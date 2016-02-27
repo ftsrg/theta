@@ -1,0 +1,410 @@
+<?xml version="1.0" encoding="windows-1250"?>
+<?eclipse version="3.0"?>
+<plugin>
+	<extension
+		point="org.eclipse.ui.editors">
+		<editor
+			class="hu.bme.mit.inf.ttmc.constraint.language.ui.ConstraintLanguageExecutableExtensionFactory:org.eclipse.xtext.ui.editor.XtextEditor"
+			contributorClass="org.eclipse.ui.editors.text.TextEditorActionContributor"
+			default="true"
+			extensions="constraint"
+			id="hu.bme.mit.inf.ttmc.constraint.language.ConstraintLanguage"
+			name="ConstraintLanguage Editor">
+		</editor>
+	</extension>
+	<extension
+		point="org.eclipse.ui.handlers">
+		<handler
+			class="hu.bme.mit.inf.ttmc.constraint.language.ui.ConstraintLanguageExecutableExtensionFactory:org.eclipse.xtext.ui.editor.hyperlinking.OpenDeclarationHandler"
+			commandId="org.eclipse.xtext.ui.editor.hyperlinking.OpenDeclaration">
+			<activeWhen>
+				<reference
+					definitionId="hu.bme.mit.inf.ttmc.constraint.language.ConstraintLanguage.Editor.opened">
+				</reference>
+			</activeWhen>
+		</handler>
+		<handler
+			class="hu.bme.mit.inf.ttmc.constraint.language.ui.ConstraintLanguageExecutableExtensionFactory:org.eclipse.xtext.ui.editor.handler.ValidateActionHandler"
+			commandId="hu.bme.mit.inf.ttmc.constraint.language.ConstraintLanguage.validate">
+		<activeWhen>
+			<reference
+					definitionId="hu.bme.mit.inf.ttmc.constraint.language.ConstraintLanguage.Editor.opened">
+			</reference>
+		</activeWhen>
+		</handler>
+		<!-- copy qualified name -->
+		<handler
+			class="hu.bme.mit.inf.ttmc.constraint.language.ui.ConstraintLanguageExecutableExtensionFactory:org.eclipse.xtext.ui.editor.copyqualifiedname.EditorCopyQualifiedNameHandler"
+			commandId="org.eclipse.xtext.ui.editor.copyqualifiedname.EditorCopyQualifiedName">
+			<activeWhen>
+				<reference definitionId="hu.bme.mit.inf.ttmc.constraint.language.ConstraintLanguage.Editor.opened" />
+			</activeWhen>
+		</handler>
+		<handler
+			class="hu.bme.mit.inf.ttmc.constraint.language.ui.ConstraintLanguageExecutableExtensionFactory:org.eclipse.xtext.ui.editor.copyqualifiedname.OutlineCopyQualifiedNameHandler"
+			commandId="org.eclipse.xtext.ui.editor.copyqualifiedname.OutlineCopyQualifiedName">
+			<activeWhen>
+				<and>
+					<reference definitionId="hu.bme.mit.inf.ttmc.constraint.language.ConstraintLanguage.XtextEditor.opened" />
+					<iterate>
+						<adapt type="org.eclipse.xtext.ui.editor.outline.IOutlineNode" />
+					</iterate>
+				</and>
+			</activeWhen>
+		</handler>
+	</extension>
+	<extension point="org.eclipse.core.expressions.definitions">
+		<definition id="hu.bme.mit.inf.ttmc.constraint.language.ConstraintLanguage.Editor.opened">
+			<and>
+				<reference definitionId="isActiveEditorAnInstanceOfXtextEditor"/>
+				<with variable="activeEditor">
+					<test property="org.eclipse.xtext.ui.editor.XtextEditor.languageName" 
+						value="hu.bme.mit.inf.ttmc.constraint.language.ConstraintLanguage" 
+						forcePluginActivation="true"/>
+				</with>		
+			</and>
+		</definition>
+		<definition id="hu.bme.mit.inf.ttmc.constraint.language.ConstraintLanguage.XtextEditor.opened">
+			<and>
+				<reference definitionId="isXtextEditorActive"/>
+				<with variable="activeEditor">
+					<test property="org.eclipse.xtext.ui.editor.XtextEditor.languageName" 
+						value="hu.bme.mit.inf.ttmc.constraint.language.ConstraintLanguage" 
+						forcePluginActivation="true"/>
+				</with>		
+			</and>
+		</definition>
+	</extension>
+	<extension
+			point="org.eclipse.ui.preferencePages">
+		<page
+			class="hu.bme.mit.inf.ttmc.constraint.language.ui.ConstraintLanguageExecutableExtensionFactory:org.eclipse.xtext.ui.editor.preferences.LanguageRootPreferencePage"
+			id="hu.bme.mit.inf.ttmc.constraint.language.ConstraintLanguage"
+			name="ConstraintLanguage">
+			<keywordReference id="hu.bme.mit.inf.ttmc.constraint.language.ui.keyword_ConstraintLanguage"/>
+		</page>
+		<page
+			category="hu.bme.mit.inf.ttmc.constraint.language.ConstraintLanguage"
+			class="hu.bme.mit.inf.ttmc.constraint.language.ui.ConstraintLanguageExecutableExtensionFactory:org.eclipse.xtext.ui.editor.syntaxcoloring.SyntaxColoringPreferencePage"
+			id="hu.bme.mit.inf.ttmc.constraint.language.ConstraintLanguage.coloring"
+			name="Syntax Coloring">
+			<keywordReference id="hu.bme.mit.inf.ttmc.constraint.language.ui.keyword_ConstraintLanguage"/>
+		</page>
+		<page
+			category="hu.bme.mit.inf.ttmc.constraint.language.ConstraintLanguage"
+			class="hu.bme.mit.inf.ttmc.constraint.language.ui.ConstraintLanguageExecutableExtensionFactory:org.eclipse.xtext.ui.editor.templates.XtextTemplatePreferencePage"
+			id="hu.bme.mit.inf.ttmc.constraint.language.ConstraintLanguage.templates"
+			name="Templates">
+			<keywordReference id="hu.bme.mit.inf.ttmc.constraint.language.ui.keyword_ConstraintLanguage"/>
+		</page>
+	</extension>
+	<extension
+			point="org.eclipse.ui.propertyPages">
+		<page
+			class="hu.bme.mit.inf.ttmc.constraint.language.ui.ConstraintLanguageExecutableExtensionFactory:org.eclipse.xtext.ui.editor.preferences.LanguageRootPreferencePage"
+			id="hu.bme.mit.inf.ttmc.constraint.language.ConstraintLanguage"
+			name="ConstraintLanguage">
+			<keywordReference id="hu.bme.mit.inf.ttmc.constraint.language.ui.keyword_ConstraintLanguage"/>
+			<enabledWhen>
+				<adapt type="org.eclipse.core.resources.IProject"/>
+			</enabledWhen>
+			<filter name="projectNature" value="org.eclipse.xtext.ui.shared.xtextNature"/>
+		</page>
+	</extension>
+	<extension
+		point="org.eclipse.ui.keywords">
+		<keyword
+			id="hu.bme.mit.inf.ttmc.constraint.language.ui.keyword_ConstraintLanguage"
+			label="ConstraintLanguage"/>
+	</extension>
+	<extension
+		point="org.eclipse.ui.commands">
+	<command
+			description="Trigger expensive validation"
+			id="hu.bme.mit.inf.ttmc.constraint.language.ConstraintLanguage.validate"
+			name="Validate">
+	</command>
+	<!-- copy qualified name -->
+	<command
+			id="org.eclipse.xtext.ui.editor.copyqualifiedname.EditorCopyQualifiedName"
+			categoryId="org.eclipse.ui.category.edit"
+			description="Copy the qualified name for the selected element"
+			name="Copy Qualified Name">
+	</command>
+	<command
+			id="org.eclipse.xtext.ui.editor.copyqualifiedname.OutlineCopyQualifiedName"
+			categoryId="org.eclipse.ui.category.edit"
+			description="Copy the qualified name for the selected element"
+			name="Copy Qualified Name">
+	</command>
+	</extension>
+	<extension point="org.eclipse.ui.menus">
+		<menuContribution
+			locationURI="popup:#TextEditorContext?after=group.edit">
+			 <command
+				 commandId="hu.bme.mit.inf.ttmc.constraint.language.ConstraintLanguage.validate"
+				 style="push"
+				 tooltip="Trigger expensive validation">
+			<visibleWhen checkEnabled="false">
+				<reference
+					definitionId="hu.bme.mit.inf.ttmc.constraint.language.ConstraintLanguage.Editor.opened">
+				</reference>
+			</visibleWhen>
+		</command>  
+		</menuContribution>
+		<!-- copy qualified name -->
+		<menuContribution locationURI="popup:#TextEditorContext?after=copy">
+			<command commandId="org.eclipse.xtext.ui.editor.copyqualifiedname.EditorCopyQualifiedName" 
+				style="push" tooltip="Copy Qualified Name">
+				<visibleWhen checkEnabled="false">
+					<reference definitionId="hu.bme.mit.inf.ttmc.constraint.language.ConstraintLanguage.Editor.opened" />
+				</visibleWhen>
+			</command>  
+		</menuContribution>
+		<menuContribution locationURI="menu:edit?after=copy">
+			<command commandId="org.eclipse.xtext.ui.editor.copyqualifiedname.EditorCopyQualifiedName"
+				style="push" tooltip="Copy Qualified Name">
+				<visibleWhen checkEnabled="false">
+					<reference definitionId="hu.bme.mit.inf.ttmc.constraint.language.ConstraintLanguage.Editor.opened" />
+				</visibleWhen>
+			</command>  
+		</menuContribution>
+		<menuContribution locationURI="popup:org.eclipse.xtext.ui.outline?after=additions">
+			<command commandId="org.eclipse.xtext.ui.editor.copyqualifiedname.OutlineCopyQualifiedName" 
+				style="push" tooltip="Copy Qualified Name">
+				<visibleWhen checkEnabled="false">
+					<and>
+						<reference definitionId="hu.bme.mit.inf.ttmc.constraint.language.ConstraintLanguage.XtextEditor.opened" />
+						<iterate>
+							<adapt type="org.eclipse.xtext.ui.editor.outline.IOutlineNode" />
+						</iterate>
+					</and>
+				</visibleWhen>
+			</command>
+		</menuContribution>
+	</extension>
+	<extension point="org.eclipse.ui.menus">
+		<menuContribution locationURI="popup:#TextEditorContext?endof=group.find">
+			<command commandId="org.eclipse.xtext.ui.editor.FindReferences">
+				<visibleWhen checkEnabled="false">
+					<reference definitionId="hu.bme.mit.inf.ttmc.constraint.language.ConstraintLanguage.Editor.opened">
+					</reference>
+				</visibleWhen>
+			</command>
+		</menuContribution>
+	</extension>
+	<extension point="org.eclipse.ui.handlers">
+		<handler
+			class="hu.bme.mit.inf.ttmc.constraint.language.ui.ConstraintLanguageExecutableExtensionFactory:org.eclipse.xtext.ui.editor.findrefs.FindReferencesHandler"
+			commandId="org.eclipse.xtext.ui.editor.FindReferences">
+			<activeWhen>
+				<reference
+					definitionId="hu.bme.mit.inf.ttmc.constraint.language.ConstraintLanguage.Editor.opened">
+				</reference>
+			</activeWhen>
+		</handler>
+	</extension>
+	<!-- adding resource factories -->
+	<extension
+		point="org.eclipse.emf.ecore.extension_parser">
+		<parser
+			class="hu.bme.mit.inf.ttmc.constraint.language.ui.ConstraintLanguageExecutableExtensionFactory:org.eclipse.xtext.resource.IResourceFactory"
+			type="constraint">
+		</parser>
+	</extension>
+	<extension point="org.eclipse.xtext.extension_resourceServiceProvider">
+	    <resourceServiceProvider
+	        class="hu.bme.mit.inf.ttmc.constraint.language.ui.ConstraintLanguageExecutableExtensionFactory:org.eclipse.xtext.ui.resource.IResourceUIServiceProvider"
+	        uriExtension="constraint">
+	    </resourceServiceProvider>
+	</extension>
+	<!-- marker definitions for hu.bme.mit.inf.ttmc.constraint.language.ConstraintLanguage -->
+	<extension
+			id="constraintlanguage.check.fast"
+			name="ConstraintLanguage Problem"
+			point="org.eclipse.core.resources.markers">
+		<super type="org.eclipse.xtext.ui.check.fast"/>
+		<persistent value="true"/>
+	</extension>
+	<extension
+			id="constraintlanguage.check.normal"
+			name="ConstraintLanguage Problem"
+			point="org.eclipse.core.resources.markers">
+		<super type="org.eclipse.xtext.ui.check.normal"/>
+		<persistent value="true"/>
+	</extension>
+	<extension
+			id="constraintlanguage.check.expensive"
+			name="ConstraintLanguage Problem"
+			point="org.eclipse.core.resources.markers">
+		<super type="org.eclipse.xtext.ui.check.expensive"/>
+		<persistent value="true"/>
+	</extension>
+	<extension point="org.eclipse.xtext.builder.participant">
+		<participant
+			class="hu.bme.mit.inf.ttmc.constraint.language.ui.ConstraintLanguageExecutableExtensionFactory:org.eclipse.xtext.builder.IXtextBuilderParticipant"
+			fileExtensions="constraint"/>
+	</extension>
+	<extension point="org.eclipse.ui.preferencePages">
+		<page
+			category="hu.bme.mit.inf.ttmc.constraint.language.ConstraintLanguage"
+			class="hu.bme.mit.inf.ttmc.constraint.language.ui.ConstraintLanguageExecutableExtensionFactory:org.eclipse.xtext.builder.preferences.BuilderPreferencePage"
+			id="hu.bme.mit.inf.ttmc.constraint.language.ConstraintLanguage.compiler.preferencePage"
+			name="Compiler">
+			<keywordReference id="hu.bme.mit.inf.ttmc.constraint.language.ui.keyword_ConstraintLanguage"/>
+		</page>
+	</extension>
+	<extension point="org.eclipse.ui.propertyPages">
+		<page
+			category="hu.bme.mit.inf.ttmc.constraint.language.ConstraintLanguage"
+			class="hu.bme.mit.inf.ttmc.constraint.language.ui.ConstraintLanguageExecutableExtensionFactory:org.eclipse.xtext.builder.preferences.BuilderPreferencePage"
+			id="hu.bme.mit.inf.ttmc.constraint.language.ConstraintLanguage.compiler.propertyPage"
+			name="Compiler">
+			<keywordReference id="hu.bme.mit.inf.ttmc.constraint.language.ui.keyword_ConstraintLanguage"/>
+			<enabledWhen>
+				<adapt type="org.eclipse.core.resources.IProject"/>
+			</enabledWhen>
+			<filter name="projectNature" value="org.eclipse.xtext.ui.shared.xtextNature"/>
+		</page>
+	</extension>
+	<extension point="org.eclipse.ui.menus">
+		<menuContribution locationURI="popup:#TextEditorContext?after=xtext.ui.openDeclaration">
+			<command
+				commandId="org.eclipse.xtext.ui.OpenGeneratedFileCommand"
+				id="hu.bme.mit.inf.ttmc.constraint.language.ConstraintLanguage.OpenGeneratedCode"
+				style="push">
+				<visibleWhen checkEnabled="false">
+					<reference definitionId="hu.bme.mit.inf.ttmc.constraint.language.ConstraintLanguage.Editor.opened" />
+				</visibleWhen>
+			</command>
+		</menuContribution>
+	</extension>
+	<extension point="org.eclipse.ui.handlers">
+		<handler
+			class="hu.bme.mit.inf.ttmc.constraint.language.ui.ConstraintLanguageExecutableExtensionFactory:org.eclipse.xtext.ui.generator.trace.OpenGeneratedFileHandler"
+			commandId="org.eclipse.xtext.ui.OpenGeneratedFileCommand">
+			<activeWhen>
+				<reference definitionId="hu.bme.mit.inf.ttmc.constraint.language.ConstraintLanguage.Editor.opened" />
+			</activeWhen>
+		</handler>
+	</extension>
+	<!-- Quick Outline -->
+	<extension
+		point="org.eclipse.ui.handlers">
+		<handler 
+			class="hu.bme.mit.inf.ttmc.constraint.language.ui.ConstraintLanguageExecutableExtensionFactory:org.eclipse.xtext.ui.editor.outline.quickoutline.ShowQuickOutlineActionHandler"
+			commandId="org.eclipse.xtext.ui.editor.outline.QuickOutline">
+			<activeWhen>
+				<reference
+					definitionId="hu.bme.mit.inf.ttmc.constraint.language.ConstraintLanguage.Editor.opened">
+				</reference>
+			</activeWhen>
+		</handler>
+	</extension>
+	<extension
+		point="org.eclipse.ui.commands">
+		<command
+			description="Open the quick outline."
+			id="org.eclipse.xtext.ui.editor.outline.QuickOutline"
+			name="Quick Outline">
+		</command>
+	</extension>
+	<extension point="org.eclipse.ui.menus">
+		<menuContribution
+			locationURI="popup:#TextEditorContext?after=group.open">
+			<command commandId="org.eclipse.xtext.ui.editor.outline.QuickOutline"
+				style="push"
+				tooltip="Open Quick Outline">
+				<visibleWhen checkEnabled="false">
+					<reference definitionId="hu.bme.mit.inf.ttmc.constraint.language.ConstraintLanguage.Editor.opened"/>
+				</visibleWhen>
+			</command>
+		</menuContribution>
+	</extension>
+	<!-- quickfix marker resolution generator for hu.bme.mit.inf.ttmc.constraint.language.ConstraintLanguage -->
+	<extension
+	        point="org.eclipse.ui.ide.markerResolution">
+	    <markerResolutionGenerator
+	        class="hu.bme.mit.inf.ttmc.constraint.language.ui.ConstraintLanguageExecutableExtensionFactory:org.eclipse.xtext.ui.editor.quickfix.MarkerResolutionGenerator"
+	        markerType="hu.bme.mit.inf.ttmc.constraint.language.ui.constraintlanguage.check.fast">
+	        <attribute
+	            name="FIXABLE_KEY"
+	            value="true">
+	        </attribute>
+	    </markerResolutionGenerator>
+	    <markerResolutionGenerator
+	        class="hu.bme.mit.inf.ttmc.constraint.language.ui.ConstraintLanguageExecutableExtensionFactory:org.eclipse.xtext.ui.editor.quickfix.MarkerResolutionGenerator"
+	        markerType="hu.bme.mit.inf.ttmc.constraint.language.ui.constraintlanguage.check.normal">
+	        <attribute
+	            name="FIXABLE_KEY"
+	            value="true">
+	        </attribute>
+	    </markerResolutionGenerator>
+	    <markerResolutionGenerator
+	        class="hu.bme.mit.inf.ttmc.constraint.language.ui.ConstraintLanguageExecutableExtensionFactory:org.eclipse.xtext.ui.editor.quickfix.MarkerResolutionGenerator"
+	        markerType="hu.bme.mit.inf.ttmc.constraint.language.ui.constraintlanguage.check.expensive">
+	        <attribute
+	            name="FIXABLE_KEY"
+	            value="true">
+	        </attribute>
+	    </markerResolutionGenerator>
+	</extension>
+	<!-- Rename Refactoring -->
+	<extension point="org.eclipse.ui.handlers">
+		<handler 
+			class="hu.bme.mit.inf.ttmc.constraint.language.ui.ConstraintLanguageExecutableExtensionFactory:org.eclipse.xtext.ui.refactoring.ui.DefaultRenameElementHandler"
+			commandId="org.eclipse.xtext.ui.refactoring.RenameElement">
+			<activeWhen>
+				<reference
+					definitionId="hu.bme.mit.inf.ttmc.constraint.language.ConstraintLanguage.Editor.opened">
+				</reference>
+			</activeWhen>
+		</handler>
+	</extension>
+	<extension point="org.eclipse.ui.menus">
+		<menuContribution
+			locationURI="popup:#TextEditorContext?after=group.edit">
+			<command commandId="org.eclipse.xtext.ui.refactoring.RenameElement"
+				style="push">
+				<visibleWhen checkEnabled="false">
+					<reference
+						definitionId="hu.bme.mit.inf.ttmc.constraint.language.ConstraintLanguage.Editor.opened">
+					</reference>
+				</visibleWhen>
+			</command>
+		</menuContribution>
+	</extension>
+	<extension point="org.eclipse.ui.preferencePages">
+		<page
+			category="hu.bme.mit.inf.ttmc.constraint.language.ConstraintLanguage"
+			class="hu.bme.mit.inf.ttmc.constraint.language.ui.ConstraintLanguageExecutableExtensionFactory:org.eclipse.xtext.ui.refactoring.ui.RefactoringPreferencePage"
+			id="hu.bme.mit.inf.ttmc.constraint.language.ConstraintLanguage.refactoring"
+			name="Refactoring">
+			<keywordReference id="hu.bme.mit.inf.ttmc.constraint.language.ui.keyword_ConstraintLanguage"/>
+		</page>
+	</extension>
+	<extension point="org.eclipse.compare.contentViewers">
+		<viewer id="hu.bme.mit.inf.ttmc.constraint.language.ConstraintLanguage.compare.contentViewers"
+			class="hu.bme.mit.inf.ttmc.constraint.language.ui.ConstraintLanguageExecutableExtensionFactory:org.eclipse.xtext.ui.compare.InjectableViewerCreator"
+			extensions="constraint">
+		</viewer>
+	</extension>
+	<extension point="org.eclipse.compare.contentMergeViewers">
+		<viewer id="hu.bme.mit.inf.ttmc.constraint.language.ConstraintLanguage.compare.contentMergeViewers"
+			class="hu.bme.mit.inf.ttmc.constraint.language.ui.ConstraintLanguageExecutableExtensionFactory:org.eclipse.xtext.ui.compare.InjectableViewerCreator"
+			extensions="constraint" label="ConstraintLanguage Compare">
+		</viewer>
+	</extension>
+	<extension point="org.eclipse.ui.editors.documentProviders">
+		<provider id="hu.bme.mit.inf.ttmc.constraint.language.ConstraintLanguage.editors.documentProviders"
+			class="hu.bme.mit.inf.ttmc.constraint.language.ui.ConstraintLanguageExecutableExtensionFactory:org.eclipse.xtext.ui.editor.model.XtextDocumentProvider"
+			extensions="constraint">
+		</provider>
+	</extension>
+	<extension point="org.eclipse.team.core.fileTypes">
+		<fileTypes
+			extension="constraint"
+			type="text">
+		</fileTypes>
+	</extension>
+</plugin>
