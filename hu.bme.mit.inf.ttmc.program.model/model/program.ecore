@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ecore:EPackage xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" name="model" nsURI="http://www.inf.mit.bme.hu/ttmc/program/Model"
+    nsPrefix="hu.bme.mit.inf.ttmc.program">
+  <eClassifiers xsi:type="ecore:EClass" name="ProgramSpecification" eSuperTypes="../../hu.bme.mit.inf.ttmc.constraint.model/model/constraint.ecore#//ConstraintSpecification">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="procedureDeclarations"
+        upperBound="-1" eType="#//ProcedureDeclaration" containment="true"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="UnitTypeDefinition" eSuperTypes="../../hu.bme.mit.inf.ttmc.constraint.model/model/constraint.ecore#//BasicTypeDefinition"/>
+  <eClassifiers xsi:type="ecore:EClass" name="ProcedureTypeDefinition" eSuperTypes="../../hu.bme.mit.inf.ttmc.constraint.model/model/constraint.ecore#//TypeDefinition">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="parameterTypes" upperBound="-1"
+        eType="ecore:EClass ../../hu.bme.mit.inf.ttmc.constraint.model/model/constraint.ecore#//Type"
+        containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="returnType" lowerBound="1"
+        eType="ecore:EClass ../../hu.bme.mit.inf.ttmc.constraint.model/model/constraint.ecore#//Type"
+        containment="true"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="ResultExpression" eSuperTypes="../../hu.bme.mit.inf.ttmc.constraint.model/model/constraint.ecore#//NullaryExpression"/>
+  <eClassifiers xsi:type="ecore:EClass" name="ProcedureLiteralExpression" eSuperTypes="../../hu.bme.mit.inf.ttmc.constraint.model/model/constraint.ecore#//LiteralExpression ../../hu.bme.mit.inf.ttmc.constraint.model/model/constraint.ecore#//ParametricElement">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="returnType" lowerBound="1"
+        eType="ecore:EClass ../../hu.bme.mit.inf.ttmc.constraint.model/model/constraint.ecore#//Type"
+        containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="statement" lowerBound="1"
+        eType="#//Statement" containment="true"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="ProcedureDeclaration" eSuperTypes="../../hu.bme.mit.inf.ttmc.constraint.model/model/constraint.ecore#//Declaration ../../hu.bme.mit.inf.ttmc.constraint.model/model/constraint.ecore#//ParametricElement">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="preconditionAnnotations"
+        upperBound="-1" eType="#//PreconditionAnnotation" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="postconditionAnnotations"
+        upperBound="-1" eType="#//PostconditionAnnotation" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="statement" eType="#//Statement"
+        containment="true"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="VariableDeclaration" eSuperTypes="../../hu.bme.mit.inf.ttmc.constraint.model/model/constraint.ecore#//DefinableDeclaration"/>
+  <eClassifiers xsi:type="ecore:EClass" name="Statement" abstract="true"/>
+  <eClassifiers xsi:type="ecore:EClass" name="SimpleStatement" abstract="true" eSuperTypes="#//Statement"/>
+  <eClassifiers xsi:type="ecore:EClass" name="CompoundStatement" abstract="true" eSuperTypes="#//Statement"/>
+  <eClassifiers xsi:type="ecore:EClass" name="UnaryStatement" eSuperTypes="#//Statement">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="expression" lowerBound="1"
+        eType="ecore:EClass ../../hu.bme.mit.inf.ttmc.constraint.model/model/constraint.ecore#//Expression"
+        containment="true"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="AssumeStatement" eSuperTypes="#//SimpleStatement #//UnaryStatement"/>
+  <eClassifiers xsi:type="ecore:EClass" name="AssertStatement" eSuperTypes="#//SimpleStatement #//UnaryStatement"/>
+  <eClassifiers xsi:type="ecore:EClass" name="ReturnStatement" eSuperTypes="#//SimpleStatement #//UnaryStatement"/>
+  <eClassifiers xsi:type="ecore:EClass" name="HavocStatement" eSuperTypes="#//SimpleStatement #//UnaryStatement"/>
+  <eClassifiers xsi:type="ecore:EClass" name="SkipStatement" eSuperTypes="#//SimpleStatement"/>
+  <eClassifiers xsi:type="ecore:EClass" name="AssignmentStatement" eSuperTypes="#//SimpleStatement">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="lhsExpression" lowerBound="1"
+        eType="ecore:EClass ../../hu.bme.mit.inf.ttmc.constraint.model/model/constraint.ecore#//Expression"
+        containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="rhsExpression" lowerBound="1"
+        eType="ecore:EClass ../../hu.bme.mit.inf.ttmc.constraint.model/model/constraint.ecore#//Expression"
+        containment="true"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="BlockStatement" eSuperTypes="#//CompoundStatement">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="variableDeclarations" upperBound="-1"
+        eType="#//VariableDeclaration" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="statements" upperBound="-1"
+        eType="#//Statement" containment="true"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="IfStatement" eSuperTypes="#//CompoundStatement">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="conditionExpression" eType="ecore:EClass ../../hu.bme.mit.inf.ttmc.constraint.model/model/constraint.ecore#//Expression"
+        containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="thenStatement" lowerBound="1"
+        eType="#//Statement" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="elseStatement" eType="#//Statement"
+        containment="true"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="WhileStatement" eSuperTypes="#//CompoundStatement">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="loopAnnotations" upperBound="-1"
+        eType="#//LoopAnnotation" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="conditionExpression" eType="ecore:EClass ../../hu.bme.mit.inf.ttmc.constraint.model/model/constraint.ecore#//Expression"
+        containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="doStatement" lowerBound="1"
+        eType="#//Statement" containment="true"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="DoStatement" eSuperTypes="#//CompoundStatement">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="loopAnnotations" upperBound="-1"
+        eType="#//LoopAnnotation" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="conditionExpression" eType="ecore:EClass ../../hu.bme.mit.inf.ttmc.constraint.model/model/constraint.ecore#//Expression"
+        containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="doStatement" lowerBound="1"
+        eType="#//Statement" containment="true"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="ProcedureAnnotation" abstract="true">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="expression" lowerBound="1"
+        eType="ecore:EClass ../../hu.bme.mit.inf.ttmc.constraint.model/model/constraint.ecore#//Expression"
+        containment="true"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="PreconditionAnnotation" eSuperTypes="#//ProcedureAnnotation"/>
+  <eClassifiers xsi:type="ecore:EClass" name="PostconditionAnnotation" eSuperTypes="#//ProcedureAnnotation"/>
+  <eClassifiers xsi:type="ecore:EClass" name="LoopAnnotation" eSuperTypes="#//ProcedureAnnotation"/>
+</ecore:EPackage>

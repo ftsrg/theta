@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.0"?>
+
+<!--
+-->
+
+<plugin>
+
+   <extension point="org.eclipse.emf.ecore.generated_package">
+      <!-- @generated program -->
+      <package
+            uri="http://www.inf.mit.bme.hu/ttmc/program/Model"
+            class="hu.bme.mit.inf.ttmc.program.model.ProgramModelPackage"
+            genModel="model/program.genmodel"/>
+   </extension>
+
+</plugin>

@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ecore:EPackage xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" name="model" nsURI="http://www.inf.mit.bme.hu/ttmc/system/Model" nsPrefix="hu.bme.mit.inf.ttmc.constraint">
+  <eClassifiers xsi:type="ecore:EClass" name="PrimedExpression" eSuperTypes="../../hu.bme.mit.inf.ttmc.constraint.model/model/constraint.ecore#//UnaryExpression"/>
+  <eClassifiers xsi:type="ecore:EClass" name="TemporalExpression" abstract="true"
+      eSuperTypes="../../hu.bme.mit.inf.ttmc.constraint.model/model/constraint.ecore#//Expression"/>
+  <eClassifiers xsi:type="ecore:EClass" name="TemporalPathExpression" abstract="true"
+      eSuperTypes="#//TemporalExpression"/>
+  <eClassifiers xsi:type="ecore:EClass" name="TemporalStateExpression" abstract="true"
+      eSuperTypes="#//TemporalExpression"/>
+  <eClassifiers xsi:type="ecore:EClass" name="ReleaseExpression" eSuperTypes="#//TemporalPathExpression ../../hu.bme.mit.inf.ttmc.constraint.model/model/constraint.ecore#//BinaryExpression"/>
+  <eClassifiers xsi:type="ecore:EClass" name="UntilExpression" eSuperTypes="#//TemporalPathExpression ../../hu.bme.mit.inf.ttmc.constraint.model/model/constraint.ecore#//BinaryExpression"/>
+  <eClassifiers xsi:type="ecore:EClass" name="GloballyExpression" eSuperTypes="#//TemporalPathExpression ../../hu.bme.mit.inf.ttmc.constraint.model/model/constraint.ecore#//UnaryExpression"/>
+  <eClassifiers xsi:type="ecore:EClass" name="FinallyExpression" eSuperTypes="#//TemporalPathExpression ../../hu.bme.mit.inf.ttmc.constraint.model/model/constraint.ecore#//UnaryExpression"/>
+  <eClassifiers xsi:type="ecore:EClass" name="NextExpression" eSuperTypes="#//TemporalPathExpression ../../hu.bme.mit.inf.ttmc.constraint.model/model/constraint.ecore#//UnaryExpression"/>
+  <eClassifiers xsi:type="ecore:EClass" name="TemporalForallExpression" eSuperTypes="#//TemporalStateExpression ../../hu.bme.mit.inf.ttmc.constraint.model/model/constraint.ecore#//UnaryExpression"/>
+  <eClassifiers xsi:type="ecore:EClass" name="TemporalExistsExpression" eSuperTypes="#//TemporalStateExpression ../../hu.bme.mit.inf.ttmc.constraint.model/model/constraint.ecore#//UnaryExpression"/>
+  <eClassifiers xsi:type="ecore:EClass" name="DefinitionDeclaration" eSuperTypes="../../hu.bme.mit.inf.ttmc.constraint.model/model/constraint.ecore#//DefinableDeclaration"/>
+  <eClassifiers xsi:type="ecore:EClass" name="VariableDeclaration" eSuperTypes="../../hu.bme.mit.inf.ttmc.constraint.model/model/constraint.ecore#//Declaration"/>
+  <eClassifiers xsi:type="ecore:EClass" name="SystemSpecification" eSuperTypes="../../hu.bme.mit.inf.ttmc.constraint.model/model/constraint.ecore#//ConstraintSpecification">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="systemDeclarations" upperBound="-1"
+        eType="#//SystemDeclaration" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="propertyDeclarations" upperBound="-1"
+        eType="#//PropertyDeclaration" containment="true"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="SystemDeclaration" eSuperTypes="../../hu.bme.mit.inf.ttmc.constraint.model/model/constraint.ecore#//NamedElement ../../hu.bme.mit.inf.ttmc.constraint.model/model/constraint.ecore#//ParametricElement">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="system" lowerBound="1"
+        eType="#//System" containment="true"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="System" abstract="true"/>
+  <eClassifiers xsi:type="ecore:EClass" name="SystemDefinition" eSuperTypes="#//System">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="variableDeclarations" upperBound="-1"
+        eType="#//VariableDeclaration" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="definitionDeclarations"
+        upperBound="-1" eType="#//DefinitionDeclaration" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="systemConstraintDefinitions"
+        upperBound="-1" eType="#//SystemConstraintDefinition" containment="true"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="SystemReference" eSuperTypes="#//System ../../hu.bme.mit.inf.ttmc.constraint.model/model/constraint.ecore#//ParameterizedElement">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="reference" lowerBound="1"
+        eType="#//SystemDeclaration"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="CompositeSystem" abstract="true" eSuperTypes="#//System">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="leftSystem" lowerBound="1"
+        eType="#//System" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="rightSystem" lowerBound="1"
+        eType="#//System" containment="true"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="SynchronousCompositeSystem" eSuperTypes="#//CompositeSystem"/>
+  <eClassifiers xsi:type="ecore:EClass" name="AsynchronousCompositeSystem" eSuperTypes="#//CompositeSystem"/>
+  <eClassifiers xsi:type="ecore:EClass" name="MultiSystem" abstract="true" eSuperTypes="#//System ../../hu.bme.mit.inf.ttmc.constraint.model/model/constraint.ecore#//ParametricElement">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="system" lowerBound="1"
+        eType="#//System" containment="true"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="SynchronousMultiSystem" eSuperTypes="#//MultiSystem"/>
+  <eClassifiers xsi:type="ecore:EClass" name="AsynchronousMultiSystem" eSuperTypes="#//MultiSystem"/>
+  <eClassifiers xsi:type="ecore:EClass" name="SystemConstraintDefinition" abstract="true"
+      eSuperTypes="../../hu.bme.mit.inf.ttmc.constraint.model/model/constraint.ecore#//ConstraintDefinition"/>
+  <eClassifiers xsi:type="ecore:EClass" name="InvariantConstraintDefinition" eSuperTypes="#//SystemConstraintDefinition"/>
+  <eClassifiers xsi:type="ecore:EClass" name="InitialConstraintDefinition" eSuperTypes="#//SystemConstraintDefinition"/>
+  <eClassifiers xsi:type="ecore:EClass" name="TransitionConstraintDefinition" eSuperTypes="#//SystemConstraintDefinition"/>
+  <eClassifiers xsi:type="ecore:EClass" name="PropertyDeclaration" eSuperTypes="../../hu.bme.mit.inf.ttmc.constraint.model/model/constraint.ecore#//NamedElement">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="system" lowerBound="1"
+        eType="#//System" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="expression" lowerBound="1"
+        eType="ecore:EClass ../../hu.bme.mit.inf.ttmc.constraint.model/model/constraint.ecore#//Expression"
+        containment="true"/>
+  </eClassifiers>
+</ecore:EPackage>
