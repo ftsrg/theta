@@ -1,7 +1,7 @@
 package hu.bme.mit.inf.ttmc.analysis.location;
 
-import hu.bme.mit.inf.ttmc.analysis.AbstractState;
+import hu.bme.mit.inf.ttmc.analysis.State;
 
-public class LocationState implements AbstractState {
+public class LocationState implements State {
 
 }
