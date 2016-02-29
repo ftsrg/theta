@@ -1,6 +1,6 @@
 package hu.bme.mit.inf.ttmc.analysis;
 
-public interface AbstractDomain<S extends AbstractState> {
+public interface Domain<S extends State> {
 	
 	public S getTop();
 	public S getBottom();

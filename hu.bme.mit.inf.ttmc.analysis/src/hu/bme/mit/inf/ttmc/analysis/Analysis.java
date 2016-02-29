@@ -1,8 +1,8 @@
 package hu.bme.mit.inf.ttmc.analysis;
 
-public interface Analysis<S extends AbstractState> {
+public interface Analysis<S extends State> {
 	
-	public AbstractDomain<S> getAbstractDomain();
+	public Domain<S> getAbstractDomain();
 	public TransferRelation<S> getTransferRelation();
 	
 }
