@@ -11,7 +11,9 @@ import hu.bme.mit.inf.ttmc.constraint.factory.DeclFactory;
 import hu.bme.mit.inf.ttmc.constraint.factory.ExprFactory;
 import hu.bme.mit.inf.ttmc.constraint.factory.TypeFactory;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
-import hu.bme.mit.inf.ttmc.constraint.utils.impl.iteelimin.IteToImpliyVisitor;
+import hu.bme.mit.inf.ttmc.constraint.type.IntType;
+import hu.bme.mit.inf.ttmc.constraint.utils.impl.iteelimin.PushBelowIteVisitor;
+import hu.bme.mit.inf.ttmc.constraint.utils.impl.iteelimin.RemoveIteVisitor;
 
 public class ITEEliminatorTests {
 	// Manager and factories
@@ -25,8 +27,12 @@ public class ITEEliminatorTests {
 	private ConstDecl<BoolType> cC;
 	private ConstDecl<BoolType> cD;
 	private ConstDecl<BoolType> cE;
+	private ConstDecl<IntType> cX;
+	private ConstDecl<IntType> cY;
+	private ConstDecl<IntType> cZ;
 	// Transformator
-	IteToImpliyVisitor visitor;
+	RemoveIteVisitor riVisitor;
+	PushBelowIteVisitor pbVisitor;
 	
 	@Before
 	public void before(){
@@ -41,8 +47,12 @@ public class ITEEliminatorTests {
 		cC = dFact.Const("C", tFact.Bool());
 		cD = dFact.Const("D", tFact.Bool());
 		cE = dFact.Const("E", tFact.Bool());
+		cX = dFact.Const("X", tFact.Int());
+		cY = dFact.Const("Y", tFact.Int());
+		cZ = dFact.Const("Z", tFact.Int());
 		// Create transformator
-		visitor = new IteToImpliyVisitor(manager);
+		riVisitor = new RemoveIteVisitor(manager);
+		pbVisitor = new PushBelowIteVisitor(manager);
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -50,18 +60,26 @@ public class ITEEliminatorTests {
 	public void testSimple() {
 		// ite(A,B,C)
 		Assert.assertEquals(
-			eFact.Ite(eFact.Ref(cA), eFact.Ref(cB), eFact.Ref(cC)).accept(visitor, null),
+			eFact.Ite(eFact.Ref(cA), eFact.Ref(cB), eFact.Ref(cC)).accept(riVisitor, null),
 			eFact.And(eFact.Or(eFact.Not(eFact.Ref(cA)), eFact.Ref(cB)), eFact.Or(eFact.Ref(cA), eFact.Ref(cC)))
 			);
 		
 		// ite(A,ite(B,C,D),E)
 		Assert.assertEquals(
-			eFact.Ite(eFact.Ref(cA), eFact.Ite(eFact.Ref(cB), eFact.Ref(cC), eFact.Ref(cD)), eFact.Ref(cE)).accept(visitor, null),
+			eFact.Ite(eFact.Ref(cA), eFact.Ite(eFact.Ref(cB), eFact.Ref(cC), eFact.Ref(cD)), eFact.Ref(cE)).accept(riVisitor, null),
 			eFact.And(
 					eFact.Or(eFact.Not(eFact.Ref(cA)), eFact.And(
 							eFact.Or(eFact.Not(eFact.Ref(cB)), eFact.Ref(cC)),
 							eFact.Or(eFact.Ref(cB), eFact.Ref(cD)))),
 					eFact.Or(eFact.Ref(cA), eFact.Ref(cE)))
 			);
+	}
+	
+	@Test
+	public void testPushDown(){
+		System.out.println(eFact.Not(eFact.Ite(eFact.Ref(cA), eFact.Ref(cB), eFact.Ref(cC))));
+		System.out.println(eFact.Not(eFact.Ite(eFact.Ref(cA), eFact.Ref(cB), eFact.Ref(cC))).accept(pbVisitor, null));
+		System.out.println(eFact.Neg(eFact.Ite(eFact.Ref(cA), eFact.Ref(cX), eFact.Ref(cY))));
+		System.out.println(eFact.Neg(eFact.Ite(eFact.Ref(cA), eFact.Ref(cX), eFact.Ref(cY))).accept(pbVisitor, null));
 	}
 }
