@@ -13,7 +13,7 @@ public class ArrayReadExprImpl<IndexType extends Type, ElemType extends Type> ex
 	private final Expr<? extends ArrayType<? super IndexType, ? extends ElemType>> array;
 	private final Expr<? extends IndexType> index;
 
-	protected ArrayReadExprImpl(final Expr<? extends ArrayType<? super IndexType, ? extends ElemType>> array,
+	public ArrayReadExprImpl(final Expr<? extends ArrayType<? super IndexType, ? extends ElemType>> array,
 			final Expr<? extends IndexType> index) {
 
 		this.array = checkNotNull(array);
