@@ -19,11 +19,20 @@ import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.constraint.utils.impl.ArityBasedVisitor;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 
-public class IteToImpliyVisitor extends ArityBasedVisitor<Void, Expr<? extends Type>> {
+/**
+ * Remove if-then-else expressions by transforming them with the following rule:
+ * (if A then B else C) <=> (!A or B) and (A or C).
+ * 
+ * It is assumed that ite expressions are propagated to the top.
+ * 
+ * @author Akos
+ *
+ */
+public class RemoveIteVisitor extends ArityBasedVisitor<Void, Expr<? extends Type>> {
 	
 	private ConstraintManager manager;
 	
-	public IteToImpliyVisitor(ConstraintManager manager) {
+	public RemoveIteVisitor(ConstraintManager manager) {
 		this.manager = manager;
 	}
 
