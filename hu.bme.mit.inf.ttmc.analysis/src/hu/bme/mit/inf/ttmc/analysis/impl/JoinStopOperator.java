@@ -6,11 +6,10 @@ import java.util.Collection;
 import java.util.Iterator;
 
 import hu.bme.mit.inf.ttmc.analysis.Domain;
-import hu.bme.mit.inf.ttmc.analysis.Precision;
 import hu.bme.mit.inf.ttmc.analysis.State;
 import hu.bme.mit.inf.ttmc.analysis.StopOperator;
 
-public class JoinStopOperator<S extends State, P extends Precision> implements StopOperator<S, P> {
+public class JoinStopOperator<S extends State> implements StopOperator<S> {
 
 	private final Domain<S> domain;
 
@@ -19,10 +18,9 @@ public class JoinStopOperator<S extends State, P extends Precision> implements S
 	}
 
 	@Override
-	public boolean stop(S state, Collection<S> reachedStates, P precision) {
+	public boolean stop(S state, Collection<S> reachedStates) {
 		checkNotNull(state);
 		checkNotNull(reachedStates);
-		checkNotNull(precision);
 		
 		Iterator<S> iterator = reachedStates.iterator();
 	    S joinedState = iterator.next();
