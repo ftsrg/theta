@@ -1,10 +1,9 @@
 package hu.bme.mit.inf.ttmc.analysis.algorithm;
 
-import hu.bme.mit.inf.ttmc.analysis.Precision;
 import hu.bme.mit.inf.ttmc.analysis.State;
 
-public interface Algorithm<S extends State, P extends Precision> {
+public interface Algorithm<S extends State> {
 	
-	public AlgorithmStatus run(final MutableReachedSet<S, P> reachedSet);
+	public ReachedSet<S> run(final MutableReachedSet<S> reachedSet);
 	
 }

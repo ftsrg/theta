@@ -1,13 +1,10 @@
 package hu.bme.mit.inf.ttmc.analysis;
 
-public interface Analysis<S extends State, P extends Precision> {
+public interface Analysis<S extends State> {
 	
 	public Domain<S> getDomain();
-	
-	public TransferRelation<S, P> getTransferRelation();
-	
-	public MergeOperator<S, P> getMergeOperator();
-	public StopOperator<S, P> getStopOperator();
-	public RefinementOperator<S, P> getRefinementOperator();
+	public TransferRelation<S> getTransferRelation();
+	public MergeOperator<S> getMergeOperator();
+	public StopOperator<S> getStopOperator();
 	
 }

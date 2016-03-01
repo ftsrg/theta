@@ -5,11 +5,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.util.Collection;
 
 import hu.bme.mit.inf.ttmc.analysis.Domain;
-import hu.bme.mit.inf.ttmc.analysis.Precision;
 import hu.bme.mit.inf.ttmc.analysis.State;
 import hu.bme.mit.inf.ttmc.analysis.StopOperator;
 
-public class SepStopOperator<S extends State, P extends Precision> implements StopOperator<S, P> {
+public class SepStopOperator<S extends State> implements StopOperator<S> {
 
 	private final Domain<S> domain;
 
@@ -18,10 +17,9 @@ public class SepStopOperator<S extends State, P extends Precision> implements St
 	}
 
 	@Override
-	public boolean stop(S state, Collection<S> reachedStates, P precision) {
+	public boolean stop(S state, Collection<S> reachedStates) {
 		checkNotNull(state);
 		checkNotNull(reachedStates);
-		checkNotNull(precision);
 		
 		for (S reachedState : reachedStates) {
 			if (domain.isLeq(state, reachedState)) {
