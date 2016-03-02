@@ -60,7 +60,7 @@ import hu.bme.mit.inf.ttmc.constraint.model.ArrayWithExpression
 import hu.bme.mit.inf.ttmc.constraint.utils.impl.TypeInferrer
 import static com.google.common.base.Preconditions.checkNotNull
 
-class ConstraintModelHelper {
+public class ConstraintModelHelper {
 	
 	private val extension ExprFactory ef
 	private val extension TypeFactory tf
@@ -83,10 +83,16 @@ class ConstraintModelHelper {
 		constantToConst = new HashMap
 		parameterToParam = new HashMap
 	}
+	
+	////////
+	
+	public def getConstDecls() {
+		constantToConst.values
+	}
 
 	////////
 	
-	protected def <T extends Type> Expr<? extends T> withType(Expr<? extends Type> expr, Class<T> metaType) {
+	public def <T extends Type> Expr<? extends T> withType(Expr<? extends Type> expr, Class<T> metaType) {
 		if (metaType.isInstance(getType(expr))) {
 			expr as Expr<? extends T>
 		} else {
@@ -95,7 +101,7 @@ class ConstraintModelHelper {
 	}
 	
 	////////////////////////////////////////////////////////////////////////////////////////////
-	
+		
 	public def dispatch Expr<? extends Type> toExpr(Expression expression) {
 		throw new UnsupportedOperationException("Not supported: " + expression.class)
 	}
