@@ -1,4 +1,4 @@
-package hu.bme.mit.inf.ttmc.constraint.utils.impl.iteeliminhelpers;
+package hu.bme.mit.inf.ttmc.constraint.utils.impl.ite;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,6 +32,10 @@ public class RemoveIteVisitor extends ArityBasedVisitor<Void, Expr<? extends Typ
 	
 	private ConstraintManager manager;
 	
+	/**
+	 * Constructor.
+	 * @param manager Constraint manager
+	 */
 	public RemoveIteVisitor(ConstraintManager manager) {
 		this.manager = manager;
 	}
@@ -41,24 +45,29 @@ public class RemoveIteVisitor extends ArityBasedVisitor<Void, Expr<? extends Typ
 		return expr;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	protected <OpType extends Type, ExprType extends Type> Expr<? extends Type> visitUnary(
 			UnaryExpr<OpType, ExprType> expr, Void param) {
-		Expr<? extends Type> op = expr.getOp().accept(this, param);
-		return expr.withOp((Expr<? extends OpType>)op);
+		// Remove ITE from operand recursively
+		return expr.withOp((Expr<? extends OpType>) expr.getOp().accept(this, param));
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	protected <LeftOpType extends Type, RightOpType extends Type, ExprType extends Type> Expr<? extends Type> visitBinary(
 			BinaryExpr<LeftOpType, RightOpType, ExprType> expr, Void param) {
-		Expr<? extends Type> leftOp = expr.getLeftOp().accept(this, param);
-		Expr<? extends Type> rightOp = expr.getRightOp().accept(this, param);
-		return expr.withOps((Expr<? extends LeftOpType>)leftOp, (Expr<? extends RightOpType>)rightOp);
+		// Remove ITE from operands recursively
+		return expr.withOps(
+				(Expr<? extends LeftOpType>)expr.getLeftOp().accept(this, param),
+				(Expr<? extends RightOpType>)expr.getRightOp().accept(this, param));
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	protected <OpsType extends Type, ExprType extends Type> Expr<? extends Type> visitMultiary(
 			MultiaryExpr<OpsType, ExprType> expr, Void param) {
+		// Remove ITE from operands recursively
 		List<Expr<? extends OpsType>> ops = new ArrayList<>(expr.getOps().size());
 		for (Expr<? extends OpsType> op : expr.getOps())
 			ops.add((Expr<? extends OpsType>) op.accept(this, param));
@@ -89,9 +98,11 @@ public class RemoveIteVisitor extends ArityBasedVisitor<Void, Expr<? extends Typ
 		throw new UnsupportedOperationException("TODO");
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public <ExprType extends Type> Expr<? extends Type> visit(IteExpr<ExprType> expr, Void param) {
 		ExprFactory fact = manager.getExprFactory();
+		// Apply ite(C,T,E) <=> (!C or T) and (C or E) transformation
 		Expr<? extends BoolType> cond = (Expr<? extends BoolType>)expr.getCond().accept(this, param);
 		Expr<? extends Type> then = expr.getThen().accept(this, param);
 		Expr<? extends Type> elze = expr.getElse().accept(this, param);
