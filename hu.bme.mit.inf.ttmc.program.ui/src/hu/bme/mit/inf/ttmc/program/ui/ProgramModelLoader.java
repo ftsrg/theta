@@ -39,8 +39,8 @@ public class ProgramModelLoader {
 		return instance;
 	}
 
-	public ProgramSpecification load(String fileName) {
-		final URI uri = URI.createFileURI(fileName);
+	public ProgramSpecification load(String filePath) {
+		final URI uri = URI.createFileURI(filePath);
 		final Resource resource = resourceSet.getResource(uri, true);
 		final EObject object = resource.getContents().get(0);
 		final ProgramSpecification specification = (ProgramSpecification) object;
