@@ -24,7 +24,7 @@ import hu.bme.mit.inf.ttmc.constraint.utils.impl.IsBooleanConnectiveVisitor;
  * @author Akos
  *
  */
-class PushBelowIteVisitor extends ArityBasedExprVisitor<Void, Expr<? extends Type>> {
+public class PushBelowIteVisitor extends ArityBasedExprVisitor<Void, Expr<? extends Type>> {
 	
 	private ConstraintManager manager;
 	private IsBooleanConnectiveVisitor isBooleanVisitor;

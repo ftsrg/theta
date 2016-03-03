@@ -5,6 +5,7 @@ import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.constraint.utils.impl.ite.PropagateIteVisitor;
 import hu.bme.mit.inf.ttmc.constraint.utils.impl.ite.RemoveIteVisitor;
+import hu.bme.mit.inf.ttmc.constraint.utils.impl.ite.PushBelowIteVisitor;
 
 /**
  * If-Then-Else eliminator.
@@ -20,7 +21,7 @@ public class ExprIteEliminator {
 	 * @param manager Constraint manager
 	 */
 	public ExprIteEliminator(ConstraintManager manager) {
-		propagateIteVisitor = new PropagateIteVisitor(manager);
+		propagateIteVisitor = new PropagateIteVisitor(manager, new PushBelowIteVisitor(manager));
 		removeIteVisitor = new RemoveIteVisitor(manager);
 	}
 	
