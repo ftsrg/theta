@@ -1,85 +1,180 @@
 package hu.bme.mit.inf.ttmc.constraint.tests;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.ConstraintManagerImpl;
-import hu.bme.mit.inf.ttmc.constraint.decl.ConstDecl;
+import hu.bme.mit.inf.ttmc.constraint.expr.ConstRefExpr;
+import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
+import hu.bme.mit.inf.ttmc.constraint.expr.IntLitExpr;
 import hu.bme.mit.inf.ttmc.constraint.factory.DeclFactory;
 import hu.bme.mit.inf.ttmc.constraint.factory.ExprFactory;
 import hu.bme.mit.inf.ttmc.constraint.factory.TypeFactory;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.constraint.type.IntType;
-import hu.bme.mit.inf.ttmc.constraint.utils.impl.iteelimin.PushBelowIteVisitor;
-import hu.bme.mit.inf.ttmc.constraint.utils.impl.iteelimin.RemoveIteVisitor;
+import hu.bme.mit.inf.ttmc.constraint.utils.impl.IteEliminator;
 
 public class ITEEliminatorTests {
 	// Manager and factories
 	private ConstraintManager manager;
-	private ExprFactory eFact;
-	private DeclFactory dFact;
-	private TypeFactory tFact;
+	private ExprFactory efc;
+	private DeclFactory dfc;
+	private TypeFactory tfc;
 	// Constants for testing
-	private ConstDecl<BoolType> cA;
-	private ConstDecl<BoolType> cB;
-	private ConstDecl<BoolType> cC;
-	private ConstDecl<BoolType> cD;
-	private ConstDecl<BoolType> cE;
-	private ConstDecl<IntType> cX;
-	private ConstDecl<IntType> cY;
-	private ConstDecl<IntType> cZ;
+	private ConstRefExpr<BoolType> cA, cB, cC, cD, cE;
+	private ConstRefExpr<IntType> cX, cY, cZ, cT;
+	private IntLitExpr i1, i2, i3, i4, i5;
 	// Transformator
-	RemoveIteVisitor riVisitor;
-	PushBelowIteVisitor pbVisitor;
+	IteEliminator eliminator;
 	
 	@Before
 	public void before(){
 		// Create manager and get factories
 		manager = new ConstraintManagerImpl();
-		eFact = manager.getExprFactory();
-		dFact = manager.getDeclFactory();
-		tFact = manager.getTypeFactory();
+		efc = manager.getExprFactory();
+		dfc = manager.getDeclFactory();
+		tfc = manager.getTypeFactory();
 		// Create constants
-		cA = dFact.Const("A", tFact.Bool());
-		cB = dFact.Const("B", tFact.Bool());
-		cC = dFact.Const("C", tFact.Bool());
-		cD = dFact.Const("D", tFact.Bool());
-		cE = dFact.Const("E", tFact.Bool());
-		cX = dFact.Const("X", tFact.Int());
-		cY = dFact.Const("Y", tFact.Int());
-		cZ = dFact.Const("Z", tFact.Int());
+		cA = efc.Ref(dfc.Const("A", tfc.Bool()));
+		cB = efc.Ref(dfc.Const("B", tfc.Bool()));
+		cC = efc.Ref(dfc.Const("C", tfc.Bool()));
+		cD = efc.Ref(dfc.Const("D", tfc.Bool()));
+		cE = efc.Ref(dfc.Const("E", tfc.Bool()));
+		cX = efc.Ref(dfc.Const("X", tfc.Int()));
+		cY = efc.Ref(dfc.Const("Y", tfc.Int()));
+		cZ = efc.Ref(dfc.Const("Z", tfc.Int()));
+		cT = efc.Ref(dfc.Const("T", tfc.Int()));
+		i1 = efc.Int(1);
+		i2 = efc.Int(2);
+		i3 = efc.Int(3);
+		i4 = efc.Int(4);
+		i5 = efc.Int(5);
 		// Create transformator
-		riVisitor = new RemoveIteVisitor(manager);
-		pbVisitor = new PushBelowIteVisitor(manager);
+		eliminator = new IteEliminator(manager);
 	}
 	
 	@SuppressWarnings("unchecked")
 	@Test
 	public void testSimple() {
-		// ite(A,B,C)
+		// if A then B else C
 		Assert.assertEquals(
-			eFact.Ite(eFact.Ref(cA), eFact.Ref(cB), eFact.Ref(cC)).accept(riVisitor, null),
-			eFact.And(eFact.Or(eFact.Not(eFact.Ref(cA)), eFact.Ref(cB)), eFact.Or(eFact.Ref(cA), eFact.Ref(cC)))
+			eliminator.eliminate(efc.Ite(cA, cB, cC)),
+			efc.And(efc.Or(efc.Not(cA), cB), efc.Or(cA, cC))
 			);
 		
-		// ite(A,ite(B,C,D),E)
+		// if A then (if B then C else D) else E
 		Assert.assertEquals(
-			eFact.Ite(eFact.Ref(cA), eFact.Ite(eFact.Ref(cB), eFact.Ref(cC), eFact.Ref(cD)), eFact.Ref(cE)).accept(riVisitor, null),
-			eFact.And(
-					eFact.Or(eFact.Not(eFact.Ref(cA)), eFact.And(
-							eFact.Or(eFact.Not(eFact.Ref(cB)), eFact.Ref(cC)),
-							eFact.Or(eFact.Ref(cB), eFact.Ref(cD)))),
-					eFact.Or(eFact.Ref(cA), eFact.Ref(cE)))
+			eliminator.eliminate(efc.Ite(cA, efc.Ite(cB, cC, cD), cE)),
+			efc.And(
+					efc.Or(efc.Not(cA), efc.And(
+							efc.Or(efc.Not(cB), cC),
+							efc.Or(cB, cD))),
+					efc.Or(cA, cE))
 			);
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Test
-	public void testPushDown(){
-		System.out.println(eFact.Not(eFact.Ite(eFact.Ref(cA), eFact.Ref(cB), eFact.Ref(cC))));
-		System.out.println(eFact.Not(eFact.Ite(eFact.Ref(cA), eFact.Ref(cB), eFact.Ref(cC))).accept(pbVisitor, null));
-		System.out.println(eFact.Neg(eFact.Ite(eFact.Ref(cA), eFact.Ref(cX), eFact.Ref(cY))));
-		System.out.println(eFact.Neg(eFact.Ite(eFact.Ref(cA), eFact.Ref(cX), eFact.Ref(cY))).accept(pbVisitor, null));
+	public void testUnary() {
+		// !(if A then B else C)
+		Assert.assertEquals(
+				eliminator.eliminate(efc.Not(efc.Ite(cA, cB, cC))),
+				efc.Not(efc.And(efc.Or(efc.Not(cA), cB), efc.Or(cA, cC)))
+				);
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Test
+	public void testBinary() {
+		// A -> (if B then C else D)
+		Assert.assertEquals(
+				eliminator.eliminate(efc.Imply(cA, efc.Ite(cB, cC, cD))),
+				efc.Imply(cA, efc.And(efc.Or(efc.Not(cB), cC), efc.Or(cB, cD)))
+				);
+		// (if B then C else D) -> A
+		Assert.assertEquals(
+				eliminator.eliminate(efc.Imply(efc.Ite(cB, cC, cD), cA)),
+				efc.Imply(efc.And(efc.Or(efc.Not(cB), cC), efc.Or(cB, cD)), cA)
+				);
+		// X = (if A then Y else Z)
+		Assert.assertEquals(
+				eliminator.eliminate(efc.Eq(cX, efc.Ite(cA, cY, cZ))),
+				efc.And(efc.Or(efc.Not(cA), efc.Eq(cX, cY)), efc.Or(cA, efc.Eq(cX, cZ)))
+				);
+		// (if A then Y else Z) = X
+		Assert.assertEquals(
+				eliminator.eliminate(efc.Eq(efc.Ite(cA, cY, cZ), cX)),
+				efc.And(efc.Or(efc.Not(cA), efc.Eq(cY, cX)), efc.Or(cA, efc.Eq(cZ, cX)))
+				);
+		// X = (if A then (if B then Y else Z) else T)
+		Assert.assertEquals(
+				eliminator.eliminate(efc.Eq(cX, efc.Ite(cA, efc.Ite(cB, cY, cZ), cT))),
+				efc.And(
+						efc.Or(efc.Not(cA), efc.And(
+								efc.Or(efc.Not(cB), efc.Eq(cX, cY)),
+								efc.Or(cB, efc.Eq(cX, cZ)))),
+						efc.Or(cA, efc.Eq(cX, cT)))
+				);
+		// (if A then (if B then Y else Z) else T) = X
+		Assert.assertEquals(
+				eliminator.eliminate(efc.Eq(efc.Ite(cA, efc.Ite(cB, cY, cZ), cT), cX)),
+				efc.And(
+						efc.Or(efc.Not(cA), efc.And(
+								efc.Or(efc.Not(cB), efc.Eq(cY, cX)),
+								efc.Or(cB, efc.Eq(cZ, cX)))),
+						efc.Or(cA, efc.Eq(cT, cX)))
+				);
+		// (if A then X else Y) = (if B then Z else T)
+		Assert.assertEquals(
+			eliminator.eliminate(efc.Eq(efc.Ite(cA, cX, cY), efc.Ite(cB, cZ, cT))),
+			efc.And(
+					efc.Or(efc.Not(cA), efc.And(
+							efc.Or(efc.Not(cB), efc.Eq(cX, cZ)),
+							efc.Or(cB, efc.Eq(cX, cT)))),
+					efc.Or(cA, efc.And(
+							efc.Or(efc.Not(cB), efc.Eq(cY, cZ)),
+							efc.Or(cB, efc.Eq(cY, cT))))));
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Test
+	public void testMultiary() {
+		// A or B or (if C then D else E)
+		Assert.assertEquals(
+				eliminator.eliminate(efc.Or(cA, cB, efc.Ite(cC, cD, cE))),
+				efc.Or(cA, cB, efc.And(efc.Or(efc.Not(cC), cD), efc.Or(cC, cE)))
+				);
+		// 1 = 2 + (if A then 3 else 4) + 5
+		Assert.assertEquals(
+				eliminator.eliminate(efc.Eq(i1, efc.Add(i2, efc.Ite(cA, i3, i4), i5))),
+				efc.And(
+						efc.Or(efc.Not(cA), efc.Eq(i1, efc.Add(i2, i3, i5))),
+						efc.Or(cA, efc.Eq(i1, efc.Add(i2, i4, i5)))));
+		// 1 = 2 + (if A then 3 else 4) + (if B then X else Y)
+				Assert.assertEquals(
+						eliminator.eliminate(efc.Eq(i1, efc.Add(i2, efc.Ite(cA, i3, i4), efc.Ite(cB, cX, cY)))),
+						efc.And(
+								efc.Or(efc.Not(cA), efc.And(
+										efc.Or(efc.Not(cB), efc.Eq(i1, efc.Add(i2, i3, cX))),
+										efc.Or(cB,efc.Eq(i1, efc.Add(i2, i3, cY))))),
+								efc.Or(cA, efc.And(
+										efc.Or(efc.Not(cB),efc.Eq(i1, efc.Add(i2, i4, cX))),
+										efc.Or(cB,efc.Eq(i1, efc.Add(i2, i4, cY)))))));
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Test
+	public void testNothingHappening() {
+		List<Expr<? extends BoolType>> expressions = new ArrayList<>();
+		expressions.add(efc.And(cA, cB, cD));
+		expressions.add(efc.Eq(cX, efc.Neg(cY)));
+		expressions.add(efc.Geq(efc.Sub(cX, cY), efc.Add(cX, cZ, cT)));
+
+		for (Expr<? extends BoolType> expr : expressions) Assert.assertEquals(expr, eliminator.eliminate(expr));
 	}
 }
