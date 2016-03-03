@@ -5,7 +5,7 @@ import java.util.Collection;
 public interface CFALoc {
 
 	public CFA getCFA();
-	public Collection<CFAEdge> getInEdges();
-	public Collection<CFAEdge> getOutEdges();
+	public Collection<? extends CFAEdge> getInEdges();
+	public Collection<? extends CFAEdge> getOutEdges();
 
 }
