@@ -59,8 +59,12 @@ import hu.bme.mit.inf.ttmc.constraint.model.ArrayTypeDefinition
 import hu.bme.mit.inf.ttmc.constraint.model.ArrayWithExpression
 import hu.bme.mit.inf.ttmc.constraint.utils.impl.TypeInferrer
 import static com.google.common.base.Preconditions.checkNotNull
+import hu.bme.mit.inf.ttmc.constraint.model.ConstraintSpecification
+import java.util.ArrayList
+import java.util.Collection
+import com.google.common.collect.ImmutableList
 
-public class ConstraintModelHelper {
+public class ConstraintModelCreator {
 	
 	private val extension ExprFactory ef
 	private val extension TypeFactory tf
@@ -70,9 +74,14 @@ public class ConstraintModelHelper {
 	
 	private val Map<ConstantDeclaration, ConstDecl<Type>> constantToConst
 	private val Map<ParameterDeclaration, ParamDecl<Type>> parameterToParam
+	
+	private val ConstraintSpecification specification;
 
-	new(ConstraintManager manager) {
+	new(ConstraintManager manager, ConstraintSpecification specification) {
 		checkNotNull(manager);
+		checkNotNull(specification);
+		
+		this.specification = specification;
 		
 		ef = manager.exprFactory
 		tf = manager.typeFactory
@@ -84,15 +93,23 @@ public class ConstraintModelHelper {
 		parameterToParam = new HashMap
 	}
 	
-	////////
-	
-	public def getConstDecls() {
-		constantToConst.values
+	public def ConstraintModel create() {
+		val constraints = new ArrayList<Expr<? extends BoolType>>
+		for (basicConstraintDefinition : specification.basicConstraintDefinitions) {
+			val expression = basicConstraintDefinition.expression
+			val expr = expression.toExpr.withType(BoolType)
+			constraints += expr
+		}
+		val constDecls = constantToConst.values
+
+		val model = new ConstraintModelImpl(constDecls, constraints)
+		
+		model
 	}
 
 	////////
 	
-	public def <T extends Type> Expr<? extends T> withType(Expr<? extends Type> expr, Class<T> metaType) {
+	protected def <T extends Type> Expr<? extends T> withType(Expr<? extends Type> expr, Class<T> metaType) {
 		if (metaType.isInstance(getType(expr))) {
 			expr as Expr<? extends T>
 		} else {
@@ -102,11 +119,11 @@ public class ConstraintModelHelper {
 	
 	////////////////////////////////////////////////////////////////////////////////////////////
 		
-	public def dispatch Expr<? extends Type> toExpr(Expression expression) {
+	protected def dispatch Expr<? extends Type> toExpr(Expression expression) {
 		throw new UnsupportedOperationException("Not supported: " + expression.class)
 	}
 	
-	public def dispatch Expr<? extends Type> toExpr(ReferenceExpression expression) {
+	protected def dispatch Expr<? extends Type> toExpr(ReferenceExpression expression) {
 		expression.declaration.toRefExpr
 	}
 	
@@ -130,132 +147,132 @@ public class ConstraintModelHelper {
 	
 	////
 
-	public def dispatch Expr<? extends Type> toExpr(TrueExpression expression) {
+	protected def dispatch Expr<? extends Type> toExpr(TrueExpression expression) {
 		True
 	}
 	
-	public def dispatch Expr<? extends Type> toExpr(FalseExpression expression) {
+	protected def dispatch Expr<? extends Type> toExpr(FalseExpression expression) {
 		False
 	}
 	
-	public def dispatch Expr<? extends Type> toExpr(IntegerLiteralExpression expression) {
+	protected def dispatch Expr<? extends Type> toExpr(IntegerLiteralExpression expression) {
 		val value = expression.value.longValueExact
 		Int(value)
 	}
 	
-	public def dispatch Expr<? extends Type> toExpr(RationalLiteralExpression expression) {
+	protected def dispatch Expr<? extends Type> toExpr(RationalLiteralExpression expression) {
 		val num = expression.numerator.longValueExact
 		val denom = expression.denominator.longValueExact
 		Rat(num, denom)
 	}
 	
-	public def dispatch Expr<? extends Type> toExpr(DecimalLiteralExpression expression) {
+	protected def dispatch Expr<? extends Type> toExpr(DecimalLiteralExpression expression) {
 		throw new UnsupportedOperationException("ToDo")
 	}
 	
-	public def dispatch Expr<? extends Type> toExpr(AddExpression expression) {
+	protected def dispatch Expr<? extends Type> toExpr(AddExpression expression) {
 		val ops = expression.operands.map[toExpr.withType(ClosedUnderAdd)]
 		Add(ops)
 	}
 	
-	public def dispatch Expr<? extends Type> toExpr(MultiplyExpression expression) {
+	protected def dispatch Expr<? extends Type> toExpr(MultiplyExpression expression) {
 		val ops = expression.operands.map[toExpr.withType(ClosedUnderMul)]
 		Mul(ops)
 	}
 	
-	public def dispatch Expr<? extends Type> toExpr(UnaryMinusExpression expression) {
+	protected def dispatch Expr<? extends Type> toExpr(UnaryMinusExpression expression) {
 		val op = expression.operand.toExpr.withType(ClosedUnderNeg)
 		Neg(op)
 	}
 	
-	public def dispatch Expr<? extends Type> toExpr(SubtractExpression expression) {
+	protected def dispatch Expr<? extends Type> toExpr(SubtractExpression expression) {
 		val leftOp = expression.leftOperand.toExpr.withType(ClosedUnderSub)
 		val rightOp = expression.rightOperand.toExpr.withType(ClosedUnderSub)
 		Sub(leftOp, rightOp)
 	}
 	
-	public def dispatch Expr<? extends Type> toExpr(DivideExpression expression) {
+	protected def dispatch Expr<? extends Type> toExpr(DivideExpression expression) {
 		val leftOp = expression.leftOperand.toExpr.withType(RatType)
 		val rightOp = expression.rightOperand.toExpr.withType(RatType)
 		RatDiv(leftOp, rightOp)
 	}
 	
-	public def dispatch Expr<? extends Type> toExpr(DivExpression expression) {
+	protected def dispatch Expr<? extends Type> toExpr(DivExpression expression) {
 		val leftOp = expression.leftOperand.toExpr.withType(IntType)
 		val rightOp = expression.rightOperand.toExpr.withType(IntType)
 		IntDiv(leftOp, rightOp)
 	}
 	
-	public def dispatch Expr<? extends Type> toExpr(ModExpression expression) {
+	protected def dispatch Expr<? extends Type> toExpr(ModExpression expression) {
 		val leftOp = expression.leftOperand.toExpr.withType(IntType)
 		val rightOp = expression.rightOperand.toExpr.withType(IntType)
 		IntDiv(leftOp, rightOp)
 	}
 	
-	public def dispatch Expr<? extends Type> toExpr(EqualityExpression expression) {
+	protected def dispatch Expr<? extends Type> toExpr(EqualityExpression expression) {
 		val leftOp = expression.leftOperand.toExpr
 		val rightOp = expression.rightOperand.toExpr
 		Eq(leftOp, rightOp)
 	}
 	
-	public def dispatch Expr<? extends Type> toExpr(InequalityExpression expression) {
+	protected def dispatch Expr<? extends Type> toExpr(InequalityExpression expression) {
 		val leftOp = expression.leftOperand.toExpr
 		val rightOp = expression.rightOperand.toExpr
 		Neq(leftOp, rightOp)
 	}
 	
-	public def dispatch Expr<? extends Type> toExpr(LessExpression expression) {
+	protected def dispatch Expr<? extends Type> toExpr(LessExpression expression) {
 		val leftOp = expression.leftOperand.toExpr.withType(RatType)
 		val rightOp = expression.rightOperand.toExpr.withType(RatType)
 		Lt(leftOp, rightOp)
 	}
 	
-	public def dispatch Expr<? extends Type> toExpr(LessEqualExpression expression) {
+	protected def dispatch Expr<? extends Type> toExpr(LessEqualExpression expression) {
 		val leftOp = expression.leftOperand.toExpr.withType(RatType)
 		val rightOp = expression.rightOperand.toExpr.withType(RatType)
 		Leq(leftOp, rightOp)
 	}
 	
-	public def dispatch Expr<? extends Type> toExpr(GreaterExpression expression) {
+	protected def dispatch Expr<? extends Type> toExpr(GreaterExpression expression) {
 		val leftOp = expression.leftOperand.toExpr.withType(RatType)
 		val rightOp = expression.rightOperand.toExpr.withType(RatType)
 		Gt(leftOp, rightOp)
 	}
 	
-	public def dispatch Expr<? extends Type> toExpr(GreaterEqualExpression expression) {
+	protected def dispatch Expr<? extends Type> toExpr(GreaterEqualExpression expression) {
 		val leftOp = expression.leftOperand.toExpr.withType(RatType)
 		val rightOp = expression.rightOperand.toExpr.withType(RatType)
 		Geq(leftOp, rightOp)
 	}
 	
-	public def dispatch Expr<? extends Type> toExpr(NotExpression expression) {
+	protected def dispatch Expr<? extends Type> toExpr(NotExpression expression) {
 		val op = expression.operand.toExpr.withType(BoolType)
 		Not(op)
 	}
 	
-	public def dispatch Expr<? extends Type> toExpr(ImplyExpression expression) {
+	protected def dispatch Expr<? extends Type> toExpr(ImplyExpression expression) {
 		val leftOp = expression.leftOperand.toExpr.withType(BoolType)
 		val rightOp = expression.rightOperand.toExpr.withType(BoolType)
 		Imply(leftOp, rightOp)
 	}
 	
-	public def dispatch Expr<? extends Type> toExpr(EqualExpression expression) {
+	protected def dispatch Expr<? extends Type> toExpr(EqualExpression expression) {
 		val leftOp = expression.leftOperand.toExpr.withType(BoolType)
 		val rightOp = expression.rightOperand.toExpr.withType(BoolType)
 		Iff(leftOp, rightOp)
 	}
 	
-	public def dispatch Expr<? extends Type> toExpr(AndExpression expression) {
+	protected def dispatch Expr<? extends Type> toExpr(AndExpression expression) {
 		val ops = expression.operands.map[toExpr.withType(BoolType)]
 		And(ops)
 	}
 	
-	public def dispatch Expr<? extends Type> toExpr(OrExpression expression) {
+	protected def dispatch Expr<? extends Type> toExpr(OrExpression expression) {
 		val ops = expression.operands.map[toExpr.withType(BoolType)]
 		Or(ops)
 	}
 	
-	public def dispatch Expr<? extends Type> toExpr(ArrayAccessExpression expression) {
+	protected def dispatch Expr<? extends Type> toExpr(ArrayAccessExpression expression) {
 		val array = expression.operand.toExpr.withType(ArrayType) as Expr<ArrayType<Type, Type>>
 		
 		val parameters = expression.parameters
@@ -270,7 +287,7 @@ public class ConstraintModelHelper {
 		}	
 	}
 	
-	public def dispatch Expr<? extends Type> toExpr(ArrayWithExpression expression) {
+	protected def dispatch Expr<? extends Type> toExpr(ArrayWithExpression expression) {
 		val array = expression.operand.toExpr.withType(ArrayType) as Expr<ArrayType<Type, Type>>
 		val elem = expression.value.toExpr
 		
@@ -288,11 +305,11 @@ public class ConstraintModelHelper {
 	
 	/////////////////////////////////////////////////////////////////////
 	
-	public def dispatch Decl<Type> toDecl(Declaration declaration) {
+	protected def dispatch Decl<Type> toDecl(Declaration declaration) {
 		throw new UnsupportedOperationException("Not supported: " + declaration.class)
 	}
 	
-	public def dispatch Decl<Type> toDecl(ConstantDeclaration declaration) {
+	protected def dispatch Decl<Type> toDecl(ConstantDeclaration declaration) {
 		var constDecl = constantToConst.get(declaration)
 		if (constDecl === null) {
 			val name = declaration.name
@@ -303,11 +320,11 @@ public class ConstraintModelHelper {
 		constDecl
 	}
 	
-	public def dispatch Decl<Type> toDecl(FunctionDeclaration declaration) {
+	protected def dispatch Decl<Type> toDecl(FunctionDeclaration declaration) {
 		throw new UnsupportedOperationException("TODO")
 	}
 	
-	public def dispatch Decl<Type> toDecl(ParameterDeclaration declaration) {
+	protected def dispatch Decl<Type> toDecl(ParameterDeclaration declaration) {
 		var paramDecl = parameterToParam.get(declaration)
 		if (paramDecl === null) {
 			val name = declaration.name
@@ -320,23 +337,23 @@ public class ConstraintModelHelper {
 	
 	//////////////////////////////////////////////////////////////////////
 
-	public def dispatch Type toType(TypeReference type) {
+	protected def dispatch Type toType(TypeReference type) {
 		type.reference.type.toType
 	}
 	
-	public def dispatch Type toType(BooleanTypeDefinition type) {
+	protected def dispatch Type toType(BooleanTypeDefinition type) {
 		Bool
 	}
 	
-	public def dispatch Type toType(IntegerTypeDefinition type) {
+	protected def dispatch Type toType(IntegerTypeDefinition type) {
 		Int
 	}
 	
-	public def dispatch Type toType(RealTypeDefinition type) {
+	protected def dispatch Type toType(RealTypeDefinition type) {
 		Rat
 	}
 	
-	public def dispatch Type toType(FunctionTypeDefinition type) {
+	protected def dispatch Type toType(FunctionTypeDefinition type) {
 		val parameterTypes = type.parameterTypes
 		if (parameterTypes.size == 0) {
 			throw new UnsupportedOperationException("TODO")
@@ -349,7 +366,7 @@ public class ConstraintModelHelper {
 		}
 	}
 	
-	public def dispatch Type toType(ArrayTypeDefinition type) {
+	protected def dispatch Type toType(ArrayTypeDefinition type) {
 		val indexTypes = type.indexTypes
 		if (indexTypes.size == 0) {
 			throw new UnsupportedOperationException("TODO")
@@ -359,6 +376,26 @@ public class ConstraintModelHelper {
 			Array(indexType, elemType)
 		} else {
 			throw new UnsupportedOperationException("TODO")
+		}
+	}
+	
+	////////
+	
+	private static class ConstraintModelImpl implements ConstraintModel {
+		private val Collection<ConstDecl<? extends Type>> constDecls
+		private val Collection<Expr<? extends BoolType>> constraints
+
+		private new(Collection<? extends ConstDecl<? extends Type>> constDecls, Collection<? extends Expr<? extends BoolType>> constraints) {
+			this.constDecls = ImmutableList.copyOf(checkNotNull(constDecls));
+			this.constraints = ImmutableList.copyOf(checkNotNull(constraints));
+		}
+	
+		override Collection<ConstDecl<? extends Type>> getConstDecls() {
+			 constDecls
+		}
+	
+		override Collection<Expr<? extends BoolType>> getConstraints() {
+			constraints
 		}
 	}
 
