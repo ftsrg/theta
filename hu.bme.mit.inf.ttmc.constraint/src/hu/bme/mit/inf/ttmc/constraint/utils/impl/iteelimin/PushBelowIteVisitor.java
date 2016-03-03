@@ -1,5 +1,9 @@
 package hu.bme.mit.inf.ttmc.constraint.utils.impl.iteelimin;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
 import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.ArrayReadExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.ArrayWriteExpr;
@@ -46,49 +50,79 @@ public class PushBelowIteVisitor extends ArityBasedVisitor<Void, Expr<? extends 
 	@Override
 	protected <LeftOpType extends Type, RightOpType extends Type, ExprType extends Type> Expr<? extends Type> visitBinary(
 			BinaryExpr<LeftOpType, RightOpType, ExprType> expr, Void param) {
-		// TODO Auto-generated method stub
-		return null;
+		// Nothing to do if the none of the operand is an ITE or it is of bool type
+		if (!(expr.getLeftOp() instanceof IteExpr || expr.getRightOp() instanceof IteExpr) || expr.accept(isBooleanVisitor, null)) {
+			return expr;
+		} else if (expr.getLeftOp() instanceof IteExpr) {
+			IteExpr<? extends LeftOpType> op = (IteExpr<? extends LeftOpType>) expr.getLeftOp();
+			return manager.getExprFactory().Ite(
+					op.getCond(),
+					expr.withLeftOp(op.getThen()).accept(this, param),
+					expr.withLeftOp(op.getElse()).accept(this, param));
+		} else /* expr.getRightOp() must be an ITE */ {
+			IteExpr<? extends RightOpType> op = (IteExpr<? extends RightOpType>) expr.getRightOp();
+			return manager.getExprFactory().Ite(
+					op.getCond(),
+					expr.withRightOp(op.getThen()).accept(this, param),
+					expr.withRightOp(op.getElse()).accept(this, param));
+		}
 	}
 
 	@Override
 	protected <OpsType extends Type, ExprType extends Type> Expr<? extends Type> visitMultiary(
 			MultiaryExpr<OpsType, ExprType> expr, Void param) {
-		// TODO Auto-generated method stub
-		return null;
+		Optional<? extends Expr<? extends OpsType>> firstIte = expr.getOps().stream().filter(op -> op instanceof IteExpr).findFirst();
+		if (!firstIte.isPresent() || expr.accept(isBooleanVisitor, null)) {
+			return expr;
+		} else {
+			List<Expr<? extends OpsType>> thenOps = new ArrayList<>(expr.getOps().size());
+			List<Expr<? extends OpsType>> elseOps = new ArrayList<>(expr.getOps().size());
+			IteExpr<? extends OpsType> ite = (IteExpr<? extends OpsType>) firstIte.get();
+
+			for (Expr<? extends OpsType> op : expr.getOps()) {
+				if (op == ite) {
+					thenOps.add(ite.getThen());
+					elseOps.add(ite.getElse());
+				} else {
+					thenOps.add(op);
+					elseOps.add(op);
+				}
+			}
+			
+			return manager.getExprFactory().Ite(
+					ite.getCond(),
+					expr.withOps(thenOps).accept(this, param),
+					expr.withOps(elseOps).accept(this, param));
+		}
 	}
 
 	@Override
 	public <IndexType extends Type, ElemType extends Type> Expr<? extends Type> visit(
 			ArrayReadExpr<IndexType, ElemType> expr, Void param) {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException("TODO");
 	}
 
 	@Override
 	public <IndexType extends Type, ElemType extends Type> Expr<? extends Type> visit(
 			ArrayWriteExpr<IndexType, ElemType> expr, Void param) {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException("TODO");
 	}
 
 	@Override
 	public <ParamType extends Type, ResultType extends Type> Expr<? extends Type> visit(
 			FuncLitExpr<ParamType, ResultType> expr, Void param) {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException("TODO");
 	}
 
 	@Override
 	public <ParamType extends Type, ResultType extends Type> Expr<? extends Type> visit(
 			FuncAppExpr<ParamType, ResultType> expr, Void param) {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException("TODO");
 	}
 
 	@Override
 	public <ExprType extends Type> Expr<? extends Type> visit(IteExpr<ExprType> expr, Void param) {
-		// TODO Auto-generated method stub
-		return null;
+		return expr;
 	}
 
 }
