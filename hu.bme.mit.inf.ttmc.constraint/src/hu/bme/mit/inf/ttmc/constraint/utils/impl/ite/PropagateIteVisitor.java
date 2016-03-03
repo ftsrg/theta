@@ -15,6 +15,7 @@ import hu.bme.mit.inf.ttmc.constraint.expr.MultiaryExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.NullaryExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.UnaryExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
+import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 import hu.bme.mit.inf.ttmc.constraint.utils.impl.ArityBasedExprVisitor;
 
 /**
@@ -23,14 +24,15 @@ import hu.bme.mit.inf.ttmc.constraint.utils.impl.ArityBasedExprVisitor;
  *
  */
 public class PropagateIteVisitor extends ArityBasedExprVisitor<Void, Expr<? extends Type>> {
-	private PushBelowIteVisitor pushBelowIteVisitor;
+	private ExprVisitor<Void, Expr<? extends Type>> pushBelowIteVisitor;
 	
 	/**
 	 * Constructor.
 	 * @param manager Constraint manager
+	 * @param pushBelowIteVisitor Visitor which can push below an ITE
 	 */
-	public PropagateIteVisitor(ConstraintManager manager) {
-		pushBelowIteVisitor = new PushBelowIteVisitor(manager);
+	public PropagateIteVisitor(ConstraintManager manager, ExprVisitor<Void, Expr<? extends Type>> pushBelowIteVisitor) {
+		this.pushBelowIteVisitor = pushBelowIteVisitor;
 	}
 	
 	@Override

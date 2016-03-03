@@ -19,7 +19,7 @@ import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.constraint.type.IntType;
 import hu.bme.mit.inf.ttmc.constraint.utils.impl.ExprIteEliminator;
 
-public class ITEEliminatorTests {
+public class ExprIteEliminatorTests {
 	// Manager and factories
 	private ConstraintManager manager;
 	private ExprFactory efc;
