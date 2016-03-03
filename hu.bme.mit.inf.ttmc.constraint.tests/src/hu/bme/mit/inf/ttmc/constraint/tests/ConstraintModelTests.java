@@ -1,5 +1,6 @@
 package hu.bme.mit.inf.ttmc.constraint.tests;
 
+import java.io.File;
 import java.io.IOException;
 
 import org.junit.Test;
@@ -10,13 +11,13 @@ import hu.bme.mit.inf.ttmc.constraint.model.ConstraintSpecification;
 import hu.bme.mit.inf.ttmc.constraint.ui.ConstraintModel;
 import hu.bme.mit.inf.ttmc.constraint.ui.ConstraintModelCreator;
 import hu.bme.mit.inf.ttmc.constraint.ui.ConstraintModelLoader;
-import hu.bme.mit.inf.ttmc.instances.InstanceHelper;
 
 public class ConstraintModelTests {
 
 	@Test
 	public void testSimple() throws IOException {
-		final String filePath = InstanceHelper.getPath("/instances/constraint/simple.constraint");
+		final File file = new File("instances/constraint/simple.constraint");
+		final String filePath = file.getAbsolutePath();
 		final ConstraintSpecification specification = ConstraintModelLoader.getInstance().load(filePath);
 		final ConstraintManager manager = new ConstraintManagerImpl();
 		final ConstraintModelCreator creator = new ConstraintModelCreator(manager, specification);
