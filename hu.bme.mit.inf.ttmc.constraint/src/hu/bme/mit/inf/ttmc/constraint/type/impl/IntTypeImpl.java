@@ -2,7 +2,7 @@ package hu.bme.mit.inf.ttmc.constraint.type.impl;
 
 import hu.bme.mit.inf.ttmc.constraint.type.IntType;
 
-public abstract class IntTypeImpl extends AbstractBaseType implements IntType {
+public class IntTypeImpl extends AbstractBaseType implements IntType {
 	
 	private static final String TYPENAME = "Int";
 	

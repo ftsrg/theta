@@ -7,7 +7,7 @@ import hu.bme.mit.inf.ttmc.constraint.expr.IteExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 
-public abstract class IteExprImpl<ExprType extends Type> extends AbstractExpr<ExprType> implements IteExpr<ExprType> {
+public class IteExprImpl<ExprType extends Type> extends AbstractExpr<ExprType> implements IteExpr<ExprType> {
 
 	private final Expr<? extends BoolType> cond;
 	private final Expr<? extends ExprType> then;
@@ -80,6 +80,12 @@ public abstract class IteExprImpl<ExprType extends Type> extends AbstractExpr<Ex
 	@Override
 	protected int getHashSeed() {
 		return 181;
+	}
+
+	@Override
+	public IteExpr<ExprType> withOps(Expr<? extends BoolType> cond, Expr<? extends ExprType> then,
+			Expr<? extends ExprType> elze) {
+		return new IteExprImpl<>(cond, then, elze);
 	}
 
 }
