@@ -21,7 +21,8 @@ Export-Package: hu.bme.mit.inf.ttmc.constraint,
  hu.bme.mit.inf.ttmc.constraint.type.closure,
  hu.bme.mit.inf.ttmc.constraint.type.impl;uses:="hu.bme.mit.inf.ttmc.constraint.type,hu.bme.mit.inf.ttmc.constraint",
  hu.bme.mit.inf.ttmc.constraint.utils,
- hu.bme.mit.inf.ttmc.constraint.utils.impl
+ hu.bme.mit.inf.ttmc.constraint.utils.impl,
+ hu.bme.mit.inf.ttmc.constraint.utils.impl.ite
 Require-Bundle: com.google.guava;bundle-version="15.0.0",
  hu.bme.mit.inf.ttmc.common;bundle-version="1.0.0",
  org.junit
