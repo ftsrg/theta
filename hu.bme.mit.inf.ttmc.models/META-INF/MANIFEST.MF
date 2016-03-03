@@ -1,5 +1,0 @@
-Manifest-Version: 1.0
-Bundle-ManifestVersion: 2
-Bundle-Name: Models
-Bundle-SymbolicName: hu.bme.mit.inf.ttmc.models
-Bundle-Version: 1.0.0.qualifier
