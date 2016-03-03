@@ -41,7 +41,7 @@ import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderNeg;
 import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderSub;
 import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 
-public class IsBooleanConnectiveVisitor implements ExprVisitor<Void, Boolean> {
+public class IsBooleanConnectiveExprVisitor implements ExprVisitor<Void, Boolean> {
 
 	@Override
 	public <DeclType extends Type> Boolean visit(ConstRefExpr<DeclType> expr, Void param) {

@@ -21,7 +21,7 @@ public class ExprIteEliminator {
 	 * @param manager Constraint manager
 	 */
 	public ExprIteEliminator(ConstraintManager manager) {
-		propagateIteVisitor = new PropagateIteVisitor(manager, new PushBelowIteVisitor(manager));
+		propagateIteVisitor = new PropagateIteVisitor(manager, new PushBelowIteVisitor(manager, new IsBooleanConnectiveExprVisitor()));
 		removeIteVisitor = new RemoveIteVisitor(manager);
 	}
 	
