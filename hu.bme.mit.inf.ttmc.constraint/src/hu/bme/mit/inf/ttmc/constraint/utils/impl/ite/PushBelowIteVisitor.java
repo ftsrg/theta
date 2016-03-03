@@ -16,8 +16,8 @@ import hu.bme.mit.inf.ttmc.constraint.expr.MultiaryExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.NullaryExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.UnaryExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
+import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 import hu.bme.mit.inf.ttmc.constraint.utils.impl.ArityBasedExprVisitor;
-import hu.bme.mit.inf.ttmc.constraint.utils.impl.IsBooleanConnectiveVisitor;
 
 /**
  * Push an expression below an ITE recursively
@@ -27,15 +27,15 @@ import hu.bme.mit.inf.ttmc.constraint.utils.impl.IsBooleanConnectiveVisitor;
 public class PushBelowIteVisitor extends ArityBasedExprVisitor<Void, Expr<? extends Type>> {
 	
 	private ConstraintManager manager;
-	private IsBooleanConnectiveVisitor isBooleanVisitor;
+	private ExprVisitor<Void, Boolean> isBooleanVisitor;
 	
 	/**
 	 * Constructor.
 	 * @param manager Constraint manager
 	 */
-	public PushBelowIteVisitor(ConstraintManager manager) {
+	public PushBelowIteVisitor(ConstraintManager manager, ExprVisitor<Void, Boolean> isBooleanVisitor) {
 		this.manager = manager;
-		isBooleanVisitor = new IsBooleanConnectiveVisitor();
+		this.isBooleanVisitor = isBooleanVisitor;
 	}
 
 	@Override
