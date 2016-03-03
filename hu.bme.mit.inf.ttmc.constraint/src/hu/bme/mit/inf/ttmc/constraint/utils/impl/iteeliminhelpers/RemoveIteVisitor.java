@@ -1,4 +1,4 @@
-package hu.bme.mit.inf.ttmc.constraint.utils.impl.iteelimin;
+package hu.bme.mit.inf.ttmc.constraint.utils.impl.iteeliminhelpers;
 
 import java.util.ArrayList;
 import java.util.List;
