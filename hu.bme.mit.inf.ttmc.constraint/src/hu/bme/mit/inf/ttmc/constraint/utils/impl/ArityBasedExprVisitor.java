@@ -52,7 +52,7 @@ import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
  * @param <P>
  * @param <R>
  */
-public abstract class ArityBasedVisitor<P, R> implements ExprVisitor<P, R> {
+public abstract class ArityBasedExprVisitor<P, R> implements ExprVisitor<P, R> {
 	
 	// Abstract methods that must be implemented
 	
