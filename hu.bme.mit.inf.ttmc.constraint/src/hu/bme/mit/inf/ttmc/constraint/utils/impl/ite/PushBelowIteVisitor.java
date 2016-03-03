@@ -16,7 +16,7 @@ import hu.bme.mit.inf.ttmc.constraint.expr.MultiaryExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.NullaryExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.UnaryExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
-import hu.bme.mit.inf.ttmc.constraint.utils.impl.ArityBasedVisitor;
+import hu.bme.mit.inf.ttmc.constraint.utils.impl.ArityBasedExprVisitor;
 import hu.bme.mit.inf.ttmc.constraint.utils.impl.IsBooleanConnectiveVisitor;
 
 /**
@@ -24,7 +24,7 @@ import hu.bme.mit.inf.ttmc.constraint.utils.impl.IsBooleanConnectiveVisitor;
  * @author Akos
  *
  */
-class PushBelowIteVisitor extends ArityBasedVisitor<Void, Expr<? extends Type>> {
+class PushBelowIteVisitor extends ArityBasedExprVisitor<Void, Expr<? extends Type>> {
 	
 	private ConstraintManager manager;
 	private IsBooleanConnectiveVisitor isBooleanVisitor;

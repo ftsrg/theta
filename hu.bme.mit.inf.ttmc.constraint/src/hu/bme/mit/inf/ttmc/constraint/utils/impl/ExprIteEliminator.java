@@ -11,7 +11,7 @@ import hu.bme.mit.inf.ttmc.constraint.utils.impl.ite.RemoveIteVisitor;
  * @author Akos
  *
  */
-public class IteEliminator {
+public class ExprIteEliminator {
 	private PropagateIteVisitor propagateIteVisitor;
 	private RemoveIteVisitor removeIteVisitor;
 	
@@ -19,7 +19,7 @@ public class IteEliminator {
 	 * Constructor.
 	 * @param manager Constraint manager
 	 */
-	public IteEliminator(ConstraintManager manager) {
+	public ExprIteEliminator(ConstraintManager manager) {
 		propagateIteVisitor = new PropagateIteVisitor(manager);
 		removeIteVisitor = new RemoveIteVisitor(manager);
 	}

@@ -16,7 +16,7 @@ import hu.bme.mit.inf.ttmc.constraint.expr.NullaryExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.UnaryExpr;
 import hu.bme.mit.inf.ttmc.constraint.factory.ExprFactory;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
-import hu.bme.mit.inf.ttmc.constraint.utils.impl.ArityBasedVisitor;
+import hu.bme.mit.inf.ttmc.constraint.utils.impl.ArityBasedExprVisitor;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 
 /**
@@ -28,7 +28,7 @@ import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
  * @author Akos
  *
  */
-public class RemoveIteVisitor extends ArityBasedVisitor<Void, Expr<? extends Type>> {
+public class RemoveIteVisitor extends ArityBasedExprVisitor<Void, Expr<? extends Type>> {
 	
 	private ConstraintManager manager;
 	

@@ -15,14 +15,14 @@ import hu.bme.mit.inf.ttmc.constraint.expr.MultiaryExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.NullaryExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.UnaryExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
-import hu.bme.mit.inf.ttmc.constraint.utils.impl.ArityBasedVisitor;
+import hu.bme.mit.inf.ttmc.constraint.utils.impl.ArityBasedExprVisitor;
 
 /**
  * Propagate ITE up in the expression tree as high as possible
  * @author Akos
  *
  */
-public class PropagateIteVisitor extends ArityBasedVisitor<Void, Expr<? extends Type>> {
+public class PropagateIteVisitor extends ArityBasedExprVisitor<Void, Expr<? extends Type>> {
 	private PushBelowIteVisitor pushBelowIteVisitor;
 	
 	/**

@@ -18,7 +18,7 @@ import hu.bme.mit.inf.ttmc.constraint.type.ArrayType;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 
-public class ExprRewriterVisitor<P> extends ArityBasedVisitor<P, Expr<?>> {
+public class ExprRewriterVisitor<P> extends ArityBasedExprVisitor<P, Expr<?>> {
 
 	@Override
 	public <ParamType extends Type, ResultType extends Type> Expr<ResultType> visit(
