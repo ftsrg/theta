@@ -17,9 +17,9 @@ import hu.bme.mit.inf.ttmc.constraint.factory.ExprFactory;
 import hu.bme.mit.inf.ttmc.constraint.factory.TypeFactory;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.constraint.type.IntType;
-import hu.bme.mit.inf.ttmc.constraint.utils.impl.IteEliminator;
+import hu.bme.mit.inf.ttmc.constraint.utils.impl.ExprIteEliminator;
 
-public class ITEEliminatorTests {
+public class ExprIteEliminatorTests {
 	// Manager and factories
 	private ConstraintManager manager;
 	private ExprFactory efc;
@@ -30,7 +30,7 @@ public class ITEEliminatorTests {
 	private ConstRefExpr<IntType> cX, cY, cZ, cT;
 	private IntLitExpr i1, i2, i3, i4, i5;
 	// Transformator
-	IteEliminator eliminator;
+	ExprIteEliminator eliminator;
 	
 	@Before
 	public void before(){
@@ -55,7 +55,7 @@ public class ITEEliminatorTests {
 		i4 = efc.Int(4);
 		i5 = efc.Int(5);
 		// Create transformator
-		eliminator = new IteEliminator(manager);
+		eliminator = new ExprIteEliminator(manager);
 	}
 	
 	@SuppressWarnings("unchecked")
