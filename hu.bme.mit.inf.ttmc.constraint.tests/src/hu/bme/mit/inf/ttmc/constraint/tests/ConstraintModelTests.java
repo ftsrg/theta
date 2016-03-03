@@ -16,7 +16,7 @@ public class ConstraintModelTests {
 
 	@Test
 	public void testSimple() throws IOException {
-		final File file = new File("instances/constraint/simple.constraint");
+		final File file = new File("instances/simple.constraint");
 		final String filePath = file.getAbsolutePath();
 		final ConstraintSpecification specification = ConstraintModelLoader.getInstance().load(filePath);
 		final ConstraintManager manager = new ConstraintManagerImpl();
