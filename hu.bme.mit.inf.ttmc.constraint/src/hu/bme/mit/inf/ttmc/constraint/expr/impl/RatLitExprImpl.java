@@ -5,7 +5,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import hu.bme.mit.inf.ttmc.constraint.expr.RatLitExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.RatType;
 
-public abstract class RatLitExprImpl extends AbstractNullaryExpr<RatType> implements RatLitExpr {
+public class RatLitExprImpl extends AbstractNullaryExpr<RatType> implements RatLitExpr {
 	
 	private final long num;
 	private final long denom;

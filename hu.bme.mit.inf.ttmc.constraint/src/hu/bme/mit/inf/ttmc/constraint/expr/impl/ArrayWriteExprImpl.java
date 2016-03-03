@@ -14,7 +14,7 @@ public class ArrayWriteExprImpl<IndexType extends Type, ElemType extends Type>
 	private final Expr<? extends IndexType> index;
 	private final Expr<? extends ElemType> elem;
 
-	protected ArrayWriteExprImpl(final Expr<? extends ArrayType<? super IndexType, ? extends ElemType>> array,
+	public ArrayWriteExprImpl(final Expr<? extends ArrayType<? super IndexType, ? extends ElemType>> array,
 			final Expr<? extends IndexType> index, final Expr<? extends ElemType> elem) {
 
 		this.array = checkNotNull(array);

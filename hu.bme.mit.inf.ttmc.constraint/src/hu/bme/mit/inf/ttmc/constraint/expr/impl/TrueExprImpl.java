@@ -3,7 +3,7 @@ package hu.bme.mit.inf.ttmc.constraint.expr.impl;
 
 import hu.bme.mit.inf.ttmc.constraint.expr.TrueExpr;
 
-public abstract class TrueExprImpl extends AbstractBoolLitExpr implements TrueExpr {
+public class TrueExprImpl extends AbstractBoolLitExpr implements TrueExpr {
 
 	private static final String OPERATOR = "True";
 
