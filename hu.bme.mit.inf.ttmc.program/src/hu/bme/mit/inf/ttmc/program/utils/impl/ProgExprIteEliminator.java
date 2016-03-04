@@ -2,11 +2,8 @@ package hu.bme.mit.inf.ttmc.program.utils.impl;
 
 import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
-import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
-import hu.bme.mit.inf.ttmc.constraint.utils.impl.ite.PropagateIteVisitor;
-import hu.bme.mit.inf.ttmc.constraint.utils.impl.ite.PushBelowIteVisitor;
-import hu.bme.mit.inf.ttmc.constraint.utils.impl.ite.RemoveIteVisitor;
+import hu.bme.mit.inf.ttmc.constraint.utils.impl.ExprIteEliminator;
 import hu.bme.mit.inf.ttmc.program.expr.PrimedExpr;
 import hu.bme.mit.inf.ttmc.program.expr.ProcCallExpr;
 import hu.bme.mit.inf.ttmc.program.expr.ProcRefExpr;
@@ -18,8 +15,13 @@ import hu.bme.mit.inf.ttmc.program.utils.ProgExprVisitor;
  * @author Akos
  *
  */
-public class ProgExprIteEliminator {
+public final class ProgExprIteEliminator extends ExprIteEliminator {
 	
+	/**
+	 * Helper visitor 1
+	 * Propagate ITE up in the expression tree as high as possible.
+	 * @author Akos
+	 */
 	private static class PropagateProgIteVisitor extends PropagateIteVisitor implements ProgExprVisitor<Void, Expr<? extends Type>>  {
 
 		public PropagateProgIteVisitor(ConstraintManager manager, ProgExprVisitor<Void, Expr<? extends Type>> pushBelowIteVisitor) {
@@ -47,6 +49,11 @@ public class ProgExprIteEliminator {
 		}
 	}
 	
+	/**
+	 * Helper visitor 2
+	 * Push an expression below an ITE recursively.
+	 * @author Akos
+	 */
 	private static class PushBelowProgIteVisitor extends PushBelowIteVisitor implements ProgExprVisitor<Void, Expr<? extends Type>> {
 
 		public PushBelowProgIteVisitor(ConstraintManager manager) {
@@ -75,6 +82,15 @@ public class ProgExprIteEliminator {
 		
 	}
 
+	/**
+	 * Helper visitor 3
+	 * 
+	 * Remove if-then-else expressions by transforming them with the following rule:
+	 * (if A then B else C) <=> (!A or B) and (A or C).
+	 * 
+	 * It is assumed that ite expressions are propagated to the top.
+	 * @author Akos
+	 */
 	private static class RemoveProgIteVisitor extends RemoveIteVisitor implements ProgExprVisitor<Void, Expr<? extends Type>> {
 
 		public RemoveProgIteVisitor(ConstraintManager manager) {
@@ -102,26 +118,22 @@ public class ProgExprIteEliminator {
 		}
 		
 	}
-
-	private PropagateProgIteVisitor propagateProgIteVisitor;
-	private RemoveProgIteVisitor removeProgIteVisitor;
 	
 	/**
 	 * Constructor.
 	 * @param manager Constraint manager
 	 */
 	public ProgExprIteEliminator(ConstraintManager manager) {
-		propagateProgIteVisitor = new PropagateProgIteVisitor(manager, new PushBelowProgIteVisitor(manager));
-		removeProgIteVisitor = new RemoveProgIteVisitor(manager);
+		super(manager);
 	}
 	
-	/**
-	 * Eliminate if-then-else expressions by replacing them with boolean connectives.
-	 * @param expr Expression from where ITE has to be eliminated
-	 * @return New expression with no ITE
-	 */
-	@SuppressWarnings("unchecked")
-	public Expr<? extends BoolType> eliminate(Expr<? extends BoolType> expr) {
-		return (Expr<? extends BoolType>) expr.accept(propagateProgIteVisitor, null).accept(removeProgIteVisitor, null);
+	@Override
+	protected PropagateIteVisitor getPropageteIteVisitor(ConstraintManager manager) {
+		return new PropagateProgIteVisitor(manager, new PushBelowProgIteVisitor(manager));
+	}
+	
+	@Override
+	protected RemoveIteVisitor getRemoveIteVisitor(ConstraintManager manager) {
+		return new RemoveProgIteVisitor(manager);
 	}
 }
