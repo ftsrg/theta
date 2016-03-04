@@ -1,11 +1,18 @@
-package hu.bme.mit.inf.ttmc.program.cfa;
+package hu.bme.mit.inf.ttmc.program.utils.impl;
 
 import java.util.HashMap;
 import java.util.Map;
 
+import hu.bme.mit.inf.ttmc.program.cfa.CFA;
+import hu.bme.mit.inf.ttmc.program.cfa.CFAEdge;
+import hu.bme.mit.inf.ttmc.program.cfa.CFALoc;
 import hu.bme.mit.inf.ttmc.program.stmt.Stmt;
 
 public class CFAPrinter {
+	
+	private CFAPrinter() {
+		
+	}
 	
 	public static String toGraphvizSting(final CFA cfa) {
 		final Map<CFALoc, Integer> ids = createIds(cfa);
