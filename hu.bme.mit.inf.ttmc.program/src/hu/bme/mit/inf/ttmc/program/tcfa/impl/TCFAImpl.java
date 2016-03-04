@@ -14,7 +14,7 @@ public final class TCFAImpl implements TCFA {
 
 	////
 
-	public TCFA copyOf(final TCFA tcfa) {
+	public static TCFA copyOf(final TCFA tcfa) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
