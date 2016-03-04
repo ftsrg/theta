@@ -277,7 +277,7 @@ public class CnfExprChecker {
 
 		@Override
 		public <ExprType extends Type> Boolean visit(IteExpr<ExprType> expr, Status param) {
-			return true;
+			return false;
 		}
 		
 	}
