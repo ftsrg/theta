@@ -7,10 +7,14 @@ import java.util.HashSet;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
+import hu.bme.mit.inf.ttmc.constraint.factory.ExprFactory;
 import hu.bme.mit.inf.ttmc.program.tcfa.TCFA;
 
 public class MutableTCFAImpl implements TCFA {
 
+	final ExprFactory factory;
+	
 	private MutableTCFALocImpl initLoc;
 	private MutableTCFALocImpl finalLoc;
 	private MutableTCFALocImpl errorLoc;
@@ -18,13 +22,20 @@ public class MutableTCFAImpl implements TCFA {
 	private final Collection<MutableTCFALocImpl> locs;
 	private final Collection<MutableTCFAEdgeImpl> edges;
 	
-	public MutableTCFAImpl() {
-		initLoc = createLoc();
-		finalLoc = createLoc();
-		errorLoc = createLoc();
+	public MutableTCFAImpl(final ConstraintManager manager) {
+		checkNotNull(manager);
+		factory = manager.getExprFactory();
 		
 		locs = new HashSet<>();
 		edges = new HashSet<>();
+		
+		initLoc = new MutableTCFALocImpl(this, factory.True(), false);
+		finalLoc = new MutableTCFALocImpl(this, factory.True(), false);
+		errorLoc = new MutableTCFALocImpl(this, factory.True(), false);
+		
+		locs.add(initLoc);
+		locs.add(finalLoc);
+		locs.add(errorLoc);
 	}
 	
 	////
@@ -75,7 +86,7 @@ public class MutableTCFAImpl implements TCFA {
 	}
 	
 	public MutableTCFALocImpl createLoc() {
-		final MutableTCFALocImpl loc = new MutableTCFALocImpl(this);
+		final MutableTCFALocImpl loc = new MutableTCFALocImpl(this, factory.True(), false);
 		locs.add(loc);
 		return loc;
 	}
@@ -88,7 +99,7 @@ public class MutableTCFAImpl implements TCFA {
 		checkArgument(loc != errorLoc);
 		checkArgument(loc.getInEdges().isEmpty());
 		checkArgument(loc.getOutEdges().isEmpty());
-		loc.unsetTCFA();
+		loc.setTCFA(null);
 		locs.remove(loc);
 	}
 	
@@ -115,10 +126,9 @@ public class MutableTCFAImpl implements TCFA {
 	public void deleteEdge(final MutableTCFAEdgeImpl edge) {
 		checkNotNull(edge);
 		checkArgument(edge.getTCFA() == this);
-		
 		edge.getSource().removeOutEdge(edge);
 		edge.getTarget().removeInEdge(edge);
-		edge.unsetTCFA();
+		edge.setTCFA(null);
 		edges.remove(edge);
 	}
 	
