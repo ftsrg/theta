@@ -1,8 +1,8 @@
 package hu.bme.mit.inf.ttmc.program.tcfa.impl;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
@@ -11,9 +11,19 @@ import hu.bme.mit.inf.ttmc.program.tcfa.TCFALoc;
 public class MutableTCFALocImpl implements TCFALoc {
 
 	private MutableTCFAImpl tcfa;
+	private Expr<? extends BoolType> invar;
+	private boolean urgent;
 	
-	MutableTCFALocImpl(final MutableTCFAImpl tcfa) {
+	private final Collection<MutableTCFAEdgeImpl> inEdges;
+	private final Collection<MutableTCFAEdgeImpl> outEdges;
+	
+	
+	MutableTCFALocImpl(final MutableTCFAImpl tcfa, final Expr<? extends BoolType> invar, final boolean urgent) {
 		this.tcfa = tcfa;
+		this.invar = invar;
+		this.urgent = urgent;
+		inEdges = new HashSet<>();
+		outEdges = new HashSet<>();
 	}
 	
 	////
@@ -23,71 +33,60 @@ public class MutableTCFALocImpl implements TCFALoc {
 		return tcfa;
 	}
 	
-	void unsetTCFA() {
-		checkArgument(!tcfa.getLocs().contains(this));
-		tcfa = null;
+	void setTCFA(MutableTCFAImpl tcfa) {
+		this.tcfa = tcfa;
 	}
 
 	////
 
 	@Override
 	public boolean isUrgent() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		return urgent;
 	}
 	
-	public boolean setUrgent(boolean urgent) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+	public void setUrgent(boolean urgent) {
+		this.urgent = urgent;
 	}
 	
 	////
 
 	@Override
 	public Expr<? extends BoolType> getInvar() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		return invar;
 	}
 	
-	public void setInvar(Expr<? extends BoolType> expr) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+	public void setInvar(Expr<? extends BoolType> invar) {
+		this.invar = invar;
 	}
 	
 	////
 
 	@Override
-	public Collection<MutableTCFAEdgeImpl> getInEdges() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+	public Collection<MutableTCFAEdgeImpl> getInEdges() {	
+		return Collections.unmodifiableCollection(inEdges);
 	}
 	
 	void addInEdge(final MutableTCFAEdgeImpl edge) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		inEdges.add(edge);
 	}
 	
 	void removeInEdge(final MutableTCFAEdgeImpl edge) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		inEdges.remove(edge);
 	}
 	
 	////
 
 	@Override
 	public Collection<MutableTCFAEdgeImpl> getOutEdges() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		return Collections.unmodifiableCollection(outEdges);
 	}
 	
 	void addOutEdge(final MutableTCFAEdgeImpl edge) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		outEdges.add(edge);
 	}
 	
 	void removeOutEdge(final MutableTCFAEdgeImpl edge) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		outEdges.remove(edge);
 	}
 	
 }
