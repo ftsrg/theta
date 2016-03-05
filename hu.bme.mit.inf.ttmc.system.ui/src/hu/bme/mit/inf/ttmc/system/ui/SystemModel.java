@@ -16,10 +16,4 @@ public interface SystemModel {
 	 */
 	public Collection<STS> getSTSs();
 	
-	/**
-	 * Get the STSModel for an STS.
-	 * @param sts STS
-	 * @return STSModel corresponding to sts
-	 */
-	public STSModel getSTSModel(STS sts);
 }
