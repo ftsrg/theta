@@ -22,9 +22,9 @@ public class MutableCFAImpl implements CFA {
 		locs = new HashSet<>();
 		edges = new HashSet<>();
 		
-		initLoc = new MutableCFALocImpl(this);
-		finalLoc = new MutableCFALocImpl(this);
-		errorLoc = new MutableCFALocImpl(this);
+		initLoc = new MutableCFALocImpl();
+		finalLoc = new MutableCFALocImpl();
+		errorLoc = new MutableCFALocImpl();
 		
 		locs.add(initLoc);
 		locs.add(finalLoc);
@@ -40,7 +40,7 @@ public class MutableCFAImpl implements CFA {
 	
 	public void setInitLoc(final MutableCFALocImpl initLoc) {
 		checkNotNull(initLoc);
-		checkArgument(initLoc.getCFA() == this);
+		checkArgument(locs.contains(initLoc));
 		this.initLoc = initLoc;
 	}
 	
@@ -54,7 +54,7 @@ public class MutableCFAImpl implements CFA {
 	
 	public void setFinalLoc(final MutableCFALocImpl finalLoc) {
 		checkNotNull(finalLoc);
-		checkArgument(finalLoc.getCFA() == this);
+		checkArgument(locs.contains(finalLoc));
 		this.finalLoc = finalLoc;
 	}
 	
@@ -67,7 +67,7 @@ public class MutableCFAImpl implements CFA {
 	
 	public void setErrorLoc(final MutableCFALocImpl errorLoc) {
 		checkNotNull(errorLoc);
-		checkArgument(errorLoc.getCFA() == this);
+		checkArgument(locs.contains(errorLoc));
 		this.errorLoc = errorLoc;
 	}
 	
@@ -79,20 +79,19 @@ public class MutableCFAImpl implements CFA {
 	}
 	
 	public MutableCFALocImpl createLoc() {
-		final MutableCFALocImpl loc = new MutableCFALocImpl(this);
+		final MutableCFALocImpl loc = new MutableCFALocImpl();
 		locs.add(loc);
 		return loc;
 	}
 	
 	public void deleteLoc(final MutableCFALocImpl loc) {
 		checkNotNull(loc);
-		checkArgument(loc.getCFA() == this);
+		checkArgument(locs.contains(loc));
 		checkArgument(loc != initLoc);
 		checkArgument(loc != finalLoc);
 		checkArgument(loc != errorLoc);
 		checkArgument(loc.getInEdges().isEmpty());
 		checkArgument(loc.getOutEdges().isEmpty());
-		loc.setCFA(null);
 		locs.remove(loc);
 	}
 	
@@ -106,10 +105,10 @@ public class MutableCFAImpl implements CFA {
 	public MutableCFAEdgeImpl createEdge(final MutableCFALocImpl source, final MutableCFALocImpl target) {
 		checkNotNull(source);
 		checkNotNull(target);
-		checkArgument(source.getCFA() == this);
-		checkArgument(target.getCFA() == this);
+		checkArgument(locs.contains(source));
+		checkArgument(locs.contains(target));
 		
-		final MutableCFAEdgeImpl edge = new MutableCFAEdgeImpl(this, source, target);
+		final MutableCFAEdgeImpl edge = new MutableCFAEdgeImpl(source, target);
 		source.addOutEdge(edge);
 		target.addOutEdge(edge);
 		edges.add(edge);
@@ -118,10 +117,9 @@ public class MutableCFAImpl implements CFA {
 	
 	public void deleteEdge(final MutableCFAEdgeImpl edge) {
 		checkNotNull(edge);
-		checkArgument(edge.getCFA() == this);
+		checkArgument(edges.contains(edge));
 		edge.getSource().removeOutEdge(edge);
 		edge.getTarget().removeInEdge(edge);
-		edge.setCFA(null);
 		edges.remove(edge);
 	}
 	

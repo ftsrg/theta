@@ -4,16 +4,13 @@ import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 
-import hu.bme.mit.inf.ttmc.program.cfa.CFA;
 import hu.bme.mit.inf.ttmc.program.cfa.CFAEdge;
 import hu.bme.mit.inf.ttmc.program.cfa.CFALoc;
-import hu.bme.mit.inf.ttmc.program.cfa.impl.CFAImpl.CFABuilder;
 import hu.bme.mit.inf.ttmc.program.cfa.impl.CFALocImpl.CFALocBuilder;
 import hu.bme.mit.inf.ttmc.program.stmt.Stmt;
 
 final class CFAEdgeImpl implements CFAEdge {
 
-	final CFA cfa;
 	final CFALoc source;
 	final CFALoc target;
 	final List<Stmt> stmts;
@@ -21,16 +18,11 @@ final class CFAEdgeImpl implements CFAEdge {
 	private CFAEdgeImpl(final CFAEdgeBuilder builder) {
 		builder.edge = this;
 
-		cfa = builder.cfa.build();
 		source = builder.source.build();
 		target = builder.target.build();
 		stmts = ImmutableList.copyOf(builder.stmts);
 	}
 
-	@Override
-	public CFA getCFA() {
-		return cfa;
-	}
 
 	@Override
 	public CFALoc getSource() {
@@ -53,7 +45,6 @@ final class CFAEdgeImpl implements CFAEdge {
 
 		private CFAEdgeImpl edge;
 
-		private CFABuilder cfa;
 		private CFALocBuilder source;
 		private CFALocBuilder target;
 		private List<Stmt> stmts;
@@ -68,10 +59,6 @@ final class CFAEdgeImpl implements CFAEdge {
 			}
 
 			return edge;
-		}
-
-		public void setCFA(final CFABuilder cfa) {
-			this.cfa = cfa;
 		}
 
 		public void setSource(final CFALocBuilder source) {
