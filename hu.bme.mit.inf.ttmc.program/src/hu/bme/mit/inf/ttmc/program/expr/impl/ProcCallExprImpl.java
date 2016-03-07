@@ -10,7 +10,9 @@ import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
+import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 import hu.bme.mit.inf.ttmc.program.expr.ProcCallExpr;
+import hu.bme.mit.inf.ttmc.program.expr.visitor.ProcCallExprVisitor;
 import hu.bme.mit.inf.ttmc.program.type.ProcType;
 
 public class ProcCallExprImpl<ReturnType extends Type> implements ProcCallExpr<ReturnType> {
@@ -76,4 +78,13 @@ public class ProcCallExprImpl<ReturnType extends Type> implements ProcCallExpr<R
 		return sj.toString();
 	}
 
+	@Override
+	public <P, R> R accept(ExprVisitor<? super P, ? extends R> visitor, P param) {
+		if (visitor instanceof ProcCallExprVisitor<?, ?>) {
+			final ProcCallExprVisitor<? super P, ? extends R> sVisitor = (ProcCallExprVisitor<? super P, ? extends R>) visitor;
+			return sVisitor.visit(this, param);
+		} else {
+			throw new UnsupportedOperationException();
+		}
+	}
 }
