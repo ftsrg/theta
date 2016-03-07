@@ -52,13 +52,11 @@ public final class CFAImpl implements CFA {
 		for (CFALoc loc : cfa.getLocs()) {
 			final CFALocBuilder locBuilder = new CFALocBuilder();
 			locToBuilder.put(loc, locBuilder);
-			locBuilder.setCFA(cfaBuilder);
 		}
 
 		for (CFAEdge edge : cfa.getEdges()) {
 			final CFAEdgeBuilder edgeBuilder = new CFAEdgeBuilder(edge.getStmts());
 			edgeBuilders.add(edgeBuilder);
-			edgeBuilder.setCFA(cfaBuilder);
 			edgeBuilder.setSource(locToBuilder.get(edge.getSource()));
 			edgeBuilder.setTarget(locToBuilder.get(edge.getTarget()));
 			locToBuilder.get(edge.getSource()).addOutEdge(edgeBuilder);

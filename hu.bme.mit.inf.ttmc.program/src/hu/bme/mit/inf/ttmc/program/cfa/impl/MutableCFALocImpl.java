@@ -8,26 +8,13 @@ import hu.bme.mit.inf.ttmc.program.cfa.CFALoc;
 
 public class MutableCFALocImpl implements CFALoc {
 
-	private MutableCFAImpl cfa;	
 	private final Collection<MutableCFAEdgeImpl> inEdges;
 	private final Collection<MutableCFAEdgeImpl> outEdges;
 	
 	
-	MutableCFALocImpl(final MutableCFAImpl cfa) {
-		this.cfa = cfa;
+	MutableCFALocImpl() {
 		inEdges = new HashSet<>();
 		outEdges = new HashSet<>();
-	}
-	
-	////
-	
-	@Override
-	public MutableCFAImpl getCFA() {
-		return cfa;
-	}
-	
-	void setCFA(final MutableCFAImpl cfa) {
-		this.cfa = cfa;
 	}
 
 	////

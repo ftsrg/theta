@@ -5,22 +5,17 @@ import java.util.HashSet;
 
 import com.google.common.collect.ImmutableSet;
 
-import hu.bme.mit.inf.ttmc.program.cfa.CFA;
 import hu.bme.mit.inf.ttmc.program.cfa.CFAEdge;
 import hu.bme.mit.inf.ttmc.program.cfa.CFALoc;
 import hu.bme.mit.inf.ttmc.program.cfa.impl.CFAEdgeImpl.CFAEdgeBuilder;
-import hu.bme.mit.inf.ttmc.program.cfa.impl.CFAImpl.CFABuilder;
 
 public final class CFALocImpl implements CFALoc {
 
-	final CFA cfa;
 	final Collection<CFAEdgeImpl> inEdges;
 	final Collection<CFAEdgeImpl> outEdges;
 
 	CFALocImpl(final CFALocBuilder builder) {
 		builder.loc = this;
-
-		cfa = builder.cfa.build();
 
 		final ImmutableSet.Builder<CFAEdgeImpl> inEdgeSet = ImmutableSet.builder();
 		for (CFAEdgeBuilder inEdge : builder.inEdges) {
@@ -33,12 +28,6 @@ public final class CFALocImpl implements CFALoc {
 			outEdgeSet.add(outEdge.build());
 		}
 		outEdges = outEdgeSet.build();
-	}
-
-	@Override
-	public CFA getCFA() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
 
 	@Override
@@ -57,7 +46,6 @@ public final class CFALocImpl implements CFALoc {
 
 		private CFALocImpl loc;
 
-		private CFABuilder cfa;
 		private Collection<CFAEdgeBuilder> inEdges;
 		private Collection<CFAEdgeBuilder> outEdges;
 
@@ -75,10 +63,6 @@ public final class CFALocImpl implements CFALoc {
 		}
 
 		////
-
-		public void setCFA(final CFABuilder cfa) {
-			this.cfa = cfa;
-		}
 
 		public void addInEdge(final CFAEdgeBuilder inEdge) {
 			inEdges.add(inEdge);
