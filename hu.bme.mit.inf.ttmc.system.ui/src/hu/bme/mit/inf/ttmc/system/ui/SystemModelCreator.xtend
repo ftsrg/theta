@@ -25,6 +25,7 @@ import java.util.Map
 
 import static com.google.common.base.Preconditions.checkNotNull
 import hu.bme.mit.inf.ttmc.constraint.ui.ConstraintModelCreator
+import hu.bme.mit.inf.ttmc.program.utils.impl.ProgTypeInferrer
 
 final class SystemModelCreator extends ConstraintModelCreator {
 	
@@ -38,6 +39,10 @@ final class SystemModelCreator extends ConstraintModelCreator {
 		super(manager, specification)
 		this.specification = specification
 		this.pf = programFactory
+	}
+	
+	override protected getTypeInferrer(ConstraintManager manager) {
+		return new ProgTypeInferrer(manager)
 	}
 	
 	public def SystemModel createSystemModel() {
