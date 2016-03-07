@@ -4,6 +4,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import hu.bme.mit.inf.ttmc.constraint.expr.RatLitExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.RatType;
+import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 
 public class RatLitExprImpl extends AbstractNullaryExpr<RatType> implements RatLitExpr {
 	
@@ -68,4 +69,8 @@ public class RatLitExprImpl extends AbstractNullaryExpr<RatType> implements RatL
 		return 149;
 	}
 
+	@Override
+	public <P, R> R accept(ExprVisitor<? super P, ? extends R> visitor, P param) {
+		return visitor.visit(this, param);
+	}
 }

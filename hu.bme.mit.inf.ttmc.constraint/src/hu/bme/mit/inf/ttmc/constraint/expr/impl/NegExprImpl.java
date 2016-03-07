@@ -3,6 +3,7 @@ package hu.bme.mit.inf.ttmc.constraint.expr.impl;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.expr.NegExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderNeg;
+import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 
 public class NegExprImpl<ExprType extends ClosedUnderNeg> extends AbstractUnaryExpr<ExprType, ExprType> implements NegExpr<ExprType> {
 
@@ -31,4 +32,8 @@ public class NegExprImpl<ExprType extends ClosedUnderNeg> extends AbstractUnaryE
 		return 97;
 	}
 
+	@Override
+	public <P, R> R accept(ExprVisitor<? super P, ? extends R> visitor, P param) {
+		return visitor.visit(this, param);
+	}
 }

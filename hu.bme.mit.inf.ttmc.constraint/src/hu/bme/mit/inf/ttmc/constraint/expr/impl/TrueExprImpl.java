@@ -2,6 +2,7 @@ package hu.bme.mit.inf.ttmc.constraint.expr.impl;
 
 
 import hu.bme.mit.inf.ttmc.constraint.expr.TrueExpr;
+import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 
 public class TrueExprImpl extends AbstractBoolLitExpr implements TrueExpr {
 
@@ -22,4 +23,8 @@ public class TrueExprImpl extends AbstractBoolLitExpr implements TrueExpr {
 		return 242181;
 	}
 
+	@Override
+	public <P, R> R accept(ExprVisitor<? super P, ? extends R> visitor, P param) {
+		return visitor.visit(this, param);
+	}
 }

@@ -6,6 +6,7 @@ import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.expr.IteExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
+import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 
 public class IteExprImpl<ExprType extends Type> extends AbstractExpr<ExprType> implements IteExpr<ExprType> {
 
@@ -87,5 +88,20 @@ public class IteExprImpl<ExprType extends Type> extends AbstractExpr<ExprType> i
 			Expr<? extends ExprType> elze) {
 		return new IteExprImpl<>(cond, then, elze);
 	}
-
+	public IteExpr<ExprType> withCond(final Expr<? extends BoolType> cond) {
+		return withOps(cond, getThen(), getElse());
+	}
+	
+	public IteExpr<ExprType> withThen(final Expr<? extends ExprType> then) {
+		return withOps(getCond(), then, getElse());
+	}
+	
+	public IteExpr<ExprType> withElse(final Expr<? extends ExprType> elze) {
+		return withOps(getCond(), getThen(), elze);
+	}
+	
+	@Override
+	public <P, R> R accept(ExprVisitor<? super P, ? extends R> visitor, P param) {
+		return visitor.visit(this, param);
+	}
 }

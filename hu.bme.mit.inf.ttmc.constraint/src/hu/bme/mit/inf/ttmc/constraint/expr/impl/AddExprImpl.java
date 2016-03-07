@@ -9,6 +9,7 @@ import com.google.common.collect.ImmutableMultiset;
 import hu.bme.mit.inf.ttmc.constraint.expr.AddExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderAdd;
+import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 
 public class AddExprImpl<ExprType extends ClosedUnderAdd>
 		extends AbstractMultiaryExpr<ExprType, ExprType> implements AddExpr<ExprType> {
@@ -37,5 +38,10 @@ public class AddExprImpl<ExprType extends ClosedUnderAdd>
 	@Override
 	protected int getHashSeed() {
 		return 73;
+	}
+
+	@Override
+	public <P, R> R accept(ExprVisitor<? super P, ? extends R> visitor, P param) {
+		return visitor.visit(this, param);
 	}
 }

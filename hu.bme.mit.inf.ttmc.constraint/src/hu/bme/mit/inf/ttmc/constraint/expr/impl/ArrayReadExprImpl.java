@@ -6,6 +6,7 @@ import hu.bme.mit.inf.ttmc.constraint.expr.ArrayReadExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.type.ArrayType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
+import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 
 public class ArrayReadExprImpl<IndexType extends Type, ElemType extends Type> extends AbstractExpr<ElemType>
 		implements ArrayReadExpr<IndexType, ElemType> {
@@ -51,6 +52,22 @@ public class ArrayReadExprImpl<IndexType extends Type, ElemType extends Type> ex
 		sb.append(index);
 		sb.append(")");
 		return sb.toString();
+	}
+	
+	@Override
+	public <P, R> R accept(ExprVisitor<? super P, ? extends R> visitor, P param) {
+		return visitor.visit(this, param);
+	}
+
+	@Override
+	public ArrayReadExpr<IndexType, ElemType> withArray(
+			final Expr<? extends ArrayType<? super IndexType, ? extends ElemType>> array) {
+		return with(array, getIndex());
+	}
+
+	@Override
+	public ArrayReadExpr<IndexType, ElemType> withIndex(final Expr<? extends IndexType> index) {
+		return with(getArray(), index);
 	}
 
 }

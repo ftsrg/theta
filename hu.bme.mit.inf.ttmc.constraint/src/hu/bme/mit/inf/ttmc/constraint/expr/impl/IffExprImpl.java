@@ -3,6 +3,7 @@ package hu.bme.mit.inf.ttmc.constraint.expr.impl;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.expr.IffExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
+import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 
 public class IffExprImpl extends AbstractBinaryExpr<BoolType, BoolType, BoolType>
 		implements IffExpr {
@@ -32,4 +33,18 @@ public class IffExprImpl extends AbstractBinaryExpr<BoolType, BoolType, BoolType
 		return 67;
 	}
 
+	@Override
+	public IffExpr withLeftOp(final Expr<? extends BoolType> leftOp) {
+		return withOps(leftOp, getRightOp());
+	}
+
+	@Override
+	public IffExpr withRightOp(final Expr<? extends BoolType> rightOp) {
+		return withOps(getLeftOp(), rightOp);
+	}
+
+	@Override
+	public <P, R> R accept(ExprVisitor<? super P, ? extends R> visitor, P param) {
+		return visitor.visit(this, param);
+	}
 }

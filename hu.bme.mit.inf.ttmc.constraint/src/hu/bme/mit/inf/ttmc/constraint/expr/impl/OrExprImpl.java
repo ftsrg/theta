@@ -9,6 +9,7 @@ import com.google.common.collect.ImmutableSet;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.expr.OrExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
+import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 
 public class OrExprImpl extends AbstractMultiaryExpr<BoolType, BoolType> implements OrExpr {
 
@@ -35,5 +36,10 @@ public class OrExprImpl extends AbstractMultiaryExpr<BoolType, BoolType> impleme
 	@Override
 	protected int getHashSeed() {
 		return 131;
+	}
+
+	@Override
+	public <P, R> R accept(ExprVisitor<? super P, ? extends R> visitor, P param) {
+		return visitor.visit(this, param);
 	}
 }

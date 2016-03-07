@@ -5,6 +5,7 @@ import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.expr.LeqExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.constraint.type.RatType;
+import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 
 public class LeqExprImpl extends AbstractBinaryExpr<RatType, RatType, BoolType> implements LeqExpr {
 
@@ -32,5 +33,18 @@ public class LeqExprImpl extends AbstractBinaryExpr<RatType, RatType, BoolType> 
 	protected final int getHashSeed() {
 		return 103;
 	}
+	@Override
+	public LeqExpr withLeftOp(final Expr<? extends RatType> leftOp) {
+		return withOps(leftOp, getRightOp());
+	}
 
+	@Override
+	public LeqExpr withRightOp(final Expr<? extends RatType> rightOp) {
+		return withOps(getLeftOp(), rightOp);
+	}
+	
+	@Override
+	public <P, R> R accept(ExprVisitor<? super P, ? extends R> visitor, P param) {
+		return visitor.visit(this, param);
+	}
 }

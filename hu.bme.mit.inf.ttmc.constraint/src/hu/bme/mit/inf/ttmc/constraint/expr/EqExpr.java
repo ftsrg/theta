@@ -11,14 +11,10 @@ public interface EqExpr extends BinaryExpr<Type, Type, BoolType> {
 	public EqExpr withOps(final Expr<? extends Type> leftOp, final Expr<? extends Type> rightOp);
 	
 	@Override
-	public default EqExpr withLeftOp(final Expr<? extends Type> leftOp) {
-		return withOps(leftOp, getRightOp());
-	}
+	public EqExpr withLeftOp(final Expr<? extends Type> leftOp);
 
 	@Override
-	public default EqExpr withRightOp(final Expr<? extends Type> rightOp) {
-		return withOps(getLeftOp(), rightOp);
-	}
+	public EqExpr withRightOp(final Expr<? extends Type> rightOp);
 	
 	@Override
 	public default <P, R> R accept(ExprVisitor<? super P, ? extends R> visitor, P param) {

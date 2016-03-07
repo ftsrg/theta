@@ -31,5 +31,15 @@ public class EqExprImpl extends AbstractBinaryExpr<Type, Type, BoolType> impleme
 	protected final int getHashSeed() {
 		return 43;
 	}
+	
+	@Override
+	public EqExpr withLeftOp(final Expr<? extends Type> leftOp) {
+		return withOps(leftOp, getRightOp());
+	}
+
+	@Override
+	public EqExpr withRightOp(final Expr<? extends Type> rightOp) {
+		return withOps(getLeftOp(), rightOp);
+	}
 
 }

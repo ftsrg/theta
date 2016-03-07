@@ -7,6 +7,7 @@ import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.expr.ForallExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
+import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 
 public class ForallExprImpl extends AbstractQuantifiedExpr implements ForallExpr {
 
@@ -32,4 +33,8 @@ public class ForallExprImpl extends AbstractQuantifiedExpr implements ForallExpr
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
+	public <P, R> R accept(ExprVisitor<? super P, ? extends R> visitor, P param) {
+		return visitor.visit(this, param);
+	}
 }
