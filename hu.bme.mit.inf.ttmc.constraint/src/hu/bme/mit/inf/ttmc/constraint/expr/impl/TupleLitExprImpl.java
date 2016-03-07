@@ -11,6 +11,7 @@ import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.expr.TupleLitExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.TupleType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
+import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 
 public abstract class TupleLitExprImpl
 		extends AbstractMultiaryExpr<Type, TupleType> implements TupleLitExpr {
@@ -32,4 +33,8 @@ public abstract class TupleLitExprImpl
 		return 173;
 	}
 
+	@Override
+	public <P, R> R accept(ExprVisitor<? super P, ? extends R> visitor, P param) {
+		return visitor.visit(this, param);
+	}
 }

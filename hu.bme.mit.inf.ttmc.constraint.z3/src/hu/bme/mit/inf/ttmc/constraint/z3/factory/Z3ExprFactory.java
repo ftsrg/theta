@@ -131,7 +131,7 @@ public final class Z3ExprFactory implements ExprFactory {
 	}
 
 	@Override
-	public <P extends Type, R extends Type> FuncLitExpr<? super P, ? extends R> Func(ParamDecl<? extends P> paramDecl,
+	public <P extends Type, R extends Type> FuncLitExpr<? super P, ? extends R> Func(ParamDecl<? super P> paramDecl,
 			Expr<? extends R> result) {
 		throw new UnsupportedOperationException();
 	}

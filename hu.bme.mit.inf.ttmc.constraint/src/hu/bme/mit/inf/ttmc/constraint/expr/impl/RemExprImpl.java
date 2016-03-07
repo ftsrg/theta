@@ -3,6 +3,7 @@ package hu.bme.mit.inf.ttmc.constraint.expr.impl;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.expr.RemExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.IntType;
+import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 
 public class RemExprImpl extends AbstractBinaryExpr<IntType, IntType, IntType> implements RemExpr {
 
@@ -31,4 +32,18 @@ public class RemExprImpl extends AbstractBinaryExpr<IntType, IntType, IntType> i
 		return 199;
 	}
 
+	@Override
+	public RemExpr withLeftOp(final Expr<? extends IntType> leftOp) {
+		return withOps(leftOp, getRightOp());
+	}
+
+	@Override
+	public RemExpr withRightOp(final Expr<? extends IntType> rightOp) {
+		return withOps(getLeftOp(), rightOp);
+	}
+	
+	@Override
+	public <P, R> R accept(ExprVisitor<? super P, ? extends R> visitor, P param) {
+		return visitor.visit(this, param);
+	}
 }

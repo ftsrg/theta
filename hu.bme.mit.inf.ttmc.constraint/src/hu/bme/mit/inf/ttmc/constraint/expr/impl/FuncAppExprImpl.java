@@ -6,6 +6,7 @@ import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.expr.FuncAppExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.FuncType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
+import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 
 public class FuncAppExprImpl<ParamType extends Type, ResultType extends Type>
 		extends AbstractExpr<ResultType> implements FuncAppExpr<ParamType, ResultType> {
@@ -72,4 +73,8 @@ public class FuncAppExprImpl<ParamType extends Type, ResultType extends Type>
 		return 47;
 	}
 
+	@Override
+	public <P, R> R accept(ExprVisitor<? super P, ? extends R> visitor, P param) {
+		return visitor.visit(this, param);
+	}
 }

@@ -2,6 +2,7 @@ package hu.bme.mit.inf.ttmc.constraint.expr.impl;
 
 
 import hu.bme.mit.inf.ttmc.constraint.expr.FalseExpr;
+import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 
 public class FalseExprImpl extends AbstractBoolLitExpr implements FalseExpr {
 
@@ -27,4 +28,8 @@ public class FalseExprImpl extends AbstractBoolLitExpr implements FalseExpr {
 		return 712514;
 	}
 
+	@Override
+	public <P, R> R accept(ExprVisitor<? super P, ? extends R> visitor, P param) {
+		return visitor.visit(this, param);
+	}
 }

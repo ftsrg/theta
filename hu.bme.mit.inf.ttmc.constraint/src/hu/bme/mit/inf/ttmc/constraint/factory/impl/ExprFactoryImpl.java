@@ -53,6 +53,7 @@ import hu.bme.mit.inf.ttmc.constraint.expr.impl.ExistsExprImpl;
 import hu.bme.mit.inf.ttmc.constraint.expr.impl.FalseExprImpl;
 import hu.bme.mit.inf.ttmc.constraint.expr.impl.ForallExprImpl;
 import hu.bme.mit.inf.ttmc.constraint.expr.impl.FuncAppExprImpl;
+import hu.bme.mit.inf.ttmc.constraint.expr.impl.FuncLitExprImpl;
 import hu.bme.mit.inf.ttmc.constraint.expr.impl.GeqExprImpl;
 import hu.bme.mit.inf.ttmc.constraint.expr.impl.GtExprImpl;
 import hu.bme.mit.inf.ttmc.constraint.expr.impl.IffExprImpl;
@@ -74,6 +75,7 @@ import hu.bme.mit.inf.ttmc.constraint.expr.impl.RatLitExprImpl;
 import hu.bme.mit.inf.ttmc.constraint.expr.impl.RemExprImpl;
 import hu.bme.mit.inf.ttmc.constraint.expr.impl.SubExprImpl;
 import hu.bme.mit.inf.ttmc.constraint.expr.impl.TrueExprImpl;
+import hu.bme.mit.inf.ttmc.constraint.expr.impl.TupleProjExprImpl;
 import hu.bme.mit.inf.ttmc.constraint.factory.ExprFactory;
 import hu.bme.mit.inf.ttmc.constraint.type.ArrayType;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
@@ -125,10 +127,11 @@ public class ExprFactoryImpl implements ExprFactory {
 	}
 
 	@Override
-	public <P extends Type, R extends Type> FuncLitExpr<? super P, ? extends R> Func(ParamDecl<? extends P> paramDecl,
+	public <P extends Type, R extends Type> FuncLitExpr<? super P, ? extends R> Func(ParamDecl<? super P> paramDecl,
 			Expr<? extends R> result) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		checkNotNull(paramDecl);
+		checkNotNull(result);
+		return new FuncLitExprImpl<P, R>(paramDecl, result);
 	}
 
 	@Override
@@ -145,8 +148,9 @@ public class ExprFactoryImpl implements ExprFactory {
 
 	@Override
 	public TupleProjExpr Proj(Expr<? extends TupleType> tup, int index) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		checkNotNull(tup);
+		checkArgument(index > 0);
+		return new TupleProjExprImpl(tup, index);
 	}
 
 	@Override
