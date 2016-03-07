@@ -14,4 +14,7 @@ Export-Package: hu.bme.mit.inf.ttmc.program,
  hu.bme.mit.inf.ttmc.program.expr,
  hu.bme.mit.inf.ttmc.program.factory,
  hu.bme.mit.inf.ttmc.program.stmt,
- hu.bme.mit.inf.ttmc.program.utils
+ hu.bme.mit.inf.ttmc.program.sts,
+ hu.bme.mit.inf.ttmc.program.sts.impl,
+ hu.bme.mit.inf.ttmc.program.utils,
+ hu.bme.mit.inf.ttmc.program.utils.impl

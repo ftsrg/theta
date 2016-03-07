@@ -1,8 +1,10 @@
 package hu.bme.mit.inf.ttmc.program.expr.impl;
 
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
+import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 import hu.bme.mit.inf.ttmc.program.decl.ProcDecl;
 import hu.bme.mit.inf.ttmc.program.expr.ProcRefExpr;
+import hu.bme.mit.inf.ttmc.program.expr.visitor.ProcRefExprVisitor;
 
 public class ProcRefExprImpl<ReturnType extends Type> implements ProcRefExpr<ReturnType> {
 
@@ -50,4 +52,13 @@ public class ProcRefExprImpl<ReturnType extends Type> implements ProcRefExpr<Ret
 		return getDecl().getName();
 	}
 
+	@Override
+	public <P, R> R accept(ExprVisitor<? super P, ? extends R> visitor, P param) {
+		if (visitor instanceof ProcRefExprVisitor<?, ?>) {
+			final ProcRefExprVisitor<? super P, ? extends R> sVisitor = (ProcRefExprVisitor<? super P, ? extends R>) visitor;
+			return sVisitor.visit(this, param);
+		} else {
+			throw new UnsupportedOperationException();
+		}
+	}
 }
