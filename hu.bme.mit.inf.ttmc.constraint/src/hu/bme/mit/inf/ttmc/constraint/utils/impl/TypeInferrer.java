@@ -62,7 +62,7 @@ public class TypeInferrer {
 	
 	public TypeInferrer(final ConstraintManager manager) {
 		checkNotNull(manager);
-		visitor = new TypeInferrerVisitor(manager);
+		visitor = getTypeInferrer(manager);
 	}
 	
 	public <T extends Type> T getType(final Expr<T> expr) {
@@ -74,14 +74,18 @@ public class TypeInferrer {
 		return result;
 	}
 	
+	protected TypeInferrerVisitor getTypeInferrer(ConstraintManager manager) {
+		return new TypeInferrerVisitor(manager);
+	}
+	
 	////////
 	
-	private final class TypeInferrerVisitor implements ExprVisitor<Void, Type> {
+	protected class TypeInferrerVisitor implements ExprVisitor<Void, Type> {
 
-		private final TypeFactory factory;
-		private final TypeUtils utils;
+		protected final TypeFactory factory;
+		protected final TypeUtils utils;
 		
-		private TypeInferrerVisitor(final ConstraintManager manager) {
+		public TypeInferrerVisitor(final ConstraintManager manager) {
 			factory = manager.getTypeFactory();
 			utils = new TypeUtils(manager);
 		}

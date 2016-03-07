@@ -64,6 +64,7 @@ import java.util.HashMap
 import java.util.Map
 
 import static com.google.common.base.Preconditions.checkNotNull
+import hu.bme.mit.inf.ttmc.constraint.model.IfThenElseExpression
 
 public class ConstraintModelCreator {
 	
@@ -95,7 +96,11 @@ public class ConstraintModelCreator {
 		constantToConst = new HashMap
 		parameterToParam = new HashMap
 		
-		inferrer = new TypeInferrer(manager)
+		inferrer = getTypeInferrer(manager)
+	}
+	
+	protected def TypeInferrer getTypeInferrer(ConstraintManager manager) {
+		return new TypeInferrer(manager)
 	}
 	
 	public def ConstraintModel create() {
@@ -282,6 +287,13 @@ public class ConstraintModelCreator {
 		} else {
 			throw new UnsupportedOperationException
 		}	
+	}
+	
+	protected def dispatch Expr<? extends Type> toExpr(IfThenElseExpression expression) {
+		val cond = expression.condition.toExpr.withType(BoolType) as Expr<BoolType>
+		val then = expression.then.toExpr
+		val elze = expression.^else.toExpr
+		Ite(cond, then, elze)
 	}
 	
 	/////
