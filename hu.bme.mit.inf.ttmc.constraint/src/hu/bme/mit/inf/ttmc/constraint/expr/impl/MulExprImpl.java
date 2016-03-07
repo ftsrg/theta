@@ -9,6 +9,7 @@ import com.google.common.collect.ImmutableMultiset;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.expr.MulExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderMul;
+import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 
 public class MulExprImpl<ExprType extends ClosedUnderMul> extends AbstractMultiaryExpr<ExprType, ExprType> implements MulExpr<ExprType> {
 
@@ -37,4 +38,8 @@ public class MulExprImpl<ExprType extends ClosedUnderMul> extends AbstractMultia
 		return 89;
 	}
 
+	@Override
+	public <P, R> R accept(ExprVisitor<? super P, ? extends R> visitor, P param) {
+		return visitor.visit(this, param);
+	}
 }

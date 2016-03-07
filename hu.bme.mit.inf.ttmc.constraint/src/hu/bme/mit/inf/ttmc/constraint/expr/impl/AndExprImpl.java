@@ -9,6 +9,7 @@ import com.google.common.collect.ImmutableSet;
 import hu.bme.mit.inf.ttmc.constraint.expr.AndExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
+import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 
 public class AndExprImpl extends AbstractMultiaryExpr<BoolType, BoolType> implements AndExpr {
 
@@ -37,4 +38,8 @@ public class AndExprImpl extends AbstractMultiaryExpr<BoolType, BoolType> implem
 		return 41;
 	}
 
+	@Override
+	public <P, R> R accept(ExprVisitor<? super P, ? extends R> visitor, P param) {
+		return visitor.visit(this, param);
+	}
 }

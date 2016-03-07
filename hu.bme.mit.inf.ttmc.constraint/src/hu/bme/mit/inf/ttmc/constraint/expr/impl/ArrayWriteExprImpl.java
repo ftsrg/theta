@@ -6,6 +6,7 @@ import hu.bme.mit.inf.ttmc.constraint.expr.ArrayWriteExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.type.ArrayType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
+import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 
 public class ArrayWriteExprImpl<IndexType extends Type, ElemType extends Type>
 		extends AbstractExpr<ArrayType<IndexType, ElemType>> implements ArrayWriteExpr<IndexType, ElemType> {
@@ -67,4 +68,18 @@ public class ArrayWriteExprImpl<IndexType extends Type, ElemType extends Type>
 		return sb.toString();
 	}
 
+	@Override
+	public <P, R> R accept(ExprVisitor<? super P, ? extends R> visitor, P param) {
+		return visitor.visit(this, param);
+	}
+	
+	@Override
+	public ArrayWriteExpr<IndexType, ElemType> withIndex(final Expr<? extends IndexType> index) {
+		return with(getArray(), index, getElem());
+	}
+
+	@Override
+	public ArrayWriteExpr<IndexType, ElemType> withElem(final Expr<? extends ElemType> elem) {
+		return with(getArray(), getIndex(), elem);
+	}
 }

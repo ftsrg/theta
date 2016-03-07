@@ -7,8 +7,9 @@ import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.expr.FuncLitExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.FuncType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
+import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 
-public abstract class FuncLitExprImpl<ParamType extends Type, ResultType extends Type>
+public class FuncLitExprImpl<ParamType extends Type, ResultType extends Type>
 		extends AbstractExpr<FuncType<ParamType, ResultType>> implements FuncLitExpr<ParamType, ResultType> {
 
 	private final ParamDecl<? super ParamType> paramDecl;
@@ -57,4 +58,8 @@ public abstract class FuncLitExprImpl<ParamType extends Type, ResultType extends
 		return 53;
 	}
 
+	@Override
+	public <P, R> R accept(ExprVisitor<? super P, ? extends R> visitor, P param) {
+		return visitor.visit(this, param);
+	}
 }
