@@ -10,31 +10,31 @@ import com.google.common.collect.ImmutableSet;
 import hu.bme.mit.inf.ttmc.program.cfa.CFA;
 import hu.bme.mit.inf.ttmc.program.cfa.CFAEdge;
 import hu.bme.mit.inf.ttmc.program.cfa.CFALoc;
-import hu.bme.mit.inf.ttmc.program.cfa.impl.CFAEdgeImpl.CFAEdgeBuilder;
-import hu.bme.mit.inf.ttmc.program.cfa.impl.CFALocImpl.CFALocBuilder;
+import hu.bme.mit.inf.ttmc.program.cfa.impl.ImmutableCFAEdge.CFAEdgeBuilder;
+import hu.bme.mit.inf.ttmc.program.cfa.impl.ImmutableCFALoc.CFALocBuilder;
 
-public final class CFAImpl implements CFA {
+public final class ImmutableCFA implements CFA {
 
-	final CFALocImpl initLoc;
-	final CFALocImpl finalLoc;
-	final CFALocImpl errorLoc;
-	final Collection<CFALocImpl> locs;
-	final Collection<CFAEdgeImpl> edges;
+	final ImmutableCFALoc initLoc;
+	final ImmutableCFALoc finalLoc;
+	final ImmutableCFALoc errorLoc;
+	final Collection<ImmutableCFALoc> locs;
+	final Collection<ImmutableCFAEdge> edges;
 
-	private CFAImpl(final CFABuilder builder) {
+	private ImmutableCFA(final CFABuilder builder) {
 		builder.cfa = this;
 
 		initLoc = builder.initLoc.build();
 		finalLoc = builder.finalLoc.build();
 		errorLoc = builder.errorLoc.build();
 
-		final ImmutableSet.Builder<CFALocImpl> locSet = ImmutableSet.builder();
+		final ImmutableSet.Builder<ImmutableCFALoc> locSet = ImmutableSet.builder();
 		for (CFALocBuilder loc : builder.locs) {
 			locSet.add(loc.build());
 		}
 		locs = locSet.build();
 
-		final ImmutableSet.Builder<CFAEdgeImpl> edgeSet = ImmutableSet.builder();
+		final ImmutableSet.Builder<ImmutableCFAEdge> edgeSet = ImmutableSet.builder();
 		for (CFAEdgeBuilder edge : builder.edges) {
 			edgeSet.add(edge.build());
 		}
@@ -104,7 +104,7 @@ public final class CFAImpl implements CFA {
 	////
 
 	final static class CFABuilder {
-		private CFAImpl cfa;
+		private ImmutableCFA cfa;
 
 		private CFALocBuilder initLoc;
 		private CFALocBuilder finalLoc;
@@ -119,7 +119,7 @@ public final class CFAImpl implements CFA {
 
 		public CFA build() {
 			if (this.cfa == null) {
-				new CFAImpl(this);
+				new ImmutableCFA(this);
 			}
 
 			return cfa;

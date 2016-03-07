@@ -7,23 +7,23 @@ import com.google.common.collect.ImmutableSet;
 
 import hu.bme.mit.inf.ttmc.program.cfa.CFAEdge;
 import hu.bme.mit.inf.ttmc.program.cfa.CFALoc;
-import hu.bme.mit.inf.ttmc.program.cfa.impl.CFAEdgeImpl.CFAEdgeBuilder;
+import hu.bme.mit.inf.ttmc.program.cfa.impl.ImmutableCFAEdge.CFAEdgeBuilder;
 
-public final class CFALocImpl implements CFALoc {
+public final class ImmutableCFALoc implements CFALoc {
 
-	final Collection<CFAEdgeImpl> inEdges;
-	final Collection<CFAEdgeImpl> outEdges;
+	final Collection<ImmutableCFAEdge> inEdges;
+	final Collection<ImmutableCFAEdge> outEdges;
 
-	CFALocImpl(final CFALocBuilder builder) {
+	ImmutableCFALoc(final CFALocBuilder builder) {
 		builder.loc = this;
 
-		final ImmutableSet.Builder<CFAEdgeImpl> inEdgeSet = ImmutableSet.builder();
+		final ImmutableSet.Builder<ImmutableCFAEdge> inEdgeSet = ImmutableSet.builder();
 		for (CFAEdgeBuilder inEdge : builder.inEdges) {
 			inEdgeSet.add(inEdge.build());
 		}
 		inEdges = inEdgeSet.build();
 
-		final ImmutableSet.Builder<CFAEdgeImpl> outEdgeSet = ImmutableSet.builder();
+		final ImmutableSet.Builder<ImmutableCFAEdge> outEdgeSet = ImmutableSet.builder();
 		for (CFAEdgeBuilder outEdge : builder.inEdges) {
 			outEdgeSet.add(outEdge.build());
 		}
@@ -44,7 +44,7 @@ public final class CFALocImpl implements CFALoc {
 
 	final static class CFALocBuilder {
 
-		private CFALocImpl loc;
+		private ImmutableCFALoc loc;
 
 		private Collection<CFAEdgeBuilder> inEdges;
 		private Collection<CFAEdgeBuilder> outEdges;
@@ -54,9 +54,9 @@ public final class CFALocImpl implements CFALoc {
 			outEdges = new HashSet<>();
 		}
 
-		public CFALocImpl build() {
+		public ImmutableCFALoc build() {
 			if (loc == null) {
-				new CFALocImpl(this);
+				new ImmutableCFALoc(this);
 			}
 
 			return loc;
