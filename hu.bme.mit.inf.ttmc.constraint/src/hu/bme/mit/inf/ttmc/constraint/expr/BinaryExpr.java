@@ -17,12 +17,8 @@ public interface BinaryExpr<LeftOpType extends Type, RightOpType extends Type, E
 
 	public BinaryExpr<LeftOpType, RightOpType, ExprType> withOps(final Expr<? extends LeftOpType> leftOp, final Expr<? extends RightOpType> rightOp);
 
-	public default BinaryExpr<LeftOpType, RightOpType, ExprType> withLeftOp(final Expr<? extends LeftOpType> leftOp) {
-		return withOps(leftOp, getRightOp());
-	}
+	public BinaryExpr<LeftOpType, RightOpType, ExprType> withLeftOp(final Expr<? extends LeftOpType> leftOp);
 
-	public default BinaryExpr<LeftOpType, RightOpType, ExprType> withRightOp(final Expr<? extends RightOpType> rightOp) {
-		return withOps(getLeftOp(), rightOp);
-	}
+	public BinaryExpr<LeftOpType, RightOpType, ExprType> withRightOp(final Expr<? extends RightOpType> rightOp);
 	
 }

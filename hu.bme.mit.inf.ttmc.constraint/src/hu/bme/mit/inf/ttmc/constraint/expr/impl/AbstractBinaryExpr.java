@@ -69,5 +69,15 @@ public abstract class AbstractBinaryExpr<LeftOpType extends Type, RightOpType ex
 	}
 
 	protected abstract String getOperatorString();
+	
+	@Override
+	public BinaryExpr<LeftOpType, RightOpType, ExprType> withLeftOp(final Expr<? extends LeftOpType> leftOp) {
+		return withOps(leftOp, getRightOp());
+	}
+
+	@Override
+	public BinaryExpr<LeftOpType, RightOpType, ExprType> withRightOp(final Expr<? extends RightOpType> rightOp) {
+		return withOps(getLeftOp(), rightOp);
+	}
 
 }
