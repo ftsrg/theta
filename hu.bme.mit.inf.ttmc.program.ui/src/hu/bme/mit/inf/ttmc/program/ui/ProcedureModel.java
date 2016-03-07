@@ -6,10 +6,10 @@ import java.util.Optional;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
-import hu.bme.mit.inf.ttmc.program.cfa.CFA;
-import hu.bme.mit.inf.ttmc.program.cfa.CFALoc;
-import hu.bme.mit.inf.ttmc.program.decl.ProcDecl;
-import hu.bme.mit.inf.ttmc.program.stmt.Stmt;
+import hu.bme.mit.inf.ttmc.formalism.cfa.CFA;
+import hu.bme.mit.inf.ttmc.formalism.cfa.CFALoc;
+import hu.bme.mit.inf.ttmc.formalism.decl.ProcDecl;
+import hu.bme.mit.inf.ttmc.formalism.stmt.Stmt;
 
 public interface ProcedureModel {
 	public ProcDecl<? extends Type> getProcDecl();

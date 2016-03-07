@@ -2,7 +2,7 @@ package hu.bme.mit.inf.ttmc.system.ui;
 
 import java.util.Collection;
 
-import hu.bme.mit.inf.ttmc.program.sts.STS;
+import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 
 /**
  * System model interface. Contains a collection of Symbolic

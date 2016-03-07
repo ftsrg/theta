@@ -8,4 +8,4 @@ Require-Bundle: org.junit,
  hu.bme.mit.inf.ttmc.system.model,
  hu.bme.mit.inf.ttmc.system.ui,
  hu.bme.mit.inf.ttmc.constraint,
- hu.bme.mit.inf.ttmc.program
+ hu.bme.mit.inf.ttmc.formalism
