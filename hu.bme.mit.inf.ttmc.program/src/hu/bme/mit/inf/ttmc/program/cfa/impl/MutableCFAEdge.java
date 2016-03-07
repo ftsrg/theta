@@ -6,13 +6,13 @@ import java.util.List;
 import hu.bme.mit.inf.ttmc.program.cfa.CFAEdge;
 import hu.bme.mit.inf.ttmc.program.stmt.Stmt;
 
-public class MutableCFAEdgeImpl implements CFAEdge {
+public class MutableCFAEdge implements CFAEdge {
 
-	private MutableCFALocImpl source;
-	private MutableCFALocImpl target;
+	private MutableCFALoc source;
+	private MutableCFALoc target;
 	private final List<Stmt> stmts;
 	
-	MutableCFAEdgeImpl(final MutableCFALocImpl source, final MutableCFALocImpl target) {
+	MutableCFAEdge(final MutableCFALoc source, final MutableCFALoc target) {
 		this.source = source;
 		this.target = target;
 		stmts = new ArrayList<>();
@@ -21,12 +21,12 @@ public class MutableCFAEdgeImpl implements CFAEdge {
 	////
 
 	@Override
-	public MutableCFALocImpl getSource() {
+	public MutableCFALoc getSource() {
 		return source;
 	}
 
 	@Override
-	public MutableCFALocImpl getTarget() {
+	public MutableCFALoc getTarget() {
 		return target;
 	}
 

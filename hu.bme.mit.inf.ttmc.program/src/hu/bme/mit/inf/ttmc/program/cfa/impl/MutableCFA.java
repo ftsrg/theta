@@ -9,22 +9,22 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import hu.bme.mit.inf.ttmc.program.cfa.CFA;
 
-public class MutableCFAImpl implements CFA {
+public class MutableCFA implements CFA {
 
-	private MutableCFALocImpl initLoc;
-	private MutableCFALocImpl finalLoc;
-	private MutableCFALocImpl errorLoc;
+	private MutableCFALoc initLoc;
+	private MutableCFALoc finalLoc;
+	private MutableCFALoc errorLoc;
 	
-	private final Collection<MutableCFALocImpl> locs;
-	private final Collection<MutableCFAEdgeImpl> edges;
+	private final Collection<MutableCFALoc> locs;
+	private final Collection<MutableCFAEdge> edges;
 	
-	public MutableCFAImpl() {		
+	public MutableCFA() {		
 		locs = new HashSet<>();
 		edges = new HashSet<>();
 		
-		initLoc = new MutableCFALocImpl();
-		finalLoc = new MutableCFALocImpl();
-		errorLoc = new MutableCFALocImpl();
+		initLoc = new MutableCFALoc();
+		finalLoc = new MutableCFALoc();
+		errorLoc = new MutableCFALoc();
 		
 		locs.add(initLoc);
 		locs.add(finalLoc);
@@ -34,11 +34,11 @@ public class MutableCFAImpl implements CFA {
 	////
 	
 	@Override
-	public MutableCFALocImpl getInitLoc() {
+	public MutableCFALoc getInitLoc() {
 		return initLoc;
 	}
 	
-	public void setInitLoc(final MutableCFALocImpl initLoc) {
+	public void setInitLoc(final MutableCFALoc initLoc) {
 		checkNotNull(initLoc);
 		checkArgument(locs.contains(initLoc));
 		this.initLoc = initLoc;
@@ -47,12 +47,12 @@ public class MutableCFAImpl implements CFA {
 	////
 	
 	@Override
-	public MutableCFALocImpl getFinalLoc() {
+	public MutableCFALoc getFinalLoc() {
 		return finalLoc;
 	}
 	
 	
-	public void setFinalLoc(final MutableCFALocImpl finalLoc) {
+	public void setFinalLoc(final MutableCFALoc finalLoc) {
 		checkNotNull(finalLoc);
 		checkArgument(locs.contains(finalLoc));
 		this.finalLoc = finalLoc;
@@ -61,11 +61,11 @@ public class MutableCFAImpl implements CFA {
 	////
 	
 	@Override
-	public MutableCFALocImpl getErrorLoc() {
+	public MutableCFALoc getErrorLoc() {
 		return errorLoc;
 	}
 	
-	public void setErrorLoc(final MutableCFALocImpl errorLoc) {
+	public void setErrorLoc(final MutableCFALoc errorLoc) {
 		checkNotNull(errorLoc);
 		checkArgument(locs.contains(errorLoc));
 		this.errorLoc = errorLoc;
@@ -74,17 +74,17 @@ public class MutableCFAImpl implements CFA {
 	////
 	
 	@Override
-	public Collection<MutableCFALocImpl> getLocs() {
+	public Collection<MutableCFALoc> getLocs() {
 		return Collections.unmodifiableCollection(locs);
 	}
 	
-	public MutableCFALocImpl createLoc() {
-		final MutableCFALocImpl loc = new MutableCFALocImpl();
+	public MutableCFALoc createLoc() {
+		final MutableCFALoc loc = new MutableCFALoc();
 		locs.add(loc);
 		return loc;
 	}
 	
-	public void deleteLoc(final MutableCFALocImpl loc) {
+	public void deleteLoc(final MutableCFALoc loc) {
 		checkNotNull(loc);
 		checkArgument(locs.contains(loc));
 		checkArgument(loc != initLoc);
@@ -98,24 +98,24 @@ public class MutableCFAImpl implements CFA {
 	////
 	
 	@Override
-	public Collection<MutableCFAEdgeImpl> getEdges() {
+	public Collection<MutableCFAEdge> getEdges() {
 		return Collections.unmodifiableCollection(edges);
 	}
 	
-	public MutableCFAEdgeImpl createEdge(final MutableCFALocImpl source, final MutableCFALocImpl target) {
+	public MutableCFAEdge createEdge(final MutableCFALoc source, final MutableCFALoc target) {
 		checkNotNull(source);
 		checkNotNull(target);
 		checkArgument(locs.contains(source));
 		checkArgument(locs.contains(target));
 		
-		final MutableCFAEdgeImpl edge = new MutableCFAEdgeImpl(source, target);
+		final MutableCFAEdge edge = new MutableCFAEdge(source, target);
 		source.addOutEdge(edge);
 		target.addOutEdge(edge);
 		edges.add(edge);
 		return edge;
 	}
 	
-	public void deleteEdge(final MutableCFAEdgeImpl edge) {
+	public void deleteEdge(final MutableCFAEdge edge) {
 		checkNotNull(edge);
 		checkArgument(edges.contains(edge));
 		edge.getSource().removeOutEdge(edge);
