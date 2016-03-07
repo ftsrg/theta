@@ -7,7 +7,6 @@ import hu.bme.mit.inf.ttmc.constraint.expr.Expr
 import hu.bme.mit.inf.ttmc.constraint.expr.RefExpr
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType
 import hu.bme.mit.inf.ttmc.constraint.type.Type
-import hu.bme.mit.inf.ttmc.constraint.ui.ExprCreator
 import hu.bme.mit.inf.ttmc.program.decl.VarDecl
 import hu.bme.mit.inf.ttmc.program.factory.ProgramFactory
 import hu.bme.mit.inf.ttmc.program.sts.STS
@@ -25,8 +24,9 @@ import java.util.HashMap
 import java.util.Map
 
 import static com.google.common.base.Preconditions.checkNotNull
+import hu.bme.mit.inf.ttmc.constraint.ui.ConstraintModelCreator
 
-final class SystemModelCreator extends ExprCreator {
+final class SystemModelCreator extends ConstraintModelCreator {
 	
 	val Map<VariableDeclaration, VarDecl<Type>> localVariableToVar = new HashMap
 	
@@ -35,12 +35,12 @@ final class SystemModelCreator extends ExprCreator {
 	private val SystemSpecification specification
 	
 	new(ConstraintManager manager, ProgramFactory programFactory, SystemSpecification specification) {
-		super(manager)
+		super(manager, specification)
 		this.specification = specification
 		this.pf = programFactory
 	}
 	
-	public def SystemModel create() {
+	public def SystemModel createSystemModel() {
 		val stss = new ArrayList<STS>()
 		
 		for (propertyDeclaration : specification.propertyDeclarations) {
