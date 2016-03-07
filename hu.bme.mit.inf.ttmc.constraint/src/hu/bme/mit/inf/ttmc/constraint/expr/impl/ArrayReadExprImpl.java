@@ -34,8 +34,11 @@ public class ArrayReadExprImpl<IndexType extends Type, ElemType extends Type> ex
 	@Override
 	public ArrayReadExpr<IndexType, ElemType> with(
 			Expr<? extends ArrayType<? super IndexType, ? extends ElemType>> array, Expr<? extends IndexType> index) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		if (this.array == array && this.index == index) {
+			return this;
+		} else {
+			return new ArrayReadExprImpl<>(array, index);
+		}
 	}
 
 	@Override
