@@ -8,83 +8,84 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import hu.bme.mit.inf.ttmc.program.cfa.CFA;
+import hu.bme.mit.inf.ttmc.program.cfa.CFAEdge;
+import hu.bme.mit.inf.ttmc.program.cfa.CFALoc;
 
 public class MutableCFA implements CFA {
 
-	private MutableCFALoc initLoc;
-	private MutableCFALoc finalLoc;
-	private MutableCFALoc errorLoc;
-	
-	private final Collection<MutableCFALoc> locs;
-	private final Collection<MutableCFAEdge> edges;
-	
-	public MutableCFA() {		
+	private CFALoc initLoc;
+	private CFALoc finalLoc;
+	private CFALoc errorLoc;
+
+	private final Collection<CFALoc> locs;
+	private final Collection<CFAEdge> edges;
+
+	public MutableCFA() {
 		locs = new HashSet<>();
 		edges = new HashSet<>();
-		
+
 		initLoc = new MutableCFALoc();
 		finalLoc = new MutableCFALoc();
 		errorLoc = new MutableCFALoc();
-		
+
 		locs.add(initLoc);
 		locs.add(finalLoc);
 		locs.add(errorLoc);
 	}
-	
+
 	////
-	
+
 	@Override
-	public MutableCFALoc getInitLoc() {
+	public CFALoc getInitLoc() {
 		return initLoc;
 	}
-	
-	public void setInitLoc(final MutableCFALoc initLoc) {
+
+	public void setInitLoc(final CFALoc initLoc) {
 		checkNotNull(initLoc);
 		checkArgument(locs.contains(initLoc));
 		this.initLoc = initLoc;
 	}
-	
+
 	////
-	
+
 	@Override
-	public MutableCFALoc getFinalLoc() {
+	public CFALoc getFinalLoc() {
 		return finalLoc;
 	}
-	
-	
-	public void setFinalLoc(final MutableCFALoc finalLoc) {
+
+	public void setFinalLoc(final CFALoc finalLoc) {
 		checkNotNull(finalLoc);
 		checkArgument(locs.contains(finalLoc));
 		this.finalLoc = finalLoc;
 	}
-	
+
 	////
-	
+
 	@Override
-	public MutableCFALoc getErrorLoc() {
+	public CFALoc getErrorLoc() {
 		return errorLoc;
 	}
-	
-	public void setErrorLoc(final MutableCFALoc errorLoc) {
+
+	public void setErrorLoc(final CFALoc errorLoc) {
 		checkNotNull(errorLoc);
 		checkArgument(locs.contains(errorLoc));
 		this.errorLoc = errorLoc;
 	}
-	
+
 	////
-	
+
 	@Override
-	public Collection<MutableCFALoc> getLocs() {
+	public Collection<CFALoc> getLocs() {
 		return Collections.unmodifiableCollection(locs);
 	}
-	
+
 	public MutableCFALoc createLoc() {
 		final MutableCFALoc loc = new MutableCFALoc();
 		locs.add(loc);
 		return loc;
 	}
-	
-	public void deleteLoc(final MutableCFALoc loc) {
+
+	public void deleteLoc(final CFALoc loc) {
 		checkNotNull(loc);
 		checkArgument(locs.contains(loc));
 		checkArgument(loc != initLoc);
@@ -94,33 +95,46 @@ public class MutableCFA implements CFA {
 		checkArgument(loc.getOutEdges().isEmpty());
 		locs.remove(loc);
 	}
-	
+
 	////
-	
+
 	@Override
-	public Collection<MutableCFAEdge> getEdges() {
+	public Collection<CFAEdge> getEdges() {
 		return Collections.unmodifiableCollection(edges);
 	}
-	
-	public MutableCFAEdge createEdge(final MutableCFALoc source, final MutableCFALoc target) {
+
+	public MutableCFAEdge createEdge(final CFALoc source, final CFALoc target) {
 		checkNotNull(source);
 		checkNotNull(target);
 		checkArgument(locs.contains(source));
 		checkArgument(locs.contains(target));
 		
-		final MutableCFAEdge edge = new MutableCFAEdge(source, target);
-		source.addOutEdge(edge);
-		target.addOutEdge(edge);
+		final MutableCFALoc mutableSource = (MutableCFALoc) source;
+		final MutableCFALoc mutableTarget = (MutableCFALoc) target;
+
+		final MutableCFAEdge edge = new MutableCFAEdge(mutableSource, mutableTarget);
+		mutableSource.addOutEdge(edge);
+		mutableTarget.addOutEdge(edge);
 		edges.add(edge);
 		return edge;
 	}
-	
-	public void deleteEdge(final MutableCFAEdge edge) {
+
+	public void deleteEdge(final CFAEdge edge) {
 		checkNotNull(edge);
 		checkArgument(edges.contains(edge));
-		edge.getSource().removeOutEdge(edge);
-		edge.getTarget().removeInEdge(edge);
+
+		final CFALoc source = edge.getSource();
+		final CFALoc target = edge.getTarget();
+
+		checkNotNull(source);
+		checkNotNull(target);
+
+		final MutableCFALoc mutableSource = (MutableCFALoc) source;
+		final MutableCFALoc mutableTarget = (MutableCFALoc) target;
+
+		mutableSource.removeOutEdge(edge);
+		mutableTarget.removeInEdge(edge);
 		edges.remove(edge);
 	}
-	
+
 }

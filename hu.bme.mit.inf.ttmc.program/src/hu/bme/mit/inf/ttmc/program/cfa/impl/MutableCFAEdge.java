@@ -4,12 +4,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 import hu.bme.mit.inf.ttmc.program.cfa.CFAEdge;
+import hu.bme.mit.inf.ttmc.program.cfa.CFALoc;
 import hu.bme.mit.inf.ttmc.program.stmt.Stmt;
 
-public class MutableCFAEdge implements CFAEdge {
+class MutableCFAEdge implements CFAEdge {
 
-	private MutableCFALoc source;
-	private MutableCFALoc target;
+	private CFALoc source;
+	private CFALoc target;
 	private final List<Stmt> stmts;
 	
 	MutableCFAEdge(final MutableCFALoc source, final MutableCFALoc target) {
@@ -21,12 +22,12 @@ public class MutableCFAEdge implements CFAEdge {
 	////
 
 	@Override
-	public MutableCFALoc getSource() {
+	public CFALoc getSource() {
 		return source;
 	}
 
 	@Override
-	public MutableCFALoc getTarget() {
+	public CFALoc getTarget() {
 		return target;
 	}
 
