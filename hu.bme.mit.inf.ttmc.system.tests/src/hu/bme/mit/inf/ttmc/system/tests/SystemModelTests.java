@@ -7,8 +7,8 @@ import org.junit.Test;
 
 import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.ConstraintManagerImpl;
-import hu.bme.mit.inf.ttmc.program.factory.ProgramFactoryImpl;
-import hu.bme.mit.inf.ttmc.program.sts.STS;
+import hu.bme.mit.inf.ttmc.formalism.factory.ProgramFactoryImpl;
+import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 import hu.bme.mit.inf.ttmc.system.model.SystemSpecification;
 import hu.bme.mit.inf.ttmc.system.ui.SystemModel;
 import hu.bme.mit.inf.ttmc.system.ui.SystemModelCreator;
