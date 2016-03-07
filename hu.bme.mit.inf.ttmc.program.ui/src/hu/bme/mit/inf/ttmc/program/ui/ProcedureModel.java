@@ -19,5 +19,6 @@ public interface ProcedureModel {
 	
 	public Optional<Stmt> getStmt();
 	public Optional<CFA> getCFA();
+	public Optional<Expr<? extends BoolType>> getAnnotation(Stmt stmt);
 	public Optional<Expr<? extends BoolType>> getAnnotation(CFALoc loc);
 }
