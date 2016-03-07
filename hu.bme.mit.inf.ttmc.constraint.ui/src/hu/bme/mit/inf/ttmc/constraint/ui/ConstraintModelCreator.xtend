@@ -1,14 +1,30 @@
 package hu.bme.mit.inf.ttmc.constraint.ui
 
+import com.google.common.collect.ImmutableList
+import hu.bme.mit.inf.ttmc.constraint.ConstraintManager
+import hu.bme.mit.inf.ttmc.constraint.decl.ConstDecl
+import hu.bme.mit.inf.ttmc.constraint.decl.Decl
+import hu.bme.mit.inf.ttmc.constraint.decl.ParamDecl
+import hu.bme.mit.inf.ttmc.constraint.expr.Expr
+import hu.bme.mit.inf.ttmc.constraint.expr.RefExpr
+import hu.bme.mit.inf.ttmc.constraint.factory.DeclFactory
+import hu.bme.mit.inf.ttmc.constraint.factory.ExprFactory
+import hu.bme.mit.inf.ttmc.constraint.factory.TypeFactory
 import hu.bme.mit.inf.ttmc.constraint.model.AddExpression
 import hu.bme.mit.inf.ttmc.constraint.model.AndExpression
+import hu.bme.mit.inf.ttmc.constraint.model.ArrayAccessExpression
+import hu.bme.mit.inf.ttmc.constraint.model.ArrayTypeDefinition
+import hu.bme.mit.inf.ttmc.constraint.model.ArrayWithExpression
 import hu.bme.mit.inf.ttmc.constraint.model.BooleanTypeDefinition
 import hu.bme.mit.inf.ttmc.constraint.model.ConstantDeclaration
+import hu.bme.mit.inf.ttmc.constraint.model.ConstraintSpecification
 import hu.bme.mit.inf.ttmc.constraint.model.DecimalLiteralExpression
+import hu.bme.mit.inf.ttmc.constraint.model.Declaration
 import hu.bme.mit.inf.ttmc.constraint.model.DivExpression
 import hu.bme.mit.inf.ttmc.constraint.model.DivideExpression
 import hu.bme.mit.inf.ttmc.constraint.model.EqualExpression
 import hu.bme.mit.inf.ttmc.constraint.model.EqualityExpression
+import hu.bme.mit.inf.ttmc.constraint.model.Expression
 import hu.bme.mit.inf.ttmc.constraint.model.FalseExpression
 import hu.bme.mit.inf.ttmc.constraint.model.FunctionDeclaration
 import hu.bme.mit.inf.ttmc.constraint.model.FunctionTypeDefinition
@@ -32,14 +48,7 @@ import hu.bme.mit.inf.ttmc.constraint.model.SubtractExpression
 import hu.bme.mit.inf.ttmc.constraint.model.TrueExpression
 import hu.bme.mit.inf.ttmc.constraint.model.TypeReference
 import hu.bme.mit.inf.ttmc.constraint.model.UnaryMinusExpression
-import hu.bme.mit.inf.ttmc.constraint.ConstraintManager
-import hu.bme.mit.inf.ttmc.constraint.decl.ConstDecl
-import hu.bme.mit.inf.ttmc.constraint.decl.Decl
-import hu.bme.mit.inf.ttmc.constraint.decl.ParamDecl
-import hu.bme.mit.inf.ttmc.constraint.expr.Expr
-import hu.bme.mit.inf.ttmc.constraint.factory.DeclFactory
-import hu.bme.mit.inf.ttmc.constraint.factory.ExprFactory
-import hu.bme.mit.inf.ttmc.constraint.factory.TypeFactory
+import hu.bme.mit.inf.ttmc.constraint.type.ArrayType
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType
 import hu.bme.mit.inf.ttmc.constraint.type.IntType
 import hu.bme.mit.inf.ttmc.constraint.type.RatType
@@ -48,49 +57,50 @@ import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderAdd
 import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderMul
 import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderNeg
 import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderSub
-import hu.bme.mit.inf.ttmc.constraint.model.Expression
-import hu.bme.mit.inf.ttmc.constraint.model.Declaration
-import java.util.Map
-import java.util.HashMap
-import hu.bme.mit.inf.ttmc.constraint.expr.RefExpr
-import hu.bme.mit.inf.ttmc.constraint.model.ArrayAccessExpression
-import hu.bme.mit.inf.ttmc.constraint.type.ArrayType
-import hu.bme.mit.inf.ttmc.constraint.model.ArrayTypeDefinition
-import hu.bme.mit.inf.ttmc.constraint.model.ArrayWithExpression
 import hu.bme.mit.inf.ttmc.constraint.utils.impl.TypeInferrer
-import static com.google.common.base.Preconditions.checkNotNull
-import hu.bme.mit.inf.ttmc.constraint.model.ConstraintSpecification
 import java.util.ArrayList
 import java.util.Collection
-import com.google.common.collect.ImmutableList
+import java.util.HashMap
+import java.util.Map
+
+import static com.google.common.base.Preconditions.checkNotNull
+import hu.bme.mit.inf.ttmc.constraint.model.IfThenElseExpression
 
 public class ConstraintModelCreator {
 	
-	private val extension ExprFactory ef
-	private val extension TypeFactory tf
-	private val extension DeclFactory df
+	protected val ConstraintManager manager
 	
-	private val extension TypeInferrer inferrer;
+	protected val extension ExprFactory ef
+	protected val extension TypeFactory tf
+	protected val extension DeclFactory df
+		
+	protected val Map<ConstantDeclaration, ConstDecl<Type>> constantToConst
+	protected val Map<ParameterDeclaration, ParamDecl<Type>> parameterToParam
 	
-	private val Map<ConstantDeclaration, ConstDecl<Type>> constantToConst
-	private val Map<ParameterDeclaration, ParamDecl<Type>> parameterToParam
+	protected val extension TypeInferrer inferrer
 	
 	private val ConstraintSpecification specification;
 
 	new(ConstraintManager manager, ConstraintSpecification specification) {
-		checkNotNull(manager);
-		checkNotNull(specification);
+		checkNotNull(manager)
+		checkNotNull(specification)
 		
-		this.specification = specification;
+		this.specification = specification
+		
+		this.manager = manager
 		
 		ef = manager.exprFactory
 		tf = manager.typeFactory
 		df = manager.declFactory
 		
-		inferrer = new TypeInferrer(manager)
-		
 		constantToConst = new HashMap
 		parameterToParam = new HashMap
+		
+		inferrer = getTypeInferrer(manager)
+	}
+	
+	protected def TypeInferrer getTypeInferrer(ConstraintManager manager) {
+		return new TypeInferrer(manager)
 	}
 	
 	public def ConstraintModel create() {
@@ -106,8 +116,8 @@ public class ConstraintModelCreator {
 		
 		model
 	}
-
-	////////
+	
+	/////
 	
 	protected def <T extends Type> Expr<? extends T> withType(Expr<? extends Type> expr, Class<T> metaType) {
 		if (metaType.isInstance(getType(expr))) {
@@ -117,36 +127,12 @@ public class ConstraintModelCreator {
 		}
 	}
 	
-	////////////////////////////////////////////////////////////////////////////////////////////
-		
+	/////
+	
 	protected def dispatch Expr<? extends Type> toExpr(Expression expression) {
 		throw new UnsupportedOperationException("Not supported: " + expression.class)
 	}
 	
-	protected def dispatch Expr<? extends Type> toExpr(ReferenceExpression expression) {
-		expression.declaration.toRefExpr
-	}
-	
-	////
-	
-	protected def dispatch RefExpr<? extends Type, ?> toRefExpr(Declaration declaration) {
-		throw new UnsupportedOperationException("Not supported")
-	}
-	
-	protected def dispatch RefExpr<? extends Type, ?> toRefExpr(ConstantDeclaration declaration) {
-		val decl = declaration.toDecl
-		val constDecl = decl as ConstDecl<Type>
-		Ref(constDecl)
-	}
-	
-	protected def dispatch RefExpr<? extends Type, ?> toRefExpr(ParameterDeclaration declaration) {
-		val decl = declaration.toDecl
-		val paramDecl = decl as ParamDecl<Type>
-		Ref(paramDecl)
-	}
-	
-	////
-
 	protected def dispatch Expr<? extends Type> toExpr(TrueExpression expression) {
 		True
 	}
@@ -303,7 +289,38 @@ public class ConstraintModelCreator {
 		}	
 	}
 	
-	/////////////////////////////////////////////////////////////////////
+	protected def dispatch Expr<? extends Type> toExpr(IfThenElseExpression expression) {
+		val cond = expression.condition.toExpr.withType(BoolType) as Expr<BoolType>
+		val then = expression.then.toExpr
+		val elze = expression.^else.toExpr
+		Ite(cond, then, elze)
+	}
+	
+	/////
+	
+	protected def dispatch Expr<? extends Type> toExpr(ReferenceExpression expression) {
+		expression.declaration.toRefExpr
+	}
+	
+	/////
+	
+	protected def dispatch RefExpr<? extends Type, ?> toRefExpr(Declaration declaration) {
+		throw new UnsupportedOperationException("Not supported")
+	}
+	
+	protected def dispatch RefExpr<? extends Type, ?> toRefExpr(ConstantDeclaration declaration) {
+		val decl = declaration.toDecl
+		val constDecl = decl as ConstDecl<Type>
+		Ref(constDecl)
+	}
+	
+	protected def dispatch RefExpr<? extends Type, ?> toRefExpr(ParameterDeclaration declaration) {
+		val decl = declaration.toDecl
+		val paramDecl = decl as ParamDecl<Type>
+		Ref(paramDecl)
+	}
+	
+	/////
 	
 	protected def dispatch Decl<Type> toDecl(Declaration declaration) {
 		throw new UnsupportedOperationException("Not supported: " + declaration.class)
@@ -335,8 +352,8 @@ public class ConstraintModelCreator {
 		return paramDecl
 	}
 	
-	//////////////////////////////////////////////////////////////////////
-
+	/////
+	
 	protected def dispatch Type toType(TypeReference type) {
 		type.reference.type.toType
 	}
@@ -379,7 +396,8 @@ public class ConstraintModelCreator {
 		}
 	}
 	
-	////////
+	
+	//////////////////////////////////////////////////////////////////////
 	
 	private static class ConstraintModelImpl implements ConstraintModel {
 		private val Collection<ConstDecl<? extends Type>> constDecls

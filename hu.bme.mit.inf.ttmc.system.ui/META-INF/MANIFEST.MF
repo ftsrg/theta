@@ -8,4 +8,11 @@ Require-Bundle: org.eclipse.xtext.ui;bundle-version="2.9.1",
  hu.bme.mit.inf.ttmc.constraint,
  hu.bme.mit.inf.ttmc.constraint.ui,
  hu.bme.mit.inf.ttmc.system.model,
- hu.bme.mit.inf.ttmc.system.language
+ hu.bme.mit.inf.ttmc.system.language,
+ hu.bme.mit.inf.ttmc.program,
+ com.google.guava,
+ org.eclipse.xtext.xbase.lib,
+ org.eclipse.xtend.lib,
+ org.eclipse.xtend.lib.macro
+Export-Package: hu.bme.mit.inf.ttmc.system.ui
+

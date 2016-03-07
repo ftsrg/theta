@@ -4,7 +4,9 @@ import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.expr.UnaryExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.impl.AbstractUnaryExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
+import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 import hu.bme.mit.inf.ttmc.program.expr.PrimedExpr;
+import hu.bme.mit.inf.ttmc.program.expr.visitor.PrimedExprVisitor;
 
 public final class PrimedExprImpl<ExprType extends Type> extends AbstractUnaryExpr<ExprType, ExprType> implements PrimedExpr<ExprType> {
 
@@ -41,5 +43,15 @@ public final class PrimedExprImpl<ExprType extends Type> extends AbstractUnaryEx
 	@Override
 	protected int getHashSeed() {
 		return 317;
+	}
+
+	@Override
+	public <P, R> R accept(ExprVisitor<? super P, ? extends R> visitor, P param) {
+		if (visitor instanceof PrimedExprVisitor<?, ?>) {
+			final PrimedExprVisitor<? super P, ? extends R> sVisitor = (PrimedExprVisitor<? super P, ? extends R>) visitor;
+			return sVisitor.visit(this, param);
+		} else {
+			throw new UnsupportedOperationException();
+		}
 	}
 }
