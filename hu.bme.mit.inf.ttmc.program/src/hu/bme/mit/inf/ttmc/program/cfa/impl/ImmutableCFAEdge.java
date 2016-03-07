@@ -6,16 +6,16 @@ import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.inf.ttmc.program.cfa.CFAEdge;
 import hu.bme.mit.inf.ttmc.program.cfa.CFALoc;
-import hu.bme.mit.inf.ttmc.program.cfa.impl.CFALocImpl.CFALocBuilder;
+import hu.bme.mit.inf.ttmc.program.cfa.impl.ImmutableCFALoc.CFALocBuilder;
 import hu.bme.mit.inf.ttmc.program.stmt.Stmt;
 
-final class CFAEdgeImpl implements CFAEdge {
+final class ImmutableCFAEdge implements CFAEdge {
 
 	final CFALoc source;
 	final CFALoc target;
 	final List<Stmt> stmts;
 
-	private CFAEdgeImpl(final CFAEdgeBuilder builder) {
+	private ImmutableCFAEdge(final CFAEdgeBuilder builder) {
 		builder.edge = this;
 
 		source = builder.source.build();
@@ -43,7 +43,7 @@ final class CFAEdgeImpl implements CFAEdge {
 
 	final static class CFAEdgeBuilder {
 
-		private CFAEdgeImpl edge;
+		private ImmutableCFAEdge edge;
 
 		private CFALocBuilder source;
 		private CFALocBuilder target;
@@ -53,9 +53,9 @@ final class CFAEdgeImpl implements CFAEdge {
 			this.stmts = stmts;
 		}
 
-		public CFAEdgeImpl build() {
+		public ImmutableCFAEdge build() {
 			if (edge == null) {
-				new CFAEdgeImpl(this);
+				new ImmutableCFAEdge(this);
 			}
 
 			return edge;
