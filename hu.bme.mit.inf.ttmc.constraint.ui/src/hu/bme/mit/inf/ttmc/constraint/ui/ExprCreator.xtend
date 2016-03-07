@@ -48,6 +48,18 @@ import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderSub
 import hu.bme.mit.inf.ttmc.constraint.utils.impl.TypeInferrer
 
 import static com.google.common.base.Preconditions.checkNotNull
+import hu.bme.mit.inf.ttmc.constraint.factory.DeclFactory
+import java.util.Map
+import hu.bme.mit.inf.ttmc.constraint.model.ConstantDeclaration
+import hu.bme.mit.inf.ttmc.constraint.decl.ConstDecl
+import hu.bme.mit.inf.ttmc.constraint.decl.ParamDecl
+import hu.bme.mit.inf.ttmc.constraint.model.ParameterDeclaration
+import java.util.HashMap
+import hu.bme.mit.inf.ttmc.constraint.model.ReferenceExpression
+import hu.bme.mit.inf.ttmc.constraint.model.Declaration
+import hu.bme.mit.inf.ttmc.constraint.expr.RefExpr
+import hu.bme.mit.inf.ttmc.constraint.decl.Decl
+import hu.bme.mit.inf.ttmc.constraint.model.FunctionDeclaration
 
 class ExprCreator {
 	
@@ -55,6 +67,10 @@ class ExprCreator {
 	
 	protected val extension ExprFactory ef
 	protected val extension TypeFactory tf
+	protected val extension DeclFactory df
+		
+	protected val Map<ConstantDeclaration, ConstDecl<Type>> constantToConst
+	protected val Map<ParameterDeclaration, ParamDecl<Type>> parameterToParam
 	
 	protected val extension TypeInferrer inferrer
 	
@@ -65,6 +81,10 @@ class ExprCreator {
 		
 		ef = manager.exprFactory
 		tf = manager.typeFactory
+		df = manager.declFactory
+		
+		constantToConst = new HashMap
+		parameterToParam = new HashMap
 		
 		inferrer = new TypeInferrer(manager)
 	}
@@ -237,6 +257,62 @@ class ExprCreator {
 		} else {
 			throw new UnsupportedOperationException
 		}	
+	}
+	
+	/////
+	
+	protected def dispatch Expr<? extends Type> toExpr(ReferenceExpression expression) {
+		expression.declaration.toRefExpr
+	}
+	
+	/////
+	
+	protected def dispatch RefExpr<? extends Type, ?> toRefExpr(Declaration declaration) {
+		throw new UnsupportedOperationException("Not supported")
+	}
+	
+	protected def dispatch RefExpr<? extends Type, ?> toRefExpr(ConstantDeclaration declaration) {
+		val decl = declaration.toDecl
+		val constDecl = decl as ConstDecl<Type>
+		Ref(constDecl)
+	}
+	
+	protected def dispatch RefExpr<? extends Type, ?> toRefExpr(ParameterDeclaration declaration) {
+		val decl = declaration.toDecl
+		val paramDecl = decl as ParamDecl<Type>
+		Ref(paramDecl)
+	}
+	
+	/////
+	
+	protected def dispatch Decl<Type> toDecl(Declaration declaration) {
+		throw new UnsupportedOperationException("Not supported: " + declaration.class)
+	}
+	
+	protected def dispatch Decl<Type> toDecl(ConstantDeclaration declaration) {
+		var constDecl = constantToConst.get(declaration)
+		if (constDecl === null) {
+			val name = declaration.name
+			val type = declaration.type.toType
+			constDecl = Const(name, type)
+			constantToConst.put(declaration, constDecl)
+		}
+		constDecl
+	}
+	
+	protected def dispatch Decl<Type> toDecl(FunctionDeclaration declaration) {
+		throw new UnsupportedOperationException("TODO")
+	}
+	
+	protected def dispatch Decl<Type> toDecl(ParameterDeclaration declaration) {
+		var paramDecl = parameterToParam.get(declaration)
+		if (paramDecl === null) {
+			val name = declaration.name
+			val type = declaration.type.toType
+			paramDecl = Param(name, type)
+			parameterToParam.put(declaration, paramDecl)
+		}
+		return paramDecl
 	}
 	
 	/////

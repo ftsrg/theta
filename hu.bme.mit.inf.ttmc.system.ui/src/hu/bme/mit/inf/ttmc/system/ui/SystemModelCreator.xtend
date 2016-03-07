@@ -5,17 +5,19 @@ import hu.bme.mit.inf.ttmc.constraint.ConstraintManager
 import hu.bme.mit.inf.ttmc.constraint.decl.Decl
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr
 import hu.bme.mit.inf.ttmc.constraint.expr.RefExpr
-import hu.bme.mit.inf.ttmc.constraint.model.Declaration
-import hu.bme.mit.inf.ttmc.constraint.model.ReferenceExpression
+import hu.bme.mit.inf.ttmc.constraint.type.BoolType
 import hu.bme.mit.inf.ttmc.constraint.type.Type
 import hu.bme.mit.inf.ttmc.constraint.ui.ExprCreator
 import hu.bme.mit.inf.ttmc.program.decl.VarDecl
 import hu.bme.mit.inf.ttmc.program.factory.ProgramFactory
 import hu.bme.mit.inf.ttmc.program.sts.STS
 import hu.bme.mit.inf.ttmc.program.sts.impl.STSImpl
+import hu.bme.mit.inf.ttmc.system.model.InitialConstraintDefinition
+import hu.bme.mit.inf.ttmc.system.model.InvariantConstraintDefinition
 import hu.bme.mit.inf.ttmc.system.model.PrimedExpression
 import hu.bme.mit.inf.ttmc.system.model.SystemDefinition
 import hu.bme.mit.inf.ttmc.system.model.SystemSpecification
+import hu.bme.mit.inf.ttmc.system.model.TransitionConstraintDefinition
 import hu.bme.mit.inf.ttmc.system.model.VariableDeclaration
 import java.util.ArrayList
 import java.util.Collection
@@ -23,10 +25,6 @@ import java.util.HashMap
 import java.util.Map
 
 import static com.google.common.base.Preconditions.checkNotNull
-import hu.bme.mit.inf.ttmc.constraint.type.BoolType
-import hu.bme.mit.inf.ttmc.system.model.InitialConstraintDefinition
-import hu.bme.mit.inf.ttmc.system.model.InvariantConstraintDefinition
-import hu.bme.mit.inf.ttmc.system.model.TransitionConstraintDefinition
 
 final class SystemModelCreator extends ExprCreator {
 	
@@ -70,10 +68,6 @@ final class SystemModelCreator extends ExprCreator {
 	
 	/////
 	
-	protected def dispatch Decl<Type> toDecl(Declaration declaration) {
-		throw new UnsupportedOperationException("Not supported: " + declaration.class)
-	}
-	
 	protected def dispatch Decl<Type> toDecl(VariableDeclaration declaration) {
 		var varDecl = localVariableToVar.get(declaration)
 		if (varDecl === null) {
@@ -87,21 +81,13 @@ final class SystemModelCreator extends ExprCreator {
 	
 	/////
 	
-	protected def dispatch Expr<? extends Type> toExpr(ReferenceExpression expression) {
-		expression.declaration.toRefExpr
-	}
-	
 	protected def dispatch Expr<? extends Type> toExpr(PrimedExpression expression) {
 		val op = expression.operand.toExpr.withType(Type)
 		Prime(op)
 	}
 	
 	/////
-	
-	protected def dispatch RefExpr<? extends Type, ?> toRefExpr(Declaration declaration) {
-		throw new UnsupportedOperationException("Not supported")
-	}
-	
+			
 	protected def dispatch RefExpr<? extends Type, ?> toRefExpr(VariableDeclaration declaration) {
 		val decl = declaration.toDecl
 		val varDecl = decl as VarDecl<Type>
