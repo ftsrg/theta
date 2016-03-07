@@ -30,6 +30,7 @@ public class ForallExprImpl extends AbstractQuantifiedExpr implements ForallExpr
 
 	@Override
 	protected int getHashSeed() {
+		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 

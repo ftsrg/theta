@@ -76,7 +76,7 @@ public interface ExprFactory {
 
 	public TupleLitExpr Tuple(final List<? extends Expr<?>> elems);
 
-	public <P extends Type, R extends Type> FuncLitExpr<? super P, ? extends R> Func(final ParamDecl<? extends P> paramDecl,
+	public <P extends Type, R extends Type> FuncLitExpr<? super P, ? extends R> Func(final ParamDecl<? super P> paramDecl,
 			final Expr<? extends R> result);
 
 	// LHS

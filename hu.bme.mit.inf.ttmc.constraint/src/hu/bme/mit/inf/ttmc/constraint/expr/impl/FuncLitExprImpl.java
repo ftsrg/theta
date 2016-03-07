@@ -9,7 +9,7 @@ import hu.bme.mit.inf.ttmc.constraint.type.FuncType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 
-public abstract class FuncLitExprImpl<ParamType extends Type, ResultType extends Type>
+public class FuncLitExprImpl<ParamType extends Type, ResultType extends Type>
 		extends AbstractExpr<FuncType<ParamType, ResultType>> implements FuncLitExpr<ParamType, ResultType> {
 
 	private final ParamDecl<? super ParamType> paramDecl;
