@@ -9,7 +9,7 @@ import hu.bme.mit.inf.ttmc.program.cfa.CFAEdge;
 import hu.bme.mit.inf.ttmc.program.cfa.CFALoc;
 import hu.bme.mit.inf.ttmc.program.cfa.impl.ImmutableCFAEdge.CFAEdgeBuilder;
 
-public final class ImmutableCFALoc implements CFALoc {
+final class ImmutableCFALoc implements CFALoc {
 
 	final Collection<ImmutableCFAEdge> inEdges;
 	final Collection<ImmutableCFAEdge> outEdges;

@@ -4,12 +4,13 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 
+import hu.bme.mit.inf.ttmc.program.cfa.CFAEdge;
 import hu.bme.mit.inf.ttmc.program.cfa.CFALoc;
 
-public class MutableCFALoc implements CFALoc {
+class MutableCFALoc implements CFALoc {
 
-	private final Collection<MutableCFAEdge> inEdges;
-	private final Collection<MutableCFAEdge> outEdges;
+	private final Collection<CFAEdge> inEdges;
+	private final Collection<CFAEdge> outEdges;
 	
 	
 	MutableCFALoc() {
@@ -20,30 +21,30 @@ public class MutableCFALoc implements CFALoc {
 	////
 	
 	@Override
-	public Collection<MutableCFAEdge> getInEdges() {	
+	public Collection<CFAEdge> getInEdges() {	
 		return Collections.unmodifiableCollection(inEdges);
 	}
 	
-	void addInEdge(final MutableCFAEdge edge) {
+	void addInEdge(final CFAEdge edge) {
 		inEdges.add(edge);
 	}
 	
-	void removeInEdge(final MutableCFAEdge edge) {
+	void removeInEdge(final CFAEdge edge) {
 		inEdges.remove(edge);
 	}
 	
 	////
 
 	@Override
-	public Collection<MutableCFAEdge> getOutEdges() {
+	public Collection<CFAEdge> getOutEdges() {
 		return Collections.unmodifiableCollection(outEdges);
 	}
 	
-	void addOutEdge(final MutableCFAEdge edge) {
+	void addOutEdge(final CFAEdge edge) {
 		outEdges.add(edge);
 	}
 	
-	void removeOutEdge(final MutableCFAEdge edge) {
+	void removeOutEdge(final CFAEdge edge) {
 		outEdges.remove(edge);
 	}
 	
