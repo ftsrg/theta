@@ -7,7 +7,6 @@ import org.junit.Test;
 
 import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.ConstraintManagerImpl;
-import hu.bme.mit.inf.ttmc.formalism.factory.ProgramFactoryImpl;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 import hu.bme.mit.inf.ttmc.formalism.utils.sts.impl.STSITETransformation;
 import hu.bme.mit.inf.ttmc.system.model.SystemSpecification;
@@ -23,8 +22,7 @@ public class SystemModelTests {
 		final String filePath = file.getAbsolutePath();
 		final SystemSpecification specification = SystemModelLoader.getInstance().load(filePath);
 		final ConstraintManager manager = new ConstraintManagerImpl();
-		final SystemModelCreator creator = new SystemModelCreator(manager, new ProgramFactoryImpl(), specification);
-		final SystemModel model = creator.createSystemModel();
+		final SystemModel model = SystemModelCreator.create(manager, specification);
 
 		for (STS sts : model.getSTSs()) {
 			sts = new STSITETransformation(manager).transform(sts);

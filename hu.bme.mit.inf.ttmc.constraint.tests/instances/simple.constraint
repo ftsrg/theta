@@ -3,6 +3,6 @@ specification Simple {
 	const a : integer
 	const b : integer
 
-	constraint a < b
+	constraint 0 < a and a < b
 	
 }

@@ -83,11 +83,9 @@ public class TypeInferrer {
 	protected class TypeInferrerVisitor implements ExprVisitor<Void, Type> {
 
 		protected final TypeFactory factory;
-		protected final TypeUtils utils;
 		
 		public TypeInferrerVisitor(final ConstraintManager manager) {
 			factory = manager.getTypeFactory();
-			utils = new TypeUtils(manager);
 		}
 		
 		////////
@@ -220,7 +218,7 @@ public class TypeInferrer {
 			final Expr<? extends ExprType> rightOp = expr.getRightOp();
 			final ExprType leftOpType = getType(leftOp);
 			final ExprType rightOpType = getType(rightOp);
-			final Optional<ExprType> joinResult = utils.join(rightOpType, leftOpType);
+			final Optional<ExprType> joinResult = TypeUtils.join(factory, rightOpType, leftOpType);
 			final ExprType result = joinResult.get();
 			return result;
 		}
@@ -231,7 +229,7 @@ public class TypeInferrer {
 			checkArgument(ops.size() > 0);
 			final Stream<ExprType> types = ops.stream().map(e -> (ExprType) getType(e));
 			final ExprType anyType = types.findAny().get();
-			final ExprType result = types.reduce(anyType, (t1, t2) -> utils.join(t1, t2).get());
+			final ExprType result = types.reduce(anyType, (t1, t2) -> TypeUtils.join(factory, t1, t2).get());
 			return result;
 		}
 
@@ -241,7 +239,7 @@ public class TypeInferrer {
 			checkArgument(ops.size() > 0);
 			final Stream<ExprType> types = ops.stream().map(e -> (ExprType) getType(e));
 			final ExprType anyType = types.findAny().get();
-			final ExprType result = types.reduce(anyType, (t1, t2) -> utils.join(t1, t2).get());
+			final ExprType result = types.reduce(anyType, (t1, t2) -> TypeUtils.join(factory, t1, t2).get());
 			return result;
 		}
 
@@ -295,7 +293,7 @@ public class TypeInferrer {
 			final Expr<? extends ExprType> elze = expr.getElse();
 			final ExprType thenType = getType(then);
 			final ExprType elzeType = getType(elze);
-			final Optional<ExprType> joinResult = utils.join(thenType, elzeType);
+			final Optional<ExprType> joinResult = TypeUtils.join(factory, thenType, elzeType);
 			final ExprType result = joinResult.get();
 			return result;
 		}
