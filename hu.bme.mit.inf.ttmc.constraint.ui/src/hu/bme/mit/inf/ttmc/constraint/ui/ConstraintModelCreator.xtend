@@ -65,6 +65,7 @@ import java.util.Map
 
 import static com.google.common.base.Preconditions.checkNotNull
 import hu.bme.mit.inf.ttmc.constraint.model.IfThenElseExpression
+import hu.bme.mit.inf.ttmc.constraint.utils.impl.ExprUtils
 
 public class ConstraintModelCreator {
 	
@@ -108,7 +109,7 @@ public class ConstraintModelCreator {
 		for (basicConstraintDefinition : specification.basicConstraintDefinitions) {
 			val expression = basicConstraintDefinition.expression
 			val expr = expression.toExpr.withType(BoolType)
-			constraints += expr
+			constraints += ExprUtils::getConjuncts(expr);
 		}
 		val constDecls = constantToConst.values
 
@@ -409,7 +410,7 @@ public class ConstraintModelCreator {
 		}
 	
 		override Collection<ConstDecl<? extends Type>> getConstDecls() {
-			 constDecls
+			constDecls
 		}
 	
 		override Collection<Expr<? extends BoolType>> getConstraints() {

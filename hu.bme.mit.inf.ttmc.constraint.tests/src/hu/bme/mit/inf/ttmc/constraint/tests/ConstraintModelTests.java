@@ -24,6 +24,7 @@ public class ConstraintModelTests {
 		final ConstraintModel model = creator.create();
 		
 		System.out.println(model.getConstDecls());
+		System.out.println(model.getConstraints());
 	}
 
 }
