@@ -3,28 +3,28 @@ package hu.bme.mit.inf.ttmc.formalism.utils.impl;
 import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
-import hu.bme.mit.inf.ttmc.constraint.utils.impl.ExprIteEliminator;
+import hu.bme.mit.inf.ttmc.constraint.utils.impl.ExprITEEliminator;
 import hu.bme.mit.inf.ttmc.formalism.expr.PrimedExpr;
 import hu.bme.mit.inf.ttmc.formalism.expr.ProcCallExpr;
 import hu.bme.mit.inf.ttmc.formalism.expr.ProcRefExpr;
 import hu.bme.mit.inf.ttmc.formalism.expr.VarRefExpr;
-import hu.bme.mit.inf.ttmc.formalism.utils.ProgExprVisitor;
+import hu.bme.mit.inf.ttmc.formalism.utils.FormalismExprVisitor;
 
 /**
  * If-Then-Else eliminator.
  * @author Akos
  *
  */
-public final class ProgExprIteEliminator extends ExprIteEliminator {
+public final class FormalismExprITEEliminator extends ExprITEEliminator {
 	
 	/**
 	 * Helper visitor 1
 	 * Propagate ITE up in the expression tree as high as possible.
 	 * @author Akos
 	 */
-	private static class PropagateProgIteVisitor extends PropagateIteVisitor implements ProgExprVisitor<Void, Expr<? extends Type>>  {
+	private static class PropagateFormalismITEVisitor extends PropagateITEVisitor implements FormalismExprVisitor<Void, Expr<? extends Type>>  {
 
-		public PropagateProgIteVisitor(ConstraintManager manager, ProgExprVisitor<Void, Expr<? extends Type>> pushBelowIteVisitor) {
+		public PropagateFormalismITEVisitor(ConstraintManager manager, FormalismExprVisitor<Void, Expr<? extends Type>> pushBelowIteVisitor) {
 			super(manager, pushBelowIteVisitor);
 		}
 
@@ -54,10 +54,10 @@ public final class ProgExprIteEliminator extends ExprIteEliminator {
 	 * Push an expression below an ITE recursively.
 	 * @author Akos
 	 */
-	private static class PushBelowProgIteVisitor extends PushBelowIteVisitor implements ProgExprVisitor<Void, Expr<? extends Type>> {
+	private static class PushBelowFormalismITEVisitor extends PushBelowITEVisitor implements FormalismExprVisitor<Void, Expr<? extends Type>> {
 
-		public PushBelowProgIteVisitor(ConstraintManager manager) {
-			super(manager, new IsBooleanConnectiveProgExprVisitor());
+		public PushBelowFormalismITEVisitor(ConstraintManager manager) {
+			super(manager, new IsBoolConnFormalismExprVisitor());
 		}
 
 		@Override
@@ -91,9 +91,9 @@ public final class ProgExprIteEliminator extends ExprIteEliminator {
 	 * It is assumed that ite expressions are propagated to the top.
 	 * @author Akos
 	 */
-	private static class RemoveProgIteVisitor extends RemoveIteVisitor implements ProgExprVisitor<Void, Expr<? extends Type>> {
+	private static class RemoveFormalismITEVisitor extends RemoveITEVisitor implements FormalismExprVisitor<Void, Expr<? extends Type>> {
 
-		public RemoveProgIteVisitor(ConstraintManager manager) {
+		public RemoveFormalismITEVisitor(ConstraintManager manager) {
 			super(manager);
 		}
 
@@ -123,17 +123,17 @@ public final class ProgExprIteEliminator extends ExprIteEliminator {
 	 * Constructor.
 	 * @param manager Constraint manager
 	 */
-	public ProgExprIteEliminator(ConstraintManager manager) {
+	public FormalismExprITEEliminator(ConstraintManager manager) {
 		super(manager);
 	}
 	
 	@Override
-	protected PropagateIteVisitor getPropageteIteVisitor(ConstraintManager manager) {
-		return new PropagateProgIteVisitor(manager, new PushBelowProgIteVisitor(manager));
+	protected PropagateITEVisitor getPropageteITEVisitor(ConstraintManager manager) {
+		return new PropagateFormalismITEVisitor(manager, new PushBelowFormalismITEVisitor(manager));
 	}
 	
 	@Override
-	protected RemoveIteVisitor getRemoveIteVisitor(ConstraintManager manager) {
-		return new RemoveProgIteVisitor(manager);
+	protected RemoveITEVisitor getRemoveITEVisitor(ConstraintManager manager) {
+		return new RemoveFormalismITEVisitor(manager);
 	}
 }

@@ -12,7 +12,6 @@ import hu.bme.mit.inf.ttmc.formalism.decl.VarDecl
 import hu.bme.mit.inf.ttmc.formalism.factory.ProgramFactory
 import hu.bme.mit.inf.ttmc.formalism.sts.STS
 import hu.bme.mit.inf.ttmc.formalism.sts.impl.STSImpl
-import hu.bme.mit.inf.ttmc.formalism.utils.impl.ProgTypeInferrer
 import hu.bme.mit.inf.ttmc.system.model.InitialConstraintDefinition
 import hu.bme.mit.inf.ttmc.system.model.InvariantConstraintDefinition
 import hu.bme.mit.inf.ttmc.system.model.PrimedExpression
@@ -26,6 +25,7 @@ import java.util.HashMap
 import java.util.Map
 
 import static com.google.common.base.Preconditions.checkNotNull
+import hu.bme.mit.inf.ttmc.formalism.utils.impl.FormalismTypeInferrer
 
 final class SystemModelCreator extends ConstraintModelCreator {
 	
@@ -42,7 +42,7 @@ final class SystemModelCreator extends ConstraintModelCreator {
 	}
 	
 	override protected getTypeInferrer(ConstraintManager manager) {
-		return new ProgTypeInferrer(manager)
+		return new FormalismTypeInferrer(manager)
 	}
 	
 	public def SystemModel createSystemModel() {

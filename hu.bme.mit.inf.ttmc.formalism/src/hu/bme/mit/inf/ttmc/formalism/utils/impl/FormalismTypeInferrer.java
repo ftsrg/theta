@@ -10,20 +10,20 @@ import hu.bme.mit.inf.ttmc.formalism.expr.ProcRefExpr;
 import hu.bme.mit.inf.ttmc.formalism.expr.VarRefExpr;
 import hu.bme.mit.inf.ttmc.formalism.utils.FormalismExprVisitor;
 
-public final class ProgTypeInferrer extends TypeInferrer {
+public final class FormalismTypeInferrer extends TypeInferrer {
 
-	public ProgTypeInferrer(ConstraintManager manager) {
+	public FormalismTypeInferrer(ConstraintManager manager) {
 		super(manager);
 	}
 	
 	@Override
 	protected TypeInferrerVisitor getTypeInferrer(ConstraintManager manager) {
-		return new ProgTypeInferrerVisitor(manager);
+		return new FormalismTypeInferrerVisitor(manager);
 	}
 	
-	private final class ProgTypeInferrerVisitor extends TypeInferrerVisitor implements FormalismExprVisitor<Void, Type> {
+	private final class FormalismTypeInferrerVisitor extends TypeInferrerVisitor implements FormalismExprVisitor<Void, Type> {
 
-		public ProgTypeInferrerVisitor(ConstraintManager manager) {
+		public FormalismTypeInferrerVisitor(ConstraintManager manager) {
 			super(manager);
 		}
 

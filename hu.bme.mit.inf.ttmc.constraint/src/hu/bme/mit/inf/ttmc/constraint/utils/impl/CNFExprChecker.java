@@ -55,15 +55,15 @@ import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
  * @author Akos
  *
  */
-public class CnfExprChecker {
+public class CNFExprChecker {
 	
-	private IsCnfExprVisitor visitor;
+	private IsCNFExprVisitor visitor;
 	
 	/**
 	 * Constructor.
 	 */
-	public CnfExprChecker() {
-		visitor = getCnfExprVisitor();
+	public CNFExprChecker() {
+		visitor = getCNFExprVisitor();
 	}
 	
 	/**
@@ -71,7 +71,7 @@ public class CnfExprChecker {
 	 * @param expr Expression to be checked
 	 * @return True if the expression is in CNF, false otherwise
 	 */
-	public boolean isExprInCnf(Expr<? extends BoolType> expr) {
+	public boolean isExprInCNF(Expr<? extends BoolType> expr) {
 		return expr.accept(visitor, Status.START);
 	}
 	
@@ -79,8 +79,8 @@ public class CnfExprChecker {
 	 * Get the helper visitor.
 	 * @return Helper visitor
 	 */
-	protected IsCnfExprVisitor getCnfExprVisitor() {
-		return new IsCnfExprVisitor();
+	protected IsCNFExprVisitor getCNFExprVisitor() {
+		return new IsCNFExprVisitor();
 	}
 
 	/**
@@ -98,7 +98,7 @@ public class CnfExprChecker {
 	 * Helper visitor for checking if an expression is in CNF.
 	 * @author Akos
 	 */
-	protected class IsCnfExprVisitor implements ExprVisitor<Status, Boolean> {
+	protected class IsCNFExprVisitor implements ExprVisitor<Status, Boolean> {
 
 		@Override
 		public <DeclType extends Type> Boolean visit(ConstRefExpr<DeclType> expr, Status param) {

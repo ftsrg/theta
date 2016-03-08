@@ -12,7 +12,7 @@ import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.formalism.expr.VarRefExpr;
 import hu.bme.mit.inf.ttmc.formalism.factory.ProgramFactory;
 import hu.bme.mit.inf.ttmc.formalism.factory.ProgramFactoryImpl;
-import hu.bme.mit.inf.ttmc.formalism.utils.impl.ProgExprIteEliminator;
+import hu.bme.mit.inf.ttmc.formalism.utils.impl.FormalismExprITEEliminator;
 
 public class ProgExprIteEliminatorTests {
 	// Manager and factories
@@ -23,7 +23,7 @@ public class ProgExprIteEliminatorTests {
 	// Constants and variables for testing
 	private VarRefExpr<BoolType> vA, vB, vC;
 	// Transformator
-	ProgExprIteEliminator eliminator;
+	FormalismExprITEEliminator eliminator;
 	
 	@Before
 	public void before() {
@@ -37,7 +37,7 @@ public class ProgExprIteEliminatorTests {
 		vB = pfc.Ref(pfc.Var("B", tfc.Bool()));
 		vC = pfc.Ref(pfc.Var("C", tfc.Bool()));
 		// Create transformator
-		eliminator = new ProgExprIteEliminator(manager);
+		eliminator = new FormalismExprITEEliminator(manager);
 	}
 	
 	@SuppressWarnings("unchecked")

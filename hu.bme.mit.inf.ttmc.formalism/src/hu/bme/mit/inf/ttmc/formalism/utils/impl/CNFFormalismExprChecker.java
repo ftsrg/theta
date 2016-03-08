@@ -1,12 +1,12 @@
 package hu.bme.mit.inf.ttmc.formalism.utils.impl;
 
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
-import hu.bme.mit.inf.ttmc.constraint.utils.impl.CnfExprChecker;
+import hu.bme.mit.inf.ttmc.constraint.utils.impl.CNFExprChecker;
 import hu.bme.mit.inf.ttmc.formalism.expr.PrimedExpr;
 import hu.bme.mit.inf.ttmc.formalism.expr.ProcCallExpr;
 import hu.bme.mit.inf.ttmc.formalism.expr.ProcRefExpr;
 import hu.bme.mit.inf.ttmc.formalism.expr.VarRefExpr;
-import hu.bme.mit.inf.ttmc.formalism.utils.ProgExprVisitor;
+import hu.bme.mit.inf.ttmc.formalism.utils.FormalismExprVisitor;
 
 /**
  * CNF checker to decide if an expression is in conjunctive
@@ -14,18 +14,18 @@ import hu.bme.mit.inf.ttmc.formalism.utils.ProgExprVisitor;
  * 
  * @author Akos
  */
-public final class CnfProgExprChecker extends CnfExprChecker {
+public final class CNFFormalismExprChecker extends CNFExprChecker {
 
 	@Override
-	protected IsCnfExprVisitor getCnfExprVisitor() {
-		return new IsCnfProgExprVisitor();
+	protected IsCNFExprVisitor getCNFExprVisitor() {
+		return new IsCNFFormalismExprVisitor();
 	}
 	
 	/**
 	 * Helper visitor for checking if an expression is in CNF.
 	 * @author Akos
 	 */
-	private class IsCnfProgExprVisitor extends IsCnfExprVisitor implements ProgExprVisitor<Status, Boolean> {
+	private class IsCNFFormalismExprVisitor extends IsCNFExprVisitor implements FormalismExprVisitor<Status, Boolean> {
 
 		@Override
 		public <ExprType extends Type> Boolean visit(PrimedExpr<ExprType> expr, Status param) {
