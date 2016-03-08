@@ -20,8 +20,7 @@ public class ConstraintModelTests {
 		final String filePath = file.getAbsolutePath();
 		final ConstraintSpecification specification = ConstraintModelLoader.getInstance().load(filePath);
 		final ConstraintManager manager = new ConstraintManagerImpl();
-		final ConstraintModelCreator creator = new ConstraintModelCreator(manager, specification);
-		final ConstraintModel model = creator.create();
+		final ConstraintModel model = ConstraintModelCreator.create(manager, specification);
 		
 		System.out.println(model.getConstDecls());
 		System.out.println(model.getConstraints());
