@@ -9,6 +9,7 @@ import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
+import hu.bme.mit.inf.ttmc.constraint.model.Expression;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.constraint.ui.TypeHelper;
@@ -20,6 +21,7 @@ import hu.bme.mit.inf.ttmc.formalism.factory.ProgramFactoryImpl;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 import hu.bme.mit.inf.ttmc.formalism.sts.impl.STSImpl;
 import hu.bme.mit.inf.ttmc.formalism.utils.impl.FormalismTypeInferrer;
+import hu.bme.mit.inf.ttmc.system.model.GloballyExpression;
 import hu.bme.mit.inf.ttmc.system.model.InitialConstraintDefinition;
 import hu.bme.mit.inf.ttmc.system.model.InvariantConstraintDefinition;
 import hu.bme.mit.inf.ttmc.system.model.PropertyDeclaration;
@@ -48,15 +50,21 @@ public class SystemModelCreator {
 
 		for (PropertyDeclaration propertyDeclaration : specification.getPropertyDeclarations()) {
 			final SystemDefinition systemDefinition = (SystemDefinition) propertyDeclaration.getSystem();
-			final STS sts = createSTS(systemDefinition, declarationHelper, expressionHelper, typeInferrer);
+			final STS sts = createSTS(systemDefinition, propertyDeclaration.getExpression(), declarationHelper, expressionHelper, typeInferrer);
 			stss.add(sts);
 		}
 
 		return new SystemModelImpl(stss);
 	}
 
-	private static STS createSTS(final SystemDefinition systemDefinition, final SystemDeclarationHelper declarationHelper, final SystemExpressionHelper expressionHelper, final TypeInferrer typeInferrer) {
+	private static STS createSTS(final SystemDefinition systemDefinition, final Expression prop, final SystemDeclarationHelper declarationHelper, final SystemExpressionHelper expressionHelper, final TypeInferrer typeInferrer) {
 		final STSImpl.Builder builder = new STSImpl.Builder();
+		if (prop instanceof GloballyExpression) {
+			builder.setProp(ExprUtils.cast(typeInferrer, expressionHelper.toExpr(((GloballyExpression)prop).getOperand()), BoolType.class));
+		} else {
+			throw new UnsupportedOperationException("Currently only expressions in the form of"
+					+ " G(expr) are supported, where 'expr' contains no temporal operators.");
+		}
 		
 		for (final VariableDeclaration variableDeclaration : systemDefinition.getVariableDeclarations()) {
 			final VarDecl<Type> varDecl = (VarDecl<Type>) declarationHelper.toDecl(variableDeclaration);
