@@ -1,14 +1,15 @@
 package hu.bme.mit.inf.ttmc.formalism.utils.impl;
 
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
-import hu.bme.mit.inf.ttmc.constraint.utils.impl.IsBooleanConnectiveExprVisitor;
+import hu.bme.mit.inf.ttmc.constraint.utils.impl.IsBoolConnExprVisitor;
 import hu.bme.mit.inf.ttmc.formalism.expr.PrimedExpr;
 import hu.bme.mit.inf.ttmc.formalism.expr.ProcCallExpr;
 import hu.bme.mit.inf.ttmc.formalism.expr.ProcRefExpr;
 import hu.bme.mit.inf.ttmc.formalism.expr.VarRefExpr;
-import hu.bme.mit.inf.ttmc.formalism.utils.ProgExprVisitor;
+import hu.bme.mit.inf.ttmc.formalism.utils.FormalismExprVisitor;
 
-public class IsBooleanConnectiveProgExprVisitor extends IsBooleanConnectiveExprVisitor implements ProgExprVisitor<Void, Boolean> {
+public class IsBoolConnFormalismExprVisitor extends IsBoolConnExprVisitor
+		implements FormalismExprVisitor<Void, Boolean> {
 
 	@Override
 	public <ExprType extends Type> Boolean visit(PrimedExpr<ExprType> expr, Void param) {

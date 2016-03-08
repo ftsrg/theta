@@ -31,17 +31,17 @@ import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
  * @author Akos
  *
  */
-public class ExprIteEliminator {
-	private PropagateIteVisitor propagateIteVisitor;
-	private RemoveIteVisitor removeIteVisitor;
+public class ExprITEEliminator {
+	private PropagateITEVisitor propagateITEVisitor;
+	private RemoveITEVisitor removeITEVisitor;
 	
 	/**
 	 * Constructor.
 	 * @param manager Constraint manager
 	 */
-	public ExprIteEliminator(ConstraintManager manager) {
-		propagateIteVisitor = getPropageteIteVisitor(manager);
-		removeIteVisitor = getRemoveIteVisitor(manager);
+	public ExprITEEliminator(ConstraintManager manager) {
+		propagateITEVisitor = getPropageteITEVisitor(manager);
+		removeITEVisitor = getRemoveITEVisitor(manager);
 	}
 	
 	/**
@@ -51,7 +51,7 @@ public class ExprIteEliminator {
 	 */
 	@SuppressWarnings("unchecked")
 	public final Expr<? extends BoolType> eliminate(Expr<? extends BoolType> expr) {
-		return (Expr<? extends BoolType>) expr.accept(propagateIteVisitor, null).accept(removeIteVisitor, null);
+		return (Expr<? extends BoolType>) expr.accept(propagateITEVisitor, null).accept(removeITEVisitor, null);
 	}
 	
 	/**
@@ -60,8 +60,8 @@ public class ExprIteEliminator {
 	 * @param manager Constraint manager
 	 * @return ITE propagating visitor
 	 */
-	protected PropagateIteVisitor getPropageteIteVisitor(ConstraintManager manager) {
-		return new PropagateIteVisitor(manager, new PushBelowIteVisitor(manager, new IsBooleanConnectiveExprVisitor()));
+	protected PropagateITEVisitor getPropageteITEVisitor(ConstraintManager manager) {
+		return new PropagateITEVisitor(manager, new PushBelowITEVisitor(manager, new IsBoolConnExprVisitor()));
 	}
 	
 	/**
@@ -70,8 +70,8 @@ public class ExprIteEliminator {
 	 * @param manager Constraint manager
 	 * @return ITE removing visitor
 	 */
-	protected RemoveIteVisitor getRemoveIteVisitor(ConstraintManager manager) {
-		return new RemoveIteVisitor(manager);
+	protected RemoveITEVisitor getRemoveITEVisitor(ConstraintManager manager) {
+		return new RemoveITEVisitor(manager);
 	}
 	
 	
@@ -80,16 +80,16 @@ public class ExprIteEliminator {
 	 * Propagate ITE up in the expression tree as high as possible.
 	 * @author Akos
 	 */
-	protected static class PropagateIteVisitor extends ArityBasedExprVisitor<Void, Expr<? extends Type>> {
-		private ExprVisitor<Void, Expr<? extends Type>> pushBelowIteVisitor;
+	protected static class PropagateITEVisitor extends ArityBasedExprVisitor<Void, Expr<? extends Type>> {
+		private ExprVisitor<Void, Expr<? extends Type>> pushBelowITEVisitor;
 		
 		/**
 		 * Constructor.
 		 * @param manager Constraint manager
 		 * @param pushBelowIteVisitor Visitor which can push below an ITE
 		 */
-		public PropagateIteVisitor(ConstraintManager manager, ExprVisitor<Void, Expr<? extends Type>> pushBelowIteVisitor) {
-			this.pushBelowIteVisitor = pushBelowIteVisitor;
+		public PropagateITEVisitor(ConstraintManager manager, ExprVisitor<Void, Expr<? extends Type>> pushBelowIteVisitor) {
+			this.pushBelowITEVisitor = pushBelowIteVisitor;
 		}
 		
 		@Override
@@ -102,7 +102,7 @@ public class ExprIteEliminator {
 		protected <OpType extends Type, ExprType extends Type> Expr<? extends Type> visitUnary(
 				UnaryExpr<OpType, ExprType> expr, Void param) {
 			// Apply propagation to operand(s) first, then apply pushdown
-			return expr.withOp((Expr<? extends OpType>) expr.getOp().accept(this, param)).accept(pushBelowIteVisitor, param);
+			return expr.withOp((Expr<? extends OpType>) expr.getOp().accept(this, param)).accept(pushBelowITEVisitor, param);
 		}
 
 		@SuppressWarnings("unchecked")
@@ -113,7 +113,7 @@ public class ExprIteEliminator {
 			return expr.withOps(
 					(Expr<? extends LeftOpType>) expr.getLeftOp().accept(this, param),
 					(Expr<? extends RightOpType>) expr.getRightOp().accept(this, param))
-					.accept(pushBelowIteVisitor, param);
+					.accept(pushBelowITEVisitor, param);
 		}
 
 		@SuppressWarnings("unchecked")
@@ -123,7 +123,7 @@ public class ExprIteEliminator {
 			// Apply propagation to operand(s) first, then apply pushdown
 			List<Expr<? extends OpsType>> ops = new ArrayList<>(expr.getOps().size());
 			for (Expr<? extends OpsType> op : expr.getOps()) ops.add((Expr<? extends OpsType>) op.accept(this, param));
-			return expr.withOps(ops).accept(pushBelowIteVisitor, param);
+			return expr.withOps(ops).accept(pushBelowITEVisitor, param);
 		}
 
 		@Override
@@ -166,7 +166,7 @@ public class ExprIteEliminator {
 	 * Push an expression below an ITE recursively.
 	 * @author Akos
 	 */
-	protected static class PushBelowIteVisitor extends ArityBasedExprVisitor<Void, Expr<? extends Type>> {
+	protected static class PushBelowITEVisitor extends ArityBasedExprVisitor<Void, Expr<? extends Type>> {
 		
 		private ConstraintManager manager;
 		private ExprVisitor<Void, Boolean> isBooleanVisitor;
@@ -175,7 +175,7 @@ public class ExprIteEliminator {
 		 * Constructor.
 		 * @param manager Constraint manager
 		 */
-		public PushBelowIteVisitor(ConstraintManager manager, ExprVisitor<Void, Boolean> isBooleanVisitor) {
+		public PushBelowITEVisitor(ConstraintManager manager, ExprVisitor<Void, Boolean> isBooleanVisitor) {
 			this.manager = manager;
 			this.isBooleanVisitor = isBooleanVisitor;
 		}
@@ -293,7 +293,7 @@ public class ExprIteEliminator {
 	 * It is assumed that ite expressions are propagated to the top.
 	 * @author Akos
 	 */
-	protected static class RemoveIteVisitor extends ArityBasedExprVisitor<Void, Expr<? extends Type>> {
+	protected static class RemoveITEVisitor extends ArityBasedExprVisitor<Void, Expr<? extends Type>> {
 		
 		private ConstraintManager manager;
 		
@@ -301,7 +301,7 @@ public class ExprIteEliminator {
 		 * Constructor.
 		 * @param manager Constraint manager
 		 */
-		public RemoveIteVisitor(ConstraintManager manager) {
+		public RemoveITEVisitor(ConstraintManager manager) {
 			this.manager = manager;
 		}
 
