@@ -24,6 +24,7 @@ public class STSImpl implements STS {
 	private final Collection<Expr<? extends BoolType>> init;
 	private final Collection<Expr<? extends BoolType>> invar;
 	private final Collection<Expr<? extends BoolType>> trans;
+	private final Expr<? extends BoolType> prop;
 	
 	/**
 	 * Constructor.
@@ -33,15 +34,18 @@ public class STSImpl implements STS {
 	 * @param trans Transition relation constraint
 	 */
 	public STSImpl(Collection<VarDecl<? extends Type>> vars, Collection<Expr<? extends BoolType>> init,
-			Collection<Expr<? extends BoolType>> invar, Collection<Expr<? extends BoolType>> trans) {
+			Collection<Expr<? extends BoolType>> invar, Collection<Expr<? extends BoolType>> trans,
+			Expr<? extends BoolType> prop) {
 		checkNotNull(vars);
 		checkNotNull(init);
 		checkNotNull(invar);
 		checkNotNull(trans);
+		checkNotNull(prop);
 		this.vars = new ArrayList<>(vars);
 		this.init = new ArrayList<>(init);
 		this.invar = new ArrayList<>(invar);
 		this.trans = new ArrayList<>(trans);
+		this.prop = prop;
 	}
 
 	@Override
@@ -64,6 +68,11 @@ public class STSImpl implements STS {
 		return Collections.unmodifiableCollection(trans);
 	}
 	
+	@Override
+	public Expr<? extends BoolType> getProp() {
+		return prop;
+	}
+	
 	/**
 	 * Builder class for Symbolic Transition Systems (STS).
 	 * @author Akos
@@ -73,6 +82,7 @@ public class STSImpl implements STS {
 		private final Collection<Expr<? extends BoolType>> init;
 		private final Collection<Expr<? extends BoolType>> invar;
 		private final Collection<Expr<? extends BoolType>> trans;
+		private Expr<? extends BoolType> prop;
 		
 		/**
 		 * Constructor.
@@ -82,6 +92,7 @@ public class STSImpl implements STS {
 			init = new ArrayList<>();
 			invar = new ArrayList<>();
 			trans = new ArrayList<>();
+			prop = null;
 		}
 		
 		/**
@@ -175,12 +186,24 @@ public class STSImpl implements STS {
 		}
 		
 		/**
+		 * Set the property expression.
+		 * @param prop Property expression
+		 * @return Builder instance
+		 */
+		public Builder setProp(Expr<? extends BoolType> prop) {
+			checkNotNull(prop);
+			this.prop = prop;
+			return this;
+		}
+		
+		/**
 		 * Build the Symbolic Transition System (STS)
 		 * @return Symbolic Transition System
 		 */
 		public STS build() {
-			return new STSImpl(vars, init, invar, trans);
+			return new STSImpl(vars, init, invar, trans, prop);
 		}
 	}
+
 
 }

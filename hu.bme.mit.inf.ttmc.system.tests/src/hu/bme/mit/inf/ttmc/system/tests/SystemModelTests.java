@@ -30,6 +30,7 @@ public class SystemModelTests {
 			System.out.println(sts.getInit());
 			System.out.println(sts.getInvar());
 			System.out.println(sts.getTrans());
+			System.out.println(sts.getProp());
 		}
 	}
 }

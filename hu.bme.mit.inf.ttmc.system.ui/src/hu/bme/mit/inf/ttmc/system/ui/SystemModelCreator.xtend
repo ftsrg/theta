@@ -26,6 +26,8 @@ import java.util.HashMap
 import java.util.Map
 
 import static com.google.common.base.Preconditions.checkNotNull
+import hu.bme.mit.inf.ttmc.constraint.model.Expression
+import hu.bme.mit.inf.ttmc.system.model.GloballyExpression
 
 final class SystemModelCreator extends ConstraintModelCreator {
 	
@@ -49,15 +51,20 @@ final class SystemModelCreator extends ConstraintModelCreator {
 		val stss = new ArrayList<STS>()
 		
 		for (propertyDeclaration : specification.propertyDeclarations) {
-			stss += create(propertyDeclaration.system as SystemDefinition)
+			stss += create(propertyDeclaration.system as SystemDefinition, propertyDeclaration.expression)
 		}
 		
 		new SystemModelImpl(stss)
 	}
 	
-	private def STS create(SystemDefinition sysDef) {
+	private def STS create(SystemDefinition sysDef, Expression property) {
 		localVariableToVar.clear
 		val builder = new STSImpl.Builder()
+		if (property instanceof GloballyExpression)
+			builder.prop = (property as GloballyExpression).operand.toExpr.withType(BoolType)
+		else
+			throw new UnsupportedOperationException("Currently only expressions in the form of"
+					+ " G(expr) are supported, where 'expr' contains no temporal operators.");
 		
 		for(constraintDef : sysDef.systemConstraintDefinitions) {
 			val expr = constraintDef.expression.toExpr.withType(BoolType)
