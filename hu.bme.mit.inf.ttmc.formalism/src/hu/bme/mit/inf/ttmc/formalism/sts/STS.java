@@ -35,4 +35,10 @@ public interface STS {
 	 * @return Transition relation constraints
 	 */
 	public Collection<Expr<? extends BoolType>> getTrans();
+	
+	/**
+	 * Get the property expression.
+	 * @return Property expression
+	 */
+	public Expr<? extends BoolType> getProp();
 }
