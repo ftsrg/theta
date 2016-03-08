@@ -26,10 +26,11 @@ import java.util.HashMap
 import java.util.Map
 
 import static com.google.common.base.Preconditions.checkNotNull
+import hu.bme.mit.inf.ttmc.constraint.utils.impl.ExprUtils
 
 final class SystemModelCreator extends ConstraintModelCreator {
 	
-	val Map<VariableDeclaration, VarDecl<Type>> localVariableToVar = new HashMap
+	val Map<VariableDeclaration, VarDecl<Type>> variableToVar = new HashMap
 	
 	private val extension ProgramFactory pf
 		
@@ -56,17 +57,17 @@ final class SystemModelCreator extends ConstraintModelCreator {
 	}
 	
 	private def STS create(SystemDefinition sysDef) {
-		localVariableToVar.clear
+		variableToVar.clear
 		val builder = new STSImpl.Builder()
 		
 		for(constraintDef : sysDef.systemConstraintDefinitions) {
-			val expr = constraintDef.expression.toExpr.withType(BoolType)
+			val expr = ExprUtils.cast(inferrer, constraintDef.expression.toExpr, BoolType)
 			if (constraintDef instanceof InitialConstraintDefinition) builder.addInit(expr)
 			if (constraintDef instanceof InvariantConstraintDefinition) builder.addInvar(expr)
 			if (constraintDef instanceof TransitionConstraintDefinition) builder.addTrans(expr)
 		}
 		
-		for (localVar : localVariableToVar.values) builder.addVar(localVar)
+		for (localVar : variableToVar.values) builder.addVar(localVar)
 		
 		builder.build()
 	}
@@ -74,12 +75,12 @@ final class SystemModelCreator extends ConstraintModelCreator {
 	/////
 	
 	protected def dispatch Decl<Type> toDecl(VariableDeclaration declaration) {
-		var varDecl = localVariableToVar.get(declaration)
+		var varDecl = variableToVar.get(declaration)
 		if (varDecl === null) {
 			val name = declaration.name
 			val type = declaration.type.toType
 			varDecl = Var(name, type)
-			localVariableToVar.put(declaration, varDecl)
+			variableToVar.put(declaration, varDecl)
 		}
 		varDecl
 	}	
@@ -87,7 +88,7 @@ final class SystemModelCreator extends ConstraintModelCreator {
 	/////
 	
 	protected def dispatch Expr<? extends Type> toExpr(PrimedExpression expression) {
-		val op = expression.operand.toExpr.withType(Type)
+		val op = expression.operand.toExpr
 		Prime(op)
 	}
 	
