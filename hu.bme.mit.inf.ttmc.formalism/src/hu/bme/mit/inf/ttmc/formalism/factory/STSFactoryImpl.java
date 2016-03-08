@@ -10,7 +10,9 @@ import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.formalism.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.decl.impl.VarDeclImpl;
 import hu.bme.mit.inf.ttmc.formalism.expr.PrimedExpr;
+import hu.bme.mit.inf.ttmc.formalism.expr.VarRefExpr;
 import hu.bme.mit.inf.ttmc.formalism.expr.impl.PrimedExprImpl;
+import hu.bme.mit.inf.ttmc.formalism.expr.impl.VarRefExprImpl;
 
 public class STSFactoryImpl implements STSFactory {
 	private final HashMap<String, VarDecl<?>> nameToVar;
@@ -35,6 +37,12 @@ public class STSFactoryImpl implements STSFactory {
 	public <T extends Type> PrimedExpr<T> Prime(Expr<? extends T> op) {
 		checkNotNull(op);
 		return new PrimedExprImpl<>(op);
+	}
+
+	@Override
+	public <T extends Type> VarRefExpr<T> Ref(VarDecl<T> varDecl) {
+		checkNotNull(varDecl);
+		return new VarRefExprImpl<>(varDecl);
 	}
 
 }
