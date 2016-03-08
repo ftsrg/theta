@@ -7,7 +7,9 @@ import org.junit.Test;
 
 import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.ConstraintManagerImpl;
+import hu.bme.mit.inf.ttmc.formalism.factory.STSFactoryImpl;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
+import hu.bme.mit.inf.ttmc.formalism.utils.sts.impl.STSCNFTransformation;
 import hu.bme.mit.inf.ttmc.formalism.utils.sts.impl.STSITETransformation;
 import hu.bme.mit.inf.ttmc.system.model.SystemSpecification;
 import hu.bme.mit.inf.ttmc.system.ui.SystemModel;
@@ -25,7 +27,8 @@ public class SystemModelTests {
 		final SystemModel model = SystemModelCreator.create(manager, specification);
 
 		for (STS sts : model.getSTSs()) {
-			sts = new STSITETransformation(manager).transform(sts);
+			sts = new STSCNFTransformation(manager, new STSFactoryImpl()).transform(
+					new STSITETransformation(manager).transform(sts));
 			System.out.println(sts.getVars());
 			System.out.println(sts.getInit());
 			System.out.println(sts.getInvar());

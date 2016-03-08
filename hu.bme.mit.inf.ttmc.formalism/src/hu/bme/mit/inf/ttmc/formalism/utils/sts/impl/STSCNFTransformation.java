@@ -1,5 +1,6 @@
 package hu.bme.mit.inf.ttmc.formalism.utils.sts.impl;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -53,16 +54,65 @@ import hu.bme.mit.inf.ttmc.formalism.expr.VarRefExpr;
 import hu.bme.mit.inf.ttmc.formalism.factory.STSFactory;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 import hu.bme.mit.inf.ttmc.formalism.sts.impl.STSImpl;
+import hu.bme.mit.inf.ttmc.formalism.utils.impl.CNFFormalismExprChecker;
 import hu.bme.mit.inf.ttmc.formalism.utils.sts.STSExprVisitor;
 import hu.bme.mit.inf.ttmc.formalism.utils.sts.STSTransformation;
 
 public final class STSCNFTransformation implements STSTransformation {
 	private final String CNFPREFIX = "__CNF";
-
+	private final ConstraintManager manager;
+	private final STSFactory stsFactory;
+	
+	public STSCNFTransformation(ConstraintManager manager, STSFactory stsFactory) {
+		this.manager = manager;
+		this.stsFactory = stsFactory;
+	}
+	
 	@Override
 	public STS transform(STS system) {
 		STSImpl.Builder builder = new STSImpl.Builder();
+		STSCNFTransformationVisitor visitor = new STSCNFTransformationVisitor(manager, stsFactory);
+		CNFFormalismExprChecker cnfChecker = new CNFFormalismExprChecker();
+		Collection<Expr<? extends BoolType>> encoding = new ArrayList<>();
+		// Keep variables
+		builder.addVar(system.getVars());
+		// Transform initial constraints
+		for (Expr<? extends BoolType> expr : system.getInit()) {
+			if (cnfChecker.isExprInCNF(expr)) builder.addInit(expr);
+			else {
+				encoding.clear();
+				expr.accept(visitor, encoding);
+				builder.addInit(encoding);
+			}
+		}
+		// Transform invariant constraints
+		for (Expr<? extends BoolType> expr : system.getInvar()) {
+			if (cnfChecker.isExprInCNF(expr)) builder.addInvar(expr);
+			else {
+				encoding.clear();
+				expr.accept(visitor, encoding);
+				builder.addInvar(encoding);
+			}
+		}
+		// Transform transition constraints
+		for (Expr<? extends BoolType> expr : system.getTrans()) {
+			if (cnfChecker.isExprInCNF(expr)) builder.addTrans(expr);
+			else {
+				encoding.clear();
+				expr.accept(visitor, encoding);
+				builder.addTrans(encoding);
+			}
+		}
+		// Transform the property
+		if (cnfChecker.isExprInCNF(system.getProp())) builder.setProp(system.getProp());
+		else {
+			encoding.clear();
+			system.getProp().accept(visitor, encoding);
+			builder.setProp(manager.getExprFactory().And(encoding));
+		}
 		
+		builder.addVar(visitor.getReps());
+
 		return builder.build();
 	}
 
@@ -79,6 +129,10 @@ public final class STSCNFTransformation implements STSTransformation {
 			ef = manager.getExprFactory();
 			nextId = 0;
 			reps = new HashMap<>();
+		}
+		
+		public Collection<VarDecl<? extends BoolType>> getReps() {
+			return reps.values();
 		}
 		
 		private Expr<? extends BoolType> getRep(Expr<?> expr) {
@@ -151,13 +205,34 @@ public final class STSCNFTransformation implements STSTransformation {
 		}
 		@Override
 		public Expr<? extends BoolType> visit(AndExpr expr, Collection<Expr<? extends BoolType>> param) {
-			// TODO Auto-generated method stub
-			return null;
+			if (reps.containsKey(expr)) return sf.Ref(reps.get(expr));
+			Expr<? extends BoolType> rep = getRep(expr);
+			Collection<Expr<? extends BoolType>> ops = new ArrayList<>(expr.getOps().size());
+			for (Expr<? extends BoolType> op : expr.getOps()) ops.add(op.accept(this, param));
+			Collection<Expr<? extends BoolType>> lastClause = new ArrayList<>();
+			lastClause.add(rep);
+			Collection<Expr<? extends BoolType>> en = new ArrayList<>();
+			for (Expr<? extends BoolType> op : ops) {
+				en.add(ef.Or(ef.Not(rep), op));
+				lastClause.add(ef.Not(op));
+			}
+			en.add(ef.Or(lastClause));
+			param.add(ef.And(en));
+			return rep;
 		}
 		@Override
 		public Expr<? extends BoolType> visit(OrExpr expr, Collection<Expr<? extends BoolType>> param) {
-			// TODO Auto-generated method stub
-			return null;
+			if (reps.containsKey(expr)) return sf.Ref(reps.get(expr));
+			Expr<? extends BoolType> rep = getRep(expr);
+			Collection<Expr<? extends BoolType>> ops = new ArrayList<>(expr.getOps().size());
+			for (Expr<? extends BoolType> op : expr.getOps()) ops.add(op.accept(this, param));
+			Collection<Expr<? extends BoolType>> en = new ArrayList<>();
+			for (Expr<? extends BoolType> op : ops) {
+				en.add(ef.Or(ef.Not(op), rep));
+			}
+			en.add(ef.Or(ops));
+			param.add(ef.And(en));
+			return rep;
 		}
 		@Override
 		public Expr<? extends BoolType> visit(ExistsExpr expr, Collection<Expr<? extends BoolType>> param) {
