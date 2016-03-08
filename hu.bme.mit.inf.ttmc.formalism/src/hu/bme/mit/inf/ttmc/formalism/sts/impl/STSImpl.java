@@ -110,7 +110,7 @@ public class STSImpl implements STS {
 		 * @param vars Variable declarations
 		 * @return Builder instance
 		 */
-		public Builder addVar(Collection<VarDecl<? extends Type>> vars) {
+		public Builder addVar(Collection<? extends VarDecl<? extends Type>> vars) {
 			checkNotNull(vars);
 			for (VarDecl<? extends Type> varDecl : vars) addVar(varDecl);
 			return this;
