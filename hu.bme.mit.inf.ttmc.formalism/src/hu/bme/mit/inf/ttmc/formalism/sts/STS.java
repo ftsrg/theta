@@ -19,20 +19,20 @@ public interface STS {
 	public Collection<VarDecl<? extends Type>> getVars();
 	
 	/**
-	 * Get the initial constarint.
-	 * @return Initial constraint
+	 * Get the initial constraints.
+	 * @return Initial constraints
 	 */
-	public Expr<? extends BoolType> getInit();
+	public Collection<Expr<? extends BoolType>> getInit();
 	
 	/**
-	 * Get the invariant constraint
-	 * @return Invariant constraint
+	 * Get the invariant constraints.
+	 * @return Invariant constraints
 	 */
-	public Expr<? extends BoolType> getInvar();
+	public Collection<Expr<? extends BoolType>> getInvar();
 	
 	/**
-	 * Get the transition relation constraint.
-	 * @return Transition relation constraint
+	 * Get the transition relation constraints.
+	 * @return Transition relation constraints
 	 */
-	public Expr<? extends BoolType> getTrans();
+	public Collection<Expr<? extends BoolType>> getTrans();
 }

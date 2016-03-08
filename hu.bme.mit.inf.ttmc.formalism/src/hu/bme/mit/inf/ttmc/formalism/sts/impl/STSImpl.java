@@ -5,9 +5,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 
-import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
+import hu.bme.mit.inf.ttmc.constraint.expr.AndExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
@@ -22,9 +21,9 @@ import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 public class STSImpl implements STS {
 
 	private final Collection<VarDecl<? extends Type>> vars;
-	private final Expr<? extends BoolType> init;
-	private final Expr<? extends BoolType> invar;
-	private final Expr<? extends BoolType> trans;
+	private final Collection<Expr<? extends BoolType>> init;
+	private final Collection<Expr<? extends BoolType>> invar;
+	private final Collection<Expr<? extends BoolType>> trans;
 	
 	/**
 	 * Constructor.
@@ -33,13 +32,16 @@ public class STSImpl implements STS {
 	 * @param invar Invariant constraint
 	 * @param trans Transition relation constraint
 	 */
-	public STSImpl(Collection<VarDecl<? extends Type>> vars, Expr<? extends BoolType> init,
-			Expr<? extends BoolType> invar, Expr<? extends BoolType> trans) {
+	public STSImpl(Collection<VarDecl<? extends Type>> vars, Collection<Expr<? extends BoolType>> init,
+			Collection<Expr<? extends BoolType>> invar, Collection<Expr<? extends BoolType>> trans) {
 		checkNotNull(vars);
+		checkNotNull(init);
+		checkNotNull(invar);
+		checkNotNull(trans);
 		this.vars = new ArrayList<>(vars);
-		this.init = checkNotNull(init);
-		this.invar = checkNotNull(invar);
-		this.trans = checkNotNull(trans);
+		this.init = new ArrayList<>(init);
+		this.invar = new ArrayList<>(invar);
+		this.trans = new ArrayList<>(trans);
 	}
 
 	@Override
@@ -48,18 +50,18 @@ public class STSImpl implements STS {
 	}
 
 	@Override
-	public Expr<? extends BoolType> getInit() {
-		return init;
+	public Collection<Expr<? extends BoolType>> getInit() {
+		return Collections.unmodifiableCollection(init);
 	}
 
 	@Override
-	public Expr<? extends BoolType> getInvar() {
-		return invar;
+	public Collection<Expr<? extends BoolType>> getInvar() {
+		return Collections.unmodifiableCollection(invar);
 	}
 
 	@Override
-	public Expr<? extends BoolType> getTrans() {
-		return trans;
+	public Collection<Expr<? extends BoolType>> getTrans() {
+		return Collections.unmodifiableCollection(trans);
 	}
 	
 	/**
@@ -67,10 +69,10 @@ public class STSImpl implements STS {
 	 * @author Akos
 	 */
 	public static class Builder {
-		private final List<VarDecl<? extends Type>> vars;
-		private final List<Expr<? extends BoolType>> init;
-		private final List<Expr<? extends BoolType>> invar;
-		private final List<Expr<? extends BoolType>> trans;
+		private final Collection<VarDecl<? extends Type>> vars;
+		private final Collection<Expr<? extends BoolType>> init;
+		private final Collection<Expr<? extends BoolType>> invar;
+		private final Collection<Expr<? extends BoolType>> trans;
 		
 		/**
 		 * Constructor.
@@ -98,7 +100,8 @@ public class STSImpl implements STS {
 		 * @return Builder instance
 		 */
 		public Builder addVar(Collection<VarDecl<? extends Type>> vars) {
-			vars.addAll(checkNotNull(vars));
+			checkNotNull(vars);
+			for (VarDecl<? extends Type> varDecl : vars) addVar(varDecl);
 			return this;
 		}
 		
@@ -108,7 +111,9 @@ public class STSImpl implements STS {
 		 * @return Builder instance
 		 */
 		public Builder addInit(Expr<? extends BoolType> expr) {
-			init.add(checkNotNull(expr));
+			checkNotNull(expr);
+			if (expr instanceof AndExpr) addInit(((AndExpr)expr).getOps());
+			else init.add(checkNotNull(expr));
 			return this;
 		}
 		
@@ -117,8 +122,9 @@ public class STSImpl implements STS {
 		 * @param init Initial constraints
 		 * @return Builder instance
 		 */
-		public Builder addInit(Collection<Expr<? extends BoolType>> init) {
-			this.init.addAll(checkNotNull(init));
+		public Builder addInit(Collection<? extends Expr<? extends BoolType>> init) {
+			checkNotNull(init);
+			for (Expr<? extends BoolType> expr : init) addInit(expr);
 			return this;
 		}
 		
@@ -128,7 +134,9 @@ public class STSImpl implements STS {
 		 * @return Builder instance
 		 */
 		public Builder addInvar(Expr<? extends BoolType> expr) {
-			invar.add(checkNotNull(expr));
+			checkNotNull(expr);
+			if (expr instanceof AndExpr) addInvar(((AndExpr)expr).getOps());
+			else invar.add(expr);
 			return this;
 		}
 		
@@ -137,8 +145,9 @@ public class STSImpl implements STS {
 		 * @param invar Invariant constraints
 		 * @return Builder instance
 		 */
-		public Builder addInvar(Collection<Expr<? extends BoolType>> invar) {
-			this.invar.addAll(checkNotNull(invar));
+		public Builder addInvar(Collection<? extends Expr<? extends BoolType>> invar) {
+			checkNotNull(invar);
+			for (Expr<? extends BoolType> expr : invar) addInvar(expr);
 			return this;
 		}
 		
@@ -148,7 +157,9 @@ public class STSImpl implements STS {
 		 * @return Builder instance
 		 */
 		public Builder addTrans(Expr<? extends BoolType> expr) {
-			trans.add(checkNotNull(expr));
+			checkNotNull(expr);
+			if (expr instanceof AndExpr) addTrans(((AndExpr)expr).getOps());
+			else trans.add(expr);
 			return this;
 		}
 		
@@ -157,22 +168,18 @@ public class STSImpl implements STS {
 		 * @param trans Transition constraints
 		 * @return Builder instance
 		 */
-		public Builder addTrans(Collection<Expr<? extends BoolType>> trans) {
-			this.trans.addAll(checkNotNull(trans));
+		public Builder addTrans(Collection<? extends Expr<? extends BoolType>> trans) {
+			checkNotNull(trans);
+			for (Expr<? extends BoolType> expr : trans) addTrans(expr);
 			return this;
 		}
 		
 		/**
 		 * Build the Symbolic Transition System (STS)
-		 * @param manager Constraint manager (required to create an AND expression from the individual constraints)
 		 * @return Symbolic Transition System
 		 */
-		public STS build(ConstraintManager manager) {
-			return new STSImpl(
-					vars,
-					init.size() == 1 ? init.get(0) : manager.getExprFactory().And(init),
-					invar.size() == 1 ? invar.get(0) : manager.getExprFactory().And(invar),
-					trans.size() == 1 ? trans.get(0) : manager.getExprFactory().And(trans));
+		public STS build() {
+			return new STSImpl(vars, init, invar, trans);
 		}
 	}
 
