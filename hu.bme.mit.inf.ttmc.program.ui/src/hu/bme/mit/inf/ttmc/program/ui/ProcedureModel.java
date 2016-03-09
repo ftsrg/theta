@@ -9,7 +9,6 @@ import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.formalism.cfa.CFA;
 import hu.bme.mit.inf.ttmc.formalism.cfa.CFALoc;
 import hu.bme.mit.inf.ttmc.formalism.decl.ProcDecl;
-import hu.bme.mit.inf.ttmc.formalism.stmt.Stmt;
 
 public interface ProcedureModel {
 	public ProcDecl<? extends Type> getProcDecl();
@@ -17,8 +16,6 @@ public interface ProcedureModel {
 	public Collection<Expr<? extends BoolType>> getPreConds();
 	public Collection<Expr<? extends BoolType>> getPostConds();
 	
-	public Optional<Stmt> getStmt();
 	public Optional<CFA> getCFA();
-	public Optional<Expr<? extends BoolType>> getAnnotation(Stmt stmt);
 	public Optional<Expr<? extends BoolType>> getAnnotation(CFALoc loc);
 }
