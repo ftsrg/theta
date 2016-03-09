@@ -13,7 +13,7 @@ import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.constraint.utils.impl.ExprCNFChecker;
 import org.junit.Assert;
 
-public class CnfExprCheckerTests {
+public class ExprCNFCheckerTests {
 	// Manager and factories
 		private ConstraintManager manager;
 		private ExprFactory efc;
