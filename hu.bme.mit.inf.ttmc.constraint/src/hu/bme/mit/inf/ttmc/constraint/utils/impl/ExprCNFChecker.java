@@ -43,240 +43,210 @@ import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderNeg;
 import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderSub;
 import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 
-/**
- * CNF checker to decide if an expression is in conjunctive
- * normal form (CNF).
- * 
- * Also serves as a base class for checking CNF for extensions
- * of the constraint language. The implementation contains a
- * helper visitor, which must be extended by the classes
- * inheriting from this class.
- * 
- * @author Akos
- *
- */
-public class CNFExprChecker {
+public class ExprCNFChecker {
 	
-	private IsCNFExprVisitor visitor;
+	private ExprCNFVisitor visitor;
 	
-	/**
-	 * Constructor.
-	 */
-	public CNFExprChecker() {
+	public ExprCNFChecker() {
 		visitor = getCNFExprVisitor();
 	}
 	
-	/**
-	 * Check if the expression is in conjunctive normal form (CNF).
-	 * @param expr Expression to be checked
-	 * @return True if the expression is in CNF, false otherwise
-	 */
-	public boolean isExprInCNF(Expr<? extends BoolType> expr) {
-		return expr.accept(visitor, Status.START);
-	}
-	
-	/**
-	 * Get the helper visitor.
-	 * @return Helper visitor
-	 */
-	protected IsCNFExprVisitor getCNFExprVisitor() {
-		return new IsCNFExprVisitor();
+	public boolean isExprCNF(Expr<? extends BoolType> expr) {
+		return expr.accept(visitor, CNFStatus.START);
 	}
 
-	/**
-	 * Enum for keeping track of the current state in the visitor.
-	 * @author Akos
-	 */
-	protected enum Status {
-		START(0), AND(1), OR(2), NOT(3);
+	// Subclasses can override this method to provide a different visitor
+	// (supporting more types of expressions)
+	protected ExprCNFVisitor getCNFExprVisitor() {
+		return new ExprCNFVisitor();
+	}
+
+	protected enum CNFStatus {
+		START(0), INSIDE_AND(1), INSIDE_OR(2), INSIDE_NOT(3);
 		private final int value;
-	    private Status(int value) { this.value = value; }
+	    private CNFStatus(int value) { this.value = value; }
 	    public int getValue() { return value; }
 	}
 
-	/**
-	 * Helper visitor for checking if an expression is in CNF.
-	 * @author Akos
-	 */
-	protected class IsCNFExprVisitor implements ExprVisitor<Status, Boolean> {
+	protected class ExprCNFVisitor implements ExprVisitor<CNFStatus, Boolean> {
 
 		@Override
-		public <DeclType extends Type> Boolean visit(ConstRefExpr<DeclType> expr, Status param) {
+		public <DeclType extends Type> Boolean visit(ConstRefExpr<DeclType> expr, CNFStatus param) {
 			return true;
 		}
 
 		@Override
-		public <DeclType extends Type> Boolean visit(ParamRefExpr<DeclType> expr, Status param) {
+		public <DeclType extends Type> Boolean visit(ParamRefExpr<DeclType> expr, CNFStatus param) {
 			return true;
 		}
 
 		@Override
-		public Boolean visit(FalseExpr expr, Status param) {
+		public Boolean visit(FalseExpr expr, CNFStatus param) {
 			return true;
 		}
 
 		@Override
-		public Boolean visit(TrueExpr expr, Status param) {
+		public Boolean visit(TrueExpr expr, CNFStatus param) {
 			return true;
 		}
 
 		@Override
-		public Boolean visit(NotExpr expr, Status param) {
+		public Boolean visit(NotExpr expr, CNFStatus param) {
 			// NOT is not allowed inside NOT
-			if(param.getValue() >= Status.NOT.getValue()) return false;
-			else return expr.getOp().accept(this, Status.NOT);
+			if(param.getValue() >= CNFStatus.INSIDE_NOT.getValue()) return false;
+			else return expr.getOp().accept(this, CNFStatus.INSIDE_NOT);
 		}
 
 		@Override
-		public Boolean visit(ImplyExpr expr, Status param) {
+		public Boolean visit(ImplyExpr expr, CNFStatus param) {
 			return false;
 		}
 
 		@Override
-		public Boolean visit(IffExpr expr, Status param) {
+		public Boolean visit(IffExpr expr, CNFStatus param) {
 			return false;
 		}
 
 		@Override
-		public Boolean visit(AndExpr expr, Status param) {
+		public Boolean visit(AndExpr expr, CNFStatus param) {
 			// AND is allowed inside AND
-			if(param.getValue() > Status.AND.getValue()) return false;
-			else return expr.getOps().stream().allMatch(op -> op.accept(this, Status.AND));
+			if(param.getValue() > CNFStatus.INSIDE_AND.getValue()) return false;
+			else return expr.getOps().stream().allMatch(op -> op.accept(this, CNFStatus.INSIDE_AND));
 		}
 
 		@Override
-		public Boolean visit(OrExpr expr, Status param) {
+		public Boolean visit(OrExpr expr, CNFStatus param) {
 			// OR is allowed inside OR
-			if(param.getValue() > Status.OR.getValue()) return false;
-			else return expr.getOps().stream().allMatch(op -> op.accept(this, Status.OR));
+			if(param.getValue() > CNFStatus.INSIDE_OR.getValue()) return false;
+			else return expr.getOps().stream().allMatch(op -> op.accept(this, CNFStatus.INSIDE_OR));
 		}
 
 		@Override
-		public Boolean visit(ExistsExpr expr, Status param) {
+		public Boolean visit(ExistsExpr expr, CNFStatus param) {
 			return true;
 		}
 
 		@Override
-		public Boolean visit(ForallExpr expr, Status param) {
+		public Boolean visit(ForallExpr expr, CNFStatus param) {
 			return true;
 		}
 
 		@Override
-		public Boolean visit(EqExpr expr, Status param) {
+		public Boolean visit(EqExpr expr, CNFStatus param) {
 			return true;
 		}
 
 		@Override
-		public Boolean visit(NeqExpr expr, Status param) {
+		public Boolean visit(NeqExpr expr, CNFStatus param) {
 			return true;
 		}
 
 		@Override
-		public Boolean visit(GeqExpr expr, Status param) {
+		public Boolean visit(GeqExpr expr, CNFStatus param) {
 			return true;
 		}
 
 		@Override
-		public Boolean visit(GtExpr expr, Status param) {
+		public Boolean visit(GtExpr expr, CNFStatus param) {
 			return true;
 		}
 
 		@Override
-		public Boolean visit(LeqExpr expr, Status param) {
+		public Boolean visit(LeqExpr expr, CNFStatus param) {
 			return true;
 		}
 
 		@Override
-		public Boolean visit(LtExpr expr, Status param) {
+		public Boolean visit(LtExpr expr, CNFStatus param) {
 			return true;
 		}
 
 		@Override
-		public Boolean visit(IntLitExpr expr, Status param) {
+		public Boolean visit(IntLitExpr expr, CNFStatus param) {
 			return true;
 		}
 
 		@Override
-		public Boolean visit(IntDivExpr expr, Status param) {
+		public Boolean visit(IntDivExpr expr, CNFStatus param) {
 			return true;
 		}
 
 		@Override
-		public Boolean visit(RemExpr expr, Status param) {
+		public Boolean visit(RemExpr expr, CNFStatus param) {
 			return true;
 		}
 
 		@Override
-		public Boolean visit(ModExpr expr, Status param) {
+		public Boolean visit(ModExpr expr, CNFStatus param) {
 			return true;
 		}
 
 		@Override
-		public Boolean visit(RatLitExpr expr, Status param) {
+		public Boolean visit(RatLitExpr expr, CNFStatus param) {
 			return true;
 		}
 
 		@Override
-		public Boolean visit(RatDivExpr expr, Status param) {
+		public Boolean visit(RatDivExpr expr, CNFStatus param) {
 			return true;
 		}
 
 		@Override
-		public <ExprType extends ClosedUnderNeg> Boolean visit(NegExpr<ExprType> expr, Status param) {
+		public <ExprType extends ClosedUnderNeg> Boolean visit(NegExpr<ExprType> expr, CNFStatus param) {
 			return true;
 		}
 
 		@Override
-		public <ExprType extends ClosedUnderSub> Boolean visit(SubExpr<ExprType> expr, Status param) {
+		public <ExprType extends ClosedUnderSub> Boolean visit(SubExpr<ExprType> expr, CNFStatus param) {
 			return true;
 		}
 
 		@Override
-		public <ExprType extends ClosedUnderAdd> Boolean visit(AddExpr<ExprType> expr, Status param) {
+		public <ExprType extends ClosedUnderAdd> Boolean visit(AddExpr<ExprType> expr, CNFStatus param) {
 			return true;
 		}
 
 		@Override
-		public <ExprType extends ClosedUnderMul> Boolean visit(MulExpr<ExprType> expr, Status param) {
+		public <ExprType extends ClosedUnderMul> Boolean visit(MulExpr<ExprType> expr, CNFStatus param) {
 			return true;
 		}
 
 		@Override
 		public <IndexType extends Type, ElemType extends Type> Boolean visit(ArrayReadExpr<IndexType, ElemType> expr,
-				Status param) {
+				CNFStatus param) {
 			return true;
 		}
 
 		@Override
 		public <IndexType extends Type, ElemType extends Type> Boolean visit(ArrayWriteExpr<IndexType, ElemType> expr,
-				Status param) {
+				CNFStatus param) {
 			return true;
 		}
 
 		@Override
 		public <ParamType extends Type, ResultType extends Type> Boolean visit(FuncLitExpr<ParamType, ResultType> expr,
-				Status param) {
+				CNFStatus param) {
 			return true;
 		}
 
 		@Override
 		public <ParamType extends Type, ResultType extends Type> Boolean visit(FuncAppExpr<ParamType, ResultType> expr,
-				Status param) {
+				CNFStatus param) {
 			return true;
 		}
 
 		@Override
-		public Boolean visit(TupleLitExpr expr, Status param) {
+		public Boolean visit(TupleLitExpr expr, CNFStatus param) {
 			return true;
 		}
 
 		@Override
-		public Boolean visit(TupleProjExpr expr, Status param) {
+		public Boolean visit(TupleProjExpr expr, CNFStatus param) {
 			return true;
 		}
 
 		@Override
-		public <ExprType extends Type> Boolean visit(IteExpr<ExprType> expr, Status param) {
+		public <ExprType extends Type> Boolean visit(IteExpr<ExprType> expr, CNFStatus param) {
 			return false;
 		}
 		

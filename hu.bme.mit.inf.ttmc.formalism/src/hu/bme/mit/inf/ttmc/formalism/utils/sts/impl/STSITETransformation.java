@@ -8,17 +8,9 @@ import hu.bme.mit.inf.ttmc.formalism.sts.impl.STSImpl;
 import hu.bme.mit.inf.ttmc.formalism.utils.impl.FormalismExprITEEliminator;
 import hu.bme.mit.inf.ttmc.formalism.utils.sts.STSTransformation;
 
-/**
- * Eliminate if-then-else constructs from the constraints of an STS.
- * @author Akos Hajdu
- */
 public final class STSITETransformation implements STSTransformation {
 	private final FormalismExprITEEliminator eliminator;
 	
-	/**
-	 * Constructor.
-	 * @param manager Constraint manager for building new expressions
-	 */
 	public STSITETransformation(ConstraintManager manager) {
 		eliminator = new FormalismExprITEEliminator(manager);
 	}

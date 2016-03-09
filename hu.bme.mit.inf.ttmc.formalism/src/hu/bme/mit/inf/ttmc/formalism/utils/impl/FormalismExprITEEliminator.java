@@ -10,17 +10,27 @@ import hu.bme.mit.inf.ttmc.formalism.expr.ProcRefExpr;
 import hu.bme.mit.inf.ttmc.formalism.expr.VarRefExpr;
 import hu.bme.mit.inf.ttmc.formalism.utils.FormalismExprVisitor;
 
-/**
- * If-Then-Else eliminator.
- * @author Akos
- *
- */
 public final class FormalismExprITEEliminator extends ExprITEEliminator {
 	
+	public FormalismExprITEEliminator(ConstraintManager manager) {
+		super(manager);
+	}
+	
+	// Provide own visitor that supports all formalism expressions
+	@Override
+	protected PropagateITEVisitor getPropageteITEVisitor(ConstraintManager manager) {
+		return new PropagateFormalismITEVisitor(manager, new PushBelowFormalismITEVisitor(manager));
+	}
+
+	// Provide own visitor that supports all formalism expressions
+	@Override
+	protected RemoveITEVisitor getRemoveITEVisitor(ConstraintManager manager) {
+		return new RemoveFormalismITEVisitor(manager);
+	}
+	
 	/**
-	 * Helper visitor 1
-	 * Propagate ITE up in the expression tree as high as possible.
-	 * @author Akos
+	 * Helper visitor 1: Propagate ITE up in the expression tree as high as possible.
+	 * For example: x = 1 + ite(c, t, e) --> ite(c, x = 1 + t, x = 1 + e)
 	 */
 	private static class PropagateFormalismITEVisitor extends PropagateITEVisitor implements FormalismExprVisitor<Void, Expr<? extends Type>>  {
 
@@ -50,9 +60,8 @@ public final class FormalismExprITEEliminator extends ExprITEEliminator {
 	}
 	
 	/**
-	 * Helper visitor 2
-	 * Push an expression below an ITE recursively.
-	 * @author Akos
+	 * Helper visitor 2: Push an expression below an ITE recursively.
+	 * For example: x = ite (c1, ite(c2, t, e1), e2) --> ite(c1, ite(c2, x = t, x = e1), x = e2)
 	 */
 	private static class PushBelowFormalismITEVisitor extends PushBelowITEVisitor implements FormalismExprVisitor<Void, Expr<? extends Type>> {
 
@@ -83,13 +92,10 @@ public final class FormalismExprITEEliminator extends ExprITEEliminator {
 	}
 
 	/**
-	 * Helper visitor 3
+	 * Helper visitor 3: Replace if-then-else expressions with boolean connectives.
+	 * For example: (if A then B else C) <=> (!A or B) and (A or C).
 	 * 
-	 * Remove if-then-else expressions by transforming them with the following rule:
-	 * (if A then B else C) <=> (!A or B) and (A or C).
-	 * 
-	 * It is assumed that ite expressions are propagated to the top.
-	 * @author Akos
+	 * It is assumed that ite expressions are propagated as high as possible.
 	 */
 	private static class RemoveFormalismITEVisitor extends RemoveITEVisitor implements FormalismExprVisitor<Void, Expr<? extends Type>> {
 
@@ -119,21 +125,4 @@ public final class FormalismExprITEEliminator extends ExprITEEliminator {
 		
 	}
 	
-	/**
-	 * Constructor.
-	 * @param manager Constraint manager
-	 */
-	public FormalismExprITEEliminator(ConstraintManager manager) {
-		super(manager);
-	}
-	
-	@Override
-	protected PropagateITEVisitor getPropageteITEVisitor(ConstraintManager manager) {
-		return new PropagateFormalismITEVisitor(manager, new PushBelowFormalismITEVisitor(manager));
-	}
-	
-	@Override
-	protected RemoveITEVisitor getRemoveITEVisitor(ConstraintManager manager) {
-		return new RemoveFormalismITEVisitor(manager);
-	}
 }

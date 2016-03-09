@@ -14,7 +14,7 @@ import hu.bme.mit.inf.ttmc.formalism.factory.ProgramFactory;
 import hu.bme.mit.inf.ttmc.formalism.factory.ProgramFactoryImpl;
 import hu.bme.mit.inf.ttmc.formalism.utils.impl.FormalismExprITEEliminator;
 
-public class ProgExprIteEliminatorTests {
+public class FormalismExprITEEliminatorTests {
 	// Manager and factories
 	private ConstraintManager manager;
 	private ExprFactory efc;

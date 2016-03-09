@@ -54,7 +54,7 @@ import hu.bme.mit.inf.ttmc.formalism.expr.VarRefExpr;
 import hu.bme.mit.inf.ttmc.formalism.factory.STSFactory;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 import hu.bme.mit.inf.ttmc.formalism.sts.impl.STSImpl;
-import hu.bme.mit.inf.ttmc.formalism.utils.impl.CNFFormalismExprChecker;
+import hu.bme.mit.inf.ttmc.formalism.utils.impl.FormalismExprCNFChecker;
 import hu.bme.mit.inf.ttmc.formalism.utils.sts.STSExprVisitor;
 import hu.bme.mit.inf.ttmc.formalism.utils.sts.STSTransformation;
 
@@ -68,17 +68,20 @@ public final class STSCNFTransformation implements STSTransformation {
 		this.stsFactory = stsFactory;
 	}
 	
+	/**
+	 * Apply Tseitin transformation to obtain a system where constraints are in CNF.
+	 */
 	@Override
 	public STS transform(STS system) {
 		STSImpl.Builder builder = new STSImpl.Builder();
 		STSCNFTransformationVisitor visitor = new STSCNFTransformationVisitor(manager, stsFactory);
-		CNFFormalismExprChecker cnfChecker = new CNFFormalismExprChecker();
+		FormalismExprCNFChecker cnfChecker = new FormalismExprCNFChecker();
 		Collection<Expr<? extends BoolType>> encoding = new ArrayList<>();
 		// Keep variables
 		builder.addVar(system.getVars());
 		// Transform initial constraints
 		for (Expr<? extends BoolType> expr : system.getInit()) {
-			if (cnfChecker.isExprInCNF(expr)) builder.addInit(expr);
+			if (cnfChecker.isExprCNF(expr)) builder.addInit(expr);
 			else {
 				encoding.clear();
 				expr.accept(visitor, encoding);
@@ -87,7 +90,7 @@ public final class STSCNFTransformation implements STSTransformation {
 		}
 		// Transform invariant constraints
 		for (Expr<? extends BoolType> expr : system.getInvar()) {
-			if (cnfChecker.isExprInCNF(expr)) builder.addInvar(expr);
+			if (cnfChecker.isExprCNF(expr)) builder.addInvar(expr);
 			else {
 				encoding.clear();
 				expr.accept(visitor, encoding);
@@ -96,7 +99,7 @@ public final class STSCNFTransformation implements STSTransformation {
 		}
 		// Transform transition constraints
 		for (Expr<? extends BoolType> expr : system.getTrans()) {
-			if (cnfChecker.isExprInCNF(expr)) builder.addTrans(expr);
+			if (cnfChecker.isExprCNF(expr)) builder.addTrans(expr);
 			else {
 				encoding.clear();
 				expr.accept(visitor, encoding);
@@ -104,21 +107,21 @@ public final class STSCNFTransformation implements STSTransformation {
 			}
 		}
 		// Transform the property
-		if (cnfChecker.isExprInCNF(system.getProp())) builder.setProp(system.getProp());
+		if (cnfChecker.isExprCNF(system.getProp())) builder.setProp(system.getProp());
 		else {
 			encoding.clear();
 			system.getProp().accept(visitor, encoding);
 			builder.setProp(manager.getExprFactory().And(encoding));
 		}
-		
+		// Add new variables
 		builder.addVar(visitor.getReps());
 
 		return builder.build();
 	}
 
 	private final class STSCNFTransformationVisitor implements STSExprVisitor<Collection<Expr<? extends BoolType>>, Expr<? extends BoolType>> {
-		private int nextId;
-		private Map<Expr<?>, VarDecl<? extends BoolType>> reps;
+		private int nextCNFVarId;
+		private Map<Expr<?>, VarDecl<? extends BoolType>> representatives;
 		private ConstraintManager manager;
 		private ExprFactory ef;
 		private STSFactory sf;
@@ -127,17 +130,17 @@ public final class STSCNFTransformation implements STSTransformation {
 			this.manager = manager;
 			sf = stsFactory;
 			ef = manager.getExprFactory();
-			nextId = 0;
-			reps = new HashMap<>();
+			nextCNFVarId = 0;
+			representatives = new HashMap<>();
 		}
 		
 		public Collection<VarDecl<? extends BoolType>> getReps() {
-			return reps.values();
+			return representatives.values();
 		}
 		
 		private Expr<? extends BoolType> getRep(Expr<?> expr) {
-			VarDecl<BoolType> rep = sf.Var(CNFPREFIX + (nextId++), manager.getTypeFactory().Bool());
-			reps.put(expr, rep);
+			VarDecl<BoolType> rep = sf.Var(CNFPREFIX + (nextCNFVarId++), manager.getTypeFactory().Bool());
+			representatives.put(expr, rep);
 			return sf.Ref(rep);
 		}
 		
@@ -164,7 +167,7 @@ public final class STSCNFTransformation implements STSTransformation {
 		}
 		@Override
 		public Expr<? extends BoolType> visit(NotExpr expr, Collection<Expr<? extends BoolType>> param) {
-			if (reps.containsKey(expr)) return sf.Ref(reps.get(expr));
+			if (representatives.containsKey(expr)) return sf.Ref(representatives.get(expr));
 			Expr<? extends BoolType> rep = getRep(expr);
 			Expr<? extends BoolType> op = expr.getOp().accept(this, param);
 			param.add(
@@ -176,7 +179,7 @@ public final class STSCNFTransformation implements STSTransformation {
 		}
 		@Override
 		public Expr<? extends BoolType> visit(ImplyExpr expr, Collection<Expr<? extends BoolType>> param) {
-			if (reps.containsKey(expr)) return sf.Ref(reps.get(expr));
+			if (representatives.containsKey(expr)) return sf.Ref(representatives.get(expr));
 			Expr<? extends BoolType> rep = getRep(expr);
 			Expr<? extends BoolType> op1 = expr.getLeftOp().accept(this, param);
 			Expr<? extends BoolType> op2 = expr.getRightOp().accept(this, param);
@@ -190,7 +193,7 @@ public final class STSCNFTransformation implements STSTransformation {
 		}
 		@Override
 		public Expr<? extends BoolType> visit(IffExpr expr, Collection<Expr<? extends BoolType>> param) {
-			if (reps.containsKey(expr)) return sf.Ref(reps.get(expr));
+			if (representatives.containsKey(expr)) return sf.Ref(representatives.get(expr));
 			Expr<? extends BoolType> rep = getRep(expr);
 			Expr<? extends BoolType> op1 = expr.getLeftOp().accept(this, param);
 			Expr<? extends BoolType> op2 = expr.getRightOp().accept(this, param);
@@ -205,7 +208,7 @@ public final class STSCNFTransformation implements STSTransformation {
 		}
 		@Override
 		public Expr<? extends BoolType> visit(AndExpr expr, Collection<Expr<? extends BoolType>> param) {
-			if (reps.containsKey(expr)) return sf.Ref(reps.get(expr));
+			if (representatives.containsKey(expr)) return sf.Ref(representatives.get(expr));
 			Expr<? extends BoolType> rep = getRep(expr);
 			Collection<Expr<? extends BoolType>> ops = new ArrayList<>(expr.getOps().size());
 			for (Expr<? extends BoolType> op : expr.getOps()) ops.add(op.accept(this, param));
@@ -222,7 +225,7 @@ public final class STSCNFTransformation implements STSTransformation {
 		}
 		@Override
 		public Expr<? extends BoolType> visit(OrExpr expr, Collection<Expr<? extends BoolType>> param) {
-			if (reps.containsKey(expr)) return sf.Ref(reps.get(expr));
+			if (representatives.containsKey(expr)) return sf.Ref(representatives.get(expr));
 			Expr<? extends BoolType> rep = getRep(expr);
 			Collection<Expr<? extends BoolType>> ops = new ArrayList<>(expr.getOps().size());
 			for (Expr<? extends BoolType> op : expr.getOps()) ops.add(op.accept(this, param));
