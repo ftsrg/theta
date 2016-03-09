@@ -20,25 +20,10 @@ import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 
-/**
- * If-then-else eliminator for expressions in the constraint language.
- * Also serves as a base class for eliminating ITE from extensions
- * of the constraint language.
- * 
- * The implementation contains 3 helper visitors, which must be
- * extended by the classes inheriting from this class.
- * 
- * @author Akos
- *
- */
 public class ExprITEEliminator {
 	private PropagateITEVisitor propagateITEVisitor;
 	private RemoveITEVisitor removeITEVisitor;
 	
-	/**
-	 * Constructor.
-	 * @param manager Constraint manager
-	 */
 	public ExprITEEliminator(ConstraintManager manager) {
 		propagateITEVisitor = getPropageteITEVisitor(manager);
 		removeITEVisitor = getRemoveITEVisitor(manager);
@@ -54,40 +39,25 @@ public class ExprITEEliminator {
 		return (Expr<? extends BoolType>) expr.accept(propagateITEVisitor, null).accept(removeITEVisitor, null);
 	}
 	
-	/**
-	 * Get the ITE propagating visitor. Subclasses can override this method
-	 * to return their own visitors.
-	 * @param manager Constraint manager
-	 * @return ITE propagating visitor
-	 */
+	// Subclasses can override this method to provide a different visitor
+	// (supporting more types of expressions)
 	protected PropagateITEVisitor getPropageteITEVisitor(ConstraintManager manager) {
 		return new PropagateITEVisitor(manager, new PushBelowITEVisitor(manager, new IsBoolConnExprVisitor()));
 	}
 	
-	/**
-	 * Get the ITE removing visitor. Subclasses can override this method
-	 * to return their own visitors.
-	 * @param manager Constraint manager
-	 * @return ITE removing visitor
-	 */
+	// Subclasses can override this method to provide a different visitor
+	// (supporting more types of expressions)
 	protected RemoveITEVisitor getRemoveITEVisitor(ConstraintManager manager) {
 		return new RemoveITEVisitor(manager);
 	}
 	
-	
 	/**
-	 * Helper visitor 1
-	 * Propagate ITE up in the expression tree as high as possible.
-	 * @author Akos
+	 * Helper visitor 1: Propagate ITE up in the expression tree as high as possible.
+	 * For example: x = 1 + ite(c, t, e) --> ite(c, x = 1 + t, x = 1 + e)
 	 */
 	protected static class PropagateITEVisitor extends ArityBasedExprVisitor<Void, Expr<? extends Type>> {
 		private ExprVisitor<Void, Expr<? extends Type>> pushBelowITEVisitor;
-		
-		/**
-		 * Constructor.
-		 * @param manager Constraint manager
-		 * @param pushBelowIteVisitor Visitor which can push below an ITE
-		 */
+
 		public PropagateITEVisitor(ConstraintManager manager, ExprVisitor<Void, Expr<? extends Type>> pushBelowIteVisitor) {
 			this.pushBelowITEVisitor = pushBelowIteVisitor;
 		}
@@ -162,9 +132,8 @@ public class ExprITEEliminator {
 	}
 	
 	/**
-	 * Helper visitor 2
-	 * Push an expression below an ITE recursively.
-	 * @author Akos
+	 * Helper visitor 2: Push an expression below an ITE recursively.
+	 * For example: x = ite (c1, ite(c2, t, e1), e2) --> ite(c1, ite(c2, x = t, x = e1), x = e2)
 	 */
 	protected static class PushBelowITEVisitor extends ArityBasedExprVisitor<Void, Expr<? extends Type>> {
 		
@@ -285,22 +254,15 @@ public class ExprITEEliminator {
 	}
 
 	/**
-	 * Helper visitor 3
+	 * Helper visitor 3: Replace if-then-else expressions with boolean connectives.
+	 * For example: (if A then B else C) <=> (!A or B) and (A or C).
 	 * 
-	 * Remove if-then-else expressions by transforming them with the following rule:
-	 * (if A then B else C) <=> (!A or B) and (A or C).
-	 * 
-	 * It is assumed that ite expressions are propagated to the top.
-	 * @author Akos
+	 * It is assumed that ite expressions are propagated as high as possible.
 	 */
 	protected static class RemoveITEVisitor extends ArityBasedExprVisitor<Void, Expr<? extends Type>> {
 		
 		private ConstraintManager manager;
 		
-		/**
-		 * Constructor.
-		 * @param manager Constraint manager
-		 */
 		public RemoveITEVisitor(ConstraintManager manager) {
 			this.manager = manager;
 		}
@@ -314,7 +276,6 @@ public class ExprITEEliminator {
 		@Override
 		protected <OpType extends Type, ExprType extends Type> Expr<? extends Type> visitUnary(
 				UnaryExpr<OpType, ExprType> expr, Void param) {
-			// Remove ITE from operand recursively
 			return expr.withOp((Expr<? extends OpType>) expr.getOp().accept(this, param));
 		}
 
@@ -322,7 +283,6 @@ public class ExprITEEliminator {
 		@Override
 		protected <LeftOpType extends Type, RightOpType extends Type, ExprType extends Type> Expr<? extends Type> visitBinary(
 				BinaryExpr<LeftOpType, RightOpType, ExprType> expr, Void param) {
-			// Remove ITE from operands recursively
 			return expr.withOps(
 					(Expr<? extends LeftOpType>)expr.getLeftOp().accept(this, param),
 					(Expr<? extends RightOpType>)expr.getRightOp().accept(this, param));
@@ -332,7 +292,6 @@ public class ExprITEEliminator {
 		@Override
 		protected <OpsType extends Type, ExprType extends Type> Expr<? extends Type> visitMultiary(
 				MultiaryExpr<OpsType, ExprType> expr, Void param) {
-			// Remove ITE from operands recursively
 			List<Expr<? extends OpsType>> ops = new ArrayList<>(expr.getOps().size());
 			for (Expr<? extends OpsType> op : expr.getOps())
 				ops.add((Expr<? extends OpsType>) op.accept(this, param));

@@ -15,8 +15,6 @@ import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 
 /**
  * Symbolic Transition System (STS) implementation.
- * @author Akos
- *
  */
 public class STSImpl implements STS {
 
@@ -26,13 +24,6 @@ public class STSImpl implements STS {
 	private final Collection<Expr<? extends BoolType>> trans;
 	private final Expr<? extends BoolType> prop;
 	
-	/**
-	 * Constructor.
-	 * @param vars Collection of variables
-	 * @param init Initial constraint
-	 * @param invar Invariant constraint
-	 * @param trans Transition relation constraint
-	 */
 	public STSImpl(Collection<VarDecl<? extends Type>> vars, Collection<Expr<? extends BoolType>> init,
 			Collection<Expr<? extends BoolType>> invar, Collection<Expr<? extends BoolType>> trans,
 			Expr<? extends BoolType> prop) {
@@ -73,10 +64,6 @@ public class STSImpl implements STS {
 		return prop;
 	}
 	
-	/**
-	 * Builder class for Symbolic Transition Systems (STS).
-	 * @author Akos
-	 */
 	public static class Builder {
 		private final Collection<VarDecl<? extends Type>> vars;
 		private final Collection<Expr<? extends BoolType>> init;
@@ -84,9 +71,6 @@ public class STSImpl implements STS {
 		private final Collection<Expr<? extends BoolType>> trans;
 		private Expr<? extends BoolType> prop;
 		
-		/**
-		 * Constructor.
-		 */
 		public Builder() {
 			vars = new ArrayList<>();
 			init = new ArrayList<>();
@@ -97,8 +81,6 @@ public class STSImpl implements STS {
 		
 		/**
 		 * Add a variable declaration.
-		 * @param varDecl Variable declaration
-		 * @return Builder instance
 		 */
 		public Builder addVar(VarDecl<? extends Type> varDecl) {
 			vars.add(checkNotNull(varDecl));
@@ -107,8 +89,6 @@ public class STSImpl implements STS {
 		
 		/**
 		 * Add variable declarations.
-		 * @param vars Variable declarations
-		 * @return Builder instance
 		 */
 		public Builder addVar(Collection<? extends VarDecl<? extends Type>> vars) {
 			checkNotNull(vars);
@@ -118,8 +98,6 @@ public class STSImpl implements STS {
 		
 		/**
 		 * Add an initial constraint. Individual initial constraints will be joined into an AND expression.
-		 * @param expr Initial constraint
-		 * @return Builder instance
 		 */
 		public Builder addInit(Expr<? extends BoolType> expr) {
 			checkNotNull(expr);
@@ -130,8 +108,6 @@ public class STSImpl implements STS {
 		
 		/**
 		 * Add initial constraints. Individual initial constraints will be joined into an AND expression.
-		 * @param init Initial constraints
-		 * @return Builder instance
 		 */
 		public Builder addInit(Collection<? extends Expr<? extends BoolType>> init) {
 			checkNotNull(init);
@@ -141,8 +117,6 @@ public class STSImpl implements STS {
 		
 		/**
 		 * Add an invariant constraint. Individual invariant constraints will be joined into an AND expression.
-		 * @param expr Invariant constraint
-		 * @return Builder instance
 		 */
 		public Builder addInvar(Expr<? extends BoolType> expr) {
 			checkNotNull(expr);
@@ -153,8 +127,6 @@ public class STSImpl implements STS {
 		
 		/**
 		 * Add invariant constraints. Individual invariant constraints will be joined into an AND expression.
-		 * @param invar Invariant constraints
-		 * @return Builder instance
 		 */
 		public Builder addInvar(Collection<? extends Expr<? extends BoolType>> invar) {
 			checkNotNull(invar);
@@ -164,8 +136,6 @@ public class STSImpl implements STS {
 		
 		/**
 		 * Add a transition constraint. Individual transition constraints will be joined into an AND expression.
-		 * @param expr Transition constraint
-		 * @return Builder instance
 		 */
 		public Builder addTrans(Expr<? extends BoolType> expr) {
 			checkNotNull(expr);
@@ -176,8 +146,6 @@ public class STSImpl implements STS {
 		
 		/**
 		 * Add transition constraints. Individual transition constraints will be joined into an AND expression.
-		 * @param trans Transition constraints
-		 * @return Builder instance
 		 */
 		public Builder addTrans(Collection<? extends Expr<? extends BoolType>> trans) {
 			checkNotNull(trans);
@@ -185,21 +153,12 @@ public class STSImpl implements STS {
 			return this;
 		}
 		
-		/**
-		 * Set the property expression.
-		 * @param prop Property expression
-		 * @return Builder instance
-		 */
 		public Builder setProp(Expr<? extends BoolType> prop) {
 			checkNotNull(prop);
 			this.prop = prop;
 			return this;
 		}
 		
-		/**
-		 * Build the Symbolic Transition System (STS)
-		 * @return Symbolic Transition System
-		 */
 		public STS build() {
 			return new STSImpl(vars, init, invar, trans, prop);
 		}

@@ -45,16 +45,7 @@ import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderNeg;
 import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderSub;
 import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 
-/**
- * Arity based abstract visitor class.
- * @author Akos
- *
- * @param <P>
- * @param <R>
- */
 public abstract class ArityBasedExprVisitor<P, R> implements ExprVisitor<P, R> {
-	
-	// Abstract methods that must be implemented
 	
 	protected abstract <ExprType extends Type> R visitNullary(NullaryExpr<ExprType> expr, P param);
 	
@@ -74,7 +65,7 @@ public abstract class ArityBasedExprVisitor<P, R> implements ExprVisitor<P, R> {
 
 	public abstract <ExprType extends Type> R visit(IteExpr<ExprType> expr, P param);
 	
-	// Methods that can be reduced to the abstract methods
+	/////
 	
 	@Override
 	public <DeclType extends Type> R visit(ConstRefExpr<DeclType> expr, P param) {
