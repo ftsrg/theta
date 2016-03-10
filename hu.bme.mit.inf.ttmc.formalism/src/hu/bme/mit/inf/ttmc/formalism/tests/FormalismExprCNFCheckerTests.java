@@ -9,9 +9,9 @@ import hu.bme.mit.inf.ttmc.constraint.ConstraintManagerImpl;
 import hu.bme.mit.inf.ttmc.constraint.factory.ExprFactory;
 import hu.bme.mit.inf.ttmc.constraint.factory.TypeFactory;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
-import hu.bme.mit.inf.ttmc.formalism.expr.VarRefExpr;
-import hu.bme.mit.inf.ttmc.formalism.factory.ProgramFactory;
-import hu.bme.mit.inf.ttmc.formalism.factory.impl.ProgramFactoryImpl;
+import hu.bme.mit.inf.ttmc.formalism.common.expr.VarRefExpr;
+import hu.bme.mit.inf.ttmc.formalism.common.factory.ProgramFactory;
+import hu.bme.mit.inf.ttmc.formalism.common.factory.impl.ProgramFactoryImpl;
 import hu.bme.mit.inf.ttmc.formalism.utils.impl.FormalismExprCNFChecker;
 
 public class FormalismExprCNFCheckerTests {

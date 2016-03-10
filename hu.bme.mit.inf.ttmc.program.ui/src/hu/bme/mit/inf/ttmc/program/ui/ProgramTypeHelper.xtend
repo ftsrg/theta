@@ -1,8 +1,8 @@
 package hu.bme.mit.inf.ttmc.program.ui
 
-import hu.bme.mit.inf.ttmc.constraint.ui.TypeHelper
 import hu.bme.mit.inf.ttmc.constraint.factory.TypeFactory
-import hu.bme.mit.inf.ttmc.formalism.factory.ProgramFactory
+import hu.bme.mit.inf.ttmc.constraint.ui.TypeHelper
+import hu.bme.mit.inf.ttmc.formalism.common.factory.ProgramFactory
 
 class ProgramTypeHelper extends TypeHelper {
 	

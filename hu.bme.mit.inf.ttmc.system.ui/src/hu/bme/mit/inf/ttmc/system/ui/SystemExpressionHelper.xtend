@@ -7,8 +7,8 @@ import hu.bme.mit.inf.ttmc.constraint.type.Type
 import hu.bme.mit.inf.ttmc.constraint.ui.DeclarationHelper
 import hu.bme.mit.inf.ttmc.constraint.ui.ExpressionHelper
 import hu.bme.mit.inf.ttmc.constraint.utils.impl.TypeInferrer
-import hu.bme.mit.inf.ttmc.formalism.decl.VarDecl
-import hu.bme.mit.inf.ttmc.formalism.factory.STSFactory
+import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl
+import hu.bme.mit.inf.ttmc.formalism.common.factory.STSFactory
 import hu.bme.mit.inf.ttmc.system.model.PrimedExpression
 import hu.bme.mit.inf.ttmc.system.model.VariableDeclaration
 
