@@ -8,13 +8,11 @@ import java.util.List;
 
 import com.microsoft.z3.Context;
 
-import hu.bme.mit.inf.ttmc.constraint.decl.ConstDecl;
 import hu.bme.mit.inf.ttmc.constraint.decl.ParamDecl;
 import hu.bme.mit.inf.ttmc.constraint.expr.AddExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.AndExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.ArrayReadExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.ArrayWriteExpr;
-import hu.bme.mit.inf.ttmc.constraint.expr.ConstRefExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.EqExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.ExistsExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
@@ -37,7 +35,6 @@ import hu.bme.mit.inf.ttmc.constraint.expr.NegExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.NeqExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.NotExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.OrExpr;
-import hu.bme.mit.inf.ttmc.constraint.expr.ParamRefExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.RatDivExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.RatLitExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.RemExpr;
@@ -61,7 +58,6 @@ import hu.bme.mit.inf.ttmc.constraint.z3.expr.Z3AddExpr;
 import hu.bme.mit.inf.ttmc.constraint.z3.expr.Z3AndExpr;
 import hu.bme.mit.inf.ttmc.constraint.z3.expr.Z3ArrayReadExpr;
 import hu.bme.mit.inf.ttmc.constraint.z3.expr.Z3ArrayWriteExpr;
-import hu.bme.mit.inf.ttmc.constraint.z3.expr.Z3ConstRefExpr;
 import hu.bme.mit.inf.ttmc.constraint.z3.expr.Z3EqExpr;
 import hu.bme.mit.inf.ttmc.constraint.z3.expr.Z3ExistsExpr;
 import hu.bme.mit.inf.ttmc.constraint.z3.expr.Z3FalseExpr;
@@ -81,7 +77,6 @@ import hu.bme.mit.inf.ttmc.constraint.z3.expr.Z3NegExpr;
 import hu.bme.mit.inf.ttmc.constraint.z3.expr.Z3NeqExpr;
 import hu.bme.mit.inf.ttmc.constraint.z3.expr.Z3NotExpr;
 import hu.bme.mit.inf.ttmc.constraint.z3.expr.Z3OrExpr;
-import hu.bme.mit.inf.ttmc.constraint.z3.expr.Z3ParamRefExpr;
 import hu.bme.mit.inf.ttmc.constraint.z3.expr.Z3RatDivExpr;
 import hu.bme.mit.inf.ttmc.constraint.z3.expr.Z3RatLitExpr;
 import hu.bme.mit.inf.ttmc.constraint.z3.expr.Z3RemExpr;
@@ -134,18 +129,6 @@ public final class Z3ExprFactory implements ExprFactory {
 	public <P extends Type, R extends Type> FuncLitExpr<? super P, ? extends R> Func(ParamDecl<? super P> paramDecl,
 			Expr<? extends R> result) {
 		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public <T extends Type> ConstRefExpr<T> Ref(ConstDecl<T> constDecl) {
-		checkNotNull(constDecl);
-		return new Z3ConstRefExpr<>(constDecl, context);
-	}
-
-	@Override
-	public <T extends Type> ParamRefExpr<T> Ref(ParamDecl<T> paramDecl) {
-		checkNotNull(paramDecl);
-		return new Z3ParamRefExpr<>(paramDecl, context);
 	}
 
 	@Override

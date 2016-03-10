@@ -6,14 +6,12 @@ import java.util.List;
 import com.google.common.collect.ImmutableMultiset;
 import com.google.common.collect.ImmutableSet;
 
-import hu.bme.mit.inf.ttmc.constraint.decl.ConstDecl;
 import hu.bme.mit.inf.ttmc.constraint.decl.ParamDecl;
 import hu.bme.mit.inf.ttmc.constraint.expr.AddExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.AndExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.ArrayReadExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.ArrayWriteExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.BoolLitExpr;
-import hu.bme.mit.inf.ttmc.constraint.expr.ConstRefExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.EqExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.ExistsExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
@@ -43,7 +41,6 @@ import hu.bme.mit.inf.ttmc.constraint.expr.SubExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.TrueExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.TupleLitExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.TupleProjExpr;
-import hu.bme.mit.inf.ttmc.constraint.expr.ParamRefExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.ArrayType;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.constraint.type.FuncType;
@@ -80,10 +77,6 @@ public interface ExprFactory {
 			final Expr<? extends R> result);
 
 	// LHS
-
-	public <T extends Type> ConstRefExpr<T> Ref(final ConstDecl<T> constDecl);
-
-	public <T extends Type> ParamRefExpr<T> Ref(final ParamDecl<T> paramDecl);
 
 	public TupleProjExpr Proj(final Expr<? extends TupleType> tup, int index);
 

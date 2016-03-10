@@ -40,7 +40,7 @@ class UnfoldVisitor extends ExprRewriterVisitor<Integer> implements ProgExprVisi
 		final int i = param;
 		final VarDecl<DeclType> varDecl = expr.getDecl();
 		final ConstDecl<DeclType> constDecl =  varMap.getConstDecl(varDecl, i);
-		final ConstRefExpr<DeclType> constRefExpr = exprFactory.Ref(constDecl);
+		final ConstRefExpr<DeclType> constRefExpr = constDecl.getRef();
 		return constRefExpr;
 	}
 
