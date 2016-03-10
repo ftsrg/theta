@@ -55,7 +55,7 @@ import hu.bme.mit.inf.ttmc.formalism.common.expr.PrimedExpr;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.ProcCallExpr;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.ProcRefExpr;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.VarRefExpr;
-import hu.bme.mit.inf.ttmc.formalism.common.factory.VarFactory;
+import hu.bme.mit.inf.ttmc.formalism.common.factory.VarDeclFactory;
 import hu.bme.mit.inf.ttmc.formalism.utils.FormalismExprVisitor;
 
 public class CNFTransformation {
@@ -63,7 +63,7 @@ public class CNFTransformation {
 	private final ConstraintManager manager;
 	private final CNFTransformationVisitor cnfTransfVisitor;
 
-	public CNFTransformation(ConstraintManager manager, VarFactory varFactory) {
+	public CNFTransformation(ConstraintManager manager, VarDeclFactory varFactory) {
 		this.manager = manager;
 		cnfTransfVisitor = new CNFTransformationVisitor(manager, varFactory);
 	}
@@ -85,9 +85,9 @@ public class CNFTransformation {
 		private Map<Expr<?>, VarDecl<? extends BoolType>> representatives;
 		private ConstraintManager manager;
 		private ExprFactory ef;
-		private VarFactory vf;
+		private VarDeclFactory vf;
 
-		public CNFTransformationVisitor(ConstraintManager manager, VarFactory varFactory) {
+		public CNFTransformationVisitor(ConstraintManager manager, VarDeclFactory varFactory) {
 			this.manager = manager;
 			vf = varFactory;
 			ef = manager.getExprFactory();

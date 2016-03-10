@@ -27,7 +27,7 @@ import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.WhileStmt;
 import hu.bme.mit.inf.ttmc.formalism.common.type.ProcType;
 
-public interface ProgramFactory extends VarFactory {
+public interface ProgramFactory extends VarDeclFactory {
 	
 	public <R extends Type> ProcDecl<R> Proc(final String name, List<? extends ParamDecl<? extends Type>> paramDecls, final R returnType);
 
