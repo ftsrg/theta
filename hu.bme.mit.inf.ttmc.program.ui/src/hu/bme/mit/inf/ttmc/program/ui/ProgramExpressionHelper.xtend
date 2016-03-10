@@ -1,14 +1,14 @@
 package hu.bme.mit.inf.ttmc.program.ui
 
-import hu.bme.mit.inf.ttmc.constraint.ui.ExpressionHelper
-import hu.bme.mit.inf.ttmc.constraint.factory.ExprFactory
-import hu.bme.mit.inf.ttmc.constraint.ui.DeclarationHelper
-import hu.bme.mit.inf.ttmc.constraint.utils.impl.TypeInferrer
-import hu.bme.mit.inf.ttmc.formalism.factory.ProgramFactory
-import hu.bme.mit.inf.ttmc.formalism.decl.VarDecl
-import hu.bme.mit.inf.ttmc.program.model.VariableDeclaration
 import hu.bme.mit.inf.ttmc.constraint.expr.RefExpr
+import hu.bme.mit.inf.ttmc.constraint.factory.ExprFactory
 import hu.bme.mit.inf.ttmc.constraint.type.Type
+import hu.bme.mit.inf.ttmc.constraint.ui.DeclarationHelper
+import hu.bme.mit.inf.ttmc.constraint.ui.ExpressionHelper
+import hu.bme.mit.inf.ttmc.constraint.utils.impl.TypeInferrer
+import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl
+import hu.bme.mit.inf.ttmc.formalism.common.factory.ProgramFactory
+import hu.bme.mit.inf.ttmc.program.model.VariableDeclaration
 
 class ProgramExpressionHelper extends ExpressionHelper {
 	

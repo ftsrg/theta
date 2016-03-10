@@ -50,12 +50,12 @@ import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderAdd;
 import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderMul;
 import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderNeg;
 import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderSub;
-import hu.bme.mit.inf.ttmc.formalism.decl.VarDecl;
-import hu.bme.mit.inf.ttmc.formalism.expr.PrimedExpr;
-import hu.bme.mit.inf.ttmc.formalism.expr.ProcCallExpr;
-import hu.bme.mit.inf.ttmc.formalism.expr.ProcRefExpr;
-import hu.bme.mit.inf.ttmc.formalism.expr.VarRefExpr;
-import hu.bme.mit.inf.ttmc.formalism.factory.VarFactory;
+import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
+import hu.bme.mit.inf.ttmc.formalism.common.expr.PrimedExpr;
+import hu.bme.mit.inf.ttmc.formalism.common.expr.ProcCallExpr;
+import hu.bme.mit.inf.ttmc.formalism.common.expr.ProcRefExpr;
+import hu.bme.mit.inf.ttmc.formalism.common.expr.VarRefExpr;
+import hu.bme.mit.inf.ttmc.formalism.common.factory.VarFactory;
 import hu.bme.mit.inf.ttmc.formalism.utils.FormalismExprVisitor;
 
 public class CNFTransformation {

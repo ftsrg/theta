@@ -5,9 +5,9 @@ import hu.bme.mit.inf.ttmc.constraint.model.ReferenceExpression
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType
 import hu.bme.mit.inf.ttmc.constraint.type.Type
 import hu.bme.mit.inf.ttmc.constraint.utils.impl.ExprUtils
-import hu.bme.mit.inf.ttmc.formalism.decl.VarDecl
-import hu.bme.mit.inf.ttmc.formalism.factory.ProgramFactory
-import hu.bme.mit.inf.ttmc.formalism.stmt.Stmt
+import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl
+import hu.bme.mit.inf.ttmc.formalism.common.factory.ProgramFactory
+import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt
 import hu.bme.mit.inf.ttmc.formalism.utils.impl.FormalismTypeInferrer
 import hu.bme.mit.inf.ttmc.program.model.AssertStatement
 import hu.bme.mit.inf.ttmc.program.model.AssignmentStatement
@@ -20,6 +20,7 @@ import hu.bme.mit.inf.ttmc.program.model.ReturnStatement
 import hu.bme.mit.inf.ttmc.program.model.SkipStatement
 import hu.bme.mit.inf.ttmc.program.model.WhileStatement
 import java.util.LinkedList
+
 import static com.google.common.base.Preconditions.checkArgument
 
 class StatementHelper {

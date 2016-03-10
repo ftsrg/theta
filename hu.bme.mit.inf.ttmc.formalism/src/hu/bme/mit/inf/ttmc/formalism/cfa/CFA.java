@@ -2,7 +2,7 @@ package hu.bme.mit.inf.ttmc.formalism.cfa;
 
 import java.util.Collection;
 
-import hu.bme.mit.inf.ttmc.formalism.Automaton;
+import hu.bme.mit.inf.ttmc.formalism.common.Automaton;
 
 public interface CFA extends Automaton {
 
