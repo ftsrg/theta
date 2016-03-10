@@ -10,7 +10,7 @@ import com.microsoft.z3.Context;
 import com.microsoft.z3.Status;
 
 import hu.bme.mit.inf.ttmc.common.Stack;
-import hu.bme.mit.inf.ttmc.common.StackImpl;
+import hu.bme.mit.inf.ttmc.common.impl.StackImpl;
 import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.solver.Model;
