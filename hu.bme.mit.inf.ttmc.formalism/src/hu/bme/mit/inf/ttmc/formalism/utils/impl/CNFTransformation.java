@@ -5,6 +5,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.google.common.collect.ImmutableSet;
+
 import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.AddExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.AndExpr;
@@ -48,12 +50,12 @@ import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderAdd;
 import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderMul;
 import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderNeg;
 import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderSub;
-import hu.bme.mit.inf.ttmc.formalism.decl.VarDecl;
-import hu.bme.mit.inf.ttmc.formalism.expr.PrimedExpr;
-import hu.bme.mit.inf.ttmc.formalism.expr.ProcCallExpr;
-import hu.bme.mit.inf.ttmc.formalism.expr.ProcRefExpr;
-import hu.bme.mit.inf.ttmc.formalism.expr.VarRefExpr;
-import hu.bme.mit.inf.ttmc.formalism.factory.VarFactory;
+import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
+import hu.bme.mit.inf.ttmc.formalism.common.expr.PrimedExpr;
+import hu.bme.mit.inf.ttmc.formalism.common.expr.ProcCallExpr;
+import hu.bme.mit.inf.ttmc.formalism.common.expr.ProcRefExpr;
+import hu.bme.mit.inf.ttmc.formalism.common.expr.VarRefExpr;
+import hu.bme.mit.inf.ttmc.formalism.common.factory.VarFactory;
 import hu.bme.mit.inf.ttmc.formalism.utils.FormalismExprVisitor;
 
 public class CNFTransformation {
@@ -129,10 +131,10 @@ public class CNFTransformation {
 			Expr<? extends BoolType> rep = getRep(expr);
 			Expr<? extends BoolType> op = expr.getOp().accept(this, param);
 			param.add(
-					ef.And(
-						ef.Or(ef.Not(rep), ef.Not(op)),
-						ef.Or(rep,op)
-					));
+					ef.And(ImmutableSet.of(
+						ef.Or(ImmutableSet.of(ef.Not(rep), ef.Not(op))),
+						ef.Or(ImmutableSet.of(rep,op))
+					)));
 			return rep;
 		}
 		@Override
@@ -142,11 +144,11 @@ public class CNFTransformation {
 			Expr<? extends BoolType> op1 = expr.getLeftOp().accept(this, param);
 			Expr<? extends BoolType> op2 = expr.getRightOp().accept(this, param);
 			param.add(
-					ef.And(
-						ef.Or(ef.Not(rep), ef.Not(op1), op2),
-						ef.Or(op1, rep),
-						ef.Or(ef.Not(op2), rep)
-					));
+					ef.And(ImmutableSet.of(
+						ef.Or(ImmutableSet.of(ef.Not(rep), ef.Not(op1), op2)),
+						ef.Or(ImmutableSet.of(op1, rep)),
+						ef.Or(ImmutableSet.of(ef.Not(op2), rep))
+					)));
 			return rep;
 		}
 		@Override
@@ -156,12 +158,12 @@ public class CNFTransformation {
 			Expr<? extends BoolType> op1 = expr.getLeftOp().accept(this, param);
 			Expr<? extends BoolType> op2 = expr.getRightOp().accept(this, param);
 			param.add(
-					ef.And(
-						ef.Or(ef.Not(rep), ef.Not(op1), op2),
-						ef.Or(ef.Not(rep), op1, ef.Not(op2)),
-						ef.Or(rep, ef.Not(op1), ef.Not(op2)),
-						ef.Or(rep, op1, op2)
-					));
+					ef.And(ImmutableSet.of(
+						ef.Or(ImmutableSet.of(ef.Not(rep), ef.Not(op1), op2)),
+						ef.Or(ImmutableSet.of(ef.Not(rep), op1, ef.Not(op2))),
+						ef.Or(ImmutableSet.of(rep, ef.Not(op1), ef.Not(op2))),
+						ef.Or(ImmutableSet.of(rep, op1, op2))
+					)));
 			return rep;
 		}
 		@Override
@@ -174,7 +176,7 @@ public class CNFTransformation {
 			lastClause.add(rep);
 			Collection<Expr<? extends BoolType>> en = new ArrayList<>();
 			for (Expr<? extends BoolType> op : ops) {
-				en.add(ef.Or(ef.Not(rep), op));
+				en.add(ef.Or(ImmutableSet.of(ef.Not(rep), op)));
 				lastClause.add(ef.Not(op));
 			}
 			en.add(ef.Or(lastClause));
@@ -189,7 +191,7 @@ public class CNFTransformation {
 			for (Expr<? extends BoolType> op : expr.getOps()) ops.add(op.accept(this, param));
 			Collection<Expr<? extends BoolType>> en = new ArrayList<>();
 			for (Expr<? extends BoolType> op : ops) {
-				en.add(ef.Or(ef.Not(op), rep));
+				en.add(ef.Or(ImmutableSet.of(ef.Not(op), rep)));
 			}
 			en.add(ef.Or(ops));
 			param.add(ef.And(en));

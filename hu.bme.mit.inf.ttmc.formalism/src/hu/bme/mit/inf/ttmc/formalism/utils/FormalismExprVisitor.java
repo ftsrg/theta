@@ -1,10 +1,10 @@
 package hu.bme.mit.inf.ttmc.formalism.utils;
 
 import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
-import hu.bme.mit.inf.ttmc.formalism.expr.visitor.PrimedExprVisitor;
-import hu.bme.mit.inf.ttmc.formalism.expr.visitor.ProcCallExprVisitor;
-import hu.bme.mit.inf.ttmc.formalism.expr.visitor.ProcRefExprVisitor;
-import hu.bme.mit.inf.ttmc.formalism.expr.visitor.VarRefExprVisitor;
+import hu.bme.mit.inf.ttmc.formalism.common.expr.visitor.PrimedExprVisitor;
+import hu.bme.mit.inf.ttmc.formalism.common.expr.visitor.ProcCallExprVisitor;
+import hu.bme.mit.inf.ttmc.formalism.common.expr.visitor.ProcRefExprVisitor;
+import hu.bme.mit.inf.ttmc.formalism.common.expr.visitor.VarRefExprVisitor;
 
 public interface FormalismExprVisitor<P, R> extends
 	ExprVisitor<P, R>,

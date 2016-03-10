@@ -7,9 +7,9 @@ import com.google.common.base.Optional;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
-import hu.bme.mit.inf.ttmc.formalism.decl.ProcDecl;
-import hu.bme.mit.inf.ttmc.formalism.decl.VarDecl;
-import hu.bme.mit.inf.ttmc.formalism.stmt.Stmt;
+import hu.bme.mit.inf.ttmc.formalism.common.decl.ProcDecl;
+import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
+import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
 
 public interface ProcedureModel {
 	public ProcDecl<? extends Type> getProcDecl();

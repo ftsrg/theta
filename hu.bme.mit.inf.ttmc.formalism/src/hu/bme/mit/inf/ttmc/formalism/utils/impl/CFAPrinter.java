@@ -6,7 +6,7 @@ import java.util.Map;
 import hu.bme.mit.inf.ttmc.formalism.cfa.CFA;
 import hu.bme.mit.inf.ttmc.formalism.cfa.CFAEdge;
 import hu.bme.mit.inf.ttmc.formalism.cfa.CFALoc;
-import hu.bme.mit.inf.ttmc.formalism.stmt.Stmt;
+import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
 
 public class CFAPrinter {
 	

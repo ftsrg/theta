@@ -1,14 +1,14 @@
 package hu.bme.mit.inf.ttmc.program.ui
 
-import hu.bme.mit.inf.ttmc.constraint.ui.DeclarationHelper
 import hu.bme.mit.inf.ttmc.constraint.factory.DeclFactory
+import hu.bme.mit.inf.ttmc.constraint.type.Type
+import hu.bme.mit.inf.ttmc.constraint.ui.DeclarationHelper
 import hu.bme.mit.inf.ttmc.constraint.ui.TypeHelper
+import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl
+import hu.bme.mit.inf.ttmc.formalism.common.factory.ProgramFactory
+import hu.bme.mit.inf.ttmc.program.model.VariableDeclaration
 import java.util.HashMap
 import java.util.Map
-import hu.bme.mit.inf.ttmc.program.model.VariableDeclaration
-import hu.bme.mit.inf.ttmc.formalism.decl.VarDecl
-import hu.bme.mit.inf.ttmc.formalism.factory.ProgramFactory
-import hu.bme.mit.inf.ttmc.constraint.type.Type
 
 class ProgramDeclarationHelper extends DeclarationHelper {
 	
@@ -22,7 +22,7 @@ class ProgramDeclarationHelper extends DeclarationHelper {
 		variableToVar = new HashMap
 	}
 	
-	public def dispatch VarDecl<hu.bme.mit.inf.ttmc.constraint.type.Type> toDecl(VariableDeclaration declaration) {
+	public def dispatch VarDecl<Type> toDecl(VariableDeclaration declaration) {
 		var varDecl = variableToVar.get(declaration)
 		if (varDecl === null) {
 			val name = declaration.name

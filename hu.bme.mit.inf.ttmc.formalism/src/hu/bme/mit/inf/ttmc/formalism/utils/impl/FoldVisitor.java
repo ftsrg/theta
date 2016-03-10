@@ -7,8 +7,8 @@ import hu.bme.mit.inf.ttmc.constraint.expr.ConstRefExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.constraint.utils.impl.ExprRewriterVisitor;
-import hu.bme.mit.inf.ttmc.formalism.decl.VarDecl;
-import hu.bme.mit.inf.ttmc.formalism.factory.ProgramFactory;
+import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
+import hu.bme.mit.inf.ttmc.formalism.common.factory.ProgramFactory;
 
 class FoldVisitor extends ExprRewriterVisitor<Integer> {
 

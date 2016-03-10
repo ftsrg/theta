@@ -5,7 +5,7 @@ import java.util.List;
 
 import hu.bme.mit.inf.ttmc.formalism.cfa.CFAEdge;
 import hu.bme.mit.inf.ttmc.formalism.cfa.CFALoc;
-import hu.bme.mit.inf.ttmc.formalism.stmt.Stmt;
+import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
 
 class MutableCFAEdge implements CFAEdge {
 
