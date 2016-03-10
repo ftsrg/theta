@@ -13,7 +13,6 @@ import hu.bme.mit.inf.ttmc.formalism.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.expr.PrimedExpr;
 import hu.bme.mit.inf.ttmc.formalism.expr.ProcCallExpr;
 import hu.bme.mit.inf.ttmc.formalism.expr.ProcRefExpr;
-import hu.bme.mit.inf.ttmc.formalism.expr.VarRefExpr;
 import hu.bme.mit.inf.ttmc.formalism.stmt.AssertStmt;
 import hu.bme.mit.inf.ttmc.formalism.stmt.AssignStmt;
 import hu.bme.mit.inf.ttmc.formalism.stmt.AssumeStmt;
@@ -28,9 +27,7 @@ import hu.bme.mit.inf.ttmc.formalism.stmt.Stmt;
 import hu.bme.mit.inf.ttmc.formalism.stmt.WhileStmt;
 import hu.bme.mit.inf.ttmc.formalism.type.ProcType;
 
-public interface ProgramFactory {
-
-	public <T extends Type> VarDecl<T> Var(final String name, final T type);
+public interface ProgramFactory extends VarFactory {
 	
 	public <R extends Type> ProcDecl<R> Proc(final String name, List<? extends ParamDecl<? extends Type>> paramDecls, final R returnType);
 
@@ -39,8 +36,6 @@ public interface ProgramFactory {
 	public <R extends Type> ProcType<R> Proc(final List<? extends Type> paramTypes, final R returnType);
 	
 	////
-	
-	public <T extends Type> VarRefExpr<T> Ref(final VarDecl<T> varDecl);
 	
 	public <R extends Type> ProcRefExpr<R> Ref(final ProcDecl<R> procDecl);
 	
