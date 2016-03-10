@@ -3,7 +3,7 @@ package hu.bme.mit.inf.ttmc.formalism.utils.impl;
 import java.util.HashMap;
 import java.util.Map;
 
-import hu.bme.mit.inf.ttmc.formalism.stmt.Stmt;
+import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFA;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFAEdge;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFALoc;

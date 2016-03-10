@@ -5,7 +5,7 @@ import java.util.Collection;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
-import hu.bme.mit.inf.ttmc.formalism.decl.VarDecl;
+import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 
 /**
  * Symbolic Transition System (STS) interface.

@@ -3,7 +3,7 @@ package hu.bme.mit.inf.ttmc.formalism.utils.impl;
 import java.util.HashMap;
 import java.util.Map;
 
-import hu.bme.mit.inf.ttmc.formalism.decl.VarDecl;
+import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 
 public class IndexMap {
 	

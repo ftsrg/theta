@@ -4,7 +4,7 @@ import java.util.Collection;
 
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.constraint.ui.ConstraintModel;
-import hu.bme.mit.inf.ttmc.formalism.decl.ProcDecl;
+import hu.bme.mit.inf.ttmc.formalism.common.decl.ProcDecl;
 
 public interface ProgramModel extends ConstraintModel {
 

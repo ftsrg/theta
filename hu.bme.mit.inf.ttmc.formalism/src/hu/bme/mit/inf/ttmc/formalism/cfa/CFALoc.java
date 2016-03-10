@@ -2,7 +2,7 @@ package hu.bme.mit.inf.ttmc.formalism.cfa;
 
 import java.util.Collection;
 
-import hu.bme.mit.inf.ttmc.formalism.Loc;
+import hu.bme.mit.inf.ttmc.formalism.common.Loc;
 
 public interface CFALoc extends Loc {
 
