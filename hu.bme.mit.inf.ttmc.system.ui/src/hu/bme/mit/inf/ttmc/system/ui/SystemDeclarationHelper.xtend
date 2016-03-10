@@ -6,7 +6,7 @@ import hu.bme.mit.inf.ttmc.constraint.type.Type
 import hu.bme.mit.inf.ttmc.constraint.ui.DeclarationHelper
 import hu.bme.mit.inf.ttmc.constraint.ui.TypeHelper
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl
-import hu.bme.mit.inf.ttmc.formalism.common.factory.STSFactory
+import hu.bme.mit.inf.ttmc.formalism.sts.STSFactory
 import hu.bme.mit.inf.ttmc.system.model.VariableDeclaration
 import java.util.HashMap
 import java.util.Map
