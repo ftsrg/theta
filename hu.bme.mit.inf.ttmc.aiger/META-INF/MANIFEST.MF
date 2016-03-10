@@ -1,0 +1,10 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Aiger
+Bundle-SymbolicName: hu.bme.mit.inf.ttmc.aiger
+Bundle-Version: 1.0.0.qualifier
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Require-Bundle: hu.bme.mit.inf.ttmc.formalism,
+ hu.bme.mit.inf.ttmc.constraint,
+ org.junit
+Import-Package: com.google.common.collect
