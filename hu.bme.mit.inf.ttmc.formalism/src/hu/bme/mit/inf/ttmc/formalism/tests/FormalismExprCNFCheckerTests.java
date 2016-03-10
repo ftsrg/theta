@@ -10,8 +10,8 @@ import hu.bme.mit.inf.ttmc.constraint.factory.ExprFactory;
 import hu.bme.mit.inf.ttmc.constraint.factory.TypeFactory;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.VarRefExpr;
-import hu.bme.mit.inf.ttmc.formalism.common.factory.ProgramFactory;
-import hu.bme.mit.inf.ttmc.formalism.common.factory.impl.ProgramFactoryImpl;
+import hu.bme.mit.inf.ttmc.formalism.sts.STSFactory;
+import hu.bme.mit.inf.ttmc.formalism.sts.impl.STSFactoryImpl;
 import hu.bme.mit.inf.ttmc.formalism.utils.impl.FormalismExprCNFChecker;
 
 public class FormalismExprCNFCheckerTests {
@@ -19,7 +19,7 @@ public class FormalismExprCNFCheckerTests {
 	private ConstraintManager manager;
 	private ExprFactory efc;
 	private TypeFactory tfc;
-	private ProgramFactory pfc;
+	private STSFactory sfc;
 	// Constants and variaBles for testing
 	private VarRefExpr<BoolType> vA, vB, vC;
 	// CNF checker
@@ -31,11 +31,11 @@ public class FormalismExprCNFCheckerTests {
 		manager = new ConstraintManagerImpl();
 		efc = manager.getExprFactory();
 		tfc = manager.getTypeFactory();
-		pfc = new ProgramFactoryImpl();
+		sfc = new STSFactoryImpl();
 		// Create constants and variaBles
-		vA = pfc.Var("A", tfc.Bool()).getRef();
-		vB = pfc.Var("B", tfc.Bool()).getRef();
-		vC = pfc.Var("C", tfc.Bool()).getRef();
+		vA = sfc.Var("A", tfc.Bool()).getRef();
+		vB = sfc.Var("B", tfc.Bool()).getRef();
+		vC = sfc.Var("C", tfc.Bool()).getRef();
 		// Create CNF checker
 		cnfChecker = new FormalismExprCNFChecker();
 	}
@@ -46,19 +46,19 @@ public class FormalismExprCNFCheckerTests {
 		// A
 		Assert.assertTrue(cnfChecker.isExprCNF(vA));
 		// A'
-		Assert.assertTrue(cnfChecker.isExprCNF(pfc.Prime(vA)));
+		Assert.assertTrue(cnfChecker.isExprCNF(sfc.Prime(vA)));
 		// !A
 		Assert.assertTrue(cnfChecker.isExprCNF(efc.Not(vA)));
 		// !(A')
-		Assert.assertTrue(cnfChecker.isExprCNF(efc.Not(pfc.Prime(vA))));
+		Assert.assertTrue(cnfChecker.isExprCNF(efc.Not(sfc.Prime(vA))));
 		// !A or B' or !C
-		Assert.assertTrue(cnfChecker.isExprCNF(efc.Or(efc.Not(vA), pfc.Prime(vB), efc.Not(vC))));
+		Assert.assertTrue(cnfChecker.isExprCNF(efc.Or(efc.Not(vA), sfc.Prime(vB), efc.Not(vC))));
 		// !A and B' and !C
-		Assert.assertTrue(cnfChecker.isExprCNF(efc.And(efc.Not(vA), pfc.Prime(vB), efc.Not(vC))));
+		Assert.assertTrue(cnfChecker.isExprCNF(efc.And(efc.Not(vA), sfc.Prime(vB), efc.Not(vC))));
 		// !A and (B and !C)
 		Assert.assertTrue(cnfChecker.isExprCNF(efc.And(efc.Not(vA), efc.And(vB, efc.Not(vC)))));
 		// !A and (B' or !C)
-		Assert.assertTrue(cnfChecker.isExprCNF(efc.And(efc.Not(vA), efc.Or(pfc.Prime(vB), efc.Not(vC)))));
+		Assert.assertTrue(cnfChecker.isExprCNF(efc.And(efc.Not(vA), efc.Or(sfc.Prime(vB), efc.Not(vC)))));
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -81,8 +81,8 @@ public class FormalismExprCNFCheckerTests {
 		// (!A)'
 		Assert.assertFalse(cnfChecker.isExprCNF(efc.Not(efc.Not(vA))));
 		// (A and B)'
-		Assert.assertFalse(cnfChecker.isExprCNF(pfc.Prime(efc.And(vA, vB))));
+		Assert.assertFalse(cnfChecker.isExprCNF(sfc.Prime(efc.And(vA, vB))));
 		// (A or B)'
-		Assert.assertFalse(cnfChecker.isExprCNF(pfc.Prime(efc.Or(vA, vB))));
+		Assert.assertFalse(cnfChecker.isExprCNF(sfc.Prime(efc.Or(vA, vB))));
 	}
 }
