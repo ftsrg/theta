@@ -10,8 +10,8 @@ import hu.bme.mit.inf.ttmc.constraint.factory.ExprFactory;
 import hu.bme.mit.inf.ttmc.constraint.factory.TypeFactory;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.VarRefExpr;
-import hu.bme.mit.inf.ttmc.formalism.common.factory.ProgramFactory;
-import hu.bme.mit.inf.ttmc.formalism.common.factory.impl.ProgramFactoryImpl;
+import hu.bme.mit.inf.ttmc.formalism.sts.STSFactory;
+import hu.bme.mit.inf.ttmc.formalism.sts.impl.STSFactoryImpl;
 import hu.bme.mit.inf.ttmc.formalism.utils.impl.FormalismExprITEEliminator;
 
 public class FormalismExprITEEliminatorTests {
@@ -19,7 +19,7 @@ public class FormalismExprITEEliminatorTests {
 	private ConstraintManager manager;
 	private ExprFactory efc;
 	private TypeFactory tfc;
-	private ProgramFactory pfc;
+	private STSFactory sfc;
 	// Constants and variables for testing
 	private VarRefExpr<BoolType> vA, vB, vC;
 	// Transformator
@@ -31,11 +31,11 @@ public class FormalismExprITEEliminatorTests {
 		manager = new ConstraintManagerImpl();
 		efc = manager.getExprFactory();
 		tfc = manager.getTypeFactory();
-		pfc = new ProgramFactoryImpl();
+		sfc = new STSFactoryImpl();
 		// Create constants and variables
-		vA = pfc.Var("A", tfc.Bool()).getRef();
-		vB = pfc.Var("B", tfc.Bool()).getRef();
-		vC = pfc.Var("C", tfc.Bool()).getRef();
+		vA = sfc.Var("A", tfc.Bool()).getRef();
+		vB = sfc.Var("B", tfc.Bool()).getRef();
+		vC = sfc.Var("C", tfc.Bool()).getRef();
 		// Create transformator
 		eliminator = new FormalismExprITEEliminator(manager);
 	}
@@ -50,8 +50,8 @@ public class FormalismExprITEEliminatorTests {
 				);
 		// (if A then B else C)'
 		Assert.assertEquals(
-				eliminator.eliminate(pfc.Prime(efc.Ite(vA, vB, vC))),
-				efc.And(efc.Or(efc.Not(vA), pfc.Prime(vB)), efc.Or(vA, pfc.Prime(vC)))
+				eliminator.eliminate(sfc.Prime(efc.Ite(vA, vB, vC))),
+				efc.And(efc.Or(efc.Not(vA), sfc.Prime(vB)), efc.Or(vA, sfc.Prime(vC)))
 				);
 	}
 }
