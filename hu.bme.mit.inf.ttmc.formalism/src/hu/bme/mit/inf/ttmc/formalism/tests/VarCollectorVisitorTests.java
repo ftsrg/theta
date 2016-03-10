@@ -8,7 +8,6 @@ import org.junit.Test;
 
 import com.google.common.collect.ImmutableSet;
 
-import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.ConstraintManagerImpl;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.factory.ExprFactory;
@@ -17,16 +16,17 @@ import hu.bme.mit.inf.ttmc.constraint.type.IntType;
 import hu.bme.mit.inf.ttmc.constraint.type.RatType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
-import hu.bme.mit.inf.ttmc.formalism.common.factory.VarFactory;
-import hu.bme.mit.inf.ttmc.formalism.common.factory.impl.STSFactoryImpl;
+import hu.bme.mit.inf.ttmc.formalism.common.factory.VarDeclFactory;
+import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
+import hu.bme.mit.inf.ttmc.formalism.sts.impl.STSManagerImpl;
 import hu.bme.mit.inf.ttmc.formalism.utils.impl.VarCollectorVisitor;
 import org.junit.Assert;
 
 public class VarCollectorVisitorTests {
 	
-	ConstraintManager manager = new ConstraintManagerImpl();
-	ExprFactory ef = manager.getExprFactory();
-	VarFactory vf = new STSFactoryImpl();
+	STSManager manager;
+	VarDeclFactory df;
+	ExprFactory ef;
 
 	VarDecl<BoolType> a;
 	VarDecl<IntType> b;
@@ -38,15 +38,15 @@ public class VarCollectorVisitorTests {
 	
 	@Before
 	public void before() {
-		manager = new ConstraintManagerImpl();
+		manager = new STSManagerImpl(new ConstraintManagerImpl());
 		ef = manager.getExprFactory();
-		vf = new STSFactoryImpl();
+		df = manager.getDeclFactory();
 
-		a = vf.Var("A", manager.getTypeFactory().Bool());
-		b = vf.Var("B", manager.getTypeFactory().Int());
-		c = vf.Var("C", manager.getTypeFactory().Rat());
-		d = vf.Var("D", manager.getTypeFactory().Bool());
-		e = vf.Var("E", manager.getTypeFactory().Int());
+		a = df.Var("A", manager.getTypeFactory().Bool());
+		b = df.Var("B", manager.getTypeFactory().Int());
+		c = df.Var("C", manager.getTypeFactory().Rat());
+		d = df.Var("D", manager.getTypeFactory().Bool());
+		e = df.Var("E", manager.getTypeFactory().Int());
 		
 		visitor = new VarCollectorVisitor();
 	}
@@ -59,11 +59,11 @@ public class VarCollectorVisitorTests {
 				new HashSet<VarDecl<? extends Type>>() {{}}));
 
 		Assert.assertTrue(checkExpr(
-				ef.And(ImmutableSet.of(vf.Ref(a), ef.Not(vf.Ref(d)))),
+				ef.And(ImmutableSet.of(a.getRef(), ef.Not(d.getRef()))),
 				new HashSet<VarDecl<? extends Type>>() {{add(a); add(d);}}));
 		
 		Assert.assertTrue(checkExpr(
-				ef.And(ImmutableSet.of(ef.Imply(vf.Ref(a), vf.Ref(d)), ef.Eq(vf.Ref(c), ef.Sub(vf.Ref(b), vf.Ref(e))))),
+				ef.And(ImmutableSet.of(ef.Imply(a.getRef(), d.getRef()), ef.Eq(c.getRef(), ef.Sub(b.getRef(), e.getRef())))),
 				new HashSet<VarDecl<? extends Type>>() {{add(a); add(b); add(c); add(d); add(e);}}));
 	}
 	
