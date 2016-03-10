@@ -5,6 +5,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 
 import hu.bme.mit.inf.ttmc.constraint.expr.AndExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
@@ -72,10 +73,10 @@ public class STSImpl implements STS {
 		private Expr<? extends BoolType> prop;
 		
 		public Builder() {
-			vars = new ArrayList<>();
-			init = new ArrayList<>();
-			invar = new ArrayList<>();
-			trans = new ArrayList<>();
+			vars = new HashSet<>();
+			init = new HashSet<>();
+			invar = new HashSet<>();
+			trans = new HashSet<>();
 			prop = null;
 		}
 		
@@ -97,7 +98,8 @@ public class STSImpl implements STS {
 		}
 		
 		/**
-		 * Add an initial constraint. Individual initial constraints will be joined into an AND expression.
+		 * Add an initial constraint. If the constraint is an AND expression it will be split
+		 * into its conjuncts. Duplicate constraints are included only once.
 		 */
 		public Builder addInit(Expr<? extends BoolType> expr) {
 			checkNotNull(expr);
@@ -107,7 +109,8 @@ public class STSImpl implements STS {
 		}
 		
 		/**
-		 * Add initial constraints. Individual initial constraints will be joined into an AND expression.
+		 * Add initial constraints. If the constraint is an AND expression it will be split
+		 * into its conjuncts. Duplicate constraints are included only once.
 		 */
 		public Builder addInit(Collection<? extends Expr<? extends BoolType>> init) {
 			checkNotNull(init);
@@ -116,7 +119,8 @@ public class STSImpl implements STS {
 		}
 		
 		/**
-		 * Add an invariant constraint. Individual invariant constraints will be joined into an AND expression.
+		 * Add an invariant constraint. If the constraint is an AND expression it will be split
+		 * into its conjuncts. Duplicate constraints are included only once.
 		 */
 		public Builder addInvar(Expr<? extends BoolType> expr) {
 			checkNotNull(expr);
@@ -126,7 +130,8 @@ public class STSImpl implements STS {
 		}
 		
 		/**
-		 * Add invariant constraints. Individual invariant constraints will be joined into an AND expression.
+		 * Add invariant constraints. If the constraint is an AND expression it will be split
+		 * into its conjuncts. Duplicate constraints are included only once.
 		 */
 		public Builder addInvar(Collection<? extends Expr<? extends BoolType>> invar) {
 			checkNotNull(invar);
@@ -135,7 +140,8 @@ public class STSImpl implements STS {
 		}
 		
 		/**
-		 * Add a transition constraint. Individual transition constraints will be joined into an AND expression.
+		 * Add a transition constraint. If the constraint is an AND expression it will be split
+		 * into its conjuncts. Duplicate constraints are included only once.
 		 */
 		public Builder addTrans(Expr<? extends BoolType> expr) {
 			checkNotNull(expr);
@@ -145,7 +151,8 @@ public class STSImpl implements STS {
 		}
 		
 		/**
-		 * Add transition constraints. Individual transition constraints will be joined into an AND expression.
+		 * Add transition constraints. If the constraint is an AND expression it will be split
+		 * into its conjuncts. Duplicate constraints are included only once.
 		 */
 		public Builder addTrans(Collection<? extends Expr<? extends BoolType>> trans) {
 			checkNotNull(trans);
