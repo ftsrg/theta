@@ -10,9 +10,7 @@ import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.impl.VarDeclImpl;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.PrimedExpr;
-import hu.bme.mit.inf.ttmc.formalism.common.expr.VarRefExpr;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.impl.PrimedExprImpl;
-import hu.bme.mit.inf.ttmc.formalism.common.expr.impl.VarRefExprImpl;
 import hu.bme.mit.inf.ttmc.formalism.common.factory.STSFactory;
 
 public class STSFactoryImpl implements STSFactory {
@@ -38,12 +36,6 @@ public class STSFactoryImpl implements STSFactory {
 	public <T extends Type> PrimedExpr<T> Prime(Expr<? extends T> op) {
 		checkNotNull(op);
 		return new PrimedExprImpl<>(op);
-	}
-
-	@Override
-	public <T extends Type> VarRefExpr<T> Ref(VarDecl<T> varDecl) {
-		checkNotNull(varDecl);
-		return new VarRefExprImpl<>(varDecl);
 	}
 
 }

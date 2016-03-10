@@ -30,7 +30,7 @@ class FoldVisitor extends ExprRewriterVisitor<Integer> {
 		checkState(nPrimes >= 0);
 		
 		final VarDecl<DeclType> varDecl = varMap.getVarDecl(constDecl);
-		Expr<DeclType> res = factory.Ref(varDecl);
+		Expr<DeclType> res = varDecl.getRef();
 		while (nPrimes > 0) {
 			res = factory.Prime(res);
 			nPrimes--;

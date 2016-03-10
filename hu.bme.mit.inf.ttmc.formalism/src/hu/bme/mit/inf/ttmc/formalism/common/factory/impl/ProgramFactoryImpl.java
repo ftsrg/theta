@@ -17,11 +17,9 @@ import hu.bme.mit.inf.ttmc.formalism.common.decl.impl.VarDeclImpl;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.PrimedExpr;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.ProcCallExpr;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.ProcRefExpr;
-import hu.bme.mit.inf.ttmc.formalism.common.expr.VarRefExpr;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.impl.PrimedExprImpl;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.impl.ProcCallExprImpl;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.impl.ProcRefExprImpl;
-import hu.bme.mit.inf.ttmc.formalism.common.expr.impl.VarRefExprImpl;
 import hu.bme.mit.inf.ttmc.formalism.common.factory.ProgramFactory;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.AssertStmt;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.AssignStmt;
@@ -99,12 +97,6 @@ public class ProgramFactoryImpl implements ProgramFactory {
 	}
 	
 	////
-	
-	@Override
-	public <T extends Type> VarRefExpr<T> Ref(VarDecl<T> varDecl) {
-		checkNotNull(varDecl);
-		return new VarRefExprImpl<>(varDecl);
-	}
 	
 	@Override
 	public <R extends Type> ProcRefExpr<R> Ref(ProcDecl<R> procDecl) {

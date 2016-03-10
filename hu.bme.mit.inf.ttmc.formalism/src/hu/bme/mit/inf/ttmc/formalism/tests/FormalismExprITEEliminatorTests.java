@@ -33,9 +33,9 @@ public class FormalismExprITEEliminatorTests {
 		tfc = manager.getTypeFactory();
 		pfc = new ProgramFactoryImpl();
 		// Create constants and variables
-		vA = pfc.Ref(pfc.Var("A", tfc.Bool()));
-		vB = pfc.Ref(pfc.Var("B", tfc.Bool()));
-		vC = pfc.Ref(pfc.Var("C", tfc.Bool()));
+		vA = pfc.Var("A", tfc.Bool()).getRef();
+		vB = pfc.Var("B", tfc.Bool()).getRef();
+		vC = pfc.Var("C", tfc.Bool()).getRef();
 		// Create transformator
 		eliminator = new FormalismExprITEEliminator(manager);
 	}
