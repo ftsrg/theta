@@ -5,20 +5,18 @@ import java.io.IOException;
 import org.junit.Test;
 
 import hu.bme.mit.inf.ttmc.aiger.AIGERLoader;
-import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.ConstraintManagerImpl;
-import hu.bme.mit.inf.ttmc.formalism.common.factory.STSFactory;
-import hu.bme.mit.inf.ttmc.formalism.common.factory.impl.STSFactoryImpl;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
+import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
+import hu.bme.mit.inf.ttmc.formalism.sts.impl.STSManagerImpl;
 
 public class AIGERLoaderTests {
 
 	@Test
 	public void testAIGERLoader() throws IOException {
 		AIGERLoader loader = new AIGERLoader();
-		STSFactory stsFactory = new STSFactoryImpl();
-		ConstraintManager manager = new ConstraintManagerImpl();
-		STS sts = loader.load("instances/flipflop.aag", stsFactory, manager);
+		STSManager manager = new STSManagerImpl(new ConstraintManagerImpl());
+		STS sts = loader.load("instances/flipflop.aag", manager);
 		
 		System.out.println("Vars:  " + sts.getVars());
 		System.out.println("Init:  " + sts.getInit());
