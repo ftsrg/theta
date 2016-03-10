@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import com.google.common.collect.ImmutableSet;
+
 import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.ArrayReadExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.ArrayWriteExpr;
@@ -330,10 +332,10 @@ public class ExprITEEliminator {
 			Expr<? extends BoolType> cond = (Expr<? extends BoolType>)expr.getCond().accept(this, param);
 			Expr<? extends Type> then = expr.getThen().accept(this, param);
 			Expr<? extends Type> elze = expr.getElse().accept(this, param);
-			return fact.And(
-					fact.Or(fact.Not(cond), (Expr<? extends BoolType>)then),
-					fact.Or(cond, (Expr<? extends BoolType>)elze)
-					);
+			return fact.And(ImmutableSet.of(
+					fact.Or(ImmutableSet.of(fact.Not(cond), (Expr<? extends BoolType>)then)),
+					fact.Or(ImmutableSet.of(cond, (Expr<? extends BoolType>)elze))
+					));
 		}
 
 	}
