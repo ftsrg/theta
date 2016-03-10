@@ -1,22 +1,19 @@
 package hu.bme.mit.inf.ttmc.formalism.utils.sts.impl;
 
-import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
-import hu.bme.mit.inf.ttmc.formalism.sts.STSFactory;
+import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
 import hu.bme.mit.inf.ttmc.formalism.sts.impl.STSImpl;
 import hu.bme.mit.inf.ttmc.formalism.utils.impl.CNFTransformation;
 import hu.bme.mit.inf.ttmc.formalism.utils.impl.FormalismExprCNFChecker;
 import hu.bme.mit.inf.ttmc.formalism.utils.sts.STSTransformation;
 
 public final class STSCNFTransformation implements STSTransformation {
-	private final ConstraintManager manager;
-	private final STSFactory stsFactory;
+	private final STSManager manager;
 	
-	public STSCNFTransformation(ConstraintManager manager, STSFactory stsFactory) {
+	public STSCNFTransformation(STSManager manager) {
 		this.manager = manager;
-		this.stsFactory = stsFactory;
 	}
 	
 	/**
@@ -25,7 +22,7 @@ public final class STSCNFTransformation implements STSTransformation {
 	@Override
 	public STS transform(STS system) {
 		STSImpl.Builder builder = new STSImpl.Builder();
-		CNFTransformation cnfTransf = new CNFTransformation(manager, stsFactory);
+		CNFTransformation cnfTransf = new CNFTransformation(manager, manager.getDeclFactory());
 		FormalismExprCNFChecker cnfChecker = new FormalismExprCNFChecker();
 		// Keep variables
 		builder.addVar(system.getVars());

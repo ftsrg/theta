@@ -5,10 +5,10 @@ import java.io.IOException;
 
 import org.junit.Test;
 
-import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.ConstraintManagerImpl;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
-import hu.bme.mit.inf.ttmc.formalism.sts.impl.STSFactoryImpl;
+import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
+import hu.bme.mit.inf.ttmc.formalism.sts.impl.STSManagerImpl;
 import hu.bme.mit.inf.ttmc.formalism.utils.sts.impl.STSCNFTransformation;
 import hu.bme.mit.inf.ttmc.formalism.utils.sts.impl.STSITETransformation;
 import hu.bme.mit.inf.ttmc.system.model.SystemSpecification;
@@ -23,11 +23,11 @@ public class SystemModelTests {
 		final File file = new File("instances/simple1.system");
 		final String filePath = file.getAbsolutePath();
 		final SystemSpecification specification = SystemModelLoader.getInstance().load(filePath);
-		final ConstraintManager manager = new ConstraintManagerImpl();
+		final STSManager manager = new STSManagerImpl(new ConstraintManagerImpl());
 		final SystemModel model = SystemModelCreator.create(manager, specification);
 
 		for (STS sts : model.getSTSs()) {
-			sts = new STSCNFTransformation(manager, new STSFactoryImpl()).transform(
+			sts = new STSCNFTransformation(manager).transform(
 					new STSITETransformation(manager).transform(sts));
 			System.out.println(sts.getVars());
 			System.out.println(sts.getInit());
