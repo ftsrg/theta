@@ -1,4 +1,4 @@
-package hu.bme.mit.inf.ttmc.formalism.factory;
+package hu.bme.mit.inf.ttmc.formalism.factory.impl;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -22,6 +22,7 @@ import hu.bme.mit.inf.ttmc.formalism.expr.impl.PrimedExprImpl;
 import hu.bme.mit.inf.ttmc.formalism.expr.impl.ProcCallExprImpl;
 import hu.bme.mit.inf.ttmc.formalism.expr.impl.ProcRefExprImpl;
 import hu.bme.mit.inf.ttmc.formalism.expr.impl.VarRefExprImpl;
+import hu.bme.mit.inf.ttmc.formalism.factory.ProgramFactory;
 import hu.bme.mit.inf.ttmc.formalism.stmt.AssertStmt;
 import hu.bme.mit.inf.ttmc.formalism.stmt.AssignStmt;
 import hu.bme.mit.inf.ttmc.formalism.stmt.AssumeStmt;

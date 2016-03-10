@@ -16,8 +16,8 @@ import hu.bme.mit.inf.ttmc.constraint.ui.TypeHelper;
 import hu.bme.mit.inf.ttmc.constraint.utils.impl.ExprUtils;
 import hu.bme.mit.inf.ttmc.constraint.utils.impl.TypeInferrer;
 import hu.bme.mit.inf.ttmc.formalism.decl.VarDecl;
-import hu.bme.mit.inf.ttmc.formalism.factory.ProgramFactory;
-import hu.bme.mit.inf.ttmc.formalism.factory.ProgramFactoryImpl;
+import hu.bme.mit.inf.ttmc.formalism.factory.STSFactory;
+import hu.bme.mit.inf.ttmc.formalism.factory.impl.STSFactoryImpl;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 import hu.bme.mit.inf.ttmc.formalism.sts.impl.STSImpl;
 import hu.bme.mit.inf.ttmc.formalism.utils.impl.FormalismTypeInferrer;
@@ -39,7 +39,7 @@ public class SystemModelCreator {
 
 		final Collection<STS> stss = new ArrayList<>();
 
-		final ProgramFactory programFactory = new ProgramFactoryImpl();
+		final STSFactory programFactory = new STSFactoryImpl();
 		final TypeInferrer typeInferrer = new FormalismTypeInferrer(manager);
 
 		final TypeHelper typeHelper = new TypeHelper(manager.getTypeFactory());

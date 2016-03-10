@@ -1,4 +1,4 @@
-package hu.bme.mit.inf.ttmc.formalism.factory;
+package hu.bme.mit.inf.ttmc.formalism.factory.impl;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -13,6 +13,7 @@ import hu.bme.mit.inf.ttmc.formalism.expr.PrimedExpr;
 import hu.bme.mit.inf.ttmc.formalism.expr.VarRefExpr;
 import hu.bme.mit.inf.ttmc.formalism.expr.impl.PrimedExprImpl;
 import hu.bme.mit.inf.ttmc.formalism.expr.impl.VarRefExprImpl;
+import hu.bme.mit.inf.ttmc.formalism.factory.STSFactory;
 
 public class STSFactoryImpl implements STSFactory {
 	private final HashMap<String, VarDecl<?>> nameToVar;
