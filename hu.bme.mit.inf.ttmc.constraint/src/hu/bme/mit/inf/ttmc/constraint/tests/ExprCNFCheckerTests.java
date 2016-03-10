@@ -32,9 +32,9 @@ public class ExprCNFCheckerTests {
 			dfc = manager.getDeclFactory();
 			tfc = manager.getTypeFactory();
 			// Create constants
-			cA = efc.Ref(dfc.Const("A", tfc.Bool()));
-			cB = efc.Ref(dfc.Const("B", tfc.Bool()));
-			cC = efc.Ref(dfc.Const("C", tfc.Bool()));
+			cA = dfc.Const("A", tfc.Bool()).getRef();
+			cB = dfc.Const("B", tfc.Bool()).getRef();
+			cC = dfc.Const("C", tfc.Bool()).getRef();
 			// Create CNF checker
 			cnfChecker = new ExprCNFChecker();
 		}

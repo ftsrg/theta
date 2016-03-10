@@ -40,15 +40,15 @@ public class ExprITEEliminatorTests {
 		dfc = manager.getDeclFactory();
 		tfc = manager.getTypeFactory();
 		// Create constants
-		cA = efc.Ref(dfc.Const("A", tfc.Bool()));
-		cB = efc.Ref(dfc.Const("B", tfc.Bool()));
-		cC = efc.Ref(dfc.Const("C", tfc.Bool()));
-		cD = efc.Ref(dfc.Const("D", tfc.Bool()));
-		cE = efc.Ref(dfc.Const("E", tfc.Bool()));
-		cX = efc.Ref(dfc.Const("X", tfc.Int()));
-		cY = efc.Ref(dfc.Const("Y", tfc.Int()));
-		cZ = efc.Ref(dfc.Const("Z", tfc.Int()));
-		cT = efc.Ref(dfc.Const("T", tfc.Int()));
+		cA = dfc.Const("A", tfc.Bool()).getRef();
+		cB = dfc.Const("B", tfc.Bool()).getRef();
+		cC = dfc.Const("C", tfc.Bool()).getRef();
+		cD = dfc.Const("D", tfc.Bool()).getRef();
+		cE = dfc.Const("E", tfc.Bool()).getRef();
+		cX = dfc.Const("X", tfc.Int()).getRef();
+		cY = dfc.Const("Y", tfc.Int()).getRef();
+		cZ = dfc.Const("Z", tfc.Int()).getRef();
+		cT = dfc.Const("T", tfc.Int()).getRef();
 		i1 = efc.Int(1);
 		i2 = efc.Int(2);
 		i3 = efc.Int(3);

@@ -5,13 +5,11 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.util.Collection;
 import java.util.List;
 
-import hu.bme.mit.inf.ttmc.constraint.decl.ConstDecl;
 import hu.bme.mit.inf.ttmc.constraint.decl.ParamDecl;
 import hu.bme.mit.inf.ttmc.constraint.expr.AddExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.AndExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.ArrayReadExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.ArrayWriteExpr;
-import hu.bme.mit.inf.ttmc.constraint.expr.ConstRefExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.EqExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.ExistsExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
@@ -34,7 +32,6 @@ import hu.bme.mit.inf.ttmc.constraint.expr.NegExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.NeqExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.NotExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.OrExpr;
-import hu.bme.mit.inf.ttmc.constraint.expr.ParamRefExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.RatDivExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.RatLitExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.RemExpr;
@@ -93,17 +90,6 @@ public abstract class ExprFactoryDecorator implements ExprFactory {
 	public <P extends Type, R extends Type> FuncLitExpr<? super P, ? extends R> Func(ParamDecl<? super P> paramDecl,
 			Expr<? extends R> result) {
 		return factory.Func(paramDecl, result);
-	}
-
-	@Override
-	public <T extends Type> ConstRefExpr<T> Ref(ConstDecl<T> constDecl) {
-		// TODO Auto-generated method stub
-		return factory.Ref(constDecl);
-	}
-
-	@Override
-	public <T extends Type> ParamRefExpr<T> Ref(ParamDecl<T> paramDecl) {
-		return factory.Ref(paramDecl);
 	}
 
 	@Override

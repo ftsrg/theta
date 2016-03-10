@@ -68,7 +68,7 @@ public class StmtUnroller {
 
 		private StmtToExprVisitor(final ExprFactory ef) {
 			this.ef = ef;
-			visitor = new VarToConstVisitor(ef);
+			visitor = new VarToConstVisitor();
 		}
 
 		////////
@@ -101,7 +101,7 @@ public class StmtUnroller {
 			indexMap.inc(varDecl);
 			final int index = indexMap.getIndex(varDecl);
 			final ConstDecl<?> constDecl = varMap.getConstDecl(varDecl, index);
-			final Expr<?> lhs = ef.Ref(constDecl);
+			final Expr<?> lhs = constDecl.getRef();
 			
 			final Expr<? extends BoolType> result = ef.Eq(lhs, rhs);
 			return result;
@@ -125,12 +125,6 @@ public class StmtUnroller {
 		private static class VarToConstVisitor extends ExprRewriterVisitor<Tuple2<VarMap, IndexMap>>
 				implements ProgExprVisitor<Tuple2<VarMap, IndexMap>, Expr<?>> {
 
-			private final ExprFactory ef;
-
-			private VarToConstVisitor(final ExprFactory ef) {
-				this.ef = ef;
-			}
-
 			@Override
 			public <ExprType extends Type> Expr<ExprType> visit(PrimedExpr<ExprType> expr,
 					Tuple2<VarMap, IndexMap> param) {
@@ -147,7 +141,7 @@ public class StmtUnroller {
 				final int index = indexMap.getIndex(varDecl);
 
 				final ConstDecl<DeclType> constDecl = varMap.getConstDecl(varDecl, index);
-				final ConstRefExpr<DeclType> constRef = ef.Ref(constDecl);
+				final ConstRefExpr<DeclType> constRef = constDecl.getRef();
 
 				return constRef;
 			}

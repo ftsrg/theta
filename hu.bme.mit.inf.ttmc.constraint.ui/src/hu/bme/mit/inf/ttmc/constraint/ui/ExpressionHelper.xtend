@@ -1,16 +1,12 @@
 package hu.bme.mit.inf.ttmc.constraint.ui
 
-import hu.bme.mit.inf.ttmc.constraint.decl.ConstDecl
-import hu.bme.mit.inf.ttmc.constraint.decl.ParamDecl
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr
-import hu.bme.mit.inf.ttmc.constraint.expr.RefExpr
+import hu.bme.mit.inf.ttmc.constraint.factory.ExprFactory
 import hu.bme.mit.inf.ttmc.constraint.model.AddExpression
 import hu.bme.mit.inf.ttmc.constraint.model.AndExpression
 import hu.bme.mit.inf.ttmc.constraint.model.ArrayAccessExpression
 import hu.bme.mit.inf.ttmc.constraint.model.ArrayWithExpression
-import hu.bme.mit.inf.ttmc.constraint.model.ConstantDeclaration
 import hu.bme.mit.inf.ttmc.constraint.model.DecimalLiteralExpression
-import hu.bme.mit.inf.ttmc.constraint.model.Declaration
 import hu.bme.mit.inf.ttmc.constraint.model.DivExpression
 import hu.bme.mit.inf.ttmc.constraint.model.DivideExpression
 import hu.bme.mit.inf.ttmc.constraint.model.EqualExpression
@@ -29,7 +25,6 @@ import hu.bme.mit.inf.ttmc.constraint.model.ModExpression
 import hu.bme.mit.inf.ttmc.constraint.model.MultiplyExpression
 import hu.bme.mit.inf.ttmc.constraint.model.NotExpression
 import hu.bme.mit.inf.ttmc.constraint.model.OrExpression
-import hu.bme.mit.inf.ttmc.constraint.model.ParameterDeclaration
 import hu.bme.mit.inf.ttmc.constraint.model.RationalLiteralExpression
 import hu.bme.mit.inf.ttmc.constraint.model.ReferenceExpression
 import hu.bme.mit.inf.ttmc.constraint.model.SubtractExpression
@@ -45,7 +40,6 @@ import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderMul
 import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderNeg
 import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderSub
 import hu.bme.mit.inf.ttmc.constraint.utils.impl.ExprUtils
-import hu.bme.mit.inf.ttmc.constraint.factory.ExprFactory
 import hu.bme.mit.inf.ttmc.constraint.utils.impl.TypeInferrer
 
 public class ExpressionHelper {
@@ -230,26 +224,10 @@ public class ExpressionHelper {
 		Ite(cond, then, elze)
 	}
 
-	// ///
 	public def dispatch Expr<? extends Type> toExpr(ReferenceExpression expression) {
-		expression.declaration.toRefExpr
+		val decl = expression.declaration.toDecl
+		decl.ref
 	}
 
-	// ///
-	public def dispatch RefExpr<? extends Type, ?> toRefExpr(Declaration declaration) {
-		throw new UnsupportedOperationException("Not supported")
-	}
-
-	public def dispatch RefExpr<? extends Type, ?> toRefExpr(ConstantDeclaration declaration) {
-		val decl = declaration.toDecl
-		val constDecl = decl as ConstDecl<Type>
-		Ref(constDecl)
-	}
-
-	public def dispatch RefExpr<? extends Type, ?> toRefExpr(ParameterDeclaration declaration) {
-		val decl = declaration.toDecl
-		val paramDecl = decl as ParamDecl<Type>
-		Ref(paramDecl)
-	}
 	
 }
