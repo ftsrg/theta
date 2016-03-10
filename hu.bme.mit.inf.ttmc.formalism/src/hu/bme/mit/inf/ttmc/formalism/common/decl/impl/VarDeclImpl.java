@@ -26,10 +26,11 @@ public class VarDeclImpl<DeclType extends Type> extends AbstractDecl<DeclType> i
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
-		sb.append("var ");
+		sb.append("Var(");
 		sb.append(getName());
 		sb.append(" : ");
 		sb.append(getType().toString());
+		sb.append(")");
 		return sb.toString();
 	}
 	
