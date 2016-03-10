@@ -10,6 +10,8 @@ import com.google.common.collect.ImmutableList;
 import hu.bme.mit.inf.ttmc.constraint.decl.ParamDecl;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.ProcDecl;
+import hu.bme.mit.inf.ttmc.formalism.common.expr.ProcRefExpr;
+import hu.bme.mit.inf.ttmc.formalism.common.expr.impl.ProcRefExprImpl;
 import hu.bme.mit.inf.ttmc.formalism.common.type.ProcType;
 
 public class ProcDeclImpl<ReturnType extends Type> implements ProcDecl<ReturnType> {
@@ -17,6 +19,8 @@ public class ProcDeclImpl<ReturnType extends Type> implements ProcDecl<ReturnTyp
 	private final String name;
 	private final List<ParamDecl<? extends Type>> paramDecls;
 	private final ReturnType returnType;
+	
+	protected volatile ProcRefExpr<ReturnType> ref;
 	
 	public ProcDeclImpl(final String name, final List<? extends ParamDecl<? extends Type>> paramDecls, final ReturnType returnType) {
 		this.name = checkNotNull(name);
@@ -43,6 +47,15 @@ public class ProcDeclImpl<ReturnType extends Type> implements ProcDecl<ReturnTyp
 	public ProcType<ReturnType> getType() {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
+	}
+	
+	@Override
+	public ProcRefExpr<ReturnType> getRef() {
+		if (ref == null) {
+			ref = new ProcRefExprImpl<>(this);
+		}
+		
+		return ref;
 	}
 	
 	@Override
