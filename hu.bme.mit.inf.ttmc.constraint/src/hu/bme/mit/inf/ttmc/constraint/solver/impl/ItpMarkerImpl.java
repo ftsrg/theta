@@ -3,7 +3,7 @@ package hu.bme.mit.inf.ttmc.constraint.solver.impl;
 import java.util.Collection;
 
 import hu.bme.mit.inf.ttmc.common.Stack;
-import hu.bme.mit.inf.ttmc.common.StackImpl;
+import hu.bme.mit.inf.ttmc.common.impl.StackImpl;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.solver.ItpMarker;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
