@@ -1,4 +1,4 @@
-package hu.bme.mit.inf.ttmc.aiger.elements;
+package hu.bme.mit.inf.ttmc.aiger.impl.elements;
 
 import java.util.List;
 

@@ -5,18 +5,23 @@ import java.io.IOException;
 import org.junit.Test;
 
 import hu.bme.mit.inf.ttmc.aiger.AIGERLoader;
+import hu.bme.mit.inf.ttmc.aiger.impl.AIGERLoaderOptimized;
+import hu.bme.mit.inf.ttmc.aiger.impl.AIGERLoaderSimple;
 import hu.bme.mit.inf.ttmc.constraint.ConstraintManagerImpl;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
 import hu.bme.mit.inf.ttmc.formalism.sts.impl.STSManagerImpl;
 
+@SuppressWarnings("unused")
 public class AIGERLoaderTests {
 
 	@Test
 	public void testAIGERLoader() throws IOException {
-		AIGERLoader loader = new AIGERLoader();
+		AIGERLoader loader = null;
+		//loader = new AIGERLoaderSimple();
+		loader = new AIGERLoaderOptimized();
 		STSManager manager = new STSManagerImpl(new ConstraintManagerImpl());
-		STS sts = loader.load("instances/simple.aag", manager);
+		STS sts = loader.load("instances/simple2.aag", manager);
 		
 		System.out.println("Vars:  " + sts.getVars());
 		System.out.println("Init:  " + sts.getInit());
