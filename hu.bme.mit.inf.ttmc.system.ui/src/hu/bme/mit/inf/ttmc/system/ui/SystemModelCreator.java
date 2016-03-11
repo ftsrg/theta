@@ -10,11 +10,9 @@ import com.google.common.collect.ImmutableList;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.model.Expression;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
-import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.constraint.ui.TypeHelper;
 import hu.bme.mit.inf.ttmc.constraint.utils.impl.ExprUtils;
 import hu.bme.mit.inf.ttmc.constraint.utils.impl.TypeInferrer;
-import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
 import hu.bme.mit.inf.ttmc.formalism.sts.impl.STSImpl;
@@ -68,8 +66,8 @@ public class SystemModelCreator {
 		}
 
 		for (final VariableDeclaration variableDeclaration : systemDefinition.getVariableDeclarations()) {
-			final VarDecl<Type> varDecl = (VarDecl<Type>) declarationHelper.toDecl(variableDeclaration);
-			builder.addVar(varDecl);
+			// declarationHelper stores the created variables internally
+			declarationHelper.toDecl(variableDeclaration);
 		}
 
 		for (SystemConstraintDefinition constraintDef : systemDefinition.getSystemConstraintDefinitions()) {

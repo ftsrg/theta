@@ -13,6 +13,7 @@ import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
+import hu.bme.mit.inf.ttmc.formalism.utils.impl.VarCollectorVisitor;
 
 /**
  * Symbolic Transition System (STS) implementation.
@@ -25,7 +26,8 @@ public class STSImpl implements STS {
 	private final Collection<Expr<? extends BoolType>> trans;
 	private final Expr<? extends BoolType> prop;
 	
-	public STSImpl(Collection<VarDecl<? extends Type>> vars, Collection<Expr<? extends BoolType>> init,
+	// Protected constructor --> use the builder
+	protected STSImpl(Collection<VarDecl<? extends Type>> vars, Collection<Expr<? extends BoolType>> init,
 			Collection<Expr<? extends BoolType>> invar, Collection<Expr<? extends BoolType>> trans,
 			Expr<? extends BoolType> prop) {
 		checkNotNull(vars);
@@ -71,6 +73,7 @@ public class STSImpl implements STS {
 		private final Collection<Expr<? extends BoolType>> invar;
 		private final Collection<Expr<? extends BoolType>> trans;
 		private Expr<? extends BoolType> prop;
+		private final VarCollectorVisitor varCollectorVisitor;
 		
 		public Builder() {
 			vars = new HashSet<>();
@@ -78,23 +81,7 @@ public class STSImpl implements STS {
 			invar = new HashSet<>();
 			trans = new HashSet<>();
 			prop = null;
-		}
-		
-		/**
-		 * Add a variable declaration.
-		 */
-		public Builder addVar(VarDecl<? extends Type> varDecl) {
-			vars.add(checkNotNull(varDecl));
-			return this;
-		}
-		
-		/**
-		 * Add variable declarations.
-		 */
-		public Builder addVar(Collection<? extends VarDecl<? extends Type>> vars) {
-			checkNotNull(vars);
-			for (VarDecl<? extends Type> varDecl : vars) addVar(varDecl);
-			return this;
+			varCollectorVisitor = new VarCollectorVisitor();
 		}
 		
 		/**
@@ -167,6 +154,12 @@ public class STSImpl implements STS {
 		}
 		
 		public STS build() {
+			// Collect variables from the expressions
+			for (Expr<? extends BoolType> expr : init) expr.accept(varCollectorVisitor, vars);
+			for (Expr<? extends BoolType> expr : invar) expr.accept(varCollectorVisitor, vars);
+			for (Expr<? extends BoolType> expr : trans) expr.accept(varCollectorVisitor, vars);
+			prop.accept(varCollectorVisitor, vars);
+			
 			return new STSImpl(vars, init, invar, trans, prop);
 		}
 	}
