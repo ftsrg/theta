@@ -7,7 +7,6 @@ import java.util.Collection;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.AddExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.AndExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.ArrayReadExpr;
@@ -55,37 +54,38 @@ import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderMul;
 import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderNeg;
 import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderSub;
 import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
+import hu.bme.mit.inf.ttmc.constraint.utils.TypeInferrer;
 
-public class TypeInferrer {
+public class TypeInferrerImpl implements TypeInferrer {
 
 	private final TypeInferrerVisitor visitor;
 	
-	public TypeInferrer(final ConstraintManager manager) {
-		checkNotNull(manager);
-		visitor = getTypeInferrer(manager);
+	public TypeInferrerImpl(final TypeFactory typeFactory) {
+		checkNotNull(typeFactory);
+		visitor = new TypeInferrerVisitor(typeFactory);
 	}
 	
+	@Override
 	public <T extends Type> T getType(final Expr<T> expr) {
 		checkNotNull(expr);
-		
-		final Type visitResult = expr.accept(visitor, null);
-		@SuppressWarnings("unchecked")
-		final T result = (T) visitResult;
-		return result;
-	}
-	
-	protected TypeInferrerVisitor getTypeInferrer(ConstraintManager manager) {
-		return new TypeInferrerVisitor(manager);
+		return visitor.getType(expr);
 	}
 	
 	////////
 	
-	protected class TypeInferrerVisitor implements ExprVisitor<Void, Type> {
+	protected static class TypeInferrerVisitor implements ExprVisitor<Void, Type> {
 
 		protected final TypeFactory factory;
 		
-		public TypeInferrerVisitor(final ConstraintManager manager) {
-			factory = manager.getTypeFactory();
+		protected TypeInferrerVisitor(final TypeFactory factory) {
+			this.factory = factory;
+		}
+		
+		public <T extends Type> T getType(final Expr<T> expr) {
+			final Type visitResult = expr.accept(this, null);
+			@SuppressWarnings("unchecked")
+			final T result = (T) visitResult;
+			return result;
 		}
 		
 		////////

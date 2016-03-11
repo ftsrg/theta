@@ -40,7 +40,8 @@ import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderMul
 import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderNeg
 import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderSub
 import hu.bme.mit.inf.ttmc.constraint.utils.impl.ExprUtils
-import hu.bme.mit.inf.ttmc.constraint.utils.impl.TypeInferrer
+import hu.bme.mit.inf.ttmc.constraint.ConstraintManager
+import hu.bme.mit.inf.ttmc.constraint.utils.TypeInferrer
 
 public class ExpressionHelper {
 	
@@ -49,10 +50,10 @@ public class ExpressionHelper {
 	
 	private val TypeInferrer typeInferrer;
 	
-	public new(ExprFactory exprFactory, DeclarationHelper declarationHelper, TypeInferrer typeInferrer) {
-		this.exprFactory = exprFactory
+	public new(ConstraintManager manager, DeclarationHelper declarationHelper) {
+		this.exprFactory = manager.getExprFactory
 		this.declarationHelper = declarationHelper
-		this.typeInferrer = typeInferrer
+		this.typeInferrer = manager.typeInferrer
 	}
 	
 	

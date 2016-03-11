@@ -7,6 +7,8 @@ import hu.bme.mit.inf.ttmc.constraint.factory.DeclFactory;
 import hu.bme.mit.inf.ttmc.constraint.factory.ExprFactory;
 import hu.bme.mit.inf.ttmc.constraint.factory.SolverFactory;
 import hu.bme.mit.inf.ttmc.constraint.factory.TypeFactory;
+import hu.bme.mit.inf.ttmc.constraint.utils.TypeInferrer;
+import hu.bme.mit.inf.ttmc.constraint.utils.impl.TypeInferrerImpl;
 import hu.bme.mit.inf.ttmc.constraint.z3.factory.Z3DeclFactory;
 import hu.bme.mit.inf.ttmc.constraint.z3.factory.Z3ExprFactory;
 import hu.bme.mit.inf.ttmc.constraint.z3.factory.Z3SolverFactory;
@@ -32,6 +34,7 @@ public final class Z3ConstraintManager implements ConstraintManager {
 	final Z3TypeFactory typeFactory;
 	final Z3ExprFactory exprFactory;
 	final Z3SolverFactory solverFactory;
+	final TypeInferrer typeInferrer;
 
 	public Z3ConstraintManager() {
 		loadLibraries();
@@ -49,6 +52,8 @@ public final class Z3ConstraintManager implements ConstraintManager {
 		exprFactory = new Z3ExprFactory(context);
 		final Z3TermWrapper termWrapper = new Z3TermWrapper(this, context, declFactory); 
 		solverFactory = new Z3SolverFactory(this, context, termWrapper);
+		typeInferrer = new TypeInferrerImpl(typeFactory);
+		
 	}
 
 	@Override
@@ -69,6 +74,11 @@ public final class Z3ConstraintManager implements ConstraintManager {
 	@Override
 	public SolverFactory getSolverFactory() {
 		return solverFactory;
+	}
+
+	@Override
+	public TypeInferrer getTypeInferrer() {
+		return typeInferrer;
 	}
 
 }
