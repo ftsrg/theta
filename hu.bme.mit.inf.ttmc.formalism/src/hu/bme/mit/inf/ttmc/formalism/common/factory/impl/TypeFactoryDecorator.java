@@ -2,15 +2,12 @@ package hu.bme.mit.inf.ttmc.formalism.common.factory.impl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.util.List;
-
 import hu.bme.mit.inf.ttmc.constraint.factory.TypeFactory;
 import hu.bme.mit.inf.ttmc.constraint.type.ArrayType;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.constraint.type.FuncType;
 import hu.bme.mit.inf.ttmc.constraint.type.IntType;
 import hu.bme.mit.inf.ttmc.constraint.type.RatType;
-import hu.bme.mit.inf.ttmc.constraint.type.TupleType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 
 public abstract class TypeFactoryDecorator implements TypeFactory {
@@ -35,11 +32,6 @@ public abstract class TypeFactoryDecorator implements TypeFactory {
 	@Override
 	public RatType Rat() {
 		return factory.Rat();
-	}
-
-	@Override
-	public TupleType Tuple(List<? extends Type> elemTypes) {
-		return factory.Tuple(elemTypes);
 	}
 
 	@Override

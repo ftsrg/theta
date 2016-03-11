@@ -32,8 +32,6 @@ import hu.bme.mit.inf.ttmc.constraint.expr.RatLitExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.RemExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.SubExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.TrueExpr;
-import hu.bme.mit.inf.ttmc.constraint.expr.TupleLitExpr;
-import hu.bme.mit.inf.ttmc.constraint.expr.TupleProjExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderAdd;
 import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderMul;
@@ -199,16 +197,6 @@ public class IsBoolConnExprVisitor implements ExprVisitor<Void, Boolean> {
 	@Override
 	public <ParamType extends Type, ResultType extends Type> Boolean visit(FuncAppExpr<ParamType, ResultType> expr,
 			Void param) {
-		return false;
-	}
-
-	@Override
-	public Boolean visit(TupleLitExpr expr, Void param) {
-		return false;
-	}
-
-	@Override
-	public Boolean visit(TupleProjExpr expr, Void param) {
 		return false;
 	}
 

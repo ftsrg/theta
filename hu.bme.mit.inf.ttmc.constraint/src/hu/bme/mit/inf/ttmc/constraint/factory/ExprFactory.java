@@ -39,14 +39,11 @@ import hu.bme.mit.inf.ttmc.constraint.expr.RatLitExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.RemExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.SubExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.TrueExpr;
-import hu.bme.mit.inf.ttmc.constraint.expr.TupleLitExpr;
-import hu.bme.mit.inf.ttmc.constraint.expr.TupleProjExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.ArrayType;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.constraint.type.FuncType;
 import hu.bme.mit.inf.ttmc.constraint.type.IntType;
 import hu.bme.mit.inf.ttmc.constraint.type.RatType;
-import hu.bme.mit.inf.ttmc.constraint.type.TupleType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderAdd;
 import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderMul;
@@ -71,14 +68,10 @@ public interface ExprFactory {
 
 	public RatLitExpr Rat(final long num, final long denom);
 
-	public TupleLitExpr Tuple(final List<? extends Expr<?>> elems);
-
 	public <P extends Type, R extends Type> FuncLitExpr<? super P, ? extends R> Func(final ParamDecl<? super P> paramDecl,
 			final Expr<? extends R> result);
 
 	// LHS
-
-	public TupleProjExpr Proj(final Expr<? extends TupleType> tup, int index);
 
 	public <P extends Type, R extends Type> FuncAppExpr<P, R> App(final Expr<? extends FuncType<? super P, ? extends R>> func,
 			final Expr<? extends P> param);

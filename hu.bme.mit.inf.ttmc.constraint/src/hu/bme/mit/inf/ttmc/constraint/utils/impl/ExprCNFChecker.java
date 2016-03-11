@@ -33,8 +33,6 @@ import hu.bme.mit.inf.ttmc.constraint.expr.RatLitExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.RemExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.SubExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.TrueExpr;
-import hu.bme.mit.inf.ttmc.constraint.expr.TupleLitExpr;
-import hu.bme.mit.inf.ttmc.constraint.expr.TupleProjExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderAdd;
@@ -232,16 +230,6 @@ public class ExprCNFChecker {
 		@Override
 		public <ParamType extends Type, ResultType extends Type> Boolean visit(FuncAppExpr<ParamType, ResultType> expr,
 				CNFStatus param) {
-			return true;
-		}
-
-		@Override
-		public Boolean visit(TupleLitExpr expr, CNFStatus param) {
-			return true;
-		}
-
-		@Override
-		public Boolean visit(TupleProjExpr expr, CNFStatus param) {
 			return true;
 		}
 

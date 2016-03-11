@@ -35,8 +35,6 @@ import hu.bme.mit.inf.ttmc.constraint.expr.RatLitExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.RemExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.SubExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.TrueExpr;
-import hu.bme.mit.inf.ttmc.constraint.expr.TupleLitExpr;
-import hu.bme.mit.inf.ttmc.constraint.expr.TupleProjExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.UnaryExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderAdd;
@@ -201,17 +199,5 @@ public abstract class ArityBasedExprVisitor<P, R> implements ExprVisitor<P, R> {
 	public <ExprType extends ClosedUnderMul> R visit(MulExpr<ExprType> expr, P param) {
 		return visitMultiary(expr, param);
 	}
-
-
-	@Override
-	public R visit(TupleLitExpr expr, P param) {
-		return visitMultiary(expr, param);	
-	}
-
-	@Override
-	public R visit(TupleProjExpr expr, P param) {
-		return visitUnary(expr, param);
-	}
-
 
 }

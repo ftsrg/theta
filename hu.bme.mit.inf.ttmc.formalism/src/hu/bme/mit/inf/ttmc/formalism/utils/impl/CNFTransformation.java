@@ -41,8 +41,6 @@ import hu.bme.mit.inf.ttmc.constraint.expr.RatLitExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.RemExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.SubExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.TrueExpr;
-import hu.bme.mit.inf.ttmc.constraint.expr.TupleLitExpr;
-import hu.bme.mit.inf.ttmc.constraint.expr.TupleProjExpr;
 import hu.bme.mit.inf.ttmc.constraint.factory.ExprFactory;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
@@ -320,16 +318,6 @@ public class CNFTransformation {
 		@Override
 		public <ParamType extends Type, ResultType extends Type> Expr<? extends BoolType> visit(
 				FuncAppExpr<ParamType, ResultType> expr, Collection<Expr<? extends BoolType>> param) {
-			return visitNonBoolConn(expr);
-		}
-
-		@Override
-		public Expr<? extends BoolType> visit(TupleLitExpr expr, Collection<Expr<? extends BoolType>> param) {
-			return visitNonBoolConn(expr);
-		}
-
-		@Override
-		public Expr<? extends BoolType> visit(TupleProjExpr expr, Collection<Expr<? extends BoolType>> param) {
 			return visitNonBoolConn(expr);
 		}
 
