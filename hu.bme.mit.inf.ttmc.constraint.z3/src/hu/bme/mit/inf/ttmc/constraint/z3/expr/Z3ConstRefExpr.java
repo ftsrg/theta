@@ -4,12 +4,12 @@ import com.microsoft.z3.Context;
 import com.microsoft.z3.FuncDecl;
 
 import hu.bme.mit.inf.ttmc.constraint.decl.ConstDecl;
-import hu.bme.mit.inf.ttmc.constraint.expr.impl.ConstRefExprImpl;
+import hu.bme.mit.inf.ttmc.constraint.expr.defaults.AbstractConstRefExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.FuncType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.constraint.z3.decl.Z3ConstDecl;
 
-public class Z3ConstRefExpr<DeclType extends Type> extends ConstRefExprImpl<DeclType> implements Z3Expr<DeclType> {
+public final class Z3ConstRefExpr<DeclType extends Type> extends AbstractConstRefExpr<DeclType> implements Z3Expr<DeclType> {
 
 	private final Context context;
 

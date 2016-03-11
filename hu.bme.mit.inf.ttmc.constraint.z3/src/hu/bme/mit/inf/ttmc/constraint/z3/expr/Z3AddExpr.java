@@ -5,10 +5,10 @@ import java.util.Collection;
 import com.microsoft.z3.Context;
 
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
-import hu.bme.mit.inf.ttmc.constraint.expr.impl.AddExprImpl;
+import hu.bme.mit.inf.ttmc.constraint.expr.defaults.AbstractAddExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderAdd;
 
-public class Z3AddExpr<ExprType extends ClosedUnderAdd> extends AddExprImpl<ExprType> implements Z3Expr<ExprType> {
+public final class Z3AddExpr<ExprType extends ClosedUnderAdd> extends AbstractAddExpr<ExprType> implements Z3Expr<ExprType> {
 
 	private final Context context;
 	
@@ -34,4 +34,5 @@ public class Z3AddExpr<ExprType extends ClosedUnderAdd> extends AddExprImpl<Expr
 		
 		return term;
 	}
+
 }

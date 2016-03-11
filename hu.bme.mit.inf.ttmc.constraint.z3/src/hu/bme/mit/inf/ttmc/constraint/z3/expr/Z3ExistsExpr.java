@@ -6,12 +6,12 @@ import com.microsoft.z3.Context;
 
 import hu.bme.mit.inf.ttmc.constraint.decl.ParamDecl;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
-import hu.bme.mit.inf.ttmc.constraint.expr.impl.ExistsExprImpl;
+import hu.bme.mit.inf.ttmc.constraint.expr.defaults.AbstractExistsExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.constraint.z3.decl.Z3Decl;
 
-public class Z3ExistsExpr extends ExistsExprImpl implements Z3Expr<BoolType> {
+public final class Z3ExistsExpr extends AbstractExistsExpr implements Z3Expr<BoolType> {
 
 	private final Context context;
 	

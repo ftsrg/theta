@@ -2,10 +2,10 @@ package hu.bme.mit.inf.ttmc.constraint.z3.expr;
 
 import com.microsoft.z3.Context;
 
-import hu.bme.mit.inf.ttmc.constraint.expr.impl.FalseExprImpl;
+import hu.bme.mit.inf.ttmc.constraint.expr.defaults.AbstractFalseExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 
-public class Z3FalseExpr extends FalseExprImpl implements Z3Expr<BoolType> {
+public final class Z3FalseExpr extends AbstractFalseExpr implements Z3Expr<BoolType> {
 	
 	@SuppressWarnings("unused")
 	private final Context context;

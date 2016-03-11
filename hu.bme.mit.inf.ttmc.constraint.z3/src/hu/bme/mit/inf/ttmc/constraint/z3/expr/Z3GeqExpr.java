@@ -3,11 +3,11 @@ package hu.bme.mit.inf.ttmc.constraint.z3.expr;
 import com.microsoft.z3.Context;
 
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
-import hu.bme.mit.inf.ttmc.constraint.expr.impl.GeqExprImpl;
+import hu.bme.mit.inf.ttmc.constraint.expr.defaults.AbstractGeqExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.constraint.type.RatType;
 
-public class Z3GeqExpr extends GeqExprImpl implements Z3Expr<BoolType> {
+public final class Z3GeqExpr extends AbstractGeqExpr implements Z3Expr<BoolType> {
 
 	private final Context context;
 	

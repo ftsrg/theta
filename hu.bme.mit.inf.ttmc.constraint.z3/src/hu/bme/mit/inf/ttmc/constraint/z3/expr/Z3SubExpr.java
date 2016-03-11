@@ -3,10 +3,10 @@ package hu.bme.mit.inf.ttmc.constraint.z3.expr;
 import com.microsoft.z3.Context;
 
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
-import hu.bme.mit.inf.ttmc.constraint.expr.impl.SubExprImpl;
+import hu.bme.mit.inf.ttmc.constraint.expr.defaults.AbstractSubExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderSub;
 
-public class Z3SubExpr<ExprType extends ClosedUnderSub> extends SubExprImpl<ExprType> implements Z3Expr<ExprType> {
+public class Z3SubExpr<ExprType extends ClosedUnderSub> extends AbstractSubExpr<ExprType> implements Z3Expr<ExprType> {
 
 	private final Context context;
 

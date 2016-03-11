@@ -3,19 +3,19 @@ package hu.bme.mit.inf.ttmc.constraint.z3.expr;
 import com.microsoft.z3.Context;
 
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
-import hu.bme.mit.inf.ttmc.constraint.expr.impl.ArrayWriteExprImpl;
+import hu.bme.mit.inf.ttmc.constraint.expr.defaults.AbstractArrayWriteExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.ArrayType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 
-public class Z3ArrayWriteExpr<IndexType extends Type, ElemType extends Type>
-		extends ArrayWriteExprImpl<IndexType, ElemType> implements Z3Expr<ArrayType<IndexType, ElemType>> {
+public final class Z3ArrayWriteExpr<IndexType extends Type, ElemType extends Type>
+		extends AbstractArrayWriteExpr<IndexType, ElemType> implements Z3Expr<ArrayType<IndexType, ElemType>> {
 
 	private final Context context;
 
 	private volatile com.microsoft.z3.ArrayExpr term;
 
-	public Z3ArrayWriteExpr(Expr<? extends ArrayType<? super IndexType, ? extends ElemType>> array,
-			Expr<? extends IndexType> index, Expr<? extends ElemType> elem, final Context context) {
+	public Z3ArrayWriteExpr(final Expr<? extends ArrayType<? super IndexType, ? extends ElemType>> array,
+			final Expr<? extends IndexType> index, final Expr<? extends ElemType> elem, final Context context) {
 		super(array, index, elem);
 		this.context = context;
 	}
