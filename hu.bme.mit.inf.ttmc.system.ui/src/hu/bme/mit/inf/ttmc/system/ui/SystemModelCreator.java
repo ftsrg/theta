@@ -13,12 +13,10 @@ import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.constraint.ui.TypeHelper;
 import hu.bme.mit.inf.ttmc.constraint.utils.impl.ExprUtils;
-import hu.bme.mit.inf.ttmc.constraint.utils.impl.TypeInferrer;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
 import hu.bme.mit.inf.ttmc.formalism.sts.impl.STSImpl;
-import hu.bme.mit.inf.ttmc.formalism.utils.impl.FormalismTypeInferrer;
 import hu.bme.mit.inf.ttmc.system.model.GloballyExpression;
 import hu.bme.mit.inf.ttmc.system.model.InitialConstraintDefinition;
 import hu.bme.mit.inf.ttmc.system.model.InvariantConstraintDefinition;
@@ -37,30 +35,27 @@ public class SystemModelCreator {
 
 		final Collection<STS> stss = new ArrayList<>();
 
-		final TypeInferrer typeInferrer = new FormalismTypeInferrer(manager);
-
 		final TypeHelper typeHelper = new TypeHelper(manager.getTypeFactory());
 		final SystemDeclarationHelper declarationHelper = new SystemDeclarationHelper(manager.getDeclFactory(),
 				typeHelper);
-		final SystemExpressionHelper expressionHelper = new SystemExpressionHelper(manager.getExprFactory(),
-				declarationHelper, typeInferrer);
+		final SystemExpressionHelper expressionHelper = new SystemExpressionHelper(manager,
+				declarationHelper);
 
 		for (PropertyDeclaration propertyDeclaration : specification.getPropertyDeclarations()) {
 			final SystemDefinition systemDefinition = (SystemDefinition) propertyDeclaration.getSystem();
-			final STS sts = createSTS(systemDefinition, propertyDeclaration.getExpression(), declarationHelper,
-					expressionHelper, typeInferrer);
+			final STS sts = createSTS(manager, systemDefinition, propertyDeclaration.getExpression(), declarationHelper,
+					expressionHelper);
 			stss.add(sts);
 		}
 
 		return new SystemModelImpl(stss);
 	}
 
-	private static STS createSTS(final SystemDefinition systemDefinition, final Expression prop,
-			final SystemDeclarationHelper declarationHelper, final SystemExpressionHelper expressionHelper,
-			final TypeInferrer typeInferrer) {
+	private static STS createSTS(final STSManager manager, final SystemDefinition systemDefinition, final Expression prop,
+			final SystemDeclarationHelper declarationHelper, final SystemExpressionHelper expressionHelper) {
 		final STSImpl.Builder builder = new STSImpl.Builder();
 		if (prop instanceof GloballyExpression) {
-			builder.setProp(ExprUtils.cast(typeInferrer,
+			builder.setProp(ExprUtils.cast(manager.getTypeInferrer(),
 					expressionHelper.toExpr(((GloballyExpression) prop).getOperand()), BoolType.class));
 		} else {
 			throw new UnsupportedOperationException("Currently only expressions in the form of"
@@ -73,7 +68,7 @@ public class SystemModelCreator {
 		}
 
 		for (SystemConstraintDefinition constraintDef : systemDefinition.getSystemConstraintDefinitions()) {
-			final Expr<? extends BoolType> expr = ExprUtils.cast(typeInferrer,
+			final Expr<? extends BoolType> expr = ExprUtils.cast(manager.getTypeInferrer(),
 					expressionHelper.toExpr(constraintDef.getExpression()), BoolType.class);
 			if (constraintDef instanceof InitialConstraintDefinition)
 				builder.addInit(expr);

@@ -17,7 +17,6 @@ import hu.bme.mit.inf.ttmc.constraint.model.Expression;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.constraint.utils.impl.ExprUtils;
-import hu.bme.mit.inf.ttmc.constraint.utils.impl.TypeInferrer;
 
 public class ConstraintModelCreator {
 
@@ -27,11 +26,10 @@ public class ConstraintModelCreator {
 	public static ConstraintModel create(final ConstraintManager manager, final ConstraintSpecification specification) {
 		checkNotNull(manager);
 		checkNotNull(specification);
-		
-		final TypeInferrer inferrer = new TypeInferrer(manager);
+
 		final TypeHelper typeHelper = new TypeHelper(manager.getTypeFactory());
 		final DeclarationHelper declarationHelper = new DeclarationHelper(manager.getDeclFactory(), typeHelper);
-		final ExpressionHelper expressionHelper = new ExpressionHelper(manager.getExprFactory(), declarationHelper, inferrer);
+		final ExpressionHelper expressionHelper = new ExpressionHelper(manager, declarationHelper);
 		
 		final Collection<ConstDecl<Type>> constDecls = new ArrayList<>();
 		for (ConstantDeclaration constantDeclaration : specification.getConstantDeclarations()) {
@@ -42,7 +40,7 @@ public class ConstraintModelCreator {
 		final Collection<Expr<? extends BoolType>> constraints = new ArrayList<>();
 		for (BasicConstraintDefinition basicConstraintDefinition : specification.getBasicConstraintDefinitions()) {
 			final Expression expression = basicConstraintDefinition.getExpression();
-			final Expr<? extends BoolType> expr = ExprUtils.cast(inferrer, expressionHelper.toExpr(expression), BoolType.class);
+			final Expr<? extends BoolType> expr = ExprUtils.cast(manager.getTypeInferrer(), expressionHelper.toExpr(expression), BoolType.class);
 			final Collection<Expr<? extends BoolType>> conjuncts = ExprUtils.getConjuncts(expr);
 			constraints.addAll(conjuncts);
 		}
