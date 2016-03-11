@@ -13,21 +13,10 @@ import hu.bme.mit.inf.ttmc.formalism.utils.FormalismExprVisitor;
 public final class FormalismExprITEEliminator extends ExprITEEliminator {
 	
 	public FormalismExprITEEliminator(ConstraintManager manager) {
-		super(manager);
-	}
-	
-	// Provide own visitor that supports all formalism expressions
-	@Override
-	protected PropagateITEVisitor getPropageteITEVisitor(ConstraintManager manager) {
-		return new PropagateFormalismITEVisitor(manager, new PushBelowFormalismITEVisitor(manager));
+		super(new PropagateFormalismITEVisitor(manager, new PushBelowFormalismITEVisitor(manager)),
+			new RemoveFormalismITEVisitor(manager));
 	}
 
-	// Provide own visitor that supports all formalism expressions
-	@Override
-	protected RemoveITEVisitor getRemoveITEVisitor(ConstraintManager manager) {
-		return new RemoveFormalismITEVisitor(manager);
-	}
-	
 	/**
 	 * Helper visitor 1: Propagate ITE up in the expression tree as high as possible.
 	 * For example: x = 1 + ite(c, t, e) --> ite(c, x = 1 + t, x = 1 + e)
