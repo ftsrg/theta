@@ -84,11 +84,7 @@ public class AIGERLoader {
 		} else {
 			throw new UnsupportedOperationException("Currently only models with a single output variable are supported (this model has " + outVars.size() + ").");
 		}
-		
-		// Variables
-		builder.addVar(vars);
-		
-	
+
 		return builder.build();
 	}
 }
