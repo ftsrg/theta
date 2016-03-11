@@ -3,6 +3,7 @@ package hu.bme.mit.inf.ttmc.constraint.expr.impl;
 
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.expr.LtExpr;
+import hu.bme.mit.inf.ttmc.constraint.expr.defaults.AbstractBinaryExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.constraint.type.RatType;
 import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;

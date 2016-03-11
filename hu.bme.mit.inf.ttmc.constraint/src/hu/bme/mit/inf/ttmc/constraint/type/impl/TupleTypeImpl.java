@@ -9,6 +9,7 @@ import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.inf.ttmc.constraint.type.TupleType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
+import hu.bme.mit.inf.ttmc.constraint.type.defaults.AbstractType;
 
 public class TupleTypeImpl extends AbstractType implements TupleType {
 	

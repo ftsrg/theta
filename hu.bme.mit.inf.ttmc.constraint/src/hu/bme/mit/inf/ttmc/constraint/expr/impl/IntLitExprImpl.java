@@ -2,6 +2,7 @@ package hu.bme.mit.inf.ttmc.constraint.expr.impl;
 
 
 import hu.bme.mit.inf.ttmc.constraint.expr.IntLitExpr;
+import hu.bme.mit.inf.ttmc.constraint.expr.defaults.AbstractNullaryExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.IntType;
 import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 

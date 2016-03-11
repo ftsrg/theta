@@ -5,6 +5,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.expr.TupleProjExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.UnaryExpr;
+import hu.bme.mit.inf.ttmc.constraint.expr.defaults.AbstractUnaryExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.TupleType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;

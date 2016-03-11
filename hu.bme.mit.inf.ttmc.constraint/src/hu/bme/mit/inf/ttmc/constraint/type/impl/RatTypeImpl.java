@@ -1,6 +1,7 @@
 package hu.bme.mit.inf.ttmc.constraint.type.impl;
 
 import hu.bme.mit.inf.ttmc.constraint.type.RatType;
+import hu.bme.mit.inf.ttmc.constraint.type.defaults.AbstractBaseType;
 
 public class RatTypeImpl extends AbstractBaseType implements RatType {
 	

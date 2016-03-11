@@ -1,6 +1,7 @@
 package hu.bme.mit.inf.ttmc.constraint.type.impl;
 
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
+import hu.bme.mit.inf.ttmc.constraint.type.defaults.AbstractBaseType;
 
 public class BoolTypeImpl extends AbstractBaseType implements BoolType {
 

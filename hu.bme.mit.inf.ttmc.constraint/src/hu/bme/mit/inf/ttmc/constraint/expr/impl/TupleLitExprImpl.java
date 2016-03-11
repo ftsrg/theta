@@ -9,6 +9,7 @@ import com.google.common.collect.ImmutableList;
 import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.expr.TupleLitExpr;
+import hu.bme.mit.inf.ttmc.constraint.expr.defaults.AbstractMultiaryExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.TupleType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;

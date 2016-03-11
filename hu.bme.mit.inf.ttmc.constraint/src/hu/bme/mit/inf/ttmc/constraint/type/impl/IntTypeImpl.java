@@ -1,6 +1,7 @@
 package hu.bme.mit.inf.ttmc.constraint.type.impl;
 
 import hu.bme.mit.inf.ttmc.constraint.type.IntType;
+import hu.bme.mit.inf.ttmc.constraint.type.defaults.AbstractBaseType;
 
 public class IntTypeImpl extends AbstractBaseType implements IntType {
 	

@@ -4,6 +4,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import hu.bme.mit.inf.ttmc.constraint.type.FuncType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
+import hu.bme.mit.inf.ttmc.constraint.type.defaults.AbstractType;
 
 public class FuncTypeImpl<ParamType extends Type, ResultType extends Type> extends AbstractType implements FuncType<ParamType, ResultType> {
 	
