@@ -18,7 +18,7 @@ public final class Latch extends HWElement {
 	public Latch(int actualState, int nextState, STSManager manager) {
 		super(actualState/2);
 		this.nextState = nextState;
-		varDecl = manager.getDeclFactory().Var("v" + varId, manager.getTypeFactory().Bool());
+		varDecl = manager.getDeclFactory().Var("la" + varId, manager.getTypeFactory().Bool());
 	}
 
 	@Override

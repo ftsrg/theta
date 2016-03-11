@@ -27,7 +27,7 @@ public final class AndGate extends HWElement {
 		if (rhs1 % 2 == 1) expr1 = manager.getExprFactory().Not(expr1);
 		
 		Expr<? extends BoolType> expr2 = elements.get(rhs2/2).getExpr(manager, elements);
-		if (rhs2 % 2 == 1) expr1 = manager.getExprFactory().Not(expr2);
+		if (rhs2 % 2 == 1) expr2 = manager.getExprFactory().Not(expr2);
 		
 		return manager.getExprFactory().And(ImmutableSet.of(expr1, expr2));
 	}

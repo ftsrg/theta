@@ -16,7 +16,7 @@ public final class InVar extends HWElement {
 
 	public InVar(int literal, STSManager manager) {
 		super(literal/2);
-		varDecl = manager.getDeclFactory().Var("v" + varId, manager.getTypeFactory().Bool());
+		varDecl = manager.getDeclFactory().Var("in" + varId, manager.getTypeFactory().Bool());
 	}
 
 	@Override
