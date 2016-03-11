@@ -40,8 +40,6 @@ import hu.bme.mit.inf.ttmc.constraint.expr.RatLitExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.RemExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.SubExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.TrueExpr;
-import hu.bme.mit.inf.ttmc.constraint.expr.TupleLitExpr;
-import hu.bme.mit.inf.ttmc.constraint.expr.TupleProjExpr;
 import hu.bme.mit.inf.ttmc.constraint.factory.TypeFactory;
 import hu.bme.mit.inf.ttmc.constraint.type.ArrayType;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
@@ -273,18 +271,6 @@ public class TypeInferrerImpl implements TypeInferrer {
 			final FuncType<? super ParamType, ? extends ResultType> funcType = getType(func);
 			final ResultType resultType = funcType.getResultType();
 			return resultType;
-		}
-
-		@Override
-		public Type visit(TupleLitExpr expr, Void param) {
-			// TODO Auto-generated method stub
-			throw new UnsupportedOperationException("TODO: auto-generated method stub");
-		}
-
-		@Override
-		public Type visit(TupleProjExpr expr, Void param) {
-			// TODO Auto-generated method stub
-			throw new UnsupportedOperationException("TODO: auto-generated method stub");
 		}
 
 		@Override

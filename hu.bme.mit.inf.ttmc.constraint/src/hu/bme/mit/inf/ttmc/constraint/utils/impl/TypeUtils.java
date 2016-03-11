@@ -9,7 +9,6 @@ import hu.bme.mit.inf.ttmc.constraint.type.ArrayType;
 import hu.bme.mit.inf.ttmc.constraint.type.FuncType;
 import hu.bme.mit.inf.ttmc.constraint.type.IntType;
 import hu.bme.mit.inf.ttmc.constraint.type.RatType;
-import hu.bme.mit.inf.ttmc.constraint.type.TupleType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 
 public class TypeUtils {
@@ -28,11 +27,6 @@ public class TypeUtils {
 
 		if (type1 instanceof IntType && type2 instanceof RatType) {
 			return true;
-		}
-
-		if (type1 instanceof TupleType && type2 instanceof TupleType) {
-			// TODO Auto-generated method stub
-			throw new UnsupportedOperationException("TODO: auto-generated method stub");
 		}
 
 		if (type1 instanceof FuncType<?, ?> && type2 instanceof FuncType<?, ?>) {
@@ -66,11 +60,6 @@ public class TypeUtils {
 
 		if (isLeq(factory, type2, type1)) {
 			return Optional.of(type1);
-		}
-
-		if (type1 instanceof TupleType && type2 instanceof TupleType) {
-			// TODO Auto-generated method stub
-			throw new UnsupportedOperationException("TODO: auto-generated method stub");
 		}
 
 		if (type1 instanceof FuncType<?, ?> && type2 instanceof FuncType<?, ?>) {
@@ -118,12 +107,6 @@ public class TypeUtils {
 		}
 		if (isLeq(factory, type2, type1)) {
 			return Optional.of(type2);
-
-		}
-
-		if (type1 instanceof TupleType && type2 instanceof TupleType) {
-			// TODO Auto-generated method stub
-			throw new UnsupportedOperationException("TODO: auto-generated method stub");
 
 		}
 

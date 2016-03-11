@@ -2,15 +2,12 @@ package hu.bme.mit.inf.ttmc.constraint.factory.impl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.util.List;
-
 import hu.bme.mit.inf.ttmc.constraint.factory.TypeFactory;
 import hu.bme.mit.inf.ttmc.constraint.type.ArrayType;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.constraint.type.FuncType;
 import hu.bme.mit.inf.ttmc.constraint.type.IntType;
 import hu.bme.mit.inf.ttmc.constraint.type.RatType;
-import hu.bme.mit.inf.ttmc.constraint.type.TupleType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.constraint.type.impl.ArrayTypeImpl;
 import hu.bme.mit.inf.ttmc.constraint.type.impl.BoolTypeImpl;
@@ -42,12 +39,6 @@ public class TypeFactoryImpl implements TypeFactory {
 	@Override
 	public RatType Rat() {
 		return ratType;
-	}
-
-	@Override
-	public TupleType Tuple(List<? extends Type> elemTypes) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
 
 	@Override
