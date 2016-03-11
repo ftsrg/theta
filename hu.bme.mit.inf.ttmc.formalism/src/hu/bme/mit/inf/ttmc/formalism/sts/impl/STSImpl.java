@@ -154,6 +154,7 @@ public class STSImpl implements STS {
 		}
 		
 		public STS build() {
+			checkNotNull(prop);
 			// Collect variables from the expressions
 			for (Expr<? extends BoolType> expr : init) expr.accept(varCollectorVisitor, vars);
 			for (Expr<? extends BoolType> expr : invar) expr.accept(varCollectorVisitor, vars);
