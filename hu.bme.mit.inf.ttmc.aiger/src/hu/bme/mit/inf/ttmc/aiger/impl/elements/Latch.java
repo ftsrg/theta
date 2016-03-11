@@ -11,14 +11,14 @@ public final class Latch extends HWElement {
 	private final int nextState;
 	private final VarDecl<BoolType> varDecl;
 
-	public Latch(String[] tokens, STSManager manager) {
-		this(Integer.parseInt(tokens[0]), Integer.parseInt(tokens[1]), manager);
+	public Latch(int nr, String[] tokens, STSManager manager) {
+		this(nr, Integer.parseInt(tokens[0]), Integer.parseInt(tokens[1]), manager);
 	}
 	
-	public Latch(int actualState, int nextState, STSManager manager) {
+	public Latch(int nr, int actualState, int nextState, STSManager manager) {
 		super(actualState/2);
 		this.nextState = nextState;
-		varDecl = manager.getDeclFactory().Var("la" + varId, manager.getTypeFactory().Bool());
+		varDecl = manager.getDeclFactory().Var("L" + nr + "_l" + varId, manager.getTypeFactory().Bool());
 	}
 
 	@Override

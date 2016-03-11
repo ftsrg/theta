@@ -41,13 +41,13 @@ public class AIGERLoaderOptimized implements AIGERLoader {
 		
 		// Parse inputs
 		for(int i = 0; i < inputs; ++i) {
-			InVar inVar = new InVar(br.readLine(), manager);
+			InVar inVar = new InVar(i + 1, br.readLine(), manager);
 			elements.set(inVar.getVarId(), inVar);
 		}
 		
 		// Parse latches
 		for (int i = 0; i < latches; ++i) {
-			Latch latch = new Latch(br.readLine().split(" "), manager);
+			Latch latch = new Latch(i + 1, br.readLine().split(" "), manager);
 			elements.set(latch.getVarId(), latch);
 			latchElements.add(latch);
 		}
