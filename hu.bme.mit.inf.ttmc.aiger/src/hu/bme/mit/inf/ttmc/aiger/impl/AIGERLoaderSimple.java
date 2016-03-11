@@ -1,4 +1,4 @@
-package hu.bme.mit.inf.ttmc.aiger;
+package hu.bme.mit.inf.ttmc.aiger.impl;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -9,6 +9,7 @@ import java.util.List;
 
 import com.google.common.collect.ImmutableSet;
 
+import hu.bme.mit.inf.ttmc.aiger.AIGERLoader;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
@@ -18,7 +19,9 @@ import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
 import hu.bme.mit.inf.ttmc.formalism.sts.factory.STSExprFactory;
 import hu.bme.mit.inf.ttmc.formalism.sts.impl.STSImpl;
 
-public class AIGERLoaderDummy {
+public class AIGERLoaderSimple implements AIGERLoader {
+	
+	@Override
 	public STS load(String fileName, STSManager manager) throws IOException {
 		STSExprFactory ef = manager.getExprFactory();
 		VarDeclFactory varDeclF = manager.getDeclFactory();
