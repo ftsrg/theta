@@ -17,7 +17,7 @@ import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.constraint.z3.expr.Z3ConstRefExpr;
 import hu.bme.mit.inf.ttmc.constraint.z3.type.Z3Type;
 
-public class Z3ConstDecl<DeclType extends Type> extends AbstractConstDecl<DeclType> implements Z3Decl<DeclType> {
+public final class Z3ConstDecl<DeclType extends Type> extends AbstractConstDecl<DeclType> implements Z3Decl<DeclType> {
 
 	private final Context context;
 	
