@@ -10,13 +10,13 @@ import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
 public final class InVar extends HWElement {
 	private final VarDecl<BoolType> varDecl;
 	
-	public InVar(String token, STSManager manager) {
-		this(Integer.parseInt(token), manager);
+	public InVar(int nr, String token, STSManager manager) {
+		this(nr, Integer.parseInt(token), manager);
 	}
 
-	public InVar(int literal, STSManager manager) {
+	public InVar(int nr, int literal, STSManager manager) {
 		super(literal/2);
-		varDecl = manager.getDeclFactory().Var("in" + varId, manager.getTypeFactory().Bool());
+		varDecl = manager.getDeclFactory().Var("I" + nr + "_l" + varId, manager.getTypeFactory().Bool());
 	}
 
 	@Override
