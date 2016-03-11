@@ -2,6 +2,7 @@ package hu.bme.mit.inf.ttmc.constraint.expr.impl;
 
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.expr.NegExpr;
+import hu.bme.mit.inf.ttmc.constraint.expr.defaults.AbstractUnaryExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderNeg;
 import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 

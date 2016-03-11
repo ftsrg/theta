@@ -4,6 +4,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import hu.bme.mit.inf.ttmc.constraint.type.ArrayType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
+import hu.bme.mit.inf.ttmc.constraint.type.defaults.AbstractType;
 
 public class ArrayTypeImpl<IndexType extends Type, ElemType extends Type> extends AbstractType implements ArrayType<IndexType, ElemType> {
 	

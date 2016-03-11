@@ -2,6 +2,7 @@ package hu.bme.mit.inf.ttmc.constraint.expr.impl;
 
 import hu.bme.mit.inf.ttmc.constraint.expr.EqExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
+import hu.bme.mit.inf.ttmc.constraint.expr.defaults.AbstractBinaryExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 

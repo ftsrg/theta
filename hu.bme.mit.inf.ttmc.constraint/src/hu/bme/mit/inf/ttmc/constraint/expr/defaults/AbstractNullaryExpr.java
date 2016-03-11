@@ -1,4 +1,4 @@
-package hu.bme.mit.inf.ttmc.constraint.expr.impl;
+package hu.bme.mit.inf.ttmc.constraint.expr.defaults;
 
 import hu.bme.mit.inf.ttmc.constraint.expr.NullaryExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;

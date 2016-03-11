@@ -8,6 +8,7 @@ import com.google.common.collect.ImmutableMultiset;
 
 import hu.bme.mit.inf.ttmc.constraint.expr.AddExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
+import hu.bme.mit.inf.ttmc.constraint.expr.defaults.AbstractMultiaryExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderAdd;
 import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 

@@ -2,6 +2,7 @@ package hu.bme.mit.inf.ttmc.constraint.expr.impl;
 
 
 import hu.bme.mit.inf.ttmc.constraint.expr.TrueExpr;
+import hu.bme.mit.inf.ttmc.constraint.expr.defaults.AbstractBoolLitExpr;
 import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 
 public class TrueExprImpl extends AbstractBoolLitExpr implements TrueExpr {

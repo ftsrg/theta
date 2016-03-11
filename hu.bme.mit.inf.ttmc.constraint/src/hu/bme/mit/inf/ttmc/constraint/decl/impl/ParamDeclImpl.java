@@ -1,7 +1,7 @@
 package hu.bme.mit.inf.ttmc.constraint.decl.impl;
 
 import hu.bme.mit.inf.ttmc.constraint.decl.ParamDecl;
-import hu.bme.mit.inf.ttmc.constraint.decl.impl.AbstractDecl;
+import hu.bme.mit.inf.ttmc.constraint.decl.defaults.AbstractDecl;
 import hu.bme.mit.inf.ttmc.constraint.expr.ParamRefExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.impl.ParamRefExprImpl;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;

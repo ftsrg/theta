@@ -3,6 +3,7 @@ package hu.bme.mit.inf.ttmc.constraint.expr.impl;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import hu.bme.mit.inf.ttmc.constraint.expr.RatLitExpr;
+import hu.bme.mit.inf.ttmc.constraint.expr.defaults.AbstractNullaryExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.RatType;
 import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 

@@ -1,4 +1,4 @@
-package hu.bme.mit.inf.ttmc.constraint.expr.impl;
+package hu.bme.mit.inf.ttmc.constraint.expr.defaults;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
