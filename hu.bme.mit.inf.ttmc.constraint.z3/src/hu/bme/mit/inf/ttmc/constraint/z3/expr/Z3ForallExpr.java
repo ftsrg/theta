@@ -6,12 +6,12 @@ import com.microsoft.z3.Context;
 
 import hu.bme.mit.inf.ttmc.constraint.decl.ParamDecl;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
-import hu.bme.mit.inf.ttmc.constraint.expr.impl.ForallExprImpl;
+import hu.bme.mit.inf.ttmc.constraint.expr.defaults.AbstractForallExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.constraint.z3.decl.Z3Decl;
 
-public class Z3ForallExpr extends ForallExprImpl implements Z3Expr<BoolType> {
+public final class Z3ForallExpr extends AbstractForallExpr implements Z3Expr<BoolType> {
 
 	private final Context context;
 	

@@ -1,46 +1,13 @@
 package hu.bme.mit.inf.ttmc.constraint.expr.impl;
 
-import hu.bme.mit.inf.ttmc.constraint.expr.EqExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
-import hu.bme.mit.inf.ttmc.constraint.expr.defaults.AbstractBinaryExpr;
-import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
+import hu.bme.mit.inf.ttmc.constraint.expr.defaults.AbstractEqExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 
-public class EqExprImpl extends AbstractBinaryExpr<Type, Type, BoolType> implements EqExpr {
-
-	private static final String OPERATOR = "Eq";
+public final class EqExprImpl extends AbstractEqExpr {
 	
 	public EqExprImpl(final Expr<? extends Type> leftOp, final Expr<? extends Type> rightOp) {
 		super(leftOp, rightOp);
-	}
-
-	@Override
-	public EqExpr withOps(Expr<? extends Type> leftOp, Expr<? extends Type> rightOp) {
-		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
-			return this;
-		} else {
-			return new EqExprImpl(leftOp, rightOp);
-		}
-	}
-	
-	@Override
-	protected final String getOperatorString() {
-		return OPERATOR;
-	}
-
-	@Override
-	protected final int getHashSeed() {
-		return 43;
-	}
-	
-	@Override
-	public EqExpr withLeftOp(final Expr<? extends Type> leftOp) {
-		return withOps(leftOp, getRightOp());
-	}
-
-	@Override
-	public EqExpr withRightOp(final Expr<? extends Type> rightOp) {
-		return withOps(getLeftOp(), rightOp);
 	}
 
 }

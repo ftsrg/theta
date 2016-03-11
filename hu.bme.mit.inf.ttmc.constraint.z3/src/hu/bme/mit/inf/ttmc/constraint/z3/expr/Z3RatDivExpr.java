@@ -3,13 +3,13 @@ package hu.bme.mit.inf.ttmc.constraint.z3.expr;
 import com.microsoft.z3.Context;
 
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
-import hu.bme.mit.inf.ttmc.constraint.expr.impl.RatDivExprImpl;
+import hu.bme.mit.inf.ttmc.constraint.expr.defaults.AbstractRatDivExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.RatType;
 
-public class Z3RatDivExpr extends RatDivExprImpl implements Z3Expr<RatType> {
+public class Z3RatDivExpr extends AbstractRatDivExpr implements Z3Expr<RatType> {
 
 	private final Context context;
-	
+
 	private volatile com.microsoft.z3.ArithExpr term;
 
 	public Z3RatDivExpr(final Expr<? extends RatType> leftOp, final Expr<? extends RatType> rightOp,
@@ -27,7 +27,7 @@ public class Z3RatDivExpr extends RatDivExprImpl implements Z3Expr<RatType> {
 			final com.microsoft.z3.ArithExpr rightOpTerm = (com.microsoft.z3.ArithExpr) rightOp.getTerm();
 			term = context.mkDiv(leftOpTerm, rightOpTerm);
 		}
-		
+
 		return term;
 	}
 

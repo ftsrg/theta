@@ -5,10 +5,10 @@ import java.util.Collection;
 import com.microsoft.z3.Context;
 
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
-import hu.bme.mit.inf.ttmc.constraint.expr.impl.OrExprImpl;
+import hu.bme.mit.inf.ttmc.constraint.expr.defaults.AbstractOrExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 
-public class Z3OrExpr extends OrExprImpl implements Z3Expr<BoolType> {
+public class Z3OrExpr extends AbstractOrExpr implements Z3Expr<BoolType> {
 
 	private final Context context;
 
@@ -24,7 +24,7 @@ public class Z3OrExpr extends OrExprImpl implements Z3Expr<BoolType> {
 		if (term == null) {
 			final com.microsoft.z3.BoolExpr[] opTerms = new com.microsoft.z3.BoolExpr[getOps().size()];
 			int i = 0;
-			for (Expr<?> op : getOps()) {
+			for (final Expr<?> op : getOps()) {
 				final Z3Expr<?> z3op = (Z3Expr<?>) op;
 				opTerms[i] = (com.microsoft.z3.BoolExpr) z3op.getTerm();
 				i++;

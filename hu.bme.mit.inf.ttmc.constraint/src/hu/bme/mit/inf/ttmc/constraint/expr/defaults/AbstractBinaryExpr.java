@@ -6,7 +6,6 @@ import hu.bme.mit.inf.ttmc.constraint.expr.BinaryExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 
-
 public abstract class AbstractBinaryExpr<LeftOpType extends Type, RightOpType extends Type, ExprType extends Type>
 		extends AbstractExpr<ExprType> implements BinaryExpr<LeftOpType, RightOpType, ExprType> {
 
@@ -15,8 +14,7 @@ public abstract class AbstractBinaryExpr<LeftOpType extends Type, RightOpType ex
 
 	private volatile int hashCode = 0;
 
-	protected AbstractBinaryExpr(final Expr<? extends LeftOpType> leftOp,
-			final Expr<? extends RightOpType> rightOp) {
+	protected AbstractBinaryExpr(final Expr<? extends LeftOpType> leftOp, final Expr<? extends RightOpType> rightOp) {
 		this.leftOp = checkNotNull(leftOp);
 		this.rightOp = checkNotNull(rightOp);
 	}
@@ -43,7 +41,7 @@ public abstract class AbstractBinaryExpr<LeftOpType extends Type, RightOpType ex
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		} else if (obj == null) {
@@ -69,7 +67,7 @@ public abstract class AbstractBinaryExpr<LeftOpType extends Type, RightOpType ex
 	}
 
 	protected abstract String getOperatorString();
-	
+
 	@Override
 	public BinaryExpr<LeftOpType, RightOpType, ExprType> withLeftOp(final Expr<? extends LeftOpType> leftOp) {
 		return withOps(leftOp, getRightOp());

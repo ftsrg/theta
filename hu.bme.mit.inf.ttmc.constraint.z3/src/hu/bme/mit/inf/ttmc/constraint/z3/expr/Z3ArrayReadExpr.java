@@ -3,12 +3,12 @@ package hu.bme.mit.inf.ttmc.constraint.z3.expr;
 import com.microsoft.z3.Context;
 
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
-import hu.bme.mit.inf.ttmc.constraint.expr.impl.ArrayReadExprImpl;
+import hu.bme.mit.inf.ttmc.constraint.expr.defaults.AbstractArrayReadExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.ArrayType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 
-public class Z3ArrayReadExpr<IndexType extends Type, ElemType extends Type>
-		extends ArrayReadExprImpl<IndexType, ElemType> implements Z3Expr<ElemType> {
+public final class Z3ArrayReadExpr<IndexType extends Type, ElemType extends Type>
+		extends AbstractArrayReadExpr<IndexType, ElemType> implements Z3Expr<ElemType> {
 
 	private final Context context;
 

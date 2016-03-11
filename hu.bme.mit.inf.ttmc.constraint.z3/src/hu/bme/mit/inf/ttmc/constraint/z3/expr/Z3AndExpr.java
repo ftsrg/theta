@@ -5,10 +5,10 @@ import java.util.Collection;
 import com.microsoft.z3.Context;
 
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
-import hu.bme.mit.inf.ttmc.constraint.expr.impl.AndExprImpl;
+import hu.bme.mit.inf.ttmc.constraint.expr.defaults.AbstractAndExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 
-public class Z3AndExpr extends AndExprImpl implements Z3Expr<BoolType> {
+public final class Z3AndExpr extends AbstractAndExpr implements Z3Expr<BoolType> {
 
 	private final Context context;
 
@@ -34,4 +34,5 @@ public class Z3AndExpr extends AndExprImpl implements Z3Expr<BoolType> {
 
 		return term;
 	}
+
 }

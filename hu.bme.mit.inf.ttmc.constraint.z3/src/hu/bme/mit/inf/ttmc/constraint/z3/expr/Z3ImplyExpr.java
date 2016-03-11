@@ -3,16 +3,16 @@ package hu.bme.mit.inf.ttmc.constraint.z3.expr;
 import com.microsoft.z3.Context;
 
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
-import hu.bme.mit.inf.ttmc.constraint.expr.impl.ImplyExprImpl;
+import hu.bme.mit.inf.ttmc.constraint.expr.defaults.AbstractImplyExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 
-public class Z3ImplyExpr extends ImplyExprImpl implements Z3Expr<BoolType> {
+public final class Z3ImplyExpr extends AbstractImplyExpr implements Z3Expr<BoolType> {
 
 	private final Context context;
-	
+
 	private volatile com.microsoft.z3.BoolExpr term;
 
-	public Z3ImplyExpr(Expr<? extends BoolType> leftOp, Expr<? extends BoolType> rightOp,
+	public Z3ImplyExpr(final Expr<? extends BoolType> leftOp, final Expr<? extends BoolType> rightOp,
 			final Context context) {
 		super(leftOp, rightOp);
 		this.context = context;
@@ -27,7 +27,7 @@ public class Z3ImplyExpr extends ImplyExprImpl implements Z3Expr<BoolType> {
 			final com.microsoft.z3.BoolExpr rightOpTerm = (com.microsoft.z3.BoolExpr) rightOp.getTerm();
 			term = context.mkImplies(leftOpTerm, rightOpTerm);
 		}
-		
+
 		return term;
 	}
 

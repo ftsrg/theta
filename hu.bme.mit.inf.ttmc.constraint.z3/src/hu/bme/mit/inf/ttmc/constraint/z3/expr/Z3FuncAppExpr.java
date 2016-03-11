@@ -3,12 +3,12 @@ package hu.bme.mit.inf.ttmc.constraint.z3.expr;
 import com.microsoft.z3.Context;
 
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
-import hu.bme.mit.inf.ttmc.constraint.expr.impl.FuncAppExprImpl;
+import hu.bme.mit.inf.ttmc.constraint.expr.defaults.AbstractFuncAppExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.FuncType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 
-public class Z3FuncAppExpr<ParamType extends Type, ResultType extends Type>
-		extends FuncAppExprImpl<ParamType, ResultType> implements Z3Expr<ResultType> {
+public final class Z3FuncAppExpr<ParamType extends Type, ResultType extends Type>
+		extends AbstractFuncAppExpr<ParamType, ResultType> implements Z3Expr<ResultType> {
 
 	@SuppressWarnings("unused")
 	private final Context context;

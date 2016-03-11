@@ -5,10 +5,10 @@ import java.util.Collection;
 import com.microsoft.z3.Context;
 
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
-import hu.bme.mit.inf.ttmc.constraint.expr.impl.MulExprImpl;
+import hu.bme.mit.inf.ttmc.constraint.expr.defaults.AbstractMulExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderMul;
 
-public class Z3MulExpr<ExprType extends ClosedUnderMul> extends MulExprImpl<ExprType> implements Z3Expr<ExprType> {
+public class Z3MulExpr<ExprType extends ClosedUnderMul> extends AbstractMulExpr<ExprType> implements Z3Expr<ExprType> {
 
 	private final Context context;
 
