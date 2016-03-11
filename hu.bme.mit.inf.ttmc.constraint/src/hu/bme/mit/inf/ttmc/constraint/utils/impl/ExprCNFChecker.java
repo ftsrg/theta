@@ -48,17 +48,16 @@ public class ExprCNFChecker {
 	private ExprCNFVisitor visitor;
 	
 	public ExprCNFChecker() {
-		visitor = getCNFExprVisitor();
+		this(new ExprCNFVisitor());
+	}
+	
+	// Derived classes can call this constructor to pass a derived visitor
+	protected ExprCNFChecker(ExprCNFVisitor visitor) {
+		this.visitor = visitor;
 	}
 	
 	public boolean isExprCNF(Expr<? extends BoolType> expr) {
 		return expr.accept(visitor, CNFStatus.START);
-	}
-
-	// Subclasses can override this method to provide a different visitor
-	// (supporting more types of expressions)
-	protected ExprCNFVisitor getCNFExprVisitor() {
-		return new ExprCNFVisitor();
 	}
 
 	protected enum CNFStatus {
@@ -68,7 +67,7 @@ public class ExprCNFChecker {
 	    public int getValue() { return value; }
 	}
 
-	protected class ExprCNFVisitor implements ExprVisitor<CNFStatus, Boolean> {
+	protected static class ExprCNFVisitor implements ExprVisitor<CNFStatus, Boolean> {
 
 		@Override
 		public <DeclType extends Type> Boolean visit(ConstRefExpr<DeclType> expr, CNFStatus param) {
