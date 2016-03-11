@@ -3,9 +3,9 @@ package hu.bme.mit.inf.ttmc.constraint.z3.type;
 import com.microsoft.z3.BoolSort;
 import com.microsoft.z3.Context;
 
-import hu.bme.mit.inf.ttmc.constraint.type.impl.BoolTypeImpl;
+import hu.bme.mit.inf.ttmc.constraint.type.defaults.AbstractBoolType;
 
-public class Z3BoolType extends BoolTypeImpl implements Z3Type {
+public class Z3BoolType extends AbstractBoolType implements Z3Type {
 
 	private final Context context;
 	

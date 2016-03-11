@@ -4,9 +4,9 @@ import com.microsoft.z3.Context;
 import com.microsoft.z3.Sort;
 
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
-import hu.bme.mit.inf.ttmc.constraint.type.impl.FuncTypeImpl;
+import hu.bme.mit.inf.ttmc.constraint.type.defaults.AbstractFuncType;
 
-public class Z3FuncType<ParamType extends Type, ResultType extends Type> extends FuncTypeImpl<ParamType, ResultType> implements Z3Type {
+public class Z3FuncType<ParamType extends Type, ResultType extends Type> extends AbstractFuncType<ParamType, ResultType> implements Z3Type {
 
 	@SuppressWarnings("unused")
 	private final Context context;
