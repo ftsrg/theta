@@ -1,20 +1,6 @@
 package hu.bme.mit.inf.ttmc.constraint.type.impl;
 
-import hu.bme.mit.inf.ttmc.constraint.type.IntType;
-import hu.bme.mit.inf.ttmc.constraint.type.defaults.AbstractBaseType;
+import hu.bme.mit.inf.ttmc.constraint.type.defaults.AbstractIntType;
 
-public class IntTypeImpl extends AbstractBaseType implements IntType {
-	
-	private static final String TYPENAME = "Int";
-	
-	@Override
-	public int hashCode() {
-		return 222670;
-	}
-	
-	@Override
-	public String toString() {
-		return TYPENAME;
-	}
-	
+public final class IntTypeImpl extends AbstractIntType {
 }

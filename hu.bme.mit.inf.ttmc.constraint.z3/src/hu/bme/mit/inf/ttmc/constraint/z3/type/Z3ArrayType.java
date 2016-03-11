@@ -5,9 +5,9 @@ import com.microsoft.z3.Context;
 import com.microsoft.z3.Sort;
 
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
-import hu.bme.mit.inf.ttmc.constraint.type.impl.ArrayTypeImpl;
+import hu.bme.mit.inf.ttmc.constraint.type.defaults.AbstractArrayType;
 
-public class Z3ArrayType<IndexType extends Type, ElemType extends Type> extends ArrayTypeImpl<IndexType, ElemType> implements Z3Type {
+public class Z3ArrayType<IndexType extends Type, ElemType extends Type> extends AbstractArrayType<IndexType, ElemType> implements Z3Type {
 
 	private final Context context;
 	

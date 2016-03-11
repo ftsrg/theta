@@ -3,9 +3,9 @@ package hu.bme.mit.inf.ttmc.constraint.z3.type;
 import com.microsoft.z3.Context;
 import com.microsoft.z3.RealSort;
 
-import hu.bme.mit.inf.ttmc.constraint.type.impl.RatTypeImpl;
+import hu.bme.mit.inf.ttmc.constraint.type.defaults.AbstractRatType;
 
-public class Z3RatType extends RatTypeImpl implements Z3Type {
+public class Z3RatType extends AbstractRatType implements Z3Type {
 
 	private final Context context;
 	
