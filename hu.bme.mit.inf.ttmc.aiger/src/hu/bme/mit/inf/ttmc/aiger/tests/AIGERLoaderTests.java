@@ -16,7 +16,7 @@ public class AIGERLoaderTests {
 	public void testAIGERLoader() throws IOException {
 		AIGERLoader loader = new AIGERLoader();
 		STSManager manager = new STSManagerImpl(new ConstraintManagerImpl());
-		STS sts = loader.load("instances/flipflop.aag", manager);
+		STS sts = loader.load("instances/simple.aag", manager);
 		
 		System.out.println("Vars:  " + sts.getVars());
 		System.out.println("Init:  " + sts.getInit());
