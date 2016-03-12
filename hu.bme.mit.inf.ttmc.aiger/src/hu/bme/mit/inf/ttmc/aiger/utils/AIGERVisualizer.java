@@ -7,6 +7,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 
 public class AIGERVisualizer {
+	
 	public static void visualize(String fileName, String output) throws IOException {
 		BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(fileName)));
 		PrintWriter pw = new PrintWriter(output);
@@ -24,7 +25,7 @@ public class AIGERVisualizer {
 		// Inputs
 		for(int i = 0; i < inputs; ++i) {
 			int v = Integer.parseInt(br.readLine());
-			pw.write("v" + v/2 + "[label=\"I" + (i+1) + "\", shape=\"invhouse\"];\n");
+			pw.write("v" + v/2 + "[label=\"I" + (i+1) + "\", shape=\"invhouse\", margin=\"0\", width=\"0\", height=\"0\"];\n");
 		}
 		
 		// Latches
@@ -32,7 +33,7 @@ public class AIGERVisualizer {
 			String v[] = br.readLine().split(" ");
 			int v1 = Integer.parseInt(v[0]);
 			int v2 = Integer.parseInt(v[1]);
-			pw.write("v" + v1/2 + "[label=\"L" + (i+1) + "\", shape=\"rectangle\"];\n");
+			pw.write("v" + v1/2 + "[label=\"L" + (i+1) + "\", shape=\"rectangle\", margin=\"0.05\", width=\"0\", height=\"0\"];\n");
 			pw.write("v" + v2/2 + ":s -> v" + v1/2 + ":n");
 			if (v2%2 == 1) pw.write(" [arrowhead=\"odot\"]");
 			pw.write(";\n");
@@ -41,7 +42,7 @@ public class AIGERVisualizer {
 		// Outputs
 		for (int i = 0; i < outputs; ++i) {
 			int v = Integer.parseInt(br.readLine());
-			pw.write("o" + i + "[label=\"O" + (i+1) + "\", shape=\"invhouse\"];\n");
+			pw.write("o" + i + "[label=\"O" + (i+1) + "\", shape=\"invhouse\", margin=\"0\", width=\"0\", height=\"0\"];\n");
 			pw.write("v" + v/2 + ":s -> o" + i + ":n");
 			if (v%2 == 1) pw.write(" [arrowhead=\"odot\"]");
 			pw.write(";\n");
@@ -53,7 +54,7 @@ public class AIGERVisualizer {
 			int vo = Integer.parseInt(v[0]);
 			int vi1 = Integer.parseInt(v[1]);
 			int vi2 = Integer.parseInt(v[2]);
-			pw.write("v" + vo/2 + "[label=\"A" + (i+1) + "\", shape=\"ellipse\"];\n");
+			pw.write("v" + vo/2 + "[label=\"A" + (i+1) + "\", shape=\"ellipse\", margin=\"0.02\", width=\"0\", height=\"0\"];\n");
 			pw.write("v" + vi1/2 + ":s -> v" + vo/2 + ":nw");
 			if (vi1%2 == 1) pw.write(" [arrowhead=\"odot\"]");
 			pw.write("\n");

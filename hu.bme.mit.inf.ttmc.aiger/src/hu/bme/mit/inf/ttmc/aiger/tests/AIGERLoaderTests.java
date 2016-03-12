@@ -22,9 +22,9 @@ public class AIGERLoaderTests {
 		//loader = new AIGERLoaderSimple();
 		loader = new AIGERLoaderOptimized();
 		STSManager manager = new STSManagerImpl(new ConstraintManagerImpl());
-		STS sts = loader.load("instances/simple2.aag", manager);
+		STS sts = loader.load("instances/simple3.aag", manager);
 		
-		AIGERVisualizer.visualize("instances/simple2.aag", "instances/simple2.dot");
+		AIGERVisualizer.visualize("instances/simple3.aag", "instances/simple3.dot");
 		
 		System.out.println("Vars:  " + sts.getVars());
 		System.out.println("Init:  " + sts.getInit());
