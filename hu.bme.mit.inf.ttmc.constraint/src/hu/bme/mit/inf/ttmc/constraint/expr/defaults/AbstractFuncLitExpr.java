@@ -17,6 +17,8 @@ public abstract class AbstractFuncLitExpr<ParamType extends Type, ResultType ext
 
 	private static final String OPERATOR_LABEL = "Func";
 
+	private final ConstraintManager manager;
+
 	private final ParamDecl<? super ParamType> paramDecl;
 	private final Expr<? extends ResultType> result;
 
@@ -24,6 +26,8 @@ public abstract class AbstractFuncLitExpr<ParamType extends Type, ResultType ext
 
 	public AbstractFuncLitExpr(final ConstraintManager manager, final ParamDecl<? super ParamType> paramDecl,
 			final Expr<? extends ResultType> result) {
+		this.manager = manager;
+
 		this.paramDecl = checkNotNull(paramDecl);
 		this.result = checkNotNull(result);
 	}

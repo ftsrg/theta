@@ -13,15 +13,21 @@ public abstract class AbstractIffExpr extends AbstractBinaryExpr<BoolType, BoolT
 
 	private static final String OPERATOR_LABEL = "Iff";
 
+	private final ConstraintManager manager;
+
 	public AbstractIffExpr(final ConstraintManager manager, final Expr<? extends BoolType> leftOp,
 			final Expr<? extends BoolType> rightOp) {
 		super(leftOp, rightOp);
+		this.manager = manager;
 	}
 
 	@Override
 	public final IffExpr withOps(final Expr<? extends BoolType> leftOp, final Expr<? extends BoolType> rightOp) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
+			return this;
+		} else {
+			return manager.getExprFactory().Iff(leftOp, rightOp);
+		}
 	}
 
 	@Override

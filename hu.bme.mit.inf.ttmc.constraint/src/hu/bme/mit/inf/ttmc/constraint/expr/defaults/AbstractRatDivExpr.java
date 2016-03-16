@@ -12,15 +12,21 @@ public abstract class AbstractRatDivExpr extends AbstractBinaryExpr<RatType, Rat
 
 	private static final String OPERATOR_LABEL = "RDiv";
 
+	private final ConstraintManager manager;
+
 	public AbstractRatDivExpr(final ConstraintManager manager, final Expr<? extends RatType> leftOp,
 			final Expr<? extends RatType> rightOp) {
 		super(leftOp, rightOp);
+		this.manager = manager;
 	}
 
 	@Override
 	public final RatDivExpr withOps(final Expr<? extends RatType> leftOp, final Expr<? extends RatType> rightOp) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
+			return this;
+		} else {
+			return manager.getExprFactory().RatDiv(leftOp, rightOp);
+		}
 	}
 
 	@Override

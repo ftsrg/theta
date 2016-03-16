@@ -13,15 +13,21 @@ public abstract class AbstractLtExpr extends AbstractBinaryExpr<RatType, RatType
 
 	private static final String OPERATOR_LABEL = "Lt";
 
+	private final ConstraintManager manager;
+
 	public AbstractLtExpr(final ConstraintManager manager, final Expr<? extends RatType> leftOp,
 			final Expr<? extends RatType> rightOp) {
 		super(leftOp, rightOp);
+		this.manager = manager;
 	}
 
 	@Override
 	public final LtExpr withOps(final Expr<? extends RatType> leftOp, final Expr<? extends RatType> rightOp) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
+			return this;
+		} else {
+			return manager.getExprFactory().Lt(leftOp, rightOp);
+		}
 	}
 
 	@Override

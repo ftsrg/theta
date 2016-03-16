@@ -12,14 +12,20 @@ public abstract class AbstractNotExpr extends AbstractUnaryExpr<BoolType, BoolTy
 
 	private static final String OPERAND_LABEL = "Not";
 
+	private final ConstraintManager manager;
+
 	public AbstractNotExpr(final ConstraintManager manager, final Expr<? extends BoolType> op) {
 		super(op);
+		this.manager = manager;
 	}
 
 	@Override
 	public final NotExpr withOp(final Expr<? extends BoolType> op) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		if (op == getOp()) {
+			return this;
+		} else {
+			return manager.getExprFactory().Not(op);
+		}
 	}
 
 	@Override

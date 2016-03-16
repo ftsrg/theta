@@ -13,14 +13,20 @@ public abstract class AbstractNegExpr<ExprType extends ClosedUnderNeg> extends A
 
 	private static final String OPERATOR_LABEL = "Neg";
 
+	private final ConstraintManager manager;
+
 	public AbstractNegExpr(final ConstraintManager manager, final Expr<? extends ExprType> op) {
 		super(op);
+		this.manager = manager;
 	}
 
 	@Override
 	public final NegExpr<ExprType> withOp(final Expr<? extends ExprType> op) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		if (op == getOp()) {
+			return this;
+		} else {
+			return manager.getExprFactory().Neg(op);
+		}
 	}
 
 	@Override

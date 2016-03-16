@@ -16,6 +16,8 @@ public abstract class AbstractArrayReadExpr<IndexType extends Type, ElemType ext
 
 	private static final String OPERATOR_LABEL = "Read";
 
+	private final ConstraintManager manager;
+
 	private volatile int hashCode = 0;
 
 	private final Expr<? extends ArrayType<? super IndexType, ? extends ElemType>> array;
@@ -25,6 +27,7 @@ public abstract class AbstractArrayReadExpr<IndexType extends Type, ElemType ext
 			final Expr<? extends ArrayType<? super IndexType, ? extends ElemType>> array,
 			final Expr<? extends IndexType> index) {
 
+		this.manager = manager;
 		this.array = checkNotNull(array);
 		this.index = checkNotNull(index);
 	}
@@ -43,8 +46,12 @@ public abstract class AbstractArrayReadExpr<IndexType extends Type, ElemType ext
 	public final ArrayReadExpr<IndexType, ElemType> with(
 			final Expr<? extends ArrayType<? super IndexType, ? extends ElemType>> array,
 			final Expr<? extends IndexType> index) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+
+		if (this.array == array && this.index == index) {
+			return this;
+		} else {
+			return manager.getExprFactory().Read(array, index);
+		}
 	}
 
 	@Override

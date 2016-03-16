@@ -10,8 +10,10 @@ public abstract class AbstractTrueExpr extends AbstractBoolLitExpr implements Tr
 
 	private static final String OPERATOR = "True";
 
+	private final ConstraintManager manager;
+
 	public AbstractTrueExpr(final ConstraintManager manager) {
-		// TODO Auto-generated constructor stub
+		this.manager = manager;
 	}
 
 	@Override

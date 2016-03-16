@@ -13,16 +13,22 @@ public abstract class AbstractSubExpr<ExprType extends ClosedUnderSub>
 
 	private static final String OPERATOR = "Sub";
 
+	private final ConstraintManager manager;
+
 	public AbstractSubExpr(final ConstraintManager manager, final Expr<? extends ExprType> leftOp,
 			final Expr<? extends ExprType> rightOp) {
 		super(leftOp, rightOp);
+		this.manager = manager;
 	}
 
 	@Override
 	public final SubExpr<ExprType> withOps(final Expr<? extends ExprType> leftOp,
 			final Expr<? extends ExprType> rightOp) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
+			return this;
+		} else {
+			return manager.getExprFactory().Sub(leftOp, rightOp);
+		}
 	}
 
 	@Override

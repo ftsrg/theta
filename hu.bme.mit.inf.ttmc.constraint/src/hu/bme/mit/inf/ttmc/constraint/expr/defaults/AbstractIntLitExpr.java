@@ -9,11 +9,14 @@ public abstract class AbstractIntLitExpr extends AbstractNullaryExpr<IntType> im
 
 	private static final int HASH_SEED = 4111;
 
+	private final ConstraintManager manager;
+
 	private final long value;
 
 	private volatile int hashCode = 0;
 
 	public AbstractIntLitExpr(final ConstraintManager manager, final long value) {
+		this.manager = manager;
 		this.value = value;
 	}
 
