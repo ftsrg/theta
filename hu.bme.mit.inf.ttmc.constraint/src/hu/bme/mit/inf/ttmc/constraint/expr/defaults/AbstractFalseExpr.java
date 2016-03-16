@@ -7,7 +7,7 @@ public abstract class AbstractFalseExpr extends AbstractBoolLitExpr implements F
 
 	private static final int HASH_SEED = 712514;
 
-	private static final String OPERATOR = "False";
+	private static final String OPERATOR_LABEL = "False";
 
 	@Override
 	public final boolean getValue() {
@@ -15,23 +15,23 @@ public abstract class AbstractFalseExpr extends AbstractBoolLitExpr implements F
 	}
 
 	@Override
-	public <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
+	public final <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
 		return visitor.visit(this, param);
 	}
 
 	@Override
-	public boolean equals(final Object obj) {
+	public final int hashCode() {
+		return HASH_SEED;
+	}
+
+	@Override
+	public final boolean equals(final Object obj) {
 		return (obj instanceof FalseExpr);
 	}
 
 	@Override
 	public final String toString() {
-		return OPERATOR;
-	}
-
-	@Override
-	protected int getHashSeed() {
-		return HASH_SEED;
+		return OPERATOR_LABEL;
 	}
 
 }

@@ -20,17 +20,17 @@ public abstract class AbstractBinaryExpr<LeftOpType extends Type, RightOpType ex
 	}
 
 	@Override
-	public Expr<? extends LeftOpType> getLeftOp() {
+	public final Expr<? extends LeftOpType> getLeftOp() {
 		return leftOp;
 	}
 
 	@Override
-	public Expr<? extends RightOpType> getRightOp() {
+	public final Expr<? extends RightOpType> getRightOp() {
 		return rightOp;
 	}
 
 	@Override
-	public int hashCode() {
+	public final int hashCode() {
 		if (hashCode == 0) {
 			hashCode = getHashSeed();
 			hashCode = 31 * hashCode + getLeftOp().hashCode();
@@ -41,9 +41,9 @@ public abstract class AbstractBinaryExpr<LeftOpType extends Type, RightOpType ex
 	}
 
 	@Override
-	public String toString() {
+	public final String toString() {
 		final StringBuilder sb = new StringBuilder();
-		sb.append(getOperatorString());
+		sb.append(getOperatorLabel());
 		sb.append("(");
 		sb.append(leftOp.toString());
 		sb.append(", ");
@@ -52,16 +52,8 @@ public abstract class AbstractBinaryExpr<LeftOpType extends Type, RightOpType ex
 		return sb.toString();
 	}
 
-	protected abstract String getOperatorString();
+	protected abstract int getHashSeed();
 
-	@Override
-	public BinaryExpr<LeftOpType, RightOpType, ExprType> withLeftOp(final Expr<? extends LeftOpType> leftOp) {
-		return withOps(leftOp, getRightOp());
-	}
-
-	@Override
-	public BinaryExpr<LeftOpType, RightOpType, ExprType> withRightOp(final Expr<? extends RightOpType> rightOp) {
-		return withOps(getLeftOp(), rightOp);
-	}
+	protected abstract String getOperatorLabel();
 
 }

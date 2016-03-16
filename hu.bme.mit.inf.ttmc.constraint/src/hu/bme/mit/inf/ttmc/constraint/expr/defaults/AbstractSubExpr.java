@@ -8,6 +8,8 @@ import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 public abstract class AbstractSubExpr<ExprType extends ClosedUnderSub>
 		extends AbstractBinaryExpr<ExprType, ExprType, ExprType> implements SubExpr<ExprType> {
 
+	private static final int HASH_SEED = 101;
+
 	private static final String OPERATOR = "Sub";
 
 	public AbstractSubExpr(final Expr<? extends ExprType> leftOp, final Expr<? extends ExprType> rightOp) {
@@ -15,23 +17,24 @@ public abstract class AbstractSubExpr<ExprType extends ClosedUnderSub>
 	}
 
 	@Override
-	public SubExpr<ExprType> withOps(final Expr<? extends ExprType> leftOp, final Expr<? extends ExprType> rightOp) {
+	public final SubExpr<ExprType> withOps(final Expr<? extends ExprType> leftOp,
+			final Expr<? extends ExprType> rightOp) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
 
 	@Override
-	public SubExpr<ExprType> withLeftOp(final Expr<? extends ExprType> leftOp) {
+	public final SubExpr<ExprType> withLeftOp(final Expr<? extends ExprType> leftOp) {
 		return withOps(leftOp, getRightOp());
 	}
 
 	@Override
-	public SubExpr<ExprType> withRightOp(final Expr<? extends ExprType> rightOp) {
+	public final SubExpr<ExprType> withRightOp(final Expr<? extends ExprType> rightOp) {
 		return withOps(getLeftOp(), rightOp);
 	}
 
 	@Override
-	public <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
+	public final <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
 		return visitor.visit(this, param);
 	}
 
@@ -48,12 +51,13 @@ public abstract class AbstractSubExpr<ExprType extends ClosedUnderSub>
 	}
 
 	@Override
-	protected final String getOperatorString() {
-		return OPERATOR;
+	protected final int getHashSeed() {
+		return HASH_SEED;
 	}
 
 	@Override
-	protected final int getHashSeed() {
-		return 101;
+	protected final String getOperatorLabel() {
+		return OPERATOR;
 	}
+
 }

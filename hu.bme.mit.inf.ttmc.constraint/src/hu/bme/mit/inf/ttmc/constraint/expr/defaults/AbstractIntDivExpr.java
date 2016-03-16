@@ -7,14 +7,16 @@ import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 
 public abstract class AbstractIntDivExpr extends AbstractBinaryExpr<IntType, IntType, IntType> implements IntDivExpr {
 
-	private static final String OPERATOR = "IDiv";
+	private static final int HASH_SEED = 79;
+
+	private static final String OPERATOR_LABEL = "IDiv";
 
 	public AbstractIntDivExpr(final Expr<? extends IntType> leftOp, final Expr<? extends IntType> rightOp) {
 		super(leftOp, rightOp);
 	}
 
 	@Override
-	public IntDivExpr withOps(final Expr<? extends IntType> leftOp, final Expr<? extends IntType> rightOp) {
+	public final IntDivExpr withOps(final Expr<? extends IntType> leftOp, final Expr<? extends IntType> rightOp) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
@@ -35,7 +37,7 @@ public abstract class AbstractIntDivExpr extends AbstractBinaryExpr<IntType, Int
 	}
 
 	@Override
-	public boolean equals(final Object obj) {
+	public final boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		} else if (obj instanceof IntDivExpr) {
@@ -47,12 +49,13 @@ public abstract class AbstractIntDivExpr extends AbstractBinaryExpr<IntType, Int
 	}
 
 	@Override
-	protected final String getOperatorString() {
-		return OPERATOR;
+	protected int getHashSeed() {
+		return HASH_SEED;
 	}
 
 	@Override
-	protected int getHashSeed() {
-		return 79;
+	protected final String getOperatorLabel() {
+		return OPERATOR_LABEL;
 	}
+
 }

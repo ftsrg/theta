@@ -14,7 +14,9 @@ import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 public abstract class AbstractAddExpr<ExprType extends ClosedUnderAdd> extends AbstractMultiaryExpr<ExprType, ExprType>
 		implements AddExpr<ExprType> {
 
-	private static final String OPERATOR = "Add";
+	private static final int HASH_SEED = 73;
+
+	private static final String OPERATOR_LABEL = "Add";
 
 	public AbstractAddExpr(final Collection<? extends Expr<? extends ExprType>> ops) {
 		super(ImmutableMultiset.copyOf(checkNotNull(ops)));
@@ -32,7 +34,7 @@ public abstract class AbstractAddExpr<ExprType extends ClosedUnderAdd> extends A
 	}
 
 	@Override
-	public boolean equals(final Object obj) {
+	public final boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		} else if (obj instanceof AddExpr<?>) {
@@ -44,13 +46,13 @@ public abstract class AbstractAddExpr<ExprType extends ClosedUnderAdd> extends A
 	}
 
 	@Override
-	protected final String getOperatorString() {
-		return OPERATOR;
+	protected final int getHashSeed() {
+		return HASH_SEED;
 	}
 
 	@Override
-	protected final int getHashSeed() {
-		return 73;
+	protected final String getOperatorLabel() {
+		return OPERATOR_LABEL;
 	}
 
 }

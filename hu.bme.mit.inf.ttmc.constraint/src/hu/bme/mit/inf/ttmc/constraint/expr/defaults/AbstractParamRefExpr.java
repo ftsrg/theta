@@ -8,17 +8,19 @@ import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 public abstract class AbstractParamRefExpr<DeclType extends Type> extends AbstractRefExpr<DeclType, ParamDecl<DeclType>>
 		implements ParamRefExpr<DeclType> {
 
+	private static final int HASH_SEED = 919;
+
 	public AbstractParamRefExpr(final ParamDecl<DeclType> paramDecl) {
 		super(paramDecl);
 	}
 
 	@Override
-	public <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
+	public final <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
 		return visitor.visit(this, param);
 	}
 
 	@Override
-	public boolean equals(final Object obj) {
+	public final boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		} else if (obj instanceof ParamRefExpr<?>) {
@@ -30,7 +32,7 @@ public abstract class AbstractParamRefExpr<DeclType extends Type> extends Abstra
 	}
 
 	@Override
-	protected int getHashSeed() {
-		return 919;
+	protected final int getHashSeed() {
+		return HASH_SEED;
 	}
 }

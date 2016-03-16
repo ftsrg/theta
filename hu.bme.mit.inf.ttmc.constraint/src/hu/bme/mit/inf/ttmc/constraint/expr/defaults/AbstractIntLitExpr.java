@@ -6,6 +6,8 @@ import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 
 public abstract class AbstractIntLitExpr extends AbstractNullaryExpr<IntType> implements IntLitExpr {
 
+	private static final int HASH_SEED = 4111;
+
 	private final long value;
 
 	private volatile int hashCode = 0;
@@ -15,19 +17,19 @@ public abstract class AbstractIntLitExpr extends AbstractNullaryExpr<IntType> im
 	}
 
 	@Override
-	public long getValue() {
+	public final long getValue() {
 		return value;
 	}
 
 	@Override
-	public int compareTo(final IntLitExpr that) {
-		return Long.compare(this.getValue(), that.getValue());
+	public final <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
+		return visitor.visit(this, param);
 	}
 
 	@Override
-	public int hashCode() {
+	public final int hashCode() {
 		if (hashCode == 0) {
-			hashCode = getHashSeed();
+			hashCode = HASH_SEED;
 			hashCode = 31 * hashCode + (int) (value ^ (value >>> 32));
 		}
 
@@ -35,7 +37,7 @@ public abstract class AbstractIntLitExpr extends AbstractNullaryExpr<IntType> im
 	}
 
 	@Override
-	public boolean equals(final Object obj) {
+	public final boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		} else if (obj instanceof IntLitExpr) {
@@ -52,12 +54,8 @@ public abstract class AbstractIntLitExpr extends AbstractNullaryExpr<IntType> im
 	}
 
 	@Override
-	protected int getHashSeed() {
-		return 83;
+	public final int compareTo(final IntLitExpr that) {
+		return Long.compare(this.getValue(), that.getValue());
 	}
 
-	@Override
-	public final <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
-		return visitor.visit(this, param);
-	}
 }

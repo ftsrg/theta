@@ -14,40 +14,48 @@ import hu.bme.mit.inf.ttmc.constraint.expr.QuantifiedExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 
-public abstract class AbstractQuantifiedExpr extends AbstractUnaryExpr<BoolType, BoolType> implements QuantifiedExpr {
+public abstract class AbstractQuantifiedExpr extends AbstractExpr<BoolType> implements QuantifiedExpr {
 
 	private final List<ParamDecl<? extends Type>> paramDecls;
 
+	private final Expr<? extends BoolType> op;
+
+	private volatile int hashCode = 0;
+
 	protected AbstractQuantifiedExpr(final Collection<? extends ParamDecl<? extends Type>> paramDecls,
 			final Expr<? extends BoolType> op) {
-		super(op);
 		this.paramDecls = ImmutableList.copyOf(checkNotNull(paramDecls));
+		this.op = checkNotNull(op);
 	}
 
 	@Override
-	public List<ParamDecl<? extends Type>> getParamDecls() {
+	public final List<ParamDecl<? extends Type>> getParamDecls() {
 		return paramDecls;
 	}
 
 	@Override
-	public int hashCode() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+	public final Expr<? extends BoolType> getOp() {
+		return op;
 	}
 
 	@Override
-	public boolean equals(Object obj) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+	public int hashCode() {
+		if (hashCode == 0) {
+			hashCode = getHashSeed();
+			hashCode = 31 * hashCode + getParamDecls().hashCode();
+			hashCode = 31 * hashCode + getOp().hashCode();
+		}
+
+		return hashCode;
 	}
 
 	@Override
 	public final String toString() {
 		final StringBuilder sb = new StringBuilder();
-		sb.append(getOperatorString());
+		sb.append(getOperatorLabel());
 
 		final StringJoiner sj = new StringJoiner(", ", "[", "]");
-		for (ParamDecl<?> varDecl : paramDecls) {
+		for (final ParamDecl<?> varDecl : paramDecls) {
 			sj.add(varDecl.toString());
 		}
 		sb.append(sj.toString());
@@ -58,5 +66,9 @@ public abstract class AbstractQuantifiedExpr extends AbstractUnaryExpr<BoolType,
 
 		return sb.toString();
 	}
+
+	protected abstract int getHashSeed();
+
+	protected abstract String getOperatorLabel();
 
 }

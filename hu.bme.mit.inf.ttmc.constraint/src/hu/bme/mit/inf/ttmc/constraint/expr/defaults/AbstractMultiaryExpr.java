@@ -21,7 +21,7 @@ public abstract class AbstractMultiaryExpr<OpsType extends Type, ExprType extend
 	}
 
 	@Override
-	public Collection<? extends Expr<? extends OpsType>> getOps() {
+	public final Collection<? extends Expr<? extends OpsType>> getOps() {
 		return ops;
 	}
 
@@ -38,7 +38,7 @@ public abstract class AbstractMultiaryExpr<OpsType extends Type, ExprType extend
 	@Override
 	public final String toString() {
 		final StringBuilder sb = new StringBuilder();
-		sb.append(getOperatorString());
+		sb.append(getOperatorLabel());
 		sb.append("(");
 		final String prefix = sb.toString();
 		final String suffix = ")";
@@ -49,5 +49,8 @@ public abstract class AbstractMultiaryExpr<OpsType extends Type, ExprType extend
 		return sj.toString();
 	}
 
-	protected abstract String getOperatorString();
+	protected abstract int getHashSeed();
+
+	protected abstract String getOperatorLabel();
+
 }

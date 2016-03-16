@@ -8,25 +8,27 @@ import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 public abstract class AbstractNegExpr<ExprType extends ClosedUnderNeg> extends AbstractUnaryExpr<ExprType, ExprType>
 		implements NegExpr<ExprType> {
 
-	private static final String OPERATOR = "Neg";
+	private static final int HASH_SEED = 97;
+
+	private static final String OPERATOR_LABEL = "Neg";
 
 	public AbstractNegExpr(final Expr<? extends ExprType> op) {
 		super(op);
 	}
 
 	@Override
-	public NegExpr<ExprType> withOp(final Expr<? extends ExprType> op) {
+	public final NegExpr<ExprType> withOp(final Expr<? extends ExprType> op) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
 
 	@Override
-	public <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
+	public final <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
 		return visitor.visit(this, param);
 	}
 
 	@Override
-	public boolean equals(final Object obj) {
+	public final boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		} else if (obj instanceof NegExpr<?>) {
@@ -38,12 +40,13 @@ public abstract class AbstractNegExpr<ExprType extends ClosedUnderNeg> extends A
 	}
 
 	@Override
-	protected final String getOperatorString() {
-		return OPERATOR;
+	protected final int getHashSeed() {
+		return HASH_SEED;
 	}
 
 	@Override
-	protected int getHashSeed() {
-		return 97;
+	protected final String getOperatorLabel() {
+		return OPERATOR_LABEL;
 	}
+
 }

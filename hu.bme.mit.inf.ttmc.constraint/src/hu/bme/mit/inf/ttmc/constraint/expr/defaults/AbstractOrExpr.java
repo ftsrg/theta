@@ -13,25 +13,27 @@ import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 
 public abstract class AbstractOrExpr extends AbstractMultiaryExpr<BoolType, BoolType> implements OrExpr {
 
-	private static final String OPERATOR = "Or";
+	private static final int HASH_SEED = 131;
+
+	private static final String OPERATOR_LABEL = "Or";
 
 	public AbstractOrExpr(final Collection<? extends Expr<? extends BoolType>> ops) {
 		super(ImmutableSet.copyOf(checkNotNull(ops)));
 	}
 
 	@Override
-	public OrExpr withOps(final Collection<? extends Expr<? extends BoolType>> ops) {
+	public final OrExpr withOps(final Collection<? extends Expr<? extends BoolType>> ops) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
 
 	@Override
-	public <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
+	public final <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
 		return visitor.visit(this, param);
 	}
 
 	@Override
-	public boolean equals(final Object obj) {
+	public final boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		} else if (obj instanceof OrExpr) {
@@ -43,12 +45,13 @@ public abstract class AbstractOrExpr extends AbstractMultiaryExpr<BoolType, Bool
 	}
 
 	@Override
-	protected final String getOperatorString() {
-		return OPERATOR;
+	protected final int getHashSeed() {
+		return HASH_SEED;
 	}
 
 	@Override
-	protected int getHashSeed() {
-		return 131;
+	protected final String getOperatorLabel() {
+		return OPERATOR_LABEL;
 	}
+
 }

@@ -15,12 +15,17 @@ public abstract class AbstractTrueExpr extends AbstractBoolLitExpr implements Tr
 	}
 
 	@Override
-	public <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
+	public final <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
 		return visitor.visit(this, param);
 	}
 
 	@Override
-	public boolean equals(final Object obj) {
+	public final int hashCode() {
+		return HASH_SEED;
+	}
+
+	@Override
+	public final boolean equals(final Object obj) {
 		return (obj instanceof TrueExpr);
 	}
 
@@ -29,8 +34,4 @@ public abstract class AbstractTrueExpr extends AbstractBoolLitExpr implements Tr
 		return OPERATOR;
 	}
 
-	@Override
-	protected int getHashSeed() {
-		return HASH_SEED;
-	}
 }

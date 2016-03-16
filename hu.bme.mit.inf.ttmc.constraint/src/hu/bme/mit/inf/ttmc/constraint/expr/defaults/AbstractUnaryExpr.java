@@ -18,12 +18,12 @@ public abstract class AbstractUnaryExpr<OpType extends Type, ExprType extends Ty
 	}
 
 	@Override
-	public Expr<? extends OpType> getOp() {
+	public final Expr<? extends OpType> getOp() {
 		return op;
 	}
 
 	@Override
-	public int hashCode() {
+	public final int hashCode() {
 		if (hashCode == 0) {
 			hashCode = getHashSeed();
 			hashCode = 37 * hashCode + getOp().hashCode();
@@ -33,14 +33,16 @@ public abstract class AbstractUnaryExpr<OpType extends Type, ExprType extends Ty
 	}
 
 	@Override
-	public String toString() {
+	public final String toString() {
 		final StringBuilder sb = new StringBuilder();
-		sb.append(getOperatorString());
+		sb.append(getOperatorLabel());
 		sb.append("(");
 		sb.append(op.toString());
 		sb.append(")");
 		return sb.toString();
 	}
 
-	protected abstract String getOperatorString();
+	protected abstract int getHashSeed();
+
+	protected abstract String getOperatorLabel();
 }

@@ -13,6 +13,8 @@ public abstract class AbstractArrayReadExpr<IndexType extends Type, ElemType ext
 
 	private static final int HASH_SEED = 1321;
 
+	private static final String OPERATOR_LABEL = "Read";
+
 	private volatile int hashCode = 0;
 
 	private final Expr<? extends ArrayType<? super IndexType, ? extends ElemType>> array;
@@ -26,12 +28,12 @@ public abstract class AbstractArrayReadExpr<IndexType extends Type, ElemType ext
 	}
 
 	@Override
-	public Expr<? extends ArrayType<? super IndexType, ? extends ElemType>> getArray() {
+	public final Expr<? extends ArrayType<? super IndexType, ? extends ElemType>> getArray() {
 		return array;
 	}
 
 	@Override
-	public Expr<? extends IndexType> getIndex() {
+	public final Expr<? extends IndexType> getIndex() {
 		return index;
 	}
 
@@ -60,7 +62,7 @@ public abstract class AbstractArrayReadExpr<IndexType extends Type, ElemType ext
 	}
 
 	@Override
-	public int hashCode() {
+	public final int hashCode() {
 		if (hashCode == 0) {
 			hashCode = HASH_SEED;
 			hashCode = 31 * hashCode + array.hashCode();
@@ -71,7 +73,7 @@ public abstract class AbstractArrayReadExpr<IndexType extends Type, ElemType ext
 	}
 
 	@Override
-	public boolean equals(final Object obj) {
+	public final boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		} else if (obj instanceof ArrayReadExpr<?, ?>) {
@@ -83,19 +85,15 @@ public abstract class AbstractArrayReadExpr<IndexType extends Type, ElemType ext
 	}
 
 	@Override
-	public String toString() {
+	public final String toString() {
 		final StringBuilder sb = new StringBuilder();
-		sb.append("Read(");
+		sb.append(OPERATOR_LABEL);
+		sb.append("(");
 		sb.append(array);
 		sb.append(", ");
 		sb.append(index);
 		sb.append(")");
 		return sb.toString();
-	}
-
-	@Override
-	protected final int getHashSeed() {
-		return HASH_SEED;
 	}
 
 }

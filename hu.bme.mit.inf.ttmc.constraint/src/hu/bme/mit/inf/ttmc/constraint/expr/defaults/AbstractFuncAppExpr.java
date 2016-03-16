@@ -11,10 +11,12 @@ import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 public abstract class AbstractFuncAppExpr<ParamType extends Type, ResultType extends Type>
 		extends AbstractExpr<ResultType> implements FuncAppExpr<ParamType, ResultType> {
 
+	private static final int HASH_SEED = 7951;
+
+	private static final String OPERATOR_LABEL = "App";
+
 	private final Expr<? extends FuncType<? super ParamType, ? extends ResultType>> func;
 	private final Expr<? extends ParamType> param;
-
-	private static final int HASH_SEED = 47;
 
 	private volatile int hashCode = 0;
 
@@ -25,17 +27,22 @@ public abstract class AbstractFuncAppExpr<ParamType extends Type, ResultType ext
 	}
 
 	@Override
-	public Expr<? extends FuncType<? super ParamType, ? extends ResultType>> getFunc() {
+	public final Expr<? extends FuncType<? super ParamType, ? extends ResultType>> getFunc() {
 		return func;
 	}
 
 	@Override
-	public Expr<? extends ParamType> getParam() {
+	public final Expr<? extends ParamType> getParam() {
 		return param;
 	}
 
 	@Override
-	public int hashCode() {
+	public final <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
+		return visitor.visit(this, param);
+	}
+
+	@Override
+	public final int hashCode() {
 		if (hashCode == 0) {
 			hashCode = HASH_SEED;
 			hashCode = 31 * hashCode + func.hashCode();
@@ -46,7 +53,7 @@ public abstract class AbstractFuncAppExpr<ParamType extends Type, ResultType ext
 	}
 
 	@Override
-	public boolean equals(final Object obj) {
+	public final boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		} else if (obj instanceof FuncAppExpr<?, ?>) {
@@ -60,7 +67,7 @@ public abstract class AbstractFuncAppExpr<ParamType extends Type, ResultType ext
 	@Override
 	public final String toString() {
 		final StringBuilder sb = new StringBuilder();
-		sb.append("App(");
+		sb.append(OPERATOR_LABEL);
 		sb.append(func);
 		sb.append(", ");
 		sb.append(param);
@@ -68,13 +75,4 @@ public abstract class AbstractFuncAppExpr<ParamType extends Type, ResultType ext
 		return sb.toString();
 	}
 
-	@Override
-	public <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
-		return visitor.visit(this, param);
-	}
-
-	@Override
-	protected int getHashSeed() {
-		return HASH_SEED;
-	}
 }

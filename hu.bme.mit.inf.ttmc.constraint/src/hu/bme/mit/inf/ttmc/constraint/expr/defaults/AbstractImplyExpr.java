@@ -7,7 +7,9 @@ import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 
 public abstract class AbstractImplyExpr extends AbstractBinaryExpr<BoolType, BoolType, BoolType> implements ImplyExpr {
 
-	private static final String OPERATOR = "Imply";
+	private static final int HASH_SEED = 71;
+
+	private static final String OPERATOR_LABEL = "Imply";
 
 	public AbstractImplyExpr(final Expr<? extends BoolType> leftOp, final Expr<? extends BoolType> rightOp) {
 		super(leftOp, rightOp);
@@ -35,7 +37,7 @@ public abstract class AbstractImplyExpr extends AbstractBinaryExpr<BoolType, Boo
 	}
 
 	@Override
-	public boolean equals(final Object obj) {
+	public final boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		} else if (obj instanceof ImplyExpr) {
@@ -47,12 +49,13 @@ public abstract class AbstractImplyExpr extends AbstractBinaryExpr<BoolType, Boo
 	}
 
 	@Override
-	protected final String getOperatorString() {
-		return OPERATOR;
+	protected final int getHashSeed() {
+		return HASH_SEED;
 	}
 
 	@Override
-	protected final int getHashSeed() {
-		return 71;
+	protected final String getOperatorLabel() {
+		return OPERATOR_LABEL;
 	}
+
 }

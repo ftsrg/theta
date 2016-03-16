@@ -13,7 +13,9 @@ import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 
 public abstract class AbstractAndExpr extends AbstractMultiaryExpr<BoolType, BoolType> implements AndExpr {
 
-	private static final String OPERATOR = "And";
+	private static final int HASH_SEED = 41;
+
+	private static final String OPERATOR_LABEL = "And";
 
 	public AbstractAndExpr(final Collection<? extends Expr<? extends BoolType>> ops) {
 		super(ImmutableSet.copyOf(checkNotNull(ops)));
@@ -31,7 +33,7 @@ public abstract class AbstractAndExpr extends AbstractMultiaryExpr<BoolType, Boo
 	}
 
 	@Override
-	public boolean equals(final Object obj) {
+	public final boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		} else if (obj instanceof AndExpr) {
@@ -43,13 +45,13 @@ public abstract class AbstractAndExpr extends AbstractMultiaryExpr<BoolType, Boo
 	}
 
 	@Override
-	protected final String getOperatorString() {
-		return OPERATOR;
+	protected final String getOperatorLabel() {
+		return OPERATOR_LABEL;
 	}
 
 	@Override
 	protected final int getHashSeed() {
-		return 41;
+		return HASH_SEED;
 	}
 
 }
