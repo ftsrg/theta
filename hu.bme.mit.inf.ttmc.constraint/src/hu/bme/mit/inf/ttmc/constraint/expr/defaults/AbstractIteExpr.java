@@ -29,17 +29,17 @@ public abstract class AbstractIteExpr<ExprType extends Type> extends AbstractExp
 	}
 
 	@Override
-	public Expr<? extends BoolType> getCond() {
+	public final Expr<? extends BoolType> getCond() {
 		return cond;
 	}
 
 	@Override
-	public Expr<? extends ExprType> getThen() {
+	public final Expr<? extends ExprType> getThen() {
 		return then;
 	}
 
 	@Override
-	public Expr<? extends ExprType> getElse() {
+	public final Expr<? extends ExprType> getElse() {
 		return elze;
 	}
 
