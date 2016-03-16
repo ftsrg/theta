@@ -1,6 +1,7 @@
 package hu.bme.mit.inf.ttmc.constraint.expr.defaults;
 
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
+import hu.bme.mit.inf.ttmc.constraint.expr.ModExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.NeqExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
@@ -15,17 +16,7 @@ public abstract class AbstractNeqExpr extends AbstractBinaryExpr<Type, Type, Boo
 	}
 
 	@Override
-	protected final String getOperatorString() {
-		return OPERATOR;
-	}
-
-	@Override
-	protected final int getHashSeed() {
-		return 113;
-	}
-
-	@Override
-	public NeqExpr withOps(Expr<? extends Type> leftOp, Expr<? extends Type> rightOp) {
+	public NeqExpr withOps(final Expr<? extends Type> leftOp, final Expr<? extends Type> rightOp) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
@@ -41,7 +32,29 @@ public abstract class AbstractNeqExpr extends AbstractBinaryExpr<Type, Type, Boo
 	}
 
 	@Override
-	public <P, R> R accept(ExprVisitor<? super P, ? extends R> visitor, P param) {
+	public <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
 		return visitor.visit(this, param);
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		} else if (obj instanceof ModExpr) {
+			final ModExpr that = (ModExpr) obj;
+			return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp().equals(that.getRightOp());
+		} else {
+			return false;
+		}
+	}
+
+	@Override
+	protected final String getOperatorString() {
+		return OPERATOR;
+	}
+
+	@Override
+	protected final int getHashSeed() {
+		return 113;
 	}
 }

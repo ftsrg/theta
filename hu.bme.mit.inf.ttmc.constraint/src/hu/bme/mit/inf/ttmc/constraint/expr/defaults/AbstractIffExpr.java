@@ -6,8 +6,7 @@ import hu.bme.mit.inf.ttmc.constraint.expr.IffExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 
-public abstract class AbstractIffExpr extends AbstractBinaryExpr<BoolType, BoolType, BoolType>
-		implements IffExpr {
+public abstract class AbstractIffExpr extends AbstractBinaryExpr<BoolType, BoolType, BoolType> implements IffExpr {
 
 	private static final String OPERATOR = "Iff";
 
@@ -16,17 +15,7 @@ public abstract class AbstractIffExpr extends AbstractBinaryExpr<BoolType, BoolT
 	}
 
 	@Override
-	protected final String getOperatorString() {
-		return OPERATOR;
-	}
-
-	@Override
-	protected final int getHashSeed() {
-		return 67;
-	}
-	
-	@Override
-	public IffExpr withOps(Expr<? extends BoolType> leftOp, Expr<? extends BoolType> rightOp) {
+	public IffExpr withOps(final Expr<? extends BoolType> leftOp, final Expr<? extends BoolType> rightOp) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
@@ -42,7 +31,29 @@ public abstract class AbstractIffExpr extends AbstractBinaryExpr<BoolType, BoolT
 	}
 
 	@Override
-	public final <P, R> R accept(ExprVisitor<? super P, ? extends R> visitor, P param) {
+	public final <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
 		return visitor.visit(this, param);
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		} else if (obj instanceof IffExpr) {
+			final IffExpr that = (IffExpr) obj;
+			return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp().equals(that.getRightOp());
+		} else {
+			return false;
+		}
+	}
+
+	@Override
+	protected final String getOperatorString() {
+		return OPERATOR;
+	}
+
+	@Override
+	protected final int getHashSeed() {
+		return 67;
 	}
 }

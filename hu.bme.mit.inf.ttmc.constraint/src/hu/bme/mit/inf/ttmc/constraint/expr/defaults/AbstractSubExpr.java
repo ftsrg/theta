@@ -15,16 +15,6 @@ public abstract class AbstractSubExpr<ExprType extends ClosedUnderSub>
 	}
 
 	@Override
-	protected final String getOperatorString() {
-		return OPERATOR;
-	}
-
-	@Override
-	protected final int getHashSeed() {
-		return 101;
-	}
-
-	@Override
 	public SubExpr<ExprType> withOps(final Expr<? extends ExprType> leftOp, final Expr<? extends ExprType> rightOp) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO: auto-generated method stub");
@@ -43,5 +33,27 @@ public abstract class AbstractSubExpr<ExprType extends ClosedUnderSub>
 	@Override
 	public <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
 		return visitor.visit(this, param);
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		} else if (obj instanceof SubExpr<?>) {
+			final SubExpr<?> that = (SubExpr<?>) obj;
+			return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp().equals(that.getRightOp());
+		} else {
+			return false;
+		}
+	}
+
+	@Override
+	protected final String getOperatorString() {
+		return OPERATOR;
+	}
+
+	@Override
+	protected final int getHashSeed() {
+		return 101;
 	}
 }

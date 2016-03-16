@@ -14,16 +14,6 @@ public abstract class AbstractRatDivExpr extends AbstractBinaryExpr<RatType, Rat
 	}
 
 	@Override
-	protected final String getOperatorString() {
-		return OPERATOR;
-	}
-
-	@Override
-	protected final int getHashSeed() {
-		return 139;
-	}
-
-	@Override
 	public RatDivExpr withOps(final Expr<? extends RatType> leftOp, final Expr<? extends RatType> rightOp) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO: auto-generated method stub");
@@ -42,5 +32,27 @@ public abstract class AbstractRatDivExpr extends AbstractBinaryExpr<RatType, Rat
 	@Override
 	public <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
 		return visitor.visit(this, param);
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		} else if (obj instanceof RatDivExpr) {
+			final RatDivExpr that = (RatDivExpr) obj;
+			return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp().equals(that.getRightOp());
+		} else {
+			return false;
+		}
+	}
+
+	@Override
+	protected final String getOperatorString() {
+		return OPERATOR;
+	}
+
+	@Override
+	protected final int getHashSeed() {
+		return 139;
 	}
 }

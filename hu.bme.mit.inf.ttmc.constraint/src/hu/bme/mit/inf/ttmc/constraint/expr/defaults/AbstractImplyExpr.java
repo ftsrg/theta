@@ -9,27 +9,16 @@ public abstract class AbstractImplyExpr extends AbstractBinaryExpr<BoolType, Boo
 
 	private static final String OPERATOR = "Imply";
 
-	public AbstractImplyExpr(final Expr<? extends BoolType> leftOp,
-			final Expr<? extends BoolType> rightOp) {
+	public AbstractImplyExpr(final Expr<? extends BoolType> leftOp, final Expr<? extends BoolType> rightOp) {
 		super(leftOp, rightOp);
 	}
 
 	@Override
-	protected final String getOperatorString() {
-		return OPERATOR;
-	}
-
-	@Override
-	protected final int getHashSeed() {
-		return 71;
-	}
-	
-	@Override
-	public final ImplyExpr withOps(Expr<? extends BoolType> leftOp, Expr<? extends BoolType> rightOp) {
+	public final ImplyExpr withOps(final Expr<? extends BoolType> leftOp, final Expr<? extends BoolType> rightOp) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
-	
+
 	@Override
 	public final ImplyExpr withLeftOp(final Expr<? extends BoolType> leftOp) {
 		return withOps(leftOp, getRightOp());
@@ -41,7 +30,29 @@ public abstract class AbstractImplyExpr extends AbstractBinaryExpr<BoolType, Boo
 	}
 
 	@Override
-	public final <P, R> R accept(ExprVisitor<? super P, ? extends R> visitor, P param) {
+	public final <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
 		return visitor.visit(this, param);
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		} else if (obj instanceof ImplyExpr) {
+			final ImplyExpr that = (ImplyExpr) obj;
+			return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp().equals(that.getRightOp());
+		} else {
+			return false;
+		}
+	}
+
+	@Override
+	protected final String getOperatorString() {
+		return OPERATOR;
+	}
+
+	@Override
+	protected final int getHashSeed() {
+		return 71;
 	}
 }
