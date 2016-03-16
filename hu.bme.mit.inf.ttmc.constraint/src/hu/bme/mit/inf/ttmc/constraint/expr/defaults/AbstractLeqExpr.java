@@ -15,17 +15,7 @@ public abstract class AbstractLeqExpr extends AbstractBinaryExpr<RatType, RatTyp
 	}
 
 	@Override
-	protected final String getOperatorString() {
-		return OPERATOR;
-	}
-
-	@Override
-	protected final int getHashSeed() {
-		return 103;
-	}
-
-	@Override
-	public final LeqExpr withOps(Expr<? extends RatType> leftOp, Expr<? extends RatType> rightOp) {
+	public final LeqExpr withOps(final Expr<? extends RatType> leftOp, final Expr<? extends RatType> rightOp) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
@@ -41,7 +31,29 @@ public abstract class AbstractLeqExpr extends AbstractBinaryExpr<RatType, RatTyp
 	}
 
 	@Override
-	public final <P, R> R accept(ExprVisitor<? super P, ? extends R> visitor, P param) {
+	public final <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
 		return visitor.visit(this, param);
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		} else if (obj instanceof LeqExpr) {
+			final LeqExpr that = (LeqExpr) obj;
+			return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp().equals(that.getRightOp());
+		} else {
+			return false;
+		}
+	}
+
+	@Override
+	protected final String getOperatorString() {
+		return OPERATOR;
+	}
+
+	@Override
+	protected final int getHashSeed() {
+		return 103;
 	}
 }

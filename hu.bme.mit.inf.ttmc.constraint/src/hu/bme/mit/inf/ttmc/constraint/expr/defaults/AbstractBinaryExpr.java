@@ -41,20 +41,6 @@ public abstract class AbstractBinaryExpr<LeftOpType extends Type, RightOpType ex
 	}
 
 	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		} else if (obj == null) {
-			return false;
-		} else if (this.getClass() == obj.getClass()) {
-			final AbstractBinaryExpr<?, ?, ?> that = (AbstractBinaryExpr<?, ?, ?>) obj;
-			return leftOp.equals(that.leftOp) && this.rightOp.equals(that.rightOp);
-		} else {
-			return false;
-		}
-	}
-
-	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
 		sb.append(getOperatorString());
