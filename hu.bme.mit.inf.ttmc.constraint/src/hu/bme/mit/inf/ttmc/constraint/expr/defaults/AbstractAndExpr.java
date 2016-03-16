@@ -31,6 +31,18 @@ public abstract class AbstractAndExpr extends AbstractMultiaryExpr<BoolType, Boo
 	}
 
 	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		} else if (obj instanceof AndExpr) {
+			final AndExpr that = (AndExpr) obj;
+			return this.getOps().equals(that.getOps());
+		} else {
+			return false;
+		}
+	}
+
+	@Override
 	protected final String getOperatorString() {
 		return OPERATOR;
 	}
