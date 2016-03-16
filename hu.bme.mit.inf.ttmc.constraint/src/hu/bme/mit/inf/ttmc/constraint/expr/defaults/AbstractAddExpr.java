@@ -32,6 +32,18 @@ public abstract class AbstractAddExpr<ExprType extends ClosedUnderAdd> extends A
 	}
 
 	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		} else if (obj instanceof AddExpr<?>) {
+			final AddExpr<?> that = (AddExpr<?>) obj;
+			return this.getOps().equals(that.getOps());
+		} else {
+			return false;
+		}
+	}
+
+	@Override
 	protected final String getOperatorString() {
 		return OPERATOR;
 	}
