@@ -13,20 +13,22 @@ import hu.bme.mit.inf.ttmc.constraint.z3.type.Z3Type;
 public final class Z3ParamDecl<DeclType extends Type> extends AbstractParamDecl<DeclType> implements Z3Decl<DeclType> {
 
 	private final Context context;
-	
+
 	private volatile com.microsoft.z3.FuncDecl symbol;
-		
+
+	private volatile ParamRefExpr<DeclType> ref;
+
 	public Z3ParamDecl(final String name, final DeclType type, final Context context) {
 		super(name, type);
 		this.context = context;
 	}
-	
+
 	@Override
 	public ParamRefExpr<DeclType> getRef() {
 		if (ref == null) {
 			ref = new Z3ParamRefExpr<>(this, context);
 		}
-		
+
 		return ref;
 	}
 
@@ -42,7 +44,7 @@ public final class Z3ParamDecl<DeclType extends Type> extends AbstractParamDecl<
 				symbol = context.mkConstDecl(getName(), sort);
 			}
 		}
-		
+
 		return symbol;
 	}
 

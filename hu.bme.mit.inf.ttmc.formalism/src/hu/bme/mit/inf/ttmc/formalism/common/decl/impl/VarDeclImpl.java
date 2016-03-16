@@ -8,30 +8,26 @@ import hu.bme.mit.inf.ttmc.formalism.common.expr.impl.VarRefExprImpl;
 
 public class VarDeclImpl<DeclType extends Type> extends AbstractDecl<DeclType> implements VarDecl<DeclType> {
 
+	private static final String DECL_LABEL = "Var";
+
 	protected volatile VarRefExpr<DeclType> ref;
-	
+
 	public VarDeclImpl(final String name, final DeclType type) {
 		super(name, type);
 	}
-	
+
 	@Override
 	public VarRefExpr<DeclType> getRef() {
 		if (ref == null) {
 			ref = new VarRefExprImpl<>(this);
 		}
-		
+
 		return ref;
 	}
-	
+
 	@Override
-	public String toString() {
-		final StringBuilder sb = new StringBuilder();
-		sb.append("Var(");
-		sb.append(getName());
-		sb.append(" : ");
-		sb.append(getType().toString());
-		sb.append(")");
-		return sb.toString();
+	protected String getDeclLabel() {
+		return DECL_LABEL;
 	}
-	
+
 }

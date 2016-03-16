@@ -7,6 +7,8 @@ import hu.bme.mit.inf.ttmc.constraint.type.Type;
 public abstract class AbstractConstDecl<DeclType extends Type> extends AbstractDecl<DeclType>
 		implements ConstDecl<DeclType> {
 
+	private static final String DECL_LABEL = "Const";
+
 	public AbstractConstDecl(final String name, final DeclType type) {
 		super(name, type);
 	}
@@ -18,14 +20,8 @@ public abstract class AbstractConstDecl<DeclType extends Type> extends AbstractD
 	}
 
 	@Override
-	public String toString() {
-		final StringBuilder sb = new StringBuilder();
-		sb.append("Const(");
-		sb.append(getName());
-		sb.append(" : ");
-		sb.append(getType());
-		sb.append(")");
-		return sb.toString();
+	protected final String getDeclLabel() {
+		return DECL_LABEL;
 	}
 
 }

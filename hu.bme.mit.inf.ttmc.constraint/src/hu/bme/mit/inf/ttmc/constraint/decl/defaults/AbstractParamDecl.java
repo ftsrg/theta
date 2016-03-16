@@ -7,6 +7,8 @@ import hu.bme.mit.inf.ttmc.constraint.type.Type;
 public abstract class AbstractParamDecl<DeclType extends Type> extends AbstractDecl<DeclType>
 		implements ParamDecl<DeclType> {
 
+	private static final String DECL_LABEL = "Param";
+
 	public AbstractParamDecl(final String name, final DeclType type) {
 		super(name, type);
 	}
@@ -26,6 +28,11 @@ public abstract class AbstractParamDecl<DeclType extends Type> extends AbstractD
 		sb.append(getType());
 		sb.append(")");
 		return sb.toString();
+	}
+
+	@Override
+	protected final String getDeclLabel() {
+		return DECL_LABEL;
 	}
 
 }
