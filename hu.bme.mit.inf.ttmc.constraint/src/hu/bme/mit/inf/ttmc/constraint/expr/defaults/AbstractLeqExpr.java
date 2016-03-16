@@ -8,7 +8,9 @@ import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 
 public abstract class AbstractLeqExpr extends AbstractBinaryExpr<RatType, RatType, BoolType> implements LeqExpr {
 
-	private static final String OPERATOR = "Leq";
+	private static final int HASH_SEED = 103;
+
+	private static final String OPERATOR_LABEL = "Leq";
 
 	public AbstractLeqExpr(final Expr<? extends RatType> leftOp, final Expr<? extends RatType> rightOp) {
 		super(leftOp, rightOp);
@@ -36,7 +38,7 @@ public abstract class AbstractLeqExpr extends AbstractBinaryExpr<RatType, RatTyp
 	}
 
 	@Override
-	public boolean equals(final Object obj) {
+	public final boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		} else if (obj instanceof LeqExpr) {
@@ -48,12 +50,13 @@ public abstract class AbstractLeqExpr extends AbstractBinaryExpr<RatType, RatTyp
 	}
 
 	@Override
-	protected final String getOperatorString() {
-		return OPERATOR;
+	protected final int getHashSeed() {
+		return HASH_SEED;
 	}
 
 	@Override
-	protected final int getHashSeed() {
-		return 103;
+	protected final String getOperatorLabel() {
+		return OPERATOR_LABEL;
 	}
+
 }

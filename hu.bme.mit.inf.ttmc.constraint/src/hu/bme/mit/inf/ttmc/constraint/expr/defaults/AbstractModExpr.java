@@ -7,35 +7,37 @@ import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 
 public abstract class AbstractModExpr extends AbstractBinaryExpr<IntType, IntType, IntType> implements ModExpr {
 
-	private static final String OPERATOR = "Mod";
+	private static final int HASH_SEED = 109;
+
+	private static final String OPERATOR_LABEL = "Mod";
 
 	public AbstractModExpr(final Expr<? extends IntType> leftOp, final Expr<? extends IntType> rightOp) {
 		super(leftOp, rightOp);
 	}
 
 	@Override
-	public ModExpr withOps(final Expr<? extends IntType> leftOp, final Expr<? extends IntType> rightOp) {
+	public final ModExpr withOps(final Expr<? extends IntType> leftOp, final Expr<? extends IntType> rightOp) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
 
 	@Override
-	public ModExpr withLeftOp(final Expr<? extends IntType> leftOp) {
+	public final ModExpr withLeftOp(final Expr<? extends IntType> leftOp) {
 		return withOps(leftOp, getRightOp());
 	}
 
 	@Override
-	public ModExpr withRightOp(final Expr<? extends IntType> rightOp) {
+	public final ModExpr withRightOp(final Expr<? extends IntType> rightOp) {
 		return withOps(getLeftOp(), rightOp);
 	}
 
 	@Override
-	public <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
+	public final <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
 		return visitor.visit(this, param);
 	}
 
 	@Override
-	public boolean equals(final Object obj) {
+	public final boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		} else if (obj instanceof ModExpr) {
@@ -47,12 +49,13 @@ public abstract class AbstractModExpr extends AbstractBinaryExpr<IntType, IntTyp
 	}
 
 	@Override
-	protected final String getOperatorString() {
-		return OPERATOR;
+	protected final int getHashSeed() {
+		return HASH_SEED;
 	}
 
 	@Override
-	protected final int getHashSeed() {
-		return 109;
+	protected final String getOperatorLabel() {
+		return OPERATOR_LABEL;
 	}
+
 }

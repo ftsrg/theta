@@ -8,14 +8,16 @@ import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 
 public abstract class AbstractIffExpr extends AbstractBinaryExpr<BoolType, BoolType, BoolType> implements IffExpr {
 
-	private static final String OPERATOR = "Iff";
+	private static final int HASH_SEED = 67;
+
+	private static final String OPERATOR_LABEL = "Iff";
 
 	public AbstractIffExpr(final Expr<? extends BoolType> leftOp, final Expr<? extends BoolType> rightOp) {
 		super(leftOp, rightOp);
 	}
 
 	@Override
-	public IffExpr withOps(final Expr<? extends BoolType> leftOp, final Expr<? extends BoolType> rightOp) {
+	public final IffExpr withOps(final Expr<? extends BoolType> leftOp, final Expr<? extends BoolType> rightOp) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
@@ -36,7 +38,7 @@ public abstract class AbstractIffExpr extends AbstractBinaryExpr<BoolType, BoolT
 	}
 
 	@Override
-	public boolean equals(final Object obj) {
+	public final boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		} else if (obj instanceof IffExpr) {
@@ -48,12 +50,13 @@ public abstract class AbstractIffExpr extends AbstractBinaryExpr<BoolType, BoolT
 	}
 
 	@Override
-	protected final String getOperatorString() {
-		return OPERATOR;
+	protected final int getHashSeed() {
+		return HASH_SEED;
 	}
 
 	@Override
-	protected final int getHashSeed() {
-		return 67;
+	protected final String getOperatorLabel() {
+		return OPERATOR_LABEL;
 	}
+
 }

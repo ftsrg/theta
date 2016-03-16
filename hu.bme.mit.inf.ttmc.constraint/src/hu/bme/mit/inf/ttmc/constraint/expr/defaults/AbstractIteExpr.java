@@ -11,11 +11,13 @@ import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 public abstract class AbstractIteExpr<ExprType extends Type> extends AbstractExpr<ExprType>
 		implements IteExpr<ExprType> {
 
+	private static final int HASH_SEED = 181;
+
+	private static final String OPERATOR_LABEL = "Ite";
+
 	private final Expr<? extends BoolType> cond;
 	private final Expr<? extends ExprType> then;
 	private final Expr<? extends ExprType> elze;
-
-	private static final int HASH_SEED = 181;
 
 	private volatile int hashCode = 0;
 
@@ -42,36 +44,36 @@ public abstract class AbstractIteExpr<ExprType extends Type> extends AbstractExp
 	}
 
 	@Override
-	public IteExpr<ExprType> withOps(final Expr<? extends BoolType> cond, final Expr<? extends ExprType> then,
+	public final IteExpr<ExprType> withOps(final Expr<? extends BoolType> cond, final Expr<? extends ExprType> then,
 			final Expr<? extends ExprType> elze) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
 
 	@Override
-	public IteExpr<ExprType> withCond(final Expr<? extends BoolType> cond) {
+	public final IteExpr<ExprType> withCond(final Expr<? extends BoolType> cond) {
 		return withOps(cond, getThen(), getElse());
 	}
 
 	@Override
-	public IteExpr<ExprType> withThen(final Expr<? extends ExprType> then) {
+	public final IteExpr<ExprType> withThen(final Expr<? extends ExprType> then) {
 		return withOps(getCond(), then, getElse());
 	}
 
 	@Override
-	public IteExpr<ExprType> withElse(final Expr<? extends ExprType> elze) {
+	public final IteExpr<ExprType> withElse(final Expr<? extends ExprType> elze) {
 		return withOps(getCond(), getThen(), elze);
 	}
 
 	@Override
-	public <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
+	public final <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
 		return visitor.visit(this, param);
 	}
 
 	@Override
-	public int hashCode() {
+	public final int hashCode() {
 		if (hashCode == 0) {
-			hashCode = getHashSeed();
+			hashCode = HASH_SEED;
 			hashCode = 31 * hashCode + cond.hashCode();
 			hashCode = 31 * hashCode + then.hashCode();
 			hashCode = 31 * hashCode + elze.hashCode();
@@ -81,7 +83,7 @@ public abstract class AbstractIteExpr<ExprType extends Type> extends AbstractExp
 	}
 
 	@Override
-	public boolean equals(final Object obj) {
+	public final boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		} else if (obj instanceof IteExpr<?>) {
@@ -94,9 +96,9 @@ public abstract class AbstractIteExpr<ExprType extends Type> extends AbstractExp
 	}
 
 	@Override
-	public String toString() {
+	public final String toString() {
 		final StringBuilder sb = new StringBuilder();
-		sb.append("Ite");
+		sb.append(OPERATOR_LABEL);
 		sb.append("(");
 		sb.append(getCond().toString());
 		sb.append(", ");
@@ -107,8 +109,4 @@ public abstract class AbstractIteExpr<ExprType extends Type> extends AbstractExp
 		return sb.toString();
 	}
 
-	@Override
-	protected int getHashSeed() {
-		return HASH_SEED;
-	}
 }

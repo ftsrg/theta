@@ -37,4 +37,6 @@ public abstract class AbstractRefExpr<DeclType extends Type, DeclKind extends De
 		return getDecl().getName();
 	}
 
+	protected abstract int getHashSeed();
+
 }

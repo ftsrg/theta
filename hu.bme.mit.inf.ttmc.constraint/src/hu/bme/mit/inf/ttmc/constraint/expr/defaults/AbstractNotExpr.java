@@ -7,7 +7,9 @@ import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 
 public abstract class AbstractNotExpr extends AbstractUnaryExpr<BoolType, BoolType> implements NotExpr {
 
-	private static final String OPERAND = "Not";
+	private static final int HASH_SEED = 127;
+
+	private static final String OPERAND_LABEL = "Not";
 
 	public AbstractNotExpr(final Expr<? extends BoolType> op) {
 		super(op);
@@ -25,7 +27,7 @@ public abstract class AbstractNotExpr extends AbstractUnaryExpr<BoolType, BoolTy
 	}
 
 	@Override
-	public boolean equals(final Object obj) {
+	public final boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		} else if (obj instanceof NotExpr) {
@@ -37,12 +39,13 @@ public abstract class AbstractNotExpr extends AbstractUnaryExpr<BoolType, BoolTy
 	}
 
 	@Override
-	protected final String getOperatorString() {
-		return OPERAND;
+	protected final int getHashSeed() {
+		return HASH_SEED;
 	}
 
 	@Override
-	protected int getHashSeed() {
-		return 127;
+	protected final String getOperatorLabel() {
+		return OPERAND_LABEL;
 	}
+
 }

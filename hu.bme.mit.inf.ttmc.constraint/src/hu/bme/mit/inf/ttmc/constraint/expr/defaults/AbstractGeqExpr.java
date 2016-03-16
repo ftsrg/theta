@@ -8,35 +8,37 @@ import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 
 public abstract class AbstractGeqExpr extends AbstractBinaryExpr<RatType, RatType, BoolType> implements GeqExpr {
 
-	private static final String OPERATOR = "Geq";
+	private static final int HASH_SEED = 59;
+
+	private static final String OPERATOR_LABEL = "Geq";
 
 	public AbstractGeqExpr(final Expr<? extends RatType> leftOp, final Expr<? extends RatType> rightOp) {
 		super(leftOp, rightOp);
 	}
 
 	@Override
-	public <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
-		return visitor.visit(this, param);
-	}
-
-	@Override
-	public GeqExpr withOps(final Expr<? extends RatType> leftOp, final Expr<? extends RatType> rightOp) {
+	public final GeqExpr withOps(final Expr<? extends RatType> leftOp, final Expr<? extends RatType> rightOp) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
 
 	@Override
-	public GeqExpr withLeftOp(final Expr<? extends RatType> leftOp) {
+	public final GeqExpr withLeftOp(final Expr<? extends RatType> leftOp) {
 		return withOps(leftOp, getRightOp());
 	}
 
 	@Override
-	public GeqExpr withRightOp(final Expr<? extends RatType> rightOp) {
+	public final GeqExpr withRightOp(final Expr<? extends RatType> rightOp) {
 		return withOps(getLeftOp(), rightOp);
 	}
 
 	@Override
-	public boolean equals(final Object obj) {
+	public final <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
+		return visitor.visit(this, param);
+	}
+
+	@Override
+	public final boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		} else if (obj instanceof GeqExpr) {
@@ -48,12 +50,12 @@ public abstract class AbstractGeqExpr extends AbstractBinaryExpr<RatType, RatTyp
 	}
 
 	@Override
-	protected final String getOperatorString() {
-		return OPERATOR;
+	protected final int getHashSeed() {
+		return HASH_SEED;
 	}
 
 	@Override
-	protected final int getHashSeed() {
-		return 59;
+	protected final String getOperatorLabel() {
+		return OPERATOR_LABEL;
 	}
 }

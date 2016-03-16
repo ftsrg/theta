@@ -13,6 +13,8 @@ public abstract class AbstractArrayWriteExpr<IndexType extends Type, ElemType ex
 
 	private static final int HASH_SEED = 1699;
 
+	private static final String OPERATOR_LABEL = "Write";
+
 	private volatile int hashCode = 0;
 
 	private final Expr<? extends ArrayType<? super IndexType, ? extends ElemType>> array;
@@ -28,23 +30,18 @@ public abstract class AbstractArrayWriteExpr<IndexType extends Type, ElemType ex
 	}
 
 	@Override
-	public Expr<? extends ArrayType<? super IndexType, ? extends ElemType>> getArray() {
+	public final Expr<? extends ArrayType<? super IndexType, ? extends ElemType>> getArray() {
 		return array;
 	}
 
 	@Override
-	public Expr<? extends IndexType> getIndex() {
+	public final Expr<? extends IndexType> getIndex() {
 		return index;
 	}
 
 	@Override
-	public Expr<? extends ElemType> getElem() {
+	public final Expr<? extends ElemType> getElem() {
 		return elem;
-	}
-
-	@Override
-	public final <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
-		return visitor.visit(this, param);
 	}
 
 	@Override
@@ -66,7 +63,12 @@ public abstract class AbstractArrayWriteExpr<IndexType extends Type, ElemType ex
 	}
 
 	@Override
-	public int hashCode() {
+	public final <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
+		return visitor.visit(this, param);
+	}
+
+	@Override
+	public final int hashCode() {
 		if (hashCode == 0) {
 			hashCode = HASH_SEED;
 			hashCode = 31 * hashCode + array.hashCode();
@@ -78,7 +80,7 @@ public abstract class AbstractArrayWriteExpr<IndexType extends Type, ElemType ex
 	}
 
 	@Override
-	public boolean equals(final Object obj) {
+	public final boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		} else if (obj instanceof ArrayWriteExpr<?, ?>) {
@@ -93,7 +95,8 @@ public abstract class AbstractArrayWriteExpr<IndexType extends Type, ElemType ex
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
-		sb.append("Write(");
+		sb.append(OPERATOR_LABEL);
+		sb.append("(");
 		sb.append(array);
 		sb.append(", ");
 		sb.append(index);
@@ -101,11 +104,6 @@ public abstract class AbstractArrayWriteExpr<IndexType extends Type, ElemType ex
 		sb.append(elem);
 		sb.append(")");
 		return sb.toString();
-	}
-
-	@Override
-	protected int getHashSeed() {
-		return HASH_SEED;
 	}
 
 }

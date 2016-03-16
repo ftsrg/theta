@@ -8,35 +8,37 @@ import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 
 public abstract class AbstractGtExpr extends AbstractBinaryExpr<RatType, RatType, BoolType> implements GtExpr {
 
-	private static final String OPERATOR = "Gt";
+	private static final int HASH_SEED = 863;
+
+	private static final String OPERATOR_LABEL = "Gt";
 
 	public AbstractGtExpr(final Expr<? extends RatType> leftOp, final Expr<? extends RatType> rightOp) {
 		super(leftOp, rightOp);
 	}
 
 	@Override
-	public GtExpr withOps(final Expr<? extends RatType> leftOp, final Expr<? extends RatType> rightOp) {
+	public final GtExpr withOps(final Expr<? extends RatType> leftOp, final Expr<? extends RatType> rightOp) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
 
 	@Override
-	public GtExpr withLeftOp(final Expr<? extends RatType> leftOp) {
+	public final GtExpr withLeftOp(final Expr<? extends RatType> leftOp) {
 		return withOps(leftOp, getRightOp());
 	}
 
 	@Override
-	public GtExpr withRightOp(final Expr<? extends RatType> rightOp) {
+	public final GtExpr withRightOp(final Expr<? extends RatType> rightOp) {
 		return withOps(getLeftOp(), rightOp);
 	}
 
 	@Override
-	public <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
+	public final <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
 		return visitor.visit(this, param);
 	}
 
 	@Override
-	public boolean equals(final Object obj) {
+	public final boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		} else if (obj instanceof GtExpr) {
@@ -48,12 +50,13 @@ public abstract class AbstractGtExpr extends AbstractBinaryExpr<RatType, RatType
 	}
 
 	@Override
-	protected final String getOperatorString() {
-		return OPERATOR;
+	protected final int getHashSeed() {
+		return HASH_SEED;
 	}
 
 	@Override
-	protected final int getHashSeed() {
-		return 59;
+	protected final String getOperatorLabel() {
+		return OPERATOR_LABEL;
 	}
+
 }

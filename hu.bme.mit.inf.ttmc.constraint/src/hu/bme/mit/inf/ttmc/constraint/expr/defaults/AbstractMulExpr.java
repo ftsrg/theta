@@ -14,7 +14,9 @@ import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 public abstract class AbstractMulExpr<ExprType extends ClosedUnderMul> extends AbstractMultiaryExpr<ExprType, ExprType>
 		implements MulExpr<ExprType> {
 
-	private static final String OPERATOR = "Mul";
+	private static final int HASH_SEED = 2221;
+
+	private static final String OPERATOR_LABEL = "Mul";
 
 	public AbstractMulExpr(final Collection<? extends Expr<? extends ExprType>> ops) {
 		super(ImmutableMultiset.copyOf(checkNotNull(ops)));
@@ -32,7 +34,7 @@ public abstract class AbstractMulExpr<ExprType extends ClosedUnderMul> extends A
 	}
 
 	@Override
-	public boolean equals(final Object obj) {
+	public final boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		} else if (obj instanceof MulExpr<?>) {
@@ -44,12 +46,13 @@ public abstract class AbstractMulExpr<ExprType extends ClosedUnderMul> extends A
 	}
 
 	@Override
-	protected final String getOperatorString() {
-		return OPERATOR;
+	protected final int getHashSeed() {
+		return HASH_SEED;
 	}
 
 	@Override
-	protected final int getHashSeed() {
-		return 89;
+	protected final String getOperatorLabel() {
+		return OPERATOR_LABEL;
 	}
+
 }

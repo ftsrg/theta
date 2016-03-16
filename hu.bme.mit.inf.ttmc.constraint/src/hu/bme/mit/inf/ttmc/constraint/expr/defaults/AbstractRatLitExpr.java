@@ -8,6 +8,8 @@ import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 
 public abstract class AbstractRatLitExpr extends AbstractNullaryExpr<RatType> implements RatLitExpr {
 
+	private static final int HASH_SEED = 149;
+
 	private final long num;
 	private final long denom;
 
@@ -31,9 +33,14 @@ public abstract class AbstractRatLitExpr extends AbstractNullaryExpr<RatType> im
 	}
 
 	@Override
+	public <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
+		return visitor.visit(this, param);
+	}
+
+	@Override
 	public int hashCode() {
 		if (hashCode == 0) {
-			hashCode = getHashSeed();
+			hashCode = HASH_SEED;
 			hashCode = 31 * hashCode + (int) (num ^ (num >>> 32));
 			hashCode = 31 * hashCode + (int) (denom ^ (denom >>> 32));
 		}
@@ -62,13 +69,4 @@ public abstract class AbstractRatLitExpr extends AbstractNullaryExpr<RatType> im
 		return sb.toString();
 	}
 
-	@Override
-	protected int getHashSeed() {
-		return 149;
-	}
-
-	@Override
-	public <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
-		return visitor.visit(this, param);
-	}
 }

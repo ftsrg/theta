@@ -8,17 +8,19 @@ import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 public abstract class AbstractConstRefExpr<DeclType extends Type> extends AbstractRefExpr<DeclType, ConstDecl<DeclType>>
 		implements ConstRefExpr<DeclType> {
 
+	private static final int HASH_SEED = 167;
+
 	public AbstractConstRefExpr(final ConstDecl<DeclType> constDecl) {
 		super(constDecl);
 	}
 
 	@Override
-	public <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
+	public final <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
 		return visitor.visit(this, param);
 	}
 
 	@Override
-	public boolean equals(final Object obj) {
+	public final boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		} else if (obj instanceof ConstRefExpr<?>) {
@@ -30,8 +32,8 @@ public abstract class AbstractConstRefExpr<DeclType extends Type> extends Abstra
 	}
 
 	@Override
-	protected int getHashSeed() {
-		return 167;
+	protected final int getHashSeed() {
+		return HASH_SEED;
 	}
 
 }

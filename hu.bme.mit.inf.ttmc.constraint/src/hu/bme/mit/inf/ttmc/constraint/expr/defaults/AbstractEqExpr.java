@@ -8,7 +8,9 @@ import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 
 public abstract class AbstractEqExpr extends AbstractBinaryExpr<Type, Type, BoolType> implements EqExpr {
 
-	private static final String OPERATOR = "Eq";
+	private static final int HASH_SEED = 43;
+
+	private static final String OPERATOR_LABEL = "Eq";
 
 	public AbstractEqExpr(final Expr<? extends Type> leftOp, final Expr<? extends Type> rightOp) {
 		super(leftOp, rightOp);
@@ -36,7 +38,7 @@ public abstract class AbstractEqExpr extends AbstractBinaryExpr<Type, Type, Bool
 	}
 
 	@Override
-	public boolean equals(final Object obj) {
+	public final boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		} else if (obj instanceof EqExpr) {
@@ -48,13 +50,13 @@ public abstract class AbstractEqExpr extends AbstractBinaryExpr<Type, Type, Bool
 	}
 
 	@Override
-	protected final String getOperatorString() {
-		return OPERATOR;
+	protected final int getHashSeed() {
+		return HASH_SEED;
 	}
 
 	@Override
-	protected final int getHashSeed() {
-		return 43;
+	protected final String getOperatorLabel() {
+		return OPERATOR_LABEL;
 	}
 
 }
