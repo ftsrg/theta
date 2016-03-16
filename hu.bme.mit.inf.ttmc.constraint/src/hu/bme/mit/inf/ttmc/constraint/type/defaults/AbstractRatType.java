@@ -3,17 +3,24 @@ package hu.bme.mit.inf.ttmc.constraint.type.defaults;
 import hu.bme.mit.inf.ttmc.constraint.type.RatType;
 
 public abstract class AbstractRatType extends AbstractBaseType implements RatType {
-	
-	private static final String TYPENAME = "Rat";
+
+	private static final int HASH_SEED = 385863;
+
+	private static final String TYPE_NAME = "Rat";
 
 	@Override
 	public int hashCode() {
-		return 385863;
+		return HASH_SEED;
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		return (obj instanceof RatType);
 	}
 
 	@Override
 	public String toString() {
-		return TYPENAME;
+		return TYPE_NAME;
 	}
 
 }
