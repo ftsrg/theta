@@ -19,14 +19,20 @@ public abstract class AbstractAddExpr<ExprType extends ClosedUnderAdd> extends A
 
 	private static final String OPERATOR_LABEL = "Add";
 
+	private final ConstraintManager manager;
+
 	public AbstractAddExpr(final ConstraintManager manager, final Collection<? extends Expr<? extends ExprType>> ops) {
 		super(ImmutableMultiset.copyOf(checkNotNull(ops)));
+		this.manager = manager;
 	}
 
 	@Override
 	public final AddExpr<ExprType> withOps(final Collection<? extends Expr<? extends ExprType>> ops) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		if (ops == getOps()) {
+			return this;
+		} else {
+			return manager.getExprFactory().Add(ops);
+		}
 	}
 
 	@Override

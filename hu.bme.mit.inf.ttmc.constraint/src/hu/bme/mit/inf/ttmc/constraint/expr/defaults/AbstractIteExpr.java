@@ -16,6 +16,8 @@ public abstract class AbstractIteExpr<ExprType extends Type> extends AbstractExp
 
 	private static final String OPERATOR_LABEL = "Ite";
 
+	private final ConstraintManager manager;
+
 	private final Expr<? extends BoolType> cond;
 	private final Expr<? extends ExprType> then;
 	private final Expr<? extends ExprType> elze;
@@ -24,6 +26,8 @@ public abstract class AbstractIteExpr<ExprType extends Type> extends AbstractExp
 
 	public AbstractIteExpr(final ConstraintManager manager, final Expr<? extends BoolType> cond,
 			final Expr<? extends ExprType> then, final Expr<? extends ExprType> elze) {
+		this.manager = manager;
+
 		this.cond = checkNotNull(cond);
 		this.then = checkNotNull(then);
 		this.elze = checkNotNull(elze);
@@ -47,8 +51,11 @@ public abstract class AbstractIteExpr<ExprType extends Type> extends AbstractExp
 	@Override
 	public final IteExpr<ExprType> withOps(final Expr<? extends BoolType> cond, final Expr<? extends ExprType> then,
 			final Expr<? extends ExprType> elze) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		if (this.cond == cond && this.then == then && this.elze == elze) {
+			return this;
+		} else {
+			return manager.getExprFactory().Ite(cond, then, elze);
+		}
 	}
 
 	@Override

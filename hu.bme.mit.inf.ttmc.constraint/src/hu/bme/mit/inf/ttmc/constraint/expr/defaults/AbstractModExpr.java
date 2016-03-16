@@ -12,15 +12,21 @@ public abstract class AbstractModExpr extends AbstractBinaryExpr<IntType, IntTyp
 
 	private static final String OPERATOR_LABEL = "Mod";
 
+	private final ConstraintManager manager;
+
 	public AbstractModExpr(final ConstraintManager manager, final Expr<? extends IntType> leftOp,
 			final Expr<? extends IntType> rightOp) {
 		super(leftOp, rightOp);
+		this.manager = manager;
 	}
 
 	@Override
 	public final ModExpr withOps(final Expr<? extends IntType> leftOp, final Expr<? extends IntType> rightOp) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
+			return this;
+		} else {
+			return manager.getExprFactory().Mod(leftOp, rightOp);
+		}
 	}
 
 	@Override

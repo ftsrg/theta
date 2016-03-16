@@ -13,6 +13,8 @@ public abstract class AbstractRatLitExpr extends AbstractNullaryExpr<RatType> im
 
 	private static final int HASH_SEED = 149;
 
+	private final ConstraintManager manager;
+
 	private final long num;
 	private final long denom;
 
@@ -20,6 +22,8 @@ public abstract class AbstractRatLitExpr extends AbstractNullaryExpr<RatType> im
 
 	public AbstractRatLitExpr(final ConstraintManager manager, final long num, final long denom) {
 		checkArgument(denom != 0);
+
+		this.manager = manager;
 
 		final long gcd = LongMath.gcd(Math.abs(num), Math.abs(denom));
 		if (denom >= 0) {

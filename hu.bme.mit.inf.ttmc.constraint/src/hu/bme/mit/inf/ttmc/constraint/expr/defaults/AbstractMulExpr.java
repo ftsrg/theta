@@ -19,14 +19,20 @@ public abstract class AbstractMulExpr<ExprType extends ClosedUnderMul> extends A
 
 	private static final String OPERATOR_LABEL = "Mul";
 
+	private final ConstraintManager manager;
+
 	public AbstractMulExpr(final ConstraintManager manager, final Collection<? extends Expr<? extends ExprType>> ops) {
 		super(ImmutableMultiset.copyOf(checkNotNull(ops)));
+		this.manager = manager;
 	}
 
 	@Override
 	public final MulExpr<ExprType> withOps(final Collection<? extends Expr<? extends ExprType>> ops) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		if (ops == getOps()) {
+			return this;
+		} else {
+			return manager.getExprFactory().Mul(ops);
+		}
 	}
 
 	@Override

@@ -12,15 +12,21 @@ public abstract class AbstractRemExpr extends AbstractBinaryExpr<IntType, IntTyp
 
 	private static final String OPERATOR_LABEL = "Rem";
 
+	private final ConstraintManager manager;
+
 	public AbstractRemExpr(final ConstraintManager manager, final Expr<? extends IntType> leftOp,
 			final Expr<? extends IntType> rightOp) {
 		super(leftOp, rightOp);
+		this.manager = manager;
 	}
 
 	@Override
 	public RemExpr withOps(final Expr<? extends IntType> leftOp, final Expr<? extends IntType> rightOp) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
+			return this;
+		} else {
+			return manager.getExprFactory().Rem(leftOp, rightOp);
+		}
 	}
 
 	@Override

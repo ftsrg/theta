@@ -18,14 +18,20 @@ public abstract class AbstractAndExpr extends AbstractMultiaryExpr<BoolType, Boo
 
 	private static final String OPERATOR_LABEL = "And";
 
+	private final ConstraintManager manager;
+
 	public AbstractAndExpr(final ConstraintManager manager, final Collection<? extends Expr<? extends BoolType>> ops) {
 		super(ImmutableSet.copyOf(checkNotNull(ops)));
+		this.manager = manager;
 	}
 
 	@Override
 	public final AndExpr withOps(final Collection<? extends Expr<? extends BoolType>> ops) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		if (ops == getOps()) {
+			return this;
+		} else {
+			return manager.getExprFactory().And(ops);
+		}
 	}
 
 	@Override

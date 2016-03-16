@@ -16,15 +16,21 @@ public abstract class AbstractForallExpr extends AbstractQuantifiedExpr implemen
 
 	private static final String OPERATOR_LABEL = "Forall";
 
+	private final ConstraintManager manager;
+
 	public AbstractForallExpr(final ConstraintManager manager,
 			final Collection<? extends ParamDecl<? extends Type>> paramDecls, final Expr<? extends BoolType> op) {
 		super(paramDecls, op);
+		this.manager = manager;
 	}
 
 	@Override
 	public ForallExpr withOp(final Expr<? extends BoolType> op) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+		if (op == getOp()) {
+			return this;
+		} else {
+			return manager.getExprFactory().Forall(getParamDecls(), op);
+		}
 	}
 
 	@Override

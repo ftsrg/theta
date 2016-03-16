@@ -16,15 +16,21 @@ public abstract class AbstractExistsExpr extends AbstractQuantifiedExpr implemen
 
 	private static final String OPERATOR_LABEL = "Exists";
 
+	private final ConstraintManager manager;
+
 	public AbstractExistsExpr(final ConstraintManager manager,
 			final Collection<? extends ParamDecl<? extends Type>> paramDecls, final Expr<? extends BoolType> op) {
 		super(paramDecls, op);
+		this.manager = manager;
 	}
 
 	@Override
 	public final ExistsExpr withOp(final Expr<? extends BoolType> op) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+		if (op == getOp()) {
+			return this;
+		} else {
+			return manager.getExprFactory().Exists(getParamDecls(), op);
+		}
 	}
 
 	@Override

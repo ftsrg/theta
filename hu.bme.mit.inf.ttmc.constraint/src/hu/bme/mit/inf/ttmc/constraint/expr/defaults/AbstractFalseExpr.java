@@ -10,8 +10,10 @@ public abstract class AbstractFalseExpr extends AbstractBoolLitExpr implements F
 
 	private static final String OPERATOR_LABEL = "False";
 
+	private final ConstraintManager manager;
+
 	public AbstractFalseExpr(final ConstraintManager manager) {
-		// TODO Auto-generated constructor stub
+		this.manager = manager;
 	}
 
 	@Override

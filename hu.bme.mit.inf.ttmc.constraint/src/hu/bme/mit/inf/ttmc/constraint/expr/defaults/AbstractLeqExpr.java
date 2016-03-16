@@ -13,15 +13,21 @@ public abstract class AbstractLeqExpr extends AbstractBinaryExpr<RatType, RatTyp
 
 	private static final String OPERATOR_LABEL = "Leq";
 
+	private final ConstraintManager manager;
+
 	public AbstractLeqExpr(final ConstraintManager manager, final Expr<? extends RatType> leftOp,
 			final Expr<? extends RatType> rightOp) {
 		super(leftOp, rightOp);
+		this.manager = manager;
 	}
 
 	@Override
 	public final LeqExpr withOps(final Expr<? extends RatType> leftOp, final Expr<? extends RatType> rightOp) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
+			return this;
+		} else {
+			return manager.getExprFactory().Leq(leftOp, rightOp);
+		}
 	}
 
 	@Override

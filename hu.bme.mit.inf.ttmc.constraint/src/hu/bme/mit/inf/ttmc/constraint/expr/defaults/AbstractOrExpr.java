@@ -18,14 +18,20 @@ public abstract class AbstractOrExpr extends AbstractMultiaryExpr<BoolType, Bool
 
 	private static final String OPERATOR_LABEL = "Or";
 
+	private final ConstraintManager manager;
+
 	public AbstractOrExpr(final ConstraintManager manager, final Collection<? extends Expr<? extends BoolType>> ops) {
 		super(ImmutableSet.copyOf(checkNotNull(ops)));
+		this.manager = manager;
 	}
 
 	@Override
 	public final OrExpr withOps(final Collection<? extends Expr<? extends BoolType>> ops) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		if (ops == getOps()) {
+			return this;
+		} else {
+			return manager.getExprFactory().Or(ops);
+		}
 	}
 
 	@Override

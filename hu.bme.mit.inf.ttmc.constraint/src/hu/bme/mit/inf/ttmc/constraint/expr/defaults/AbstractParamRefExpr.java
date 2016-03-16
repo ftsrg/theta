@@ -11,8 +11,11 @@ public abstract class AbstractParamRefExpr<DeclType extends Type> extends Abstra
 
 	private static final int HASH_SEED = 919;
 
+	private final ConstraintManager manager;
+
 	public AbstractParamRefExpr(final ConstraintManager manager, final ParamDecl<DeclType> paramDecl) {
 		super(paramDecl);
+		this.manager = manager;
 	}
 
 	@Override

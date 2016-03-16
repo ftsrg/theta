@@ -16,6 +16,8 @@ public abstract class AbstractArrayWriteExpr<IndexType extends Type, ElemType ex
 
 	private static final String OPERATOR_LABEL = "Write";
 
+	private final ConstraintManager manager;
+
 	private volatile int hashCode = 0;
 
 	private final Expr<? extends ArrayType<? super IndexType, ? extends ElemType>> array;
@@ -25,6 +27,7 @@ public abstract class AbstractArrayWriteExpr<IndexType extends Type, ElemType ex
 	public AbstractArrayWriteExpr(final ConstraintManager manager,
 			final Expr<? extends ArrayType<? super IndexType, ? extends ElemType>> array,
 			final Expr<? extends IndexType> index, final Expr<? extends ElemType> elem) {
+		this.manager = manager;
 
 		this.array = checkNotNull(array);
 		this.index = checkNotNull(index);
@@ -50,8 +53,12 @@ public abstract class AbstractArrayWriteExpr<IndexType extends Type, ElemType ex
 	public final ArrayWriteExpr<IndexType, ElemType> with(
 			final Expr<? extends ArrayType<? super IndexType, ? extends ElemType>> array,
 			final Expr<? extends IndexType> index, final Expr<? extends ElemType> elem) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+
+		if (this.array == array && this.index == index && elem == this.elem) {
+			return this;
+		} else {
+			return manager.getExprFactory().Write(array, index, elem);
+		}
 	}
 
 	@Override

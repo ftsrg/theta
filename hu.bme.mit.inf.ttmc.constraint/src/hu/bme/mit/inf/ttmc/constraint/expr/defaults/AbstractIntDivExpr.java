@@ -12,15 +12,21 @@ public abstract class AbstractIntDivExpr extends AbstractBinaryExpr<IntType, Int
 
 	private static final String OPERATOR_LABEL = "IDiv";
 
+	private final ConstraintManager manager;
+
 	public AbstractIntDivExpr(final ConstraintManager manager, final Expr<? extends IntType> leftOp,
 			final Expr<? extends IntType> rightOp) {
 		super(leftOp, rightOp);
+		this.manager = manager;
 	}
 
 	@Override
 	public final IntDivExpr withOps(final Expr<? extends IntType> leftOp, final Expr<? extends IntType> rightOp) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
+			return this;
+		} else {
+			return manager.getExprFactory().IntDiv(leftOp, rightOp);
+		}
 	}
 
 	@Override

@@ -14,15 +14,21 @@ public abstract class AbstractNeqExpr extends AbstractBinaryExpr<Type, Type, Boo
 
 	private static final String OPERATOR_LABEL = "Neq";
 
+	private final ConstraintManager manager;
+
 	public AbstractNeqExpr(final ConstraintManager manager, final Expr<? extends Type> leftOp,
 			final Expr<? extends Type> rightOp) {
 		super(leftOp, rightOp);
+		this.manager = manager;
 	}
 
 	@Override
 	public final NeqExpr withOps(final Expr<? extends Type> leftOp, final Expr<? extends Type> rightOp) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
+			return this;
+		} else {
+			return manager.getExprFactory().Neq(leftOp, rightOp);
+		}
 	}
 
 	@Override

@@ -12,15 +12,21 @@ public abstract class AbstractImplyExpr extends AbstractBinaryExpr<BoolType, Boo
 
 	private static final String OPERATOR_LABEL = "Imply";
 
+	private final ConstraintManager manager;
+
 	public AbstractImplyExpr(final ConstraintManager manager, final Expr<? extends BoolType> leftOp,
 			final Expr<? extends BoolType> rightOp) {
 		super(leftOp, rightOp);
+		this.manager = manager;
 	}
 
 	@Override
 	public final ImplyExpr withOps(final Expr<? extends BoolType> leftOp, final Expr<? extends BoolType> rightOp) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
+			return this;
+		} else {
+			return manager.getExprFactory().Imply(leftOp, rightOp);
+		}
 	}
 
 	@Override

@@ -16,6 +16,8 @@ public abstract class AbstractFuncAppExpr<ParamType extends Type, ResultType ext
 
 	private static final String OPERATOR_LABEL = "App";
 
+	private final ConstraintManager manager;
+
 	private final Expr<? extends FuncType<? super ParamType, ? extends ResultType>> func;
 	private final Expr<? extends ParamType> param;
 
@@ -24,6 +26,8 @@ public abstract class AbstractFuncAppExpr<ParamType extends Type, ResultType ext
 	public AbstractFuncAppExpr(final ConstraintManager manager,
 			final Expr<? extends FuncType<? super ParamType, ? extends ResultType>> func,
 			final Expr<? extends ParamType> param) {
+		this.manager = manager;
+
 		this.func = checkNotNull(func);
 		this.param = checkNotNull(param);
 	}
