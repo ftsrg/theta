@@ -1,5 +1,6 @@
 package hu.bme.mit.inf.ttmc.constraint.expr.defaults;
 
+import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.expr.RatDivExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.RatType;
@@ -11,7 +12,8 @@ public abstract class AbstractRatDivExpr extends AbstractBinaryExpr<RatType, Rat
 
 	private static final String OPERATOR_LABEL = "RDiv";
 
-	public AbstractRatDivExpr(final Expr<? extends RatType> leftOp, final Expr<? extends RatType> rightOp) {
+	public AbstractRatDivExpr(final ConstraintManager manager, final Expr<? extends RatType> leftOp,
+			final Expr<? extends RatType> rightOp) {
 		super(leftOp, rightOp);
 	}
 

@@ -1,5 +1,6 @@
 package hu.bme.mit.inf.ttmc.constraint.expr.defaults;
 
+import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.expr.ImplyExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
@@ -11,7 +12,8 @@ public abstract class AbstractImplyExpr extends AbstractBinaryExpr<BoolType, Boo
 
 	private static final String OPERATOR_LABEL = "Imply";
 
-	public AbstractImplyExpr(final Expr<? extends BoolType> leftOp, final Expr<? extends BoolType> rightOp) {
+	public AbstractImplyExpr(final ConstraintManager manager, final Expr<? extends BoolType> leftOp,
+			final Expr<? extends BoolType> rightOp) {
 		super(leftOp, rightOp);
 	}
 

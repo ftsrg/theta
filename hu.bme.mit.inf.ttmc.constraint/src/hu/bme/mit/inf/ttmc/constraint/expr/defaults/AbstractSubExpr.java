@@ -1,5 +1,6 @@
 package hu.bme.mit.inf.ttmc.constraint.expr.defaults;
 
+import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.expr.SubExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderSub;
@@ -12,7 +13,8 @@ public abstract class AbstractSubExpr<ExprType extends ClosedUnderSub>
 
 	private static final String OPERATOR = "Sub";
 
-	public AbstractSubExpr(final Expr<? extends ExprType> leftOp, final Expr<? extends ExprType> rightOp) {
+	public AbstractSubExpr(final ConstraintManager manager, final Expr<? extends ExprType> leftOp,
+			final Expr<? extends ExprType> rightOp) {
 		super(leftOp, rightOp);
 	}
 

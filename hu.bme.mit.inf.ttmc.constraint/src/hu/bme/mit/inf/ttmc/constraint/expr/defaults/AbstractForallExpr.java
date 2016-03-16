@@ -2,6 +2,7 @@ package hu.bme.mit.inf.ttmc.constraint.expr.defaults;
 
 import java.util.Collection;
 
+import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.decl.ParamDecl;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.expr.ForallExpr;
@@ -15,8 +16,8 @@ public abstract class AbstractForallExpr extends AbstractQuantifiedExpr implemen
 
 	private static final String OPERATOR_LABEL = "Forall";
 
-	public AbstractForallExpr(final Collection<? extends ParamDecl<? extends Type>> paramDecls,
-			final Expr<? extends BoolType> op) {
+	public AbstractForallExpr(final ConstraintManager manager,
+			final Collection<? extends ParamDecl<? extends Type>> paramDecls, final Expr<? extends BoolType> op) {
 		super(paramDecls, op);
 	}
 

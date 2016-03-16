@@ -2,6 +2,7 @@ package hu.bme.mit.inf.ttmc.constraint.z3.expr;
 
 import com.microsoft.z3.Context;
 
+import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.expr.defaults.AbstractLtExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
@@ -13,9 +14,9 @@ public class Z3LtExpr extends AbstractLtExpr implements Z3Expr<BoolType> {
 
 	private volatile com.microsoft.z3.BoolExpr term;
 
-	public Z3LtExpr(final Expr<? extends RatType> leftOp, final Expr<? extends RatType> rightOp,
-			final Context context) {
-		super(leftOp, rightOp);
+	public Z3LtExpr(final ConstraintManager manager, final Expr<? extends RatType> leftOp,
+			final Expr<? extends RatType> rightOp, final Context context) {
+		super(manager, leftOp, rightOp);
 		this.context = context;
 	}
 

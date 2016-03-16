@@ -2,6 +2,7 @@ package hu.bme.mit.inf.ttmc.constraint.z3.expr;
 
 import com.microsoft.z3.Context;
 
+import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.expr.defaults.AbstractNegExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderNeg;
@@ -12,8 +13,8 @@ public class Z3NegExpr<ExprType extends ClosedUnderNeg> extends AbstractNegExpr<
 
 	private volatile com.microsoft.z3.ArithExpr term;
 
-	public Z3NegExpr(final Expr<? extends ExprType> op, final Context context) {
-		super(op);
+	public Z3NegExpr(final ConstraintManager manager, final Expr<? extends ExprType> op, final Context context) {
+		super(manager, op);
 		this.context = context;
 	}
 

@@ -2,6 +2,7 @@ package hu.bme.mit.inf.ttmc.constraint.expr.defaults;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.ArrayWriteExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.type.ArrayType;
@@ -21,7 +22,8 @@ public abstract class AbstractArrayWriteExpr<IndexType extends Type, ElemType ex
 	private final Expr<? extends IndexType> index;
 	private final Expr<? extends ElemType> elem;
 
-	public AbstractArrayWriteExpr(final Expr<? extends ArrayType<? super IndexType, ? extends ElemType>> array,
+	public AbstractArrayWriteExpr(final ConstraintManager manager,
+			final Expr<? extends ArrayType<? super IndexType, ? extends ElemType>> array,
 			final Expr<? extends IndexType> index, final Expr<? extends ElemType> elem) {
 
 		this.array = checkNotNull(array);

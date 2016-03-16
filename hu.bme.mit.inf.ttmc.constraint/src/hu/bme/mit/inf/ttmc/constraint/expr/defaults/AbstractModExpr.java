@@ -1,5 +1,6 @@
 package hu.bme.mit.inf.ttmc.constraint.expr.defaults;
 
+import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.expr.ModExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.IntType;
@@ -11,7 +12,8 @@ public abstract class AbstractModExpr extends AbstractBinaryExpr<IntType, IntTyp
 
 	private static final String OPERATOR_LABEL = "Mod";
 
-	public AbstractModExpr(final Expr<? extends IntType> leftOp, final Expr<? extends IntType> rightOp) {
+	public AbstractModExpr(final ConstraintManager manager, final Expr<? extends IntType> leftOp,
+			final Expr<? extends IntType> rightOp) {
 		super(leftOp, rightOp);
 	}
 

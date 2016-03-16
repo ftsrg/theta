@@ -1,5 +1,6 @@
 package hu.bme.mit.inf.ttmc.constraint.expr.defaults;
 
+import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.expr.LeqExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
@@ -12,7 +13,8 @@ public abstract class AbstractLeqExpr extends AbstractBinaryExpr<RatType, RatTyp
 
 	private static final String OPERATOR_LABEL = "Leq";
 
-	public AbstractLeqExpr(final Expr<? extends RatType> leftOp, final Expr<? extends RatType> rightOp) {
+	public AbstractLeqExpr(final ConstraintManager manager, final Expr<? extends RatType> leftOp,
+			final Expr<? extends RatType> rightOp) {
 		super(leftOp, rightOp);
 	}
 

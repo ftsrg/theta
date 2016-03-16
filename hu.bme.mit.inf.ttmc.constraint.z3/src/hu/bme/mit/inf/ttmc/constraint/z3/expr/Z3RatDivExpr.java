@@ -2,6 +2,7 @@ package hu.bme.mit.inf.ttmc.constraint.z3.expr;
 
 import com.microsoft.z3.Context;
 
+import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.expr.defaults.AbstractRatDivExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.RatType;
@@ -12,9 +13,9 @@ public class Z3RatDivExpr extends AbstractRatDivExpr implements Z3Expr<RatType> 
 
 	private volatile com.microsoft.z3.ArithExpr term;
 
-	public Z3RatDivExpr(final Expr<? extends RatType> leftOp, final Expr<? extends RatType> rightOp,
-			final Context context) {
-		super(leftOp, rightOp);
+	public Z3RatDivExpr(final ConstraintManager manager, final Expr<? extends RatType> leftOp,
+			final Expr<? extends RatType> rightOp, final Context context) {
+		super(manager, leftOp, rightOp);
 		this.context = context;
 	}
 

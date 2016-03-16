@@ -2,6 +2,7 @@ package hu.bme.mit.inf.ttmc.constraint.z3.expr;
 
 import com.microsoft.z3.Context;
 
+import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.expr.defaults.AbstractArrayWriteExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.ArrayType;
@@ -14,9 +15,10 @@ public final class Z3ArrayWriteExpr<IndexType extends Type, ElemType extends Typ
 
 	private volatile com.microsoft.z3.ArrayExpr term;
 
-	public Z3ArrayWriteExpr(final Expr<? extends ArrayType<? super IndexType, ? extends ElemType>> array,
+	public Z3ArrayWriteExpr(final ConstraintManager manager,
+			final Expr<? extends ArrayType<? super IndexType, ? extends ElemType>> array,
 			final Expr<? extends IndexType> index, final Expr<? extends ElemType> elem, final Context context) {
-		super(array, index, elem);
+		super(manager, array, index, elem);
 		this.context = context;
 	}
 

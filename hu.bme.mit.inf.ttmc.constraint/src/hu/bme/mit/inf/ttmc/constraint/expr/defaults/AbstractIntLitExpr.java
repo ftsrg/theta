@@ -1,5 +1,6 @@
 package hu.bme.mit.inf.ttmc.constraint.expr.defaults;
 
+import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.IntLitExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.IntType;
 import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
@@ -12,7 +13,7 @@ public abstract class AbstractIntLitExpr extends AbstractNullaryExpr<IntType> im
 
 	private volatile int hashCode = 0;
 
-	public AbstractIntLitExpr(final long value) {
+	public AbstractIntLitExpr(final ConstraintManager manager, final long value) {
 		this.value = value;
 	}
 

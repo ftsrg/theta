@@ -1,6 +1,7 @@
 
 package hu.bme.mit.inf.ttmc.constraint.expr.defaults;
 
+import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.expr.IffExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
@@ -12,7 +13,8 @@ public abstract class AbstractIffExpr extends AbstractBinaryExpr<BoolType, BoolT
 
 	private static final String OPERATOR_LABEL = "Iff";
 
-	public AbstractIffExpr(final Expr<? extends BoolType> leftOp, final Expr<? extends BoolType> rightOp) {
+	public AbstractIffExpr(final ConstraintManager manager, final Expr<? extends BoolType> leftOp,
+			final Expr<? extends BoolType> rightOp) {
 		super(leftOp, rightOp);
 	}
 

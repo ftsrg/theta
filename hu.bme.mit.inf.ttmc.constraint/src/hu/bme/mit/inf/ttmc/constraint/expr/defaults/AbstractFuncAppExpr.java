@@ -2,6 +2,7 @@ package hu.bme.mit.inf.ttmc.constraint.expr.defaults;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.expr.FuncAppExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.FuncType;
@@ -20,7 +21,8 @@ public abstract class AbstractFuncAppExpr<ParamType extends Type, ResultType ext
 
 	private volatile int hashCode = 0;
 
-	public AbstractFuncAppExpr(final Expr<? extends FuncType<? super ParamType, ? extends ResultType>> func,
+	public AbstractFuncAppExpr(final ConstraintManager manager,
+			final Expr<? extends FuncType<? super ParamType, ? extends ResultType>> func,
 			final Expr<? extends ParamType> param) {
 		this.func = checkNotNull(func);
 		this.param = checkNotNull(param);
