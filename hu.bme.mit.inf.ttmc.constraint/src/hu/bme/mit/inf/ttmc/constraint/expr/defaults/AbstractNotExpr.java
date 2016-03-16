@@ -14,6 +14,29 @@ public abstract class AbstractNotExpr extends AbstractUnaryExpr<BoolType, BoolTy
 	}
 
 	@Override
+	public final NotExpr withOp(final Expr<? extends BoolType> op) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+	}
+
+	@Override
+	public final <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
+		return visitor.visit(this, param);
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		} else if (obj instanceof NotExpr) {
+			final NotExpr that = (NotExpr) obj;
+			return this.getOp().equals(that.getOp());
+		} else {
+			return false;
+		}
+	}
+
+	@Override
 	protected final String getOperatorString() {
 		return OPERAND;
 	}
@@ -21,16 +44,5 @@ public abstract class AbstractNotExpr extends AbstractUnaryExpr<BoolType, BoolTy
 	@Override
 	protected int getHashSeed() {
 		return 127;
-	}
-	
-	@Override
-	public final NotExpr withOp(Expr<? extends BoolType> op) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
-	}
-
-	@Override
-	public final <P, R> R accept(ExprVisitor<? super P, ? extends R> visitor, P param) {
-		return visitor.visit(this, param);
 	}
 }
