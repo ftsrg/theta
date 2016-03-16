@@ -2,6 +2,7 @@ package hu.bme.mit.inf.ttmc.constraint.expr.defaults;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.ArrayReadExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.type.ArrayType;
@@ -20,7 +21,8 @@ public abstract class AbstractArrayReadExpr<IndexType extends Type, ElemType ext
 	private final Expr<? extends ArrayType<? super IndexType, ? extends ElemType>> array;
 	private final Expr<? extends IndexType> index;
 
-	public AbstractArrayReadExpr(final Expr<? extends ArrayType<? super IndexType, ? extends ElemType>> array,
+	public AbstractArrayReadExpr(final ConstraintManager manager,
+			final Expr<? extends ArrayType<? super IndexType, ? extends ElemType>> array,
 			final Expr<? extends IndexType> index) {
 
 		this.array = checkNotNull(array);

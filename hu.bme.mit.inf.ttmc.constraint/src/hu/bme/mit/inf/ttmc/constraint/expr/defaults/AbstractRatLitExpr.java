@@ -4,6 +4,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import com.google.common.math.LongMath;
 
+import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.RatLitExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.RatType;
 import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
@@ -17,7 +18,7 @@ public abstract class AbstractRatLitExpr extends AbstractNullaryExpr<RatType> im
 
 	private volatile int hashCode = 0;
 
-	public AbstractRatLitExpr(final long num, final long denom) {
+	public AbstractRatLitExpr(final ConstraintManager manager, final long num, final long denom) {
 		checkArgument(denom != 0);
 
 		final long gcd = LongMath.gcd(Math.abs(num), Math.abs(denom));

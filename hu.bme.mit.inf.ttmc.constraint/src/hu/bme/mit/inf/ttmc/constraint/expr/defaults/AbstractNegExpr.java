@@ -1,5 +1,6 @@
 package hu.bme.mit.inf.ttmc.constraint.expr.defaults;
 
+import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.expr.NegExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderNeg;
@@ -12,7 +13,7 @@ public abstract class AbstractNegExpr<ExprType extends ClosedUnderNeg> extends A
 
 	private static final String OPERATOR_LABEL = "Neg";
 
-	public AbstractNegExpr(final Expr<? extends ExprType> op) {
+	public AbstractNegExpr(final ConstraintManager manager, final Expr<? extends ExprType> op) {
 		super(op);
 	}
 

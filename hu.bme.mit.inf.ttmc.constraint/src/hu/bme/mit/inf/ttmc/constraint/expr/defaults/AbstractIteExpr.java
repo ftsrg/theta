@@ -2,6 +2,7 @@ package hu.bme.mit.inf.ttmc.constraint.expr.defaults;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.expr.IteExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
@@ -21,8 +22,8 @@ public abstract class AbstractIteExpr<ExprType extends Type> extends AbstractExp
 
 	private volatile int hashCode = 0;
 
-	public AbstractIteExpr(final Expr<? extends BoolType> cond, final Expr<? extends ExprType> then,
-			final Expr<? extends ExprType> elze) {
+	public AbstractIteExpr(final ConstraintManager manager, final Expr<? extends BoolType> cond,
+			final Expr<? extends ExprType> then, final Expr<? extends ExprType> elze) {
 		this.cond = checkNotNull(cond);
 		this.then = checkNotNull(then);
 		this.elze = checkNotNull(elze);

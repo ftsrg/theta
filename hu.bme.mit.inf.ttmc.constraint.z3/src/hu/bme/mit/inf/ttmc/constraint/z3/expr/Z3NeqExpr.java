@@ -2,6 +2,7 @@ package hu.bme.mit.inf.ttmc.constraint.z3.expr;
 
 import com.microsoft.z3.Context;
 
+import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.expr.defaults.AbstractNeqExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
@@ -13,8 +14,9 @@ public class Z3NeqExpr extends AbstractNeqExpr implements Z3Expr<BoolType> {
 
 	private volatile com.microsoft.z3.BoolExpr term;
 
-	public Z3NeqExpr(final Expr<? extends Type> leftOp, final Expr<? extends Type> rightOp, final Context context) {
-		super(leftOp, rightOp);
+	public Z3NeqExpr(final ConstraintManager manager, final Expr<? extends Type> leftOp,
+			final Expr<? extends Type> rightOp, final Context context) {
+		super(manager, leftOp, rightOp);
 		this.context = context;
 	}
 

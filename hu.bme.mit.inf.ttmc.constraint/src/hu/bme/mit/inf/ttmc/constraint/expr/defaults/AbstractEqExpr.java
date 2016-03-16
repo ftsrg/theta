@@ -1,5 +1,6 @@
 package hu.bme.mit.inf.ttmc.constraint.expr.defaults;
 
+import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.EqExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
@@ -12,7 +13,8 @@ public abstract class AbstractEqExpr extends AbstractBinaryExpr<Type, Type, Bool
 
 	private static final String OPERATOR_LABEL = "Eq";
 
-	public AbstractEqExpr(final Expr<? extends Type> leftOp, final Expr<? extends Type> rightOp) {
+	public AbstractEqExpr(final ConstraintManager manager, final Expr<? extends Type> leftOp,
+			final Expr<? extends Type> rightOp) {
 		super(leftOp, rightOp);
 	}
 

@@ -2,6 +2,7 @@ package hu.bme.mit.inf.ttmc.constraint.z3.expr;
 
 import com.microsoft.z3.Context;
 
+import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.defaults.AbstractRatLitExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.RatType;
 
@@ -11,8 +12,8 @@ public class Z3RatLitExpr extends AbstractRatLitExpr implements Z3Expr<RatType> 
 
 	private volatile com.microsoft.z3.RatNum term;
 
-	public Z3RatLitExpr(final long num, final long denom, final Context context) {
-		super(num, denom);
+	public Z3RatLitExpr(final ConstraintManager manager, final long num, final long denom, final Context context) {
+		super(manager, num, denom);
 		this.context = context;
 	}
 

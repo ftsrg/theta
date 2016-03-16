@@ -1,5 +1,6 @@
 package hu.bme.mit.inf.ttmc.constraint.expr.defaults;
 
+import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.FalseExpr;
 import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 
@@ -8,6 +9,10 @@ public abstract class AbstractFalseExpr extends AbstractBoolLitExpr implements F
 	private static final int HASH_SEED = 712514;
 
 	private static final String OPERATOR_LABEL = "False";
+
+	public AbstractFalseExpr(final ConstraintManager manager) {
+		// TODO Auto-generated constructor stub
+	}
 
 	@Override
 	public final boolean getValue() {

@@ -1,5 +1,6 @@
 package hu.bme.mit.inf.ttmc.constraint.expr.defaults;
 
+import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.decl.ConstDecl;
 import hu.bme.mit.inf.ttmc.constraint.expr.ConstRefExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
@@ -10,7 +11,7 @@ public abstract class AbstractConstRefExpr<DeclType extends Type> extends Abstra
 
 	private static final int HASH_SEED = 167;
 
-	public AbstractConstRefExpr(final ConstDecl<DeclType> constDecl) {
+	public AbstractConstRefExpr(final ConstraintManager manager, final ConstDecl<DeclType> constDecl) {
 		super(constDecl);
 	}
 

@@ -6,6 +6,7 @@ import java.util.Collection;
 
 import com.google.common.collect.ImmutableMultiset;
 
+import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.AddExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderAdd;
@@ -18,7 +19,7 @@ public abstract class AbstractAddExpr<ExprType extends ClosedUnderAdd> extends A
 
 	private static final String OPERATOR_LABEL = "Add";
 
-	public AbstractAddExpr(final Collection<? extends Expr<? extends ExprType>> ops) {
+	public AbstractAddExpr(final ConstraintManager manager, final Collection<? extends Expr<? extends ExprType>> ops) {
 		super(ImmutableMultiset.copyOf(checkNotNull(ops)));
 	}
 

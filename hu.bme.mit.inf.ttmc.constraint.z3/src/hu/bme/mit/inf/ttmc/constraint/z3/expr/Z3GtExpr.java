@@ -2,6 +2,7 @@ package hu.bme.mit.inf.ttmc.constraint.z3.expr;
 
 import com.microsoft.z3.Context;
 
+import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.expr.defaults.AbstractGtExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
@@ -10,11 +11,12 @@ import hu.bme.mit.inf.ttmc.constraint.type.RatType;
 public final class Z3GtExpr extends AbstractGtExpr implements Z3Expr<BoolType> {
 
 	private final Context context;
-	
+
 	private volatile com.microsoft.z3.BoolExpr term;
 
-	public Z3GtExpr(Expr<? extends RatType> leftOp, Expr<? extends RatType> rightOp, final Context context) {
-		super(leftOp, rightOp);
+	public Z3GtExpr(final ConstraintManager manager, final Expr<? extends RatType> leftOp,
+			final Expr<? extends RatType> rightOp, final Context context) {
+		super(manager, leftOp, rightOp);
 		this.context = context;
 	}
 
@@ -27,7 +29,7 @@ public final class Z3GtExpr extends AbstractGtExpr implements Z3Expr<BoolType> {
 			final com.microsoft.z3.ArithExpr rightOpTerm = (com.microsoft.z3.ArithExpr) rightOp.getTerm();
 			term = context.mkGt(leftOpTerm, rightOpTerm);
 		}
-		
+
 		return term;
 	}
 

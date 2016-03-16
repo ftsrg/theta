@@ -6,6 +6,7 @@ import java.util.Collection;
 
 import com.google.common.collect.ImmutableMultiset;
 
+import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.expr.MulExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderMul;
@@ -18,7 +19,7 @@ public abstract class AbstractMulExpr<ExprType extends ClosedUnderMul> extends A
 
 	private static final String OPERATOR_LABEL = "Mul";
 
-	public AbstractMulExpr(final Collection<? extends Expr<? extends ExprType>> ops) {
+	public AbstractMulExpr(final ConstraintManager manager, final Collection<? extends Expr<? extends ExprType>> ops) {
 		super(ImmutableMultiset.copyOf(checkNotNull(ops)));
 	}
 

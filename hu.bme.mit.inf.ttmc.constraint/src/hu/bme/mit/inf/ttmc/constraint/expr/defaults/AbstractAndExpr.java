@@ -6,6 +6,7 @@ import java.util.Collection;
 
 import com.google.common.collect.ImmutableSet;
 
+import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.AndExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
@@ -17,7 +18,7 @@ public abstract class AbstractAndExpr extends AbstractMultiaryExpr<BoolType, Boo
 
 	private static final String OPERATOR_LABEL = "And";
 
-	public AbstractAndExpr(final Collection<? extends Expr<? extends BoolType>> ops) {
+	public AbstractAndExpr(final ConstraintManager manager, final Collection<? extends Expr<? extends BoolType>> ops) {
 		super(ImmutableSet.copyOf(checkNotNull(ops)));
 	}
 

@@ -16,14 +16,14 @@ public class ConstraintManagerImpl implements ConstraintManager {
 	private final TypeFactory typeFactory;
 	private final ExprFactory exprFactory;
 	private final TypeInferrer typeInferrer;
-	
+
 	public ConstraintManagerImpl() {
 		declFactory = new DeclFactoryImpl();
 		typeFactory = new TypeFactoryImpl();
-		exprFactory = new ExprFactoryImpl();
+		exprFactory = new ExprFactoryImpl(this);
 		typeInferrer = new TypeInferrerImpl(typeFactory);
 	}
-	
+
 	@Override
 	public DeclFactory getDeclFactory() {
 		return declFactory;
@@ -49,7 +49,5 @@ public class ConstraintManagerImpl implements ConstraintManager {
 	public TypeInferrer getTypeInferrer() {
 		return typeInferrer;
 	}
-	
-	
 
 }

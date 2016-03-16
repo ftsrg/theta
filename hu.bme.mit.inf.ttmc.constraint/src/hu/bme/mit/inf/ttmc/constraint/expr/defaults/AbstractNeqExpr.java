@@ -1,5 +1,6 @@
 package hu.bme.mit.inf.ttmc.constraint.expr.defaults;
 
+import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.expr.ModExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.NeqExpr;
@@ -13,7 +14,8 @@ public abstract class AbstractNeqExpr extends AbstractBinaryExpr<Type, Type, Boo
 
 	private static final String OPERATOR_LABEL = "Neq";
 
-	public AbstractNeqExpr(final Expr<? extends Type> leftOp, final Expr<? extends Type> rightOp) {
+	public AbstractNeqExpr(final ConstraintManager manager, final Expr<? extends Type> leftOp,
+			final Expr<? extends Type> rightOp) {
 		super(leftOp, rightOp);
 	}
 

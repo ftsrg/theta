@@ -6,6 +6,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.util.Collection;
 import java.util.List;
 
+import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.decl.ParamDecl;
 import hu.bme.mit.inf.ttmc.constraint.expr.AddExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.AndExpr;
@@ -82,12 +83,15 @@ import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderSub;
 
 public class ExprFactoryImpl implements ExprFactory {
 
+	private final ConstraintManager manager;
+
 	private final TrueExpr trueExpr;
 	private final FalseExpr falseExpr;
-	
-	public ExprFactoryImpl() {
-		trueExpr = new TrueExprImpl();
-		falseExpr = new FalseExprImpl();
+
+	public ExprFactoryImpl(final ConstraintManager manager) {
+		this.manager = manager;
+		trueExpr = new TrueExprImpl(manager);
+		falseExpr = new FalseExprImpl(manager);
 	}
 
 	@Override
@@ -101,197 +105,198 @@ public class ExprFactoryImpl implements ExprFactory {
 	}
 
 	@Override
-	public IntLitExpr Int(long value) {
-		return new IntLitExprImpl(value);
+	public IntLitExpr Int(final long value) {
+		return new IntLitExprImpl(manager, value);
 	}
 
 	@Override
-	public RatLitExpr Rat(long num, long denom) {
+	public RatLitExpr Rat(final long num, final long denom) {
 		checkArgument(denom != 0);
-		return new RatLitExprImpl(num, denom);
+		return new RatLitExprImpl(manager, num, denom);
 	}
 
 	@Override
-	public <P extends Type, R extends Type> FuncLitExpr<? super P, ? extends R> Func(ParamDecl<? super P> paramDecl,
-			Expr<? extends R> result) {
+	public <P extends Type, R extends Type> FuncLitExpr<? super P, ? extends R> Func(
+			final ParamDecl<? super P> paramDecl, final Expr<? extends R> result) {
 		checkNotNull(paramDecl);
 		checkNotNull(result);
-		return new FuncLitExprImpl<P, R>(paramDecl, result);
+		return new FuncLitExprImpl<P, R>(manager, paramDecl, result);
 	}
 
 	@Override
-	public <P extends Type, R extends Type> FuncAppExpr<P, R> App(Expr<? extends FuncType<? super P, ? extends R>> func,
-			Expr<? extends P> param) {
+	public <P extends Type, R extends Type> FuncAppExpr<P, R> App(
+			final Expr<? extends FuncType<? super P, ? extends R>> func, final Expr<? extends P> param) {
 		checkNotNull(func);
 		checkNotNull(param);
-		return new FuncAppExprImpl<P, R>(func, param);
+		return new FuncAppExprImpl<P, R>(manager, func, param);
 	}
 
 	@Override
 	public <I extends Type, E extends Type> ArrayReadExpr<I, E> Read(
-			Expr<? extends ArrayType<? super I, ? extends E>> array, Expr<? extends I> index) {
+			final Expr<? extends ArrayType<? super I, ? extends E>> array, final Expr<? extends I> index) {
 		checkNotNull(array);
 		checkNotNull(index);
-		return new ArrayReadExprImpl<>(array, index);
+		return new ArrayReadExprImpl<>(manager, array, index);
 	}
 
 	@Override
 	public <I extends Type, E extends Type> ArrayWriteExpr<I, E> Write(
-			Expr<? extends ArrayType<? super I, ? extends E>> array, Expr<? extends I> index, Expr<? extends E> elem) {
+			final Expr<? extends ArrayType<? super I, ? extends E>> array, final Expr<? extends I> index,
+			final Expr<? extends E> elem) {
 		checkNotNull(array);
 		checkNotNull(index);
 		checkNotNull(elem);
-		return new ArrayWriteExprImpl<>(array, index, elem);
+		return new ArrayWriteExprImpl<>(manager, array, index, elem);
 	}
 
 	@Override
-	public NotExpr Not(Expr<? extends BoolType> op) {
+	public NotExpr Not(final Expr<? extends BoolType> op) {
 		checkNotNull(op);
-		return new NotExprImpl(op);
+		return new NotExprImpl(manager, op);
 	}
 
 	@Override
-	public ImplyExpr Imply(Expr<? extends BoolType> leftOp, Expr<? extends BoolType> rightOp) {
+	public ImplyExpr Imply(final Expr<? extends BoolType> leftOp, final Expr<? extends BoolType> rightOp) {
 		checkNotNull(leftOp);
 		checkNotNull(rightOp);
-		return new ImplyExprImpl(leftOp, rightOp);
+		return new ImplyExprImpl(manager, leftOp, rightOp);
 	}
 
 	@Override
-	public IffExpr Iff(Expr<? extends BoolType> leftOp, Expr<? extends BoolType> rightOp) {
+	public IffExpr Iff(final Expr<? extends BoolType> leftOp, final Expr<? extends BoolType> rightOp) {
 		checkNotNull(leftOp);
 		checkNotNull(rightOp);
-		return new IffExprImpl(leftOp, rightOp);
+		return new IffExprImpl(manager, leftOp, rightOp);
 	}
 
 	@Override
-	public AndExpr And(Collection<? extends Expr<? extends BoolType>> ops) {
+	public AndExpr And(final Collection<? extends Expr<? extends BoolType>> ops) {
 		checkNotNull(ops);
-		return new AndExprImpl(ops);
+		return new AndExprImpl(manager, ops);
 	}
 
 	@Override
-	public OrExpr Or(Collection<? extends Expr<? extends BoolType>> ops) {
+	public OrExpr Or(final Collection<? extends Expr<? extends BoolType>> ops) {
 		checkNotNull(ops);
-		return new OrExprImpl(ops);
+		return new OrExprImpl(manager, ops);
 	}
 
 	@Override
-	public ForallExpr Forall(List<? extends ParamDecl<?>> paramDecls, Expr<? extends BoolType> op) {
+	public ForallExpr Forall(final List<? extends ParamDecl<?>> paramDecls, final Expr<? extends BoolType> op) {
 		checkNotNull(paramDecls);
 		checkNotNull(op);
-		return new ForallExprImpl(paramDecls, op);
+		return new ForallExprImpl(manager, paramDecls, op);
 	}
 
 	@Override
-	public ExistsExpr Exists(List<? extends ParamDecl<?>> paramDecls, Expr<? extends BoolType> op) {
+	public ExistsExpr Exists(final List<? extends ParamDecl<?>> paramDecls, final Expr<? extends BoolType> op) {
 		checkNotNull(paramDecls);
 		checkNotNull(op);
-		return new ExistsExprImpl(paramDecls, op);
+		return new ExistsExprImpl(manager, paramDecls, op);
 	}
 
 	@Override
-	public EqExpr Eq(Expr<? extends Type> leftOp, Expr<? extends Type> rightOp) {
+	public EqExpr Eq(final Expr<? extends Type> leftOp, final Expr<? extends Type> rightOp) {
 		checkNotNull(leftOp);
 		checkNotNull(rightOp);
-		return new EqExprImpl(leftOp, rightOp);
+		return new EqExprImpl(manager, leftOp, rightOp);
 	}
 
 	@Override
-	public NeqExpr Neq(Expr<? extends Type> leftOp, Expr<? extends Type> rightOp) {
+	public NeqExpr Neq(final Expr<? extends Type> leftOp, final Expr<? extends Type> rightOp) {
 		checkNotNull(leftOp);
 		checkNotNull(rightOp);
-		return new NeqExprImpl(leftOp, rightOp);
+		return new NeqExprImpl(manager, leftOp, rightOp);
 	}
 
 	@Override
-	public LtExpr Lt(Expr<? extends RatType> leftOp, Expr<? extends RatType> rightOp) {
+	public LtExpr Lt(final Expr<? extends RatType> leftOp, final Expr<? extends RatType> rightOp) {
 		checkNotNull(leftOp);
 		checkNotNull(rightOp);
-		return new LtExprImpl(leftOp, rightOp);
+		return new LtExprImpl(manager, leftOp, rightOp);
 	}
 
 	@Override
-	public LeqExpr Leq(Expr<? extends RatType> leftOp, Expr<? extends RatType> rightOp) {
+	public LeqExpr Leq(final Expr<? extends RatType> leftOp, final Expr<? extends RatType> rightOp) {
 		checkNotNull(leftOp);
 		checkNotNull(rightOp);
-		return new LeqExprImpl(leftOp, rightOp);
+		return new LeqExprImpl(manager, leftOp, rightOp);
 	}
 
 	@Override
-	public GtExpr Gt(Expr<? extends RatType> leftOp, Expr<? extends RatType> rightOp) {
+	public GtExpr Gt(final Expr<? extends RatType> leftOp, final Expr<? extends RatType> rightOp) {
 		checkNotNull(leftOp);
 		checkNotNull(rightOp);
-		return new GtExprImpl(leftOp, rightOp);
+		return new GtExprImpl(manager, leftOp, rightOp);
 	}
 
 	@Override
-	public GeqExpr Geq(Expr<? extends RatType> leftOp, Expr<? extends RatType> rightOp) {
+	public GeqExpr Geq(final Expr<? extends RatType> leftOp, final Expr<? extends RatType> rightOp) {
 		checkNotNull(leftOp);
 		checkNotNull(rightOp);
-		return new GeqExprImpl(leftOp, rightOp);
+		return new GeqExprImpl(manager, leftOp, rightOp);
 	}
 
 	@Override
-	public <T extends ClosedUnderNeg> NegExpr<T> Neg(Expr<? extends T> op) {
+	public <T extends ClosedUnderNeg> NegExpr<T> Neg(final Expr<? extends T> op) {
 		checkNotNull(op);
-		return new NegExprImpl<T>(op);
+		return new NegExprImpl<T>(manager, op);
 	}
 
 	@Override
-	public <T extends ClosedUnderSub> SubExpr<T> Sub(Expr<? extends T> leftOp, Expr<? extends T> rightOp) {
+	public <T extends ClosedUnderSub> SubExpr<T> Sub(final Expr<? extends T> leftOp, final Expr<? extends T> rightOp) {
 		checkNotNull(leftOp);
 		checkNotNull(rightOp);
-		return new SubExprImpl<T>(leftOp, rightOp);
+		return new SubExprImpl<T>(manager, leftOp, rightOp);
 	}
 
 	@Override
-	public <T extends ClosedUnderAdd> AddExpr<T> Add(Collection<? extends Expr<? extends T>> ops) {
+	public <T extends ClosedUnderAdd> AddExpr<T> Add(final Collection<? extends Expr<? extends T>> ops) {
 		checkNotNull(ops);
-		return new AddExprImpl<T>(ops);
+		return new AddExprImpl<T>(manager, ops);
 	}
 
 	@Override
-	public <T extends ClosedUnderMul> MulExpr<T> Mul(Collection<? extends Expr<? extends T>> ops) {
+	public <T extends ClosedUnderMul> MulExpr<T> Mul(final Collection<? extends Expr<? extends T>> ops) {
 		checkNotNull(ops);
-		return new MulExprImpl<>(ops);
+		return new MulExprImpl<>(manager, ops);
 	}
 
 	@Override
-	public ModExpr Mod(Expr<? extends IntType> leftOp, Expr<? extends IntType> rightOp) {
+	public ModExpr Mod(final Expr<? extends IntType> leftOp, final Expr<? extends IntType> rightOp) {
 		checkNotNull(leftOp);
 		checkNotNull(rightOp);
-		return new ModExprImpl(leftOp, rightOp);
+		return new ModExprImpl(manager, leftOp, rightOp);
 	}
 
 	@Override
-	public RemExpr Rem(Expr<? extends IntType> leftOp, Expr<? extends IntType> rightOp) {
+	public RemExpr Rem(final Expr<? extends IntType> leftOp, final Expr<? extends IntType> rightOp) {
 		checkNotNull(leftOp);
 		checkNotNull(rightOp);
-		return new RemExprImpl(leftOp, rightOp);
+		return new RemExprImpl(manager, leftOp, rightOp);
 	}
 
 	@Override
-	public IntDivExpr IntDiv(Expr<? extends IntType> leftOp, Expr<? extends IntType> rightOp) {
+	public IntDivExpr IntDiv(final Expr<? extends IntType> leftOp, final Expr<? extends IntType> rightOp) {
 		checkNotNull(leftOp);
 		checkNotNull(rightOp);
-		return new IntDivExprImpl(leftOp, rightOp);
+		return new IntDivExprImpl(manager, leftOp, rightOp);
 	}
 
 	@Override
-	public RatDivExpr RatDiv(Expr<? extends RatType> leftOp, Expr<? extends RatType> rightOp) {
+	public RatDivExpr RatDiv(final Expr<? extends RatType> leftOp, final Expr<? extends RatType> rightOp) {
 		checkNotNull(leftOp);
 		checkNotNull(rightOp);
-		return new RatDivExprImpl(leftOp, rightOp);
+		return new RatDivExprImpl(manager, leftOp, rightOp);
 	}
 
 	@Override
-	public <T extends Type> IteExpr<T> Ite(Expr<? extends BoolType> cond, Expr<? extends T> then,
-			Expr<? extends T> elze) {
+	public <T extends Type> IteExpr<T> Ite(final Expr<? extends BoolType> cond, final Expr<? extends T> then,
+			final Expr<? extends T> elze) {
 		checkNotNull(cond);
 		checkNotNull(then);
 		checkNotNull(elze);
-		return new IteExprImpl<>(cond, then, elze);
+		return new IteExprImpl<>(manager, cond, then, elze);
 	}
 
 }

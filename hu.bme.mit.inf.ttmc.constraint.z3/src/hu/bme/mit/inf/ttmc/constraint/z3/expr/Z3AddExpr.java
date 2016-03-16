@@ -4,18 +4,21 @@ import java.util.Collection;
 
 import com.microsoft.z3.Context;
 
+import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.expr.defaults.AbstractAddExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderAdd;
 
-public final class Z3AddExpr<ExprType extends ClosedUnderAdd> extends AbstractAddExpr<ExprType> implements Z3Expr<ExprType> {
+public final class Z3AddExpr<ExprType extends ClosedUnderAdd> extends AbstractAddExpr<ExprType>
+		implements Z3Expr<ExprType> {
 
 	private final Context context;
-	
+
 	private volatile com.microsoft.z3.ArithExpr term;
-	
-	public Z3AddExpr(Collection<? extends Expr<? extends ExprType>> ops, final Context context) {
-		super(ops);
+
+	public Z3AddExpr(final ConstraintManager manager, final Collection<? extends Expr<? extends ExprType>> ops,
+			final Context context) {
+		super(manager, ops);
 		this.context = context;
 	}
 
@@ -24,14 +27,14 @@ public final class Z3AddExpr<ExprType extends ClosedUnderAdd> extends AbstractAd
 		if (term == null) {
 			final com.microsoft.z3.ArithExpr[] opTerms = new com.microsoft.z3.ArithExpr[getOps().size()];
 			int i = 0;
-			for (Expr<?> op : getOps()) {
+			for (final Expr<?> op : getOps()) {
 				final Z3Expr<?> z3op = (Z3Expr<?>) op;
 				opTerms[i] = (com.microsoft.z3.ArithExpr) z3op.getTerm();
 				i++;
 			}
 			term = context.mkAdd(opTerms);
 		}
-		
+
 		return term;
 	}
 

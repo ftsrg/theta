@@ -1,5 +1,6 @@
 package hu.bme.mit.inf.ttmc.constraint.expr.defaults;
 
+import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.decl.ParamDecl;
 import hu.bme.mit.inf.ttmc.constraint.expr.ParamRefExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
@@ -10,7 +11,7 @@ public abstract class AbstractParamRefExpr<DeclType extends Type> extends Abstra
 
 	private static final int HASH_SEED = 919;
 
-	public AbstractParamRefExpr(final ParamDecl<DeclType> paramDecl) {
+	public AbstractParamRefExpr(final ConstraintManager manager, final ParamDecl<DeclType> paramDecl) {
 		super(paramDecl);
 	}
 
