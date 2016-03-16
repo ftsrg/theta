@@ -25,22 +25,22 @@ public final class STSCNFTransformation implements STSTransformation {
 		CNFTransformation cnfTransf = new CNFTransformation(manager, manager.getDeclFactory());
 		FormalismExprCNFChecker cnfChecker = new FormalismExprCNFChecker();
 
-		for (Expr<? extends BoolType> expr : system.getInit()) {
-			if (cnfChecker.isExprCNF(expr)) builder.addInit(expr);
-			else builder.addInit(cnfTransf.transform(expr));
-		}
-		for (Expr<? extends BoolType> expr : system.getInvar()) {
-			if (cnfChecker.isExprCNF(expr)) builder.addInvar(expr);
-			else builder.addInvar(cnfTransf.transform(expr));
-		}
-		for (Expr<? extends BoolType> expr : system.getTrans()) {
-			if (cnfChecker.isExprCNF(expr)) builder.addTrans(expr);
-			else builder.addTrans(cnfTransf.transform(expr));
-		}
-		if (cnfChecker.isExprCNF(system.getProp())) builder.setProp(system.getProp());
-		else builder.setProp(cnfTransf.transform(system.getProp()));
+		for (Expr<? extends BoolType> expr : system.getInit())
+			builder.addInit(transformIfNonCNF(expr, cnfTransf, cnfChecker));
+		for (Expr<? extends BoolType> expr : system.getInvar())
+			builder.addInvar(transformIfNonCNF(expr, cnfTransf, cnfChecker));
+		for (Expr<? extends BoolType> expr : system.getTrans())
+			builder.addTrans(transformIfNonCNF(expr, cnfTransf, cnfChecker));
+
+		builder.setProp(transformIfNonCNF(system.getProp(), cnfTransf, cnfChecker));
 
 		return builder.build();
+	}
+	
+	private Expr<? extends BoolType> transformIfNonCNF(Expr<? extends BoolType> expr,
+			CNFTransformation cnfTransf, FormalismExprCNFChecker cnfChecker) {
+		if (cnfChecker.isExprCNF(expr)) return expr;
+		else return cnfTransf.transform(expr);
 	}
 
 }
