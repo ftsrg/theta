@@ -13,12 +13,24 @@ public abstract class AbstractParamRefExpr<DeclType extends Type> extends Abstra
 	}
 
 	@Override
-	protected int getHashSeed() {
-		return 919;
+	public <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
+		return visitor.visit(this, param);
 	}
 
 	@Override
-	public <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
-		return visitor.visit(this, param);
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		} else if (obj instanceof ParamRefExpr<?>) {
+			final ParamRefExpr<?> that = (ParamRefExpr<?>) obj;
+			return this.getDecl().equals(that.getDecl());
+		} else {
+			return false;
+		}
+	}
+
+	@Override
+	protected int getHashSeed() {
+		return 919;
 	}
 }

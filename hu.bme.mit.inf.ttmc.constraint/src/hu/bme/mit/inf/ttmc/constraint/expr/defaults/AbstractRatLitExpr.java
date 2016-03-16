@@ -45,11 +45,9 @@ public abstract class AbstractRatLitExpr extends AbstractNullaryExpr<RatType> im
 	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
-		} else if (obj == null) {
-			return false;
-		} else if (this.getClass() == obj.getClass()) {
-			final AbstractRatLitExpr that = (AbstractRatLitExpr) obj;
-			return (this.num == that.num && this.denom == that.denom);
+		} else if (obj instanceof RatLitExpr) {
+			final RatLitExpr that = (RatLitExpr) obj;
+			return (this.getNum() == that.getNum() && this.getDenom() == that.getDenom());
 		} else {
 			return false;
 		}

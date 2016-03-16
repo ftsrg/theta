@@ -15,6 +15,8 @@ public abstract class AbstractIteExpr<ExprType extends Type> extends AbstractExp
 	private final Expr<? extends ExprType> then;
 	private final Expr<? extends ExprType> elze;
 
+	private static final int HASH_SEED = 181;
+
 	private volatile int hashCode = 0;
 
 	public AbstractIteExpr(final Expr<? extends BoolType> cond, final Expr<? extends ExprType> then,
@@ -37,51 +39,6 @@ public abstract class AbstractIteExpr<ExprType extends Type> extends AbstractExp
 	@Override
 	public Expr<? extends ExprType> getElse() {
 		return elze;
-	}
-
-	@Override
-	public int hashCode() {
-		if (hashCode == 0) {
-			hashCode = getHashSeed();
-			hashCode = 31 * hashCode + cond.hashCode();
-			hashCode = 31 * hashCode + then.hashCode();
-			hashCode = 31 * hashCode + elze.hashCode();
-		}
-
-		return hashCode;
-	}
-
-	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		} else if (obj == null) {
-			return false;
-		} else if (this.getClass() == obj.getClass()) {
-			final AbstractIteExpr<?> that = (AbstractIteExpr<?>) obj;
-			return this.cond.equals(that.cond) && this.then.equals(that.then) && this.elze.equals(that.elze);
-		} else {
-			return false;
-		}
-	}
-
-	@Override
-	public String toString() {
-		final StringBuilder sb = new StringBuilder();
-		sb.append("Ite");
-		sb.append("(");
-		sb.append(getCond().toString());
-		sb.append(", ");
-		sb.append(getThen().toString());
-		sb.append(", ");
-		sb.append(getElse().toString());
-		sb.append(")");
-		return sb.toString();
-	}
-
-	@Override
-	protected int getHashSeed() {
-		return 181;
 	}
 
 	@Override
@@ -109,5 +66,49 @@ public abstract class AbstractIteExpr<ExprType extends Type> extends AbstractExp
 	@Override
 	public <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
 		return visitor.visit(this, param);
+	}
+
+	@Override
+	public int hashCode() {
+		if (hashCode == 0) {
+			hashCode = getHashSeed();
+			hashCode = 31 * hashCode + cond.hashCode();
+			hashCode = 31 * hashCode + then.hashCode();
+			hashCode = 31 * hashCode + elze.hashCode();
+		}
+
+		return hashCode;
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		} else if (obj instanceof IteExpr<?>) {
+			final IteExpr<?> that = (IteExpr<?>) obj;
+			return this.getCond().equals(that.getCond()) && this.getThen().equals(that.getThen())
+					&& this.getElse().equals(that.getElse());
+		} else {
+			return false;
+		}
+	}
+
+	@Override
+	public String toString() {
+		final StringBuilder sb = new StringBuilder();
+		sb.append("Ite");
+		sb.append("(");
+		sb.append(getCond().toString());
+		sb.append(", ");
+		sb.append(getThen().toString());
+		sb.append(", ");
+		sb.append(getElse().toString());
+		sb.append(")");
+		return sb.toString();
+	}
+
+	@Override
+	protected int getHashSeed() {
+		return HASH_SEED;
 	}
 }

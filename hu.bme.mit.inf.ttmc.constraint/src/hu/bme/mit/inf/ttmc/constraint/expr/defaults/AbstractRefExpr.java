@@ -22,7 +22,6 @@ public abstract class AbstractRefExpr<DeclType extends Type, DeclKind extends De
 		return decl;
 	}
 
-
 	@Override
 	public int hashCode() {
 		if (hashCode == 0) {
@@ -31,20 +30,6 @@ public abstract class AbstractRefExpr<DeclType extends Type, DeclKind extends De
 		}
 
 		return hashCode;
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
-			return true;
-		} else if (obj == null) {
-			return false;
-		} else if (this.getClass() == obj.getClass()) {
-			final AbstractRefExpr<?, ?> that = (AbstractRefExpr<?, ?>) obj;
-			return this.decl.equals(that.decl);
-		} else {
-			return false;
-		}
 	}
 
 	@Override

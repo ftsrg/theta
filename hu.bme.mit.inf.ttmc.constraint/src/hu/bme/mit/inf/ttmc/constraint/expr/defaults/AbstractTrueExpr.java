@@ -5,11 +5,23 @@ import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 
 public abstract class AbstractTrueExpr extends AbstractBoolLitExpr implements TrueExpr {
 
+	private static final int HASH_SEED = 242181;
+
 	private static final String OPERATOR = "True";
 
 	@Override
 	public final boolean getValue() {
 		return true;
+	}
+
+	@Override
+	public <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
+		return visitor.visit(this, param);
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		return (obj instanceof TrueExpr);
 	}
 
 	@Override
@@ -19,11 +31,6 @@ public abstract class AbstractTrueExpr extends AbstractBoolLitExpr implements Tr
 
 	@Override
 	protected int getHashSeed() {
-		return 242181;
-	}
-
-	@Override
-	public <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
-		return visitor.visit(this, param);
+		return HASH_SEED;
 	}
 }
