@@ -31,22 +31,22 @@ public abstract class AbstractRatLitExpr extends AbstractNullaryExpr<RatType> im
 	}
 
 	@Override
-	public long getNum() {
+	public final long getNum() {
 		return num;
 	}
 
 	@Override
-	public long getDenom() {
+	public final long getDenom() {
 		return denom;
 	}
 
 	@Override
-	public <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
+	public final <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
 		return visitor.visit(this, param);
 	}
 
 	@Override
-	public int hashCode() {
+	public final int hashCode() {
 		if (hashCode == 0) {
 			hashCode = HASH_SEED;
 			hashCode = 31 * hashCode + (int) (num ^ (num >>> 32));
@@ -57,7 +57,7 @@ public abstract class AbstractRatLitExpr extends AbstractNullaryExpr<RatType> im
 	}
 
 	@Override
-	public boolean equals(final Object obj) {
+	public final boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		} else if (obj instanceof RatLitExpr) {
@@ -75,6 +75,12 @@ public abstract class AbstractRatLitExpr extends AbstractNullaryExpr<RatType> im
 		sb.append("%");
 		sb.append(getDenom());
 		return sb.toString();
+	}
+
+	@Override
+	public final int compareTo(final RatLitExpr that) {
+		return Long.compare(LongMath.checkedMultiply(this.getNum(), that.getDenom()),
+				LongMath.checkedMultiply(that.getNum(), this.getDenom()));
 	}
 
 }
