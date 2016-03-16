@@ -11,6 +11,10 @@ import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 public abstract class AbstractArrayWriteExpr<IndexType extends Type, ElemType extends Type>
 		extends AbstractExpr<ArrayType<IndexType, ElemType>> implements ArrayWriteExpr<IndexType, ElemType> {
 
+	private static final int HASH_SEED = 1699;
+
+	private volatile int hashCode = 0;
+
 	private final Expr<? extends ArrayType<? super IndexType, ? extends ElemType>> array;
 	private final Expr<? extends IndexType> index;
 	private final Expr<? extends ElemType> elem;
@@ -39,11 +43,6 @@ public abstract class AbstractArrayWriteExpr<IndexType extends Type, ElemType ex
 	}
 
 	@Override
-	protected int getHashSeed() {
-		return 1699;
-	}
-
-	@Override
 	public final <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
 		return visitor.visit(this, param);
 	}
@@ -68,14 +67,27 @@ public abstract class AbstractArrayWriteExpr<IndexType extends Type, ElemType ex
 
 	@Override
 	public int hashCode() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		if (hashCode == 0) {
+			hashCode = HASH_SEED;
+			hashCode = 31 * hashCode + array.hashCode();
+			hashCode = 31 * hashCode + index.hashCode();
+			hashCode = 31 * hashCode + elem.hashCode();
+		}
+
+		return hashCode;
 	}
 
 	@Override
 	public boolean equals(final Object obj) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		if (this == obj) {
+			return true;
+		} else if (obj instanceof ArrayWriteExpr<?, ?>) {
+			final ArrayWriteExpr<?, ?> that = (ArrayWriteExpr<?, ?>) obj;
+			return this.getArray().equals(that.getArray()) && this.getIndex().equals(that.getIndex())
+					&& this.getElem().equals(that.getElem());
+		} else {
+			return false;
+		}
 	}
 
 	@Override
@@ -89,6 +101,11 @@ public abstract class AbstractArrayWriteExpr<IndexType extends Type, ElemType ex
 		sb.append(elem);
 		sb.append(")");
 		return sb.toString();
+	}
+
+	@Override
+	protected int getHashSeed() {
+		return HASH_SEED;
 	}
 
 }

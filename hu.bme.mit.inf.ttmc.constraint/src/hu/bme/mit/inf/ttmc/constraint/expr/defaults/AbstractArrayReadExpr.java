@@ -11,6 +11,10 @@ import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 public abstract class AbstractArrayReadExpr<IndexType extends Type, ElemType extends Type>
 		extends AbstractExpr<ElemType> implements ArrayReadExpr<IndexType, ElemType> {
 
+	private static final int HASH_SEED = 1321;
+
+	private volatile int hashCode = 0;
+
 	private final Expr<? extends ArrayType<? super IndexType, ? extends ElemType>> array;
 	private final Expr<? extends IndexType> index;
 
@@ -57,14 +61,25 @@ public abstract class AbstractArrayReadExpr<IndexType extends Type, ElemType ext
 
 	@Override
 	public int hashCode() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		if (hashCode == 0) {
+			hashCode = HASH_SEED;
+			hashCode = 31 * hashCode + array.hashCode();
+			hashCode = 31 * hashCode + index.hashCode();
+		}
+
+		return hashCode;
 	}
 
 	@Override
 	public boolean equals(final Object obj) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		if (this == obj) {
+			return true;
+		} else if (obj instanceof ArrayReadExpr<?, ?>) {
+			final ArrayReadExpr<?, ?> that = (ArrayReadExpr<?, ?>) obj;
+			return this.getArray().equals(that.getArray()) && this.getIndex().equals(that.getIndex());
+		} else {
+			return false;
+		}
 	}
 
 	@Override
@@ -80,7 +95,7 @@ public abstract class AbstractArrayReadExpr<IndexType extends Type, ElemType ext
 
 	@Override
 	protected final int getHashSeed() {
-		return 1321;
+		return HASH_SEED;
 	}
 
 }
