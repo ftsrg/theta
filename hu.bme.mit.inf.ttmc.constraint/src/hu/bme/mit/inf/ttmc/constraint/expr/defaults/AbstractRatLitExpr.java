@@ -2,6 +2,8 @@ package hu.bme.mit.inf.ttmc.constraint.expr.defaults;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import com.google.common.math.LongMath;
+
 import hu.bme.mit.inf.ttmc.constraint.expr.RatLitExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.RatType;
 import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
@@ -18,8 +20,14 @@ public abstract class AbstractRatLitExpr extends AbstractNullaryExpr<RatType> im
 	public AbstractRatLitExpr(final long num, final long denom) {
 		checkArgument(denom != 0);
 
-		this.num = num;
-		this.denom = denom;
+		final long gcd = LongMath.gcd(Math.abs(num), Math.abs(denom));
+		if (denom >= 0) {
+			this.num = num / gcd;
+			this.denom = denom / gcd;
+		} else {
+			this.num = -num / gcd;
+			this.denom = -denom / gcd;
+		}
 	}
 
 	@Override
