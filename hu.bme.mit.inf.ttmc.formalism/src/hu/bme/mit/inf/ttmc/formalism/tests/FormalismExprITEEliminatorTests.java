@@ -7,6 +7,7 @@ import org.junit.Test;
 import hu.bme.mit.inf.ttmc.constraint.ConstraintManagerImpl;
 import hu.bme.mit.inf.ttmc.constraint.factory.TypeFactory;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
+import hu.bme.mit.inf.ttmc.constraint.type.IntType;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.VarRefExpr;
 import hu.bme.mit.inf.ttmc.formalism.common.factory.VarDeclFactory;
 import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
@@ -21,7 +22,8 @@ public class FormalismExprITEEliminatorTests {
 	private TypeFactory tfc;
 	private STSExprFactory efc;
 	// Constants and variables for testing
-	private VarRefExpr<BoolType> vA, vB, vC;
+	private VarRefExpr<BoolType> vA;
+	private VarRefExpr<IntType> vB, vC, vD;
 
 	@Before
 	public void before() {
@@ -32,18 +34,19 @@ public class FormalismExprITEEliminatorTests {
 		tfc = manager.getTypeFactory();
 		// Create constants and variables
 		vA = dfc.Var("A", tfc.Bool()).getRef();
-		vB = dfc.Var("B", tfc.Bool()).getRef();
-		vC = dfc.Var("C", tfc.Bool()).getRef();
+		vB = dfc.Var("B", tfc.Int()).getRef();
+		vC = dfc.Var("C", tfc.Int()).getRef();
+		vD = dfc.Var("D", tfc.Int()).getRef();
 	}
 
 	@SuppressWarnings("unchecked")
 	@Test
 	public void testProgExprIteEliminator() {
-		// if A then B else C
-		Assert.assertEquals(FormalismUtils.eliminate(efc.Ite(vA, vB, vC), manager),
-				efc.And(efc.Or(efc.Not(vA), vB), efc.Or(vA, vC)));
-		// (if A then B else C)'
-		Assert.assertEquals(FormalismUtils.eliminate(efc.Prime(efc.Ite(vA, vB, vC)), manager),
-				efc.And(efc.Or(efc.Not(vA), efc.Prime(vB)), efc.Or(vA, efc.Prime(vC))));
+		// D = if A then B else C
+		Assert.assertEquals(FormalismUtils.eliminate(efc.Eq(vD, efc.Ite(vA, vB, vC)), manager),
+				efc.And(efc.Or(efc.Not(vA), efc.Eq(vD, vB)), efc.Or(vA, efc.Eq(vD, vC))));
+		// D = (if A then B else C)'
+		Assert.assertEquals(FormalismUtils.eliminate(efc.Eq(vD, efc.Prime(efc.Ite(vA, vB, vC))), manager),
+				efc.And(efc.Or(efc.Not(vA), efc.Eq(vD, efc.Prime(vB))), efc.Or(vA, efc.Eq(vD, efc.Prime(vC)))));
 	}
 }

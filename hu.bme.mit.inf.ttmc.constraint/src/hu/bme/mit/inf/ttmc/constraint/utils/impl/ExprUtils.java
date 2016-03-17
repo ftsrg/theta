@@ -45,7 +45,7 @@ public class ExprUtils {
 	public static Expr<? extends BoolType> eliminateITE(Expr<? extends BoolType> expr, ConstraintManager manager) {
 		return (Expr<? extends BoolType>) expr.accept(
 				new ExprITEPropagatorVisitor(manager,
-						new ExprITEPusherVisitor(manager, new IsBoolConnExprVisitor())), null).accept(
+						new ExprITEPusherVisitor(manager, new TypeInferrer(manager))), null).accept(
 								new ExprITERemoverVisitor(manager), null);
 	}
 

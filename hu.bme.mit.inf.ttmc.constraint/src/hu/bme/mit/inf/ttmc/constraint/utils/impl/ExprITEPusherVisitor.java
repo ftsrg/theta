@@ -15,21 +15,17 @@ import hu.bme.mit.inf.ttmc.constraint.expr.IteExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.MultiaryExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.NullaryExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.UnaryExpr;
+import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
-import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 
 public class ExprITEPusherVisitor extends ArityBasedExprVisitor<Void, Expr<? extends Type>> {
 	
 	private ConstraintManager manager;
-	private ExprVisitor<Void, Boolean> isBooleanVisitor;
-	
-	/**
-	 * Constructor.
-	 * @param manager Constraint manager
-	 */
-	public ExprITEPusherVisitor(ConstraintManager manager, ExprVisitor<Void, Boolean> isBooleanVisitor) {
+	private TypeInferrer typeInferrer;
+
+	public ExprITEPusherVisitor(ConstraintManager manager, TypeInferrer typeInferrer) {
 		this.manager = manager;
-		this.isBooleanVisitor = isBooleanVisitor;
+		this.typeInferrer = typeInferrer;
 	}
 
 	@Override
@@ -41,7 +37,7 @@ public class ExprITEPusherVisitor extends ArityBasedExprVisitor<Void, Expr<? ext
 	protected <OpType extends Type, ExprType extends Type> Expr<? extends Type> visitUnary(
 			UnaryExpr<OpType, ExprType> expr, Void param) {
 		// Nothing to do if the operand is not an ITE or it is of bool type
-		if (!(expr.getOp() instanceof IteExpr) || expr.accept(isBooleanVisitor, null)) {
+		if (!(expr.getOp() instanceof IteExpr) || typeInferrer.getType(expr.getOp()) instanceof BoolType) {
 			return expr;
 		} else {
 			// Push expression below ITE, e.g., -ite(C,T,E) => ite(C,-T,-E)
@@ -54,23 +50,25 @@ public class ExprITEPusherVisitor extends ArityBasedExprVisitor<Void, Expr<? ext
 	@Override
 	protected <LeftOpType extends Type, RightOpType extends Type, ExprType extends Type> Expr<? extends Type> visitBinary(
 			BinaryExpr<LeftOpType, RightOpType, ExprType> expr, Void param) {
-		// Nothing to do if the none of the operands are ITE or it is of bool type
-		if (!(expr.getLeftOp() instanceof IteExpr || expr.getRightOp() instanceof IteExpr) || expr.accept(isBooleanVisitor, null)) {
+		// Nothing to do if the none of the operands are ITE
+		if (!(expr.getLeftOp() instanceof IteExpr || expr.getRightOp() instanceof IteExpr)) {
 			return expr;
-		} else if (expr.getLeftOp() instanceof IteExpr) {
+		} else if (expr.getLeftOp() instanceof IteExpr && !(typeInferrer.getType(expr.getLeftOp()) instanceof BoolType)) {
 			// Push expression below ITE, e.g., ite(C,T,E) = X => ite(C,T=X,E=X)
 			IteExpr<? extends LeftOpType> op = (IteExpr<? extends LeftOpType>) expr.getLeftOp();
 			return manager.getExprFactory().Ite(
 					op.getCond(),
 					expr.withLeftOp(op.getThen()).accept(this, param),
 					expr.withLeftOp(op.getElse()).accept(this, param));
-		} else /* expr.getRightOp() must be an ITE */ {
+		} else if (expr.getRightOp() instanceof IteExpr && !(typeInferrer.getType(expr.getRightOp()) instanceof BoolType)) {
 			// Push expression below ITE, e.g., X = ite(C,T,E) => ite(C,x=T,X=E)
 			IteExpr<? extends RightOpType> op = (IteExpr<? extends RightOpType>) expr.getRightOp();
 			return manager.getExprFactory().Ite(
 					op.getCond(),
 					expr.withRightOp(op.getThen()).accept(this, param),
 					expr.withRightOp(op.getElse()).accept(this, param));
+		} else {
+			return expr;
 		}
 	}
 
@@ -80,7 +78,7 @@ public class ExprITEPusherVisitor extends ArityBasedExprVisitor<Void, Expr<? ext
 		// Get the first operand which is an ITE
 		Optional<? extends Expr<? extends OpsType>> firstIte = expr.getOps().stream().filter(op -> op instanceof IteExpr).findFirst();
 		// Nothing to do if the none of the operands are ITE or it is of bool type
-		if (!firstIte.isPresent() || expr.accept(isBooleanVisitor, null)) {
+		if (!firstIte.isPresent() || expr.getOps().size() == 0 || typeInferrer.getType(expr.getOps().iterator().next()) instanceof BoolType) {
 			return expr;
 		} else {
 			// Push expression below ITE, e.g., X + ite(C,T,E) + Y  => ite(C,X+T+Y,X+E+Y)

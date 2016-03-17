@@ -13,7 +13,7 @@ import hu.bme.mit.inf.ttmc.formalism.utils.FormalismExprVisitor;
 public class FormalismITEPusherVisitor extends ExprITEPusherVisitor implements FormalismExprVisitor<Void, Expr<? extends Type>> {
 
 	public FormalismITEPusherVisitor(ConstraintManager manager) {
-		super(manager, new IsBoolConnFormalismExprVisitor());
+		super(manager, new FormalismTypeInferrer(manager));
 	}
 
 	@Override
