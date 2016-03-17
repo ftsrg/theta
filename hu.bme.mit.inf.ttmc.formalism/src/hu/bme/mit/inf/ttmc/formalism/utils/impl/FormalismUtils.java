@@ -8,6 +8,7 @@ import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.constraint.utils.impl.ExprCNFCheckerVisitor.CNFStatus;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
+import hu.bme.mit.inf.ttmc.formalism.common.factory.VarDeclFactory;
 
 public class FormalismUtils {
 
@@ -27,6 +28,10 @@ public class FormalismUtils {
 	
 	public static void collectVars(Expr<? extends Type> expr, Collection<VarDecl<? extends Type>> collectTo) {
 		expr.accept(new VarCollectorVisitor(), collectTo);
+	}
+	
+	public static CNFTransformation createCNFTransformation(ConstraintManager manager, VarDeclFactory varFactory) {
+		return new CNFTransformation(manager, varFactory);
 	}
 
 }
