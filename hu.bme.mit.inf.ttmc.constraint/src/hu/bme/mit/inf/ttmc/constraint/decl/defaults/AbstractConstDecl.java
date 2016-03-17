@@ -12,6 +12,8 @@ public abstract class AbstractConstDecl<DeclType extends Type> extends AbstractD
 
 	private final ConstraintManager manager;
 
+	private volatile ConstRefExpr<DeclType> ref;
+
 	public AbstractConstDecl(final ConstraintManager manager, final String name, final DeclType type) {
 		super(name, type);
 		this.manager = manager;
@@ -19,8 +21,11 @@ public abstract class AbstractConstDecl<DeclType extends Type> extends AbstractD
 
 	@Override
 	public ConstRefExpr<DeclType> getRef() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		if (ref == null) {
+			ref = manager.getExprFactory().Ref(this);
+		}
+
+		return ref;
 	}
 
 	@Override

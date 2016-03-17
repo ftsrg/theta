@@ -12,6 +12,8 @@ public abstract class AbstractParamDecl<DeclType extends Type> extends AbstractD
 
 	private final ConstraintManager manager;
 
+	private volatile ParamRefExpr<DeclType> ref;
+
 	public AbstractParamDecl(final ConstraintManager manager, final String name, final DeclType type) {
 		super(name, type);
 		this.manager = manager;
@@ -19,8 +21,11 @@ public abstract class AbstractParamDecl<DeclType extends Type> extends AbstractD
 
 	@Override
 	public ParamRefExpr<DeclType> getRef() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		if (ref == null) {
+			ref = manager.getExprFactory().Ref(this);
+		}
+
+		return ref;
 	}
 
 	@Override

@@ -7,11 +7,13 @@ import java.util.Collection;
 import java.util.List;
 
 import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
+import hu.bme.mit.inf.ttmc.constraint.decl.ConstDecl;
 import hu.bme.mit.inf.ttmc.constraint.decl.ParamDecl;
 import hu.bme.mit.inf.ttmc.constraint.expr.AddExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.AndExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.ArrayReadExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.ArrayWriteExpr;
+import hu.bme.mit.inf.ttmc.constraint.expr.ConstRefExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.EqExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.ExistsExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
@@ -34,6 +36,7 @@ import hu.bme.mit.inf.ttmc.constraint.expr.NegExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.NeqExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.NotExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.OrExpr;
+import hu.bme.mit.inf.ttmc.constraint.expr.ParamRefExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.RatDivExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.RatLitExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.RemExpr;
@@ -43,6 +46,7 @@ import hu.bme.mit.inf.ttmc.constraint.expr.impl.AddExprImpl;
 import hu.bme.mit.inf.ttmc.constraint.expr.impl.AndExprImpl;
 import hu.bme.mit.inf.ttmc.constraint.expr.impl.ArrayReadExprImpl;
 import hu.bme.mit.inf.ttmc.constraint.expr.impl.ArrayWriteExprImpl;
+import hu.bme.mit.inf.ttmc.constraint.expr.impl.ConstRefExprImpl;
 import hu.bme.mit.inf.ttmc.constraint.expr.impl.EqExprImpl;
 import hu.bme.mit.inf.ttmc.constraint.expr.impl.ExistsExprImpl;
 import hu.bme.mit.inf.ttmc.constraint.expr.impl.FalseExprImpl;
@@ -64,6 +68,7 @@ import hu.bme.mit.inf.ttmc.constraint.expr.impl.NegExprImpl;
 import hu.bme.mit.inf.ttmc.constraint.expr.impl.NeqExprImpl;
 import hu.bme.mit.inf.ttmc.constraint.expr.impl.NotExprImpl;
 import hu.bme.mit.inf.ttmc.constraint.expr.impl.OrExprImpl;
+import hu.bme.mit.inf.ttmc.constraint.expr.impl.ParamRefExprImpl;
 import hu.bme.mit.inf.ttmc.constraint.expr.impl.RatDivExprImpl;
 import hu.bme.mit.inf.ttmc.constraint.expr.impl.RatLitExprImpl;
 import hu.bme.mit.inf.ttmc.constraint.expr.impl.RemExprImpl;
@@ -121,6 +126,18 @@ public class ExprFactoryImpl implements ExprFactory {
 		checkNotNull(paramDecl);
 		checkNotNull(result);
 		return new FuncLitExprImpl<P, R>(manager, paramDecl, result);
+	}
+
+	@Override
+	public <T extends Type> ConstRefExpr<T> Ref(final ConstDecl<T> constDecl) {
+		checkNotNull(constDecl);
+		return new ConstRefExprImpl<>(manager, constDecl);
+	}
+
+	@Override
+	public <T extends Type> ParamRefExpr<T> Ref(final ParamDecl<T> paramDecl) {
+		checkNotNull(paramDecl);
+		return new ParamRefExprImpl<>(manager, paramDecl);
 	}
 
 	@Override
