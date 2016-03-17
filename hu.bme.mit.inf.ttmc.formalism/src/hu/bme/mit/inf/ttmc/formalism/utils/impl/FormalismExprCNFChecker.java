@@ -1,20 +1,23 @@
 package hu.bme.mit.inf.ttmc.formalism.utils.impl;
 
+import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
+import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
-import hu.bme.mit.inf.ttmc.constraint.utils.impl.ExprCNFChecker;
+import hu.bme.mit.inf.ttmc.constraint.utils.impl.ExprCNFCheckerVisitor;
+import hu.bme.mit.inf.ttmc.constraint.utils.impl.ExprCNFCheckerVisitor.CNFStatus;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.PrimedExpr;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.ProcCallExpr;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.ProcRefExpr;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.VarRefExpr;
 import hu.bme.mit.inf.ttmc.formalism.utils.FormalismExprVisitor;
 
-public final class FormalismExprCNFChecker extends ExprCNFChecker {
-
-	public FormalismExprCNFChecker() {
-		super(new IsCNFFormalismExprVisitor());
+public final class FormalismExprCNFChecker {
+	
+	public boolean isExprCNF(Expr<? extends BoolType> expr) {
+		return expr.accept(new IsCNFFormalismExprVisitor(), CNFStatus.START);
 	}
 	
-	private static class IsCNFFormalismExprVisitor extends ExprCNFVisitor implements FormalismExprVisitor<CNFStatus, Boolean> {
+	private static class IsCNFFormalismExprVisitor extends ExprCNFCheckerVisitor implements FormalismExprVisitor<CNFStatus, Boolean> {
 
 		@Override
 		public <ExprType extends Type> Boolean visit(PrimedExpr<ExprType> expr, CNFStatus param) {
