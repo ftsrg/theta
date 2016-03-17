@@ -14,7 +14,7 @@ import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
-import hu.bme.mit.inf.ttmc.formalism.utils.impl.VarCollectorVisitor;
+import hu.bme.mit.inf.ttmc.formalism.utils.impl.FormalismUtils;
 
 /**
  * Symbolic Transition System (STS) implementation.
@@ -90,7 +90,6 @@ public final class STSImpl implements STS {
 		private final Collection<Expr<? extends BoolType>> invar;
 		private final Collection<Expr<? extends BoolType>> trans;
 		private Expr<? extends BoolType> prop;
-		private final VarCollectorVisitor varCollectorVisitor;
 		
 		public Builder() {
 			vars = new HashSet<>();
@@ -98,7 +97,6 @@ public final class STSImpl implements STS {
 			invar = new HashSet<>();
 			trans = new HashSet<>();
 			prop = null;
-			varCollectorVisitor = new VarCollectorVisitor();
 		}
 		
 		/**
@@ -173,10 +171,10 @@ public final class STSImpl implements STS {
 		public STS build() {
 			checkNotNull(prop);
 			// Collect variables from the expressions
-			for (Expr<? extends BoolType> expr : init) expr.accept(varCollectorVisitor, vars);
-			for (Expr<? extends BoolType> expr : invar) expr.accept(varCollectorVisitor, vars);
-			for (Expr<? extends BoolType> expr : trans) expr.accept(varCollectorVisitor, vars);
-			prop.accept(varCollectorVisitor, vars);
+			for (Expr<? extends BoolType> expr : init) FormalismUtils.collectVars(expr, vars);
+			for (Expr<? extends BoolType> expr : invar) FormalismUtils.collectVars(expr, vars);
+			for (Expr<? extends BoolType> expr : trans) FormalismUtils.collectVars(expr, vars);
+			FormalismUtils.collectVars(prop, vars);
 			
 			return new STSImpl(vars, init, invar, trans, prop);
 		}
