@@ -44,8 +44,7 @@ public abstract class AbstractArrayReadExpr<IndexType extends Type, ElemType ext
 
 	@Override
 	public final ElemType getType() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		return array.getType().getElemType();
 	}
 
 	@Override

@@ -22,8 +22,7 @@ public abstract class AbstractRatDivExpr extends AbstractBinaryExpr<RatType, Rat
 
 	@Override
 	public final RatType getType() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		return manager.getTypeFactory().Rat();
 	}
 
 	@Override

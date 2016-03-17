@@ -26,8 +26,7 @@ public class ProcRefExprImpl<ReturnType extends Type> implements ProcRefExpr<Ret
 
 	@Override
 	public final ProcType<ReturnType> getType() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		return getDecl().getType();
 	}
 
 	@Override

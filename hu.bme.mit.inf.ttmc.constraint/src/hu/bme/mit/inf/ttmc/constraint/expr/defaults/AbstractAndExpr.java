@@ -27,8 +27,7 @@ public abstract class AbstractAndExpr extends AbstractMultiaryExpr<BoolType, Boo
 
 	@Override
 	public final BoolType getType() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		return manager.getTypeFactory().Bool();
 	}
 
 	@Override

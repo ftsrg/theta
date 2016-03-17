@@ -13,7 +13,6 @@ public abstract class AbstractRatLitExpr extends AbstractNullaryExpr<RatType> im
 
 	private static final int HASH_SEED = 149;
 
-	@SuppressWarnings("unused")
 	private final ConstraintManager manager;
 
 	private final long num;
@@ -48,8 +47,7 @@ public abstract class AbstractRatLitExpr extends AbstractNullaryExpr<RatType> im
 
 	@Override
 	public final RatType getType() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		return manager.getTypeFactory().Rat();
 	}
 
 	@Override

@@ -22,8 +22,7 @@ public abstract class AbstractIntDivExpr extends AbstractBinaryExpr<IntType, Int
 
 	@Override
 	public final IntType getType() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		return manager.getTypeFactory().Int();
 	}
 
 	@Override

@@ -11,7 +11,6 @@ public abstract class AbstractFalseExpr extends AbstractBoolLitExpr implements F
 
 	private static final String OPERATOR_LABEL = "False";
 
-	@SuppressWarnings("unused")
 	private final ConstraintManager manager;
 
 	public AbstractFalseExpr(final ConstraintManager manager) {
@@ -25,8 +24,7 @@ public abstract class AbstractFalseExpr extends AbstractBoolLitExpr implements F
 
 	@Override
 	public final BoolType getType() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		return manager.getTypeFactory().Bool();
 	}
 
 	@Override

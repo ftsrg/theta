@@ -9,7 +9,6 @@ public abstract class AbstractIntLitExpr extends AbstractNullaryExpr<IntType> im
 
 	private static final int HASH_SEED = 4111;
 
-	@SuppressWarnings("unused")
 	private final ConstraintManager manager;
 
 	private final long value;
@@ -28,8 +27,7 @@ public abstract class AbstractIntLitExpr extends AbstractNullaryExpr<IntType> im
 
 	@Override
 	public final IntType getType() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		return manager.getTypeFactory().Int();
 	}
 
 	@Override

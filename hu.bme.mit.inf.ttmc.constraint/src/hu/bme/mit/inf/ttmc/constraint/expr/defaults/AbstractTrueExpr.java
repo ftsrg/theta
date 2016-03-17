@@ -11,7 +11,6 @@ public abstract class AbstractTrueExpr extends AbstractBoolLitExpr implements Tr
 
 	private static final String OPERATOR = "True";
 
-	@SuppressWarnings("unused")
 	private final ConstraintManager manager;
 
 	public AbstractTrueExpr(final ConstraintManager manager) {
@@ -25,8 +24,7 @@ public abstract class AbstractTrueExpr extends AbstractBoolLitExpr implements Tr
 
 	@Override
 	public final BoolType getType() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		return manager.getTypeFactory().Bool();
 	}
 
 	@Override
