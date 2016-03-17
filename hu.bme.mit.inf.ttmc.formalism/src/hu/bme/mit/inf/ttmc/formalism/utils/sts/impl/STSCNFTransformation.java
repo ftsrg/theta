@@ -22,7 +22,7 @@ public final class STSCNFTransformation implements STSTransformation {
 	@Override
 	public STS transform(STS system) {
 		STSImpl.Builder builder = new STSImpl.Builder();
-		CNFTransformation cnfTransf = new CNFTransformation(manager, manager.getDeclFactory());
+		CNFTransformation cnfTransf = FormalismUtils.createCNFTransformation(manager, manager.getDeclFactory());
 		
 		for (Expr<? extends BoolType> expr : system.getInit())
 			builder.addInit(transformIfNonCNF(expr, cnfTransf));
