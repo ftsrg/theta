@@ -7,6 +7,7 @@ import hu.bme.mit.inf.ttmc.constraint.expr.AndExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
+import hu.bme.mit.inf.ttmc.constraint.utils.impl.ExprCNFCheckerVisitor.CNFStatus;
 
 public class ExprUtils {
 
@@ -32,6 +33,10 @@ public class ExprUtils {
 		} else {
 			throw new ClassCastException("Expression " + expr + " is not of type " + metaType.getName());
 		}
+	}
+	
+	public static boolean isExprCNF(Expr<? extends BoolType> expr) {
+		return expr.accept(new ExprCNFCheckerVisitor(), CNFStatus.START);
 	}
 
 }
