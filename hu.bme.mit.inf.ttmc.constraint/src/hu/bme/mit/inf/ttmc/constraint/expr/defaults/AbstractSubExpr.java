@@ -1,10 +1,13 @@
 package hu.bme.mit.inf.ttmc.constraint.expr.defaults;
 
+import java.util.Optional;
+
 import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.expr.SubExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderSub;
 import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
+import hu.bme.mit.inf.ttmc.constraint.utils.impl.TypeUtils;
 
 public abstract class AbstractSubExpr<ExprType extends ClosedUnderSub>
 		extends AbstractBinaryExpr<ExprType, ExprType, ExprType> implements SubExpr<ExprType> {
@@ -23,8 +26,11 @@ public abstract class AbstractSubExpr<ExprType extends ClosedUnderSub>
 
 	@Override
 	public final ExprType getType() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		final ExprType leftType = getLeftOp().getType();
+		final ExprType rightType = getRightOp().getType();
+		final Optional<ExprType> joinResult = TypeUtils.join(manager.getTypeFactory(), leftType, rightType);
+		final ExprType result = joinResult.get();
+		return result;
 	}
 
 	@Override
