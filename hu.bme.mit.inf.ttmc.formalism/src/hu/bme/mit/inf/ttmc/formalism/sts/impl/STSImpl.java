@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.stream.Collectors;
 
 import hu.bme.mit.inf.ttmc.constraint.expr.AndExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
@@ -13,12 +14,12 @@ import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
-import hu.bme.mit.inf.ttmc.formalism.utils.impl.VarCollectorVisitor;
+import hu.bme.mit.inf.ttmc.formalism.utils.impl.FormalismUtils;
 
 /**
  * Symbolic Transition System (STS) implementation.
  */
-public class STSImpl implements STS {
+public final class STSImpl implements STS {
 
 	private final Collection<VarDecl<? extends Type>> vars;
 	private final Collection<Expr<? extends BoolType>> init;
@@ -67,13 +68,28 @@ public class STSImpl implements STS {
 		return prop;
 	}
 	
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder("STS [" + System.lineSeparator());
+		appendCollection(sb, "\tVars:  ", vars, System.lineSeparator());
+		appendCollection(sb, "\tInit:  ", init, System.lineSeparator());
+		appendCollection(sb, "\tInvar: ", invar, System.lineSeparator());
+		appendCollection(sb, "\tTrans: ", trans, System.lineSeparator() + "]");
+		return sb.toString();
+	}
+	
+	private void appendCollection(StringBuilder sb, String prefix, Collection<?> collection, String postfix) {
+		sb.append(prefix);
+		sb.append(String.join(", ", collection.stream().map(i -> i.toString()).collect(Collectors.toList())));
+		sb.append(postfix);
+	}
+	
 	public static class Builder {
 		private final Collection<VarDecl<? extends Type>> vars;
 		private final Collection<Expr<? extends BoolType>> init;
 		private final Collection<Expr<? extends BoolType>> invar;
 		private final Collection<Expr<? extends BoolType>> trans;
 		private Expr<? extends BoolType> prop;
-		private final VarCollectorVisitor varCollectorVisitor;
 		
 		public Builder() {
 			vars = new HashSet<>();
@@ -81,7 +97,6 @@ public class STSImpl implements STS {
 			invar = new HashSet<>();
 			trans = new HashSet<>();
 			prop = null;
-			varCollectorVisitor = new VarCollectorVisitor();
 		}
 		
 		/**
@@ -156,10 +171,10 @@ public class STSImpl implements STS {
 		public STS build() {
 			checkNotNull(prop);
 			// Collect variables from the expressions
-			for (Expr<? extends BoolType> expr : init) expr.accept(varCollectorVisitor, vars);
-			for (Expr<? extends BoolType> expr : invar) expr.accept(varCollectorVisitor, vars);
-			for (Expr<? extends BoolType> expr : trans) expr.accept(varCollectorVisitor, vars);
-			prop.accept(varCollectorVisitor, vars);
+			for (Expr<? extends BoolType> expr : init) FormalismUtils.collectVars(expr, vars);
+			for (Expr<? extends BoolType> expr : invar) FormalismUtils.collectVars(expr, vars);
+			for (Expr<? extends BoolType> expr : trans) FormalismUtils.collectVars(expr, vars);
+			FormalismUtils.collectVars(prop, vars);
 			
 			return new STSImpl(vars, init, invar, trans, prop);
 		}
