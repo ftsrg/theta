@@ -32,6 +32,7 @@ public abstract class AbstractDecl<DeclType extends Type> implements Decl<DeclTy
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
 		sb.append(getDeclLabel());
+		sb.append("(");
 		sb.append(getName());
 		sb.append(", ");
 		sb.append(getType());
