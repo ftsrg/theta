@@ -27,8 +27,14 @@ public class ExprITEEliminator {
 	private RemoveITEVisitor removeITEVisitor;
 	
 	public ExprITEEliminator(ConstraintManager manager) {
-		propagateITEVisitor = getPropageteITEVisitor(manager);
-		removeITEVisitor = getRemoveITEVisitor(manager);
+		this(new PropagateITEVisitor(manager, new PushBelowITEVisitor(manager, new IsBoolConnExprVisitor())),
+			new RemoveITEVisitor(manager));
+	}
+	
+	// Derived classes can call this constructor to pass derived visitors
+	protected ExprITEEliminator(PropagateITEVisitor propagateITEVisitor, RemoveITEVisitor removeITEVisitor) {
+		this.propagateITEVisitor = propagateITEVisitor;
+		this.removeITEVisitor = removeITEVisitor;
 	}
 	
 	/**
@@ -39,18 +45,6 @@ public class ExprITEEliminator {
 	@SuppressWarnings("unchecked")
 	public final Expr<? extends BoolType> eliminate(Expr<? extends BoolType> expr) {
 		return (Expr<? extends BoolType>) expr.accept(propagateITEVisitor, null).accept(removeITEVisitor, null);
-	}
-	
-	// Subclasses can override this method to provide a different visitor
-	// (supporting more types of expressions)
-	protected PropagateITEVisitor getPropageteITEVisitor(ConstraintManager manager) {
-		return new PropagateITEVisitor(manager, new PushBelowITEVisitor(manager, new IsBoolConnExprVisitor()));
-	}
-	
-	// Subclasses can override this method to provide a different visitor
-	// (supporting more types of expressions)
-	protected RemoveITEVisitor getRemoveITEVisitor(ConstraintManager manager) {
-		return new RemoveITEVisitor(manager);
 	}
 	
 	/**

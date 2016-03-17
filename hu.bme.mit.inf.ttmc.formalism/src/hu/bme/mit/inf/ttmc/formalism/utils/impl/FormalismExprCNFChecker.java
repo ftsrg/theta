@@ -10,13 +10,11 @@ import hu.bme.mit.inf.ttmc.formalism.utils.FormalismExprVisitor;
 
 public final class FormalismExprCNFChecker extends ExprCNFChecker {
 
-	// Provide own visitor that supports all formalism expressions
-	@Override
-	protected ExprCNFVisitor getCNFExprVisitor() {
-		return new IsCNFFormalismExprVisitor();
+	public FormalismExprCNFChecker() {
+		super(new IsCNFFormalismExprVisitor());
 	}
 	
-	private class IsCNFFormalismExprVisitor extends ExprCNFVisitor implements FormalismExprVisitor<CNFStatus, Boolean> {
+	private static class IsCNFFormalismExprVisitor extends ExprCNFVisitor implements FormalismExprVisitor<CNFStatus, Boolean> {
 
 		@Override
 		public <ExprType extends Type> Boolean visit(PrimedExpr<ExprType> expr, CNFStatus param) {
