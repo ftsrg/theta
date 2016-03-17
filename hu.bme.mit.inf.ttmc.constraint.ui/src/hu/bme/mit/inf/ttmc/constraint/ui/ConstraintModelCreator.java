@@ -22,7 +22,7 @@ public class ConstraintModelCreator {
 
 	private ConstraintModelCreator() {
 	}
-	
+
 	public static ConstraintModel create(final ConstraintManager manager, final ConstraintSpecification specification) {
 		checkNotNull(manager);
 		checkNotNull(specification);
@@ -30,17 +30,18 @@ public class ConstraintModelCreator {
 		final TypeHelper typeHelper = new TypeHelper(manager.getTypeFactory());
 		final DeclarationHelper declarationHelper = new DeclarationHelper(manager.getDeclFactory(), typeHelper);
 		final ExpressionHelper expressionHelper = new ExpressionHelper(manager, declarationHelper);
-		
+
 		final Collection<ConstDecl<Type>> constDecls = new ArrayList<>();
-		for (ConstantDeclaration constantDeclaration : specification.getConstantDeclarations()) {
+		for (final ConstantDeclaration constantDeclaration : specification.getConstantDeclarations()) {
 			final ConstDecl<Type> constDecl = (ConstDecl<Type>) declarationHelper.toDecl(constantDeclaration);
 			constDecls.add(constDecl);
 		}
-		
+
 		final Collection<Expr<? extends BoolType>> constraints = new ArrayList<>();
-		for (BasicConstraintDefinition basicConstraintDefinition : specification.getBasicConstraintDefinitions()) {
+		for (final BasicConstraintDefinition basicConstraintDefinition : specification
+				.getBasicConstraintDefinitions()) {
 			final Expression expression = basicConstraintDefinition.getExpression();
-			final Expr<? extends BoolType> expr = ExprUtils.cast(manager.getTypeInferrer(), expressionHelper.toExpr(expression), BoolType.class);
+			final Expr<? extends BoolType> expr = ExprUtils.cast(expressionHelper.toExpr(expression), BoolType.class);
 			final Collection<Expr<? extends BoolType>> conjuncts = ExprUtils.getConjuncts(expr);
 			constraints.addAll(conjuncts);
 		}

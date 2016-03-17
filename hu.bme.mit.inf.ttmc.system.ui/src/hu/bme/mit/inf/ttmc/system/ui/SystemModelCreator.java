@@ -38,10 +38,9 @@ public class SystemModelCreator {
 		final TypeHelper typeHelper = new TypeHelper(manager.getTypeFactory());
 		final SystemDeclarationHelper declarationHelper = new SystemDeclarationHelper(manager.getDeclFactory(),
 				typeHelper);
-		final SystemExpressionHelper expressionHelper = new SystemExpressionHelper(manager,
-				declarationHelper);
+		final SystemExpressionHelper expressionHelper = new SystemExpressionHelper(manager, declarationHelper);
 
-		for (PropertyDeclaration propertyDeclaration : specification.getPropertyDeclarations()) {
+		for (final PropertyDeclaration propertyDeclaration : specification.getPropertyDeclarations()) {
 			final SystemDefinition systemDefinition = (SystemDefinition) propertyDeclaration.getSystem();
 			final STS sts = createSTS(manager, systemDefinition, propertyDeclaration.getExpression(), declarationHelper,
 					expressionHelper);
@@ -51,12 +50,13 @@ public class SystemModelCreator {
 		return new SystemModelImpl(stss);
 	}
 
-	private static STS createSTS(final STSManager manager, final SystemDefinition systemDefinition, final Expression prop,
-			final SystemDeclarationHelper declarationHelper, final SystemExpressionHelper expressionHelper) {
+	private static STS createSTS(final STSManager manager, final SystemDefinition systemDefinition,
+			final Expression prop, final SystemDeclarationHelper declarationHelper,
+			final SystemExpressionHelper expressionHelper) {
 		final STSImpl.Builder builder = new STSImpl.Builder();
 		if (prop instanceof GloballyExpression) {
-			builder.setProp(ExprUtils.cast(manager.getTypeInferrer(),
-					expressionHelper.toExpr(((GloballyExpression) prop).getOperand()), BoolType.class));
+			builder.setProp(
+					ExprUtils.cast(expressionHelper.toExpr(((GloballyExpression) prop).getOperand()), BoolType.class));
 		} else {
 			throw new UnsupportedOperationException("Currently only expressions in the form of"
 					+ " G(expr) are supported, where 'expr' contains no temporal operators.");
@@ -67,9 +67,9 @@ public class SystemModelCreator {
 			builder.addVar(varDecl);
 		}
 
-		for (SystemConstraintDefinition constraintDef : systemDefinition.getSystemConstraintDefinitions()) {
-			final Expr<? extends BoolType> expr = ExprUtils.cast(manager.getTypeInferrer(),
-					expressionHelper.toExpr(constraintDef.getExpression()), BoolType.class);
+		for (final SystemConstraintDefinition constraintDef : systemDefinition.getSystemConstraintDefinitions()) {
+			final Expr<? extends BoolType> expr = ExprUtils.cast(expressionHelper.toExpr(constraintDef.getExpression()),
+					BoolType.class);
 			if (constraintDef instanceof InitialConstraintDefinition)
 				builder.addInit(expr);
 			if (constraintDef instanceof InvariantConstraintDefinition)
@@ -85,7 +85,7 @@ public class SystemModelCreator {
 
 		private final Collection<STS> stss;
 
-		private SystemModelImpl(Collection<STS> stss) {
+		private SystemModelImpl(final Collection<STS> stss) {
 			this.stss = ImmutableList.copyOf(checkNotNull(stss));
 		}
 
