@@ -13,6 +13,7 @@ public abstract class AbstractRatLitExpr extends AbstractNullaryExpr<RatType> im
 
 	private static final int HASH_SEED = 149;
 
+	@SuppressWarnings("unused")
 	private final ConstraintManager manager;
 
 	private final long num;

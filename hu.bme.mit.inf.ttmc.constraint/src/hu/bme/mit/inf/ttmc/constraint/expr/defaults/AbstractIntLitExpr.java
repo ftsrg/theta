@@ -9,6 +9,7 @@ public abstract class AbstractIntLitExpr extends AbstractNullaryExpr<IntType> im
 
 	private static final int HASH_SEED = 4111;
 
+	@SuppressWarnings("unused")
 	private final ConstraintManager manager;
 
 	private final long value;

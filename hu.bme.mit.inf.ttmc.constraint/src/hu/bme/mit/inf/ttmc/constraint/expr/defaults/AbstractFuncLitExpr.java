@@ -17,6 +17,7 @@ public abstract class AbstractFuncLitExpr<ParamType extends Type, ResultType ext
 
 	private static final String OPERATOR_LABEL = "Func";
 
+	@SuppressWarnings("unused")
 	private final ConstraintManager manager;
 
 	private final ParamDecl<? super ParamType> paramDecl;

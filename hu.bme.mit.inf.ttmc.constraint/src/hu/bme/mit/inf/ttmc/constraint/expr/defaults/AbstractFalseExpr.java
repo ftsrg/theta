@@ -10,6 +10,7 @@ public abstract class AbstractFalseExpr extends AbstractBoolLitExpr implements F
 
 	private static final String OPERATOR_LABEL = "False";
 
+	@SuppressWarnings("unused")
 	private final ConstraintManager manager;
 
 	public AbstractFalseExpr(final ConstraintManager manager) {

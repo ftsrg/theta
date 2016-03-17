@@ -11,6 +11,7 @@ public abstract class AbstractConstRefExpr<DeclType extends Type> extends Abstra
 
 	private static final int HASH_SEED = 167;
 
+	@SuppressWarnings("unused")
 	private final ConstraintManager manager;
 
 	public AbstractConstRefExpr(final ConstraintManager manager, final ConstDecl<DeclType> constDecl) {
