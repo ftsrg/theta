@@ -27,6 +27,12 @@ public abstract class AbstractMulExpr<ExprType extends ClosedUnderMul> extends A
 	}
 
 	@Override
+	public final ExprType getType() {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+	}
+
+	@Override
 	public final MulExpr<ExprType> withOps(final Collection<? extends Expr<? extends ExprType>> ops) {
 		if (ops == getOps()) {
 			return this;

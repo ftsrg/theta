@@ -27,6 +27,12 @@ public abstract class AbstractAddExpr<ExprType extends ClosedUnderAdd> extends A
 	}
 
 	@Override
+	public final ExprType getType() {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+	}
+
+	@Override
 	public final AddExpr<ExprType> withOps(final Collection<? extends Expr<? extends ExprType>> ops) {
 		if (ops == getOps()) {
 			return this;

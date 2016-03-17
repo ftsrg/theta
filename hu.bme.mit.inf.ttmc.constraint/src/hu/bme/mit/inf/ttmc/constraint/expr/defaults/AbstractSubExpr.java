@@ -22,6 +22,12 @@ public abstract class AbstractSubExpr<ExprType extends ClosedUnderSub>
 	}
 
 	@Override
+	public final ExprType getType() {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+	}
+
+	@Override
 	public final SubExpr<ExprType> withOps(final Expr<? extends ExprType> leftOp,
 			final Expr<? extends ExprType> rightOp) {
 		if (leftOp == getLeftOp() && rightOp == getRightOp()) {

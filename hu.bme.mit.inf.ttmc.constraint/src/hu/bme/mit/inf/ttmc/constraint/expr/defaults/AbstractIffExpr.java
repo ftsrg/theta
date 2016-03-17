@@ -1,4 +1,3 @@
-
 package hu.bme.mit.inf.ttmc.constraint.expr.defaults;
 
 import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
@@ -19,6 +18,12 @@ public abstract class AbstractIffExpr extends AbstractBinaryExpr<BoolType, BoolT
 			final Expr<? extends BoolType> rightOp) {
 		super(leftOp, rightOp);
 		this.manager = manager;
+	}
+
+	@Override
+	public final BoolType getType() {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
 
 	@Override

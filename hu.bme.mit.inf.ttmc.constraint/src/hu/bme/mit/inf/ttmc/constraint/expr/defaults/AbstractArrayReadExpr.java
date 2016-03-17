@@ -43,6 +43,12 @@ public abstract class AbstractArrayReadExpr<IndexType extends Type, ElemType ext
 	}
 
 	@Override
+	public final ElemType getType() {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+	}
+
+	@Override
 	public final ArrayReadExpr<IndexType, ElemType> with(
 			final Expr<? extends ArrayType<? super IndexType, ? extends ElemType>> array,
 			final Expr<? extends IndexType> index) {

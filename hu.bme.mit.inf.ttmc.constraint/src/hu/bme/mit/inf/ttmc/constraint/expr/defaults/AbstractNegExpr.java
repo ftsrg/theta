@@ -21,6 +21,12 @@ public abstract class AbstractNegExpr<ExprType extends ClosedUnderNeg> extends A
 	}
 
 	@Override
+	public final ExprType getType() {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+	}
+
+	@Override
 	public final NegExpr<ExprType> withOp(final Expr<? extends ExprType> op) {
 		if (op == getOp()) {
 			return this;
