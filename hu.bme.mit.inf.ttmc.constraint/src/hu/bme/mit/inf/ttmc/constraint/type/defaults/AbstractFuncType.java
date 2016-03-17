@@ -4,11 +4,14 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import hu.bme.mit.inf.ttmc.constraint.type.FuncType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
+import hu.bme.mit.inf.ttmc.constraint.utils.TypeVisitor;
 
 public abstract class AbstractFuncType<ParamType extends Type, ResultType extends Type> extends AbstractType
 		implements FuncType<ParamType, ResultType> {
 
 	private final static int HASH_SEED = 3931;
+
+	private final static String TYPE_LABEL = "Func";
 
 	private volatile int hashCode = 0;
 
@@ -21,17 +24,22 @@ public abstract class AbstractFuncType<ParamType extends Type, ResultType extend
 	}
 
 	@Override
-	public ParamType getParamType() {
+	public final ParamType getParamType() {
 		return paramType;
 	}
 
 	@Override
-	public ResultType getResultType() {
+	public final ResultType getResultType() {
 		return resultType;
 	}
 
 	@Override
-	public int hashCode() {
+	public final <P, R> R accept(final TypeVisitor<? super P, ? extends R> visitor, final P param) {
+		return visitor.visit(this, param);
+	}
+
+	@Override
+	public final int hashCode() {
 		if (hashCode == 0) {
 			hashCode = HASH_SEED;
 			hashCode = 31 * hashCode + paramType.hashCode();
@@ -42,7 +50,7 @@ public abstract class AbstractFuncType<ParamType extends Type, ResultType extend
 	}
 
 	@Override
-	public boolean equals(final Object obj) {
+	public final boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		} else if (obj instanceof FuncType<?, ?>) {
@@ -54,9 +62,10 @@ public abstract class AbstractFuncType<ParamType extends Type, ResultType extend
 	}
 
 	@Override
-	public String toString() {
+	public final String toString() {
 		final StringBuilder sb = new StringBuilder();
-		sb.append("Func(");
+		sb.append(TYPE_LABEL);
+		sb.append("(");
 		sb.append(paramType);
 		sb.append(" -> ");
 		sb.append(resultType);

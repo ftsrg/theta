@@ -4,11 +4,14 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import hu.bme.mit.inf.ttmc.constraint.type.ArrayType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
+import hu.bme.mit.inf.ttmc.constraint.utils.TypeVisitor;
 
 public abstract class AbstractArrayType<IndexType extends Type, ElemType extends Type> extends AbstractType
 		implements ArrayType<IndexType, ElemType> {
 
 	private final static int HASH_SEED = 4919;
+
+	private final static String TYPE_LABEL = "Array";
 
 	private volatile int hashCode = 0;
 
@@ -21,17 +24,22 @@ public abstract class AbstractArrayType<IndexType extends Type, ElemType extends
 	}
 
 	@Override
-	public IndexType getIndexType() {
+	public final IndexType getIndexType() {
 		return indexType;
 	}
 
 	@Override
-	public ElemType getElemType() {
+	public final ElemType getElemType() {
 		return elemType;
 	}
 
 	@Override
-	public int hashCode() {
+	public final <P, R> R accept(final TypeVisitor<? super P, ? extends R> visitor, final P param) {
+		return visitor.visit(this, param);
+	}
+
+	@Override
+	public final int hashCode() {
 		if (hashCode == 0) {
 			hashCode = HASH_SEED;
 			hashCode = 31 * hashCode + indexType.hashCode();
@@ -42,7 +50,7 @@ public abstract class AbstractArrayType<IndexType extends Type, ElemType extends
 	}
 
 	@Override
-	public boolean equals(final Object obj) {
+	public final boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		} else if (obj instanceof ArrayType<?, ?>) {
@@ -54,9 +62,10 @@ public abstract class AbstractArrayType<IndexType extends Type, ElemType extends
 	}
 
 	@Override
-	public String toString() {
+	public final String toString() {
 		final StringBuilder sb = new StringBuilder();
-		sb.append("Array(");
+		sb.append(TYPE_LABEL);
+		sb.append("(");
 		sb.append(indexType);
 		sb.append(" -> ");
 		sb.append(elemType);
