@@ -12,7 +12,7 @@ import hu.bme.mit.inf.ttmc.formalism.common.factory.VarDeclFactory;
 import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
 import hu.bme.mit.inf.ttmc.formalism.sts.factory.STSExprFactory;
 import hu.bme.mit.inf.ttmc.formalism.sts.impl.STSManagerImpl;
-import hu.bme.mit.inf.ttmc.formalism.utils.impl.FormalismExprCNFChecker;
+import hu.bme.mit.inf.ttmc.formalism.utils.impl.FormalismUtils;
 
 public class FormalismExprCNFCheckerTests {
 	// Factories
@@ -21,8 +21,6 @@ public class FormalismExprCNFCheckerTests {
 	private STSExprFactory efc;
 	// Constants and variaBles for testing
 	private VarRefExpr<BoolType> vA, vB, vC;
-	// CNF checker
-	FormalismExprCNFChecker cnfChecker;
 	
 	@Before
 	public void Before() {
@@ -35,53 +33,51 @@ public class FormalismExprCNFCheckerTests {
 		vA = dfc.Var("A", tfc.Bool()).getRef();
 		vB = dfc.Var("B", tfc.Bool()).getRef();
 		vC = dfc.Var("C", tfc.Bool()).getRef();
-		// Create CNF checker
-		cnfChecker = new FormalismExprCNFChecker();
 	}
 	
 	@SuppressWarnings("unchecked")
 	@Test
 	public void testCnfProgExprCheckerTrue() {
 		// A
-		Assert.assertTrue(cnfChecker.isExprCNF(vA));
+		Assert.assertTrue(FormalismUtils.isExprCNF(vA));
 		// A'
-		Assert.assertTrue(cnfChecker.isExprCNF(efc.Prime(vA)));
+		Assert.assertTrue(FormalismUtils.isExprCNF(efc.Prime(vA)));
 		// !A
-		Assert.assertTrue(cnfChecker.isExprCNF(efc.Not(vA)));
+		Assert.assertTrue(FormalismUtils.isExprCNF(efc.Not(vA)));
 		// !(A')
-		Assert.assertTrue(cnfChecker.isExprCNF(efc.Not(efc.Prime(vA))));
+		Assert.assertTrue(FormalismUtils.isExprCNF(efc.Not(efc.Prime(vA))));
 		// !A or B' or !C
-		Assert.assertTrue(cnfChecker.isExprCNF(efc.Or(efc.Not(vA), efc.Prime(vB), efc.Not(vC))));
+		Assert.assertTrue(FormalismUtils.isExprCNF(efc.Or(efc.Not(vA), efc.Prime(vB), efc.Not(vC))));
 		// !A and B' and !C
-		Assert.assertTrue(cnfChecker.isExprCNF(efc.And(efc.Not(vA), efc.Prime(vB), efc.Not(vC))));
+		Assert.assertTrue(FormalismUtils.isExprCNF(efc.And(efc.Not(vA), efc.Prime(vB), efc.Not(vC))));
 		// !A and (B and !C)
-		Assert.assertTrue(cnfChecker.isExprCNF(efc.And(efc.Not(vA), efc.And(vB, efc.Not(vC)))));
+		Assert.assertTrue(FormalismUtils.isExprCNF(efc.And(efc.Not(vA), efc.And(vB, efc.Not(vC)))));
 		// !A and (B' or !C)
-		Assert.assertTrue(cnfChecker.isExprCNF(efc.And(efc.Not(vA), efc.Or(efc.Prime(vB), efc.Not(vC)))));
+		Assert.assertTrue(FormalismUtils.isExprCNF(efc.And(efc.Not(vA), efc.Or(efc.Prime(vB), efc.Not(vC)))));
 	}
 	
 	@SuppressWarnings("unchecked")
 	@Test
 	public void testCnfProgExprCheckerFalse() {
 		// !!A
-		Assert.assertFalse(cnfChecker.isExprCNF(efc.Not(efc.Not(vA))));
+		Assert.assertFalse(FormalismUtils.isExprCNF(efc.Not(efc.Not(vA))));
 		// !A and B and !C
-		Assert.assertTrue(cnfChecker.isExprCNF(efc.And(efc.Not(vA), vB, efc.Not(vC))));
+		Assert.assertTrue(FormalismUtils.isExprCNF(efc.And(efc.Not(vA), vB, efc.Not(vC))));
 		// !A or (B and !C)
-		Assert.assertFalse(cnfChecker.isExprCNF(efc.Or(efc.Not(vA), efc.And(vB, efc.Not(vC)))));
+		Assert.assertFalse(FormalismUtils.isExprCNF(efc.Or(efc.Not(vA), efc.And(vB, efc.Not(vC)))));
 		// !(A and B)
-		Assert.assertFalse(cnfChecker.isExprCNF(efc.Not(efc.And(vA, vB))));
+		Assert.assertFalse(FormalismUtils.isExprCNF(efc.Not(efc.And(vA, vB))));
 		// !(A or B)
-		Assert.assertFalse(cnfChecker.isExprCNF(efc.Not(efc.Or(vA, vB))));
+		Assert.assertFalse(FormalismUtils.isExprCNF(efc.Not(efc.Or(vA, vB))));
 		// A -> B
-		Assert.assertFalse(cnfChecker.isExprCNF(efc.Imply(vA, vB)));
+		Assert.assertFalse(FormalismUtils.isExprCNF(efc.Imply(vA, vB)));
 		// A <-> B
-		Assert.assertFalse(cnfChecker.isExprCNF(efc.Iff(vA, vB)));
+		Assert.assertFalse(FormalismUtils.isExprCNF(efc.Iff(vA, vB)));
 		// (!A)'
-		Assert.assertFalse(cnfChecker.isExprCNF(efc.Not(efc.Not(vA))));
+		Assert.assertFalse(FormalismUtils.isExprCNF(efc.Not(efc.Not(vA))));
 		// (A and B)'
-		Assert.assertFalse(cnfChecker.isExprCNF(efc.Prime(efc.And(vA, vB))));
+		Assert.assertFalse(FormalismUtils.isExprCNF(efc.Prime(efc.And(vA, vB))));
 		// (A or B)'
-		Assert.assertFalse(cnfChecker.isExprCNF(efc.Prime(efc.Or(vA, vB))));
+		Assert.assertFalse(FormalismUtils.isExprCNF(efc.Prime(efc.Or(vA, vB))));
 	}
 }

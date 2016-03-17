@@ -3,6 +3,7 @@ package hu.bme.mit.inf.ttmc.formalism.tests;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -19,8 +20,7 @@ import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.common.factory.VarDeclFactory;
 import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
 import hu.bme.mit.inf.ttmc.formalism.sts.impl.STSManagerImpl;
-import hu.bme.mit.inf.ttmc.formalism.utils.impl.VarCollectorVisitor;
-import org.junit.Assert;
+import hu.bme.mit.inf.ttmc.formalism.utils.impl.FormalismUtils;
 
 public class VarCollectorVisitorTests {
 	
@@ -34,8 +34,6 @@ public class VarCollectorVisitorTests {
 	VarDecl<BoolType> d;
 	VarDecl<IntType> e;
 	
-	VarCollectorVisitor visitor;
-	
 	@Before
 	public void before() {
 		manager = new STSManagerImpl(new ConstraintManagerImpl());
@@ -47,8 +45,6 @@ public class VarCollectorVisitorTests {
 		c = df.Var("C", manager.getTypeFactory().Rat());
 		d = df.Var("D", manager.getTypeFactory().Bool());
 		e = df.Var("E", manager.getTypeFactory().Int());
-		
-		visitor = new VarCollectorVisitor();
 	}
 
 	@SuppressWarnings("serial")
@@ -69,7 +65,7 @@ public class VarCollectorVisitorTests {
 	
 	private boolean checkExpr(Expr<? extends Type> expr, Set<VarDecl<? extends Type>> expectedVars) {
 		Set<VarDecl<? extends Type>> vars = new HashSet<>();
-		expr.accept(visitor, vars);
+		FormalismUtils.collectVars(expr, vars);
 		return setContentEquals(vars, expectedVars);
 	}
 	

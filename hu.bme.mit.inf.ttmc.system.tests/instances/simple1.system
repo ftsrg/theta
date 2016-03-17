@@ -1,31 +1,18 @@
-
-specification Test {
-	property s : {
-		
-		var reset : integer
+specification System {
+	property safe : {
 		var x : integer
-		var y : integer
+		var r : boolean
 		
-		invariant 0 <= reset and reset <= 1
-		invariant 0 <= x and x <= 2
-		invariant 0 <= y and y <= 2
+		invariant x >= 1 and x <= 4
 		
-		initial reset = 0
-		initial x = 0
-		initial y = 1
+		initial x = 1
+		initial r = false
 		
-		transition reset' >= 0 and reset' <= 1
 		transition x' = (
-			if reset = 1 then 0
-			else if x < y then x + 1
-			else if x = y then 0
-			else x
+			if x < 4 and not r then x + 1
+			else 1
 		)
-		transition y' = (
-			if reset = 1 then 0
-			else if x = y and not y = 2 then y + 1
-			else if x = y then 0
-			else y
-		)
-	} models G(x < y or reset = 1) // Does not hold
+		
+		transition (r' = true and x = 2) or r' = false
+	} models G(not r or not x = 2)
 }
