@@ -23,8 +23,7 @@ public abstract class AbstractEqExpr extends AbstractBinaryExpr<Type, Type, Bool
 
 	@Override
 	public final BoolType getType() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		return manager.getTypeFactory().Bool();
 	}
 
 	@Override

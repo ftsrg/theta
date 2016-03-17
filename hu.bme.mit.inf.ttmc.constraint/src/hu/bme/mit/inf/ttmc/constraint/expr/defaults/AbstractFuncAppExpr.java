@@ -45,8 +45,7 @@ public abstract class AbstractFuncAppExpr<ParamType extends Type, ResultType ext
 
 	@Override
 	public final ResultType getType() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		return getFunc().getType().getResultType();
 	}
 
 	@Override

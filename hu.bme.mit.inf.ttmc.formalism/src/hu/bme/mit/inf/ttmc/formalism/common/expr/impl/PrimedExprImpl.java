@@ -21,8 +21,7 @@ public final class PrimedExprImpl<ExprType extends Type> extends AbstractUnaryEx
 
 	@Override
 	public final ExprType getType() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		return getOp().getType();
 	}
 
 	@Override

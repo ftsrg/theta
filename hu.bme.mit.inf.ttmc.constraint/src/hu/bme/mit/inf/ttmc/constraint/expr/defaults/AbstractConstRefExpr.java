@@ -21,8 +21,7 @@ public abstract class AbstractConstRefExpr<DeclType extends Type> extends Abstra
 
 	@Override
 	public final DeclType getType() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		return getDecl().getType();
 	}
 
 	@Override

@@ -41,8 +41,7 @@ public class ProcCallExprImpl<ReturnType extends Type> implements ProcCallExpr<R
 
 	@Override
 	public final ReturnType getType() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		return getProc().getType().getReturnType();
 	}
 
 	@Override
