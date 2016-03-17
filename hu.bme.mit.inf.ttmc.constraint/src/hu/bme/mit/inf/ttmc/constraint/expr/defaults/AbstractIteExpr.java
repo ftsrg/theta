@@ -2,12 +2,15 @@ package hu.bme.mit.inf.ttmc.constraint.expr.defaults;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import java.util.Optional;
+
 import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.expr.IteExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
+import hu.bme.mit.inf.ttmc.constraint.utils.impl.TypeUtils;
 
 public abstract class AbstractIteExpr<ExprType extends Type> extends AbstractExpr<ExprType>
 		implements IteExpr<ExprType> {
@@ -50,8 +53,11 @@ public abstract class AbstractIteExpr<ExprType extends Type> extends AbstractExp
 
 	@Override
 	public final ExprType getType() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		final ExprType thenType = getThen().getType();
+		final ExprType elseType = getElse().getType();
+		final Optional<ExprType> joinResult = TypeUtils.join(manager.getTypeFactory(), thenType, elseType);
+		final ExprType result = joinResult.get();
+		return result;
 	}
 
 	@Override
