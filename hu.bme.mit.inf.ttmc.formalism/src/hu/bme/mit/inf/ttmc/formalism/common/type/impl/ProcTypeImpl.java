@@ -8,40 +8,70 @@ import java.util.StringJoiner;
 import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
+import hu.bme.mit.inf.ttmc.constraint.utils.TypeVisitor;
 import hu.bme.mit.inf.ttmc.formalism.common.type.ProcType;
+import hu.bme.mit.inf.ttmc.formalism.common.type.visitor.ProcTypeVisitor;
 
 public class ProcTypeImpl<ReturnType extends Type> implements ProcType<ReturnType> {
-	
+
+	private static final int HASH_SEED = 2069;
+
+	private static final String TYPE_LABEL = "Proc";
+
 	private final ImmutableList<? extends Type> paramTypes;
 	private final ReturnType returnType;
-	
+
+	private volatile int hashCode = 0;
+
 	public ProcTypeImpl(final List<? extends Type> paramTypes, final ReturnType returnType) {
 		this.paramTypes = ImmutableList.copyOf(checkNotNull(paramTypes));
 		this.returnType = checkNotNull(returnType);
 	}
-	
+
 	@Override
-	public List<? extends Type> getParamTypes() {
+	public final List<? extends Type> getParamTypes() {
 		return paramTypes;
 	}
 
 	@Override
-	public ReturnType getReturnType() {
+	public final ReturnType getReturnType() {
 		return returnType;
 	}
-	
+
 	@Override
-	public String toString() {
+	public final <P, R> R accept(final TypeVisitor<? super P, ? extends R> visitor, final P param) {
+		if (visitor instanceof ProcTypeVisitor<?, ?>) {
+			final ProcTypeVisitor<? super P, ? extends R> sVisitor = (ProcTypeVisitor<? super P, ? extends R>) visitor;
+			return sVisitor.visit(this, param);
+		} else {
+			throw new UnsupportedOperationException();
+		}
+	}
+
+	@Override
+	public final int hashCode() {
+		if (hashCode == 0) {
+			hashCode = HASH_SEED;
+			hashCode = 31 * hashCode + paramTypes.hashCode();
+			hashCode = 31 * hashCode + returnType.hashCode();
+		}
+
+		return hashCode;
+	}
+
+	@Override
+	public final String toString() {
 		final StringBuilder sb = new StringBuilder();
-		final String prefix = "Proc(";
+		final String prefix = TYPE_LABEL + "(";
 		sb.append(" -> ");
 		sb.append(returnType.toString());
 		sb.append(")");
 		final String suffix = sb.toString();
 		final StringJoiner sj = new StringJoiner(", ", prefix, suffix);
-		for (Type varType : paramTypes) {
+		for (final Type varType : paramTypes) {
 			sj.add(varType.toString());
 		}
 		return sj.toString();
 	}
+
 }
