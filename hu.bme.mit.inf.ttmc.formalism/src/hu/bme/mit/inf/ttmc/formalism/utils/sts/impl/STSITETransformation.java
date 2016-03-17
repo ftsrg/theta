@@ -18,17 +18,11 @@ public final class STSITETransformation implements STSTransformation {
 	@Override
 	public STS transform(STS system) {
 		STSImpl.Builder builder = new STSImpl.Builder();
-		// Keep variables
-		builder.addVar(system.getVars());
-		// Transform initial constraints
 		for (Expr<? extends BoolType> expr : system.getInit()) builder.addInit(eliminator.eliminate(expr));
-		// Transform invariant constraints
 		for (Expr<? extends BoolType> expr : system.getInvar()) builder.addInvar(eliminator.eliminate(expr));
-		// Transform transition constraints
 		for (Expr<? extends BoolType> expr : system.getTrans()) builder.addTrans(eliminator.eliminate(expr));
-		// Transform the property
 		builder.setProp(eliminator.eliminate(system.getProp()));
-		// Build and return system
+
 		return builder.build();
 	}
 
