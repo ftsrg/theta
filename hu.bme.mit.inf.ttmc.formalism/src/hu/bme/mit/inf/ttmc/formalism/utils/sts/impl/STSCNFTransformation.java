@@ -6,7 +6,7 @@ import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
 import hu.bme.mit.inf.ttmc.formalism.sts.impl.STSImpl;
 import hu.bme.mit.inf.ttmc.formalism.utils.impl.CNFTransformation;
-import hu.bme.mit.inf.ttmc.formalism.utils.impl.FormalismExprCNFChecker;
+import hu.bme.mit.inf.ttmc.formalism.utils.impl.FormalismUtils;
 import hu.bme.mit.inf.ttmc.formalism.utils.sts.STSTransformation;
 
 public final class STSCNFTransformation implements STSTransformation {
@@ -23,23 +23,22 @@ public final class STSCNFTransformation implements STSTransformation {
 	public STS transform(STS system) {
 		STSImpl.Builder builder = new STSImpl.Builder();
 		CNFTransformation cnfTransf = new CNFTransformation(manager, manager.getDeclFactory());
-		FormalismExprCNFChecker cnfChecker = new FormalismExprCNFChecker();
-
+		
 		for (Expr<? extends BoolType> expr : system.getInit())
-			builder.addInit(transformIfNonCNF(expr, cnfTransf, cnfChecker));
+			builder.addInit(transformIfNonCNF(expr, cnfTransf));
 		for (Expr<? extends BoolType> expr : system.getInvar())
-			builder.addInvar(transformIfNonCNF(expr, cnfTransf, cnfChecker));
+			builder.addInvar(transformIfNonCNF(expr, cnfTransf));
 		for (Expr<? extends BoolType> expr : system.getTrans())
-			builder.addTrans(transformIfNonCNF(expr, cnfTransf, cnfChecker));
+			builder.addTrans(transformIfNonCNF(expr, cnfTransf));
 
-		builder.setProp(transformIfNonCNF(system.getProp(), cnfTransf, cnfChecker));
+		builder.setProp(transformIfNonCNF(system.getProp(), cnfTransf));
 
 		return builder.build();
 	}
 	
 	private Expr<? extends BoolType> transformIfNonCNF(Expr<? extends BoolType> expr,
-			CNFTransformation cnfTransf, FormalismExprCNFChecker cnfChecker) {
-		if (cnfChecker.isExprCNF(expr)) return expr;
+			CNFTransformation cnfTransf) {
+		if (FormalismUtils.isExprCNF(expr)) return expr;
 		else return cnfTransf.transform(expr);
 	}
 
