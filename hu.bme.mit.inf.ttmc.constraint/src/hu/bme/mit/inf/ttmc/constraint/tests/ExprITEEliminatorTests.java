@@ -97,6 +97,11 @@ public class ExprITEEliminatorTests {
 				ExprUtils.eliminateITE(efc.Imply(efc.Ite(cB, cC, cD), cA), manager),
 				efc.Imply(efc.And(efc.Or(efc.Not(cB), cC), efc.Or(cB, cD)), cA)
 				);
+		// A = (if B then C else D)
+		Assert.assertEquals(
+				ExprUtils.eliminateITE(efc.Eq(cA, efc.Ite(cB, cC, cD)), manager),
+				efc.Eq(cA, efc.And(efc.Or(efc.Not(cB), cC), efc.Or(cB, cD)))
+				);
 		// X = (if A then Y else Z)
 		Assert.assertEquals(
 				ExprUtils.eliminateITE(efc.Eq(cX, efc.Ite(cA, cY, cZ)), manager),
