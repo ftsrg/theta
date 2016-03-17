@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.stream.Collectors;
 
 import hu.bme.mit.inf.ttmc.constraint.expr.AndExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
@@ -18,7 +19,7 @@ import hu.bme.mit.inf.ttmc.formalism.utils.impl.VarCollectorVisitor;
 /**
  * Symbolic Transition System (STS) implementation.
  */
-public class STSImpl implements STS {
+public final class STSImpl implements STS {
 
 	private final Collection<VarDecl<? extends Type>> vars;
 	private final Collection<Expr<? extends BoolType>> init;
@@ -65,6 +66,22 @@ public class STSImpl implements STS {
 	@Override
 	public Expr<? extends BoolType> getProp() {
 		return prop;
+	}
+	
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder("STS [" + System.lineSeparator());
+		appendCollection(sb, "\tVars:  ", vars, System.lineSeparator());
+		appendCollection(sb, "\tInit:  ", init, System.lineSeparator());
+		appendCollection(sb, "\tInvar: ", invar, System.lineSeparator());
+		appendCollection(sb, "\tTrans: ", trans, System.lineSeparator() + "]");
+		return sb.toString();
+	}
+	
+	private void appendCollection(StringBuilder sb, String prefix, Collection<?> collection, String postfix) {
+		sb.append(prefix);
+		sb.append(String.join(", ", collection.stream().map(i -> i.toString()).collect(Collectors.toList())));
+		sb.append(postfix);
 	}
 	
 	public static class Builder {

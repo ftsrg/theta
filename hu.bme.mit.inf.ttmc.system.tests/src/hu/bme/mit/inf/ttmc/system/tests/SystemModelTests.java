@@ -29,11 +29,7 @@ public class SystemModelTests {
 		for (STS sts : model.getSTSs()) {
 			sts = new STSCNFTransformation(manager).transform(
 					new STSITETransformation(manager).transform(sts));
-			System.out.println(sts.getVars());
-			System.out.println(sts.getInit());
-			System.out.println(sts.getInvar());
-			System.out.println(sts.getTrans());
-			System.out.println(sts.getProp());
+			System.out.println(sts);
 		}
 	}
 }
