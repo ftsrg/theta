@@ -1,5 +1,6 @@
 package hu.bme.mit.inf.ttmc.constraint.decl.defaults;
 
+import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.decl.ConstDecl;
 import hu.bme.mit.inf.ttmc.constraint.expr.ConstRefExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
@@ -9,8 +10,11 @@ public abstract class AbstractConstDecl<DeclType extends Type> extends AbstractD
 
 	private static final String DECL_LABEL = "Const";
 
-	public AbstractConstDecl(final String name, final DeclType type) {
+	private final ConstraintManager manager;
+
+	public AbstractConstDecl(final ConstraintManager manager, final String name, final DeclType type) {
 		super(name, type);
+		this.manager = manager;
 	}
 
 	@Override

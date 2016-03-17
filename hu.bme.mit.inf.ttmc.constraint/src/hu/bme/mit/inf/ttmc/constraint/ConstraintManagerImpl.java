@@ -18,7 +18,7 @@ public class ConstraintManagerImpl implements ConstraintManager {
 	private final TypeInferrer typeInferrer;
 
 	public ConstraintManagerImpl() {
-		declFactory = new DeclFactoryImpl();
+		declFactory = new DeclFactoryImpl(this);
 		typeFactory = new TypeFactoryImpl();
 		exprFactory = new ExprFactoryImpl(this);
 		typeInferrer = new TypeInferrerImpl(typeFactory);
