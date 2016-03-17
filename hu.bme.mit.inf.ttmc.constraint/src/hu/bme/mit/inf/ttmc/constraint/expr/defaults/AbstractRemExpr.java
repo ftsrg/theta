@@ -21,6 +21,12 @@ public abstract class AbstractRemExpr extends AbstractBinaryExpr<IntType, IntTyp
 	}
 
 	@Override
+	public final IntType getType() {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+	}
+
+	@Override
 	public RemExpr withOps(final Expr<? extends IntType> leftOp, final Expr<? extends IntType> rightOp) {
 		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
 			return this;

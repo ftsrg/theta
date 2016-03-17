@@ -17,7 +17,7 @@ import hu.bme.mit.inf.ttmc.formalism.common.type.ProcType;
 
 public class ProcCallExprImpl<ReturnType extends Type> implements ProcCallExpr<ReturnType> {
 
-	private final static int HASHSEED = 1471;
+	private final static int HASH_SEED = 1471;
 	private volatile int hashCode = 0;
 
 	private final Expr<? extends ProcType<? extends ReturnType>> proc;
@@ -30,19 +30,35 @@ public class ProcCallExprImpl<ReturnType extends Type> implements ProcCallExpr<R
 	}
 
 	@Override
-	public Expr<? extends ProcType<? extends ReturnType>> getProc() {
+	public final Expr<? extends ProcType<? extends ReturnType>> getProc() {
 		return proc;
 	}
 
 	@Override
-	public Collection<? extends Expr<? extends Type>> getParams() {
+	public final Collection<? extends Expr<? extends Type>> getParams() {
 		return params;
 	}
 
 	@Override
-	public int hashCode() {
+	public final ReturnType getType() {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+	}
+
+	@Override
+	public final <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
+		if (visitor instanceof ProcCallExprVisitor<?, ?>) {
+			final ProcCallExprVisitor<? super P, ? extends R> sVisitor = (ProcCallExprVisitor<? super P, ? extends R>) visitor;
+			return sVisitor.visit(this, param);
+		} else {
+			throw new UnsupportedOperationException();
+		}
+	}
+
+	@Override
+	public final int hashCode() {
 		if (hashCode == 0) {
-			hashCode = HASHSEED;
+			hashCode = HASH_SEED;
 			hashCode = 31 * hashCode + proc.hashCode();
 			hashCode = 31 * hashCode + params.hashCode();
 		}
@@ -51,14 +67,12 @@ public class ProcCallExprImpl<ReturnType extends Type> implements ProcCallExpr<R
 	}
 
 	@Override
-	public boolean equals(final Object obj) {
+	public final boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
-		} else if (obj == null) {
-			return false;
-		} else if (this.getClass() == obj.getClass()) {
-			final ProcCallExprImpl<?> that = (ProcCallExprImpl<?>) obj;
-			return this.proc.equals(that.proc) && this.params.equals(that.params);
+		} else if (obj instanceof ProcCallExpr<?>) {
+			final ProcCallExpr<?> that = (ProcCallExpr<?>) obj;
+			return this.getProc().equals(that.getProc()) && this.getParams().equals(that.getParams());
 		} else {
 			return false;
 		}
@@ -67,24 +81,15 @@ public class ProcCallExprImpl<ReturnType extends Type> implements ProcCallExpr<R
 	@Override
 	public final String toString() {
 		final StringBuilder sb = new StringBuilder();
-		sb.append(proc.toString());
+		sb.append(proc);
 		sb.append("(");
 		final String prefix = sb.toString();
 		final String suffix = ")";
 		final StringJoiner sj = new StringJoiner(", ", prefix, suffix);
-		for (Expr<? extends Type> param : params) {
+		for (final Expr<? extends Type> param : params) {
 			sj.add(param.toString());
 		}
 		return sj.toString();
 	}
 
-	@Override
-	public <P, R> R accept(ExprVisitor<? super P, ? extends R> visitor, P param) {
-		if (visitor instanceof ProcCallExprVisitor<?, ?>) {
-			final ProcCallExprVisitor<? super P, ? extends R> sVisitor = (ProcCallExprVisitor<? super P, ? extends R>) visitor;
-			return sVisitor.visit(this, param);
-		} else {
-			throw new UnsupportedOperationException();
-		}
-	}
 }

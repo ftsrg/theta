@@ -22,6 +22,12 @@ public abstract class AbstractEqExpr extends AbstractBinaryExpr<Type, Type, Bool
 	}
 
 	@Override
+	public final BoolType getType() {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+	}
+
+	@Override
 	public final EqExpr withOps(final Expr<? extends Type> leftOp, final Expr<? extends Type> rightOp) {
 		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
 			return this;

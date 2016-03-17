@@ -47,6 +47,12 @@ public abstract class AbstractRatLitExpr extends AbstractNullaryExpr<RatType> im
 	}
 
 	@Override
+	public final RatType getType() {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+	}
+
+	@Override
 	public final <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
 		return visitor.visit(this, param);
 	}

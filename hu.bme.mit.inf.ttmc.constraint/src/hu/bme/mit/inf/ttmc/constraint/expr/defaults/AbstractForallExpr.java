@@ -25,6 +25,12 @@ public abstract class AbstractForallExpr extends AbstractQuantifiedExpr implemen
 	}
 
 	@Override
+	public final BoolType getType() {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+	}
+
+	@Override
 	public ForallExpr withOp(final Expr<? extends BoolType> op) {
 		if (op == getOp()) {
 			return this;

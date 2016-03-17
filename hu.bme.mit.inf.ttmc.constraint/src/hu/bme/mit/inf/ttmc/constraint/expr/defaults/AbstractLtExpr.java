@@ -22,6 +22,12 @@ public abstract class AbstractLtExpr extends AbstractBinaryExpr<RatType, RatType
 	}
 
 	@Override
+	public final BoolType getType() {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+	}
+
+	@Override
 	public final LtExpr withOps(final Expr<? extends RatType> leftOp, final Expr<? extends RatType> rightOp) {
 		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
 			return this;

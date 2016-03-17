@@ -50,6 +50,12 @@ public abstract class AbstractArrayWriteExpr<IndexType extends Type, ElemType ex
 	}
 
 	@Override
+	public final ArrayType<IndexType, ElemType> getType() {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+	}
+
+	@Override
 	public final ArrayWriteExpr<IndexType, ElemType> with(
 			final Expr<? extends ArrayType<? super IndexType, ? extends ElemType>> array,
 			final Expr<? extends IndexType> index, final Expr<? extends ElemType> elem) {

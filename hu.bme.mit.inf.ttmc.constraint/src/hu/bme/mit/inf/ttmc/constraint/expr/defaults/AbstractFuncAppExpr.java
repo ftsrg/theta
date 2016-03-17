@@ -44,6 +44,12 @@ public abstract class AbstractFuncAppExpr<ParamType extends Type, ResultType ext
 	}
 
 	@Override
+	public final ResultType getType() {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+	}
+
+	@Override
 	public final <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
 		return visitor.visit(this, param);
 	}

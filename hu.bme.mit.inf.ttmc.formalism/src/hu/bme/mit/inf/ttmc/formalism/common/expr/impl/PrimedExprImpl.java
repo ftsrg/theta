@@ -20,6 +20,12 @@ public final class PrimedExprImpl<ExprType extends Type> extends AbstractUnaryEx
 	}
 
 	@Override
+	public final ExprType getType() {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+	}
+
+	@Override
 	public final UnaryExpr<ExprType, ExprType> withOp(final Expr<? extends ExprType> op) {
 		if (op == getOp()) {
 			return this;
@@ -39,12 +45,12 @@ public final class PrimedExprImpl<ExprType extends Type> extends AbstractUnaryEx
 	}
 
 	@Override
-	protected int getHashSeed() {
+	protected final int getHashSeed() {
 		return HASH_SEED;
 	}
 
 	@Override
-	protected String getOperatorLabel() {
+	protected final String getOperatorLabel() {
 		return OPERATOR_LABEL;
 	}
 

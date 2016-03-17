@@ -2,6 +2,7 @@ package hu.bme.mit.inf.ttmc.constraint.expr.defaults;
 
 import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.FalseExpr;
+import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 
 public abstract class AbstractFalseExpr extends AbstractBoolLitExpr implements FalseExpr {
@@ -20,6 +21,12 @@ public abstract class AbstractFalseExpr extends AbstractBoolLitExpr implements F
 	@Override
 	public final boolean getValue() {
 		return false;
+	}
+
+	@Override
+	public final BoolType getType() {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
 
 	@Override

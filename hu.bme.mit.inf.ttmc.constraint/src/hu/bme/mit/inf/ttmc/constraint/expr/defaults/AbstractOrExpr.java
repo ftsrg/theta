@@ -26,6 +26,12 @@ public abstract class AbstractOrExpr extends AbstractMultiaryExpr<BoolType, Bool
 	}
 
 	@Override
+	public final BoolType getType() {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+	}
+
+	@Override
 	public final OrExpr withOps(final Collection<? extends Expr<? extends BoolType>> ops) {
 		if (ops == getOps()) {
 			return this;

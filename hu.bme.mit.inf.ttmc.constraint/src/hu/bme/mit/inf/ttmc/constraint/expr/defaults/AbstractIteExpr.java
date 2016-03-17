@@ -49,6 +49,12 @@ public abstract class AbstractIteExpr<ExprType extends Type> extends AbstractExp
 	}
 
 	@Override
+	public final ExprType getType() {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+	}
+
+	@Override
 	public final IteExpr<ExprType> withOps(final Expr<? extends BoolType> cond, final Expr<? extends ExprType> then,
 			final Expr<? extends ExprType> elze) {
 		if (this.cond == cond && this.then == then && this.elze == elze) {
