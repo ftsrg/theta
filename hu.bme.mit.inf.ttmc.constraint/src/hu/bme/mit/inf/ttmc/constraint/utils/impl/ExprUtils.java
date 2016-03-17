@@ -3,6 +3,8 @@ package hu.bme.mit.inf.ttmc.constraint.utils.impl;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.stream.Collectors;
+
+import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.AndExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
@@ -37,6 +39,14 @@ public class ExprUtils {
 	
 	public static boolean isExprCNF(Expr<? extends BoolType> expr) {
 		return expr.accept(new ExprCNFCheckerVisitor(), CNFStatus.START);
+	}
+	
+	@SuppressWarnings("unchecked")
+	public static Expr<? extends BoolType> eliminateITE(Expr<? extends BoolType> expr, ConstraintManager manager) {
+		return (Expr<? extends BoolType>) expr.accept(
+				new ExprITEPropagatorVisitor(manager,
+						new ExprITEPusherVisitor(manager, new IsBoolConnExprVisitor())), null).accept(
+								new ExprITERemoverVisitor(manager), null);
 	}
 
 }

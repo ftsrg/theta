@@ -2,29 +2,40 @@ package hu.bme.mit.inf.ttmc.formalism.utils.impl;
 
 import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
+import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
-import hu.bme.mit.inf.ttmc.constraint.utils.impl.ExprITEEliminator;
+import hu.bme.mit.inf.ttmc.constraint.utils.impl.ExprITEPropagatorVisitor;
+import hu.bme.mit.inf.ttmc.constraint.utils.impl.ExprITEPusherVisitor;
+import hu.bme.mit.inf.ttmc.constraint.utils.impl.ExprITERemoverVisitor;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.PrimedExpr;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.ProcCallExpr;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.ProcRefExpr;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.VarRefExpr;
 import hu.bme.mit.inf.ttmc.formalism.utils.FormalismExprVisitor;
 
-public final class FormalismExprITEEliminator extends ExprITEEliminator {
+public final class FormalismExprITEEliminator {
+	ConstraintManager manager;
 	
 	public FormalismExprITEEliminator(ConstraintManager manager) {
-		super(new PropagateFormalismITEVisitor(manager, new PushBelowFormalismITEVisitor(manager)),
-			new RemoveFormalismITEVisitor(manager));
+		this.manager = manager;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public Expr<? extends BoolType> eliminate(Expr<? extends BoolType> expr) {
+		return (Expr<? extends BoolType>) expr.accept(
+				new FormalismITEPropagatorVisitor(manager,
+						new FormalismITEPusherVisitor(manager)), null).accept(
+								new FormalismITERemoverVisitor(manager), null);
 	}
 
 	/**
 	 * Helper visitor 1: Propagate ITE up in the expression tree as high as possible.
 	 * For example: x = 1 + ite(c, t, e) --> ite(c, x = 1 + t, x = 1 + e)
 	 */
-	private static class PropagateFormalismITEVisitor extends PropagateITEVisitor implements FormalismExprVisitor<Void, Expr<? extends Type>>  {
+	private static class FormalismITEPropagatorVisitor extends ExprITEPropagatorVisitor implements FormalismExprVisitor<Void, Expr<? extends Type>>  {
 
-		public PropagateFormalismITEVisitor(ConstraintManager manager, FormalismExprVisitor<Void, Expr<? extends Type>> pushBelowIteVisitor) {
-			super(manager, pushBelowIteVisitor);
+		public FormalismITEPropagatorVisitor(ConstraintManager manager, FormalismExprVisitor<Void, Expr<? extends Type>> formalismITEPusherVisitor) {
+			super(manager, formalismITEPusherVisitor);
 		}
 
 		@Override
@@ -52,9 +63,9 @@ public final class FormalismExprITEEliminator extends ExprITEEliminator {
 	 * Helper visitor 2: Push an expression below an ITE recursively.
 	 * For example: x = ite (c1, ite(c2, t, e1), e2) --> ite(c1, ite(c2, x = t, x = e1), x = e2)
 	 */
-	private static class PushBelowFormalismITEVisitor extends PushBelowITEVisitor implements FormalismExprVisitor<Void, Expr<? extends Type>> {
+	private static class FormalismITEPusherVisitor extends ExprITEPusherVisitor implements FormalismExprVisitor<Void, Expr<? extends Type>> {
 
-		public PushBelowFormalismITEVisitor(ConstraintManager manager) {
+		public FormalismITEPusherVisitor(ConstraintManager manager) {
 			super(manager, new IsBoolConnFormalismExprVisitor());
 		}
 
@@ -86,9 +97,9 @@ public final class FormalismExprITEEliminator extends ExprITEEliminator {
 	 * 
 	 * It is assumed that ite expressions are propagated as high as possible.
 	 */
-	private static class RemoveFormalismITEVisitor extends RemoveITEVisitor implements FormalismExprVisitor<Void, Expr<? extends Type>> {
+	private static class FormalismITERemoverVisitor extends ExprITERemoverVisitor implements FormalismExprVisitor<Void, Expr<? extends Type>> {
 
-		public RemoveFormalismITEVisitor(ConstraintManager manager) {
+		public FormalismITERemoverVisitor(ConstraintManager manager) {
 			super(manager);
 		}
 
