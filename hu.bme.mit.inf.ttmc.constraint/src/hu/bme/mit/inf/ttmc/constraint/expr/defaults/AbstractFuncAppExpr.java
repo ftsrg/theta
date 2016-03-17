@@ -16,6 +16,7 @@ public abstract class AbstractFuncAppExpr<ParamType extends Type, ResultType ext
 
 	private static final String OPERATOR_LABEL = "App";
 
+	@SuppressWarnings("unused")
 	private final ConstraintManager manager;
 
 	private final Expr<? extends FuncType<? super ParamType, ? extends ResultType>> func;

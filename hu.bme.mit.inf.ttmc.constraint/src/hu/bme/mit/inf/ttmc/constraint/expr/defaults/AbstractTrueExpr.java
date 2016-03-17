@@ -10,6 +10,7 @@ public abstract class AbstractTrueExpr extends AbstractBoolLitExpr implements Tr
 
 	private static final String OPERATOR = "True";
 
+	@SuppressWarnings("unused")
 	private final ConstraintManager manager;
 
 	public AbstractTrueExpr(final ConstraintManager manager) {
