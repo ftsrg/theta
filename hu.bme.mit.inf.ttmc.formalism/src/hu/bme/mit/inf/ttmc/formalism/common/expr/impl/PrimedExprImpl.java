@@ -44,6 +44,18 @@ public final class PrimedExprImpl<ExprType extends Type> extends AbstractUnaryEx
 	}
 
 	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		} else if (obj instanceof PrimedExpr) {
+			final PrimedExpr<?> that = (PrimedExpr<?>) obj;
+			return this.getOp().equals(that.getOp());
+		} else {
+			return false;
+		}
+	}
+
+	@Override
 	protected final int getHashSeed() {
 		return HASH_SEED;
 	}
