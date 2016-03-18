@@ -2,6 +2,7 @@ package hu.bme.mit.inf.ttmc.constraint.factory.impl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.factory.TypeFactory;
 import hu.bme.mit.inf.ttmc.constraint.type.ArrayType;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
@@ -16,16 +17,21 @@ import hu.bme.mit.inf.ttmc.constraint.type.impl.IntTypeImpl;
 import hu.bme.mit.inf.ttmc.constraint.type.impl.RatTypeImpl;
 
 public class TypeFactoryImpl implements TypeFactory {
+
 	final BoolType boolType;
 	final IntType intType;
 	final RatType ratType;
-	
-	public TypeFactoryImpl() {
-		boolType = new BoolTypeImpl();
-		intType = new IntTypeImpl();
-		ratType = new RatTypeImpl();
+
+	private final ConstraintManager manager;
+
+	public TypeFactoryImpl(final ConstraintManager manager) {
+		this.manager = manager;
+
+		boolType = new BoolTypeImpl(manager);
+		intType = new IntTypeImpl(manager);
+		ratType = new RatTypeImpl(manager);
 	}
-	
+
 	@Override
 	public BoolType Bool() {
 		return boolType;
@@ -42,17 +48,17 @@ public class TypeFactoryImpl implements TypeFactory {
 	}
 
 	@Override
-	public <P extends Type, R extends Type> FuncType<P, R> Func(P paramTypes, R resultType) {
+	public <P extends Type, R extends Type> FuncType<P, R> Func(final P paramTypes, final R resultType) {
 		checkNotNull(paramTypes);
 		checkNotNull(resultType);
-		return new FuncTypeImpl<P, R>(paramTypes, resultType);
+		return new FuncTypeImpl<P, R>(manager, paramTypes, resultType);
 	}
 
 	@Override
-	public <I extends Type, E extends Type> ArrayType<I, E> Array(I indexType, E elemType) {
+	public <I extends Type, E extends Type> ArrayType<I, E> Array(final I indexType, final E elemType) {
 		checkNotNull(indexType);
 		checkNotNull(elemType);
-		return new ArrayTypeImpl<I, E>(indexType, elemType);
+		return new ArrayTypeImpl<I, E>(manager, indexType, elemType);
 	}
 
 }

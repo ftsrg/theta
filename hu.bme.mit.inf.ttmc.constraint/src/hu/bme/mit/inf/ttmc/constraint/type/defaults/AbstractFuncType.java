@@ -2,6 +2,7 @@ package hu.bme.mit.inf.ttmc.constraint.type.defaults;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.type.FuncType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.constraint.utils.TypeVisitor;
@@ -13,14 +14,18 @@ public abstract class AbstractFuncType<ParamType extends Type, ResultType extend
 
 	private final static String TYPE_LABEL = "Func";
 
-	private volatile int hashCode = 0;
+	@SuppressWarnings("unused")
+	private final ConstraintManager manager;
 
 	private final ParamType paramType;
 	private final ResultType resultType;
 
-	public AbstractFuncType(final ParamType paramType, final ResultType resultType) {
+	private volatile int hashCode = 0;
+
+	public AbstractFuncType(final ConstraintManager manager, final ParamType paramType, final ResultType resultType) {
 		this.paramType = checkNotNull(paramType);
 		this.resultType = checkNotNull(resultType);
+		this.manager = manager;
 	}
 
 	@Override
