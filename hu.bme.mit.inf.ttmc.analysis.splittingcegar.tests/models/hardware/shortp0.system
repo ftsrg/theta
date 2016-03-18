@@ -1,0 +1,212 @@
+specification aag {
+	property s : {
+		// Constants
+		local var v0 : boolean
+		invariant v0 = false
+		// Variables
+		local var v1 : boolean
+		local var v2 : boolean
+		local var v3 : boolean
+		local var v4 : boolean
+		local var v5 : boolean
+		local var v6 : boolean
+		local var v7 : boolean
+		local var v8 : boolean
+		local var v9 : boolean
+		local var v10 : boolean
+		local var v11 : boolean
+		local var v12 : boolean
+		local var v13 : boolean
+		local var v14 : boolean
+		local var v15 : boolean
+		local var v16 : boolean
+		local var v17 : boolean
+		local var v18 : boolean
+		local var v19 : boolean
+		local var v20 : boolean
+		local var v21 : boolean
+		local var v22 : boolean
+		local var v23 : boolean
+		local var v24 : boolean
+		local var v25 : boolean
+		local var v26 : boolean
+		local var v27 : boolean
+		local var v28 : boolean
+		local var v29 : boolean
+		local var v30 : boolean
+		local var v31 : boolean
+		local var v32 : boolean
+		local var v33 : boolean
+		local var v34 : boolean
+		local var v35 : boolean
+		local var v36 : boolean
+		local var v37 : boolean
+		local var v38 : boolean
+		local var v39 : boolean
+		local var v40 : boolean
+		local var v41 : boolean
+		local var v42 : boolean
+		local var v43 : boolean
+		local var v44 : boolean
+		local var v45 : boolean
+		local var v46 : boolean
+		local var v47 : boolean
+		local var v48 : boolean
+		local var v49 : boolean
+		local var v50 : boolean
+		local var v51 : boolean
+		local var v52 : boolean
+		local var v53 : boolean
+		local var v54 : boolean
+		local var v55 : boolean
+		local var v56 : boolean
+		local var v57 : boolean
+		local var v58 : boolean
+		local var v59 : boolean
+		local var v60 : boolean
+		local var v61 : boolean
+		local var v62 : boolean
+		local var v63 : boolean
+		local var v64 : boolean
+		local var v65 : boolean
+		local var v66 : boolean
+		local var v67 : boolean
+		local var v68 : boolean
+		local var v69 : boolean
+		local var v70 : boolean
+		local var v71 : boolean
+		local var v72 : boolean
+		local var v73 : boolean
+		local var v74 : boolean
+		local var v75 : boolean
+		local var v76 : boolean
+		local var v77 : boolean
+		local var v78 : boolean
+		local var v79 : boolean
+		local var v80 : boolean
+		local var v81 : boolean
+		local var v82 : boolean
+		local var v83 : boolean
+		local var v84 : boolean
+		local var v85 : boolean
+		local var v86 : boolean
+		local var v87 : boolean
+		local var v88 : boolean
+		local var v89 : boolean
+		local var v90 : boolean
+		local var v91 : boolean
+		local var v92 : boolean
+		local var v93 : boolean
+		local var v94 : boolean
+		local var v95 : boolean
+		local var v96 : boolean
+		local var v97 : boolean
+		local var v98 : boolean
+		// Input variables [10]: v1 v2 v3 v4 v5 v6 v7 v8 v9 v10
+		// Latches [14]:
+		initial v11 = false
+		transition v11' = (v1)
+		initial v12 = false
+		transition v12' = (v27)
+		initial v13 = false
+		transition v13' = (v2)
+		initial v14 = false
+		transition v14' = (v3)
+		initial v15 = false
+		transition v15' = (v4)
+		initial v16 = false
+		transition v16' = (v5)
+		initial v17 = false
+		transition v17' = (v6)
+		initial v18 = false
+		transition v18' = (v7)
+		initial v19 = false
+		transition v19' = (v34)
+		initial v20 = false
+		transition v20' = (v38)
+		initial v21 = false
+		transition v21' = (v8)
+		initial v22 = false
+		transition v22' = (v39)
+		initial v23 = false
+		transition v23' = (v97)
+		initial v24 = false
+		transition v24' = (not v0)
+		// Output variables [1]: v98
+		// And gates [74]:
+		invariant v25 = (not v12 and v11)
+		invariant v26 = (not v25 and v10)
+		invariant v27 = (not v26 and v24)
+		invariant v28 = (not v22 and not v21)
+		invariant v29 = (not v13 and not v12)
+		invariant v30 = (v29 and v11)
+		invariant v31 = (not v30 and v14)
+		invariant v32 = (not v31 and not v28)
+		invariant v33 = (not v32 and not v19)
+		invariant v34 = (not v33 and v24)
+		invariant v35 = (v13 and not v12)
+		invariant v36 = (not v35 and not v28)
+		invariant v37 = (not v36 and not v20)
+		invariant v38 = (not v37 and v24)
+		invariant v39 = (not v28 and v24)
+		invariant v40 = (not v2 and v1)
+		invariant v41 = (not v40 and not v3)
+		invariant v42 = (v41 and not v24)
+		invariant v43 = (not v13 and v12)
+		invariant v44 = (v30 and not v14)
+		invariant v45 = (not v44 and not v43)
+		invariant v46 = (not v22 and v21)
+		invariant v47 = (v46 and not v11)
+		invariant v48 = (not v46 and not v15)
+		invariant v49 = (not v48 and not v47)
+		invariant v50 = (v49 and not v4)
+		invariant v51 = (not v49 and v4)
+		invariant v52 = (not v51 and not v50)
+		invariant v53 = (v52 and v45)
+		invariant v54 = (not v46 and not v16)
+		invariant v55 = (v46 and v12)
+		invariant v56 = (not v55 and not v54)
+		invariant v57 = (v56 and not v5)
+		invariant v58 = (not v56 and v5)
+		invariant v59 = (not v58 and not v57)
+		invariant v60 = (v59 and v53)
+		invariant v61 = (v46 and not v13)
+		invariant v62 = (not v46 and not v17)
+		invariant v63 = (not v62 and not v61)
+		invariant v64 = (v63 and not v6)
+		invariant v65 = (not v63 and v6)
+		invariant v66 = (not v65 and not v64)
+		invariant v67 = (v66 and v60)
+		invariant v68 = (v46 and not v14)
+		invariant v69 = (not v46 and not v18)
+		invariant v70 = (not v69 and not v68)
+		invariant v71 = (v70 and not v7)
+		invariant v72 = (not v70 and v7)
+		invariant v73 = (not v72 and not v71)
+		invariant v74 = (v73 and v67)
+		invariant v75 = (not v15 and v11)
+		invariant v76 = (v15 and not v11)
+		invariant v77 = (not v76 and not v75)
+		invariant v78 = (v17 and not v13)
+		invariant v79 = (not v17 and v13)
+		invariant v80 = (not v79 and not v78)
+		invariant v81 = (v18 and not v14)
+		invariant v82 = (not v18 and v14)
+		invariant v83 = (not v82 and not v81)
+		invariant v84 = (v83 and v80)
+		invariant v85 = (not v16 and not v12)
+		invariant v86 = (v16 and v12)
+		invariant v87 = (not v86 and not v85)
+		invariant v88 = (v87 and v84)
+		invariant v89 = (v88 and v77)
+		invariant v90 = (v89 and v22)
+		invariant v91 = (v90 and v19)
+		invariant v92 = (v91 and v20)
+		invariant v93 = (not v92 and v9)
+		invariant v94 = (not v93 and v23)
+		invariant v95 = (v94 and v74)
+		invariant v96 = (not v95 and v24)
+		invariant v97 = (not v96 and not v42)
+		invariant v98 = (v94 and v9)
+	} models G (not v98)
+}

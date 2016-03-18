@@ -1,0 +1,54 @@
+specification aag {
+	property s : {
+		// Constants
+		local var v0 : boolean
+		invariant v0 = false
+		// Variables
+		local var v1 : boolean
+		local var v2 : boolean
+		local var v3 : boolean
+		local var v4 : boolean
+		local var v5 : boolean
+		local var v6 : boolean
+		local var v7 : boolean
+		local var v8 : boolean
+		local var v9 : boolean
+		local var v10 : boolean
+		local var v11 : boolean
+		local var v12 : boolean
+		local var v13 : boolean
+		local var v14 : boolean
+		local var v15 : boolean
+		local var v16 : boolean
+		local var v17 : boolean
+		local var v18 : boolean
+		local var v19 : boolean
+		local var v20 : boolean
+		local var v21 : boolean
+		// Input variables [5]: v1 v2 v3 v4 v5
+		// Latches [5]:
+		initial v6 = false
+		transition v6' = (v1)
+		initial v7 = false
+		transition v7' = (v6)
+		initial v8 = false
+		transition v8' = (not v16)
+		initial v9 = false
+		transition v9' = (v21)
+		initial v10 = false
+		transition v10' = (v10)
+		// Output variables [1]: v20
+		// And gates [11]:
+		invariant v11 = (v7 and not v6)
+		invariant v12 = (not v7 and v6)
+		invariant v13 = (not v12 and not v11)
+		invariant v14 = (v13 and v8)
+		invariant v15 = (not v13 and not v8)
+		invariant v16 = (not v15 and not v14)
+		invariant v17 = (not v16 and not v6)
+		invariant v18 = (v16 and v6)
+		invariant v19 = (not v18 and not v17)
+		invariant v20 = (not v19 and v9)
+		invariant v21 = (not v8 and not v7)
+	} models G (not v20)
+}

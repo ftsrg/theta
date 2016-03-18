@@ -1,0 +1,35 @@
+// CNF version of simple2
+specification Test {
+	property s : {
+		// Variables
+		local var x : integer
+		local var y : integer
+		local var z : integer
+		
+		// Invariants
+		invariant x >= 1 and x <= 2
+		invariant y >= 0 and invariant y <= 2
+		invariant z >= 0 and invariant z <= 2
+		
+		// Initial values
+		initial x = 2
+		initial y = 2
+		initial z = 0
+		
+		// Transitions		
+		transition y < 2 or x = 1 or x' = x - 1
+		transition y >= 2 or x' = x + 1
+		transition x /= 1 or x' = x + 1
+		
+		transition y >= 2 or x /= 1 or y' = y * 2
+		transition y < 2 or y' = y - 1
+		transition x = 1 or y' = y - 1
+		
+		transition z >= y or z >= 2 or z' = z + 1
+		transition z < y or z' = y
+		transition z < 2 or z' = y
+		
+	} models
+	                  // this part is always true, it is required for the initial predicates to be the same as in the non CNF
+	G(y >= 2 or x = 1 and (z < 2 or (not z < 2) or z < y or (not z < y)) )
+}
