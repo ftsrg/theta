@@ -3,6 +3,7 @@ package hu.bme.mit.inf.ttmc.constraint.type.defaults;
 import java.util.Optional;
 
 import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
+import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.type.IntType;
 import hu.bme.mit.inf.ttmc.constraint.type.RatType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
@@ -14,11 +15,15 @@ public abstract class AbstractIntType extends AbstractBaseType implements IntTyp
 
 	private static final String TYPE_LABEL = "Int";
 
-	@SuppressWarnings("unused")
 	private final ConstraintManager manager;
 
 	public AbstractIntType(final ConstraintManager manager) {
 		this.manager = manager;
+	}
+
+	@Override
+	public final Expr<IntType> getAny() {
+		return manager.getExprFactory().Int(0);
 	}
 
 	@Override
