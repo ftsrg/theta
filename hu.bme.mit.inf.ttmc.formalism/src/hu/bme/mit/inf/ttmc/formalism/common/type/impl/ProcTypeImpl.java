@@ -39,6 +39,12 @@ public class ProcTypeImpl<ReturnType extends Type> implements ProcType<ReturnTyp
 	}
 
 	@Override
+	public boolean isLeq(final Type type) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+	}
+
+	@Override
 	public final <P, R> R accept(final TypeVisitor<? super P, ? extends R> visitor, final P param) {
 		if (visitor instanceof ProcTypeVisitor<?, ?>) {
 			final ProcTypeVisitor<? super P, ? extends R> sVisitor = (ProcTypeVisitor<? super P, ? extends R>) visitor;

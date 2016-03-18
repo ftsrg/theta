@@ -39,6 +39,16 @@ public abstract class AbstractFuncType<ParamType extends Type, ResultType extend
 	}
 
 	@Override
+	public final boolean isLeq(final Type type) {
+		if (type instanceof AbstractFuncType<?, ?>) {
+			final AbstractFuncType<?, ?> that = (AbstractFuncType<?, ?>) type;
+			return that.paramType.isLeq(this.paramType) && this.resultType.isLeq(that.resultType);
+		} else {
+			return false;
+		}
+	}
+
+	@Override
 	public final <P, R> R accept(final TypeVisitor<? super P, ? extends R> visitor, final P param) {
 		return visitor.visit(this, param);
 	}
