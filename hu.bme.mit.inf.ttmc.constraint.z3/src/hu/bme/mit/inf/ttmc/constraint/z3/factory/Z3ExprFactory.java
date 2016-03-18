@@ -44,8 +44,6 @@ import hu.bme.mit.inf.ttmc.constraint.expr.RatLitExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.RemExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.SubExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.TrueExpr;
-import hu.bme.mit.inf.ttmc.constraint.expr.impl.ConstRefExprImpl;
-import hu.bme.mit.inf.ttmc.constraint.expr.impl.ParamRefExprImpl;
 import hu.bme.mit.inf.ttmc.constraint.factory.ExprFactory;
 import hu.bme.mit.inf.ttmc.constraint.type.ArrayType;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
@@ -61,6 +59,7 @@ import hu.bme.mit.inf.ttmc.constraint.z3.expr.Z3AddExpr;
 import hu.bme.mit.inf.ttmc.constraint.z3.expr.Z3AndExpr;
 import hu.bme.mit.inf.ttmc.constraint.z3.expr.Z3ArrayReadExpr;
 import hu.bme.mit.inf.ttmc.constraint.z3.expr.Z3ArrayWriteExpr;
+import hu.bme.mit.inf.ttmc.constraint.z3.expr.Z3ConstRefExpr;
 import hu.bme.mit.inf.ttmc.constraint.z3.expr.Z3EqExpr;
 import hu.bme.mit.inf.ttmc.constraint.z3.expr.Z3ExistsExpr;
 import hu.bme.mit.inf.ttmc.constraint.z3.expr.Z3FalseExpr;
@@ -81,6 +80,7 @@ import hu.bme.mit.inf.ttmc.constraint.z3.expr.Z3NegExpr;
 import hu.bme.mit.inf.ttmc.constraint.z3.expr.Z3NeqExpr;
 import hu.bme.mit.inf.ttmc.constraint.z3.expr.Z3NotExpr;
 import hu.bme.mit.inf.ttmc.constraint.z3.expr.Z3OrExpr;
+import hu.bme.mit.inf.ttmc.constraint.z3.expr.Z3ParamRefExpr;
 import hu.bme.mit.inf.ttmc.constraint.z3.expr.Z3RatDivExpr;
 import hu.bme.mit.inf.ttmc.constraint.z3.expr.Z3RatLitExpr;
 import hu.bme.mit.inf.ttmc.constraint.z3.expr.Z3RemExpr;
@@ -137,13 +137,13 @@ public final class Z3ExprFactory implements ExprFactory {
 	@Override
 	public <T extends Type> ConstRefExpr<T> Ref(final ConstDecl<T> constDecl) {
 		checkNotNull(constDecl);
-		return new ConstRefExprImpl<>(manager, constDecl);
+		return new Z3ConstRefExpr<>(manager, constDecl, context);
 	}
 
 	@Override
 	public <T extends Type> ParamRefExpr<T> Ref(final ParamDecl<T> paramDecl) {
 		checkNotNull(paramDecl);
-		return new ParamRefExprImpl<>(manager, paramDecl);
+		return new Z3ParamRefExpr<>(manager, paramDecl, context);
 	}
 
 	@Override
