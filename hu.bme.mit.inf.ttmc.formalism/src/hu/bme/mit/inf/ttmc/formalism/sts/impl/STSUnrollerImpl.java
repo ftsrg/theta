@@ -65,9 +65,9 @@ public class STSUnrollerImpl implements STSUnroller {
 		return getConcreteState(model, i, sts.getVars());
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
-	public AndExpr getConcreteState(final Model model, final int i,
-			final Collection<VarDecl<? extends Type>> variables) {
+	public AndExpr getConcreteState(final Model model, final int i, final Collection<VarDecl<? extends Type>> variables) {
 		final List<Expr<? extends BoolType>> ops = new ArrayList<>(variables.size());
 
 		for (final VarDecl<? extends Type> varDecl : variables) {
@@ -76,7 +76,7 @@ public class STSUnrollerImpl implements STSUnroller {
 			if (eval.isPresent())
 				value = (Expr<? extends Type>) eval.get();
 			else
-				throw new UnsupportedOperationException("TODO: AnyVal");
+				value = varDecl.getType().getAny();
 			ops.add(manager.getExprFactory().Eq(varDecl.getRef(), value));
 		}
 
@@ -89,8 +89,7 @@ public class STSUnrollerImpl implements STSUnroller {
 	}
 
 	@Override
-	public List<AndExpr> extractTrace(final Model model, final int length,
-			final Collection<VarDecl<? extends Type>> variables) {
+	public List<AndExpr> extractTrace(final Model model, final int length, final Collection<VarDecl<? extends Type>> variables) {
 		final List<AndExpr> trace = new ArrayList<>(length);
 		for (int i = 0; i < length; ++i)
 			trace.add(getConcreteState(model, i, variables));
