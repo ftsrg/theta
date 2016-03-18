@@ -3,6 +3,7 @@ package hu.bme.mit.inf.ttmc.formalism.common.type.impl;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.StringJoiner;
 
 import com.google.common.collect.ImmutableList;
@@ -40,6 +41,18 @@ public class ProcTypeImpl<ReturnType extends Type> implements ProcType<ReturnTyp
 
 	@Override
 	public boolean isLeq(final Type type) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+	}
+
+	@Override
+	public Optional<? extends Type> meet(final Type type) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+	}
+
+	@Override
+	public Optional<? extends Type> join(final Type type) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
