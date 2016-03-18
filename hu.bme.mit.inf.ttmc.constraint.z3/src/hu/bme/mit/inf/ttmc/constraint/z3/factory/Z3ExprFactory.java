@@ -72,6 +72,7 @@ import hu.bme.mit.inf.ttmc.constraint.z3.expr.Z3IffExpr;
 import hu.bme.mit.inf.ttmc.constraint.z3.expr.Z3ImplyExpr;
 import hu.bme.mit.inf.ttmc.constraint.z3.expr.Z3IntDivExpr;
 import hu.bme.mit.inf.ttmc.constraint.z3.expr.Z3IntLitExpr;
+import hu.bme.mit.inf.ttmc.constraint.z3.expr.Z3IteExpr;
 import hu.bme.mit.inf.ttmc.constraint.z3.expr.Z3LeqExpr;
 import hu.bme.mit.inf.ttmc.constraint.z3.expr.Z3LtExpr;
 import hu.bme.mit.inf.ttmc.constraint.z3.expr.Z3ModExpr;
@@ -315,7 +316,10 @@ public final class Z3ExprFactory implements ExprFactory {
 	@Override
 	public <T extends Type> IteExpr<T> Ite(final Expr<? extends BoolType> cond, final Expr<? extends T> then,
 			final Expr<? extends T> elze) {
-		throw new UnsupportedOperationException("TODO");
+		checkNotNull(cond);
+		checkNotNull(then);
+		checkNotNull(elze);
+		return new Z3IteExpr<>(manager, cond, then, elze, context);
 	}
 
 }
