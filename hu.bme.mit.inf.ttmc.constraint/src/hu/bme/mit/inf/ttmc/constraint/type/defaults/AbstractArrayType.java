@@ -2,6 +2,7 @@ package hu.bme.mit.inf.ttmc.constraint.type.defaults;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.type.ArrayType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.constraint.utils.TypeVisitor;
@@ -13,14 +14,18 @@ public abstract class AbstractArrayType<IndexType extends Type, ElemType extends
 
 	private final static String TYPE_LABEL = "Array";
 
-	private volatile int hashCode = 0;
+	@SuppressWarnings("unused")
+	private final ConstraintManager manager;
 
 	private final IndexType indexType;
 	private final ElemType elemType;
 
-	public AbstractArrayType(final IndexType indexType, final ElemType elemType) {
+	private volatile int hashCode = 0;
+
+	public AbstractArrayType(final ConstraintManager manager, final IndexType indexType, final ElemType elemType) {
 		this.indexType = checkNotNull(indexType);
 		this.elemType = checkNotNull(elemType);
+		this.manager = manager;
 	}
 
 	@Override

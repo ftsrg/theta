@@ -4,6 +4,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.microsoft.z3.Context;
 
+import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.factory.TypeFactory;
 import hu.bme.mit.inf.ttmc.constraint.type.ArrayType;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
@@ -19,20 +20,23 @@ import hu.bme.mit.inf.ttmc.constraint.z3.type.Z3RatType;
 
 public final class Z3TypeFactory implements TypeFactory {
 
+	final ConstraintManager manager;
+
 	final Context context;
-	
+
 	final BoolType boolType;
 	final IntType intType;
 	final RatType ratType;
-	
-	public Z3TypeFactory(final Context context) {
+
+	public Z3TypeFactory(final ConstraintManager manager, final Context context) {
+		this.manager = manager;
 		this.context = context;
-		
-		boolType = new Z3BoolType(context);
-		intType = new Z3IntType(context);
-		ratType = new Z3RatType(context);
+
+		boolType = new Z3BoolType(manager, context);
+		intType = new Z3IntType(manager, context);
+		ratType = new Z3RatType(manager, context);
 	}
-	
+
 	@Override
 	public BoolType Bool() {
 		return boolType;
@@ -49,18 +53,17 @@ public final class Z3TypeFactory implements TypeFactory {
 	}
 
 	@Override
-	public <P extends Type, R extends Type> FuncType<P, R> Func(P paramType, R resultType) {
+	public <P extends Type, R extends Type> FuncType<P, R> Func(final P paramType, final R resultType) {
 		checkNotNull(paramType);
 		checkNotNull(resultType);
-		return new Z3FuncType<>(paramType, resultType, context);
+		return new Z3FuncType<>(manager, paramType, resultType, context);
 	}
 
 	@Override
 	public <I extends Type, E extends Type> ArrayType<I, E> Array(final I indexType, final E elemType) {
 		checkNotNull(indexType);
 		checkNotNull(elemType);
-		return new Z3ArrayType<>(indexType, elemType, context);
+		return new Z3ArrayType<>(manager, indexType, elemType, context);
 	}
-	
 
 }

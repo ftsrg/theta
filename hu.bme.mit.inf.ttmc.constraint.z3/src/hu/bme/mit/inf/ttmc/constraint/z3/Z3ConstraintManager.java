@@ -45,7 +45,7 @@ public final class Z3ConstraintManager implements ConstraintManager {
 		final InterpolationContext context = new InterpolationContext();
 
 		declFactory = new Z3DeclFactory(this, context);
-		typeFactory = new Z3TypeFactory(context);
+		typeFactory = new Z3TypeFactory(this, context);
 		exprFactory = new Z3ExprFactory(this, context);
 		final Z3TermWrapper termWrapper = new Z3TermWrapper(this, context, declFactory);
 		solverFactory = new Z3SolverFactory(this, context, termWrapper);
