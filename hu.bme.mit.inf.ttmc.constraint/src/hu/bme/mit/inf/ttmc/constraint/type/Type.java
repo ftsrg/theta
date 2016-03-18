@@ -2,9 +2,12 @@ package hu.bme.mit.inf.ttmc.constraint.type;
 
 import java.util.Optional;
 
+import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.utils.TypeVisitor;
 
 public interface Type {
+
+	public Expr<? extends Type> getAny();
 
 	public boolean isLeq(Type type);
 
