@@ -1,7 +1,11 @@
 package hu.bme.mit.inf.ttmc.constraint.type.defaults;
 
+import java.util.Optional;
+
 import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
+import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.type.IntType;
+import hu.bme.mit.inf.ttmc.constraint.type.RatType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.constraint.utils.TypeVisitor;
 
@@ -11,7 +15,6 @@ public abstract class AbstractIntType extends AbstractBaseType implements IntTyp
 
 	private static final String TYPE_LABEL = "Int";
 
-	@SuppressWarnings("unused")
 	private final ConstraintManager manager;
 
 	public AbstractIntType(final ConstraintManager manager) {
@@ -19,8 +22,39 @@ public abstract class AbstractIntType extends AbstractBaseType implements IntTyp
 	}
 
 	@Override
+	public final Expr<IntType> getAny() {
+		return manager.getExprFactory().Int(0);
+	}
+
+	@Override
 	public final boolean isLeq(final Type type) {
 		return type instanceof AbstractIntType || type instanceof AbstractRatType;
+	}
+
+	@Override
+	public final Optional<? extends IntType> meet(final Type type) {
+		if (type.isLeq(this)) {
+			assert type instanceof IntType;
+			final IntType that = (IntType) type;
+			return Optional.of(that);
+		} else if (this.isLeq(type)) {
+			return Optional.of(this);
+		} else {
+			return Optional.empty();
+		}
+	}
+
+	@Override
+	public final Optional<? extends RatType> join(final Type type) {
+		if (type.isLeq(this)) {
+			return Optional.of(this);
+		} else if (this.isLeq(type)) {
+			assert type instanceof RatType;
+			final RatType that = (RatType) type;
+			return Optional.of(that);
+		} else {
+			return Optional.empty();
+		}
 	}
 
 	@Override
@@ -35,7 +69,7 @@ public abstract class AbstractIntType extends AbstractBaseType implements IntTyp
 
 	@Override
 	public final boolean equals(final Object obj) {
-		return (obj instanceof IntType);
+		return (obj instanceof AbstractIntType);
 	}
 
 	@Override

@@ -3,6 +3,7 @@ package hu.bme.mit.inf.ttmc.constraint.tests;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import org.junit.Before;
 import org.junit.Test;
 
 import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
@@ -14,6 +15,28 @@ import hu.bme.mit.inf.ttmc.constraint.type.IntType;
 import hu.bme.mit.inf.ttmc.constraint.type.RatType;
 
 public class TypeTests {
+
+	BoolType Bool;
+	IntType Int;
+	RatType Rat;
+	FuncType<IntType, RatType> IntToRat;
+	FuncType<IntType, IntType> IntToInt;
+	FuncType<RatType, RatType> RatToRat;
+	FuncType<RatType, IntType> RatToInt;
+
+	@Before
+	public void init() {
+		final ConstraintManager manager = new ConstraintManagerImpl();
+		final TypeFactory tf = manager.getTypeFactory();
+
+		Bool = tf.Bool();
+		Int = tf.Int();
+		Rat = tf.Rat();
+		IntToRat = tf.Func(Int, Rat);
+		IntToInt = tf.Func(Int, Int);
+		RatToRat = tf.Func(Rat, Rat);
+		RatToInt = tf.Func(Rat, Int);
+	}
 
 	@Test
 	public final void testIsLeq() {

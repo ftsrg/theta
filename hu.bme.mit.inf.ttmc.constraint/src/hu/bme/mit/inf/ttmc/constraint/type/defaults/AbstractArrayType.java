@@ -2,7 +2,10 @@ package hu.bme.mit.inf.ttmc.constraint.type.defaults;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import java.util.Optional;
+
 import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
+import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.type.ArrayType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.constraint.utils.TypeVisitor;
@@ -14,7 +17,6 @@ public abstract class AbstractArrayType<IndexType extends Type, ElemType extends
 
 	private final static String TYPE_LABEL = "Array";
 
-	@SuppressWarnings("unused")
 	private final ConstraintManager manager;
 
 	private final IndexType indexType;
@@ -39,6 +41,12 @@ public abstract class AbstractArrayType<IndexType extends Type, ElemType extends
 	}
 
 	@Override
+	public final Expr<ArrayType<IndexType, ElemType>> getAny() {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+	}
+
+	@Override
 	public final boolean isLeq(final Type type) {
 		if (type instanceof ArrayType<?, ?>) {
 			final ArrayType<?, ?> that = (ArrayType<?, ?>) type;
@@ -46,6 +54,40 @@ public abstract class AbstractArrayType<IndexType extends Type, ElemType extends
 		} else {
 			return false;
 		}
+	}
+
+	@Override
+	public final Optional<ArrayType<?, ?>> meet(final Type type) {
+		if (type instanceof ArrayType<?, ?>) {
+			final ArrayType<?, ?> that = (ArrayType<?, ?>) type;
+			final Optional<? extends Type> joinOfIndexTypes = this.getIndexType().join(that.getIndexType());
+			final Optional<? extends Type> meetOfElemTypes = this.getElemType().meet(that.getElemType());
+
+			if (joinOfIndexTypes.isPresent() && meetOfElemTypes.isPresent()) {
+				final ArrayType<?, ?> arrayType = manager.getTypeFactory().Array(joinOfIndexTypes.get(),
+						meetOfElemTypes.get());
+				return Optional.of(arrayType);
+			}
+		}
+
+		return Optional.empty();
+	}
+
+	@Override
+	public final Optional<ArrayType<?, ?>> join(final Type type) {
+		if (type instanceof ArrayType<?, ?>) {
+			final ArrayType<?, ?> that = (ArrayType<?, ?>) type;
+			final Optional<? extends Type> meetOfIndexTypes = this.getIndexType().meet(that.getIndexType());
+			final Optional<? extends Type> joinOfElemTypes = this.getElemType().join(that.getElemType());
+
+			if (meetOfIndexTypes.isPresent() && joinOfElemTypes.isPresent()) {
+				final ArrayType<?, ?> arrayType = manager.getTypeFactory().Array(meetOfIndexTypes.get(),
+						joinOfElemTypes.get());
+				return Optional.of(arrayType);
+			}
+		}
+
+		return Optional.empty();
 	}
 
 	@Override
