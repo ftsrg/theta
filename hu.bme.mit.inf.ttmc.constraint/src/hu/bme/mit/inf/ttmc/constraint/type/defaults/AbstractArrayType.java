@@ -39,6 +39,16 @@ public abstract class AbstractArrayType<IndexType extends Type, ElemType extends
 	}
 
 	@Override
+	public final boolean isLeq(final Type type) {
+		if (type instanceof ArrayType<?, ?>) {
+			final ArrayType<?, ?> that = (ArrayType<?, ?>) type;
+			return that.getIndexType().isLeq(this.getIndexType()) && this.getElemType().isLeq(that.getElemType());
+		} else {
+			return false;
+		}
+	}
+
+	@Override
 	public final <P, R> R accept(final TypeVisitor<? super P, ? extends R> visitor, final P param) {
 		return visitor.visit(this, param);
 	}
@@ -58,9 +68,9 @@ public abstract class AbstractArrayType<IndexType extends Type, ElemType extends
 	public final boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
-		} else if (obj instanceof ArrayType<?, ?>) {
-			final ArrayType<?, ?> that = (ArrayType<?, ?>) obj;
-			return this.getIndexType().equals(that.getIndexType()) && this.getElemType().equals(that.getElemType());
+		} else if (obj instanceof AbstractArrayType<?, ?>) {
+			final AbstractArrayType<?, ?> that = (AbstractArrayType<?, ?>) obj;
+			return this.indexType.equals(that.indexType) && this.elemType.equals(that.elemType);
 		} else {
 			return false;
 		}

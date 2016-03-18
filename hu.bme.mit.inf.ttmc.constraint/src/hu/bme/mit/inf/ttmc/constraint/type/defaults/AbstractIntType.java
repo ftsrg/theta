@@ -2,6 +2,7 @@ package hu.bme.mit.inf.ttmc.constraint.type.defaults;
 
 import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.type.IntType;
+import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.constraint.utils.TypeVisitor;
 
 public abstract class AbstractIntType extends AbstractBaseType implements IntType {
@@ -15,6 +16,11 @@ public abstract class AbstractIntType extends AbstractBaseType implements IntTyp
 
 	public AbstractIntType(final ConstraintManager manager) {
 		this.manager = manager;
+	}
+
+	@Override
+	public final boolean isLeq(final Type type) {
+		return type instanceof AbstractIntType || type instanceof AbstractRatType;
 	}
 
 	@Override

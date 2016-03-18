@@ -2,6 +2,7 @@ package hu.bme.mit.inf.ttmc.constraint.type.defaults;
 
 import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
+import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.constraint.utils.TypeVisitor;
 
 public abstract class AbstractBoolType extends AbstractBaseType implements BoolType {
@@ -18,6 +19,11 @@ public abstract class AbstractBoolType extends AbstractBaseType implements BoolT
 	}
 
 	@Override
+	public final boolean isLeq(final Type type) {
+		return this.equals(type);
+	}
+
+	@Override
 	public final <P, R> R accept(final TypeVisitor<? super P, ? extends R> visitor, final P param) {
 		return visitor.visit(this, param);
 	}
@@ -29,7 +35,7 @@ public abstract class AbstractBoolType extends AbstractBaseType implements BoolT
 
 	@Override
 	public final boolean equals(final Object obj) {
-		return (obj instanceof BoolType);
+		return (obj instanceof AbstractBoolType);
 	}
 
 	@Override
