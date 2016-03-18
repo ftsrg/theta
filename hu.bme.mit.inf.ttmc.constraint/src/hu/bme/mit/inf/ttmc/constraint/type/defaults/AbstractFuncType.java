@@ -2,6 +2,8 @@ package hu.bme.mit.inf.ttmc.constraint.type.defaults;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import java.util.Optional;
+
 import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.type.FuncType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
@@ -14,7 +16,6 @@ public abstract class AbstractFuncType<ParamType extends Type, ResultType extend
 
 	private final static String TYPE_LABEL = "Func";
 
-	@SuppressWarnings("unused")
 	private final ConstraintManager manager;
 
 	private final ParamType paramType;
@@ -46,6 +47,40 @@ public abstract class AbstractFuncType<ParamType extends Type, ResultType extend
 		} else {
 			return false;
 		}
+	}
+
+	@Override
+	public final Optional<FuncType<?, ?>> meet(final Type type) {
+		if (type instanceof FuncType<?, ?>) {
+			final FuncType<?, ?> that = (FuncType<?, ?>) type;
+			final Optional<? extends Type> joinOfParamTypes = this.getParamType().join(that.getParamType());
+			final Optional<? extends Type> meetOfResultTypes = this.getResultType().meet(that.getResultType());
+
+			if (joinOfParamTypes.isPresent() && meetOfResultTypes.isPresent()) {
+				final FuncType<?, ?> funcType = manager.getTypeFactory().Func(joinOfParamTypes.get(),
+						meetOfResultTypes.get());
+				return Optional.of(funcType);
+			}
+		}
+
+		return Optional.empty();
+	}
+
+	@Override
+	public final Optional<FuncType<?, ?>> join(final Type type) {
+		if (type instanceof FuncType<?, ?>) {
+			final FuncType<?, ?> that = (FuncType<?, ?>) type;
+			final Optional<? extends Type> meetOfParamTypes = this.getParamType().meet(that.getParamType());
+			final Optional<? extends Type> joinOfResultTypes = this.getResultType().join(that.getResultType());
+
+			if (meetOfParamTypes.isPresent() && joinOfResultTypes.isPresent()) {
+				final FuncType<?, ?> funcType = manager.getTypeFactory().Func(meetOfParamTypes.get(),
+						joinOfResultTypes.get());
+				return Optional.of(funcType);
+			}
+		}
+
+		return Optional.empty();
 	}
 
 	@Override

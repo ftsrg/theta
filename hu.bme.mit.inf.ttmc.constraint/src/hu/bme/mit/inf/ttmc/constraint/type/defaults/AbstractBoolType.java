@@ -1,5 +1,7 @@
 package hu.bme.mit.inf.ttmc.constraint.type.defaults;
 
+import java.util.Optional;
+
 import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
@@ -21,6 +23,28 @@ public abstract class AbstractBoolType extends AbstractBaseType implements BoolT
 	@Override
 	public final boolean isLeq(final Type type) {
 		return this.equals(type);
+	}
+
+	@Override
+	public final Optional<BoolType> meet(final Type type) {
+		if (type.isLeq(this)) {
+			assert type instanceof BoolType;
+			final BoolType that = (BoolType) type;
+			return Optional.of(that);
+		} else {
+			assert !this.isLeq(type);
+			return Optional.empty();
+		}
+	}
+
+	@Override
+	public final Optional<BoolType> join(final Type type) {
+		if (type.isLeq(this)) {
+			return Optional.of(this);
+		} else {
+			assert !this.isLeq(type);
+			return Optional.empty();
+		}
 	}
 
 	@Override
