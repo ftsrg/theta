@@ -34,8 +34,7 @@ public abstract class AbstractAddExpr<ExprType extends ClosedUnderAdd> extends A
 		checkArgument(getOps().size() > 0);
 		final ExprType headType = getOps().iterator().next().getType();
 		final Stream<ExprType> tailTypes = getOps().stream().skip(1).map(e -> (ExprType) e.getType());
-		final ExprType result = tailTypes.reduce(headType,
-				(t1, t2) -> TypeUtils.join(manager.getTypeFactory(), t1, t2).get());
+		final ExprType result = tailTypes.reduce(headType, (t1, t2) -> TypeUtils.join(t1, t2).get());
 		return result;
 	}
 
