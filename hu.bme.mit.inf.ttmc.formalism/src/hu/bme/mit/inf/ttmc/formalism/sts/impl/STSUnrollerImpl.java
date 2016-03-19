@@ -3,7 +3,6 @@ package hu.bme.mit.inf.ttmc.formalism.sts.impl;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import hu.bme.mit.inf.ttmc.constraint.expr.AndExpr;
@@ -72,11 +71,11 @@ public class STSUnrollerImpl implements STSUnroller {
 
 		for (final VarDecl<? extends Type> varDecl : variables) {
 			Expr<? extends Type> value = null;
-			final Optional<?> eval = model.eval(varMap.getConstDecl(varDecl, i));
-			if (eval.isPresent())
-				value = (Expr<? extends Type>) eval.get();
-			else
+			try {
+				value = model.eval(varMap.getConstDecl(varDecl, i)).get();
+			} catch (final Exception ex) {
 				value = varDecl.getType().getAny();
+			}
 			ops.add(manager.getExprFactory().Eq(varDecl.getRef(), value));
 		}
 
