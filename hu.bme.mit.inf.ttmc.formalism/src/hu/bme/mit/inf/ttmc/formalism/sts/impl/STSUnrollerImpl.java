@@ -64,7 +64,6 @@ public class STSUnrollerImpl implements STSUnroller {
 		return getConcreteState(model, i, sts.getVars());
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public AndExpr getConcreteState(final Model model, final int i, final Collection<VarDecl<? extends Type>> variables) {
 		final List<Expr<? extends BoolType>> ops = new ArrayList<>(variables.size());
