@@ -11,35 +11,42 @@ import hu.bme.mit.inf.ttmc.formalism.utils.sts.STSTransformation;
 
 public final class STSCNFTransformation implements STSTransformation {
 	private final STSManager manager;
-	
-	public STSCNFTransformation(STSManager manager) {
+
+	public STSCNFTransformation(final STSManager manager) {
 		this.manager = manager;
 	}
-	
+
 	/**
-	 * Apply Tseitin transformation to obtain a system where constraints are in CNF.
+	 * Apply Tseitin transformation to obtain a system where constraints are in
+	 * CNF.
 	 */
 	@Override
-	public STS transform(STS system) {
-		STSImpl.Builder builder = new STSImpl.Builder();
-		CNFTransformation cnfTransf = FormalismUtils.createCNFTransformation(manager, manager.getDeclFactory());
-		
-		for (Expr<? extends BoolType> expr : system.getInit())
-			builder.addInit(transformIfNonCNF(expr, cnfTransf));
-		for (Expr<? extends BoolType> expr : system.getInvar())
-			builder.addInvar(transformIfNonCNF(expr, cnfTransf));
-		for (Expr<? extends BoolType> expr : system.getTrans())
-			builder.addTrans(transformIfNonCNF(expr, cnfTransf));
+	public STS transform(final STS system) {
+		final STSImpl.Builder builder = new STSImpl.Builder();
+		final CNFTransformation cnfTransf = FormalismUtils.createCNFTransformation(manager, manager.getDeclFactory());
 
-		builder.setProp(transformIfNonCNF(system.getProp(), cnfTransf));
+		for (final Expr<? extends BoolType> expr : system.getInit())
+			builder.addInit(transformIfNonCNF(expr, cnfTransf));
+		cnfTransf.clearRepresentatives();
+
+		for (final Expr<? extends BoolType> expr : system.getInvar())
+			builder.addInvar(transformIfNonCNF(expr, cnfTransf));
+		cnfTransf.clearRepresentatives();
+
+		for (final Expr<? extends BoolType> expr : system.getTrans())
+			builder.addTrans(transformIfNonCNF(expr, cnfTransf));
+		cnfTransf.clearRepresentatives();
+
+		builder.setProp(system.getProp());
 
 		return builder.build();
 	}
-	
-	private Expr<? extends BoolType> transformIfNonCNF(Expr<? extends BoolType> expr,
-			CNFTransformation cnfTransf) {
-		if (FormalismUtils.isExprCNF(expr)) return expr;
-		else return cnfTransf.transform(expr);
+
+	private Expr<? extends BoolType> transformIfNonCNF(final Expr<? extends BoolType> expr, final CNFTransformation cnfTransf) {
+		if (FormalismUtils.isExprCNF(expr))
+			return expr;
+		else
+			return cnfTransf.transform(expr);
 	}
 
 }

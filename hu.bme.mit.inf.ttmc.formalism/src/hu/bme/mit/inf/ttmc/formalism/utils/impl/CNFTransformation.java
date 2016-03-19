@@ -77,6 +77,10 @@ public class CNFTransformation {
 		return cnfTransfVisitor.getReps();
 	}
 
+	public void clearRepresentatives() {
+		cnfTransfVisitor.clearReps();
+	}
+
 	private final class CNFTransformationVisitor implements FormalismExprVisitor<Collection<Expr<? extends BoolType>>, Expr<? extends BoolType>> {
 
 		private int nextCNFVarId;
@@ -95,6 +99,10 @@ public class CNFTransformation {
 
 		public Collection<VarDecl<? extends BoolType>> getReps() {
 			return representatives.values();
+		}
+
+		public void clearReps() {
+			representatives.clear();
 		}
 
 		private Expr<? extends BoolType> getRep(final Expr<?> expr) {
