@@ -2,95 +2,95 @@ specification instance {
 	
 	property s : {
 		// Variables (variable declaration + range def. + initial value)
-		local var HLD : boolean
+		var HLD : boolean
 		initial HLD = false
 		
-		local var Manreg01_8_ : boolean
+		var Manreg01_8_ : boolean
 		initial Manreg01_8_ = false
 		
-		local var Manreg01_9_ : boolean
+		var Manreg01_9_ : boolean
 		initial Manreg01_9_ = false
 		
-		local var Manreg01_10_ : boolean
+		var Manreg01_10_ : boolean
 		initial Manreg01_10_ = false
 		
-		local var Manreg01_11_ : boolean
+		var Manreg01_11_ : boolean
 		initial Manreg01_11_ = false
 		
-		local var AuAuMoR : boolean
+		var AuAuMoR : boolean
 		initial AuAuMoR = false
 		
-		local var AuIhMMo : boolean
+		var AuIhMMo : boolean
 		initial AuIhMMo = false
 		
-		local var AuIhFoMo : boolean
+		var AuIhFoMo : boolean
 		initial AuIhFoMo = false
 		
-		local var POnOff__ParReg_12_ : boolean
+		var POnOff__ParReg_12_ : boolean
 		
-		local var MMoSt : boolean
+		var MMoSt : boolean
 		initial MMoSt = false
 		
-		local var E_MAuMoR : boolean
+		var E_MAuMoR : boolean
 		initial E_MAuMoR = false
 		
-		local var E_MMMoR : boolean
+		var E_MMMoR : boolean
 		initial E_MMMoR = false
 		
-		local var E_MFoMoR : boolean
+		var E_MFoMoR : boolean
 		initial E_MFoMoR = false
 		
-		local var E_AuAuMoR : boolean
+		var E_AuAuMoR : boolean
 		initial E_AuAuMoR = false
 		
-		local var E_MSoftLDR : boolean
+		var E_MSoftLDR : boolean
 		initial E_MSoftLDR = false
 		
-		local var MAuMoR_old : boolean
+		var MAuMoR_old : boolean
 		initial MAuMoR_old = false
 		
-		local var MMMoR_old : boolean
+		var MMMoR_old : boolean
 		initial MMMoR_old = false
 		
-		local var MFoMoR_old : boolean
+		var MFoMoR_old : boolean
 		initial MFoMoR_old = false
 		
-		local var AuAuMoR_old : boolean
+		var AuAuMoR_old : boolean
 		initial AuAuMoR_old = false
 		
-		local var MSoftLDR_old : boolean
+		var MSoftLDR_old : boolean
 		initial MSoftLDR_old = false
 		
-		local var AuMoSt_aux : boolean
+		var AuMoSt_aux : boolean
 		initial AuMoSt_aux = false
 		
-		local var MMoSt_aux : boolean
+		var MMoSt_aux : boolean
 		initial MMoSt_aux = false
 		
-		local var FoMoSt_aux : boolean
+		var FoMoSt_aux : boolean
 		initial FoMoSt_aux = false
 		
-		local var SoftLDSt_aux : boolean
+		var SoftLDSt_aux : boolean
 		initial SoftLDSt_aux = false
 		
-		local var inlined_R_EDGE_1__old : boolean
+		var inlined_R_EDGE_1__old : boolean
 		initial inlined_R_EDGE_1__old = false
 		
-		local var inlined_R_EDGE_2__old : boolean
+		var inlined_R_EDGE_2__old : boolean
 		initial inlined_R_EDGE_2__old = false
 		
-		local var inlined_R_EDGE_3__old : boolean
+		var inlined_R_EDGE_3__old : boolean
 		initial inlined_R_EDGE_3__old = false
 		
-		local var inlined_R_EDGE_4__old : boolean
+		var inlined_R_EDGE_4__old : boolean
 		initial inlined_R_EDGE_4__old = false
 		
-		local var inlined_R_EDGE_9__old : boolean
+		var inlined_R_EDGE_9__old : boolean
 		initial inlined_R_EDGE_9__old = false
 		
 		
 		// Location variable definition
-		local var loc : integer
+		var loc : integer
 		invariant loc >= 0 and loc <= 16
 		initial loc = 1
 		// Automaton state - TTMC loc mapping

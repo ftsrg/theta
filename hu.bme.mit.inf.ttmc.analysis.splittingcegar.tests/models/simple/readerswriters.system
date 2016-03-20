@@ -1,8 +1,8 @@
 specification PetriNet {
 	property s : {
-		local var reading : integer
-		local var writing : integer
-		local var idle : integer
+		var reading : integer
+		var writing : integer
+		var idle : integer
 		
 		initial reading = 0
 		initial writing = 0

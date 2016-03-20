@@ -2,191 +2,191 @@ specification instance {
 	
 	property s : {
 		// Variables (variable declaration + range def. + initial value)
-		local var HFOn : boolean
+		var HFOn : boolean
 		initial HFOn = false
 		
-		local var HFOff : boolean
+		var HFOff : boolean
 		initial HFOff = false
 		
-		local var IOError : boolean
+		var IOError : boolean
 		initial IOError = false
 		
-		local var IOSimu : boolean
+		var IOSimu : boolean
 		initial IOSimu = false
 		
-		local var Manreg01_0_ : boolean
+		var Manreg01_0_ : boolean
 		initial Manreg01_0_ = false
 		
-		local var Manreg01_1_ : boolean
+		var Manreg01_1_ : boolean
 		initial Manreg01_1_ = false
 		
-		local var Manreg01_2_ : boolean
+		var Manreg01_2_ : boolean
 		initial Manreg01_2_ = false
 		
-		local var Manreg01_3_ : boolean
+		var Manreg01_3_ : boolean
 		initial Manreg01_3_ = false
 		
-		local var Manreg01_4_ : boolean
+		var Manreg01_4_ : boolean
 		initial Manreg01_4_ = false
 		
-		local var Manreg01_5_ : boolean
+		var Manreg01_5_ : boolean
 		initial Manreg01_5_ = false
 		
-		local var Manreg01_6_ : boolean
+		var Manreg01_6_ : boolean
 		initial Manreg01_6_ = false
 		
-		local var Manreg01_7_ : boolean
+		var Manreg01_7_ : boolean
 		initial Manreg01_7_ = false
 		
-		local var Manreg01_8_ : boolean
+		var Manreg01_8_ : boolean
 		initial Manreg01_8_ = false
 		
-		local var Manreg01_9_ : boolean
+		var Manreg01_9_ : boolean
 		initial Manreg01_9_ = false
 		
-		local var Manreg01_10_ : boolean
+		var Manreg01_10_ : boolean
 		initial Manreg01_10_ = false
 		
-		local var Manreg01_11_ : boolean
+		var Manreg01_11_ : boolean
 		initial Manreg01_11_ = false
 		
-		local var Manreg01_12_ : boolean
+		var Manreg01_12_ : boolean
 		initial Manreg01_12_ = false
 		
-		local var Manreg01_13_ : boolean
+		var Manreg01_13_ : boolean
 		initial Manreg01_13_ = false
 		
-		local var Manreg01_14_ : boolean
+		var Manreg01_14_ : boolean
 		initial Manreg01_14_ = false
 		
-		local var Manreg01_15_ : boolean
+		var Manreg01_15_ : boolean
 		initial Manreg01_15_ = false
 		
-		local var PLocal__ParReg_0_ : boolean
+		var PLocal__ParReg_0_ : boolean
 		
-		local var PLocal__ParReg_1_ : boolean
+		var PLocal__ParReg_1_ : boolean
 		
-		local var PLocal__ParReg_2_ : boolean
+		var PLocal__ParReg_2_ : boolean
 		
-		local var PLocal__ParReg_3_ : boolean
+		var PLocal__ParReg_3_ : boolean
 		
-		local var PLocal__ParReg_4_ : boolean
+		var PLocal__ParReg_4_ : boolean
 		
-		local var PLocal__ParReg_5_ : boolean
+		var PLocal__ParReg_5_ : boolean
 		
-		local var PLocal__ParReg_6_ : boolean
+		var PLocal__ParReg_6_ : boolean
 		
-		local var PLocal__ParReg_7_ : boolean
+		var PLocal__ParReg_7_ : boolean
 		
-		local var PLocal__ParReg_8_ : boolean
+		var PLocal__ParReg_8_ : boolean
 		
-		local var PLocal__ParReg_9_ : boolean
+		var PLocal__ParReg_9_ : boolean
 		
-		local var PLocal__ParReg_10_ : boolean
+		var PLocal__ParReg_10_ : boolean
 		
-		local var PLocal__ParReg_11_ : boolean
+		var PLocal__ParReg_11_ : boolean
 		
-		local var PLocal__ParReg_12_ : boolean
+		var PLocal__ParReg_12_ : boolean
 		
-		local var PLocal__ParReg_13_ : boolean
+		var PLocal__ParReg_13_ : boolean
 		
-		local var PLocal__ParReg_14_ : boolean
+		var PLocal__ParReg_14_ : boolean
 		
-		local var PLocal__ParReg_15_ : boolean
+		var PLocal__ParReg_15_ : boolean
 		
-		local var Stsreg01_0_ : boolean
+		var Stsreg01_0_ : boolean
 		initial Stsreg01_0_ = false
 		
-		local var Stsreg01_1_ : boolean
+		var Stsreg01_1_ : boolean
 		initial Stsreg01_1_ = false
 		
-		local var Stsreg01_2_ : boolean
+		var Stsreg01_2_ : boolean
 		initial Stsreg01_2_ = false
 		
-		local var Stsreg01_3_ : boolean
+		var Stsreg01_3_ : boolean
 		initial Stsreg01_3_ = false
 		
-		local var Stsreg01_4_ : boolean
+		var Stsreg01_4_ : boolean
 		initial Stsreg01_4_ = false
 		
-		local var Stsreg01_5_ : boolean
+		var Stsreg01_5_ : boolean
 		initial Stsreg01_5_ = false
 		
-		local var Stsreg01_6_ : boolean
+		var Stsreg01_6_ : boolean
 		initial Stsreg01_6_ = false
 		
-		local var Stsreg01_7_ : boolean
+		var Stsreg01_7_ : boolean
 		initial Stsreg01_7_ = false
 		
-		local var Stsreg01_8_ : boolean
+		var Stsreg01_8_ : boolean
 		initial Stsreg01_8_ = false
 		
-		local var Stsreg01_9_ : boolean
+		var Stsreg01_9_ : boolean
 		initial Stsreg01_9_ = false
 		
-		local var Stsreg01_10_ : boolean
+		var Stsreg01_10_ : boolean
 		initial Stsreg01_10_ = false
 		
-		local var Stsreg01_11_ : boolean
+		var Stsreg01_11_ : boolean
 		initial Stsreg01_11_ = false
 		
-		local var Stsreg01_12_ : boolean
+		var Stsreg01_12_ : boolean
 		initial Stsreg01_12_ = false
 		
-		local var Stsreg01_13_ : boolean
+		var Stsreg01_13_ : boolean
 		initial Stsreg01_13_ = false
 		
-		local var Stsreg01_14_ : boolean
+		var Stsreg01_14_ : boolean
 		initial Stsreg01_14_ = false
 		
-		local var Stsreg01_15_ : boolean
+		var Stsreg01_15_ : boolean
 		initial Stsreg01_15_ = false
 		
-		local var OnSt : boolean
+		var OnSt : boolean
 		initial OnSt = false
 		
-		local var OffSt : boolean
+		var OffSt : boolean
 		initial OffSt = false
 		
-		local var IOErrorW : boolean
+		var IOErrorW : boolean
 		initial IOErrorW = false
 		
-		local var IOSimuW : boolean
+		var IOSimuW : boolean
 		initial IOSimuW = false
 		
-		local var PosAlSt : boolean
+		var PosAlSt : boolean
 		initial PosAlSt = false
 		
-		local var PosW : boolean
+		var PosW : boolean
 		initial PosW = false
 		
-		local var E_PosAlSt : boolean
+		var E_PosAlSt : boolean
 		initial E_PosAlSt = false
 		
-		local var PosAlSt_old : boolean
+		var PosAlSt_old : boolean
 		initial PosAlSt_old = false
 		
-		local var PHFOn : boolean
+		var PHFOn : boolean
 		initial PHFOn = false
 		
-		local var PHFOff : boolean
+		var PHFOff : boolean
 		initial PHFOff = false
 		
-		local var PPosAlE : boolean
+		var PPosAlE : boolean
 		initial PPosAlE = false
 		
-		local var PAnim : boolean
+		var PAnim : boolean
 		initial PAnim = false
 		
-		local var inlined_R_eDgE_1__new : boolean
+		var inlined_R_eDgE_1__new : boolean
 		initial inlined_R_eDgE_1__new = false
 		
-		local var inlined_R_eDgE_1__old : boolean
+		var inlined_R_eDgE_1__old : boolean
 		initial inlined_R_eDgE_1__old = false
 		
 		
 		// Location variable definition
-		local var loc : integer
+		var loc : integer
 		invariant loc >= 0 and loc <= 35
 		initial loc = 1
 		// Automaton state - TTMC loc mapping

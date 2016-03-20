@@ -2,76 +2,76 @@ specification instance {
 	
 	property s : {
 		// Variables (variable declaration + range def. + initial value)
-		local var Manreg01_1_ : boolean
+		var Manreg01_1_ : boolean
 		initial Manreg01_1_ = false
 		
-		local var Manreg01_7_ : boolean
+		var Manreg01_7_ : boolean
 		initial Manreg01_7_ = false
 		
-		local var FuStopI : boolean
+		var FuStopI : boolean
 		initial FuStopI = false
 		
-		local var AuAlAck : boolean
+		var AuAlAck : boolean
 		initial AuAlAck = false
 		
-		local var AuRstart : boolean
+		var AuRstart : boolean
 		initial AuRstart = false
 		
-		local var POnOff__ParReg_0_ : boolean
+		var POnOff__ParReg_0_ : boolean
 		
-		local var POnOff__ParReg_1_ : boolean
+		var POnOff__ParReg_1_ : boolean
 		
-		local var EnRstartSt : boolean
+		var EnRstartSt : boolean
 		initial EnRstartSt = true
 		
-		local var E_MAlAckR : boolean
+		var E_MAlAckR : boolean
 		initial E_MAlAckR = false
 		
-		local var E_FuStopI : boolean
+		var E_FuStopI : boolean
 		initial E_FuStopI = false
 		
-		local var E_AuAlAck : boolean
+		var E_AuAlAck : boolean
 		initial E_AuAlAck = false
 		
-		local var E_MEnRstartR : boolean
+		var E_MEnRstartR : boolean
 		initial E_MEnRstartR = false
 		
-		local var MAlAckR_old : boolean
+		var MAlAckR_old : boolean
 		initial MAlAckR_old = false
 		
-		local var AuAlAck_old : boolean
+		var AuAlAck_old : boolean
 		initial AuAlAck_old = false
 		
-		local var FuStopI_old : boolean
+		var FuStopI_old : boolean
 		initial FuStopI_old = false
 		
-		local var MEnRstartR_old : boolean
+		var MEnRstartR_old : boolean
 		initial MEnRstartR_old = false
 		
-		local var PEnRstart : boolean
+		var PEnRstart : boolean
 		initial PEnRstart = false
 		
-		local var PRstartFS : boolean
+		var PRstartFS : boolean
 		initial PRstartFS = false
 		
-		local var fullNotAcknowledged : boolean
+		var fullNotAcknowledged : boolean
 		initial fullNotAcknowledged = false
 		
-		local var inlined_R_EDGE_7__old : boolean
+		var inlined_R_EDGE_7__old : boolean
 		initial inlined_R_EDGE_7__old = false
 		
-		local var inlined_R_EDGE_8__old : boolean
+		var inlined_R_EDGE_8__old : boolean
 		initial inlined_R_EDGE_8__old = false
 		
-		local var inlined_R_EDGE_10__old : boolean
+		var inlined_R_EDGE_10__old : boolean
 		initial inlined_R_EDGE_10__old = false
 		
-		local var inlined_R_EDGE_13__old : boolean
+		var inlined_R_EDGE_13__old : boolean
 		initial inlined_R_EDGE_13__old = false
 		
 		
 		// Location variable definition
-		local var loc : integer
+		var loc : integer
 		invariant loc >= 0 and loc <= 13
 		initial loc = 1
 		// Automaton state - TTMC loc mapping

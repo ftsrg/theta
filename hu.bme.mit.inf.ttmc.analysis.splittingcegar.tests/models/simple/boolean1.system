@@ -1,8 +1,8 @@
 specification Boolean1 {
 	
 	property safe : {
-		local var x1 : boolean
-		local var x2 : boolean
+		var x1 : boolean
+		var x2 : boolean
 		
 		// This dummy invariant is needed because TTMCInterpolatingSolver throws an exception for an empty list of invariants
 		invariant x1 = x1

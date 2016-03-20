@@ -1,8 +1,8 @@
 specification System {
 	property safe : {
-		local var x : integer
-		local var y : integer
-		local var z : integer
+		var x : integer
+		var y : integer
+		var z : integer
 		invariant 0 <= x and x <= 5
 		invariant 0 <= y and y <= 1
 		invariant 0 <= z and z <= 1

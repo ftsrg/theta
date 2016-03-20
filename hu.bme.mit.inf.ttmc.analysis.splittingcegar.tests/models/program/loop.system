@@ -6,8 +6,8 @@
 
 specification Program {
 	property s : {
-		local var loc : integer
-		local var x : integer
+		var loc : integer
+		var x : integer
 		
 		initial loc = 0
 		initial x = 0

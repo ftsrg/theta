@@ -2,785 +2,785 @@ specification instance {
 	
 	property s : {
 		// Variables (variable declaration + range def. + initial value)
-		local var HFOn : boolean
+		var HFOn : boolean
 		initial HFOn = false
 		
-		local var HFOff : boolean
+		var HFOff : boolean
 		initial HFOff = false
 		
-		local var HLD : boolean
+		var HLD : boolean
 		initial HLD = false
 		
-		local var IOError : boolean
+		var IOError : boolean
 		initial IOError = false
 		
-		local var IOSimu : boolean
+		var IOSimu : boolean
 		initial IOSimu = false
 		
-		local var AlB : boolean
+		var AlB : boolean
 		initial AlB = false
 		
-		local var Manreg01_0_ : boolean
+		var Manreg01_0_ : boolean
 		initial Manreg01_0_ = false
 		
-		local var Manreg01_1_ : boolean
+		var Manreg01_1_ : boolean
 		initial Manreg01_1_ = false
 		
-		local var Manreg01_2_ : boolean
+		var Manreg01_2_ : boolean
 		initial Manreg01_2_ = false
 		
-		local var Manreg01_3_ : boolean
+		var Manreg01_3_ : boolean
 		initial Manreg01_3_ = false
 		
-		local var Manreg01_4_ : boolean
+		var Manreg01_4_ : boolean
 		initial Manreg01_4_ = false
 		
-		local var Manreg01_5_ : boolean
+		var Manreg01_5_ : boolean
 		initial Manreg01_5_ = false
 		
-		local var Manreg01_6_ : boolean
+		var Manreg01_6_ : boolean
 		initial Manreg01_6_ = false
 		
-		local var Manreg01_7_ : boolean
+		var Manreg01_7_ : boolean
 		initial Manreg01_7_ = false
 		
-		local var Manreg01_8_ : boolean
+		var Manreg01_8_ : boolean
 		initial Manreg01_8_ = false
 		
-		local var Manreg01_9_ : boolean
+		var Manreg01_9_ : boolean
 		initial Manreg01_9_ = false
 		
-		local var Manreg01_10_ : boolean
+		var Manreg01_10_ : boolean
 		initial Manreg01_10_ = false
 		
-		local var Manreg01_11_ : boolean
+		var Manreg01_11_ : boolean
 		initial Manreg01_11_ = false
 		
-		local var Manreg01_12_ : boolean
+		var Manreg01_12_ : boolean
 		initial Manreg01_12_ = false
 		
-		local var Manreg01_13_ : boolean
+		var Manreg01_13_ : boolean
 		initial Manreg01_13_ = false
 		
-		local var Manreg01_14_ : boolean
+		var Manreg01_14_ : boolean
 		initial Manreg01_14_ = false
 		
-		local var Manreg01_15_ : boolean
+		var Manreg01_15_ : boolean
 		initial Manreg01_15_ = false
 		
-		local var HOnR : boolean
+		var HOnR : boolean
 		initial HOnR = false
 		
-		local var HOffR : boolean
+		var HOffR : boolean
 		initial HOffR = false
 		
-		local var StartI : boolean
+		var StartI : boolean
 		initial StartI = false
 		
-		local var TStopI : boolean
+		var TStopI : boolean
 		initial TStopI = false
 		
-		local var FuStopI : boolean
+		var FuStopI : boolean
 		initial FuStopI = false
 		
-		local var Al : boolean
+		var Al : boolean
 		initial Al = false
 		
-		local var AuOnR : boolean
+		var AuOnR : boolean
 		initial AuOnR = false
 		
-		local var AuOffR : boolean
+		var AuOffR : boolean
 		initial AuOffR = false
 		
-		local var AuAuMoR : boolean
+		var AuAuMoR : boolean
 		initial AuAuMoR = false
 		
-		local var AuIhMMo : boolean
+		var AuIhMMo : boolean
 		initial AuIhMMo = false
 		
-		local var AuIhFoMo : boolean
+		var AuIhFoMo : boolean
 		initial AuIhFoMo = false
 		
-		local var AuAlAck : boolean
+		var AuAlAck : boolean
 		initial AuAlAck = false
 		
-		local var IhAuMRW : boolean
+		var IhAuMRW : boolean
 		initial IhAuMRW = false
 		
-		local var AuRstart : boolean
+		var AuRstart : boolean
 		initial AuRstart = false
 		
-		local var POnOff__ParReg_0_ : boolean
+		var POnOff__ParReg_0_ : boolean
 		
-		local var POnOff__ParReg_1_ : boolean
+		var POnOff__ParReg_1_ : boolean
 		
-		local var POnOff__ParReg_2_ : boolean
+		var POnOff__ParReg_2_ : boolean
 		
-		local var POnOff__ParReg_3_ : boolean
+		var POnOff__ParReg_3_ : boolean
 		
-		local var POnOff__ParReg_4_ : boolean
+		var POnOff__ParReg_4_ : boolean
 		
-		local var POnOff__ParReg_5_ : boolean
+		var POnOff__ParReg_5_ : boolean
 		
-		local var POnOff__ParReg_6_ : boolean
+		var POnOff__ParReg_6_ : boolean
 		
-		local var POnOff__ParReg_7_ : boolean
+		var POnOff__ParReg_7_ : boolean
 		
-		local var POnOff__ParReg_8_ : boolean
+		var POnOff__ParReg_8_ : boolean
 		
-		local var POnOff__ParReg_9_ : boolean
+		var POnOff__ParReg_9_ : boolean
 		
-		local var POnOff__ParReg_10_ : boolean
+		var POnOff__ParReg_10_ : boolean
 		
-		local var POnOff__ParReg_11_ : boolean
+		var POnOff__ParReg_11_ : boolean
 		
-		local var POnOff__ParReg_12_ : boolean
+		var POnOff__ParReg_12_ : boolean
 		
-		local var POnOff__ParReg_13_ : boolean
+		var POnOff__ParReg_13_ : boolean
 		
-		local var POnOff__ParReg_14_ : boolean
+		var POnOff__ParReg_14_ : boolean
 		
-		local var POnOff__ParReg_15_ : boolean
+		var POnOff__ParReg_15_ : boolean
 		
-		local var POnOff__PPulseLe : integer
+		var POnOff__PPulseLe : integer
 		invariant POnOff__PPulseLe >= 0
 		invariant POnOff__PPulseLe <= 65535
 		
-		local var POnOff__PWDt : integer
+		var POnOff__PWDt : integer
 		invariant POnOff__PWDt >= 0
 		invariant POnOff__PWDt <= 65535
 		
-		local var Stsreg01_0_ : boolean
+		var Stsreg01_0_ : boolean
 		initial Stsreg01_0_ = false
 		
-		local var Stsreg01_1_ : boolean
+		var Stsreg01_1_ : boolean
 		initial Stsreg01_1_ = false
 		
-		local var Stsreg01_2_ : boolean
+		var Stsreg01_2_ : boolean
 		initial Stsreg01_2_ = false
 		
-		local var Stsreg01_3_ : boolean
+		var Stsreg01_3_ : boolean
 		initial Stsreg01_3_ = false
 		
-		local var Stsreg01_4_ : boolean
+		var Stsreg01_4_ : boolean
 		initial Stsreg01_4_ = false
 		
-		local var Stsreg01_5_ : boolean
+		var Stsreg01_5_ : boolean
 		initial Stsreg01_5_ = false
 		
-		local var Stsreg01_6_ : boolean
+		var Stsreg01_6_ : boolean
 		initial Stsreg01_6_ = false
 		
-		local var Stsreg01_7_ : boolean
+		var Stsreg01_7_ : boolean
 		initial Stsreg01_7_ = false
 		
-		local var Stsreg01_8_ : boolean
+		var Stsreg01_8_ : boolean
 		initial Stsreg01_8_ = false
 		
-		local var Stsreg01_9_ : boolean
+		var Stsreg01_9_ : boolean
 		initial Stsreg01_9_ = false
 		
-		local var Stsreg01_10_ : boolean
+		var Stsreg01_10_ : boolean
 		initial Stsreg01_10_ = false
 		
-		local var Stsreg01_11_ : boolean
+		var Stsreg01_11_ : boolean
 		initial Stsreg01_11_ = false
 		
-		local var Stsreg01_12_ : boolean
+		var Stsreg01_12_ : boolean
 		initial Stsreg01_12_ = false
 		
-		local var Stsreg01_13_ : boolean
+		var Stsreg01_13_ : boolean
 		initial Stsreg01_13_ = false
 		
-		local var Stsreg01_14_ : boolean
+		var Stsreg01_14_ : boolean
 		initial Stsreg01_14_ = false
 		
-		local var Stsreg01_15_ : boolean
+		var Stsreg01_15_ : boolean
 		initial Stsreg01_15_ = false
 		
-		local var Stsreg02_0_ : boolean
+		var Stsreg02_0_ : boolean
 		initial Stsreg02_0_ = false
 		
-		local var Stsreg02_1_ : boolean
+		var Stsreg02_1_ : boolean
 		initial Stsreg02_1_ = false
 		
-		local var Stsreg02_2_ : boolean
+		var Stsreg02_2_ : boolean
 		initial Stsreg02_2_ = false
 		
-		local var Stsreg02_3_ : boolean
+		var Stsreg02_3_ : boolean
 		initial Stsreg02_3_ = false
 		
-		local var Stsreg02_4_ : boolean
+		var Stsreg02_4_ : boolean
 		initial Stsreg02_4_ = false
 		
-		local var Stsreg02_5_ : boolean
+		var Stsreg02_5_ : boolean
 		initial Stsreg02_5_ = false
 		
-		local var Stsreg02_6_ : boolean
+		var Stsreg02_6_ : boolean
 		initial Stsreg02_6_ = false
 		
-		local var Stsreg02_7_ : boolean
+		var Stsreg02_7_ : boolean
 		initial Stsreg02_7_ = false
 		
-		local var Stsreg02_8_ : boolean
+		var Stsreg02_8_ : boolean
 		initial Stsreg02_8_ = false
 		
-		local var Stsreg02_9_ : boolean
+		var Stsreg02_9_ : boolean
 		initial Stsreg02_9_ = false
 		
-		local var Stsreg02_10_ : boolean
+		var Stsreg02_10_ : boolean
 		initial Stsreg02_10_ = false
 		
-		local var Stsreg02_11_ : boolean
+		var Stsreg02_11_ : boolean
 		initial Stsreg02_11_ = false
 		
-		local var Stsreg02_12_ : boolean
+		var Stsreg02_12_ : boolean
 		initial Stsreg02_12_ = false
 		
-		local var Stsreg02_13_ : boolean
+		var Stsreg02_13_ : boolean
 		initial Stsreg02_13_ = false
 		
-		local var Stsreg02_14_ : boolean
+		var Stsreg02_14_ : boolean
 		initial Stsreg02_14_ = false
 		
-		local var Stsreg02_15_ : boolean
+		var Stsreg02_15_ : boolean
 		initial Stsreg02_15_ = false
 		
-		local var OutOnOV : boolean
+		var OutOnOV : boolean
 		initial OutOnOV = false
 		
-		local var OutOffOV : boolean
+		var OutOffOV : boolean
 		initial OutOffOV = false
 		
-		local var OnSt : boolean
+		var OnSt : boolean
 		initial OnSt = false
 		
-		local var OffSt : boolean
+		var OffSt : boolean
 		initial OffSt = false
 		
-		local var AuMoSt : boolean
+		var AuMoSt : boolean
 		initial AuMoSt = false
 		
-		local var MMoSt : boolean
+		var MMoSt : boolean
 		initial MMoSt = false
 		
-		local var LDSt : boolean
+		var LDSt : boolean
 		initial LDSt = false
 		
-		local var SoftLDSt : boolean
+		var SoftLDSt : boolean
 		initial SoftLDSt = false
 		
-		local var FoMoSt : boolean
+		var FoMoSt : boolean
 		initial FoMoSt = false
 		
-		local var AuOnRSt : boolean
+		var AuOnRSt : boolean
 		initial AuOnRSt = false
 		
-		local var AuOffRSt : boolean
+		var AuOffRSt : boolean
 		initial AuOffRSt = false
 		
-		local var MOnRSt : boolean
+		var MOnRSt : boolean
 		initial MOnRSt = false
 		
-		local var MOffRSt : boolean
+		var MOffRSt : boolean
 		initial MOffRSt = false
 		
-		local var HOnRSt : boolean
+		var HOnRSt : boolean
 		initial HOnRSt = false
 		
-		local var HOffRSt : boolean
+		var HOffRSt : boolean
 		initial HOffRSt = false
 		
-		local var IOErrorW : boolean
+		var IOErrorW : boolean
 		initial IOErrorW = false
 		
-		local var IOSimuW : boolean
+		var IOSimuW : boolean
 		initial IOSimuW = false
 		
-		local var AuMRW : boolean
+		var AuMRW : boolean
 		initial AuMRW = false
 		
-		local var AlUnAck : boolean
+		var AlUnAck : boolean
 		initial AlUnAck = false
 		
-		local var PosW : boolean
+		var PosW : boolean
 		initial PosW = false
 		
-		local var StartISt : boolean
+		var StartISt : boolean
 		initial StartISt = false
 		
-		local var TStopISt : boolean
+		var TStopISt : boolean
 		initial TStopISt = false
 		
-		local var FuStopISt : boolean
+		var FuStopISt : boolean
 		initial FuStopISt = false
 		
-		local var AlSt : boolean
+		var AlSt : boolean
 		initial AlSt = false
 		
-		local var AlBW : boolean
+		var AlBW : boolean
 		initial AlBW = false
 		
-		local var EnRstartSt : boolean
+		var EnRstartSt : boolean
 		initial EnRstartSt = true
 		
-		local var RdyStartSt : boolean
+		var RdyStartSt : boolean
 		initial RdyStartSt = false
 		
-		local var E_MAuMoR : boolean
+		var E_MAuMoR : boolean
 		initial E_MAuMoR = false
 		
-		local var E_MMMoR : boolean
+		var E_MMMoR : boolean
 		initial E_MMMoR = false
 		
-		local var E_MFoMoR : boolean
+		var E_MFoMoR : boolean
 		initial E_MFoMoR = false
 		
-		local var E_MOnR : boolean
+		var E_MOnR : boolean
 		initial E_MOnR = false
 		
-		local var E_MOffR : boolean
+		var E_MOffR : boolean
 		initial E_MOffR = false
 		
-		local var E_MAlAckR : boolean
+		var E_MAlAckR : boolean
 		initial E_MAlAckR = false
 		
-		local var E_StartI : boolean
+		var E_StartI : boolean
 		initial E_StartI = false
 		
-		local var E_TStopI : boolean
+		var E_TStopI : boolean
 		initial E_TStopI = false
 		
-		local var E_FuStopI : boolean
+		var E_FuStopI : boolean
 		initial E_FuStopI = false
 		
-		local var E_Al : boolean
+		var E_Al : boolean
 		initial E_Al = false
 		
-		local var E_AuAuMoR : boolean
+		var E_AuAuMoR : boolean
 		initial E_AuAuMoR = false
 		
-		local var E_AuAlAck : boolean
+		var E_AuAlAck : boolean
 		initial E_AuAlAck = false
 		
-		local var E_MSoftLDR : boolean
+		var E_MSoftLDR : boolean
 		initial E_MSoftLDR = false
 		
-		local var E_MEnRstartR : boolean
+		var E_MEnRstartR : boolean
 		initial E_MEnRstartR = false
 		
-		local var RE_AlUnAck : boolean
+		var RE_AlUnAck : boolean
 		initial RE_AlUnAck = false
 		
-		local var FE_AlUnAck : boolean
+		var FE_AlUnAck : boolean
 		initial FE_AlUnAck = false
 		
-		local var RE_PulseOn : boolean
+		var RE_PulseOn : boolean
 		initial RE_PulseOn = false
 		
-		local var FE_PulseOn : boolean
+		var FE_PulseOn : boolean
 		initial FE_PulseOn = false
 		
-		local var RE_PulseOff : boolean
+		var RE_PulseOff : boolean
 		initial RE_PulseOff = false
 		
-		local var RE_OutOVSt_aux : boolean
+		var RE_OutOVSt_aux : boolean
 		initial RE_OutOVSt_aux = false
 		
-		local var FE_OutOVSt_aux : boolean
+		var FE_OutOVSt_aux : boolean
 		initial FE_OutOVSt_aux = false
 		
-		local var FE_InterlockR : boolean
+		var FE_InterlockR : boolean
 		initial FE_InterlockR = false
 		
-		local var MAuMoR_old : boolean
+		var MAuMoR_old : boolean
 		initial MAuMoR_old = false
 		
-		local var MMMoR_old : boolean
+		var MMMoR_old : boolean
 		initial MMMoR_old = false
 		
-		local var MFoMoR_old : boolean
+		var MFoMoR_old : boolean
 		initial MFoMoR_old = false
 		
-		local var MOnR_old : boolean
+		var MOnR_old : boolean
 		initial MOnR_old = false
 		
-		local var MOffR_old : boolean
+		var MOffR_old : boolean
 		initial MOffR_old = false
 		
-		local var MAlAckR_old : boolean
+		var MAlAckR_old : boolean
 		initial MAlAckR_old = false
 		
-		local var AuAuMoR_old : boolean
+		var AuAuMoR_old : boolean
 		initial AuAuMoR_old = false
 		
-		local var AuAlAck_old : boolean
+		var AuAlAck_old : boolean
 		initial AuAlAck_old = false
 		
-		local var StartI_old : boolean
+		var StartI_old : boolean
 		initial StartI_old = false
 		
-		local var TStopI_old : boolean
+		var TStopI_old : boolean
 		initial TStopI_old = false
 		
-		local var FuStopI_old : boolean
+		var FuStopI_old : boolean
 		initial FuStopI_old = false
 		
-		local var Al_old : boolean
+		var Al_old : boolean
 		initial Al_old = false
 		
-		local var AlUnAck_old : boolean
+		var AlUnAck_old : boolean
 		initial AlUnAck_old = false
 		
-		local var MSoftLDR_old : boolean
+		var MSoftLDR_old : boolean
 		initial MSoftLDR_old = false
 		
-		local var MEnRstartR_old : boolean
+		var MEnRstartR_old : boolean
 		initial MEnRstartR_old = false
 		
-		local var RE_PulseOn_old : boolean
+		var RE_PulseOn_old : boolean
 		initial RE_PulseOn_old = false
 		
-		local var FE_PulseOn_old : boolean
+		var FE_PulseOn_old : boolean
 		initial FE_PulseOn_old = false
 		
-		local var RE_PulseOff_old : boolean
+		var RE_PulseOff_old : boolean
 		initial RE_PulseOff_old = false
 		
-		local var RE_OutOVSt_aux_old : boolean
+		var RE_OutOVSt_aux_old : boolean
 		initial RE_OutOVSt_aux_old = false
 		
-		local var FE_OutOVSt_aux_old : boolean
+		var FE_OutOVSt_aux_old : boolean
 		initial FE_OutOVSt_aux_old = false
 		
-		local var FE_InterlockR_old : boolean
+		var FE_InterlockR_old : boolean
 		initial FE_InterlockR_old = false
 		
-		local var PFsPosOn : boolean
+		var PFsPosOn : boolean
 		initial PFsPosOn = false
 		
-		local var PFsPosOn2 : boolean
+		var PFsPosOn2 : boolean
 		initial PFsPosOn2 = false
 		
-		local var PHFOn : boolean
+		var PHFOn : boolean
 		initial PHFOn = false
 		
-		local var PHFOff : boolean
+		var PHFOff : boolean
 		initial PHFOff = false
 		
-		local var PPulse : boolean
+		var PPulse : boolean
 		initial PPulse = false
 		
-		local var PPulseCste : boolean
+		var PPulseCste : boolean
 		initial PPulseCste = false
 		
-		local var PHLD : boolean
+		var PHLD : boolean
 		initial PHLD = false
 		
-		local var PHLDCmd : boolean
+		var PHLDCmd : boolean
 		initial PHLDCmd = false
 		
-		local var PAnim : boolean
+		var PAnim : boolean
 		initial PAnim = false
 		
-		local var POutOff : boolean
+		var POutOff : boolean
 		initial POutOff = false
 		
-		local var PEnRstart : boolean
+		var PEnRstart : boolean
 		initial PEnRstart = false
 		
-		local var PRstartFS : boolean
+		var PRstartFS : boolean
 		initial PRstartFS = false
 		
-		local var OutOnOVSt : boolean
+		var OutOnOVSt : boolean
 		initial OutOnOVSt = false
 		
-		local var OutOffOVSt : boolean
+		var OutOffOVSt : boolean
 		initial OutOffOVSt = false
 		
-		local var AuMoSt_aux : boolean
+		var AuMoSt_aux : boolean
 		initial AuMoSt_aux = false
 		
-		local var MMoSt_aux : boolean
+		var MMoSt_aux : boolean
 		initial MMoSt_aux = false
 		
-		local var FoMoSt_aux : boolean
+		var FoMoSt_aux : boolean
 		initial FoMoSt_aux = false
 		
-		local var SoftLDSt_aux : boolean
+		var SoftLDSt_aux : boolean
 		initial SoftLDSt_aux = false
 		
-		local var PulseOn : boolean
+		var PulseOn : boolean
 		initial PulseOn = false
 		
-		local var PulseOff : boolean
+		var PulseOff : boolean
 		initial PulseOff = false
 		
-		local var PosW_aux : boolean
+		var PosW_aux : boolean
 		initial PosW_aux = false
 		
-		local var OutOVSt_aux : boolean
+		var OutOVSt_aux : boolean
 		initial OutOVSt_aux = false
 		
-		local var fullNotAcknowledged : boolean
+		var fullNotAcknowledged : boolean
 		initial fullNotAcknowledged = false
 		
-		local var PulseOnR : boolean
+		var PulseOnR : boolean
 		initial PulseOnR = false
 		
-		local var PulseOffR : boolean
+		var PulseOffR : boolean
 		initial PulseOffR = false
 		
-		local var InterlockR : boolean
+		var InterlockR : boolean
 		initial InterlockR = false
 		
-		local var Time_Warning : integer
+		var Time_Warning : integer
 		invariant Time_Warning >= 0
 		invariant Time_Warning <= 65535
 		initial Time_Warning = 0
 		
-		local var PulseWidth : integer
+		var PulseWidth : integer
 		invariant PulseWidth >= 0
 		invariant PulseWidth <= 65535
 		initial PulseWidth = 0
 		
-		local var FSIinc : integer
+		var FSIinc : integer
 		invariant FSIinc >= -32768
 		invariant FSIinc <= 32767
 		initial FSIinc = 0
 		
-		local var TSIinc : integer
+		var TSIinc : integer
 		invariant TSIinc >= -32768
 		invariant TSIinc <= 32767
 		initial TSIinc = 0
 		
-		local var SIinc : integer
+		var SIinc : integer
 		invariant SIinc >= -32768
 		invariant SIinc <= 32767
 		initial SIinc = 0
 		
-		local var Alinc : integer
+		var Alinc : integer
 		invariant Alinc >= -32768
 		invariant Alinc <= 32767
 		initial Alinc = 0
 		
-		local var WTStopISt : boolean
+		var WTStopISt : boolean
 		initial WTStopISt = false
 		
-		local var WStartISt : boolean
+		var WStartISt : boolean
 		initial WStartISt = false
 		
-		local var WAlSt : boolean
+		var WAlSt : boolean
 		initial WAlSt = false
 		
-		local var WFuStopISt : boolean
+		var WFuStopISt : boolean
 		initial WFuStopISt = false
 		
-		local var inlined_R_EDGE_1__new : boolean
+		var inlined_R_EDGE_1__new : boolean
 		initial inlined_R_EDGE_1__new = false
 		
-		local var inlined_R_EDGE_1__old : boolean
+		var inlined_R_EDGE_1__old : boolean
 		initial inlined_R_EDGE_1__old = false
 		
-		local var inlined_R_EDGE_2__new : boolean
+		var inlined_R_EDGE_2__new : boolean
 		initial inlined_R_EDGE_2__new = false
 		
-		local var inlined_R_EDGE_2__old : boolean
+		var inlined_R_EDGE_2__old : boolean
 		initial inlined_R_EDGE_2__old = false
 		
-		local var inlined_R_EDGE_3__new : boolean
+		var inlined_R_EDGE_3__new : boolean
 		initial inlined_R_EDGE_3__new = false
 		
-		local var inlined_R_EDGE_3__old : boolean
+		var inlined_R_EDGE_3__old : boolean
 		initial inlined_R_EDGE_3__old = false
 		
-		local var inlined_R_EDGE_4__new : boolean
+		var inlined_R_EDGE_4__new : boolean
 		initial inlined_R_EDGE_4__new = false
 		
-		local var inlined_R_EDGE_4__old : boolean
+		var inlined_R_EDGE_4__old : boolean
 		initial inlined_R_EDGE_4__old = false
 		
-		local var inlined_R_EDGE_5__new : boolean
+		var inlined_R_EDGE_5__new : boolean
 		initial inlined_R_EDGE_5__new = false
 		
-		local var inlined_R_EDGE_5__old : boolean
+		var inlined_R_EDGE_5__old : boolean
 		initial inlined_R_EDGE_5__old = false
 		
-		local var inlined_R_EDGE_6__new : boolean
+		var inlined_R_EDGE_6__new : boolean
 		initial inlined_R_EDGE_6__new = false
 		
-		local var inlined_R_EDGE_6__old : boolean
+		var inlined_R_EDGE_6__old : boolean
 		initial inlined_R_EDGE_6__old = false
 		
-		local var inlined_R_EDGE_7__new : boolean
+		var inlined_R_EDGE_7__new : boolean
 		initial inlined_R_EDGE_7__new = false
 		
-		local var inlined_R_EDGE_7__old : boolean
+		var inlined_R_EDGE_7__old : boolean
 		initial inlined_R_EDGE_7__old = false
 		
-		local var inlined_R_EDGE_8__new : boolean
+		var inlined_R_EDGE_8__new : boolean
 		initial inlined_R_EDGE_8__new = false
 		
-		local var inlined_R_EDGE_8__old : boolean
+		var inlined_R_EDGE_8__old : boolean
 		initial inlined_R_EDGE_8__old = false
 		
-		local var inlined_R_EDGE_9__new : boolean
+		var inlined_R_EDGE_9__new : boolean
 		initial inlined_R_EDGE_9__new = false
 		
-		local var inlined_R_EDGE_9__old : boolean
+		var inlined_R_EDGE_9__old : boolean
 		initial inlined_R_EDGE_9__old = false
 		
-		local var inlined_R_EDGE_10__new : boolean
+		var inlined_R_EDGE_10__new : boolean
 		initial inlined_R_EDGE_10__new = false
 		
-		local var inlined_R_EDGE_10__old : boolean
+		var inlined_R_EDGE_10__old : boolean
 		initial inlined_R_EDGE_10__old = false
 		
-		local var inlined_R_EDGE_11__new : boolean
+		var inlined_R_EDGE_11__new : boolean
 		initial inlined_R_EDGE_11__new = false
 		
-		local var inlined_R_EDGE_11__old : boolean
+		var inlined_R_EDGE_11__old : boolean
 		initial inlined_R_EDGE_11__old = false
 		
-		local var inlined_R_EDGE_12__new : boolean
+		var inlined_R_EDGE_12__new : boolean
 		initial inlined_R_EDGE_12__new = false
 		
-		local var inlined_R_EDGE_12__old : boolean
+		var inlined_R_EDGE_12__old : boolean
 		initial inlined_R_EDGE_12__old = false
 		
-		local var inlined_R_EDGE_13__new : boolean
+		var inlined_R_EDGE_13__new : boolean
 		initial inlined_R_EDGE_13__new = false
 		
-		local var inlined_R_EDGE_13__old : boolean
+		var inlined_R_EDGE_13__old : boolean
 		initial inlined_R_EDGE_13__old = false
 		
-		local var inlined_R_EDGE_14__new : boolean
+		var inlined_R_EDGE_14__new : boolean
 		initial inlined_R_EDGE_14__new = false
 		
-		local var inlined_R_EDGE_14__old : boolean
+		var inlined_R_EDGE_14__old : boolean
 		initial inlined_R_EDGE_14__old = false
 		
-		local var inlined_F_EDGE_15__new : boolean
+		var inlined_F_EDGE_15__new : boolean
 		initial inlined_F_EDGE_15__new = false
 		
-		local var inlined_F_EDGE_15__old : boolean
+		var inlined_F_EDGE_15__old : boolean
 		initial inlined_F_EDGE_15__old = false
 		
-		local var inlined_Timer_PulseOn__PT : integer
+		var inlined_Timer_PulseOn__PT : integer
 		invariant inlined_Timer_PulseOn__PT >= 0
 		invariant inlined_Timer_PulseOn__PT <= 65535
 		initial inlined_Timer_PulseOn__PT = 0
 		
-		local var inlined_Timer_PulseOn__IN : boolean
+		var inlined_Timer_PulseOn__IN : boolean
 		initial inlined_Timer_PulseOn__IN = false
 		
-		local var inlined_Timer_PulseOn__Q : boolean
+		var inlined_Timer_PulseOn__Q : boolean
 		initial inlined_Timer_PulseOn__Q = false
 		
-		local var inlined_Timer_PulseOn__ET : integer
+		var inlined_Timer_PulseOn__ET : integer
 		invariant inlined_Timer_PulseOn__ET >= 0
 		invariant inlined_Timer_PulseOn__ET <= 65535
 		initial inlined_Timer_PulseOn__ET = 0
 		
-		local var inlined_Timer_PulseOn__old_in : boolean
+		var inlined_Timer_PulseOn__old_in : boolean
 		initial inlined_Timer_PulseOn__old_in = false
 		
-		local var inlined_Timer_PulseOn__due : integer
+		var inlined_Timer_PulseOn__due : integer
 		invariant inlined_Timer_PulseOn__due >= 0
 		invariant inlined_Timer_PulseOn__due <= 65535
 		initial inlined_Timer_PulseOn__due = 0
 		
-		local var inlined_Timer_PulseOff__PT : integer
+		var inlined_Timer_PulseOff__PT : integer
 		invariant inlined_Timer_PulseOff__PT >= 0
 		invariant inlined_Timer_PulseOff__PT <= 65535
 		initial inlined_Timer_PulseOff__PT = 0
 		
-		local var inlined_Timer_PulseOff__IN : boolean
+		var inlined_Timer_PulseOff__IN : boolean
 		initial inlined_Timer_PulseOff__IN = false
 		
-		local var inlined_Timer_PulseOff__Q : boolean
+		var inlined_Timer_PulseOff__Q : boolean
 		initial inlined_Timer_PulseOff__Q = false
 		
-		local var inlined_Timer_PulseOff__ET : integer
+		var inlined_Timer_PulseOff__ET : integer
 		invariant inlined_Timer_PulseOff__ET >= 0
 		invariant inlined_Timer_PulseOff__ET <= 65535
 		initial inlined_Timer_PulseOff__ET = 0
 		
-		local var inlined_Timer_PulseOff__old_in : boolean
+		var inlined_Timer_PulseOff__old_in : boolean
 		initial inlined_Timer_PulseOff__old_in = false
 		
-		local var inlined_Timer_PulseOff__due : integer
+		var inlined_Timer_PulseOff__due : integer
 		invariant inlined_Timer_PulseOff__due >= 0
 		invariant inlined_Timer_PulseOff__due <= 65535
 		initial inlined_Timer_PulseOff__due = 0
 		
-		local var inlined_R_EDGE_20__new : boolean
+		var inlined_R_EDGE_20__new : boolean
 		initial inlined_R_EDGE_20__new = false
 		
-		local var inlined_R_EDGE_20__old : boolean
+		var inlined_R_EDGE_20__old : boolean
 		initial inlined_R_EDGE_20__old = false
 		
-		local var inlined_F_EDGE_21__new : boolean
+		var inlined_F_EDGE_21__new : boolean
 		initial inlined_F_EDGE_21__new = false
 		
-		local var inlined_F_EDGE_21__old : boolean
+		var inlined_F_EDGE_21__old : boolean
 		initial inlined_F_EDGE_21__old = false
 		
-		local var inlined_R_EDGE_22__new : boolean
+		var inlined_R_EDGE_22__new : boolean
 		initial inlined_R_EDGE_22__new = false
 		
-		local var inlined_R_EDGE_22__old : boolean
+		var inlined_R_EDGE_22__old : boolean
 		initial inlined_R_EDGE_22__old = false
 		
-		local var inlined_R_EDGE_25__new : boolean
+		var inlined_R_EDGE_25__new : boolean
 		initial inlined_R_EDGE_25__new = false
 		
-		local var inlined_R_EDGE_25__old : boolean
+		var inlined_R_EDGE_25__old : boolean
 		initial inlined_R_EDGE_25__old = false
 		
-		local var inlined_F_EDGE_26__new : boolean
+		var inlined_F_EDGE_26__new : boolean
 		initial inlined_F_EDGE_26__new = false
 		
-		local var inlined_F_EDGE_26__old : boolean
+		var inlined_F_EDGE_26__old : boolean
 		initial inlined_F_EDGE_26__old = false
 		
-		local var inlined_Timer_Warning__PT : integer
+		var inlined_Timer_Warning__PT : integer
 		invariant inlined_Timer_Warning__PT >= 0
 		invariant inlined_Timer_Warning__PT <= 65535
 		initial inlined_Timer_Warning__PT = 0
 		
-		local var inlined_Timer_Warning__IN : boolean
+		var inlined_Timer_Warning__IN : boolean
 		initial inlined_Timer_Warning__IN = false
 		
-		local var inlined_Timer_Warning__Q : boolean
+		var inlined_Timer_Warning__Q : boolean
 		initial inlined_Timer_Warning__Q = false
 		
-		local var inlined_Timer_Warning__ET : integer
+		var inlined_Timer_Warning__ET : integer
 		invariant inlined_Timer_Warning__ET >= 0
 		invariant inlined_Timer_Warning__ET <= 65535
 		initial inlined_Timer_Warning__ET = 0
 		
-		local var inlined_Timer_Warning__running : boolean
+		var inlined_Timer_Warning__running : boolean
 		initial inlined_Timer_Warning__running = false
 		
-		local var inlined_Timer_Warning__start : integer
+		var inlined_Timer_Warning__start : integer
 		invariant inlined_Timer_Warning__start >= 0
 		invariant inlined_Timer_Warning__start <= 65535
 		initial inlined_Timer_Warning__start = 0
 		
-		local var inlined_DETECT_EDGE_28__new : boolean
+		var inlined_DETECT_EDGE_28__new : boolean
 		initial inlined_DETECT_EDGE_28__new = false
 		
-		local var inlined_DETECT_EDGE_28__old : boolean
+		var inlined_DETECT_EDGE_28__old : boolean
 		initial inlined_DETECT_EDGE_28__old = false
 		
-		local var inlined_DETECT_EDGE_28__re : boolean
+		var inlined_DETECT_EDGE_28__re : boolean
 		initial inlined_DETECT_EDGE_28__re = false
 		
-		local var inlined_DETECT_EDGE_28__fe : boolean
+		var inlined_DETECT_EDGE_28__fe : boolean
 		initial inlined_DETECT_EDGE_28__fe = false
 		
-		local var __GLOBAL_TIME : integer
+		var __GLOBAL_TIME : integer
 		invariant __GLOBAL_TIME >=0
 		initial __GLOBAL_TIME = 0
 		
@@ -788,7 +788,7 @@ specification instance {
 		
 		
 		// Location variable definition
-		local var loc : integer
+		var loc : integer
 		invariant loc >= 0 and loc <= 459
 		initial loc = 1
 		// Automaton state - TTMC loc mapping

@@ -3,10 +3,10 @@
 specification Test {
 	property s : {
 		// Variables
-		local var x : integer
-		local var y : boolean
-		local var z : boolean
-		local var t : boolean
+		var x : integer
+		var y : boolean
+		var z : boolean
+		var t : boolean
 		
 		// Invariants
 		invariant 0 <= x and x <= 2
