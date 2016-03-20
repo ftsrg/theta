@@ -1,7 +1,7 @@
 specification Counter {
 	property safe : {	
-		local var x : integer
-		local var y : integer
+		var x : integer
+		var y : integer
 		invariant x >= 0
 		
 		initial x = 0

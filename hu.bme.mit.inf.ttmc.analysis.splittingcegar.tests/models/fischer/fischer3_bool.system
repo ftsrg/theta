@@ -2,22 +2,22 @@ specification MutualExclusion_check {
 
 	property safe: {
 		// delay
-		input var d : real
+		var d : real
 		
 		// normal variables
-		global var lock_b0 : boolean
-		global var lock_b1 : boolean
-		local var location1_b0 : boolean
-		local var location1_b1 : boolean
-		local var location2_b0 : boolean
-		local var location2_b1 : boolean
-		local var location3_b0 : boolean
-		local var location3_b1 : boolean
+		var lock_b0 : boolean
+		var lock_b1 : boolean
+		var location1_b0 : boolean
+		var location1_b1 : boolean
+		var location2_b0 : boolean
+		var location2_b1 : boolean
+		var location3_b0 : boolean
+		var location3_b1 : boolean
 				
 		// clock variables
-		local var c1 : real
-		local var c2 : real
-		local var c3 : real
+		var c1 : real
+		var c2 : real
+		var c3 : real
 
 		// type invariants
 		invariant c1 >= 0%1

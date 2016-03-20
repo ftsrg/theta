@@ -2,16 +2,16 @@ specification MutualExclusion_check {
 
 	property safe: {
 		// delay
-		input var d : real
+		var d : real
 		
 		// normal variables
-		global var lock : integer
-		local var location1 : integer
-		local var location2 : integer
+		var lock : integer
+		var location1 : integer
+		var location2 : integer
 				
 		// clock variables
-		local var c1 : real
-		local var c2 : real
+		var c1 : real
+		var c2 : real
 		
 		// type invariants
 		invariant lock >= 0

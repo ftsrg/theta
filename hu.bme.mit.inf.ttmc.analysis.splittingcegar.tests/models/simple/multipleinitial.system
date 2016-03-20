@@ -2,9 +2,9 @@
 specification Test {
 	property s : {
 		// Variables
-		local var x : integer
-		local var y : integer
-		local var z : integer
+		var x : integer
+		var y : integer
+		var z : integer
 		
 		// Invariants
 		invariant x >= 1 and x <= 2

@@ -1,7 +1,7 @@
 specification System {
 	property safe : {
-		local var x : integer
-		local var r : boolean
+		var x : integer
+		var r : boolean
 		
 		invariant x >= 1 and x <= 4
 		
