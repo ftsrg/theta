@@ -68,6 +68,41 @@ public class PerformanceTests {
 		run(testCases, configurations, 10000);
 	}
 
+	@SuppressWarnings("serial")
+	//@Test
+	public void testCERNPLC() {
+		final List<TestCase> testCases = new ArrayList<TestCase>() {
+			{
+				add(new TestCase("models/cern/LOCAL_vc1.system", false));
+				add(new TestCase("models/cern/LOCAL_vc2.system", false));
+				add(new TestCase("models/cern/REQ_1-1.system", true));
+				add(new TestCase("models/cern/REQ_1-8_correct.system", true));
+				add(new TestCase("models/cern/REQ_1-8_incorrect.system", false));
+				add(new TestCase("models/cern/REQ_1-9.system", true));
+				add(new TestCase("models/cern/REQ_2-3b_correct.system", true));
+				add(new TestCase("models/cern/REQ_2-3b_incorrect.system", false));
+				add(new TestCase("models/cern/REQ_3-1.system", true));
+				add(new TestCase("models/cern/REQ_3-2.system", false));
+				add(new TestCase("models/cern/UCPC-1721.system", true));
+			}
+		};
+		final List<ICEGARBuilder> configurations = new ArrayList<ICEGARBuilder>() {
+			{
+				add(new VisibleCEGARBuilder().logger(null).visualizer(null).manager(manager).useCNFTransformation(false));
+				add(new InterpolatingCEGARBuilder().logger(null).visualizer(null).interpolationMethod(InterpolationMethod.Craig).incrementalModelChecking(true)
+						.useCNFTransformation(false));
+				add(new InterpolatingCEGARBuilder().logger(null).visualizer(null).interpolationMethod(InterpolationMethod.Craig).incrementalModelChecking(true)
+						.useCNFTransformation(false).explicitVariable("loc"));
+				add(new InterpolatingCEGARBuilder().logger(null).visualizer(null).interpolationMethod(InterpolationMethod.Sequence)
+						.incrementalModelChecking(true).useCNFTransformation(false));
+				add(new InterpolatingCEGARBuilder().logger(null).visualizer(null).interpolationMethod(InterpolationMethod.Sequence)
+						.incrementalModelChecking(true).useCNFTransformation(false).explicitVariable("loc"));
+			}
+		};
+
+		run(testCases, configurations, 30 * 60 * 1000);
+	}
+
 	private void run(final List<TestCase> testCases, final List<ICEGARBuilder> configurations, final int timeOut) {
 		boolean allOk = true;
 
