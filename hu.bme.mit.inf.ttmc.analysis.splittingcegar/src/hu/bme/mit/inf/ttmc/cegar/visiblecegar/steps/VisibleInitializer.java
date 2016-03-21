@@ -89,19 +89,11 @@ public class VisibleInitializer extends CEGARStepBase implements IInitializer<Vi
 			logger.writeln("done, " + cnfVars.size() + " new variables were added.", 3);
 		}
 
-		logger.writeln("### Using new system from now on ###", 0);
-
 		final VisibleAbstractSystem system = new VisibleAbstractSystem(concrSys, manager);
 		system.getVariables().addAll(nonCnfVars);
 		system.getCNFVariables().addAll(cnfVars);
 		system.getVisibleVariables().addAll(visibleVars);
 		system.getInvisibleVariables().addAll(invisibleVars);
-		/*
-		 * System.out.println(system.getVariables());
-		 * System.out.println(system.getCNFVariables());
-		 * System.out.println(system.getVisibleVariables());
-		 * System.out.println(system.getInvisibleVariables());
-		 */
 
 		assert (system.getInvisibleVariables().size() + system.getVisibleVariables().size() == system.getVariables().size());
 		assert (system.getVariables().size() + system.getCNFVariables().size() == system.getSystem().getVars().size());
