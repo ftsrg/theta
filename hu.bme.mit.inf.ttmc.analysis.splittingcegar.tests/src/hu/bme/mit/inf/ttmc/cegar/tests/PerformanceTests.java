@@ -9,7 +9,7 @@ import java.util.Locale;
 import org.junit.Assert;
 import org.junit.Test;
 
-import hu.bme.mit.inf.ttmc.aiger.impl.AIGERLoaderOptimized;
+import hu.bme.mit.inf.ttmc.aiger.impl.AIGERLoaderSimple;
 import hu.bme.mit.inf.ttmc.cegar.clusteredcegar.ClusteredCEGARBuilder;
 import hu.bme.mit.inf.ttmc.cegar.common.CEGARResult;
 import hu.bme.mit.inf.ttmc.cegar.common.ICEGARBuilder;
@@ -31,7 +31,7 @@ public class PerformanceTests {
 	private final IFormatter formatter = new ExcelFormatter();
 
 	@SuppressWarnings("serial")
-	@Test
+	//@Test
 	public void testSimple() {
 		final List<TestCase> testCases = new ArrayList<TestCase>() {
 			{
@@ -101,6 +101,62 @@ public class PerformanceTests {
 		};
 
 		run(testCases, configurations, 30 * 60 * 1000);
+	}
+
+	@SuppressWarnings("serial")
+	//@Test
+	public void testFischer() {
+		final List<TestCase> testCases = new ArrayList<TestCase>() {
+			{
+				add(new TestCase("models/fischer/fischer2.system", true));
+				add(new TestCase("models/fischer/fischer2_bad.system", false));
+				add(new TestCase("models/fischer/fischer3_bool.system", true));
+				add(new TestCase("models/fischer/fischer3_bool_bad.system", false));
+			}
+		};
+		final List<ICEGARBuilder> configurations = new ArrayList<ICEGARBuilder>() {
+			{
+				add(new InterpolatingCEGARBuilder().logger(null).visualizer(null).interpolationMethod(InterpolationMethod.Craig).incrementalModelChecking(true)
+						.useCNFTransformation(false));
+				add(new InterpolatingCEGARBuilder().logger(null).visualizer(null).interpolationMethod(InterpolationMethod.Sequence)
+						.incrementalModelChecking(true).useCNFTransformation(false));
+			}
+		};
+
+		run(testCases, configurations, 5 * 60 * 1000);
+	}
+
+	@SuppressWarnings("serial")
+	@Test
+	public void testHardware() {
+		final List<TestCase> testCases = new ArrayList<TestCase>() {
+			{
+				add(new TestCase("models/hardware/ringp0.aag", false));
+				add(new TestCase("models/hardware/ringp0neg.aag", false));
+				add(new TestCase("models/hardware/shortp0.aag", false));
+				add(new TestCase("models/hardware/shortp0neg.aag", false));
+				add(new TestCase("models/hardware/srg5ptimo.aag", false));
+				add(new TestCase("models/hardware/srg5ptimoneg.aag", false));
+				add(new TestCase("models/hardware/srg5ptimonegnv.aag", false));
+				add(new TestCase("models/hardware/nusmv.syncarb5_2.B.aag", true));
+				add(new TestCase("models/hardware/nusmv.syncarb10_2.B.aag", true));
+				add(new TestCase("models/hardware/mutexp0.aag", false));
+				add(new TestCase("models/hardware/mutexp0neg.aag", false));
+				add(new TestCase("models/hardware/pdtpmsarbiter.aag", true));
+
+			}
+		};
+		final List<ICEGARBuilder> configurations = new ArrayList<ICEGARBuilder>() {
+			{
+				add(new VisibleCEGARBuilder().logger(null).visualizer(null).manager(manager).useCNFTransformation(false));
+				add(new InterpolatingCEGARBuilder().logger(null).visualizer(null).interpolationMethod(InterpolationMethod.Craig).incrementalModelChecking(true)
+						.useCNFTransformation(false));
+				add(new InterpolatingCEGARBuilder().logger(null).visualizer(null).interpolationMethod(InterpolationMethod.Sequence)
+						.incrementalModelChecking(true).useCNFTransformation(false));
+			}
+		};
+
+		run(testCases, configurations, 5 * 60 * 1000);
 	}
 
 	private void run(final List<TestCase> testCases, final List<ICEGARBuilder> configurations, final int timeOut) {
@@ -213,7 +269,7 @@ public class PerformanceTests {
 			// It is assumed that the file contains _exactly one_ STS
 			return SystemModelCreator.create(manager, SystemModelLoader.getInstance().load(path)).getSTSs().iterator().next();
 		} else if (path.endsWith(".aag")) {
-			return new AIGERLoaderOptimized().load(path, manager);
+			return new AIGERLoaderSimple().load(path, manager);
 		} else {
 			throw new UnsupportedOperationException("Cannot determine model type by extension.");
 		}
