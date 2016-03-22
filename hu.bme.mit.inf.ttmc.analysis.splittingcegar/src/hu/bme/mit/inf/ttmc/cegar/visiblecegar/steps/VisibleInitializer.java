@@ -50,7 +50,7 @@ public class VisibleInitializer extends CEGARStepBase implements IInitializer<Vi
 
 		// Eliminate if-then-else expressions from the constraints by replacing them with implications
 		logger.write("Eliminating if-then-else expressions from the constraints...", 3);
-		concrSys = new STSITETransformation(manager).transform(concrSys);
+		concrSys = new STSITETransformation().transform(concrSys);
 		logger.writeln("done.", 3);
 
 		final List<VarDecl<? extends Type>> visibleVars = new ArrayList<>();
@@ -78,7 +78,7 @@ public class VisibleInitializer extends CEGARStepBase implements IInitializer<Vi
 		// Apply CNF transformation if needed
 		if (useCNFTransformation) {
 			logger.write("Transforming constraints to CNF...", 3);
-			concrSys = new STSCNFTransformation(manager).transform(concrSys);
+			concrSys = new STSCNFTransformation().transform(concrSys);
 			// Collect the new helper variables
 			for (final VarDecl<? extends Type> varDecl : concrSys.getVars()) {
 				if (!nonCnfVars.contains(varDecl))

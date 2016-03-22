@@ -128,7 +128,7 @@ public class InterpolatingInitializer extends CEGARStepBase implements IInitiali
 
 		// Eliminate if-then-else expressions from the constraints by replacing them with implications
 		logger.write("Eliminating if-then-else expressions from the constraints...", 3);
-		concrSys = new STSITETransformation(manager).transform(concrSys);
+		concrSys = new STSITETransformation().transform(concrSys);
 		logger.writeln("done.", 3);
 
 		// Apply CNF transformation if needed
@@ -136,7 +136,7 @@ public class InterpolatingInitializer extends CEGARStepBase implements IInitiali
 		final List<VarDecl<? extends Type>> nonCnfVariables = new ArrayList<>(concrSys.getVars());
 		if (useCNFTransformation) {
 			logger.write("Transforming constraints to CNF...", 3);
-			concrSys = new STSCNFTransformation(manager).transform(concrSys);
+			concrSys = new STSCNFTransformation().transform(concrSys);
 			for (final VarDecl<? extends Type> varDecl : concrSys.getVars()) {
 				if (!nonCnfVariables.contains(varDecl))
 					cnfVariables.add(varDecl);

@@ -5,7 +5,7 @@ import hu.bme.mit.inf.ttmc.constraint.decl.ConstDecl;
 import hu.bme.mit.inf.ttmc.constraint.expr.ConstRefExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 
-public abstract class AbstractConstDecl<DeclType extends Type> extends AbstractDecl<DeclType>
+public abstract class AbstractConstDecl<DeclType extends Type> extends AbstractDecl<DeclType, ConstDecl<DeclType>>
 		implements ConstDecl<DeclType> {
 
 	private static final String DECL_LABEL = "Const";
