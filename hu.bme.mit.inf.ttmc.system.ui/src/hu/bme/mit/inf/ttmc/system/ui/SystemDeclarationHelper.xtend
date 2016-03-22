@@ -1,14 +1,13 @@
 package hu.bme.mit.inf.ttmc.system.ui
 
-import hu.bme.mit.inf.ttmc.constraint.decl.Decl
 import hu.bme.mit.inf.ttmc.constraint.type.Type
 import hu.bme.mit.inf.ttmc.constraint.ui.DeclarationHelper
 import hu.bme.mit.inf.ttmc.constraint.ui.TypeHelper
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl
+import hu.bme.mit.inf.ttmc.formalism.common.factory.VarDeclFactory
 import hu.bme.mit.inf.ttmc.system.model.VariableDeclaration
 import java.util.HashMap
 import java.util.Map
-import hu.bme.mit.inf.ttmc.formalism.common.factory.VarDeclFactory
 
 class SystemDeclarationHelper extends DeclarationHelper {
 
@@ -25,7 +24,7 @@ class SystemDeclarationHelper extends DeclarationHelper {
 	////
 	
 	
-	public def dispatch Decl<Type> toDecl(VariableDeclaration declaration) {
+	public def dispatch VarDecl<Type> toDecl(VariableDeclaration declaration) {
 		var varDecl = variableToVar.get(declaration)
 		if (varDecl === null) {
 			val name = declaration.name
