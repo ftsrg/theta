@@ -139,6 +139,9 @@ public class VisibleChecker extends CEGARStepBase implements IChecker<VisibleAbs
 			VisualizationHelper.visualize(exploredStates.keySet(), visualizer, 6);
 		}
 
+		if (isStopped)
+			return null;
+
 		return counterExample == null ? new AbstractResult<VisibleAbstractState>(null, exploredStates.keySet(), exploredStates.size())
 				: new AbstractResult<VisibleAbstractState>(counterExample, null, exploredStates.size());
 	}
@@ -153,6 +156,8 @@ public class VisibleChecker extends CEGARStepBase implements IChecker<VisibleAbs
 		solver.add(unroller.unroll(state.getExpression(), 0));
 		// Loop until a new successor is found
 		do {
+			if (isStopped)
+				return new ArrayList<>();
 			if (SolverHelper.checkSatisfiable(solver)) {
 				// Get successor
 				// TODO: check if initial (only for presentation purposes, since it may be found as a successor of some state first than as an initial state)

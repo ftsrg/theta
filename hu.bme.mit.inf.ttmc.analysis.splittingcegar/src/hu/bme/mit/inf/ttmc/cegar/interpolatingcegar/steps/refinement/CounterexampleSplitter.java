@@ -42,6 +42,8 @@ public class CounterexampleSplitter extends CEGARStepBase implements IStateSplit
 		assert (0 < interpolant.size() && interpolant.size() <= abstractCounterEx.size());
 		int firstSplit = -1;
 		for (int i = 0; i < interpolant.size(); ++i) {
+			if (isStopped)
+				return 0;
 			if (!interpolant.get(i).equals(manager.getExprFactory().True())) {
 				split(system, abstractCounterEx.get(i), interpolant.get(i));
 				if (firstSplit == -1)
@@ -108,6 +110,9 @@ public class CounterexampleSplitter extends CEGARStepBase implements IStateSplit
 			solver.pop();
 		}
 
+		if (isStopped)
+			return;
+
 		// Get successors for the abstract states (only the successors of the original state
 		// have to be checked, but every successor must belong to at least one of the
 		// refined states --> assertion)
@@ -116,6 +121,8 @@ public class CounterexampleSplitter extends CEGARStepBase implements IStateSplit
 		solver.add(unroller.inv(1));
 		solver.add(unroller.trans(0));
 		for (final InterpolatedAbstractState succ : failureState.getSuccessors()) {
+			if (isStopped)
+				return;
 			if (succ.equals(failureState))
 				continue;
 			// The failure state has to be removed from predecessors
@@ -125,6 +132,8 @@ public class CounterexampleSplitter extends CEGARStepBase implements IStateSplit
 			SolverHelper.unrollAndAssert(solver, succ.getLabels(), unroller, 1);
 			boolean isSuccessor = false;
 			for (final InterpolatedAbstractState refined : refinedStates) {
+				if (isStopped)
+					return;
 				solver.push();
 				SolverHelper.unrollAndAssert(solver, refined.getLabels(), unroller, 0);
 				if (SolverHelper.checkSatisfiable(solver)) {
@@ -142,6 +151,8 @@ public class CounterexampleSplitter extends CEGARStepBase implements IStateSplit
 		// have to be checked, but every predecessor must belong to at least one of the
 		// refined states --> assertion)
 		for (final InterpolatedAbstractState prev : failureState.getPredecessors()) {
+			if (isStopped)
+				return;
 			if (prev.equals(failureState))
 				continue;
 			final boolean removed = prev.getSuccessors().remove(failureState);
@@ -150,6 +161,8 @@ public class CounterexampleSplitter extends CEGARStepBase implements IStateSplit
 			SolverHelper.unrollAndAssert(solver, prev.getLabels(), unroller, 0);
 			boolean isPredecessor = false;
 			for (final InterpolatedAbstractState refined : refinedStates) {
+				if (isStopped)
+					return;
 				solver.push();
 				SolverHelper.unrollAndAssert(solver, refined.getLabels(), unroller, 1);
 				if (SolverHelper.checkSatisfiable(solver)) {
@@ -169,9 +182,13 @@ public class CounterexampleSplitter extends CEGARStepBase implements IStateSplit
 		if (failureState.getSuccessors().contains(failureState)) {
 			boolean isSuccessor = false;
 			for (final InterpolatedAbstractState ref0 : refinedStates) {
+				if (isStopped)
+					return;
 				solver.push();
 				SolverHelper.unrollAndAssert(solver, ref0.getLabels(), unroller, 0);
 				for (final InterpolatedAbstractState ref1 : refinedStates) {
+					if (isStopped)
+						return;
 					solver.push();
 					SolverHelper.unrollAndAssert(solver, ref1.getLabels(), unroller, 1);
 					if (SolverHelper.checkSatisfiable(solver)) {
