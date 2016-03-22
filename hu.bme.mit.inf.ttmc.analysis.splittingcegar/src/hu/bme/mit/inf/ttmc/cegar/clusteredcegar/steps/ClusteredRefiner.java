@@ -66,6 +66,8 @@ public class ClusteredRefiner extends CEGARStepBase implements IRefiner<Clustere
 		// Loop through each component of the failure state
 		int newStates = 0;
 		for (final ComponentAbstractState as : failureState.getStates()) {
+			if (isStopped)
+				return null;
 			++clusterNo;
 			logger.write("Refining component: ", 5, 2);
 			logger.writeln(as, 5, 0);
@@ -87,6 +89,8 @@ public class ClusteredRefiner extends CEGARStepBase implements IRefiner<Clustere
 
 			// Loop through pairs of states and check if they should be separated
 			for (int i = 0; i < concreteStates.size(); ++i) {
+				if (isStopped)
+					return null;
 				final List<AndExpr> comp = new ArrayList<>();
 				comp.add(concreteStates.get(i)); // The state is compatible with itself
 				for (int j = i + 1; j < concreteStates.size(); ++j) // Check other states
@@ -106,6 +110,8 @@ public class ClusteredRefiner extends CEGARStepBase implements IRefiner<Clustere
 			// Loop through each state and if it was not included in an equivalence class yet,
 			// then include it with its equivalence class
 			for (int i = 0; i < compatibility.size(); ++i) {
+				if (isStopped)
+					return null;
 				if (!includedStates.contains(concreteStates.get(i))) {
 					if (compatibility.get(i).size() == 1) // If it is a single state -> expression of the state
 						eqclasses.add(compatibility.get(i).get(0));
@@ -163,6 +169,8 @@ public class ClusteredRefiner extends CEGARStepBase implements IRefiner<Clustere
 			solver.add(unroller.inv(1));
 			solver.add(unroller.trans(0));
 			for (final ComponentAbstractState succ : as.getSuccessors()) {
+				if (isStopped)
+					return null;
 				if (succ.equals(as))
 					continue;
 				solver.push();
@@ -183,6 +191,8 @@ public class ClusteredRefiner extends CEGARStepBase implements IRefiner<Clustere
 
 			// Check transitions between refined states
 			for (final ComponentAbstractState ref0 : refinedStates) {
+				if (isStopped)
+					return null;
 				solver.push();
 				SolverHelper.unrollAndAssert(solver, ref0.getLabels(), unroller, 0);
 				for (final ComponentAbstractState ref1 : refinedStates) {
@@ -200,6 +210,8 @@ public class ClusteredRefiner extends CEGARStepBase implements IRefiner<Clustere
 			// Update other states' successors: if the original state was a successor, then remove it
 			// and check which refined states are successors (at least one must be --> assertion)
 			for (final ComponentAbstractState prev : ks.getStates()) {
+				if (isStopped)
+					return null;
 				if (prev.getSuccessors().contains(as)) {
 					boolean isSuccessor = false;
 					prev.getSuccessors().remove(as);

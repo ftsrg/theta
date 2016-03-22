@@ -61,7 +61,6 @@ public class ClusteredInitializer extends CEGARStepBase implements IInitializer<
 		// Collect atomic formulas from the specification
 		FormulaCollector.collectAtomsFromExpression(concrSys.getProp(), atomicFormulas);
 
-		// TODO: use addAll when TTMCAdapterHashSet.toArray is implemented
 		// Move the collected formulas to a list for further use
 		final List<Expr<? extends BoolType>> atomicFormulasList = new ArrayList<>(atomicFormulas);
 
@@ -74,6 +73,9 @@ public class ClusteredInitializer extends CEGARStepBase implements IInitializer<
 		system.getVariables().addAll(concrSys.getVars());
 
 		system.getAtomicFormulas().addAll(atomicFormulasList);
+
+		if (isStopped)
+			return null;
 
 		// Get clusters
 		system.getClusters().addAll(new ClusterCreator().getClusters(system.getVariables(), system.getAtomicFormulas()));
@@ -91,6 +93,8 @@ public class ClusteredInitializer extends CEGARStepBase implements IInitializer<
 		// Loop through clusters and create abstract Kripke structures
 		int c = 0;
 		for (final Cluster cluster : system.getClusters()) {
+			if (isStopped)
+				return null;
 			logger.write("Cluster " + c++, 2);
 			system.getAbstractKripkeStructures().add(createAbstractKripkeStructure(cluster, unroller));
 		}

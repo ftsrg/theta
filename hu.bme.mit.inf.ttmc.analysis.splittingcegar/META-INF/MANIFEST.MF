@@ -18,6 +18,7 @@ Export-Package:
  hu.bme.mit.inf.ttmc.cegar.clusteredcegar.steps,
  hu.bme.mit.inf.ttmc.cegar.common,
  hu.bme.mit.inf.ttmc.cegar.common.data,
+ hu.bme.mit.inf.ttmc.cegar.common.steps,
  hu.bme.mit.inf.ttmc.cegar.common.utils.logging,
  hu.bme.mit.inf.ttmc.cegar.common.utils.visualization,
  hu.bme.mit.inf.ttmc.cegar.interpolatingcegar,

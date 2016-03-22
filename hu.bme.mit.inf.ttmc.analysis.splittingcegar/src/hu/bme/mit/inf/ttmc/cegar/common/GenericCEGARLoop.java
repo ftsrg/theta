@@ -47,6 +47,19 @@ public class GenericCEGARLoop<AbstractSystemType extends IAbstractSystem, Abstra
 	@Override
 	public void stop() {
 		isStopped = true;
+		initializer.stop();
+		checker.stop();
+		concretizer.stop();
+		refiner.stop();
+	}
+
+	@Override
+	public void resetStop() {
+		isStopped = false;
+		initializer.resetStop();
+		checker.resetStop();
+		concretizer.resetStop();
+		refiner.resetStop();
 	}
 
 	/**
@@ -83,7 +96,7 @@ public class GenericCEGARLoop<AbstractSystemType extends IAbstractSystem, Abstra
 
 	@Override
 	public CEGARResult check(final STS concreteSystem) {
-		isStopped = false;
+		resetStop();
 		// Reset stopwatch
 		stopwatch.reset();
 		long start = 0;
@@ -96,6 +109,8 @@ public class GenericCEGARLoop<AbstractSystemType extends IAbstractSystem, Abstra
 		logger.writeTitle("Creating initial abstraction (" + refinementCount + ")", 1);
 		start = stopwatch.elapsed(TimeUnit.MILLISECONDS);
 		AbstractSystemType abstractSystem = initializer.create(concreteSystem);
+		if (isStopped)
+			return null;
 		initializerTime += stopwatch.elapsed(TimeUnit.MILLISECONDS) - start;
 
 		AbstractResult<AbstractStateType> abstractResult = null; // Abstract result: counterexample or inductive invariant
@@ -111,12 +126,11 @@ public class GenericCEGARLoop<AbstractSystemType extends IAbstractSystem, Abstra
 			logger.writeTitle("Model checking (" + refinementCount + ")", 1);
 			start = stopwatch.elapsed(TimeUnit.MILLISECONDS);
 			abstractResult = checker.check(abstractSystem);
+			if (isStopped)
+				return null;
 			checkerTime += stopwatch.elapsed(TimeUnit.MILLISECONDS) - start;
 			totalStates += abstractResult.getStateSpaceSize();
 			concreteTrace = null; // Reset the concrete trace
-
-			if (isStopped)
-				return null;
 
 			// If an abstract counterexample was found, try to concretize it
 			if (abstractResult.isCounterExample()) {
@@ -126,10 +140,9 @@ public class GenericCEGARLoop<AbstractSystemType extends IAbstractSystem, Abstra
 				logger.writeTitle("Concretizing counterexample (" + refinementCount + ")", 1);
 				start = stopwatch.elapsed(TimeUnit.MILLISECONDS);
 				concreteTrace = concretizer.concretize(abstractSystem, abstractResult.getCounterexample());
-				concretizerTime += stopwatch.elapsed(TimeUnit.MILLISECONDS) - start;
-
 				if (isStopped)
 					return null;
+				concretizerTime += stopwatch.elapsed(TimeUnit.MILLISECONDS) - start;
 
 				//if (debugger != null) debugger.setConcreteTrace(concreteTrace).visualize();
 
@@ -140,10 +153,10 @@ public class GenericCEGARLoop<AbstractSystemType extends IAbstractSystem, Abstra
 					logger.writeTitle("Abstraction refinement (" + refinementCount + ")", 1);
 					start = stopwatch.elapsed(TimeUnit.MILLISECONDS);
 					abstractSystem = refiner.refine(abstractSystem, abstractResult.getCounterexample(), concreteTrace);
-					refinerTime += stopwatch.elapsed(TimeUnit.MILLISECONDS) - start;
-					++refinementCount;
 					if (isStopped)
 						return null;
+					refinerTime += stopwatch.elapsed(TimeUnit.MILLISECONDS) - start;
+					++refinementCount;
 				}
 			}
 			if (isStopped)

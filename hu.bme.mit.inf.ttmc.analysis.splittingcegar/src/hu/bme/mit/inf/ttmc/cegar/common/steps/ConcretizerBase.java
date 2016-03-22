@@ -52,8 +52,8 @@ public abstract class ConcretizerBase extends CEGARStepBase {
 	 * @return Longest concrete trace corresponding to a prefix of the abstract
 	 *         counterexample
 	 */
-	protected ConcreteTrace concretize(final STSUnroller unroller, final List<? extends IAbstractState> counterEx,
-			final Expr<? extends BoolType> lastState, final Collection<VarDecl<?>> projectVars) {
+	protected ConcreteTrace concretize(final STSUnroller unroller, final List<? extends IAbstractState> counterEx, final Expr<? extends BoolType> lastState,
+			final Collection<VarDecl<?>> projectVars) {
 		// Do an iterative bounded model checking to find a concrete
 		// counterexample.
 		// Iterative method is required because if no counterexample exists, we
@@ -75,6 +75,8 @@ public abstract class ConcretizerBase extends CEGARStepBase {
 		// (i>0)
 		int len = 0;
 		for (int i = 0; i < counterEx.size(); ++i) {
+			if (isStopped)
+				return null;
 			solver.add(unroller.inv(i)); // Invariants
 			solver.add(unroller.unroll(counterEx.get(i).createExpression(manager), i)); // Labels
 			if (i > 0)

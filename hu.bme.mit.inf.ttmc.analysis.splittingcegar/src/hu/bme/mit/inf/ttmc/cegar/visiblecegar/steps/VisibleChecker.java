@@ -57,6 +57,8 @@ public class VisibleChecker extends CEGARStepBase implements IChecker<VisibleAbs
 
 		// Loop until there is a next initial state
 		while (init != null && counterExample == null) {
+			if (isStopped)
+				return null;
 			final Stack<VisibleAbstractState> stateStack = new Stack<>();
 			final Stack<List<VisibleAbstractState>> successorStack = new Stack<>();
 
@@ -76,6 +78,8 @@ public class VisibleChecker extends CEGARStepBase implements IChecker<VisibleAbs
 
 			// Loop until the stack is empty or a counterexample is found
 			while (!stateStack.empty() && counterExample == null) {
+				if (isStopped)
+					return null;
 				// Get the next successor of the actual state (which is on top of stateStack)
 				final int nextSucc = successorStack.peek().size() - 1;
 				if (nextSucc >= 0) { // Get the next state (and also remove)

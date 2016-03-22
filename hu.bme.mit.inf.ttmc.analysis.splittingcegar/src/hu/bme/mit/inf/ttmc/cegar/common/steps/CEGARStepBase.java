@@ -12,15 +12,27 @@ import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
  *
  * @author Akos
  */
-public class CEGARStepBase {
+public class CEGARStepBase implements IStoppable {
 	protected ILogger logger; // Logger
 	protected IVisualizer visualizer; // Visualizer
 	protected STSManager manager;
 	protected Solver solver;
 
+	protected volatile boolean isStopped;
+
+	@Override
+	public void stop() {
+		isStopped = true;
+	}
+
+	@Override
+	public void resetStop() {
+		isStopped = false;
+	}
+
 	/**
 	 * Initialize step with a manager, logger and visualizer
-	 * 
+	 *
 	 * @param manager
 	 * @param logger
 	 * @param visualizer
@@ -36,5 +48,7 @@ public class CEGARStepBase {
 			this.visualizer = new NullVisualizer();
 		else
 			this.visualizer = visualizer;
+
+		this.isStopped = false;
 	}
 }

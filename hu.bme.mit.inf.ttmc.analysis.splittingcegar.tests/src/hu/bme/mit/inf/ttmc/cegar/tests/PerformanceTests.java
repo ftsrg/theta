@@ -28,11 +28,10 @@ import hu.bme.mit.inf.ttmc.system.ui.SystemModelCreator;
 import hu.bme.mit.inf.ttmc.system.ui.SystemModelLoader;
 
 public class PerformanceTests {
-	private STSManager manager = new STSManagerImpl(new Z3ConstraintManager());
 	private final IFormatter formatter = new ExcelFormatter();
 
 	@SuppressWarnings("serial")
-	//@Test
+	@Test
 	public void testSimple() {
 		final IModelLoader loader = new SystemFileModelLoader();
 
@@ -53,8 +52,8 @@ public class PerformanceTests {
 		};
 		final List<ICEGARBuilder> configurations = new ArrayList<ICEGARBuilder>() {
 			{
-				add(new ClusteredCEGARBuilder().logger(null).visualizer(null).manager(manager));
-				add(new VisibleCEGARBuilder().logger(null).visualizer(null).manager(manager).useCNFTransformation(false));
+				add(new ClusteredCEGARBuilder().logger(null).visualizer(null));
+				add(new VisibleCEGARBuilder().logger(null).visualizer(null).useCNFTransformation(false));
 				add(new InterpolatingCEGARBuilder().logger(null).visualizer(null).interpolationMethod(InterpolationMethod.Craig).incrementalModelChecking(false)
 						.useCNFTransformation(false));
 				add(new InterpolatingCEGARBuilder().logger(null).visualizer(null).interpolationMethod(InterpolationMethod.Craig).incrementalModelChecking(true)
@@ -93,7 +92,7 @@ public class PerformanceTests {
 		};
 		final List<ICEGARBuilder> configurations = new ArrayList<ICEGARBuilder>() {
 			{
-				add(new VisibleCEGARBuilder().logger(null).visualizer(null).manager(manager).useCNFTransformation(false));
+				add(new VisibleCEGARBuilder().logger(null).visualizer(null).useCNFTransformation(false));
 				add(new InterpolatingCEGARBuilder().logger(null).visualizer(null).interpolationMethod(InterpolationMethod.Craig).incrementalModelChecking(true)
 						.useCNFTransformation(false));
 				add(new InterpolatingCEGARBuilder().logger(null).visualizer(null).interpolationMethod(InterpolationMethod.Craig).incrementalModelChecking(true)
@@ -134,7 +133,7 @@ public class PerformanceTests {
 	}
 
 	@SuppressWarnings("serial")
-	@Test
+	//@Test
 	public void testHardware() {
 		final IModelLoader loader = new AIGERFileModelLoaderOptimized();
 		//final IModelLoader loader = new AIGERFileModelLoaderSimple();
@@ -224,7 +223,7 @@ public class PerformanceTests {
 	}
 
 	private TestResult run(final TestCase testCase, final ICEGARBuilder configuration, final int timeOut) {
-		manager = new STSManagerImpl(new Z3ConstraintManager());
+		STSManager manager = new STSManagerImpl(new Z3ConstraintManager());
 		STS system;
 		try {
 			system = testCase.loader.load(testCase.path, manager);

@@ -123,6 +123,9 @@ public class InterpolatingInitializer extends CEGARStepBase implements IInitiali
 		for (final Expr<? extends BoolType> ex : initialPredList)
 			logger.writeln(ex, 3, 1);
 
+		if (isStopped)
+			return null;
+
 		// Eliminate if-then-else expressions from the constraints by replacing them with implications
 		logger.write("Eliminating if-then-else expressions from the constraints...", 3);
 		concrSys = new STSITETransformation(manager).transform(concrSys);
@@ -177,6 +180,8 @@ public class InterpolatingInitializer extends CEGARStepBase implements IInitiali
 		solver.add(unroller.inv(0));
 
 		while (!stack.isEmpty()) {
+			if (isStopped)
+				return null;
 			final InterpolatedAbstractState actual = stack.pop(); // Get the next state
 
 			// Add the next formula unnegated
@@ -206,6 +211,8 @@ public class InterpolatingInitializer extends CEGARStepBase implements IInitiali
 		if (system.getExplicitVariables().size() > 0) {
 			// Loop through each state and get explicit variables
 			for (final InterpolatedAbstractState as : predicateStates) {
+				if (isStopped)
+					return null;
 				solver.push();
 				// Assert labels of the state
 				SolverHelper.unrollAndAssert(solver, as.getLabels(), unroller, 0);
@@ -228,10 +235,14 @@ public class InterpolatingInitializer extends CEGARStepBase implements IInitiali
 		// Calculate initial states and transition relation
 		logger.writeln("Abstract states [" + ks.getStates().size() + "]", 2);
 		for (final InterpolatedAbstractState s0 : ks.getStates()) { // Loop through the states
+			if (isStopped)
+				return null;
 			s0.setInitial(isStateInitial(s0, unroller)); // Check whether it is initial
 			if (s0.isInitial())
 				ks.addInitialState(s0);
 			for (final InterpolatedAbstractState s1 : ks.getStates()) { // Calculate successors
+				if (isStopped)
+					return null;
 				if (isTransitionFeasible(s0, s1, unroller)) {
 					s0.addSuccessor(s1);
 					s1.addPredecessor(s0);
