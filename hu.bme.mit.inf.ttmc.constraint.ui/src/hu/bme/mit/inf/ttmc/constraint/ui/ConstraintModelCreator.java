@@ -33,6 +33,7 @@ public class ConstraintModelCreator {
 
 		final Collection<ConstDecl<Type>> constDecls = new ArrayList<>();
 		for (final ConstantDeclaration constantDeclaration : specification.getConstantDeclarations()) {
+			@SuppressWarnings("unchecked")
 			final ConstDecl<Type> constDecl = (ConstDecl<Type>) declarationHelper.toDecl(constantDeclaration);
 			constDecls.add(constDecl);
 		}

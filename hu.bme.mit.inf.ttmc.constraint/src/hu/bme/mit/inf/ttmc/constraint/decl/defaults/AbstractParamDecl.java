@@ -5,7 +5,7 @@ import hu.bme.mit.inf.ttmc.constraint.decl.ParamDecl;
 import hu.bme.mit.inf.ttmc.constraint.expr.ParamRefExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 
-public abstract class AbstractParamDecl<DeclType extends Type> extends AbstractDecl<DeclType>
+public abstract class AbstractParamDecl<DeclType extends Type> extends AbstractDecl<DeclType, ParamDecl<DeclType>>
 		implements ParamDecl<DeclType> {
 
 	private static final String DECL_LABEL = "Param";

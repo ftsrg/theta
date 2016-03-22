@@ -27,8 +27,7 @@ public class Z3Model extends ModelImpl {
 
 	final Map<ConstDecl<?>, Expr<?>> valMap;
 
-	Z3Model(final ConstraintManager manager, final Z3TermWrapper termWrapper,
-			final com.microsoft.z3.Model z3Model) {
+	Z3Model(final ConstraintManager manager, final Z3TermWrapper termWrapper, final com.microsoft.z3.Model z3Model) {
 		this(manager, termWrapper, z3Model, new HashMap<>());
 	}
 
@@ -38,7 +37,7 @@ public class Z3Model extends ModelImpl {
 		this.termWrapper = checkNotNull(termWrapper);
 		this.z3Model = checkNotNull(z3Model);
 		checkNotNull(valMap);
-		
+
 		this.valMap = new HashMap<>(valMap);
 	}
 
@@ -50,9 +49,9 @@ public class Z3Model extends ModelImpl {
 
 		if (val == null) {
 			@SuppressWarnings("unchecked")
-			final Z3Decl<T> z3Decl = (Z3Decl<T>) decl;
+			final Z3Decl<T, ConstDecl<T>> z3Decl = (Z3Decl<T, ConstDecl<T>>) decl;
 			final FuncDecl funcDecl = z3Decl.getSymbol();
-			
+
 			final com.microsoft.z3.Expr term = z3Model.getConstInterp(funcDecl);
 			if (term != null) {
 				val = termWrapper.wrap(term);
@@ -61,18 +60,18 @@ public class Z3Model extends ModelImpl {
 		}
 
 		@SuppressWarnings("unchecked")
-		Expr<T> tVal = (Expr<T>) val;
+		final Expr<T> tVal = (Expr<T>) val;
 		return Optional.ofNullable(tVal);
 	}
 
 	@Override
-	public Model with(Map<? extends ConstDecl<?>, ? extends Expr<?>> mapping) {
+	public Model with(final Map<? extends ConstDecl<?>, ? extends Expr<?>> mapping) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public Model without(Collection<? extends ConstDecl<?>> constDecls) {
+	public Model without(final Collection<? extends ConstDecl<?>> constDecls) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}

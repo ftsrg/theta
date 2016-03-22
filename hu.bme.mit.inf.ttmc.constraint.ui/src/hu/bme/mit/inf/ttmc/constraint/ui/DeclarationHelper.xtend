@@ -29,11 +29,11 @@ class DeclarationHelper {
 	
 	////////
 	
-	public def dispatch Decl<Type> toDecl(Declaration declaration) {
+	public def dispatch Decl<Type, ?> toDecl(Declaration declaration) {
 		throw new UnsupportedOperationException("Not supported: " + declaration.class)
 	}
 
-	public def dispatch Decl<Type> toDecl(ConstantDeclaration declaration) {
+	public def dispatch ConstDecl<Type> toDecl(ConstantDeclaration declaration) {
 		var constDecl = constantToConst.get(declaration)
 		if (constDecl === null) {
 			val name = declaration.name
@@ -44,11 +44,11 @@ class DeclarationHelper {
 		constDecl
 	}
 
-	public def dispatch Decl<Type> toDecl(FunctionDeclaration declaration) {
+	public def dispatch ConstDecl<Type> toDecl(FunctionDeclaration declaration) {
 		throw new UnsupportedOperationException("TODO")
 	}
 
-	public def dispatch Decl<Type> toDecl(ParameterDeclaration declaration) {
+	public def dispatch ParamDecl<Type> toDecl(ParameterDeclaration declaration) {
 		var paramDecl = parameterToParam.get(declaration)
 		if (paramDecl === null) {
 			val name = declaration.name

@@ -6,7 +6,7 @@ import hu.bme.mit.inf.ttmc.constraint.decl.Decl;
 import hu.bme.mit.inf.ttmc.constraint.expr.RefExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 
-public abstract class AbstractRefExpr<DeclType extends Type, DeclKind extends Decl<DeclType>>
+public abstract class AbstractRefExpr<DeclType extends Type, DeclKind extends Decl<DeclType, DeclKind>>
 		extends AbstractExpr<DeclType> implements RefExpr<DeclType, DeclKind> {
 
 	private final DeclKind decl;

@@ -34,7 +34,7 @@ public final class Z3ExistsExpr extends AbstractExistsExpr implements Z3Expr<Boo
 			final com.microsoft.z3.Expr[] paramTerms = new com.microsoft.z3.Expr[getParamDecls().size()];
 			int i = 0;
 			for (final ParamDecl<?> paramDecl : getParamDecls()) {
-				final Z3Decl<?> z3ParamDecl = (Z3Decl<?>) paramDecl;
+				final Z3Decl<?, ?> z3ParamDecl = (Z3Decl<?, ?>) paramDecl;
 				final com.microsoft.z3.FuncDecl paramSymbol = z3ParamDecl.getSymbol();
 				paramTerms[i] = context.mkConst(paramSymbol);
 				i++;
