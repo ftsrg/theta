@@ -23,6 +23,19 @@ import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
 public class InterpolatingRefiner extends CEGARStepBase implements IRefiner<InterpolatedAbstractSystem, InterpolatedAbstractState> {
 
 	private final IInterpolater interpolater;
+	private final IStateSplitter splitter;
+
+	@Override
+	public void stop() {
+		super.stop();
+		splitter.stop();
+	}
+
+	@Override
+	public void resetStop() {
+		splitter.resetStop();
+		super.resetStop();
+	}
 
 	/**
 	 * Initialize the step with a solver, logger, visualizer and interpolater
@@ -35,6 +48,8 @@ public class InterpolatingRefiner extends CEGARStepBase implements IRefiner<Inte
 	public InterpolatingRefiner(final STSManager manager, final Logger logger, final IVisualizer visualizer, final IInterpolater interpolater) {
 		super(manager, logger, visualizer);
 		this.interpolater = interpolater;
+		this.splitter = new CounterexampleSplitter(manager, logger, visualizer);
+
 	}
 
 	@Override
@@ -54,7 +69,6 @@ public class InterpolatingRefiner extends CEGARStepBase implements IRefiner<Inte
 		logger.writeln("Interpolant: " + interpolant, 2, 0);
 
 		// Split state(s)
-		final IStateSplitter splitter = new CounterexampleSplitter(manager, logger, visualizer);
 		final int states = system.getAbstractKripkeStructure().getStates().size();
 		final int firstSplit = splitter.split(system, abstractCounterEx, interpolant);
 		assert (states < system.getAbstractKripkeStructure().getStates().size());
