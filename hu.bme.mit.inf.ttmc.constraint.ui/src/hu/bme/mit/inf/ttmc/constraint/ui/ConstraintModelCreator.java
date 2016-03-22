@@ -29,7 +29,7 @@ public class ConstraintModelCreator {
 
 		final TypeHelper typeHelper = new TypeHelper(manager.getTypeFactory());
 		final DeclarationHelper declarationHelper = new DeclarationHelper(manager.getDeclFactory(), typeHelper);
-		final ExpressionHelper expressionHelper = new ExpressionHelper(manager, declarationHelper);
+		final ExpressionHelper expressionHelper = new ExpressionHelper(manager.getExprFactory(), declarationHelper);
 
 		final Collection<ConstDecl<Type>> constDecls = new ArrayList<>();
 		for (final ConstantDeclaration constantDeclaration : specification.getConstantDeclarations()) {
