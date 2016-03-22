@@ -5,10 +5,10 @@ import java.util.List;
 import hu.bme.mit.inf.ttmc.cegar.common.data.ConcreteTrace;
 import hu.bme.mit.inf.ttmc.cegar.common.steps.ConcretizerBase;
 import hu.bme.mit.inf.ttmc.cegar.common.steps.IConcretizer;
-import hu.bme.mit.inf.ttmc.cegar.common.utils.logging.ILogger;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.IVisualizer;
 import hu.bme.mit.inf.ttmc.cegar.visiblecegar.data.VisibleAbstractState;
 import hu.bme.mit.inf.ttmc.cegar.visiblecegar.data.VisibleAbstractSystem;
+import hu.bme.mit.inf.ttmc.common.logging.Logger;
 import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
 
 /**
@@ -20,7 +20,7 @@ import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
  */
 public class VisibleConcretizer extends ConcretizerBase implements IConcretizer<VisibleAbstractSystem, VisibleAbstractState> {
 
-	public VisibleConcretizer(final STSManager manager, final ILogger logger, final IVisualizer visualizer) {
+	public VisibleConcretizer(final STSManager manager, final Logger logger, final IVisualizer visualizer) {
 		super(manager, logger, visualizer);
 	}
 

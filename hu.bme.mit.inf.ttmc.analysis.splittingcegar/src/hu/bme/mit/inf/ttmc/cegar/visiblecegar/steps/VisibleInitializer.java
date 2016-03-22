@@ -5,9 +5,9 @@ import java.util.List;
 
 import hu.bme.mit.inf.ttmc.cegar.common.steps.CEGARStepBase;
 import hu.bme.mit.inf.ttmc.cegar.common.steps.IInitializer;
-import hu.bme.mit.inf.ttmc.cegar.common.utils.logging.ILogger;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.IVisualizer;
 import hu.bme.mit.inf.ttmc.cegar.visiblecegar.data.VisibleAbstractSystem;
+import hu.bme.mit.inf.ttmc.common.logging.Logger;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
@@ -33,7 +33,7 @@ public class VisibleInitializer extends CEGARStepBase implements IInitializer<Vi
 	 * @param logger
 	 * @param visualizer
 	 */
-	public VisibleInitializer(final STSManager manager, final ILogger logger, final IVisualizer visualizer, final boolean useCNFTransformation) {
+	public VisibleInitializer(final STSManager manager, final Logger logger, final IVisualizer visualizer, final boolean useCNFTransformation) {
 		super(manager, logger, visualizer);
 		this.useCNFTransformation = useCNFTransformation;
 	}

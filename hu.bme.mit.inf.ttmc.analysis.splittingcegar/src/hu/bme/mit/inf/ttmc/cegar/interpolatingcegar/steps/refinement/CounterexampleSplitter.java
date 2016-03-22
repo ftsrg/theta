@@ -6,11 +6,11 @@ import java.util.List;
 import hu.bme.mit.inf.ttmc.cegar.common.data.KripkeStructure;
 import hu.bme.mit.inf.ttmc.cegar.common.steps.CEGARStepBase;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.SolverHelper;
-import hu.bme.mit.inf.ttmc.cegar.common.utils.logging.ILogger;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.IVisualizer;
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.data.Interpolant;
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.data.InterpolatedAbstractState;
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.data.InterpolatedAbstractSystem;
+import hu.bme.mit.inf.ttmc.common.logging.Logger;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.expr.NotExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
@@ -33,7 +33,7 @@ public class CounterexampleSplitter extends CEGARStepBase implements IStateSplit
 	 * @param logger
 	 * @param visualizer
 	 */
-	public CounterexampleSplitter(final STSManager manager, final ILogger logger, final IVisualizer visualizer) {
+	public CounterexampleSplitter(final STSManager manager, final Logger logger, final IVisualizer visualizer) {
 		super(manager, logger, visualizer);
 	}
 

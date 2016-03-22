@@ -5,8 +5,6 @@ import java.util.List;
 
 import hu.bme.mit.inf.ttmc.cegar.common.GenericCEGARLoop;
 import hu.bme.mit.inf.ttmc.cegar.common.ICEGARBuilder;
-import hu.bme.mit.inf.ttmc.cegar.common.utils.logging.ILogger;
-import hu.bme.mit.inf.ttmc.cegar.common.utils.logging.NullLogger;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.IVisualizer;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.NullVisualizer;
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.data.InterpolatedAbstractState;
@@ -18,13 +16,15 @@ import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.steps.InterpolatingRefiner;
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.steps.refinement.CraigInterpolater;
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.steps.refinement.IInterpolater;
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.steps.refinement.SequenceInterpolater;
+import hu.bme.mit.inf.ttmc.common.logging.Logger;
+import hu.bme.mit.inf.ttmc.common.logging.impl.NullLogger;
 import hu.bme.mit.inf.ttmc.constraint.z3.Z3ConstraintManager;
 import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
 import hu.bme.mit.inf.ttmc.formalism.sts.impl.STSManagerImpl;
 
 public class InterpolatingCEGARBuilder implements ICEGARBuilder {
 	private STSManager manager = new STSManagerImpl(new Z3ConstraintManager());
-	private ILogger logger = new NullLogger();
+	private Logger logger = new NullLogger();
 	private IVisualizer visualizer = new NullVisualizer();
 	private boolean collectFromConditions = false;
 	private boolean collectFromSpecification = false;
@@ -49,7 +49,7 @@ public class InterpolatingCEGARBuilder implements ICEGARBuilder {
 	 * @param logger
 	 * @return Builder instance
 	 */
-	public InterpolatingCEGARBuilder logger(final ILogger logger) {
+	public InterpolatingCEGARBuilder logger(final Logger logger) {
 		this.logger = logger;
 		return this;
 	}

@@ -8,17 +8,17 @@ import hu.bme.mit.inf.ttmc.cegar.clusteredcegar.steps.ClusteredInitializer;
 import hu.bme.mit.inf.ttmc.cegar.clusteredcegar.steps.ClusteredRefiner;
 import hu.bme.mit.inf.ttmc.cegar.common.GenericCEGARLoop;
 import hu.bme.mit.inf.ttmc.cegar.common.ICEGARBuilder;
-import hu.bme.mit.inf.ttmc.cegar.common.utils.logging.ILogger;
-import hu.bme.mit.inf.ttmc.cegar.common.utils.logging.NullLogger;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.IVisualizer;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.NullVisualizer;
+import hu.bme.mit.inf.ttmc.common.logging.Logger;
+import hu.bme.mit.inf.ttmc.common.logging.impl.NullLogger;
 import hu.bme.mit.inf.ttmc.constraint.z3.Z3ConstraintManager;
 import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
 import hu.bme.mit.inf.ttmc.formalism.sts.impl.STSManagerImpl;
 
 public class ClusteredCEGARBuilder implements ICEGARBuilder {
 	private STSManager manager = new STSManagerImpl(new Z3ConstraintManager());
-	private ILogger logger = new NullLogger();
+	private Logger logger = new NullLogger();
 	private IVisualizer visualizer = new NullVisualizer();
 
 	@Override
@@ -33,7 +33,7 @@ public class ClusteredCEGARBuilder implements ICEGARBuilder {
 	 * @param logger
 	 * @return Builder instance
 	 */
-	public ClusteredCEGARBuilder logger(final ILogger logger) {
+	public ClusteredCEGARBuilder logger(final Logger logger) {
 		this.logger = logger;
 		return this;
 	}

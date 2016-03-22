@@ -1,9 +1,9 @@
 package hu.bme.mit.inf.ttmc.cegar.common.steps;
 
-import hu.bme.mit.inf.ttmc.cegar.common.utils.logging.ILogger;
-import hu.bme.mit.inf.ttmc.cegar.common.utils.logging.NullLogger;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.IVisualizer;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.NullVisualizer;
+import hu.bme.mit.inf.ttmc.common.logging.Logger;
+import hu.bme.mit.inf.ttmc.common.logging.impl.NullLogger;
 import hu.bme.mit.inf.ttmc.constraint.solver.Solver;
 import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
 
@@ -13,7 +13,7 @@ import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
  * @author Akos
  */
 public class CEGARStepBase implements IStoppable {
-	protected ILogger logger; // Logger
+	protected Logger logger; // Logger
 	protected IVisualizer visualizer; // Visualizer
 	protected STSManager manager;
 	protected Solver solver;
@@ -37,7 +37,7 @@ public class CEGARStepBase implements IStoppable {
 	 * @param logger
 	 * @param visualizer
 	 */
-	public CEGARStepBase(final STSManager manager, final ILogger logger, final IVisualizer visualizer) {
+	public CEGARStepBase(final STSManager manager, final Logger logger, final IVisualizer visualizer) {
 		this.manager = manager;
 		this.solver = manager.getSolverFactory().createSolver(true, false);
 		if (logger == null)

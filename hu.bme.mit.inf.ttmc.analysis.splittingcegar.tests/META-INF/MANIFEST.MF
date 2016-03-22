@@ -11,4 +11,5 @@ Require-Bundle: hu.bme.mit.inf.ttmc.analysis.splittingcegar,
  hu.bme.mit.inf.ttmc.system.ui,
  hu.bme.mit.inf.ttmc.constraint,
  hu.bme.mit.inf.ttmc.system.model,
- hu.bme.mit.inf.ttmc.aiger
+ hu.bme.mit.inf.ttmc.aiger,
+ hu.bme.mit.inf.ttmc.common
