@@ -6,7 +6,7 @@ import hu.bme.mit.inf.ttmc.cegar.common.data.IAbstractSystem;
 
 /**
  * Common interface for model checking.
- * 
+ *
  * @author Akos
  * @param <AbstractSystemType>
  *            Type of the abstract system
@@ -16,7 +16,7 @@ import hu.bme.mit.inf.ttmc.cegar.common.data.IAbstractSystem;
 public interface IChecker<AbstractSystemType extends IAbstractSystem, AbstractStateType extends IAbstractState> extends IStoppable {
 	/**
 	 * Check whether the abstract system meets the specification
-	 * 
+	 *
 	 * @param system
 	 *            System
 	 * @return Result of the model checking, which is either a counterexample or

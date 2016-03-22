@@ -20,9 +20,9 @@ public abstract class AbstractSystemBase implements IAbstractSystem {
 	protected STSUnroller unroller;
 	protected Set<VarDecl<? extends Type>> variables; // Variables of the system
 
-	public AbstractSystemBase(final STS system, final STSManager manager) {
+	public AbstractSystemBase(final STS system) {
 		this.system = system;
-		this.unroller = new STSUnrollerImpl(system, manager);
+		this.unroller = new STSUnrollerImpl(system, system.getManager());
 		this.variables = new HashSet<>();
 	}
 
@@ -39,5 +39,10 @@ public abstract class AbstractSystemBase implements IAbstractSystem {
 	@Override
 	public STSUnroller getUnroller() {
 		return unroller;
+	}
+
+	@Override
+	public STSManager getManager() {
+		return system.getManager();
 	}
 }

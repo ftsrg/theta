@@ -7,7 +7,6 @@ import hu.bme.mit.inf.ttmc.cegar.common.data.AbstractSystemBase;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
-import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
 
 /**
  * Represents the visibility-based abstract system.
@@ -25,8 +24,8 @@ public class VisibleAbstractSystem extends AbstractSystemBase {
 	 * @param problem
 	 *            Problem
 	 */
-	public VisibleAbstractSystem(final STS system, final STSManager manager) {
-		super(system, manager);
+	public VisibleAbstractSystem(final STS system) {
+		super(system);
 		visibleVariables = new HashSet<>();
 		invisibleVariables = new HashSet<>();
 		cnfVariables = new HashSet<>();

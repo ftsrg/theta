@@ -11,7 +11,6 @@ import hu.bme.mit.inf.ttmc.common.logging.Logger;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
-import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
 import hu.bme.mit.inf.ttmc.formalism.utils.impl.FormalismUtils;
 import hu.bme.mit.inf.ttmc.formalism.utils.sts.impl.STSCNFTransformation;
 import hu.bme.mit.inf.ttmc.formalism.utils.sts.impl.STSITETransformation;
@@ -33,8 +32,8 @@ public class VisibleInitializer extends CEGARStepBase implements IInitializer<Vi
 	 * @param logger
 	 * @param visualizer
 	 */
-	public VisibleInitializer(final STSManager manager, final Logger logger, final IVisualizer visualizer, final boolean useCNFTransformation) {
-		super(manager, logger, visualizer);
+	public VisibleInitializer(final Logger logger, final IVisualizer visualizer, final boolean useCNFTransformation) {
+		super(logger, visualizer);
 		this.useCNFTransformation = useCNFTransformation;
 	}
 
@@ -89,7 +88,7 @@ public class VisibleInitializer extends CEGARStepBase implements IInitializer<Vi
 			logger.writeln("done, " + cnfVars.size() + " new variables were added.", 3);
 		}
 
-		final VisibleAbstractSystem system = new VisibleAbstractSystem(concrSys, manager);
+		final VisibleAbstractSystem system = new VisibleAbstractSystem(concrSys);
 		system.getVariables().addAll(nonCnfVars);
 		system.getCNFVariables().addAll(cnfVars);
 		system.getVisibleVariables().addAll(visibleVars);

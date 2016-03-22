@@ -13,7 +13,6 @@ import hu.bme.mit.inf.ttmc.cegar.visiblecegar.steps.refinement.IVariableCollecto
 import hu.bme.mit.inf.ttmc.common.logging.Logger;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
-import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
 
 public class VisibleRefiner extends CEGARStepBase implements IRefiner<VisibleAbstractSystem, VisibleAbstractState> {
 	private final IVariableCollector variableCollector;
@@ -25,8 +24,8 @@ public class VisibleRefiner extends CEGARStepBase implements IRefiner<VisibleAbs
 	 * @param logger
 	 * @param visualizer
 	 */
-	public VisibleRefiner(final STSManager manager, final Logger logger, final IVisualizer visualizer, final IVariableCollector variableCollector) {
-		super(manager, logger, visualizer);
+	public VisibleRefiner(final Logger logger, final IVisualizer visualizer, final IVariableCollector variableCollector) {
+		super(logger, visualizer);
 		this.variableCollector = variableCollector;
 	}
 

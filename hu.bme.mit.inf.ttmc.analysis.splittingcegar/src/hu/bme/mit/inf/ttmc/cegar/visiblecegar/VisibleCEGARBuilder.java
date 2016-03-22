@@ -13,21 +13,11 @@ import hu.bme.mit.inf.ttmc.cegar.visiblecegar.steps.VisibleRefiner;
 import hu.bme.mit.inf.ttmc.cegar.visiblecegar.steps.refinement.InterpolatingVariableCollector;
 import hu.bme.mit.inf.ttmc.common.logging.Logger;
 import hu.bme.mit.inf.ttmc.common.logging.impl.NullLogger;
-import hu.bme.mit.inf.ttmc.constraint.z3.Z3ConstraintManager;
-import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
-import hu.bme.mit.inf.ttmc.formalism.sts.impl.STSManagerImpl;
 
 public class VisibleCEGARBuilder implements ICEGARBuilder {
-	private STSManager manager = new STSManagerImpl(new Z3ConstraintManager());
 	private Logger logger = new NullLogger();
 	private IVisualizer visualizer = new NullVisualizer();
 	private boolean useCNFTransformation = false;
-
-	@Override
-	public VisibleCEGARBuilder manager(final STSManager manager) {
-		this.manager = manager;
-		return this;
-	}
 
 	/**
 	 * Set logger
@@ -70,8 +60,8 @@ public class VisibleCEGARBuilder implements ICEGARBuilder {
 	 */
 	@Override
 	public GenericCEGARLoop<VisibleAbstractSystem, VisibleAbstractState> build() {
-		return new GenericCEGARLoop<>(new VisibleInitializer(manager, logger, visualizer, useCNFTransformation),
-				new VisibleChecker(manager, logger, visualizer), new VisibleConcretizer(manager, logger, visualizer),
-				new VisibleRefiner(manager, logger, visualizer, new InterpolatingVariableCollector(manager, logger, visualizer)), logger, "Visible");
+		return new GenericCEGARLoop<>(new VisibleInitializer(logger, visualizer, useCNFTransformation), new VisibleChecker(logger, visualizer),
+				new VisibleConcretizer(logger, visualizer), new VisibleRefiner(logger, visualizer, new InterpolatingVariableCollector(logger, visualizer)),
+				logger, "Visible");
 	}
 }

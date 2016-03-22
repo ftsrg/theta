@@ -13,7 +13,6 @@ import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.steps.refinement.Counterexam
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.steps.refinement.IInterpolater;
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.steps.refinement.IStateSplitter;
 import hu.bme.mit.inf.ttmc.common.logging.Logger;
-import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
 
 /**
  * Refines the abstraction using the spurious counterexample.
@@ -45,10 +44,10 @@ public class InterpolatingRefiner extends CEGARStepBase implements IRefiner<Inte
 	 * @param visualizer
 	 * @param interpolater
 	 */
-	public InterpolatingRefiner(final STSManager manager, final Logger logger, final IVisualizer visualizer, final IInterpolater interpolater) {
-		super(manager, logger, visualizer);
+	public InterpolatingRefiner(final Logger logger, final IVisualizer visualizer, final IInterpolater interpolater) {
+		super(logger, visualizer);
 		this.interpolater = interpolater;
-		this.splitter = new CounterexampleSplitter(manager, logger, visualizer);
+		this.splitter = new CounterexampleSplitter(logger, visualizer);
 
 	}
 

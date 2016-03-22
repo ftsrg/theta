@@ -11,6 +11,7 @@ import hu.bme.mit.inf.ttmc.common.logging.Logger;
 import hu.bme.mit.inf.ttmc.constraint.expr.AndExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.solver.Model;
+import hu.bme.mit.inf.ttmc.constraint.solver.Solver;
 import hu.bme.mit.inf.ttmc.constraint.solver.SolverStatus;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
@@ -31,8 +32,8 @@ public abstract class ConcretizerBase extends CEGARStepBase {
 	 * @param logger
 	 * @param visualizer
 	 */
-	public ConcretizerBase(final STSManager manager, final Logger logger, final IVisualizer visualizer) {
-		super(manager, logger, visualizer);
+	public ConcretizerBase(final Logger logger, final IVisualizer visualizer) {
+		super(logger, visualizer);
 	}
 
 	/**
@@ -52,8 +53,8 @@ public abstract class ConcretizerBase extends CEGARStepBase {
 	 * @return Longest concrete trace corresponding to a prefix of the abstract
 	 *         counterexample
 	 */
-	protected ConcreteTrace concretize(final STSUnroller unroller, final List<? extends IAbstractState> counterEx, final Expr<? extends BoolType> lastState,
-			final Collection<VarDecl<?>> projectVars) {
+	protected ConcreteTrace concretize(final STSManager manager, final STSUnroller unroller, final List<? extends IAbstractState> counterEx,
+			final Expr<? extends BoolType> lastState, final Collection<VarDecl<?>> projectVars) {
 		// Do an iterative bounded model checking to find a concrete
 		// counterexample.
 		// Iterative method is required because if no counterexample exists, we
@@ -62,6 +63,7 @@ public abstract class ConcretizerBase extends CEGARStepBase {
 		// counterexample
 		// that has no corresponding concrete state (or if the last state is not
 		// bad).
+		final Solver solver = manager.getSolverFactory().createSolver(true, false);
 		Model model = null;
 
 		solver.push();

@@ -15,7 +15,6 @@ import hu.bme.mit.inf.ttmc.constraint.solver.ItpMarker;
 import hu.bme.mit.inf.ttmc.constraint.solver.ItpPattern;
 import hu.bme.mit.inf.ttmc.constraint.solver.ItpSolver;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
-import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
 import hu.bme.mit.inf.ttmc.formalism.sts.STSUnroller;
 
 /**
@@ -24,7 +23,6 @@ import hu.bme.mit.inf.ttmc.formalism.sts.STSUnroller;
  * @author Akos
  */
 public class CraigInterpolater extends CEGARStepBase implements IInterpolater {
-	private final ItpSolver interpolatingSolver;
 
 	/**
 	 * Initialize the interpolater with a solver, logger and visualizer
@@ -34,15 +32,14 @@ public class CraigInterpolater extends CEGARStepBase implements IInterpolater {
 	 * @param visualizer
 	 * @param interpolatingSolver
 	 */
-	public CraigInterpolater(final STSManager manager, final Logger logger, final IVisualizer visualizer) {
-		super(manager, logger, visualizer);
-		this.interpolatingSolver = manager.getSolverFactory().createItpSolver();
+	public CraigInterpolater(final Logger logger, final IVisualizer visualizer) {
+		super(logger, visualizer);
 	}
 
 	@Override
 	public Interpolant interpolate(final InterpolatedAbstractSystem system, final List<InterpolatedAbstractState> abstractCounterEx,
 			final ConcreteTrace concreteTrace) {
-
+		final ItpSolver interpolatingSolver = system.getManager().getSolverFactory().createItpSolver();
 		final int traceLength = concreteTrace.getTrace().size();
 
 		// Create pattern for a binary interpolant
@@ -74,7 +71,7 @@ public class CraigInterpolater extends CEGARStepBase implements IInterpolater {
 			interpolatingSolver.add(B, unroller.inv(traceLength)); // Invariants for the next abstract state
 			interpolatingSolver.add(B, unroller.trans(traceLength - 1)); // Transition to the next abstract state
 		} else { // Failure state is the last
-			final NotExpr negSpec = manager.getExprFactory().Not(system.getSystem().getProp());
+			final NotExpr negSpec = system.getManager().getExprFactory().Not(system.getSystem().getProp());
 			interpolatingSolver.add(B, unroller.unroll(negSpec, traceLength - 1)); // Property violation
 		}
 		// Since A and B is unsatisfiable (otherwise there would be a concrete counterexample),
@@ -84,7 +81,7 @@ public class CraigInterpolater extends CEGARStepBase implements IInterpolater {
 		final Expr<? extends BoolType> interpolant = unroller.foldin(interpolatingSolver.getInterpolant(pattern).eval(A), traceLength - 1);
 
 		interpolatingSolver.pop();
-		return new Interpolant(interpolant, traceLength - 1, manager); // Return binary interpolant
+		return new Interpolant(interpolant, traceLength - 1, system.getManager()); // Return binary interpolant
 	}
 
 	@Override

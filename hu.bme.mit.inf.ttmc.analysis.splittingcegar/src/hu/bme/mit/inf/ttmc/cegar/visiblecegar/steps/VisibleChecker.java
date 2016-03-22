@@ -18,8 +18,8 @@ import hu.bme.mit.inf.ttmc.common.logging.Logger;
 import hu.bme.mit.inf.ttmc.constraint.expr.AndExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.expr.NotExpr;
+import hu.bme.mit.inf.ttmc.constraint.solver.Solver;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
-import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
 import hu.bme.mit.inf.ttmc.formalism.sts.STSUnroller;
 
 /**
@@ -29,14 +29,15 @@ import hu.bme.mit.inf.ttmc.formalism.sts.STSUnroller;
  */
 public class VisibleChecker extends CEGARStepBase implements IChecker<VisibleAbstractSystem, VisibleAbstractState> {
 
-	public VisibleChecker(final STSManager manager, final Logger logger, final IVisualizer visualizer) {
-		super(manager, logger, visualizer);
+	public VisibleChecker(final Logger logger, final IVisualizer visualizer) {
+		super(logger, visualizer);
 	}
 
 	@Override
 	public AbstractResult<VisibleAbstractState> check(final VisibleAbstractSystem system) {
+		final Solver solver = system.getManager().getSolverFactory().createSolver(true, false);
 		// Get the negate of the inner expression of G(...)
-		final NotExpr negSpec = manager.getExprFactory().Not(system.getSystem().getProp());
+		final NotExpr negSpec = system.getManager().getExprFactory().Not(system.getSystem().getProp());
 
 		final STSUnroller unroller = system.getUnroller(); // Create an unroller for k=1
 		Stack<VisibleAbstractState> counterExample = null;
@@ -67,9 +68,9 @@ public class VisibleChecker extends CEGARStepBase implements IChecker<VisibleAbs
 				exploredStates.put(init, init);
 				// Push to stack and get successors
 				stateStack.push(init);
-				successorStack.push(getSuccessors(init, unroller, system));
+				successorStack.push(getSuccessors(solver, init, unroller, system));
 				// Check if the specification holds
-				if (checkState(init, negSpec, unroller)) {
+				if (checkState(solver, init, negSpec, unroller)) {
 					logger.writeln("Counterexample reached!", 5, 1);
 					counterExample = stateStack;
 				}
@@ -93,9 +94,9 @@ public class VisibleChecker extends CEGARStepBase implements IChecker<VisibleAbs
 						// Push to stack
 						stateStack.push(nextState);
 						// The successors found here are not added to the actual state here, only when they are explored
-						successorStack.push(getSuccessors(nextState, unroller, system));
+						successorStack.push(getSuccessors(solver, nextState, unroller, system));
 						// Check if the specification holds
-						if (checkState(nextState, negSpec, unroller)) {
+						if (checkState(solver, nextState, negSpec, unroller)) {
 							logger.writeln("Counterexample reached!", 5, 1);
 							counterExample = stateStack;
 							break;
@@ -115,7 +116,7 @@ public class VisibleChecker extends CEGARStepBase implements IChecker<VisibleAbs
 			solver.push();
 			solver.add(unroller.inv(0));
 			solver.add(unroller.init(0));
-			solver.add(unroller.unroll(manager.getExprFactory().Not(manager.getExprFactory().Or(initExpr)), 0));
+			solver.add(unroller.unroll(system.getManager().getExprFactory().Not(system.getManager().getExprFactory().Or(initExpr)), 0));
 			if (SolverHelper.checkSatisfiable(solver))
 				init = new VisibleAbstractState(unroller.getConcreteState(solver.getModel(), 0, system.getVisibleVariables()), true);
 			else
@@ -147,7 +148,8 @@ public class VisibleChecker extends CEGARStepBase implements IChecker<VisibleAbs
 	}
 
 	// Get successors of an abstract state
-	private List<VisibleAbstractState> getSuccessors(final VisibleAbstractState state, final STSUnroller unroller, final VisibleAbstractSystem system) {
+	private List<VisibleAbstractState> getSuccessors(final Solver solver, final VisibleAbstractState state, final STSUnroller unroller,
+			final VisibleAbstractSystem system) {
 		final List<VisibleAbstractState> successors = new ArrayList<>(); // List of successors
 		solver.push();
 		solver.add(unroller.inv(0));
@@ -165,7 +167,7 @@ public class VisibleChecker extends CEGARStepBase implements IChecker<VisibleAbs
 						false);
 				successors.add(succ);
 				// Force new successors
-				solver.add(unroller.unroll(manager.getExprFactory().Not(succ.getExpression()), 1));
+				solver.add(unroller.unroll(system.getManager().getExprFactory().Not(succ.getExpression()), 1));
 			} else
 				break;
 		} while (true);
@@ -174,7 +176,7 @@ public class VisibleChecker extends CEGARStepBase implements IChecker<VisibleAbs
 	}
 
 	// Check if an expression is feasible for a state
-	private boolean checkState(final VisibleAbstractState state, final Expr<? extends BoolType> expr, final STSUnroller unroller) {
+	private boolean checkState(final Solver solver, final VisibleAbstractState state, final Expr<? extends BoolType> expr, final STSUnroller unroller) {
 		solver.push();
 		solver.add(unroller.unroll(state.getExpression(), 0));
 		solver.add(unroller.inv(0));
