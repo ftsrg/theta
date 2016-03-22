@@ -59,6 +59,8 @@ public class ClusteredChecker extends CEGARStepBase implements IChecker<Clustere
 
 		// Loop through each initial state and do a search
 		while ((init = getNextInitialState(system, prevInit)) != null && counterExample == null) {
+			if (isStopped)
+				return null;
 			// Check if the state is really initial
 			if (!checkInitial(init, unroller))
 				continue;
@@ -86,6 +88,8 @@ public class ClusteredChecker extends CEGARStepBase implements IChecker<Clustere
 
 			// Loop until the stack is empty or a counterexample is found
 			while (!stateStack.empty() && counterExample == null) {
+				if (isStopped)
+					return null;
 				// Get the actual state
 				final ClusteredAbstractState actualState = stateStack.peek();
 				// Get the next successor of the actual state

@@ -1,5 +1,6 @@
 package hu.bme.mit.inf.ttmc.cegar.common;
 
+import hu.bme.mit.inf.ttmc.cegar.common.steps.IStoppable;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 
 /**
@@ -7,7 +8,7 @@ import hu.bme.mit.inf.ttmc.formalism.sts.STS;
  *
  * @author Akos
  */
-public interface ICEGARLoop {
+public interface ICEGARLoop extends IStoppable {
 
 	/**
 	 * Check whether a system satisfies the specification. The algorithms may
@@ -17,5 +18,4 @@ public interface ICEGARLoop {
 	 */
 	public CEGARResult check(STS concreteSystem);
 
-	public void stop();
 }

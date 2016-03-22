@@ -10,7 +10,7 @@ import hu.bme.mit.inf.ttmc.formalism.sts.STS;
  * @param <AbstractSystemType>
  *            Type of the abstract system
  */
-public interface IInitializer<AbstractSystemType extends IAbstractSystem> {
+public interface IInitializer<AbstractSystemType extends IAbstractSystem> extends IStoppable {
 	/**
 	 * Create the initial abstraction
 	 *

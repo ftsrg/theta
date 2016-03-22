@@ -107,6 +107,8 @@ public class InterpolatingChecker extends CEGARStepBase implements IChecker<Inte
 
 		// Loop through each initial state and do a search
 		while (actualInit < system.getAbstractKripkeStructure().getInitialStates().size()) {
+			if (isStopped)
+				return null;
 			final InterpolatedAbstractState init = system.getAbstractKripkeStructure().getInitialState(actualInit);
 			++actualInit;
 
@@ -137,6 +139,8 @@ public class InterpolatingChecker extends CEGARStepBase implements IChecker<Inte
 			isContinuation = false;
 
 			while (!stateStack.isEmpty() && counterExample == null) {
+				if (isStopped)
+					return null;
 				// Get the actual state
 				final InterpolatedAbstractState actual = stateStack.peek();
 				// Get the next successor of the actual state (if exists)
