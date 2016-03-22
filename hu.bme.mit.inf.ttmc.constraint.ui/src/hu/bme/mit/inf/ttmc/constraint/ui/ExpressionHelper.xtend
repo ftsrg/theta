@@ -40,15 +40,14 @@ import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderMul
 import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderNeg
 import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderSub
 import hu.bme.mit.inf.ttmc.constraint.utils.impl.ExprUtils
-import hu.bme.mit.inf.ttmc.constraint.ConstraintManager
 
 public class ExpressionHelper {
 	
 	protected val extension ExprFactory exprFactory;
 	protected val extension DeclarationHelper declarationHelper;
 		
-	public new(ConstraintManager manager, DeclarationHelper declarationHelper) {
-		this.exprFactory = manager.getExprFactory
+	public new(ExprFactory factory, DeclarationHelper declarationHelper) {
+		this.exprFactory = exprFactory
 		this.declarationHelper = declarationHelper
 	}
 	

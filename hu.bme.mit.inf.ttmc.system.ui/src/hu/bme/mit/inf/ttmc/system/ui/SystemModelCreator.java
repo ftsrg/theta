@@ -36,7 +36,8 @@ public class SystemModelCreator {
 		final TypeHelper typeHelper = new TypeHelper(manager.getTypeFactory());
 		final SystemDeclarationHelper declarationHelper = new SystemDeclarationHelper(manager.getDeclFactory(),
 				typeHelper);
-		final SystemExpressionHelper expressionHelper = new SystemExpressionHelper(manager, declarationHelper);
+		final SystemExpressionHelper expressionHelper = new SystemExpressionHelper(manager.getExprFactory(),
+				declarationHelper);
 
 		for (final PropertyDeclaration propertyDeclaration : specification.getPropertyDeclarations()) {
 			final SystemDefinition systemDefinition = (SystemDefinition) propertyDeclaration.getSystem();
