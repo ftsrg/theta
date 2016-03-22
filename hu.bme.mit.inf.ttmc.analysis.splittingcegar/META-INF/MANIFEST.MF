@@ -11,7 +11,8 @@ Require-Bundle: com.google.guava,
  org.junit,
  hu.bme.mit.inf.ttmc.constraint,
  hu.bme.mit.inf.ttmc.formalism,
- hu.bme.mit.inf.ttmc.constraint.z3
+ hu.bme.mit.inf.ttmc.constraint.z3,
+ hu.bme.mit.inf.ttmc.common
 Export-Package: 
  hu.bme.mit.inf.ttmc.cegar.clusteredcegar,
  hu.bme.mit.inf.ttmc.cegar.clusteredcegar.data,
@@ -19,7 +20,6 @@ Export-Package:
  hu.bme.mit.inf.ttmc.cegar.common,
  hu.bme.mit.inf.ttmc.cegar.common.data,
  hu.bme.mit.inf.ttmc.cegar.common.steps,
- hu.bme.mit.inf.ttmc.cegar.common.utils.logging,
  hu.bme.mit.inf.ttmc.cegar.common.utils.visualization,
  hu.bme.mit.inf.ttmc.cegar.interpolatingcegar,
  hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.data,

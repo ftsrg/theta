@@ -6,15 +6,15 @@ import java.util.List;
 
 import org.junit.Test;
 
+import hu.bme.mit.inf.ttmc.aiger.impl.AIGERLoaderSimple;
 import hu.bme.mit.inf.ttmc.cegar.common.CEGARResult;
 import hu.bme.mit.inf.ttmc.cegar.common.ICEGARLoop;
 import hu.bme.mit.inf.ttmc.cegar.common.data.IAbstractState;
-import hu.bme.mit.inf.ttmc.cegar.common.utils.logging.ConsoleLogger;
-import hu.bme.mit.inf.ttmc.cegar.common.utils.logging.ILogger;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.IVisualizer;
-import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.InterpolatingCEGARBuilder;
-import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.InterpolatingCEGARBuilder.InterpolationMethod;
 import hu.bme.mit.inf.ttmc.cegar.tests.invariantchecker.InvariantChecker;
+import hu.bme.mit.inf.ttmc.cegar.visiblecegar.VisibleCEGARBuilder;
+import hu.bme.mit.inf.ttmc.common.logging.Logger;
+import hu.bme.mit.inf.ttmc.common.logging.impl.ConsoleLogger;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.constraint.z3.Z3ConstraintManager;
@@ -33,32 +33,36 @@ public class SandBox {
 	@Test
 	public void test() throws IOException {
 
-		//System.in.read();
+		System.in.read();
 
-		final String subPath = "simple/";
-		final String modelName = "simple1";
+		final String subPath = "hardware/";
+		final String modelName = "ringp0.aag";
 
 		final STSManager manager = new STSManagerImpl(new Z3ConstraintManager());
 
-		final ILogger logger = new ConsoleLogger(100);
+		final Logger logger = new ConsoleLogger(1);
 		final IVisualizer visualizer = null; //new GraphVizVisualizer("models/_output", modelName, 100);
 
-		final SystemSpecification sysSpec = SystemModelLoader.getInstance().load(MODELSPATH + subPath + modelName + ".system");
+		STS problem = null;
 
-		final SystemModel systemModel = SystemModelCreator.create(manager, sysSpec);
-
-		final STS problem = systemModel.getSTSs().iterator().next();
+		if (modelName.endsWith(".system")) {
+			final SystemSpecification sysSpec = SystemModelLoader.getInstance().load(MODELSPATH + subPath + modelName);
+			final SystemModel systemModel = SystemModelCreator.create(manager, sysSpec);
+			problem = systemModel.getSTSs().iterator().next();
+		} else if (modelName.endsWith(".aag")) {
+			problem = new AIGERLoaderSimple().load(MODELSPATH + subPath + modelName, manager);
+		}
 
 		ICEGARLoop cegar = null;
 
 		//cegar = new ClusteredCEGARBuilder().manager(manager).logger(logger).visualizer(visualizer).build();
-		//cegar = new VisibleCEGARBuilder().manager(manager).logger(logger).visualizer(visualizer).useCNFTransformation(true).build();
+		cegar = new VisibleCEGARBuilder().manager(manager).logger(logger).visualizer(visualizer).useCNFTransformation(false).build();
 
-		cegar = new InterpolatingCEGARBuilder().manager(manager).logger(logger).visualizer(visualizer).useCNFTransformation(true)
-				.collectFromSpecification(false).collectFromConditions(false).incrementalModelChecking(true).interpolationMethod(InterpolationMethod.Craig)
-				//.explicitVariable("lock_b0").explicitVariable("lock_b1")
-				//.explicitVariable("loc")
-				.build();
+		//cegar = new InterpolatingCEGARBuilder().manager(manager).logger(logger).visualizer(visualizer).useCNFTransformation(false)
+		//		.collectFromSpecification(false).collectFromConditions(false).incrementalModelChecking(true).interpolationMethod(InterpolationMethod.Craig)
+		//.explicitVariable("lock_b0").explicitVariable("lock_b1")
+		//.explicitVariable("loc")
+		//		.build();
 
 		final CEGARResult result = cegar.check(problem);
 

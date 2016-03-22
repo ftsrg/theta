@@ -9,11 +9,11 @@ import hu.bme.mit.inf.ttmc.cegar.common.data.AbstractResult;
 import hu.bme.mit.inf.ttmc.cegar.common.steps.CEGARStepBase;
 import hu.bme.mit.inf.ttmc.cegar.common.steps.IChecker;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.SolverHelper;
-import hu.bme.mit.inf.ttmc.cegar.common.utils.logging.ILogger;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.IVisualizer;
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.data.InterpolatedAbstractState;
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.data.InterpolatedAbstractSystem;
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.utils.VisualizationHelper;
+import hu.bme.mit.inf.ttmc.common.logging.Logger;
 import hu.bme.mit.inf.ttmc.constraint.expr.NotExpr;
 import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
 import hu.bme.mit.inf.ttmc.formalism.sts.STSUnroller;
@@ -41,7 +41,7 @@ public class InterpolatingChecker extends CEGARStepBase implements IChecker<Inte
 	 * @param isIncremental
 	 *            Is model checking incremental
 	 */
-	public InterpolatingChecker(final STSManager manager, final ILogger logger, final IVisualizer visualizer, final boolean isIncremental) {
+	public InterpolatingChecker(final STSManager manager, final Logger logger, final IVisualizer visualizer, final boolean isIncremental) {
 		super(manager, logger, visualizer);
 		this.isIncremental = isIncremental;
 		exploredStates = new HashSet<>();

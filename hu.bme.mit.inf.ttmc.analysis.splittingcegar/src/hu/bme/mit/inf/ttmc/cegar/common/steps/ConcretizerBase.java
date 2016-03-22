@@ -6,8 +6,8 @@ import java.util.List;
 import hu.bme.mit.inf.ttmc.cegar.common.data.ConcreteTrace;
 import hu.bme.mit.inf.ttmc.cegar.common.data.IAbstractState;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.SolverHelper;
-import hu.bme.mit.inf.ttmc.cegar.common.utils.logging.ILogger;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.IVisualizer;
+import hu.bme.mit.inf.ttmc.common.logging.Logger;
 import hu.bme.mit.inf.ttmc.constraint.expr.AndExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.solver.Model;
@@ -31,7 +31,7 @@ public abstract class ConcretizerBase extends CEGARStepBase {
 	 * @param logger
 	 * @param visualizer
 	 */
-	public ConcretizerBase(final STSManager manager, final ILogger logger, final IVisualizer visualizer) {
+	public ConcretizerBase(final STSManager manager, final Logger logger, final IVisualizer visualizer) {
 		super(manager, logger, visualizer);
 	}
 

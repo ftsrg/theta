@@ -5,10 +5,10 @@ import java.util.List;
 import hu.bme.mit.inf.ttmc.cegar.common.data.ConcreteTrace;
 import hu.bme.mit.inf.ttmc.cegar.common.steps.ConcretizerBase;
 import hu.bme.mit.inf.ttmc.cegar.common.steps.IConcretizer;
-import hu.bme.mit.inf.ttmc.cegar.common.utils.logging.ILogger;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.IVisualizer;
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.data.InterpolatedAbstractState;
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.data.InterpolatedAbstractSystem;
+import hu.bme.mit.inf.ttmc.common.logging.Logger;
 import hu.bme.mit.inf.ttmc.constraint.expr.NotExpr;
 import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
 
@@ -31,7 +31,7 @@ public class InterpolatingConcretizer extends ConcretizerBase implements IConcre
 	 * @param logger
 	 * @param visualizer
 	 */
-	public InterpolatingConcretizer(final STSManager manager, final ILogger logger, final IVisualizer visualizer) {
+	public InterpolatingConcretizer(final STSManager manager, final Logger logger, final IVisualizer visualizer) {
 		super(manager, logger, visualizer);
 	}
 

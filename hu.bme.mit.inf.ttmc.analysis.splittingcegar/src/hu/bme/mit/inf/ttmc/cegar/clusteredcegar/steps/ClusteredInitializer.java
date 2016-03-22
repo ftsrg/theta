@@ -16,8 +16,8 @@ import hu.bme.mit.inf.ttmc.cegar.common.steps.CEGARStepBase;
 import hu.bme.mit.inf.ttmc.cegar.common.steps.IInitializer;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.FormulaCollector;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.SolverHelper;
-import hu.bme.mit.inf.ttmc.cegar.common.utils.logging.ILogger;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.IVisualizer;
+import hu.bme.mit.inf.ttmc.common.logging.Logger;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
@@ -39,7 +39,7 @@ public class ClusteredInitializer extends CEGARStepBase implements IInitializer<
 	 * @param logger
 	 * @param visualizer
 	 */
-	public ClusteredInitializer(final STSManager manager, final ILogger logger, final IVisualizer visualizer) {
+	public ClusteredInitializer(final STSManager manager, final Logger logger, final IVisualizer visualizer) {
 		super(manager, logger, visualizer);
 	}
 

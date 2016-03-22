@@ -14,10 +14,10 @@ import hu.bme.mit.inf.ttmc.cegar.common.steps.CEGARStepBase;
 import hu.bme.mit.inf.ttmc.cegar.common.steps.IInitializer;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.FormulaCollector;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.SolverHelper;
-import hu.bme.mit.inf.ttmc.cegar.common.utils.logging.ILogger;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.IVisualizer;
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.data.InterpolatedAbstractState;
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.data.InterpolatedAbstractSystem;
+import hu.bme.mit.inf.ttmc.common.logging.Logger;
 import hu.bme.mit.inf.ttmc.constraint.expr.AndExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
@@ -57,7 +57,7 @@ public class InterpolatingInitializer extends CEGARStepBase implements IInitiali
 	 * @param explicitVariables
 	 *            List of explicitly tracked variables
 	 */
-	public InterpolatingInitializer(final STSManager manager, final ILogger logger, final IVisualizer visualizer, final boolean collectFromConditions,
+	public InterpolatingInitializer(final STSManager manager, final Logger logger, final IVisualizer visualizer, final boolean collectFromConditions,
 			final boolean collectFromSpecification, final boolean useCNFTransformation, final Collection<String> explicitVariables) {
 		super(manager, logger, visualizer);
 		this.collectFromConditions = collectFromConditions;

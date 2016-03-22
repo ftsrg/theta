@@ -7,8 +7,8 @@ import hu.bme.mit.inf.ttmc.cegar.clusteredcegar.data.ClusteredAbstractSystem;
 import hu.bme.mit.inf.ttmc.cegar.common.data.ConcreteTrace;
 import hu.bme.mit.inf.ttmc.cegar.common.steps.ConcretizerBase;
 import hu.bme.mit.inf.ttmc.cegar.common.steps.IConcretizer;
-import hu.bme.mit.inf.ttmc.cegar.common.utils.logging.ILogger;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.IVisualizer;
+import hu.bme.mit.inf.ttmc.common.logging.Logger;
 import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
 
 /**
@@ -27,7 +27,7 @@ public class ClusteredConcretizer extends ConcretizerBase implements IConcretize
 	 * @param logger
 	 * @param visualizer
 	 */
-	public ClusteredConcretizer(final STSManager manager, final ILogger logger, final IVisualizer visualizer) {
+	public ClusteredConcretizer(final STSManager manager, final Logger logger, final IVisualizer visualizer) {
 		super(manager, logger, visualizer);
 	}
 
