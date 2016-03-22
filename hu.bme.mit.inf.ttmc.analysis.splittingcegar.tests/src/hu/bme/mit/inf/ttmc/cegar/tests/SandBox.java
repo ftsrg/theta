@@ -55,10 +55,10 @@ public class SandBox {
 
 		ICEGARLoop cegar = null;
 
-		//cegar = new ClusteredCEGARBuilder().manager(manager).logger(logger).visualizer(visualizer).build();
-		cegar = new VisibleCEGARBuilder().manager(manager).logger(logger).visualizer(visualizer).useCNFTransformation(false).build();
+		//cegar = new ClusteredCEGARBuilder().logger(logger).visualizer(visualizer).build();
+		cegar = new VisibleCEGARBuilder().logger(logger).visualizer(visualizer).useCNFTransformation(false).build();
 
-		//cegar = new InterpolatingCEGARBuilder().manager(manager).logger(logger).visualizer(visualizer).useCNFTransformation(false)
+		//cegar = new InterpolatingCEGARBuilder().logger(logger).visualizer(visualizer).useCNFTransformation(false)
 		//		.collectFromSpecification(false).collectFromConditions(false).incrementalModelChecking(true).interpolationMethod(InterpolationMethod.Craig)
 		//.explicitVariable("lock_b0").explicitVariable("lock_b1")
 		//.explicitVariable("loc")

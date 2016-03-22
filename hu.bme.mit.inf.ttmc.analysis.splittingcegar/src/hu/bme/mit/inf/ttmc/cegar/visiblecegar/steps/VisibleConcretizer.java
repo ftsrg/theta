@@ -9,7 +9,6 @@ import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.IVisualizer;
 import hu.bme.mit.inf.ttmc.cegar.visiblecegar.data.VisibleAbstractState;
 import hu.bme.mit.inf.ttmc.cegar.visiblecegar.data.VisibleAbstractSystem;
 import hu.bme.mit.inf.ttmc.common.logging.Logger;
-import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
 
 /**
  * Tries to find a concrete counterexample for an abstract counterexample. If no
@@ -20,13 +19,13 @@ import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
  */
 public class VisibleConcretizer extends ConcretizerBase implements IConcretizer<VisibleAbstractSystem, VisibleAbstractState> {
 
-	public VisibleConcretizer(final STSManager manager, final Logger logger, final IVisualizer visualizer) {
-		super(manager, logger, visualizer);
+	public VisibleConcretizer(final Logger logger, final IVisualizer visualizer) {
+		super(logger, visualizer);
 	}
 
 	@Override
 	public ConcreteTrace concretize(final VisibleAbstractSystem system, final List<VisibleAbstractState> abstractCounterEx) {
-		return super.concretize(system.getUnroller(), abstractCounterEx, null, system.getVariables());
+		return super.concretize(system.getManager(), system.getUnroller(), abstractCounterEx, null, system.getVariables());
 	}
 
 	@Override

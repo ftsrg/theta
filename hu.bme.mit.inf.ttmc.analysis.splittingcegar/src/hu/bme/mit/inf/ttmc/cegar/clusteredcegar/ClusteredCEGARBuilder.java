@@ -12,20 +12,10 @@ import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.IVisualizer;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.NullVisualizer;
 import hu.bme.mit.inf.ttmc.common.logging.Logger;
 import hu.bme.mit.inf.ttmc.common.logging.impl.NullLogger;
-import hu.bme.mit.inf.ttmc.constraint.z3.Z3ConstraintManager;
-import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
-import hu.bme.mit.inf.ttmc.formalism.sts.impl.STSManagerImpl;
 
 public class ClusteredCEGARBuilder implements ICEGARBuilder {
-	private STSManager manager = new STSManagerImpl(new Z3ConstraintManager());
 	private Logger logger = new NullLogger();
 	private IVisualizer visualizer = new NullVisualizer();
-
-	@Override
-	public ClusteredCEGARBuilder manager(final STSManager manager) {
-		this.manager = manager;
-		return this;
-	}
 
 	/**
 	 * Set logger
@@ -56,8 +46,8 @@ public class ClusteredCEGARBuilder implements ICEGARBuilder {
 	 */
 	@Override
 	public GenericCEGARLoop<ClusteredAbstractSystem, ClusteredAbstractState> build() {
-		return new GenericCEGARLoop<ClusteredAbstractSystem, ClusteredAbstractState>(new ClusteredInitializer(manager, logger, visualizer),
-				new ClusteredChecker(manager, logger, visualizer), new ClusteredConcretizer(manager, logger, visualizer),
-				new ClusteredRefiner(manager, logger, visualizer), logger, "Clustered");
+		return new GenericCEGARLoop<ClusteredAbstractSystem, ClusteredAbstractState>(new ClusteredInitializer(logger, visualizer),
+				new ClusteredChecker(logger, visualizer), new ClusteredConcretizer(logger, visualizer), new ClusteredRefiner(logger, visualizer), logger,
+				"Clustered");
 	}
 }

@@ -15,12 +15,10 @@ import hu.bme.mit.inf.ttmc.constraint.solver.ItpPattern;
 import hu.bme.mit.inf.ttmc.constraint.solver.ItpSolver;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
-import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
 import hu.bme.mit.inf.ttmc.formalism.sts.STSUnroller;
 import hu.bme.mit.inf.ttmc.formalism.utils.impl.FormalismUtils;
 
 public class InterpolatingVariableCollector extends CEGARStepBase implements IVariableCollector {
-	private final ItpSolver interpolatingSolver;
 
 	/**
 	 * Initialize the step with a solver, logger and visualizer
@@ -30,14 +28,14 @@ public class InterpolatingVariableCollector extends CEGARStepBase implements IVa
 	 * @param visualizer
 	 * @param interpolatingSolver
 	 */
-	public InterpolatingVariableCollector(final STSManager manager, final Logger logger, final IVisualizer visualizer) {
-		super(manager, logger, visualizer);
-		this.interpolatingSolver = manager.getSolverFactory().createItpSolver();
+	public InterpolatingVariableCollector(final Logger logger, final IVisualizer visualizer) {
+		super(logger, visualizer);
 	}
 
 	@Override
 	public Collection<VarDecl<? extends Type>> collectVariables(final VisibleAbstractSystem system, final List<VisibleAbstractState> abstractCounterEx,
 			final ConcreteTrace concreteTrace) {
+		final ItpSolver interpolatingSolver = system.getManager().getSolverFactory().createItpSolver();
 		final int traceLength = concreteTrace.size();
 		assert (traceLength < abstractCounterEx.size());
 		// Create pattern for a binary interpolant

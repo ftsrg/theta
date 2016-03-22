@@ -223,14 +223,13 @@ public class PerformanceTests {
 	}
 
 	private TestResult run(final TestCase testCase, final ICEGARBuilder configuration, final int timeOut) {
-		STSManager manager = new STSManagerImpl(new Z3ConstraintManager());
 		STS system;
 		try {
-			system = testCase.loader.load(testCase.path, manager);
+			system = testCase.loader.load(testCase.path, new STSManagerImpl(new Z3ConstraintManager()));
 		} catch (final IOException e1) {
 			return new TestResult(TestResult.ResultType.IOException, new ArrayList<>());
 		}
-		ICEGARLoop cegar = configuration.manager(manager).build();
+		ICEGARLoop cegar = configuration.build();
 		final CEGARRunner runner = new CEGARRunner(cegar, system);
 
 		runner.start();
@@ -254,13 +253,12 @@ public class PerformanceTests {
 					else if (runner.result.getElapsedMillis() < 10000)
 						rerun = 1;
 					for (int i = 0; i < rerun; ++i) {
-						manager = new STSManagerImpl(new Z3ConstraintManager());
 						try {
-							system = testCase.loader.load(testCase.path, manager);
+							system = testCase.loader.load(testCase.path, new STSManagerImpl(new Z3ConstraintManager()));
 						} catch (final IOException e1) {
 							return new TestResult(TestResult.ResultType.IOException, new ArrayList<>());
 						}
-						cegar = configuration.manager(manager).build();
+						cegar = configuration.build();
 						resultList.add(cegar.check(system));
 					}
 					return new TestResult(TestResult.ResultType.Ok, resultList);

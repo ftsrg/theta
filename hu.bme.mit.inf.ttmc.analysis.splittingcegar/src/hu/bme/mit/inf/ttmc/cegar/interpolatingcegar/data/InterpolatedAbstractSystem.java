@@ -12,7 +12,6 @@ import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
-import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
 
 /**
  * Represents the interpolated abstract system.
@@ -34,8 +33,8 @@ public class InterpolatedAbstractSystem extends AbstractSystemBase {
 	 * @param problem
 	 *            Problem
 	 */
-	public InterpolatedAbstractSystem(final STS system, final STSManager manager) {
-		super(system, manager);
+	public InterpolatedAbstractSystem(final STS system) {
+		super(system);
 		initialPredicates = new ArrayList<>();
 		abstractKripkeStructure = null;
 		cnfVariables = new HashSet<>();

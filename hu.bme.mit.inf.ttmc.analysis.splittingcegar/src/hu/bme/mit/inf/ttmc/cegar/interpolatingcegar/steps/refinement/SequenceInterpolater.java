@@ -17,7 +17,6 @@ import hu.bme.mit.inf.ttmc.constraint.solver.ItpMarker;
 import hu.bme.mit.inf.ttmc.constraint.solver.ItpPattern;
 import hu.bme.mit.inf.ttmc.constraint.solver.ItpSolver;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
-import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
 import hu.bme.mit.inf.ttmc.formalism.sts.STSUnroller;
 
 /**
@@ -26,7 +25,6 @@ import hu.bme.mit.inf.ttmc.formalism.sts.STSUnroller;
  * @author Akos
  */
 public class SequenceInterpolater extends CEGARStepBase implements IInterpolater {
-	private final ItpSolver interpolatingSolver;
 
 	/**
 	 * Initialize the interpolater with a solver, logger and visualizer
@@ -36,15 +34,15 @@ public class SequenceInterpolater extends CEGARStepBase implements IInterpolater
 	 * @param visualizer
 	 * @param interpolatingSolver
 	 */
-	public SequenceInterpolater(final STSManager manager, final Logger logger, final IVisualizer visualizer) {
-		super(manager, logger, visualizer);
-		this.interpolatingSolver = manager.getSolverFactory().createItpSolver();
+	public SequenceInterpolater(final Logger logger, final IVisualizer visualizer) {
+		super(logger, visualizer);
 	}
 
 	@Override
 	public Interpolant interpolate(final InterpolatedAbstractSystem system, final List<InterpolatedAbstractState> abstractCounterEx,
 			final ConcreteTrace concreteTrace) {
 
+		final ItpSolver interpolatingSolver = system.getManager().getSolverFactory().createItpSolver();
 		// Create pattern for a sequence interpolant
 		final ItpMarker[] markers = new ItpMarker[abstractCounterEx.size() + 1];
 		for (int i = 0; i < markers.length; ++i)
@@ -67,7 +65,7 @@ public class SequenceInterpolater extends CEGARStepBase implements IInterpolater
 		}
 
 		// Set the last marker
-		final NotExpr negSpec = manager.getExprFactory().Not(system.getSystem().getProp());
+		final NotExpr negSpec = system.getManager().getExprFactory().Not(system.getSystem().getProp());
 		interpolatingSolver.add(markers[abstractCounterEx.size()], unroller.unroll(negSpec, abstractCounterEx.size() - 1)); // Property violation
 
 		// The conjunction of the markers is unsatisfiable (otherwise there would be a concrete counterexample),

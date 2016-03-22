@@ -13,8 +13,8 @@ import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.data.InterpolatedAbstractSys
 import hu.bme.mit.inf.ttmc.common.logging.Logger;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.expr.NotExpr;
+import hu.bme.mit.inf.ttmc.constraint.solver.Solver;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
-import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
 import hu.bme.mit.inf.ttmc.formalism.sts.STSUnroller;
 
 /**
@@ -33,8 +33,8 @@ public class CounterexampleSplitter extends CEGARStepBase implements IStateSplit
 	 * @param logger
 	 * @param visualizer
 	 */
-	public CounterexampleSplitter(final STSManager manager, final Logger logger, final IVisualizer visualizer) {
-		super(manager, logger, visualizer);
+	public CounterexampleSplitter(final Logger logger, final IVisualizer visualizer) {
+		super(logger, visualizer);
 	}
 
 	@Override
@@ -44,7 +44,7 @@ public class CounterexampleSplitter extends CEGARStepBase implements IStateSplit
 		for (int i = 0; i < interpolant.size(); ++i) {
 			if (isStopped)
 				return 0;
-			if (!interpolant.get(i).equals(manager.getExprFactory().True())) {
+			if (!interpolant.get(i).equals(system.getManager().getExprFactory().True())) {
 				split(system, abstractCounterEx.get(i), interpolant.get(i));
 				if (firstSplit == -1)
 					firstSplit = i;
@@ -55,6 +55,7 @@ public class CounterexampleSplitter extends CEGARStepBase implements IStateSplit
 	}
 
 	private void split(final InterpolatedAbstractSystem system, final InterpolatedAbstractState failureState, Expr<? extends BoolType> interpolant) {
+		final Solver solver = system.getManager().getSolverFactory().createSolver(true, false);
 		// Create unroller for k=1
 		final STSUnroller unroller = system.getUnroller();
 
@@ -70,7 +71,7 @@ public class CounterexampleSplitter extends CEGARStepBase implements IStateSplit
 		// Create refined abstract states using the interpolant and its negation
 		final List<InterpolatedAbstractState> refinedStates = new ArrayList<>(2);
 		refinedStates.add(failureState.refine(interpolant));
-		refinedStates.add(failureState.refine(manager.getExprFactory().Not(interpolant)));
+		refinedStates.add(failureState.refine(system.getManager().getExprFactory().Not(interpolant)));
 		// Check for contradicting labels
 		for (final InterpolatedAbstractState refined : refinedStates) {
 			solver.push();

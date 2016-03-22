@@ -8,7 +8,6 @@ import hu.bme.mit.inf.ttmc.cegar.common.data.KripkeStructure;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
-import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
 
 /**
  * Represents the clustered abstract system.
@@ -21,8 +20,8 @@ public class ClusteredAbstractSystem extends AbstractSystemBase {
 	private final List<Cluster> clusters; // Clusters (variables and formulas)
 	private final List<KripkeStructure<ComponentAbstractState>> abstractKripkeStructures; // Abstract Kripke structure for each cluster
 
-	public ClusteredAbstractSystem(final STS system, final STSManager manager) {
-		super(system, manager);
+	public ClusteredAbstractSystem(final STS system) {
+		super(system);
 		this.atomicFormulas = new ArrayList<>();
 		this.clusters = new ArrayList<>();
 		this.abstractKripkeStructures = new ArrayList<>();

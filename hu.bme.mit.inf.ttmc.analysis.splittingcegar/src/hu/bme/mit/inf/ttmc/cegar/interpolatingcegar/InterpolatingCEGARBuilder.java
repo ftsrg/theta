@@ -18,12 +18,8 @@ import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.steps.refinement.IInterpolat
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.steps.refinement.SequenceInterpolater;
 import hu.bme.mit.inf.ttmc.common.logging.Logger;
 import hu.bme.mit.inf.ttmc.common.logging.impl.NullLogger;
-import hu.bme.mit.inf.ttmc.constraint.z3.Z3ConstraintManager;
-import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
-import hu.bme.mit.inf.ttmc.formalism.sts.impl.STSManagerImpl;
 
 public class InterpolatingCEGARBuilder implements ICEGARBuilder {
-	private STSManager manager = new STSManagerImpl(new Z3ConstraintManager());
 	private Logger logger = new NullLogger();
 	private IVisualizer visualizer = new NullVisualizer();
 	private boolean collectFromConditions = false;
@@ -36,12 +32,6 @@ public class InterpolatingCEGARBuilder implements ICEGARBuilder {
 	public enum InterpolationMethod {
 		Craig, Sequence
 	};
-
-	@Override
-	public InterpolatingCEGARBuilder manager(final STSManager manager) {
-		this.manager = manager;
-		return this;
-	}
 
 	/**
 	 * Set logger
@@ -148,19 +138,18 @@ public class InterpolatingCEGARBuilder implements ICEGARBuilder {
 		IInterpolater interpolater = null;
 		switch (interpolationMethod) {
 		case Craig:
-			interpolater = new CraigInterpolater(manager, logger, visualizer);
+			interpolater = new CraigInterpolater(logger, visualizer);
 			break;
 		case Sequence:
-			interpolater = new SequenceInterpolater(manager, logger, visualizer);
+			interpolater = new SequenceInterpolater(logger, visualizer);
 			break;
 		default:
 			throw new RuntimeException("Unknown interpolation method: " + interpolationMethod);
 		}
 
 		return new GenericCEGARLoop<>(
-				new InterpolatingInitializer(manager, logger, visualizer, collectFromConditions, collectFromSpecification, useCNFTransformation,
-						explicitVariables),
-				new InterpolatingChecker(manager, logger, visualizer, incrementalModelChecking), new InterpolatingConcretizer(manager, logger, visualizer),
-				new InterpolatingRefiner(manager, logger, visualizer, interpolater), logger, "Interpolating");
+				new InterpolatingInitializer(logger, visualizer, collectFromConditions, collectFromSpecification, useCNFTransformation, explicitVariables),
+				new InterpolatingChecker(logger, visualizer, incrementalModelChecking), new InterpolatingConcretizer(logger, visualizer),
+				new InterpolatingRefiner(logger, visualizer, interpolater), logger, "Interpolating");
 	}
 }

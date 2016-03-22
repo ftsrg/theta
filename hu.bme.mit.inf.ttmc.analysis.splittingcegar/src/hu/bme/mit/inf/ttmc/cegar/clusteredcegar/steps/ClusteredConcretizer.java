@@ -9,7 +9,6 @@ import hu.bme.mit.inf.ttmc.cegar.common.steps.ConcretizerBase;
 import hu.bme.mit.inf.ttmc.cegar.common.steps.IConcretizer;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.IVisualizer;
 import hu.bme.mit.inf.ttmc.common.logging.Logger;
-import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
 
 /**
  * Tries to find a concrete counterexample for an abstract counterexample. If no
@@ -27,13 +26,13 @@ public class ClusteredConcretizer extends ConcretizerBase implements IConcretize
 	 * @param logger
 	 * @param visualizer
 	 */
-	public ClusteredConcretizer(final STSManager manager, final Logger logger, final IVisualizer visualizer) {
-		super(manager, logger, visualizer);
+	public ClusteredConcretizer(final Logger logger, final IVisualizer visualizer) {
+		super(logger, visualizer);
 	}
 
 	@Override
 	public ConcreteTrace concretize(final ClusteredAbstractSystem system, final List<ClusteredAbstractState> abstractCounterEx) {
-		return super.concretize(system.getUnroller(), abstractCounterEx, null, system.getVariables());
+		return super.concretize(system.getManager(), system.getUnroller(), abstractCounterEx, null, system.getVariables());
 	}
 
 	@Override

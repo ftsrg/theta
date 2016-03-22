@@ -10,7 +10,6 @@ import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.data.InterpolatedAbstractSta
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.data.InterpolatedAbstractSystem;
 import hu.bme.mit.inf.ttmc.common.logging.Logger;
 import hu.bme.mit.inf.ttmc.constraint.expr.NotExpr;
-import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
 
 /**
  * Tries to find a concrete counterexample for an abstract counterexample. If no
@@ -31,14 +30,14 @@ public class InterpolatingConcretizer extends ConcretizerBase implements IConcre
 	 * @param logger
 	 * @param visualizer
 	 */
-	public InterpolatingConcretizer(final STSManager manager, final Logger logger, final IVisualizer visualizer) {
-		super(manager, logger, visualizer);
+	public InterpolatingConcretizer(final Logger logger, final IVisualizer visualizer) {
+		super(logger, visualizer);
 	}
 
 	@Override
 	public ConcreteTrace concretize(final InterpolatedAbstractSystem system, final List<InterpolatedAbstractState> abstractCounterEx) {
-		final NotExpr negSpec = manager.getExprFactory().Not(system.getSystem().getProp());
-		return super.concretize(system.getUnroller(), abstractCounterEx, negSpec, system.getVariables());
+		final NotExpr negSpec = system.getManager().getExprFactory().Not(system.getSystem().getProp());
+		return super.concretize(system.getManager(), system.getUnroller(), abstractCounterEx, negSpec, system.getVariables());
 	}
 
 	@Override

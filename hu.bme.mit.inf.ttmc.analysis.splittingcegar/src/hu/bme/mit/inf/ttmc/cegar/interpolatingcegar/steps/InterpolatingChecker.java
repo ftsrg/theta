@@ -15,7 +15,7 @@ import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.data.InterpolatedAbstractSys
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.utils.VisualizationHelper;
 import hu.bme.mit.inf.ttmc.common.logging.Logger;
 import hu.bme.mit.inf.ttmc.constraint.expr.NotExpr;
-import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
+import hu.bme.mit.inf.ttmc.constraint.solver.Solver;
 import hu.bme.mit.inf.ttmc.formalism.sts.STSUnroller;
 
 /**
@@ -41,8 +41,8 @@ public class InterpolatingChecker extends CEGARStepBase implements IChecker<Inte
 	 * @param isIncremental
 	 *            Is model checking incremental
 	 */
-	public InterpolatingChecker(final STSManager manager, final Logger logger, final IVisualizer visualizer, final boolean isIncremental) {
-		super(manager, logger, visualizer);
+	public InterpolatingChecker(final Logger logger, final IVisualizer visualizer, final boolean isIncremental) {
+		super(logger, visualizer);
 		this.isIncremental = isIncremental;
 		exploredStates = new HashSet<>();
 		stateStack = new Stack<>();
@@ -52,11 +52,12 @@ public class InterpolatingChecker extends CEGARStepBase implements IChecker<Inte
 
 	@Override
 	public AbstractResult<InterpolatedAbstractState> check(final InterpolatedAbstractSystem system) {
+		final Solver solver = system.getManager().getSolverFactory().createSolver(true, false);
 		// Get the index of the previously splitted state, or -1 at first call
 		final int splitIndex = system.getPreviousSplitIndex();
 
 		// Get the negate of the inner expression of G(...)
-		final NotExpr negSpec = manager.getExprFactory().Not(system.getSystem().getProp());
+		final NotExpr negSpec = system.getManager().getExprFactory().Not(system.getSystem().getProp());
 
 		final STSUnroller unroller = system.getUnroller(); // Create an unroller for k=0
 		Stack<InterpolatedAbstractState> counterExample = null; // Store the counterexample (if found)
@@ -130,7 +131,7 @@ public class InterpolatingChecker extends CEGARStepBase implements IChecker<Inte
 					stateStack.push(init);
 					successorStack.push(-1);
 					// Check if the specification holds
-					if (checkState(init, unroller)) {
+					if (checkState(solver, init, unroller)) {
 						logger.writeln("Counterexample reached!", 5, 1);
 						counterExample = stateStack;
 					}
@@ -157,7 +158,7 @@ public class InterpolatingChecker extends CEGARStepBase implements IChecker<Inte
 						stateStack.push(next);
 						successorStack.push(-1);
 						// Check if the specification holds
-						if (checkState(next, unroller)) {
+						if (checkState(solver, next, unroller)) {
 							logger.writeln("Counterexample reached!", 5, 1);
 							counterExample = stateStack;
 						}
@@ -205,7 +206,7 @@ public class InterpolatingChecker extends CEGARStepBase implements IChecker<Inte
 	 *            Unroller
 	 * @return True if the predicates hold, false otherwise
 	 */
-	private boolean checkState(final InterpolatedAbstractState s, final STSUnroller unroller) {
+	private boolean checkState(final Solver solver, final InterpolatedAbstractState s, final STSUnroller unroller) {
 		solver.push();
 		SolverHelper.unrollAndAssert(solver, s.getLabels(), unroller, 0);
 		final boolean ret = SolverHelper.checkSatisfiable(solver);
