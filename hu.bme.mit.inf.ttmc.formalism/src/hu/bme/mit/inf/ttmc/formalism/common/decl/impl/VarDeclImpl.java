@@ -6,7 +6,8 @@ import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.VarRefExpr;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.impl.VarRefExprImpl;
 
-public class VarDeclImpl<DeclType extends Type> extends AbstractDecl<DeclType> implements VarDecl<DeclType> {
+public class VarDeclImpl<DeclType extends Type> extends AbstractDecl<DeclType, VarDecl<DeclType>>
+		implements VarDecl<DeclType> {
 
 	private static final String DECL_LABEL = "Var";
 

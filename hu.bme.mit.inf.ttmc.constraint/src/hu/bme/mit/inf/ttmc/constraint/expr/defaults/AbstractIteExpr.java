@@ -55,7 +55,7 @@ public abstract class AbstractIteExpr<ExprType extends Type> extends AbstractExp
 	public final ExprType getType() {
 		final ExprType thenType = getThen().getType();
 		final ExprType elseType = getElse().getType();
-		final Optional<ExprType> joinResult = TypeUtils.join(manager.getTypeFactory(), thenType, elseType);
+		final Optional<ExprType> joinResult = TypeUtils.join(thenType, elseType);
 		final ExprType result = joinResult.get();
 		return result;
 	}

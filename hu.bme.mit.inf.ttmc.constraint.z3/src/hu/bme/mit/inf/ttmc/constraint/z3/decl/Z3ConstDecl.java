@@ -11,12 +11,14 @@ import com.microsoft.z3.Sort;
 import hu.bme.mit.inf.ttmc.common.Tuple2;
 import hu.bme.mit.inf.ttmc.common.Tuples;
 import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
+import hu.bme.mit.inf.ttmc.constraint.decl.ConstDecl;
 import hu.bme.mit.inf.ttmc.constraint.decl.defaults.AbstractConstDecl;
 import hu.bme.mit.inf.ttmc.constraint.type.FuncType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.constraint.z3.type.Z3Type;
 
-public final class Z3ConstDecl<DeclType extends Type> extends AbstractConstDecl<DeclType> implements Z3Decl<DeclType> {
+public final class Z3ConstDecl<DeclType extends Type> extends AbstractConstDecl<DeclType>
+		implements Z3Decl<DeclType, ConstDecl<DeclType>> {
 
 	private final Context context;
 

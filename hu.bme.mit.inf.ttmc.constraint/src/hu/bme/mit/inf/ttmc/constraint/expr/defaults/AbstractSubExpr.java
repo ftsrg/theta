@@ -28,7 +28,7 @@ public abstract class AbstractSubExpr<ExprType extends ClosedUnderSub>
 	public final ExprType getType() {
 		final ExprType leftType = getLeftOp().getType();
 		final ExprType rightType = getRightOp().getType();
-		final Optional<ExprType> joinResult = TypeUtils.join(manager.getTypeFactory(), leftType, rightType);
+		final Optional<ExprType> joinResult = TypeUtils.join(leftType, rightType);
 		final ExprType result = joinResult.get();
 		return result;
 	}

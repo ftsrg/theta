@@ -27,8 +27,7 @@ public class SystemModelTests {
 		final SystemModel model = SystemModelCreator.create(manager, specification);
 
 		for (STS sts : model.getSTSs()) {
-			sts = new STSCNFTransformation(manager).transform(
-					new STSITETransformation(manager).transform(sts));
+			sts = new STSCNFTransformation().transform(new STSITETransformation().transform(sts));
 			System.out.println(sts);
 		}
 	}
