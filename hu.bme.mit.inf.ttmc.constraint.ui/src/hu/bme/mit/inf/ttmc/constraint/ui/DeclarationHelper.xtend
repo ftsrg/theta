@@ -29,7 +29,7 @@ class DeclarationHelper {
 	
 	////////
 	
-	public def dispatch Decl<Type, ?> toDecl(Declaration declaration) {
+	public def dispatch Decl<? extends Type, ?> toDecl(Declaration declaration) {
 		throw new UnsupportedOperationException("Not supported: " + declaration.class)
 	}
 
