@@ -1,5 +1,7 @@
 package hu.bme.mit.inf.ttmc.code.ast;
 
+import hu.bme.mit.inf.ttmc.code.ast.visitor.ExpressionVisitor;
+
 public class BinaryExpressionAst extends ExpressionAst {
 
 	public enum Operator {
@@ -33,8 +35,9 @@ public class BinaryExpressionAst extends ExpressionAst {
 		return new AstNode[] {left, right};
 	}
 	
-	public <R> void accept(AstVisitor<R> visitor) {
-		visitor.visit(this);
+	@Override
+	public <E> E accept(ExpressionVisitor<E> visitor) {
+		return visitor.visit(this);
 	}
 	
 }

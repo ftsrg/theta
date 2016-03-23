@@ -1,5 +1,7 @@
 package hu.bme.mit.inf.ttmc.code.ast;
 
+import hu.bme.mit.inf.ttmc.code.ast.visitor.StatementVisitor;
+
 public class ReturnStatementAst extends StatementAst {
 
 	private ExpressionAst expr;
@@ -8,13 +10,18 @@ public class ReturnStatementAst extends StatementAst {
 		this.expr = expr;
 	}
 
+	public ExpressionAst getExpr() {
+		return this.expr;
+	}
+	
 	@Override
 	public AstNode[] getChildren() {
 		return new AstNode[] {this.expr};
 	}
 	
-	public <R> void accept(AstVisitor<R> visitor) {
-		visitor.visit(this);
+	@Override
+	public <S> S accept(StatementVisitor<S> visitor) {
+		return visitor.visit(this);
 	}
 	
 }

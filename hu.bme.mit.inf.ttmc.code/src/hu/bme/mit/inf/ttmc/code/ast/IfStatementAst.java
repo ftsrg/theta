@@ -1,5 +1,7 @@
 package hu.bme.mit.inf.ttmc.code.ast;
 
+import hu.bme.mit.inf.ttmc.code.ast.visitor.StatementVisitor;
+
 public class IfStatementAst extends StatementAst {
 
 	private ExpressionAst condition;
@@ -17,6 +19,18 @@ public class IfStatementAst extends StatementAst {
 		this.thenStatement = thenStatement;
 	}
 	
+	public ExpressionAst getCondition() {
+		return this.condition;
+	}
+	
+	public StatementAst getThen() {
+		return this.thenStatement;
+	}
+	
+	public StatementAst getElse() {
+		return this.elseStatement;
+	}
+	
 	@Override
 	public AstNode[] getChildren() {
 		if (this.elseStatement != null) {
@@ -24,6 +38,11 @@ public class IfStatementAst extends StatementAst {
 		} else {
 			return new AstNode[] { condition, thenStatement };
 		}
+	}
+	
+	@Override
+	public <S> S accept(StatementVisitor<S> visitor) {
+		return visitor.visit(this);
 	}
 
 }

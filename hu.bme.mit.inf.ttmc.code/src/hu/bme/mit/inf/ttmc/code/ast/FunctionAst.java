@@ -10,15 +10,14 @@ public class FunctionAst extends AstNode {
 		this.body = body;
 	}
 
+	public StatementAst getBody() {
+		return this.body;		
+	}
+	
 	@Override
 	public AstNode[] getChildren() {
 		return new AstNode[] { this.body };
-	}
-	
-	public <R> void accept(AstVisitor<R> visitor) {
-		visitor.visit(this);
-	}
-	
+	}	
 	
 	
 }
