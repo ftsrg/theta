@@ -13,5 +13,5 @@ Require-Bundle: com.google.guava,
  hu.bme.mit.inf.ttmc.constraint.model,
  hu.bme.mit.inf.ttmc.constraint.language
 Export-Package: hu.bme.mit.inf.ttmc.constraint.ui,
- hu.bme.mit.inf.ttmc.constraint.ui.helpers
-
+ hu.bme.mit.inf.ttmc.constraint.ui.transform,
+ hu.bme.mit.inf.ttmc.constraint.ui.transform.impl

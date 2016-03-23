@@ -78,7 +78,7 @@ public class ProcDeclImpl<ReturnType extends Type> implements ProcDecl<ReturnTyp
 
 	@Override
 	public String toString() {
-		final String prefix = "proc " + name + "(";
+		final String prefix = "Proc(" + name + ", ";
 		final String suffix = ") : " + returnType.toString();
 		final StringJoiner sj = new StringJoiner(", ", prefix, suffix);
 		for (final ParamDecl<?> paramDecl : paramDecls) {
