@@ -86,6 +86,6 @@ public class CraigInterpolater extends CEGARStepBase implements IInterpolater {
 
 	@Override
 	public String toString() {
-		return "craigInterpol";
+		return "craigItp";
 	}
 }

@@ -69,11 +69,10 @@ public class InterpolatingInitializer extends CEGARStepBase implements IInitiali
 	@Override
 	public InterpolatedAbstractSystem create(STS concrSys) {
 		final Solver solver = concrSys.getManager().getSolverFactory().createSolver(true, false);
-		logger.writeln("Specification expression: " + concrSys.getProp(), 2);
 
 		final Map<String, VarDecl<? extends Type>> varMap = new HashMap<>();
 		final Set<VarDecl<? extends Type>> explicitVars = new HashSet<>();
-		// Print variables
+
 		logger.write("Variables [" + concrSys.getVars().size() + "]:", 2);
 		for (final VarDecl<? extends Type> varDecl : concrSys.getVars()) {
 			logger.write(" " + varDecl.getName(), 3);
@@ -85,6 +84,8 @@ public class InterpolatingInitializer extends CEGARStepBase implements IInitiali
 		for (final String varName : explicitVariableNames)
 			logger.write(" " + varName, 2);
 		logger.writeln(2);
+
+		logger.writeln("Specification expression: " + concrSys.getProp(), 2);
 
 		// Check explicitly tracked variables
 		int variablesNotFound = 0; // Count not found variables for assertion
@@ -99,14 +100,10 @@ public class InterpolatingInitializer extends CEGARStepBase implements IInitiali
 
 		assert (explicitVariableNames.size() == variablesNotFound + explicitVars.size());
 
-		// Collect initial predicates to a set that ensures uniqueness for isomorphic expressions
-
+		// Set ensures uniqueness
 		final Set<Expr<? extends BoolType>> initialPredSet = new HashSet<>();
-
-		// Collect atomic formulas from the conditions
 		if (collectFromConditions)
 			FormulaCollector.collectAtomsFromTransitionConditions(concrSys, initialPredSet);
-		// Collect atomic formulas from the specification
 		if (collectFromSpecification)
 			FormulaCollector.collectAtomsFromExpression(concrSys.getProp(), initialPredSet);
 
@@ -117,8 +114,7 @@ public class InterpolatingInitializer extends CEGARStepBase implements IInitiali
 		// Move the collected predicates to a list for further use
 		final List<Expr<? extends BoolType>> initialPredList = new ArrayList<>(initialPredSet);
 
-		// There must be at least one predicate
-		assert (initialPredList.size() > 0);
+		assert (initialPredList.size() > 0); // There must be at least one predicate
 
 		logger.writeln("Initial predicates [" + initialPredList.size() + "]", 2);
 		for (final Expr<? extends BoolType> ex : initialPredList)
@@ -147,8 +143,6 @@ public class InterpolatingInitializer extends CEGARStepBase implements IInitiali
 			logger.writeln("done, " + cnfVariables.size() + " new variables were added.", 3);
 		}
 
-		logger.writeln("### Using new system from now on ###", 0);
-
 		final InterpolatedAbstractSystem system = new InterpolatedAbstractSystem(concrSys);
 
 		system.getVariables().addAll(nonCnfVariables);
@@ -167,7 +161,7 @@ public class InterpolatingInitializer extends CEGARStepBase implements IInitiali
 		for (final Expr<? extends BoolType> ex : system.getInitialPredicates())
 			negates.add(concrSys.getManager().getExprFactory().Not(ex));
 
-		final STSUnroller unroller = system.getUnroller(); // Create an unroller for k=1
+		final STSUnroller unroller = system.getUnroller();
 
 		// Traverse the possible abstract states. Each formula is either unnegated or negated, so
 		// there are 2^|formulas| possible abstract states. We start with an empty state (no
@@ -187,7 +181,7 @@ public class InterpolatingInitializer extends CEGARStepBase implements IInitiali
 
 			// Add the next formula unnegated
 			final InterpolatedAbstractState s1 = actual.cloneAndAdd(system.getInitialPredicates().get(actual.getLabels().size()));
-			if (isStateFeasible(solver, s1, unroller)) {
+			if (isStateFeasible(s1, solver, unroller)) {
 				// If the state is feasible and there are no more formulas, this state is finished
 				if (s1.getLabels().size() == system.getInitialPredicates().size())
 					predicateStates.add(s1);
@@ -197,7 +191,7 @@ public class InterpolatingInitializer extends CEGARStepBase implements IInitiali
 
 			// Add the next formula negated
 			final InterpolatedAbstractState s2 = actual.cloneAndAdd(negates.get(actual.getLabels().size()));
-			if (isStateFeasible(solver, s2, unroller)) {
+			if (isStateFeasible(s2, solver, unroller)) {
 				// If the state is feasible and there are no more formulas, this state is finished
 				if (s2.getLabels().size() == system.getInitialPredicates().size())
 					predicateStates.add(s2);
@@ -218,6 +212,8 @@ public class InterpolatingInitializer extends CEGARStepBase implements IInitiali
 				// Assert labels of the state
 				SolverHelper.unrollAndAssert(solver, as.getLabels(), unroller, 0);
 				do { // Loop until a new state is found
+					if (isStopped)
+						return null;
 					if (SolverHelper.checkSatisfiable(solver)) {
 						// Keep only explicitly tracked variables
 						final AndExpr model = unroller.getConcreteState(solver.getModel(), 0, system.getExplicitVariables());
@@ -238,13 +234,13 @@ public class InterpolatingInitializer extends CEGARStepBase implements IInitiali
 		for (final InterpolatedAbstractState s0 : ks.getStates()) { // Loop through the states
 			if (isStopped)
 				return null;
-			s0.setInitial(isStateInitial(solver, s0, unroller)); // Check whether it is initial
+			s0.setInitial(isStateInitial(s0, solver, unroller)); // Check whether it is initial
 			if (s0.isInitial())
 				ks.addInitialState(s0);
 			for (final InterpolatedAbstractState s1 : ks.getStates()) { // Calculate successors
 				if (isStopped)
 					return null;
-				if (isTransitionFeasible(solver, s0, s1, unroller)) {
+				if (isTransitionFeasible(s0, s1, solver, unroller)) {
 					s0.addSuccessor(s1);
 					s1.addPredecessor(s0);
 				}
@@ -267,7 +263,7 @@ public class InterpolatingInitializer extends CEGARStepBase implements IInitiali
 	 *            System unroller
 	 * @return True if the state is feasible, false otherwise
 	 */
-	private boolean isStateFeasible(final Solver solver, final InterpolatedAbstractState s, final STSUnroller unroller) {
+	private boolean isStateFeasible(final InterpolatedAbstractState s, final Solver solver, final STSUnroller unroller) {
 		solver.push();
 		SolverHelper.unrollAndAssert(solver, s.getLabels(), unroller, 0);
 		final boolean ret = SolverHelper.checkSatisfiable(solver);
@@ -284,7 +280,7 @@ public class InterpolatingInitializer extends CEGARStepBase implements IInitiali
 	 *            System unroller
 	 * @return True if the state is initial, false otherwise
 	 */
-	private boolean isStateInitial(final Solver solver, final InterpolatedAbstractState s, final STSUnroller unroller) {
+	private boolean isStateInitial(final InterpolatedAbstractState s, final Solver solver, final STSUnroller unroller) {
 		solver.push();
 		SolverHelper.unrollAndAssert(solver, s.getLabels(), unroller, 0);
 		solver.add(unroller.init(0));
@@ -306,7 +302,7 @@ public class InterpolatingInitializer extends CEGARStepBase implements IInitiali
 	 * @return True if a transition is present between s0 and s1, false
 	 *         otherwise
 	 */
-	private boolean isTransitionFeasible(final Solver solver, final InterpolatedAbstractState s0, final InterpolatedAbstractState s1,
+	private boolean isTransitionFeasible(final InterpolatedAbstractState s0, final InterpolatedAbstractState s1, final Solver solver,
 			final STSUnroller unroller) {
 		solver.push();
 		SolverHelper.unrollAndAssert(solver, s0.getLabels(), unroller, 0);

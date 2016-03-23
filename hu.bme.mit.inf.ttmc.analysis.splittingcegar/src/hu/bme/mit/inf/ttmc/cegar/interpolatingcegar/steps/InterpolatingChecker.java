@@ -131,7 +131,7 @@ public class InterpolatingChecker extends CEGARStepBase implements IChecker<Inte
 					stateStack.push(init);
 					successorStack.push(-1);
 					// Check if the specification holds
-					if (checkState(solver, init, unroller)) {
+					if (checkState(init, solver, unroller)) {
 						logger.writeln("Counterexample reached!", 5, 1);
 						counterExample = stateStack;
 					}
@@ -158,7 +158,7 @@ public class InterpolatingChecker extends CEGARStepBase implements IChecker<Inte
 						stateStack.push(next);
 						successorStack.push(-1);
 						// Check if the specification holds
-						if (checkState(solver, next, unroller)) {
+						if (checkState(next, solver, unroller)) {
 							logger.writeln("Counterexample reached!", 5, 1);
 							counterExample = stateStack;
 						}
@@ -206,7 +206,7 @@ public class InterpolatingChecker extends CEGARStepBase implements IChecker<Inte
 	 *            Unroller
 	 * @return True if the predicates hold, false otherwise
 	 */
-	private boolean checkState(final Solver solver, final InterpolatedAbstractState s, final STSUnroller unroller) {
+	private boolean checkState(final InterpolatedAbstractState s, final Solver solver, final STSUnroller unroller) {
 		solver.push();
 		SolverHelper.unrollAndAssert(solver, s.getLabels(), unroller, 0);
 		final boolean ret = SolverHelper.checkSatisfiable(solver);

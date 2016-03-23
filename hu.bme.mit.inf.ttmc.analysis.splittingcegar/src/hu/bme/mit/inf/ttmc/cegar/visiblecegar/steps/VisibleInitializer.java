@@ -39,13 +39,12 @@ public class VisibleInitializer extends CEGARStepBase implements IInitializer<Vi
 
 	@Override
 	public VisibleAbstractSystem create(STS concrSys) {
-		logger.writeln("Specification expression: " + concrSys.getProp(), 2);
-
-		// Print variables
 		logger.write("Variables [" + concrSys.getVars().size() + "]:", 2);
 		for (final VarDecl<? extends Type> varDecl : concrSys.getVars())
 			logger.write(" " + varDecl.getName(), 3);
 		logger.writeln(2);
+
+		logger.writeln("Specification expression: " + concrSys.getProp(), 2);
 
 		// Eliminate if-then-else expressions from the constraints by replacing them with implications
 		logger.write("Eliminating if-then-else expressions from the constraints...", 3);
@@ -53,13 +52,10 @@ public class VisibleInitializer extends CEGARStepBase implements IInitializer<Vi
 		logger.writeln("done.", 3);
 
 		final List<VarDecl<? extends Type>> visibleVars = new ArrayList<>();
-		final List<VarDecl<? extends Type>> invisibleVars = new ArrayList<>();
+		final List<VarDecl<? extends Type>> invisibleVars = new ArrayList<>(concrSys.getVars()); // First assume that each variable is invisible
 		final List<VarDecl<? extends Type>> cnfVars = new ArrayList<>();
+		final List<VarDecl<? extends Type>> nonCnfVars = new ArrayList<>(concrSys.getVars());
 
-		// First assume that each variable is invisible
-		for (final VarDecl<? extends Type> varDec : concrSys.getVars())
-			invisibleVars.add(varDec);
-		final List<VarDecl<? extends Type>> nonCnfVars = new ArrayList<>(invisibleVars);
 		// Then make variables appearing in the specification visible
 		for (final VarDecl<? extends Type> varDec : FormalismUtils.collectVars(concrSys.getProp()))
 			if (!visibleVars.contains(varDec)) {

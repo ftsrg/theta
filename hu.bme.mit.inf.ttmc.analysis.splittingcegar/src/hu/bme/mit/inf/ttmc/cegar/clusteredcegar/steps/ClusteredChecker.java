@@ -20,11 +20,6 @@ import hu.bme.mit.inf.ttmc.constraint.solver.Solver;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.formalism.sts.STSUnroller;
 
-/**
- * Model checking (explicit) step.
- *
- * @author Akos
- */
 public class ClusteredChecker extends CEGARStepBase implements IChecker<ClusteredAbstractSystem, ClusteredAbstractState> {
 
 	public ClusteredChecker(final Logger logger, final IVisualizer visualizer) {
@@ -34,8 +29,7 @@ public class ClusteredChecker extends CEGARStepBase implements IChecker<Clustere
 	@Override
 	public AbstractResult<ClusteredAbstractState> check(final ClusteredAbstractSystem system) {
 		final Solver solver = system.getManager().getSolverFactory().createSolver(true, false);
-		// Get the negate of the inner expression of G(...)
-		final NotExpr negSpec = system.getManager().getExprFactory().Not(system.getSystem().getProp());
+		final NotExpr negProp = system.getManager().getExprFactory().Not(system.getSystem().getProp());
 
 		final STSUnroller unroller = system.getUnroller(); // Create an unroller for k=1
 		// Store explored states in a map. The key and the value is the same state.
@@ -62,7 +56,7 @@ public class ClusteredChecker extends CEGARStepBase implements IChecker<Clustere
 			if (isStopped)
 				return null;
 			// Check if the state is really initial
-			if (!checkInitial(solver, init, unroller))
+			if (!checkInitial(init, solver, unroller))
 				continue;
 			// Create stacks for backtracking
 			final Stack<ClusteredAbstractState> stateStack = new Stack<>();
@@ -80,7 +74,7 @@ public class ClusteredChecker extends CEGARStepBase implements IChecker<Clustere
 				stateStack.push(init);
 				successorStack.push(ss);
 				// Check if the specification holds
-				if (checkState(solver, init, negSpec, unroller)) {
+				if (checkState(init, negProp, solver, unroller)) {
 					logger.writeln("Counterexample reached!", 5, 1);
 					counterExample = stateStack;
 				}
@@ -97,7 +91,7 @@ public class ClusteredChecker extends CEGARStepBase implements IChecker<Clustere
 
 				if (nextState != null) { // If it has one
 					// Check if it is really a successor using the solver
-					if (checkTransition(solver, actualState, nextState, unroller)) {
+					if (checkTransition(actualState, nextState, solver, unroller)) {
 						arcs++;
 						// If this state is not yet explored, process it
 						if (!exploredStates.containsKey(nextState)) {
@@ -114,7 +108,7 @@ public class ClusteredChecker extends CEGARStepBase implements IChecker<Clustere
 							stateStack.push(nextState);
 							successorStack.push(ss);
 							// Check if the specification holds
-							if (checkState(solver, nextState, negSpec, unroller)) {
+							if (checkState(nextState, negProp, solver, unroller)) {
 								logger.writeln("Counterexample reached!", 5, 1);
 								counterExample = stateStack;
 								break;
@@ -166,7 +160,7 @@ public class ClusteredChecker extends CEGARStepBase implements IChecker<Clustere
 	 *            Unroller
 	 * @return True if the expression holds for the state, false otherwise
 	 */
-	private boolean checkState(final Solver solver, final ClusteredAbstractState state, final Expr<? extends BoolType> expr, final STSUnroller unroller) {
+	private boolean checkState(final ClusteredAbstractState state, final Expr<? extends BoolType> expr, final Solver solver, final STSUnroller unroller) {
 		solver.push();
 		for (final ComponentAbstractState as : state.getStates())
 			SolverHelper.unrollAndAssert(solver, as.getLabels(), unroller, 0);
@@ -187,7 +181,7 @@ public class ClusteredChecker extends CEGARStepBase implements IChecker<Clustere
 	 *            Unroller
 	 * @return True if there is a transition from s0 to s1, false otherwise
 	 */
-	private boolean checkTransition(final Solver solver, final ClusteredAbstractState s0, final ClusteredAbstractState s1, final STSUnroller unroller) {
+	private boolean checkTransition(final ClusteredAbstractState s0, final ClusteredAbstractState s1, final Solver solver, final STSUnroller unroller) {
 		solver.push();
 		for (final ComponentAbstractState as : s0.getStates())
 			SolverHelper.unrollAndAssert(solver, as.getLabels(), unroller, 0);
@@ -213,7 +207,7 @@ public class ClusteredChecker extends CEGARStepBase implements IChecker<Clustere
 	 * @param unroller
 	 * @return
 	 */
-	private boolean checkInitial(final Solver solver, final ClusteredAbstractState s, final STSUnroller unroller) {
+	private boolean checkInitial(final ClusteredAbstractState s, final Solver solver, final STSUnroller unroller) {
 		solver.push();
 		for (final ComponentAbstractState as : s.getStates())
 			SolverHelper.unrollAndAssert(solver, as.getLabels(), unroller, 0);

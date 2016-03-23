@@ -5,6 +5,7 @@ import java.util.List;
 
 import hu.bme.mit.inf.ttmc.cegar.common.data.ConcreteTrace;
 import hu.bme.mit.inf.ttmc.cegar.common.data.IAbstractState;
+import hu.bme.mit.inf.ttmc.cegar.common.data.IAbstractSystem;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.SolverHelper;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.IVisualizer;
 import hu.bme.mit.inf.ttmc.common.logging.Logger;
@@ -15,7 +16,6 @@ import hu.bme.mit.inf.ttmc.constraint.solver.Solver;
 import hu.bme.mit.inf.ttmc.constraint.solver.SolverStatus;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
-import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
 import hu.bme.mit.inf.ttmc.formalism.sts.STSUnroller;
 
 /**
@@ -53,17 +53,14 @@ public abstract class ConcretizerBase extends CEGARStepBase {
 	 * @return Longest concrete trace corresponding to a prefix of the abstract
 	 *         counterexample
 	 */
-	protected ConcreteTrace concretize(final STSManager manager, final STSUnroller unroller, final List<? extends IAbstractState> counterEx,
-			final Expr<? extends BoolType> lastState, final Collection<VarDecl<?>> projectVars) {
-		// Do an iterative bounded model checking to find a concrete
-		// counterexample.
-		// Iterative method is required because if no counterexample exists, we
-		// would
-		// like to know which is the first abstract state in the abstract
-		// counterexample
-		// that has no corresponding concrete state (or if the last state is not
-		// bad).
-		final Solver solver = manager.getSolverFactory().createSolver(true, false);
+	protected ConcreteTrace concretize(final IAbstractSystem system, final List<? extends IAbstractState> counterEx, final Expr<? extends BoolType> lastState,
+			final Collection<VarDecl<?>> projectVars) {
+		// Do an iterative bounded model checking to find a concrete counterexample.
+		// Iterative method is required because if no counterexample exists, we would like to know which is
+		// the first abstract state in the abstract counterexample that has no corresponding concrete state
+		// (or if the last state is not bad).
+		final STSUnroller unroller = system.getUnroller();
+		final Solver solver = system.getManager().getSolverFactory().createSolver(true, false);
 		Model model = null;
 
 		solver.push();
@@ -80,7 +77,7 @@ public abstract class ConcretizerBase extends CEGARStepBase {
 			if (isStopped)
 				return null;
 			solver.add(unroller.inv(i)); // Invariants
-			solver.add(unroller.unroll(counterEx.get(i).createExpression(manager), i)); // Labels
+			solver.add(unroller.unroll(counterEx.get(i).createExpression(system.getManager()), i)); // Labels
 			if (i > 0)
 				solver.add(unroller.trans(i - 1)); // Transition relation
 

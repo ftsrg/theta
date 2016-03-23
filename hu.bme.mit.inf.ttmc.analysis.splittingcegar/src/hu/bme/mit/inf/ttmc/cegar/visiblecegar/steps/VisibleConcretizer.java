@@ -25,7 +25,7 @@ public class VisibleConcretizer extends ConcretizerBase implements IConcretizer<
 
 	@Override
 	public ConcreteTrace concretize(final VisibleAbstractSystem system, final List<VisibleAbstractState> abstractCounterEx) {
-		return super.concretize(system.getManager(), system.getUnroller(), abstractCounterEx, null, system.getVariables());
+		return super.concretize(system, abstractCounterEx, null, system.getVariables());
 	}
 
 	@Override
