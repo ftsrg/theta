@@ -12,6 +12,7 @@ import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.ProcDecl;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.impl.ProcDeclImpl;
 import hu.bme.mit.inf.ttmc.formalism.common.factory.impl.VarDeclFactoryImpl;
+import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
 import hu.bme.mit.inf.ttmc.formalism.program.factory.ProgramDeclFactory;
 
 public class ProgramDeclFactoryImpl extends VarDeclFactoryImpl implements ProgramDeclFactory {
@@ -33,6 +34,21 @@ public class ProgramDeclFactoryImpl extends VarDeclFactoryImpl implements Progra
 		checkArgument(nameToProc.get(name) == null);
 
 		final ProcDecl<R> procDecl = new ProcDeclImpl<>(name, paramDecls, returnType);
+		nameToProc.put(name, procDecl);
+		return procDecl;
+	}
+
+	@Override
+	public <R extends Type> ProcDecl<R> Proc(final String name,
+			final List<? extends ParamDecl<? extends Type>> paramDecls, final R returnType, final Stmt def) {
+		checkNotNull(name);
+		checkNotNull(paramDecls);
+		checkNotNull(returnType);
+		checkNotNull(def);
+		checkArgument(name.length() > 0);
+		checkArgument(nameToProc.get(name) == null);
+
+		final ProcDecl<R> procDecl = new ProcDeclImpl<>(name, paramDecls, returnType, def);
 		nameToProc.put(name, procDecl);
 		return procDecl;
 	}
