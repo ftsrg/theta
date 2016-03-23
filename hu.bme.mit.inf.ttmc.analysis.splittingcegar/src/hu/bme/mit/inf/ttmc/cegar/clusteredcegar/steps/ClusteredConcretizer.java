@@ -32,7 +32,7 @@ public class ClusteredConcretizer extends ConcretizerBase implements IConcretize
 
 	@Override
 	public ConcreteTrace concretize(final ClusteredAbstractSystem system, final List<ClusteredAbstractState> abstractCounterEx) {
-		return super.concretize(system.getManager(), system.getUnroller(), abstractCounterEx, null, system.getVariables());
+		return super.concretize(system, abstractCounterEx, null, system.getVariables());
 	}
 
 	@Override

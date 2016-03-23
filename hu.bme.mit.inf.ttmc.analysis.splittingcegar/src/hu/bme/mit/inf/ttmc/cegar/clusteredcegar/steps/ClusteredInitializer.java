@@ -27,53 +27,33 @@ import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
 import hu.bme.mit.inf.ttmc.formalism.sts.STSUnroller;
 
-/**
- * Initial abstraction creator step.
- *
- * @author Akos
- */
 public class ClusteredInitializer extends CEGARStepBase implements IInitializer<ClusteredAbstractSystem> {
-	/**
-	 * Initialize the step with a solver, logger and visualizer
-	 *
-	 * @param solver
-	 * @param logger
-	 * @param visualizer
-	 */
+
 	public ClusteredInitializer(final Logger logger, final IVisualizer visualizer) {
 		super(logger, visualizer);
 	}
 
 	@Override
 	public ClusteredAbstractSystem create(final STS concrSys) {
-		logger.writeln("Specification expression: " + concrSys.getProp(), 2);
-
-		// Print variables
 		logger.write("Variables [" + concrSys.getVars().size() + "]:", 2);
 		for (final VarDecl<? extends Type> varDecl : concrSys.getVars())
 			logger.write(" " + varDecl.getName(), 3);
 		logger.writeln(2);
 
-		// Collect atomic formulas to a set that ensures uniqueness for isomorphic expressions
-		final Set<Expr<? extends BoolType>> atomicFormulas = new HashSet<>();
+		logger.writeln("Specification expression: " + concrSys.getProp(), 2);
 
-		// Collect atomic formulas from the conditions
+		// Set ensures uniqueness
+		final Set<Expr<? extends BoolType>> atomicFormulas = new HashSet<>();
 		FormulaCollector.collectAtomsFromTransitionConditions(concrSys, atomicFormulas);
-		// Collect atomic formulas from the specification
 		FormulaCollector.collectAtomsFromExpression(concrSys.getProp(), atomicFormulas);
 
-		// Move the collected formulas to a list for further use
-		final List<Expr<? extends BoolType>> atomicFormulasList = new ArrayList<>(atomicFormulas);
-
-		logger.writeln("Atomic formulas [" + atomicFormulasList.size() + "]", 2);
-		for (final Expr<? extends BoolType> ex : atomicFormulasList)
-			logger.writeln(ex, 3, 1);
-
 		final ClusteredAbstractSystem system = new ClusteredAbstractSystem(concrSys);
-
 		system.getVariables().addAll(concrSys.getVars());
+		system.getAtomicFormulas().addAll(atomicFormulas);
 
-		system.getAtomicFormulas().addAll(atomicFormulasList);
+		logger.writeln("Atomic formulas [" + system.getAtomicFormulas().size() + "]", 2);
+		for (final Expr<? extends BoolType> ex : system.getAtomicFormulas())
+			logger.writeln(ex, 3, 1);
 
 		if (isStopped)
 			return null;
@@ -97,7 +77,7 @@ public class ClusteredInitializer extends CEGARStepBase implements IInitializer<
 			if (isStopped)
 				return null;
 			logger.write("Cluster " + c++, 2);
-			system.getAbstractKripkeStructures().add(createAbstractKripkeStructure(solver, system.getManager(), cluster, unroller));
+			system.getAbstractKripkeStructures().add(createAbstractKripkeStructure(cluster, solver, system.getManager(), unroller));
 		}
 		solver.pop();
 		// Visualize the abstract Kripke structures
@@ -115,7 +95,7 @@ public class ClusteredInitializer extends CEGARStepBase implements IInitializer<
 	 *            System unroller
 	 * @return Abstract Kripke structure
 	 */
-	private KripkeStructure<ComponentAbstractState> createAbstractKripkeStructure(final Solver solver, final STSManager manager, final Cluster cluster,
+	private KripkeStructure<ComponentAbstractState> createAbstractKripkeStructure(final Cluster cluster, final Solver solver, final STSManager manager,
 			final STSUnroller unroller) {
 		final KripkeStructure<ComponentAbstractState> ks = new KripkeStructure<>();
 		// If there is no formula for the cluster, add a default one
@@ -138,7 +118,7 @@ public class ClusteredInitializer extends CEGARStepBase implements IInitializer<
 
 			// Add the next formula unnegated
 			final ComponentAbstractState s1 = actual.cloneAndAdd(cluster.getFormulas().get(actual.getLabels().size()));
-			if (isStateFeasible(solver, s1, unroller)) {
+			if (isStateFeasible(s1, solver, unroller)) {
 				// If the state is feasible and there are no more formulas, this state is finished
 				if (s1.getLabels().size() == cluster.getFormulas().size())
 					ks.addState(s1);
@@ -148,7 +128,7 @@ public class ClusteredInitializer extends CEGARStepBase implements IInitializer<
 
 			// Add the next formula negated
 			final ComponentAbstractState s2 = actual.cloneAndAdd(negates.get(actual.getLabels().size()));
-			if (isStateFeasible(solver, s2, unroller)) {
+			if (isStateFeasible(s2, solver, unroller)) {
 				// If the state is feasible and there are no more formulas, this state is finished
 				if (s2.getLabels().size() == cluster.getFormulas().size())
 					ks.addState(s2);
@@ -160,11 +140,11 @@ public class ClusteredInitializer extends CEGARStepBase implements IInitializer<
 		// Calculate initial states and transition relation
 		logger.writeln(", abstract states [" + ks.getStates().size() + "]", 2);
 		for (final ComponentAbstractState s0 : ks.getStates()) { // Loop through the states
-			s0.setInitial(isStateInitial(solver, s0, unroller)); // Check whether it is initial
+			s0.setInitial(isStateInitial(s0, solver, unroller)); // Check whether it is initial
 			if (s0.isInitial())
 				ks.addInitialState(s0);
 			for (final ComponentAbstractState s1 : ks.getStates()) // Calculate successors
-				if (isTransitionFeasible(solver, s0, s1, unroller))
+				if (isTransitionFeasible(s0, s1, solver, unroller))
 					s0.getSuccessors().add(s1);
 			logger.writeln(s0, 4, 1);
 		}
@@ -181,7 +161,7 @@ public class ClusteredInitializer extends CEGARStepBase implements IInitializer<
 	 *            System unroller
 	 * @return True if the state is feasible, false otherwise
 	 */
-	private boolean isStateFeasible(final Solver solver, final ComponentAbstractState s, final STSUnroller unroller) {
+	private boolean isStateFeasible(final ComponentAbstractState s, final Solver solver, final STSUnroller unroller) {
 		solver.push();
 		SolverHelper.unrollAndAssert(solver, s.getLabels(), unroller, 0);
 		final boolean ret = SolverHelper.checkSatisfiable(solver);
@@ -198,7 +178,7 @@ public class ClusteredInitializer extends CEGARStepBase implements IInitializer<
 	 *            System unroller
 	 * @return True if the state is initial, false otherwise
 	 */
-	private boolean isStateInitial(final Solver solver, final ComponentAbstractState s, final STSUnroller unroller) {
+	private boolean isStateInitial(final ComponentAbstractState s, final Solver solver, final STSUnroller unroller) {
 		solver.push();
 		SolverHelper.unrollAndAssert(solver, s.getLabels(), unroller, 0);
 		solver.add(unroller.init(0));
@@ -220,7 +200,7 @@ public class ClusteredInitializer extends CEGARStepBase implements IInitializer<
 	 * @return True if a transition is present between s0 and s1, false
 	 *         otherwise
 	 */
-	private boolean isTransitionFeasible(final Solver solver, final ComponentAbstractState s0, final ComponentAbstractState s1, final STSUnroller unroller) {
+	private boolean isTransitionFeasible(final ComponentAbstractState s0, final ComponentAbstractState s1, final Solver solver, final STSUnroller unroller) {
 		solver.push();
 		SolverHelper.unrollAndAssert(solver, s0.getLabels(), unroller, 0);
 		SolverHelper.unrollAndAssert(solver, s1.getLabels(), unroller, 1);

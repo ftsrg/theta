@@ -86,6 +86,6 @@ public class SequenceInterpolater extends CEGARStepBase implements IInterpolater
 
 	@Override
 	public String toString() {
-		return "seqInterpol";
+		return "seqItp";
 	}
 }

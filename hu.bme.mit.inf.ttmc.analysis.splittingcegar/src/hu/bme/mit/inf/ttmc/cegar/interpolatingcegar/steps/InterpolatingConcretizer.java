@@ -37,7 +37,7 @@ public class InterpolatingConcretizer extends ConcretizerBase implements IConcre
 	@Override
 	public ConcreteTrace concretize(final InterpolatedAbstractSystem system, final List<InterpolatedAbstractState> abstractCounterEx) {
 		final NotExpr negSpec = system.getManager().getExprFactory().Not(system.getSystem().getProp());
-		return super.concretize(system.getManager(), system.getUnroller(), abstractCounterEx, negSpec, system.getVariables());
+		return super.concretize(system, abstractCounterEx, negSpec, system.getVariables());
 	}
 
 	@Override

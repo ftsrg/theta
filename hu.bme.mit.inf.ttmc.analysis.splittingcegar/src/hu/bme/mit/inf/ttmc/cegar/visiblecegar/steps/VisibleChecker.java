@@ -68,9 +68,9 @@ public class VisibleChecker extends CEGARStepBase implements IChecker<VisibleAbs
 				exploredStates.put(init, init);
 				// Push to stack and get successors
 				stateStack.push(init);
-				successorStack.push(getSuccessors(solver, init, unroller, system));
+				successorStack.push(getSuccessors(init, system, solver, unroller));
 				// Check if the specification holds
-				if (checkState(solver, init, negSpec, unroller)) {
+				if (checkState(init, negSpec, solver, unroller)) {
 					logger.writeln("Counterexample reached!", 5, 1);
 					counterExample = stateStack;
 				}
@@ -94,9 +94,9 @@ public class VisibleChecker extends CEGARStepBase implements IChecker<VisibleAbs
 						// Push to stack
 						stateStack.push(nextState);
 						// The successors found here are not added to the actual state here, only when they are explored
-						successorStack.push(getSuccessors(solver, nextState, unroller, system));
+						successorStack.push(getSuccessors(nextState, system, solver, unroller));
 						// Check if the specification holds
-						if (checkState(solver, nextState, negSpec, unroller)) {
+						if (checkState(nextState, negSpec, solver, unroller)) {
 							logger.writeln("Counterexample reached!", 5, 1);
 							counterExample = stateStack;
 							break;
@@ -148,8 +148,8 @@ public class VisibleChecker extends CEGARStepBase implements IChecker<VisibleAbs
 	}
 
 	// Get successors of an abstract state
-	private List<VisibleAbstractState> getSuccessors(final Solver solver, final VisibleAbstractState state, final STSUnroller unroller,
-			final VisibleAbstractSystem system) {
+	private List<VisibleAbstractState> getSuccessors(final VisibleAbstractState state, final VisibleAbstractSystem system, final Solver solver,
+			final STSUnroller unroller) {
 		final List<VisibleAbstractState> successors = new ArrayList<>(); // List of successors
 		solver.push();
 		solver.add(unroller.inv(0));
@@ -176,7 +176,7 @@ public class VisibleChecker extends CEGARStepBase implements IChecker<VisibleAbs
 	}
 
 	// Check if an expression is feasible for a state
-	private boolean checkState(final Solver solver, final VisibleAbstractState state, final Expr<? extends BoolType> expr, final STSUnroller unroller) {
+	private boolean checkState(final VisibleAbstractState state, final Expr<? extends BoolType> expr, final Solver solver, final STSUnroller unroller) {
 		solver.push();
 		solver.add(unroller.unroll(state.getExpression(), 0));
 		solver.add(unroller.inv(0));
