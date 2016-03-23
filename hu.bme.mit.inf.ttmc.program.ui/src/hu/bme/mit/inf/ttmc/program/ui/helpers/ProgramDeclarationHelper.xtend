@@ -1,8 +1,6 @@
-package hu.bme.mit.inf.ttmc.program.ui
+package hu.bme.mit.inf.ttmc.program.ui.helpers
 
 import hu.bme.mit.inf.ttmc.constraint.type.Type
-import hu.bme.mit.inf.ttmc.constraint.ui.DeclarationHelper
-import hu.bme.mit.inf.ttmc.constraint.ui.TypeHelper
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl
 import hu.bme.mit.inf.ttmc.program.model.VariableDeclaration
 import java.util.HashMap
@@ -10,6 +8,8 @@ import java.util.Map
 import hu.bme.mit.inf.ttmc.formalism.program.factory.ProgramDeclFactory
 import hu.bme.mit.inf.ttmc.program.model.ProcedureDeclaration
 import hu.bme.mit.inf.ttmc.formalism.common.decl.ProcDecl
+import hu.bme.mit.inf.ttmc.constraint.ui.helpers.DeclarationHelper
+import hu.bme.mit.inf.ttmc.constraint.ui.helpers.TypeHelper
 
 class ProgramDeclarationHelper extends DeclarationHelper {
 	

@@ -1,4 +1,4 @@
-package hu.bme.mit.inf.ttmc.constraint.ui
+package hu.bme.mit.inf.ttmc.constraint.ui.helpers
 
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr
 import hu.bme.mit.inf.ttmc.constraint.factory.ExprFactory

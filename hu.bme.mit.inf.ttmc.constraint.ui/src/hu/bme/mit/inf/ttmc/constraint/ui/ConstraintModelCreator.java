@@ -16,6 +16,9 @@ import hu.bme.mit.inf.ttmc.constraint.model.ConstraintSpecification;
 import hu.bme.mit.inf.ttmc.constraint.model.Expression;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
+import hu.bme.mit.inf.ttmc.constraint.ui.helpers.DeclarationHelper;
+import hu.bme.mit.inf.ttmc.constraint.ui.helpers.ExpressionHelper;
+import hu.bme.mit.inf.ttmc.constraint.ui.helpers.TypeHelper;
 import hu.bme.mit.inf.ttmc.constraint.utils.impl.ExprUtils;
 
 public class ConstraintModelCreator {

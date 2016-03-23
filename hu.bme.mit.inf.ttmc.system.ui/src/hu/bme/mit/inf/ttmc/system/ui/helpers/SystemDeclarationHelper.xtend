@@ -1,21 +1,21 @@
-package hu.bme.mit.inf.ttmc.system.ui
+package hu.bme.mit.inf.ttmc.system.ui.helpers
 
 import hu.bme.mit.inf.ttmc.constraint.type.Type
-import hu.bme.mit.inf.ttmc.constraint.ui.DeclarationHelper
-import hu.bme.mit.inf.ttmc.constraint.ui.TypeHelper
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl
 import hu.bme.mit.inf.ttmc.formalism.common.factory.VarDeclFactory
 import hu.bme.mit.inf.ttmc.system.model.VariableDeclaration
 import java.util.HashMap
 import java.util.Map
+import hu.bme.mit.inf.ttmc.constraint.ui.helpers.DeclarationHelper
+import hu.bme.mit.inf.ttmc.constraint.ui.helpers.TypeHelper
 
-class SystemDeclarationHelper extends DeclarationHelper {
+public class SystemDeclarationHelper extends DeclarationHelper {
 
 	private val Map<VariableDeclaration, VarDecl<Type>> variableToVar
 
 	private val extension VarDeclFactory varDeclFactory;
 
-	protected new(VarDeclFactory declFactory, TypeHelper typeHelper) {
+	public new(VarDeclFactory declFactory, TypeHelper typeHelper) {
 		super(declFactory, typeHelper)
 		varDeclFactory = declFactory
 		variableToVar = new HashMap

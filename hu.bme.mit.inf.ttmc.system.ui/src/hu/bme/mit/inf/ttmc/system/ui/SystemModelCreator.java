@@ -10,7 +10,7 @@ import com.google.common.collect.ImmutableList;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.model.Expression;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
-import hu.bme.mit.inf.ttmc.constraint.ui.TypeHelper;
+import hu.bme.mit.inf.ttmc.constraint.ui.helpers.TypeHelper;
 import hu.bme.mit.inf.ttmc.constraint.utils.impl.ExprUtils;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
@@ -24,6 +24,8 @@ import hu.bme.mit.inf.ttmc.system.model.SystemDefinition;
 import hu.bme.mit.inf.ttmc.system.model.SystemSpecification;
 import hu.bme.mit.inf.ttmc.system.model.TransitionConstraintDefinition;
 import hu.bme.mit.inf.ttmc.system.model.VariableDeclaration;
+import hu.bme.mit.inf.ttmc.system.ui.helpers.SystemDeclarationHelper;
+import hu.bme.mit.inf.ttmc.system.ui.helpers.SystemExpressionHelper;
 
 public class SystemModelCreator {
 
