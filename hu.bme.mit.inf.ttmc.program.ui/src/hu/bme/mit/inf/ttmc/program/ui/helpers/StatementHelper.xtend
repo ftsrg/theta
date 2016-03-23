@@ -1,4 +1,4 @@
-package hu.bme.mit.inf.ttmc.program.ui
+package hu.bme.mit.inf.ttmc.program.ui.helpers
 
 import hu.bme.mit.inf.ttmc.constraint.model.Expression
 import hu.bme.mit.inf.ttmc.constraint.model.ReferenceExpression

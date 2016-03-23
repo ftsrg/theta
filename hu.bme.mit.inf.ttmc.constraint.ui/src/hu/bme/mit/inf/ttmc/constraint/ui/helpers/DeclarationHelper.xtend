@@ -1,4 +1,4 @@
-package hu.bme.mit.inf.ttmc.constraint.ui
+package hu.bme.mit.inf.ttmc.constraint.ui.helpers
 
 import java.util.Map
 import hu.bme.mit.inf.ttmc.constraint.model.ConstantDeclaration
