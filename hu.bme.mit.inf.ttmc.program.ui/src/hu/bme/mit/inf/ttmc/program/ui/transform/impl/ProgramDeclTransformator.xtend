@@ -1,4 +1,4 @@
-package hu.bme.mit.inf.ttmc.program.ui.helpers
+package hu.bme.mit.inf.ttmc.program.ui.transform.impl
 
 import hu.bme.mit.inf.ttmc.constraint.type.Type
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl
@@ -8,19 +8,22 @@ import java.util.Map
 import hu.bme.mit.inf.ttmc.formalism.program.factory.ProgramDeclFactory
 import hu.bme.mit.inf.ttmc.program.model.ProcedureDeclaration
 import hu.bme.mit.inf.ttmc.formalism.common.decl.ProcDecl
-import hu.bme.mit.inf.ttmc.constraint.ui.helpers.DeclarationHelper
-import hu.bme.mit.inf.ttmc.constraint.ui.helpers.TypeHelper
+import hu.bme.mit.inf.ttmc.constraint.ui.transform.impl.ConstraintDeclTransformator
+import hu.bme.mit.inf.ttmc.constraint.ui.transform.TypeTransformator
 
-class ProgramDeclarationHelper extends DeclarationHelper {
+class ProgramDeclTransformator extends ConstraintDeclTransformator {
 	
 	private val extension ProgramDeclFactory declFactory
+	
+	private val extension TypeTransformator tt
 	
 	private val Map<VariableDeclaration, VarDecl<Type>> variableToVar
 	private val Map<ProcedureDeclaration, ProcDecl<Type>> procedureToProc
 	
-	new(ProgramDeclFactory declFactory, TypeHelper typeHelper) {
-		super(declFactory, typeHelper)
+	new(ProgramTransformationManager manager, ProgramDeclFactory declFactory) {
+		super(manager, declFactory)
 		this.declFactory = declFactory
+		tt = manager.typeTransformator
 		variableToVar = new HashMap
 		procedureToProc = new HashMap
 	}
@@ -31,7 +34,7 @@ class ProgramDeclarationHelper extends DeclarationHelper {
 		var varDecl = variableToVar.get(declaration)
 		if (varDecl === null) {
 			val name = declaration.name
-			val type = declaration.type.toType
+			val type = declaration.type.transform
 			varDecl = Var(name, type)
 			variableToVar.put(declaration, varDecl)
 		}
@@ -42,7 +45,7 @@ class ProgramDeclarationHelper extends DeclarationHelper {
 		var procDecl = procedureToProc.get(declaration)
 		if (procDecl === null) {
 			val name = declaration.name
-			val returnType = declaration.type.toType
+			val returnType = declaration.type.transform
 			val paramDecls = declaration.parameterDeclarations.map[_toDecl]
 			procDecl = Proc(name, paramDecls, returnType)
 			procedureToProc.put(declaration, procDecl)

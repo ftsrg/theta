@@ -1,9 +1,11 @@
-package hu.bme.mit.inf.ttmc.program.ui.helpers
+package hu.bme.mit.inf.ttmc.program.ui.transform.impl
 
 import hu.bme.mit.inf.ttmc.constraint.model.Expression
 import hu.bme.mit.inf.ttmc.constraint.model.ReferenceExpression
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType
 import hu.bme.mit.inf.ttmc.constraint.type.Type
+import hu.bme.mit.inf.ttmc.constraint.ui.transform.DeclTransformator
+import hu.bme.mit.inf.ttmc.constraint.ui.transform.ExprTransformator
 import hu.bme.mit.inf.ttmc.constraint.utils.impl.ExprUtils
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl
 import hu.bme.mit.inf.ttmc.formalism.common.factory.StmtFactory
@@ -17,55 +19,65 @@ import hu.bme.mit.inf.ttmc.program.model.HavocStatement
 import hu.bme.mit.inf.ttmc.program.model.IfStatement
 import hu.bme.mit.inf.ttmc.program.model.ReturnStatement
 import hu.bme.mit.inf.ttmc.program.model.SkipStatement
+import hu.bme.mit.inf.ttmc.program.model.Statement
 import hu.bme.mit.inf.ttmc.program.model.WhileStatement
+import hu.bme.mit.inf.ttmc.program.ui.transform.StmtTransformator
 import java.util.LinkedList
 
 import static com.google.common.base.Preconditions.checkArgument
 
-class StatementHelper {
+class ProgramStmtTransformator implements StmtTransformator {
 
 	private val extension StmtFactory stmtFactory;
+	
+	private val extension DeclTransformator dt;
+	private val extension ExprTransformator et;
 
-	private val extension ProgramDeclarationHelper declarationHelper
-	private val extension ProgramExpressionHelper expressionHelper
-
-	new(StmtFactory stmtFactory, ProgramDeclarationHelper declarationHelper, ProgramExpressionHelper expressionHelper) {
+	new(ProgramTransformationManager manager, StmtFactory stmtFactory) {
 		this.stmtFactory = stmtFactory
-		this.declarationHelper = declarationHelper
-		this.expressionHelper = expressionHelper
+		dt = manager.declTransformator
+		et = manager.exprTransformator
 	}
+	
+	////////
+	
+	override transform(Statement statement) {
+		throw new UnsupportedOperationException("TODO: auto-generated method stub")
+	}
+	
+	///////
 
-	public def dispatch Stmt toStmt(AssumeStatement statement) {
-		val cond = ExprUtils.cast(statement.expression.toExpr, BoolType)
+	protected def dispatch Stmt toStmt(AssumeStatement statement) {
+		val cond = ExprUtils.cast(statement.expression.transform, BoolType)
 		Assume(cond)
 	}
 
-	public def dispatch Stmt toStmt(AssertStatement statement) {
-		val cond = ExprUtils.cast(statement.expression.toExpr, BoolType)
+	protected def dispatch Stmt toStmt(AssertStatement statement) {
+		val cond = ExprUtils.cast(statement.expression.transform, BoolType)
 		Assert(cond)
 	}
 
-	public def dispatch Stmt toStmt(AssignmentStatement statement) {
+	protected def dispatch Stmt toStmt(AssignmentStatement statement) {
 		val varDecl = statement.lhsExpression.extractVar
-		val expr = statement.rhsExpression.toExpr
+		val expr = statement.rhsExpression.transform
 		Assign(varDecl, expr)
 	}
 
-	public def dispatch Stmt toStmt(HavocStatement statement) {
+	protected def dispatch Stmt toStmt(HavocStatement statement) {
 		val varDecl = statement.expression.extractVar
 		Havoc(varDecl)
 	}
 
-	public def dispatch Stmt toStmt(SkipStatement statement) {
+	protected def dispatch Stmt toStmt(SkipStatement statement) {
 		Skip
 	}
 
-	public def dispatch Stmt toStmt(BlockStatement statement) {
+	protected def dispatch Stmt toStmt(BlockStatement statement) {
 		val stmts = new LinkedList
 		for (variableDeclaration : statement.variableDeclarations) {
 			if (variableDeclaration.expression !== null) {
-				val varDecl = variableDeclaration.toDecl as VarDecl<Type>
-				val value = variableDeclaration.expression.toExpr
+				val varDecl = variableDeclaration.transform as VarDecl<Type>
+				val value = variableDeclaration.expression.transform
 				val assign = Assign(varDecl, value)
 				stmts.add(assign)
 			}
@@ -75,15 +87,15 @@ class StatementHelper {
 		Block(stmts)
 	}
 
-	public def dispatch Stmt toStmt(ReturnStatement statement) {
-		val expr = statement.expression.toExpr
+	protected def dispatch Stmt toStmt(ReturnStatement statement) {
+		val expr = statement.expression.transform
 		Return(expr)
 	}
 
-	public def dispatch Stmt toStmt(IfStatement statement) {
+	protected def dispatch Stmt toStmt(IfStatement statement) {
 		checkArgument(statement.conditionExpression != null, "Nondeterministic statements are not supported")
 
-		val cond = ExprUtils.cast(statement.conditionExpression.toExpr, BoolType)
+		val cond = ExprUtils.cast(statement.conditionExpression.transform, BoolType)
 		val then = statement.thenStatement.toStmt
 		if (statement.elseStatement == null) {
 			If(cond, then)
@@ -93,26 +105,26 @@ class StatementHelper {
 		}
 	}
 
-	public def dispatch Stmt toStmt(WhileStatement statement) {
+	protected def dispatch Stmt toStmt(WhileStatement statement) {
 		checkArgument(statement.conditionExpression != null, "Nondeterministic statements are not supported")
 
-		val cond = ExprUtils.cast(statement.conditionExpression.toExpr, BoolType)
+		val cond = ExprUtils.cast(statement.conditionExpression.transform, BoolType)
 		val doStmt = statement.doStatement.toStmt
 		While(cond, doStmt)
 	}
 
-	public def dispatch Stmt toStmt(DoStatement statement) {
+	protected def dispatch Stmt toStmt(DoStatement statement) {
 		checkArgument(statement.conditionExpression != null, "Nondeterministic statements are not supported")
 
 		val doStmt = statement.doStatement.toStmt
-		val cond = ExprUtils.cast(statement.conditionExpression.toExpr, BoolType)
+		val cond = ExprUtils.cast(statement.conditionExpression.transform, BoolType)
 		Do(doStmt, cond)
 	}
 
 	// //////
 	private def VarDecl<Type> extractVar(Expression expression) {
 		if (expression instanceof ReferenceExpression) {
-			val decl = expression.declaration.toDecl
+			val decl = expression.declaration.transform
 			if (decl instanceof VarDecl<?>) {
 				val varDecl = decl as VarDecl<Type>
 				varDecl
