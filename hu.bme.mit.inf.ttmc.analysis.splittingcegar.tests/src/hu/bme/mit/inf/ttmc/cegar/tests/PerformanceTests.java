@@ -20,6 +20,7 @@ import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.InterpolatingCEGARBuilder.In
 import hu.bme.mit.inf.ttmc.cegar.tests.formatters.ExcelFormatter;
 import hu.bme.mit.inf.ttmc.cegar.tests.formatters.IFormatter;
 import hu.bme.mit.inf.ttmc.cegar.visiblecegar.VisibleCEGARBuilder;
+import hu.bme.mit.inf.ttmc.cegar.visiblecegar.VisibleCEGARBuilder.VariableCollectionMethod;
 import hu.bme.mit.inf.ttmc.constraint.z3.Z3ConstraintManager;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
@@ -31,7 +32,7 @@ public class PerformanceTests {
 	private final IFormatter formatter = new ExcelFormatter();
 
 	@SuppressWarnings("serial")
-	@Test
+	//@Test
 	public void testSimple() {
 		final IModelLoader loader = new SystemFileModelLoader();
 
@@ -53,7 +54,10 @@ public class PerformanceTests {
 		final List<ICEGARBuilder> configurations = new ArrayList<ICEGARBuilder>() {
 			{
 				add(new ClusteredCEGARBuilder().logger(null).visualizer(null));
-				add(new VisibleCEGARBuilder().logger(null).visualizer(null).useCNFTransformation(false));
+				add(new VisibleCEGARBuilder().logger(null).visualizer(null).useCNFTransformation(false)
+						.variableCollectionMethod(VariableCollectionMethod.CraigItp));
+				add(new VisibleCEGARBuilder().logger(null).visualizer(null).useCNFTransformation(false)
+						.variableCollectionMethod(VariableCollectionMethod.SequenceItp));
 				add(new InterpolatingCEGARBuilder().logger(null).visualizer(null).interpolationMethod(InterpolationMethod.Craig).incrementalModelChecking(false)
 						.useCNFTransformation(false));
 				add(new InterpolatingCEGARBuilder().logger(null).visualizer(null).interpolationMethod(InterpolationMethod.Craig).incrementalModelChecking(true)
@@ -83,28 +87,31 @@ public class PerformanceTests {
 				add(new TestCase("models/cern/REQ_1-8_correct.system", true, loader));
 				add(new TestCase("models/cern/REQ_1-8_incorrect.system", false, loader));
 				add(new TestCase("models/cern/REQ_1-9.system", true, loader));
-				add(new TestCase("models/cern/REQ_2-3b_correct.system", true, loader));
-				add(new TestCase("models/cern/REQ_2-3b_incorrect.system", false, loader));
-				add(new TestCase("models/cern/REQ_3-1.system", true, loader));
-				add(new TestCase("models/cern/REQ_3-2.system", false, loader));
+				//add(new TestCase("models/cern/REQ_2-3b_correct.system", true, loader));
+				//add(new TestCase("models/cern/REQ_2-3b_incorrect.system", false, loader));
+				//add(new TestCase("models/cern/REQ_3-1.system", true, loader));
+				//add(new TestCase("models/cern/REQ_3-2.system", false, loader));
 				add(new TestCase("models/cern/UCPC-1721.system", true, loader));
 			}
 		};
 		final List<ICEGARBuilder> configurations = new ArrayList<ICEGARBuilder>() {
 			{
-				add(new VisibleCEGARBuilder().logger(null).visualizer(null).useCNFTransformation(false));
-				add(new InterpolatingCEGARBuilder().logger(null).visualizer(null).interpolationMethod(InterpolationMethod.Craig).incrementalModelChecking(true)
-						.useCNFTransformation(false));
-				add(new InterpolatingCEGARBuilder().logger(null).visualizer(null).interpolationMethod(InterpolationMethod.Craig).incrementalModelChecking(true)
-						.useCNFTransformation(false).explicitVariable("loc"));
-				add(new InterpolatingCEGARBuilder().logger(null).visualizer(null).interpolationMethod(InterpolationMethod.Sequence)
-						.incrementalModelChecking(true).useCNFTransformation(false));
-				add(new InterpolatingCEGARBuilder().logger(null).visualizer(null).interpolationMethod(InterpolationMethod.Sequence)
-						.incrementalModelChecking(true).useCNFTransformation(false).explicitVariable("loc"));
+				add(new VisibleCEGARBuilder().logger(null).visualizer(null).useCNFTransformation(false)
+						.variableCollectionMethod(VariableCollectionMethod.CraigItp));
+				add(new VisibleCEGARBuilder().logger(null).visualizer(null).useCNFTransformation(false)
+						.variableCollectionMethod(VariableCollectionMethod.SequenceItp));
+				//add(new InterpolatingCEGARBuilder().logger(null).visualizer(null).interpolationMethod(InterpolationMethod.Craig).incrementalModelChecking(true)
+				//		.useCNFTransformation(false));
+				//add(new InterpolatingCEGARBuilder().logger(null).visualizer(null).interpolationMethod(InterpolationMethod.Craig).incrementalModelChecking(true)
+				//		.useCNFTransformation(false).explicitVariable("loc"));
+				//add(new InterpolatingCEGARBuilder().logger(null).visualizer(null).interpolationMethod(InterpolationMethod.Sequence)
+				//		.incrementalModelChecking(true).useCNFTransformation(false));
+				//add(new InterpolatingCEGARBuilder().logger(null).visualizer(null).interpolationMethod(InterpolationMethod.Sequence)
+				//		.incrementalModelChecking(true).useCNFTransformation(false).explicitVariable("loc"));
 			}
 		};
 
-		run(testCases, configurations, 30 * 60 * 1000);
+		run(testCases, configurations, 5 * 60 * 1000);
 	}
 
 	@SuppressWarnings("serial")
@@ -133,10 +140,10 @@ public class PerformanceTests {
 	}
 
 	@SuppressWarnings("serial")
-	//@Test
+	@Test
 	public void testHardware() {
-		final IModelLoader loader = new AIGERFileModelLoaderOptimized();
-		//final IModelLoader loader = new AIGERFileModelLoaderSimple();
+		//final IModelLoader loader = new AIGERFileModelLoaderOptimized();
+		final IModelLoader loader = new AIGERFileModelLoaderSimple();
 
 		final List<TestCase> testCases = new ArrayList<TestCase>() {
 			{
@@ -157,11 +164,14 @@ public class PerformanceTests {
 		};
 		final List<ICEGARBuilder> configurations = new ArrayList<ICEGARBuilder>() {
 			{
-				//add(new VisibleCEGARBuilder().logger(null).visualizer(null).manager(manager).useCNFTransformation(false));
-				add(new InterpolatingCEGARBuilder().logger(null).visualizer(null).interpolationMethod(InterpolationMethod.Craig).incrementalModelChecking(true)
-						.useCNFTransformation(false));
-				add(new InterpolatingCEGARBuilder().logger(null).visualizer(null).interpolationMethod(InterpolationMethod.Sequence)
-						.incrementalModelChecking(true).useCNFTransformation(false));
+				add(new VisibleCEGARBuilder().logger(null).visualizer(null).useCNFTransformation(false)
+						.variableCollectionMethod(VariableCollectionMethod.CraigItp));
+				add(new VisibleCEGARBuilder().logger(null).visualizer(null).useCNFTransformation(false)
+						.variableCollectionMethod(VariableCollectionMethod.SequenceItp));
+				//add(new InterpolatingCEGARBuilder().logger(null).visualizer(null).interpolationMethod(InterpolationMethod.Craig).incrementalModelChecking(true)
+				//		.useCNFTransformation(false));
+				//add(new InterpolatingCEGARBuilder().logger(null).visualizer(null).interpolationMethod(InterpolationMethod.Sequence)
+				//		.incrementalModelChecking(true).useCNFTransformation(false));
 			}
 		};
 

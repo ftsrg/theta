@@ -18,7 +18,7 @@ import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.sts.STSUnroller;
 import hu.bme.mit.inf.ttmc.formalism.utils.impl.FormalismUtils;
 
-public class InterpolatingVariableCollector extends CEGARStepBase implements IVariableCollector {
+public class CraigItpVarCollector extends CEGARStepBase implements IVarCollector {
 
 	/**
 	 * Initialize the step with a solver, logger and visualizer
@@ -28,7 +28,7 @@ public class InterpolatingVariableCollector extends CEGARStepBase implements IVa
 	 * @param visualizer
 	 * @param interpolatingSolver
 	 */
-	public InterpolatingVariableCollector(final Logger logger, final IVisualizer visualizer) {
+	public CraigItpVarCollector(final Logger logger, final IVisualizer visualizer) {
 		super(logger, visualizer);
 	}
 
@@ -72,6 +72,6 @@ public class InterpolatingVariableCollector extends CEGARStepBase implements IVa
 
 	@Override
 	public String toString() {
-		return "InterpolatingVariableCollector";
+		return "craigItpVarColl";
 	}
 }

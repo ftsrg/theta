@@ -10,7 +10,9 @@ import hu.bme.mit.inf.ttmc.cegar.visiblecegar.steps.VisibleChecker;
 import hu.bme.mit.inf.ttmc.cegar.visiblecegar.steps.VisibleConcretizer;
 import hu.bme.mit.inf.ttmc.cegar.visiblecegar.steps.VisibleInitializer;
 import hu.bme.mit.inf.ttmc.cegar.visiblecegar.steps.VisibleRefiner;
-import hu.bme.mit.inf.ttmc.cegar.visiblecegar.steps.refinement.InterpolatingVariableCollector;
+import hu.bme.mit.inf.ttmc.cegar.visiblecegar.steps.refinement.CraigItpVarCollector;
+import hu.bme.mit.inf.ttmc.cegar.visiblecegar.steps.refinement.IVarCollector;
+import hu.bme.mit.inf.ttmc.cegar.visiblecegar.steps.refinement.SeqItpVarCollector;
 import hu.bme.mit.inf.ttmc.common.logging.Logger;
 import hu.bme.mit.inf.ttmc.common.logging.impl.NullLogger;
 
@@ -18,6 +20,11 @@ public class VisibleCEGARBuilder implements ICEGARBuilder {
 	private Logger logger = new NullLogger();
 	private IVisualizer visualizer = new NullVisualizer();
 	private boolean useCNFTransformation = false;
+	private VariableCollectionMethod varCollMethod = VariableCollectionMethod.CraigItp;
+
+	public enum VariableCollectionMethod {
+		CraigItp, SequenceItp
+	};
 
 	/**
 	 * Set logger
@@ -53,6 +60,11 @@ public class VisibleCEGARBuilder implements ICEGARBuilder {
 		return this;
 	}
 
+	public VisibleCEGARBuilder variableCollectionMethod(final VariableCollectionMethod method) {
+		this.varCollMethod = method;
+		return this;
+	}
+
 	/**
 	 * Build CEGAR loop instance
 	 *
@@ -60,8 +72,18 @@ public class VisibleCEGARBuilder implements ICEGARBuilder {
 	 */
 	@Override
 	public GenericCEGARLoop<VisibleAbstractSystem, VisibleAbstractState> build() {
+		IVarCollector varCollector = null;
+		switch (varCollMethod) {
+		case CraigItp:
+			varCollector = new CraigItpVarCollector(logger, visualizer);
+			break;
+		case SequenceItp:
+			varCollector = new SeqItpVarCollector(logger, visualizer);
+			break;
+		default:
+			throw new RuntimeException("Unknown variable collection method: " + varCollMethod);
+		}
 		return new GenericCEGARLoop<>(new VisibleInitializer(logger, visualizer, useCNFTransformation), new VisibleChecker(logger, visualizer),
-				new VisibleConcretizer(logger, visualizer), new VisibleRefiner(logger, visualizer, new InterpolatingVariableCollector(logger, visualizer)),
-				logger, "Visible");
+				new VisibleConcretizer(logger, visualizer), new VisibleRefiner(logger, visualizer, varCollector), logger, "Visible");
 	}
 }
