@@ -2,6 +2,8 @@ package hu.bme.mit.inf.ttmc.code.ast;
 
 import java.util.List;
 
+import hu.bme.mit.inf.ttmc.code.ast.visitor.StatementVisitor;
+
 public class CompoundStatementAst extends StatementAst {
 
 	private List<StatementAst> statements;
@@ -19,8 +21,9 @@ public class CompoundStatementAst extends StatementAst {
 		return this.statements.toArray(new AstNode[this.statements.size()]);
 	}
 	
-	public <R> void accept(AstVisitor<R> visitor) {
-		visitor.visit(this);
+	@Override
+	public <S> S accept(StatementVisitor<S> visitor) {
+		return visitor.visit(this);
 	}
 	
 	

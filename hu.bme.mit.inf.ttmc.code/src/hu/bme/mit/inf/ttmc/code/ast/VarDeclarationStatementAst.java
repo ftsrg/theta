@@ -1,5 +1,7 @@
 package hu.bme.mit.inf.ttmc.code.ast;
 
+import hu.bme.mit.inf.ttmc.code.ast.visitor.StatementVisitor;
+
 public class VarDeclarationStatementAst extends StatementAst {
 
 	private String name;
@@ -17,8 +19,9 @@ public class VarDeclarationStatementAst extends StatementAst {
 		return new AstNode[] {};
 	}
 	
-	public <R> void accept(AstVisitor<R> visitor) {
-		visitor.visit(this);
+	@Override
+	public <S> S accept(StatementVisitor<S> visitor) {
+		return visitor.visit(this);
 	}
 	
 }

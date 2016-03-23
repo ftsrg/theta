@@ -9,16 +9,19 @@ import org.eclipse.cdt.core.dom.ast.IASTDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTDeclarationStatement;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
 import org.eclipse.cdt.core.dom.ast.IASTExpressionStatement;
+import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTIdExpression;
 import org.eclipse.cdt.core.dom.ast.IASTIfStatement;
+import org.eclipse.cdt.core.dom.ast.IASTInitializerClause;
 import org.eclipse.cdt.core.dom.ast.IASTLiteralExpression;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTReturnStatement;
 import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTStatement;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
+import org.eclipse.cdt.core.dom.ast.IASTWhileStatement;
 
 import hu.bme.mit.inf.ttmc.code.ast.AstRoot;
 import hu.bme.mit.inf.ttmc.code.ast.BinaryExpressionAst;
@@ -26,12 +29,14 @@ import hu.bme.mit.inf.ttmc.code.ast.CompoundStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.ExpressionAst;
 import hu.bme.mit.inf.ttmc.code.ast.ExpressionStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.FunctionAst;
+import hu.bme.mit.inf.ttmc.code.ast.FunctionCallExpressionAst;
 import hu.bme.mit.inf.ttmc.code.ast.IfStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.LiteralExpressionAst;
 import hu.bme.mit.inf.ttmc.code.ast.NameExpressionAst;
 import hu.bme.mit.inf.ttmc.code.ast.ReturnStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.StatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.VarDeclarationStatementAst;
+import hu.bme.mit.inf.ttmc.code.ast.WhileStatementAst;
 
 public class AstTransformer {
 
@@ -77,9 +82,20 @@ public class AstTransformer {
 			return transformIfStatement((IASTIfStatement) ast);
 		}
 		
+		if (ast instanceof IASTWhileStatement) {
+			return transformWhileStatement((IASTWhileStatement) ast);
+		}
+		
 		return null;		
 	}
 	
+	private static StatementAst transformWhileStatement(IASTWhileStatement ast) {
+		ExpressionAst cond = transformExpression(ast.getCondition());
+		StatementAst body  = transformStatement(ast.getBody());
+		
+		return new WhileStatementAst(cond, body);
+	}
+
 	private static IfStatementAst transformIfStatement(IASTIfStatement ast) {
 		ExpressionAst cond = transformExpression(ast.getConditionExpression());
 		StatementAst thenStmt = transformStatement(ast.getThenClause());
@@ -136,9 +152,30 @@ public class AstTransformer {
 			return transformNameExpression((IASTIdExpression) ast);
 		}
 		
+		if (ast instanceof IASTFunctionCallExpression) {
+			return transformFunctionCallExpression((IASTFunctionCallExpression) ast);
+		}
+		
 		return null; // @todo
 	}
 	
+	private static FunctionCallExpressionAst transformFunctionCallExpression(IASTFunctionCallExpression ast) {
+		IASTExpression functionName = ast.getFunctionNameExpression();
+		if (functionName instanceof IASTIdExpression) {
+			String name = ((IASTIdExpression) functionName).getName().toString();
+			
+			List<ExpressionAst> args = new ArrayList<>();
+			for (IASTInitializerClause arg : ast.getArguments()) {
+				IASTExpression expr = (IASTExpression) arg;
+				args.add(transformExpression(expr));
+			}
+			
+			return new FunctionCallExpressionAst(name, args);			
+		}
+		
+		return null;
+	}
+
 	public static NameExpressionAst transformNameExpression(IASTIdExpression ast) {
 		String name = ast.getName().toString();
 		return new NameExpressionAst(name);
@@ -165,6 +202,10 @@ public class AstTransformer {
 			return new BinaryExpressionAst(left, right, BinaryExpressionAst.Operator.OP_ASSIGN);
 		case IASTBinaryExpression.op_greaterThan:
 			return new BinaryExpressionAst(left, right, BinaryExpressionAst.Operator.OP_IS_GT);
+		case IASTBinaryExpression.op_equals:
+			return new BinaryExpressionAst(left, right, BinaryExpressionAst.Operator.OP_IS_EQUAL);
+		case IASTBinaryExpression.op_lessThan:
+			return new BinaryExpressionAst(left, right, BinaryExpressionAst.Operator.OP_IS_LT);
 		}
 		
 		return null;

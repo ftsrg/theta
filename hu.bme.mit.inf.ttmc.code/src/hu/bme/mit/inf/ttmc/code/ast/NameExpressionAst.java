@@ -1,5 +1,7 @@
 package hu.bme.mit.inf.ttmc.code.ast;
 
+import hu.bme.mit.inf.ttmc.code.ast.visitor.ExpressionVisitor;
+
 public class NameExpressionAst extends ExpressionAst {
 	
 	private String name;
@@ -17,8 +19,9 @@ public class NameExpressionAst extends ExpressionAst {
 		return new AstNode[]{};
 	}
 	
-	public <R> void accept(AstVisitor<R> visitor) {
-		visitor.visit(this);
+	@Override
+	public <E> E accept(ExpressionVisitor<E> visitor) {
+		return visitor.visit(this);
 	}
 
 	

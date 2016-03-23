@@ -1,5 +1,11 @@
 package hu.bme.mit.inf.ttmc.code;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.nio.CharBuffer;
 
 import org.eclipse.cdt.core.dom.ast.ASTVisitor;
@@ -21,11 +27,16 @@ import org.eclipse.core.runtime.CoreException;
 
 import hu.bme.mit.inf.ttmc.code.ast.AstNode;
 import hu.bme.mit.inf.ttmc.code.ast.AstRoot;
+import hu.bme.mit.inf.ttmc.code.ast.CompoundStatementAst;
+import hu.bme.mit.inf.ttmc.code.ast.FunctionAst;
+import hu.bme.mit.inf.ttmc.code.visitor.TransformProgramVisitor;
 import hu.bme.mit.inf.ttmc.constraint.ConstraintManagerImpl;
+import hu.bme.mit.inf.ttmc.formalism.common.stmt.BlockStmt;
+import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
 
 class Application {
 
-	public static void main(String[] args) throws CoreException {
+	public static void main(String[] args) throws CoreException, FileNotFoundException, IOException, InterruptedException {
 	    
 	    GCCLanguage lang = new GCCLanguage();
 	    
@@ -40,37 +51,75 @@ class Application {
 	    IASTTranslationUnit ast = lang.getASTTranslationUnit(fc, sc, ifcp, index, 0, log);
 	    
 	    //ast.accept(visitor);
-	    	    
-	    System.out.println("digraph G {");
-        printTree(ast);
-	    System.out.println("}");
-	       
+	    
+	    StringBuilder sb = new StringBuilder();
+	    sb.append("digraph G {");
+        printTree(ast, sb);
+        sb.append("}");
+	            
+        try {
+            FileOutputStream fos = new FileOutputStream(new File("ast_cdt.dot"));
+            OutputStreamWriter osw = new OutputStreamWriter(fos);
+            
+            osw.write(sb.toString());
+            osw.close();
+            
+            Process proc = Runtime.getRuntime().exec("dot -Tpng -o ast_cdt.png ast_cdt.dot");
+			proc.waitFor();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+        
 	    AstRoot root = AstTransformer.transform(ast);
 
-	    System.out.println("digraph G {");	
-	    printCustomTree(root);	    
-	    System.out.println("}");
+	    sb.setLength(0);
+	    sb.append("digraph G {");
+        printCustomTree(root, sb);
+        sb.append("}");
+	            
+        try {
+            FileOutputStream fos = new FileOutputStream(new File("ast_custom.dot"));
+            OutputStreamWriter osw = new OutputStreamWriter(fos);
+            
+            osw.write(sb.toString());
+            osw.close();
+            
+            Process proc = Runtime.getRuntime().exec("dot -Tpng -o ast_custom.png ast_custom.dot");
+			proc.waitFor();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	    
+	    
+	    TransformProgramVisitor visitor = new TransformProgramVisitor(new ConstraintManagerImpl());
+	    
+	    FunctionAst main = (FunctionAst) root.getChildren()[0];
+	    
+	    Stmt content = main.getBody().accept(visitor);	   
+	    
+	    System.out.println(content);
+	    
 	}
 	
 	private static int nodeId = 0;
 	
-	public static String printTree(IASTNode node) {
+	public static String printTree(IASTNode node, StringBuilder sb) {
 	    String nodeName = "node_" + nodeId++;
-	    System.out.println( String.format("%s [label=\"%s\"];", nodeName, node.getClass().getSimpleName()));
+	    sb.append(String.format("%s [label=\"%s\"];\n", nodeName, node.getClass().getSimpleName()));
 	    for (IASTNode child : node.getChildren()) {
-	        String cname = printTree(child);
-	        System.out.println(String.format("%s -> %s;", nodeName, cname));
+	        String cname = printTree(child, sb);
+	        sb.append(String.format("%s -> %s;\n", nodeName, cname));
 	    }
 	    
 	    return nodeName;
 	}
 	
-	public static String printCustomTree(AstNode node) {
+	public static String printCustomTree(AstNode node, StringBuilder sb) {
 		String nodeName = "node_" + nodeId++;
-	    System.out.println( String.format("%s [label=\"%s\"];", nodeName, node.getClass().getSimpleName()));
+	    sb.append(String.format("%s [label=\"%s\"];\n", nodeName, node.getClass().getSimpleName()));
 	    for (AstNode child : node.getChildren()) {
-	        String cname = printCustomTree(child);
-	        System.out.println(String.format("%s -> %s;", nodeName, cname));
+	        String cname = printCustomTree(child, sb);
+	        sb.append(String.format("%s -> %s;\n", nodeName, cname));
 	    }
 	    
 	    return nodeName;
