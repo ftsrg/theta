@@ -39,7 +39,8 @@ public class SystemModelCreator {
 
 		for (final PropertyDeclaration propertyDeclaration : specification.getPropertyDeclarations()) {
 			final SystemDefinition systemDefinition = (SystemDefinition) propertyDeclaration.getSystem();
-			final STS sts = createSTS(systemDefinition, propertyDeclaration.getExpression(), tManager);
+			final STS sts = createSTS(systemDefinition, propertyDeclaration.getExpression(), manager, tManager);
+
 			stss.add(sts);
 		}
 
@@ -47,15 +48,16 @@ public class SystemModelCreator {
 	}
 
 	private static STS createSTS(final SystemDefinition systemDefinition, final Expression prop,
-			final SystemTransformationManager manager) {
+			final STSManager manager, final SystemTransformationManager tManager) {
 
-		final DeclTransformator dt = manager.getDeclTransformator();
-		final ExprTransformator et = manager.getExprTransformator();
+		final DeclTransformator dt = tManager.getDeclTransformator();
+		final ExprTransformator et = tManager.getExprTransformator();
 
-		final STSImpl.Builder builder = new STSImpl.Builder();
+		final STSImpl.Builder builder = new STSImpl.Builder(manager);
 
 		if (prop instanceof GloballyExpression) {
 			builder.setProp(ExprUtils.cast(et.transform(((GloballyExpression) prop).getOperand()), BoolType.class));
+
 		} else {
 			throw new UnsupportedOperationException("Currently only expressions in the form of"
 					+ " G(expr) are supported, where 'expr' contains no temporal operators.");
@@ -67,8 +69,10 @@ public class SystemModelCreator {
 		}
 
 		for (final SystemConstraintDefinition constraintDef : systemDefinition.getSystemConstraintDefinitions()) {
+
 			final Expr<? extends BoolType> expr = ExprUtils.cast(et.transform(constraintDef.getExpression()),
 					BoolType.class);
+
 			if (constraintDef instanceof InitialConstraintDefinition)
 				builder.addInit(expr);
 			if (constraintDef instanceof InvariantConstraintDefinition)

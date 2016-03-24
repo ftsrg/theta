@@ -19,66 +19,68 @@ import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
 import hu.bme.mit.inf.ttmc.formalism.sts.impl.STSImpl;
 
 public class AIGERLoaderOptimized implements AIGERLoader {
-	
+
 	@Override
-	public STS load(String fileName, STSManager manager) throws IOException {
-		STSImpl.Builder builder = new STSImpl.Builder();
-		BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(fileName)));
-		
+	public STS load(final String fileName, final STSManager manager) throws IOException {
+		final STSImpl.Builder builder = new STSImpl.Builder(manager);
+		final BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(fileName)));
+
 		int inputs, latches, outputs, andGates;
 		// Parse header
-		String[] header = br.readLine().split(" ");
+		final String[] header = br.readLine().split(" ");
 		inputs = Integer.parseInt(header[2]);
 		latches = Integer.parseInt(header[3]);
 		outputs = Integer.parseInt(header[4]);
 		andGates = Integer.parseInt(header[5]);
-		
-		List<HWElement> elements = new ArrayList<>(inputs + latches + andGates + 1);
-		for (int i = 0; i < inputs + latches + andGates + 1; ++i) elements.add(null);
+
+		final List<HWElement> elements = new ArrayList<>(inputs + latches + andGates + 1);
+		for (int i = 0; i < inputs + latches + andGates + 1; ++i)
+			elements.add(null);
 		elements.set(0, new FalseConst());
-		List<OutVar> outVarElements = new ArrayList<>(outputs);
-		List<Latch> latchElements = new ArrayList<>(latches);
-		
+		final List<OutVar> outVarElements = new ArrayList<>(outputs);
+		final List<Latch> latchElements = new ArrayList<>(latches);
+
 		// Parse inputs
-		for(int i = 0; i < inputs; ++i) {
-			InVar inVar = new InVar(i + 1, br.readLine(), manager);
+		for (int i = 0; i < inputs; ++i) {
+			final InVar inVar = new InVar(i + 1, br.readLine(), manager);
 			elements.set(inVar.getVarId(), inVar);
 		}
-		
+
 		// Parse latches
 		for (int i = 0; i < latches; ++i) {
-			Latch latch = new Latch(i + 1, br.readLine().split(" "), manager);
+			final Latch latch = new Latch(i + 1, br.readLine().split(" "), manager);
 			elements.set(latch.getVarId(), latch);
 			latchElements.add(latch);
 		}
-		
+
 		// Parse outputs
 		for (int i = 0; i < outputs; ++i) {
-			OutVar outVar = new OutVar(br.readLine());
+			final OutVar outVar = new OutVar(br.readLine());
 			outVarElements.add(outVar);
 		}
-		
+
 		// Parse and gates
 		for (int i = 0; i < andGates; ++i) {
-			AndGate andGate = new AndGate(br.readLine().split(" "));
+			final AndGate andGate = new AndGate(br.readLine().split(" "));
 			elements.set(andGate.getVarId(), andGate);
 		}
 
 		br.close();
-		
+
 		// Process latches
-		for (Latch latch : latchElements) {
+		for (final Latch latch : latchElements) {
 			builder.addInit(latch.getInitExpr(manager));
 			builder.addTrans(latch.getTransExpr(manager, elements));
 		}
-		
+
 		// Process output
 		if (outVarElements.size() == 1) {
 			builder.setProp(manager.getExprFactory().Not(outVarElements.get(0).getExpr(manager, elements)));
 		} else {
-			throw new UnsupportedOperationException("Currently only models with a single output variable are supported (this model has " + outVarElements.size() + ").");
+			throw new UnsupportedOperationException(
+					"Currently only models with a single output variable are supported (this model has " + outVarElements.size() + ").");
 		}
-		
+
 		return builder.build();
 	}
 
