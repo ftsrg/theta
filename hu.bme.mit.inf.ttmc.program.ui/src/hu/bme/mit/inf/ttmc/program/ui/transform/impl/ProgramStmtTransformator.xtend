@@ -1,5 +1,8 @@
 package hu.bme.mit.inf.ttmc.program.ui.transform.impl
 
+import hu.bme.mit.inf.ttmc.constraint.decl.Decl
+import hu.bme.mit.inf.ttmc.constraint.expr.Expr
+import hu.bme.mit.inf.ttmc.constraint.model.Declaration
 import hu.bme.mit.inf.ttmc.constraint.model.Expression
 import hu.bme.mit.inf.ttmc.constraint.model.ReferenceExpression
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType
@@ -10,10 +13,12 @@ import hu.bme.mit.inf.ttmc.constraint.utils.impl.ExprUtils
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl
 import hu.bme.mit.inf.ttmc.formalism.common.factory.StmtFactory
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt
+import hu.bme.mit.inf.ttmc.formalism.utils.impl.StmtUtils
 import hu.bme.mit.inf.ttmc.program.model.AssertStatement
 import hu.bme.mit.inf.ttmc.program.model.AssignmentStatement
 import hu.bme.mit.inf.ttmc.program.model.AssumeStatement
 import hu.bme.mit.inf.ttmc.program.model.BlockStatement
+import hu.bme.mit.inf.ttmc.program.model.DeclarationStatement
 import hu.bme.mit.inf.ttmc.program.model.DoStatement
 import hu.bme.mit.inf.ttmc.program.model.HavocStatement
 import hu.bme.mit.inf.ttmc.program.model.IfStatement
@@ -22,13 +27,8 @@ import hu.bme.mit.inf.ttmc.program.model.SkipStatement
 import hu.bme.mit.inf.ttmc.program.model.Statement
 import hu.bme.mit.inf.ttmc.program.model.WhileStatement
 import hu.bme.mit.inf.ttmc.program.ui.transform.StmtTransformator
-import java.util.LinkedList
 
 import static com.google.common.base.Preconditions.checkArgument
-import hu.bme.mit.inf.ttmc.constraint.expr.Expr
-import hu.bme.mit.inf.ttmc.constraint.model.Declaration
-import hu.bme.mit.inf.ttmc.constraint.decl.Decl
-import hu.bme.mit.inf.ttmc.program.model.DeclarationStatement
 
 class ProgramStmtTransformator implements StmtTransformator {
 
@@ -89,7 +89,14 @@ class ProgramStmtTransformator implements StmtTransformator {
 	protected def dispatch Stmt toStmt(DeclarationStatement statement) {
 		val variableDeclaration = statement.variableDeclaration
 		val VarDecl<? extends Type> varDecl = variableDeclaration.transform as VarDecl<? extends Type>
-		Decl(varDecl)
+		
+		val expression = variableDeclaration.expression
+		if (expression === null) {
+			Decl(varDecl)
+		} else {
+			val expr = ExprUtils.cast(expression.transform, varDecl.type.class)
+			Block(Decl(varDecl), Assign(varDecl as VarDecl<Type>, expr))
+		}
 	}
 
 	protected def dispatch Stmt toStmt(AssignmentStatement statement) {
@@ -108,10 +115,13 @@ class ProgramStmtTransformator implements StmtTransformator {
 	}
 
 	protected def dispatch Stmt toStmt(BlockStatement statement) {
-		val stmts = new LinkedList
-		val blockStmts = statement.statements.map[toStmt]
-		stmts.addAll(blockStmts)
-		Block(stmts)
+		val subStmts = statement.statements.map[toStmt]
+		
+		if (subStmts.size == 1) {
+			subStmts.get(0)
+		} else {
+			Block(subStmts.map[StmtUtils::getSubStmts(it)].flatten)
+		}
 	}
 
 	protected def dispatch Stmt toStmt(ReturnStatement statement) {
@@ -148,7 +158,8 @@ class ProgramStmtTransformator implements StmtTransformator {
 		Do(doStmt, cond)
 	}
 
-	// //////
+	////////
+	
 	private def VarDecl<Type> extractVar(Expression expression) {
 		if (expression instanceof ReferenceExpression) {
 			val decl = expression.declaration.transform
@@ -162,5 +173,4 @@ class ProgramStmtTransformator implements StmtTransformator {
 			throw new UnsupportedOperationException("Only assignments to simple identifiers is supported.")
 		}
 	}
-
 }
