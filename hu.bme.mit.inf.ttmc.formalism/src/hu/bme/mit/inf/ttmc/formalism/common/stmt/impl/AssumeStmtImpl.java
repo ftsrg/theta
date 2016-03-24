@@ -8,39 +8,38 @@ import hu.bme.mit.inf.ttmc.formalism.common.stmt.AssumeStmt;
 
 public final class AssumeStmtImpl extends AbstractStmt implements AssumeStmt {
 
-	private final static int HASHSEED = 547;
+	private static final int HASH_SEED = 547;
 	private volatile int hashCode = 0;
-	
+
 	private final Expr<? extends BoolType> cond;
 
 	public AssumeStmtImpl(final Expr<? extends BoolType> cond) {
 		this.cond = checkNotNull(cond);
 	}
-	
+
 	@Override
 	public Expr<? extends BoolType> getCond() {
 		return cond;
 	}
-	
+
 	@Override
 	public int hashCode() {
-		if (hashCode == 0) {
-			hashCode = HASHSEED;
-			hashCode = 37 * hashCode + cond.hashCode();
+		int result = hashCode;
+		if (result == 0) {
+			result = HASH_SEED;
+			result = 37 * result + cond.hashCode();
+			hashCode = result;
 		}
-
-		return hashCode;
+		return result;
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
-		} else if (obj == null) {
-			return false;
-		} else if (this.getClass() == obj.getClass()) {
-			final AssumeStmtImpl that = (AssumeStmtImpl) obj;
-			return this.cond.equals(that.cond);
+		} else if (obj instanceof AssumeStmt) {
+			final AssumeStmt that = (AssumeStmt) obj;
+			return this.getCond().equals(that.getCond());
 		} else {
 			return false;
 		}
