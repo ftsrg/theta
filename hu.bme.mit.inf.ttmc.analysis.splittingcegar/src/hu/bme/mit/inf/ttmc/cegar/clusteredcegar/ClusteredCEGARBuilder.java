@@ -47,7 +47,7 @@ public class ClusteredCEGARBuilder implements ICEGARBuilder {
 	@Override
 	public GenericCEGARLoop<ClusteredAbstractSystem, ClusteredAbstractState> build() {
 		return new GenericCEGARLoop<ClusteredAbstractSystem, ClusteredAbstractState>(new ClusteredInitializer(logger, visualizer),
-				new ClusteredChecker(logger, visualizer), new ClusteredConcretizer(logger, visualizer), new ClusteredRefiner(logger, visualizer), logger,
+				new ClusteredChecker(logger, visualizer), new ClusteredConcretizer(logger, visualizer), new ClusteredRefiner(logger, visualizer), null, logger,
 				"Clustered");
 	}
 }

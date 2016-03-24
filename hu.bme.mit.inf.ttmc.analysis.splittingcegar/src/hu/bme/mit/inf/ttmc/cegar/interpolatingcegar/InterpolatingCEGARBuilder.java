@@ -16,6 +16,7 @@ import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.steps.InterpolatingRefiner;
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.steps.refinement.CraigInterpolater;
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.steps.refinement.IInterpolater;
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.steps.refinement.SequenceInterpolater;
+import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.utils.InterpolatingCEGARDebugger;
 import hu.bme.mit.inf.ttmc.common.logging.Logger;
 import hu.bme.mit.inf.ttmc.common.logging.impl.NullLogger;
 
@@ -28,6 +29,7 @@ public class InterpolatingCEGARBuilder implements ICEGARBuilder {
 	private boolean incrementalModelChecking = true;
 	private boolean useCNFTransformation = false;
 	private final List<String> explicitVariables = new ArrayList<>();
+	private InterpolatingCEGARDebugger debugger = null;
 
 	public enum InterpolationMethod {
 		Craig, Sequence
@@ -128,6 +130,14 @@ public class InterpolatingCEGARBuilder implements ICEGARBuilder {
 		return this;
 	}
 
+	public InterpolatingCEGARBuilder debug(final IVisualizer visualizer) {
+		if (visualizer == null)
+			this.debugger = null;
+		else
+			this.debugger = new InterpolatingCEGARDebugger(visualizer);
+		return this;
+	}
+
 	/**
 	 * Build CEGAR loop instance
 	 *
@@ -150,6 +160,6 @@ public class InterpolatingCEGARBuilder implements ICEGARBuilder {
 		return new GenericCEGARLoop<>(
 				new InterpolatingInitializer(logger, visualizer, collectFromConditions, collectFromSpecification, useCNFTransformation, explicitVariables),
 				new InterpolatingChecker(logger, visualizer, incrementalModelChecking), new InterpolatingConcretizer(logger, visualizer),
-				new InterpolatingRefiner(logger, visualizer, interpolater), logger, "Interpolating");
+				new InterpolatingRefiner(logger, visualizer, interpolater), debugger, logger, "Interpolating");
 	}
 }

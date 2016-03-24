@@ -16,6 +16,7 @@ import hu.bme.mit.inf.ttmc.cegar.common.steps.IChecker;
 import hu.bme.mit.inf.ttmc.cegar.common.steps.IConcretizer;
 import hu.bme.mit.inf.ttmc.cegar.common.steps.IInitializer;
 import hu.bme.mit.inf.ttmc.cegar.common.steps.IRefiner;
+import hu.bme.mit.inf.ttmc.cegar.common.utils.debugging.IDebugger;
 import hu.bme.mit.inf.ttmc.common.logging.Logger;
 import hu.bme.mit.inf.ttmc.common.logging.impl.NullLogger;
 import hu.bme.mit.inf.ttmc.constraint.expr.AndExpr;
@@ -37,7 +38,7 @@ public class GenericCEGARLoop<AbstractSystemType extends IAbstractSystem, Abstra
 	private final IChecker<AbstractSystemType, AbstractStateType> checker; // Model checker
 	private final IConcretizer<AbstractSystemType, AbstractStateType> concretizer; // Counterexample concretizer
 	private final IRefiner<AbstractSystemType, AbstractStateType> refiner; // Abstraction refiner
-	//private IDebugger<AbstractSystemType, AbstractStateType> debugger;         // Debugger (can be null)
+	private final IDebugger<AbstractSystemType, AbstractStateType> debugger; // Debugger (can be null)
 	private final Logger logger; // Logger
 	private final String name; // Name of the algorithm
 	private final Stopwatch stopwatch; // Stopwatch for measuring runtime
@@ -80,13 +81,12 @@ public class GenericCEGARLoop<AbstractSystemType extends IAbstractSystem, Abstra
 	 */
 	public GenericCEGARLoop(final IInitializer<AbstractSystemType> initializer, final IChecker<AbstractSystemType, AbstractStateType> checker,
 			final IConcretizer<AbstractSystemType, AbstractStateType> concretizer, final IRefiner<AbstractSystemType, AbstractStateType> refiner,
-			//IDebugger<AbstractSystemType, AbstractStateType> debugger,
-			final Logger logger, final String name) {
+			final IDebugger<AbstractSystemType, AbstractStateType> debugger, final Logger logger, final String name) {
 		this.initializer = initializer;
 		this.checker = checker;
 		this.concretizer = concretizer;
 		this.refiner = refiner;
-		//this.debugger = debugger;
+		this.debugger = debugger;
 		this.logger = logger == null ? new NullLogger() : logger;
 		this.name = name == null ? "" : name;
 		this.stopwatch = Stopwatch.createUnstarted();
@@ -120,7 +120,8 @@ public class GenericCEGARLoop<AbstractSystemType extends IAbstractSystem, Abstra
 		do {
 			if (isStopped)
 				return null;
-			//if (debugger != null) debugger.explore(system).visualize();
+			if (debugger != null)
+				debugger.clearStateSpace().explore(abstractSystem).visualize();
 
 			// Do the model checking
 			logger.writeHeader("Model checking (" + refinementCount + ")", 1);
@@ -134,7 +135,8 @@ public class GenericCEGARLoop<AbstractSystemType extends IAbstractSystem, Abstra
 
 			// If an abstract counterexample was found, try to concretize it
 			if (abstractResult.isCounterExample()) {
-				//if (debugger != null) debugger.setAbstractCE(abstractResult.getCounterexample()).visualize();
+				if (debugger != null)
+					debugger.setAbstractCE(abstractResult.getCounterexample()).visualize();
 
 				// Try to concretize abstract counterexample
 				logger.writeHeader("Concretizing counterexample (" + refinementCount + ")", 1);
@@ -144,7 +146,8 @@ public class GenericCEGARLoop<AbstractSystemType extends IAbstractSystem, Abstra
 					return null;
 				concretizerTime += stopwatch.elapsed(TimeUnit.MILLISECONDS) - start;
 
-				//if (debugger != null) debugger.setConcreteTrace(concreteTrace).visualize();
+				if (debugger != null)
+					debugger.setConcreteTrace(concreteTrace).visualize();
 
 				// If no concrete counterexample is found the abstract one is spurious
 				// and the abstraction has to be refined

@@ -3,16 +3,22 @@ package hu.bme.mit.inf.ttmc.cegar.common.utils.debugging;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Stack;
+import java.util.stream.Collectors;
 
+import hu.bme.mit.inf.ttmc.cegar.common.data.IAbstractState;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.SolverHelper;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.IVisualizer;
-import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
+import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.graph.ClusterNode;
+import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.graph.Graph;
+import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.graph.Node;
 import hu.bme.mit.inf.ttmc.constraint.expr.AndExpr;
+import hu.bme.mit.inf.ttmc.constraint.expr.EqExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.solver.Solver;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
-import hu.bme.mit.inf.ttmc.constraint.z3.Z3ConstraintManager;
+import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
 import hu.bme.mit.inf.ttmc.formalism.sts.STSUnroller;
 
 /**
@@ -22,23 +28,9 @@ import hu.bme.mit.inf.ttmc.formalism.sts.STSUnroller;
  */
 public class DebuggerBase {
 	protected IVisualizer visualizer;
-	protected ConstraintManager basicManager;
-	protected ConstraintManager solverManager;
-	protected Solver solver;
-	protected STSUnroller unroller; // Unroller (the derived classes have to initialize it)
 
-	/**
-	 * Constructor with visualizer
-	 *
-	 * @param visualizer
-	 *            Visualizer
-	 */
 	public DebuggerBase(final IVisualizer visualizer) {
 		this.visualizer = visualizer;
-		basicManager = new Z3ConstraintManager();
-		solverManager = new Z3ConstraintManager();
-		solver = solverManager.getSolverFactory().createSolver(true, true);
-		unroller = null;
 	}
 
 	/**
@@ -48,7 +40,8 @@ public class DebuggerBase {
 	 * @param concreteStates
 	 *            Collection of concrete states
 	 */
-	protected void exploreConcreteTransitionRelationAndInitials(final Collection<ConcreteState> concreteStates) {
+	protected void exploreConcreteTransitionRelationAndInitials(final Collection<ConcreteState> concreteStates, final Solver solver,
+			final STSUnroller unroller) {
 		solver.push();
 		solver.add(unroller.inv(0));
 		// Loop through each state
@@ -108,7 +101,8 @@ public class DebuggerBase {
 	 * @param unsafeExpr
 	 *            Expression that is feasible for unsafe states
 	 */
-	protected void markUnsafeStates(final Collection<ConcreteState> concreteStates, final Expr<? extends BoolType> unsafeExpr) {
+	protected void markUnsafeStates(final Collection<ConcreteState> concreteStates, final Expr<? extends BoolType> unsafeExpr, final Solver solver,
+			final STSUnroller unroller) {
 		solver.push();
 		solver.add(unroller.unroll(unsafeExpr, 0));
 		for (final ConcreteState cs0 : concreteStates) {
@@ -119,6 +113,41 @@ public class DebuggerBase {
 			solver.pop();
 		}
 		solver.pop();
+	}
+
+	protected void visualize(final Map<? extends IAbstractState, ? extends Collection<ConcreteState>> stateSpace,
+			final Collection<? extends IAbstractState> reachableStates, final STSManager manager) {
+		if (stateSpace.isEmpty())
+			throw new RuntimeException("State space is not explored.");
+
+		final Graph g = new Graph("SYSTEM", "SYSTEM");
+		for (final IAbstractState as : stateSpace.keySet()) {
+			final StringBuilder labelString = new StringBuilder("");
+			final Expr<? extends BoolType> labelExpr = as.createExpression(manager);
+			if (labelExpr instanceof AndExpr) {
+				for (final Expr<?> label : ((AndExpr) labelExpr).getOps())
+					labelString.append(label).append("\n");
+			} else {
+				labelString.append(labelExpr);
+			}
+
+			final ClusterNode cn = new ClusterNode("cluster_cas_" + as.hashCode(), labelString.toString(), reachableStates.contains(as) ? "black" : "gray",
+					as.isPartOfCounterexample() ? "pink" : "white", "", as.isInitial());
+			g.addNode(cn);
+			for (final IAbstractState as1 : as.getSuccessors())
+				cn.addSuccessor("cluster_cas_" + as1.hashCode(), "");
+
+			for (final ConcreteState cs0 : stateSpace.get(as)) {
+				final Node n = new Node("cs_" + cs0.createId(), cs0.toString(), (cs0.isReachable ? "" : "grey"), (cs0.isPartOfCounterExample ? "red" : ""),
+						(cs0.isUnsafe ? "dashed" : ""), cs0.isInitial);
+				cn.addSubNode(n);
+				for (final ConcreteState cs1 : cs0.successors)
+					n.addSuccessor("cs_" + cs1.createId(),
+							(cs0.isPartOfCounterExample && cs1.isPartOfCounterExample && cs0.counterExampleIndex < cs1.counterExampleIndex ? "red" : ""));
+			}
+		}
+
+		visualizer.visualize(g);
 	}
 
 	/**
@@ -137,8 +166,8 @@ public class DebuggerBase {
 		public boolean isReachable;
 		public boolean isUnsafe;
 
-		public ConcreteState(final AndExpr model) {
-			this.model = model;
+		public ConcreteState(final Expr<? extends BoolType> model) {
+			this.model = (AndExpr) model;
 			this.id = nextId++;
 			this.isInitial = false;
 			this.isPartOfCounterExample = false;
@@ -149,7 +178,8 @@ public class DebuggerBase {
 
 		@Override
 		public String toString() {
-			return model.toString();
+			return String.join(System.lineSeparator(),
+					model.getOps().stream().map(m -> ((EqExpr) m).getLeftOp() + " = " + ((EqExpr) m).getRightOp()).collect(Collectors.toList()));
 		}
 
 		public String createId() {
