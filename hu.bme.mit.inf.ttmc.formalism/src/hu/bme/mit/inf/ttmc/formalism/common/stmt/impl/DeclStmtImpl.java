@@ -6,9 +6,9 @@ import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.DeclStmt;
 
-public class DeclStmtImpl<DeclType extends Type> implements DeclStmt<DeclType> {
+public final class DeclStmtImpl<DeclType extends Type> implements DeclStmt<DeclType> {
 
-	private final static int HASH_SEED = 4201;
+	private static final int HASH_SEED = 4201;
 
 	private volatile int hashCode = 0;
 
@@ -28,10 +28,9 @@ public class DeclStmtImpl<DeclType extends Type> implements DeclStmt<DeclType> {
 		int result = hashCode;
 		if (result == 0) {
 			result = HASH_SEED;
-			result = 37 * hashCode + varDecl.hashCode();
+			result = 37 * result + varDecl.hashCode();
 			hashCode = result;
 		}
-
 		return result;
 	}
 
@@ -50,7 +49,8 @@ public class DeclStmtImpl<DeclType extends Type> implements DeclStmt<DeclType> {
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
-		sb.append("Decl(");
+		sb.append("Decl");
+		sb.append("(");
 		sb.append(varDecl);
 		sb.append(")");
 		return sb.toString();
