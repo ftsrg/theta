@@ -88,6 +88,6 @@ public class VisibleCEGARBuilder implements ICEGARBuilder {
 			throw new RuntimeException("Unknown variable collection method: " + varCollMethod);
 		}
 		return new GenericCEGARLoop<>(new VisibleInitializer(logger, visualizer, useCNFTransformation), new VisibleChecker(logger, visualizer),
-				new VisibleConcretizer(logger, visualizer), new VisibleRefiner(logger, visualizer, varCollector), logger, "Visible");
+				new VisibleConcretizer(logger, visualizer), new VisibleRefiner(logger, visualizer, varCollector), null, logger, "Visible");
 	}
 }
