@@ -6,8 +6,6 @@ specification BinarySearch {
 	function contains(a : array integer of integer, l : integer, u : integer, e : integer) : boolean :=
 		exists (i : integer) : i >= l and i <= u and a[i] = e
 	
-	@pre sorted(a, l, u)
-	@post result equal contains(a, l, u, e)
 	procedure binarySearch(a : array integer of integer, l : integer, u : integer, e : integer) : boolean {
 		if l > u then {
 			return false;
