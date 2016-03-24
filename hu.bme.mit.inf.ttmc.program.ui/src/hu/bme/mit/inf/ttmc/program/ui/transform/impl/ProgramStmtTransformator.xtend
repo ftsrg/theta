@@ -28,6 +28,7 @@ import static com.google.common.base.Preconditions.checkArgument
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr
 import hu.bme.mit.inf.ttmc.constraint.model.Declaration
 import hu.bme.mit.inf.ttmc.constraint.decl.Decl
+import hu.bme.mit.inf.ttmc.program.model.DeclarationStatement
 
 class ProgramStmtTransformator implements StmtTransformator {
 
@@ -84,6 +85,12 @@ class ProgramStmtTransformator implements StmtTransformator {
 		val cond = ExprUtils.cast(statement.expression.transform, BoolType)
 		Assert(cond)
 	}
+	
+	protected def dispatch Stmt toStmt(DeclarationStatement statement) {
+		val variableDeclaration = statement.variableDeclaration
+		val VarDecl<? extends Type> varDecl = variableDeclaration.transform as VarDecl<? extends Type>
+		Decl(varDecl)
+	}
 
 	protected def dispatch Stmt toStmt(AssignmentStatement statement) {
 		val varDecl = statement.lhsExpression.extractVar
@@ -102,14 +109,6 @@ class ProgramStmtTransformator implements StmtTransformator {
 
 	protected def dispatch Stmt toStmt(BlockStatement statement) {
 		val stmts = new LinkedList
-		for (variableDeclaration : statement.variableDeclarations) {
-			if (variableDeclaration.expression !== null) {
-				val varDecl = variableDeclaration.transform as VarDecl<Type>
-				val value = variableDeclaration.expression.transform
-				val assign = Assign(varDecl, value)
-				stmts.add(assign)
-			}
-		}
 		val blockStmts = statement.statements.map[toStmt]
 		stmts.addAll(blockStmts)
 		Block(stmts)
