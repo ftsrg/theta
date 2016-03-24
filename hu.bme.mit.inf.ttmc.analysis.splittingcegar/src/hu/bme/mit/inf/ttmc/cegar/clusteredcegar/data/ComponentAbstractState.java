@@ -141,7 +141,7 @@ public class ComponentAbstractState {
 
 	@Override
 	public int hashCode() {
-		return bitset.hashCode();
+		return bitset.hashCode() * 31 + refinementIndicies.hashCode();
 	}
 
 	@Override
