@@ -75,7 +75,7 @@ public class PerformanceTests {
 	}
 
 	@SuppressWarnings("serial")
-	@Test
+	//@Test
 	public void testCERNPLC() {
 		final IModelLoader loader = new SystemFileModelLoader();
 
@@ -140,23 +140,23 @@ public class PerformanceTests {
 	}
 
 	@SuppressWarnings("serial")
-	//@Test
+	@Test
 	public void testHardware() {
 		//final IModelLoader loader = new AIGERFileModelLoaderOptimized();
 		final IModelLoader loader = new AIGERFileModelLoaderSimple();
 
 		final List<TestCase> testCases = new ArrayList<TestCase>() {
 			{
-				add(new TestCase("models/hardware/ringp0.aag", false, loader));
-				add(new TestCase("models/hardware/ringp0neg.aag", false, loader));
-				add(new TestCase("models/hardware/shortp0.aag", false, loader));
+				//add(new TestCase("models/hardware/ringp0.aag", false, loader));
+				//add(new TestCase("models/hardware/ringp0neg.aag", false, loader));
+				//add(new TestCase("models/hardware/shortp0.aag", false, loader));
 				add(new TestCase("models/hardware/shortp0neg.aag", false, loader));
 				add(new TestCase("models/hardware/srg5ptimo.aag", false, loader));
 				add(new TestCase("models/hardware/srg5ptimoneg.aag", false, loader));
 				add(new TestCase("models/hardware/srg5ptimonegnv.aag", false, loader));
 				add(new TestCase("models/hardware/nusmv.syncarb5_2.B.aag", true, loader));
 				add(new TestCase("models/hardware/nusmv.syncarb10_2.B.aag", true, loader));
-				add(new TestCase("models/hardware/mutexp0.aag", false, loader));
+				//add(new TestCase("models/hardware/mutexp0.aag", false, loader));
 				add(new TestCase("models/hardware/mutexp0neg.aag", false, loader));
 				add(new TestCase("models/hardware/pdtpmsarbiter.aag", true, loader));
 
@@ -166,8 +166,10 @@ public class PerformanceTests {
 			{
 				add(new VisibleCEGARBuilder().logger(null).visualizer(null).useCNFTransformation(false)
 						.variableCollectionMethod(VariableCollectionMethod.CraigItp));
+				//add(new VisibleCEGARBuilder().logger(null).visualizer(null).useCNFTransformation(false)
+				//		.variableCollectionMethod(VariableCollectionMethod.SequenceItp));
 				add(new VisibleCEGARBuilder().logger(null).visualizer(null).useCNFTransformation(false)
-						.variableCollectionMethod(VariableCollectionMethod.SequenceItp));
+						.variableCollectionMethod(VariableCollectionMethod.UnsatCore));
 				//add(new InterpolatingCEGARBuilder().logger(null).visualizer(null).interpolationMethod(InterpolationMethod.Craig).incrementalModelChecking(true)
 				//		.useCNFTransformation(false));
 				//add(new InterpolatingCEGARBuilder().logger(null).visualizer(null).interpolationMethod(InterpolationMethod.Sequence)
@@ -175,7 +177,7 @@ public class PerformanceTests {
 			}
 		};
 
-		run(testCases, configurations, 5 * 60 * 1000);
+		run(testCases, configurations, 4 * 60 * 1000);
 	}
 
 	private void run(final List<TestCase> testCases, final List<ICEGARBuilder> configurations, final int timeOut) {

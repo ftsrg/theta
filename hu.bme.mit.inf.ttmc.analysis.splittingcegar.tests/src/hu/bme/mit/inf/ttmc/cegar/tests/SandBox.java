@@ -36,12 +36,12 @@ public class SandBox {
 
 		//System.in.read();
 
-		final String subPath = "cern/";
-		final String modelName = "UCPC-1721.system";
+		final String subPath = "simple/";
+		final String modelName = "simple3.system";
 
 		final STSManager manager = new STSManagerImpl(new Z3ConstraintManager());
 
-		final Logger logger = new ConsoleLogger(2);
+		final Logger logger = new ConsoleLogger(10);
 		final IVisualizer visualizer = null; //new GraphVizVisualizer("models/_output", modelName, 100);
 
 		STS problem = null;
@@ -58,7 +58,7 @@ public class SandBox {
 
 		//cegar = new ClusteredCEGARBuilder().logger(logger).visualizer(visualizer).build();
 		cegar = new VisibleCEGARBuilder().logger(logger).visualizer(visualizer).useCNFTransformation(false)
-				.variableCollectionMethod(VariableCollectionMethod.SequenceItp).build();
+				.variableCollectionMethod(VariableCollectionMethod.UnsatCore).build();
 
 		//cegar = new InterpolatingCEGARBuilder().logger(logger).visualizer(visualizer).useCNFTransformation(false)
 		//		.collectFromSpecification(false).collectFromConditions(false).incrementalModelChecking(true).interpolationMethod(InterpolationMethod.Craig)
