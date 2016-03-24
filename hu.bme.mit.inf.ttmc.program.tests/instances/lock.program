@@ -1,0 +1,18 @@
+specification Lock {
+	
+	procedure main() : unit {
+		var lock : boolean := false;
+		var old : integer;
+		var new : integer;
+		do {
+			assert lock = false;
+			lock := true;
+			old := new;
+			if * then {
+				lock := false;
+				new := new + 1;
+			}
+		} while new /= old;
+	}
+	
+}
