@@ -7,12 +7,13 @@ import java.util.List;
 import org.junit.Test;
 
 import hu.bme.mit.inf.ttmc.aiger.impl.AIGERLoaderSimple;
-import hu.bme.mit.inf.ttmc.cegar.clusteredcegar.ClusteredCEGARBuilder;
 import hu.bme.mit.inf.ttmc.cegar.common.CEGARResult;
 import hu.bme.mit.inf.ttmc.cegar.common.ICEGARLoop;
 import hu.bme.mit.inf.ttmc.cegar.common.data.IAbstractState;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.IVisualizer;
 import hu.bme.mit.inf.ttmc.cegar.tests.invariantchecker.InvariantChecker;
+import hu.bme.mit.inf.ttmc.cegar.visiblecegar.VisibleCEGARBuilder;
+import hu.bme.mit.inf.ttmc.cegar.visiblecegar.VisibleCEGARBuilder.VariableCollectionMethod;
 import hu.bme.mit.inf.ttmc.common.logging.Logger;
 import hu.bme.mit.inf.ttmc.common.logging.impl.ConsoleLogger;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
@@ -35,12 +36,12 @@ public class SandBox {
 
 		//System.in.read();
 
-		final String subPath = "simple/";
-		final String modelName = "simple1.system";
+		final String subPath = "cern/";
+		final String modelName = "UCPC-1721.system";
 
 		final STSManager manager = new STSManagerImpl(new Z3ConstraintManager());
 
-		final Logger logger = new ConsoleLogger(10);
+		final Logger logger = new ConsoleLogger(2);
 		final IVisualizer visualizer = null; //new GraphVizVisualizer("models/_output", modelName, 100);
 
 		STS problem = null;
@@ -55,8 +56,9 @@ public class SandBox {
 
 		ICEGARLoop cegar = null;
 
-		cegar = new ClusteredCEGARBuilder().logger(logger).visualizer(visualizer).build();
-		//cegar = new VisibleCEGARBuilder().logger(logger).visualizer(visualizer).useCNFTransformation(false).build();
+		//cegar = new ClusteredCEGARBuilder().logger(logger).visualizer(visualizer).build();
+		cegar = new VisibleCEGARBuilder().logger(logger).visualizer(visualizer).useCNFTransformation(false)
+				.variableCollectionMethod(VariableCollectionMethod.SequenceItp).build();
 
 		//cegar = new InterpolatingCEGARBuilder().logger(logger).visualizer(visualizer).useCNFTransformation(false)
 		//		.collectFromSpecification(false).collectFromConditions(false).incrementalModelChecking(true).interpolationMethod(InterpolationMethod.Craig)

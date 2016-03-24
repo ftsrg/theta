@@ -75,7 +75,7 @@ public class PerformanceTests {
 	}
 
 	@SuppressWarnings("serial")
-	//@Test
+	@Test
 	public void testCERNPLC() {
 		final IModelLoader loader = new SystemFileModelLoader();
 
@@ -140,7 +140,7 @@ public class PerformanceTests {
 	}
 
 	@SuppressWarnings("serial")
-	@Test
+	//@Test
 	public void testHardware() {
 		//final IModelLoader loader = new AIGERFileModelLoaderOptimized();
 		final IModelLoader loader = new AIGERFileModelLoaderSimple();
