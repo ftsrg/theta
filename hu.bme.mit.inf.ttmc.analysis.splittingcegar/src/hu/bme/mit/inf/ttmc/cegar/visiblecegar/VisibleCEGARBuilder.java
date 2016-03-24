@@ -13,6 +13,7 @@ import hu.bme.mit.inf.ttmc.cegar.visiblecegar.steps.VisibleRefiner;
 import hu.bme.mit.inf.ttmc.cegar.visiblecegar.steps.refinement.CraigItpVarCollector;
 import hu.bme.mit.inf.ttmc.cegar.visiblecegar.steps.refinement.IVarCollector;
 import hu.bme.mit.inf.ttmc.cegar.visiblecegar.steps.refinement.SeqItpVarCollector;
+import hu.bme.mit.inf.ttmc.cegar.visiblecegar.steps.refinement.UnsatCoreVarCollector;
 import hu.bme.mit.inf.ttmc.common.logging.Logger;
 import hu.bme.mit.inf.ttmc.common.logging.impl.NullLogger;
 
@@ -23,7 +24,7 @@ public class VisibleCEGARBuilder implements ICEGARBuilder {
 	private VariableCollectionMethod varCollMethod = VariableCollectionMethod.CraigItp;
 
 	public enum VariableCollectionMethod {
-		CraigItp, SequenceItp
+		CraigItp, SequenceItp, UnsatCore
 	};
 
 	/**
@@ -79,6 +80,9 @@ public class VisibleCEGARBuilder implements ICEGARBuilder {
 			break;
 		case SequenceItp:
 			varCollector = new SeqItpVarCollector(logger, visualizer);
+			break;
+		case UnsatCore:
+			varCollector = new UnsatCoreVarCollector(logger, visualizer);
 			break;
 		default:
 			throw new RuntimeException("Unknown variable collection method: " + varCollMethod);
