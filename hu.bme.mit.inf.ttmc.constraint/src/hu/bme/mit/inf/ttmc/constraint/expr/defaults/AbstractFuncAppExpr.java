@@ -55,13 +55,14 @@ public abstract class AbstractFuncAppExpr<ParamType extends Type, ResultType ext
 
 	@Override
 	public final int hashCode() {
-		if (hashCode == 0) {
-			hashCode = HASH_SEED;
-			hashCode = 31 * hashCode + func.hashCode();
-			hashCode = 31 * hashCode + param.hashCode();
+		int result = hashCode;
+		if (result == 0) {
+			result = HASH_SEED;
+			result = 31 * result + func.hashCode();
+			result = 31 * result + param.hashCode();
+			hashCode = result;
 		}
-
-		return hashCode;
+		return result;
 	}
 
 	@Override
