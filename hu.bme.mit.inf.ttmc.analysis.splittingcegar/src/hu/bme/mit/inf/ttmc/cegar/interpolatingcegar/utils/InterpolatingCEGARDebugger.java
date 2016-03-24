@@ -40,7 +40,7 @@ public class InterpolatingCEGARDebugger extends DebuggerBase implements IDebugge
 	public IDebugger<InterpolatedAbstractSystem, InterpolatedAbstractState> explore(final InterpolatedAbstractSystem system) {
 		if (system.getAbstractKripkeStructure() == null)
 			throw new RuntimeException("Abstract state space must be explored by the algorithm before exploring the concrete state space.");
-
+		clearStateSpace();
 		this.system = system;
 
 		// Collect abstract states
@@ -96,7 +96,6 @@ public class InterpolatingCEGARDebugger extends DebuggerBase implements IDebugge
 		exploreReachableConcreteStates(allConcreteStates);
 
 		// Mark unsafe states
-
 		markUnsafeStates(allConcreteStates, system.getManager().getExprFactory().Not(system.getSystem().getProp()), solver, unroller);
 
 		return this;

@@ -126,13 +126,13 @@ public class DebuggerBase {
 			final Expr<? extends BoolType> labelExpr = as.createExpression(manager);
 			if (labelExpr instanceof AndExpr) {
 				for (final Expr<?> label : ((AndExpr) labelExpr).getOps())
-					labelString.append(label).append("\n");
+					labelString.append(label).append(System.lineSeparator());
 			} else {
 				labelString.append(labelExpr);
 			}
 
-			final ClusterNode cn = new ClusterNode("cluster_cas_" + as.hashCode(), labelString.toString(), reachableStates.contains(as) ? "black" : "gray",
-					as.isPartOfCounterexample() ? "pink" : "white", "", as.isInitial());
+			final ClusterNode cn = new ClusterNode(("cluster_cas_" + as.hashCode()).replace('-', '_'), labelString.toString(),
+					reachableStates.contains(as) ? "black" : "gray", as.isPartOfCounterexample() ? "pink" : "white", "", as.isInitial());
 			g.addNode(cn);
 			for (final IAbstractState as1 : as.getSuccessors())
 				cn.addSuccessor("cluster_cas_" + as1.hashCode(), "");

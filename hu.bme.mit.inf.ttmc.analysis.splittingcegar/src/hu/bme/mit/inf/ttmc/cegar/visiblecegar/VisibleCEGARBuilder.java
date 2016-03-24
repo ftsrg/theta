@@ -14,6 +14,7 @@ import hu.bme.mit.inf.ttmc.cegar.visiblecegar.steps.refinement.CraigItpVarCollec
 import hu.bme.mit.inf.ttmc.cegar.visiblecegar.steps.refinement.IVarCollector;
 import hu.bme.mit.inf.ttmc.cegar.visiblecegar.steps.refinement.SeqItpVarCollector;
 import hu.bme.mit.inf.ttmc.cegar.visiblecegar.steps.refinement.UnsatCoreVarCollector;
+import hu.bme.mit.inf.ttmc.cegar.visiblecegar.utils.VisibleCEGARDebugger;
 import hu.bme.mit.inf.ttmc.common.logging.Logger;
 import hu.bme.mit.inf.ttmc.common.logging.impl.NullLogger;
 
@@ -22,6 +23,7 @@ public class VisibleCEGARBuilder implements ICEGARBuilder {
 	private IVisualizer visualizer = new NullVisualizer();
 	private boolean useCNFTransformation = false;
 	private VariableCollectionMethod varCollMethod = VariableCollectionMethod.CraigItp;
+	private VisibleCEGARDebugger debugger = null;
 
 	public enum VariableCollectionMethod {
 		CraigItp, SequenceItp, UnsatCore
@@ -66,6 +68,14 @@ public class VisibleCEGARBuilder implements ICEGARBuilder {
 		return this;
 	}
 
+	public VisibleCEGARBuilder debug(final IVisualizer visualizer) {
+		if (visualizer == null)
+			this.debugger = null;
+		else
+			this.debugger = new VisibleCEGARDebugger(visualizer);
+		return this;
+	}
+
 	/**
 	 * Build CEGAR loop instance
 	 *
@@ -88,6 +98,6 @@ public class VisibleCEGARBuilder implements ICEGARBuilder {
 			throw new RuntimeException("Unknown variable collection method: " + varCollMethod);
 		}
 		return new GenericCEGARLoop<>(new VisibleInitializer(logger, visualizer, useCNFTransformation), new VisibleChecker(logger, visualizer),
-				new VisibleConcretizer(logger, visualizer), new VisibleRefiner(logger, visualizer, varCollector), null, logger, "Visible");
+				new VisibleConcretizer(logger, visualizer), new VisibleRefiner(logger, visualizer, varCollector), debugger, logger, "Visible");
 	}
 }
