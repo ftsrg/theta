@@ -4,7 +4,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.StringJoiner;
 
 import com.google.common.collect.ImmutableList;
 
@@ -78,13 +77,16 @@ public class ProcDeclImpl<ReturnType extends Type> implements ProcDecl<ReturnTyp
 
 	@Override
 	public String toString() {
-		final String prefix = "Proc(" + name + ", ";
-		final String suffix = ") : " + returnType.toString();
-		final StringJoiner sj = new StringJoiner(", ", prefix, suffix);
+		final StringBuilder sb = new StringBuilder();
+		sb.append("Proc(");
+		sb.append(name);
 		for (final ParamDecl<?> paramDecl : paramDecls) {
-			sj.add(paramDecl.toString());
+			sb.append(", ");
+			sb.append(paramDecl);
 		}
-		return sj.toString();
+		sb.append(" : ");
+		sb.append(returnType);
+		return sb.toString();
 	}
 
 }

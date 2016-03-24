@@ -25,24 +25,52 @@ import hu.bme.mit.inf.ttmc.program.ui.transform.StmtTransformator
 import java.util.LinkedList
 
 import static com.google.common.base.Preconditions.checkArgument
+import hu.bme.mit.inf.ttmc.constraint.expr.Expr
+import hu.bme.mit.inf.ttmc.constraint.model.Declaration
+import hu.bme.mit.inf.ttmc.constraint.decl.Decl
 
 class ProgramStmtTransformator implements StmtTransformator {
 
+	private val ProgramTransformationManager manager
 	private val extension StmtFactory stmtFactory;
 	
-	private val extension DeclTransformator dt;
-	private val extension ExprTransformator et;
+	private volatile DeclTransformator dt;
+	private volatile ExprTransformator et;
 
 	new(ProgramTransformationManager manager, StmtFactory stmtFactory) {
+		this.manager = manager
 		this.stmtFactory = stmtFactory
-		dt = manager.declTransformator
-		et = manager.exprTransformator
+
+	}
+	
+	////////
+	
+	private def DeclTransformator getDeclTransformator() {
+		if (dt === null) {
+			dt = manager.declTransformator
+		}
+		dt
+	}
+	
+	private def ExprTransformator getExprTransformator() {
+		if (et === null) {
+			et = manager.exprTransformator
+		}
+		et
+	}
+	
+	private def Decl<? extends Type, ?> transform(Declaration declaration) {
+		declTransformator.transform(declaration)
+	}
+	
+	private def Expr<? extends Type> transform(Expression expression) {
+		exprTransformator.transform(expression)
 	}
 	
 	////////
 	
 	override transform(Statement statement) {
-		throw new UnsupportedOperationException("TODO: auto-generated method stub")
+		statement.toStmt
 	}
 	
 	///////

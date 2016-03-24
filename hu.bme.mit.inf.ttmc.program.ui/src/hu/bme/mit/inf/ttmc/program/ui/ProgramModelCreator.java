@@ -1,7 +1,9 @@
 package hu.bme.mit.inf.ttmc.program.ui;
 
+import hu.bme.mit.inf.ttmc.constraint.decl.ConstDecl;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.model.BasicConstraintDefinition;
+import hu.bme.mit.inf.ttmc.constraint.model.ConstantDeclaration;
 import hu.bme.mit.inf.ttmc.constraint.model.Expression;
 import hu.bme.mit.inf.ttmc.constraint.model.Type;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
@@ -22,14 +24,26 @@ public class ProgramModelCreator {
 	}
 
 	public static ProgramModel create(final ProgramManager manager, final ProgramSpecification specification) {
-
 		final ProgramTransformationManager tManager = new ProgramTransformationManager(manager);
 		final ProgramModelBuilder builder = ProgramModelImpl.builder();
 
+		addConstDecls(builder, specification, tManager);
 		addConstraints(builder, specification, tManager);
 		addProcDecls(builder, specification, tManager);
 
 		return builder.build();
+	}
+
+	private static void addConstDecls(final ProgramModelBuilder builder, final ProgramSpecification specification,
+			final ProgramTransformationManager manager) {
+
+		final DeclTransformator dt = manager.getDeclTransformator();
+
+		for (final ConstantDeclaration constantDeclaration : specification.getConstantDeclarations()) {
+			@SuppressWarnings("unchecked")
+			final ConstDecl<? extends Type> constDecl = (ConstDecl<? extends Type>) dt.transform(constantDeclaration);
+			builder.addConstDecl(constDecl);
+		}
 	}
 
 	private static void addConstraints(final ProgramModelBuilder builder, final ProgramSpecification specification,
