@@ -41,12 +41,13 @@ public class ProcRefExprImpl<ReturnType extends Type> implements ProcRefExpr<Ret
 
 	@Override
 	public final int hashCode() {
-		if (hashCode == 0) {
-			hashCode = HASH_SEED;
-			hashCode = 31 * hashCode + procDecl.hashCode();
+		int result = hashCode;
+		if (result == 0) {
+			result = HASH_SEED;
+			result = 31 * result + procDecl.hashCode();
+			hashCode = result;
 		}
-
-		return hashCode;
+		return result;
 	}
 
 	@Override

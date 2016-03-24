@@ -31,13 +31,14 @@ public abstract class AbstractBinaryExpr<LeftOpType extends Type, RightOpType ex
 
 	@Override
 	public final int hashCode() {
-		if (hashCode == 0) {
-			hashCode = getHashSeed();
-			hashCode = 31 * hashCode + getLeftOp().hashCode();
-			hashCode = 31 * hashCode + getRightOp().hashCode();
+		int result = hashCode;
+		if (result == 0) {
+			result = getHashSeed();
+			result = 31 * result + getLeftOp().hashCode();
+			result = 31 * result + getRightOp().hashCode();
+			hashCode = result;
 		}
-
-		return hashCode;
+		return result;
 	}
 
 	@Override

@@ -97,13 +97,14 @@ public abstract class AbstractArrayType<IndexType extends Type, ElemType extends
 
 	@Override
 	public final int hashCode() {
-		if (hashCode == 0) {
-			hashCode = HASH_SEED;
-			hashCode = 31 * hashCode + indexType.hashCode();
-			hashCode = 31 * hashCode + elemType.hashCode();
+		int result = hashCode;
+		if (result == 0) {
+			result = HASH_SEED;
+			result = 31 * result + indexType.hashCode();
+			result = 31 * result + elemType.hashCode();
+			hashCode = result;
 		}
-
-		return hashCode;
+		return result;
 	}
 
 	@Override

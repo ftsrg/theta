@@ -76,13 +76,14 @@ public class ProcTypeImpl<ReturnType extends Type> implements ProcType<ReturnTyp
 
 	@Override
 	public final int hashCode() {
-		if (hashCode == 0) {
-			hashCode = HASH_SEED;
-			hashCode = 31 * hashCode + paramTypes.hashCode();
-			hashCode = 31 * hashCode + returnType.hashCode();
+		int result = hashCode;
+		if (result == 0) {
+			result = HASH_SEED;
+			result = 31 * result + paramTypes.hashCode();
+			result = 31 * result + returnType.hashCode();
+			hashCode = result;
 		}
-
-		return hashCode;
+		return result;
 	}
 
 	@Override

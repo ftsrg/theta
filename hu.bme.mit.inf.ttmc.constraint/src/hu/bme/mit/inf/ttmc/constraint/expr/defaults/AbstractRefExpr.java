@@ -18,18 +18,19 @@ public abstract class AbstractRefExpr<DeclType extends Type, DeclKind extends De
 	}
 
 	@Override
-	public DeclKind getDecl() {
+	public final DeclKind getDecl() {
 		return decl;
 	}
 
 	@Override
-	public int hashCode() {
-		if (hashCode == 0) {
-			hashCode = getHashSeed();
-			hashCode = 31 * hashCode + decl.hashCode();
+	public final int hashCode() {
+		int result = hashCode;
+		if (result == 0) {
+			result = getHashSeed();
+			result = 31 * result + decl.hashCode();
+			hashCode = result;
 		}
-
-		return hashCode;
+		return result;
 	}
 
 	@Override

@@ -56,13 +56,14 @@ public class ProcCallExprImpl<ReturnType extends Type> implements ProcCallExpr<R
 
 	@Override
 	public final int hashCode() {
-		if (hashCode == 0) {
-			hashCode = HASH_SEED;
-			hashCode = 31 * hashCode + proc.hashCode();
-			hashCode = 31 * hashCode + params.hashCode();
+		int result = hashCode;
+		if (result == 0) {
+			result = HASH_SEED;
+			result = 31 * result + proc.hashCode();
+			result = 31 * result + params.hashCode();
+			hashCode = result;
 		}
-
-		return hashCode;
+		return result;
 	}
 
 	@Override
