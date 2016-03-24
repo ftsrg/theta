@@ -1,0 +1,15 @@
+specification LinearSearch {
+	
+	procedure linearSearch(a : array integer of integer, l : integer, u : integer, e : integer) : boolean {
+		var i : integer := l;
+		
+		while i <= u do {
+			if a[i] = e then {
+				return true;
+			} else {
+				i := i + 1;
+			}
+		}
+		return false;
+	}
+}
