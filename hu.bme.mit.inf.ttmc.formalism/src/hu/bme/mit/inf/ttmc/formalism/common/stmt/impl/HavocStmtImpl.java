@@ -27,7 +27,7 @@ public final class HavocStmtImpl<DeclType extends Type> extends AbstractStmt imp
 		int result = hashCode;
 		if (result == 0) {
 			result = HASH_SEED;
-			result = 37 * result + varDecl.hashCode();
+			result = 31 * result + varDecl.hashCode();
 			hashCode = result;
 		}
 		return result;

@@ -27,7 +27,7 @@ public final class AssumeStmtImpl extends AbstractStmt implements AssumeStmt {
 		int result = hashCode;
 		if (result == 0) {
 			result = HASH_SEED;
-			result = 37 * result + cond.hashCode();
+			result = 31 * result + cond.hashCode();
 			hashCode = result;
 		}
 		return result;

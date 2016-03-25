@@ -42,9 +42,9 @@ public final class IfElseStmtImpl extends AbstractStmt implements IfElseStmt {
 		int result = hashCode;
 		if (result == 0) {
 			result = HASH_SEED;
-			result = 37 * result + cond.hashCode();
-			result = 37 * result + then.hashCode();
-			result = 37 * result + elze.hashCode();
+			result = 31 * result + cond.hashCode();
+			result = 31 * result + then.hashCode();
+			result = 31 * result + elze.hashCode();
 			hashCode = result;
 		}
 		return result;

@@ -27,7 +27,7 @@ public final class ReturnStmtImpl<ReturnType extends Type> implements ReturnStmt
 		int result = hashCode;
 		if (result == 0) {
 			result = HASH_SEED;
-			result = 37 * result + expr.hashCode();
+			result = 31 * result + expr.hashCode();
 			hashCode = result;
 		}
 		return result;

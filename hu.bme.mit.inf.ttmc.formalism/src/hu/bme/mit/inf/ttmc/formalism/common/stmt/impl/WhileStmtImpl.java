@@ -35,8 +35,8 @@ public final class WhileStmtImpl extends AbstractStmt implements WhileStmt {
 		int result = hashCode;
 		if (result == 0) {
 			result = HASH_SEED;
-			result = 37 * result + cond.hashCode();
-			result = 37 * result + doStmt.hashCode();
+			result = 31 * result + cond.hashCode();
+			result = 31 * result + doStmt.hashCode();
 			hashCode = result;
 		}
 		return result;

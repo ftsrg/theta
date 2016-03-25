@@ -36,8 +36,8 @@ public final class AssignStmtImpl<DeclType extends Type, ExprType extends DeclTy
 		int result = hashCode;
 		if (result == 0) {
 			result = HASH_SEED;
-			result = 37 * result + varDecl.hashCode();
-			result = 37 * result + expr.hashCode();
+			result = 31 * result + varDecl.hashCode();
+			result = 31 * result + expr.hashCode();
 			hashCode = result;
 		}
 		return result;

@@ -31,7 +31,7 @@ public final class BlockStmtImpl extends AbstractStmt implements BlockStmt {
 		int result = hashCode;
 		if (result == 0) {
 			result = HASH_SEED;
-			result = 37 * result + stmts.hashCode();
+			result = 31 * result + stmts.hashCode();
 			hashCode = result;
 		}
 		return result;
