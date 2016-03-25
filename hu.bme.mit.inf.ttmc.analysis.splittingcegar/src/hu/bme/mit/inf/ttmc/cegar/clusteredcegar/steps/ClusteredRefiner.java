@@ -24,20 +24,8 @@ import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
 import hu.bme.mit.inf.ttmc.formalism.sts.STSUnroller;
 
-/**
- * Refines the abstraction using the spurious counterexample.
- *
- * @author Akos
- */
 public class ClusteredRefiner extends AbstractCEGARStep implements Refiner<ClusteredAbstractSystem, ClusteredAbstractState> {
 
-	/**
-	 * Initialize the step with a solver, logger and visualizer
-	 *
-	 * @param solver
-	 * @param logger
-	 * @param visualizer
-	 */
 	public ClusteredRefiner(final Logger logger, final Visualizer visualizer) {
 		super(logger, visualizer);
 	}
@@ -55,15 +43,12 @@ public class ClusteredRefiner extends AbstractCEGARStep implements Refiner<Clust
 		final ClusteredAbstractState failureState = abstractCounterEx.get(traceLength - 1);
 		logger.writeln("Failure state: " + failureState, 4, 0);
 
-		// Create an unroller for the size of the trace
 		final STSUnroller unroller = system.getUnroller();
 
-		// Get dead-end states
 		final List<AndExpr> deadEndStates = getDeadEndStates(abstractCounterEx, traceLength, solver, system.getManager(), unroller);
 
-		// Get bad states
-		// TODO: bad states are not needed currently, they are collected only for debugging
-		/* List<Model> badStates = */getBadStates(abstractCounterEx, traceLength, solver, system.getManager(), unroller);
+		// Bad states are not needed currently, they can be collected for debugging
+		/// List<Model> badStates = getBadStates(abstractCounterEx, traceLength, solver, system.getManager(), unroller);
 
 		int clusterNo = -1;
 		// Loop through each component of the failure state
@@ -75,7 +60,7 @@ public class ClusteredRefiner extends AbstractCEGARStep implements Refiner<Clust
 			logger.write("Refining component: ", 5, 2);
 			logger.writeln(as, 5, 0);
 			// Get concrete states in the abstract state (projected)
-			final List<AndExpr> concreteStates = getConcreteStates(as, solver, system.getManager(), unroller);
+			final List<AndExpr> concreteStates = getConcreteStatesOfAbstractState(as, solver, system.getManager(), unroller);
 			// Cannot refine if there is only one state
 			if (concreteStates.size() == 1)
 				continue;
@@ -88,7 +73,7 @@ public class ClusteredRefiner extends AbstractCEGARStep implements Refiner<Clust
 
 			// Get variables outside the cluster
 			final Set<VarDecl<? extends Type>> otherVars = new HashSet<>(system.getVars());
-			otherVars.removeAll(as.getCluster().getVariables());
+			otherVars.removeAll(as.getCluster().getVars());
 
 			// Loop through pairs of states and check if they should be separated
 			for (int i = 0; i < concreteStates.size(); ++i) {
@@ -248,18 +233,6 @@ public class ClusteredRefiner extends AbstractCEGARStep implements Refiner<Clust
 		return system;
 	}
 
-	/**
-	 * Get dead-end states, i.e., concrete states in the failure state, which
-	 * can be reached with a concrete path
-	 * @param abstractCounterEx
-	 *            Abstract counterexample
-	 * @param traceLength
-	 *            Length of the concrete trace
-	 * @param unroller
-	 *            System unroller
-	 *
-	 * @return List of dead-end states
-	 */
 	private List<AndExpr> getDeadEndStates(final List<ClusteredAbstractState> abstractCounterEx, final int traceLength, final Solver solver,
 			final STSManager manager, final STSUnroller unroller) {
 		final List<AndExpr> deadEndStates = new ArrayList<>();
@@ -292,19 +265,7 @@ public class ClusteredRefiner extends AbstractCEGARStep implements Refiner<Clust
 		return deadEndStates;
 	}
 
-	/**
-	 * Get bad states, i.e., concrete states in the failure state, which have a
-	 * (concrete) successor belonging to the (abstract) successor of the failure
-	 * state.
-	 * @param abstractCounterEx
-	 *            Abstract counterexample
-	 * @param traceLength
-	 *            Length of the concrete trace
-	 * @param unroller
-	 *            System unroller
-	 *
-	 * @return List of bad states
-	 */
+	@SuppressWarnings("unused")
 	private List<AndExpr> getBadStates(final List<ClusteredAbstractState> abstractCounterEx, final int traceLength, final Solver solver,
 			final STSManager manager, final STSUnroller unroller) {
 		final List<AndExpr> badStates = new ArrayList<>();
@@ -338,17 +299,7 @@ public class ClusteredRefiner extends AbstractCEGARStep implements Refiner<Clust
 		return badStates;
 	}
 
-	/**
-	 * Get all concrete states of an abstract state projected to the variables
-	 * of the cluster
-	 *
-	 * @param abstractState
-	 *            Abstract state
-	 * @param unroller
-	 *            System unroller
-	 * @return List of projected concrete states
-	 */
-	private List<AndExpr> getConcreteStates(final ComponentAbstractState abstractState, final Solver solver, final STSManager manager,
+	private List<AndExpr> getConcreteStatesOfAbstractState(final ComponentAbstractState abstractState, final Solver solver, final STSManager manager,
 			final STSUnroller unroller) {
 		final List<AndExpr> concreteStates = new ArrayList<>();
 		solver.push();
@@ -359,7 +310,7 @@ public class ClusteredRefiner extends AbstractCEGARStep implements Refiner<Clust
 		do {
 			if (SolverHelper.checkSat(solver)) {
 				// Get the model and project
-				final AndExpr cs = unroller.getConcreteState(solver.getModel(), 0, abstractState.getCluster().getVariables());
+				final AndExpr cs = unroller.getConcreteState(solver.getModel(), 0, abstractState.getCluster().getVars());
 				concreteStates.add(cs);
 				// Exclude this state to get new ones
 				solver.add(unroller.unroll(manager.getExprFactory().Not(cs), 0));
@@ -372,24 +323,8 @@ public class ClusteredRefiner extends AbstractCEGARStep implements Refiner<Clust
 		return concreteStates;
 	}
 
-	/**
-	 * Check wheter a pair of concrete states can remain in the same equivalence
-	 * class
-	 *
-	 * @param as
-	 *            The abstract state where the concrete states belong to
-	 * @param cs0
-	 *            First concrete state
-	 * @param cs1
-	 *            Second concrete state
-	 * @param deadEndStates
-	 *            List of dead end states
-	 * @param unroller
-	 *            System unroller
-	 * @return True if the states are compatible, false otherwise
-	 */
-	private boolean checkPair(final ComponentAbstractState as, final AndExpr cs0, final AndExpr cs1, final List<AndExpr> deadEndStates, final Set<VarDecl<? extends Type>> otherVars,
-			final Solver solver, final STSUnroller unroller) {
+	private boolean checkPair(final ComponentAbstractState as, final AndExpr cs0, final AndExpr cs1, final List<AndExpr> deadEndStates,
+			final Set<VarDecl<? extends Type>> otherVars, final Solver solver, final STSUnroller unroller) {
 		// Project the dead-end states and check if they are equal
 		final List<AndExpr> proj0 = projectDeadEndStates(as, cs0, deadEndStates, otherVars, solver, unroller);
 		final List<AndExpr> proj1 = projectDeadEndStates(as, cs1, deadEndStates, otherVars, solver, unroller);
@@ -411,22 +346,8 @@ public class ClusteredRefiner extends AbstractCEGARStep implements Refiner<Clust
 		return true;
 	}
 
-	/**
-	 * Project the dead-end states to a concrete state (proj function on page
-	 * 778).
-	 *
-	 * @param as
-	 *            Abstract state where the concrete state belongs to
-	 * @param cs
-	 *            Concrete state
-	 * @param deadEndStates
-	 *            List of dead-end states
-	 * @param unroller
-	 *            System unroller
-	 * @return Dead-end states projected
-	 */
-	private List<AndExpr> projectDeadEndStates(final ComponentAbstractState as, final AndExpr cs, final List<AndExpr> deadEndStates, final Set<VarDecl<? extends Type>> otherVars,
-			final Solver solver, final STSUnroller unroller) {
+	private List<AndExpr> projectDeadEndStates(final ComponentAbstractState as, final AndExpr cs, final List<AndExpr> deadEndStates,
+			final Set<VarDecl<? extends Type>> otherVars, final Solver solver, final STSUnroller unroller) {
 		// Example: concrete state: (x=1,y=2)
 		// The dead-end states are: (x=1,y=2,z=3), (x=1,y=3,z=2), (x=1,y=2,z=5)
 		// The result is: (z=3), (z=5)

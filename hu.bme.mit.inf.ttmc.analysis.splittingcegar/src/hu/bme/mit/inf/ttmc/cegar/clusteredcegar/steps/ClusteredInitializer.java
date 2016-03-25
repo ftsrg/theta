@@ -1,5 +1,7 @@
 package hu.bme.mit.inf.ttmc.cegar.clusteredcegar.steps;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -35,6 +37,7 @@ public class ClusteredInitializer extends AbstractCEGARStep implements Initializ
 
 	@Override
 	public ClusteredAbstractSystem create(final STS concrSys) {
+		checkNotNull(concrSys);
 		logger.write("Variables [" + concrSys.getVars().size() + "]:", 2);
 		for (final VarDecl<? extends Type> varDecl : concrSys.getVars())
 			logger.write(" " + varDecl.getName(), 3);
@@ -66,11 +69,11 @@ public class ClusteredInitializer extends AbstractCEGARStep implements Initializ
 
 		// Create Kripke structures
 
-		system.getAbstractKripkeStructures().clear(); // Clear existing Kripke structures
-		final STSUnroller unroller = system.getUnroller(); // Create an unroller for k=1
+		system.getAbstractKripkeStructures().clear();
+		final STSUnroller unroller = system.getUnroller();
 		final Solver solver = system.getManager().getSolverFactory().createSolver(true, false);
 		solver.push();
-		solver.add(unroller.inv(0)); // Assert invariants for k=0
+		solver.add(unroller.inv(0));
 		// Loop through clusters and create abstract Kripke structures
 		int c = 0;
 		for (final Cluster cluster : system.getClusters()) {
@@ -86,15 +89,6 @@ public class ClusteredInitializer extends AbstractCEGARStep implements Initializ
 		return system;
 	}
 
-	/**
-	 * Create an abstract Kripke structure for a cluster
-	 *
-	 * @param cluster
-	 *            Cluster
-	 * @param unroller
-	 *            System unroller
-	 * @return Abstract Kripke structure
-	 */
 	private KripkeStructure<ComponentAbstractState> createAbstractKripkeStructure(final Cluster cluster, final Solver solver, final STSManager manager,
 			final STSUnroller unroller) {
 		final KripkeStructure<ComponentAbstractState> ks = new KripkeStructure<>();
@@ -140,11 +134,11 @@ public class ClusteredInitializer extends AbstractCEGARStep implements Initializ
 		// Calculate initial states and transition relation
 		logger.writeln(", abstract states [" + ks.getStates().size() + "]", 2);
 		for (final ComponentAbstractState s0 : ks.getStates()) { // Loop through the states
-			s0.setInitial(isStateInitial(s0, solver, unroller)); // Check whether it is initial
+			s0.setInitial(isStateInit(s0, solver, unroller)); // Check whether it is initial
 			if (s0.isInitial())
 				ks.addInitialState(s0);
 			for (final ComponentAbstractState s1 : ks.getStates()) // Calculate successors
-				if (isTransitionFeasible(s0, s1, solver, unroller))
+				if (isTransFeasible(s0, s1, solver, unroller))
 					s0.getSuccessors().add(s1);
 			logger.writeln(s0, 4, 1);
 		}
@@ -152,15 +146,6 @@ public class ClusteredInitializer extends AbstractCEGARStep implements Initializ
 		return ks;
 	}
 
-	/**
-	 * Helper function for checking whether a state is feasible
-	 *
-	 * @param s
-	 *            State
-	 * @param unroller
-	 *            System unroller
-	 * @return True if the state is feasible, false otherwise
-	 */
 	private boolean isStateFeasible(final ComponentAbstractState s, final Solver solver, final STSUnroller unroller) {
 		solver.push();
 		SolverHelper.unrollAndAssert(solver, s.getLabels(), unroller, 0);
@@ -169,16 +154,7 @@ public class ClusteredInitializer extends AbstractCEGARStep implements Initializ
 		return ret;
 	}
 
-	/**
-	 * Helper function for checking whether a state is initial
-	 *
-	 * @param s
-	 *            State
-	 * @param unroller
-	 *            System unroller
-	 * @return True if the state is initial, false otherwise
-	 */
-	private boolean isStateInitial(final ComponentAbstractState s, final Solver solver, final STSUnroller unroller) {
+	private boolean isStateInit(final ComponentAbstractState s, final Solver solver, final STSUnroller unroller) {
 		solver.push();
 		SolverHelper.unrollAndAssert(solver, s.getLabels(), unroller, 0);
 		solver.add(unroller.init(0));
@@ -187,20 +163,7 @@ public class ClusteredInitializer extends AbstractCEGARStep implements Initializ
 		return ret;
 	}
 
-	/**
-	 * Helper function for checking whether a transition is present between s0
-	 * and s1
-	 *
-	 * @param s0
-	 *            From state
-	 * @param s1
-	 *            To state
-	 * @param unroller
-	 *            System unroller
-	 * @return True if a transition is present between s0 and s1, false
-	 *         otherwise
-	 */
-	private boolean isTransitionFeasible(final ComponentAbstractState s0, final ComponentAbstractState s1, final Solver solver, final STSUnroller unroller) {
+	private boolean isTransFeasible(final ComponentAbstractState s0, final ComponentAbstractState s1, final Solver solver, final STSUnroller unroller) {
 		solver.push();
 		SolverHelper.unrollAndAssert(solver, s0.getLabels(), unroller, 0);
 		SolverHelper.unrollAndAssert(solver, s1.getLabels(), unroller, 1);

@@ -88,7 +88,7 @@ public class ClusterCreator {
 		final ClusterNode cn2 = getCluster(c2);
 		if (cn1 != cn2) {
 			cn1.setParent(cn2);
-			cn2.getCluster().getVariables().addAll(cn1.getCluster().getVariables());
+			cn2.getCluster().getVars().addAll(cn1.getCluster().getVars());
 			cn2.getCluster().getFormulas().addAll(cn1.getCluster().getFormulas());
 			cn1.setCluster(null);
 		}
