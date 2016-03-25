@@ -2,11 +2,15 @@ package hu.bme.mit.inf.ttmc.formalism.common.stmt.impl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import java.util.Optional;
+
+import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.DeclStmt;
 
-public final class DeclStmtImpl<DeclType extends Type> implements DeclStmt<DeclType> {
+public final class DeclStmtImpl<DeclType extends Type, ExprType extends DeclType>
+		implements DeclStmt<DeclType, ExprType> {
 
 	private static final int HASH_SEED = 4201;
 
@@ -14,8 +18,16 @@ public final class DeclStmtImpl<DeclType extends Type> implements DeclStmt<DeclT
 
 	private final VarDecl<DeclType> varDecl;
 
+	private final Optional<Expr<ExprType>> initVal;
+
 	public DeclStmtImpl(final VarDecl<DeclType> varDecl) {
 		this.varDecl = checkNotNull(varDecl);
+		initVal = Optional.empty();
+	}
+
+	public DeclStmtImpl(final VarDecl<DeclType> varDecl, final Expr<ExprType> initVal) {
+		this.varDecl = checkNotNull(varDecl);
+		this.initVal = Optional.of(checkNotNull(initVal));
 	}
 
 	@Override
@@ -24,11 +36,17 @@ public final class DeclStmtImpl<DeclType extends Type> implements DeclStmt<DeclT
 	}
 
 	@Override
+	public Optional<Expr<ExprType>> getInitVal() {
+		return initVal;
+	}
+
+	@Override
 	public int hashCode() {
 		int result = hashCode;
 		if (result == 0) {
 			result = HASH_SEED;
-			result = 37 * result + varDecl.hashCode();
+			result = 31 * result + varDecl.hashCode();
+			result = 31 * result + initVal.hashCode();
 			hashCode = result;
 		}
 		return result;
@@ -38,9 +56,9 @@ public final class DeclStmtImpl<DeclType extends Type> implements DeclStmt<DeclT
 	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
-		} else if (obj instanceof DeclStmt<?>) {
-			final DeclStmt<?> that = (DeclStmt<?>) obj;
-			return this.getVarDecl().equals(that.getVarDecl());
+		} else if (obj instanceof DeclStmt<?, ?>) {
+			final DeclStmt<?, ?> that = (DeclStmt<?, ?>) obj;
+			return this.getVarDecl().equals(that.getVarDecl()) && this.getInitVal().equals(that.getInitVal());
 		} else {
 			return false;
 		}
@@ -52,6 +70,10 @@ public final class DeclStmtImpl<DeclType extends Type> implements DeclStmt<DeclT
 		sb.append("Decl");
 		sb.append("(");
 		sb.append(varDecl);
+		if (initVal.isPresent()) {
+			sb.append(", ");
+			sb.append(initVal.get());
+		}
 		sb.append(")");
 		return sb.toString();
 	}

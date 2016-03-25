@@ -24,7 +24,9 @@ import hu.bme.mit.inf.ttmc.formalism.common.stmt.WhileStmt;
 
 public interface StmtFactory {
 
-	public <T extends Type> DeclStmt<T> Decl(final VarDecl<T> varDecl);
+	public <T extends Type> DeclStmt<T, ?> Decl(final VarDecl<T> varDecl);
+
+	public <T1 extends Type, T2 extends T1> DeclStmt<T1, T2> Decl(final VarDecl<T1> varDecl, final Expr<T2> initVal);
 
 	public AssumeStmt Assume(final Expr<? extends BoolType> cond);
 

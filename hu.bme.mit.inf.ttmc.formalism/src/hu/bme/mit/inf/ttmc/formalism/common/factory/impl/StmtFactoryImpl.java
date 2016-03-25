@@ -44,9 +44,16 @@ public class StmtFactoryImpl implements StmtFactory {
 	}
 
 	@Override
-	public <T extends Type> DeclStmt<T> Decl(final VarDecl<T> varDecl) {
+	public <T extends Type> DeclStmt<T, ?> Decl(final VarDecl<T> varDecl) {
 		checkNotNull(varDecl);
 		return new DeclStmtImpl<>(varDecl);
+	}
+
+	@Override
+	public <T1 extends Type, T2 extends T1> DeclStmt<T1, T2> Decl(final VarDecl<T1> varDecl, final Expr<T2> initVal) {
+		checkNotNull(varDecl);
+		checkNotNull(initVal);
+		return new DeclStmtImpl<T1, T2>(varDecl, initVal);
 	}
 
 	@Override
