@@ -1,6 +1,6 @@
 package hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.utils;
 
-import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.IVisualizer;
+import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.Visualizer;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.graph.Graph;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.graph.Node;
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.data.InterpolatedAbstractState;
@@ -26,7 +26,7 @@ public class VisualizationHelper {
 	 */
 	public static void visualizeAbstractKripkeStructure(InterpolatedAbstractSystem system,
 			Set<InterpolatedAbstractState> exploredStates,
-			IVisualizer visualizer, int level){
+			Visualizer visualizer, int level){
 		
 		if(level > visualizer.getMinLevel()) return;
 

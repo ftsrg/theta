@@ -6,8 +6,8 @@ import java.util.List;
 import java.util.Set;
 
 import hu.bme.mit.inf.ttmc.cegar.common.data.ConcreteTrace;
-import hu.bme.mit.inf.ttmc.cegar.common.steps.CEGARStepBase;
-import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.IVisualizer;
+import hu.bme.mit.inf.ttmc.cegar.common.steps.AbstractCEGARStep;
+import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.Visualizer;
 import hu.bme.mit.inf.ttmc.cegar.visiblecegar.data.VisibleAbstractState;
 import hu.bme.mit.inf.ttmc.cegar.visiblecegar.data.VisibleAbstractSystem;
 import hu.bme.mit.inf.ttmc.common.logging.Logger;
@@ -20,9 +20,9 @@ import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.sts.STSUnroller;
 import hu.bme.mit.inf.ttmc.formalism.utils.impl.FormalismUtils;
 
-public class UnsatCoreVarCollector extends CEGARStepBase implements IVarCollector {
+public class UnsatCoreVarCollector extends AbstractCEGARStep implements IVarCollector {
 
-	public UnsatCoreVarCollector(final Logger logger, final IVisualizer visualizer) {
+	public UnsatCoreVarCollector(final Logger logger, final Visualizer visualizer) {
 		super(logger, visualizer);
 	}
 

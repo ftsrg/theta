@@ -1,5 +1,7 @@
 package hu.bme.mit.inf.ttmc.cegar.common.data;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.util.HashSet;
 import java.util.Set;
 
@@ -11,29 +13,27 @@ import hu.bme.mit.inf.ttmc.formalism.sts.STSUnroller;
 import hu.bme.mit.inf.ttmc.formalism.sts.impl.STSUnrollerImpl;
 
 /**
- * Base class for abstract systems. Contains common data and helper methods.
- *
- * @author Akos
+ * Base class for abstract systems.
  */
-public abstract class AbstractSystemBase implements IAbstractSystem {
-	protected STS system; // Reference to the system
+public abstract class AbstractSystemBase implements AbstractSystem {
+	protected STS sts;
 	protected STSUnroller unroller;
-	protected Set<VarDecl<? extends Type>> variables; // Variables of the system
+	protected Set<VarDecl<? extends Type>> vars;
 
-	public AbstractSystemBase(final STS system) {
-		this.system = system;
-		this.unroller = new STSUnrollerImpl(system, system.getManager());
-		this.variables = new HashSet<>();
+	public AbstractSystemBase(final STS sts) {
+		this.sts = checkNotNull(sts);
+		this.unroller = new STSUnrollerImpl(sts, sts.getManager());
+		this.vars = new HashSet<>();
 	}
 
 	@Override
-	public STS getSystem() {
-		return system;
+	public STS getSTS() {
+		return sts;
 	}
 
 	@Override
-	public Set<VarDecl<? extends Type>> getVariables() {
-		return variables;
+	public Set<VarDecl<? extends Type>> getVars() {
+		return vars;
 	}
 
 	@Override
@@ -43,6 +43,6 @@ public abstract class AbstractSystemBase implements IAbstractSystem {
 
 	@Override
 	public STSManager getManager() {
-		return system.getManager();
+		return sts.getManager();
 	}
 }

@@ -6,7 +6,7 @@ import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.graph.Graph;
  * Visualizer interface
  * @author Akos
  */
-public interface IVisualizer {	
+public interface Visualizer {	
 	
 	/**
 	 * Visualize a graph

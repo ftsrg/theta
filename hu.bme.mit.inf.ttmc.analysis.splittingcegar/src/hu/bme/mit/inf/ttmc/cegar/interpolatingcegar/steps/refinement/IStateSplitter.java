@@ -2,7 +2,7 @@ package hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.steps.refinement;
 
 import java.util.List;
 
-import hu.bme.mit.inf.ttmc.cegar.common.steps.IStoppable;
+import hu.bme.mit.inf.ttmc.cegar.common.steps.Stoppable;
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.data.Interpolant;
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.data.InterpolatedAbstractState;
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.data.InterpolatedAbstractSystem;
@@ -12,7 +12,7 @@ import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.data.InterpolatedAbstractSys
  * 
  * @author Akos
  */
-public interface IStateSplitter extends IStoppable {
+public interface IStateSplitter extends Stoppable {
 	/**
 	 * Split abstract state(s) using the interpolant
 	 * 

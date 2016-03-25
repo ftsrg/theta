@@ -3,9 +3,9 @@ package hu.bme.mit.inf.ttmc.cegar.visiblecegar.steps;
 import java.util.ArrayList;
 import java.util.List;
 
-import hu.bme.mit.inf.ttmc.cegar.common.steps.CEGARStepBase;
-import hu.bme.mit.inf.ttmc.cegar.common.steps.IInitializer;
-import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.IVisualizer;
+import hu.bme.mit.inf.ttmc.cegar.common.steps.AbstractCEGARStep;
+import hu.bme.mit.inf.ttmc.cegar.common.steps.Initializer;
+import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.Visualizer;
 import hu.bme.mit.inf.ttmc.cegar.visiblecegar.data.VisibleAbstractSystem;
 import hu.bme.mit.inf.ttmc.common.logging.Logger;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
@@ -21,7 +21,7 @@ import hu.bme.mit.inf.ttmc.formalism.utils.sts.impl.STSITETransformation;
  *
  * @author Akos
  */
-public class VisibleInitializer extends CEGARStepBase implements IInitializer<VisibleAbstractSystem> {
+public class VisibleInitializer extends AbstractCEGARStep implements Initializer<VisibleAbstractSystem> {
 
 	private final boolean useCNFTransformation;
 
@@ -32,7 +32,7 @@ public class VisibleInitializer extends CEGARStepBase implements IInitializer<Vi
 	 * @param logger
 	 * @param visualizer
 	 */
-	public VisibleInitializer(final Logger logger, final IVisualizer visualizer, final boolean useCNFTransformation) {
+	public VisibleInitializer(final Logger logger, final Visualizer visualizer, final boolean useCNFTransformation) {
 		super(logger, visualizer);
 		this.useCNFTransformation = useCNFTransformation;
 	}
@@ -85,13 +85,13 @@ public class VisibleInitializer extends CEGARStepBase implements IInitializer<Vi
 		}
 
 		final VisibleAbstractSystem system = new VisibleAbstractSystem(concrSys);
-		system.getVariables().addAll(nonCnfVars);
+		system.getVars().addAll(nonCnfVars);
 		system.getCNFVariables().addAll(cnfVars);
 		system.getVisibleVariables().addAll(visibleVars);
 		system.getInvisibleVariables().addAll(invisibleVars);
 
-		assert (system.getInvisibleVariables().size() + system.getVisibleVariables().size() == system.getVariables().size());
-		assert (system.getVariables().size() + system.getCNFVariables().size() == system.getSystem().getVars().size());
+		assert (system.getInvisibleVariables().size() + system.getVisibleVariables().size() == system.getVars().size());
+		assert (system.getVars().size() + system.getCNFVariables().size() == system.getSTS().getVars().size());
 
 		return system;
 	}

@@ -5,8 +5,8 @@ import java.util.Arrays;
 import java.util.List;
 
 import hu.bme.mit.inf.ttmc.cegar.common.data.ConcreteTrace;
-import hu.bme.mit.inf.ttmc.cegar.common.steps.CEGARStepBase;
-import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.IVisualizer;
+import hu.bme.mit.inf.ttmc.cegar.common.steps.AbstractCEGARStep;
+import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.Visualizer;
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.data.Interpolant;
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.data.InterpolatedAbstractState;
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.data.InterpolatedAbstractSystem;
@@ -24,7 +24,7 @@ import hu.bme.mit.inf.ttmc.formalism.sts.STSUnroller;
  *
  * @author Akos
  */
-public class SequenceInterpolater extends CEGARStepBase implements IInterpolater {
+public class SequenceInterpolater extends AbstractCEGARStep implements IInterpolater {
 
 	/**
 	 * Initialize the interpolater with a solver, logger and visualizer
@@ -34,7 +34,7 @@ public class SequenceInterpolater extends CEGARStepBase implements IInterpolater
 	 * @param visualizer
 	 * @param interpolatingSolver
 	 */
-	public SequenceInterpolater(final Logger logger, final IVisualizer visualizer) {
+	public SequenceInterpolater(final Logger logger, final Visualizer visualizer) {
 		super(logger, visualizer);
 	}
 
@@ -65,7 +65,7 @@ public class SequenceInterpolater extends CEGARStepBase implements IInterpolater
 		}
 
 		// Set the last marker
-		final NotExpr negSpec = system.getManager().getExprFactory().Not(system.getSystem().getProp());
+		final NotExpr negSpec = system.getManager().getExprFactory().Not(system.getSTS().getProp());
 		interpolatingSolver.add(markers[abstractCounterEx.size()], unroller.unroll(negSpec, abstractCounterEx.size() - 1)); // Property violation
 
 		// The conjunction of the markers is unsatisfiable (otherwise there would be a concrete counterexample),

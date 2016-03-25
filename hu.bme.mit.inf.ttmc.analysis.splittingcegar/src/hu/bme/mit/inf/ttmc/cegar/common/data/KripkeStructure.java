@@ -1,73 +1,46 @@
 package hu.bme.mit.inf.ttmc.cegar.common.data;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Represents a Kripke structure with states of type T
- * @author Akos
- * @param <T> Type of the states
- */
 public class KripkeStructure<T> {
-	private List<T> states; // States
-	private List<T> initialStates; // Initial states
-	
-	/**
-	 * Constructor
-	 */
+	private final List<T> states;
+	private final List<T> initialStates;
+
 	public KripkeStructure() {
 		states = new ArrayList<T>();
 		initialStates = new ArrayList<T>();
 	}
 
-	/**
-	 * Get the list of states
-	 * @return List of states
-	 */
 	public List<T> getStates() {
 		return states;
 	}
-	
-	/**
-	 * Get the ith state
-	 * @param i Index
-	 * @return ith state
-	 */
-	public T getState(int i){
+
+	public T getState(final int i) {
+		checkArgument(0 <= i && i < states.size());
 		return states.get(i);
 	}
 
-	/**
-	 * Get the list of initial states
-	 * @return List of initial states
-	 */
 	public List<T> getInitialStates() {
 		return initialStates;
 	}
-	
-	/**
-	 * Get the ith initial state
-	 * @param i Index
-	 * @return ith initial state
-	 */
-	public T getInitialState(int i){
+
+	public T getInitialState(final int i) {
+		checkArgument(0 <= i && i < initialStates.size());
 		return initialStates.get(i);
 	}
-	
-	/**
-	 * Add a state
-	 * @param state State to be added
-	 */
-	public void addState(T state){
+
+	public void addState(final T state) {
+		checkNotNull(state);
 		states.add(state);
 	}
-	
-	/**
-	 * Add an initial state
-	 * @param state State to be added as initial
-	 */
-	public void addInitialState(T state){
+
+	public void addInitialState(final T state) {
+		checkNotNull(state);
 		initialStates.add(state);
 	}
-	
+
 }

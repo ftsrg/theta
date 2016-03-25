@@ -10,11 +10,11 @@ import java.util.Set;
 import java.util.Stack;
 
 import hu.bme.mit.inf.ttmc.cegar.common.data.KripkeStructure;
-import hu.bme.mit.inf.ttmc.cegar.common.steps.CEGARStepBase;
-import hu.bme.mit.inf.ttmc.cegar.common.steps.IInitializer;
+import hu.bme.mit.inf.ttmc.cegar.common.steps.AbstractCEGARStep;
+import hu.bme.mit.inf.ttmc.cegar.common.steps.Initializer;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.FormulaCollector;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.SolverHelper;
-import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.IVisualizer;
+import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.Visualizer;
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.data.InterpolatedAbstractState;
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.data.InterpolatedAbstractSystem;
 import hu.bme.mit.inf.ttmc.common.logging.Logger;
@@ -34,7 +34,7 @@ import hu.bme.mit.inf.ttmc.formalism.utils.sts.impl.STSITETransformation;
  *
  * @author Akos
  */
-public class InterpolatingInitializer extends CEGARStepBase implements IInitializer<InterpolatedAbstractSystem> {
+public class InterpolatingInitializer extends AbstractCEGARStep implements Initializer<InterpolatedAbstractSystem> {
 
 	private final boolean collectFromConditions, collectFromSpecification;
 	private final boolean useCNFTransformation;
@@ -57,7 +57,7 @@ public class InterpolatingInitializer extends CEGARStepBase implements IInitiali
 	 * @param explicitVariables
 	 *            List of explicitly tracked variables
 	 */
-	public InterpolatingInitializer(final Logger logger, final IVisualizer visualizer, final boolean collectFromConditions,
+	public InterpolatingInitializer(final Logger logger, final Visualizer visualizer, final boolean collectFromConditions,
 			final boolean collectFromSpecification, final boolean useCNFTransformation, final Collection<String> explicitVariables) {
 		super(logger, visualizer);
 		this.collectFromConditions = collectFromConditions;
@@ -145,11 +145,11 @@ public class InterpolatingInitializer extends CEGARStepBase implements IInitiali
 
 		final InterpolatedAbstractSystem system = new InterpolatedAbstractSystem(concrSys);
 
-		system.getVariables().addAll(nonCnfVariables);
+		system.getVars().addAll(nonCnfVariables);
 		system.getCNFVariables().addAll(cnfVariables);
 		system.getExplicitVariables().addAll(explicitVars);
 
-		assert (system.getVariables().size() + system.getCNFVariables().size() == system.getSystem().getVars().size());
+		assert (system.getVars().size() + system.getCNFVariables().size() == system.getSTS().getVars().size());
 
 		system.getInitialPredicates().addAll(initialPredList);
 
@@ -214,7 +214,7 @@ public class InterpolatingInitializer extends CEGARStepBase implements IInitiali
 				do { // Loop until a new state is found
 					if (isStopped)
 						return null;
-					if (SolverHelper.checkSatisfiable(solver)) {
+					if (SolverHelper.checkSat(solver)) {
 						// Keep only explicitly tracked variables
 						final AndExpr model = unroller.getConcreteState(solver.getModel(), 0, system.getExplicitVariables());
 						ks.addState(as.cloneAndAddExplicit(model));
@@ -266,7 +266,7 @@ public class InterpolatingInitializer extends CEGARStepBase implements IInitiali
 	private boolean isStateFeasible(final InterpolatedAbstractState s, final Solver solver, final STSUnroller unroller) {
 		solver.push();
 		SolverHelper.unrollAndAssert(solver, s.getLabels(), unroller, 0);
-		final boolean ret = SolverHelper.checkSatisfiable(solver);
+		final boolean ret = SolverHelper.checkSat(solver);
 		solver.pop();
 		return ret;
 	}
@@ -284,7 +284,7 @@ public class InterpolatingInitializer extends CEGARStepBase implements IInitiali
 		solver.push();
 		SolverHelper.unrollAndAssert(solver, s.getLabels(), unroller, 0);
 		solver.add(unroller.init(0));
-		final boolean ret = SolverHelper.checkSatisfiable(solver);
+		final boolean ret = SolverHelper.checkSat(solver);
 		solver.pop();
 		return ret;
 	}
@@ -309,7 +309,7 @@ public class InterpolatingInitializer extends CEGARStepBase implements IInitiali
 		SolverHelper.unrollAndAssert(solver, s1.getLabels(), unroller, 1);
 		solver.add(unroller.trans(0));
 		solver.add(unroller.inv(1));
-		final boolean ret = SolverHelper.checkSatisfiable(solver);
+		final boolean ret = SolverHelper.checkSat(solver);
 		solver.pop();
 		return ret;
 	}

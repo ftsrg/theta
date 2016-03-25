@@ -9,9 +9,9 @@ import org.junit.Test;
 import hu.bme.mit.inf.ttmc.aiger.impl.AIGERLoaderSimple;
 import hu.bme.mit.inf.ttmc.cegar.common.CEGARResult;
 import hu.bme.mit.inf.ttmc.cegar.common.ICEGARLoop;
-import hu.bme.mit.inf.ttmc.cegar.common.data.IAbstractState;
+import hu.bme.mit.inf.ttmc.cegar.common.data.AbstractState;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.GraphVizVisualizer;
-import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.IVisualizer;
+import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.Visualizer;
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.InterpolatingCEGARBuilder;
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.InterpolatingCEGARBuilder.InterpolationMethod;
 import hu.bme.mit.inf.ttmc.cegar.tests.invariantchecker.InvariantChecker;
@@ -43,8 +43,8 @@ public class SandBox {
 		final STSManager manager = new STSManagerImpl(new Z3ConstraintManager());
 
 		final Logger logger = new ConsoleLogger(10);
-		final IVisualizer visualizer = null; //new GraphVizVisualizer("models/_output", modelName, 100);
-		final IVisualizer debugVisualizer = new GraphVizVisualizer("models/_debug", modelName, 100, true);
+		final Visualizer visualizer = null; //new GraphVizVisualizer("models/_output", modelName, 100);
+		final Visualizer debugVisualizer = new GraphVizVisualizer("models/_debug", modelName, 100, true);
 
 		STS problem = null;
 
@@ -70,13 +70,13 @@ public class SandBox {
 
 		final CEGARResult result = cegar.check(problem);
 
-		if (result.specificationHolds()) {
+		if (result.propertyHolds()) {
 			final List<Expr<? extends BoolType>> ops = new ArrayList<>();
-			for (final IAbstractState as : result.getExploredStates()) {
+			for (final AbstractState as : result.getExploredStates()) {
 				ops.add(as.createExpression(manager));
 			}
 
-			System.out.println(InvariantChecker.check(result.getAbstractSystem().getUnroller(), result.getSystem(), manager, manager.getExprFactory().Or(ops)));
+			System.out.println(InvariantChecker.check(result.getAbstractSystem().getUnroller(), result.getSTS(), manager, manager.getExprFactory().Or(ops)));
 		}
 	}
 }

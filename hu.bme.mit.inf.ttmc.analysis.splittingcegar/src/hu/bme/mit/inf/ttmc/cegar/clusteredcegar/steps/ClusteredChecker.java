@@ -9,10 +9,10 @@ import hu.bme.mit.inf.ttmc.cegar.clusteredcegar.data.ClusteredAbstractSystem;
 import hu.bme.mit.inf.ttmc.cegar.clusteredcegar.data.ComponentAbstractState;
 import hu.bme.mit.inf.ttmc.cegar.clusteredcegar.utils.VisualizationHelper;
 import hu.bme.mit.inf.ttmc.cegar.common.data.AbstractResult;
-import hu.bme.mit.inf.ttmc.cegar.common.steps.CEGARStepBase;
-import hu.bme.mit.inf.ttmc.cegar.common.steps.IChecker;
+import hu.bme.mit.inf.ttmc.cegar.common.steps.AbstractCEGARStep;
+import hu.bme.mit.inf.ttmc.cegar.common.steps.Checker;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.SolverHelper;
-import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.IVisualizer;
+import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.Visualizer;
 import hu.bme.mit.inf.ttmc.common.logging.Logger;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.expr.NotExpr;
@@ -20,16 +20,16 @@ import hu.bme.mit.inf.ttmc.constraint.solver.Solver;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.formalism.sts.STSUnroller;
 
-public class ClusteredChecker extends CEGARStepBase implements IChecker<ClusteredAbstractSystem, ClusteredAbstractState> {
+public class ClusteredChecker extends AbstractCEGARStep implements Checker<ClusteredAbstractSystem, ClusteredAbstractState> {
 
-	public ClusteredChecker(final Logger logger, final IVisualizer visualizer) {
+	public ClusteredChecker(final Logger logger, final Visualizer visualizer) {
 		super(logger, visualizer);
 	}
 
 	@Override
 	public AbstractResult<ClusteredAbstractState> check(final ClusteredAbstractSystem system) {
 		final Solver solver = system.getManager().getSolverFactory().createSolver(true, false);
-		final NotExpr negProp = system.getManager().getExprFactory().Not(system.getSystem().getProp());
+		final NotExpr negProp = system.getManager().getExprFactory().Not(system.getSTS().getProp());
 
 		final STSUnroller unroller = system.getUnroller(); // Create an unroller for k=1
 		// Store explored states in a map. The key and the value is the same state.
@@ -165,7 +165,7 @@ public class ClusteredChecker extends CEGARStepBase implements IChecker<Clustere
 		for (final ComponentAbstractState as : state.getStates())
 			SolverHelper.unrollAndAssert(solver, as.getLabels(), unroller, 0);
 		solver.add(unroller.unroll(expr, 0));
-		final boolean ret = SolverHelper.checkSatisfiable(solver);
+		final boolean ret = SolverHelper.checkSat(solver);
 		solver.pop();
 		return ret;
 	}
@@ -192,7 +192,7 @@ public class ClusteredChecker extends CEGARStepBase implements IChecker<Clustere
 		solver.add(unroller.inv(1));
 		solver.add(unroller.trans(0));
 
-		final boolean ret = SolverHelper.checkSatisfiable(solver);
+		final boolean ret = SolverHelper.checkSat(solver);
 		solver.pop();
 		return ret;
 	}
@@ -213,7 +213,7 @@ public class ClusteredChecker extends CEGARStepBase implements IChecker<Clustere
 			SolverHelper.unrollAndAssert(solver, as.getLabels(), unroller, 0);
 		solver.add(unroller.init(0));
 
-		final boolean ret = SolverHelper.checkSatisfiable(solver);
+		final boolean ret = SolverHelper.checkSat(solver);
 		solver.pop();
 		return ret;
 	}

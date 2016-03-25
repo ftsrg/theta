@@ -10,14 +10,12 @@ import hu.bme.mit.inf.ttmc.formalism.sts.STSUnroller;
 
 /**
  * Common interface for abstract systems.
- *
- * @author Akos
  */
-public interface IAbstractSystem {
+public interface AbstractSystem {
 
-	STS getSystem();
+	STS getSTS();
 
-	Set<VarDecl<? extends Type>> getVariables();
+	Set<VarDecl<? extends Type>> getVars();
 
 	STSUnroller getUnroller();
 

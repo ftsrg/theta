@@ -3,8 +3,8 @@ package hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.steps.refinement;
 import java.util.List;
 
 import hu.bme.mit.inf.ttmc.cegar.common.data.ConcreteTrace;
-import hu.bme.mit.inf.ttmc.cegar.common.steps.CEGARStepBase;
-import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.IVisualizer;
+import hu.bme.mit.inf.ttmc.cegar.common.steps.AbstractCEGARStep;
+import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.Visualizer;
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.data.Interpolant;
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.data.InterpolatedAbstractState;
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.data.InterpolatedAbstractSystem;
@@ -22,7 +22,7 @@ import hu.bme.mit.inf.ttmc.formalism.sts.STSUnroller;
  *
  * @author Akos
  */
-public class CraigInterpolater extends CEGARStepBase implements IInterpolater {
+public class CraigInterpolater extends AbstractCEGARStep implements IInterpolater {
 
 	/**
 	 * Initialize the interpolater with a solver, logger and visualizer
@@ -32,7 +32,7 @@ public class CraigInterpolater extends CEGARStepBase implements IInterpolater {
 	 * @param visualizer
 	 * @param interpolatingSolver
 	 */
-	public CraigInterpolater(final Logger logger, final IVisualizer visualizer) {
+	public CraigInterpolater(final Logger logger, final Visualizer visualizer) {
 		super(logger, visualizer);
 	}
 
@@ -71,7 +71,7 @@ public class CraigInterpolater extends CEGARStepBase implements IInterpolater {
 			interpolatingSolver.add(B, unroller.inv(traceLength)); // Invariants for the next abstract state
 			interpolatingSolver.add(B, unroller.trans(traceLength - 1)); // Transition to the next abstract state
 		} else { // Failure state is the last
-			final NotExpr negSpec = system.getManager().getExprFactory().Not(system.getSystem().getProp());
+			final NotExpr negSpec = system.getManager().getExprFactory().Not(system.getSTS().getProp());
 			interpolatingSolver.add(B, unroller.unroll(negSpec, traceLength - 1)); // Property violation
 		}
 		// Since A and B is unsatisfiable (otherwise there would be a concrete counterexample),

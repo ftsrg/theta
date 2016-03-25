@@ -1,6 +1,6 @@
 package hu.bme.mit.inf.ttmc.cegar.visiblecegar.utils;
 
-import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.IVisualizer;
+import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.Visualizer;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.graph.Graph;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.graph.Node;
 import hu.bme.mit.inf.ttmc.cegar.visiblecegar.data.VisibleAbstractState;
@@ -14,7 +14,7 @@ import java.util.Collection;
  */
 public class VisualizationHelper {
 
-	public static void visualize(Collection<VisibleAbstractState> exploredStates, IVisualizer visualizer, int level) {
+	public static void visualize(Collection<VisibleAbstractState> exploredStates, Visualizer visualizer, int level) {
 		if(level > visualizer.getMinLevel()) return;
 		
 		Graph g = new Graph("KS", "KS");

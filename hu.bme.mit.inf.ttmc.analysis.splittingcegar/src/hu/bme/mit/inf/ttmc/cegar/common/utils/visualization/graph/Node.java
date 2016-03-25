@@ -1,108 +1,72 @@
 package hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.graph;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Generic node that can be visualized
- * @author Akos
- */
 public class Node {
-	private String id;
-	private String label;
-	private String color;
-	private String fillColor;
-	private String lineStyle;
-	private boolean isInitial;
-	private List<String> successors;
-	private Map<String, String> arcColors;
-	
-	/**
-	 * Initialize node
-	 * @param id Id
-	 * @param label Label
-	 * @param color Color
-	 * @param isInitial Is the node initial
-	 */
-	public Node(String id, String label, String color, String fillColor, String lineStyle, boolean isInitial){
-		this.id = id;
-		this.label = label;
-		this.color = color;
-		this.fillColor = fillColor;
-		this.lineStyle = lineStyle;
+	private final String id;
+	private final String label;
+	private final String color;
+	private final String fillColor;
+	private final String lineStyle;
+	private final boolean isInitial;
+	private final List<String> successors;
+	private final Map<String, String> arcColors;
+
+	public Node(final String id, final String label, final String color, final String fillColor, final String lineStyle, final boolean isInitial) {
+		this.id = checkNotNull(id);
+		this.label = checkNotNull(label);
+		this.color = checkNotNull(color);
+		this.fillColor = checkNotNull(fillColor);
+		this.lineStyle = checkNotNull(lineStyle);
 		this.isInitial = isInitial;
 		this.successors = new ArrayList<>();
 		this.arcColors = new HashMap<>();
 	}
-	
-	/**
-	 * Get the id
-	 * @return Id
-	 */
+
 	public String getId() {
 		return id;
 	}
-	
-	/**
-	 * Get the label
-	 * @return Label
-	 */
+
 	public String getLabel() {
 		return label;
 	}
-	
-	/**
-	 * Get the color
-	 * @return Color
-	 */
+
 	public String getColor() {
 		return color;
 	}
-	
-	public String getFillColor(){
+
+	public String getFillColor() {
 		return fillColor;
 	}
-	
-	public String getLineStyle(){
+
+	public String getLineStyle() {
 		return lineStyle;
 	}
-	
-	/**
-	 * Get whether the node is initial
-	 * @return True if the node is initial, false otherwise
-	 */
+
 	public boolean isInitial() {
 		return isInitial;
 	}
-	
-	/**
-	 * Get the list of successors
-	 * @return List of successors
-	 */
+
 	public List<String> getSuccessors() {
 		return successors;
 	}
-	
-	/**
-	 * Add a successor
-	 * @param id Id of the successor
-	 */
-	public void addSuccessor(String id, String color){
+
+	public void addSuccessor(final String id, final String color) {
 		successors.add(id);
-		if (!"".equals(color)) arcColors.put(id, color);
+		if (!"".equals(color))
+			arcColors.put(id, color);
 	}
-	
-	/**
-	 * Get the color of an arc
-	 * @param id Id of the successor
-	 * @return Color of the arc
-	 */
-	public String getArcColor(String id){
+
+	public String getArcColor(final String id) {
 		if (arcColors.containsKey(id))
 			return arcColors.get(id);
-		else return "";
+		else
+			return "";
 	}
-	
+
 }

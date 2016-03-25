@@ -4,9 +4,9 @@ import java.util.Collection;
 import java.util.List;
 
 import hu.bme.mit.inf.ttmc.cegar.common.data.ConcreteTrace;
-import hu.bme.mit.inf.ttmc.cegar.common.steps.CEGARStepBase;
-import hu.bme.mit.inf.ttmc.cegar.common.steps.IRefiner;
-import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.IVisualizer;
+import hu.bme.mit.inf.ttmc.cegar.common.steps.AbstractCEGARStep;
+import hu.bme.mit.inf.ttmc.cegar.common.steps.Refiner;
+import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.Visualizer;
 import hu.bme.mit.inf.ttmc.cegar.visiblecegar.data.VisibleAbstractState;
 import hu.bme.mit.inf.ttmc.cegar.visiblecegar.data.VisibleAbstractSystem;
 import hu.bme.mit.inf.ttmc.cegar.visiblecegar.steps.refinement.IVarCollector;
@@ -14,7 +14,7 @@ import hu.bme.mit.inf.ttmc.common.logging.Logger;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 
-public class VisibleRefiner extends CEGARStepBase implements IRefiner<VisibleAbstractSystem, VisibleAbstractState> {
+public class VisibleRefiner extends AbstractCEGARStep implements Refiner<VisibleAbstractSystem, VisibleAbstractState> {
 	private final IVarCollector variableCollector;
 
 	/**
@@ -24,7 +24,7 @@ public class VisibleRefiner extends CEGARStepBase implements IRefiner<VisibleAbs
 	 * @param logger
 	 * @param visualizer
 	 */
-	public VisibleRefiner(final Logger logger, final IVisualizer visualizer, final IVarCollector variableCollector) {
+	public VisibleRefiner(final Logger logger, final Visualizer visualizer, final IVarCollector variableCollector) {
 		super(logger, visualizer);
 		this.variableCollector = variableCollector;
 	}
@@ -45,7 +45,7 @@ public class VisibleRefiner extends CEGARStepBase implements IRefiner<VisibleAbs
 		}
 		logger.writeln(2);
 		assert (previouslyVisibleVariables < system.getVisibleVariables().size());
-		assert (system.getVisibleVariables().size() + system.getInvisibleVariables().size() == system.getVariables().size());
+		assert (system.getVisibleVariables().size() + system.getInvisibleVariables().size() == system.getVars().size());
 		return system;
 	}
 

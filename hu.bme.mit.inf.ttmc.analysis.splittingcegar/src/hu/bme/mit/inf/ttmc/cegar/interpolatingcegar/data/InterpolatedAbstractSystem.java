@@ -82,7 +82,7 @@ public class InterpolatedAbstractSystem extends AbstractSystemBase {
 	}
 
 	@Override
-	public Set<VarDecl<? extends Type>> getVariables() {
+	public Set<VarDecl<? extends Type>> getVars() {
 		return this.variables;
 	}
 

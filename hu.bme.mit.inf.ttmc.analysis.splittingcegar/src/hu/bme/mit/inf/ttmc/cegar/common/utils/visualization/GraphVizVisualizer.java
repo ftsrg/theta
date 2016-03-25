@@ -13,7 +13,7 @@ import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.graph.Node;
  * 
  * @author Akos
  */
-public class GraphVizVisualizer implements IVisualizer {
+public class GraphVizVisualizer implements Visualizer {
 
 	private final String path; // Folder to put graphs
 	private final String fileNamePrefix; // Prefix for generated file names

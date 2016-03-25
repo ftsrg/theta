@@ -6,10 +6,10 @@ import java.util.Set;
 import java.util.Stack;
 
 import hu.bme.mit.inf.ttmc.cegar.common.data.AbstractResult;
-import hu.bme.mit.inf.ttmc.cegar.common.steps.CEGARStepBase;
-import hu.bme.mit.inf.ttmc.cegar.common.steps.IChecker;
+import hu.bme.mit.inf.ttmc.cegar.common.steps.AbstractCEGARStep;
+import hu.bme.mit.inf.ttmc.cegar.common.steps.Checker;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.SolverHelper;
-import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.IVisualizer;
+import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.Visualizer;
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.data.InterpolatedAbstractState;
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.data.InterpolatedAbstractSystem;
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.utils.VisualizationHelper;
@@ -23,7 +23,7 @@ import hu.bme.mit.inf.ttmc.formalism.sts.STSUnroller;
  *
  * @author Akos
  */
-public class InterpolatingChecker extends CEGARStepBase implements IChecker<InterpolatedAbstractSystem, InterpolatedAbstractState> {
+public class InterpolatingChecker extends AbstractCEGARStep implements Checker<InterpolatedAbstractSystem, InterpolatedAbstractState> {
 
 	private final boolean isIncremental; // Is model checking incremental
 	private int actualInit; // The actual initial state where the search is going from
@@ -41,7 +41,7 @@ public class InterpolatingChecker extends CEGARStepBase implements IChecker<Inte
 	 * @param isIncremental
 	 *            Is model checking incremental
 	 */
-	public InterpolatingChecker(final Logger logger, final IVisualizer visualizer, final boolean isIncremental) {
+	public InterpolatingChecker(final Logger logger, final Visualizer visualizer, final boolean isIncremental) {
 		super(logger, visualizer);
 		this.isIncremental = isIncremental;
 		exploredStates = new HashSet<>();
@@ -57,7 +57,7 @@ public class InterpolatingChecker extends CEGARStepBase implements IChecker<Inte
 		final int splitIndex = system.getPreviousSplitIndex();
 
 		// Get the negate of the inner expression of G(...)
-		final NotExpr negSpec = system.getManager().getExprFactory().Not(system.getSystem().getProp());
+		final NotExpr negSpec = system.getManager().getExprFactory().Not(system.getSTS().getProp());
 
 		final STSUnroller unroller = system.getUnroller(); // Create an unroller for k=0
 		Stack<InterpolatedAbstractState> counterExample = null; // Store the counterexample (if found)
@@ -209,7 +209,7 @@ public class InterpolatingChecker extends CEGARStepBase implements IChecker<Inte
 	private boolean checkState(final InterpolatedAbstractState s, final Solver solver, final STSUnroller unroller) {
 		solver.push();
 		SolverHelper.unrollAndAssert(solver, s.getLabels(), unroller, 0);
-		final boolean ret = SolverHelper.checkSatisfiable(solver);
+		final boolean ret = SolverHelper.checkSat(solver);
 		solver.pop();
 		return ret;
 	}

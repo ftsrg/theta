@@ -14,7 +14,7 @@ import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.graph.Node;
  * yED visualizer
  * @author Akos
  */
-public class YedVisualizer implements IVisualizer {
+public class YedVisualizer implements Visualizer {
 	private String path;           // Folder to put graphs
 	private String fileNamePrefix; // Prefix for generated file names
 	private int counter;           // Counter for file names

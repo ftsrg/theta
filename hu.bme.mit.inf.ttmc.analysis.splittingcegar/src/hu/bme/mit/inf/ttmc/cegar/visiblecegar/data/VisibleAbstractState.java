@@ -3,7 +3,7 @@ package hu.bme.mit.inf.ttmc.cegar.visiblecegar.data;
 import java.util.ArrayList;
 import java.util.List;
 
-import hu.bme.mit.inf.ttmc.cegar.common.data.IAbstractState;
+import hu.bme.mit.inf.ttmc.cegar.common.data.AbstractState;
 import hu.bme.mit.inf.ttmc.constraint.expr.AndExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.EqExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
@@ -15,7 +15,7 @@ import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
  *
  * @author Akos
  */
-public class VisibleAbstractState implements IAbstractState {
+public class VisibleAbstractState implements AbstractState {
 	private final AndExpr expression; // Expression representing the state
 	private boolean isInitial; // Is the state initial
 	private final List<VisibleAbstractState> successors; // List of successors

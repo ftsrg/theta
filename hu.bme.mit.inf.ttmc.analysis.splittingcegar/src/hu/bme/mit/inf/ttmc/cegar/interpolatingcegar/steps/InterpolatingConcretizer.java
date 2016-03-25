@@ -3,9 +3,9 @@ package hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.steps;
 import java.util.List;
 
 import hu.bme.mit.inf.ttmc.cegar.common.data.ConcreteTrace;
-import hu.bme.mit.inf.ttmc.cegar.common.steps.ConcretizerBase;
-import hu.bme.mit.inf.ttmc.cegar.common.steps.IConcretizer;
-import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.IVisualizer;
+import hu.bme.mit.inf.ttmc.cegar.common.steps.AbstractConcretizer;
+import hu.bme.mit.inf.ttmc.cegar.common.steps.Concretizer;
+import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.Visualizer;
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.data.InterpolatedAbstractState;
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.data.InterpolatedAbstractSystem;
 import hu.bme.mit.inf.ttmc.common.logging.Logger;
@@ -21,7 +21,7 @@ import hu.bme.mit.inf.ttmc.constraint.expr.NotExpr;
  *
  * @author Akos
  */
-public class InterpolatingConcretizer extends ConcretizerBase implements IConcretizer<InterpolatedAbstractSystem, InterpolatedAbstractState> {
+public class InterpolatingConcretizer extends AbstractConcretizer implements Concretizer<InterpolatedAbstractSystem, InterpolatedAbstractState> {
 
 	/**
 	 * Initialize the step with a solver, logger and visualizer
@@ -30,14 +30,14 @@ public class InterpolatingConcretizer extends ConcretizerBase implements IConcre
 	 * @param logger
 	 * @param visualizer
 	 */
-	public InterpolatingConcretizer(final Logger logger, final IVisualizer visualizer) {
+	public InterpolatingConcretizer(final Logger logger, final Visualizer visualizer) {
 		super(logger, visualizer);
 	}
 
 	@Override
 	public ConcreteTrace concretize(final InterpolatedAbstractSystem system, final List<InterpolatedAbstractState> abstractCounterEx) {
-		final NotExpr negSpec = system.getManager().getExprFactory().Not(system.getSystem().getProp());
-		return super.concretize(system, abstractCounterEx, negSpec, system.getVariables());
+		final NotExpr negSpec = system.getManager().getExprFactory().Not(system.getSTS().getProp());
+		return super.concretize(system, abstractCounterEx, negSpec, system.getVars());
 	}
 
 	@Override

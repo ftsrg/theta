@@ -96,7 +96,7 @@ public class PerfTestBase {
 			} else {
 				final List<CEGARResult> resultList = new ArrayList<>();
 				resultList.add(runner.result);
-				if (runner.result.specificationHolds() != testCase.expected) {
+				if (runner.result.propertyHolds() != testCase.expected) {
 					return new TestResult(TestResult.ResultType.False, resultList);
 				} else {
 					int rerun = 0;

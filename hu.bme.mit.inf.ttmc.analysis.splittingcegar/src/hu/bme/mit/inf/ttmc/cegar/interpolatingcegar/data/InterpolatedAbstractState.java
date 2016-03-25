@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
 
-import hu.bme.mit.inf.ttmc.cegar.common.data.IAbstractState;
+import hu.bme.mit.inf.ttmc.cegar.common.data.AbstractState;
 import hu.bme.mit.inf.ttmc.constraint.expr.AndExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.EqExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
@@ -17,7 +17,7 @@ import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
  *
  * @author Akos
  */
-public class InterpolatedAbstractState implements IAbstractState {
+public class InterpolatedAbstractState implements AbstractState {
 	private final List<Expr<? extends BoolType>> labels; // List of labels
 	private final List<InterpolatedAbstractState> successors; // List of successors
 	private final List<InterpolatedAbstractState> predecessors; // List of predecessors

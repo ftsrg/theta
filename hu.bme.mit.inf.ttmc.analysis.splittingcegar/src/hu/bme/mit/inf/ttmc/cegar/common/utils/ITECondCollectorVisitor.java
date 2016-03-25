@@ -21,6 +21,9 @@ import hu.bme.mit.inf.ttmc.formalism.common.expr.ProcRefExpr;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.VarRefExpr;
 import hu.bme.mit.inf.ttmc.formalism.utils.FormalismExprVisitor;
 
+/**
+ * Collect condition formulas of ITE expressions.
+ */
 public class ITECondCollectorVisitor extends ArityBasedExprVisitor<Collection<Expr<? extends BoolType>>, Void>
 		implements FormalismExprVisitor<Collection<Expr<? extends BoolType>>, Void> {
 
