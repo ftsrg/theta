@@ -10,13 +10,13 @@ import com.google.common.base.Stopwatch;
 
 import hu.bme.mit.inf.ttmc.cegar.common.data.AbstractResult;
 import hu.bme.mit.inf.ttmc.cegar.common.data.ConcreteTrace;
-import hu.bme.mit.inf.ttmc.cegar.common.data.IAbstractState;
-import hu.bme.mit.inf.ttmc.cegar.common.data.IAbstractSystem;
-import hu.bme.mit.inf.ttmc.cegar.common.steps.IChecker;
-import hu.bme.mit.inf.ttmc.cegar.common.steps.IConcretizer;
-import hu.bme.mit.inf.ttmc.cegar.common.steps.IInitializer;
-import hu.bme.mit.inf.ttmc.cegar.common.steps.IRefiner;
-import hu.bme.mit.inf.ttmc.cegar.common.utils.debugging.IDebugger;
+import hu.bme.mit.inf.ttmc.cegar.common.data.AbstractState;
+import hu.bme.mit.inf.ttmc.cegar.common.data.AbstractSystem;
+import hu.bme.mit.inf.ttmc.cegar.common.steps.Checker;
+import hu.bme.mit.inf.ttmc.cegar.common.steps.Concretizer;
+import hu.bme.mit.inf.ttmc.cegar.common.steps.Initializer;
+import hu.bme.mit.inf.ttmc.cegar.common.steps.Refiner;
+import hu.bme.mit.inf.ttmc.cegar.common.utils.debugging.Debugger;
 import hu.bme.mit.inf.ttmc.common.logging.Logger;
 import hu.bme.mit.inf.ttmc.common.logging.impl.NullLogger;
 import hu.bme.mit.inf.ttmc.constraint.expr.AndExpr;
@@ -33,12 +33,12 @@ import hu.bme.mit.inf.ttmc.formalism.sts.STS;
  * @param <AbstractStateType>
  *            Type of the abstract states
  */
-public class GenericCEGARLoop<AbstractSystemType extends IAbstractSystem, AbstractStateType extends IAbstractState> implements ICEGARLoop {
-	private final IInitializer<AbstractSystemType> initializer; // Initial abstraction creator
-	private final IChecker<AbstractSystemType, AbstractStateType> checker; // Model checker
-	private final IConcretizer<AbstractSystemType, AbstractStateType> concretizer; // Counterexample concretizer
-	private final IRefiner<AbstractSystemType, AbstractStateType> refiner; // Abstraction refiner
-	private final IDebugger<AbstractSystemType, AbstractStateType> debugger; // Debugger (can be null)
+public class GenericCEGARLoop<AbstractSystemType extends AbstractSystem, AbstractStateType extends AbstractState> implements ICEGARLoop {
+	private final Initializer<AbstractSystemType> initializer; // Initial abstraction creator
+	private final Checker<AbstractSystemType, AbstractStateType> checker; // Model checker
+	private final Concretizer<AbstractSystemType, AbstractStateType> concretizer; // Counterexample concretizer
+	private final Refiner<AbstractSystemType, AbstractStateType> refiner; // Abstraction refiner
+	private final Debugger<AbstractSystemType, AbstractStateType> debugger; // Debugger (can be null)
 	private final Logger logger; // Logger
 	private final String name; // Name of the algorithm
 	private final Stopwatch stopwatch; // Stopwatch for measuring runtime
@@ -79,9 +79,9 @@ public class GenericCEGARLoop<AbstractSystemType extends IAbstractSystem, Abstra
 	 * @param logger
 	 *            Logger
 	 */
-	public GenericCEGARLoop(final IInitializer<AbstractSystemType> initializer, final IChecker<AbstractSystemType, AbstractStateType> checker,
-			final IConcretizer<AbstractSystemType, AbstractStateType> concretizer, final IRefiner<AbstractSystemType, AbstractStateType> refiner,
-			final IDebugger<AbstractSystemType, AbstractStateType> debugger, final Logger logger, final String name) {
+	public GenericCEGARLoop(final Initializer<AbstractSystemType> initializer, final Checker<AbstractSystemType, AbstractStateType> checker,
+			final Concretizer<AbstractSystemType, AbstractStateType> concretizer, final Refiner<AbstractSystemType, AbstractStateType> refiner,
+			final Debugger<AbstractSystemType, AbstractStateType> debugger, final Logger logger, final String name) {
 		this.initializer = initializer;
 		this.checker = checker;
 		this.concretizer = concretizer;
@@ -178,10 +178,10 @@ public class GenericCEGARLoop<AbstractSystemType extends IAbstractSystem, Abstra
 		// Create result, print and return
 		CEGARResult result = null;
 		if (abstractResult.isCounterExample())
-			result = new CEGARResult(abstractSystem.getSystem(), concreteTrace, stopwatch.elapsed(TimeUnit.MILLISECONDS), refinementCount, detailedTime,
+			result = new CEGARResult(abstractSystem.getSTS(), concreteTrace, stopwatch.elapsed(TimeUnit.MILLISECONDS), refinementCount, detailedTime,
 					totalStates, abstractSystem);
 		else
-			result = new CEGARResult(abstractSystem.getSystem(), abstractResult.getExploredStates(), stopwatch.elapsed(TimeUnit.MILLISECONDS), refinementCount,
+			result = new CEGARResult(abstractSystem.getSTS(), abstractResult.getExploredStates(), stopwatch.elapsed(TimeUnit.MILLISECONDS), refinementCount,
 					detailedTime, totalStates, abstractSystem);
 		printResult(result);
 		return result;
@@ -199,7 +199,7 @@ public class GenericCEGARLoop<AbstractSystemType extends IAbstractSystem, Abstra
 		for (final Entry<String, Long> entry : result.getDetailedTime().entrySet())
 			logger.writeln(String.format(Locale.ENGLISH, "%4.1f", entry.getValue() / (float) result.getElapsedMillis() * 100) + "% " + entry.getKey(), 1, 1);
 		logger.writeln("Refinement iterations: " + result.getRefinementCount(), 0);
-		logger.writeln("Result: " + (result.specificationHolds() ? "specification holds" : "counterexample found"), 0);
+		logger.writeln("Result: " + (result.propertyHolds() ? "specification holds" : "counterexample found"), 0);
 		if (result.getCounterExample() != null) {
 			for (final AndExpr m : result.getCounterExample())
 				logger.writeln(m, 1, 1);

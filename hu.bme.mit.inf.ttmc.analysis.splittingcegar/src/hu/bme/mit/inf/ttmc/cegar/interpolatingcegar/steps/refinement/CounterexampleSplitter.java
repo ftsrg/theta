@@ -4,9 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import hu.bme.mit.inf.ttmc.cegar.common.data.KripkeStructure;
-import hu.bme.mit.inf.ttmc.cegar.common.steps.CEGARStepBase;
+import hu.bme.mit.inf.ttmc.cegar.common.steps.AbstractCEGARStep;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.SolverHelper;
-import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.IVisualizer;
+import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.Visualizer;
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.data.Interpolant;
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.data.InterpolatedAbstractState;
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.data.InterpolatedAbstractSystem;
@@ -24,7 +24,7 @@ import hu.bme.mit.inf.ttmc.formalism.sts.STSUnroller;
  *
  * @author Akos
  */
-public class CounterexampleSplitter extends CEGARStepBase implements IStateSplitter {
+public class CounterexampleSplitter extends AbstractCEGARStep implements IStateSplitter {
 
 	/**
 	 * Initialize the splitter with a solver, logger and visualizer
@@ -33,7 +33,7 @@ public class CounterexampleSplitter extends CEGARStepBase implements IStateSplit
 	 * @param logger
 	 * @param visualizer
 	 */
-	public CounterexampleSplitter(final Logger logger, final IVisualizer visualizer) {
+	public CounterexampleSplitter(final Logger logger, final Visualizer visualizer) {
 		super(logger, visualizer);
 	}
 
@@ -76,7 +76,7 @@ public class CounterexampleSplitter extends CEGARStepBase implements IStateSplit
 		for (final InterpolatedAbstractState refined : refinedStates) {
 			solver.push();
 			SolverHelper.unrollAndAssert(solver, refined.getLabels(), unroller, 0);
-			final boolean check = SolverHelper.checkSatisfiable(solver);
+			final boolean check = SolverHelper.checkSat(solver);
 			solver.pop();
 			if (!check) {
 				logger.writeln("Cannot refine.", 5, 2);
@@ -102,7 +102,7 @@ public class CounterexampleSplitter extends CEGARStepBase implements IStateSplit
 			for (final InterpolatedAbstractState refined : refinedStates) {
 				solver.push();
 				SolverHelper.unrollAndAssert(solver, refined.getLabels(), unroller, 0);
-				refined.setInitial(SolverHelper.checkSatisfiable(solver));
+				refined.setInitial(SolverHelper.checkSat(solver));
 				if (refined.isInitial())
 					isInitial = true;
 				solver.pop();
@@ -137,7 +137,7 @@ public class CounterexampleSplitter extends CEGARStepBase implements IStateSplit
 					return;
 				solver.push();
 				SolverHelper.unrollAndAssert(solver, refined.getLabels(), unroller, 0);
-				if (SolverHelper.checkSatisfiable(solver)) {
+				if (SolverHelper.checkSat(solver)) {
 					refined.addSuccessor(succ);
 					succ.addPredecessor(refined);
 					isSuccessor = true;
@@ -166,7 +166,7 @@ public class CounterexampleSplitter extends CEGARStepBase implements IStateSplit
 					return;
 				solver.push();
 				SolverHelper.unrollAndAssert(solver, refined.getLabels(), unroller, 1);
-				if (SolverHelper.checkSatisfiable(solver)) {
+				if (SolverHelper.checkSat(solver)) {
 					prev.addSuccessor(refined);
 					refined.addPredecessor(prev);
 					isPredecessor = true;
@@ -192,7 +192,7 @@ public class CounterexampleSplitter extends CEGARStepBase implements IStateSplit
 						return;
 					solver.push();
 					SolverHelper.unrollAndAssert(solver, ref1.getLabels(), unroller, 1);
-					if (SolverHelper.checkSatisfiable(solver)) {
+					if (SolverHelper.checkSat(solver)) {
 						ref0.addSuccessor(ref1);
 						ref1.addPredecessor(ref0);
 						isSuccessor = true;

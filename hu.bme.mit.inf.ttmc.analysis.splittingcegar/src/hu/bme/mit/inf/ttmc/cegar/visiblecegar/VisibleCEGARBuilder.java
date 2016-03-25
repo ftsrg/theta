@@ -2,7 +2,7 @@ package hu.bme.mit.inf.ttmc.cegar.visiblecegar;
 
 import hu.bme.mit.inf.ttmc.cegar.common.GenericCEGARLoop;
 import hu.bme.mit.inf.ttmc.cegar.common.ICEGARBuilder;
-import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.IVisualizer;
+import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.Visualizer;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.NullVisualizer;
 import hu.bme.mit.inf.ttmc.cegar.visiblecegar.data.VisibleAbstractState;
 import hu.bme.mit.inf.ttmc.cegar.visiblecegar.data.VisibleAbstractSystem;
@@ -20,7 +20,7 @@ import hu.bme.mit.inf.ttmc.common.logging.impl.NullLogger;
 
 public class VisibleCEGARBuilder implements ICEGARBuilder {
 	private Logger logger = new NullLogger();
-	private IVisualizer visualizer = new NullVisualizer();
+	private Visualizer visualizer = new NullVisualizer();
 	private boolean useCNFTransformation = false;
 	private VariableCollectionMethod varCollMethod = VariableCollectionMethod.CraigItp;
 	private VisibleCEGARDebugger debugger = null;
@@ -46,7 +46,7 @@ public class VisibleCEGARBuilder implements ICEGARBuilder {
 	 * @param visualizer
 	 * @return Builder instance
 	 */
-	public VisibleCEGARBuilder visualizer(final IVisualizer visualizer) {
+	public VisibleCEGARBuilder visualizer(final Visualizer visualizer) {
 		this.visualizer = visualizer;
 		return this;
 	}
@@ -68,7 +68,7 @@ public class VisibleCEGARBuilder implements ICEGARBuilder {
 		return this;
 	}
 
-	public VisibleCEGARBuilder debug(final IVisualizer visualizer) {
+	public VisibleCEGARBuilder debug(final Visualizer visualizer) {
 		if (visualizer == null)
 			this.debugger = null;
 		else

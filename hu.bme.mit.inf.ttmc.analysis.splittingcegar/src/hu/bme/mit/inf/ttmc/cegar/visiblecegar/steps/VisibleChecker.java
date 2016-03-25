@@ -7,10 +7,10 @@ import java.util.Map;
 import java.util.Stack;
 
 import hu.bme.mit.inf.ttmc.cegar.common.data.AbstractResult;
-import hu.bme.mit.inf.ttmc.cegar.common.steps.CEGARStepBase;
-import hu.bme.mit.inf.ttmc.cegar.common.steps.IChecker;
+import hu.bme.mit.inf.ttmc.cegar.common.steps.AbstractCEGARStep;
+import hu.bme.mit.inf.ttmc.cegar.common.steps.Checker;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.SolverHelper;
-import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.IVisualizer;
+import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.Visualizer;
 import hu.bme.mit.inf.ttmc.cegar.visiblecegar.data.VisibleAbstractState;
 import hu.bme.mit.inf.ttmc.cegar.visiblecegar.data.VisibleAbstractSystem;
 import hu.bme.mit.inf.ttmc.cegar.visiblecegar.utils.VisualizationHelper;
@@ -27,9 +27,9 @@ import hu.bme.mit.inf.ttmc.formalism.sts.STSUnroller;
  *
  * @author Akos
  */
-public class VisibleChecker extends CEGARStepBase implements IChecker<VisibleAbstractSystem, VisibleAbstractState> {
+public class VisibleChecker extends AbstractCEGARStep implements Checker<VisibleAbstractSystem, VisibleAbstractState> {
 
-	public VisibleChecker(final Logger logger, final IVisualizer visualizer) {
+	public VisibleChecker(final Logger logger, final Visualizer visualizer) {
 		super(logger, visualizer);
 	}
 
@@ -37,7 +37,7 @@ public class VisibleChecker extends CEGARStepBase implements IChecker<VisibleAbs
 	public AbstractResult<VisibleAbstractState> check(final VisibleAbstractSystem system) {
 		final Solver solver = system.getManager().getSolverFactory().createSolver(true, false);
 		// Get the negate of the inner expression of G(...)
-		final NotExpr negSpec = system.getManager().getExprFactory().Not(system.getSystem().getProp());
+		final NotExpr negSpec = system.getManager().getExprFactory().Not(system.getSTS().getProp());
 
 		final STSUnroller unroller = system.getUnroller(); // Create an unroller for k=1
 		Stack<VisibleAbstractState> counterExample = null;
@@ -52,7 +52,7 @@ public class VisibleChecker extends CEGARStepBase implements IChecker<VisibleAbs
 		solver.push();
 		solver.add(unroller.inv(0));
 		solver.add(unroller.init(0));
-		if (SolverHelper.checkSatisfiable(solver))
+		if (SolverHelper.checkSat(solver))
 			init = new VisibleAbstractState(unroller.getConcreteState(solver.getModel(), 0, system.getVisibleVariables()), true);
 		solver.pop();
 
@@ -117,7 +117,7 @@ public class VisibleChecker extends CEGARStepBase implements IChecker<VisibleAbs
 			solver.add(unroller.inv(0));
 			solver.add(unroller.init(0));
 			solver.add(unroller.unroll(system.getManager().getExprFactory().Not(system.getManager().getExprFactory().Or(initExpr)), 0));
-			if (SolverHelper.checkSatisfiable(solver))
+			if (SolverHelper.checkSat(solver))
 				init = new VisibleAbstractState(unroller.getConcreteState(solver.getModel(), 0, system.getVisibleVariables()), true);
 			else
 				init = null;
@@ -160,7 +160,7 @@ public class VisibleChecker extends CEGARStepBase implements IChecker<VisibleAbs
 		do {
 			if (isStopped)
 				return new ArrayList<>();
-			if (SolverHelper.checkSatisfiable(solver)) {
+			if (SolverHelper.checkSat(solver)) {
 				// Get successor
 				// TODO: check if initial (only for presentation purposes, since it may be found as a successor of some state first than as an initial state)
 				final VisibleAbstractState succ = new VisibleAbstractState(unroller.getConcreteState(solver.getModel(), 1, system.getVisibleVariables()),
@@ -181,7 +181,7 @@ public class VisibleChecker extends CEGARStepBase implements IChecker<VisibleAbs
 		solver.add(unroller.unroll(state.getExpression(), 0));
 		solver.add(unroller.inv(0));
 		solver.add(unroller.unroll(expr, 0));
-		final boolean ret = SolverHelper.checkSatisfiable(solver);
+		final boolean ret = SolverHelper.checkSat(solver);
 		solver.pop();
 		return ret;
 	}

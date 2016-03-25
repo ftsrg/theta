@@ -12,11 +12,11 @@ import hu.bme.mit.inf.ttmc.cegar.clusteredcegar.data.ComponentAbstractState;
 import hu.bme.mit.inf.ttmc.cegar.clusteredcegar.steps.clustering.ClusterCreator;
 import hu.bme.mit.inf.ttmc.cegar.clusteredcegar.utils.VisualizationHelper;
 import hu.bme.mit.inf.ttmc.cegar.common.data.KripkeStructure;
-import hu.bme.mit.inf.ttmc.cegar.common.steps.CEGARStepBase;
-import hu.bme.mit.inf.ttmc.cegar.common.steps.IInitializer;
+import hu.bme.mit.inf.ttmc.cegar.common.steps.AbstractCEGARStep;
+import hu.bme.mit.inf.ttmc.cegar.common.steps.Initializer;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.FormulaCollector;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.SolverHelper;
-import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.IVisualizer;
+import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.Visualizer;
 import hu.bme.mit.inf.ttmc.common.logging.Logger;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.solver.Solver;
@@ -27,9 +27,9 @@ import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
 import hu.bme.mit.inf.ttmc.formalism.sts.STSUnroller;
 
-public class ClusteredInitializer extends CEGARStepBase implements IInitializer<ClusteredAbstractSystem> {
+public class ClusteredInitializer extends AbstractCEGARStep implements Initializer<ClusteredAbstractSystem> {
 
-	public ClusteredInitializer(final Logger logger, final IVisualizer visualizer) {
+	public ClusteredInitializer(final Logger logger, final Visualizer visualizer) {
 		super(logger, visualizer);
 	}
 
@@ -48,7 +48,7 @@ public class ClusteredInitializer extends CEGARStepBase implements IInitializer<
 		FormulaCollector.collectAtomsFromExpression(concrSys.getProp(), atomicFormulas);
 
 		final ClusteredAbstractSystem system = new ClusteredAbstractSystem(concrSys);
-		system.getVariables().addAll(concrSys.getVars());
+		system.getVars().addAll(concrSys.getVars());
 		system.getAtomicFormulas().addAll(atomicFormulas);
 
 		logger.writeln("Atomic formulas [" + system.getAtomicFormulas().size() + "]", 2);
@@ -59,7 +59,7 @@ public class ClusteredInitializer extends CEGARStepBase implements IInitializer<
 			return null;
 
 		// Get clusters
-		system.getClusters().addAll(new ClusterCreator().getClusters(system.getVariables(), system.getAtomicFormulas()));
+		system.getClusters().addAll(new ClusterCreator().getClusters(system.getVars(), system.getAtomicFormulas()));
 		logger.writeln("Clusters [" + system.getClusters().size() + "]", 2);
 		for (final Cluster cluster : system.getClusters())
 			logger.writeln(cluster, 3, 1);
@@ -164,7 +164,7 @@ public class ClusteredInitializer extends CEGARStepBase implements IInitializer<
 	private boolean isStateFeasible(final ComponentAbstractState s, final Solver solver, final STSUnroller unroller) {
 		solver.push();
 		SolverHelper.unrollAndAssert(solver, s.getLabels(), unroller, 0);
-		final boolean ret = SolverHelper.checkSatisfiable(solver);
+		final boolean ret = SolverHelper.checkSat(solver);
 		solver.pop();
 		return ret;
 	}
@@ -182,7 +182,7 @@ public class ClusteredInitializer extends CEGARStepBase implements IInitializer<
 		solver.push();
 		SolverHelper.unrollAndAssert(solver, s.getLabels(), unroller, 0);
 		solver.add(unroller.init(0));
-		final boolean ret = SolverHelper.checkSatisfiable(solver);
+		final boolean ret = SolverHelper.checkSat(solver);
 		solver.pop();
 		return ret;
 	}
@@ -206,7 +206,7 @@ public class ClusteredInitializer extends CEGARStepBase implements IInitializer<
 		SolverHelper.unrollAndAssert(solver, s1.getLabels(), unroller, 1);
 		solver.add(unroller.trans(0));
 		solver.add(unroller.inv(1));
-		final boolean ret = SolverHelper.checkSatisfiable(solver);
+		final boolean ret = SolverHelper.checkSat(solver);
 		solver.pop();
 		return ret;
 	}

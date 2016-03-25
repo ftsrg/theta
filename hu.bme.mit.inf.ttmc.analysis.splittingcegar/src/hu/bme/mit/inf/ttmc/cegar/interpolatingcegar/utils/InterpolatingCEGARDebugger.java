@@ -10,11 +10,11 @@ import java.util.Set;
 import java.util.Stack;
 
 import hu.bme.mit.inf.ttmc.cegar.common.data.ConcreteTrace;
-import hu.bme.mit.inf.ttmc.cegar.common.data.IAbstractSystem;
+import hu.bme.mit.inf.ttmc.cegar.common.data.AbstractSystem;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.SolverHelper;
-import hu.bme.mit.inf.ttmc.cegar.common.utils.debugging.DebuggerBase;
-import hu.bme.mit.inf.ttmc.cegar.common.utils.debugging.IDebugger;
-import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.IVisualizer;
+import hu.bme.mit.inf.ttmc.cegar.common.utils.debugging.AbstractDebugger;
+import hu.bme.mit.inf.ttmc.cegar.common.utils.debugging.Debugger;
+import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.Visualizer;
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.data.InterpolatedAbstractState;
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.data.InterpolatedAbstractSystem;
 import hu.bme.mit.inf.ttmc.constraint.expr.AndExpr;
@@ -23,13 +23,13 @@ import hu.bme.mit.inf.ttmc.constraint.solver.Solver;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.formalism.sts.STSUnroller;
 
-public class InterpolatingCEGARDebugger extends DebuggerBase implements IDebugger<InterpolatedAbstractSystem, InterpolatedAbstractState> {
+public class InterpolatingCEGARDebugger extends AbstractDebugger implements Debugger<InterpolatedAbstractSystem, InterpolatedAbstractState> {
 
 	private final Map<InterpolatedAbstractState, List<ConcreteState>> stateSpace;
 	private final Set<InterpolatedAbstractState> reachableStates;
-	private IAbstractSystem system = null;
+	private AbstractSystem system = null;
 
-	public InterpolatingCEGARDebugger(final IVisualizer visualizer) {
+	public InterpolatingCEGARDebugger(final Visualizer visualizer) {
 		super(visualizer);
 
 		stateSpace = new HashMap<>();
@@ -37,7 +37,7 @@ public class InterpolatingCEGARDebugger extends DebuggerBase implements IDebugge
 	}
 
 	@Override
-	public IDebugger<InterpolatedAbstractSystem, InterpolatedAbstractState> explore(final InterpolatedAbstractSystem system) {
+	public Debugger<InterpolatedAbstractSystem, InterpolatedAbstractState> explore(final InterpolatedAbstractSystem system) {
 		if (system.getAbstractKripkeStructure() == null)
 			throw new RuntimeException("Abstract state space must be explored by the algorithm before exploring the concrete state space.");
 		clearStateSpace();
@@ -58,8 +58,8 @@ public class InterpolatingCEGARDebugger extends DebuggerBase implements IDebugge
 			solver.push(); // 2
 			SolverHelper.unrollAndAssert(solver, as.getLabels(), unroller, 0);
 			do {
-				if (SolverHelper.checkSatisfiable(solver)) {
-					final Expr<? extends BoolType> csExpr = unroller.getConcreteState(solver.getModel(), 0, system.getVariables());
+				if (SolverHelper.checkSat(solver)) {
+					final Expr<? extends BoolType> csExpr = unroller.getConcreteState(solver.getModel(), 0, system.getVars());
 					final ConcreteState cs = new ConcreteState(csExpr);
 					stateSpace.get(as).add(cs);
 					allConcreteStates.add(cs);
@@ -90,19 +90,19 @@ public class InterpolatingCEGARDebugger extends DebuggerBase implements IDebugge
 		}
 
 		// Explore the transition relation between concrete states and initial states
-		exploreConcreteTransitionRelationAndInitials(allConcreteStates, solver, unroller);
+		exploreConcrTransRelAndInits(allConcreteStates, solver, unroller);
 
 		// Explore the reachable concrete states
-		exploreReachableConcreteStates(allConcreteStates);
+		exploreReachableConcrStates(allConcreteStates);
 
 		// Mark unsafe states
-		markUnsafeStates(allConcreteStates, system.getManager().getExprFactory().Not(system.getSystem().getProp()), solver, unroller);
+		markUnsafeStates(allConcreteStates, system.getManager().getExprFactory().Not(system.getSTS().getProp()), solver, unroller);
 
 		return this;
 	}
 
 	@Override
-	public IDebugger<InterpolatedAbstractSystem, InterpolatedAbstractState> clearStateSpace() {
+	public Debugger<InterpolatedAbstractSystem, InterpolatedAbstractState> clearStateSpace() {
 		stateSpace.clear();
 		reachableStates.clear();
 		clearAbstractCE();
@@ -111,7 +111,7 @@ public class InterpolatingCEGARDebugger extends DebuggerBase implements IDebugge
 	}
 
 	@Override
-	public IDebugger<InterpolatedAbstractSystem, InterpolatedAbstractState> setAbstractCE(final List<InterpolatedAbstractState> ace) {
+	public Debugger<InterpolatedAbstractSystem, InterpolatedAbstractState> setAbstractCE(final List<InterpolatedAbstractState> ace) {
 		if (stateSpace.isEmpty())
 			throw new RuntimeException("State space is not explored");
 		clearAbstractCE();
@@ -127,7 +127,7 @@ public class InterpolatingCEGARDebugger extends DebuggerBase implements IDebugge
 	}
 
 	@Override
-	public IDebugger<InterpolatedAbstractSystem, InterpolatedAbstractState> clearAbstractCE() {
+	public Debugger<InterpolatedAbstractSystem, InterpolatedAbstractState> clearAbstractCE() {
 		clearConcreteTrace();
 		// Interpolated abstract states are not constructed on-the-fly, thus
 		// their isPartOfCounterExample attribute should be set to false by
@@ -136,7 +136,7 @@ public class InterpolatingCEGARDebugger extends DebuggerBase implements IDebugge
 	}
 
 	@Override
-	public IDebugger<InterpolatedAbstractSystem, InterpolatedAbstractState> setConcreteTrace(final ConcreteTrace cce) {
+	public Debugger<InterpolatedAbstractSystem, InterpolatedAbstractState> setConcreteTrace(final ConcreteTrace cce) {
 		if (stateSpace.isEmpty())
 			throw new RuntimeException("State space is not explored");
 		clearConcreteTrace();
@@ -153,7 +153,7 @@ public class InterpolatingCEGARDebugger extends DebuggerBase implements IDebugge
 	}
 
 	@Override
-	public IDebugger<InterpolatedAbstractSystem, InterpolatedAbstractState> clearConcreteTrace() {
+	public Debugger<InterpolatedAbstractSystem, InterpolatedAbstractState> clearConcreteTrace() {
 		for (final List<ConcreteState> csList : stateSpace.values())
 			for (final ConcreteState cs : csList)
 				cs.isPartOfCounterExample = false;
@@ -161,7 +161,7 @@ public class InterpolatingCEGARDebugger extends DebuggerBase implements IDebugge
 	}
 
 	@Override
-	public IDebugger<InterpolatedAbstractSystem, InterpolatedAbstractState> visualize() {
+	public Debugger<InterpolatedAbstractSystem, InterpolatedAbstractState> visualize() {
 		visualize(stateSpace, reachableStates, system.getManager());
 		return this;
 	}

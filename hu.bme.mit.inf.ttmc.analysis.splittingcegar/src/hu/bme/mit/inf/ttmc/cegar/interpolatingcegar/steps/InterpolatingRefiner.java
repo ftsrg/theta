@@ -3,9 +3,9 @@ package hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.steps;
 import java.util.List;
 
 import hu.bme.mit.inf.ttmc.cegar.common.data.ConcreteTrace;
-import hu.bme.mit.inf.ttmc.cegar.common.steps.CEGARStepBase;
-import hu.bme.mit.inf.ttmc.cegar.common.steps.IRefiner;
-import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.IVisualizer;
+import hu.bme.mit.inf.ttmc.cegar.common.steps.AbstractCEGARStep;
+import hu.bme.mit.inf.ttmc.cegar.common.steps.Refiner;
+import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.Visualizer;
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.data.Interpolant;
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.data.InterpolatedAbstractState;
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.data.InterpolatedAbstractSystem;
@@ -19,7 +19,7 @@ import hu.bme.mit.inf.ttmc.common.logging.Logger;
  *
  * @author Akos
  */
-public class InterpolatingRefiner extends CEGARStepBase implements IRefiner<InterpolatedAbstractSystem, InterpolatedAbstractState> {
+public class InterpolatingRefiner extends AbstractCEGARStep implements Refiner<InterpolatedAbstractSystem, InterpolatedAbstractState> {
 
 	private final IInterpolater interpolater;
 	private final IStateSplitter splitter;
@@ -44,7 +44,7 @@ public class InterpolatingRefiner extends CEGARStepBase implements IRefiner<Inte
 	 * @param visualizer
 	 * @param interpolater
 	 */
-	public InterpolatingRefiner(final Logger logger, final IVisualizer visualizer, final IInterpolater interpolater) {
+	public InterpolatingRefiner(final Logger logger, final Visualizer visualizer, final IInterpolater interpolater) {
 		super(logger, visualizer);
 		this.interpolater = interpolater;
 		this.splitter = new CounterexampleSplitter(logger, visualizer);

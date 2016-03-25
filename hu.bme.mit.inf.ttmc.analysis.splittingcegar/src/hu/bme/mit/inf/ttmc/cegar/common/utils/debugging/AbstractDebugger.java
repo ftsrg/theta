@@ -8,9 +8,9 @@ import java.util.Map;
 import java.util.Stack;
 import java.util.stream.Collectors;
 
-import hu.bme.mit.inf.ttmc.cegar.common.data.IAbstractState;
+import hu.bme.mit.inf.ttmc.cegar.common.data.AbstractState;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.SolverHelper;
-import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.IVisualizer;
+import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.Visualizer;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.graph.ClusterNode;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.graph.Graph;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.graph.Node;
@@ -23,25 +23,16 @@ import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
 import hu.bme.mit.inf.ttmc.formalism.sts.STSUnroller;
 
 /**
- * Base class for debuggers, providing some common functionality.
- *
- * @author Akos
+ * Base class for debuggers.
  */
-public class DebuggerBase {
-	protected IVisualizer visualizer;
+public class AbstractDebugger {
+	protected Visualizer visualizer;
 
-	public DebuggerBase(final IVisualizer visualizer) {
+	public AbstractDebugger(final Visualizer visualizer) {
 		this.visualizer = visualizer;
 	}
 
-	/**
-	 * Explore the transition relation between the concrete states and the
-	 * initial states. Unroller is assumed to be not null
-	 *
-	 * @param concreteStates
-	 *            Collection of concrete states
-	 */
-	protected void exploreConcreteTransitionRelationAndInitials(final Collection<ConcreteState> concreteStates, final Solver solver,
+	protected void exploreConcrTransRelAndInits(final Collection<ConcreteState> concreteStates, final Solver solver,
 			final STSUnroller unroller) {
 		solver.push();
 		solver.add(unroller.inv(0));
@@ -53,7 +44,7 @@ public class DebuggerBase {
 			// Check if it is initial
 			solver.push();
 			solver.add(unroller.init(0));
-			cs0.isInitial = SolverHelper.checkSatisfiable(solver);
+			cs0.isInitial = SolverHelper.checkSat(solver);
 			solver.pop();
 			// Loop through other states to get successors
 			for (final ConcreteState cs1 : concreteStates) {
@@ -61,7 +52,7 @@ public class DebuggerBase {
 				solver.add(unroller.inv(1));
 				solver.add(unroller.unroll(cs1.model, 1));
 				solver.add(unroller.trans(0));
-				if (SolverHelper.checkSatisfiable(solver))
+				if (SolverHelper.checkSat(solver))
 					cs0.successors.add(cs1);
 				solver.pop();
 			}
@@ -70,13 +61,7 @@ public class DebuggerBase {
 		solver.pop();
 	}
 
-	/**
-	 * Explore concrete states that are reachable from the initial states
-	 *
-	 * @param concreteStates
-	 *            Collection of concrete states
-	 */
-	protected void exploreReachableConcreteStates(final Collection<ConcreteState> concreteStates) {
+	protected void exploreReachableConcrStates(final Collection<ConcreteState> concreteStates) {
 		for (final ConcreteState cs0 : concreteStates) {
 			if (cs0.isInitial) { // Start a search from each initial state
 				final Stack<ConcreteState> stack = new Stack<>();
@@ -94,14 +79,6 @@ public class DebuggerBase {
 		}
 	}
 
-	/**
-	 * Mark unsafe states. The unroller is assumed to be not null.
-	 *
-	 * @param concreteStates
-	 *            Collection of concrete states
-	 * @param unsafeExpr
-	 *            Expression that is feasible for unsafe states
-	 */
 	protected void markUnsafeStates(final Collection<ConcreteState> concreteStates, final Expr<? extends BoolType> unsafeExpr, final Solver solver,
 			final STSUnroller unroller) {
 		solver.push();
@@ -109,27 +86,27 @@ public class DebuggerBase {
 		for (final ConcreteState cs0 : concreteStates) {
 			solver.push();
 			solver.add(unroller.unroll(cs0.model, 0));
-			if (SolverHelper.checkSatisfiable(solver))
+			if (SolverHelper.checkSat(solver))
 				cs0.isUnsafe = true;
 			solver.pop();
 		}
 		solver.pop();
 	}
 
-	protected void visualize(final Map<? extends IAbstractState, ? extends Collection<ConcreteState>> stateSpace,
-			final Collection<? extends IAbstractState> reachableStates, final STSManager manager) {
+	protected void visualize(final Map<? extends AbstractState, ? extends Collection<ConcreteState>> stateSpace,
+			final Collection<? extends AbstractState> reachableStates, final STSManager manager) {
 		if (stateSpace.isEmpty())
 			throw new RuntimeException("State space is not explored.");
 
-		final Map<IAbstractState, Integer> ids = new HashMap<>();
+		final Map<AbstractState, Integer> ids = new HashMap<>();
 		int id = 0;
-		for (final IAbstractState as : stateSpace.keySet()) {
+		for (final AbstractState as : stateSpace.keySet()) {
 			ids.put(as, id);
 			++id;
 		}
 
 		final Graph g = new Graph("SYSTEM", "SYSTEM");
-		for (final IAbstractState as : stateSpace.keySet()) {
+		for (final AbstractState as : stateSpace.keySet()) {
 			final StringBuilder labelString = new StringBuilder("");
 			final Expr<? extends BoolType> labelExpr = as.createExpression(manager);
 			if (labelExpr instanceof AndExpr) {
@@ -142,7 +119,7 @@ public class DebuggerBase {
 			final ClusterNode cn = new ClusterNode(("cluster_cas_" + ids.get(as)).replace('-', '_'), labelString.toString(),
 					reachableStates.contains(as) ? "black" : "gray", as.isPartOfCounterexample() ? "pink" : "white", "", as.isInitial());
 			g.addNode(cn);
-			for (final IAbstractState as1 : as.getSuccessors())
+			for (final AbstractState as1 : as.getSuccessors())
 				cn.addSuccessor(("cluster_cas_" + ids.get(as1)).replace('-', '_'), "");
 
 			for (final ConcreteState cs0 : stateSpace.get(as)) {
@@ -160,8 +137,6 @@ public class DebuggerBase {
 
 	/**
 	 * Helper structure for storing concrete states
-	 *
-	 * @author Akos
 	 */
 	protected static class ConcreteState {
 		public AndExpr model;

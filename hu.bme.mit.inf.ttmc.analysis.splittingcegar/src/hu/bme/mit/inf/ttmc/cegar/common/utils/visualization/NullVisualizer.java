@@ -6,7 +6,7 @@ import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.graph.Graph;
  * Null visualizer, does nothing
  * @author Akos
  */
-public class NullVisualizer implements IVisualizer {
+public class NullVisualizer implements Visualizer {
 
 	@Override
 	public int getMinLevel() { return -1; }

@@ -9,14 +9,14 @@ import hu.bme.mit.inf.ttmc.cegar.clusteredcegar.steps.ClusteredRefiner;
 import hu.bme.mit.inf.ttmc.cegar.clusteredcegar.utils.ClusteredCEGARDebugger;
 import hu.bme.mit.inf.ttmc.cegar.common.GenericCEGARLoop;
 import hu.bme.mit.inf.ttmc.cegar.common.ICEGARBuilder;
-import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.IVisualizer;
+import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.Visualizer;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.NullVisualizer;
 import hu.bme.mit.inf.ttmc.common.logging.Logger;
 import hu.bme.mit.inf.ttmc.common.logging.impl.NullLogger;
 
 public class ClusteredCEGARBuilder implements ICEGARBuilder {
 	private Logger logger = new NullLogger();
-	private IVisualizer visualizer = new NullVisualizer();
+	private Visualizer visualizer = new NullVisualizer();
 	private ClusteredCEGARDebugger debugger = null;
 
 	/**
@@ -36,12 +36,12 @@ public class ClusteredCEGARBuilder implements ICEGARBuilder {
 	 * @param visualizer
 	 * @return Builder instance
 	 */
-	public ClusteredCEGARBuilder visualizer(final IVisualizer visualizer) {
+	public ClusteredCEGARBuilder visualizer(final Visualizer visualizer) {
 		this.visualizer = visualizer;
 		return this;
 	}
 
-	public ClusteredCEGARBuilder debug(final IVisualizer visualizer) {
+	public ClusteredCEGARBuilder debug(final Visualizer visualizer) {
 		if (visualizer == null)
 			debugger = null;
 		else

@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import hu.bme.mit.inf.ttmc.cegar.common.data.IAbstractState;
+import hu.bme.mit.inf.ttmc.cegar.common.data.AbstractState;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
@@ -15,7 +15,7 @@ import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
  *
  * @author Akos
  */
-public class ClusteredAbstractState implements IAbstractState {
+public class ClusteredAbstractState implements AbstractState {
 	private final ComponentAbstractState[] states;
 	private final boolean isInitial;
 	private final List<ClusteredAbstractState> successors;

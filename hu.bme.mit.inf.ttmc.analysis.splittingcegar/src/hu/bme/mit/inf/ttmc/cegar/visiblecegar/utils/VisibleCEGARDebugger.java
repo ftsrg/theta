@@ -10,11 +10,11 @@ import java.util.Set;
 import java.util.Stack;
 
 import hu.bme.mit.inf.ttmc.cegar.common.data.ConcreteTrace;
-import hu.bme.mit.inf.ttmc.cegar.common.data.IAbstractSystem;
+import hu.bme.mit.inf.ttmc.cegar.common.data.AbstractSystem;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.SolverHelper;
-import hu.bme.mit.inf.ttmc.cegar.common.utils.debugging.DebuggerBase;
-import hu.bme.mit.inf.ttmc.cegar.common.utils.debugging.IDebugger;
-import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.IVisualizer;
+import hu.bme.mit.inf.ttmc.cegar.common.utils.debugging.AbstractDebugger;
+import hu.bme.mit.inf.ttmc.cegar.common.utils.debugging.Debugger;
+import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.Visualizer;
 import hu.bme.mit.inf.ttmc.cegar.visiblecegar.data.VisibleAbstractState;
 import hu.bme.mit.inf.ttmc.cegar.visiblecegar.data.VisibleAbstractSystem;
 import hu.bme.mit.inf.ttmc.constraint.expr.AndExpr;
@@ -23,19 +23,19 @@ import hu.bme.mit.inf.ttmc.constraint.solver.Solver;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.formalism.sts.STSUnroller;
 
-public class VisibleCEGARDebugger extends DebuggerBase implements IDebugger<VisibleAbstractSystem, VisibleAbstractState> {
+public class VisibleCEGARDebugger extends AbstractDebugger implements Debugger<VisibleAbstractSystem, VisibleAbstractState> {
 	private final Map<VisibleAbstractState, List<ConcreteState>> stateSpace;
 	private final Set<VisibleAbstractState> reachableStates;
-	private IAbstractSystem system = null;
+	private AbstractSystem system = null;
 
-	public VisibleCEGARDebugger(final IVisualizer visualizer) {
+	public VisibleCEGARDebugger(final Visualizer visualizer) {
 		super(visualizer);
 		stateSpace = new HashMap<>();
 		reachableStates = new HashSet<>();
 	}
 
 	@Override
-	public IDebugger<VisibleAbstractSystem, VisibleAbstractState> explore(final VisibleAbstractSystem system) {
+	public Debugger<VisibleAbstractSystem, VisibleAbstractState> explore(final VisibleAbstractSystem system) {
 		clearStateSpace();
 		this.system = system;
 
@@ -47,7 +47,7 @@ public class VisibleCEGARDebugger extends DebuggerBase implements IDebugger<Visi
 
 		solver.push(); // 2
 		do {
-			if (SolverHelper.checkSatisfiable(solver)) { // New state found
+			if (SolverHelper.checkSat(solver)) { // New state found
 				final AndExpr vasExpr = unroller.getConcreteState(solver.getModel(), 0, system.getVisibleVariables());
 				final VisibleAbstractState vas = new VisibleAbstractState(vasExpr, false);
 				stateSpace.put(vas, new ArrayList<>());
@@ -65,7 +65,7 @@ public class VisibleCEGARDebugger extends DebuggerBase implements IDebugger<Visi
 		for (final VisibleAbstractState vas : stateSpace.keySet()) {
 			solver.push(); // 3
 			solver.add(unroller.unroll(vas.getExpression(), 0));
-			vas.setInitial(SolverHelper.checkSatisfiable(solver));
+			vas.setInitial(SolverHelper.checkSat(solver));
 			solver.pop(); // 3
 		}
 		solver.pop(); // 2
@@ -76,8 +76,8 @@ public class VisibleCEGARDebugger extends DebuggerBase implements IDebugger<Visi
 			solver.push(); // 2
 			solver.add(unroller.unroll(vas.getExpression(), 0));
 			do {
-				if (SolverHelper.checkSatisfiable(solver)) { // New concrete state found
-					final Expr<? extends BoolType> csExpr = unroller.getConcreteState(solver.getModel(), 0, system.getVariables());
+				if (SolverHelper.checkSat(solver)) { // New concrete state found
+					final Expr<? extends BoolType> csExpr = unroller.getConcreteState(solver.getModel(), 0, system.getVars());
 					final ConcreteState cs = new ConcreteState(csExpr);
 					stateSpace.get(vas).add(cs);
 					allConcreteStates.add(cs);
@@ -99,7 +99,7 @@ public class VisibleCEGARDebugger extends DebuggerBase implements IDebugger<Visi
 			for (final VisibleAbstractState vas1 : stateSpace.keySet()) {
 				solver.push(); // 4
 				solver.add(unroller.unroll(vas1.getExpression(), 1));
-				if (SolverHelper.checkSatisfiable(solver))
+				if (SolverHelper.checkSat(solver))
 					vas0.addSuccessor(vas1);
 				solver.pop(); // 4
 			}
@@ -126,26 +126,26 @@ public class VisibleCEGARDebugger extends DebuggerBase implements IDebugger<Visi
 		}
 
 		// Explore the transition relation between concrete states and initial states
-		exploreConcreteTransitionRelationAndInitials(allConcreteStates, solver, unroller);
+		exploreConcrTransRelAndInits(allConcreteStates, solver, unroller);
 
 		// Explore the reachable concrete states
-		exploreReachableConcreteStates(allConcreteStates);
+		exploreReachableConcrStates(allConcreteStates);
 
 		// Mark unsafe states
-		markUnsafeStates(allConcreteStates, system.getManager().getExprFactory().Not(system.getSystem().getProp()), solver, unroller);
+		markUnsafeStates(allConcreteStates, system.getManager().getExprFactory().Not(system.getSTS().getProp()), solver, unroller);
 
 		return this;
 	}
 
 	@Override
-	public IDebugger<VisibleAbstractSystem, VisibleAbstractState> clearStateSpace() {
+	public Debugger<VisibleAbstractSystem, VisibleAbstractState> clearStateSpace() {
 		stateSpace.clear();
 		reachableStates.clear();
 		return this;
 	}
 
 	@Override
-	public IDebugger<VisibleAbstractSystem, VisibleAbstractState> setAbstractCE(final List<VisibleAbstractState> ace) {
+	public Debugger<VisibleAbstractSystem, VisibleAbstractState> setAbstractCE(final List<VisibleAbstractState> ace) {
 		if (stateSpace.isEmpty())
 			throw new RuntimeException("State space is not explored");
 		clearAbstractCE();
@@ -160,14 +160,14 @@ public class VisibleCEGARDebugger extends DebuggerBase implements IDebugger<Visi
 	}
 
 	@Override
-	public IDebugger<VisibleAbstractSystem, VisibleAbstractState> clearAbstractCE() {
+	public Debugger<VisibleAbstractSystem, VisibleAbstractState> clearAbstractCE() {
 		for (final VisibleAbstractState vas : stateSpace.keySet())
 			vas.setPartOfCounterExample(false);
 		return this;
 	}
 
 	@Override
-	public IDebugger<VisibleAbstractSystem, VisibleAbstractState> setConcreteTrace(final ConcreteTrace cce) {
+	public Debugger<VisibleAbstractSystem, VisibleAbstractState> setConcreteTrace(final ConcreteTrace cce) {
 		if (stateSpace.isEmpty())
 			throw new RuntimeException("State space is not explored");
 		clearConcreteTrace();
@@ -184,7 +184,7 @@ public class VisibleCEGARDebugger extends DebuggerBase implements IDebugger<Visi
 	}
 
 	@Override
-	public IDebugger<VisibleAbstractSystem, VisibleAbstractState> clearConcreteTrace() {
+	public Debugger<VisibleAbstractSystem, VisibleAbstractState> clearConcreteTrace() {
 		for (final List<ConcreteState> csList : stateSpace.values())
 			for (final ConcreteState cs : csList)
 				cs.isPartOfCounterExample = false;
@@ -192,7 +192,7 @@ public class VisibleCEGARDebugger extends DebuggerBase implements IDebugger<Visi
 	}
 
 	@Override
-	public IDebugger<VisibleAbstractSystem, VisibleAbstractState> visualize() {
+	public Debugger<VisibleAbstractSystem, VisibleAbstractState> visualize() {
 		visualize(stateSpace, reachableStates, system.getManager());
 		return this;
 	}

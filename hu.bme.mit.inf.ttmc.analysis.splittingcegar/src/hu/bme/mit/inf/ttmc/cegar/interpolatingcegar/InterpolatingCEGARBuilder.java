@@ -5,7 +5,7 @@ import java.util.List;
 
 import hu.bme.mit.inf.ttmc.cegar.common.GenericCEGARLoop;
 import hu.bme.mit.inf.ttmc.cegar.common.ICEGARBuilder;
-import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.IVisualizer;
+import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.Visualizer;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.NullVisualizer;
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.data.InterpolatedAbstractState;
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.data.InterpolatedAbstractSystem;
@@ -22,7 +22,7 @@ import hu.bme.mit.inf.ttmc.common.logging.impl.NullLogger;
 
 public class InterpolatingCEGARBuilder implements ICEGARBuilder {
 	private Logger logger = new NullLogger();
-	private IVisualizer visualizer = new NullVisualizer();
+	private Visualizer visualizer = new NullVisualizer();
 	private boolean collectFromConditions = false;
 	private boolean collectFromSpecification = false;
 	private InterpolationMethod interpolationMethod = InterpolationMethod.Craig;
@@ -52,7 +52,7 @@ public class InterpolatingCEGARBuilder implements ICEGARBuilder {
 	 * @param visualizer
 	 * @return Builder instance
 	 */
-	public InterpolatingCEGARBuilder visualizer(final IVisualizer visualizer) {
+	public InterpolatingCEGARBuilder visualizer(final Visualizer visualizer) {
 		this.visualizer = visualizer;
 		return this;
 	}
@@ -130,7 +130,7 @@ public class InterpolatingCEGARBuilder implements ICEGARBuilder {
 		return this;
 	}
 
-	public InterpolatingCEGARBuilder debug(final IVisualizer visualizer) {
+	public InterpolatingCEGARBuilder debug(final Visualizer visualizer) {
 		if (visualizer == null)
 			this.debugger = null;
 		else

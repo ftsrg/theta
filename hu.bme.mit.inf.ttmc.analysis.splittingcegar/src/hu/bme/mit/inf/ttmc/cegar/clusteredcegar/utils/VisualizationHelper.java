@@ -4,7 +4,7 @@ import hu.bme.mit.inf.ttmc.cegar.clusteredcegar.data.ClusteredAbstractState;
 import hu.bme.mit.inf.ttmc.cegar.clusteredcegar.data.ClusteredAbstractSystem;
 import hu.bme.mit.inf.ttmc.cegar.clusteredcegar.data.ComponentAbstractState;
 import hu.bme.mit.inf.ttmc.cegar.common.data.KripkeStructure;
-import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.IVisualizer;
+import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.Visualizer;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.graph.ClusterNode;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.graph.Graph;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.graph.Node;
@@ -25,7 +25,7 @@ public class VisualizationHelper {
 	 * @param visualizer Visualizer
 	 * @param level Minimal level of logging
 	 */
-	public static void visualizeAbstractKripkeStructures(ClusteredAbstractSystem system, IVisualizer visualizer, int level) {
+	public static void visualizeAbstractKripkeStructures(ClusteredAbstractSystem system, Visualizer visualizer, int level) {
 		if(level > visualizer.getMinLevel()) return;
 
 		Graph g = new Graph("KS", "KS");
@@ -59,7 +59,7 @@ public class VisualizationHelper {
 	 * @param visualizer Visualizer
 	 * @param level Minimal level of logging
 	 */
-	public static void visualizeCompositeAbstractKripkeStructure( Collection<ClusteredAbstractState> abstractStates, IVisualizer visualizer, int level) {
+	public static void visualizeCompositeAbstractKripkeStructure( Collection<ClusteredAbstractState> abstractStates, Visualizer visualizer, int level) {
 		if(level > visualizer.getMinLevel()) return;
 
 		Graph g = new Graph("KS", "KS");

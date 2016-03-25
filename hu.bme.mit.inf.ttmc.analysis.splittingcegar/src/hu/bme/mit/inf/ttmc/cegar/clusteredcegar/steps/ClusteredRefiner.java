@@ -10,10 +10,10 @@ import hu.bme.mit.inf.ttmc.cegar.clusteredcegar.data.ClusteredAbstractSystem;
 import hu.bme.mit.inf.ttmc.cegar.clusteredcegar.data.ComponentAbstractState;
 import hu.bme.mit.inf.ttmc.cegar.common.data.ConcreteTrace;
 import hu.bme.mit.inf.ttmc.cegar.common.data.KripkeStructure;
-import hu.bme.mit.inf.ttmc.cegar.common.steps.CEGARStepBase;
-import hu.bme.mit.inf.ttmc.cegar.common.steps.IRefiner;
+import hu.bme.mit.inf.ttmc.cegar.common.steps.AbstractCEGARStep;
+import hu.bme.mit.inf.ttmc.cegar.common.steps.Refiner;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.SolverHelper;
-import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.IVisualizer;
+import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.Visualizer;
 import hu.bme.mit.inf.ttmc.common.logging.Logger;
 import hu.bme.mit.inf.ttmc.constraint.expr.AndExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
@@ -29,7 +29,7 @@ import hu.bme.mit.inf.ttmc.formalism.sts.STSUnroller;
  *
  * @author Akos
  */
-public class ClusteredRefiner extends CEGARStepBase implements IRefiner<ClusteredAbstractSystem, ClusteredAbstractState> {
+public class ClusteredRefiner extends AbstractCEGARStep implements Refiner<ClusteredAbstractSystem, ClusteredAbstractState> {
 
 	/**
 	 * Initialize the step with a solver, logger and visualizer
@@ -38,7 +38,7 @@ public class ClusteredRefiner extends CEGARStepBase implements IRefiner<Clustere
 	 * @param logger
 	 * @param visualizer
 	 */
-	public ClusteredRefiner(final Logger logger, final IVisualizer visualizer) {
+	public ClusteredRefiner(final Logger logger, final Visualizer visualizer) {
 		super(logger, visualizer);
 	}
 
@@ -87,7 +87,7 @@ public class ClusteredRefiner extends CEGARStepBase implements IRefiner<Clustere
 			final List<List<AndExpr>> compatibility = new ArrayList<>(concreteStates.size());
 
 			// Get variables outside the cluster
-			final Set<VarDecl<? extends Type>> otherVars = new HashSet<>(system.getVariables());
+			final Set<VarDecl<? extends Type>> otherVars = new HashSet<>(system.getVars());
 			otherVars.removeAll(as.getCluster().getVariables());
 
 			// Loop through pairs of states and check if they should be separated
@@ -154,7 +154,7 @@ public class ClusteredRefiner extends CEGARStepBase implements IRefiner<Clustere
 				for (final ComponentAbstractState refined : refinedStates) {
 					solver.push();
 					SolverHelper.unrollAndAssert(solver, refined.getLabels(), unroller, 0);
-					if (SolverHelper.checkSatisfiable(solver)) {
+					if (SolverHelper.checkSat(solver)) {
 						refined.setInitial(true);
 						isInitial = true;
 					}
@@ -182,7 +182,7 @@ public class ClusteredRefiner extends CEGARStepBase implements IRefiner<Clustere
 				for (final ComponentAbstractState refined : refinedStates) {
 					solver.push();
 					SolverHelper.unrollAndAssert(solver, refined.getLabels(), unroller, 0);
-					if (SolverHelper.checkSatisfiable(solver)) {
+					if (SolverHelper.checkSat(solver)) {
 						refined.getSuccessors().add(succ);
 						isSuccessor = true;
 					}
@@ -201,7 +201,7 @@ public class ClusteredRefiner extends CEGARStepBase implements IRefiner<Clustere
 				for (final ComponentAbstractState ref1 : refinedStates) {
 					solver.push();
 					SolverHelper.unrollAndAssert(solver, ref1.getLabels(), unroller, 1);
-					if (SolverHelper.checkSatisfiable(solver))
+					if (SolverHelper.checkSat(solver))
 						ref0.getSuccessors().add(ref1);
 					solver.pop();
 				}
@@ -223,7 +223,7 @@ public class ClusteredRefiner extends CEGARStepBase implements IRefiner<Clustere
 					for (final ComponentAbstractState refined : refinedStates) {
 						solver.push();
 						SolverHelper.unrollAndAssert(solver, refined.getLabels(), unroller, 1);
-						if (SolverHelper.checkSatisfiable(solver)) {
+						if (SolverHelper.checkSat(solver)) {
 							prev.getSuccessors().add(refined);
 							isSuccessor = true;
 						}
@@ -275,7 +275,7 @@ public class ClusteredRefiner extends CEGARStepBase implements IRefiner<Clustere
 		}
 
 		do {
-			if (SolverHelper.checkSatisfiable(solver)) {
+			if (SolverHelper.checkSat(solver)) {
 				// Get dead-end state
 				final AndExpr ds = unroller.getConcreteState(solver.getModel(), traceLength - 1);
 				logger.write("Dead end state: ", 6, 1);
@@ -322,7 +322,7 @@ public class ClusteredRefiner extends CEGARStepBase implements IRefiner<Clustere
 		solver.add(unroller.trans(0)); // Transition relation
 
 		do {
-			if (SolverHelper.checkSatisfiable(solver)) {
+			if (SolverHelper.checkSat(solver)) {
 				// Get bad state
 				final AndExpr bs = unroller.getConcreteState(solver.getModel(), 0);
 				logger.write("Bad state: ", 6, 1);
@@ -357,7 +357,7 @@ public class ClusteredRefiner extends CEGARStepBase implements IRefiner<Clustere
 		for (final Expr<? extends BoolType> label : abstractState.getLabels())
 			solver.add(unroller.unroll(label, 0));
 		do {
-			if (SolverHelper.checkSatisfiable(solver)) {
+			if (SolverHelper.checkSat(solver)) {
 				// Get the model and project
 				final AndExpr cs = unroller.getConcreteState(solver.getModel(), 0, abstractState.getCluster().getVariables());
 				concreteStates.add(cs);
@@ -437,7 +437,7 @@ public class ClusteredRefiner extends CEGARStepBase implements IRefiner<Clustere
 		for (final AndExpr ds : deadEndStates) {
 			solver.push();
 			solver.add(unroller.unroll(ds, 0));
-			if (SolverHelper.checkSatisfiable(solver))
+			if (SolverHelper.checkSat(solver))
 				ret.add(unroller.getConcreteState(solver.getModel(), 0, otherVars));
 			solver.pop();
 		}
