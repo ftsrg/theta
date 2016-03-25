@@ -2,6 +2,7 @@ package hu.bme.mit.inf.ttmc.cegar.common.utils.debugging;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
@@ -120,6 +121,13 @@ public class DebuggerBase {
 		if (stateSpace.isEmpty())
 			throw new RuntimeException("State space is not explored.");
 
+		final Map<IAbstractState, Integer> ids = new HashMap<>();
+		int id = 0;
+		for (final IAbstractState as : stateSpace.keySet()) {
+			ids.put(as, id);
+			++id;
+		}
+
 		final Graph g = new Graph("SYSTEM", "SYSTEM");
 		for (final IAbstractState as : stateSpace.keySet()) {
 			final StringBuilder labelString = new StringBuilder("");
@@ -131,11 +139,11 @@ public class DebuggerBase {
 				labelString.append(labelExpr);
 			}
 
-			final ClusterNode cn = new ClusterNode(("cluster_cas_" + as.hashCode()).replace('-', '_'), labelString.toString(),
+			final ClusterNode cn = new ClusterNode(("cluster_cas_" + ids.get(as)).replace('-', '_'), labelString.toString(),
 					reachableStates.contains(as) ? "black" : "gray", as.isPartOfCounterexample() ? "pink" : "white", "", as.isInitial());
 			g.addNode(cn);
 			for (final IAbstractState as1 : as.getSuccessors())
-				cn.addSuccessor("cluster_cas_" + as1.hashCode(), "");
+				cn.addSuccessor(("cluster_cas_" + ids.get(as1)).replace('-', '_'), "");
 
 			for (final ConcreteState cs0 : stateSpace.get(as)) {
 				final Node n = new Node("cs_" + cs0.createId(), cs0.toString(), (cs0.isReachable ? "" : "grey"), (cs0.isPartOfCounterExample ? "red" : ""),
