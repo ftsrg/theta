@@ -1,7 +1,7 @@
 package hu.bme.mit.inf.ttmc.cegar.visiblecegar;
 
 import hu.bme.mit.inf.ttmc.cegar.common.GenericCEGARLoop;
-import hu.bme.mit.inf.ttmc.cegar.common.ICEGARBuilder;
+import hu.bme.mit.inf.ttmc.cegar.common.CEGARBuilder;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.Visualizer;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.NullVisualizer;
 import hu.bme.mit.inf.ttmc.cegar.visiblecegar.data.VisibleAbstractState;
@@ -18,7 +18,7 @@ import hu.bme.mit.inf.ttmc.cegar.visiblecegar.utils.VisibleCEGARDebugger;
 import hu.bme.mit.inf.ttmc.common.logging.Logger;
 import hu.bme.mit.inf.ttmc.common.logging.impl.NullLogger;
 
-public class VisibleCEGARBuilder implements ICEGARBuilder {
+public class VisibleCEGARBuilder implements CEGARBuilder {
 	private Logger logger = new NullLogger();
 	private Visualizer visualizer = new NullVisualizer();
 	private boolean useCNFTransformation = false;

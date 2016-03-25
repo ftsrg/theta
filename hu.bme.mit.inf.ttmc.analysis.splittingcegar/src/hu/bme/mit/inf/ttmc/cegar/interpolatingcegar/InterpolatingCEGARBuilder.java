@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import hu.bme.mit.inf.ttmc.cegar.common.GenericCEGARLoop;
-import hu.bme.mit.inf.ttmc.cegar.common.ICEGARBuilder;
+import hu.bme.mit.inf.ttmc.cegar.common.CEGARBuilder;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.Visualizer;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.NullVisualizer;
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.data.InterpolatedAbstractState;
@@ -20,7 +20,7 @@ import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.utils.InterpolatingCEGARDebu
 import hu.bme.mit.inf.ttmc.common.logging.Logger;
 import hu.bme.mit.inf.ttmc.common.logging.impl.NullLogger;
 
-public class InterpolatingCEGARBuilder implements ICEGARBuilder {
+public class InterpolatingCEGARBuilder implements CEGARBuilder {
 	private Logger logger = new NullLogger();
 	private Visualizer visualizer = new NullVisualizer();
 	private boolean collectFromConditions = false;

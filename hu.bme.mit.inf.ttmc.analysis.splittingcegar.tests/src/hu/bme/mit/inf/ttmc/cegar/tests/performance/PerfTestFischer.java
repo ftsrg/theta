@@ -5,7 +5,7 @@ import java.util.List;
 
 import org.junit.Test;
 
-import hu.bme.mit.inf.ttmc.cegar.common.ICEGARBuilder;
+import hu.bme.mit.inf.ttmc.cegar.common.CEGARBuilder;
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.InterpolatingCEGARBuilder;
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.InterpolatingCEGARBuilder.InterpolationMethod;
 import hu.bme.mit.inf.ttmc.cegar.tests.formatters.ExcelFormatter;
@@ -29,7 +29,7 @@ public class PerfTestFischer extends PerfTestBase {
 				add(new TestCase("models/fischer/fischer3_bool_bad.system", false, loader));
 			}
 		};
-		final List<ICEGARBuilder> configurations = new ArrayList<ICEGARBuilder>() {
+		final List<CEGARBuilder> configurations = new ArrayList<CEGARBuilder>() {
 			{
 				add(new InterpolatingCEGARBuilder().logger(null).visualizer(null).interpolationMethod(InterpolationMethod.Craig).incrementalModelChecking(true)
 						.useCNFTransformation(false));

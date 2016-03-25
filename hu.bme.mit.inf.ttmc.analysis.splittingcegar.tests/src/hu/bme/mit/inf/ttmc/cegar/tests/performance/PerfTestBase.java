@@ -11,8 +11,8 @@ import org.junit.Assert;
 import hu.bme.mit.inf.ttmc.aiger.impl.AIGERLoaderOptimized;
 import hu.bme.mit.inf.ttmc.aiger.impl.AIGERLoaderSimple;
 import hu.bme.mit.inf.ttmc.cegar.common.CEGARResult;
-import hu.bme.mit.inf.ttmc.cegar.common.ICEGARBuilder;
-import hu.bme.mit.inf.ttmc.cegar.common.ICEGARLoop;
+import hu.bme.mit.inf.ttmc.cegar.common.CEGARBuilder;
+import hu.bme.mit.inf.ttmc.cegar.common.CEGARLoop;
 import hu.bme.mit.inf.ttmc.cegar.tests.formatters.IFormatter;
 import hu.bme.mit.inf.ttmc.constraint.z3.Z3ConstraintManager;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
@@ -22,7 +22,7 @@ import hu.bme.mit.inf.ttmc.system.ui.SystemModelCreator;
 import hu.bme.mit.inf.ttmc.system.ui.SystemModelLoader;
 
 public class PerfTestBase {
-	protected void run(final List<TestCase> testCases, final List<ICEGARBuilder> configurations, final int timeOut, final IFormatter formatter) {
+	protected void run(final List<TestCase> testCases, final List<CEGARBuilder> configurations, final int timeOut, final IFormatter formatter) {
 		boolean allOk = true;
 
 		final TestResult[][] results = new TestResult[testCases.size()][configurations.size()];
@@ -31,7 +31,7 @@ public class PerfTestBase {
 			final TestCase testCase = testCases.get(i);
 			System.out.println("Running model " + (i + 1) + "/" + testCases.size() + " [" + testCase.path + "]");
 			for (int j = 0; j < configurations.size(); j++) {
-				final ICEGARBuilder configuration = configurations.get(j);
+				final CEGARBuilder configuration = configurations.get(j);
 				System.out.println("\tConfiguration " + (j + 1) + "/" + configurations.size() + " [" + configuration.build() + "]");
 				results[i][j] = run(testCase, configuration, timeOut);
 			}
@@ -43,7 +43,7 @@ public class PerfTestBase {
 
 		// Header
 		formatter.cell("");
-		for (final ICEGARBuilder cegar : configurations)
+		for (final CEGARBuilder cegar : configurations)
 			formatter.cell(cegar.build() + "", 4);
 		formatter.newRow();
 		formatter.cell("");
@@ -76,14 +76,14 @@ public class PerfTestBase {
 		Assert.assertTrue(allOk);
 	}
 
-	protected TestResult run(final TestCase testCase, final ICEGARBuilder configuration, final int timeOut) {
+	protected TestResult run(final TestCase testCase, final CEGARBuilder configuration, final int timeOut) {
 		STS system;
 		try {
 			system = testCase.loader.load(testCase.path, new STSManagerImpl(new Z3ConstraintManager()));
 		} catch (final IOException e1) {
 			return new TestResult(TestResult.ResultType.IOException, new ArrayList<>());
 		}
-		ICEGARLoop cegar = configuration.build();
+		CEGARLoop cegar = configuration.build();
 		final CEGARRunner runner = new CEGARRunner(cegar, system);
 
 		runner.start();
@@ -183,11 +183,11 @@ public class PerfTestBase {
 	}
 
 	protected static class CEGARRunner extends Thread {
-		public final ICEGARLoop cegar;
+		public final CEGARLoop cegar;
 		public final STS system;
 		public volatile CEGARResult result;
 
-		public CEGARRunner(final ICEGARLoop cegar, final STS system) {
+		public CEGARRunner(final CEGARLoop cegar, final STS system) {
 			this.cegar = cegar;
 			this.system = system;
 			this.result = null;

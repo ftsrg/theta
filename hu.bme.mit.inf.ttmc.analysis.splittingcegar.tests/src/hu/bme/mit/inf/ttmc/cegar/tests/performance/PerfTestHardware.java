@@ -5,7 +5,7 @@ import java.util.List;
 
 import org.junit.Test;
 
-import hu.bme.mit.inf.ttmc.cegar.common.ICEGARBuilder;
+import hu.bme.mit.inf.ttmc.cegar.common.CEGARBuilder;
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.InterpolatingCEGARBuilder;
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.InterpolatingCEGARBuilder.InterpolationMethod;
 import hu.bme.mit.inf.ttmc.cegar.tests.formatters.ExcelFormatter;
@@ -41,7 +41,7 @@ public class PerfTestHardware extends PerfTestBase {
 
 			}
 		};
-		final List<ICEGARBuilder> configurations = new ArrayList<ICEGARBuilder>() {
+		final List<CEGARBuilder> configurations = new ArrayList<CEGARBuilder>() {
 			{
 				add(new VisibleCEGARBuilder().logger(null).visualizer(null).useCNFTransformation(false)
 						.variableCollectionMethod(VariableCollectionMethod.CraigItp));
