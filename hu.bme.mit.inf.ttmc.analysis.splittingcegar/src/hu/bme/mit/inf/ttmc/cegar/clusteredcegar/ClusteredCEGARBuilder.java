@@ -8,13 +8,13 @@ import hu.bme.mit.inf.ttmc.cegar.clusteredcegar.steps.ClusteredInitializer;
 import hu.bme.mit.inf.ttmc.cegar.clusteredcegar.steps.ClusteredRefiner;
 import hu.bme.mit.inf.ttmc.cegar.clusteredcegar.utils.ClusteredCEGARDebugger;
 import hu.bme.mit.inf.ttmc.cegar.common.GenericCEGARLoop;
-import hu.bme.mit.inf.ttmc.cegar.common.ICEGARBuilder;
+import hu.bme.mit.inf.ttmc.cegar.common.CEGARBuilder;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.Visualizer;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.NullVisualizer;
 import hu.bme.mit.inf.ttmc.common.logging.Logger;
 import hu.bme.mit.inf.ttmc.common.logging.impl.NullLogger;
 
-public class ClusteredCEGARBuilder implements ICEGARBuilder {
+public class ClusteredCEGARBuilder implements CEGARBuilder {
 	private Logger logger = new NullLogger();
 	private Visualizer visualizer = new NullVisualizer();
 	private ClusteredCEGARDebugger debugger = null;

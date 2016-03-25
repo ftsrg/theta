@@ -8,7 +8,7 @@ import org.junit.Test;
 
 import hu.bme.mit.inf.ttmc.aiger.impl.AIGERLoaderSimple;
 import hu.bme.mit.inf.ttmc.cegar.common.CEGARResult;
-import hu.bme.mit.inf.ttmc.cegar.common.ICEGARLoop;
+import hu.bme.mit.inf.ttmc.cegar.common.CEGARLoop;
 import hu.bme.mit.inf.ttmc.cegar.common.data.AbstractState;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.GraphVizVisualizer;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.Visualizer;
@@ -56,7 +56,7 @@ public class SandBox {
 			problem = new AIGERLoaderSimple().load(MODELSPATH + subPath + modelName, manager);
 		}
 
-		ICEGARLoop cegar = null;
+		CEGARLoop cegar = null;
 
 		//cegar = new ClusteredCEGARBuilder().logger(logger).visualizer(visualizer).debug(debugVisualizer).build();
 		//cegar = new VisibleCEGARBuilder().logger(logger).visualizer(visualizer).useCNFTransformation(false)
