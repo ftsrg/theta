@@ -95,7 +95,7 @@ class ProgramStmtTransformator implements StmtTransformator {
 			Decl(varDecl)
 		} else {
 			val expr = ExprUtils.cast(expression.transform, varDecl.type.class)
-			Block(Decl(varDecl), Assign(varDecl as VarDecl<Type>, expr))
+			Decl(varDecl as VarDecl<Type>, expr)
 		}
 	}
 

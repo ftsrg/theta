@@ -22,7 +22,8 @@ public class FailStmtVisitor<P, R> implements StmtVisitor<P, R> {
 	}
 
 	@Override
-	public <DeclType extends Type> R visit(final DeclStmt<DeclType> stmt, final P param) {
+	public <DeclType extends Type, ExprType extends DeclType> R visit(final DeclStmt<DeclType, ExprType> stmt,
+			final P param) {
 		throw new UnsupportedOperationException();
 	}
 
