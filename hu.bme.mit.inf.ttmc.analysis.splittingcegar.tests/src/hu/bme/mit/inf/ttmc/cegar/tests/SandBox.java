@@ -7,12 +7,13 @@ import java.util.List;
 import org.junit.Test;
 
 import hu.bme.mit.inf.ttmc.aiger.impl.AIGERLoaderSimple;
-import hu.bme.mit.inf.ttmc.cegar.clusteredcegar.ClusteredCEGARBuilder;
 import hu.bme.mit.inf.ttmc.cegar.common.CEGARResult;
 import hu.bme.mit.inf.ttmc.cegar.common.ICEGARLoop;
 import hu.bme.mit.inf.ttmc.cegar.common.data.IAbstractState;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.GraphVizVisualizer;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.IVisualizer;
+import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.InterpolatingCEGARBuilder;
+import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.InterpolatingCEGARBuilder.InterpolationMethod;
 import hu.bme.mit.inf.ttmc.cegar.tests.invariantchecker.InvariantChecker;
 import hu.bme.mit.inf.ttmc.common.logging.Logger;
 import hu.bme.mit.inf.ttmc.common.logging.impl.ConsoleLogger;
@@ -37,13 +38,13 @@ public class SandBox {
 		//System.in.read();
 
 		final String subPath = "simple/";
-		final String modelName = "simple2.system";
+		final String modelName = "simple3.system";
 
 		final STSManager manager = new STSManagerImpl(new Z3ConstraintManager());
 
 		final Logger logger = new ConsoleLogger(10);
 		final IVisualizer visualizer = null; //new GraphVizVisualizer("models/_output", modelName, 100);
-		final IVisualizer debugVisualizer = new GraphVizVisualizer("models/_debug", modelName, 100, false);
+		final IVisualizer debugVisualizer = new GraphVizVisualizer("models/_debug", modelName, 100, true);
 
 		STS problem = null;
 
@@ -57,15 +58,15 @@ public class SandBox {
 
 		ICEGARLoop cegar = null;
 
-		cegar = new ClusteredCEGARBuilder().logger(logger).visualizer(visualizer).debug(debugVisualizer).build();
+		//cegar = new ClusteredCEGARBuilder().logger(logger).visualizer(visualizer).debug(debugVisualizer).build();
 		//cegar = new VisibleCEGARBuilder().logger(logger).visualizer(visualizer).useCNFTransformation(false)
 		//		.variableCollectionMethod(VariableCollectionMethod.UnsatCore).debug(debugVisualizer).build();
 
-		//cegar = new InterpolatingCEGARBuilder().logger(logger).visualizer(visualizer).useCNFTransformation(false).collectFromSpecification(false)
-		//		.collectFromConditions(false).incrementalModelChecking(true).interpolationMethod(InterpolationMethod.Craig)
-		//.explicitVariable("lock_b0").explicitVariable("lock_b1")
-		//.explicitVariable("loc")
-		//		.debug(debugVisualizer).build();
+		cegar = new InterpolatingCEGARBuilder().logger(logger).visualizer(visualizer).useCNFTransformation(false).collectFromSpecification(false)
+				.collectFromConditions(false).incrementalModelChecking(true).interpolationMethod(InterpolationMethod.Craig)
+				//.explicitVariable("lock_b0").explicitVariable("lock_b1")
+				//.explicitVariable("loc")
+				.debug(debugVisualizer).build();
 
 		final CEGARResult result = cegar.check(problem);
 
