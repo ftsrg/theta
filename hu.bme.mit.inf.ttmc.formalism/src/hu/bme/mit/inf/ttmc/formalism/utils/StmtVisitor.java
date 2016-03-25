@@ -18,7 +18,7 @@ public interface StmtVisitor<P, R> {
 
 	public R visit(SkipStmt stmt, P param);
 
-	public <DeclType extends Type> R visit(DeclStmt<DeclType> stmt, P param);
+	public <DeclType extends Type, ExprType extends DeclType> R visit(DeclStmt<DeclType, ExprType> stmt, P param);
 
 	public R visit(AssumeStmt stmt, P param);
 
