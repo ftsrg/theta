@@ -7,9 +7,13 @@ import org.junit.Test;
 
 import hu.bme.mit.inf.ttmc.constraint.ConstraintManagerImpl;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
+import hu.bme.mit.inf.ttmc.formalism.cfa.CFA;
+import hu.bme.mit.inf.ttmc.formalism.cfa.CFACreator;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.ProcDecl;
+import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
 import hu.bme.mit.inf.ttmc.formalism.program.ProgramManager;
 import hu.bme.mit.inf.ttmc.formalism.program.impl.ProgramManagerImpl;
+import hu.bme.mit.inf.ttmc.formalism.utils.impl.CFAPrinter;
 import hu.bme.mit.inf.ttmc.program.model.ProgramSpecification;
 import hu.bme.mit.inf.ttmc.program.ui.ProgramModel;
 import hu.bme.mit.inf.ttmc.program.ui.ProgramModelCreator;
@@ -25,7 +29,10 @@ public class ProgramModelTests {
 		final ProgramManager manager = new ProgramManagerImpl(new ConstraintManagerImpl());
 		final ProgramModel model = ProgramModelCreator.create(manager, specification);
 		final ProcDecl<? extends Type> procDecl = model.getProcDecls().iterator().next();
-		System.out.println(procDecl.getStmt().get());
+		final Stmt stmt = procDecl.getStmt().get();
+
+		final CFA cfa = CFACreator.createSBE(manager, stmt);
+		System.out.println(CFAPrinter.toGraphvizSting(cfa));
 	}
 
 }
