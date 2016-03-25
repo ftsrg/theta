@@ -21,7 +21,7 @@ public class ClusterNode {
 	 */
 	public ClusterNode(final VarDecl<? extends Type> vd) {
 		this.cluster = new Cluster();
-		this.cluster.getVariables().add(vd);
+		this.cluster.getVars().add(vd);
 		this.parent = null;
 	}
 

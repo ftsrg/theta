@@ -12,73 +12,42 @@ import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 
 /**
  * Represents a cluster of variables and formulas
- *
- * @author Akos
  */
 public class Cluster {
-	private final Set<VarDecl<? extends Type>> variables; // Map of variables
-	private final List<Expr<? extends BoolType>> formulas; // List of formulas
-	private int id; // Id
+	private final Set<VarDecl<? extends Type>> vars;
+	private final List<Expr<? extends BoolType>> formulas;
+	private int clusterId;
 
-	/**
-	 * Constructor
-	 */
 	public Cluster() {
-		variables = new HashSet<>();
+		vars = new HashSet<>();
 		formulas = new ArrayList<>();
-		id = -1; // ID must be set by the one who creates the cluster using setId()
+		clusterId = -1; // ID must be set by the one who creates the cluster using setId()
 	}
 
-	/**
-	 * Get the map of variables
-	 *
-	 * @return Map of variables
-	 */
-	public Set<VarDecl<? extends Type>> getVariables() {
-		return variables;
+	public Set<VarDecl<? extends Type>> getVars() {
+		return vars;
 	}
 
-	/**
-	 * Get the list of formulas
-	 *
-	 * @return List of formulas
-	 */
 	public List<Expr<? extends BoolType>> getFormulas() {
 		return formulas;
 	}
 
-	/**
-	 * Get the ID of the cluster
-	 *
-	 * @return ID of the cluster
-	 */
-	public int getId() {
-		return id;
+	public int getClusterId() {
+		return clusterId;
 	}
 
-	/**
-	 * Set the ID of the cluster
-	 *
-	 * @param id
-	 *            New ID of the cluster
-	 */
 	public void setId(final int id) {
-		this.id = id;
+		this.clusterId = id;
 	}
 
-	/**
-	 * Get the number of formulas
-	 *
-	 * @return Number of formulas
-	 */
 	public int getFormulaCount() {
 		return formulas.size();
 	}
 
 	@Override
 	public String toString() {
-		final StringBuilder ret = new StringBuilder("Cluster " + id + ": { Variables: {");
-		for (final VarDecl<? extends Type> var : variables) {
+		final StringBuilder ret = new StringBuilder("Cluster " + clusterId + ": { Variables: {");
+		for (final VarDecl<? extends Type> var : vars) {
 			ret.append(var.getName()).append(" ");
 		}
 		ret.append("}, Formulas: {");

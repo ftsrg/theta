@@ -11,9 +11,7 @@ import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
 
 /**
  * Represents a composite abstract state, which is a product of
- * ComponentAbstractStates
- *
- * @author Akos
+ * ComponentAbstractStates.
  */
 public class ClusteredAbstractState implements AbstractState {
 	private final ComponentAbstractState[] states;
@@ -21,28 +19,14 @@ public class ClusteredAbstractState implements AbstractState {
 	private final List<ClusteredAbstractState> successors;
 	private boolean isPartOfCounterexample;
 
-	/**
-	 * Constructor, state is not initial by default
-	 *
-	 * @param stateCount
-	 *            Number of contained states
-	 */
-	public ClusteredAbstractState(final int stateCount) {
-		this(stateCount, false);
+	public ClusteredAbstractState(final int containedStateCount) {
+		this(containedStateCount, false);
 	}
 
-	/**
-	 * Constructor
-	 *
-	 * @param stateCount
-	 *            Number of contained states
-	 * @param isInitial
-	 *            Is the state initial
-	 */
-	public ClusteredAbstractState(final int stateCount, final boolean isInitial) {
-		this.states = new ComponentAbstractState[stateCount];
+	public ClusteredAbstractState(final int containedStateCount, final boolean isInitial) {
+		this.states = new ComponentAbstractState[containedStateCount];
 		this.isInitial = isInitial;
-		this.successors = new ArrayList<ClusteredAbstractState>();
+		this.successors = new ArrayList<>();
 		this.isPartOfCounterexample = false;
 	}
 
@@ -51,11 +35,6 @@ public class ClusteredAbstractState implements AbstractState {
 		return isInitial;
 	}
 
-	/**
-	 * Get the list of states
-	 *
-	 * @return List of states
-	 */
 	public ComponentAbstractState[] getStates() {
 		return states;
 	}
@@ -70,12 +49,6 @@ public class ClusteredAbstractState implements AbstractState {
 		return isPartOfCounterexample;
 	}
 
-	/**
-	 * Set whether the state part of a counterexample
-	 *
-	 * @param isPartOfCounterexample
-	 *            Is the state part of a counterexample
-	 */
 	public void setPartOfCounterexample(final boolean isPartOfCounterexample) {
 		this.isPartOfCounterexample = isPartOfCounterexample;
 	}
@@ -112,11 +85,6 @@ public class ClusteredAbstractState implements AbstractState {
 		return ret.append("}").toString();
 	}
 
-	/**
-	 * Convert to a short string representation
-	 *
-	 * @return State as a short string
-	 */
 	public String toShortString() {
 		final StringBuilder ret = new StringBuilder("{");
 		for (int i = 0; i < states.length; ++i) {
@@ -134,11 +102,6 @@ public class ClusteredAbstractState implements AbstractState {
 		return Arrays.hashCode(states);
 	}
 
-	/**
-	 * Create string id
-	 *
-	 * @return String id
-	 */
 	public String createId() {
 		final StringBuilder ret = new StringBuilder("");
 		for (int i = 0; i < states.length; ++i) {

@@ -1,5 +1,7 @@
 package hu.bme.mit.inf.ttmc.cegar.clusteredcegar.steps;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Stack;
@@ -28,92 +30,85 @@ public class ClusteredChecker extends AbstractCEGARStep implements Checker<Clust
 
 	@Override
 	public AbstractResult<ClusteredAbstractState> check(final ClusteredAbstractSystem system) {
+		checkNotNull(system);
 		final Solver solver = system.getManager().getSolverFactory().createSolver(true, false);
 		final NotExpr negProp = system.getManager().getExprFactory().Not(system.getSTS().getProp());
 
-		final STSUnroller unroller = system.getUnroller(); // Create an unroller for k=1
+		final STSUnroller unroller = system.getUnroller();
 		// Store explored states in a map. The key and the value is the same state.
 		// This is required because when a new state is created, it is a different object
 		// and the original one can be retrieved from the map.
 		final Map<ClusteredAbstractState, ClusteredAbstractState> exploredStates = new HashMap<>();
 		Stack<ClusteredAbstractState> counterExample = null; // Store the counterexample (if found)
 
-		ClusteredAbstractState init; // Actual initial state
+		ClusteredAbstractState actualInit;
 		// Initialize backtracking array for initial states to [-1, 0, 0, ..., 0]
 		final int[] prevInit = new int[system.getAbstractKripkeStructures().size()];
 		prevInit[0] = -1;
 		for (int i = 1; i < prevInit.length; ++i)
 			prevInit[i] = 0;
 
-		// Count arcs and deleted arcs
 		int arcs = 0, deletedArcs = 0;
 
 		solver.push();
-		solver.add(unroller.inv(0)); // Assert invariants for k=0
+		solver.add(unroller.inv(0));
 
 		// Loop through each initial state and do a search
-		while ((init = getNextInitialState(system, prevInit)) != null && counterExample == null) {
+		while ((actualInit = getNextInitialState(system, prevInit)) != null && counterExample == null) {
 			if (isStopped)
 				return null;
 			// Check if the state is really initial
-			if (!checkInitial(init, solver, unroller))
+			if (!checkInit(actualInit, solver, unroller))
 				continue;
 			// Create stacks for backtracking
 			final Stack<ClusteredAbstractState> stateStack = new Stack<>();
 			final Stack<int[]> successorStack = new Stack<>();
 
-			logger.writeln("Initial state: " + init, 5);
-			if (!exploredStates.containsKey(init)) {
-				exploredStates.put(init, init);
+			logger.writeln("Initial state: " + actualInit, 5);
+			if (!exploredStates.containsKey(actualInit)) {
+				exploredStates.put(actualInit, actualInit);
 				// Initialize successor array to [-1, 0, 0, ..., 0]
 				final int[] ss = new int[system.getAbstractKripkeStructures().size()];
 				ss[0] = -1;
 				for (int i = 1; i < ss.length; ++i)
 					ss[i] = 0;
-				// Push to stack
-				stateStack.push(init);
+				stateStack.push(actualInit);
 				successorStack.push(ss);
 				// Check if the specification holds
-				if (checkState(init, negProp, solver, unroller)) {
+				if (checkProp(actualInit, negProp, solver, unroller)) {
 					logger.writeln("Counterexample reached!", 5, 1);
 					counterExample = stateStack;
 				}
 			}
 
-			// Loop until the stack is empty or a counterexample is found
 			while (!stateStack.empty() && counterExample == null) {
 				if (isStopped)
 					return null;
-				// Get the actual state
 				final ClusteredAbstractState actualState = stateStack.peek();
-				// Get the next successor of the actual state
 				final ClusteredAbstractState nextState = getNextSuccessor(actualState, successorStack.peek());
 
-				if (nextState != null) { // If it has one
+				if (nextState != null) {
 					// Check if it is really a successor using the solver
-					if (checkTransition(actualState, nextState, solver, unroller)) {
+					if (checkTrans(actualState, nextState, solver, unroller)) {
 						arcs++;
-						// If this state is not yet explored, process it
 						if (!exploredStates.containsKey(nextState)) {
 							logger.write("New state: ", 6, 1);
 							logger.writeln(nextState, 6, 0);
 							exploredStates.put(nextState, nextState);
-							// Add to the actual state as a successor
 							actualState.getSuccessors().add(nextState);
 							final int[] ss = new int[system.getAbstractKripkeStructures().size()];
 							ss[0] = -1;
 							for (int i = 1; i < ss.length; ++i)
 								ss[i] = 0;
-							// Push to stack
 							stateStack.push(nextState);
 							successorStack.push(ss);
 							// Check if the specification holds
-							if (checkState(nextState, negProp, solver, unroller)) {
+							if (checkProp(nextState, negProp, solver, unroller)) {
 								logger.writeln("Counterexample reached!", 5, 1);
 								counterExample = stateStack;
 								break;
 							}
-						} else { // If it is already explored
+						} else {
 							// Get the original instance and add to the actual as successor
 							actualState.getSuccessors().add(exploredStates.get(nextState));
 						}
@@ -137,7 +132,7 @@ public class ClusteredChecker extends AbstractCEGARStep implements Checker<Clust
 			// Mark states on the stack and print counterexample
 			for (final ClusteredAbstractState cas : counterExample) {
 				cas.setPartOfCounterexample(true);
-				logger.writeln(cas, 4, 1); // Print each state in the counterexample
+				logger.writeln(cas, 4, 1);
 			}
 			VisualizationHelper.visualizeCompositeAbstractKripkeStructure(exploredStates.keySet(), visualizer, 4);
 		} else {
@@ -149,18 +144,7 @@ public class ClusteredChecker extends AbstractCEGARStep implements Checker<Clust
 				: new AbstractResult<ClusteredAbstractState>(counterExample, null, exploredStates.size());
 	}
 
-	/**
-	 * Check if an expression is feasible for a state
-	 *
-	 * @param state
-	 *            State
-	 * @param expr
-	 *            Expression
-	 * @param unroller
-	 *            Unroller
-	 * @return True if the expression holds for the state, false otherwise
-	 */
-	private boolean checkState(final ClusteredAbstractState state, final Expr<? extends BoolType> expr, final Solver solver, final STSUnroller unroller) {
+	private boolean checkProp(final ClusteredAbstractState state, final Expr<? extends BoolType> expr, final Solver solver, final STSUnroller unroller) {
 		solver.push();
 		for (final ComponentAbstractState as : state.getStates())
 			SolverHelper.unrollAndAssert(solver, as.getLabels(), unroller, 0);
@@ -170,18 +154,7 @@ public class ClusteredChecker extends AbstractCEGARStep implements Checker<Clust
 		return ret;
 	}
 
-	/**
-	 * Check if a transition between two states is feasible
-	 *
-	 * @param s0
-	 *            From state
-	 * @param s1
-	 *            To state
-	 * @param unroller
-	 *            Unroller
-	 * @return True if there is a transition from s0 to s1, false otherwise
-	 */
-	private boolean checkTransition(final ClusteredAbstractState s0, final ClusteredAbstractState s1, final Solver solver, final STSUnroller unroller) {
+	private boolean checkTrans(final ClusteredAbstractState s0, final ClusteredAbstractState s1, final Solver solver, final STSUnroller unroller) {
 		solver.push();
 		for (final ComponentAbstractState as : s0.getStates())
 			SolverHelper.unrollAndAssert(solver, as.getLabels(), unroller, 0);
@@ -197,17 +170,7 @@ public class ClusteredChecker extends AbstractCEGARStep implements Checker<Clust
 		return ret;
 	}
 
-	/**
-	 * Check if a composite state is really initial. E.g. suppose that (x=0,y=0)
-	 * and (x=1,y=1) are initial states. Then in the cluster of x, both x=0 and
-	 * x=1 are initial states and similarly in the cluster of y, both y=0 and
-	 * y=1. However, the composition (x=0,y=1) is not initial.
-	 *
-	 * @param s
-	 * @param unroller
-	 * @return
-	 */
-	private boolean checkInitial(final ClusteredAbstractState s, final Solver solver, final STSUnroller unroller) {
+	private boolean checkInit(final ClusteredAbstractState s, final Solver solver, final STSUnroller unroller) {
 		solver.push();
 		for (final ComponentAbstractState as : s.getStates())
 			SolverHelper.unrollAndAssert(solver, as.getLabels(), unroller, 0);
