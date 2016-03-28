@@ -18,31 +18,23 @@ import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.sts.STSUnroller;
 import hu.bme.mit.inf.ttmc.formalism.utils.impl.FormalismUtils;
 
-public class CraigItpVarCollector extends AbstractCEGARStep implements IVarCollector {
+public class CraigItpVarCollector extends AbstractCEGARStep implements VarCollector {
 
-	/**
-	 * Initialize the step with a solver, logger and visualizer
-	 *
-	 * @param solver
-	 * @param logger
-	 * @param visualizer
-	 * @param interpolatingSolver
-	 */
 	public CraigItpVarCollector(final Logger logger, final Visualizer visualizer) {
 		super(logger, visualizer);
 	}
 
 	@Override
-	public Collection<VarDecl<? extends Type>> collectVariables(final VisibleAbstractSystem system, final List<VisibleAbstractState> abstractCounterEx,
+	public Collection<VarDecl<? extends Type>> collectVars(final VisibleAbstractSystem system, final List<VisibleAbstractState> abstractCounterEx,
 			final ConcreteTrace concreteTrace) {
 		final ItpSolver interpolatingSolver = system.getManager().getSolverFactory().createItpSolver();
 		final int traceLength = concreteTrace.size();
 		assert (traceLength < abstractCounterEx.size());
-		// Create pattern for a binary interpolant
+
 		final ItpMarker A = interpolatingSolver.createMarker();
 		final ItpMarker B = interpolatingSolver.createMarker();
 		final ItpPattern pattern = interpolatingSolver.createBinPattern(A, B);
-		// Create an unroller for the size of the trace
+
 		final STSUnroller unroller = system.getUnroller();
 
 		interpolatingSolver.push();

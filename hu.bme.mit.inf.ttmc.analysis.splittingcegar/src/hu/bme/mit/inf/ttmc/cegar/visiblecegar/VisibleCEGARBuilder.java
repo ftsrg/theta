@@ -1,9 +1,9 @@
 package hu.bme.mit.inf.ttmc.cegar.visiblecegar;
 
-import hu.bme.mit.inf.ttmc.cegar.common.GenericCEGARLoop;
 import hu.bme.mit.inf.ttmc.cegar.common.CEGARBuilder;
-import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.Visualizer;
+import hu.bme.mit.inf.ttmc.cegar.common.GenericCEGARLoop;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.NullVisualizer;
+import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.Visualizer;
 import hu.bme.mit.inf.ttmc.cegar.visiblecegar.data.VisibleAbstractState;
 import hu.bme.mit.inf.ttmc.cegar.visiblecegar.data.VisibleAbstractSystem;
 import hu.bme.mit.inf.ttmc.cegar.visiblecegar.steps.VisibleChecker;
@@ -11,9 +11,9 @@ import hu.bme.mit.inf.ttmc.cegar.visiblecegar.steps.VisibleConcretizer;
 import hu.bme.mit.inf.ttmc.cegar.visiblecegar.steps.VisibleInitializer;
 import hu.bme.mit.inf.ttmc.cegar.visiblecegar.steps.VisibleRefiner;
 import hu.bme.mit.inf.ttmc.cegar.visiblecegar.steps.refinement.CraigItpVarCollector;
-import hu.bme.mit.inf.ttmc.cegar.visiblecegar.steps.refinement.IVarCollector;
 import hu.bme.mit.inf.ttmc.cegar.visiblecegar.steps.refinement.SeqItpVarCollector;
 import hu.bme.mit.inf.ttmc.cegar.visiblecegar.steps.refinement.UnsatCoreVarCollector;
+import hu.bme.mit.inf.ttmc.cegar.visiblecegar.steps.refinement.VarCollector;
 import hu.bme.mit.inf.ttmc.cegar.visiblecegar.utils.VisibleCEGARDebugger;
 import hu.bme.mit.inf.ttmc.common.logging.Logger;
 import hu.bme.mit.inf.ttmc.common.logging.impl.NullLogger;
@@ -22,48 +22,29 @@ public class VisibleCEGARBuilder implements CEGARBuilder {
 	private Logger logger = new NullLogger();
 	private Visualizer visualizer = new NullVisualizer();
 	private boolean useCNFTransformation = false;
-	private VariableCollectionMethod varCollMethod = VariableCollectionMethod.CraigItp;
+	private VarCollectionMethod varCollMethod = VarCollectionMethod.CraigItp;
 	private VisibleCEGARDebugger debugger = null;
 
-	public enum VariableCollectionMethod {
+	public enum VarCollectionMethod {
 		CraigItp, SequenceItp, UnsatCore
 	};
 
-	/**
-	 * Set logger
-	 *
-	 * @param logger
-	 * @return Builder instance
-	 */
 	public VisibleCEGARBuilder logger(final Logger logger) {
 		this.logger = logger;
 		return this;
 	}
 
-	/**
-	 * Set visualizer
-	 *
-	 * @param visualizer
-	 * @return Builder instance
-	 */
 	public VisibleCEGARBuilder visualizer(final Visualizer visualizer) {
 		this.visualizer = visualizer;
 		return this;
 	}
 
-	/**
-	 * Set whether CNF transformation should be applied to the constraints
-	 *
-	 * @param useCNFTransformation
-	 *            True for CNF transformation, false otherwise
-	 * @return Builder instance
-	 */
 	public VisibleCEGARBuilder useCNFTransformation(final boolean useCNFTransformation) {
 		this.useCNFTransformation = useCNFTransformation;
 		return this;
 	}
 
-	public VisibleCEGARBuilder variableCollectionMethod(final VariableCollectionMethod method) {
+	public VisibleCEGARBuilder varCollectionMethod(final VarCollectionMethod method) {
 		this.varCollMethod = method;
 		return this;
 	}
@@ -76,14 +57,9 @@ public class VisibleCEGARBuilder implements CEGARBuilder {
 		return this;
 	}
 
-	/**
-	 * Build CEGAR loop instance
-	 *
-	 * @return CEGAR loop instance
-	 */
 	@Override
 	public GenericCEGARLoop<VisibleAbstractSystem, VisibleAbstractState> build() {
-		IVarCollector varCollector = null;
+		VarCollector varCollector = null;
 		switch (varCollMethod) {
 		case CraigItp:
 			varCollector = new CraigItpVarCollector(logger, visualizer);

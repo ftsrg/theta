@@ -20,14 +20,14 @@ import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.sts.STSUnroller;
 import hu.bme.mit.inf.ttmc.formalism.utils.impl.FormalismUtils;
 
-public class UnsatCoreVarCollector extends AbstractCEGARStep implements IVarCollector {
+public class UnsatCoreVarCollector extends AbstractCEGARStep implements VarCollector {
 
 	public UnsatCoreVarCollector(final Logger logger, final Visualizer visualizer) {
 		super(logger, visualizer);
 	}
 
 	@Override
-	public Collection<VarDecl<? extends Type>> collectVariables(final VisibleAbstractSystem system, final List<VisibleAbstractState> abstractCounterEx,
+	public Collection<VarDecl<? extends Type>> collectVars(final VisibleAbstractSystem system, final List<VisibleAbstractState> abstractCounterEx,
 			final ConcreteTrace concreteCounterEx) {
 
 		final Solver solver = system.getManager().getSolverFactory().createSolver(true, true);

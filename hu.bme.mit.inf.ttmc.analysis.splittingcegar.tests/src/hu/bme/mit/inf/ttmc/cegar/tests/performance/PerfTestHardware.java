@@ -11,7 +11,7 @@ import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.InterpolatingCEGARBuilder.In
 import hu.bme.mit.inf.ttmc.cegar.tests.formatters.ExcelFormatter;
 import hu.bme.mit.inf.ttmc.cegar.tests.formatters.IFormatter;
 import hu.bme.mit.inf.ttmc.cegar.visiblecegar.VisibleCEGARBuilder;
-import hu.bme.mit.inf.ttmc.cegar.visiblecegar.VisibleCEGARBuilder.VariableCollectionMethod;
+import hu.bme.mit.inf.ttmc.cegar.visiblecegar.VisibleCEGARBuilder.VarCollectionMethod;
 
 public class PerfTestHardware extends PerfTestBase {
 
@@ -44,11 +44,11 @@ public class PerfTestHardware extends PerfTestBase {
 		final List<CEGARBuilder> configurations = new ArrayList<CEGARBuilder>() {
 			{
 				add(new VisibleCEGARBuilder().logger(null).visualizer(null).useCNFTransformation(false)
-						.variableCollectionMethod(VariableCollectionMethod.CraigItp));
+						.varCollectionMethod(VarCollectionMethod.CraigItp));
 				add(new VisibleCEGARBuilder().logger(null).visualizer(null).useCNFTransformation(false)
-						.variableCollectionMethod(VariableCollectionMethod.SequenceItp));
+						.varCollectionMethod(VarCollectionMethod.SequenceItp));
 				add(new VisibleCEGARBuilder().logger(null).visualizer(null).useCNFTransformation(false)
-						.variableCollectionMethod(VariableCollectionMethod.UnsatCore));
+						.varCollectionMethod(VarCollectionMethod.UnsatCore));
 				add(new InterpolatingCEGARBuilder().logger(null).visualizer(null).interpolationMethod(InterpolationMethod.Craig).incrementalModelChecking(true)
 						.useCNFTransformation(false));
 				add(new InterpolatingCEGARBuilder().logger(null).visualizer(null).interpolationMethod(InterpolationMethod.Sequence)

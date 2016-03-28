@@ -10,63 +10,36 @@ import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 
 /**
  * Represents the visibility-based abstract system.
- *
- * @author Akos
  */
 public class VisibleAbstractSystem extends AbstractSystemBase {
-	private final Set<VarDecl<? extends Type>> visibleVariables;
-	private final Set<VarDecl<? extends Type>> invisibleVariables;
-	private final Set<VarDecl<? extends Type>> cnfVariables;
+	private final Set<VarDecl<? extends Type>> visibleVars;
+	private final Set<VarDecl<? extends Type>> invisibleVars;
+	private final Set<VarDecl<? extends Type>> cnfVars;
 
-	/**
-	 * Constructor
-	 *
-	 * @param problem
-	 *            Problem
-	 */
 	public VisibleAbstractSystem(final STS system) {
 		super(system);
-		visibleVariables = new HashSet<>();
-		invisibleVariables = new HashSet<>();
-		cnfVariables = new HashSet<>();
+		visibleVars = new HashSet<>();
+		invisibleVars = new HashSet<>();
+		cnfVars = new HashSet<>();
 	}
 
-	/**
-	 * Get the list of visible variables
-	 *
-	 * @return List of visible variables
-	 */
-	public Set<VarDecl<? extends Type>> getVisibleVariables() {
-		return visibleVariables;
+	public Set<VarDecl<? extends Type>> getVisibleVars() {
+		return visibleVars;
 	}
 
-	/**
-	 * Get the list of invisible variables
-	 *
-	 * @return List of invisible variables
-	 */
-	public Set<VarDecl<? extends Type>> getInvisibleVariables() {
-		return invisibleVariables;
+	public Set<VarDecl<? extends Type>> getInvisibleVars() {
+		return invisibleVars;
 	}
 
-	/**
-	 * Get the list of variables introduced by the CNF (Tseitin) transformation
-	 *
-	 * @return List of CNF variables
-	 */
-	public Set<VarDecl<? extends Type>> getCNFVariables() {
-		return this.cnfVariables;
+	public Set<VarDecl<? extends Type>> getCNFVars() {
+		return this.cnfVars;
 	}
 
-	/**
-	 * Make a previously invisible variable visible
-	 *
-	 * @param variable
-	 */
-	public void makeVisible(final VarDecl<? extends Type> variable) {
-		if (invisibleVariables.remove(variable)) {
-			visibleVariables.add(variable);
-		} else
-			throw new RuntimeException("Variable " + variable + " could not be made visible because it was not found.");
+	public void makeVisible(final VarDecl<? extends Type> var) {
+		if (invisibleVars.remove(var)) {
+			visibleVars.add(var);
+		} else {
+			throw new RuntimeException("Variable " + var + " could not be made visible because it was not found.");
+		}
 	}
 }
