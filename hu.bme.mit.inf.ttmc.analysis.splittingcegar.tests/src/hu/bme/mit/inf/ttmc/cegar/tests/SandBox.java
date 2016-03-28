@@ -7,8 +7,8 @@ import java.util.List;
 import org.junit.Test;
 
 import hu.bme.mit.inf.ttmc.aiger.impl.AIGERLoaderSimple;
-import hu.bme.mit.inf.ttmc.cegar.common.CEGARResult;
 import hu.bme.mit.inf.ttmc.cegar.common.CEGARLoop;
+import hu.bme.mit.inf.ttmc.cegar.common.CEGARResult;
 import hu.bme.mit.inf.ttmc.cegar.common.data.AbstractState;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.GraphVizVisualizer;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.Visualizer;
@@ -76,7 +76,7 @@ public class SandBox {
 				ops.add(as.createExpression(manager));
 			}
 
-			System.out.println(InvariantChecker.check(result.getAbstractSystem().getUnroller(), result.getSTS(), manager, manager.getExprFactory().Or(ops)));
+			System.out.println(InvariantChecker.check(result.getSTS(), result.getAbstractSystem().getUnroller(), manager.getExprFactory().Or(ops)));
 		}
 	}
 }

@@ -13,7 +13,7 @@ import hu.bme.mit.inf.ttmc.aiger.impl.AIGERLoaderSimple;
 import hu.bme.mit.inf.ttmc.cegar.common.CEGARResult;
 import hu.bme.mit.inf.ttmc.cegar.common.CEGARBuilder;
 import hu.bme.mit.inf.ttmc.cegar.common.CEGARLoop;
-import hu.bme.mit.inf.ttmc.cegar.tests.formatters.IFormatter;
+import hu.bme.mit.inf.ttmc.cegar.tests.formatters.Formatter;
 import hu.bme.mit.inf.ttmc.constraint.z3.Z3ConstraintManager;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
@@ -22,7 +22,7 @@ import hu.bme.mit.inf.ttmc.system.ui.SystemModelCreator;
 import hu.bme.mit.inf.ttmc.system.ui.SystemModelLoader;
 
 public class PerfTestBase {
-	protected void run(final List<TestCase> testCases, final List<CEGARBuilder> configurations, final int timeOut, final IFormatter formatter) {
+	protected void run(final List<TestCase> testCases, final List<CEGARBuilder> configurations, final int timeOut, final Formatter formatter) {
 		boolean allOk = true;
 
 		final TestResult[][] results = new TestResult[testCases.size()][configurations.size()];
