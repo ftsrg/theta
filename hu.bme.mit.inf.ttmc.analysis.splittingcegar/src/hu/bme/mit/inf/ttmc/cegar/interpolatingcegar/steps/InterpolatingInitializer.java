@@ -29,41 +29,19 @@ import hu.bme.mit.inf.ttmc.formalism.sts.STSUnroller;
 import hu.bme.mit.inf.ttmc.formalism.utils.sts.impl.STSCNFTransformation;
 import hu.bme.mit.inf.ttmc.formalism.utils.sts.impl.STSITETransformation;
 
-/**
- * Initial abstraction creator step.
- *
- * @author Akos
- */
 public class InterpolatingInitializer extends AbstractCEGARStep implements Initializer<InterpolatedAbstractSystem> {
 
 	private final boolean collectFromConditions, collectFromSpecification;
 	private final boolean useCNFTransformation;
-	private final Set<String> explicitVariableNames; // List of explicitly tracked variables
+	private final Set<String> explicitVarNames;
 
-	/**
-	 * Initialize the step with a solver, logger, visualizer and collection
-	 * parameters
-	 *
-	 * @param solver
-	 * @param logger
-	 * @param visualizer
-	 * @param collectFromConditions
-	 *            Should the initial predicates be collected from the conditions
-	 * @param collectFromSpecification
-	 *            Should the initial predicates be collected from the
-	 *            specification
-	 * @param useCNFTransformation
-	 *            Should the constraints be transformed into CNF form
-	 * @param explicitVariables
-	 *            List of explicitly tracked variables
-	 */
 	public InterpolatingInitializer(final Logger logger, final Visualizer visualizer, final boolean collectFromConditions,
 			final boolean collectFromSpecification, final boolean useCNFTransformation, final Collection<String> explicitVariables) {
 		super(logger, visualizer);
 		this.collectFromConditions = collectFromConditions;
 		this.collectFromSpecification = collectFromSpecification;
 		this.useCNFTransformation = useCNFTransformation;
-		this.explicitVariableNames = new HashSet<>(explicitVariables);
+		this.explicitVarNames = new HashSet<>(explicitVariables);
 	}
 
 	@Override
@@ -80,8 +58,8 @@ public class InterpolatingInitializer extends AbstractCEGARStep implements Initi
 		}
 		logger.writeln(2);
 
-		logger.write("Explicitly tracked [" + explicitVariableNames.size() + "]:", 2);
-		for (final String varName : explicitVariableNames)
+		logger.write("Explicitly tracked [" + explicitVarNames.size() + "]:", 2);
+		for (final String varName : explicitVarNames)
 			logger.write(" " + varName, 2);
 		logger.writeln(2);
 
@@ -89,7 +67,7 @@ public class InterpolatingInitializer extends AbstractCEGARStep implements Initi
 
 		// Check explicitly tracked variables
 		int variablesNotFound = 0; // Count not found variables for assertion
-		for (final String varName : explicitVariableNames) {
+		for (final String varName : explicitVarNames) {
 			if (!varMap.containsKey(varName)) {
 				logger.writeln("Warning: variable '" + varName + "' does not exist.", 0);
 				++variablesNotFound;
@@ -98,7 +76,7 @@ public class InterpolatingInitializer extends AbstractCEGARStep implements Initi
 			}
 		}
 
-		assert (explicitVariableNames.size() == variablesNotFound + explicitVars.size());
+		assert (explicitVarNames.size() == variablesNotFound + explicitVars.size());
 
 		// Set ensures uniqueness
 		final Set<Expr<? extends BoolType>> initialPredSet = new HashSet<>();
@@ -254,15 +232,6 @@ public class InterpolatingInitializer extends AbstractCEGARStep implements Initi
 		return system;
 	}
 
-	/**
-	 * Helper function for checking whether a state is feasible
-	 *
-	 * @param s
-	 *            State
-	 * @param unroller
-	 *            System unroller
-	 * @return True if the state is feasible, false otherwise
-	 */
 	private boolean isStateFeasible(final InterpolatedAbstractState s, final Solver solver, final STSUnroller unroller) {
 		solver.push();
 		SolverHelper.unrollAndAssert(solver, s.getLabels(), unroller, 0);
@@ -271,15 +240,6 @@ public class InterpolatingInitializer extends AbstractCEGARStep implements Initi
 		return ret;
 	}
 
-	/**
-	 * Helper function for checking whether a state is initial
-	 *
-	 * @param s
-	 *            State
-	 * @param unroller
-	 *            System unroller
-	 * @return True if the state is initial, false otherwise
-	 */
 	private boolean isStateInitial(final InterpolatedAbstractState s, final Solver solver, final STSUnroller unroller) {
 		solver.push();
 		SolverHelper.unrollAndAssert(solver, s.getLabels(), unroller, 0);
@@ -289,19 +249,6 @@ public class InterpolatingInitializer extends AbstractCEGARStep implements Initi
 		return ret;
 	}
 
-	/**
-	 * Helper function for checking whether a transition is present between s0
-	 * and s1
-	 *
-	 * @param s0
-	 *            From state
-	 * @param s1
-	 *            To state
-	 * @param unroller
-	 *            System unroller
-	 * @return True if a transition is present between s0 and s1, false
-	 *         otherwise
-	 */
 	private boolean isTransitionFeasible(final InterpolatedAbstractState s0, final InterpolatedAbstractState s1, final Solver solver,
 			final STSUnroller unroller) {
 		solver.push();
@@ -323,8 +270,8 @@ public class InterpolatingInitializer extends AbstractCEGARStep implements Initi
 			tokens.add("collectFromSpec");
 		if (useCNFTransformation)
 			tokens.add("CNF");
-		if (explicitVariableNames.size() > 0)
-			tokens.add("explicit(" + String.join(",", explicitVariableNames) + ")");
+		if (explicitVarNames.size() > 0)
+			tokens.add("explicit(" + String.join(",", explicitVarNames) + ")");
 		return String.join(",", tokens);
 	}
 }

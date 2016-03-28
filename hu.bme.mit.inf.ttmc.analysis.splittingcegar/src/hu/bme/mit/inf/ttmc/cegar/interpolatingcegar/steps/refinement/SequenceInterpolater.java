@@ -24,7 +24,7 @@ import hu.bme.mit.inf.ttmc.formalism.sts.STSUnroller;
  *
  * @author Akos
  */
-public class SequenceInterpolater extends AbstractCEGARStep implements IInterpolater {
+public class SequenceInterpolater extends AbstractCEGARStep implements Interpolater {
 
 	/**
 	 * Initialize the interpolater with a solver, logger and visualizer

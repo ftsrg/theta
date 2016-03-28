@@ -18,29 +18,15 @@ import hu.bme.mit.inf.ttmc.constraint.expr.NotExpr;
 import hu.bme.mit.inf.ttmc.constraint.solver.Solver;
 import hu.bme.mit.inf.ttmc.formalism.sts.STSUnroller;
 
-/**
- * Model checking (explicit) step.
- *
- * @author Akos
- */
 public class InterpolatingChecker extends AbstractCEGARStep implements Checker<InterpolatedAbstractSystem, InterpolatedAbstractState> {
 
-	private final boolean isIncremental; // Is model checking incremental
-	private int actualInit; // The actual initial state where the search is going from
-	private final Set<InterpolatedAbstractState> exploredStates; // Already explored states
+	private final boolean isIncremental;
+	private int actualInit;
+	private final Set<InterpolatedAbstractState> exploredStates;
 	// Stacks for backtracking
-	private final Stack<InterpolatedAbstractState> stateStack; // States
-	private final Stack<Integer> successorStack; // Next successor of states
+	private final Stack<InterpolatedAbstractState> stateStack;
+	private final Stack<Integer> successorStack;
 
-	/**
-	 * Initialize the step with a solver, logger and visualizer
-	 *
-	 * @param solver
-	 * @param logger
-	 * @param visualizer
-	 * @param isIncremental
-	 *            Is model checking incremental
-	 */
 	public InterpolatingChecker(final Logger logger, final Visualizer visualizer, final boolean isIncremental) {
 		super(logger, visualizer);
 		this.isIncremental = isIncremental;
@@ -56,10 +42,9 @@ public class InterpolatingChecker extends AbstractCEGARStep implements Checker<I
 		// Get the index of the previously splitted state, or -1 at first call
 		final int splitIndex = system.getPreviousSplitIndex();
 
-		// Get the negate of the inner expression of G(...)
-		final NotExpr negSpec = system.getManager().getExprFactory().Not(system.getSTS().getProp());
+		final NotExpr negProp = system.getManager().getExprFactory().Not(system.getSTS().getProp());
 
-		final STSUnroller unroller = system.getUnroller(); // Create an unroller for k=0
+		final STSUnroller unroller = system.getUnroller();
 		Stack<InterpolatedAbstractState> counterExample = null; // Store the counterexample (if found)
 
 		final int stateSpaceInitialSize = exploredStates.size();
@@ -99,7 +84,7 @@ public class InterpolatingChecker extends AbstractCEGARStep implements Checker<I
 
 		solver.push();
 		solver.add(unroller.inv(0)); // Assert invariants
-		solver.add(unroller.unroll(negSpec, 0)); // Assert the negate of the specification
+		solver.add(unroller.unroll(negProp, 0)); // Assert the negate of the specification
 
 		// Flag for storing whether the actual search is a continuation from a previous
 		// model checking round. It is true for the first search from an initial state,
@@ -197,15 +182,6 @@ public class InterpolatingChecker extends AbstractCEGARStep implements Checker<I
 				: new AbstractResult<InterpolatedAbstractState>(counterExample, null, exploredStates.size() - stateSpaceSizeAfterClear);
 	}
 
-	/**
-	 * Helper functon for checking whether the predicates of a state hold
-	 *
-	 * @param s
-	 *            State
-	 * @param unroller
-	 *            Unroller
-	 * @return True if the predicates hold, false otherwise
-	 */
 	private boolean checkState(final InterpolatedAbstractState s, final Solver solver, final STSUnroller unroller) {
 		solver.push();
 		SolverHelper.unrollAndAssert(solver, s.getLabels(), unroller, 0);

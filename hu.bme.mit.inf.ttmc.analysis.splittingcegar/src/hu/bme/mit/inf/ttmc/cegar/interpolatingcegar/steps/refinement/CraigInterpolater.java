@@ -17,21 +17,8 @@ import hu.bme.mit.inf.ttmc.constraint.solver.ItpSolver;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.formalism.sts.STSUnroller;
 
-/**
- * Calculate binary interpolant using Craig's interpolants.
- *
- * @author Akos
- */
-public class CraigInterpolater extends AbstractCEGARStep implements IInterpolater {
+public class CraigInterpolater extends AbstractCEGARStep implements Interpolater {
 
-	/**
-	 * Initialize the interpolater with a solver, logger and visualizer
-	 *
-	 * @param solver
-	 * @param logger
-	 * @param visualizer
-	 * @param interpolatingSolver
-	 */
 	public CraigInterpolater(final Logger logger, final Visualizer visualizer) {
 		super(logger, visualizer);
 	}
@@ -42,12 +29,10 @@ public class CraigInterpolater extends AbstractCEGARStep implements IInterpolate
 		final ItpSolver interpolatingSolver = system.getManager().getSolverFactory().createItpSolver();
 		final int traceLength = concreteTrace.getTrace().size();
 
-		// Create pattern for a binary interpolant
 		final ItpMarker A = interpolatingSolver.createMarker();
 		final ItpMarker B = interpolatingSolver.createMarker();
 		final ItpPattern pattern = interpolatingSolver.createBinPattern(A, B);
 
-		// Create an unroller for the size of the trace + 1
 		final STSUnroller unroller = system.getUnroller();
 
 		interpolatingSolver.push();
@@ -81,7 +66,7 @@ public class CraigInterpolater extends AbstractCEGARStep implements IInterpolate
 		final Expr<? extends BoolType> interpolant = unroller.foldin(interpolatingSolver.getInterpolant(pattern).eval(A), traceLength - 1);
 
 		interpolatingSolver.pop();
-		return new Interpolant(interpolant, traceLength - 1, system.getManager()); // Return binary interpolant
+		return new Interpolant(interpolant, traceLength - 1, system.getManager());
 	}
 
 	@Override
