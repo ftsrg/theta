@@ -9,15 +9,15 @@ import hu.bme.mit.inf.ttmc.cegar.clusteredcegar.ClusteredCEGARBuilder;
 import hu.bme.mit.inf.ttmc.cegar.common.CEGARBuilder;
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.InterpolatingCEGARBuilder;
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.InterpolatingCEGARBuilder.InterpolationMethod;
-import hu.bme.mit.inf.ttmc.cegar.tests.formatters.ExcelFormatter;
-import hu.bme.mit.inf.ttmc.cegar.tests.formatters.IFormatter;
+import hu.bme.mit.inf.ttmc.cegar.tests.formatters.Formatter;
+import hu.bme.mit.inf.ttmc.cegar.tests.formatters.impl.ExcelFormatter;
 import hu.bme.mit.inf.ttmc.cegar.visiblecegar.VisibleCEGARBuilder;
 import hu.bme.mit.inf.ttmc.cegar.visiblecegar.VisibleCEGARBuilder.VarCollectionMethod;
 
 public class PerfTestSimple extends PerfTestBase {
 
 	private static final int TIMEOUT = 10 * 1000;
-	private static final IFormatter FORMATTER = new ExcelFormatter();
+	private static final Formatter FORMATTER = new ExcelFormatter();
 
 	@SuppressWarnings("serial")
 	@Test

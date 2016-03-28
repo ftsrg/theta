@@ -1,6 +1,8 @@
-package hu.bme.mit.inf.ttmc.cegar.tests.formatters;
+package hu.bme.mit.inf.ttmc.cegar.tests.formatters.impl;
 
-public class ExcelFormatter implements IFormatter {
+import hu.bme.mit.inf.ttmc.cegar.tests.formatters.Formatter;
+
+public class ExcelFormatter implements Formatter {
 	
 	boolean isFirstCell = true;
 

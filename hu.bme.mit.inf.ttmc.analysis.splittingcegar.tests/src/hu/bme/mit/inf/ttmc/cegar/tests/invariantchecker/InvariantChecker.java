@@ -9,7 +9,8 @@ import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
 import hu.bme.mit.inf.ttmc.formalism.sts.STSUnroller;
 
 public class InvariantChecker {
-	public static boolean check(final STSUnroller unroller, final STS system, final STSManager manager, final Expr<? extends BoolType> invariant) {
+	public static boolean check(final STS system, final STSUnroller unroller, final Expr<? extends BoolType> invariant) {
+		final STSManager manager = system.getManager();
 		final Solver solver = manager.getSolverFactory().createSolver(true, true);
 
 		solver.push();
