@@ -2,17 +2,17 @@ package hu.bme.mit.inf.ttmc.formalism.common.stmt.impl;
 
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.SkipStmt;
 
-public class SkipStmtImpl extends AbstractStmt implements SkipStmt {
-	
-	private final static int HASHCODE = 1310147;
-	
+public final class SkipStmtImpl extends AbstractStmt implements SkipStmt {
+
+	private final static int HASH_CODE = 1310147;
+
 	@Override
 	public int hashCode() {
-		return HASHCODE;
+		return HASH_CODE;
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		} else if (obj == null) {
@@ -28,5 +28,5 @@ public class SkipStmtImpl extends AbstractStmt implements SkipStmt {
 	public String toString() {
 		return "Skip";
 	}
-	
+
 }

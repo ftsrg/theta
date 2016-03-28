@@ -97,13 +97,14 @@ public abstract class AbstractFuncType<ParamType extends Type, ResultType extend
 
 	@Override
 	public final int hashCode() {
-		if (hashCode == 0) {
-			hashCode = HASH_SEED;
-			hashCode = 31 * hashCode + paramType.hashCode();
-			hashCode = 31 * hashCode + resultType.hashCode();
+		int result = hashCode;
+		if (result == 0) {
+			result = HASH_SEED;
+			result = 31 * result + paramType.hashCode();
+			result = 31 * result + resultType.hashCode();
+			hashCode = result;
 		}
-
-		return hashCode;
+		return result;
 	}
 
 	@Override

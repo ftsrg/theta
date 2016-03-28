@@ -1,0 +1,17 @@
+specification Test {
+	
+	procedure main() : unit {
+		var b : integer := 0;
+		var i : integer := 0;
+		var break : boolean := false;
+		
+		while not break do {
+			if (i > 9) then
+				break := true;
+			else
+				i := i+1;
+		}
+		assert b = 0 and i = 10;
+	}
+	
+}

@@ -10,7 +10,8 @@ import com.google.common.collect.ImmutableList;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.model.Expression;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
-import hu.bme.mit.inf.ttmc.constraint.ui.TypeHelper;
+import hu.bme.mit.inf.ttmc.constraint.ui.transform.DeclTransformator;
+import hu.bme.mit.inf.ttmc.constraint.ui.transform.ExprTransformator;
 import hu.bme.mit.inf.ttmc.constraint.utils.impl.ExprUtils;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
@@ -24,6 +25,7 @@ import hu.bme.mit.inf.ttmc.system.model.SystemDefinition;
 import hu.bme.mit.inf.ttmc.system.model.SystemSpecification;
 import hu.bme.mit.inf.ttmc.system.model.TransitionConstraintDefinition;
 import hu.bme.mit.inf.ttmc.system.model.VariableDeclaration;
+import hu.bme.mit.inf.ttmc.system.ui.transform.impl.SystemTransformationManager;
 
 public class SystemModelCreator {
 
@@ -33,36 +35,44 @@ public class SystemModelCreator {
 
 		final Collection<STS> stss = new ArrayList<>();
 
-		final TypeHelper typeHelper = new TypeHelper(manager.getTypeFactory());
-		final SystemDeclarationHelper declarationHelper = new SystemDeclarationHelper(manager.getDeclFactory(), typeHelper);
-		final SystemExpressionHelper expressionHelper = new SystemExpressionHelper(manager, declarationHelper);
+		final SystemTransformationManager tManager = new SystemTransformationManager(manager);
 
 		for (final PropertyDeclaration propertyDeclaration : specification.getPropertyDeclarations()) {
 			final SystemDefinition systemDefinition = (SystemDefinition) propertyDeclaration.getSystem();
-			final STS sts = createSTS(manager, systemDefinition, propertyDeclaration.getExpression(), declarationHelper, expressionHelper);
+			final STS sts = createSTS(systemDefinition, propertyDeclaration.getExpression(), manager, tManager);
+
 			stss.add(sts);
 		}
 
 		return new SystemModelImpl(stss);
 	}
 
-	private static STS createSTS(final STSManager manager, final SystemDefinition systemDefinition, final Expression prop,
-			final SystemDeclarationHelper declarationHelper, final SystemExpressionHelper expressionHelper) {
+	private static STS createSTS(final SystemDefinition systemDefinition, final Expression prop,
+			final STSManager manager, final SystemTransformationManager tManager) {
+
+		final DeclTransformator dt = tManager.getDeclTransformator();
+		final ExprTransformator et = tManager.getExprTransformator();
+
 		final STSImpl.Builder builder = new STSImpl.Builder(manager);
+
 		if (prop instanceof GloballyExpression) {
-			builder.setProp(ExprUtils.cast(expressionHelper.toExpr(((GloballyExpression) prop).getOperand()), BoolType.class));
+			builder.setProp(ExprUtils.cast(et.transform(((GloballyExpression) prop).getOperand()), BoolType.class));
+
 		} else {
-			throw new UnsupportedOperationException(
-					"Currently only expressions in the form of" + " G(expr) are supported, where 'expr' contains no temporal operators.");
+			throw new UnsupportedOperationException("Currently only expressions in the form of"
+					+ " G(expr) are supported, where 'expr' contains no temporal operators.");
 		}
 
 		for (final VariableDeclaration variableDeclaration : systemDefinition.getVariableDeclarations()) {
 			// declarationHelper stores the created variables internally
-			declarationHelper.toDecl(variableDeclaration);
+			dt.transform(variableDeclaration);
 		}
 
 		for (final SystemConstraintDefinition constraintDef : systemDefinition.getSystemConstraintDefinitions()) {
-			final Expr<? extends BoolType> expr = ExprUtils.cast(expressionHelper.toExpr(constraintDef.getExpression()), BoolType.class);
+
+			final Expr<? extends BoolType> expr = ExprUtils.cast(et.transform(constraintDef.getExpression()),
+					BoolType.class);
+
 			if (constraintDef instanceof InitialConstraintDefinition)
 				builder.addInit(expr);
 			if (constraintDef instanceof InvariantConstraintDefinition)

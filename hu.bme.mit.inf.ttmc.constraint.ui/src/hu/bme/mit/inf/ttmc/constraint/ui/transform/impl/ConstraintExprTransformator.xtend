@@ -1,4 +1,4 @@
-package hu.bme.mit.inf.ttmc.constraint.ui
+package hu.bme.mit.inf.ttmc.constraint.ui.transform.impl
 
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr
 import hu.bme.mit.inf.ttmc.constraint.factory.ExprFactory
@@ -40,150 +40,159 @@ import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderMul
 import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderNeg
 import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderSub
 import hu.bme.mit.inf.ttmc.constraint.utils.impl.ExprUtils
-import hu.bme.mit.inf.ttmc.constraint.ConstraintManager
+import hu.bme.mit.inf.ttmc.constraint.ui.transform.ExprTransformator
+import hu.bme.mit.inf.ttmc.constraint.ui.transform.TransformationManager
+import hu.bme.mit.inf.ttmc.constraint.ui.transform.DeclTransformator
 
-public class ExpressionHelper {
+public class ConstraintExprTransformator implements ExprTransformator {
+
+	private val extension ExprFactory exprFactory
 	
-	protected val extension ExprFactory exprFactory;
-	protected val extension DeclarationHelper declarationHelper;
+	private val extension DeclTransformator df
+	
+	public new(TransformationManager manager, ExprFactory exprFactory) {
+		this.exprFactory = exprFactory
+		df = manager.declTransformator
+	}
 		
-	public new(ConstraintManager manager, DeclarationHelper declarationHelper) {
-		this.exprFactory = manager.getExprFactory
-		this.declarationHelper = declarationHelper
+	////
+		
+	override transform(Expression expression) {
+		return expression.toExpr
 	}
 	
+	////
 	
-	/////
-	public def dispatch Expr<? extends Type> toExpr(Expression expression) {
+	protected def dispatch Expr<? extends Type> toExpr(Expression expression) {
 		throw new UnsupportedOperationException("Not supported: " + expression.class)
 	}
 
-	public def dispatch Expr<? extends Type> toExpr(TrueExpression expression) {
+	protected def dispatch Expr<? extends Type> toExpr(TrueExpression expression) {
 		True
 	}
 
-	public def dispatch Expr<? extends Type> toExpr(FalseExpression expression) {
+	protected def dispatch Expr<? extends Type> toExpr(FalseExpression expression) {
 		False
 	}
 
-	public def dispatch Expr<? extends Type> toExpr(IntegerLiteralExpression expression) {
+	protected def dispatch Expr<? extends Type> toExpr(IntegerLiteralExpression expression) {
 		val value = expression.value.longValueExact
 		Int(value)
 	}
 
-	public def dispatch Expr<? extends Type> toExpr(RationalLiteralExpression expression) {
+	protected def dispatch Expr<? extends Type> toExpr(RationalLiteralExpression expression) {
 		val num = expression.numerator.longValueExact
 		val denom = expression.denominator.longValueExact
 		Rat(num, denom)
 	}
 
-	public def dispatch Expr<? extends Type> toExpr(DecimalLiteralExpression expression) {
+	protected def dispatch Expr<? extends Type> toExpr(DecimalLiteralExpression expression) {
 		throw new UnsupportedOperationException("ToDo")
 	}
 
-	public def dispatch Expr<? extends Type> toExpr(AddExpression expression) {
+	protected def dispatch Expr<? extends Type> toExpr(AddExpression expression) {
 		val ops = expression.operands.map[ExprUtils.cast(toExpr, ClosedUnderAdd)]
 		Add(ops)
 	}
 
-	public def dispatch Expr<? extends Type> toExpr(MultiplyExpression expression) {
+	protected def dispatch Expr<? extends Type> toExpr(MultiplyExpression expression) {
 		val ops = expression.operands.map[ExprUtils.cast(toExpr, ClosedUnderMul)]
 		Mul(ops)
 	}
 
-	public def dispatch Expr<? extends Type> toExpr(UnaryMinusExpression expression) {
+	protected def dispatch Expr<? extends Type> toExpr(UnaryMinusExpression expression) {
 		val op = ExprUtils.cast(expression.operand.toExpr, ClosedUnderNeg)
 		Neg(op)
 	}
 
-	public def dispatch Expr<? extends Type> toExpr(SubtractExpression expression) {
+	protected def dispatch Expr<? extends Type> toExpr(SubtractExpression expression) {
 		val leftOp = ExprUtils.cast(expression.leftOperand.toExpr, ClosedUnderSub)
 		val rightOp = ExprUtils.cast(expression.rightOperand.toExpr, ClosedUnderSub)
 		Sub(leftOp, rightOp)
 	}
 
-	public def dispatch Expr<? extends Type> toExpr(DivideExpression expression) {
+	protected def dispatch Expr<? extends Type> toExpr(DivideExpression expression) {
 		val leftOp = ExprUtils.cast(expression.leftOperand.toExpr, RatType)
 		val rightOp = ExprUtils.cast(expression.rightOperand.toExpr, RatType)
 		RatDiv(leftOp, rightOp)
 	}
 
-	public def dispatch Expr<? extends Type> toExpr(DivExpression expression) {
+	protected def dispatch Expr<? extends Type> toExpr(DivExpression expression) {
 		val leftOp = ExprUtils.cast(expression.leftOperand.toExpr, IntType)
 		val rightOp = ExprUtils.cast(expression.rightOperand.toExpr, IntType)
 		IntDiv(leftOp, rightOp)
 	}
 
-	public def dispatch Expr<? extends Type> toExpr(ModExpression expression) {
+	protected def dispatch Expr<? extends Type> toExpr(ModExpression expression) {
 		val leftOp = ExprUtils.cast(expression.leftOperand.toExpr, IntType)
 		val rightOp = ExprUtils.cast(expression.rightOperand.toExpr, IntType)
 		IntDiv(leftOp, rightOp)
 	}
 
-	public def dispatch Expr<? extends Type> toExpr(EqualityExpression expression) {
+	protected def dispatch Expr<? extends Type> toExpr(EqualityExpression expression) {
 		val leftOp = expression.leftOperand.toExpr
 		val rightOp = expression.rightOperand.toExpr
 		Eq(leftOp, rightOp)
 	}
 
-	public def dispatch Expr<? extends Type> toExpr(InequalityExpression expression) {
+	protected def dispatch Expr<? extends Type> toExpr(InequalityExpression expression) {
 		val leftOp = expression.leftOperand.toExpr
 		val rightOp = expression.rightOperand.toExpr
 		Neq(leftOp, rightOp)
 	}
 
-	public def dispatch Expr<? extends Type> toExpr(LessExpression expression) {
+	protected def dispatch Expr<? extends Type> toExpr(LessExpression expression) {
 		val leftOp = ExprUtils.cast(expression.leftOperand.toExpr, RatType)
 		val rightOp = ExprUtils.cast(expression.rightOperand.toExpr, RatType)
 		Lt(leftOp, rightOp)
 	}
 
-	public def dispatch Expr<? extends Type> toExpr(LessEqualExpression expression) {
+	protected def dispatch Expr<? extends Type> toExpr(LessEqualExpression expression) {
 		val leftOp = ExprUtils.cast(expression.leftOperand.toExpr, RatType)
 		val rightOp = ExprUtils.cast(expression.rightOperand.toExpr, RatType)
 		Leq(leftOp, rightOp)
 	}
 
-	public def dispatch Expr<? extends Type> toExpr(GreaterExpression expression) {
+	protected def dispatch Expr<? extends Type> toExpr(GreaterExpression expression) {
 		val leftOp = ExprUtils.cast(expression.leftOperand.toExpr, RatType)
 		val rightOp = ExprUtils.cast(expression.rightOperand.toExpr, RatType)
 		Gt(leftOp, rightOp)
 	}
 
-	public def dispatch Expr<? extends Type> toExpr(GreaterEqualExpression expression) {
+	protected def dispatch Expr<? extends Type> toExpr(GreaterEqualExpression expression) {
 		val leftOp = ExprUtils.cast(expression.leftOperand.toExpr, RatType)
 		val rightOp = ExprUtils.cast(expression.rightOperand.toExpr, RatType)
 		Geq(leftOp, rightOp)
 	}
 
-	public def dispatch Expr<? extends Type> toExpr(NotExpression expression) {
+	protected def dispatch Expr<? extends Type> toExpr(NotExpression expression) {
 		val op = ExprUtils.cast(expression.operand.toExpr, BoolType)
 		Not(op)
 	}
 
-	public def dispatch Expr<? extends Type> toExpr(ImplyExpression expression) {
+	protected def dispatch Expr<? extends Type> toExpr(ImplyExpression expression) {
 		val leftOp = ExprUtils.cast(expression.leftOperand.toExpr, BoolType)
 		val rightOp = ExprUtils.cast(expression.rightOperand.toExpr, BoolType)
 		Imply(leftOp, rightOp)
 	}
 
-	public def dispatch Expr<? extends Type> toExpr(EqualExpression expression) {
+	protected def dispatch Expr<? extends Type> toExpr(EqualExpression expression) {
 		val leftOp = ExprUtils.cast(expression.leftOperand.toExpr, BoolType)
 		val rightOp = ExprUtils.cast(expression.rightOperand.toExpr, BoolType)
 		Iff(leftOp, rightOp)
 	}
 
-	public def dispatch Expr<? extends Type> toExpr(AndExpression expression) {
+	protected def dispatch Expr<? extends Type> toExpr(AndExpression expression) {
 		val ops = expression.operands.map[ExprUtils.cast(toExpr, BoolType)]
 		And(ops)
 	}
 
-	public def dispatch Expr<? extends Type> toExpr(OrExpression expression) {
+	protected def dispatch Expr<? extends Type> toExpr(OrExpression expression) {
 		val ops = expression.operands.map[ExprUtils.cast(toExpr, BoolType)]
 		Or(ops)
 	}
 
-	public def dispatch Expr<? extends Type> toExpr(ArrayAccessExpression expression) {
+	protected def dispatch Expr<? extends Type> toExpr(ArrayAccessExpression expression) {
 		val array = ExprUtils.cast(expression.operand.toExpr, ArrayType) as Expr<ArrayType<Type, Type>>
 
 		val parameters = expression.parameters
@@ -198,7 +207,7 @@ public class ExpressionHelper {
 		}
 	}
 
-	public def dispatch Expr<? extends Type> toExpr(ArrayWithExpression expression) {
+	protected def dispatch Expr<? extends Type> toExpr(ArrayWithExpression expression) {
 		val array = ExprUtils.cast(expression.operand.toExpr, ArrayType) as Expr<ArrayType<Type, Type>>
 		val elem = expression.value.toExpr
 
@@ -214,17 +223,16 @@ public class ExpressionHelper {
 		}
 	}
 
-	public def dispatch Expr<? extends Type> toExpr(IfThenElseExpression expression) {
+	protected def dispatch Expr<? extends Type> toExpr(IfThenElseExpression expression) {
 		val cond = ExprUtils.cast(expression.condition.toExpr, BoolType)
 		val then = expression.then.toExpr
 		val elze = expression.^else.toExpr
 		Ite(cond, then, elze)
 	}
 
-	public def dispatch Expr<? extends Type> toExpr(ReferenceExpression expression) {
-		val decl = expression.declaration.toDecl
+	protected def dispatch Expr<? extends Type> toExpr(ReferenceExpression expression) {
+		val decl = expression.declaration.transform
 		decl.ref
 	}
-
 	
 }

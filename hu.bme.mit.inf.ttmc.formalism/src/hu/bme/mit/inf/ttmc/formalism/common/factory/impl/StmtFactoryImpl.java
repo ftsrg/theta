@@ -13,6 +13,7 @@ import hu.bme.mit.inf.ttmc.formalism.common.stmt.AssertStmt;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.AssignStmt;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.AssumeStmt;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.BlockStmt;
+import hu.bme.mit.inf.ttmc.formalism.common.stmt.DeclStmt;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.DoStmt;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.HavocStmt;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.IfElseStmt;
@@ -25,6 +26,7 @@ import hu.bme.mit.inf.ttmc.formalism.common.stmt.impl.AssertStmtImpl;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.impl.AssignStmtImpl;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.impl.AssumeStmtImpl;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.impl.BlockStmtImpl;
+import hu.bme.mit.inf.ttmc.formalism.common.stmt.impl.DeclStmtImpl;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.impl.DoStmtImpl;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.impl.HavocStmtImpl;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.impl.IfElseStmtImpl;
@@ -39,6 +41,12 @@ public class StmtFactoryImpl implements StmtFactory {
 
 	public StmtFactoryImpl() {
 		skipStmt = new SkipStmtImpl();
+	}
+
+	@Override
+	public <T extends Type> DeclStmt<T> Decl(final VarDecl<T> varDecl) {
+		checkNotNull(varDecl);
+		return new DeclStmtImpl<>(varDecl);
 	}
 
 	@Override

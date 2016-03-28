@@ -24,10 +24,6 @@
         eType="#//Statement" containment="true"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="ProcedureDeclaration" eSuperTypes="../../hu.bme.mit.inf.ttmc.constraint.model/model/constraint.ecore#//Declaration ../../hu.bme.mit.inf.ttmc.constraint.model/model/constraint.ecore#//ParametricElement">
-    <eStructuralFeatures xsi:type="ecore:EReference" name="preconditionAnnotations"
-        upperBound="-1" eType="#//PreconditionAnnotation" containment="true"/>
-    <eStructuralFeatures xsi:type="ecore:EReference" name="postconditionAnnotations"
-        upperBound="-1" eType="#//PostconditionAnnotation" containment="true"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="statement" eType="#//Statement"
         containment="true"/>
   </eClassifiers>
@@ -43,6 +39,10 @@
   <eClassifiers xsi:type="ecore:EClass" name="AssumeStatement" eSuperTypes="#//SimpleStatement #//UnaryStatement"/>
   <eClassifiers xsi:type="ecore:EClass" name="AssertStatement" eSuperTypes="#//SimpleStatement #//UnaryStatement"/>
   <eClassifiers xsi:type="ecore:EClass" name="ReturnStatement" eSuperTypes="#//SimpleStatement #//UnaryStatement"/>
+  <eClassifiers xsi:type="ecore:EClass" name="DeclarationStatement" eSuperTypes="#//SimpleStatement">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="variableDeclaration" lowerBound="1"
+        eType="#//VariableDeclaration" containment="true"/>
+  </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="HavocStatement" eSuperTypes="#//SimpleStatement #//UnaryStatement"/>
   <eClassifiers xsi:type="ecore:EClass" name="SkipStatement" eSuperTypes="#//SimpleStatement"/>
   <eClassifiers xsi:type="ecore:EClass" name="AssignmentStatement" eSuperTypes="#//SimpleStatement">
@@ -54,8 +54,6 @@
         containment="true"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="BlockStatement" eSuperTypes="#//CompoundStatement">
-    <eStructuralFeatures xsi:type="ecore:EReference" name="variableDeclarations" upperBound="-1"
-        eType="#//VariableDeclaration" containment="true"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="statements" upperBound="-1"
         eType="#//Statement" containment="true"/>
   </eClassifiers>
@@ -68,27 +66,15 @@
         containment="true"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="WhileStatement" eSuperTypes="#//CompoundStatement">
-    <eStructuralFeatures xsi:type="ecore:EReference" name="loopAnnotations" upperBound="-1"
-        eType="#//LoopAnnotation" containment="true"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="conditionExpression" eType="ecore:EClass ../../hu.bme.mit.inf.ttmc.constraint.model/model/constraint.ecore#//Expression"
         containment="true"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="doStatement" lowerBound="1"
         eType="#//Statement" containment="true"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="DoStatement" eSuperTypes="#//CompoundStatement">
-    <eStructuralFeatures xsi:type="ecore:EReference" name="loopAnnotations" upperBound="-1"
-        eType="#//LoopAnnotation" containment="true"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="conditionExpression" eType="ecore:EClass ../../hu.bme.mit.inf.ttmc.constraint.model/model/constraint.ecore#//Expression"
         containment="true"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="doStatement" lowerBound="1"
         eType="#//Statement" containment="true"/>
   </eClassifiers>
-  <eClassifiers xsi:type="ecore:EClass" name="ProcedureAnnotation" abstract="true">
-    <eStructuralFeatures xsi:type="ecore:EReference" name="expression" lowerBound="1"
-        eType="ecore:EClass ../../hu.bme.mit.inf.ttmc.constraint.model/model/constraint.ecore#//Expression"
-        containment="true"/>
-  </eClassifiers>
-  <eClassifiers xsi:type="ecore:EClass" name="PreconditionAnnotation" eSuperTypes="#//ProcedureAnnotation"/>
-  <eClassifiers xsi:type="ecore:EClass" name="PostconditionAnnotation" eSuperTypes="#//ProcedureAnnotation"/>
-  <eClassifiers xsi:type="ecore:EClass" name="LoopAnnotation" eSuperTypes="#//ProcedureAnnotation"/>
 </ecore:EPackage>
