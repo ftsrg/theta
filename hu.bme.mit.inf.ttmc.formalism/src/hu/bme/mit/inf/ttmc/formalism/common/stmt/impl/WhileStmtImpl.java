@@ -7,19 +7,19 @@ import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.WhileStmt;
 
-public class WhileStmtImpl extends AbstractStmt implements WhileStmt {
+public final class WhileStmtImpl extends AbstractStmt implements WhileStmt {
 
-	private final static int HASHSEED = 631;
+	private final static int HASH_SEED = 631;
 	private volatile int hashCode = 0;
-	
+
 	private final Expr<? extends BoolType> cond;
 	private final Stmt doStmt;
-	
+
 	public WhileStmtImpl(final Expr<? extends BoolType> cond, final Stmt doStmt) {
 		this.cond = checkNotNull(cond);
 		this.doStmt = checkNotNull(doStmt);
 	}
-	
+
 	@Override
 	public Expr<? extends BoolType> getCond() {
 		return cond;
@@ -29,27 +29,26 @@ public class WhileStmtImpl extends AbstractStmt implements WhileStmt {
 	public Stmt getDo() {
 		return doStmt;
 	}
-	
+
 	@Override
 	public int hashCode() {
-		if (hashCode == 0) {
-			hashCode = HASHSEED;
-			hashCode = 37 * hashCode + cond.hashCode();
-			hashCode = 37 * hashCode + doStmt.hashCode();
+		int result = hashCode;
+		if (result == 0) {
+			result = HASH_SEED;
+			result = 37 * result + cond.hashCode();
+			result = 37 * result + doStmt.hashCode();
+			hashCode = result;
 		}
-
-		return hashCode;
+		return result;
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
-		} else if (obj == null) {
-			return false;
-		} else if (this.getClass() == obj.getClass()) {
-			final WhileStmtImpl that = (WhileStmtImpl) obj;
-			return this.cond.equals(that.cond) && this.doStmt.equals(that.doStmt);
+		} else if (obj instanceof WhileStmt) {
+			final WhileStmt that = (WhileStmt) obj;
+			return this.getCond().equals(that.getCond()) && this.getDo().equals(that.getDo());
 		} else {
 			return false;
 		}

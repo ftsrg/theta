@@ -56,13 +56,14 @@ public abstract class AbstractFuncLitExpr<ParamType extends Type, ResultType ext
 
 	@Override
 	public int hashCode() {
-		if (hashCode == 0) {
-			hashCode = HASH_SEED;
-			hashCode = 31 * hashCode + paramDecl.hashCode();
-			hashCode = 31 * hashCode + result.hashCode();
+		int tmp = hashCode;
+		if (tmp == 0) {
+			tmp = HASH_SEED;
+			tmp = 31 * tmp + paramDecl.hashCode();
+			tmp = 31 * tmp + result.hashCode();
+			hashCode = tmp;
 		}
-
-		return hashCode;
+		return tmp;
 	}
 
 	@Override

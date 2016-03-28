@@ -9,6 +9,5 @@ import hu.bme.mit.inf.ttmc.formalism.common.decl.ProcDecl;
 public interface ProgramModel extends ConstraintModel {
 
 	public Collection<ProcDecl<? extends Type>> getProcDecls();
-	public ProcedureModel getProcedureModel(ProcDecl<? extends Type> procDecl);
-	
+
 }

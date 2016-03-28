@@ -1,4 +1,4 @@
-package hu.bme.mit.inf.ttmc.constraint.ui
+package hu.bme.mit.inf.ttmc.constraint.ui.transform.impl
 
 import java.util.Map
 import hu.bme.mit.inf.ttmc.constraint.model.ConstantDeclaration
@@ -11,52 +11,62 @@ import java.util.HashMap
 import hu.bme.mit.inf.ttmc.constraint.factory.DeclFactory
 import hu.bme.mit.inf.ttmc.constraint.type.Type
 import hu.bme.mit.inf.ttmc.constraint.model.FunctionDeclaration
+import hu.bme.mit.inf.ttmc.constraint.ui.transform.DeclTransformator
+import hu.bme.mit.inf.ttmc.constraint.ui.transform.TransformationManager
+import hu.bme.mit.inf.ttmc.constraint.ui.transform.TypeTransformator
 
-class DeclarationHelper {
+public class ConstraintDeclTransformator implements DeclTransformator {
 	
-	protected val Map<ConstantDeclaration, ConstDecl<Type>> constantToConst
-	protected val Map<ParameterDeclaration, ParamDecl<Type>> parameterToParam
+	private val Map<ConstantDeclaration, ConstDecl<Type>> constantToConst
+	private val Map<ParameterDeclaration, ParamDecl<Type>> parameterToParam
 	
-	protected val extension DeclFactory declFactory
-	protected val extension TypeHelper typeHelper
+	private val extension DeclFactory declFactory
 	
-	public new(DeclFactory declFactory, TypeHelper typeHelper) {
+	private val extension TypeTransformator tt
+	
+	public new(TransformationManager manager, DeclFactory declFactory) {
 		this.declFactory = declFactory
-		this.typeHelper = typeHelper
+		tt = manager.typeTransformator
 		constantToConst = new HashMap()
 		parameterToParam = new HashMap()
 	}
 	
 	////////
 	
-	public def dispatch Decl<Type, ?> toDecl(Declaration declaration) {
+	override transform(Declaration declaration) {
+		return declaration.toDecl
+	}
+	
+	////////
+	
+	protected def dispatch Decl<? extends Type, ?> toDecl(Declaration declaration) {
 		throw new UnsupportedOperationException("Not supported: " + declaration.class)
 	}
 
-	public def dispatch ConstDecl<Type> toDecl(ConstantDeclaration declaration) {
+	protected def dispatch ConstDecl<Type> toDecl(ConstantDeclaration declaration) {
 		var constDecl = constantToConst.get(declaration)
 		if (constDecl === null) {
 			val name = declaration.name
-			val type = declaration.type.toType
+			val type = declaration.type.transform
 			constDecl = Const(name, type)
 			constantToConst.put(declaration, constDecl)
 		}
 		constDecl
 	}
 
-	public def dispatch ConstDecl<Type> toDecl(FunctionDeclaration declaration) {
+	protected def dispatch ConstDecl<Type> toDecl(FunctionDeclaration declaration) {
 		throw new UnsupportedOperationException("TODO")
 	}
 
-	public def dispatch ParamDecl<Type> toDecl(ParameterDeclaration declaration) {
+	protected def dispatch ParamDecl<Type> toDecl(ParameterDeclaration declaration) {
 		var paramDecl = parameterToParam.get(declaration)
 		if (paramDecl === null) {
 			val name = declaration.name
-			val type = declaration.type.toType
+			val type = declaration.type.transform
 			paramDecl = Param(name, type)
 			parameterToParam.put(declaration, paramDecl)
 		}
 		return paramDecl
 	}
-	
+
 }

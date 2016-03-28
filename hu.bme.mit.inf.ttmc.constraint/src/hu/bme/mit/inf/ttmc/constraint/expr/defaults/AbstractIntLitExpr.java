@@ -37,12 +37,13 @@ public abstract class AbstractIntLitExpr extends AbstractNullaryExpr<IntType> im
 
 	@Override
 	public final int hashCode() {
-		if (hashCode == 0) {
-			hashCode = HASH_SEED;
-			hashCode = 31 * hashCode + (int) (value ^ (value >>> 32));
+		int result = hashCode;
+		if (result == 0) {
+			result = HASH_SEED;
+			result = 31 * result + (int) (value ^ (value >>> 32));
+			hashCode = result;
 		}
-
-		return hashCode;
+		return result;
 	}
 
 	@Override

@@ -77,13 +77,15 @@ public abstract class AbstractArrayReadExpr<IndexType extends Type, ElemType ext
 
 	@Override
 	public final int hashCode() {
-		if (hashCode == 0) {
-			hashCode = HASH_SEED;
-			hashCode = 31 * hashCode + array.hashCode();
-			hashCode = 31 * hashCode + index.hashCode();
+		int result = hashCode;
+		if (result == 0) {
+			result = HASH_SEED;
+			result = 31 * result + array.hashCode();
+			result = 31 * result + index.hashCode();
+			hashCode = result;
 		}
 
-		return hashCode;
+		return result;
 	}
 
 	@Override

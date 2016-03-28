@@ -79,40 +79,31 @@ UnitTypeDefinition returns UnitTypeDefinition:
 
 /////
 
-PreconditionAnnotation returns PreconditionAnnotation:
-	'@pre' expression=Expression
-;
-
-PostconditionAnnotation returns PostconditionAnnotation:
-	'@post' expression=Expression
-;
-
-LoopAnnotation returns LoopAnnotation:
-	'@loop' expression=Expression
-;
-
-/////
-
 ProcedureDeclaration returns ProcedureDeclaration:
-	(
-		preconditionAnnotations+=PreconditionAnnotation |
-		postconditionAnnotations+=PostconditionAnnotation
-	)*
 	'procedure' name=ID ('(' ((parameterDeclarations+=ParameterDeclaration)(',' parameterDeclarations+=ParameterDeclaration)*)? ')')? ':' type=Type (statement=BlockStatement)?
 ;
 
 
 VariableDeclaration returns VariableDeclaration:
-	'var' name=ID ':' type=Type (':=' expression=Expression)? ';'
+	'var' name=ID ':' type=Type (':=' expression=Expression)?
 ;
 
 Statement returns Statement:
-	BlockStatement | WhileStatement | DoStatement | IfStatement | AssignmentStatement | ReturnStatement | HavocStatement | AssumeStatement | AssertStatement | SkipStatement
+	BlockStatement |
+	WhileStatement |
+	DoStatement |
+	IfStatement |
+	DeclarationStatement |
+	AssignmentStatement |
+	ReturnStatement |
+	HavocStatement |
+	AssumeStatement |
+	AssertStatement |
+	SkipStatement
 ;
 
 BlockStatement returns BlockStatement:
 	{BlockStatement} '{'
-		(variableDeclarations+=VariableDeclaration)*
 		(statements+=Statement)*
 	'}'
 ;
@@ -122,13 +113,15 @@ IfStatement returns IfStatement:
 ;
 
 WhileStatement returns WhileStatement:
-	(loopAnnotations+=LoopAnnotation)*
 	'while' ('*' | conditionExpression=Expression) 'do' doStatement=Statement
 ;
 
 DoStatement returns DoStatement:
-//	(loopAnnotations+=LoopAnnotation)*
 	'do' doStatement=Statement 'while' ('*' | conditionExpression=Expression) ';'
+;
+
+DeclarationStatement returns DeclarationStatement:
+	{DeclarationStatement} variableDeclaration=VariableDeclaration ';'
 ;
 
 AssignmentStatement returns AssignmentStatement:

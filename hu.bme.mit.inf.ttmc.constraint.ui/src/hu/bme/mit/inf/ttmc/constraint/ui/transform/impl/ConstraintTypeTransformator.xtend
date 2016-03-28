@@ -1,4 +1,4 @@
-package hu.bme.mit.inf.ttmc.constraint.ui
+package hu.bme.mit.inf.ttmc.constraint.ui.transform.impl
 
 import hu.bme.mit.inf.ttmc.constraint.type.Type
 import hu.bme.mit.inf.ttmc.constraint.model.TypeReference
@@ -8,18 +8,29 @@ import hu.bme.mit.inf.ttmc.constraint.model.RealTypeDefinition
 import hu.bme.mit.inf.ttmc.constraint.model.FunctionTypeDefinition
 import hu.bme.mit.inf.ttmc.constraint.model.ArrayTypeDefinition
 import hu.bme.mit.inf.ttmc.constraint.factory.TypeFactory
+import hu.bme.mit.inf.ttmc.constraint.ui.transform.TypeTransformator
+import hu.bme.mit.inf.ttmc.constraint.ui.transform.TransformationManager
 
-public class TypeHelper {
+public class ConstraintTypeTransformator implements TypeTransformator {
 
-	private val extension TypeFactory typeFactory;
+	private val TransformationManager manager
+	
+	private val extension TypeFactory typeFactory
 
-	public new(TypeFactory typeFactory) {
+	public new(TransformationManager manager, TypeFactory typeFactory) {
+		this.manager = manager
 		this.typeFactory = typeFactory
+	}
+	
+	///////
+		
+	override transform(hu.bme.mit.inf.ttmc.constraint.model.Type type) {
+		return type.toType
 	}
 
 	///////
 	
-	public def dispatch Type toType(Type type) {
+	public def dispatch Type toType(hu.bme.mit.inf.ttmc.constraint.model.Type type) {
 		throw new UnsupportedOperationException("Not supported: " + type.class)
 	}
 
@@ -66,4 +77,5 @@ public class TypeHelper {
 			throw new UnsupportedOperationException("TODO")
 		}
 	}
+	
 }
