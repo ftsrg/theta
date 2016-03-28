@@ -48,7 +48,7 @@ public class VisibleCEGARDebugger extends AbstractDebugger implements Debugger<V
 		solver.push(); // 2
 		do {
 			if (SolverHelper.checkSat(solver)) { // New state found
-				final AndExpr vasExpr = unroller.getConcreteState(solver.getModel(), 0, system.getVisibleVariables());
+				final AndExpr vasExpr = unroller.getConcreteState(solver.getModel(), 0, system.getVisibleVars());
 				final VisibleAbstractState vas = new VisibleAbstractState(vasExpr, false);
 				stateSpace.put(vas, new ArrayList<>());
 				// Exclude

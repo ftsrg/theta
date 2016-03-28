@@ -1,5 +1,7 @@
 package hu.bme.mit.inf.ttmc.cegar.visiblecegar.data;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,26 +14,13 @@ import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
 
 /**
  * Represents an abstract state of the variable-visibility based CEGAR.
- *
- * @author Akos
  */
 public class VisibleAbstractState implements AbstractState {
-	private final AndExpr expression; // Expression representing the state
-	private boolean isInitial; // Is the state initial
-	private final List<VisibleAbstractState> successors; // List of successors
-	private boolean isPartOfCounterexample; // Is the state part of a counterexample (for visualization)
+	private final AndExpr expression;
+	private boolean isInitial;
+	private final List<VisibleAbstractState> successors;
+	private boolean isPartOfCounterexample; // for visualization
 
-	/**
-	 * Constructor from a model. A reference to the system is required in order
-	 * to remove the invisible variables
-	 *
-	 * @param model
-	 *            Model
-	 * @param system
-	 *            Reference to the system
-	 * @param isInitial
-	 *            Is the state initial
-	 */
 	public VisibleAbstractState(final AndExpr expression, final boolean isInitial) {
 		this.isInitial = isInitial;
 		this.successors = new ArrayList<>();
@@ -39,11 +28,6 @@ public class VisibleAbstractState implements AbstractState {
 		this.expression = expression;
 	}
 
-	/**
-	 * Get the expression representing this abstract state
-	 *
-	 * @return Expression representing this abstract state
-	 */
 	public AndExpr getExpression() {
 		return expression;
 	}
@@ -53,34 +37,17 @@ public class VisibleAbstractState implements AbstractState {
 		return isInitial;
 	}
 
-	/**
-	 * Set whether this abstract state is initial
-	 *
-	 * @param isInitial
-	 *            True if initial, false otherwise
-	 */
 	public void setInitial(final boolean isInitial) {
 		this.isInitial = isInitial;
 	}
 
-	/**
-	 * Get the list of successors
-	 *
-	 * @return List of successors
-	 */
 	@Override
 	public List<VisibleAbstractState> getSuccessors() {
 		return successors;
 	}
 
-	/**
-	 * Add a successor state
-	 *
-	 * @param successor
-	 *            State to be added as a successor
-	 */
 	public void addSuccessor(final VisibleAbstractState successor) {
-		successors.add(successor);
+		successors.add(checkNotNull(successor));
 	}
 
 	@Override
@@ -88,12 +55,6 @@ public class VisibleAbstractState implements AbstractState {
 		return isPartOfCounterexample;
 	}
 
-	/**
-	 * Set whether the state is part of a counterexample
-	 *
-	 * @param isPartOfCounterexample
-	 *            True if the state is part of a counterexample, false otherwise
-	 */
 	public void setPartOfCounterExample(final boolean isPartOfCounterexample) {
 		this.isPartOfCounterexample = isPartOfCounterexample;
 	}
@@ -122,16 +83,11 @@ public class VisibleAbstractState implements AbstractState {
 		return expression;
 	}
 
-	/**
-	 * Create string id
-	 *
-	 * @return String id
-	 */
 	public String createId() {
 		final StringBuilder ret = new StringBuilder("");
 
 		for (final Expr<?> ex : expression.getOps())
-			ret.append(((EqExpr) ex).getRightOp());
+			ret.append(((EqExpr) ex).getRightOp()).append(" ");
 		return ret.toString();
 	}
 }

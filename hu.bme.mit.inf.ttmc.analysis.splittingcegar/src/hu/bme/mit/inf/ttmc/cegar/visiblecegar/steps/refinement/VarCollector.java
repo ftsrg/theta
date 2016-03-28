@@ -9,7 +9,7 @@ import hu.bme.mit.inf.ttmc.cegar.visiblecegar.data.VisibleAbstractSystem;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 
-public interface IVarCollector {
-	Collection<VarDecl<? extends Type>> collectVariables(VisibleAbstractSystem system, List<VisibleAbstractState> abstractCounterEx,
+public interface VarCollector {
+	Collection<VarDecl<? extends Type>> collectVars(VisibleAbstractSystem system, List<VisibleAbstractState> abstractCounterEx,
 			ConcreteTrace concreteCounterEx);
 }

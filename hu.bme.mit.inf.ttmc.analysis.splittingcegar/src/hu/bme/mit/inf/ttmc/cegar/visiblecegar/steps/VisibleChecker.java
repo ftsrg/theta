@@ -22,11 +22,6 @@ import hu.bme.mit.inf.ttmc.constraint.solver.Solver;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.formalism.sts.STSUnroller;
 
-/**
- * Model checker (explicit) step.
- *
- * @author Akos
- */
 public class VisibleChecker extends AbstractCEGARStep implements Checker<VisibleAbstractSystem, VisibleAbstractState> {
 
 	public VisibleChecker(final Logger logger, final Visualizer visualizer) {
@@ -36,41 +31,41 @@ public class VisibleChecker extends AbstractCEGARStep implements Checker<Visible
 	@Override
 	public AbstractResult<VisibleAbstractState> check(final VisibleAbstractSystem system) {
 		final Solver solver = system.getManager().getSolverFactory().createSolver(true, false);
-		// Get the negate of the inner expression of G(...)
-		final NotExpr negSpec = system.getManager().getExprFactory().Not(system.getSTS().getProp());
 
-		final STSUnroller unroller = system.getUnroller(); // Create an unroller for k=1
+		final NotExpr negProp = system.getManager().getExprFactory().Not(system.getSTS().getProp());
+
+		final STSUnroller unroller = system.getUnroller();
 		Stack<VisibleAbstractState> counterExample = null;
 		// Store explored states in a map. The key and the value is the same state.
 		// This is required because when a new state is created, it is a different object
 		// and the original one can be retrieved from the map.
 		final Map<VisibleAbstractState, VisibleAbstractState> exploredStates = new HashMap<>();
 
-		VisibleAbstractState init = null; // Storing the actual initial state
-		final List<AndExpr> initExpr = new ArrayList<>(); // Storing previuos initial states
+		VisibleAbstractState actualInit = null;
+		final List<AndExpr> prevInits = new ArrayList<>();
 		// Get the first initial state
 		solver.push();
 		solver.add(unroller.inv(0));
 		solver.add(unroller.init(0));
 		if (SolverHelper.checkSat(solver))
-			init = new VisibleAbstractState(unroller.getConcreteState(solver.getModel(), 0, system.getVisibleVariables()), true);
+			actualInit = new VisibleAbstractState(unroller.getConcreteState(solver.getModel(), 0, system.getVisibleVars()), true);
 		solver.pop();
 
 		// Loop until there is a next initial state
-		while (init != null && counterExample == null) {
+		while (actualInit != null && counterExample == null) {
 			if (isStopped)
 				return null;
 			final Stack<VisibleAbstractState> stateStack = new Stack<>();
 			final Stack<List<VisibleAbstractState>> successorStack = new Stack<>();
 
-			if (!exploredStates.containsKey(init)) {
-				logger.writeln("Initial state: " + init, 5);
-				exploredStates.put(init, init);
+			if (!exploredStates.containsKey(actualInit)) {
+				logger.writeln("Initial state: " + actualInit, 5);
+				exploredStates.put(actualInit, actualInit);
 				// Push to stack and get successors
-				stateStack.push(init);
-				successorStack.push(getSuccessors(init, system, solver, unroller));
+				stateStack.push(actualInit);
+				successorStack.push(getSuccessors(actualInit, system, solver, unroller));
 				// Check if the specification holds
-				if (checkState(init, negSpec, solver, unroller)) {
+				if (checkState(actualInit, negProp, solver, unroller)) {
 					logger.writeln("Counterexample reached!", 5, 1);
 					counterExample = stateStack;
 				}
@@ -89,14 +84,13 @@ public class VisibleChecker extends AbstractCEGARStep implements Checker<Visible
 						logger.write("New state: ", 6, 1);
 						logger.writeln(nextState, 6, 0);
 						exploredStates.put(nextState, nextState);
-						// Add to the actual state as a successor
+
 						stateStack.peek().addSuccessor(nextState);
-						// Push to stack
 						stateStack.push(nextState);
 						// The successors found here are not added to the actual state here, only when they are explored
 						successorStack.push(getSuccessors(nextState, system, solver, unroller));
 						// Check if the specification holds
-						if (checkState(nextState, negSpec, solver, unroller)) {
+						if (checkState(nextState, negProp, solver, unroller)) {
 							logger.writeln("Counterexample reached!", 5, 1);
 							counterExample = stateStack;
 							break;
@@ -112,15 +106,15 @@ public class VisibleChecker extends AbstractCEGARStep implements Checker<Visible
 			}
 
 			// Get next initial state
-			initExpr.add(init.getExpression());
+			prevInits.add(actualInit.getExpression());
 			solver.push();
 			solver.add(unroller.inv(0));
 			solver.add(unroller.init(0));
-			solver.add(unroller.unroll(system.getManager().getExprFactory().Not(system.getManager().getExprFactory().Or(initExpr)), 0));
+			solver.add(unroller.unroll(system.getManager().getExprFactory().Not(system.getManager().getExprFactory().Or(prevInits)), 0));
 			if (SolverHelper.checkSat(solver))
-				init = new VisibleAbstractState(unroller.getConcreteState(solver.getModel(), 0, system.getVisibleVariables()), true);
+				actualInit = new VisibleAbstractState(unroller.getConcreteState(solver.getModel(), 0, system.getVisibleVars()), true);
 			else
-				init = null;
+				actualInit = null;
 			solver.pop();
 		}
 
@@ -163,8 +157,7 @@ public class VisibleChecker extends AbstractCEGARStep implements Checker<Visible
 			if (SolverHelper.checkSat(solver)) {
 				// Get successor
 				// TODO: check if initial (only for presentation purposes, since it may be found as a successor of some state first than as an initial state)
-				final VisibleAbstractState succ = new VisibleAbstractState(unroller.getConcreteState(solver.getModel(), 1, system.getVisibleVariables()),
-						false);
+				final VisibleAbstractState succ = new VisibleAbstractState(unroller.getConcreteState(solver.getModel(), 1, system.getVisibleVars()), false);
 				successors.add(succ);
 				// Force new successors
 				solver.add(unroller.unroll(system.getManager().getExprFactory().Not(succ.getExpression()), 1));
@@ -175,7 +168,6 @@ public class VisibleChecker extends AbstractCEGARStep implements Checker<Visible
 		return successors;
 	}
 
-	// Check if an expression is feasible for a state
 	private boolean checkState(final VisibleAbstractState state, final Expr<? extends BoolType> expr, final Solver solver, final STSUnroller unroller) {
 		solver.push();
 		solver.add(unroller.unroll(state.getExpression(), 0));

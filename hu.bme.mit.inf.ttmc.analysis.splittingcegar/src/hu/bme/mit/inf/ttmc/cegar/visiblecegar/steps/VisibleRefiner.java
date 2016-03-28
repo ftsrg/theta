@@ -1,5 +1,7 @@
 package hu.bme.mit.inf.ttmc.cegar.visiblecegar.steps;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.util.Collection;
 import java.util.List;
 
@@ -9,24 +11,17 @@ import hu.bme.mit.inf.ttmc.cegar.common.steps.Refiner;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.Visualizer;
 import hu.bme.mit.inf.ttmc.cegar.visiblecegar.data.VisibleAbstractState;
 import hu.bme.mit.inf.ttmc.cegar.visiblecegar.data.VisibleAbstractSystem;
-import hu.bme.mit.inf.ttmc.cegar.visiblecegar.steps.refinement.IVarCollector;
+import hu.bme.mit.inf.ttmc.cegar.visiblecegar.steps.refinement.VarCollector;
 import hu.bme.mit.inf.ttmc.common.logging.Logger;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 
 public class VisibleRefiner extends AbstractCEGARStep implements Refiner<VisibleAbstractSystem, VisibleAbstractState> {
-	private final IVarCollector variableCollector;
+	private final VarCollector varCollector;
 
-	/**
-	 * Initialize the step with a solver, logger and visualizer
-	 *
-	 * @param solver
-	 * @param logger
-	 * @param visualizer
-	 */
-	public VisibleRefiner(final Logger logger, final Visualizer visualizer, final IVarCollector variableCollector) {
+	public VisibleRefiner(final Logger logger, final Visualizer visualizer, final VarCollector varCollector) {
 		super(logger, visualizer);
-		this.variableCollector = variableCollector;
+		this.varCollector = checkNotNull(varCollector);
 	}
 
 	@Override
@@ -34,23 +29,23 @@ public class VisibleRefiner extends AbstractCEGARStep implements Refiner<Visible
 			final ConcreteTrace concreteTrace) {
 		assert (1 <= concreteTrace.size() && concreteTrace.size() < abstractCounterEx.size());
 		logger.writeln("Failure state: " + abstractCounterEx.get(concreteTrace.size() - 1), 4, 0);
-		final Collection<VarDecl<? extends Type>> variables = variableCollector.collectVariables(system, abstractCounterEx, concreteTrace);
+		final Collection<VarDecl<? extends Type>> varsToBeMadeVisible = varCollector.collectVars(system, abstractCounterEx, concreteTrace);
 		logger.write("New visible variables:", 2);
-		final int previouslyVisibleVariables = system.getVisibleVariables().size();
-		for (final VarDecl<? extends Type> variable : variables) {
-			if (!system.getVisibleVariables().contains(variable)) {
-				system.makeVisible(variable);
-				logger.write(" " + variable, 2);
+		final int previouslyVisibleVarCount = system.getVisibleVars().size();
+		for (final VarDecl<? extends Type> var : varsToBeMadeVisible) {
+			if (!system.getVisibleVars().contains(var)) {
+				system.makeVisible(var);
+				logger.write(" " + var, 2);
 			}
 		}
 		logger.writeln(2);
-		assert (previouslyVisibleVariables < system.getVisibleVariables().size());
-		assert (system.getVisibleVariables().size() + system.getInvisibleVariables().size() == system.getVars().size());
+		assert (previouslyVisibleVarCount < system.getVisibleVars().size());
+		assert (system.getVisibleVars().size() + system.getInvisibleVars().size() == system.getVars().size());
 		return system;
 	}
 
 	@Override
 	public String toString() {
-		return variableCollector.toString();
+		return varCollector.toString();
 	}
 }
