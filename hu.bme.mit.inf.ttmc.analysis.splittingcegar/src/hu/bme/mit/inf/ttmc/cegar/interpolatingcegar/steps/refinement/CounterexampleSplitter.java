@@ -22,17 +22,9 @@ import hu.bme.mit.inf.ttmc.formalism.sts.STSUnroller;
  * Using a binary interpolant, only the failure state is split, but using a
  * sequence interpolant, multiple states can be split.
  *
- * @author Akos
  */
-public class CounterexampleSplitter extends AbstractCEGARStep implements IStateSplitter {
+public class CounterexampleSplitter extends AbstractCEGARStep implements Splitter {
 
-	/**
-	 * Initialize the splitter with a solver, logger and visualizer
-	 *
-	 * @param solver
-	 * @param logger
-	 * @param visualizer
-	 */
 	public CounterexampleSplitter(final Logger logger, final Visualizer visualizer) {
 		super(logger, visualizer);
 	}
@@ -45,7 +37,7 @@ public class CounterexampleSplitter extends AbstractCEGARStep implements IStateS
 			if (isStopped)
 				return 0;
 			if (!interpolant.get(i).equals(system.getManager().getExprFactory().True())) {
-				split(system, abstractCounterEx.get(i), interpolant.get(i));
+				splitSingleState(system, abstractCounterEx.get(i), interpolant.get(i));
 				if (firstSplit == -1)
 					firstSplit = i;
 			}
@@ -54,24 +46,22 @@ public class CounterexampleSplitter extends AbstractCEGARStep implements IStateS
 		return firstSplit;
 	}
 
-	private void split(final InterpolatedAbstractSystem system, final InterpolatedAbstractState failureState, Expr<? extends BoolType> interpolant) {
+	private void splitSingleState(final InterpolatedAbstractSystem system, final InterpolatedAbstractState stateToSplit, Expr<? extends BoolType> interpolant) {
 		final Solver solver = system.getManager().getSolverFactory().createSolver(true, false);
-		// Create unroller for k=1
 		final STSUnroller unroller = system.getUnroller();
 
-		// Refine the abstract Kripke structure
 		final KripkeStructure<InterpolatedAbstractState> ks = system.getAbstractKripkeStructure();
 
 		// Remove negations from the interpolant (to avoid multiple negations)
 		while (interpolant instanceof NotExpr)
 			interpolant = ((NotExpr) interpolant).getOp();
 
-		logger.writeln("Refining " + failureState, 5, 1);
+		logger.writeln("Refining " + stateToSplit, 5, 1);
 
 		// Create refined abstract states using the interpolant and its negation
 		final List<InterpolatedAbstractState> refinedStates = new ArrayList<>(2);
-		refinedStates.add(failureState.refine(interpolant));
-		refinedStates.add(failureState.refine(system.getManager().getExprFactory().Not(interpolant)));
+		refinedStates.add(stateToSplit.refine(interpolant));
+		refinedStates.add(stateToSplit.refine(system.getManager().getExprFactory().Not(interpolant)));
 		// Check for contradicting labels
 		for (final InterpolatedAbstractState refined : refinedStates) {
 			solver.push();
@@ -85,8 +75,8 @@ public class CounterexampleSplitter extends AbstractCEGARStep implements IStateS
 		}
 
 		// Remove the original state
-		ks.getStates().remove(failureState);
-		ks.getInitialStates().remove(failureState);
+		ks.getStates().remove(stateToSplit);
+		ks.getInitialStates().remove(stateToSplit);
 
 		logger.writeln(refinedStates.size() + " new abstract states.", 5, 1);
 		for (final InterpolatedAbstractState refined : refinedStates)
@@ -94,7 +84,7 @@ public class CounterexampleSplitter extends AbstractCEGARStep implements IStateS
 
 		// Check if the refined states are initial (only if the original state was initial, but
 		// then at least one of the refined states must also be initial --> assertion)
-		if (failureState.isInitial()) {
+		if (stateToSplit.isInitial()) {
 			solver.push();
 			solver.add(unroller.inv(0));
 			solver.add(unroller.init(0));
@@ -121,13 +111,13 @@ public class CounterexampleSplitter extends AbstractCEGARStep implements IStateS
 		solver.add(unroller.inv(0));
 		solver.add(unroller.inv(1));
 		solver.add(unroller.trans(0));
-		for (final InterpolatedAbstractState succ : failureState.getSuccessors()) {
+		for (final InterpolatedAbstractState succ : stateToSplit.getSuccessors()) {
 			if (isStopped)
 				return;
-			if (succ.equals(failureState))
+			if (succ.equals(stateToSplit))
 				continue;
 			// The failure state has to be removed from predecessors
-			final boolean removed = succ.getPredecessors().remove(failureState);
+			final boolean removed = succ.getPredecessors().remove(stateToSplit);
 			assert (removed);
 			solver.push();
 			SolverHelper.unrollAndAssert(solver, succ.getLabels(), unroller, 1);
@@ -151,12 +141,12 @@ public class CounterexampleSplitter extends AbstractCEGARStep implements IStateS
 		// Get predecessors for the abstract states (only the predecessors of the original state
 		// have to be checked, but every predecessor must belong to at least one of the
 		// refined states --> assertion)
-		for (final InterpolatedAbstractState prev : failureState.getPredecessors()) {
+		for (final InterpolatedAbstractState prev : stateToSplit.getPredecessors()) {
 			if (isStopped)
 				return;
-			if (prev.equals(failureState))
+			if (prev.equals(stateToSplit))
 				continue;
-			final boolean removed = prev.getSuccessors().remove(failureState);
+			final boolean removed = prev.getSuccessors().remove(stateToSplit);
 			assert (removed);
 			solver.push();
 			SolverHelper.unrollAndAssert(solver, prev.getLabels(), unroller, 0);
@@ -180,7 +170,7 @@ public class CounterexampleSplitter extends AbstractCEGARStep implements IStateS
 		// Check transitions between refined states (only if the failure state was a successor
 		// of itself, but then at least one transition must also be present between the
 		// refined states --> assertion)
-		if (failureState.getSuccessors().contains(failureState)) {
+		if (stateToSplit.getSuccessors().contains(stateToSplit)) {
 			boolean isSuccessor = false;
 			for (final InterpolatedAbstractState ref0 : refinedStates) {
 				if (isStopped)

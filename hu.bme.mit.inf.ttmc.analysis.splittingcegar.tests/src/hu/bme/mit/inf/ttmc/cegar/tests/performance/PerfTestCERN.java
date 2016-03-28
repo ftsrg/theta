@@ -48,11 +48,11 @@ public class PerfTestCERN extends PerfTestBase {
 				add(new InterpolatingCEGARBuilder().logger(null).visualizer(null).interpolationMethod(InterpolationMethod.Craig).incrementalModelChecking(true)
 						.useCNFTransformation(false));
 				add(new InterpolatingCEGARBuilder().logger(null).visualizer(null).interpolationMethod(InterpolationMethod.Craig).incrementalModelChecking(true)
-						.useCNFTransformation(false).explicitVariable("loc"));
+						.useCNFTransformation(false).explicitVar("loc"));
 				add(new InterpolatingCEGARBuilder().logger(null).visualizer(null).interpolationMethod(InterpolationMethod.Sequence)
 						.incrementalModelChecking(true).useCNFTransformation(false));
 				add(new InterpolatingCEGARBuilder().logger(null).visualizer(null).interpolationMethod(InterpolationMethod.Sequence)
-						.incrementalModelChecking(true).useCNFTransformation(false).explicitVariable("loc"));
+						.incrementalModelChecking(true).useCNFTransformation(false).explicitVar("loc"));
 			}
 		};
 

@@ -1,5 +1,8 @@
 package hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.data;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -14,37 +17,23 @@ import hu.bme.mit.inf.ttmc.constraint.type.Type;
  * Class representing a sequence or binary interpolant. A binary interpolant is
  * a special case of sequence interpolant, where each member of the sequence is
  * 'true' except for the last.
- *
- * @author Akos
  */
 public class Interpolant implements Iterable<Expr<? extends BoolType>> {
-	private final List<Expr<? extends BoolType>> interpolants; // List of interpolants
-	private final boolean isBinary; // Is the interpolant binary
+	private final List<Expr<? extends BoolType>> interpolants;
+	private final boolean isBinary;
 
-	/**
-	 * Constructor (binary)
-	 *
-	 * @param interpolant
-	 *            Interpolant expression
-	 * @param index
-	 *            Number of 'true' interpolants before the actual one
-	 */
-	public Interpolant(final Expr<? extends BoolType> interpolant, final int index, final ConstraintManager manager) {
+	public Interpolant(final Expr<? extends BoolType> binaryItp, final int index, final ConstraintManager manager) {
+		checkNotNull(binaryItp);
+		checkArgument(0 <= index);
 		interpolants = new ArrayList<>();
 		for (int i = 0; i < index; ++i)
 			interpolants.add(manager.getExprFactory().True());
-		interpolants.add(interpolant);
+		interpolants.add(binaryItp);
 		isBinary = true;
 	}
 
-	/**
-	 * Constructor (sequence)
-	 *
-	 * @param interpolants
-	 *            Collection of interpolant expressions
-	 */
-	public Interpolant(final Collection<Expr<? extends BoolType>> interpolants) {
-		this.interpolants = new ArrayList<>(interpolants);
+	public Interpolant(final Collection<Expr<? extends BoolType>> seqenceItp) {
+		this.interpolants = new ArrayList<>(seqenceItp);
 		isBinary = false;
 	}
 
@@ -53,14 +42,8 @@ public class Interpolant implements Iterable<Expr<? extends BoolType>> {
 		return interpolants.iterator();
 	}
 
-	/**
-	 * Get an interpolant expression
-	 *
-	 * @param index
-	 *            Index
-	 * @return Interpolant expression at the specified index
-	 */
 	public Expr<? extends BoolType> get(final int index) {
+		checkArgument(0 <= index && index < interpolants.size());
 		return interpolants.get(index);
 	}
 

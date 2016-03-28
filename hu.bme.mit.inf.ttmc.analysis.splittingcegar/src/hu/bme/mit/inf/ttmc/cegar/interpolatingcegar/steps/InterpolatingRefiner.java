@@ -1,5 +1,7 @@
 package hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.steps;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.util.List;
 
 import hu.bme.mit.inf.ttmc.cegar.common.data.ConcreteTrace;
@@ -10,19 +12,14 @@ import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.data.Interpolant;
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.data.InterpolatedAbstractState;
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.data.InterpolatedAbstractSystem;
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.steps.refinement.CounterexampleSplitter;
-import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.steps.refinement.IInterpolater;
-import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.steps.refinement.IStateSplitter;
+import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.steps.refinement.Interpolater;
+import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.steps.refinement.Splitter;
 import hu.bme.mit.inf.ttmc.common.logging.Logger;
 
-/**
- * Refines the abstraction using the spurious counterexample.
- *
- * @author Akos
- */
 public class InterpolatingRefiner extends AbstractCEGARStep implements Refiner<InterpolatedAbstractSystem, InterpolatedAbstractState> {
 
-	private final IInterpolater interpolater;
-	private final IStateSplitter splitter;
+	private final Interpolater interpolater;
+	private final Splitter splitter;
 
 	@Override
 	public void stop() {
@@ -36,17 +33,9 @@ public class InterpolatingRefiner extends AbstractCEGARStep implements Refiner<I
 		super.resetStop();
 	}
 
-	/**
-	 * Initialize the step with a solver, logger, visualizer and interpolater
-	 *
-	 * @param solver
-	 * @param logger
-	 * @param visualizer
-	 * @param interpolater
-	 */
-	public InterpolatingRefiner(final Logger logger, final Visualizer visualizer, final IInterpolater interpolater) {
+	public InterpolatingRefiner(final Logger logger, final Visualizer visualizer, final Interpolater interpolater) {
 		super(logger, visualizer);
-		this.interpolater = interpolater;
+		this.interpolater = checkNotNull(interpolater);
 		this.splitter = new CounterexampleSplitter(logger, visualizer);
 
 	}
@@ -57,9 +46,6 @@ public class InterpolatingRefiner extends AbstractCEGARStep implements Refiner<I
 		final int traceLength = concreteTrace.size();
 		assert (1 <= traceLength && traceLength <= abstractCounterEx.size());
 
-		// The failure state is the last state in the abstract counterexample which
-		// can be reached with a concrete path (or the last state if the last concrete
-		// state satisfies the formula)
 		final InterpolatedAbstractState failureState = abstractCounterEx.get(traceLength - 1);
 		logger.writeln("Failure state: " + failureState, 4, 0);
 
@@ -76,7 +62,7 @@ public class InterpolatingRefiner extends AbstractCEGARStep implements Refiner<I
 		// in the abstract counterexample that was split (for incremental model checking)
 		system.setPreviousSplitIndex(firstSplit);
 
-		// Clear counterexample marker
+		// Clear counterexample markers
 		for (final InterpolatedAbstractState as : abstractCounterEx)
 			as.setPartOfCounterexample(false);
 
