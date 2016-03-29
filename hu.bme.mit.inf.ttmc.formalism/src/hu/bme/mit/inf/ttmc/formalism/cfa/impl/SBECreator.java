@@ -209,7 +209,7 @@ public class SBECreator {
 			final CFAEdge enterEdge = cfa.createEdge(source, doLoc);
 			enterEdge.getStmts().add(sf.Assume(stmt.getCond()));
 
-			stmt.getDo().accept(this, Tuples.of(cfa, doLoc, doLoc));
+			stmt.getDo().accept(this, Tuples.of(cfa, doLoc, source));
 
 			final CFAEdge exitEdge = cfa.createEdge(source, target);
 			exitEdge.getStmts().add(sf.Assume(ef.Not(stmt.getCond())));
