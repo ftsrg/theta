@@ -85,7 +85,7 @@ public class MutableCFA implements CFA {
 		return loc;
 	}
 
-	public void deleteLoc(final CFALoc loc) {
+	public void removeLoc(final CFALoc loc) {
 		checkNotNull(loc);
 		checkArgument(locs.contains(loc));
 		checkArgument(loc != initLoc);
@@ -119,7 +119,7 @@ public class MutableCFA implements CFA {
 		return edge;
 	}
 
-	public void deleteEdge(final CFAEdge edge) {
+	public void removeEdge(final CFAEdge edge) {
 		checkNotNull(edge);
 		checkArgument(edges.contains(edge));
 
