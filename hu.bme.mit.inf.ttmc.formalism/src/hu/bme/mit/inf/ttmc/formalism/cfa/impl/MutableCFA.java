@@ -1,5 +1,8 @@
 package hu.bme.mit.inf.ttmc.formalism.cfa.impl;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -7,9 +10,6 @@ import java.util.HashSet;
 import hu.bme.mit.inf.ttmc.formalism.cfa.CFA;
 import hu.bme.mit.inf.ttmc.formalism.cfa.CFAEdge;
 import hu.bme.mit.inf.ttmc.formalism.cfa.CFALoc;
-
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 
 public class MutableCFA implements CFA {
 
@@ -108,13 +108,13 @@ public class MutableCFA implements CFA {
 		checkNotNull(target);
 		checkArgument(locs.contains(source));
 		checkArgument(locs.contains(target));
-		
+
 		final MutableCFALoc mutableSource = (MutableCFALoc) source;
 		final MutableCFALoc mutableTarget = (MutableCFALoc) target;
 
 		final MutableCFAEdge edge = new MutableCFAEdge(mutableSource, mutableTarget);
 		mutableSource.addOutEdge(edge);
-		mutableTarget.addOutEdge(edge);
+		mutableTarget.addInEdge(edge);
 		edges.add(edge);
 		return edge;
 	}
