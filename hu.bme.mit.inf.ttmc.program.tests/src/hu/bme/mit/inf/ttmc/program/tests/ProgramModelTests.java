@@ -22,7 +22,7 @@ import hu.bme.mit.inf.ttmc.program.ui.ProgramModelLoader;
 public class ProgramModelTests {
 
 	@Test
-	public void testLinear() throws IOException {
+	public void testSBELinear() throws IOException {
 		final File file = new File("instances/linear.program");
 		final String filePath = file.getAbsolutePath();
 		final ProgramSpecification specification = ProgramModelLoader.getInstance().load(filePath);
@@ -32,6 +32,20 @@ public class ProgramModelTests {
 		final Stmt stmt = procDecl.getStmt().get();
 
 		final CFA cfa = CFACreator.createSBE(manager, stmt);
+		System.out.println(CFAPrinter.toGraphvizSting(cfa));
+	}
+
+	@Test
+	public void testLBELinear() throws IOException {
+		final File file = new File("instances/linear.program");
+		final String filePath = file.getAbsolutePath();
+		final ProgramSpecification specification = ProgramModelLoader.getInstance().load(filePath);
+		final ProgramManager manager = new ProgramManagerImpl(new ConstraintManagerImpl());
+		final ProgramModel model = ProgramModelCreator.create(manager, specification);
+		final ProcDecl<? extends Type> procDecl = model.getProcDecls().iterator().next();
+		final Stmt stmt = procDecl.getStmt().get();
+
+		final CFA cfa = CFACreator.createLBE(manager, stmt);
 		System.out.println(CFAPrinter.toGraphvizSting(cfa));
 	}
 
