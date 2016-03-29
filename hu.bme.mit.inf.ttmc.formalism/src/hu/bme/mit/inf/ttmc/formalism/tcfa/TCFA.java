@@ -9,10 +9,6 @@ public interface TCFA extends Automaton {
 	@Override
 	public TCFALoc getInitLoc();
 
-	public TCFALoc getFinalLoc();
-
-	public TCFALoc getErrorLoc();
-
 	@Override
 	public Collection<? extends TCFALoc> getLocs();
 
