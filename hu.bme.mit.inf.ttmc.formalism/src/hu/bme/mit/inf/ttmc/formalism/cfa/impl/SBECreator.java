@@ -2,7 +2,7 @@ package hu.bme.mit.inf.ttmc.formalism.cfa.impl;
 
 import java.util.List;
 
-import hu.bme.mit.inf.ttmc.common.Tuple3;
+import hu.bme.mit.inf.ttmc.common.Tuple2;
 import hu.bme.mit.inf.ttmc.common.Tuples;
 import hu.bme.mit.inf.ttmc.constraint.factory.ExprFactory;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
@@ -30,25 +30,26 @@ public class SBECreator {
 
 	public static CFA create(final ProgramManager manager, final Stmt stmt) {
 		final MutableCFA cfa = new MutableCFA();
-		final SBECreatorVisitor visitor = new SBECreatorVisitor(manager);
-		stmt.accept(visitor, Tuples.of(cfa, cfa.getInitLoc(), cfa.getFinalLoc()));
+		final SBECreatorVisitor visitor = new SBECreatorVisitor(cfa, manager);
+		stmt.accept(visitor, Tuples.of(cfa.getInitLoc(), cfa.getFinalLoc()));
 		return ImmutableCFA.copyOf(cfa);
 	}
 
-	private static class SBECreatorVisitor implements StmtVisitor<Tuple3<MutableCFA, CFALoc, CFALoc>, Void> {
+	private static class SBECreatorVisitor implements StmtVisitor<Tuple2<CFALoc, CFALoc>, Void> {
 
+		private final MutableCFA cfa;
 		private final ExprFactory ef;
 		private final StmtFactory sf;
 
-		private SBECreatorVisitor(final ProgramManager manager) {
+		private SBECreatorVisitor(final MutableCFA cfa, final ProgramManager manager) {
+			this.cfa = cfa;
 			ef = manager.getExprFactory();
 			sf = manager.getStmtFactory();
 		}
 
-		private Void visitSimple(final Stmt stmt, final Tuple3<MutableCFA, CFALoc, CFALoc> param) {
-			final MutableCFA cfa = param._1();
-			final CFALoc source = param._2();
-			final CFALoc target = param._3();
+		private Void visitSimple(final Stmt stmt, final Tuple2<CFALoc, CFALoc> param) {
+			final CFALoc source = param._1();
+			final CFALoc target = param._2();
 
 			final CFAEdge edge = cfa.createEdge(source, target);
 			edge.getStmts().add(stmt);
@@ -57,10 +58,9 @@ public class SBECreator {
 		}
 
 		@Override
-		public Void visit(final SkipStmt stmt, final Tuple3<MutableCFA, CFALoc, CFALoc> param) {
-			final MutableCFA cfa = param._1();
-			final CFALoc source = param._2();
-			final CFALoc target = param._3();
+		public Void visit(final SkipStmt stmt, final Tuple2<CFALoc, CFALoc> param) {
+			final CFALoc source = param._1();
+			final CFALoc target = param._2();
 
 			cfa.createEdge(source, target);
 
@@ -69,10 +69,9 @@ public class SBECreator {
 
 		@Override
 		public <DeclType extends Type, ExprType extends DeclType> Void visit(final DeclStmt<DeclType, ExprType> stmt,
-				final Tuple3<MutableCFA, CFALoc, CFALoc> param) {
-			final MutableCFA cfa = param._1();
-			final CFALoc source = param._2();
-			final CFALoc target = param._3();
+				final Tuple2<CFALoc, CFALoc> param) {
+			final CFALoc source = param._1();
+			final CFALoc target = param._2();
 
 			final CFAEdge edge = cfa.createEdge(source, target);
 			if (stmt.getInitVal().isPresent()) {
@@ -85,15 +84,14 @@ public class SBECreator {
 		}
 
 		@Override
-		public Void visit(final AssumeStmt stmt, final Tuple3<MutableCFA, CFALoc, CFALoc> param) {
+		public Void visit(final AssumeStmt stmt, final Tuple2<CFALoc, CFALoc> param) {
 			return visitSimple(stmt, param);
 		}
 
 		@Override
-		public Void visit(final AssertStmt stmt, final Tuple3<MutableCFA, CFALoc, CFALoc> param) {
-			final MutableCFA cfa = param._1();
-			final CFALoc source = param._2();
-			final CFALoc target = param._3();
+		public Void visit(final AssertStmt stmt, final Tuple2<CFALoc, CFALoc> param) {
+			final CFALoc source = param._1();
+			final CFALoc target = param._2();
 
 			final CFAEdge normalEdge = cfa.createEdge(source, target);
 			normalEdge.getStmts().add(sf.Assume(stmt.getCond()));
@@ -106,21 +104,19 @@ public class SBECreator {
 
 		@Override
 		public <DeclType extends Type, ExprType extends DeclType> Void visit(final AssignStmt<DeclType, ExprType> stmt,
-				final Tuple3<MutableCFA, CFALoc, CFALoc> param) {
+				final Tuple2<CFALoc, CFALoc> param) {
 			return visitSimple(stmt, param);
 		}
 
 		@Override
-		public <DeclType extends Type> Void visit(final HavocStmt<DeclType> stmt,
-				final Tuple3<MutableCFA, CFALoc, CFALoc> param) {
+		public <DeclType extends Type> Void visit(final HavocStmt<DeclType> stmt, final Tuple2<CFALoc, CFALoc> param) {
 			return visitSimple(stmt, param);
 		}
 
 		@Override
-		public Void visit(final BlockStmt stmt, final Tuple3<MutableCFA, CFALoc, CFALoc> param) {
-			final MutableCFA cfa = param._1();
-			final CFALoc source = param._2();
-			final CFALoc target = param._3();
+		public Void visit(final BlockStmt stmt, final Tuple2<CFALoc, CFALoc> param) {
+			final CFALoc source = param._1();
+			final CFALoc target = param._2();
 
 			final List<? extends Stmt> stmts = stmt.getStmts();
 
@@ -139,10 +135,10 @@ public class SBECreator {
 				final Stmt head, final List<? extends Stmt> tail) {
 
 			if (head instanceof ReturnStmt<?> || tail.isEmpty()) {
-				head.accept(this, Tuples.of(cfa, source, target));
+				head.accept(this, Tuples.of(source, target));
 			} else {
 				final CFALoc middle = cfa.createLoc();
-				head.accept(this, Tuples.of(cfa, source, middle));
+				head.accept(this, Tuples.of(source, middle));
 
 				final Stmt newHead = tail.get(0);
 				final List<? extends Stmt> newTail = tail.subList(1, tail.size());
@@ -153,9 +149,8 @@ public class SBECreator {
 
 		@Override
 		public <ReturnType extends Type> Void visit(final ReturnStmt<ReturnType> stmt,
-				final Tuple3<MutableCFA, CFALoc, CFALoc> param) {
-			final MutableCFA cfa = param._1();
-			final CFALoc source = param._2();
+				final Tuple2<CFALoc, CFALoc> param) {
+			final CFALoc source = param._1();
 
 			final CFAEdge edge = cfa.createEdge(source, cfa.getFinalLoc());
 			edge.getStmts().add(stmt);
@@ -164,15 +159,14 @@ public class SBECreator {
 		}
 
 		@Override
-		public Void visit(final IfStmt stmt, final Tuple3<MutableCFA, CFALoc, CFALoc> param) {
-			final MutableCFA cfa = param._1();
-			final CFALoc source = param._2();
-			final CFALoc target = param._3();
+		public Void visit(final IfStmt stmt, final Tuple2<CFALoc, CFALoc> param) {
+			final CFALoc source = param._1();
+			final CFALoc target = param._2();
 
 			final CFALoc thenLoc = cfa.createLoc();
 			final CFAEdge thenEdge = cfa.createEdge(source, thenLoc);
 			thenEdge.getStmts().add(sf.Assume(stmt.getCond()));
-			stmt.getThen().accept(this, Tuples.of(cfa, thenLoc, target));
+			stmt.getThen().accept(this, Tuples.of(thenLoc, target));
 
 			final CFAEdge elseEdge = cfa.createEdge(source, target);
 			elseEdge.getStmts().add(sf.Assume(ef.Not(stmt.getCond())));
@@ -181,35 +175,33 @@ public class SBECreator {
 		}
 
 		@Override
-		public Void visit(final IfElseStmt stmt, final Tuple3<MutableCFA, CFALoc, CFALoc> param) {
-			final MutableCFA cfa = param._1();
-			final CFALoc source = param._2();
-			final CFALoc target = param._3();
+		public Void visit(final IfElseStmt stmt, final Tuple2<CFALoc, CFALoc> param) {
+			final CFALoc source = param._1();
+			final CFALoc target = param._2();
 
 			final CFALoc thenLoc = cfa.createLoc();
 			final CFAEdge thenEdge = cfa.createEdge(source, thenLoc);
 			thenEdge.getStmts().add(sf.Assume(stmt.getCond()));
-			stmt.getThen().accept(this, Tuples.of(cfa, thenLoc, target));
+			stmt.getThen().accept(this, Tuples.of(thenLoc, target));
 
 			final CFALoc elseLoc = cfa.createLoc();
 			final CFAEdge elseEdge = cfa.createEdge(source, elseLoc);
 			elseEdge.getStmts().add(sf.Assume(ef.Not(stmt.getCond())));
-			stmt.getElse().accept(this, Tuples.of(cfa, elseLoc, target));
+			stmt.getElse().accept(this, Tuples.of(elseLoc, target));
 
 			return null;
 		}
 
 		@Override
-		public Void visit(final WhileStmt stmt, final Tuple3<MutableCFA, CFALoc, CFALoc> param) {
-			final MutableCFA cfa = param._1();
-			final CFALoc source = param._2();
-			final CFALoc target = param._3();
+		public Void visit(final WhileStmt stmt, final Tuple2<CFALoc, CFALoc> param) {
+			final CFALoc source = param._1();
+			final CFALoc target = param._2();
 
 			final CFALoc doLoc = cfa.createLoc();
 			final CFAEdge enterEdge = cfa.createEdge(source, doLoc);
 			enterEdge.getStmts().add(sf.Assume(stmt.getCond()));
 
-			stmt.getDo().accept(this, Tuples.of(cfa, doLoc, source));
+			stmt.getDo().accept(this, Tuples.of(doLoc, source));
 
 			final CFAEdge exitEdge = cfa.createEdge(source, target);
 			exitEdge.getStmts().add(sf.Assume(ef.Not(stmt.getCond())));
@@ -218,13 +210,12 @@ public class SBECreator {
 		}
 
 		@Override
-		public Void visit(final DoStmt stmt, final Tuple3<MutableCFA, CFALoc, CFALoc> param) {
-			final MutableCFA cfa = param._1();
-			final CFALoc source = param._2();
-			final CFALoc target = param._3();
+		public Void visit(final DoStmt stmt, final Tuple2<CFALoc, CFALoc> param) {
+			final CFALoc source = param._1();
+			final CFALoc target = param._2();
 
 			final CFALoc doLoc = cfa.createLoc();
-			stmt.getDo().accept(this, Tuples.of(cfa, source, doLoc));
+			stmt.getDo().accept(this, Tuples.of(source, doLoc));
 
 			final CFAEdge entryEdge = cfa.createEdge(doLoc, source);
 			entryEdge.getStmts().add(sf.Assume(stmt.getCond()));
