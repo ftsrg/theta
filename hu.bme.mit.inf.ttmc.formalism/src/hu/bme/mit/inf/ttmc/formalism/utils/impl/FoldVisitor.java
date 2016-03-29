@@ -8,14 +8,14 @@ import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.constraint.utils.impl.ExprRewriterVisitor;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
-import hu.bme.mit.inf.ttmc.formalism.program.factory.ProgramExprFactory;
+import hu.bme.mit.inf.ttmc.formalism.common.factory.PrimedExprFactory;
 
-class FoldVisitor extends ExprRewriterVisitor<Integer> {
+public class FoldVisitor extends ExprRewriterVisitor<Integer> {
 
 	final VarMap varMap;
-	final ProgramExprFactory factory;
+	final PrimedExprFactory factory;
 
-	FoldVisitor(final VarMap varMap, final ProgramExprFactory factory) {
+	public FoldVisitor(final VarMap varMap, final PrimedExprFactory factory) {
 		this.varMap = varMap;
 		this.factory = factory;
 	}

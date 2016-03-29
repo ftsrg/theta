@@ -19,8 +19,7 @@ public class ExprUtils {
 	public static Collection<Expr<? extends BoolType>> getConjuncts(final Expr<? extends BoolType> expr) {
 		if (expr instanceof AndExpr) {
 			final AndExpr andExpr = (AndExpr) expr;
-			return andExpr.getOps().stream().map(e -> getConjuncts(e)).flatMap(c -> c.stream())
-					.collect(Collectors.toSet());
+			return andExpr.getOps().stream().map(e -> getConjuncts(e)).flatMap(c -> c.stream()).collect(Collectors.toSet());
 		} else {
 			return Collections.singleton(expr);
 		}
@@ -41,11 +40,13 @@ public class ExprUtils {
 	}
 
 	@SuppressWarnings("unchecked")
-	public static Expr<? extends BoolType> eliminateITE(final Expr<? extends BoolType> expr,
-			final ConstraintManager manager) {
-		return (Expr<? extends BoolType>) expr
-				.accept(new ExprITEPropagatorVisitor(manager, new ExprITEPusherVisitor(manager)), null)
+	public static Expr<? extends BoolType> eliminateITE(final Expr<? extends BoolType> expr, final ConstraintManager manager) {
+		return (Expr<? extends BoolType>) expr.accept(new ExprITEPropagatorVisitor(manager, new ExprITEPusherVisitor(manager)), null)
 				.accept(new ExprITERemoverVisitor(manager), null);
+	}
+
+	public static void collectAtoms(final Expr<? extends BoolType> expr, final Collection<Expr<? extends BoolType>> collectTo) {
+		expr.accept(new AtomCollectorVisitor(), collectTo);
 	}
 
 }

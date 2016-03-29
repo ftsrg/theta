@@ -1,0 +1,21 @@
+// Simple example where there is no constraint on some variables thus the
+// solver may not include a value for them in the solutions
+specification Test {
+	property s : {
+		// Variables
+		var x : integer
+		var y : boolean
+		var z : boolean
+		var t : boolean
+		
+		// Invariants
+		invariant 0 <= x and x <= 2
+		
+		// Initial values
+		initial x = 1
+		
+		// Transitions
+		transition x' = if y then x + 1 else x - 1
+		
+	} models G (y = z) // Does not holds
+}
