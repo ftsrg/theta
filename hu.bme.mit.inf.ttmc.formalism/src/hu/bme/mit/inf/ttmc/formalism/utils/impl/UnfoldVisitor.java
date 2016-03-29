@@ -13,21 +13,21 @@ import hu.bme.mit.inf.ttmc.formalism.common.expr.ProcRefExpr;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.VarRefExpr;
 import hu.bme.mit.inf.ttmc.formalism.utils.ProgExprVisitor;
 
-
-class UnfoldVisitor extends ExprRewriterVisitor<Integer> implements ProgExprVisitor<Integer, Expr<?>> {
+public class UnfoldVisitor extends ExprRewriterVisitor<Integer> implements ProgExprVisitor<Integer, Expr<?>> {
 
 	final VarMap varMap;
 	final ExprFactory exprFactory;
-	
-	UnfoldVisitor(VarMap varMap, ExprFactory exprFactory) {
+
+	public UnfoldVisitor(final VarMap varMap, final ExprFactory exprFactory) {
 		this.varMap = varMap;
 		this.exprFactory = exprFactory;
 	}
-		
+
 	////
-	
+
 	@Override
-	public <ExprType extends Type> Expr<? extends ExprType> visit(PrimedExpr<ExprType> expr, Integer param) {
+	public <ExprType extends Type> Expr<? extends ExprType> visit(final PrimedExpr<ExprType> expr,
+			final Integer param) {
 		final int i = param;
 		final Expr<? extends ExprType> op = expr.getOp();
 		@SuppressWarnings("unchecked")
@@ -36,22 +36,23 @@ class UnfoldVisitor extends ExprRewriterVisitor<Integer> implements ProgExprVisi
 	}
 
 	@Override
-	public <DeclType extends Type> Expr<? extends DeclType> visit(VarRefExpr<DeclType> expr, Integer param) {
+	public <DeclType extends Type> Expr<? extends DeclType> visit(final VarRefExpr<DeclType> expr,
+			final Integer param) {
 		final int i = param;
 		final VarDecl<DeclType> varDecl = expr.getDecl();
-		final ConstDecl<DeclType> constDecl =  varMap.getConstDecl(varDecl, i);
+		final ConstDecl<DeclType> constDecl = varMap.getConstDecl(varDecl, i);
 		final ConstRefExpr<DeclType> constRefExpr = constDecl.getRef();
 		return constRefExpr;
 	}
 
 	@Override
-	public <ReturnType extends Type> Expr<?> visit(ProcRefExpr<ReturnType> expr, Integer param) {
+	public <ReturnType extends Type> Expr<?> visit(final ProcRefExpr<ReturnType> expr, final Integer param) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
 
 	@Override
-	public <ReturnType extends Type> Expr<?> visit(ProcCallExpr<ReturnType> expr, Integer param) {
+	public <ReturnType extends Type> Expr<?> visit(final ProcCallExpr<ReturnType> expr, final Integer param) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}

@@ -16,17 +16,23 @@ public final class STSCNFTransformation implements STSTransformation {
 	 */
 	@Override
 	public STS transform(final STS system) {
+
 		final STSImpl.Builder builder = new STSImpl.Builder(system.getManager());
 		final CNFTransformation cnfTransf = FormalismUtils.createCNFTransformation(system.getManager(), system.getManager().getDeclFactory());
 
 		for (final Expr<? extends BoolType> expr : system.getInit())
 			builder.addInit(transformIfNonCNF(expr, cnfTransf));
+		cnfTransf.clearRepresentatives();
+
 		for (final Expr<? extends BoolType> expr : system.getInvar())
 			builder.addInvar(transformIfNonCNF(expr, cnfTransf));
+		cnfTransf.clearRepresentatives();
+
 		for (final Expr<? extends BoolType> expr : system.getTrans())
 			builder.addTrans(transformIfNonCNF(expr, cnfTransf));
+		cnfTransf.clearRepresentatives();
 
-		builder.setProp(transformIfNonCNF(system.getProp(), cnfTransf));
+		builder.setProp(system.getProp());
 
 		return builder.build();
 	}
