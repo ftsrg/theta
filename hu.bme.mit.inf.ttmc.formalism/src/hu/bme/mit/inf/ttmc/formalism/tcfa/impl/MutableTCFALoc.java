@@ -14,22 +14,33 @@ final class MutableTCFALoc implements TCFALoc {
 	final Collection<MutableTCFAEdge> inEdges;
 	final Collection<MutableTCFAEdge> outEdges;
 
+	private final Collection<Expr<? extends BoolType>> invars;
+	private boolean urgent;
+
 	MutableTCFALoc() {
 		inEdges = new LinkedList<>();
 		outEdges = new LinkedList<>();
+		invars = new LinkedList<>();
+		urgent = false;
 	}
 
 	@Override
 	public boolean isUrgent() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		return urgent;
 	}
 
-	@Override
-	public Expr<? extends BoolType> getInvar() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+	public void setUrgent(final boolean urgent) {
+		this.urgent = urgent;
 	}
+
+	////
+
+	@Override
+	public Collection<Expr<? extends BoolType>> getInvars() {
+		return invars;
+	}
+
+	////
 
 	@Override
 	public Collection<? extends TCFAEdge> getInEdges() {

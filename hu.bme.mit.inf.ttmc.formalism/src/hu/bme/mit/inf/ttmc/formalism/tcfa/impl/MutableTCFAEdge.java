@@ -1,5 +1,6 @@
 package hu.bme.mit.inf.ttmc.formalism.tcfa.impl;
 
+import java.util.LinkedList;
 import java.util.List;
 
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
@@ -11,9 +12,12 @@ final class MutableTCFAEdge implements TCFAEdge {
 	MutableTCFALoc source;
 	MutableTCFALoc target;
 
+	private final List<Stmt> stmts;
+
 	MutableTCFAEdge(final MutableTCFALoc source, final MutableTCFALoc target) {
 		this.source = source;
 		this.target = target;
+		stmts = new LinkedList<>();
 	}
 
 	@Override
@@ -28,8 +32,7 @@ final class MutableTCFAEdge implements TCFAEdge {
 
 	@Override
 	public List<Stmt> getStmts() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		return stmts;
 	}
 
 }
