@@ -24,12 +24,13 @@ public abstract class AbstractUnaryExpr<OpType extends Type, ExprType extends Ty
 
 	@Override
 	public final int hashCode() {
-		if (hashCode == 0) {
-			hashCode = getHashSeed();
-			hashCode = 37 * hashCode + getOp().hashCode();
+		int result = hashCode;
+		if (result == 0) {
+			result = getHashSeed();
+			result = 37 * result + getOp().hashCode();
+			result = hashCode;
 		}
-
-		return hashCode;
+		return result;
 	}
 
 	@Override

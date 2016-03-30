@@ -1,0 +1,4 @@
+/bin/
+/models/*/*.dot
+/models/*/*.png
+/models/*/*.graphml

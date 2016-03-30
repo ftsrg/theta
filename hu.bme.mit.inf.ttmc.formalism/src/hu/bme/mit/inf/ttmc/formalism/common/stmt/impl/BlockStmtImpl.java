@@ -10,53 +10,52 @@ import com.google.common.collect.ImmutableList;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.BlockStmt;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
 
-public class BlockStmtImpl extends AbstractStmt implements BlockStmt {
-	
-	private final static int HASHSEED = 757;
+public final class BlockStmtImpl extends AbstractStmt implements BlockStmt {
+
+	private static final int HASH_SEED = 757;
 	private volatile int hashCode = 0;
-	
+
 	private final List<? extends Stmt> stmts;
-	
+
 	public BlockStmtImpl(final List<? extends Stmt> stmts) {
 		this.stmts = ImmutableList.copyOf(checkNotNull(stmts));
 	}
-	
+
 	@Override
 	public List<? extends Stmt> getStmts() {
 		return stmts;
 	}
-	
+
 	@Override
 	public int hashCode() {
-		if (hashCode == 0) {
-			hashCode = HASHSEED;
-			hashCode = 37 * hashCode + stmts.hashCode();
+		int result = hashCode;
+		if (result == 0) {
+			result = HASH_SEED;
+			result = 31 * result + stmts.hashCode();
+			hashCode = result;
 		}
-
-		return hashCode;
+		return result;
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
-		} else if (obj == null) {
-			return false;
-		} else if (this.getClass() == obj.getClass()) {
-			final BlockStmtImpl that = (BlockStmtImpl) obj;
-			return this.stmts.equals(that.stmts);
+		} else if (obj instanceof BlockStmt) {
+			final BlockStmt that = (BlockStmt) obj;
+			return this.getStmts().equals(that.getStmts());
 		} else {
 			return false;
 		}
 	}
-	
+
 	@Override
 	public String toString() {
 		final StringJoiner sj = new StringJoiner(", ", "Block(", ")");
-		for (Stmt stmt : stmts) {
+		for (final Stmt stmt : stmts) {
 			sj.add(stmt.toString());
 		}
 		return sj.toString();
 	}
-	
+
 }

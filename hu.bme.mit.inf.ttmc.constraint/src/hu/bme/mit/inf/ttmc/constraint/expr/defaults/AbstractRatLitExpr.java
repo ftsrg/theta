@@ -57,12 +57,13 @@ public abstract class AbstractRatLitExpr extends AbstractNullaryExpr<RatType> im
 
 	@Override
 	public final int hashCode() {
-		if (hashCode == 0) {
-			hashCode = HASH_SEED;
-			hashCode = 31 * hashCode + (int) (num ^ (num >>> 32));
-			hashCode = 31 * hashCode + (int) (denom ^ (denom >>> 32));
+		int result = hashCode;
+		if (result == 0) {
+			result = HASH_SEED;
+			result = 31 * result + (int) (num ^ (num >>> 32));
+			result = 31 * result + (int) (denom ^ (denom >>> 32));
+			hashCode = result;
 		}
-
 		return hashCode;
 	}
 

@@ -2,10 +2,7 @@ package hu.bme.mit.inf.ttmc.constraint.ui;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.util.ArrayList;
 import java.util.Collection;
-
-import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.decl.ConstDecl;
@@ -16,6 +13,11 @@ import hu.bme.mit.inf.ttmc.constraint.model.ConstraintSpecification;
 import hu.bme.mit.inf.ttmc.constraint.model.Expression;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
+import hu.bme.mit.inf.ttmc.constraint.ui.impl.ConstraintModelBuilder;
+import hu.bme.mit.inf.ttmc.constraint.ui.impl.ConstraintModelImpl;
+import hu.bme.mit.inf.ttmc.constraint.ui.transform.DeclTransformator;
+import hu.bme.mit.inf.ttmc.constraint.ui.transform.ExprTransformator;
+import hu.bme.mit.inf.ttmc.constraint.ui.transform.impl.ConstraintTransformationManager;
 import hu.bme.mit.inf.ttmc.constraint.utils.impl.ExprUtils;
 
 public class ConstraintModelCreator {
@@ -27,50 +29,36 @@ public class ConstraintModelCreator {
 		checkNotNull(manager);
 		checkNotNull(specification);
 
-		final TypeHelper typeHelper = new TypeHelper(manager.getTypeFactory());
-		final DeclarationHelper declarationHelper = new DeclarationHelper(manager.getDeclFactory(), typeHelper);
-		final ExpressionHelper expressionHelper = new ExpressionHelper(manager, declarationHelper);
+		final ConstraintTransformationManager tManager = new ConstraintTransformationManager(manager);
+		final ConstraintModelBuilder builder = ConstraintModelImpl.builder();
 
-		final Collection<ConstDecl<Type>> constDecls = new ArrayList<>();
+		addConstants(builder, specification, tManager);
+		addConstraints(builder, specification, tManager);
+
+		return builder.build();
+	}
+
+	private static void addConstants(final ConstraintModelBuilder builder, final ConstraintSpecification specification,
+			final ConstraintTransformationManager manager) {
+		final DeclTransformator dt = manager.getDeclTransformator();
+
 		for (final ConstantDeclaration constantDeclaration : specification.getConstantDeclarations()) {
-			final ConstDecl<Type> constDecl = (ConstDecl<Type>) declarationHelper.toDecl(constantDeclaration);
-			constDecls.add(constDecl);
+			@SuppressWarnings("unchecked")
+			final ConstDecl<Type> constDecl = (ConstDecl<Type>) dt.transform(constantDeclaration);
+			builder.addConstDecl(constDecl);
 		}
+	}
 
-		final Collection<Expr<? extends BoolType>> constraints = new ArrayList<>();
+	private static void addConstraints(final ConstraintModelBuilder builder,
+			final ConstraintSpecification specification, final ConstraintTransformationManager manager) {
+		final ExprTransformator et = manager.getExprTransformator();
+
 		for (final BasicConstraintDefinition basicConstraintDefinition : specification
 				.getBasicConstraintDefinitions()) {
 			final Expression expression = basicConstraintDefinition.getExpression();
-			final Expr<? extends BoolType> expr = ExprUtils.cast(expressionHelper.toExpr(expression), BoolType.class);
+			final Expr<? extends BoolType> expr = ExprUtils.cast(et.transform(expression), BoolType.class);
 			final Collection<Expr<? extends BoolType>> conjuncts = ExprUtils.getConjuncts(expr);
-			constraints.addAll(conjuncts);
-		}
-
-		final ConstraintModel model = new ConstraintModelImpl(constDecls, constraints);
-
-		return model;
-	}
-
-	/////////////////
-
-	private static class ConstraintModelImpl implements ConstraintModel {
-		private final Collection<ConstDecl<? extends Type>> constDecls;
-		private final Collection<Expr<? extends BoolType>> constraints;
-
-		private ConstraintModelImpl(final Collection<? extends ConstDecl<? extends Type>> constDecls,
-				final Collection<? extends Expr<? extends BoolType>> constraints) {
-			this.constDecls = ImmutableList.copyOf(checkNotNull(constDecls));
-			this.constraints = ImmutableList.copyOf(checkNotNull(constraints));
-		}
-
-		@Override
-		public Collection<ConstDecl<? extends Type>> getConstDecls() {
-			return constDecls;
-		}
-
-		@Override
-		public Collection<Expr<? extends BoolType>> getConstraints() {
-			return constraints;
+			builder.addConstraints(conjuncts);
 		}
 	}
 

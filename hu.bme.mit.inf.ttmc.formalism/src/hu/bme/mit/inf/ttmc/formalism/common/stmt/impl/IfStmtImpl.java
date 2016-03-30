@@ -7,19 +7,19 @@ import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.IfStmt;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
 
-public class IfStmtImpl extends AbstractStmt implements IfStmt {
+public final class IfStmtImpl extends AbstractStmt implements IfStmt {
 
-	private final static int HASHSEED = 829;
+	private static final int HASH_SEED = 829;
 	private volatile int hashCode = 0;
-	
+
 	private final Expr<? extends BoolType> cond;
 	private final Stmt then;
-	
+
 	public IfStmtImpl(final Expr<? extends BoolType> cond, final Stmt then) {
 		this.cond = checkNotNull(cond);
 		this.then = checkNotNull(then);
 	}
-	
+
 	@Override
 	public Expr<? extends BoolType> getCond() {
 		return cond;
@@ -29,27 +29,26 @@ public class IfStmtImpl extends AbstractStmt implements IfStmt {
 	public Stmt getThen() {
 		return then;
 	}
-	
+
 	@Override
 	public int hashCode() {
-		if (hashCode == 0) {
-			hashCode = HASHSEED;
-			hashCode = 37 * hashCode + cond.hashCode();
-			hashCode = 37 * hashCode + then.hashCode();
+		int result = hashCode;
+		if (result == 0) {
+			result = HASH_SEED;
+			result = 31 * result + cond.hashCode();
+			result = 31 * result + then.hashCode();
+			hashCode = result;
 		}
-
-		return hashCode;
+		return result;
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
-		} else if (obj == null) {
-			return false;
-		} else if (this.getClass() == obj.getClass()) {
-			final IfStmtImpl that = (IfStmtImpl) obj;
-			return this.cond.equals(that.cond) && this.then.equals(that.then);
+		} else if (obj instanceof IfStmt) {
+			final IfStmt that = (IfStmt) obj;
+			return this.getCond().equals(that.getCond()) && this.getThen().equals(that.getThen());
 		} else {
 			return false;
 		}

@@ -8,34 +8,34 @@ import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.constraint.utils.impl.ExprRewriterVisitor;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
-import hu.bme.mit.inf.ttmc.formalism.common.factory.ProgramFactory;
+import hu.bme.mit.inf.ttmc.formalism.common.factory.PrimedExprFactory;
 
-class FoldVisitor extends ExprRewriterVisitor<Integer> {
+public class FoldVisitor extends ExprRewriterVisitor<Integer> {
 
 	final VarMap varMap;
-	final ProgramFactory factory;
-	
-	FoldVisitor(VarMap varMap, ProgramFactory factory) {
+	final PrimedExprFactory factory;
+
+	public FoldVisitor(final VarMap varMap, final PrimedExprFactory factory) {
 		this.varMap = varMap;
 		this.factory = factory;
 	}
 
 	@Override
-	public <DeclType extends Type> Expr<DeclType> visit(ConstRefExpr<DeclType> expr, Integer param) {
+	public <DeclType extends Type> Expr<DeclType> visit(final ConstRefExpr<DeclType> expr, final Integer param) {
 		final int i = param;
 		final ConstDecl<DeclType> constDecl = expr.getDecl();
 		final int index = varMap.getIndex(constDecl);
-		
+
 		int nPrimes = index - i;
 		checkState(nPrimes >= 0);
-		
+
 		final VarDecl<DeclType> varDecl = varMap.getVarDecl(constDecl);
 		Expr<DeclType> res = varDecl.getRef();
 		while (nPrimes > 0) {
 			res = factory.Prime(res);
 			nPrimes--;
 		}
-		
+
 		return res;
 	}
 }

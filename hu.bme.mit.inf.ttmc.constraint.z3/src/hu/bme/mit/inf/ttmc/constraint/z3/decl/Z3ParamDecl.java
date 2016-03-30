@@ -4,12 +4,14 @@ import com.microsoft.z3.Context;
 import com.microsoft.z3.Sort;
 
 import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
+import hu.bme.mit.inf.ttmc.constraint.decl.ParamDecl;
 import hu.bme.mit.inf.ttmc.constraint.decl.defaults.AbstractParamDecl;
 import hu.bme.mit.inf.ttmc.constraint.type.FuncType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.constraint.z3.type.Z3Type;
 
-public final class Z3ParamDecl<DeclType extends Type> extends AbstractParamDecl<DeclType> implements Z3Decl<DeclType> {
+public final class Z3ParamDecl<DeclType extends Type> extends AbstractParamDecl<DeclType>
+		implements Z3Decl<DeclType, ParamDecl<DeclType>> {
 
 	private final Context context;
 

@@ -27,12 +27,13 @@ public abstract class AbstractMultiaryExpr<OpsType extends Type, ExprType extend
 
 	@Override
 	public int hashCode() {
-		if (hashCode == 0) {
-			hashCode = getHashSeed();
-			hashCode = 31 * hashCode + getOps().hashCode();
+		int result = hashCode;
+		if (result == 0) {
+			result = getHashSeed();
+			result = 31 * result + getOps().hashCode();
+			hashCode = result;
 		}
-
-		return hashCode;
+		return result;
 	}
 
 	@Override
