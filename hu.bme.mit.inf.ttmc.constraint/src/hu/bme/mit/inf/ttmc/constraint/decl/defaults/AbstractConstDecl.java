@@ -4,6 +4,7 @@ import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.decl.ConstDecl;
 import hu.bme.mit.inf.ttmc.constraint.expr.ConstRefExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
+import hu.bme.mit.inf.ttmc.constraint.utils.DeclVisitor;
 
 public abstract class AbstractConstDecl<DeclType extends Type> extends AbstractDecl<DeclType, ConstDecl<DeclType>>
 		implements ConstDecl<DeclType> {
@@ -26,6 +27,11 @@ public abstract class AbstractConstDecl<DeclType extends Type> extends AbstractD
 		}
 
 		return ref;
+	}
+
+	@Override
+	public final <P, R> R accept(final DeclVisitor<? super P, ? extends R> visitor, final P param) {
+		return visitor.visit(this, param);
 	}
 
 	@Override
