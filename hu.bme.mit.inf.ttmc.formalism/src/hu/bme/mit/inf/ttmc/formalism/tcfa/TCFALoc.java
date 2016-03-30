@@ -10,7 +10,7 @@ public interface TCFALoc extends Loc {
 
 	public boolean isUrgent();
 
-	public Expr<? extends BoolType> getInvar();
+	public Collection<Expr<? extends BoolType>> getInvars();
 
 	@Override
 	public Collection<? extends TCFAEdge> getInEdges();
