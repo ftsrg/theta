@@ -4,6 +4,7 @@ import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.decl.ParamDecl;
 import hu.bme.mit.inf.ttmc.constraint.expr.ParamRefExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
+import hu.bme.mit.inf.ttmc.constraint.utils.DeclVisitor;
 
 public abstract class AbstractParamDecl<DeclType extends Type> extends AbstractDecl<DeclType, ParamDecl<DeclType>>
 		implements ParamDecl<DeclType> {
@@ -29,14 +30,8 @@ public abstract class AbstractParamDecl<DeclType extends Type> extends AbstractD
 	}
 
 	@Override
-	public String toString() {
-		final StringBuilder sb = new StringBuilder();
-		sb.append("Param(");
-		sb.append(getName());
-		sb.append(" : ");
-		sb.append(getType());
-		sb.append(")");
-		return sb.toString();
+	public final <P, R> R accept(final DeclVisitor<? super P, ? extends R> visitor, final P param) {
+		return visitor.visit(this, param);
 	}
 
 	@Override
