@@ -15,6 +15,15 @@ public class FunctionCallExpressionAst extends ExpressionAst {
 		this.params = params;
 	}
 	
+	public String getName() {
+		return this.name;
+	}
+	
+	public List<ExpressionAst> getParams() {
+		return this.params;
+	}
+	
+	
 	@Override
 	public <E> E accept(ExpressionVisitor<E> visitor) {
 		return visitor.visit(this);

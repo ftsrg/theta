@@ -5,7 +5,7 @@ import hu.bme.mit.inf.ttmc.code.ast.visitor.ExpressionVisitor;
 public class BinaryExpressionAst extends ExpressionAst {
 
 	public enum Operator {
-		OP_ADD, OP_SUB, OP_MUL, OP_DIV, OP_ASSIGN, OP_IS_EQUAL, OP_IS_GTEQ, OP_IS_LTEQ, OP_IS_LT, OP_IS_GT
+		OP_ADD, OP_SUB, OP_MUL, OP_DIV, OP_ASSIGN, OP_IS_EQ, OP_IS_GTEQ, OP_IS_LTEQ, OP_IS_LT, OP_IS_GT, OP_IS_NOT_EQ
 	}
 	
 	private Operator operator;
