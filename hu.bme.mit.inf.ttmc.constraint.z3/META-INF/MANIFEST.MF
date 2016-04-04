@@ -4,7 +4,8 @@ Bundle-Name: Z3
 Bundle-SymbolicName: hu.bme.mit.inf.ttmc.constraint.z3
 Bundle-Version: 1.0.0.qualifier
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
-Require-Bundle: com.google.guava;bundle-version="15.0.0",
- hu.bme.mit.inf.ttmc.common;bundle-version="1.0.0",
- hu.bme.mit.inf.ttmc.constraint;bundle-version="1.0.0"
+Require-Bundle: com.google.guava,
+ org.junit,
+ hu.bme.mit.inf.ttmc.common,
+ hu.bme.mit.inf.ttmc.constraint
 Export-Package: hu.bme.mit.inf.ttmc.constraint.z3
