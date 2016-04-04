@@ -1,4 +1,4 @@
-package hu.bme.mit.inf.ttmc.constraint.z3.solver2;
+package hu.bme.mit.inf.ttmc.constraint.z3.trasform;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
