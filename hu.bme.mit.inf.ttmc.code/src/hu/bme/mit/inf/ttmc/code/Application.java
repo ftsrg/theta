@@ -7,6 +7,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.CharBuffer;
+import java.util.ArrayList;
 
 import org.eclipse.cdt.core.dom.ast.ASTVisitor;
 import org.eclipse.cdt.core.dom.ast.IASTDeclaration;
@@ -29,13 +30,24 @@ import hu.bme.mit.inf.ttmc.code.ast.AstNode;
 import hu.bme.mit.inf.ttmc.code.ast.AstRoot;
 import hu.bme.mit.inf.ttmc.code.ast.CompoundStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.FunctionAst;
+import hu.bme.mit.inf.ttmc.code.stmt.visitor.PrintStmtVisitor;
+import hu.bme.mit.inf.ttmc.code.visitor.SimplifyAstVisitor;
 import hu.bme.mit.inf.ttmc.code.visitor.TransformProgramVisitor;
 import hu.bme.mit.inf.ttmc.constraint.ConstraintManagerImpl;
+import hu.bme.mit.inf.ttmc.formalism.cfa.CFA;
+import hu.bme.mit.inf.ttmc.formalism.cfa.CFACreator;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.BlockStmt;
+import hu.bme.mit.inf.ttmc.formalism.common.stmt.IfStmt;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
+import hu.bme.mit.inf.ttmc.formalism.common.stmt.WhileStmt;
+import hu.bme.mit.inf.ttmc.formalism.program.ProgramManager;
+import hu.bme.mit.inf.ttmc.formalism.program.impl.ProgramManagerImpl;
+import hu.bme.mit.inf.ttmc.formalism.utils.impl.CFAPrinter;
 
 class Application {
 
+	// scope, deklarációs lista, postfix/prefix
+	
 	public static void main(String[] args) throws CoreException, FileNotFoundException, IOException, InterruptedException {
 	    
 	    GCCLanguage lang = new GCCLanguage();
@@ -51,7 +63,7 @@ class Application {
 	    IASTTranslationUnit ast = lang.getASTTranslationUnit(fc, sc, ifcp, index, 0, log);
 	    
 	    //ast.accept(visitor);
-	    
+	    	    
 	    StringBuilder sb = new StringBuilder();
 	    sb.append("digraph G {");
         printTree(ast, sb);
@@ -88,17 +100,53 @@ class Application {
 			proc.waitFor();
 		} catch (Exception e) {
 			e.printStackTrace();
-		}
+		}	    
 	    
-	    
-	    TransformProgramVisitor visitor = new TransformProgramVisitor(new ConstraintManagerImpl());
-	    
+	    SimplifyAstVisitor simplVisitor = new SimplifyAstVisitor();
+
 	    FunctionAst main = (FunctionAst) root.getChildren()[0];
+	    FunctionAst mainSimpl = (FunctionAst) main.accept(simplVisitor);
 	    
-	    Stmt content = main.getBody().accept(visitor);	   
+	    sb.setLength(0);
+	    sb.append("digraph G {");
+        printCustomTree(mainSimpl, sb);
+        sb.append("}");
+	            
+        try {
+            FileOutputStream fos = new FileOutputStream(new File("ast_trans.dot"));
+            OutputStreamWriter osw = new OutputStreamWriter(fos);
+            
+            osw.write(sb.toString());
+            osw.close();
+            
+            Process proc = Runtime.getRuntime().exec("dot -Tpng -o ast_trans.png ast_trans.dot");
+			proc.waitFor();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}	
+
+	    ProgramManager manager = new ProgramManagerImpl(new ConstraintManagerImpl());
+	    TransformProgramVisitor visitor = new TransformProgramVisitor(manager);
+	    
+	    Stmt content = mainSimpl.getBody().accept(visitor);
+	    
+	    CFA cfa = CFACreator.createSBE(manager, content);
+	    CFA cfa2 = CFACreator.createLBE(manager, content);
+	    
+	    //printStmt(content, 0);
 	    
 	    System.out.println(content);
 	    
+	    PrintStmtVisitor stmtVisitor = new PrintStmtVisitor();
+	    String s = content.accept(stmtVisitor, new StringBuilder());
+	    System.out.println("===============");
+	    
+	    System.out.println(s);
+	    System.out.println("================");
+
+	    System.out.println(CFAPrinter.toGraphvizSting(cfa));
+	    System.out.println("================");
+	    System.out.println(CFAPrinter.toGraphvizSting(cfa2));
 	}
 	
 	private static int nodeId = 0;
@@ -124,7 +172,7 @@ class Application {
 	    
 	    return nodeName;
 	}
-	
+		
 	public static void printc(IASTNode node, int depth) {
 	    for (IASTNode child : node.getChildren()) {
 	        System.out.print(CharBuffer.allocate(depth).toString().replace( '\0', ' ' ));

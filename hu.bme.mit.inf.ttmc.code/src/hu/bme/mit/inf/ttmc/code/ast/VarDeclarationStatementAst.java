@@ -5,9 +5,15 @@ import hu.bme.mit.inf.ttmc.code.ast.visitor.StatementVisitor;
 public class VarDeclarationStatementAst extends StatementAst {
 
 	private String name;
+	private VarDeclarationAst decl;
 	
-	public VarDeclarationStatementAst(String name) {
-		this.name = name;
+	public VarDeclarationStatementAst(VarDeclarationAst decl) {
+		this.decl = decl;
+		this.name = decl.getName();
+	}
+
+	public VarDeclarationAst getDeclaration() {
+		return this.decl;
 	}
 	
 	public String getName() {
@@ -16,7 +22,7 @@ public class VarDeclarationStatementAst extends StatementAst {
 	
 	@Override
 	public AstNode[] getChildren() {
-		return new AstNode[] {};
+		return new AstNode[] { this.decl };
 	}
 	
 	@Override

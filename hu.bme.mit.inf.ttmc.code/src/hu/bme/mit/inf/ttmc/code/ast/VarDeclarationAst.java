@@ -1,16 +1,30 @@
 package hu.bme.mit.inf.ttmc.code.ast;
 
-public class VarDeclarationAst extends AstNode {
+import java.util.List;
+
+import hu.bme.mit.inf.ttmc.code.ast.visitor.DeclarationVisitor;
+
+public class VarDeclarationAst extends DeclarationAst {
 
 	private String name;
-
+	private List<DeclaratorAst> declarators;
+	
+	public VarDeclarationAst(String name) {
+		this.name = name;
+	}
+	
+	public String getName() {
+		return this.name;
+	}
+	
 	@Override
 	public AstNode[] getChildren() {
 		return new AstNode[] {};
 	}
-	
-	public <R> void accept(AstVisitor<R> visitor) {
-		visitor.visit(this);
+
+	@Override
+	public <D> D accept(DeclarationVisitor<D> visitor) {
+		return visitor.visit(this);
 	}
 	
 }

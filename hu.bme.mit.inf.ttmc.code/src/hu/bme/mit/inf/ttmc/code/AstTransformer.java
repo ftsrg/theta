@@ -7,13 +7,18 @@ import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTCompoundStatement;
 import org.eclipse.cdt.core.dom.ast.IASTDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTDeclarationStatement;
+import org.eclipse.cdt.core.dom.ast.IASTDeclarator;
+import org.eclipse.cdt.core.dom.ast.IASTDoStatement;
+import org.eclipse.cdt.core.dom.ast.IASTEqualsInitializer;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
 import org.eclipse.cdt.core.dom.ast.IASTExpressionStatement;
+import org.eclipse.cdt.core.dom.ast.IASTForStatement;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTIdExpression;
 import org.eclipse.cdt.core.dom.ast.IASTIfStatement;
+import org.eclipse.cdt.core.dom.ast.IASTInitializer;
 import org.eclipse.cdt.core.dom.ast.IASTInitializerClause;
 import org.eclipse.cdt.core.dom.ast.IASTLiteralExpression;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
@@ -21,13 +26,18 @@ import org.eclipse.cdt.core.dom.ast.IASTReturnStatement;
 import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTStatement;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
+import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTWhileStatement;
+import org.eclipse.cdt.internal.core.dom.parser.c.CASTEqualsInitializer;
 
 import hu.bme.mit.inf.ttmc.code.ast.AstRoot;
 import hu.bme.mit.inf.ttmc.code.ast.BinaryExpressionAst;
 import hu.bme.mit.inf.ttmc.code.ast.CompoundStatementAst;
+import hu.bme.mit.inf.ttmc.code.ast.DeclaratorAst;
+import hu.bme.mit.inf.ttmc.code.ast.DoStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.ExpressionAst;
 import hu.bme.mit.inf.ttmc.code.ast.ExpressionStatementAst;
+import hu.bme.mit.inf.ttmc.code.ast.ForStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.FunctionAst;
 import hu.bme.mit.inf.ttmc.code.ast.FunctionCallExpressionAst;
 import hu.bme.mit.inf.ttmc.code.ast.IfStatementAst;
@@ -35,6 +45,9 @@ import hu.bme.mit.inf.ttmc.code.ast.LiteralExpressionAst;
 import hu.bme.mit.inf.ttmc.code.ast.NameExpressionAst;
 import hu.bme.mit.inf.ttmc.code.ast.ReturnStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.StatementAst;
+import hu.bme.mit.inf.ttmc.code.ast.UnaryExpressionAst;
+import hu.bme.mit.inf.ttmc.code.ast.UnaryExpressionAst.Operator;
+import hu.bme.mit.inf.ttmc.code.ast.VarDeclarationAst;
 import hu.bme.mit.inf.ttmc.code.ast.VarDeclarationStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.WhileStatementAst;
 
@@ -86,7 +99,31 @@ public class AstTransformer {
 			return transformWhileStatement((IASTWhileStatement) ast);
 		}
 		
+		if (ast instanceof IASTForStatement) {
+			return transformForStatement((IASTForStatement) ast);
+		}
+		
+		if (ast instanceof IASTDoStatement) {
+			return transformDoStatement((IASTDoStatement) ast);
+		}
+		
 		return null;		
+	}
+	
+	private static StatementAst transformDoStatement(IASTDoStatement ast) {
+		ExpressionAst cond = transformExpression(ast.getCondition());
+		StatementAst body = transformStatement(ast.getBody());
+		
+		return new DoStatementAst(cond, body);
+	}
+
+	private static ForStatementAst transformForStatement(IASTForStatement ast) {
+		StatementAst init = transformStatement(ast.getInitializerStatement());
+		ExpressionAst cond = transformExpression(ast.getConditionExpression());
+		ExpressionAst iter = transformExpression(ast.getIterationExpression());
+		StatementAst body = transformStatement(ast.getBody());
+		
+		return new ForStatementAst(init, cond, iter, body);		
 	}
 	
 	private static StatementAst transformWhileStatement(IASTWhileStatement ast) {
@@ -111,10 +148,28 @@ public class AstTransformer {
 			IASTSimpleDeclaration varDecl = (IASTSimpleDeclaration) decl;
 			String name = varDecl.getDeclarators()[0].getName().toString();
 			
-			return new VarDeclarationStatementAst(name);
+			return new VarDeclarationStatementAst(new VarDeclarationAst(name));
 		}
 		
 		return null;
+	}
+	
+	private static DeclaratorAst transformDeclarator(IASTDeclarator ast) {
+		String name = ast.getName().toString();
+		IASTInitializer init = ast.getInitializer();
+		
+		if (init == null) {
+			return new DeclaratorAst();
+		}
+		
+		if (init instanceof IASTEqualsInitializer) {
+			IASTInitializerClause clause = ((IASTEqualsInitializer) init).getInitializerClause();
+			if (clause instanceof IASTExpression) {
+				ExpressionAst expr = transformExpression((IASTExpression) clause);
+			}
+		}
+		
+		throw new UnsupportedOperationException();
 	}
 	
 	private static ExpressionStatementAst transformExpressionStatement(IASTExpressionStatement ast) {
@@ -156,9 +211,30 @@ public class AstTransformer {
 			return transformFunctionCallExpression((IASTFunctionCallExpression) ast);
 		}
 		
+		if (ast instanceof IASTUnaryExpression) {
+			return transformUnaryExpression((IASTUnaryExpression) ast);
+		}
+		
 		return null; // @todo
 	}
 	
+	private static UnaryExpressionAst transformUnaryExpression(IASTUnaryExpression ast) {
+		IASTExpression expr = ast.getOperand();
+		
+		switch (ast.getOperator()) {
+			case IASTUnaryExpression.op_prefixIncr:
+				return new UnaryExpressionAst(transformExpression(expr), Operator.OP_PREFIX_INCR);
+			case IASTUnaryExpression.op_postFixIncr:
+				return new UnaryExpressionAst(transformExpression(expr), Operator.OP_POSTFIX_INCR);
+			case IASTUnaryExpression.op_prefixDecr:
+				return new UnaryExpressionAst(transformExpression(expr), Operator.OP_PREFIX_INCR);
+			case IASTUnaryExpression.op_postFixDecr:
+				return new UnaryExpressionAst(transformExpression(expr), Operator.OP_PREFIX_INCR);
+		}
+		
+		return null;		
+	}
+
 	private static FunctionCallExpressionAst transformFunctionCallExpression(IASTFunctionCallExpression ast) {
 		IASTExpression functionName = ast.getFunctionNameExpression();
 		if (functionName instanceof IASTIdExpression) {
@@ -203,9 +279,15 @@ public class AstTransformer {
 		case IASTBinaryExpression.op_greaterThan:
 			return new BinaryExpressionAst(left, right, BinaryExpressionAst.Operator.OP_IS_GT);
 		case IASTBinaryExpression.op_equals:
-			return new BinaryExpressionAst(left, right, BinaryExpressionAst.Operator.OP_IS_EQUAL);
+			return new BinaryExpressionAst(left, right, BinaryExpressionAst.Operator.OP_IS_EQ);
+		case IASTBinaryExpression.op_notequals:
+			return new BinaryExpressionAst(left, right, BinaryExpressionAst.Operator.OP_IS_NOT_EQ);			
 		case IASTBinaryExpression.op_lessThan:
 			return new BinaryExpressionAst(left, right, BinaryExpressionAst.Operator.OP_IS_LT);
+		case IASTBinaryExpression.op_greaterEqual:
+			return new BinaryExpressionAst(left, right, BinaryExpressionAst.Operator.OP_IS_GTEQ);
+		case IASTBinaryExpression.op_lessEqual:
+			return new BinaryExpressionAst(left, right, BinaryExpressionAst.Operator.OP_IS_LTEQ);
 		}
 		
 		return null;
