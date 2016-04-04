@@ -15,27 +15,12 @@ import hu.bme.mit.inf.ttmc.constraint.z3.solver.Z3TermWrapper;
 
 public final class Z3ConstraintManager implements ConstraintManager {
 
-	private static boolean loaded = false;
-
-	private static void loadLibraries() {
-		if (!loaded) {
-			System.loadLibrary("msvcr110");
-			System.loadLibrary("msvcp110");
-			System.loadLibrary("vcomp110");
-			System.loadLibrary("libz3");
-			System.loadLibrary("libz3java");
-			loaded = true;
-		}
-	}
-
 	final Z3DeclFactory declFactory;
 	final Z3TypeFactory typeFactory;
 	final Z3ExprFactory exprFactory;
 	final Z3SolverFactory solverFactory;
 
 	public Z3ConstraintManager() {
-		loadLibraries();
-
 		// final Map<String, String> config = new HashMap<String, String>();
 		// // Turn model generation on
 		// config.put("model", "true");
@@ -49,7 +34,18 @@ public final class Z3ConstraintManager implements ConstraintManager {
 		exprFactory = new Z3ExprFactory(this, context);
 		final Z3TermWrapper termWrapper = new Z3TermWrapper(this, context, declFactory);
 		solverFactory = new Z3SolverFactory(this, context, termWrapper);
+	}
 
+	static {
+		loadLibraries();
+	}
+
+	private static void loadLibraries() {
+		System.loadLibrary("msvcr110");
+		System.loadLibrary("msvcp110");
+		System.loadLibrary("vcomp110");
+		System.loadLibrary("libz3");
+		System.loadLibrary("libz3java");
 	}
 
 	@Override
