@@ -19,29 +19,29 @@ import hu.bme.mit.inf.ttmc.constraint.type.FuncType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.constraint.utils.DeclVisitor;
 
-class Z3DeclTransformator {
+class Z3DeclTransformer {
 
-	private final Z3TransformationManager transformator;
+	private final Z3TransformationManager transformer;
 	private final Context context;
 
-	private final Z3DeclTransformatorVisitor visitor;
+	private final Z3DeclTransformerVisitor visitor;
 
-	Z3DeclTransformator(final Z3TransformationManager transformator, final Context context) {
+	Z3DeclTransformer(final Z3TransformationManager transformer, final Context context) {
 		this.context = context;
-		this.transformator = transformator;
-		visitor = new Z3DeclTransformatorVisitor(transformator, context);
+		this.transformer = transformer;
+		visitor = new Z3DeclTransformerVisitor(transformer, context);
 	}
 
 	public com.microsoft.z3.FuncDecl transform(final Decl<?, ?> decl) {
 		return decl.accept(visitor, null);
 	}
 
-	private class Z3DeclTransformatorVisitor implements DeclVisitor<Void, com.microsoft.z3.FuncDecl> {
+	private class Z3DeclTransformerVisitor implements DeclVisitor<Void, com.microsoft.z3.FuncDecl> {
 
 		private final Map<String, ConstDecl<?>> nameToConst;
 		private final Map<ConstDecl<?>, com.microsoft.z3.FuncDecl> constToSymbol;
 
-		private Z3DeclTransformatorVisitor(final Z3TransformationManager transformator, final Context context) {
+		private Z3DeclTransformerVisitor(final Z3TransformationManager transformator, final Context context) {
 			nameToConst = new HashMap<>();
 			constToSymbol = new HashMap<>();
 		}
@@ -60,8 +60,8 @@ class Z3DeclTransformator {
 				final List<Type> paramTypes = extractedTypes._1();
 				final Type returnType = extractedTypes._2();
 
-				final com.microsoft.z3.Sort returnSort = transformator.transform(returnType);
-				final com.microsoft.z3.Sort[] paramSorts = paramTypes.stream().map(t -> transformator.transform(t))
+				final com.microsoft.z3.Sort returnSort = transformer.transform(returnType);
+				final com.microsoft.z3.Sort[] paramSorts = paramTypes.stream().map(t -> transformer.transform(t))
 						.toArray(size -> new com.microsoft.z3.Sort[size]);
 
 				symbol = context.mkFuncDecl(decl.getName(), paramSorts, returnSort);
@@ -78,7 +78,7 @@ class Z3DeclTransformator {
 			if (type instanceof FuncType<?, ?>) {
 				throw new UnsupportedOperationException("Only simple types are supported");
 			} else {
-				final com.microsoft.z3.Sort sort = transformator.transform(type);
+				final com.microsoft.z3.Sort sort = transformer.transform(type);
 				return context.mkConstDecl(decl.getName(), sort);
 			}
 		}
