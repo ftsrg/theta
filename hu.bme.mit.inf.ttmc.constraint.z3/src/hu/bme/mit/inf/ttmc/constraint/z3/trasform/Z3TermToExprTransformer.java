@@ -2,9 +2,10 @@ package hu.bme.mit.inf.ttmc.constraint.z3.trasform;
 
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
-import java.util.WeakHashMap;
+import java.util.concurrent.ExecutionException;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.microsoft.z3.FuncDecl;
 import com.microsoft.z3.IntNum;
 import com.microsoft.z3.RatNum;
@@ -25,21 +26,23 @@ public class Z3TermToExprTransformer {
 	final ExprFactory ef;
 	final Z3SymbolWrapper symbolWrapper;
 
-	final Map<com.microsoft.z3.Expr, Expr<?>> termToExpr;
+	final Cache<com.microsoft.z3.Expr, Expr<?>> termToExpr;
+
+	private static final int CACHE_SIZE = 1000;
 
 	public Z3TermToExprTransformer(final ExprFactory factory, final Z3SymbolWrapper symbolWrapper) {
 		this.ef = factory;
 		this.symbolWrapper = symbolWrapper;
-		termToExpr = new WeakHashMap<>();
+
+		termToExpr = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).build();
 	}
 
 	public Expr<?> toExpr(final com.microsoft.z3.Expr term) {
-		Expr<?> expr = termToExpr.get(term);
-		if (expr == null) {
-			expr = transform(term);
-			termToExpr.put(term, expr);
+		try {
+			return termToExpr.get(term, (() -> transform(term)));
+		} catch (final ExecutionException e) {
+			throw new AssertionError();
 		}
-		return expr;
 	}
 
 	////////
