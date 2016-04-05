@@ -11,30 +11,30 @@ import hu.bme.mit.inf.ttmc.constraint.type.RatType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.constraint.utils.TypeVisitor;
 
-class Z3TypeTransformator {
+class Z3TypeTransformer {
 
 	@SuppressWarnings("unused")
-	private final Z3TransformationManager transformator;
+	private final Z3TransformationManager transformer;
 	private final Context context;
 
-	private final Z3TypeTransformatorVisitor visitor;
+	private final Z3TypeTransformerVisitor visitor;
 
-	Z3TypeTransformator(final Z3TransformationManager transformator, final Context context) {
+	Z3TypeTransformer(final Z3TransformationManager transformer, final Context context) {
 		this.context = context;
-		this.transformator = transformator;
-		visitor = new Z3TypeTransformatorVisitor();
+		this.transformer = transformer;
+		visitor = new Z3TypeTransformerVisitor();
 	}
 
 	public com.microsoft.z3.Sort transform(final Type type) {
 		return type.accept(visitor, null);
 	}
 
-	private class Z3TypeTransformatorVisitor implements TypeVisitor<Void, com.microsoft.z3.Sort> {
+	private class Z3TypeTransformerVisitor implements TypeVisitor<Void, com.microsoft.z3.Sort> {
 		private final com.microsoft.z3.BoolSort boolSort;
 		private final com.microsoft.z3.IntSort intSort;
 		private final com.microsoft.z3.RealSort ratSort;
 
-		private Z3TypeTransformatorVisitor() {
+		private Z3TypeTransformerVisitor() {
 
 			boolSort = context.mkBoolSort();
 			intSort = context.mkIntSort();
