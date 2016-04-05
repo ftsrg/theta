@@ -1,11 +1,8 @@
 package hu.bme.mit.inf.ttmc.constraint.z3.trasform;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkState;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import com.google.common.collect.ImmutableList;
 import com.microsoft.z3.Context;
@@ -22,14 +19,17 @@ import hu.bme.mit.inf.ttmc.constraint.utils.DeclVisitor;
 class Z3DeclTransformer {
 
 	private final Z3TransformationManager transformer;
+	private final Z3SymbolTable symbolTable;
 	private final Context context;
 
 	private final Z3DeclTransformerVisitor visitor;
 
-	Z3DeclTransformer(final Z3TransformationManager transformer, final Context context) {
-		this.context = context;
+	Z3DeclTransformer(final Z3TransformationManager transformer, final Z3SymbolTable symbolTable,
+			final Context context) {
 		this.transformer = transformer;
-		visitor = new Z3DeclTransformerVisitor(transformer, context);
+		this.symbolTable = symbolTable;
+		this.context = context;
+		visitor = new Z3DeclTransformerVisitor();
 	}
 
 	public com.microsoft.z3.FuncDecl transform(final Decl<?, ?> decl) {
@@ -38,21 +38,11 @@ class Z3DeclTransformer {
 
 	private class Z3DeclTransformerVisitor implements DeclVisitor<Void, com.microsoft.z3.FuncDecl> {
 
-		private final Map<String, ConstDecl<?>> nameToConst;
-		private final Map<ConstDecl<?>, com.microsoft.z3.FuncDecl> constToSymbol;
-
-		private Z3DeclTransformerVisitor(final Z3TransformationManager transformator, final Context context) {
-			nameToConst = new HashMap<>();
-			constToSymbol = new HashMap<>();
-		}
-
 		@Override
 		public <DeclType extends Type> com.microsoft.z3.FuncDecl visit(final ConstDecl<DeclType> decl,
 				final Void param) {
-			checkState(!nameToConst.containsKey(decl.getName()));
 
-			com.microsoft.z3.FuncDecl symbol = constToSymbol.get(decl);
-
+			com.microsoft.z3.FuncDecl symbol = symbolTable.getSymbol(decl);
 			if (symbol == null) {
 				final Type type = decl.getType();
 
@@ -65,7 +55,7 @@ class Z3DeclTransformer {
 						.toArray(size -> new com.microsoft.z3.Sort[size]);
 
 				symbol = context.mkFuncDecl(decl.getName(), paramSorts, returnSort);
-				constToSymbol.put(decl, symbol);
+				symbolTable.put(decl, symbol);
 			}
 
 			return symbol;

@@ -12,9 +12,9 @@ public class Z3TransformationManager {
 	final Z3DeclTransformer declTransformer;
 	final Z3ExprTransformer exprTransformer;
 
-	public Z3TransformationManager(final Context context) {
+	public Z3TransformationManager(final Z3SymbolTable symbolTable, final Context context) {
 		this.typeTransformer = new Z3TypeTransformer(this, context);
-		this.declTransformer = new Z3DeclTransformer(this, context);
+		this.declTransformer = new Z3DeclTransformer(this, symbolTable, context);
 		this.exprTransformer = new Z3ExprTransformer(this, context);
 	}
 
