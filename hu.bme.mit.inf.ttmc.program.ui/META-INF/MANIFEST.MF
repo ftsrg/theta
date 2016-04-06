@@ -10,8 +10,8 @@ Require-Bundle: com.google.guava,
  org.eclipse.xtend.lib.macro,
  org.eclipse.xtext.ui;bundle-version="2.9.1",
  hu.bme.mit.inf.ttmc.constraint,
- hu.bme.mit.inf.ttmc.constraint.ui,
- hu.bme.mit.inf.ttmc.program,
+ hu.bme.mit.inf.ttmc.constraint.ui;visibility:=reexport,
+ hu.bme.mit.inf.ttmc.formalism,
  hu.bme.mit.inf.ttmc.program.model,
  hu.bme.mit.inf.ttmc.program.language
 Export-Package: hu.bme.mit.inf.ttmc.program.ui

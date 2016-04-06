@@ -1,19 +1,12 @@
 package hu.bme.mit.inf.ttmc.constraint.type.impl;
 
-import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
+import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
+import hu.bme.mit.inf.ttmc.constraint.type.defaults.AbstractBoolType;
 
-public class BoolTypeImpl extends AbstractBaseType implements BoolType {
+public final class BoolTypeImpl extends AbstractBoolType {
 
-	private static final String TYPENAME = "Bool";
-
-	@Override
-	public int hashCode() {
-		return 754364;
-	}
-
-	@Override
-	public String toString() {
-		return TYPENAME;
+	public BoolTypeImpl(final ConstraintManager manager) {
+		super(manager);
 	}
 
 }

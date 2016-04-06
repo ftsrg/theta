@@ -8,6 +8,7 @@ import java.util.List;
 
 import com.microsoft.z3.Context;
 
+import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.decl.ConstDecl;
 import hu.bme.mit.inf.ttmc.constraint.decl.ParamDecl;
 import hu.bme.mit.inf.ttmc.constraint.expr.AddExpr;
@@ -43,15 +44,12 @@ import hu.bme.mit.inf.ttmc.constraint.expr.RatLitExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.RemExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.SubExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.TrueExpr;
-import hu.bme.mit.inf.ttmc.constraint.expr.TupleLitExpr;
-import hu.bme.mit.inf.ttmc.constraint.expr.TupleProjExpr;
 import hu.bme.mit.inf.ttmc.constraint.factory.ExprFactory;
 import hu.bme.mit.inf.ttmc.constraint.type.ArrayType;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.constraint.type.FuncType;
 import hu.bme.mit.inf.ttmc.constraint.type.IntType;
 import hu.bme.mit.inf.ttmc.constraint.type.RatType;
-import hu.bme.mit.inf.ttmc.constraint.type.TupleType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderAdd;
 import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderMul;
@@ -73,6 +71,7 @@ import hu.bme.mit.inf.ttmc.constraint.z3.expr.Z3IffExpr;
 import hu.bme.mit.inf.ttmc.constraint.z3.expr.Z3ImplyExpr;
 import hu.bme.mit.inf.ttmc.constraint.z3.expr.Z3IntDivExpr;
 import hu.bme.mit.inf.ttmc.constraint.z3.expr.Z3IntLitExpr;
+import hu.bme.mit.inf.ttmc.constraint.z3.expr.Z3IteExpr;
 import hu.bme.mit.inf.ttmc.constraint.z3.expr.Z3LeqExpr;
 import hu.bme.mit.inf.ttmc.constraint.z3.expr.Z3LtExpr;
 import hu.bme.mit.inf.ttmc.constraint.z3.expr.Z3ModExpr;
@@ -90,18 +89,22 @@ import hu.bme.mit.inf.ttmc.constraint.z3.expr.Z3TrueExpr;
 
 public final class Z3ExprFactory implements ExprFactory {
 
+	private final ConstraintManager manager;
+
 	private final Context context;
 
 	private final TrueExpr trueExpr;
 	private final FalseExpr falseExpr;
 
-	public Z3ExprFactory(final Context context) {
+	public Z3ExprFactory(final ConstraintManager manager, final Context context) {
 		checkNotNull(context);
+
+		this.manager = manager;
 
 		this.context = context;
 
-		trueExpr = new Z3TrueExpr(context);
-		falseExpr = new Z3FalseExpr(context);
+		trueExpr = new Z3TrueExpr(manager, context);
+		falseExpr = new Z3FalseExpr(manager, context);
 	}
 
 	@Override
@@ -115,214 +118,208 @@ public final class Z3ExprFactory implements ExprFactory {
 	}
 
 	@Override
-	public IntLitExpr Int(long value) {
-		return new Z3IntLitExpr(value, context);
+	public IntLitExpr Int(final long value) {
+		return new Z3IntLitExpr(manager, value, context);
 	}
 
 	@Override
-	public RatLitExpr Rat(long num, long denom) {
+	public RatLitExpr Rat(final long num, final long denom) {
 		checkArgument(denom != 0);
-		return new Z3RatLitExpr(num, denom, context);
+		return new Z3RatLitExpr(manager, num, denom, context);
 	}
 
 	@Override
-	public TupleLitExpr Tuple(List<? extends Expr<?>> elems) {
+	public <P extends Type, R extends Type> FuncLitExpr<? super P, ? extends R> Func(
+			final ParamDecl<? super P> paramDecl, final Expr<? extends R> result) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public <P extends Type, R extends Type> FuncLitExpr<? super P, ? extends R> Func(ParamDecl<? extends P> paramDecl,
-			Expr<? extends R> result) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public <T extends Type> ConstRefExpr<T> Ref(ConstDecl<T> constDecl) {
+	public <T extends Type> ConstRefExpr<T> Ref(final ConstDecl<T> constDecl) {
 		checkNotNull(constDecl);
-		return new Z3ConstRefExpr<>(constDecl, context);
+		return new Z3ConstRefExpr<>(manager, constDecl, context);
 	}
 
 	@Override
-	public <T extends Type> ParamRefExpr<T> Ref(ParamDecl<T> paramDecl) {
+	public <T extends Type> ParamRefExpr<T> Ref(final ParamDecl<T> paramDecl) {
 		checkNotNull(paramDecl);
-		return new Z3ParamRefExpr<>(paramDecl, context);
+		return new Z3ParamRefExpr<>(manager, paramDecl, context);
 	}
 
 	@Override
-	public TupleProjExpr Proj(Expr<? extends TupleType> tup, int index) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public <P extends Type, R extends Type> FuncAppExpr<P, R> App(Expr<? extends FuncType<? super P, ? extends R>> func,
-			Expr<? extends P> param) {
+	public <P extends Type, R extends Type> FuncAppExpr<P, R> App(
+			final Expr<? extends FuncType<? super P, ? extends R>> func, final Expr<? extends P> param) {
 		checkNotNull(func);
 		checkNotNull(param);
-		return new Z3FuncAppExpr<>(func, param, context);
+		return new Z3FuncAppExpr<>(manager, func, param, context);
 	}
-	
+
 	@Override
 	public <I extends Type, E extends Type> ArrayReadExpr<I, E> Read(
-			Expr<? extends ArrayType<? super I, ? extends E>> array, Expr<? extends I> index) {
+			final Expr<? extends ArrayType<? super I, ? extends E>> array, final Expr<? extends I> index) {
 		checkNotNull(array);
 		checkNotNull(index);
-		return new Z3ArrayReadExpr<>(array, index, context);
+		return new Z3ArrayReadExpr<>(manager, array, index, context);
 	}
 
 	@Override
 	public <I extends Type, E extends Type> ArrayWriteExpr<I, E> Write(
-			Expr<? extends ArrayType<? super I, ? extends E>> array, Expr<? extends I> index, Expr<? extends E> elem) {
+			final Expr<? extends ArrayType<? super I, ? extends E>> array, final Expr<? extends I> index,
+			final Expr<? extends E> elem) {
 		checkNotNull(array);
 		checkNotNull(index);
 		checkNotNull(elem);
-		return new Z3ArrayWriteExpr<>(array, index, elem, context);
+		return new Z3ArrayWriteExpr<>(manager, array, index, elem, context);
 	}
 
 	@Override
-	public NotExpr Not(Expr<? extends BoolType> op) {
+	public NotExpr Not(final Expr<? extends BoolType> op) {
 		checkNotNull(op);
-		return new Z3NotExpr(op, context);
+		return new Z3NotExpr(manager, op, context);
 	}
 
 	@Override
-	public ImplyExpr Imply(Expr<? extends BoolType> leftOp, Expr<? extends BoolType> rightOp) {
+	public ImplyExpr Imply(final Expr<? extends BoolType> leftOp, final Expr<? extends BoolType> rightOp) {
 		checkNotNull(leftOp);
 		checkNotNull(rightOp);
-		return new Z3ImplyExpr(leftOp, rightOp, context);
+		return new Z3ImplyExpr(manager, leftOp, rightOp, context);
 	}
 
 	@Override
-	public IffExpr Iff(Expr<? extends BoolType> leftOp, Expr<? extends BoolType> rightOp) {
+	public IffExpr Iff(final Expr<? extends BoolType> leftOp, final Expr<? extends BoolType> rightOp) {
 		checkNotNull(leftOp);
 		checkNotNull(rightOp);
-		return new Z3IffExpr(leftOp, rightOp, context);
+		return new Z3IffExpr(manager, leftOp, rightOp, context);
 	}
 
 	@Override
-	public AndExpr And(Collection<? extends Expr<? extends BoolType>> ops) {
+	public AndExpr And(final Collection<? extends Expr<? extends BoolType>> ops) {
 		checkNotNull(ops);
-		return new Z3AndExpr(ops, context);
+		return new Z3AndExpr(manager, ops, context);
 	}
 
 	@Override
-	public OrExpr Or(Collection<? extends Expr<? extends BoolType>> ops) {
+	public OrExpr Or(final Collection<? extends Expr<? extends BoolType>> ops) {
 		checkNotNull(ops);
-		return new Z3OrExpr(ops, context);
+		return new Z3OrExpr(manager, ops, context);
 	}
 
 	@Override
-	public ForallExpr Forall(List<? extends ParamDecl<?>> paramDecls, Expr<? extends BoolType> op) {
+	public ForallExpr Forall(final List<? extends ParamDecl<?>> paramDecls, final Expr<? extends BoolType> op) {
 		checkNotNull(paramDecls);
 		checkNotNull(op);
-		return new Z3ForallExpr(paramDecls, op, context);
+		return new Z3ForallExpr(manager, paramDecls, op, context);
 	}
 
 	@Override
-	public ExistsExpr Exists(List<? extends ParamDecl<?>> paramDecls, Expr<? extends BoolType> op) {
+	public ExistsExpr Exists(final List<? extends ParamDecl<?>> paramDecls, final Expr<? extends BoolType> op) {
 		checkNotNull(paramDecls);
 		checkNotNull(op);
-		return new Z3ExistsExpr(paramDecls, op, context);
+		return new Z3ExistsExpr(manager, paramDecls, op, context);
 	}
 
 	@Override
-	public EqExpr Eq(Expr<? extends Type> leftOp, Expr<? extends Type> rightOp) {
+	public EqExpr Eq(final Expr<? extends Type> leftOp, final Expr<? extends Type> rightOp) {
 		checkNotNull(leftOp);
 		checkNotNull(rightOp);
-		return new Z3EqExpr(leftOp, rightOp, context);
+		return new Z3EqExpr(manager, leftOp, rightOp, context);
 	}
 
 	@Override
-	public NeqExpr Neq(Expr<? extends Type> leftOp, Expr<? extends Type> rightOp) {
+	public NeqExpr Neq(final Expr<? extends Type> leftOp, final Expr<? extends Type> rightOp) {
 		checkNotNull(leftOp);
 		checkNotNull(rightOp);
-		return new Z3NeqExpr(leftOp, rightOp, context);
+		return new Z3NeqExpr(manager, leftOp, rightOp, context);
 	}
 
 	@Override
-	public LtExpr Lt(Expr<? extends RatType> leftOp, Expr<? extends RatType> rightOp) {
+	public LtExpr Lt(final Expr<? extends RatType> leftOp, final Expr<? extends RatType> rightOp) {
 		checkNotNull(leftOp);
 		checkNotNull(rightOp);
-		return new Z3LtExpr(leftOp, rightOp, context);
+		return new Z3LtExpr(manager, leftOp, rightOp, context);
 	}
 
 	@Override
-	public LeqExpr Leq(Expr<? extends RatType> leftOp, Expr<? extends RatType> rightOp) {
+	public LeqExpr Leq(final Expr<? extends RatType> leftOp, final Expr<? extends RatType> rightOp) {
 		checkNotNull(leftOp);
 		checkNotNull(rightOp);
-		return new Z3LeqExpr(leftOp, rightOp, context);
+		return new Z3LeqExpr(manager, leftOp, rightOp, context);
 	}
 
 	@Override
-	public GtExpr Gt(Expr<? extends RatType> leftOp, Expr<? extends RatType> rightOp) {
+	public GtExpr Gt(final Expr<? extends RatType> leftOp, final Expr<? extends RatType> rightOp) {
 		checkNotNull(leftOp);
 		checkNotNull(rightOp);
-		return new Z3GtExpr(leftOp, rightOp, context);
+		return new Z3GtExpr(manager, leftOp, rightOp, context);
 	}
 
 	@Override
-	public GeqExpr Geq(Expr<? extends RatType> leftOp, Expr<? extends RatType> rightOp) {
+	public GeqExpr Geq(final Expr<? extends RatType> leftOp, final Expr<? extends RatType> rightOp) {
 		checkNotNull(leftOp);
 		checkNotNull(rightOp);
-		return new Z3GeqExpr(leftOp, rightOp, context);
+		return new Z3GeqExpr(manager, leftOp, rightOp, context);
 	}
 
 	@Override
-	public <T extends ClosedUnderNeg> NegExpr<T> Neg(Expr<? extends T> op) {
+	public <T extends ClosedUnderNeg> NegExpr<T> Neg(final Expr<? extends T> op) {
 		checkNotNull(op);
-		return new Z3NegExpr<>(op, context);
+		return new Z3NegExpr<>(manager, op, context);
 	}
 
 	@Override
-	public <T extends ClosedUnderSub> SubExpr<T> Sub(Expr<? extends T> leftOp, Expr<? extends T> rightOp) {
+	public <T extends ClosedUnderSub> SubExpr<T> Sub(final Expr<? extends T> leftOp, final Expr<? extends T> rightOp) {
 		checkNotNull(leftOp);
 		checkNotNull(rightOp);
-		return new Z3SubExpr<>(leftOp, rightOp, context);
+		return new Z3SubExpr<>(manager, leftOp, rightOp, context);
 	}
 
 	@Override
-	public <T extends ClosedUnderAdd> AddExpr<T> Add(Collection<? extends Expr<? extends T>> ops) {
+	public <T extends ClosedUnderAdd> AddExpr<T> Add(final Collection<? extends Expr<? extends T>> ops) {
 		checkNotNull(ops);
-		return new Z3AddExpr<>(ops, context);
+		return new Z3AddExpr<>(manager, ops, context);
 	}
 
 	@Override
-	public <T extends ClosedUnderMul> MulExpr<T> Mul(Collection<? extends Expr<? extends T>> ops) {
+	public <T extends ClosedUnderMul> MulExpr<T> Mul(final Collection<? extends Expr<? extends T>> ops) {
 		checkNotNull(ops);
-		return new Z3MulExpr<>(ops, context);
+		return new Z3MulExpr<>(manager, ops, context);
 	}
 
 	@Override
-	public ModExpr Mod(Expr<? extends IntType> leftOp, Expr<? extends IntType> rightOp) {
+	public ModExpr Mod(final Expr<? extends IntType> leftOp, final Expr<? extends IntType> rightOp) {
 		checkNotNull(leftOp);
 		checkNotNull(rightOp);
-		return new Z3ModExpr(leftOp, rightOp, context);
+		return new Z3ModExpr(manager, leftOp, rightOp, context);
 	}
 
 	@Override
-	public RemExpr Rem(Expr<? extends IntType> leftOp, Expr<? extends IntType> rightOp) {
+	public RemExpr Rem(final Expr<? extends IntType> leftOp, final Expr<? extends IntType> rightOp) {
 		checkNotNull(leftOp);
 		checkNotNull(rightOp);
-		return new Z3RemExpr(leftOp, rightOp, context);
+		return new Z3RemExpr(manager, leftOp, rightOp, context);
 	}
 
 	@Override
-	public IntDivExpr IntDiv(Expr<? extends IntType> leftOp, Expr<? extends IntType> rightOp) {
+	public IntDivExpr IntDiv(final Expr<? extends IntType> leftOp, final Expr<? extends IntType> rightOp) {
 		checkNotNull(leftOp);
 		checkNotNull(rightOp);
-		return new Z3IntDivExpr(leftOp, rightOp, context);
+		return new Z3IntDivExpr(manager, leftOp, rightOp, context);
 	}
 
 	@Override
-	public RatDivExpr RatDiv(Expr<? extends RatType> leftOp, Expr<? extends RatType> rightOp) {
+	public RatDivExpr RatDiv(final Expr<? extends RatType> leftOp, final Expr<? extends RatType> rightOp) {
 		checkNotNull(leftOp);
 		checkNotNull(rightOp);
-		return new Z3RatDivExpr(leftOp, rightOp, context);
+		return new Z3RatDivExpr(manager, leftOp, rightOp, context);
 	}
 
 	@Override
-	public <T extends Type> IteExpr<T> Ite(Expr<? extends BoolType> cond, Expr<? extends T> then,
-			Expr<? extends T> elze) {
-		throw new UnsupportedOperationException("TODO");
+	public <T extends Type> IteExpr<T> Ite(final Expr<? extends BoolType> cond, final Expr<? extends T> then,
+			final Expr<? extends T> elze) {
+		checkNotNull(cond);
+		checkNotNull(then);
+		checkNotNull(elze);
+		return new Z3IteExpr<>(manager, cond, then, elze, context);
 	}
 
 }

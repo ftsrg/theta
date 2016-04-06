@@ -8,6 +8,9 @@ import hu.bme.mit.inf.ttmc.common.impl.Tuple6Impl;
 import hu.bme.mit.inf.ttmc.common.impl.Tuple7Impl;
 
 public class Tuples {
+	
+	private Tuples() {
+	}
 
 	public static <T1, T2> Tuple2<T1, T2> of(final T1 e1, final T2 e2) {
 		return new Tuple2Impl<>(e1, e2);

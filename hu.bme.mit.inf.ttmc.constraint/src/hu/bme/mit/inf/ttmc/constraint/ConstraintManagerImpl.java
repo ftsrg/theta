@@ -13,13 +13,13 @@ public class ConstraintManagerImpl implements ConstraintManager {
 	private final DeclFactory declFactory;
 	private final TypeFactory typeFactory;
 	private final ExprFactory exprFactory;
-	
+
 	public ConstraintManagerImpl() {
-		declFactory = new DeclFactoryImpl();
-		typeFactory = new TypeFactoryImpl();
-		exprFactory = new ExprFactoryImpl();
+		declFactory = new DeclFactoryImpl(this);
+		typeFactory = new TypeFactoryImpl(this);
+		exprFactory = new ExprFactoryImpl(this);
 	}
-	
+
 	@Override
 	public DeclFactory getDeclFactory() {
 		return declFactory;

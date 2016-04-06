@@ -3,15 +3,17 @@ package hu.bme.mit.inf.ttmc.constraint.z3.type;
 import com.microsoft.z3.Context;
 import com.microsoft.z3.IntSort;
 
-import hu.bme.mit.inf.ttmc.constraint.type.impl.IntTypeImpl;
+import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
+import hu.bme.mit.inf.ttmc.constraint.type.defaults.AbstractIntType;
 
-public class Z3IntType extends IntTypeImpl implements Z3Type {
+public class Z3IntType extends AbstractIntType implements Z3Type {
 
 	private final Context context;
-	
+
 	private volatile IntSort sort;
-	
-	public Z3IntType(final Context context) {
+
+	public Z3IntType(final ConstraintManager manager, final Context context) {
+		super(manager);
 		this.context = context;
 	}
 
@@ -20,7 +22,7 @@ public class Z3IntType extends IntTypeImpl implements Z3Type {
 		if (sort == null) {
 			sort = context.mkIntSort();
 		}
-		
+
 		return sort;
 	}
 

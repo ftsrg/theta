@@ -1,37 +1,14 @@
 package hu.bme.mit.inf.ttmc.constraint.expr.impl;
 
-
+import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
-import hu.bme.mit.inf.ttmc.constraint.expr.LtExpr;
-import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
+import hu.bme.mit.inf.ttmc.constraint.expr.defaults.AbstractLtExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.RatType;
 
-public class LtExprImpl extends AbstractBinaryExpr<RatType, RatType, BoolType> implements LtExpr {
+public final class LtExprImpl extends AbstractLtExpr {
 
-	private static final String OPERATOR = "Lt";
-	
-	public LtExprImpl(final Expr<? extends RatType> leftOp, final Expr<? extends RatType> rightOp) {
-		super(leftOp, rightOp);
-	}
-	
-	@Override
-	public LtExpr withOps(Expr<? extends RatType> leftOp, Expr<? extends RatType> rightOp) {
-		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
-			return this;
-		} else {
-			return new LtExprImpl(leftOp, rightOp);
-		}
-	}
-	
-	@Override
-	protected final String getOperatorString() {
-		return OPERATOR;
+	public LtExprImpl(final ConstraintManager manager, final Expr<? extends RatType> leftOp, final Expr<? extends RatType> rightOp) {
+		super(manager, leftOp, rightOp);
 	}
 
-	@Override
-	protected final int getHashSeed() {
-		return 107;
-	}
-	
 }
-

@@ -1,24 +1,12 @@
 package hu.bme.mit.inf.ttmc.constraint.decl.impl;
 
-import hu.bme.mit.inf.ttmc.constraint.decl.ConstDecl;
-import hu.bme.mit.inf.ttmc.constraint.decl.impl.AbstractDecl;
+import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
+import hu.bme.mit.inf.ttmc.constraint.decl.defaults.AbstractConstDecl;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 
-public class ConstDeclImpl<DeclType extends Type> extends AbstractDecl<DeclType> implements ConstDecl<DeclType> {
-	
-	public ConstDeclImpl(final String name, final DeclType type) {
-		super(name, type);
+public final class ConstDeclImpl<DeclType extends Type> extends AbstractConstDecl<DeclType> {
+
+	public ConstDeclImpl(final ConstraintManager manager, final String name, final DeclType type) {
+		super(manager, name, type);
 	}
-	
-	@Override
-	public String toString() {
-		final StringBuilder sb = new StringBuilder();
-		sb.append("Const(");
-		sb.append(getName());
-		sb.append(" : ");
-		sb.append(getType());
-		sb.append(")");
-		return sb.toString();
-	}
-	
 }

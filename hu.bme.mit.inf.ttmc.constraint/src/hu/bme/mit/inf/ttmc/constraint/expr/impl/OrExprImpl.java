@@ -1,39 +1,16 @@
 package hu.bme.mit.inf.ttmc.constraint.expr.impl;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import java.util.Collection;
 
-import com.google.common.collect.ImmutableSet;
-
+import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
-import hu.bme.mit.inf.ttmc.constraint.expr.OrExpr;
+import hu.bme.mit.inf.ttmc.constraint.expr.defaults.AbstractOrExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 
-public class OrExprImpl extends AbstractMultiaryExpr<BoolType, BoolType> implements OrExpr {
+public final class OrExprImpl extends AbstractOrExpr {
 
-	private static final String OPERATOR = "Or";
-		
-	public OrExprImpl(final Collection<? extends Expr<? extends BoolType>> ops) {
-		super(ImmutableSet.copyOf(checkNotNull(ops)));
-	}
-	
-	@Override
-	public OrExpr withOps(Collection<? extends Expr<? extends BoolType>> ops) {
-		if (ops == getOps()) {
-			return this;
-		} else {
-			return new OrExprImpl(ops);
-		}
+	public OrExprImpl(final ConstraintManager manager, final Collection<? extends Expr<? extends BoolType>> ops) {
+		super(manager, ops);
 	}
 
-	@Override
-	protected final String getOperatorString() {
-		return OPERATOR;
-	}
-
-	@Override
-	protected int getHashSeed() {
-		return 131;
-	}
 }

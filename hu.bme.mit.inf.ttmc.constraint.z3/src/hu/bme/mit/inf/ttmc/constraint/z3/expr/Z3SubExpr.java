@@ -2,19 +2,20 @@ package hu.bme.mit.inf.ttmc.constraint.z3.expr;
 
 import com.microsoft.z3.Context;
 
+import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
-import hu.bme.mit.inf.ttmc.constraint.expr.impl.SubExprImpl;
+import hu.bme.mit.inf.ttmc.constraint.expr.defaults.AbstractSubExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderSub;
 
-public class Z3SubExpr<ExprType extends ClosedUnderSub> extends SubExprImpl<ExprType> implements Z3Expr<ExprType> {
+public class Z3SubExpr<ExprType extends ClosedUnderSub> extends AbstractSubExpr<ExprType> implements Z3Expr<ExprType> {
 
 	private final Context context;
 
 	private volatile com.microsoft.z3.ArithExpr term;
 
-	public Z3SubExpr(final Expr<? extends ExprType> leftOp, final Expr<? extends ExprType> rightOp,
-			final Context context) {
-		super(leftOp, rightOp);
+	public Z3SubExpr(final ConstraintManager manager, final Expr<? extends ExprType> leftOp,
+			final Expr<? extends ExprType> rightOp, final Context context) {
+		super(manager, leftOp, rightOp);
 		this.context = context;
 	}
 

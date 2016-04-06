@@ -34,7 +34,7 @@ public class Z3TermWrapper implements TermWrapper<com.microsoft.z3.Expr> {
 	final ConstraintManager manager;
 	final Context context;
 	final Z3SymbolWrapper symbolWrapper;
-	
+
 	public Z3TermWrapper(final ConstraintManager manager, final Context context, final Z3SymbolWrapper symbolWrapper) {
 		this.manager = manager;
 		this.context = context;
@@ -42,7 +42,7 @@ public class Z3TermWrapper implements TermWrapper<com.microsoft.z3.Expr> {
 	}
 
 	@Override
-	public Expr<?> wrap(com.microsoft.z3.Expr term) {
+	public Expr<?> wrap(final com.microsoft.z3.Expr term) {
 
 		if (term instanceof com.microsoft.z3.ArithExpr) {
 			return wrapArith((com.microsoft.z3.ArithExpr) term);
@@ -55,7 +55,7 @@ public class Z3TermWrapper implements TermWrapper<com.microsoft.z3.Expr> {
 		throw new UnsupportedOperationException();
 	}
 
-	public Expr<? extends BoolType> wrapBool(com.microsoft.z3.BoolExpr term) {	
+	public Expr<? extends BoolType> wrapBool(final com.microsoft.z3.BoolExpr term) {
 		if (term.isTrue()) {
 			return manager.getExprFactory().True();
 		}
@@ -68,81 +68,81 @@ public class Z3TermWrapper implements TermWrapper<com.microsoft.z3.Expr> {
 			final FuncDecl funcDecl = term.getFuncDecl();
 			@SuppressWarnings("unchecked")
 			final ConstDecl<BoolType> constDecl = (ConstDecl<BoolType>) symbolWrapper.wrap(funcDecl);
-			return new Z3ConstRefExpr<>(constDecl, context);
+			return new Z3ConstRefExpr<>(manager, constDecl, context);
 		}
 
 		if (term.isNot()) {
 			final com.microsoft.z3.BoolExpr opTerm = (com.microsoft.z3.BoolExpr) term.getArgs()[0];
 			final Expr<? extends BoolType> op = wrapBool(opTerm);
-			final Expr<? extends BoolType> resExpr = new Z3NotExpr(op, context);
+			final Expr<? extends BoolType> resExpr = new Z3NotExpr(manager, op, context);
 			return resExpr;
 		}
-		
+
 		if (term.isAnd()) {
 			final com.microsoft.z3.Expr[] opTerms = term.getArgs();
 			final List<Expr<? extends BoolType>> ops = new LinkedList<>();
-			for (com.microsoft.z3.Expr opTerm : opTerms) {
+			for (final com.microsoft.z3.Expr opTerm : opTerms) {
 				ops.add(wrapBool((com.microsoft.z3.BoolExpr) opTerm));
 			}
-			
-			final Expr<? extends BoolType> resExpr = new Z3AndExpr(ops, context);
+
+			final Expr<? extends BoolType> resExpr = new Z3AndExpr(manager, ops, context);
 			return resExpr;
 		}
-		
+
 		if (term.isOr()) {
 			final com.microsoft.z3.Expr[] opTerms = term.getArgs();
 			final List<Expr<? extends BoolType>> ops = new LinkedList<>();
-			for (com.microsoft.z3.Expr opTerm : opTerms) {
+			for (final com.microsoft.z3.Expr opTerm : opTerms) {
 				ops.add(wrapBool((com.microsoft.z3.BoolExpr) opTerm));
 			}
-			
-			final Expr<? extends BoolType> resExpr = new Z3OrExpr(ops, context);
+
+			final Expr<? extends BoolType> resExpr = new Z3OrExpr(manager, ops, context);
 			return resExpr;
 		}
-		
+
 		if (term.isIff()) {
 			final com.microsoft.z3.BoolExpr leftOpTerm = (com.microsoft.z3.BoolExpr) term.getArgs()[0];
 			final com.microsoft.z3.BoolExpr rightOpTerm = (com.microsoft.z3.BoolExpr) term.getArgs()[1];
 			final Expr<? extends BoolType> leftOp = wrapBool(leftOpTerm);
 			final Expr<? extends BoolType> rightOp = wrapBool(rightOpTerm);
-			
-			final Expr<? extends BoolType> resExpr = new Z3IffExpr(leftOp, rightOp, context);
+
+			final Expr<? extends BoolType> resExpr = new Z3IffExpr(manager, leftOp, rightOp, context);
 			return resExpr;
 		}
-		
+
 		if (term.isEq()) {
 			final com.microsoft.z3.Expr leftOpTerm = term.getArgs()[0];
 			final com.microsoft.z3.Expr rightOpTerm = term.getArgs()[1];
 			final Expr<?> leftOp = wrap(leftOpTerm);
 			final Expr<?> rightOp = wrap(rightOpTerm);
-			
-			final Expr<? extends BoolType> resExpr = new Z3EqExpr(leftOp, rightOp, context);
+
+			final Expr<? extends BoolType> resExpr = new Z3EqExpr(manager, leftOp, rightOp, context);
 			return resExpr;
 		}
-		
+
 		if (term.isLE()) {
 			final com.microsoft.z3.ArithExpr leftOpTerm = (com.microsoft.z3.ArithExpr) term.getArgs()[0];
 			final com.microsoft.z3.ArithExpr rightOpTerm = (com.microsoft.z3.ArithExpr) term.getArgs()[1];
 			final Expr<? extends RatType> leftOp = wrapArith(leftOpTerm);
 			final Expr<? extends RatType> rightOp = wrapArith(rightOpTerm);
-			
-			final Expr<? extends BoolType> resExpr = new Z3LeqExpr(leftOp, rightOp, context);
+
+			final Expr<? extends BoolType> resExpr = new Z3LeqExpr(manager, leftOp, rightOp, context);
 			return resExpr;
 		}
-		
+
 		if (term.isGE()) {
 			final com.microsoft.z3.ArithExpr leftOpTerm = (com.microsoft.z3.ArithExpr) term.getArgs()[0];
 			final com.microsoft.z3.ArithExpr rightOpTerm = (com.microsoft.z3.ArithExpr) term.getArgs()[1];
 			final Expr<? extends RatType> leftOp = wrapArith(leftOpTerm);
 			final Expr<? extends RatType> rightOp = wrapArith(rightOpTerm);
-			
-			final Expr<? extends BoolType> resExpr = new Z3GeqExpr(leftOp, rightOp, context);
+
+			final Expr<? extends BoolType> resExpr = new Z3GeqExpr(manager, leftOp, rightOp, context);
 			return resExpr;
 		}
-		
+
 		if (term.isQuantifier()) {
 			final com.microsoft.z3.Quantifier quantifier = (com.microsoft.z3.Quantifier) term;
-			
+
 			if (quantifier.isUniversal()) {
 				throw new UnsupportedOperationException();
 			} else if (quantifier.isExistential()) {
@@ -153,57 +153,57 @@ public class Z3TermWrapper implements TermWrapper<com.microsoft.z3.Expr> {
 		throw new UnsupportedOperationException("Not supported: " + term);
 	}
 
-	public Expr<? extends RatType> wrapArith(com.microsoft.z3.ArithExpr term) {
+	public Expr<? extends RatType> wrapArith(final com.microsoft.z3.ArithExpr term) {
 
 		if (term.isIntNum()) {
 			final long value = ((IntNum) term).getInt64();
-			return new Z3IntLitExpr(value, context);
+			return new Z3IntLitExpr(manager, value, context);
 		}
 
 		if (term.isRatNum()) {
 			final long num = ((RatNum) term).getNumerator().getInt64();
 			final long denom = ((RatNum) term).getDenominator().getInt64();
-			return new Z3RatLitExpr(num, denom, context);
+			return new Z3RatLitExpr(manager, num, denom, context);
 		}
-		
+
 		if (term.isConst()) {
 			final FuncDecl funcDecl = term.getFuncDecl();
 			final ConstDecl<?> constDecl = symbolWrapper.wrap(funcDecl);
 			if (constDecl.getType() instanceof IntType) {
 				@SuppressWarnings("unchecked")
-				ConstDecl<IntType> intConstDecl = (ConstDecl<IntType>) constDecl;
-				return new Z3ConstRefExpr<>(intConstDecl, context);
+				final ConstDecl<IntType> intConstDecl = (ConstDecl<IntType>) constDecl;
+				return new Z3ConstRefExpr<>(manager, intConstDecl, context);
 			} else if (constDecl.getType() instanceof RatType) {
 				@SuppressWarnings("unchecked")
-				ConstDecl<RatType> ratConstDecl = (ConstDecl<RatType>) constDecl;
-				return new Z3ConstRefExpr<>(ratConstDecl, context);
+				final ConstDecl<RatType> ratConstDecl = (ConstDecl<RatType>) constDecl;
+				return new Z3ConstRefExpr<>(manager, ratConstDecl, context);
 			} else {
 				throw new RuntimeException();
 			}
 		}
-		
+
 		if (term.isAdd()) {
 			final com.microsoft.z3.Expr[] opTerms = term.getArgs();
 			final List<Expr<? extends RatType>> ops = new LinkedList<>();
-			for (com.microsoft.z3.Expr opTerm : opTerms) {
+			for (final com.microsoft.z3.Expr opTerm : opTerms) {
 				ops.add(wrapArith((com.microsoft.z3.ArithExpr) opTerm));
 			}
-			
-			final Expr<? extends RatType> resExpr = new Z3AddExpr<>(ops, context);
+
+			final Expr<? extends RatType> resExpr = new Z3AddExpr<>(manager, ops, context);
 			return resExpr;
 		}
-		
+
 		if (term.isMul()) {
 			final com.microsoft.z3.Expr[] opTerms = term.getArgs();
 			final List<Expr<? extends RatType>> ops = new LinkedList<>();
-			for (com.microsoft.z3.Expr opTerm : opTerms) {
+			for (final com.microsoft.z3.Expr opTerm : opTerms) {
 				ops.add(wrapArith((com.microsoft.z3.ArithExpr) opTerm));
 			}
-			
-			final Expr<? extends RatType> resExpr = new Z3MulExpr<>(ops, context);
+
+			final Expr<? extends RatType> resExpr = new Z3MulExpr<>(manager, ops, context);
 			return resExpr;
 		}
-		
+
 		if (term.isIDiv()) {
 			final com.microsoft.z3.ArithExpr leftOpTerm = (com.microsoft.z3.ArithExpr) term.getArgs()[0];
 			final com.microsoft.z3.ArithExpr rightOpTerm = (com.microsoft.z3.ArithExpr) term.getArgs()[1];
@@ -211,12 +211,12 @@ public class Z3TermWrapper implements TermWrapper<com.microsoft.z3.Expr> {
 			final Expr<? extends IntType> leftOp = (Expr<? extends IntType>) wrapArith(leftOpTerm);
 			@SuppressWarnings("unchecked")
 			final Expr<? extends IntType> rightOp = (Expr<? extends IntType>) wrapArith(rightOpTerm);
-			
-			final Expr<? extends IntType> resExpr = new Z3IntDivExpr(leftOp, rightOp, context);
+
+			final Expr<? extends IntType> resExpr = new Z3IntDivExpr(manager, leftOp, rightOp, context);
 			return resExpr;
 		}
 
 		throw new UnsupportedOperationException("Not supported: " + term);
 	}
-	
+
 }
