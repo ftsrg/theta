@@ -4,18 +4,18 @@ import com.microsoft.z3.Context;
 
 import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
-import hu.bme.mit.inf.ttmc.constraint.z3.trasform.Z3TermToExprTransformer;
+import hu.bme.mit.inf.ttmc.constraint.z3.trasform.Z3TermTransformer;
 
 public class Z3TermWrapper2 implements Z3TermWrapper {
 
 	final ConstraintManager manager;
 	final Context context;
-	final Z3TermToExprTransformer transformer;
+	final Z3TermTransformer transformer;
 
 	public Z3TermWrapper2(final ConstraintManager manager, final Context context, final Z3SymbolWrapper symbolWrapper) {
 		this.manager = manager;
 		this.context = context;
-		transformer = new Z3TermToExprTransformer(manager.getExprFactory(), symbolWrapper);
+		transformer = new Z3TermTransformer(manager.getExprFactory(), symbolWrapper);
 	}
 
 	@Override

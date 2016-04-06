@@ -21,7 +21,7 @@ import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.constraint.utils.impl.ExprUtils;
 import hu.bme.mit.inf.ttmc.constraint.z3.solver.Z3SymbolWrapper;
 
-public class Z3TermToExprTransformer {
+public class Z3TermTransformer {
 
 	final ExprFactory ef;
 	final Z3SymbolWrapper symbolWrapper;
@@ -30,7 +30,7 @@ public class Z3TermToExprTransformer {
 
 	private static final int CACHE_SIZE = 1000;
 
-	public Z3TermToExprTransformer(final ExprFactory factory, final Z3SymbolWrapper symbolWrapper) {
+	public Z3TermTransformer(final ExprFactory factory, final Z3SymbolWrapper symbolWrapper) {
 		this.ef = factory;
 		this.symbolWrapper = symbolWrapper;
 
