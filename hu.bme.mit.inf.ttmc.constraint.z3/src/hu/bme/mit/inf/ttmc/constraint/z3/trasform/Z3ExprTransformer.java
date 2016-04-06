@@ -66,7 +66,7 @@ class Z3ExprTransformer {
 		exprToTerm = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).build();
 	}
 
-	public com.microsoft.z3.Expr transform(final Expr<?> expr) {
+	public com.microsoft.z3.Expr toTerm(final Expr<?> expr) {
 		try {
 			return exprToTerm.get(expr, (() -> expr.accept(visitor, null)));
 		} catch (final ExecutionException e) {
@@ -89,14 +89,14 @@ class Z3ExprTransformer {
 		@Override
 		public <DeclType extends Type> com.microsoft.z3.Expr visit(final ConstRefExpr<DeclType> expr,
 				final Void param) {
-			final com.microsoft.z3.FuncDecl funcDecl = transformer.transform(expr.getDecl());
+			final com.microsoft.z3.FuncDecl funcDecl = transformer.toSymbol(expr.getDecl());
 			return context.mkConst(funcDecl);
 		}
 
 		@Override
 		public <DeclType extends Type> com.microsoft.z3.Expr visit(final ParamRefExpr<DeclType> expr,
 				final Void param) {
-			final com.microsoft.z3.FuncDecl funcDecl = transformer.transform(expr.getDecl());
+			final com.microsoft.z3.FuncDecl funcDecl = transformer.toSymbol(expr.getDecl());
 			return context.mkConst(funcDecl);
 		}
 
@@ -112,41 +112,41 @@ class Z3ExprTransformer {
 
 		@Override
 		public com.microsoft.z3.BoolExpr visit(final NotExpr expr, final Void param) {
-			final com.microsoft.z3.BoolExpr opTerm = (com.microsoft.z3.BoolExpr) transform(expr.getOp());
+			final com.microsoft.z3.BoolExpr opTerm = (com.microsoft.z3.BoolExpr) toTerm(expr.getOp());
 			return context.mkNot(opTerm);
 		}
 
 		@Override
 		public com.microsoft.z3.BoolExpr visit(final ImplyExpr expr, final Void param) {
-			final com.microsoft.z3.BoolExpr leftOpTerm = (com.microsoft.z3.BoolExpr) transform(expr.getLeftOp());
-			final com.microsoft.z3.BoolExpr rightOpTerm = (com.microsoft.z3.BoolExpr) transform(expr.getRightOp());
+			final com.microsoft.z3.BoolExpr leftOpTerm = (com.microsoft.z3.BoolExpr) toTerm(expr.getLeftOp());
+			final com.microsoft.z3.BoolExpr rightOpTerm = (com.microsoft.z3.BoolExpr) toTerm(expr.getRightOp());
 			return context.mkImplies(leftOpTerm, rightOpTerm);
 		}
 
 		@Override
 		public com.microsoft.z3.BoolExpr visit(final IffExpr expr, final Void param) {
-			final com.microsoft.z3.BoolExpr leftOpTerm = (com.microsoft.z3.BoolExpr) transform(expr.getLeftOp());
-			final com.microsoft.z3.BoolExpr rightOpTerm = (com.microsoft.z3.BoolExpr) transform(expr.getRightOp());
+			final com.microsoft.z3.BoolExpr leftOpTerm = (com.microsoft.z3.BoolExpr) toTerm(expr.getLeftOp());
+			final com.microsoft.z3.BoolExpr rightOpTerm = (com.microsoft.z3.BoolExpr) toTerm(expr.getRightOp());
 			return context.mkIff(leftOpTerm, rightOpTerm);
 		}
 
 		@Override
 		public com.microsoft.z3.BoolExpr visit(final AndExpr expr, final Void param) {
-			final com.microsoft.z3.BoolExpr[] opTerms = expr.getOps().stream().map(e -> transform(e))
+			final com.microsoft.z3.BoolExpr[] opTerms = expr.getOps().stream().map(e -> toTerm(e))
 					.toArray(size -> new com.microsoft.z3.BoolExpr[size]);
 			return context.mkAnd(opTerms);
 		}
 
 		@Override
 		public com.microsoft.z3.BoolExpr visit(final OrExpr expr, final Void param) {
-			final com.microsoft.z3.BoolExpr[] opTerms = expr.getOps().stream().map(e -> transform(e))
+			final com.microsoft.z3.BoolExpr[] opTerms = expr.getOps().stream().map(e -> toTerm(e))
 					.toArray(size -> new com.microsoft.z3.BoolExpr[size]);
 			return context.mkOr(opTerms);
 		}
 
 		@Override
 		public com.microsoft.z3.Quantifier visit(final ExistsExpr expr, final Void param) {
-			final com.microsoft.z3.BoolExpr opTerm = (com.microsoft.z3.BoolExpr) transform(expr.getOp());
+			final com.microsoft.z3.BoolExpr opTerm = (com.microsoft.z3.BoolExpr) toTerm(expr.getOp());
 			final com.microsoft.z3.Expr[] paramTerms = new com.microsoft.z3.Expr[expr.getParamDecls().size()];
 
 			int i = 0;
@@ -162,7 +162,7 @@ class Z3ExprTransformer {
 
 		@Override
 		public com.microsoft.z3.Quantifier visit(final ForallExpr expr, final Void param) {
-			final com.microsoft.z3.BoolExpr opTerm = (com.microsoft.z3.BoolExpr) transform(expr.getOp());
+			final com.microsoft.z3.BoolExpr opTerm = (com.microsoft.z3.BoolExpr) toTerm(expr.getOp());
 			final com.microsoft.z3.Expr[] paramTerms = new com.microsoft.z3.Expr[expr.getParamDecls().size()];
 
 			int i = 0;
@@ -178,43 +178,43 @@ class Z3ExprTransformer {
 
 		@Override
 		public com.microsoft.z3.BoolExpr visit(final EqExpr expr, final Void param) {
-			final com.microsoft.z3.Expr leftOpTerm = transform(expr.getLeftOp());
-			final com.microsoft.z3.Expr rightOpTerm = transform(expr.getRightOp());
+			final com.microsoft.z3.Expr leftOpTerm = toTerm(expr.getLeftOp());
+			final com.microsoft.z3.Expr rightOpTerm = toTerm(expr.getRightOp());
 			return context.mkEq(leftOpTerm, rightOpTerm);
 		}
 
 		@Override
 		public com.microsoft.z3.BoolExpr visit(final NeqExpr expr, final Void param) {
-			final com.microsoft.z3.Expr leftOpTerm = transform(expr.getLeftOp());
-			final com.microsoft.z3.Expr rightOpTerm = transform(expr.getRightOp());
+			final com.microsoft.z3.Expr leftOpTerm = toTerm(expr.getLeftOp());
+			final com.microsoft.z3.Expr rightOpTerm = toTerm(expr.getRightOp());
 			return context.mkDistinct(leftOpTerm, rightOpTerm);
 		}
 
 		@Override
 		public com.microsoft.z3.Expr visit(final GeqExpr expr, final Void param) {
-			final com.microsoft.z3.ArithExpr leftOpTerm = (com.microsoft.z3.ArithExpr) transform(expr.getLeftOp());
-			final com.microsoft.z3.ArithExpr rightOpTerm = (com.microsoft.z3.ArithExpr) transform(expr.getRightOp());
+			final com.microsoft.z3.ArithExpr leftOpTerm = (com.microsoft.z3.ArithExpr) toTerm(expr.getLeftOp());
+			final com.microsoft.z3.ArithExpr rightOpTerm = (com.microsoft.z3.ArithExpr) toTerm(expr.getRightOp());
 			return context.mkGe(leftOpTerm, rightOpTerm);
 		}
 
 		@Override
 		public com.microsoft.z3.Expr visit(final GtExpr expr, final Void param) {
-			final com.microsoft.z3.ArithExpr leftOpTerm = (com.microsoft.z3.ArithExpr) transform(expr.getLeftOp());
-			final com.microsoft.z3.ArithExpr rightOpTerm = (com.microsoft.z3.ArithExpr) transform(expr.getRightOp());
+			final com.microsoft.z3.ArithExpr leftOpTerm = (com.microsoft.z3.ArithExpr) toTerm(expr.getLeftOp());
+			final com.microsoft.z3.ArithExpr rightOpTerm = (com.microsoft.z3.ArithExpr) toTerm(expr.getRightOp());
 			return context.mkGt(leftOpTerm, rightOpTerm);
 		}
 
 		@Override
 		public com.microsoft.z3.Expr visit(final LeqExpr expr, final Void param) {
-			final com.microsoft.z3.ArithExpr leftOpTerm = (com.microsoft.z3.ArithExpr) transform(expr.getLeftOp());
-			final com.microsoft.z3.ArithExpr rightOpTerm = (com.microsoft.z3.ArithExpr) transform(expr.getRightOp());
+			final com.microsoft.z3.ArithExpr leftOpTerm = (com.microsoft.z3.ArithExpr) toTerm(expr.getLeftOp());
+			final com.microsoft.z3.ArithExpr rightOpTerm = (com.microsoft.z3.ArithExpr) toTerm(expr.getRightOp());
 			return context.mkLe(leftOpTerm, rightOpTerm);
 		}
 
 		@Override
 		public com.microsoft.z3.Expr visit(final LtExpr expr, final Void param) {
-			final com.microsoft.z3.ArithExpr leftOpTerm = (com.microsoft.z3.ArithExpr) transform(expr.getLeftOp());
-			final com.microsoft.z3.ArithExpr rightOpTerm = (com.microsoft.z3.ArithExpr) transform(expr.getRightOp());
+			final com.microsoft.z3.ArithExpr leftOpTerm = (com.microsoft.z3.ArithExpr) toTerm(expr.getLeftOp());
+			final com.microsoft.z3.ArithExpr rightOpTerm = (com.microsoft.z3.ArithExpr) toTerm(expr.getRightOp());
 			return context.mkLt(leftOpTerm, rightOpTerm);
 		}
 
@@ -225,22 +225,22 @@ class Z3ExprTransformer {
 
 		@Override
 		public com.microsoft.z3.Expr visit(final IntDivExpr expr, final Void param) {
-			final com.microsoft.z3.IntExpr leftOpTerm = (com.microsoft.z3.IntExpr) transform(expr.getLeftOp());
-			final com.microsoft.z3.IntExpr rightOpTerm = (com.microsoft.z3.IntExpr) transform(expr.getRightOp());
+			final com.microsoft.z3.IntExpr leftOpTerm = (com.microsoft.z3.IntExpr) toTerm(expr.getLeftOp());
+			final com.microsoft.z3.IntExpr rightOpTerm = (com.microsoft.z3.IntExpr) toTerm(expr.getRightOp());
 			return context.mkDiv(leftOpTerm, rightOpTerm);
 		}
 
 		@Override
 		public com.microsoft.z3.Expr visit(final RemExpr expr, final Void param) {
-			final com.microsoft.z3.IntExpr leftOpTerm = (com.microsoft.z3.IntExpr) transform(expr.getLeftOp());
-			final com.microsoft.z3.IntExpr rightOpTerm = (com.microsoft.z3.IntExpr) transform(expr.getRightOp());
+			final com.microsoft.z3.IntExpr leftOpTerm = (com.microsoft.z3.IntExpr) toTerm(expr.getLeftOp());
+			final com.microsoft.z3.IntExpr rightOpTerm = (com.microsoft.z3.IntExpr) toTerm(expr.getRightOp());
 			return context.mkRem(leftOpTerm, rightOpTerm);
 		}
 
 		@Override
 		public com.microsoft.z3.Expr visit(final ModExpr expr, final Void param) {
-			final com.microsoft.z3.IntExpr leftOpTerm = (com.microsoft.z3.IntExpr) transform(expr.getLeftOp());
-			final com.microsoft.z3.IntExpr rightOpTerm = (com.microsoft.z3.IntExpr) transform(expr.getRightOp());
+			final com.microsoft.z3.IntExpr leftOpTerm = (com.microsoft.z3.IntExpr) toTerm(expr.getLeftOp());
+			final com.microsoft.z3.IntExpr rightOpTerm = (com.microsoft.z3.IntExpr) toTerm(expr.getRightOp());
 			return context.mkMod(leftOpTerm, rightOpTerm);
 		}
 
@@ -251,30 +251,30 @@ class Z3ExprTransformer {
 
 		@Override
 		public com.microsoft.z3.Expr visit(final RatDivExpr expr, final Void param) {
-			final com.microsoft.z3.ArithExpr leftOpTerm = (com.microsoft.z3.ArithExpr) transform(expr.getLeftOp());
-			final com.microsoft.z3.ArithExpr rightOpTerm = (com.microsoft.z3.ArithExpr) transform(expr.getRightOp());
+			final com.microsoft.z3.ArithExpr leftOpTerm = (com.microsoft.z3.ArithExpr) toTerm(expr.getLeftOp());
+			final com.microsoft.z3.ArithExpr rightOpTerm = (com.microsoft.z3.ArithExpr) toTerm(expr.getRightOp());
 			return context.mkDiv(leftOpTerm, rightOpTerm);
 		}
 
 		@Override
 		public <ExprType extends ClosedUnderNeg> com.microsoft.z3.Expr visit(final NegExpr<ExprType> expr,
 				final Void param) {
-			final com.microsoft.z3.ArithExpr opTerm = (com.microsoft.z3.ArithExpr) transform(expr.getOp());
+			final com.microsoft.z3.ArithExpr opTerm = (com.microsoft.z3.ArithExpr) toTerm(expr.getOp());
 			return context.mkUnaryMinus(opTerm);
 		}
 
 		@Override
 		public <ExprType extends ClosedUnderSub> com.microsoft.z3.Expr visit(final SubExpr<ExprType> expr,
 				final Void param) {
-			final com.microsoft.z3.ArithExpr leftOpTerm = (com.microsoft.z3.ArithExpr) transform(expr.getLeftOp());
-			final com.microsoft.z3.ArithExpr rightOpTerm = (com.microsoft.z3.ArithExpr) transform(expr.getRightOp());
+			final com.microsoft.z3.ArithExpr leftOpTerm = (com.microsoft.z3.ArithExpr) toTerm(expr.getLeftOp());
+			final com.microsoft.z3.ArithExpr rightOpTerm = (com.microsoft.z3.ArithExpr) toTerm(expr.getRightOp());
 			return context.mkSub(leftOpTerm, rightOpTerm);
 		}
 
 		@Override
 		public <ExprType extends ClosedUnderAdd> com.microsoft.z3.Expr visit(final AddExpr<ExprType> expr,
 				final Void param) {
-			final com.microsoft.z3.ArithExpr[] opTerms = expr.getOps().stream().map(e -> transform(e))
+			final com.microsoft.z3.ArithExpr[] opTerms = expr.getOps().stream().map(e -> toTerm(e))
 					.toArray(size -> new com.microsoft.z3.ArithExpr[size]);
 			return context.mkAdd(opTerms);
 		}
@@ -282,7 +282,7 @@ class Z3ExprTransformer {
 		@Override
 		public <ExprType extends ClosedUnderMul> com.microsoft.z3.Expr visit(final MulExpr<ExprType> expr,
 				final Void param) {
-			final com.microsoft.z3.ArithExpr[] opTerms = expr.getOps().stream().map(e -> transform(e))
+			final com.microsoft.z3.ArithExpr[] opTerms = expr.getOps().stream().map(e -> toTerm(e))
 					.toArray(size -> new com.microsoft.z3.ArithExpr[size]);
 			return context.mkMul(opTerms);
 		}
@@ -290,17 +290,17 @@ class Z3ExprTransformer {
 		@Override
 		public <IndexType extends Type, ElemType extends Type> com.microsoft.z3.Expr visit(
 				final ArrayReadExpr<IndexType, ElemType> expr, final Void param) {
-			final com.microsoft.z3.ArrayExpr arrayTerm = (com.microsoft.z3.ArrayExpr) transform(expr.getArray());
-			final com.microsoft.z3.Expr indexTerm = transform(expr.getIndex());
+			final com.microsoft.z3.ArrayExpr arrayTerm = (com.microsoft.z3.ArrayExpr) toTerm(expr.getArray());
+			final com.microsoft.z3.Expr indexTerm = toTerm(expr.getIndex());
 			return context.mkSelect(arrayTerm, indexTerm);
 		}
 
 		@Override
 		public <IndexType extends Type, ElemType extends Type> com.microsoft.z3.Expr visit(
 				final ArrayWriteExpr<IndexType, ElemType> expr, final Void param) {
-			final com.microsoft.z3.ArrayExpr arrayTerm = (com.microsoft.z3.ArrayExpr) transform(expr.getArray());
-			final com.microsoft.z3.Expr indexTerm = transform(expr.getIndex());
-			final com.microsoft.z3.Expr elemExpr = transform(expr.getElem());
+			final com.microsoft.z3.ArrayExpr arrayTerm = (com.microsoft.z3.ArrayExpr) toTerm(expr.getArray());
+			final com.microsoft.z3.Expr indexTerm = toTerm(expr.getIndex());
+			final com.microsoft.z3.Expr elemExpr = toTerm(expr.getElem());
 			return context.mkStore(arrayTerm, indexTerm, elemExpr);
 		}
 
@@ -320,9 +320,9 @@ class Z3ExprTransformer {
 
 		@Override
 		public <ExprType extends Type> com.microsoft.z3.Expr visit(final IteExpr<ExprType> expr, final Void param) {
-			final com.microsoft.z3.BoolExpr condTerm = (com.microsoft.z3.BoolExpr) transform(expr.getCond());
-			final com.microsoft.z3.Expr thenTerm = transform(expr.getThen());
-			final com.microsoft.z3.Expr elzeTerm = transform(expr.getElse());
+			final com.microsoft.z3.BoolExpr condTerm = (com.microsoft.z3.BoolExpr) toTerm(expr.getCond());
+			final com.microsoft.z3.Expr thenTerm = toTerm(expr.getThen());
+			final com.microsoft.z3.Expr elzeTerm = toTerm(expr.getElse());
 			return context.mkITE(condTerm, thenTerm, elzeTerm);
 		}
 	}
