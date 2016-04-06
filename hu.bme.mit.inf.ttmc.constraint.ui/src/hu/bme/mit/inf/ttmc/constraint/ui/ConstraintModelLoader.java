@@ -39,8 +39,8 @@ public class ConstraintModelLoader {
 		return instance;
 	}
 
-	public ConstraintSpecification load(String fileName) {
-		final URI uri = URI.createFileURI(fileName);
+	public ConstraintSpecification load(String filePath) {
+		final URI uri = URI.createFileURI(filePath);
 		final Resource resource = resourceSet.getResource(uri, true);
 		final EObject object = resource.getContents().get(0);
 		final ConstraintSpecification specification = (ConstraintSpecification) object;

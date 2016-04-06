@@ -1,13 +1,10 @@
 package hu.bme.mit.inf.ttmc.constraint.factory;
 
-import java.util.List;
-
 import hu.bme.mit.inf.ttmc.constraint.type.ArrayType;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.constraint.type.FuncType;
 import hu.bme.mit.inf.ttmc.constraint.type.IntType;
 import hu.bme.mit.inf.ttmc.constraint.type.RatType;
-import hu.bme.mit.inf.ttmc.constraint.type.TupleType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 
 public interface TypeFactory {
@@ -17,8 +14,6 @@ public interface TypeFactory {
 	public IntType Int();
 
 	public RatType Rat();
-
-	public TupleType Tuple(final List<? extends Type> elemTypes);
 
 	public <P extends Type, R extends Type> FuncType<P, R> Func(final P paramTypes, final R resultType);
 	

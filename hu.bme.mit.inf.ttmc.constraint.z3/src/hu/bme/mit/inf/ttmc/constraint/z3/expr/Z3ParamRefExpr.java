@@ -2,19 +2,20 @@ package hu.bme.mit.inf.ttmc.constraint.z3.expr;
 
 import com.microsoft.z3.Context;
 
+import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.decl.ParamDecl;
-import hu.bme.mit.inf.ttmc.constraint.expr.impl.ParamRefExprImpl;
+import hu.bme.mit.inf.ttmc.constraint.expr.defaults.AbstractParamRefExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.constraint.z3.decl.Z3ParamDecl;
 
-public class Z3ParamRefExpr<DeclType extends Type> extends ParamRefExprImpl<DeclType> implements Z3Expr<DeclType> {
+public class Z3ParamRefExpr<DeclType extends Type> extends AbstractParamRefExpr<DeclType> implements Z3Expr<DeclType> {
 
 	private final Context context;
-	
+
 	private volatile com.microsoft.z3.Expr term;
-	
-	public Z3ParamRefExpr(final ParamDecl<DeclType> paramDecl, final Context context) {
-		super(paramDecl);
+
+	public Z3ParamRefExpr(final ConstraintManager manager, final ParamDecl<DeclType> paramDecl, final Context context) {
+		super(manager, paramDecl);
 		this.context = context;
 	}
 

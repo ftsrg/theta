@@ -1,19 +1,11 @@
 package hu.bme.mit.inf.ttmc.constraint.type.impl;
 
-import hu.bme.mit.inf.ttmc.constraint.type.RatType;
+import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
+import hu.bme.mit.inf.ttmc.constraint.type.defaults.AbstractRatType;
 
-public class RatTypeImpl extends AbstractBaseType implements RatType {
-	
-	private static final String TYPENAME = "Rat";
+public final class RatTypeImpl extends AbstractRatType {
 
-	@Override
-	public int hashCode() {
-		return 385863;
+	public RatTypeImpl(final ConstraintManager manager) {
+		super(manager);
 	}
-
-	@Override
-	public String toString() {
-		return TYPENAME;
-	}
-
 }

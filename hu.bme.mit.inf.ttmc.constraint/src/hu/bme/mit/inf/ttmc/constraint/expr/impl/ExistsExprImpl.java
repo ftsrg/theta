@@ -2,35 +2,18 @@ package hu.bme.mit.inf.ttmc.constraint.expr.impl;
 
 import java.util.Collection;
 
+import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.decl.ParamDecl;
-import hu.bme.mit.inf.ttmc.constraint.expr.ExistsExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
+import hu.bme.mit.inf.ttmc.constraint.expr.defaults.AbstractExistsExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 
-public class ExistsExprImpl extends AbstractQuantifiedExpr implements ExistsExpr {
+public final class ExistsExprImpl extends AbstractExistsExpr {
 
-	private static final String OPERATOR = "Exists";
-
-	public ExistsExprImpl(Collection<? extends ParamDecl<? extends Type>> paramDecls,
-			Expr<? extends BoolType> op) {
-		super(paramDecls, op);
-	}
-	
-	@Override
-	public ExistsExpr withOp(Expr<? extends BoolType> op) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+	public ExistsExprImpl(final ConstraintManager manager,
+			final Collection<? extends ParamDecl<? extends Type>> paramDecls, final Expr<? extends BoolType> op) {
+		super(manager, paramDecls, op);
 	}
 
-	@Override
-	protected String getOperatorString() {
-		return OPERATOR;
-	}
-
-	@Override
-	protected int getHashSeed() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
-	}
 }

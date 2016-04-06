@@ -36,20 +36,17 @@ import hu.bme.mit.inf.ttmc.constraint.expr.NegExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.NeqExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.NotExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.OrExpr;
+import hu.bme.mit.inf.ttmc.constraint.expr.ParamRefExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.RatDivExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.RatLitExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.RemExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.SubExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.TrueExpr;
-import hu.bme.mit.inf.ttmc.constraint.expr.TupleLitExpr;
-import hu.bme.mit.inf.ttmc.constraint.expr.TupleProjExpr;
-import hu.bme.mit.inf.ttmc.constraint.expr.ParamRefExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.ArrayType;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.constraint.type.FuncType;
 import hu.bme.mit.inf.ttmc.constraint.type.IntType;
 import hu.bme.mit.inf.ttmc.constraint.type.RatType;
-import hu.bme.mit.inf.ttmc.constraint.type.TupleType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderAdd;
 import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderMul;
@@ -57,12 +54,12 @@ import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderNeg;
 import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderSub;
 
 public interface ExprFactory {
-	
+
 	public TrueExpr True();
 
 	public FalseExpr False();
-	
-	public default BoolLitExpr Bool(boolean value) {
+
+	public default BoolLitExpr Bool(final boolean value) {
 		if (value) {
 			return True();
 		} else {
@@ -74,10 +71,8 @@ public interface ExprFactory {
 
 	public RatLitExpr Rat(final long num, final long denom);
 
-	public TupleLitExpr Tuple(final List<? extends Expr<?>> elems);
-
-	public <P extends Type, R extends Type> FuncLitExpr<? super P, ? extends R> Func(final ParamDecl<? extends P> paramDecl,
-			final Expr<? extends R> result);
+	public <P extends Type, R extends Type> FuncLitExpr<? super P, ? extends R> Func(
+			final ParamDecl<? super P> paramDecl, final Expr<? extends R> result);
 
 	// LHS
 
@@ -85,18 +80,17 @@ public interface ExprFactory {
 
 	public <T extends Type> ParamRefExpr<T> Ref(final ParamDecl<T> paramDecl);
 
-	public TupleProjExpr Proj(final Expr<? extends TupleType> tup, int index);
+	public <P extends Type, R extends Type> FuncAppExpr<P, R> App(
+			final Expr<? extends FuncType<? super P, ? extends R>> func, final Expr<? extends P> param);
 
-	public <P extends Type, R extends Type> FuncAppExpr<P, R> App(final Expr<? extends FuncType<? super P, ? extends R>> func,
-			final Expr<? extends P> param);
-	
-	public <I extends Type, E extends Type> ArrayReadExpr<I, E> Read(final Expr<? extends ArrayType<? super I, ? extends E>> array,
-			final Expr<? extends I> index);
-	
+	public <I extends Type, E extends Type> ArrayReadExpr<I, E> Read(
+			final Expr<? extends ArrayType<? super I, ? extends E>> array, final Expr<? extends I> index);
+
 	//
-	
-	public <I extends Type, E extends Type> ArrayWriteExpr<I, E> Write(final Expr<? extends ArrayType<? super I, ? extends E>> array,
-			final Expr<? extends I> index, final Expr<? extends E> elem);
+
+	public <I extends Type, E extends Type> ArrayWriteExpr<I, E> Write(
+			final Expr<? extends ArrayType<? super I, ? extends E>> array, final Expr<? extends I> index,
+			final Expr<? extends E> elem);
 
 	// Boolean connectives
 
@@ -107,20 +101,19 @@ public interface ExprFactory {
 	public IffExpr Iff(final Expr<? extends BoolType> leftOp, final Expr<? extends BoolType> rightOp);
 
 	public AndExpr And(final Collection<? extends Expr<? extends BoolType>> ops);
-	
+
 	@SuppressWarnings("unchecked")
 	public default AndExpr And(final Expr<? extends BoolType>... ops) {
 		return And(ImmutableSet.copyOf(ops));
 	}
 
 	public OrExpr Or(final Collection<? extends Expr<? extends BoolType>> ops);
-	
+
 	@SuppressWarnings("unchecked")
 	public default OrExpr Or(final Expr<? extends BoolType>... ops) {
 		return Or(ImmutableSet.copyOf(ops));
 	}
-	
-	
+
 	// Quantifiers
 
 	public ForallExpr Forall(final List<? extends ParamDecl<?>> paramDecls, final Expr<? extends BoolType> op);
@@ -147,33 +140,32 @@ public interface ExprFactory {
 
 	public <T extends ClosedUnderNeg> NegExpr<T> Neg(final Expr<? extends T> op);
 
-	public <T extends ClosedUnderSub> SubExpr<T> Sub(final Expr<? extends T> leftOp,
-			final Expr<? extends T> rightOp);
+	public <T extends ClosedUnderSub> SubExpr<T> Sub(final Expr<? extends T> leftOp, final Expr<? extends T> rightOp);
 
 	public <T extends ClosedUnderAdd> AddExpr<T> Add(final Collection<? extends Expr<? extends T>> ops);
-	
+
 	@SuppressWarnings("unchecked")
-	public default <T extends ClosedUnderAdd> AddExpr<T> Add(Expr<? extends T>... ops) {
+	public default <T extends ClosedUnderAdd> AddExpr<T> Add(final Expr<? extends T>... ops) {
 		return Add(ImmutableMultiset.copyOf(ops));
 	}
 
 	public <T extends ClosedUnderMul> MulExpr<T> Mul(final Collection<? extends Expr<? extends T>> ops);
-	
+
 	@SuppressWarnings("unchecked")
-	public default <T extends ClosedUnderMul> MulExpr<T> Mul(Expr<? extends T>... ops) {
+	public default <T extends ClosedUnderMul> MulExpr<T> Mul(final Expr<? extends T>... ops) {
 		return Mul(ImmutableMultiset.copyOf(ops));
 	}
 
 	public ModExpr Mod(final Expr<? extends IntType> leftOp, final Expr<? extends IntType> rightOp);
 
 	public RemExpr Rem(final Expr<? extends IntType> leftOp, final Expr<? extends IntType> rightOp);
-	
+
 	public IntDivExpr IntDiv(final Expr<? extends IntType> leftOp, final Expr<? extends IntType> rightOp);
 
 	public RatDivExpr RatDiv(final Expr<? extends RatType> leftOp, final Expr<? extends RatType> rightOp);
 
 	// if-then-else
 
-	public <T extends Type> IteExpr<T> Ite(final Expr<? extends BoolType> cond,
-			final Expr<? extends T> then, final Expr<? extends T> elze);
+	public <T extends Type> IteExpr<T> Ite(final Expr<? extends BoolType> cond, final Expr<? extends T> then,
+			final Expr<? extends T> elze);
 }

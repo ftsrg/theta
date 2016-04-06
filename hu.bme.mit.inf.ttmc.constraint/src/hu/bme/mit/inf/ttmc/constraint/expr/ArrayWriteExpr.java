@@ -2,7 +2,6 @@ package hu.bme.mit.inf.ttmc.constraint.expr;
 
 import hu.bme.mit.inf.ttmc.constraint.type.ArrayType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
-import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 
 public interface ArrayWriteExpr<IndexType extends Type, ElemType extends Type>
 		extends Expr<ArrayType<IndexType, ElemType>> {
@@ -22,16 +21,8 @@ public interface ArrayWriteExpr<IndexType extends Type, ElemType extends Type>
 		return with(array, getIndex(), getElem());
 	}
 
-	public default ArrayWriteExpr<IndexType, ElemType> withIndex(final Expr<? extends IndexType> index) {
-		return with(getArray(), index, getElem());
-	}
+	public ArrayWriteExpr<IndexType, ElemType> withIndex(final Expr<? extends IndexType> index);
 
-	public default ArrayWriteExpr<IndexType, ElemType> withElem(final Expr<? extends ElemType> elem) {
-		return with(getArray(), getIndex(), elem);
-	}
+	public ArrayWriteExpr<IndexType, ElemType> withElem(final Expr<? extends ElemType> elem);
 
-	@Override
-	public default <P, R> R accept(ExprVisitor<? super P, ? extends R> visitor, P param) {
-		return visitor.visit(this, param);
-	}
 }

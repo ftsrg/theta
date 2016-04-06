@@ -1,31 +1,15 @@
 package hu.bme.mit.inf.ttmc.constraint.expr.impl;
 
-
+import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
-import hu.bme.mit.inf.ttmc.constraint.expr.RatDivExpr;
+import hu.bme.mit.inf.ttmc.constraint.expr.defaults.AbstractRatDivExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.RatType;
 
-public class RatDivExprImpl extends AbstractBinaryExpr<RatType, RatType, RatType> implements RatDivExpr {
+public final class RatDivExprImpl extends AbstractRatDivExpr {
 
-	private static final String OPERATOR = "RDiv";
-		
-	public RatDivExprImpl(final Expr<? extends RatType> leftOp, final Expr<? extends RatType> rightOp) {
-		super(leftOp, rightOp);
-	}
-
-	@Override
-	public RatDivExpr withOps(Expr<? extends RatType> leftOp, Expr<? extends RatType> rightOp) {
-		return new RatDivExprImpl(leftOp, rightOp);
-	}
-	
-	@Override
-	protected final String getOperatorString() {
-		return OPERATOR;
+	public RatDivExprImpl(final ConstraintManager manager, final Expr<? extends RatType> leftOp,
+			final Expr<? extends RatType> rightOp) {
+		super(manager, leftOp, rightOp);
 	}
 
-	@Override
-	protected final int getHashSeed() {
-		return 139;
-	}
-	
 }

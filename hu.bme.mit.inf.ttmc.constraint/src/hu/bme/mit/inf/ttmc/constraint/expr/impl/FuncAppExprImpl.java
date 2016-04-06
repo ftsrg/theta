@@ -1,75 +1,18 @@
 package hu.bme.mit.inf.ttmc.constraint.expr.impl;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
+import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
-import hu.bme.mit.inf.ttmc.constraint.expr.FuncAppExpr;
+import hu.bme.mit.inf.ttmc.constraint.expr.defaults.AbstractFuncAppExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.FuncType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 
-public class FuncAppExprImpl<ParamType extends Type, ResultType extends Type>
-		extends AbstractExpr<ResultType> implements FuncAppExpr<ParamType, ResultType> {
+public final class FuncAppExprImpl<ParamType extends Type, ResultType extends Type>
+		extends AbstractFuncAppExpr<ParamType, ResultType> {
 
-	private final Expr<? extends FuncType<? super ParamType, ? extends ResultType>> func;
-	private final Expr<? extends ParamType> param;
-
-	private volatile int hashCode = 0;
-
-	public FuncAppExprImpl(final Expr<? extends FuncType<? super ParamType, ? extends ResultType>> func,
+	public FuncAppExprImpl(final ConstraintManager manager,
+			final Expr<? extends FuncType<? super ParamType, ? extends ResultType>> func,
 			final Expr<? extends ParamType> param) {
-		this.func = checkNotNull(func);
-		this.param = checkNotNull(param);
-	}
-
-	@Override
-	public Expr<? extends FuncType<? super ParamType, ? extends ResultType>> getFunc() {
-		return func;
-	}
-
-	@Override
-	public Expr<? extends ParamType> getParam() {
-		return param;
-	}
-
-	@Override
-	public int hashCode() {
-		if (hashCode == 0) {
-			hashCode = getHashSeed();
-			hashCode = 31 * hashCode + func.hashCode();
-			hashCode = 31 * hashCode + param.hashCode();
-		}
-
-		return hashCode;
-	}
-
-	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		} else if (obj == null) {
-			return false;
-		} else if (this.getClass() == obj.getClass()) {
-			final FuncAppExprImpl<?, ?> that = (FuncAppExprImpl<?, ?>) obj;
-			return this.func.equals(that.func) && this.param.equals(that.param);
-		} else {
-			return false;
-		}
-	}
-
-	@Override
-	public final String toString() {
-		final StringBuilder sb = new StringBuilder();
-		sb.append("App(");
-		sb.append(func);
-		sb.append(", ");
-		sb.append(param);
-		sb.append(")");
-		return sb.toString();
-	}
-
-	@Override
-	protected int getHashSeed() {
-		return 47;
+		super(manager, func, param);
 	}
 
 }
