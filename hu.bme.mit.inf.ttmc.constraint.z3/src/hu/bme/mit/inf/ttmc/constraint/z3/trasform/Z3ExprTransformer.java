@@ -1,8 +1,9 @@
 package hu.bme.mit.inf.ttmc.constraint.z3.trasform;
 
-import java.util.Map;
-import java.util.WeakHashMap;
+import java.util.concurrent.ExecutionException;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.microsoft.z3.Context;
 
 import hu.bme.mit.inf.ttmc.constraint.decl.ParamDecl;
@@ -49,27 +50,28 @@ import hu.bme.mit.inf.ttmc.constraint.z3.decl.Z3Decl;
 
 class Z3ExprTransformer {
 
+	private static final int CACHE_SIZE = 1000;
+
 	private final Z3TransformationManager transformer;
 	private final Context context;
 
 	private final Z3ExprTransformerVisitor visitor;
 
-	private final Map<Expr<?>, com.microsoft.z3.Expr> exprToTerm;
+	private final Cache<Expr<?>, com.microsoft.z3.Expr> exprToTerm;
 
 	Z3ExprTransformer(final Z3TransformationManager transformer, final Context context) {
 		this.context = context;
 		this.transformer = transformer;
 		visitor = new Z3ExprTransformerVisitor();
-		exprToTerm = new WeakHashMap<>();
+		exprToTerm = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).build();
 	}
 
 	public com.microsoft.z3.Expr transform(final Expr<?> expr) {
-		com.microsoft.z3.Expr term = exprToTerm.get(expr);
-		if (term == null) {
-			term = expr.accept(visitor, null);
-			exprToTerm.put(expr, term);
+		try {
+			return exprToTerm.get(expr, (() -> expr.accept(visitor, null)));
+		} catch (final ExecutionException e) {
+			throw new AssertionError(e);
 		}
-		return term;
 	}
 
 	private class Z3ExprTransformerVisitor implements ExprVisitor<Void, com.microsoft.z3.Expr> {
