@@ -19,20 +19,19 @@ import hu.bme.mit.inf.ttmc.constraint.type.IntType;
 import hu.bme.mit.inf.ttmc.constraint.type.RatType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.constraint.utils.impl.ExprUtils;
-import hu.bme.mit.inf.ttmc.constraint.z3.solver.Z3SymbolWrapper;
 
 public class Z3TermTransformer {
 
 	final ExprFactory ef;
-	final Z3SymbolWrapper symbolWrapper;
+	final Z3SymbolTable symbolTable;
 
 	final Cache<com.microsoft.z3.Expr, Expr<?>> termToExpr;
 
 	private static final int CACHE_SIZE = 1000;
 
-	public Z3TermTransformer(final ExprFactory factory, final Z3SymbolWrapper symbolWrapper) {
+	public Z3TermTransformer(final ExprFactory factory, final Z3SymbolTable symbolTable) {
 		this.ef = factory;
-		this.symbolWrapper = symbolWrapper;
+		this.symbolTable = symbolTable;
 
 		termToExpr = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).build();
 	}
@@ -206,7 +205,7 @@ public class Z3TermTransformer {
 
 	private Expr<?> toConst(final com.microsoft.z3.Expr term) {
 		final FuncDecl funcDecl = term.getFuncDecl();
-		final ConstDecl<?> constDecl = symbolWrapper.wrap(funcDecl);
+		final ConstDecl<?> constDecl = symbolTable.getConst(funcDecl);
 		return ef.Ref(constDecl);
 	}
 

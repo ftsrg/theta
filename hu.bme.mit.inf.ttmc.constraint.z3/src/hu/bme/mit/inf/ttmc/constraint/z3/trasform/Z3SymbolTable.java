@@ -9,11 +9,11 @@ import com.google.common.collect.Maps;
 
 import hu.bme.mit.inf.ttmc.constraint.decl.ConstDecl;
 
-class Z3SymbolTable {
+public class Z3SymbolTable {
 
 	private final BiMap<ConstDecl<?>, com.microsoft.z3.FuncDecl> constToSymbol;
 
-	Z3SymbolTable() {
+	public Z3SymbolTable() {
 		constToSymbol = Maps.synchronizedBiMap(HashBiMap.create());
 	}
 

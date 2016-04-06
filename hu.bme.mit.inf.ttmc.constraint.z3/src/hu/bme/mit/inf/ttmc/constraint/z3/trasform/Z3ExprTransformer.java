@@ -70,7 +70,7 @@ class Z3ExprTransformer {
 		try {
 			return exprToTerm.get(expr, (() -> expr.accept(visitor, null)));
 		} catch (final ExecutionException e) {
-			throw new AssertionError(e);
+			throw new AssertionError();
 		}
 	}
 
