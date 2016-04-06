@@ -28,13 +28,13 @@ import hu.bme.mit.inf.ttmc.constraint.z3.expr.Z3NotExpr;
 import hu.bme.mit.inf.ttmc.constraint.z3.expr.Z3OrExpr;
 import hu.bme.mit.inf.ttmc.constraint.z3.expr.Z3RatLitExpr;
 
-public class Z3TermWrapper1 implements Z3TermWrapper {
+public class Z3TermWrapperImpl implements Z3TermWrapper {
 
 	final ConstraintManager manager;
 	final Context context;
 	final Z3SymbolWrapper symbolWrapper;
 
-	public Z3TermWrapper1(final ConstraintManager manager, final Context context, final Z3SymbolWrapper symbolWrapper) {
+	public Z3TermWrapperImpl(final ConstraintManager manager, final Context context, final Z3SymbolWrapper symbolWrapper) {
 		this.manager = manager;
 		this.context = context;
 		this.symbolWrapper = symbolWrapper;

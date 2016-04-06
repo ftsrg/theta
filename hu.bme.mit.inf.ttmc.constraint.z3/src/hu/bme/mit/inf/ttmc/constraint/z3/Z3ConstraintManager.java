@@ -12,7 +12,7 @@ import hu.bme.mit.inf.ttmc.constraint.z3.factory.Z3ExprFactory;
 import hu.bme.mit.inf.ttmc.constraint.z3.factory.Z3SolverFactory;
 import hu.bme.mit.inf.ttmc.constraint.z3.factory.Z3TypeFactory;
 import hu.bme.mit.inf.ttmc.constraint.z3.solver.Z3TermWrapper;
-import hu.bme.mit.inf.ttmc.constraint.z3.solver.Z3TermWrapper2;
+import hu.bme.mit.inf.ttmc.constraint.z3.solver.Z3TermWrapperImpl;
 
 public final class Z3ConstraintManager implements ConstraintManager {
 
@@ -29,11 +29,11 @@ public final class Z3ConstraintManager implements ConstraintManager {
 		// config.put("proof", "true");
 		//
 		final InterpolationContext context = new InterpolationContext();
-
 		declFactory = new Z3DeclFactory(this, context);
 		typeFactory = new Z3TypeFactory(this, context);
 		exprFactory = new Z3ExprFactory(this, context);
-		final Z3TermWrapper termWrapper = new Z3TermWrapper2(this, context, declFactory);
+
+		final Z3TermWrapper termWrapper = new Z3TermWrapperImpl(this, context, declFactory);
 		solverFactory = new Z3SolverFactory(this, context, termWrapper);
 	}
 
