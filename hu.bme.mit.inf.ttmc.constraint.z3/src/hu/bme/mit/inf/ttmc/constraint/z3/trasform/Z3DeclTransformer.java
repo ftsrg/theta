@@ -32,7 +32,7 @@ class Z3DeclTransformer {
 		visitor = new Z3DeclTransformerVisitor();
 	}
 
-	public com.microsoft.z3.FuncDecl transform(final Decl<?, ?> decl) {
+	public com.microsoft.z3.FuncDecl toSymbol(final Decl<?, ?> decl) {
 		return decl.accept(visitor, null);
 	}
 
@@ -50,8 +50,8 @@ class Z3DeclTransformer {
 				final List<Type> paramTypes = extractedTypes._1();
 				final Type returnType = extractedTypes._2();
 
-				final com.microsoft.z3.Sort returnSort = transformer.transform(returnType);
-				final com.microsoft.z3.Sort[] paramSorts = paramTypes.stream().map(t -> transformer.transform(t))
+				final com.microsoft.z3.Sort returnSort = transformer.toSort(returnType);
+				final com.microsoft.z3.Sort[] paramSorts = paramTypes.stream().map(t -> transformer.toSort(t))
 						.toArray(size -> new com.microsoft.z3.Sort[size]);
 
 				symbol = context.mkFuncDecl(decl.getName(), paramSorts, returnSort);
@@ -68,7 +68,7 @@ class Z3DeclTransformer {
 			if (type instanceof FuncType<?, ?>) {
 				throw new UnsupportedOperationException("Only simple types are supported");
 			} else {
-				final com.microsoft.z3.Sort sort = transformer.transform(type);
+				final com.microsoft.z3.Sort sort = transformer.toSort(type);
 				return context.mkConstDecl(decl.getName(), sort);
 			}
 		}

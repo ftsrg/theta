@@ -18,16 +18,16 @@ public class Z3TransformationManager {
 		this.exprTransformer = new Z3ExprTransformer(this, context);
 	}
 
-	public com.microsoft.z3.Sort transform(final Type type) {
-		return typeTransformer.transform(type);
+	public com.microsoft.z3.Sort toSort(final Type type) {
+		return typeTransformer.toSort(type);
 	}
 
-	public com.microsoft.z3.FuncDecl transform(final Decl<?, ?> decl) {
-		return declTransformer.transform(decl);
+	public com.microsoft.z3.FuncDecl toSymbol(final Decl<?, ?> decl) {
+		return declTransformer.toSymbol(decl);
 	}
 
-	public com.microsoft.z3.Expr transform(final Expr<?> expr) {
-		return exprTransformer.transform(expr);
+	public com.microsoft.z3.Expr toTerm(final Expr<?> expr) {
+		return exprTransformer.toTerm(expr);
 	}
 
 }

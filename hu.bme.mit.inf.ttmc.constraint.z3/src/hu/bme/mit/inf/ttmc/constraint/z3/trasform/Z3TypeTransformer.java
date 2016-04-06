@@ -25,7 +25,7 @@ class Z3TypeTransformer {
 		visitor = new Z3TypeTransformerVisitor();
 	}
 
-	public com.microsoft.z3.Sort transform(final Type type) {
+	public com.microsoft.z3.Sort toSort(final Type type) {
 		return type.accept(visitor, null);
 	}
 
