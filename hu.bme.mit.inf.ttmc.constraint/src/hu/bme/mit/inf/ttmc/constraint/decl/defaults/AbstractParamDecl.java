@@ -8,6 +8,7 @@ import hu.bme.mit.inf.ttmc.constraint.type.Type;
 public abstract class AbstractParamDecl<DeclType extends Type> extends AbstractDecl<DeclType, ParamDecl<DeclType>>
 		implements ParamDecl<DeclType> {
 
+	private static final int HASH_SEED = 6949;
 	private static final String DECL_LABEL = "Param";
 
 	private final ConstraintManager manager;
@@ -29,14 +30,8 @@ public abstract class AbstractParamDecl<DeclType extends Type> extends AbstractD
 	}
 
 	@Override
-	public String toString() {
-		final StringBuilder sb = new StringBuilder();
-		sb.append("Param(");
-		sb.append(getName());
-		sb.append(" : ");
-		sb.append(getType());
-		sb.append(")");
-		return sb.toString();
+	protected final int getHashSeed() {
+		return HASH_SEED;
 	}
 
 	@Override
