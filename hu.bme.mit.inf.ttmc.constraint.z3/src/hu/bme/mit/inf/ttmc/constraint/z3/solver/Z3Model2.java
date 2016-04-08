@@ -15,26 +15,24 @@ import hu.bme.mit.inf.ttmc.constraint.solver.Model;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.constraint.utils.impl.ModelImpl;
-import hu.bme.mit.inf.ttmc.constraint.z3.decl.Z3Decl;
 import hu.bme.mit.inf.ttmc.constraint.z3.trasform.Z3TermTransformer;
+import hu.bme.mit.inf.ttmc.constraint.z3.trasform.Z3TransformationManager;
 
 class Z3Model2 extends ModelImpl {
 
+	final Z3TransformationManager transformationManager;
 	final Z3TermTransformer termTransformer;
 
 	final com.microsoft.z3.Model z3Model;
 
 	final Map<ConstDecl<?>, Expr<?>> valMap;
 
-	Z3Model2(final Z3TermTransformer termTransformer, final com.microsoft.z3.Model z3Model) {
-		this(termTransformer, z3Model, new HashMap<>());
-	}
-
-	private Z3Model2(final Z3TermTransformer termTransformer, final com.microsoft.z3.Model z3Model,
-			final Map<? extends ConstDecl<?>, ? extends Expr<?>> valMap) {
+	public Z3Model2(final Z3TransformationManager transformationManager, final Z3TermTransformer termTransformer,
+			final com.microsoft.z3.Model z3Model) {
+		this.transformationManager = transformationManager;
 		this.termTransformer = termTransformer;
 		this.z3Model = z3Model;
-		this.valMap = new HashMap<>(valMap);
+		this.valMap = new HashMap<>();
 	}
 
 	@Override
@@ -44,10 +42,7 @@ class Z3Model2 extends ModelImpl {
 		Expr<?> val = valMap.get(decl);
 
 		if (val == null) {
-			@SuppressWarnings("unchecked")
-			final Z3Decl<T, ConstDecl<T>> z3Decl = (Z3Decl<T, ConstDecl<T>>) decl;
-			final FuncDecl funcDecl = z3Decl.getSymbol();
-
+			final FuncDecl funcDecl = transformationManager.toSymbol(decl);
 			final com.microsoft.z3.Expr term = z3Model.getConstInterp(funcDecl);
 			if (term != null) {
 				val = termTransformer.toExpr(term);

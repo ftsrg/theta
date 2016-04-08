@@ -27,18 +27,12 @@ public class Z3Model extends ModelImpl {
 
 	final Map<ConstDecl<?>, Expr<?>> valMap;
 
-	Z3Model(final ConstraintManager manager, final Z3TermWrapper termWrapper, final com.microsoft.z3.Model z3Model) {
-		this(manager, termWrapper, z3Model, new HashMap<>());
-	}
-
-	private Z3Model(final ConstraintManager manager, final Z3TermWrapper termWrapper,
-			final com.microsoft.z3.Model z3Model, final Map<? extends ConstDecl<?>, ? extends Expr<?>> valMap) {
+	public Z3Model(final ConstraintManager manager, final Z3TermWrapper termWrapper,
+			final com.microsoft.z3.Model z3Model) {
 		this.manager = checkNotNull(manager);
 		this.termWrapper = checkNotNull(termWrapper);
 		this.z3Model = checkNotNull(z3Model);
-		checkNotNull(valMap);
-
-		this.valMap = new HashMap<>(valMap);
+		valMap = new HashMap<>();
 	}
 
 	@Override

@@ -161,7 +161,7 @@ public class Z3Solver2 implements Solver {
 		final com.microsoft.z3.Model z3Model = z3Solver.getModel();
 		assert z3Model != null;
 
-		return new Z3Model2(termTransformer, z3Model);
+		return new Z3Model2(transformationManager, termTransformer, z3Model);
 	}
 
 	private Collection<Expr<? extends BoolType>> extractUnsatCore() {
