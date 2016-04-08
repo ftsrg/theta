@@ -1,9 +1,11 @@
 package hu.bme.mit.inf.ttmc.analysis.algorithm;
 
+import java.util.Collection;
+
 import hu.bme.mit.inf.ttmc.analysis.State;
 
 public interface Algorithm<S extends State<S>> {
 
-	public ReachedSet<S> run(final MutableReachedSet<S> reachedSet);
+	public Collection<S> run(final Collection<? extends S> reachedSet);
 
 }
