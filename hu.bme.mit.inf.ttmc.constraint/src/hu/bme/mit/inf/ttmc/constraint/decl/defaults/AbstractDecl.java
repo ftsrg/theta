@@ -12,6 +12,8 @@ public abstract class AbstractDecl<DeclType extends Type, DeclKind extends Decl<
 	private final String name;
 	private final DeclType type;
 
+	private volatile int hashCode;
+
 	protected AbstractDecl(final String name, final DeclType type) {
 		checkNotNull(name);
 		checkArgument(name.length() > 0);
@@ -20,17 +22,34 @@ public abstract class AbstractDecl<DeclType extends Type, DeclKind extends Decl<
 	}
 
 	@Override
-	public String getName() {
+	public final String getName() {
 		return name;
 	}
 
 	@Override
-	public DeclType getType() {
+	public final DeclType getType() {
 		return type;
 	}
 
 	@Override
-	public String toString() {
+	public final int hashCode() {
+		int result = hashCode;
+		if (result == 0) {
+			result = getHashSeed();
+			result = 31 * result + getName().hashCode();
+			result = 31 * result + getType().hashCode();
+			hashCode = result;
+		}
+		return result;
+	}
+
+	@Override
+	public final boolean equals(final Object obj) {
+		return this == obj;
+	}
+
+	@Override
+	public final String toString() {
 		final StringBuilder sb = new StringBuilder();
 		sb.append(getDeclLabel());
 		sb.append("(");
@@ -40,6 +59,8 @@ public abstract class AbstractDecl<DeclType extends Type, DeclKind extends Decl<
 		sb.append(")");
 		return sb.toString();
 	}
+
+	protected abstract int getHashSeed();
 
 	protected abstract String getDeclLabel();
 
