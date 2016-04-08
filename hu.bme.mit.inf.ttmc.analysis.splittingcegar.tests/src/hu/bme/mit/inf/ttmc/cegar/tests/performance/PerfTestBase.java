@@ -3,6 +3,7 @@ package hu.bme.mit.inf.ttmc.cegar.tests.performance;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
@@ -10,9 +11,9 @@ import org.junit.Assert;
 
 import hu.bme.mit.inf.ttmc.aiger.impl.AIGERLoaderOptimized;
 import hu.bme.mit.inf.ttmc.aiger.impl.AIGERLoaderSimple;
-import hu.bme.mit.inf.ttmc.cegar.common.CEGARResult;
 import hu.bme.mit.inf.ttmc.cegar.common.CEGARBuilder;
 import hu.bme.mit.inf.ttmc.cegar.common.CEGARLoop;
+import hu.bme.mit.inf.ttmc.cegar.common.CEGARResult;
 import hu.bme.mit.inf.ttmc.cegar.tests.formatters.Formatter;
 import hu.bme.mit.inf.ttmc.constraint.z3.Z3ConstraintManager;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
@@ -22,24 +23,18 @@ import hu.bme.mit.inf.ttmc.system.ui.SystemModelCreator;
 import hu.bme.mit.inf.ttmc.system.ui.SystemModelLoader;
 
 public class PerfTestBase {
+
+	private STSManager createNewManager() {
+		return new STSManagerImpl(new Z3ConstraintManager());
+	}
+
 	protected void run(final List<TestCase> testCases, final List<CEGARBuilder> configurations, final int timeOut, final Formatter formatter) {
 		boolean allOk = true;
 
 		final TestResult[][] results = new TestResult[testCases.size()][configurations.size()];
 
-		for (int i = 0; i < testCases.size(); i++) {
-			final TestCase testCase = testCases.get(i);
-			System.out.println("Running model " + (i + 1) + "/" + testCases.size() + " [" + testCase.path + "]");
-			for (int j = 0; j < configurations.size(); j++) {
-				final CEGARBuilder configuration = configurations.get(j);
-				System.out.println("\tConfiguration " + (j + 1) + "/" + configurations.size() + " [" + configuration.build() + "]");
-				results[i][j] = run(testCase, configuration, timeOut);
-			}
-		}
-
-		System.out.println("-------------------------");
-		System.out.println("RESULTS");
-		System.out.println("-------------------------");
+		System.out.println("Running " + testCases.size() + " test cases with " + configurations.size() + " configurations");
+		System.out.println("Started at " + new Date());
 
 		// Header
 		formatter.cell("");
@@ -54,10 +49,14 @@ public class PerfTestBase {
 			formatter.cell("#S");
 		}
 		formatter.newRow();
-		// Body
+
 		for (int i = 0; i < testCases.size(); i++) {
-			formatter.cell((testCases.get(i).expected ? "(+) " : "(-) ") + testCases.get(i).path.substring(testCases.get(i).path.lastIndexOf('/') + 1));
+			final TestCase testCase = testCases.get(i);
+			formatter.cell((testCase.expected ? "(+) " : "(-) ") + testCase.path.substring(testCase.path.lastIndexOf('/') + 1));
+
 			for (int j = 0; j < configurations.size(); j++) {
+				final CEGARBuilder configuration = configurations.get(j);
+				results[i][j] = run(testCase, configuration, timeOut);
 				final TestResult result = results[i][j];
 				if (result.resultType == TestResult.ResultType.Ok) {
 					formatter.cell(result.results.size() + "");
@@ -72,14 +71,14 @@ public class PerfTestBase {
 			}
 			formatter.newRow();
 		}
-
+		System.out.println("Done at " + new Date());
 		Assert.assertTrue(allOk);
 	}
 
 	protected TestResult run(final TestCase testCase, final CEGARBuilder configuration, final int timeOut) {
 		STS system;
 		try {
-			system = testCase.loader.load(testCase.path, new STSManagerImpl(new Z3ConstraintManager()));
+			system = testCase.loader.load(testCase.path, createNewManager());
 		} catch (final IOException e1) {
 			return new TestResult(TestResult.ResultType.IOException, new ArrayList<>());
 		}
@@ -108,7 +107,7 @@ public class PerfTestBase {
 						rerun = 1;
 					for (int i = 0; i < rerun; ++i) {
 						try {
-							system = testCase.loader.load(testCase.path, new STSManagerImpl(new Z3ConstraintManager()));
+							system = testCase.loader.load(testCase.path, createNewManager());
 						} catch (final IOException e1) {
 							return new TestResult(TestResult.ResultType.IOException, new ArrayList<>());
 						}
