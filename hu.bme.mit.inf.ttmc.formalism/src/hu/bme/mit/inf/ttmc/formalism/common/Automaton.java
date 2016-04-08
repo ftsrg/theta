@@ -2,12 +2,12 @@ package hu.bme.mit.inf.ttmc.formalism.common;
 
 import java.util.Collection;
 
-public interface Automaton {
+public interface Automaton<L extends Loc<L, E>, E extends Edge<L, E>> {
 
-	public Loc getInitLoc();
+	public L getInitLoc();
 
-	public Collection<? extends Loc> getLocs();
+	public Collection<? extends L> getLocs();
 
-	public Collection<? extends Edge> getEdges();
+	public Collection<? extends E> getEdges();
 
 }
