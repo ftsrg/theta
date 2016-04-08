@@ -8,6 +8,7 @@ import hu.bme.mit.inf.ttmc.constraint.type.Type;
 public abstract class AbstractConstDecl<DeclType extends Type> extends AbstractDecl<DeclType, ConstDecl<DeclType>>
 		implements ConstDecl<DeclType> {
 
+	private static final int HASH_SEED = 5351;
 	private static final String DECL_LABEL = "Const";
 
 	private final ConstraintManager manager;
@@ -26,6 +27,11 @@ public abstract class AbstractConstDecl<DeclType extends Type> extends AbstractD
 		}
 
 		return ref;
+	}
+
+	@Override
+	protected final int getHashSeed() {
+		return HASH_SEED;
 	}
 
 	@Override

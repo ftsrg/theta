@@ -6,8 +6,10 @@ import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.VarRefExpr;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.impl.VarRefExprImpl;
 
-public class VarDeclImpl<DeclType extends Type> extends AbstractDecl<DeclType, VarDecl<DeclType>>
+public final class VarDeclImpl<DeclType extends Type> extends AbstractDecl<DeclType, VarDecl<DeclType>>
 		implements VarDecl<DeclType> {
+
+	private static final int HASH_SEED = 3761;
 
 	private static final String DECL_LABEL = "Var";
 
@@ -24,6 +26,11 @@ public class VarDeclImpl<DeclType extends Type> extends AbstractDecl<DeclType, V
 		}
 
 		return ref;
+	}
+
+	@Override
+	protected int getHashSeed() {
+		return HASH_SEED;
 	}
 
 	@Override

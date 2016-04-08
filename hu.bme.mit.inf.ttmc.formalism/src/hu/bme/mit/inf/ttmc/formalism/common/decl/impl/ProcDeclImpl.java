@@ -15,14 +15,17 @@ import hu.bme.mit.inf.ttmc.formalism.common.expr.impl.ProcRefExprImpl;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
 import hu.bme.mit.inf.ttmc.formalism.common.type.ProcType;
 
-public class ProcDeclImpl<ReturnType extends Type> implements ProcDecl<ReturnType> {
+public final class ProcDeclImpl<ReturnType extends Type> implements ProcDecl<ReturnType> {
+
+	private static final int HASH_SEED = 4001;
 
 	private final String name;
 	private final List<ParamDecl<? extends Type>> paramDecls;
 	private final ReturnType returnType;
 	private final Optional<Stmt> stmt;
 
-	protected volatile ProcRefExpr<ReturnType> ref;
+	private volatile int hashCode;
+	private volatile ProcRefExpr<ReturnType> ref;
 
 	public ProcDeclImpl(final String name, final List<? extends ParamDecl<? extends Type>> paramDecls,
 			final ReturnType returnType, final Stmt stmt) {
@@ -73,6 +76,23 @@ public class ProcDeclImpl<ReturnType extends Type> implements ProcDecl<ReturnTyp
 		}
 
 		return ref;
+	}
+
+	@Override
+	public int hashCode() {
+		int result = hashCode;
+		if (result == 0) {
+			result = HASH_SEED;
+			result = 31 * result + getName().hashCode();
+			result = 31 * result + getType().hashCode();
+			hashCode = result;
+		}
+		return result;
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		return this == obj;
 	}
 
 	@Override
