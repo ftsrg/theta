@@ -18,7 +18,7 @@ import hu.bme.mit.inf.ttmc.constraint.utils.impl.ModelImpl;
 import hu.bme.mit.inf.ttmc.constraint.z3.trasform.Z3TermTransformer;
 import hu.bme.mit.inf.ttmc.constraint.z3.trasform.Z3TransformationManager;
 
-class Z3Model2 extends ModelImpl {
+class Z3Model extends ModelImpl {
 
 	final Z3TransformationManager transformationManager;
 	final Z3TermTransformer termTransformer;
@@ -27,7 +27,7 @@ class Z3Model2 extends ModelImpl {
 
 	final Map<ConstDecl<?>, Expr<?>> valMap;
 
-	public Z3Model2(final Z3TransformationManager transformationManager, final Z3TermTransformer termTransformer,
+	public Z3Model(final Z3TransformationManager transformationManager, final Z3TermTransformer termTransformer,
 			final com.microsoft.z3.Model z3Model) {
 		this.transformationManager = transformationManager;
 		this.termTransformer = termTransformer;
