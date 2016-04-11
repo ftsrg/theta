@@ -26,7 +26,7 @@ import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.constraint.z3.trasform.Z3TermTransformer;
 import hu.bme.mit.inf.ttmc.constraint.z3.trasform.Z3TransformationManager;
 
-public class Z3ItpSolver2 implements ItpSolver {
+public class Z3ItpSolver implements ItpSolver {
 
 	private final Z3TransformationManager transformationManager;
 	private final Z3TermTransformer termTransformer;
@@ -38,14 +38,14 @@ public class Z3ItpSolver2 implements ItpSolver {
 
 	private final Collection<ItpMarkerImpl> markers;
 
-	public Z3ItpSolver2(final Z3TransformationManager transformationManager, final Z3TermTransformer termTransformer,
+	public Z3ItpSolver(final Z3TransformationManager transformationManager, final Z3TermTransformer termTransformer,
 			final com.microsoft.z3.InterpolationContext z3Context, final com.microsoft.z3.Solver z3Solver) {
 		this.transformationManager = transformationManager;
 		this.termTransformer = termTransformer;
 		this.z3Context = z3Context;
 		this.z3Solver = z3Solver;
 
-		solver = new Z3Solver2(transformationManager, termTransformer, z3Context, z3Solver);
+		solver = new Z3Solver(transformationManager, termTransformer, z3Context, z3Solver);
 
 		markers = new HashSet<>();
 	}

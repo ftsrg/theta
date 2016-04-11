@@ -6,7 +6,7 @@ import hu.bme.mit.inf.ttmc.constraint.factory.DeclFactory;
 import hu.bme.mit.inf.ttmc.constraint.factory.ExprFactory;
 import hu.bme.mit.inf.ttmc.constraint.factory.SolverFactory;
 import hu.bme.mit.inf.ttmc.constraint.factory.TypeFactory;
-import hu.bme.mit.inf.ttmc.constraint.z3.factory.Z3SolverFactory2;
+import hu.bme.mit.inf.ttmc.constraint.z3.factory.Z3SolverFactory;
 
 public class Z3ConstraintManager implements ConstraintManager {
 
@@ -19,7 +19,7 @@ public class Z3ConstraintManager implements ConstraintManager {
 
 	public Z3ConstraintManager() {
 		manager = new ConstraintManagerImpl();
-		solverFactory = new Z3SolverFactory2(manager);
+		solverFactory = new Z3SolverFactory(manager);
 	}
 
 	@Override

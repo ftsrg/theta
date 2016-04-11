@@ -21,7 +21,7 @@ import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.constraint.z3.trasform.Z3TermTransformer;
 import hu.bme.mit.inf.ttmc.constraint.z3.trasform.Z3TransformationManager;
 
-public class Z3Solver2 implements Solver {
+public class Z3Solver implements Solver {
 
 	private final Z3TransformationManager transformationManager;
 	private final Z3TermTransformer termTransformer;
@@ -39,7 +39,7 @@ public class Z3Solver2 implements Solver {
 	private Collection<Expr<? extends BoolType>> unsatCore;
 	private SolverStatus status;
 
-	public Z3Solver2(final Z3TransformationManager transformationManager, final Z3TermTransformer termTransformer,
+	public Z3Solver(final Z3TransformationManager transformationManager, final Z3TermTransformer termTransformer,
 			final com.microsoft.z3.Context z3Context, final com.microsoft.z3.Solver z3Solver) {
 		this.transformationManager = transformationManager;
 		this.termTransformer = termTransformer;
@@ -161,7 +161,7 @@ public class Z3Solver2 implements Solver {
 		final com.microsoft.z3.Model z3Model = z3Solver.getModel();
 		assert z3Model != null;
 
-		return new Z3Model2(transformationManager, termTransformer, z3Model);
+		return new Z3Model(transformationManager, termTransformer, z3Model);
 	}
 
 	private Collection<Expr<? extends BoolType>> extractUnsatCore() {
