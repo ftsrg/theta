@@ -6,7 +6,7 @@ Bundle-Version: 1.0.0.qualifier
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Export-Package: hu.bme.mit.inf.ttmc.constraint,
  hu.bme.mit.inf.ttmc.constraint.decl,
- hu.bme.mit.inf.ttmc.constraint.decl.defaults,
+ hu.bme.mit.inf.ttmc.constraint.decl.impl,
  hu.bme.mit.inf.ttmc.constraint.expr,
  hu.bme.mit.inf.ttmc.constraint.expr.defaults,
  hu.bme.mit.inf.ttmc.constraint.expr.impl;
