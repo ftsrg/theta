@@ -16,7 +16,7 @@ import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.utils.VisualizationHelper;
 import hu.bme.mit.inf.ttmc.common.logging.Logger;
 import hu.bme.mit.inf.ttmc.constraint.expr.NotExpr;
 import hu.bme.mit.inf.ttmc.constraint.solver.Solver;
-import hu.bme.mit.inf.ttmc.formalism.sts.STSUnroller;
+import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 
 public class InterpolatingChecker extends AbstractCEGARStep implements Checker<InterpolatedAbstractSystem, InterpolatedAbstractState> {
 
@@ -44,7 +44,7 @@ public class InterpolatingChecker extends AbstractCEGARStep implements Checker<I
 
 		final NotExpr negProp = system.getManager().getExprFactory().Not(system.getSTS().getProp());
 
-		final STSUnroller unroller = system.getUnroller();
+		final STS sts = system.getSTS();
 		Stack<InterpolatedAbstractState> counterExample = null; // Store the counterexample (if found)
 
 		final int stateSpaceInitialSize = exploredStates.size();
@@ -83,8 +83,8 @@ public class InterpolatingChecker extends AbstractCEGARStep implements Checker<I
 		final int stateSpaceSizeAfterClear = exploredStates.size();
 
 		solver.push();
-		solver.add(unroller.inv(0)); // Assert invariants
-		solver.add(unroller.unroll(negProp, 0)); // Assert the negate of the specification
+		solver.add(sts.unrollInv(0)); // Assert invariants
+		solver.add(sts.unroll(negProp, 0)); // Assert the negate of the specification
 
 		// Flag for storing whether the actual search is a continuation from a previous
 		// model checking round. It is true for the first search from an initial state,
@@ -116,7 +116,7 @@ public class InterpolatingChecker extends AbstractCEGARStep implements Checker<I
 					stateStack.push(init);
 					successorStack.push(-1);
 					// Check if the specification holds
-					if (checkState(init, solver, unroller)) {
+					if (checkState(init, solver, sts)) {
 						logger.writeln("Counterexample reached!", 5, 1);
 						counterExample = stateStack;
 					}
@@ -143,7 +143,7 @@ public class InterpolatingChecker extends AbstractCEGARStep implements Checker<I
 						stateStack.push(next);
 						successorStack.push(-1);
 						// Check if the specification holds
-						if (checkState(next, solver, unroller)) {
+						if (checkState(next, solver, sts)) {
 							logger.writeln("Counterexample reached!", 5, 1);
 							counterExample = stateStack;
 						}
@@ -182,9 +182,9 @@ public class InterpolatingChecker extends AbstractCEGARStep implements Checker<I
 				: new AbstractResult<InterpolatedAbstractState>(counterExample, null, exploredStates.size() - stateSpaceSizeAfterClear);
 	}
 
-	private boolean checkState(final InterpolatedAbstractState s, final Solver solver, final STSUnroller unroller) {
+	private boolean checkState(final InterpolatedAbstractState s, final Solver solver, final STS sts) {
 		solver.push();
-		SolverHelper.unrollAndAssert(solver, s.getLabels(), unroller, 0);
+		SolverHelper.unrollAndAssert(solver, s.getLabels(), sts, 0);
 		final boolean ret = SolverHelper.checkSat(solver);
 		solver.pop();
 		return ret;

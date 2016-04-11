@@ -16,7 +16,7 @@ import hu.bme.mit.inf.ttmc.constraint.solver.Solver;
 import hu.bme.mit.inf.ttmc.constraint.solver.SolverStatus;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
-import hu.bme.mit.inf.ttmc.formalism.sts.STSUnroller;
+import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 
 /**
  * Base class for concretizing linear counterexamples.
@@ -38,12 +38,12 @@ public abstract class AbstractConcretizer extends AbstractCEGARStep {
 		// Iterative method is required because if no counterexample exists, we would like to know which is
 		// the first abstract state in the abstract counterexample that has no corresponding concrete state
 		// (or if the last state is not bad).
-		final STSUnroller unroller = system.getUnroller();
+		final STS sts = system.getSTS();
 		final Solver solver = system.getManager().getSolverFactory().createSolver(true, false);
 		Model model = null;
 
 		solver.push();
-		solver.add(unroller.init(0)); // Assert initial conditions
+		solver.add(sts.unrollInit(0)); // Assert initial conditions
 
 		// Loop through each abstract state in the abstract counterexample and
 		// assert:
@@ -54,10 +54,10 @@ public abstract class AbstractConcretizer extends AbstractCEGARStep {
 		for (int i = 0; i < counterEx.size(); ++i) {
 			if (isStopped)
 				return null;
-			solver.add(unroller.inv(i)); // Invariants
-			solver.add(unroller.unroll(counterEx.get(i).createExpression(system.getManager()), i)); // Labels
+			solver.add(sts.unrollInv(i)); // Invariants
+			solver.add(sts.unroll(counterEx.get(i).createExpression(system.getManager()), i)); // Labels
 			if (i > 0)
-				solver.add(unroller.trans(i - 1)); // Transition relation
+				solver.add(sts.unrollTrans(i - 1)); // Transition relation
 
 			if (SolverHelper.checkSat(solver))
 				model = solver.getModel();
@@ -73,7 +73,7 @@ public abstract class AbstractConcretizer extends AbstractCEGARStep {
 		// If a trace as long as the abstract counterexample was found,
 		// check if the last state violates the specification
 		if (lastState != null && solver.getStatus() == SolverStatus.SAT) {
-			solver.add(unroller.unroll(lastState, counterEx.size() - 1));
+			solver.add(sts.unroll(lastState, counterEx.size() - 1));
 			if (SolverHelper.checkSat(solver))
 				model = solver.getModel();
 		}
@@ -82,7 +82,7 @@ public abstract class AbstractConcretizer extends AbstractCEGARStep {
 		// since for i=0 it must be satisfiable)
 		assert model != null;
 
-		final List<AndExpr> trace = unroller.extractTrace(model, len, requiredVars);
+		final List<AndExpr> trace = sts.extractTrace(model, len, requiredVars);
 
 		final ConcreteTrace result = new ConcreteTrace(trace, solver.getStatus() == SolverStatus.SAT);
 		solver.pop();

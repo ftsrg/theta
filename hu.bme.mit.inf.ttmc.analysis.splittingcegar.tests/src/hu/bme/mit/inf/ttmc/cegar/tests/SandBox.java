@@ -76,7 +76,7 @@ public class SandBox {
 				ops.add(as.createExpression(manager));
 			}
 
-			System.out.println(InvariantChecker.check(result.getSTS(), result.getAbstractSystem().getUnroller(), manager.getExprFactory().Or(ops)));
+			System.out.println(InvariantChecker.check(result.getSTS(), manager.getExprFactory().Or(ops)));
 		}
 	}
 }
