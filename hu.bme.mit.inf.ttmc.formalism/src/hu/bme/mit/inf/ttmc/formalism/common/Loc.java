@@ -2,10 +2,10 @@ package hu.bme.mit.inf.ttmc.formalism.common;
 
 import java.util.Collection;
 
-public interface Loc {
-	
-	public Collection<? extends Edge> getInEdges();
-	
-	public Collection<? extends Edge> getOutEdges();
-	
+public interface Loc<L extends Loc<L, E>, E extends Edge<L, E>> {
+
+	public Collection<? extends E> getInEdges();
+
+	public Collection<? extends E> getOutEdges();
+
 }

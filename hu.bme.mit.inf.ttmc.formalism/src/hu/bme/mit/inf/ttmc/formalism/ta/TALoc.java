@@ -6,14 +6,8 @@ import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.formalism.common.Loc;
 
-public interface TALoc extends Loc {
+public interface TALoc extends Loc<TALoc, TAEdge> {
 
 	public Collection<Expr<? extends BoolType>> getInvars();
-
-	@Override
-	public Collection<? extends TAEdge> getInEdges();
-
-	@Override
-	public Collection<? extends TAEdge> getOutEdges();
 
 }

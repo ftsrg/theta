@@ -5,14 +5,8 @@ import java.util.List;
 import hu.bme.mit.inf.ttmc.formalism.common.Edge;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
 
-public interface CFAEdge extends Edge {
+public interface CFAEdge extends Edge<CFALoc, CFAEdge> {
 
-	@Override
-	public CFALoc getSource();
-	
-	@Override
-	public CFALoc getTarget();
-	
 	public List<Stmt> getStmts();
 
 }
