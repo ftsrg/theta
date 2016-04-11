@@ -19,8 +19,8 @@ import hu.bme.mit.inf.ttmc.constraint.expr.EqExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.solver.Solver;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
+import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
-import hu.bme.mit.inf.ttmc.formalism.sts.STSUnroller;
 
 /**
  * Base class for debuggers.
@@ -32,26 +32,25 @@ public class AbstractDebugger {
 		this.visualizer = visualizer;
 	}
 
-	protected void exploreConcrTransRelAndInits(final Collection<ConcreteState> concreteStates, final Solver solver,
-			final STSUnroller unroller) {
+	protected void exploreConcrTransRelAndInits(final Collection<ConcreteState> concreteStates, final Solver solver, final STS sts) {
 		solver.push();
-		solver.add(unroller.inv(0));
+		solver.add(sts.unrollInv(0));
 		// Loop through each state
 		for (final ConcreteState cs0 : concreteStates) {
 			// Assert its expression
 			solver.push();
-			solver.add(unroller.unroll(cs0.model, 0));
+			solver.add(sts.unroll(cs0.model, 0));
 			// Check if it is initial
 			solver.push();
-			solver.add(unroller.init(0));
+			solver.add(sts.unrollInit(0));
 			cs0.isInitial = SolverHelper.checkSat(solver);
 			solver.pop();
 			// Loop through other states to get successors
 			for (final ConcreteState cs1 : concreteStates) {
 				solver.push();
-				solver.add(unroller.inv(1));
-				solver.add(unroller.unroll(cs1.model, 1));
-				solver.add(unroller.trans(0));
+				solver.add(sts.unrollInv(1));
+				solver.add(sts.unroll(cs1.model, 1));
+				solver.add(sts.unrollTrans(0));
 				if (SolverHelper.checkSat(solver))
 					cs0.successors.add(cs1);
 				solver.pop();
@@ -80,12 +79,12 @@ public class AbstractDebugger {
 	}
 
 	protected void markUnsafeStates(final Collection<ConcreteState> concreteStates, final Expr<? extends BoolType> unsafeExpr, final Solver solver,
-			final STSUnroller unroller) {
+			final STS sts) {
 		solver.push();
-		solver.add(unroller.unroll(unsafeExpr, 0));
+		solver.add(sts.unroll(unsafeExpr, 0));
 		for (final ConcreteState cs0 : concreteStates) {
 			solver.push();
-			solver.add(unroller.unroll(cs0.model, 0));
+			solver.add(sts.unroll(cs0.model, 0));
 			if (SolverHelper.checkSat(solver))
 				cs0.isUnsafe = true;
 			solver.pop();

@@ -9,8 +9,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 
-import hu.bme.mit.inf.ttmc.cegar.common.data.ConcreteTrace;
 import hu.bme.mit.inf.ttmc.cegar.common.data.AbstractSystem;
+import hu.bme.mit.inf.ttmc.cegar.common.data.ConcreteTrace;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.SolverHelper;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.debugging.AbstractDebugger;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.debugging.Debugger;
@@ -21,7 +21,7 @@ import hu.bme.mit.inf.ttmc.constraint.expr.AndExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.solver.Solver;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
-import hu.bme.mit.inf.ttmc.formalism.sts.STSUnroller;
+import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 
 public class InterpolatingCEGARDebugger extends AbstractDebugger implements Debugger<InterpolatedAbstractSystem, InterpolatedAbstractState> {
 
@@ -47,23 +47,23 @@ public class InterpolatingCEGARDebugger extends AbstractDebugger implements Debu
 		for (final InterpolatedAbstractState as : system.getAbstractKripkeStructure().getStates())
 			stateSpace.put(as, new ArrayList<>());
 
-		final STSUnroller unroller = system.getUnroller();
+		final STS sts = system.getSTS();
 		final Solver solver = system.getManager().getSolverFactory().createSolver(true, false);
 
 		// Explore corresponding concrete states
 		final Collection<ConcreteState> allConcreteStates = new ArrayList<>(); // Also store them temporary in a flat collection
 		solver.push(); // 1
-		solver.add(unroller.inv(0));
+		solver.add(sts.unrollInv(0));
 		for (final InterpolatedAbstractState as : stateSpace.keySet()) {
 			solver.push(); // 2
-			SolverHelper.unrollAndAssert(solver, as.getLabels(), unroller, 0);
+			SolverHelper.unrollAndAssert(solver, as.getLabels(), sts, 0);
 			do {
 				if (SolverHelper.checkSat(solver)) {
-					final Expr<? extends BoolType> csExpr = unroller.getConcreteState(solver.getModel(), 0, system.getVars());
+					final Expr<? extends BoolType> csExpr = sts.getConcreteState(solver.getModel(), 0, system.getVars());
 					final ConcreteState cs = new ConcreteState(csExpr);
 					stateSpace.get(as).add(cs);
 					allConcreteStates.add(cs);
-					solver.add(unroller.unroll(system.getManager().getExprFactory().Not(csExpr), 0));
+					solver.add(sts.unroll(system.getManager().getExprFactory().Not(csExpr), 0));
 				} else {
 					break;
 				}
@@ -90,13 +90,13 @@ public class InterpolatingCEGARDebugger extends AbstractDebugger implements Debu
 		}
 
 		// Explore the transition relation between concrete states and initial states
-		exploreConcrTransRelAndInits(allConcreteStates, solver, unroller);
+		exploreConcrTransRelAndInits(allConcreteStates, solver, sts);
 
 		// Explore the reachable concrete states
 		exploreReachableConcrStates(allConcreteStates);
 
 		// Mark unsafe states
-		markUnsafeStates(allConcreteStates, system.getManager().getExprFactory().Not(system.getSTS().getProp()), solver, unroller);
+		markUnsafeStates(allConcreteStates, system.getManager().getExprFactory().Not(system.getSTS().getProp()), solver, sts);
 
 		return this;
 	}

@@ -20,7 +20,7 @@ import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.expr.NotExpr;
 import hu.bme.mit.inf.ttmc.constraint.solver.Solver;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
-import hu.bme.mit.inf.ttmc.formalism.sts.STSUnroller;
+import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 
 public class ClusteredChecker extends AbstractCEGARStep implements Checker<ClusteredAbstractSystem, ClusteredAbstractState> {
 
@@ -34,7 +34,7 @@ public class ClusteredChecker extends AbstractCEGARStep implements Checker<Clust
 		final Solver solver = system.getManager().getSolverFactory().createSolver(true, false);
 		final NotExpr negProp = system.getManager().getExprFactory().Not(system.getSTS().getProp());
 
-		final STSUnroller unroller = system.getUnroller();
+		final STS sts = system.getSTS();
 		// Store explored states in a map. The key and the value is the same state.
 		// This is required because when a new state is created, it is a different object
 		// and the original one can be retrieved from the map.
@@ -51,14 +51,14 @@ public class ClusteredChecker extends AbstractCEGARStep implements Checker<Clust
 		int arcs = 0, deletedArcs = 0;
 
 		solver.push();
-		solver.add(unroller.inv(0));
+		solver.add(sts.unrollInv(0));
 
 		// Loop through each initial state and do a search
 		while ((actualInit = getNextInitialState(system, prevInit)) != null && counterExample == null) {
 			if (isStopped)
 				return null;
 			// Check if the state is really initial
-			if (!checkInit(actualInit, solver, unroller))
+			if (!checkInit(actualInit, solver, sts))
 				continue;
 			// Create stacks for backtracking
 			final Stack<ClusteredAbstractState> stateStack = new Stack<>();
@@ -75,7 +75,7 @@ public class ClusteredChecker extends AbstractCEGARStep implements Checker<Clust
 				stateStack.push(actualInit);
 				successorStack.push(ss);
 				// Check if the specification holds
-				if (checkProp(actualInit, negProp, solver, unroller)) {
+				if (checkProp(actualInit, negProp, solver, sts)) {
 					logger.writeln("Counterexample reached!", 5, 1);
 					counterExample = stateStack;
 				}
@@ -89,7 +89,7 @@ public class ClusteredChecker extends AbstractCEGARStep implements Checker<Clust
 
 				if (nextState != null) {
 					// Check if it is really a successor using the solver
-					if (checkTrans(actualState, nextState, solver, unroller)) {
+					if (checkTrans(actualState, nextState, solver, sts)) {
 						arcs++;
 						if (!exploredStates.containsKey(nextState)) {
 							logger.write("New state: ", 6, 1);
@@ -103,7 +103,7 @@ public class ClusteredChecker extends AbstractCEGARStep implements Checker<Clust
 							stateStack.push(nextState);
 							successorStack.push(ss);
 							// Check if the specification holds
-							if (checkProp(nextState, negProp, solver, unroller)) {
+							if (checkProp(nextState, negProp, solver, sts)) {
 								logger.writeln("Counterexample reached!", 5, 1);
 								counterExample = stateStack;
 								break;
@@ -144,37 +144,37 @@ public class ClusteredChecker extends AbstractCEGARStep implements Checker<Clust
 				: new AbstractResult<ClusteredAbstractState>(counterExample, null, exploredStates.size());
 	}
 
-	private boolean checkProp(final ClusteredAbstractState state, final Expr<? extends BoolType> expr, final Solver solver, final STSUnroller unroller) {
+	private boolean checkProp(final ClusteredAbstractState state, final Expr<? extends BoolType> expr, final Solver solver, final STS sts) {
 		solver.push();
 		for (final ComponentAbstractState as : state.getStates())
-			SolverHelper.unrollAndAssert(solver, as.getLabels(), unroller, 0);
-		solver.add(unroller.unroll(expr, 0));
+			SolverHelper.unrollAndAssert(solver, as.getLabels(), sts, 0);
+		solver.add(sts.unroll(expr, 0));
 		final boolean ret = SolverHelper.checkSat(solver);
 		solver.pop();
 		return ret;
 	}
 
-	private boolean checkTrans(final ClusteredAbstractState s0, final ClusteredAbstractState s1, final Solver solver, final STSUnroller unroller) {
+	private boolean checkTrans(final ClusteredAbstractState s0, final ClusteredAbstractState s1, final Solver solver, final STS sts) {
 		solver.push();
 		for (final ComponentAbstractState as : s0.getStates())
-			SolverHelper.unrollAndAssert(solver, as.getLabels(), unroller, 0);
+			SolverHelper.unrollAndAssert(solver, as.getLabels(), sts, 0);
 
 		for (final ComponentAbstractState as : s1.getStates())
-			SolverHelper.unrollAndAssert(solver, as.getLabels(), unroller, 1);
+			SolverHelper.unrollAndAssert(solver, as.getLabels(), sts, 1);
 
-		solver.add(unroller.inv(1));
-		solver.add(unroller.trans(0));
+		solver.add(sts.unrollInv(1));
+		solver.add(sts.unrollTrans(0));
 
 		final boolean ret = SolverHelper.checkSat(solver);
 		solver.pop();
 		return ret;
 	}
 
-	private boolean checkInit(final ClusteredAbstractState s, final Solver solver, final STSUnroller unroller) {
+	private boolean checkInit(final ClusteredAbstractState s, final Solver solver, final STS sts) {
 		solver.push();
 		for (final ComponentAbstractState as : s.getStates())
-			SolverHelper.unrollAndAssert(solver, as.getLabels(), unroller, 0);
-		solver.add(unroller.init(0));
+			SolverHelper.unrollAndAssert(solver, as.getLabels(), sts, 0);
+		solver.add(sts.unrollInit(0));
 
 		final boolean ret = SolverHelper.checkSat(solver);
 		solver.pop();

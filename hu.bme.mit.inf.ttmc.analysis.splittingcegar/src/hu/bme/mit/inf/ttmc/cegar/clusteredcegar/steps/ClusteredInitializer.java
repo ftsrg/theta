@@ -27,7 +27,6 @@ import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
-import hu.bme.mit.inf.ttmc.formalism.sts.STSUnroller;
 
 public class ClusteredInitializer extends AbstractCEGARStep implements Initializer<ClusteredAbstractSystem> {
 
@@ -70,17 +69,17 @@ public class ClusteredInitializer extends AbstractCEGARStep implements Initializ
 		// Create Kripke structures
 
 		system.getAbstractKripkeStructures().clear();
-		final STSUnroller unroller = system.getUnroller();
+		final STS sts = system.getSTS();
 		final Solver solver = system.getManager().getSolverFactory().createSolver(true, false);
 		solver.push();
-		solver.add(unroller.inv(0));
+		solver.add(sts.unrollInv(0));
 		// Loop through clusters and create abstract Kripke structures
 		int c = 0;
 		for (final Cluster cluster : system.getClusters()) {
 			if (isStopped)
 				return null;
 			logger.write("Cluster " + c++, 2);
-			system.getAbstractKripkeStructures().add(createAbstractKripkeStructure(cluster, solver, system.getManager(), unroller));
+			system.getAbstractKripkeStructures().add(createAbstractKripkeStructure(cluster, solver, system.getManager(), sts));
 		}
 		solver.pop();
 		// Visualize the abstract Kripke structures
@@ -90,7 +89,7 @@ public class ClusteredInitializer extends AbstractCEGARStep implements Initializ
 	}
 
 	private KripkeStructure<ComponentAbstractState> createAbstractKripkeStructure(final Cluster cluster, final Solver solver, final STSManager manager,
-			final STSUnroller unroller) {
+			final STS sts) {
 		final KripkeStructure<ComponentAbstractState> ks = new KripkeStructure<>();
 		// If there is no formula for the cluster, add a default one
 		if (cluster.getFormulas().size() == 0)
@@ -112,7 +111,7 @@ public class ClusteredInitializer extends AbstractCEGARStep implements Initializ
 
 			// Add the next formula unnegated
 			final ComponentAbstractState s1 = actual.cloneAndAdd(cluster.getFormulas().get(actual.getLabels().size()));
-			if (isStateFeasible(s1, solver, unroller)) {
+			if (isStateFeasible(s1, solver, sts)) {
 				// If the state is feasible and there are no more formulas, this state is finished
 				if (s1.getLabels().size() == cluster.getFormulas().size())
 					ks.addState(s1);
@@ -122,7 +121,7 @@ public class ClusteredInitializer extends AbstractCEGARStep implements Initializ
 
 			// Add the next formula negated
 			final ComponentAbstractState s2 = actual.cloneAndAdd(negates.get(actual.getLabels().size()));
-			if (isStateFeasible(s2, solver, unroller)) {
+			if (isStateFeasible(s2, solver, sts)) {
 				// If the state is feasible and there are no more formulas, this state is finished
 				if (s2.getLabels().size() == cluster.getFormulas().size())
 					ks.addState(s2);
@@ -134,11 +133,11 @@ public class ClusteredInitializer extends AbstractCEGARStep implements Initializ
 		// Calculate initial states and transition relation
 		logger.writeln(", abstract states [" + ks.getStates().size() + "]", 2);
 		for (final ComponentAbstractState s0 : ks.getStates()) { // Loop through the states
-			s0.setInitial(isStateInit(s0, solver, unroller)); // Check whether it is initial
+			s0.setInitial(isStateInit(s0, solver, sts)); // Check whether it is initial
 			if (s0.isInitial())
 				ks.addInitialState(s0);
 			for (final ComponentAbstractState s1 : ks.getStates()) // Calculate successors
-				if (isTransFeasible(s0, s1, solver, unroller))
+				if (isTransFeasible(s0, s1, solver, sts))
 					s0.getSuccessors().add(s1);
 			logger.writeln(s0, 4, 1);
 		}
@@ -146,29 +145,29 @@ public class ClusteredInitializer extends AbstractCEGARStep implements Initializ
 		return ks;
 	}
 
-	private boolean isStateFeasible(final ComponentAbstractState s, final Solver solver, final STSUnroller unroller) {
+	private boolean isStateFeasible(final ComponentAbstractState s, final Solver solver, final STS sts) {
 		solver.push();
-		SolverHelper.unrollAndAssert(solver, s.getLabels(), unroller, 0);
+		SolverHelper.unrollAndAssert(solver, s.getLabels(), sts, 0);
 		final boolean ret = SolverHelper.checkSat(solver);
 		solver.pop();
 		return ret;
 	}
 
-	private boolean isStateInit(final ComponentAbstractState s, final Solver solver, final STSUnroller unroller) {
+	private boolean isStateInit(final ComponentAbstractState s, final Solver solver, final STS sts) {
 		solver.push();
-		SolverHelper.unrollAndAssert(solver, s.getLabels(), unroller, 0);
-		solver.add(unroller.init(0));
+		SolverHelper.unrollAndAssert(solver, s.getLabels(), sts, 0);
+		solver.add(sts.unrollInit(0));
 		final boolean ret = SolverHelper.checkSat(solver);
 		solver.pop();
 		return ret;
 	}
 
-	private boolean isTransFeasible(final ComponentAbstractState s0, final ComponentAbstractState s1, final Solver solver, final STSUnroller unroller) {
+	private boolean isTransFeasible(final ComponentAbstractState s0, final ComponentAbstractState s1, final Solver solver, final STS sts) {
 		solver.push();
-		SolverHelper.unrollAndAssert(solver, s0.getLabels(), unroller, 0);
-		SolverHelper.unrollAndAssert(solver, s1.getLabels(), unroller, 1);
-		solver.add(unroller.trans(0));
-		solver.add(unroller.inv(1));
+		SolverHelper.unrollAndAssert(solver, s0.getLabels(), sts, 0);
+		SolverHelper.unrollAndAssert(solver, s1.getLabels(), sts, 1);
+		solver.add(sts.unrollTrans(0));
+		solver.add(sts.unrollInv(1));
 		final boolean ret = SolverHelper.checkSat(solver);
 		solver.pop();
 		return ret;

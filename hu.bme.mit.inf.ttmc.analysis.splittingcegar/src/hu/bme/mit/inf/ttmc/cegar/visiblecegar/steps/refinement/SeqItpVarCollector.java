@@ -21,7 +21,7 @@ import hu.bme.mit.inf.ttmc.constraint.solver.SolverStatus;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
-import hu.bme.mit.inf.ttmc.formalism.sts.STSUnroller;
+import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 import hu.bme.mit.inf.ttmc.formalism.utils.impl.FormalismUtils;
 
 public class SeqItpVarCollector extends AbstractCEGARStep implements VarCollector {
@@ -41,16 +41,16 @@ public class SeqItpVarCollector extends AbstractCEGARStep implements VarCollecto
 
 		final ItpPattern pattern = itpSolver.createSeqPattern(Arrays.asList(markers));
 
-		final STSUnroller unroller = system.getUnroller();
+		final STS sts = system.getSTS();
 
 		itpSolver.push();
 
-		itpSolver.add(markers[0], unroller.init(0)); // Initial conditions for the first marker
+		itpSolver.add(markers[0], sts.unrollInit(0)); // Initial conditions for the first marker
 		for (int i = 0; i < abstractCounterEx.size(); ++i) { // Loop through each marker
-			itpSolver.add(markers[i], unroller.unroll(abstractCounterEx.get(i).getExpression(), i)); // Assert labels
+			itpSolver.add(markers[i], sts.unroll(abstractCounterEx.get(i).getExpression(), i)); // Assert labels
 			if (i > 0)
-				itpSolver.add(markers[i], unroller.trans(i - 1)); // Assert transition relation
-			itpSolver.add(markers[i], unroller.inv(i)); // Assert invariants
+				itpSolver.add(markers[i], sts.unrollTrans(i - 1)); // Assert transition relation
+			itpSolver.add(markers[i], sts.unrollInv(i)); // Assert invariants
 		}
 
 		// The conjunction of the markers is unsatisfiable (otherwise there would be a concrete counterexample),
@@ -61,7 +61,7 @@ public class SeqItpVarCollector extends AbstractCEGARStep implements VarCollecto
 		final List<Expr<? extends BoolType>> interpolants = new ArrayList<>();
 		// Fold in interpolants (except the last)
 		for (int i = 0; i < markers.length - 1; ++i)
-			interpolants.add(unroller.foldin(itpSolver.getInterpolant(pattern).eval(markers[i]), i));
+			interpolants.add(sts.foldin(itpSolver.getInterpolant(pattern).eval(markers[i]), i));
 
 		itpSolver.pop();
 
