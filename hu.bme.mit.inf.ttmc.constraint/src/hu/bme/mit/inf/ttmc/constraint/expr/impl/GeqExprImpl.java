@@ -1,29 +1,25 @@
 package hu.bme.mit.inf.ttmc.constraint.expr.impl;
 
-import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.expr.GeqExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.constraint.type.RatType;
+import hu.bme.mit.inf.ttmc.constraint.type.impl.Types;
 import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 
-public final class GeqExprImpl extends AbstractBinaryExpr<RatType, RatType, BoolType> implements GeqExpr {
+final class GeqExprImpl extends AbstractBinaryExpr<RatType, RatType, BoolType> implements GeqExpr {
 
 	private static final int HASH_SEED = 59;
 
 	private static final String OPERATOR_LABEL = "Geq";
 
-	private final ConstraintManager manager;
-
-	public GeqExprImpl(final ConstraintManager manager, final Expr<? extends RatType> leftOp,
-			final Expr<? extends RatType> rightOp) {
+	GeqExprImpl(final Expr<? extends RatType> leftOp, final Expr<? extends RatType> rightOp) {
 		super(leftOp, rightOp);
-		this.manager = manager;
 	}
 
 	@Override
 	public BoolType getType() {
-		return manager.getTypeFactory().Bool();
+		return Types.Bool();
 	}
 
 	@Override
@@ -31,7 +27,7 @@ public final class GeqExprImpl extends AbstractBinaryExpr<RatType, RatType, Bool
 		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
 			return this;
 		} else {
-			return manager.getExprFactory().Geq(leftOp, rightOp);
+			return Exprs.Geq(leftOp, rightOp);
 		}
 	}
 

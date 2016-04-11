@@ -4,30 +4,25 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Optional;
 
-import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.type.FuncType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.constraint.utils.TypeVisitor;
 
-public final class FuncTypeImpl<ParamType extends Type, ResultType extends Type>
-		implements FuncType<ParamType, ResultType> {
+final class FuncTypeImpl<ParamType extends Type, ResultType extends Type> implements FuncType<ParamType, ResultType> {
 
 	private final static int HASH_SEED = 3931;
 
 	private final static String TYPE_LABEL = "Func";
-
-	private final ConstraintManager manager;
 
 	private final ParamType paramType;
 	private final ResultType resultType;
 
 	private volatile int hashCode = 0;
 
-	public FuncTypeImpl(final ConstraintManager manager, final ParamType paramType, final ResultType resultType) {
+	FuncTypeImpl(final ParamType paramType, final ResultType resultType) {
 		this.paramType = checkNotNull(paramType);
 		this.resultType = checkNotNull(resultType);
-		this.manager = manager;
 	}
 
 	@Override
@@ -64,8 +59,7 @@ public final class FuncTypeImpl<ParamType extends Type, ResultType extends Type>
 			final Optional<? extends Type> meetOfResultTypes = this.getResultType().meet(that.getResultType());
 
 			if (joinOfParamTypes.isPresent() && meetOfResultTypes.isPresent()) {
-				final FuncType<?, ?> funcType = manager.getTypeFactory().Func(joinOfParamTypes.get(),
-						meetOfResultTypes.get());
+				final FuncType<?, ?> funcType = Types.Func(joinOfParamTypes.get(), meetOfResultTypes.get());
 				return Optional.of(funcType);
 			}
 		}
@@ -81,8 +75,7 @@ public final class FuncTypeImpl<ParamType extends Type, ResultType extends Type>
 			final Optional<? extends Type> joinOfResultTypes = this.getResultType().join(that.getResultType());
 
 			if (meetOfParamTypes.isPresent() && joinOfResultTypes.isPresent()) {
-				final FuncType<?, ?> funcType = manager.getTypeFactory().Func(meetOfParamTypes.get(),
-						joinOfResultTypes.get());
+				final FuncType<?, ?> funcType = Types.Func(meetOfParamTypes.get(), joinOfResultTypes.get());
 				return Optional.of(funcType);
 			}
 		}

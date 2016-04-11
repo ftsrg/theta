@@ -1,23 +1,19 @@
 package hu.bme.mit.inf.ttmc.constraint.expr.impl;
 
-import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.expr.NegExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderNeg;
 import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 
-public final class NegExprImpl<ExprType extends ClosedUnderNeg> extends AbstractUnaryExpr<ExprType, ExprType>
+final class NegExprImpl<ExprType extends ClosedUnderNeg> extends AbstractUnaryExpr<ExprType, ExprType>
 		implements NegExpr<ExprType> {
 
 	private static final int HASH_SEED = 97;
 
 	private static final String OPERATOR_LABEL = "Neg";
 
-	private final ConstraintManager manager;
-
-	public NegExprImpl(final ConstraintManager manager, final Expr<? extends ExprType> op) {
+	NegExprImpl(final Expr<? extends ExprType> op) {
 		super(op);
-		this.manager = manager;
 	}
 
 	@Override
@@ -30,7 +26,7 @@ public final class NegExprImpl<ExprType extends ClosedUnderNeg> extends Abstract
 		if (op == getOp()) {
 			return this;
 		} else {
-			return manager.getExprFactory().Neg(op);
+			return Exprs.Neg(op);
 		}
 	}
 

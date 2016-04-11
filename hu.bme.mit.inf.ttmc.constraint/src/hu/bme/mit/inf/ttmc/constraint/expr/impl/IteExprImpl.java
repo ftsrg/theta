@@ -4,7 +4,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Optional;
 
-import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.expr.IteExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
@@ -12,13 +11,11 @@ import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 import hu.bme.mit.inf.ttmc.constraint.utils.impl.TypeUtils;
 
-public final class IteExprImpl<ExprType extends Type> extends AbstractExpr<ExprType> implements IteExpr<ExprType> {
+final class IteExprImpl<ExprType extends Type> extends AbstractExpr<ExprType> implements IteExpr<ExprType> {
 
 	private static final int HASH_SEED = 181;
 
 	private static final String OPERATOR_LABEL = "Ite";
-
-	private final ConstraintManager manager;
 
 	private final Expr<? extends BoolType> cond;
 	private final Expr<? extends ExprType> then;
@@ -26,9 +23,8 @@ public final class IteExprImpl<ExprType extends Type> extends AbstractExpr<ExprT
 
 	private volatile int hashCode = 0;
 
-	public IteExprImpl(final ConstraintManager manager, final Expr<? extends BoolType> cond,
-			final Expr<? extends ExprType> then, final Expr<? extends ExprType> elze) {
-		this.manager = manager;
+	IteExprImpl(final Expr<? extends BoolType> cond, final Expr<? extends ExprType> then,
+			final Expr<? extends ExprType> elze) {
 
 		this.cond = checkNotNull(cond);
 		this.then = checkNotNull(then);
@@ -65,7 +61,7 @@ public final class IteExprImpl<ExprType extends Type> extends AbstractExpr<ExprT
 		if (this.cond == cond && this.then == then && this.elze == elze) {
 			return this;
 		} else {
-			return manager.getExprFactory().Ite(cond, then, elze);
+			return Exprs.Ite(cond, then, elze);
 		}
 	}
 

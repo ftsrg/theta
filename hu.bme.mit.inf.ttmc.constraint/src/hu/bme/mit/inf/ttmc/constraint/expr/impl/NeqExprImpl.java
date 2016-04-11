@@ -1,30 +1,26 @@
 package hu.bme.mit.inf.ttmc.constraint.expr.impl;
 
-import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.expr.ModExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.NeqExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
+import hu.bme.mit.inf.ttmc.constraint.type.impl.Types;
 import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 
-public final class NeqExprImpl extends AbstractBinaryExpr<Type, Type, BoolType> implements NeqExpr {
+final class NeqExprImpl extends AbstractBinaryExpr<Type, Type, BoolType> implements NeqExpr {
 
 	private static final int HASH_SEED = 113;
 
 	private static final String OPERATOR_LABEL = "Neq";
 
-	private final ConstraintManager manager;
-
-	public NeqExprImpl(final ConstraintManager manager, final Expr<? extends Type> leftOp,
-			final Expr<? extends Type> rightOp) {
+	NeqExprImpl(final Expr<? extends Type> leftOp, final Expr<? extends Type> rightOp) {
 		super(leftOp, rightOp);
-		this.manager = manager;
 	}
 
 	@Override
 	public BoolType getType() {
-		return manager.getTypeFactory().Bool();
+		return Types.Bool();
 	}
 
 	@Override
@@ -32,7 +28,7 @@ public final class NeqExprImpl extends AbstractBinaryExpr<Type, Type, BoolType> 
 		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
 			return this;
 		} else {
-			return manager.getExprFactory().Neq(leftOp, rightOp);
+			return Exprs.Neq(leftOp, rightOp);
 		}
 	}
 

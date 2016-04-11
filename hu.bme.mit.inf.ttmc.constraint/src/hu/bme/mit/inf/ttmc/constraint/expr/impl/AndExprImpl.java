@@ -6,28 +6,25 @@ import java.util.Collection;
 
 import com.google.common.collect.ImmutableSet;
 
-import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.AndExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
+import hu.bme.mit.inf.ttmc.constraint.type.impl.Types;
 import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 
-public final class AndExprImpl extends AbstractMultiaryExpr<BoolType, BoolType> implements AndExpr {
+final class AndExprImpl extends AbstractMultiaryExpr<BoolType, BoolType> implements AndExpr {
 
 	private static final int HASH_SEED = 41;
 
 	private static final String OPERATOR_LABEL = "And";
 
-	private final ConstraintManager manager;
-
-	public AndExprImpl(final ConstraintManager manager, final Collection<? extends Expr<? extends BoolType>> ops) {
+	AndExprImpl(final Collection<? extends Expr<? extends BoolType>> ops) {
 		super(ImmutableSet.copyOf(checkNotNull(ops)));
-		this.manager = manager;
 	}
 
 	@Override
 	public BoolType getType() {
-		return manager.getTypeFactory().Bool();
+		return Types.Bool();
 	}
 
 	@Override
@@ -35,7 +32,7 @@ public final class AndExprImpl extends AbstractMultiaryExpr<BoolType, BoolType> 
 		if (ops == getOps()) {
 			return this;
 		} else {
-			return manager.getExprFactory().And(ops);
+			return Exprs.And(ops);
 		}
 	}
 

@@ -1,28 +1,24 @@
 package hu.bme.mit.inf.ttmc.constraint.expr.impl;
 
-import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.expr.RatDivExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.RatType;
+import hu.bme.mit.inf.ttmc.constraint.type.impl.Types;
 import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 
-public final class RatDivExprImpl extends AbstractBinaryExpr<RatType, RatType, RatType> implements RatDivExpr {
+final class RatDivExprImpl extends AbstractBinaryExpr<RatType, RatType, RatType> implements RatDivExpr {
 
 	private static final int HASH_SEED = 139;
 
 	private static final String OPERATOR_LABEL = "RDiv";
 
-	private final ConstraintManager manager;
-
-	public RatDivExprImpl(final ConstraintManager manager, final Expr<? extends RatType> leftOp,
-			final Expr<? extends RatType> rightOp) {
+	RatDivExprImpl(final Expr<? extends RatType> leftOp, final Expr<? extends RatType> rightOp) {
 		super(leftOp, rightOp);
-		this.manager = manager;
 	}
 
 	@Override
 	public RatType getType() {
-		return manager.getTypeFactory().Rat();
+		return Types.Rat();
 	}
 
 	@Override
@@ -30,7 +26,7 @@ public final class RatDivExprImpl extends AbstractBinaryExpr<RatType, RatType, R
 		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
 			return this;
 		} else {
-			return manager.getExprFactory().RatDiv(leftOp, rightOp);
+			return Exprs.RatDiv(leftOp, rightOp);
 		}
 	}
 

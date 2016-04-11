@@ -1,28 +1,24 @@
 package hu.bme.mit.inf.ttmc.constraint.expr.impl;
 
-import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.expr.ModExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.IntType;
+import hu.bme.mit.inf.ttmc.constraint.type.impl.Types;
 import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 
-public final class ModExprImpl extends AbstractBinaryExpr<IntType, IntType, IntType> implements ModExpr {
+final class ModExprImpl extends AbstractBinaryExpr<IntType, IntType, IntType> implements ModExpr {
 
 	private static final int HASH_SEED = 109;
 
 	private static final String OPERATOR_LABEL = "Mod";
 
-	private final ConstraintManager manager;
-
-	public ModExprImpl(final ConstraintManager manager, final Expr<? extends IntType> leftOp,
-			final Expr<? extends IntType> rightOp) {
+	ModExprImpl(final Expr<? extends IntType> leftOp, final Expr<? extends IntType> rightOp) {
 		super(leftOp, rightOp);
-		this.manager = manager;
 	}
 
 	@Override
 	public IntType getType() {
-		return manager.getTypeFactory().Int();
+		return Types.Int();
 	}
 
 	@Override
@@ -30,7 +26,7 @@ public final class ModExprImpl extends AbstractBinaryExpr<IntType, IntType, IntT
 		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
 			return this;
 		} else {
-			return manager.getExprFactory().Mod(leftOp, rightOp);
+			return Exprs.Mod(leftOp, rightOp);
 		}
 	}
 

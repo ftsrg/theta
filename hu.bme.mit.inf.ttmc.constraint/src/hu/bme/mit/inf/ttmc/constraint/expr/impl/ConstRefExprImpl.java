@@ -1,22 +1,17 @@
 package hu.bme.mit.inf.ttmc.constraint.expr.impl;
 
-import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.decl.ConstDecl;
 import hu.bme.mit.inf.ttmc.constraint.expr.ConstRefExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 
-public final class ConstRefExprImpl<DeclType extends Type> extends AbstractRefExpr<DeclType, ConstDecl<DeclType>>
+final class ConstRefExprImpl<DeclType extends Type> extends AbstractRefExpr<DeclType, ConstDecl<DeclType>>
 		implements ConstRefExpr<DeclType> {
 
 	private static final int HASH_SEED = 167;
 
-	@SuppressWarnings("unused")
-	private final ConstraintManager manager;
-
-	public ConstRefExprImpl(final ConstraintManager manager, final ConstDecl<DeclType> constDecl) {
+	ConstRefExprImpl(final ConstDecl<DeclType> constDecl) {
 		super(constDecl);
-		this.manager = manager;
 	}
 
 	@Override

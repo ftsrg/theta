@@ -1,33 +1,29 @@
 package hu.bme.mit.inf.ttmc.constraint.type.impl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.inf.ttmc.constraint.type.impl.Types.Array;
 
 import java.util.Optional;
 
-import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.type.ArrayType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.constraint.utils.TypeVisitor;
 
-public final class ArrayTypeImpl<IndexType extends Type, ElemType extends Type>
-		implements ArrayType<IndexType, ElemType> {
+final class ArrayTypeImpl<IndexType extends Type, ElemType extends Type> implements ArrayType<IndexType, ElemType> {
 
 	private final static int HASH_SEED = 4919;
 
 	private final static String TYPE_LABEL = "Array";
-
-	private final ConstraintManager manager;
 
 	private final IndexType indexType;
 	private final ElemType elemType;
 
 	private volatile int hashCode = 0;
 
-	public ArrayTypeImpl(final ConstraintManager manager, final IndexType indexType, final ElemType elemType) {
+	ArrayTypeImpl(final IndexType indexType, final ElemType elemType) {
 		this.indexType = checkNotNull(indexType);
 		this.elemType = checkNotNull(elemType);
-		this.manager = manager;
 	}
 
 	@Override
@@ -64,8 +60,7 @@ public final class ArrayTypeImpl<IndexType extends Type, ElemType extends Type>
 			final Optional<? extends Type> meetOfElemTypes = this.getElemType().meet(that.getElemType());
 
 			if (joinOfIndexTypes.isPresent() && meetOfElemTypes.isPresent()) {
-				final ArrayType<?, ?> arrayType = manager.getTypeFactory().Array(joinOfIndexTypes.get(),
-						meetOfElemTypes.get());
+				final ArrayType<?, ?> arrayType = Array(joinOfIndexTypes.get(), meetOfElemTypes.get());
 				return Optional.of(arrayType);
 			}
 		}
@@ -81,8 +76,7 @@ public final class ArrayTypeImpl<IndexType extends Type, ElemType extends Type>
 			final Optional<? extends Type> joinOfElemTypes = this.getElemType().join(that.getElemType());
 
 			if (meetOfIndexTypes.isPresent() && joinOfElemTypes.isPresent()) {
-				final ArrayType<?, ?> arrayType = manager.getTypeFactory().Array(meetOfIndexTypes.get(),
-						joinOfElemTypes.get());
+				final ArrayType<?, ?> arrayType = Array(meetOfIndexTypes.get(), joinOfElemTypes.get());
 				return Optional.of(arrayType);
 			}
 		}
