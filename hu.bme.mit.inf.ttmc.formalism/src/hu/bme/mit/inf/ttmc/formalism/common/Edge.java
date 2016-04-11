@@ -1,9 +1,9 @@
 package hu.bme.mit.inf.ttmc.formalism.common;
 
-public interface Edge {
+public interface Edge<L extends Loc<L, E>, E extends Edge<L, E>> {
 
-	public Loc getSource();
+	public L getSource();
 
-	public Loc getTarget();
+	public L getTarget();
 
 }
