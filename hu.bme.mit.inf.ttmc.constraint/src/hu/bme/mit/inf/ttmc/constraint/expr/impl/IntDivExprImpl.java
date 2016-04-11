@@ -1,9 +1,9 @@
 package hu.bme.mit.inf.ttmc.constraint.expr.impl;
 
-import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.expr.IntDivExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.IntType;
+import hu.bme.mit.inf.ttmc.constraint.type.impl.Types;
 import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 
 public final class IntDivExprImpl extends AbstractBinaryExpr<IntType, IntType, IntType> implements IntDivExpr {
@@ -12,17 +12,13 @@ public final class IntDivExprImpl extends AbstractBinaryExpr<IntType, IntType, I
 
 	private static final String OPERATOR_LABEL = "IDiv";
 
-	private final ConstraintManager manager;
-
-	public IntDivExprImpl(final ConstraintManager manager, final Expr<? extends IntType> leftOp,
-			final Expr<? extends IntType> rightOp) {
+	public IntDivExprImpl(final Expr<? extends IntType> leftOp, final Expr<? extends IntType> rightOp) {
 		super(leftOp, rightOp);
-		this.manager = manager;
 	}
 
 	@Override
 	public IntType getType() {
-		return manager.getTypeFactory().Int();
+		return Types.Int();
 	}
 
 	@Override
@@ -30,7 +26,7 @@ public final class IntDivExprImpl extends AbstractBinaryExpr<IntType, IntType, I
 		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
 			return this;
 		} else {
-			return manager.getExprFactory().IntDiv(leftOp, rightOp);
+			return Exprs.IntDiv(leftOp, rightOp);
 		}
 	}
 

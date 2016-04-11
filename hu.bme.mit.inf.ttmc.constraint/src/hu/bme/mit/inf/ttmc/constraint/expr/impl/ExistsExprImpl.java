@@ -2,31 +2,28 @@ package hu.bme.mit.inf.ttmc.constraint.expr.impl;
 
 import java.util.Collection;
 
-import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.decl.ParamDecl;
 import hu.bme.mit.inf.ttmc.constraint.expr.ExistsExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
+import hu.bme.mit.inf.ttmc.constraint.type.impl.Types;
 import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 
-public final class ExistsExprImpl extends AbstractQuantifiedExpr implements ExistsExpr {
+final class ExistsExprImpl extends AbstractQuantifiedExpr implements ExistsExpr {
 
 	private static final int HASH_SEED = 7993;
 
 	private static final String OPERATOR_LABEL = "Exists";
 
-	private final ConstraintManager manager;
-
-	public ExistsExprImpl(final ConstraintManager manager,
-			final Collection<? extends ParamDecl<? extends Type>> paramDecls, final Expr<? extends BoolType> op) {
+	ExistsExprImpl(final Collection<? extends ParamDecl<? extends Type>> paramDecls,
+			final Expr<? extends BoolType> op) {
 		super(paramDecls, op);
-		this.manager = manager;
 	}
 
 	@Override
 	public BoolType getType() {
-		return manager.getTypeFactory().Bool();
+		return Types.Bool();
 	}
 
 	@Override
@@ -34,7 +31,7 @@ public final class ExistsExprImpl extends AbstractQuantifiedExpr implements Exis
 		if (op == getOp()) {
 			return this;
 		} else {
-			return manager.getExprFactory().Exists(getParamDecls(), op);
+			return Exprs.Exists(getParamDecls(), op);
 		}
 	}
 

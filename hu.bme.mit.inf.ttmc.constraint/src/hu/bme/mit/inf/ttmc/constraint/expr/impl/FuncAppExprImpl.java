@@ -2,32 +2,26 @@ package hu.bme.mit.inf.ttmc.constraint.expr.impl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.expr.FuncAppExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.FuncType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 
-public final class FuncAppExprImpl<ParamType extends Type, ResultType extends Type> extends AbstractExpr<ResultType>
+final class FuncAppExprImpl<ParamType extends Type, ResultType extends Type> extends AbstractExpr<ResultType>
 		implements FuncAppExpr<ParamType, ResultType> {
 
 	private static final int HASH_SEED = 7951;
 
 	private static final String OPERATOR_LABEL = "App";
 
-	@SuppressWarnings("unused")
-	private final ConstraintManager manager;
-
 	private final Expr<? extends FuncType<? super ParamType, ? extends ResultType>> func;
 	private final Expr<? extends ParamType> param;
 
 	private volatile int hashCode = 0;
 
-	public FuncAppExprImpl(final ConstraintManager manager,
-			final Expr<? extends FuncType<? super ParamType, ? extends ResultType>> func,
+	FuncAppExprImpl(final Expr<? extends FuncType<? super ParamType, ? extends ResultType>> func,
 			final Expr<? extends ParamType> param) {
-		this.manager = manager;
 
 		this.func = checkNotNull(func);
 		this.param = checkNotNull(param);

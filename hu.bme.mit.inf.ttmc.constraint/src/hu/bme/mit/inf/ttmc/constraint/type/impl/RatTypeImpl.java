@@ -2,27 +2,24 @@ package hu.bme.mit.inf.ttmc.constraint.type.impl;
 
 import java.util.Optional;
 
-import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
+import hu.bme.mit.inf.ttmc.constraint.expr.impl.Exprs;
 import hu.bme.mit.inf.ttmc.constraint.type.RatType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.constraint.utils.TypeVisitor;
 
-public final class RatTypeImpl implements RatType {
+final class RatTypeImpl implements RatType {
 
 	private static final int HASH_SEED = 385863;
 
 	private static final String TYPE_LABEL = "Rat";
 
-	private final ConstraintManager manager;
-
-	public RatTypeImpl(final ConstraintManager manager) {
-		this.manager = manager;
+	RatTypeImpl() {
 	}
 
 	@Override
 	public Expr<RatType> getAny() {
-		return manager.getExprFactory().Rat(0, 1);
+		return Exprs.Rat(0, 1);
 	}
 
 	@Override

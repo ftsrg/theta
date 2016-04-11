@@ -1,20 +1,17 @@
 package hu.bme.mit.inf.ttmc.constraint.expr.impl;
 
-import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.FalseExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
+import hu.bme.mit.inf.ttmc.constraint.type.impl.Types;
 import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 
-public final class FalseExprImpl extends AbstractBoolLitExpr implements FalseExpr {
+final class FalseExprImpl extends AbstractBoolLitExpr implements FalseExpr {
 
 	private static final int HASH_SEED = 712514;
 
 	private static final String OPERATOR_LABEL = "False";
 
-	private final ConstraintManager manager;
-
-	public FalseExprImpl(final ConstraintManager manager) {
-		this.manager = manager;
+	FalseExprImpl() {
 	}
 
 	@Override
@@ -24,7 +21,7 @@ public final class FalseExprImpl extends AbstractBoolLitExpr implements FalseExp
 
 	@Override
 	public BoolType getType() {
-		return manager.getTypeFactory().Bool();
+		return Types.Bool();
 	}
 
 	@Override

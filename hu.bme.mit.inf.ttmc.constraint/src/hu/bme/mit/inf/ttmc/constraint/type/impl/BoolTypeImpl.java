@@ -2,27 +2,24 @@ package hu.bme.mit.inf.ttmc.constraint.type.impl;
 
 import java.util.Optional;
 
-import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
+import hu.bme.mit.inf.ttmc.constraint.expr.impl.Exprs;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.constraint.utils.TypeVisitor;
 
-public final class BoolTypeImpl implements BoolType {
+final class BoolTypeImpl implements BoolType {
 
 	private static final int HASH_SEED = 754364;
 
 	private static final String TYPE_LABEL = "Bool";
 
-	private final ConstraintManager manager;
-
-	public BoolTypeImpl(final ConstraintManager manager) {
-		this.manager = manager;
+	public BoolTypeImpl() {
 	}
 
 	@Override
 	public Expr<BoolType> getAny() {
-		return manager.getExprFactory().False();
+		return Exprs.False();
 	}
 
 	@Override

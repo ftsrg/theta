@@ -2,31 +2,28 @@ package hu.bme.mit.inf.ttmc.constraint.expr.impl;
 
 import java.util.Collection;
 
-import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.decl.ParamDecl;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.expr.ForallExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
+import hu.bme.mit.inf.ttmc.constraint.type.impl.Types;
 import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 
-public final class ForallExprImpl extends AbstractQuantifiedExpr implements ForallExpr {
+final class ForallExprImpl extends AbstractQuantifiedExpr implements ForallExpr {
 
 	private static final int HASH_SEED = 6871;
 
 	private static final String OPERATOR_LABEL = "Forall";
 
-	private final ConstraintManager manager;
-
-	public ForallExprImpl(final ConstraintManager manager,
-			final Collection<? extends ParamDecl<? extends Type>> paramDecls, final Expr<? extends BoolType> op) {
+	ForallExprImpl(final Collection<? extends ParamDecl<? extends Type>> paramDecls,
+			final Expr<? extends BoolType> op) {
 		super(paramDecls, op);
-		this.manager = manager;
 	}
 
 	@Override
 	public BoolType getType() {
-		return manager.getTypeFactory().Bool();
+		return Types.Bool();
 	}
 
 	@Override
@@ -34,7 +31,7 @@ public final class ForallExprImpl extends AbstractQuantifiedExpr implements Fora
 		if (op == getOp()) {
 			return this;
 		} else {
-			return manager.getExprFactory().Forall(getParamDecls(), op);
+			return Exprs.Forall(getParamDecls(), op);
 		}
 	}
 

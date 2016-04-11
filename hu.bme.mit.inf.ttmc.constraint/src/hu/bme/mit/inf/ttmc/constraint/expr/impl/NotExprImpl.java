@@ -1,27 +1,24 @@
 package hu.bme.mit.inf.ttmc.constraint.expr.impl;
 
-import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.expr.NotExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
+import hu.bme.mit.inf.ttmc.constraint.type.impl.Types;
 import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 
-public final class NotExprImpl extends AbstractUnaryExpr<BoolType, BoolType> implements NotExpr {
+final class NotExprImpl extends AbstractUnaryExpr<BoolType, BoolType> implements NotExpr {
 
 	private static final int HASH_SEED = 127;
 
 	private static final String OPERAND_LABEL = "Not";
 
-	private final ConstraintManager manager;
-
-	public NotExprImpl(final ConstraintManager manager, final Expr<? extends BoolType> op) {
+	NotExprImpl(final Expr<? extends BoolType> op) {
 		super(op);
-		this.manager = manager;
 	}
 
 	@Override
 	public BoolType getType() {
-		return manager.getTypeFactory().Bool();
+		return Types.Bool();
 	}
 
 	@Override
@@ -29,7 +26,7 @@ public final class NotExprImpl extends AbstractUnaryExpr<BoolType, BoolType> imp
 		if (op == getOp()) {
 			return this;
 		} else {
-			return manager.getExprFactory().Not(op);
+			return Exprs.Not(op);
 		}
 	}
 

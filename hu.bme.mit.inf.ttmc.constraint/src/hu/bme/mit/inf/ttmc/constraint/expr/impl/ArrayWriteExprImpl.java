@@ -2,21 +2,18 @@ package hu.bme.mit.inf.ttmc.constraint.expr.impl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.ArrayWriteExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.type.ArrayType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 
-public final class ArrayWriteExprImpl<IndexType extends Type, ElemType extends Type>
+final class ArrayWriteExprImpl<IndexType extends Type, ElemType extends Type>
 		extends AbstractExpr<ArrayType<IndexType, ElemType>> implements ArrayWriteExpr<IndexType, ElemType> {
 
 	private static final int HASH_SEED = 1699;
 
 	private static final String OPERATOR_LABEL = "Write";
-
-	private final ConstraintManager manager;
 
 	private volatile int hashCode = 0;
 
@@ -24,10 +21,8 @@ public final class ArrayWriteExprImpl<IndexType extends Type, ElemType extends T
 	private final Expr<? extends IndexType> index;
 	private final Expr<? extends ElemType> elem;
 
-	public ArrayWriteExprImpl(final ConstraintManager manager,
-			final Expr<? extends ArrayType<? super IndexType, ? extends ElemType>> array,
+	ArrayWriteExprImpl(final Expr<? extends ArrayType<? super IndexType, ? extends ElemType>> array,
 			final Expr<? extends IndexType> index, final Expr<? extends ElemType> elem) {
-		this.manager = manager;
 
 		this.array = checkNotNull(array);
 		this.index = checkNotNull(index);
@@ -63,7 +58,7 @@ public final class ArrayWriteExprImpl<IndexType extends Type, ElemType extends T
 		if (this.array == array && this.index == index && elem == this.elem) {
 			return this;
 		} else {
-			return manager.getExprFactory().Write(array, index, elem);
+			return Exprs.Write(array, index, elem);
 		}
 	}
 

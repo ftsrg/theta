@@ -4,26 +4,22 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import com.google.common.math.LongMath;
 
-import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.RatLitExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.RatType;
+import hu.bme.mit.inf.ttmc.constraint.type.impl.Types;
 import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 
-public final class RatLitExprImpl extends AbstractNullaryExpr<RatType> implements RatLitExpr {
+final class RatLitExprImpl extends AbstractNullaryExpr<RatType> implements RatLitExpr {
 
 	private static final int HASH_SEED = 149;
-
-	private final ConstraintManager manager;
 
 	private final long num;
 	private final long denom;
 
 	private volatile int hashCode = 0;
 
-	public RatLitExprImpl(final ConstraintManager manager, final long num, final long denom) {
+	RatLitExprImpl(final long num, final long denom) {
 		checkArgument(denom != 0);
-
-		this.manager = manager;
 
 		final long gcd = LongMath.gcd(Math.abs(num), Math.abs(denom));
 		if (denom >= 0) {
@@ -47,7 +43,7 @@ public final class RatLitExprImpl extends AbstractNullaryExpr<RatType> implement
 
 	@Override
 	public RatType getType() {
-		return manager.getTypeFactory().Rat();
+		return Types.Rat();
 	}
 
 	@Override

@@ -2,28 +2,25 @@ package hu.bme.mit.inf.ttmc.constraint.type.impl;
 
 import java.util.Optional;
 
-import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
+import hu.bme.mit.inf.ttmc.constraint.expr.impl.Exprs;
 import hu.bme.mit.inf.ttmc.constraint.type.IntType;
 import hu.bme.mit.inf.ttmc.constraint.type.RatType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.constraint.utils.TypeVisitor;
 
-public final class IntTypeImpl implements IntType {
+final class IntTypeImpl implements IntType {
 
 	private static final int HASH_SEED = 222670;
 
 	private static final String TYPE_LABEL = "Int";
 
-	private final ConstraintManager manager;
-
-	public IntTypeImpl(final ConstraintManager manager) {
-		this.manager = manager;
+	IntTypeImpl() {
 	}
 
 	@Override
 	public Expr<IntType> getAny() {
-		return manager.getExprFactory().Int(0);
+		return Exprs.Int(0);
 	}
 
 	@Override

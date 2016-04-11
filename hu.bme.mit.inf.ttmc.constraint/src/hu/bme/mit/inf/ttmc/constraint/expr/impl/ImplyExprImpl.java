@@ -1,28 +1,24 @@
 package hu.bme.mit.inf.ttmc.constraint.expr.impl;
 
-import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.expr.ImplyExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
+import hu.bme.mit.inf.ttmc.constraint.type.impl.Types;
 import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 
-public final class ImplyExprImpl extends AbstractBinaryExpr<BoolType, BoolType, BoolType> implements ImplyExpr {
+final class ImplyExprImpl extends AbstractBinaryExpr<BoolType, BoolType, BoolType> implements ImplyExpr {
 
 	private static final int HASH_SEED = 71;
 
 	private static final String OPERATOR_LABEL = "Imply";
 
-	private final ConstraintManager manager;
-
-	public ImplyExprImpl(final ConstraintManager manager, final Expr<? extends BoolType> leftOp,
-			final Expr<? extends BoolType> rightOp) {
+	ImplyExprImpl(final Expr<? extends BoolType> leftOp, final Expr<? extends BoolType> rightOp) {
 		super(leftOp, rightOp);
-		this.manager = manager;
 	}
 
 	@Override
 	public BoolType getType() {
-		return manager.getTypeFactory().Bool();
+		return Types.Bool();
 	}
 
 	@Override
@@ -30,7 +26,7 @@ public final class ImplyExprImpl extends AbstractBinaryExpr<BoolType, BoolType, 
 		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
 			return this;
 		} else {
-			return manager.getExprFactory().Imply(leftOp, rightOp);
+			return Exprs.Imply(leftOp, rightOp);
 		}
 	}
 

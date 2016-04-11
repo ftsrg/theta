@@ -6,28 +6,25 @@ import java.util.Collection;
 
 import com.google.common.collect.ImmutableSet;
 
-import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.expr.OrExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
+import hu.bme.mit.inf.ttmc.constraint.type.impl.Types;
 import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 
-public final class OrExprImpl extends AbstractMultiaryExpr<BoolType, BoolType> implements OrExpr {
+final class OrExprImpl extends AbstractMultiaryExpr<BoolType, BoolType> implements OrExpr {
 
 	private static final int HASH_SEED = 131;
 
 	private static final String OPERATOR_LABEL = "Or";
 
-	private final ConstraintManager manager;
-
-	public OrExprImpl(final ConstraintManager manager, final Collection<? extends Expr<? extends BoolType>> ops) {
+	OrExprImpl(final Collection<? extends Expr<? extends BoolType>> ops) {
 		super(ImmutableSet.copyOf(checkNotNull(ops)));
-		this.manager = manager;
 	}
 
 	@Override
 	public BoolType getType() {
-		return manager.getTypeFactory().Bool();
+		return Types.Bool();
 	}
 
 	@Override
@@ -35,7 +32,7 @@ public final class OrExprImpl extends AbstractMultiaryExpr<BoolType, BoolType> i
 		if (ops == getOps()) {
 			return this;
 		} else {
-			return manager.getExprFactory().Or(ops);
+			return Exprs.Or(ops);
 		}
 	}
 

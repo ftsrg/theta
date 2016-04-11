@@ -1,22 +1,19 @@
 package hu.bme.mit.inf.ttmc.constraint.expr.impl;
 
-import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.IntLitExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.IntType;
+import hu.bme.mit.inf.ttmc.constraint.type.impl.Types;
 import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 
-public final class IntLitExprImpl extends AbstractNullaryExpr<IntType> implements IntLitExpr {
+final class IntLitExprImpl extends AbstractNullaryExpr<IntType> implements IntLitExpr {
 
 	private static final int HASH_SEED = 4111;
-
-	private final ConstraintManager manager;
 
 	private final long value;
 
 	private volatile int hashCode = 0;
 
-	public IntLitExprImpl(final ConstraintManager manager, final long value) {
-		this.manager = manager;
+	IntLitExprImpl(final long value) {
 		this.value = value;
 	}
 
@@ -27,7 +24,7 @@ public final class IntLitExprImpl extends AbstractNullaryExpr<IntType> implement
 
 	@Override
 	public IntType getType() {
-		return manager.getTypeFactory().Int();
+		return Types.Int();
 	}
 
 	@Override

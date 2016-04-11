@@ -1,29 +1,25 @@
 package hu.bme.mit.inf.ttmc.constraint.expr.impl;
 
-import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.EqExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
+import hu.bme.mit.inf.ttmc.constraint.type.impl.Types;
 import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 
-public final class EqExprImpl extends AbstractBinaryExpr<Type, Type, BoolType> implements EqExpr {
+final class EqExprImpl extends AbstractBinaryExpr<Type, Type, BoolType> implements EqExpr {
 
 	private static final int HASH_SEED = 43;
 
 	private static final String OPERATOR_LABEL = "Eq";
 
-	private final ConstraintManager manager;
-
-	public EqExprImpl(final ConstraintManager manager, final Expr<? extends Type> leftOp,
-			final Expr<? extends Type> rightOp) {
+	EqExprImpl(final Expr<? extends Type> leftOp, final Expr<? extends Type> rightOp) {
 		super(leftOp, rightOp);
-		this.manager = manager;
 	}
 
 	@Override
 	public BoolType getType() {
-		return manager.getTypeFactory().Bool();
+		return Types.Bool();
 	}
 
 	@Override
@@ -31,7 +27,7 @@ public final class EqExprImpl extends AbstractBinaryExpr<Type, Type, BoolType> i
 		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
 			return this;
 		} else {
-			return manager.getExprFactory().Eq(leftOp, rightOp);
+			return Exprs.Eq(leftOp, rightOp);
 		}
 	}
 

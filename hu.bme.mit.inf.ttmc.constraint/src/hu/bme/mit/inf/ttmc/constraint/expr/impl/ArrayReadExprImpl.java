@@ -2,32 +2,27 @@ package hu.bme.mit.inf.ttmc.constraint.expr.impl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.ArrayReadExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.type.ArrayType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 
-public final class ArrayReadExprImpl<IndexType extends Type, ElemType extends Type> extends AbstractExpr<ElemType>
+final class ArrayReadExprImpl<IndexType extends Type, ElemType extends Type> extends AbstractExpr<ElemType>
 		implements ArrayReadExpr<IndexType, ElemType> {
 
 	private static final int HASH_SEED = 1321;
 
 	private static final String OPERATOR_LABEL = "Read";
 
-	private final ConstraintManager manager;
-
 	private volatile int hashCode = 0;
 
 	private final Expr<? extends ArrayType<? super IndexType, ? extends ElemType>> array;
 	private final Expr<? extends IndexType> index;
 
-	public ArrayReadExprImpl(final ConstraintManager manager,
-			final Expr<? extends ArrayType<? super IndexType, ? extends ElemType>> array,
+	public ArrayReadExprImpl(final Expr<? extends ArrayType<? super IndexType, ? extends ElemType>> array,
 			final Expr<? extends IndexType> index) {
 
-		this.manager = manager;
 		this.array = checkNotNull(array);
 		this.index = checkNotNull(index);
 	}
@@ -55,7 +50,7 @@ public final class ArrayReadExprImpl<IndexType extends Type, ElemType extends Ty
 		if (this.array == array && this.index == index) {
 			return this;
 		} else {
-			return manager.getExprFactory().Read(array, index);
+			return Exprs.Read(array, index);
 		}
 	}
 

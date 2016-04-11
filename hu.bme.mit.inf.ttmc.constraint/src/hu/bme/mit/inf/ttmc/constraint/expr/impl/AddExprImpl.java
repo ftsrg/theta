@@ -1,37 +1,34 @@
 package hu.bme.mit.inf.ttmc.constraint.expr.impl;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 import java.util.Collection;
 import java.util.stream.Stream;
 
 import com.google.common.collect.ImmutableMultiset;
 
-import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.AddExpr;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderAdd;
 import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 import hu.bme.mit.inf.ttmc.constraint.utils.impl.TypeUtils;
 
-public final class AddExprImpl<ExprType extends ClosedUnderAdd> extends AbstractMultiaryExpr<ExprType, ExprType>
+final class AddExprImpl<ExprType extends ClosedUnderAdd> extends AbstractMultiaryExpr<ExprType, ExprType>
 		implements AddExpr<ExprType> {
 
 	private static final int HASH_SEED = 73;
 
 	private static final String OPERATOR_LABEL = "Add";
 
-	private final ConstraintManager manager;
-
-	public AddExprImpl(final ConstraintManager manager, final Collection<? extends Expr<? extends ExprType>> ops) {
+	AddExprImpl(final Collection<? extends Expr<? extends ExprType>> ops) {
 		super(ImmutableMultiset.copyOf(checkNotNull(ops)));
-		this.manager = manager;
 	}
 
 	@Override
 	public ExprType getType() {
-		checkArgument(getOps().size() > 0);
+		checkState(getOps().size() > 0);
+
 		final ExprType headType = getOps().iterator().next().getType();
 		final Stream<ExprType> tailTypes = getOps().stream().skip(1).map(e -> (ExprType) e.getType());
 		final ExprType result = tailTypes.reduce(headType, (t1, t2) -> TypeUtils.join(t1, t2).get());
@@ -43,7 +40,7 @@ public final class AddExprImpl<ExprType extends ClosedUnderAdd> extends Abstract
 		if (ops == getOps()) {
 			return this;
 		} else {
-			return manager.getExprFactory().Add(ops);
+			return Exprs.Add(ops);
 		}
 	}
 

@@ -15,9 +15,9 @@ public class ConstraintManagerImpl implements ConstraintManager {
 	private final ExprFactory exprFactory;
 
 	public ConstraintManagerImpl() {
-		declFactory = new DeclFactoryImpl(this);
-		typeFactory = new TypeFactoryImpl(this);
-		exprFactory = new ExprFactoryImpl(this);
+		declFactory = new DeclFactoryImpl();
+		typeFactory = new TypeFactoryImpl();
+		exprFactory = new ExprFactoryImpl();
 	}
 
 	@Override

@@ -2,7 +2,6 @@ package hu.bme.mit.inf.ttmc.constraint.expr.impl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.decl.ParamDecl;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.expr.FuncLitExpr;
@@ -10,25 +9,19 @@ import hu.bme.mit.inf.ttmc.constraint.type.FuncType;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
 
-public final class FuncLitExprImpl<ParamType extends Type, ResultType extends Type>
+final class FuncLitExprImpl<ParamType extends Type, ResultType extends Type>
 		extends AbstractExpr<FuncType<ParamType, ResultType>> implements FuncLitExpr<ParamType, ResultType> {
 
 	private static final int HASH_SEED = 53;
 
 	private static final String OPERATOR_LABEL = "Func";
 
-	@SuppressWarnings("unused")
-	private final ConstraintManager manager;
-
 	private final ParamDecl<? super ParamType> paramDecl;
 	private final Expr<? extends ResultType> result;
 
 	private volatile int hashCode = 0;
 
-	public FuncLitExprImpl(final ConstraintManager manager, final ParamDecl<? super ParamType> paramDecl,
-			final Expr<? extends ResultType> result) {
-		this.manager = manager;
-
+	FuncLitExprImpl(final ParamDecl<? super ParamType> paramDecl, final Expr<? extends ResultType> result) {
 		this.paramDecl = checkNotNull(paramDecl);
 		this.result = checkNotNull(result);
 	}
