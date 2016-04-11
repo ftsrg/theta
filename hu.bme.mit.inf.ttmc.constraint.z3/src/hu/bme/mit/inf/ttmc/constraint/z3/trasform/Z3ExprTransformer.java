@@ -46,7 +46,6 @@ import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderMul;
 import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderNeg;
 import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderSub;
 import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
-import hu.bme.mit.inf.ttmc.constraint.z3.decl.Z3Decl;
 
 class Z3ExprTransformer {
 
@@ -151,8 +150,7 @@ class Z3ExprTransformer {
 
 			int i = 0;
 			for (final ParamDecl<?> paramDecl : expr.getParamDecls()) {
-				final Z3Decl<?, ?> z3ParamDecl = (Z3Decl<?, ?>) paramDecl;
-				final com.microsoft.z3.FuncDecl paramSymbol = z3ParamDecl.getSymbol();
+				final com.microsoft.z3.FuncDecl paramSymbol = transformer.toSymbol(paramDecl);
 				paramTerms[i] = context.mkConst(paramSymbol);
 				i++;
 			}
@@ -167,8 +165,7 @@ class Z3ExprTransformer {
 
 			int i = 0;
 			for (final ParamDecl<?> paramDecl : expr.getParamDecls()) {
-				final Z3Decl<?, ?> z3ParamDecl = (Z3Decl<?, ?>) paramDecl;
-				final com.microsoft.z3.FuncDecl paramSymbol = z3ParamDecl.getSymbol();
+				final com.microsoft.z3.FuncDecl paramSymbol = transformer.toSymbol(paramDecl);
 				paramTerms[i] = context.mkConst(paramSymbol);
 				i++;
 			}
