@@ -1,15 +1,82 @@
 package hu.bme.mit.inf.ttmc.constraint.expr.impl;
 
+import java.util.Optional;
+
 import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
-import hu.bme.mit.inf.ttmc.constraint.expr.defaults.AbstractSubExpr;
+import hu.bme.mit.inf.ttmc.constraint.expr.SubExpr;
 import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderSub;
+import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
+import hu.bme.mit.inf.ttmc.constraint.utils.impl.TypeUtils;
 
-public final class SubExprImpl<ExprType extends ClosedUnderSub> extends AbstractSubExpr<ExprType> {
+public final class SubExprImpl<ExprType extends ClosedUnderSub> extends AbstractBinaryExpr<ExprType, ExprType, ExprType>
+		implements SubExpr<ExprType> {
+
+	private static final int HASH_SEED = 101;
+
+	private static final String OPERATOR = "Sub";
+
+	private final ConstraintManager manager;
 
 	public SubExprImpl(final ConstraintManager manager, final Expr<? extends ExprType> leftOp,
 			final Expr<? extends ExprType> rightOp) {
-		super(manager, leftOp, rightOp);
+		super(leftOp, rightOp);
+		this.manager = manager;
+	}
+
+	@Override
+	public ExprType getType() {
+		final ExprType leftType = getLeftOp().getType();
+		final ExprType rightType = getRightOp().getType();
+		final Optional<ExprType> joinResult = TypeUtils.join(leftType, rightType);
+		final ExprType result = joinResult.get();
+		return result;
+	}
+
+	@Override
+	public SubExpr<ExprType> withOps(final Expr<? extends ExprType> leftOp, final Expr<? extends ExprType> rightOp) {
+		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
+			return this;
+		} else {
+			return manager.getExprFactory().Sub(leftOp, rightOp);
+		}
+	}
+
+	@Override
+	public SubExpr<ExprType> withLeftOp(final Expr<? extends ExprType> leftOp) {
+		return withOps(leftOp, getRightOp());
+	}
+
+	@Override
+	public SubExpr<ExprType> withRightOp(final Expr<? extends ExprType> rightOp) {
+		return withOps(getLeftOp(), rightOp);
+	}
+
+	@Override
+	public <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
+		return visitor.visit(this, param);
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		} else if (obj instanceof SubExpr<?>) {
+			final SubExpr<?> that = (SubExpr<?>) obj;
+			return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp().equals(that.getRightOp());
+		} else {
+			return false;
+		}
+	}
+
+	@Override
+	protected int getHashSeed() {
+		return HASH_SEED;
+	}
+
+	@Override
+	protected String getOperatorLabel() {
+		return OPERATOR;
 	}
 
 }
