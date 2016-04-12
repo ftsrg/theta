@@ -5,7 +5,6 @@ import java.io.IOException;
 
 import org.junit.Test;
 
-import hu.bme.mit.inf.ttmc.core.ConstraintManagerImpl;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
 import hu.bme.mit.inf.ttmc.formalism.sts.impl.STSManagerImpl;
@@ -23,7 +22,7 @@ public class SystemModelTests {
 		final File file = new File("instances/simple1.system");
 		final String filePath = file.getAbsolutePath();
 		final SystemSpecification specification = SystemModelLoader.getInstance().load(filePath);
-		final STSManager manager = new STSManagerImpl(new ConstraintManagerImpl());
+		final STSManager manager = new STSManagerImpl();
 		final SystemModel model = SystemModelCreator.create(manager, specification);
 
 		for (STS sts : model.getSTSs()) {

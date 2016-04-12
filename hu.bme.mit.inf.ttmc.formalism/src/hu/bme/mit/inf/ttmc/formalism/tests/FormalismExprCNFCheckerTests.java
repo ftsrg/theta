@@ -4,7 +4,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import hu.bme.mit.inf.ttmc.core.ConstraintManagerImpl;
 import hu.bme.mit.inf.ttmc.core.factory.TypeFactory;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.VarRefExpr;
@@ -21,11 +20,11 @@ public class FormalismExprCNFCheckerTests {
 	private STSExprFactory efc;
 	// Constants and variaBles for testing
 	private VarRefExpr<BoolType> vA, vB, vC;
-	
+
 	@Before
 	public void Before() {
 		// Create manager and get factories
-		STSManager manager = new STSManagerImpl(new ConstraintManagerImpl());
+		final STSManager manager = new STSManagerImpl();
 		dfc = manager.getDeclFactory();
 		efc = manager.getExprFactory();
 		tfc = manager.getTypeFactory();
@@ -34,7 +33,7 @@ public class FormalismExprCNFCheckerTests {
 		vB = dfc.Var("B", tfc.Bool()).getRef();
 		vC = dfc.Var("C", tfc.Bool()).getRef();
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	@Test
 	public void testCnfProgExprCheckerTrue() {
@@ -55,7 +54,7 @@ public class FormalismExprCNFCheckerTests {
 		// !A and (B' or !C)
 		Assert.assertTrue(FormalismUtils.isExprCNF(efc.And(efc.Not(vA), efc.Or(efc.Prime(vB), efc.Not(vC)))));
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	@Test
 	public void testCnfProgExprCheckerFalse() {
