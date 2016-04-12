@@ -1,7 +1,7 @@
 package hu.bme.mit.inf.ttmc.cegar.clusteredcegar.steps.clustering;
 
 import hu.bme.mit.inf.ttmc.cegar.clusteredcegar.data.Cluster;
-import hu.bme.mit.inf.ttmc.constraint.type.Type;
+import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 
 /**

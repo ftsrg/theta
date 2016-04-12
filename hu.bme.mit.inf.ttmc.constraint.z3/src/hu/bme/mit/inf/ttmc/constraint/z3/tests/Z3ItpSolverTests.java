@@ -5,22 +5,22 @@ import org.junit.Test;
 
 import com.google.common.collect.ImmutableList;
 
-import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
-import hu.bme.mit.inf.ttmc.constraint.decl.ConstDecl;
-import hu.bme.mit.inf.ttmc.constraint.decl.ParamDecl;
-import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
-import hu.bme.mit.inf.ttmc.constraint.factory.DeclFactory;
-import hu.bme.mit.inf.ttmc.constraint.factory.ExprFactory;
-import hu.bme.mit.inf.ttmc.constraint.factory.SolverFactory;
-import hu.bme.mit.inf.ttmc.constraint.factory.TypeFactory;
-import hu.bme.mit.inf.ttmc.constraint.solver.Interpolant;
-import hu.bme.mit.inf.ttmc.constraint.solver.ItpMarker;
-import hu.bme.mit.inf.ttmc.constraint.solver.ItpPattern;
-import hu.bme.mit.inf.ttmc.constraint.solver.ItpSolver;
-import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
-import hu.bme.mit.inf.ttmc.constraint.type.FuncType;
-import hu.bme.mit.inf.ttmc.constraint.type.IntType;
 import hu.bme.mit.inf.ttmc.constraint.z3.Z3ConstraintManager;
+import hu.bme.mit.inf.ttmc.core.ConstraintManager;
+import hu.bme.mit.inf.ttmc.core.decl.ConstDecl;
+import hu.bme.mit.inf.ttmc.core.decl.ParamDecl;
+import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.factory.DeclFactory;
+import hu.bme.mit.inf.ttmc.core.factory.ExprFactory;
+import hu.bme.mit.inf.ttmc.core.factory.SolverFactory;
+import hu.bme.mit.inf.ttmc.core.factory.TypeFactory;
+import hu.bme.mit.inf.ttmc.core.solver.Interpolant;
+import hu.bme.mit.inf.ttmc.core.solver.ItpMarker;
+import hu.bme.mit.inf.ttmc.core.solver.ItpPattern;
+import hu.bme.mit.inf.ttmc.core.solver.ItpSolver;
+import hu.bme.mit.inf.ttmc.core.type.BoolType;
+import hu.bme.mit.inf.ttmc.core.type.FuncType;
+import hu.bme.mit.inf.ttmc.core.type.IntType;
 
 public class Z3ItpSolverTests {
 

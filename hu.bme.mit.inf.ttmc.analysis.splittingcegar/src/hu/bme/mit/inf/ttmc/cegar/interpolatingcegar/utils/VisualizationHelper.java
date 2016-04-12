@@ -5,8 +5,8 @@ import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.graph.Graph;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.graph.Node;
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.data.InterpolatedAbstractState;
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.data.InterpolatedAbstractSystem;
-import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
-import hu.bme.mit.inf.ttmc.constraint.type.Type;
+import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.type.Type;
 
 import java.util.Set;
 

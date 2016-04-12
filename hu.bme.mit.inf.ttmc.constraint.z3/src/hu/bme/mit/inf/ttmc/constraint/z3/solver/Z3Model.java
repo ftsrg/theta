@@ -9,14 +9,14 @@ import java.util.Optional;
 
 import com.microsoft.z3.FuncDecl;
 
-import hu.bme.mit.inf.ttmc.constraint.decl.ConstDecl;
-import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
-import hu.bme.mit.inf.ttmc.constraint.solver.Model;
-import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
-import hu.bme.mit.inf.ttmc.constraint.type.Type;
-import hu.bme.mit.inf.ttmc.constraint.utils.impl.ModelImpl;
 import hu.bme.mit.inf.ttmc.constraint.z3.trasform.Z3TermTransformer;
 import hu.bme.mit.inf.ttmc.constraint.z3.trasform.Z3TransformationManager;
+import hu.bme.mit.inf.ttmc.core.decl.ConstDecl;
+import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.solver.Model;
+import hu.bme.mit.inf.ttmc.core.type.BoolType;
+import hu.bme.mit.inf.ttmc.core.type.Type;
+import hu.bme.mit.inf.ttmc.core.utils.impl.ModelImpl;
 
 class Z3Model extends ModelImpl {
 

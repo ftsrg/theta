@@ -1,12 +1,12 @@
 package hu.bme.mit.inf.ttmc.constraint.z3;
 
-import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
-import hu.bme.mit.inf.ttmc.constraint.ConstraintManagerImpl;
-import hu.bme.mit.inf.ttmc.constraint.factory.DeclFactory;
-import hu.bme.mit.inf.ttmc.constraint.factory.ExprFactory;
-import hu.bme.mit.inf.ttmc.constraint.factory.SolverFactory;
-import hu.bme.mit.inf.ttmc.constraint.factory.TypeFactory;
 import hu.bme.mit.inf.ttmc.constraint.z3.factory.Z3SolverFactory;
+import hu.bme.mit.inf.ttmc.core.ConstraintManager;
+import hu.bme.mit.inf.ttmc.core.ConstraintManagerImpl;
+import hu.bme.mit.inf.ttmc.core.factory.DeclFactory;
+import hu.bme.mit.inf.ttmc.core.factory.ExprFactory;
+import hu.bme.mit.inf.ttmc.core.factory.SolverFactory;
+import hu.bme.mit.inf.ttmc.core.factory.TypeFactory;
 
 public class Z3ConstraintManager implements ConstraintManager {
 

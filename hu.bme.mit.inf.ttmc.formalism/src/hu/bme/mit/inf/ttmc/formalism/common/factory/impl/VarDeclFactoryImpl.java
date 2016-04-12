@@ -3,8 +3,8 @@ package hu.bme.mit.inf.ttmc.formalism.common.factory.impl;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import hu.bme.mit.inf.ttmc.constraint.factory.DeclFactory;
-import hu.bme.mit.inf.ttmc.constraint.type.Type;
+import hu.bme.mit.inf.ttmc.core.factory.DeclFactory;
+import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.impl.VarDeclImpl;
 import hu.bme.mit.inf.ttmc.formalism.common.factory.VarDeclFactory;

@@ -13,13 +13,13 @@ import com.microsoft.z3.Status;
 
 import hu.bme.mit.inf.ttmc.common.Stack;
 import hu.bme.mit.inf.ttmc.common.impl.StackImpl;
-import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
-import hu.bme.mit.inf.ttmc.constraint.solver.Model;
-import hu.bme.mit.inf.ttmc.constraint.solver.Solver;
-import hu.bme.mit.inf.ttmc.constraint.solver.SolverStatus;
-import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.constraint.z3.trasform.Z3TermTransformer;
 import hu.bme.mit.inf.ttmc.constraint.z3.trasform.Z3TransformationManager;
+import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.solver.Model;
+import hu.bme.mit.inf.ttmc.core.solver.Solver;
+import hu.bme.mit.inf.ttmc.core.solver.SolverStatus;
+import hu.bme.mit.inf.ttmc.core.type.BoolType;
 
 public class Z3Solver implements Solver {
 

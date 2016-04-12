@@ -2,9 +2,9 @@ package hu.bme.mit.inf.ttmc.formalism.sts.impl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
-import hu.bme.mit.inf.ttmc.constraint.factory.SolverFactory;
-import hu.bme.mit.inf.ttmc.constraint.factory.TypeFactory;
+import hu.bme.mit.inf.ttmc.core.ConstraintManager;
+import hu.bme.mit.inf.ttmc.core.factory.SolverFactory;
+import hu.bme.mit.inf.ttmc.core.factory.TypeFactory;
 import hu.bme.mit.inf.ttmc.formalism.common.factory.VarDeclFactory;
 import hu.bme.mit.inf.ttmc.formalism.common.factory.impl.VarDeclFactoryImpl;
 import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;

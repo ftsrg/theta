@@ -1,6 +1,6 @@
 package hu.bme.mit.inf.ttmc.formalism.common.stmt;
 
-import hu.bme.mit.inf.ttmc.constraint.type.Type;
+import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.utils.StmtVisitor;
 

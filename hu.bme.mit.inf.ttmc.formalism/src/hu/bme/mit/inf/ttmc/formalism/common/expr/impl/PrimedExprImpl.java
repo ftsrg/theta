@@ -1,10 +1,10 @@
 package hu.bme.mit.inf.ttmc.formalism.common.expr.impl;
 
-import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
-import hu.bme.mit.inf.ttmc.constraint.expr.UnaryExpr;
-import hu.bme.mit.inf.ttmc.constraint.expr.impl.AbstractUnaryExpr;
-import hu.bme.mit.inf.ttmc.constraint.type.Type;
-import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
+import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.expr.UnaryExpr;
+import hu.bme.mit.inf.ttmc.core.expr.impl.AbstractUnaryExpr;
+import hu.bme.mit.inf.ttmc.core.type.Type;
+import hu.bme.mit.inf.ttmc.core.utils.ExprVisitor;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.PrimedExpr;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.visitor.PrimedExprVisitor;
 

@@ -5,7 +5,7 @@ import java.io.IOException;
 
 import org.junit.Test;
 
-import hu.bme.mit.inf.ttmc.constraint.ConstraintManagerImpl;
+import hu.bme.mit.inf.ttmc.core.ConstraintManagerImpl;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
 import hu.bme.mit.inf.ttmc.formalism.sts.impl.STSManagerImpl;

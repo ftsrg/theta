@@ -1,7 +1,5 @@
 package hu.bme.mit.inf.ttmc.constraint.ui.transform.impl
 
-import hu.bme.mit.inf.ttmc.constraint.expr.Expr
-import hu.bme.mit.inf.ttmc.constraint.factory.ExprFactory
 import hu.bme.mit.inf.ttmc.constraint.model.AddExpression
 import hu.bme.mit.inf.ttmc.constraint.model.AndExpression
 import hu.bme.mit.inf.ttmc.constraint.model.ArrayAccessExpression
@@ -30,19 +28,21 @@ import hu.bme.mit.inf.ttmc.constraint.model.ReferenceExpression
 import hu.bme.mit.inf.ttmc.constraint.model.SubtractExpression
 import hu.bme.mit.inf.ttmc.constraint.model.TrueExpression
 import hu.bme.mit.inf.ttmc.constraint.model.UnaryMinusExpression
-import hu.bme.mit.inf.ttmc.constraint.type.ArrayType
-import hu.bme.mit.inf.ttmc.constraint.type.BoolType
-import hu.bme.mit.inf.ttmc.constraint.type.IntType
-import hu.bme.mit.inf.ttmc.constraint.type.RatType
-import hu.bme.mit.inf.ttmc.constraint.type.Type
-import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderAdd
-import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderMul
-import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderNeg
-import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderSub
-import hu.bme.mit.inf.ttmc.constraint.utils.impl.ExprUtils
+import hu.bme.mit.inf.ttmc.constraint.ui.transform.DeclTransformator
 import hu.bme.mit.inf.ttmc.constraint.ui.transform.ExprTransformator
 import hu.bme.mit.inf.ttmc.constraint.ui.transform.TransformationManager
-import hu.bme.mit.inf.ttmc.constraint.ui.transform.DeclTransformator
+import hu.bme.mit.inf.ttmc.core.expr.Expr
+import hu.bme.mit.inf.ttmc.core.factory.ExprFactory
+import hu.bme.mit.inf.ttmc.core.type.ArrayType
+import hu.bme.mit.inf.ttmc.core.type.BoolType
+import hu.bme.mit.inf.ttmc.core.type.IntType
+import hu.bme.mit.inf.ttmc.core.type.RatType
+import hu.bme.mit.inf.ttmc.core.type.Type
+import hu.bme.mit.inf.ttmc.core.type.closure.ClosedUnderAdd
+import hu.bme.mit.inf.ttmc.core.type.closure.ClosedUnderMul
+import hu.bme.mit.inf.ttmc.core.type.closure.ClosedUnderNeg
+import hu.bme.mit.inf.ttmc.core.type.closure.ClosedUnderSub
+import hu.bme.mit.inf.ttmc.core.utils.impl.ExprUtils
 
 public class ConstraintExprTransformator implements ExprTransformator {
 

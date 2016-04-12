@@ -8,7 +8,7 @@ import hu.bme.mit.inf.ttmc.aiger.AIGERLoader;
 import hu.bme.mit.inf.ttmc.aiger.impl.AIGERLoaderOptimized;
 import hu.bme.mit.inf.ttmc.aiger.impl.AIGERLoaderSimple;
 import hu.bme.mit.inf.ttmc.aiger.utils.AIGERVisualizer;
-import hu.bme.mit.inf.ttmc.constraint.ConstraintManagerImpl;
+import hu.bme.mit.inf.ttmc.core.ConstraintManagerImpl;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
 import hu.bme.mit.inf.ttmc.formalism.sts.impl.STSManagerImpl;
