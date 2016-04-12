@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: Constraint
-Bundle-SymbolicName: hu.bme.mit.inf.ttmc.constraint
+Bundle-Name: Core
+Bundle-SymbolicName: hu.bme.mit.inf.ttmc.core
 Bundle-Version: 1.0.0.qualifier
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Export-Package: hu.bme.mit.inf.ttmc.constraint,

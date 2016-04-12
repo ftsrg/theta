@@ -5,7 +5,7 @@ Bundle-SymbolicName: hu.bme.mit.inf.ttmc.program.tests
 Bundle-Version: 1.0.0.qualifier
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Require-Bundle: org.junit,
- hu.bme.mit.inf.ttmc.constraint,
+ hu.bme.mit.inf.ttmc.core,
  hu.bme.mit.inf.ttmc.formalism,
  hu.bme.mit.inf.ttmc.program.model,
  hu.bme.mit.inf.ttmc.program.language,
