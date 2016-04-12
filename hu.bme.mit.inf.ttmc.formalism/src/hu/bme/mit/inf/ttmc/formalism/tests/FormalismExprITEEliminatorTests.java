@@ -4,7 +4,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import hu.bme.mit.inf.ttmc.core.ConstraintManagerImpl;
 import hu.bme.mit.inf.ttmc.core.factory.TypeFactory;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.core.type.IntType;
@@ -28,7 +27,7 @@ public class FormalismExprITEEliminatorTests {
 	@Before
 	public void before() {
 		// Create manager and get factories
-		manager = new STSManagerImpl(new ConstraintManagerImpl());
+		manager = new STSManagerImpl();
 		dfc = manager.getDeclFactory();
 		efc = manager.getExprFactory();
 		tfc = manager.getTypeFactory();

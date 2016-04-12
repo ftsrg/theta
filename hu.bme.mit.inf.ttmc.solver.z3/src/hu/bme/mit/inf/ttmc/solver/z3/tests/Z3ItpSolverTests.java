@@ -1,18 +1,31 @@
 package hu.bme.mit.inf.ttmc.solver.z3.tests;
 
+import static hu.bme.mit.inf.ttmc.core.decl.impl.Decls.Const;
+import static hu.bme.mit.inf.ttmc.core.decl.impl.Decls.Param;
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Add;
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.App;
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Eq;
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Forall;
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Imply;
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Int;
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Mul;
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Neq;
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Not;
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Ref;
+import static hu.bme.mit.inf.ttmc.core.type.impl.Types.Bool;
+import static hu.bme.mit.inf.ttmc.core.type.impl.Types.Func;
+import static hu.bme.mit.inf.ttmc.core.type.impl.Types.Int;
+
 import org.junit.Before;
 import org.junit.Test;
 
 import com.google.common.collect.ImmutableList;
 
-import hu.bme.mit.inf.ttmc.core.ConstraintManager;
+import hu.bme.mit.inf.ttmc.core.SolverManager;
 import hu.bme.mit.inf.ttmc.core.decl.ConstDecl;
 import hu.bme.mit.inf.ttmc.core.decl.ParamDecl;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
-import hu.bme.mit.inf.ttmc.core.factory.DeclFactory;
-import hu.bme.mit.inf.ttmc.core.factory.ExprFactory;
 import hu.bme.mit.inf.ttmc.core.factory.SolverFactory;
-import hu.bme.mit.inf.ttmc.core.factory.TypeFactory;
 import hu.bme.mit.inf.ttmc.core.solver.Interpolant;
 import hu.bme.mit.inf.ttmc.core.solver.ItpMarker;
 import hu.bme.mit.inf.ttmc.core.solver.ItpPattern;
@@ -20,13 +33,9 @@ import hu.bme.mit.inf.ttmc.core.solver.ItpSolver;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.core.type.FuncType;
 import hu.bme.mit.inf.ttmc.core.type.IntType;
-import hu.bme.mit.inf.ttmc.solver.z3.Z3ConstraintManager;
+import hu.bme.mit.inf.ttmc.solver.z3.Z3SolverManager;
 
 public class Z3ItpSolverTests {
-
-	TypeFactory tf;
-	DeclFactory df;
-	ExprFactory ef;
 
 	ItpSolver solver;
 
@@ -40,29 +49,26 @@ public class Z3ItpSolverTests {
 
 	@Before
 	public void initialize() {
-		final ConstraintManager manager = new Z3ConstraintManager();
+		final SolverManager manager = new Z3SolverManager();
 		final SolverFactory sf = manager.getSolverFactory();
 
-		tf = manager.getTypeFactory();
-		df = manager.getDeclFactory();
-		ef = manager.getExprFactory();
 		solver = sf.createItpSolver();
 
-		final ConstDecl<IntType> ad = df.Const("a", tf.Int());
-		final ConstDecl<IntType> bd = df.Const("b", tf.Int());
-		final ConstDecl<IntType> cd = df.Const("c", tf.Int());
-		final ConstDecl<IntType> dd = df.Const("d", tf.Int());
-		final ConstDecl<IntType> ed = df.Const("e", tf.Int());
-		final ConstDecl<FuncType<IntType, IntType>> fd = df.Const("f", tf.Func(tf.Int(), tf.Int()));
-		final ConstDecl<FuncType<IntType, IntType>> gd = df.Const("g", tf.Func(tf.Int(), tf.Int()));
+		final ConstDecl<IntType> ad = Const("a", Int());
+		final ConstDecl<IntType> bd = Const("b", Int());
+		final ConstDecl<IntType> cd = Const("c", Int());
+		final ConstDecl<IntType> dd = Const("d", Int());
+		final ConstDecl<IntType> ed = Const("e", Int());
+		final ConstDecl<FuncType<IntType, IntType>> fd = Const("f", Func(Int(), Int()));
+		final ConstDecl<FuncType<IntType, IntType>> gd = Const("g", Func(Int(), Int()));
 
-		a = ef.Ref(ad);
-		b = ef.Ref(bd);
-		c = ef.Ref(cd);
-		d = ef.Ref(dd);
-		e = ef.Ref(ed);
-		f = ef.Ref(fd);
-		g = ef.Ref(gd);
+		a = Ref(ad);
+		b = Ref(bd);
+		c = Ref(cd);
+		d = Ref(dd);
+		e = Ref(ed);
+		f = Ref(fd);
+		g = Ref(gd);
 	}
 
 	@Test
@@ -71,10 +77,10 @@ public class Z3ItpSolverTests {
 		final ItpMarker B = solver.createMarker();
 		final ItpPattern pattern = solver.createBinPattern(A, B);
 
-		solver.add(A, ef.Eq(a, b));
-		solver.add(A, ef.Eq(a, c));
-		solver.add(B, ef.Eq(b, d));
-		solver.add(B, ef.Neq(c, d));
+		solver.add(A, Eq(a, b));
+		solver.add(A, Eq(a, c));
+		solver.add(B, Eq(b, d));
+		solver.add(B, Neq(c, d));
 
 		solver.check();
 		final Interpolant itp = solver.getInterpolant(pattern);
@@ -90,11 +96,11 @@ public class Z3ItpSolverTests {
 		final ItpMarker I3 = solver.createMarker();
 		final ItpPattern pattern = solver.createSeqPattern(ImmutableList.of(I1, I2, I3));
 
-		solver.add(I1, ef.Eq(a, b));
-		solver.add(I1, ef.Eq(a, c));
-		solver.add(I2, ef.Eq(c, d));
-		solver.add(I3, ef.Eq(b, e));
-		solver.add(I3, ef.Neq(d, e));
+		solver.add(I1, Eq(a, b));
+		solver.add(I1, Eq(a, c));
+		solver.add(I2, Eq(c, d));
+		solver.add(I3, Eq(b, e));
+		solver.add(I3, Neq(d, e));
 
 		solver.check();
 		final Interpolant itp = solver.getInterpolant(pattern);
@@ -113,11 +119,11 @@ public class Z3ItpSolverTests {
 		pattern.createChild(I1);
 		pattern.createChild(I2);
 
-		solver.add(I1, ef.Eq(a, ef.Int(0)));
-		solver.add(I1, ef.Eq(a, b));
-		solver.add(I2, ef.Eq(c, d));
-		solver.add(I2, ef.Eq(d, ef.Int(1)));
-		solver.add(I3, ef.Eq(b, c));
+		solver.add(I1, Eq(a, Int(0)));
+		solver.add(I1, Eq(a, b));
+		solver.add(I2, Eq(c, d));
+		solver.add(I2, Eq(d, Int(1)));
+		solver.add(I3, Eq(b, c));
 
 		solver.check();
 		final Interpolant itp = solver.getInterpolant(pattern);
@@ -133,10 +139,10 @@ public class Z3ItpSolverTests {
 		final ItpMarker B = solver.createMarker();
 		final ItpPattern pattern = solver.createBinPattern(A, B);
 
-		solver.add(A, ef.Eq(ef.App(f, a), c));
-		solver.add(A, ef.Eq(ef.App(f, b), d));
-		solver.add(B, ef.Eq(a, b));
-		solver.add(B, ef.Neq(ef.App(g, c), ef.App(g, d)));
+		solver.add(A, Eq(App(f, a), c));
+		solver.add(A, Eq(App(f, b), d));
+		solver.add(B, Eq(a, b));
+		solver.add(B, Neq(App(g, c), App(g, d)));
 
 		solver.check();
 		final Interpolant itp = solver.getInterpolant(pattern);
@@ -151,8 +157,8 @@ public class Z3ItpSolverTests {
 		final ItpMarker B = solver.createMarker();
 		final ItpPattern pattern = solver.createBinPattern(A, B);
 
-		solver.add(A, ef.Eq(b, ef.Mul(ImmutableList.of(ef.Int(2), a))));
-		solver.add(B, ef.Eq(b, ef.Add(ImmutableList.of(ef.Mul(ImmutableList.of(ef.Int(2), c)), ef.Int(1)))));
+		solver.add(A, Eq(b, Mul(ImmutableList.of(Int(2), a))));
+		solver.add(B, Eq(b, Add(ImmutableList.of(Mul(ImmutableList.of(Int(2), c)), Int(1)))));
 
 		solver.check();
 		final Interpolant itp = solver.getInterpolant(pattern);
@@ -167,21 +173,21 @@ public class Z3ItpSolverTests {
 		final ItpMarker B = solver.createMarker();
 		final ItpPattern pattern = solver.createBinPattern(A, B);
 
-		final ConstDecl<IntType> id = df.Const("i", tf.Int());
-		final ConstDecl<FuncType<IntType, BoolType>> pd = df.Const("p", tf.Func(tf.Int(), tf.Bool()));
-		final ConstDecl<FuncType<IntType, BoolType>> qd = df.Const("q", tf.Func(tf.Int(), tf.Bool()));
-		final ParamDecl<IntType> x1d = df.Param("x", tf.Int());
-		final ParamDecl<IntType> x2d = df.Param("x", tf.Int());
+		final ConstDecl<IntType> id = Const("i", Int());
+		final ConstDecl<FuncType<IntType, BoolType>> pd = Const("p", Func(Int(), Bool()));
+		final ConstDecl<FuncType<IntType, BoolType>> qd = Const("q", Func(Int(), Bool()));
+		final ParamDecl<IntType> x1d = Param("x", Int());
+		final ParamDecl<IntType> x2d = Param("x", Int());
 
-		final Expr<IntType> i = ef.Ref(id);
-		final Expr<FuncType<IntType, BoolType>> p = ef.Ref(pd);
-		final Expr<FuncType<IntType, BoolType>> q = ef.Ref(qd);
-		final Expr<IntType> x1 = ef.Ref(x1d);
-		final Expr<IntType> x2 = ef.Ref(x2d);
+		final Expr<IntType> i = Ref(id);
+		final Expr<FuncType<IntType, BoolType>> p = Ref(pd);
+		final Expr<FuncType<IntType, BoolType>> q = Ref(qd);
+		final Expr<IntType> x1 = Ref(x1d);
+		final Expr<IntType> x2 = Ref(x2d);
 
-		solver.add(A, ef.Forall(ImmutableList.of(x1d), ef.Imply(ef.App(q, x1), ef.App(p, x1))));
-		solver.add(A, ef.Forall(ImmutableList.of(x2d), ef.Not(ef.App(p, x2))));
-		solver.add(B, ef.App(q, i));
+		solver.add(A, Forall(ImmutableList.of(x1d), Imply(App(q, x1), App(p, x1))));
+		solver.add(A, Forall(ImmutableList.of(x2d), Not(App(p, x2))));
+		solver.add(B, App(q, i));
 
 		solver.check();
 		final Interpolant itp = solver.getInterpolant(pattern);
@@ -196,17 +202,17 @@ public class Z3ItpSolverTests {
 		final ItpMarker B = solver.createMarker();
 		final ItpPattern pattern = solver.createBinPattern(A, B);
 
-		solver.add(A, ef.Eq(a, b));
-		solver.add(B, ef.Eq(b, c));
+		solver.add(A, Eq(a, b));
+		solver.add(B, Eq(b, c));
 
 		solver.push();
 
-		solver.add(A, ef.Neq(a, c));
+		solver.add(A, Neq(a, c));
 		solver.check();
 
 		solver.pop();
 
-		solver.add(B, ef.Neq(a, c));
+		solver.add(B, Neq(a, c));
 		solver.check();
 		final Interpolant itp = solver.getInterpolant(pattern);
 
