@@ -9,7 +9,7 @@ Require-Bundle: com.google.guava,
  org.eclipse.xtend.lib,
  org.eclipse.xtend.lib.macro,
  org.junit,
- hu.bme.mit.inf.ttmc.constraint,
+ hu.bme.mit.inf.ttmc.core,
  hu.bme.mit.inf.ttmc.formalism,
  hu.bme.mit.inf.ttmc.constraint.z3,
  hu.bme.mit.inf.ttmc.common
