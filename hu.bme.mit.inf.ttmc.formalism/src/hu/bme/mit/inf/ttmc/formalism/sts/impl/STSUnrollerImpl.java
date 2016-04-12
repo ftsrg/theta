@@ -7,7 +7,6 @@ import java.util.stream.Collectors;
 
 import hu.bme.mit.inf.ttmc.core.expr.AndExpr;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
-import hu.bme.mit.inf.ttmc.core.solver.Model;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.core.utils.impl.ExprUtils;
@@ -18,6 +17,7 @@ import hu.bme.mit.inf.ttmc.formalism.sts.STSUnroller;
 import hu.bme.mit.inf.ttmc.formalism.utils.impl.FoldVisitor;
 import hu.bme.mit.inf.ttmc.formalism.utils.impl.UnfoldVisitor;
 import hu.bme.mit.inf.ttmc.formalism.utils.impl.VarMap;
+import hu.bme.mit.inf.ttmc.solver.Model;
 
 public class STSUnrollerImpl implements STSUnroller {
 	private final STS sts;
@@ -65,7 +65,8 @@ public class STSUnrollerImpl implements STSUnroller {
 	}
 
 	@Override
-	public AndExpr getConcreteState(final Model model, final int i, final Collection<VarDecl<? extends Type>> variables) {
+	public AndExpr getConcreteState(final Model model, final int i,
+			final Collection<VarDecl<? extends Type>> variables) {
 		final List<Expr<? extends BoolType>> ops = new ArrayList<>(variables.size());
 
 		for (final VarDecl<? extends Type> varDecl : variables) {
@@ -87,7 +88,8 @@ public class STSUnrollerImpl implements STSUnroller {
 	}
 
 	@Override
-	public List<AndExpr> extractTrace(final Model model, final int length, final Collection<VarDecl<? extends Type>> variables) {
+	public List<AndExpr> extractTrace(final Model model, final int length,
+			final Collection<VarDecl<? extends Type>> variables) {
 		final List<AndExpr> trace = new ArrayList<>(length);
 		for (int i = 0; i < length; ++i)
 			trace.add(getConcreteState(model, i, variables));

@@ -5,9 +5,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.util.Map;
 
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
-import hu.bme.mit.inf.ttmc.core.solver.Interpolant;
-import hu.bme.mit.inf.ttmc.core.solver.ItpMarker;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
+import hu.bme.mit.inf.ttmc.solver.Interpolant;
+import hu.bme.mit.inf.ttmc.solver.ItpMarker;
 
 public class Z3Interpolant implements Interpolant {
 

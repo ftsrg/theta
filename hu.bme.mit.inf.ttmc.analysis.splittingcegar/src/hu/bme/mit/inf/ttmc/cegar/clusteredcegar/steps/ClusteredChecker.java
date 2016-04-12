@@ -18,11 +18,12 @@ import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.Visualizer;
 import hu.bme.mit.inf.ttmc.common.logging.Logger;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.expr.NotExpr;
-import hu.bme.mit.inf.ttmc.core.solver.Solver;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.formalism.sts.STSUnroller;
+import hu.bme.mit.inf.ttmc.solver.Solver;
 
-public class ClusteredChecker extends AbstractCEGARStep implements Checker<ClusteredAbstractSystem, ClusteredAbstractState> {
+public class ClusteredChecker extends AbstractCEGARStep
+		implements Checker<ClusteredAbstractSystem, ClusteredAbstractState> {
 
 	public ClusteredChecker(final Logger logger, final Visualizer visualizer) {
 		super(logger, visualizer);
@@ -35,14 +36,19 @@ public class ClusteredChecker extends AbstractCEGARStep implements Checker<Clust
 		final NotExpr negProp = system.getManager().getExprFactory().Not(system.getSTS().getProp());
 
 		final STSUnroller unroller = system.getUnroller();
-		// Store explored states in a map. The key and the value is the same state.
-		// This is required because when a new state is created, it is a different object
+		// Store explored states in a map. The key and the value is the same
+		// state.
+		// This is required because when a new state is created, it is a
+		// different object
 		// and the original one can be retrieved from the map.
 		final Map<ClusteredAbstractState, ClusteredAbstractState> exploredStates = new HashMap<>();
-		Stack<ClusteredAbstractState> counterExample = null; // Store the counterexample (if found)
+		Stack<ClusteredAbstractState> counterExample = null; // Store the
+																// counterexample
+																// (if found)
 
 		ClusteredAbstractState actualInit;
-		// Initialize backtracking array for initial states to [-1, 0, 0, ..., 0]
+		// Initialize backtracking array for initial states to [-1, 0, 0, ...,
+		// 0]
 		final int[] prevInit = new int[system.getAbstractKripkeStructures().size()];
 		prevInit[0] = -1;
 		for (int i = 1; i < prevInit.length; ++i)
@@ -109,13 +115,15 @@ public class ClusteredChecker extends AbstractCEGARStep implements Checker<Clust
 								break;
 							}
 						} else {
-							// Get the original instance and add to the actual as successor
+							// Get the original instance and add to the actual
+							// as successor
 							actualState.getSuccessors().add(exploredStates.get(nextState));
 						}
 					} else {
 						deletedArcs++;
 					}
-				} else { // If the actual state has no more successors, then backtrack
+				} else { // If the actual state has no more successors, then
+							// backtrack
 					stateStack.pop();
 					successorStack.pop();
 				}
@@ -140,11 +148,13 @@ public class ClusteredChecker extends AbstractCEGARStep implements Checker<Clust
 			VisualizationHelper.visualizeCompositeAbstractKripkeStructure(exploredStates.keySet(), visualizer, 6);
 		}
 
-		return counterExample == null ? new AbstractResult<ClusteredAbstractState>(null, exploredStates.keySet(), exploredStates.size())
+		return counterExample == null
+				? new AbstractResult<ClusteredAbstractState>(null, exploredStates.keySet(), exploredStates.size())
 				: new AbstractResult<ClusteredAbstractState>(counterExample, null, exploredStates.size());
 	}
 
-	private boolean checkProp(final ClusteredAbstractState state, final Expr<? extends BoolType> expr, final Solver solver, final STSUnroller unroller) {
+	private boolean checkProp(final ClusteredAbstractState state, final Expr<? extends BoolType> expr,
+			final Solver solver, final STSUnroller unroller) {
 		solver.push();
 		for (final ComponentAbstractState as : state.getStates())
 			SolverHelper.unrollAndAssert(solver, as.getLabels(), unroller, 0);
@@ -154,7 +164,8 @@ public class ClusteredChecker extends AbstractCEGARStep implements Checker<Clust
 		return ret;
 	}
 
-	private boolean checkTrans(final ClusteredAbstractState s0, final ClusteredAbstractState s1, final Solver solver, final STSUnroller unroller) {
+	private boolean checkTrans(final ClusteredAbstractState s0, final ClusteredAbstractState s1, final Solver solver,
+			final STSUnroller unroller) {
 		solver.push();
 		for (final ComponentAbstractState as : s0.getStates())
 			SolverHelper.unrollAndAssert(solver, as.getLabels(), unroller, 0);
@@ -184,7 +195,8 @@ public class ClusteredChecker extends AbstractCEGARStep implements Checker<Clust
 	// Get the next initial state
 	// For example if the system has 3 clusters with 2, 3 and 4 initial states,
 	// there are 2*3*4 = 24 abstract initial states in the following order:
-	// (0,0,0), (1,0,0), (0,1,0), (1,1,0), (0,2,0), (1,2,0), (0,0,1), ..., (1,2,3)
+	// (0,0,0), (1,0,0), (0,1,0), (1,1,0), (0,2,0), (1,2,0), (0,0,1), ...,
+	// (1,2,3)
 	private ClusteredAbstractState getNextInitialState(final ClusteredAbstractSystem system, final int[] previous) {
 		previous[0]++;
 		for (int i = 0; i < previous.length; ++i) {

@@ -20,7 +20,6 @@ import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.data.InterpolatedAbstractSys
 import hu.bme.mit.inf.ttmc.common.logging.Logger;
 import hu.bme.mit.inf.ttmc.core.expr.AndExpr;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
-import hu.bme.mit.inf.ttmc.core.solver.Solver;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
@@ -28,6 +27,7 @@ import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 import hu.bme.mit.inf.ttmc.formalism.sts.STSUnroller;
 import hu.bme.mit.inf.ttmc.formalism.utils.sts.impl.STSCNFTransformation;
 import hu.bme.mit.inf.ttmc.formalism.utils.sts.impl.STSITETransformation;
+import hu.bme.mit.inf.ttmc.solver.Solver;
 
 public class InterpolatingInitializer extends AbstractCEGARStep implements Initializer<InterpolatedAbstractSystem> {
 
@@ -35,8 +35,9 @@ public class InterpolatingInitializer extends AbstractCEGARStep implements Initi
 	private final boolean useCNFTransformation;
 	private final Set<String> explicitVarNames;
 
-	public InterpolatingInitializer(final Logger logger, final Visualizer visualizer, final boolean collectFromConditions,
-			final boolean collectFromSpecification, final boolean useCNFTransformation, final Collection<String> explicitVariables) {
+	public InterpolatingInitializer(final Logger logger, final Visualizer visualizer,
+			final boolean collectFromConditions, final boolean collectFromSpecification,
+			final boolean useCNFTransformation, final Collection<String> explicitVariables) {
 		super(logger, visualizer);
 		this.collectFromConditions = collectFromConditions;
 		this.collectFromSpecification = collectFromSpecification;
@@ -92,7 +93,8 @@ public class InterpolatingInitializer extends AbstractCEGARStep implements Initi
 		// Move the collected predicates to a list for further use
 		final List<Expr<? extends BoolType>> initialPredList = new ArrayList<>(initialPredSet);
 
-		assert (initialPredList.size() > 0); // There must be at least one predicate
+		assert (initialPredList.size() > 0); // There must be at least one
+												// predicate
 
 		logger.writeln("Initial predicates [" + initialPredList.size() + "]", 2);
 		for (final Expr<? extends BoolType> ex : initialPredList)
@@ -101,7 +103,8 @@ public class InterpolatingInitializer extends AbstractCEGARStep implements Initi
 		if (isStopped)
 			return null;
 
-		// Eliminate if-then-else expressions from the constraints by replacing them with implications
+		// Eliminate if-then-else expressions from the constraints by replacing
+		// them with implications
 		logger.write("Eliminating if-then-else expressions from the constraints...", 3);
 		concrSys = new STSITETransformation().transform(concrSys);
 		logger.writeln("done.", 3);
@@ -131,7 +134,8 @@ public class InterpolatingInitializer extends AbstractCEGARStep implements Initi
 
 		system.getInitialPredicates().addAll(initialPredList);
 
-		// Create the initial abstract Kripke structure based on the initial predicates
+		// Create the initial abstract Kripke structure based on the initial
+		// predicates
 		// and explicit variables
 
 		// Calculate negate for each formula
@@ -141,10 +145,14 @@ public class InterpolatingInitializer extends AbstractCEGARStep implements Initi
 
 		final STSUnroller unroller = system.getUnroller();
 
-		// Traverse the possible abstract states. Each formula is either unnegated or negated, so
-		// there are 2^|formulas| possible abstract states. We start with an empty state (no
-		// formulas) and in each step we expand the state with the unnegated and negated version
-		// of the next formula, i.e., two new states may be obtained (if feasible).
+		// Traverse the possible abstract states. Each formula is either
+		// unnegated or negated, so
+		// there are 2^|formulas| possible abstract states. We start with an
+		// empty state (no
+		// formulas) and in each step we expand the state with the unnegated and
+		// negated version
+		// of the next formula, i.e., two new states may be obtained (if
+		// feasible).
 		final Stack<InterpolatedAbstractState> stack = new Stack<>();
 		final List<InterpolatedAbstractState> predicateStates = new ArrayList<>();
 		stack.push(new InterpolatedAbstractState()); // Start with no formulas
@@ -155,12 +163,16 @@ public class InterpolatingInitializer extends AbstractCEGARStep implements Initi
 		while (!stack.isEmpty()) {
 			if (isStopped)
 				return null;
-			final InterpolatedAbstractState actual = stack.pop(); // Get the next state
+			final InterpolatedAbstractState actual = stack.pop(); // Get the
+																	// next
+																	// state
 
 			// Add the next formula unnegated
-			final InterpolatedAbstractState s1 = actual.cloneAndAdd(system.getInitialPredicates().get(actual.getLabels().size()));
+			final InterpolatedAbstractState s1 = actual
+					.cloneAndAdd(system.getInitialPredicates().get(actual.getLabels().size()));
 			if (isStateFeasible(s1, solver, unroller)) {
-				// If the state is feasible and there are no more formulas, this state is finished
+				// If the state is feasible and there are no more formulas, this
+				// state is finished
 				if (s1.getLabels().size() == system.getInitialPredicates().size())
 					predicateStates.add(s1);
 				else
@@ -170,7 +182,8 @@ public class InterpolatingInitializer extends AbstractCEGARStep implements Initi
 			// Add the next formula negated
 			final InterpolatedAbstractState s2 = actual.cloneAndAdd(negates.get(actual.getLabels().size()));
 			if (isStateFeasible(s2, solver, unroller)) {
-				// If the state is feasible and there are no more formulas, this state is finished
+				// If the state is feasible and there are no more formulas, this
+				// state is finished
 				if (s2.getLabels().size() == system.getInitialPredicates().size())
 					predicateStates.add(s2);
 				else
@@ -194,9 +207,12 @@ public class InterpolatingInitializer extends AbstractCEGARStep implements Initi
 						return null;
 					if (SolverHelper.checkSat(solver)) {
 						// Keep only explicitly tracked variables
-						final AndExpr model = unroller.getConcreteState(solver.getModel(), 0, system.getExplicitVariables());
+						final AndExpr model = unroller.getConcreteState(solver.getModel(), 0,
+								system.getExplicitVariables());
 						ks.addState(as.cloneAndAddExplicit(model));
-						solver.add(unroller.unroll(concrSys.getManager().getExprFactory().Not(model), 0)); // Exclude this state
+						solver.add(unroller.unroll(concrSys.getManager().getExprFactory().Not(model), 0)); // Exclude
+																											// this
+																											// state
 					} else
 						break;
 				} while (true);
@@ -209,13 +225,20 @@ public class InterpolatingInitializer extends AbstractCEGARStep implements Initi
 
 		// Calculate initial states and transition relation
 		logger.writeln("Abstract states [" + ks.getStates().size() + "]", 2);
-		for (final InterpolatedAbstractState s0 : ks.getStates()) { // Loop through the states
+		for (final InterpolatedAbstractState s0 : ks.getStates()) { // Loop
+																	// through
+																	// the
+																	// states
 			if (isStopped)
 				return null;
-			s0.setInitial(isStateInitial(s0, solver, unroller)); // Check whether it is initial
+			s0.setInitial(isStateInitial(s0, solver, unroller)); // Check
+																	// whether
+																	// it is
+																	// initial
 			if (s0.isInitial())
 				ks.addInitialState(s0);
-			for (final InterpolatedAbstractState s1 : ks.getStates()) { // Calculate successors
+			for (final InterpolatedAbstractState s1 : ks.getStates()) { // Calculate
+																		// successors
 				if (isStopped)
 					return null;
 				if (isTransitionFeasible(s0, s1, solver, unroller)) {
@@ -232,7 +255,8 @@ public class InterpolatingInitializer extends AbstractCEGARStep implements Initi
 		return system;
 	}
 
-	private boolean isStateFeasible(final InterpolatedAbstractState s, final Solver solver, final STSUnroller unroller) {
+	private boolean isStateFeasible(final InterpolatedAbstractState s, final Solver solver,
+			final STSUnroller unroller) {
 		solver.push();
 		SolverHelper.unrollAndAssert(solver, s.getLabels(), unroller, 0);
 		final boolean ret = SolverHelper.checkSat(solver);
@@ -249,8 +273,8 @@ public class InterpolatingInitializer extends AbstractCEGARStep implements Initi
 		return ret;
 	}
 
-	private boolean isTransitionFeasible(final InterpolatedAbstractState s0, final InterpolatedAbstractState s1, final Solver solver,
-			final STSUnroller unroller) {
+	private boolean isTransitionFeasible(final InterpolatedAbstractState s0, final InterpolatedAbstractState s1,
+			final Solver solver, final STSUnroller unroller) {
 		solver.push();
 		SolverHelper.unrollAndAssert(solver, s0.getLabels(), unroller, 0);
 		SolverHelper.unrollAndAssert(solver, s1.getLabels(), unroller, 1);

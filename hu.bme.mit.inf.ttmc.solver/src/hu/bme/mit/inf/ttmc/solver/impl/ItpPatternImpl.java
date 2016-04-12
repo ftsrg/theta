@@ -1,4 +1,4 @@
-package hu.bme.mit.inf.ttmc.core.solver.impl;
+package hu.bme.mit.inf.ttmc.solver.impl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -7,8 +7,8 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-import hu.bme.mit.inf.ttmc.core.solver.ItpMarker;
-import hu.bme.mit.inf.ttmc.core.solver.ItpPattern;
+import hu.bme.mit.inf.ttmc.solver.ItpMarker;
+import hu.bme.mit.inf.ttmc.solver.ItpPattern;
 
 public class ItpPatternImpl implements ItpPattern {
 	

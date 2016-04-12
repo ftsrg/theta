@@ -1,7 +1,4 @@
-package hu.bme.mit.inf.ttmc.core.factory;
-
-import hu.bme.mit.inf.ttmc.core.solver.ItpSolver;
-import hu.bme.mit.inf.ttmc.core.solver.Solver;
+package hu.bme.mit.inf.ttmc.solver;
 
 public interface SolverFactory {
 

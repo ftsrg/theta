@@ -1,4 +1,4 @@
-package hu.bme.mit.inf.ttmc.core.solver;
+package hu.bme.mit.inf.ttmc.solver;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkArgument;

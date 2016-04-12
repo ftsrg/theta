@@ -9,8 +9,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 
-import hu.bme.mit.inf.ttmc.cegar.common.data.ConcreteTrace;
 import hu.bme.mit.inf.ttmc.cegar.common.data.AbstractSystem;
+import hu.bme.mit.inf.ttmc.cegar.common.data.ConcreteTrace;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.SolverHelper;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.debugging.AbstractDebugger;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.debugging.Debugger;
@@ -19,11 +19,12 @@ import hu.bme.mit.inf.ttmc.cegar.visiblecegar.data.VisibleAbstractState;
 import hu.bme.mit.inf.ttmc.cegar.visiblecegar.data.VisibleAbstractSystem;
 import hu.bme.mit.inf.ttmc.core.expr.AndExpr;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
-import hu.bme.mit.inf.ttmc.core.solver.Solver;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.formalism.sts.STSUnroller;
+import hu.bme.mit.inf.ttmc.solver.Solver;
 
-public class VisibleCEGARDebugger extends AbstractDebugger implements Debugger<VisibleAbstractSystem, VisibleAbstractState> {
+public class VisibleCEGARDebugger extends AbstractDebugger
+		implements Debugger<VisibleAbstractSystem, VisibleAbstractState> {
 	private final Map<VisibleAbstractState, List<ConcreteState>> stateSpace;
 	private final Set<VisibleAbstractState> reachableStates;
 	private AbstractSystem system = null;
@@ -71,13 +72,21 @@ public class VisibleCEGARDebugger extends AbstractDebugger implements Debugger<V
 		solver.pop(); // 2
 
 		// Explore corresponding concrete states
-		final Collection<ConcreteState> allConcreteStates = new ArrayList<>(); // Also store them temporary in a flat collection
+		final Collection<ConcreteState> allConcreteStates = new ArrayList<>(); // Also
+																				// store
+																				// them
+																				// temporary
+																				// in
+																				// a
+																				// flat
+																				// collection
 		for (final VisibleAbstractState vas : stateSpace.keySet()) {
 			solver.push(); // 2
 			solver.add(unroller.unroll(vas.getExpression(), 0));
 			do {
 				if (SolverHelper.checkSat(solver)) { // New concrete state found
-					final Expr<? extends BoolType> csExpr = unroller.getConcreteState(solver.getModel(), 0, system.getVars());
+					final Expr<? extends BoolType> csExpr = unroller.getConcreteState(solver.getModel(), 0,
+							system.getVars());
 					final ConcreteState cs = new ConcreteState(csExpr);
 					stateSpace.get(vas).add(cs);
 					allConcreteStates.add(cs);
@@ -125,14 +134,16 @@ public class VisibleCEGARDebugger extends AbstractDebugger implements Debugger<V
 			}
 		}
 
-		// Explore the transition relation between concrete states and initial states
+		// Explore the transition relation between concrete states and initial
+		// states
 		exploreConcrTransRelAndInits(allConcreteStates, solver, unroller);
 
 		// Explore the reachable concrete states
 		exploreReachableConcrStates(allConcreteStates);
 
 		// Mark unsafe states
-		markUnsafeStates(allConcreteStates, system.getManager().getExprFactory().Not(system.getSTS().getProp()), solver, unroller);
+		markUnsafeStates(allConcreteStates, system.getManager().getExprFactory().Not(system.getSTS().getProp()), solver,
+				unroller);
 
 		return this;
 	}

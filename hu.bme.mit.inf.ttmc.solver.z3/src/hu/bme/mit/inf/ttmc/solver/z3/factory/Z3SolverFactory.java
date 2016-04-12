@@ -1,9 +1,9 @@
 package hu.bme.mit.inf.ttmc.solver.z3.factory;
 
 import hu.bme.mit.inf.ttmc.core.ConstraintManager;
-import hu.bme.mit.inf.ttmc.core.factory.SolverFactory;
-import hu.bme.mit.inf.ttmc.core.solver.ItpSolver;
-import hu.bme.mit.inf.ttmc.core.solver.Solver;
+import hu.bme.mit.inf.ttmc.solver.ItpSolver;
+import hu.bme.mit.inf.ttmc.solver.Solver;
+import hu.bme.mit.inf.ttmc.solver.SolverFactory;
 import hu.bme.mit.inf.ttmc.solver.z3.solver.Z3ItpSolver;
 import hu.bme.mit.inf.ttmc.solver.z3.solver.Z3Solver;
 import hu.bme.mit.inf.ttmc.solver.z3.trasform.Z3SymbolTable;
