@@ -19,10 +19,10 @@ import hu.bme.mit.inf.ttmc.cegar.visiblecegar.VisibleCEGARBuilder.VarCollectionM
 import hu.bme.mit.inf.ttmc.common.logging.Logger;
 import hu.bme.mit.inf.ttmc.common.logging.impl.ConsoleLogger;
 import hu.bme.mit.inf.ttmc.common.logging.impl.FileLogger;
-import hu.bme.mit.inf.ttmc.constraint.z3.Z3ConstraintManager;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
 import hu.bme.mit.inf.ttmc.formalism.sts.impl.STSManagerImpl;
+import hu.bme.mit.inf.ttmc.solver.z3.Z3SolverManager;
 import hu.bme.mit.inf.ttmc.system.model.SystemSpecification;
 import hu.bme.mit.inf.ttmc.system.ui.SystemModel;
 import hu.bme.mit.inf.ttmc.system.ui.SystemModelCreator;
@@ -43,7 +43,7 @@ public class CLI {
 		String algorithm = null;
 		Logger logger = null;
 		Visualizer visualizer = null;
-		final STSManager manager = new STSManagerImpl(new Z3ConstraintManager());
+		final STSManager manager = new STSManagerImpl(new Z3SolverManager());
 
 		// Get model path
 		if (!parsedArgs.containsKey(Options.Model))
@@ -116,7 +116,8 @@ public class CLI {
 		if ("clustered".equals(algorithm)) { // Clustered
 			cegar = new ClusteredCEGARBuilder().visualizer(visualizer).debug(debugVisualizer).build();
 		} else if ("visible".equals(algorithm)) { // Visible
-			final VisibleCEGARBuilder builder = new VisibleCEGARBuilder().logger(logger).debug(debugVisualizer).visualizer(visualizer);
+			final VisibleCEGARBuilder builder = new VisibleCEGARBuilder().logger(logger).debug(debugVisualizer)
+					.visualizer(visualizer);
 			// CNF option
 			if (parsedArgs.containsKey(Options.UseCNF))
 				builder.useCNFTransformation("true".equals(parsedArgs.get(Options.UseCNF)));
@@ -139,7 +140,8 @@ public class CLI {
 			}
 			cegar = builder.build();
 		} else if ("interpolating".equals(algorithm)) { // Interpolated
-			final InterpolatingCEGARBuilder builder = new InterpolatingCEGARBuilder().logger(logger).debug(debugVisualizer).visualizer(visualizer);
+			final InterpolatingCEGARBuilder builder = new InterpolatingCEGARBuilder().logger(logger)
+					.debug(debugVisualizer).visualizer(visualizer);
 			// CNF option
 			if (parsedArgs.containsKey(Options.UseCNF))
 				builder.useCNFTransformation("true".equals(parsedArgs.get(Options.UseCNF)));

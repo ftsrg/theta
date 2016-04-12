@@ -4,8 +4,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.List;
 
-import hu.bme.mit.inf.ttmc.constraint.factory.TypeFactory;
-import hu.bme.mit.inf.ttmc.constraint.type.Type;
+import hu.bme.mit.inf.ttmc.core.factory.TypeFactory;
+import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.formalism.common.factory.impl.TypeFactoryDecorator;
 import hu.bme.mit.inf.ttmc.formalism.common.type.ProcType;
 import hu.bme.mit.inf.ttmc.formalism.common.type.impl.ProcTypeImpl;

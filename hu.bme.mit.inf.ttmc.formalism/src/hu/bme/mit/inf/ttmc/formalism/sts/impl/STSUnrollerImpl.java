@@ -5,18 +5,18 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import hu.bme.mit.inf.ttmc.constraint.expr.AndExpr;
-import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
-import hu.bme.mit.inf.ttmc.constraint.solver.Model;
-import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
-import hu.bme.mit.inf.ttmc.constraint.type.Type;
-import hu.bme.mit.inf.ttmc.constraint.utils.impl.ExprUtils;
+import hu.bme.mit.inf.ttmc.core.expr.AndExpr;
+import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.type.BoolType;
+import hu.bme.mit.inf.ttmc.core.type.Type;
+import hu.bme.mit.inf.ttmc.core.utils.impl.ExprUtils;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
 import hu.bme.mit.inf.ttmc.formalism.utils.impl.FoldVisitor;
 import hu.bme.mit.inf.ttmc.formalism.utils.impl.UnfoldVisitor;
 import hu.bme.mit.inf.ttmc.formalism.utils.impl.VarMap;
+import hu.bme.mit.inf.ttmc.solver.Model;
 
 class STSUnrollerImpl {
 	private final STS sts;
@@ -53,7 +53,9 @@ class STSUnrollerImpl {
 		return unroll(sts.getProp(), i);
 	}
 
-	public AndExpr getConcreteState(final Model model, final int i, final Collection<VarDecl<? extends Type>> variables) {
+	public AndExpr getConcreteState(final Model model, final int i,
+			final Collection<VarDecl<? extends Type>> variables) {
+
 		final List<Expr<? extends BoolType>> ops = new ArrayList<>(variables.size());
 
 		for (final VarDecl<? extends Type> varDecl : variables) {
@@ -69,7 +71,9 @@ class STSUnrollerImpl {
 		return manager.getExprFactory().And(ops);
 	}
 
-	public List<AndExpr> extractTrace(final Model model, final int length, final Collection<VarDecl<? extends Type>> variables) {
+	public List<AndExpr> extractTrace(final Model model, final int length,
+			final Collection<VarDecl<? extends Type>> variables) {
+
 		final List<AndExpr> trace = new ArrayList<>(length);
 		for (int i = 0; i < length; ++i)
 			trace.add(getConcreteState(model, i, variables));

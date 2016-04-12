@@ -2,9 +2,9 @@ package hu.bme.mit.inf.ttmc.formalism.sts.factory.impl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
-import hu.bme.mit.inf.ttmc.constraint.factory.ExprFactory;
-import hu.bme.mit.inf.ttmc.constraint.type.Type;
+import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.factory.ExprFactory;
+import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.PrimedExpr;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.impl.PrimedExprImpl;
 import hu.bme.mit.inf.ttmc.formalism.common.factory.impl.ExprFactoryDecorator;

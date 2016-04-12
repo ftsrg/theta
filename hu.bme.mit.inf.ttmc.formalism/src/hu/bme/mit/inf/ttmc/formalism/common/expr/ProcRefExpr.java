@@ -1,7 +1,7 @@
 package hu.bme.mit.inf.ttmc.formalism.common.expr;
 
-import hu.bme.mit.inf.ttmc.constraint.expr.RefExpr;
-import hu.bme.mit.inf.ttmc.constraint.type.Type;
+import hu.bme.mit.inf.ttmc.core.expr.RefExpr;
+import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.ProcDecl;
 import hu.bme.mit.inf.ttmc.formalism.common.type.ProcType;
 

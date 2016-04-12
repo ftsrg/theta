@@ -2,15 +2,16 @@ package hu.bme.mit.inf.ttmc.cegar.common.utils;
 
 import java.util.Collection;
 
-import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
-import hu.bme.mit.inf.ttmc.constraint.solver.Solver;
-import hu.bme.mit.inf.ttmc.constraint.solver.SolverStatus;
-import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
+import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
+import hu.bme.mit.inf.ttmc.solver.Solver;
+import hu.bme.mit.inf.ttmc.solver.SolverStatus;
 
 public class SolverHelper {
 
-	public static void unrollAndAssert(final Solver solver, final Collection<Expr<? extends BoolType>> expressions, final STS sts, final int k) {
+	public static void unrollAndAssert(final Solver solver, final Collection<Expr<? extends BoolType>> expressions,
+			final STS sts, final int k) {
 		for (final Expr<? extends BoolType> ex : expressions)
 			solver.add(sts.unroll(ex, k));
 	}

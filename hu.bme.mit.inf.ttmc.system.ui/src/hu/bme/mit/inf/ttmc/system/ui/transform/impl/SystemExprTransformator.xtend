@@ -1,7 +1,7 @@
 package hu.bme.mit.inf.ttmc.system.ui.transform.impl
 
-import hu.bme.mit.inf.ttmc.constraint.expr.Expr
-import hu.bme.mit.inf.ttmc.constraint.type.Type
+import hu.bme.mit.inf.ttmc.core.expr.Expr
+import hu.bme.mit.inf.ttmc.core.type.Type
 import hu.bme.mit.inf.ttmc.formalism.sts.factory.STSExprFactory
 import hu.bme.mit.inf.ttmc.system.model.PrimedExpression
 import hu.bme.mit.inf.ttmc.constraint.ui.transform.impl.ConstraintExprTransformator

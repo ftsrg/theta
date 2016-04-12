@@ -4,11 +4,11 @@ import java.util.Collection;
 
 import com.google.common.collect.ImmutableList;
 
-import hu.bme.mit.inf.ttmc.constraint.decl.ConstDecl;
-import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
-import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
-import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.constraint.ui.ConstraintModel;
+import hu.bme.mit.inf.ttmc.core.decl.ConstDecl;
+import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.type.BoolType;
+import hu.bme.mit.inf.ttmc.core.type.Type;
 
 public class ConstraintModelImpl implements ConstraintModel {
 	private final Collection<ConstDecl<? extends Type>> constDecls;

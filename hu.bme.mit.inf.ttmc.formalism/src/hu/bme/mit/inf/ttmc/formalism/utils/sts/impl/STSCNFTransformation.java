@@ -1,7 +1,7 @@
 package hu.bme.mit.inf.ttmc.formalism.utils.sts.impl;
 
-import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
-import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
+import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 import hu.bme.mit.inf.ttmc.formalism.sts.impl.STSImpl;
 import hu.bme.mit.inf.ttmc.formalism.utils.impl.CNFTransformation;

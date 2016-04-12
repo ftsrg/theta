@@ -3,12 +3,11 @@ package hu.bme.mit.inf.ttmc.formalism.program.factory.impl;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.util.HashMap;
 import java.util.List;
 
-import hu.bme.mit.inf.ttmc.constraint.decl.ParamDecl;
-import hu.bme.mit.inf.ttmc.constraint.factory.DeclFactory;
-import hu.bme.mit.inf.ttmc.constraint.type.Type;
+import hu.bme.mit.inf.ttmc.core.decl.ParamDecl;
+import hu.bme.mit.inf.ttmc.core.factory.DeclFactory;
+import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.ProcDecl;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.impl.ProcDeclImpl;
 import hu.bme.mit.inf.ttmc.formalism.common.factory.impl.VarDeclFactoryImpl;
@@ -17,11 +16,8 @@ import hu.bme.mit.inf.ttmc.formalism.program.factory.ProgramDeclFactory;
 
 public class ProgramDeclFactoryImpl extends VarDeclFactoryImpl implements ProgramDeclFactory {
 
-	private final HashMap<String, ProcDecl<?>> nameToProc;
-
 	public ProgramDeclFactoryImpl(final DeclFactory factory) {
 		super(factory);
-		nameToProc = new HashMap<>();
 	}
 
 	@Override
@@ -31,10 +27,8 @@ public class ProgramDeclFactoryImpl extends VarDeclFactoryImpl implements Progra
 		checkNotNull(paramDecls);
 		checkNotNull(returnType);
 		checkArgument(name.length() > 0);
-		checkArgument(nameToProc.get(name) == null);
 
 		final ProcDecl<R> procDecl = new ProcDeclImpl<>(name, paramDecls, returnType);
-		nameToProc.put(name, procDecl);
 		return procDecl;
 	}
 
@@ -46,10 +40,8 @@ public class ProgramDeclFactoryImpl extends VarDeclFactoryImpl implements Progra
 		checkNotNull(returnType);
 		checkNotNull(def);
 		checkArgument(name.length() > 0);
-		checkArgument(nameToProc.get(name) == null);
 
 		final ProcDecl<R> procDecl = new ProcDeclImpl<>(name, paramDecls, returnType, def);
-		nameToProc.put(name, procDecl);
 		return procDecl;
 	}
 

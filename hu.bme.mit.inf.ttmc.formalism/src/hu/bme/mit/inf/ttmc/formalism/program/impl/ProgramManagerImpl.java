@@ -1,7 +1,6 @@
 package hu.bme.mit.inf.ttmc.formalism.program.impl;
 
-import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
-import hu.bme.mit.inf.ttmc.constraint.factory.SolverFactory;
+import hu.bme.mit.inf.ttmc.core.ConstraintManager;
 import hu.bme.mit.inf.ttmc.formalism.common.factory.StmtFactory;
 import hu.bme.mit.inf.ttmc.formalism.common.factory.impl.StmtFactoryImpl;
 import hu.bme.mit.inf.ttmc.formalism.program.ProgramManager;
@@ -14,15 +13,12 @@ import hu.bme.mit.inf.ttmc.formalism.program.factory.impl.ProgramTypeFactoryImpl
 
 public class ProgramManagerImpl implements ProgramManager {
 
-	private final ConstraintManager manager;
-
 	private final ProgramTypeFactory typeFactory;
 	private final ProgramDeclFactory declFactory;
 	private final ProgramExprFactory exprFactory;
 	private final StmtFactory stmtFactory;
 
 	public ProgramManagerImpl(final ConstraintManager manager) {
-		this.manager = manager;
 		typeFactory = new ProgramTypeFactoryImpl(manager.getTypeFactory());
 		declFactory = new ProgramDeclFactoryImpl(manager.getDeclFactory());
 		exprFactory = new ProgramExprFactoryImpl(manager.getExprFactory());
@@ -47,11 +43,6 @@ public class ProgramManagerImpl implements ProgramManager {
 	@Override
 	public StmtFactory getStmtFactory() {
 		return stmtFactory;
-	}
-
-	@Override
-	public SolverFactory getSolverFactory() {
-		return manager.getSolverFactory();
 	}
 
 }
