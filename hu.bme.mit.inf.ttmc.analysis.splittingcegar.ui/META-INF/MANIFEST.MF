@@ -7,7 +7,7 @@ Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Require-Bundle: hu.bme.mit.inf.ttmc.analysis.splittingcegar,
  hu.bme.mit.inf.ttmc.common,
  hu.bme.mit.inf.ttmc.formalism,
- hu.bme.mit.inf.ttmc.constraint.z3,
+ hu.bme.mit.inf.ttmc.solver.z3,
  hu.bme.mit.inf.ttmc.core,
  hu.bme.mit.inf.ttmc.system.model,
  hu.bme.mit.inf.ttmc.system.ui,
