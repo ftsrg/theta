@@ -2,12 +2,12 @@ package hu.bme.mit.inf.ttmc.formalism.common.stmt.impl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
-import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
+import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.IfElseStmt;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
 
-public final class IfElseStmtImpl extends AbstractStmt implements IfElseStmt {
+final class IfElseStmtImpl extends AbstractStmt implements IfElseStmt {
 
 	private static final int HASH_SEED = 661;
 	private volatile int hashCode = 0;
@@ -16,7 +16,7 @@ public final class IfElseStmtImpl extends AbstractStmt implements IfElseStmt {
 	private final Stmt then;
 	private final Stmt elze;
 
-	public IfElseStmtImpl(final Expr<? extends BoolType> cond, final Stmt then, final Stmt elze) {
+	IfElseStmtImpl(final Expr<? extends BoolType> cond, final Stmt then, final Stmt elze) {
 		this.cond = checkNotNull(cond);
 		this.then = checkNotNull(then);
 		this.elze = checkNotNull(elze);

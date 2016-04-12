@@ -1,6 +1,6 @@
 package hu.bme.mit.inf.ttmc.formalism.utils;
 
-import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
+import hu.bme.mit.inf.ttmc.core.utils.ExprVisitor;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.visitor.PrimedExprVisitor;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.visitor.ProcCallExprVisitor;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.visitor.ProcRefExprVisitor;

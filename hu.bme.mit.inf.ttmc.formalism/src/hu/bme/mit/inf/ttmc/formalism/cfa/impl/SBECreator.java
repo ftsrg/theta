@@ -4,8 +4,8 @@ import java.util.List;
 
 import hu.bme.mit.inf.ttmc.common.Tuple2;
 import hu.bme.mit.inf.ttmc.common.Tuples;
-import hu.bme.mit.inf.ttmc.constraint.factory.ExprFactory;
-import hu.bme.mit.inf.ttmc.constraint.type.Type;
+import hu.bme.mit.inf.ttmc.core.factory.ExprFactory;
+import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.formalism.cfa.CFA;
 import hu.bme.mit.inf.ttmc.formalism.cfa.CFAEdge;
 import hu.bme.mit.inf.ttmc.formalism.cfa.CFALoc;

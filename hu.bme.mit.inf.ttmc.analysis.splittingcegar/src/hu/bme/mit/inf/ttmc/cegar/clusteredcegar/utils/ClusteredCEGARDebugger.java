@@ -12,21 +12,28 @@ import java.util.Stack;
 import hu.bme.mit.inf.ttmc.cegar.clusteredcegar.data.ClusteredAbstractState;
 import hu.bme.mit.inf.ttmc.cegar.clusteredcegar.data.ClusteredAbstractSystem;
 import hu.bme.mit.inf.ttmc.cegar.clusteredcegar.data.ComponentAbstractState;
-import hu.bme.mit.inf.ttmc.cegar.common.data.ConcreteTrace;
 import hu.bme.mit.inf.ttmc.cegar.common.data.AbstractSystem;
+import hu.bme.mit.inf.ttmc.cegar.common.data.ConcreteTrace;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.SolverHelper;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.debugging.AbstractDebugger;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.debugging.Debugger;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.Visualizer;
-import hu.bme.mit.inf.ttmc.constraint.expr.AndExpr;
-import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
-import hu.bme.mit.inf.ttmc.constraint.solver.Solver;
-import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
-import hu.bme.mit.inf.ttmc.formalism.sts.STSUnroller;
+import hu.bme.mit.inf.ttmc.core.expr.AndExpr;
+import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.type.BoolType;
+import hu.bme.mit.inf.ttmc.formalism.sts.STS;
+import hu.bme.mit.inf.ttmc.solver.Solver;
 
-public class ClusteredCEGARDebugger extends AbstractDebugger implements Debugger<ClusteredAbstractSystem, ClusteredAbstractState> {
-	private final Map<ClusteredAbstractState, List<ConcreteState>> stateSpace; // Abstract and concrete state space
-	private final Set<ClusteredAbstractState> reachableStates; // Set of reachable states
+public class ClusteredCEGARDebugger extends AbstractDebugger
+		implements Debugger<ClusteredAbstractSystem, ClusteredAbstractState> {
+	private final Map<ClusteredAbstractState, List<ConcreteState>> stateSpace; // Abstract
+																				// and
+																				// concrete
+																				// state
+																				// space
+	private final Set<ClusteredAbstractState> reachableStates; // Set of
+																// reachable
+																// states
 	private AbstractSystem system = null;
 
 	public ClusteredCEGARDebugger(final Visualizer visualizer) {
@@ -40,7 +47,7 @@ public class ClusteredCEGARDebugger extends AbstractDebugger implements Debugger
 		clearStateSpace();
 		this.system = system;
 
-		final STSUnroller unroller = system.getUnroller();
+		final STS sts = system.getSTS();
 		final Solver solver = system.getManager().getSolverFactory().createSolver(true, false);
 
 		// Explore all abstract states
@@ -50,27 +57,36 @@ public class ClusteredCEGARDebugger extends AbstractDebugger implements Debugger
 		for (int i = 1; i < prev.length; ++i)
 			prev[i] = 0;
 		do {
-			nextCAS = getNextState(system, prev, solver, unroller);
+			nextCAS = getNextState(system, prev, solver, sts);
 			if (nextCAS != null)
 				stateSpace.put(nextCAS, new ArrayList<>());
 		} while (nextCAS != null);
 
 		// Explore corresponding concrete states
-		final Collection<ConcreteState> allConcreteStates = new ArrayList<>(); // Also store them temporary in a flat collection
+		final Collection<ConcreteState> allConcreteStates = new ArrayList<>(); // Also
+																				// store
+																				// them
+																				// temporary
+																				// in
+																				// a
+																				// flat
+																				// collection
 		solver.push(); // 1
-		solver.add(unroller.inv(0));
+		solver.add(sts.unrollInv(0));
 		for (final ClusteredAbstractState cas : stateSpace.keySet()) {
 			solver.push(); // 2
 			for (final ComponentAbstractState as : cas.getStates())
 				for (final Expr<? extends BoolType> label : as.getLabels())
-					solver.add(unroller.unroll(label, 0));
+					solver.add(sts.unroll(label, 0));
 			do {
 				if (SolverHelper.checkSat(solver)) {
-					final Expr<? extends BoolType> csExpr = unroller.getConcreteState(solver.getModel(), 0, system.getVars());
+					final Expr<? extends BoolType> csExpr = sts.getConcreteState(solver.getModel(), 0,
+							system.getVars());
+
 					final ConcreteState cs = new ConcreteState(csExpr);
 					stateSpace.get(cas).add(cs);
 					allConcreteStates.add(cs);
-					solver.add(unroller.unroll(system.getManager().getExprFactory().Not(csExpr), 0));
+					solver.add(sts.unroll(system.getManager().getExprFactory().Not(csExpr), 0));
 				} else {
 					break;
 				}
@@ -80,23 +96,23 @@ public class ClusteredCEGARDebugger extends AbstractDebugger implements Debugger
 
 		// Explore abstract transition relation
 		solver.push(); // 2
-		solver.add(unroller.inv(1));
-		solver.add(unroller.trans(0));
+		solver.add(sts.unrollInv(1));
+		solver.add(sts.unrollTrans(0));
 		for (final ClusteredAbstractState cas0 : stateSpace.keySet()) {
 			solver.push(); // 3
 			for (final ComponentAbstractState as : cas0.getStates())
 				for (final Expr<? extends BoolType> label : as.getLabels())
-					solver.add(unroller.unroll(label, 0));
+					solver.add(sts.unroll(label, 0));
 			for (final ClusteredAbstractState cas1 : stateSpace.keySet()) {
 				solver.push(); // 4
 				for (final ComponentAbstractState as : cas1.getStates())
 					for (final Expr<? extends BoolType> label : as.getLabels())
-						solver.add(unroller.unroll(label, 1));
+						solver.add(sts.unroll(label, 1));
 				if (SolverHelper.checkSat(solver))
 					cas0.getSuccessors().add(cas1);
 				solver.pop(); // 4
 			}
-			solver.pop(); //3
+			solver.pop(); // 3
 		}
 		solver.pop(); // 2
 		solver.pop(); // 1
@@ -118,14 +134,16 @@ public class ClusteredCEGARDebugger extends AbstractDebugger implements Debugger
 			}
 		}
 
-		// Explore the transition relation between concrete states and initial states
-		exploreConcrTransRelAndInits(allConcreteStates, solver, unroller);
+		// Explore the transition relation between concrete states and initial
+		// states
+		exploreConcrTransRelAndInits(allConcreteStates, solver, sts);
 
 		// Explore the reachable concrete states
 		exploreReachableConcrStates(allConcreteStates);
 
 		// Mark unsafe states
-		markUnsafeStates(allConcreteStates, system.getManager().getExprFactory().Not(system.getSTS().getProp()), solver, unroller);
+		markUnsafeStates(allConcreteStates, system.getManager().getExprFactory().Not(system.getSTS().getProp()), solver,
+				sts);
 
 		return this;
 	}
@@ -140,7 +158,8 @@ public class ClusteredCEGARDebugger extends AbstractDebugger implements Debugger
 	}
 
 	@Override
-	public Debugger<ClusteredAbstractSystem, ClusteredAbstractState> setAbstractCE(final List<ClusteredAbstractState> ace) {
+	public Debugger<ClusteredAbstractSystem, ClusteredAbstractState> setAbstractCE(
+			final List<ClusteredAbstractState> ace) {
 		if (stateSpace.isEmpty())
 			throw new RuntimeException("State space is not explored");
 		clearAbstractCE();
@@ -193,7 +212,9 @@ public class ClusteredCEGARDebugger extends AbstractDebugger implements Debugger
 	}
 
 	// Get the next abstract state in the product
-	private ClusteredAbstractState getNextState(final ClusteredAbstractSystem system, final int[] previous, final Solver solver, final STSUnroller unroller) {
+	private ClusteredAbstractState getNextState(final ClusteredAbstractSystem system, final int[] previous,
+			final Solver solver, final STS sts) {
+
 		previous[0]++;
 		for (int i = 0; i < previous.length; ++i) {
 			if (previous[i] == system.getAbstractKripkeStructure(i).getStates().size()) {
@@ -220,8 +241,10 @@ public class ClusteredCEGARDebugger extends AbstractDebugger implements Debugger
 		if (isInitial) {
 			solver.push();
 			for (int i = 0; i < previous.length; ++i)
-				SolverHelper.unrollAndAssert(solver, system.getAbstractKripkeStructure(i).getState(previous[i]).getLabels(), unroller, 0);
-			solver.add(unroller.init(0));
+				SolverHelper.unrollAndAssert(solver,
+						system.getAbstractKripkeStructure(i).getState(previous[i]).getLabels(), sts, 0);
+			solver.add(sts.unrollInit(0));
+
 			isInitial = SolverHelper.checkSat(solver);
 			solver.pop();
 		}

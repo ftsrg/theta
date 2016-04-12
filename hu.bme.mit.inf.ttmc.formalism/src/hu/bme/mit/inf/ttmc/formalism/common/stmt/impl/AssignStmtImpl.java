@@ -2,12 +2,12 @@ package hu.bme.mit.inf.ttmc.formalism.common.stmt.impl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
-import hu.bme.mit.inf.ttmc.constraint.type.Type;
+import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.AssignStmt;
 
-public final class AssignStmtImpl<DeclType extends Type, ExprType extends DeclType> extends AbstractStmt
+final class AssignStmtImpl<DeclType extends Type, ExprType extends DeclType> extends AbstractStmt
 		implements AssignStmt<DeclType, ExprType> {
 
 	private static final int HASH_SEED = 409;
@@ -16,7 +16,7 @@ public final class AssignStmtImpl<DeclType extends Type, ExprType extends DeclTy
 	private final VarDecl<DeclType> varDecl;
 	private final Expr<ExprType> expr;
 
-	public AssignStmtImpl(final VarDecl<DeclType> varDecl, final Expr<ExprType> expr) {
+	AssignStmtImpl(final VarDecl<DeclType> varDecl, final Expr<ExprType> expr) {
 		this.varDecl = checkNotNull(varDecl);
 		this.expr = checkNotNull(expr);
 	}
