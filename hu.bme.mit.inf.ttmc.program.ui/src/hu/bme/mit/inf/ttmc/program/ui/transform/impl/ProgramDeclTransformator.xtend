@@ -1,6 +1,6 @@
 package hu.bme.mit.inf.ttmc.program.ui.transform.impl
 
-import hu.bme.mit.inf.ttmc.constraint.type.Type
+import hu.bme.mit.inf.ttmc.core.type.Type
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl
 import hu.bme.mit.inf.ttmc.program.model.VariableDeclaration
 import java.util.HashMap

@@ -11,14 +11,14 @@ import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.Visualizer;
 import hu.bme.mit.inf.ttmc.cegar.visiblecegar.data.VisibleAbstractState;
 import hu.bme.mit.inf.ttmc.cegar.visiblecegar.data.VisibleAbstractSystem;
 import hu.bme.mit.inf.ttmc.common.logging.Logger;
-import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
-import hu.bme.mit.inf.ttmc.constraint.solver.Solver;
-import hu.bme.mit.inf.ttmc.constraint.solver.SolverStatus;
-import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
-import hu.bme.mit.inf.ttmc.constraint.type.Type;
+import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.type.BoolType;
+import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
-import hu.bme.mit.inf.ttmc.formalism.sts.STSUnroller;
+import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 import hu.bme.mit.inf.ttmc.formalism.utils.impl.FormalismUtils;
+import hu.bme.mit.inf.ttmc.solver.Solver;
+import hu.bme.mit.inf.ttmc.solver.SolverStatus;
 
 public class UnsatCoreVarCollector extends AbstractCEGARStep implements VarCollector {
 
@@ -27,23 +27,23 @@ public class UnsatCoreVarCollector extends AbstractCEGARStep implements VarColle
 	}
 
 	@Override
-	public Collection<VarDecl<? extends Type>> collectVars(final VisibleAbstractSystem system, final List<VisibleAbstractState> abstractCounterEx,
-			final ConcreteTrace concreteCounterEx) {
+	public Collection<VarDecl<? extends Type>> collectVars(final VisibleAbstractSystem system,
+			final List<VisibleAbstractState> abstractCounterEx, final ConcreteTrace concreteCounterEx) {
 
 		final Solver solver = system.getManager().getSolverFactory().createSolver(true, true);
 		final int traceLength = concreteCounterEx.size();
 		assert (traceLength < abstractCounterEx.size());
 
-		final STSUnroller unroller = system.getUnroller();
+		final STS sts = system.getSTS();
 
 		solver.push();
-		solver.track(unroller.init(0));
+		solver.track(sts.unrollInit(0));
 		for (int i = 0; i < traceLength + 1; ++i) {
 			for (final Expr<? extends BoolType> label : abstractCounterEx.get(i).getExpression().getOps())
-				solver.track(unroller.unroll(label, i));
+				solver.track(sts.unroll(label, i));
 			if (i > 0)
-				solver.track(unroller.trans(i - 1));
-			solver.track(unroller.inv(i));
+				solver.track(sts.unrollTrans(i - 1));
+			solver.track(sts.unrollInv(i));
 		}
 
 		solver.check();
@@ -53,7 +53,7 @@ public class UnsatCoreVarCollector extends AbstractCEGARStep implements VarColle
 		final Set<VarDecl<? extends Type>> vars = new HashSet<>();
 
 		for (final Expr<? extends BoolType> uc : solver.getUnsatCore())
-			FormalismUtils.collectVars(unroller.foldin(uc, 0), vars);
+			FormalismUtils.collectVars(sts.foldin(uc, 0), vars);
 
 		solver.pop();
 

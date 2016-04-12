@@ -8,10 +8,10 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
-import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
-import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
-import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
-import hu.bme.mit.inf.ttmc.constraint.type.Type;
+import hu.bme.mit.inf.ttmc.core.ConstraintManager;
+import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.type.BoolType;
+import hu.bme.mit.inf.ttmc.core.type.Type;
 
 /**
  * Class representing a sequence or binary interpolant. A binary interpolant is

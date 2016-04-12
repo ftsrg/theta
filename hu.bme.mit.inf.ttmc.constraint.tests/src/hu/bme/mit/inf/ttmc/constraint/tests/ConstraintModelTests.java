@@ -5,12 +5,12 @@ import java.io.IOException;
 
 import org.junit.Test;
 
-import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
-import hu.bme.mit.inf.ttmc.constraint.ConstraintManagerImpl;
 import hu.bme.mit.inf.ttmc.constraint.model.ConstraintSpecification;
 import hu.bme.mit.inf.ttmc.constraint.ui.ConstraintModel;
 import hu.bme.mit.inf.ttmc.constraint.ui.ConstraintModelCreator;
 import hu.bme.mit.inf.ttmc.constraint.ui.ConstraintModelLoader;
+import hu.bme.mit.inf.ttmc.core.ConstraintManager;
+import hu.bme.mit.inf.ttmc.core.ConstraintManagerImpl;
 
 public class ConstraintModelTests {
 

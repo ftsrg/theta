@@ -2,12 +2,12 @@ package hu.bme.mit.inf.ttmc.formalism.common.stmt.impl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
-import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
+import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.WhileStmt;
 
-public final class WhileStmtImpl extends AbstractStmt implements WhileStmt {
+final class WhileStmtImpl extends AbstractStmt implements WhileStmt {
 
 	private final static int HASH_SEED = 631;
 	private volatile int hashCode = 0;
@@ -15,7 +15,7 @@ public final class WhileStmtImpl extends AbstractStmt implements WhileStmt {
 	private final Expr<? extends BoolType> cond;
 	private final Stmt doStmt;
 
-	public WhileStmtImpl(final Expr<? extends BoolType> cond, final Stmt doStmt) {
+	WhileStmtImpl(final Expr<? extends BoolType> cond, final Stmt doStmt) {
 		this.cond = checkNotNull(cond);
 		this.doStmt = checkNotNull(doStmt);
 	}

@@ -1,10 +1,10 @@
 package hu.bme.mit.inf.ttmc.constraint.ui.transform.impl;
 
-import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.ui.transform.DeclTransformator;
 import hu.bme.mit.inf.ttmc.constraint.ui.transform.ExprTransformator;
 import hu.bme.mit.inf.ttmc.constraint.ui.transform.TransformationManager;
 import hu.bme.mit.inf.ttmc.constraint.ui.transform.TypeTransformator;
+import hu.bme.mit.inf.ttmc.core.ConstraintManager;
 
 public class ConstraintTransformationManager implements TransformationManager {
 

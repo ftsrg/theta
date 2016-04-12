@@ -10,14 +10,14 @@ import com.google.common.collect.ImmutableList;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.BlockStmt;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
 
-public final class BlockStmtImpl extends AbstractStmt implements BlockStmt {
+final class BlockStmtImpl extends AbstractStmt implements BlockStmt {
 
 	private static final int HASH_SEED = 757;
 	private volatile int hashCode = 0;
 
 	private final List<? extends Stmt> stmts;
 
-	public BlockStmtImpl(final List<? extends Stmt> stmts) {
+	BlockStmtImpl(final List<? extends Stmt> stmts) {
 		this.stmts = ImmutableList.copyOf(checkNotNull(stmts));
 	}
 

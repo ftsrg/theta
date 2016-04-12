@@ -4,21 +4,21 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Collection;
 
-import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
-import hu.bme.mit.inf.ttmc.constraint.decl.ConstDecl;
-import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.model.BasicConstraintDefinition;
 import hu.bme.mit.inf.ttmc.constraint.model.ConstantDeclaration;
 import hu.bme.mit.inf.ttmc.constraint.model.ConstraintSpecification;
 import hu.bme.mit.inf.ttmc.constraint.model.Expression;
-import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
-import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.constraint.ui.impl.ConstraintModelBuilder;
 import hu.bme.mit.inf.ttmc.constraint.ui.impl.ConstraintModelImpl;
 import hu.bme.mit.inf.ttmc.constraint.ui.transform.DeclTransformator;
 import hu.bme.mit.inf.ttmc.constraint.ui.transform.ExprTransformator;
 import hu.bme.mit.inf.ttmc.constraint.ui.transform.impl.ConstraintTransformationManager;
-import hu.bme.mit.inf.ttmc.constraint.utils.impl.ExprUtils;
+import hu.bme.mit.inf.ttmc.core.ConstraintManager;
+import hu.bme.mit.inf.ttmc.core.decl.ConstDecl;
+import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.type.BoolType;
+import hu.bme.mit.inf.ttmc.core.type.Type;
+import hu.bme.mit.inf.ttmc.core.utils.impl.ExprUtils;
 
 public class ConstraintModelCreator {
 

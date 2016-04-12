@@ -1,6 +1,6 @@
 package hu.bme.mit.inf.ttmc.constraint.ui.transform;
 
-import hu.bme.mit.inf.ttmc.constraint.type.Type;
+import hu.bme.mit.inf.ttmc.core.type.Type;
 
 public interface TypeTransformator {
 

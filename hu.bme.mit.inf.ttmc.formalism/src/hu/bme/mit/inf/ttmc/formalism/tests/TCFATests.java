@@ -2,13 +2,13 @@ package hu.bme.mit.inf.ttmc.formalism.tests;
 
 import org.junit.Test;
 
-import hu.bme.mit.inf.ttmc.constraint.ConstraintManagerImpl;
-import hu.bme.mit.inf.ttmc.constraint.decl.ConstDecl;
-import hu.bme.mit.inf.ttmc.constraint.expr.ConstRefExpr;
-import hu.bme.mit.inf.ttmc.constraint.expr.IntLitExpr;
-import hu.bme.mit.inf.ttmc.constraint.expr.RatLitExpr;
-import hu.bme.mit.inf.ttmc.constraint.type.IntType;
-import hu.bme.mit.inf.ttmc.constraint.type.RatType;
+import hu.bme.mit.inf.ttmc.core.ConstraintManagerImpl;
+import hu.bme.mit.inf.ttmc.core.decl.ConstDecl;
+import hu.bme.mit.inf.ttmc.core.expr.ConstRefExpr;
+import hu.bme.mit.inf.ttmc.core.expr.IntLitExpr;
+import hu.bme.mit.inf.ttmc.core.expr.RatLitExpr;
+import hu.bme.mit.inf.ttmc.core.type.IntType;
+import hu.bme.mit.inf.ttmc.core.type.RatType;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.VarRefExpr;
 import hu.bme.mit.inf.ttmc.formalism.common.factory.StmtFactory;

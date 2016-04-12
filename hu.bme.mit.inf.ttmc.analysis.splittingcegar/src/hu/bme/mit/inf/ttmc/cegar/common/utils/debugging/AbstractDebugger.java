@@ -14,13 +14,13 @@ import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.Visualizer;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.graph.ClusterNode;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.graph.Graph;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.graph.Node;
-import hu.bme.mit.inf.ttmc.constraint.expr.AndExpr;
-import hu.bme.mit.inf.ttmc.constraint.expr.EqExpr;
-import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
-import hu.bme.mit.inf.ttmc.constraint.solver.Solver;
-import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
+import hu.bme.mit.inf.ttmc.core.expr.AndExpr;
+import hu.bme.mit.inf.ttmc.core.expr.EqExpr;
+import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.type.BoolType;
+import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
-import hu.bme.mit.inf.ttmc.formalism.sts.STSUnroller;
+import hu.bme.mit.inf.ttmc.solver.Solver;
 
 /**
  * Base class for debuggers.
@@ -33,25 +33,25 @@ public class AbstractDebugger {
 	}
 
 	protected void exploreConcrTransRelAndInits(final Collection<ConcreteState> concreteStates, final Solver solver,
-			final STSUnroller unroller) {
+			final STS sts) {
 		solver.push();
-		solver.add(unroller.inv(0));
+		solver.add(sts.unrollInv(0));
 		// Loop through each state
 		for (final ConcreteState cs0 : concreteStates) {
 			// Assert its expression
 			solver.push();
-			solver.add(unroller.unroll(cs0.model, 0));
+			solver.add(sts.unroll(cs0.model, 0));
 			// Check if it is initial
 			solver.push();
-			solver.add(unroller.init(0));
+			solver.add(sts.unrollInit(0));
 			cs0.isInitial = SolverHelper.checkSat(solver);
 			solver.pop();
 			// Loop through other states to get successors
 			for (final ConcreteState cs1 : concreteStates) {
 				solver.push();
-				solver.add(unroller.inv(1));
-				solver.add(unroller.unroll(cs1.model, 1));
-				solver.add(unroller.trans(0));
+				solver.add(sts.unrollInv(1));
+				solver.add(sts.unroll(cs1.model, 1));
+				solver.add(sts.unrollTrans(0));
 				if (SolverHelper.checkSat(solver))
 					cs0.successors.add(cs1);
 				solver.pop();
@@ -79,13 +79,14 @@ public class AbstractDebugger {
 		}
 	}
 
-	protected void markUnsafeStates(final Collection<ConcreteState> concreteStates, final Expr<? extends BoolType> unsafeExpr, final Solver solver,
-			final STSUnroller unroller) {
+	protected void markUnsafeStates(final Collection<ConcreteState> concreteStates,
+			final Expr<? extends BoolType> unsafeExpr, final Solver solver, final STS sts) {
+
 		solver.push();
-		solver.add(unroller.unroll(unsafeExpr, 0));
+		solver.add(sts.unroll(unsafeExpr, 0));
 		for (final ConcreteState cs0 : concreteStates) {
 			solver.push();
-			solver.add(unroller.unroll(cs0.model, 0));
+			solver.add(sts.unroll(cs0.model, 0));
 			if (SolverHelper.checkSat(solver))
 				cs0.isUnsafe = true;
 			solver.pop();
@@ -116,19 +117,20 @@ public class AbstractDebugger {
 				labelString.append(labelExpr);
 			}
 
-			final ClusterNode cn = new ClusterNode(("cluster_cas_" + ids.get(as)).replace('-', '_'), labelString.toString(),
-					reachableStates.contains(as) ? "black" : "gray", as.isPartOfCounterexample() ? "pink" : "white", "", as.isInitial());
+			final ClusterNode cn = new ClusterNode(("cluster_cas_" + ids.get(as)).replace('-', '_'),
+					labelString.toString(), reachableStates.contains(as) ? "black" : "gray",
+					as.isPartOfCounterexample() ? "pink" : "white", "", as.isInitial());
 			g.addNode(cn);
 			for (final AbstractState as1 : as.getSuccessors())
 				cn.addSuccessor(("cluster_cas_" + ids.get(as1)).replace('-', '_'), "");
 
 			for (final ConcreteState cs0 : stateSpace.get(as)) {
-				final Node n = new Node("cs_" + cs0.createId(), cs0.toString(), (cs0.isReachable ? "" : "grey"), (cs0.isPartOfCounterExample ? "red" : ""),
-						(cs0.isUnsafe ? "dashed" : ""), cs0.isInitial);
+				final Node n = new Node("cs_" + cs0.createId(), cs0.toString(), (cs0.isReachable ? "" : "grey"),
+						(cs0.isPartOfCounterExample ? "red" : ""), (cs0.isUnsafe ? "dashed" : ""), cs0.isInitial);
 				cn.addSubNode(n);
 				for (final ConcreteState cs1 : cs0.successors)
-					n.addSuccessor("cs_" + cs1.createId(),
-							(cs0.isPartOfCounterExample && cs1.isPartOfCounterExample && cs0.counterExampleIndex < cs1.counterExampleIndex ? "red" : ""));
+					n.addSuccessor("cs_" + cs1.createId(), (cs0.isPartOfCounterExample && cs1.isPartOfCounterExample
+							&& cs0.counterExampleIndex < cs1.counterExampleIndex ? "red" : ""));
 			}
 		}
 
@@ -162,7 +164,8 @@ public class AbstractDebugger {
 		@Override
 		public String toString() {
 			return String.join(System.lineSeparator(),
-					model.getOps().stream().map(m -> ((EqExpr) m).getLeftOp() + " = " + ((EqExpr) m).getRightOp()).collect(Collectors.toList()));
+					model.getOps().stream().map(m -> ((EqExpr) m).getLeftOp() + " = " + ((EqExpr) m).getRightOp())
+							.collect(Collectors.toList()));
 		}
 
 		public String createId() {

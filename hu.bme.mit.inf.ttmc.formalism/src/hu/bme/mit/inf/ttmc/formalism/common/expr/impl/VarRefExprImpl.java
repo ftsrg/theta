@@ -1,8 +1,8 @@
 package hu.bme.mit.inf.ttmc.formalism.common.expr.impl;
 
-import hu.bme.mit.inf.ttmc.constraint.expr.defaults.AbstractRefExpr;
-import hu.bme.mit.inf.ttmc.constraint.type.Type;
-import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
+import hu.bme.mit.inf.ttmc.core.expr.impl.AbstractRefExpr;
+import hu.bme.mit.inf.ttmc.core.type.Type;
+import hu.bme.mit.inf.ttmc.core.utils.ExprVisitor;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.VarRefExpr;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.visitor.VarRefExprVisitor;

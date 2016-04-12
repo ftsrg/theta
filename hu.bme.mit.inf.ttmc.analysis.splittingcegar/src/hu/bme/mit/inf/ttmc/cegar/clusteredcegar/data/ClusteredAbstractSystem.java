@@ -7,8 +7,8 @@ import java.util.List;
 
 import hu.bme.mit.inf.ttmc.cegar.common.data.AbstractSystemBase;
 import hu.bme.mit.inf.ttmc.cegar.common.data.KripkeStructure;
-import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
-import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
+import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 
 public class ClusteredAbstractSystem extends AbstractSystemBase {

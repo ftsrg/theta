@@ -2,13 +2,13 @@ package hu.bme.mit.inf.ttmc.formalism.common.factory.impl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import hu.bme.mit.inf.ttmc.constraint.factory.TypeFactory;
-import hu.bme.mit.inf.ttmc.constraint.type.ArrayType;
-import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
-import hu.bme.mit.inf.ttmc.constraint.type.FuncType;
-import hu.bme.mit.inf.ttmc.constraint.type.IntType;
-import hu.bme.mit.inf.ttmc.constraint.type.RatType;
-import hu.bme.mit.inf.ttmc.constraint.type.Type;
+import hu.bme.mit.inf.ttmc.core.factory.TypeFactory;
+import hu.bme.mit.inf.ttmc.core.type.ArrayType;
+import hu.bme.mit.inf.ttmc.core.type.BoolType;
+import hu.bme.mit.inf.ttmc.core.type.FuncType;
+import hu.bme.mit.inf.ttmc.core.type.IntType;
+import hu.bme.mit.inf.ttmc.core.type.RatType;
+import hu.bme.mit.inf.ttmc.core.type.Type;
 
 public abstract class TypeFactoryDecorator implements TypeFactory {
 
