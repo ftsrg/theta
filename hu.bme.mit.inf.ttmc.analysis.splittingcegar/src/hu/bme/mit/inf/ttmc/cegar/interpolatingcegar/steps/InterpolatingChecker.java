@@ -104,7 +104,7 @@ public class InterpolatingChecker extends AbstractCEGARStep
 		boolean isContinuation = true;
 
 		// Loop through each initial state and do a search
-		while (actualInit < system.getAbstractKripkeStructure().getInitialStates().size()) {
+		while (actualInit < system.getAbstractKripkeStructure().getInitialStates().size() && counterExample == null) {
 			if (isStopped)
 				return null;
 			final InterpolatedAbstractState init = system.getAbstractKripkeStructure().getInitialState(actualInit);
