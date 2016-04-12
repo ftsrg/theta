@@ -1,5 +1,9 @@
 package hu.bme.mit.inf.ttmc.core.tests;
 
+import static hu.bme.mit.inf.ttmc.core.type.impl.Types.Bool;
+import static hu.bme.mit.inf.ttmc.core.type.impl.Types.Func;
+import static hu.bme.mit.inf.ttmc.core.type.impl.Types.Int;
+import static hu.bme.mit.inf.ttmc.core.type.impl.Types.Rat;
 import static org.junit.Assert.assertEquals;
 
 import java.util.Arrays;
@@ -12,9 +16,6 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
-import hu.bme.mit.inf.ttmc.core.ConstraintManager;
-import hu.bme.mit.inf.ttmc.core.ConstraintManagerImpl;
-import hu.bme.mit.inf.ttmc.core.factory.TypeFactory;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.core.type.FuncType;
 import hu.bme.mit.inf.ttmc.core.type.IntType;
@@ -88,17 +89,14 @@ public class TypeMeetTests {
 	}
 
 	static {
-		final ConstraintManager manager = new ConstraintManagerImpl();
-		final TypeFactory tf = manager.getTypeFactory();
-
 		BOTTOM = null;
-		BOOL = tf.Bool();
-		INT = tf.Int();
-		RAT = tf.Rat();
-		INT_TO_RAT = tf.Func(INT, RAT);
-		INT_TO_INT = tf.Func(INT, INT);
-		RAT_TO_RAT = tf.Func(RAT, RAT);
-		RAT_TO_INT = tf.Func(RAT, INT);
+		BOOL = Bool();
+		INT = Int();
+		RAT = Rat();
+		INT_TO_RAT = Func(Int(), Rat());
+		INT_TO_INT = Func(Int(), Int());
+		RAT_TO_RAT = Func(Rat(), Rat());
+		RAT_TO_INT = Func(Rat(), Int());
 	}
 
 	@Test
