@@ -6,14 +6,14 @@ import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.ReturnStmt;
 
-public final class ReturnStmtImpl<ReturnType extends Type> implements ReturnStmt<ReturnType> {
+final class ReturnStmtImpl<ReturnType extends Type> implements ReturnStmt<ReturnType> {
 
 	private static final int HASH_SEED = 1009;
 	private volatile int hashCode = 0;
 
 	private final Expr<? extends ReturnType> expr;
 
-	public ReturnStmtImpl(final Expr<? extends ReturnType> expr) {
+	ReturnStmtImpl(final Expr<? extends ReturnType> expr) {
 		this.expr = checkNotNull(expr);
 	}
 

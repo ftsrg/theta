@@ -7,7 +7,7 @@ import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.DoStmt;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
 
-public final class DoStmtImpl extends AbstractStmt implements DoStmt {
+final class DoStmtImpl extends AbstractStmt implements DoStmt {
 
 	private static final int HASH_SEED = 599;
 	private volatile int hashCode = 0;
@@ -15,7 +15,7 @@ public final class DoStmtImpl extends AbstractStmt implements DoStmt {
 	private final Stmt doStmt;
 	private final Expr<? extends BoolType> cond;
 
-	public DoStmtImpl(final Stmt doStmt, final Expr<? extends BoolType> cond) {
+	DoStmtImpl(final Stmt doStmt, final Expr<? extends BoolType> cond) {
 		this.doStmt = checkNotNull(doStmt);
 		this.cond = checkNotNull(cond);
 	}
