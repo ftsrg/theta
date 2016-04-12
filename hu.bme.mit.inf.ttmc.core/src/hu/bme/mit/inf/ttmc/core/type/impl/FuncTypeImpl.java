@@ -45,7 +45,7 @@ final class FuncTypeImpl<ParamType extends Type, ResultType extends Type> implem
 	public boolean isLeq(final Type type) {
 		if (type instanceof FuncType<?, ?>) {
 			final FuncType<?, ?> that = (FuncType<?, ?>) type;
-			return this.getParamType().isLeq(that.getParamType()) && this.getResultType().isLeq(that.getResultType());
+			return that.getParamType().isLeq(this.getParamType()) && this.getResultType().isLeq(that.getResultType());
 		} else {
 			return false;
 		}
