@@ -17,12 +17,12 @@ import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.InterpolatingCEGARBuilder.In
 import hu.bme.mit.inf.ttmc.cegar.tests.invariantchecker.InvariantChecker;
 import hu.bme.mit.inf.ttmc.common.logging.Logger;
 import hu.bme.mit.inf.ttmc.common.logging.impl.ConsoleLogger;
-import hu.bme.mit.inf.ttmc.constraint.z3.Z3ConstraintManager;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
 import hu.bme.mit.inf.ttmc.formalism.sts.impl.STSManagerImpl;
+import hu.bme.mit.inf.ttmc.solver.z3.Z3ConstraintManager;
 import hu.bme.mit.inf.ttmc.system.model.SystemSpecification;
 import hu.bme.mit.inf.ttmc.system.ui.SystemModel;
 import hu.bme.mit.inf.ttmc.system.ui.SystemModelCreator;

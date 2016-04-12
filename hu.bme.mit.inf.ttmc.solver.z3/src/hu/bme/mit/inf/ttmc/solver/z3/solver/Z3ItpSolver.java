@@ -1,4 +1,4 @@
-package hu.bme.mit.inf.ttmc.constraint.z3.solver;
+package hu.bme.mit.inf.ttmc.solver.z3.solver;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -12,8 +12,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import hu.bme.mit.inf.ttmc.constraint.z3.trasform.Z3TermTransformer;
-import hu.bme.mit.inf.ttmc.constraint.z3.trasform.Z3TransformationManager;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.solver.Interpolant;
 import hu.bme.mit.inf.ttmc.core.solver.ItpMarker;
@@ -25,6 +23,8 @@ import hu.bme.mit.inf.ttmc.core.solver.SolverStatus;
 import hu.bme.mit.inf.ttmc.core.solver.impl.ItpMarkerImpl;
 import hu.bme.mit.inf.ttmc.core.solver.impl.ItpPatternImpl;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
+import hu.bme.mit.inf.ttmc.solver.z3.trasform.Z3TermTransformer;
+import hu.bme.mit.inf.ttmc.solver.z3.trasform.Z3TransformationManager;
 
 public class Z3ItpSolver implements ItpSolver {
 

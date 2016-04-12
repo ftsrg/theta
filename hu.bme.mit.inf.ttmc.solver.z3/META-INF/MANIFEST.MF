@@ -8,4 +8,4 @@ Require-Bundle: com.google.guava,
  org.junit,
  hu.bme.mit.inf.ttmc.common,
  hu.bme.mit.inf.ttmc.core
-Export-Package: hu.bme.mit.inf.ttmc.constraint.z3
+Export-Package: hu.bme.mit.inf.ttmc.solver.z3

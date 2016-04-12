@@ -1,4 +1,4 @@
-package hu.bme.mit.inf.ttmc.constraint.z3.solver;
+package hu.bme.mit.inf.ttmc.solver.z3.solver;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -13,13 +13,13 @@ import com.microsoft.z3.Status;
 
 import hu.bme.mit.inf.ttmc.common.Stack;
 import hu.bme.mit.inf.ttmc.common.impl.StackImpl;
-import hu.bme.mit.inf.ttmc.constraint.z3.trasform.Z3TermTransformer;
-import hu.bme.mit.inf.ttmc.constraint.z3.trasform.Z3TransformationManager;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.solver.Model;
 import hu.bme.mit.inf.ttmc.core.solver.Solver;
 import hu.bme.mit.inf.ttmc.core.solver.SolverStatus;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
+import hu.bme.mit.inf.ttmc.solver.z3.trasform.Z3TermTransformer;
+import hu.bme.mit.inf.ttmc.solver.z3.trasform.Z3TransformationManager;
 
 public class Z3Solver implements Solver {
 
