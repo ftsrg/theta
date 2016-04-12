@@ -9,7 +9,7 @@ import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.DeclStmt;
 
-public final class DeclStmtImpl<DeclType extends Type, ExprType extends DeclType>
+final class DeclStmtImpl<DeclType extends Type, ExprType extends DeclType> extends AbstractStmt
 		implements DeclStmt<DeclType, ExprType> {
 
 	private static final int HASH_SEED = 4201;
@@ -20,7 +20,7 @@ public final class DeclStmtImpl<DeclType extends Type, ExprType extends DeclType
 
 	private final Optional<Expr<ExprType>> initVal;
 
-	public DeclStmtImpl(final VarDecl<DeclType> varDecl) {
+	DeclStmtImpl(final VarDecl<DeclType> varDecl) {
 		this.varDecl = checkNotNull(varDecl);
 		initVal = Optional.empty();
 	}

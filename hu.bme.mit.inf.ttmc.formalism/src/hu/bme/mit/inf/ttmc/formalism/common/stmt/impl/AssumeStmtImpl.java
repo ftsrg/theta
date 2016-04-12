@@ -6,14 +6,14 @@ import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.AssumeStmt;
 
-public final class AssumeStmtImpl extends AbstractStmt implements AssumeStmt {
+final class AssumeStmtImpl extends AbstractStmt implements AssumeStmt {
 
 	private static final int HASH_SEED = 547;
 	private volatile int hashCode = 0;
 
 	private final Expr<? extends BoolType> cond;
 
-	public AssumeStmtImpl(final Expr<? extends BoolType> cond) {
+	AssumeStmtImpl(final Expr<? extends BoolType> cond) {
 		this.cond = checkNotNull(cond);
 	}
 

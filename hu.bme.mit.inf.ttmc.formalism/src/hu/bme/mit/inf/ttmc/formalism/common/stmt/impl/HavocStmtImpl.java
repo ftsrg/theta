@@ -6,14 +6,14 @@ import hu.bme.mit.inf.ttmc.constraint.type.Type;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.HavocStmt;
 
-public final class HavocStmtImpl<DeclType extends Type> extends AbstractStmt implements HavocStmt<DeclType> {
+final class HavocStmtImpl<DeclType extends Type> extends AbstractStmt implements HavocStmt<DeclType> {
 
 	private static final int HASH_SEED = 929;
 	private volatile int hashCode = 0;
 
 	private final VarDecl<DeclType> varDecl;
 
-	public HavocStmtImpl(final VarDecl<DeclType> varDecl) {
+	HavocStmtImpl(final VarDecl<DeclType> varDecl) {
 		this.varDecl = checkNotNull(varDecl);
 	}
 

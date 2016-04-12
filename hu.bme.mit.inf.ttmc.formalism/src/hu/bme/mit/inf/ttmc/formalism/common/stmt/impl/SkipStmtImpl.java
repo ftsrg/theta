@@ -2,9 +2,12 @@ package hu.bme.mit.inf.ttmc.formalism.common.stmt.impl;
 
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.SkipStmt;
 
-public final class SkipStmtImpl extends AbstractStmt implements SkipStmt {
+final class SkipStmtImpl extends AbstractStmt implements SkipStmt {
 
 	private final static int HASH_CODE = 1310147;
+
+	SkipStmtImpl() {
+	}
 
 	@Override
 	public int hashCode() {
