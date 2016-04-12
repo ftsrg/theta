@@ -1,4 +1,4 @@
-package hu.bme.mit.inf.ttmc.core.solver;
+package hu.bme.mit.inf.ttmc.solver;
 
 import java.util.Collection;
 

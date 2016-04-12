@@ -5,10 +5,10 @@ import java.util.List;
 
 import hu.bme.mit.inf.ttmc.core.expr.AndExpr;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
-import hu.bme.mit.inf.ttmc.core.solver.Model;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
+import hu.bme.mit.inf.ttmc.solver.Model;
 
 public interface STSUnroller {
 	public Expr<? extends BoolType> unroll(final Expr<? extends BoolType> expr, final int i);

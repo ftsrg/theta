@@ -1,8 +1,8 @@
 package hu.bme.mit.inf.ttmc.solver.z3;
 
 import hu.bme.mit.inf.ttmc.core.ConstraintManagerImpl;
-import hu.bme.mit.inf.ttmc.core.SolverManager;
-import hu.bme.mit.inf.ttmc.core.factory.SolverFactory;
+import hu.bme.mit.inf.ttmc.solver.SolverFactory;
+import hu.bme.mit.inf.ttmc.solver.SolverManager;
 import hu.bme.mit.inf.ttmc.solver.z3.factory.Z3SolverFactory;
 
 public class Z3SolverManager implements SolverManager {

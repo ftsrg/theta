@@ -1,4 +1,4 @@
-package hu.bme.mit.inf.ttmc.core.solver;
+package hu.bme.mit.inf.ttmc.solver;
 
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;

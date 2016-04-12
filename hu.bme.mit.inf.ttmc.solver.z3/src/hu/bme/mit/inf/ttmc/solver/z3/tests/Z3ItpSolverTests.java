@@ -21,18 +21,18 @@ import org.junit.Test;
 
 import com.google.common.collect.ImmutableList;
 
-import hu.bme.mit.inf.ttmc.core.SolverManager;
 import hu.bme.mit.inf.ttmc.core.decl.ConstDecl;
 import hu.bme.mit.inf.ttmc.core.decl.ParamDecl;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
-import hu.bme.mit.inf.ttmc.core.factory.SolverFactory;
-import hu.bme.mit.inf.ttmc.core.solver.Interpolant;
-import hu.bme.mit.inf.ttmc.core.solver.ItpMarker;
-import hu.bme.mit.inf.ttmc.core.solver.ItpPattern;
-import hu.bme.mit.inf.ttmc.core.solver.ItpSolver;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.core.type.FuncType;
 import hu.bme.mit.inf.ttmc.core.type.IntType;
+import hu.bme.mit.inf.ttmc.solver.Interpolant;
+import hu.bme.mit.inf.ttmc.solver.ItpMarker;
+import hu.bme.mit.inf.ttmc.solver.ItpPattern;
+import hu.bme.mit.inf.ttmc.solver.ItpSolver;
+import hu.bme.mit.inf.ttmc.solver.SolverFactory;
+import hu.bme.mit.inf.ttmc.solver.SolverManager;
 import hu.bme.mit.inf.ttmc.solver.z3.Z3SolverManager;
 
 public class Z3ItpSolverTests {

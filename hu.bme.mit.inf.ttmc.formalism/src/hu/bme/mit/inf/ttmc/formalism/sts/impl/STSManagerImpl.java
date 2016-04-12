@@ -2,14 +2,14 @@ package hu.bme.mit.inf.ttmc.formalism.sts.impl;
 
 import hu.bme.mit.inf.ttmc.core.ConstraintManager;
 import hu.bme.mit.inf.ttmc.core.ConstraintManagerImpl;
-import hu.bme.mit.inf.ttmc.core.SolverManager;
-import hu.bme.mit.inf.ttmc.core.factory.SolverFactory;
 import hu.bme.mit.inf.ttmc.core.factory.TypeFactory;
 import hu.bme.mit.inf.ttmc.formalism.common.factory.VarDeclFactory;
 import hu.bme.mit.inf.ttmc.formalism.common.factory.impl.VarDeclFactoryImpl;
 import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
 import hu.bme.mit.inf.ttmc.formalism.sts.factory.STSExprFactory;
 import hu.bme.mit.inf.ttmc.formalism.sts.factory.impl.STSExprFactoryImpl;
+import hu.bme.mit.inf.ttmc.solver.SolverFactory;
+import hu.bme.mit.inf.ttmc.solver.SolverManager;
 
 public class STSManagerImpl implements STSManager {
 

@@ -12,13 +12,13 @@ import hu.bme.mit.inf.ttmc.cegar.visiblecegar.data.VisibleAbstractState;
 import hu.bme.mit.inf.ttmc.cegar.visiblecegar.data.VisibleAbstractSystem;
 import hu.bme.mit.inf.ttmc.common.logging.Logger;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
-import hu.bme.mit.inf.ttmc.core.solver.Solver;
-import hu.bme.mit.inf.ttmc.core.solver.SolverStatus;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.sts.STSUnroller;
 import hu.bme.mit.inf.ttmc.formalism.utils.impl.FormalismUtils;
+import hu.bme.mit.inf.ttmc.solver.Solver;
+import hu.bme.mit.inf.ttmc.solver.SolverStatus;
 
 public class UnsatCoreVarCollector extends AbstractCEGARStep implements VarCollector {
 
@@ -27,8 +27,8 @@ public class UnsatCoreVarCollector extends AbstractCEGARStep implements VarColle
 	}
 
 	@Override
-	public Collection<VarDecl<? extends Type>> collectVars(final VisibleAbstractSystem system, final List<VisibleAbstractState> abstractCounterEx,
-			final ConcreteTrace concreteCounterEx) {
+	public Collection<VarDecl<? extends Type>> collectVars(final VisibleAbstractSystem system,
+			final List<VisibleAbstractState> abstractCounterEx, final ConcreteTrace concreteCounterEx) {
 
 		final Solver solver = system.getManager().getSolverFactory().createSolver(true, true);
 		final int traceLength = concreteCounterEx.size();

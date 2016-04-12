@@ -1,12 +1,12 @@
-package hu.bme.mit.inf.ttmc.core.solver.impl;
+package hu.bme.mit.inf.ttmc.solver.impl;
 
 import java.util.Collection;
 
 import hu.bme.mit.inf.ttmc.common.Stack;
 import hu.bme.mit.inf.ttmc.common.impl.StackImpl;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
-import hu.bme.mit.inf.ttmc.core.solver.ItpMarker;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
+import hu.bme.mit.inf.ttmc.solver.ItpMarker;
 
 public class ItpMarkerImpl implements ItpMarker {
 

@@ -1,15 +1,16 @@
 package hu.bme.mit.inf.ttmc.cegar.tests.invariantchecker;
 
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
-import hu.bme.mit.inf.ttmc.core.solver.Solver;
-import hu.bme.mit.inf.ttmc.core.solver.SolverStatus;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
 import hu.bme.mit.inf.ttmc.formalism.sts.STSUnroller;
+import hu.bme.mit.inf.ttmc.solver.Solver;
+import hu.bme.mit.inf.ttmc.solver.SolverStatus;
 
 public class InvariantChecker {
-	public static boolean check(final STS system, final STSUnroller unroller, final Expr<? extends BoolType> invariant) {
+	public static boolean check(final STS system, final STSUnroller unroller,
+			final Expr<? extends BoolType> invariant) {
 		final STSManager manager = system.getManager();
 		final Solver solver = manager.getSolverFactory().createSolver(true, true);
 

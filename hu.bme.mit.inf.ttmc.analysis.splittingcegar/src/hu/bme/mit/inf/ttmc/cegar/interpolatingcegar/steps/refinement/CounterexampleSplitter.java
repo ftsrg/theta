@@ -13,9 +13,9 @@ import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.data.InterpolatedAbstractSys
 import hu.bme.mit.inf.ttmc.common.logging.Logger;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.expr.NotExpr;
-import hu.bme.mit.inf.ttmc.core.solver.Solver;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.formalism.sts.STSUnroller;
+import hu.bme.mit.inf.ttmc.solver.Solver;
 
 /**
  * State splitter that cuts only states that are in the abstract counterexample.
@@ -30,7 +30,8 @@ public class CounterexampleSplitter extends AbstractCEGARStep implements Splitte
 	}
 
 	@Override
-	public int split(final InterpolatedAbstractSystem system, final List<InterpolatedAbstractState> abstractCounterEx, final Interpolant interpolant) {
+	public int split(final InterpolatedAbstractSystem system, final List<InterpolatedAbstractState> abstractCounterEx,
+			final Interpolant interpolant) {
 		assert (0 < interpolant.size() && interpolant.size() <= abstractCounterEx.size());
 		int firstSplit = -1;
 		for (int i = 0; i < interpolant.size(); ++i) {
@@ -46,7 +47,8 @@ public class CounterexampleSplitter extends AbstractCEGARStep implements Splitte
 		return firstSplit;
 	}
 
-	private void splitSingleState(final InterpolatedAbstractSystem system, final InterpolatedAbstractState stateToSplit, Expr<? extends BoolType> interpolant) {
+	private void splitSingleState(final InterpolatedAbstractSystem system, final InterpolatedAbstractState stateToSplit,
+			Expr<? extends BoolType> interpolant) {
 		final Solver solver = system.getManager().getSolverFactory().createSolver(true, false);
 		final STSUnroller unroller = system.getUnroller();
 
@@ -82,8 +84,10 @@ public class CounterexampleSplitter extends AbstractCEGARStep implements Splitte
 		for (final InterpolatedAbstractState refined : refinedStates)
 			logger.writeln(refined, 6, 2);
 
-		// Check if the refined states are initial (only if the original state was initial, but
-		// then at least one of the refined states must also be initial --> assertion)
+		// Check if the refined states are initial (only if the original state
+		// was initial, but
+		// then at least one of the refined states must also be initial -->
+		// assertion)
 		if (stateToSplit.isInitial()) {
 			solver.push();
 			solver.add(unroller.inv(0));
@@ -104,8 +108,10 @@ public class CounterexampleSplitter extends AbstractCEGARStep implements Splitte
 		if (isStopped)
 			return;
 
-		// Get successors for the abstract states (only the successors of the original state
-		// have to be checked, but every successor must belong to at least one of the
+		// Get successors for the abstract states (only the successors of the
+		// original state
+		// have to be checked, but every successor must belong to at least one
+		// of the
 		// refined states --> assertion)
 		solver.push();
 		solver.add(unroller.inv(0));
@@ -138,8 +144,10 @@ public class CounterexampleSplitter extends AbstractCEGARStep implements Splitte
 			solver.pop();
 		}
 
-		// Get predecessors for the abstract states (only the predecessors of the original state
-		// have to be checked, but every predecessor must belong to at least one of the
+		// Get predecessors for the abstract states (only the predecessors of
+		// the original state
+		// have to be checked, but every predecessor must belong to at least one
+		// of the
 		// refined states --> assertion)
 		for (final InterpolatedAbstractState prev : stateToSplit.getPredecessors()) {
 			if (isStopped)
@@ -167,8 +175,10 @@ public class CounterexampleSplitter extends AbstractCEGARStep implements Splitte
 			assert (isPredecessor);
 		}
 
-		// Check transitions between refined states (only if the failure state was a successor
-		// of itself, but then at least one transition must also be present between the
+		// Check transitions between refined states (only if the failure state
+		// was a successor
+		// of itself, but then at least one transition must also be present
+		// between the
 		// refined states --> assertion)
 		if (stateToSplit.getSuccessors().contains(stateToSplit)) {
 			boolean isSuccessor = false;
