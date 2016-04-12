@@ -1,0 +1,11 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Solver
+Bundle-SymbolicName: hu.bme.mit.inf.ttmc.solver
+Bundle-Version: 1.0.0.qualifier
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Export-Package: hu.bme.mit.inf.ttmc.solver,
+ hu.bme.mit.inf.ttmc.solver.impl;uses:="hu.bme.mit.inf.ttmc.constraint.decl,hu.bme.mit.inf.ttmc.constraint.expr"
+Require-Bundle: com.google.guava;bundle-version="15.0.0",
+ hu.bme.mit.inf.ttmc.common;bundle-version="1.0.0",
+ hu.bme.mit.inf.ttmc.core;bundle-version="1.0.0"

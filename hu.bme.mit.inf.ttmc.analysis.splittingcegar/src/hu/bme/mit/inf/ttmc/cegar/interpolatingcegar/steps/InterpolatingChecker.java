@@ -14,11 +14,12 @@ import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.data.InterpolatedAbstractSta
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.data.InterpolatedAbstractSystem;
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.utils.VisualizationHelper;
 import hu.bme.mit.inf.ttmc.common.logging.Logger;
-import hu.bme.mit.inf.ttmc.constraint.expr.NotExpr;
-import hu.bme.mit.inf.ttmc.constraint.solver.Solver;
+import hu.bme.mit.inf.ttmc.core.expr.NotExpr;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
+import hu.bme.mit.inf.ttmc.solver.Solver;
 
-public class InterpolatingChecker extends AbstractCEGARStep implements Checker<InterpolatedAbstractSystem, InterpolatedAbstractState> {
+public class InterpolatingChecker extends AbstractCEGARStep
+		implements Checker<InterpolatedAbstractSystem, InterpolatedAbstractState> {
 
 	private final boolean isIncremental;
 	private int actualInit;
@@ -45,7 +46,9 @@ public class InterpolatingChecker extends AbstractCEGARStep implements Checker<I
 		final NotExpr negProp = system.getManager().getExprFactory().Not(system.getSTS().getProp());
 
 		final STS sts = system.getSTS();
-		Stack<InterpolatedAbstractState> counterExample = null; // Store the counterexample (if found)
+		Stack<InterpolatedAbstractState> counterExample = null; // Store the
+																// counterexample
+																// (if found)
 
 		final int stateSpaceInitialSize = exploredStates.size();
 
@@ -56,9 +59,12 @@ public class InterpolatingChecker extends AbstractCEGARStep implements Checker<I
 				reset(); // No split state before the first iteration
 			if (splitIndex >= 0) {
 				assert (actualInit > 0);
-				--actualInit; // The actual initial state should be moved back by one
-								// since the previous search is continued in this case
-								// Remove states from the explored set (only those that are later than the split one)
+				--actualInit; // The actual initial state should be moved back
+								// by one
+								// since the previous search is continued in
+								// this case
+								// Remove states from the explored set (only
+								// those that are later than the split one)
 				assert (splitIndex < stateStack.size());
 				final int removeAfter = stateStack.get(splitIndex).getExploredIndex();
 				for (final Iterator<InterpolatedAbstractState> it = exploredStates.iterator(); it.hasNext();) {
@@ -67,13 +73,16 @@ public class InterpolatingChecker extends AbstractCEGARStep implements Checker<I
 						it.remove();
 				}
 
-				// Stacks also have to be cleared above (including) the split state.
+				// Stacks also have to be cleared above (including) the split
+				// state.
 				while (stateStack.size() > splitIndex) {
 					stateStack.pop();
 					successorStack.pop();
 				}
-				// The current successor for the top state must be moved back, since the split state was
-				// removed from its successors (if any state still remains on the stack)
+				// The current successor for the top state must be moved back,
+				// since the split state was
+				// removed from its successors (if any state still remains on
+				// the stack)
 				if (splitIndex > 0)
 					successorStack.push(successorStack.pop() - 1);
 				logger.writeln("Continuing search with a stack of " + stateStack.size(), 5);
@@ -84,10 +93,13 @@ public class InterpolatingChecker extends AbstractCEGARStep implements Checker<I
 
 		solver.push();
 		solver.add(sts.unrollInv(0)); // Assert invariants
-		solver.add(sts.unroll(negProp, 0)); // Assert the negate of the specification
+		solver.add(sts.unroll(negProp, 0)); // Assert the negate of the
+											// specification
 
-		// Flag for storing whether the actual search is a continuation from a previous
-		// model checking round. It is true for the first search from an initial state,
+		// Flag for storing whether the actual search is a continuation from a
+		// previous
+		// model checking round. It is true for the first search from an initial
+		// state,
 		// but false after
 		boolean isContinuation = true;
 
@@ -148,7 +160,8 @@ public class InterpolatingChecker extends AbstractCEGARStep implements Checker<I
 							counterExample = stateStack;
 						}
 					}
-				} else { // If the actual state has no more successors, then backtrack
+				} else { // If the actual state has no more successors, then
+							// backtrack
 					stateStack.pop();
 					successorStack.pop();
 				}
@@ -168,7 +181,8 @@ public class InterpolatingChecker extends AbstractCEGARStep implements Checker<I
 			// Mark states on the stack and print counterexample
 			for (final InterpolatedAbstractState as : counterExample) {
 				as.setPartOfCounterexample(true);
-				logger.writeln(as, 4, 1); // Print each state in the counterexample
+				logger.writeln(as, 4, 1); // Print each state in the
+											// counterexample
 			}
 			VisualizationHelper.visualizeAbstractKripkeStructure(system, exploredStates, visualizer, 4);
 		} else {
@@ -176,10 +190,14 @@ public class InterpolatingChecker extends AbstractCEGARStep implements Checker<I
 			VisualizationHelper.visualizeAbstractKripkeStructure(system, exploredStates, visualizer, 6);
 		}
 
-		// TODO: optimization: clear data structures if not incremental. Note that the returned counterexample is a reference to the state stack
+		// TODO: optimization: clear data structures if not incremental. Note
+		// that the returned counterexample is a reference to the state stack
 
-		return counterExample == null ? new AbstractResult<InterpolatedAbstractState>(null, exploredStates, exploredStates.size() - stateSpaceSizeAfterClear)
-				: new AbstractResult<InterpolatedAbstractState>(counterExample, null, exploredStates.size() - stateSpaceSizeAfterClear);
+		return counterExample == null
+				? new AbstractResult<InterpolatedAbstractState>(null, exploredStates,
+						exploredStates.size() - stateSpaceSizeAfterClear)
+				: new AbstractResult<InterpolatedAbstractState>(counterExample, null,
+						exploredStates.size() - stateSpaceSizeAfterClear);
 	}
 
 	private boolean checkState(final InterpolatedAbstractState s, final Solver solver, final STS sts) {

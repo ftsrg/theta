@@ -2,8 +2,8 @@ package hu.bme.mit.inf.ttmc.formalism.program.factory;
 
 import java.util.List;
 
-import hu.bme.mit.inf.ttmc.constraint.decl.ParamDecl;
-import hu.bme.mit.inf.ttmc.constraint.type.Type;
+import hu.bme.mit.inf.ttmc.core.decl.ParamDecl;
+import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.ProcDecl;
 import hu.bme.mit.inf.ttmc.formalism.common.factory.VarDeclFactory;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;

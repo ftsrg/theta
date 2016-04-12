@@ -1,7 +1,7 @@
 package hu.bme.mit.inf.ttmc.formalism.common.factory;
 
-import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
-import hu.bme.mit.inf.ttmc.constraint.type.Type;
+import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.PrimedExpr;
 
 public interface PrimedExprFactory {

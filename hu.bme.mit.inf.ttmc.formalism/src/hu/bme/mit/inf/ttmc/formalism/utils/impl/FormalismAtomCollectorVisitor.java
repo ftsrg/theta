@@ -2,10 +2,10 @@ package hu.bme.mit.inf.ttmc.formalism.utils.impl;
 
 import java.util.Collection;
 
-import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
-import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
-import hu.bme.mit.inf.ttmc.constraint.type.Type;
-import hu.bme.mit.inf.ttmc.constraint.utils.impl.AtomCollectorVisitor;
+import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.type.BoolType;
+import hu.bme.mit.inf.ttmc.core.type.Type;
+import hu.bme.mit.inf.ttmc.core.utils.impl.AtomCollectorVisitor;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.PrimedExpr;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.ProcCallExpr;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.ProcRefExpr;

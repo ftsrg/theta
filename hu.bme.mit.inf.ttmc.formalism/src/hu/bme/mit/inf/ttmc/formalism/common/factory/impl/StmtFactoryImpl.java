@@ -1,12 +1,10 @@
 package hu.bme.mit.inf.ttmc.formalism.common.factory.impl;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import java.util.List;
 
-import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
-import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
-import hu.bme.mit.inf.ttmc.constraint.type.Type;
+import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.type.BoolType;
+import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.common.factory.StmtFactory;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.AssertStmt;
@@ -22,109 +20,73 @@ import hu.bme.mit.inf.ttmc.formalism.common.stmt.ReturnStmt;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.SkipStmt;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.WhileStmt;
-import hu.bme.mit.inf.ttmc.formalism.common.stmt.impl.AssertStmtImpl;
-import hu.bme.mit.inf.ttmc.formalism.common.stmt.impl.AssignStmtImpl;
-import hu.bme.mit.inf.ttmc.formalism.common.stmt.impl.AssumeStmtImpl;
-import hu.bme.mit.inf.ttmc.formalism.common.stmt.impl.BlockStmtImpl;
-import hu.bme.mit.inf.ttmc.formalism.common.stmt.impl.DeclStmtImpl;
-import hu.bme.mit.inf.ttmc.formalism.common.stmt.impl.DoStmtImpl;
-import hu.bme.mit.inf.ttmc.formalism.common.stmt.impl.HavocStmtImpl;
-import hu.bme.mit.inf.ttmc.formalism.common.stmt.impl.IfElseStmtImpl;
-import hu.bme.mit.inf.ttmc.formalism.common.stmt.impl.IfStmtImpl;
-import hu.bme.mit.inf.ttmc.formalism.common.stmt.impl.ReturnStmtImpl;
-import hu.bme.mit.inf.ttmc.formalism.common.stmt.impl.SkipStmtImpl;
-import hu.bme.mit.inf.ttmc.formalism.common.stmt.impl.WhileStmtImpl;
+import hu.bme.mit.inf.ttmc.formalism.common.stmt.impl.Stmts;
 
 public class StmtFactoryImpl implements StmtFactory {
 
-	private final SkipStmt skipStmt;
-
-	public StmtFactoryImpl() {
-		skipStmt = new SkipStmtImpl();
-	}
-
 	@Override
 	public <T extends Type> DeclStmt<T, ?> Decl(final VarDecl<T> varDecl) {
-		checkNotNull(varDecl);
-		return new DeclStmtImpl<>(varDecl);
+		return Stmts.Decl(varDecl);
 	}
 
 	@Override
 	public <T1 extends Type, T2 extends T1> DeclStmt<T1, T2> Decl(final VarDecl<T1> varDecl, final Expr<T2> initVal) {
-		checkNotNull(varDecl);
-		checkNotNull(initVal);
-		return new DeclStmtImpl<T1, T2>(varDecl, initVal);
+		return Stmts.Decl(varDecl, initVal);
 	}
 
 	@Override
 	public AssumeStmt Assume(final Expr<? extends BoolType> cond) {
-		checkNotNull(cond);
-		return new AssumeStmtImpl(cond);
+		return Stmts.Assume(cond);
 	}
 
 	@Override
 	public AssertStmt Assert(final Expr<? extends BoolType> cond) {
-		checkNotNull(cond);
-		return new AssertStmtImpl(cond);
+		return Stmts.Assert(cond);
 	}
 
 	@Override
 	public <T1 extends Type, T2 extends T1> AssignStmt<T1, T2> Assign(final VarDecl<T1> lhs, final Expr<T2> rhs) {
-		checkNotNull(lhs);
-		checkNotNull(rhs);
-		return new AssignStmtImpl<>(lhs, rhs);
+		return Stmts.Assign(lhs, rhs);
 	}
 
 	@Override
 	public <T extends Type> HavocStmt<T> Havoc(final VarDecl<T> varDecl) {
-		checkNotNull(varDecl);
-		return new HavocStmtImpl<>(varDecl);
+		return Stmts.Havoc(varDecl);
 	}
 
 	@Override
 	public BlockStmt Block(final List<? extends Stmt> stmts) {
-		checkNotNull(stmts);
-		return new BlockStmtImpl(stmts);
+		return Stmts.Block(stmts);
 	}
 
 	@Override
 	public <T extends Type> ReturnStmt<T> Return(final Expr<? extends T> expr) {
-		checkNotNull(expr);
-		return new ReturnStmtImpl<>(expr);
+		return Stmts.Return(expr);
 	}
 
 	@Override
 	public IfStmt If(final Expr<? extends BoolType> cond, final Stmt then) {
-		checkNotNull(cond);
-		checkNotNull(then);
-		return new IfStmtImpl(cond, then);
+		return Stmts.If(cond, then);
 	}
 
 	@Override
 	public IfElseStmt If(final Expr<? extends BoolType> cond, final Stmt then, final Stmt elze) {
-		checkNotNull(cond);
-		checkNotNull(then);
-		checkNotNull(elze);
-		return new IfElseStmtImpl(cond, then, elze);
+		return Stmts.If(cond, then, elze);
 	}
 
 	@Override
 	public WhileStmt While(final Expr<? extends BoolType> cond, final Stmt stmt) {
-		checkNotNull(cond);
-		checkNotNull(stmt);
-		return new WhileStmtImpl(cond, stmt);
+		return Stmts.While(cond, stmt);
 	}
 
 	@Override
 	public DoStmt Do(final Stmt stmt, final Expr<? extends BoolType> cond) {
-		checkNotNull(stmt);
-		checkNotNull(cond);
-		return new DoStmtImpl(stmt, cond);
+		return Stmts.Do(stmt, cond);
 	}
 
 	@Override
 	public SkipStmt Skip() {
-		return skipStmt;
+		return Stmts.Skip();
 	}
 
 }

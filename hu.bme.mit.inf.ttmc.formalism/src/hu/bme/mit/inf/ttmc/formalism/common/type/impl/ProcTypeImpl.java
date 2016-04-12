@@ -8,9 +8,9 @@ import java.util.StringJoiner;
 
 import com.google.common.collect.ImmutableList;
 
-import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
-import hu.bme.mit.inf.ttmc.constraint.type.Type;
-import hu.bme.mit.inf.ttmc.constraint.utils.TypeVisitor;
+import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.type.Type;
+import hu.bme.mit.inf.ttmc.core.utils.TypeVisitor;
 import hu.bme.mit.inf.ttmc.formalism.common.type.ProcType;
 import hu.bme.mit.inf.ttmc.formalism.common.type.visitor.ProcTypeVisitor;
 

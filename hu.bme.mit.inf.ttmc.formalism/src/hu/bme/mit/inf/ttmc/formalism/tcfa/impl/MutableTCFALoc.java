@@ -4,8 +4,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 
-import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
-import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
+import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFAEdge;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFALoc;
 

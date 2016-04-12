@@ -4,10 +4,9 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import hu.bme.mit.inf.ttmc.constraint.ConstraintManagerImpl;
-import hu.bme.mit.inf.ttmc.constraint.factory.TypeFactory;
-import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
-import hu.bme.mit.inf.ttmc.constraint.type.IntType;
+import hu.bme.mit.inf.ttmc.core.factory.TypeFactory;
+import hu.bme.mit.inf.ttmc.core.type.BoolType;
+import hu.bme.mit.inf.ttmc.core.type.IntType;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.VarRefExpr;
 import hu.bme.mit.inf.ttmc.formalism.common.factory.VarDeclFactory;
 import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
@@ -28,7 +27,7 @@ public class FormalismExprITEEliminatorTests {
 	@Before
 	public void before() {
 		// Create manager and get factories
-		manager = new STSManagerImpl(new ConstraintManagerImpl());
+		manager = new STSManagerImpl();
 		dfc = manager.getDeclFactory();
 		efc = manager.getExprFactory();
 		tfc = manager.getTypeFactory();

@@ -1,6 +1,6 @@
 package hu.bme.mit.inf.ttmc.system.ui.transform.impl
 
-import hu.bme.mit.inf.ttmc.constraint.type.Type
+import hu.bme.mit.inf.ttmc.core.type.Type
 import hu.bme.mit.inf.ttmc.constraint.ui.transform.TypeTransformator
 import hu.bme.mit.inf.ttmc.constraint.ui.transform.impl.ConstraintDeclTransformator
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl
