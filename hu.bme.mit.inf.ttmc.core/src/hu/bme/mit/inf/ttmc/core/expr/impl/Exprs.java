@@ -6,6 +6,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.util.Collection;
 import java.util.List;
 
+import com.google.common.collect.ImmutableMultiset;
+import com.google.common.collect.ImmutableSet;
+
 import hu.bme.mit.inf.ttmc.core.decl.ConstDecl;
 import hu.bme.mit.inf.ttmc.core.decl.ParamDecl;
 import hu.bme.mit.inf.ttmc.core.expr.AddExpr;
@@ -250,4 +253,149 @@ public class Exprs {
 		checkNotNull(elze);
 		return new IteExprImpl<>(cond, then, elze);
 	}
+
+	/*
+	 * Convenience methods
+	 */
+
+	public static AndExpr And(final Expr<? extends BoolType> op1, final Expr<? extends BoolType> op2) {
+		checkNotNull(op1);
+		checkNotNull(op2);
+		return And(ImmutableSet.of(op1, op2));
+	}
+
+	public static AndExpr And(final Expr<? extends BoolType> op1, final Expr<? extends BoolType> op2,
+			final Expr<? extends BoolType> op3) {
+		checkNotNull(op1);
+		checkNotNull(op2);
+		checkNotNull(op3);
+		return And(ImmutableSet.of(op1, op2, op3));
+	}
+
+	public static AndExpr And(final Expr<? extends BoolType> op1, final Expr<? extends BoolType> op2,
+			final Expr<? extends BoolType> op3, final Expr<? extends BoolType> op4) {
+		checkNotNull(op1);
+		checkNotNull(op2);
+		checkNotNull(op3);
+		checkNotNull(op4);
+		return And(ImmutableSet.of(op1, op2, op3, op4));
+	}
+
+	public static AndExpr And(final Expr<? extends BoolType> op1, final Expr<? extends BoolType> op2,
+			final Expr<? extends BoolType> op3, final Expr<? extends BoolType> op4,
+			final Expr<? extends BoolType> op5) {
+		checkNotNull(op1);
+		checkNotNull(op2);
+		checkNotNull(op3);
+		checkNotNull(op4);
+		checkNotNull(op5);
+		return And(ImmutableSet.of(op1, op2, op3, op4, op5));
+	}
+
+	////
+
+	public static OrExpr Or(final Expr<? extends BoolType> op1, final Expr<? extends BoolType> op2) {
+		checkNotNull(op1);
+		checkNotNull(op2);
+		return Or(ImmutableSet.of(op1, op2));
+	}
+
+	public static OrExpr Or(final Expr<? extends BoolType> op1, final Expr<? extends BoolType> op2,
+			final Expr<? extends BoolType> op3) {
+		checkNotNull(op1);
+		checkNotNull(op2);
+		checkNotNull(op3);
+		return Or(ImmutableSet.of(op1, op2, op3));
+	}
+
+	public static OrExpr Or(final Expr<? extends BoolType> op1, final Expr<? extends BoolType> op2,
+			final Expr<? extends BoolType> op3, final Expr<? extends BoolType> op4) {
+		checkNotNull(op1);
+		checkNotNull(op2);
+		checkNotNull(op3);
+		checkNotNull(op4);
+		return Or(ImmutableSet.of(op1, op2, op3, op4));
+	}
+
+	public static OrExpr Or(final Expr<? extends BoolType> op1, final Expr<? extends BoolType> op2,
+			final Expr<? extends BoolType> op3, final Expr<? extends BoolType> op4,
+			final Expr<? extends BoolType> op5) {
+		checkNotNull(op1);
+		checkNotNull(op2);
+		checkNotNull(op3);
+		checkNotNull(op4);
+		checkNotNull(op5);
+		return Or(ImmutableSet.of(op1, op2, op3, op4, op5));
+	}
+
+	////
+
+	public static <T extends ClosedUnderAdd> AddExpr<T> Add(final Expr<? extends T> op1, final Expr<? extends T> op2) {
+		checkNotNull(op1);
+		checkNotNull(op2);
+		return Add(ImmutableMultiset.of(op1, op2));
+	}
+
+	public static <T extends ClosedUnderAdd> AddExpr<T> Add(final Expr<? extends T> op1, final Expr<? extends T> op2,
+			final Expr<? extends T> op3) {
+		checkNotNull(op1);
+		checkNotNull(op2);
+		checkNotNull(op3);
+		return Add(ImmutableMultiset.of(op1, op2, op3));
+	}
+
+	public static <T extends ClosedUnderAdd> AddExpr<T> Add(final Expr<? extends T> op1, final Expr<? extends T> op2,
+			final Expr<? extends T> op3, final Expr<? extends T> op4) {
+		checkNotNull(op1);
+		checkNotNull(op2);
+		checkNotNull(op3);
+		checkNotNull(op4);
+		return Add(ImmutableMultiset.of(op1, op2, op3, op4));
+	}
+
+	public static <T extends ClosedUnderAdd> AddExpr<T> Add(final Expr<? extends T> op1, final Expr<? extends T> op2,
+			final Expr<? extends T> op3, final Expr<? extends T> op4, final Expr<? extends T> op5) {
+		checkNotNull(op1);
+		checkNotNull(op2);
+		checkNotNull(op3);
+		checkNotNull(op4);
+		checkNotNull(op5);
+		return Add(ImmutableMultiset.of(op1, op2, op3, op4, op5));
+	}
+
+	////
+
+	public static <T extends ClosedUnderMul> MulExpr<T> Mul(final Expr<? extends T> op1, final Expr<? extends T> op2) {
+		checkNotNull(op1);
+		checkNotNull(op2);
+		return Mul(ImmutableMultiset.of(op1, op2));
+	}
+
+	public static <T extends ClosedUnderMul> MulExpr<T> Mul(final Expr<? extends T> op1, final Expr<? extends T> op2,
+			final Expr<? extends T> op3) {
+		checkNotNull(op1);
+		checkNotNull(op2);
+		checkNotNull(op3);
+		return Mul(ImmutableMultiset.of(op1, op2, op3));
+	}
+
+	public static <T extends ClosedUnderMul> MulExpr<T> Mul(final Expr<? extends T> op1, final Expr<? extends T> op2,
+			final Expr<? extends T> op3, final Expr<? extends T> op4) {
+		checkNotNull(op1);
+		checkNotNull(op2);
+		checkNotNull(op3);
+		checkNotNull(op4);
+		return Mul(ImmutableMultiset.of(op1, op2, op3, op4));
+	}
+
+	public static <T extends ClosedUnderMul> MulExpr<T> Mul(final Expr<? extends T> op1, final Expr<? extends T> op2,
+			final Expr<? extends T> op3, final Expr<? extends T> op4, final Expr<? extends T> op5) {
+		checkNotNull(op1);
+		checkNotNull(op2);
+		checkNotNull(op3);
+		checkNotNull(op4);
+		checkNotNull(op5);
+		return Mul(ImmutableMultiset.of(op1, op2, op3, op4, op5));
+	}
+
 }
