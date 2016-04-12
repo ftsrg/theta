@@ -1,11 +1,10 @@
-package hu.bme.mit.inf.ttmc.constraint.z3.tests;
+package hu.bme.mit.inf.ttmc.solver.z3.tests;
 
 import org.junit.Before;
 import org.junit.Test;
 
 import com.google.common.collect.ImmutableList;
 
-import hu.bme.mit.inf.ttmc.constraint.z3.Z3ConstraintManager;
 import hu.bme.mit.inf.ttmc.core.ConstraintManager;
 import hu.bme.mit.inf.ttmc.core.decl.ConstDecl;
 import hu.bme.mit.inf.ttmc.core.decl.ParamDecl;
@@ -21,6 +20,7 @@ import hu.bme.mit.inf.ttmc.core.solver.ItpSolver;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.core.type.FuncType;
 import hu.bme.mit.inf.ttmc.core.type.IntType;
+import hu.bme.mit.inf.ttmc.solver.z3.Z3ConstraintManager;
 
 public class Z3ItpSolverTests {
 

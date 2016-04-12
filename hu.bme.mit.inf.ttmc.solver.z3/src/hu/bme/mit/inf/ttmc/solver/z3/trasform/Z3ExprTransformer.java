@@ -1,4 +1,4 @@
-package hu.bme.mit.inf.ttmc.constraint.z3.trasform;
+package hu.bme.mit.inf.ttmc.solver.z3.trasform;
 
 import java.util.concurrent.ExecutionException;
 

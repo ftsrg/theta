@@ -1,4 +1,4 @@
-package hu.bme.mit.inf.ttmc.constraint.z3.solver;
+package hu.bme.mit.inf.ttmc.solver.z3.solver;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
