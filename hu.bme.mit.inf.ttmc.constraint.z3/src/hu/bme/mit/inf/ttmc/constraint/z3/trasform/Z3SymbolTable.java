@@ -7,7 +7,7 @@ import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.google.common.collect.Maps;
 
-import hu.bme.mit.inf.ttmc.constraint.decl.ConstDecl;
+import hu.bme.mit.inf.ttmc.core.decl.ConstDecl;
 
 public class Z3SymbolTable {
 

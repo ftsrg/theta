@@ -1,7 +1,7 @@
 package hu.bme.mit.inf.ttmc.formalism.common.stmt;
 
-import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
-import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
+import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.formalism.utils.StmtVisitor;
 
 public interface WhileStmt extends Stmt {

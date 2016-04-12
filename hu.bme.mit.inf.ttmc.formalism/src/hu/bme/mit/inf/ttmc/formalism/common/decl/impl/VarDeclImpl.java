@@ -1,8 +1,8 @@
 package hu.bme.mit.inf.ttmc.formalism.common.decl.impl;
 
-import hu.bme.mit.inf.ttmc.constraint.decl.impl.AbstractDecl;
-import hu.bme.mit.inf.ttmc.constraint.type.Type;
-import hu.bme.mit.inf.ttmc.constraint.utils.DeclVisitor;
+import hu.bme.mit.inf.ttmc.core.decl.impl.AbstractDecl;
+import hu.bme.mit.inf.ttmc.core.type.Type;
+import hu.bme.mit.inf.ttmc.core.utils.DeclVisitor;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.VarRefExpr;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.impl.VarRefExprImpl;

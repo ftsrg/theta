@@ -1,14 +1,14 @@
 package hu.bme.mit.inf.ttmc.constraint.z3.factory;
 
-import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
-import hu.bme.mit.inf.ttmc.constraint.factory.SolverFactory;
-import hu.bme.mit.inf.ttmc.constraint.solver.ItpSolver;
-import hu.bme.mit.inf.ttmc.constraint.solver.Solver;
 import hu.bme.mit.inf.ttmc.constraint.z3.solver.Z3ItpSolver;
 import hu.bme.mit.inf.ttmc.constraint.z3.solver.Z3Solver;
 import hu.bme.mit.inf.ttmc.constraint.z3.trasform.Z3SymbolTable;
 import hu.bme.mit.inf.ttmc.constraint.z3.trasform.Z3TermTransformer;
 import hu.bme.mit.inf.ttmc.constraint.z3.trasform.Z3TransformationManager;
+import hu.bme.mit.inf.ttmc.core.ConstraintManager;
+import hu.bme.mit.inf.ttmc.core.factory.SolverFactory;
+import hu.bme.mit.inf.ttmc.core.solver.ItpSolver;
+import hu.bme.mit.inf.ttmc.core.solver.Solver;
 
 public class Z3SolverFactory implements SolverFactory {
 

@@ -2,14 +2,14 @@ package hu.bme.mit.inf.ttmc.constraint.ui.transform.impl
 
 import java.util.Map
 import hu.bme.mit.inf.ttmc.constraint.model.ConstantDeclaration
-import hu.bme.mit.inf.ttmc.constraint.decl.ConstDecl
-import hu.bme.mit.inf.ttmc.constraint.decl.ParamDecl
+import hu.bme.mit.inf.ttmc.core.decl.ConstDecl
+import hu.bme.mit.inf.ttmc.core.decl.ParamDecl
 import hu.bme.mit.inf.ttmc.constraint.model.ParameterDeclaration
-import hu.bme.mit.inf.ttmc.constraint.decl.Decl
+import hu.bme.mit.inf.ttmc.core.decl.Decl
 import hu.bme.mit.inf.ttmc.constraint.model.Declaration
 import java.util.HashMap
-import hu.bme.mit.inf.ttmc.constraint.factory.DeclFactory
-import hu.bme.mit.inf.ttmc.constraint.type.Type
+import hu.bme.mit.inf.ttmc.core.factory.DeclFactory
+import hu.bme.mit.inf.ttmc.core.type.Type
 import hu.bme.mit.inf.ttmc.constraint.model.FunctionDeclaration
 import hu.bme.mit.inf.ttmc.constraint.ui.transform.DeclTransformator
 import hu.bme.mit.inf.ttmc.constraint.ui.transform.TransformationManager

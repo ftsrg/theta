@@ -2,9 +2,9 @@ package hu.bme.mit.inf.ttmc.constraint.z3.trasform;
 
 import com.microsoft.z3.Context;
 
-import hu.bme.mit.inf.ttmc.constraint.decl.Decl;
-import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
-import hu.bme.mit.inf.ttmc.constraint.type.Type;
+import hu.bme.mit.inf.ttmc.core.decl.Decl;
+import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.type.Type;
 
 public class Z3TransformationManager {
 

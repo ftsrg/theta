@@ -3,13 +3,13 @@ package hu.bme.mit.inf.ttmc.constraint.z3.trasform;
 import com.microsoft.z3.Context;
 import com.microsoft.z3.Sort;
 
-import hu.bme.mit.inf.ttmc.constraint.type.ArrayType;
-import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
-import hu.bme.mit.inf.ttmc.constraint.type.FuncType;
-import hu.bme.mit.inf.ttmc.constraint.type.IntType;
-import hu.bme.mit.inf.ttmc.constraint.type.RatType;
-import hu.bme.mit.inf.ttmc.constraint.type.Type;
-import hu.bme.mit.inf.ttmc.constraint.utils.TypeVisitor;
+import hu.bme.mit.inf.ttmc.core.type.ArrayType;
+import hu.bme.mit.inf.ttmc.core.type.BoolType;
+import hu.bme.mit.inf.ttmc.core.type.FuncType;
+import hu.bme.mit.inf.ttmc.core.type.IntType;
+import hu.bme.mit.inf.ttmc.core.type.RatType;
+import hu.bme.mit.inf.ttmc.core.type.Type;
+import hu.bme.mit.inf.ttmc.core.utils.TypeVisitor;
 
 class Z3TypeTransformer {
 

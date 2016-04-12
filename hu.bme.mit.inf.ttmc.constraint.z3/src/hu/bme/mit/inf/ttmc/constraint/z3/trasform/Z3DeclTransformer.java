@@ -9,12 +9,12 @@ import com.microsoft.z3.Context;
 
 import hu.bme.mit.inf.ttmc.common.Tuple2;
 import hu.bme.mit.inf.ttmc.common.Tuples;
-import hu.bme.mit.inf.ttmc.constraint.decl.ConstDecl;
-import hu.bme.mit.inf.ttmc.constraint.decl.Decl;
-import hu.bme.mit.inf.ttmc.constraint.decl.ParamDecl;
-import hu.bme.mit.inf.ttmc.constraint.type.FuncType;
-import hu.bme.mit.inf.ttmc.constraint.type.Type;
-import hu.bme.mit.inf.ttmc.constraint.utils.DeclVisitor;
+import hu.bme.mit.inf.ttmc.core.decl.ConstDecl;
+import hu.bme.mit.inf.ttmc.core.decl.Decl;
+import hu.bme.mit.inf.ttmc.core.decl.ParamDecl;
+import hu.bme.mit.inf.ttmc.core.type.FuncType;
+import hu.bme.mit.inf.ttmc.core.type.Type;
+import hu.bme.mit.inf.ttmc.core.utils.DeclVisitor;
 
 class Z3DeclTransformer {
 

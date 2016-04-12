@@ -12,19 +12,19 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
-import hu.bme.mit.inf.ttmc.constraint.solver.Interpolant;
-import hu.bme.mit.inf.ttmc.constraint.solver.ItpMarker;
-import hu.bme.mit.inf.ttmc.constraint.solver.ItpPattern;
-import hu.bme.mit.inf.ttmc.constraint.solver.ItpSolver;
-import hu.bme.mit.inf.ttmc.constraint.solver.Model;
-import hu.bme.mit.inf.ttmc.constraint.solver.Solver;
-import hu.bme.mit.inf.ttmc.constraint.solver.SolverStatus;
-import hu.bme.mit.inf.ttmc.constraint.solver.impl.ItpMarkerImpl;
-import hu.bme.mit.inf.ttmc.constraint.solver.impl.ItpPatternImpl;
-import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.constraint.z3.trasform.Z3TermTransformer;
 import hu.bme.mit.inf.ttmc.constraint.z3.trasform.Z3TransformationManager;
+import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.solver.Interpolant;
+import hu.bme.mit.inf.ttmc.core.solver.ItpMarker;
+import hu.bme.mit.inf.ttmc.core.solver.ItpPattern;
+import hu.bme.mit.inf.ttmc.core.solver.ItpSolver;
+import hu.bme.mit.inf.ttmc.core.solver.Model;
+import hu.bme.mit.inf.ttmc.core.solver.Solver;
+import hu.bme.mit.inf.ttmc.core.solver.SolverStatus;
+import hu.bme.mit.inf.ttmc.core.solver.impl.ItpMarkerImpl;
+import hu.bme.mit.inf.ttmc.core.solver.impl.ItpPatternImpl;
+import hu.bme.mit.inf.ttmc.core.type.BoolType;
 
 public class Z3ItpSolver implements ItpSolver {
 

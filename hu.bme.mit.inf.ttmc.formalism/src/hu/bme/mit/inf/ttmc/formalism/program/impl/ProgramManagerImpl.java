@@ -1,7 +1,7 @@
 package hu.bme.mit.inf.ttmc.formalism.program.impl;
 
-import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
-import hu.bme.mit.inf.ttmc.constraint.factory.SolverFactory;
+import hu.bme.mit.inf.ttmc.core.ConstraintManager;
+import hu.bme.mit.inf.ttmc.core.factory.SolverFactory;
 import hu.bme.mit.inf.ttmc.formalism.common.factory.StmtFactory;
 import hu.bme.mit.inf.ttmc.formalism.common.factory.impl.StmtFactoryImpl;
 import hu.bme.mit.inf.ttmc.formalism.program.ProgramManager;
