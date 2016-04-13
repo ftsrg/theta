@@ -3,7 +3,6 @@ package hu.bme.mit.inf.ttmc.analysis.loc;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Collection;
-import java.util.Collections;
 
 import org.junit.Test;
 
@@ -19,11 +18,12 @@ public class LocTests {
 	@Test
 	public void exploreLocs() {
 		final CFA cfa = createSimpleCFA();
+		final LocInitStates<CFALoc> initStates = new LocInitStates<>(cfa);
 		final TransferRelation<LocState<CFALoc>> trel = new LocTransferRelation<>();
 
-		final LocState<CFALoc> initState = LocState.create(cfa.getInitLoc());
+		//final LocState<CFALoc> initState = LocState.create(cfa.getInitLoc());
 		final LocState<CFALoc> finalState = LocState.create(cfa.getFinalLoc());
-		final Collection<LocState<CFALoc>> reachedSet = Collections.singleton(initState);
+		final Collection<? extends LocState<CFALoc>> reachedSet = initStates.get();
 		final Algorithm<LocState<CFALoc>> algorithm = new BasicAlgorithm<>(trel);
 		final Collection<LocState<CFALoc>> result = algorithm.run(reachedSet);
 
