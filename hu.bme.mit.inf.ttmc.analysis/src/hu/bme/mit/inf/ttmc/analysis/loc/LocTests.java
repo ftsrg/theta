@@ -23,9 +23,9 @@ public class LocTests {
 
 		//final LocState<CFALoc> initState = LocState.create(cfa.getInitLoc());
 		final LocState<CFALoc> finalState = LocState.create(cfa.getFinalLoc());
-		final Collection<? extends LocState<CFALoc>> reachedSet = initStates.get();
-		final Algorithm<LocState<CFALoc>> algorithm = new BasicAlgorithm<>(trel);
-		final Collection<LocState<CFALoc>> result = algorithm.run(reachedSet);
+		//final Collection<? extends LocState<CFALoc>> reachedSet = initStates.get();
+		final Algorithm<LocState<CFALoc>> algorithm = new BasicAlgorithm<>(initStates, trel);
+		final Collection<LocState<CFALoc>> result = algorithm.run();
 
 		assertTrue(result.contains(finalState));
 	}
