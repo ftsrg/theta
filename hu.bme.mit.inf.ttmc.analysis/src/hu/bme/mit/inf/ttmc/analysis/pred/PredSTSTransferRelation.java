@@ -26,40 +26,42 @@ public class PredSTSTransferRelation implements TransferRelation<PredState> {
 
 	@Override
 	public Collection<? extends PredState> getSuccStates(final PredState state) {
-		final Set<PredState> successors = new HashSet<>();
+		final Set<PredState> succStates = new HashSet<>();
 		while (true) {
-			AndExpr successor = null;
+			AndExpr nextSuccExpr = null;
 			solver.push();
 			for (final Expr<? extends BoolType> pred : state.getPreds())
 				solver.add(sts.unroll(pred, 0));
 			solver.add(sts.unrollInv(0));
 			solver.add(sts.unrollInv(1));
 			solver.add(sts.unrollTrans(0));
+			for (final PredState existingSucc : succStates)
+				solver.add(Exprs.Not(Exprs.And(existingSucc.getPreds())));
 			if (solver.check().boolValue())
-				successor = sts.getConcreteState(solver.getModel(), 0);
+				nextSuccExpr = sts.getConcreteState(solver.getModel(), 0);
 			solver.pop();
-			if (successor != null) {
-				final Set<Expr<? extends BoolType>> successorPreds = new HashSet<>();
+			if (nextSuccExpr != null) {
+				final Set<Expr<? extends BoolType>> nextSuccPreds = new HashSet<>();
 				solver.push();
-				solver.add(sts.unroll(successor, 0));
+				solver.add(sts.unroll(nextSuccExpr, 0));
 				for (final Expr<? extends BoolType> pred : state.getPreds()) {
 					solver.push();
 					solver.add(sts.unroll(pred, 0));
 					if (solver.check().boolValue()) {
-						successorPreds.add(pred);
+						nextSuccPreds.add(pred);
 					} else {
-						successorPreds.add(Exprs.Not(pred));
+						nextSuccPreds.add(Exprs.Not(pred));
 					}
 					solver.pop();
 				}
 				solver.pop();
-				successors.add(PredState.create(successorPreds, solver));
+				succStates.add(PredState.create(nextSuccPreds, solver));
 			} else {
 				break;
 			}
 
 		}
-		return successors;
+		return succStates;
 	}
 
 }
