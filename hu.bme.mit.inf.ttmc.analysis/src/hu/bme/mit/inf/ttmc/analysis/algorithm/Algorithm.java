@@ -6,6 +6,6 @@ import hu.bme.mit.inf.ttmc.analysis.State;
 
 public interface Algorithm<S extends State<S>> {
 
-	public Collection<S> run(final Collection<? extends S> reachedSet);
+	public Collection<S> run();
 
 }
