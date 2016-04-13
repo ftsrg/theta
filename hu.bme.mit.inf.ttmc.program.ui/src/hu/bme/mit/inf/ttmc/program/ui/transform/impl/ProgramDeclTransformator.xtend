@@ -5,7 +5,6 @@ import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl
 import hu.bme.mit.inf.ttmc.program.model.VariableDeclaration
 import java.util.HashMap
 import java.util.Map
-import hu.bme.mit.inf.ttmc.formalism.program.factory.ProgramDeclFactory
 import hu.bme.mit.inf.ttmc.program.model.ProcedureDeclaration
 import hu.bme.mit.inf.ttmc.formalism.common.decl.ProcDecl
 import hu.bme.mit.inf.ttmc.constraint.ui.transform.impl.ConstraintDeclTransformator
@@ -14,11 +13,11 @@ import hu.bme.mit.inf.ttmc.program.model.Statement
 import hu.bme.mit.inf.ttmc.program.ui.transform.StmtTransformator
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt
 
+import static hu.bme.mit.inf.ttmc.formalism.common.decl.impl.Decls2.*;
+
 class ProgramDeclTransformator extends ConstraintDeclTransformator {
 
-	private val ProgramTransformationManager manager
-	private val extension ProgramDeclFactory declFactory
-	
+	private val ProgramTransformationManager manager	
 	
 	private volatile TypeTransformator tt
 	private volatile StmtTransformator st
@@ -26,10 +25,9 @@ class ProgramDeclTransformator extends ConstraintDeclTransformator {
 	private val Map<VariableDeclaration, VarDecl<Type>> variableToVar
 	private val Map<ProcedureDeclaration, ProcDecl<Type>> procedureToProc
 	
-	new(ProgramTransformationManager manager, ProgramDeclFactory declFactory) {
-		super(manager, declFactory)
+	new(ProgramTransformationManager manager) {
+		super(manager)
 		this.manager = manager
-		this.declFactory = declFactory
 		variableToVar = new HashMap
 		procedureToProc = new HashMap
 	}

@@ -13,10 +13,10 @@ import hu.bme.mit.inf.ttmc.aiger.AIGERLoader;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
-import hu.bme.mit.inf.ttmc.formalism.common.factory.VarDeclFactory;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
 import hu.bme.mit.inf.ttmc.formalism.sts.factory.STSExprFactory;
+import hu.bme.mit.inf.ttmc.formalism.sts.factory.VarDeclFactory;
 import hu.bme.mit.inf.ttmc.formalism.sts.impl.STSImpl;
 
 public class AIGERLoaderSimple implements AIGERLoader {

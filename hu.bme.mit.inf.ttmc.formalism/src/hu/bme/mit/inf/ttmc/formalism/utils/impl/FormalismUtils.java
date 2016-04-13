@@ -10,7 +10,7 @@ import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.core.utils.impl.ExprCNFCheckerVisitor.CNFStatus;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
-import hu.bme.mit.inf.ttmc.formalism.common.factory.VarDeclFactory;
+import hu.bme.mit.inf.ttmc.formalism.sts.factory.VarDeclFactory;
 
 public class FormalismUtils {
 

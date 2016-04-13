@@ -55,7 +55,7 @@ import hu.bme.mit.inf.ttmc.core.type.closure.ClosedUnderMul;
 import hu.bme.mit.inf.ttmc.core.type.closure.ClosedUnderNeg;
 import hu.bme.mit.inf.ttmc.core.type.closure.ClosedUnderSub;
 
-public class Exprs {
+public final class Exprs {
 
 	private static final TrueExpr TRUE_EXPR;
 	private static final FalseExpr FALSE_EXPR;
@@ -65,7 +65,7 @@ public class Exprs {
 		FALSE_EXPR = new FalseExprImpl();
 	}
 
-	protected Exprs() {
+	private Exprs() {
 	}
 
 	public static TrueExpr True() {

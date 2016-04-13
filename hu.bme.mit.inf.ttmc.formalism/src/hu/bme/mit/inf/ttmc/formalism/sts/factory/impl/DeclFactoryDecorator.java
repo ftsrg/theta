@@ -1,4 +1,4 @@
-package hu.bme.mit.inf.ttmc.formalism.common.factory.impl;
+package hu.bme.mit.inf.ttmc.formalism.sts.factory.impl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 

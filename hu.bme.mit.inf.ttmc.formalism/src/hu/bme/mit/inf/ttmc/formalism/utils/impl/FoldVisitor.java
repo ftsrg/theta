@@ -8,7 +8,7 @@ import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.core.utils.impl.ExprRewriterVisitor;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
-import hu.bme.mit.inf.ttmc.formalism.common.factory.PrimedExprFactory;
+import hu.bme.mit.inf.ttmc.formalism.sts.factory.PrimedExprFactory;
 
 public class FoldVisitor extends ExprRewriterVisitor<Integer> {
 
