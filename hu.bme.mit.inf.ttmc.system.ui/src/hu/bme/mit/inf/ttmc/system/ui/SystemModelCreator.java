@@ -35,7 +35,7 @@ public class SystemModelCreator {
 
 		final Collection<STS> stss = new ArrayList<>();
 
-		final SystemTransformationManager tManager = new SystemTransformationManager(manager);
+		final SystemTransformationManager tManager = new SystemTransformationManager();
 
 		for (final PropertyDeclaration propertyDeclaration : specification.getPropertyDeclarations()) {
 			final SystemDefinition systemDefinition = (SystemDefinition) propertyDeclaration.getSystem();

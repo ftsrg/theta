@@ -7,7 +7,7 @@ import hu.bme.mit.inf.ttmc.formalism.common.expr.ProcRefExpr;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.visitor.ProcRefExprVisitor;
 import hu.bme.mit.inf.ttmc.formalism.common.type.ProcType;
 
-public class ProcRefExprImpl<ReturnType extends Type> implements ProcRefExpr<ReturnType> {
+class ProcRefExprImpl<ReturnType extends Type> implements ProcRefExpr<ReturnType> {
 
 	private final static int HASH_SEED = 1229;
 
@@ -15,7 +15,7 @@ public class ProcRefExprImpl<ReturnType extends Type> implements ProcRefExpr<Ret
 
 	private volatile int hashCode = 0;
 
-	public ProcRefExprImpl(final ProcDecl<ReturnType> procDecl) {
+	ProcRefExprImpl(final ProcDecl<ReturnType> procDecl) {
 		this.procDecl = procDecl;
 	}
 

@@ -7,9 +7,9 @@ import hu.bme.mit.inf.ttmc.core.decl.ConstDecl;
 import hu.bme.mit.inf.ttmc.core.decl.ParamDecl;
 import hu.bme.mit.inf.ttmc.core.type.Type;
 
-public class Decls {
+public final class Decls {
 
-	protected Decls() {
+	private Decls() {
 	}
 
 	public static <T extends Type> ConstDecl<T> Const(final String name, final T type) {

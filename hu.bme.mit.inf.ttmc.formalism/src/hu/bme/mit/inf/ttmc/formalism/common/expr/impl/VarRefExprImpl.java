@@ -7,12 +7,12 @@ import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.VarRefExpr;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.visitor.VarRefExprVisitor;
 
-public final class VarRefExprImpl<DeclType extends Type> extends AbstractRefExpr<DeclType, VarDecl<DeclType>>
+final class VarRefExprImpl<DeclType extends Type> extends AbstractRefExpr<DeclType, VarDecl<DeclType>>
 		implements VarRefExpr<DeclType> {
 
 	private static final int HASH_SEED = 313;
 
-	public VarRefExprImpl(final VarDecl<DeclType> varDecl) {
+	VarRefExprImpl(final VarDecl<DeclType> varDecl) {
 		super(varDecl);
 	}
 
