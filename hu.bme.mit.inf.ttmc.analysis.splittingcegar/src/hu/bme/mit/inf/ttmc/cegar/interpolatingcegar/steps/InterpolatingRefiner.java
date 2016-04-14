@@ -5,6 +5,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.util.List;
 
 import hu.bme.mit.inf.ttmc.cegar.common.data.ConcreteTrace;
+import hu.bme.mit.inf.ttmc.cegar.common.data.SolverWrapper;
+import hu.bme.mit.inf.ttmc.cegar.common.data.StopHandler;
 import hu.bme.mit.inf.ttmc.cegar.common.steps.AbstractCEGARStep;
 import hu.bme.mit.inf.ttmc.cegar.common.steps.Refiner;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.Visualizer;
@@ -21,22 +23,11 @@ public class InterpolatingRefiner extends AbstractCEGARStep implements Refiner<I
 	private final Interpolater interpolater;
 	private final Splitter splitter;
 
-	@Override
-	public void stop() {
-		super.stop();
-		splitter.stop();
-	}
-
-	@Override
-	public void resetStop() {
-		splitter.resetStop();
-		super.resetStop();
-	}
-
-	public InterpolatingRefiner(final Logger logger, final Visualizer visualizer, final Interpolater interpolater) {
-		super(logger, visualizer);
+	public InterpolatingRefiner(final SolverWrapper solvers, final StopHandler stopHandler, final Logger logger, final Visualizer visualizer,
+			final Interpolater interpolater) {
+		super(solvers, stopHandler, logger, visualizer);
 		this.interpolater = checkNotNull(interpolater);
-		this.splitter = new CounterexampleSplitter(logger, visualizer);
+		this.splitter = new CounterexampleSplitter(solvers, stopHandler, logger, visualizer);
 
 	}
 
@@ -53,9 +44,16 @@ public class InterpolatingRefiner extends AbstractCEGARStep implements Refiner<I
 		final Interpolant interpolant = interpolater.interpolate(system, abstractCounterEx, concreteTrace);
 		logger.writeln("Interpolant: " + interpolant, 2, 0);
 
+		if (stopHandler.isStopped())
+			return null;
+
 		// Split state(s)
 		final int states = system.getAbstractKripkeStructure().getStates().size();
 		final int firstSplit = splitter.split(system, abstractCounterEx, interpolant);
+
+		if (stopHandler.isStopped())
+			return null;
+
 		assert (states < system.getAbstractKripkeStructure().getStates().size());
 
 		// Set the index of the split state, i.e., the index of the first state

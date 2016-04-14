@@ -7,7 +7,6 @@ import java.util.Map;
 
 import com.google.common.collect.ImmutableSet;
 
-import hu.bme.mit.inf.ttmc.core.ConstraintManager;
 import hu.bme.mit.inf.ttmc.core.expr.AddExpr;
 import hu.bme.mit.inf.ttmc.core.expr.AndExpr;
 import hu.bme.mit.inf.ttmc.core.expr.ArrayReadExpr;
@@ -41,36 +40,35 @@ import hu.bme.mit.inf.ttmc.core.expr.RatLitExpr;
 import hu.bme.mit.inf.ttmc.core.expr.RemExpr;
 import hu.bme.mit.inf.ttmc.core.expr.SubExpr;
 import hu.bme.mit.inf.ttmc.core.expr.TrueExpr;
-import hu.bme.mit.inf.ttmc.core.factory.ExprFactory;
+import hu.bme.mit.inf.ttmc.core.expr.impl.Exprs;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.core.type.closure.ClosedUnderAdd;
 import hu.bme.mit.inf.ttmc.core.type.closure.ClosedUnderMul;
 import hu.bme.mit.inf.ttmc.core.type.closure.ClosedUnderNeg;
 import hu.bme.mit.inf.ttmc.core.type.closure.ClosedUnderSub;
+import hu.bme.mit.inf.ttmc.core.type.impl.Types;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
+import hu.bme.mit.inf.ttmc.formalism.common.decl.impl.Decls2;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.PrimedExpr;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.ProcCallExpr;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.ProcRefExpr;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.VarRefExpr;
-import hu.bme.mit.inf.ttmc.formalism.sts.factory.VarDeclFactory;
 import hu.bme.mit.inf.ttmc.formalism.utils.FormalismExprVisitor;
 
 public class CNFTransformation {
 	private final String CNFPREFIX = "__CNF";
-	private final ConstraintManager manager;
 	private final CNFTransformationVisitor cnfTransfVisitor;
 
-	public CNFTransformation(final ConstraintManager manager, final VarDeclFactory varFactory) {
-		this.manager = manager;
-		cnfTransfVisitor = new CNFTransformationVisitor(manager, varFactory);
+	public CNFTransformation() {
+		cnfTransfVisitor = new CNFTransformationVisitor();
 	}
 
 	public Expr<? extends BoolType> transform(final Expr<? extends BoolType> expr) {
 		final Collection<Expr<? extends BoolType>> encoding = new ArrayList<>();
 		final Expr<? extends BoolType> top = expr.accept(cnfTransfVisitor, encoding);
 		encoding.add(top);
-		return manager.getExprFactory().And(encoding);
+		return Exprs.And(encoding);
 	}
 
 	public Collection<VarDecl<? extends BoolType>> getRepresentatives() {
@@ -85,14 +83,8 @@ public class CNFTransformation {
 
 		private int nextCNFVarId;
 		private final Map<Expr<?>, VarDecl<? extends BoolType>> representatives;
-		private final ConstraintManager manager;
-		private final ExprFactory ef;
-		private final VarDeclFactory vf;
 
-		public CNFTransformationVisitor(final ConstraintManager manager, final VarDeclFactory varFactory) {
-			this.manager = manager;
-			vf = varFactory;
-			ef = manager.getExprFactory();
+		public CNFTransformationVisitor() {
 			nextCNFVarId = 0;
 			representatives = new HashMap<>();
 		}
@@ -106,7 +98,7 @@ public class CNFTransformation {
 		}
 
 		private Expr<? extends BoolType> getRep(final Expr<?> expr) {
-			final VarDecl<BoolType> rep = vf.Var(CNFPREFIX + (nextCNFVarId++), manager.getTypeFactory().Bool());
+			final VarDecl<BoolType> rep = Decls2.Var(CNFPREFIX + (nextCNFVarId++), Types.Bool());
 			representatives.put(expr, rep);
 			return rep.getRef();
 		}
@@ -142,7 +134,7 @@ public class CNFTransformation {
 				return representatives.get(expr).getRef();
 			final Expr<? extends BoolType> rep = getRep(expr);
 			final Expr<? extends BoolType> op = expr.getOp().accept(this, param);
-			param.add(ef.And(ImmutableSet.of(ef.Or(ImmutableSet.of(ef.Not(rep), ef.Not(op))), ef.Or(ImmutableSet.of(rep, op)))));
+			param.add(Exprs.And(ImmutableSet.of(Exprs.Or(ImmutableSet.of(Exprs.Not(rep), Exprs.Not(op))), Exprs.Or(ImmutableSet.of(rep, op)))));
 			return rep;
 		}
 
@@ -153,8 +145,8 @@ public class CNFTransformation {
 			final Expr<? extends BoolType> rep = getRep(expr);
 			final Expr<? extends BoolType> op1 = expr.getLeftOp().accept(this, param);
 			final Expr<? extends BoolType> op2 = expr.getRightOp().accept(this, param);
-			param.add(ef.And(ImmutableSet.of(ef.Or(ImmutableSet.of(ef.Not(rep), ef.Not(op1), op2)), ef.Or(ImmutableSet.of(op1, rep)),
-					ef.Or(ImmutableSet.of(ef.Not(op2), rep)))));
+			param.add(Exprs.And(ImmutableSet.of(Exprs.Or(ImmutableSet.of(Exprs.Not(rep), Exprs.Not(op1), op2)), Exprs.Or(ImmutableSet.of(op1, rep)),
+					Exprs.Or(ImmutableSet.of(Exprs.Not(op2), rep)))));
 			return rep;
 		}
 
@@ -165,8 +157,9 @@ public class CNFTransformation {
 			final Expr<? extends BoolType> rep = getRep(expr);
 			final Expr<? extends BoolType> op1 = expr.getLeftOp().accept(this, param);
 			final Expr<? extends BoolType> op2 = expr.getRightOp().accept(this, param);
-			param.add(ef.And(ImmutableSet.of(ef.Or(ImmutableSet.of(ef.Not(rep), ef.Not(op1), op2)), ef.Or(ImmutableSet.of(ef.Not(rep), op1, ef.Not(op2))),
-					ef.Or(ImmutableSet.of(rep, ef.Not(op1), ef.Not(op2))), ef.Or(ImmutableSet.of(rep, op1, op2)))));
+			param.add(Exprs.And(ImmutableSet.of(Exprs.Or(ImmutableSet.of(Exprs.Not(rep), Exprs.Not(op1), op2)),
+					Exprs.Or(ImmutableSet.of(Exprs.Not(rep), op1, Exprs.Not(op2))), Exprs.Or(ImmutableSet.of(rep, Exprs.Not(op1), Exprs.Not(op2))),
+					Exprs.Or(ImmutableSet.of(rep, op1, op2)))));
 			return rep;
 		}
 
@@ -182,11 +175,11 @@ public class CNFTransformation {
 			lastClause.add(rep);
 			final Collection<Expr<? extends BoolType>> en = new ArrayList<>();
 			for (final Expr<? extends BoolType> op : ops) {
-				en.add(ef.Or(ImmutableSet.of(ef.Not(rep), op)));
-				lastClause.add(ef.Not(op));
+				en.add(Exprs.Or(ImmutableSet.of(Exprs.Not(rep), op)));
+				lastClause.add(Exprs.Not(op));
 			}
-			en.add(ef.Or(lastClause));
-			param.add(ef.And(en));
+			en.add(Exprs.Or(lastClause));
+			param.add(Exprs.And(en));
 			return rep;
 		}
 
@@ -199,14 +192,14 @@ public class CNFTransformation {
 			for (final Expr<? extends BoolType> op : expr.getOps())
 				ops.add(op.accept(this, param));
 			final Collection<Expr<? extends BoolType>> lastClause = new ArrayList<>();
-			lastClause.add(ef.Not(rep));
+			lastClause.add(Exprs.Not(rep));
 			final Collection<Expr<? extends BoolType>> en = new ArrayList<>();
 			for (final Expr<? extends BoolType> op : ops) {
-				en.add(ef.Or(ImmutableSet.of(ef.Not(op), rep)));
+				en.add(Exprs.Or(ImmutableSet.of(Exprs.Not(op), rep)));
 				lastClause.add(op);
 			}
-			en.add(ef.Or(lastClause));
-			param.add(ef.And(en));
+			en.add(Exprs.Or(lastClause));
+			param.add(Exprs.And(en));
 			return rep;
 		}
 

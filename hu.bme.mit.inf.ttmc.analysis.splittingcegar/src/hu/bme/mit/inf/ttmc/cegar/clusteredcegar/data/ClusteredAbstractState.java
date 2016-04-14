@@ -6,8 +6,8 @@ import java.util.List;
 
 import hu.bme.mit.inf.ttmc.cegar.common.data.AbstractState;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.expr.impl.Exprs;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
-import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
 
 /**
  * Represents a composite abstract state, which is a product of
@@ -113,11 +113,11 @@ public class ClusteredAbstractState implements AbstractState {
 	}
 
 	@Override
-	public Expr<? extends BoolType> createExpression(final STSManager manager) {
+	public Expr<? extends BoolType> createExpression() {
 		final List<Expr<? extends BoolType>> ops = new ArrayList<>();
 		for (final ComponentAbstractState cas : states)
 			for (final Expr<? extends BoolType> ex : cas.getLabels())
 				ops.add(ex);
-		return manager.getExprFactory().And(ops);
+		return Exprs.And(ops);
 	}
 }

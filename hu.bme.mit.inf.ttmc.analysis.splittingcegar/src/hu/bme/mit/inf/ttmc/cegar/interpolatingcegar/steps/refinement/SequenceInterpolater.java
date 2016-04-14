@@ -5,6 +5,8 @@ import java.util.Arrays;
 import java.util.List;
 
 import hu.bme.mit.inf.ttmc.cegar.common.data.ConcreteTrace;
+import hu.bme.mit.inf.ttmc.cegar.common.data.SolverWrapper;
+import hu.bme.mit.inf.ttmc.cegar.common.data.StopHandler;
 import hu.bme.mit.inf.ttmc.cegar.common.steps.AbstractCEGARStep;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.Visualizer;
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.data.Interpolant;
@@ -13,6 +15,7 @@ import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.data.InterpolatedAbstractSys
 import hu.bme.mit.inf.ttmc.common.logging.Logger;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.expr.NotExpr;
+import hu.bme.mit.inf.ttmc.core.expr.impl.Exprs;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 import hu.bme.mit.inf.ttmc.solver.ItpMarker;
@@ -26,75 +29,68 @@ import hu.bme.mit.inf.ttmc.solver.ItpSolver;
  */
 public class SequenceInterpolater extends AbstractCEGARStep implements Interpolater {
 
-	/**
-	 * Initialize the interpolater with a solver, logger and visualizer
-	 *
-	 * @param solver
-	 * @param logger
-	 * @param visualizer
-	 * @param interpolatingSolver
-	 */
-	public SequenceInterpolater(final Logger logger, final Visualizer visualizer) {
-		super(logger, visualizer);
+	public SequenceInterpolater(final SolverWrapper solvers, final StopHandler stopHandler, final Logger logger, final Visualizer visualizer) {
+		super(solvers, stopHandler, logger, visualizer);
 	}
 
 	@Override
-	public Interpolant interpolate(final InterpolatedAbstractSystem system,
-			final List<InterpolatedAbstractState> abstractCounterEx, final ConcreteTrace concreteTrace) {
+	public Interpolant interpolate(final InterpolatedAbstractSystem system, final List<InterpolatedAbstractState> abstractCounterEx,
+			final ConcreteTrace concreteTrace) {
 
-		final ItpSolver interpolatingSolver = system.getManager().getSolverFactory().createItpSolver();
+		final ItpSolver itpSolver = solvers.getItpSolver();
+
 		// Create pattern for a sequence interpolant
 		final ItpMarker[] markers = new ItpMarker[abstractCounterEx.size() + 1];
 		for (int i = 0; i < markers.length; ++i)
-			markers[i] = interpolatingSolver.createMarker();
+			markers[i] = itpSolver.createMarker();
 
-		final ItpPattern pattern = interpolatingSolver.createSeqPattern(Arrays.asList(markers));
+		final ItpPattern pattern = itpSolver.createSeqPattern(Arrays.asList(markers));
 
 		// Create an sts for the size of the abstract trace
 		final STS sts = system.getSTS();
 
-		interpolatingSolver.push();
+		itpSolver.push();
 
 		// Initial conditions for the first marker
-		interpolatingSolver.add(markers[0], sts.unrollInit(0));
+		itpSolver.add(markers[0], sts.unrollInit(0));
 
 		// Loop through each marker except the last one
 		for (int i = 0; i < abstractCounterEx.size(); ++i) {
 
 			for (final Expr<? extends BoolType> label : abstractCounterEx.get(i).getLabels()) {
 				// Assert labels
-				interpolatingSolver.add(markers[i], sts.unroll(label, i));
+				itpSolver.add(markers[i], sts.unroll(label, i));
 			}
 
 			if (i > 0) {
 				// Assert transition relation
-				interpolatingSolver.add(markers[i], sts.unrollTrans(i - 1));
+				itpSolver.add(markers[i], sts.unrollTrans(i - 1));
 			}
 
 			// Assert invariants
-			interpolatingSolver.add(markers[i], sts.unrollInv(i));
+			itpSolver.add(markers[i], sts.unrollInv(i));
 
 		}
 
 		// Set the last marker
-		final NotExpr negSpec = system.getManager().getExprFactory().Not(system.getSTS().getProp());
-		interpolatingSolver.add(markers[abstractCounterEx.size()], sts.unroll(negSpec, abstractCounterEx.size() - 1)); // Property
-																														// violation
+		final NotExpr negSpec = Exprs.Not(system.getSTS().getProp());
+		itpSolver.add(markers[abstractCounterEx.size()], sts.unroll(negSpec, abstractCounterEx.size() - 1)); // Property
+																												// violation
 
 		// The conjunction of the markers is unsatisfiable (otherwise there
 		// would be a concrete counterexample),
 		// thus an interpolant sequence must exist. The first one is always
 		// 'true' and it is not returned by the
 		// solver, but the last one is always 'false' and it is returned
-		interpolatingSolver.check();
+		itpSolver.check();
 		final List<Expr<? extends BoolType>> interpolants = new ArrayList<>();
 		// Fold in interpolants (except the last)
 		for (int i = 0; i < markers.length - 1; ++i)
-			interpolants.add(sts.foldin(interpolatingSolver.getInterpolant(pattern).eval(markers[i]), i));
+			interpolants.add(sts.foldin(itpSolver.getInterpolant(pattern).eval(markers[i]), i));
 
 		// TODO: assert last interpolant to be 'false'
 
-		interpolatingSolver.pop();
+		itpSolver.pop();
 
 		return new Interpolant(interpolants);
 	}

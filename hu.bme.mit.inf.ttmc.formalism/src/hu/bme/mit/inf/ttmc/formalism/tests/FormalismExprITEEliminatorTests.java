@@ -18,12 +18,8 @@ import org.junit.Test;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.core.type.IntType;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.VarRefExpr;
-import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
-import hu.bme.mit.inf.ttmc.formalism.sts.impl.STSManagerImpl;
 
 public class FormalismExprITEEliminatorTests {
-	// Manager and factories
-	STSManager manager;
 
 	// Constants and variables for testing
 	private VarRefExpr<BoolType> vA;
@@ -31,9 +27,6 @@ public class FormalismExprITEEliminatorTests {
 
 	@Before
 	public void before() {
-		// Create manager
-		manager = new STSManagerImpl();
-
 		// Create constants and variables
 		vA = Var("A", Bool()).getRef();
 		vB = Var("B", Int()).getRef();
@@ -44,9 +37,8 @@ public class FormalismExprITEEliminatorTests {
 	@Test
 	public void testProgExprIteEliminator() {
 		// D = if A then B else C
-		assertEquals(eliminate(Eq(vD, Ite(vA, vB, vC)), manager), And(Or(Not(vA), Eq(vD, vB)), Or(vA, Eq(vD, vC))));
+		assertEquals(eliminate(Eq(vD, Ite(vA, vB, vC))), And(Or(Not(vA), Eq(vD, vB)), Or(vA, Eq(vD, vC))));
 		// D = (if A then B else C)'
-		assertEquals(eliminate(Eq(vD, Prime(Ite(vA, vB, vC))), manager),
-				And(Or(Not(vA), Eq(vD, Prime(vB))), Or(vA, Eq(vD, Prime(vC)))));
+		assertEquals(eliminate(Eq(vD, Prime(Ite(vA, vB, vC)))), And(Or(Not(vA), Eq(vD, Prime(vB))), Or(vA, Eq(vD, Prime(vC)))));
 	}
 }

@@ -15,7 +15,6 @@ import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
-import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
 import hu.bme.mit.inf.ttmc.formalism.utils.impl.FormalismUtils;
 import hu.bme.mit.inf.ttmc.solver.Model;
 
@@ -24,7 +23,6 @@ import hu.bme.mit.inf.ttmc.solver.Model;
  */
 public final class STSImpl implements STS {
 
-	private final STSManager manager;
 	private final Collection<VarDecl<? extends Type>> vars;
 	private final Collection<Expr<? extends BoolType>> init;
 	private final Collection<Expr<? extends BoolType>> invar;
@@ -33,27 +31,19 @@ public final class STSImpl implements STS {
 	private final STSUnrollerImpl unroller;
 
 	// Protected constructor --> use the builder
-	protected STSImpl(final STSManager manager, final Collection<VarDecl<? extends Type>> vars,
-			final Collection<Expr<? extends BoolType>> init, final Collection<Expr<? extends BoolType>> invar,
-			final Collection<Expr<? extends BoolType>> trans, final Expr<? extends BoolType> prop) {
-		checkNotNull(manager);
+	protected STSImpl(final Collection<VarDecl<? extends Type>> vars, final Collection<Expr<? extends BoolType>> init,
+			final Collection<Expr<? extends BoolType>> invar, final Collection<Expr<? extends BoolType>> trans, final Expr<? extends BoolType> prop) {
 		checkNotNull(vars);
 		checkNotNull(init);
 		checkNotNull(invar);
 		checkNotNull(trans);
 		checkNotNull(prop);
-		this.manager = manager;
 		this.vars = new ArrayList<>(vars);
 		this.init = new ArrayList<>(init);
 		this.invar = new ArrayList<>(invar);
 		this.trans = new ArrayList<>(trans);
 		this.prop = prop;
-		this.unroller = new STSUnrollerImpl(this, manager);
-	}
-
-	@Override
-	public STSManager getManager() {
-		return manager;
+		this.unroller = new STSUnrollerImpl(this);
 	}
 
 	@Override
@@ -91,23 +81,20 @@ public final class STSImpl implements STS {
 		return sb.toString();
 	}
 
-	private void appendCollection(final StringBuilder sb, final String prefix, final Collection<?> collection,
-			final String postfix) {
+	private void appendCollection(final StringBuilder sb, final String prefix, final Collection<?> collection, final String postfix) {
 		sb.append(prefix);
 		sb.append(String.join(", ", collection.stream().map(i -> i.toString()).collect(Collectors.toList())));
 		sb.append(postfix);
 	}
 
 	public static class Builder {
-		private final STSManager manager;
 		private final Collection<VarDecl<? extends Type>> vars;
 		private final Collection<Expr<? extends BoolType>> init;
 		private final Collection<Expr<? extends BoolType>> invar;
 		private final Collection<Expr<? extends BoolType>> trans;
 		private Expr<? extends BoolType> prop;
 
-		public Builder(final STSManager manager) {
-			this.manager = manager;
+		public Builder() {
 			vars = new HashSet<>();
 			init = new HashSet<>();
 			invar = new HashSet<>();
@@ -210,7 +197,7 @@ public final class STSImpl implements STS {
 				FormalismUtils.collectVars(expr, vars);
 			FormalismUtils.collectVars(prop, vars);
 
-			return new STSImpl(manager, vars, init, invar, trans, prop);
+			return new STSImpl(vars, init, invar, trans, prop);
 		}
 	}
 
@@ -245,8 +232,7 @@ public final class STSImpl implements STS {
 	}
 
 	@Override
-	public AndExpr getConcreteState(final Model model, final int i,
-			final Collection<VarDecl<? extends Type>> variables) {
+	public AndExpr getConcreteState(final Model model, final int i, final Collection<VarDecl<? extends Type>> variables) {
 		return unroller.getConcreteState(model, i, variables);
 	}
 
@@ -256,8 +242,7 @@ public final class STSImpl implements STS {
 	}
 
 	@Override
-	public List<AndExpr> extractTrace(final Model model, final int length,
-			final Collection<VarDecl<? extends Type>> variables) {
+	public List<AndExpr> extractTrace(final Model model, final int length, final Collection<VarDecl<? extends Type>> variables) {
 		return unroller.extractTrace(model, length, variables);
 	}
 

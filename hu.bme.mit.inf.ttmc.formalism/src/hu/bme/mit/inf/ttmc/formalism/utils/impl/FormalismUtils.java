@@ -4,13 +4,11 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-import hu.bme.mit.inf.ttmc.core.ConstraintManager;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.core.utils.impl.ExprCNFCheckerVisitor.CNFStatus;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
-import hu.bme.mit.inf.ttmc.formalism.sts.factory.VarDeclFactory;
 
 public class FormalismUtils {
 
@@ -22,9 +20,9 @@ public class FormalismUtils {
 	}
 
 	@SuppressWarnings("unchecked")
-	public static Expr<? extends BoolType> eliminate(final Expr<? extends BoolType> expr, final ConstraintManager manager) {
-		return (Expr<? extends BoolType>) expr.accept(new FormalismITEPropagatorVisitor(manager, new FormalismITEPusherVisitor(manager)), null)
-				.accept(new FormalismITERemoverVisitor(manager), null);
+	public static Expr<? extends BoolType> eliminate(final Expr<? extends BoolType> expr) {
+		return (Expr<? extends BoolType>) expr.accept(new FormalismITEPropagatorVisitor(new FormalismITEPusherVisitor()), null)
+				.accept(new FormalismITERemoverVisitor(), null);
 	}
 
 	public static void collectVars(final Expr<? extends Type> expr, final Collection<VarDecl<? extends Type>> collectTo) {
@@ -37,8 +35,8 @@ public class FormalismUtils {
 		return vars;
 	}
 
-	public static CNFTransformation createCNFTransformation(final ConstraintManager manager, final VarDeclFactory varFactory) {
-		return new CNFTransformation(manager, varFactory);
+	public static CNFTransformation createCNFTransformation() {
+		return new CNFTransformation();
 	}
 
 	public static void collectAtoms(final Expr<? extends BoolType> expr, final Collection<Expr<? extends BoolType>> collectTo) {

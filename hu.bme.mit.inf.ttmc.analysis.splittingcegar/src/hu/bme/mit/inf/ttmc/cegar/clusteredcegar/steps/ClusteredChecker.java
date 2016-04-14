@@ -11,6 +11,8 @@ import hu.bme.mit.inf.ttmc.cegar.clusteredcegar.data.ClusteredAbstractSystem;
 import hu.bme.mit.inf.ttmc.cegar.clusteredcegar.data.ComponentAbstractState;
 import hu.bme.mit.inf.ttmc.cegar.clusteredcegar.utils.VisualizationHelper;
 import hu.bme.mit.inf.ttmc.cegar.common.data.AbstractResult;
+import hu.bme.mit.inf.ttmc.cegar.common.data.SolverWrapper;
+import hu.bme.mit.inf.ttmc.cegar.common.data.StopHandler;
 import hu.bme.mit.inf.ttmc.cegar.common.steps.AbstractCEGARStep;
 import hu.bme.mit.inf.ttmc.cegar.common.steps.Checker;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.SolverHelper;
@@ -18,22 +20,21 @@ import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.Visualizer;
 import hu.bme.mit.inf.ttmc.common.logging.Logger;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.expr.NotExpr;
+import hu.bme.mit.inf.ttmc.core.expr.impl.Exprs;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 import hu.bme.mit.inf.ttmc.solver.Solver;
 
-public class ClusteredChecker extends AbstractCEGARStep
-		implements Checker<ClusteredAbstractSystem, ClusteredAbstractState> {
+public class ClusteredChecker extends AbstractCEGARStep implements Checker<ClusteredAbstractSystem, ClusteredAbstractState> {
 
-	public ClusteredChecker(final Logger logger, final Visualizer visualizer) {
-		super(logger, visualizer);
+	public ClusteredChecker(final SolverWrapper solvers, final StopHandler stopHandler, final Logger logger, final Visualizer visualizer) {
+		super(solvers, stopHandler, logger, visualizer);
 	}
 
 	@Override
 	public AbstractResult<ClusteredAbstractState> check(final ClusteredAbstractSystem system) {
 		checkNotNull(system);
-		final Solver solver = system.getManager().getSolverFactory().createSolver(true, false);
-		final NotExpr negProp = system.getManager().getExprFactory().Not(system.getSTS().getProp());
+		final NotExpr negProp = Exprs.Not(system.getSTS().getProp());
 
 		final STS sts = system.getSTS();
 		// Store explored states in a map. The key and the value is the same
@@ -55,13 +56,14 @@ public class ClusteredChecker extends AbstractCEGARStep
 			prevInit[i] = 0;
 
 		int arcs = 0, deletedArcs = 0;
+		final Solver solver = solvers.getSolver();
 
 		solver.push();
 		solver.add(sts.unrollInv(0));
 
 		// Loop through each initial state and do a search
 		while ((actualInit = getNextInitialState(system, prevInit)) != null && counterExample == null) {
-			if (isStopped)
+			if (stopHandler.isStopped())
 				return null;
 			// Check if the state is really initial
 			if (!checkInit(actualInit, solver, sts))
@@ -88,7 +90,7 @@ public class ClusteredChecker extends AbstractCEGARStep
 			}
 
 			while (!stateStack.empty() && counterExample == null) {
-				if (isStopped)
+				if (stopHandler.isStopped())
 					return null;
 				final ClusteredAbstractState actualState = stateStack.peek();
 				final ClusteredAbstractState nextState = getNextSuccessor(actualState, successorStack.peek());
@@ -123,7 +125,7 @@ public class ClusteredChecker extends AbstractCEGARStep
 						deletedArcs++;
 					}
 				} else { // If the actual state has no more successors, then
-							// backtrack
+								// backtrack
 					stateStack.pop();
 					successorStack.pop();
 				}
@@ -148,13 +150,11 @@ public class ClusteredChecker extends AbstractCEGARStep
 			VisualizationHelper.visualizeCompositeAbstractKripkeStructure(exploredStates.keySet(), visualizer, 6);
 		}
 
-		return counterExample == null
-				? new AbstractResult<ClusteredAbstractState>(null, exploredStates.keySet(), exploredStates.size())
+		return counterExample == null ? new AbstractResult<ClusteredAbstractState>(null, exploredStates.keySet(), exploredStates.size())
 				: new AbstractResult<ClusteredAbstractState>(counterExample, null, exploredStates.size());
 	}
 
-	private boolean checkProp(final ClusteredAbstractState state, final Expr<? extends BoolType> expr,
-			final Solver solver, final STS sts) {
+	private boolean checkProp(final ClusteredAbstractState state, final Expr<? extends BoolType> expr, final Solver solver, final STS sts) {
 		solver.push();
 		for (final ComponentAbstractState as : state.getStates())
 			SolverHelper.unrollAndAssert(solver, as.getLabels(), sts, 0);
@@ -164,8 +164,7 @@ public class ClusteredChecker extends AbstractCEGARStep
 		return ret;
 	}
 
-	private boolean checkTrans(final ClusteredAbstractState s0, final ClusteredAbstractState s1, final Solver solver,
-			final STS sts) {
+	private boolean checkTrans(final ClusteredAbstractState s0, final ClusteredAbstractState s1, final Solver solver, final STS sts) {
 		solver.push();
 		for (final ComponentAbstractState as : s0.getStates())
 			SolverHelper.unrollAndAssert(solver, as.getLabels(), sts, 0);
