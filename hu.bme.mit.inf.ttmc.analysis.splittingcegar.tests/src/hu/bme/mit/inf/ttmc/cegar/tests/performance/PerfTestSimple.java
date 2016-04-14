@@ -42,12 +42,9 @@ public class PerfTestSimple extends PerfTestBase {
 		final List<CEGARBuilder> configurations = new ArrayList<CEGARBuilder>() {
 			{
 				add(new ClusteredCEGARBuilder().logger(null).visualizer(null));
-				add(new VisibleCEGARBuilder().logger(null).visualizer(null).useCNFTransformation(false)
-						.varCollectionMethod(VarCollectionMethod.CraigItp));
-				add(new VisibleCEGARBuilder().logger(null).visualizer(null).useCNFTransformation(false)
-						.varCollectionMethod(VarCollectionMethod.SequenceItp));
-				add(new VisibleCEGARBuilder().logger(null).visualizer(null).useCNFTransformation(false)
-						.varCollectionMethod(VarCollectionMethod.UnsatCore));
+				add(new VisibleCEGARBuilder().logger(null).visualizer(null).useCNFTransformation(false).varCollectionMethod(VarCollectionMethod.CraigItp));
+				add(new VisibleCEGARBuilder().logger(null).visualizer(null).useCNFTransformation(false).varCollectionMethod(VarCollectionMethod.SequenceItp));
+				add(new VisibleCEGARBuilder().logger(null).visualizer(null).useCNFTransformation(false).varCollectionMethod(VarCollectionMethod.UnsatCore));
 				add(new InterpolatingCEGARBuilder().logger(null).visualizer(null).interpolationMethod(InterpolationMethod.Craig).incrementalModelChecking(false)
 						.useCNFTransformation(false));
 				add(new InterpolatingCEGARBuilder().logger(null).visualizer(null).interpolationMethod(InterpolationMethod.Craig).incrementalModelChecking(true)

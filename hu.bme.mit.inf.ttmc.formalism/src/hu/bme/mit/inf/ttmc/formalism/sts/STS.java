@@ -25,8 +25,6 @@ public interface STS {
 
 	public Expr<? extends BoolType> getProp();
 
-	public STSManager getManager();
-
 	// Unrolling methods
 
 	public Expr<? extends BoolType> unroll(final Expr<? extends BoolType> expr, final int i);
@@ -41,13 +39,11 @@ public interface STS {
 
 	public AndExpr getConcreteState(final Model model, final int i);
 
-	public AndExpr getConcreteState(final Model model, final int i,
-			final Collection<VarDecl<? extends Type>> variables);
+	public AndExpr getConcreteState(final Model model, final int i, final Collection<VarDecl<? extends Type>> variables);
 
 	public List<AndExpr> extractTrace(final Model model, final int length);
 
-	public List<AndExpr> extractTrace(final Model model, final int length,
-			final Collection<VarDecl<? extends Type>> variables);
+	public List<AndExpr> extractTrace(final Model model, final int length, final Collection<VarDecl<? extends Type>> variables);
 
 	public Expr<? extends BoolType> foldin(final Expr<? extends BoolType> expr, final int i);
 }

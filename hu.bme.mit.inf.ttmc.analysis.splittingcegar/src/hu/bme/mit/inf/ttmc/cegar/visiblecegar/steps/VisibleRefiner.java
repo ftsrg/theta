@@ -6,6 +6,8 @@ import java.util.Collection;
 import java.util.List;
 
 import hu.bme.mit.inf.ttmc.cegar.common.data.ConcreteTrace;
+import hu.bme.mit.inf.ttmc.cegar.common.data.SolverWrapper;
+import hu.bme.mit.inf.ttmc.cegar.common.data.StopHandler;
 import hu.bme.mit.inf.ttmc.cegar.common.steps.AbstractCEGARStep;
 import hu.bme.mit.inf.ttmc.cegar.common.steps.Refiner;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.Visualizer;
@@ -19,8 +21,9 @@ import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 public class VisibleRefiner extends AbstractCEGARStep implements Refiner<VisibleAbstractSystem, VisibleAbstractState> {
 	private final VarCollector varCollector;
 
-	public VisibleRefiner(final Logger logger, final Visualizer visualizer, final VarCollector varCollector) {
-		super(logger, visualizer);
+	public VisibleRefiner(final SolverWrapper solvers, final StopHandler stopHandler, final Logger logger, final Visualizer visualizer,
+			final VarCollector varCollector) {
+		super(solvers, stopHandler, logger, visualizer);
 		this.varCollector = checkNotNull(varCollector);
 	}
 

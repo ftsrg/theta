@@ -9,6 +9,8 @@ import java.util.Stack;
 import java.util.stream.Collectors;
 
 import hu.bme.mit.inf.ttmc.cegar.common.data.AbstractState;
+import hu.bme.mit.inf.ttmc.cegar.common.data.AbstractSystem;
+import hu.bme.mit.inf.ttmc.cegar.common.data.SolverWrapper;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.SolverHelper;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.Visualizer;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.graph.ClusterNode;
@@ -19,21 +21,23 @@ import hu.bme.mit.inf.ttmc.core.expr.EqExpr;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
-import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
 import hu.bme.mit.inf.ttmc.solver.Solver;
 
 /**
  * Base class for debuggers.
  */
-public class AbstractDebugger {
-	protected Visualizer visualizer;
+public abstract class AbstractDebugger<AbstractSystemType extends AbstractSystem, AbstractStateType extends AbstractState>
+		implements Debugger<AbstractSystemType, AbstractStateType> {
+	protected final Visualizer visualizer;
+	protected SolverWrapper solvers;
 
-	public AbstractDebugger(final Visualizer visualizer) {
+	public AbstractDebugger(final SolverWrapper solvers, final Visualizer visualizer) {
+		this.solvers = solvers;
 		this.visualizer = visualizer;
 	}
 
-	protected void exploreConcrTransRelAndInits(final Collection<ConcreteState> concreteStates, final Solver solver,
-			final STS sts) {
+	protected void exploreConcrTransRelAndInits(final Collection<ConcreteState> concreteStates, final STS sts) {
+		final Solver solver = solvers.getSolver();
 		solver.push();
 		solver.add(sts.unrollInv(0));
 		// Loop through each state
@@ -79,9 +83,8 @@ public class AbstractDebugger {
 		}
 	}
 
-	protected void markUnsafeStates(final Collection<ConcreteState> concreteStates,
-			final Expr<? extends BoolType> unsafeExpr, final Solver solver, final STS sts) {
-
+	protected void markUnsafeStates(final Collection<ConcreteState> concreteStates, final Expr<? extends BoolType> unsafeExpr, final STS sts) {
+		final Solver solver = solvers.getSolver();
 		solver.push();
 		solver.add(sts.unroll(unsafeExpr, 0));
 		for (final ConcreteState cs0 : concreteStates) {
@@ -95,7 +98,7 @@ public class AbstractDebugger {
 	}
 
 	protected void visualize(final Map<? extends AbstractState, ? extends Collection<ConcreteState>> stateSpace,
-			final Collection<? extends AbstractState> reachableStates, final STSManager manager) {
+			final Collection<? extends AbstractState> reachableStates) {
 		if (stateSpace.isEmpty())
 			throw new RuntimeException("State space is not explored.");
 
@@ -109,7 +112,7 @@ public class AbstractDebugger {
 		final Graph g = new Graph("SYSTEM", "SYSTEM");
 		for (final AbstractState as : stateSpace.keySet()) {
 			final StringBuilder labelString = new StringBuilder("");
-			final Expr<? extends BoolType> labelExpr = as.createExpression(manager);
+			final Expr<? extends BoolType> labelExpr = as.createExpression();
 			if (labelExpr instanceof AndExpr) {
 				for (final Expr<?> label : ((AndExpr) labelExpr).getOps())
 					labelString.append(label).append(System.lineSeparator());
@@ -117,20 +120,19 @@ public class AbstractDebugger {
 				labelString.append(labelExpr);
 			}
 
-			final ClusterNode cn = new ClusterNode(("cluster_cas_" + ids.get(as)).replace('-', '_'),
-					labelString.toString(), reachableStates.contains(as) ? "black" : "gray",
-					as.isPartOfCounterexample() ? "pink" : "white", "", as.isInitial());
+			final ClusterNode cn = new ClusterNode(("cluster_cas_" + ids.get(as)).replace('-', '_'), labelString.toString(),
+					reachableStates.contains(as) ? "black" : "gray", as.isPartOfCounterexample() ? "pink" : "white", "", as.isInitial());
 			g.addNode(cn);
 			for (final AbstractState as1 : as.getSuccessors())
 				cn.addSuccessor(("cluster_cas_" + ids.get(as1)).replace('-', '_'), "");
 
 			for (final ConcreteState cs0 : stateSpace.get(as)) {
-				final Node n = new Node("cs_" + cs0.createId(), cs0.toString(), (cs0.isReachable ? "" : "grey"),
-						(cs0.isPartOfCounterExample ? "red" : ""), (cs0.isUnsafe ? "dashed" : ""), cs0.isInitial);
+				final Node n = new Node("cs_" + cs0.createId(), cs0.toString(), (cs0.isReachable ? "" : "grey"), (cs0.isPartOfCounterExample ? "red" : ""),
+						(cs0.isUnsafe ? "dashed" : ""), cs0.isInitial);
 				cn.addSubNode(n);
 				for (final ConcreteState cs1 : cs0.successors)
-					n.addSuccessor("cs_" + cs1.createId(), (cs0.isPartOfCounterExample && cs1.isPartOfCounterExample
-							&& cs0.counterExampleIndex < cs1.counterExampleIndex ? "red" : ""));
+					n.addSuccessor("cs_" + cs1.createId(),
+							(cs0.isPartOfCounterExample && cs1.isPartOfCounterExample && cs0.counterExampleIndex < cs1.counterExampleIndex ? "red" : ""));
 			}
 		}
 
@@ -164,8 +166,7 @@ public class AbstractDebugger {
 		@Override
 		public String toString() {
 			return String.join(System.lineSeparator(),
-					model.getOps().stream().map(m -> ((EqExpr) m).getLeftOp() + " = " + ((EqExpr) m).getRightOp())
-							.collect(Collectors.toList()));
+					model.getOps().stream().map(m -> ((EqExpr) m).getLeftOp() + " = " + ((EqExpr) m).getRightOp()).collect(Collectors.toList()));
 		}
 
 		public String createId() {

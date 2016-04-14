@@ -8,18 +8,15 @@ import hu.bme.mit.inf.ttmc.aiger.AIGERLoader;
 import hu.bme.mit.inf.ttmc.aiger.impl.AIGERLoaderOptimized;
 import hu.bme.mit.inf.ttmc.aiger.utils.AIGERVisualizer;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
-import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
-import hu.bme.mit.inf.ttmc.formalism.sts.impl.STSManagerImpl;
 
 public class AIGERLoaderTests {
 
 	@Test
 	public void testAIGERLoader() throws IOException {
 		AIGERLoader loader = null;
-		// loader = new AIGERLoaderSimple();
+		//loader = new AIGERLoaderSimple();
 		loader = new AIGERLoaderOptimized();
-		final STSManager manager = new STSManagerImpl();
-		final STS sts = loader.load("instances/simple3.aag", manager);
+		final STS sts = loader.load("instances/simple3.aag");
 
 		AIGERVisualizer.visualize("instances/simple3.aag", "instances/simple3.dot");
 
