@@ -9,8 +9,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 
-import hu.bme.mit.inf.ttmc.cegar.common.data.AbstractSystem;
 import hu.bme.mit.inf.ttmc.cegar.common.data.ConcreteTrace;
+import hu.bme.mit.inf.ttmc.cegar.common.data.SolverWrapper;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.SolverHelper;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.debugging.AbstractDebugger;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.debugging.Debugger;
@@ -19,18 +19,17 @@ import hu.bme.mit.inf.ttmc.cegar.visiblecegar.data.VisibleAbstractState;
 import hu.bme.mit.inf.ttmc.cegar.visiblecegar.data.VisibleAbstractSystem;
 import hu.bme.mit.inf.ttmc.core.expr.AndExpr;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.expr.impl.Exprs;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 import hu.bme.mit.inf.ttmc.solver.Solver;
 
-public class VisibleCEGARDebugger extends AbstractDebugger
-		implements Debugger<VisibleAbstractSystem, VisibleAbstractState> {
+public class VisibleCEGARDebugger extends AbstractDebugger<VisibleAbstractSystem, VisibleAbstractState> {
 	private final Map<VisibleAbstractState, List<ConcreteState>> stateSpace;
 	private final Set<VisibleAbstractState> reachableStates;
-	private AbstractSystem system = null;
 
-	public VisibleCEGARDebugger(final Visualizer visualizer) {
-		super(visualizer);
+	public VisibleCEGARDebugger(final SolverWrapper solvers, final Visualizer visualizer) {
+		super(solvers, visualizer);
 		stateSpace = new HashMap<>();
 		reachableStates = new HashSet<>();
 	}
@@ -38,11 +37,11 @@ public class VisibleCEGARDebugger extends AbstractDebugger
 	@Override
 	public Debugger<VisibleAbstractSystem, VisibleAbstractState> explore(final VisibleAbstractSystem system) {
 		clearStateSpace();
-		this.system = system;
+
+		final Solver solver = solvers.getSolver();
 
 		// Explore all abstract states
 		final STS sts = system.getSTS();
-		final Solver solver = system.getManager().getSolverFactory().createSolver(true, false);
 		solver.push(); // 1
 		solver.add(sts.unrollInv(0));
 
@@ -53,7 +52,7 @@ public class VisibleCEGARDebugger extends AbstractDebugger
 				final VisibleAbstractState vas = new VisibleAbstractState(vasExpr, false);
 				stateSpace.put(vas, new ArrayList<>());
 				// Exclude
-				solver.add(sts.unroll(system.getManager().getExprFactory().Not(vasExpr), 0));
+				solver.add(sts.unroll(Exprs.Not(vasExpr), 0));
 			} else {
 				break;
 			}
@@ -80,13 +79,12 @@ public class VisibleCEGARDebugger extends AbstractDebugger
 			solver.add(sts.unroll(vas.getExpression(), 0));
 			do {
 				if (SolverHelper.checkSat(solver)) { // New concrete state found
-					final Expr<? extends BoolType> csExpr = sts.getConcreteState(solver.getModel(), 0,
-							system.getVars());
+					final Expr<? extends BoolType> csExpr = sts.getConcreteState(solver.getModel(), 0, system.getVars());
 
 					final ConcreteState cs = new ConcreteState(csExpr);
 					stateSpace.get(vas).add(cs);
 					allConcreteStates.add(cs);
-					solver.add(sts.unroll(system.getManager().getExprFactory().Not(csExpr), 0));
+					solver.add(sts.unroll(Exprs.Not(csExpr), 0));
 				} else {
 					break;
 				}
@@ -132,14 +130,13 @@ public class VisibleCEGARDebugger extends AbstractDebugger
 
 		// Explore the transition relation between concrete states and initial
 		// states
-		exploreConcrTransRelAndInits(allConcreteStates, solver, sts);
+		exploreConcrTransRelAndInits(allConcreteStates, sts);
 
 		// Explore the reachable concrete states
 		exploreReachableConcrStates(allConcreteStates);
 
 		// Mark unsafe states
-		markUnsafeStates(allConcreteStates, system.getManager().getExprFactory().Not(system.getSTS().getProp()), solver,
-				sts);
+		markUnsafeStates(allConcreteStates, Exprs.Not(system.getSTS().getProp()), sts);
 
 		return this;
 	}
@@ -200,7 +197,7 @@ public class VisibleCEGARDebugger extends AbstractDebugger
 
 	@Override
 	public Debugger<VisibleAbstractSystem, VisibleAbstractState> visualize() {
-		visualize(stateSpace, reachableStates, system.getManager());
+		visualize(stateSpace, reachableStates);
 		return this;
 	}
 

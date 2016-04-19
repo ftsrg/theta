@@ -11,14 +11,14 @@ public final class STSITETransformation implements STSTransformation {
 
 	@Override
 	public STS transform(final STS system) {
-		final STSImpl.Builder builder = new STSImpl.Builder(system.getManager());
+		final STSImpl.Builder builder = new STSImpl.Builder();
 		for (final Expr<? extends BoolType> expr : system.getInit())
-			builder.addInit(FormalismUtils.eliminate(expr, system.getManager()));
+			builder.addInit(FormalismUtils.eliminate(expr));
 		for (final Expr<? extends BoolType> expr : system.getInvar())
-			builder.addInvar(FormalismUtils.eliminate(expr, system.getManager()));
+			builder.addInvar(FormalismUtils.eliminate(expr));
 		for (final Expr<? extends BoolType> expr : system.getTrans())
-			builder.addTrans(FormalismUtils.eliminate(expr, system.getManager()));
-		builder.setProp(FormalismUtils.eliminate(system.getProp(), system.getManager()));
+			builder.addTrans(FormalismUtils.eliminate(expr));
+		builder.setProp(FormalismUtils.eliminate(system.getProp()));
 
 		return builder.build();
 	}

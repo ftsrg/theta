@@ -9,8 +9,8 @@ import hu.bme.mit.inf.ttmc.core.expr.AndExpr;
 import hu.bme.mit.inf.ttmc.core.expr.EqExpr;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.expr.NotExpr;
+import hu.bme.mit.inf.ttmc.core.expr.impl.Exprs;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
-import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
 
 /**
  * Represents an abstract state of the interpolated CEGAR algorithm
@@ -111,8 +111,8 @@ public class InterpolatedAbstractState implements AbstractState {
 	}
 
 	@Override
-	public Expr<? extends BoolType> createExpression(final STSManager manager) {
-		return manager.getExprFactory().And(labels);
+	public Expr<? extends BoolType> createExpression() {
+		return Exprs.And(labels);
 	}
 
 	@Override

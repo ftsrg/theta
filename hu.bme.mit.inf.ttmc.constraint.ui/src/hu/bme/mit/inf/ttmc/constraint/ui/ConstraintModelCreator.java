@@ -13,7 +13,6 @@ import hu.bme.mit.inf.ttmc.constraint.ui.impl.ConstraintModelImpl;
 import hu.bme.mit.inf.ttmc.constraint.ui.transform.DeclTransformator;
 import hu.bme.mit.inf.ttmc.constraint.ui.transform.ExprTransformator;
 import hu.bme.mit.inf.ttmc.constraint.ui.transform.impl.ConstraintTransformationManager;
-import hu.bme.mit.inf.ttmc.core.ConstraintManager;
 import hu.bme.mit.inf.ttmc.core.decl.ConstDecl;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
@@ -25,11 +24,10 @@ public class ConstraintModelCreator {
 	private ConstraintModelCreator() {
 	}
 
-	public static ConstraintModel create(final ConstraintManager manager, final ConstraintSpecification specification) {
-		checkNotNull(manager);
+	public static ConstraintModel create(final ConstraintSpecification specification) {
 		checkNotNull(specification);
 
-		final ConstraintTransformationManager tManager = new ConstraintTransformationManager(manager);
+		final ConstraintTransformationManager tManager = new ConstraintTransformationManager();
 		final ConstraintModelBuilder builder = ConstraintModelImpl.builder();
 
 		addConstants(builder, specification, tManager);

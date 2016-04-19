@@ -9,7 +9,7 @@ import hu.bme.mit.inf.ttmc.core.type.IntType;
 import hu.bme.mit.inf.ttmc.core.type.RatType;
 import hu.bme.mit.inf.ttmc.core.type.Type;
 
-public class Types {
+public final class Types {
 
 	private static final BoolType BOOL_TYPE;
 	private static final IntType INT_TYPE;
@@ -21,7 +21,7 @@ public class Types {
 		RAT_TYPE = new RatTypeImpl();
 	}
 
-	protected Types() {
+	private Types() {
 	}
 
 	public static BoolType Bool() {

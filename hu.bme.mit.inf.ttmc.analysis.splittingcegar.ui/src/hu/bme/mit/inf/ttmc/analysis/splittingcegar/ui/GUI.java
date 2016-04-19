@@ -46,9 +46,6 @@ import hu.bme.mit.inf.ttmc.cegar.visiblecegar.VisibleCEGARBuilder;
 import hu.bme.mit.inf.ttmc.cegar.visiblecegar.VisibleCEGARBuilder.VarCollectionMethod;
 import hu.bme.mit.inf.ttmc.common.logging.Logger;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
-import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
-import hu.bme.mit.inf.ttmc.formalism.sts.impl.STSManagerImpl;
-import hu.bme.mit.inf.ttmc.solver.z3.Z3SolverManager;
 import hu.bme.mit.inf.ttmc.system.ui.SystemModel;
 import hu.bme.mit.inf.ttmc.system.ui.SystemModelCreator;
 import hu.bme.mit.inf.ttmc.system.ui.SystemModelLoader;
@@ -254,16 +251,13 @@ public class GUI extends JFrame {
 				cegar = new ClusteredCEGARBuilder().visualizer(visualizer).debug(debugVisualizer).logger(this).build();
 				break;
 			case 1:
-				cegar = new VisibleCEGARBuilder().visualizer(visualizer).debug(debugVisualizer).logger(this)
-						.useCNFTransformation(cb_usecnf.isSelected())
+				cegar = new VisibleCEGARBuilder().visualizer(visualizer).debug(debugVisualizer).logger(this).useCNFTransformation(cb_usecnf.isSelected())
 						.varCollectionMethod((VarCollectionMethod) cb_varCollMethod.getSelectedItem()).build();
 				break;
 			case 2:
-				final InterpolatingCEGARBuilder builder = new InterpolatingCEGARBuilder().visualizer(visualizer)
-						.logger(this).debug(debugVisualizer).useCNFTransformation(cb_usecnf.isSelected())
-						.collectFromConditions(cb_collectFromCond.isSelected())
-						.interpolationMethod((InterpolationMethod) cb_itpMethod.getSelectedItem())
-						.collectFromSpecification(cb_collectFromProp.isSelected())
+				final InterpolatingCEGARBuilder builder = new InterpolatingCEGARBuilder().visualizer(visualizer).logger(this).debug(debugVisualizer)
+						.useCNFTransformation(cb_usecnf.isSelected()).collectFromConditions(cb_collectFromCond.isSelected())
+						.interpolationMethod((InterpolationMethod) cb_itpMethod.getSelectedItem()).collectFromSpecification(cb_collectFromProp.isSelected())
 						.incrementalModelChecking(cb_incrMC.isSelected());
 				if (!txt_explVars.getText().equals(""))
 					for (final String var : txt_explVars.getText().split(","))
@@ -353,22 +347,19 @@ public class GUI extends JFrame {
 
 	private STS loadSystem() throws IOException {
 		STS sts = null;
-		final STSManager manager = new STSManagerImpl(new Z3SolverManager());
 		if (stsPath.endsWith(".system")) {
-			final SystemModel systemModel = SystemModelCreator.create(manager,
-					SystemModelLoader.getInstance().load(stsPath));
+			final SystemModel systemModel = SystemModelCreator.create(SystemModelLoader.getInstance().load(stsPath));
 			assert (systemModel.getSTSs().size() == 1);
 			sts = systemModel.getSTSs().iterator().next();
 		} else if (stsPath.endsWith(".aag")) {
-			sts = new AIGERLoaderSimple().load(stsPath, manager);
+			sts = new AIGERLoaderSimple().load(stsPath);
 		}
 		return sts;
 	}
 
 	private void enableSpecificControls() {
 		for (final Component comp : algorithmSpecificSettings.keySet()) {
-			comp.setEnabled(
-					Arrays.asList(algorithmSpecificSettings.get(comp)).contains(cb_algorithm.getSelectedItem()));
+			comp.setEnabled(Arrays.asList(algorithmSpecificSettings.get(comp)).contains(cb_algorithm.getSelectedItem()));
 		}
 	}
 }

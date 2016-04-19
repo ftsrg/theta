@@ -16,26 +16,17 @@ import hu.bme.mit.inf.ttmc.cegar.common.CEGARLoop;
 import hu.bme.mit.inf.ttmc.cegar.common.CEGARResult;
 import hu.bme.mit.inf.ttmc.cegar.tests.formatters.Formatter;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
-import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
-import hu.bme.mit.inf.ttmc.formalism.sts.impl.STSManagerImpl;
-import hu.bme.mit.inf.ttmc.solver.z3.Z3SolverManager;
 import hu.bme.mit.inf.ttmc.system.ui.SystemModelCreator;
 import hu.bme.mit.inf.ttmc.system.ui.SystemModelLoader;
 
 public class PerfTestBase {
 
-	private STSManager createNewManager() {
-		return new STSManagerImpl(new Z3SolverManager());
-	}
-
-	protected void run(final List<TestCase> testCases, final List<CEGARBuilder> configurations, final int timeOut,
-			final Formatter formatter) {
+	protected void run(final List<TestCase> testCases, final List<CEGARBuilder> configurations, final int timeOut, final Formatter formatter) {
 		boolean allOk = true;
 
 		final TestResult[][] results = new TestResult[testCases.size()][configurations.size()];
 
-		System.out.println(
-				"Running " + testCases.size() + " test cases with " + configurations.size() + " configurations");
+		System.out.println("Running " + testCases.size() + " test cases with " + configurations.size() + " configurations");
 		System.out.println("Started at " + new Date());
 
 		// Header
@@ -54,8 +45,7 @@ public class PerfTestBase {
 
 		for (int i = 0; i < testCases.size(); i++) {
 			final TestCase testCase = testCases.get(i);
-			formatter.cell((testCase.expected ? "(+) " : "(-) ")
-					+ testCase.path.substring(testCase.path.lastIndexOf('/') + 1));
+			formatter.cell((testCase.expected ? "(+) " : "(-) ") + testCase.path.substring(testCase.path.lastIndexOf('/') + 1));
 
 			for (int j = 0; j < configurations.size(); j++) {
 				final CEGARBuilder configuration = configurations.get(j);
@@ -81,7 +71,7 @@ public class PerfTestBase {
 	protected TestResult run(final TestCase testCase, final CEGARBuilder configuration, final int timeOut) {
 		STS system;
 		try {
-			system = testCase.loader.load(testCase.path, createNewManager());
+			system = testCase.loader.load(testCase.path);
 		} catch (final IOException e1) {
 			return new TestResult(TestResult.ResultType.IOException, new ArrayList<>());
 		}
@@ -110,7 +100,7 @@ public class PerfTestBase {
 						rerun = 1;
 					for (int i = 0; i < rerun; ++i) {
 						try {
-							system = testCase.loader.load(testCase.path, createNewManager());
+							system = testCase.loader.load(testCase.path);
 						} catch (final IOException e1) {
 							return new TestResult(TestResult.ResultType.IOException, new ArrayList<>());
 						}
@@ -128,30 +118,29 @@ public class PerfTestBase {
 	}
 
 	protected static interface IModelLoader {
-		STS load(final String path, final STSManager manager) throws IOException;
+		STS load(final String path) throws IOException;
 	}
 
 	protected static class SystemFileModelLoader implements IModelLoader {
 		@Override
-		public STS load(final String path, final STSManager manager) {
-			return SystemModelCreator.create(manager, SystemModelLoader.getInstance().load(path)).getSTSs().iterator()
-					.next();
+		public STS load(final String path) {
+			return SystemModelCreator.create(SystemModelLoader.getInstance().load(path)).getSTSs().iterator().next();
 		}
 	}
 
 	protected static class AIGERFileModelLoaderOptimized implements IModelLoader {
 
 		@Override
-		public STS load(final String path, final STSManager manager) throws IOException {
-			return new AIGERLoaderOptimized().load(path, manager);
+		public STS load(final String path) throws IOException {
+			return new AIGERLoaderOptimized().load(path);
 		}
 	}
 
 	protected static class AIGERFileModelLoaderSimple implements IModelLoader {
 
 		@Override
-		public STS load(final String path, final STSManager manager) throws IOException {
-			return new AIGERLoaderSimple().load(path, manager);
+		public STS load(final String path) throws IOException {
+			return new AIGERLoaderSimple().load(path);
 		}
 	}
 

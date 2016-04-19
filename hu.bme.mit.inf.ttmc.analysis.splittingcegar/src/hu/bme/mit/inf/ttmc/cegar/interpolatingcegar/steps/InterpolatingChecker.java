@@ -6,6 +6,8 @@ import java.util.Set;
 import java.util.Stack;
 
 import hu.bme.mit.inf.ttmc.cegar.common.data.AbstractResult;
+import hu.bme.mit.inf.ttmc.cegar.common.data.SolverWrapper;
+import hu.bme.mit.inf.ttmc.cegar.common.data.StopHandler;
 import hu.bme.mit.inf.ttmc.cegar.common.steps.AbstractCEGARStep;
 import hu.bme.mit.inf.ttmc.cegar.common.steps.Checker;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.SolverHelper;
@@ -15,11 +17,11 @@ import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.data.InterpolatedAbstractSys
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.utils.VisualizationHelper;
 import hu.bme.mit.inf.ttmc.common.logging.Logger;
 import hu.bme.mit.inf.ttmc.core.expr.NotExpr;
+import hu.bme.mit.inf.ttmc.core.expr.impl.Exprs;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 import hu.bme.mit.inf.ttmc.solver.Solver;
 
-public class InterpolatingChecker extends AbstractCEGARStep
-		implements Checker<InterpolatedAbstractSystem, InterpolatedAbstractState> {
+public class InterpolatingChecker extends AbstractCEGARStep implements Checker<InterpolatedAbstractSystem, InterpolatedAbstractState> {
 
 	private final boolean isIncremental;
 	private int actualInit;
@@ -28,8 +30,9 @@ public class InterpolatingChecker extends AbstractCEGARStep
 	private final Stack<InterpolatedAbstractState> stateStack;
 	private final Stack<Integer> successorStack;
 
-	public InterpolatingChecker(final Logger logger, final Visualizer visualizer, final boolean isIncremental) {
-		super(logger, visualizer);
+	public InterpolatingChecker(final SolverWrapper solvers, final StopHandler stopHandler, final Logger logger, final Visualizer visualizer,
+			final boolean isIncremental) {
+		super(solvers, stopHandler, logger, visualizer);
 		this.isIncremental = isIncremental;
 		exploredStates = new HashSet<>();
 		stateStack = new Stack<>();
@@ -39,11 +42,10 @@ public class InterpolatingChecker extends AbstractCEGARStep
 
 	@Override
 	public AbstractResult<InterpolatedAbstractState> check(final InterpolatedAbstractSystem system) {
-		final Solver solver = system.getManager().getSolverFactory().createSolver(true, false);
 		// Get the index of the previously splitted state, or -1 at first call
 		final int splitIndex = system.getPreviousSplitIndex();
 
-		final NotExpr negProp = system.getManager().getExprFactory().Not(system.getSTS().getProp());
+		final NotExpr negProp = Exprs.Not(system.getSTS().getProp());
 
 		final STS sts = system.getSTS();
 		Stack<InterpolatedAbstractState> counterExample = null; // Store the
@@ -91,6 +93,8 @@ public class InterpolatingChecker extends AbstractCEGARStep
 
 		final int stateSpaceSizeAfterClear = exploredStates.size();
 
+		final Solver solver = solvers.getSolver();
+
 		solver.push();
 		solver.add(sts.unrollInv(0)); // Assert invariants
 		solver.add(sts.unroll(negProp, 0)); // Assert the negate of the
@@ -105,7 +109,7 @@ public class InterpolatingChecker extends AbstractCEGARStep
 
 		// Loop through each initial state and do a search
 		while (actualInit < system.getAbstractKripkeStructure().getInitialStates().size() && counterExample == null) {
-			if (isStopped)
+			if (stopHandler.isStopped())
 				return null;
 			final InterpolatedAbstractState init = system.getAbstractKripkeStructure().getInitialState(actualInit);
 			++actualInit;
@@ -137,7 +141,7 @@ public class InterpolatingChecker extends AbstractCEGARStep
 			isContinuation = false;
 
 			while (!stateStack.isEmpty() && counterExample == null) {
-				if (isStopped)
+				if (stopHandler.isStopped())
 					return null;
 				// Get the actual state
 				final InterpolatedAbstractState actual = stateStack.peek();
@@ -161,7 +165,7 @@ public class InterpolatingChecker extends AbstractCEGARStep
 						}
 					}
 				} else { // If the actual state has no more successors, then
-							// backtrack
+								// backtrack
 					stateStack.pop();
 					successorStack.pop();
 				}
@@ -193,11 +197,8 @@ public class InterpolatingChecker extends AbstractCEGARStep
 		// TODO: optimization: clear data structures if not incremental. Note
 		// that the returned counterexample is a reference to the state stack
 
-		return counterExample == null
-				? new AbstractResult<InterpolatedAbstractState>(null, exploredStates,
-						exploredStates.size() - stateSpaceSizeAfterClear)
-				: new AbstractResult<InterpolatedAbstractState>(counterExample, null,
-						exploredStates.size() - stateSpaceSizeAfterClear);
+		return counterExample == null ? new AbstractResult<InterpolatedAbstractState>(null, exploredStates, exploredStates.size() - stateSpaceSizeAfterClear)
+				: new AbstractResult<InterpolatedAbstractState>(counterExample, null, exploredStates.size() - stateSpaceSizeAfterClear);
 	}
 
 	private boolean checkState(final InterpolatedAbstractState s, final Solver solver, final STS sts) {

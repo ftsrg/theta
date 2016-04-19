@@ -2,6 +2,8 @@ package hu.bme.mit.inf.ttmc.cegar.visiblecegar;
 
 import hu.bme.mit.inf.ttmc.cegar.common.CEGARBuilder;
 import hu.bme.mit.inf.ttmc.cegar.common.GenericCEGARLoop;
+import hu.bme.mit.inf.ttmc.cegar.common.data.SolverWrapper;
+import hu.bme.mit.inf.ttmc.cegar.common.data.StopHandler;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.NullVisualizer;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.Visualizer;
 import hu.bme.mit.inf.ttmc.cegar.visiblecegar.data.VisibleAbstractState;
@@ -17,13 +19,15 @@ import hu.bme.mit.inf.ttmc.cegar.visiblecegar.steps.refinement.VarCollector;
 import hu.bme.mit.inf.ttmc.cegar.visiblecegar.utils.VisibleCEGARDebugger;
 import hu.bme.mit.inf.ttmc.common.logging.Logger;
 import hu.bme.mit.inf.ttmc.common.logging.impl.NullLogger;
+import hu.bme.mit.inf.ttmc.solver.SolverManager;
+import hu.bme.mit.inf.ttmc.solver.z3.Z3SolverManager;
 
 public class VisibleCEGARBuilder implements CEGARBuilder {
 	private Logger logger = new NullLogger();
 	private Visualizer visualizer = new NullVisualizer();
 	private boolean useCNFTransformation = false;
 	private VarCollectionMethod varCollMethod = VarCollectionMethod.CraigItp;
-	private VisibleCEGARDebugger debugger = null;
+	private Visualizer debugVisualizer = null;
 
 	public enum VarCollectionMethod {
 		CraigItp, SequenceItp, UnsatCore
@@ -50,30 +54,34 @@ public class VisibleCEGARBuilder implements CEGARBuilder {
 	}
 
 	public VisibleCEGARBuilder debug(final Visualizer visualizer) {
-		if (visualizer == null)
-			this.debugger = null;
-		else
-			this.debugger = new VisibleCEGARDebugger(visualizer);
+		this.debugVisualizer = visualizer;
 		return this;
 	}
 
 	@Override
 	public GenericCEGARLoop<VisibleAbstractSystem, VisibleAbstractState> build() {
+		final SolverManager manager = new Z3SolverManager();
+		final SolverWrapper solvers = new SolverWrapper(manager.getSolverFactory().createSolver(true, true), manager.getSolverFactory().createItpSolver());
+		final StopHandler stopHandler = new StopHandler();
+		VisibleCEGARDebugger debugger = null;
+		if (debugVisualizer != null)
+			debugger = new VisibleCEGARDebugger(solvers, debugVisualizer);
 		VarCollector varCollector = null;
 		switch (varCollMethod) {
 		case CraigItp:
-			varCollector = new CraigItpVarCollector(logger, visualizer);
+			varCollector = new CraigItpVarCollector(solvers, stopHandler, logger, visualizer);
 			break;
 		case SequenceItp:
-			varCollector = new SeqItpVarCollector(logger, visualizer);
+			varCollector = new SeqItpVarCollector(solvers, stopHandler, logger, visualizer);
 			break;
 		case UnsatCore:
-			varCollector = new UnsatCoreVarCollector(logger, visualizer);
+			varCollector = new UnsatCoreVarCollector(solvers, stopHandler, logger, visualizer);
 			break;
 		default:
 			throw new RuntimeException("Unknown variable collection method: " + varCollMethod);
 		}
-		return new GenericCEGARLoop<>(new VisibleInitializer(logger, visualizer, useCNFTransformation), new VisibleChecker(logger, visualizer),
-				new VisibleConcretizer(logger, visualizer), new VisibleRefiner(logger, visualizer, varCollector), debugger, logger, "Visible");
+		return new GenericCEGARLoop<>(solvers, stopHandler, new VisibleInitializer(solvers, stopHandler, logger, visualizer, useCNFTransformation),
+				new VisibleChecker(solvers, stopHandler, logger, visualizer), new VisibleConcretizer(solvers, stopHandler, logger, visualizer),
+				new VisibleRefiner(solvers, stopHandler, logger, visualizer, varCollector), debugger, logger, "Visible");
 	}
 }

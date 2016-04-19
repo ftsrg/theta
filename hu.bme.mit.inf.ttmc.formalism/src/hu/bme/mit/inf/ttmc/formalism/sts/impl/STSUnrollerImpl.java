@@ -7,12 +7,12 @@ import java.util.stream.Collectors;
 
 import hu.bme.mit.inf.ttmc.core.expr.AndExpr;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.expr.impl.Exprs;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.core.utils.impl.ExprUtils;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
-import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
 import hu.bme.mit.inf.ttmc.formalism.utils.impl.FoldVisitor;
 import hu.bme.mit.inf.ttmc.formalism.utils.impl.UnfoldVisitor;
 import hu.bme.mit.inf.ttmc.formalism.utils.impl.VarMap;
@@ -20,17 +20,15 @@ import hu.bme.mit.inf.ttmc.solver.Model;
 
 class STSUnrollerImpl {
 	private final STS sts;
-	private final STSManager manager;
 	private final UnfoldVisitor ufVisitor;
 	private final FoldVisitor fVisitor;
 	private final VarMap varMap;
 
-	public STSUnrollerImpl(final STS sts, final STSManager manager) {
+	public STSUnrollerImpl(final STS sts) {
 		this.sts = sts;
-		this.manager = manager;
-		varMap = new VarMap(manager.getDeclFactory());
-		ufVisitor = new UnfoldVisitor(varMap, manager.getExprFactory());
-		fVisitor = new FoldVisitor(varMap, manager.getExprFactory());
+		varMap = new VarMap();
+		ufVisitor = new UnfoldVisitor(varMap);
+		fVisitor = new FoldVisitor(varMap);
 	}
 
 	public Expr<? extends BoolType> unroll(final Expr<? extends BoolType> expr, final int i) {
@@ -53,8 +51,7 @@ class STSUnrollerImpl {
 		return unroll(sts.getProp(), i);
 	}
 
-	public AndExpr getConcreteState(final Model model, final int i,
-			final Collection<VarDecl<? extends Type>> variables) {
+	public AndExpr getConcreteState(final Model model, final int i, final Collection<VarDecl<? extends Type>> variables) {
 
 		final List<Expr<? extends BoolType>> ops = new ArrayList<>(variables.size());
 
@@ -65,14 +62,13 @@ class STSUnrollerImpl {
 			} catch (final Exception ex) {
 				value = varDecl.getType().getAny();
 			}
-			ops.add(manager.getExprFactory().Eq(varDecl.getRef(), value));
+			ops.add(Exprs.Eq(varDecl.getRef(), value));
 		}
 
-		return manager.getExprFactory().And(ops);
+		return Exprs.And(ops);
 	}
 
-	public List<AndExpr> extractTrace(final Model model, final int length,
-			final Collection<VarDecl<? extends Type>> variables) {
+	public List<AndExpr> extractTrace(final Model model, final int length, final Collection<VarDecl<? extends Type>> variables) {
 
 		final List<AndExpr> trace = new ArrayList<>(length);
 		for (int i = 0; i < length; ++i)

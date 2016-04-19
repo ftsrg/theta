@@ -7,6 +7,8 @@ import java.util.Map;
 import java.util.Stack;
 
 import hu.bme.mit.inf.ttmc.cegar.common.data.AbstractResult;
+import hu.bme.mit.inf.ttmc.cegar.common.data.SolverWrapper;
+import hu.bme.mit.inf.ttmc.cegar.common.data.StopHandler;
 import hu.bme.mit.inf.ttmc.cegar.common.steps.AbstractCEGARStep;
 import hu.bme.mit.inf.ttmc.cegar.common.steps.Checker;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.SolverHelper;
@@ -18,21 +20,22 @@ import hu.bme.mit.inf.ttmc.common.logging.Logger;
 import hu.bme.mit.inf.ttmc.core.expr.AndExpr;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.expr.NotExpr;
+import hu.bme.mit.inf.ttmc.core.expr.impl.Exprs;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 import hu.bme.mit.inf.ttmc.solver.Solver;
 
 public class VisibleChecker extends AbstractCEGARStep implements Checker<VisibleAbstractSystem, VisibleAbstractState> {
 
-	public VisibleChecker(final Logger logger, final Visualizer visualizer) {
-		super(logger, visualizer);
+	public VisibleChecker(final SolverWrapper solvers, final StopHandler stopHandler, final Logger logger, final Visualizer visualizer) {
+		super(solvers, stopHandler, logger, visualizer);
 	}
 
 	@Override
 	public AbstractResult<VisibleAbstractState> check(final VisibleAbstractSystem system) {
-		final Solver solver = system.getManager().getSolverFactory().createSolver(true, false);
 
-		final NotExpr negProp = system.getManager().getExprFactory().Not(system.getSTS().getProp());
+		final NotExpr negProp = Exprs.Not(system.getSTS().getProp());
+		final Solver solver = solvers.getSolver();
 
 		final STS sts = system.getSTS();
 		Stack<VisibleAbstractState> counterExample = null;
@@ -50,14 +53,13 @@ public class VisibleChecker extends AbstractCEGARStep implements Checker<Visible
 		solver.add(sts.unrollInv(0));
 		solver.add(sts.unrollInit(0));
 		if (SolverHelper.checkSat(solver))
-			actualInit = new VisibleAbstractState(sts.getConcreteState(solver.getModel(), 0, system.getVisibleVars()),
-					true);
+			actualInit = new VisibleAbstractState(sts.getConcreteState(solver.getModel(), 0, system.getVisibleVars()), true);
 
 		solver.pop();
 
 		// Loop until there is a next initial state
 		while (actualInit != null && counterExample == null) {
-			if (isStopped)
+			if (stopHandler.isStopped())
 				return null;
 			final Stack<VisibleAbstractState> stateStack = new Stack<>();
 			final Stack<List<VisibleAbstractState>> successorStack = new Stack<>();
@@ -78,7 +80,7 @@ public class VisibleChecker extends AbstractCEGARStep implements Checker<Visible
 
 			// Loop until the stack is empty or a counterexample is found
 			while (!stateStack.empty() && counterExample == null) {
-				if (isStopped)
+				if (stopHandler.isStopped())
 					return null;
 				// Get the next successor of the actual state (which is on top
 				// of stateStack)
@@ -86,7 +88,7 @@ public class VisibleChecker extends AbstractCEGARStep implements Checker<Visible
 				if (nextSucc >= 0) { // Get the next state (and also remove)
 					final VisibleAbstractState nextState = successorStack.peek().remove(nextSucc);
 					if (!exploredStates.containsKey(nextState)) { // If it is
-																	// not
+																		// not
 																	// explored
 																	// yet
 						logger.write("New state: ", 6, 1);
@@ -112,7 +114,7 @@ public class VisibleChecker extends AbstractCEGARStep implements Checker<Visible
 						stateStack.peek().addSuccessor(exploredStates.get(nextState));
 					}
 				} else { // If the actual state has no more successors, then
-							// backtrack
+								// backtrack
 					stateStack.pop();
 					successorStack.pop();
 				}
@@ -123,12 +125,10 @@ public class VisibleChecker extends AbstractCEGARStep implements Checker<Visible
 			solver.push();
 			solver.add(sts.unrollInv(0));
 			solver.add(sts.unrollInit(0));
-			solver.add(sts.unroll(
-					system.getManager().getExprFactory().Not(system.getManager().getExprFactory().Or(prevInits)), 0));
+			solver.add(sts.unroll(Exprs.Not(Exprs.Or(prevInits)), 0));
 
 			if (SolverHelper.checkSat(solver)) {
-				actualInit = new VisibleAbstractState(
-						sts.getConcreteState(solver.getModel(), 0, system.getVisibleVars()), true);
+				actualInit = new VisibleAbstractState(sts.getConcreteState(solver.getModel(), 0, system.getVisibleVars()), true);
 			} else {
 				actualInit = null;
 			}
@@ -152,17 +152,15 @@ public class VisibleChecker extends AbstractCEGARStep implements Checker<Visible
 			VisualizationHelper.visualize(exploredStates.keySet(), visualizer, 6);
 		}
 
-		if (isStopped)
+		if (stopHandler.isStopped())
 			return null;
 
-		return counterExample == null
-				? new AbstractResult<VisibleAbstractState>(null, exploredStates.keySet(), exploredStates.size())
+		return counterExample == null ? new AbstractResult<VisibleAbstractState>(null, exploredStates.keySet(), exploredStates.size())
 				: new AbstractResult<VisibleAbstractState>(counterExample, null, exploredStates.size());
 	}
 
 	// Get successors of an abstract state
-	private List<VisibleAbstractState> getSuccessors(final VisibleAbstractState state,
-			final VisibleAbstractSystem system, final Solver solver, final STS sts) {
+	private List<VisibleAbstractState> getSuccessors(final VisibleAbstractState state, final VisibleAbstractSystem system, final Solver solver, final STS sts) {
 		final List<VisibleAbstractState> successors = new ArrayList<>(); // List
 																			// of
 																			// successors
@@ -174,19 +172,18 @@ public class VisibleChecker extends AbstractCEGARStep implements Checker<Visible
 		solver.add(sts.unroll(state.getExpression(), 0));
 		// Loop until a new successor is found
 		do {
-			if (isStopped)
+			if (stopHandler.isStopped())
 				return new ArrayList<>();
 			if (SolverHelper.checkSat(solver)) {
 				// Get successor
 				// TODO: check if initial (only for presentation purposes, since
 				// it may be found as a successor of some state first than as an
 				// initial state)
-				final VisibleAbstractState succ = new VisibleAbstractState(
-						sts.getConcreteState(solver.getModel(), 1, system.getVisibleVars()), false);
+				final VisibleAbstractState succ = new VisibleAbstractState(sts.getConcreteState(solver.getModel(), 1, system.getVisibleVars()), false);
 
 				successors.add(succ);
 				// Force new successors
-				solver.add(sts.unroll(system.getManager().getExprFactory().Not(succ.getExpression()), 1));
+				solver.add(sts.unroll(Exprs.Not(succ.getExpression()), 1));
 			} else
 				break;
 		} while (true);
@@ -194,8 +191,7 @@ public class VisibleChecker extends AbstractCEGARStep implements Checker<Visible
 		return successors;
 	}
 
-	private boolean checkState(final VisibleAbstractState state, final Expr<? extends BoolType> expr,
-			final Solver solver, final STS sts) {
+	private boolean checkState(final VisibleAbstractState state, final Expr<? extends BoolType> expr, final Solver solver, final STS sts) {
 		solver.push();
 		solver.add(sts.unroll(state.getExpression(), 0));
 		solver.add(sts.unrollInv(0));

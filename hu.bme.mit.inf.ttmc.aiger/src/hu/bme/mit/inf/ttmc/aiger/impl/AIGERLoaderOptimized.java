@@ -14,15 +14,15 @@ import hu.bme.mit.inf.ttmc.aiger.impl.elements.HWElement;
 import hu.bme.mit.inf.ttmc.aiger.impl.elements.InVar;
 import hu.bme.mit.inf.ttmc.aiger.impl.elements.Latch;
 import hu.bme.mit.inf.ttmc.aiger.impl.elements.OutVar;
+import hu.bme.mit.inf.ttmc.core.expr.impl.Exprs;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
-import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
 import hu.bme.mit.inf.ttmc.formalism.sts.impl.STSImpl;
 
 public class AIGERLoaderOptimized implements AIGERLoader {
 
 	@Override
-	public STS load(final String fileName, final STSManager manager) throws IOException {
-		final STSImpl.Builder builder = new STSImpl.Builder(manager);
+	public STS load(final String fileName) throws IOException {
+		final STSImpl.Builder builder = new STSImpl.Builder();
 		final BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(fileName)));
 
 		int inputs, latches, outputs, andGates;
@@ -42,13 +42,13 @@ public class AIGERLoaderOptimized implements AIGERLoader {
 
 		// Parse inputs
 		for (int i = 0; i < inputs; ++i) {
-			final InVar inVar = new InVar(i + 1, br.readLine(), manager);
+			final InVar inVar = new InVar(i + 1, br.readLine());
 			elements.set(inVar.getVarId(), inVar);
 		}
 
 		// Parse latches
 		for (int i = 0; i < latches; ++i) {
-			final Latch latch = new Latch(i + 1, br.readLine().split(" "), manager);
+			final Latch latch = new Latch(i + 1, br.readLine().split(" "));
 			elements.set(latch.getVarId(), latch);
 			latchElements.add(latch);
 		}
@@ -69,13 +69,13 @@ public class AIGERLoaderOptimized implements AIGERLoader {
 
 		// Process latches
 		for (final Latch latch : latchElements) {
-			builder.addInit(latch.getInitExpr(manager));
-			builder.addTrans(latch.getTransExpr(manager, elements));
+			builder.addInit(latch.getInitExpr());
+			builder.addTrans(latch.getTransExpr(elements));
 		}
 
 		// Process output
 		if (outVarElements.size() == 1) {
-			builder.setProp(manager.getExprFactory().Not(outVarElements.get(0).getExpr(manager, elements)));
+			builder.setProp(Exprs.Not(outVarElements.get(0).getExpr(elements)));
 		} else {
 			throw new UnsupportedOperationException(
 					"Currently only models with a single output variable are supported (this model has " + outVarElements.size() + ").");

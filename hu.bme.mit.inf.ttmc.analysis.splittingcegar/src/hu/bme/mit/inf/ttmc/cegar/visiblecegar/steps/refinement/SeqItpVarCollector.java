@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Set;
 
 import hu.bme.mit.inf.ttmc.cegar.common.data.ConcreteTrace;
+import hu.bme.mit.inf.ttmc.cegar.common.data.SolverWrapper;
+import hu.bme.mit.inf.ttmc.cegar.common.data.StopHandler;
 import hu.bme.mit.inf.ttmc.cegar.common.steps.AbstractCEGARStep;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.Visualizer;
 import hu.bme.mit.inf.ttmc.cegar.visiblecegar.data.VisibleAbstractState;
@@ -26,14 +28,15 @@ import hu.bme.mit.inf.ttmc.solver.SolverStatus;
 
 public class SeqItpVarCollector extends AbstractCEGARStep implements VarCollector {
 
-	public SeqItpVarCollector(final Logger logger, final Visualizer visualizer) {
-		super(logger, visualizer);
+	public SeqItpVarCollector(final SolverWrapper solvers, final StopHandler stopHandler, final Logger logger, final Visualizer visualizer) {
+		super(solvers, stopHandler, logger, visualizer);
 	}
 
 	@Override
-	public Collection<VarDecl<? extends Type>> collectVars(final VisibleAbstractSystem system,
-			final List<VisibleAbstractState> abstractCounterEx, final ConcreteTrace concreteCounterEx) {
-		final ItpSolver itpSolver = system.getManager().getSolverFactory().createItpSolver();
+	public Collection<VarDecl<? extends Type>> collectVars(final VisibleAbstractSystem system, final List<VisibleAbstractState> abstractCounterEx,
+			final ConcreteTrace concreteCounterEx) {
+
+		final ItpSolver itpSolver = solvers.getItpSolver();
 
 		final ItpMarker[] markers = new ItpMarker[abstractCounterEx.size()];
 		for (int i = 0; i < markers.length; ++i)

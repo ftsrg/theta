@@ -1,6 +1,5 @@
 package hu.bme.mit.inf.ttmc.formalism.utils.impl;
 
-import hu.bme.mit.inf.ttmc.core.ConstraintManager;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.core.utils.impl.ExprITEPusherVisitor;
@@ -10,11 +9,10 @@ import hu.bme.mit.inf.ttmc.formalism.common.expr.ProcRefExpr;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.VarRefExpr;
 import hu.bme.mit.inf.ttmc.formalism.utils.FormalismExprVisitor;
 
-public class FormalismITEPusherVisitor extends ExprITEPusherVisitor
-		implements FormalismExprVisitor<Void, Expr<? extends Type>> {
+public class FormalismITEPusherVisitor extends ExprITEPusherVisitor implements FormalismExprVisitor<Void, Expr<? extends Type>> {
 
-	public FormalismITEPusherVisitor(final ConstraintManager manager) {
-		super(manager);
+	public FormalismITEPusherVisitor() {
+		super();
 	}
 
 	@Override

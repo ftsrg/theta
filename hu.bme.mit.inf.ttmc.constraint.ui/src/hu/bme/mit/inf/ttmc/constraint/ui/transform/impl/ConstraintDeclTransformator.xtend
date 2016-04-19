@@ -8,24 +8,22 @@ import hu.bme.mit.inf.ttmc.constraint.model.ParameterDeclaration
 import hu.bme.mit.inf.ttmc.core.decl.Decl
 import hu.bme.mit.inf.ttmc.constraint.model.Declaration
 import java.util.HashMap
-import hu.bme.mit.inf.ttmc.core.factory.DeclFactory
 import hu.bme.mit.inf.ttmc.core.type.Type
 import hu.bme.mit.inf.ttmc.constraint.model.FunctionDeclaration
 import hu.bme.mit.inf.ttmc.constraint.ui.transform.DeclTransformator
 import hu.bme.mit.inf.ttmc.constraint.ui.transform.TransformationManager
 import hu.bme.mit.inf.ttmc.constraint.ui.transform.TypeTransformator
 
+import static hu.bme.mit.inf.ttmc.core.decl.impl.Decls.*;
+
 public class ConstraintDeclTransformator implements DeclTransformator {
 	
 	private val Map<ConstantDeclaration, ConstDecl<Type>> constantToConst
 	private val Map<ParameterDeclaration, ParamDecl<Type>> parameterToParam
-	
-	private val extension DeclFactory declFactory
-	
+		
 	private val extension TypeTransformator tt
 	
-	public new(TransformationManager manager, DeclFactory declFactory) {
-		this.declFactory = declFactory
+	public new(TransformationManager manager) {
 		tt = manager.typeTransformator
 		constantToConst = new HashMap()
 		parameterToParam = new HashMap()
