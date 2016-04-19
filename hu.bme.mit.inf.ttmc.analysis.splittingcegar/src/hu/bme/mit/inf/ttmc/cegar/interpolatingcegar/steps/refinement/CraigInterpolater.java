@@ -23,13 +23,14 @@ import hu.bme.mit.inf.ttmc.solver.SolverStatus;
 
 public class CraigInterpolater extends AbstractCEGARStep implements Interpolater {
 
-	public CraigInterpolater(final SolverWrapper solvers, final StopHandler stopHandler, final Logger logger, final Visualizer visualizer) {
+	public CraigInterpolater(final SolverWrapper solvers, final StopHandler stopHandler, final Logger logger,
+			final Visualizer visualizer) {
 		super(solvers, stopHandler, logger, visualizer);
 	}
 
 	@Override
-	public Interpolant interpolate(final InterpolatedAbstractSystem system, final List<InterpolatedAbstractState> abstractCounterEx,
-			final ConcreteTrace concreteTrace) {
+	public Interpolant interpolate(final InterpolatedAbstractSystem system,
+			final List<InterpolatedAbstractState> abstractCounterEx, final ConcreteTrace concreteTrace) {
 		final int traceLength = concreteTrace.getTrace().size();
 
 		final ItpSolver itpSolver = solvers.getItpSolver();
@@ -68,7 +69,7 @@ public class CraigInterpolater extends AbstractCEGARStep implements Interpolater
 		// state is not the last)
 		// - States violating the property (if the failure state is the last)
 		if (traceLength < abstractCounterEx.size()) { // Failure state is not
-															// the last
+														// the last
 			for (final Expr<? extends BoolType> label : abstractCounterEx.get(traceLength).getLabels())
 				// Labels of the next abstract state
 				itpSolver.add(B, sts.unroll(label, traceLength));
@@ -92,14 +93,9 @@ public class CraigInterpolater extends AbstractCEGARStep implements Interpolater
 		assert (itpSolver.getStatus() == SolverStatus.UNSAT);
 		final hu.bme.mit.inf.ttmc.solver.Interpolant itp = itpSolver.getInterpolant(pattern);
 
-		try {
-			final Expr<? extends BoolType> interpolant = sts.foldin(itp.eval(A), traceLength - 1);
-			itpSolver.pop();
-			return new Interpolant(interpolant, traceLength - 1);
-		} catch (final Exception ex) {
-			itpSolver.getInterpolant(pattern);
-			throw new AssertionError();
-		}
+		final Expr<? extends BoolType> interpolant = sts.foldin(itp.eval(A), traceLength - 1);
+		itpSolver.pop();
+		return new Interpolant(interpolant, traceLength - 1);
 
 	}
 
