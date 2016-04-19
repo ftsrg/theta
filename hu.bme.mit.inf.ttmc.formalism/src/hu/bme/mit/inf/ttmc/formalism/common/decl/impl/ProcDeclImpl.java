@@ -12,11 +12,11 @@ import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.core.utils.DeclVisitor;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.ProcDecl;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.ProcRefExpr;
-import hu.bme.mit.inf.ttmc.formalism.common.expr.impl.ProcRefExprImpl;
+import hu.bme.mit.inf.ttmc.formalism.common.expr.impl.Exprs2;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
 import hu.bme.mit.inf.ttmc.formalism.common.type.ProcType;
 
-public final class ProcDeclImpl<ReturnType extends Type> implements ProcDecl<ReturnType> {
+final class ProcDeclImpl<ReturnType extends Type> implements ProcDecl<ReturnType> {
 
 	private static final int HASH_SEED = 4001;
 
@@ -28,7 +28,7 @@ public final class ProcDeclImpl<ReturnType extends Type> implements ProcDecl<Ret
 	private volatile int hashCode;
 	private volatile ProcRefExpr<ReturnType> ref;
 
-	public ProcDeclImpl(final String name, final List<? extends ParamDecl<? extends Type>> paramDecls,
+	ProcDeclImpl(final String name, final List<? extends ParamDecl<? extends Type>> paramDecls,
 			final ReturnType returnType, final Stmt stmt) {
 		this.name = checkNotNull(name);
 		this.paramDecls = ImmutableList.copyOf(checkNotNull(paramDecls));
@@ -73,7 +73,7 @@ public final class ProcDeclImpl<ReturnType extends Type> implements ProcDecl<Ret
 	@Override
 	public ProcRefExpr<ReturnType> getRef() {
 		if (ref == null) {
-			ref = new ProcRefExprImpl<>(this);
+			ref = Exprs2.Ref(this);
 		}
 
 		return ref;

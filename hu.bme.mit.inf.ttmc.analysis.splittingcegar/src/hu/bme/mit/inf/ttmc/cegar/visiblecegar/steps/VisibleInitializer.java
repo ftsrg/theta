@@ -3,6 +3,8 @@ package hu.bme.mit.inf.ttmc.cegar.visiblecegar.steps;
 import java.util.ArrayList;
 import java.util.List;
 
+import hu.bme.mit.inf.ttmc.cegar.common.data.SolverWrapper;
+import hu.bme.mit.inf.ttmc.cegar.common.data.StopHandler;
 import hu.bme.mit.inf.ttmc.cegar.common.steps.AbstractCEGARStep;
 import hu.bme.mit.inf.ttmc.cegar.common.steps.Initializer;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.Visualizer;
@@ -19,8 +21,9 @@ public class VisibleInitializer extends AbstractCEGARStep implements Initializer
 
 	private final boolean useCNFTransformation;
 
-	public VisibleInitializer(final Logger logger, final Visualizer visualizer, final boolean useCNFTransformation) {
-		super(logger, visualizer);
+	public VisibleInitializer(final SolverWrapper solvers, final StopHandler stopHandler, final Logger logger, final Visualizer visualizer,
+			final boolean useCNFTransformation) {
+		super(solvers, stopHandler, logger, visualizer);
 		this.useCNFTransformation = useCNFTransformation;
 	}
 

@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Set;
 
 import hu.bme.mit.inf.ttmc.cegar.common.data.ConcreteTrace;
+import hu.bme.mit.inf.ttmc.cegar.common.data.SolverWrapper;
+import hu.bme.mit.inf.ttmc.cegar.common.data.StopHandler;
 import hu.bme.mit.inf.ttmc.cegar.common.steps.AbstractCEGARStep;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.Visualizer;
 import hu.bme.mit.inf.ttmc.cegar.visiblecegar.data.VisibleAbstractState;
@@ -22,19 +24,19 @@ import hu.bme.mit.inf.ttmc.solver.SolverStatus;
 
 public class UnsatCoreVarCollector extends AbstractCEGARStep implements VarCollector {
 
-	public UnsatCoreVarCollector(final Logger logger, final Visualizer visualizer) {
-		super(logger, visualizer);
+	public UnsatCoreVarCollector(final SolverWrapper solvers, final StopHandler stopHandler, final Logger logger, final Visualizer visualizer) {
+		super(solvers, stopHandler, logger, visualizer);
 	}
 
 	@Override
-	public Collection<VarDecl<? extends Type>> collectVars(final VisibleAbstractSystem system,
-			final List<VisibleAbstractState> abstractCounterEx, final ConcreteTrace concreteCounterEx) {
+	public Collection<VarDecl<? extends Type>> collectVars(final VisibleAbstractSystem system, final List<VisibleAbstractState> abstractCounterEx,
+			final ConcreteTrace concreteCounterEx) {
 
-		final Solver solver = system.getManager().getSolverFactory().createSolver(true, true);
 		final int traceLength = concreteCounterEx.size();
 		assert (traceLength < abstractCounterEx.size());
 
 		final STS sts = system.getSTS();
+		final Solver solver = solvers.getSolver();
 
 		solver.push();
 		solver.track(sts.unrollInit(0));

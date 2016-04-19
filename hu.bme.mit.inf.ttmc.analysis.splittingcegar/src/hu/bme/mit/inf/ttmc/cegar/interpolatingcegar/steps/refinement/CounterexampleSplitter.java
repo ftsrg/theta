@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import hu.bme.mit.inf.ttmc.cegar.common.data.KripkeStructure;
+import hu.bme.mit.inf.ttmc.cegar.common.data.SolverWrapper;
+import hu.bme.mit.inf.ttmc.cegar.common.data.StopHandler;
 import hu.bme.mit.inf.ttmc.cegar.common.steps.AbstractCEGARStep;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.SolverHelper;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.Visualizer;
@@ -13,6 +15,7 @@ import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.data.InterpolatedAbstractSys
 import hu.bme.mit.inf.ttmc.common.logging.Logger;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.expr.NotExpr;
+import hu.bme.mit.inf.ttmc.core.expr.impl.Exprs;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 import hu.bme.mit.inf.ttmc.solver.Solver;
@@ -25,19 +28,18 @@ import hu.bme.mit.inf.ttmc.solver.Solver;
  */
 public class CounterexampleSplitter extends AbstractCEGARStep implements Splitter {
 
-	public CounterexampleSplitter(final Logger logger, final Visualizer visualizer) {
-		super(logger, visualizer);
+	public CounterexampleSplitter(final SolverWrapper solvers, final StopHandler stopHandler, final Logger logger, final Visualizer visualizer) {
+		super(solvers, stopHandler, logger, visualizer);
 	}
 
 	@Override
-	public int split(final InterpolatedAbstractSystem system, final List<InterpolatedAbstractState> abstractCounterEx,
-			final Interpolant interpolant) {
+	public int split(final InterpolatedAbstractSystem system, final List<InterpolatedAbstractState> abstractCounterEx, final Interpolant interpolant) {
 		assert (0 < interpolant.size() && interpolant.size() <= abstractCounterEx.size());
 		int firstSplit = -1;
 		for (int i = 0; i < interpolant.size(); ++i) {
-			if (isStopped)
+			if (stopHandler.isStopped())
 				return 0;
-			if (!interpolant.get(i).equals(system.getManager().getExprFactory().True())) {
+			if (!interpolant.get(i).equals(Exprs.True())) {
 				splitSingleState(system, abstractCounterEx.get(i), interpolant.get(i));
 				if (firstSplit == -1)
 					firstSplit = i;
@@ -47,10 +49,10 @@ public class CounterexampleSplitter extends AbstractCEGARStep implements Splitte
 		return firstSplit;
 	}
 
-	private void splitSingleState(final InterpolatedAbstractSystem system, final InterpolatedAbstractState stateToSplit,
-			Expr<? extends BoolType> interpolant) {
-		final Solver solver = system.getManager().getSolverFactory().createSolver(true, false);
+	private void splitSingleState(final InterpolatedAbstractSystem system, final InterpolatedAbstractState stateToSplit, Expr<? extends BoolType> interpolant) {
 		final STS sts = system.getSTS();
+
+		final Solver solver = solvers.getSolver();
 
 		final KripkeStructure<InterpolatedAbstractState> ks = system.getAbstractKripkeStructure();
 
@@ -63,7 +65,7 @@ public class CounterexampleSplitter extends AbstractCEGARStep implements Splitte
 		// Create refined abstract states using the interpolant and its negation
 		final List<InterpolatedAbstractState> refinedStates = new ArrayList<>(2);
 		refinedStates.add(stateToSplit.refine(interpolant));
-		refinedStates.add(stateToSplit.refine(system.getManager().getExprFactory().Not(interpolant)));
+		refinedStates.add(stateToSplit.refine(Exprs.Not(interpolant)));
 		// Check for contradicting labels
 		for (final InterpolatedAbstractState refined : refinedStates) {
 			solver.push();
@@ -105,7 +107,7 @@ public class CounterexampleSplitter extends AbstractCEGARStep implements Splitte
 			solver.pop();
 		}
 
-		if (isStopped)
+		if (stopHandler.isStopped())
 			return;
 
 		// Get successors for the abstract states (only the successors of the
@@ -118,7 +120,7 @@ public class CounterexampleSplitter extends AbstractCEGARStep implements Splitte
 		solver.add(sts.unrollInv(1));
 		solver.add(sts.unrollTrans(0));
 		for (final InterpolatedAbstractState succ : stateToSplit.getSuccessors()) {
-			if (isStopped)
+			if (stopHandler.isStopped())
 				return;
 			if (succ.equals(stateToSplit))
 				continue;
@@ -129,7 +131,7 @@ public class CounterexampleSplitter extends AbstractCEGARStep implements Splitte
 			SolverHelper.unrollAndAssert(solver, succ.getLabels(), sts, 1);
 			boolean isSuccessor = false;
 			for (final InterpolatedAbstractState refined : refinedStates) {
-				if (isStopped)
+				if (stopHandler.isStopped())
 					return;
 				solver.push();
 				SolverHelper.unrollAndAssert(solver, refined.getLabels(), sts, 0);
@@ -150,7 +152,7 @@ public class CounterexampleSplitter extends AbstractCEGARStep implements Splitte
 		// of the
 		// refined states --> assertion)
 		for (final InterpolatedAbstractState prev : stateToSplit.getPredecessors()) {
-			if (isStopped)
+			if (stopHandler.isStopped())
 				return;
 			if (prev.equals(stateToSplit))
 				continue;
@@ -160,7 +162,7 @@ public class CounterexampleSplitter extends AbstractCEGARStep implements Splitte
 			SolverHelper.unrollAndAssert(solver, prev.getLabels(), sts, 0);
 			boolean isPredecessor = false;
 			for (final InterpolatedAbstractState refined : refinedStates) {
-				if (isStopped)
+				if (stopHandler.isStopped())
 					return;
 				solver.push();
 				SolverHelper.unrollAndAssert(solver, refined.getLabels(), sts, 1);
@@ -183,12 +185,12 @@ public class CounterexampleSplitter extends AbstractCEGARStep implements Splitte
 		if (stateToSplit.getSuccessors().contains(stateToSplit)) {
 			boolean isSuccessor = false;
 			for (final InterpolatedAbstractState ref0 : refinedStates) {
-				if (isStopped)
+				if (stopHandler.isStopped())
 					return;
 				solver.push();
 				SolverHelper.unrollAndAssert(solver, ref0.getLabels(), sts, 0);
 				for (final InterpolatedAbstractState ref1 : refinedStates) {
-					if (isStopped)
+					if (stopHandler.isStopped())
 						return;
 					solver.push();
 					SolverHelper.unrollAndAssert(solver, ref1.getLabels(), sts, 1);

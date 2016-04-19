@@ -8,16 +8,14 @@ import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.core.utils.impl.ExprRewriterVisitor;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
-import hu.bme.mit.inf.ttmc.formalism.common.factory.PrimedExprFactory;
+import hu.bme.mit.inf.ttmc.formalism.common.expr.impl.Exprs2;
 
 public class FoldVisitor extends ExprRewriterVisitor<Integer> {
 
 	final VarMap varMap;
-	final PrimedExprFactory factory;
 
-	public FoldVisitor(final VarMap varMap, final PrimedExprFactory factory) {
+	public FoldVisitor(final VarMap varMap) {
 		this.varMap = varMap;
-		this.factory = factory;
 	}
 
 	@Override
@@ -32,7 +30,7 @@ public class FoldVisitor extends ExprRewriterVisitor<Integer> {
 		final VarDecl<DeclType> varDecl = varMap.getVarDecl(constDecl);
 		Expr<DeclType> res = varDecl.getRef();
 		while (nPrimes > 0) {
-			res = factory.Prime(res);
+			res = Exprs2.Prime(res);
 			nPrimes--;
 		}
 

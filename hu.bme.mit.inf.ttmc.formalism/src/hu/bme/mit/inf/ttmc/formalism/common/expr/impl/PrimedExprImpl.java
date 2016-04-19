@@ -8,14 +8,14 @@ import hu.bme.mit.inf.ttmc.core.utils.ExprVisitor;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.PrimedExpr;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.visitor.PrimedExprVisitor;
 
-public final class PrimedExprImpl<ExprType extends Type> extends AbstractUnaryExpr<ExprType, ExprType>
+final class PrimedExprImpl<ExprType extends Type> extends AbstractUnaryExpr<ExprType, ExprType>
 		implements PrimedExpr<ExprType> {
 
 	private static final int HASH_SEED = 4561;
 
 	private static final String OPERATOR_LABEL = "Prime";
 
-	public PrimedExprImpl(final Expr<? extends ExprType> op) {
+	PrimedExprImpl(final Expr<? extends ExprType> op) {
 		super(op);
 	}
 

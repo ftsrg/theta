@@ -1,5 +1,10 @@
 package hu.bme.mit.inf.ttmc.formalism.cfa.impl;
 
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Not;
+import static hu.bme.mit.inf.ttmc.formalism.common.stmt.impl.Stmts.Assign;
+import static hu.bme.mit.inf.ttmc.formalism.common.stmt.impl.Stmts.Assume;
+import static hu.bme.mit.inf.ttmc.formalism.common.stmt.impl.Stmts.Havoc;
+
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -8,12 +13,10 @@ import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.inf.ttmc.common.Tuple4;
 import hu.bme.mit.inf.ttmc.common.Tuples;
-import hu.bme.mit.inf.ttmc.core.factory.ExprFactory;
 import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.formalism.cfa.CFA;
 import hu.bme.mit.inf.ttmc.formalism.cfa.CFAEdge;
 import hu.bme.mit.inf.ttmc.formalism.cfa.CFALoc;
-import hu.bme.mit.inf.ttmc.formalism.common.factory.StmtFactory;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.AssertStmt;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.AssignStmt;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.AssumeStmt;
@@ -27,14 +30,13 @@ import hu.bme.mit.inf.ttmc.formalism.common.stmt.ReturnStmt;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.SkipStmt;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.WhileStmt;
-import hu.bme.mit.inf.ttmc.formalism.program.ProgramManager;
 import hu.bme.mit.inf.ttmc.formalism.utils.StmtVisitor;
 
 public class LBECreator {
 
-	public static CFA create(final ProgramManager manager, final Stmt stmt) {
+	public static CFA create(final Stmt stmt) {
 		final MutableCFA cfa = new MutableCFA();
-		final LBECreatorVisitor visitor = new LBECreatorVisitor(cfa, manager);
+		final LBECreatorVisitor visitor = new LBECreatorVisitor(cfa);
 		stmt.accept(visitor, Tuples.of(cfa.getInitLoc(), cfa.getFinalLoc(), new LinkedList<>(), new LinkedList<>()));
 		return ImmutableCFA.copyOf(cfa);
 	}
@@ -43,13 +45,9 @@ public class LBECreator {
 			implements StmtVisitor<Tuple4<CFALoc, CFALoc, List<Stmt>, List<Stmt>>, Void> {
 
 		private final MutableCFA cfa;
-		private final ExprFactory ef;
-		private final StmtFactory sf;
 
-		private LBECreatorVisitor(final MutableCFA cfa, final ProgramManager manager) {
+		private LBECreatorVisitor(final MutableCFA cfa) {
 			this.cfa = cfa;
-			ef = manager.getExprFactory();
-			sf = manager.getStmtFactory();
 		}
 
 		////
@@ -111,9 +109,9 @@ public class LBECreator {
 		private <DeclType extends Type, ExprType extends DeclType> Stmt initStmt(
 				final DeclStmt<DeclType, ExprType> stmt) {
 			if (stmt.getInitVal().isPresent()) {
-				return sf.Assign(stmt.getVarDecl(), stmt.getInitVal().get());
+				return Assign(stmt.getVarDecl(), stmt.getInitVal().get());
 			} else {
-				return sf.Havoc(stmt.getVarDecl());
+				return Havoc(stmt.getVarDecl());
 			}
 		}
 
@@ -129,12 +127,12 @@ public class LBECreator {
 			final List<Stmt> prefix = param._3();
 			final List<Stmt> postfix = param._4();
 
-			final Stmt assumeCorrect = sf.Assume(stmt.getCond());
+			final Stmt assumeCorrect = Assume(stmt.getCond());
 			final List<Stmt> correctPrefix = ImmutableList.<Stmt> builder().addAll(prefix).add(assumeCorrect).build();
 			final List<Stmt> correctPostfix = postfix;
 			createEdges(source, target, correctPrefix, correctPostfix);
 
-			final Stmt assumeError = sf.Assume(ef.Not(stmt.getCond()));
+			final Stmt assumeError = Assume(Not(stmt.getCond()));
 			final List<Stmt> errorPrefix = ImmutableList.<Stmt> builder().addAll(prefix).add(assumeError).build();
 			final List<Stmt> errorPostfix = ImmutableList.of();
 			createEdges(source, cfa.getErrorLoc(), errorPrefix, errorPostfix);
@@ -189,12 +187,12 @@ public class LBECreator {
 			final List<Stmt> prefix = param._3();
 			final List<Stmt> postfix = param._4();
 
-			final Stmt assumeThen = sf.Assume(stmt.getCond());
+			final Stmt assumeThen = Assume(stmt.getCond());
 			final List<Stmt> thenPrefix = ImmutableList.<Stmt> builder().addAll(prefix).add(assumeThen).build();
 			final List<Stmt> thenPostfix = ImmutableList.<Stmt> builder().add(stmt.getThen()).addAll(postfix).build();
 			createEdges(source, target, thenPrefix, thenPostfix);
 
-			final Stmt assumeElse = sf.Assume(ef.Not(stmt.getCond()));
+			final Stmt assumeElse = Assume(Not(stmt.getCond()));
 			final List<Stmt> elsePrefix = ImmutableList.<Stmt> builder().addAll(prefix).add(assumeElse).build();
 			final List<Stmt> elsePostfix = postfix;
 			createEdges(source, target, elsePrefix, elsePostfix);
@@ -209,12 +207,12 @@ public class LBECreator {
 			final List<Stmt> prefix = param._3();
 			final List<Stmt> postfix = param._4();
 
-			final Stmt assumeThen = sf.Assume(stmt.getCond());
+			final Stmt assumeThen = Assume(stmt.getCond());
 			final List<Stmt> thenPrefix = ImmutableList.<Stmt> builder().addAll(prefix).add(assumeThen).build();
 			final List<Stmt> thenPostfix = ImmutableList.<Stmt> builder().add(stmt.getThen()).addAll(postfix).build();
 			createEdges(source, target, thenPrefix, thenPostfix);
 
-			final Stmt assumeElse = sf.Assume(ef.Not(stmt.getCond()));
+			final Stmt assumeElse = Assume(Not(stmt.getCond()));
 			final List<Stmt> elsePrefix = ImmutableList.<Stmt> builder().addAll(prefix).add(assumeElse).build();
 			final List<Stmt> elsePostfix = ImmutableList.<Stmt> builder().add(stmt.getElse()).addAll(postfix).build();
 			createEdges(source, target, elsePrefix, elsePostfix);
@@ -239,11 +237,11 @@ public class LBECreator {
 				createEdges(source, doLoc, entryPrefix, entryPostfix);
 			}
 
-			final List<Stmt> loopPrefix = Collections.singletonList(sf.Assume(stmt.getCond()));
+			final List<Stmt> loopPrefix = Collections.singletonList(Assume(stmt.getCond()));
 			final List<Stmt> loopPostfix = Collections.singletonList(stmt.getDo());
 			createEdges(doLoc, doLoc, loopPrefix, loopPostfix);
 
-			final List<Stmt> exitPrefix = Collections.singletonList(sf.Assume(ef.Not(stmt.getCond())));
+			final List<Stmt> exitPrefix = Collections.singletonList(Assume(Not(stmt.getCond())));
 			final List<Stmt> exitPostfix = postfix;
 			createEdges(doLoc, target, exitPrefix, exitPostfix);
 
@@ -263,11 +261,11 @@ public class LBECreator {
 			final List<Stmt> entryPostfix = ImmutableList.of(stmt.getDo());
 			createEdges(source, doLoc, entryPrefix, entryPostfix);
 
-			final List<Stmt> loopPrefix = Collections.singletonList(sf.Assume(stmt.getCond()));
+			final List<Stmt> loopPrefix = Collections.singletonList(Assume(stmt.getCond()));
 			final List<Stmt> loopPostfix = Collections.singletonList(stmt.getDo());
 			createEdges(doLoc, doLoc, loopPrefix, loopPostfix);
 
-			final List<Stmt> exitPrefix = Collections.singletonList(sf.Assume(ef.Not(stmt.getCond())));
+			final List<Stmt> exitPrefix = Collections.singletonList(Assume(Not(stmt.getCond())));
 			final List<Stmt> exitPostfix = postfix;
 			createEdges(doLoc, target, exitPrefix, exitPostfix);
 

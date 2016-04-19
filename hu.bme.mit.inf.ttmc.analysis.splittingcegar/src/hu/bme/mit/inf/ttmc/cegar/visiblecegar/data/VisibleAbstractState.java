@@ -10,7 +10,6 @@ import hu.bme.mit.inf.ttmc.core.expr.AndExpr;
 import hu.bme.mit.inf.ttmc.core.expr.EqExpr;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
-import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
 
 /**
  * Represents an abstract state of the variable-visibility based CEGAR.
@@ -79,7 +78,7 @@ public class VisibleAbstractState implements AbstractState {
 	}
 
 	@Override
-	public Expr<? extends BoolType> createExpression(final STSManager manager) {
+	public Expr<? extends BoolType> createExpression() {
 		return expression;
 	}
 

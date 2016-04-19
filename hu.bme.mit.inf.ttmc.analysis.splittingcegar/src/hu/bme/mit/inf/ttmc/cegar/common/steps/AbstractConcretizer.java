@@ -6,6 +6,8 @@ import java.util.List;
 import hu.bme.mit.inf.ttmc.cegar.common.data.AbstractState;
 import hu.bme.mit.inf.ttmc.cegar.common.data.AbstractSystem;
 import hu.bme.mit.inf.ttmc.cegar.common.data.ConcreteTrace;
+import hu.bme.mit.inf.ttmc.cegar.common.data.SolverWrapper;
+import hu.bme.mit.inf.ttmc.cegar.common.data.StopHandler;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.SolverHelper;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.Visualizer;
 import hu.bme.mit.inf.ttmc.common.logging.Logger;
@@ -23,8 +25,8 @@ import hu.bme.mit.inf.ttmc.solver.SolverStatus;
  */
 public abstract class AbstractConcretizer extends AbstractCEGARStep {
 
-	public AbstractConcretizer(final Logger logger, final Visualizer visualizer) {
-		super(logger, visualizer);
+	public AbstractConcretizer(final SolverWrapper solvers, final StopHandler stopHandler, final Logger logger, final Visualizer visualizer) {
+		super(solvers, stopHandler, logger, visualizer);
 	}
 
 	/**
@@ -32,8 +34,8 @@ public abstract class AbstractConcretizer extends AbstractCEGARStep {
 	 * expressions. Returns the longest concrete trace that corresponds to a
 	 * prefix of the abstract counterexample.
 	 */
-	protected ConcreteTrace concretize(final AbstractSystem system, final List<? extends AbstractState> counterEx,
-			final Expr<? extends BoolType> lastState, final Collection<VarDecl<?>> requiredVars) {
+	protected ConcreteTrace concretize(final AbstractSystem system, final List<? extends AbstractState> counterEx, final Expr<? extends BoolType> lastState,
+			final Collection<VarDecl<?>> requiredVars) {
 		// Do an iterative bounded model checking to find a concrete
 		// counterexample.
 		// Iterative method is required because if no counterexample exists, we
@@ -42,7 +44,8 @@ public abstract class AbstractConcretizer extends AbstractCEGARStep {
 		// corresponding concrete state
 		// (or if the last state is not bad).
 		final STS sts = system.getSTS();
-		final Solver solver = system.getManager().getSolverFactory().createSolver(true, false);
+		final Solver solver = solvers.getSolver();
+
 		Model model = null;
 
 		solver.push();
@@ -56,10 +59,10 @@ public abstract class AbstractConcretizer extends AbstractCEGARStep {
 		// (i>0)
 		int len = 0;
 		for (int i = 0; i < counterEx.size(); ++i) {
-			if (isStopped)
+			if (stopHandler.isStopped())
 				return null;
 			solver.add(sts.unrollInv(i)); // Invariants
-			solver.add(sts.unroll(counterEx.get(i).createExpression(system.getManager()), i)); // Labels
+			solver.add(sts.unroll(counterEx.get(i).createExpression(), i)); // Labels
 			if (i > 0)
 				solver.add(sts.unrollTrans(i - 1)); // Transition relation
 

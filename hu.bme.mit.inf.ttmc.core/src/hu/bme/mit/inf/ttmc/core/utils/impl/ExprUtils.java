@@ -4,7 +4,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.stream.Collectors;
 
-import hu.bme.mit.inf.ttmc.core.ConstraintManager;
 import hu.bme.mit.inf.ttmc.core.expr.AndExpr;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
@@ -40,9 +39,8 @@ public class ExprUtils {
 	}
 
 	@SuppressWarnings("unchecked")
-	public static Expr<? extends BoolType> eliminateITE(final Expr<? extends BoolType> expr, final ConstraintManager manager) {
-		return (Expr<? extends BoolType>) expr.accept(new ExprITEPropagatorVisitor(manager, new ExprITEPusherVisitor(manager)), null)
-				.accept(new ExprITERemoverVisitor(manager), null);
+	public static Expr<? extends BoolType> eliminateITE(final Expr<? extends BoolType> expr) {
+		return (Expr<? extends BoolType>) expr.accept(new ExprITEPropagatorVisitor(new ExprITEPusherVisitor()), null).accept(new ExprITERemoverVisitor(), null);
 	}
 
 	public static void collectAtoms(final Expr<? extends BoolType> expr, final Collection<Expr<? extends BoolType>> collectTo) {

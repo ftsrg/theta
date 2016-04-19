@@ -8,8 +8,8 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
-import hu.bme.mit.inf.ttmc.core.ConstraintManager;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.expr.impl.Exprs;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.core.type.Type;
 
@@ -22,12 +22,12 @@ public class Interpolant implements Iterable<Expr<? extends BoolType>> {
 	private final List<Expr<? extends BoolType>> interpolants;
 	private final boolean isBinary;
 
-	public Interpolant(final Expr<? extends BoolType> binaryItp, final int index, final ConstraintManager manager) {
+	public Interpolant(final Expr<? extends BoolType> binaryItp, final int index) {
 		checkNotNull(binaryItp);
 		checkArgument(0 <= index);
 		interpolants = new ArrayList<>();
 		for (int i = 0; i < index; ++i)
-			interpolants.add(manager.getExprFactory().True());
+			interpolants.add(Exprs.True());
 		interpolants.add(binaryItp);
 		isBinary = true;
 	}

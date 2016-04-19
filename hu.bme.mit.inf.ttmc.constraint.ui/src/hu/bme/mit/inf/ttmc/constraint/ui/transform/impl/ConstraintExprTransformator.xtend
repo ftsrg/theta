@@ -32,7 +32,6 @@ import hu.bme.mit.inf.ttmc.constraint.ui.transform.DeclTransformator
 import hu.bme.mit.inf.ttmc.constraint.ui.transform.ExprTransformator
 import hu.bme.mit.inf.ttmc.constraint.ui.transform.TransformationManager
 import hu.bme.mit.inf.ttmc.core.expr.Expr
-import hu.bme.mit.inf.ttmc.core.factory.ExprFactory
 import hu.bme.mit.inf.ttmc.core.type.ArrayType
 import hu.bme.mit.inf.ttmc.core.type.BoolType
 import hu.bme.mit.inf.ttmc.core.type.IntType
@@ -44,14 +43,13 @@ import hu.bme.mit.inf.ttmc.core.type.closure.ClosedUnderNeg
 import hu.bme.mit.inf.ttmc.core.type.closure.ClosedUnderSub
 import hu.bme.mit.inf.ttmc.core.utils.impl.ExprUtils
 
-public class ConstraintExprTransformator implements ExprTransformator {
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.*
 
-	private val extension ExprFactory exprFactory
+public class ConstraintExprTransformator implements ExprTransformator {
 	
 	private val extension DeclTransformator df
 	
-	public new(TransformationManager manager, ExprFactory exprFactory) {
-		this.exprFactory = exprFactory
+	public new(TransformationManager manager) {
 		df = manager.declTransformator
 	}
 		
@@ -126,7 +124,7 @@ public class ConstraintExprTransformator implements ExprTransformator {
 	protected def dispatch Expr<? extends Type> toExpr(ModExpression expression) {
 		val leftOp = ExprUtils.cast(expression.leftOperand.toExpr, IntType)
 		val rightOp = ExprUtils.cast(expression.rightOperand.toExpr, IntType)
-		IntDiv(leftOp, rightOp)
+		Mod(leftOp, rightOp)
 	}
 
 	protected def dispatch Expr<? extends Type> toExpr(EqualityExpression expression) {

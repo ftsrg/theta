@@ -1,4 +1,4 @@
-package hu.bme.mit.inf.ttmc.formalism.common.factory;
+package hu.bme.mit.inf.ttmc.formalism.sts.factory;
 
 import hu.bme.mit.inf.ttmc.core.factory.DeclFactory;
 import hu.bme.mit.inf.ttmc.core.type.Type;

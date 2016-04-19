@@ -11,7 +11,6 @@ import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.core.utils.impl.ExprUtils;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.ProcDecl;
-import hu.bme.mit.inf.ttmc.formalism.program.ProgramManager;
 import hu.bme.mit.inf.ttmc.program.model.ProcedureDeclaration;
 import hu.bme.mit.inf.ttmc.program.model.ProgramSpecification;
 import hu.bme.mit.inf.ttmc.program.ui.impl.ProgramModelBuilder;
@@ -23,8 +22,8 @@ public class ProgramModelCreator {
 	private ProgramModelCreator() {
 	}
 
-	public static ProgramModel create(final ProgramManager manager, final ProgramSpecification specification) {
-		final ProgramTransformationManager tManager = new ProgramTransformationManager(manager);
+	public static ProgramModel create(final ProgramSpecification specification) {
+		final ProgramTransformationManager tManager = new ProgramTransformationManager();
 		final ProgramModelBuilder builder = ProgramModelImpl.builder();
 
 		addConstDecls(builder, specification, tManager);

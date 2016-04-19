@@ -8,7 +8,6 @@ import java.util.Set;
 import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
-import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
 
 /**
  * Base class for abstract systems.
@@ -30,10 +29,5 @@ public abstract class AbstractSystemBase implements AbstractSystem {
 	@Override
 	public Set<VarDecl<? extends Type>> getVars() {
 		return vars;
-	}
-
-	@Override
-	public STSManager getManager() {
-		return sts.getManager();
 	}
 }
