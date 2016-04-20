@@ -1,6 +1,5 @@
 package hu.bme.mit.inf.ttmc.solver.z3;
 
-import hu.bme.mit.inf.ttmc.core.ConstraintManager;
 import hu.bme.mit.inf.ttmc.solver.ItpSolver;
 import hu.bme.mit.inf.ttmc.solver.Solver;
 import hu.bme.mit.inf.ttmc.solver.SolverManager;
@@ -32,7 +31,7 @@ public class Z3SolverManager implements SolverManager {
 
 	final Z3SymbolTable symbolTable;
 
-	public Z3SolverManager(final ConstraintManager manager) {
+	public Z3SolverManager() {
 		z3Context = new com.microsoft.z3.InterpolationContext();
 		symbolTable = new Z3SymbolTable();
 	}

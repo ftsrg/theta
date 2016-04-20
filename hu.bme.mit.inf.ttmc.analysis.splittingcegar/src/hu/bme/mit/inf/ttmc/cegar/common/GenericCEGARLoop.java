@@ -23,7 +23,6 @@ import hu.bme.mit.inf.ttmc.cegar.common.steps.Refiner;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.debugging.Debugger;
 import hu.bme.mit.inf.ttmc.common.logging.Logger;
 import hu.bme.mit.inf.ttmc.common.logging.impl.NullLogger;
-import hu.bme.mit.inf.ttmc.core.ConstraintManagerImpl;
 import hu.bme.mit.inf.ttmc.core.expr.AndExpr;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 import hu.bme.mit.inf.ttmc.solver.SolverManager;
@@ -52,7 +51,7 @@ public class GenericCEGARLoop<AbstractSystemType extends AbstractSystem, Abstrac
 
 	private void reset() {
 		stopHandler.reset();
-		final SolverManager manager = new Z3SolverManager(new ConstraintManagerImpl());
+		final SolverManager manager = new Z3SolverManager();
 		solvers.setSolver(manager.createSolver(true, true));
 		solvers.setItpSolver(manager.createItpSolver());
 	}
