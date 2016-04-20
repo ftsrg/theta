@@ -21,6 +21,7 @@ import org.junit.Test;
 
 import com.google.common.collect.ImmutableList;
 
+import hu.bme.mit.inf.ttmc.core.ConstraintManagerImpl;
 import hu.bme.mit.inf.ttmc.core.decl.ConstDecl;
 import hu.bme.mit.inf.ttmc.core.decl.ParamDecl;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
@@ -31,7 +32,6 @@ import hu.bme.mit.inf.ttmc.solver.Interpolant;
 import hu.bme.mit.inf.ttmc.solver.ItpMarker;
 import hu.bme.mit.inf.ttmc.solver.ItpPattern;
 import hu.bme.mit.inf.ttmc.solver.ItpSolver;
-import hu.bme.mit.inf.ttmc.solver.SolverFactory;
 import hu.bme.mit.inf.ttmc.solver.SolverManager;
 import hu.bme.mit.inf.ttmc.solver.z3.Z3SolverManager;
 
@@ -49,10 +49,9 @@ public class Z3ItpSolverTests {
 
 	@Before
 	public void initialize() {
-		final SolverManager manager = new Z3SolverManager();
-		final SolverFactory sf = manager.getSolverFactory();
+		final SolverManager manager = new Z3SolverManager(new ConstraintManagerImpl());
 
-		solver = sf.createItpSolver();
+		solver = manager.createItpSolver();
 
 		final ConstDecl<IntType> ad = Const("a", Int());
 		final ConstDecl<IntType> bd = Const("b", Int());

@@ -23,6 +23,7 @@ import hu.bme.mit.inf.ttmc.cegar.common.steps.Refiner;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.debugging.Debugger;
 import hu.bme.mit.inf.ttmc.common.logging.Logger;
 import hu.bme.mit.inf.ttmc.common.logging.impl.NullLogger;
+import hu.bme.mit.inf.ttmc.core.ConstraintManagerImpl;
 import hu.bme.mit.inf.ttmc.core.expr.AndExpr;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 import hu.bme.mit.inf.ttmc.solver.SolverManager;
@@ -33,12 +34,15 @@ import hu.bme.mit.inf.ttmc.solver.z3.Z3SolverManager;
  * the same type of abstraction: initial abstraction, model checking,
  * counterexample concretization, abstraction refinement.
  */
-public class GenericCEGARLoop<AbstractSystemType extends AbstractSystem, AbstractStateType extends AbstractState> implements CEGARLoop {
+public class GenericCEGARLoop<AbstractSystemType extends AbstractSystem, AbstractStateType extends AbstractState>
+		implements CEGARLoop {
 	private final Initializer<AbstractSystemType> initializer;
 	private final Checker<AbstractSystemType, AbstractStateType> checker;
 	private final Concretizer<AbstractSystemType, AbstractStateType> concretizer;
 	private final Refiner<AbstractSystemType, AbstractStateType> refiner;
-	private final Debugger<AbstractSystemType, AbstractStateType> debugger; // Can be null
+	private final Debugger<AbstractSystemType, AbstractStateType> debugger; // Can
+																			// be
+																			// null
 	private final String name;
 	private final Stopwatch stopwatch;
 	private final Logger logger;
@@ -48,9 +52,9 @@ public class GenericCEGARLoop<AbstractSystemType extends AbstractSystem, Abstrac
 
 	private void reset() {
 		stopHandler.reset();
-		final SolverManager manager = new Z3SolverManager();
-		solvers.setSolver(manager.getSolverFactory().createSolver(true, true));
-		solvers.setItpSolver(manager.getSolverFactory().createItpSolver());
+		final SolverManager manager = new Z3SolverManager(new ConstraintManagerImpl());
+		solvers.setSolver(manager.createSolver(true, true));
+		solvers.setItpSolver(manager.createItpSolver());
 	}
 
 	@Override
@@ -58,10 +62,12 @@ public class GenericCEGARLoop<AbstractSystemType extends AbstractSystem, Abstrac
 		stopHandler.stop();
 	}
 
-	public GenericCEGARLoop(final SolverWrapper solvers, final StopHandler stopHandler, final Initializer<AbstractSystemType> initializer,
-			final Checker<AbstractSystemType, AbstractStateType> checker, final Concretizer<AbstractSystemType, AbstractStateType> concretizer,
-			final Refiner<AbstractSystemType, AbstractStateType> refiner, final Debugger<AbstractSystemType, AbstractStateType> debugger, final Logger logger,
-			final String name) {
+	public GenericCEGARLoop(final SolverWrapper solvers, final StopHandler stopHandler,
+			final Initializer<AbstractSystemType> initializer,
+			final Checker<AbstractSystemType, AbstractStateType> checker,
+			final Concretizer<AbstractSystemType, AbstractStateType> concretizer,
+			final Refiner<AbstractSystemType, AbstractStateType> refiner,
+			final Debugger<AbstractSystemType, AbstractStateType> debugger, final Logger logger, final String name) {
 		this.initializer = checkNotNull(initializer);
 		this.checker = checkNotNull(checker);
 		this.concretizer = checkNotNull(concretizer);
@@ -129,7 +135,8 @@ public class GenericCEGARLoop<AbstractSystemType extends AbstractSystem, Abstrac
 				if (debugger != null)
 					debugger.setConcreteTrace(concreteTrace).visualize();
 
-				// If no concrete counterexample is found the abstract one is spurious and the abstraction has to be refined
+				// If no concrete counterexample is found the abstract one is
+				// spurious and the abstraction has to be refined
 				if (!concreteTrace.isCounterexample()) {
 					// Refine the abstraction
 					logger.writeHeader("Abstraction refinement (" + refinementIterations + ")", 1);
@@ -156,11 +163,12 @@ public class GenericCEGARLoop<AbstractSystemType extends AbstractSystem, Abstrac
 		// Create result, print and return
 		CEGARResult result = null;
 		if (abstractResult.isCounterExample())
-			result = new CEGARResult(abstractSystem.getSTS(), concreteTrace, stopwatch.elapsed(TimeUnit.MILLISECONDS), refinementIterations, detailedTime,
-					totalStates, abstractSystem);
-		else
-			result = new CEGARResult(abstractSystem.getSTS(), abstractResult.getExploredStates(), stopwatch.elapsed(TimeUnit.MILLISECONDS),
+			result = new CEGARResult(abstractSystem.getSTS(), concreteTrace, stopwatch.elapsed(TimeUnit.MILLISECONDS),
 					refinementIterations, detailedTime, totalStates, abstractSystem);
+		else
+			result = new CEGARResult(abstractSystem.getSTS(), abstractResult.getExploredStates(),
+					stopwatch.elapsed(TimeUnit.MILLISECONDS), refinementIterations, detailedTime, totalStates,
+					abstractSystem);
 		printResult(result);
 		return result;
 	}
@@ -169,7 +177,10 @@ public class GenericCEGARLoop<AbstractSystemType extends AbstractSystem, Abstrac
 		logger.writeHeader("Done", 0);
 		logger.writeln("Elapsed time: " + result.getElapsedMillis() + " ms", 0);
 		for (final Entry<String, Long> entry : result.getDetailedTime().entrySet())
-			logger.writeln(String.format(Locale.ENGLISH, "%4.1f", entry.getValue() / (float) result.getElapsedMillis() * 100) + "% " + entry.getKey(), 1, 1);
+			logger.writeln(
+					String.format(Locale.ENGLISH, "%4.1f", entry.getValue() / (float) result.getElapsedMillis() * 100)
+							+ "% " + entry.getKey(),
+					1, 1);
 		logger.writeln("Refinement iterations: " + result.getRefinementCount(), 0);
 		logger.writeln("Result: " + (result.propertyHolds() ? "specification holds" : "counterexample found"), 0);
 		if (result.getCounterExample() != null) {
@@ -180,8 +191,8 @@ public class GenericCEGARLoop<AbstractSystemType extends AbstractSystem, Abstrac
 
 	@Override
 	public String toString() {
-		return "CEGAR[" + name + (debugger != null ? ", debugmode" : "") + "]" + " Init[" + initializer + "]" + " Check[" + checker + "]" + " Concr["
-				+ concretizer + "]" + " Refin[" + refiner + "]";
+		return "CEGAR[" + name + (debugger != null ? ", debugmode" : "") + "]" + " Init[" + initializer + "]"
+				+ " Check[" + checker + "]" + " Concr[" + concretizer + "]" + " Refin[" + refiner + "]";
 	}
 
 }
