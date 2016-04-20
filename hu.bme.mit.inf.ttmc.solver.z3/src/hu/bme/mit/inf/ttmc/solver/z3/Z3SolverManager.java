@@ -28,14 +28,11 @@ public class Z3SolverManager implements SolverManager {
 
 	///////
 
-	final ConstraintManager manager;
-
 	final com.microsoft.z3.InterpolationContext z3Context;
 
 	final Z3SymbolTable symbolTable;
 
 	public Z3SolverManager(final ConstraintManager manager) {
-		this.manager = manager;
 		z3Context = new com.microsoft.z3.InterpolationContext();
 		symbolTable = new Z3SymbolTable();
 	}
@@ -44,7 +41,7 @@ public class Z3SolverManager implements SolverManager {
 	public Solver createSolver(final boolean genModels, final boolean genUnsatCores) {
 		final com.microsoft.z3.Solver z3Solver = z3Context.mkSimpleSolver();
 		final Z3TransformationManager transformationManager = new Z3TransformationManager(symbolTable, z3Context);
-		final Z3TermTransformer termTransformer = new Z3TermTransformer(manager.getExprFactory(), symbolTable);
+		final Z3TermTransformer termTransformer = new Z3TermTransformer(symbolTable);
 		return new Z3Solver(transformationManager, termTransformer, z3Context, z3Solver);
 	}
 
@@ -52,7 +49,7 @@ public class Z3SolverManager implements SolverManager {
 	public ItpSolver createItpSolver() {
 		final com.microsoft.z3.Solver z3Solver = z3Context.mkSimpleSolver();
 		final Z3TransformationManager transformationManager = new Z3TransformationManager(symbolTable, z3Context);
-		final Z3TermTransformer termTransformer = new Z3TermTransformer(manager.getExprFactory(), symbolTable);
+		final Z3TermTransformer termTransformer = new Z3TermTransformer(symbolTable);
 		return new Z3ItpSolver(transformationManager, termTransformer, z3Context, z3Solver);
 	}
 
