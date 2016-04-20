@@ -27,11 +27,13 @@ import org.eclipse.cdt.internal.core.parser.ParserLogService;
 import org.eclipse.core.runtime.CoreException;
 
 import hu.bme.mit.inf.ttmc.code.ast.AstNode;
-import hu.bme.mit.inf.ttmc.code.ast.AstRoot;
+import hu.bme.mit.inf.ttmc.code.ast.TranslationUnitAst;
 import hu.bme.mit.inf.ttmc.code.ast.CompoundStatementAst;
-import hu.bme.mit.inf.ttmc.code.ast.FunctionAst;
+import hu.bme.mit.inf.ttmc.code.ast.FunctionDefinitionAst;
 import hu.bme.mit.inf.ttmc.code.stmt.visitor.PrintStmtVisitor;
+import hu.bme.mit.inf.ttmc.code.visitor.PrintCodeAstVisitor;
 import hu.bme.mit.inf.ttmc.code.visitor.SimplifyAstVisitor;
+import hu.bme.mit.inf.ttmc.code.visitor.StatementUnrollAstVisitor;
 import hu.bme.mit.inf.ttmc.code.visitor.TransformProgramVisitor;
 import hu.bme.mit.inf.ttmc.constraint.ConstraintManagerImpl;
 import hu.bme.mit.inf.ttmc.formalism.cfa.CFA;
@@ -68,7 +70,7 @@ class Application {
 	    sb.append("digraph G {");
         printTree(ast, sb);
         sb.append("}");
-	            
+
         try {
             FileOutputStream fos = new FileOutputStream(new File("ast_cdt.dot"));
             OutputStreamWriter osw = new OutputStreamWriter(fos);
@@ -82,7 +84,7 @@ class Application {
 			e.printStackTrace();
 		}
         
-	    AstRoot root = AstTransformer.transform(ast);
+	    TranslationUnitAst root = AstTransformer.transform(ast);
 
 	    sb.setLength(0);
 	    sb.append("digraph G {");
@@ -103,9 +105,17 @@ class Application {
 		}	    
 	    
 	    SimplifyAstVisitor simplVisitor = new SimplifyAstVisitor();
+	    StatementUnrollAstVisitor unroll = new StatementUnrollAstVisitor();
 
-	    FunctionAst main = (FunctionAst) root.getChildren()[0];
-	    FunctionAst mainSimpl = (FunctionAst) main.accept(simplVisitor);
+	    FunctionDefinitionAst main = (FunctionDefinitionAst) root.getChildren()[0];
+	    FunctionDefinitionAst mainSimpl = (FunctionDefinitionAst) (main.accept(unroll).accept(simplVisitor));
+	    
+	    PrintCodeAstVisitor codePrinter = new PrintCodeAstVisitor();
+	    
+	    String code = mainSimpl.accept(codePrinter);
+	    
+	    System.out.println(code);
+	    
 	    
 	    sb.setLength(0);
 	    sb.append("digraph G {");

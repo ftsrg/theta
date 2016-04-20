@@ -2,24 +2,18 @@ package hu.bme.mit.inf.ttmc.code.ast;
 
 import hu.bme.mit.inf.ttmc.code.ast.visitor.StatementVisitor;
 
-public class VarDeclarationStatementAst extends StatementAst {
+public class DeclarationStatementAst extends StatementAst {
 
-	private String name;
-	private VarDeclarationAst decl;
+	private DeclarationAst decl;
 	
-	public VarDeclarationStatementAst(VarDeclarationAst decl) {
+	public DeclarationStatementAst(DeclarationAst decl) {
 		this.decl = decl;
-		this.name = decl.getName();
 	}
 
-	public VarDeclarationAst getDeclaration() {
+	public DeclarationAst getDeclaration() {
 		return this.decl;
 	}
-	
-	public String getName() {
-		return this.name;
-	}
-	
+		
 	@Override
 	public AstNode[] getChildren() {
 		return new AstNode[] { this.decl };
@@ -28,6 +22,11 @@ public class VarDeclarationStatementAst extends StatementAst {
 	@Override
 	public <S> S accept(StatementVisitor<S> visitor) {
 		return visitor.visit(this);
+	}
+
+	@Override
+	public DeclarationStatementAst copy() {
+		return new DeclarationStatementAst(decl.copy());
 	}
 	
 }

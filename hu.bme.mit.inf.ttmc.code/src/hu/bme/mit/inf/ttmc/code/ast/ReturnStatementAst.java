@@ -10,7 +10,7 @@ public class ReturnStatementAst extends StatementAst {
 		this.expr = expr;
 	}
 
-	public ExpressionAst getExpr() {
+	public ExpressionAst getExpression() {
 		return this.expr;
 	}
 	
@@ -22,6 +22,11 @@ public class ReturnStatementAst extends StatementAst {
 	@Override
 	public <S> S accept(StatementVisitor<S> visitor) {
 		return visitor.visit(this);
+	}
+
+	@Override
+	public ReturnStatementAst copy() {
+		return new ReturnStatementAst(expr.copy());
 	}
 	
 }

@@ -42,4 +42,9 @@ public class ForStatementAst extends StatementAst {
 		return new AstNode[] { init, cond, iter, body };
 	}
 
+	@Override
+	public ForStatementAst copy() {
+		return new ForStatementAst(init.copy(), cond.copy(), iter.copy(), body.copy());
+	}
+
 }

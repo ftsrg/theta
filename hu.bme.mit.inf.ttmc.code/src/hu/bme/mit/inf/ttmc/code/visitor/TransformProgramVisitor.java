@@ -1,31 +1,47 @@
 package hu.bme.mit.inf.ttmc.code.visitor;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import com.google.common.collect.ImmutableSet;
 
+import hu.bme.mit.inf.ttmc.code.ast.AssignmentInitializerAst;
 import hu.bme.mit.inf.ttmc.code.ast.BinaryExpressionAst;
 import hu.bme.mit.inf.ttmc.code.ast.BinaryExpressionAst.Operator;
+import hu.bme.mit.inf.ttmc.code.ast.BreakStatementAst;
+import hu.bme.mit.inf.ttmc.code.ast.CaseStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.CompoundStatementAst;
+import hu.bme.mit.inf.ttmc.code.ast.ContinueStatementAst;
+import hu.bme.mit.inf.ttmc.code.ast.DeclarationAst;
 import hu.bme.mit.inf.ttmc.code.ast.DoStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.ExpressionAst;
 import hu.bme.mit.inf.ttmc.code.ast.ExpressionStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.ForStatementAst;
-import hu.bme.mit.inf.ttmc.code.ast.FunctionAst;
+import hu.bme.mit.inf.ttmc.code.ast.FunctionDefinitionAst;
+import hu.bme.mit.inf.ttmc.code.ast.GotoStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.FunctionCallExpressionAst;
+import hu.bme.mit.inf.ttmc.code.ast.FunctionDeclaratorAst;
 import hu.bme.mit.inf.ttmc.code.ast.IfStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.LiteralExpressionAst;
 import hu.bme.mit.inf.ttmc.code.ast.NameExpressionAst;
 import hu.bme.mit.inf.ttmc.code.ast.ReturnStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.StatementAst;
+import hu.bme.mit.inf.ttmc.code.ast.SwitchStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.UnaryExpressionAst;
 import hu.bme.mit.inf.ttmc.code.ast.VarDeclarationAst;
-import hu.bme.mit.inf.ttmc.code.ast.VarDeclarationStatementAst;
+import hu.bme.mit.inf.ttmc.code.ast.DeclarationStatementAst;
+import hu.bme.mit.inf.ttmc.code.ast.DeclaratorAst;
+import hu.bme.mit.inf.ttmc.code.ast.DefaultStatementAst;
+import hu.bme.mit.inf.ttmc.code.ast.InitDeclaratorAst;
+import hu.bme.mit.inf.ttmc.code.ast.LabeledStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.WhileStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.visitor.AstVisitor;
+import hu.bme.mit.inf.ttmc.code.ast.visitor.DeclarationVisitor;
+import hu.bme.mit.inf.ttmc.code.ast.visitor.ExpressionVisitor;
+import hu.bme.mit.inf.ttmc.code.ast.visitor.StatementVisitor;
 import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.decl.Decl;
 import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
@@ -49,12 +65,14 @@ import hu.bme.mit.inf.ttmc.formalism.common.factory.impl.VarDeclFactoryImpl;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.BlockStmt;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
 
-public class TransformProgramVisitor implements AstVisitor<Expr<? extends Type>, Stmt, Decl<? extends Type, ?>> {
+public class TransformProgramVisitor implements ExpressionVisitor<Expr<? extends Type>>, StatementVisitor<Stmt>, DeclarationVisitor<Decl<? extends Type, ?>> {
 
 	private ExprFactory efc;
 	private StmtFactory pfc;
 	private TypeFactory tfc;
 	private VarDeclFactory vfc;
+	
+	private int uniqid = 0;
 	
 	private Map<String, VarDecl<? extends Type>> symbols = new HashMap<>();
 	
@@ -133,7 +151,7 @@ public class TransformProgramVisitor implements AstVisitor<Expr<? extends Type>,
 	public Stmt visit(CompoundStatementAst ast) {
 		List<Stmt> stmts = new ArrayList<>();
 		
-		for (StatementAst child : ast.getStatements()) {
+		for (StatementAst child : ast.getStatements()) {			
 			stmts.add(child.accept(this));
 		}
 		
@@ -141,16 +159,39 @@ public class TransformProgramVisitor implements AstVisitor<Expr<? extends Type>,
 	}
 
 	@Override
-	public Stmt visit(VarDeclarationStatementAst ast) {
-		VarDecl<?> var = this.vfc.Var(ast.getName(), this.tfc.Int());
-		this.symbols.put(ast.getName(), var);
+	public Stmt visit(DeclarationStatementAst ast) {
+		List<Stmt> stmts = new ArrayList<>();
+		DeclarationAst decl = ast.getDeclaration();
 		
-		return this.pfc.Decl(var);
+		if (decl instanceof VarDeclarationAst) {
+			Collection<DeclaratorAst> declarators = ((VarDeclarationAst) decl).getDeclarators();
+			
+			for (DeclaratorAst declar : declarators) {
+				InitDeclaratorAst declarator = (InitDeclaratorAst) declar; // Ugly
+				String name = declarator.getName();
+
+				System.out.println(".... " + name);
+				
+				VarDecl<? extends Type>  varDecl = this.vfc.Var(name, this.tfc.Int());
+				this.symbols.put(name, varDecl);
+				
+				if (declarator.getInitializer() == null) {
+					stmts.add(this.pfc.Decl(varDecl));
+				} else { // Hack
+					ExpressionAst exprAst = ((AssignmentInitializerAst) declarator.getInitializer()).getExpression();
+					Expr<? extends Type> expr = exprAst.accept(this);
+					
+					stmts.add(this.pfc.Decl(varDecl, ExprUtils.cast(expr, varDecl.getType().getClass())));	// :'(
+				}
+			}
+		}
+		
+		return this.pfc.Block(stmts);
 	}
 
 	@Override
 	public Stmt visit(ReturnStatementAst ast) {
-		Expr<? extends Type> expr = ast.getExpr().accept(this);
+		Expr<? extends Type> expr = ast.getExpression().accept(this);
 		
 		return this.pfc.Return(expr);
 	}
@@ -180,6 +221,12 @@ public class TransformProgramVisitor implements AstVisitor<Expr<? extends Type>,
 				ExpressionAst cond = func.getParams().get(0); // Szebben?
 				return this.pfc.Assert(ExprUtils.cast(cond.accept(this), BoolType.class));
 			}
+		} else if (expr instanceof UnaryExpressionAst) { // Unary expression hack
+			UnaryExpressionAst un = (UnaryExpressionAst) expr;
+			
+			Expr<? extends Type> operand = un.getOperand().accept(this);
+			
+			
 		}
 		
 		return this.pfc.Skip();
@@ -208,20 +255,28 @@ public class TransformProgramVisitor implements AstVisitor<Expr<? extends Type>,
 
 	@Override
 	public Decl<? extends Type, ?> visit(VarDeclarationAst ast) {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public Decl<? extends Type, ?> visit(FunctionAst ast) {
-		// TODO Auto-generated method stub
-		return null;
+	public Decl<? extends Type, ?> visit(FunctionDefinitionAst ast) {
+		throw new UnsupportedOperationException();
 	}
 
+/*
+	@Override
+	public Decl<? extends Type, ?> visit(InitDeclaratorAst ast) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public Decl<? extends Type, ?> visit(FunctionDeclaratorAst ast) {
+		throw new UnsupportedOperationException();
+	}
+*/
 	@Override
 	public Expr<? extends Type> visit(UnaryExpressionAst ast) {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
@@ -234,5 +289,56 @@ public class TransformProgramVisitor implements AstVisitor<Expr<? extends Type>,
 		
 		return this.pfc.Do(body, cond);
 	}
+	
+	private Stmt resolveUnaryOperators(StatementAst ast) {
+		List<UnaryExpressionAst> unaryExprs = new ArrayList<>();
+		
+		if (ast instanceof ExpressionStatementAst) {
+		}
+		
+		return this.pfc.Skip();
+	}
+	
+	private List<ExpressionAst> findUnaryExpressions(ExpressionAst ast) {
+		throw new UnsupportedOperationException();		
+	}
+
+	@Override
+	public Stmt visit(SwitchStatementAst ast) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public Stmt visit(CaseStatementAst ast) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public Stmt visit(DefaultStatementAst ast) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public Stmt visit(ContinueStatementAst ast) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public Stmt visit(BreakStatementAst ast) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public Stmt visit(GotoStatementAst ast) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public Stmt visit(LabeledStatementAst ast) {
+		throw new UnsupportedOperationException();
+	}
+	
+	
+	
 
 }

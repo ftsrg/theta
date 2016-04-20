@@ -23,5 +23,10 @@ public class LiteralExpressionAst extends ExpressionAst {
 	public <E> E accept(ExpressionVisitor<E> visitor) {
 		return visitor.visit(this);
 	}
+
+	@Override
+	public LiteralExpressionAst copy() {
+		return new LiteralExpressionAst(value);
+	}
 	
 }

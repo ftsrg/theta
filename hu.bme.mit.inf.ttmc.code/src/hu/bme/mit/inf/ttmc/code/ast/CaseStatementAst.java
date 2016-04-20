@@ -2,21 +2,16 @@ package hu.bme.mit.inf.ttmc.code.ast;
 
 import hu.bme.mit.inf.ttmc.code.ast.visitor.StatementVisitor;
 
-public class ExpressionStatementAst extends StatementAst {
+public class CaseStatementAst extends StatementAst {
 
 	private ExpressionAst expr;
 	
-	public ExpressionStatementAst(ExpressionAst expr) {
+	public CaseStatementAst(ExpressionAst expr) {
 		this.expr = expr;
 	}
 	
 	public ExpressionAst getExpression() {
 		return this.expr;
-	}
-
-	@Override
-	public AstNode[] getChildren() {
-		return new AstNode[] { this.expr };
 	}
 	
 	@Override
@@ -25,10 +20,13 @@ public class ExpressionStatementAst extends StatementAst {
 	}
 
 	@Override
-	public ExpressionStatementAst copy() {
-		return new ExpressionStatementAst(expr.copy());
+	public StatementAst copy() {
+		throw new UnsupportedOperationException();
 	}
-	
-	
-	
+
+	@Override
+	public AstNode[] getChildren() {
+		return new AstNode[] { this.expr };
+	}
+
 }

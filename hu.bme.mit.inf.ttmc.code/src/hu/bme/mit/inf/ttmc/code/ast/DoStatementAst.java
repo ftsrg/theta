@@ -30,4 +30,9 @@ public class DoStatementAst extends StatementAst {
 		return this.body;
 	}
 
+	@Override
+	public DoStatementAst copy() {
+		return new DoStatementAst(cond.copy(), body.copy());
+	}
+
 }

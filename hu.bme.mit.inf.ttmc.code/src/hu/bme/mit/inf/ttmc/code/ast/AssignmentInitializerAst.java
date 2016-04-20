@@ -9,6 +9,15 @@ public class AssignmentInitializerAst extends InitializerAst {
 	}
 	
 	@Override
+	public AssignmentInitializerAst copy() {
+		return new AssignmentInitializerAst(expr.copy());
+	}
+	
+	public ExpressionAst getExpression() {
+		return this.expr;
+	}
+	
+	@Override
 	public AstNode[] getChildren() {
 		return new AstNode[] { this.expr };
 	}

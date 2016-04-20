@@ -39,5 +39,11 @@ public class BinaryExpressionAst extends ExpressionAst {
 	public <E> E accept(ExpressionVisitor<E> visitor) {
 		return visitor.visit(this);
 	}
+
+	@Override
+	public ExpressionAst copy() {
+		return new BinaryExpressionAst(this.left.copy(), this.right.copy(), this.operator);
+	}
+	
 	
 }

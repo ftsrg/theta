@@ -30,4 +30,9 @@ public class WhileStatementAst extends StatementAst {
 		return this.body;
 	}
 
+	@Override
+	public WhileStatementAst copy() {
+		return new WhileStatementAst(cond.copy(), body.copy());
+	}
+
 }

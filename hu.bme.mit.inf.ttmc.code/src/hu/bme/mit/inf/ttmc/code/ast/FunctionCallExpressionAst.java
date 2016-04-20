@@ -1,5 +1,6 @@
 package hu.bme.mit.inf.ttmc.code.ast;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import hu.bme.mit.inf.ttmc.code.ast.visitor.ExpressionVisitor;
@@ -32,6 +33,17 @@ public class FunctionCallExpressionAst extends ExpressionAst {
 	@Override
 	public AstNode[] getChildren() {
 		return this.params.toArray(new AstNode[this.params.size()]);
+	}
+
+	@Override
+	public FunctionCallExpressionAst copy() {
+		List<ExpressionAst> newParams = new ArrayList<>();
+		
+		for (ExpressionAst param : params) {
+			newParams.add(param.copy());
+		}
+		
+		return new FunctionCallExpressionAst(name, newParams);
 	}
 
 }
