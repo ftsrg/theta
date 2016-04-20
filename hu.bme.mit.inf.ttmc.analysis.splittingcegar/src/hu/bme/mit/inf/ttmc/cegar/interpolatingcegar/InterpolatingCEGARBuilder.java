@@ -21,6 +21,7 @@ import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.steps.refinement.SequenceInt
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.utils.InterpolatingCEGARDebugger;
 import hu.bme.mit.inf.ttmc.common.logging.Logger;
 import hu.bme.mit.inf.ttmc.common.logging.impl.NullLogger;
+import hu.bme.mit.inf.ttmc.core.ConstraintManagerImpl;
 import hu.bme.mit.inf.ttmc.solver.SolverManager;
 import hu.bme.mit.inf.ttmc.solver.z3.Z3SolverManager;
 
@@ -86,8 +87,8 @@ public class InterpolatingCEGARBuilder implements CEGARBuilder {
 
 	@Override
 	public GenericCEGARLoop<InterpolatedAbstractSystem, InterpolatedAbstractState> build() {
-		final SolverManager manager = new Z3SolverManager();
-		final SolverWrapper solvers = new SolverWrapper(manager.getSolverFactory().createSolver(true, true), manager.getSolverFactory().createItpSolver());
+		final SolverManager manager = new Z3SolverManager(new ConstraintManagerImpl());
+		final SolverWrapper solvers = new SolverWrapper(manager.createSolver(true, true), manager.createItpSolver());
 		final StopHandler stopHandler = new StopHandler();
 		InterpolatingCEGARDebugger debugger = null;
 		if (debugVisualizer != null)
@@ -105,10 +106,11 @@ public class InterpolatingCEGARBuilder implements CEGARBuilder {
 		}
 
 		return new GenericCEGARLoop<>(solvers, stopHandler,
-				new InterpolatingInitializer(solvers, stopHandler, logger, visualizer, collectFromConditions, collectFromSpecification, useCNFTransformation,
-						explicitVariables),
+				new InterpolatingInitializer(solvers, stopHandler, logger, visualizer, collectFromConditions,
+						collectFromSpecification, useCNFTransformation, explicitVariables),
 				new InterpolatingChecker(solvers, stopHandler, logger, visualizer, incrementalModelChecking),
 				new InterpolatingConcretizer(solvers, stopHandler, logger, visualizer),
-				new InterpolatingRefiner(solvers, stopHandler, logger, visualizer, interpolater), debugger, logger, "Interpolating");
+				new InterpolatingRefiner(solvers, stopHandler, logger, visualizer, interpolater), debugger, logger,
+				"Interpolating");
 	}
 }
