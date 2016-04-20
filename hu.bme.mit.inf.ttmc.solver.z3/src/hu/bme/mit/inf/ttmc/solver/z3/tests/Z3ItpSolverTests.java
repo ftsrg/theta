@@ -21,7 +21,6 @@ import org.junit.Test;
 
 import com.google.common.collect.ImmutableList;
 
-import hu.bme.mit.inf.ttmc.core.ConstraintManagerImpl;
 import hu.bme.mit.inf.ttmc.core.decl.ConstDecl;
 import hu.bme.mit.inf.ttmc.core.decl.ParamDecl;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
@@ -49,7 +48,7 @@ public class Z3ItpSolverTests {
 
 	@Before
 	public void initialize() {
-		final SolverManager manager = new Z3SolverManager(new ConstraintManagerImpl());
+		final SolverManager manager = new Z3SolverManager();
 
 		solver = manager.createItpSolver();
 

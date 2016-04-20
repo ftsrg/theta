@@ -15,7 +15,6 @@ import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.NullVisualizer;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.Visualizer;
 import hu.bme.mit.inf.ttmc.common.logging.Logger;
 import hu.bme.mit.inf.ttmc.common.logging.impl.NullLogger;
-import hu.bme.mit.inf.ttmc.core.ConstraintManagerImpl;
 import hu.bme.mit.inf.ttmc.solver.SolverManager;
 import hu.bme.mit.inf.ttmc.solver.z3.Z3SolverManager;
 
@@ -41,7 +40,7 @@ public class ClusteredCEGARBuilder implements CEGARBuilder {
 
 	@Override
 	public GenericCEGARLoop<ClusteredAbstractSystem, ClusteredAbstractState> build() {
-		final SolverManager manager = new Z3SolverManager(new ConstraintManagerImpl());
+		final SolverManager manager = new Z3SolverManager();
 		final SolverWrapper solvers = new SolverWrapper(manager.createSolver(true, true), manager.createItpSolver());
 		final StopHandler stopHandler = new StopHandler();
 		ClusteredCEGARDebugger debugger = null;
