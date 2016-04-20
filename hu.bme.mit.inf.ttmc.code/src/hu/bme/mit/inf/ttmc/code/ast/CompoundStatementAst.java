@@ -1,5 +1,6 @@
 package hu.bme.mit.inf.ttmc.code.ast;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import hu.bme.mit.inf.ttmc.code.ast.visitor.StatementVisitor;
@@ -24,6 +25,17 @@ public class CompoundStatementAst extends StatementAst {
 	@Override
 	public <S> S accept(StatementVisitor<S> visitor) {
 		return visitor.visit(this);
+	}
+
+	@Override
+	public CompoundStatementAst copy() {
+		List<StatementAst> stmts = new ArrayList<>();
+		
+		for (StatementAst stmt : this.statements) {
+			stmts.add(stmt.copy());
+		}
+		
+		return new CompoundStatementAst(stmts);
 	}
 	
 	

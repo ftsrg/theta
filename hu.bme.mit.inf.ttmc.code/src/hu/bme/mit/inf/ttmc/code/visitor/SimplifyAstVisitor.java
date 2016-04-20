@@ -9,31 +9,45 @@ import java.util.Stack;
 
 import org.eclipse.cdt.core.dom.ast.IASTDeclSpecifier;
 
+import hu.bme.mit.inf.ttmc.code.ast.AstNode;
 import hu.bme.mit.inf.ttmc.code.ast.BinaryExpressionAst;
 import hu.bme.mit.inf.ttmc.code.ast.BinaryExpressionAst.Operator;
+import hu.bme.mit.inf.ttmc.code.ast.BreakStatementAst;
+import hu.bme.mit.inf.ttmc.code.ast.CaseStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.CompoundStatementAst;
+import hu.bme.mit.inf.ttmc.code.ast.ContinueStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.DeclarationAst;
 import hu.bme.mit.inf.ttmc.code.ast.DoStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.ExpressionAst;
 import hu.bme.mit.inf.ttmc.code.ast.ExpressionStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.ForStatementAst;
-import hu.bme.mit.inf.ttmc.code.ast.FunctionAst;
+import hu.bme.mit.inf.ttmc.code.ast.FunctionDefinitionAst;
+import hu.bme.mit.inf.ttmc.code.ast.GotoStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.FunctionCallExpressionAst;
+import hu.bme.mit.inf.ttmc.code.ast.FunctionDeclaratorAst;
 import hu.bme.mit.inf.ttmc.code.ast.IfStatementAst;
+import hu.bme.mit.inf.ttmc.code.ast.InitDeclaratorAst;
+import hu.bme.mit.inf.ttmc.code.ast.LabeledStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.LiteralExpressionAst;
 import hu.bme.mit.inf.ttmc.code.ast.NameExpressionAst;
 import hu.bme.mit.inf.ttmc.code.ast.ReturnStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.StatementAst;
+import hu.bme.mit.inf.ttmc.code.ast.SwitchStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.UnaryExpressionAst;
 import hu.bme.mit.inf.ttmc.code.ast.VarDeclarationAst;
-import hu.bme.mit.inf.ttmc.code.ast.VarDeclarationStatementAst;
+import hu.bme.mit.inf.ttmc.code.ast.DeclarationStatementAst;
+import hu.bme.mit.inf.ttmc.code.ast.DeclaratorAst;
+import hu.bme.mit.inf.ttmc.code.ast.DefaultStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.WhileStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.visitor.AstVisitor;
 
-public class SimplifyAstVisitor implements AstVisitor<ExpressionAst, StatementAst, DeclarationAst> {
+public class SimplifyAstVisitor implements AstVisitor<ExpressionAst, StatementAst, DeclarationAst, DeclaratorAst> {
 
 	private Map<String, DeclarationAst> names = new HashMap<>();
 	private Stack<List<String>> scopes = new Stack<>();
+	private Map<String, String> scopeMappings = new HashMap<>();
+	
+	private int uniqid = 0;
 	
 	public SimplifyAstVisitor() {
 	}
@@ -49,8 +63,8 @@ public class SimplifyAstVisitor implements AstVisitor<ExpressionAst, StatementAs
 	}
 	
 	@Override
-	public ExpressionAst visit(NameExpressionAst ast) {
-		return new NameExpressionAst(ast.getName());
+	public ExpressionAst visit(NameExpressionAst ast) {		
+		return new NameExpressionAst(this.scopeMappings.containsKey(ast.getName()) ? this.scopeMappings.get(ast.getName()) : ast.getName());
 	}
 
 	@Override
@@ -85,28 +99,20 @@ public class SimplifyAstVisitor implements AstVisitor<ExpressionAst, StatementAs
 		for (StatementAst stmt : ast.getStatements()) {
 			stmts.add(stmt.accept(this));
 		}
-		
+				
 		this.leaveScope();
 		
 		return new CompoundStatementAst(stmts);
 	}
 
 	@Override
-	public StatementAst visit(VarDeclarationStatementAst ast) {
-		String name = ast.getName();
-		List<String> top = this.scopes.lastElement();
-		
-		// If we have such declaration in the current scope, it's an error
-		if (top.contains(name)) {
-			throw new RuntimeException("Redeclaration of variable '" + name +"'.");
-		}
-		
-		return new VarDeclarationStatementAst(ast.getDeclaration());
+	public StatementAst visit(DeclarationStatementAst ast) {		
+		return new DeclarationStatementAst(ast.getDeclaration().accept(this));
 	}
 
 	@Override
 	public StatementAst visit(ReturnStatementAst ast) {
-		return new ReturnStatementAst(ast.getExpr().accept(this));
+		return new ReturnStatementAst(ast.getExpression().accept(this));
 	}
 
 	@Override
@@ -151,14 +157,38 @@ public class SimplifyAstVisitor implements AstVisitor<ExpressionAst, StatementAs
 
 	@Override
 	public DeclarationAst visit(VarDeclarationAst ast) {
-		return new VarDeclarationAst(ast.getName());
+		List<DeclaratorAst> newDeclarators = new ArrayList<>();
+		List<DeclaratorAst> declarators = ast.getDeclarators();
+		for (DeclaratorAst declarator : declarators) {
+			String name = declarator.getName();
+			if (this.hasInScope(name)) {
+				String newName = name + "_conflict" + uniqid++;
+				this.scopeMappings.put(name, newName);
+				newDeclarators.add(new InitDeclaratorAst(newName));
+				this.scopes.lastElement().add(newName);
+			} else {
+				newDeclarators.add(new InitDeclaratorAst(name));
+				this.scopes.lastElement().add(name);
+			}
+		}
+		
+		return new VarDeclarationAst(ast.getSpecifier(), newDeclarators);
 	}
 
 	@Override
-	public DeclarationAst visit(FunctionAst ast) {
-		return new FunctionAst(ast.getName(), (CompoundStatementAst) ast.getBody().accept(this));
+	public DeclarationAst visit(FunctionDefinitionAst ast) {
+		return new FunctionDefinitionAst(ast.getName(), ast.getDeclarationSpecifier(), ast.getDeclarator(), (CompoundStatementAst) ast.getBody().accept(this));
 	}
-
+/*
+	@Override
+	public DeclaratorAst visit(InitDeclaratorAst ast) {
+		return new InitDeclaratorAst(ast.getName());
+	}
+	
+	public DeclaratorAst visit(FunctionDeclaratorAst ast) {
+		return new FunctionDeclaratorAst(ast.getName());
+	}
+*/
 	@Override
 	public ExpressionAst visit(UnaryExpressionAst ast) {
 		ExpressionAst operand = ast.getOperand().accept(this);
@@ -181,9 +211,64 @@ public class SimplifyAstVisitor implements AstVisitor<ExpressionAst, StatementAs
 
 	private void leaveScope() {
 		this.scopes.pop();
+		this.scopeMappings.clear();		
 	}
 
 	private void enterScope() {
 		this.scopes.add(new ArrayList<String>());
+	}
+	
+	private boolean hasInScope(String name) {
+		for (List<String> list : this.scopes) {
+			if (list.contains(name))
+				return true;
+		}
+		
+		return false;
+	}
+
+	@Override
+	public DeclaratorAst visit(InitDeclaratorAst ast) {
+		return new InitDeclaratorAst(ast.getName());
+	}
+
+	@Override
+	public DeclaratorAst visit(FunctionDeclaratorAst ast) {
+		return new FunctionDeclaratorAst(ast.getName());
+	}
+
+	@Override
+	public StatementAst visit(SwitchStatementAst ast) {
+		return new SwitchStatementAst(ast.getExpression().accept(this), ast.getBody().accept(this));
+	}
+
+	@Override
+	public StatementAst visit(CaseStatementAst ast) {
+		return new CaseStatementAst(ast.getExpression().accept(this));
+	}
+
+	@Override
+	public StatementAst visit(DefaultStatementAst ast) {
+		return ast;
+	}
+
+	@Override
+	public StatementAst visit(ContinueStatementAst ast) {
+		return ast;
+	}
+
+	@Override
+	public StatementAst visit(BreakStatementAst ast) {
+		return ast;
+	}
+
+	@Override
+	public StatementAst visit(GotoStatementAst ast) {
+		return ast;
+	}
+
+	@Override
+	public StatementAst visit(LabeledStatementAst ast) {
+		return ast;
 	}
 }

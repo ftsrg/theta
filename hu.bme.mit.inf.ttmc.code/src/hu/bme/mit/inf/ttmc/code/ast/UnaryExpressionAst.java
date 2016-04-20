@@ -34,4 +34,9 @@ public class UnaryExpressionAst extends ExpressionAst {
 		return new AstNode[] { this.operand };
 	}
 
+	@Override
+	public ExpressionAst copy() {
+		return new UnaryExpressionAst(this.operand.copy(), this.operator);
+	}
+
 }

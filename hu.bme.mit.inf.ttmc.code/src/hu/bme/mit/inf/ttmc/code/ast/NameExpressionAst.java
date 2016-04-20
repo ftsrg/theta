@@ -24,5 +24,10 @@ public class NameExpressionAst extends ExpressionAst {
 		return visitor.visit(this);
 	}
 
+	@Override
+	public NameExpressionAst copy() {
+		return new NameExpressionAst(name);
+	}
+
 	
 }

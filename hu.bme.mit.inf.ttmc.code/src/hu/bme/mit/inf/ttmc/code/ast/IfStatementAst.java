@@ -45,4 +45,12 @@ public class IfStatementAst extends StatementAst {
 		return visitor.visit(this);
 	}
 
+	@Override
+	public StatementAst copy() {		
+		if (elseStatement != null)
+			return new IfStatementAst(condition.copy(), thenStatement.copy(), elseStatement.copy());
+		else
+			return new IfStatementAst(condition.copy(), thenStatement.copy());
+	}
+
 }

@@ -1,14 +1,26 @@
 package hu.bme.mit.inf.ttmc.code.ast;
 
-public class DeclaratorAst extends AstNode {
+import hu.bme.mit.inf.ttmc.code.ast.visitor.DeclaratorVisitor;
+
+abstract public class DeclaratorAst extends AstNode {
 
 	private String name;
-	private InitializerAst initializer;
 	
 	@Override
-	public AstNode[] getChildren() {
-		return new AstNode[] { this.initializer };
+	abstract public DeclaratorAst copy();
+
+	abstract public <DR> DR accept(DeclaratorVisitor<DR> visitor);
+	
+	public DeclaratorAst(String name) {
+		this.name = name;
 	}
 
+	public String getName() {
+		return this.name;
+	}
+	
+	protected void setName(String name) {
+		this.name = name;
+	}
 	
 }

@@ -1,13 +1,19 @@
 package hu.bme.mit.inf.ttmc.code;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
+import org.eclipse.cdt.core.dom.ast.IASTBreakStatement;
+import org.eclipse.cdt.core.dom.ast.IASTCaseStatement;
 import org.eclipse.cdt.core.dom.ast.IASTCompoundStatement;
+import org.eclipse.cdt.core.dom.ast.IASTContinueStatement;
+import org.eclipse.cdt.core.dom.ast.IASTDeclSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTDeclarationStatement;
 import org.eclipse.cdt.core.dom.ast.IASTDeclarator;
+import org.eclipse.cdt.core.dom.ast.IASTDefaultStatement;
 import org.eclipse.cdt.core.dom.ast.IASTDoStatement;
 import org.eclipse.cdt.core.dom.ast.IASTEqualsInitializer;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
@@ -16,62 +22,79 @@ import org.eclipse.cdt.core.dom.ast.IASTForStatement;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
+import org.eclipse.cdt.core.dom.ast.IASTGotoStatement;
 import org.eclipse.cdt.core.dom.ast.IASTIdExpression;
 import org.eclipse.cdt.core.dom.ast.IASTIfStatement;
 import org.eclipse.cdt.core.dom.ast.IASTInitializer;
 import org.eclipse.cdt.core.dom.ast.IASTInitializerClause;
+import org.eclipse.cdt.core.dom.ast.IASTLabelStatement;
 import org.eclipse.cdt.core.dom.ast.IASTLiteralExpression;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTReturnStatement;
 import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTStatement;
+import org.eclipse.cdt.core.dom.ast.IASTSwitchStatement;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTWhileStatement;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTEqualsInitializer;
 
-import hu.bme.mit.inf.ttmc.code.ast.AstRoot;
+import hu.bme.mit.inf.ttmc.code.ast.TranslationUnitAst;
+import hu.bme.mit.inf.ttmc.code.ast.AssignmentInitializerAst;
 import hu.bme.mit.inf.ttmc.code.ast.BinaryExpressionAst;
+import hu.bme.mit.inf.ttmc.code.ast.BreakStatementAst;
+import hu.bme.mit.inf.ttmc.code.ast.CaseStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.CompoundStatementAst;
-import hu.bme.mit.inf.ttmc.code.ast.DeclaratorAst;
+import hu.bme.mit.inf.ttmc.code.ast.ContinueStatementAst;
+import hu.bme.mit.inf.ttmc.code.ast.DeclarationSpecifierAst;
+import hu.bme.mit.inf.ttmc.code.ast.InitDeclaratorAst;
+import hu.bme.mit.inf.ttmc.code.ast.LabeledStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.DoStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.ExpressionAst;
 import hu.bme.mit.inf.ttmc.code.ast.ExpressionStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.ForStatementAst;
-import hu.bme.mit.inf.ttmc.code.ast.FunctionAst;
+import hu.bme.mit.inf.ttmc.code.ast.FunctionDefinitionAst;
 import hu.bme.mit.inf.ttmc.code.ast.FunctionCallExpressionAst;
+import hu.bme.mit.inf.ttmc.code.ast.FunctionDeclaratorAst;
 import hu.bme.mit.inf.ttmc.code.ast.IfStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.LiteralExpressionAst;
 import hu.bme.mit.inf.ttmc.code.ast.NameExpressionAst;
 import hu.bme.mit.inf.ttmc.code.ast.ReturnStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.StatementAst;
+import hu.bme.mit.inf.ttmc.code.ast.SwitchStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.UnaryExpressionAst;
 import hu.bme.mit.inf.ttmc.code.ast.UnaryExpressionAst.Operator;
 import hu.bme.mit.inf.ttmc.code.ast.VarDeclarationAst;
-import hu.bme.mit.inf.ttmc.code.ast.VarDeclarationStatementAst;
+import hu.bme.mit.inf.ttmc.code.ast.DeclarationStatementAst;
+import hu.bme.mit.inf.ttmc.code.ast.DeclaratorAst;
+import hu.bme.mit.inf.ttmc.code.ast.DefaultStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.WhileStatementAst;
 
 public class AstTransformer {
-
-	public static AstRoot transform(IASTTranslationUnit ast) {
-		List<FunctionAst> functions = new ArrayList<>();
+	
+	public static TranslationUnitAst transform(IASTTranslationUnit ast) {
+		List<FunctionDefinitionAst> functions = new ArrayList<>();
 		
 		for (IASTNode child : ast.getChildren()) {
 			if (child instanceof IASTFunctionDefinition) {
 				functions.add(transformFunction((IASTFunctionDefinition) child));
 			}
 		}
-		
-		return new AstRoot(functions);
+						
+		return new TranslationUnitAst(functions);
 	}
 	
-	public static FunctionAst transformFunction(IASTFunctionDefinition ast) {
+	public static FunctionDefinitionAst transformFunction(IASTFunctionDefinition ast) {
 		IASTFunctionDeclarator decl = ast.getDeclarator();
 		String name = decl.getName().toString();
 		
+		FunctionDeclaratorAst funcDeclarator = new FunctionDeclaratorAst(name);
+		
 		CompoundStatementAst body = transformCompoundStatement((IASTCompoundStatement)ast.getBody());
 		
-		return new FunctionAst(name, body);
+		DeclarationSpecifierAst spec = transformDeclSpecifier(ast.getDeclSpecifier());
+		
+		return new FunctionDefinitionAst(name, spec, funcDeclarator, body);
 	}
 	
 	private static StatementAst transformStatement(IASTStatement ast) {
@@ -107,9 +130,44 @@ public class AstTransformer {
 			return transformDoStatement((IASTDoStatement) ast);
 		}
 		
+		if (ast instanceof IASTSwitchStatement) {
+			return transformSwitchStatement((IASTSwitchStatement) ast);
+		}
+		
+		if (ast instanceof IASTCaseStatement) {
+			IASTCaseStatement caseAst = (IASTCaseStatement) ast;
+			return new CaseStatementAst(transformExpression(caseAst.getExpression()));
+		}
+		
+		if (ast instanceof IASTLabelStatement) {
+			IASTLabelStatement labelStmt = (IASTLabelStatement) ast;
+			String label = labelStmt.getName().toString();
+			
+			return new LabeledStatementAst(label, transformStatement(labelStmt.getNestedStatement()));
+		}
+		
+		if (ast instanceof IASTDefaultStatement) {
+			return new DefaultStatementAst();
+		}
+		
+		if (ast instanceof IASTContinueStatement) {
+			return new ContinueStatementAst();
+		}
+		
+		if (ast instanceof IASTBreakStatement) {
+			return new BreakStatementAst();
+		}
+		
 		return null;		
 	}
 	
+	private static SwitchStatementAst transformSwitchStatement(IASTSwitchStatement ast) {
+		ExpressionAst expr = transformExpression(ast.getControllerExpression());
+		StatementAst  body = transformStatement(ast.getBody());
+		
+		return new SwitchStatementAst(expr, body);
+	}
+
 	private static StatementAst transformDoStatement(IASTDoStatement ast) {
 		ExpressionAst cond = transformExpression(ast.getCondition());
 		StatementAst body = transformStatement(ast.getBody());
@@ -141,35 +199,94 @@ public class AstTransformer {
 		return new IfStatementAst(cond, thenStmt, elseStmt);
 	}
 	
-	private static VarDeclarationStatementAst transformDeclarationStatement(IASTDeclarationStatement ast) {
+	private static DeclarationStatementAst transformDeclarationStatement(IASTDeclarationStatement ast) {
 		IASTDeclaration decl = ast.getDeclaration();
 		
 		if (decl instanceof IASTSimpleDeclaration) {
 			IASTSimpleDeclaration varDecl = (IASTSimpleDeclaration) decl;
-			String name = varDecl.getDeclarators()[0].getName().toString();
+			IASTDeclSpecifier spec = varDecl.getDeclSpecifier();
 			
-			return new VarDeclarationStatementAst(new VarDeclarationAst(name));
+			DeclarationSpecifierAst declSpec = transformDeclSpecifier(spec);
+			
+			List<DeclaratorAst> declarators = new ArrayList<>();
+			for (IASTDeclarator declarator : varDecl.getDeclarators()) {
+				String name = declarator.getName().toString();
+				IASTInitializer init = declarator.getInitializer();
+				
+				if (init == null) {
+					InitDeclaratorAst declAst = new InitDeclaratorAst(name);					
+					declarators.add(declAst);
+				} else if (init instanceof IASTEqualsInitializer) {
+					IASTInitializerClause clause = ((IASTEqualsInitializer) init).getInitializerClause();
+					if (clause instanceof IASTExpression) {
+						IASTExpression exprAst = (IASTExpression) clause;
+						
+						InitDeclaratorAst declAst = new InitDeclaratorAst(name, new AssignmentInitializerAst(transformExpression(exprAst)));				
+						declarators.add(declAst);
+					} else {
+						throw new UnsupportedOperationException("Only assignment initializators are supported");
+					}
+				} else {
+					throw new UnsupportedOperationException();
+				}				
+			}
+			
+			return new DeclarationStatementAst(new VarDeclarationAst(declSpec, declarators));
 		}
 		
 		return null;
 	}
 	
-	private static DeclaratorAst transformDeclarator(IASTDeclarator ast) {
+	private static DeclarationSpecifierAst transformDeclSpecifier(IASTDeclSpecifier spec) {
+		EnumSet<DeclarationSpecifierAst.StorageClassSpecifier> storage = EnumSet.noneOf(DeclarationSpecifierAst.StorageClassSpecifier.class);
+		EnumSet<DeclarationSpecifierAst.TypeQualifier> type = EnumSet.noneOf(DeclarationSpecifierAst.TypeQualifier.class);
+		EnumSet<DeclarationSpecifierAst.FunctionSpecifier> func = EnumSet.noneOf(DeclarationSpecifierAst.FunctionSpecifier.class);
+		
+		int sc = spec.getStorageClass();
+		
+		if ((sc & spec.sc_typedef) != 0) {
+			storage.add(DeclarationSpecifierAst.StorageClassSpecifier.TYPEDEF);
+		}
+		
+		if ((sc & spec.sc_extern) != 0) {
+			storage.add(DeclarationSpecifierAst.StorageClassSpecifier.EXTERN);
+		}
+		
+		if ((sc & spec.sc_static) != 0) {
+			storage.add(DeclarationSpecifierAst.StorageClassSpecifier.STATIC);
+		}
+		
+		if ((sc & spec.sc_auto) != 0) {
+			storage.add(DeclarationSpecifierAst.StorageClassSpecifier.AUTO);
+		}
+		
+		if ((sc & spec.sc_register) != 0) {
+			storage.add(DeclarationSpecifierAst.StorageClassSpecifier.REGISTER);
+		}
+		
+		if (spec.isConst()) {
+			type.add(DeclarationSpecifierAst.TypeQualifier.CONST);
+		}
+		
+		if (spec.isVolatile()) {
+			type.add(DeclarationSpecifierAst.TypeQualifier.VOLATILE);
+		}
+		
+		if (spec.isRestrict()) {
+			type.add(DeclarationSpecifierAst.TypeQualifier.RESTRICT);
+		}
+		
+		if (spec.isInline()) {
+			func.add(DeclarationSpecifierAst.FunctionSpecifier.INLINE);
+		}
+		
+		return new DeclarationSpecifierAst(storage, type, func);
+	}
+
+	private static InitDeclaratorAst transformDeclarator(IASTDeclarator ast) {
 		String name = ast.getName().toString();
-		IASTInitializer init = ast.getInitializer();
 		
-		if (init == null) {
-			return new DeclaratorAst();
-		}
-		
-		if (init instanceof IASTEqualsInitializer) {
-			IASTInitializerClause clause = ((IASTEqualsInitializer) init).getInitializerClause();
-			if (clause instanceof IASTExpression) {
-				ExpressionAst expr = transformExpression((IASTExpression) clause);
-			}
-		}
-		
-		throw new UnsupportedOperationException();
+		return new InitDeclaratorAst(name);
 	}
 	
 	private static ExpressionStatementAst transformExpressionStatement(IASTExpressionStatement ast) {
