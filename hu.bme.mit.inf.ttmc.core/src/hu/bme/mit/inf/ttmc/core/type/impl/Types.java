@@ -39,13 +39,13 @@ public final class Types {
 	public static <P extends Type, R extends Type> FuncType<P, R> Func(final P paramType, final R resultType) {
 		checkNotNull(paramType);
 		checkNotNull(resultType);
-		return new FuncTypeImpl<P, R>(paramType, resultType);
+		return new FuncTypeImpl<>(paramType, resultType);
 	}
 
 	public static <I extends Type, E extends Type> ArrayType<I, E> Array(final I indexType, final E elemType) {
 		checkNotNull(indexType);
 		checkNotNull(elemType);
-		return new ArrayTypeImpl<I, E>(indexType, elemType);
+		return new ArrayTypeImpl<>(indexType, elemType);
 	}
 
 }
