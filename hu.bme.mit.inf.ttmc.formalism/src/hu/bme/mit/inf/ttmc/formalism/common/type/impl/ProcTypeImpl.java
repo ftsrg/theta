@@ -14,7 +14,7 @@ import hu.bme.mit.inf.ttmc.core.utils.TypeVisitor;
 import hu.bme.mit.inf.ttmc.formalism.common.type.ProcType;
 import hu.bme.mit.inf.ttmc.formalism.common.type.visitor.ProcTypeVisitor;
 
-public class ProcTypeImpl<ReturnType extends Type> implements ProcType<ReturnType> {
+final class ProcTypeImpl<ReturnType extends Type> implements ProcType<ReturnType> {
 
 	private static final int HASH_SEED = 2069;
 
@@ -25,7 +25,7 @@ public class ProcTypeImpl<ReturnType extends Type> implements ProcType<ReturnTyp
 
 	private volatile int hashCode = 0;
 
-	public ProcTypeImpl(final List<? extends Type> paramTypes, final ReturnType returnType) {
+	ProcTypeImpl(final List<? extends Type> paramTypes, final ReturnType returnType) {
 		this.paramTypes = ImmutableList.copyOf(checkNotNull(paramTypes));
 		this.returnType = checkNotNull(returnType);
 	}
