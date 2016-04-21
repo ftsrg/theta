@@ -18,11 +18,13 @@ import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.solver.Model;
 import hu.bme.mit.inf.ttmc.solver.Solver;
 import hu.bme.mit.inf.ttmc.solver.SolverStatus;
+import hu.bme.mit.inf.ttmc.solver.z3.trasform.Z3SymbolTable;
 import hu.bme.mit.inf.ttmc.solver.z3.trasform.Z3TermTransformer;
 import hu.bme.mit.inf.ttmc.solver.z3.trasform.Z3TransformationManager;
 
 public class Z3Solver implements Solver {
 
+	private final Z3SymbolTable symbolTable;
 	private final Z3TransformationManager transformationManager;
 	private final Z3TermTransformer termTransformer;
 
@@ -39,8 +41,10 @@ public class Z3Solver implements Solver {
 	private Collection<Expr<? extends BoolType>> unsatCore;
 	private SolverStatus status;
 
-	public Z3Solver(final Z3TransformationManager transformationManager, final Z3TermTransformer termTransformer,
-			final com.microsoft.z3.Context z3Context, final com.microsoft.z3.Solver z3Solver) {
+	public Z3Solver(final Z3SymbolTable symbolTable, final Z3TransformationManager transformationManager,
+			final Z3TermTransformer termTransformer, final com.microsoft.z3.Context z3Context,
+			final com.microsoft.z3.Solver z3Solver) {
+		this.symbolTable = symbolTable;
 		this.transformationManager = transformationManager;
 		this.termTransformer = termTransformer;
 		this.z3Context = z3Context;
@@ -161,7 +165,7 @@ public class Z3Solver implements Solver {
 		final com.microsoft.z3.Model z3Model = z3Solver.getModel();
 		assert z3Model != null;
 
-		return new Z3Model(transformationManager, termTransformer, z3Model);
+		return new Z3Model(symbolTable, transformationManager, termTransformer, z3Model);
 	}
 
 	private Collection<Expr<? extends BoolType>> extractUnsatCore() {
