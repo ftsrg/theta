@@ -36,10 +36,10 @@ public final class Types {
 		return RAT_TYPE;
 	}
 
-	public static <P extends Type, R extends Type> FuncType<P, R> Func(final P paramTypes, final R resultType) {
-		checkNotNull(paramTypes);
+	public static <P extends Type, R extends Type> FuncType<P, R> Func(final P paramType, final R resultType) {
+		checkNotNull(paramType);
 		checkNotNull(resultType);
-		return new FuncTypeImpl<P, R>(paramTypes, resultType);
+		return new FuncTypeImpl<P, R>(paramType, resultType);
 	}
 
 	public static <I extends Type, E extends Type> ArrayType<I, E> Array(final I indexType, final E elemType) {
