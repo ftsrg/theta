@@ -50,7 +50,7 @@ final class HavocStmtImpl<DeclType extends Type> extends AbstractStmt implements
 		final StringBuilder sb = new StringBuilder();
 		sb.append("Havoc");
 		sb.append("(");
-		sb.append(varDecl.toString());
+		sb.append(varDecl.getName());
 		sb.append(")");
 		return sb.toString();
 	}
