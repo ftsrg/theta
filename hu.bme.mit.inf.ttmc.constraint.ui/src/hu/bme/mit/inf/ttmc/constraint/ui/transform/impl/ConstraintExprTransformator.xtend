@@ -11,6 +11,7 @@ import hu.bme.mit.inf.ttmc.constraint.model.EqualExpression
 import hu.bme.mit.inf.ttmc.constraint.model.EqualityExpression
 import hu.bme.mit.inf.ttmc.constraint.model.Expression
 import hu.bme.mit.inf.ttmc.constraint.model.FalseExpression
+import hu.bme.mit.inf.ttmc.constraint.model.FunctionAccessExpression
 import hu.bme.mit.inf.ttmc.constraint.model.GreaterEqualExpression
 import hu.bme.mit.inf.ttmc.constraint.model.GreaterExpression
 import hu.bme.mit.inf.ttmc.constraint.model.IfThenElseExpression
@@ -34,6 +35,7 @@ import hu.bme.mit.inf.ttmc.constraint.ui.transform.TransformationManager
 import hu.bme.mit.inf.ttmc.core.expr.Expr
 import hu.bme.mit.inf.ttmc.core.type.ArrayType
 import hu.bme.mit.inf.ttmc.core.type.BoolType
+import hu.bme.mit.inf.ttmc.core.type.FuncType
 import hu.bme.mit.inf.ttmc.core.type.IntType
 import hu.bme.mit.inf.ttmc.core.type.RatType
 import hu.bme.mit.inf.ttmc.core.type.Type
@@ -42,8 +44,13 @@ import hu.bme.mit.inf.ttmc.core.type.closure.ClosedUnderMul
 import hu.bme.mit.inf.ttmc.core.type.closure.ClosedUnderNeg
 import hu.bme.mit.inf.ttmc.core.type.closure.ClosedUnderSub
 import hu.bme.mit.inf.ttmc.core.utils.impl.ExprUtils
+import java.util.List
 
+import static com.google.common.base.Preconditions.checkArgument
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.*
+import hu.bme.mit.inf.ttmc.constraint.model.ForallExpression
+import hu.bme.mit.inf.ttmc.core.decl.ParamDecl
+import hu.bme.mit.inf.ttmc.constraint.model.ExistsExpression
 
 public class ConstraintExprTransformator implements ExprTransformator {
 	
@@ -190,13 +197,43 @@ public class ConstraintExprTransformator implements ExprTransformator {
 		Or(ops)
 	}
 
+	protected def dispatch Expr<? extends Type> toExpr(ForallExpression expression) {
+		val params = expression.parameterDeclarations.map[transform as ParamDecl<?>]
+		val op = ExprUtils.cast(expression.operand.toExpr, BoolType)
+		Forall(params, op)
+	}
+	
+	protected def dispatch Expr<? extends Type> toExpr(ExistsExpression expression) {
+		val params = expression.parameterDeclarations.map[transform as ParamDecl<?>]
+		val op = ExprUtils.cast(expression.operand.toExpr, BoolType)
+		Exists(params, op)
+	}
+
+	protected def dispatch Expr<? extends Type> toExpr(FunctionAccessExpression expression) {
+		checkArgument(expression.parameters.size > 0)
+		val func = expression.operand.toExpr
+		val params = expression.parameters.map[toExpr]
+		toFuncAppExpr(func, params)
+	}
+	
+	private def Expr<? extends Type> toFuncAppExpr(Expr<? extends Type> op, List<Expr<? extends Type>> params) {
+		if (params.empty) {
+			op
+		} else {
+			val func = ExprUtils.cast(op, FuncType) as Expr<? extends FuncType<Type, Type>>
+			val head = ExprUtils.cast(params.head, func.type.paramType.class)
+			val tail = params.tail.toList
+			toFuncAppExpr(App(func, head), tail)
+		}
+	}
+
 	protected def dispatch Expr<? extends Type> toExpr(ArrayAccessExpression expression) {
+		checkArgument(expression.parameters.size > 0)
+		
 		val array = ExprUtils.cast(expression.operand.toExpr, ArrayType) as Expr<ArrayType<Type, Type>>
 
 		val parameters = expression.parameters
-		if (parameters.size == 0) {
-			throw new UnsupportedOperationException
-		} else if (parameters.size == 1) {
+		if (parameters.size == 1) {
 			val parameter = expression.parameters.get(0)
 			val index = parameter.toExpr
 			Read(array, index)
