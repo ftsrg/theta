@@ -23,6 +23,7 @@ import hu.bme.mit.inf.ttmc.solver.Solver;
 import hu.bme.mit.inf.ttmc.solver.SolverStatus;
 import hu.bme.mit.inf.ttmc.solver.impl.ItpMarkerImpl;
 import hu.bme.mit.inf.ttmc.solver.impl.ItpPatternImpl;
+import hu.bme.mit.inf.ttmc.solver.z3.trasform.Z3SymbolTable;
 import hu.bme.mit.inf.ttmc.solver.z3.trasform.Z3TermTransformer;
 import hu.bme.mit.inf.ttmc.solver.z3.trasform.Z3TransformationManager;
 
@@ -38,14 +39,15 @@ public class Z3ItpSolver implements ItpSolver {
 
 	private final Collection<ItpMarkerImpl> markers;
 
-	public Z3ItpSolver(final Z3TransformationManager transformationManager, final Z3TermTransformer termTransformer,
-			final com.microsoft.z3.InterpolationContext z3Context, final com.microsoft.z3.Solver z3Solver) {
+	public Z3ItpSolver(final Z3SymbolTable symbolTable, final Z3TransformationManager transformationManager,
+			final Z3TermTransformer termTransformer, final com.microsoft.z3.InterpolationContext z3Context,
+			final com.microsoft.z3.Solver z3Solver) {
 		this.transformationManager = transformationManager;
 		this.termTransformer = termTransformer;
 		this.z3Context = z3Context;
 		this.z3Solver = z3Solver;
 
-		solver = new Z3Solver(transformationManager, termTransformer, z3Context, z3Solver);
+		solver = new Z3Solver(symbolTable, transformationManager, termTransformer, z3Context, z3Solver);
 
 		markers = new HashSet<>();
 	}

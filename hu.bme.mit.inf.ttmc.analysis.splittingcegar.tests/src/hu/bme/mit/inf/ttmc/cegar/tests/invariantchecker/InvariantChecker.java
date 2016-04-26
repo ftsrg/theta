@@ -11,7 +11,7 @@ import hu.bme.mit.inf.ttmc.solver.SolverStatus;
 public class InvariantChecker {
 	public static boolean check(final STS sts, final Expr<? extends BoolType> invariant, final SolverManager manager) {
 
-		final Solver solver = manager.getSolverFactory().createSolver(true, true);
+		final Solver solver = manager.createSolver(true, true);
 
 		solver.push();
 
