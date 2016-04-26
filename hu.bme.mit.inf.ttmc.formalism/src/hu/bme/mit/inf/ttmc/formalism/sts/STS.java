@@ -8,12 +8,13 @@ import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
+import hu.bme.mit.inf.ttmc.formalism.utils.ExprUnroller;
 import hu.bme.mit.inf.ttmc.solver.Model;
 
 /**
  * Symbolic Transition System (STS) interface.
  */
-public interface STS {
+public interface STS extends ExprUnroller {
 
 	public Collection<VarDecl<? extends Type>> getVars();
 
@@ -27,13 +28,11 @@ public interface STS {
 
 	// Unrolling methods
 
-	public Expr<? extends BoolType> unroll(final Expr<? extends BoolType> expr, final int i);
+	public Collection<? extends Expr<? extends BoolType>> unrollInit(final int i);
 
-	public Collection<Expr<? extends BoolType>> unrollInit(final int i);
+	public Collection<? extends Expr<? extends BoolType>> unrollTrans(final int i);
 
-	public Collection<Expr<? extends BoolType>> unrollTrans(final int i);
-
-	public Collection<Expr<? extends BoolType>> unrollInv(final int i);
+	public Collection<? extends Expr<? extends BoolType>> unrollInv(final int i);
 
 	public Expr<? extends BoolType> unrollProp(final int i);
 

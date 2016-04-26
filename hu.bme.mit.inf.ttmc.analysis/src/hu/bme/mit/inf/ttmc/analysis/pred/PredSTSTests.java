@@ -18,6 +18,7 @@ import org.junit.Test;
 
 import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.BasicAlgorithm;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.expr.OrExpr;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.core.type.IntType;
 import hu.bme.mit.inf.ttmc.core.type.impl.Types;
@@ -39,11 +40,11 @@ public class PredSTSTests {
 		final STS sts = createSimpleSTS();
 		System.out.println(sts);
 		final Collection<Expr<? extends BoolType>> preds = new ArrayList<>();
-		preds.add(sts.getProp());
+		preds.addAll(((OrExpr) sts.getProp()).getOps());
 		final PredSTSInitStates initStates = new PredSTSInitStates(sts, preds, solver);
 		System.out.println(initStates.get().size());
 		final PredSTSTransferRelation trel = new PredSTSTransferRelation(sts, solver);
-		final BasicAlgorithm<PredState> algorithm = new BasicAlgorithm<>(new PredDomain(solver), initStates, trel);
+		final BasicAlgorithm<PredState> algorithm = new BasicAlgorithm<>(new PredDomain(solver, sts), initStates, trel);
 		final Collection<PredState> result = algorithm.run();
 
 		System.out.println(result.size());
@@ -71,11 +72,10 @@ public class PredSTSTests {
 		builder.addInit(Eq(y.getRef(), Int(1)));
 
 		builder.addTrans(And(Geq(Prime(r.getRef()), Int(0)), Leq(Prime(r.getRef()), Int(1))));
-		builder.addTrans(Eq(Prime(x.getRef()), Ite(Eq(r.getRef(), Int(1)), Int(0), Ite(Lt(x.getRef(), y.getRef()),
-				Add(x.getRef(), Int(1)), Ite(Eq(x.getRef(), y.getRef()), Int(0), x.getRef())))));
-		builder.addTrans(Eq(Prime(y.getRef()),
-				Ite(Eq(r.getRef(), Int(1)), Int(0), Ite(And(Eq(x.getRef(), y.getRef()), Eq(y.getRef(), Int(2))),
-						Add(y.getRef(), Int(1)), Ite(Eq(x.getRef(), y.getRef()), Int(0), y.getRef())))));
+		builder.addTrans(Eq(Prime(x.getRef()), Ite(Eq(r.getRef(), Int(1)), Int(0),
+				Ite(Lt(x.getRef(), y.getRef()), Add(x.getRef(), Int(1)), Ite(Eq(x.getRef(), y.getRef()), Int(0), x.getRef())))));
+		builder.addTrans(Eq(Prime(y.getRef()), Ite(Eq(r.getRef(), Int(1)), Int(0),
+				Ite(And(Eq(x.getRef(), y.getRef()), Eq(y.getRef(), Int(2))), Add(y.getRef(), Int(1)), Ite(Eq(x.getRef(), y.getRef()), Int(0), y.getRef())))));
 
 		builder.setProp(Or(Lt(x.getRef(), y.getRef()), Eq(r.getRef(), Int(1))));
 
