@@ -14,7 +14,7 @@ import hu.bme.mit.inf.ttmc.core.utils.TypeVisitor;
 import hu.bme.mit.inf.ttmc.formalism.common.type.ProcType;
 import hu.bme.mit.inf.ttmc.formalism.common.type.visitor.ProcTypeVisitor;
 
-public class ProcTypeImpl<ReturnType extends Type> implements ProcType<ReturnType> {
+final class ProcTypeImpl<ReturnType extends Type> implements ProcType<ReturnType> {
 
 	private static final int HASH_SEED = 2069;
 
@@ -25,23 +25,23 @@ public class ProcTypeImpl<ReturnType extends Type> implements ProcType<ReturnTyp
 
 	private volatile int hashCode = 0;
 
-	public ProcTypeImpl(final List<? extends Type> paramTypes, final ReturnType returnType) {
+	ProcTypeImpl(final List<? extends Type> paramTypes, final ReturnType returnType) {
 		this.paramTypes = ImmutableList.copyOf(checkNotNull(paramTypes));
 		this.returnType = checkNotNull(returnType);
 	}
 
 	@Override
-	public final List<? extends Type> getParamTypes() {
+	public List<? extends Type> getParamTypes() {
 		return paramTypes;
 	}
 
 	@Override
-	public final ReturnType getReturnType() {
+	public ReturnType getReturnType() {
 		return returnType;
 	}
 
 	@Override
-	public final Expr<ProcType<ReturnType>> getAny() {
+	public Expr<ProcType<ReturnType>> getAny() {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
@@ -65,7 +65,7 @@ public class ProcTypeImpl<ReturnType extends Type> implements ProcType<ReturnTyp
 	}
 
 	@Override
-	public final <P, R> R accept(final TypeVisitor<? super P, ? extends R> visitor, final P param) {
+	public <P, R> R accept(final TypeVisitor<? super P, ? extends R> visitor, final P param) {
 		if (visitor instanceof ProcTypeVisitor<?, ?>) {
 			final ProcTypeVisitor<? super P, ? extends R> sVisitor = (ProcTypeVisitor<? super P, ? extends R>) visitor;
 			return sVisitor.visit(this, param);
@@ -75,7 +75,7 @@ public class ProcTypeImpl<ReturnType extends Type> implements ProcType<ReturnTyp
 	}
 
 	@Override
-	public final int hashCode() {
+	public int hashCode() {
 		int result = hashCode;
 		if (result == 0) {
 			result = HASH_SEED;
@@ -87,7 +87,20 @@ public class ProcTypeImpl<ReturnType extends Type> implements ProcType<ReturnTyp
 	}
 
 	@Override
-	public final String toString() {
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		} else if (obj instanceof ProcType<?>) {
+			final ProcType<?> that = (ProcType<?>) obj;
+			return this.getParamTypes().equals(that.getParamTypes())
+					&& this.getReturnType().equals(that.getReturnType());
+		} else {
+			return false;
+		}
+	}
+
+	@Override
+	public String toString() {
 		final StringBuilder sb = new StringBuilder();
 		final String prefix = TYPE_LABEL + "(";
 		sb.append(" -> ");

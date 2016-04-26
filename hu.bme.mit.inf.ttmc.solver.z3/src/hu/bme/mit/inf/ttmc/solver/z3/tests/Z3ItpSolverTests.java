@@ -31,7 +31,6 @@ import hu.bme.mit.inf.ttmc.solver.Interpolant;
 import hu.bme.mit.inf.ttmc.solver.ItpMarker;
 import hu.bme.mit.inf.ttmc.solver.ItpPattern;
 import hu.bme.mit.inf.ttmc.solver.ItpSolver;
-import hu.bme.mit.inf.ttmc.solver.SolverFactory;
 import hu.bme.mit.inf.ttmc.solver.SolverManager;
 import hu.bme.mit.inf.ttmc.solver.z3.Z3SolverManager;
 
@@ -50,9 +49,8 @@ public class Z3ItpSolverTests {
 	@Before
 	public void initialize() {
 		final SolverManager manager = new Z3SolverManager();
-		final SolverFactory sf = manager.getSolverFactory();
 
-		solver = sf.createItpSolver();
+		solver = manager.createItpSolver();
 
 		final ConstDecl<IntType> ad = Const("a", Int());
 		final ConstDecl<IntType> bd = Const("b", Int());

@@ -18,7 +18,8 @@ public class ExprUtils {
 	public static Collection<Expr<? extends BoolType>> getConjuncts(final Expr<? extends BoolType> expr) {
 		if (expr instanceof AndExpr) {
 			final AndExpr andExpr = (AndExpr) expr;
-			return andExpr.getOps().stream().map(e -> getConjuncts(e)).flatMap(c -> c.stream()).collect(Collectors.toSet());
+			return andExpr.getOps().stream().map(e -> getConjuncts(e)).flatMap(c -> c.stream())
+					.collect(Collectors.toSet());
 		} else {
 			return Collections.singleton(expr);
 		}
@@ -30,7 +31,7 @@ public class ExprUtils {
 			final Expr<? extends T> result = (Expr<? extends T>) expr;
 			return result;
 		} else {
-			throw new ClassCastException("Expression " + expr + " is not of type " + metaType.getName());
+			throw new ClassCastException("The type of expression " + expr + " is not of type " + metaType.getName());
 		}
 	}
 
@@ -40,10 +41,12 @@ public class ExprUtils {
 
 	@SuppressWarnings("unchecked")
 	public static Expr<? extends BoolType> eliminateITE(final Expr<? extends BoolType> expr) {
-		return (Expr<? extends BoolType>) expr.accept(new ExprITEPropagatorVisitor(new ExprITEPusherVisitor()), null).accept(new ExprITERemoverVisitor(), null);
+		return (Expr<? extends BoolType>) expr.accept(new ExprITEPropagatorVisitor(new ExprITEPusherVisitor()), null)
+				.accept(new ExprITERemoverVisitor(), null);
 	}
 
-	public static void collectAtoms(final Expr<? extends BoolType> expr, final Collection<Expr<? extends BoolType>> collectTo) {
+	public static void collectAtoms(final Expr<? extends BoolType> expr,
+			final Collection<Expr<? extends BoolType>> collectTo) {
 		expr.accept(new AtomCollectorVisitor(), collectTo);
 	}
 
