@@ -42,12 +42,9 @@ public class PredSTSTests {
 		final Collection<Expr<? extends BoolType>> preds = new ArrayList<>();
 		preds.addAll(((OrExpr) sts.getProp()).getOps());
 		final PredSTSInitStates initStates = new PredSTSInitStates(sts, preds, solver);
-		System.out.println(initStates.get().size());
 		final PredSTSTransferRelation trel = new PredSTSTransferRelation(sts, solver);
 		final BasicAlgorithm<PredState> algorithm = new BasicAlgorithm<>(new PredDomain(solver, sts), initStates, trel);
 		final Collection<PredState> result = algorithm.run();
-
-		System.out.println(result.size());
 
 		for (final PredState predState : result) {
 			System.out.println(predState);
