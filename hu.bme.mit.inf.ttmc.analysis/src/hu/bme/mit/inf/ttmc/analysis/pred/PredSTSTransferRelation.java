@@ -55,7 +55,7 @@ public class PredSTSTransferRelation implements TransferRelation<PredState> {
 					solver.pop();
 				}
 				solver.pop();
-				succStates.add(PredState.create(nextSuccPreds, solver));
+				succStates.add(PredState.create(nextSuccPreds));
 			} else {
 				break;
 			}

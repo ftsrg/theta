@@ -21,10 +21,11 @@ public class LocTests {
 		final LocInitStates<CFALoc> initStates = new LocInitStates<>(cfa);
 		final TransferRelation<LocState<CFALoc>> trel = new LocTransferRelation<>();
 
-		//final LocState<CFALoc> initState = LocState.create(cfa.getInitLoc());
+		// final LocState<CFALoc> initState = LocState.create(cfa.getInitLoc());
 		final LocState<CFALoc> finalState = LocState.create(cfa.getFinalLoc());
-		//final Collection<? extends LocState<CFALoc>> reachedSet = initStates.get();
-		final Algorithm<LocState<CFALoc>> algorithm = new BasicAlgorithm<>(initStates, trel);
+		// final Collection<? extends LocState<CFALoc>> reachedSet =
+		// initStates.get();
+		final Algorithm<LocState<CFALoc>> algorithm = new BasicAlgorithm<>(LocDomain.create(), initStates, trel);
 		final Collection<LocState<CFALoc>> result = algorithm.run();
 
 		assertTrue(result.contains(finalState));
