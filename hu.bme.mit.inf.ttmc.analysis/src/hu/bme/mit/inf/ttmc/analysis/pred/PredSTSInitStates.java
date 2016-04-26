@@ -33,7 +33,7 @@ public class PredSTSInitStates implements InitStates<PredState> {
 			solver.add(sts.unrollInit(0));
 			solver.add(sts.unrollInv(0));
 			for (final PredState existingInit : initStates)
-				solver.add(Exprs.Not(Exprs.And(existingInit.getPreds())));
+				solver.add(sts.unroll(Exprs.Not(Exprs.And(existingInit.getPreds())), 0));
 			if (solver.check().boolValue())
 				nextInitStateExpr = sts.getConcreteState(solver.getModel(), 0);
 			solver.pop();
