@@ -35,7 +35,7 @@ public class PredSTSTests {
 	@Test
 	public void exploreStates() {
 		final SolverManager manager = new Z3SolverManager();
-		final Solver solver = manager.getSolverFactory().createSolver(true, false);
+		final Solver solver = manager.createSolver(true, false);
 		final STS sts = createSimpleSTS();
 		System.out.println(sts);
 		final Collection<Expr<? extends BoolType>> preds = new ArrayList<>();
@@ -71,10 +71,11 @@ public class PredSTSTests {
 		builder.addInit(Eq(y.getRef(), Int(1)));
 
 		builder.addTrans(And(Geq(Prime(r.getRef()), Int(0)), Leq(Prime(r.getRef()), Int(1))));
-		builder.addTrans(Eq(Prime(x.getRef()), Ite(Eq(r.getRef(), Int(1)), Int(0),
-				Ite(Lt(x.getRef(), y.getRef()), Add(x.getRef(), Int(1)), Ite(Eq(x.getRef(), y.getRef()), Int(0), x.getRef())))));
-		builder.addTrans(Eq(Prime(y.getRef()), Ite(Eq(r.getRef(), Int(1)), Int(0),
-				Ite(And(Eq(x.getRef(), y.getRef()), Eq(y.getRef(), Int(2))), Add(y.getRef(), Int(1)), Ite(Eq(x.getRef(), y.getRef()), Int(0), y.getRef())))));
+		builder.addTrans(Eq(Prime(x.getRef()), Ite(Eq(r.getRef(), Int(1)), Int(0), Ite(Lt(x.getRef(), y.getRef()),
+				Add(x.getRef(), Int(1)), Ite(Eq(x.getRef(), y.getRef()), Int(0), x.getRef())))));
+		builder.addTrans(Eq(Prime(y.getRef()),
+				Ite(Eq(r.getRef(), Int(1)), Int(0), Ite(And(Eq(x.getRef(), y.getRef()), Eq(y.getRef(), Int(2))),
+						Add(y.getRef(), Int(1)), Ite(Eq(x.getRef(), y.getRef()), Int(0), y.getRef())))));
 
 		builder.setProp(Or(Lt(x.getRef(), y.getRef()), Eq(r.getRef(), Int(1))));
 
