@@ -1,5 +1,5 @@
 
-package hu.bme.mit.inf.ttmc.solver;
+package hu.bme.mit.inf.ttmc.core;
 
 import java.util.Collection;
 import java.util.Optional;

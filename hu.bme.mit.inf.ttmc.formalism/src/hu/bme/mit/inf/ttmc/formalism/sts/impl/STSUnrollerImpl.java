@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import hu.bme.mit.inf.ttmc.core.Model;
 import hu.bme.mit.inf.ttmc.core.expr.AndExpr;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.expr.impl.Exprs;
@@ -16,7 +17,6 @@ import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 import hu.bme.mit.inf.ttmc.formalism.utils.impl.FoldVisitor;
 import hu.bme.mit.inf.ttmc.formalism.utils.impl.UnfoldVisitor;
 import hu.bme.mit.inf.ttmc.formalism.utils.impl.VarMap;
-import hu.bme.mit.inf.ttmc.solver.Model;
 
 class STSUnrollerImpl {
 	private final STS sts;
