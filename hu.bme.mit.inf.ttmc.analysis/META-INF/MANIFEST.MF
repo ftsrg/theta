@@ -9,4 +9,5 @@ Require-Bundle: com.google.guava,
  hu.bme.mit.inf.ttmc.common,
  hu.bme.mit.inf.ttmc.core,
  hu.bme.mit.inf.ttmc.formalism,
- hu.bme.mit.inf.ttmc.solver
+ hu.bme.mit.inf.ttmc.solver,
+ hu.bme.mit.inf.ttmc.solver.z3

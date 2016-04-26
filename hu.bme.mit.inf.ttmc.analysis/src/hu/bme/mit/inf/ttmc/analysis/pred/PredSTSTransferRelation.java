@@ -36,7 +36,7 @@ public class PredSTSTransferRelation implements TransferRelation<PredState> {
 			solver.add(sts.unrollInv(1));
 			solver.add(sts.unrollTrans(0));
 			for (final PredState existingSucc : succStates)
-				solver.add(Exprs.Not(Exprs.And(existingSucc.getPreds())));
+				solver.add(sts.unroll(Exprs.Not(Exprs.And(existingSucc.getPreds())), 0));
 			if (solver.check().boolValue())
 				nextSuccExpr = sts.getConcreteState(solver.getModel(), 0);
 			solver.pop();
