@@ -207,17 +207,22 @@ public final class STSImpl implements STS {
 	}
 
 	@Override
-	public Collection<Expr<? extends BoolType>> unrollInit(final int i) {
+	public Collection<? extends Expr<? extends BoolType>> unroll(final Collection<? extends Expr<? extends BoolType>> exprs, final int i) {
+		return unroller.unroll(exprs, i);
+	}
+
+	@Override
+	public Collection<? extends Expr<? extends BoolType>> unrollInit(final int i) {
 		return unroller.init(i);
 	}
 
 	@Override
-	public Collection<Expr<? extends BoolType>> unrollTrans(final int i) {
+	public Collection<? extends Expr<? extends BoolType>> unrollTrans(final int i) {
 		return unroller.trans(i);
 	}
 
 	@Override
-	public Collection<Expr<? extends BoolType>> unrollInv(final int i) {
+	public Collection<? extends Expr<? extends BoolType>> unrollInv(final int i) {
 		return unroller.inv(i);
 	}
 
