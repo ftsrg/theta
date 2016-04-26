@@ -4,17 +4,21 @@ import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Deque;
 
+import hu.bme.mit.inf.ttmc.analysis.Domain;
 import hu.bme.mit.inf.ttmc.analysis.InitStates;
 import hu.bme.mit.inf.ttmc.analysis.State;
 import hu.bme.mit.inf.ttmc.analysis.TransferRelation;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.Algorithm;
 
-public class BasicAlgorithm<S extends State<S>> implements Algorithm<S> {
+public class BasicAlgorithm<S extends State> implements Algorithm<S> {
 
-	final InitStates<S> initStates;
-	final TransferRelation<S> transferRelation;
+	private final Domain<S> domain;
+	private final InitStates<S> initStates;
+	private final TransferRelation<S> transferRelation;
 
-	public BasicAlgorithm(final InitStates<S> initStates, final TransferRelation<S> transferRelation) {
+	public BasicAlgorithm(final Domain<S> domain, final InitStates<S> initStates,
+			final TransferRelation<S> transferRelation) {
+		this.domain = domain;
 		this.initStates = initStates;
 		this.transferRelation = transferRelation;
 	}
@@ -40,7 +44,7 @@ public class BasicAlgorithm<S extends State<S>> implements Algorithm<S> {
 	}
 
 	private boolean isCovered(final S state, final Collection<? extends S> reached) {
-		return reached.stream().anyMatch(s -> state.isLeq(s));
+		return reached.stream().anyMatch(s -> domain.isLeq(state, s));
 	}
 
 }

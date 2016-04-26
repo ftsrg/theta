@@ -1,6 +1,6 @@
 package hu.bme.mit.inf.ttmc.analysis;
 
-public interface Domain<S extends State<S>> {
+public interface Domain<S extends State> {
 
 	public S join(S state1, S state2);
 

@@ -5,7 +5,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import hu.bme.mit.inf.ttmc.analysis.State;
 import hu.bme.mit.inf.ttmc.formalism.common.Loc;
 
-public final class LocState<L extends Loc<L, ?>> implements State<LocState<L>> {
+public final class LocState<L extends Loc<L, ?>> implements State {
 
 	private static final int HASH_SEED = 8191;
 
@@ -23,16 +23,6 @@ public final class LocState<L extends Loc<L, ?>> implements State<LocState<L>> {
 
 	public L getLoc() {
 		return loc;
-	}
-
-	@Override
-	public LocState<L> join(final LocState<L> state) {
-		throw new UnsupportedOperationException("join not supported for location states");
-	}
-
-	@Override
-	public boolean isLeq(final LocState<L> state) {
-		return equals(state);
 	}
 
 	@Override

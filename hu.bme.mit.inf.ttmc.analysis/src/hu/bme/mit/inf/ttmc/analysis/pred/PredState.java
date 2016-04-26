@@ -10,46 +10,26 @@ import java.util.StringJoiner;
 
 import hu.bme.mit.inf.ttmc.analysis.State;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
-import hu.bme.mit.inf.ttmc.core.expr.impl.Exprs;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
-import hu.bme.mit.inf.ttmc.solver.Solver;
 
-public class PredState implements State<PredState> {
+public class PredState implements State {
 
 	private static final int HASH_SEED = 7621;
 
-	private final Solver solver;
 	private final Set<Expr<? extends BoolType>> preds;
 
 	private volatile int hashCode;
 
-	private PredState(final Collection<Expr<? extends BoolType>> preds, final Solver solver) {
-		this.solver = checkNotNull(solver);
+	private PredState(final Collection<Expr<? extends BoolType>> preds) {
 		this.preds = new HashSet<>(checkNotNull(preds));
 	}
 
-	public static PredState create(final Collection<Expr<? extends BoolType>> preds, final Solver solver) {
-		return new PredState(preds, solver);
+	public static PredState create(final Collection<Expr<? extends BoolType>> preds) {
+		return new PredState(preds);
 	}
 
 	public Collection<Expr<? extends BoolType>> getPreds() {
 		return Collections.unmodifiableCollection(preds);
-	}
-
-	@Override
-	public PredState join(final PredState state) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO");
-	}
-
-	@Override
-	public boolean isLeq(final PredState state) {
-		solver.push();
-		solver.add(preds);
-		solver.add(Exprs.Not(Exprs.And(state.getPreds())));
-		final boolean result = !solver.check().boolValue();
-		solver.pop();
-		return result;
 	}
 
 	@Override

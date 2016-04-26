@@ -18,7 +18,8 @@ public class PredSTSInitStates implements InitStates<PredState> {
 	private final STS sts;
 	private final Set<Expr<? extends BoolType>> preds;
 
-	public PredSTSInitStates(final STS sts, final Collection<? extends Expr<? extends BoolType>> preds, final Solver solver) {
+	public PredSTSInitStates(final STS sts, final Collection<? extends Expr<? extends BoolType>> preds,
+			final Solver solver) {
 		this.sts = sts;
 		this.solver = solver;
 		this.preds = new HashSet<>(preds);
@@ -52,7 +53,7 @@ public class PredSTSInitStates implements InitStates<PredState> {
 					solver.pop();
 				}
 				solver.pop();
-				initStates.add(PredState.create(nextInitStatePreds, solver));
+				initStates.add(PredState.create(nextInitStatePreds));
 			} else {
 				break;
 			}
