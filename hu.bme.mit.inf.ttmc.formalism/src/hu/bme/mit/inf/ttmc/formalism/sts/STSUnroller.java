@@ -3,9 +3,9 @@ package hu.bme.mit.inf.ttmc.formalism.sts;
 import java.util.Collection;
 import java.util.List;
 
-import hu.bme.mit.inf.ttmc.core.Model;
 import hu.bme.mit.inf.ttmc.core.expr.AndExpr;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.model.Model;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;

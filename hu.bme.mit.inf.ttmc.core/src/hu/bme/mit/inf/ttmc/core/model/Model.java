@@ -1,5 +1,5 @@
 
-package hu.bme.mit.inf.ttmc.core;
+package hu.bme.mit.inf.ttmc.core.model;
 
 import java.util.Collection;
 import java.util.Optional;

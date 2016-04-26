@@ -13,8 +13,8 @@ import com.microsoft.z3.Status;
 
 import hu.bme.mit.inf.ttmc.common.Stack;
 import hu.bme.mit.inf.ttmc.common.impl.StackImpl;
-import hu.bme.mit.inf.ttmc.core.Model;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.model.Model;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.solver.Solver;
 import hu.bme.mit.inf.ttmc.solver.SolverStatus;

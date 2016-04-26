@@ -2,8 +2,8 @@ package hu.bme.mit.inf.ttmc.solver;
 
 import java.util.Collection;
 
-import hu.bme.mit.inf.ttmc.core.Model;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.model.Model;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
 
 public interface Solver {

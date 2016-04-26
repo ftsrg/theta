@@ -11,9 +11,9 @@ import java.util.StringJoiner;
 import com.google.common.collect.ImmutableList;
 import com.microsoft.z3.FuncDecl;
 
-import hu.bme.mit.inf.ttmc.core.Model;
 import hu.bme.mit.inf.ttmc.core.decl.ConstDecl;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.model.Model;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.solver.z3.trasform.Z3SymbolTable;
