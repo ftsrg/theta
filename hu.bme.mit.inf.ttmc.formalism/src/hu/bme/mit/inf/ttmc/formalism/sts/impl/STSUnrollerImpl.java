@@ -5,10 +5,10 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import hu.bme.mit.inf.ttmc.core.Model;
 import hu.bme.mit.inf.ttmc.core.expr.AndExpr;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.expr.impl.Exprs;
+import hu.bme.mit.inf.ttmc.core.model.Model;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.core.utils.impl.ExprUtils;
