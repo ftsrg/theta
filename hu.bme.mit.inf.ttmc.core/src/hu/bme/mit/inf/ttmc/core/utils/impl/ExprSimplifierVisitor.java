@@ -220,7 +220,29 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 		final Expr<? extends RatType> leftOp = ExprUtils.cast(expr.getLeftOp().accept(this, param), RatType.class);
 		final Expr<? extends RatType> rightOp = ExprUtils.cast(expr.getRightOp().accept(this, param), RatType.class);
 
-		// TODO
+		if (leftOp.equals(rightOp))
+			return Exprs.False();
+
+		if ((leftOp instanceof RatLitExpr || leftOp instanceof IntLitExpr) && (rightOp instanceof RatLitExpr || rightOp instanceof IntLitExpr)) {
+			long leftNum = 0, leftDenom = 1, rightNum = 0, rightDenom = 1;
+			if (leftOp instanceof IntLitExpr) {
+				leftNum = ((IntLitExpr) leftOp).getValue();
+			} else {
+				leftNum = ((RatLitExpr) leftOp).getNum();
+				leftDenom = ((RatLitExpr) leftOp).getDenom();
+			}
+			if (rightOp instanceof IntLitExpr) {
+				rightNum = ((IntLitExpr) rightOp).getValue();
+			} else {
+				rightNum = ((RatLitExpr) rightOp).getNum();
+				rightDenom = ((RatLitExpr) rightOp).getDenom();
+			}
+
+			assert (leftDenom > 0);
+			assert (rightDenom > 0);
+
+			return Exprs.Bool(leftNum * rightDenom > rightNum * leftDenom);
+		}
 
 		return Exprs.Gt(leftOp, rightOp);
 	}
@@ -230,7 +252,29 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 		final Expr<? extends RatType> leftOp = ExprUtils.cast(expr.getLeftOp().accept(this, param), RatType.class);
 		final Expr<? extends RatType> rightOp = ExprUtils.cast(expr.getRightOp().accept(this, param), RatType.class);
 
-		// TODO
+		if (leftOp.equals(rightOp))
+			return Exprs.True();
+
+		if ((leftOp instanceof RatLitExpr || leftOp instanceof IntLitExpr) && (rightOp instanceof RatLitExpr || rightOp instanceof IntLitExpr)) {
+			long leftNum = 0, leftDenom = 1, rightNum = 0, rightDenom = 1;
+			if (leftOp instanceof IntLitExpr) {
+				leftNum = ((IntLitExpr) leftOp).getValue();
+			} else {
+				leftNum = ((RatLitExpr) leftOp).getNum();
+				leftDenom = ((RatLitExpr) leftOp).getDenom();
+			}
+			if (rightOp instanceof IntLitExpr) {
+				rightNum = ((IntLitExpr) rightOp).getValue();
+			} else {
+				rightNum = ((RatLitExpr) rightOp).getNum();
+				rightDenom = ((RatLitExpr) rightOp).getDenom();
+			}
+
+			assert (leftDenom > 0);
+			assert (rightDenom > 0);
+
+			return Exprs.Bool(leftNum * rightDenom <= rightNum * leftDenom);
+		}
 
 		return Exprs.Leq(leftOp, rightOp);
 	}
@@ -240,9 +284,31 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 		final Expr<? extends RatType> leftOp = ExprUtils.cast(expr.getLeftOp().accept(this, param), RatType.class);
 		final Expr<? extends RatType> rightOp = ExprUtils.cast(expr.getRightOp().accept(this, param), RatType.class);
 
-		// TODO
+		if (leftOp.equals(rightOp))
+			return Exprs.False();
 
-		return Exprs.Geq(leftOp, rightOp);
+		if ((leftOp instanceof RatLitExpr || leftOp instanceof IntLitExpr) && (rightOp instanceof RatLitExpr || rightOp instanceof IntLitExpr)) {
+			long leftNum = 0, leftDenom = 1, rightNum = 0, rightDenom = 1;
+			if (leftOp instanceof IntLitExpr) {
+				leftNum = ((IntLitExpr) leftOp).getValue();
+			} else {
+				leftNum = ((RatLitExpr) leftOp).getNum();
+				leftDenom = ((RatLitExpr) leftOp).getDenom();
+			}
+			if (rightOp instanceof IntLitExpr) {
+				rightNum = ((IntLitExpr) rightOp).getValue();
+			} else {
+				rightNum = ((RatLitExpr) rightOp).getNum();
+				rightDenom = ((RatLitExpr) rightOp).getDenom();
+			}
+
+			assert (leftDenom > 0);
+			assert (rightDenom > 0);
+
+			return Exprs.Bool(leftNum * rightDenom < rightNum * leftDenom);
+		}
+
+		return Exprs.Lt(leftOp, rightOp);
 	}
 
 	@Override
@@ -258,7 +324,9 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 		if (leftOp instanceof IntLitExpr && rightOp instanceof IntLitExpr) {
 			final long leftInt = ((IntLitExpr) leftOp).getValue();
 			final long rightInt = ((IntLitExpr) rightOp).getValue();
-			assert (rightInt != 0);
+			if (rightInt == 0) {
+				throw new ArithmeticException("Division by zero");
+			}
 			return Exprs.Int(leftInt / rightInt);
 		}
 
@@ -273,29 +341,44 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 
 	@Override
 	public Expr<? extends Type> visit(final RemExpr expr, final Model param) {
-		final Expr<? extends IntType> leftOp = ExprUtils.cast(expr.getLeftOp().accept(this, param), IntType.class);
-		final Expr<? extends IntType> rightOp = ExprUtils.cast(expr.getRightOp().accept(this, param), IntType.class);
-
-		// TODO
-
-		return Exprs.Rem(leftOp, rightOp);
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("TODO");
+		/*
+		 * final Expr<? extends IntType> leftOp =
+		 * ExprUtils.cast(expr.getLeftOp().accept(this, param), IntType.class);
+		 * final Expr<? extends IntType> rightOp =
+		 * ExprUtils.cast(expr.getRightOp().accept(this, param), IntType.class);
+		 *
+		 * if (leftOp instanceof IntLitExpr && rightOp instanceof IntLitExpr) {
+		 * final long leftInt = ((IntLitExpr) leftOp).getValue(); final long
+		 * rightInt = ((IntLitExpr) rightOp).getValue(); return
+		 * Exprs.Int(leftInt % rightInt); }
+		 *
+		 * if (leftOp.equals(rightOp)) return Exprs.Int(0);
+		 *
+		 * return Exprs.Rem(leftOp, rightOp);
+		 */
 	}
 
 	@Override
 	public Expr<? extends Type> visit(final ModExpr expr, final Model param) {
-		final Expr<? extends IntType> leftOp = ExprUtils.cast(expr.getLeftOp().accept(this, param), IntType.class);
-		final Expr<? extends IntType> rightOp = ExprUtils.cast(expr.getRightOp().accept(this, param), IntType.class);
-
-		if (leftOp instanceof IntLitExpr && rightOp instanceof IntLitExpr) {
-			final IntLitExpr leftLit = (IntLitExpr) leftOp;
-			final IntLitExpr rightLit = (IntLitExpr) rightOp;
-			return Exprs.Int(leftLit.getValue() % rightLit.getValue());
-		}
-
-		if (leftOp.equals(rightOp))
-			return Exprs.Int(0);
-
-		return Exprs.IntDiv(leftOp, rightOp);
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("TODO");
+		/*
+		 * final Expr<? extends IntType> leftOp =
+		 * ExprUtils.cast(expr.getLeftOp().accept(this, param), IntType.class);
+		 * final Expr<? extends IntType> rightOp =
+		 * ExprUtils.cast(expr.getRightOp().accept(this, param), IntType.class);
+		 *
+		 * if (leftOp instanceof IntLitExpr && rightOp instanceof IntLitExpr) {
+		 * final long leftInt = ((IntLitExpr) leftOp).getValue(); final long
+		 * rightInt = ((IntLitExpr) rightOp).getValue(); return
+		 * Exprs.Int(Math.floorMod(leftInt, rightInt)); }
+		 *
+		 * if (leftOp.equals(rightOp)) return Exprs.Int(0);
+		 *
+		 * return Exprs.IntDiv(leftOp, rightOp);
+		 */
 	}
 
 	@Override
@@ -325,7 +408,23 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 		final Expr<? extends RatType> leftOp = ExprUtils.cast(expr.getLeftOp().accept(this, param), RatType.class);
 		final Expr<? extends RatType> rightOp = ExprUtils.cast(expr.getRightOp().accept(this, param), RatType.class);
 
-		// TODO
+		if ((leftOp instanceof RatLitExpr || leftOp instanceof IntLitExpr) && (rightOp instanceof RatLitExpr || rightOp instanceof IntLitExpr)) {
+			long leftNum = 0, leftDenom = 1, rightNum = 0, rightDenom = 1;
+			if (leftOp instanceof IntLitExpr) {
+				leftNum = ((IntLitExpr) leftOp).getValue();
+			} else {
+				leftNum = ((RatLitExpr) leftOp).getNum();
+				leftDenom = ((RatLitExpr) leftOp).getDenom();
+			}
+			if (rightOp instanceof IntLitExpr) {
+				rightNum = ((IntLitExpr) rightOp).getValue();
+			} else {
+				rightNum = ((RatLitExpr) rightOp).getNum();
+				rightDenom = ((RatLitExpr) rightOp).getDenom();
+			}
+
+			return Exprs.Rat(leftNum * rightDenom, leftDenom * rightNum);
+		}
 
 		return Exprs.RatDiv(leftOp, rightOp);
 	}
