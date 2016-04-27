@@ -10,10 +10,12 @@ import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Imply;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Int;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Leq;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Lt;
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Neg;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Not;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Or;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Rat;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.RatDiv;
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Sub;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.True;
 
 import org.junit.Assert;
@@ -32,7 +34,7 @@ public class ExprSimplifierTests {
 
 	private final ExprSimplifierVisitor visitor = new ExprSimplifierVisitor();
 	private final ConstDecl<BoolType> cx = Decls.Const("x", Types.Bool());
-	private final ConstDecl<BoolType> cy = Decls.Const("y", Types.Bool());
+	//private final ConstDecl<BoolType> cy = Decls.Const("y", Types.Bool());
 	private final ConstDecl<IntType> ca = Decls.Const("a", Types.Int());
 	//private final ConstDecl<IntType> cb = Decls.Const("b", Types.Int());
 	//private final ConstDecl<IntType> cc = Decls.Const("c", Types.Int());
@@ -50,7 +52,7 @@ public class ExprSimplifierTests {
 				Not(And(False(), True())).accept(visitor, model));
 		Assert.assertEquals(
 				True(),
-				Imply(False(), True()).accept(visitor, model));
+				Imply(False(), cx.getRef()).accept(visitor, model));
 		Assert.assertEquals(
 				cx.getRef(),
 				And(True(), cx.getRef(), True()).accept(visitor, model));
@@ -59,7 +61,7 @@ public class ExprSimplifierTests {
 				Or(False(), cx.getRef(), False()).accept(visitor, model));
 		Assert.assertEquals(
 				True(),
-				Iff(And(cx.getRef(), cy.getRef()), And(cy.getRef(), cx.getRef())).accept(visitor, model));
+				Iff(False(), False()).accept(visitor, model));
 		//@formatter:on
 	}
 
@@ -169,6 +171,32 @@ public class ExprSimplifierTests {
 		Assert.assertEquals( // a/a != 1 because 'a' can be zero
 				RatDiv(ca.getRef(), ca.getRef()),
 				RatDiv(ca.getRef(), ca.getRef()).accept(visitor, model));
+
+		Assert.assertEquals(
+				Rat(1, 2),
+				Neg(Neg(Neg(Neg(Rat(1, 2))))).accept(visitor, model));
+		Assert.assertEquals(
+				Rat(-1, 2),
+				Neg(Neg(Neg(Neg(Neg(Rat(1, 2)))))).accept(visitor, model));
+		Assert.assertEquals(
+				Int(182),
+				Neg(Neg(Neg(Neg(Int(182))))).accept(visitor, model));
+		Assert.assertEquals(
+				Int(-182),
+				Neg(Neg(Neg(Neg(Neg(Int(182)))))).accept(visitor, model));
+
+		Assert.assertEquals(
+				Int(-1),
+				Sub(Int(7), Int(8)).accept(visitor, model));
+		Assert.assertEquals(
+				Rat(1, 4),
+				Sub(Rat(3, 4), Rat(1, 2)).accept(visitor, model));
+		Assert.assertEquals(
+				Rat(-1, 4),
+				Sub(Rat(3, 4), Int(1)).accept(visitor, model));
+		Assert.assertEquals(
+				Int(0),
+				Sub(ca.getRef(), ca.getRef()).accept(visitor, model));
 		//@formatter:on
 	}
 }
