@@ -1,5 +1,6 @@
 package hu.bme.mit.inf.ttmc.core.tests;
 
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Add;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.And;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Eq;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.False;
@@ -9,6 +10,7 @@ import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Iff;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Imply;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Int;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.IntDiv;
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Ite;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Leq;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Lt;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Mul;
@@ -36,10 +38,8 @@ public class ExprSimplifierTests {
 
 	private final ExprSimplifierVisitor visitor = new ExprSimplifierVisitor();
 	private final ConstDecl<BoolType> cx = Decls.Const("x", Types.Bool());
-	private final ConstDecl<BoolType> cy = Decls.Const("y", Types.Bool());
 	private final ConstDecl<IntType> ca = Decls.Const("a", Types.Int());
 	private final ConstDecl<IntType> cb = Decls.Const("b", Types.Int());
-	private final ConstDecl<IntType> cc = Decls.Const("c", Types.Int());
 
 	@Test
 	public void testNot() {
@@ -259,7 +259,7 @@ public class ExprSimplifierTests {
 				Int(1),
 				IntDiv(Int(3), Int(2)).accept(visitor, model));
 		Assert.assertEquals(
-				Int(0),
+				IntDiv(Int(0), ca.getRef()),
 				IntDiv(Int(0), ca.getRef()).accept(visitor, model));
 		//@formatter:on
 	}
@@ -282,8 +282,8 @@ public class ExprSimplifierTests {
 				Rat(1, 2),
 				RatDiv(Int(2), Int(4)).accept(visitor, model));
 		Assert.assertEquals(
-				RatDiv(ca.getRef(), ca.getRef()),
-				RatDiv(ca.getRef(), ca.getRef()).accept(visitor, model));
+				RatDiv(Int(0), ca.getRef()),
+				RatDiv(Int(0), ca.getRef()).accept(visitor, model));
 		//@formatter:on
 	}
 
@@ -328,6 +328,29 @@ public class ExprSimplifierTests {
 	}
 
 	@Test
+	public void testAdd() {
+		final Model model = new EmptyModel();
+
+		//@formatter:off
+		Assert.assertEquals(
+				Int(6),
+				Add(Int(1), Int(2), Int(3)).accept(visitor, model));
+		Assert.assertEquals(
+				Int(0),
+				Add(Int(1), Int(2), Int(-3)).accept(visitor, model));
+		Assert.assertEquals(
+				Rat(7, 12),
+				Add(Rat(1, 3), Rat(1, 4)).accept(visitor, model));
+		Assert.assertEquals(
+				Add(ca.getRef(), Int(4)),
+				Add(Int(1), ca.getRef(), Int(3)).accept(visitor, model));
+		Assert.assertEquals(
+				ca.getRef(),
+				Add(Int(-3), ca.getRef(), Int(3)).accept(visitor, model));
+		//@formatter:on
+	}
+
+	@Test
 	public void testMul() {
 		final Model model = new EmptyModel();
 
@@ -350,6 +373,23 @@ public class ExprSimplifierTests {
 		Assert.assertEquals(
 				Rat(3, 4),
 				Mul(Rat(3, 2), Int(1), Rat(1, 2)).accept(visitor, model));
+		//@formatter:on
+	}
+
+	@Test
+	public void testIte() {
+		final Model model = new EmptyModel();
+
+		//@formatter:off
+		Assert.assertEquals(
+				ca.getRef(),
+				Ite(True(), ca.getRef(), cb.getRef()).accept(visitor, model));
+		Assert.assertEquals(
+				cb.getRef(),
+				Ite(False(), ca.getRef(), cb.getRef()).accept(visitor, model));
+		Assert.assertEquals(
+				ca.getRef(),
+				Ite(True(), Ite(True(), Ite(True(), ca.getRef(), cb.getRef()), cb.getRef()), cb.getRef()).accept(visitor, model));
 		//@formatter:on
 	}
 
