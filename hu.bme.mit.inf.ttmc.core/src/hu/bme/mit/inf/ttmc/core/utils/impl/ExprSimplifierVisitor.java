@@ -206,6 +206,9 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 				rightDenom = ((RatLitExpr) rightOp).getDenom();
 			}
 
+			assert (leftDenom > 0);
+			assert (rightDenom > 0);
+
 			return Exprs.Bool(leftNum * rightDenom >= rightNum * leftDenom);
 		}
 
@@ -255,6 +258,7 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 		if (leftOp instanceof IntLitExpr && rightOp instanceof IntLitExpr) {
 			final long leftInt = ((IntLitExpr) leftOp).getValue();
 			final long rightInt = ((IntLitExpr) rightOp).getValue();
+			assert (rightInt != 0);
 			return Exprs.Int(leftInt / rightInt);
 		}
 
@@ -296,18 +300,22 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 
 	@Override
 	public Expr<? extends Type> visit(final RatLitExpr expr, final Model param) {
-		if (expr.getNum() == 0)
-			return Exprs.Int(0);
+
 		long denom = expr.getDenom();
 		long num = expr.getNum();
 
 		if (denom < 0) {
 			denom *= -1;
 			num *= -1;
+		} else if (denom == 0) {
+			throw new ArithmeticException("Division by zero");
 		}
 
-		if (num % denom == 0)
+		if (num == 0) {
+			return Exprs.Int(0);
+		} else if (num % denom == 0) {
 			return Exprs.Int(num / denom);
+		}
 
 		return Exprs.Rat(num, denom);
 	}
@@ -324,8 +332,18 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 
 	@Override
 	public <ExprType extends ClosedUnderNeg> Expr<? extends Type> visit(final NegExpr<ExprType> expr, final Model param) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO");
+		final Expr<? extends ClosedUnderNeg> op = ExprUtils.cast(expr.getOp().accept(this, param), ClosedUnderNeg.class);
+
+		if (op instanceof IntLitExpr) {
+			return Exprs.Int(((IntLitExpr) op).getValue() * -1);
+		} else if (op instanceof RatLitExpr) {
+			final RatLitExpr opLit = ((RatLitExpr) op);
+			return Exprs.Rat(opLit.getNum() * -1, opLit.getDenom());
+		} else if (op instanceof NegExpr) {
+			return ((NegExpr<? extends ClosedUnderNeg>) op).getOp();
+		}
+
+		return Exprs.Neg(op);
 	}
 
 	@Override
