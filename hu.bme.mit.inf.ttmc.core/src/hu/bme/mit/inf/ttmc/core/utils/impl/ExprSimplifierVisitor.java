@@ -400,17 +400,14 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 		final Expr<? extends IntType> leftOp = ExprUtils.cast(expr.getLeftOp().accept(this, param), IntType.class);
 		final Expr<? extends IntType> rightOp = ExprUtils.cast(expr.getRightOp().accept(this, param), IntType.class);
 
+		if (rightOp instanceof IntLitExpr && ((IntLitExpr) rightOp).getValue() == 0) {
+			throw new ArithmeticException("Division by zero");
+		}
+
 		if (leftOp instanceof IntLitExpr && rightOp instanceof IntLitExpr) {
 			final long leftInt = ((IntLitExpr) leftOp).getValue();
 			final long rightInt = ((IntLitExpr) rightOp).getValue();
-			if (rightInt == 0) {
-				throw new ArithmeticException("Division by zero");
-			}
 			return Int(leftInt / rightInt);
-		}
-
-		if (leftOp instanceof IntLitExpr && leftOp.equals(Int(0))) {
-			return Int(0);
 		}
 
 		return IntDiv(leftOp, rightOp);
@@ -431,8 +428,6 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 		 * rightInt = ((IntLitExpr) rightOp).getValue(); return Int(leftInt %
 		 * rightInt); }
 		 *
-		 * if (leftOp.equals(rightOp)) return Int(0);
-		 *
 		 * return Rem(leftOp, rightOp);
 		 */
 	}
@@ -451,8 +446,6 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 		 * final long leftInt = ((IntLitExpr) leftOp).getValue(); final long
 		 * rightInt = ((IntLitExpr) rightOp).getValue(); return
 		 * Int(Math.floorMod(leftInt, rightInt)); }
-		 *
-		 * if (leftOp.equals(rightOp)) return Int(0);
 		 *
 		 * return IntDiv(leftOp, rightOp);
 		 */
@@ -484,6 +477,10 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 	public Expr<? extends Type> visit(final RatDivExpr expr, final Model param) {
 		final Expr<? extends RatType> leftOp = ExprUtils.cast(expr.getLeftOp().accept(this, param), RatType.class);
 		final Expr<? extends RatType> rightOp = ExprUtils.cast(expr.getRightOp().accept(this, param), RatType.class);
+
+		if (rightOp instanceof IntLitExpr && ((IntLitExpr) rightOp).getValue() == 0) {
+			throw new ArithmeticException("Division by zero");
+		}
 
 		if ((leftOp instanceof RatLitExpr || leftOp instanceof IntLitExpr) && (rightOp instanceof RatLitExpr || rightOp instanceof IntLitExpr)) {
 			long leftNum = 0, leftDenom = 1, rightNum = 0, rightDenom = 1;
@@ -653,9 +650,9 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 		final Expr<? extends Type> then = expr.getThen().accept(this, param);
 		final Expr<? extends Type> elze = expr.getElse().accept(this, param);
 
-		if (cond.equals(True())) {
+		if (cond instanceof TrueExpr) {
 			return then;
-		} else if (cond.equals(False())) {
+		} else if (cond instanceof FalseExpr) {
 			return elze;
 		}
 
