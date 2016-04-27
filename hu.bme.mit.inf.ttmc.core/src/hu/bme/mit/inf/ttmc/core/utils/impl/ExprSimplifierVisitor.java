@@ -1,5 +1,28 @@
 package hu.bme.mit.inf.ttmc.core.utils.impl;
 
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Add;
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.And;
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Bool;
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Eq;
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.False;
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Geq;
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Gt;
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Iff;
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Imply;
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Int;
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.IntDiv;
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Ite;
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Leq;
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Lt;
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Mul;
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Neg;
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Neq;
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Not;
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Or;
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Rat;
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.RatDiv;
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.True;
+
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -38,7 +61,6 @@ import hu.bme.mit.inf.ttmc.core.expr.RatLitExpr;
 import hu.bme.mit.inf.ttmc.core.expr.RemExpr;
 import hu.bme.mit.inf.ttmc.core.expr.SubExpr;
 import hu.bme.mit.inf.ttmc.core.expr.TrueExpr;
-import hu.bme.mit.inf.ttmc.core.expr.impl.Exprs;
 import hu.bme.mit.inf.ttmc.core.model.Model;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.core.type.IntType;
@@ -81,14 +103,15 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 	@Override
 	public Expr<? extends Type> visit(final NotExpr expr, final Model param) {
 		final Expr<? extends BoolType> op = ExprUtils.cast(expr.getOp().accept(this, param), BoolType.class);
-		if (op instanceof NotExpr)
+		if (op instanceof NotExpr) {
 			return ((NotExpr) op).getOp();
-		else if (op instanceof TrueExpr)
-			return Exprs.False();
-		else if (op instanceof FalseExpr)
-			return Exprs.True();
+		} else if (op instanceof TrueExpr) {
+			return False();
+		} else if (op instanceof FalseExpr) {
+			return True();
+		}
 
-		return Exprs.Not(op);
+		return Not(op);
 	}
 
 	@Override
@@ -96,15 +119,21 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 		final Expr<? extends BoolType> leftOp = ExprUtils.cast(expr.getLeftOp().accept(this, param), BoolType.class);
 		final Expr<? extends BoolType> rightOp = ExprUtils.cast(expr.getRightOp().accept(this, param), BoolType.class);
 
-		if (leftOp instanceof BoolLitExpr && leftOp.equals(Exprs.False())) {
-			return Exprs.True();
-		} else if (leftOp instanceof BoolLitExpr && rightOp instanceof BoolLitExpr) {
+		if (leftOp instanceof BoolLitExpr && rightOp instanceof BoolLitExpr) {
 			final boolean leftValue = ((BoolLitExpr) leftOp).getValue();
 			final boolean rightValue = ((BoolLitExpr) rightOp).getValue();
-			return Exprs.Bool(!leftValue || rightValue);
+			return Bool(!leftValue || rightValue);
 		}
 
-		return Exprs.Imply(leftOp, rightOp);
+		if (leftOp instanceof FalseExpr || rightOp instanceof TrueExpr) {
+			return True();
+		} else if (leftOp instanceof TrueExpr) {
+			return rightOp;
+		} else if (rightOp instanceof FalseExpr) {
+			return Not(leftOp).accept(this, param);
+		}
+
+		return Imply(leftOp, rightOp);
 	}
 
 	@Override
@@ -115,58 +144,70 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 		if (leftOp instanceof BoolLitExpr && rightOp instanceof BoolLitExpr) {
 			final boolean leftValue = ((BoolLitExpr) leftOp).getValue();
 			final boolean rightValue = ((BoolLitExpr) rightOp).getValue();
-			return Exprs.Bool(leftValue == rightValue);
+			return Bool(leftValue == rightValue);
 		}
 
-		return Exprs.Iff(leftOp, rightOp);
+		if (leftOp instanceof TrueExpr) {
+			return rightOp;
+		} else if (rightOp instanceof TrueExpr) {
+			return leftOp;
+		} else if (leftOp instanceof FalseExpr) {
+			return Not(rightOp).accept(this, param);
+		} else if (rightOp instanceof FalseExpr) {
+			return Not(leftOp).accept(this, param);
+		}
+
+		return Iff(leftOp, rightOp);
 	}
 
 	@Override
 	public Expr<? extends Type> visit(final AndExpr expr, final Model param) {
 		final Set<Expr<? extends BoolType>> ops = new HashSet<>();
 		for (final Expr<? extends BoolType> op : expr.getOps()) {
-			final Expr<? extends BoolType> opMapped = ExprUtils.cast(op.accept(this, param), BoolType.class);
-			if (opMapped instanceof TrueExpr) {
+			final Expr<? extends BoolType> opVisited = ExprUtils.cast(op.accept(this, param), BoolType.class);
+			if (opVisited instanceof TrueExpr) {
 				continue;
-			} else if (opMapped instanceof FalseExpr) {
-				return Exprs.False();
-			} else if (opMapped instanceof AndExpr) {
-				ops.addAll(((AndExpr) opMapped).getOps());
+			} else if (opVisited instanceof FalseExpr) {
+				return False();
+			} else if (opVisited instanceof AndExpr) {
+				ops.addAll(((AndExpr) opVisited).getOps());
 			} else {
-				ops.add(opMapped);
+				ops.add(opVisited);
 			}
 		}
 
 		if (ops.size() == 0) {
-			return Exprs.True();
+			return True();
 		} else if (ops.size() == 1) {
 			return ops.iterator().next();
 		}
-		return Exprs.And(ops);
+
+		return And(ops);
 	}
 
 	@Override
 	public Expr<? extends Type> visit(final OrExpr expr, final Model param) {
 		final Set<Expr<? extends BoolType>> ops = new HashSet<>();
 		for (final Expr<? extends BoolType> op : expr.getOps()) {
-			final Expr<? extends BoolType> opMapped = ExprUtils.cast(op.accept(this, param), BoolType.class);
-			if (opMapped instanceof FalseExpr) {
+			final Expr<? extends BoolType> opVisited = ExprUtils.cast(op.accept(this, param), BoolType.class);
+			if (opVisited instanceof FalseExpr) {
 				continue;
-			} else if (opMapped instanceof TrueExpr) {
-				return Exprs.True();
-			} else if (opMapped instanceof OrExpr) {
-				ops.addAll(((OrExpr) opMapped).getOps());
+			} else if (opVisited instanceof TrueExpr) {
+				return True();
+			} else if (opVisited instanceof OrExpr) {
+				ops.addAll(((OrExpr) opVisited).getOps());
 			} else {
-				ops.add(opMapped);
+				ops.add(opVisited);
 			}
 		}
 
 		if (ops.size() == 0) {
-			return Exprs.True();
+			return True();
 		} else if (ops.size() == 1) {
 			return ops.iterator().next();
 		}
-		return Exprs.Or(ops);
+
+		return Or(ops);
 	}
 
 	@Override
@@ -185,20 +226,32 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 	public Expr<? extends Type> visit(final EqExpr expr, final Model param) {
 		final Expr<? extends Type> leftOp = expr.getLeftOp().accept(this, param);
 		final Expr<? extends Type> rightOp = expr.getRightOp().accept(this, param);
-		if (leftOp.equals(rightOp))
-			return Exprs.True();
 
-		return Exprs.Eq(leftOp, rightOp);
+		if ((leftOp instanceof BoolLitExpr && rightOp instanceof BoolLitExpr) || (leftOp instanceof IntLitExpr && rightOp instanceof IntLitExpr)
+				|| (leftOp instanceof RatLitExpr && rightOp instanceof RatLitExpr)) {
+			return Bool(leftOp.equals(rightOp));
+		} else if (leftOp instanceof ConstRefExpr && rightOp instanceof ConstRefExpr) {
+			if (leftOp.equals(rightOp))
+				return True();
+		}
+
+		return Eq(leftOp, rightOp);
 	}
 
 	@Override
 	public Expr<? extends Type> visit(final NeqExpr expr, final Model param) {
 		final Expr<? extends Type> leftOp = expr.getLeftOp().accept(this, param);
 		final Expr<? extends Type> rightOp = expr.getRightOp().accept(this, param);
-		if (leftOp.equals(rightOp))
-			return Exprs.False();
 
-		return Exprs.Neq(leftOp, rightOp);
+		if ((leftOp instanceof BoolLitExpr && rightOp instanceof BoolLitExpr) || (leftOp instanceof IntLitExpr && rightOp instanceof IntLitExpr)
+				|| (leftOp instanceof RatLitExpr && rightOp instanceof RatLitExpr)) {
+			return Bool(!leftOp.equals(rightOp));
+		} else if (leftOp instanceof ConstRefExpr && rightOp instanceof ConstRefExpr) {
+			if (leftOp.equals(rightOp))
+				return False();
+		}
+
+		return Neq(leftOp, rightOp);
 	}
 
 	@Override
@@ -206,8 +259,10 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 		final Expr<? extends RatType> leftOp = ExprUtils.cast(expr.getLeftOp().accept(this, param), RatType.class);
 		final Expr<? extends RatType> rightOp = ExprUtils.cast(expr.getRightOp().accept(this, param), RatType.class);
 
-		if (leftOp.equals(rightOp))
-			return Exprs.True();
+		if (leftOp instanceof ConstRefExpr && rightOp instanceof ConstRefExpr) {
+			if (leftOp.equals(rightOp))
+				return True();
+		}
 
 		if ((leftOp instanceof RatLitExpr || leftOp instanceof IntLitExpr) && (rightOp instanceof RatLitExpr || rightOp instanceof IntLitExpr)) {
 			long leftNum = 0, leftDenom = 1, rightNum = 0, rightDenom = 1;
@@ -227,10 +282,10 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 			assert (leftDenom > 0);
 			assert (rightDenom > 0);
 
-			return Exprs.Bool(leftNum * rightDenom >= rightNum * leftDenom);
+			return Bool(leftNum * rightDenom >= rightNum * leftDenom);
 		}
 
-		return Exprs.Geq(leftOp, rightOp);
+		return Geq(leftOp, rightOp);
 	}
 
 	@Override
@@ -238,8 +293,10 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 		final Expr<? extends RatType> leftOp = ExprUtils.cast(expr.getLeftOp().accept(this, param), RatType.class);
 		final Expr<? extends RatType> rightOp = ExprUtils.cast(expr.getRightOp().accept(this, param), RatType.class);
 
-		if (leftOp.equals(rightOp))
-			return Exprs.False();
+		if (leftOp instanceof ConstRefExpr && rightOp instanceof ConstRefExpr) {
+			if (leftOp.equals(rightOp))
+				return False();
+		}
 
 		if ((leftOp instanceof RatLitExpr || leftOp instanceof IntLitExpr) && (rightOp instanceof RatLitExpr || rightOp instanceof IntLitExpr)) {
 			long leftNum = 0, leftDenom = 1, rightNum = 0, rightDenom = 1;
@@ -259,10 +316,10 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 			assert (leftDenom > 0);
 			assert (rightDenom > 0);
 
-			return Exprs.Bool(leftNum * rightDenom > rightNum * leftDenom);
+			return Bool(leftNum * rightDenom > rightNum * leftDenom);
 		}
 
-		return Exprs.Gt(leftOp, rightOp);
+		return Gt(leftOp, rightOp);
 	}
 
 	@Override
@@ -270,8 +327,10 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 		final Expr<? extends RatType> leftOp = ExprUtils.cast(expr.getLeftOp().accept(this, param), RatType.class);
 		final Expr<? extends RatType> rightOp = ExprUtils.cast(expr.getRightOp().accept(this, param), RatType.class);
 
-		if (leftOp.equals(rightOp))
-			return Exprs.True();
+		if (leftOp instanceof ConstRefExpr && rightOp instanceof ConstRefExpr) {
+			if (leftOp.equals(rightOp))
+				return True();
+		}
 
 		if ((leftOp instanceof RatLitExpr || leftOp instanceof IntLitExpr) && (rightOp instanceof RatLitExpr || rightOp instanceof IntLitExpr)) {
 			long leftNum = 0, leftDenom = 1, rightNum = 0, rightDenom = 1;
@@ -291,10 +350,10 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 			assert (leftDenom > 0);
 			assert (rightDenom > 0);
 
-			return Exprs.Bool(leftNum * rightDenom <= rightNum * leftDenom);
+			return Bool(leftNum * rightDenom <= rightNum * leftDenom);
 		}
 
-		return Exprs.Leq(leftOp, rightOp);
+		return Leq(leftOp, rightOp);
 	}
 
 	@Override
@@ -302,8 +361,10 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 		final Expr<? extends RatType> leftOp = ExprUtils.cast(expr.getLeftOp().accept(this, param), RatType.class);
 		final Expr<? extends RatType> rightOp = ExprUtils.cast(expr.getRightOp().accept(this, param), RatType.class);
 
-		if (leftOp.equals(rightOp))
-			return Exprs.False();
+		if (leftOp instanceof ConstRefExpr && rightOp instanceof ConstRefExpr) {
+			if (leftOp.equals(rightOp))
+				return False();
+		}
 
 		if ((leftOp instanceof RatLitExpr || leftOp instanceof IntLitExpr) && (rightOp instanceof RatLitExpr || rightOp instanceof IntLitExpr)) {
 			long leftNum = 0, leftDenom = 1, rightNum = 0, rightDenom = 1;
@@ -323,10 +384,10 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 			assert (leftDenom > 0);
 			assert (rightDenom > 0);
 
-			return Exprs.Bool(leftNum * rightDenom < rightNum * leftDenom);
+			return Bool(leftNum * rightDenom < rightNum * leftDenom);
 		}
 
-		return Exprs.Lt(leftOp, rightOp);
+		return Lt(leftOp, rightOp);
 	}
 
 	@Override
@@ -345,16 +406,14 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 			if (rightInt == 0) {
 				throw new ArithmeticException("Division by zero");
 			}
-			return Exprs.Int(leftInt / rightInt);
+			return Int(leftInt / rightInt);
 		}
 
-		if (leftOp.equals(Exprs.Int(0)))
-			return Exprs.Int(0);
+		if (leftOp instanceof IntLitExpr && leftOp.equals(Int(0))) {
+			return Int(0);
+		}
 
-		if (leftOp.equals(rightOp))
-			return Exprs.Int(1);
-
-		return Exprs.IntDiv(leftOp, rightOp);
+		return IntDiv(leftOp, rightOp);
 	}
 
 	@Override
@@ -369,12 +428,12 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 		 *
 		 * if (leftOp instanceof IntLitExpr && rightOp instanceof IntLitExpr) {
 		 * final long leftInt = ((IntLitExpr) leftOp).getValue(); final long
-		 * rightInt = ((IntLitExpr) rightOp).getValue(); return
-		 * Exprs.Int(leftInt % rightInt); }
+		 * rightInt = ((IntLitExpr) rightOp).getValue(); return Int(leftInt %
+		 * rightInt); }
 		 *
-		 * if (leftOp.equals(rightOp)) return Exprs.Int(0);
+		 * if (leftOp.equals(rightOp)) return Int(0);
 		 *
-		 * return Exprs.Rem(leftOp, rightOp);
+		 * return Rem(leftOp, rightOp);
 		 */
 	}
 
@@ -391,11 +450,11 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 		 * if (leftOp instanceof IntLitExpr && rightOp instanceof IntLitExpr) {
 		 * final long leftInt = ((IntLitExpr) leftOp).getValue(); final long
 		 * rightInt = ((IntLitExpr) rightOp).getValue(); return
-		 * Exprs.Int(Math.floorMod(leftInt, rightInt)); }
+		 * Int(Math.floorMod(leftInt, rightInt)); }
 		 *
-		 * if (leftOp.equals(rightOp)) return Exprs.Int(0);
+		 * if (leftOp.equals(rightOp)) return Int(0);
 		 *
-		 * return Exprs.IntDiv(leftOp, rightOp);
+		 * return IntDiv(leftOp, rightOp);
 		 */
 	}
 
@@ -413,12 +472,12 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 		}
 
 		if (num == 0) {
-			return Exprs.Int(0);
+			return Int(0);
 		} else if (num % denom == 0) {
-			return Exprs.Int(num / denom);
+			return Int(num / denom);
 		}
 
-		return Exprs.Rat(num, denom);
+		return Rat(num, denom);
 	}
 
 	@Override
@@ -441,10 +500,10 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 				rightDenom = ((RatLitExpr) rightOp).getDenom();
 			}
 
-			return Exprs.Rat(leftNum * rightDenom, leftDenom * rightNum);
+			return Rat(leftNum * rightDenom, leftDenom * rightNum).accept(this, param);
 		}
 
-		return Exprs.RatDiv(leftOp, rightOp);
+		return RatDiv(leftOp, rightOp);
 	}
 
 	@Override
@@ -452,15 +511,15 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 		final Expr<? extends ClosedUnderNeg> op = ExprUtils.cast(expr.getOp().accept(this, param), ClosedUnderNeg.class);
 
 		if (op instanceof IntLitExpr) {
-			return Exprs.Int(((IntLitExpr) op).getValue() * -1);
+			return Int(((IntLitExpr) op).getValue() * -1);
 		} else if (op instanceof RatLitExpr) {
 			final RatLitExpr opLit = ((RatLitExpr) op);
-			return Exprs.Rat(opLit.getNum() * -1, opLit.getDenom());
+			return Rat(opLit.getNum() * -1, opLit.getDenom());
 		} else if (op instanceof NegExpr) {
 			return ((NegExpr<? extends ClosedUnderNeg>) op).getOp();
 		}
 
-		return Exprs.Neg(op);
+		return Neg(op);
 	}
 
 	@Override
@@ -468,8 +527,10 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 		final Expr<? extends RatType> leftOp = ExprUtils.cast(expr.getLeftOp().accept(this, param), RatType.class);
 		final Expr<? extends RatType> rightOp = ExprUtils.cast(expr.getRightOp().accept(this, param), RatType.class);
 
-		if (leftOp.equals(rightOp))
-			return Exprs.Int(0);
+		if (leftOp instanceof ConstRefExpr && rightOp instanceof ConstRefExpr) {
+			if (leftOp.equals(rightOp))
+				return Int(0);
+		}
 
 		if ((leftOp instanceof RatLitExpr || leftOp instanceof IntLitExpr) && (rightOp instanceof RatLitExpr || rightOp instanceof IntLitExpr)) {
 			long leftNum = 0, leftDenom = 1, rightNum = 0, rightDenom = 1;
@@ -486,16 +547,44 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 				rightDenom = ((RatLitExpr) rightOp).getDenom();
 			}
 
-			return Exprs.Rat(leftNum * rightDenom - rightNum * leftDenom, leftDenom * rightDenom).accept(this, param);
+			return Rat(leftNum * rightDenom - rightNum * leftDenom, leftDenom * rightDenom).accept(this, param);
 		}
 
-		return Exprs.Lt(leftOp, rightOp);
+		return Lt(leftOp, rightOp);
 	}
 
 	@Override
 	public <ExprType extends ClosedUnderAdd> Expr<? extends Type> visit(final AddExpr<ExprType> expr, final Model param) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO");
+		final Set<Expr<? extends ClosedUnderAdd>> ops = new HashSet<>();
+		long num = 0;
+		long denom = 1;
+
+		for (final Expr<? extends ExprType> op : expr.getOps()) {
+			final Expr<? extends ClosedUnderAdd> opVisited = ExprUtils.cast(op.accept(this, param), ClosedUnderAdd.class);
+			if (opVisited instanceof IntLitExpr) {
+				num += denom * ((IntLitExpr) op).getValue();
+			} else if (opVisited instanceof RatLitExpr) {
+				final RatLitExpr opRatLit = (RatLitExpr) op;
+				num = num * opRatLit.getDenom() + denom * opRatLit.getNum();
+				denom *= opRatLit.getDenom();
+			} else {
+				ops.add(opVisited);
+			}
+		}
+
+		final Expr<? extends ClosedUnderAdd> sum = ExprUtils.cast(Rat(num, denom).accept(this, param), ClosedUnderAdd.class);
+
+		if (!sum.equals(Int(0))) {
+			ops.add(sum);
+		}
+
+		if (ops.size() == 0) {
+			return Int(0);
+		} else if (ops.size() == 1) {
+			return ops.iterator().next();
+		}
+
+		return Add(ops);
 	}
 
 	@Override
@@ -505,27 +594,33 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 		long denom = 1;
 
 		for (final Expr<? extends ExprType> op : expr.getOps()) {
-			final Expr<? extends ClosedUnderMul> opMapped = ExprUtils.cast(op.accept(this, param), ClosedUnderMul.class);
-			if (opMapped instanceof IntLitExpr) {
+			final Expr<? extends ClosedUnderMul> opVisited = ExprUtils.cast(op.accept(this, param), ClosedUnderMul.class);
+			if (opVisited instanceof IntLitExpr) {
 				num *= ((IntLitExpr) op).getValue();
-			} else if (opMapped instanceof RatLitExpr) {
+				if (num == 0)
+					return Int(0);
+			} else if (opVisited instanceof RatLitExpr) {
 				final RatLitExpr opRatLit = (RatLitExpr) op;
 				num *= opRatLit.getNum();
 				denom *= opRatLit.getDenom();
-			} else if (opMapped.equals(Exprs.Int(0))) {
-				return Exprs.Int(0);
 			} else {
-				ops.add(opMapped);
+				ops.add(opVisited);
 			}
 		}
 
+		final Expr<? extends ClosedUnderMul> prod = ExprUtils.cast(Rat(num, denom).accept(this, param), ClosedUnderMul.class);
+
+		if (!prod.equals(Int(1))) {
+			ops.add(prod);
+		}
+
 		if (ops.size() == 0) {
-			return Exprs.Rat(num, denom).accept(this, param);
+			return Int(1);
 		} else if (ops.size() == 1) {
 			return ops.iterator().next();
 		}
 
-		return Exprs.Mul(ops);
+		return Mul(ops);
 	}
 
 	@Override
@@ -558,13 +653,13 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 		final Expr<? extends Type> then = expr.getThen().accept(this, param);
 		final Expr<? extends Type> elze = expr.getElse().accept(this, param);
 
-		if (cond.equals(Exprs.True())) {
+		if (cond.equals(True())) {
 			return then;
-		} else if (cond.equals(Exprs.False())) {
+		} else if (cond.equals(False())) {
 			return elze;
 		}
 
-		return Exprs.Ite(cond, then, elze);
+		return Ite(cond, then, elze);
 	}
 
 }
