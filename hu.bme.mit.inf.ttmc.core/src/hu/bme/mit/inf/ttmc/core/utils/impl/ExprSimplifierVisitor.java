@@ -559,9 +559,9 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 		for (final Expr<? extends ExprType> op : expr.getOps()) {
 			final Expr<? extends ClosedUnderAdd> opVisited = ExprUtils.cast(op.accept(this, param), ClosedUnderAdd.class);
 			if (opVisited instanceof IntLitExpr) {
-				num += denom * ((IntLitExpr) op).getValue();
+				num += denom * ((IntLitExpr) opVisited).getValue();
 			} else if (opVisited instanceof RatLitExpr) {
-				final RatLitExpr opRatLit = (RatLitExpr) op;
+				final RatLitExpr opRatLit = (RatLitExpr) opVisited;
 				num = num * opRatLit.getDenom() + denom * opRatLit.getNum();
 				denom *= opRatLit.getDenom();
 			} else if (opVisited instanceof AddExpr<?>) {
@@ -595,11 +595,11 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 		for (final Expr<? extends ExprType> op : expr.getOps()) {
 			final Expr<? extends ClosedUnderMul> opVisited = ExprUtils.cast(op.accept(this, param), ClosedUnderMul.class);
 			if (opVisited instanceof IntLitExpr) {
-				num *= ((IntLitExpr) op).getValue();
+				num *= ((IntLitExpr) opVisited).getValue();
 				if (num == 0)
 					return Int(0);
 			} else if (opVisited instanceof RatLitExpr) {
-				final RatLitExpr opRatLit = (RatLitExpr) op;
+				final RatLitExpr opRatLit = (RatLitExpr) opVisited;
 				num *= opRatLit.getNum();
 				denom *= opRatLit.getDenom();
 			} else if (opVisited instanceof MulExpr<?>) {

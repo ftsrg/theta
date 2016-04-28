@@ -22,13 +22,17 @@ import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.RatDiv;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Sub;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.True;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.junit.Assert;
 import org.junit.Test;
 
 import hu.bme.mit.inf.ttmc.core.decl.ConstDecl;
 import hu.bme.mit.inf.ttmc.core.decl.impl.Decls;
+import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.model.Model;
-import hu.bme.mit.inf.ttmc.core.model.impl.EmptyModel;
+import hu.bme.mit.inf.ttmc.core.model.impl.BasicModel;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.core.type.IntType;
 import hu.bme.mit.inf.ttmc.core.type.impl.Types;
@@ -46,7 +50,7 @@ public class ExprSimplifierTests {
 
 	@Test
 	public void testNot() {
-		final Model model = new EmptyModel();
+		final Model model = new BasicModel();
 
 		//@formatter:off
 		Assert.assertEquals(
@@ -60,7 +64,7 @@ public class ExprSimplifierTests {
 
 	@Test
 	public void testAnd() {
-		final Model model = new EmptyModel();
+		final Model model = new BasicModel();
 
 		//@formatter:off
 		Assert.assertEquals(
@@ -77,7 +81,7 @@ public class ExprSimplifierTests {
 
 	@Test
 	public void testOr() {
-		final Model model = new EmptyModel();
+		final Model model = new BasicModel();
 
 		//@formatter:off
 		Assert.assertEquals(
@@ -91,7 +95,7 @@ public class ExprSimplifierTests {
 
 	@Test
 	public void testImply() {
-		final Model model = new EmptyModel();
+		final Model model = new BasicModel();
 
 		//@formatter:off
 		Assert.assertEquals(
@@ -111,7 +115,7 @@ public class ExprSimplifierTests {
 
 	@Test
 	public void testIff() {
-		final Model model = new EmptyModel();
+		final Model model = new BasicModel();
 
 		//@formatter:off
 		Assert.assertEquals(
@@ -131,7 +135,7 @@ public class ExprSimplifierTests {
 
 	@Test
 	public void testEq() {
-		final Model model = new EmptyModel();
+		final Model model = new BasicModel();
 
 		//@formatter:off
 		Assert.assertEquals(
@@ -163,7 +167,7 @@ public class ExprSimplifierTests {
 
 	@Test
 	public void testGeq() {
-		final Model model = new EmptyModel();
+		final Model model = new BasicModel();
 
 		//@formatter:off
 		Assert.assertEquals(
@@ -186,7 +190,7 @@ public class ExprSimplifierTests {
 
 	@Test
 	public void testGt() {
-		final Model model = new EmptyModel();
+		final Model model = new BasicModel();
 
 		//@formatter:off
 		Assert.assertEquals(
@@ -209,7 +213,7 @@ public class ExprSimplifierTests {
 
 	@Test
 	public void testLeq() {
-		final Model model = new EmptyModel();
+		final Model model = new BasicModel();
 
 		//@formatter:off
 		Assert.assertEquals(
@@ -232,7 +236,7 @@ public class ExprSimplifierTests {
 
 	@Test
 	public void testLt() {
-		final Model model = new EmptyModel();
+		final Model model = new BasicModel();
 
 		//@formatter:off
 		Assert.assertEquals(
@@ -255,7 +259,7 @@ public class ExprSimplifierTests {
 
 	@Test
 	public void testIntDiv() {
-		final Model model = new EmptyModel();
+		final Model model = new BasicModel();
 
 		//@formatter:off
 		Assert.assertEquals(
@@ -272,7 +276,7 @@ public class ExprSimplifierTests {
 
 	@Test
 	public void testRatDiv() {
-		final Model model = new EmptyModel();
+		final Model model = new BasicModel();
 
 		//@formatter:off
 		Assert.assertEquals(
@@ -295,7 +299,7 @@ public class ExprSimplifierTests {
 
 	@Test
 	public void testNeg() {
-		final Model model = new EmptyModel();
+		final Model model = new BasicModel();
 
 		//@formatter:off
 		Assert.assertEquals(
@@ -315,7 +319,7 @@ public class ExprSimplifierTests {
 
 	@Test
 	public void testSub() {
-		final Model model = new EmptyModel();
+		final Model model = new BasicModel();
 
 		//@formatter:off
 		Assert.assertEquals(
@@ -335,7 +339,7 @@ public class ExprSimplifierTests {
 
 	@Test
 	public void testAdd() {
-		final Model model = new EmptyModel();
+		final Model model = new BasicModel();
 
 		//@formatter:off
 		Assert.assertEquals(
@@ -361,7 +365,7 @@ public class ExprSimplifierTests {
 
 	@Test
 	public void testMul() {
-		final Model model = new EmptyModel();
+		final Model model = new BasicModel();
 
 		//@formatter:off
 		Assert.assertEquals(
@@ -390,7 +394,7 @@ public class ExprSimplifierTests {
 
 	@Test
 	public void testIte() {
-		final Model model = new EmptyModel();
+		final Model model = new BasicModel();
 
 		//@formatter:off
 		Assert.assertEquals(
@@ -407,12 +411,29 @@ public class ExprSimplifierTests {
 
 	@Test
 	public void testComplex() {
-		final Model model = new EmptyModel();
+		final Model model = new BasicModel();
 
 		//@formatter:off
 		Assert.assertEquals(
 				True(),
 				Eq(And(cx.getRef(), True()), Or(cx.getRef(), False())).accept(visitor, model));
+		//@formatter:on
+	}
+
+	@Test
+	public void testModel() {
+		final Map<ConstDecl<?>, Expr<?>> constToExpr = new HashMap<>();
+		constToExpr.put(ca, Int(5));
+		constToExpr.put(cb, Int(9));
+		final Model model = new BasicModel(constToExpr);
+
+		//@formatter:off
+		Assert.assertEquals(
+				Int(14),
+				Add(ca.getRef(), cb.getRef()).accept(visitor, model));
+		Assert.assertEquals(
+				Add(Int(14), cc.getRef()),
+				Add(ca.getRef(), cb.getRef(), cc.getRef()).accept(visitor, model));
 		//@formatter:on
 	}
 }
