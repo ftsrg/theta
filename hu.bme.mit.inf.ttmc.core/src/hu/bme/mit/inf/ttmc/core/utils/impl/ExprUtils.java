@@ -48,8 +48,9 @@ public class ExprUtils {
 		expr.accept(new AtomCollectorVisitor(), collectTo);
 	}
 
-	public static Expr<? extends Type> simplify(final Expr<? extends Type> expr, final Model model) {
-		return expr.accept(new ExprSimplifierVisitor(), model);
+	@SuppressWarnings("unchecked")
+	public static <ExprType extends Type> Expr<? extends ExprType> simplify(final Expr<? extends ExprType> expr, final Model model) {
+		return (Expr<? extends ExprType>) expr.accept(new ExprSimplifierVisitor(), model);
 	}
 
 }
