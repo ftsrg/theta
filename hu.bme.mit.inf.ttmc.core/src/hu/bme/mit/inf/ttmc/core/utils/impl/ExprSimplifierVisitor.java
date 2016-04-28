@@ -23,9 +23,9 @@ import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Rat;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.RatDiv;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.True;
 
-import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 import hu.bme.mit.inf.ttmc.core.expr.AddExpr;
 import hu.bme.mit.inf.ttmc.core.expr.AndExpr;
@@ -162,7 +162,7 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 
 	@Override
 	public Expr<? extends Type> visit(final AndExpr expr, final Model param) {
-		final Set<Expr<? extends BoolType>> ops = new HashSet<>();
+		final List<Expr<? extends BoolType>> ops = new ArrayList<>();
 		for (final Expr<? extends BoolType> op : expr.getOps()) {
 			final Expr<? extends BoolType> opVisited = ExprUtils.cast(op.accept(this, param), BoolType.class);
 			if (opVisited instanceof TrueExpr) {
@@ -187,7 +187,7 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 
 	@Override
 	public Expr<? extends Type> visit(final OrExpr expr, final Model param) {
-		final Set<Expr<? extends BoolType>> ops = new HashSet<>();
+		final List<Expr<? extends BoolType>> ops = new ArrayList<>();
 		for (final Expr<? extends BoolType> op : expr.getOps()) {
 			final Expr<? extends BoolType> opVisited = ExprUtils.cast(op.accept(this, param), BoolType.class);
 			if (opVisited instanceof FalseExpr) {
@@ -552,7 +552,7 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 
 	@Override
 	public <ExprType extends ClosedUnderAdd> Expr<? extends Type> visit(final AddExpr<ExprType> expr, final Model param) {
-		final Set<Expr<? extends ClosedUnderAdd>> ops = new HashSet<>();
+		final List<Expr<? extends ClosedUnderAdd>> ops = new ArrayList<>();
 		long num = 0;
 		long denom = 1;
 
@@ -564,6 +564,8 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 				final RatLitExpr opRatLit = (RatLitExpr) op;
 				num = num * opRatLit.getDenom() + denom * opRatLit.getNum();
 				denom *= opRatLit.getDenom();
+			} else if (opVisited instanceof AddExpr<?>) {
+				ops.addAll(((AddExpr<?>) opVisited).getOps());
 			} else {
 				ops.add(opVisited);
 			}
@@ -586,7 +588,7 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 
 	@Override
 	public <ExprType extends ClosedUnderMul> Expr<? extends Type> visit(final MulExpr<ExprType> expr, final Model param) {
-		final Set<Expr<? extends ClosedUnderMul>> ops = new HashSet<>();
+		final List<Expr<? extends ClosedUnderMul>> ops = new ArrayList<>();
 		long num = 1;
 		long denom = 1;
 
@@ -600,6 +602,8 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 				final RatLitExpr opRatLit = (RatLitExpr) op;
 				num *= opRatLit.getNum();
 				denom *= opRatLit.getDenom();
+			} else if (opVisited instanceof MulExpr<?>) {
+				ops.addAll(((MulExpr<?>) opVisited).getOps());
 			} else {
 				ops.add(opVisited);
 			}

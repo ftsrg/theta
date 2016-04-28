@@ -38,8 +38,11 @@ public class ExprSimplifierTests {
 
 	private final ExprSimplifierVisitor visitor = new ExprSimplifierVisitor();
 	private final ConstDecl<BoolType> cx = Decls.Const("x", Types.Bool());
+	private final ConstDecl<BoolType> cy = Decls.Const("y", Types.Bool());
+	private final ConstDecl<BoolType> cz = Decls.Const("z", Types.Bool());
 	private final ConstDecl<IntType> ca = Decls.Const("a", Types.Int());
 	private final ConstDecl<IntType> cb = Decls.Const("b", Types.Int());
+	private final ConstDecl<IntType> cc = Decls.Const("c", Types.Int());
 
 	@Test
 	public void testNot() {
@@ -66,6 +69,9 @@ public class ExprSimplifierTests {
 		Assert.assertEquals(
 				False(),
 				And(True(), cx.getRef(), False()).accept(visitor, model));
+		Assert.assertEquals(
+				And(cx.getRef(), cy.getRef(), cz.getRef()),
+				And(cx.getRef(), And(cy.getRef(), cz.getRef())).accept(visitor, model));
 		//@formatter:on
 	}
 
@@ -347,6 +353,9 @@ public class ExprSimplifierTests {
 		Assert.assertEquals(
 				ca.getRef(),
 				Add(Int(-3), ca.getRef(), Int(3)).accept(visitor, model));
+		Assert.assertEquals(
+				Add(ca.getRef(), cb.getRef(), ca.getRef(), cb.getRef(), cc.getRef()),
+				Add(ca.getRef(), Add(cb.getRef(), Add(ca.getRef(), Add(cb.getRef(), cc.getRef())))).accept(visitor, model));
 		//@formatter:on
 	}
 
@@ -373,6 +382,9 @@ public class ExprSimplifierTests {
 		Assert.assertEquals(
 				Rat(3, 4),
 				Mul(Rat(3, 2), Int(1), Rat(1, 2)).accept(visitor, model));
+		Assert.assertEquals(
+				Mul(ca.getRef(), cb.getRef(), ca.getRef(), cb.getRef(), cc.getRef()),
+				Mul(ca.getRef(), Mul(cb.getRef(), Mul(ca.getRef(), Mul(cb.getRef(), cc.getRef())))).accept(visitor, model));
 		//@formatter:on
 	}
 
