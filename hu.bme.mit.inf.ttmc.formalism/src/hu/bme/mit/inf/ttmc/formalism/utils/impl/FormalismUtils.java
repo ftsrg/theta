@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.model.Model;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.core.utils.impl.ExprCNFCheckerVisitor.CNFStatus;
@@ -41,6 +42,11 @@ public class FormalismUtils {
 
 	public static void collectAtoms(final Expr<? extends BoolType> expr, final Collection<Expr<? extends BoolType>> collectTo) {
 		expr.accept(new FormalismAtomCollectorVisitor(), collectTo);
+	}
+
+	@SuppressWarnings("unchecked")
+	public static <ExprType extends Type> Expr<? extends ExprType> simplify(final Expr<? extends ExprType> expr, final Model model) {
+		return (Expr<? extends ExprType>) expr.accept(new FormalismExprSimplifierVisitor(), model);
 	}
 
 }
