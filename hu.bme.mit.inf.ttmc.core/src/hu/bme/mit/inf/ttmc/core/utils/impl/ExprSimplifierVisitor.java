@@ -265,19 +265,10 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 		}
 
 		if ((leftOp instanceof RatLitExpr || leftOp instanceof IntLitExpr) && (rightOp instanceof RatLitExpr || rightOp instanceof IntLitExpr)) {
-			long leftNum = 0, leftDenom = 1, rightNum = 0, rightDenom = 1;
-			if (leftOp instanceof IntLitExpr) {
-				leftNum = ((IntLitExpr) leftOp).getValue();
-			} else {
-				leftNum = ((RatLitExpr) leftOp).getNum();
-				leftDenom = ((RatLitExpr) leftOp).getDenom();
-			}
-			if (rightOp instanceof IntLitExpr) {
-				rightNum = ((IntLitExpr) rightOp).getValue();
-			} else {
-				rightNum = ((RatLitExpr) rightOp).getNum();
-				rightDenom = ((RatLitExpr) rightOp).getDenom();
-			}
+			final long leftNum = num(leftOp);
+			final long leftDenom = denom(leftOp);
+			final long rightNum = num(rightOp);
+			final long rightDenom = denom(rightOp);
 
 			assert (leftDenom > 0);
 			assert (rightDenom > 0);
@@ -299,19 +290,10 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 		}
 
 		if ((leftOp instanceof RatLitExpr || leftOp instanceof IntLitExpr) && (rightOp instanceof RatLitExpr || rightOp instanceof IntLitExpr)) {
-			long leftNum = 0, leftDenom = 1, rightNum = 0, rightDenom = 1;
-			if (leftOp instanceof IntLitExpr) {
-				leftNum = ((IntLitExpr) leftOp).getValue();
-			} else {
-				leftNum = ((RatLitExpr) leftOp).getNum();
-				leftDenom = ((RatLitExpr) leftOp).getDenom();
-			}
-			if (rightOp instanceof IntLitExpr) {
-				rightNum = ((IntLitExpr) rightOp).getValue();
-			} else {
-				rightNum = ((RatLitExpr) rightOp).getNum();
-				rightDenom = ((RatLitExpr) rightOp).getDenom();
-			}
+			final long leftNum = num(leftOp);
+			final long leftDenom = denom(leftOp);
+			final long rightNum = num(rightOp);
+			final long rightDenom = denom(rightOp);
 
 			assert (leftDenom > 0);
 			assert (rightDenom > 0);
@@ -333,19 +315,10 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 		}
 
 		if ((leftOp instanceof RatLitExpr || leftOp instanceof IntLitExpr) && (rightOp instanceof RatLitExpr || rightOp instanceof IntLitExpr)) {
-			long leftNum = 0, leftDenom = 1, rightNum = 0, rightDenom = 1;
-			if (leftOp instanceof IntLitExpr) {
-				leftNum = ((IntLitExpr) leftOp).getValue();
-			} else {
-				leftNum = ((RatLitExpr) leftOp).getNum();
-				leftDenom = ((RatLitExpr) leftOp).getDenom();
-			}
-			if (rightOp instanceof IntLitExpr) {
-				rightNum = ((IntLitExpr) rightOp).getValue();
-			} else {
-				rightNum = ((RatLitExpr) rightOp).getNum();
-				rightDenom = ((RatLitExpr) rightOp).getDenom();
-			}
+			final long leftNum = num(leftOp);
+			final long leftDenom = denom(leftOp);
+			final long rightNum = num(rightOp);
+			final long rightDenom = denom(rightOp);
 
 			assert (leftDenom > 0);
 			assert (rightDenom > 0);
@@ -367,19 +340,10 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 		}
 
 		if ((leftOp instanceof RatLitExpr || leftOp instanceof IntLitExpr) && (rightOp instanceof RatLitExpr || rightOp instanceof IntLitExpr)) {
-			long leftNum = 0, leftDenom = 1, rightNum = 0, rightDenom = 1;
-			if (leftOp instanceof IntLitExpr) {
-				leftNum = ((IntLitExpr) leftOp).getValue();
-			} else {
-				leftNum = ((RatLitExpr) leftOp).getNum();
-				leftDenom = ((RatLitExpr) leftOp).getDenom();
-			}
-			if (rightOp instanceof IntLitExpr) {
-				rightNum = ((IntLitExpr) rightOp).getValue();
-			} else {
-				rightNum = ((RatLitExpr) rightOp).getNum();
-				rightDenom = ((RatLitExpr) rightOp).getDenom();
-			}
+			final long leftNum = num(leftOp);
+			final long leftDenom = denom(leftOp);
+			final long rightNum = num(rightOp);
+			final long rightDenom = denom(rightOp);
 
 			assert (leftDenom > 0);
 			assert (rightDenom > 0);
@@ -483,19 +447,10 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 		}
 
 		if ((leftOp instanceof RatLitExpr || leftOp instanceof IntLitExpr) && (rightOp instanceof RatLitExpr || rightOp instanceof IntLitExpr)) {
-			long leftNum = 0, leftDenom = 1, rightNum = 0, rightDenom = 1;
-			if (leftOp instanceof IntLitExpr) {
-				leftNum = ((IntLitExpr) leftOp).getValue();
-			} else {
-				leftNum = ((RatLitExpr) leftOp).getNum();
-				leftDenom = ((RatLitExpr) leftOp).getDenom();
-			}
-			if (rightOp instanceof IntLitExpr) {
-				rightNum = ((IntLitExpr) rightOp).getValue();
-			} else {
-				rightNum = ((RatLitExpr) rightOp).getNum();
-				rightDenom = ((RatLitExpr) rightOp).getDenom();
-			}
+			final long leftNum = num(leftOp);
+			final long leftDenom = denom(leftOp);
+			final long rightNum = num(rightOp);
+			final long rightDenom = denom(rightOp);
 
 			return Rat(leftNum * rightDenom, leftDenom * rightNum).accept(this, param);
 		}
@@ -530,19 +485,10 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 		}
 
 		if ((leftOp instanceof RatLitExpr || leftOp instanceof IntLitExpr) && (rightOp instanceof RatLitExpr || rightOp instanceof IntLitExpr)) {
-			long leftNum = 0, leftDenom = 1, rightNum = 0, rightDenom = 1;
-			if (leftOp instanceof IntLitExpr) {
-				leftNum = ((IntLitExpr) leftOp).getValue();
-			} else {
-				leftNum = ((RatLitExpr) leftOp).getNum();
-				leftDenom = ((RatLitExpr) leftOp).getDenom();
-			}
-			if (rightOp instanceof IntLitExpr) {
-				rightNum = ((IntLitExpr) rightOp).getValue();
-			} else {
-				rightNum = ((RatLitExpr) rightOp).getNum();
-				rightDenom = ((RatLitExpr) rightOp).getDenom();
-			}
+			final long leftNum = num(leftOp);
+			final long leftDenom = denom(leftOp);
+			final long rightNum = num(rightOp);
+			final long rightDenom = denom(rightOp);
 
 			return Rat(leftNum * rightDenom - rightNum * leftDenom, leftDenom * rightDenom).accept(this, param);
 		}
@@ -663,4 +609,21 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 		return Ite(cond, then, elze);
 	}
 
+	// TODO: refactor these helper methods as soon as IntLit and RatLit has some common interface
+	private long num(final Expr<? extends Type> expr) {
+		assert (expr instanceof IntLitExpr || expr instanceof RatLitExpr);
+		if (expr instanceof IntLitExpr)
+			return ((IntLitExpr) expr).getValue();
+		else
+			return ((RatLitExpr) expr).getNum();
+	}
+
+	// TODO: refactor these helper methods as soon as IntLit and RatLit has some common interface
+	private long denom(final Expr<? extends Type> expr) {
+		assert (expr instanceof IntLitExpr || expr instanceof RatLitExpr);
+		if (expr instanceof IntLitExpr)
+			return 1;
+		else
+			return ((RatLitExpr) expr).getDenom();
+	}
 }
