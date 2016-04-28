@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 
 import hu.bme.mit.inf.ttmc.core.expr.AndExpr;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.model.Model;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.core.utils.impl.ExprCNFCheckerVisitor.CNFStatus;
@@ -18,8 +19,7 @@ public class ExprUtils {
 	public static Collection<Expr<? extends BoolType>> getConjuncts(final Expr<? extends BoolType> expr) {
 		if (expr instanceof AndExpr) {
 			final AndExpr andExpr = (AndExpr) expr;
-			return andExpr.getOps().stream().map(e -> getConjuncts(e)).flatMap(c -> c.stream())
-					.collect(Collectors.toSet());
+			return andExpr.getOps().stream().map(e -> getConjuncts(e)).flatMap(c -> c.stream()).collect(Collectors.toSet());
 		} else {
 			return Collections.singleton(expr);
 		}
@@ -41,13 +41,15 @@ public class ExprUtils {
 
 	@SuppressWarnings("unchecked")
 	public static Expr<? extends BoolType> eliminateITE(final Expr<? extends BoolType> expr) {
-		return (Expr<? extends BoolType>) expr.accept(new ExprITEPropagatorVisitor(new ExprITEPusherVisitor()), null)
-				.accept(new ExprITERemoverVisitor(), null);
+		return (Expr<? extends BoolType>) expr.accept(new ExprITEPropagatorVisitor(new ExprITEPusherVisitor()), null).accept(new ExprITERemoverVisitor(), null);
 	}
 
-	public static void collectAtoms(final Expr<? extends BoolType> expr,
-			final Collection<Expr<? extends BoolType>> collectTo) {
+	public static void collectAtoms(final Expr<? extends BoolType> expr, final Collection<Expr<? extends BoolType>> collectTo) {
 		expr.accept(new AtomCollectorVisitor(), collectTo);
+	}
+
+	public static Expr<? extends Type> simplify(final Expr<? extends Type> expr, final Model model) {
+		return expr.accept(new ExprSimplifierVisitor(), model);
 	}
 
 }
