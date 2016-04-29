@@ -17,11 +17,6 @@ final class VarRefExprImpl<DeclType extends Type> extends AbstractRefExpr<DeclTy
 	}
 
 	@Override
-	public final DeclType getType() {
-		return getDecl().getType();
-	}
-
-	@Override
 	public final <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
 		if (visitor instanceof VarRefExprVisitor<?, ?>) {
 			final VarRefExprVisitor<? super P, ? extends R> sVisitor = (VarRefExprVisitor<? super P, ? extends R>) visitor;

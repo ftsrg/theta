@@ -15,11 +15,6 @@ final class ParamRefExprImpl<DeclType extends Type> extends AbstractRefExpr<Decl
 	}
 
 	@Override
-	public DeclType getType() {
-		return getDecl().getType();
-	}
-
-	@Override
 	public <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
 		return visitor.visit(this, param);
 	}
