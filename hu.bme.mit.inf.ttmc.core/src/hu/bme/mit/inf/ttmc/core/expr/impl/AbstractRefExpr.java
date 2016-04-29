@@ -23,6 +23,11 @@ public abstract class AbstractRefExpr<DeclType extends Type, DeclKind extends De
 	}
 
 	@Override
+	public final DeclType getType() {
+		return decl.getType();
+	}
+
+	@Override
 	public final int hashCode() {
 		int result = hashCode;
 		if (result == 0) {
