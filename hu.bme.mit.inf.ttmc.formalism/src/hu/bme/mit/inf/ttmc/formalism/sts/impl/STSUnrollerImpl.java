@@ -13,6 +13,7 @@ import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.core.utils.impl.ExprUtils;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
+import hu.bme.mit.inf.ttmc.formalism.common.expr.impl.Exprs2;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 import hu.bme.mit.inf.ttmc.formalism.utils.impl.FoldVisitor;
 import hu.bme.mit.inf.ttmc.formalism.utils.impl.UnfoldVisitor;
@@ -51,7 +52,8 @@ class STSUnrollerImpl {
 		return unroll(sts.getProp(), i);
 	}
 
-	public AndExpr getConcreteState(final Model model, final int i, final Collection<VarDecl<? extends Type>> variables) {
+	public AndExpr getConcreteState(final Model model, final int i,
+			final Collection<VarDecl<? extends Type>> variables) {
 
 		final List<Expr<? extends BoolType>> ops = new ArrayList<>(variables.size());
 
@@ -62,13 +64,14 @@ class STSUnrollerImpl {
 			} catch (final Exception ex) {
 				value = varDecl.getType().getAny();
 			}
-			ops.add(Exprs.Eq(varDecl.getRef(), value));
+			ops.add(Exprs.Eq(Exprs2.Ref(varDecl), value));
 		}
 
 		return Exprs.And(ops);
 	}
 
-	public List<AndExpr> extractTrace(final Model model, final int length, final Collection<VarDecl<? extends Type>> variables) {
+	public List<AndExpr> extractTrace(final Model model, final int length,
+			final Collection<VarDecl<? extends Type>> variables) {
 
 		final List<AndExpr> trace = new ArrayList<>(length);
 		for (int i = 0; i < length; ++i)

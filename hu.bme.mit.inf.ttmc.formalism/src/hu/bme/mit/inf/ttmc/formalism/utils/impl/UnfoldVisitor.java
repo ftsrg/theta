@@ -1,5 +1,7 @@
 package hu.bme.mit.inf.ttmc.formalism.utils.impl;
 
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Ref;
+
 import hu.bme.mit.inf.ttmc.core.decl.ConstDecl;
 import hu.bme.mit.inf.ttmc.core.expr.ConstRefExpr;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
@@ -23,7 +25,8 @@ public class UnfoldVisitor extends ExprRewriterVisitor<Integer> implements ProgE
 	////
 
 	@Override
-	public <ExprType extends Type> Expr<? extends ExprType> visit(final PrimedExpr<ExprType> expr, final Integer param) {
+	public <ExprType extends Type> Expr<? extends ExprType> visit(final PrimedExpr<ExprType> expr,
+			final Integer param) {
 		final int i = param;
 		final Expr<? extends ExprType> op = expr.getOp();
 		@SuppressWarnings("unchecked")
@@ -32,11 +35,12 @@ public class UnfoldVisitor extends ExprRewriterVisitor<Integer> implements ProgE
 	}
 
 	@Override
-	public <DeclType extends Type> Expr<? extends DeclType> visit(final VarRefExpr<DeclType> expr, final Integer param) {
+	public <DeclType extends Type> Expr<? extends DeclType> visit(final VarRefExpr<DeclType> expr,
+			final Integer param) {
 		final int i = param;
 		final VarDecl<DeclType> varDecl = expr.getDecl();
 		final ConstDecl<DeclType> constDecl = varMap.getConstDecl(varDecl, i);
-		final ConstRefExpr<DeclType> constRefExpr = constDecl.getRef();
+		final ConstRefExpr<DeclType> constRefExpr = Ref(constDecl);
 		return constRefExpr;
 	}
 

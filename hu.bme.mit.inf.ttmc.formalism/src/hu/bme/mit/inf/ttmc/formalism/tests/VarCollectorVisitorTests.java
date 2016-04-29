@@ -13,6 +13,7 @@ import static hu.bme.mit.inf.ttmc.core.type.impl.Types.Bool;
 import static hu.bme.mit.inf.ttmc.core.type.impl.Types.Int;
 import static hu.bme.mit.inf.ttmc.core.type.impl.Types.Rat;
 import static hu.bme.mit.inf.ttmc.formalism.common.decl.impl.Decls2.Var;
+import static hu.bme.mit.inf.ttmc.formalism.common.expr.impl.Exprs2.Ref;
 import static org.junit.Assert.assertTrue;
 
 import java.util.HashSet;
@@ -31,19 +32,31 @@ import hu.bme.mit.inf.ttmc.formalism.utils.impl.FormalismUtils;
 
 public class VarCollectorVisitorTests {
 
-	VarDecl<BoolType> a;
-	VarDecl<IntType> b;
-	VarDecl<RatType> c;
-	VarDecl<BoolType> d;
-	VarDecl<IntType> e;
+	VarDecl<BoolType> va;
+	VarDecl<IntType> vb;
+	VarDecl<RatType> vc;
+	VarDecl<BoolType> vd;
+	VarDecl<IntType> ve;
+
+	Expr<BoolType> a;
+	Expr<IntType> b;
+	Expr<RatType> c;
+	Expr<BoolType> d;
+	Expr<IntType> e;
 
 	@Before
 	public void before() {
-		a = Var("a", Bool());
-		b = Var("b", Int());
-		c = Var("c", Rat());
-		d = Var("d", Bool());
-		e = Var("e", Int());
+		va = Var("a", Bool());
+		vb = Var("b", Int());
+		vc = Var("c", Rat());
+		vd = Var("d", Bool());
+		ve = Var("e", Int());
+
+		a = Ref(va);
+		b = Ref(vb);
+		c = Ref(vc);
+		d = Ref(vd);
+		e = Ref(ve);
 	}
 
 	@SuppressWarnings("serial")
@@ -54,10 +67,9 @@ public class VarCollectorVisitorTests {
 			}
 		}));
 
-		assertTrue(checkExpr(And(a.getRef(), Not(d.getRef())), of(a, d)));
+		assertTrue(checkExpr(And(a, Not(d)), of(va, vd)));
 
-		assertTrue(checkExpr(And(Imply(a.getRef(), d.getRef()), Eq(c.getRef(), Sub(b.getRef(), e.getRef()))),
-				of(a, b, c, d, e)));
+		assertTrue(checkExpr(And(Imply(a, d), Eq(c, Sub(b, e))), of(va, vb, vc, vd, ve)));
 	}
 
 	private boolean checkExpr(final Expr<? extends Type> expr, final Set<VarDecl<? extends Type>> expectedVars) {

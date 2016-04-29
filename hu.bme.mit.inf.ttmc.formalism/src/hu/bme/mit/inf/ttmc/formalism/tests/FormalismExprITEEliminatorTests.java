@@ -9,6 +9,7 @@ import static hu.bme.mit.inf.ttmc.core.type.impl.Types.Bool;
 import static hu.bme.mit.inf.ttmc.core.type.impl.Types.Int;
 import static hu.bme.mit.inf.ttmc.formalism.common.decl.impl.Decls2.Var;
 import static hu.bme.mit.inf.ttmc.formalism.common.expr.impl.Exprs2.Prime;
+import static hu.bme.mit.inf.ttmc.formalism.common.expr.impl.Exprs2.Ref;
 import static hu.bme.mit.inf.ttmc.formalism.utils.impl.FormalismUtils.eliminate;
 import static org.junit.Assert.assertEquals;
 
@@ -28,10 +29,10 @@ public class FormalismExprITEEliminatorTests {
 	@Before
 	public void before() {
 		// Create constants and variables
-		vA = Var("A", Bool()).getRef();
-		vB = Var("B", Int()).getRef();
-		vC = Var("C", Int()).getRef();
-		vD = Var("D", Int()).getRef();
+		vA = Ref(Var("A", Bool()));
+		vB = Ref(Var("B", Int()));
+		vC = Ref(Var("C", Int()));
+		vD = Ref(Var("D", Int()));
 	}
 
 	@Test
@@ -39,6 +40,7 @@ public class FormalismExprITEEliminatorTests {
 		// D = if A then B else C
 		assertEquals(eliminate(Eq(vD, Ite(vA, vB, vC))), And(Or(Not(vA), Eq(vD, vB)), Or(vA, Eq(vD, vC))));
 		// D = (if A then B else C)'
-		assertEquals(eliminate(Eq(vD, Prime(Ite(vA, vB, vC)))), And(Or(Not(vA), Eq(vD, Prime(vB))), Or(vA, Eq(vD, Prime(vC)))));
+		assertEquals(eliminate(Eq(vD, Prime(Ite(vA, vB, vC)))),
+				And(Or(Not(vA), Eq(vD, Prime(vB))), Or(vA, Eq(vD, Prime(vC)))));
 	}
 }

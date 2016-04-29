@@ -17,7 +17,7 @@ import static hu.bme.mit.inf.ttmc.formalism.common.decl.impl.Decls2.*;
 
 class ProgramDeclTransformator extends ConstraintDeclTransformator {
 
-	private val ProgramTransformationManager manager	
+	private val ProgramTransformationManager manager
 	
 	private volatile TypeTransformator tt
 	private volatile StmtTransformator st

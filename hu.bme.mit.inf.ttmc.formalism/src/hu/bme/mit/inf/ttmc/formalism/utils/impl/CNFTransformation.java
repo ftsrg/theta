@@ -1,5 +1,7 @@
 package hu.bme.mit.inf.ttmc.formalism.utils.impl;
 
+import static hu.bme.mit.inf.ttmc.formalism.common.expr.impl.Exprs2.Ref;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -79,7 +81,8 @@ public class CNFTransformation {
 		cnfTransfVisitor.clearReps();
 	}
 
-	private final class CNFTransformationVisitor implements FormalismExprVisitor<Collection<Expr<? extends BoolType>>, Expr<? extends BoolType>> {
+	private final class CNFTransformationVisitor
+			implements FormalismExprVisitor<Collection<Expr<? extends BoolType>>, Expr<? extends BoolType>> {
 
 		private int nextCNFVarId;
 		private final Map<Expr<?>, VarDecl<? extends BoolType>> representatives;
@@ -100,7 +103,7 @@ public class CNFTransformation {
 		private Expr<? extends BoolType> getRep(final Expr<?> expr) {
 			final VarDecl<BoolType> rep = Decls2.Var(CNFPREFIX + (nextCNFVarId++), Types.Bool());
 			representatives.put(expr, rep);
-			return rep.getRef();
+			return Ref(rep);
 		}
 
 		@SuppressWarnings("unchecked")
@@ -109,12 +112,14 @@ public class CNFTransformation {
 		}
 
 		@Override
-		public <DeclType extends Type> Expr<? extends BoolType> visit(final ConstRefExpr<DeclType> expr, final Collection<Expr<? extends BoolType>> param) {
+		public <DeclType extends Type> Expr<? extends BoolType> visit(final ConstRefExpr<DeclType> expr,
+				final Collection<Expr<? extends BoolType>> param) {
 			return visitNonBoolConn(expr);
 		}
 
 		@Override
-		public <DeclType extends Type> Expr<? extends BoolType> visit(final ParamRefExpr<DeclType> expr, final Collection<Expr<? extends BoolType>> param) {
+		public <DeclType extends Type> Expr<? extends BoolType> visit(final ParamRefExpr<DeclType> expr,
+				final Collection<Expr<? extends BoolType>> param) {
 			return visitNonBoolConn(expr);
 		}
 
@@ -131,34 +136,36 @@ public class CNFTransformation {
 		@Override
 		public Expr<? extends BoolType> visit(final NotExpr expr, final Collection<Expr<? extends BoolType>> param) {
 			if (representatives.containsKey(expr))
-				return representatives.get(expr).getRef();
+				return Ref(representatives.get(expr));
 			final Expr<? extends BoolType> rep = getRep(expr);
 			final Expr<? extends BoolType> op = expr.getOp().accept(this, param);
-			param.add(Exprs.And(ImmutableSet.of(Exprs.Or(ImmutableSet.of(Exprs.Not(rep), Exprs.Not(op))), Exprs.Or(ImmutableSet.of(rep, op)))));
+			param.add(Exprs.And(ImmutableSet.of(Exprs.Or(ImmutableSet.of(Exprs.Not(rep), Exprs.Not(op))),
+					Exprs.Or(ImmutableSet.of(rep, op)))));
 			return rep;
 		}
 
 		@Override
 		public Expr<? extends BoolType> visit(final ImplyExpr expr, final Collection<Expr<? extends BoolType>> param) {
 			if (representatives.containsKey(expr))
-				return representatives.get(expr).getRef();
+				return Ref(representatives.get(expr));
 			final Expr<? extends BoolType> rep = getRep(expr);
 			final Expr<? extends BoolType> op1 = expr.getLeftOp().accept(this, param);
 			final Expr<? extends BoolType> op2 = expr.getRightOp().accept(this, param);
-			param.add(Exprs.And(ImmutableSet.of(Exprs.Or(ImmutableSet.of(Exprs.Not(rep), Exprs.Not(op1), op2)), Exprs.Or(ImmutableSet.of(op1, rep)),
-					Exprs.Or(ImmutableSet.of(Exprs.Not(op2), rep)))));
+			param.add(Exprs.And(ImmutableSet.of(Exprs.Or(ImmutableSet.of(Exprs.Not(rep), Exprs.Not(op1), op2)),
+					Exprs.Or(ImmutableSet.of(op1, rep)), Exprs.Or(ImmutableSet.of(Exprs.Not(op2), rep)))));
 			return rep;
 		}
 
 		@Override
 		public Expr<? extends BoolType> visit(final IffExpr expr, final Collection<Expr<? extends BoolType>> param) {
 			if (representatives.containsKey(expr))
-				return representatives.get(expr).getRef();
+				return Ref(representatives.get(expr));
 			final Expr<? extends BoolType> rep = getRep(expr);
 			final Expr<? extends BoolType> op1 = expr.getLeftOp().accept(this, param);
 			final Expr<? extends BoolType> op2 = expr.getRightOp().accept(this, param);
 			param.add(Exprs.And(ImmutableSet.of(Exprs.Or(ImmutableSet.of(Exprs.Not(rep), Exprs.Not(op1), op2)),
-					Exprs.Or(ImmutableSet.of(Exprs.Not(rep), op1, Exprs.Not(op2))), Exprs.Or(ImmutableSet.of(rep, Exprs.Not(op1), Exprs.Not(op2))),
+					Exprs.Or(ImmutableSet.of(Exprs.Not(rep), op1, Exprs.Not(op2))),
+					Exprs.Or(ImmutableSet.of(rep, Exprs.Not(op1), Exprs.Not(op2))),
 					Exprs.Or(ImmutableSet.of(rep, op1, op2)))));
 			return rep;
 		}
@@ -166,7 +173,7 @@ public class CNFTransformation {
 		@Override
 		public Expr<? extends BoolType> visit(final AndExpr expr, final Collection<Expr<? extends BoolType>> param) {
 			if (representatives.containsKey(expr))
-				return representatives.get(expr).getRef();
+				return Ref(representatives.get(expr));
 			final Expr<? extends BoolType> rep = getRep(expr);
 			final Collection<Expr<? extends BoolType>> ops = new ArrayList<>(expr.getOps().size());
 			for (final Expr<? extends BoolType> op : expr.getOps())
@@ -186,7 +193,7 @@ public class CNFTransformation {
 		@Override
 		public Expr<? extends BoolType> visit(final OrExpr expr, final Collection<Expr<? extends BoolType>> param) {
 			if (representatives.containsKey(expr))
-				return representatives.get(expr).getRef();
+				return Ref(representatives.get(expr));
 			final Expr<? extends BoolType> rep = getRep(expr);
 			final Collection<Expr<? extends BoolType>> ops = new ArrayList<>(expr.getOps().size());
 			for (final Expr<? extends BoolType> op : expr.getOps())
@@ -298,51 +305,56 @@ public class CNFTransformation {
 		}
 
 		@Override
-		public <IndexType extends Type, ElemType extends Type> Expr<? extends BoolType> visit(final ArrayReadExpr<IndexType, ElemType> expr,
+		public <IndexType extends Type, ElemType extends Type> Expr<? extends BoolType> visit(
+				final ArrayReadExpr<IndexType, ElemType> expr, final Collection<Expr<? extends BoolType>> param) {
+			return visitNonBoolConn(expr);
+		}
+
+		@Override
+		public <IndexType extends Type, ElemType extends Type> Expr<? extends BoolType> visit(
+				final ArrayWriteExpr<IndexType, ElemType> expr, final Collection<Expr<? extends BoolType>> param) {
+			return visitNonBoolConn(expr);
+		}
+
+		@Override
+		public <ParamType extends Type, ResultType extends Type> Expr<? extends BoolType> visit(
+				final FuncLitExpr<ParamType, ResultType> expr, final Collection<Expr<? extends BoolType>> param) {
+			return visitNonBoolConn(expr);
+		}
+
+		@Override
+		public <ParamType extends Type, ResultType extends Type> Expr<? extends BoolType> visit(
+				final FuncAppExpr<ParamType, ResultType> expr, final Collection<Expr<? extends BoolType>> param) {
+			return visitNonBoolConn(expr);
+		}
+
+		@Override
+		public <ExprType extends Type> Expr<? extends BoolType> visit(final IteExpr<ExprType> expr,
 				final Collection<Expr<? extends BoolType>> param) {
 			return visitNonBoolConn(expr);
 		}
 
 		@Override
-		public <IndexType extends Type, ElemType extends Type> Expr<? extends BoolType> visit(final ArrayWriteExpr<IndexType, ElemType> expr,
+		public <ExprType extends Type> Expr<? extends BoolType> visit(final PrimedExpr<ExprType> expr,
 				final Collection<Expr<? extends BoolType>> param) {
 			return visitNonBoolConn(expr);
 		}
 
 		@Override
-		public <ParamType extends Type, ResultType extends Type> Expr<? extends BoolType> visit(final FuncLitExpr<ParamType, ResultType> expr,
+		public <DeclType extends Type> Expr<? extends BoolType> visit(final VarRefExpr<DeclType> expr,
 				final Collection<Expr<? extends BoolType>> param) {
 			return visitNonBoolConn(expr);
 		}
 
 		@Override
-		public <ParamType extends Type, ResultType extends Type> Expr<? extends BoolType> visit(final FuncAppExpr<ParamType, ResultType> expr,
+		public <ReturnType extends Type> Expr<? extends BoolType> visit(final ProcCallExpr<ReturnType> expr,
 				final Collection<Expr<? extends BoolType>> param) {
 			return visitNonBoolConn(expr);
 		}
 
 		@Override
-		public <ExprType extends Type> Expr<? extends BoolType> visit(final IteExpr<ExprType> expr, final Collection<Expr<? extends BoolType>> param) {
-			return visitNonBoolConn(expr);
-		}
-
-		@Override
-		public <ExprType extends Type> Expr<? extends BoolType> visit(final PrimedExpr<ExprType> expr, final Collection<Expr<? extends BoolType>> param) {
-			return visitNonBoolConn(expr);
-		}
-
-		@Override
-		public <DeclType extends Type> Expr<? extends BoolType> visit(final VarRefExpr<DeclType> expr, final Collection<Expr<? extends BoolType>> param) {
-			return visitNonBoolConn(expr);
-		}
-
-		@Override
-		public <ReturnType extends Type> Expr<? extends BoolType> visit(final ProcCallExpr<ReturnType> expr, final Collection<Expr<? extends BoolType>> param) {
-			return visitNonBoolConn(expr);
-		}
-
-		@Override
-		public <ReturnType extends Type> Expr<? extends BoolType> visit(final ProcRefExpr<ReturnType> expr, final Collection<Expr<? extends BoolType>> param) {
+		public <ReturnType extends Type> Expr<? extends BoolType> visit(final ProcRefExpr<ReturnType> expr,
+				final Collection<Expr<? extends BoolType>> param) {
 			return visitNonBoolConn(expr);
 		}
 	}

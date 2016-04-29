@@ -1,5 +1,7 @@
 package hu.bme.mit.inf.ttmc.aiger.impl;
 
+import static hu.bme.mit.inf.ttmc.formalism.common.expr.impl.Exprs2.Ref;
+
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -42,7 +44,7 @@ public class AIGERLoaderSimple implements AIGERLoader {
 		for (int i = 0; i <= maxVars; ++i)
 			vars.add(Decls2.Var("v" + i, Types.Bool()));
 		// v0 is the constant 'false'
-		builder.addInvar(Exprs.Not(vars.get(0).getRef()));
+		builder.addInvar(Exprs.Not(Ref(vars.get(0))));
 
 		// Inputs
 		for (int i = 0; i < inputs; ++i)
@@ -53,15 +55,15 @@ public class AIGERLoaderSimple implements AIGERLoader {
 			final String v[] = br.readLine().split(" ");
 			final int v1 = Integer.parseInt(v[0]);
 			final int v2 = Integer.parseInt(v[1]);
-			builder.addInit(Exprs.Not(vars.get(v1 / 2).getRef()));
-			builder.addTrans(
-					Exprs.Iff(Exprs2.Prime(vars.get(v1 / 2).getRef()), v2 % 2 == 0 ? vars.get(v2 / 2).getRef() : Exprs.Not(vars.get(v2 / 2).getRef())));
+			builder.addInit(Exprs.Not(Ref(vars.get(v1 / 2))));
+			builder.addTrans(Exprs.Iff(Exprs2.Prime(Ref(vars.get(v1 / 2))),
+					v2 % 2 == 0 ? Ref(vars.get(v2 / 2)) : Exprs.Not(Ref(vars.get(v2 / 2)))));
 		}
 
 		// Outputs
 		for (int i = 0; i < outputs; ++i) {
 			final int v = Integer.parseInt(br.readLine());
-			outVars.add(v % 2 == 0 ? vars.get(v / 2).getRef() : Exprs.Not(vars.get(v / 2).getRef()));
+			outVars.add(v % 2 == 0 ? Ref(vars.get(v / 2)) : Exprs.Not(Ref(vars.get(v / 2))));
 		}
 
 		// And gates
@@ -70,9 +72,11 @@ public class AIGERLoaderSimple implements AIGERLoader {
 			final int vo = Integer.parseInt(v[0]);
 			final int vi1 = Integer.parseInt(v[1]);
 			final int vi2 = Integer.parseInt(v[2]);
-			builder.addInvar(Exprs.Iff(vars.get(vo / 2).getRef(),
-					Exprs.And(ImmutableSet.of(vi1 % 2 == 0 ? vars.get(vi1 / 2).getRef() : Exprs.Not(vars.get(vi1 / 2).getRef()),
-							vi2 % 2 == 0 ? vars.get(vi2 / 2).getRef() : Exprs.Not(vars.get(vi2 / 2).getRef())))));
+			builder.addInvar(
+					Exprs.Iff(Ref(vars.get(vo / 2)),
+							Exprs.And(ImmutableSet.of(
+									vi1 % 2 == 0 ? Ref(vars.get(vi1 / 2)) : Exprs.Not(Ref(vars.get(vi1 / 2))),
+									vi2 % 2 == 0 ? Ref(vars.get(vi2 / 2)) : Exprs.Not(Ref(vars.get(vi2 / 2)))))));
 		}
 
 		br.close();
@@ -82,7 +86,8 @@ public class AIGERLoaderSimple implements AIGERLoader {
 			builder.setProp(Exprs.Not(outVars.get(0)));
 		} else {
 			throw new UnsupportedOperationException(
-					"Currently only models with a single output variable are supported (this model has " + outVars.size() + ").");
+					"Currently only models with a single output variable are supported (this model has "
+							+ outVars.size() + ").");
 		}
 
 		return builder.build();

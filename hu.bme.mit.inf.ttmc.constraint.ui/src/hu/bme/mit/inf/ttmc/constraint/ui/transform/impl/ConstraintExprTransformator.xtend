@@ -51,6 +51,10 @@ import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.*
 import hu.bme.mit.inf.ttmc.constraint.model.ForallExpression
 import hu.bme.mit.inf.ttmc.core.decl.ParamDecl
 import hu.bme.mit.inf.ttmc.constraint.model.ExistsExpression
+import hu.bme.mit.inf.ttmc.constraint.model.Declaration
+import hu.bme.mit.inf.ttmc.constraint.model.ConstantDeclaration
+import hu.bme.mit.inf.ttmc.core.decl.ConstDecl
+import hu.bme.mit.inf.ttmc.constraint.model.ParameterDeclaration
 
 public class ConstraintExprTransformator implements ExprTransformator {
 	
@@ -266,8 +270,23 @@ public class ConstraintExprTransformator implements ExprTransformator {
 	}
 
 	protected def dispatch Expr<? extends Type> toExpr(ReferenceExpression expression) {
-		val decl = expression.declaration.transform
-		decl.ref
+		toRefExpr(expression, expression.declaration)
+	}
+	
+	////
+	
+	protected def dispatch Expr<? extends Type> toRefExpr(ReferenceExpression expression, Declaration declaration) {
+		throw new UnsupportedOperationException("Not supported: " + declaration.class)
+	}
+	
+	protected def dispatch Expr<? extends Type> toRefExpr(ReferenceExpression expression, ConstantDeclaration declaration) {
+		val decl = expression.declaration.transform as ConstDecl<? extends Type>
+		Ref(decl)
+	}
+	
+	protected def dispatch Expr<? extends Type> toRefExpr(ReferenceExpression expression, ParameterDeclaration declaration) {
+		val decl = expression.declaration.transform as ParamDecl<? extends Type>
+		Ref(decl)
 	}
 	
 }

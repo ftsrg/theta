@@ -58,7 +58,7 @@ class ProgramStmtTransformator implements StmtTransformator {
 		et
 	}
 	
-	private def Decl<? extends Type, ?> transform(Declaration declaration) {
+	private def Decl<? extends Type> transform(Declaration declaration) {
 		declTransformator.transform(declaration)
 	}
 	
