@@ -1,5 +1,7 @@
 package hu.bme.mit.inf.ttmc.formalism.common.expr.impl;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.core.utils.ExprVisitor;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.ProcDecl;
@@ -16,7 +18,7 @@ class ProcRefExprImpl<ReturnType extends Type> implements ProcRefExpr<ReturnType
 	private volatile int hashCode = 0;
 
 	ProcRefExprImpl(final ProcDecl<ReturnType> procDecl) {
-		this.procDecl = procDecl;
+		this.procDecl = checkNotNull(procDecl);
 	}
 
 	@Override
