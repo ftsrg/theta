@@ -1,6 +1,7 @@
 package hu.bme.mit.inf.ttmc.formalism.utils.impl;
 
 import static com.google.common.base.Preconditions.checkState;
+import static hu.bme.mit.inf.ttmc.formalism.common.expr.impl.Exprs2.Ref;
 
 import hu.bme.mit.inf.ttmc.core.decl.ConstDecl;
 import hu.bme.mit.inf.ttmc.core.expr.ConstRefExpr;
@@ -28,7 +29,7 @@ public class FoldVisitor extends ExprRewriterVisitor<Integer> {
 		checkState(nPrimes >= 0);
 
 		final VarDecl<DeclType> varDecl = varMap.getVarDecl(constDecl);
-		Expr<DeclType> res = varDecl.getRef();
+		Expr<DeclType> res = Ref(varDecl);
 		while (nPrimes > 0) {
 			res = Exprs2.Prime(res);
 			nPrimes--;

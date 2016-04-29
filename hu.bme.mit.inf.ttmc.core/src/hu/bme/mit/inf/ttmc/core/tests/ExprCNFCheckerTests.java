@@ -6,6 +6,7 @@ import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Iff;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Imply;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Not;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Or;
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Ref;
 import static hu.bme.mit.inf.ttmc.core.type.impl.Types.Bool;
 import static hu.bme.mit.inf.ttmc.core.utils.impl.ExprUtils.isExprCNF;
 import static org.junit.Assert.assertFalse;
@@ -24,9 +25,9 @@ public class ExprCNFCheckerTests {
 	@Before
 	public void before() {
 		// Create constants
-		cA = Const("A", Bool()).getRef();
-		cB = Const("B", Bool()).getRef();
-		cC = Const("C", Bool()).getRef();
+		cA = Ref(Const("A", Bool()));
+		cB = Ref(Const("B", Bool()));
+		cC = Ref(Const("C", Bool()));
 	}
 
 	@Test

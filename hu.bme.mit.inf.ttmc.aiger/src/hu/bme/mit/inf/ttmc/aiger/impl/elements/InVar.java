@@ -1,5 +1,7 @@
 package hu.bme.mit.inf.ttmc.aiger.impl.elements;
 
+import static hu.bme.mit.inf.ttmc.formalism.common.expr.impl.Exprs2.Ref;
+
 import java.util.List;
 
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
@@ -22,7 +24,7 @@ public final class InVar extends HWElement {
 
 	@Override
 	public Expr<? extends BoolType> getExpr(final List<HWElement> elements) {
-		return varDecl.getRef();
+		return Ref(varDecl);
 	}
 
 }

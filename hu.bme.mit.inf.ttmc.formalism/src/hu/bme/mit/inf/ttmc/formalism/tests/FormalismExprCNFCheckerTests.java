@@ -8,6 +8,7 @@ import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Or;
 import static hu.bme.mit.inf.ttmc.core.type.impl.Types.Bool;
 import static hu.bme.mit.inf.ttmc.formalism.common.decl.impl.Decls2.Var;
 import static hu.bme.mit.inf.ttmc.formalism.common.expr.impl.Exprs2.Prime;
+import static hu.bme.mit.inf.ttmc.formalism.common.expr.impl.Exprs2.Ref;
 import static hu.bme.mit.inf.ttmc.formalism.utils.impl.FormalismUtils.isExprCNF;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -26,9 +27,9 @@ public class FormalismExprCNFCheckerTests {
 	@Before
 	public void Before() {
 		// Create constants and variaBles
-		vA = Var("A", Bool()).getRef();
-		vB = Var("B", Bool()).getRef();
-		vC = Var("C", Bool()).getRef();
+		vA = Ref(Var("A", Bool()));
+		vB = Ref(Var("B", Bool()));
+		vC = Ref(Var("C", Bool()));
 	}
 
 	@Test

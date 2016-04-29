@@ -11,6 +11,7 @@ import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Ite;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Neg;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Not;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Or;
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Ref;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Sub;
 import static hu.bme.mit.inf.ttmc.core.type.impl.Types.Bool;
 import static hu.bme.mit.inf.ttmc.core.type.impl.Types.Int;
@@ -40,15 +41,15 @@ public class ExprITEEliminatorTests {
 	public void before() {
 
 		// Create constants
-		cA = Const("A", Bool()).getRef();
-		cB = Const("B", Bool()).getRef();
-		cC = Const("C", Bool()).getRef();
-		cD = Const("D", Bool()).getRef();
-		cE = Const("E", Bool()).getRef();
-		cX = Const("X", Int()).getRef();
-		cY = Const("Y", Int()).getRef();
-		cZ = Const("Z", Int()).getRef();
-		cT = Const("T", Int()).getRef();
+		cA = Ref(Const("A", Bool()));
+		cB = Ref(Const("B", Bool()));
+		cC = Ref(Const("C", Bool()));
+		cD = Ref(Const("D", Bool()));
+		cE = Ref(Const("E", Bool()));
+		cX = Ref(Const("X", Int()));
+		cY = Ref(Const("Y", Int()));
+		cZ = Ref(Const("Z", Int()));
+		cT = Ref(Const("T", Int()));
 		i1 = Int(1);
 		i2 = Int(2);
 		i3 = Int(3);
@@ -62,7 +63,8 @@ public class ExprITEEliminatorTests {
 		assertEquals(eliminateITE(Ite(cA, cB, cC)), And(Or(Not(cA), cB), Or(cA, cC)));
 
 		// if A then (if B then C else D) else E
-		assertEquals(eliminateITE(Ite(cA, Ite(cB, cC, cD), cE)), And(Or(Not(cA), And(Or(Not(cB), cC), Or(cB, cD))), Or(cA, cE)));
+		assertEquals(eliminateITE(Ite(cA, Ite(cB, cC, cD), cE)),
+				And(Or(Not(cA), And(Or(Not(cB), cC), Or(cB, cD))), Or(cA, cE)));
 	}
 
 	@Test
@@ -91,7 +93,8 @@ public class ExprITEEliminatorTests {
 				And(Or(Not(cA), And(Or(Not(cB), Eq(cY, cX)), Or(cB, Eq(cZ, cX)))), Or(cA, Eq(cT, cX))));
 		// (if A then X else Y) = (if B then Z else T)
 		assertEquals(eliminateITE(Eq(Ite(cA, cX, cY), Ite(cB, cZ, cT))),
-				And(Or(Not(cA), And(Or(Not(cB), Eq(cX, cZ)), Or(cB, Eq(cX, cT)))), Or(cA, And(Or(Not(cB), Eq(cY, cZ)), Or(cB, Eq(cY, cT))))));
+				And(Or(Not(cA), And(Or(Not(cB), Eq(cX, cZ)), Or(cB, Eq(cX, cT)))),
+						Or(cA, And(Or(Not(cB), Eq(cY, cZ)), Or(cB, Eq(cY, cT))))));
 	}
 
 	@Test
@@ -99,9 +102,14 @@ public class ExprITEEliminatorTests {
 		// A or B or (if C then D else E)
 		assertEquals(eliminateITE(Or(cA, cB, Ite(cC, cD, cE))), Or(cA, cB, And(Or(Not(cC), cD), Or(cC, cE))));
 		// 1 = 2 + (if A then 3 else 4) + 5
-		assertEquals(eliminateITE(Eq(i1, Add(i2, Ite(cA, i3, i4), i5))), And(Or(Not(cA), Eq(i1, Add(i2, i3, i5))), Or(cA, Eq(i1, Add(i2, i4, i5)))));
+		assertEquals(eliminateITE(Eq(i1, Add(i2, Ite(cA, i3, i4), i5))),
+				And(Or(Not(cA), Eq(i1, Add(i2, i3, i5))), Or(cA, Eq(i1, Add(i2, i4, i5)))));
 		// 1 = 2 + (if A then 3 else 4) + (if B then X else Y)
-		assertEquals(eliminateITE(Eq(i1, Add(i2, Ite(cA, i3, i4), Ite(cB, cX, cY)))),
+		assertEquals(
+				eliminateITE(Eq(i1,
+						Add(i2, Ite(cA, i3, i4),
+								Ite(cB, cX,
+										cY)))),
 				And(Or(Not(cA), And(Or(Not(cB), Eq(i1, Add(i2, i3, cX))), Or(cB, Eq(i1, Add(i2, i3, cY))))),
 						Or(cA, And(Or(Not(cB), Eq(i1, Add(i2, i4, cX))), Or(cB, Eq(i1, Add(i2, i4, cY)))))));
 	}
