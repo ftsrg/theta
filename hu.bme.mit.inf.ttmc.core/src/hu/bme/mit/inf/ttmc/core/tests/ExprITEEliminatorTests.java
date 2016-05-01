@@ -11,7 +11,6 @@ import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Ite;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Neg;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Not;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Or;
-import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Ref;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Sub;
 import static hu.bme.mit.inf.ttmc.core.type.impl.Types.Bool;
 import static hu.bme.mit.inf.ttmc.core.type.impl.Types.Int;
@@ -33,23 +32,23 @@ import hu.bme.mit.inf.ttmc.core.type.IntType;
 public class ExprITEEliminatorTests {
 
 	// Constants for testing
-	private ConstRefExpr<BoolType> cA, cB, cC, cD, cE;
-	private ConstRefExpr<IntType> cX, cY, cZ, cT;
+	private ConstRefExpr<BoolType> a, b, c, d, e;
+	private ConstRefExpr<IntType> x, y, z, t;
 	private IntLitExpr i1, i2, i3, i4, i5;
 
 	@Before
 	public void before() {
 
 		// Create constants
-		cA = Ref(Const("A", Bool()));
-		cB = Ref(Const("B", Bool()));
-		cC = Ref(Const("C", Bool()));
-		cD = Ref(Const("D", Bool()));
-		cE = Ref(Const("E", Bool()));
-		cX = Ref(Const("X", Int()));
-		cY = Ref(Const("Y", Int()));
-		cZ = Ref(Const("Z", Int()));
-		cT = Ref(Const("T", Int()));
+		a = Const("a", Bool()).getRef();
+		b = Const("b", Bool()).getRef();
+		c = Const("c", Bool()).getRef();
+		d = Const("d", Bool()).getRef();
+		e = Const("e", Bool()).getRef();
+		x = Const("x", Int()).getRef();
+		y = Const("y", Int()).getRef();
+		z = Const("z", Int()).getRef();
+		t = Const("t", Int()).getRef();
 		i1 = Int(1);
 		i2 = Int(2);
 		i3 = Int(3);
@@ -60,66 +59,61 @@ public class ExprITEEliminatorTests {
 	@Test
 	public void testSimple() {
 		// if A then B else C
-		assertEquals(eliminateITE(Ite(cA, cB, cC)), And(Or(Not(cA), cB), Or(cA, cC)));
+		assertEquals(eliminateITE(Ite(a, b, c)), And(Or(Not(a), b), Or(a, c)));
 
 		// if A then (if B then C else D) else E
-		assertEquals(eliminateITE(Ite(cA, Ite(cB, cC, cD), cE)),
-				And(Or(Not(cA), And(Or(Not(cB), cC), Or(cB, cD))), Or(cA, cE)));
+		assertEquals(eliminateITE(Ite(a, Ite(b, c, d), e)), And(Or(Not(a), And(Or(Not(b), c), Or(b, d))), Or(a, e)));
 	}
 
 	@Test
 	public void testUnary() {
 		// !(if A then B else C)
-		assertEquals(eliminateITE(Not(Ite(cA, cB, cC))), Not(And(Or(Not(cA), cB), Or(cA, cC))));
+		assertEquals(eliminateITE(Not(Ite(a, b, c))), Not(And(Or(Not(a), b), Or(a, c))));
 	}
 
 	@Test
 	public void testBinary() {
 		// A -> (if B then C else D)
-		assertEquals(eliminateITE(Imply(cA, Ite(cB, cC, cD))), Imply(cA, And(Or(Not(cB), cC), Or(cB, cD))));
+		assertEquals(eliminateITE(Imply(a, Ite(b, c, d))), Imply(a, And(Or(Not(b), c), Or(b, d))));
 		// (if B then C else D) -> A
-		assertEquals(eliminateITE(Imply(Ite(cB, cC, cD), cA)), Imply(And(Or(Not(cB), cC), Or(cB, cD)), cA));
+		assertEquals(eliminateITE(Imply(Ite(b, c, d), a)), Imply(And(Or(Not(b), c), Or(b, d)), a));
 		// A = (if B then C else D)
-		assertEquals(eliminateITE(Eq(cA, Ite(cB, cC, cD))), Eq(cA, And(Or(Not(cB), cC), Or(cB, cD))));
+		assertEquals(eliminateITE(Eq(a, Ite(b, c, d))), Eq(a, And(Or(Not(b), c), Or(b, d))));
 		// X = (if A then Y else Z)
-		assertEquals(eliminateITE(Eq(cX, Ite(cA, cY, cZ))), And(Or(Not(cA), Eq(cX, cY)), Or(cA, Eq(cX, cZ))));
+		assertEquals(eliminateITE(Eq(x, Ite(a, y, z))), And(Or(Not(a), Eq(x, y)), Or(a, Eq(x, z))));
 		// (if A then Y else Z) = X
-		assertEquals(eliminateITE(Eq(Ite(cA, cY, cZ), cX)), And(Or(Not(cA), Eq(cY, cX)), Or(cA, Eq(cZ, cX))));
+		assertEquals(eliminateITE(Eq(Ite(a, y, z), x)), And(Or(Not(a), Eq(y, x)), Or(a, Eq(z, x))));
 		// X = (if A then (if B then Y else Z) else T)
-		assertEquals(eliminateITE(Eq(cX, Ite(cA, Ite(cB, cY, cZ), cT))),
-				And(Or(Not(cA), And(Or(Not(cB), Eq(cX, cY)), Or(cB, Eq(cX, cZ)))), Or(cA, Eq(cX, cT))));
+		assertEquals(eliminateITE(Eq(x, Ite(a, Ite(b, y, z), t))),
+				And(Or(Not(a), And(Or(Not(b), Eq(x, y)), Or(b, Eq(x, z)))), Or(a, Eq(x, t))));
 		// (if A then (if B then Y else Z) else T) = X
-		assertEquals(eliminateITE(Eq(Ite(cA, Ite(cB, cY, cZ), cT), cX)),
-				And(Or(Not(cA), And(Or(Not(cB), Eq(cY, cX)), Or(cB, Eq(cZ, cX)))), Or(cA, Eq(cT, cX))));
+		assertEquals(eliminateITE(Eq(Ite(a, Ite(b, y, z), t), x)),
+				And(Or(Not(a), And(Or(Not(b), Eq(y, x)), Or(b, Eq(z, x)))), Or(a, Eq(t, x))));
 		// (if A then X else Y) = (if B then Z else T)
-		assertEquals(eliminateITE(Eq(Ite(cA, cX, cY), Ite(cB, cZ, cT))),
-				And(Or(Not(cA), And(Or(Not(cB), Eq(cX, cZ)), Or(cB, Eq(cX, cT)))),
-						Or(cA, And(Or(Not(cB), Eq(cY, cZ)), Or(cB, Eq(cY, cT))))));
+		assertEquals(eliminateITE(Eq(Ite(a, x, y), Ite(b, z, t))),
+				And(Or(Not(a), And(Or(Not(b), Eq(x, z)), Or(b, Eq(x, t)))),
+						Or(a, And(Or(Not(b), Eq(y, z)), Or(b, Eq(y, t))))));
 	}
 
 	@Test
 	public void testMultiary() {
 		// A or B or (if C then D else E)
-		assertEquals(eliminateITE(Or(cA, cB, Ite(cC, cD, cE))), Or(cA, cB, And(Or(Not(cC), cD), Or(cC, cE))));
+		assertEquals(eliminateITE(Or(a, b, Ite(c, d, e))), Or(a, b, And(Or(Not(c), d), Or(c, e))));
 		// 1 = 2 + (if A then 3 else 4) + 5
-		assertEquals(eliminateITE(Eq(i1, Add(i2, Ite(cA, i3, i4), i5))),
-				And(Or(Not(cA), Eq(i1, Add(i2, i3, i5))), Or(cA, Eq(i1, Add(i2, i4, i5)))));
+		assertEquals(eliminateITE(Eq(i1, Add(i2, Ite(a, i3, i4), i5))),
+				And(Or(Not(a), Eq(i1, Add(i2, i3, i5))), Or(a, Eq(i1, Add(i2, i4, i5)))));
 		// 1 = 2 + (if A then 3 else 4) + (if B then X else Y)
-		assertEquals(
-				eliminateITE(Eq(i1,
-						Add(i2, Ite(cA, i3, i4),
-								Ite(cB, cX,
-										cY)))),
-				And(Or(Not(cA), And(Or(Not(cB), Eq(i1, Add(i2, i3, cX))), Or(cB, Eq(i1, Add(i2, i3, cY))))),
-						Or(cA, And(Or(Not(cB), Eq(i1, Add(i2, i4, cX))), Or(cB, Eq(i1, Add(i2, i4, cY)))))));
+		assertEquals(eliminateITE(Eq(i1, Add(i2, Ite(a, i3, i4), Ite(b, x, y)))),
+				And(Or(Not(a), And(Or(Not(b), Eq(i1, Add(i2, i3, x))), Or(b, Eq(i1, Add(i2, i3, y))))),
+						Or(a, And(Or(Not(b), Eq(i1, Add(i2, i4, x))), Or(b, Eq(i1, Add(i2, i4, y)))))));
 	}
 
 	@Test
 	public void testNothingHappening() {
 		final List<Expr<? extends BoolType>> expressions = new ArrayList<>();
-		expressions.add(And(cA, cB, cD));
-		expressions.add(Eq(cX, Neg(cY)));
-		expressions.add(Geq(Sub(cX, cY), Add(cX, cZ, cT)));
+		expressions.add(And(a, b, d));
+		expressions.add(Eq(x, Neg(y)));
+		expressions.add(Geq(Sub(x, y), Add(x, z, t)));
 
 		for (final Expr<? extends BoolType> expr : expressions)
 			assertEquals(expr, eliminateITE(expr));

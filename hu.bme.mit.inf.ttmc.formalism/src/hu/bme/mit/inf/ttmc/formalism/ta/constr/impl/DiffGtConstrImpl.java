@@ -3,10 +3,9 @@ package hu.bme.mit.inf.ttmc.formalism.ta.constr.impl;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Gt;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Int;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Sub;
-import static hu.bme.mit.inf.ttmc.formalism.common.expr.impl.Exprs2.Ref;
 
 import hu.bme.mit.inf.ttmc.core.expr.GtExpr;
-import hu.bme.mit.inf.ttmc.formalism.common.decl.ClockDecl;
+import hu.bme.mit.inf.ttmc.formalism.common.expr.ClockRefExpr;
 import hu.bme.mit.inf.ttmc.formalism.ta.constr.Clock;
 import hu.bme.mit.inf.ttmc.formalism.ta.constr.DiffGtConstr;
 import hu.bme.mit.inf.ttmc.formalism.ta.utils.ConstrVisitor;
@@ -27,9 +26,9 @@ final class DiffGtConstrImpl extends AbstractDiffConstr implements DiffGtConstr 
 	public GtExpr asExpr() {
 		GtExpr result = expr;
 		if (result == null) {
-			final ClockDecl leftDecl = getLeftClock().asDecl();
-			final ClockDecl rightDecl = getRightClock().asDecl();
-			result = Gt(Sub(Ref(leftDecl), Ref(rightDecl)), Int(getBound()));
+			final ClockRefExpr leftRef = getLeftClock().asDecl().getRef();
+			final ClockRefExpr rightRef = getRightClock().asDecl().getRef();
+			result = Gt(Sub(leftRef, rightRef), Int(getBound()));
 			expr = result;
 		}
 		return result;

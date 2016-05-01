@@ -2,10 +2,9 @@ package hu.bme.mit.inf.ttmc.formalism.ta.constr.impl;
 
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Eq;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Int;
-import static hu.bme.mit.inf.ttmc.formalism.common.expr.impl.Exprs2.Ref;
 
 import hu.bme.mit.inf.ttmc.core.expr.EqExpr;
-import hu.bme.mit.inf.ttmc.formalism.common.decl.ClockDecl;
+import hu.bme.mit.inf.ttmc.formalism.common.expr.ClockRefExpr;
 import hu.bme.mit.inf.ttmc.formalism.ta.constr.Clock;
 import hu.bme.mit.inf.ttmc.formalism.ta.constr.UnitEqConstr;
 import hu.bme.mit.inf.ttmc.formalism.ta.utils.ConstrVisitor;
@@ -26,8 +25,8 @@ final class UnitEqConstrImpl extends AbstractUnitConstr implements UnitEqConstr 
 	public EqExpr asExpr() {
 		EqExpr result = expr;
 		if (result == null) {
-			final ClockDecl decl = getClock().asDecl();
-			result = Eq(Ref(decl), Int(getBound()));
+			final ClockRefExpr ref = getClock().asDecl().getRef();
+			result = Eq(ref, Int(getBound()));
 			expr = result;
 		}
 		return result;

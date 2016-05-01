@@ -1,6 +1,6 @@
-package hu.bme.mit.inf.ttmc.formalism.common.expr.impl;
+package hu.bme.mit.inf.ttmc.formalism.common.decl.impl;
 
-import hu.bme.mit.inf.ttmc.core.expr.impl.AbstractRefExpr;
+import hu.bme.mit.inf.ttmc.core.decl.impl.AbstractRefExpr;
 import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.core.utils.ExprVisitor;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;

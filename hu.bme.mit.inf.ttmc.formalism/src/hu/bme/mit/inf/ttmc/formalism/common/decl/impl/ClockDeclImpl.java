@@ -6,14 +6,24 @@ import hu.bme.mit.inf.ttmc.core.decl.impl.AbstractDecl;
 import hu.bme.mit.inf.ttmc.core.type.RatType;
 import hu.bme.mit.inf.ttmc.core.utils.DeclVisitor;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.ClockDecl;
+import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
+import hu.bme.mit.inf.ttmc.formalism.common.expr.ClockRefExpr;
 
-class ClockDeclImpl extends AbstractDecl<RatType> implements ClockDecl {
+class ClockDeclImpl extends AbstractDecl<RatType, VarDecl<RatType>> implements ClockDecl {
 
 	private static final int HASH_SEED = 8053;
 	private static final String DECL_LABEL = "Clock";
 
+	private final ClockRefExpr ref;
+
 	ClockDeclImpl(final String name) {
 		super(name, Rat());
+		ref = new ClockRefExprImpl(this);
+	}
+
+	@Override
+	public ClockRefExpr getRef() {
+		return ref;
 	}
 
 	@Override

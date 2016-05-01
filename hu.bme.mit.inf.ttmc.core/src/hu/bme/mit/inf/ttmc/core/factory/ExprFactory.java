@@ -6,14 +6,12 @@ import java.util.List;
 import com.google.common.collect.ImmutableMultiset;
 import com.google.common.collect.ImmutableSet;
 
-import hu.bme.mit.inf.ttmc.core.decl.ConstDecl;
 import hu.bme.mit.inf.ttmc.core.decl.ParamDecl;
 import hu.bme.mit.inf.ttmc.core.expr.AddExpr;
 import hu.bme.mit.inf.ttmc.core.expr.AndExpr;
 import hu.bme.mit.inf.ttmc.core.expr.ArrayReadExpr;
 import hu.bme.mit.inf.ttmc.core.expr.ArrayWriteExpr;
 import hu.bme.mit.inf.ttmc.core.expr.BoolLitExpr;
-import hu.bme.mit.inf.ttmc.core.expr.ConstRefExpr;
 import hu.bme.mit.inf.ttmc.core.expr.EqExpr;
 import hu.bme.mit.inf.ttmc.core.expr.ExistsExpr;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
@@ -36,7 +34,6 @@ import hu.bme.mit.inf.ttmc.core.expr.NegExpr;
 import hu.bme.mit.inf.ttmc.core.expr.NeqExpr;
 import hu.bme.mit.inf.ttmc.core.expr.NotExpr;
 import hu.bme.mit.inf.ttmc.core.expr.OrExpr;
-import hu.bme.mit.inf.ttmc.core.expr.ParamRefExpr;
 import hu.bme.mit.inf.ttmc.core.expr.RatDivExpr;
 import hu.bme.mit.inf.ttmc.core.expr.RatLitExpr;
 import hu.bme.mit.inf.ttmc.core.expr.RemExpr;
@@ -75,10 +72,6 @@ public interface ExprFactory {
 			final ParamDecl<? super P> paramDecl, final Expr<? extends R> result);
 
 	// LHS
-
-	public <T extends Type> ConstRefExpr<T> Ref(final ConstDecl<T> constDecl);
-
-	public <T extends Type> ParamRefExpr<T> Ref(final ParamDecl<T> paramDecl);
 
 	public <P extends Type, R extends Type> FuncAppExpr<P, R> App(
 			final Expr<? extends FuncType<? super P, ? extends R>> func, final Expr<? extends P> param);

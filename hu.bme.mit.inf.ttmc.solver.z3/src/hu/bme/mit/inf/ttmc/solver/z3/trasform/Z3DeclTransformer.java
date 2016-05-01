@@ -32,7 +32,7 @@ class Z3DeclTransformer {
 		visitor = new Z3DeclTransformerVisitor();
 	}
 
-	public com.microsoft.z3.FuncDecl toSymbol(final Decl<?> decl) {
+	public com.microsoft.z3.FuncDecl toSymbol(final Decl<?, ?> decl) {
 		return decl.accept(visitor, null);
 	}
 

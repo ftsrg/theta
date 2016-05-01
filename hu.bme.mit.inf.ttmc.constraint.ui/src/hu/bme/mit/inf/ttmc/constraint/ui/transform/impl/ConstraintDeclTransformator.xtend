@@ -39,7 +39,7 @@ public class ConstraintDeclTransformator implements DeclTransformator {
 	
 	////////
 	
-	protected def dispatch Decl<? extends Type> toDecl(Declaration declaration) {
+	protected def dispatch Decl<? extends Type, ?> toDecl(Declaration declaration) {
 		throw new UnsupportedOperationException("Not supported: " + declaration.class)
 	}
 

@@ -13,7 +13,6 @@ import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.core.utils.impl.ExprUtils;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
-import hu.bme.mit.inf.ttmc.formalism.common.expr.impl.Exprs2;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 import hu.bme.mit.inf.ttmc.formalism.utils.impl.FoldVisitor;
 import hu.bme.mit.inf.ttmc.formalism.utils.impl.UnfoldVisitor;
@@ -64,7 +63,7 @@ class STSUnrollerImpl {
 			} catch (final Exception ex) {
 				value = varDecl.getType().getAny();
 			}
-			ops.add(Exprs.Eq(Exprs2.Ref(varDecl), value));
+			ops.add(Exprs.Eq(varDecl.getRef(), value));
 		}
 
 		return Exprs.And(ops);

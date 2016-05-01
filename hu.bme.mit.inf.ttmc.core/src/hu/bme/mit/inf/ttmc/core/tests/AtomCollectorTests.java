@@ -9,7 +9,6 @@ import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Int;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Leq;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Not;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Or;
-import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Ref;
 import static hu.bme.mit.inf.ttmc.core.type.impl.Types.Bool;
 import static hu.bme.mit.inf.ttmc.core.type.impl.Types.Int;
 
@@ -30,10 +29,10 @@ public class AtomCollectorTests {
 	@Test
 	public void test() {
 		final Set<Expr<? extends BoolType>> atoms = new HashSet<>();
-		final ConstRefExpr<BoolType> ca = Ref(Const("a", Bool()));
-		final ConstRefExpr<BoolType> cb = Ref(Const("b", Bool()));
-		final ConstRefExpr<IntType> cx = Ref(Const("x", Int()));
-		final ConstRefExpr<IntType> cy = Ref(Const("y", Int()));
+		final ConstRefExpr<BoolType> ca = Const("a", Bool()).getRef();
+		final ConstRefExpr<BoolType> cb = Const("b", Bool()).getRef();
+		final ConstRefExpr<IntType> cx = Const("x", Int()).getRef();
+		final ConstRefExpr<IntType> cy = Const("y", Int()).getRef();
 
 		ExprUtils.collectAtoms(And(ca, Or(ca, Not(cb))), atoms);
 		Assert.assertEquals(of(ca, cb), atoms);

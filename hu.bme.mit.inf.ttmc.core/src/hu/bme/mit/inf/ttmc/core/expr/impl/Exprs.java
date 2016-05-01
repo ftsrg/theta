@@ -9,14 +9,12 @@ import java.util.List;
 import com.google.common.collect.ImmutableMultiset;
 import com.google.common.collect.ImmutableSet;
 
-import hu.bme.mit.inf.ttmc.core.decl.ConstDecl;
 import hu.bme.mit.inf.ttmc.core.decl.ParamDecl;
 import hu.bme.mit.inf.ttmc.core.expr.AddExpr;
 import hu.bme.mit.inf.ttmc.core.expr.AndExpr;
 import hu.bme.mit.inf.ttmc.core.expr.ArrayReadExpr;
 import hu.bme.mit.inf.ttmc.core.expr.ArrayWriteExpr;
 import hu.bme.mit.inf.ttmc.core.expr.BoolLitExpr;
-import hu.bme.mit.inf.ttmc.core.expr.ConstRefExpr;
 import hu.bme.mit.inf.ttmc.core.expr.EqExpr;
 import hu.bme.mit.inf.ttmc.core.expr.ExistsExpr;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
@@ -39,7 +37,6 @@ import hu.bme.mit.inf.ttmc.core.expr.NegExpr;
 import hu.bme.mit.inf.ttmc.core.expr.NeqExpr;
 import hu.bme.mit.inf.ttmc.core.expr.NotExpr;
 import hu.bme.mit.inf.ttmc.core.expr.OrExpr;
-import hu.bme.mit.inf.ttmc.core.expr.ParamRefExpr;
 import hu.bme.mit.inf.ttmc.core.expr.RatDivExpr;
 import hu.bme.mit.inf.ttmc.core.expr.RatLitExpr;
 import hu.bme.mit.inf.ttmc.core.expr.RemExpr;
@@ -92,39 +89,30 @@ public final class Exprs {
 		return new RatLitExprImpl(num, denom);
 	}
 
-	public static <P extends Type, R extends Type> FuncLitExpr<? super P, ? extends R> Func(final ParamDecl<? super P> paramDecl,
-			final Expr<? extends R> result) {
+	public static <P extends Type, R extends Type> FuncLitExpr<? super P, ? extends R> Func(
+			final ParamDecl<? super P> paramDecl, final Expr<? extends R> result) {
 		checkNotNull(paramDecl);
 		checkNotNull(result);
 		return new FuncLitExprImpl<P, R>(paramDecl, result);
 	}
 
-	public static <T extends Type> ConstRefExpr<T> Ref(final ConstDecl<T> constDecl) {
-		checkNotNull(constDecl);
-		return new ConstRefExprImpl<>(constDecl);
-	}
-
-	public static <T extends Type> ParamRefExpr<T> Ref(final ParamDecl<T> paramDecl) {
-		checkNotNull(paramDecl);
-		return new ParamRefExprImpl<>(paramDecl);
-	}
-
-	public static <P extends Type, R extends Type> FuncAppExpr<P, R> App(final Expr<? extends FuncType<? super P, ? extends R>> func,
-			final Expr<? extends P> param) {
+	public static <P extends Type, R extends Type> FuncAppExpr<P, R> App(
+			final Expr<? extends FuncType<? super P, ? extends R>> func, final Expr<? extends P> param) {
 		checkNotNull(func);
 		checkNotNull(param);
 		return new FuncAppExprImpl<P, R>(func, param);
 	}
 
-	public static <I extends Type, E extends Type> ArrayReadExpr<I, E> Read(final Expr<? extends ArrayType<? super I, ? extends E>> array,
-			final Expr<? extends I> index) {
+	public static <I extends Type, E extends Type> ArrayReadExpr<I, E> Read(
+			final Expr<? extends ArrayType<? super I, ? extends E>> array, final Expr<? extends I> index) {
 		checkNotNull(array);
 		checkNotNull(index);
 		return new ArrayReadExprImpl<>(array, index);
 	}
 
-	public static <I extends Type, E extends Type> ArrayWriteExpr<I, E> Write(final Expr<? extends ArrayType<? super I, ? extends E>> array,
-			final Expr<? extends I> index, final Expr<? extends E> elem) {
+	public static <I extends Type, E extends Type> ArrayWriteExpr<I, E> Write(
+			final Expr<? extends ArrayType<? super I, ? extends E>> array, final Expr<? extends I> index,
+			final Expr<? extends E> elem) {
 		checkNotNull(array);
 		checkNotNull(index);
 		checkNotNull(elem);
@@ -211,7 +199,8 @@ public final class Exprs {
 		return new NegExprImpl<T>(op);
 	}
 
-	public static <T extends ClosedUnderSub> SubExpr<T> Sub(final Expr<? extends T> leftOp, final Expr<? extends T> rightOp) {
+	public static <T extends ClosedUnderSub> SubExpr<T> Sub(final Expr<? extends T> leftOp,
+			final Expr<? extends T> rightOp) {
 		checkNotNull(leftOp);
 		checkNotNull(rightOp);
 		return new SubExprImpl<T>(leftOp, rightOp);
@@ -251,7 +240,8 @@ public final class Exprs {
 		return new RatDivExprImpl(leftOp, rightOp);
 	}
 
-	public static <T extends Type> IteExpr<T> Ite(final Expr<? extends BoolType> cond, final Expr<? extends T> then, final Expr<? extends T> elze) {
+	public static <T extends Type> IteExpr<T> Ite(final Expr<? extends BoolType> cond, final Expr<? extends T> then,
+			final Expr<? extends T> elze) {
 		checkNotNull(cond);
 		checkNotNull(then);
 		checkNotNull(elze);
@@ -268,15 +258,16 @@ public final class Exprs {
 		return And(ImmutableSet.of(op1, op2));
 	}
 
-	public static AndExpr And(final Expr<? extends BoolType> op1, final Expr<? extends BoolType> op2, final Expr<? extends BoolType> op3) {
+	public static AndExpr And(final Expr<? extends BoolType> op1, final Expr<? extends BoolType> op2,
+			final Expr<? extends BoolType> op3) {
 		checkNotNull(op1);
 		checkNotNull(op2);
 		checkNotNull(op3);
 		return And(ImmutableSet.of(op1, op2, op3));
 	}
 
-	public static AndExpr And(final Expr<? extends BoolType> op1, final Expr<? extends BoolType> op2, final Expr<? extends BoolType> op3,
-			final Expr<? extends BoolType> op4) {
+	public static AndExpr And(final Expr<? extends BoolType> op1, final Expr<? extends BoolType> op2,
+			final Expr<? extends BoolType> op3, final Expr<? extends BoolType> op4) {
 		checkNotNull(op1);
 		checkNotNull(op2);
 		checkNotNull(op3);
@@ -284,8 +275,9 @@ public final class Exprs {
 		return And(ImmutableSet.of(op1, op2, op3, op4));
 	}
 
-	public static AndExpr And(final Expr<? extends BoolType> op1, final Expr<? extends BoolType> op2, final Expr<? extends BoolType> op3,
-			final Expr<? extends BoolType> op4, final Expr<? extends BoolType> op5) {
+	public static AndExpr And(final Expr<? extends BoolType> op1, final Expr<? extends BoolType> op2,
+			final Expr<? extends BoolType> op3, final Expr<? extends BoolType> op4,
+			final Expr<? extends BoolType> op5) {
 		checkNotNull(op1);
 		checkNotNull(op2);
 		checkNotNull(op3);
@@ -302,15 +294,16 @@ public final class Exprs {
 		return Or(ImmutableSet.of(op1, op2));
 	}
 
-	public static OrExpr Or(final Expr<? extends BoolType> op1, final Expr<? extends BoolType> op2, final Expr<? extends BoolType> op3) {
+	public static OrExpr Or(final Expr<? extends BoolType> op1, final Expr<? extends BoolType> op2,
+			final Expr<? extends BoolType> op3) {
 		checkNotNull(op1);
 		checkNotNull(op2);
 		checkNotNull(op3);
 		return Or(ImmutableSet.of(op1, op2, op3));
 	}
 
-	public static OrExpr Or(final Expr<? extends BoolType> op1, final Expr<? extends BoolType> op2, final Expr<? extends BoolType> op3,
-			final Expr<? extends BoolType> op4) {
+	public static OrExpr Or(final Expr<? extends BoolType> op1, final Expr<? extends BoolType> op2,
+			final Expr<? extends BoolType> op3, final Expr<? extends BoolType> op4) {
 		checkNotNull(op1);
 		checkNotNull(op2);
 		checkNotNull(op3);
@@ -318,8 +311,9 @@ public final class Exprs {
 		return Or(ImmutableSet.of(op1, op2, op3, op4));
 	}
 
-	public static OrExpr Or(final Expr<? extends BoolType> op1, final Expr<? extends BoolType> op2, final Expr<? extends BoolType> op3,
-			final Expr<? extends BoolType> op4, final Expr<? extends BoolType> op5) {
+	public static OrExpr Or(final Expr<? extends BoolType> op1, final Expr<? extends BoolType> op2,
+			final Expr<? extends BoolType> op3, final Expr<? extends BoolType> op4,
+			final Expr<? extends BoolType> op5) {
 		checkNotNull(op1);
 		checkNotNull(op2);
 		checkNotNull(op3);
@@ -336,15 +330,16 @@ public final class Exprs {
 		return Add(ImmutableMultiset.of(op1, op2));
 	}
 
-	public static <T extends ClosedUnderAdd> AddExpr<T> Add(final Expr<? extends T> op1, final Expr<? extends T> op2, final Expr<? extends T> op3) {
+	public static <T extends ClosedUnderAdd> AddExpr<T> Add(final Expr<? extends T> op1, final Expr<? extends T> op2,
+			final Expr<? extends T> op3) {
 		checkNotNull(op1);
 		checkNotNull(op2);
 		checkNotNull(op3);
 		return Add(ImmutableMultiset.of(op1, op2, op3));
 	}
 
-	public static <T extends ClosedUnderAdd> AddExpr<T> Add(final Expr<? extends T> op1, final Expr<? extends T> op2, final Expr<? extends T> op3,
-			final Expr<? extends T> op4) {
+	public static <T extends ClosedUnderAdd> AddExpr<T> Add(final Expr<? extends T> op1, final Expr<? extends T> op2,
+			final Expr<? extends T> op3, final Expr<? extends T> op4) {
 		checkNotNull(op1);
 		checkNotNull(op2);
 		checkNotNull(op3);
@@ -352,8 +347,8 @@ public final class Exprs {
 		return Add(ImmutableMultiset.of(op1, op2, op3, op4));
 	}
 
-	public static <T extends ClosedUnderAdd> AddExpr<T> Add(final Expr<? extends T> op1, final Expr<? extends T> op2, final Expr<? extends T> op3,
-			final Expr<? extends T> op4, final Expr<? extends T> op5) {
+	public static <T extends ClosedUnderAdd> AddExpr<T> Add(final Expr<? extends T> op1, final Expr<? extends T> op2,
+			final Expr<? extends T> op3, final Expr<? extends T> op4, final Expr<? extends T> op5) {
 		checkNotNull(op1);
 		checkNotNull(op2);
 		checkNotNull(op3);
@@ -370,15 +365,16 @@ public final class Exprs {
 		return Mul(ImmutableMultiset.of(op1, op2));
 	}
 
-	public static <T extends ClosedUnderMul> MulExpr<T> Mul(final Expr<? extends T> op1, final Expr<? extends T> op2, final Expr<? extends T> op3) {
+	public static <T extends ClosedUnderMul> MulExpr<T> Mul(final Expr<? extends T> op1, final Expr<? extends T> op2,
+			final Expr<? extends T> op3) {
 		checkNotNull(op1);
 		checkNotNull(op2);
 		checkNotNull(op3);
 		return Mul(ImmutableMultiset.of(op1, op2, op3));
 	}
 
-	public static <T extends ClosedUnderMul> MulExpr<T> Mul(final Expr<? extends T> op1, final Expr<? extends T> op2, final Expr<? extends T> op3,
-			final Expr<? extends T> op4) {
+	public static <T extends ClosedUnderMul> MulExpr<T> Mul(final Expr<? extends T> op1, final Expr<? extends T> op2,
+			final Expr<? extends T> op3, final Expr<? extends T> op4) {
 		checkNotNull(op1);
 		checkNotNull(op2);
 		checkNotNull(op3);
@@ -386,8 +382,8 @@ public final class Exprs {
 		return Mul(ImmutableMultiset.of(op1, op2, op3, op4));
 	}
 
-	public static <T extends ClosedUnderMul> MulExpr<T> Mul(final Expr<? extends T> op1, final Expr<? extends T> op2, final Expr<? extends T> op3,
-			final Expr<? extends T> op4, final Expr<? extends T> op5) {
+	public static <T extends ClosedUnderMul> MulExpr<T> Mul(final Expr<? extends T> op1, final Expr<? extends T> op2,
+			final Expr<? extends T> op3, final Expr<? extends T> op4, final Expr<? extends T> op5) {
 		checkNotNull(op1);
 		checkNotNull(op2);
 		checkNotNull(op3);

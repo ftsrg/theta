@@ -5,7 +5,6 @@ import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Not;
 import static hu.bme.mit.inf.ttmc.core.type.impl.Types.Bool;
 import static hu.bme.mit.inf.ttmc.formalism.common.decl.impl.Decls2.Var;
 import static hu.bme.mit.inf.ttmc.formalism.common.expr.impl.Exprs2.Prime;
-import static hu.bme.mit.inf.ttmc.formalism.common.expr.impl.Exprs2.Ref;
 
 import java.util.List;
 
@@ -29,18 +28,18 @@ public final class Latch extends HWElement {
 
 	@Override
 	public Expr<? extends BoolType> getExpr(final List<HWElement> elements) {
-		return Ref(varDecl);
+		return varDecl.getRef();
 	}
 
 	public Expr<? extends BoolType> getInitExpr() {
-		return Not(Ref(varDecl));
+		return Not(varDecl.getRef());
 	}
 
 	public Expr<? extends BoolType> getTransExpr(final List<HWElement> elements) {
 		Expr<? extends BoolType> expr = elements.get(nextState / 2).getExpr(elements);
 		if (nextState % 2 == 1)
 			expr = Not(expr);
-		return Iff(Prime(Ref(varDecl)), expr);
+		return Iff(Prime(varDecl.getRef()), expr);
 	}
 
 }

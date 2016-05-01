@@ -1,4 +1,4 @@
-package hu.bme.mit.inf.ttmc.formalism.common.expr.impl;
+package hu.bme.mit.inf.ttmc.formalism.common.decl.impl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 

@@ -1,12 +1,13 @@
-package hu.bme.mit.inf.ttmc.core.expr.impl;
+package hu.bme.mit.inf.ttmc.core.decl.impl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import hu.bme.mit.inf.ttmc.core.decl.Decl;
 import hu.bme.mit.inf.ttmc.core.expr.RefExpr;
+import hu.bme.mit.inf.ttmc.core.expr.impl.AbstractExpr;
 import hu.bme.mit.inf.ttmc.core.type.Type;
 
-public abstract class AbstractRefExpr<DeclType extends Type, DeclKind extends Decl<DeclType>>
+public abstract class AbstractRefExpr<DeclType extends Type, DeclKind extends Decl<DeclType, DeclKind>>
 		extends AbstractExpr<DeclType> implements RefExpr<DeclType, DeclKind> {
 
 	private final DeclKind decl;

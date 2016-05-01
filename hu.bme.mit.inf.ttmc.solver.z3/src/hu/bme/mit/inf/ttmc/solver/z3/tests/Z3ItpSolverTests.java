@@ -11,7 +11,6 @@ import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Int;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Mul;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Neq;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Not;
-import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Ref;
 import static hu.bme.mit.inf.ttmc.core.type.impl.Types.Bool;
 import static hu.bme.mit.inf.ttmc.core.type.impl.Types.Func;
 import static hu.bme.mit.inf.ttmc.core.type.impl.Types.Int;
@@ -60,13 +59,13 @@ public class Z3ItpSolverTests {
 		final ConstDecl<FuncType<IntType, IntType>> fd = Const("f", Func(Int(), Int()));
 		final ConstDecl<FuncType<IntType, IntType>> gd = Const("g", Func(Int(), Int()));
 
-		a = Ref(ad);
-		b = Ref(bd);
-		c = Ref(cd);
-		d = Ref(dd);
-		e = Ref(ed);
-		f = Ref(fd);
-		g = Ref(gd);
+		a = ad.getRef();
+		b = bd.getRef();
+		c = cd.getRef();
+		d = dd.getRef();
+		e = ed.getRef();
+		f = fd.getRef();
+		g = gd.getRef();
 	}
 
 	@Test
@@ -177,11 +176,11 @@ public class Z3ItpSolverTests {
 		final ParamDecl<IntType> x1d = Param("x", Int());
 		final ParamDecl<IntType> x2d = Param("x", Int());
 
-		final Expr<IntType> i = Ref(id);
-		final Expr<FuncType<IntType, BoolType>> p = Ref(pd);
-		final Expr<FuncType<IntType, BoolType>> q = Ref(qd);
-		final Expr<IntType> x1 = Ref(x1d);
-		final Expr<IntType> x2 = Ref(x2d);
+		final Expr<IntType> i = id.getRef();
+		final Expr<FuncType<IntType, BoolType>> p = pd.getRef();
+		final Expr<FuncType<IntType, BoolType>> q = qd.getRef();
+		final Expr<IntType> x1 = x1d.getRef();
+		final Expr<IntType> x2 = x2d.getRef();
 
 		solver.add(A, Forall(ImmutableList.of(x1d), Imply(App(q, x1), App(p, x1))));
 		solver.add(A, Forall(ImmutableList.of(x2d), Not(App(p, x2))));

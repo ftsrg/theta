@@ -6,6 +6,6 @@ import hu.bme.mit.inf.ttmc.core.type.Type;
 
 public interface DeclTransformator {
 
-	public Decl<? extends Type> transform(Declaration declaration);
+	public Decl<? extends Type, ?> transform(Declaration declaration);
 
 }
