@@ -30,6 +30,7 @@ import org.eclipse.cdt.core.dom.ast.IASTInitializerClause;
 import org.eclipse.cdt.core.dom.ast.IASTLabelStatement;
 import org.eclipse.cdt.core.dom.ast.IASTLiteralExpression;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
+import org.eclipse.cdt.core.dom.ast.IASTNullStatement;
 import org.eclipse.cdt.core.dom.ast.IASTReturnStatement;
 import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTStatement;
@@ -46,6 +47,7 @@ import hu.bme.mit.inf.ttmc.code.ast.BreakStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.CaseStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.CompoundStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.ContinueStatementAst;
+import hu.bme.mit.inf.ttmc.code.ast.DeclarationAst;
 import hu.bme.mit.inf.ttmc.code.ast.DeclarationSpecifierAst;
 import hu.bme.mit.inf.ttmc.code.ast.InitDeclaratorAst;
 import hu.bme.mit.inf.ttmc.code.ast.LabeledStatementAst;
@@ -59,6 +61,7 @@ import hu.bme.mit.inf.ttmc.code.ast.FunctionDeclaratorAst;
 import hu.bme.mit.inf.ttmc.code.ast.IfStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.LiteralExpressionAst;
 import hu.bme.mit.inf.ttmc.code.ast.NameExpressionAst;
+import hu.bme.mit.inf.ttmc.code.ast.NullStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.ReturnStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.StatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.SwitchStatementAst;
@@ -73,7 +76,7 @@ import hu.bme.mit.inf.ttmc.code.ast.WhileStatementAst;
 public class AstTransformer {
 	
 	public static TranslationUnitAst transform(IASTTranslationUnit ast) {
-		List<FunctionDefinitionAst> functions = new ArrayList<>();
+		List<DeclarationAst> functions = new ArrayList<>();
 		
 		for (IASTNode child : ast.getChildren()) {
 			if (child instanceof IASTFunctionDefinition) {
@@ -158,7 +161,11 @@ public class AstTransformer {
 			return new BreakStatementAst();
 		}
 		
-		return null;		
+		if (ast instanceof IASTNullStatement) {
+			return new NullStatementAst();
+		}
+		
+		throw new UnsupportedOperationException("Statement class " + ast.getClass().getName() + " is not supported.");		
 	}
 	
 	private static SwitchStatementAst transformSwitchStatement(IASTSwitchStatement ast) {
@@ -194,7 +201,7 @@ public class AstTransformer {
 	private static IfStatementAst transformIfStatement(IASTIfStatement ast) {
 		ExpressionAst cond = transformExpression(ast.getConditionExpression());
 		StatementAst thenStmt = transformStatement(ast.getThenClause());
-		StatementAst elseStmt = transformStatement(ast.getElseClause());
+		StatementAst elseStmt = ast.getElseClause() != null ? transformStatement(ast.getElseClause()) : null;
 				
 		return new IfStatementAst(cond, thenStmt, elseStmt);
 	}
@@ -347,9 +354,11 @@ public class AstTransformer {
 				return new UnaryExpressionAst(transformExpression(expr), Operator.OP_PREFIX_INCR);
 			case IASTUnaryExpression.op_postFixDecr:
 				return new UnaryExpressionAst(transformExpression(expr), Operator.OP_PREFIX_INCR);
+			case IASTUnaryExpression.op_not:
+				return new UnaryExpressionAst(transformExpression(expr), Operator.OP_NOT);
 		}
 		
-		return null;		
+		throw new UnsupportedOperationException();		
 	}
 
 	private static FunctionCallExpressionAst transformFunctionCallExpression(IASTFunctionCallExpression ast) {

@@ -13,7 +13,7 @@ public class InitDeclaratorAst extends DeclaratorAst {
 	public InitDeclaratorAst(String name, InitializerAst initializer) {
 		super(name);
 		this.initializer = initializer;
-	}	
+	}
 	
 	public InitializerAst getInitializer() {
 		return this.initializer;

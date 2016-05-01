@@ -2,7 +2,6 @@ package hu.bme.mit.inf.ttmc.code.visitor;
 
 import java.util.ArrayList;
 import java.util.List;
-
 import hu.bme.mit.inf.ttmc.code.ast.AstNode;
 import hu.bme.mit.inf.ttmc.code.ast.BreakStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.CaseStatementAst;
@@ -11,6 +10,7 @@ import hu.bme.mit.inf.ttmc.code.ast.ContinueStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.DeclarationStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.DefaultStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.DoStatementAst;
+import hu.bme.mit.inf.ttmc.code.ast.ExpressionAst;
 import hu.bme.mit.inf.ttmc.code.ast.ExpressionStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.ForStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.GotoStatementAst;
@@ -23,8 +23,8 @@ import hu.bme.mit.inf.ttmc.code.ast.SwitchStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.WhileStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.visitor.StatementVisitor;
 
-public class UnrollingStatementVisitorAst implements StatementVisitor<StatementAst> {
-	
+public abstract class StatementAstTransformerVisitor implements StatementVisitor<StatementAst> {
+
 	public static class StatementListAst extends StatementAst {
 		private List<StatementAst> stmts = new ArrayList<>();
 
@@ -49,9 +49,9 @@ public class UnrollingStatementVisitorAst implements StatementVisitor<StatementA
 		@Override
 		public AstNode[] getChildren() {
 			throw new UnsupportedOperationException();
-		}
+		}		
 	}
-	
+
 	@Override
 	public StatementAst visit(IfStatementAst ast) {
 		return ast;
@@ -127,10 +127,8 @@ public class UnrollingStatementVisitorAst implements StatementVisitor<StatementA
 		return ast;
 	}
 
-	@Override
 	public StatementAst visit(NullStatementAst ast) {
-		// TODO Auto-generated method stub
-		return null;
+		return ast;
 	}
-
+	
 }

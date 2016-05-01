@@ -24,6 +24,12 @@ public class DeclarationSpecifierAst extends AstNode {
 	private EnumSet<TypeQualifier> typeQualifier;
 	private EnumSet<FunctionSpecifier> functionSpec;
 	
+	public DeclarationSpecifierAst() {
+		this.storageSpec = EnumSet.noneOf(StorageClassSpecifier.class);
+		this.typeQualifier = EnumSet.noneOf(TypeQualifier.class);
+		this.functionSpec = EnumSet.noneOf(FunctionSpecifier.class);
+	}
+	
 	public DeclarationSpecifierAst(
 		EnumSet<StorageClassSpecifier> storageSpec,
 		EnumSet<TypeQualifier> typeQualifier,

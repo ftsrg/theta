@@ -3,11 +3,13 @@ package hu.bme.mit.inf.ttmc.code.visitor;
 import java.util.ArrayList;
 import java.util.List;
 
+import hu.bme.mit.inf.ttmc.code.ast.AssignmentInitializerAst;
 import hu.bme.mit.inf.ttmc.code.ast.BinaryExpressionAst;
 import hu.bme.mit.inf.ttmc.code.ast.BreakStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.CaseStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.CompoundStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.ContinueStatementAst;
+import hu.bme.mit.inf.ttmc.code.ast.DeclarationAst;
 import hu.bme.mit.inf.ttmc.code.ast.DeclarationStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.DeclaratorAst;
 import hu.bme.mit.inf.ttmc.code.ast.DefaultStatementAst;
@@ -24,15 +26,17 @@ import hu.bme.mit.inf.ttmc.code.ast.InitDeclaratorAst;
 import hu.bme.mit.inf.ttmc.code.ast.LabeledStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.LiteralExpressionAst;
 import hu.bme.mit.inf.ttmc.code.ast.NameExpressionAst;
+import hu.bme.mit.inf.ttmc.code.ast.NullStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.ReturnStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.StatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.SwitchStatementAst;
+import hu.bme.mit.inf.ttmc.code.ast.TranslationUnitAst;
 import hu.bme.mit.inf.ttmc.code.ast.UnaryExpressionAst;
 import hu.bme.mit.inf.ttmc.code.ast.VarDeclarationAst;
 import hu.bme.mit.inf.ttmc.code.ast.WhileStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.visitor.AstVisitor;
 
-public class PrintCodeAstVisitor implements AstVisitor<String, String, String, String> {
+public class PrintCodeAstVisitor implements AstVisitor<String, String, String, String, String> {
 
 	private int indent = 0;
 	
@@ -41,7 +45,7 @@ public class PrintCodeAstVisitor implements AstVisitor<String, String, String, S
 		String left = ast.getLeft().accept(this);
 		String right = ast.getRight().accept(this);
 		
-		return String.format("%s %s %s", left, ast.getOperator().toString(), right);
+		return String.format("%s %s %s", left, binaryOperatorString(ast.getOperator()), right);
 	}
 
 	@Override
@@ -81,7 +85,7 @@ public class PrintCodeAstVisitor implements AstVisitor<String, String, String, S
 	@Override
 	public String visit(IfStatementAst ast) {
 		StringBuilder sb = new StringBuilder();
-		sb.append(String.format("if(%s) \n", ast.getCondition().accept(this)));
+		sb.append(String.format("if(%s) ", ast.getCondition().accept(this)));
 		sb.append(ast.getThen().accept(this));
 		
 		if (ast.getElse() != null) {
@@ -103,9 +107,9 @@ public class PrintCodeAstVisitor implements AstVisitor<String, String, String, S
 		for (StatementAst stmt : ast.getStatements()) {
 			sb.append(String.format("%s%s\n", indentStr, stmt.accept(this)));
 		}
-		sb.append('}');
-		
 		this.indent--;
+		sb.append(new String(new char[this.indent*4]).replace('\0', ' ') + '}');
+		
 		
 		return sb.toString();
 	}
@@ -127,17 +131,17 @@ public class PrintCodeAstVisitor implements AstVisitor<String, String, String, S
 
 	@Override
 	public String visit(WhileStatementAst ast) {
-		return String.format("while (%s)\n %s", ast.getCondition().accept(this), ast.getBody().accept(this)); 
+		return String.format("while (%s) %s", ast.getCondition().accept(this), ast.getBody().accept(this)); 
 	}
 
 	@Override
 	public String visit(ForStatementAst ast) {
-		return String.format("for (%s;%s;%s)\n %s", ast.getInit().accept(this), ast.getCondition().accept(this), ast.getIteration().accept(this), ast.getBody().accept(this));
+		return String.format("for (%s;%s;%s) %s", ast.getInit().accept(this), ast.getCondition().accept(this), ast.getIteration().accept(this), ast.getBody().accept(this));
 	}
 
 	@Override
 	public String visit(DoStatementAst ast) {
-		return String.format("do\n%s while (%s)\n", ast.getBody().accept(this), ast.getCondition().accept(this));
+		return String.format("do %s while (%s)\n", ast.getBody().accept(this), ast.getCondition().accept(this));
 	}
 
 	@Override
@@ -158,7 +162,12 @@ public class PrintCodeAstVisitor implements AstVisitor<String, String, String, S
 
 	@Override
 	public String visit(InitDeclaratorAst ast) {
-		return ast.getName();		
+		if (ast.getInitializer() instanceof AssignmentInitializerAst) {
+			AssignmentInitializerAst init = (AssignmentInitializerAst) ast.getInitializer();
+			return String.format("%s = %s", ast.getName(), init.getExpression().accept(this));
+		}
+		
+		return ast.getName();
 	}
 
 	@Override
@@ -198,8 +207,52 @@ public class PrintCodeAstVisitor implements AstVisitor<String, String, String, S
 
 	@Override
 	public String visit(LabeledStatementAst ast) {
-		return String.format("%s: %s", ast.getLabel(), ast.getStatement());
+		return String.format("%s: %s", ast.getLabel(), ast.getStatement().accept(this));
 	}
 
+	@Override
+	public String visit(NullStatementAst ast) {
+		return ";";
+	}
+
+	@Override
+	public String visit(TranslationUnitAst ast) {
+		StringBuilder sb = new StringBuilder();
+		
+		for (DeclarationAst decl : ast.getDeclarations()) {
+			sb.append(String.format("%s\n", decl.accept(this)));
+		}
+		
+		return sb.toString();
+	}
+
+	private String binaryOperatorString(BinaryExpressionAst.Operator op) {
+		switch (op) {
+		case OP_ADD:
+			return "+";
+		case OP_ASSIGN:
+			return "=";
+		case OP_DIV:
+			return "/";
+		case OP_IS_EQ:
+			return "==";
+		case OP_IS_GT:
+			return ">";
+		case OP_IS_GTEQ:
+			return ">=";
+		case OP_IS_LT:
+			return "<";
+		case OP_IS_LTEQ:
+			return "<=";
+		case OP_IS_NOT_EQ:
+			return "!=";
+		case OP_MUL:
+			return "*";
+		case OP_SUB:
+			return "-";			
+		}
+		throw new UnsupportedOperationException();
+	}
+	
 	
 }

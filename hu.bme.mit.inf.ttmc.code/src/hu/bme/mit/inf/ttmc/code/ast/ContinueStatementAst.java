@@ -6,7 +6,7 @@ public class ContinueStatementAst extends StatementAst {
 
 	@Override
 	public <S> S accept(StatementVisitor<S> visitor) {
-		throw new UnsupportedOperationException();
+		return visitor.visit(this);
 	}
 
 	@Override

@@ -10,6 +10,7 @@ import hu.bme.mit.inf.ttmc.code.ast.ForStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.GotoStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.IfStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.LabeledStatementAst;
+import hu.bme.mit.inf.ttmc.code.ast.NullStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.ReturnStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.StatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.SwitchStatementAst;
@@ -34,5 +35,6 @@ public interface StatementVisitor<S> {
 	public S visit(BreakStatementAst ast);
 	public S visit(GotoStatementAst ast);
 	public S visit(LabeledStatementAst ast);
+	public S visit(NullStatementAst ast);
 	
 }

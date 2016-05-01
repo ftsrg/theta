@@ -25,14 +25,16 @@ import hu.bme.mit.inf.ttmc.code.ast.InitDeclaratorAst;
 import hu.bme.mit.inf.ttmc.code.ast.LabeledStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.LiteralExpressionAst;
 import hu.bme.mit.inf.ttmc.code.ast.NameExpressionAst;
+import hu.bme.mit.inf.ttmc.code.ast.NullStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.ReturnStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.StatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.SwitchStatementAst;
+import hu.bme.mit.inf.ttmc.code.ast.TranslationUnitAst;
 import hu.bme.mit.inf.ttmc.code.ast.UnaryExpressionAst;
 import hu.bme.mit.inf.ttmc.code.ast.VarDeclarationAst;
 import hu.bme.mit.inf.ttmc.code.ast.WhileStatementAst;
 
-public class CloneAstVisitor implements AstVisitor<ExpressionAst, StatementAst, DeclarationAst, DeclaratorAst> {
+public class CloneAstVisitor implements AstVisitor<ExpressionAst, StatementAst, DeclarationAst, DeclaratorAst, TranslationUnitAst> {
 
 	@Override
 	public ExpressionAst visit(BinaryExpressionAst ast) {
@@ -132,7 +134,7 @@ public class CloneAstVisitor implements AstVisitor<ExpressionAst, StatementAst, 
 
 	@Override
 	public DeclaratorAst visit(InitDeclaratorAst ast) {
-		return new InitDeclaratorAst(ast.getName());
+		return new InitDeclaratorAst(ast.getName(), ast.getInitializer());
 	}
 
 	@Override
@@ -173,6 +175,21 @@ public class CloneAstVisitor implements AstVisitor<ExpressionAst, StatementAst, 
 	@Override
 	public StatementAst visit(LabeledStatementAst ast) {
 		return ast;
+	}
+
+	@Override
+	public StatementAst visit(NullStatementAst ast) {
+		return ast;
+	}
+
+	@Override
+	public TranslationUnitAst visit(TranslationUnitAst ast) {
+		List<DeclarationAst> decl = new ArrayList<>();
+		for (DeclarationAst d : ast.getDeclarations()) {
+			decl.add(d.accept(this));
+		}
+		
+		return new TranslationUnitAst(decl);
 	}
 
 }

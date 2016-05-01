@@ -8,7 +8,7 @@ public class UnaryExpressionAst extends ExpressionAst {
 	private ExpressionAst operand;
 	
 	public enum Operator {
-		OP_PREFIX_INCR, OP_PREFIX_DECR, OP_POSTFIX_INCR, OP_POSTFIX_DECR, OP_ASTERISK, OP_PLUS, OP_MINUS
+		OP_PREFIX_INCR, OP_PREFIX_DECR, OP_POSTFIX_INCR, OP_POSTFIX_DECR, OP_ASTERISK, OP_PLUS, OP_MINUS, OP_NOT
 	}
 	
 	public UnaryExpressionAst(ExpressionAst operand, Operator operator) {
