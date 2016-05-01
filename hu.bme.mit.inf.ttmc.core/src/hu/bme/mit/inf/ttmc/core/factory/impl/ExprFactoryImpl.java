@@ -3,13 +3,11 @@ package hu.bme.mit.inf.ttmc.core.factory.impl;
 import java.util.Collection;
 import java.util.List;
 
-import hu.bme.mit.inf.ttmc.core.decl.ConstDecl;
 import hu.bme.mit.inf.ttmc.core.decl.ParamDecl;
 import hu.bme.mit.inf.ttmc.core.expr.AddExpr;
 import hu.bme.mit.inf.ttmc.core.expr.AndExpr;
 import hu.bme.mit.inf.ttmc.core.expr.ArrayReadExpr;
 import hu.bme.mit.inf.ttmc.core.expr.ArrayWriteExpr;
-import hu.bme.mit.inf.ttmc.core.expr.ConstRefExpr;
 import hu.bme.mit.inf.ttmc.core.expr.EqExpr;
 import hu.bme.mit.inf.ttmc.core.expr.ExistsExpr;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
@@ -32,7 +30,6 @@ import hu.bme.mit.inf.ttmc.core.expr.NegExpr;
 import hu.bme.mit.inf.ttmc.core.expr.NeqExpr;
 import hu.bme.mit.inf.ttmc.core.expr.NotExpr;
 import hu.bme.mit.inf.ttmc.core.expr.OrExpr;
-import hu.bme.mit.inf.ttmc.core.expr.ParamRefExpr;
 import hu.bme.mit.inf.ttmc.core.expr.RatDivExpr;
 import hu.bme.mit.inf.ttmc.core.expr.RatLitExpr;
 import hu.bme.mit.inf.ttmc.core.expr.RemExpr;
@@ -77,16 +74,6 @@ public class ExprFactoryImpl implements ExprFactory {
 	public <P extends Type, R extends Type> FuncLitExpr<? super P, ? extends R> Func(
 			final ParamDecl<? super P> paramDecl, final Expr<? extends R> result) {
 		return Exprs.Func(paramDecl, result);
-	}
-
-	@Override
-	public <T extends Type> ConstRefExpr<T> Ref(final ConstDecl<T> constDecl) {
-		return Exprs.Ref(constDecl);
-	}
-
-	@Override
-	public <T extends Type> ParamRefExpr<T> Ref(final ParamDecl<T> paramDecl) {
-		return Exprs.Ref(paramDecl);
 	}
 
 	@Override

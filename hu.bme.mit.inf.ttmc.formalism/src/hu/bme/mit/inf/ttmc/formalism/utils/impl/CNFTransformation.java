@@ -1,7 +1,5 @@
 package hu.bme.mit.inf.ttmc.formalism.utils.impl;
 
-import static hu.bme.mit.inf.ttmc.formalism.common.expr.impl.Exprs2.Ref;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -103,7 +101,7 @@ public class CNFTransformation {
 		private Expr<? extends BoolType> getRep(final Expr<?> expr) {
 			final VarDecl<BoolType> rep = Decls2.Var(CNFPREFIX + (nextCNFVarId++), Types.Bool());
 			representatives.put(expr, rep);
-			return Ref(rep);
+			return rep.getRef();
 		}
 
 		@SuppressWarnings("unchecked")
@@ -136,7 +134,7 @@ public class CNFTransformation {
 		@Override
 		public Expr<? extends BoolType> visit(final NotExpr expr, final Collection<Expr<? extends BoolType>> param) {
 			if (representatives.containsKey(expr))
-				return Ref(representatives.get(expr));
+				return representatives.get(expr).getRef();
 			final Expr<? extends BoolType> rep = getRep(expr);
 			final Expr<? extends BoolType> op = expr.getOp().accept(this, param);
 			param.add(Exprs.And(ImmutableSet.of(Exprs.Or(ImmutableSet.of(Exprs.Not(rep), Exprs.Not(op))),
@@ -147,7 +145,7 @@ public class CNFTransformation {
 		@Override
 		public Expr<? extends BoolType> visit(final ImplyExpr expr, final Collection<Expr<? extends BoolType>> param) {
 			if (representatives.containsKey(expr))
-				return Ref(representatives.get(expr));
+				return representatives.get(expr).getRef();
 			final Expr<? extends BoolType> rep = getRep(expr);
 			final Expr<? extends BoolType> op1 = expr.getLeftOp().accept(this, param);
 			final Expr<? extends BoolType> op2 = expr.getRightOp().accept(this, param);
@@ -159,7 +157,7 @@ public class CNFTransformation {
 		@Override
 		public Expr<? extends BoolType> visit(final IffExpr expr, final Collection<Expr<? extends BoolType>> param) {
 			if (representatives.containsKey(expr))
-				return Ref(representatives.get(expr));
+				return representatives.get(expr).getRef();
 			final Expr<? extends BoolType> rep = getRep(expr);
 			final Expr<? extends BoolType> op1 = expr.getLeftOp().accept(this, param);
 			final Expr<? extends BoolType> op2 = expr.getRightOp().accept(this, param);
@@ -173,7 +171,7 @@ public class CNFTransformation {
 		@Override
 		public Expr<? extends BoolType> visit(final AndExpr expr, final Collection<Expr<? extends BoolType>> param) {
 			if (representatives.containsKey(expr))
-				return Ref(representatives.get(expr));
+				return representatives.get(expr).getRef();
 			final Expr<? extends BoolType> rep = getRep(expr);
 			final Collection<Expr<? extends BoolType>> ops = new ArrayList<>(expr.getOps().size());
 			for (final Expr<? extends BoolType> op : expr.getOps())
@@ -193,7 +191,7 @@ public class CNFTransformation {
 		@Override
 		public Expr<? extends BoolType> visit(final OrExpr expr, final Collection<Expr<? extends BoolType>> param) {
 			if (representatives.containsKey(expr))
-				return Ref(representatives.get(expr));
+				return representatives.get(expr).getRef();
 			final Expr<? extends BoolType> rep = getRep(expr);
 			final Collection<Expr<? extends BoolType>> ops = new ArrayList<>(expr.getOps().size());
 			for (final Expr<? extends BoolType> op : expr.getOps())

@@ -1,7 +1,5 @@
 package hu.bme.mit.inf.ttmc.formalism.utils.impl;
 
-import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Ref;
-
 import hu.bme.mit.inf.ttmc.core.decl.ConstDecl;
 import hu.bme.mit.inf.ttmc.core.expr.ConstRefExpr;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
@@ -40,7 +38,7 @@ public class UnfoldVisitor extends ExprRewriterVisitor<Integer> implements ProgE
 		final int i = param;
 		final VarDecl<DeclType> varDecl = expr.getDecl();
 		final ConstDecl<DeclType> constDecl = varMap.getConstDecl(varDecl, i);
-		final ConstRefExpr<DeclType> constRefExpr = Ref(constDecl);
+		final ConstRefExpr<DeclType> constRefExpr = constDecl.getRef();
 		return constRefExpr;
 	}
 

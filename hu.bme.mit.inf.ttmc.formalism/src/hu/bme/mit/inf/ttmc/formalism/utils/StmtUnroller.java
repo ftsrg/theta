@@ -1,7 +1,5 @@
 package hu.bme.mit.inf.ttmc.formalism.utils;
 
-import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Ref;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -100,7 +98,7 @@ public class StmtUnroller {
 			indexMap.inc(varDecl);
 			final int index = indexMap.getIndex(varDecl);
 			final ConstDecl<?> constDecl = varMap.getConstDecl(varDecl, index);
-			final Expr<?> lhs = Ref(constDecl);
+			final Expr<?> lhs = constDecl.getRef();
 
 			final Expr<? extends BoolType> result = Exprs.Eq(lhs, rhs);
 			return result;
@@ -140,7 +138,7 @@ public class StmtUnroller {
 				final int index = indexMap.getIndex(varDecl);
 
 				final ConstDecl<DeclType> constDecl = varMap.getConstDecl(varDecl, index);
-				final ConstRefExpr<DeclType> constRef = Ref(constDecl);
+				final ConstRefExpr<DeclType> constRef = constDecl.getRef();
 
 				return constRef;
 			}

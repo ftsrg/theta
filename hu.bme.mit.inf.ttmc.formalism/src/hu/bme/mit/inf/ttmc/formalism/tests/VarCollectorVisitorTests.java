@@ -13,7 +13,6 @@ import static hu.bme.mit.inf.ttmc.core.type.impl.Types.Bool;
 import static hu.bme.mit.inf.ttmc.core.type.impl.Types.Int;
 import static hu.bme.mit.inf.ttmc.core.type.impl.Types.Rat;
 import static hu.bme.mit.inf.ttmc.formalism.common.decl.impl.Decls2.Var;
-import static hu.bme.mit.inf.ttmc.formalism.common.expr.impl.Exprs2.Ref;
 import static org.junit.Assert.assertTrue;
 
 import java.util.HashSet;
@@ -52,20 +51,16 @@ public class VarCollectorVisitorTests {
 		vd = Var("d", Bool());
 		ve = Var("e", Int());
 
-		a = Ref(va);
-		b = Ref(vb);
-		c = Ref(vc);
-		d = Ref(vd);
-		e = Ref(ve);
+		a = va.getRef();
+		b = vb.getRef();
+		c = vc.getRef();
+		d = vd.getRef();
+		e = ve.getRef();
 	}
 
-	@SuppressWarnings("serial")
 	@Test
 	public void test() {
-		assertTrue(checkExpr(And(True(), False(), Eq(Int(1), Int(2))), new HashSet<VarDecl<? extends Type>>() {
-			{
-			}
-		}));
+		assertTrue(checkExpr(And(True(), False(), Eq(Int(1), Int(2))), of()));
 
 		assertTrue(checkExpr(And(a, Not(d)), of(va, vd)));
 

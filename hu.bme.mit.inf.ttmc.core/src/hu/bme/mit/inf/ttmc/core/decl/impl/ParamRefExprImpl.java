@@ -1,4 +1,4 @@
-package hu.bme.mit.inf.ttmc.core.expr.impl;
+package hu.bme.mit.inf.ttmc.core.decl.impl;
 
 import hu.bme.mit.inf.ttmc.core.decl.ParamDecl;
 import hu.bme.mit.inf.ttmc.core.expr.ParamRefExpr;

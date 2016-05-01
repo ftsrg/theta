@@ -3,10 +3,9 @@ package hu.bme.mit.inf.ttmc.formalism.ta.constr.impl;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Int;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Leq;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Sub;
-import static hu.bme.mit.inf.ttmc.formalism.common.expr.impl.Exprs2.Ref;
 
 import hu.bme.mit.inf.ttmc.core.expr.LeqExpr;
-import hu.bme.mit.inf.ttmc.formalism.common.decl.ClockDecl;
+import hu.bme.mit.inf.ttmc.formalism.common.expr.ClockRefExpr;
 import hu.bme.mit.inf.ttmc.formalism.ta.constr.Clock;
 import hu.bme.mit.inf.ttmc.formalism.ta.constr.DiffLeqConstr;
 import hu.bme.mit.inf.ttmc.formalism.ta.utils.ConstrVisitor;
@@ -27,9 +26,9 @@ final class DiffLeqConstrImpl extends AbstractDiffConstr implements DiffLeqConst
 	public LeqExpr asExpr() {
 		LeqExpr result = expr;
 		if (result == null) {
-			final ClockDecl leftDecl = getLeftClock().asDecl();
-			final ClockDecl rightDecl = getRightClock().asDecl();
-			result = Leq(Sub(Ref(leftDecl), Ref(rightDecl)), Int(getBound()));
+			final ClockRefExpr leftRef = getLeftClock().asDecl().getRef();
+			final ClockRefExpr rightRef = getRightClock().asDecl().getRef();
+			result = Leq(Sub(leftRef, rightRef), Int(getBound()));
 			expr = result;
 		}
 		return result;

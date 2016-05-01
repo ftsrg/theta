@@ -19,7 +19,6 @@ import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Not;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Or;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Rat;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.RatDiv;
-import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Ref;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Sub;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.True;
 import static hu.bme.mit.inf.ttmc.core.type.impl.Types.Bool;
@@ -49,12 +48,12 @@ public class ExprSimplifierTests {
 	private final ConstDecl<IntType> cb = Decls.Const("b", Int());
 	private final ConstDecl<IntType> cc = Decls.Const("c", Int());
 
-	private final Expr<BoolType> x = Ref(cx);
-	private final Expr<BoolType> y = Ref(cy);
-	private final Expr<BoolType> z = Ref(cz);
-	private final Expr<IntType> a = Ref(ca);
-	private final Expr<IntType> b = Ref(cb);
-	private final Expr<IntType> c = Ref(cc);
+	private final Expr<BoolType> x = cx.getRef();
+	private final Expr<BoolType> y = cy.getRef();
+	private final Expr<BoolType> z = cz.getRef();
+	private final Expr<IntType> a = ca.getRef();
+	private final Expr<IntType> b = cb.getRef();
+	private final Expr<IntType> c = cc.getRef();
 
 	@Test
 	public void testNot() {

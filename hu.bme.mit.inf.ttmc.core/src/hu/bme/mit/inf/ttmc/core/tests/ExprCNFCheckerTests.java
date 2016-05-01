@@ -6,7 +6,6 @@ import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Iff;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Imply;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Not;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Or;
-import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Ref;
 import static hu.bme.mit.inf.ttmc.core.type.impl.Types.Bool;
 import static hu.bme.mit.inf.ttmc.core.utils.impl.ExprUtils.isExprCNF;
 import static org.junit.Assert.assertFalse;
@@ -20,47 +19,47 @@ import hu.bme.mit.inf.ttmc.core.type.BoolType;
 
 public class ExprCNFCheckerTests {
 	// Constants for testing
-	private ConstRefExpr<BoolType> cA, cB, cC;
+	private ConstRefExpr<BoolType> a, b, c;
 
 	@Before
 	public void before() {
 		// Create constants
-		cA = Ref(Const("A", Bool()));
-		cB = Ref(Const("B", Bool()));
-		cC = Ref(Const("C", Bool()));
+		a = Const("a", Bool()).getRef();
+		b = Const("b", Bool()).getRef();
+		c = Const("c", Bool()).getRef();
 	}
 
 	@Test
 	public void testCnfCheckerTrue() {
 		// A
-		assertTrue(isExprCNF(cA));
+		assertTrue(isExprCNF(a));
 		// !A
-		assertTrue(isExprCNF(Not(cA)));
+		assertTrue(isExprCNF(Not(a)));
 		// !A or B or !C
-		assertTrue(isExprCNF(Or(Not(cA), cB, Not(cC))));
+		assertTrue(isExprCNF(Or(Not(a), b, Not(c))));
 		// !A and B and !C
-		assertTrue(isExprCNF(And(Not(cA), cB, Not(cC))));
+		assertTrue(isExprCNF(And(Not(a), b, Not(c))));
 		// !A and (B and !C)
-		assertTrue(isExprCNF(And(Not(cA), And(cB, Not(cC)))));
+		assertTrue(isExprCNF(And(Not(a), And(b, Not(c)))));
 		// !A and (B or !C)
-		assertTrue(isExprCNF(And(Not(cA), Or(cB, Not(cC)))));
+		assertTrue(isExprCNF(And(Not(a), Or(b, Not(c)))));
 	}
 
 	@Test
 	public void testCnfCheckerFalse() {
 		// !!A
-		assertFalse(isExprCNF(Not(Not(cA))));
+		assertFalse(isExprCNF(Not(Not(a))));
 		// !A and B and !C
-		assertTrue(isExprCNF(And(Not(cA), cB, Not(cC))));
+		assertTrue(isExprCNF(And(Not(a), b, Not(c))));
 		// !A or (B and !C)
-		assertFalse(isExprCNF(Or(Not(cA), And(cB, Not(cC)))));
+		assertFalse(isExprCNF(Or(Not(a), And(b, Not(c)))));
 		// !(A and B)
-		assertFalse(isExprCNF(Not(And(cA, cB))));
+		assertFalse(isExprCNF(Not(And(a, b))));
 		// !(A or B)
-		assertFalse(isExprCNF(Not(Or(cA, cB))));
+		assertFalse(isExprCNF(Not(Or(a, b))));
 		// A -> B
-		assertFalse(isExprCNF(Imply(cA, cB)));
+		assertFalse(isExprCNF(Imply(a, b)));
 		// A <-> B
-		assertFalse(isExprCNF(Iff(cA, cB)));
+		assertFalse(isExprCNF(Iff(a, b)));
 	}
 }
