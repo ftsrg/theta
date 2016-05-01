@@ -27,6 +27,7 @@ import hu.bme.mit.inf.ttmc.code.ast.FunctionDeclaratorAst;
 import hu.bme.mit.inf.ttmc.code.ast.IfStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.LiteralExpressionAst;
 import hu.bme.mit.inf.ttmc.code.ast.NameExpressionAst;
+import hu.bme.mit.inf.ttmc.code.ast.NullStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.ReturnStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.StatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.SwitchStatementAst;
@@ -336,6 +337,12 @@ public class TransformProgramVisitor implements ExpressionVisitor<Expr<? extends
 	@Override
 	public Stmt visit(LabeledStatementAst ast) {
 		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public Stmt visit(NullStatementAst ast) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 	
 	

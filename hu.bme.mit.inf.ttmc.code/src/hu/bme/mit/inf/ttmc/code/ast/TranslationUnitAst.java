@@ -3,28 +3,37 @@ package hu.bme.mit.inf.ttmc.code.ast;
 import java.util.ArrayList;
 import java.util.List;
 
+import hu.bme.mit.inf.ttmc.code.ast.visitor.TranslationUnitVisitor;
+
 public class TranslationUnitAst extends AstNode {
 
-	private List<FunctionDefinitionAst> functions;
+	private List<DeclarationAst> declarations;
 	
-	public TranslationUnitAst(List<FunctionDefinitionAst> functions) {
-		this.functions = functions;
+	public TranslationUnitAst(List<DeclarationAst> declarations) {
+		this.declarations = declarations;
 	}
 
-	@Override
-	public AstNode[] getChildren() {
-		return this.functions.toArray(new AstNode[this.functions.size()]);
+	public List<DeclarationAst> getDeclarations() {
+		return this.declarations;
 	}
 	
+	@Override
+	public AstNode[] getChildren() {
+		return this.declarations.toArray(new AstNode[this.declarations.size()]);
+	}
 	
 	public TranslationUnitAst copy() {
-		List<FunctionDefinitionAst> newFunctions = new ArrayList<>();
+		List<DeclarationAst> newDeclarations = new ArrayList<>();
 		
-		for (FunctionDefinitionAst func : this.functions) {
-			newFunctions.add(func.copy());
+		for (DeclarationAst func : this.declarations) {
+			newDeclarations.add(func.copy());
 		}
 		
-		return new TranslationUnitAst(newFunctions);
+		return new TranslationUnitAst(newDeclarations);
+	}
+	
+	public<T> T accept(TranslationUnitVisitor<T> visitor) {
+		return visitor.visit(this);
 	}
 	
 }
