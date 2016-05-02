@@ -84,8 +84,8 @@ public class StmtUnroller {
 		}
 
 		@Override
-		public <DeclType extends Type, ExprType extends DeclType> Expr<? extends BoolType> visit(final AssignStmt<DeclType, ExprType> stmt,
-				final Tuple2<VarMap, IndexMap> param) {
+		public <DeclType extends Type, ExprType extends DeclType> Expr<? extends BoolType> visit(
+				final AssignStmt<DeclType, ExprType> stmt, final Tuple2<VarMap, IndexMap> param) {
 
 			final VarMap varMap = param._1();
 			final IndexMap indexMap = param._2();
@@ -105,8 +105,9 @@ public class StmtUnroller {
 		}
 
 		@Override
-		public <DeclType extends Type> Expr<? extends BoolType> visit(final HavocStmt<DeclType> stmt, final Tuple2<VarMap, IndexMap> param) {
-			//			final VarMap varMap = param._1();
+		public <DeclType extends Type> Expr<? extends BoolType> visit(final HavocStmt<DeclType> stmt,
+				final Tuple2<VarMap, IndexMap> param) {
+			// final VarMap varMap = param._1();
 			final IndexMap indexMap = param._2();
 
 			final VarDecl<?> varDecl = stmt.getVarDecl();
@@ -122,12 +123,14 @@ public class StmtUnroller {
 				implements ProgExprVisitor<Tuple2<VarMap, IndexMap>, Expr<?>> {
 
 			@Override
-			public <ExprType extends Type> Expr<ExprType> visit(final PrimedExpr<ExprType> expr, final Tuple2<VarMap, IndexMap> param) {
+			public <ExprType extends Type> Expr<ExprType> visit(final PrimedExpr<ExprType> expr,
+					final Tuple2<VarMap, IndexMap> param) {
 				throw new UnsupportedOperationException();
 			}
 
 			@Override
-			public <DeclType extends Type> ConstRefExpr<DeclType> visit(final VarRefExpr<DeclType> expr, final Tuple2<VarMap, IndexMap> param) {
+			public <DeclType extends Type> ConstRefExpr<DeclType> visit(final VarRefExpr<DeclType> expr,
+					final Tuple2<VarMap, IndexMap> param) {
 				final VarMap varMap = param._1();
 				final IndexMap indexMap = param._2();
 
@@ -141,12 +144,14 @@ public class StmtUnroller {
 			}
 
 			@Override
-			public <ReturnType extends Type> Expr<?> visit(final ProcRefExpr<ReturnType> expr, final Tuple2<VarMap, IndexMap> param) {
+			public <ReturnType extends Type> Expr<?> visit(final ProcRefExpr<ReturnType> expr,
+					final Tuple2<VarMap, IndexMap> param) {
 				throw new UnsupportedOperationException();
 			}
 
 			@Override
-			public <ReturnType extends Type> Expr<?> visit(final ProcCallExpr<ReturnType> expr, final Tuple2<VarMap, IndexMap> param) {
+			public <ReturnType extends Type> Expr<?> visit(final ProcCallExpr<ReturnType> expr,
+					final Tuple2<VarMap, IndexMap> param) {
 				throw new UnsupportedOperationException();
 			}
 		}

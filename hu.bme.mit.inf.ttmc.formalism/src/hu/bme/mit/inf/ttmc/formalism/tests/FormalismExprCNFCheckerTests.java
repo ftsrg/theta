@@ -21,57 +21,57 @@ import hu.bme.mit.inf.ttmc.formalism.common.expr.VarRefExpr;
 public class FormalismExprCNFCheckerTests {
 
 	// Constants and variaBles for testing
-	private VarRefExpr<BoolType> vA, vB, vC;
+	private VarRefExpr<BoolType> a, b, c;
 
 	@Before
 	public void Before() {
 		// Create constants and variaBles
-		vA = Var("A", Bool()).getRef();
-		vB = Var("B", Bool()).getRef();
-		vC = Var("C", Bool()).getRef();
+		a = Var("a", Bool()).getRef();
+		b = Var("b", Bool()).getRef();
+		c = Var("c", Bool()).getRef();
 	}
 
 	@Test
 	public void testCnfProgExprCheckerTrue() {
 		// A
-		assertTrue(isExprCNF(vA));
+		assertTrue(isExprCNF(a));
 		// A'
-		assertTrue(isExprCNF(Prime(vA)));
+		assertTrue(isExprCNF(Prime(a)));
 		// !A
-		assertTrue(isExprCNF(Not(vA)));
+		assertTrue(isExprCNF(Not(a)));
 		// !(A')
-		assertTrue(isExprCNF(Not(Prime(vA))));
+		assertTrue(isExprCNF(Not(Prime(a))));
 		// !A or B' or !C
-		assertTrue(isExprCNF(Or(Not(vA), Prime(vB), Not(vC))));
+		assertTrue(isExprCNF(Or(Not(a), Prime(b), Not(c))));
 		// !A and B' and !C
-		assertTrue(isExprCNF(And(Not(vA), Prime(vB), Not(vC))));
+		assertTrue(isExprCNF(And(Not(a), Prime(b), Not(c))));
 		// !A and (B and !C)
-		assertTrue(isExprCNF(And(Not(vA), And(vB, Not(vC)))));
+		assertTrue(isExprCNF(And(Not(a), And(b, Not(c)))));
 		// !A and (B' or !C)
-		assertTrue(isExprCNF(And(Not(vA), Or(Prime(vB), Not(vC)))));
+		assertTrue(isExprCNF(And(Not(a), Or(Prime(b), Not(c)))));
 	}
 
 	@Test
 	public void testCnfProgExprCheckerFalse() {
 		// !!A
-		assertFalse(isExprCNF(Not(Not(vA))));
+		assertFalse(isExprCNF(Not(Not(a))));
 		// !A and B and !C
-		assertTrue(isExprCNF(And(Not(vA), vB, Not(vC))));
+		assertTrue(isExprCNF(And(Not(a), b, Not(c))));
 		// !A or (B and !C)
-		assertFalse(isExprCNF(Or(Not(vA), And(vB, Not(vC)))));
+		assertFalse(isExprCNF(Or(Not(a), And(b, Not(c)))));
 		// !(A and B)
-		assertFalse(isExprCNF(Not(And(vA, vB))));
+		assertFalse(isExprCNF(Not(And(a, b))));
 		// !(A or B)
-		assertFalse(isExprCNF(Not(Or(vA, vB))));
+		assertFalse(isExprCNF(Not(Or(a, b))));
 		// A -> B
-		assertFalse(isExprCNF(Imply(vA, vB)));
+		assertFalse(isExprCNF(Imply(a, b)));
 		// A <-> B
-		assertFalse(isExprCNF(Iff(vA, vB)));
+		assertFalse(isExprCNF(Iff(a, b)));
 		// (!A)'
-		assertFalse(isExprCNF(Not(Not(vA))));
+		assertFalse(isExprCNF(Not(Not(a))));
 		// (A and B)'
-		assertFalse(isExprCNF(Prime(And(vA, vB))));
+		assertFalse(isExprCNF(Prime(And(a, b))));
 		// (A or B)'
-		assertFalse(isExprCNF(Prime(Or(vA, vB))));
+		assertFalse(isExprCNF(Prime(Or(a, b))));
 	}
 }

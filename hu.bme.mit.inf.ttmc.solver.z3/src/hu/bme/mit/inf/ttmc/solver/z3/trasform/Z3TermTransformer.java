@@ -204,7 +204,7 @@ public class Z3TermTransformer {
 	private Expr<?> toConst(final com.microsoft.z3.Expr term) {
 		final FuncDecl funcDecl = term.getFuncDecl();
 		final ConstDecl<?> constDecl = symbolTable.getConst(funcDecl);
-		return Exprs.Ref(constDecl);
+		return constDecl.getRef();
 	}
 
 	private <T extends Type> List<Expr<? extends T>> toExprListOfType(final com.microsoft.z3.Expr[] terms,

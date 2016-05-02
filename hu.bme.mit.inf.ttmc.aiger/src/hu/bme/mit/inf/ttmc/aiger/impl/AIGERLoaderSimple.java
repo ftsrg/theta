@@ -54,8 +54,8 @@ public class AIGERLoaderSimple implements AIGERLoader {
 			final int v1 = Integer.parseInt(v[0]);
 			final int v2 = Integer.parseInt(v[1]);
 			builder.addInit(Exprs.Not(vars.get(v1 / 2).getRef()));
-			builder.addTrans(
-					Exprs.Iff(Exprs2.Prime(vars.get(v1 / 2).getRef()), v2 % 2 == 0 ? vars.get(v2 / 2).getRef() : Exprs.Not(vars.get(v2 / 2).getRef())));
+			builder.addTrans(Exprs.Iff(Exprs2.Prime(vars.get(v1 / 2).getRef()),
+					v2 % 2 == 0 ? vars.get(v2 / 2).getRef() : Exprs.Not(vars.get(v2 / 2).getRef())));
 		}
 
 		// Outputs
@@ -71,7 +71,8 @@ public class AIGERLoaderSimple implements AIGERLoader {
 			final int vi1 = Integer.parseInt(v[1]);
 			final int vi2 = Integer.parseInt(v[2]);
 			builder.addInvar(Exprs.Iff(vars.get(vo / 2).getRef(),
-					Exprs.And(ImmutableSet.of(vi1 % 2 == 0 ? vars.get(vi1 / 2).getRef() : Exprs.Not(vars.get(vi1 / 2).getRef()),
+					Exprs.And(ImmutableSet.of(
+							vi1 % 2 == 0 ? vars.get(vi1 / 2).getRef() : Exprs.Not(vars.get(vi1 / 2).getRef()),
 							vi2 % 2 == 0 ? vars.get(vi2 / 2).getRef() : Exprs.Not(vars.get(vi2 / 2).getRef())))));
 		}
 
@@ -82,7 +83,8 @@ public class AIGERLoaderSimple implements AIGERLoader {
 			builder.setProp(Exprs.Not(outVars.get(0)));
 		} else {
 			throw new UnsupportedOperationException(
-					"Currently only models with a single output variable are supported (this model has " + outVars.size() + ").");
+					"Currently only models with a single output variable are supported (this model has "
+							+ outVars.size() + ").");
 		}
 
 		return builder.build();

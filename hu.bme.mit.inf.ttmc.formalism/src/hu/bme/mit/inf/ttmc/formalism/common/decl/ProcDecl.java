@@ -12,12 +12,13 @@ import hu.bme.mit.inf.ttmc.formalism.common.type.ProcType;
 
 public interface ProcDecl<ReturnType extends Type> extends Decl<ProcType<ReturnType>, ProcDecl<ReturnType>> {
 
+	@Override
+	public ProcRefExpr<ReturnType> getRef();
+
 	public List<? extends ParamDecl<?>> getParamDecls();
 
 	public ReturnType getReturnType();
 
 	public Optional<Stmt> getStmt();
 
-	@Override
-	public ProcRefExpr<ReturnType> getRef();
 }

@@ -8,4 +8,5 @@ public interface VarDecl<DeclType extends Type> extends Decl<DeclType, VarDecl<D
 
 	@Override
 	public VarRefExpr<DeclType> getRef();
+
 }

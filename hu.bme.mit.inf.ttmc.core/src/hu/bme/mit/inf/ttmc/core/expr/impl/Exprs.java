@@ -9,13 +9,12 @@ import java.util.List;
 import com.google.common.collect.ImmutableMultiset;
 import com.google.common.collect.ImmutableSet;
 
-import hu.bme.mit.inf.ttmc.core.decl.ConstDecl;
 import hu.bme.mit.inf.ttmc.core.decl.ParamDecl;
 import hu.bme.mit.inf.ttmc.core.expr.AddExpr;
 import hu.bme.mit.inf.ttmc.core.expr.AndExpr;
 import hu.bme.mit.inf.ttmc.core.expr.ArrayReadExpr;
 import hu.bme.mit.inf.ttmc.core.expr.ArrayWriteExpr;
-import hu.bme.mit.inf.ttmc.core.expr.ConstRefExpr;
+import hu.bme.mit.inf.ttmc.core.expr.BoolLitExpr;
 import hu.bme.mit.inf.ttmc.core.expr.EqExpr;
 import hu.bme.mit.inf.ttmc.core.expr.ExistsExpr;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
@@ -38,7 +37,6 @@ import hu.bme.mit.inf.ttmc.core.expr.NegExpr;
 import hu.bme.mit.inf.ttmc.core.expr.NeqExpr;
 import hu.bme.mit.inf.ttmc.core.expr.NotExpr;
 import hu.bme.mit.inf.ttmc.core.expr.OrExpr;
-import hu.bme.mit.inf.ttmc.core.expr.ParamRefExpr;
 import hu.bme.mit.inf.ttmc.core.expr.RatDivExpr;
 import hu.bme.mit.inf.ttmc.core.expr.RatLitExpr;
 import hu.bme.mit.inf.ttmc.core.expr.RemExpr;
@@ -76,6 +74,12 @@ public final class Exprs {
 		return FALSE_EXPR;
 	}
 
+	public static BoolLitExpr Bool(final boolean value) {
+		if (value)
+			return True();
+		return False();
+	}
+
 	public static IntLitExpr Int(final long value) {
 		return new IntLitExprImpl(value);
 	}
@@ -90,16 +94,6 @@ public final class Exprs {
 		checkNotNull(paramDecl);
 		checkNotNull(result);
 		return new FuncLitExprImpl<P, R>(paramDecl, result);
-	}
-
-	public static <T extends Type> ConstRefExpr<T> Ref(final ConstDecl<T> constDecl) {
-		checkNotNull(constDecl);
-		return new ConstRefExprImpl<>(constDecl);
-	}
-
-	public static <T extends Type> ParamRefExpr<T> Ref(final ParamDecl<T> paramDecl) {
-		checkNotNull(paramDecl);
-		return new ParamRefExprImpl<>(paramDecl);
 	}
 
 	public static <P extends Type, R extends Type> FuncAppExpr<P, R> App(
