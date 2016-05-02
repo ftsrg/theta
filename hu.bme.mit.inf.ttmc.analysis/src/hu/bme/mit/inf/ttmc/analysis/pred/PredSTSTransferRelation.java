@@ -26,8 +26,10 @@ public class PredSTSTransferRelation implements TransferRelation<PredState> {
 
 	@Override
 	public Collection<? extends PredState> getSuccStates(final PredState state) {
+		checkNotNull(state);
 		final Set<PredState> succStates = new HashSet<>();
-		while (true) {
+		boolean moreSuccessors;
+		do {
 			AndExpr nextSuccExpr = null;
 			solver.push();
 			for (final Expr<? extends BoolType> pred : state.getPreds())
@@ -37,10 +39,13 @@ public class PredSTSTransferRelation implements TransferRelation<PredState> {
 			solver.add(sts.unrollTrans(0));
 			for (final PredState existingSucc : succStates)
 				solver.add(sts.unroll(Exprs.Not(Exprs.And(existingSucc.getPreds())), 1));
-			if (solver.check().boolValue())
+
+			moreSuccessors = solver.check().boolValue();
+			if (moreSuccessors)
 				nextSuccExpr = sts.getConcreteState(solver.getModel(), 1);
+
 			solver.pop();
-			if (nextSuccExpr != null) {
+			if (moreSuccessors) {
 				final Set<Expr<? extends BoolType>> nextSuccPreds = new HashSet<>();
 				solver.push();
 				solver.add(sts.unroll(nextSuccExpr, 0));
@@ -60,7 +65,7 @@ public class PredSTSTransferRelation implements TransferRelation<PredState> {
 				break;
 			}
 
-		}
+		} while (moreSuccessors);
 		return succStates;
 	}
 

@@ -1,5 +1,7 @@
 package hu.bme.mit.inf.ttmc.analysis.pred;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -18,27 +20,32 @@ public class PredSTSInitStates implements InitStates<PredState> {
 	private final STS sts;
 	private final Set<Expr<? extends BoolType>> preds;
 
-	public PredSTSInitStates(final STS sts, final Collection<? extends Expr<? extends BoolType>> preds,
-			final Solver solver) {
-		this.sts = sts;
-		this.solver = solver;
+	public PredSTSInitStates(final STS sts, final Collection<? extends Expr<? extends BoolType>> preds, final Solver solver) {
+		this.sts = checkNotNull(sts);
+		this.solver = checkNotNull(solver);
 		this.preds = new HashSet<>(preds);
 	}
 
 	@Override
 	public Collection<? extends PredState> get() {
 		final Set<PredState> initStates = new HashSet<>();
-		while (true) {
+		boolean moreInitialStates;
+
+		do {
 			AndExpr nextInitStateExpr = null;
 			solver.push();
 			solver.add(sts.unrollInit(0));
 			solver.add(sts.unrollInv(0));
 			for (final PredState existingInit : initStates)
 				solver.add(sts.unroll(Exprs.Not(Exprs.And(existingInit.getPreds())), 0));
-			if (solver.check().boolValue())
+
+			moreInitialStates = solver.check().boolValue();
+			if (moreInitialStates) {
 				nextInitStateExpr = sts.getConcreteState(solver.getModel(), 0);
+			}
+
 			solver.pop();
-			if (nextInitStateExpr != null) {
+			if (moreInitialStates) {
 				final Set<Expr<? extends BoolType>> nextInitStatePreds = new HashSet<>();
 				solver.push();
 				solver.add(sts.unroll(nextInitStateExpr, 0));
@@ -54,10 +61,8 @@ public class PredSTSInitStates implements InitStates<PredState> {
 				}
 				solver.pop();
 				initStates.add(PredState.create(nextInitStatePreds));
-			} else {
-				break;
 			}
-		}
+		} while (moreInitialStates);
 		return initStates;
 	}
 
