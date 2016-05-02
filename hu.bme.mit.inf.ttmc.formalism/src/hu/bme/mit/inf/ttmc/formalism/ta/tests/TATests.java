@@ -7,9 +7,8 @@ import static hu.bme.mit.inf.ttmc.formalism.ta.constr.impl.Constrs.True;
 
 import org.junit.Test;
 
-import hu.bme.mit.inf.ttmc.core.expr.Expr;
-import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.formalism.ta.constr.Clock;
+import hu.bme.mit.inf.ttmc.formalism.ta.constr.Constr;
 
 public class TATests {
 
@@ -17,8 +16,11 @@ public class TATests {
 	public void testConstraints() {
 		final Clock x = Clock("x");
 		final Clock y = Clock("y");
-		final Expr<BoolType> expr = And(Eq(x, y, 0), True(), Eq(y, x, 10)).asExpr();
-		System.out.println(expr);
+		final Constr constr = And(Eq(x, y, 0), True(), Eq(y, x, 10));
+		System.out.println(constr);
+		System.out.println(constr.getClocks());
+		System.out.println(constr.asExpr());
+
 	}
 
 }

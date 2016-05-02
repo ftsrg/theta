@@ -2,6 +2,10 @@ package hu.bme.mit.inf.ttmc.formalism.ta.constr.impl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import java.util.Collection;
+
+import com.google.common.collect.ImmutableSet;
+
 import hu.bme.mit.inf.ttmc.formalism.ta.constr.Clock;
 import hu.bme.mit.inf.ttmc.formalism.ta.constr.DiffConstr;
 
@@ -32,6 +36,11 @@ public abstract class AbstractDiffConstr implements DiffConstr {
 	@Override
 	public final int getBound() {
 		return bound;
+	}
+
+	@Override
+	public Collection<? extends Clock> getClocks() {
+		return ImmutableSet.of(leftClock, rightClock);
 	}
 
 	@Override

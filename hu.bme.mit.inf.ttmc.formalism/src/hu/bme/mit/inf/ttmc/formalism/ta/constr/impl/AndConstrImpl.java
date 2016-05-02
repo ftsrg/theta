@@ -12,6 +12,7 @@ import com.google.common.collect.ImmutableSet;
 import hu.bme.mit.inf.ttmc.core.expr.AndExpr;
 import hu.bme.mit.inf.ttmc.formalism.ta.constr.AndConstr;
 import hu.bme.mit.inf.ttmc.formalism.ta.constr.AtomicConstr;
+import hu.bme.mit.inf.ttmc.formalism.ta.constr.Clock;
 import hu.bme.mit.inf.ttmc.formalism.ta.constr.Constr;
 import hu.bme.mit.inf.ttmc.formalism.ta.constr.TrueConstr;
 import hu.bme.mit.inf.ttmc.formalism.ta.utils.ConstrVisitor;
@@ -33,6 +34,15 @@ final class AndConstrImpl implements AndConstr {
 	@Override
 	public Collection<? extends AtomicConstr> getConstrs() {
 		return constrs;
+	}
+
+	@Override
+	public Collection<? extends Clock> getClocks() {
+		final ImmutableSet.Builder<Clock> builder = ImmutableSet.builder();
+		for (final Constr constr : constrs) {
+			builder.addAll(constr.getClocks());
+		}
+		return builder.build();
 	}
 
 	@Override
