@@ -4,10 +4,11 @@ import java.util.Collection;
 import java.util.Collections;
 
 import hu.bme.mit.inf.ttmc.analysis.InitStates;
+import hu.bme.mit.inf.ttmc.analysis.impl.NullPrecision;
 import hu.bme.mit.inf.ttmc.formalism.common.Automaton;
 import hu.bme.mit.inf.ttmc.formalism.common.Loc;
 
-public class LocInitStates<L extends Loc<L, ?>> implements InitStates<LocState<L>> {
+public class LocInitStates<L extends Loc<L, ?>> implements InitStates<LocState<L>, NullPrecision> {
 
 	private final Automaton<L, ?> automaton;
 
@@ -16,7 +17,7 @@ public class LocInitStates<L extends Loc<L, ?>> implements InitStates<LocState<L
 	}
 
 	@Override
-	public Collection<? extends LocState<L>> get() {
+	public Collection<? extends LocState<L>> get(final NullPrecision precision) {
 		return Collections.singleton(LocState.create(automaton.getInitLoc()));
 	}
 

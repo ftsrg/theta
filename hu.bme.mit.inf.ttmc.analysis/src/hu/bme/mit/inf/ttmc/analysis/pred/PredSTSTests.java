@@ -43,8 +43,11 @@ public class PredSTSTests {
 		preds.addAll(((OrExpr) sts.getProp()).getOps());
 		final PredSTSInitStates initStates = new PredSTSInitStates(sts, preds, solver);
 		final PredSTSTransferRelation trel = new PredSTSTransferRelation(sts, solver);
-		final BasicAlgorithm<PredState> algorithm = new BasicAlgorithm<>(new PredDomain(solver, sts), initStates, trel);
-		final Collection<PredState> result = algorithm.run();
+		final BasicAlgorithm<PredState, PredPrecision> algorithm = new BasicAlgorithm<>(new PredDomain(solver, sts),
+				initStates, trel);
+
+		// TODO replace null by actual precision
+		final Collection<PredState> result = algorithm.run(null);
 
 		for (final PredState predState : result) {
 			System.out.println(predState);
@@ -69,10 +72,11 @@ public class PredSTSTests {
 		builder.addInit(Eq(y.getRef(), Int(1)));
 
 		builder.addTrans(And(Geq(Prime(r.getRef()), Int(0)), Leq(Prime(r.getRef()), Int(1))));
-		builder.addTrans(Eq(Prime(x.getRef()), Ite(Eq(r.getRef(), Int(1)), Int(0),
-				Ite(Lt(x.getRef(), y.getRef()), Add(x.getRef(), Int(1)), Ite(Eq(x.getRef(), y.getRef()), Int(0), x.getRef())))));
-		builder.addTrans(Eq(Prime(y.getRef()), Ite(Eq(r.getRef(), Int(1)), Int(0),
-				Ite(And(Eq(x.getRef(), y.getRef()), Eq(y.getRef(), Int(2))), Add(y.getRef(), Int(1)), Ite(Eq(x.getRef(), y.getRef()), Int(0), y.getRef())))));
+		builder.addTrans(Eq(Prime(x.getRef()), Ite(Eq(r.getRef(), Int(1)), Int(0), Ite(Lt(x.getRef(), y.getRef()),
+				Add(x.getRef(), Int(1)), Ite(Eq(x.getRef(), y.getRef()), Int(0), x.getRef())))));
+		builder.addTrans(Eq(Prime(y.getRef()),
+				Ite(Eq(r.getRef(), Int(1)), Int(0), Ite(And(Eq(x.getRef(), y.getRef()), Eq(y.getRef(), Int(2))),
+						Add(y.getRef(), Int(1)), Ite(Eq(x.getRef(), y.getRef()), Int(0), y.getRef())))));
 
 		builder.setProp(Or(Lt(x.getRef(), y.getRef()), Eq(r.getRef(), Int(1))));
 
