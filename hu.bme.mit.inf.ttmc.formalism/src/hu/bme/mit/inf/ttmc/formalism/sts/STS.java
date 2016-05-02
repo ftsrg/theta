@@ -5,11 +5,11 @@ import java.util.List;
 
 import hu.bme.mit.inf.ttmc.core.expr.AndExpr;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.model.Model;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.utils.ExprUnroller;
-import hu.bme.mit.inf.ttmc.solver.Model;
 
 /**
  * Symbolic Transition System (STS) interface.
@@ -38,11 +38,13 @@ public interface STS extends ExprUnroller {
 
 	public AndExpr getConcreteState(final Model model, final int i);
 
-	public AndExpr getConcreteState(final Model model, final int i, final Collection<VarDecl<? extends Type>> variables);
+	public AndExpr getConcreteState(final Model model, final int i,
+			final Collection<VarDecl<? extends Type>> variables);
 
 	public List<AndExpr> extractTrace(final Model model, final int length);
 
-	public List<AndExpr> extractTrace(final Model model, final int length, final Collection<VarDecl<? extends Type>> variables);
+	public List<AndExpr> extractTrace(final Model model, final int length,
+			final Collection<VarDecl<? extends Type>> variables);
 
 	public Expr<? extends BoolType> foldin(final Expr<? extends BoolType> expr, final int i);
 }

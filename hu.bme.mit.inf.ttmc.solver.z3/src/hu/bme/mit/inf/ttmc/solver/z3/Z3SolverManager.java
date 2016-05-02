@@ -1,5 +1,6 @@
 package hu.bme.mit.inf.ttmc.solver.z3;
 
+import hu.bme.mit.inf.ttmc.common.OSHelper;
 import hu.bme.mit.inf.ttmc.solver.ItpSolver;
 import hu.bme.mit.inf.ttmc.solver.Solver;
 import hu.bme.mit.inf.ttmc.solver.SolverManager;
@@ -18,11 +19,22 @@ public class Z3SolverManager implements SolverManager {
 	////////
 
 	private static void loadLibraries() {
-		System.loadLibrary("msvcr110");
-		System.loadLibrary("msvcp110");
-		System.loadLibrary("vcomp110");
-		System.loadLibrary("libz3");
-		System.loadLibrary("libz3java");
+		switch (OSHelper.getOS()) {
+		case WINDOWS:
+			System.loadLibrary("msvcr110");
+			System.loadLibrary("msvcp110");
+			System.loadLibrary("vcomp110");
+			System.loadLibrary("libz3");
+			System.loadLibrary("libz3java");
+			break;
+		case LINUX:
+			System.loadLibrary("z3");
+			System.loadLibrary("z3java");
+			break;
+		default:
+			throw new RuntimeException("Operating system not supported.");
+		}
+
 	}
 
 	///////

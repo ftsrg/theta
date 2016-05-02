@@ -13,12 +13,12 @@ import java.util.List;
 import java.util.Map;
 
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.model.Model;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.solver.Interpolant;
 import hu.bme.mit.inf.ttmc.solver.ItpMarker;
 import hu.bme.mit.inf.ttmc.solver.ItpPattern;
 import hu.bme.mit.inf.ttmc.solver.ItpSolver;
-import hu.bme.mit.inf.ttmc.solver.Model;
 import hu.bme.mit.inf.ttmc.solver.Solver;
 import hu.bme.mit.inf.ttmc.solver.SolverStatus;
 import hu.bme.mit.inf.ttmc.solver.impl.ItpMarkerImpl;

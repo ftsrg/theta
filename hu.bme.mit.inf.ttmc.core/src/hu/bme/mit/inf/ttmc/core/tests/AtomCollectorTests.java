@@ -1,5 +1,6 @@
 package hu.bme.mit.inf.ttmc.core.tests;
 
+import static com.google.common.collect.ImmutableSet.of;
 import static hu.bme.mit.inf.ttmc.core.decl.impl.Decls.Const;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.And;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Eq;
@@ -21,12 +22,10 @@ import hu.bme.mit.inf.ttmc.core.expr.ConstRefExpr;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.core.type.IntType;
-import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.core.utils.impl.ExprUtils;
 
 public class AtomCollectorTests {
 
-	@SuppressWarnings("serial")
 	@Test
 	public void test() {
 		final Set<Expr<? extends BoolType>> atoms = new HashSet<>();
@@ -36,21 +35,11 @@ public class AtomCollectorTests {
 		final ConstRefExpr<IntType> cy = Const("y", Int()).getRef();
 
 		ExprUtils.collectAtoms(And(ca, Or(ca, Not(cb))), atoms);
-		Assert.assertEquals(new HashSet<Expr<? extends Type>>() {
-			{
-				add(ca);
-				add(cb);
-			}
-		}, atoms);
+		Assert.assertEquals(of(ca, cb), atoms);
 
 		atoms.clear();
 		ExprUtils.collectAtoms(Imply(Eq(cx, Int(2)), Not(Leq(cx, cy))), atoms);
-		Assert.assertEquals(new HashSet<Expr<? extends Type>>() {
-			{
-				add(Eq(cx, Int(2)));
-				add(Leq(cx, cy));
-			}
-		}, atoms);
+		Assert.assertEquals(of(Eq(cx, Int(2)), Leq(cx, cy)), atoms);
 	}
 
 }

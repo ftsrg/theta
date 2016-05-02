@@ -7,11 +7,9 @@ import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Int;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Leq;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Neq;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Rat;
-import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Ref;
 import static hu.bme.mit.inf.ttmc.core.type.impl.Types.Int;
 import static hu.bme.mit.inf.ttmc.core.type.impl.Types.Rat;
 import static hu.bme.mit.inf.ttmc.formalism.common.decl.impl.Decls2.Var;
-import static hu.bme.mit.inf.ttmc.formalism.common.expr.impl.Exprs2.Ref;
 import static hu.bme.mit.inf.ttmc.formalism.common.stmt.impl.Stmts.Assign;
 import static hu.bme.mit.inf.ttmc.formalism.common.stmt.impl.Stmts.Assume;
 
@@ -49,10 +47,10 @@ public class TCFATests {
 
 		final VarDecl<RatType> xd = Var("x_" + id, Rat());
 
-		final VarRefExpr<RatType> x = Ref(xd);
-		final VarRefExpr<IntType> lock = Ref(lockd);
-		final ConstRefExpr<IntType> a = Ref(ad);
-		final ConstRefExpr<IntType> b = Ref(bd);
+		final VarRefExpr<RatType> x = xd.getRef();
+		final VarRefExpr<IntType> lock = lockd.getRef();
+		final ConstRefExpr<IntType> a = ad.getRef();
+		final ConstRefExpr<IntType> b = bd.getRef();
 		final RatLitExpr rzero = Rat(0, 1);
 		final IntLitExpr izero = Int(0);
 		final IntLitExpr i = Int(id);

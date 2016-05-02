@@ -2,14 +2,13 @@ package hu.bme.mit.inf.ttmc.formalism.ta;
 
 import java.util.Collection;
 
-import hu.bme.mit.inf.ttmc.core.expr.Expr;
-import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.formalism.common.Edge;
-import hu.bme.mit.inf.ttmc.formalism.common.decl.ClockDecl;
+import hu.bme.mit.inf.ttmc.formalism.ta.constr.Clock;
+import hu.bme.mit.inf.ttmc.formalism.ta.constr.Constr;
 
 public interface TAEdge extends Edge<TALoc, TAEdge> {
 
-	public Expr<? extends BoolType> getGuard();
+	public Constr getGuard();
 
-	public Collection<ClockDecl> getResets();
+	public Collection<? extends Clock> getResets();
 }

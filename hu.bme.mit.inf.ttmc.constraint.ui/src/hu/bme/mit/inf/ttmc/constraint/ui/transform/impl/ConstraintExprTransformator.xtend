@@ -9,8 +9,10 @@ import hu.bme.mit.inf.ttmc.constraint.model.DivExpression
 import hu.bme.mit.inf.ttmc.constraint.model.DivideExpression
 import hu.bme.mit.inf.ttmc.constraint.model.EqualExpression
 import hu.bme.mit.inf.ttmc.constraint.model.EqualityExpression
+import hu.bme.mit.inf.ttmc.constraint.model.ExistsExpression
 import hu.bme.mit.inf.ttmc.constraint.model.Expression
 import hu.bme.mit.inf.ttmc.constraint.model.FalseExpression
+import hu.bme.mit.inf.ttmc.constraint.model.ForallExpression
 import hu.bme.mit.inf.ttmc.constraint.model.FunctionAccessExpression
 import hu.bme.mit.inf.ttmc.constraint.model.GreaterEqualExpression
 import hu.bme.mit.inf.ttmc.constraint.model.GreaterExpression
@@ -32,6 +34,7 @@ import hu.bme.mit.inf.ttmc.constraint.model.UnaryMinusExpression
 import hu.bme.mit.inf.ttmc.constraint.ui.transform.DeclTransformator
 import hu.bme.mit.inf.ttmc.constraint.ui.transform.ExprTransformator
 import hu.bme.mit.inf.ttmc.constraint.ui.transform.TransformationManager
+import hu.bme.mit.inf.ttmc.core.decl.ParamDecl
 import hu.bme.mit.inf.ttmc.core.expr.Expr
 import hu.bme.mit.inf.ttmc.core.type.ArrayType
 import hu.bme.mit.inf.ttmc.core.type.BoolType
@@ -48,9 +51,6 @@ import java.util.List
 
 import static com.google.common.base.Preconditions.checkArgument
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.*
-import hu.bme.mit.inf.ttmc.constraint.model.ForallExpression
-import hu.bme.mit.inf.ttmc.core.decl.ParamDecl
-import hu.bme.mit.inf.ttmc.constraint.model.ExistsExpression
 
 public class ConstraintExprTransformator implements ExprTransformator {
 	
