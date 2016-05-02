@@ -8,8 +8,8 @@ import java.util.Collections;
 import java.util.stream.Stream;
 
 import hu.bme.mit.inf.ttmc.analysis.AutomatonTransferRelation;
-import hu.bme.mit.inf.ttmc.formalism.common.Edge;
-import hu.bme.mit.inf.ttmc.formalism.common.Loc;
+import hu.bme.mit.inf.ttmc.formalism.common.automaton.Edge;
+import hu.bme.mit.inf.ttmc.formalism.common.automaton.Loc;
 
 public class LocTransferRelation<L extends Loc<L, E>, E extends Edge<L, E>>
 		implements AutomatonTransferRelation<LocState<L>, E> {
