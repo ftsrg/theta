@@ -49,7 +49,7 @@ public abstract class StatementAstTransformerVisitor implements StatementVisitor
 		@Override
 		public AstNode[] getChildren() {
 			throw new UnsupportedOperationException();
-		}		
+		}
 	}
 
 	@Override

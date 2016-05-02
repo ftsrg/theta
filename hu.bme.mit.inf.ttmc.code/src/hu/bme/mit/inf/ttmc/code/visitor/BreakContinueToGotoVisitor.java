@@ -22,7 +22,7 @@ public class BreakContinueToGotoVisitor extends StatementAstTransformerVisitor {
 	private int breakCount = 0;
 	private int contCount = 0;
 	private Stack<Integer> loops = new Stack<>();
-		
+	
 	@Override
 	public StatementAst visit(WhileStatementAst ast) {
 		if (this.breakCount == 0 && this.contCount == 0) // There were no break statements
@@ -57,7 +57,8 @@ public class BreakContinueToGotoVisitor extends StatementAstTransformerVisitor {
 		
 		return new StatementListAst(stmts);
 	}
-		
+	
+	
 	@Override
 	public StatementAst visit(BreakStatementAst ast) {
 		this.breakCount++;

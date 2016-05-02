@@ -18,6 +18,7 @@ import hu.bme.mit.inf.ttmc.code.ast.ContinueStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.DeclarationAst;
 import hu.bme.mit.inf.ttmc.code.ast.DoStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.ExpressionAst;
+import hu.bme.mit.inf.ttmc.code.ast.ExpressionListAst;
 import hu.bme.mit.inf.ttmc.code.ast.ExpressionStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.ForStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.FunctionDefinitionAst;
@@ -341,8 +342,12 @@ public class TransformProgramVisitor implements ExpressionVisitor<Expr<? extends
 
 	@Override
 	public Stmt visit(NullStatementAst ast) {
-		// TODO Auto-generated method stub
-		return null;
+		return this.pfc.Skip();
+	}
+
+	@Override
+	public Expr<? extends Type> visit(ExpressionListAst ast) {
+		throw new UnsupportedOperationException();
 	}
 	
 	

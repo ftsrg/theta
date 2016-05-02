@@ -14,6 +14,7 @@ import hu.bme.mit.inf.ttmc.code.ast.DeclaratorAst;
 import hu.bme.mit.inf.ttmc.code.ast.DefaultStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.DoStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.ExpressionAst;
+import hu.bme.mit.inf.ttmc.code.ast.ExpressionListAst;
 import hu.bme.mit.inf.ttmc.code.ast.ExpressionStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.ForStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.FunctionCallExpressionAst;
@@ -59,6 +60,16 @@ public class CloneAstVisitor implements AstVisitor<ExpressionAst, StatementAst, 
 		}
 		
 		return new FunctionCallExpressionAst(ast.getName(), params);
+	}
+
+	@Override
+	public ExpressionAst visit(ExpressionListAst ast) {
+		List<ExpressionAst> members = new ArrayList<>();
+		for (ExpressionAst expr : ast.getExpressions()) {
+			members.add(expr.accept(this));
+		}
+		
+		return new ExpressionListAst(members);
 	}
 
 	@Override
