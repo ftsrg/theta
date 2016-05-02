@@ -11,7 +11,7 @@ import hu.bme.mit.inf.ttmc.formalism.cfa.CFA;
 import hu.bme.mit.inf.ttmc.formalism.cfa.CFAEdge;
 import hu.bme.mit.inf.ttmc.formalism.cfa.CFALoc;
 
-public class MutableCFA implements CFA {
+public final class MutableCFA implements CFA {
 
 	private CFALoc initLoc;
 	private CFALoc finalLoc;
@@ -23,14 +23,9 @@ public class MutableCFA implements CFA {
 	public MutableCFA() {
 		locs = new HashSet<>();
 		edges = new HashSet<>();
-
-		initLoc = new MutableCFALoc();
-		finalLoc = new MutableCFALoc();
-		errorLoc = new MutableCFALoc();
-
-		locs.add(initLoc);
-		locs.add(finalLoc);
-		locs.add(errorLoc);
+		initLoc = createLoc();
+		finalLoc = createLoc();
+		errorLoc = createLoc();
 	}
 
 	////
