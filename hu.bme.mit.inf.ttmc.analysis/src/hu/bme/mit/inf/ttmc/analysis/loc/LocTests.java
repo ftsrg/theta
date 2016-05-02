@@ -6,10 +6,11 @@ import java.util.Collection;
 
 import org.junit.Test;
 
-import hu.bme.mit.inf.ttmc.analysis.TransferRelation;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.Algorithm;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.BasicAlgorithm;
+import hu.bme.mit.inf.ttmc.analysis.impl.NullPrecision;
 import hu.bme.mit.inf.ttmc.formalism.cfa.CFA;
+import hu.bme.mit.inf.ttmc.formalism.cfa.CFAEdge;
 import hu.bme.mit.inf.ttmc.formalism.cfa.CFALoc;
 import hu.bme.mit.inf.ttmc.formalism.cfa.impl.MutableCFA;
 
@@ -19,14 +20,12 @@ public class LocTests {
 	public void exploreLocs() {
 		final CFA cfa = createSimpleCFA();
 		final LocInitStates<CFALoc> initStates = new LocInitStates<>(cfa);
-		final TransferRelation<LocState<CFALoc>> trel = new LocTransferRelation<>();
+		final LocTransferRelation<CFALoc, CFAEdge> trel = new LocTransferRelation<>();
 
-		// final LocState<CFALoc> initState = LocState.create(cfa.getInitLoc());
 		final LocState<CFALoc> finalState = LocState.create(cfa.getFinalLoc());
-		// final Collection<? extends LocState<CFALoc>> reachedSet =
-		// initStates.get();
-		final Algorithm<LocState<CFALoc>> algorithm = new BasicAlgorithm<>(LocDomain.create(), initStates, trel);
-		final Collection<LocState<CFALoc>> result = algorithm.run();
+		final Algorithm<LocState<CFALoc>, NullPrecision> algorithm = new BasicAlgorithm<>(LocDomain.create(),
+				initStates, trel);
+		final Collection<LocState<CFALoc>> result = algorithm.run(NullPrecision.get());
 
 		assertTrue(result.contains(finalState));
 	}

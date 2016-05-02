@@ -14,7 +14,7 @@ import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 import hu.bme.mit.inf.ttmc.solver.Solver;
 
-public class PredSTSTransferRelation implements TransferRelation<PredState> {
+public class PredSTSTransferRelation implements TransferRelation<PredState, PredPrecision> {
 
 	private final Solver solver;
 	private final STS sts;
@@ -25,7 +25,7 @@ public class PredSTSTransferRelation implements TransferRelation<PredState> {
 	}
 
 	@Override
-	public Collection<? extends PredState> getSuccStates(final PredState state) {
+	public Collection<? extends PredState> getSuccStates(final PredState state, final PredPrecision precision) {
 		checkNotNull(state);
 		final Set<PredState> succStates = new HashSet<>();
 		boolean moreSuccessors;

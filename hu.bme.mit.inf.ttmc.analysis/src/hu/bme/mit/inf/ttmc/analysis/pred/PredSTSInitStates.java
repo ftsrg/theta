@@ -14,20 +14,21 @@ import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 import hu.bme.mit.inf.ttmc.solver.Solver;
 
-public class PredSTSInitStates implements InitStates<PredState> {
+public class PredSTSInitStates implements InitStates<PredState, PredPrecision> {
 
 	private final Solver solver;
 	private final STS sts;
 	private final Set<Expr<? extends BoolType>> preds;
 
-	public PredSTSInitStates(final STS sts, final Collection<? extends Expr<? extends BoolType>> preds, final Solver solver) {
+	public PredSTSInitStates(final STS sts, final Collection<? extends Expr<? extends BoolType>> preds,
+			final Solver solver) {
 		this.sts = checkNotNull(sts);
 		this.solver = checkNotNull(solver);
 		this.preds = new HashSet<>(preds);
 	}
 
 	@Override
-	public Collection<? extends PredState> get() {
+	public Collection<? extends PredState> get(final PredPrecision precision) {
 		final Set<PredState> initStates = new HashSet<>();
 		boolean moreInitialStates;
 
