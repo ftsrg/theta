@@ -17,6 +17,7 @@ import org.eclipse.cdt.core.dom.ast.IASTDefaultStatement;
 import org.eclipse.cdt.core.dom.ast.IASTDoStatement;
 import org.eclipse.cdt.core.dom.ast.IASTEqualsInitializer;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
+import org.eclipse.cdt.core.dom.ast.IASTExpressionList;
 import org.eclipse.cdt.core.dom.ast.IASTExpressionStatement;
 import org.eclipse.cdt.core.dom.ast.IASTForStatement;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
@@ -39,6 +40,7 @@ import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTWhileStatement;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTEqualsInitializer;
+import org.eclipse.cdt.internal.core.dom.parser.c.CASTExpressionList;
 
 import hu.bme.mit.inf.ttmc.code.ast.TranslationUnitAst;
 import hu.bme.mit.inf.ttmc.code.ast.AssignmentInitializerAst;
@@ -53,6 +55,7 @@ import hu.bme.mit.inf.ttmc.code.ast.InitDeclaratorAst;
 import hu.bme.mit.inf.ttmc.code.ast.LabeledStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.DoStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.ExpressionAst;
+import hu.bme.mit.inf.ttmc.code.ast.ExpressionListAst;
 import hu.bme.mit.inf.ttmc.code.ast.ExpressionStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.ForStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.FunctionDefinitionAst;
@@ -74,7 +77,7 @@ import hu.bme.mit.inf.ttmc.code.ast.DefaultStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.WhileStatementAst;
 
 public class AstTransformer {
-	
+		
 	public static TranslationUnitAst transform(IASTTranslationUnit ast) {
 		List<DeclarationAst> functions = new ArrayList<>();
 		
@@ -339,9 +342,22 @@ public class AstTransformer {
 			return transformUnaryExpression((IASTUnaryExpression) ast);
 		}
 		
+		if (ast instanceof IASTExpressionList) {
+			return transformExpressionList((IASTExpressionList) ast);
+		}
+		
 		return null; // @todo
 	}
 	
+	private static ExpressionListAst transformExpressionList(IASTExpressionList ast) {
+		List<ExpressionAst> newExpressions = new ArrayList<>();
+		for (IASTExpression expr : ast.getExpressions()) {
+			newExpressions.add(transformExpression(expr));
+		}
+		
+		return new ExpressionListAst(newExpressions);
+	}
+
 	private static UnaryExpressionAst transformUnaryExpression(IASTUnaryExpression ast) {
 		IASTExpression expr = ast.getOperand();
 		

@@ -15,6 +15,7 @@ import hu.bme.mit.inf.ttmc.code.ast.DeclaratorAst;
 import hu.bme.mit.inf.ttmc.code.ast.DefaultStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.DoStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.ExpressionAst;
+import hu.bme.mit.inf.ttmc.code.ast.ExpressionListAst;
 import hu.bme.mit.inf.ttmc.code.ast.ExpressionStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.ForStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.FunctionCallExpressionAst;
@@ -80,6 +81,16 @@ public class PrintCodeAstVisitor implements AstVisitor<String, String, String, S
 		default:
 			return String.format("(%s)%s", ast.getOperator().toString(), ast.getOperand().accept(this));
 		}
+	}
+
+	@Override
+	public String visit(ExpressionListAst ast) {
+		List<String> members = new ArrayList<>();
+		for (ExpressionAst expr : ast.getExpressions()) {
+			members.add(expr.accept(this));
+		}
+		
+		return String.join(",", members);
 	}
 
 	@Override

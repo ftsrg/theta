@@ -2,6 +2,7 @@ package hu.bme.mit.inf.ttmc.code.ast.visitor;
 
 import hu.bme.mit.inf.ttmc.code.ast.BinaryExpressionAst;
 import hu.bme.mit.inf.ttmc.code.ast.ExpressionAst;
+import hu.bme.mit.inf.ttmc.code.ast.ExpressionListAst;
 import hu.bme.mit.inf.ttmc.code.ast.FunctionCallExpressionAst;
 import hu.bme.mit.inf.ttmc.code.ast.NameExpressionAst;
 import hu.bme.mit.inf.ttmc.code.ast.UnaryExpressionAst;
@@ -14,5 +15,6 @@ public interface ExpressionVisitor<E> {
 	public E visit(NameExpressionAst ast);
 	public E visit(FunctionCallExpressionAst ast);
 	public E visit(UnaryExpressionAst ast);
+	public E visit(ExpressionListAst ast);
 	
 }
