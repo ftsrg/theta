@@ -1,6 +1,6 @@
 package hu.bme.mit.inf.ttmc.formalism.cfa;
 
-import hu.bme.mit.inf.ttmc.formalism.common.Automaton;
+import hu.bme.mit.inf.ttmc.formalism.common.automaton.Automaton;
 
 public interface CFA extends Automaton<CFALoc, CFAEdge> {
 

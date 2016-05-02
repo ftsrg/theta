@@ -1,7 +1,7 @@
 package hu.bme.mit.inf.ttmc.analysis.loc;
 
 import hu.bme.mit.inf.ttmc.analysis.Domain;
-import hu.bme.mit.inf.ttmc.formalism.common.Loc;
+import hu.bme.mit.inf.ttmc.formalism.common.automaton.Loc;
 
 public class LocDomain<L extends Loc<L, ?>> implements Domain<LocState<L>> {
 

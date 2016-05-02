@@ -1,4 +1,4 @@
-package hu.bme.mit.inf.ttmc.formalism.common;
+package hu.bme.mit.inf.ttmc.formalism.common.automaton;
 
 import java.util.Collection;
 
