@@ -9,6 +9,7 @@ import org.junit.Test;
 
 import hu.bme.mit.inf.ttmc.formalism.ta.constr.Clock;
 import hu.bme.mit.inf.ttmc.formalism.ta.constr.Constr;
+import hu.bme.mit.inf.ttmc.formalism.ta.impl.MutableTA;
 
 public class TATests {
 
@@ -21,6 +22,20 @@ public class TATests {
 		System.out.println(constr.getClocks());
 		System.out.println(constr.asExpr());
 
+	}
+
+	@Test
+	public void testTA() {
+		final MutableTA ta = new MutableTA();
+
+		final Clock x = Clock("x");
+		final Clock y = Clock("y");
+
+		ta.addClock(x);
+		ta.addClock(y);
+		ta.createLoc(Eq(y, x, 10));
+
+		System.out.println(ta.getClocks());
 	}
 
 }
