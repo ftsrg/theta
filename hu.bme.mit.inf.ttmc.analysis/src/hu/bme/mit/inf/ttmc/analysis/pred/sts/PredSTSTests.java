@@ -1,4 +1,4 @@
-package hu.bme.mit.inf.ttmc.analysis.pred;
+package hu.bme.mit.inf.ttmc.analysis.pred.sts;
 
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Add;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.And;
@@ -17,6 +17,9 @@ import java.util.Collection;
 import org.junit.Test;
 
 import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.BasicAlgorithm;
+import hu.bme.mit.inf.ttmc.analysis.pred.PredDomain;
+import hu.bme.mit.inf.ttmc.analysis.pred.PredPrecision;
+import hu.bme.mit.inf.ttmc.analysis.pred.PredState;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.expr.OrExpr;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
@@ -41,13 +44,11 @@ public class PredSTSTests {
 		System.out.println(sts);
 		final Collection<Expr<? extends BoolType>> preds = new ArrayList<>();
 		preds.addAll(((OrExpr) sts.getProp()).getOps());
-		final PredSTSInitStates initStates = new PredSTSInitStates(sts, preds, solver);
+		final PredSTSInitStates initStates = new PredSTSInitStates(sts, solver);
 		final PredSTSTransferRelation trel = new PredSTSTransferRelation(sts, solver);
-		final BasicAlgorithm<PredState, PredPrecision> algorithm = new BasicAlgorithm<>(new PredDomain(solver, sts),
-				initStates, trel);
+		final BasicAlgorithm<PredState, PredPrecision> algorithm = new BasicAlgorithm<>(new PredDomain(solver, sts), initStates, trel);
 
-		// TODO replace null by actual precision
-		final Collection<PredState> result = algorithm.run(null);
+		final Collection<PredState> result = algorithm.run(new PredPrecision(preds));
 
 		for (final PredState predState : result) {
 			System.out.println(predState);
@@ -72,11 +73,10 @@ public class PredSTSTests {
 		builder.addInit(Eq(y.getRef(), Int(1)));
 
 		builder.addTrans(And(Geq(Prime(r.getRef()), Int(0)), Leq(Prime(r.getRef()), Int(1))));
-		builder.addTrans(Eq(Prime(x.getRef()), Ite(Eq(r.getRef(), Int(1)), Int(0), Ite(Lt(x.getRef(), y.getRef()),
-				Add(x.getRef(), Int(1)), Ite(Eq(x.getRef(), y.getRef()), Int(0), x.getRef())))));
-		builder.addTrans(Eq(Prime(y.getRef()),
-				Ite(Eq(r.getRef(), Int(1)), Int(0), Ite(And(Eq(x.getRef(), y.getRef()), Eq(y.getRef(), Int(2))),
-						Add(y.getRef(), Int(1)), Ite(Eq(x.getRef(), y.getRef()), Int(0), y.getRef())))));
+		builder.addTrans(Eq(Prime(x.getRef()), Ite(Eq(r.getRef(), Int(1)), Int(0),
+				Ite(Lt(x.getRef(), y.getRef()), Add(x.getRef(), Int(1)), Ite(Eq(x.getRef(), y.getRef()), Int(0), x.getRef())))));
+		builder.addTrans(Eq(Prime(y.getRef()), Ite(Eq(r.getRef(), Int(1)), Int(0),
+				Ite(And(Eq(x.getRef(), y.getRef()), Eq(y.getRef(), Int(2))), Add(y.getRef(), Int(1)), Ite(Eq(x.getRef(), y.getRef()), Int(0), y.getRef())))));
 
 		builder.setProp(Or(Lt(x.getRef(), y.getRef()), Eq(r.getRef(), Int(1))));
 
