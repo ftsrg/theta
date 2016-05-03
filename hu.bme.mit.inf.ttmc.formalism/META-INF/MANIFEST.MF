@@ -11,7 +11,7 @@ Require-Bundle: org.junit,
  hu.bme.mit.inf.ttmc.solver
 Export-Package: hu.bme.mit.inf.ttmc.formalism.cfa,
  hu.bme.mit.inf.ttmc.formalism.cfa.impl,
- hu.bme.mit.inf.ttmc.formalism.common,
+ hu.bme.mit.inf.ttmc.formalism.common.automaton,
  hu.bme.mit.inf.ttmc.formalism.common.decl,
  hu.bme.mit.inf.ttmc.formalism.common.decl.impl,
  hu.bme.mit.inf.ttmc.formalism.common.expr,

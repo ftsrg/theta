@@ -5,8 +5,8 @@ import java.util.Collections;
 
 import hu.bme.mit.inf.ttmc.analysis.InitStates;
 import hu.bme.mit.inf.ttmc.analysis.impl.NullPrecision;
-import hu.bme.mit.inf.ttmc.formalism.common.Automaton;
-import hu.bme.mit.inf.ttmc.formalism.common.Loc;
+import hu.bme.mit.inf.ttmc.formalism.common.automaton.Automaton;
+import hu.bme.mit.inf.ttmc.formalism.common.automaton.Loc;
 
 public class LocInitStates<L extends Loc<L, ?>> implements InitStates<LocState<L>, NullPrecision> {
 
