@@ -1,4 +1,4 @@
-package hu.bme.mit.inf.ttmc.analysis.pred;
+package hu.bme.mit.inf.ttmc.analysis.pred.sts;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -7,6 +7,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 import hu.bme.mit.inf.ttmc.analysis.InitStates;
+import hu.bme.mit.inf.ttmc.analysis.pred.PredPrecision;
+import hu.bme.mit.inf.ttmc.analysis.pred.PredState;
 import hu.bme.mit.inf.ttmc.core.expr.AndExpr;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.expr.impl.Exprs;
@@ -18,13 +20,10 @@ public class PredSTSInitStates implements InitStates<PredState, PredPrecision> {
 
 	private final Solver solver;
 	private final STS sts;
-	private final Set<Expr<? extends BoolType>> preds;
 
-	public PredSTSInitStates(final STS sts, final Collection<? extends Expr<? extends BoolType>> preds,
-			final Solver solver) {
+	public PredSTSInitStates(final STS sts, final Solver solver) {
 		this.sts = checkNotNull(sts);
 		this.solver = checkNotNull(solver);
-		this.preds = new HashSet<>(preds);
 	}
 
 	@Override
@@ -50,7 +49,7 @@ public class PredSTSInitStates implements InitStates<PredState, PredPrecision> {
 				final Set<Expr<? extends BoolType>> nextInitStatePreds = new HashSet<>();
 				solver.push();
 				solver.add(sts.unroll(nextInitStateExpr, 0));
-				for (final Expr<? extends BoolType> pred : preds) {
+				for (final Expr<? extends BoolType> pred : precision.getPreds()) {
 					solver.push();
 					solver.add(sts.unroll(pred, 0));
 					if (solver.check().boolValue()) {

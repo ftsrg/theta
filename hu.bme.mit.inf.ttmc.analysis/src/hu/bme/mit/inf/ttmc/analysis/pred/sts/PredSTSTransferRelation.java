@@ -1,4 +1,4 @@
-package hu.bme.mit.inf.ttmc.analysis.pred;
+package hu.bme.mit.inf.ttmc.analysis.pred.sts;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -7,6 +7,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 import hu.bme.mit.inf.ttmc.analysis.TransferRelation;
+import hu.bme.mit.inf.ttmc.analysis.pred.PredPrecision;
+import hu.bme.mit.inf.ttmc.analysis.pred.PredState;
 import hu.bme.mit.inf.ttmc.core.expr.AndExpr;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.expr.impl.Exprs;
@@ -49,7 +51,7 @@ public class PredSTSTransferRelation implements TransferRelation<PredState, Pred
 				final Set<Expr<? extends BoolType>> nextSuccPreds = new HashSet<>();
 				solver.push();
 				solver.add(sts.unroll(nextSuccExpr, 0));
-				for (final Expr<? extends BoolType> pred : state.getPreds()) {
+				for (final Expr<? extends BoolType> pred : precision.getPreds()) {
 					solver.push();
 					solver.add(sts.unroll(pred, 0));
 					if (solver.check().boolValue()) {
