@@ -41,6 +41,7 @@ public class UnaryExpressionUnrollStatementVisitor extends StatementAstTransform
 		}
 	}
 	
+	private int uniqueId = 0;
 	private List<NameExpressionAst> currLvals = new ArrayList<>();
 	private Stack< List<LvalData> > lvalStack = new Stack<>();
 	
@@ -108,7 +109,6 @@ public class UnaryExpressionUnrollStatementVisitor extends StatementAstTransform
 		
 		return new StatementListAst(stmts);
 	}
-
 	
 	private List<StatementAst> transformStatement(ExpressionAst expr) {
 		expr = expr.accept(this);
@@ -174,7 +174,7 @@ public class UnaryExpressionUnrollStatementVisitor extends StatementAstTransform
 			// Remember this expression
 			LvalData data = new LvalData(
 				lval.getName(),
-				String.format("_tmpvar_%s", lval.getName()),
+				String.format("%s_tmp%d", lval.getName(), this.uniqueId++),
 				operator == Operator.OP_POSTFIX_INCR ? BinaryExpressionAst.Operator.OP_ADD : BinaryExpressionAst.Operator.OP_SUB
 			);
 			this.lvalStack.lastElement().add(data);
@@ -187,7 +187,12 @@ public class UnaryExpressionUnrollStatementVisitor extends StatementAstTransform
 
 	@Override
 	public ExpressionAst visit(ExpressionListAst ast) {
-		return ast;
+		List<ExpressionAst> expressions = new ArrayList<>();
+		for (ExpressionAst expr : ast.getExpressions()) {
+			expressions.add(expr.accept(this));
+		}
+		
+		return new ExpressionListAst(expressions);
 	}
 	
 	
