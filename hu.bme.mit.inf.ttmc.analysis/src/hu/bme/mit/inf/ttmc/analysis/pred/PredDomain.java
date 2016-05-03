@@ -12,7 +12,11 @@ public class PredDomain implements Domain<PredState> {
 	private final Solver solver;
 	private final ExprUnroller unroller;
 
-	public PredDomain(final Solver solver, final ExprUnroller unroller) {
+	public static PredDomain create(final Solver solver, final ExprUnroller unroller) {
+		return new PredDomain(solver, unroller);
+	}
+
+	private PredDomain(final Solver solver, final ExprUnroller unroller) {
 		this.solver = checkNotNull(solver);
 		this.unroller = checkNotNull(unroller);
 	}
