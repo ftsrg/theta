@@ -13,18 +13,15 @@ import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFALoc;
 
 public final class MutableTCFA implements TCFA {
 
-	private TCFALoc initLoc;
-
 	private final Collection<TCFALoc> locs;
 	private final Collection<TCFAEdge> edges;
 
+	private TCFALoc initLoc;
+
 	public MutableTCFA() {
-		initLoc = new MutableTCFALoc();
-
 		locs = new LinkedList<>();
-		locs.add(initLoc);
-
 		edges = new LinkedList<>();
+		initLoc = createLoc();
 	}
 
 	////

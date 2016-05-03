@@ -2,7 +2,7 @@ package hu.bme.mit.inf.ttmc.analysis;
 
 import java.util.Collection;
 
-import hu.bme.mit.inf.ttmc.formalism.common.Edge;
+import hu.bme.mit.inf.ttmc.formalism.common.automaton.Edge;
 
 public interface AutomatonTransferRelation<S extends State, P extends Precision, E extends Edge<?, E>>
 		extends TransferRelation<S, P> {

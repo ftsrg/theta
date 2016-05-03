@@ -3,7 +3,7 @@ package hu.bme.mit.inf.ttmc.analysis.loc;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import hu.bme.mit.inf.ttmc.analysis.State;
-import hu.bme.mit.inf.ttmc.formalism.common.Loc;
+import hu.bme.mit.inf.ttmc.formalism.common.automaton.Loc;
 
 public final class LocState<L extends Loc<L, ?>> implements State {
 
