@@ -1,0 +1,5 @@
+/bin/
+/src-gen/
+/xtend-gen/
+/src/
+*.xml_gen
