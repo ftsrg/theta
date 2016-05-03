@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import hu.bme.mit.inf.ttmc.analysis.ExprState;
 import hu.bme.mit.inf.ttmc.analysis.TransferRelation;
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplPrecision;
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplState;
@@ -45,7 +46,7 @@ public class ExplSTSTransferRelation implements TransferRelation<ExplState, Expl
 			solver.add(sts.unrollInv(0));
 			solver.add(sts.unrollInv(1));
 			solver.add(sts.unrollTrans(0));
-			for (final ExplState existingSucc : succStates)
+			for (final ExprState existingSucc : succStates)
 				solver.add(sts.unroll(Exprs.Not(existingSucc.asExpr()), 1));
 
 			moreSuccessors = solver.check().boolValue();

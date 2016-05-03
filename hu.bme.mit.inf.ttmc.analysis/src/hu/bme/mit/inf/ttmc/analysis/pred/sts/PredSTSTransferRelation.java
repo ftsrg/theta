@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
+import hu.bme.mit.inf.ttmc.analysis.ExprState;
 import hu.bme.mit.inf.ttmc.analysis.TransferRelation;
 import hu.bme.mit.inf.ttmc.analysis.pred.PredPrecision;
 import hu.bme.mit.inf.ttmc.analysis.pred.PredState;
@@ -39,8 +40,8 @@ public class PredSTSTransferRelation implements TransferRelation<PredState, Pred
 			solver.add(sts.unrollInv(0));
 			solver.add(sts.unrollInv(1));
 			solver.add(sts.unrollTrans(0));
-			for (final PredState existingSucc : succStates)
-				solver.add(sts.unroll(Exprs.Not(Exprs.And(existingSucc.getPreds())), 1));
+			for (final ExprState existingSucc : succStates)
+				solver.add(sts.unroll(Exprs.Not(existingSucc.asExpr()), 1));
 
 			moreSuccessors = solver.check().boolValue();
 			if (moreSuccessors)
