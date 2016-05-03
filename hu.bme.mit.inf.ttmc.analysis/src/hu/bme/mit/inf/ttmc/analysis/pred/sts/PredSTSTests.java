@@ -46,9 +46,9 @@ public class PredSTSTests {
 		preds.addAll(((OrExpr) sts.getProp()).getOps());
 		final PredSTSInitStates initStates = new PredSTSInitStates(sts, solver);
 		final PredSTSTransferRelation trel = new PredSTSTransferRelation(sts, solver);
-		final BasicAlgorithm<PredState, PredPrecision> algorithm = new BasicAlgorithm<>(new PredDomain(solver, sts), initStates, trel);
+		final BasicAlgorithm<PredState, PredPrecision> algorithm = new BasicAlgorithm<>(PredDomain.create(solver, sts), initStates, trel);
 
-		final Collection<PredState> result = algorithm.run(new PredPrecision(preds));
+		final Collection<PredState> result = algorithm.run(PredPrecision.create(preds));
 
 		for (final PredState predState : result) {
 			System.out.println(predState);

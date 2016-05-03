@@ -14,12 +14,16 @@ import hu.bme.mit.inf.ttmc.core.type.BoolType;
 public class PredPrecision implements Precision {
 	private final List<Expr<? extends BoolType>> preds;
 
-	public PredPrecision(final Collection<Expr<? extends BoolType>> preds) {
+	public static PredPrecision create(final Collection<Expr<? extends BoolType>> preds) {
+		return new PredPrecision(preds);
+	}
+
+	private PredPrecision(final Collection<Expr<? extends BoolType>> preds) {
 		checkNotNull(preds);
 		this.preds = Collections.unmodifiableList(new ArrayList<>(preds));
 	}
 
-	public List<Expr<? extends BoolType>> getPreds() {
+	public Collection<Expr<? extends BoolType>> getPreds() {
 		return preds;
 	}
 }
