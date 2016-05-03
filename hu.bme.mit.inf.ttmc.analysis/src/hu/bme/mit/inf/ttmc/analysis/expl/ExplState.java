@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.StringJoiner;
 
-import hu.bme.mit.inf.ttmc.analysis.State;
+import hu.bme.mit.inf.ttmc.analysis.ExprState;
 import hu.bme.mit.inf.ttmc.core.expr.EqExpr;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.expr.LitExpr;
@@ -18,7 +18,7 @@ import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 
-public class ExplState implements State {
+public class ExplState implements ExprState {
 
 	private static final int HASH_SEED = 6659;
 
@@ -45,6 +45,7 @@ public class ExplState implements State {
 		return (LitExpr<ExprType>) values.get(varDecl);
 	}
 
+	@Override
 	public Expr<? extends BoolType> asExpr() {
 		Expr<? extends BoolType> result = expr;
 		if (result == null) {

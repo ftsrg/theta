@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
+import hu.bme.mit.inf.ttmc.analysis.ExprState;
 import hu.bme.mit.inf.ttmc.analysis.InitStates;
 import hu.bme.mit.inf.ttmc.analysis.pred.PredPrecision;
 import hu.bme.mit.inf.ttmc.analysis.pred.PredState;
@@ -36,8 +37,8 @@ public class PredSTSInitStates implements InitStates<PredState, PredPrecision> {
 			solver.push();
 			solver.add(sts.unrollInit(0));
 			solver.add(sts.unrollInv(0));
-			for (final PredState existingInit : initStates)
-				solver.add(sts.unroll(Exprs.Not(Exprs.And(existingInit.getPreds())), 0));
+			for (final ExprState existingInit : initStates)
+				solver.add(sts.unroll(Exprs.Not(existingInit.asExpr()), 0));
 
 			moreInitialStates = solver.check().boolValue();
 			if (moreInitialStates) {

@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import hu.bme.mit.inf.ttmc.analysis.ExprState;
 import hu.bme.mit.inf.ttmc.analysis.InitStates;
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplPrecision;
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplState;
@@ -43,7 +44,7 @@ public class ExplSTSInitStates implements InitStates<ExplState, ExplPrecision> {
 			solver.push();
 			solver.add(sts.unrollInit(0));
 			solver.add(sts.unrollInv(0));
-			for (final ExplState existingInit : initStates)
+			for (final ExprState existingInit : initStates)
 				solver.add(sts.unroll(Exprs.Not(existingInit.asExpr()), 0));
 
 			moreInitialStates = solver.check().boolValue();

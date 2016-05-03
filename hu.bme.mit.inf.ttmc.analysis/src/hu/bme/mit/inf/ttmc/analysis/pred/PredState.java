@@ -8,15 +8,18 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.StringJoiner;
 
-import hu.bme.mit.inf.ttmc.analysis.State;
+import hu.bme.mit.inf.ttmc.analysis.ExprState;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.expr.impl.Exprs;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
 
-public class PredState implements State {
+public class PredState implements ExprState {
 
 	private static final int HASH_SEED = 7621;
 
 	private final Set<Expr<? extends BoolType>> preds;
+
+	private volatile Expr<? extends BoolType> expr = null;
 
 	private volatile int hashCode;
 
@@ -30,6 +33,16 @@ public class PredState implements State {
 
 	public Collection<Expr<? extends BoolType>> getPreds() {
 		return Collections.unmodifiableCollection(preds);
+	}
+
+	@Override
+	public Expr<? extends BoolType> asExpr() {
+		Expr<? extends BoolType> result = expr;
+		if (result == null) {
+			result = Exprs.And(preds);
+			expr = result;
+		}
+		return result;
 	}
 
 	@Override
