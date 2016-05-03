@@ -21,8 +21,9 @@ public class SimplifyAstVisitor extends CloneAstVisitor {
 			new ForToWhileStatementVisitor(),
 			new SwitchToIfElseVisitor(),
 			new UnrollDeclarationsVisitor(),
+			new UnaryExpressionUnrollStatementVisitor(),
 			new BreakContinueToGotoVisitor(),
-			new UnaryExpressionUnrollStatementVisitor()
+			new ExpressionListUnrollStatementVisitor(),
 		};
 	}
 	

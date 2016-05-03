@@ -358,7 +358,7 @@ public class AstTransformer {
 		return new ExpressionListAst(newExpressions);
 	}
 
-	private static UnaryExpressionAst transformUnaryExpression(IASTUnaryExpression ast) {
+	private static ExpressionAst transformUnaryExpression(IASTUnaryExpression ast) {
 		IASTExpression expr = ast.getOperand();
 		
 		switch (ast.getOperator()) {
@@ -372,9 +372,11 @@ public class AstTransformer {
 				return new UnaryExpressionAst(transformExpression(expr), Operator.OP_PREFIX_INCR);
 			case IASTUnaryExpression.op_not:
 				return new UnaryExpressionAst(transformExpression(expr), Operator.OP_NOT);
+			case IASTUnaryExpression.op_bracketedPrimary:
+				return transformExpression(expr);
 		}
 		
-		throw new UnsupportedOperationException();		
+		throw new UnsupportedOperationException("Operator " + ast.getOperator() + " is not supported");		
 	}
 
 	private static FunctionCallExpressionAst transformFunctionCallExpression(IASTFunctionCallExpression ast) {
