@@ -11,6 +11,7 @@ import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.inf.ttmc.core.decl.ConstDecl;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.expr.LitExpr;
 import hu.bme.mit.inf.ttmc.core.model.Model;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.core.type.Type;
@@ -18,14 +19,14 @@ import hu.bme.mit.inf.ttmc.core.type.Type;
 public final class BasicModel implements Model {
 
 	final Collection<ConstDecl<?>> constDecls;
-	final Map<ConstDecl<?>, Expr<?>> constToExpr;
+	final Map<ConstDecl<?>, LitExpr<?>> constToExpr;
 
 	public BasicModel() {
 		this(new HashMap<>());
 	}
 
-	public BasicModel(final Map<ConstDecl<?>, Expr<?>> constToExpr) {
-		this.constToExpr = new HashMap<ConstDecl<?>, Expr<?>>(constToExpr);
+	public BasicModel(final Map<ConstDecl<?>, LitExpr<?>> constToExpr) {
+		this.constToExpr = new HashMap<>(constToExpr);
 		this.constDecls = ImmutableList.copyOf(constToExpr.keySet());
 	}
 
@@ -35,13 +36,13 @@ public final class BasicModel implements Model {
 	}
 
 	@Override
-	public <T extends Type> Optional<Expr<T>> eval(final ConstDecl<T> decl) {
+	public <T extends Type> Optional<LitExpr<T>> eval(final ConstDecl<T> decl) {
 		checkNotNull(decl);
 
 		if (constToExpr.containsKey(decl)) {
 
 			@SuppressWarnings("unchecked")
-			final Expr<T> val = (Expr<T>) constToExpr.get(decl);
+			final LitExpr<T> val = (LitExpr<T>) constToExpr.get(decl);
 			return Optional.of(val);
 		}
 
@@ -49,7 +50,7 @@ public final class BasicModel implements Model {
 	}
 
 	@Override
-	public <T extends Type> Optional<Expr<T>> eval(final Expr<T> expr) {
+	public <T extends Type> Optional<LitExpr<T>> eval(final Expr<T> expr) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO");
 	}
