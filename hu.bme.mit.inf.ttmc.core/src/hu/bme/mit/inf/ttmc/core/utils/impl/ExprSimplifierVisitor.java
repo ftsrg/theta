@@ -464,7 +464,11 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 			return ((NegExpr<? extends ClosedUnderNeg>) op).getOp();
 		}
 
-		return Neg(op);
+		if (op == expr.getOp()) {
+			return expr;
+		} else {
+			return Neg(op);
+		}
 	}
 
 	@Override
@@ -486,7 +490,11 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 			return ExprUtils.cast(Rat(leftNum * rightDenom - rightNum * leftDenom, leftDenom * rightDenom).accept(this, param), RatType.class);
 		}
 
-		return Sub(leftOp, rightOp);
+		if (leftOp == expr.getLeftOp() && rightOp == expr.getRightOp()) {
+			return expr;
+		} else {
+			return Sub(leftOp, rightOp);
+		}
 	}
 
 	@Override
@@ -601,7 +609,11 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 			return elze;
 		}
 
-		return Ite(cond, then, elze);
+		if (cond == expr.getCond() && then == expr.getThen() && elze == expr.getElse()) {
+			return expr;
+		} else {
+			return Ite(cond, then, elze);
+		}
 	}
 
 	// TODO: refactor these helper methods as soon as IntLit and RatLit has some common interface
