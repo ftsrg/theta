@@ -34,6 +34,7 @@ import org.junit.Test;
 import hu.bme.mit.inf.ttmc.core.decl.ConstDecl;
 import hu.bme.mit.inf.ttmc.core.decl.impl.Decls;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.expr.LitExpr;
 import hu.bme.mit.inf.ttmc.core.model.Model;
 import hu.bme.mit.inf.ttmc.core.model.impl.BasicModel;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
@@ -277,7 +278,7 @@ public class ExprSimplifierTests {
 
 	@Test
 	public void testModel() {
-		final Map<ConstDecl<?>, Expr<?>> constToExpr = new HashMap<>();
+		final Map<ConstDecl<?>, LitExpr<?>> constToExpr = new HashMap<>();
 		constToExpr.put(ca, Int(5));
 		constToExpr.put(cb, Int(9));
 		final Model model = new BasicModel(constToExpr);
