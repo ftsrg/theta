@@ -17,10 +17,8 @@ import hu.bme.mit.inf.ttmc.cegar.common.utils.debugging.Debugger;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.Visualizer;
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.data.InterpolatedAbstractState;
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.data.InterpolatedAbstractSystem;
-import hu.bme.mit.inf.ttmc.core.expr.AndExpr;
-import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.expr.impl.Exprs;
-import hu.bme.mit.inf.ttmc.core.type.BoolType;
+import hu.bme.mit.inf.ttmc.formalism.common.Valuation;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 import hu.bme.mit.inf.ttmc.solver.Solver;
 
@@ -61,12 +59,12 @@ public class InterpolatingCEGARDebugger extends AbstractDebugger<InterpolatedAbs
 			SolverHelper.unrollAndAssert(solver, as.getLabels(), sts, 0);
 			do {
 				if (SolverHelper.checkSat(solver)) {
-					final Expr<? extends BoolType> csExpr = sts.getConcreteState(solver.getModel(), 0, system.getVars());
+					final Valuation csExpr = sts.getConcreteState(solver.getModel(), 0, system.getVars());
 
 					final ConcreteState cs = new ConcreteState(csExpr);
 					stateSpace.get(as).add(cs);
 					allConcreteStates.add(cs);
-					solver.add(sts.unroll(Exprs.Not(csExpr), 0));
+					solver.add(sts.unroll(Exprs.Not(csExpr.toExpr()), 0));
 				} else {
 					break;
 				}
@@ -146,7 +144,7 @@ public class InterpolatingCEGARDebugger extends AbstractDebugger<InterpolatedAbs
 			throw new RuntimeException("State space is not explored");
 		clearConcreteTrace();
 		int ci = 0;
-		for (final AndExpr m : cce.getTrace())
+		for (final Valuation m : cce.getTrace())
 			for (final List<ConcreteState> csList : stateSpace.values())
 				for (final ConcreteState cs : csList)
 					if (m.equals(cs.model)) {
