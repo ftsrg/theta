@@ -25,6 +25,7 @@ import static hu.bme.mit.inf.ttmc.core.type.impl.Types.Bool;
 import static hu.bme.mit.inf.ttmc.core.type.impl.Types.Int;
 import static hu.bme.mit.inf.ttmc.core.utils.impl.ExprUtils.simplify;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -62,6 +63,7 @@ public class ExprSimplifierTests {
 		// @formatter:off
 		Assert.assertEquals(False(), simplify(Not(And(True(), True()))));
 		Assert.assertEquals(True(), simplify(Not(And(False(), True()))));
+		Assert.assertEquals(True(), simplify(And(Collections.emptySet())));
 		// @formatter:on
 	}
 
@@ -71,6 +73,7 @@ public class ExprSimplifierTests {
 		Assert.assertEquals(x, simplify(And(True(), x, True())));
 		Assert.assertEquals(False(), simplify(And(True(), x, False())));
 		Assert.assertEquals(And(x, y, z), simplify(And(x, And(y, z))));
+		Assert.assertEquals(True(), simplify(And(Collections.emptySet())));
 		// @formatter:on
 	}
 

@@ -153,6 +153,10 @@ public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? ext
 	@Override
 	public Expr<? extends BoolType> visit(final AndExpr expr, final Assignment param) {
 		final List<Expr<? extends BoolType>> ops = new ArrayList<>();
+
+		if (expr.getOps().size() == 0)
+			return True();
+
 		for (final Expr<? extends BoolType> op : expr.getOps()) {
 			final Expr<? extends BoolType> opVisited = ExprUtils.cast(op.accept(this, param), BoolType.class);
 			if (opVisited instanceof TrueExpr) {
@@ -178,6 +182,10 @@ public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? ext
 	@Override
 	public Expr<? extends BoolType> visit(final OrExpr expr, final Assignment param) {
 		final List<Expr<? extends BoolType>> ops = new ArrayList<>();
+
+		if (expr.getOps().size() == 0)
+			return True();
+
 		for (final Expr<? extends BoolType> op : expr.getOps()) {
 			final Expr<? extends BoolType> opVisited = ExprUtils.cast(op.accept(this, param), BoolType.class);
 			if (opVisited instanceof FalseExpr) {
@@ -192,7 +200,7 @@ public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? ext
 		}
 
 		if (ops.size() == 0) {
-			return True();
+			return False();
 		} else if (ops.size() == 1) {
 			return ops.iterator().next();
 		}
