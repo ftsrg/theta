@@ -3,8 +3,6 @@ package hu.bme.mit.inf.ttmc.core.utils.impl;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.google.common.collect.ImmutableSet;
-
 import hu.bme.mit.inf.ttmc.core.expr.ArrayReadExpr;
 import hu.bme.mit.inf.ttmc.core.expr.ArrayWriteExpr;
 import hu.bme.mit.inf.ttmc.core.expr.BinaryExpr;
@@ -76,8 +74,7 @@ public class ExprITERemoverVisitor extends ArityBasedExprVisitor<Void, Expr<? ex
 		final Expr<? extends BoolType> cond = (Expr<? extends BoolType>) expr.getCond().accept(this, param);
 		final Expr<? extends Type> then = expr.getThen().accept(this, param);
 		final Expr<? extends Type> elze = expr.getElse().accept(this, param);
-		return Exprs.And(ImmutableSet.of(Exprs.Or(ImmutableSet.of(Exprs.Not(cond), (Expr<? extends BoolType>) then)),
-				Exprs.Or(ImmutableSet.of(cond, (Expr<? extends BoolType>) elze))));
+		return Exprs.And(Exprs.Or(Exprs.Not(cond), (Expr<? extends BoolType>) then), Exprs.Or(cond, (Expr<? extends BoolType>) elze));
 	}
 
 }
