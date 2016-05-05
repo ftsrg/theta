@@ -57,7 +57,7 @@ public class PredSTSTransferRelation implements TransferRelation<PredState, Pred
 					if (solver.check().boolValue()) {
 						nextSuccPreds.add(pred);
 					} else {
-						nextSuccPreds.add(Exprs.Not(pred));
+						nextSuccPreds.add(precision.negate(pred));
 					}
 					solver.pop();
 				}
