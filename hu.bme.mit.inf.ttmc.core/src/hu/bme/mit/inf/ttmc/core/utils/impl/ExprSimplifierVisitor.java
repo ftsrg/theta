@@ -37,6 +37,7 @@ import hu.bme.mit.inf.ttmc.core.expr.IntDivExpr;
 import hu.bme.mit.inf.ttmc.core.expr.IntLitExpr;
 import hu.bme.mit.inf.ttmc.core.expr.IteExpr;
 import hu.bme.mit.inf.ttmc.core.expr.LeqExpr;
+import hu.bme.mit.inf.ttmc.core.expr.LitExpr;
 import hu.bme.mit.inf.ttmc.core.expr.LtExpr;
 import hu.bme.mit.inf.ttmc.core.expr.ModExpr;
 import hu.bme.mit.inf.ttmc.core.expr.MulExpr;
@@ -65,7 +66,7 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 
 	@Override
 	public <DeclType extends Type> Expr<? extends DeclType> visit(final ConstRefExpr<DeclType> expr, final Model param) {
-		final Optional<Expr<DeclType>> eval = param.eval(expr.getDecl());
+		final Optional<LitExpr<DeclType>> eval = param.eval(expr.getDecl());
 		if (eval.isPresent()) {
 			return eval.get();
 		}
@@ -616,7 +617,8 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 		}
 	}
 
-	// TODO: refactor these helper methods as soon as IntLit and RatLit has some common interface
+	// TODO: refactor these helper methods as soon as IntLit and RatLit has some
+	// common interface
 	private long num(final Expr<? extends Type> expr) {
 		assert (expr instanceof IntLitExpr || expr instanceof RatLitExpr);
 		if (expr instanceof IntLitExpr)
@@ -625,7 +627,8 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 			return ((RatLitExpr) expr).getNum();
 	}
 
-	// TODO: refactor these helper methods as soon as IntLit and RatLit has some common interface
+	// TODO: refactor these helper methods as soon as IntLit and RatLit has some
+	// common interface
 	private long denom(final Expr<? extends Type> expr) {
 		assert (expr instanceof IntLitExpr || expr instanceof RatLitExpr);
 		if (expr instanceof IntLitExpr)
