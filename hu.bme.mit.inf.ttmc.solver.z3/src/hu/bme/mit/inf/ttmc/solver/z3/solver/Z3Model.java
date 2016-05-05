@@ -12,6 +12,7 @@ import com.google.common.collect.ImmutableList;
 import com.microsoft.z3.FuncDecl;
 
 import hu.bme.mit.inf.ttmc.core.decl.ConstDecl;
+import hu.bme.mit.inf.ttmc.core.decl.Decl;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.expr.LitExpr;
 import hu.bme.mit.inf.ttmc.core.model.Model;
@@ -30,10 +31,10 @@ class Z3Model implements Model {
 	final com.microsoft.z3.Model z3Model;
 
 	final Collection<ConstDecl<?>> constDecls;
-	final Map<ConstDecl<?>, LitExpr<?>> constToExpr;
+	final Map<Decl<?, ?>, LitExpr<?>> constToExpr;
 
-	public Z3Model(final Z3SymbolTable symbolTable, final Z3TransformationManager transformationManager,
-			final Z3TermTransformer termTransformer, final com.microsoft.z3.Model z3Model) {
+	public Z3Model(final Z3SymbolTable symbolTable, final Z3TransformationManager transformationManager, final Z3TermTransformer termTransformer,
+			final com.microsoft.z3.Model z3Model) {
 		this.symbolTable = symbolTable;
 		this.transformationManager = transformationManager;
 		this.termTransformer = termTransformer;
@@ -44,12 +45,12 @@ class Z3Model implements Model {
 	}
 
 	@Override
-	public Collection<? extends ConstDecl<?>> getConstDecls() {
+	public Collection<? extends ConstDecl<?>> getDecls() {
 		return constDecls;
 	}
 
 	@Override
-	public <T extends Type> Optional<LitExpr<T>> eval(final ConstDecl<T> decl) {
+	public <DeclType extends Type, DeclKind extends Decl<DeclType, DeclKind>> Optional<LitExpr<DeclType>> eval(final Decl<DeclType, DeclKind> decl) {
 		checkNotNull(decl);
 
 		LitExpr<?> val = constToExpr.get(decl);
@@ -63,7 +64,7 @@ class Z3Model implements Model {
 		}
 
 		@SuppressWarnings("unchecked")
-		final LitExpr<T> tVal = (LitExpr<T>) val;
+		final LitExpr<DeclType> tVal = (LitExpr<DeclType>) val;
 		return Optional.of(tVal);
 	}
 
