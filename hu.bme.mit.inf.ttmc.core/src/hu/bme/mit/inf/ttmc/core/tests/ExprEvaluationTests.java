@@ -225,4 +225,9 @@ public class ExprEvaluationTests {
 		Assert.assertEquals(Rat(5, 10), evaluate(RatDiv(a, b), assignment));
 		// @formatter:on
 	}
+
+	@Test(expected = RuntimeException.class)
+	public void testException() {
+		evaluate(Add(a, Int(1)));
+	}
 }
