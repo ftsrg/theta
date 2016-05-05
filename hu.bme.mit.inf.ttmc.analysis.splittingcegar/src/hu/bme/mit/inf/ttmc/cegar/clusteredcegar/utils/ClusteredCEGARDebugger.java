@@ -18,22 +18,16 @@ import hu.bme.mit.inf.ttmc.cegar.common.utils.SolverHelper;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.debugging.AbstractDebugger;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.debugging.Debugger;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.Visualizer;
-import hu.bme.mit.inf.ttmc.core.expr.AndExpr;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.expr.impl.Exprs;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
+import hu.bme.mit.inf.ttmc.formalism.common.Valuation;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 import hu.bme.mit.inf.ttmc.solver.Solver;
 
 public class ClusteredCEGARDebugger extends AbstractDebugger<ClusteredAbstractSystem, ClusteredAbstractState> {
-	private final Map<ClusteredAbstractState, List<ConcreteState>> stateSpace; // Abstract
-																				// and
-																				// concrete
-																				// state
-																				// space
-	private final Set<ClusteredAbstractState> reachableStates; // Set of
-																// reachable
-																// states
+	private final Map<ClusteredAbstractState, List<ConcreteState>> stateSpace; // Abstract and concrete state space
+	private final Set<ClusteredAbstractState> reachableStates; // Set of reachable states
 
 	public ClusteredCEGARDebugger(final SolverWrapper solvers, final Visualizer visualizer) {
 		super(solvers, visualizer);
@@ -71,12 +65,12 @@ public class ClusteredCEGARDebugger extends AbstractDebugger<ClusteredAbstractSy
 					solver.add(sts.unroll(label, 0));
 			do {
 				if (SolverHelper.checkSat(solver)) {
-					final Expr<? extends BoolType> csExpr = sts.getConcreteState(solver.getModel(), 0, system.getVars());
+					final Valuation csExpr = sts.getConcreteState(solver.getModel(), 0, system.getVars());
 
 					final ConcreteState cs = new ConcreteState(csExpr);
 					stateSpace.get(cas).add(cs);
 					allConcreteStates.add(cs);
-					solver.add(sts.unroll(Exprs.Not(csExpr), 0));
+					solver.add(sts.unroll(Exprs.Not(csExpr.toExpr()), 0));
 				} else {
 					break;
 				}
@@ -174,7 +168,7 @@ public class ClusteredCEGARDebugger extends AbstractDebugger<ClusteredAbstractSy
 			throw new RuntimeException("State space is not explored");
 		clearConcreteTrace();
 		int ci = 0;
-		for (final AndExpr m : cce.getTrace())
+		for (final Valuation m : cce.getTrace())
 			for (final List<ConcreteState> csList : stateSpace.values())
 				for (final ConcreteState cs : csList)
 					if (m.equals(cs.model)) {

@@ -53,7 +53,7 @@ public class SeqItpVarCollector extends AbstractCEGARStep implements VarCollecto
 		// Loop through each marker
 		for (int i = 0; i < abstractCounterEx.size(); ++i) {
 			// Assert labels
-			itpSolver.add(markers[i], sts.unroll(abstractCounterEx.get(i).getExpression(), i));
+			itpSolver.add(markers[i], sts.unroll(abstractCounterEx.get(i).getExpression().toExpr(), i));
 
 			if (i > 0) {
 				// Assert transition relation
