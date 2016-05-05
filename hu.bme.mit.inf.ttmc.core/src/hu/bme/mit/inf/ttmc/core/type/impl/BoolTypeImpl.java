@@ -2,7 +2,7 @@ package hu.bme.mit.inf.ttmc.core.type.impl;
 
 import java.util.Optional;
 
-import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.expr.LitExpr;
 import hu.bme.mit.inf.ttmc.core.expr.impl.Exprs;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.core.type.Type;
@@ -18,7 +18,7 @@ final class BoolTypeImpl implements BoolType {
 	}
 
 	@Override
-	public Expr<BoolType> getAny() {
+	public LitExpr<BoolType> getAny() {
 		return Exprs.False();
 	}
 
