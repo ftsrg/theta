@@ -14,6 +14,7 @@ import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.model.Model;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.core.type.Type;
+import hu.bme.mit.inf.ttmc.formalism.common.Valuation;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 import hu.bme.mit.inf.ttmc.formalism.utils.impl.FormalismUtils;
@@ -232,22 +233,22 @@ public final class STSImpl implements STS {
 	}
 
 	@Override
-	public AndExpr getConcreteState(final Model model, final int i) {
+	public Valuation getConcreteState(final Model model, final int i) {
 		return getConcreteState(model, i, getVars());
 	}
 
 	@Override
-	public AndExpr getConcreteState(final Model model, final int i, final Collection<VarDecl<? extends Type>> variables) {
+	public Valuation getConcreteState(final Model model, final int i, final Collection<VarDecl<? extends Type>> variables) {
 		return unroller.getConcreteState(model, i, variables);
 	}
 
 	@Override
-	public List<AndExpr> extractTrace(final Model model, final int length) {
+	public List<Valuation> extractTrace(final Model model, final int length) {
 		return extractTrace(model, length, getVars());
 	}
 
 	@Override
-	public List<AndExpr> extractTrace(final Model model, final int length, final Collection<VarDecl<? extends Type>> variables) {
+	public List<Valuation> extractTrace(final Model model, final int length, final Collection<VarDecl<? extends Type>> variables) {
 		return unroller.extractTrace(model, length, variables);
 	}
 

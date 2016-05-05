@@ -5,13 +5,13 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import hu.bme.mit.inf.ttmc.core.expr.AndExpr;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
-import hu.bme.mit.inf.ttmc.core.expr.impl.Exprs;
+import hu.bme.mit.inf.ttmc.core.expr.LitExpr;
 import hu.bme.mit.inf.ttmc.core.model.Model;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.core.utils.impl.ExprUtils;
+import hu.bme.mit.inf.ttmc.formalism.common.Valuation;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 import hu.bme.mit.inf.ttmc.formalism.utils.impl.FoldVisitor;
@@ -55,28 +55,26 @@ class STSUnrollerImpl {
 		return unroll(sts.getProp(), i);
 	}
 
-	public AndExpr getConcreteState(final Model model, final int i,
-			final Collection<VarDecl<? extends Type>> variables) {
+	public Valuation getConcreteState(final Model model, final int i, final Collection<VarDecl<? extends Type>> variables) {
 
-		final List<Expr<? extends BoolType>> ops = new ArrayList<>(variables.size());
+		final Valuation.Builder builder = new Valuation.Builder();
 
 		for (final VarDecl<? extends Type> varDecl : variables) {
-			Expr<? extends Type> value = null;
+			LitExpr<? extends Type> value = null;
 			try {
 				value = model.eval(varMap.getConstDecl(varDecl, i)).get();
 			} catch (final Exception ex) {
 				value = varDecl.getType().getAny();
 			}
-			ops.add(Exprs.Eq(varDecl.getRef(), value));
+			builder.put(varDecl, value);
 		}
 
-		return Exprs.And(ops);
+		return builder.build();
 	}
 
-	public List<AndExpr> extractTrace(final Model model, final int length,
-			final Collection<VarDecl<? extends Type>> variables) {
+	public List<Valuation> extractTrace(final Model model, final int length, final Collection<VarDecl<? extends Type>> variables) {
 
-		final List<AndExpr> trace = new ArrayList<>(length);
+		final List<Valuation> trace = new ArrayList<>(length);
 		for (int i = 0; i < length; ++i)
 			trace.add(getConcreteState(model, i, variables));
 		return trace;

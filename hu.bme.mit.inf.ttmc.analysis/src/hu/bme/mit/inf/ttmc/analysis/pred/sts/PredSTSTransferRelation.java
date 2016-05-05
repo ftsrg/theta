@@ -10,7 +10,6 @@ import hu.bme.mit.inf.ttmc.analysis.ExprState;
 import hu.bme.mit.inf.ttmc.analysis.TransferRelation;
 import hu.bme.mit.inf.ttmc.analysis.pred.PredPrecision;
 import hu.bme.mit.inf.ttmc.analysis.pred.PredState;
-import hu.bme.mit.inf.ttmc.core.expr.AndExpr;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.expr.impl.Exprs;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
@@ -33,7 +32,7 @@ public class PredSTSTransferRelation implements TransferRelation<PredState, Pred
 		final Set<PredState> succStates = new HashSet<>();
 		boolean moreSuccessors;
 		do {
-			AndExpr nextSuccExpr = null;
+			Expr<? extends BoolType> nextSuccExpr = null;
 			solver.push();
 			for (final Expr<? extends BoolType> pred : state.getPreds())
 				solver.add(sts.unroll(pred, 0));
@@ -45,7 +44,7 @@ public class PredSTSTransferRelation implements TransferRelation<PredState, Pred
 
 			moreSuccessors = solver.check().boolValue();
 			if (moreSuccessors)
-				nextSuccExpr = sts.getConcreteState(solver.getModel(), 1);
+				nextSuccExpr = sts.getConcreteState(solver.getModel(), 1).toExpr();
 
 			solver.pop();
 			if (moreSuccessors) {
