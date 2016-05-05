@@ -38,6 +38,11 @@ class ClockImpl implements Clock {
 	}
 
 	@Override
+	public int compareTo(final Clock that) {
+		return this.getName().compareTo(that.getName());
+	}
+
+	@Override
 	public int hashCode() {
 		int result = hashCode;
 		if (result == 0) {
