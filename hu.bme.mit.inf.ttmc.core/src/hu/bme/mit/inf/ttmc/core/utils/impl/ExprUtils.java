@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 
 import hu.bme.mit.inf.ttmc.core.expr.AndExpr;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.expr.LitExpr;
 import hu.bme.mit.inf.ttmc.core.model.Assignment;
 import hu.bme.mit.inf.ttmc.core.model.impl.AssignmentImpl;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
@@ -54,9 +55,21 @@ public class ExprUtils {
 		return (Expr<? extends ExprType>) expr.accept(new ExprSimplifierVisitor(), assignment);
 	}
 
-	@SuppressWarnings("unchecked")
 	public static <ExprType extends Type> Expr<? extends ExprType> simplify(final Expr<? extends ExprType> expr) {
-		return (Expr<? extends ExprType>) expr.accept(new ExprSimplifierVisitor(), AssignmentImpl.empty());
+		return simplify(expr, AssignmentImpl.empty());
 	}
 
+	@SuppressWarnings("unchecked")
+	public static <ExprType extends Type> LitExpr<? extends ExprType> evaluate(final Expr<? extends ExprType> expr, final Assignment assignment) {
+		final Expr<? extends ExprType> simplified = simplify(expr, assignment);
+		if (simplified instanceof LitExpr<?>) {
+			return (LitExpr<ExprType>) simplified;
+		} else {
+			throw new RuntimeException("Could not evaluate " + expr + " with assignment " + assignment);
+		}
+	}
+
+	public static <ExprType extends Type> LitExpr<? extends ExprType> evaluate(final Expr<? extends ExprType> expr) {
+		return evaluate(expr, AssignmentImpl.empty());
+	}
 }
