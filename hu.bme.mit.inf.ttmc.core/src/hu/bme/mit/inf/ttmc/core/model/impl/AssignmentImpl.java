@@ -2,8 +2,10 @@ package hu.bme.mit.inf.ttmc.core.model.impl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.StringJoiner;
@@ -11,8 +13,11 @@ import java.util.StringJoiner;
 import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.inf.ttmc.core.decl.Decl;
+import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.expr.LitExpr;
+import hu.bme.mit.inf.ttmc.core.expr.impl.Exprs;
 import hu.bme.mit.inf.ttmc.core.model.Assignment;
+import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.core.type.Type;
 
 public final class AssignmentImpl implements Assignment {
@@ -71,6 +76,21 @@ public final class AssignmentImpl implements Assignment {
 			sj.add(sb);
 		}
 		return sj.toString();
+	}
+
+	@Override
+	public Expr<? extends BoolType> toExpr() {
+		final List<Expr<? extends BoolType>> ops = new ArrayList<>(declToExpr.size());
+		for (final Decl<?, ?> decl : declToExpr.keySet()) {
+			ops.add(Exprs.Eq(decl.getRef(), declToExpr.get(decl)));
+		}
+		if (ops.size() == 0) {
+			return Exprs.True();
+		} else if (ops.size() == 1) {
+			return ops.get(0);
+		} else {
+			return Exprs.And(ops);
+		}
 	}
 
 }
