@@ -1,5 +1,6 @@
 package hu.bme.mit.inf.ttmc.solver.z3.solver;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Collection;
@@ -12,7 +13,9 @@ import com.google.common.collect.ImmutableList;
 import com.microsoft.z3.FuncDecl;
 
 import hu.bme.mit.inf.ttmc.core.decl.ConstDecl;
+import hu.bme.mit.inf.ttmc.core.decl.Decl;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.expr.LitExpr;
 import hu.bme.mit.inf.ttmc.core.model.Model;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.core.type.Type;
@@ -29,10 +32,10 @@ class Z3Model implements Model {
 	final com.microsoft.z3.Model z3Model;
 
 	final Collection<ConstDecl<?>> constDecls;
-	final Map<ConstDecl<?>, Expr<?>> constToExpr;
+	final Map<ConstDecl<?>, LitExpr<?>> constToExpr;
 
-	public Z3Model(final Z3SymbolTable symbolTable, final Z3TransformationManager transformationManager,
-			final Z3TermTransformer termTransformer, final com.microsoft.z3.Model z3Model) {
+	public Z3Model(final Z3SymbolTable symbolTable, final Z3TransformationManager transformationManager, final Z3TermTransformer termTransformer,
+			final com.microsoft.z3.Model z3Model) {
 		this.symbolTable = symbolTable;
 		this.transformationManager = transformationManager;
 		this.termTransformer = termTransformer;
@@ -43,33 +46,31 @@ class Z3Model implements Model {
 	}
 
 	@Override
-	public Collection<? extends ConstDecl<?>> getConstDecls() {
+	public Collection<? extends ConstDecl<?>> getDecls() {
 		return constDecls;
 	}
 
 	@Override
-	public <T extends Type> Optional<Expr<T>> eval(final ConstDecl<T> decl) {
+	public <DeclType extends Type, DeclKind extends Decl<DeclType, DeclKind>> Optional<LitExpr<DeclType>> eval(final Decl<DeclType, DeclKind> decl) {
 		checkNotNull(decl);
+		checkArgument(decl instanceof ConstDecl<?>);
 
-		Expr<?> val = constToExpr.get(decl);
+		@SuppressWarnings("unchecked")
+		final ConstDecl<DeclType> constDecl = (ConstDecl<DeclType>) decl;
+
+		LitExpr<?> val = constToExpr.get(constDecl);
 		if (val == null) {
-			final FuncDecl funcDecl = transformationManager.toSymbol(decl);
+			final FuncDecl funcDecl = transformationManager.toSymbol(constDecl);
 			final com.microsoft.z3.Expr term = z3Model.getConstInterp(funcDecl);
 			if (term != null) {
-				val = termTransformer.toExpr(term);
-				constToExpr.put(decl, val);
+				val = (LitExpr<?>) termTransformer.toExpr(term);
+				constToExpr.put(constDecl, val);
 			}
 		}
 
 		@SuppressWarnings("unchecked")
-		final Expr<T> tVal = (Expr<T>) val;
+		final LitExpr<DeclType> tVal = (LitExpr<DeclType>) val;
 		return Optional.of(tVal);
-	}
-
-	@Override
-	public <T extends Type> Optional<Expr<T>> eval(final Expr<T> expr) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
 
 	@Override
