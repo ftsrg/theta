@@ -51,7 +51,7 @@ import hu.bme.mit.inf.ttmc.core.expr.RatLitExpr;
 import hu.bme.mit.inf.ttmc.core.expr.RemExpr;
 import hu.bme.mit.inf.ttmc.core.expr.SubExpr;
 import hu.bme.mit.inf.ttmc.core.expr.TrueExpr;
-import hu.bme.mit.inf.ttmc.core.model.Model;
+import hu.bme.mit.inf.ttmc.core.model.Assignment;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.core.type.IntType;
 import hu.bme.mit.inf.ttmc.core.type.RatType;
@@ -62,10 +62,10 @@ import hu.bme.mit.inf.ttmc.core.type.closure.ClosedUnderNeg;
 import hu.bme.mit.inf.ttmc.core.type.closure.ClosedUnderSub;
 import hu.bme.mit.inf.ttmc.core.utils.ExprVisitor;
 
-public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends Type>> {
+public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? extends Type>> {
 
 	@Override
-	public <DeclType extends Type> Expr<? extends DeclType> visit(final ConstRefExpr<DeclType> expr, final Model param) {
+	public <DeclType extends Type> Expr<? extends DeclType> visit(final ConstRefExpr<DeclType> expr, final Assignment param) {
 		final Optional<LitExpr<DeclType>> eval = param.eval(expr.getDecl());
 		if (eval.isPresent()) {
 			return eval.get();
@@ -75,23 +75,23 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 	}
 
 	@Override
-	public <DeclType extends Type> Expr<? extends Type> visit(final ParamRefExpr<DeclType> expr, final Model param) {
+	public <DeclType extends Type> Expr<? extends Type> visit(final ParamRefExpr<DeclType> expr, final Assignment param) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO");
 	}
 
 	@Override
-	public Expr<? extends BoolType> visit(final FalseExpr expr, final Model param) {
+	public Expr<? extends BoolType> visit(final FalseExpr expr, final Assignment param) {
 		return expr;
 	}
 
 	@Override
-	public Expr<? extends BoolType> visit(final TrueExpr expr, final Model param) {
+	public Expr<? extends BoolType> visit(final TrueExpr expr, final Assignment param) {
 		return expr;
 	}
 
 	@Override
-	public Expr<? extends BoolType> visit(final NotExpr expr, final Model param) {
+	public Expr<? extends BoolType> visit(final NotExpr expr, final Assignment param) {
 		final Expr<? extends BoolType> op = ExprUtils.cast(expr.getOp().accept(this, param), BoolType.class);
 		if (op instanceof NotExpr) {
 			return ((NotExpr) op).getOp();
@@ -105,7 +105,7 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 	}
 
 	@Override
-	public Expr<? extends BoolType> visit(final ImplyExpr expr, final Model param) {
+	public Expr<? extends BoolType> visit(final ImplyExpr expr, final Assignment param) {
 		final Expr<? extends BoolType> leftOp = ExprUtils.cast(expr.getLeftOp().accept(this, param), BoolType.class);
 		final Expr<? extends BoolType> rightOp = ExprUtils.cast(expr.getRightOp().accept(this, param), BoolType.class);
 
@@ -127,7 +127,7 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 	}
 
 	@Override
-	public Expr<? extends BoolType> visit(final IffExpr expr, final Model param) {
+	public Expr<? extends BoolType> visit(final IffExpr expr, final Assignment param) {
 		final Expr<? extends BoolType> leftOp = ExprUtils.cast(expr.getLeftOp().accept(this, param), BoolType.class);
 		final Expr<? extends BoolType> rightOp = ExprUtils.cast(expr.getRightOp().accept(this, param), BoolType.class);
 
@@ -151,7 +151,7 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 	}
 
 	@Override
-	public Expr<? extends BoolType> visit(final AndExpr expr, final Model param) {
+	public Expr<? extends BoolType> visit(final AndExpr expr, final Assignment param) {
 		final List<Expr<? extends BoolType>> ops = new ArrayList<>();
 		for (final Expr<? extends BoolType> op : expr.getOps()) {
 			final Expr<? extends BoolType> opVisited = ExprUtils.cast(op.accept(this, param), BoolType.class);
@@ -176,7 +176,7 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 	}
 
 	@Override
-	public Expr<? extends BoolType> visit(final OrExpr expr, final Model param) {
+	public Expr<? extends BoolType> visit(final OrExpr expr, final Assignment param) {
 		final List<Expr<? extends BoolType>> ops = new ArrayList<>();
 		for (final Expr<? extends BoolType> op : expr.getOps()) {
 			final Expr<? extends BoolType> opVisited = ExprUtils.cast(op.accept(this, param), BoolType.class);
@@ -201,19 +201,19 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 	}
 
 	@Override
-	public Expr<? extends Type> visit(final ExistsExpr expr, final Model param) {
+	public Expr<? extends Type> visit(final ExistsExpr expr, final Assignment param) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO");
 	}
 
 	@Override
-	public Expr<? extends Type> visit(final ForallExpr expr, final Model param) {
+	public Expr<? extends Type> visit(final ForallExpr expr, final Assignment param) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO");
 	}
 
 	@Override
-	public Expr<? extends BoolType> visit(final EqExpr expr, final Model param) {
+	public Expr<? extends BoolType> visit(final EqExpr expr, final Assignment param) {
 		final Expr<? extends Type> leftOp = expr.getLeftOp().accept(this, param);
 		final Expr<? extends Type> rightOp = expr.getRightOp().accept(this, param);
 
@@ -229,7 +229,7 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 	}
 
 	@Override
-	public Expr<? extends BoolType> visit(final NeqExpr expr, final Model param) {
+	public Expr<? extends BoolType> visit(final NeqExpr expr, final Assignment param) {
 		final Expr<? extends Type> leftOp = expr.getLeftOp().accept(this, param);
 		final Expr<? extends Type> rightOp = expr.getRightOp().accept(this, param);
 
@@ -245,7 +245,7 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 	}
 
 	@Override
-	public Expr<? extends BoolType> visit(final GeqExpr expr, final Model param) {
+	public Expr<? extends BoolType> visit(final GeqExpr expr, final Assignment param) {
 		final Expr<? extends RatType> leftOp = ExprUtils.cast(expr.getLeftOp().accept(this, param), RatType.class);
 		final Expr<? extends RatType> rightOp = ExprUtils.cast(expr.getRightOp().accept(this, param), RatType.class);
 
@@ -270,7 +270,7 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 	}
 
 	@Override
-	public Expr<? extends BoolType> visit(final GtExpr expr, final Model param) {
+	public Expr<? extends BoolType> visit(final GtExpr expr, final Assignment param) {
 		final Expr<? extends RatType> leftOp = ExprUtils.cast(expr.getLeftOp().accept(this, param), RatType.class);
 		final Expr<? extends RatType> rightOp = ExprUtils.cast(expr.getRightOp().accept(this, param), RatType.class);
 
@@ -295,7 +295,7 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 	}
 
 	@Override
-	public Expr<? extends BoolType> visit(final LeqExpr expr, final Model param) {
+	public Expr<? extends BoolType> visit(final LeqExpr expr, final Assignment param) {
 		final Expr<? extends RatType> leftOp = ExprUtils.cast(expr.getLeftOp().accept(this, param), RatType.class);
 		final Expr<? extends RatType> rightOp = ExprUtils.cast(expr.getRightOp().accept(this, param), RatType.class);
 
@@ -320,7 +320,7 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 	}
 
 	@Override
-	public Expr<? extends BoolType> visit(final LtExpr expr, final Model param) {
+	public Expr<? extends BoolType> visit(final LtExpr expr, final Assignment param) {
 		final Expr<? extends RatType> leftOp = ExprUtils.cast(expr.getLeftOp().accept(this, param), RatType.class);
 		final Expr<? extends RatType> rightOp = ExprUtils.cast(expr.getRightOp().accept(this, param), RatType.class);
 
@@ -345,12 +345,12 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 	}
 
 	@Override
-	public Expr<? extends IntType> visit(final IntLitExpr expr, final Model param) {
+	public Expr<? extends IntType> visit(final IntLitExpr expr, final Assignment param) {
 		return expr;
 	}
 
 	@Override
-	public Expr<? extends IntType> visit(final IntDivExpr expr, final Model param) {
+	public Expr<? extends IntType> visit(final IntDivExpr expr, final Assignment param) {
 		final Expr<? extends IntType> leftOp = ExprUtils.cast(expr.getLeftOp().accept(this, param), IntType.class);
 		final Expr<? extends IntType> rightOp = ExprUtils.cast(expr.getRightOp().accept(this, param), IntType.class);
 
@@ -368,7 +368,7 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 	}
 
 	@Override
-	public Expr<? extends IntType> visit(final RemExpr expr, final Model param) {
+	public Expr<? extends IntType> visit(final RemExpr expr, final Assignment param) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO");
 		/*
@@ -387,7 +387,7 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 	}
 
 	@Override
-	public Expr<? extends IntType> visit(final ModExpr expr, final Model param) {
+	public Expr<? extends IntType> visit(final ModExpr expr, final Assignment param) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO");
 		/*
@@ -406,7 +406,7 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 	}
 
 	@Override
-	public Expr<? extends RatType> visit(final RatLitExpr expr, final Model param) {
+	public Expr<? extends RatType> visit(final RatLitExpr expr, final Assignment param) {
 
 		long denom = expr.getDenom();
 		long num = expr.getNum();
@@ -432,7 +432,7 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 	}
 
 	@Override
-	public Expr<? extends RatType> visit(final RatDivExpr expr, final Model param) {
+	public Expr<? extends RatType> visit(final RatDivExpr expr, final Assignment param) {
 		final Expr<? extends RatType> leftOp = ExprUtils.cast(expr.getLeftOp().accept(this, param), RatType.class);
 		final Expr<? extends RatType> rightOp = ExprUtils.cast(expr.getRightOp().accept(this, param), RatType.class);
 
@@ -453,7 +453,7 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 	}
 
 	@Override
-	public <ExprType extends ClosedUnderNeg> Expr<? extends ClosedUnderNeg> visit(final NegExpr<ExprType> expr, final Model param) {
+	public <ExprType extends ClosedUnderNeg> Expr<? extends ClosedUnderNeg> visit(final NegExpr<ExprType> expr, final Assignment param) {
 		final Expr<? extends ClosedUnderNeg> op = ExprUtils.cast(expr.getOp().accept(this, param), ClosedUnderNeg.class);
 
 		if (op instanceof IntLitExpr) {
@@ -473,7 +473,7 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 	}
 
 	@Override
-	public <ExprType extends ClosedUnderSub> Expr<? extends ClosedUnderSub> visit(final SubExpr<ExprType> expr, final Model param) {
+	public <ExprType extends ClosedUnderSub> Expr<? extends ClosedUnderSub> visit(final SubExpr<ExprType> expr, final Assignment param) {
 		final Expr<? extends ClosedUnderSub> leftOp = ExprUtils.cast(expr.getLeftOp().accept(this, param), ClosedUnderSub.class);
 		final Expr<? extends ClosedUnderSub> rightOp = ExprUtils.cast(expr.getRightOp().accept(this, param), ClosedUnderSub.class);
 
@@ -499,7 +499,7 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 	}
 
 	@Override
-	public <ExprType extends ClosedUnderAdd> Expr<? extends ClosedUnderAdd> visit(final AddExpr<ExprType> expr, final Model param) {
+	public <ExprType extends ClosedUnderAdd> Expr<? extends ClosedUnderAdd> visit(final AddExpr<ExprType> expr, final Assignment param) {
 		final List<Expr<? extends ClosedUnderAdd>> ops = new ArrayList<>();
 		long num = 0;
 		long denom = 1;
@@ -535,7 +535,7 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 	}
 
 	@Override
-	public <ExprType extends ClosedUnderMul> Expr<? extends ClosedUnderMul> visit(final MulExpr<ExprType> expr, final Model param) {
+	public <ExprType extends ClosedUnderMul> Expr<? extends ClosedUnderMul> visit(final MulExpr<ExprType> expr, final Assignment param) {
 		final List<Expr<? extends ClosedUnderMul>> ops = new ArrayList<>();
 		long num = 1;
 		long denom = 1;
@@ -573,31 +573,31 @@ public class ExprSimplifierVisitor implements ExprVisitor<Model, Expr<? extends 
 	}
 
 	@Override
-	public <IndexType extends Type, ElemType extends Type> Expr<? extends Type> visit(final ArrayReadExpr<IndexType, ElemType> expr, final Model param) {
+	public <IndexType extends Type, ElemType extends Type> Expr<? extends Type> visit(final ArrayReadExpr<IndexType, ElemType> expr, final Assignment param) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO");
 	}
 
 	@Override
-	public <IndexType extends Type, ElemType extends Type> Expr<? extends Type> visit(final ArrayWriteExpr<IndexType, ElemType> expr, final Model param) {
+	public <IndexType extends Type, ElemType extends Type> Expr<? extends Type> visit(final ArrayWriteExpr<IndexType, ElemType> expr, final Assignment param) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO");
 	}
 
 	@Override
-	public <ParamType extends Type, ResultType extends Type> Expr<? extends Type> visit(final FuncLitExpr<ParamType, ResultType> expr, final Model param) {
+	public <ParamType extends Type, ResultType extends Type> Expr<? extends Type> visit(final FuncLitExpr<ParamType, ResultType> expr, final Assignment param) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO");
 	}
 
 	@Override
-	public <ParamType extends Type, ResultType extends Type> Expr<? extends Type> visit(final FuncAppExpr<ParamType, ResultType> expr, final Model param) {
+	public <ParamType extends Type, ResultType extends Type> Expr<? extends Type> visit(final FuncAppExpr<ParamType, ResultType> expr, final Assignment param) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO");
 	}
 
 	@Override
-	public <ExprType extends Type> Expr<? extends ExprType> visit(final IteExpr<ExprType> expr, final Model param) {
+	public <ExprType extends Type> Expr<? extends ExprType> visit(final IteExpr<ExprType> expr, final Assignment param) {
 		final Expr<? extends BoolType> cond = ExprUtils.cast(expr.getCond().accept(this, param), BoolType.class);
 		@SuppressWarnings("unchecked")
 		final Expr<? extends ExprType> then = (Expr<? extends ExprType>) expr.getThen().accept(this, param);
