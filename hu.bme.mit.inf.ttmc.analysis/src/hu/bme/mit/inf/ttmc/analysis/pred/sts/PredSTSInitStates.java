@@ -55,7 +55,7 @@ public class PredSTSInitStates implements InitStates<PredState, PredPrecision> {
 					if (solver.check().boolValue()) {
 						nextInitStatePreds.add(pred);
 					} else {
-						nextInitStatePreds.add(Exprs.Not(pred));
+						nextInitStatePreds.add(precision.negate(pred));
 					}
 					solver.pop();
 				}
