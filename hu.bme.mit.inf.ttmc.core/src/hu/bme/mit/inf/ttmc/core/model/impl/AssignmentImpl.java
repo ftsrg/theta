@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.StringJoiner;
 
 import com.google.common.collect.ImmutableList;
 
@@ -55,6 +56,21 @@ public final class AssignmentImpl implements Assignment {
 	@Override
 	public Collection<? extends Decl<?, ?>> getDecls() {
 		return decls;
+	}
+
+	@Override
+	public String toString() {
+		final StringJoiner sj = new StringJoiner(", ", "Assignment(", ")");
+		for (final Decl<?, ?> decl : decls) {
+			final StringBuilder sb = new StringBuilder();
+			sb.append(decl.getName());
+			sb.append(" <- ");
+			final Optional<?> val = eval(decl);
+			assert val.isPresent();
+			sb.append(val.get());
+			sj.add(sb);
+		}
+		return sj.toString();
 	}
 
 }
