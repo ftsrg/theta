@@ -7,8 +7,7 @@ Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Require-Bundle: org.junit,
  com.google.guava;bundle-version="15.0.0",
  hu.bme.mit.inf.ttmc.common,
- hu.bme.mit.inf.ttmc.core,
- hu.bme.mit.inf.ttmc.solver
+ hu.bme.mit.inf.ttmc.core
 Export-Package: hu.bme.mit.inf.ttmc.formalism.cfa,
  hu.bme.mit.inf.ttmc.formalism.cfa.impl,
  hu.bme.mit.inf.ttmc.formalism.common.automaton,
