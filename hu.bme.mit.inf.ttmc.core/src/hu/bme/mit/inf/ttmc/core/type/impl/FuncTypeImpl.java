@@ -4,7 +4,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Optional;
 
-import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.expr.LitExpr;
 import hu.bme.mit.inf.ttmc.core.type.FuncType;
 import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.core.utils.TypeVisitor;
@@ -36,7 +36,7 @@ final class FuncTypeImpl<ParamType extends Type, ResultType extends Type> implem
 	}
 
 	@Override
-	public Expr<FuncType<ParamType, ResultType>> getAny() {
+	public LitExpr<FuncType<ParamType, ResultType>> getAny() {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}

@@ -2,7 +2,7 @@ package hu.bme.mit.inf.ttmc.core.type.impl;
 
 import java.util.Optional;
 
-import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.expr.LitExpr;
 import hu.bme.mit.inf.ttmc.core.expr.impl.Exprs;
 import hu.bme.mit.inf.ttmc.core.type.IntType;
 import hu.bme.mit.inf.ttmc.core.type.RatType;
@@ -19,7 +19,7 @@ final class IntTypeImpl implements IntType {
 	}
 
 	@Override
-	public Expr<IntType> getAny() {
+	public LitExpr<IntType> getAny() {
 		return Exprs.Int(0);
 	}
 

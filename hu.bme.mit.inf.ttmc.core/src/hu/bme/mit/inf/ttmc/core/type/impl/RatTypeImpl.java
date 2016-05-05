@@ -2,7 +2,7 @@ package hu.bme.mit.inf.ttmc.core.type.impl;
 
 import java.util.Optional;
 
-import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.expr.LitExpr;
 import hu.bme.mit.inf.ttmc.core.expr.impl.Exprs;
 import hu.bme.mit.inf.ttmc.core.type.RatType;
 import hu.bme.mit.inf.ttmc.core.type.Type;
@@ -18,7 +18,7 @@ final class RatTypeImpl implements RatType {
 	}
 
 	@Override
-	public Expr<RatType> getAny() {
+	public LitExpr<RatType> getAny() {
 		return Exprs.Rat(0, 1);
 	}
 
