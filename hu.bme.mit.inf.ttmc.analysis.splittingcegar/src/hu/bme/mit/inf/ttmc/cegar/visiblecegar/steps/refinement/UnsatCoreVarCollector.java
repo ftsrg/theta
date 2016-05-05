@@ -42,7 +42,7 @@ public class UnsatCoreVarCollector extends AbstractCEGARStep implements VarColle
 		solver.track(sts.unrollInit(0));
 		for (int i = 0; i < traceLength + 1; ++i) {
 			// TODO: if the expression is an AND, are the operands added separately?
-			solver.track(sts.unroll(abstractCounterEx.get(i).getExpression().toExpr(), i));
+			solver.track(sts.unroll(abstractCounterEx.get(i).getValuation().toExpr(), i));
 
 			if (i > 0)
 				solver.track(sts.unrollTrans(i - 1));

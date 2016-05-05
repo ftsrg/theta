@@ -77,13 +77,13 @@ public class InterpolatedAbstractState implements AbstractState {
 		return ret;
 	}
 
-	public InterpolatedAbstractState cloneAndAddExplicit(final Valuation label) {
+	public InterpolatedAbstractState cloneAndAddExplicit(final Valuation valuation) {
 		final InterpolatedAbstractState ret = new InterpolatedAbstractState();
 		ret.labels.addAll(this.labels);
-		ret.labels.add(0, label.toExpr()); // Insert new label to the beginning
+		ret.labels.add(0, valuation.toExpr()); // Insert new label to the beginning
 		ret.bitset = (BitSet) this.bitset.clone();
-		for (final VarDecl<? extends Type> varDecl : label.getDecls())
-			ret.explicitValues += label.eval(varDecl).get() + " ";
+		for (final VarDecl<? extends Type> varDecl : valuation.getDecls())
+			ret.explicitValues += valuation.eval(varDecl).get() + " ";
 		ret.explicitValues += this.explicitValues;
 
 		return ret;

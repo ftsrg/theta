@@ -44,7 +44,7 @@ public class CraigItpVarCollector extends AbstractCEGARStep implements VarCollec
 		itpSolver.add(A, sts.unrollInit(0));
 		for (int i = 0; i < traceLength; ++i) {
 			// Expression of the abstract state
-			itpSolver.add(A, sts.unroll(abstractCounterEx.get(i).getExpression().toExpr(), i));
+			itpSolver.add(A, sts.unroll(abstractCounterEx.get(i).getValuation().toExpr(), i));
 
 			if (i > 0) {
 				// Transition relation
@@ -60,7 +60,7 @@ public class CraigItpVarCollector extends AbstractCEGARStep implements VarCollec
 		// transitions to the next abstract state
 
 		// Expression of the next abstract state
-		itpSolver.add(B, sts.unroll(abstractCounterEx.get(traceLength).getExpression().toExpr(), traceLength));
+		itpSolver.add(B, sts.unroll(abstractCounterEx.get(traceLength).getValuation().toExpr(), traceLength));
 		// Invariants for the next abstract state
 		itpSolver.add(B, sts.unrollInv(traceLength));
 		// Transition to the next abstract state
