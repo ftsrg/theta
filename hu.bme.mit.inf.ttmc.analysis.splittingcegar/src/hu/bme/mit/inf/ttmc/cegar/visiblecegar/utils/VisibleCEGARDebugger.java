@@ -62,7 +62,7 @@ public class VisibleCEGARDebugger extends AbstractDebugger<VisibleAbstractSystem
 		solver.add(sts.unrollInit(0));
 		for (final VisibleAbstractState vas : stateSpace.keySet()) {
 			solver.push(); // 3
-			solver.add(sts.unroll(vas.getExpression().toExpr(), 0));
+			solver.add(sts.unroll(vas.getValuation().toExpr(), 0));
 			vas.setInitial(SolverHelper.checkSat(solver));
 			solver.pop(); // 3
 		}
@@ -74,7 +74,7 @@ public class VisibleCEGARDebugger extends AbstractDebugger<VisibleAbstractSystem
 
 		for (final VisibleAbstractState vas : stateSpace.keySet()) {
 			solver.push(); // 2
-			solver.add(sts.unroll(vas.getExpression().toExpr(), 0));
+			solver.add(sts.unroll(vas.getValuation().toExpr(), 0));
 			do {
 				if (SolverHelper.checkSat(solver)) { // New concrete state found
 					final Valuation csExpr = sts.getConcreteState(solver.getModel(), 0, system.getVars());
@@ -96,10 +96,10 @@ public class VisibleCEGARDebugger extends AbstractDebugger<VisibleAbstractSystem
 		solver.add(sts.unrollTrans(0));
 		for (final VisibleAbstractState vas0 : stateSpace.keySet()) {
 			solver.push(); // 3
-			solver.add(sts.unroll(vas0.getExpression().toExpr(), 0));
+			solver.add(sts.unroll(vas0.getValuation().toExpr(), 0));
 			for (final VisibleAbstractState vas1 : stateSpace.keySet()) {
 				solver.push(); // 4
-				solver.add(sts.unroll(vas1.getExpression().toExpr(), 1));
+				solver.add(sts.unroll(vas1.getValuation().toExpr(), 1));
 				if (SolverHelper.checkSat(solver))
 					vas0.addSuccessor(vas1);
 				solver.pop(); // 4

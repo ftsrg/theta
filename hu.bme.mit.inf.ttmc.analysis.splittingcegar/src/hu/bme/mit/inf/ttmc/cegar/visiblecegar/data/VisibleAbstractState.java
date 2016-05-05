@@ -16,7 +16,7 @@ import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
  * Represents an abstract state of the variable-visibility based CEGAR.
  */
 public class VisibleAbstractState implements AbstractState {
-	private final Valuation expression;
+	private final Valuation valuation;
 	private boolean isInitial;
 	private final List<VisibleAbstractState> successors;
 	private boolean isPartOfCounterexample; // for visualization
@@ -25,11 +25,11 @@ public class VisibleAbstractState implements AbstractState {
 		this.isInitial = isInitial;
 		this.successors = new ArrayList<>();
 		this.isPartOfCounterexample = false;
-		this.expression = expression;
+		this.valuation = expression;
 	}
 
-	public Valuation getExpression() {
-		return expression;
+	public Valuation getValuation() {
+		return valuation;
 	}
 
 	@Override
@@ -65,28 +65,28 @@ public class VisibleAbstractState implements AbstractState {
 			return false;
 		if (!(obj instanceof VisibleAbstractState))
 			return false;
-		return expression.equals(((VisibleAbstractState) obj).expression);
+		return valuation.equals(((VisibleAbstractState) obj).valuation);
 	}
 
 	@Override
 	public int hashCode() {
-		return expression.toString().hashCode();
+		return valuation.toString().hashCode();
 	}
 
 	@Override
 	public String toString() {
-		return expression.toString() + (isInitial ? ", initial" : "");
+		return valuation.toString() + (isInitial ? ", initial" : "");
 	}
 
 	@Override
 	public Expr<? extends BoolType> createExpression() {
-		return expression.toExpr();
+		return valuation.toExpr();
 	}
 
 	public String createId() {
 		final StringBuilder ret = new StringBuilder("");
-		for (final VarDecl<? extends Type> varDecl : expression.getDecls())
-			ret.append(expression.eval(varDecl).get()).append(" ");
+		for (final VarDecl<? extends Type> varDecl : valuation.getDecls())
+			ret.append(valuation.eval(varDecl).get()).append(" ");
 		return ret.toString();
 	}
 }
