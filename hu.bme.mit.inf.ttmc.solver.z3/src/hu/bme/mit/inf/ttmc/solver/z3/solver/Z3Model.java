@@ -74,12 +74,6 @@ class Z3Model implements Model {
 	}
 
 	@Override
-	public <T extends Type> Optional<LitExpr<T>> eval(final Expr<T> expr) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
-	}
-
-	@Override
 	public Expr<? extends BoolType> toExpr() {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO: auto-generated method stub");
