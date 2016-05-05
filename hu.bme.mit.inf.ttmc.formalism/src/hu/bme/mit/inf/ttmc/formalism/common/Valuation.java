@@ -23,6 +23,8 @@ public final class Valuation implements Assignment {
 	private final Collection<VarDecl<? extends Type>> decls;
 	private final Map<VarDecl<? extends Type>, LitExpr<?>> declToExpr;
 
+	private volatile Expr<? extends BoolType> expr = null;
+
 	private Valuation(final Map<VarDecl<? extends Type>, LitExpr<?>> declToExpr) {
 		this.declToExpr = declToExpr;
 		this.decls = declToExpr.keySet();
@@ -50,17 +52,25 @@ public final class Valuation implements Assignment {
 
 	@Override
 	public Expr<? extends BoolType> toExpr() {
-		final List<Expr<? extends BoolType>> ops = new ArrayList<>(declToExpr.size());
-		for (final VarDecl<? extends Type> decl : declToExpr.keySet()) {
-			ops.add(Exprs.Eq(decl.getRef(), declToExpr.get(decl)));
+
+		Expr<? extends BoolType> result = expr;
+
+		if (result == null) {
+
+			final List<Expr<? extends BoolType>> ops = new ArrayList<>(declToExpr.size());
+			for (final VarDecl<? extends Type> decl : declToExpr.keySet()) {
+				ops.add(Exprs.Eq(decl.getRef(), declToExpr.get(decl)));
+			}
+			if (ops.size() == 0) {
+				result = Exprs.True();
+			} else if (ops.size() == 1) {
+				result = ops.get(0);
+			} else {
+				result = Exprs.And(ops);
+			}
+			expr = result;
 		}
-		if (ops.size() == 0) {
-			return Exprs.True();
-		} else if (ops.size() == 1) {
-			return ops.get(0);
-		} else {
-			return Exprs.And(ops);
-		}
+		return result;
 	}
 
 	public static final class Builder {
@@ -78,6 +88,7 @@ public final class Valuation implements Assignment {
 		public Valuation build() {
 			return new Valuation(declToExpr);
 		}
+
 	}
 
 	@Override
