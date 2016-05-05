@@ -10,7 +10,6 @@ import hu.bme.mit.inf.ttmc.analysis.ExprState;
 import hu.bme.mit.inf.ttmc.analysis.InitStates;
 import hu.bme.mit.inf.ttmc.analysis.pred.PredPrecision;
 import hu.bme.mit.inf.ttmc.analysis.pred.PredState;
-import hu.bme.mit.inf.ttmc.core.expr.AndExpr;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.expr.impl.Exprs;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
@@ -33,7 +32,7 @@ public class PredSTSInitStates implements InitStates<PredState, PredPrecision> {
 		boolean moreInitialStates;
 
 		do {
-			AndExpr nextInitStateExpr = null;
+			Expr<? extends BoolType> nextInitStateExpr = null;
 			solver.push();
 			solver.add(sts.unrollInit(0));
 			solver.add(sts.unrollInv(0));
@@ -42,7 +41,7 @@ public class PredSTSInitStates implements InitStates<PredState, PredPrecision> {
 
 			moreInitialStates = solver.check().boolValue();
 			if (moreInitialStates) {
-				nextInitStateExpr = sts.getConcreteState(solver.getModel(), 0);
+				nextInitStateExpr = sts.getConcreteState(solver.getModel(), 0).toExpr();
 			}
 
 			solver.pop();

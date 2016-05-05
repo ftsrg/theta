@@ -70,7 +70,7 @@ public final class Valuation implements Assignment {
 			this.declToExpr = new HashMap<>();
 		}
 
-		public <T extends Type> Builder put(final VarDecl<T> decl, final LitExpr<T> lit) {
+		public Builder put(final VarDecl<? extends Type> decl, final LitExpr<? extends Type> lit) {
 			declToExpr.put(decl, lit);
 			return this;
 		}
