@@ -6,14 +6,16 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-import hu.bme.mit.inf.ttmc.analysis.ExprState;
 import hu.bme.mit.inf.ttmc.analysis.TransferRelation;
 import hu.bme.mit.inf.ttmc.analysis.pred.PredPrecision;
 import hu.bme.mit.inf.ttmc.analysis.pred.PredState;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.expr.LitExpr;
 import hu.bme.mit.inf.ttmc.core.expr.impl.Exprs;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
+import hu.bme.mit.inf.ttmc.formalism.common.Valuation;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
+import hu.bme.mit.inf.ttmc.formalism.utils.impl.FormalismUtils;
 import hu.bme.mit.inf.ttmc.solver.Solver;
 
 public class PredSTSTransferRelation implements TransferRelation<PredState, PredPrecision> {
@@ -29,43 +31,35 @@ public class PredSTSTransferRelation implements TransferRelation<PredState, Pred
 	@Override
 	public Collection<? extends PredState> getSuccStates(final PredState state, final PredPrecision precision) {
 		checkNotNull(state);
+		checkNotNull(precision);
 		final Set<PredState> succStates = new HashSet<>();
-		boolean moreSuccessors;
+		solver.push();
+		solver.add(sts.unroll(state.asExpr(), 0));
+		solver.add(sts.unrollInv(0));
+		solver.add(sts.unrollInv(1));
+		solver.add(sts.unrollTrans(0));
+		boolean moreSuccStates;
 		do {
-			Expr<? extends BoolType> nextSuccExpr = null;
-			solver.push();
-			for (final Expr<? extends BoolType> pred : state.getPreds())
-				solver.add(sts.unroll(pred, 0));
-			solver.add(sts.unrollInv(0));
-			solver.add(sts.unrollInv(1));
-			solver.add(sts.unrollTrans(0));
-			for (final ExprState existingSucc : succStates)
-				solver.add(sts.unroll(Exprs.Not(existingSucc.asExpr()), 1));
+			moreSuccStates = solver.check().boolValue();
+			if (moreSuccStates) {
+				final Valuation nextSuccStateVal = sts.getConcreteState(solver.getModel(), 1);
+				final Set<Expr<? extends BoolType>> nextSuccStatePreds = new HashSet<>();
 
-			moreSuccessors = solver.check().boolValue();
-			if (moreSuccessors)
-				nextSuccExpr = sts.getConcreteState(solver.getModel(), 1).toExpr();
-
-			solver.pop();
-			if (moreSuccessors) {
-				final Set<Expr<? extends BoolType>> nextSuccPreds = new HashSet<>();
-				solver.push();
-				solver.add(sts.unroll(nextSuccExpr, 0));
 				for (final Expr<? extends BoolType> pred : precision.getPreds()) {
-					solver.push();
-					solver.add(sts.unroll(pred, 0));
-					if (solver.check().boolValue()) {
-						nextSuccPreds.add(pred);
+					final LitExpr<? extends BoolType> predHolds = FormalismUtils.evaluate(pred, nextSuccStateVal);
+					if (predHolds.equals(Exprs.True())) {
+						nextSuccStatePreds.add(pred);
 					} else {
-						nextSuccPreds.add(precision.negate(pred));
+						nextSuccStatePreds.add(precision.negate(pred));
 					}
-					solver.pop();
 				}
-				solver.pop();
-				succStates.add(PredState.create(nextSuccPreds));
+				final PredState nextSuccState = PredState.create(nextSuccStatePreds);
+				succStates.add(nextSuccState);
+				solver.add(sts.unroll(Exprs.Not(nextSuccState.asExpr()), 1));
 			}
+		} while (moreSuccStates);
+		solver.pop();
 
-		} while (moreSuccessors);
 		return succStates;
 	}
 
