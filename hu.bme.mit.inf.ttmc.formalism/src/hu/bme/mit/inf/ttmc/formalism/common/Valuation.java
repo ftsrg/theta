@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.StringJoiner;
 
 import hu.bme.mit.inf.ttmc.core.decl.Decl;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
@@ -113,5 +114,20 @@ public final class Valuation implements Assignment {
 			hashCode = result;
 		}
 		return result;
+	}
+
+	@Override
+	public String toString() {
+		final StringJoiner sj = new StringJoiner(", ", "Assignment(", ")");
+		for (final VarDecl<?> decl : decls) {
+			final StringBuilder sb = new StringBuilder();
+			sb.append(decl.getName());
+			sb.append(" <- ");
+			final Optional<?> val = eval(decl);
+			assert val.isPresent();
+			sb.append(val.get());
+			sj.add(sb);
+		}
+		return sj.toString();
 	}
 }
