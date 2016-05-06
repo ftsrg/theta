@@ -6,7 +6,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-import hu.bme.mit.inf.ttmc.analysis.ExprState;
 import hu.bme.mit.inf.ttmc.analysis.InitStates;
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplPrecision;
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplState;
@@ -27,25 +26,22 @@ public class ExplSTSInitStates implements InitStates<ExplState, ExplPrecision> {
 
 	@Override
 	public Collection<? extends ExplState> get(final ExplPrecision precision) {
+		checkNotNull(precision);
 		final Set<ExplState> initStates = new HashSet<>();
-		boolean moreInitialStates;
-
+		boolean moreInitStates;
+		solver.push();
+		solver.add(sts.unrollInit(0));
+		solver.add(sts.unrollInv(0));
 		do {
-			Valuation nextInitStateVal = null;
-			solver.push();
-			solver.add(sts.unrollInit(0));
-			solver.add(sts.unrollInv(0));
-			for (final ExprState existingInit : initStates)
-				solver.add(sts.unroll(Exprs.Not(existingInit.asExpr()), 0));
-
-			moreInitialStates = solver.check().boolValue();
-			if (moreInitialStates) {
-				nextInitStateVal = sts.getConcreteState(solver.getModel(), 0, precision.getVisibleVars());
-				initStates.add(ExplState.create(nextInitStateVal));
+			moreInitStates = solver.check().boolValue();
+			if (moreInitStates) {
+				final Valuation nextInitStateVal = sts.getConcreteState(solver.getModel(), 0, precision.getVisibleVars());
+				final ExplState nextInitState = ExplState.create(nextInitStateVal);
+				initStates.add(nextInitState);
+				solver.add(sts.unroll(Exprs.Not(nextInitState.asExpr()), 0));
 			}
-			solver.pop();
-		} while (moreInitialStates);
-
+		} while (moreInitStates);
+		solver.pop();
 		return initStates;
 	}
 

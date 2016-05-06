@@ -6,7 +6,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-import hu.bme.mit.inf.ttmc.analysis.ExprState;
 import hu.bme.mit.inf.ttmc.analysis.TransferRelation;
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplPrecision;
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplState;
@@ -28,27 +27,25 @@ public class ExplSTSTransferRelation implements TransferRelation<ExplState, Expl
 	@Override
 	public Collection<? extends ExplState> getSuccStates(final ExplState state, final ExplPrecision precision) {
 		checkNotNull(state);
+		checkNotNull(precision);
 		final Set<ExplState> succStates = new HashSet<>();
-		boolean moreSuccessors;
+		solver.push();
+		solver.add(sts.unroll(state.asExpr(), 0));
+		solver.add(sts.unrollInv(0));
+		solver.add(sts.unrollInv(1));
+		solver.add(sts.unrollTrans(0));
+		boolean moreSuccStates;
 		do {
-			Valuation nextSuccVal = null;
-			solver.push();
-			solver.add(sts.unroll(state.asExpr(), 0));
-			solver.add(sts.unrollInv(0));
-			solver.add(sts.unrollInv(1));
-			solver.add(sts.unrollTrans(0));
-			for (final ExprState existingSucc : succStates)
-				solver.add(sts.unroll(Exprs.Not(existingSucc.asExpr()), 1));
-
-			moreSuccessors = solver.check().boolValue();
-			if (moreSuccessors) {
-				nextSuccVal = sts.getConcreteState(solver.getModel(), 1, precision.getVisibleVars());
-				succStates.add(ExplState.create(nextSuccVal));
+			moreSuccStates = solver.check().boolValue();
+			if (moreSuccStates) {
+				final Valuation nextSuccStateVal = sts.getConcreteState(solver.getModel(), 1, precision.getVisibleVars());
+				final ExplState nextSuccState = ExplState.create(nextSuccStateVal);
+				succStates.add(nextSuccState);
+				solver.add(sts.unroll(Exprs.Not(nextSuccState.asExpr()), 1));
 			}
 
-			solver.pop();
-
-		} while (moreSuccessors);
+		} while (moreSuccStates);
+		solver.pop();
 
 		return succStates;
 	}
