@@ -9,13 +9,9 @@ import java.util.Set;
 import hu.bme.mit.inf.ttmc.analysis.TransferRelation;
 import hu.bme.mit.inf.ttmc.analysis.pred.PredPrecision;
 import hu.bme.mit.inf.ttmc.analysis.pred.PredState;
-import hu.bme.mit.inf.ttmc.core.expr.Expr;
-import hu.bme.mit.inf.ttmc.core.expr.LitExpr;
 import hu.bme.mit.inf.ttmc.core.expr.impl.Exprs;
-import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.formalism.common.Valuation;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
-import hu.bme.mit.inf.ttmc.formalism.utils.impl.FormalismUtils;
 import hu.bme.mit.inf.ttmc.solver.Solver;
 
 public class PredSTSTransferRelation implements TransferRelation<PredState, PredPrecision> {
@@ -43,17 +39,8 @@ public class PredSTSTransferRelation implements TransferRelation<PredState, Pred
 			moreSuccStates = solver.check().boolValue();
 			if (moreSuccStates) {
 				final Valuation nextSuccStateVal = sts.getConcreteState(solver.getModel(), 1);
-				final Set<Expr<? extends BoolType>> nextSuccStatePreds = new HashSet<>();
 
-				for (final Expr<? extends BoolType> pred : precision.getPreds()) {
-					final LitExpr<? extends BoolType> predHolds = FormalismUtils.evaluate(pred, nextSuccStateVal);
-					if (predHolds.equals(Exprs.True())) {
-						nextSuccStatePreds.add(pred);
-					} else {
-						nextSuccStatePreds.add(precision.negate(pred));
-					}
-				}
-				final PredState nextSuccState = PredState.create(nextSuccStatePreds);
+				final PredState nextSuccState = PredState.create(nextSuccStateVal, precision);
 				succStates.add(nextSuccState);
 				solver.add(sts.unroll(Exprs.Not(nextSuccState.asExpr()), 1));
 			}

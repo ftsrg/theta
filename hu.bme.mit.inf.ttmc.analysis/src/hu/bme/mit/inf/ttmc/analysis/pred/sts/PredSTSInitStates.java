@@ -9,13 +9,9 @@ import java.util.Set;
 import hu.bme.mit.inf.ttmc.analysis.InitStates;
 import hu.bme.mit.inf.ttmc.analysis.pred.PredPrecision;
 import hu.bme.mit.inf.ttmc.analysis.pred.PredState;
-import hu.bme.mit.inf.ttmc.core.expr.Expr;
-import hu.bme.mit.inf.ttmc.core.expr.LitExpr;
 import hu.bme.mit.inf.ttmc.core.expr.impl.Exprs;
-import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.formalism.common.Valuation;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
-import hu.bme.mit.inf.ttmc.formalism.utils.impl.FormalismUtils;
 import hu.bme.mit.inf.ttmc.solver.Solver;
 
 public class PredSTSInitStates implements InitStates<PredState, PredPrecision> {
@@ -40,17 +36,8 @@ public class PredSTSInitStates implements InitStates<PredState, PredPrecision> {
 			moreInitStates = solver.check().boolValue();
 			if (moreInitStates) {
 				final Valuation nextInitStateVal = sts.getConcreteState(solver.getModel(), 0);
-				final Set<Expr<? extends BoolType>> nextInitStatePreds = new HashSet<>();
 
-				for (final Expr<? extends BoolType> pred : precision.getPreds()) {
-					final LitExpr<? extends BoolType> predHolds = FormalismUtils.evaluate(pred, nextInitStateVal);
-					if (predHolds.equals(Exprs.True())) {
-						nextInitStatePreds.add(pred);
-					} else {
-						nextInitStatePreds.add(precision.negate(pred));
-					}
-				}
-				final PredState nextInitState = PredState.create(nextInitStatePreds);
+				final PredState nextInitState = PredState.create(nextInitStateVal, precision);
 				initStates.add(nextInitState);
 				solver.add(sts.unroll(Exprs.Not(nextInitState.asExpr()), 0));
 			}
