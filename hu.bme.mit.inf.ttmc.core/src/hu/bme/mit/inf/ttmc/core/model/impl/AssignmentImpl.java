@@ -93,4 +93,27 @@ public final class AssignmentImpl implements Assignment {
 		}
 	}
 
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		} else if (obj instanceof AssignmentImpl) {
+			final AssignmentImpl that = (AssignmentImpl) obj;
+			return this.declToExpr.equals(that.declToExpr);
+		} else {
+			return false;
+		}
+	}
+
+	private volatile int hashCode = 0;
+
+	@Override
+	public int hashCode() {
+		int result = hashCode;
+		if (result == 0) {
+			result = 31 * result + declToExpr.hashCode();
+			hashCode = result;
+		}
+		return result;
+	}
 }
