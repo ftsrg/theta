@@ -78,7 +78,8 @@ public final class STSImpl implements STS {
 		appendCollection(sb, "\tVars:  ", vars, System.lineSeparator());
 		appendCollection(sb, "\tInit:  ", init, System.lineSeparator());
 		appendCollection(sb, "\tInvar: ", invar, System.lineSeparator());
-		appendCollection(sb, "\tTrans: ", trans, System.lineSeparator() + "]");
+		appendCollection(sb, "\tTrans: ", trans, System.lineSeparator());
+		sb.append("\tProp: ").append(prop).append(System.lineSeparator()).append("]");
 		return sb.toString();
 	}
 
