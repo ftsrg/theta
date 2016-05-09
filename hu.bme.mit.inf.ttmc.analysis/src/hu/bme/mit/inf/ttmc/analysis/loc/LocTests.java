@@ -21,10 +21,10 @@ public class LocTests {
 		final CFA cfa = createSimpleCFA();
 		final LocInitStates<CFALoc> initStates = new LocInitStates<>(cfa);
 		final LocTransferRelation<CFALoc, CFAEdge> trel = new LocTransferRelation<>();
+		final LocErrorStates<CFALoc> errorStates = new LocErrorStates<>(cfa);
 
 		final LocState<CFALoc> finalState = LocState.create(cfa.getFinalLoc());
-		final Algorithm<LocState<CFALoc>, NullPrecision> algorithm = new BasicAlgorithm<>(LocDomain.create(),
-				initStates, trel);
+		final Algorithm<LocState<CFALoc>, NullPrecision> algorithm = new BasicAlgorithm<>(LocDomain.create(), initStates, trel, errorStates);
 		final Collection<LocState<CFALoc>> result = algorithm.run(NullPrecision.get());
 
 		assertTrue(result.contains(finalState));
