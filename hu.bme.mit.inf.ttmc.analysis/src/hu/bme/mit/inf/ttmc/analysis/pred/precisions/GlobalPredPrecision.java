@@ -36,8 +36,7 @@ public class GlobalPredPrecision implements PredPrecision {
 		}
 	}
 
-	@Override
-	public Expr<? extends BoolType> negate(final Expr<? extends BoolType> pred) {
+	private Expr<? extends BoolType> negate(final Expr<? extends BoolType> pred) {
 		final Expr<? extends BoolType> negated = preds.get(pred);
 		checkArgument(negated != null);
 		return negated;
