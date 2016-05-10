@@ -37,7 +37,7 @@ public class PredSTSInitStates implements InitStates<PredState, PredPrecision> {
 			if (moreInitStates) {
 				final Valuation nextInitStateVal = sts.getConcreteState(solver.getModel(), 0);
 
-				final PredState nextInitState = PredState.create(nextInitStateVal, precision);
+				final PredState nextInitState = precision.createState(nextInitStateVal);
 				initStates.add(nextInitState);
 				solver.add(sts.unroll(Exprs.Not(nextInitState.asExpr()), 0));
 			}
