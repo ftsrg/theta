@@ -37,7 +37,7 @@ public final class Latch extends HWElement {
 
 	public Expr<? extends BoolType> getTransExpr(final List<HWElement> elements) {
 		Expr<? extends BoolType> expr = elements.get(nextState / 2).getExpr(elements);
-		if (nextState % 2 == 1)
+		if (nextState % 2 != 0)
 			expr = Not(expr);
 		return Iff(Prime(varDecl.getRef()), expr);
 	}

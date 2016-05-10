@@ -21,7 +21,7 @@ public final class OutVar extends HWElement {
 	@Override
 	public Expr<? extends BoolType> getExpr(final List<HWElement> elements) {
 		Expr<? extends BoolType> expr = elements.get(literal / 2).getExpr(elements);
-		if (literal % 2 == 1)
+		if (literal % 2 != 0)
 			expr = Exprs.Not(expr);
 		return expr;
 	}
