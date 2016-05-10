@@ -40,7 +40,7 @@ public class PredSTSTransferRelation implements TransferRelation<PredState, Pred
 			if (moreSuccStates) {
 				final Valuation nextSuccStateVal = sts.getConcreteState(solver.getModel(), 1);
 
-				final PredState nextSuccState = precision.createState(nextSuccStateVal);
+				final PredState nextSuccState = precision.mapToAbstractState(nextSuccStateVal);
 				succStates.add(nextSuccState);
 				solver.add(sts.unroll(Exprs.Not(nextSuccState.asExpr()), 1));
 			}

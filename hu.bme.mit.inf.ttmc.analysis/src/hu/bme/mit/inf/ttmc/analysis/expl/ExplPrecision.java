@@ -38,7 +38,8 @@ public class ExplPrecision implements Precision {
 		return invisibleVars;
 	}
 
-	public ExplState createState(final Valuation valuation) {
+	public ExplState mapToAbstractState(final Valuation valuation) {
+		checkNotNull(valuation);
 		final Valuation.Builder builder = new Valuation.Builder();
 		for (final VarDecl<? extends Type> visibleVar : visibleVars) {
 			final Optional<? extends LitExpr<? extends Type>> eval = valuation.eval(visibleVar);
