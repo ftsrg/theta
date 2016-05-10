@@ -38,8 +38,8 @@ public class ExplSTSTransferRelation implements TransferRelation<ExplState, Expl
 		do {
 			moreSuccStates = solver.check().boolValue();
 			if (moreSuccStates) {
-				final Valuation nextSuccStateVal = sts.getConcreteState(solver.getModel(), 1, precision.getVisibleVars());
-				final ExplState nextSuccState = ExplState.create(nextSuccStateVal);
+				final Valuation nextSuccStateVal = sts.getConcreteState(solver.getModel(), 1);
+				final ExplState nextSuccState = precision.createState(nextSuccStateVal);
 				succStates.add(nextSuccState);
 				solver.add(sts.unroll(Exprs.Not(nextSuccState.asExpr()), 1));
 			}

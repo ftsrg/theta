@@ -5,10 +5,13 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 
 import hu.bme.mit.inf.ttmc.analysis.Precision;
+import hu.bme.mit.inf.ttmc.core.expr.LitExpr;
 import hu.bme.mit.inf.ttmc.core.type.Type;
+import hu.bme.mit.inf.ttmc.formalism.common.Valuation;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 
 public class ExplPrecision implements Precision {
@@ -33,5 +36,18 @@ public class ExplPrecision implements Precision {
 
 	public Collection<VarDecl<? extends Type>> getInvisibleVars() {
 		return invisibleVars;
+	}
+
+	public ExplState createState(final Valuation valuation) {
+		final Valuation.Builder builder = new Valuation.Builder();
+		for (final VarDecl<? extends Type> visibleVar : visibleVars) {
+			final Optional<? extends LitExpr<? extends Type>> eval = valuation.eval(visibleVar);
+			if (eval.isPresent()) {
+				builder.put(visibleVar, eval.get());
+			} else {
+				builder.put(visibleVar, visibleVar.getType().getAny());
+			}
+		}
+		return ExplState.create(builder.build());
 	}
 }
