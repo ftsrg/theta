@@ -35,8 +35,8 @@ public class ExplSTSInitStates implements InitStates<ExplState, ExplPrecision> {
 		do {
 			moreInitStates = solver.check().boolValue();
 			if (moreInitStates) {
-				final Valuation nextInitStateVal = sts.getConcreteState(solver.getModel(), 0, precision.getVisibleVars());
-				final ExplState nextInitState = ExplState.create(nextInitStateVal);
+				final Valuation nextInitStateVal = sts.getConcreteState(solver.getModel(), 0);
+				final ExplState nextInitState = precision.createState(nextInitStateVal);
 				initStates.add(nextInitState);
 				solver.add(sts.unroll(Exprs.Not(nextInitState.asExpr()), 0));
 			}
