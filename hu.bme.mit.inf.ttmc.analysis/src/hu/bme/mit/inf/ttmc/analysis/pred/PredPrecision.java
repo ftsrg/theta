@@ -46,7 +46,7 @@ public class PredPrecision implements Precision {
 		return negated;
 	}
 
-	public PredState createState(final Valuation valuation) {
+	public PredState mapToAbstractState(final Valuation valuation) {
 		checkNotNull(valuation);
 		final Set<Expr<? extends BoolType>> statePreds = new HashSet<>();
 
