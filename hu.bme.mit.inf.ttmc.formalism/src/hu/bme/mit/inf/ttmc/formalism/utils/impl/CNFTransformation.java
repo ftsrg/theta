@@ -55,7 +55,7 @@ import hu.bme.mit.inf.ttmc.formalism.common.expr.VarRefExpr;
 import hu.bme.mit.inf.ttmc.formalism.utils.FormalismExprVisitor;
 
 public class CNFTransformation {
-	private final String CNFPREFIX = "__CNF";
+	private static final String CNFPREFIX = "__CNF";
 	private final CNFTransformationVisitor cnfTransfVisitor;
 
 	public CNFTransformation() {
@@ -77,7 +77,7 @@ public class CNFTransformation {
 		cnfTransfVisitor.clearReps();
 	}
 
-	private final class CNFTransformationVisitor implements FormalismExprVisitor<Collection<Expr<? extends BoolType>>, Expr<? extends BoolType>> {
+	private static final class CNFTransformationVisitor implements FormalismExprVisitor<Collection<Expr<? extends BoolType>>, Expr<? extends BoolType>> {
 
 		private int nextCNFVarId;
 		private final Map<Expr<?>, VarDecl<? extends BoolType>> representatives;
