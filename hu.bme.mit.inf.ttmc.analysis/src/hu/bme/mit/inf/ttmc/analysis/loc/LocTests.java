@@ -20,7 +20,7 @@ public class LocTests {
 	public void exploreLocs() {
 		final CFA cfa = createSimpleCFA();
 
-		final LocAbstraction<CFALoc, CFAEdge> locAbstraction = new CFALocAbstraction(cfa);
+		final LocAbstraction<CFALoc, CFAEdge> locAbstraction = CFALocAbstraction.create(cfa);
 
 		final LocState<CFALoc> finalState = LocState.create(cfa.getFinalLoc());
 		final Algorithm<LocState<CFALoc>, NullPrecision> algorithm = new BasicAlgorithm<LocState<CFALoc>, NullPrecision>(LocDomain.create(), locAbstraction);

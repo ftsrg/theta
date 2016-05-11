@@ -8,7 +8,11 @@ public class CFALocAbstraction extends LocAbstraction<CFALoc, CFAEdge> {
 
 	private final CFA automaton;
 
-	public CFALocAbstraction(final CFA automaton) {
+	public static CFALocAbstraction create(final CFA automaton) {
+		return new CFALocAbstraction(automaton);
+	}
+
+	private CFALocAbstraction(final CFA automaton) {
 		super(automaton);
 		this.automaton = automaton;
 	}

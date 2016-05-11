@@ -64,7 +64,7 @@ public class STSTests {
 	public void testPred() {
 		final Collection<Expr<? extends BoolType>> preds = new ArrayList<>();
 		preds.addAll(((OrExpr) sts.getProp()).getOps());
-		final STSPredAbstraction stsAbstraction = new STSPredAbstraction(sts, solver);
+		final STSPredAbstraction stsAbstraction = STSPredAbstraction.create(sts, solver);
 		final BasicAlgorithm<PredState, PredPrecision> algorithm = new BasicAlgorithm<>(PredDomain.create(solver, sts), stsAbstraction);
 
 		final Collection<PredState> result = algorithm.run(GlobalPredPrecision.create(preds));
@@ -81,7 +81,7 @@ public class STSTests {
 				.collect(Collectors.toSet());
 		final Set<VarDecl<? extends Type>> invisibleVars = sts.getVars().stream().filter(v -> !visibleVars.contains(v)).collect(Collectors.toSet());
 
-		final STSExplAbstraction stsAbstraction = new STSExplAbstraction(sts, solver);
+		final STSExplAbstraction stsAbstraction = STSExplAbstraction.create(sts, solver);
 		final BasicAlgorithm<ExplState, ExplPrecision> algorithm = new BasicAlgorithm<>(ExplDomain.create(), stsAbstraction);
 
 		final Collection<ExplState> result = algorithm.run(GlobalExplPrecision.create(visibleVars, invisibleVars));
