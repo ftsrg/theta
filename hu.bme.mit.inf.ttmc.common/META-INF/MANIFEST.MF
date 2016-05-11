@@ -8,4 +8,5 @@ Require-Bundle: com.google.guava;bundle-version="15.0.0"
 Export-Package: hu.bme.mit.inf.ttmc.common,
  hu.bme.mit.inf.ttmc.common.impl,
  hu.bme.mit.inf.ttmc.common.logging,
- hu.bme.mit.inf.ttmc.common.logging.impl
+ hu.bme.mit.inf.ttmc.common.logging.impl,
+ hu.bme.mit.inf.ttmc.common.matrix

@@ -1,7 +1,6 @@
 package hu.bme.mit.inf.ttmc.core.expr.impl;
 
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
-import hu.bme.mit.inf.ttmc.core.expr.ModExpr;
 import hu.bme.mit.inf.ttmc.core.expr.NeqExpr;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.core.type.Type;
@@ -51,8 +50,8 @@ final class NeqExprImpl extends AbstractBinaryExpr<Type, Type, BoolType> impleme
 	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
-		} else if (obj instanceof ModExpr) {
-			final ModExpr that = (ModExpr) obj;
+		} else if (obj instanceof NeqExpr) {
+			final NeqExpr that = (NeqExpr) obj;
 			return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp().equals(that.getRightOp());
 		} else {
 			return false;

@@ -11,10 +11,10 @@ import hu.bme.mit.inf.ttmc.cegar.common.data.StopHandler;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.SolverHelper;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.Visualizer;
 import hu.bme.mit.inf.ttmc.common.logging.Logger;
-import hu.bme.mit.inf.ttmc.core.expr.AndExpr;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.model.Model;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
+import hu.bme.mit.inf.ttmc.formalism.common.Valuation;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 import hu.bme.mit.inf.ttmc.solver.Solver;
@@ -89,7 +89,7 @@ public abstract class AbstractConcretizer extends AbstractCEGARStep {
 		// since for i=0 it must be satisfiable)
 		assert model != null;
 
-		final List<AndExpr> trace = sts.extractTrace(model, len, requiredVars);
+		final List<Valuation> trace = sts.extractTrace(model, len, requiredVars);
 
 		final ConcreteTrace result = new ConcreteTrace(trace, solver.getStatus() == SolverStatus.SAT);
 		solver.pop();
@@ -97,11 +97,11 @@ public abstract class AbstractConcretizer extends AbstractCEGARStep {
 		// Print result
 		if (result.isCounterexample()) {
 			logger.writeln("Concrete counterexample found.", 2, 0);
-			for (final AndExpr m : result.getTrace())
+			for (final Valuation m : result.getTrace())
 				logger.writeln(m, 4, 1);
 		} else {
 			logger.writeln("No concrete counterexample was found, length of trace: " + result.getTrace().size(), 2);
-			for (final AndExpr m : result.getTrace())
+			for (final Valuation m : result.getTrace())
 				logger.writeln(m, 4, 1);
 		}
 

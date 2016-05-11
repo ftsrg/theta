@@ -2,12 +2,12 @@ package hu.bme.mit.inf.ttmc.core.type;
 
 import java.util.Optional;
 
-import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.expr.LitExpr;
 import hu.bme.mit.inf.ttmc.core.utils.TypeVisitor;
 
 public interface Type {
 
-	public Expr<? extends Type> getAny();
+	public LitExpr<? extends Type> getAny();
 
 	public boolean isLeq(Type type);
 

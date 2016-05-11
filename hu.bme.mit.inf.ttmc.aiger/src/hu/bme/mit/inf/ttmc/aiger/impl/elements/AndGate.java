@@ -24,11 +24,11 @@ public final class AndGate extends HWElement {
 	@Override
 	public Expr<? extends BoolType> getExpr(final List<HWElement> elements) {
 		Expr<? extends BoolType> expr1 = elements.get(rhs1 / 2).getExpr(elements);
-		if (rhs1 % 2 == 1)
+		if (rhs1 % 2 != 0)
 			expr1 = Exprs.Not(expr1);
 
 		Expr<? extends BoolType> expr2 = elements.get(rhs2 / 2).getExpr(elements);
-		if (rhs2 % 2 == 1)
+		if (rhs2 % 2 != 0)
 			expr2 = Exprs.Not(expr2);
 
 		return Exprs.And(ImmutableSet.of(expr1, expr2));

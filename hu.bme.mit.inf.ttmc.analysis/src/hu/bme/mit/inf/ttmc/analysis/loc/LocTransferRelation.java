@@ -8,14 +8,14 @@ import java.util.Collections;
 import java.util.stream.Stream;
 
 import hu.bme.mit.inf.ttmc.analysis.AutomatonTransferRelation;
+import hu.bme.mit.inf.ttmc.analysis.impl.NullPrecision;
 import hu.bme.mit.inf.ttmc.formalism.common.automaton.Edge;
 import hu.bme.mit.inf.ttmc.formalism.common.automaton.Loc;
 
-public class LocTransferRelation<L extends Loc<L, E>, E extends Edge<L, E>>
-		implements AutomatonTransferRelation<LocState<L>, E> {
+public class LocTransferRelation<L extends Loc<L, E>, E extends Edge<L, E>> implements AutomatonTransferRelation<LocState<L>, NullPrecision, E> {
 
 	@Override
-	public Collection<LocState<L>> getSuccStates(final LocState<L> state) {
+	public Collection<LocState<L>> getSuccStates(final LocState<L> state, final NullPrecision precision) {
 		checkNotNull(state);
 
 		final L loc = state.getLoc();
@@ -25,7 +25,7 @@ public class LocTransferRelation<L extends Loc<L, E>, E extends Edge<L, E>>
 	}
 
 	@Override
-	public Collection<LocState<L>> getSuccStatesForEdge(final LocState<L> state, final E edge) {
+	public Collection<LocState<L>> getSuccStatesForEdge(final LocState<L> state, final NullPrecision precision, final E edge) {
 		checkNotNull(state);
 		checkNotNull(edge);
 

@@ -5,12 +5,13 @@ import java.util.BitSet;
 import java.util.List;
 
 import hu.bme.mit.inf.ttmc.cegar.common.data.AbstractState;
-import hu.bme.mit.inf.ttmc.core.expr.AndExpr;
-import hu.bme.mit.inf.ttmc.core.expr.EqExpr;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.expr.NotExpr;
 import hu.bme.mit.inf.ttmc.core.expr.impl.Exprs;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
+import hu.bme.mit.inf.ttmc.core.type.Type;
+import hu.bme.mit.inf.ttmc.formalism.common.Valuation;
+import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 
 /**
  * Represents an abstract state of the interpolated CEGAR algorithm
@@ -76,13 +77,13 @@ public class InterpolatedAbstractState implements AbstractState {
 		return ret;
 	}
 
-	public InterpolatedAbstractState cloneAndAddExplicit(final AndExpr label) {
+	public InterpolatedAbstractState cloneAndAddExplicit(final Valuation valuation) {
 		final InterpolatedAbstractState ret = new InterpolatedAbstractState();
 		ret.labels.addAll(this.labels);
-		ret.labels.add(0, label); // Insert new label to the beginning
+		ret.labels.add(0, valuation.toExpr()); // Insert new label to the beginning
 		ret.bitset = (BitSet) this.bitset.clone();
-		for (final Expr<? extends BoolType> ex : label.getOps())
-			ret.explicitValues += ((EqExpr) ex).getRightOp() + " ";
+		for (final VarDecl<? extends Type> varDecl : valuation.getDecls())
+			ret.explicitValues += valuation.eval(varDecl).get() + " ";
 		ret.explicitValues += this.explicitValues;
 
 		return ret;

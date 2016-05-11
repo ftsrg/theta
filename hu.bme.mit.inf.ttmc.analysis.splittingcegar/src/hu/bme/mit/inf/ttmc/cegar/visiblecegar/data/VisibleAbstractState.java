@@ -6,29 +6,30 @@ import java.util.ArrayList;
 import java.util.List;
 
 import hu.bme.mit.inf.ttmc.cegar.common.data.AbstractState;
-import hu.bme.mit.inf.ttmc.core.expr.AndExpr;
-import hu.bme.mit.inf.ttmc.core.expr.EqExpr;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
+import hu.bme.mit.inf.ttmc.core.type.Type;
+import hu.bme.mit.inf.ttmc.formalism.common.Valuation;
+import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 
 /**
  * Represents an abstract state of the variable-visibility based CEGAR.
  */
 public class VisibleAbstractState implements AbstractState {
-	private final AndExpr expression;
+	private final Valuation valuation;
 	private boolean isInitial;
 	private final List<VisibleAbstractState> successors;
 	private boolean isPartOfCounterexample; // for visualization
 
-	public VisibleAbstractState(final AndExpr expression, final boolean isInitial) {
+	public VisibleAbstractState(final Valuation expression, final boolean isInitial) {
 		this.isInitial = isInitial;
 		this.successors = new ArrayList<>();
 		this.isPartOfCounterexample = false;
-		this.expression = expression;
+		this.valuation = expression;
 	}
 
-	public AndExpr getExpression() {
-		return expression;
+	public Valuation getValuation() {
+		return valuation;
 	}
 
 	@Override
@@ -64,29 +65,28 @@ public class VisibleAbstractState implements AbstractState {
 			return false;
 		if (!(obj instanceof VisibleAbstractState))
 			return false;
-		return expression.equals(((VisibleAbstractState) obj).expression);
+		return valuation.equals(((VisibleAbstractState) obj).valuation);
 	}
 
 	@Override
 	public int hashCode() {
-		return expression.toString().hashCode();
+		return valuation.toString().hashCode();
 	}
 
 	@Override
 	public String toString() {
-		return expression.toString() + (isInitial ? ", initial" : "");
+		return valuation.toString() + (isInitial ? ", initial" : "");
 	}
 
 	@Override
 	public Expr<? extends BoolType> createExpression() {
-		return expression;
+		return valuation.toExpr();
 	}
 
 	public String createId() {
 		final StringBuilder ret = new StringBuilder("");
-
-		for (final Expr<?> ex : expression.getOps())
-			ret.append(((EqExpr) ex).getRightOp()).append(" ");
+		for (final VarDecl<? extends Type> varDecl : valuation.getDecls())
+			ret.append(valuation.eval(varDecl).get()).append(" ");
 		return ret.toString();
 	}
 }
