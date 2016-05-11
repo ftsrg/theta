@@ -5,8 +5,8 @@ import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Lt;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Sub;
 
 import hu.bme.mit.inf.ttmc.core.expr.LtExpr;
+import hu.bme.mit.inf.ttmc.formalism.common.decl.ClockDecl;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.ClockRefExpr;
-import hu.bme.mit.inf.ttmc.formalism.ta.constr.Clock;
 import hu.bme.mit.inf.ttmc.formalism.ta.constr.DiffLtConstr;
 import hu.bme.mit.inf.ttmc.formalism.ta.utils.ConstrVisitor;
 
@@ -18,7 +18,7 @@ final class DiffLtConstrImpl extends AbstractDiffConstr implements DiffLtConstr 
 
 	private volatile LtExpr expr = null;
 
-	DiffLtConstrImpl(final Clock leftClock, final Clock rightClock, final int bound) {
+	DiffLtConstrImpl(final ClockDecl leftClock, final ClockDecl rightClock, final int bound) {
 		super(leftClock, rightClock, bound);
 	}
 
@@ -26,8 +26,8 @@ final class DiffLtConstrImpl extends AbstractDiffConstr implements DiffLtConstr 
 	public LtExpr asExpr() {
 		LtExpr result = expr;
 		if (result == null) {
-			final ClockRefExpr leftRef = getLeftClock().asDecl().getRef();
-			final ClockRefExpr rightRef = getRightClock().asDecl().getRef();
+			final ClockRefExpr leftRef = getLeftClock().getRef();
+			final ClockRefExpr rightRef = getRightClock().getRef();
 			result = Lt(Sub(leftRef, rightRef), Int(getBound()));
 			expr = result;
 		}

@@ -6,23 +6,23 @@ import java.util.Collection;
 
 import com.google.common.collect.ImmutableSet;
 
-import hu.bme.mit.inf.ttmc.formalism.ta.constr.Clock;
+import hu.bme.mit.inf.ttmc.formalism.common.decl.ClockDecl;
 import hu.bme.mit.inf.ttmc.formalism.ta.constr.UnitConstr;
 
 public abstract class AbstractUnitConstr implements UnitConstr {
 
-	private final Clock clock;
+	private final ClockDecl clock;
 	private final int bound;
 
 	private volatile int hashCode = 0;
 
-	protected AbstractUnitConstr(final Clock clock, final int bound) {
+	protected AbstractUnitConstr(final ClockDecl clock, final int bound) {
 		this.clock = checkNotNull(clock);
 		this.bound = bound;
 	}
 
 	@Override
-	public final Clock getClock() {
+	public final ClockDecl getClock() {
 		return clock;
 	}
 
@@ -32,7 +32,7 @@ public abstract class AbstractUnitConstr implements UnitConstr {
 	}
 
 	@Override
-	public Collection<? extends Clock> getClocks() {
+	public Collection<? extends ClockDecl> getClocks() {
 		return ImmutableSet.of(clock);
 	}
 

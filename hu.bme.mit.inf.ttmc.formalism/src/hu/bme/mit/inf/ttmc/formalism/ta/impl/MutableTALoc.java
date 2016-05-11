@@ -6,16 +6,16 @@ import java.util.Collections;
 
 import hu.bme.mit.inf.ttmc.formalism.ta.TAEdge;
 import hu.bme.mit.inf.ttmc.formalism.ta.TALoc;
-import hu.bme.mit.inf.ttmc.formalism.ta.constr.Constr;
+import hu.bme.mit.inf.ttmc.formalism.ta.constr.ClockConstr;
 
 final class MutableTALoc implements TALoc {
 
 	final Collection<TAEdge> inEdges;
 	final Collection<TAEdge> outEdges;
 
-	private final Constr invar;
+	private final ClockConstr invar;
 
-	MutableTALoc(final Constr invar) {
+	MutableTALoc(final ClockConstr invar) {
 		this.invar = invar;
 		inEdges = new ArrayList<>();
 		outEdges = new ArrayList<>();
@@ -32,7 +32,7 @@ final class MutableTALoc implements TALoc {
 	}
 
 	@Override
-	public Constr getInvar() {
+	public ClockConstr getInvar() {
 		return invar;
 	}
 

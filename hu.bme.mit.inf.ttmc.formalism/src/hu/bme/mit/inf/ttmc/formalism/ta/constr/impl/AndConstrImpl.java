@@ -10,10 +10,10 @@ import java.util.StringJoiner;
 import com.google.common.collect.ImmutableSet;
 
 import hu.bme.mit.inf.ttmc.core.expr.AndExpr;
+import hu.bme.mit.inf.ttmc.formalism.common.decl.ClockDecl;
 import hu.bme.mit.inf.ttmc.formalism.ta.constr.AndConstr;
 import hu.bme.mit.inf.ttmc.formalism.ta.constr.AtomicConstr;
-import hu.bme.mit.inf.ttmc.formalism.ta.constr.Clock;
-import hu.bme.mit.inf.ttmc.formalism.ta.constr.Constr;
+import hu.bme.mit.inf.ttmc.formalism.ta.constr.ClockConstr;
 import hu.bme.mit.inf.ttmc.formalism.ta.constr.TrueConstr;
 import hu.bme.mit.inf.ttmc.formalism.ta.utils.ConstrVisitor;
 
@@ -26,7 +26,7 @@ final class AndConstrImpl implements AndConstr {
 	private volatile int hashCode = 0;
 	private volatile AndExpr expr = null;
 
-	AndConstrImpl(final Collection<? extends Constr> constrs) {
+	AndConstrImpl(final Collection<? extends ClockConstr> constrs) {
 		checkNotNull(constrs);
 		this.constrs = toAtomicConstrs(constrs);
 	}
@@ -37,9 +37,9 @@ final class AndConstrImpl implements AndConstr {
 	}
 
 	@Override
-	public Collection<? extends Clock> getClocks() {
-		final ImmutableSet.Builder<Clock> builder = ImmutableSet.builder();
-		for (final Constr constr : constrs) {
+	public Collection<? extends ClockDecl> getClocks() {
+		final ImmutableSet.Builder<ClockDecl> builder = ImmutableSet.builder();
+		for (final ClockConstr constr : constrs) {
 			builder.addAll(constr.getClocks());
 		}
 		return builder.build();
@@ -49,7 +49,7 @@ final class AndConstrImpl implements AndConstr {
 	public AndExpr asExpr() {
 		AndExpr result = expr;
 		if (result == null) {
-			result = And(constrs.stream().map(Constr::asExpr).collect(toSet()));
+			result = And(constrs.stream().map(ClockConstr::asExpr).collect(toSet()));
 			expr = result;
 		}
 		return result;
@@ -92,9 +92,9 @@ final class AndConstrImpl implements AndConstr {
 
 	////////
 
-	private static Collection<AtomicConstr> toAtomicConstrs(final Collection<? extends Constr> constrs) {
+	private static Collection<AtomicConstr> toAtomicConstrs(final Collection<? extends ClockConstr> constrs) {
 		final ImmutableSet.Builder<AtomicConstr> builder = ImmutableSet.builder();
-		for (final Constr constr : constrs) {
+		for (final ClockConstr constr : constrs) {
 			if (constr instanceof AtomicConstr) {
 				builder.add((AtomicConstr) constr);
 			} else if (constr instanceof AndConstr) {

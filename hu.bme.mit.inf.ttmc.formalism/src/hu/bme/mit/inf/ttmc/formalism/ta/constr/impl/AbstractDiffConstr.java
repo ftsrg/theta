@@ -6,30 +6,30 @@ import java.util.Collection;
 
 import com.google.common.collect.ImmutableSet;
 
-import hu.bme.mit.inf.ttmc.formalism.ta.constr.Clock;
+import hu.bme.mit.inf.ttmc.formalism.common.decl.ClockDecl;
 import hu.bme.mit.inf.ttmc.formalism.ta.constr.DiffConstr;
 
 public abstract class AbstractDiffConstr implements DiffConstr {
 
-	private final Clock leftClock;
-	private final Clock rightClock;
+	private final ClockDecl leftClock;
+	private final ClockDecl rightClock;
 	private final int bound;
 
 	private volatile int hashCode = 0;
 
-	protected AbstractDiffConstr(final Clock leftClock, final Clock rightClock, final int bound) {
+	protected AbstractDiffConstr(final ClockDecl leftClock, final ClockDecl rightClock, final int bound) {
 		this.leftClock = checkNotNull(leftClock);
 		this.rightClock = checkNotNull(rightClock);
 		this.bound = bound;
 	}
 
 	@Override
-	public final Clock getLeftClock() {
+	public final ClockDecl getLeftClock() {
 		return leftClock;
 	}
 
 	@Override
-	public final Clock getRightClock() {
+	public final ClockDecl getRightClock() {
 		return rightClock;
 	}
 
@@ -39,7 +39,7 @@ public abstract class AbstractDiffConstr implements DiffConstr {
 	}
 
 	@Override
-	public Collection<? extends Clock> getClocks() {
+	public Collection<? extends ClockDecl> getClocks() {
 		return ImmutableSet.of(leftClock, rightClock);
 	}
 
