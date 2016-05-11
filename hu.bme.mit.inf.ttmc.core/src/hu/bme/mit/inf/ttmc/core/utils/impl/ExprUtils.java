@@ -74,15 +74,10 @@ public class ExprUtils {
 		return evaluate(expr, AssignmentImpl.empty());
 	}
 
-	public static Expr<? extends BoolType> removeMultipleNeg(final Expr<? extends BoolType> expr) {
+	public static Expr<? extends BoolType> ponate(final Expr<? extends BoolType> expr) {
 		if (expr instanceof NotExpr) {
 			final NotExpr notExpr = (NotExpr) expr;
-			if (notExpr.getOp() instanceof NotExpr) {
-				final NotExpr innerNotExpr = (NotExpr) notExpr.getOp();
-				return removeMultipleNeg(innerNotExpr.getOp());
-			} else {
-				return expr;
-			}
+			return ponate(notExpr.getOp());
 		} else {
 			return expr;
 		}

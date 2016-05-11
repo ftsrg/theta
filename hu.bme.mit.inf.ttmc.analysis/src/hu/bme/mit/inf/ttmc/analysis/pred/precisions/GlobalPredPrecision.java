@@ -31,9 +31,9 @@ public class GlobalPredPrecision implements PredPrecision {
 		this.preds = new HashMap<>();
 
 		for (final Expr<? extends BoolType> pred : preds) {
-			final Expr<? extends BoolType> predPonated = ExprUtils.removeMultipleNeg(pred);
-			if (!this.preds.containsKey(predPonated)) {
-				this.preds.put(predPonated, Exprs.Not(predPonated));
+			final Expr<? extends BoolType> predSimplified = ExprUtils.ponate(pred);
+			if (!this.preds.containsKey(predSimplified)) {
+				this.preds.put(predSimplified, Exprs.Not(predSimplified));
 			}
 		}
 	}
