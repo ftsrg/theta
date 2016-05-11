@@ -2,21 +2,21 @@ package hu.bme.mit.inf.ttmc.formalism.ta.impl;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.inf.ttmc.formalism.ta.constr.impl.Constrs.True;
+import static hu.bme.mit.inf.ttmc.formalism.ta.constr.impl.ClockConstrs.True;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 
+import hu.bme.mit.inf.ttmc.formalism.common.decl.ClockDecl;
 import hu.bme.mit.inf.ttmc.formalism.ta.TA;
 import hu.bme.mit.inf.ttmc.formalism.ta.TAEdge;
 import hu.bme.mit.inf.ttmc.formalism.ta.TALoc;
-import hu.bme.mit.inf.ttmc.formalism.ta.constr.Clock;
-import hu.bme.mit.inf.ttmc.formalism.ta.constr.Constr;
+import hu.bme.mit.inf.ttmc.formalism.ta.constr.ClockConstr;
 
 public class MutableTA implements TA {
 
-	final Collection<Clock> clocks;
+	final Collection<ClockDecl> clocks;
 
 	private final Collection<TALoc> locs;
 	private final Collection<TAEdge> edges;
@@ -46,7 +46,7 @@ public class MutableTA implements TA {
 	////////
 
 	@Override
-	public Collection<? extends Clock> getClocks() {
+	public Collection<? extends ClockDecl> getClocks() {
 		return Collections.unmodifiableCollection(clocks);
 	}
 
@@ -62,7 +62,7 @@ public class MutableTA implements TA {
 
 	////////
 
-	public void addClock(final Clock clock) {
+	public void addClock(final ClockDecl clock) {
 		checkNotNull(clock);
 		checkArgument(!clocks.stream().anyMatch(c -> c.getName().equals(clock.getName())));
 		clocks.add(clock);
@@ -70,7 +70,7 @@ public class MutableTA implements TA {
 
 	////////
 
-	public TALoc createLoc(final Constr invar) {
+	public TALoc createLoc(final ClockConstr invar) {
 		checkNotNull(invar);
 		checkArgument(clocks.containsAll(invar.getClocks()));
 
@@ -81,7 +81,7 @@ public class MutableTA implements TA {
 
 	////////
 
-	public TAEdge createEdge(final TALoc source, final Constr guard, final Collection<? extends Clock> resets,
+	public TAEdge createEdge(final TALoc source, final ClockConstr guard, final Collection<? extends ClockDecl> resets,
 			final TALoc target) {
 		checkNotNull(source);
 		checkNotNull(guard);

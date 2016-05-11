@@ -4,8 +4,8 @@ import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Int;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Leq;
 
 import hu.bme.mit.inf.ttmc.core.expr.LeqExpr;
+import hu.bme.mit.inf.ttmc.formalism.common.decl.ClockDecl;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.ClockRefExpr;
-import hu.bme.mit.inf.ttmc.formalism.ta.constr.Clock;
 import hu.bme.mit.inf.ttmc.formalism.ta.constr.UnitLeqConstr;
 import hu.bme.mit.inf.ttmc.formalism.ta.utils.ConstrVisitor;
 
@@ -17,7 +17,7 @@ final class UnitLeqConstrImpl extends AbstractUnitConstr implements UnitLeqConst
 
 	private volatile LeqExpr expr = null;
 
-	UnitLeqConstrImpl(final Clock clock, final int bound) {
+	UnitLeqConstrImpl(final ClockDecl clock, final int bound) {
 		super(clock, bound);
 	}
 
@@ -25,7 +25,7 @@ final class UnitLeqConstrImpl extends AbstractUnitConstr implements UnitLeqConst
 	public LeqExpr asExpr() {
 		LeqExpr result = expr;
 		if (result == null) {
-			final ClockRefExpr ref = getClock().asDecl().getRef();
+			final ClockRefExpr ref = getClock().getRef();
 			result = Leq(ref, Int(getBound()));
 			expr = result;
 		}

@@ -7,7 +7,7 @@ import java.util.Collection;
 import com.google.common.collect.ImmutableSet;
 
 import hu.bme.mit.inf.ttmc.core.expr.TrueExpr;
-import hu.bme.mit.inf.ttmc.formalism.ta.constr.Clock;
+import hu.bme.mit.inf.ttmc.formalism.common.decl.ClockDecl;
 import hu.bme.mit.inf.ttmc.formalism.ta.constr.TrueConstr;
 import hu.bme.mit.inf.ttmc.formalism.ta.utils.ConstrVisitor;
 
@@ -18,7 +18,7 @@ final class TrueConstrImpl implements TrueConstr {
 	private static final String CC_LABEL = "CC(true)";
 
 	@Override
-	public Collection<? extends Clock> getClocks() {
+	public Collection<? extends ClockDecl> getClocks() {
 		return ImmutableSet.of();
 	}
 

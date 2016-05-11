@@ -6,19 +6,19 @@ import java.util.Collection;
 
 import com.google.common.collect.ImmutableSet;
 
+import hu.bme.mit.inf.ttmc.formalism.common.decl.ClockDecl;
 import hu.bme.mit.inf.ttmc.formalism.ta.TAEdge;
 import hu.bme.mit.inf.ttmc.formalism.ta.TALoc;
-import hu.bme.mit.inf.ttmc.formalism.ta.constr.Clock;
-import hu.bme.mit.inf.ttmc.formalism.ta.constr.Constr;
+import hu.bme.mit.inf.ttmc.formalism.ta.constr.ClockConstr;
 
 final class MutableTAEdge implements TAEdge {
 
 	private final TALoc source;
 	private final TALoc target;
-	private final Constr guard;
-	private final Collection<? extends Clock> resets;
+	private final ClockConstr guard;
+	private final Collection<? extends ClockDecl> resets;
 
-	public MutableTAEdge(final TALoc source, final Constr guard, final Collection<? extends Clock> resets,
+	public MutableTAEdge(final TALoc source, final ClockConstr guard, final Collection<? extends ClockDecl> resets,
 			final TALoc target) {
 		checkNotNull(source);
 		checkNotNull(guard);
@@ -43,12 +43,12 @@ final class MutableTAEdge implements TAEdge {
 	}
 
 	@Override
-	public Constr getGuard() {
+	public ClockConstr getGuard() {
 		return guard;
 	}
 
 	@Override
-	public Collection<? extends Clock> getResets() {
+	public Collection<? extends ClockDecl> getResets() {
 		return resets;
 	}
 

@@ -4,7 +4,7 @@ import java.util.Collection;
 
 import hu.bme.mit.inf.ttmc.core.expr.AndExpr;
 
-public interface AndConstr extends Constr {
+public interface AndConstr extends ClockConstr {
 
 	public Collection<? extends AtomicConstr> getConstrs();
 

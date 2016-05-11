@@ -33,6 +33,11 @@ class ClockDeclImpl extends AbstractDecl<RatType, VarDecl<RatType>> implements C
 	}
 
 	@Override
+	public int compareTo(final ClockDecl that) {
+		return this.getName().compareTo(that.getName());
+	}
+
+	@Override
 	protected int getHashSeed() {
 		return HASH_SEED;
 	}

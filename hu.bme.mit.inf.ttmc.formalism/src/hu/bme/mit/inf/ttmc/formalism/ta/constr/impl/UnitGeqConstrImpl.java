@@ -4,8 +4,8 @@ import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Geq;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Int;
 
 import hu.bme.mit.inf.ttmc.core.expr.GeqExpr;
+import hu.bme.mit.inf.ttmc.formalism.common.decl.ClockDecl;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.ClockRefExpr;
-import hu.bme.mit.inf.ttmc.formalism.ta.constr.Clock;
 import hu.bme.mit.inf.ttmc.formalism.ta.constr.UnitGeqConstr;
 import hu.bme.mit.inf.ttmc.formalism.ta.utils.ConstrVisitor;
 
@@ -17,7 +17,7 @@ final class UnitGeqConstrImpl extends AbstractUnitConstr implements UnitGeqConst
 
 	private volatile GeqExpr expr = null;
 
-	UnitGeqConstrImpl(final Clock clock, final int bound) {
+	UnitGeqConstrImpl(final ClockDecl clock, final int bound) {
 		super(clock, bound);
 	}
 
@@ -25,7 +25,7 @@ final class UnitGeqConstrImpl extends AbstractUnitConstr implements UnitGeqConst
 	public GeqExpr asExpr() {
 		GeqExpr result = expr;
 		if (result == null) {
-			final ClockRefExpr ref = getClock().asDecl().getRef();
+			final ClockRefExpr ref = getClock().getRef();
 			result = Geq(ref, Int(getBound()));
 			expr = result;
 		}

@@ -4,11 +4,12 @@ import java.util.Collection;
 
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
+import hu.bme.mit.inf.ttmc.formalism.common.decl.ClockDecl;
 import hu.bme.mit.inf.ttmc.formalism.ta.utils.ConstrVisitor;
 
-public interface Constr {
+public interface ClockConstr {
 
-	public Collection<? extends Clock> getClocks();
+	public Collection<? extends ClockDecl> getClocks();
 
 	public Expr<? extends BoolType> asExpr();
 

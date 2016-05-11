@@ -5,8 +5,8 @@ import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Int;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Sub;
 
 import hu.bme.mit.inf.ttmc.core.expr.EqExpr;
+import hu.bme.mit.inf.ttmc.formalism.common.decl.ClockDecl;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.ClockRefExpr;
-import hu.bme.mit.inf.ttmc.formalism.ta.constr.Clock;
 import hu.bme.mit.inf.ttmc.formalism.ta.constr.DiffEqConstr;
 import hu.bme.mit.inf.ttmc.formalism.ta.utils.ConstrVisitor;
 
@@ -18,7 +18,7 @@ final class DiffEqConstrImpl extends AbstractDiffConstr implements DiffEqConstr 
 
 	private volatile EqExpr expr = null;
 
-	DiffEqConstrImpl(final Clock leftClock, final Clock rightClock, final int bound) {
+	DiffEqConstrImpl(final ClockDecl leftClock, final ClockDecl rightClock, final int bound) {
 		super(leftClock, rightClock, bound);
 	}
 
@@ -26,8 +26,8 @@ final class DiffEqConstrImpl extends AbstractDiffConstr implements DiffEqConstr 
 	public EqExpr asExpr() {
 		EqExpr result = expr;
 		if (result == null) {
-			final ClockRefExpr leftRef = getLeftClock().asDecl().getRef();
-			final ClockRefExpr rightRef = getRightClock().asDecl().getRef();
+			final ClockRefExpr leftRef = getLeftClock().getRef();
+			final ClockRefExpr rightRef = getRightClock().getRef();
 			result = Eq(Sub(leftRef, rightRef), Int(getBound()));
 			expr = result;
 		}
