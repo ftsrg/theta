@@ -17,7 +17,7 @@ public abstract class LocAbstraction<L extends Loc<L, E>, E extends Edge<L, E>> 
 
 	private final Automaton<L, ?> automaton;
 
-	public LocAbstraction(final Automaton<L, ?> automaton) {
+	protected LocAbstraction(final Automaton<L, ?> automaton) {
 		this.automaton = automaton;
 	}
 

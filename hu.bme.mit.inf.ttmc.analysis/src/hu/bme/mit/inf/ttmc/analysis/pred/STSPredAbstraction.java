@@ -7,8 +7,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 import hu.bme.mit.inf.ttmc.analysis.FormalismAbstraction;
-import hu.bme.mit.inf.ttmc.analysis.pred.PredPrecision;
-import hu.bme.mit.inf.ttmc.analysis.pred.PredState;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.expr.impl.Exprs;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
@@ -16,13 +14,17 @@ import hu.bme.mit.inf.ttmc.formalism.common.Valuation;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 import hu.bme.mit.inf.ttmc.solver.Solver;
 
-public class STSPredAbstraction implements FormalismAbstraction<PredState, PredPrecision> {
+public final class STSPredAbstraction implements FormalismAbstraction<PredState, PredPrecision> {
 
 	private final Solver solver;
 	private final STS sts;
 	private final Expr<? extends BoolType> negProp;
 
-	public STSPredAbstraction(final STS sts, final Solver solver) {
+	public static STSPredAbstraction create(final STS sts, final Solver solver) {
+		return new STSPredAbstraction(sts, solver);
+	}
+
+	private STSPredAbstraction(final STS sts, final Solver solver) {
 		this.sts = checkNotNull(sts);
 		this.solver = checkNotNull(solver);
 		this.negProp = Exprs.Not(checkNotNull(sts.getProp()));

@@ -15,13 +15,17 @@ import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 import hu.bme.mit.inf.ttmc.formalism.utils.impl.FormalismUtils;
 import hu.bme.mit.inf.ttmc.solver.Solver;
 
-public class STSExplAbstraction implements FormalismAbstraction<ExplState, ExplPrecision> {
+public final class STSExplAbstraction implements FormalismAbstraction<ExplState, ExplPrecision> {
 
 	private final Solver solver;
 	private final STS sts;
 	private final Expr<? extends BoolType> negProp;
 
-	public STSExplAbstraction(final STS sts, final Solver solver) {
+	public static STSExplAbstraction create(final STS sts, final Solver solver) {
+		return new STSExplAbstraction(sts, solver);
+	}
+
+	private STSExplAbstraction(final STS sts, final Solver solver) {
 		this.solver = checkNotNull(solver);
 		this.sts = checkNotNull(sts);
 		this.negProp = Exprs.Not(sts.getProp());
