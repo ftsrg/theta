@@ -15,6 +15,7 @@ import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.expr.LitExpr;
 import hu.bme.mit.inf.ttmc.core.expr.impl.Exprs;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
+import hu.bme.mit.inf.ttmc.core.utils.impl.ExprUtils;
 import hu.bme.mit.inf.ttmc.formalism.common.Valuation;
 import hu.bme.mit.inf.ttmc.formalism.utils.impl.FormalismUtils;
 
@@ -30,8 +31,9 @@ public class GlobalPredPrecision implements PredPrecision {
 		this.preds = new HashMap<>();
 
 		for (final Expr<? extends BoolType> pred : preds) {
-			if (!this.preds.containsKey(pred)) {
-				this.preds.put(pred, Exprs.Not(pred));
+			final Expr<? extends BoolType> predPonated = ExprUtils.removeMultipleNeg(pred);
+			if (!this.preds.containsKey(predPonated)) {
+				this.preds.put(predPonated, Exprs.Not(predPonated));
 			}
 		}
 	}
