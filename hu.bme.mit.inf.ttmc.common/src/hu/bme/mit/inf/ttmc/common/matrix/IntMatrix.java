@@ -10,18 +10,36 @@ public abstract class IntMatrix {
 	IntMatrix() {
 	}
 
-	public static IntMatrix allZero(final int m, final int n) {
+	public static IntMatrix create(final int m, final int n) {
 		checkArgument(m >= 0);
 		checkArgument(n >= 0);
 		return new IntMatrixImpl(m, n);
 	}
 
-	public static IntMatrix allZero(final int n) {
+	public static IntMatrix create(final int n) {
 		checkArgument(n >= 0);
 		return new IntMatrixImpl(n, n);
 	}
 
+	public static IntMatrix copyOf(final IntMatrix matrix) {
+		final IntMatrix result = create(matrix.nRows(), matrix.nCols());
+		for (int i = 0; i < matrix.nRows(); i++) {
+			for (int j = 0; j < matrix.nRows(); j++) {
+				result.set(i, j, matrix.get(i, j));
+			}
+		}
+		return result;
+	}
+
 	////////
+
+	public final void fill(final int e) {
+		for (int i = 0; i < nRows(); i++) {
+			for (int j = 0; j < nCols(); j++) {
+				set(i, j, e);
+			}
+		}
+	}
 
 	public final IntMatrix subMatrix(final boolean[] selRows, final boolean[] selCols) {
 		checkArgument(selRows.length == nRows());
