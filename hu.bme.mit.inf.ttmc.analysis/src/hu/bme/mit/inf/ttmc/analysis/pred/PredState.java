@@ -8,28 +8,62 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.StringJoiner;
 
-import hu.bme.mit.inf.ttmc.analysis.State;
+import hu.bme.mit.inf.ttmc.analysis.ExprState;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.expr.LitExpr;
+import hu.bme.mit.inf.ttmc.core.expr.impl.Exprs;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
+import hu.bme.mit.inf.ttmc.formalism.common.Valuation;
+import hu.bme.mit.inf.ttmc.formalism.utils.impl.FormalismUtils;
 
-public class PredState implements State {
+public class PredState implements ExprState {
 
 	private static final int HASH_SEED = 7621;
 
 	private final Set<Expr<? extends BoolType>> preds;
 
+	private volatile Expr<? extends BoolType> expr = null;
+
 	private volatile int hashCode;
 
-	private PredState(final Collection<Expr<? extends BoolType>> preds) {
-		this.preds = new HashSet<>(checkNotNull(preds));
+	// Constructor does not copy the set, the static initializers should do the copying
+	private PredState(final Set<Expr<? extends BoolType>> preds) {
+		this.preds = checkNotNull(preds);
 	}
 
 	public static PredState create(final Collection<Expr<? extends BoolType>> preds) {
-		return new PredState(preds);
+		return new PredState(new HashSet<>(checkNotNull(preds)));
+	}
+
+	public static PredState create(final Valuation valuation, final PredPrecision precision) {
+		checkNotNull(valuation);
+		checkNotNull(precision);
+		final Set<Expr<? extends BoolType>> statePreds = new HashSet<>();
+
+		for (final Expr<? extends BoolType> pred : precision.getPreds()) {
+			final LitExpr<? extends BoolType> predHolds = FormalismUtils.evaluate(pred, valuation);
+			if (predHolds.equals(Exprs.True())) {
+				statePreds.add(pred);
+			} else {
+				statePreds.add(precision.negate(pred));
+			}
+		}
+
+		return new PredState(statePreds);
 	}
 
 	public Collection<Expr<? extends BoolType>> getPreds() {
 		return Collections.unmodifiableCollection(preds);
+	}
+
+	@Override
+	public Expr<? extends BoolType> asExpr() {
+		Expr<? extends BoolType> result = expr;
+		if (result == null) {
+			result = Exprs.And(preds);
+			expr = result;
+		}
+		return result;
 	}
 
 	@Override

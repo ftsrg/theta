@@ -18,13 +18,13 @@ final class ImmutableCFALoc implements CFALoc {
 		builder.loc = this;
 
 		final ImmutableSet.Builder<ImmutableCFAEdge> inEdgeSet = ImmutableSet.builder();
-		for (CFAEdgeBuilder inEdge : builder.inEdges) {
+		for (final CFAEdgeBuilder inEdge : builder.inEdges) {
 			inEdgeSet.add(inEdge.build());
 		}
 		inEdges = inEdgeSet.build();
 
 		final ImmutableSet.Builder<ImmutableCFAEdge> outEdgeSet = ImmutableSet.builder();
-		for (CFAEdgeBuilder outEdge : builder.inEdges) {
+		for (final CFAEdgeBuilder outEdge : builder.outEdges) {
 			outEdgeSet.add(outEdge.build());
 		}
 		outEdges = outEdgeSet.build();
@@ -46,8 +46,8 @@ final class ImmutableCFALoc implements CFALoc {
 
 		private ImmutableCFALoc loc;
 
-		private Collection<CFAEdgeBuilder> inEdges;
-		private Collection<CFAEdgeBuilder> outEdges;
+		private final Collection<CFAEdgeBuilder> inEdges;
+		private final Collection<CFAEdgeBuilder> outEdges;
 
 		CFALocBuilder() {
 			inEdges = new HashSet<>();

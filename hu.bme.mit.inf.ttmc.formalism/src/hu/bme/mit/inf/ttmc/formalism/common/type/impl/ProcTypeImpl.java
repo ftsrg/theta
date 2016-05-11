@@ -8,7 +8,7 @@ import java.util.StringJoiner;
 
 import com.google.common.collect.ImmutableList;
 
-import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.expr.LitExpr;
 import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.core.utils.TypeVisitor;
 import hu.bme.mit.inf.ttmc.formalism.common.type.ProcType;
@@ -41,7 +41,7 @@ final class ProcTypeImpl<ReturnType extends Type> implements ProcType<ReturnType
 	}
 
 	@Override
-	public Expr<ProcType<ReturnType>> getAny() {
+	public LitExpr<ProcType<ReturnType>> getAny() {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
@@ -92,8 +92,7 @@ final class ProcTypeImpl<ReturnType extends Type> implements ProcType<ReturnType
 			return true;
 		} else if (obj instanceof ProcType<?>) {
 			final ProcType<?> that = (ProcType<?>) obj;
-			return this.getParamTypes().equals(that.getParamTypes())
-					&& this.getReturnType().equals(that.getReturnType());
+			return this.getParamTypes().equals(that.getParamTypes()) && this.getReturnType().equals(that.getReturnType());
 		} else {
 			return false;
 		}

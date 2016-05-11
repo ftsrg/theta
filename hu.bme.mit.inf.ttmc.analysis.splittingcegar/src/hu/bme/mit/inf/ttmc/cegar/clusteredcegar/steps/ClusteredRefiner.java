@@ -17,11 +17,11 @@ import hu.bme.mit.inf.ttmc.cegar.common.steps.Refiner;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.SolverHelper;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.Visualizer;
 import hu.bme.mit.inf.ttmc.common.logging.Logger;
-import hu.bme.mit.inf.ttmc.core.expr.AndExpr;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.expr.impl.Exprs;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.core.type.Type;
+import hu.bme.mit.inf.ttmc.formalism.common.Valuation;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 import hu.bme.mit.inf.ttmc.solver.Solver;
@@ -48,7 +48,7 @@ public class ClusteredRefiner extends AbstractCEGARStep implements Refiner<Clust
 
 		final STS sts = system.getSTS();
 
-		final List<AndExpr> deadEndStates = getDeadEndStates(abstractCounterEx, traceLength, sts);
+		final List<Valuation> deadEndStates = getDeadEndStates(abstractCounterEx, traceLength, sts);
 
 		// Bad states are not needed currently, they can be collected for
 		// debugging
@@ -65,7 +65,7 @@ public class ClusteredRefiner extends AbstractCEGARStep implements Refiner<Clust
 			logger.write("Refining component: ", 5, 2);
 			logger.writeln(as, 5, 0);
 			// Get concrete states in the abstract state (projected)
-			final List<AndExpr> concreteStates = getConcreteStatesOfAbstractState(as, sts);
+			final List<Valuation> concreteStates = getConcreteStatesOfAbstractState(as, sts);
 
 			// Cannot refine if there is only one state
 			if (concreteStates.size() == 1)
@@ -77,7 +77,7 @@ public class ClusteredRefiner extends AbstractCEGARStep implements Refiner<Clust
 			// classes
 
 			// For each state, collect the compatible states
-			final List<List<AndExpr>> compatibility = new ArrayList<>(concreteStates.size());
+			final List<List<Expr<? extends BoolType>>> compatibility = new ArrayList<>(concreteStates.size());
 
 			// Get variables outside the cluster
 			final Set<VarDecl<? extends Type>> otherVars = new HashSet<>(system.getVars());
@@ -88,15 +88,12 @@ public class ClusteredRefiner extends AbstractCEGARStep implements Refiner<Clust
 			for (int i = 0; i < concreteStates.size(); ++i) {
 				if (stopHandler.isStopped())
 					return null;
-				final List<AndExpr> comp = new ArrayList<>();
-				comp.add(concreteStates.get(i)); // The state is compatible with
-													// itself
-				for (int j = i + 1; j < concreteStates.size(); ++j) // Check
-																		// other
-																	// states
+				final List<Expr<? extends BoolType>> comp = new ArrayList<>();
+				comp.add(concreteStates.get(i).toExpr()); // The state is compatible with itself
+				for (int j = i + 1; j < concreteStates.size(); ++j) // Check other states
 					if (checkPair(as, concreteStates.get(i), concreteStates.get(j), deadEndStates, otherVars, solver, sts))
 
-						comp.add(concreteStates.get(j));
+						comp.add(concreteStates.get(j).toExpr());
 				compatibility.add(comp);
 			}
 
@@ -109,7 +106,7 @@ public class ClusteredRefiner extends AbstractCEGARStep implements Refiner<Clust
 
 			// Collect the new equivalence classes with their expressions
 			final List<Expr<? extends BoolType>> eqclasses = new ArrayList<>();
-			final Set<AndExpr> includedStates = new HashSet<>();
+			final Set<Expr<? extends BoolType>> includedStates = new HashSet<>();
 			// Loop through each state and if it was not included in an
 			// equivalence class yet,
 			// then include it with its equivalence class
@@ -126,7 +123,7 @@ public class ClusteredRefiner extends AbstractCEGARStep implements Refiner<Clust
 								// expressions of the states
 						eqclasses.add(Exprs.Or(compatibility.get(i)));
 
-					for (final AndExpr cs : compatibility.get(i))
+					for (final Expr<? extends BoolType> cs : compatibility.get(i))
 						includedStates.add(cs);
 				}
 			}
@@ -259,10 +256,10 @@ public class ClusteredRefiner extends AbstractCEGARStep implements Refiner<Clust
 		return system;
 	}
 
-	private List<AndExpr> getDeadEndStates(final List<ClusteredAbstractState> abstractCounterEx, final int traceLength, final STS sts) {
+	private List<Valuation> getDeadEndStates(final List<ClusteredAbstractState> abstractCounterEx, final int traceLength, final STS sts) {
 		final Solver solver = solvers.getSolver();
 
-		final List<AndExpr> deadEndStates = new ArrayList<>();
+		final List<Valuation> deadEndStates = new ArrayList<>();
 		solver.push();
 		solver.add(sts.unrollInit(0)); // Assert initial conditions
 		for (int i = 0; i < traceLength; ++i) {
@@ -277,13 +274,13 @@ public class ClusteredRefiner extends AbstractCEGARStep implements Refiner<Clust
 		do {
 			if (SolverHelper.checkSat(solver)) {
 				// Get dead-end state
-				final AndExpr ds = sts.getConcreteState(solver.getModel(), traceLength - 1);
+				final Valuation ds = sts.getConcreteState(solver.getModel(), traceLength - 1);
 				logger.write("Dead end state: ", 6, 1);
 				logger.writeln(ds, 6, 0);
 				deadEndStates.add(ds);
 
 				// Exclude this state in order to get new dead end states
-				solver.add(sts.unroll(Exprs.Not(ds), traceLength - 1));
+				solver.add(sts.unroll(Exprs.Not(ds.toExpr()), traceLength - 1));
 			} else
 				break;
 		} while (true);
@@ -293,10 +290,10 @@ public class ClusteredRefiner extends AbstractCEGARStep implements Refiner<Clust
 	}
 
 	@SuppressWarnings("unused")
-	private List<AndExpr> getBadStates(final List<ClusteredAbstractState> abstractCounterEx, final int traceLength, final STS sts) {
+	private List<Valuation> getBadStates(final List<ClusteredAbstractState> abstractCounterEx, final int traceLength, final STS sts) {
 		final Solver solver = solvers.getSolver();
 
-		final List<AndExpr> badStates = new ArrayList<>();
+		final List<Valuation> badStates = new ArrayList<>();
 		solver.push();
 		solver.add(sts.unrollInv(0)); // Invariants
 		solver.add(sts.unrollInv(1)); // Invariants
@@ -313,13 +310,13 @@ public class ClusteredRefiner extends AbstractCEGARStep implements Refiner<Clust
 		do {
 			if (SolverHelper.checkSat(solver)) {
 				// Get bad state
-				final AndExpr bs = sts.getConcreteState(solver.getModel(), 0);
+				final Valuation bs = sts.getConcreteState(solver.getModel(), 0);
 				logger.write("Bad state: ", 6, 1);
 				logger.writeln(bs, 6, 0);
 				badStates.add(bs);
 
 				// Exclude this state in order to get new dead end states
-				solver.add(sts.unroll(Exprs.Not(bs), 0));
+				solver.add(sts.unroll(Exprs.Not(bs.toExpr()), 0));
 			} else
 				break;
 		} while (true);
@@ -327,10 +324,10 @@ public class ClusteredRefiner extends AbstractCEGARStep implements Refiner<Clust
 		return badStates;
 	}
 
-	private List<AndExpr> getConcreteStatesOfAbstractState(final ComponentAbstractState abstractState, final STS sts) {
+	private List<Valuation> getConcreteStatesOfAbstractState(final ComponentAbstractState abstractState, final STS sts) {
 		final Solver solver = solvers.getSolver();
 
-		final List<AndExpr> concreteStates = new ArrayList<>();
+		final List<Valuation> concreteStates = new ArrayList<>();
 		solver.push();
 		solver.add(sts.unrollInv(0));
 		// Assert the labels of the state
@@ -339,11 +336,11 @@ public class ClusteredRefiner extends AbstractCEGARStep implements Refiner<Clust
 		do {
 			if (SolverHelper.checkSat(solver)) {
 				// Get the model and project
-				final AndExpr cs = sts.getConcreteState(solver.getModel(), 0, abstractState.getCluster().getVars());
+				final Valuation cs = sts.getConcreteState(solver.getModel(), 0, abstractState.getCluster().getVars());
 
 				concreteStates.add(cs);
 				// Exclude this state to get new ones
-				solver.add(sts.unroll(Exprs.Not(cs), 0));
+				solver.add(sts.unroll(Exprs.Not(cs.toExpr()), 0));
 				logger.write("Concrete state: ", 7, 3);
 				logger.writeln(cs, 7, 0);
 			} else
@@ -353,18 +350,18 @@ public class ClusteredRefiner extends AbstractCEGARStep implements Refiner<Clust
 		return concreteStates;
 	}
 
-	private boolean checkPair(final ComponentAbstractState as, final AndExpr cs0, final AndExpr cs1, final List<AndExpr> deadEndStates,
+	private boolean checkPair(final ComponentAbstractState as, final Valuation cs0, final Valuation cs1, final List<Valuation> deadEndStates,
 			final Set<VarDecl<? extends Type>> otherVars, final Solver solver, final STS sts) {
 
 		// Project the dead-end states and check if they are equal
-		final List<AndExpr> proj0 = projectDeadEndStates(as, cs0, deadEndStates, otherVars, solver, sts);
-		final List<AndExpr> proj1 = projectDeadEndStates(as, cs1, deadEndStates, otherVars, solver, sts);
+		final List<Valuation> proj0 = projectDeadEndStates(as, cs0, deadEndStates, otherVars, solver, sts);
+		final List<Valuation> proj1 = projectDeadEndStates(as, cs1, deadEndStates, otherVars, solver, sts);
 		if (proj0.size() != proj1.size())
 			return false;
 
-		for (final AndExpr p0 : proj0) {
+		for (final Valuation p0 : proj0) {
 			boolean found = false;
-			for (final AndExpr p1 : proj1) {
+			for (final Valuation p1 : proj1) {
 				if (p0.equals(p1)) {
 					found = true;
 					break;
@@ -377,19 +374,19 @@ public class ClusteredRefiner extends AbstractCEGARStep implements Refiner<Clust
 		return true;
 	}
 
-	private List<AndExpr> projectDeadEndStates(final ComponentAbstractState as, final AndExpr cs, final List<AndExpr> deadEndStates,
+	private List<Valuation> projectDeadEndStates(final ComponentAbstractState as, final Valuation cs, final List<Valuation> deadEndStates,
 			final Set<VarDecl<? extends Type>> otherVars, final Solver solver, final STS sts) {
 
 		// Example: concrete state: (x=1,y=2)
 		// The dead-end states are: (x=1,y=2,z=3), (x=1,y=3,z=2), (x=1,y=2,z=5)
 		// The result is: (z=3), (z=5)
 
-		final List<AndExpr> ret = new ArrayList<>();
+		final List<Valuation> ret = new ArrayList<>();
 		solver.push();
-		solver.add(sts.unroll(cs, 0));
-		for (final AndExpr ds : deadEndStates) {
+		solver.add(sts.unroll(cs.toExpr(), 0));
+		for (final Valuation ds : deadEndStates) {
 			solver.push();
-			solver.add(sts.unroll(ds, 0));
+			solver.add(sts.unroll(ds.toExpr(), 0));
 			if (SolverHelper.checkSat(solver))
 				ret.add(sts.getConcreteState(solver.getModel(), 0, otherVars));
 			solver.pop();

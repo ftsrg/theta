@@ -2,7 +2,7 @@ package hu.bme.mit.inf.ttmc.formalism.common.type.impl;
 
 import java.util.Optional;
 
-import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.expr.LitExpr;
 import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.core.utils.TypeVisitor;
 import hu.bme.mit.inf.ttmc.formalism.common.type.UnitType;
@@ -18,7 +18,7 @@ final class UnitTypeImpl implements UnitType {
 	}
 
 	@Override
-	public final Expr<UnitType> getAny() {
+	public final LitExpr<UnitType> getAny() {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}

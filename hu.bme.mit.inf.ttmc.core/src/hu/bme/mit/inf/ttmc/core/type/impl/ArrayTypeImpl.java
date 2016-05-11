@@ -5,7 +5,7 @@ import static hu.bme.mit.inf.ttmc.core.type.impl.Types.Array;
 
 import java.util.Optional;
 
-import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.expr.LitExpr;
 import hu.bme.mit.inf.ttmc.core.type.ArrayType;
 import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.core.utils.TypeVisitor;
@@ -37,7 +37,7 @@ final class ArrayTypeImpl<IndexType extends Type, ElemType extends Type> impleme
 	}
 
 	@Override
-	public Expr<ArrayType<IndexType, ElemType>> getAny() {
+	public LitExpr<ArrayType<IndexType, ElemType>> getAny() {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}

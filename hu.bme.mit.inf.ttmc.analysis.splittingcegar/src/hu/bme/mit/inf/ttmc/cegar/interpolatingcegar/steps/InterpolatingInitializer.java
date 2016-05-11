@@ -20,11 +20,11 @@ import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.Visualizer;
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.data.InterpolatedAbstractState;
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.data.InterpolatedAbstractSystem;
 import hu.bme.mit.inf.ttmc.common.logging.Logger;
-import hu.bme.mit.inf.ttmc.core.expr.AndExpr;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.expr.impl.Exprs;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.core.type.Type;
+import hu.bme.mit.inf.ttmc.formalism.common.Valuation;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 import hu.bme.mit.inf.ttmc.formalism.utils.sts.impl.STSCNFTransformation;
@@ -207,11 +207,11 @@ public class InterpolatingInitializer extends AbstractCEGARStep implements Initi
 						return null;
 					if (SolverHelper.checkSat(solver)) {
 						// Keep only explicitly tracked variables
-						final AndExpr model = sts.getConcreteState(solver.getModel(), 0, system.getExplicitVariables());
+						final Valuation model = sts.getConcreteState(solver.getModel(), 0, system.getExplicitVariables());
 						ks.addState(as.cloneAndAddExplicit(model));
 
 						// Exclude this state
-						solver.add(sts.unroll(Exprs.Not(model), 0));
+						solver.add(sts.unroll(Exprs.Not(model.toExpr()), 0));
 					} else
 						break;
 				} while (true);
