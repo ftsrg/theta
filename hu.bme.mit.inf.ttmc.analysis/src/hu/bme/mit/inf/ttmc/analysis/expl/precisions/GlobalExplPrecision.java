@@ -18,7 +18,6 @@ import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 public class GlobalExplPrecision implements ExplPrecision {
 
 	private final Set<VarDecl<? extends Type>> visibleVars;
-	@SuppressWarnings("unused") // It will be used at refinement
 	private final Set<VarDecl<? extends Type>> invisibleVars;
 
 	public static GlobalExplPrecision create(final Collection<VarDecl<? extends Type>> visibleVars, final Collection<VarDecl<? extends Type>> invisibleVars) {
@@ -30,6 +29,12 @@ public class GlobalExplPrecision implements ExplPrecision {
 		checkNotNull(invisibleVars);
 		this.visibleVars = Collections.unmodifiableSet(new HashSet<>(visibleVars));
 		this.invisibleVars = Collections.unmodifiableSet(new HashSet<>(invisibleVars));
+
+		for (final VarDecl<? extends Type> visibleVar : this.visibleVars) {
+			if (this.invisibleVars.contains(visibleVar)) {
+				throw new RuntimeException("Visible and invisible variables must be disjoint.");
+			}
+		}
 	}
 
 	@Override
