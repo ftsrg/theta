@@ -27,6 +27,8 @@ Export-Package: hu.bme.mit.inf.ttmc.formalism.cfa,
  hu.bme.mit.inf.ttmc.formalism.ta,
  hu.bme.mit.inf.ttmc.formalism.ta.constr,
  hu.bme.mit.inf.ttmc.formalism.ta.constr.impl,
+ hu.bme.mit.inf.ttmc.formalism.ta.impl,
+ hu.bme.mit.inf.ttmc.formalism.ta.utils,
  hu.bme.mit.inf.ttmc.formalism.utils,
  hu.bme.mit.inf.ttmc.formalism.utils.impl,
  hu.bme.mit.inf.ttmc.formalism.utils.sts.impl
