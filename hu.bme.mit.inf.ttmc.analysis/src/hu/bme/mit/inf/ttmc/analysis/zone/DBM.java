@@ -13,8 +13,8 @@ import hu.bme.mit.inf.ttmc.common.matrix.IntMatrix;
 
 final class DBM {
 
-	private final int n;
-	private final IntMatrix D;
+	private int n;
+	private IntMatrix D;
 
 	private DBM(final IntMatrix D) {
 		this.n = D.nCols() - 1;
@@ -43,6 +43,25 @@ final class DBM {
 	public static DBM copyOf(final DBM dbm) {
 		final IntMatrix D = IntMatrix.copyOf(dbm.D);
 		return new DBM(D);
+	}
+
+	////////
+
+	public void expand() {
+		final int n2 = n + 1;
+		final IntMatrix D2 = IntMatrix.create(n2 + 1);
+
+		for (int i = 0; i <= n; i++) {
+			for (int j = 0; j <= n; j++) {
+				D2.set(i, j, D.get(i, j));
+			}
+			D2.set(i, n2, Inf());
+			D2.set(n2, i, Inf());
+		}
+		D2.set(0, n2, Leq(0));
+		D2.set(n2, n2, Leq(0));
+		n = n2;
+		D = D2;
 	}
 
 	////////

@@ -1,77 +1,97 @@
 package hu.bme.mit.inf.ttmc.analysis.zone;
 
-import java.util.Collection;
-import java.util.Map;
 import java.util.Set;
 
-import com.google.common.collect.ImmutableSortedMap;
-import com.google.common.collect.ImmutableSortedSet;
-
 import hu.bme.mit.inf.ttmc.formalism.common.decl.ClockDecl;
+import hu.bme.mit.inf.ttmc.formalism.ta.constr.ClockConstr;
 
 public final class ZoneState {
 
-	private final Map<ClockDecl, Integer> clockToIndex;
-	private final DBM dbm;
+	private final DBMWithSignature dbm;
 
-	private ZoneState(final Map<ClockDecl, Integer> clockToIndex, final DBM dbm) {
-		this.clockToIndex = clockToIndex;
+	private ZoneState(final DBMWithSignature dbm) {
 		this.dbm = dbm;
 	}
 
-	public static ZoneState zero(final Collection<? extends ClockDecl> clockDecls) {
-
-		final Map<ClockDecl, Integer> clockToIndex = toIndexMap(clockDecls);
-		return new ZoneState(clockToIndex, DBM.zero(clockDecls.size()));
+	private ZoneState(final ZoneOperations transformer) {
+		this.dbm = transformer.dbm;
 	}
 
-	public static ZoneState top(final Collection<? extends ClockDecl> clockDecls) {
-		final Map<ClockDecl, Integer> clockToIndex = toIndexMap(clockDecls);
-		return new ZoneState(clockToIndex, DBM.top(clockDecls.size()));
+	////
+
+	public static ZoneState zero(final Set<? extends ClockDecl> clockDecls) {
+		final DBMWithSignature dbm = DBMWithSignature.zero(clockDecls);
+		return new ZoneState(dbm);
 	}
 
-	////////
-
-	public ZoneState up() {
-		final DBM dbm = DBM.copyOf(this.dbm);
-		dbm.up();
-		return new ZoneState(clockToIndex, dbm);
+	public static ZoneState top(final Set<? extends ClockDecl> clockDecls) {
+		final DBMWithSignature dbm = DBMWithSignature.top(clockDecls);
+		return new ZoneState(dbm);
 	}
 
-	public ZoneState down() {
-		final DBM dbm = DBM.copyOf(this.dbm);
-		dbm.down();
-		return new ZoneState(clockToIndex, dbm);
+	////
+
+	public ZoneOperations transform() {
+		return new ZoneOperations(this);
 	}
 
-	////////
+	////
 
 	@Override
 	public String toString() {
-		final StringBuilder sb = new StringBuilder();
-		sb.append(String.format("%-12s", ""));
-		for (final ClockDecl clockDecl : clockToIndex.keySet()) {
-			sb.append(String.format("%-12s", clockDecl.getName()));
-		}
-		sb.append(System.lineSeparator());
-		sb.append(dbm);
-		return sb.toString();
+		return dbm.toString();
 	}
 
 	////////
 
-	private static Map<ClockDecl, Integer> toIndexMap(final Collection<? extends ClockDecl> clockDecls) {
-		final Set<ClockDecl> sortedClockDecls = ImmutableSortedSet.<ClockDecl> naturalOrder().addAll(clockDecls)
-				.build();
-		final ImmutableSortedMap.Builder<ClockDecl, Integer> builder = ImmutableSortedMap.naturalOrder();
+	public static class ZoneOperations {
+		private final DBMWithSignature dbm;
 
-		int i = 1;
-		for (final ClockDecl clockDecl : sortedClockDecls) {
-			builder.put(clockDecl, i);
-			i++;
+		private ZoneOperations(final ZoneState zone) {
+			dbm = DBMWithSignature.copyOf(zone.dbm);
 		}
-		return builder.build();
 
+		////////
+
+		public ZoneState done() {
+			return new ZoneState(this);
+		}
+
+		////////
+
+		public ZoneOperations up() {
+			dbm.up();
+			return this;
+		}
+
+		public ZoneOperations down() {
+			dbm.down();
+			return this;
+		}
+
+		public ZoneOperations and(final ClockConstr constr) {
+			dbm.and(constr);
+			return this;
+		}
+
+		public ZoneOperations free(final ClockDecl clock) {
+			dbm.free(clock);
+			return this;
+		}
+
+		public ZoneOperations reset(final ClockDecl clock, final int m) {
+			dbm.reset(clock, m);
+			return this;
+		}
+
+		public ZoneOperations copy(final ClockDecl lhs, final ClockDecl rhs) {
+			dbm.copy(lhs, rhs);
+			return this;
+		}
+
+		public ZoneOperations shift(final ClockDecl clock, final int m) {
+			dbm.shift(clock, m);
+			return this;
+		}
 	}
-
 }
