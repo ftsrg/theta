@@ -15,7 +15,7 @@ import hu.bme.mit.inf.ttmc.formalism.ta.constr.AndConstr;
 import hu.bme.mit.inf.ttmc.formalism.ta.constr.AtomicConstr;
 import hu.bme.mit.inf.ttmc.formalism.ta.constr.ClockConstr;
 import hu.bme.mit.inf.ttmc.formalism.ta.constr.TrueConstr;
-import hu.bme.mit.inf.ttmc.formalism.ta.utils.ConstrVisitor;
+import hu.bme.mit.inf.ttmc.formalism.ta.utils.ClockConstrVisitor;
 
 final class AndConstrImpl implements AndConstr {
 
@@ -56,7 +56,7 @@ final class AndConstrImpl implements AndConstr {
 	}
 
 	@Override
-	public <P, R> R accept(final ConstrVisitor<? super P, ? extends R> visitor, final P param) {
+	public <P, R> R accept(final ClockConstrVisitor<? super P, ? extends R> visitor, final P param) {
 		return visitor.visit(this, param);
 	}
 

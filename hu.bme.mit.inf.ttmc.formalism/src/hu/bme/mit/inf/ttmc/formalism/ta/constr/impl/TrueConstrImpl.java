@@ -9,7 +9,7 @@ import com.google.common.collect.ImmutableSet;
 import hu.bme.mit.inf.ttmc.core.expr.TrueExpr;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.ClockDecl;
 import hu.bme.mit.inf.ttmc.formalism.ta.constr.TrueConstr;
-import hu.bme.mit.inf.ttmc.formalism.ta.utils.ConstrVisitor;
+import hu.bme.mit.inf.ttmc.formalism.ta.utils.ClockConstrVisitor;
 
 final class TrueConstrImpl implements TrueConstr {
 
@@ -28,7 +28,7 @@ final class TrueConstrImpl implements TrueConstr {
 	}
 
 	@Override
-	public <P, R> R accept(final ConstrVisitor<? super P, ? extends R> visitor, final P param) {
+	public <P, R> R accept(final ClockConstrVisitor<? super P, ? extends R> visitor, final P param) {
 		return visitor.visit(this, param);
 	}
 

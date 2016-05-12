@@ -7,7 +7,7 @@ import hu.bme.mit.inf.ttmc.core.expr.LeqExpr;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.ClockDecl;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.ClockRefExpr;
 import hu.bme.mit.inf.ttmc.formalism.ta.constr.UnitLeqConstr;
-import hu.bme.mit.inf.ttmc.formalism.ta.utils.ConstrVisitor;
+import hu.bme.mit.inf.ttmc.formalism.ta.utils.ClockConstrVisitor;
 
 final class UnitLeqConstrImpl extends AbstractUnitConstr implements UnitLeqConstr {
 
@@ -33,7 +33,7 @@ final class UnitLeqConstrImpl extends AbstractUnitConstr implements UnitLeqConst
 	}
 
 	@Override
-	public <P, R> R accept(final ConstrVisitor<? super P, ? extends R> visitor, final P param) {
+	public <P, R> R accept(final ClockConstrVisitor<? super P, ? extends R> visitor, final P param) {
 		return visitor.visit(this, param);
 	}
 
