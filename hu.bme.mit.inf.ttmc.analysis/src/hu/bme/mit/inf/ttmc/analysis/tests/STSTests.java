@@ -24,11 +24,13 @@ import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.BasicAlgorithm;
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplDomain;
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplPrecision;
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplState;
+import hu.bme.mit.inf.ttmc.analysis.expl.sts.ExplSTSErrorStates;
 import hu.bme.mit.inf.ttmc.analysis.expl.sts.ExplSTSInitStates;
 import hu.bme.mit.inf.ttmc.analysis.expl.sts.ExplSTSTransferRelation;
 import hu.bme.mit.inf.ttmc.analysis.pred.PredDomain;
 import hu.bme.mit.inf.ttmc.analysis.pred.PredPrecision;
 import hu.bme.mit.inf.ttmc.analysis.pred.PredState;
+import hu.bme.mit.inf.ttmc.analysis.pred.sts.PredSTSErrorStates;
 import hu.bme.mit.inf.ttmc.analysis.pred.sts.PredSTSInitStates;
 import hu.bme.mit.inf.ttmc.analysis.pred.sts.PredSTSTransferRelation;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
@@ -66,10 +68,12 @@ public class STSTests {
 		preds.addAll(((OrExpr) sts.getProp()).getOps());
 		final PredSTSInitStates initStates = new PredSTSInitStates(sts, solver);
 		final PredSTSTransferRelation trel = new PredSTSTransferRelation(sts, solver);
-		final BasicAlgorithm<PredState, PredPrecision> algorithm = new BasicAlgorithm<>(PredDomain.create(solver, sts), initStates, trel);
+		final PredSTSErrorStates errorStates = new PredSTSErrorStates(sts, solver);
+		final BasicAlgorithm<PredState, PredPrecision> algorithm = new BasicAlgorithm<>(PredDomain.create(solver, sts), initStates, trel, errorStates);
 
 		final Collection<PredState> result = algorithm.run(PredPrecision.create(preds));
 
+		System.out.println("Error reached: " + algorithm.isErrorReached());
 		for (final PredState predState : result) {
 			System.out.println(predState);
 		}
@@ -83,10 +87,12 @@ public class STSTests {
 
 		final ExplSTSInitStates initStates = new ExplSTSInitStates(sts, solver);
 		final ExplSTSTransferRelation trel = new ExplSTSTransferRelation(sts, solver);
-		final BasicAlgorithm<ExplState, ExplPrecision> algorithm = new BasicAlgorithm<>(ExplDomain.create(), initStates, trel);
+		final ExplSTSErrorStates errorStates = new ExplSTSErrorStates(sts, solver);
+		final BasicAlgorithm<ExplState, ExplPrecision> algorithm = new BasicAlgorithm<>(ExplDomain.create(), initStates, trel, errorStates);
 
 		final Collection<ExplState> result = algorithm.run(ExplPrecision.create(visibleVars, invisibleVars));
 
+		System.out.println("Error reached: " + algorithm.isErrorReached());
 		for (final ExplState predState : result) {
 			System.out.println(predState);
 		}
