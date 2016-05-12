@@ -2,10 +2,11 @@ package hu.bme.mit.inf.ttmc.analysis.zone;
 
 import java.util.Set;
 
+import hu.bme.mit.inf.ttmc.analysis.State;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.ClockDecl;
 import hu.bme.mit.inf.ttmc.formalism.ta.constr.ClockConstr;
 
-public final class ZoneState {
+public final class ZoneState implements State {
 
 	private final DBMWithSignature dbm;
 
