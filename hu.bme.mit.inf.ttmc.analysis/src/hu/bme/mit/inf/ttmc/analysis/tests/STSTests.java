@@ -24,15 +24,13 @@ import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.BasicAlgorithm;
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplDomain;
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplPrecision;
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplState;
-import hu.bme.mit.inf.ttmc.analysis.expl.sts.ExplSTSErrorStates;
-import hu.bme.mit.inf.ttmc.analysis.expl.sts.ExplSTSInitStates;
-import hu.bme.mit.inf.ttmc.analysis.expl.sts.ExplSTSTransferRelation;
+import hu.bme.mit.inf.ttmc.analysis.expl.STSExplAbstraction;
+import hu.bme.mit.inf.ttmc.analysis.expl.precisions.GlobalExplPrecision;
 import hu.bme.mit.inf.ttmc.analysis.pred.PredDomain;
 import hu.bme.mit.inf.ttmc.analysis.pred.PredPrecision;
 import hu.bme.mit.inf.ttmc.analysis.pred.PredState;
-import hu.bme.mit.inf.ttmc.analysis.pred.sts.PredSTSErrorStates;
-import hu.bme.mit.inf.ttmc.analysis.pred.sts.PredSTSInitStates;
-import hu.bme.mit.inf.ttmc.analysis.pred.sts.PredSTSTransferRelation;
+import hu.bme.mit.inf.ttmc.analysis.pred.STSPredAbstraction;
+import hu.bme.mit.inf.ttmc.analysis.pred.precisions.GlobalPredPrecision;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.expr.OrExpr;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
@@ -66,12 +64,10 @@ public class STSTests {
 	public void testPred() {
 		final Collection<Expr<? extends BoolType>> preds = new ArrayList<>();
 		preds.addAll(((OrExpr) sts.getProp()).getOps());
-		final PredSTSInitStates initStates = new PredSTSInitStates(sts, solver);
-		final PredSTSTransferRelation trel = new PredSTSTransferRelation(sts, solver);
-		final PredSTSErrorStates errorStates = new PredSTSErrorStates(sts, solver);
-		final BasicAlgorithm<PredState, PredPrecision> algorithm = new BasicAlgorithm<>(PredDomain.create(solver, sts), initStates, trel, errorStates);
+		final STSPredAbstraction stsAbstraction = STSPredAbstraction.create(sts, solver);
+		final BasicAlgorithm<PredState, PredPrecision> algorithm = new BasicAlgorithm<>(PredDomain.create(solver, sts), stsAbstraction);
 
-		final Collection<PredState> result = algorithm.run(PredPrecision.create(preds));
+		final Collection<PredState> result = algorithm.run(GlobalPredPrecision.create(preds));
 
 		System.out.println("Error reached: " + algorithm.isErrorReached());
 		for (final PredState predState : result) {
@@ -85,12 +81,10 @@ public class STSTests {
 				.collect(Collectors.toSet());
 		final Set<VarDecl<? extends Type>> invisibleVars = sts.getVars().stream().filter(v -> !visibleVars.contains(v)).collect(Collectors.toSet());
 
-		final ExplSTSInitStates initStates = new ExplSTSInitStates(sts, solver);
-		final ExplSTSTransferRelation trel = new ExplSTSTransferRelation(sts, solver);
-		final ExplSTSErrorStates errorStates = new ExplSTSErrorStates(sts, solver);
-		final BasicAlgorithm<ExplState, ExplPrecision> algorithm = new BasicAlgorithm<>(ExplDomain.create(), initStates, trel, errorStates);
+		final STSExplAbstraction stsAbstraction = STSExplAbstraction.create(sts, solver);
+		final BasicAlgorithm<ExplState, ExplPrecision> algorithm = new BasicAlgorithm<>(ExplDomain.create(), stsAbstraction);
 
-		final Collection<ExplState> result = algorithm.run(ExplPrecision.create(visibleVars, invisibleVars));
+		final Collection<ExplState> result = algorithm.run(GlobalExplPrecision.create(visibleVars, invisibleVars));
 
 		System.out.println("Error reached: " + algorithm.isErrorReached());
 		for (final ExplState predState : result) {

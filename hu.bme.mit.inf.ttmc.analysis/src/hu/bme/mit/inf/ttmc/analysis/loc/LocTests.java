@@ -9,7 +9,6 @@ import org.junit.Test;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.Algorithm;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.BasicAlgorithm;
 import hu.bme.mit.inf.ttmc.analysis.impl.NullPrecision;
-import hu.bme.mit.inf.ttmc.analysis.loc.cfa.LocCFAErrorStates;
 import hu.bme.mit.inf.ttmc.formalism.cfa.CFA;
 import hu.bme.mit.inf.ttmc.formalism.cfa.CFAEdge;
 import hu.bme.mit.inf.ttmc.formalism.cfa.CFALoc;
@@ -20,13 +19,11 @@ public class LocTests {
 	@Test
 	public void exploreLocs() {
 		final CFA cfa = createSimpleCFA();
-		final LocInitStates<CFALoc> initStates = new LocInitStates<>(cfa);
-		final LocTransferRelation<CFALoc, CFAEdge> trel = new LocTransferRelation<>();
-		final LocCFAErrorStates errorStates = new LocCFAErrorStates(cfa);
+
+		final LocAbstraction<CFALoc, CFAEdge> locAbstraction = CFALocAbstraction.create(cfa);
 
 		final LocState<CFALoc> finalState = LocState.create(cfa.getFinalLoc());
-		final Algorithm<LocState<CFALoc>, NullPrecision> algorithm = new BasicAlgorithm<LocState<CFALoc>, NullPrecision>(LocDomain.create(), initStates, trel,
-				errorStates);
+		final Algorithm<LocState<CFALoc>, NullPrecision> algorithm = new BasicAlgorithm<LocState<CFALoc>, NullPrecision>(LocDomain.create(), locAbstraction);
 		final Collection<LocState<CFALoc>> result = algorithm.run(NullPrecision.get());
 
 		assertTrue(result.contains(finalState));
