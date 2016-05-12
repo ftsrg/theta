@@ -13,7 +13,7 @@ import hu.bme.mit.inf.ttmc.formalism.ta.constr.UnitGtConstr;
 import hu.bme.mit.inf.ttmc.formalism.ta.constr.UnitLeqConstr;
 import hu.bme.mit.inf.ttmc.formalism.ta.constr.UnitLtConstr;
 
-public interface ConstrVisitor<P, R> {
+public interface ClockConstrVisitor<P, R> {
 
 	public R visit(final TrueConstr constr, final P param);
 

@@ -8,7 +8,7 @@ import hu.bme.mit.inf.ttmc.core.expr.LtExpr;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.ClockDecl;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.ClockRefExpr;
 import hu.bme.mit.inf.ttmc.formalism.ta.constr.DiffLtConstr;
-import hu.bme.mit.inf.ttmc.formalism.ta.utils.ConstrVisitor;
+import hu.bme.mit.inf.ttmc.formalism.ta.utils.ClockConstrVisitor;
 
 final class DiffLtConstrImpl extends AbstractDiffConstr implements DiffLtConstr {
 
@@ -35,7 +35,7 @@ final class DiffLtConstrImpl extends AbstractDiffConstr implements DiffLtConstr 
 	}
 
 	@Override
-	public <P, R> R accept(final ConstrVisitor<? super P, ? extends R> visitor, final P param) {
+	public <P, R> R accept(final ClockConstrVisitor<? super P, ? extends R> visitor, final P param) {
 		return visitor.visit(this, param);
 	}
 
