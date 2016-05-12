@@ -3,17 +3,20 @@ package hu.bme.mit.inf.ttmc.analysis.expl;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Collection;
+import java.util.Optional;
 import java.util.StringJoiner;
 
 import hu.bme.mit.inf.ttmc.analysis.ExprState;
+import hu.bme.mit.inf.ttmc.core.decl.Decl;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.expr.LitExpr;
+import hu.bme.mit.inf.ttmc.core.model.Assignment;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.formalism.common.Valuation;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 
-public class ExplState implements ExprState {
+public class ExplState implements ExprState, Assignment {
 
 	private static final int HASH_SEED = 6659;
 
@@ -76,5 +79,20 @@ public class ExplState implements ExprState {
 			sj.add(varDecl.getName() + " = " + getValue(varDecl));
 		}
 		return sj.toString();
+	}
+
+	@Override
+	public Collection<? extends Decl<?, ?>> getDecls() {
+		return values.getDecls();
+	}
+
+	@Override
+	public <DeclType extends Type, DeclKind extends Decl<DeclType, DeclKind>> Optional<LitExpr<DeclType>> eval(final Decl<DeclType, DeclKind> decl) {
+		return values.eval(decl);
+	}
+
+	@Override
+	public Expr<? extends BoolType> toExpr() {
+		return asExpr();
 	}
 }
