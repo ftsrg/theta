@@ -16,26 +16,24 @@ import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 import hu.bme.mit.inf.ttmc.formalism.utils.impl.FoldVisitor;
 import hu.bme.mit.inf.ttmc.formalism.utils.impl.UnfoldVisitor;
-import hu.bme.mit.inf.ttmc.formalism.utils.impl.VarMap;
 
 class STSUnrollerImpl {
 	private final STS sts;
 	private final UnfoldVisitor ufVisitor;
 	private final FoldVisitor fVisitor;
-	private final VarMap varMap;
 
 	public STSUnrollerImpl(final STS sts) {
 		this.sts = sts;
-		varMap = new VarMap();
-		ufVisitor = new UnfoldVisitor(varMap);
-		fVisitor = new FoldVisitor(varMap);
+		ufVisitor = new UnfoldVisitor();
+		fVisitor = new FoldVisitor();
 	}
 
 	public Expr<? extends BoolType> unroll(final Expr<? extends BoolType> expr, final int i) {
 		return ExprUtils.cast(expr.accept(ufVisitor, i), BoolType.class);
 	}
 
-	public Collection<? extends Expr<? extends BoolType>> unroll(final Collection<? extends Expr<? extends BoolType>> exprs, final int i) {
+	public Collection<? extends Expr<? extends BoolType>> unroll(
+			final Collection<? extends Expr<? extends BoolType>> exprs, final int i) {
 		return exprs.stream().map(e -> unroll(e, i)).collect(Collectors.toSet());
 	}
 
@@ -55,14 +53,15 @@ class STSUnrollerImpl {
 		return unroll(sts.getProp(), i);
 	}
 
-	public Valuation getConcreteState(final Model model, final int i, final Collection<VarDecl<? extends Type>> variables) {
+	public Valuation getConcreteState(final Model model, final int i,
+			final Collection<VarDecl<? extends Type>> variables) {
 
 		final Valuation.Builder builder = new Valuation.Builder();
 
 		for (final VarDecl<? extends Type> varDecl : variables) {
 			LitExpr<? extends Type> value = null;
 			try {
-				value = model.eval(varMap.getConstDecl(varDecl, i)).get();
+				value = model.eval(varDecl.getConstDecl(i)).get();
 			} catch (final Exception ex) {
 				value = varDecl.getType().getAny();
 			}
@@ -72,7 +71,8 @@ class STSUnrollerImpl {
 		return builder.build();
 	}
 
-	public List<Valuation> extractTrace(final Model model, final int length, final Collection<VarDecl<? extends Type>> variables) {
+	public List<Valuation> extractTrace(final Model model, final int length,
+			final Collection<VarDecl<? extends Type>> variables) {
 
 		final List<Valuation> trace = new ArrayList<>(length);
 		for (int i = 0; i < length; ++i)
