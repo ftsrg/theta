@@ -3,6 +3,7 @@ package hu.bme.mit.inf.ttmc.formalism.common.decl.impl;
 import hu.bme.mit.inf.ttmc.core.decl.impl.AbstractDecl;
 import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.core.utils.DeclVisitor;
+import hu.bme.mit.inf.ttmc.formalism.common.decl.IndexedConstDecl;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.VarRefExpr;
 
@@ -22,6 +23,12 @@ final class VarDeclImpl<DeclType extends Type> extends AbstractDecl<DeclType, Va
 	@Override
 	public VarRefExpr<DeclType> getRef() {
 		return ref;
+	}
+
+	@Override
+	public IndexedConstDecl<DeclType> getConstDecl(final int index) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
 
 	@Override

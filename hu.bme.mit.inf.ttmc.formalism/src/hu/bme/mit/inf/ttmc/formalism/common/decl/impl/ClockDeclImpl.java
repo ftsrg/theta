@@ -6,6 +6,7 @@ import hu.bme.mit.inf.ttmc.core.decl.impl.AbstractDecl;
 import hu.bme.mit.inf.ttmc.core.type.RatType;
 import hu.bme.mit.inf.ttmc.core.utils.DeclVisitor;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.ClockDecl;
+import hu.bme.mit.inf.ttmc.formalism.common.decl.IndexedConstDecl;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.ClockRefExpr;
 
@@ -24,6 +25,12 @@ class ClockDeclImpl extends AbstractDecl<RatType, VarDecl<RatType>> implements C
 	@Override
 	public ClockRefExpr getRef() {
 		return ref;
+	}
+
+	@Override
+	public IndexedConstDecl<RatType> getConstDecl(final int index) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
 
 	@Override
