@@ -14,10 +14,7 @@ import hu.bme.mit.inf.ttmc.formalism.utils.ProgExprVisitor;
 
 public class UnfoldVisitor extends ExprRewriterVisitor<Integer> implements ProgExprVisitor<Integer, Expr<?>> {
 
-	final VarMap varMap;
-
-	public UnfoldVisitor(final VarMap varMap) {
-		this.varMap = varMap;
+	public UnfoldVisitor() {
 	}
 
 	////
@@ -37,7 +34,7 @@ public class UnfoldVisitor extends ExprRewriterVisitor<Integer> implements ProgE
 			final Integer param) {
 		final int i = param;
 		final VarDecl<DeclType> varDecl = expr.getDecl();
-		final ConstDecl<DeclType> constDecl = varMap.getConstDecl(varDecl, i);
+		final ConstDecl<DeclType> constDecl = varDecl.getConstDecl(i);
 		final ConstRefExpr<DeclType> constRefExpr = constDecl.getRef();
 		return constRefExpr;
 	}
