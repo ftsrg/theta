@@ -3,6 +3,7 @@ package hu.bme.mit.inf.ttmc.analysis.zone;
 import static hu.bme.mit.inf.ttmc.analysis.zone.DiffBounds.Leq;
 import static hu.bme.mit.inf.ttmc.analysis.zone.DiffBounds.Lt;
 
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -26,6 +27,10 @@ import hu.bme.mit.inf.ttmc.formalism.ta.utils.ClockConstrVisitor;
 
 final class DBMWithSignature {
 
+	private static final int HASH_SEED = 7211;
+
+	private volatile int hashCode = 0;
+
 	private final Map<ClockDecl, Integer> clockToIndex;
 	private final DBM dbm;
 
@@ -44,9 +49,19 @@ final class DBMWithSignature {
 		return new DBMWithSignature(clockToIndex, DBM.zero(clockDecls.size()));
 	}
 
+	public static DBMWithSignature nonNegative(final Set<? extends ClockDecl> clockDecls) {
+		final Map<ClockDecl, Integer> clockToIndex = toIndexMap(clockDecls);
+		return new DBMWithSignature(clockToIndex, DBM.nonNegative(clockDecls.size()));
+	}
+
 	public static DBMWithSignature top(final Set<? extends ClockDecl> clockDecls) {
 		final Map<ClockDecl, Integer> clockToIndex = toIndexMap(clockDecls);
 		return new DBMWithSignature(clockToIndex, DBM.top(clockDecls.size()));
+	}
+
+	public static DBMWithSignature bottom() {
+		final Map<ClockDecl, Integer> clockToIndex = Collections.emptyMap();
+		return new DBMWithSignature(clockToIndex, DBM.bottom());
 	}
 
 	public static DBMWithSignature copyOf(final DBMWithSignature other) {
@@ -79,7 +94,7 @@ final class DBMWithSignature {
 	}
 
 	public void copy(final ClockDecl lhs, final ClockDecl rhs) {
-		final Integer rhsIndex = clockToIndex.get(rhs);
+		final Integer rhsIndex = getIndex(rhs);
 		if (rhsIndex != null) {
 			final int lhsIndex = declareAndGetIndex(lhs);
 			dbm.copy(lhsIndex, rhsIndex);
@@ -93,6 +108,29 @@ final class DBMWithSignature {
 	}
 
 	////////
+
+	@Override
+	public int hashCode() {
+		int result = hashCode;
+		if (result == 0) {
+			result = HASH_SEED;
+			result = 31 * result + dbm.hashCode();
+			hashCode = result;
+		}
+		return result;
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		} else if (obj instanceof DBMWithSignature) {
+			final DBMWithSignature that = (DBMWithSignature) obj;
+			return this.dbm.equals(that.dbm);
+		} else {
+			return false;
+		}
+	}
 
 	@Override
 	public String toString() {
@@ -118,15 +156,19 @@ final class DBMWithSignature {
 		return result;
 	}
 
+	private Integer getIndex(final ClockDecl clock) {
+		return clockToIndex.get(clock);
+	}
+
 	private void doIfDeclared(final ClockDecl clock, final Consumer<? super Integer> operation) {
-		final Integer index = clockToIndex.get(clock);
+		final Integer index = getIndex(clock);
 		if (index != null) {
 			operation.accept(index);
 		}
 	}
 
 	private int declareAndGetIndex(final ClockDecl clock) {
-		Integer index = clockToIndex.get(clock);
+		Integer index = getIndex(clock);
 		if (index == null) {
 			dbm.expand();
 			index = dbm.nClocks();

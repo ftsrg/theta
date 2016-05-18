@@ -8,6 +8,10 @@ import hu.bme.mit.inf.ttmc.formalism.ta.constr.ClockConstr;
 
 public final class ZoneState implements State {
 
+	private static final int HASH_SEED = 4349;
+
+	private volatile int hashCode = 0;
+
 	private final DBMWithSignature dbm;
 
 	private ZoneState(final DBMWithSignature dbm) {
@@ -25,6 +29,11 @@ public final class ZoneState implements State {
 		return new ZoneState(dbm);
 	}
 
+	public static ZoneState nonNegative(final Set<? extends ClockDecl> clockDecls) {
+		final DBMWithSignature dbm = DBMWithSignature.nonNegative(clockDecls);
+		return new ZoneState(dbm);
+	}
+
 	public static ZoneState top(final Set<? extends ClockDecl> clockDecls) {
 		final DBMWithSignature dbm = DBMWithSignature.top(clockDecls);
 		return new ZoneState(dbm);
@@ -37,6 +46,29 @@ public final class ZoneState implements State {
 	}
 
 	////
+
+	@Override
+	public int hashCode() {
+		int result = hashCode;
+		if (result == 0) {
+			result = HASH_SEED;
+			result = 31 * result + dbm.hashCode();
+			hashCode = result;
+		}
+		return result;
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		} else if (obj instanceof ZoneState) {
+			final ZoneState that = (ZoneState) obj;
+			return this.dbm.equals(that.dbm);
+		} else {
+			return false;
+		}
+	}
 
 	@Override
 	public String toString() {

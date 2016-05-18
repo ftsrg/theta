@@ -13,31 +13,51 @@ import hu.bme.mit.inf.ttmc.common.matrix.IntMatrix;
 
 final class DBM {
 
+	private static final int HASH_SEED = 8581;
+
 	private int n;
 	private IntMatrix D;
 
+	private DBM(final int n) {
+		checkArgument(n >= 0);
+		this.n = n;
+		this.D = IntMatrix.create(n + 1);
+		D.fill(Inf());
+		for (int i = 0; i <= n; i++) {
+			D.set(i, i, Leq(0));
+		}
+	}
+
 	private DBM(final IntMatrix D) {
-		this.n = D.nCols() - 1;
+		this.n = D.nRows() - 1;
 		this.D = D;
 	}
 
 	public static DBM zero(final int n) {
 		checkArgument(n >= 0);
-		final IntMatrix D = IntMatrix.create(n + 1);
-		D.fill(Leq(0));
-		return new DBM(D);
+		final DBM result = new DBM(n);
+		result.D.fill(Leq(0));
+		return result;
+	}
+
+	public static DBM nonNegative(final int n) {
+		checkArgument(n >= 0);
+		final DBM result = new DBM(n);
+		for (int i = 1; i <= n; i++) {
+			result.D.set(0, i, Leq(0));
+		}
+		return result;
 	}
 
 	public static DBM top(final int n) {
 		checkArgument(n >= 0);
-		final IntMatrix D = IntMatrix.create(n + 1);
-		D.fill(Inf());
-		D.set(0, 0, Leq(0));
-		for (int i = 1; i < D.nRows(); i++) {
-			D.set(0, i, Leq(0));
-			D.set(i, i, Leq(0));
-		}
-		return new DBM(D);
+		return new DBM(n);
+	}
+
+	public static DBM bottom() {
+		final DBM result = new DBM(0);
+		result.D.set(0, 0, Leq(-1));
+		return result;
 	}
 
 	public static DBM copyOf(final DBM dbm) {
@@ -74,6 +94,12 @@ final class DBM {
 		checkArgument(isClock(x));
 		checkArgument(isClock(y));
 		return D.get(x, y);
+	}
+
+	void set(final int x, final int y, final int b) {
+		checkArgument(isClock(x));
+		checkArgument(isClock(y));
+		D.set(x, y, b);
 	}
 
 	////////
@@ -206,6 +232,25 @@ final class DBM {
 	}
 
 	////////
+
+	@Override
+	public int hashCode() {
+		int result = HASH_SEED;
+		result = 31 * result + D.hashCode();
+		return result;
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		} else if (obj instanceof DBM) {
+			final DBM that = (DBM) obj;
+			return this.D.equals(that.D);
+		} else {
+			return false;
+		}
+	}
 
 	@Override
 	public String toString() {
