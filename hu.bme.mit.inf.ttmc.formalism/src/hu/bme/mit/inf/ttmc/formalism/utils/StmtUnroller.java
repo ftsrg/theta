@@ -5,8 +5,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-import hu.bme.mit.inf.ttmc.common.Tuple2;
-import hu.bme.mit.inf.ttmc.common.Tuples;
 import hu.bme.mit.inf.ttmc.core.decl.ConstDecl;
 import hu.bme.mit.inf.ttmc.core.expr.ConstRefExpr;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
@@ -24,15 +22,12 @@ import hu.bme.mit.inf.ttmc.formalism.common.stmt.AssumeStmt;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.HavocStmt;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
 import hu.bme.mit.inf.ttmc.formalism.utils.impl.IndexMap;
-import hu.bme.mit.inf.ttmc.formalism.utils.impl.VarMap;
 
 public class StmtUnroller {
 
-	private final VarMap varMap;
 	private final StmtToExprVisitor visitor;
 
 	public StmtUnroller() {
-		varMap = new VarMap();
 		visitor = new StmtToExprVisitor();
 	}
 
@@ -55,12 +50,12 @@ public class StmtUnroller {
 	}
 
 	private Expr<? extends BoolType> pathExpr(final Stmt stmt, final IndexMap indexMap) {
-		return stmt.accept(visitor, Tuples.of(varMap, indexMap));
+		return stmt.accept(visitor, indexMap);
 	}
 
 	////
 
-	private static class StmtToExprVisitor extends FailStmtVisitor<Tuple2<VarMap, IndexMap>, Expr<? extends BoolType>> {
+	private static class StmtToExprVisitor extends FailStmtVisitor<IndexMap, Expr<? extends BoolType>> {
 
 		private final VarToConstVisitor visitor;
 
@@ -71,12 +66,9 @@ public class StmtUnroller {
 		////////
 
 		@Override
-		public Expr<? extends BoolType> visit(final AssumeStmt stmt, final Tuple2<VarMap, IndexMap> param) {
-			final VarMap varMap = param._1();
-			final IndexMap indexMap = param._2();
-
+		public Expr<? extends BoolType> visit(final AssumeStmt stmt, final IndexMap indexMap) {
 			final Expr<? extends BoolType> cond = stmt.getCond();
-			final Expr<?> expr = cond.accept(visitor, Tuples.of(varMap, indexMap));
+			final Expr<?> expr = cond.accept(visitor, indexMap);
 			@SuppressWarnings("unchecked")
 			final Expr<? extends BoolType> result = (Expr<? extends BoolType>) expr;
 
@@ -85,19 +77,16 @@ public class StmtUnroller {
 
 		@Override
 		public <DeclType extends Type, ExprType extends DeclType> Expr<? extends BoolType> visit(
-				final AssignStmt<DeclType, ExprType> stmt, final Tuple2<VarMap, IndexMap> param) {
-
-			final VarMap varMap = param._1();
-			final IndexMap indexMap = param._2();
+				final AssignStmt<DeclType, ExprType> stmt, final IndexMap indexMap) {
 
 			final Expr<?> expr = stmt.getExpr();
-			final Expr<?> rhs = expr.accept(visitor, Tuples.of(varMap, indexMap));
+			final Expr<?> rhs = expr.accept(visitor, indexMap);
 
 			final VarDecl<?> varDecl = stmt.getVarDecl();
 			// side effect on indexMap
 			indexMap.inc(varDecl);
 			final int index = indexMap.getIndex(varDecl);
-			final ConstDecl<?> constDecl = varMap.getConstDecl(varDecl, index);
+			final ConstDecl<?> constDecl = varDecl.getConstDecl(index);
 			final Expr<?> lhs = constDecl.getRef();
 
 			final Expr<? extends BoolType> result = Exprs.Eq(lhs, rhs);
@@ -106,38 +95,33 @@ public class StmtUnroller {
 
 		@Override
 		public <DeclType extends Type> Expr<? extends BoolType> visit(final HavocStmt<DeclType> stmt,
-				final Tuple2<VarMap, IndexMap> param) {
-			// final VarMap varMap = param._1();
-			final IndexMap indexMap = param._2();
+				final IndexMap indexMap) {
 
 			final VarDecl<?> varDecl = stmt.getVarDecl();
 			// side effect on indexMap
 			indexMap.inc(varDecl);
-
 			return null;
 		}
 
 		////////
 
-		private static class VarToConstVisitor extends ExprRewriterVisitor<Tuple2<VarMap, IndexMap>>
-				implements ProgExprVisitor<Tuple2<VarMap, IndexMap>, Expr<?>> {
+		private static class VarToConstVisitor extends ExprRewriterVisitor<IndexMap>
+				implements ProgExprVisitor<IndexMap, Expr<?>> {
 
 			@Override
 			public <ExprType extends Type> Expr<ExprType> visit(final PrimedExpr<ExprType> expr,
-					final Tuple2<VarMap, IndexMap> param) {
+					final IndexMap indexMap) {
 				throw new UnsupportedOperationException();
 			}
 
 			@Override
 			public <DeclType extends Type> ConstRefExpr<DeclType> visit(final VarRefExpr<DeclType> expr,
-					final Tuple2<VarMap, IndexMap> param) {
-				final VarMap varMap = param._1();
-				final IndexMap indexMap = param._2();
+					final IndexMap indexMap) {
 
 				final VarDecl<DeclType> varDecl = expr.getDecl();
 				final int index = indexMap.getIndex(varDecl);
 
-				final ConstDecl<DeclType> constDecl = varMap.getConstDecl(varDecl, index);
+				final ConstDecl<DeclType> constDecl = varDecl.getConstDecl(index);
 				final ConstRefExpr<DeclType> constRef = constDecl.getRef();
 
 				return constRef;
@@ -145,13 +129,13 @@ public class StmtUnroller {
 
 			@Override
 			public <ReturnType extends Type> Expr<?> visit(final ProcRefExpr<ReturnType> expr,
-					final Tuple2<VarMap, IndexMap> param) {
+					final IndexMap indexMap) {
 				throw new UnsupportedOperationException();
 			}
 
 			@Override
 			public <ReturnType extends Type> Expr<?> visit(final ProcCallExpr<ReturnType> expr,
-					final Tuple2<VarMap, IndexMap> param) {
+					final IndexMap indexMap) {
 				throw new UnsupportedOperationException();
 			}
 		}
