@@ -52,7 +52,7 @@ public class ArgFormalismAbstraction<S extends State, P extends Precision> imple
 	public boolean isTarget(final ArgState<S> state) {
 		final boolean isTarget = formalismAbstraction.isTarget(state.getState());
 		state.setTarget(isTarget);
-		return false;
+		return isTarget;
 	}
 
 }
