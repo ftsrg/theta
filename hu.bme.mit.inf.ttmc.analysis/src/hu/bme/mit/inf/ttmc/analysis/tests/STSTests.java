@@ -97,7 +97,7 @@ public class STSTests {
 	}
 
 	@Test
-	public void testArg() {
+	public void testArgWithExpl() {
 		final Set<VarDecl<? extends Type>> visibleVars = sts.getVars().stream().filter(v -> v.getName().equals("x") || v.getName().equals("y"))
 				.collect(Collectors.toSet());
 		final Set<VarDecl<? extends Type>> invisibleVars = sts.getVars().stream().filter(v -> !visibleVars.contains(v)).collect(Collectors.toSet());
@@ -109,6 +109,24 @@ public class STSTests {
 
 		System.out.println("Error reached: " + algorithm.isErrorReached());
 		for (final ArgState<ExplState> state : result) {
+			System.out.println(state);
+		}
+
+		System.out.println(ArgPrinter.toGraphvizString(result));
+	}
+
+	@Test
+	public void testArgWithPred() {
+		final Collection<Expr<? extends BoolType>> preds = new ArrayList<>();
+		preds.addAll(((OrExpr) sts.getProp()).getOps());
+		final ArgFormalismAbstraction<PredState, PredPrecision> stsAbstraction = ArgFormalismAbstraction.create(STSPredAbstraction.create(sts, solver));
+		final BasicAlgorithm<ArgState<PredState>, PredPrecision> algorithm = new BasicAlgorithm<>(ArgDomain.create(PredDomain.create(solver, sts)),
+				stsAbstraction);
+
+		final Collection<ArgState<PredState>> result = algorithm.run(GlobalPredPrecision.create(preds));
+
+		System.out.println("Error reached: " + algorithm.isErrorReached());
+		for (final ArgState<PredState> state : result) {
 			System.out.println(state);
 		}
 
