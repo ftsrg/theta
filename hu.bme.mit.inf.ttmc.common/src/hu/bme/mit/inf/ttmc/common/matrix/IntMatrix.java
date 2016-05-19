@@ -5,6 +5,8 @@ import static java.lang.Math.abs;
 import static java.lang.Math.log10;
 import static java.lang.Math.max;
 
+import java.util.function.IntBinaryOperator;
+
 public abstract class IntMatrix {
 
 	IntMatrix() {
@@ -37,6 +39,14 @@ public abstract class IntMatrix {
 		for (int i = 0; i < nRows(); i++) {
 			for (int j = 0; j < nCols(); j++) {
 				set(i, j, e);
+			}
+		}
+	}
+
+	public final void fill(final IntBinaryOperator f) {
+		for (int i = 0; i < nRows(); i++) {
+			for (int j = 0; j < nCols(); j++) {
+				set(i, j, f.applyAsInt(i, j));
 			}
 		}
 	}
