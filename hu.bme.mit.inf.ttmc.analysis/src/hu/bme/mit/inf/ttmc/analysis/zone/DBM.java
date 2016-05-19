@@ -37,28 +37,39 @@ final class DBM {
 		checkArgument(n >= 0);
 		final DBM result = new DBM(n);
 		result.D.fill(Leq(0));
-		return result;
-	}
 
-	public static DBM nonNegative(final int n) {
-		checkArgument(n >= 0);
-		final DBM result = new DBM(n);
-		for (int i = 1; i <= n; i++) {
-			result.D.set(0, i, Leq(0));
-		}
+		assert result.isClosed();
 		return result;
 	}
 
 	public static DBM top(final int n) {
 		checkArgument(n >= 0);
+		final DBM result = new DBM(n);
+
+		assert result.isClosed();
 		return new DBM(n);
+	}
+
+	public static DBM top0(final int n) {
+		checkArgument(n >= 0);
+		final DBM result = new DBM(n);
+		for (int i = 1; i <= n; i++) {
+			result.D.set(0, i, Leq(0));
+		}
+
+		assert result.isClosed();
+		return result;
 	}
 
 	public static DBM bottom() {
 		final DBM result = new DBM(0);
 		result.D.set(0, 0, Leq(-1));
+
+		assert result.isClosed();
 		return result;
 	}
+
+	////////
 
 	public static DBM copyOf(final DBM dbm) {
 		final IntMatrix D = IntMatrix.copyOf(dbm.D);
@@ -75,13 +86,31 @@ final class DBM {
 			for (int j = 0; j <= n; j++) {
 				D2.set(i, j, D.get(i, j));
 			}
-			D2.set(i, n2, Inf());
 			D2.set(n2, i, Inf());
+			D2.set(i, n2, Inf());
+		}
+		D2.set(n2, n2, Leq(0));
+		n = n2;
+		D = D2;
+		assert isClosed();
+	}
+
+	public void expand0() {
+		final int n2 = n + 1;
+		final IntMatrix D2 = IntMatrix.create(n2 + 1);
+
+		for (int i = 0; i <= n; i++) {
+			for (int j = 0; j <= n; j++) {
+				D2.set(i, j, D.get(i, j));
+			}
+			D2.set(n2, i, Inf());
+			D2.set(i, n2, D.get(i, 0));
 		}
 		D2.set(0, n2, Leq(0));
 		D2.set(n2, n2, Leq(0));
 		n = n2;
 		D = D2;
+		assert isClosed();
 	}
 
 	////////
@@ -94,12 +123,6 @@ final class DBM {
 		checkArgument(isClock(x));
 		checkArgument(isClock(y));
 		return D.get(x, y);
-	}
-
-	void set(final int x, final int y, final int b) {
-		checkArgument(isClock(x));
-		checkArgument(isClock(y));
-		D.set(x, y, b);
 	}
 
 	////////
@@ -120,9 +143,17 @@ final class DBM {
 		for (int i = 1; i <= n; i++) {
 			D.set(i, 0, Inf());
 		}
+		assert isClosed();
 	}
 
 	public void down() {
+		for (int i = 1; i <= n; i++) {
+			D.set(0, i, Inf());
+		}
+		assert isClosed();
+	}
+
+	public void down0() {
 		for (int i = 1; i <= n; i++) {
 			D.set(0, i, Leq(0));
 			for (int j = 1; j <= n; j++) {
@@ -131,6 +162,7 @@ final class DBM {
 				}
 			}
 		}
+		assert isClosed();
 	}
 
 	public void and(final int x, final int y, final int b) {
@@ -154,17 +186,29 @@ final class DBM {
 				}
 			}
 		}
+		assert isClosed();
 	}
 
 	public void free(final int x) {
 		checkArgument(isNonZeroClock(x));
+		for (int i = 0; i <= n; i++) {
+			if (i != x) {
+				D.set(x, i, Inf());
+				D.set(i, x, Inf());
+			}
+		}
+		assert isClosed();
+	}
 
+	public void free0(final int x) {
+		checkArgument(isNonZeroClock(x));
 		for (int i = 0; i <= n; i++) {
 			if (i != x) {
 				D.set(x, i, Inf());
 				D.set(i, x, D.get(i, 0));
 			}
 		}
+		assert isClosed();
 	}
 
 	public void reset(final int x, final int m) {
@@ -173,6 +217,7 @@ final class DBM {
 			D.set(x, i, add(Leq(m), D.get(0, i)));
 			D.set(i, x, add(D.get(i, 0), Leq(-m)));
 		}
+		assert isClosed();
 	}
 
 	public void copy(final int x, final int y) {
@@ -187,19 +232,29 @@ final class DBM {
 		}
 		D.set(x, y, Leq(0));
 		D.set(y, x, Leq(0));
+		assert isClosed();
 	}
 
 	public void shift(final int x, final int m) {
 		checkArgument(isNonZeroClock(x));
-
 		for (int i = 0; i <= n; i++) {
 			if (i != x) {
 				D.set(x, i, add(D.get(x, i), Leq(m)));
 				D.set(i, x, add(D.get(i, x), Leq(-m)));
 			}
 		}
+		// Enforce nonnegative clock values:
 		D.set(x, 0, max(D.get(x, 0), Leq(0)));
 		D.set(0, x, min(D.get(0, x), Leq(0)));
+		assert isClosed();
+	}
+
+	public void shift0(final int x, final int m) {
+		shift(x, m);
+		// Enforce nonnegative clock values:
+		D.set(x, 0, max(D.get(x, 0), Leq(0)));
+		D.set(0, x, min(D.get(0, x), Leq(0)));
+		assert isClosed();
 	}
 
 	public void norm(final int[] k) {
@@ -217,18 +272,6 @@ final class DBM {
 			}
 		}
 		close();
-	}
-
-	////////
-
-	private void close() {
-		for (int k = 0; k <= n; k++) {
-			for (int i = 0; i <= n; i++) {
-				for (int j = 0; j <= n; j++) {
-					D.set(i, j, min(D.get(i, j), add(D.get(i, k), D.get(k, j))));
-				}
-			}
-		}
 	}
 
 	////////
@@ -269,6 +312,33 @@ final class DBM {
 
 		}
 		return sb.toString();
+	}
+
+	////////
+
+	boolean isClosed() {
+		for (int i = 0; i <= n; i++) {
+			for (int j = 0; j <= n; j++) {
+				for (int k = 0; k <= n; k++) {
+					if (D.get(i, j) > add(D.get(i, k), D.get(k, j))) {
+						return false;
+					}
+					;
+				}
+			}
+		}
+		return true;
+	}
+
+	private void close() {
+		for (int k = 0; k <= n; k++) {
+			for (int i = 0; i <= n; i++) {
+				for (int j = 0; j <= n; j++) {
+					D.set(i, j, min(D.get(i, j), add(D.get(i, k), D.get(k, j))));
+				}
+			}
+		}
+		assert isClosed();
 	}
 
 	////////

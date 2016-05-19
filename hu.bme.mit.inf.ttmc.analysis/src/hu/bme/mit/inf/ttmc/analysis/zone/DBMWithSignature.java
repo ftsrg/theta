@@ -49,14 +49,14 @@ final class DBMWithSignature {
 		return new DBMWithSignature(clockToIndex, DBM.zero(clockDecls.size()));
 	}
 
-	public static DBMWithSignature nonNegative(final Set<? extends ClockDecl> clockDecls) {
-		final Map<ClockDecl, Integer> clockToIndex = toIndexMap(clockDecls);
-		return new DBMWithSignature(clockToIndex, DBM.nonNegative(clockDecls.size()));
-	}
-
 	public static DBMWithSignature top(final Set<? extends ClockDecl> clockDecls) {
 		final Map<ClockDecl, Integer> clockToIndex = toIndexMap(clockDecls);
 		return new DBMWithSignature(clockToIndex, DBM.top(clockDecls.size()));
+	}
+
+	public static DBMWithSignature top0(final Set<? extends ClockDecl> clockDecls) {
+		final Map<ClockDecl, Integer> clockToIndex = toIndexMap(clockDecls);
+		return new DBMWithSignature(clockToIndex, DBM.top0(clockDecls.size()));
 	}
 
 	public static DBMWithSignature bottom() {
@@ -136,7 +136,7 @@ final class DBMWithSignature {
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
 		sb.append(String.format("%-12s", ""));
-		for (final ClockDecl clockDecl : clockToIndex.keySet()) {
+		for (final ClockDecl clockDecl : getClockDecls()) {
 			sb.append(String.format("%-12s", clockDecl.getName()));
 		}
 		sb.append(System.lineSeparator());
@@ -175,6 +175,10 @@ final class DBMWithSignature {
 			clockToIndex.put(clock, index);
 		}
 		return index;
+	}
+
+	private Set<ClockDecl> getClockDecls() {
+		return clockToIndex.keySet();
 	}
 
 	////////

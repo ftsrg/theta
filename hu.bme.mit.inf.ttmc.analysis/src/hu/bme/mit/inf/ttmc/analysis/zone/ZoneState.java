@@ -29,13 +29,13 @@ public final class ZoneState implements State {
 		return new ZoneState(dbm);
 	}
 
-	public static ZoneState nonNegative(final Set<? extends ClockDecl> clockDecls) {
-		final DBMWithSignature dbm = DBMWithSignature.nonNegative(clockDecls);
+	public static ZoneState top(final Set<? extends ClockDecl> clockDecls) {
+		final DBMWithSignature dbm = DBMWithSignature.top(clockDecls);
 		return new ZoneState(dbm);
 	}
 
-	public static ZoneState top(final Set<? extends ClockDecl> clockDecls) {
-		final DBMWithSignature dbm = DBMWithSignature.top(clockDecls);
+	public static ZoneState top0(final Set<? extends ClockDecl> clockDecls) {
+		final DBMWithSignature dbm = DBMWithSignature.top0(clockDecls);
 		return new ZoneState(dbm);
 	}
 
