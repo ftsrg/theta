@@ -41,7 +41,7 @@ public class ExplState implements ExprState, Assignment {
 	}
 
 	@Override
-	public Expr<? extends BoolType> asExpr() {
+	public Expr<? extends BoolType> toExpr() {
 		return values.toExpr();
 	}
 
@@ -89,10 +89,5 @@ public class ExplState implements ExprState, Assignment {
 	@Override
 	public <DeclType extends Type, DeclKind extends Decl<DeclType, DeclKind>> Optional<LitExpr<DeclType>> eval(final Decl<DeclType, DeclKind> decl) {
 		return values.eval(decl);
-	}
-
-	@Override
-	public Expr<? extends BoolType> toExpr() {
-		return asExpr();
 	}
 }
