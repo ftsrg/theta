@@ -9,6 +9,8 @@ import hu.bme.mit.inf.ttmc.analysis.FormalismAbstraction;
 import hu.bme.mit.inf.ttmc.analysis.Precision;
 import hu.bme.mit.inf.ttmc.analysis.State;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.Algorithm;
+import hu.bme.mit.inf.ttmc.analysis.algorithm.waitlist.Waitlist;
+import hu.bme.mit.inf.ttmc.analysis.algorithm.waitlist.impl.FIFOWaitlist;
 
 public class BasicAlgorithm<S extends State, P extends Precision> implements Algorithm<S, P> {
 
@@ -27,11 +29,11 @@ public class BasicAlgorithm<S extends State, P extends Precision> implements Alg
 	public Collection<S> run(final P precision) {
 		isErrorReached = false;
 		final Collection<? extends S> reachedSet = formalismAbstraction.getStartStates(precision);
-		final Deque<S> waitlist = new ArrayDeque<S>(reachedSet);
+		final Waitlist<S> waitlist = new FIFOWaitlist<>(reachedSet);
 		final Deque<S> reached = new ArrayDeque<S>(reachedSet);
 
 		while (!waitlist.isEmpty()) {
-			final S state = waitlist.pop();
+			final S state = waitlist.remove();
 
 			if (formalismAbstraction.isTarget(state)) {
 				isErrorReached = true;
