@@ -21,6 +21,10 @@ import org.junit.Before;
 import org.junit.Test;
 
 import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.BasicAlgorithm;
+import hu.bme.mit.inf.ttmc.analysis.arg.ArgDomain;
+import hu.bme.mit.inf.ttmc.analysis.arg.ArgFormalismAbstraction;
+import hu.bme.mit.inf.ttmc.analysis.arg.ArgState;
+import hu.bme.mit.inf.ttmc.analysis.arg.utils.ArgPrinter;
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplDomain;
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplPrecision;
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplState;
@@ -70,8 +74,8 @@ public class STSTests {
 		final Collection<PredState> result = algorithm.run(GlobalPredPrecision.create(preds));
 
 		System.out.println("Error reached: " + algorithm.isErrorReached());
-		for (final PredState predState : result) {
-			System.out.println(predState);
+		for (final PredState state : result) {
+			System.out.println(state);
 		}
 	}
 
@@ -87,9 +91,28 @@ public class STSTests {
 		final Collection<ExplState> result = algorithm.run(GlobalExplPrecision.create(visibleVars, invisibleVars));
 
 		System.out.println("Error reached: " + algorithm.isErrorReached());
-		for (final ExplState predState : result) {
-			System.out.println(predState);
+		for (final ExplState state : result) {
+			System.out.println(state);
 		}
+	}
+
+	@Test
+	public void testArg() {
+		final Set<VarDecl<? extends Type>> visibleVars = sts.getVars().stream().filter(v -> v.getName().equals("x") || v.getName().equals("y"))
+				.collect(Collectors.toSet());
+		final Set<VarDecl<? extends Type>> invisibleVars = sts.getVars().stream().filter(v -> !visibleVars.contains(v)).collect(Collectors.toSet());
+
+		final ArgFormalismAbstraction<ExplState, ExplPrecision> stsAbstraction = ArgFormalismAbstraction.create(STSExplAbstraction.create(sts, solver));
+		final BasicAlgorithm<ArgState<ExplState>, ExplPrecision> algorithm = new BasicAlgorithm<>(ArgDomain.create(ExplDomain.create()), stsAbstraction);
+
+		final Collection<ArgState<ExplState>> result = algorithm.run(GlobalExplPrecision.create(visibleVars, invisibleVars));
+
+		System.out.println("Error reached: " + algorithm.isErrorReached());
+		for (final ArgState<ExplState> state : result) {
+			System.out.println(state);
+		}
+
+		System.out.println(ArgPrinter.toGraphvizString(result));
 	}
 
 	private static STS createSimpleSTS() {
