@@ -28,7 +28,6 @@ public class ARGFormalismAbstraction<S extends State, P extends Precision> imple
 
 		for (final S startState : formalismAbstraction.getStartStates(precision)) {
 			final ARGState<S> argStartState = ARGState.create(startState);
-			argStartState.setStart(true);
 			argStartStates.add(argStartState);
 		}
 

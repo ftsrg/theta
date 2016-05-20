@@ -29,7 +29,7 @@ public class ArgPrinter {
 		sb.append("digraph statespace {\n");
 		for (final ARGState<S> state : allStates) {
 
-			if (state.isStart().isPresent() && state.isStart().get()) {
+			if (state.isStart()) {
 				sb.append("\ti").append(ids.get(state)).append(" [style=invis]\n");
 				sb.append("\t\ti").append(ids.get(state)).append(" -> ").append(ids.get(state)).append("\n");
 			}
