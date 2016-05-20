@@ -57,11 +57,6 @@ final class DBMWithSignature {
 		return new DBMWithSignature(clockToIndex, DBM.top(clockDecls.size()));
 	}
 
-	public static DBMWithSignature top0(final Set<? extends ClockDecl> clockDecls) {
-		final Map<ClockDecl, Integer> clockToIndex = toIndexMap(clockDecls);
-		return new DBMWithSignature(clockToIndex, DBM.top0(clockDecls.size()));
-	}
-
 	public static DBMWithSignature bottom() {
 		final Map<ClockDecl, Integer> clockToIndex = Collections.emptyMap();
 		return new DBMWithSignature(clockToIndex, DBM.bottom());
