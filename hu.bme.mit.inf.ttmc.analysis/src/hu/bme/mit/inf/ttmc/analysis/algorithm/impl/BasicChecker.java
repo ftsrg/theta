@@ -24,10 +24,12 @@ public class BasicChecker<S extends State, P extends Precision> implements Check
 
 	private final ArgDomain<S> domain;
 	private final ArgFormalismAbstraction<S, P> formalismAbstraction;
+	private final Waitlist<ArgState<S>> waitlist;
 
 	private BasicChecker(final Domain<S> domain, final FormalismAbstraction<S, P> formalismAbstraction) {
 		this.domain = ArgDomain.create(checkNotNull(domain));
 		this.formalismAbstraction = ArgFormalismAbstraction.create(checkNotNull(formalismAbstraction));
+		this.waitlist = new FIFOWaitlist<>();
 	}
 
 	public static <S extends State, P extends Precision> BasicChecker<S, P> create(final Domain<S> domain,
@@ -37,8 +39,9 @@ public class BasicChecker<S extends State, P extends Precision> implements Check
 
 	@Override
 	public Optional<List<S>> check(final P precision) {
+		waitlist.clear();
 		final Collection<? extends ArgState<S>> reachedSet = formalismAbstraction.getStartStates(precision);
-		final Waitlist<ArgState<S>> waitlist = new FIFOWaitlist<>(reachedSet);
+		waitlist.addAll(reachedSet);
 		final Deque<ArgState<S>> reached = new ArrayDeque<ArgState<S>>(reachedSet);
 
 		ArgState<S> targetState = null;

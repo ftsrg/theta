@@ -27,6 +27,11 @@ public class LIFOWaitlist<S extends State> implements Waitlist<S> {
 	}
 
 	@Override
+	public void addAll(final Collection<? extends S> states) {
+		waitlist.addAll(states);
+	}
+
+	@Override
 	public boolean isEmpty() {
 		return waitlist.isEmpty();
 	}
