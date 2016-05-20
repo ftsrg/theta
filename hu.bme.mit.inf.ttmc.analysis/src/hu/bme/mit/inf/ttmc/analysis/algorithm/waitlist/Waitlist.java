@@ -8,4 +8,6 @@ public interface Waitlist<S extends State> {
 	boolean isEmpty();
 
 	S remove();
+
+	void clear();
 }
