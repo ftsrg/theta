@@ -9,16 +9,18 @@ import java.util.Set;
 import hu.bme.mit.inf.ttmc.analysis.FormalismAbstraction;
 import hu.bme.mit.inf.ttmc.analysis.Precision;
 import hu.bme.mit.inf.ttmc.analysis.State;
+import hu.bme.mit.inf.ttmc.formalism.Formalism;
 
-public class ARGFormalismAbstraction<S extends State, P extends Precision> implements FormalismAbstraction<ARGState<S>, P> {
+public class ARGFormalismAbstraction<F extends Formalism, S extends State, P extends Precision> implements FormalismAbstraction<F, ARGState<S>, P> {
 
-	private final FormalismAbstraction<S, P> formalismAbstraction;
+	private final FormalismAbstraction<F, S, P> formalismAbstraction;
 
-	private ARGFormalismAbstraction(final FormalismAbstraction<S, P> formalismAbstraction) {
+	private ARGFormalismAbstraction(final FormalismAbstraction<F, S, P> formalismAbstraction) {
 		this.formalismAbstraction = checkNotNull(formalismAbstraction);
 	}
 
-	public static <S extends State, P extends Precision> ARGFormalismAbstraction<S, P> create(final FormalismAbstraction<S, P> formalismAbstraction) {
+	public static <F extends Formalism, S extends State, P extends Precision> ARGFormalismAbstraction<F, S, P> create(
+			final FormalismAbstraction<F, S, P> formalismAbstraction) {
 		return new ARGFormalismAbstraction<>(formalismAbstraction);
 	}
 

@@ -15,7 +15,7 @@ import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 import hu.bme.mit.inf.ttmc.formalism.utils.impl.FormalismUtils;
 import hu.bme.mit.inf.ttmc.solver.Solver;
 
-public final class STSExplAbstraction implements FormalismAbstraction<ExplState, ExplPrecision> {
+public final class STSExplAbstraction implements FormalismAbstraction<STS, ExplState, ExplPrecision> {
 
 	private final Solver solver;
 	private final STS sts;

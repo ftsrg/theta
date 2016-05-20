@@ -69,7 +69,7 @@ public class STSTests {
 		final Collection<Expr<? extends BoolType>> preds = new ArrayList<>();
 		preds.addAll(((OrExpr) sts.getProp()).getOps());
 		final STSPredAbstraction stsAbstraction = STSPredAbstraction.create(sts, solver);
-		final BasicAlgorithm<PredState, PredPrecision> algorithm = new BasicAlgorithm<>(PredDomain.create(solver, sts), stsAbstraction);
+		final BasicAlgorithm<STS, PredState, PredPrecision> algorithm = new BasicAlgorithm<>(PredDomain.create(solver, sts), stsAbstraction);
 
 		final Collection<PredState> result = algorithm.run(GlobalPredPrecision.create(preds));
 
@@ -85,7 +85,7 @@ public class STSTests {
 		final Set<VarDecl<? extends Type>> invisibleVars = sts.getVars().stream().filter(v -> !visibleVars.contains(v)).collect(Collectors.toSet());
 
 		final STSExplAbstraction stsAbstraction = STSExplAbstraction.create(sts, solver);
-		final BasicAlgorithm<ExplState, ExplPrecision> algorithm = new BasicAlgorithm<>(ExplDomain.create(), stsAbstraction);
+		final BasicAlgorithm<STS, ExplState, ExplPrecision> algorithm = new BasicAlgorithm<>(ExplDomain.create(), stsAbstraction);
 
 		final Collection<ExplState> result = algorithm.run(GlobalExplPrecision.create(visibleVars, invisibleVars));
 
@@ -100,8 +100,8 @@ public class STSTests {
 				.collect(Collectors.toSet());
 		final Set<VarDecl<? extends Type>> invisibleVars = sts.getVars().stream().filter(v -> !visibleVars.contains(v)).collect(Collectors.toSet());
 
-		final ARGFormalismAbstraction<ExplState, ExplPrecision> stsAbstraction = ARGFormalismAbstraction.create(STSExplAbstraction.create(sts, solver));
-		final BasicAlgorithm<ARGState<ExplState>, ExplPrecision> algorithm = new BasicAlgorithm<>(ARGDomain.create(ExplDomain.create()), stsAbstraction);
+		final ARGFormalismAbstraction<STS, ExplState, ExplPrecision> stsAbstraction = ARGFormalismAbstraction.create(STSExplAbstraction.create(sts, solver));
+		final BasicAlgorithm<STS, ARGState<ExplState>, ExplPrecision> algorithm = new BasicAlgorithm<>(ARGDomain.create(ExplDomain.create()), stsAbstraction);
 
 		final Collection<ARGState<ExplState>> result = algorithm.run(GlobalExplPrecision.create(visibleVars, invisibleVars));
 
@@ -116,8 +116,8 @@ public class STSTests {
 	public void testArgWithPred() {
 		final Collection<Expr<? extends BoolType>> preds = new ArrayList<>();
 		preds.addAll(((OrExpr) sts.getProp()).getOps());
-		final ARGFormalismAbstraction<PredState, PredPrecision> stsAbstraction = ARGFormalismAbstraction.create(STSPredAbstraction.create(sts, solver));
-		final BasicAlgorithm<ARGState<PredState>, PredPrecision> algorithm = new BasicAlgorithm<>(ARGDomain.create(PredDomain.create(solver, sts)),
+		final ARGFormalismAbstraction<STS, PredState, PredPrecision> stsAbstraction = ARGFormalismAbstraction.create(STSPredAbstraction.create(sts, solver));
+		final BasicAlgorithm<STS, ARGState<PredState>, PredPrecision> algorithm = new BasicAlgorithm<>(ARGDomain.create(PredDomain.create(solver, sts)),
 				stsAbstraction);
 
 		final Collection<ARGState<PredState>> result = algorithm.run(GlobalPredPrecision.create(preds));

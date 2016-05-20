@@ -14,7 +14,7 @@ import hu.bme.mit.inf.ttmc.formalism.common.Valuation;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 import hu.bme.mit.inf.ttmc.solver.Solver;
 
-public final class STSPredAbstraction implements FormalismAbstraction<PredState, PredPrecision> {
+public final class STSPredAbstraction implements FormalismAbstraction<STS, PredState, PredPrecision> {
 
 	private final Solver solver;
 	private final STS sts;
