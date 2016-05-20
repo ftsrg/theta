@@ -15,13 +15,11 @@ public class ARGState<S extends State> implements State {
 
 	private final Optional<ARGState<S>> parent;
 	private final Set<ARGState<S>> successors;
-	private Optional<Boolean> isStart;
 	private Optional<Boolean> isTarget;
 
 	private ARGState(final S state, final ARGState<S> parent) {
 		this.state = checkNotNull(state);
 		this.parent = parent != null ? Optional.of(parent) : Optional.empty();
-		isStart = Optional.empty();
 		isTarget = Optional.empty();
 		successors = new HashSet<>();
 	}
@@ -38,12 +36,8 @@ public class ARGState<S extends State> implements State {
 		return state;
 	}
 
-	public Optional<Boolean> isStart() {
-		return isStart;
-	}
-
-	public void setStart(final boolean isStart) {
-		this.isStart = Optional.of(isStart);
+	public boolean isStart() {
+		return !parent.isPresent();
 	}
 
 	public Optional<Boolean> isTarget() {
@@ -71,7 +65,7 @@ public class ARGState<S extends State> implements State {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("ArgState(");
 		sb.append(state.toString());
-		if (isStart.isPresent() && isStart.get()) {
+		if (isStart()) {
 			sb.append(", start");
 		}
 		if (isTarget.isPresent() && isTarget.get()) {
