@@ -9,6 +9,7 @@ import java.util.Deque;
 import java.util.List;
 import java.util.Optional;
 
+import hu.bme.mit.inf.ttmc.analysis.Counterexample;
 import hu.bme.mit.inf.ttmc.analysis.Domain;
 import hu.bme.mit.inf.ttmc.analysis.FormalismAbstraction;
 import hu.bme.mit.inf.ttmc.analysis.Precision;
@@ -19,6 +20,7 @@ import hu.bme.mit.inf.ttmc.analysis.algorithm.waitlist.impl.FIFOWaitlist;
 import hu.bme.mit.inf.ttmc.analysis.arg.ARGDomain;
 import hu.bme.mit.inf.ttmc.analysis.arg.ARGFormalismAbstraction;
 import hu.bme.mit.inf.ttmc.analysis.arg.ARGState;
+import hu.bme.mit.inf.ttmc.analysis.impl.CounterexampleImpl;
 
 public class BasicChecker<S extends State, P extends Precision> implements Checker<S, P> {
 
@@ -38,7 +40,7 @@ public class BasicChecker<S extends State, P extends Precision> implements Check
 	}
 
 	@Override
-	public Optional<List<S>> check(final P precision) {
+	public Optional<Counterexample<S>> check(final P precision) {
 		waitlist.clear();
 		final Collection<? extends ARGState<S>> reachedSet = formalismAbstraction.getStartStates(precision);
 		waitlist.addAll(reachedSet);
@@ -66,13 +68,13 @@ public class BasicChecker<S extends State, P extends Precision> implements Check
 		if (targetState == null) {
 			return Optional.empty();
 		} else {
-			final List<S> counterexample = new ArrayList<>();
+			final List<S> path = new ArrayList<>();
 			Optional<ARGState<S>> iterator = Optional.of(targetState);
 			while (iterator.isPresent()) {
-				counterexample.add(0, iterator.get().getState());
+				path.add(0, iterator.get().getState());
 				iterator = iterator.get().getParent();
 			}
-			return Optional.of(counterexample);
+			return Optional.of(CounterexampleImpl.create(path));
 		}
 
 	}
