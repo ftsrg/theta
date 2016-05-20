@@ -5,6 +5,7 @@ import static com.google.common.base.Preconditions.checkPositionIndex;
 import static java.lang.Math.abs;
 import static java.lang.Math.log10;
 import static java.lang.Math.max;
+import static java.lang.Math.min;
 
 import java.util.Arrays;
 import java.util.function.IntBinaryOperator;
@@ -22,14 +23,14 @@ public final class IntMatrix {
 		checkArgument(cols > 0);
 		this.rows = rows;
 		this.cols = cols;
-		actualSize = max(rows, cols);
+		actualSize = matrixSizeFor(rows, cols);
 		matrix = new int[actualSize * actualSize];
 	}
 
 	private IntMatrix(final int[] matrix, final int cols, final int rows) {
 		this.rows = rows;
 		this.cols = cols;
-		actualSize = max(rows, cols);
+		actualSize = matrixSizeFor(rows, cols);
 		this.matrix = Arrays.copyOf(matrix, actualSize * actualSize);
 	}
 
@@ -53,10 +54,6 @@ public final class IntMatrix {
 		checkPositionIndex(row, rows);
 		checkPositionIndex(col, cols);
 		matrix[index(row, col)] = value;
-	}
-
-	static int index(final int row, final int col) {
-		return row <= col ? col * (col + 1) + row : row * row + col;
 	}
 
 	////
@@ -94,7 +91,7 @@ public final class IntMatrix {
 		checkArgument(cols >= this.cols);
 
 		final int minSize = max(rows, cols);
-		if (minSize == actualSize) {
+		if (minSize <= actualSize) {
 			return;
 		}
 
@@ -136,6 +133,18 @@ public final class IntMatrix {
 		}
 		return sb.toString();
 	}
+
+	////////
+
+	static int index(final int row, final int col) {
+		return row <= col ? col * (col + 1) + row : row * row + col;
+	}
+
+	private static int matrixSizeFor(final int rows, final int cols) {
+		return min(max(rows, cols), 5);
+	}
+
+	////////
 
 	private int maxLength() {
 		int result = 0;
