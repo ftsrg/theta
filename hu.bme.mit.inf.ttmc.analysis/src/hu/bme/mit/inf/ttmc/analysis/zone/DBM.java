@@ -45,14 +45,6 @@ final class DBM {
 	public static DBM top(final int n) {
 		checkArgument(n >= 0);
 		final DBM result = new DBM(n);
-
-		assert result.isClosed();
-		return new DBM(n);
-	}
-
-	public static DBM top0(final int n) {
-		checkArgument(n >= 0);
-		final DBM result = new DBM(n);
 		for (int i = 1; i <= n; i++) {
 			result.D.set(0, i, Leq(0));
 		}
@@ -76,26 +68,7 @@ final class DBM {
 		return new DBM(D);
 	}
 
-	////////
-
 	public void expand() {
-		final int n2 = n + 1;
-		final IntMatrix D2 = IntMatrix.create(n2 + 1);
-
-		for (int i = 0; i <= n; i++) {
-			for (int j = 0; j <= n; j++) {
-				D2.set(i, j, D.get(i, j));
-			}
-			D2.set(n2, i, Inf());
-			D2.set(i, n2, Inf());
-		}
-		D2.set(n2, n2, Leq(0));
-		n = n2;
-		D = D2;
-		assert isClosed();
-	}
-
-	public void expand0() {
 		final int n2 = n + 1;
 		final IntMatrix D2 = IntMatrix.create(n2 + 1);
 
@@ -148,13 +121,6 @@ final class DBM {
 
 	public void down() {
 		for (int i = 1; i <= n; i++) {
-			D.set(0, i, Inf());
-		}
-		assert isClosed();
-	}
-
-	public void down0() {
-		for (int i = 1; i <= n; i++) {
 			D.set(0, i, Leq(0));
 			for (int j = 1; j <= n; j++) {
 				if (D.get(j, i) < D.get(0, i)) {
@@ -190,17 +156,6 @@ final class DBM {
 	}
 
 	public void free(final int x) {
-		checkArgument(isNonZeroClock(x));
-		for (int i = 0; i <= n; i++) {
-			if (i != x) {
-				D.set(x, i, Inf());
-				D.set(i, x, Inf());
-			}
-		}
-		assert isClosed();
-	}
-
-	public void free0(final int x) {
 		checkArgument(isNonZeroClock(x));
 		for (int i = 0; i <= n; i++) {
 			if (i != x) {
@@ -243,15 +198,6 @@ final class DBM {
 				D.set(i, x, add(D.get(i, x), Leq(-m)));
 			}
 		}
-		// Enforce nonnegative clock values:
-		D.set(x, 0, max(D.get(x, 0), Leq(0)));
-		D.set(0, x, min(D.get(0, x), Leq(0)));
-		assert isClosed();
-	}
-
-	public void shift0(final int x, final int m) {
-		shift(x, m);
-		// Enforce nonnegative clock values:
 		D.set(x, 0, max(D.get(x, 0), Leq(0)));
 		D.set(0, x, min(D.get(0, x), Leq(0)));
 		assert isClosed();
