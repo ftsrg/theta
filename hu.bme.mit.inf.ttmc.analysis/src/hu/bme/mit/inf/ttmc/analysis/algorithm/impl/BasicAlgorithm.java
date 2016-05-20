@@ -11,13 +11,14 @@ import hu.bme.mit.inf.ttmc.analysis.State;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.Algorithm;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.waitlist.Waitlist;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.waitlist.impl.FIFOWaitlist;
+import hu.bme.mit.inf.ttmc.formalism.Formalism;
 
-public class BasicAlgorithm<S extends State, P extends Precision> implements Algorithm<S, P> {
+public class BasicAlgorithm<F extends Formalism, S extends State, P extends Precision> implements Algorithm<S, P> {
 
 	private final Domain<S> domain;
-	private final FormalismAbstraction<S, P> formalismAbstraction;
+	private final FormalismAbstraction<F, S, P> formalismAbstraction;
 
-	public BasicAlgorithm(final Domain<S> domain, final FormalismAbstraction<S, P> formalismAbstraction) {
+	public BasicAlgorithm(final Domain<S> domain, final FormalismAbstraction<F, S, P> formalismAbstraction) {
 		this.domain = domain;
 		this.formalismAbstraction = formalismAbstraction;
 	}

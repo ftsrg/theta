@@ -21,21 +21,22 @@ import hu.bme.mit.inf.ttmc.analysis.arg.ARGDomain;
 import hu.bme.mit.inf.ttmc.analysis.arg.ARGFormalismAbstraction;
 import hu.bme.mit.inf.ttmc.analysis.arg.ARGState;
 import hu.bme.mit.inf.ttmc.analysis.impl.CounterexampleImpl;
+import hu.bme.mit.inf.ttmc.formalism.Formalism;
 
-public class BasicChecker<S extends State, P extends Precision> implements Checker<S, P> {
+public class BasicChecker<F extends Formalism, S extends State, P extends Precision> implements Checker<S, P> {
 
 	private final ARGDomain<S> domain;
-	private final ARGFormalismAbstraction<S, P> formalismAbstraction;
+	private final ARGFormalismAbstraction<F, S, P> formalismAbstraction;
 	private final Waitlist<ARGState<S>> waitlist;
 
-	private BasicChecker(final Domain<S> domain, final FormalismAbstraction<S, P> formalismAbstraction) {
+	private BasicChecker(final Domain<S> domain, final FormalismAbstraction<F, S, P> formalismAbstraction) {
 		this.domain = ARGDomain.create(checkNotNull(domain));
 		this.formalismAbstraction = ARGFormalismAbstraction.create(checkNotNull(formalismAbstraction));
 		this.waitlist = new FIFOWaitlist<>();
 	}
 
-	public static <S extends State, P extends Precision> BasicChecker<S, P> create(final Domain<S> domain,
-			final FormalismAbstraction<S, P> formalismAbstraction) {
+	public static <F extends Formalism, S extends State, P extends Precision> BasicChecker<F, S, P> create(final Domain<S> domain,
+			final FormalismAbstraction<F, S, P> formalismAbstraction) {
 		return new BasicChecker<>(domain, formalismAbstraction);
 	}
 
