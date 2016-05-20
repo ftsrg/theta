@@ -35,4 +35,9 @@ public class LIFOWaitlist<S extends State> implements Waitlist<S> {
 	public S remove() {
 		return waitlist.pop();
 	}
+
+	@Override
+	public void clear() {
+		waitlist.clear();
+	}
 }

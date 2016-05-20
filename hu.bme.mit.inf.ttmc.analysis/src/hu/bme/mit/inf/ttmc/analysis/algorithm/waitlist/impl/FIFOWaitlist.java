@@ -36,4 +36,9 @@ public class FIFOWaitlist<S extends State> implements Waitlist<S> {
 		return waitlist.remove();
 	}
 
+	@Override
+	public void clear() {
+		waitlist.clear();
+	}
+
 }
