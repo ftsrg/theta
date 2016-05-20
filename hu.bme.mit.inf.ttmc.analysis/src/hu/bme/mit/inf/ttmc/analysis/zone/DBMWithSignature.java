@@ -1,9 +1,12 @@
 package hu.bme.mit.inf.ttmc.analysis.zone;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static hu.bme.mit.inf.ttmc.analysis.zone.DiffBounds.Inf;
 import static hu.bme.mit.inf.ttmc.analysis.zone.DiffBounds.Leq;
 import static hu.bme.mit.inf.ttmc.analysis.zone.DiffBounds.Lt;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -68,6 +71,38 @@ final class DBMWithSignature {
 		final Map<ClockDecl, Integer> clockToIndex = new LinkedHashMap<>(other.clockToIndex);
 		final DBM dbm = DBM.copyOf(other.dbm);
 		return new DBMWithSignature(clockToIndex, dbm);
+	}
+
+	////////
+
+	public DBMRelation getRelation(final DBMWithSignature that) {
+		final Set<ClockDecl> clockDecls = new HashSet<>();
+		clockDecls.addAll(this.getClockDecls());
+		clockDecls.addAll(that.getClockDecls());
+
+		boolean leq = true;
+		boolean geq = true;
+
+		for (final ClockDecl x : clockDecls) {
+			final Integer i1 = this.getIndex(x);
+			final Integer i2 = that.getIndex(x);
+
+			leq = leq && this.getBound(i1, 0) <= that.getBound(i2, 0);
+			leq = leq && this.getBound(0, i1) <= that.getBound(0, i2);
+
+			geq = geq && this.getBound(i1, 0) >= that.getBound(i2, 0);
+			geq = geq && this.getBound(0, i1) >= that.getBound(0, i2);
+
+			for (final ClockDecl y : clockDecls) {
+				final Integer j1 = this.getIndex(y);
+				final Integer j2 = that.getIndex(y);
+
+				leq = leq && this.getBound(i1, j1) <= that.getBound(i2, j2);
+				geq = geq && this.getBound(i1, j1) >= that.getBound(i2, j2);
+			}
+		}
+
+		return relation(leq, geq);
 	}
 
 	////////
@@ -156,8 +191,34 @@ final class DBMWithSignature {
 		return result;
 	}
 
+	private static DBMRelation relation(final boolean leq, final boolean geq) {
+		if (leq) {
+			if (geq) {
+				return DBMRelation.EQUAL;
+			} else {
+				return DBMRelation.LESS;
+			}
+		} else {
+			if (geq) {
+				return DBMRelation.GREATER;
+			} else {
+				return DBMRelation.DISJOINT;
+			}
+		}
+	}
+
 	private Integer getIndex(final ClockDecl clock) {
 		return clockToIndex.get(clock);
+	}
+
+	private int getBound(final Integer x, final Integer y) {
+		if (x == null || y == null) {
+			return Inf();
+		} else {
+			checkArgument(x >= 0 && x <= dbm.nClocks());
+			checkArgument(y >= 0 && y <= dbm.nClocks());
+			return dbm.get(x, y);
+		}
 	}
 
 	private void doIfDeclared(final ClockDecl clock, final Consumer<? super Integer> operation) {
