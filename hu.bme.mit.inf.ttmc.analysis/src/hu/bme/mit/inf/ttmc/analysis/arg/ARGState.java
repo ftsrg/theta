@@ -10,15 +10,15 @@ import java.util.Set;
 
 import hu.bme.mit.inf.ttmc.analysis.State;
 
-public class ArgState<S extends State> implements State {
+public class ARGState<S extends State> implements State {
 	private final S state;
 
-	private final Optional<ArgState<S>> parent;
-	private final Set<ArgState<S>> successors;
+	private final Optional<ARGState<S>> parent;
+	private final Set<ARGState<S>> successors;
 	private Optional<Boolean> isStart;
 	private Optional<Boolean> isTarget;
 
-	private ArgState(final S state, final ArgState<S> parent) {
+	private ARGState(final S state, final ARGState<S> parent) {
 		this.state = checkNotNull(state);
 		this.parent = parent != null ? Optional.of(parent) : Optional.empty();
 		isStart = Optional.empty();
@@ -26,12 +26,12 @@ public class ArgState<S extends State> implements State {
 		successors = new HashSet<>();
 	}
 
-	public static <S extends State> ArgState<S> create(final S state, final ArgState<S> parent) {
-		return new ArgState<>(state, parent);
+	public static <S extends State> ARGState<S> create(final S state, final ARGState<S> parent) {
+		return new ARGState<>(state, parent);
 	}
 
-	public static <S extends State> ArgState<S> create(final S state) {
-		return new ArgState<>(state, null);
+	public static <S extends State> ARGState<S> create(final S state) {
+		return new ARGState<>(state, null);
 	}
 
 	public S getState() {
@@ -54,15 +54,15 @@ public class ArgState<S extends State> implements State {
 		this.isTarget = Optional.of(isTarget);
 	}
 
-	public void addSuccessor(final ArgState<S> state) {
+	public void addSuccessor(final ARGState<S> state) {
 		this.successors.add(state);
 	}
 
-	public Collection<? extends ArgState<S>> getSuccessors() {
+	public Collection<? extends ARGState<S>> getSuccessors() {
 		return Collections.unmodifiableSet(successors);
 	}
 
-	public Optional<ArgState<S>> getParent() {
+	public Optional<ARGState<S>> getParent() {
 		return parent;
 	}
 

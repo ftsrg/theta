@@ -10,24 +10,24 @@ import hu.bme.mit.inf.ttmc.analysis.FormalismAbstraction;
 import hu.bme.mit.inf.ttmc.analysis.Precision;
 import hu.bme.mit.inf.ttmc.analysis.State;
 
-public class ArgFormalismAbstraction<S extends State, P extends Precision> implements FormalismAbstraction<ArgState<S>, P> {
+public class ARGFormalismAbstraction<S extends State, P extends Precision> implements FormalismAbstraction<ARGState<S>, P> {
 
 	private final FormalismAbstraction<S, P> formalismAbstraction;
 
-	private ArgFormalismAbstraction(final FormalismAbstraction<S, P> formalismAbstraction) {
+	private ARGFormalismAbstraction(final FormalismAbstraction<S, P> formalismAbstraction) {
 		this.formalismAbstraction = checkNotNull(formalismAbstraction);
 	}
 
-	public static <S extends State, P extends Precision> ArgFormalismAbstraction<S, P> create(final FormalismAbstraction<S, P> formalismAbstraction) {
-		return new ArgFormalismAbstraction<>(formalismAbstraction);
+	public static <S extends State, P extends Precision> ARGFormalismAbstraction<S, P> create(final FormalismAbstraction<S, P> formalismAbstraction) {
+		return new ARGFormalismAbstraction<>(formalismAbstraction);
 	}
 
 	@Override
-	public Collection<? extends ArgState<S>> getStartStates(final P precision) {
-		final Set<ArgState<S>> argStartStates = new HashSet<>();
+	public Collection<? extends ARGState<S>> getStartStates(final P precision) {
+		final Set<ARGState<S>> argStartStates = new HashSet<>();
 
 		for (final S startState : formalismAbstraction.getStartStates(precision)) {
-			final ArgState<S> argStartState = ArgState.create(startState);
+			final ARGState<S> argStartState = ARGState.create(startState);
 			argStartState.setStart(true);
 			argStartStates.add(argStartState);
 		}
@@ -36,11 +36,11 @@ public class ArgFormalismAbstraction<S extends State, P extends Precision> imple
 	}
 
 	@Override
-	public Collection<? extends ArgState<S>> getSuccStates(final ArgState<S> state, final P precision) {
-		final Set<ArgState<S>> argSuccStates = new HashSet<>();
+	public Collection<? extends ARGState<S>> getSuccStates(final ARGState<S> state, final P precision) {
+		final Set<ARGState<S>> argSuccStates = new HashSet<>();
 
 		for (final S succState : formalismAbstraction.getSuccStates(state.getState(), precision)) {
-			final ArgState<S> argSuccState = ArgState.create(succState, state);
+			final ARGState<S> argSuccState = ARGState.create(succState, state);
 			state.addSuccessor(argSuccState);
 			argSuccStates.add(argSuccState);
 		}
@@ -49,7 +49,7 @@ public class ArgFormalismAbstraction<S extends State, P extends Precision> imple
 	}
 
 	@Override
-	public boolean isTarget(final ArgState<S> state) {
+	public boolean isTarget(final ARGState<S> state) {
 		final boolean isTarget = formalismAbstraction.isTarget(state.getState());
 		state.setTarget(isTarget);
 		return isTarget;
