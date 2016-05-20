@@ -7,6 +7,7 @@ import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.model.Model;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.core.type.Type;
+import hu.bme.mit.inf.ttmc.formalism.Formalism;
 import hu.bme.mit.inf.ttmc.formalism.common.Valuation;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.utils.ExprUnroller;
@@ -14,7 +15,7 @@ import hu.bme.mit.inf.ttmc.formalism.utils.ExprUnroller;
 /**
  * Symbolic Transition System (STS) interface.
  */
-public interface STS extends ExprUnroller {
+public interface STS extends Formalism, ExprUnroller {
 
 	public Collection<VarDecl<? extends Type>> getVars();
 
