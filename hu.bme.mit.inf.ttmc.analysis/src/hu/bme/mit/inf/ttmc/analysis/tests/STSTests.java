@@ -21,9 +21,9 @@ import org.junit.Before;
 import org.junit.Test;
 
 import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.BasicAlgorithm;
-import hu.bme.mit.inf.ttmc.analysis.arg.ArgDomain;
-import hu.bme.mit.inf.ttmc.analysis.arg.ArgFormalismAbstraction;
-import hu.bme.mit.inf.ttmc.analysis.arg.ArgState;
+import hu.bme.mit.inf.ttmc.analysis.arg.ARGDomain;
+import hu.bme.mit.inf.ttmc.analysis.arg.ARGFormalismAbstraction;
+import hu.bme.mit.inf.ttmc.analysis.arg.ARGState;
 import hu.bme.mit.inf.ttmc.analysis.arg.utils.ArgPrinter;
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplDomain;
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplPrecision;
@@ -100,12 +100,12 @@ public class STSTests {
 				.collect(Collectors.toSet());
 		final Set<VarDecl<? extends Type>> invisibleVars = sts.getVars().stream().filter(v -> !visibleVars.contains(v)).collect(Collectors.toSet());
 
-		final ArgFormalismAbstraction<ExplState, ExplPrecision> stsAbstraction = ArgFormalismAbstraction.create(STSExplAbstraction.create(sts, solver));
-		final BasicAlgorithm<ArgState<ExplState>, ExplPrecision> algorithm = new BasicAlgorithm<>(ArgDomain.create(ExplDomain.create()), stsAbstraction);
+		final ARGFormalismAbstraction<ExplState, ExplPrecision> stsAbstraction = ARGFormalismAbstraction.create(STSExplAbstraction.create(sts, solver));
+		final BasicAlgorithm<ARGState<ExplState>, ExplPrecision> algorithm = new BasicAlgorithm<>(ARGDomain.create(ExplDomain.create()), stsAbstraction);
 
-		final Collection<ArgState<ExplState>> result = algorithm.run(GlobalExplPrecision.create(visibleVars, invisibleVars));
+		final Collection<ARGState<ExplState>> result = algorithm.run(GlobalExplPrecision.create(visibleVars, invisibleVars));
 
-		for (final ArgState<ExplState> state : result) {
+		for (final ARGState<ExplState> state : result) {
 			System.out.println(state);
 		}
 
@@ -116,13 +116,13 @@ public class STSTests {
 	public void testArgWithPred() {
 		final Collection<Expr<? extends BoolType>> preds = new ArrayList<>();
 		preds.addAll(((OrExpr) sts.getProp()).getOps());
-		final ArgFormalismAbstraction<PredState, PredPrecision> stsAbstraction = ArgFormalismAbstraction.create(STSPredAbstraction.create(sts, solver));
-		final BasicAlgorithm<ArgState<PredState>, PredPrecision> algorithm = new BasicAlgorithm<>(ArgDomain.create(PredDomain.create(solver, sts)),
+		final ARGFormalismAbstraction<PredState, PredPrecision> stsAbstraction = ARGFormalismAbstraction.create(STSPredAbstraction.create(sts, solver));
+		final BasicAlgorithm<ARGState<PredState>, PredPrecision> algorithm = new BasicAlgorithm<>(ARGDomain.create(PredDomain.create(solver, sts)),
 				stsAbstraction);
 
-		final Collection<ArgState<PredState>> result = algorithm.run(GlobalPredPrecision.create(preds));
+		final Collection<ARGState<PredState>> result = algorithm.run(GlobalPredPrecision.create(preds));
 
-		for (final ArgState<PredState> state : result) {
+		for (final ARGState<PredState> state : result) {
 			System.out.println(state);
 		}
 
