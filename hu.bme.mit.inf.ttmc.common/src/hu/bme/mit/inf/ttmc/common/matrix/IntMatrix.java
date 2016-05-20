@@ -1,70 +1,119 @@
 package hu.bme.mit.inf.ttmc.common.matrix;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkPositionIndex;
 import static java.lang.Math.abs;
 import static java.lang.Math.log10;
 import static java.lang.Math.max;
 
+import java.util.Arrays;
 import java.util.function.IntBinaryOperator;
 
-public abstract class IntMatrix {
+public final class IntMatrix {
 
-	IntMatrix() {
+	private int rows;
+	private int cols;
+	private int[] matrix;
+
+	private int actualSize;
+
+	private IntMatrix(final int cols, final int rows) {
+		checkArgument(rows > 0);
+		checkArgument(cols > 0);
+		this.rows = rows;
+		this.cols = cols;
+		actualSize = max(rows, cols);
+		matrix = new int[actualSize * actualSize];
 	}
 
-	public static IntMatrix create(final int m, final int n) {
-		checkArgument(m >= 0);
-		checkArgument(n >= 0);
-		return new IntMatrixImpl(m, n);
+	private IntMatrix(final int[] matrix, final int cols, final int rows) {
+		this.rows = rows;
+		this.cols = cols;
+		actualSize = max(rows, cols);
+		this.matrix = Arrays.copyOf(matrix, actualSize * actualSize);
 	}
 
-	public static IntMatrix create(final int n) {
-		checkArgument(n >= 0);
-		return new IntMatrixImpl(n, n);
+	public static IntMatrix create(final int rows, final int cols) {
+		return new IntMatrix(cols, rows);
 	}
 
-	public static IntMatrix copyOf(final IntMatrix matrix) {
-		final IntMatrix result = create(matrix.nRows(), matrix.nCols());
-		for (int i = 0; i < matrix.nRows(); i++) {
-			for (int j = 0; j < matrix.nRows(); j++) {
-				result.set(i, j, matrix.get(i, j));
+	public static IntMatrix copyOf(final IntMatrix other) {
+		return new IntMatrix(other.matrix, other.cols, other.rows);
+	}
+
+	////
+
+	public int get(final int row, final int col) {
+		checkPositionIndex(row, rows);
+		checkPositionIndex(col, cols);
+		return matrix[index(row, col)];
+	}
+
+	public void set(final int row, final int col, final int value) {
+		checkPositionIndex(row, rows);
+		checkPositionIndex(col, cols);
+		matrix[index(row, col)] = value;
+	}
+
+	static int index(final int row, final int col) {
+		return row <= col ? col * (col + 1) + row : row * row + col;
+	}
+
+	////
+
+	public void fill(final int value) {
+		for (int i = 0; i < rows; i++) {
+			for (int j = 0; j < cols; j++) {
+				set(i, j, value);
 			}
 		}
-		return result;
 	}
 
-	////////
-
-	public final void fill(final int e) {
-		for (int i = 0; i < nRows(); i++) {
-			for (int j = 0; j < nCols(); j++) {
-				set(i, j, e);
+	public void fill(final IntBinaryOperator op) {
+		for (int i = 0; i < rows; i++) {
+			for (int j = 0; j < cols; j++) {
+				set(i, j, op.applyAsInt(i, j));
 			}
 		}
 	}
 
-	public final void fill(final IntBinaryOperator f) {
-		for (int i = 0; i < nRows(); i++) {
-			for (int j = 0; j < nCols(); j++) {
-				set(i, j, f.applyAsInt(i, j));
-			}
-		}
+	////
+
+	public int rows() {
+		return rows;
 	}
 
-	public final IntMatrix subMatrix(final boolean[] selRows, final boolean[] selCols) {
-		checkArgument(selRows.length == nRows());
-		checkArgument(selCols.length == nCols());
-		return new IntSubMatrixImpl(this, selRows, selCols);
+	public int cols() {
+		return cols;
 	}
+
+	////
+
+	public void expand(final int rows, final int cols) {
+		checkArgument(rows >= this.rows);
+		checkArgument(cols >= this.cols);
+
+		final int minSize = max(rows, cols);
+		if (minSize == actualSize) {
+			return;
+		}
+
+		this.rows = rows;
+		this.cols = cols;
+		actualSize = max((actualSize * 3) / 2 + 1, minSize);
+		matrix = Arrays.copyOf(matrix, minSize * minSize);
+	}
+
+	////
 
 	@Override
-	public final int hashCode() {
+	public int hashCode() {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
 
 	@Override
-	public final boolean equals(final Object obj) {
+	public boolean equals(final Object obj) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
@@ -73,13 +122,13 @@ public abstract class IntMatrix {
 	public final String toString() {
 		final StringBuilder sb = new StringBuilder();
 		final int maxLength = maxLength();
-		for (int i = 0; i < nRows(); i++) {
-			for (int j = 0; j < nCols(); j++) {
-				if (j < nCols() - 1) {
+		for (int i = 0; i < rows; i++) {
+			for (int j = 0; j < cols; j++) {
+				if (j < cols - 1) {
 					sb.append(String.format("%" + Integer.toString(-maxLength - 1) + "s", get(i, j)));
 				} else {
 					sb.append(get(i, j));
-					if (i < nRows() - 1) {
+					if (i < rows() - 1) {
 						sb.append(System.lineSeparator());
 					}
 				}
@@ -88,22 +137,10 @@ public abstract class IntMatrix {
 		return sb.toString();
 	}
 
-	/////
-
-	public abstract int nRows();
-
-	public abstract int nCols();
-
-	public abstract int get(final int i, final int j);
-
-	public abstract void set(final int i, final int j, final int value);
-
-	/////
-
 	private int maxLength() {
 		int result = 0;
-		for (int i = 0; i < nRows(); i++) {
-			for (int j = 0; j < nCols(); j++) {
+		for (int i = 0; i < rows(); i++) {
+			for (int j = 0; j < cols(); j++) {
 				result = max(result, length(get(i, j)));
 			}
 		}

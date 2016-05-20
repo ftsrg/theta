@@ -21,7 +21,7 @@ final class DBM {
 	private DBM(final int n) {
 		checkArgument(n >= 0);
 		this.n = n;
-		this.D = IntMatrix.create(n + 1);
+		this.D = IntMatrix.create(n + 1, n + 1);
 		D.fill(Inf());
 		for (int i = 0; i <= n; i++) {
 			D.set(i, i, Leq(0));
@@ -29,7 +29,7 @@ final class DBM {
 	}
 
 	private DBM(final IntMatrix D) {
-		this.n = D.nRows() - 1;
+		this.n = D.rows() - 1;
 		this.D = D;
 	}
 
@@ -70,7 +70,7 @@ final class DBM {
 
 	public void expand() {
 		final int n2 = n + 1;
-		final IntMatrix D2 = IntMatrix.create(n2 + 1);
+		final IntMatrix D2 = IntMatrix.create(n2 + 1, n2 + 1);
 
 		for (int i = 0; i <= n; i++) {
 			for (int j = 0; j <= n; j++) {
