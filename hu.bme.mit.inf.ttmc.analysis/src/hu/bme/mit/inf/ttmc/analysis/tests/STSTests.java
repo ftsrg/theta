@@ -73,7 +73,6 @@ public class STSTests {
 
 		final Collection<PredState> result = algorithm.run(GlobalPredPrecision.create(preds));
 
-		System.out.println("Error reached: " + algorithm.isErrorReached());
 		for (final PredState state : result) {
 			System.out.println(state);
 		}
@@ -90,7 +89,6 @@ public class STSTests {
 
 		final Collection<ExplState> result = algorithm.run(GlobalExplPrecision.create(visibleVars, invisibleVars));
 
-		System.out.println("Error reached: " + algorithm.isErrorReached());
 		for (final ExplState state : result) {
 			System.out.println(state);
 		}
@@ -107,7 +105,6 @@ public class STSTests {
 
 		final Collection<ArgState<ExplState>> result = algorithm.run(GlobalExplPrecision.create(visibleVars, invisibleVars));
 
-		System.out.println("Error reached: " + algorithm.isErrorReached());
 		for (final ArgState<ExplState> state : result) {
 			System.out.println(state);
 		}
@@ -125,7 +122,6 @@ public class STSTests {
 
 		final Collection<ArgState<PredState>> result = algorithm.run(GlobalPredPrecision.create(preds));
 
-		System.out.println("Error reached: " + algorithm.isErrorReached());
 		for (final ArgState<PredState> state : result) {
 			System.out.println(state);
 		}
