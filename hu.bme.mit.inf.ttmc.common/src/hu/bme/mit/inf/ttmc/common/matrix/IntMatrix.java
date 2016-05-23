@@ -90,15 +90,14 @@ public final class IntMatrix {
 		checkArgument(rows >= this.rows);
 		checkArgument(cols >= this.cols);
 
-		final int minSize = max(rows, cols);
-		if (minSize <= actualSize) {
-			return;
-		}
-
 		this.rows = rows;
 		this.cols = cols;
-		actualSize = max((actualSize * 3) / 2 + 1, minSize);
-		matrix = Arrays.copyOf(matrix, minSize * minSize);
+
+		final int minSize = max(rows, cols);
+		if (minSize > actualSize) {
+			actualSize = max((actualSize * 3) / 2 + 1, minSize);
+			matrix = Arrays.copyOf(matrix, actualSize * actualSize);
+		}
 	}
 
 	////
