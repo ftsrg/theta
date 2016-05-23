@@ -41,4 +41,17 @@ public class CounterexampleImpl<S extends State> implements Counterexample<S> {
 		return path.get(i);
 	}
 
+	@Override
+	public String toString() {
+		final StringBuilder sb = new StringBuilder();
+		sb.append("Counterexample(");
+		for (int i = 0; i < size(); ++i) {
+			sb.append(get(i).toString());
+			if (i < size() - 1)
+				sb.append("; ");
+		}
+		sb.append(")");
+		return sb.toString();
+	}
+
 }
