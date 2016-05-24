@@ -22,7 +22,7 @@ public class ZoneStateTests {
 
 		final Set<ClockDecl> clockDecls = ImmutableSet.of(x, y);
 
-		final ZoneState z0 = ZoneState.zero(clockDecls);
+		final ZoneState z0 = ZoneState.top(clockDecls);
 		System.out.println(z0);
 
 		final ZoneState z1 = z0.transform().and(Leq(x, z, 0)).and(Eq(z, 4)).done();

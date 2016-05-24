@@ -53,8 +53,8 @@ public final class DBM {
 
 	////
 
-	public static DBM top() {
-		final DBM result = builder().build();
+	public static DBM top(final Set<? extends ClockDecl> clockDecls) {
+		final DBM result = builder(clockDecls).build();
 		return result;
 	}
 
@@ -141,22 +141,16 @@ public final class DBM {
 		final StringBuilder sb = new StringBuilder();
 
 		for (final ClockDecl clockDecl : clockToIndex.keySet()) {
-			if (!isFree(clockDecl)) {
-				sb.append(String.format("%-12s", clockDecl.getName()));
-			}
+			sb.append(String.format("%-12s", clockDecl.getName()));
 		}
 
 		sb.append(System.lineSeparator());
 
 		for (int i = 0; i < size(); i++) {
-			if (!isFree(i)) {
-				for (int j = 0; j < size(); j++) {
-					if (!isFree(j)) {
-						sb.append(String.format("%-12s", asString(matrix.get(i, j))));
-					}
-				}
-				sb.append(System.lineSeparator());
+			for (int j = 0; j < size(); j++) {
+				sb.append(String.format("%-12s", asString(matrix.get(i, j))));
 			}
+			sb.append(System.lineSeparator());
 		}
 		return sb.toString();
 	}
@@ -179,29 +173,6 @@ public final class DBM {
 		}
 
 		return matrix.get(i, j);
-	}
-
-	private boolean isFree(final ClockDecl clock) {
-		final Integer x = clockToIndex.get(clock);
-		if (x == null) {
-			return true;
-		} else {
-			return isFree(x);
-		}
-	}
-
-	private boolean isFree(final int x) {
-		if (matrix.get(x, 0) != Inf()) {
-			return false;
-		}
-
-		for (int i = 1; i < size(); i++) {
-			if (i != x && (matrix.get(x, i) != Inf() || matrix.get(i, x) != matrix.get(i, 0))) {
-				return false;
-			}
-		}
-
-		return true;
 	}
 
 	////

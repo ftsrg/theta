@@ -24,8 +24,8 @@ public final class ZoneState implements State {
 
 	////
 
-	public static ZoneState top() {
-		return new ZoneState(DBM.top());
+	public static ZoneState top(final Set<? extends ClockDecl> clockDecls) {
+		return new ZoneState(DBM.top(clockDecls));
 	}
 
 	public static ZoneState zero(final Set<? extends ClockDecl> clockDecls) {
