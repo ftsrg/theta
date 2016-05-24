@@ -15,7 +15,7 @@ import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 import hu.bme.mit.inf.ttmc.formalism.utils.impl.FormalismUtils;
 import hu.bme.mit.inf.ttmc.solver.Solver;
 
-public final class STSExplAbstraction implements FormalismAbstraction<ExplState, ExplPrecision> {
+public final class STSExplAbstraction implements FormalismAbstraction<STS, ExplState, ExplPrecision> {
 
 	private final Solver solver;
 	private final STS sts;
@@ -45,7 +45,7 @@ public final class STSExplAbstraction implements FormalismAbstraction<ExplState,
 				final Valuation nextInitStateVal = sts.getConcreteState(solver.getModel(), 0);
 				final ExplState nextInitState = precision.mapToAbstractState(nextInitStateVal);
 				initStates.add(nextInitState);
-				solver.add(sts.unroll(Exprs.Not(nextInitState.asExpr()), 0));
+				solver.add(sts.unroll(Exprs.Not(nextInitState.toExpr()), 0));
 			}
 		} while (moreInitStates);
 		solver.pop();
@@ -58,7 +58,7 @@ public final class STSExplAbstraction implements FormalismAbstraction<ExplState,
 		checkNotNull(precision);
 		final Set<ExplState> succStates = new HashSet<>();
 		solver.push();
-		solver.add(sts.unroll(state.asExpr(), 0));
+		solver.add(sts.unroll(state.toExpr(), 0));
 		solver.add(sts.unrollInv(0));
 		solver.add(sts.unrollInv(1));
 		solver.add(sts.unrollTrans(0));
@@ -69,7 +69,7 @@ public final class STSExplAbstraction implements FormalismAbstraction<ExplState,
 				final Valuation nextSuccStateVal = sts.getConcreteState(solver.getModel(), 1);
 				final ExplState nextSuccState = precision.mapToAbstractState(nextSuccStateVal);
 				succStates.add(nextSuccState);
-				solver.add(sts.unroll(Exprs.Not(nextSuccState.asExpr()), 1));
+				solver.add(sts.unroll(Exprs.Not(nextSuccState.toExpr()), 1));
 			}
 
 		} while (moreSuccStates);

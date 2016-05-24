@@ -5,5 +5,5 @@ import hu.bme.mit.inf.ttmc.core.type.BoolType;
 
 public interface ExprState extends State {
 
-	Expr<? extends BoolType> asExpr();
+	Expr<? extends BoolType> toExpr();
 }

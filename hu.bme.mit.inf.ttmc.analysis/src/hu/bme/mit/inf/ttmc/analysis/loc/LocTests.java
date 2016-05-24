@@ -23,7 +23,7 @@ public class LocTests {
 		final LocAbstraction<CFALoc, CFAEdge> locAbstraction = CFALocAbstraction.create(cfa);
 
 		final LocState<CFALoc> finalState = LocState.create(cfa.getFinalLoc());
-		final Algorithm<LocState<CFALoc>, NullPrecision> algorithm = new BasicAlgorithm<LocState<CFALoc>, NullPrecision>(LocDomain.create(), locAbstraction);
+		final Algorithm<LocState<CFALoc>, NullPrecision> algorithm = new BasicAlgorithm<>(LocDomain.create(), locAbstraction);
 		final Collection<LocState<CFALoc>> result = algorithm.run(NullPrecision.get());
 
 		assertTrue(result.contains(finalState));
