@@ -45,4 +45,9 @@ public class LIFOWaitlist<S extends State> implements Waitlist<S> {
 	public void clear() {
 		waitlist.clear();
 	}
+
+	@Override
+	public String toString() {
+		return waitlist.toString();
+	}
 }
