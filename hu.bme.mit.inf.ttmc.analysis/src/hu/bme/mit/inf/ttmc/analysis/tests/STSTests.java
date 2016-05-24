@@ -14,13 +14,23 @@ import static hu.bme.mit.inf.ttmc.formalism.common.expr.impl.Exprs2.Prime;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.junit.Before;
 import org.junit.Test;
 
+import hu.bme.mit.inf.ttmc.analysis.Counterexample;
+import hu.bme.mit.inf.ttmc.analysis.ExprState;
+import hu.bme.mit.inf.ttmc.analysis.ItpRefutation;
+import hu.bme.mit.inf.ttmc.analysis.algorithm.Checker;
+import hu.bme.mit.inf.ttmc.analysis.algorithm.Concretizer;
+import hu.bme.mit.inf.ttmc.analysis.algorithm.Refiner;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.BasicAlgorithm;
+import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.BasicChecker;
+import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.PredGlobalItpRefiner;
+import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.STSExprSeqConcretizer;
 import hu.bme.mit.inf.ttmc.analysis.arg.ARGDomain;
 import hu.bme.mit.inf.ttmc.analysis.arg.ARGFormalismAbstraction;
 import hu.bme.mit.inf.ttmc.analysis.arg.ARGState;
@@ -37,6 +47,7 @@ import hu.bme.mit.inf.ttmc.analysis.pred.STSPredAbstraction;
 import hu.bme.mit.inf.ttmc.analysis.pred.precisions.GlobalPredPrecision;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.expr.OrExpr;
+import hu.bme.mit.inf.ttmc.core.expr.impl.Exprs;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.core.type.IntType;
 import hu.bme.mit.inf.ttmc.core.type.Type;
@@ -46,25 +57,59 @@ import hu.bme.mit.inf.ttmc.formalism.common.decl.impl.Decls2;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 import hu.bme.mit.inf.ttmc.formalism.sts.impl.STSImpl;
 import hu.bme.mit.inf.ttmc.formalism.sts.impl.STSImpl.Builder;
-import hu.bme.mit.inf.ttmc.solver.Solver;
+import hu.bme.mit.inf.ttmc.solver.ItpSolver;
 import hu.bme.mit.inf.ttmc.solver.SolverManager;
 import hu.bme.mit.inf.ttmc.solver.z3.Z3SolverManager;
 
 public class STSTests {
 
 	SolverManager manager;
-	Solver solver;
+	ItpSolver solver;
 	STS sts;
 
 	@Before
 	public void setup() {
 		manager = new Z3SolverManager();
-		solver = manager.createSolver(true, false);
+		solver = manager.createItpSolver();
 		sts = createSimpleSTS();
 		System.out.println(sts);
 	}
 
 	@Test
+	public void testCegar() {
+		final Collection<Expr<? extends BoolType>> preds = new ArrayList<>();
+		preds.add(Exprs.True());
+		final STSPredAbstraction stsAbstraction = STSPredAbstraction.create(sts, solver);
+		final PredDomain domain = PredDomain.create(solver, sts);
+		GlobalPredPrecision precision = GlobalPredPrecision.create(preds);
+
+		final Checker<STS, PredState, PredPrecision> checker = BasicChecker.create(domain, stsAbstraction);
+
+		final Concretizer<STS, ExprState, ItpRefutation> concretizer = STSExprSeqConcretizer.create(sts, solver);
+
+		final Refiner<PredState, GlobalPredPrecision, ItpRefutation> refiner = PredGlobalItpRefiner.create();
+
+		Optional<Counterexample<PredState>> abstractResult;
+		Counterexample<ExplState> concreteCex = null;
+
+		do {
+			abstractResult = checker.check(precision);
+
+			if (abstractResult.isPresent()) {
+				System.out.println("Abstract Cex: " + abstractResult.get());
+				if (concretizer.check(abstractResult.get())) {
+					concreteCex = concretizer.getConcreteCex();
+					System.out.println("Concrete Cex: " + concreteCex);
+				} else {
+					precision = refiner.refine(precision, concretizer.getRefutation());
+					System.out.println("New precision: " + precision);
+				}
+			}
+		} while (abstractResult.isPresent() && concreteCex == null);
+
+	}
+
+	//@Test
 	public void testPred() {
 		final Collection<Expr<? extends BoolType>> preds = new ArrayList<>();
 		preds.addAll(((OrExpr) sts.getProp()).getOps());
@@ -78,7 +123,7 @@ public class STSTests {
 		}
 	}
 
-	@Test
+	//@Test
 	public void testExpl() {
 		final Set<VarDecl<? extends Type>> visibleVars = sts.getVars().stream().filter(v -> v.getName().equals("x") || v.getName().equals("y"))
 				.collect(Collectors.toSet());
@@ -94,7 +139,7 @@ public class STSTests {
 		}
 	}
 
-	@Test
+	//@Test
 	public void testArgWithExpl() {
 		final Set<VarDecl<? extends Type>> visibleVars = sts.getVars().stream().filter(v -> v.getName().equals("x") || v.getName().equals("y"))
 				.collect(Collectors.toSet());
@@ -112,7 +157,7 @@ public class STSTests {
 		System.out.println(ArgPrinter.toGraphvizString(result));
 	}
 
-	@Test
+	//@Test
 	public void testArgWithPred() {
 		final Collection<Expr<? extends BoolType>> preds = new ArrayList<>();
 		preds.addAll(((OrExpr) sts.getProp()).getOps());
