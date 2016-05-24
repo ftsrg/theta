@@ -12,26 +12,24 @@ public final class ZoneState implements State {
 
 	private volatile int hashCode = 0;
 
-	private final DBMWithSignature dbm;
+	private final DBM dbm;
 
-	private ZoneState(final DBMWithSignature dbm) {
+	private ZoneState(final DBM dbm) {
 		this.dbm = dbm;
 	}
 
-	private ZoneState(final ZoneOperations transformer) {
-		this.dbm = transformer.dbm;
+	private ZoneState(final ZoneOperations ops) {
+		this.dbm = ops.builder.build();
 	}
 
 	////
 
-	public static ZoneState zero(final Set<? extends ClockDecl> clockDecls) {
-		final DBMWithSignature dbm = DBMWithSignature.zero(clockDecls);
-		return new ZoneState(dbm);
+	public static ZoneState top() {
+		return new ZoneState(DBM.top());
 	}
 
-	public static ZoneState top(final Set<? extends ClockDecl> clockDecls) {
-		final DBMWithSignature dbm = DBMWithSignature.top(clockDecls);
-		return new ZoneState(dbm);
+	public static ZoneState zero(final Set<? extends ClockDecl> clockDecls) {
+		return new ZoneState(DBM.zero(clockDecls));
 	}
 
 	////
@@ -73,10 +71,10 @@ public final class ZoneState implements State {
 	////////
 
 	public static class ZoneOperations {
-		private final DBMWithSignature dbm;
+		private final DBMBuilder builder;
 
 		private ZoneOperations(final ZoneState zone) {
-			dbm = DBMWithSignature.copyOf(zone.dbm);
+			builder = zone.dbm.transform();
 		}
 
 		////////
@@ -88,37 +86,37 @@ public final class ZoneState implements State {
 		////////
 
 		public ZoneOperations up() {
-			dbm.up();
+			builder.up();
 			return this;
 		}
 
 		public ZoneOperations down() {
-			dbm.down();
+			builder.down();
 			return this;
 		}
 
 		public ZoneOperations and(final ClockConstr constr) {
-			dbm.and(constr);
+			builder.and(constr);
 			return this;
 		}
 
 		public ZoneOperations free(final ClockDecl clock) {
-			dbm.free(clock);
+			builder.free(clock);
 			return this;
 		}
 
 		public ZoneOperations reset(final ClockDecl clock, final int m) {
-			dbm.reset(clock, m);
+			builder.reset(clock, m);
 			return this;
 		}
 
 		public ZoneOperations copy(final ClockDecl lhs, final ClockDecl rhs) {
-			dbm.copy(lhs, rhs);
+			builder.copy(lhs, rhs);
 			return this;
 		}
 
 		public ZoneOperations shift(final ClockDecl clock, final int m) {
-			dbm.shift(clock, m);
+			builder.shift(clock, m);
 			return this;
 		}
 	}

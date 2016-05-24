@@ -1,232 +1,127 @@
 package hu.bme.mit.inf.ttmc.analysis.zone;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.inf.ttmc.analysis.zone.DiffBounds.Inf;
 import static hu.bme.mit.inf.ttmc.analysis.zone.DiffBounds.Leq;
 import static hu.bme.mit.inf.ttmc.analysis.zone.DiffBounds.Lt;
 import static hu.bme.mit.inf.ttmc.analysis.zone.DiffBounds.add;
 import static hu.bme.mit.inf.ttmc.analysis.zone.DiffBounds.asString;
-import static java.lang.Math.max;
-import static java.lang.Math.min;
+import static hu.bme.mit.inf.ttmc.formalism.common.decl.impl.Decls2.Clock;
+
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Set;
+
+import com.google.common.collect.Sets;
 
 import hu.bme.mit.inf.ttmc.common.matrix.IntMatrix;
+import hu.bme.mit.inf.ttmc.formalism.common.decl.ClockDecl;
+import hu.bme.mit.inf.ttmc.formalism.ta.constr.AndConstr;
+import hu.bme.mit.inf.ttmc.formalism.ta.constr.ClockConstr;
+import hu.bme.mit.inf.ttmc.formalism.ta.constr.DiffEqConstr;
+import hu.bme.mit.inf.ttmc.formalism.ta.constr.DiffGeqConstr;
+import hu.bme.mit.inf.ttmc.formalism.ta.constr.DiffGtConstr;
+import hu.bme.mit.inf.ttmc.formalism.ta.constr.DiffLeqConstr;
+import hu.bme.mit.inf.ttmc.formalism.ta.constr.DiffLtConstr;
+import hu.bme.mit.inf.ttmc.formalism.ta.constr.TrueConstr;
+import hu.bme.mit.inf.ttmc.formalism.ta.constr.UnitEqConstr;
+import hu.bme.mit.inf.ttmc.formalism.ta.constr.UnitGeqConstr;
+import hu.bme.mit.inf.ttmc.formalism.ta.constr.UnitGtConstr;
+import hu.bme.mit.inf.ttmc.formalism.ta.constr.UnitLeqConstr;
+import hu.bme.mit.inf.ttmc.formalism.ta.constr.UnitLtConstr;
+import hu.bme.mit.inf.ttmc.formalism.ta.utils.ClockConstrVisitor;
 
-final class DBM {
+public final class DBM {
 
-	private static final int HASH_SEED = 8581;
+	private static final ClockDecl ZERO_CLOCK;
 
-	private int n;
-	private IntMatrix D;
+	private final LinkedHashMap<ClockDecl, Integer> clockToIndex;
+	private final IntMatrix matrix;
 
-	private DBM(final int n) {
-		checkArgument(n >= 0);
-		this.n = n;
-		this.D = IntMatrix.create(n + 1, n + 1);
-		D.fill(Inf());
-		for (int i = 0; i <= n; i++) {
-			D.set(i, i, Leq(0));
-		}
+	private final ZoneConsistencyVisitor visitor;
+
+	static {
+		ZERO_CLOCK = Clock("_zero");
 	}
 
-	private DBM(final IntMatrix D) {
-		this.n = D.rows() - 1;
-		this.D = D;
+	DBM(final DBMBuilder builder) {
+		clockToIndex = builder.clockToIndex;
+		matrix = builder.matrix;
+		visitor = new ZoneConsistencyVisitor();
 	}
 
-	public static DBM zero(final int n) {
-		checkArgument(n >= 0);
-		final DBM result = new DBM(n);
-		result.D.fill(Leq(0));
+	////
 
-		assert result.isClosed();
+	public static DBM top() {
+		final DBM result = builder().build();
 		return result;
 	}
 
-	public static DBM top(final int n) {
-		checkArgument(n >= 0);
-		final DBM result = new DBM(n);
-		for (int i = 1; i <= n; i++) {
-			result.D.set(0, i, Leq(0));
-		}
-
-		assert result.isClosed();
+	public static DBM zero(final Set<? extends ClockDecl> clockDecls) {
+		checkArgument(!clockDecls.contains(ZERO_CLOCK));
+		final DBM result = builder(clockDecls).build();
+		result.matrix.fill(Leq(0));
 		return result;
 	}
 
-	public static DBM bottom() {
-		final DBM result = new DBM(0);
-		result.D.set(0, 0, Leq(-1));
+	////
 
-		assert result.isClosed();
-		return result;
+	public static DBMBuilder builder() {
+		return builder(Collections.emptySet());
 	}
 
-	////////
-
-	public static DBM copyOf(final DBM dbm) {
-		final IntMatrix D = IntMatrix.copyOf(dbm.D);
-		return new DBM(D);
+	public static DBMBuilder builder(final Set<? extends ClockDecl> clockDecls) {
+		return new DBMBuilder(clockDecls);
 	}
 
-	public void expand() {
-		final int n2 = n + 1;
-		final IntMatrix D2 = IntMatrix.create(n2 + 1, n2 + 1);
-
-		for (int i = 0; i <= n; i++) {
-			for (int j = 0; j <= n; j++) {
-				D2.set(i, j, D.get(i, j));
-			}
-			D2.set(n2, i, Inf());
-			D2.set(i, n2, D.get(i, 0));
-		}
-		D2.set(0, n2, Leq(0));
-		D2.set(n2, n2, Leq(0));
-		n = n2;
-		D = D2;
-		assert isClosed();
+	public DBMBuilder transform() {
+		return new DBMBuilder(clockToIndex, matrix);
 	}
 
-	////////
+	////
 
-	public int nClocks() {
-		return n;
+	public static ClockDecl zeroClock() {
+		return ZERO_CLOCK;
 	}
 
-	public int get(final int x, final int y) {
-		checkArgument(isClock(x));
-		checkArgument(isClock(y));
-		return D.get(x, y);
+	public int size() {
+		return matrix.rows();
 	}
 
-	////////
+	////
 
 	public boolean isConsistent() {
-		return D.get(0, 0) >= 0;
+		return matrix.get(0, 0) >= 0;
 	}
 
-	public boolean isSatisfied(final int x, final int y, final int b) {
-		checkArgument(isClock(x));
-		checkArgument(isClock(y));
-		return add(D.get(y, x), b) >= 0;
+	public boolean isConsistent(final ClockConstr constr) {
+		return constr.accept(visitor, null);
 	}
 
-	////////
+	////
 
-	public void up() {
-		for (int i = 1; i <= n; i++) {
-			D.set(i, 0, Inf());
-		}
-		assert isClosed();
-	}
+	public DBMRelation getRelation(final DBM that) {
+		final Set<ClockDecl> clockDecls = Sets.union(this.clockToIndex.keySet(), that.clockToIndex.keySet());
 
-	public void down() {
-		for (int i = 1; i <= n; i++) {
-			D.set(0, i, Leq(0));
-			for (int j = 1; j <= n; j++) {
-				if (D.get(j, i) < D.get(0, i)) {
-					D.set(0, i, D.get(j, i));
-				}
+		boolean leq = true;
+		boolean geq = true;
+
+		for (final ClockDecl x : clockDecls) {
+			for (final ClockDecl y : clockDecls) {
+				leq = leq && this.getBound(x, y) <= that.getBound(x, y);
+				geq = geq && this.getBound(x, y) >= that.getBound(x, y);
 			}
 		}
-		assert isClosed();
+		return DBMRelation.create(leq, geq);
 	}
 
-	public void and(final int x, final int y, final int b) {
-		checkArgument(isClock(x));
-		checkArgument(isClock(y));
-
-		if (add(D.get(y, x), b) < 0) {
-			D.set(0, 0, Leq(-1));
-
-		} else if (b < D.get(x, y)) {
-			D.set(x, y, b);
-
-			for (int i = 0; i <= n; i++) {
-				for (int j = 0; j <= n; j++) {
-					if (add(D.get(i, x), D.get(x, j)) < D.get(i, j)) {
-						D.set(i, j, add(D.get(i, x), D.get(x, j)));
-					}
-					if (add(D.get(i, y), D.get(y, j)) < D.get(i, j)) {
-						D.set(i, j, add(D.get(i, y), D.get(y, j)));
-					}
-				}
-			}
-		}
-		assert isClosed();
-	}
-
-	public void free(final int x) {
-		checkArgument(isNonZeroClock(x));
-		for (int i = 0; i <= n; i++) {
-			if (i != x) {
-				D.set(x, i, Inf());
-				D.set(i, x, D.get(i, 0));
-			}
-		}
-		assert isClosed();
-	}
-
-	public void reset(final int x, final int m) {
-		checkArgument(isNonZeroClock(x));
-		for (int i = 0; i <= n; i++) {
-			D.set(x, i, add(Leq(m), D.get(0, i)));
-			D.set(i, x, add(D.get(i, 0), Leq(-m)));
-		}
-		assert isClosed();
-	}
-
-	public void copy(final int x, final int y) {
-		checkArgument(isNonZeroClock(x));
-		checkArgument(isNonZeroClock(y));
-
-		for (int i = 0; i <= n; i++) {
-			if (i != x) {
-				D.set(x, i, D.get(y, i));
-				D.set(i, x, D.get(i, y));
-			}
-		}
-		D.set(x, y, Leq(0));
-		D.set(y, x, Leq(0));
-		assert isClosed();
-	}
-
-	public void shift(final int x, final int m) {
-		checkArgument(isNonZeroClock(x));
-		for (int i = 0; i <= n; i++) {
-			if (i != x) {
-				D.set(x, i, add(D.get(x, i), Leq(m)));
-				D.set(i, x, add(D.get(i, x), Leq(-m)));
-			}
-		}
-		D.set(x, 0, max(D.get(x, 0), Leq(0)));
-		D.set(0, x, min(D.get(0, x), Leq(0)));
-		assert isClosed();
-	}
-
-	public void norm(final int[] k) {
-		checkArgument(k.length == n + 1);
-
-		for (int i = 0; i <= n; i++) {
-			for (int j = 0; j <= n; j++) {
-				if (D.get(i, j) != Inf()) {
-					if (D.get(i, j) > Leq(k[i])) {
-						D.set(i, j, Inf());
-					} else if (D.get(i, j) < Leq(-k[j])) {
-						D.set(i, j, Lt(-k[j]));
-					}
-				}
-			}
-		}
-		close();
-	}
-
-	////////
+	////
 
 	@Override
 	public int hashCode() {
-		int result = HASH_SEED;
-		result = 31 * result + D.hashCode();
-		return result;
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
 
 	@Override
@@ -235,7 +130,7 @@ final class DBM {
 			return true;
 		} else if (obj instanceof DBM) {
 			final DBM that = (DBM) obj;
-			return this.D.equals(that.D);
+			return this.getRelation(that).equals(DBMRelation.EQUAL);
 		} else {
 			return false;
 		}
@@ -244,57 +139,218 @@ final class DBM {
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
-		for (int i = 0; i <= n; i++) {
-			for (int j = 0; j <= n; j++) {
-				if (j < n) {
-					sb.append(String.format("%-12s", asString(D.get(i, j))));
-				} else {
-					sb.append(asString(D.get(i, n)));
-					if (i < n) {
-						sb.append(System.lineSeparator());
+
+		for (final ClockDecl clockDecl : clockToIndex.keySet()) {
+			if (!isFree(clockDecl)) {
+				sb.append(String.format("%-12s", clockDecl.getName()));
+			}
+		}
+
+		sb.append(System.lineSeparator());
+
+		for (int i = 0; i < size(); i++) {
+			if (!isFree(i)) {
+				for (int j = 0; j < size(); j++) {
+					if (!isFree(j)) {
+						sb.append(String.format("%-12s", asString(matrix.get(i, j))));
 					}
 				}
+				sb.append(System.lineSeparator());
 			}
-
 		}
 		return sb.toString();
 	}
 
-	////////
+	////
 
-	boolean isClosed() {
-		for (int i = 0; i <= n; i++) {
-			for (int j = 0; j <= n; j++) {
-				for (int k = 0; k <= n; k++) {
-					if (D.get(i, j) > add(D.get(i, k), D.get(k, j))) {
-						return false;
-					}
-					;
-				}
+	private int getBound(final ClockDecl x, final ClockDecl y) {
+		checkNotNull(x);
+		checkNotNull(y);
+
+		if (x.equals(y) || x.equals(ZERO_CLOCK)) {
+			return Leq(0);
+		}
+
+		final Integer i = clockToIndex.get(x);
+		final Integer j = clockToIndex.get(y);
+
+		if (i == null || j == null) {
+			return Inf();
+		}
+
+		return matrix.get(i, j);
+	}
+
+	private boolean isFree(final ClockDecl clock) {
+		final Integer x = clockToIndex.get(clock);
+		if (x == null) {
+			return true;
+		} else {
+			return isFree(x);
+		}
+	}
+
+	private boolean isFree(final int x) {
+		if (matrix.get(x, 0) != Inf()) {
+			return false;
+		}
+
+		for (int i = 1; i < size(); i++) {
+			if (i != x && (matrix.get(x, i) != Inf() || matrix.get(i, x) != matrix.get(i, 0))) {
+				return false;
 			}
 		}
+
 		return true;
 	}
 
-	private void close() {
-		for (int k = 0; k <= n; k++) {
-			for (int i = 0; i <= n; i++) {
-				for (int j = 0; j <= n; j++) {
-					D.set(i, j, min(D.get(i, j), add(D.get(i, k), D.get(k, j))));
-				}
+	////
+
+	private final class ZoneConsistencyVisitor implements ClockConstrVisitor<Void, Boolean> {
+
+		private boolean isConsistent(final int x, final int y, final int b) {
+			return add(matrix.get(y, x), b) >= 0;
+		}
+
+		@Override
+		public Boolean visit(final TrueConstr constr, final Void param) {
+			return true;
+		}
+
+		@Override
+		public Boolean visit(final UnitLtConstr constr, final Void param) {
+			final Integer x = clockToIndex.get(constr.getClock());
+			if (x == null) {
+				return constr.getBound() > 0;
+			} else {
+				return isConsistent(x, 0, Lt(constr.getBound()));
 			}
 		}
-		assert isClosed();
-	}
 
-	////////
+		@Override
+		public Boolean visit(final UnitLeqConstr constr, final Void param) {
+			final Integer x = clockToIndex.get(constr.getClock());
+			if (x == null) {
+				return constr.getBound() >= 0;
+			} else {
+				return isConsistent(x, 0, Leq(constr.getBound()));
+			}
+		}
 
-	private boolean isNonZeroClock(final int x) {
-		return x >= 1 && x <= n;
-	}
+		@Override
+		public Boolean visit(final UnitGtConstr constr, final Void param) {
+			final Integer x = clockToIndex.get(constr.getClock());
+			if (x == null) {
+				return true;
+			} else {
+				return isConsistent(0, x, Lt(-constr.getBound()));
+			}
+		}
 
-	private boolean isClock(final int x) {
-		return x >= 0 && x <= n;
+		@Override
+		public Boolean visit(final UnitGeqConstr constr, final Void param) {
+			final Integer x = clockToIndex.get(constr.getClock());
+			if (x == null) {
+				return true;
+			} else {
+				return isConsistent(0, x, Leq(-constr.getBound()));
+			}
+		}
+
+		@Override
+		public Boolean visit(final UnitEqConstr constr, final Void param) {
+			final Integer x = clockToIndex.get(constr.getClock());
+			if (x == null) {
+				return constr.getBound() >= 0;
+			} else {
+				return isConsistent(x, 0, Leq(constr.getBound())) && isConsistent(0, x, Leq(-constr.getBound()));
+			}
+		}
+
+		@Override
+		public Boolean visit(final DiffLtConstr constr, final Void param) {
+			if (constr.getLeftClock().equals(constr.getRightClock())) {
+				return constr.getBound() > 0;
+			}
+
+			final Integer x = clockToIndex.get(constr.getLeftClock());
+			final Integer y = clockToIndex.get(constr.getRightClock());
+
+			if (x == null || y == null) {
+				return true;
+			} else {
+				return isConsistent(x, y, Lt(constr.getBound()));
+			}
+		}
+
+		@Override
+		public Boolean visit(final DiffLeqConstr constr, final Void param) {
+			if (constr.getLeftClock().equals(constr.getRightClock())) {
+				return constr.getBound() >= 0;
+			}
+
+			final Integer x = clockToIndex.get(constr.getLeftClock());
+			final Integer y = clockToIndex.get(constr.getRightClock());
+
+			if (x == null || y == null) {
+				return true;
+			} else {
+				return isConsistent(x, y, Leq(constr.getBound()));
+			}
+		}
+
+		@Override
+		public Boolean visit(final DiffGtConstr constr, final Void param) {
+			if (constr.getLeftClock().equals(constr.getRightClock())) {
+				return constr.getBound() < 0;
+			}
+
+			final Integer x = clockToIndex.get(constr.getLeftClock());
+			final Integer y = clockToIndex.get(constr.getRightClock());
+
+			if (x == null || y == null) {
+				return true;
+			} else {
+				return isConsistent(y, x, Lt(-constr.getBound()));
+			}
+		}
+
+		@Override
+		public Boolean visit(final DiffGeqConstr constr, final Void param) {
+			if (constr.getLeftClock().equals(constr.getRightClock())) {
+				return constr.getBound() <= 0;
+			}
+
+			final Integer x = clockToIndex.get(constr.getLeftClock());
+			final Integer y = clockToIndex.get(constr.getRightClock());
+
+			if (x == null || y == null) {
+				return true;
+			} else {
+				return isConsistent(y, x, Leq(-constr.getBound()));
+			}
+		}
+
+		@Override
+		public Boolean visit(final DiffEqConstr constr, final Void param) {
+			if (constr.getLeftClock().equals(constr.getRightClock())) {
+				return constr.getBound() == 0;
+			}
+
+			final Integer x = clockToIndex.get(constr.getLeftClock());
+			final Integer y = clockToIndex.get(constr.getRightClock());
+
+			if (x == null || y == null) {
+				return true;
+			} else {
+				return isConsistent(x, y, Leq(constr.getBound())) && isConsistent(y, x, Leq(-constr.getBound()));
+			}
+		}
+
+		@Override
+		public Boolean visit(final AndConstr constr, final Void param) {
+			return constr.getConstrs().stream().allMatch(c -> c.accept(this, null));
+		}
 	}
 
 }
