@@ -23,7 +23,7 @@ import hu.bme.mit.inf.ttmc.analysis.arg.ARGState;
 import hu.bme.mit.inf.ttmc.analysis.impl.CounterexampleImpl;
 import hu.bme.mit.inf.ttmc.formalism.Formalism;
 
-public class BasicChecker<F extends Formalism, S extends State, P extends Precision> implements Checker<S, P> {
+public class BasicChecker<F extends Formalism, S extends State, P extends Precision> implements Checker<F, S, P> {
 
 	private final ARGDomain<S> domain;
 	private final ARGFormalismAbstraction<F, S, P> formalismAbstraction;
