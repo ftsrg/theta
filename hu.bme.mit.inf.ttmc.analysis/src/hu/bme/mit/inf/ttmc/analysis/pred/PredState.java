@@ -37,7 +37,7 @@ public class PredState implements ExprState {
 	}
 
 	@Override
-	public Expr<? extends BoolType> asExpr() {
+	public Expr<? extends BoolType> toExpr() {
 		Expr<? extends BoolType> result = expr;
 		if (result == null) {
 			result = Exprs.And(preds);

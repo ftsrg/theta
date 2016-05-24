@@ -9,34 +9,28 @@ import hu.bme.mit.inf.ttmc.analysis.FormalismAbstraction;
 import hu.bme.mit.inf.ttmc.analysis.Precision;
 import hu.bme.mit.inf.ttmc.analysis.State;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.Algorithm;
+import hu.bme.mit.inf.ttmc.analysis.algorithm.waitlist.Waitlist;
+import hu.bme.mit.inf.ttmc.analysis.algorithm.waitlist.impl.FIFOWaitlist;
+import hu.bme.mit.inf.ttmc.formalism.Formalism;
 
-public class BasicAlgorithm<S extends State, P extends Precision> implements Algorithm<S, P> {
+public class BasicAlgorithm<F extends Formalism, S extends State, P extends Precision> implements Algorithm<S, P> {
 
 	private final Domain<S> domain;
-	private final FormalismAbstraction<S, P> formalismAbstraction;
+	private final FormalismAbstraction<F, S, P> formalismAbstraction;
 
-	private boolean isErrorReached;
-
-	public BasicAlgorithm(final Domain<S> domain, final FormalismAbstraction<S, P> formalismAbstraction) {
+	public BasicAlgorithm(final Domain<S> domain, final FormalismAbstraction<F, S, P> formalismAbstraction) {
 		this.domain = domain;
 		this.formalismAbstraction = formalismAbstraction;
-		this.isErrorReached = false;
 	}
 
 	@Override
 	public Collection<S> run(final P precision) {
-		isErrorReached = false;
 		final Collection<? extends S> reachedSet = formalismAbstraction.getStartStates(precision);
-		final Deque<S> waitlist = new ArrayDeque<S>(reachedSet);
+		final Waitlist<S> waitlist = new FIFOWaitlist<>(reachedSet);
 		final Deque<S> reached = new ArrayDeque<S>(reachedSet);
 
 		while (!waitlist.isEmpty()) {
-			final S state = waitlist.pop();
-
-			if (formalismAbstraction.isTarget(state)) {
-				isErrorReached = true;
-				return reached;
-			}
+			final S state = waitlist.remove();
 
 			for (final S succState : formalismAbstraction.getSuccStates(state, precision)) {
 				if (!isCovered(succState, reached)) {
@@ -51,10 +45,6 @@ public class BasicAlgorithm<S extends State, P extends Precision> implements Alg
 
 	private boolean isCovered(final S state, final Collection<? extends S> reached) {
 		return reached.stream().anyMatch(s -> domain.isLeq(state, s));
-	}
-
-	public boolean isErrorReached() {
-		return isErrorReached;
 	}
 
 }
