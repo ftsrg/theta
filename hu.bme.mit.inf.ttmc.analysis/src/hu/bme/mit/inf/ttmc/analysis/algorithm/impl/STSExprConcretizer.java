@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 import hu.bme.mit.inf.ttmc.analysis.Counterexample;
 import hu.bme.mit.inf.ttmc.analysis.ExprState;
+import hu.bme.mit.inf.ttmc.analysis.Precision;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.Concretizer;
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplState;
 import hu.bme.mit.inf.ttmc.analysis.impl.CounterexampleImpl;
@@ -20,7 +21,7 @@ import hu.bme.mit.inf.ttmc.formalism.common.Valuation;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 import hu.bme.mit.inf.ttmc.solver.Solver;
 
-public class STSExprConcretizer implements Concretizer<STS, ExprState> {
+public class STSExprConcretizer<P extends Precision> implements Concretizer<STS, ExprState, P> {
 
 	private final Solver solver;
 	private final STS sts;
@@ -30,8 +31,8 @@ public class STSExprConcretizer implements Concretizer<STS, ExprState> {
 	private Optional<Counterexample<ExplState>> concreteCex;
 	private Optional<Counterexample<ExplState>> prefix;
 
-	public static STSExprConcretizer create(final STS sts, final Solver solver, final boolean genPrefix) {
-		return new STSExprConcretizer(sts, solver, genPrefix);
+	public static <P extends Precision> STSExprConcretizer<P> create(final STS sts, final Solver solver, final boolean genPrefix) {
+		return new STSExprConcretizer<P>(sts, solver, genPrefix);
 	}
 
 	private STSExprConcretizer(final STS sts, final Solver solver, final boolean genPrefix) {
