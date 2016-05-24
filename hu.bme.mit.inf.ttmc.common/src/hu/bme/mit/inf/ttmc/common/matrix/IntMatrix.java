@@ -18,7 +18,7 @@ public final class IntMatrix {
 
 	private int actualSize;
 
-	private IntMatrix(final int cols, final int rows) {
+	private IntMatrix(final int rows, final int cols) {
 		checkArgument(rows > 0);
 		checkArgument(cols > 0);
 		this.rows = rows;
