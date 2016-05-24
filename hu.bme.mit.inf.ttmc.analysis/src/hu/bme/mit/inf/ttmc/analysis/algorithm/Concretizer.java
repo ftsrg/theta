@@ -1,4 +1,4 @@
-package hu.bme.mit.inf.ttmc.analysis.concr;
+package hu.bme.mit.inf.ttmc.analysis.algorithm;
 
 import hu.bme.mit.inf.ttmc.analysis.Counterexample;
 import hu.bme.mit.inf.ttmc.analysis.State;
