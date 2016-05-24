@@ -33,6 +33,10 @@ public class STSExprSeqConcretizer implements Concretizer<STS, ExprState, ItpRef
 	private Optional<Counterexample<ExplState>> concreteCex;
 	private Optional<ItpRefutation> refutation;
 
+	public static STSExprSeqConcretizer create(final STS sts, final ItpSolver solver) {
+		return new STSExprSeqConcretizer(sts, solver);
+	}
+
 	private STSExprSeqConcretizer(final STS sts, final ItpSolver solver) {
 		this.sts = checkNotNull(sts);
 		this.solver = checkNotNull(solver);
