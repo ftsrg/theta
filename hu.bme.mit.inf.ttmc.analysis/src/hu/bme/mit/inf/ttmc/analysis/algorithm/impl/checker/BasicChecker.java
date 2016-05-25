@@ -1,4 +1,4 @@
-package hu.bme.mit.inf.ttmc.analysis.algorithm.checker.impl;
+package hu.bme.mit.inf.ttmc.analysis.algorithm.impl.checker;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -15,9 +15,9 @@ import hu.bme.mit.inf.ttmc.analysis.Domain;
 import hu.bme.mit.inf.ttmc.analysis.FormalismAbstraction;
 import hu.bme.mit.inf.ttmc.analysis.Precision;
 import hu.bme.mit.inf.ttmc.analysis.State;
-import hu.bme.mit.inf.ttmc.analysis.algorithm.checker.Checker;
-import hu.bme.mit.inf.ttmc.analysis.algorithm.checker.waitlist.Waitlist;
-import hu.bme.mit.inf.ttmc.analysis.algorithm.checker.waitlist.impl.FIFOWaitlist;
+import hu.bme.mit.inf.ttmc.analysis.algorithm.Checker;
+import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.checker.waitlist.Waitlist;
+import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.checker.waitlist.impl.FIFOWaitlist;
 import hu.bme.mit.inf.ttmc.analysis.arg.ARGDomain;
 import hu.bme.mit.inf.ttmc.analysis.arg.ARGFormalismAbstraction;
 import hu.bme.mit.inf.ttmc.analysis.arg.ARGState;

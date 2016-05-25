@@ -6,7 +6,7 @@ import java.util.Collection;
 
 import org.junit.Test;
 
-import hu.bme.mit.inf.ttmc.analysis.algorithm.checker.impl.BasicChecker;
+import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.checker.BasicChecker;
 import hu.bme.mit.inf.ttmc.analysis.impl.NullPrecision;
 import hu.bme.mit.inf.ttmc.formalism.cfa.CFA;
 import hu.bme.mit.inf.ttmc.formalism.cfa.CFAEdge;
