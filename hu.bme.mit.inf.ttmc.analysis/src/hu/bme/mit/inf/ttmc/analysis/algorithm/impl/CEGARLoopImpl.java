@@ -49,7 +49,7 @@ public class CEGARLoopImpl<F extends Formalism, S extends State, P extends Preci
 					concrCex = concretizer.getConcreteCex();
 					System.out.println("Concrete Cex: " + concrCex); // TODO: use logging instead
 				} else {
-					precision = refiner.refine(precision, concretizer.getRefutation());
+					precision = refiner.refine(precision, abstractResult.get(), concretizer.getRefutation());
 					System.out.println("New precision: " + precision); // TODO: use logging instead
 				}
 			}
