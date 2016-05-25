@@ -9,8 +9,8 @@ import hu.bme.mit.inf.ttmc.analysis.FormalismAbstraction;
 import hu.bme.mit.inf.ttmc.analysis.Precision;
 import hu.bme.mit.inf.ttmc.analysis.State;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.Algorithm;
-import hu.bme.mit.inf.ttmc.analysis.algorithm.waitlist.Waitlist;
-import hu.bme.mit.inf.ttmc.analysis.algorithm.waitlist.impl.FIFOWaitlist;
+import hu.bme.mit.inf.ttmc.analysis.algorithm.checker.waitlist.Waitlist;
+import hu.bme.mit.inf.ttmc.analysis.algorithm.checker.waitlist.impl.FIFOWaitlist;
 import hu.bme.mit.inf.ttmc.formalism.Formalism;
 
 public class BasicAlgorithm<F extends Formalism, S extends State, P extends Precision> implements Algorithm<S, P> {

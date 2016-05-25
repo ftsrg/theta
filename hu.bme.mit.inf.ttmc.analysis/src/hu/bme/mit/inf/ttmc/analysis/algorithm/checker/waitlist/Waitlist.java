@@ -1,4 +1,4 @@
-package hu.bme.mit.inf.ttmc.analysis.algorithm.waitlist;
+package hu.bme.mit.inf.ttmc.analysis.algorithm.checker.waitlist;
 
 import java.util.Collection;
 

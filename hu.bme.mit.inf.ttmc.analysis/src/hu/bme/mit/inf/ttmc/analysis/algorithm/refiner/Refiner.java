@@ -1,4 +1,4 @@
-package hu.bme.mit.inf.ttmc.analysis.algorithm;
+package hu.bme.mit.inf.ttmc.analysis.algorithm.refiner;
 
 import hu.bme.mit.inf.ttmc.analysis.Precision;
 import hu.bme.mit.inf.ttmc.analysis.State;

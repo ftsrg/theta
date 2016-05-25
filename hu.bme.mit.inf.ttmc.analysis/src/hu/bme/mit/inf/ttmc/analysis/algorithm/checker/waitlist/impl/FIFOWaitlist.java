@@ -1,4 +1,4 @@
-package hu.bme.mit.inf.ttmc.analysis.algorithm.waitlist.impl;
+package hu.bme.mit.inf.ttmc.analysis.algorithm.checker.waitlist.impl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -7,7 +7,7 @@ import java.util.Collection;
 import java.util.Queue;
 
 import hu.bme.mit.inf.ttmc.analysis.State;
-import hu.bme.mit.inf.ttmc.analysis.algorithm.waitlist.Waitlist;
+import hu.bme.mit.inf.ttmc.analysis.algorithm.checker.waitlist.Waitlist;
 
 public class FIFOWaitlist<S extends State> implements Waitlist<S> {
 
