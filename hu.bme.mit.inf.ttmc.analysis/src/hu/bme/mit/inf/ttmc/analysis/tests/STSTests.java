@@ -14,20 +14,20 @@ import static hu.bme.mit.inf.ttmc.formalism.common.expr.impl.Exprs2.Prime;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.junit.Before;
 import org.junit.Test;
 
-import hu.bme.mit.inf.ttmc.analysis.Counterexample;
 import hu.bme.mit.inf.ttmc.analysis.ExprState;
+import hu.bme.mit.inf.ttmc.analysis.algorithm.CEGARLoop;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.checker.Checker;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.checker.impl.BasicChecker;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.concretizer.Concretizer;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.concretizer.impl.STSExprSeqConcretizer;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.BasicAlgorithm;
+import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.CEGARLoopImpl;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.refiner.Refiner;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.refiner.impl.PredGlobalItpRefiner;
 import hu.bme.mit.inf.ttmc.analysis.arg.ARGDomain;
@@ -81,7 +81,7 @@ public class STSTests {
 		preds.add(Exprs.True());
 		final STSPredAbstraction stsAbstraction = STSPredAbstraction.create(sts, solver);
 		final PredDomain domain = PredDomain.create(solver, sts);
-		GlobalPredPrecision precision = GlobalPredPrecision.create(preds);
+		final GlobalPredPrecision precision = GlobalPredPrecision.create(preds);
 
 		final Checker<STS, PredState, PredPrecision> checker = BasicChecker.create(domain, stsAbstraction);
 
@@ -89,23 +89,9 @@ public class STSTests {
 
 		final Refiner<PredState, GlobalPredPrecision, ItpRefutation> refiner = PredGlobalItpRefiner.create();
 
-		Optional<Counterexample<PredState>> abstractResult;
-		Counterexample<ExplState> concreteCex = null;
+		final CEGARLoop<GlobalPredPrecision> cegarLoop = CEGARLoopImpl.create(checker, concretizer, refiner);
 
-		do {
-			abstractResult = checker.check(precision);
-
-			if (abstractResult.isPresent()) {
-				System.out.println("Abstract Cex: " + abstractResult.get());
-				if (concretizer.check(abstractResult.get())) {
-					concreteCex = concretizer.getConcreteCex();
-					System.out.println("Concrete Cex: " + concreteCex);
-				} else {
-					precision = refiner.refine(precision, concretizer.getRefutation());
-					System.out.println("New precision: " + precision);
-				}
-			}
-		} while (abstractResult.isPresent() && concreteCex == null);
+		System.out.println(cegarLoop.check(precision));
 
 	}
 
