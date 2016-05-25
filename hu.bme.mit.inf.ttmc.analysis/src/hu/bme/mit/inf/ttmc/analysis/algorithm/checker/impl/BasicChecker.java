@@ -1,4 +1,4 @@
-package hu.bme.mit.inf.ttmc.analysis.algorithm.impl;
+package hu.bme.mit.inf.ttmc.analysis.algorithm.checker.impl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -8,15 +8,16 @@ import java.util.Collection;
 import java.util.Deque;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import hu.bme.mit.inf.ttmc.analysis.Counterexample;
 import hu.bme.mit.inf.ttmc.analysis.Domain;
 import hu.bme.mit.inf.ttmc.analysis.FormalismAbstraction;
 import hu.bme.mit.inf.ttmc.analysis.Precision;
 import hu.bme.mit.inf.ttmc.analysis.State;
-import hu.bme.mit.inf.ttmc.analysis.algorithm.Checker;
-import hu.bme.mit.inf.ttmc.analysis.algorithm.waitlist.Waitlist;
-import hu.bme.mit.inf.ttmc.analysis.algorithm.waitlist.impl.FIFOWaitlist;
+import hu.bme.mit.inf.ttmc.analysis.algorithm.checker.Checker;
+import hu.bme.mit.inf.ttmc.analysis.algorithm.checker.waitlist.Waitlist;
+import hu.bme.mit.inf.ttmc.analysis.algorithm.checker.waitlist.impl.FIFOWaitlist;
 import hu.bme.mit.inf.ttmc.analysis.arg.ARGDomain;
 import hu.bme.mit.inf.ttmc.analysis.arg.ARGFormalismAbstraction;
 import hu.bme.mit.inf.ttmc.analysis.arg.ARGState;
@@ -28,11 +29,13 @@ public class BasicChecker<F extends Formalism, S extends State, P extends Precis
 	private final ARGDomain<S> domain;
 	private final ARGFormalismAbstraction<F, S, P> formalismAbstraction;
 	private final Waitlist<ARGState<S>> waitlist;
+	private final Deque<ARGState<S>> reached;
 
 	private BasicChecker(final Domain<S> domain, final FormalismAbstraction<F, S, P> formalismAbstraction) {
 		this.domain = ARGDomain.create(checkNotNull(domain));
 		this.formalismAbstraction = ARGFormalismAbstraction.create(checkNotNull(formalismAbstraction));
 		this.waitlist = new FIFOWaitlist<>();
+		this.reached = new ArrayDeque<ARGState<S>>();
 	}
 
 	public static <F extends Formalism, S extends State, P extends Precision> BasicChecker<F, S, P> create(final Domain<S> domain,
@@ -43,9 +46,11 @@ public class BasicChecker<F extends Formalism, S extends State, P extends Precis
 	@Override
 	public Optional<Counterexample<S>> check(final P precision) {
 		waitlist.clear();
+		reached.clear();
+
 		final Collection<? extends ARGState<S>> reachedSet = formalismAbstraction.getStartStates(precision);
 		waitlist.addAll(reachedSet);
-		final Deque<ARGState<S>> reached = new ArrayDeque<ARGState<S>>(reachedSet);
+		reached.addAll(reachedSet);
 
 		ARGState<S> targetState = null;
 
@@ -82,6 +87,13 @@ public class BasicChecker<F extends Formalism, S extends State, P extends Precis
 
 	private boolean isCovered(final ARGState<S> state, final Collection<? extends ARGState<S>> reached) {
 		return reached.stream().anyMatch(s -> domain.isLeq(state, s));
+	}
+
+	@Override
+	public Collection<S> getReachedSet() {
+		// TODO: this may not be the optimal solution. But we cannot simly return an immutable
+		// view of 'reached' because it stores 'ArgState<S>' and we have to return a collection of 'S'
+		return reached.stream().map(s -> s.getState()).collect(Collectors.toSet());
 	}
 
 }

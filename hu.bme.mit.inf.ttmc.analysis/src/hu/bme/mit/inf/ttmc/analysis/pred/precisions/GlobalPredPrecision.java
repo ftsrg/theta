@@ -4,10 +4,12 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.StringJoiner;
 
 import hu.bme.mit.inf.ttmc.analysis.pred.PredPrecision;
 import hu.bme.mit.inf.ttmc.analysis.pred.PredState;
@@ -59,5 +61,28 @@ public class GlobalPredPrecision implements PredPrecision {
 		}
 
 		return PredState.create(statePreds);
+	}
+
+	public GlobalPredPrecision refine(final Collection<Expr<? extends BoolType>> preds) {
+		checkNotNull(preds);
+		final Set<Expr<? extends BoolType>> newPreds = new HashSet<>();
+		newPreds.addAll(this.preds.keySet());
+		newPreds.addAll(preds);
+		return create(newPreds);
+	}
+
+	public GlobalPredPrecision refine(final Expr<? extends BoolType> pred) {
+		return refine(Collections.singleton(pred));
+	}
+
+	@Override
+	public String toString() {
+		final String prefix = "GlobalPredPrecision(";
+		final String suffix = ")";
+		final StringJoiner sj = new StringJoiner(", ", prefix, suffix);
+		for (final Expr<? extends BoolType> pred : preds.keySet()) {
+			sj.add(pred.toString());
+		}
+		return sj.toString();
 	}
 }

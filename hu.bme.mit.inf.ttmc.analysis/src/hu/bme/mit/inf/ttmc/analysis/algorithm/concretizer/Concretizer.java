@@ -1,21 +1,17 @@
-package hu.bme.mit.inf.ttmc.analysis.algorithm;
+package hu.bme.mit.inf.ttmc.analysis.algorithm.concretizer;
 
 import hu.bme.mit.inf.ttmc.analysis.Counterexample;
-import hu.bme.mit.inf.ttmc.analysis.Precision;
 import hu.bme.mit.inf.ttmc.analysis.State;
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplState;
+import hu.bme.mit.inf.ttmc.analysis.refutation.Refutation;
 import hu.bme.mit.inf.ttmc.formalism.Formalism;
 
-public interface Concretizer<F extends Formalism, S extends State, P extends Precision> {
+public interface Concretizer<F extends Formalism, S extends State, R extends Refutation> {
 
 	public boolean check(Counterexample<? extends S> abstractCex);
 
 	public Counterexample<ExplState> getConcreteCex();
 
-	public Counterexample<ExplState> getPrefix();
-
-	public void setGenPrefix(boolean genPrefix);
-
-	public boolean getGenPrefix();
+	public R getRefutation();
 
 }
