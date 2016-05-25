@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.StringJoiner;
 
@@ -59,8 +60,8 @@ public final class Valuation implements Assignment {
 		if (result == null) {
 
 			final List<Expr<? extends BoolType>> ops = new ArrayList<>(declToExpr.size());
-			for (final VarDecl<? extends Type> decl : declToExpr.keySet()) {
-				ops.add(Exprs.Eq(decl.getRef(), declToExpr.get(decl)));
+			for (final Entry<VarDecl<? extends Type>, LitExpr<?>> entry : declToExpr.entrySet()) {
+				ops.add(Exprs.Eq(entry.getKey().getRef(), entry.getValue()));
 			}
 			if (ops.size() == 0) {
 				result = Exprs.True();
