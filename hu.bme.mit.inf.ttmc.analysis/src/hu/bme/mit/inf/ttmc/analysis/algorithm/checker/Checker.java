@@ -1,5 +1,6 @@
 package hu.bme.mit.inf.ttmc.analysis.algorithm.checker;
 
+import java.util.Collection;
 import java.util.Optional;
 
 import hu.bme.mit.inf.ttmc.analysis.Counterexample;
@@ -9,5 +10,7 @@ import hu.bme.mit.inf.ttmc.formalism.Formalism;
 
 public interface Checker<F extends Formalism, S extends State, P extends Precision> {
 
-	public Optional<Counterexample<S>> check(P precision);
+	Optional<Counterexample<S>> check(P precision);
+
+	Collection<S> getReachedSet();
 }
