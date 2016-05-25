@@ -19,7 +19,7 @@ public class CFALocAbstraction extends LocAbstraction<CFALoc, CFAEdge> {
 
 	@Override
 	public boolean isTarget(final LocState<CFALoc> state) {
-		return automaton.getErrorLoc().equals(state);
+		return automaton.getErrorLoc().equals(state.getLoc());
 	}
 
 }
