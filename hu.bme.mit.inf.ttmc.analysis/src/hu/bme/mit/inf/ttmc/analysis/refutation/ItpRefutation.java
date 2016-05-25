@@ -1,4 +1,4 @@
-package hu.bme.mit.inf.ttmc.analysis;
+package hu.bme.mit.inf.ttmc.analysis.refutation;
 
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
