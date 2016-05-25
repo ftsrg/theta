@@ -3,6 +3,7 @@ package hu.bme.mit.inf.ttmc.analysis.algorithm.refiner.impl;
 import java.util.HashSet;
 import java.util.Set;
 
+import hu.bme.mit.inf.ttmc.analysis.Counterexample;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.refiner.Refiner;
 import hu.bme.mit.inf.ttmc.analysis.pred.PredState;
 import hu.bme.mit.inf.ttmc.analysis.pred.precisions.GlobalPredPrecision;
@@ -28,7 +29,7 @@ public class PredGlobalItpRefiner implements Refiner<PredState, GlobalPredPrecis
 	}
 
 	@Override
-	public GlobalPredPrecision refine(final GlobalPredPrecision precision, final ItpRefutation refutation) {
+	public GlobalPredPrecision refine(final GlobalPredPrecision precision, final Counterexample<PredState> abstractCex, final ItpRefutation refutation) {
 		final Set<Expr<? extends BoolType>> preds = new HashSet<>();
 		for (final Expr<? extends BoolType> pred : refutation) {
 			if (!(pred instanceof BoolLitExpr)) {
