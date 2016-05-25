@@ -68,6 +68,7 @@ public class GlobalPredPrecision implements PredPrecision {
 		final Set<Expr<? extends BoolType>> newPreds = new HashSet<>();
 		newPreds.addAll(this.preds.keySet());
 		newPreds.addAll(preds);
+		assert (newPreds.size() > this.preds.size());
 		return create(newPreds);
 	}
 
