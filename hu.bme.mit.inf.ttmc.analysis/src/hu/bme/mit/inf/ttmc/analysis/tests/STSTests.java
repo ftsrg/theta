@@ -23,7 +23,6 @@ import org.junit.Test;
 
 import hu.bme.mit.inf.ttmc.analysis.Counterexample;
 import hu.bme.mit.inf.ttmc.analysis.ExprState;
-import hu.bme.mit.inf.ttmc.analysis.ItpRefutation;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.Checker;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.Concretizer;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.Refiner;
@@ -45,6 +44,7 @@ import hu.bme.mit.inf.ttmc.analysis.pred.PredPrecision;
 import hu.bme.mit.inf.ttmc.analysis.pred.PredState;
 import hu.bme.mit.inf.ttmc.analysis.pred.STSPredAbstraction;
 import hu.bme.mit.inf.ttmc.analysis.pred.precisions.GlobalPredPrecision;
+import hu.bme.mit.inf.ttmc.analysis.refutation.ItpRefutation;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.expr.OrExpr;
 import hu.bme.mit.inf.ttmc.core.expr.impl.Exprs;

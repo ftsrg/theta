@@ -1,4 +1,4 @@
-package hu.bme.mit.inf.ttmc.analysis.impl;
+package hu.bme.mit.inf.ttmc.analysis.refutation.impl;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -8,7 +8,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-import hu.bme.mit.inf.ttmc.analysis.ItpRefutation;
+import hu.bme.mit.inf.ttmc.analysis.refutation.ItpRefutation;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.expr.impl.Exprs;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;

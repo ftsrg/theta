@@ -10,11 +10,11 @@ import java.util.stream.Collectors;
 
 import hu.bme.mit.inf.ttmc.analysis.Counterexample;
 import hu.bme.mit.inf.ttmc.analysis.ExprState;
-import hu.bme.mit.inf.ttmc.analysis.ItpRefutation;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.Concretizer;
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplState;
 import hu.bme.mit.inf.ttmc.analysis.impl.CounterexampleImpl;
-import hu.bme.mit.inf.ttmc.analysis.impl.ItpRefutationImpl;
+import hu.bme.mit.inf.ttmc.analysis.refutation.ItpRefutation;
+import hu.bme.mit.inf.ttmc.analysis.refutation.impl.ItpRefutationImpl;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.expr.impl.Exprs;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
