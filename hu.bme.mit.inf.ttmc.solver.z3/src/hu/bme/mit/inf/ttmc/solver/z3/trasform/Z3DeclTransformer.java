@@ -7,8 +7,8 @@ import java.util.List;
 import com.google.common.collect.ImmutableList;
 import com.microsoft.z3.Context;
 
-import hu.bme.mit.inf.ttmc.common.Tuple2;
-import hu.bme.mit.inf.ttmc.common.Tuples;
+import hu.bme.mit.inf.ttmc.common.Product2;
+import hu.bme.mit.inf.ttmc.common.Tuple;
 import hu.bme.mit.inf.ttmc.core.decl.ConstDecl;
 import hu.bme.mit.inf.ttmc.core.decl.Decl;
 import hu.bme.mit.inf.ttmc.core.decl.ParamDecl;
@@ -46,7 +46,7 @@ class Z3DeclTransformer {
 			if (symbol == null) {
 				final Type type = decl.getType();
 
-				final Tuple2<List<Type>, Type> extractedTypes = extractTypes(type);
+				final Product2<List<Type>, Type> extractedTypes = extractTypes(type);
 				final List<Type> paramTypes = extractedTypes._1();
 				final Type returnType = extractedTypes._2();
 
@@ -75,7 +75,7 @@ class Z3DeclTransformer {
 
 		////
 
-		private Tuple2<List<Type>, Type> extractTypes(final Type type) {
+		private Product2<List<Type>, Type> extractTypes(final Type type) {
 			if (type instanceof FuncType<?, ?>) {
 				final FuncType<?, ?> funcType = (FuncType<?, ?>) type;
 
@@ -84,16 +84,16 @@ class Z3DeclTransformer {
 
 				checkArgument(!(paramType instanceof FuncType));
 
-				final Tuple2<List<Type>, Type> subResult = extractTypes(resultType);
+				final Product2<List<Type>, Type> subResult = extractTypes(resultType);
 				final List<Type> paramTypes = subResult._1();
 				final Type newResultType = subResult._2();
 				final List<Type> newParamTypes = ImmutableList.<Type> builder().add(paramType).addAll(paramTypes)
 						.build();
-				final Tuple2<List<Type>, Type> result = Tuples.of(newParamTypes, newResultType);
+				final Product2<List<Type>, Type> result = Tuple.of(newParamTypes, newResultType);
 
 				return result;
 			} else {
-				return Tuples.of(ImmutableList.of(), type);
+				return Tuple.of(ImmutableList.of(), type);
 			}
 		}
 

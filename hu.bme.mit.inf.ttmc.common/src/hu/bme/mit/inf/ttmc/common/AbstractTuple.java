@@ -1,41 +1,39 @@
-package hu.bme.mit.inf.ttmc.common.impl;
+package hu.bme.mit.inf.ttmc.common;
 
-import java.util.List;
+import static com.google.common.base.Preconditions.checkPositionIndex;
+
 import java.util.StringJoiner;
 
-import com.google.common.collect.ImmutableList;
-
-import hu.bme.mit.inf.ttmc.common.Tuple;
-
-public abstract class AbstractTuple implements Tuple {
+abstract class AbstractTuple implements Product {
 
 	private volatile int hashCode = 0;
-	
-	private final List<Object> elems;
-	
-	public AbstractTuple(Object... elems) {
-		this.elems = ImmutableList.of(elems);
+
+	private final Object[] elems;
+
+	protected AbstractTuple(final Object... elems) {
+		this.elems = elems;
 	}
-	
+
 	@Override
-	public int getArity() {
-		return elems.size();
+	public int arity() {
+		return elems.length;
 	}
-	
+
 	@Override
-	public List<Object> getElems() {
-		return elems;
+	public Object elem(final int n) {
+		checkPositionIndex(n, elems.length);
+		return elems[n];
 	}
-	
+
 	@Override
 	public int hashCode() {
 		if (hashCode == 0) {
-			hashCode = getArity();
+			hashCode = arity();
 			hashCode = 31 * hashCode + elems.hashCode();
 		}
 		return hashCode;
 	}
-	
+
 	@Override
 	public boolean equals(final Object obj) {
 		if (this == obj) {
@@ -49,11 +47,11 @@ public abstract class AbstractTuple implements Tuple {
 			return false;
 		}
 	}
-	
+
 	@Override
 	public String toString() {
-		final StringJoiner sj = new StringJoiner(", ", "(", ")");
-		for (Object elem : elems) {
+		final StringJoiner sj = new StringJoiner(", ", "Tuple(", ")");
+		for (final Object elem : elems) {
 			sj.add(elem.toString());
 		}
 		return sj.toString();

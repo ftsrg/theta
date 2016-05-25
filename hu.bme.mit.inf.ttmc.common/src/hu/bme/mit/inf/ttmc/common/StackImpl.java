@@ -1,12 +1,10 @@
-package hu.bme.mit.inf.ttmc.common.impl;
+package hu.bme.mit.inf.ttmc.common;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
-
-import hu.bme.mit.inf.ttmc.common.Stack;
 
 
 public class StackImpl<T> implements Stack<T> {
