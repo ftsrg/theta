@@ -6,13 +6,13 @@ import java.util.Collection;
 
 import org.junit.Test;
 
-import hu.bme.mit.inf.ttmc.analysis.algorithm.Algorithm;
-import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.BasicAlgorithm;
+import hu.bme.mit.inf.ttmc.analysis.algorithm.checker.impl.BasicChecker;
 import hu.bme.mit.inf.ttmc.analysis.impl.NullPrecision;
 import hu.bme.mit.inf.ttmc.formalism.cfa.CFA;
 import hu.bme.mit.inf.ttmc.formalism.cfa.CFAEdge;
 import hu.bme.mit.inf.ttmc.formalism.cfa.CFALoc;
 import hu.bme.mit.inf.ttmc.formalism.cfa.impl.MutableCFA;
+import hu.bme.mit.inf.ttmc.formalism.common.automaton.Automaton;
 
 public class LocTests {
 
@@ -23,8 +23,9 @@ public class LocTests {
 		final LocAbstraction<CFALoc, CFAEdge> locAbstraction = CFALocAbstraction.create(cfa);
 
 		final LocState<CFALoc> finalState = LocState.create(cfa.getFinalLoc());
-		final Algorithm<LocState<CFALoc>, NullPrecision> algorithm = new BasicAlgorithm<>(LocDomain.create(), locAbstraction);
-		final Collection<LocState<CFALoc>> result = algorithm.run(NullPrecision.get());
+		final BasicChecker<Automaton<?, CFAEdge>, LocState<CFALoc>, NullPrecision> checker = BasicChecker.create(LocDomain.create(), locAbstraction);
+		checker.check(NullPrecision.get());
+		final Collection<LocState<CFALoc>> result = checker.getReachedSet();
 
 		assertTrue(result.contains(finalState));
 	}
