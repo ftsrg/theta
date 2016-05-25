@@ -26,7 +26,6 @@ import hu.bme.mit.inf.ttmc.analysis.algorithm.checker.Checker;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.checker.impl.BasicChecker;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.concretizer.Concretizer;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.concretizer.impl.STSExprSeqConcretizer;
-import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.BasicAlgorithm;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.CEGARLoopImpl;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.refiner.Refiner;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.refiner.impl.PredGlobalItpRefiner;
@@ -100,9 +99,10 @@ public class STSTests {
 		final Collection<Expr<? extends BoolType>> preds = new ArrayList<>();
 		preds.addAll(((OrExpr) sts.getProp()).getOps());
 		final STSPredAbstraction stsAbstraction = STSPredAbstraction.create(sts, solver);
-		final BasicAlgorithm<STS, PredState, PredPrecision> algorithm = new BasicAlgorithm<>(PredDomain.create(solver, sts), stsAbstraction);
+		final Checker<STS, PredState, PredPrecision> algorithm = BasicChecker.create(PredDomain.create(solver, sts), stsAbstraction);
 
-		final Collection<PredState> result = algorithm.run(GlobalPredPrecision.create(preds));
+		algorithm.check(GlobalPredPrecision.create(preds));
+		final Collection<PredState> result = algorithm.getReachedSet();
 
 		for (final PredState state : result) {
 			System.out.println(state);
@@ -116,9 +116,10 @@ public class STSTests {
 		final Set<VarDecl<? extends Type>> invisibleVars = sts.getVars().stream().filter(v -> !visibleVars.contains(v)).collect(Collectors.toSet());
 
 		final STSExplAbstraction stsAbstraction = STSExplAbstraction.create(sts, solver);
-		final BasicAlgorithm<STS, ExplState, ExplPrecision> algorithm = new BasicAlgorithm<>(ExplDomain.create(), stsAbstraction);
+		final Checker<STS, ExplState, ExplPrecision> algorithm = BasicChecker.create(ExplDomain.create(), stsAbstraction);
 
-		final Collection<ExplState> result = algorithm.run(GlobalExplPrecision.create(visibleVars, invisibleVars));
+		algorithm.check(GlobalExplPrecision.create(visibleVars, invisibleVars));
+		final Collection<ExplState> result = algorithm.getReachedSet();
 
 		for (final ExplState state : result) {
 			System.out.println(state);
@@ -132,9 +133,10 @@ public class STSTests {
 		final Set<VarDecl<? extends Type>> invisibleVars = sts.getVars().stream().filter(v -> !visibleVars.contains(v)).collect(Collectors.toSet());
 
 		final ARGFormalismAbstraction<STS, ExplState, ExplPrecision> stsAbstraction = ARGFormalismAbstraction.create(STSExplAbstraction.create(sts, solver));
-		final BasicAlgorithm<STS, ARGState<ExplState>, ExplPrecision> algorithm = new BasicAlgorithm<>(ARGDomain.create(ExplDomain.create()), stsAbstraction);
+		final Checker<STS, ARGState<ExplState>, ExplPrecision> algorithm = BasicChecker.create(ARGDomain.create(ExplDomain.create()), stsAbstraction);
 
-		final Collection<ARGState<ExplState>> result = algorithm.run(GlobalExplPrecision.create(visibleVars, invisibleVars));
+		algorithm.check(GlobalExplPrecision.create(visibleVars, invisibleVars));
+		final Collection<ARGState<ExplState>> result = algorithm.getReachedSet();
 
 		for (final ARGState<ExplState> state : result) {
 			System.out.println(state);
@@ -148,10 +150,11 @@ public class STSTests {
 		final Collection<Expr<? extends BoolType>> preds = new ArrayList<>();
 		preds.addAll(((OrExpr) sts.getProp()).getOps());
 		final ARGFormalismAbstraction<STS, PredState, PredPrecision> stsAbstraction = ARGFormalismAbstraction.create(STSPredAbstraction.create(sts, solver));
-		final BasicAlgorithm<STS, ARGState<PredState>, PredPrecision> algorithm = new BasicAlgorithm<>(ARGDomain.create(PredDomain.create(solver, sts)),
+		final Checker<STS, ARGState<PredState>, PredPrecision> algorithm = BasicChecker.create(ARGDomain.create(PredDomain.create(solver, sts)),
 				stsAbstraction);
 
-		final Collection<ARGState<PredState>> result = algorithm.run(GlobalPredPrecision.create(preds));
+		algorithm.check(GlobalPredPrecision.create(preds));
+		final Collection<ARGState<PredState>> result = algorithm.getReachedSet();
 
 		for (final ARGState<PredState> state : result) {
 			System.out.println(state);
