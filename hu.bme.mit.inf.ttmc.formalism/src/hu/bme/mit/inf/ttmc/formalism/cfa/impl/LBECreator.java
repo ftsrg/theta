@@ -11,8 +11,8 @@ import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 
-import hu.bme.mit.inf.ttmc.common.Tuple4;
-import hu.bme.mit.inf.ttmc.common.Tuples;
+import hu.bme.mit.inf.ttmc.common.Product4;
+import hu.bme.mit.inf.ttmc.common.Tuple;
 import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.formalism.cfa.CFA;
 import hu.bme.mit.inf.ttmc.formalism.cfa.CFAEdge;
@@ -37,12 +37,12 @@ public class LBECreator {
 	public static CFA create(final Stmt stmt) {
 		final MutableCFA cfa = new MutableCFA();
 		final LBECreatorVisitor visitor = new LBECreatorVisitor(cfa);
-		stmt.accept(visitor, Tuples.of(cfa.getInitLoc(), cfa.getFinalLoc(), new LinkedList<>(), new LinkedList<>()));
+		stmt.accept(visitor, Tuple.of(cfa.getInitLoc(), cfa.getFinalLoc(), new LinkedList<>(), new LinkedList<>()));
 		return ImmutableCFA.copyOf(cfa);
 	}
 
 	private static class LBECreatorVisitor
-			implements StmtVisitor<Tuple4<CFALoc, CFALoc, List<Stmt>, List<Stmt>>, Void> {
+			implements StmtVisitor<Product4<CFALoc, CFALoc, List<Stmt>, List<Stmt>>, Void> {
 
 		private final MutableCFA cfa;
 
@@ -61,11 +61,11 @@ public class LBECreator {
 			} else {
 				final Stmt head = postfix.get(0);
 				final List<Stmt> tail = postfix.subList(1, postfix.size());
-				head.accept(this, Tuples.of(source, target, prefix, tail));
+				head.accept(this, Tuple.of(source, target, prefix, tail));
 			}
 		}
 
-		private Void visitSimpleStatement(final Stmt stmt, final Tuple4<CFALoc, CFALoc, List<Stmt>, List<Stmt>> param) {
+		private Void visitSimpleStatement(final Stmt stmt, final Product4<CFALoc, CFALoc, List<Stmt>, List<Stmt>> param) {
 			final CFALoc source = param._1();
 			final CFALoc target = param._2();
 			final List<Stmt> prefix = param._3();
@@ -81,7 +81,7 @@ public class LBECreator {
 		////
 
 		@Override
-		public Void visit(final SkipStmt stmt, final Tuple4<CFALoc, CFALoc, List<Stmt>, List<Stmt>> param) {
+		public Void visit(final SkipStmt stmt, final Product4<CFALoc, CFALoc, List<Stmt>, List<Stmt>> param) {
 			final CFALoc source = param._1();
 			final CFALoc target = param._2();
 			final List<Stmt> prefix = param._3();
@@ -93,7 +93,7 @@ public class LBECreator {
 
 		@Override
 		public <DeclType extends Type, ExprType extends DeclType> Void visit(final DeclStmt<DeclType, ExprType> stmt,
-				final Tuple4<CFALoc, CFALoc, List<Stmt>, List<Stmt>> param) {
+				final Product4<CFALoc, CFALoc, List<Stmt>, List<Stmt>> param) {
 			final CFALoc source = param._1();
 			final CFALoc target = param._2();
 			final List<Stmt> prefix = param._3();
@@ -116,12 +116,12 @@ public class LBECreator {
 		}
 
 		@Override
-		public Void visit(final AssumeStmt stmt, final Tuple4<CFALoc, CFALoc, List<Stmt>, List<Stmt>> param) {
+		public Void visit(final AssumeStmt stmt, final Product4<CFALoc, CFALoc, List<Stmt>, List<Stmt>> param) {
 			return visitSimpleStatement(stmt, param);
 		}
 
 		@Override
-		public Void visit(final AssertStmt stmt, final Tuple4<CFALoc, CFALoc, List<Stmt>, List<Stmt>> param) {
+		public Void visit(final AssertStmt stmt, final Product4<CFALoc, CFALoc, List<Stmt>, List<Stmt>> param) {
 			final CFALoc source = param._1();
 			final CFALoc target = param._2();
 			final List<Stmt> prefix = param._3();
@@ -142,18 +142,18 @@ public class LBECreator {
 
 		@Override
 		public <DeclType extends Type, ExprType extends DeclType> Void visit(final AssignStmt<DeclType, ExprType> stmt,
-				final Tuple4<CFALoc, CFALoc, List<Stmt>, List<Stmt>> param) {
+				final Product4<CFALoc, CFALoc, List<Stmt>, List<Stmt>> param) {
 			return visitSimpleStatement(stmt, param);
 		}
 
 		@Override
 		public <DeclType extends Type> Void visit(final HavocStmt<DeclType> stmt,
-				final Tuple4<CFALoc, CFALoc, List<Stmt>, List<Stmt>> param) {
+				final Product4<CFALoc, CFALoc, List<Stmt>, List<Stmt>> param) {
 			return visitSimpleStatement(stmt, param);
 		}
 
 		@Override
-		public Void visit(final BlockStmt stmt, final Tuple4<CFALoc, CFALoc, List<Stmt>, List<Stmt>> param) {
+		public Void visit(final BlockStmt stmt, final Product4<CFALoc, CFALoc, List<Stmt>, List<Stmt>> param) {
 			final CFALoc source = param._1();
 			final CFALoc target = param._2();
 			final List<Stmt> prefix = param._3();
@@ -169,7 +169,7 @@ public class LBECreator {
 
 		@Override
 		public <ReturnType extends Type> Void visit(final ReturnStmt<ReturnType> stmt,
-				final Tuple4<CFALoc, CFALoc, List<Stmt>, List<Stmt>> param) {
+				final Product4<CFALoc, CFALoc, List<Stmt>, List<Stmt>> param) {
 			final CFALoc source = param._1();
 			final List<Stmt> prefix = param._3();
 
@@ -181,7 +181,7 @@ public class LBECreator {
 		}
 
 		@Override
-		public Void visit(final IfStmt stmt, final Tuple4<CFALoc, CFALoc, List<Stmt>, List<Stmt>> param) {
+		public Void visit(final IfStmt stmt, final Product4<CFALoc, CFALoc, List<Stmt>, List<Stmt>> param) {
 			final CFALoc source = param._1();
 			final CFALoc target = param._2();
 			final List<Stmt> prefix = param._3();
@@ -201,7 +201,7 @@ public class LBECreator {
 		}
 
 		@Override
-		public Void visit(final IfElseStmt stmt, final Tuple4<CFALoc, CFALoc, List<Stmt>, List<Stmt>> param) {
+		public Void visit(final IfElseStmt stmt, final Product4<CFALoc, CFALoc, List<Stmt>, List<Stmt>> param) {
 			final CFALoc source = param._1();
 			final CFALoc target = param._2();
 			final List<Stmt> prefix = param._3();
@@ -221,7 +221,7 @@ public class LBECreator {
 		}
 
 		@Override
-		public Void visit(final WhileStmt stmt, final Tuple4<CFALoc, CFALoc, List<Stmt>, List<Stmt>> param) {
+		public Void visit(final WhileStmt stmt, final Product4<CFALoc, CFALoc, List<Stmt>, List<Stmt>> param) {
 			final CFALoc source = param._1();
 			final CFALoc target = param._2();
 			final List<Stmt> prefix = param._3();
@@ -249,7 +249,7 @@ public class LBECreator {
 		}
 
 		@Override
-		public Void visit(final DoStmt stmt, final Tuple4<CFALoc, CFALoc, List<Stmt>, List<Stmt>> param) {
+		public Void visit(final DoStmt stmt, final Product4<CFALoc, CFALoc, List<Stmt>, List<Stmt>> param) {
 			final CFALoc source = param._1();
 			final CFALoc target = param._2();
 			final List<Stmt> prefix = param._3();

@@ -1,12 +1,35 @@
 package hu.bme.mit.inf.ttmc.common;
 
-public interface Tuple3<T1, T2, T3> extends Tuple {
+import static com.google.common.base.Preconditions.checkNotNull;
 
-	public T1 _1();
-	public T2 _2();
-	public T3 _3();
-	
-	public <T> Tuple3<T, T2, T3> with1(T e);
-	public <T> Tuple3<T1, T, T3> with2(T e);
-	public <T> Tuple3<T1, T2, T> with3(T e);
+public final class Tuple3<T1, T2, T3> extends AbstractTuple implements Product3<T1, T2, T3> {
+
+	Tuple3(final T1 e1, final T2 e2, final T3 e3) {
+		super(e1, e2, e3);
+		checkNotNull(e1);
+		checkNotNull(e2);
+		checkNotNull(e3);
+	}
+
+	@Override
+	public T1 _1() {
+		@SuppressWarnings("unchecked")
+		final T1 result = (T1) elem(0);
+		return result;
+	}
+
+	@Override
+	public T2 _2() {
+		@SuppressWarnings("unchecked")
+		final T2 result = (T2) elem(1);
+		return result;
+	}
+
+	@Override
+	public T3 _3() {
+		@SuppressWarnings("unchecked")
+		final T3 result = (T3) elem(2);
+		return result;
+	}
+
 }
