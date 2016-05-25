@@ -28,7 +28,8 @@ import hu.bme.mit.inf.ttmc.analysis.algorithm.concretizer.Concretizer;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.concretizer.impl.STSExprSeqConcretizer;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.CEGARLoopImpl;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.refiner.Refiner;
-import hu.bme.mit.inf.ttmc.analysis.algorithm.refiner.impl.PredGlobalItpRefiner;
+import hu.bme.mit.inf.ttmc.analysis.algorithm.refiner.impl.GlobalExplItpRefiner;
+import hu.bme.mit.inf.ttmc.analysis.algorithm.refiner.impl.GlobalPredItpRefiner;
 import hu.bme.mit.inf.ttmc.analysis.arg.ARGDomain;
 import hu.bme.mit.inf.ttmc.analysis.arg.ARGFormalismAbstraction;
 import hu.bme.mit.inf.ttmc.analysis.arg.ARGState;
@@ -56,6 +57,7 @@ import hu.bme.mit.inf.ttmc.formalism.common.decl.impl.Decls2;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 import hu.bme.mit.inf.ttmc.formalism.sts.impl.STSImpl;
 import hu.bme.mit.inf.ttmc.formalism.sts.impl.STSImpl.Builder;
+import hu.bme.mit.inf.ttmc.formalism.utils.sts.impl.STSITETransformation;
 import hu.bme.mit.inf.ttmc.solver.ItpSolver;
 import hu.bme.mit.inf.ttmc.solver.SolverManager;
 import hu.bme.mit.inf.ttmc.solver.z3.Z3SolverManager;
@@ -71,11 +73,12 @@ public class STSTests {
 		manager = new Z3SolverManager();
 		solver = manager.createItpSolver();
 		sts = createSimpleSTS();
+		sts = new STSITETransformation().transform(sts);
 		System.out.println(sts);
 	}
 
 	@Test
-	public void testCegar() {
+	public void testCegarPred() {
 		final Collection<Expr<? extends BoolType>> preds = new ArrayList<>();
 		preds.add(Exprs.True());
 		final STSPredAbstraction stsAbstraction = STSPredAbstraction.create(sts, solver);
@@ -83,12 +86,29 @@ public class STSTests {
 		final GlobalPredPrecision precision = GlobalPredPrecision.create(preds);
 
 		final Checker<STS, PredState, PredPrecision> checker = BasicChecker.create(domain, stsAbstraction);
-
 		final Concretizer<STS, ExprState, ItpRefutation> concretizer = STSExprSeqConcretizer.create(sts, solver);
-
-		final Refiner<PredState, GlobalPredPrecision, ItpRefutation> refiner = PredGlobalItpRefiner.create();
+		final Refiner<PredState, GlobalPredPrecision, ItpRefutation> refiner = GlobalPredItpRefiner.create();
 
 		final CEGARLoop<GlobalPredPrecision> cegarLoop = CEGARLoopImpl.create(checker, concretizer, refiner);
+
+		System.out.println(cegarLoop.check(precision));
+
+	}
+
+	@Test
+	public void testCegarExpl() {
+		final Set<VarDecl<? extends Type>> visibleVars = sts.getVars().stream().filter(v -> v.getName().equals("x")).collect(Collectors.toSet());
+		final Set<VarDecl<? extends Type>> invisibleVars = sts.getVars().stream().filter(v -> !visibleVars.contains(v)).collect(Collectors.toSet());
+
+		final STSExplAbstraction stsAbstraction = STSExplAbstraction.create(sts, solver);
+		final ExplDomain domain = ExplDomain.create();
+		final GlobalExplPrecision precision = GlobalExplPrecision.create(visibleVars, invisibleVars);
+
+		final Checker<STS, ExplState, ExplPrecision> checker = BasicChecker.create(domain, stsAbstraction);
+		final Concretizer<STS, ExprState, ItpRefutation> concretizer = STSExprSeqConcretizer.create(sts, solver);
+		final Refiner<ExplState, GlobalExplPrecision, ItpRefutation> refiner = GlobalExplItpRefiner.create();
+
+		final CEGARLoop<GlobalExplPrecision> cegarLoop = CEGARLoopImpl.create(checker, concretizer, refiner);
 
 		System.out.println(cegarLoop.check(precision));
 
