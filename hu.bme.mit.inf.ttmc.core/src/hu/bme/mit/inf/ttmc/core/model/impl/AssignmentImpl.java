@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.StringJoiner;
 
@@ -81,8 +82,8 @@ public final class AssignmentImpl implements Assignment {
 	@Override
 	public Expr<? extends BoolType> toExpr() {
 		final List<Expr<? extends BoolType>> ops = new ArrayList<>(declToExpr.size());
-		for (final Decl<?, ?> decl : declToExpr.keySet()) {
-			ops.add(Exprs.Eq(decl.getRef(), declToExpr.get(decl)));
+		for (final Entry<Decl<?, ?>, LitExpr<?>> entry : declToExpr.entrySet()) {
+			ops.add(Exprs.Eq(entry.getKey().getRef(), entry.getValue()));
 		}
 		if (ops.size() == 0) {
 			return Exprs.True();
