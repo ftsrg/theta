@@ -11,7 +11,7 @@ import hu.bme.mit.inf.ttmc.formalism.common.expr.ProcCallExpr;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.ProcRefExpr;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.VarRefExpr;
 
-public class ExprUnfolder {
+public class PathUtils {
 
 	private static final UnfoldVisitor VISITOR;
 
@@ -19,7 +19,7 @@ public class ExprUnfolder {
 		VISITOR = new UnfoldVisitor();
 	}
 
-	private ExprUnfolder() {
+	private PathUtils() {
 	}
 
 	public static <T extends Type> Expr<T> unfold(final Expr<T> expr, final int i) {
