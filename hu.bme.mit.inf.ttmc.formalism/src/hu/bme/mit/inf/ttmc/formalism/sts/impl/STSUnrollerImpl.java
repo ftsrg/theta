@@ -14,22 +14,20 @@ import hu.bme.mit.inf.ttmc.core.utils.impl.ExprUtils;
 import hu.bme.mit.inf.ttmc.formalism.common.Valuation;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
+import hu.bme.mit.inf.ttmc.formalism.utils.ExprUnfolder;
 import hu.bme.mit.inf.ttmc.formalism.utils.impl.FoldVisitor;
-import hu.bme.mit.inf.ttmc.formalism.utils.impl.UnfoldVisitor;
 
 class STSUnrollerImpl {
 	private final STS sts;
-	private final UnfoldVisitor ufVisitor;
 	private final FoldVisitor fVisitor;
 
 	public STSUnrollerImpl(final STS sts) {
 		this.sts = sts;
-		ufVisitor = new UnfoldVisitor();
 		fVisitor = new FoldVisitor();
 	}
 
 	public Expr<? extends BoolType> unroll(final Expr<? extends BoolType> expr, final int i) {
-		return ExprUtils.cast(expr.accept(ufVisitor, i), BoolType.class);
+		return ExprUnfolder.unfold(expr, i);
 	}
 
 	public Collection<? extends Expr<? extends BoolType>> unroll(
