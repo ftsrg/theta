@@ -14,8 +14,7 @@ import hu.bme.mit.inf.ttmc.core.utils.impl.ExprUtils;
 import hu.bme.mit.inf.ttmc.formalism.common.Valuation;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
-import hu.bme.mit.inf.ttmc.formalism.utils.ExprUnfolder;
-import hu.bme.mit.inf.ttmc.formalism.utils.impl.FoldVisitor;
+import hu.bme.mit.inf.ttmc.formalism.utils.PathUtils;
 
 class STSUnrollerImpl {
 	private final STS sts;
@@ -27,7 +26,7 @@ class STSUnrollerImpl {
 	}
 
 	public Expr<? extends BoolType> unroll(final Expr<? extends BoolType> expr, final int i) {
-		return ExprUnfolder.unfold(expr, i);
+		return PathUtils.unfold(expr, i);
 	}
 
 	public Collection<? extends Expr<? extends BoolType>> unroll(
