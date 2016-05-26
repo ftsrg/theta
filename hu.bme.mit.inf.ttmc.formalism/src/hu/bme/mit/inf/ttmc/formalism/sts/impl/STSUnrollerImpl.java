@@ -10,19 +10,17 @@ import hu.bme.mit.inf.ttmc.core.expr.LitExpr;
 import hu.bme.mit.inf.ttmc.core.model.Model;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.core.type.Type;
-import hu.bme.mit.inf.ttmc.core.utils.impl.ExprUtils;
 import hu.bme.mit.inf.ttmc.formalism.common.Valuation;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 import hu.bme.mit.inf.ttmc.formalism.utils.PathUtils;
 
 class STSUnrollerImpl {
+
 	private final STS sts;
-	private final FoldVisitor fVisitor;
 
 	public STSUnrollerImpl(final STS sts) {
 		this.sts = sts;
-		fVisitor = new FoldVisitor();
 	}
 
 	public Expr<? extends BoolType> unroll(final Expr<? extends BoolType> expr, final int i) {
@@ -78,7 +76,7 @@ class STSUnrollerImpl {
 	}
 
 	public Expr<? extends BoolType> foldin(final Expr<? extends BoolType> expr, final int i) {
-		return ExprUtils.cast(expr.accept(fVisitor, i), BoolType.class);
+		return PathUtils.fold(expr, i);
 	}
 
 }
