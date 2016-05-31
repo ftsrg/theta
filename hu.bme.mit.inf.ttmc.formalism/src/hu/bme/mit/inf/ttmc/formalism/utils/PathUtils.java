@@ -5,8 +5,11 @@ import static com.google.common.base.Preconditions.checkState;
 import hu.bme.mit.inf.ttmc.core.decl.ConstDecl;
 import hu.bme.mit.inf.ttmc.core.expr.ConstRefExpr;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.expr.LitExpr;
+import hu.bme.mit.inf.ttmc.core.model.Model;
 import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.core.utils.impl.ExprRewriterVisitor;
+import hu.bme.mit.inf.ttmc.formalism.common.Valuation;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.IndexedConstDecl;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.PrimedExpr;
@@ -40,6 +43,21 @@ public class PathUtils {
 		@SuppressWarnings("unchecked")
 		final Expr<T> result = (Expr<T>) expr.accept(FOLD_VISITOR, i);
 		return result;
+	}
+
+	public static Valuation extractValuation(final Model model, final int i) {
+		final Valuation.Builder builder = new Valuation.Builder();
+		for (final ConstDecl<?> constDecl : model.getDecls()) {
+			if (constDecl instanceof IndexedConstDecl) {
+				final IndexedConstDecl<?> indexedConstDecl = (IndexedConstDecl<?>) constDecl;
+				if (indexedConstDecl.getIndex() == i) {
+					final VarDecl<?> varDecl = indexedConstDecl.getVarDecl();
+					final LitExpr<?> value = model.eval(indexedConstDecl).get();
+					builder.put(varDecl, value);
+				}
+			}
+		}
+		return builder.build();
 	}
 
 	////
