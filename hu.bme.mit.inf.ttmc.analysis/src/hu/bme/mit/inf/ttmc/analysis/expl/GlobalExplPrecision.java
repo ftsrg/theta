@@ -1,4 +1,4 @@
-package hu.bme.mit.inf.ttmc.analysis.expl.precisions;
+package hu.bme.mit.inf.ttmc.analysis.expl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -8,8 +8,6 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
-import hu.bme.mit.inf.ttmc.analysis.expl.ExplPrecision;
-import hu.bme.mit.inf.ttmc.analysis.expl.ExplState;
 import hu.bme.mit.inf.ttmc.core.expr.LitExpr;
 import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.formalism.common.Valuation;
