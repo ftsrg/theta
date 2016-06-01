@@ -1,4 +1,4 @@
-package hu.bme.mit.inf.ttmc.analysis.expl;
+package hu.bme.mit.inf.ttmc.analysis.sts.expl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -7,33 +7,32 @@ import java.util.HashSet;
 import java.util.Set;
 
 import hu.bme.mit.inf.ttmc.analysis.TransferFunction;
-import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.analysis.expl.ExplPrecision;
+import hu.bme.mit.inf.ttmc.analysis.expl.ExplState;
+import hu.bme.mit.inf.ttmc.analysis.sts.STSAction;
 import hu.bme.mit.inf.ttmc.core.expr.impl.Exprs;
-import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.formalism.common.Valuation;
 import hu.bme.mit.inf.ttmc.formalism.utils.PathUtils;
 import hu.bme.mit.inf.ttmc.solver.Solver;
 
-class ExplTransferFunction implements TransferFunction<ExplState, ExplPrecision> {
+class ExplTransferFunction implements TransferFunction<ExplState, ExplPrecision, STSAction> {
 
 	private final Solver solver;
-	private final Expr<? extends BoolType> trans;
 
-	ExplTransferFunction(final Solver solver, final Expr<? extends BoolType> trans) {
+	ExplTransferFunction(final Solver solver) {
 		checkNotNull(solver);
-		checkNotNull(trans);
 		this.solver = solver;
-		this.trans = trans;
 	}
 
 	@Override
-	public Collection<ExplState> getSuccStates(final ExplState state, final ExplPrecision precision) {
+	public Collection<ExplState> getSuccStates(final ExplState state, final ExplPrecision precision,
+			final STSAction action) {
 		checkNotNull(state);
 		checkNotNull(precision);
 		final Set<ExplState> succStates = new HashSet<>();
 		solver.push();
 		solver.add(PathUtils.unfold(state.toExpr(), 0));
-		solver.add(PathUtils.unfold(trans, 0));
+		solver.add(PathUtils.unfold(action.getTrans(), 0));
 		boolean moreSuccStates;
 		do {
 			moreSuccStates = solver.check().boolValue();
