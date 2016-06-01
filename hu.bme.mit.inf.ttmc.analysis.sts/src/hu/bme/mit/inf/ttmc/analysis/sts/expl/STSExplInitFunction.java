@@ -16,12 +16,12 @@ import hu.bme.mit.inf.ttmc.formalism.common.Valuation;
 import hu.bme.mit.inf.ttmc.formalism.utils.PathUtils;
 import hu.bme.mit.inf.ttmc.solver.Solver;
 
-class ExplInitFunction implements InitFunction<ExplState, ExplPrecision> {
+class STSExplInitFunction implements InitFunction<ExplState, ExplPrecision> {
 
 	private final Solver solver;
 	private final Expr<? extends BoolType> init;
 
-	ExplInitFunction(final Solver solver, final Expr<? extends BoolType> init) {
+	STSExplInitFunction(final Solver solver, final Expr<? extends BoolType> init) {
 		checkNotNull(solver);
 		checkNotNull(init);
 		this.solver = solver;
