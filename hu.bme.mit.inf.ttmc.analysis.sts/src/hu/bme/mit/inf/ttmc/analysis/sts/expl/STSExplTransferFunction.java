@@ -15,11 +15,11 @@ import hu.bme.mit.inf.ttmc.formalism.common.Valuation;
 import hu.bme.mit.inf.ttmc.formalism.utils.PathUtils;
 import hu.bme.mit.inf.ttmc.solver.Solver;
 
-class ExplTransferFunction implements TransferFunction<ExplState, ExplPrecision, STSAction> {
+class STSExplTransferFunction implements TransferFunction<ExplState, ExplPrecision, STSAction> {
 
 	private final Solver solver;
 
-	ExplTransferFunction(final Solver solver) {
+	STSExplTransferFunction(final Solver solver) {
 		checkNotNull(solver);
 		this.solver = solver;
 	}
