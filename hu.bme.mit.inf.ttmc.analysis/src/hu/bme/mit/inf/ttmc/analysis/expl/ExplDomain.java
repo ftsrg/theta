@@ -21,9 +21,14 @@ public class ExplDomain implements Domain<ExplState> {
 	}
 
 	@Override
-	public ExplState join(final ExplState state1, final ExplState state2) {
+	public boolean isTop(final ExplState state) {
+		return state.getVars().isEmpty();
+	}
+
+	@Override
+	public boolean isBottom(final ExplState state) {
 		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO");
+		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
 
 	@Override
@@ -33,6 +38,12 @@ public class ExplDomain implements Domain<ExplState> {
 				return false;
 		}
 		return true;
+	}
+
+	@Override
+	public ExplState join(final ExplState state1, final ExplState state2) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("TODO");
 	}
 
 }

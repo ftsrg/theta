@@ -3,8 +3,8 @@ package hu.bme.mit.inf.ttmc.analysis;
 import java.util.Collection;
 
 @FunctionalInterface
-public interface TransferFunction<S extends State, P extends Precision, A extends Action> {
+public interface TransferFunction<S extends State, P extends Precision, Trans> {
 
-	Collection<? extends S> getSuccStates(S state, P precision, A action);
+	Collection<S> getSuccStates(S state, P precision, Trans trans);
 
 }

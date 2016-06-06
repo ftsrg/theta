@@ -5,8 +5,8 @@ import java.util.Set;
 
 import hu.bme.mit.inf.ttmc.analysis.Counterexample;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.refiner.Refiner;
+import hu.bme.mit.inf.ttmc.analysis.pred.GlobalPredPrecision;
 import hu.bme.mit.inf.ttmc.analysis.pred.PredState;
-import hu.bme.mit.inf.ttmc.analysis.pred.precisions.GlobalPredPrecision;
 import hu.bme.mit.inf.ttmc.analysis.refutation.ItpRefutation;
 import hu.bme.mit.inf.ttmc.core.expr.BoolLitExpr;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
