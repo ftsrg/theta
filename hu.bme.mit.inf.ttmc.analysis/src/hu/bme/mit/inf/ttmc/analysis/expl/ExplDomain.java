@@ -22,7 +22,7 @@ public class ExplDomain implements Domain<ExplState> {
 
 	@Override
 	public boolean isTop(final ExplState state) {
-		return state.getVars().isEmpty();
+		return state.getDecls().isEmpty();
 	}
 
 	@Override
@@ -33,8 +33,8 @@ public class ExplDomain implements Domain<ExplState> {
 
 	@Override
 	public boolean isLeq(final ExplState state1, final ExplState state2) {
-		for (final VarDecl<? extends Type> varDecl : state2.getVars()) {
-			if (!state1.getVars().contains(varDecl) || !state2.getValue(varDecl).equals(state1.getValue(varDecl)))
+		for (final VarDecl<? extends Type> varDecl : state2.getDecls()) {
+			if (!state1.getDecls().contains(varDecl) || !state2.getValue(varDecl).equals(state1.getValue(varDecl)))
 				return false;
 		}
 		return true;
