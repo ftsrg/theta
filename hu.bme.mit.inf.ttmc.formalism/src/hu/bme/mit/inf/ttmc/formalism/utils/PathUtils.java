@@ -46,7 +46,7 @@ public class PathUtils {
 	}
 
 	public static Valuation extractValuation(final Model model, final int i) {
-		final Valuation.Builder builder = new Valuation.Builder();
+		final Valuation.Builder builder = Valuation.builder();
 		for (final ConstDecl<?> constDecl : model.getDecls()) {
 			if (constDecl instanceof IndexedConstDecl) {
 				final IndexedConstDecl<?> indexedConstDecl = (IndexedConstDecl<?>) constDecl;

@@ -1,9 +1,11 @@
 package hu.bme.mit.inf.ttmc.formalism.common;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,23 +23,26 @@ import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 
 public final class Valuation implements Assignment {
 
-	private final Collection<VarDecl<? extends Type>> decls;
 	private final Map<VarDecl<? extends Type>, LitExpr<?>> declToExpr;
 
 	private volatile Expr<? extends BoolType> expr = null;
 
-	private Valuation(final Map<VarDecl<? extends Type>, LitExpr<?>> declToExpr) {
-		this.declToExpr = declToExpr;
-		this.decls = declToExpr.keySet();
+	private Valuation(final Builder builder) {
+		this.declToExpr = builder.declToExpr;
+	}
+
+	public static Builder builder() {
+		return new Builder();
 	}
 
 	@Override
 	public Collection<? extends VarDecl<? extends Type>> getDecls() {
-		return decls;
+		return Collections.unmodifiableCollection(declToExpr.keySet());
 	}
 
 	@Override
-	public <DeclType extends Type, DeclKind extends Decl<DeclType, DeclKind>> Optional<LitExpr<DeclType>> eval(final Decl<DeclType, DeclKind> decl) {
+	public <DeclType extends Type, DeclKind extends Decl<DeclType, DeclKind>> Optional<LitExpr<DeclType>> eval(
+			final Decl<DeclType, DeclKind> decl) {
 		checkNotNull(decl);
 		assert (decl instanceof VarDecl<?>);
 
@@ -74,24 +79,6 @@ public final class Valuation implements Assignment {
 		return result;
 	}
 
-	public static final class Builder {
-		private final Map<VarDecl<? extends Type>, LitExpr<?>> declToExpr;
-
-		public Builder() {
-			this.declToExpr = new HashMap<>();
-		}
-
-		public Builder put(final VarDecl<? extends Type> decl, final LitExpr<? extends Type> lit) {
-			declToExpr.put(decl, lit);
-			return this;
-		}
-
-		public Valuation build() {
-			return new Valuation(declToExpr);
-		}
-
-	}
-
 	@Override
 	public boolean equals(final Object obj) {
 		if (this == obj) {
@@ -119,7 +106,7 @@ public final class Valuation implements Assignment {
 	@Override
 	public String toString() {
 		final StringJoiner sj = new StringJoiner(", ", "Assignment(", ")");
-		for (final VarDecl<?> decl : decls) {
+		for (final VarDecl<?> decl : getDecls()) {
 			final StringBuilder sb = new StringBuilder();
 			sb.append(decl.getName());
 			sb.append(" <- ");
@@ -129,5 +116,25 @@ public final class Valuation implements Assignment {
 			sj.add(sb);
 		}
 		return sj.toString();
+	}
+
+	public static final class Builder {
+		private final Map<VarDecl<? extends Type>, LitExpr<?>> declToExpr;
+
+		private Builder() {
+			this.declToExpr = new HashMap<>();
+		}
+
+		public Builder put(final VarDecl<?> decl, final LitExpr<?> value) {
+			checkArgument(value.getType().isLeq(decl.getType()));
+
+			declToExpr.put(decl, value);
+			return this;
+		}
+
+		public Valuation build() {
+			return new Valuation(this);
+		}
+
 	}
 }

@@ -51,7 +51,7 @@ class STSUnrollerImpl {
 	public Valuation getConcreteState(final Model model, final int i,
 			final Collection<VarDecl<? extends Type>> variables) {
 
-		final Valuation.Builder builder = new Valuation.Builder();
+		final Valuation.Builder builder = Valuation.builder();
 
 		for (final VarDecl<? extends Type> varDecl : variables) {
 			LitExpr<? extends Type> value = null;
