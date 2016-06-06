@@ -18,11 +18,13 @@ public class GlobalExplPrecision implements ExplPrecision {
 	private final Set<VarDecl<? extends Type>> visibleVars;
 	private final Set<VarDecl<? extends Type>> invisibleVars;
 
-	public static GlobalExplPrecision create(final Collection<VarDecl<? extends Type>> visibleVars, final Collection<VarDecl<? extends Type>> invisibleVars) {
+	public static GlobalExplPrecision create(final Collection<VarDecl<? extends Type>> visibleVars,
+			final Collection<VarDecl<? extends Type>> invisibleVars) {
 		return new GlobalExplPrecision(visibleVars, invisibleVars);
 	}
 
-	private GlobalExplPrecision(final Collection<VarDecl<? extends Type>> visibleVars, final Collection<VarDecl<? extends Type>> invisibleVars) {
+	private GlobalExplPrecision(final Collection<VarDecl<? extends Type>> visibleVars,
+			final Collection<VarDecl<? extends Type>> invisibleVars) {
 		checkNotNull(visibleVars);
 		checkNotNull(invisibleVars);
 		this.visibleVars = Collections.unmodifiableSet(new HashSet<>(visibleVars));
@@ -38,7 +40,7 @@ public class GlobalExplPrecision implements ExplPrecision {
 	@Override
 	public ExplState mapToAbstractState(final Valuation valuation) {
 		checkNotNull(valuation);
-		final Valuation.Builder builder = new Valuation.Builder();
+		final Valuation.Builder builder = Valuation.builder();
 		for (final VarDecl<? extends Type> visibleVar : visibleVars) {
 			final Optional<? extends LitExpr<? extends Type>> eval = valuation.eval(visibleVar);
 			if (eval.isPresent()) {
