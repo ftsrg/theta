@@ -31,12 +31,14 @@ public class FormalismUtils {
 
 	@SuppressWarnings("unchecked")
 	public static Expr<? extends BoolType> eliminate(final Expr<? extends BoolType> expr) {
-		return (Expr<? extends BoolType>) expr.accept(new FormalismITEPropagatorVisitor(new FormalismITEPusherVisitor()), null)
+		return (Expr<? extends BoolType>) expr
+				.accept(new FormalismITEPropagatorVisitor(new FormalismITEPusherVisitor()), null)
 				.accept(new FormalismITERemoverVisitor(), null);
 	}
 
-	public static void collectVars(final Expr<? extends Type> expr, final Collection<VarDecl<? extends Type>> collectTo) {
-		expr.accept(new VarCollectorVisitor(), collectTo);
+	public static void collectVars(final Expr<? extends Type> expr,
+			final Collection<VarDecl<? extends Type>> collectTo) {
+		expr.accept(VarCollectorVisitor.getInstance(), collectTo);
 	}
 
 	public static Set<VarDecl<? extends Type>> collectVars(final Expr<? extends Type> expr) {
@@ -49,12 +51,14 @@ public class FormalismUtils {
 		return new CNFTransformation();
 	}
 
-	public static void collectAtoms(final Expr<? extends BoolType> expr, final Collection<Expr<? extends BoolType>> collectTo) {
+	public static void collectAtoms(final Expr<? extends BoolType> expr,
+			final Collection<Expr<? extends BoolType>> collectTo) {
 		expr.accept(new FormalismAtomCollectorVisitor(), collectTo);
 	}
 
 	@SuppressWarnings("unchecked")
-	public static <ExprType extends Type> Expr<? extends ExprType> simplify(final Expr<? extends ExprType> expr, final Assignment assignment) {
+	public static <ExprType extends Type> Expr<? extends ExprType> simplify(final Expr<? extends ExprType> expr,
+			final Assignment assignment) {
 		return (Expr<? extends ExprType>) expr.accept(new FormalismExprSimplifierVisitor(), assignment);
 	}
 
@@ -63,7 +67,8 @@ public class FormalismUtils {
 	}
 
 	@SuppressWarnings("unchecked")
-	public static <ExprType extends Type> LitExpr<? extends ExprType> evaluate(final Expr<? extends ExprType> expr, final Assignment assignment) {
+	public static <ExprType extends Type> LitExpr<? extends ExprType> evaluate(final Expr<? extends ExprType> expr,
+			final Assignment assignment) {
 		final Expr<? extends ExprType> simplified = simplify(expr, assignment);
 		if (simplified instanceof LitExpr<?>) {
 			return (LitExpr<ExprType>) simplified;
