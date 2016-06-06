@@ -36,12 +36,12 @@ public class FormalismUtils {
 				.accept(new FormalismITERemoverVisitor(), null);
 	}
 
-	public static void collectVars(final Expr<? extends Type> expr,
+	public static void collectVars(final Expr<?> expr,
 			final Collection<VarDecl<? extends Type>> collectTo) {
 		expr.accept(VarCollectorVisitor.getInstance(), collectTo);
 	}
 
-	public static Set<VarDecl<? extends Type>> collectVars(final Expr<? extends Type> expr) {
+	public static Set<VarDecl<? extends Type>> collectVars(final Expr<?> expr) {
 		final Set<VarDecl<? extends Type>> vars = new HashSet<>();
 		collectVars(expr, vars);
 		return vars;
