@@ -1,4 +1,4 @@
-package hu.bme.mit.inf.ttmc.analysis.pred.precisions;
+package hu.bme.mit.inf.ttmc.analysis.pred;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -10,8 +10,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import hu.bme.mit.inf.ttmc.analysis.pred.PredPrecision;
-import hu.bme.mit.inf.ttmc.analysis.pred.PredState;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.expr.LitExpr;
 import hu.bme.mit.inf.ttmc.core.expr.NotExpr;

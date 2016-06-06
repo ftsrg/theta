@@ -1,4 +1,4 @@
-package hu.bme.mit.inf.ttmc.analysis.sts.expl;
+package hu.bme.mit.inf.ttmc.analysis.sts.pred;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -7,8 +7,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 import hu.bme.mit.inf.ttmc.analysis.InitFunction;
-import hu.bme.mit.inf.ttmc.analysis.expl.ExplPrecision;
-import hu.bme.mit.inf.ttmc.analysis.expl.ExplState;
+import hu.bme.mit.inf.ttmc.analysis.pred.PredPrecision;
+import hu.bme.mit.inf.ttmc.analysis.pred.PredState;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.expr.impl.Exprs;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
@@ -16,20 +16,18 @@ import hu.bme.mit.inf.ttmc.formalism.common.Valuation;
 import hu.bme.mit.inf.ttmc.formalism.utils.PathUtils;
 import hu.bme.mit.inf.ttmc.solver.Solver;
 
-class STSExplInitFunction implements InitFunction<ExplState, ExplPrecision, Expr<? extends BoolType>> {
+public class STSPredInitFunction implements InitFunction<PredState, PredPrecision, Expr<? extends BoolType>> {
 
 	private final Solver solver;
 
-	STSExplInitFunction(final Solver solver) {
+	STSPredInitFunction(final Solver solver) {
 		this.solver = solver;
 	}
 
 	@Override
-	public Collection<ExplState> getInitStates(final ExplPrecision precision, final Expr<? extends BoolType> init) {
+	public Collection<PredState> getInitStates(final PredPrecision precision, final Expr<? extends BoolType> init) {
 		checkNotNull(precision);
-		checkNotNull(init);
-
-		final Set<ExplState> initStates = new HashSet<>();
+		final Set<PredState> initStates = new HashSet<>();
 		boolean moreInitStates;
 		solver.push();
 		solver.add(PathUtils.unfold(init, 0));
@@ -37,12 +35,14 @@ class STSExplInitFunction implements InitFunction<ExplState, ExplPrecision, Expr
 			moreInitStates = solver.check().boolValue();
 			if (moreInitStates) {
 				final Valuation nextInitStateVal = PathUtils.extractValuation(solver.getModel(), 0);
-				final ExplState nextInitState = precision.mapToAbstractState(nextInitStateVal);
+
+				final PredState nextInitState = precision.mapToAbstractState(nextInitStateVal);
 				initStates.add(nextInitState);
 				solver.add(PathUtils.unfold(Exprs.Not(nextInitState.toExpr()), 0));
 			}
 		} while (moreInitStates);
 		solver.pop();
+
 		return initStates;
 	}
 
