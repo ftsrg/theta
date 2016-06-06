@@ -32,10 +32,6 @@ public class ExplState implements ExprState, Assignment {
 		return new ExplState(values);
 	}
 
-	public Collection<? extends VarDecl<? extends Type>> getVars() {
-		return values.getDecls();
-	}
-
 	public <ExprType extends Type> LitExpr<ExprType> getValue(final VarDecl<ExprType> varDecl) {
 		return values.eval(varDecl).get();
 	}
@@ -82,12 +78,13 @@ public class ExplState implements ExprState, Assignment {
 	}
 
 	@Override
-	public Collection<? extends Decl<?, ?>> getDecls() {
+	public Collection<? extends VarDecl<?>> getDecls() {
 		return values.getDecls();
 	}
 
 	@Override
-	public <DeclType extends Type, DeclKind extends Decl<DeclType, DeclKind>> Optional<LitExpr<DeclType>> eval(final Decl<DeclType, DeclKind> decl) {
+	public <DeclType extends Type, DeclKind extends Decl<DeclType, DeclKind>> Optional<LitExpr<DeclType>> eval(
+			final Decl<DeclType, DeclKind> decl) {
 		return values.eval(decl);
 	}
 }
