@@ -37,6 +37,21 @@ public class ExplState implements ExprState, Assignment {
 	}
 
 	@Override
+	public Collection<? extends VarDecl<?>> getDecls() {
+		return values.getDecls();
+	}
+
+	public Valuation getValuation() {
+		return values;
+	}
+
+	@Override
+	public <DeclType extends Type, DeclKind extends Decl<DeclType, DeclKind>> Optional<LitExpr<DeclType>> eval(
+			final Decl<DeclType, DeclKind> decl) {
+		return values.eval(decl);
+	}
+
+	@Override
 	public Expr<? extends BoolType> toExpr() {
 		return values.toExpr();
 	}
@@ -75,16 +90,5 @@ public class ExplState implements ExprState, Assignment {
 			sj.add(varDecl.getName() + " = " + getValue(varDecl));
 		}
 		return sj.toString();
-	}
-
-	@Override
-	public Collection<? extends VarDecl<?>> getDecls() {
-		return values.getDecls();
-	}
-
-	@Override
-	public <DeclType extends Type, DeclKind extends Decl<DeclType, DeclKind>> Optional<LitExpr<DeclType>> eval(
-			final Decl<DeclType, DeclKind> decl) {
-		return values.eval(decl);
 	}
 }
