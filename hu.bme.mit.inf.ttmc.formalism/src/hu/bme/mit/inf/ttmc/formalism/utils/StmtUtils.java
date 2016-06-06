@@ -1,4 +1,4 @@
-package hu.bme.mit.inf.ttmc.formalism.utils.impl;
+package hu.bme.mit.inf.ttmc.formalism.utils;
 
 import java.util.Collections;
 import java.util.List;
@@ -8,6 +8,9 @@ import hu.bme.mit.inf.ttmc.formalism.common.stmt.BlockStmt;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
 
 public class StmtUtils {
+
+	private StmtUtils() {
+	}
 
 	public static List<? extends Stmt> getSubStmts(final Stmt stmt) {
 		if (stmt instanceof BlockStmt) {
