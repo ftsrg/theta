@@ -1,4 +1,4 @@
-package hu.bme.mit.inf.ttmc.formalism.utils.impl;
+package hu.bme.mit.inf.ttmc.formalism.utils;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -12,6 +12,13 @@ import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.core.utils.impl.ExprCNFCheckerVisitor.CNFStatus;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
+import hu.bme.mit.inf.ttmc.formalism.utils.impl.CNFTransformation;
+import hu.bme.mit.inf.ttmc.formalism.utils.impl.FormalismAtomCollectorVisitor;
+import hu.bme.mit.inf.ttmc.formalism.utils.impl.FormalismCNFCheckerVisitor;
+import hu.bme.mit.inf.ttmc.formalism.utils.impl.FormalismExprSimplifierVisitor;
+import hu.bme.mit.inf.ttmc.formalism.utils.impl.FormalismITEPropagatorVisitor;
+import hu.bme.mit.inf.ttmc.formalism.utils.impl.FormalismITEPusherVisitor;
+import hu.bme.mit.inf.ttmc.formalism.utils.impl.FormalismITERemoverVisitor;
 
 public class FormalismUtils {
 

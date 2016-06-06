@@ -1,4 +1,4 @@
-package hu.bme.mit.inf.ttmc.formalism.utils.impl;
+package hu.bme.mit.inf.ttmc.formalism.utils;
 
 import java.util.Collection;
 
@@ -20,7 +20,6 @@ import hu.bme.mit.inf.ttmc.formalism.common.expr.PrimedExpr;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.ProcCallExpr;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.ProcRefExpr;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.VarRefExpr;
-import hu.bme.mit.inf.ttmc.formalism.utils.FormalismExprVisitor;
 
 final class VarCollectorVisitor extends ArityBasedExprVisitor<Collection<VarDecl<? extends Type>>, Void>
 		implements ExprVisitor<Collection<VarDecl<? extends Type>>, Void>,

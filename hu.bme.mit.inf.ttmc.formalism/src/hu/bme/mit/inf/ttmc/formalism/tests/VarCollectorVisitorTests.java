@@ -27,7 +27,7 @@ import hu.bme.mit.inf.ttmc.core.type.IntType;
 import hu.bme.mit.inf.ttmc.core.type.RatType;
 import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
-import hu.bme.mit.inf.ttmc.formalism.utils.impl.FormalismUtils;
+import hu.bme.mit.inf.ttmc.formalism.utils.FormalismUtils;
 
 public class VarCollectorVisitorTests {
 
