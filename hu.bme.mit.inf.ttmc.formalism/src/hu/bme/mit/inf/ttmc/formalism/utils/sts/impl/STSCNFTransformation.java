@@ -4,8 +4,8 @@ import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 import hu.bme.mit.inf.ttmc.formalism.sts.impl.STSImpl;
+import hu.bme.mit.inf.ttmc.formalism.utils.FormalismUtils;
 import hu.bme.mit.inf.ttmc.formalism.utils.impl.CNFTransformation;
-import hu.bme.mit.inf.ttmc.formalism.utils.impl.FormalismUtils;
 import hu.bme.mit.inf.ttmc.formalism.utils.sts.STSTransformation;
 
 public final class STSCNFTransformation implements STSTransformation {

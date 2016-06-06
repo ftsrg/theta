@@ -9,7 +9,7 @@ import static hu.bme.mit.inf.ttmc.core.type.impl.Types.Bool;
 import static hu.bme.mit.inf.ttmc.core.type.impl.Types.Int;
 import static hu.bme.mit.inf.ttmc.formalism.common.decl.impl.Decls2.Var;
 import static hu.bme.mit.inf.ttmc.formalism.common.expr.impl.Exprs2.Prime;
-import static hu.bme.mit.inf.ttmc.formalism.utils.impl.FormalismUtils.eliminate;
+import static hu.bme.mit.inf.ttmc.formalism.utils.FormalismUtils.eliminate;
 import static org.junit.Assert.assertEquals;
 
 import org.junit.Before;

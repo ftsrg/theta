@@ -7,8 +7,8 @@ import hu.bme.mit.inf.ttmc.analysis.expl.ExplState;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.expr.impl.Exprs;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
+import hu.bme.mit.inf.ttmc.formalism.utils.FormalismUtils;
 import hu.bme.mit.inf.ttmc.formalism.utils.PathUtils;
-import hu.bme.mit.inf.ttmc.formalism.utils.impl.FormalismUtils;
 import hu.bme.mit.inf.ttmc.solver.Solver;
 
 public class STSExplTargetPredicate implements TargetPredicate<ExplState, Expr<? extends BoolType>> {

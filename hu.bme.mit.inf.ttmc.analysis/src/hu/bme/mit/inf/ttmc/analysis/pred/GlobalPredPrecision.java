@@ -17,7 +17,7 @@ import hu.bme.mit.inf.ttmc.core.expr.impl.Exprs;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.core.utils.impl.ExprUtils;
 import hu.bme.mit.inf.ttmc.formalism.common.Valuation;
-import hu.bme.mit.inf.ttmc.formalism.utils.impl.FormalismUtils;
+import hu.bme.mit.inf.ttmc.formalism.utils.FormalismUtils;
 
 public class GlobalPredPrecision implements PredPrecision {
 	private final Map<Expr<? extends BoolType>, Expr<? extends BoolType>> preds;
