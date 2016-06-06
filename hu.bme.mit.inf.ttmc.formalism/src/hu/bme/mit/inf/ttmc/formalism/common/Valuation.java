@@ -23,6 +23,10 @@ import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 
 public final class Valuation implements Assignment {
 
+	private static final int HASH_SEED = 5743;
+
+	private volatile int hashCode = 0;
+
 	private final Map<VarDecl<? extends Type>, LitExpr<?>> declToExpr;
 
 	private volatile Expr<? extends BoolType> expr = null;
@@ -33,6 +37,10 @@ public final class Valuation implements Assignment {
 
 	public static Builder builder() {
 		return new Builder();
+	}
+
+	public Builder transform() {
+		return new Builder(declToExpr);
 	}
 
 	@Override
@@ -91,12 +99,11 @@ public final class Valuation implements Assignment {
 		}
 	}
 
-	private volatile int hashCode = 0;
-
 	@Override
 	public int hashCode() {
 		int result = hashCode;
 		if (result == 0) {
+			result = HASH_SEED;
 			result = 31 * result + declToExpr.hashCode();
 			hashCode = result;
 		}
@@ -125,10 +132,26 @@ public final class Valuation implements Assignment {
 			this.declToExpr = new HashMap<>();
 		}
 
+		private Builder(final Map<VarDecl<? extends Type>, LitExpr<?>> declToExpr) {
+			this.declToExpr = new HashMap<>(declToExpr);
+		}
+
 		public Builder put(final VarDecl<?> decl, final LitExpr<?> value) {
 			checkArgument(value.getType().isLeq(decl.getType()));
 
 			declToExpr.put(decl, value);
+			return this;
+		}
+
+		public Builder remove(final VarDecl<?> decl) {
+			declToExpr.remove(decl);
+			return this;
+		}
+
+		public Builder project(final Collection<? extends VarDecl<?>> decls) {
+			for (final VarDecl<?> decl : decls) {
+				remove(decl);
+			}
 			return this;
 		}
 
