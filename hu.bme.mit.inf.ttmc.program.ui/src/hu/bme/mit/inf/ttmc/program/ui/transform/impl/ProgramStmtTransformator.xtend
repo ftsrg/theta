@@ -12,7 +12,6 @@ import hu.bme.mit.inf.ttmc.core.type.Type
 import hu.bme.mit.inf.ttmc.core.utils.impl.ExprUtils
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt
-import hu.bme.mit.inf.ttmc.formalism.utils.impl.StmtUtils
 import hu.bme.mit.inf.ttmc.program.model.AssertStatement
 import hu.bme.mit.inf.ttmc.program.model.AssignmentStatement
 import hu.bme.mit.inf.ttmc.program.model.AssumeStatement
@@ -30,6 +29,7 @@ import hu.bme.mit.inf.ttmc.program.ui.transform.StmtTransformator
 import static com.google.common.base.Preconditions.checkArgument
 
 import static hu.bme.mit.inf.ttmc.formalism.common.stmt.impl.Stmts.*;
+import hu.bme.mit.inf.ttmc.formalism.utils.StmtUtils
 
 class ProgramStmtTransformator implements StmtTransformator {
 
