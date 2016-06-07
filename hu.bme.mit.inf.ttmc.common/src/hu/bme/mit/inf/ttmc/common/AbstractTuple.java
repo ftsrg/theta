@@ -27,9 +27,11 @@ abstract class AbstractTuple implements Product {
 
 	@Override
 	public int hashCode() {
-		if (hashCode == 0) {
-			hashCode = arity();
-			hashCode = 31 * hashCode + elems.hashCode();
+		int result = hashCode;
+		if (result == 0) {
+			result = arity();
+			result = 31 * hashCode + elems.hashCode();
+			hashCode = result;
 		}
 		return hashCode;
 	}
