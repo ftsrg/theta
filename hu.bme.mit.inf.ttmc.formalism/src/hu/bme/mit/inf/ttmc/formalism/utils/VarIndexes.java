@@ -19,15 +19,6 @@ public class VarIndexes {
 		varToIndex = builder.varToIndex;
 	}
 
-	public int getIndex(final VarDecl<?> varDecl) {
-		checkNotNull(varDecl);
-		Integer index = varToIndex.get(varDecl);
-		if (index == null) {
-			index = defaultIndex;
-		}
-		return index;
-	}
-
 	public static VarIndexes all(final int defaultIndex) {
 		checkArgument(defaultIndex >= 0);
 		return new Builder(defaultIndex).build();
@@ -45,6 +36,15 @@ public class VarIndexes {
 	public VarIndexes inc(final VarDecl<?> varDecl) {
 		checkNotNull(varDecl);
 		return transform().inc(varDecl).build();
+	}
+
+	public int get(final VarDecl<?> varDecl) {
+		checkNotNull(varDecl);
+		Integer index = varToIndex.get(varDecl);
+		if (index == null) {
+			index = defaultIndex;
+		}
+		return index;
 	}
 
 	@Override

@@ -38,7 +38,7 @@ public class VarToConstRewriter {
 		public <DeclType extends Type> ConstRefExpr<DeclType> visit(final VarRefExpr<DeclType> expr,
 				final VarIndexes indexes) {
 			final VarDecl<DeclType> varDecl = expr.getDecl();
-			final int index = indexes.getIndex(varDecl);
+			final int index = indexes.get(varDecl);
 
 			final ConstDecl<DeclType> constDecl = varDecl.getConstDecl(index);
 			final ConstRefExpr<DeclType> constRef = constDecl.getRef();

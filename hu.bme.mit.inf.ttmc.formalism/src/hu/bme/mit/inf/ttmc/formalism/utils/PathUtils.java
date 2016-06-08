@@ -66,7 +66,7 @@ public class PathUtils {
 			if (constDecl instanceof IndexedConstDecl) {
 				final IndexedConstDecl<?> indexedConstDecl = (IndexedConstDecl<?>) constDecl;
 				final VarDecl<?> varDecl = indexedConstDecl.getVarDecl();
-				if (indexedConstDecl.getIndex() == indexes.getIndex(varDecl)) {
+				if (indexedConstDecl.getIndex() == indexes.get(varDecl)) {
 					final LitExpr<?> value = model.eval(indexedConstDecl).get();
 					builder.put(varDecl, value);
 				}
