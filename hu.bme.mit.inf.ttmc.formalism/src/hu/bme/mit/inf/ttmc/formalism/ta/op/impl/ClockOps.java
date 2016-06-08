@@ -1,16 +1,34 @@
 package hu.bme.mit.inf.ttmc.formalism.ta.op.impl;
 
+import hu.bme.mit.inf.ttmc.core.expr.AddExpr;
+import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.expr.IntLitExpr;
+import hu.bme.mit.inf.ttmc.core.type.BoolType;
+import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.ClockDecl;
+import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
+import hu.bme.mit.inf.ttmc.formalism.common.expr.ClockRefExpr;
+import hu.bme.mit.inf.ttmc.formalism.common.stmt.AssignStmt;
+import hu.bme.mit.inf.ttmc.formalism.common.stmt.AssumeStmt;
+import hu.bme.mit.inf.ttmc.formalism.common.stmt.HavocStmt;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
 import hu.bme.mit.inf.ttmc.formalism.ta.constr.ClockConstr;
+import hu.bme.mit.inf.ttmc.formalism.ta.constr.impl.ClockConstrs;
 import hu.bme.mit.inf.ttmc.formalism.ta.op.ClockOp;
 import hu.bme.mit.inf.ttmc.formalism.ta.op.CopyOp;
 import hu.bme.mit.inf.ttmc.formalism.ta.op.FreeOp;
 import hu.bme.mit.inf.ttmc.formalism.ta.op.GuardOp;
 import hu.bme.mit.inf.ttmc.formalism.ta.op.ResetOp;
 import hu.bme.mit.inf.ttmc.formalism.ta.op.ShiftOp;
+import hu.bme.mit.inf.ttmc.formalism.utils.FailStmtVisitor;
 
 public final class ClockOps {
+
+	private static final StmtToClockOpVisitor VISITOR;
+
+	static {
+		VISITOR = new StmtToClockOpVisitor();
+	}
 
 	private ClockOps() {
 	}
@@ -18,8 +36,7 @@ public final class ClockOps {
 	////
 
 	public static ClockOp fromStmt(final Stmt stmt) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		return stmt.accept(VISITOR, null);
 	}
 
 	////
@@ -42,6 +59,84 @@ public final class ClockOps {
 
 	public static ShiftOp Shift(final ClockDecl clock, final int offset) {
 		return new ShifOpImpl(clock, offset);
+	}
+
+	////
+
+	private static final class StmtToClockOpVisitor extends FailStmtVisitor<Void, ClockOp> {
+
+		private StmtToClockOpVisitor() {
+		}
+
+		@Override
+		public <LhsType extends Type> ClockOp visit(final HavocStmt<LhsType> stmt, final Void param) {
+			final VarDecl<?> varDecl = stmt.getVarDecl();
+			if (varDecl instanceof ClockDecl) {
+				final ClockDecl clock = (ClockDecl) varDecl;
+				return Free(clock);
+			}
+
+			throw new IllegalArgumentException();
+		}
+
+		@Override
+		public <LhsType extends Type, RhsType extends LhsType> ClockOp visit(final AssignStmt<LhsType, RhsType> stmt,
+				final Void param) {
+
+			final VarDecl<?> varDecl = stmt.getVarDecl();
+
+			if (varDecl instanceof ClockDecl) {
+				final ClockDecl clock = (ClockDecl) varDecl;
+				final Expr<?> expr = stmt.getExpr();
+
+				if (expr instanceof IntLitExpr) {
+					final IntLitExpr intLit = (IntLitExpr) expr;
+					final int value = Math.toIntExact(intLit.getValue());
+					return Reset(clock, value);
+
+				} else if (expr instanceof ClockRefExpr) {
+					final ClockRefExpr clockRef = (ClockRefExpr) expr;
+					final ClockDecl value = clockRef.getDecl();
+					return Copy(clock, value);
+
+				} else if (expr instanceof AddExpr) {
+					final ClockRefExpr clockRef = clock.getRef();
+					final AddExpr<?> addExpr = (AddExpr<?>) expr;
+					final Expr<?>[] ops = addExpr.getOps().toArray(new Expr<?>[0]);
+
+					if (ops.length == 2) {
+						if (ops[0].equals(clockRef)) {
+							if (ops[1] instanceof IntLitExpr) {
+								final IntLitExpr intLit = (IntLitExpr) ops[1];
+								final int offset = Math.toIntExact(intLit.getValue());
+								return Shift(clock, offset);
+							}
+						} else if (ops[1].equals(clockRef)) {
+							if (ops[0] instanceof IntLitExpr) {
+								final IntLitExpr intLit = (IntLitExpr) ops[0];
+								final int offset = Math.toIntExact(intLit.getValue());
+								return Shift(clock, offset);
+							}
+						}
+					}
+				}
+			}
+
+			throw new IllegalArgumentException();
+		}
+
+		@Override
+		public ClockOp visit(final AssumeStmt stmt, final Void param) {
+			try {
+				final Expr<? extends BoolType> cond = stmt.getCond();
+				final ClockConstr constr = ClockConstrs.formExpr(cond);
+				return Guard(constr);
+
+			} catch (final IllegalArgumentException e) {
+				throw new IllegalArgumentException();
+			}
+		}
+
 	}
 
 }
