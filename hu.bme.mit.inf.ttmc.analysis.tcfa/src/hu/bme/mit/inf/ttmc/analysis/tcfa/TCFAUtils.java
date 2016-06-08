@@ -53,6 +53,10 @@ public final class TCFAUtils {
 		return stmt.accept(DATA_STMT_VISITOR, null);
 	}
 
+	public static boolean isDataExpr(final Expr<? extends BoolType> expr) {
+		return collectVars(expr).stream().allMatch(v -> !isClock(v));
+	}
+
 	private static boolean isClock(final VarDecl<?> varDecl) {
 		return varDecl instanceof ClockDecl;
 	}
