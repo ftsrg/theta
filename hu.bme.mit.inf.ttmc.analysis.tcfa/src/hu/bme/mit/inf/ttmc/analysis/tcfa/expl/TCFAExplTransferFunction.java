@@ -11,6 +11,7 @@ import hu.bme.mit.inf.ttmc.analysis.TransferFunction;
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplPrecision;
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplState;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFATrans;
+import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFATrans.TCFADelayTrans;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFATrans.TCFADiscreteTrans;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.expr.impl.Exprs;
@@ -37,11 +38,13 @@ public class TCFAExplTransferFunction implements TransferFunction<ExplState, Exp
 		checkNotNull(precision);
 		checkNotNull(trans);
 
-		if (trans instanceof TCFADiscreteTrans) {
+		if (trans instanceof TCFADelayTrans) {
+			return Collections.singleton(state);
+		} else if (trans instanceof TCFADiscreteTrans) {
 			final TCFADiscreteTrans discreteTrans = (TCFADiscreteTrans) trans;
 			return succStatesForDiscreteTrans(state, precision, discreteTrans);
 		} else {
-			return Collections.emptySet();
+			throw new AssertionError();
 		}
 	}
 
