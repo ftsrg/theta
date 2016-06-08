@@ -11,18 +11,27 @@ import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFALoc;
 
 final class MutableTCFALoc implements TCFALoc {
 
+	private final int id;
 	final Collection<MutableTCFAEdge> inEdges;
 	final Collection<MutableTCFAEdge> outEdges;
 
 	private final Collection<Expr<? extends BoolType>> invars;
 	private boolean urgent;
 
-	MutableTCFALoc() {
+	MutableTCFALoc(final int id) {
+		this.id = id;
 		inEdges = new LinkedList<>();
 		outEdges = new LinkedList<>();
 		invars = new LinkedList<>();
 		urgent = false;
 	}
+
+	@Override
+	public int getId() {
+		return id;
+	}
+
+	////
 
 	@Override
 	public boolean isUrgent() {
@@ -50,6 +59,13 @@ final class MutableTCFALoc implements TCFALoc {
 	@Override
 	public Collection<? extends TCFAEdge> getOutEdges() {
 		return Collections.unmodifiableCollection(outEdges);
+	}
+
+	////
+
+	@Override
+	public String toString() {
+		return "TCFALoc(" + id + ")";
 	}
 
 }

@@ -8,6 +8,8 @@ import hu.bme.mit.inf.ttmc.formalism.common.automaton.Loc;
 
 public interface TCFALoc extends Loc<TCFALoc, TCFAEdge> {
 
+	public int getId();
+
 	public boolean isUrgent();
 
 	public Collection<Expr<? extends BoolType>> getInvars();
