@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
+import java.util.StringJoiner;
 
 import hu.bme.mit.inf.ttmc.core.expr.LitExpr;
 import hu.bme.mit.inf.ttmc.core.type.Type;
@@ -50,5 +51,39 @@ public class GlobalExplPrecision implements ExplPrecision {
 			}
 		}
 		return ExplState.create(builder.build());
+	}
+
+	public GlobalExplPrecision refine(final Collection<VarDecl<? extends Type>> makeVisible) {
+		checkNotNull(makeVisible);
+
+		final Set<VarDecl<? extends Type>> newVisibleVars = new HashSet<>(visibleVars);
+		final Set<VarDecl<? extends Type>> newInvisibleVars = new HashSet<>(invisibleVars);
+
+		for (final VarDecl<? extends Type> var : makeVisible) {
+			if (newVisibleVars.contains(var)) {
+				continue;
+			} else if (newInvisibleVars.contains(var)) {
+				newInvisibleVars.remove(var);
+				newVisibleVars.add(var);
+			} else {
+				throw new IllegalArgumentException("Variable " + var + " is neither visible nor invisible!");
+			}
+		}
+
+		assert (visibleVars.size() + invisibleVars.size() == newVisibleVars.size() + newInvisibleVars.size());
+		assert (newVisibleVars.size() > visibleVars.size());
+
+		return create(newVisibleVars, newInvisibleVars);
+	}
+
+	@Override
+	public String toString() {
+		final String prefix = "GlobalExplPrecision(";
+		final String suffix = ")";
+		final StringJoiner sj = new StringJoiner(", ", prefix, suffix);
+		for (final VarDecl<? extends Type> var : visibleVars) {
+			sj.add(var.toString());
+		}
+		return sj.toString();
 	}
 }

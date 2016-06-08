@@ -1,29 +1,29 @@
-package hu.bme.mit.inf.ttmc.analysis.algorithm.checker.waitlist.impl;
+package hu.bme.mit.inf.ttmc.analysis.algorithm.impl.checker.waitlist.impl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.ArrayDeque;
 import java.util.Collection;
-import java.util.Deque;
+import java.util.Queue;
 
 import hu.bme.mit.inf.ttmc.analysis.State;
-import hu.bme.mit.inf.ttmc.analysis.algorithm.checker.waitlist.Waitlist;
+import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.checker.waitlist.Waitlist;
 
-public class LIFOWaitlist<S extends State> implements Waitlist<S> {
+public class FIFOWaitlist<S extends State> implements Waitlist<S> {
 
-	private final Deque<S> waitlist;
+	private final Queue<S> waitlist;
 
-	public LIFOWaitlist() {
+	public FIFOWaitlist() {
 		waitlist = new ArrayDeque<>();
 	}
 
-	public LIFOWaitlist(final Collection<? extends S> states) {
+	public FIFOWaitlist(final Collection<? extends S> states) {
 		waitlist = new ArrayDeque<>(states);
 	}
 
 	@Override
 	public void add(final S state) {
-		waitlist.push(checkNotNull(state));
+		waitlist.add(checkNotNull(state));
 	}
 
 	@Override
@@ -38,7 +38,7 @@ public class LIFOWaitlist<S extends State> implements Waitlist<S> {
 
 	@Override
 	public S remove() {
-		return waitlist.pop();
+		return waitlist.remove();
 	}
 
 	@Override

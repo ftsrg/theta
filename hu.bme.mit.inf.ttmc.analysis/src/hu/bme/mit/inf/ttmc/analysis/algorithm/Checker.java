@@ -1,4 +1,4 @@
-package hu.bme.mit.inf.ttmc.analysis.algorithm.checker;
+package hu.bme.mit.inf.ttmc.analysis.algorithm;
 
 import java.util.Collection;
 import java.util.Optional;
