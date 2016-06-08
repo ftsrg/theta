@@ -16,6 +16,7 @@ import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.core.utils.ExprVisitor;
 import hu.bme.mit.inf.ttmc.core.utils.impl.ArityBasedExprVisitor;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
+import hu.bme.mit.inf.ttmc.formalism.common.expr.ClockRefExpr;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.PrimedExpr;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.ProcCallExpr;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.ProcRefExpr;
@@ -61,6 +62,12 @@ final class VarCollectorVisitor extends ArityBasedExprVisitor<Collection<VarDecl
 	@Override
 	public <DeclType extends Type> Void visit(final VarRefExpr<DeclType> expr,
 			final Collection<VarDecl<? extends Type>> param) {
+		param.add(expr.getDecl());
+		return null;
+	}
+
+	@Override
+	public Void visit(final ClockRefExpr expr, final Collection<VarDecl<? extends Type>> param) {
 		param.add(expr.getDecl());
 		return null;
 	}
