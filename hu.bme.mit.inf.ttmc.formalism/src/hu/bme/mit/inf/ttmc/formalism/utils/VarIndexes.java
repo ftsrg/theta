@@ -10,18 +10,18 @@ public class VarIndexes {
 
 	private final Map<VarDecl<?>, Integer> varToIndex;
 
-	private static final VarIndexes CONSTANT_ZERO;
+	private static final VarIndexes ALL_ZERO;
 
 	static {
-		CONSTANT_ZERO = new VarIndexes(new HashMap<>());
+		ALL_ZERO = new VarIndexes(new HashMap<>());
 	}
 
 	private VarIndexes(final Map<VarDecl<?>, Integer> varToIndex) {
 		this.varToIndex = new HashMap<>(varToIndex);
 	}
 
-	public static VarIndexes create() {
-		return CONSTANT_ZERO;
+	public static VarIndexes allZero() {
+		return ALL_ZERO;
 	}
 
 	public int getIndex(final VarDecl<?> varDecl) {
