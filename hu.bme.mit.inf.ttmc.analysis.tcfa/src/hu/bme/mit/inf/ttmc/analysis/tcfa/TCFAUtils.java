@@ -16,7 +16,7 @@ import hu.bme.mit.inf.ttmc.core.expr.SubExpr;
 import hu.bme.mit.inf.ttmc.core.expr.TrueExpr;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.core.type.Type;
-import hu.bme.mit.inf.ttmc.core.utils.impl.FailExprVisitor;
+import hu.bme.mit.inf.ttmc.core.utils.impl.DefaultValueExprVisitor;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.ClockDecl;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.ClockRefExpr;
@@ -24,6 +24,7 @@ import hu.bme.mit.inf.ttmc.formalism.common.stmt.AssignStmt;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.AssumeStmt;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.HavocStmt;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
+import hu.bme.mit.inf.ttmc.formalism.utils.DefaultValueStmtVisitor;
 import hu.bme.mit.inf.ttmc.formalism.utils.FailStmtVisitor;
 
 public final class TCFAUtils {
@@ -122,9 +123,14 @@ public final class TCFAUtils {
 
 	}
 
-	private static final class ClockExprVisitor extends FailExprVisitor<Void, Boolean> {
+	private static final class ClockExprVisitor extends DefaultValueExprVisitor<Void, Boolean> {
 
 		private ClockExprVisitor() {
+		}
+
+		@Override
+		protected Boolean defaultValue(final Void param) {
+			return false;
 		}
 
 		@Override
@@ -179,9 +185,14 @@ public final class TCFAUtils {
 
 	}
 
-	private static final class DataStmtVisitor extends FailStmtVisitor<Void, Boolean> {
+	private static final class DataStmtVisitor extends DefaultValueStmtVisitor<Void, Boolean> {
 
 		private DataStmtVisitor() {
+		}
+
+		@Override
+		protected Boolean defaultValue(final Void param) {
+			return false;
 		}
 
 		@Override
@@ -199,6 +210,7 @@ public final class TCFAUtils {
 		public Boolean visit(final AssumeStmt stmt, final Void param) {
 			return collectVars(stmt.getCond()).stream().allMatch(v -> !isClock(v));
 		}
+
 	}
 
 }
