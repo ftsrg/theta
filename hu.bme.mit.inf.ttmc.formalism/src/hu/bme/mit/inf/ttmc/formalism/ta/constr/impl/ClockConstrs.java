@@ -232,7 +232,7 @@ public final class ClockConstrs {
 		}
 
 		private int extractConstrRhs(final BinaryExpr<?, ?, BoolType> expr) {
-			final Expr<?> rightOp = expr.getLeftOp();
+			final Expr<?> rightOp = expr.getRightOp();
 
 			if (rightOp instanceof IntLitExpr) {
 				final IntLitExpr intLitExpr = (IntLitExpr) rightOp;
