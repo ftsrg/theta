@@ -228,7 +228,7 @@ public final class ClockConstrs {
 				}
 			}
 
-			throw new UnsupportedOperationException();
+			throw new IllegalArgumentException();
 		}
 
 		private int extractConstrRhs(final BinaryExpr<?, ?, BoolType> expr) {
@@ -240,7 +240,7 @@ public final class ClockConstrs {
 				return Math.toIntExact(value);
 			}
 
-			throw new UnsupportedOperationException();
+			throw new IllegalArgumentException();
 		}
 
 	}
