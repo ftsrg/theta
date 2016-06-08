@@ -60,6 +60,21 @@ public class PathUtils {
 		return builder.build();
 	}
 
+	public static Valuation extractValuation(final Model model, final VarIndexes indexes) {
+		final Valuation.Builder builder = Valuation.builder();
+		for (final ConstDecl<?> constDecl : model.getDecls()) {
+			if (constDecl instanceof IndexedConstDecl) {
+				final IndexedConstDecl<?> indexedConstDecl = (IndexedConstDecl<?>) constDecl;
+				final VarDecl<?> varDecl = indexedConstDecl.getVarDecl();
+				if (indexedConstDecl.getIndex() == indexes.getIndex(varDecl)) {
+					final LitExpr<?> value = model.eval(indexedConstDecl).get();
+					builder.put(varDecl, value);
+				}
+			}
+		}
+		return builder.build();
+	}
+
 	////
 
 	private static final class UnfoldVisitor extends ExprRewriterVisitor<Integer>
