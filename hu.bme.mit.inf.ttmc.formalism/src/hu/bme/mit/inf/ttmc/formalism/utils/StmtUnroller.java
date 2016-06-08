@@ -38,7 +38,7 @@ public class StmtUnroller {
 		for (final Stmt stmt : stmts) {
 			final StmtToExprResult subResult = transform(stmt, resultIndexes);
 			resultExprs.addAll(subResult.exprs);
-			resultIndexes = indexes;
+			resultIndexes = subResult.indexes;
 		}
 
 		return StmtToExprResult.of(resultExprs, resultIndexes);
