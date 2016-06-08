@@ -25,7 +25,8 @@ public class Abstractor<S extends State, P extends Precision, NodeLabel, EdgeLab
 	public Abstractor(final AnalysisContext<? super S, Init, Trans, Target> context,
 			final ARGLabeling<? super S, NodeLabel, EdgeLabel, ? super Init, ? super Trans, ? super Target> labeling,
 			final Domain<S> domain, final InitFunction<S, P, Init> initFunction,
-			final TransferFunction<S, P, Trans> transferFunction, final TargetPredicate<S, Target> targetPredicate) {
+			final TransferFunction<S, P, Trans> transferFunction,
+			final TargetPredicate<? super S, Target> targetPredicate) {
 		checkNotNull(context);
 		checkNotNull(labeling);
 		checkNotNull(domain);
