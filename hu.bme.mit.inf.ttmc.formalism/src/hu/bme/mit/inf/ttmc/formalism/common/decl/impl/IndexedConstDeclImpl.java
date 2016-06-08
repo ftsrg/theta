@@ -28,7 +28,7 @@ final class IndexedConstDeclImpl<DeclType extends Type> implements IndexedConstD
 
 		this.varDecl = varDecl;
 		this.index = index;
-		name = String.format(NAME_FORMAT, varDecl, index);
+		name = String.format(NAME_FORMAT, varDecl.getName(), index);
 		ref = new IndexedConstRefExprImpl<>(this);
 	}
 
