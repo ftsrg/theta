@@ -34,7 +34,7 @@ public class TCFAAnalysisContext implements AnalysisContext<TCFAState<?>, TCFALo
 		}
 
 		if (!loc.isUrgent()) {
-			tcfaTrans.add(TCFATrans.delay());
+			tcfaTrans.add(TCFATrans.delay(loc));
 		}
 
 		return tcfaTrans;
