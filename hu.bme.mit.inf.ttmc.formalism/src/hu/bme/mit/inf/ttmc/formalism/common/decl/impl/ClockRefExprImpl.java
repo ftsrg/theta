@@ -6,6 +6,7 @@ import hu.bme.mit.inf.ttmc.core.type.RatType;
 import hu.bme.mit.inf.ttmc.core.utils.ExprVisitor;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.ClockDecl;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.ClockRefExpr;
+import hu.bme.mit.inf.ttmc.formalism.common.expr.visitor.ClockRefExprVisitor;
 
 final class ClockRefExprImpl implements ClockRefExpr {
 
@@ -31,8 +32,12 @@ final class ClockRefExprImpl implements ClockRefExpr {
 
 	@Override
 	public <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		if (visitor instanceof ClockRefExprVisitor<?, ?>) {
+			final ClockRefExprVisitor<? super P, ? extends R> sVisitor = (ClockRefExprVisitor<? super P, ? extends R>) visitor;
+			return sVisitor.visit(this, param);
+		} else {
+			throw new UnsupportedOperationException();
+		}
 	}
 
 	@Override
