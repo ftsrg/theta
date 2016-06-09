@@ -40,6 +40,12 @@ public final class ZoneState implements State {
 
 	////
 
+	public boolean isLeq(final ZoneState that) {
+		return this.dbm.getRelation(that.dbm).isLeq();
+	}
+
+	////
+
 	@Override
 	public int hashCode() {
 		int result = hashCode;
