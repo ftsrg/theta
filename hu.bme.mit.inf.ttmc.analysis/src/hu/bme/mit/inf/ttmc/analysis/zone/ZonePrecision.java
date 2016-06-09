@@ -13,7 +13,7 @@ public final class ZonePrecision implements Precision {
 	private final Collection<ClockDecl> clocks;
 
 	private ZonePrecision(final Builder builder) {
-		clocks = builder.clocks.build();
+		clocks = builder.clocksBuilder.build();
 	}
 
 	public static Builder builder() {
@@ -27,10 +27,20 @@ public final class ZonePrecision implements Precision {
 	////
 
 	public static final class Builder {
-		private final ImmutableCollection.Builder<ClockDecl> clocks;
+		private final ImmutableCollection.Builder<ClockDecl> clocksBuilder;
 
 		private Builder() {
-			clocks = ImmutableSet.builder();
+			clocksBuilder = ImmutableSet.builder();
+		}
+
+		public Builder add(final ClockDecl clock) {
+			clocksBuilder.add(clock);
+			return this;
+		}
+
+		public Builder addAll(final Collection<? extends ClockDecl> clocks) {
+			clocksBuilder.addAll(clocks);
+			return this;
 		}
 
 		public ZonePrecision build() {
