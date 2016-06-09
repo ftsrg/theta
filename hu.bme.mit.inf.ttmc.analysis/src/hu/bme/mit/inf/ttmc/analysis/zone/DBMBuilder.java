@@ -60,6 +60,34 @@ public final class DBMBuilder {
 
 	////
 
+	public DBMBuilder track(final ClockDecl clock) {
+		Integer index = clockToIndex.get(clock);
+		if (index == null) {
+			nClocks = nClocks + 1;
+			index = nClocks;
+
+			clockToIndex.put(clock, index);
+			matrix.expand(nClocks + 1, nClocks + 1);
+
+			final int x = index;
+			matrix.set(0, x, Leq(0));
+			matrix.set(x, x, Leq(0));
+			matrix.set(x, 0, Inf());
+			for (int i = 1; i <= nClocks - 1; i++) {
+				matrix.set(x, i, Inf());
+				matrix.set(i, x, matrix.get(i, 0));
+			}
+		}
+		return this;
+	}
+
+	public DBMBuilder untrack(final ClockDecl clock) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+	}
+
+	//
+
 	public DBMBuilder up() {
 		for (int i = 1; i <= nClocks; i++) {
 			matrix.set(i, 0, Inf());
@@ -84,6 +112,8 @@ public final class DBMBuilder {
 	//
 
 	public DBMBuilder and(final ClockConstr constr) {
+		checkNotNull(constr);
+
 		constr.accept(visitor, null);
 		return this;
 	}
@@ -94,10 +124,9 @@ public final class DBMBuilder {
 		checkNotNull(clock);
 		checkNotZeroClock(clock);
 
-		final Integer x = clockToIndex.get(clock);
-		if (x != null) {
-			free(x);
-		}
+		final int x = indexOf(clock);
+		free(x);
+
 		return this;
 	}
 
@@ -117,7 +146,7 @@ public final class DBMBuilder {
 		checkNotNull(clock);
 		checkNotZeroClock(clock);
 
-		final int x = ensureDeclaredAndGetIndex(clock);
+		final int x = indexOf(clock);
 		reset(x, m);
 
 		return this;
@@ -139,17 +168,9 @@ public final class DBMBuilder {
 		checkNotZeroClock(lhs);
 		checkNotZeroClock(rhs);
 
-		final Integer lhsIndex = clockToIndex.get(lhs);
-		final Integer rhsIndex = clockToIndex.get(rhs);
-
-		if (rhsIndex != null) {
-			final int x = ensureDeclaredAndGetIndex(lhs);
-			final int y = rhsIndex;
-			copy(x, y);
-		} else if (lhsIndex != null) {
-			final int x = lhsIndex;
-			free(x);
-		}
+		final int x = indexOf(lhs);
+		final int y = indexOf(rhs);
+		copy(x, y);
 
 		return this;
 	}
@@ -222,6 +243,15 @@ public final class DBMBuilder {
 
 	////
 
+	private boolean isTracked(final ClockDecl clock) {
+		return clockToIndex.containsKey(clock);
+	}
+
+	private int indexOf(final ClockDecl clock) {
+		checkArgument(isTracked(clock));
+		return clockToIndex.get(clock);
+	}
+
 	private boolean isClosed() {
 		for (int i = 0; i <= nClocks; i++) {
 			for (int j = 0; j <= nClocks; j++) {
@@ -236,12 +266,12 @@ public final class DBMBuilder {
 	}
 
 	private static void checkNotZeroClock(final ClockDecl clock) {
-		checkArgument(!clock.equals(DBM.zeroClock()));
+		checkArgument(!clock.equals(DBM.ZERO_CLOCK));
 	}
 
 	private static LinkedHashMap<ClockDecl, Integer> createIndexMapFrom(final Collection<? extends ClockDecl> clocks) {
 		final LinkedHashMap<ClockDecl, Integer> result = new LinkedHashMap<ClockDecl, Integer>();
-		result.put(DBM.zeroClock(), 0);
+		result.put(DBM.ZERO_CLOCK, 0);
 		int i = 1;
 		for (final ClockDecl clock : clocks) {
 			if (!result.containsKey(clock)) {
@@ -250,27 +280,6 @@ public final class DBMBuilder {
 			}
 		}
 		return result;
-	}
-
-	private int ensureDeclaredAndGetIndex(final ClockDecl clockDecl) {
-		Integer index = clockToIndex.get(clockDecl);
-		if (index == null) {
-			nClocks = nClocks + 1;
-			index = nClocks;
-
-			clockToIndex.put(clockDecl, index);
-			matrix.expand(nClocks + 1, nClocks + 1);
-
-			final int x = index;
-			matrix.set(0, x, Leq(0));
-			matrix.set(x, x, Leq(0));
-			matrix.set(x, 0, Inf());
-			for (int i = 1; i <= nClocks - 1; i++) {
-				matrix.set(x, i, Inf());
-				matrix.set(i, x, matrix.get(i, 0));
-			}
-		}
-		return index;
 	}
 
 	////
@@ -305,7 +314,7 @@ public final class DBMBuilder {
 
 		@Override
 		public Void visit(final UnitLtConstr constr, final Void param) {
-			final int x = ensureDeclaredAndGetIndex(constr.getClock());
+			final int x = indexOf(constr.getClock());
 			final int m = constr.getBound();
 			and(x, 0, Lt(m));
 			return null;
@@ -313,7 +322,7 @@ public final class DBMBuilder {
 
 		@Override
 		public Void visit(final UnitLeqConstr constr, final Void param) {
-			final int x = ensureDeclaredAndGetIndex(constr.getClock());
+			final int x = indexOf(constr.getClock());
 			final int m = constr.getBound();
 			and(x, 0, Leq(m));
 			return null;
@@ -321,7 +330,7 @@ public final class DBMBuilder {
 
 		@Override
 		public Void visit(final UnitGtConstr constr, final Void param) {
-			final int x = ensureDeclaredAndGetIndex(constr.getClock());
+			final int x = indexOf(constr.getClock());
 			final int m = constr.getBound();
 			and(0, x, Lt(-m));
 			return null;
@@ -329,7 +338,7 @@ public final class DBMBuilder {
 
 		@Override
 		public Void visit(final UnitGeqConstr constr, final Void param) {
-			final int x = ensureDeclaredAndGetIndex(constr.getClock());
+			final int x = indexOf(constr.getClock());
 			final int m = constr.getBound();
 			and(0, x, Leq(-m));
 			return null;
@@ -337,7 +346,7 @@ public final class DBMBuilder {
 
 		@Override
 		public Void visit(final UnitEqConstr constr, final Void param) {
-			final int x = ensureDeclaredAndGetIndex(constr.getClock());
+			final int x = indexOf(constr.getClock());
 			final int m = constr.getBound();
 			and(x, 0, Leq(m));
 			and(0, x, Leq(-m));
@@ -346,8 +355,8 @@ public final class DBMBuilder {
 
 		@Override
 		public Void visit(final DiffLtConstr constr, final Void param) {
-			final int x = ensureDeclaredAndGetIndex(constr.getLeftClock());
-			final int y = ensureDeclaredAndGetIndex(constr.getRightClock());
+			final int x = indexOf(constr.getLeftClock());
+			final int y = indexOf(constr.getRightClock());
 			final int m = constr.getBound();
 			and(x, y, Lt(m));
 			return null;
@@ -355,8 +364,8 @@ public final class DBMBuilder {
 
 		@Override
 		public Void visit(final DiffLeqConstr constr, final Void param) {
-			final int x = ensureDeclaredAndGetIndex(constr.getLeftClock());
-			final int y = ensureDeclaredAndGetIndex(constr.getRightClock());
+			final int x = indexOf(constr.getLeftClock());
+			final int y = indexOf(constr.getRightClock());
 			final int m = constr.getBound();
 			and(x, y, Leq(m));
 			return null;
@@ -364,8 +373,8 @@ public final class DBMBuilder {
 
 		@Override
 		public Void visit(final DiffGtConstr constr, final Void param) {
-			final int x = ensureDeclaredAndGetIndex(constr.getLeftClock());
-			final int y = ensureDeclaredAndGetIndex(constr.getRightClock());
+			final int x = indexOf(constr.getLeftClock());
+			final int y = indexOf(constr.getRightClock());
 			final int m = constr.getBound();
 			and(y, x, Lt(-m));
 			return null;
@@ -373,8 +382,8 @@ public final class DBMBuilder {
 
 		@Override
 		public Void visit(final DiffGeqConstr constr, final Void param) {
-			final int x = ensureDeclaredAndGetIndex(constr.getLeftClock());
-			final int y = ensureDeclaredAndGetIndex(constr.getRightClock());
+			final int x = indexOf(constr.getLeftClock());
+			final int y = indexOf(constr.getRightClock());
 			final int m = constr.getBound();
 			and(y, x, Leq(-m));
 			return null;
@@ -382,8 +391,8 @@ public final class DBMBuilder {
 
 		@Override
 		public Void visit(final DiffEqConstr constr, final Void param) {
-			final int x = ensureDeclaredAndGetIndex(constr.getLeftClock());
-			final int y = ensureDeclaredAndGetIndex(constr.getRightClock());
+			final int x = indexOf(constr.getLeftClock());
+			final int y = indexOf(constr.getRightClock());
 			final int m = constr.getBound();
 			and(x, y, Leq(m));
 			and(y, x, Leq(-m));
