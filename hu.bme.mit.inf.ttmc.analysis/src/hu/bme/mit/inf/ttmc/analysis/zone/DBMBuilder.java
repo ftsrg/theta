@@ -34,7 +34,7 @@ public final class DBMBuilder {
 
 	final LinkedHashMap<ClockDecl, Integer> clockToIndex;
 
-	final int nClocks;
+	int nClocks;
 	final IntMatrix matrix;
 
 	private final AndOperationVisitor visitor;
@@ -255,10 +255,11 @@ public final class DBMBuilder {
 	private int ensureDeclaredAndGetIndex(final ClockDecl clockDecl) {
 		Integer index = clockToIndex.get(clockDecl);
 		if (index == null) {
-			index = nClocks + 1;
+			nClocks = nClocks + 1;
+			index = nClocks;
 
 			clockToIndex.put(clockDecl, index);
-			matrix.expand(nClocks + 2, nClocks + 2);
+			matrix.expand(nClocks + 1, nClocks + 1);
 
 			final int x = index;
 			matrix.set(0, x, Leq(0));
