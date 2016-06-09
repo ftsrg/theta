@@ -1,5 +1,7 @@
-package hu.bme.mit.inf.ttmc.formalism.tcfa;
+package hu.bme.mit.inf.ttmc.formalism.tcfa.instances;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Eq;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Geq;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Int;
@@ -15,16 +17,54 @@ import hu.bme.mit.inf.ttmc.core.type.IntType;
 import hu.bme.mit.inf.ttmc.core.type.RatType;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.ClockDecl;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
+import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFAEdge;
+import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFALoc;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.impl.MutableTCFA;
 
-public final class TCFAInstances {
+public final class FischerTCFA {
 
-	private TCFAInstances() {
+	private final int id;
+	private final VarDecl<IntType> vlock;
+	private final ClockDecl cx;
+
+	private final TCFALoc initial;
+	private final TCFALoc critical;
+
+	////
+
+	public int getId() {
+		return id;
 	}
 
-	public static TCFA fischer(final int id, final int ia, final int ib, final VarDecl<IntType> vlock) {
+	public VarDecl<IntType> getLock() {
+		return vlock;
+	}
 
-		final ClockDecl cx = Clock("x_" + id);
+	public ClockDecl getClock() {
+		return cx;
+	}
+
+	public TCFALoc getInitial() {
+		return initial;
+	}
+
+	public TCFALoc getCritical() {
+		return critical;
+	}
+
+	////
+
+	public FischerTCFA(final int id, final int ia, final int ib, final VarDecl<IntType> vlock) {
+		checkArgument(id > 0);
+		checkArgument(ia >= 0);
+		checkArgument(ib >= 0);
+		checkNotNull(vlock);
+
+		this.id = id;
+		this.vlock = vlock;
+
+		final MutableTCFA tcfa = new MutableTCFA();
+		cx = Clock("x_" + id);
 
 		final Expr<RatType> x = cx.getRef();
 		final Expr<IntType> lock = vlock.getRef();
@@ -36,12 +76,13 @@ public final class TCFAInstances {
 		final Expr<RatType> rzero = Rat(0, 1);
 		final Expr<IntType> izero = Int(0);
 
-		final MutableTCFA tcfa = new MutableTCFA();
-
 		final TCFALoc l0 = tcfa.getInitLoc();
 		final TCFALoc l1 = tcfa.createLoc();
 		final TCFALoc l2 = tcfa.createLoc();
 		final TCFALoc l3 = tcfa.createLoc();
+
+		initial = l0;
+		critical = l3;
 
 		l1.getInvars().add(Leq(x, a));
 
@@ -64,8 +105,6 @@ public final class TCFAInstances {
 		final TCFAEdge edge5 = tcfa.createEdge(l3, l0);
 		edge5.getStmts().add(Assign(cx, rzero));
 		edge5.getStmts().add(Assign(vlock, izero));
-
-		return tcfa;
 	}
 
 }
