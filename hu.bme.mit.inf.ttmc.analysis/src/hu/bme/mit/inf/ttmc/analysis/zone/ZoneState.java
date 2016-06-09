@@ -72,7 +72,7 @@ public final class ZoneState implements State {
 
 	@Override
 	public String toString() {
-		return dbm.toString();
+		return "ZoneState";
 	}
 
 	////////
