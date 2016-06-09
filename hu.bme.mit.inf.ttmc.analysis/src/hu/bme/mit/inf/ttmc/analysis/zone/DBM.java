@@ -35,7 +35,7 @@ import hu.bme.mit.inf.ttmc.formalism.ta.utils.ClockConstrVisitor;
 
 public final class DBM {
 
-	private static final ClockDecl ZERO_CLOCK;
+	static final ClockDecl ZERO_CLOCK;
 
 	private final LinkedHashMap<ClockDecl, Integer> clockToIndex;
 
@@ -85,11 +85,15 @@ public final class DBM {
 
 	////
 
-	public static ClockDecl zeroClock() {
-		return ZERO_CLOCK;
+	public Collection<ClockDecl> getClocks() {
+		return Collections.unmodifiableCollection(clockToIndex.keySet());
 	}
 
 	////
+
+	public boolean isTracked(final ClockDecl clock) {
+		return clockToIndex.containsKey(clock);
+	}
 
 	public boolean isConsistent() {
 		return matrix.get(0, 0) >= 0;
