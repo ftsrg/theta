@@ -5,6 +5,7 @@ import java.util.Collection;
 import hu.bme.mit.inf.ttmc.analysis.State;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.ClockDecl;
 import hu.bme.mit.inf.ttmc.formalism.ta.constr.ClockConstr;
+import hu.bme.mit.inf.ttmc.formalism.ta.op.ClockOp;
 
 public final class ZoneState implements State {
 
@@ -98,6 +99,11 @@ public final class ZoneState implements State {
 
 		public ZoneOperations down() {
 			builder.down();
+			return this;
+		}
+
+		public ZoneOperations execute(final ClockOp op) {
+			builder.execute(op);
 			return this;
 		}
 

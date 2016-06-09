@@ -28,30 +28,40 @@ import hu.bme.mit.inf.ttmc.formalism.ta.constr.UnitGeqConstr;
 import hu.bme.mit.inf.ttmc.formalism.ta.constr.UnitGtConstr;
 import hu.bme.mit.inf.ttmc.formalism.ta.constr.UnitLeqConstr;
 import hu.bme.mit.inf.ttmc.formalism.ta.constr.UnitLtConstr;
+import hu.bme.mit.inf.ttmc.formalism.ta.op.ClockOp;
+import hu.bme.mit.inf.ttmc.formalism.ta.op.CopyOp;
+import hu.bme.mit.inf.ttmc.formalism.ta.op.FreeOp;
+import hu.bme.mit.inf.ttmc.formalism.ta.op.GuardOp;
+import hu.bme.mit.inf.ttmc.formalism.ta.op.ResetOp;
+import hu.bme.mit.inf.ttmc.formalism.ta.op.ShiftOp;
 import hu.bme.mit.inf.ttmc.formalism.ta.utils.ClockConstrVisitor;
+import hu.bme.mit.inf.ttmc.formalism.ta.utils.ClockOpVisitor;
 
 public final class DBMBuilder {
+
+	private final ExecuteVisitor executeVisitor;;
+	private final AndOperationVisitor andVisitor;
 
 	final LinkedHashMap<ClockDecl, Integer> clockToIndex;
 
 	int nClocks;
 	final IntMatrix matrix;
 
-	private final AndOperationVisitor visitor;
-
 	DBMBuilder(final Collection<? extends ClockDecl> clocks) {
 		clockToIndex = createIndexMapFrom(clocks);
 		nClocks = clockToIndex.size() - 1;
 		matrix = IntMatrix.create(nClocks + 1, nClocks + 1);
 		matrix.fill((i, j) -> i == 0 || i == j ? Leq(0) : Inf());
-		visitor = new AndOperationVisitor();
+		executeVisitor = new ExecuteVisitor();
+		andVisitor = new AndOperationVisitor();
 	}
 
-	DBMBuilder(final Map<ClockDecl, Integer> clockToIndex, final IntMatrix matrix) {
-		this.clockToIndex = new LinkedHashMap<>(clockToIndex);
-		nClocks = clockToIndex.size() - 1;
-		this.matrix = IntMatrix.copyOf(matrix);
-		visitor = new AndOperationVisitor();
+	DBMBuilder(final DBM dbm) {
+		clockToIndex = new LinkedHashMap<>(dbm.clockToIndex);
+		nClocks = dbm.nClocks;
+		this.matrix = IntMatrix.copyOf(dbm.matrix);
+		executeVisitor = new ExecuteVisitor();
+		andVisitor = new AndOperationVisitor();
 	}
 
 	public DBM build() {
@@ -111,10 +121,15 @@ public final class DBMBuilder {
 
 	//
 
+	public DBMBuilder execute(final ClockOp op) {
+		checkNotNull(op);
+		op.accept(executeVisitor, null);
+		return this;
+	}
+
 	public DBMBuilder and(final ClockConstr constr) {
 		checkNotNull(constr);
-
-		constr.accept(visitor, null);
+		constr.accept(andVisitor, null);
 		return this;
 	}
 
@@ -283,6 +298,40 @@ public final class DBMBuilder {
 	}
 
 	////
+
+	private final class ExecuteVisitor implements ClockOpVisitor<Void, Void> {
+
+		@Override
+		public Void visit(final CopyOp op, final Void param) {
+			copy(op.getClock(), op.getValue());
+			return null;
+		}
+
+		@Override
+		public Void visit(final FreeOp op, final Void param) {
+			free(op.getClock());
+			return null;
+		}
+
+		@Override
+		public Void visit(final GuardOp op, final Void param) {
+			and(op.getConstr());
+			return null;
+		}
+
+		@Override
+		public Void visit(final ResetOp op, final Void param) {
+			reset(op.getClock(), op.getValue());
+			return null;
+		}
+
+		@Override
+		public Void visit(final ShiftOp op, final Void param) {
+			shift(op.getClock(), op.getOffset());
+			return null;
+		}
+
+	}
 
 	private final class AndOperationVisitor implements ClockConstrVisitor<Void, Void> {
 
