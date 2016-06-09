@@ -57,9 +57,12 @@ public class TCFAExplTransferFunction implements TransferFunction<ExplState, Exp
 		solver.add(PathUtils.unfold(state.toExpr(), 0));
 
 		final StmtToExprResult transformResult = StmtUnroller.transform(trans.getDataStmts(), VarIndexes.all(0));
-		solver.add(transformResult.getExprs());
+		final Collection<? extends Expr<? extends BoolType>> stmtExprs = transformResult.getExprs();
 		final VarIndexes indexes = transformResult.getIndexes();
-		for (final Expr<? extends BoolType> invar : trans.getDataInvars()) {
+
+		solver.add(stmtExprs);
+
+		for (final Expr<? extends BoolType> invar : trans.getTargetDataInvars()) {
 			solver.add(PathUtils.unfold(invar, indexes));
 		}
 

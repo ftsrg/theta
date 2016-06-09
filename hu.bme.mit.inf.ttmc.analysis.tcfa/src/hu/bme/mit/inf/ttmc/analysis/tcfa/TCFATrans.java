@@ -33,10 +33,9 @@ public abstract class TCFATrans {
 		return new TCFADiscreteTrans(edge);
 	}
 
-	private static Collection<ClockConstr> extractClockInvars(
-			final Collection<? extends Expr<? extends BoolType>> invars) {
+	private static Collection<ClockConstr> extractClockInvars(final TCFALoc loc) {
 		final ImmutableSet.Builder<ClockConstr> builder = ImmutableSet.builder();
-		for (final Expr<? extends BoolType> invar : invars) {
+		for (final Expr<? extends BoolType> invar : loc.getInvars()) {
 			if (TCFAUtils.isClockExpr(invar)) {
 				builder.add(ClockConstrs.formExpr(invar));
 			}
@@ -44,7 +43,9 @@ public abstract class TCFATrans {
 		return builder.build();
 	}
 
-	public abstract Collection<ClockConstr> getClockInvars();
+	public abstract Collection<ClockConstr> getSourceClockInvars();
+
+	public abstract Collection<ClockConstr> getTargetClockInvars();
 
 	////
 
@@ -54,11 +55,16 @@ public abstract class TCFATrans {
 
 		private TCFADelayTrans(final TCFALoc loc) {
 			assert loc != null;
-			clockInvars = extractClockInvars(loc.getInvars());
+			clockInvars = extractClockInvars(loc);
 		}
 
 		@Override
-		public Collection<ClockConstr> getClockInvars() {
+		public Collection<ClockConstr> getSourceClockInvars() {
+			return clockInvars;
+		}
+
+		@Override
+		public Collection<ClockConstr> getTargetClockInvars() {
 			return clockInvars;
 		}
 
@@ -67,19 +73,24 @@ public abstract class TCFATrans {
 	public static final class TCFADiscreteTrans extends TCFATrans {
 
 		private final TCFAEdge edge;
-		private final Collection<ClockConstr> clockInvars;
-		private final Collection<Expr<? extends BoolType>> dataInvars;
+
+		private final Collection<ClockConstr> sourceClockInvars;
+		private final Collection<Expr<? extends BoolType>> sourceDataInvars;
+
+		private final Collection<ClockConstr> targetClockInvars;
+		private final Collection<Expr<? extends BoolType>> targetDataInvars;
+
 		private final List<ClockOp> clockOps;
 		private final List<Stmt> dataStmts;
 
 		private TCFADiscreteTrans(final TCFAEdge edge) {
-			assert edge != null;
-
 			this.edge = edge;
-			clockInvars = extractClockInvars(edge.getTarget().getInvars());
-			dataInvars = extractDataInvars(edge.getTarget().getInvars());
-			clockOps = extractClockOps(edge.getStmts());
-			dataStmts = extractDataStmts(edge.getStmts());
+			sourceClockInvars = extractClockInvars(edge.getSource());
+			sourceDataInvars = extractDataInvars(edge.getSource());
+			targetClockInvars = extractClockInvars(edge.getTarget());
+			targetDataInvars = extractDataInvars(edge.getTarget());
+			clockOps = extractClockOps(edge);
+			dataStmts = extractDataStmts(edge);
 		}
 
 		public TCFAEdge getEdge() {
@@ -87,12 +98,21 @@ public abstract class TCFATrans {
 		}
 
 		@Override
-		public Collection<ClockConstr> getClockInvars() {
-			return clockInvars;
+		public Collection<ClockConstr> getSourceClockInvars() {
+			return sourceClockInvars;
 		}
 
-		public Collection<Expr<? extends BoolType>> getDataInvars() {
-			return dataInvars;
+		@Override
+		public Collection<ClockConstr> getTargetClockInvars() {
+			return targetClockInvars;
+		}
+
+		public Collection<Expr<? extends BoolType>> getSourceDataInvars() {
+			return sourceDataInvars;
+		}
+
+		public Collection<Expr<? extends BoolType>> getTargetDataInvars() {
+			return targetDataInvars;
 		}
 
 		public List<ClockOp> getClockOps() {
@@ -103,10 +123,9 @@ public abstract class TCFATrans {
 			return dataStmts;
 		}
 
-		private static Collection<Expr<? extends BoolType>> extractDataInvars(
-				final Collection<? extends Expr<? extends BoolType>> invars) {
+		private static Collection<Expr<? extends BoolType>> extractDataInvars(final TCFALoc loc) {
 			final ImmutableSet.Builder<Expr<? extends BoolType>> builder = ImmutableSet.builder();
-			for (final Expr<? extends BoolType> invar : invars) {
+			for (final Expr<? extends BoolType> invar : loc.getInvars()) {
 				if (TCFAUtils.isDataExpr(invar)) {
 					builder.add(invar);
 				}
@@ -114,9 +133,9 @@ public abstract class TCFATrans {
 			return builder.build();
 		}
 
-		private static List<ClockOp> extractClockOps(final Collection<? extends Stmt> stmts) {
+		private static List<ClockOp> extractClockOps(final TCFAEdge edge) {
 			final ImmutableList.Builder<ClockOp> builder = ImmutableList.builder();
-			for (final Stmt stmt : stmts) {
+			for (final Stmt stmt : edge.getStmts()) {
 				if (TCFAUtils.isClockStmt(stmt)) {
 					builder.add(ClockOps.fromStmt(stmt));
 				}
@@ -124,9 +143,9 @@ public abstract class TCFATrans {
 			return builder.build();
 		}
 
-		private static List<Stmt> extractDataStmts(final Collection<? extends Stmt> stmts) {
+		private static List<Stmt> extractDataStmts(final TCFAEdge edge) {
 			final ImmutableList.Builder<Stmt> builder = ImmutableList.builder();
-			for (final Stmt stmt : stmts) {
+			for (final Stmt stmt : edge.getStmts()) {
 				if (TCFAUtils.isDataStmt(stmt)) {
 					builder.add(stmt);
 				}
