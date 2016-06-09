@@ -1,8 +1,8 @@
 package hu.bme.mit.inf.ttmc.analysis.zone;
 
 import java.util.Collection;
+import java.util.Set;
 
-import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableSet;
 
 import hu.bme.mit.inf.ttmc.analysis.Precision;
@@ -10,7 +10,7 @@ import hu.bme.mit.inf.ttmc.formalism.common.decl.ClockDecl;
 
 public final class ZonePrecision implements Precision {
 
-	private final Collection<ClockDecl> clocks;
+	private final Set<ClockDecl> clocks;
 
 	private ZonePrecision(final Builder builder) {
 		clocks = builder.clocksBuilder.build();
@@ -20,14 +20,14 @@ public final class ZonePrecision implements Precision {
 		return new Builder();
 	}
 
-	public Collection<ClockDecl> getClocks() {
+	public Set<ClockDecl> getClocks() {
 		return clocks;
 	}
 
 	////
 
 	public static final class Builder {
-		private final ImmutableCollection.Builder<ClockDecl> clocksBuilder;
+		private final ImmutableSet.Builder<ClockDecl> clocksBuilder;
 
 		private Builder() {
 			clocksBuilder = ImmutableSet.builder();
