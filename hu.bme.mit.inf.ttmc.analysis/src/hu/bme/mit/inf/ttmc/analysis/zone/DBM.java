@@ -37,10 +37,10 @@ public final class DBM {
 
 	static final ClockDecl ZERO_CLOCK;
 
-	private final LinkedHashMap<ClockDecl, Integer> clockToIndex;
+	final LinkedHashMap<ClockDecl, Integer> clockToIndex;
 
-	private final int nClocks;
-	private final IntMatrix matrix;
+	final int nClocks;
+	final IntMatrix matrix;
 
 	private final ZoneConsistencyVisitor visitor;
 
@@ -80,7 +80,7 @@ public final class DBM {
 	}
 
 	public DBMBuilder transform() {
-		return new DBMBuilder(clockToIndex, matrix);
+		return new DBMBuilder(this);
 	}
 
 	////
