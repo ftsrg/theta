@@ -1,6 +1,6 @@
 package hu.bme.mit.inf.ttmc.analysis.zone;
 
-import java.util.Set;
+import java.util.Collection;
 
 import hu.bme.mit.inf.ttmc.analysis.State;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.ClockDecl;
@@ -24,12 +24,12 @@ public final class ZoneState implements State {
 
 	////
 
-	public static ZoneState top(final Set<? extends ClockDecl> clockDecls) {
-		return new ZoneState(DBM.top(clockDecls));
+	public static ZoneState top(final Collection<? extends ClockDecl> clocks) {
+		return new ZoneState(DBM.top(clocks));
 	}
 
-	public static ZoneState zero(final Set<? extends ClockDecl> clockDecls) {
-		return new ZoneState(DBM.zero(clockDecls));
+	public static ZoneState zero(final Collection<? extends ClockDecl> clocks) {
+		return new ZoneState(DBM.zero(clocks));
 	}
 
 	////

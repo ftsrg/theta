@@ -9,9 +9,9 @@ import static hu.bme.mit.inf.ttmc.analysis.zone.DiffBounds.add;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Set;
 
 import hu.bme.mit.inf.ttmc.common.matrix.IntMatrix;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.ClockDecl;
@@ -33,19 +33,23 @@ import hu.bme.mit.inf.ttmc.formalism.ta.utils.ClockConstrVisitor;
 public final class DBMBuilder {
 
 	final LinkedHashMap<ClockDecl, Integer> clockToIndex;
+
+	final int nClocks;
 	final IntMatrix matrix;
 
 	private final AndOperationVisitor visitor;
 
-	DBMBuilder(final Set<? extends ClockDecl> clockDecls) {
-		clockToIndex = createIndexMapFrom(clockDecls);
-		matrix = IntMatrix.create(clockDecls.size() + 1, clockDecls.size() + 1);
+	DBMBuilder(final Collection<? extends ClockDecl> clocks) {
+		clockToIndex = createIndexMapFrom(clocks);
+		nClocks = clockToIndex.size() - 1;
+		matrix = IntMatrix.create(nClocks + 1, nClocks + 1);
 		matrix.fill((i, j) -> i == 0 || i == j ? Leq(0) : Inf());
 		visitor = new AndOperationVisitor();
 	}
 
 	DBMBuilder(final Map<ClockDecl, Integer> clockToIndex, final IntMatrix matrix) {
 		this.clockToIndex = new LinkedHashMap<>(clockToIndex);
+		nClocks = clockToIndex.size() - 1;
 		this.matrix = IntMatrix.copyOf(matrix);
 		visitor = new AndOperationVisitor();
 	}
@@ -57,7 +61,7 @@ public final class DBMBuilder {
 	////
 
 	public DBMBuilder up() {
-		for (int i = 1; i < size(); i++) {
+		for (int i = 1; i <= nClocks; i++) {
 			matrix.set(i, 0, Inf());
 		}
 		assert isClosed();
@@ -65,9 +69,9 @@ public final class DBMBuilder {
 	}
 
 	public DBMBuilder down() {
-		for (int i = 1; i < size(); i++) {
+		for (int i = 1; i <= nClocks; i++) {
 			matrix.set(0, i, Leq(0));
-			for (int j = 1; j < size(); j++) {
+			for (int j = 1; j <= nClocks; j++) {
 				if (matrix.get(j, i) < matrix.get(0, i)) {
 					matrix.set(0, i, matrix.get(j, i));
 				}
@@ -98,7 +102,7 @@ public final class DBMBuilder {
 	}
 
 	private void free(final int x) {
-		for (int i = 0; i < size(); i++) {
+		for (int i = 0; i <= nClocks; i++) {
 			if (i != x) {
 				matrix.set(x, i, Inf());
 				matrix.set(i, x, matrix.get(i, 0));
@@ -120,7 +124,7 @@ public final class DBMBuilder {
 	}
 
 	private void reset(final int x, final int m) {
-		for (int i = 0; i < size(); i++) {
+		for (int i = 0; i <= nClocks; i++) {
 			matrix.set(x, i, add(Leq(m), matrix.get(0, i)));
 			matrix.set(i, x, add(matrix.get(i, 0), Leq(-m)));
 		}
@@ -151,7 +155,7 @@ public final class DBMBuilder {
 	}
 
 	private void copy(final int x, final int y) {
-		for (int i = 0; i < size(); i++) {
+		for (int i = 0; i <= nClocks; i++) {
 			if (i != x) {
 				matrix.set(x, i, matrix.get(y, i));
 				matrix.set(i, x, matrix.get(i, y));
@@ -171,7 +175,7 @@ public final class DBMBuilder {
 
 	@SuppressWarnings("unused")
 	private void shift(final int x, final int m) {
-		for (int i = 0; i < size(); i++) {
+		for (int i = 0; i <= nClocks; i++) {
 			if (i != x) {
 				matrix.set(x, i, add(matrix.get(x, i), Leq(m)));
 				matrix.set(i, x, add(matrix.get(i, x), Leq(-m)));
@@ -191,8 +195,8 @@ public final class DBMBuilder {
 
 	@SuppressWarnings("unused")
 	private void norm(final int[] k) {
-		for (int i = 0; i < size(); i++) {
-			for (int j = 0; j < size(); j++) {
+		for (int i = 0; i <= nClocks; i++) {
+			for (int j = 0; j <= nClocks; j++) {
 				if (matrix.get(i, j) != Inf()) {
 					if (matrix.get(i, j) > Leq(k[i])) {
 						matrix.set(i, j, Inf());
@@ -206,9 +210,9 @@ public final class DBMBuilder {
 	}
 
 	private void close() {
-		for (int k = 0; k < size(); k++) {
-			for (int i = 0; i < size(); i++) {
-				for (int j = 0; j < size(); j++) {
+		for (int k = 0; k <= nClocks; k++) {
+			for (int i = 0; i <= nClocks; i++) {
+				for (int j = 0; j <= nClocks; j++) {
 					matrix.set(i, j, min(matrix.get(i, j), add(matrix.get(i, k), matrix.get(k, j))));
 				}
 			}
@@ -219,9 +223,9 @@ public final class DBMBuilder {
 	////
 
 	private boolean isClosed() {
-		for (int i = 0; i < size(); i++) {
-			for (int j = 0; j <= size(); j++) {
-				for (int k = 0; k <= size(); k++) {
+		for (int i = 0; i <= nClocks; i++) {
+			for (int j = 0; j <= nClocks; j++) {
+				for (int k = 0; k <= nClocks; k++) {
 					if (matrix.get(i, j) > add(matrix.get(i, k), matrix.get(k, j))) {
 						return false;
 					}
@@ -235,13 +239,15 @@ public final class DBMBuilder {
 		checkArgument(!clock.equals(DBM.zeroClock()));
 	}
 
-	private static LinkedHashMap<ClockDecl, Integer> createIndexMapFrom(final Set<? extends ClockDecl> clockDecls) {
+	private static LinkedHashMap<ClockDecl, Integer> createIndexMapFrom(final Collection<? extends ClockDecl> clocks) {
 		final LinkedHashMap<ClockDecl, Integer> result = new LinkedHashMap<ClockDecl, Integer>();
 		result.put(DBM.zeroClock(), 0);
 		int i = 1;
-		for (final ClockDecl clockDecl : clockDecls) {
-			result.put(clockDecl, i);
-			i++;
+		for (final ClockDecl clock : clocks) {
+			if (!result.containsKey(clock)) {
+				result.put(clock, i);
+				i++;
+			}
 		}
 		return result;
 	}
@@ -249,25 +255,21 @@ public final class DBMBuilder {
 	private int ensureDeclaredAndGetIndex(final ClockDecl clockDecl) {
 		Integer index = clockToIndex.get(clockDecl);
 		if (index == null) {
-			index = size();
+			index = nClocks + 1;
 
 			clockToIndex.put(clockDecl, index);
-			matrix.expand(size() + 1, size() + 1);
+			matrix.expand(nClocks + 2, nClocks + 2);
 
 			final int x = index;
 			matrix.set(0, x, Leq(0));
 			matrix.set(x, x, Leq(0));
 			matrix.set(x, 0, Inf());
-			for (int i = 1; i < size() - 1; i++) {
+			for (int i = 1; i <= nClocks - 1; i++) {
 				matrix.set(x, i, Inf());
 				matrix.set(i, x, matrix.get(i, 0));
 			}
 		}
 		return index;
-	}
-
-	private int size() {
-		return matrix.rows();
 	}
 
 	////
@@ -281,8 +283,8 @@ public final class DBMBuilder {
 			} else if (b < matrix.get(x, y)) {
 				matrix.set(x, y, b);
 
-				for (int i = 0; i < size(); i++) {
-					for (int j = 0; j < size(); j++) {
+				for (int i = 0; i <= nClocks; i++) {
+					for (int j = 0; j <= nClocks; j++) {
 						if (add(matrix.get(i, x), matrix.get(x, j)) < matrix.get(i, j)) {
 							matrix.set(i, j, add(matrix.get(i, x), matrix.get(x, j)));
 						}

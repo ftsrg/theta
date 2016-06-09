@@ -9,6 +9,7 @@ import static hu.bme.mit.inf.ttmc.analysis.zone.DiffBounds.add;
 import static hu.bme.mit.inf.ttmc.analysis.zone.DiffBounds.asString;
 import static hu.bme.mit.inf.ttmc.formalism.common.decl.impl.Decls2.Clock;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Set;
@@ -37,6 +38,8 @@ public final class DBM {
 	private static final ClockDecl ZERO_CLOCK;
 
 	private final LinkedHashMap<ClockDecl, Integer> clockToIndex;
+
+	private final int nClocks;
 	private final IntMatrix matrix;
 
 	private final ZoneConsistencyVisitor visitor;
@@ -47,20 +50,21 @@ public final class DBM {
 
 	DBM(final DBMBuilder builder) {
 		clockToIndex = builder.clockToIndex;
+		nClocks = builder.nClocks;
 		matrix = builder.matrix;
 		visitor = new ZoneConsistencyVisitor();
 	}
 
 	////
 
-	public static DBM top(final Set<? extends ClockDecl> clockDecls) {
-		final DBM result = builder(clockDecls).build();
+	public static DBM top(final Collection<? extends ClockDecl> clocks) {
+		final DBM result = builder(clocks).build();
 		return result;
 	}
 
-	public static DBM zero(final Set<? extends ClockDecl> clockDecls) {
-		checkArgument(!clockDecls.contains(ZERO_CLOCK));
-		final DBM result = builder(clockDecls).build();
+	public static DBM zero(final Collection<? extends ClockDecl> clocks) {
+		checkArgument(!clocks.contains(ZERO_CLOCK));
+		final DBM result = builder(clocks).build();
 		result.matrix.fill(Leq(0));
 		return result;
 	}
@@ -71,8 +75,8 @@ public final class DBM {
 		return builder(Collections.emptySet());
 	}
 
-	public static DBMBuilder builder(final Set<? extends ClockDecl> clockDecls) {
-		return new DBMBuilder(clockDecls);
+	public static DBMBuilder builder(final Collection<? extends ClockDecl> clocks) {
+		return new DBMBuilder(clocks);
 	}
 
 	public DBMBuilder transform() {
@@ -83,10 +87,6 @@ public final class DBM {
 
 	public static ClockDecl zeroClock() {
 		return ZERO_CLOCK;
-	}
-
-	public int size() {
-		return matrix.rows();
 	}
 
 	////
@@ -146,8 +146,8 @@ public final class DBM {
 
 		sb.append(System.lineSeparator());
 
-		for (int i = 0; i < size(); i++) {
-			for (int j = 0; j < size(); j++) {
+		for (int i = 0; i <= nClocks; i++) {
+			for (int j = 0; j <= nClocks; j++) {
 				sb.append(String.format("%-12s", asString(matrix.get(i, j))));
 			}
 			sb.append(System.lineSeparator());
