@@ -3,6 +3,11 @@ package hu.bme.mit.inf.ttmc.analysis.composite;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkPositionIndex;
 
+import java.util.Collection;
+
+import com.google.common.collect.ImmutableCollection;
+import com.google.common.collect.ImmutableSet;
+
 import hu.bme.mit.inf.ttmc.analysis.State;
 import hu.bme.mit.inf.ttmc.common.Product2;
 
@@ -22,6 +27,20 @@ public final class CompositeState<S1 extends State, S2 extends State> implements
 
 	public static <S1 extends State, S2 extends State> CompositeState<S1, S2> create(final S1 state1, final S2 state2) {
 		return new CompositeState<>(state1, state2);
+	}
+
+	public static <S1 extends State, S2 extends State> Collection<CompositeState<S1, S2>> product(
+			final Collection<? extends S1> states1, final Collection<? extends S2> states2) {
+		checkNotNull(states1);
+		checkNotNull(states2);
+
+		final ImmutableCollection.Builder<CompositeState<S1, S2>> builder = ImmutableSet.builder();
+		for (final S1 state1 : states1) {
+			for (final S2 state2 : states2) {
+				builder.add(create(state1, state2));
+			}
+		}
+		return builder.build();
 	}
 
 	@Override
