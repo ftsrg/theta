@@ -17,11 +17,14 @@ import hu.bme.mit.inf.ttmc.core.type.IntType;
 import hu.bme.mit.inf.ttmc.core.type.RatType;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.ClockDecl;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
+import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFA;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFAEdge;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFALoc;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.impl.MutableTCFA;
 
 public final class FischerTCFA {
+
+	private final MutableTCFA tcfa;
 
 	private final int id;
 	private final VarDecl<IntType> vlock;
@@ -31,6 +34,10 @@ public final class FischerTCFA {
 	private final TCFALoc critical;
 
 	////
+
+	public TCFA getTCFA() {
+		return tcfa;
+	}
 
 	public int getId() {
 		return id;
@@ -63,7 +70,7 @@ public final class FischerTCFA {
 		this.id = id;
 		this.vlock = vlock;
 
-		final MutableTCFA tcfa = new MutableTCFA();
+		tcfa = new MutableTCFA();
 		cx = Clock("x_" + id);
 
 		final Expr<RatType> x = cx.getRef();
