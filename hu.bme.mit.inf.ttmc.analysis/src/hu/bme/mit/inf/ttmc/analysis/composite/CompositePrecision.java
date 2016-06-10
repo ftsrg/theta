@@ -6,7 +6,8 @@ import static com.google.common.base.Preconditions.checkPositionIndex;
 import hu.bme.mit.inf.ttmc.analysis.Precision;
 import hu.bme.mit.inf.ttmc.common.Product2;
 
-public class CompositePrecision<P1 extends Precision, P2 extends Precision> implements Precision, Product2<P1, P2> {
+public final class CompositePrecision<P1 extends Precision, P2 extends Precision>
+		implements Precision, Product2<P1, P2> {
 
 	private static final int HASH_SEED = 5479;
 
@@ -18,6 +19,11 @@ public class CompositePrecision<P1 extends Precision, P2 extends Precision> impl
 	private CompositePrecision(final P1 prec1, final P2 prec2) {
 		this.prec1 = checkNotNull(prec1);
 		this.prec2 = checkNotNull(prec2);
+	}
+
+	public static <P1 extends Precision, P2 extends Precision> CompositePrecision<P1, P2> create(final P1 prec1,
+			final P2 prec2) {
+		return new CompositePrecision<>(prec1, prec2);
 	}
 
 	@Override
