@@ -11,15 +11,16 @@ import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFALoc;
 
 final class MutableTCFALoc implements TCFALoc {
 
-	private final int id;
+	private final String name;
+
 	final Collection<MutableTCFAEdge> inEdges;
 	final Collection<MutableTCFAEdge> outEdges;
 
 	private final Collection<Expr<? extends BoolType>> invars;
 	private boolean urgent;
 
-	MutableTCFALoc(final int id) {
-		this.id = id;
+	MutableTCFALoc(final String name) {
+		this.name = name;
 		inEdges = new LinkedList<>();
 		outEdges = new LinkedList<>();
 		invars = new LinkedList<>();
@@ -27,8 +28,8 @@ final class MutableTCFALoc implements TCFALoc {
 	}
 
 	@Override
-	public int getId() {
-		return id;
+	public String getName() {
+		return name;
 	}
 
 	////
@@ -65,7 +66,7 @@ final class MutableTCFALoc implements TCFALoc {
 
 	@Override
 	public String toString() {
-		return "TCFALoc(" + id + ")";
+		return "TCFALoc(" + name + ")";
 	}
 
 }

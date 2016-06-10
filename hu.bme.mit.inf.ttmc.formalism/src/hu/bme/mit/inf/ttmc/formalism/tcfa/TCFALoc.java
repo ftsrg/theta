@@ -8,7 +8,7 @@ import hu.bme.mit.inf.ttmc.formalism.common.automaton.Loc;
 
 public interface TCFALoc extends Loc<TCFALoc, TCFAEdge> {
 
-	public int getId();
+	public String getName();
 
 	public boolean isUrgent();
 
