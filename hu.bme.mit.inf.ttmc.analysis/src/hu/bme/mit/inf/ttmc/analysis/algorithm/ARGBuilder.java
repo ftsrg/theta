@@ -37,7 +37,7 @@ class ARGBuilder<S extends State, NodeLabel, EdgeLabel, Init, Trans, Target> {
 
 		final Init init = context.getInitialization();
 		final Target target = context.getTarget();
-		final Collection<S> initStates = initFunction.getInitStates(precision, init);
+		final Collection<? extends S> initStates = initFunction.getInitStates(precision, init);
 
 		final ARG<S, NodeLabel, EdgeLabel> arg = new ARG<>(domain);
 

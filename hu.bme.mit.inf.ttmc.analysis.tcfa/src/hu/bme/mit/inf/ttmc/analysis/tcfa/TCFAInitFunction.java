@@ -21,7 +21,7 @@ public class TCFAInitFunction<S extends State, P extends Precision> implements I
 	@Override
 	public Collection<TCFAState<S>> getInitStates(final P precision, final TCFALoc initLoc) {
 		final Collection<TCFAState<S>> initStates = new ArrayList<>();
-		final Collection<S> subInitStates = initFunction.getInitStates(precision, initLoc);
+		final Collection<? extends S> subInitStates = initFunction.getInitStates(precision, initLoc);
 		for (final S subInitState : subInitStates) {
 			final TCFAState<S> initState = TCFAState.create(initLoc, subInitState);
 			initStates.add(initState);
