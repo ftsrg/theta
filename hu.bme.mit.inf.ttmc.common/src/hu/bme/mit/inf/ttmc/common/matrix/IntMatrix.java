@@ -5,7 +5,6 @@ import static com.google.common.base.Preconditions.checkPositionIndex;
 import static java.lang.Math.abs;
 import static java.lang.Math.log10;
 import static java.lang.Math.max;
-import static java.lang.Math.min;
 
 import java.util.Arrays;
 import java.util.function.IntBinaryOperator;
@@ -140,7 +139,7 @@ public final class IntMatrix {
 	}
 
 	private static int matrixSizeFor(final int rows, final int cols) {
-		return min(max(rows, cols), 5);
+		return max(max(rows, cols), 5);
 	}
 
 	////////
