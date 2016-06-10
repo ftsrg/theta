@@ -1,16 +1,17 @@
 package hu.bme.mit.inf.ttmc.analysis.tcfa;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 
 import hu.bme.mit.inf.ttmc.analysis.Precision;
 import hu.bme.mit.inf.ttmc.analysis.State;
 import hu.bme.mit.inf.ttmc.analysis.TransferFunction;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFATrans.TCFADelayTrans;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFATrans.TCFADiscreteTrans;
+import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFAEdge;
 
 public class TCFATransferFunction<S extends State, P extends Precision>
 		implements TransferFunction<TCFAState<S>, P, TCFATrans> {
@@ -54,14 +55,14 @@ public class TCFATransferFunction<S extends State, P extends Precision>
 			final TCFADiscreteTrans trans) {
 		final Collection<TCFAState<S>> succStates = new ArrayList<>();
 
-		if (!state.getLoc().getOutEdges().contains(trans.getEdge())) {
-			return Collections.emptySet();
-		}
+		final TCFAEdge edge = trans.getEdge();
+
+		checkArgument(state.getLoc().getOutEdges().contains(edge));
 
 		final Collection<? extends S> subSuccStates = transferFunction.getSuccStates(state.getState(), precision,
 				trans);
 		for (final S subSuccState : subSuccStates) {
-			final TCFAState<S> succState = TCFAState.create(trans.getEdge().getTarget(), subSuccState);
+			final TCFAState<S> succState = TCFAState.create(edge.getTarget(), subSuccState);
 			succStates.add(succState);
 		}
 
