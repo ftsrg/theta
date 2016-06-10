@@ -20,7 +20,7 @@ import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAAnalysisContext;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFADomain;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAInitFunction;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAState;
-import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFATargetPredicate;
+import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFALocTargetPredicate;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFATrans;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFATransferFunction;
 import hu.bme.mit.inf.ttmc.core.type.IntType;
@@ -48,7 +48,7 @@ public class TCFAPredTests {
 				new TCFAPredInitFunction());
 		final TCFATransferFunction<PredState, PredPrecision> transferFunction = new TCFATransferFunction<>(
 				new TCFAPredTransferFunction(solver));
-		final TCFATargetPredicate targetPredicate = new TCFATargetPredicate();
+		final TCFALocTargetPredicate targetPredicate = new TCFALocTargetPredicate();
 
 		final PredPrecision precision = GlobalPredPrecision.create(Collections.singleton(Eq(vlock.getRef(), Int(0))));
 

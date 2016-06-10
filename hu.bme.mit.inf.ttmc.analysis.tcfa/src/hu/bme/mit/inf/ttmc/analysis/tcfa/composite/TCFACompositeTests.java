@@ -23,7 +23,7 @@ import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAAnalysisContext;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFADomain;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAInitFunction;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAState;
-import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFATargetPredicate;
+import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFALocTargetPredicate;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFATrans;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFATransferFunction;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.expl.TCFAExplInitFunction;
@@ -62,7 +62,7 @@ public class TCFACompositeTests {
 		final TCFATransferFunction<CompositeState<ZoneState, ExplState>, CompositePrecision<ZonePrecision, ExplPrecision>> transferFunction = new TCFATransferFunction<>(
 				new CompositeTransferFunction<>(new TCFAZoneTransferFunction(), new TCFAExplTransferFunction(solver)));
 
-		final TCFATargetPredicate targetPredicate = new TCFATargetPredicate();
+		final TCFALocTargetPredicate targetPredicate = new TCFALocTargetPredicate();
 
 		final CompositePrecision<ZonePrecision, ExplPrecision> precision = CompositePrecision.create(
 				ZonePrecision.builder().add(fischer.getClock()).build(),

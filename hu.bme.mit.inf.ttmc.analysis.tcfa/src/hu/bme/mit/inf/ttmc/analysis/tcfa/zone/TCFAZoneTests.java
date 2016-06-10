@@ -12,7 +12,7 @@ import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAAnalysisContext;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFADomain;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAInitFunction;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAState;
-import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFATargetPredicate;
+import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFALocTargetPredicate;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFATrans;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFATransferFunction;
 import hu.bme.mit.inf.ttmc.analysis.zone.ZoneDomain;
@@ -37,7 +37,7 @@ public class TCFAZoneTests {
 				new TCFAZoneInitFunction());
 		final TCFATransferFunction<ZoneState, ZonePrecision> transferFunction = new TCFATransferFunction<>(
 				new TCFAZoneTransferFunction());
-		final TCFATargetPredicate targetPredicate = new TCFATargetPredicate();
+		final TCFALocTargetPredicate targetPredicate = new TCFALocTargetPredicate();
 
 		final ZonePrecision precision = ZonePrecision.builder().add(fischer.getClock()).build();
 
