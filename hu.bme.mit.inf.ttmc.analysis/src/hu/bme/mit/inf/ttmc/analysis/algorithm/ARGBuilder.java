@@ -66,7 +66,8 @@ class ARGBuilder<S extends State, NodeLabel, EdgeLabel, Init, Trans, Target> {
 
 		final Collection<? extends Trans> transitions = context.getTransitions(node.getState());
 		for (final Trans trans : transitions) {
-			final Collection<S> succStates = transferFunction.getSuccStates(node.getState(), precision, trans);
+			final Collection<? extends S> succStates = transferFunction.getSuccStates(node.getState(), precision,
+					trans);
 			for (final S succState : succStates) {
 				final boolean isTarget = targetPredicate.isTargetState(succState, target);
 				final ARGNode<S, NodeLabel, EdgeLabel> succNode = arg.createSuccNode(node, succState, isTarget);
