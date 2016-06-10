@@ -40,7 +40,8 @@ public class TCFATransferFunction<S extends State, P extends Precision>
 			final TCFADelayTrans trans) {
 		final Collection<TCFAState<S>> succStates = new ArrayList<>();
 
-		final Collection<S> subSuccStates = transferFunction.getSuccStates(state.getState(), precision, trans);
+		final Collection<? extends S> subSuccStates = transferFunction.getSuccStates(state.getState(), precision,
+				trans);
 		for (final S subSuccState : subSuccStates) {
 			final TCFAState<S> succState = TCFAState.create(state.getLoc(), subSuccState);
 			succStates.add(succState);
@@ -57,7 +58,8 @@ public class TCFATransferFunction<S extends State, P extends Precision>
 			return Collections.emptySet();
 		}
 
-		final Collection<S> subSuccStates = transferFunction.getSuccStates(state.getState(), precision, trans);
+		final Collection<? extends S> subSuccStates = transferFunction.getSuccStates(state.getState(), precision,
+				trans);
 		for (final S subSuccState : subSuccStates) {
 			final TCFAState<S> succState = TCFAState.create(trans.getEdge().getTarget(), subSuccState);
 			succStates.add(succState);
