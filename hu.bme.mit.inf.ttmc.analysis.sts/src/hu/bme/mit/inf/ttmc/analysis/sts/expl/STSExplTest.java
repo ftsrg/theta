@@ -51,7 +51,7 @@ public class STSExplTest {
 		final SolverManager manager = new Z3SolverManager();
 		final Solver solver = manager.createSolver(true, true);
 
-		final ExplDomain domain = ExplDomain.create();
+		final ExplDomain domain = ExplDomain.getInstance();
 		final STSExplInitFunction initFunction = new STSExplInitFunction(solver);
 		final STSExplTransferFunction transferFunction = new STSExplTransferFunction(solver);
 		final STSExplTargetPredicate targetPredicate = new STSExplTargetPredicate(solver);

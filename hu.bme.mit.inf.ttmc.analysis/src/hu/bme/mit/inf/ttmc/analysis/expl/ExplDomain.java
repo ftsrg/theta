@@ -13,10 +13,9 @@ public class ExplDomain implements Domain<ExplState> {
 	}
 
 	private ExplDomain() {
-
 	}
 
-	public static ExplDomain create() {
+	public static ExplDomain getInstance() {
 		return INSTANCE;
 	}
 
