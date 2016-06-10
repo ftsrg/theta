@@ -18,7 +18,7 @@ import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAAnalysisContext;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFADomain;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAInitFunction;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAState;
-import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFATargetPredicate;
+import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFALocTargetPredicate;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFATrans;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFATransferFunction;
 import hu.bme.mit.inf.ttmc.core.type.IntType;
@@ -46,7 +46,7 @@ public class TCFAExplTests {
 				new TCFAExplInitFunction());
 		final TCFATransferFunction<ExplState, ExplPrecision> transferFunction = new TCFATransferFunction<>(
 				new TCFAExplTransferFunction(solver));
-		final TCFATargetPredicate targetPredicate = new TCFATargetPredicate();
+		final TCFALocTargetPredicate targetPredicate = new TCFALocTargetPredicate();
 
 		final ExplPrecision precision = GlobalExplPrecision.create(Collections.singleton(vlock),
 				Collections.emptySet());
