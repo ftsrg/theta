@@ -63,7 +63,7 @@ public final class TCFAState<S extends State> implements State {
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("TCFAState(");
-		sb.append(loc.getId());
+		sb.append(loc);
 		sb.append(", ");
 		sb.append(state);
 		sb.append(")");

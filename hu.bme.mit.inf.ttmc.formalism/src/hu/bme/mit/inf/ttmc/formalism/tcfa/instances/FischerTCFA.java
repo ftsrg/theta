@@ -84,9 +84,9 @@ public final class FischerTCFA {
 		final Expr<IntType> izero = Int(0);
 
 		final TCFALoc l0 = tcfa.getInitLoc();
-		final TCFALoc l1 = tcfa.createLoc();
-		final TCFALoc l2 = tcfa.createLoc();
-		final TCFALoc l3 = tcfa.createLoc();
+		final TCFALoc l1 = tcfa.createLoc("wait");
+		final TCFALoc l2 = tcfa.createLoc("try");
+		final TCFALoc l3 = tcfa.createLoc("crit");
 
 		initial = l0;
 		critical = l3;
