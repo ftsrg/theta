@@ -41,7 +41,7 @@ public class TCFAExplTests {
 		final SolverManager manager = new Z3SolverManager();
 		final Solver solver = manager.createSolver(true, true);
 
-		final TCFADomain<ExplState> domain = new TCFADomain<>(ExplDomain.create());
+		final TCFADomain<ExplState> domain = new TCFADomain<>(ExplDomain.getInstance());
 		final TCFAInitFunction<ExplState, ExplPrecision> initFunction = new TCFAInitFunction<>(
 				new TCFAExplInitFunction());
 		final TCFATransferFunction<ExplState, ExplPrecision> transferFunction = new TCFATransferFunction<>(
