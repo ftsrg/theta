@@ -13,6 +13,7 @@ Require-Bundle: com.google.guava,
  hu.bme.mit.inf.ttmc.solver.z3
 Export-Package: hu.bme.mit.inf.ttmc.analysis,
  hu.bme.mit.inf.ttmc.analysis.algorithm,
+ hu.bme.mit.inf.ttmc.analysis.composite,
  hu.bme.mit.inf.ttmc.analysis.expl,
  hu.bme.mit.inf.ttmc.analysis.pred,
  hu.bme.mit.inf.ttmc.analysis.zone
