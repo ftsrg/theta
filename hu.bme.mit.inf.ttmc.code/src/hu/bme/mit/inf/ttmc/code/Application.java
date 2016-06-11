@@ -9,6 +9,8 @@ import java.io.OutputStreamWriter;
 import java.nio.CharBuffer;
 import java.util.ArrayList;
 
+import javax.xml.transform.Transformer;
+
 import org.eclipse.cdt.core.dom.ast.ASTVisitor;
 import org.eclipse.cdt.core.dom.ast.IASTDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTDeclarator;
@@ -32,11 +34,13 @@ import hu.bme.mit.inf.ttmc.code.ast.utils.AstPrinter;
 import hu.bme.mit.inf.ttmc.code.ast.visitor.CloneAstVisitor;
 import hu.bme.mit.inf.ttmc.code.ast.CompoundStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.FunctionDefinitionAst;
+import hu.bme.mit.inf.ttmc.code.ast.StatementAst;
 import hu.bme.mit.inf.ttmc.code.stmt.visitor.PrintStmtVisitor;
 import hu.bme.mit.inf.ttmc.code.visitor.PrintCodeAstVisitor;
 import hu.bme.mit.inf.ttmc.code.visitor.SimplifyAstVisitor;
 import hu.bme.mit.inf.ttmc.code.visitor.StatementUnrollAstVisitor;
 import hu.bme.mit.inf.ttmc.code.visitor.TransformProgramVisitor;
+import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.ConstraintManagerImpl;
 import hu.bme.mit.inf.ttmc.formalism.cfa.CFA;
 import hu.bme.mit.inf.ttmc.formalism.cfa.CFACreator;
@@ -82,6 +86,16 @@ class Application {
 		graphvizOutput("ast_trans", AstPrinter.toGraphvizString(newRoot));
 		
 		System.out.println(newRoot.accept(new PrintCodeAstVisitor()));
+		
+		ProgramManager pm = new ProgramManagerImpl(new ConstraintManagerImpl());
+		
+		TransformProgramVisitor transformer = new TransformProgramVisitor(pm);
+		
+		StatementAst funcBody = ((FunctionDefinitionAst) newRoot.getDeclarations().get(0)).getBody();
+		Stmt content = funcBody.accept(transformer);
+		
+		CFA cfa = CFACreator.createSBE(pm, content);
+		System.out.println(CFAPrinter.toGraphvizSting(cfa));
 
 		/*
 		 * ProgramManager manager = new ProgramManagerImpl(new
