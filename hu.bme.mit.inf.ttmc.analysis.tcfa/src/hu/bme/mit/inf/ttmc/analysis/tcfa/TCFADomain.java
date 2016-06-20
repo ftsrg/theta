@@ -21,8 +21,7 @@ public final class TCFADomain<S extends State> implements Domain<TCFAState<S>> {
 
 	@Override
 	public boolean isBottom(final TCFAState<S> state) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		return domain.isBottom(state.getState());
 	}
 
 	@Override

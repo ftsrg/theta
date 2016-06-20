@@ -21,8 +21,7 @@ public final class ZoneDomain implements Domain<ZoneState> {
 
 	@Override
 	public boolean isBottom(final ZoneState state) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		return state.isBottom();
 	}
 
 	@Override
