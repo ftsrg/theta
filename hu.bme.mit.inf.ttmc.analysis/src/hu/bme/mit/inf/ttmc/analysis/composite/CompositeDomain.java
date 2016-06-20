@@ -22,7 +22,7 @@ public class CompositeDomain<S1 extends State, S2 extends State> implements Doma
 
 	@Override
 	public boolean isBottom(final CompositeState<S1, S2> state) {
-		return domain1.isBottom(state._1()) && domain2.isBottom(state._2());
+		return domain1.isBottom(state._1()) || domain2.isBottom(state._2());
 	}
 
 	@Override
