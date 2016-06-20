@@ -58,7 +58,7 @@ class ARGBuilder<S extends State, NodeLabel, EdgeLabel, Init, Trans, Target> {
 		checkNotNull(transferFunction);
 		checkNotNull(precision);
 
-		if (node.isExpanded()) {
+		if (node.isExpanded() || domain.isBottom(node.getState())) {
 			return;
 		}
 

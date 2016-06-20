@@ -26,8 +26,7 @@ public class ExplDomain implements Domain<ExplState> {
 
 	@Override
 	public boolean isBottom(final ExplState state) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		return false;
 	}
 
 	@Override
