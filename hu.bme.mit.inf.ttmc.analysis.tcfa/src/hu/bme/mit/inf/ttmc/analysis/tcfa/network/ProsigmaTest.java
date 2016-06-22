@@ -1,17 +1,12 @@
 package hu.bme.mit.inf.ttmc.analysis.tcfa.network;
 
-import static hu.bme.mit.inf.ttmc.core.type.impl.Types.Int;
-import static hu.bme.mit.inf.ttmc.formalism.common.decl.impl.Decls2.Var;
-import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toSet;
-
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 import org.junit.Test;
 
+import hu.bme.mit.inf.ttmc.analysis.algorithm.ARG;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.Abstractor;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.ArgPrinter;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.NullLabeling;
@@ -38,36 +33,30 @@ import hu.bme.mit.inf.ttmc.analysis.tcfa.zone.TCFAZoneTransferFunction;
 import hu.bme.mit.inf.ttmc.analysis.zone.ZoneDomain;
 import hu.bme.mit.inf.ttmc.analysis.zone.ZonePrecision;
 import hu.bme.mit.inf.ttmc.analysis.zone.ZoneState;
-import hu.bme.mit.inf.ttmc.core.type.IntType;
-import hu.bme.mit.inf.ttmc.formalism.common.decl.ClockDecl;
-import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
+import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFA;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFALoc;
-import hu.bme.mit.inf.ttmc.formalism.tcfa.instances.FischerTCFA;
+import hu.bme.mit.inf.ttmc.formalism.tcfa.impl.MutableTCFA;
+import hu.bme.mit.inf.ttmc.formalism.tcfa.instances.ProsigmaTCFA;
 import hu.bme.mit.inf.ttmc.solver.Solver;
 import hu.bme.mit.inf.ttmc.solver.SolverManager;
 import hu.bme.mit.inf.ttmc.solver.z3.Z3SolverManager;
 
-public class TCFANetworkTests {
+public class ProsigmaTest {
 
 	@Test
-	public void testExplicit() {
-		final int n = 2;
+	public void test() {
+		final ProsigmaTCFA prosigma = new ProsigmaTCFA(3, 7);
 
-		final VarDecl<IntType> vlock = Var("lock", Int());
+		final TCFA eth = prosigma.getETH();
+		final TCFA faultModel = prosigma.getFaultModel();
+		final TCFA fieldLG = prosigma.getFieldLG();
+		final TCFA controlLG = prosigma.getControlLG();
 
-		final List<FischerTCFA> network = new ArrayList<FischerTCFA>(n);
-		for (int i = 0; i < n; i++) {
-			network.add(new FischerTCFA(i + 1, 1, 2, vlock));
-		}
-
-		final Collection<ClockDecl> clocks = network.stream().map(comp -> comp.getClock()).collect(toSet());
-		final List<TCFALoc> initLocs = network.stream().map(comp -> comp.getInitial()).collect(toList());
-		final List<TCFALoc> criticalLocs = network.stream().map(comp -> comp.getCritical()).collect(toList());
-
-		////
+		final List<TCFALoc> initLocs = Arrays.asList(eth.getInitLoc(), faultModel.getInitLoc(), fieldLG.getInitLoc(),
+				controlLG.getInitLoc());
 
 		final TCFAAnalysisContext context = new TCFAAnalysisContext(TCFANetworkLoc.create(initLocs),
-				TCFANetworkLoc.create(criticalLocs));
+				new MutableTCFA().getInitLoc());
 
 		final SolverManager manager = new Z3SolverManager();
 		final Solver solver = manager.createSolver(true, true);
@@ -84,8 +73,8 @@ public class TCFANetworkTests {
 		final TCFALocTargetPredicate targetPredicate = new TCFALocTargetPredicate();
 
 		final CompositePrecision<ZonePrecision, ExplPrecision> precision = CompositePrecision.create(
-				ZonePrecision.builder().addAll(clocks).build(),
-				GlobalExplPrecision.create(Collections.singleton(vlock), Collections.emptySet()));
+				ZonePrecision.builder().addAll(prosigma.getClocks()).build(),
+				GlobalExplPrecision.create(Collections.singleton(prosigma.getChan()), Collections.emptySet()));
 
 		final Abstractor<TCFAState<CompositeState<ZoneState, ExplState>>, CompositePrecision<ZonePrecision, ExplPrecision>, Void, Void, TCFALoc, TCFATrans, TCFALoc> abstractor = new Abstractor<>(
 				context, NullLabeling.getInstance(), domain, initFunction, transferFunction, targetPredicate);
@@ -93,7 +82,10 @@ public class TCFANetworkTests {
 		abstractor.init(precision);
 		abstractor.check(precision);
 
-		System.out.println(ArgPrinter.toGraphvizString(abstractor.getARG()));
+		final ARG<?, ?, ?> arg = abstractor.getARG();
+
+		System.out.println(ArgPrinter.toGraphvizString(arg));
+
 	}
 
 }
