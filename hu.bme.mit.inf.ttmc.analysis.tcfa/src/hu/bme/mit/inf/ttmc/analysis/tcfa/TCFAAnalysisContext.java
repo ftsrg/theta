@@ -11,18 +11,18 @@ public class TCFAAnalysisContext implements AnalysisContext<TCFAState<?>, TCFAAc
 
 	@Override
 	public Collection<TCFAAction> getEnabledActionsFor(final TCFAState<?> state) {
-		final Collection<TCFAAction> tcfaAction = new ArrayList<>();
+		final Collection<TCFAAction> tcfaActions = new ArrayList<>();
 		final TCFALoc loc = state.getLoc();
 
 		for (final TCFAEdge outEdge : loc.getOutEdges()) {
-			tcfaAction.add(TCFAAction.discrete(outEdge));
+			tcfaActions.add(TCFAAction.discrete(outEdge));
 		}
 
 		if (!loc.isUrgent()) {
-			tcfaAction.add(TCFAAction.delay(loc));
+			tcfaActions.add(TCFAAction.delay(loc));
 		}
 
-		return tcfaAction;
+		return tcfaActions;
 	}
 
 }
