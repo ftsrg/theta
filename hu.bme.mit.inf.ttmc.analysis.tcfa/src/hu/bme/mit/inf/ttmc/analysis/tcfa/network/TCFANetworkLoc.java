@@ -17,7 +17,11 @@ import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFALoc;
 
 public final class TCFANetworkLoc implements TCFALoc {
 
+	private static final int HASH_SEED = 2543;
+
 	private final List<TCFALoc> locs;
+
+	private volatile int hashCode = 0;
 
 	private TCFANetworkLoc(final List<? extends TCFALoc> locs) {
 		this.locs = ImmutableList.copyOf(checkNotNull(locs));
@@ -90,8 +94,13 @@ public final class TCFANetworkLoc implements TCFALoc {
 
 	@Override
 	public int hashCode() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		int result = hashCode;
+		if (result == 0) {
+			result = HASH_SEED;
+			result = 31 * result + locs.hashCode();
+			hashCode = result;
+		}
+		return result;
 	}
 
 	@Override
