@@ -7,9 +7,10 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
+import hu.bme.mit.inf.ttmc.analysis.Action;
 import hu.bme.mit.inf.ttmc.analysis.State;
 
-public class ARGNode<S extends State, NodeLabel, EdgeLabel> {
+public class ARGNode<S extends State, A extends Action> {
 
 	private final int id;
 	private final S state;
@@ -17,13 +18,11 @@ public class ARGNode<S extends State, NodeLabel, EdgeLabel> {
 
 	boolean expanded;
 
-	Optional<ARGEdge<S, NodeLabel, EdgeLabel>> inEdge;
-	final Collection<ARGEdge<S, NodeLabel, EdgeLabel>> outEdges;
+	Optional<ARGEdge<S, A>> inEdge;
+	final Collection<ARGEdge<S, A>> outEdges;
 
-	Optional<ARGNode<S, NodeLabel, EdgeLabel>> coveringNode;
-	final Collection<ARGNode<S, NodeLabel, EdgeLabel>> coveredNodes;
-
-	NodeLabel label;
+	Optional<ARGNode<S, A>> coveringNode;
+	final Collection<ARGNode<S, A>> coveredNodes;
 
 	ARGNode(final S state, final int id, final boolean target) {
 		this.state = state;
@@ -39,7 +38,7 @@ public class ARGNode<S extends State, NodeLabel, EdgeLabel> {
 	////
 
 	void clearCoveredNodes() {
-		for (final ARGNode<S, NodeLabel, EdgeLabel> coveredNode : coveredNodes) {
+		for (final ARGNode<S, A> coveredNode : coveredNodes) {
 			coveredNode.coveringNode = Optional.empty();
 		}
 		coveredNodes.clear();
@@ -47,7 +46,7 @@ public class ARGNode<S extends State, NodeLabel, EdgeLabel> {
 
 	////
 
-	public boolean existsAncestor(final Predicate<ARGNode<S, NodeLabel, EdgeLabel>> predicate) {
+	public boolean existsAncestor(final Predicate<ARGNode<S, A>> predicate) {
 		if (predicate.test(this)) {
 			return true;
 		} else if (inEdge.isPresent()) {
@@ -59,35 +58,35 @@ public class ARGNode<S extends State, NodeLabel, EdgeLabel> {
 
 	////
 
-	public void foreachAncsetors(final Consumer<ARGNode<S, NodeLabel, EdgeLabel>> consumer) {
+	public void foreachAncsetors(final Consumer<ARGNode<S, A>> consumer) {
 		consumer.accept(this);
 		if (inEdge.isPresent()) {
 			inEdge.get().getSource().foreachAncsetors(consumer);
 		}
 	}
 
-	public void foreachDescendants(final Consumer<ARGNode<S, NodeLabel, EdgeLabel>> consumer) {
+	public void foreachDescendants(final Consumer<ARGNode<S, A>> consumer) {
 		consumer.accept(this);
-		for (final ARGEdge<S, NodeLabel, EdgeLabel> outEdge : outEdges) {
+		for (final ARGEdge<S, A> outEdge : outEdges) {
 			outEdge.getTarget().foreachDescendants(consumer);
 		}
 	}
 
 	////
 
-	public Optional<ARGEdge<S, NodeLabel, EdgeLabel>> getInEdge() {
+	public Optional<ARGEdge<S, A>> getInEdge() {
 		return inEdge;
 	}
 
-	public Collection<ARGEdge<S, NodeLabel, EdgeLabel>> getOutEdges() {
+	public Collection<ARGEdge<S, A>> getOutEdges() {
 		return Collections.unmodifiableCollection(outEdges);
 	}
 
-	public Optional<ARGNode<S, NodeLabel, EdgeLabel>> getCoveringNode() {
+	public Optional<ARGNode<S, A>> getCoveringNode() {
 		return coveringNode;
 	}
 
-	public Collection<ARGNode<S, NodeLabel, EdgeLabel>> coveredNodes() {
+	public Collection<ARGNode<S, A>> coveredNodes() {
 		return Collections.unmodifiableCollection(coveredNodes);
 	}
 
@@ -115,10 +114,6 @@ public class ARGNode<S extends State, NodeLabel, EdgeLabel> {
 
 	public boolean isExpanded() {
 		return expanded;
-	}
-
-	public NodeLabel getLabel() {
-		return label;
 	}
 
 	////

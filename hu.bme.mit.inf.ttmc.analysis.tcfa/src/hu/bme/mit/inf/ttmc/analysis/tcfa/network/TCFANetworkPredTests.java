@@ -16,7 +16,6 @@ import org.junit.Test;
 
 import hu.bme.mit.inf.ttmc.analysis.algorithm.Abstractor;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.ArgPrinter;
-import hu.bme.mit.inf.ttmc.analysis.algorithm.NullLabeling;
 import hu.bme.mit.inf.ttmc.analysis.composite.CompositeDomain;
 import hu.bme.mit.inf.ttmc.analysis.composite.CompositeInitFunction;
 import hu.bme.mit.inf.ttmc.analysis.composite.CompositePrecision;
@@ -26,12 +25,12 @@ import hu.bme.mit.inf.ttmc.analysis.pred.GlobalPredPrecision;
 import hu.bme.mit.inf.ttmc.analysis.pred.PredDomain;
 import hu.bme.mit.inf.ttmc.analysis.pred.PredPrecision;
 import hu.bme.mit.inf.ttmc.analysis.pred.PredState;
+import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAAction;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAAnalysisContext;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFADomain;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAInitFunction;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFALocTargetPredicate;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAState;
-import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFATrans;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFATransferFunction;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.pred.TCFAPredInitFunction;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.pred.TCFAPredTransferFunction;
@@ -54,7 +53,7 @@ public class TCFANetworkPredTests {
 
 	@Test
 	public void test() {
-		final int n = 4;
+		final int n = 6;
 
 		final VarDecl<IntType> vlock = Var("lock", Int());
 		final Expr<IntType> lock = vlock.getRef();
@@ -66,12 +65,10 @@ public class TCFANetworkPredTests {
 
 		final Collection<ClockDecl> clocks = network.stream().map(comp -> comp.getClock()).collect(toSet());
 		final List<TCFALoc> initLocs = network.stream().map(comp -> comp.getInitial()).collect(toList());
-		final List<TCFALoc> criticalLocs = network.stream().map(comp -> comp.getCritical()).collect(toList());
 
 		////
 
-		final TCFAAnalysisContext context = new TCFAAnalysisContext(TCFANetworkLoc.create(initLocs),
-				TCFANetworkLoc.create(criticalLocs));
+		final TCFAAnalysisContext context = new TCFAAnalysisContext();
 
 		final SolverManager manager = new Z3SolverManager();
 		final Solver solver = manager.createSolver(true, true);
@@ -80,19 +77,20 @@ public class TCFANetworkPredTests {
 				new CompositeDomain<>(ZoneDomain.getInstance(), PredDomain.create(solver)));
 
 		final TCFAInitFunction<CompositeState<ZoneState, PredState>, CompositePrecision<ZonePrecision, PredPrecision>> initFunction = new TCFAInitFunction<>(
+				TCFANetworkLoc.create(initLocs),
 				new CompositeInitFunction<>(new TCFAZoneInitFunction(), new TCFAPredInitFunction()));
 
 		final TCFATransferFunction<CompositeState<ZoneState, PredState>, CompositePrecision<ZonePrecision, PredPrecision>> transferFunction = new TCFATransferFunction<>(
 				new CompositeTransferFunction<>(new TCFAZoneTransferFunction(), new TCFAPredTransferFunction(solver)));
 
-		final TCFALocTargetPredicate targetPredicate = new TCFALocTargetPredicate();
+		final TCFALocTargetPredicate targetPredicate = new TCFALocTargetPredicate(loc -> false);
 
 		final CompositePrecision<ZonePrecision, PredPrecision> precision = CompositePrecision.create(
 				ZonePrecision.builder().addAll(clocks).build(),
 				GlobalPredPrecision.create(Arrays.asList(Eq(lock, Int(0)), Eq(lock, Int(1)))));
 
-		final Abstractor<TCFAState<CompositeState<ZoneState, PredState>>, CompositePrecision<ZonePrecision, PredPrecision>, Void, Void, TCFALoc, TCFATrans, TCFALoc> abstractor = new Abstractor<>(
-				context, NullLabeling.getInstance(), domain, initFunction, transferFunction, targetPredicate);
+		final Abstractor<TCFAState<CompositeState<ZoneState, PredState>>, TCFAAction, CompositePrecision<ZonePrecision, PredPrecision>> abstractor = new Abstractor<>(
+				context, domain, initFunction, transferFunction, targetPredicate);
 
 		abstractor.init(precision);
 		abstractor.check(precision);

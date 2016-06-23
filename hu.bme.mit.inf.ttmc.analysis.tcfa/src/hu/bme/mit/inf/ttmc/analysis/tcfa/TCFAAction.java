@@ -8,6 +8,7 @@ import java.util.List;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
+import hu.bme.mit.inf.ttmc.analysis.Action;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
@@ -18,19 +19,19 @@ import hu.bme.mit.inf.ttmc.formalism.ta.op.impl.ClockOps;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFAEdge;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFALoc;
 
-public abstract class TCFATrans {
+public abstract class TCFAAction implements Action {
 
-	private TCFATrans() {
+	private TCFAAction() {
 	}
 
-	public static TCFADelayTrans delay(final TCFALoc loc) {
+	public static TCFADelayAction delay(final TCFALoc loc) {
 		checkNotNull(loc);
-		return new TCFADelayTrans(loc);
+		return new TCFADelayAction(loc);
 	}
 
-	public static TCFADiscreteTrans discrete(final TCFAEdge edge) {
+	public static TCFADiscreteAction discrete(final TCFAEdge edge) {
 		checkNotNull(edge);
-		return new TCFADiscreteTrans(edge);
+		return new TCFADiscreteAction(edge);
 	}
 
 	private static Collection<ClockConstr> extractClockInvars(final TCFALoc loc) {
@@ -49,11 +50,11 @@ public abstract class TCFATrans {
 
 	////
 
-	public static final class TCFADelayTrans extends TCFATrans {
+	public static final class TCFADelayAction extends TCFAAction {
 
 		private final Collection<ClockConstr> clockInvars;
 
-		private TCFADelayTrans(final TCFALoc loc) {
+		private TCFADelayAction(final TCFALoc loc) {
 			assert loc != null;
 			clockInvars = extractClockInvars(loc);
 		}
@@ -70,7 +71,7 @@ public abstract class TCFATrans {
 
 	}
 
-	public static final class TCFADiscreteTrans extends TCFATrans {
+	public static final class TCFADiscreteAction extends TCFAAction {
 
 		private final TCFAEdge edge;
 
@@ -83,7 +84,7 @@ public abstract class TCFATrans {
 		private final List<ClockOp> clockOps;
 		private final List<Stmt> dataStmts;
 
-		private TCFADiscreteTrans(final TCFAEdge edge) {
+		private TCFADiscreteAction(final TCFAEdge edge) {
 			this.edge = edge;
 			sourceClockInvars = extractClockInvars(edge.getSource());
 			sourceDataInvars = extractDataInvars(edge.getSource());

@@ -7,13 +7,13 @@ public class ArgPrinter {
 	private ArgPrinter() {
 	}
 
-	public static String toGraphvizString(final ARG<?, ?, ?> arg) {
+	public static String toGraphvizString(final ARG<?, ?> arg) {
 		final StringBuilder sb = new StringBuilder();
 
 		sb.append("digraph arg {");
 		sb.append(lineSeparator());
 
-		for (final ARGNode<?, ?, ?> initNode : arg.getInitNodes()) {
+		for (final ARGNode<?, ?> initNode : arg.getInitNodes()) {
 			appendNode(sb, initNode);
 		}
 
@@ -21,7 +21,7 @@ public class ArgPrinter {
 		return sb.toString();
 	}
 
-	public static String toGraphvizString(final ARGNode<?, ?, ?> node) {
+	public static String toGraphvizString(final ARGNode<?, ?> node) {
 		final StringBuilder sb = new StringBuilder();
 
 		sb.append("digraph arg {\\n");
@@ -33,7 +33,7 @@ public class ArgPrinter {
 		return sb.toString();
 	}
 
-	private static void appendNode(final StringBuilder sb, final ARGNode<?, ?, ?> node) {
+	private static void appendNode(final StringBuilder sb, final ARGNode<?, ?> node) {
 		sb.append(Integer.toString(node.getId()));
 		sb.append(" [label=\"");
 		sb.append(node.getState());
@@ -45,7 +45,7 @@ public class ArgPrinter {
 		}
 		sb.append(lineSeparator());
 
-		for (final ARGEdge<?, ?, ?> edge : node.getOutEdges()) {
+		for (final ARGEdge<?, ?> edge : node.getOutEdges()) {
 			appendNode(sb, edge.getTarget());
 			appendEdge(sb, edge);
 		}
@@ -55,15 +55,15 @@ public class ArgPrinter {
 		}
 	}
 
-	private static void appendEdge(final StringBuilder sb, final ARGEdge<?, ?, ?> edge) {
+	private static void appendEdge(final StringBuilder sb, final ARGEdge<?, ?> edge) {
 		sb.append(Integer.toString(edge.getSource().getId()));
 		sb.append(" -> ");
 		sb.append(Integer.toString(edge.getTarget().getId()));
 		sb.append(lineSeparator());
 	}
 
-	private static void appendCover(final StringBuilder sb, final ARGNode<?, ?, ?> node,
-			final ARGNode<?, ?, ?> coveringNode) {
+	private static void appendCover(final StringBuilder sb, final ARGNode<?, ?> node,
+			final ARGNode<?, ?> coveringNode) {
 		sb.append(node.getId());
 		sb.append(" -> ");
 		sb.append(coveringNode.getId());

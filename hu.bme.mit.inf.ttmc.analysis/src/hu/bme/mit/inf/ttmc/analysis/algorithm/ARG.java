@@ -9,17 +9,18 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Optional;
 
+import hu.bme.mit.inf.ttmc.analysis.Action;
 import hu.bme.mit.inf.ttmc.analysis.Domain;
 import hu.bme.mit.inf.ttmc.analysis.State;
 
-public class ARG<S extends State, NodeLabel, EdgeLabel> {
+public class ARG<S extends State, A extends Action> {
 
 	private final Domain<S> domain;
 
-	private final Collection<ARGNode<S, NodeLabel, EdgeLabel>> nodes;
-	private final Collection<ARGEdge<S, NodeLabel, EdgeLabel>> edges;
+	private final Collection<ARGNode<S, A>> nodes;
+	private final Collection<ARGEdge<S, A>> edges;
 
-	private final Collection<ARGNode<S, NodeLabel, EdgeLabel>> initNodes;
+	private final Collection<ARGNode<S, A>> initNodes;
 
 	private int nextId = 0;
 
@@ -32,22 +33,22 @@ public class ARG<S extends State, NodeLabel, EdgeLabel> {
 
 	////
 
-	public Collection<ARGNode<S, NodeLabel, EdgeLabel>> getNodes() {
+	public Collection<ARGNode<S, A>> getNodes() {
 		return Collections.unmodifiableCollection(nodes);
 	}
 
-	public Collection<ARGEdge<S, NodeLabel, EdgeLabel>> getEdges() {
+	public Collection<ARGEdge<S, A>> getEdges() {
 		return Collections.unmodifiableCollection(edges);
 	}
 
-	public Collection<ARGNode<S, NodeLabel, EdgeLabel>> getInitNodes() {
+	public Collection<ARGNode<S, A>> getInitNodes() {
 		return Collections.unmodifiableCollection(initNodes);
 	}
 
 	////
 
-	public void close(final ARGNode<S, NodeLabel, EdgeLabel> node) {
-		for (final ARGNode<S, NodeLabel, EdgeLabel> nodeToCoverWith : nodes) {
+	public void close(final ARGNode<S, A> node) {
+		for (final ARGNode<S, A> nodeToCoverWith : nodes) {
 			if (nodeToCoverWith.getId() >= node.getId()) {
 				break;
 			}
@@ -55,8 +56,7 @@ public class ARG<S extends State, NodeLabel, EdgeLabel> {
 		}
 	}
 
-	private void cover(final ARGNode<S, NodeLabel, EdgeLabel> nodeToCover,
-			final ARGNode<S, NodeLabel, EdgeLabel> nodeToCoverWith) {
+	private void cover(final ARGNode<S, A> nodeToCover, final ARGNode<S, A> nodeToCoverWith) {
 		checkNotNull(nodeToCover);
 		checkNotNull(nodeToCoverWith);
 		checkArgument(nodes.contains(nodeToCover));
@@ -74,40 +74,38 @@ public class ARG<S extends State, NodeLabel, EdgeLabel> {
 
 	////
 
-	ARGNode<S, NodeLabel, EdgeLabel> createInitNode(final S initState, final boolean target) {
-		final ARGNode<S, NodeLabel, EdgeLabel> initNode = createNode(initState, target);
+	ARGNode<S, A> createInitNode(final S initState, final boolean target) {
+		final ARGNode<S, A> initNode = createNode(initState, target);
 		initNodes.add(initNode);
 		return initNode;
 	}
 
-	ARGNode<S, NodeLabel, EdgeLabel> createSuccNode(final ARGNode<S, NodeLabel, EdgeLabel> node, final S succState,
-			final boolean target) {
-		checkArgument(nodes.contains(node));
+	ARGNode<S, A> createSuccNode(final ARGNode<S, A> node, final A action, final S succState, final boolean target) {
+		assert nodes.contains(node);
 
-		final ARGNode<S, NodeLabel, EdgeLabel> succNode = createNode(succState, target);
-		createEdge(node, succNode);
+		final ARGNode<S, A> succNode = createNode(succState, target);
+		createEdge(node, action, succNode);
 		return succNode;
 	}
 
 	////
 
-	private ARGEdge<S, NodeLabel, EdgeLabel> createEdge(final ARGNode<S, NodeLabel, EdgeLabel> source,
-			final ARGNode<S, NodeLabel, EdgeLabel> target) {
-		final ARGEdge<S, NodeLabel, EdgeLabel> edge = new ARGEdge<>(source, target);
+	private ARGEdge<S, A> createEdge(final ARGNode<S, A> source, final A action, final ARGNode<S, A> target) {
+		final ARGEdge<S, A> edge = new ARGEdge<>(source, action, target);
 		source.outEdges.add(edge);
 		target.inEdge = Optional.of(edge);
+		edges.add(edge);
 		return edge;
 	}
 
-	private ARGNode<S, NodeLabel, EdgeLabel> createNode(final S state, final boolean target) {
-		final ARGNode<S, NodeLabel, EdgeLabel> node = new ARGNode<>(state, nextId, target);
+	private ARGNode<S, A> createNode(final S state, final boolean target) {
+		final ARGNode<S, A> node = new ARGNode<>(state, nextId, target);
 		nodes.add(node);
 		nextId++;
 		return node;
 	}
 
-	private void addCoveringEdge(final ARGNode<S, NodeLabel, EdgeLabel> nodeToCover,
-			final ARGNode<S, NodeLabel, EdgeLabel> nodeToCoverWith) {
+	private void addCoveringEdge(final ARGNode<S, A> nodeToCover, final ARGNode<S, A> nodeToCoverWith) {
 		nodeToCover.coveringNode = Optional.of(nodeToCoverWith);
 		nodeToCoverWith.coveredNodes.add(nodeToCover);
 	}

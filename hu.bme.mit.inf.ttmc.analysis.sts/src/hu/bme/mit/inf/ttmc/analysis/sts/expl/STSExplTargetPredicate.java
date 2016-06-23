@@ -11,18 +11,19 @@ import hu.bme.mit.inf.ttmc.formalism.utils.FormalismUtils;
 import hu.bme.mit.inf.ttmc.formalism.utils.PathUtils;
 import hu.bme.mit.inf.ttmc.solver.Solver;
 
-public class STSExplTargetPredicate implements TargetPredicate<ExplState, Expr<? extends BoolType>> {
+public class STSExplTargetPredicate implements TargetPredicate<ExplState> {
 
+	private final Expr<? extends BoolType> target;
 	private final Solver solver;
 
-	public STSExplTargetPredicate(final Solver solver) {
+	public STSExplTargetPredicate(final Expr<? extends BoolType> target, final Solver solver) {
+		this.target = checkNotNull(target);
 		this.solver = checkNotNull(solver);
 	}
 
 	@Override
-	public boolean isTargetState(final ExplState state, final Expr<? extends BoolType> target) {
+	public boolean isTargetState(final ExplState state) {
 		checkNotNull(state);
-		checkNotNull(target);
 
 		final Expr<? extends BoolType> simplified = FormalismUtils.simplify(target, state);
 		if (simplified.equals(Exprs.True()) || simplified.equals(Exprs.False())) {
