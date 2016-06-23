@@ -10,33 +10,18 @@ import hu.bme.mit.inf.ttmc.analysis.State;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
 
-public class STSAnalysisContext implements
-		AnalysisContext<State, Expr<? extends BoolType>, Expr<? extends BoolType>, Expr<? extends BoolType>> {
+public class STSAnalysisContext implements AnalysisContext<State, STSAction> {
 
-	final Expr<? extends BoolType> init;
-	final Collection<Expr<? extends BoolType>> trans;
-	final Expr<? extends BoolType> target;
+	final Collection<STSAction> actions;
 
-	public STSAnalysisContext(final Expr<? extends BoolType> init, final Expr<? extends BoolType> trans,
-			final Expr<? extends BoolType> target) {
-		this.init = checkNotNull(init);
-		this.trans = Collections.singleton(checkNotNull(trans));
-		this.target = checkNotNull(target);
+	public STSAnalysisContext(final Expr<? extends BoolType> trans) {
+		checkNotNull(trans);
+		this.actions = Collections.singleton(new STSAction(trans));
 	}
 
 	@Override
-	public Expr<? extends BoolType> getInitialization() {
-		return init;
-	}
-
-	@Override
-	public Collection<? extends Expr<? extends BoolType>> getTransitions(final State state) {
-		return trans;
-	}
-
-	@Override
-	public Expr<? extends BoolType> getTarget() {
-		return target;
+	public Collection<? extends STSAction> getEnabledActionsFor(final State state) {
+		return actions;
 	}
 
 }

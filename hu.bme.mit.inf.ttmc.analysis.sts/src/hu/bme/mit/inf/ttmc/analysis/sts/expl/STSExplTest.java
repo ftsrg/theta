@@ -17,11 +17,11 @@ import org.junit.Test;
 
 import hu.bme.mit.inf.ttmc.analysis.algorithm.Abstractor;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.ArgPrinter;
-import hu.bme.mit.inf.ttmc.analysis.algorithm.NullLabeling;
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplDomain;
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplPrecision;
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplState;
 import hu.bme.mit.inf.ttmc.analysis.expl.GlobalExplPrecision;
+import hu.bme.mit.inf.ttmc.analysis.sts.STSAction;
 import hu.bme.mit.inf.ttmc.analysis.sts.STSAnalysisContext;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
@@ -46,20 +46,20 @@ public class STSExplTest {
 				Imply(Geq(x, Int(mod)), Eq(Prime(x), Int(0))));
 		final Expr<? extends BoolType> target = Eq(x, Int(mod));
 
-		final STSAnalysisContext context = new STSAnalysisContext(init, trans, target);
+		final STSAnalysisContext context = new STSAnalysisContext(trans);
 
 		final SolverManager manager = new Z3SolverManager();
 		final Solver solver = manager.createSolver(true, true);
 
 		final ExplDomain domain = ExplDomain.getInstance();
-		final STSExplInitFunction initFunction = new STSExplInitFunction(solver);
+		final STSExplInitFunction initFunction = new STSExplInitFunction(init, solver);
 		final STSExplTransferFunction transferFunction = new STSExplTransferFunction(solver);
-		final STSExplTargetPredicate targetPredicate = new STSExplTargetPredicate(solver);
+		final STSExplTargetPredicate targetPredicate = new STSExplTargetPredicate(target, solver);
 
 		final ExplPrecision precision = GlobalExplPrecision.create(Collections.singleton(vx), Collections.emptySet());
 
-		final Abstractor<ExplState, ExplPrecision, Void, Void, Expr<? extends BoolType>, Expr<? extends BoolType>, Expr<? extends BoolType>> abstractor = new Abstractor<>(
-				context, NullLabeling.getInstance(), domain, initFunction, transferFunction, targetPredicate);
+		final Abstractor<ExplState, STSAction, ExplPrecision> abstractor = new Abstractor<>(context, domain,
+				initFunction, transferFunction, targetPredicate);
 
 		abstractor.init(precision);
 		abstractor.check(precision);

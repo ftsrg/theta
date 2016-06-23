@@ -5,6 +5,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import hu.bme.mit.inf.ttmc.analysis.Action;
 import hu.bme.mit.inf.ttmc.analysis.AnalysisContext;
 import hu.bme.mit.inf.ttmc.analysis.Domain;
 import hu.bme.mit.inf.ttmc.analysis.InitFunction;
@@ -13,32 +14,29 @@ import hu.bme.mit.inf.ttmc.analysis.State;
 import hu.bme.mit.inf.ttmc.analysis.TargetPredicate;
 import hu.bme.mit.inf.ttmc.analysis.TransferFunction;
 
-public class Abstractor<S extends State, P extends Precision, NodeLabel, EdgeLabel, Init, Trans, Target> {
+public class Abstractor<S extends State, A extends Action, P extends Precision> {
 
-	private final ARGBuilder<S, NodeLabel, EdgeLabel, Init, Trans, Target> builder;
+	private final ARGBuilder<S, A> builder;
 
-	private final InitFunction<S, P, Init> initFunction;
-	private final TransferFunction<S, P, Trans> transferFunction;
+	private final InitFunction<S, P> initFunction;
+	private final TransferFunction<S, A, P> transferFunction;
 
-	private ARG<S, NodeLabel, EdgeLabel> arg;
+	private ARG<S, A> arg;
 
-	public Abstractor(final AnalysisContext<? super S, Init, Trans, Target> context,
-			final ARGLabeling<? super S, NodeLabel, EdgeLabel, ? super Init, ? super Trans, ? super Target> labeling,
-			final Domain<S> domain, final InitFunction<S, P, Init> initFunction,
-			final TransferFunction<S, P, Trans> transferFunction,
-			final TargetPredicate<? super S, Target> targetPredicate) {
+	public Abstractor(final AnalysisContext<? super S, ? extends A> context, final Domain<S> domain,
+			final InitFunction<S, P> initFunction, final TransferFunction<S, A, P> transferFunction,
+			final TargetPredicate<? super S> targetPredicate) {
 		checkNotNull(context);
-		checkNotNull(labeling);
 		checkNotNull(domain);
 		checkNotNull(targetPredicate);
 
 		this.initFunction = checkNotNull(initFunction);
 		this.transferFunction = checkNotNull(transferFunction);
 
-		builder = new ARGBuilder<>(context, labeling, domain, targetPredicate);
+		builder = new ARGBuilder<>(context, domain, targetPredicate);
 	}
 
-	public ARG<S, NodeLabel, EdgeLabel> getARG() {
+	public ARG<S, A> getARG() {
 		return arg;
 	}
 
@@ -47,20 +45,20 @@ public class Abstractor<S extends State, P extends Precision, NodeLabel, EdgeLab
 	}
 
 	public void check(final P precision) {
-		final Collection<ARGNode<S, NodeLabel, EdgeLabel>> nodes = new ArrayList<>(arg.getNodes());
-		for (final ARGNode<S, NodeLabel, EdgeLabel> node : nodes) {
+		final Collection<ARGNode<S, A>> nodes = new ArrayList<>(arg.getNodes());
+		for (final ARGNode<S, A> node : nodes) {
 			if (!node.isTarget() && !node.isExpanded() && !node.isCovered()) {
 				dfs(node, precision);
 			}
 		}
 	}
 
-	private void dfs(final ARGNode<S, NodeLabel, EdgeLabel> node, final P precision) {
+	private void dfs(final ARGNode<S, A> node, final P precision) {
 		arg.close(node);
 		if (!node.isCovered()) {
 			builder.expand(arg, node, transferFunction, precision);
-			for (final ARGEdge<S, NodeLabel, EdgeLabel> outEdge : node.getOutEdges()) {
-				final ARGNode<S, NodeLabel, EdgeLabel> succNode = outEdge.getTarget();
+			for (final ARGEdge<S, A> outEdge : node.getOutEdges()) {
+				final ARGNode<S, A> succNode = outEdge.getTarget();
 				if (!succNode.isTarget()) {
 					dfs(succNode, precision);
 				}

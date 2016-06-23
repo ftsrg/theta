@@ -16,18 +16,19 @@ import hu.bme.mit.inf.ttmc.formalism.common.Valuation;
 import hu.bme.mit.inf.ttmc.formalism.utils.PathUtils;
 import hu.bme.mit.inf.ttmc.solver.Solver;
 
-class STSExplInitFunction implements InitFunction<ExplState, ExplPrecision, Expr<? extends BoolType>> {
+class STSExplInitFunction implements InitFunction<ExplState, ExplPrecision> {
 
+	private final Expr<? extends BoolType> init;
 	private final Solver solver;
 
-	STSExplInitFunction(final Solver solver) {
-		this.solver = solver;
+	public STSExplInitFunction(final Expr<? extends BoolType> init, final Solver solver) {
+		this.init = checkNotNull(init);
+		this.solver = checkNotNull(solver);
 	}
 
 	@Override
-	public Collection<ExplState> getInitStates(final ExplPrecision precision, final Expr<? extends BoolType> init) {
+	public Collection<ExplState> getInitStates(final ExplPrecision precision) {
 		checkNotNull(precision);
-		checkNotNull(init);
 
 		final Set<ExplState> initStates = new HashSet<>();
 		boolean moreInitStates;

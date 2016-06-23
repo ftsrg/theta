@@ -16,17 +16,20 @@ import hu.bme.mit.inf.ttmc.formalism.common.Valuation;
 import hu.bme.mit.inf.ttmc.formalism.utils.PathUtils;
 import hu.bme.mit.inf.ttmc.solver.Solver;
 
-public class STSPredInitFunction implements InitFunction<PredState, PredPrecision, Expr<? extends BoolType>> {
+public class STSPredInitFunction implements InitFunction<PredState, PredPrecision> {
 
+	private final Expr<? extends BoolType> init;
 	private final Solver solver;
 
-	STSPredInitFunction(final Solver solver) {
-		this.solver = solver;
+	public STSPredInitFunction(final Expr<? extends BoolType> init, final Solver solver) {
+		this.init = checkNotNull(init);
+		this.solver = checkNotNull(solver);
 	}
 
 	@Override
-	public Collection<PredState> getInitStates(final PredPrecision precision, final Expr<? extends BoolType> init) {
+	public Collection<PredState> getInitStates(final PredPrecision precision) {
 		checkNotNull(precision);
+
 		final Set<PredState> initStates = new HashSet<>();
 		boolean moreInitStates;
 		solver.push();

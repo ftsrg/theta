@@ -1,7 +1,5 @@
 package hu.bme.mit.inf.ttmc.analysis.tcfa;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -9,40 +7,22 @@ import hu.bme.mit.inf.ttmc.analysis.AnalysisContext;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFAEdge;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFALoc;
 
-public class TCFAAnalysisContext implements AnalysisContext<TCFAState<?>, TCFALoc, TCFATrans, TCFALoc> {
-
-	private final TCFALoc initLoc;
-	private final TCFALoc targetLoc;
-
-	public TCFAAnalysisContext(final TCFALoc initLoc, final TCFALoc targetLoc) {
-		this.initLoc = checkNotNull(initLoc);
-		this.targetLoc = checkNotNull(targetLoc);
-	}
+public class TCFAAnalysisContext implements AnalysisContext<TCFAState<?>, TCFAAction> {
 
 	@Override
-	public TCFALoc getInitialization() {
-		return initLoc;
-	}
-
-	@Override
-	public Collection<TCFATrans> getTransitions(final TCFAState<?> state) {
-		final Collection<TCFATrans> tcfaTrans = new ArrayList<>();
+	public Collection<TCFAAction> getEnabledActionsFor(final TCFAState<?> state) {
+		final Collection<TCFAAction> tcfaAction = new ArrayList<>();
 		final TCFALoc loc = state.getLoc();
 
 		for (final TCFAEdge outEdge : loc.getOutEdges()) {
-			tcfaTrans.add(TCFATrans.discrete(outEdge));
+			tcfaAction.add(TCFAAction.discrete(outEdge));
 		}
 
 		if (!loc.isUrgent()) {
-			tcfaTrans.add(TCFATrans.delay(loc));
+			tcfaAction.add(TCFAAction.delay(loc));
 		}
 
-		return tcfaTrans;
-	}
-
-	@Override
-	public TCFALoc getTarget() {
-		return targetLoc;
+		return tcfaAction;
 	}
 
 }

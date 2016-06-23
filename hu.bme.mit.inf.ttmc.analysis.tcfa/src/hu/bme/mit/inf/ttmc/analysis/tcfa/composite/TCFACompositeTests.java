@@ -9,7 +9,6 @@ import org.junit.Test;
 
 import hu.bme.mit.inf.ttmc.analysis.algorithm.Abstractor;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.ArgPrinter;
-import hu.bme.mit.inf.ttmc.analysis.algorithm.NullLabeling;
 import hu.bme.mit.inf.ttmc.analysis.composite.CompositeDomain;
 import hu.bme.mit.inf.ttmc.analysis.composite.CompositeInitFunction;
 import hu.bme.mit.inf.ttmc.analysis.composite.CompositePrecision;
@@ -19,12 +18,12 @@ import hu.bme.mit.inf.ttmc.analysis.expl.ExplDomain;
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplPrecision;
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplState;
 import hu.bme.mit.inf.ttmc.analysis.expl.GlobalExplPrecision;
+import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAAction;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAAnalysisContext;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFADomain;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAInitFunction;
-import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAState;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFALocTargetPredicate;
-import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFATrans;
+import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAState;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFATransferFunction;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.expl.TCFAExplInitFunction;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.expl.TCFAExplTransferFunction;
@@ -35,7 +34,6 @@ import hu.bme.mit.inf.ttmc.analysis.zone.ZonePrecision;
 import hu.bme.mit.inf.ttmc.analysis.zone.ZoneState;
 import hu.bme.mit.inf.ttmc.core.type.IntType;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
-import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFALoc;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.instances.FischerTCFA;
 import hu.bme.mit.inf.ttmc.solver.Solver;
 import hu.bme.mit.inf.ttmc.solver.SolverManager;
@@ -48,7 +46,7 @@ public class TCFACompositeTests {
 		final VarDecl<IntType> vlock = Var("lock", Int());
 		final FischerTCFA fischer = new FischerTCFA(1, 1, 2, vlock);
 
-		final TCFAAnalysisContext context = new TCFAAnalysisContext(fischer.getInitial(), fischer.getCritical());
+		final TCFAAnalysisContext context = new TCFAAnalysisContext();
 
 		final SolverManager manager = new Z3SolverManager();
 		final Solver solver = manager.createSolver(true, true);
@@ -57,19 +55,21 @@ public class TCFACompositeTests {
 				new CompositeDomain<>(ZoneDomain.getInstance(), ExplDomain.getInstance()));
 
 		final TCFAInitFunction<CompositeState<ZoneState, ExplState>, CompositePrecision<ZonePrecision, ExplPrecision>> initFunction = new TCFAInitFunction<>(
+				fischer.getInitial(),
 				new CompositeInitFunction<>(new TCFAZoneInitFunction(), new TCFAExplInitFunction()));
 
 		final TCFATransferFunction<CompositeState<ZoneState, ExplState>, CompositePrecision<ZonePrecision, ExplPrecision>> transferFunction = new TCFATransferFunction<>(
 				new CompositeTransferFunction<>(new TCFAZoneTransferFunction(), new TCFAExplTransferFunction(solver)));
 
-		final TCFALocTargetPredicate targetPredicate = new TCFALocTargetPredicate();
+		final TCFALocTargetPredicate targetPredicate = new TCFALocTargetPredicate(
+				loc -> loc.equals(fischer.getCritical()));
 
 		final CompositePrecision<ZonePrecision, ExplPrecision> precision = CompositePrecision.create(
 				ZonePrecision.builder().add(fischer.getClock()).build(),
 				GlobalExplPrecision.create(Collections.singleton(vlock), Collections.emptySet()));
 
-		final Abstractor<TCFAState<CompositeState<ZoneState, ExplState>>, CompositePrecision<ZonePrecision, ExplPrecision>, Void, Void, TCFALoc, TCFATrans, TCFALoc> abstractor = new Abstractor<>(
-				context, NullLabeling.getInstance(), domain, initFunction, transferFunction, targetPredicate);
+		final Abstractor<TCFAState<CompositeState<ZoneState, ExplState>>, TCFAAction, CompositePrecision<ZonePrecision, ExplPrecision>> abstractor = new Abstractor<>(
+				context, domain, initFunction, transferFunction, targetPredicate);
 
 		abstractor.init(precision);
 		abstractor.check(precision);

@@ -8,14 +8,12 @@ import java.util.Collections;
 import hu.bme.mit.inf.ttmc.analysis.InitFunction;
 import hu.bme.mit.inf.ttmc.analysis.pred.PredPrecision;
 import hu.bme.mit.inf.ttmc.analysis.pred.PredState;
-import hu.bme.mit.inf.ttmc.common.Unit;
 
-public class TCFAPredInitFunction implements InitFunction<PredState, PredPrecision, Unit> {
+public class TCFAPredInitFunction implements InitFunction<PredState, PredPrecision> {
 
 	@Override
-	public Collection<PredState> getInitStates(final PredPrecision precision, final Unit init) {
+	public Collection<PredState> getInitStates(final PredPrecision precision) {
 		checkNotNull(precision);
-		checkNotNull(init);
 		return Collections.singleton(PredState.create(Collections.emptySet()));
 	}
 
