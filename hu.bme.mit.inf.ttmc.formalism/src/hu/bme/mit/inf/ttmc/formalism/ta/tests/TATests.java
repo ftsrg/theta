@@ -20,7 +20,7 @@ public class TATests {
 		final ClockConstr constr = And(Eq(x, y, 0), True(), Eq(y, x, 10));
 		System.out.println(constr);
 		System.out.println(constr.getClocks());
-		System.out.println(constr.asExpr());
+		System.out.println(constr.toExpr());
 
 	}
 

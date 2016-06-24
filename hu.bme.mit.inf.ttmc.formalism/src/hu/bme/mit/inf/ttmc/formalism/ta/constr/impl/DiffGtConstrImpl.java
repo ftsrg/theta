@@ -23,7 +23,7 @@ final class DiffGtConstrImpl extends AbstractDiffConstr implements DiffGtConstr 
 	}
 
 	@Override
-	public GtExpr asExpr() {
+	public GtExpr toExpr() {
 		GtExpr result = expr;
 		if (result == null) {
 			final ClockRefExpr leftRef = getLeftClock().getRef();

@@ -9,6 +9,6 @@ public interface AndConstr extends ClockConstr {
 	public Collection<? extends AtomicConstr> getConstrs();
 
 	@Override
-	public AndExpr asExpr();
+	public AndExpr toExpr();
 
 }

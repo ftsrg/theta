@@ -22,7 +22,7 @@ final class UnitLeqConstrImpl extends AbstractUnitConstr implements UnitLeqConst
 	}
 
 	@Override
-	public LeqExpr asExpr() {
+	public LeqExpr toExpr() {
 		LeqExpr result = expr;
 		if (result == null) {
 			final ClockRefExpr ref = getClock().getRef();

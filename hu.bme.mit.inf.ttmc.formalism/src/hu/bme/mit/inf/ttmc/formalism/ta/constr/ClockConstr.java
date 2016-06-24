@@ -11,7 +11,7 @@ public interface ClockConstr {
 
 	public Collection<? extends ClockDecl> getClocks();
 
-	public Expr<? extends BoolType> asExpr();
+	public Expr<? extends BoolType> toExpr();
 
 	public <P, R> R accept(final ClockConstrVisitor<? super P, ? extends R> visitor, final P param);
 

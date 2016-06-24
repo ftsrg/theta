@@ -46,10 +46,10 @@ final class AndConstrImpl implements AndConstr {
 	}
 
 	@Override
-	public AndExpr asExpr() {
+	public AndExpr toExpr() {
 		AndExpr result = expr;
 		if (result == null) {
-			result = And(constrs.stream().map(ClockConstr::asExpr).collect(toSet()));
+			result = And(constrs.stream().map(ClockConstr::toExpr).collect(toSet()));
 			expr = result;
 		}
 		return result;

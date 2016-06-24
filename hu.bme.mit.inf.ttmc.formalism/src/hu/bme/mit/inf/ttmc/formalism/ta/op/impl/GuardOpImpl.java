@@ -38,7 +38,7 @@ final class GuardOpImpl implements GuardOp {
 	public AssumeStmt toStmt() {
 		AssumeStmt result = stmt;
 		if (result == null) {
-			result = Assume(constr.asExpr());
+			result = Assume(constr.toExpr());
 			stmt = result;
 		}
 		return result;
