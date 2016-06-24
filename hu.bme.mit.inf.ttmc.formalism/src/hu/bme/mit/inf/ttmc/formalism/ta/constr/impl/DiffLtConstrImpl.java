@@ -23,7 +23,7 @@ final class DiffLtConstrImpl extends AbstractDiffConstr implements DiffLtConstr 
 	}
 
 	@Override
-	public LtExpr asExpr() {
+	public LtExpr toExpr() {
 		LtExpr result = expr;
 		if (result == null) {
 			final ClockRefExpr leftRef = getLeftClock().getRef();

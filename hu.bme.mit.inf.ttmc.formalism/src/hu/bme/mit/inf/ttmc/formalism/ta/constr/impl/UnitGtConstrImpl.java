@@ -22,7 +22,7 @@ final class UnitGtConstrImpl extends AbstractUnitConstr implements UnitGtConstr 
 	}
 
 	@Override
-	public GtExpr asExpr() {
+	public GtExpr toExpr() {
 		GtExpr result = expr;
 		if (result == null) {
 			final ClockRefExpr ref = getClock().getRef();

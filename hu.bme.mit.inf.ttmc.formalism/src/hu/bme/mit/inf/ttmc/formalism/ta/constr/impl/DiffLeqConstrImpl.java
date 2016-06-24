@@ -23,7 +23,7 @@ final class DiffLeqConstrImpl extends AbstractDiffConstr implements DiffLeqConst
 	}
 
 	@Override
-	public LeqExpr asExpr() {
+	public LeqExpr toExpr() {
 		LeqExpr result = expr;
 		if (result == null) {
 			final ClockRefExpr leftRef = getLeftClock().getRef();

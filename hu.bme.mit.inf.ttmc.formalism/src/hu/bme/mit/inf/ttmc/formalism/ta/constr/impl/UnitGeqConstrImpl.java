@@ -22,7 +22,7 @@ final class UnitGeqConstrImpl extends AbstractUnitConstr implements UnitGeqConst
 	}
 
 	@Override
-	public GeqExpr asExpr() {
+	public GeqExpr toExpr() {
 		GeqExpr result = expr;
 		if (result == null) {
 			final ClockRefExpr ref = getClock().getRef();

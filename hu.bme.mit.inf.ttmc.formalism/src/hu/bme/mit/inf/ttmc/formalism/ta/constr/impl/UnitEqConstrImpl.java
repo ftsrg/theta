@@ -22,7 +22,7 @@ final class UnitEqConstrImpl extends AbstractUnitConstr implements UnitEqConstr 
 	}
 
 	@Override
-	public EqExpr asExpr() {
+	public EqExpr toExpr() {
 		EqExpr result = expr;
 		if (result == null) {
 			final ClockRefExpr ref = getClock().getRef();

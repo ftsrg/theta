@@ -23,7 +23,7 @@ final class DiffEqConstrImpl extends AbstractDiffConstr implements DiffEqConstr 
 	}
 
 	@Override
-	public EqExpr asExpr() {
+	public EqExpr toExpr() {
 		EqExpr result = expr;
 		if (result == null) {
 			final ClockRefExpr leftRef = getLeftClock().getRef();

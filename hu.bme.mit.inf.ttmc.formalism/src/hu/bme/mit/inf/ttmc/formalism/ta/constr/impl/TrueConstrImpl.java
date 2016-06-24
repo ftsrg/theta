@@ -23,7 +23,7 @@ final class TrueConstrImpl implements TrueConstr {
 	}
 
 	@Override
-	public TrueExpr asExpr() {
+	public TrueExpr toExpr() {
 		return True();
 	}
 

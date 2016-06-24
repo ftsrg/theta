@@ -22,7 +22,7 @@ final class UnitLtConstrImpl extends AbstractUnitConstr implements UnitLtConstr 
 	}
 
 	@Override
-	public LtExpr asExpr() {
+	public LtExpr toExpr() {
 		LtExpr result = expr;
 		if (result == null) {
 			final ClockRefExpr ref = getClock().getRef();
