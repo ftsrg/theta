@@ -5,6 +5,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.util.List;
 
 import hu.bme.mit.inf.ttmc.core.type.Type;
+import hu.bme.mit.inf.ttmc.formalism.common.type.PointerType;
 import hu.bme.mit.inf.ttmc.formalism.common.type.ProcType;
 import hu.bme.mit.inf.ttmc.formalism.common.type.UnitType;
 
@@ -27,6 +28,11 @@ public class Types2 {
 		checkNotNull(paramTypes);
 		checkNotNull(resultType);
 		return new ProcTypeImpl<>(paramTypes, resultType);
+	}
+
+	public static <T extends Type> PointerType<T> Pointer(final T type) {
+		checkNotNull(type);
+		return new PointerTypeImpl<>(type);
 	}
 
 }
