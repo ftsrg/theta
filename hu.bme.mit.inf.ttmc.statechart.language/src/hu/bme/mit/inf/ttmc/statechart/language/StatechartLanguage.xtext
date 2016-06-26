@@ -11,7 +11,7 @@ StatechartSpecification returns StatechartSpecification:
 		constantDeclarations+=ConstantDeclaration |
 		functionDeclarations+=FunctionDeclaration |
 		basicConstraintDefinitions+=BasicConstraintDefinition |
-		signalDeclarations+=SignalDeclaration |
+		signalDeclarations+=SignalDeclaration | 
 		statechartDeclarations+=StatechartDeclaration
 	)*
 	'}'
@@ -66,7 +66,6 @@ SetTimeoutAction returns SetTimeoutAction:
 DeactivateTimeoutAction returns DeactivateTimeoutAction:
 	'deactivate' timeoutDeclaration=[TimeoutDeclaration]
 ;
-
 
 AssignmentAction returns AssignmentAction:
 	'assign' lhs=Expression ':=' rhs=Expression
@@ -138,12 +137,19 @@ State returns State:
 ;
 
 PseudoState returns PseudoState:
-	InitialState |
+	EntryState |
 	ForkState |
 	JoinState |
 	ChoiceState |
 	MergeState
 ;
+
+EntryState:
+	InitialState |
+	ShallowHistory |
+	DeepHistory
+;
+
 
 MergeState returns MergeState:
 	'merge' name=ID
@@ -163,4 +169,12 @@ ForkState returns ForkState:
 
 InitialState returns InitialState:
 	'initial' name=ID
+;
+
+ShallowHistory returns ShallowHistory:
+	'shallowHistory' name=ID
+;
+
+DeepHistory returns DeepHistory:
+	'deepHistory' name=ID
 ;
