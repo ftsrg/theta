@@ -12,6 +12,13 @@ public class WhileStatementAst extends StatementAst {
 		this.body = body;
 	}
 	
+	public WhileStatementAst with(ExpressionAst cond, StatementAst body) {
+		if (cond == this.cond && body == this.body)
+			return this;
+		
+		return new WhileStatementAst(cond, body);
+	}
+	
 	@Override
 	public <S> S accept(StatementVisitor<S> visitor) {
 		return visitor.visit(this);

@@ -16,6 +16,13 @@ public class FunctionCallExpressionAst extends ExpressionAst {
 		this.params = params;
 	}
 	
+	public FunctionCallExpressionAst with(List<ExpressionAst> params) {
+		if (params == this.params)
+			return this;
+		
+		return new FunctionCallExpressionAst(this.name, params);
+	}
+	
 	public String getName() {
 		return this.name;
 	}

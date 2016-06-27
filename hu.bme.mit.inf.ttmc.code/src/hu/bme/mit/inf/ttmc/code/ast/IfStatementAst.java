@@ -19,6 +19,13 @@ public class IfStatementAst extends StatementAst {
 		this.thenStatement = thenStatement;
 	}
 	
+	public IfStatementAst with(ExpressionAst condition, StatementAst thenStatement, StatementAst elseStatement) {
+		if (condition == this.condition && thenStatement == this.thenStatement && elseStatement == this.elseStatement)
+			return this;
+		
+		return new IfStatementAst(condition, thenStatement, elseStatement);
+	}
+		
 	public ExpressionAst getCondition() {
 		return this.condition;
 	}

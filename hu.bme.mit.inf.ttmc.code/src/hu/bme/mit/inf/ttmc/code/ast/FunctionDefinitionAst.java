@@ -16,6 +16,13 @@ public class FunctionDefinitionAst extends DeclarationAst {
 		this.body = body;
 	}
 
+	public FunctionDefinitionAst with(FunctionDeclaratorAst declarator, CompoundStatementAst body) {
+		if (body == this.body && declarator == this.declarator)
+			return this;
+		
+		return new FunctionDefinitionAst(this.name, this.spec, declarator, body);
+	}
+	
 	public CompoundStatementAst getBody() {
 		return this.body;		
 	}

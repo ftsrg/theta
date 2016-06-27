@@ -18,6 +18,14 @@ public class BinaryExpressionAst extends ExpressionAst {
 		this.right = right;
 	}
 	
+	public BinaryExpressionAst with(ExpressionAst left, ExpressionAst right)
+	{
+		if (left == this.left && right == this.right)
+			return this;
+		
+		return new BinaryExpressionAst(left, right, this.operator);
+	}
+	
 	public Operator getOperator() {
 		return this.operator;
 	}

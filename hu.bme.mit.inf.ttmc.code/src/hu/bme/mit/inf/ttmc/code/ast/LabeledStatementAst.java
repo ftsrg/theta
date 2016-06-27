@@ -11,7 +11,14 @@ public class LabeledStatementAst extends StatementAst {
 		this.label = label;
 		this.stmt  = stmt;
 	}
-	
+
+	public LabeledStatementAst with(StatementAst stmt) {
+		if (stmt == this.stmt)
+			return this;
+		
+		return new LabeledStatementAst(label, stmt);
+	}
+
 	public String getLabel() {
 		return this.label;
 	}

@@ -12,6 +12,13 @@ public class DoStatementAst extends StatementAst {
 		this.body = body;
 	}
 	
+	public DoStatementAst with(ExpressionAst cond, StatementAst body) {
+		if (cond == this.cond && body == this.body)
+			return this;
+		
+		return new DoStatementAst(cond, body);
+	}
+	
 	@Override
 	public <S> S accept(StatementVisitor<S> visitor) {
 		return visitor.visit(this);

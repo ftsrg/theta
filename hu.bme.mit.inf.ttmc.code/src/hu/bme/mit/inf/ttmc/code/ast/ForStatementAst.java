@@ -15,6 +15,14 @@ public class ForStatementAst extends StatementAst {
 		this.iter = iter;
 		this.body = body;
 	}
+
+	
+	public ForStatementAst with(StatementAst init, ExpressionAst cond, ExpressionAst iter, StatementAst body) {
+		if (init == this.init && cond == this.cond && iter == this.iter && body == this.body)
+			return this;
+		
+		return new ForStatementAst(init, cond, iter, body);
+	}
 	
 	public StatementAst getInit() {
 		return init;

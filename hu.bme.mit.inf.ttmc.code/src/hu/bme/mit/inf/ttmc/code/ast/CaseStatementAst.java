@@ -9,6 +9,14 @@ public class CaseStatementAst extends StatementAst {
 	public CaseStatementAst(ExpressionAst expr) {
 		this.expr = expr;
 	}
+
+	public CaseStatementAst with(ExpressionAst expr) {
+		if (expr == this.expr)
+			return this;
+		
+		return new CaseStatementAst(expr);
+	}
+	
 	
 	public ExpressionAst getExpression() {
 		return this.expr;
