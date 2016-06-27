@@ -1,6 +1,7 @@
 package hu.bme.mit.inf.ttmc.formalism.common.type.impl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.inf.ttmc.formalism.common.expr.impl.Exprs2.Null;
 
 import java.util.Optional;
 
@@ -9,35 +10,34 @@ import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.core.utils.TypeVisitor;
 import hu.bme.mit.inf.ttmc.formalism.common.type.PointerType;
 
-final class PointerTypeImpl<T extends Type> implements PointerType<T> {
+final class PointerTypeImpl<PointedType extends Type> implements PointerType<PointedType> {
 
 	private static final String TYPE_LABEL = "Pointer";
 
 	private static final int HASH_SEED = 6619;
 	private volatile int hashCode = 0;
 
-	private final T type;
+	private final PointedType type;
 
-	PointerTypeImpl(final T type) {
+	PointerTypeImpl(final PointedType type) {
 		this.type = checkNotNull(type);
 	}
 
 	@Override
-	public T getType() {
+	public PointedType getPointedType() {
 		return type;
 	}
 
 	@Override
 	public LitExpr<? extends Type> getAny() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		return Null();
 	}
 
 	@Override
 	public boolean isLeq(final Type other) {
 		if (other instanceof PointerType) {
 			final PointerType<?> that = (PointerType<?>) other;
-			return this.getType().isLeq(that.getType());
+			return this.getPointedType().isLeq(that.getPointedType());
 		} else {
 			return false;
 		}
@@ -78,7 +78,7 @@ final class PointerTypeImpl<T extends Type> implements PointerType<T> {
 			return true;
 		} else if (obj instanceof PointerType) {
 			final PointerType<?> that = (PointerType<?>) obj;
-			return this.getType().equals(that.getType());
+			return this.getPointedType().equals(that.getPointedType());
 		} else {
 			return false;
 		}
