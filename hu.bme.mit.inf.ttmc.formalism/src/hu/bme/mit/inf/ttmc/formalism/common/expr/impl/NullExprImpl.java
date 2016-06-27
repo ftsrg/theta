@@ -5,7 +5,7 @@ import hu.bme.mit.inf.ttmc.core.utils.ExprVisitor;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.NullExpr;
 import hu.bme.mit.inf.ttmc.formalism.common.type.PointerType;
 
-final class NullExprImpl<T extends Type> implements NullExpr<T> {
+final class NullExprImpl<PointedType extends Type> implements NullExpr<PointedType> {
 
 	private static final String EXPR_LABEL = "Null";
 	private static final int HASH_SEED = 1632143;
@@ -14,7 +14,7 @@ final class NullExprImpl<T extends Type> implements NullExpr<T> {
 	}
 
 	@Override
-	public PointerType<T> getType() {
+	public PointerType<PointedType> getType() {
 		throw new UnsupportedOperationException();
 	}
 

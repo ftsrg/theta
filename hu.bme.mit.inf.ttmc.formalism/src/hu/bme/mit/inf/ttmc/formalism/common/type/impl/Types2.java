@@ -30,9 +30,9 @@ public class Types2 {
 		return new ProcTypeImpl<>(paramTypes, resultType);
 	}
 
-	public static <T extends Type> PointerType<T> Pointer(final T type) {
-		checkNotNull(type);
-		return new PointerTypeImpl<>(type);
+	public static <T extends Type> PointerType<T> Pointer(final T pointedType) {
+		checkNotNull(pointedType);
+		return new PointerTypeImpl<>(pointedType);
 	}
 
 }
