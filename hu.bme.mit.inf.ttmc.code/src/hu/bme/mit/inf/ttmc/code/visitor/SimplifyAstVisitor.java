@@ -28,22 +28,7 @@ public class SimplifyAstVisitor extends CloneAstVisitor {
 	}
 	
 	@Override
-	public StatementAst visit(CompoundStatementAst ast) {
-		/*
-		List<StatementAst> stmts = new ArrayList<>();
-		for (StatementAst stmt : ast.getStatements()) {
-			StatementAst res = stmt.accept(this);
-			for (StatementAstTransformerVisitor visitor : this.statementVisitors) {
-				res = res.accept(visitor);
-			}
-
-			if (res instanceof StatementAstTransformerVisitor.StatementListAst) {
-				stmts.addAll(((StatementAstTransformerVisitor.StatementListAst) res).getStatements());
-			} else {				
-				stmts.add(res);
-			}
-		}*/
-		
+	public StatementAst visit(CompoundStatementAst ast) {		
 		List<StatementAst> prev = ast.getStatements();
 		
 		for (StatementAstTransformerVisitor visitor : this.statementVisitors) {

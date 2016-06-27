@@ -32,6 +32,7 @@ import hu.bme.mit.inf.ttmc.code.ast.AstNode;
 import hu.bme.mit.inf.ttmc.code.ast.TranslationUnitAst;
 import hu.bme.mit.inf.ttmc.code.ast.utils.AstPrinter;
 import hu.bme.mit.inf.ttmc.code.ast.visitor.CloneAstVisitor;
+import hu.bme.mit.inf.ttmc.code.simplifier.AstSimplifier;
 import hu.bme.mit.inf.ttmc.code.ast.CompoundStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.FunctionDefinitionAst;
 import hu.bme.mit.inf.ttmc.code.ast.StatementAst;
@@ -79,6 +80,12 @@ class Application {
 
 		System.out.println(code); */
 		
+		TranslationUnitAst newRoot = AstSimplifier.simplify(root);
+		graphvizOutput("ast_trans", AstPrinter.toGraphvizString(newRoot));
+		
+		System.out.println(newRoot.accept(new PrintCodeAstVisitor()));
+		
+		/*
 		SimplifyAstVisitor visitor = new SimplifyAstVisitor();
 		
 		TranslationUnitAst newRoot = root.accept(new SimplifyAstVisitor());		
@@ -96,7 +103,7 @@ class Application {
 		
 		CFA cfa = CFACreator.createSBE(pm, content);
 		System.out.println(CFAPrinter.toGraphvizSting(cfa));
-
+*/
 		/*
 		 * ProgramManager manager = new ProgramManagerImpl(new
 		 * ConstraintManagerImpl()); TransformProgramVisitor visitor = new

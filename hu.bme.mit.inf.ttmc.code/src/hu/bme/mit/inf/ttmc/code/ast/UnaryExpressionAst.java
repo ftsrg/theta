@@ -16,6 +16,13 @@ public class UnaryExpressionAst extends ExpressionAst {
 		this.operator = operator;
 	}
 	
+	public UnaryExpressionAst with(ExpressionAst operand) {
+		if (operand == this.operand)
+			return this;
+		
+		return new UnaryExpressionAst(operand, this.operator);
+	}
+	
 	public Operator getOperator() {
 		return this.operator;
 	}

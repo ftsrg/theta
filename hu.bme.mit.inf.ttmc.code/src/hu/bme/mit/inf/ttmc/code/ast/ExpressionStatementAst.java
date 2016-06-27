@@ -10,6 +10,13 @@ public class ExpressionStatementAst extends StatementAst {
 		this.expr = expr;
 	}
 	
+	public ExpressionStatementAst with(ExpressionAst expr) {
+		if (expr == this.expr)
+			return this;
+		
+		return new ExpressionStatementAst(expr);		
+	}
+	
 	public ExpressionAst getExpression() {
 		return this.expr;
 	}

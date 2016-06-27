@@ -1,0 +1,37 @@
+package hu.bme.mit.inf.ttmc.code.simplifier;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import hu.bme.mit.inf.ttmc.code.ast.TranslationUnitAst;
+import hu.bme.mit.inf.ttmc.code.simplifier.visitor.BreakContinueToGotoVisitor;
+import hu.bme.mit.inf.ttmc.code.simplifier.visitor.ExpressionListUnrollVisitor;
+import hu.bme.mit.inf.ttmc.code.simplifier.visitor.ForToWhileStatementVisitor;
+import hu.bme.mit.inf.ttmc.code.simplifier.visitor.SwitchToIfElseVisitor;
+import hu.bme.mit.inf.ttmc.code.simplifier.visitor.UnaryExpressionUnrollVisitor;
+import hu.bme.mit.inf.ttmc.code.simplifier.visitor.UnrollDeclarationsVisitor;
+
+public class AstSimplifier {
+
+	
+	private static SimplifyAstVisitor[] visitors = new SimplifyAstVisitor[] {
+		new ForToWhileStatementVisitor(),
+		new SwitchToIfElseVisitor(),
+		new UnrollDeclarationsVisitor(),
+		new BreakContinueToGotoVisitor(),
+		new UnaryExpressionUnrollVisitor(),
+		new ExpressionListUnrollVisitor()
+	};
+	
+	public static TranslationUnitAst simplify(TranslationUnitAst ast) {		
+		TranslationUnitAst prev = ast;
+		
+		for (SimplifyAstVisitor visitor : visitors) {
+			ast = prev.accept(visitor);
+			prev = ast;
+		}
+		
+		return ast;
+	}
+	
+}

@@ -12,6 +12,13 @@ public class SwitchStatementAst extends StatementAst {
 		this.body = body;
 	}
 	
+	public SwitchStatementAst with(ExpressionAst expr, StatementAst body) {
+		if (expr == this.expr && body == this.body)
+			return this;
+		
+		return new SwitchStatementAst(expr, body);
+	}
+	
 	public ExpressionAst getExpression() {
 		return this.expr;
 	}

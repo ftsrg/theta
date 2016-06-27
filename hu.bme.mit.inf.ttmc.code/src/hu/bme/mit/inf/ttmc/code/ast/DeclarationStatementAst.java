@@ -9,6 +9,13 @@ public class DeclarationStatementAst extends StatementAst {
 	public DeclarationStatementAst(DeclarationAst decl) {
 		this.decl = decl;
 	}
+	
+	public DeclarationStatementAst with(DeclarationAst decl) {
+		if (decl == this.decl)
+			return this;
+		
+		return new DeclarationStatementAst(decl);
+	}
 
 	public DeclarationAst getDeclaration() {
 		return this.decl;

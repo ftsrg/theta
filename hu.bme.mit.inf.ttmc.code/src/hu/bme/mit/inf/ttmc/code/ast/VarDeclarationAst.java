@@ -15,7 +15,7 @@ public class VarDeclarationAst extends DeclarationAst {
 		this.specifier = specifier;
 		this.declarators = declarators;
 	}
-	
+
 	public VarDeclarationAst(DeclarationSpecifierAst specifier, DeclaratorAst declarator) {
 		this.specifier = specifier;
 		this.declarators = new ArrayList<>();
