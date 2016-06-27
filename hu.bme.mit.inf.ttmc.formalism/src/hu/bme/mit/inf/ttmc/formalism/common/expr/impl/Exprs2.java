@@ -4,8 +4,11 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.type.Type;
+import hu.bme.mit.inf.ttmc.formalism.common.expr.DerefExpr;
+import hu.bme.mit.inf.ttmc.formalism.common.expr.NewExpr;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.NullExpr;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.PrimedExpr;
+import hu.bme.mit.inf.ttmc.formalism.common.type.PointerType;
 
 public final class Exprs2 {
 
@@ -26,6 +29,16 @@ public final class Exprs2 {
 	@SuppressWarnings("unchecked")
 	public static <T extends Type> NullExpr<T> Null() {
 		return (NullExpr<T>) NULL_EXPR;
+	}
+
+	public static <T extends Type> NewExpr<T> New(final T pointedType) {
+		checkNotNull(pointedType);
+		return new NewExprImpl<>(pointedType);
+	}
+
+	public static <T extends Type> DerefExpr<T> Deref(final Expr<? extends PointerType<? extends T>> op) {
+		checkNotNull(op);
+		return new DerefExprImpl<>(op);
 	}
 
 }
