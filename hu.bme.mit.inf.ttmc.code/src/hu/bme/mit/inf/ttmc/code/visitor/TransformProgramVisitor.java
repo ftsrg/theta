@@ -2,7 +2,6 @@ package hu.bme.mit.inf.ttmc.code.visitor;
 
 import java.util.ArrayList;
 import java.util.List;
-import com.google.common.collect.ImmutableSet;
 
 import hu.bme.mit.inf.ttmc.code.ast.AssignmentInitializerAst;
 import hu.bme.mit.inf.ttmc.code.ast.BinaryExpressionAst;
@@ -38,43 +37,33 @@ import hu.bme.mit.inf.ttmc.code.ast.visitor.DeclarationVisitor;
 import hu.bme.mit.inf.ttmc.code.ast.visitor.ExpressionVisitor;
 import hu.bme.mit.inf.ttmc.code.ast.visitor.StatementVisitor;
 import hu.bme.mit.inf.ttmc.code.util.SymbolTable;
-import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
-import hu.bme.mit.inf.ttmc.constraint.decl.Decl;
-import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
-import hu.bme.mit.inf.ttmc.constraint.factory.ExprFactory;
-import hu.bme.mit.inf.ttmc.constraint.factory.TypeFactory;
-import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
-import hu.bme.mit.inf.ttmc.constraint.type.IntType;
-import hu.bme.mit.inf.ttmc.constraint.type.RatType;
-import hu.bme.mit.inf.ttmc.constraint.type.Type;
-import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderAdd;
-import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderMul;
-import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderNeg;
-import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderSub;
-import hu.bme.mit.inf.ttmc.constraint.utils.impl.ExprUtils;
+import hu.bme.mit.inf.ttmc.core.decl.Decl;
+import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.type.BoolType;
+import hu.bme.mit.inf.ttmc.core.type.IntType;
+import hu.bme.mit.inf.ttmc.core.type.RatType;
+import hu.bme.mit.inf.ttmc.core.type.Type;
+import hu.bme.mit.inf.ttmc.core.type.closure.ClosedUnderAdd;
+import hu.bme.mit.inf.ttmc.core.type.closure.ClosedUnderMul;
+import hu.bme.mit.inf.ttmc.core.type.closure.ClosedUnderNeg;
+import hu.bme.mit.inf.ttmc.core.type.closure.ClosedUnderSub;
+import hu.bme.mit.inf.ttmc.core.utils.impl.ExprUtils;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.VarRefExpr;
-import hu.bme.mit.inf.ttmc.formalism.common.factory.StmtFactory;
-import hu.bme.mit.inf.ttmc.formalism.common.factory.VarDeclFactory;
-import hu.bme.mit.inf.ttmc.formalism.common.factory.impl.StmtFactoryImpl;
-import hu.bme.mit.inf.ttmc.formalism.common.factory.impl.VarDeclFactoryImpl;
+
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
+
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.*;
+import static hu.bme.mit.inf.ttmc.formalism.common.expr.impl.Exprs2.*;
+import static hu.bme.mit.inf.ttmc.formalism.common.stmt.impl.Stmts.*;
+import static hu.bme.mit.inf.ttmc.core.type.impl.Types.*;
+import static hu.bme.mit.inf.ttmc.core.decl.impl.Decls.*;
+import static hu.bme.mit.inf.ttmc.formalism.common.decl.impl.Decls2.*;
 
 public class TransformProgramVisitor implements ExpressionVisitor<Expr<? extends Type>>, StatementVisitor<Stmt>, DeclarationVisitor<Decl<? extends Type, ?>> {
 
-	private ExprFactory efc;
-	private StmtFactory pfc;
-	private TypeFactory tfc;
-	private VarDeclFactory vfc;
 		
 	private SymbolTable<Decl<? extends Type, ?>> symbols = new SymbolTable<>();
-		
-	public TransformProgramVisitor(ConstraintManager cm) {
-		this.efc = cm.getExprFactory();
-		this.tfc = cm.getTypeFactory();
-		this.pfc = new StmtFactoryImpl();
-		this.vfc = new VarDeclFactoryImpl(cm.getDeclFactory());
-	}
 	
 	@Override
 	public Expr<? extends Type> visit(BinaryExpressionAst ast) {
@@ -86,25 +75,25 @@ public class TransformProgramVisitor implements ExpressionVisitor<Expr<? extends
 		
 		switch (ast.getOperator()) {
 			case OP_ADD:
-				return this.efc.Add(ImmutableSet.of(ExprUtils.cast(left, ClosedUnderAdd.class), ExprUtils.cast(right, ClosedUnderAdd.class)));
+				return Add(ExprUtils.cast(left, ClosedUnderAdd.class), ExprUtils.cast(right, ClosedUnderAdd.class));
 			case OP_SUB:
-				return this.efc.Sub(ExprUtils.cast(left, ClosedUnderSub.class), ExprUtils.cast(right, ClosedUnderSub.class));
+				return Sub(ExprUtils.cast(left, ClosedUnderSub.class), ExprUtils.cast(right, ClosedUnderSub.class));
 			case OP_MUL:
-				return this.efc.Mul(ImmutableSet.of(ExprUtils.cast(left, ClosedUnderMul.class), ExprUtils.cast(right, ClosedUnderMul.class)));
+				return Mul(ExprUtils.cast(left, ClosedUnderMul.class), ExprUtils.cast(right, ClosedUnderMul.class));
 			case OP_IS_GT:
-				return this.efc.Gt(ExprUtils.cast(left, RatType.class), ExprUtils.cast(right, RatType.class));
+				return Gt(ExprUtils.cast(left, RatType.class), ExprUtils.cast(right, RatType.class));
 			case OP_IS_LT:
-				return this.efc.Lt(ExprUtils.cast(left, RatType.class), ExprUtils.cast(right, RatType.class));
+				return Lt(ExprUtils.cast(left, RatType.class), ExprUtils.cast(right, RatType.class));
 			case OP_IS_EQ:
-				return this.efc.Eq(left, right);
+				return Eq(left, right);
 			case OP_IS_NOT_EQ:
-				return this.efc.Neq(left, right);
+				return Neq(left, right);
 			case OP_DIV:
-				return this.efc.IntDiv(ExprUtils.cast(left, IntType.class), ExprUtils.cast(right, IntType.class));
+				return IntDiv(ExprUtils.cast(left, IntType.class), ExprUtils.cast(right, IntType.class));
 			case OP_IS_GTEQ:
-				return this.efc.Geq(ExprUtils.cast(left, RatType.class), ExprUtils.cast(right, RatType.class));
+				return Geq(ExprUtils.cast(left, RatType.class), ExprUtils.cast(right, RatType.class));
 			case OP_IS_LTEQ:
-				return this.efc.Leq(ExprUtils.cast(left, RatType.class), ExprUtils.cast(right, RatType.class));
+				return Leq(ExprUtils.cast(left, RatType.class), ExprUtils.cast(right, RatType.class));
 			case OP_ASSIGN: // intentional
 			default:
 				break;
@@ -115,7 +104,7 @@ public class TransformProgramVisitor implements ExpressionVisitor<Expr<? extends
 
 	@Override
 	public Expr<? extends Type> visit(LiteralExpressionAst ast) {
-		return this.efc.Int(ast.getValue());
+		return Int(ast.getValue());
 	}
 
 	@Override
@@ -134,9 +123,9 @@ public class TransformProgramVisitor implements ExpressionVisitor<Expr<? extends
 		
 		if (elseAst != null) {
 			Stmt elze = elseAst.accept(this);
-			return this.pfc.If(cond, then, elze);
+			return If(cond, then, elze);
 		} else {
-			return this.pfc.If(cond, then);
+			return If(cond, then);
 		}
 	}
 
@@ -148,7 +137,7 @@ public class TransformProgramVisitor implements ExpressionVisitor<Expr<? extends
 			stmts.add(child.accept(this));
 		}
 		
-		return this.pfc.Block(stmts);
+		return Block(stmts);
 	}
 
 	@Override
@@ -165,25 +154,25 @@ public class TransformProgramVisitor implements ExpressionVisitor<Expr<? extends
 			
 			String name = declarator.getName();
 			
-			VarDecl<? extends Type> var = this.vfc.Var(name, this.tfc.Int());
+			VarDecl<? extends Type> var = Var(name, Int());
 			this.symbols.put(name, var);			
 			
 			if (null == initializer) {
-				stmts.add(this.pfc.Decl(var));
+				stmts.add(Decl(var));
 			} else {
 				Expr<? extends Type> initExpr = initializer.getExpression().accept(this);
-				stmts.add(this.pfc.Decl(var, ExprUtils.cast(initExpr, var.getType().getClass())));
+				stmts.add(Decl(var, ExprUtils.cast(initExpr, var.getType().getClass())));
 			}
 		}
 		
-		return this.pfc.Block(stmts);
+		return Block(stmts);
 	}
 	
 	@Override
 	public Stmt visit(ReturnStatementAst ast) {
 		Expr<? extends Type> expr = ast.getExpression().accept(this);
 		
-		return this.pfc.Return(expr);
+		return Return(expr);
 	}
 
 	@Override
@@ -203,7 +192,7 @@ public class TransformProgramVisitor implements ExpressionVisitor<Expr<? extends
 			
 			VarRefExpr<Type> left = (VarRefExpr<Type>) lhs;
 			
-			return this.pfc.Assign(left.getDecl(), rhs);
+			return Assign(left.getDecl(), rhs);
 		}
 		
 		// Call to assertion functions must be replaced by condition assert statements
@@ -212,11 +201,11 @@ public class TransformProgramVisitor implements ExpressionVisitor<Expr<? extends
 			
 			if (func.getName().equals("assert")) {
 				ExpressionAst cond = func.getParams().get(0); // The first parameter is the condition
-				return this.pfc.Assert(ExprUtils.cast(cond.accept(this), BoolType.class));
+				return Assert(ExprUtils.cast(cond.accept(this), BoolType.class));
 			}
 		}
 		
-		return this.pfc.Skip();
+		return Skip();
 	}
 
 	@Override
@@ -227,7 +216,7 @@ public class TransformProgramVisitor implements ExpressionVisitor<Expr<? extends
 		Expr<? extends BoolType> cond = ExprUtils.cast(condAst.accept(this), BoolType.class);
 		Stmt body = bodyAst.accept(this);
 		
-		return this.pfc.While(cond, body);
+		return While(cond, body);
 	}
 
 	@Override
@@ -240,13 +229,13 @@ public class TransformProgramVisitor implements ExpressionVisitor<Expr<? extends
 		switch (ast.getOperator()) {
 		case OP_MINUS:
 			// The minus operation is negation
-			return this.efc.Neg(ExprUtils.cast(ast.getOperand().accept(this), ClosedUnderNeg.class));
+			return Neg(ExprUtils.cast(ast.getOperand().accept(this), ClosedUnderNeg.class));
 		case OP_PLUS:
 			// The unary plus operator promotes the operand to an integral type
 			// Since only integer variables are supported atm, this means a no-op
 			return ast.getOperand().accept(this);
 		case OP_NOT:
-			return this.efc.Not(ExprUtils.cast(ast.getOperand().accept(this), BoolType.class));
+			return Not(ExprUtils.cast(ast.getOperand().accept(this), BoolType.class));
 		case OP_POSTFIX_DECR:
 		case OP_PREFIX_DECR:
 		case OP_POSTFIX_INCR:
@@ -265,12 +254,12 @@ public class TransformProgramVisitor implements ExpressionVisitor<Expr<? extends
 		Expr<? extends BoolType> cond = ExprUtils.cast(condAst.accept(this), BoolType.class);
 		Stmt body = bodyAst.accept(this);
 		
-		return this.pfc.Do(body, cond);
+		return Do(body, cond);
 	}
 	
 	@Override
 	public Stmt visit(NullStatementAst ast) {
-		return this.pfc.Skip();
+		return Skip();
 	}
 
 

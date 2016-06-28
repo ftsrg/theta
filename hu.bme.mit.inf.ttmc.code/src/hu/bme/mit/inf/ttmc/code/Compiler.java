@@ -16,29 +16,24 @@ import hu.bme.mit.inf.ttmc.code.ast.StatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.TranslationUnitAst;
 import hu.bme.mit.inf.ttmc.code.simplifier.AstSimplifier;
 import hu.bme.mit.inf.ttmc.code.visitor.TransformProgramVisitor;
-import hu.bme.mit.inf.ttmc.constraint.ConstraintManagerImpl;
 import hu.bme.mit.inf.ttmc.formalism.cfa.CFA;
 import hu.bme.mit.inf.ttmc.formalism.cfa.CFACreator;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
-import hu.bme.mit.inf.ttmc.formalism.program.ProgramManager;
-import hu.bme.mit.inf.ttmc.formalism.program.impl.ProgramManagerImpl;
 
 public class Compiler {
-
-	private ProgramManager pm = new ProgramManagerImpl(new ConstraintManagerImpl());
 	
 	public CFA createLBE(String filename)
 	{
 		Stmt content = this.createStmt(filename);
 		
-		return CFACreator.createLBE(this.pm, content);
+		return CFACreator.createLBE(content);
 	}
 	
 	public CFA createSBE(String filename)
 	{
 		Stmt content = this.createStmt(filename);
 		
-		return CFACreator.createSBE(this.pm, content);
+		return CFACreator.createSBE(content);
 	}
 	
 	public Stmt createStmt(String filename)
@@ -54,7 +49,7 @@ public class Compiler {
 			// Simplify the AST for easier transformation 
 			TranslationUnitAst newRoot = AstSimplifier.simplify(root);
 						
-			TransformProgramVisitor transformer = new TransformProgramVisitor(this.pm);
+			TransformProgramVisitor transformer = new TransformProgramVisitor();
 			
 			StatementAst funcBody = ((FunctionDefinitionAst) newRoot.getDeclarations().get(0)).getBody();
 			Stmt content = funcBody.accept(transformer);
