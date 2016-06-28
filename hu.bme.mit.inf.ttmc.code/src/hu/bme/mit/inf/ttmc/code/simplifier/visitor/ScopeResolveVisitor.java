@@ -2,10 +2,14 @@ package hu.bme.mit.inf.ttmc.code.simplifier.visitor;
 
 import hu.bme.mit.inf.ttmc.code.TransformException;
 import hu.bme.mit.inf.ttmc.code.ast.CompoundStatementAst;
+import hu.bme.mit.inf.ttmc.code.ast.DeclarationAst;
 import hu.bme.mit.inf.ttmc.code.ast.DeclaratorAst;
 import hu.bme.mit.inf.ttmc.code.ast.ExpressionAst;
+import hu.bme.mit.inf.ttmc.code.ast.FunctionDeclaratorAst;
+import hu.bme.mit.inf.ttmc.code.ast.FunctionDefinitionAst;
 import hu.bme.mit.inf.ttmc.code.ast.InitDeclaratorAst;
 import hu.bme.mit.inf.ttmc.code.ast.NameExpressionAst;
+import hu.bme.mit.inf.ttmc.code.ast.ParameterDeclarationAst;
 import hu.bme.mit.inf.ttmc.code.ast.StatementAst;
 import hu.bme.mit.inf.ttmc.code.simplifier.SimplifyAstVisitor;
 import hu.bme.mit.inf.ttmc.code.util.SymbolTable;
@@ -42,6 +46,26 @@ public class ScopeResolveVisitor extends SimplifyAstVisitor {
 		
 		return ast;
 	}
+	
+	@Override
+	public DeclarationAst visit(FunctionDefinitionAst ast) {
+		this.symbols.pushScope();
+		
+		DeclarationAst res = super.visit(ast);
+		
+		this.symbols.popScope();
+		
+		return res;
+	}
+	
+	public DeclaratorAst visit(FunctionDeclaratorAst ast) {
+		for (ParameterDeclarationAst param : ast.getParameters()) {
+			this.symbols.put(param.getDeclarator().getName(), param.getDeclarator().getName());
+		}
+				
+		return ast;
+	}
+	
 	
 	@Override
 	public ExpressionAst visit(NameExpressionAst ast) {

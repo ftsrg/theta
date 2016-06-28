@@ -1,5 +1,8 @@
 package hu.bme.mit.inf.ttmc.code;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 import org.eclipse.cdt.core.dom.ast.gnu.c.GCCLanguage;
 import org.eclipse.cdt.core.parser.FileContent;
@@ -10,13 +13,16 @@ import org.eclipse.cdt.internal.core.index.CIndex;
 import org.eclipse.cdt.internal.core.parser.ParserLogService;
 import org.eclipse.core.runtime.CoreException;
 
+import hu.bme.mit.inf.ttmc.code.ast.DeclarationAst;
 import hu.bme.mit.inf.ttmc.code.ast.FunctionDefinitionAst;
 import hu.bme.mit.inf.ttmc.code.ast.StatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.TranslationUnitAst;
 import hu.bme.mit.inf.ttmc.code.simplifier.AstSimplifier;
 import hu.bme.mit.inf.ttmc.code.visitor.TransformProgramVisitor;
+import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.formalism.cfa.CFA;
 import hu.bme.mit.inf.ttmc.formalism.cfa.CFACreator;
+import hu.bme.mit.inf.ttmc.formalism.common.decl.ProcDecl;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
 
 import hu.bme.mit.inf.ttmc.formalism.cfa.CFA;
@@ -26,45 +32,74 @@ import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
 public class Compiler {
 
 	
-	public CFA createLBE(String filename)
+	public static List<CFA> createLBE(String filename)
 	{
-		Stmt content = this.createStmt(filename);
+		List<CFA> cfas = new ArrayList<>();
+		List<ProcDecl<? extends Type>> procs = createStmts(filename);
 		
-		return CFACreator.createLBE(content);
+		for (ProcDecl<? extends Type> proc : procs) {
+			cfas.add(CFACreator.createLBE(proc.getStmt().get()));
+		}
+		
+		return cfas;
 	}
 	
-	public CFA createSBE(String filename)
+	public static List<CFA> createSBE(String filename)
 	{
-		Stmt content = this.createStmt(filename);
+		List<CFA> cfas = new ArrayList<>();
+		List<ProcDecl<? extends Type>> procs = createStmts(filename);
 		
-		return CFACreator.createSBE(content);
+		for (ProcDecl<? extends Type> proc : procs) {
+			cfas.add(CFACreator.createSBE(proc.getStmt().get()));
+		}
+		
+		return cfas;
 	}
 	
-	public Stmt createStmt(String filename)
+	public static List<ProcDecl<? extends Type>> createStmts(String filename)
 	{
-		// Parse with CDT
-		IASTTranslationUnit cdtAst;
+		TranslationUnitAst root = createSimplifiedAst(filename);
+		
+		TransformProgramVisitor transformer = new TransformProgramVisitor();
+		
+		List<ProcDecl<? extends Type>> topDecls = new ArrayList<>();
+
+		for (DeclarationAst decl : root.getDeclarations()) {
+			if (decl instanceof FunctionDefinitionAst) {
+				ProcDecl<? extends Type> proc = (ProcDecl<? extends Type>) decl.accept(transformer);
+				topDecls.add(proc);
+			}
+		}
+		
+		return topDecls;
+	}
+	
+	
+	public static TranslationUnitAst createSimplifiedAst(String filename)
+	{
+		TranslationUnitAst root = createAst(filename);
+		
+		// Simplify the AST for easier transformation 
+		TranslationUnitAst newRoot = AstSimplifier.simplify(root);
+		
+		return newRoot;
+	}
+	
+	public static TranslationUnitAst createAst(String filename)
+	{
 		try {
-			cdtAst = this.parseFile(filename);
+			// Parse with CDT
+			IASTTranslationUnit cdtAst = parseFile(filename);
 			
 			// Transform the CDT representation into our custom AST
 			TranslationUnitAst root = CdtAstTransformer.transform(cdtAst);
-			
-			// Simplify the AST for easier transformation 
-			TranslationUnitAst newRoot = AstSimplifier.simplify(root);
-
-			TransformProgramVisitor transformer = new TransformProgramVisitor();
-			
-			StatementAst funcBody = ((FunctionDefinitionAst) newRoot.getDeclarations().get(0)).getBody();
-			Stmt content = funcBody.accept(transformer);
-			
-			return content;
+			return root;
 		} catch (CoreException e) {
 			throw new TransformException("Error occured during transform.", e);
-		}
+		}		
 	}
 	
-	private IASTTranslationUnit parseFile(String file) throws CoreException {
+	private static IASTTranslationUnit parseFile(String file) throws CoreException {
 		GCCLanguage lang = new GCCLanguage();
 
 		FileContent fc = FileContent.createForExternalFileLocation(file);

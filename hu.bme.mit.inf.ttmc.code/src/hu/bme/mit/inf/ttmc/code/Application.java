@@ -5,22 +5,36 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.util.List;
+
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.core.runtime.CoreException;
+
+import hu.bme.mit.inf.ttmc.code.ast.TranslationUnitAst;
+import hu.bme.mit.inf.ttmc.code.ast.utils.AstPrinter;
+import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.formalism.cfa.CFA;
+import hu.bme.mit.inf.ttmc.formalism.common.decl.ProcDecl;
+import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
 import hu.bme.mit.inf.ttmc.formalism.utils.impl.CFAPrinter;
 
 class Application {
-
-	// scope, deklarációs lista, postfix/prefix
 	
 	public static void main(String[] args)
 			throws CoreException, FileNotFoundException, IOException, InterruptedException {
 	
-		Compiler compiler = new Compiler();
-		CFA cfa = compiler.createSBE("simple.c");
+		TranslationUnitAst root = Compiler.createAst("simple.c");
 		
-		System.out.println(CFAPrinter.toGraphvizSting(cfa));
+		graphvizOutput("ast_custom", AstPrinter.toGraphvizString(root));
+		
+		//CFA cfa = Compiler.createSBE("simple.c");
+		
+		//System.out.println(CFAPrinter.toGraphvizSting(cfa))
+		List<CFA> cfas = Compiler.createSBE("simple.c");
+		
+		for (CFA cfa : cfas) {
+			System.out.println(CFAPrinter.toGraphvizSting(cfa));
+		}
 	}
 
 	private static int nodeId = 0;

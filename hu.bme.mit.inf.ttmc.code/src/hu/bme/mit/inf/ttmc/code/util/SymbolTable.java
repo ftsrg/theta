@@ -36,7 +36,7 @@ public class SymbolTable<Node> {
 				return elem;
 			
 			if (parent == null)
-				throw new NoSuchElementException();
+				throw new NoSuchElementException(String.format("No node for found for name '%s'.", name));
 			
 			return parent.get(name);
 		}

@@ -3,6 +3,7 @@ package hu.bme.mit.inf.ttmc.code;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.List;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTBreakStatement;
@@ -31,8 +32,10 @@ import org.eclipse.cdt.core.dom.ast.IASTLabelStatement;
 import org.eclipse.cdt.core.dom.ast.IASTLiteralExpression;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTNullStatement;
+import org.eclipse.cdt.core.dom.ast.IASTParameterDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTReturnStatement;
 import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclaration;
+import org.eclipse.cdt.core.dom.ast.IASTStandardFunctionDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTStatement;
 import org.eclipse.cdt.core.dom.ast.IASTSwitchStatement;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
@@ -61,6 +64,7 @@ import hu.bme.mit.inf.ttmc.code.ast.IfStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.LiteralExpressionAst;
 import hu.bme.mit.inf.ttmc.code.ast.NameExpressionAst;
 import hu.bme.mit.inf.ttmc.code.ast.NullStatementAst;
+import hu.bme.mit.inf.ttmc.code.ast.ParameterDeclarationAst;
 import hu.bme.mit.inf.ttmc.code.ast.ReturnStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.StatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.SwitchStatementAst;
@@ -89,8 +93,16 @@ public class CdtAstTransformer {
 	public static FunctionDefinitionAst transformFunction(IASTFunctionDefinition ast) {
 		IASTFunctionDeclarator decl = ast.getDeclarator();
 		String name = decl.getName().toString();
+		List<ParameterDeclarationAst> params = new ArrayList<>();
 		
-		FunctionDeclaratorAst funcDeclarator = new FunctionDeclaratorAst(name);
+		if (decl instanceof IASTStandardFunctionDeclarator) {
+			IASTParameterDeclaration[] paramDecls = ((IASTStandardFunctionDeclarator) decl).getParameters();
+			for (IASTParameterDeclaration pd : paramDecls) {
+				params.add(new ParameterDeclarationAst(transformDeclSpecifier(pd.getDeclSpecifier()), transformDeclarator(pd.getDeclarator())));
+			}
+		}
+		
+		FunctionDeclaratorAst funcDeclarator = new FunctionDeclaratorAst(name, params);
 		
 		CompoundStatementAst body = transformCompoundStatement((IASTCompoundStatement)ast.getBody());
 		

@@ -35,8 +35,8 @@ import hu.bme.mit.inf.ttmc.code.ast.UnaryExpressionAst;
 import hu.bme.mit.inf.ttmc.code.ast.VarDeclarationAst;
 import hu.bme.mit.inf.ttmc.code.ast.WhileStatementAst;
 
-public class CloneAstVisitor implements AstVisitor<ExpressionAst, StatementAst, DeclarationAst, DeclaratorAst, TranslationUnitAst> {
-
+public abstract class CloneAstVisitor implements AstVisitor<ExpressionAst, StatementAst, DeclarationAst, DeclaratorAst, TranslationUnitAst> {
+/*
 	@Override
 	public ExpressionAst visit(BinaryExpressionAst ast) {
 		return new BinaryExpressionAst(ast.getLeft().accept(this), ast.getRight().accept(this), ast.getOperator());
@@ -202,5 +202,5 @@ public class CloneAstVisitor implements AstVisitor<ExpressionAst, StatementAst, 
 		
 		return new TranslationUnitAst(decl);
 	}
-
+*/
 }

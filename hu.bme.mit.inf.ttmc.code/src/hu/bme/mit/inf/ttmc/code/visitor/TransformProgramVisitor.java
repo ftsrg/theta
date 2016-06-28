@@ -3,6 +3,9 @@ package hu.bme.mit.inf.ttmc.code.visitor;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.xml.transform.TransformerException;
+
+import hu.bme.mit.inf.ttmc.code.TransformException;
 import hu.bme.mit.inf.ttmc.code.ast.AssignmentInitializerAst;
 import hu.bme.mit.inf.ttmc.code.ast.BinaryExpressionAst;
 import hu.bme.mit.inf.ttmc.code.ast.BinaryExpressionAst.Operator;
@@ -19,10 +22,12 @@ import hu.bme.mit.inf.ttmc.code.ast.ForStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.FunctionDefinitionAst;
 import hu.bme.mit.inf.ttmc.code.ast.GotoStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.FunctionCallExpressionAst;
+import hu.bme.mit.inf.ttmc.code.ast.FunctionDeclaratorAst;
 import hu.bme.mit.inf.ttmc.code.ast.IfStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.LiteralExpressionAst;
 import hu.bme.mit.inf.ttmc.code.ast.NameExpressionAst;
 import hu.bme.mit.inf.ttmc.code.ast.NullStatementAst;
+import hu.bme.mit.inf.ttmc.code.ast.ParameterDeclarationAst;
 import hu.bme.mit.inf.ttmc.code.ast.ReturnStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.StatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.SwitchStatementAst;
@@ -34,10 +39,12 @@ import hu.bme.mit.inf.ttmc.code.ast.InitDeclaratorAst;
 import hu.bme.mit.inf.ttmc.code.ast.LabeledStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.WhileStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.visitor.DeclarationVisitor;
+import hu.bme.mit.inf.ttmc.code.ast.visitor.DeclaratorVisitor;
 import hu.bme.mit.inf.ttmc.code.ast.visitor.ExpressionVisitor;
 import hu.bme.mit.inf.ttmc.code.ast.visitor.StatementVisitor;
 import hu.bme.mit.inf.ttmc.code.util.SymbolTable;
 import hu.bme.mit.inf.ttmc.core.decl.Decl;
+import hu.bme.mit.inf.ttmc.core.decl.ParamDecl;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.core.type.IntType;
@@ -48,6 +55,7 @@ import hu.bme.mit.inf.ttmc.core.type.closure.ClosedUnderMul;
 import hu.bme.mit.inf.ttmc.core.type.closure.ClosedUnderNeg;
 import hu.bme.mit.inf.ttmc.core.type.closure.ClosedUnderSub;
 import hu.bme.mit.inf.ttmc.core.utils.impl.ExprUtils;
+import hu.bme.mit.inf.ttmc.formalism.common.decl.ProcDecl;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.VarRefExpr;
 
@@ -60,7 +68,12 @@ import static hu.bme.mit.inf.ttmc.core.type.impl.Types.*;
 import static hu.bme.mit.inf.ttmc.core.decl.impl.Decls.*;
 import static hu.bme.mit.inf.ttmc.formalism.common.decl.impl.Decls2.*;
 
-public class TransformProgramVisitor implements ExpressionVisitor<Expr<? extends Type>>, StatementVisitor<Stmt>, DeclarationVisitor<Decl<? extends Type, ?>> {
+public class TransformProgramVisitor implements
+	ExpressionVisitor<Expr<? extends Type>>,
+	StatementVisitor<Stmt>,
+	DeclarationVisitor<Decl<? extends Type, ?>>,
+	DeclaratorVisitor<Decl<? extends Type, ?>>
+{
 
 		
 	private SymbolTable<Decl<? extends Type, ?>> symbols = new SymbolTable<>();
@@ -109,6 +122,9 @@ public class TransformProgramVisitor implements ExpressionVisitor<Expr<? extends
 
 	@Override
 	public Expr<? extends Type> visit(NameExpressionAst ast) {
+		if (!this.symbols.contains(ast.getName()))
+			throw new TransformException(String.format("Use of undeclared identifier '%s'.", ast.getName()));
+		
 		return this.symbols.get(ast.getName()).getRef();
 	}
 
@@ -264,13 +280,24 @@ public class TransformProgramVisitor implements ExpressionVisitor<Expr<? extends
 
 
 	@Override
-	public Decl<? extends Type, ?> visit(FunctionDefinitionAst ast) {
-		throw new UnsupportedOperationException("TODO: Function Defs");
+	public ProcDecl<? extends Type> visit(FunctionDefinitionAst ast) {
+		List<ParamDecl<? extends Type>> paramDecls = new ArrayList<>();
+		
+		FunctionDeclaratorAst declarator = ast.getDeclarator();
+		for (ParameterDeclarationAst pd : declarator.getParameters()) {
+			ParamDecl<? extends Type> paramDecl = Param(pd.getDeclarator().getName(), Int());
+			this.symbols.put(paramDecl.getName(), paramDecl);
+			paramDecls.add(paramDecl);
+		}
+		
+		Stmt body = ast.getBody().accept(this);
+		
+		return Proc(ast.getName(), paramDecls, Int(), body);
 	}
 
 	@Override
 	public Expr<? extends Type> visit(FunctionCallExpressionAst ast) {
-		throw new UnsupportedOperationException("TODO: Function Calls");
+		throw new UnsupportedOperationException("TODO: Function call Stmt");
 	}
 	
 	@Override
@@ -319,5 +346,15 @@ public class TransformProgramVisitor implements ExpressionVisitor<Expr<? extends
 	@Override
 	public Expr<? extends Type> visit(ExpressionListAst ast) {
 		throw new UnsupportedOperationException("TransformProgramVisitor does not support expression lists.");
+	}
+
+	@Override
+	public Decl<? extends Type, ?> visit(InitDeclaratorAst ast) {
+		throw new UnsupportedOperationException("This code should not be reachable.");
+	}
+
+	@Override
+	public Decl<? extends Type, ?> visit(FunctionDeclaratorAst ast) {
+		throw new UnsupportedOperationException("This code should not be reachable.");
 	}
 }
