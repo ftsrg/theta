@@ -4,9 +4,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import hu.bme.mit.inf.ttmc.code.ast.TranslationUnitAst;
+import hu.bme.mit.inf.ttmc.code.simplifier.visitor.AssignmentUnrollVisitor;
 import hu.bme.mit.inf.ttmc.code.simplifier.visitor.BreakContinueToGotoVisitor;
 import hu.bme.mit.inf.ttmc.code.simplifier.visitor.ExpressionListUnrollVisitor;
 import hu.bme.mit.inf.ttmc.code.simplifier.visitor.ForToWhileStatementVisitor;
+import hu.bme.mit.inf.ttmc.code.simplifier.visitor.ScopeResolveVisitor;
 import hu.bme.mit.inf.ttmc.code.simplifier.visitor.SwitchToIfElseVisitor;
 import hu.bme.mit.inf.ttmc.code.simplifier.visitor.UnaryExpressionUnrollVisitor;
 import hu.bme.mit.inf.ttmc.code.simplifier.visitor.UnrollDeclarationsVisitor;
@@ -20,7 +22,9 @@ public class AstSimplifier {
 		new UnrollDeclarationsVisitor(),
 		new BreakContinueToGotoVisitor(),
 		new UnaryExpressionUnrollVisitor(),
-		new ExpressionListUnrollVisitor()
+		new ExpressionListUnrollVisitor(),
+		new AssignmentUnrollVisitor(),
+		new ScopeResolveVisitor()
 	};
 	
 	public static TranslationUnitAst simplify(TranslationUnitAst ast) {		
