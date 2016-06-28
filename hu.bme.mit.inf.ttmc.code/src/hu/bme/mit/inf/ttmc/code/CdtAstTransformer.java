@@ -76,7 +76,7 @@ import hu.bme.mit.inf.ttmc.code.ast.DeclaratorAst;
 import hu.bme.mit.inf.ttmc.code.ast.DefaultStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.WhileStatementAst;
 
-public class AstTransformer {
+public class CdtAstTransformer {
 		
 	public static TranslationUnitAst transform(IASTTranslationUnit ast) {
 		List<DeclarationAst> functions = new ArrayList<>();

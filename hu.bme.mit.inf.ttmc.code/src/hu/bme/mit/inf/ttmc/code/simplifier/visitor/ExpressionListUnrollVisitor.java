@@ -45,7 +45,6 @@ public class ExpressionListUnrollVisitor extends SimplifyAstVisitor {
 		for (ExpressionAst expr : ast.getExpressions()) {
 			last = expr.accept(this);
 			this.exprStack.lastElement().add(last);
-			System.out.println(last.getClass());
 		}
 		
 		return last;

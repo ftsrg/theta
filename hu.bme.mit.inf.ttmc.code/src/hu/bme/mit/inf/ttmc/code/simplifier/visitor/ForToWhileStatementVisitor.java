@@ -9,7 +9,7 @@ import hu.bme.mit.inf.ttmc.code.ast.ExpressionStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.ForStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.StatementAst;
 import hu.bme.mit.inf.ttmc.code.simplifier.SimplifyAstVisitor;
-import hu.bme.mit.inf.ttmc.code.visitor.ast.TransformedWhileStatementAst;
+import hu.bme.mit.inf.ttmc.code.simplifier.ast.TransformedWhileStatementAst;
 
 public class ForToWhileStatementVisitor extends SimplifyAstVisitor {
 

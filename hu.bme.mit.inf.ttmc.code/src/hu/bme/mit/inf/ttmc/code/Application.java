@@ -38,9 +38,6 @@ import hu.bme.mit.inf.ttmc.code.ast.FunctionDefinitionAst;
 import hu.bme.mit.inf.ttmc.code.ast.StatementAst;
 import hu.bme.mit.inf.ttmc.code.stmt.visitor.PrintStmtVisitor;
 import hu.bme.mit.inf.ttmc.code.visitor.PrintCodeAstVisitor;
-import hu.bme.mit.inf.ttmc.code.visitor.SimplifyAstVisitor;
-import hu.bme.mit.inf.ttmc.code.visitor.StatementUnrollAstVisitor;
-import hu.bme.mit.inf.ttmc.code.visitor.TransformProgramVisitor;
 import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.ConstraintManagerImpl;
 import hu.bme.mit.inf.ttmc.formalism.cfa.CFA;
@@ -61,73 +58,10 @@ class Application {
 	public static void main(String[] args)
 			throws CoreException, FileNotFoundException, IOException, InterruptedException {
 	
-		IASTTranslationUnit ast = parseFile("hello.c");
-		graphvizOutput("ast_cdt", getCdtAstString(ast));
-
-		TranslationUnitAst root = AstTransformer.transform(ast);
-
-		graphvizOutput("ast_custom", AstPrinter.toGraphvizString(root));
-/*
-		SimplifyAstVisitorOld simplVisitor = new SimplifyAstVisitorOld();
-		StatementUnrollAstVisitor unroll = new StatementUnrollAstVisitor();
-
-		FunctionDefinitionAst main = (FunctionDefinitionAst) root.getChildren()[0];
-		FunctionDefinitionAst mainSimpl = (FunctionDefinitionAst) (main.accept(unroll).accept(simplVisitor));
-
-		PrintCodeAstVisitor codePrinter = new PrintCodeAstVisitor();
-
-		String code = mainSimpl.accept(codePrinter);
-
-		System.out.println(code); */
+		Compiler compiler = new Compiler();
+		CFA cfa = compiler.createLBE("hello.c");
 		
-		TranslationUnitAst newRoot = AstSimplifier.simplify(root);
-		graphvizOutput("ast_trans", AstPrinter.toGraphvizString(newRoot));
-		
-		System.out.println(newRoot.accept(new PrintCodeAstVisitor()));
-		
-		/*
-		SimplifyAstVisitor visitor = new SimplifyAstVisitor();
-		
-		TranslationUnitAst newRoot = root.accept(new SimplifyAstVisitor());		
-
-		graphvizOutput("ast_trans", AstPrinter.toGraphvizString(newRoot));
-		
-		System.out.println(newRoot.accept(new PrintCodeAstVisitor()));
-		
-		ProgramManager pm = new ProgramManagerImpl(new ConstraintManagerImpl());
-		
-		TransformProgramVisitor transformer = new TransformProgramVisitor(pm);
-		
-		StatementAst funcBody = ((FunctionDefinitionAst) newRoot.getDeclarations().get(0)).getBody();
-		Stmt content = funcBody.accept(transformer);
-		
-		CFA cfa = CFACreator.createSBE(pm, content);
 		System.out.println(CFAPrinter.toGraphvizSting(cfa));
-*/
-		/*
-		 * ProgramManager manager = new ProgramManagerImpl(new
-		 * ConstraintManagerImpl()); TransformProgramVisitor visitor = new
-		 * TransformProgramVisitor(manager);
-		 * 
-		 * Stmt content = mainSimpl.getBody().accept(visitor);
-		 * 
-		 * CFA cfa = CFACreator.createSBE(manager, content); CFA cfa2 =
-		 * CFACreator.createLBE(manager, content);
-		 * 
-		 * //printStmt(content, 0);
-		 * 
-		 * System.out.println(content);
-		 * 
-		 * PrintStmtVisitor stmtVisitor = new PrintStmtVisitor(); String s =
-		 * content.accept(stmtVisitor, new StringBuilder());
-		 * System.out.println("===============");
-		 * 
-		 * System.out.println(s); System.out.println("================");
-		 * 
-		 * System.out.println(CFAPrinter.toGraphvizSting(cfa));
-		 * System.out.println("================");
-		 * System.out.println(CFAPrinter.toGraphvizSting(cfa2));
-		 */
 	}
 
 	private static int nodeId = 0;
