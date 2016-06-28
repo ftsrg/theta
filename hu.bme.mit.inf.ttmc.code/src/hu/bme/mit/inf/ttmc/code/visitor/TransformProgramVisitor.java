@@ -147,7 +147,7 @@ public class TransformProgramVisitor implements ExpressionVisitor<Expr<? extends
 		
 		if (decl instanceof VarDeclarationAst) {
 			VarDeclarationAst varDecl = (VarDeclarationAst) decl;
-			
+
 			// Every declaration contains a single declarator because of the earlier transformations
 			InitDeclaratorAst declarator = (InitDeclaratorAst) varDecl.getDeclarators().get(0); // TODO
 			AssignmentInitializerAst initializer = (AssignmentInitializerAst) declarator.getInitializer();

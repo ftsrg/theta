@@ -1,6 +1,5 @@
 package hu.bme.mit.inf.ttmc.code;
 
-
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 import org.eclipse.cdt.core.dom.ast.gnu.c.GCCLanguage;
 import org.eclipse.cdt.core.parser.FileContent;
@@ -20,7 +19,12 @@ import hu.bme.mit.inf.ttmc.formalism.cfa.CFA;
 import hu.bme.mit.inf.ttmc.formalism.cfa.CFACreator;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
 
+import hu.bme.mit.inf.ttmc.formalism.cfa.CFA;
+import hu.bme.mit.inf.ttmc.formalism.cfa.CFACreator;
+import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
+
 public class Compiler {
+
 	
 	public CFA createLBE(String filename)
 	{
@@ -48,7 +52,7 @@ public class Compiler {
 			
 			// Simplify the AST for easier transformation 
 			TranslationUnitAst newRoot = AstSimplifier.simplify(root);
-						
+
 			TransformProgramVisitor transformer = new TransformProgramVisitor();
 			
 			StatementAst funcBody = ((FunctionDefinitionAst) newRoot.getDeclarations().get(0)).getBody();

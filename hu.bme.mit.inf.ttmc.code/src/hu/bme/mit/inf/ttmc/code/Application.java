@@ -5,17 +5,14 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.core.runtime.CoreException;
-
 import hu.bme.mit.inf.ttmc.formalism.cfa.CFA;
 import hu.bme.mit.inf.ttmc.formalism.utils.impl.CFAPrinter;
 
 class Application {
 
 	// scope, deklarációs lista, postfix/prefix
-
 	
 	public static void main(String[] args)
 			throws CoreException, FileNotFoundException, IOException, InterruptedException {
