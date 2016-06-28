@@ -8,7 +8,6 @@ import hu.bme.mit.inf.ttmc.code.ast.DeclaratorAst;
 import hu.bme.mit.inf.ttmc.code.ast.InitDeclaratorAst;
 import hu.bme.mit.inf.ttmc.code.ast.InitializerAst;
 import hu.bme.mit.inf.ttmc.code.ast.VarDeclarationAst;
-import hu.bme.mit.inf.ttmc.code.ast.DeclarationSpecifierAst.FunctionSpecifier;
 import hu.bme.mit.inf.ttmc.code.ast.DeclarationSpecifierAst.StorageClassSpecifier;
 import hu.bme.mit.inf.ttmc.code.ast.DeclarationSpecifierAst.TypeQualifier;
 

@@ -1,7 +1,6 @@
 package hu.bme.mit.inf.ttmc.code.ast.visitor;
 
 import hu.bme.mit.inf.ttmc.code.ast.BinaryExpressionAst;
-import hu.bme.mit.inf.ttmc.code.ast.ExpressionAst;
 import hu.bme.mit.inf.ttmc.code.ast.ExpressionListAst;
 import hu.bme.mit.inf.ttmc.code.ast.FunctionCallExpressionAst;
 import hu.bme.mit.inf.ttmc.code.ast.NameExpressionAst;

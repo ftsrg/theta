@@ -1,6 +1,5 @@
 package hu.bme.mit.inf.ttmc.code;
 
-import javax.xml.transform.TransformerException;
 
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 import org.eclipse.cdt.core.dom.ast.gnu.c.GCCLanguage;

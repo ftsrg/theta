@@ -16,7 +16,6 @@ import hu.bme.mit.inf.ttmc.formalism.common.stmt.ReturnStmt;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.SkipStmt;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.WhileStmt;
-import hu.bme.mit.inf.ttmc.formalism.utils.FailStmtVisitor;
 import hu.bme.mit.inf.ttmc.formalism.utils.StmtVisitor;
 
 public class PrintStmtVisitor implements StmtVisitor<StringBuilder, String> {

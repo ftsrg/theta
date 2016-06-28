@@ -1,6 +1,5 @@
 package hu.bme.mit.inf.ttmc.code.ast.visitor;
 
-import hu.bme.mit.inf.ttmc.code.ast.InitDeclaratorAst;
 import hu.bme.mit.inf.ttmc.code.ast.FunctionDefinitionAst;
 import hu.bme.mit.inf.ttmc.code.ast.VarDeclarationAst;
 

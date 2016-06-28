@@ -2,9 +2,6 @@ package hu.bme.mit.inf.ttmc.code.simplifier.visitor;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Stack;
-import java.util.concurrent.locks.Condition;
-
 import hu.bme.mit.inf.ttmc.code.ast.BreakStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.CompoundStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.ContinueStatementAst;

@@ -1,8 +1,5 @@
 package hu.bme.mit.inf.ttmc.code.simplifier;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import hu.bme.mit.inf.ttmc.code.ast.TranslationUnitAst;
 import hu.bme.mit.inf.ttmc.code.simplifier.visitor.AssignmentUnrollVisitor;
 import hu.bme.mit.inf.ttmc.code.simplifier.visitor.BreakContinueToGotoVisitor;

@@ -12,7 +12,6 @@ import hu.bme.mit.inf.ttmc.code.ast.IfStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.LabeledStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.NullStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.ReturnStatementAst;
-import hu.bme.mit.inf.ttmc.code.ast.StatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.SwitchStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.DeclarationStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.DefaultStatementAst;
