@@ -171,8 +171,6 @@ public class TransformProgramVisitor implements ExpressionVisitor<Expr<? extends
 			for (DeclaratorAst declar : declarators) {
 				InitDeclaratorAst declarator = (InitDeclaratorAst) declar; // Ugly
 				String name = declarator.getName();
-
-				System.out.println(".... " + name);
 				
 				VarDecl<? extends Type>  varDecl = this.vfc.Var(name, this.tfc.Int());
 				this.symbols.put(name, varDecl);

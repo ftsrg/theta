@@ -1,4 +1,4 @@
-package hu.bme.mit.inf.ttmc.code.visitor.ast;
+package hu.bme.mit.inf.ttmc.code.simplifier.ast;
 
 import hu.bme.mit.inf.ttmc.code.ast.ExpressionAst;
 import hu.bme.mit.inf.ttmc.code.ast.StatementAst;

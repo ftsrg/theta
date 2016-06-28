@@ -2,6 +2,7 @@ package hu.bme.mit.inf.ttmc.code.simplifier.visitor;
 
 import java.util.Stack;
 
+import hu.bme.mit.inf.ttmc.code.TransformException;
 import hu.bme.mit.inf.ttmc.code.ast.CompoundStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.DeclaratorAst;
 import hu.bme.mit.inf.ttmc.code.ast.ExpressionAst;
@@ -9,7 +10,6 @@ import hu.bme.mit.inf.ttmc.code.ast.InitDeclaratorAst;
 import hu.bme.mit.inf.ttmc.code.ast.NameExpressionAst;
 import hu.bme.mit.inf.ttmc.code.ast.StatementAst;
 import hu.bme.mit.inf.ttmc.code.simplifier.SimplifyAstVisitor;
-import hu.bme.mit.inf.ttmc.code.simplifier.TransformException;
 import hu.bme.mit.inf.ttmc.code.util.SymbolTable;
 
 public class ScopeResolveVisitor extends SimplifyAstVisitor {
