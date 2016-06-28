@@ -1,42 +1,45 @@
 package hu.bme.mit.inf.ttmc.aiger.impl.elements;
 
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Iff;
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Not;
+import static hu.bme.mit.inf.ttmc.core.type.impl.Types.Bool;
+import static hu.bme.mit.inf.ttmc.formalism.common.decl.impl.Decls2.Var;
+import static hu.bme.mit.inf.ttmc.formalism.common.expr.impl.Exprs2.Prime;
+
 import java.util.List;
 
-import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
-import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
+import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
-import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
 
 public final class Latch extends HWElement {
 	private final int nextState;
 	private final VarDecl<BoolType> varDecl;
 
-	public Latch(int nr, String[] tokens, STSManager manager) {
-		this(nr, Integer.parseInt(tokens[0]), Integer.parseInt(tokens[1]), manager);
+	public Latch(final int nr, final String[] tokens) {
+		this(nr, Integer.parseInt(tokens[0]), Integer.parseInt(tokens[1]));
 	}
-	
-	public Latch(int nr, int actualState, int nextState, STSManager manager) {
-		super(actualState/2);
+
+	public Latch(final int nr, final int actualState, final int nextState) {
+		super(actualState / 2);
 		this.nextState = nextState;
-		varDecl = manager.getDeclFactory().Var("L" + nr + "_l" + varId, manager.getTypeFactory().Bool());
+		varDecl = Var("L" + nr + "_l" + varId, Bool());
 	}
 
 	@Override
-	public Expr<? extends BoolType> getExpr(STSManager manager, List<HWElement> elements) {
+	public Expr<? extends BoolType> getExpr(final List<HWElement> elements) {
 		return varDecl.getRef();
 	}
-	
-	public Expr<? extends BoolType> getInitExpr(STSManager manager) {
-		return manager.getExprFactory().Not(varDecl.getRef());
+
+	public Expr<? extends BoolType> getInitExpr() {
+		return Not(varDecl.getRef());
 	}
-	
-	public Expr<? extends BoolType> getTransExpr(STSManager manager, List<HWElement> elements) {
-		Expr<? extends BoolType> expr = elements.get(nextState / 2).getExpr(manager, elements);
-		if (nextState % 2 == 1) expr = manager.getExprFactory().Not(expr);
-		return manager.getExprFactory().Iff(
-				manager.getExprFactory().Prime(varDecl.getRef()),
-				expr
-				);
+
+	public Expr<? extends BoolType> getTransExpr(final List<HWElement> elements) {
+		Expr<? extends BoolType> expr = elements.get(nextState / 2).getExpr(elements);
+		if (nextState % 2 != 0)
+			expr = Not(expr);
+		return Iff(Prime(varDecl.getRef()), expr);
 	}
 
 }

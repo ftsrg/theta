@@ -1,77 +1,76 @@
 package hu.bme.mit.inf.ttmc.formalism.tests;
 
+import static com.google.common.collect.ImmutableSet.of;
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.And;
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Eq;
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.False;
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Imply;
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Int;
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Not;
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Sub;
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.True;
+import static hu.bme.mit.inf.ttmc.core.type.impl.Types.Bool;
+import static hu.bme.mit.inf.ttmc.core.type.impl.Types.Int;
+import static hu.bme.mit.inf.ttmc.core.type.impl.Types.Rat;
+import static hu.bme.mit.inf.ttmc.formalism.common.decl.impl.Decls2.Var;
+import static org.junit.Assert.assertTrue;
+
 import java.util.HashSet;
 import java.util.Set;
 
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.google.common.collect.ImmutableSet;
-
-import hu.bme.mit.inf.ttmc.constraint.ConstraintManagerImpl;
-import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
-import hu.bme.mit.inf.ttmc.constraint.factory.ExprFactory;
-import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
-import hu.bme.mit.inf.ttmc.constraint.type.IntType;
-import hu.bme.mit.inf.ttmc.constraint.type.RatType;
-import hu.bme.mit.inf.ttmc.constraint.type.Type;
+import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.type.BoolType;
+import hu.bme.mit.inf.ttmc.core.type.IntType;
+import hu.bme.mit.inf.ttmc.core.type.RatType;
+import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
-import hu.bme.mit.inf.ttmc.formalism.common.factory.VarDeclFactory;
-import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
-import hu.bme.mit.inf.ttmc.formalism.sts.impl.STSManagerImpl;
-import hu.bme.mit.inf.ttmc.formalism.utils.impl.FormalismUtils;
+import hu.bme.mit.inf.ttmc.formalism.utils.FormalismUtils;
 
 public class VarCollectorVisitorTests {
-	
-	STSManager manager;
-	VarDeclFactory df;
-	ExprFactory ef;
 
-	VarDecl<BoolType> a;
-	VarDecl<IntType> b;
-	VarDecl<RatType> c;
-	VarDecl<BoolType> d;
-	VarDecl<IntType> e;
-	
+	VarDecl<BoolType> va;
+	VarDecl<IntType> vb;
+	VarDecl<RatType> vc;
+	VarDecl<BoolType> vd;
+	VarDecl<IntType> ve;
+
+	Expr<BoolType> a;
+	Expr<IntType> b;
+	Expr<RatType> c;
+	Expr<BoolType> d;
+	Expr<IntType> e;
+
 	@Before
 	public void before() {
-		manager = new STSManagerImpl(new ConstraintManagerImpl());
-		ef = manager.getExprFactory();
-		df = manager.getDeclFactory();
+		va = Var("a", Bool());
+		vb = Var("b", Int());
+		vc = Var("c", Rat());
+		vd = Var("d", Bool());
+		ve = Var("e", Int());
 
-		a = df.Var("A", manager.getTypeFactory().Bool());
-		b = df.Var("B", manager.getTypeFactory().Int());
-		c = df.Var("C", manager.getTypeFactory().Rat());
-		d = df.Var("D", manager.getTypeFactory().Bool());
-		e = df.Var("E", manager.getTypeFactory().Int());
+		a = va.getRef();
+		b = vb.getRef();
+		c = vc.getRef();
+		d = vd.getRef();
+		e = ve.getRef();
 	}
 
-	@SuppressWarnings("serial")
 	@Test
 	public void test() {
-		Assert.assertTrue(checkExpr(
-				ef.And(ImmutableSet.of(ef.True(), ef.False(), ef.Eq(ef.Int(1), ef.Int(2)))),
-				new HashSet<VarDecl<? extends Type>>() {{}}));
+		assertTrue(checkExpr(And(True(), False(), Eq(Int(1), Int(2))), of()));
 
-		Assert.assertTrue(checkExpr(
-				ef.And(ImmutableSet.of(a.getRef(), ef.Not(d.getRef()))),
-				new HashSet<VarDecl<? extends Type>>() {{add(a); add(d);}}));
-		
-		Assert.assertTrue(checkExpr(
-				ef.And(ImmutableSet.of(ef.Imply(a.getRef(), d.getRef()), ef.Eq(c.getRef(), ef.Sub(b.getRef(), e.getRef())))),
-				new HashSet<VarDecl<? extends Type>>() {{add(a); add(b); add(c); add(d); add(e);}}));
+		assertTrue(checkExpr(And(a, Not(d)), of(va, vd)));
+
+		assertTrue(checkExpr(And(Imply(a, d), Eq(c, Sub(b, e))), of(va, vb, vc, vd, ve)));
 	}
-	
-	private boolean checkExpr(Expr<? extends Type> expr, Set<VarDecl<? extends Type>> expectedVars) {
-		Set<VarDecl<? extends Type>> vars = new HashSet<>();
+
+	private boolean checkExpr(final Expr<? extends Type> expr, final Set<VarDecl<? extends Type>> expectedVars) {
+		final Set<VarDecl<? extends Type>> vars = new HashSet<>();
 		FormalismUtils.collectVars(expr, vars);
-		return setContentEquals(vars, expectedVars);
+		return vars.equals(expectedVars);
 	}
-	
-	private <T> boolean setContentEquals(Set<T> set1, Set<T> set2) {
-		if (set1.size() != set2.size()) return false;
-		for (T item : set1) if (!set2.contains(item)) return false;
-		return true;
-	}
+
 }

@@ -1,19 +1,17 @@
 package hu.bme.mit.inf.ttmc.program.ui.transform.impl
 
-import hu.bme.mit.inf.ttmc.constraint.decl.Decl
-import hu.bme.mit.inf.ttmc.constraint.expr.Expr
 import hu.bme.mit.inf.ttmc.constraint.model.Declaration
 import hu.bme.mit.inf.ttmc.constraint.model.Expression
 import hu.bme.mit.inf.ttmc.constraint.model.ReferenceExpression
-import hu.bme.mit.inf.ttmc.constraint.type.BoolType
-import hu.bme.mit.inf.ttmc.constraint.type.Type
 import hu.bme.mit.inf.ttmc.constraint.ui.transform.DeclTransformator
 import hu.bme.mit.inf.ttmc.constraint.ui.transform.ExprTransformator
-import hu.bme.mit.inf.ttmc.constraint.utils.impl.ExprUtils
+import hu.bme.mit.inf.ttmc.core.decl.Decl
+import hu.bme.mit.inf.ttmc.core.expr.Expr
+import hu.bme.mit.inf.ttmc.core.type.BoolType
+import hu.bme.mit.inf.ttmc.core.type.Type
+import hu.bme.mit.inf.ttmc.core.utils.impl.ExprUtils
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl
-import hu.bme.mit.inf.ttmc.formalism.common.factory.StmtFactory
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt
-import hu.bme.mit.inf.ttmc.formalism.utils.impl.StmtUtils
 import hu.bme.mit.inf.ttmc.program.model.AssertStatement
 import hu.bme.mit.inf.ttmc.program.model.AssignmentStatement
 import hu.bme.mit.inf.ttmc.program.model.AssumeStatement
@@ -30,18 +28,18 @@ import hu.bme.mit.inf.ttmc.program.ui.transform.StmtTransformator
 
 import static com.google.common.base.Preconditions.checkArgument
 
+import static hu.bme.mit.inf.ttmc.formalism.common.stmt.impl.Stmts.*;
+import hu.bme.mit.inf.ttmc.formalism.utils.StmtUtils
+
 class ProgramStmtTransformator implements StmtTransformator {
 
 	private val ProgramTransformationManager manager
-	private val extension StmtFactory stmtFactory;
 	
 	private volatile DeclTransformator dt;
 	private volatile ExprTransformator et;
 
-	new(ProgramTransformationManager manager, StmtFactory stmtFactory) {
+	new(ProgramTransformationManager manager) {
 		this.manager = manager
-		this.stmtFactory = stmtFactory
-
 	}
 	
 	////////
@@ -120,7 +118,7 @@ class ProgramStmtTransformator implements StmtTransformator {
 		if (subStmts.size == 1) {
 			subStmts.get(0)
 		} else {
-			Block(subStmts.map[StmtUtils::getSubStmts(it)].flatten)
+			Block(subStmts.map[StmtUtils::getSubStmts(it)].flatten.toList)
 		}
 	}
 

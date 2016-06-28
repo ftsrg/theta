@@ -1,7 +1,5 @@
 package hu.bme.mit.inf.ttmc.constraint.ui.transform.impl
 
-import hu.bme.mit.inf.ttmc.constraint.expr.Expr
-import hu.bme.mit.inf.ttmc.constraint.factory.ExprFactory
 import hu.bme.mit.inf.ttmc.constraint.model.AddExpression
 import hu.bme.mit.inf.ttmc.constraint.model.AndExpression
 import hu.bme.mit.inf.ttmc.constraint.model.ArrayAccessExpression
@@ -11,8 +9,11 @@ import hu.bme.mit.inf.ttmc.constraint.model.DivExpression
 import hu.bme.mit.inf.ttmc.constraint.model.DivideExpression
 import hu.bme.mit.inf.ttmc.constraint.model.EqualExpression
 import hu.bme.mit.inf.ttmc.constraint.model.EqualityExpression
+import hu.bme.mit.inf.ttmc.constraint.model.ExistsExpression
 import hu.bme.mit.inf.ttmc.constraint.model.Expression
 import hu.bme.mit.inf.ttmc.constraint.model.FalseExpression
+import hu.bme.mit.inf.ttmc.constraint.model.ForallExpression
+import hu.bme.mit.inf.ttmc.constraint.model.FunctionAccessExpression
 import hu.bme.mit.inf.ttmc.constraint.model.GreaterEqualExpression
 import hu.bme.mit.inf.ttmc.constraint.model.GreaterExpression
 import hu.bme.mit.inf.ttmc.constraint.model.IfThenElseExpression
@@ -30,28 +31,32 @@ import hu.bme.mit.inf.ttmc.constraint.model.ReferenceExpression
 import hu.bme.mit.inf.ttmc.constraint.model.SubtractExpression
 import hu.bme.mit.inf.ttmc.constraint.model.TrueExpression
 import hu.bme.mit.inf.ttmc.constraint.model.UnaryMinusExpression
-import hu.bme.mit.inf.ttmc.constraint.type.ArrayType
-import hu.bme.mit.inf.ttmc.constraint.type.BoolType
-import hu.bme.mit.inf.ttmc.constraint.type.IntType
-import hu.bme.mit.inf.ttmc.constraint.type.RatType
-import hu.bme.mit.inf.ttmc.constraint.type.Type
-import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderAdd
-import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderMul
-import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderNeg
-import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderSub
-import hu.bme.mit.inf.ttmc.constraint.utils.impl.ExprUtils
+import hu.bme.mit.inf.ttmc.constraint.ui.transform.DeclTransformator
 import hu.bme.mit.inf.ttmc.constraint.ui.transform.ExprTransformator
 import hu.bme.mit.inf.ttmc.constraint.ui.transform.TransformationManager
-import hu.bme.mit.inf.ttmc.constraint.ui.transform.DeclTransformator
+import hu.bme.mit.inf.ttmc.core.decl.ParamDecl
+import hu.bme.mit.inf.ttmc.core.expr.Expr
+import hu.bme.mit.inf.ttmc.core.type.ArrayType
+import hu.bme.mit.inf.ttmc.core.type.BoolType
+import hu.bme.mit.inf.ttmc.core.type.FuncType
+import hu.bme.mit.inf.ttmc.core.type.IntType
+import hu.bme.mit.inf.ttmc.core.type.RatType
+import hu.bme.mit.inf.ttmc.core.type.Type
+import hu.bme.mit.inf.ttmc.core.type.closure.ClosedUnderAdd
+import hu.bme.mit.inf.ttmc.core.type.closure.ClosedUnderMul
+import hu.bme.mit.inf.ttmc.core.type.closure.ClosedUnderNeg
+import hu.bme.mit.inf.ttmc.core.type.closure.ClosedUnderSub
+import hu.bme.mit.inf.ttmc.core.utils.impl.ExprUtils
+import java.util.List
+
+import static com.google.common.base.Preconditions.checkArgument
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.*
 
 public class ConstraintExprTransformator implements ExprTransformator {
-
-	private val extension ExprFactory exprFactory
 	
 	private val extension DeclTransformator df
 	
-	public new(TransformationManager manager, ExprFactory exprFactory) {
-		this.exprFactory = exprFactory
+	public new(TransformationManager manager) {
 		df = manager.declTransformator
 	}
 		
@@ -126,7 +131,7 @@ public class ConstraintExprTransformator implements ExprTransformator {
 	protected def dispatch Expr<? extends Type> toExpr(ModExpression expression) {
 		val leftOp = ExprUtils.cast(expression.leftOperand.toExpr, IntType)
 		val rightOp = ExprUtils.cast(expression.rightOperand.toExpr, IntType)
-		IntDiv(leftOp, rightOp)
+		Mod(leftOp, rightOp)
 	}
 
 	protected def dispatch Expr<? extends Type> toExpr(EqualityExpression expression) {
@@ -192,13 +197,43 @@ public class ConstraintExprTransformator implements ExprTransformator {
 		Or(ops)
 	}
 
+	protected def dispatch Expr<? extends Type> toExpr(ForallExpression expression) {
+		val params = expression.parameterDeclarations.map[transform as ParamDecl<?>]
+		val op = ExprUtils.cast(expression.operand.toExpr, BoolType)
+		Forall(params, op)
+	}
+	
+	protected def dispatch Expr<? extends Type> toExpr(ExistsExpression expression) {
+		val params = expression.parameterDeclarations.map[transform as ParamDecl<?>]
+		val op = ExprUtils.cast(expression.operand.toExpr, BoolType)
+		Exists(params, op)
+	}
+
+	protected def dispatch Expr<? extends Type> toExpr(FunctionAccessExpression expression) {
+		checkArgument(expression.parameters.size > 0)
+		val func = expression.operand.toExpr
+		val params = expression.parameters.map[toExpr]
+		toFuncAppExpr(func, params)
+	}
+	
+	private def Expr<? extends Type> toFuncAppExpr(Expr<? extends Type> op, List<Expr<? extends Type>> params) {
+		if (params.empty) {
+			op
+		} else {
+			val func = ExprUtils.cast(op, FuncType) as Expr<? extends FuncType<Type, Type>>
+			val head = ExprUtils.cast(params.head, func.type.paramType.class)
+			val tail = params.tail.toList
+			toFuncAppExpr(App(func, head), tail)
+		}
+	}
+
 	protected def dispatch Expr<? extends Type> toExpr(ArrayAccessExpression expression) {
+		checkArgument(expression.parameters.size > 0)
+		
 		val array = ExprUtils.cast(expression.operand.toExpr, ArrayType) as Expr<ArrayType<Type, Type>>
 
 		val parameters = expression.parameters
-		if (parameters.size == 0) {
-			throw new UnsupportedOperationException
-		} else if (parameters.size == 1) {
+		if (parameters.size == 1) {
 			val parameter = expression.parameters.get(0)
 			val index = parameter.toExpr
 			Read(array, index)

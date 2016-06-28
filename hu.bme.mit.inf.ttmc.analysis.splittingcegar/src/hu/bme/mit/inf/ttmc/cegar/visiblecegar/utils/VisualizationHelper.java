@@ -21,7 +21,7 @@ public class VisualizationHelper {
 		
 		// Loop through explored states
 		for (VisibleAbstractState vas0 : exploredStates) {
-			Node n = new Node("s_" + vas0.createId(), vas0.getExpression().toString(), "",
+			Node n = new Node("s_" + vas0.createId(), vas0.getValuation().toString(), "",
 					vas0.isPartOfCounterexample() ? "red" : "", "", vas0.isInitial());
 			g.addNode(n);
 			for (VisibleAbstractState vas1 : vas0.getSuccessors()) n.addSuccessor("s_" + vas1.createId(), "");

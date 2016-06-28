@@ -5,8 +5,6 @@ import java.io.IOException;
 
 import org.junit.Test;
 
-import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
-import hu.bme.mit.inf.ttmc.constraint.ConstraintManagerImpl;
 import hu.bme.mit.inf.ttmc.constraint.model.ConstraintSpecification;
 import hu.bme.mit.inf.ttmc.constraint.ui.ConstraintModel;
 import hu.bme.mit.inf.ttmc.constraint.ui.ConstraintModelCreator;
@@ -19,9 +17,8 @@ public class ConstraintModelTests {
 		final File file = new File("instances/simple.constraint");
 		final String filePath = file.getAbsolutePath();
 		final ConstraintSpecification specification = ConstraintModelLoader.getInstance().load(filePath);
-		final ConstraintManager manager = new ConstraintManagerImpl();
-		final ConstraintModel model = ConstraintModelCreator.create(manager, specification);
-		
+		final ConstraintModel model = ConstraintModelCreator.create(specification);
+
 		System.out.println(model.getConstDecls());
 		System.out.println(model.getConstraints());
 	}

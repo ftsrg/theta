@@ -6,6 +6,8 @@ import java.util.Set;
 import java.util.Stack;
 
 import hu.bme.mit.inf.ttmc.cegar.common.data.AbstractResult;
+import hu.bme.mit.inf.ttmc.cegar.common.data.SolverWrapper;
+import hu.bme.mit.inf.ttmc.cegar.common.data.StopHandler;
 import hu.bme.mit.inf.ttmc.cegar.common.steps.AbstractCEGARStep;
 import hu.bme.mit.inf.ttmc.cegar.common.steps.Checker;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.SolverHelper;
@@ -14,9 +16,10 @@ import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.data.InterpolatedAbstractSta
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.data.InterpolatedAbstractSystem;
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.utils.VisualizationHelper;
 import hu.bme.mit.inf.ttmc.common.logging.Logger;
-import hu.bme.mit.inf.ttmc.constraint.expr.NotExpr;
-import hu.bme.mit.inf.ttmc.constraint.solver.Solver;
-import hu.bme.mit.inf.ttmc.formalism.sts.STSUnroller;
+import hu.bme.mit.inf.ttmc.core.expr.NotExpr;
+import hu.bme.mit.inf.ttmc.core.expr.impl.Exprs;
+import hu.bme.mit.inf.ttmc.formalism.sts.STS;
+import hu.bme.mit.inf.ttmc.solver.Solver;
 
 public class InterpolatingChecker extends AbstractCEGARStep implements Checker<InterpolatedAbstractSystem, InterpolatedAbstractState> {
 
@@ -27,8 +30,9 @@ public class InterpolatingChecker extends AbstractCEGARStep implements Checker<I
 	private final Stack<InterpolatedAbstractState> stateStack;
 	private final Stack<Integer> successorStack;
 
-	public InterpolatingChecker(final Logger logger, final Visualizer visualizer, final boolean isIncremental) {
-		super(logger, visualizer);
+	public InterpolatingChecker(final SolverWrapper solvers, final StopHandler stopHandler, final Logger logger, final Visualizer visualizer,
+			final boolean isIncremental) {
+		super(solvers, stopHandler, logger, visualizer);
 		this.isIncremental = isIncremental;
 		exploredStates = new HashSet<>();
 		stateStack = new Stack<>();
@@ -38,14 +42,15 @@ public class InterpolatingChecker extends AbstractCEGARStep implements Checker<I
 
 	@Override
 	public AbstractResult<InterpolatedAbstractState> check(final InterpolatedAbstractSystem system) {
-		final Solver solver = system.getManager().getSolverFactory().createSolver(true, false);
 		// Get the index of the previously splitted state, or -1 at first call
 		final int splitIndex = system.getPreviousSplitIndex();
 
-		final NotExpr negProp = system.getManager().getExprFactory().Not(system.getSTS().getProp());
+		final NotExpr negProp = Exprs.Not(system.getSTS().getProp());
 
-		final STSUnroller unroller = system.getUnroller();
-		Stack<InterpolatedAbstractState> counterExample = null; // Store the counterexample (if found)
+		final STS sts = system.getSTS();
+		Stack<InterpolatedAbstractState> counterExample = null; // Store the
+																// counterexample
+																// (if found)
 
 		final int stateSpaceInitialSize = exploredStates.size();
 
@@ -56,9 +61,12 @@ public class InterpolatingChecker extends AbstractCEGARStep implements Checker<I
 				reset(); // No split state before the first iteration
 			if (splitIndex >= 0) {
 				assert (actualInit > 0);
-				--actualInit; // The actual initial state should be moved back by one
-								// since the previous search is continued in this case
-								// Remove states from the explored set (only those that are later than the split one)
+				--actualInit; // The actual initial state should be moved back
+								// by one
+								// since the previous search is continued in
+								// this case
+								// Remove states from the explored set (only
+								// those that are later than the split one)
 				assert (splitIndex < stateStack.size());
 				final int removeAfter = stateStack.get(splitIndex).getExploredIndex();
 				for (final Iterator<InterpolatedAbstractState> it = exploredStates.iterator(); it.hasNext();) {
@@ -67,13 +75,16 @@ public class InterpolatingChecker extends AbstractCEGARStep implements Checker<I
 						it.remove();
 				}
 
-				// Stacks also have to be cleared above (including) the split state.
+				// Stacks also have to be cleared above (including) the split
+				// state.
 				while (stateStack.size() > splitIndex) {
 					stateStack.pop();
 					successorStack.pop();
 				}
-				// The current successor for the top state must be moved back, since the split state was
-				// removed from its successors (if any state still remains on the stack)
+				// The current successor for the top state must be moved back,
+				// since the split state was
+				// removed from its successors (if any state still remains on
+				// the stack)
 				if (splitIndex > 0)
 					successorStack.push(successorStack.pop() - 1);
 				logger.writeln("Continuing search with a stack of " + stateStack.size(), 5);
@@ -82,18 +93,23 @@ public class InterpolatingChecker extends AbstractCEGARStep implements Checker<I
 
 		final int stateSpaceSizeAfterClear = exploredStates.size();
 
-		solver.push();
-		solver.add(unroller.inv(0)); // Assert invariants
-		solver.add(unroller.unroll(negProp, 0)); // Assert the negate of the specification
+		final Solver solver = solvers.getSolver();
 
-		// Flag for storing whether the actual search is a continuation from a previous
-		// model checking round. It is true for the first search from an initial state,
+		solver.push();
+		solver.add(sts.unrollInv(0)); // Assert invariants
+		solver.add(sts.unroll(negProp, 0)); // Assert the negate of the
+											// specification
+
+		// Flag for storing whether the actual search is a continuation from a
+		// previous
+		// model checking round. It is true for the first search from an initial
+		// state,
 		// but false after
 		boolean isContinuation = true;
 
 		// Loop through each initial state and do a search
-		while (actualInit < system.getAbstractKripkeStructure().getInitialStates().size()) {
-			if (isStopped)
+		while (actualInit < system.getAbstractKripkeStructure().getInitialStates().size() && counterExample == null) {
+			if (stopHandler.isStopped())
 				return null;
 			final InterpolatedAbstractState init = system.getAbstractKripkeStructure().getInitialState(actualInit);
 			++actualInit;
@@ -116,7 +132,7 @@ public class InterpolatingChecker extends AbstractCEGARStep implements Checker<I
 					stateStack.push(init);
 					successorStack.push(-1);
 					// Check if the specification holds
-					if (checkState(init, solver, unroller)) {
+					if (checkState(init, solver, sts)) {
 						logger.writeln("Counterexample reached!", 5, 1);
 						counterExample = stateStack;
 					}
@@ -125,7 +141,7 @@ public class InterpolatingChecker extends AbstractCEGARStep implements Checker<I
 			isContinuation = false;
 
 			while (!stateStack.isEmpty() && counterExample == null) {
-				if (isStopped)
+				if (stopHandler.isStopped())
 					return null;
 				// Get the actual state
 				final InterpolatedAbstractState actual = stateStack.peek();
@@ -143,12 +159,13 @@ public class InterpolatingChecker extends AbstractCEGARStep implements Checker<I
 						stateStack.push(next);
 						successorStack.push(-1);
 						// Check if the specification holds
-						if (checkState(next, solver, unroller)) {
+						if (checkState(next, solver, sts)) {
 							logger.writeln("Counterexample reached!", 5, 1);
 							counterExample = stateStack;
 						}
 					}
-				} else { // If the actual state has no more successors, then backtrack
+				} else { // If the actual state has no more successors, then
+								// backtrack
 					stateStack.pop();
 					successorStack.pop();
 				}
@@ -168,7 +185,8 @@ public class InterpolatingChecker extends AbstractCEGARStep implements Checker<I
 			// Mark states on the stack and print counterexample
 			for (final InterpolatedAbstractState as : counterExample) {
 				as.setPartOfCounterexample(true);
-				logger.writeln(as, 4, 1); // Print each state in the counterexample
+				logger.writeln(as, 4, 1); // Print each state in the
+											// counterexample
 			}
 			VisualizationHelper.visualizeAbstractKripkeStructure(system, exploredStates, visualizer, 4);
 		} else {
@@ -176,15 +194,16 @@ public class InterpolatingChecker extends AbstractCEGARStep implements Checker<I
 			VisualizationHelper.visualizeAbstractKripkeStructure(system, exploredStates, visualizer, 6);
 		}
 
-		// TODO: optimization: clear data structures if not incremental. Note that the returned counterexample is a reference to the state stack
+		// TODO: optimization: clear data structures if not incremental. Note
+		// that the returned counterexample is a reference to the state stack
 
 		return counterExample == null ? new AbstractResult<InterpolatedAbstractState>(null, exploredStates, exploredStates.size() - stateSpaceSizeAfterClear)
 				: new AbstractResult<InterpolatedAbstractState>(counterExample, null, exploredStates.size() - stateSpaceSizeAfterClear);
 	}
 
-	private boolean checkState(final InterpolatedAbstractState s, final Solver solver, final STSUnroller unroller) {
+	private boolean checkState(final InterpolatedAbstractState s, final Solver solver, final STS sts) {
 		solver.push();
-		SolverHelper.unrollAndAssert(solver, s.getLabels(), unroller, 0);
+		SolverHelper.unrollAndAssert(solver, s.getLabels(), sts, 0);
 		final boolean ret = SolverHelper.checkSat(solver);
 		solver.pop();
 		return ret;

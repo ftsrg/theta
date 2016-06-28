@@ -10,8 +10,8 @@ import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.Visualizer;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.graph.ClusterNode;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.graph.Graph;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.graph.Node;
-import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
-import hu.bme.mit.inf.ttmc.constraint.type.Type;
+import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.type.Type;
 
 /**
  * Helper class for converting a (clustered) abstract Kripke structure into a

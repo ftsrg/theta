@@ -1,25 +1,23 @@
 package hu.bme.mit.inf.ttmc.constraint.ui.transform.impl
 
-import hu.bme.mit.inf.ttmc.constraint.type.Type
-import hu.bme.mit.inf.ttmc.constraint.model.TypeReference
+import hu.bme.mit.inf.ttmc.constraint.model.ArrayTypeDefinition
 import hu.bme.mit.inf.ttmc.constraint.model.BooleanTypeDefinition
+import hu.bme.mit.inf.ttmc.constraint.model.FunctionTypeDefinition
 import hu.bme.mit.inf.ttmc.constraint.model.IntegerTypeDefinition
 import hu.bme.mit.inf.ttmc.constraint.model.RealTypeDefinition
-import hu.bme.mit.inf.ttmc.constraint.model.FunctionTypeDefinition
-import hu.bme.mit.inf.ttmc.constraint.model.ArrayTypeDefinition
-import hu.bme.mit.inf.ttmc.constraint.factory.TypeFactory
-import hu.bme.mit.inf.ttmc.constraint.ui.transform.TypeTransformator
+import hu.bme.mit.inf.ttmc.constraint.model.TypeReference
 import hu.bme.mit.inf.ttmc.constraint.ui.transform.TransformationManager
+import hu.bme.mit.inf.ttmc.constraint.ui.transform.TypeTransformator
+import hu.bme.mit.inf.ttmc.core.type.Type
+
+import static hu.bme.mit.inf.ttmc.core.type.impl.Types.*;
 
 public class ConstraintTypeTransformator implements TypeTransformator {
 
 	private val TransformationManager manager
 	
-	private val extension TypeFactory typeFactory
-
-	public new(TransformationManager manager, TypeFactory typeFactory) {
+	public new(TransformationManager manager) {
 		this.manager = manager
-		this.typeFactory = typeFactory
 	}
 	
 	///////

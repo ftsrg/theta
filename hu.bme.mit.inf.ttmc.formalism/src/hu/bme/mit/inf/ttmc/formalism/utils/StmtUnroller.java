@@ -1,163 +1,110 @@
 package hu.bme.mit.inf.ttmc.formalism.utils;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-import hu.bme.mit.inf.ttmc.common.Tuple2;
-import hu.bme.mit.inf.ttmc.common.Tuples;
-import hu.bme.mit.inf.ttmc.constraint.decl.ConstDecl;
-import hu.bme.mit.inf.ttmc.constraint.expr.ConstRefExpr;
-import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
-import hu.bme.mit.inf.ttmc.constraint.factory.DeclFactory;
-import hu.bme.mit.inf.ttmc.constraint.factory.ExprFactory;
-import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
-import hu.bme.mit.inf.ttmc.constraint.type.Type;
-import hu.bme.mit.inf.ttmc.constraint.utils.impl.ExprRewriterVisitor;
+import com.google.common.collect.ImmutableList;
+
+import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.expr.impl.Exprs;
+import hu.bme.mit.inf.ttmc.core.type.BoolType;
+import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
-import hu.bme.mit.inf.ttmc.formalism.common.expr.PrimedExpr;
-import hu.bme.mit.inf.ttmc.formalism.common.expr.ProcCallExpr;
-import hu.bme.mit.inf.ttmc.formalism.common.expr.ProcRefExpr;
-import hu.bme.mit.inf.ttmc.formalism.common.expr.VarRefExpr;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.AssignStmt;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.AssumeStmt;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.HavocStmt;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
-import hu.bme.mit.inf.ttmc.formalism.utils.impl.IndexMap;
-import hu.bme.mit.inf.ttmc.formalism.utils.impl.VarMap;
 
 public class StmtUnroller {
 
-	private final VarMap varMap;
-	private final StmtToExprVisitor visitor;
+	private static final StmtToExprVisitor VISITOR;
 
-	public StmtUnroller(final ExprFactory ef, final DeclFactory df) {
-		varMap = new VarMap(df);
-		visitor = new StmtToExprVisitor(ef);
+	static {
+		VISITOR = new StmtToExprVisitor();
 	}
 
-	public Collection<Expr<? extends BoolType>> pathExprs(Stmt... stmts) {
-		return pathExprs(Arrays.asList(stmts));
+	private StmtUnroller() {
 	}
 
-	public Collection<Expr<? extends BoolType>> pathExprs(final List<Stmt> stmts) {
-		final List<Expr<? extends BoolType>> result = new ArrayList<>();
-		final IndexMap indexMap = new IndexMap();
+	public static StmtToExprResult transform(final Stmt stmt, final VarIndexes indexes) {
+		return stmt.accept(VISITOR, indexes);
+	}
 
-		for (Stmt stmt : stmts) {
-			final Expr<? extends BoolType> expr = pathExpr(stmt, indexMap);
-			if (expr != null) {
-				result.add(expr);
-			}
+	public static StmtToExprResult transform(final List<? extends Stmt> stmts, final VarIndexes indexes) {
+		final Collection<Expr<? extends BoolType>> resultExprs = new ArrayList<>();
+		VarIndexes resultIndexes = indexes;
+
+		for (final Stmt stmt : stmts) {
+			final StmtToExprResult subResult = transform(stmt, resultIndexes);
+			resultExprs.addAll(subResult.exprs);
+			resultIndexes = subResult.indexes;
 		}
 
-		return result;
+		return StmtToExprResult.of(resultExprs, resultIndexes);
 	}
 
-	private Expr<? extends BoolType> pathExpr(Stmt stmt, IndexMap indexMap) {
-		return stmt.accept(visitor, Tuples.of(varMap, indexMap));
+	////////
+
+	public static class StmtToExprResult {
+		final Collection<Expr<? extends BoolType>> exprs;
+		final VarIndexes indexes;
+
+		private StmtToExprResult(final Collection<? extends Expr<? extends BoolType>> exprs, final VarIndexes indexes) {
+			this.exprs = ImmutableList.copyOf(exprs);
+			this.indexes = indexes;
+		}
+
+		private static StmtToExprResult of(final Collection<? extends Expr<? extends BoolType>> exprs,
+				final VarIndexes indexes) {
+			return new StmtToExprResult(exprs, indexes);
+		}
+
+		public Collection<? extends Expr<? extends BoolType>> getExprs() {
+			return exprs;
+		}
+
+		public VarIndexes getIndexes() {
+			return indexes;
+		}
 	}
 
-	////
+	////////
 
-	private static class StmtToExprVisitor extends FailStmtVisitor<Tuple2<VarMap, IndexMap>, Expr<? extends BoolType>> {
+	private static class StmtToExprVisitor extends FailStmtVisitor<VarIndexes, StmtToExprResult> {
 
-		private final ExprFactory ef;
-		private final VarToConstVisitor visitor;
-
-		private StmtToExprVisitor(final ExprFactory ef) {
-			this.ef = ef;
-			visitor = new VarToConstVisitor();
+		private StmtToExprVisitor() {
 		}
 
 		////////
 
 		@Override
-		public Expr<? extends BoolType> visit(AssumeStmt stmt, Tuple2<VarMap, IndexMap> param) {
-			final VarMap varMap = param._1();
-			final IndexMap indexMap = param._2();
-
+		public StmtToExprResult visit(final AssumeStmt stmt, final VarIndexes indexes) {
 			final Expr<? extends BoolType> cond = stmt.getCond();
-			final Expr<?> expr = cond.accept(visitor, Tuples.of(varMap, indexMap));
-			@SuppressWarnings("unchecked")
-			final Expr<? extends BoolType> result = (Expr<? extends BoolType>) expr;
-
-			return result;
+			final Expr<? extends BoolType> expr = VarToConstRewriter.rewrite(cond, indexes);
+			return StmtToExprResult.of(ImmutableList.of(expr), indexes);
 		}
 
 		@Override
-		public <DeclType extends Type, ExprType extends DeclType> Expr<? extends BoolType> visit(
-				AssignStmt<DeclType, ExprType> stmt, Tuple2<VarMap, IndexMap> param) {
-
-			final VarMap varMap = param._1();
-			final IndexMap indexMap = param._2();
-
-			final Expr<?> expr = stmt.getExpr();
-			final Expr<?> rhs = expr.accept(visitor, Tuples.of(varMap, indexMap));
-			
+		public <DeclType extends Type> StmtToExprResult visit(final HavocStmt<DeclType> stmt,
+				final VarIndexes indexes) {
 			final VarDecl<?> varDecl = stmt.getVarDecl();
-			// side effect on indexMap
-			indexMap.inc(varDecl);
-			final int index = indexMap.getIndex(varDecl);
-			final ConstDecl<?> constDecl = varMap.getConstDecl(varDecl, index);
-			final Expr<?> lhs = constDecl.getRef();
-			
-			final Expr<? extends BoolType> result = ef.Eq(lhs, rhs);
-			return result;
+			final VarIndexes newIndexMap = indexes.inc(varDecl);
+			return StmtToExprResult.of(ImmutableList.of(), newIndexMap);
 		}
 
 		@Override
-		public <DeclType extends Type> Expr<? extends BoolType> visit(HavocStmt<DeclType> stmt,
-				Tuple2<VarMap, IndexMap> param) {
-//			final VarMap varMap = param._1();
-			final IndexMap indexMap = param._2();
-
+		public <DeclType extends Type, ExprType extends DeclType> StmtToExprResult visit(
+				final AssignStmt<DeclType, ExprType> stmt, final VarIndexes indexes) {
 			final VarDecl<?> varDecl = stmt.getVarDecl();
-			// side effect on indexMap
-			indexMap.inc(varDecl);
+			final VarIndexes newIndexes = indexes.inc(varDecl);
+			final Expr<?> rhs = VarToConstRewriter.rewrite(stmt.getExpr(), indexes);
+			final Expr<?> lhs = VarToConstRewriter.rewrite(varDecl.getRef(), newIndexes);
 
-			return null;
+			final Expr<? extends BoolType> expr = Exprs.Eq(lhs, rhs);
+			return StmtToExprResult.of(ImmutableList.of(expr), newIndexes);
 		}
 
-		////////
-
-		private static class VarToConstVisitor extends ExprRewriterVisitor<Tuple2<VarMap, IndexMap>>
-				implements ProgExprVisitor<Tuple2<VarMap, IndexMap>, Expr<?>> {
-
-			@Override
-			public <ExprType extends Type> Expr<ExprType> visit(PrimedExpr<ExprType> expr,
-					Tuple2<VarMap, IndexMap> param) {
-				throw new UnsupportedOperationException();
-			}
-
-			@Override
-			public <DeclType extends Type> ConstRefExpr<DeclType> visit(VarRefExpr<DeclType> expr,
-					Tuple2<VarMap, IndexMap> param) {
-				final VarMap varMap = param._1();
-				final IndexMap indexMap = param._2();
-
-				final VarDecl<DeclType> varDecl = expr.getDecl();
-				final int index = indexMap.getIndex(varDecl);
-
-				final ConstDecl<DeclType> constDecl = varMap.getConstDecl(varDecl, index);
-				final ConstRefExpr<DeclType> constRef = constDecl.getRef();
-
-				return constRef;
-			}
-
-			@Override
-			public <ReturnType extends Type> Expr<?> visit(ProcRefExpr<ReturnType> expr,
-					Tuple2<VarMap, IndexMap> param) {
-				throw new UnsupportedOperationException();
-			}
-
-			@Override
-			public <ReturnType extends Type> Expr<?> visit(ProcCallExpr<ReturnType> expr,
-					Tuple2<VarMap, IndexMap> param) {
-				throw new UnsupportedOperationException();
-			}
-		}
 	}
 
 }

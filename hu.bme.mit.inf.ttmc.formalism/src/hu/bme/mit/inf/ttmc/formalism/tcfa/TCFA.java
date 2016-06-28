@@ -1,17 +1,6 @@
 package hu.bme.mit.inf.ttmc.formalism.tcfa;
 
-import java.util.Collection;
+import hu.bme.mit.inf.ttmc.formalism.common.automaton.Automaton;
 
-public interface TCFA {
-
-	public TCFALoc getInitLoc();
-
-	public TCFALoc getFinalLoc();
-
-	public TCFALoc getErrorLoc();
-
-	public Collection<? extends TCFALoc> getLocs();
-
-	public Collection<? extends TCFAEdge> getEdges();
-
+public interface TCFA extends Automaton<TCFALoc, TCFAEdge> {
 }

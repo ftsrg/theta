@@ -7,29 +7,34 @@ import java.util.Optional;
 
 import com.google.common.collect.ImmutableList;
 
-import hu.bme.mit.inf.ttmc.constraint.decl.ParamDecl;
-import hu.bme.mit.inf.ttmc.constraint.type.Type;
+import hu.bme.mit.inf.ttmc.core.decl.ParamDecl;
+import hu.bme.mit.inf.ttmc.core.type.Type;
+import hu.bme.mit.inf.ttmc.core.utils.DeclVisitor;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.ProcDecl;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.ProcRefExpr;
-import hu.bme.mit.inf.ttmc.formalism.common.expr.impl.ProcRefExprImpl;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
 import hu.bme.mit.inf.ttmc.formalism.common.type.ProcType;
 
-public class ProcDeclImpl<ReturnType extends Type> implements ProcDecl<ReturnType> {
+final class ProcDeclImpl<ReturnType extends Type> implements ProcDecl<ReturnType> {
+
+	private static final int HASH_SEED = 4001;
 
 	private final String name;
 	private final List<ParamDecl<? extends Type>> paramDecls;
 	private final ReturnType returnType;
 	private final Optional<Stmt> stmt;
 
-	protected volatile ProcRefExpr<ReturnType> ref;
+	private final ProcRefExpr<ReturnType> ref;
 
-	public ProcDeclImpl(final String name, final List<? extends ParamDecl<? extends Type>> paramDecls,
+	private volatile int hashCode;
+
+	ProcDeclImpl(final String name, final List<? extends ParamDecl<? extends Type>> paramDecls,
 			final ReturnType returnType, final Stmt stmt) {
 		this.name = checkNotNull(name);
 		this.paramDecls = ImmutableList.copyOf(checkNotNull(paramDecls));
 		this.returnType = checkNotNull(returnType);
 		this.stmt = Optional.of(checkNotNull(stmt));
+		ref = new ProcRefExprImpl<>(this);
 	}
 
 	public ProcDeclImpl(final String name, final List<? extends ParamDecl<? extends Type>> paramDecls,
@@ -38,6 +43,7 @@ public class ProcDeclImpl<ReturnType extends Type> implements ProcDecl<ReturnTyp
 		this.paramDecls = ImmutableList.copyOf(checkNotNull(paramDecls));
 		this.returnType = checkNotNull(returnType);
 		this.stmt = Optional.empty();
+		ref = new ProcRefExprImpl<>(this);
 	}
 
 	@Override
@@ -61,18 +67,37 @@ public class ProcDeclImpl<ReturnType extends Type> implements ProcDecl<ReturnTyp
 	}
 
 	@Override
+	public ProcRefExpr<ReturnType> getRef() {
+		return ref;
+	}
+
+	@Override
 	public ProcType<ReturnType> getType() {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public ProcRefExpr<ReturnType> getRef() {
-		if (ref == null) {
-			ref = new ProcRefExprImpl<>(this);
-		}
+	public <P, R> R accept(final DeclVisitor<? super P, ? extends R> visitor, final P param) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+	}
 
-		return ref;
+	@Override
+	public int hashCode() {
+		int result = hashCode;
+		if (result == 0) {
+			result = HASH_SEED;
+			result = 31 * result + getName().hashCode();
+			result = 31 * result + getType().hashCode();
+			hashCode = result;
+		}
+		return result;
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		return this == obj;
 	}
 
 	@Override

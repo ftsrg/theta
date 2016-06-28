@@ -5,72 +5,69 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.google.common.collect.ImmutableSet;
-
-import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
-import hu.bme.mit.inf.ttmc.constraint.expr.AddExpr;
-import hu.bme.mit.inf.ttmc.constraint.expr.AndExpr;
-import hu.bme.mit.inf.ttmc.constraint.expr.ArrayReadExpr;
-import hu.bme.mit.inf.ttmc.constraint.expr.ArrayWriteExpr;
-import hu.bme.mit.inf.ttmc.constraint.expr.ConstRefExpr;
-import hu.bme.mit.inf.ttmc.constraint.expr.EqExpr;
-import hu.bme.mit.inf.ttmc.constraint.expr.ExistsExpr;
-import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
-import hu.bme.mit.inf.ttmc.constraint.expr.FalseExpr;
-import hu.bme.mit.inf.ttmc.constraint.expr.ForallExpr;
-import hu.bme.mit.inf.ttmc.constraint.expr.FuncAppExpr;
-import hu.bme.mit.inf.ttmc.constraint.expr.FuncLitExpr;
-import hu.bme.mit.inf.ttmc.constraint.expr.GeqExpr;
-import hu.bme.mit.inf.ttmc.constraint.expr.GtExpr;
-import hu.bme.mit.inf.ttmc.constraint.expr.IffExpr;
-import hu.bme.mit.inf.ttmc.constraint.expr.ImplyExpr;
-import hu.bme.mit.inf.ttmc.constraint.expr.IntDivExpr;
-import hu.bme.mit.inf.ttmc.constraint.expr.IntLitExpr;
-import hu.bme.mit.inf.ttmc.constraint.expr.IteExpr;
-import hu.bme.mit.inf.ttmc.constraint.expr.LeqExpr;
-import hu.bme.mit.inf.ttmc.constraint.expr.LtExpr;
-import hu.bme.mit.inf.ttmc.constraint.expr.ModExpr;
-import hu.bme.mit.inf.ttmc.constraint.expr.MulExpr;
-import hu.bme.mit.inf.ttmc.constraint.expr.NegExpr;
-import hu.bme.mit.inf.ttmc.constraint.expr.NeqExpr;
-import hu.bme.mit.inf.ttmc.constraint.expr.NotExpr;
-import hu.bme.mit.inf.ttmc.constraint.expr.OrExpr;
-import hu.bme.mit.inf.ttmc.constraint.expr.ParamRefExpr;
-import hu.bme.mit.inf.ttmc.constraint.expr.RatDivExpr;
-import hu.bme.mit.inf.ttmc.constraint.expr.RatLitExpr;
-import hu.bme.mit.inf.ttmc.constraint.expr.RemExpr;
-import hu.bme.mit.inf.ttmc.constraint.expr.SubExpr;
-import hu.bme.mit.inf.ttmc.constraint.expr.TrueExpr;
-import hu.bme.mit.inf.ttmc.constraint.factory.ExprFactory;
-import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
-import hu.bme.mit.inf.ttmc.constraint.type.Type;
-import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderAdd;
-import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderMul;
-import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderNeg;
-import hu.bme.mit.inf.ttmc.constraint.type.closure.ClosedUnderSub;
+import hu.bme.mit.inf.ttmc.core.expr.AddExpr;
+import hu.bme.mit.inf.ttmc.core.expr.AndExpr;
+import hu.bme.mit.inf.ttmc.core.expr.ArrayReadExpr;
+import hu.bme.mit.inf.ttmc.core.expr.ArrayWriteExpr;
+import hu.bme.mit.inf.ttmc.core.expr.ConstRefExpr;
+import hu.bme.mit.inf.ttmc.core.expr.EqExpr;
+import hu.bme.mit.inf.ttmc.core.expr.ExistsExpr;
+import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.expr.FalseExpr;
+import hu.bme.mit.inf.ttmc.core.expr.ForallExpr;
+import hu.bme.mit.inf.ttmc.core.expr.FuncAppExpr;
+import hu.bme.mit.inf.ttmc.core.expr.FuncLitExpr;
+import hu.bme.mit.inf.ttmc.core.expr.GeqExpr;
+import hu.bme.mit.inf.ttmc.core.expr.GtExpr;
+import hu.bme.mit.inf.ttmc.core.expr.IffExpr;
+import hu.bme.mit.inf.ttmc.core.expr.ImplyExpr;
+import hu.bme.mit.inf.ttmc.core.expr.IntDivExpr;
+import hu.bme.mit.inf.ttmc.core.expr.IntLitExpr;
+import hu.bme.mit.inf.ttmc.core.expr.IteExpr;
+import hu.bme.mit.inf.ttmc.core.expr.LeqExpr;
+import hu.bme.mit.inf.ttmc.core.expr.LtExpr;
+import hu.bme.mit.inf.ttmc.core.expr.ModExpr;
+import hu.bme.mit.inf.ttmc.core.expr.MulExpr;
+import hu.bme.mit.inf.ttmc.core.expr.NegExpr;
+import hu.bme.mit.inf.ttmc.core.expr.NeqExpr;
+import hu.bme.mit.inf.ttmc.core.expr.NotExpr;
+import hu.bme.mit.inf.ttmc.core.expr.OrExpr;
+import hu.bme.mit.inf.ttmc.core.expr.ParamRefExpr;
+import hu.bme.mit.inf.ttmc.core.expr.RatDivExpr;
+import hu.bme.mit.inf.ttmc.core.expr.RatLitExpr;
+import hu.bme.mit.inf.ttmc.core.expr.RemExpr;
+import hu.bme.mit.inf.ttmc.core.expr.SubExpr;
+import hu.bme.mit.inf.ttmc.core.expr.TrueExpr;
+import hu.bme.mit.inf.ttmc.core.expr.impl.Exprs;
+import hu.bme.mit.inf.ttmc.core.type.BoolType;
+import hu.bme.mit.inf.ttmc.core.type.Type;
+import hu.bme.mit.inf.ttmc.core.type.closure.ClosedUnderAdd;
+import hu.bme.mit.inf.ttmc.core.type.closure.ClosedUnderMul;
+import hu.bme.mit.inf.ttmc.core.type.closure.ClosedUnderNeg;
+import hu.bme.mit.inf.ttmc.core.type.closure.ClosedUnderSub;
+import hu.bme.mit.inf.ttmc.core.type.impl.Types;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
+import hu.bme.mit.inf.ttmc.formalism.common.decl.impl.Decls2;
+import hu.bme.mit.inf.ttmc.formalism.common.expr.ClockRefExpr;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.PrimedExpr;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.ProcCallExpr;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.ProcRefExpr;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.VarRefExpr;
-import hu.bme.mit.inf.ttmc.formalism.common.factory.VarDeclFactory;
 import hu.bme.mit.inf.ttmc.formalism.utils.FormalismExprVisitor;
 
 public class CNFTransformation {
-	private final String CNFPREFIX = "__CNF";
-	private final ConstraintManager manager;
+	private static final String CNFPREFIX = "__CNF";
 	private final CNFTransformationVisitor cnfTransfVisitor;
 
-	public CNFTransformation(final ConstraintManager manager, final VarDeclFactory varFactory) {
-		this.manager = manager;
-		cnfTransfVisitor = new CNFTransformationVisitor(manager, varFactory);
+	public CNFTransformation() {
+		cnfTransfVisitor = new CNFTransformationVisitor();
 	}
 
 	public Expr<? extends BoolType> transform(final Expr<? extends BoolType> expr) {
 		final Collection<Expr<? extends BoolType>> encoding = new ArrayList<>();
 		final Expr<? extends BoolType> top = expr.accept(cnfTransfVisitor, encoding);
 		encoding.add(top);
-		return manager.getExprFactory().And(encoding);
+		return Exprs.And(encoding);
 	}
 
 	public Collection<VarDecl<? extends BoolType>> getRepresentatives() {
@@ -81,18 +78,13 @@ public class CNFTransformation {
 		cnfTransfVisitor.clearReps();
 	}
 
-	private final class CNFTransformationVisitor implements FormalismExprVisitor<Collection<Expr<? extends BoolType>>, Expr<? extends BoolType>> {
+	private static final class CNFTransformationVisitor
+			implements FormalismExprVisitor<Collection<Expr<? extends BoolType>>, Expr<? extends BoolType>> {
 
 		private int nextCNFVarId;
 		private final Map<Expr<?>, VarDecl<? extends BoolType>> representatives;
-		private final ConstraintManager manager;
-		private final ExprFactory ef;
-		private final VarDeclFactory vf;
 
-		public CNFTransformationVisitor(final ConstraintManager manager, final VarDeclFactory varFactory) {
-			this.manager = manager;
-			vf = varFactory;
-			ef = manager.getExprFactory();
+		public CNFTransformationVisitor() {
 			nextCNFVarId = 0;
 			representatives = new HashMap<>();
 		}
@@ -106,7 +98,7 @@ public class CNFTransformation {
 		}
 
 		private Expr<? extends BoolType> getRep(final Expr<?> expr) {
-			final VarDecl<BoolType> rep = vf.Var(CNFPREFIX + (nextCNFVarId++), manager.getTypeFactory().Bool());
+			final VarDecl<BoolType> rep = Decls2.Var(CNFPREFIX + (nextCNFVarId++), Types.Bool());
 			representatives.put(expr, rep);
 			return rep.getRef();
 		}
@@ -117,12 +109,14 @@ public class CNFTransformation {
 		}
 
 		@Override
-		public <DeclType extends Type> Expr<? extends BoolType> visit(final ConstRefExpr<DeclType> expr, final Collection<Expr<? extends BoolType>> param) {
+		public <DeclType extends Type> Expr<? extends BoolType> visit(final ConstRefExpr<DeclType> expr,
+				final Collection<Expr<? extends BoolType>> param) {
 			return visitNonBoolConn(expr);
 		}
 
 		@Override
-		public <DeclType extends Type> Expr<? extends BoolType> visit(final ParamRefExpr<DeclType> expr, final Collection<Expr<? extends BoolType>> param) {
+		public <DeclType extends Type> Expr<? extends BoolType> visit(final ParamRefExpr<DeclType> expr,
+				final Collection<Expr<? extends BoolType>> param) {
 			return visitNonBoolConn(expr);
 		}
 
@@ -142,7 +136,7 @@ public class CNFTransformation {
 				return representatives.get(expr).getRef();
 			final Expr<? extends BoolType> rep = getRep(expr);
 			final Expr<? extends BoolType> op = expr.getOp().accept(this, param);
-			param.add(ef.And(ImmutableSet.of(ef.Or(ImmutableSet.of(ef.Not(rep), ef.Not(op))), ef.Or(ImmutableSet.of(rep, op)))));
+			param.add(Exprs.And(Exprs.Or(Exprs.Not(rep), Exprs.Not(op)), Exprs.Or(rep, op)));
 			return rep;
 		}
 
@@ -153,8 +147,8 @@ public class CNFTransformation {
 			final Expr<? extends BoolType> rep = getRep(expr);
 			final Expr<? extends BoolType> op1 = expr.getLeftOp().accept(this, param);
 			final Expr<? extends BoolType> op2 = expr.getRightOp().accept(this, param);
-			param.add(ef.And(ImmutableSet.of(ef.Or(ImmutableSet.of(ef.Not(rep), ef.Not(op1), op2)), ef.Or(ImmutableSet.of(op1, rep)),
-					ef.Or(ImmutableSet.of(ef.Not(op2), rep)))));
+			param.add(Exprs.And(Exprs.Or(Exprs.Not(rep), Exprs.Not(op1), op2), Exprs.Or(op1, rep),
+					Exprs.Or(Exprs.Not(op2), rep)));
 			return rep;
 		}
 
@@ -165,8 +159,9 @@ public class CNFTransformation {
 			final Expr<? extends BoolType> rep = getRep(expr);
 			final Expr<? extends BoolType> op1 = expr.getLeftOp().accept(this, param);
 			final Expr<? extends BoolType> op2 = expr.getRightOp().accept(this, param);
-			param.add(ef.And(ImmutableSet.of(ef.Or(ImmutableSet.of(ef.Not(rep), ef.Not(op1), op2)), ef.Or(ImmutableSet.of(ef.Not(rep), op1, ef.Not(op2))),
-					ef.Or(ImmutableSet.of(rep, ef.Not(op1), ef.Not(op2))), ef.Or(ImmutableSet.of(rep, op1, op2)))));
+			param.add(Exprs.And(Exprs.Or(Exprs.Not(rep), Exprs.Not(op1), op2),
+					Exprs.Or(Exprs.Not(rep), op1, Exprs.Not(op2)), Exprs.Or(rep, Exprs.Not(op1), Exprs.Not(op2)),
+					Exprs.Or(rep, op1, op2)));
 			return rep;
 		}
 
@@ -182,11 +177,11 @@ public class CNFTransformation {
 			lastClause.add(rep);
 			final Collection<Expr<? extends BoolType>> en = new ArrayList<>();
 			for (final Expr<? extends BoolType> op : ops) {
-				en.add(ef.Or(ImmutableSet.of(ef.Not(rep), op)));
-				lastClause.add(ef.Not(op));
+				en.add(Exprs.Or(Exprs.Not(rep), op));
+				lastClause.add(Exprs.Not(op));
 			}
-			en.add(ef.Or(lastClause));
-			param.add(ef.And(en));
+			en.add(Exprs.Or(lastClause));
+			param.add(Exprs.And(en));
 			return rep;
 		}
 
@@ -199,14 +194,14 @@ public class CNFTransformation {
 			for (final Expr<? extends BoolType> op : expr.getOps())
 				ops.add(op.accept(this, param));
 			final Collection<Expr<? extends BoolType>> lastClause = new ArrayList<>();
-			lastClause.add(ef.Not(rep));
+			lastClause.add(Exprs.Not(rep));
 			final Collection<Expr<? extends BoolType>> en = new ArrayList<>();
 			for (final Expr<? extends BoolType> op : ops) {
-				en.add(ef.Or(ImmutableSet.of(ef.Not(op), rep)));
+				en.add(Exprs.Or(Exprs.Not(op), rep));
 				lastClause.add(op);
 			}
-			en.add(ef.Or(lastClause));
-			param.add(ef.And(en));
+			en.add(Exprs.Or(lastClause));
+			param.add(Exprs.And(en));
 			return rep;
 		}
 
@@ -305,51 +300,62 @@ public class CNFTransformation {
 		}
 
 		@Override
-		public <IndexType extends Type, ElemType extends Type> Expr<? extends BoolType> visit(final ArrayReadExpr<IndexType, ElemType> expr,
+		public <IndexType extends Type, ElemType extends Type> Expr<? extends BoolType> visit(
+				final ArrayReadExpr<IndexType, ElemType> expr, final Collection<Expr<? extends BoolType>> param) {
+			return visitNonBoolConn(expr);
+		}
+
+		@Override
+		public <IndexType extends Type, ElemType extends Type> Expr<? extends BoolType> visit(
+				final ArrayWriteExpr<IndexType, ElemType> expr, final Collection<Expr<? extends BoolType>> param) {
+			return visitNonBoolConn(expr);
+		}
+
+		@Override
+		public <ParamType extends Type, ResultType extends Type> Expr<? extends BoolType> visit(
+				final FuncLitExpr<ParamType, ResultType> expr, final Collection<Expr<? extends BoolType>> param) {
+			return visitNonBoolConn(expr);
+		}
+
+		@Override
+		public <ParamType extends Type, ResultType extends Type> Expr<? extends BoolType> visit(
+				final FuncAppExpr<ParamType, ResultType> expr, final Collection<Expr<? extends BoolType>> param) {
+			return visitNonBoolConn(expr);
+		}
+
+		@Override
+		public <ExprType extends Type> Expr<? extends BoolType> visit(final IteExpr<ExprType> expr,
 				final Collection<Expr<? extends BoolType>> param) {
 			return visitNonBoolConn(expr);
 		}
 
 		@Override
-		public <IndexType extends Type, ElemType extends Type> Expr<? extends BoolType> visit(final ArrayWriteExpr<IndexType, ElemType> expr,
+		public <ExprType extends Type> Expr<? extends BoolType> visit(final PrimedExpr<ExprType> expr,
 				final Collection<Expr<? extends BoolType>> param) {
 			return visitNonBoolConn(expr);
 		}
 
 		@Override
-		public <ParamType extends Type, ResultType extends Type> Expr<? extends BoolType> visit(final FuncLitExpr<ParamType, ResultType> expr,
+		public <DeclType extends Type> Expr<? extends BoolType> visit(final VarRefExpr<DeclType> expr,
 				final Collection<Expr<? extends BoolType>> param) {
 			return visitNonBoolConn(expr);
 		}
 
 		@Override
-		public <ParamType extends Type, ResultType extends Type> Expr<? extends BoolType> visit(final FuncAppExpr<ParamType, ResultType> expr,
+		public Expr<? extends BoolType> visit(final ClockRefExpr expr,
 				final Collection<Expr<? extends BoolType>> param) {
 			return visitNonBoolConn(expr);
 		}
 
 		@Override
-		public <ExprType extends Type> Expr<? extends BoolType> visit(final IteExpr<ExprType> expr, final Collection<Expr<? extends BoolType>> param) {
+		public <ReturnType extends Type> Expr<? extends BoolType> visit(final ProcCallExpr<ReturnType> expr,
+				final Collection<Expr<? extends BoolType>> param) {
 			return visitNonBoolConn(expr);
 		}
 
 		@Override
-		public <ExprType extends Type> Expr<? extends BoolType> visit(final PrimedExpr<ExprType> expr, final Collection<Expr<? extends BoolType>> param) {
-			return visitNonBoolConn(expr);
-		}
-
-		@Override
-		public <DeclType extends Type> Expr<? extends BoolType> visit(final VarRefExpr<DeclType> expr, final Collection<Expr<? extends BoolType>> param) {
-			return visitNonBoolConn(expr);
-		}
-
-		@Override
-		public <ReturnType extends Type> Expr<? extends BoolType> visit(final ProcCallExpr<ReturnType> expr, final Collection<Expr<? extends BoolType>> param) {
-			return visitNonBoolConn(expr);
-		}
-
-		@Override
-		public <ReturnType extends Type> Expr<? extends BoolType> visit(final ProcRefExpr<ReturnType> expr, final Collection<Expr<? extends BoolType>> param) {
+		public <ReturnType extends Type> Expr<? extends BoolType> visit(final ProcRefExpr<ReturnType> expr,
+				final Collection<Expr<? extends BoolType>> param) {
 			return visitNonBoolConn(expr);
 		}
 	}

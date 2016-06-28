@@ -6,49 +6,45 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.stream.Collectors;
 
-import hu.bme.mit.inf.ttmc.constraint.expr.AndExpr;
-import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
-import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
-import hu.bme.mit.inf.ttmc.constraint.type.Type;
+import hu.bme.mit.inf.ttmc.core.expr.AndExpr;
+import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.model.Model;
+import hu.bme.mit.inf.ttmc.core.type.BoolType;
+import hu.bme.mit.inf.ttmc.core.type.Type;
+import hu.bme.mit.inf.ttmc.formalism.common.Valuation;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
-import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
-import hu.bme.mit.inf.ttmc.formalism.utils.impl.FormalismUtils;
+import hu.bme.mit.inf.ttmc.formalism.utils.FormalismUtils;
 
 /**
  * Symbolic Transition System (STS) implementation.
  */
 public final class STSImpl implements STS {
 
-	private final STSManager manager;
 	private final Collection<VarDecl<? extends Type>> vars;
 	private final Collection<Expr<? extends BoolType>> init;
 	private final Collection<Expr<? extends BoolType>> invar;
 	private final Collection<Expr<? extends BoolType>> trans;
 	private final Expr<? extends BoolType> prop;
+	private final STSUnrollerImpl unroller;
 
 	// Protected constructor --> use the builder
-	protected STSImpl(final STSManager manager, final Collection<VarDecl<? extends Type>> vars, final Collection<Expr<? extends BoolType>> init,
+	protected STSImpl(final Collection<VarDecl<? extends Type>> vars, final Collection<Expr<? extends BoolType>> init,
 			final Collection<Expr<? extends BoolType>> invar, final Collection<Expr<? extends BoolType>> trans, final Expr<? extends BoolType> prop) {
-		checkNotNull(manager);
 		checkNotNull(vars);
 		checkNotNull(init);
 		checkNotNull(invar);
 		checkNotNull(trans);
 		checkNotNull(prop);
-		this.manager = manager;
 		this.vars = new ArrayList<>(vars);
 		this.init = new ArrayList<>(init);
 		this.invar = new ArrayList<>(invar);
 		this.trans = new ArrayList<>(trans);
 		this.prop = prop;
-	}
-
-	@Override
-	public STSManager getManager() {
-		return manager;
+		this.unroller = new STSUnrollerImpl(this);
 	}
 
 	@Override
@@ -82,7 +78,8 @@ public final class STSImpl implements STS {
 		appendCollection(sb, "\tVars:  ", vars, System.lineSeparator());
 		appendCollection(sb, "\tInit:  ", init, System.lineSeparator());
 		appendCollection(sb, "\tInvar: ", invar, System.lineSeparator());
-		appendCollection(sb, "\tTrans: ", trans, System.lineSeparator() + "]");
+		appendCollection(sb, "\tTrans: ", trans, System.lineSeparator());
+		sb.append("\tProp: ").append(prop).append(System.lineSeparator()).append("]");
 		return sb.toString();
 	}
 
@@ -93,15 +90,13 @@ public final class STSImpl implements STS {
 	}
 
 	public static class Builder {
-		private final STSManager manager;
 		private final Collection<VarDecl<? extends Type>> vars;
 		private final Collection<Expr<? extends BoolType>> init;
 		private final Collection<Expr<? extends BoolType>> invar;
 		private final Collection<Expr<? extends BoolType>> trans;
 		private Expr<? extends BoolType> prop;
 
-		public Builder(final STSManager manager) {
-			this.manager = manager;
+		public Builder() {
 			vars = new HashSet<>();
 			init = new HashSet<>();
 			invar = new HashSet<>();
@@ -204,8 +199,63 @@ public final class STSImpl implements STS {
 				FormalismUtils.collectVars(expr, vars);
 			FormalismUtils.collectVars(prop, vars);
 
-			return new STSImpl(manager, vars, init, invar, trans, prop);
+			return new STSImpl(vars, init, invar, trans, prop);
 		}
+	}
+
+	@Override
+	public Expr<? extends BoolType> unroll(final Expr<? extends BoolType> expr, final int i) {
+		return unroller.unroll(expr, i);
+	}
+
+	@Override
+	public Collection<? extends Expr<? extends BoolType>> unroll(final Collection<? extends Expr<? extends BoolType>> exprs, final int i) {
+		return unroller.unroll(exprs, i);
+	}
+
+	@Override
+	public Collection<? extends Expr<? extends BoolType>> unrollInit(final int i) {
+		return unroller.init(i);
+	}
+
+	@Override
+	public Collection<? extends Expr<? extends BoolType>> unrollTrans(final int i) {
+		return unroller.trans(i);
+	}
+
+	@Override
+	public Collection<? extends Expr<? extends BoolType>> unrollInv(final int i) {
+		return unroller.inv(i);
+	}
+
+	@Override
+	public Expr<? extends BoolType> unrollProp(final int i) {
+		return unroller.prop(i);
+	}
+
+	@Override
+	public Valuation getConcreteState(final Model model, final int i) {
+		return getConcreteState(model, i, getVars());
+	}
+
+	@Override
+	public Valuation getConcreteState(final Model model, final int i, final Collection<VarDecl<? extends Type>> variables) {
+		return unroller.getConcreteState(model, i, variables);
+	}
+
+	@Override
+	public List<Valuation> extractTrace(final Model model, final int length) {
+		return extractTrace(model, length, getVars());
+	}
+
+	@Override
+	public List<Valuation> extractTrace(final Model model, final int length, final Collection<VarDecl<? extends Type>> variables) {
+		return unroller.extractTrace(model, length, variables);
+	}
+
+	@Override
+	public Expr<? extends BoolType> foldin(final Expr<? extends BoolType> expr, final int i) {
+		return unroller.foldin(expr, i);
 	}
 
 }

@@ -1,17 +1,16 @@
 package hu.bme.mit.inf.ttmc.program.ui;
 
-import hu.bme.mit.inf.ttmc.constraint.decl.ConstDecl;
-import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
 import hu.bme.mit.inf.ttmc.constraint.model.BasicConstraintDefinition;
 import hu.bme.mit.inf.ttmc.constraint.model.ConstantDeclaration;
 import hu.bme.mit.inf.ttmc.constraint.model.Expression;
 import hu.bme.mit.inf.ttmc.constraint.model.Type;
-import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
 import hu.bme.mit.inf.ttmc.constraint.ui.transform.DeclTransformator;
 import hu.bme.mit.inf.ttmc.constraint.ui.transform.ExprTransformator;
-import hu.bme.mit.inf.ttmc.constraint.utils.impl.ExprUtils;
+import hu.bme.mit.inf.ttmc.core.decl.ConstDecl;
+import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.type.BoolType;
+import hu.bme.mit.inf.ttmc.core.utils.impl.ExprUtils;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.ProcDecl;
-import hu.bme.mit.inf.ttmc.formalism.program.ProgramManager;
 import hu.bme.mit.inf.ttmc.program.model.ProcedureDeclaration;
 import hu.bme.mit.inf.ttmc.program.model.ProgramSpecification;
 import hu.bme.mit.inf.ttmc.program.ui.impl.ProgramModelBuilder;
@@ -23,8 +22,8 @@ public class ProgramModelCreator {
 	private ProgramModelCreator() {
 	}
 
-	public static ProgramModel create(final ProgramManager manager, final ProgramSpecification specification) {
-		final ProgramTransformationManager tManager = new ProgramTransformationManager(manager);
+	public static ProgramModel create(final ProgramSpecification specification) {
+		final ProgramTransformationManager tManager = new ProgramTransformationManager();
 		final ProgramModelBuilder builder = ProgramModelImpl.builder();
 
 		addConstDecls(builder, specification, tManager);

@@ -1,6 +1,6 @@
 package hu.bme.mit.inf.ttmc.formalism.utils;
 
-import hu.bme.mit.inf.ttmc.constraint.type.Type;
+import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.AssertStmt;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.AssignStmt;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.AssumeStmt;

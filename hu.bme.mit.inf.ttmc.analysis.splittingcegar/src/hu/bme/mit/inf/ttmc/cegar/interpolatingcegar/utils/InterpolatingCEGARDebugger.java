@@ -10,27 +10,25 @@ import java.util.Set;
 import java.util.Stack;
 
 import hu.bme.mit.inf.ttmc.cegar.common.data.ConcreteTrace;
-import hu.bme.mit.inf.ttmc.cegar.common.data.AbstractSystem;
+import hu.bme.mit.inf.ttmc.cegar.common.data.SolverWrapper;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.SolverHelper;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.debugging.AbstractDebugger;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.debugging.Debugger;
 import hu.bme.mit.inf.ttmc.cegar.common.utils.visualization.Visualizer;
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.data.InterpolatedAbstractState;
 import hu.bme.mit.inf.ttmc.cegar.interpolatingcegar.data.InterpolatedAbstractSystem;
-import hu.bme.mit.inf.ttmc.constraint.expr.AndExpr;
-import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
-import hu.bme.mit.inf.ttmc.constraint.solver.Solver;
-import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
-import hu.bme.mit.inf.ttmc.formalism.sts.STSUnroller;
+import hu.bme.mit.inf.ttmc.core.expr.impl.Exprs;
+import hu.bme.mit.inf.ttmc.formalism.common.Valuation;
+import hu.bme.mit.inf.ttmc.formalism.sts.STS;
+import hu.bme.mit.inf.ttmc.solver.Solver;
 
-public class InterpolatingCEGARDebugger extends AbstractDebugger implements Debugger<InterpolatedAbstractSystem, InterpolatedAbstractState> {
+public class InterpolatingCEGARDebugger extends AbstractDebugger<InterpolatedAbstractSystem, InterpolatedAbstractState> {
 
 	private final Map<InterpolatedAbstractState, List<ConcreteState>> stateSpace;
 	private final Set<InterpolatedAbstractState> reachableStates;
-	private AbstractSystem system = null;
 
-	public InterpolatingCEGARDebugger(final Visualizer visualizer) {
-		super(visualizer);
+	public InterpolatingCEGARDebugger(final SolverWrapper solvers, final Visualizer visualizer) {
+		super(solvers, visualizer);
 
 		stateSpace = new HashMap<>();
 		reachableStates = new HashSet<>();
@@ -41,29 +39,32 @@ public class InterpolatingCEGARDebugger extends AbstractDebugger implements Debu
 		if (system.getAbstractKripkeStructure() == null)
 			throw new RuntimeException("Abstract state space must be explored by the algorithm before exploring the concrete state space.");
 		clearStateSpace();
-		this.system = system;
 
 		// Collect abstract states
 		for (final InterpolatedAbstractState as : system.getAbstractKripkeStructure().getStates())
 			stateSpace.put(as, new ArrayList<>());
 
-		final STSUnroller unroller = system.getUnroller();
-		final Solver solver = system.getManager().getSolverFactory().createSolver(true, false);
+		final STS sts = system.getSTS();
 
 		// Explore corresponding concrete states
-		final Collection<ConcreteState> allConcreteStates = new ArrayList<>(); // Also store them temporary in a flat collection
+		// Also store them temporary in a flat collection
+		final Collection<ConcreteState> allConcreteStates = new ArrayList<>();
+
+		final Solver solver = solvers.getSolver();
+
 		solver.push(); // 1
-		solver.add(unroller.inv(0));
+		solver.add(sts.unrollInv(0));
 		for (final InterpolatedAbstractState as : stateSpace.keySet()) {
 			solver.push(); // 2
-			SolverHelper.unrollAndAssert(solver, as.getLabels(), unroller, 0);
+			SolverHelper.unrollAndAssert(solver, as.getLabels(), sts, 0);
 			do {
 				if (SolverHelper.checkSat(solver)) {
-					final Expr<? extends BoolType> csExpr = unroller.getConcreteState(solver.getModel(), 0, system.getVars());
+					final Valuation csExpr = sts.getConcreteState(solver.getModel(), 0, system.getVars());
+
 					final ConcreteState cs = new ConcreteState(csExpr);
 					stateSpace.get(as).add(cs);
 					allConcreteStates.add(cs);
-					solver.add(unroller.unroll(system.getManager().getExprFactory().Not(csExpr), 0));
+					solver.add(sts.unroll(Exprs.Not(csExpr.toExpr()), 0));
 				} else {
 					break;
 				}
@@ -89,14 +90,15 @@ public class InterpolatingCEGARDebugger extends AbstractDebugger implements Debu
 			}
 		}
 
-		// Explore the transition relation between concrete states and initial states
-		exploreConcrTransRelAndInits(allConcreteStates, solver, unroller);
+		// Explore the transition relation between concrete states and initial
+		// states
+		exploreConcrTransRelAndInits(allConcreteStates, sts);
 
 		// Explore the reachable concrete states
 		exploreReachableConcrStates(allConcreteStates);
 
 		// Mark unsafe states
-		markUnsafeStates(allConcreteStates, system.getManager().getExprFactory().Not(system.getSTS().getProp()), solver, unroller);
+		markUnsafeStates(allConcreteStates, Exprs.Not(system.getSTS().getProp()), sts);
 
 		return this;
 	}
@@ -118,7 +120,8 @@ public class InterpolatingCEGARDebugger extends AbstractDebugger implements Debu
 		// Interpolated abstract states are not constructed on-the-fly, thus
 		// the given list contains the same objects as the explored state space
 		// in the debugger. Since their attribute (isPartOfCounterexample) is
-		// already set, only a check is required whether the state space is up-to-date
+		// already set, only a check is required whether the state space is
+		// up-to-date
 		for (final InterpolatedAbstractState as : ace) {
 			if (!stateSpace.containsKey(as))
 				throw new RuntimeException("A state in the counterexample is not included in the state space. The actual state space may not be up to date.");
@@ -141,7 +144,7 @@ public class InterpolatingCEGARDebugger extends AbstractDebugger implements Debu
 			throw new RuntimeException("State space is not explored");
 		clearConcreteTrace();
 		int ci = 0;
-		for (final AndExpr m : cce.getTrace())
+		for (final Valuation m : cce.getTrace())
 			for (final List<ConcreteState> csList : stateSpace.values())
 				for (final ConcreteState cs : csList)
 					if (m.equals(cs.model)) {
@@ -162,7 +165,7 @@ public class InterpolatingCEGARDebugger extends AbstractDebugger implements Debu
 
 	@Override
 	public Debugger<InterpolatedAbstractSystem, InterpolatedAbstractState> visualize() {
-		visualize(stateSpace, reachableStates, system.getManager());
+		visualize(stateSpace, reachableStates);
 		return this;
 	}
 

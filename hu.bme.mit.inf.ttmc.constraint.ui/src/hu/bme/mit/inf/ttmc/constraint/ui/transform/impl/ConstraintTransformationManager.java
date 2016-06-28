@@ -1,6 +1,5 @@
 package hu.bme.mit.inf.ttmc.constraint.ui.transform.impl;
 
-import hu.bme.mit.inf.ttmc.constraint.ConstraintManager;
 import hu.bme.mit.inf.ttmc.constraint.ui.transform.DeclTransformator;
 import hu.bme.mit.inf.ttmc.constraint.ui.transform.ExprTransformator;
 import hu.bme.mit.inf.ttmc.constraint.ui.transform.TransformationManager;
@@ -12,10 +11,10 @@ public class ConstraintTransformationManager implements TransformationManager {
 	private final DeclTransformator declTransformator;
 	private final ExprTransformator exprTransformator;
 
-	public ConstraintTransformationManager(final ConstraintManager manager) {
-		typeTransformator = new ConstraintTypeTransformator(this, manager.getTypeFactory());
-		declTransformator = new ConstraintDeclTransformator(this, manager.getDeclFactory());
-		exprTransformator = new ConstraintExprTransformator(this, manager.getExprFactory());
+	public ConstraintTransformationManager() {
+		typeTransformator = new ConstraintTypeTransformator(this);
+		declTransformator = new ConstraintDeclTransformator(this);
+		exprTransformator = new ConstraintExprTransformator(this);
 	}
 
 	@Override

@@ -8,14 +8,14 @@ import java.util.StringJoiner;
 
 import com.google.common.collect.ImmutableList;
 
-import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
-import hu.bme.mit.inf.ttmc.constraint.type.Type;
-import hu.bme.mit.inf.ttmc.constraint.utils.ExprVisitor;
+import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.type.Type;
+import hu.bme.mit.inf.ttmc.core.utils.ExprVisitor;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.ProcCallExpr;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.visitor.ProcCallExprVisitor;
 import hu.bme.mit.inf.ttmc.formalism.common.type.ProcType;
 
-public class ProcCallExprImpl<ReturnType extends Type> implements ProcCallExpr<ReturnType> {
+class ProcCallExprImpl<ReturnType extends Type> implements ProcCallExpr<ReturnType> {
 
 	private final static int HASH_SEED = 1471;
 	private volatile int hashCode = 0;
@@ -23,8 +23,7 @@ public class ProcCallExprImpl<ReturnType extends Type> implements ProcCallExpr<R
 	private final Expr<? extends ProcType<? extends ReturnType>> proc;
 	private final ImmutableList<Expr<?>> params;
 
-	public ProcCallExprImpl(final Expr<? extends ProcType<? extends ReturnType>> proc,
-			final List<? extends Expr<?>> params) {
+	ProcCallExprImpl(final Expr<? extends ProcType<? extends ReturnType>> proc, final List<? extends Expr<?>> params) {
 		this.proc = checkNotNull(proc);
 		this.params = ImmutableList.copyOf(checkNotNull(params));
 	}
@@ -81,11 +80,12 @@ public class ProcCallExprImpl<ReturnType extends Type> implements ProcCallExpr<R
 	@Override
 	public final String toString() {
 		final StringBuilder sb = new StringBuilder();
-		sb.append(proc);
+		sb.append("Call");
 		sb.append("(");
 		final String prefix = sb.toString();
 		final String suffix = ")";
 		final StringJoiner sj = new StringJoiner(", ", prefix, suffix);
+		sj.add(proc.toString());
 		for (final Expr<? extends Type> param : params) {
 			sj.add(param.toString());
 		}

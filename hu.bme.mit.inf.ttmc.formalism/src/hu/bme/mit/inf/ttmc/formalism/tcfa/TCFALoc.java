@@ -2,19 +2,16 @@ package hu.bme.mit.inf.ttmc.formalism.tcfa;
 
 import java.util.Collection;
 
-import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
-import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
+import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.type.BoolType;
+import hu.bme.mit.inf.ttmc.formalism.common.automaton.Loc;
 
-public interface TCFALoc {
+public interface TCFALoc extends Loc<TCFALoc, TCFAEdge> {
 
-	public TCFA getTCFA();
+	public String getName();
 
 	public boolean isUrgent();
 
-	public Expr<? extends BoolType> getInvar();
-
-	public Collection<? extends TCFAEdge> getInEdges();
-
-	public Collection<? extends TCFAEdge> getOutEdges();
+	public Collection<Expr<? extends BoolType>> getInvars();
 
 }

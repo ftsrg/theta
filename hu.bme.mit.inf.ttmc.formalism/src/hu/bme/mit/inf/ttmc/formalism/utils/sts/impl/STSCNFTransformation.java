@@ -1,11 +1,11 @@
 package hu.bme.mit.inf.ttmc.formalism.utils.sts.impl;
 
-import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
-import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
+import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 import hu.bme.mit.inf.ttmc.formalism.sts.impl.STSImpl;
+import hu.bme.mit.inf.ttmc.formalism.utils.FormalismUtils;
 import hu.bme.mit.inf.ttmc.formalism.utils.impl.CNFTransformation;
-import hu.bme.mit.inf.ttmc.formalism.utils.impl.FormalismUtils;
 import hu.bme.mit.inf.ttmc.formalism.utils.sts.STSTransformation;
 
 public final class STSCNFTransformation implements STSTransformation {
@@ -17,8 +17,8 @@ public final class STSCNFTransformation implements STSTransformation {
 	@Override
 	public STS transform(final STS system) {
 
-		final STSImpl.Builder builder = new STSImpl.Builder(system.getManager());
-		final CNFTransformation cnfTransf = FormalismUtils.createCNFTransformation(system.getManager(), system.getManager().getDeclFactory());
+		final STSImpl.Builder builder = new STSImpl.Builder();
+		final CNFTransformation cnfTransf = FormalismUtils.createCNFTransformation();
 
 		for (final Expr<? extends BoolType> expr : system.getInit())
 			builder.addInit(transformIfNonCNF(expr, cnfTransf));

@@ -5,98 +5,78 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import hu.bme.mit.inf.ttmc.constraint.expr.AndExpr;
-import hu.bme.mit.inf.ttmc.constraint.expr.Expr;
-import hu.bme.mit.inf.ttmc.constraint.solver.Model;
-import hu.bme.mit.inf.ttmc.constraint.type.BoolType;
-import hu.bme.mit.inf.ttmc.constraint.type.Type;
-import hu.bme.mit.inf.ttmc.constraint.utils.impl.ExprUtils;
+import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.expr.LitExpr;
+import hu.bme.mit.inf.ttmc.core.model.Model;
+import hu.bme.mit.inf.ttmc.core.type.BoolType;
+import hu.bme.mit.inf.ttmc.core.type.Type;
+import hu.bme.mit.inf.ttmc.formalism.common.Valuation;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
-import hu.bme.mit.inf.ttmc.formalism.sts.STSManager;
-import hu.bme.mit.inf.ttmc.formalism.sts.STSUnroller;
-import hu.bme.mit.inf.ttmc.formalism.utils.impl.FoldVisitor;
-import hu.bme.mit.inf.ttmc.formalism.utils.impl.UnfoldVisitor;
-import hu.bme.mit.inf.ttmc.formalism.utils.impl.VarMap;
+import hu.bme.mit.inf.ttmc.formalism.utils.PathUtils;
 
-public class STSUnrollerImpl implements STSUnroller {
+class STSUnrollerImpl {
+
 	private final STS sts;
-	private final STSManager manager;
-	private final UnfoldVisitor ufVisitor;
-	private final FoldVisitor fVisitor;
-	private final VarMap varMap;
 
-	public STSUnrollerImpl(final STS sts, final STSManager manager) {
+	public STSUnrollerImpl(final STS sts) {
 		this.sts = sts;
-		this.manager = manager;
-		varMap = new VarMap(manager.getDeclFactory());
-		ufVisitor = new UnfoldVisitor(varMap, manager.getExprFactory());
-		fVisitor = new FoldVisitor(varMap, manager.getExprFactory());
 	}
 
-	@Override
 	public Expr<? extends BoolType> unroll(final Expr<? extends BoolType> expr, final int i) {
-		return ExprUtils.cast(expr.accept(ufVisitor, i), BoolType.class);
+		return PathUtils.unfold(expr, i);
 	}
 
-	@Override
-	public Collection<Expr<? extends BoolType>> init(final int i) {
-		return sts.getInit().stream().map(e -> unroll(e, i)).collect(Collectors.toSet());
+	public Collection<? extends Expr<? extends BoolType>> unroll(
+			final Collection<? extends Expr<? extends BoolType>> exprs, final int i) {
+		return exprs.stream().map(e -> unroll(e, i)).collect(Collectors.toSet());
 	}
 
-	@Override
-	public Collection<Expr<? extends BoolType>> trans(final int i) {
-		return sts.getTrans().stream().map(e -> unroll(e, i)).collect(Collectors.toSet());
+	public Collection<? extends Expr<? extends BoolType>> init(final int i) {
+		return unroll(sts.getInit(), i);
 	}
 
-	@Override
-	public Collection<Expr<? extends BoolType>> inv(final int i) {
-		return sts.getInvar().stream().map(e -> unroll(e, i)).collect(Collectors.toSet());
+	public Collection<? extends Expr<? extends BoolType>> trans(final int i) {
+		return unroll(sts.getTrans(), i);
 	}
 
-	@Override
+	public Collection<? extends Expr<? extends BoolType>> inv(final int i) {
+		return unroll(sts.getInvar(), i);
+	}
+
 	public Expr<? extends BoolType> prop(final int i) {
 		return unroll(sts.getProp(), i);
 	}
 
-	@Override
-	public AndExpr getConcreteState(final Model model, final int i) {
-		return getConcreteState(model, i, sts.getVars());
-	}
+	public Valuation getConcreteState(final Model model, final int i,
+			final Collection<VarDecl<? extends Type>> variables) {
 
-	@Override
-	public AndExpr getConcreteState(final Model model, final int i, final Collection<VarDecl<? extends Type>> variables) {
-		final List<Expr<? extends BoolType>> ops = new ArrayList<>(variables.size());
+		final Valuation.Builder builder = Valuation.builder();
 
 		for (final VarDecl<? extends Type> varDecl : variables) {
-			Expr<? extends Type> value = null;
+			LitExpr<? extends Type> value = null;
 			try {
-				value = model.eval(varMap.getConstDecl(varDecl, i)).get();
+				value = model.eval(varDecl.getConstDecl(i)).get();
 			} catch (final Exception ex) {
 				value = varDecl.getType().getAny();
 			}
-			ops.add(manager.getExprFactory().Eq(varDecl.getRef(), value));
+			builder.put(varDecl, value);
 		}
 
-		return manager.getExprFactory().And(ops);
+		return builder.build();
 	}
 
-	@Override
-	public List<AndExpr> extractTrace(final Model model, final int length) {
-		return extractTrace(model, length, sts.getVars());
-	}
+	public List<Valuation> extractTrace(final Model model, final int length,
+			final Collection<VarDecl<? extends Type>> variables) {
 
-	@Override
-	public List<AndExpr> extractTrace(final Model model, final int length, final Collection<VarDecl<? extends Type>> variables) {
-		final List<AndExpr> trace = new ArrayList<>(length);
+		final List<Valuation> trace = new ArrayList<>(length);
 		for (int i = 0; i < length; ++i)
 			trace.add(getConcreteState(model, i, variables));
 		return trace;
 	}
 
-	@Override
 	public Expr<? extends BoolType> foldin(final Expr<? extends BoolType> expr, final int i) {
-		return ExprUtils.cast(expr.accept(fVisitor, i), BoolType.class);
+		return PathUtils.fold(expr, i);
 	}
 
 }
