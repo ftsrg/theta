@@ -67,7 +67,7 @@ public class TransformProgramVisitor implements ExpressionVisitor<Expr<? extends
 	private TypeFactory tfc;
 	private VarDeclFactory vfc;
 		
-	private SymbolTable<VarDecl<? extends Type>> symbols = new SymbolTable<VarDecl<? extends Type>>();
+	private SymbolTable<Decl<? extends Type, ?>> symbols = new SymbolTable<>();
 		
 	public TransformProgramVisitor(ConstraintManager cm) {
 		this.efc = cm.getExprFactory();
@@ -239,7 +239,7 @@ public class TransformProgramVisitor implements ExpressionVisitor<Expr<? extends
 	public Expr<? extends Type> visit(UnaryExpressionAst ast) {
 		switch (ast.getOperator()) {
 		case OP_MINUS:
-			// The minus operator returns the expression multiplied by -1.
+			// The minus operation is negation
 			return this.efc.Neg(ExprUtils.cast(ast.getOperand().accept(this), ClosedUnderNeg.class));
 		case OP_PLUS:
 			// The unary plus operator promotes the operand to an integral type
