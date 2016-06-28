@@ -14,13 +14,14 @@ public class DBMTests {
 
 	@Test
 	public void test() {
+
 		final ClockDecl x = Clock("x");
 		final ClockDecl y = Clock("y");
 		final ClockDecl z = Clock("z");
 
 		final Set<ClockDecl> clocks = ImmutableSet.of(x, y, z);
 
-		final DBM dbm = DBM.zero(clocks).transform().up().free(x).reset(z, 3).up().build();
+		final DBM dbm = DBM.top(clocks);
 
 		System.out.println(dbm);
 	}

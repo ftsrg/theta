@@ -5,18 +5,16 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.inf.ttmc.analysis.zone.DiffBounds.Inf;
 import static hu.bme.mit.inf.ttmc.analysis.zone.DiffBounds.Leq;
 import static hu.bme.mit.inf.ttmc.analysis.zone.DiffBounds.Lt;
-import static hu.bme.mit.inf.ttmc.analysis.zone.DiffBounds.add;
-import static hu.bme.mit.inf.ttmc.analysis.zone.DiffBounds.asString;
 import static hu.bme.mit.inf.ttmc.formalism.common.decl.impl.Decls2.Clock;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.IntBinaryOperator;
 
 import com.google.common.collect.Sets;
 
-import hu.bme.mit.inf.ttmc.common.matrix.IntMatrix;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.ClockDecl;
 import hu.bme.mit.inf.ttmc.formalism.ta.constr.AndConstr;
 import hu.bme.mit.inf.ttmc.formalism.ta.constr.ClockConstr;
@@ -31,79 +29,92 @@ import hu.bme.mit.inf.ttmc.formalism.ta.constr.UnitGeqConstr;
 import hu.bme.mit.inf.ttmc.formalism.ta.constr.UnitGtConstr;
 import hu.bme.mit.inf.ttmc.formalism.ta.constr.UnitLeqConstr;
 import hu.bme.mit.inf.ttmc.formalism.ta.constr.UnitLtConstr;
+import hu.bme.mit.inf.ttmc.formalism.ta.op.ClockOp;
+import hu.bme.mit.inf.ttmc.formalism.ta.op.CopyOp;
+import hu.bme.mit.inf.ttmc.formalism.ta.op.FreeOp;
+import hu.bme.mit.inf.ttmc.formalism.ta.op.GuardOp;
+import hu.bme.mit.inf.ttmc.formalism.ta.op.ResetOp;
+import hu.bme.mit.inf.ttmc.formalism.ta.op.ShiftOp;
 import hu.bme.mit.inf.ttmc.formalism.ta.utils.ClockConstrVisitor;
+import hu.bme.mit.inf.ttmc.formalism.ta.utils.ClockOpVisitor;
 
-public final class DBM {
+final class DBM {
 
-	static final ClockDecl ZERO_CLOCK;
+	private static final IntBinaryOperator ZERO_DBM_VALUES = (x, y) -> Leq(0);
+	private static final IntBinaryOperator TOP_DBM_VALUES = (x, y) -> x == 0 || x == y ? Leq(0) : Inf();
 
-	final LinkedHashMap<ClockDecl, Integer> clockToIndex;
+	private static final ClockDecl ZERO_CLOCK = Clock("_zero");
 
-	final int nClocks;
-	final IntMatrix matrix;
+	private final ExecuteVisitor executeVisitor;;
+	private final AndOperationVisitor andVisitor;
 
-	private final ZoneConsistencyVisitor visitor;
+	private final LinkedHashMap<ClockDecl, Integer> clockToIndex;
+	private final SimpleDBM dbm;
 
-	static {
-		ZERO_CLOCK = Clock("_zero");
+	private DBM(final LinkedHashMap<ClockDecl, Integer> clockToIndex, final IntBinaryOperator values) {
+		this.clockToIndex = clockToIndex;
+		this.dbm = new SimpleDBM(clockToIndex.size() - 1, values);
+		executeVisitor = new ExecuteVisitor();
+		andVisitor = new AndOperationVisitor();
 	}
 
-	DBM(final DBMBuilder builder) {
-		clockToIndex = builder.clockToIndex;
-		nClocks = builder.nClocks;
-		matrix = builder.matrix;
-		visitor = new ZoneConsistencyVisitor();
+	private DBM(final DBM dbm) {
+		this.clockToIndex = new LinkedHashMap<>(dbm.clockToIndex);
+		this.dbm = new SimpleDBM(dbm.dbm);
+		executeVisitor = new ExecuteVisitor();
+		andVisitor = new AndOperationVisitor();
+
 	}
 
 	////
 
-	public static DBM top(final Collection<? extends ClockDecl> clocks) {
-		final DBM result = builder(clocks).build();
-		return result;
+	public static DBM copyOf(final DBM dbm) {
+		checkNotNull(dbm);
+		return new DBM(dbm);
 	}
 
 	public static DBM zero(final Collection<? extends ClockDecl> clocks) {
-		checkArgument(!clocks.contains(ZERO_CLOCK));
-		final DBM result = builder(clocks).build();
-		result.matrix.fill(Leq(0));
-		return result;
+		checkNotNull(clocks);
+		final LinkedHashMap<ClockDecl, Integer> clockToIndex = createIndexMapFrom(clocks);
+		return new DBM(clockToIndex, ZERO_DBM_VALUES);
+	}
+
+	public static DBM top(final Collection<? extends ClockDecl> clocks) {
+		checkNotNull(clocks);
+		final LinkedHashMap<ClockDecl, Integer> clockToIndex = createIndexMapFrom(clocks);
+		return new DBM(clockToIndex, TOP_DBM_VALUES);
 	}
 
 	////
 
-	public static DBMBuilder builder() {
-		return builder(Collections.emptySet());
-	}
+	int getBound(final ClockDecl x, final ClockDecl y) {
+		checkNotNull(x);
+		checkNotNull(y);
 
-	public static DBMBuilder builder(final Collection<? extends ClockDecl> clocks) {
-		return new DBMBuilder(clocks);
-	}
+		if (x.equals(y) || x.equals(ZERO_CLOCK)) {
+			return Leq(0);
+		}
 
-	public DBMBuilder transform() {
-		return new DBMBuilder(this);
+		final Integer i = clockToIndex.get(x);
+		final Integer j = clockToIndex.get(y);
+
+		if (i == null || j == null) {
+			return Inf();
+		}
+
+		return dbm.get(i, j);
 	}
 
 	////
-
-	public Collection<ClockDecl> getClocks() {
-		return Collections.unmodifiableCollection(clockToIndex.keySet());
-	}
-
-	////
-
-	public boolean isTracked(final ClockDecl clock) {
-		return clockToIndex.containsKey(clock);
-	}
 
 	public boolean isConsistent() {
-		return matrix.get(0, 0) >= 0;
+		return dbm.isConsistent();
 	}
 
-	public boolean isConsistent(final ClockConstr constr) {
-		return constr.accept(visitor, null);
+	public boolean isSatisfied(final ClockConstr constr) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
-
-	////
 
 	public DBMRelation getRelation(final DBM that) {
 		final Set<ClockDecl> clockDecls = Sets.union(this.clockToIndex.keySet(), that.clockToIndex.keySet());
@@ -122,6 +133,73 @@ public final class DBM {
 
 	////
 
+	public void track(final ClockDecl clock) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+	}
+
+	public void untrack(final ClockDecl clock) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+	}
+
+	public void execute(final ClockOp op) {
+		checkNotNull(op);
+		op.accept(executeVisitor, null);
+	}
+
+	////
+
+	public void up() {
+		dbm.up();
+	}
+
+	public void down() {
+		dbm.down();
+	}
+
+	public void and(final ClockConstr constr) {
+		checkNotNull(constr);
+		constr.accept(andVisitor, null);
+	}
+
+	public void free(final ClockDecl clock) {
+		checkNotNull(clock);
+		checkArgument(!isZeroClock(clock));
+		final int x = indexOf(clock);
+		dbm.free(x);
+
+	}
+
+	public void reset(final ClockDecl clock, final int m) {
+		checkNotNull(clock);
+		checkArgument(!isZeroClock(clock));
+		final int x = indexOf(clock);
+		dbm.reset(x, m);
+	}
+
+	public void copy(final ClockDecl lhs, final ClockDecl rhs) {
+		checkNotNull(lhs);
+		checkNotNull(rhs);
+		checkArgument(!isZeroClock(lhs));
+		checkArgument(!isZeroClock(rhs));
+		final int x = indexOf(lhs);
+		final int y = indexOf(rhs);
+		dbm.copy(x, y);
+	}
+
+	public void shift(final ClockDecl clock, final int m) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+	}
+
+	public void norm(final Map<? super ClockDecl, ? extends Integer> bounds) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+	}
+
+	////
+
 	@Override
 	public int hashCode() {
 		// TODO Auto-generated method stub
@@ -130,201 +208,184 @@ public final class DBM {
 
 	@Override
 	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		} else if (obj instanceof DBM) {
-			final DBM that = (DBM) obj;
-			return this.getRelation(that).equals(DBMRelation.EQUAL);
-		} else {
-			return false;
-		}
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
 
 	@Override
 	public String toString() {
-		final StringBuilder sb = new StringBuilder();
-
-		for (final ClockDecl clockDecl : clockToIndex.keySet()) {
-			sb.append(String.format("%-12s", clockDecl.getName()));
-		}
-
-		sb.append(System.lineSeparator());
-
-		for (int i = 0; i <= nClocks; i++) {
-			for (int j = 0; j <= nClocks; j++) {
-				sb.append(String.format("%-12s", asString(matrix.get(i, j))));
-			}
-			sb.append(System.lineSeparator());
-		}
-		return sb.toString();
+		return dbm.toString();
 	}
 
 	////
 
-	private int getBound(final ClockDecl x, final ClockDecl y) {
-		checkNotNull(x);
-		checkNotNull(y);
+	private boolean isTracked(final ClockDecl clock) {
+		return clockToIndex.containsKey(clock);
+	}
 
-		if (x.equals(y) || x.equals(ZERO_CLOCK)) {
-			return Leq(0);
+	private boolean isZeroClock(final ClockDecl clock) {
+		return clock.equals(ZERO_CLOCK);
+	}
+
+	private int indexOf(final ClockDecl clock) {
+		checkArgument(isTracked(clock));
+		return clockToIndex.get(clock);
+	}
+
+	private static LinkedHashMap<ClockDecl, Integer> createIndexMapFrom(final Collection<? extends ClockDecl> clocks) {
+		final LinkedHashMap<ClockDecl, Integer> result = new LinkedHashMap<ClockDecl, Integer>();
+		result.put(ZERO_CLOCK, 0);
+		int i = 1;
+		for (final ClockDecl clock : clocks) {
+			if (!result.containsKey(clock)) {
+				result.put(clock, i);
+				i++;
+			}
 		}
-
-		final Integer i = clockToIndex.get(x);
-		final Integer j = clockToIndex.get(y);
-
-		if (i == null || j == null) {
-			return Inf();
-		}
-
-		return matrix.get(i, j);
+		return result;
 	}
 
 	////
 
-	private final class ZoneConsistencyVisitor implements ClockConstrVisitor<Void, Boolean> {
+	private final class ExecuteVisitor implements ClockOpVisitor<Void, Void> {
 
-		private boolean isConsistent(final int x, final int y, final int b) {
-			return add(matrix.get(y, x), b) >= 0;
+		@Override
+		public Void visit(final CopyOp op, final Void param) {
+			copy(op.getClock(), op.getValue());
+			return null;
 		}
 
 		@Override
-		public Boolean visit(final TrueConstr constr, final Void param) {
-			return true;
+		public Void visit(final FreeOp op, final Void param) {
+			free(op.getClock());
+			return null;
 		}
 
 		@Override
-		public Boolean visit(final UnitLtConstr constr, final Void param) {
-			final Integer x = clockToIndex.get(constr.getClock());
-			if (x == null) {
-				return constr.getBound() > 0;
-			} else {
-				return isConsistent(x, 0, Lt(constr.getBound()));
-			}
+		public Void visit(final GuardOp op, final Void param) {
+			and(op.getConstr());
+			return null;
 		}
 
 		@Override
-		public Boolean visit(final UnitLeqConstr constr, final Void param) {
-			final Integer x = clockToIndex.get(constr.getClock());
-			if (x == null) {
-				return constr.getBound() >= 0;
-			} else {
-				return isConsistent(x, 0, Leq(constr.getBound()));
-			}
+		public Void visit(final ResetOp op, final Void param) {
+			reset(op.getClock(), op.getValue());
+			return null;
 		}
 
 		@Override
-		public Boolean visit(final UnitGtConstr constr, final Void param) {
-			final Integer x = clockToIndex.get(constr.getClock());
-			if (x == null) {
-				return true;
-			} else {
-				return isConsistent(0, x, Lt(-constr.getBound()));
-			}
+		public Void visit(final ShiftOp op, final Void param) {
+			shift(op.getClock(), op.getOffset());
+			return null;
+		}
+
+	}
+
+	////
+
+	private final class AndOperationVisitor implements ClockConstrVisitor<Void, Void> {
+
+		@Override
+		public Void visit(final TrueConstr constr, final Void param) {
+			return null;
 		}
 
 		@Override
-		public Boolean visit(final UnitGeqConstr constr, final Void param) {
-			final Integer x = clockToIndex.get(constr.getClock());
-			if (x == null) {
-				return true;
-			} else {
-				return isConsistent(0, x, Leq(-constr.getBound()));
-			}
+		public Void visit(final UnitLtConstr constr, final Void param) {
+			final int x = indexOf(constr.getClock());
+			final int m = constr.getBound();
+			dbm.and(x, 0, Lt(m));
+			return null;
 		}
 
 		@Override
-		public Boolean visit(final UnitEqConstr constr, final Void param) {
-			final Integer x = clockToIndex.get(constr.getClock());
-			if (x == null) {
-				return constr.getBound() >= 0;
-			} else {
-				return isConsistent(x, 0, Leq(constr.getBound())) && isConsistent(0, x, Leq(-constr.getBound()));
-			}
+		public Void visit(final UnitLeqConstr constr, final Void param) {
+			final int x = indexOf(constr.getClock());
+			final int m = constr.getBound();
+			dbm.and(x, 0, Leq(m));
+			return null;
 		}
 
 		@Override
-		public Boolean visit(final DiffLtConstr constr, final Void param) {
-			if (constr.getLeftClock().equals(constr.getRightClock())) {
-				return constr.getBound() > 0;
-			}
-
-			final Integer x = clockToIndex.get(constr.getLeftClock());
-			final Integer y = clockToIndex.get(constr.getRightClock());
-
-			if (x == null || y == null) {
-				return true;
-			} else {
-				return isConsistent(x, y, Lt(constr.getBound()));
-			}
+		public Void visit(final UnitGtConstr constr, final Void param) {
+			final int x = indexOf(constr.getClock());
+			final int m = constr.getBound();
+			dbm.and(0, x, Lt(-m));
+			return null;
 		}
 
 		@Override
-		public Boolean visit(final DiffLeqConstr constr, final Void param) {
-			if (constr.getLeftClock().equals(constr.getRightClock())) {
-				return constr.getBound() >= 0;
-			}
-
-			final Integer x = clockToIndex.get(constr.getLeftClock());
-			final Integer y = clockToIndex.get(constr.getRightClock());
-
-			if (x == null || y == null) {
-				return true;
-			} else {
-				return isConsistent(x, y, Leq(constr.getBound()));
-			}
+		public Void visit(final UnitGeqConstr constr, final Void param) {
+			final int x = indexOf(constr.getClock());
+			final int m = constr.getBound();
+			dbm.and(0, x, Leq(-m));
+			return null;
 		}
 
 		@Override
-		public Boolean visit(final DiffGtConstr constr, final Void param) {
-			if (constr.getLeftClock().equals(constr.getRightClock())) {
-				return constr.getBound() < 0;
-			}
-
-			final Integer x = clockToIndex.get(constr.getLeftClock());
-			final Integer y = clockToIndex.get(constr.getRightClock());
-
-			if (x == null || y == null) {
-				return true;
-			} else {
-				return isConsistent(y, x, Lt(-constr.getBound()));
-			}
+		public Void visit(final UnitEqConstr constr, final Void param) {
+			final int x = indexOf(constr.getClock());
+			final int m = constr.getBound();
+			dbm.and(x, 0, Leq(m));
+			dbm.and(0, x, Leq(-m));
+			return null;
 		}
 
 		@Override
-		public Boolean visit(final DiffGeqConstr constr, final Void param) {
-			if (constr.getLeftClock().equals(constr.getRightClock())) {
-				return constr.getBound() <= 0;
-			}
-
-			final Integer x = clockToIndex.get(constr.getLeftClock());
-			final Integer y = clockToIndex.get(constr.getRightClock());
-
-			if (x == null || y == null) {
-				return true;
-			} else {
-				return isConsistent(y, x, Leq(-constr.getBound()));
-			}
+		public Void visit(final DiffLtConstr constr, final Void param) {
+			final int x = indexOf(constr.getLeftClock());
+			final int y = indexOf(constr.getRightClock());
+			final int m = constr.getBound();
+			dbm.and(x, y, Lt(m));
+			return null;
 		}
 
 		@Override
-		public Boolean visit(final DiffEqConstr constr, final Void param) {
-			if (constr.getLeftClock().equals(constr.getRightClock())) {
-				return constr.getBound() == 0;
-			}
-
-			final Integer x = clockToIndex.get(constr.getLeftClock());
-			final Integer y = clockToIndex.get(constr.getRightClock());
-
-			if (x == null || y == null) {
-				return true;
-			} else {
-				return isConsistent(x, y, Leq(constr.getBound())) && isConsistent(y, x, Leq(-constr.getBound()));
-			}
+		public Void visit(final DiffLeqConstr constr, final Void param) {
+			final int x = indexOf(constr.getLeftClock());
+			final int y = indexOf(constr.getRightClock());
+			final int m = constr.getBound();
+			dbm.and(x, y, Leq(m));
+			return null;
 		}
 
 		@Override
-		public Boolean visit(final AndConstr constr, final Void param) {
-			return constr.getConstrs().stream().allMatch(c -> c.accept(this, null));
+		public Void visit(final DiffGtConstr constr, final Void param) {
+			final int x = indexOf(constr.getLeftClock());
+			final int y = indexOf(constr.getRightClock());
+			final int m = constr.getBound();
+			dbm.and(y, x, Lt(-m));
+			return null;
+		}
+
+		@Override
+		public Void visit(final DiffGeqConstr constr, final Void param) {
+			final int x = indexOf(constr.getLeftClock());
+			final int y = indexOf(constr.getRightClock());
+			final int m = constr.getBound();
+			dbm.and(y, x, Leq(-m));
+			return null;
+		}
+
+		@Override
+		public Void visit(final DiffEqConstr constr, final Void param) {
+			final int x = indexOf(constr.getLeftClock());
+			final int y = indexOf(constr.getRightClock());
+			final int m = constr.getBound();
+			dbm.and(x, y, Leq(m));
+			dbm.and(y, x, Leq(-m));
+			return null;
+		}
+
+		@Override
+		public Void visit(final AndConstr constr, final Void param) {
+			for (final ClockConstr atomicConstr : constr.getConstrs()) {
+				atomicConstr.accept(this, param);
+				if (!dbm.isConsistent()) {
+					return null;
+				}
+			}
+			return null;
 		}
 	}
 
