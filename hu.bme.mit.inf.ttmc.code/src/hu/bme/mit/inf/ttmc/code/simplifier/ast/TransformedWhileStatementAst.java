@@ -9,5 +9,12 @@ public class TransformedWhileStatementAst extends WhileStatementAst {
 	public TransformedWhileStatementAst(ExpressionAst cond, StatementAst body) {
 		super(cond, body);
 	}
+	
+	public WhileStatementAst with(ExpressionAst cond, StatementAst body) {
+		if (super.with(cond, body) ==  this)
+			return this;
+		
+		return new TransformedWhileStatementAst(cond, body);
+	}
 
 }

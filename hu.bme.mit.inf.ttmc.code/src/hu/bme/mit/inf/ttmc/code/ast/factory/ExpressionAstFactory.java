@@ -9,67 +9,79 @@ import hu.bme.mit.inf.ttmc.code.ast.UnaryExpressionAst.Operator;
 
 public class ExpressionAstFactory {
 
-	public static BinaryExpressionAst add(ExpressionAst left, ExpressionAst right) {
+	public static BinaryExpressionAst Add(ExpressionAst left, ExpressionAst right) {
 		return new BinaryExpressionAst(left, right, BinaryExpressionAst.Operator.OP_ADD);
 	}
 
-	public static BinaryExpressionAst sub(ExpressionAst left, ExpressionAst right) {
+	public static BinaryExpressionAst Sub(ExpressionAst left, ExpressionAst right) {
 		return new BinaryExpressionAst(left, right, BinaryExpressionAst.Operator.OP_SUB);
 	}
 
-	public static BinaryExpressionAst mul(ExpressionAst left, ExpressionAst right) {
+	public static BinaryExpressionAst Mul(ExpressionAst left, ExpressionAst right) {
 		return new BinaryExpressionAst(left, right, BinaryExpressionAst.Operator.OP_MUL);
 	}
 
-	public static BinaryExpressionAst div(ExpressionAst left, ExpressionAst right) {
+	public static BinaryExpressionAst Div(ExpressionAst left, ExpressionAst right) {
 		return new BinaryExpressionAst(left, right, BinaryExpressionAst.Operator.OP_DIV);
 	}
 
-	public static BinaryExpressionAst assign(ExpressionAst left, ExpressionAst right) {
+	public static BinaryExpressionAst Mod(ExpressionAst left, ExpressionAst right) {
+		return new BinaryExpressionAst(left, right, BinaryExpressionAst.Operator.OP_MOD);
+	}
+
+	public static BinaryExpressionAst Assign(ExpressionAst left, ExpressionAst right) {
 		return new BinaryExpressionAst(left, right, BinaryExpressionAst.Operator.OP_ASSIGN);
 	}
 
-	public static BinaryExpressionAst isGt(ExpressionAst left, ExpressionAst right) {
+	public static BinaryExpressionAst IsGt(ExpressionAst left, ExpressionAst right) {
 		return new BinaryExpressionAst(left, right, BinaryExpressionAst.Operator.OP_IS_GT);
 	}
 
-	public static BinaryExpressionAst isGtEq(ExpressionAst left, ExpressionAst right) {
+	public static BinaryExpressionAst IsGtEq(ExpressionAst left, ExpressionAst right) {
 		return new BinaryExpressionAst(left, right, BinaryExpressionAst.Operator.OP_IS_GTEQ);
 	}
 
-	public static BinaryExpressionAst isLt(ExpressionAst left, ExpressionAst right) {
+	public static BinaryExpressionAst IsLt(ExpressionAst left, ExpressionAst right) {
 		return new BinaryExpressionAst(left, right, BinaryExpressionAst.Operator.OP_IS_LT);
 	}
 
-	public static BinaryExpressionAst isLtEq(ExpressionAst left, ExpressionAst right) {
+	public static BinaryExpressionAst IsLtEq(ExpressionAst left, ExpressionAst right) {
 		return new BinaryExpressionAst(left, right, BinaryExpressionAst.Operator.OP_IS_LTEQ);
 	}
 
-	public static BinaryExpressionAst isEq(ExpressionAst left, ExpressionAst right) {
+	public static BinaryExpressionAst IsEq(ExpressionAst left, ExpressionAst right) {
 		return new BinaryExpressionAst(left, right, BinaryExpressionAst.Operator.OP_IS_EQ);
 	}
 	
-	public static NameExpressionAst name(String name) {
+	public static BinaryExpressionAst LogicAnd(ExpressionAst left, ExpressionAst right) {
+		return new BinaryExpressionAst(left, right, BinaryExpressionAst.Operator.OP_LOGIC_AND);
+	}
+	
+	public static BinaryExpressionAst LogicOr(ExpressionAst left, ExpressionAst right) {
+		return new BinaryExpressionAst(left, right, BinaryExpressionAst.Operator.OP_LOGIC_OR);
+	}
+	
+	public static NameExpressionAst Name(String name) {
 		return new NameExpressionAst(name);
 	}
 	
-	public static LiteralExpressionAst lit(int value) {
+	public static LiteralExpressionAst IntLit(int value) {
 		return new LiteralExpressionAst(value);
 	}
 	
-	public static UnaryExpressionAst prefixIncr(ExpressionAst operand) {
+	public static UnaryExpressionAst PrefixIncr(ExpressionAst operand) {
 		return new UnaryExpressionAst(operand, Operator.OP_PREFIX_INCR);
 	}
 	
-	public static UnaryExpressionAst postfixIncr(ExpressionAst operand) {
+	public static UnaryExpressionAst PostfixIncr(ExpressionAst operand) {
 		return new UnaryExpressionAst(operand, Operator.OP_POSTFIX_INCR);
 	}
 	
-	public static UnaryExpressionAst prefixDecr(ExpressionAst operand) {
+	public static UnaryExpressionAst PrefixDecr(ExpressionAst operand) {
 		return new UnaryExpressionAst(operand, Operator.OP_PREFIX_DECR);
 	}
 	
-	public static UnaryExpressionAst postfixDecr(ExpressionAst operand) {
+	public static UnaryExpressionAst PostfixDecr(ExpressionAst operand) {
 		return new UnaryExpressionAst(operand, Operator.OP_POSTFIX_DECR);
 	}
 	

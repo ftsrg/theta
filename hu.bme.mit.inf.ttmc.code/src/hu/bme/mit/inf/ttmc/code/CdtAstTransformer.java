@@ -3,7 +3,6 @@ package hu.bme.mit.inf.ttmc.code;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.List;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTBreakStatement;
@@ -256,30 +255,22 @@ public class CdtAstTransformer {
 	}
 	
 	private static DeclarationSpecifierAst transformDeclSpecifier(IASTDeclSpecifier spec) {
-		EnumSet<DeclarationSpecifierAst.StorageClassSpecifier> storage = EnumSet.noneOf(DeclarationSpecifierAst.StorageClassSpecifier.class);
+		DeclarationSpecifierAst.StorageClassSpecifier storage = DeclarationSpecifierAst.StorageClassSpecifier.NONE;
 		EnumSet<DeclarationSpecifierAst.TypeQualifier> type = EnumSet.noneOf(DeclarationSpecifierAst.TypeQualifier.class);
-		EnumSet<DeclarationSpecifierAst.FunctionSpecifier> func = EnumSet.noneOf(DeclarationSpecifierAst.FunctionSpecifier.class);
+		DeclarationSpecifierAst.FunctionSpecifier func = DeclarationSpecifierAst.FunctionSpecifier.NONE;
 		
 		int sc = spec.getStorageClass();
 		
-		if ((sc & spec.sc_typedef) != 0) {
-			storage.add(DeclarationSpecifierAst.StorageClassSpecifier.TYPEDEF);
-		}
-		
-		if ((sc & spec.sc_extern) != 0) {
-			storage.add(DeclarationSpecifierAst.StorageClassSpecifier.EXTERN);
-		}
-		
-		if ((sc & spec.sc_static) != 0) {
-			storage.add(DeclarationSpecifierAst.StorageClassSpecifier.STATIC);
-		}
-		
-		if ((sc & spec.sc_auto) != 0) {
-			storage.add(DeclarationSpecifierAst.StorageClassSpecifier.AUTO);
-		}
-		
-		if ((sc & spec.sc_register) != 0) {
-			storage.add(DeclarationSpecifierAst.StorageClassSpecifier.REGISTER);
+		if (sc == IASTDeclSpecifier.sc_typedef) {
+			storage = DeclarationSpecifierAst.StorageClassSpecifier.TYPEDEF;
+		} else if (sc == IASTDeclSpecifier.sc_extern) {
+			storage = DeclarationSpecifierAst.StorageClassSpecifier.EXTERN;
+		} else if (sc == IASTDeclSpecifier.sc_static) {
+			storage = DeclarationSpecifierAst.StorageClassSpecifier.STATIC;
+		} else if (sc == IASTDeclSpecifier.sc_auto) {
+			storage = DeclarationSpecifierAst.StorageClassSpecifier.AUTO;
+		} else if (sc == IASTDeclSpecifier.sc_register) {
+			storage = DeclarationSpecifierAst.StorageClassSpecifier.REGISTER;
 		}
 		
 		if (spec.isConst()) {
@@ -295,7 +286,7 @@ public class CdtAstTransformer {
 		}
 		
 		if (spec.isInline()) {
-			func.add(DeclarationSpecifierAst.FunctionSpecifier.INLINE);
+			func = DeclarationSpecifierAst.FunctionSpecifier.INLINE;
 		}
 		
 		return new DeclarationSpecifierAst(storage, type, func);
@@ -426,6 +417,8 @@ public class CdtAstTransformer {
 			return new BinaryExpressionAst(left, right, BinaryExpressionAst.Operator.OP_MUL);
 		case IASTBinaryExpression.op_divide:
 			return new BinaryExpressionAst(left, right, BinaryExpressionAst.Operator.OP_DIV);
+		case IASTBinaryExpression.op_modulo:
+			return new BinaryExpressionAst(left, right, BinaryExpressionAst.Operator.OP_MOD);
 		case IASTBinaryExpression.op_assign:
 			return new BinaryExpressionAst(left, right, BinaryExpressionAst.Operator.OP_ASSIGN);
 		case IASTBinaryExpression.op_greaterThan:
@@ -440,9 +433,23 @@ public class CdtAstTransformer {
 			return new BinaryExpressionAst(left, right, BinaryExpressionAst.Operator.OP_IS_GTEQ);
 		case IASTBinaryExpression.op_lessEqual:
 			return new BinaryExpressionAst(left, right, BinaryExpressionAst.Operator.OP_IS_LTEQ);
+		case IASTBinaryExpression.op_plusAssign:
+			return new BinaryExpressionAst(left, right, BinaryExpressionAst.Operator.OP_ADD_ASSIGN);
+		case IASTBinaryExpression.op_minusAssign:
+			return new BinaryExpressionAst(left, right, BinaryExpressionAst.Operator.OP_SUB_ASSIGN);
+		case IASTBinaryExpression.op_multiplyAssign:
+			return new BinaryExpressionAst(left, right, BinaryExpressionAst.Operator.OP_MUL_ASSIGN);
+		case IASTBinaryExpression.op_divideAssign:
+			return new BinaryExpressionAst(left, right, BinaryExpressionAst.Operator.OP_DIV_ASSIGN);
+		case IASTBinaryExpression.op_moduloAssign:
+			return new BinaryExpressionAst(left, right, BinaryExpressionAst.Operator.OP_MOD_ASSIGN);
+		case IASTBinaryExpression.op_logicalAnd:
+			return new BinaryExpressionAst(left, right, BinaryExpressionAst.Operator.OP_LOGIC_AND);
+		case IASTBinaryExpression.op_logicalOr:
+			return new BinaryExpressionAst(left, right, BinaryExpressionAst.Operator.OP_LOGIC_OR);
 		}
 		
-		return null;
+		throw new TransformException("Unknown binary operator.");
 	}
 	
 }

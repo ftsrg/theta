@@ -15,7 +15,6 @@ import org.eclipse.core.runtime.CoreException;
 
 import hu.bme.mit.inf.ttmc.code.ast.DeclarationAst;
 import hu.bme.mit.inf.ttmc.code.ast.FunctionDefinitionAst;
-import hu.bme.mit.inf.ttmc.code.ast.StatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.TranslationUnitAst;
 import hu.bme.mit.inf.ttmc.code.simplifier.AstSimplifier;
 import hu.bme.mit.inf.ttmc.code.visitor.TransformProgramVisitor;
@@ -23,11 +22,6 @@ import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.formalism.cfa.CFA;
 import hu.bme.mit.inf.ttmc.formalism.cfa.CFACreator;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.ProcDecl;
-import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
-
-import hu.bme.mit.inf.ttmc.formalism.cfa.CFA;
-import hu.bme.mit.inf.ttmc.formalism.cfa.CFACreator;
-import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
 
 public class Compiler {
 

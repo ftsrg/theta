@@ -12,10 +12,8 @@ import org.eclipse.core.runtime.CoreException;
 
 import hu.bme.mit.inf.ttmc.code.ast.TranslationUnitAst;
 import hu.bme.mit.inf.ttmc.code.ast.utils.AstPrinter;
-import hu.bme.mit.inf.ttmc.core.type.Type;
+import hu.bme.mit.inf.ttmc.code.visitor.PrintCodeAstVisitor;
 import hu.bme.mit.inf.ttmc.formalism.cfa.CFA;
-import hu.bme.mit.inf.ttmc.formalism.common.decl.ProcDecl;
-import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
 import hu.bme.mit.inf.ttmc.formalism.utils.impl.CFAPrinter;
 
 class Application {
@@ -29,7 +27,14 @@ class Application {
 		
 		//CFA cfa = Compiler.createSBE("simple.c");
 		
+		TranslationUnitAst newRoot = Compiler.createSimplifiedAst("simple.c");
+		graphvizOutput("ast_trans", AstPrinter.toGraphvizString(newRoot));
+		
+		PrintCodeAstVisitor printer = new PrintCodeAstVisitor();
+		System.out.println(newRoot.accept(printer));
+		
 		//System.out.println(CFAPrinter.toGraphvizSting(cfa))
+
 		List<CFA> cfas = Compiler.createSBE("simple.c");
 		
 		for (CFA cfa : cfas) {

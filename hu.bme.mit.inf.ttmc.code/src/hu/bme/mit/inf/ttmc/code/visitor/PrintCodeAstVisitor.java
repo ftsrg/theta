@@ -2,6 +2,9 @@ package hu.bme.mit.inf.ttmc.code.visitor;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.StringJoiner;
+import java.util.function.UnaryOperator;
 
 import hu.bme.mit.inf.ttmc.code.ast.AssignmentInitializerAst;
 import hu.bme.mit.inf.ttmc.code.ast.BinaryExpressionAst;
@@ -10,6 +13,10 @@ import hu.bme.mit.inf.ttmc.code.ast.CaseStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.CompoundStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.ContinueStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.DeclarationAst;
+import hu.bme.mit.inf.ttmc.code.ast.DeclarationSpecifierAst;
+import hu.bme.mit.inf.ttmc.code.ast.DeclarationSpecifierAst.FunctionSpecifier;
+import hu.bme.mit.inf.ttmc.code.ast.DeclarationSpecifierAst.StorageClassSpecifier;
+import hu.bme.mit.inf.ttmc.code.ast.DeclarationSpecifierAst.TypeQualifier;
 import hu.bme.mit.inf.ttmc.code.ast.DeclarationStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.DeclaratorAst;
 import hu.bme.mit.inf.ttmc.code.ast.DefaultStatementAst;
@@ -28,6 +35,7 @@ import hu.bme.mit.inf.ttmc.code.ast.LabeledStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.LiteralExpressionAst;
 import hu.bme.mit.inf.ttmc.code.ast.NameExpressionAst;
 import hu.bme.mit.inf.ttmc.code.ast.NullStatementAst;
+import hu.bme.mit.inf.ttmc.code.ast.ParameterDeclarationAst;
 import hu.bme.mit.inf.ttmc.code.ast.ReturnStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.StatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.SwitchStatementAst;
@@ -77,9 +85,10 @@ public class PrintCodeAstVisitor implements AstVisitor<String, String, String, S
 		case OP_ASTERISK:
 		case OP_MINUS:
 		case OP_PLUS:
-			return String.format("%s(%s)", ast.getOperator().toString(), ast.getOperand().accept(this));
+		case OP_NOT:
+			return String.format("%s(%s)", unaryOperatorString(ast.getOperator()), ast.getOperand().accept(this));
 		default:
-			return String.format("(%s)%s", ast.getOperator().toString(), ast.getOperand().accept(this));
+			return String.format("(%s)%s", unaryOperatorString(ast.getOperator()), ast.getOperand().accept(this));
 		}
 	}
 
@@ -157,18 +166,17 @@ public class PrintCodeAstVisitor implements AstVisitor<String, String, String, S
 
 	@Override
 	public String visit(VarDeclarationAst ast) {
-		List<String> declarators = new ArrayList<>();
-		
+		StringJoiner sj = new StringJoiner(", ");
 		for (DeclaratorAst decl : ast.getDeclarators()) {
-			declarators.add(decl.accept(this));
+			sj.add(decl.accept(this));
 		}
 		
-		return String.format("int %s", String.join(", ", declarators));
+		return String.format("%s %s", declSpecifierString(ast.getSpecifier()), String.join(", ", sj.toString()));
 	}
 
 	@Override
 	public String visit(FunctionDefinitionAst ast) {
-		return String.format("%s\n%s", ast.getDeclarator().accept(this), ast.getBody().accept(this));
+		return String.format("%s %s\n%s", declSpecifierString(ast.getDeclarationSpecifier()), ast.getDeclarator().accept(this), ast.getBody().accept(this));
 	}
 
 	@Override
@@ -183,7 +191,13 @@ public class PrintCodeAstVisitor implements AstVisitor<String, String, String, S
 
 	@Override
 	public String visit(FunctionDeclaratorAst ast) {
-		return String.format("%s()", ast.getName());
+		StringJoiner sj = new StringJoiner(", ");
+		
+		for (ParameterDeclarationAst param : ast.getParameters()) {
+			sj.add(declSpecifierString(param.getSpecifier()) + " " + param.getDeclarator().getName());
+		}		
+		
+		return String.format("%s(%s)", ast.getName(), sj.toString());
 	}
 
 	@Override
@@ -236,6 +250,27 @@ public class PrintCodeAstVisitor implements AstVisitor<String, String, String, S
 		
 		return sb.toString();
 	}
+	
+	private String unaryOperatorString(UnaryExpressionAst.Operator op) {
+		switch (op) {
+		case OP_ASTERISK:
+			return "*";
+		case OP_MINUS:
+			return "-";
+		case OP_NOT:
+			return "!";
+		case OP_PLUS:
+			return "+";
+		case OP_POSTFIX_DECR:
+		case OP_PREFIX_DECR:
+			return "--";
+		case OP_POSTFIX_INCR:
+		case OP_PREFIX_INCR:
+			return "++";
+		default:
+			throw new UnsupportedOperationException();
+		}
+	}
 
 	private String binaryOperatorString(BinaryExpressionAst.Operator op) {
 		switch (op) {
@@ -260,9 +295,75 @@ public class PrintCodeAstVisitor implements AstVisitor<String, String, String, S
 		case OP_MUL:
 			return "*";
 		case OP_SUB:
-			return "-";			
+			return "-";
+		case OP_ADD_ASSIGN:
+			return "+=";
+		case OP_DIV_ASSIGN:
+			return "/=";
+		case OP_MOD_ASSIGN:
+			return "%=";
+		case OP_MUL_ASSIGN:
+			return "*=";
+		case OP_SUB_ASSIGN:
+			return "-=";
+		case OP_LOGIC_AND:
+			return "&&";
+		case OP_LOGIC_OR:
+			return "||";
+		case OP_MOD:
+			return "%";
+		default:
+			throw new UnsupportedOperationException();	
 		}
-		throw new UnsupportedOperationException();
+	}
+	
+	private String declSpecifierString(DeclarationSpecifierAst spec)
+	{	
+		StringJoiner sj = new StringJoiner(" ");
+		
+		switch (spec.getStorageClassSpecifier()) {
+		case EXTERN:
+			sj.add("extern");
+			break;
+		case REGISTER:
+			sj.add("register");
+			break;
+		case STATIC:
+			sj.add("static");
+			break;
+		case TYPEDEF:
+			sj.add("typedef");
+			break;
+		case AUTO:
+			sj.add("auto");
+		default:
+			break;
+		}
+		
+		for (TypeQualifier qualifier : spec.getTypeQualifier()) {
+			switch (qualifier) {
+			case CONST:
+				sj.add("const");
+			case RESTRICT:
+				sj.add("restrict");
+				break;
+			case VOLATILE:
+				sj.add("volatile");
+				break;
+			}
+		}
+		
+		switch (spec.getFunctionSpecifier()) {
+		case INLINE:
+			sj.add("inline");
+			break;
+		default:
+			break;
+		}
+		
+		sj.add("int");
+		
+		return sj.toString();
 	}
 	
 	

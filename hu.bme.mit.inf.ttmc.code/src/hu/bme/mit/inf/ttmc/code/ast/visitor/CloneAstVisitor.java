@@ -1,39 +1,10 @@
 package hu.bme.mit.inf.ttmc.code.ast.visitor;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import hu.bme.mit.inf.ttmc.code.ast.BinaryExpressionAst;
-import hu.bme.mit.inf.ttmc.code.ast.BreakStatementAst;
-import hu.bme.mit.inf.ttmc.code.ast.CaseStatementAst;
-import hu.bme.mit.inf.ttmc.code.ast.CompoundStatementAst;
-import hu.bme.mit.inf.ttmc.code.ast.ContinueStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.DeclarationAst;
-import hu.bme.mit.inf.ttmc.code.ast.DeclarationStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.DeclaratorAst;
-import hu.bme.mit.inf.ttmc.code.ast.DefaultStatementAst;
-import hu.bme.mit.inf.ttmc.code.ast.DoStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.ExpressionAst;
-import hu.bme.mit.inf.ttmc.code.ast.ExpressionListAst;
-import hu.bme.mit.inf.ttmc.code.ast.ExpressionStatementAst;
-import hu.bme.mit.inf.ttmc.code.ast.ForStatementAst;
-import hu.bme.mit.inf.ttmc.code.ast.FunctionCallExpressionAst;
-import hu.bme.mit.inf.ttmc.code.ast.FunctionDeclaratorAst;
-import hu.bme.mit.inf.ttmc.code.ast.FunctionDefinitionAst;
-import hu.bme.mit.inf.ttmc.code.ast.GotoStatementAst;
-import hu.bme.mit.inf.ttmc.code.ast.IfStatementAst;
-import hu.bme.mit.inf.ttmc.code.ast.InitDeclaratorAst;
-import hu.bme.mit.inf.ttmc.code.ast.LabeledStatementAst;
-import hu.bme.mit.inf.ttmc.code.ast.LiteralExpressionAst;
-import hu.bme.mit.inf.ttmc.code.ast.NameExpressionAst;
-import hu.bme.mit.inf.ttmc.code.ast.NullStatementAst;
-import hu.bme.mit.inf.ttmc.code.ast.ReturnStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.StatementAst;
-import hu.bme.mit.inf.ttmc.code.ast.SwitchStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.TranslationUnitAst;
-import hu.bme.mit.inf.ttmc.code.ast.UnaryExpressionAst;
-import hu.bme.mit.inf.ttmc.code.ast.VarDeclarationAst;
-import hu.bme.mit.inf.ttmc.code.ast.WhileStatementAst;
 
 public abstract class CloneAstVisitor implements AstVisitor<ExpressionAst, StatementAst, DeclarationAst, DeclaratorAst, TranslationUnitAst> {
 /*

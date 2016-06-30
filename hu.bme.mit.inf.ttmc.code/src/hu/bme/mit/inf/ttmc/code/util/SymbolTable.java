@@ -13,8 +13,7 @@ public class SymbolTable<Node> {
 		
 		public boolean contains(String name)
 		{
-			boolean has = false;
-			if (has = nodes.containsKey(name)) {
+			if (nodes.containsKey(name)) {
 				return true;
 			}
 			

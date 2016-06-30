@@ -1,9 +1,37 @@
 package hu.bme.mit.inf.ttmc.code.visitor;
 
+import static hu.bme.mit.inf.ttmc.core.decl.impl.Decls.Param;
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Add;
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.And;
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Eq;
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Geq;
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Gt;
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Int;
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.IntDiv;
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Leq;
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Lt;
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Mod;
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Mul;
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Neg;
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Neq;
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Not;
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Or;
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Sub;
+import static hu.bme.mit.inf.ttmc.core.type.impl.Types.Int;
+import static hu.bme.mit.inf.ttmc.formalism.common.decl.impl.Decls2.Proc;
+import static hu.bme.mit.inf.ttmc.formalism.common.decl.impl.Decls2.Var;
+import static hu.bme.mit.inf.ttmc.formalism.common.stmt.impl.Stmts.Assert;
+import static hu.bme.mit.inf.ttmc.formalism.common.stmt.impl.Stmts.Assign;
+import static hu.bme.mit.inf.ttmc.formalism.common.stmt.impl.Stmts.Block;
+import static hu.bme.mit.inf.ttmc.formalism.common.stmt.impl.Stmts.Decl;
+import static hu.bme.mit.inf.ttmc.formalism.common.stmt.impl.Stmts.Do;
+import static hu.bme.mit.inf.ttmc.formalism.common.stmt.impl.Stmts.If;
+import static hu.bme.mit.inf.ttmc.formalism.common.stmt.impl.Stmts.Return;
+import static hu.bme.mit.inf.ttmc.formalism.common.stmt.impl.Stmts.Skip;
+import static hu.bme.mit.inf.ttmc.formalism.common.stmt.impl.Stmts.While;
+
 import java.util.ArrayList;
 import java.util.List;
-
-import javax.xml.transform.TransformerException;
 
 import hu.bme.mit.inf.ttmc.code.TransformException;
 import hu.bme.mit.inf.ttmc.code.ast.AssignmentInitializerAst;
@@ -14,16 +42,20 @@ import hu.bme.mit.inf.ttmc.code.ast.CaseStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.CompoundStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.ContinueStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.DeclarationAst;
+import hu.bme.mit.inf.ttmc.code.ast.DeclarationStatementAst;
+import hu.bme.mit.inf.ttmc.code.ast.DefaultStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.DoStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.ExpressionAst;
 import hu.bme.mit.inf.ttmc.code.ast.ExpressionListAst;
 import hu.bme.mit.inf.ttmc.code.ast.ExpressionStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.ForStatementAst;
-import hu.bme.mit.inf.ttmc.code.ast.FunctionDefinitionAst;
-import hu.bme.mit.inf.ttmc.code.ast.GotoStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.FunctionCallExpressionAst;
 import hu.bme.mit.inf.ttmc.code.ast.FunctionDeclaratorAst;
+import hu.bme.mit.inf.ttmc.code.ast.FunctionDefinitionAst;
+import hu.bme.mit.inf.ttmc.code.ast.GotoStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.IfStatementAst;
+import hu.bme.mit.inf.ttmc.code.ast.InitDeclaratorAst;
+import hu.bme.mit.inf.ttmc.code.ast.LabeledStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.LiteralExpressionAst;
 import hu.bme.mit.inf.ttmc.code.ast.NameExpressionAst;
 import hu.bme.mit.inf.ttmc.code.ast.NullStatementAst;
@@ -33,10 +65,6 @@ import hu.bme.mit.inf.ttmc.code.ast.StatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.SwitchStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.UnaryExpressionAst;
 import hu.bme.mit.inf.ttmc.code.ast.VarDeclarationAst;
-import hu.bme.mit.inf.ttmc.code.ast.DeclarationStatementAst;
-import hu.bme.mit.inf.ttmc.code.ast.DefaultStatementAst;
-import hu.bme.mit.inf.ttmc.code.ast.InitDeclaratorAst;
-import hu.bme.mit.inf.ttmc.code.ast.LabeledStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.WhileStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.visitor.DeclarationVisitor;
 import hu.bme.mit.inf.ttmc.code.ast.visitor.DeclaratorVisitor;
@@ -58,15 +86,7 @@ import hu.bme.mit.inf.ttmc.core.utils.impl.ExprUtils;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.ProcDecl;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.VarRefExpr;
-
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
-
-import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.*;
-import static hu.bme.mit.inf.ttmc.formalism.common.expr.impl.Exprs2.*;
-import static hu.bme.mit.inf.ttmc.formalism.common.stmt.impl.Stmts.*;
-import static hu.bme.mit.inf.ttmc.core.type.impl.Types.*;
-import static hu.bme.mit.inf.ttmc.core.decl.impl.Decls.*;
-import static hu.bme.mit.inf.ttmc.formalism.common.decl.impl.Decls2.*;
 
 public class TransformProgramVisitor implements
 	ExpressionVisitor<Expr<? extends Type>>,
@@ -93,6 +113,10 @@ public class TransformProgramVisitor implements
 				return Sub(ExprUtils.cast(left, ClosedUnderSub.class), ExprUtils.cast(right, ClosedUnderSub.class));
 			case OP_MUL:
 				return Mul(ExprUtils.cast(left, ClosedUnderMul.class), ExprUtils.cast(right, ClosedUnderMul.class));
+			case OP_DIV:
+				return IntDiv(ExprUtils.cast(left, IntType.class), ExprUtils.cast(right, IntType.class));
+			case OP_MOD:
+				return Mod(ExprUtils.cast(left, IntType.class), ExprUtils.cast(right, IntType.class));				
 			case OP_IS_GT:
 				return Gt(ExprUtils.cast(left, RatType.class), ExprUtils.cast(right, RatType.class));
 			case OP_IS_LT:
@@ -101,18 +125,18 @@ public class TransformProgramVisitor implements
 				return Eq(left, right);
 			case OP_IS_NOT_EQ:
 				return Neq(left, right);
-			case OP_DIV:
-				return IntDiv(ExprUtils.cast(left, IntType.class), ExprUtils.cast(right, IntType.class));
 			case OP_IS_GTEQ:
 				return Geq(ExprUtils.cast(left, RatType.class), ExprUtils.cast(right, RatType.class));
 			case OP_IS_LTEQ:
 				return Leq(ExprUtils.cast(left, RatType.class), ExprUtils.cast(right, RatType.class));
+			case OP_LOGIC_AND:
+				return And(ExprUtils.cast(left, BoolType.class), ExprUtils.cast(right, BoolType.class));
+			case OP_LOGIC_OR:
+				return Or(ExprUtils.cast(left, BoolType.class), ExprUtils.cast(right, BoolType.class));
 			case OP_ASSIGN: // intentional
 			default:
-				break;
+				throw new UnsupportedOperationException("This code should not be reachable.");
 		}
-		
-		return null;
 	}
 
 	@Override
@@ -297,7 +321,20 @@ public class TransformProgramVisitor implements
 
 	@Override
 	public Expr<? extends Type> visit(FunctionCallExpressionAst ast) {
-		throw new UnsupportedOperationException("TODO: Function call Stmt");
+		String name = ast.getName();
+		
+		if (!this.symbols.contains(name)) {
+			throw new RuntimeException(String.format("Use of undeclared identifier '%s'.", name));
+		}
+		
+		Decl<? extends Type, ?> decl = this.symbols.get(name);
+		if (!(decl instanceof ProcDecl<?>)) {
+			throw new RuntimeException(String.format("Invalid use of function indirection.", name));			
+		}
+		
+		ProcDecl<? extends Type> proc = (ProcDecl<? extends Type>) decl;
+		
+		throw new UnsupportedOperationException("TODO: Function call");
 	}
 	
 	@Override

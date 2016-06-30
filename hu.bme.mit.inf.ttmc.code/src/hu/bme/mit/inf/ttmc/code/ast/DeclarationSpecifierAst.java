@@ -5,43 +5,62 @@ import java.util.EnumSet;
 public class DeclarationSpecifierAst extends AstNode {
 
 	public enum StorageClassSpecifier {
-		TYPEDEF, EXTERN, STATIC, AUTO, REGISTER		
+		TYPEDEF, EXTERN, STATIC, AUTO, REGISTER,
+		NONE
 	}
 	
 	public enum TypeQualifier {
-		CONST, RESTRICT, VOLATILE
+		CONST, RESTRICT, VOLATILE,
 	}
 	
-	public enum TypeEnum {
+	public enum TypeSpecifier {
 		VOID, CHAR, SHORT, INT, LONG, FLOAT, DOUBLE, SIGNED, UNSIGNED
 	}
 	
 	public enum FunctionSpecifier {
-		INLINE
+		INLINE,
+		NONE
 	}
 		
-	private EnumSet<StorageClassSpecifier> storageSpec;
+	private StorageClassSpecifier storageSpec;
 	private EnumSet<TypeQualifier> typeQualifier;
-	private EnumSet<FunctionSpecifier> functionSpec;
+	private FunctionSpecifier functionSpec;
 	
 	public DeclarationSpecifierAst() {
-		this.storageSpec = EnumSet.noneOf(StorageClassSpecifier.class);
+		this.storageSpec = StorageClassSpecifier.NONE;
+		this.functionSpec = FunctionSpecifier.NONE;
 		this.typeQualifier = EnumSet.noneOf(TypeQualifier.class);
-		this.functionSpec = EnumSet.noneOf(FunctionSpecifier.class);
 	}
-	
+		
 	public DeclarationSpecifierAst(
-		EnumSet<StorageClassSpecifier> storageSpec,
-		EnumSet<TypeQualifier> typeQualifier,
-		EnumSet<FunctionSpecifier> functionSpec
+		StorageClassSpecifier storageSpec,
+		EnumSet<TypeQualifier> typeQualifiers,
+		FunctionSpecifier functionSpec
 	) {
 		this.storageSpec = storageSpec;
-		this.typeQualifier = typeQualifier;
+		this.typeQualifier = typeQualifiers;
 		this.functionSpec = functionSpec;
 	}
 	
-	public final EnumSet<StorageClassSpecifier> getStorageClassSpecifier() {
+	public DeclarationSpecifierAst(
+		StorageClassSpecifier storageSpec,
+		EnumSet<TypeQualifier> typeQualifiers
+	) {
+		this.storageSpec = storageSpec;
+		this.typeQualifier = typeQualifiers;
+		this.functionSpec = FunctionSpecifier.NONE;
+	}
+	
+	public final StorageClassSpecifier getStorageClassSpecifier() {
 		return this.storageSpec;
+	}
+
+	public EnumSet<TypeQualifier> getTypeQualifier() {
+		return this.typeQualifier;
+	}
+
+	public FunctionSpecifier getFunctionSpecifier() {
+		return this.functionSpec;
 	}
 	
 	@Override
@@ -53,5 +72,6 @@ public class DeclarationSpecifierAst extends AstNode {
 	public DeclarationSpecifierAst copy() {
 		throw new UnsupportedOperationException();
 	}
+
 
 }
