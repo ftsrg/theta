@@ -35,6 +35,8 @@ class Application {
 		
 		//System.out.println(CFAPrinter.toGraphvizSting(cfa))
 
+		System.out.println(Compiler.createStmts("simple.c").get(0).getStmt().get());
+		
 		List<CFA> cfas = Compiler.createSBE("simple.c");
 		
 		for (CFA cfa : cfas) {
