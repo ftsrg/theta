@@ -1,5 +1,5 @@
 
-int main(void) {
+int main() {
 	int i, x, j = 3, u = 4, z, y;
 
 	i = 3;
