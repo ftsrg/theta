@@ -100,7 +100,7 @@ final class SimpleDBM {
 				}
 			}
 		}
-		assert isClosed();
+		assert !isConsistent() || isClosed();
 	}
 
 	public void free(final int x) {
