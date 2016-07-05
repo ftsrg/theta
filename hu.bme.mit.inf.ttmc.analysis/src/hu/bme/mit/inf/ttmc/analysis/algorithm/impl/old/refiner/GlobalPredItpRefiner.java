@@ -1,4 +1,4 @@
-package hu.bme.mit.inf.ttmc.analysis.algorithm.impl.refiner;
+package hu.bme.mit.inf.ttmc.analysis.algorithm.impl.old.refiner;
 
 import java.util.HashSet;
 import java.util.Set;
