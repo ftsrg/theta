@@ -57,8 +57,8 @@
   <eClassifiers xsi:type="ecore:EClass" name="JoinState" eSuperTypes="#//PseudoState"/>
   <eClassifiers xsi:type="ecore:EClass" name="EntryState" eSuperTypes="#//PseudoState"/>
   <eClassifiers xsi:type="ecore:EClass" name="InitialState" eSuperTypes="#//EntryState"/>
-  <eClassifiers xsi:type="ecore:EClass" name="DeepHistory" eSuperTypes="#//EntryState"/>
-  <eClassifiers xsi:type="ecore:EClass" name="ShallowHistory" eSuperTypes="#//EntryState"/>
+  <eClassifiers xsi:type="ecore:EClass" name="DeepHistoryState" eSuperTypes="#//EntryState"/>
+  <eClassifiers xsi:type="ecore:EClass" name="ShallowHistoryState" eSuperTypes="#//EntryState"/>
   <eClassifiers xsi:type="ecore:EClass" name="Transition" eSuperTypes="../../hu.bme.mit.inf.ttmc.constraint.model/model/constraint.ecore#//ParametricElement">
     <eStructuralFeatures xsi:type="ecore:EReference" name="sourceState" eType="#//StateNode"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="targetState" eType="#//StateNode"/>
