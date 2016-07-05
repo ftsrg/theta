@@ -16,6 +16,7 @@ import java.util.Collections;
 import org.junit.Test;
 
 import hu.bme.mit.inf.ttmc.analysis.algorithm.Abstractor;
+import hu.bme.mit.inf.ttmc.analysis.algorithm.AbstractorImpl;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.ArgPrinter;
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplDomain;
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplPrecision;
@@ -42,8 +43,7 @@ public class STSExplTest {
 		final int mod = 10;
 
 		final Expr<? extends BoolType> init = Eq(x, Int(0));
-		final Expr<? extends BoolType> trans = And(Imply(Lt(x, Int(mod)), Eq(Prime(x), Add(x, Int(1)))),
-				Imply(Geq(x, Int(mod)), Eq(Prime(x), Int(0))));
+		final Expr<? extends BoolType> trans = And(Imply(Lt(x, Int(mod)), Eq(Prime(x), Add(x, Int(1)))), Imply(Geq(x, Int(mod)), Eq(Prime(x), Int(0))));
 		final Expr<? extends BoolType> target = Eq(x, Int(mod));
 
 		final STSAnalysisContext context = new STSAnalysisContext(trans);
@@ -58,8 +58,8 @@ public class STSExplTest {
 
 		final ExplPrecision precision = GlobalExplPrecision.create(Collections.singleton(vx), Collections.emptySet());
 
-		final Abstractor<ExplState, STSAction, ExplPrecision> abstractor = new Abstractor<>(context, domain,
-				initFunction, transferFunction, targetPredicate);
+		final Abstractor<ExplState, STSAction, ExplPrecision> abstractor = new AbstractorImpl<>(context, domain, initFunction, transferFunction,
+				targetPredicate);
 
 		abstractor.init(precision);
 		abstractor.check(precision);
