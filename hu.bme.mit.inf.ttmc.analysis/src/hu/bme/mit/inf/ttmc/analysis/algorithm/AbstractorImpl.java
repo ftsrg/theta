@@ -1,6 +1,7 @@
 package hu.bme.mit.inf.ttmc.analysis.algorithm;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -37,6 +38,7 @@ public class AbstractorImpl<S extends State, A extends Action, P extends Precisi
 
 	@Override
 	public ARG<S, A> getARG() {
+		checkState(arg != null);
 		return arg;
 	}
 
