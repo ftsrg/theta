@@ -1,4 +1,4 @@
-package hu.bme.mit.inf.ttmc.analysis.algorithm.impl.concretizer;
+package hu.bme.mit.inf.ttmc.analysis.algorithm.impl.old.concretizer;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
