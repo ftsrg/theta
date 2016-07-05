@@ -21,4 +21,9 @@ public class StmtCFGNode extends CFGNode {
 		return this.stmt.toString();
 	}
 
+	@Override
+	public String getLabel() {
+		return this.stmt.toString();
+	}
+
 }

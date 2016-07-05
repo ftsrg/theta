@@ -37,7 +37,7 @@ public class CFGBuilder {
 
 		public void transform(Stmt stmt) {
 			CFGNode node = new StmtCFGNode(stmt);
-			node.addParent(cfg.getInit());
+			node.addParent(cfg.getEntry());
 			node.addChild(cfg.getEnd());
 
 			processStmt(stmt, node);
@@ -180,12 +180,9 @@ public class CFGBuilder {
 			CFGNode assumeNode = new StmtCFGNode(assume);
 			CFGNode bodyNode = new StmtCFGNode(body);
 
-			for (CFGNode child : param.getChildren()) {
-				child.addParent(assumeNode);
-			}
 
 			param.parentsReplace(assumeNode);
-			param.childrenReplace(bodyNode);
+			param.childrenReplace(assumeNode);
 			assumeNode.addChild(bodyNode);
 			bodyNode.addChild(assumeNode);
 			processStmt(body, bodyNode);

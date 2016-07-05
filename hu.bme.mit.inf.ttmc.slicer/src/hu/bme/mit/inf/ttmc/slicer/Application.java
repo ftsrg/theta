@@ -15,6 +15,11 @@ import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
 import hu.bme.mit.inf.ttmc.formalism.utils.impl.CFAPrinter;
 import hu.bme.mit.inf.ttmc.slicer.cfg.StmtCFGNode;
+import hu.bme.mit.inf.ttmc.slicer.graph.GraphPrinter;
+import hu.bme.mit.inf.ttmc.slicer.pdg.DominanceTree;
+import hu.bme.mit.inf.ttmc.slicer.pdg.PDG;
+import hu.bme.mit.inf.ttmc.slicer.pdg.PDGPrinter;
+import hu.bme.mit.inf.ttmc.slicer.pdg.PDGTransformer;
 import hu.bme.mit.inf.ttmc.slicer.cfg.CFG;
 import hu.bme.mit.inf.ttmc.slicer.cfg.CFGBuilder;
 import hu.bme.mit.inf.ttmc.slicer.cfg.CFGPrinter;
@@ -31,8 +36,16 @@ public class Application {
 		CFG cfg = CFGBuilder.createCFG(body);
 		CFA cfa = CFACreator.createSBE(body.getStmt().get());
 
-		System.out.println(CFGPrinter.toGraphvizString(cfg));
+		//System.out.println(CFGPrinter.toGraphvizString(cfg));
 		//System.out.println(CFAPrinter.toGraphvizSting(cfa));
+
+		System.out.println(GraphPrinter.toGraphvizString(cfg));
+
+		DominanceTree fdt =	DominanceTree.fromCFG(cfg);
+		System.out.println(GraphPrinter.toGraphvizString(fdt));
+
+		//PDG pdg = PDGTransformer.createPDG(cfg);
+		//System.out.println(GraphPrinter.toGraphvizString(pdg));
 	}
 
 }

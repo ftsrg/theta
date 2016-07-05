@@ -1,4 +1,4 @@
-package hu.bme.mit.inf.ttmc.slicer.cfg;
+package hu.bme.mit.inf.ttmc.slicer.pdg;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -8,23 +8,23 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-public class CFGPrinter {
+public class PDGPrinter {
 
 	private static class Edge
 	{
-		public CFGNode source;
-		public CFGNode target;
+		public PDGNode source;
+		public PDGNode target;
 
-		Edge(CFGNode source, CFGNode target) { this.source = source; this.target = target; }
+		Edge(PDGNode source, PDGNode target) { this.source = source; this.target = target; }
 	}
 
 
 	private static int uniqid = 0;
 
-	public static void countEdges(CFGNode cfg, Set<Edge> edges, Map<CFGNode, Integer> nodes)
+	public static void countEdges(PDGNode pdg, Set<Edge> edges, Map<PDGNode, Integer> nodes)
 	{
-		for (CFGNode node : cfg.getChildren()) {
-			edges.add(new Edge(cfg, node));
+		for (PDGNode node : pdg.getControlChildren()) {
+			edges.add(new Edge(pdg, node));
 			if (!nodes.containsKey(node)) {
 				nodes.put(node, uniqid++);
 				countEdges(node, edges, nodes);
@@ -32,25 +32,25 @@ public class CFGPrinter {
 		}
 	}
 
-	public static String toGraphvizString(CFG cfg)
+	public static String toGraphvizString(PDG pdg)
 	{
 		StringBuilder sb = new StringBuilder();
 
 		Set<Edge> edges = new HashSet<>();
-		Map<CFGNode, Integer> nodes = new HashMap<>();
+		Map<PDGNode, Integer> nodes = new HashMap<>();
 
-		CFGNode entry = cfg.getEntry();
+		PDGNode entry = pdg.getEntry();
 
 		nodes.put(entry, uniqid++);
 		countEdges(entry, edges, nodes);
 
 		sb.append("digraph G {");
-		for (Entry<CFGNode, Integer> node : nodes.entrySet()) {
+		for (Entry<PDGNode, Integer> node : nodes.entrySet()) {
 			sb.append(String.format("node_%d [label=\"%s\"];\n", node.getValue(), node.getKey()));
 		}
 
 		for (Edge e : edges) {
-			sb.append(String.format("node_%d -> node_%d\n", nodes.get(e.source), nodes.get(e.target)));
+			sb.append(String.format("node_%d -> node_%d [color=blue]\n", nodes.get(e.source), nodes.get(e.target)));
 		}
 		sb.append("}");
 

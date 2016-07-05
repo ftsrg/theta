@@ -1,10 +1,11 @@
 package hu.bme.mit.inf.ttmc.slicer.cfg;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 
-public class CFGNode {
+import hu.bme.mit.inf.ttmc.slicer.graph.GraphNode;
+
+public abstract class CFGNode implements GraphNode {
 
 	private Collection<CFGNode> parents = new HashSet<CFGNode>();
 	private Collection<CFGNode> children = new HashSet<CFGNode>();
@@ -54,7 +55,13 @@ public class CFGNode {
 		this.childrenReplace(newNode);
 	}
 
+	@Override
 	public Collection<CFGNode> getChildren()
+	{
+		return this.children;
+	}
+
+	public Collection<CFGNode> getParents()
 	{
 		return this.children;
 	}

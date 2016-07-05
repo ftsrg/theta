@@ -13,4 +13,10 @@ public class DecoratedCFGNode extends CFGNode {
 		return this.name;
 	}
 
+	@Override
+	public String getLabel() {
+		return this.name;
+	}
+
+
 }
