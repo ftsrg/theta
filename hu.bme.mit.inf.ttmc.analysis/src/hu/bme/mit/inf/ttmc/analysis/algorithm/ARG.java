@@ -21,6 +21,7 @@ public class ARG<S extends State, A extends Action> {
 	private final Collection<ARGEdge<S, A>> edges;
 
 	private final Collection<ARGNode<S, A>> initNodes;
+	private final Collection<ARGNode<S, A>> targetNodes;
 
 	private int nextId = 0;
 
@@ -29,6 +30,7 @@ public class ARG<S extends State, A extends Action> {
 		nodes = new LinkedHashSet<>();
 		edges = new HashSet<>();
 		initNodes = new HashSet<>();
+		targetNodes = new HashSet<>();
 	}
 
 	////
@@ -43,6 +45,10 @@ public class ARG<S extends State, A extends Action> {
 
 	public Collection<ARGNode<S, A>> getInitNodes() {
 		return Collections.unmodifiableCollection(initNodes);
+	}
+
+	public Collection<ARGNode<S, A>> getTargetNodes() {
+		return Collections.unmodifiableCollection(targetNodes);
 	}
 
 	////
@@ -101,6 +107,9 @@ public class ARG<S extends State, A extends Action> {
 	private ARGNode<S, A> createNode(final S state, final boolean target) {
 		final ARGNode<S, A> node = new ARGNode<>(state, nextId, target);
 		nodes.add(node);
+		if (node.isTarget()) {
+			targetNodes.add(node);
+		}
 		nextId++;
 		return node;
 	}
