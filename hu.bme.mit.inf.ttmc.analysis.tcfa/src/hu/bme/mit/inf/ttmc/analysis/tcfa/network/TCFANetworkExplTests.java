@@ -13,6 +13,7 @@ import java.util.List;
 import org.junit.Test;
 
 import hu.bme.mit.inf.ttmc.analysis.algorithm.Abstractor;
+import hu.bme.mit.inf.ttmc.analysis.algorithm.AbstractorImpl;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.ArgPrinter;
 import hu.bme.mit.inf.ttmc.analysis.composite.CompositeDomain;
 import hu.bme.mit.inf.ttmc.analysis.composite.CompositeInitFunction;
@@ -73,19 +74,17 @@ public class TCFANetworkExplTests {
 				new CompositeDomain<>(ZoneDomain.getInstance(), ExplDomain.getInstance()));
 
 		final TCFAInitFunction<CompositeState<ZoneState, ExplState>, CompositePrecision<ZonePrecision, ExplPrecision>> initFunction = new TCFAInitFunction<>(
-				TCFANetworkLoc.create(initLocs),
-				new CompositeInitFunction<>(new TCFAZoneInitFunction(), new TCFAExplInitFunction()));
+				TCFANetworkLoc.create(initLocs), new CompositeInitFunction<>(new TCFAZoneInitFunction(), new TCFAExplInitFunction()));
 
 		final TCFATransferFunction<CompositeState<ZoneState, ExplState>, CompositePrecision<ZonePrecision, ExplPrecision>> transferFunction = new TCFATransferFunction<>(
 				new CompositeTransferFunction<>(new TCFAZoneTransferFunction(), new TCFAExplTransferFunction(solver)));
 
 		final TCFALocTargetPredicate targetPredicate = new TCFALocTargetPredicate(loc -> false);
 
-		final CompositePrecision<ZonePrecision, ExplPrecision> precision = CompositePrecision.create(
-				ZonePrecision.builder().addAll(clocks).build(),
+		final CompositePrecision<ZonePrecision, ExplPrecision> precision = CompositePrecision.create(ZonePrecision.builder().addAll(clocks).build(),
 				GlobalExplPrecision.create(Collections.singleton(vlock), Collections.emptySet()));
 
-		final Abstractor<TCFAState<CompositeState<ZoneState, ExplState>>, TCFAAction, CompositePrecision<ZonePrecision, ExplPrecision>> abstractor = new Abstractor<>(
+		final Abstractor<TCFAState<CompositeState<ZoneState, ExplState>>, TCFAAction, CompositePrecision<ZonePrecision, ExplPrecision>> abstractor = new AbstractorImpl<>(
 				context, domain, initFunction, transferFunction, targetPredicate);
 
 		abstractor.init(precision);
