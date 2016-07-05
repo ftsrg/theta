@@ -58,10 +58,10 @@ public class ARGNode<S extends State, A extends Action> {
 
 	////
 
-	public void foreachAncsetors(final Consumer<ARGNode<S, A>> consumer) {
+	public void foreachAncestors(final Consumer<ARGNode<S, A>> consumer) {
 		consumer.accept(this);
 		if (inEdge.isPresent()) {
-			inEdge.get().getSource().foreachAncsetors(consumer);
+			inEdge.get().getSource().foreachAncestors(consumer);
 		}
 	}
 
