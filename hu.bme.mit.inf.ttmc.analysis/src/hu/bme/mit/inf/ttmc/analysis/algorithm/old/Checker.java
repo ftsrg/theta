@@ -1,4 +1,4 @@
-package hu.bme.mit.inf.ttmc.analysis.algorithm;
+package hu.bme.mit.inf.ttmc.analysis.algorithm.old;
 
 import java.util.Collection;
 import java.util.Optional;

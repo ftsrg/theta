@@ -10,7 +10,7 @@ import java.util.stream.Collectors;
 
 import hu.bme.mit.inf.ttmc.analysis.Counterexample;
 import hu.bme.mit.inf.ttmc.analysis.ExprState;
-import hu.bme.mit.inf.ttmc.analysis.algorithm.Concretizer;
+import hu.bme.mit.inf.ttmc.analysis.algorithm.old.Concretizer;
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplState;
 import hu.bme.mit.inf.ttmc.analysis.impl.CounterexampleImpl;
 import hu.bme.mit.inf.ttmc.analysis.refutation.ItpRefutation;
