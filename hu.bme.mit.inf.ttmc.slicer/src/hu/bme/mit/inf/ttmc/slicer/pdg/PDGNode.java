@@ -1,7 +1,10 @@
 package hu.bme.mit.inf.ttmc.slicer.pdg;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import hu.bme.mit.inf.ttmc.slicer.cfg.CFGNode;
@@ -34,6 +37,18 @@ public class PDGNode implements GraphNode {
 		node.controlChildren.add(this);
 	}
 
+	public void addFlowChild(PDGNode node)
+	{
+		this.flowChildren.add(node);
+		node.flowParents.add(this);
+	}
+
+	public void addFlowParent(PDGNode node)
+	{
+		this.flowParents.add(node);
+		node.flowChildren.add(this);
+	}
+
 	public Collection<PDGNode> getControlParents()
 	{
 		return this.controlParents;
@@ -42,6 +57,16 @@ public class PDGNode implements GraphNode {
 	public Collection<PDGNode> getControlChildren()
 	{
 		return this.controlChildren;
+	}
+
+	public Collection<PDGNode> getFlowParents()
+	{
+		return this.flowParents;
+	}
+
+	public Collection<PDGNode> getFlowChildren()
+	{
+		return this.flowChildren;
 	}
 
 	@Override
@@ -55,7 +80,12 @@ public class PDGNode implements GraphNode {
 
 	@Override
 	public Collection<? extends GraphNode> getChildren() {
-		return this.controlChildren;
+		Set<PDGNode> allChildren = new HashSet<>();
+
+		allChildren.addAll(this.flowChildren);
+		allChildren.addAll(this.controlChildren);
+
+		return allChildren;
 	}
 
 	@Override

@@ -52,6 +52,18 @@ public class PDGPrinter {
 		for (Edge e : edges) {
 			sb.append(String.format("node_%d -> node_%d [color=blue]\n", nodes.get(e.source), nodes.get(e.target)));
 		}
+
+		for (PDGNode node : nodes.keySet()) {
+			for (PDGNode inner : nodes.keySet()) {
+				if (node == inner)
+					continue;
+
+				if (node.getFlowChildren().contains(inner)) {
+					sb.append(String.format("node_%d -> node_%d [color=green]\n", nodes.get(node), nodes.get(inner)));
+				}
+			}
+		}
+
 		sb.append("}");
 
 

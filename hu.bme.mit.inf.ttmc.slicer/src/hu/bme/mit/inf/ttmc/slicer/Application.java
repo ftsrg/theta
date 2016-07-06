@@ -50,7 +50,7 @@ public class Application {
 
 		PDG pdg = PDG.fromCFG(cfg);
 
-		System.out.println(GraphPrinter.toGraphvizString(pdg));
+		System.out.println(PDGPrinter.toGraphvizString(pdg));
 
 		//PDG pdg = PDGTransformer.createPDG(cfg);
 		//System.out.println(GraphPrinter.toGraphvizString(pdg));

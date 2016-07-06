@@ -85,4 +85,22 @@ public abstract class CFGNode implements GraphNode {
 		return this.parents;
 	}
 
+	public Set<CFGNode> getSuccessors() {
+		Stack<CFGNode> stack = new Stack<CFGNode>();
+		Set<CFGNode> visited = new HashSet<CFGNode>();
+
+		stack.push(this);
+		while (!stack.empty()) {
+			CFGNode node = stack.pop();
+			if (!visited.contains(node)) {
+				visited.add(node);
+				for (CFGNode child : node.getChildren()) {
+					stack.push(child);
+				}
+			}
+		}
+
+		return visited;
+	}
+
 }
