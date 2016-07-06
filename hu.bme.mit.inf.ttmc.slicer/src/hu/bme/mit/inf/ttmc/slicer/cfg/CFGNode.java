@@ -6,11 +6,14 @@ import java.util.Set;
 import java.util.Stack;
 
 import hu.bme.mit.inf.ttmc.slicer.graph.GraphNode;
+import hu.bme.mit.inf.ttmc.slicer.graph.ReversibleGraphNode;
 
-public abstract class CFGNode implements GraphNode {
+public abstract class CFGNode implements ReversibleGraphNode {
 
 	private Collection<CFGNode> parents = new HashSet<CFGNode>();
 	private Collection<CFGNode> children = new HashSet<CFGNode>();
+
+	abstract public CFGNode copy();
 
 	public void addChild(CFGNode node) {
 		this.children.add(node);
@@ -57,6 +60,19 @@ public abstract class CFGNode implements GraphNode {
 		this.childrenReplace(newNode);
 	}
 
+	public void remove()
+	{
+		for (CFGNode parent : this.parents) {
+			parent.children.remove(this);
+			parent.children.addAll(this.children);
+		}
+
+		for (CFGNode child : this.children) {
+			child.parents.remove(this);
+			child.parents.addAll(this.parents);
+		}
+	}
+
 	public Collection<CFGNode> successors()
 	{
 		Set<CFGNode> visited = new HashSet<>();
@@ -80,6 +96,7 @@ public abstract class CFGNode implements GraphNode {
 		return this.children;
 	}
 
+	@Override
 	public Collection<CFGNode> getParents()
 	{
 		return this.parents;

@@ -1,17 +1,14 @@
 package hu.bme.mit.inf.ttmc.slicer.pdg;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
-import java.util.stream.Stream;
 
 import hu.bme.mit.inf.ttmc.slicer.cfg.CFGNode;
-import hu.bme.mit.inf.ttmc.slicer.graph.Graph;
 import hu.bme.mit.inf.ttmc.slicer.graph.GraphNode;
+import hu.bme.mit.inf.ttmc.slicer.graph.ReversibleGraphNode;
 
-public class PDGNode implements GraphNode {
+public class PDGNode implements ReversibleGraphNode {
 
 	private Collection<PDGNode> controlParents = new HashSet<PDGNode>();
 	private Collection<PDGNode> controlChildren = new HashSet<PDGNode>();
@@ -86,6 +83,16 @@ public class PDGNode implements GraphNode {
 		allChildren.addAll(this.controlChildren);
 
 		return allChildren;
+	}
+
+	@Override
+	public Collection<? extends ReversibleGraphNode> getParents() {
+		Set<PDGNode> allParents = new HashSet<>();
+
+		allParents.addAll(this.flowParents);
+		allParents.addAll(this.controlParents);
+
+		return allParents;
 	}
 
 	@Override

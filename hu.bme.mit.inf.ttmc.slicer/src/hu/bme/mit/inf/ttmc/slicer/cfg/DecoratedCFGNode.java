@@ -9,6 +9,11 @@ public class DecoratedCFGNode extends CFGNode {
 	}
 
 	@Override
+	public CFGNode copy() {
+		return new DecoratedCFGNode(name);
+	}
+
+	@Override
 	public String toString() {
 		return this.name;
 	}
@@ -17,6 +22,7 @@ public class DecoratedCFGNode extends CFGNode {
 	public String getLabel() {
 		return this.name;
 	}
+
 
 
 }

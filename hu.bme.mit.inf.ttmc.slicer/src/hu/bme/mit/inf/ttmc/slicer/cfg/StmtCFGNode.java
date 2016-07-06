@@ -1,9 +1,5 @@
 package hu.bme.mit.inf.ttmc.slicer.cfg;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
 
 public class StmtCFGNode extends CFGNode {
@@ -24,6 +20,11 @@ public class StmtCFGNode extends CFGNode {
 	@Override
 	public String getLabel() {
 		return this.stmt.toString();
+	}
+
+	@Override
+	public CFGNode copy() {
+		return new StmtCFGNode(this.stmt);
 	}
 
 }
