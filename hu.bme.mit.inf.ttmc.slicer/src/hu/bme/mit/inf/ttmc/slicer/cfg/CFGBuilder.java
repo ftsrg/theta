@@ -38,7 +38,7 @@ public class CFGBuilder {
 		public void transform(Stmt stmt) {
 			CFGNode node = new StmtCFGNode(stmt);
 			node.addParent(cfg.getEntry());
-			node.addChild(cfg.getEnd());
+			node.addChild(cfg.getExit());
 
 			processStmt(stmt, node);
 		}

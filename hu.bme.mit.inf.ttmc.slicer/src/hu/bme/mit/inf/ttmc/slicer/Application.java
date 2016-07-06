@@ -20,6 +20,7 @@ import hu.bme.mit.inf.ttmc.slicer.pdg.DominanceTree;
 import hu.bme.mit.inf.ttmc.slicer.pdg.PDG;
 import hu.bme.mit.inf.ttmc.slicer.pdg.PDGPrinter;
 import hu.bme.mit.inf.ttmc.slicer.pdg.PDGTransformer;
+import hu.bme.mit.inf.ttmc.slicer.pdg.PostDominanceTree;
 import hu.bme.mit.inf.ttmc.slicer.cfg.CFG;
 import hu.bme.mit.inf.ttmc.slicer.cfg.CFGBuilder;
 import hu.bme.mit.inf.ttmc.slicer.cfg.CFGPrinter;
@@ -41,8 +42,15 @@ public class Application {
 
 		System.out.println(GraphPrinter.toGraphvizString(cfg));
 
-		DominanceTree fdt =	DominanceTree.fromCFG(cfg);
+		DominanceTree dt =	DominanceTree.fromCFG(cfg);
+		System.out.println(GraphPrinter.toGraphvizString(dt));
+
+		PostDominanceTree fdt =	PostDominanceTree.fromCFG(cfg);
 		System.out.println(GraphPrinter.toGraphvizString(fdt));
+
+		PDG pdg = PDG.fromCFG(cfg);
+
+		System.out.println(GraphPrinter.toGraphvizString(pdg));
 
 		//PDG pdg = PDGTransformer.createPDG(cfg);
 		//System.out.println(GraphPrinter.toGraphvizString(pdg));

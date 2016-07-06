@@ -10,9 +10,16 @@ public class DominanceTreeNode implements GraphNode {
 
 	private CFGNode cfg;
 	private Collection<DominanceTreeNode> children = new HashSet<>();
+	private DominanceTreeNode parent;
 
-	public DominanceTreeNode(CFGNode cfg) {
+	public DominanceTreeNode(CFGNode cfg, DominanceTreeNode parent) {
 		this.cfg = cfg;
+		this.parent = parent;
+	}
+
+	public DominanceTreeNode getParent()
+	{
+		return this.parent;
 	}
 
 	public void addChild(DominanceTreeNode node) {
@@ -20,7 +27,7 @@ public class DominanceTreeNode implements GraphNode {
 	}
 
 	@Override
-	public Collection<? extends GraphNode> getChildren() {
+	public Collection<DominanceTreeNode> getChildren() {
 		return this.children;
 	}
 

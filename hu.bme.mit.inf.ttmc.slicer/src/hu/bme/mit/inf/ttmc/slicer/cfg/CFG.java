@@ -1,39 +1,38 @@
 package hu.bme.mit.inf.ttmc.slicer.cfg;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
+import java.util.Stack;
 
 import hu.bme.mit.inf.ttmc.slicer.graph.Graph;
 
 public class CFG implements Graph {
 
-	private CFGNode init;
-	private CFGNode end;
+	private CFGNode entry;
+	private CFGNode exit;
 
 	public CFG() {}
 
-	public CFG(CFGNode init, CFGNode end) { this.setInit(init); this.setEnd(end); }
+	public CFG(CFGNode entry, CFGNode exit) {
+		this.entry = entry;
+		this.exit = exit;
+	}
 
+	@Override
 	public CFGNode getEntry() {
-		return init;
+		return entry;
 	}
 
-	public void setInit(CFGNode init) {
-		this.init = init;
-	}
-
-	public CFGNode getEnd() {
-		return end;
-	}
-
-	public void setEnd(CFGNode end) {
-		this.end = end;
+	public CFGNode getExit() {
+		return exit;
 	}
 
 	public Set<CFGNode> nodes()
 	{
 		Set<CFGNode> nodes = new HashSet<>();
-		DFS(init, nodes);
+		DFS(entry, nodes);
 
 		return nodes;
 	}

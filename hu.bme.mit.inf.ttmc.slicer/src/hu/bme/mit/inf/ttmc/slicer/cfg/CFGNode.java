@@ -2,6 +2,8 @@ package hu.bme.mit.inf.ttmc.slicer.cfg;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Set;
+import java.util.Stack;
 
 import hu.bme.mit.inf.ttmc.slicer.graph.GraphNode;
 
@@ -55,6 +57,23 @@ public abstract class CFGNode implements GraphNode {
 		this.childrenReplace(newNode);
 	}
 
+	public Collection<CFGNode> successors()
+	{
+		Set<CFGNode> visited = new HashSet<>();
+		Stack<CFGNode> nodes = new Stack<>();
+		while (!nodes.empty()) {
+			CFGNode node = nodes.pop();
+			if (!visited.contains(node)) {
+				visited.add(node);
+				for (CFGNode child : node.getChildren()) {
+					nodes.push(child);
+				}
+			}
+		}
+
+		return visited;
+	}
+
 	@Override
 	public Collection<CFGNode> getChildren()
 	{
@@ -63,7 +82,7 @@ public abstract class CFGNode implements GraphNode {
 
 	public Collection<CFGNode> getParents()
 	{
-		return this.children;
+		return this.parents;
 	}
 
 }

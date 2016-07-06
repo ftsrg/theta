@@ -31,7 +31,12 @@ public class PDGNode implements GraphNode {
 	public void addControlParent(PDGNode node)
 	{
 		this.controlParents.add(node);
-		this.controlChildren.add(this);
+		node.controlChildren.add(this);
+	}
+
+	public Collection<PDGNode> getControlParents()
+	{
+		return this.controlParents;
 	}
 
 	public Collection<PDGNode> getControlChildren()
