@@ -1,4 +1,4 @@
-package hu.bme.mit.inf.ttmc.analysis.algorithm;
+package hu.bme.mit.inf.ttmc.analysis.algorithm.impl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -14,6 +14,7 @@ import hu.bme.mit.inf.ttmc.analysis.Precision;
 import hu.bme.mit.inf.ttmc.analysis.State;
 import hu.bme.mit.inf.ttmc.analysis.TargetPredicate;
 import hu.bme.mit.inf.ttmc.analysis.TransferFunction;
+import hu.bme.mit.inf.ttmc.analysis.algorithm.Abstractor;
 
 public class AbstractorImpl<S extends State, A extends Action, P extends Precision> implements Abstractor<S, A, P> {
 
