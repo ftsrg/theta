@@ -9,12 +9,11 @@ import hu.bme.mit.inf.ttmc.analysis.expl.ExplState;
 
 public interface Refiner<S extends State, A extends Action, P extends Precision> {
 
-	CounterexampleStatus checkAndRefine(ARG<S, A> arg);
+	RefinerStatus refine(ARG<S, A> arg);
 
-	CounterexampleStatus getStatus();
+	RefinerStatus getStatus();
 
 	Counterexample<ExplState> getConcreteCounterexample();
 
 	P getRefinedPrecision();
-
 }

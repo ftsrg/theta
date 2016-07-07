@@ -1,5 +1,5 @@
 package hu.bme.mit.inf.ttmc.analysis.algorithm;
 
-public enum CounterexampleStatus {
+public enum RefinerStatus {
 	Concrete, Spurious
 }
