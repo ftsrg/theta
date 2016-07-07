@@ -11,6 +11,8 @@ public interface Abstractor<S extends State, A extends Action, P extends Precisi
 
 	void init(final P precision);
 
-	void check(final P precision);
+	AbstractorStatus check(final P precision);
+
+	AbstractorStatus getStatus();
 
 }
