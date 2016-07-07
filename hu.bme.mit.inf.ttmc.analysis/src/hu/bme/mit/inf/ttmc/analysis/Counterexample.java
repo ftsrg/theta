@@ -1,7 +1,11 @@
 package hu.bme.mit.inf.ttmc.analysis;
 
-public interface Counterexample<S extends State> extends Iterable<S> {
+// TODO: find a good interface for alternating S,A,S,...,S,A,S sequence
+public interface Counterexample<S extends State, A extends Action> {
+
 	int size();
 
-	S get(int i);
+	S getState(int i);
+
+	A getAction(int i);
 }

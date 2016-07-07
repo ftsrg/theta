@@ -13,14 +13,13 @@ import hu.bme.mit.inf.ttmc.analysis.algorithm.CEGARLoop;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.CEGARStatus;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.Refiner;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.RefinerStatus;
-import hu.bme.mit.inf.ttmc.analysis.expl.ExplState;
 
-public class CEGARLoopImpl<S extends State, A extends Action, P extends Precision> implements CEGARLoop<P> {
+public class CEGARLoopImpl<S extends State, A extends Action, P extends Precision, CS extends State> implements CEGARLoop<P, CS, A> {
 
 	private final Abstractor<S, A, P> abstractor;
-	private final Refiner<S, A, P> refiner;
+	private final Refiner<S, A, P, CS> refiner;
 
-	private CEGARLoopImpl(final Abstractor<S, A, P> abstractor, final Refiner<S, A, P> refiner) {
+	private CEGARLoopImpl(final Abstractor<S, A, P> abstractor, final Refiner<S, A, P, CS> refiner) {
 		this.abstractor = checkNotNull(abstractor);
 		this.refiner = checkNotNull(refiner);
 	}
@@ -59,7 +58,7 @@ public class CEGARLoopImpl<S extends State, A extends Action, P extends Precisio
 	}
 
 	@Override
-	public Counterexample<ExplState> getCounterexample() {
+	public Counterexample<CS, A> getCounterexample() {
 		checkState(refiner.getStatus() == RefinerStatus.Concrete);
 		return refiner.getConcreteCounterexample();
 	}
