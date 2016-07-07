@@ -25,6 +25,11 @@ public abstract class CFGNode implements ReversibleGraphNode {
 		node.children.add(this);
 	}
 
+	public void removeParent(CFGNode node) {
+		this.parents.remove(node);
+		node.children.remove(this);
+	}
+
 	public void parentsReplace(CFGNode newNode)
 	{
 		for (CFGNode parent : this.parents) {

@@ -16,7 +16,9 @@ import hu.bme.mit.inf.ttmc.slicer.pdg.PostDominanceTree;
 import hu.bme.mit.inf.ttmc.slicer.cfg.CFG;
 import hu.bme.mit.inf.ttmc.slicer.cfg.CFGBuilder;
 import hu.bme.mit.inf.ttmc.slicer.cfg.CFGNode;
+import hu.bme.mit.inf.ttmc.slicer.cfg.CFGPrinter;
 import hu.bme.mit.inf.ttmc.slicer.cfg.StmtCFGNode;
+import hu.bme.mit.inf.ttmc.slicer.dominators.DominatorTreeCreator;
 
 public class Application {
 
@@ -33,8 +35,6 @@ public class Application {
 
 		System.out.println(GraphPrinter.toGraphvizString(cfg));
 
-		DominanceTree dt =	DominanceTree.fromCFG(cfg);
-		System.out.println(GraphPrinter.toGraphvizString(dt));
 
 		PostDominanceTree fdt =	PostDominanceTree.fromCFG(cfg);
 		System.out.println(GraphPrinter.toGraphvizString(fdt));
@@ -42,7 +42,7 @@ public class Application {
 		PDG pdg = PDG.fromCFG(cfg);
 
 		System.out.println(PDGPrinter.toGraphvizString(pdg));
-
+/*
 		ReachabilitySlicer slicer = new ReachabilitySlicer();
 		for (CFGNode node : cfg.nodes()) {
 			if (node instanceof StmtCFGNode) {
@@ -53,8 +53,11 @@ public class Application {
 					System.out.println(GraphPrinter.toGraphvizString(slice));
 				}
 			}
-		}
+		}*/
+		System.out.println(CFGPrinter.toGraphvizString(cfg));
 
+
+		DominatorTreeCreator.dominatorTree(cfg);
 
 
 		//PDG pdg = PDGTransformer.createPDG(cfg);

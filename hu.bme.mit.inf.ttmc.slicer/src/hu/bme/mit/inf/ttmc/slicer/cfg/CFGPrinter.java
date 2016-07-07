@@ -23,7 +23,7 @@ public class CFGPrinter {
 
 	public static void countEdges(CFGNode cfg, Set<Edge> edges, Map<CFGNode, Integer> nodes)
 	{
-		for (CFGNode node : cfg.getChildren()) {
+		for (CFGNode node : cfg.getParents()) {
 			edges.add(new Edge(cfg, node));
 			if (!nodes.containsKey(node)) {
 				nodes.put(node, uniqid++);
@@ -39,7 +39,7 @@ public class CFGPrinter {
 		Set<Edge> edges = new HashSet<>();
 		Map<CFGNode, Integer> nodes = new HashMap<>();
 
-		CFGNode entry = cfg.getEntry();
+		CFGNode entry = cfg.getExit();
 
 		nodes.put(entry, uniqid++);
 		countEdges(entry, edges, nodes);

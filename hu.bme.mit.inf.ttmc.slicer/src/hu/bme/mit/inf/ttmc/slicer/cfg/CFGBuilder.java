@@ -161,6 +161,7 @@ public class CFGBuilder {
 			for (CFGNode child : param.getChildren()) {
 				child.addParent(thenNode);
 				child.addParent(elzeNode);
+				child.removeParent(param);
 			}
 
 			param.parentsReplace(assumeNode);
