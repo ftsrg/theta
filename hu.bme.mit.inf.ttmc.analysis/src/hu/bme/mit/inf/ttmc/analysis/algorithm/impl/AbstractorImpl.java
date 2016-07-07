@@ -15,6 +15,7 @@ import hu.bme.mit.inf.ttmc.analysis.State;
 import hu.bme.mit.inf.ttmc.analysis.TargetPredicate;
 import hu.bme.mit.inf.ttmc.analysis.TransferFunction;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.Abstractor;
+import hu.bme.mit.inf.ttmc.analysis.algorithm.AbstractorStatus;
 
 public class AbstractorImpl<S extends State, A extends Action, P extends Precision> implements Abstractor<S, A, P> {
 
@@ -49,13 +50,15 @@ public class AbstractorImpl<S extends State, A extends Action, P extends Precisi
 	}
 
 	@Override
-	public void check(final P precision) {
+	public AbstractorStatus check(final P precision) {
 		final Collection<ARGNode<S, A>> nodes = new ArrayList<>(arg.getNodes());
 		for (final ARGNode<S, A> node : nodes) {
 			if (!node.isTarget() && !node.isExpanded() && !node.isCovered()) {
 				dfs(node, precision);
 			}
 		}
+
+		return getStatus();
 	}
 
 	private void dfs(final ARGNode<S, A> node, final P precision) {
@@ -69,6 +72,12 @@ public class AbstractorImpl<S extends State, A extends Action, P extends Precisi
 				}
 			}
 		}
+	}
+
+	@Override
+	public AbstractorStatus getStatus() {
+		checkState(arg != null);
+		return arg.getTargetNodes().size() == 0 ? AbstractorStatus.Ok : AbstractorStatus.Counterexample;
 	}
 
 }
