@@ -2,6 +2,10 @@ package hu.bme.mit.inf.ttmc.analysis.algorithm;
 
 import static java.lang.System.lineSeparator;
 
+import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.ARG;
+import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.ARGEdge;
+import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.ARGNode;
+
 public class ArgPrinter {
 
 	private ArgPrinter() {
