@@ -1,6 +1,5 @@
 package hu.bme.mit.inf.ttmc.analysis.algorithm.old;
 
-import hu.bme.mit.inf.ttmc.analysis.Counterexample;
 import hu.bme.mit.inf.ttmc.analysis.State;
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplState;
 import hu.bme.mit.inf.ttmc.analysis.refutation.Refutation;

@@ -3,7 +3,7 @@ package hu.bme.mit.inf.ttmc.analysis.algorithm.impl.old.refiner;
 import java.util.HashSet;
 import java.util.Set;
 
-import hu.bme.mit.inf.ttmc.analysis.Counterexample;
+import hu.bme.mit.inf.ttmc.analysis.algorithm.old.Counterexample;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.old.Refiner;
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplState;
 import hu.bme.mit.inf.ttmc.analysis.expl.GlobalExplPrecision;
