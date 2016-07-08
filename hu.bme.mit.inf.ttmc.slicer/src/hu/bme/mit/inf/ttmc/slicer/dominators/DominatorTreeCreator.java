@@ -34,14 +34,12 @@ public class DominatorTreeCreator {
 		public String toString() {
 			return dfs + " " + parent + " " + sdom;
 		}
-
 	}
 
 	public static DominatorTree postDominatorTree(CFG cfg)
 	{
 		return buildTree(cfg, true);
 	}
-
 
 	public static DominatorTree dominatorTree(CFG cfg)
 	{
@@ -77,9 +75,6 @@ public class DominatorTreeCreator {
 			bucket.put(i, new HashSet<Integer>());
 		}
 
-		System.out.println(infoMap);
-		System.out.println(cnt);
-
 		for (int w = cnt; w > 1; --w) {
 			NodeInfo wInfo = vertices.get(w);
 			int p = wInfo.parent;
@@ -91,7 +86,6 @@ public class DominatorTreeCreator {
 			Collection<CFGNode> predecessors = reverse ? wInfo.node.getChildren() : wInfo.node.getParents();
 			for (CFGNode pred : predecessors) {
 				NodeInfo vInfo = infoMap.get(pred);
-				System.out.println(vertices.get(w).node + " " + pred + " " + vInfo);
 				int u = eval(vInfo, ancestor, vertices);
 				NodeInfo uInfo = vertices.get(u);
 

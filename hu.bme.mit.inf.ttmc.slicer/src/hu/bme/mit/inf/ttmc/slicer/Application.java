@@ -13,6 +13,7 @@ import hu.bme.mit.inf.ttmc.slicer.pdg.DominanceTree;
 import hu.bme.mit.inf.ttmc.slicer.pdg.PDG;
 import hu.bme.mit.inf.ttmc.slicer.pdg.PDGPrinter;
 import hu.bme.mit.inf.ttmc.slicer.pdg.PostDominanceTree;
+import hu.bme.mit.inf.ttmc.slicer.cfg.BasicBlockCFGTransformer;
 import hu.bme.mit.inf.ttmc.slicer.cfg.CFG;
 import hu.bme.mit.inf.ttmc.slicer.cfg.CFGBuilder;
 import hu.bme.mit.inf.ttmc.slicer.cfg.CFGNode;
@@ -25,21 +26,14 @@ public class Application {
 
 	public static void main(String[] args) {
 
-		ProcDecl<? extends Type> body = Compiler.createStmts("simple.c").get(0);
+		ProcDecl<? extends Type> body = Compiler.createStmts("constprop.c").get(0);
 
 		CFG cfg = CFGBuilder.createCFG(body);
-
-		CFA cfa = CFACreator.createSBE(body.getStmt().get());
 
 		//System.out.println(CFGPrinter.toGraphvizString(cfg));
 		//System.out.println(CFAPrinter.toGraphvizSting(cfa));
 
 		System.out.println(GraphPrinter.toGraphvizString(cfg));
-
-
-		PostDominanceTree fdt =	PostDominanceTree.fromCFG(cfg);
-		System.out.println(GraphPrinter.toGraphvizString(fdt));
-
 		PDG pdg = PDG.fromCFG(cfg);
 
 		System.out.println(PDGPrinter.toGraphvizString(pdg));
@@ -55,14 +49,10 @@ public class Application {
 				}
 			}
 		}
-		System.out.println(CFGPrinter.toGraphvizString(cfg));
 
+		CFG bb = BasicBlockCFGTransformer.buildBasicBlocks(cfg);
+		System.out.println(GraphPrinter.toGraphvizString(bb));
 
-		DominatorTree dt = DominatorTreeCreator.dominatorTree(cfg);
-		System.out.println(GraphPrinter.toGraphvizString(dt));
-
-		DominatorTree pdt = DominatorTreeCreator.postDominatorTree(cfg);
-		System.out.println(GraphPrinter.toGraphvizString(pdt));
 
 		//PDG pdg = PDGTransformer.createPDG(cfg);
 		//System.out.println(GraphPrinter.toGraphvizString(pdg));
