@@ -27,7 +27,7 @@ public class Application {
 
 	public static void main(String[] args) {
 
-		ProcDecl<? extends Type> body = Compiler.createStmts("constprop.c").get(0);
+		ProcDecl<? extends Type> body = Compiler.createStmts("simple.c").get(0);
 
 		CFG cfg = CFGBuilder.createCFG(body);
 
@@ -40,6 +40,7 @@ public class Application {
 		System.out.println(PDGPrinter.toGraphvizString(pdg));
 
 		ReachabilitySlicer slicer = new ReachabilitySlicer();
+
 		for (CFGNode node : cfg.nodes()) {
 			if (node instanceof StmtCFGNode) {
 				Stmt stmt = ((StmtCFGNode) node).getStmt();
@@ -54,12 +55,29 @@ public class Application {
 		CFG bb = BasicBlockCFGTransformer.buildBasicBlocks(cfg);
 		System.out.println(GraphPrinter.toGraphvizString(bb));
 
-
 		LocalConstantPropagator constProp = new LocalConstantPropagator();
+
 		constProp.transform(bb);
-
-
 		System.out.println(GraphPrinter.toGraphvizString(bb));
+
+		CFG newCfg = BasicBlockCFGTransformer.splitBasicBlocks(bb);
+		System.out.println(GraphPrinter.toGraphvizString(newCfg));
+		PDG newPdg = PDG.fromCFG(newCfg);
+
+		System.out.println(PDGPrinter.toGraphvizString(newPdg));
+
+		for (CFGNode node : newCfg.nodes()) {
+			if (node instanceof StmtCFGNode) {
+				Stmt stmt = ((StmtCFGNode) node).getStmt();
+				if (stmt instanceof AssertStmt) {
+					CFG slice = slicer.slice(newCfg, node);
+					System.out.println("Slice on " + stmt);
+					System.out.println(GraphPrinter.toGraphvizString(slice));
+				}
+			}
+		}
+
+
 
 		//PDG pdg = PDGTransformer.createPDG(cfg);
 		//System.out.println(GraphPrinter.toGraphvizString(pdg));

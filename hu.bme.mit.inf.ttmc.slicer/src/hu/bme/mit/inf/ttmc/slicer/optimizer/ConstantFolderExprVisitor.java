@@ -35,6 +35,7 @@ import hu.bme.mit.inf.ttmc.core.expr.RemExpr;
 import hu.bme.mit.inf.ttmc.core.expr.SubExpr;
 import hu.bme.mit.inf.ttmc.core.expr.TrueExpr;
 import hu.bme.mit.inf.ttmc.core.type.IntType;
+import hu.bme.mit.inf.ttmc.core.type.RatType;
 import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.core.type.closure.ClosedUnderAdd;
 import hu.bme.mit.inf.ttmc.core.type.closure.ClosedUnderMul;
@@ -145,7 +146,7 @@ public class ConstantFolderExprVisitor implements VarRefExprVisitor<Void, Expr<?
 			return Bool(leftLit.getValue() != rightLit.getValue());
 		}
 
-		return Eq(left, right);
+		return Neq(left, right);
 	}
 
 	@Override
@@ -160,7 +161,7 @@ public class ConstantFolderExprVisitor implements VarRefExprVisitor<Void, Expr<?
 			return Bool(leftLit.getValue() >= rightLit.getValue());
 		}
 
-		return Eq(left, right);
+		return Geq(ExprUtils.cast(left, RatType.class), ExprUtils.cast(right, RatType.class));
 	}
 
 	@Override
@@ -175,7 +176,7 @@ public class ConstantFolderExprVisitor implements VarRefExprVisitor<Void, Expr<?
 			return Bool(leftLit.getValue() > rightLit.getValue());
 		}
 
-		return Eq(left, right);
+		return Gt(ExprUtils.cast(left, RatType.class), ExprUtils.cast(right, RatType.class));
 	}
 
 	@Override
@@ -190,7 +191,7 @@ public class ConstantFolderExprVisitor implements VarRefExprVisitor<Void, Expr<?
 			return Bool(leftLit.getValue() <= rightLit.getValue());
 		}
 
-		return Eq(left, right);
+		return Leq(ExprUtils.cast(left, RatType.class), ExprUtils.cast(right, RatType.class));
 	}
 
 	@Override
@@ -205,7 +206,7 @@ public class ConstantFolderExprVisitor implements VarRefExprVisitor<Void, Expr<?
 			return Bool(leftLit.getValue() < rightLit.getValue());
 		}
 
-		return Eq(left, right);
+		return Lt(ExprUtils.cast(left, RatType.class), ExprUtils.cast(right, RatType.class));
 	}
 
 	@Override
