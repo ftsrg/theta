@@ -9,6 +9,7 @@ import hu.bme.mit.inf.ttmc.formalism.common.decl.ProcDecl;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.AssertStmt;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
 import hu.bme.mit.inf.ttmc.slicer.graph.GraphPrinter;
+import hu.bme.mit.inf.ttmc.slicer.optimizer.LocalConstantPropagator;
 import hu.bme.mit.inf.ttmc.slicer.pdg.DominanceTree;
 import hu.bme.mit.inf.ttmc.slicer.pdg.PDG;
 import hu.bme.mit.inf.ttmc.slicer.pdg.PDGPrinter;
@@ -53,6 +54,12 @@ public class Application {
 		CFG bb = BasicBlockCFGTransformer.buildBasicBlocks(cfg);
 		System.out.println(GraphPrinter.toGraphvizString(bb));
 
+
+		LocalConstantPropagator constProp = new LocalConstantPropagator();
+		constProp.transform(bb);
+
+
+		System.out.println(GraphPrinter.toGraphvizString(bb));
 
 		//PDG pdg = PDGTransformer.createPDG(cfg);
 		//System.out.println(GraphPrinter.toGraphvizString(pdg));

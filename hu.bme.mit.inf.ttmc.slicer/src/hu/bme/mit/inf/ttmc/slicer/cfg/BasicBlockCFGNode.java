@@ -11,6 +11,11 @@ public class BasicBlockCFGNode extends CFGNode {
 		this.block = block;
 	}
 
+	public List<Stmt> getStmts()
+	{
+		return this.block;
+	}
+
 	@Override
 	public String getLabel() {
 		StringBuilder sb = new StringBuilder();
