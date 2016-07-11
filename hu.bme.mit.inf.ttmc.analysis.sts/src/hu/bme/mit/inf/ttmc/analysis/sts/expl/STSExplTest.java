@@ -65,6 +65,9 @@ public class STSExplTest {
 		abstractor.check(precision);
 
 		System.out.println(ArgPrinter.toGraphvizString(abstractor.getARG()));
+
+		System.out.println("\n\nCounterexample(s):");
+		System.out.println(abstractor.getARG().getCounterexamples());
 	}
 
 }

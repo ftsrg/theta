@@ -16,4 +16,8 @@ public class STSAction implements Action {
 		return trans;
 	}
 
+	@Override
+	public String toString() {
+		return trans.toString();
+	}
 }
