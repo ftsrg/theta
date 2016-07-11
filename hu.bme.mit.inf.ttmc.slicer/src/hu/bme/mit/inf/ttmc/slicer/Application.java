@@ -8,18 +8,18 @@ import hu.bme.mit.inf.ttmc.formalism.cfa.CFACreator;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.ProcDecl;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.AssertStmt;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
+import hu.bme.mit.inf.ttmc.formalism.utils.impl.CFAPrinter;
 import hu.bme.mit.inf.ttmc.slicer.graph.GraphPrinter;
 import hu.bme.mit.inf.ttmc.slicer.optimizer.LocalConstantPropagator;
-import hu.bme.mit.inf.ttmc.slicer.pdg.DominanceTree;
-import hu.bme.mit.inf.ttmc.slicer.pdg.PDG;
-import hu.bme.mit.inf.ttmc.slicer.pdg.PDGPrinter;
-import hu.bme.mit.inf.ttmc.slicer.pdg.PostDominanceTree;
 import hu.bme.mit.inf.ttmc.slicer.cfg.BasicBlockCFGTransformer;
 import hu.bme.mit.inf.ttmc.slicer.cfg.CFG;
 import hu.bme.mit.inf.ttmc.slicer.cfg.CFGBuilder;
 import hu.bme.mit.inf.ttmc.slicer.cfg.CFGNode;
 import hu.bme.mit.inf.ttmc.slicer.cfg.CFGPrinter;
 import hu.bme.mit.inf.ttmc.slicer.cfg.StmtCFGNode;
+import hu.bme.mit.inf.ttmc.slicer.dependence.PDG;
+import hu.bme.mit.inf.ttmc.slicer.dependence.PDGPrinter;
+import hu.bme.mit.inf.ttmc.slicer.dependence.UseDefineChain;
 import hu.bme.mit.inf.ttmc.slicer.dominators.DominatorTree;
 import hu.bme.mit.inf.ttmc.slicer.dominators.DominatorTreeCreator;
 
@@ -30,9 +30,11 @@ public class Application {
 		ProcDecl<? extends Type> body = Compiler.createStmts("simple.c").get(0);
 
 		CFG cfg = CFGBuilder.createCFG(body);
+		/*
+		CFA cfa = CFACreator.createLBE(body.getStmt().get());
 
 		//System.out.println(CFGPrinter.toGraphvizString(cfg));
-		//System.out.println(CFAPrinter.toGraphvizSting(cfa));
+		System.out.println(CFAPrinter.toGraphvizSting(cfa));
 
 		System.out.println(GraphPrinter.toGraphvizString(cfg));
 		PDG pdg = PDG.fromCFG(cfg);
@@ -76,7 +78,10 @@ public class Application {
 				}
 			}
 		}
-
+*/
+		CFG bb = BasicBlockCFGTransformer.buildBasicBlocks(cfg);
+		System.out.println(GraphPrinter.toGraphvizString(bb));
+		UseDefineChain ud = new UseDefineChain(bb);
 
 
 		//PDG pdg = PDGTransformer.createPDG(cfg);

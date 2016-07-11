@@ -1,4 +1,4 @@
-package hu.bme.mit.inf.ttmc.slicer.pdg;
+package hu.bme.mit.inf.ttmc.slicer.dependence;
 
 import java.util.HashMap;
 import java.util.HashSet;

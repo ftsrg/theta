@@ -11,18 +11,18 @@ import java.util.function.Function;
 
 public class GraphAlgorithm {
 
-	public static Set<? extends GraphNode> DFS(GraphNode start)
+	public static <T extends GraphNode> List<T> DFS(T start)
 	{
-		Stack<GraphNode> stack = new Stack<GraphNode>();
-		Set<GraphNode> visited = new HashSet<>();
+		Stack<T> stack = new Stack<>();
+		List<T> visited = new ArrayList<>();
 
 		stack.push(start);
 		while (!stack.isEmpty()) {
-			GraphNode node = stack.pop();
+			T node = stack.pop();
 			if (!visited.contains(node)) {
 				visited.add(node);
 				for (GraphNode child : node.getChildren()) {
-					stack.push(child);
+					stack.push((T) child);
 				}
 			}
 		}

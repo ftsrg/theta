@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.Stack;
 
+import hu.bme.mit.inf.ttmc.slicer.graph.GraphAlgorithm;
 import hu.bme.mit.inf.ttmc.slicer.graph.GraphNode;
 import hu.bme.mit.inf.ttmc.slicer.graph.ReversibleGraphNode;
 
@@ -80,19 +81,12 @@ public abstract class CFGNode implements ReversibleGraphNode {
 
 	public Collection<CFGNode> successors()
 	{
-		Set<CFGNode> visited = new HashSet<>();
-		Stack<CFGNode> nodes = new Stack<>();
-		while (!nodes.empty()) {
-			CFGNode node = nodes.pop();
-			if (!visited.contains(node)) {
-				visited.add(node);
-				for (CFGNode child : node.getChildren()) {
-					nodes.push(child);
-				}
-			}
-		}
+		return GraphAlgorithm.DFS(this);
+	}
 
-		return visited;
+	public Collection<CFGNode> predecessors()
+	{
+		return GraphAlgorithm.reverseDFS(this);
 	}
 
 	@Override

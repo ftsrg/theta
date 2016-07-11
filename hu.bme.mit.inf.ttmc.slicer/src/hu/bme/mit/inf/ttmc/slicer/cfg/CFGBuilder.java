@@ -6,8 +6,11 @@ import java.util.List;
 
 import hu.bme.mit.inf.ttmc.common.Product2;
 import hu.bme.mit.inf.ttmc.common.Tuple;
+import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.type.Type;
+import hu.bme.mit.inf.ttmc.core.utils.impl.ExprUtils;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.ProcDecl;
+import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.AssertStmt;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.AssignStmt;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.AssumeStmt;
@@ -36,6 +39,7 @@ public class CFGBuilder {
 		}
 
 		public void transform(Stmt stmt) {
+
 			CFGNode node = new StmtCFGNode(stmt);
 			node.addParent(cfg.getEntry());
 			node.addChild(cfg.getExit());
@@ -47,7 +51,14 @@ public class CFGBuilder {
 			if (stmt instanceof BlockStmt) {
 				BlockStmt block = (BlockStmt) stmt;
 				processBlockStmt(block, node);
-			} else {
+			} /* else if (stmt instanceof DeclStmt<?, ?>) {
+				DeclStmt<? extends Type, ? extends Type> decl = (DeclStmt<? extends Type, ? extends Type>) stmt;
+				if (decl.getInitVal().isPresent()) {
+					// This is an assignment
+					Expr<Type> init = decl.getInitVal().get();
+					Stmt assign = Assign(decl.getVarDecl(), decl.getInitVal().get());
+				}
+			} */else {
 				stmt.accept(this, node);
 			}
 		}
@@ -87,7 +98,15 @@ public class CFGBuilder {
 		@Override
 		public <DeclType extends Type, ExprType extends DeclType> CFGNode visit(DeclStmt<DeclType, ExprType> stmt,
 				CFGNode param) {
-			// TODO Auto-generated method stub
+			CFGNode node;
+			if (stmt.getInitVal().isPresent()) {
+				node = new StmtCFGNode(Assign(stmt.getVarDecl(), stmt.getInitVal().get()));
+			} else {
+				node = new StmtCFGNode(Havoc(stmt.getVarDecl()));
+			}
+
+			param.replace(node);
+
 			return null;
 		}
 

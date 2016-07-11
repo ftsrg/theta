@@ -5,7 +5,6 @@ import java.util.HashSet;
 
 import hu.bme.mit.inf.ttmc.slicer.cfg.CFGNode;
 import hu.bme.mit.inf.ttmc.slicer.graph.GraphNode;
-import hu.bme.mit.inf.ttmc.slicer.pdg.DominanceTreeNode;
 
 public class DominatorTreeNode implements GraphNode {
 

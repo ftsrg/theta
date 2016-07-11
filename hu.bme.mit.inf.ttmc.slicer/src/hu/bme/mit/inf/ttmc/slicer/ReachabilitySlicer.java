@@ -6,9 +6,9 @@ import java.util.Set;
 
 import hu.bme.mit.inf.ttmc.slicer.cfg.CFG;
 import hu.bme.mit.inf.ttmc.slicer.cfg.CFGNode;
+import hu.bme.mit.inf.ttmc.slicer.dependence.PDG;
+import hu.bme.mit.inf.ttmc.slicer.dependence.PDGNode;
 import hu.bme.mit.inf.ttmc.slicer.graph.GraphAlgorithm;
-import hu.bme.mit.inf.ttmc.slicer.pdg.PDG;
-import hu.bme.mit.inf.ttmc.slicer.pdg.PDGNode;
 
 public class ReachabilitySlicer implements CFGSlicer {
 

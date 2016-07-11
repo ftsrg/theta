@@ -1,6 +1,9 @@
 package hu.bme.mit.inf.ttmc.slicer.cfg;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
+
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
 
 public class BasicBlockCFGNode extends CFGNode {
@@ -14,6 +17,10 @@ public class BasicBlockCFGNode extends CFGNode {
 	public List<Stmt> getStmts()
 	{
 		return this.block;
+	}
+
+	public Collection<BasicBlockCFGNode> getBlockParents() {
+		return this.getParents().stream().filter(s -> s instanceof BasicBlockCFGNode).map(s -> (BasicBlockCFGNode) s).collect(Collectors.toSet());
 	}
 
 	@Override

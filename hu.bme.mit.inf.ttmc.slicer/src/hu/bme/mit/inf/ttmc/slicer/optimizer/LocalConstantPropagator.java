@@ -140,6 +140,8 @@ public class LocalConstantPropagator implements CFGOptimizer {
 				Expr<? extends BoolType> cond = ExprUtils.cast(assertStmt.getCond().accept(visitor, null), BoolType.class);
 
 				newBlock.add(Assert(cond));
+			} else if (s instanceof HavocStmt<?>){
+				newBlock.add(s);
 			} else {
 				throw new UnsupportedOperationException();
 			}
