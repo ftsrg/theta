@@ -19,19 +19,24 @@ import org.junit.Test;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.Abstractor;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.ArgPrinter;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.AbstractorImpl;
+import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.CEGARLoopImpl;
+import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.RefutationBasedRefiner;
+import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.refineroperator.GlobalExplItpRefinerOperator;
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplDomain;
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplPrecision;
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplState;
 import hu.bme.mit.inf.ttmc.analysis.expl.GlobalExplPrecision;
+import hu.bme.mit.inf.ttmc.analysis.refutation.ItpRefutation;
 import hu.bme.mit.inf.ttmc.analysis.sts.STSAction;
 import hu.bme.mit.inf.ttmc.analysis.sts.STSAnalysisContext;
+import hu.bme.mit.inf.ttmc.analysis.sts.STSExprSeqConcretizer;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.type.IntType;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 import hu.bme.mit.inf.ttmc.formalism.sts.impl.STSImpl;
 import hu.bme.mit.inf.ttmc.formalism.sts.impl.STSImpl.Builder;
-import hu.bme.mit.inf.ttmc.solver.Solver;
+import hu.bme.mit.inf.ttmc.solver.ItpSolver;
 import hu.bme.mit.inf.ttmc.solver.SolverManager;
 import hu.bme.mit.inf.ttmc.solver.z3.Z3SolverManager;
 
@@ -56,25 +61,29 @@ public class STSExplTest {
 		final STSAnalysisContext context = new STSAnalysisContext(sts);
 
 		final SolverManager manager = new Z3SolverManager();
-		final Solver solver = manager.createSolver(true, true);
+		final ItpSolver solver = manager.createItpSolver();
 
 		final ExplDomain domain = ExplDomain.getInstance();
 		final STSExplInitFunction initFunction = new STSExplInitFunction(sts, solver);
 		final STSExplTransferFunction transferFunction = new STSExplTransferFunction(solver);
 		final STSExplTargetPredicate targetPredicate = new STSExplTargetPredicate(sts, solver);
 
-		final ExplPrecision precision = GlobalExplPrecision.create(Collections.singleton(vx), Collections.emptySet());
+		final GlobalExplPrecision precision = GlobalExplPrecision.create(Collections.singleton(vx), Collections.emptySet());
 
 		final Abstractor<ExplState, STSAction, ExplPrecision> abstractor = new AbstractorImpl<>(context, domain, initFunction, transferFunction,
 				targetPredicate);
 
-		abstractor.init(precision);
-		abstractor.check(precision);
+		final STSExprSeqConcretizer concretizerOp = new STSExprSeqConcretizer(sts, solver);
+		final GlobalExplItpRefinerOperator<STSAction> refinerOp = new GlobalExplItpRefinerOperator<>();
 
+		final RefutationBasedRefiner<ExplState, ExplState, ItpRefutation, GlobalExplPrecision, STSAction> refiner = new RefutationBasedRefiner<>(concretizerOp,
+				refinerOp);
+
+		final CEGARLoopImpl<ExplState, STSAction, GlobalExplPrecision, ExplState> cegarLoop = new CEGARLoopImpl<>(abstractor, refiner);
+
+		cegarLoop.check(precision);
 		System.out.println(ArgPrinter.toGraphvizString(abstractor.getARG()));
-
-		System.out.println("\n\nCounterexample(s):");
-		System.out.println(abstractor.getARG().getCounterexamples());
+		System.out.println(cegarLoop.getStatus());
 	}
 
 }
