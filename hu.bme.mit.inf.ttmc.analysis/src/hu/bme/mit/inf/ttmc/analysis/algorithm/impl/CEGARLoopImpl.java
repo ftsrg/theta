@@ -16,10 +16,10 @@ import hu.bme.mit.inf.ttmc.analysis.algorithm.Refiner;
 
 public class CEGARLoopImpl<S extends State, A extends Action, P extends Precision, CS extends State> implements CEGARLoop<P, CS, A> {
 
-	private final Abstractor<S, A, P> abstractor;
+	private final Abstractor<S, A, ? super P> abstractor;
 	private final Refiner<S, A, P, CS> refiner;
 
-	private CEGARLoopImpl(final Abstractor<S, A, P> abstractor, final Refiner<S, A, P, CS> refiner) {
+	public CEGARLoopImpl(final Abstractor<S, A, ? super P> abstractor, final Refiner<S, A, P, CS> refiner) {
 		this.abstractor = checkNotNull(abstractor);
 		this.refiner = checkNotNull(refiner);
 	}
@@ -29,6 +29,7 @@ public class CEGARLoopImpl<S extends State, A extends Action, P extends Precisio
 
 		P precision = initPrecision;
 		do {
+
 			abstractor.init(precision); // TODO: currently the ARG is not pruned, so the abstractor simply restarts at every iteration
 			abstractor.check(precision);
 

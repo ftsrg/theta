@@ -44,7 +44,7 @@ public class STSExprSeqConcretizer implements ConcretizerOperator<ExprState, STS
 	}
 
 	@Override
-	public CounterexampleStatus concretize(final Counterexample<ExprState, STSAction> counterexample) {
+	public CounterexampleStatus concretize(final Counterexample<? extends ExprState, STSAction> counterexample) {
 		checkNotNull(counterexample);
 		checkArgument(counterexample.size() > 0);
 		concreteCex = Optional.empty();

@@ -17,12 +17,12 @@ import hu.bme.mit.inf.ttmc.analysis.refutation.Refutation;
 public class RefutationBasedRefiner<S extends State, CS extends State, R extends Refutation, P extends Precision, A extends Action>
 		implements Refiner<S, A, P, CS> {
 
-	private final ConcretizerOperator<S, A, CS, R> concretizerOp;
+	private final ConcretizerOperator<? super S, A, CS, R> concretizerOp;
 	private final RefinerOperator<S, A, R, P> refinerOp;
 
 	private P refinedPrecision;
 
-	private RefutationBasedRefiner(final ConcretizerOperator<S, A, CS, R> concretizerOp, final RefinerOperator<S, A, R, P> refinerOp) {
+	public RefutationBasedRefiner(final ConcretizerOperator<? super S, A, CS, R> concretizerOp, final RefinerOperator<S, A, R, P> refinerOp) {
 		this.concretizerOp = checkNotNull(concretizerOp);
 		this.refinerOp = checkNotNull(refinerOp);
 		this.refinedPrecision = null;

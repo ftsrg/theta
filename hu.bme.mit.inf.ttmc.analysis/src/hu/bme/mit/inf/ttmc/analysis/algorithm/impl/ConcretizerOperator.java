@@ -8,7 +8,7 @@ import hu.bme.mit.inf.ttmc.analysis.refutation.Refutation;
 
 public interface ConcretizerOperator<S extends State, A extends Action, CS extends State, R extends Refutation> {
 
-	CounterexampleStatus concretize(Counterexample<S, A> counterexample);
+	CounterexampleStatus concretize(Counterexample<? extends S, A> counterexample);
 
 	CounterexampleStatus getStatus();
 
