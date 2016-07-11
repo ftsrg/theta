@@ -7,6 +7,7 @@ import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Geq;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Imply;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Int;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Lt;
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Not;
 import static hu.bme.mit.inf.ttmc.core.type.impl.Types.Int;
 import static hu.bme.mit.inf.ttmc.formalism.common.decl.impl.Decls2.Var;
 import static hu.bme.mit.inf.ttmc.formalism.common.expr.impl.Exprs2.Prime;
@@ -31,12 +32,11 @@ import hu.bme.mit.inf.ttmc.analysis.sts.STSAction;
 import hu.bme.mit.inf.ttmc.analysis.sts.STSAnalysisContext;
 import hu.bme.mit.inf.ttmc.analysis.sts.STSExprSeqConcretizer;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
-import hu.bme.mit.inf.ttmc.core.expr.impl.Exprs;
-import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.core.type.IntType;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 import hu.bme.mit.inf.ttmc.formalism.sts.impl.STSImpl;
+import hu.bme.mit.inf.ttmc.formalism.sts.impl.STSImpl.Builder;
 import hu.bme.mit.inf.ttmc.solver.ItpSolver;
 import hu.bme.mit.inf.ttmc.solver.SolverManager;
 import hu.bme.mit.inf.ttmc.solver.z3.Z3SolverManager;
@@ -51,22 +51,24 @@ public class STSPredTest {
 
 		final int mod = 10;
 
-		final Expr<? extends BoolType> init = Eq(x, Int(0));
-		final Expr<? extends BoolType> trans = And(Imply(Lt(x, Int(mod)), Eq(Prime(x), Add(x, Int(1)))), Imply(Geq(x, Int(mod)), Eq(Prime(x), Int(0))));
-		final Expr<? extends BoolType> target = Eq(x, Int(mod));
+		final Builder builder = new STSImpl.Builder();
 
-		final STS sts = new STSImpl.Builder().addInit(init).addTrans(trans).setProp(Exprs.Not(target)).build();
+		builder.addInit(Eq(x, Int(0)));
+		builder.addTrans(And(Imply(Lt(x, Int(mod)), Eq(Prime(x), Add(x, Int(1)))), Imply(Geq(x, Int(mod)), Eq(Prime(x), Int(0)))));
+		builder.setProp(Not(Eq(x, Int(mod))));
 
-		final STSAnalysisContext context = new STSAnalysisContext(trans);
+		final STS sts = builder.build();
+
+		final STSAnalysisContext context = new STSAnalysisContext(sts);
 
 		final SolverManager manager = new Z3SolverManager();
 		final ItpSolver solver = manager.createItpSolver();
 
 		final PredDomain domain = PredDomain.create(solver);
 
-		final STSPredInitFunction initFunction = new STSPredInitFunction(init, solver);
+		final STSPredInitFunction initFunction = new STSPredInitFunction(sts, solver);
 		final STSPredTransferFunction transferFunction = new STSPredTransferFunction(solver);
-		final STSPredTargetPredicate targetPredicate = new STSPredTargetPredicate(target, solver);
+		final STSPredTargetPredicate targetPredicate = new STSPredTargetPredicate(sts, solver);
 
 		final GlobalPredPrecision precision = GlobalPredPrecision.create(Collections.singleton(Lt(x, Int(mod))));
 

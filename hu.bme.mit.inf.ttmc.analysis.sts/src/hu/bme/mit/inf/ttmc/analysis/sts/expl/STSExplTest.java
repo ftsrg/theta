@@ -7,6 +7,7 @@ import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Geq;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Imply;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Int;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Lt;
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Not;
 import static hu.bme.mit.inf.ttmc.core.type.impl.Types.Int;
 import static hu.bme.mit.inf.ttmc.formalism.common.decl.impl.Decls2.Var;
 import static hu.bme.mit.inf.ttmc.formalism.common.expr.impl.Exprs2.Prime;
@@ -25,9 +26,11 @@ import hu.bme.mit.inf.ttmc.analysis.expl.GlobalExplPrecision;
 import hu.bme.mit.inf.ttmc.analysis.sts.STSAction;
 import hu.bme.mit.inf.ttmc.analysis.sts.STSAnalysisContext;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
-import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.core.type.IntType;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
+import hu.bme.mit.inf.ttmc.formalism.sts.STS;
+import hu.bme.mit.inf.ttmc.formalism.sts.impl.STSImpl;
+import hu.bme.mit.inf.ttmc.formalism.sts.impl.STSImpl.Builder;
 import hu.bme.mit.inf.ttmc.solver.Solver;
 import hu.bme.mit.inf.ttmc.solver.SolverManager;
 import hu.bme.mit.inf.ttmc.solver.z3.Z3SolverManager;
@@ -42,19 +45,23 @@ public class STSExplTest {
 
 		final int mod = 10;
 
-		final Expr<? extends BoolType> init = Eq(x, Int(0));
-		final Expr<? extends BoolType> trans = And(Imply(Lt(x, Int(mod)), Eq(Prime(x), Add(x, Int(1)))), Imply(Geq(x, Int(mod)), Eq(Prime(x), Int(0))));
-		final Expr<? extends BoolType> target = Eq(x, Int(mod));
+		final Builder builder = new STSImpl.Builder();
 
-		final STSAnalysisContext context = new STSAnalysisContext(trans);
+		builder.addInit(Eq(x, Int(0)));
+		builder.addTrans(And(Imply(Lt(x, Int(mod)), Eq(Prime(x), Add(x, Int(1)))), Imply(Geq(x, Int(mod)), Eq(Prime(x), Int(0)))));
+		builder.setProp(Not(Eq(x, Int(mod))));
+
+		final STS sts = builder.build();
+
+		final STSAnalysisContext context = new STSAnalysisContext(sts);
 
 		final SolverManager manager = new Z3SolverManager();
 		final Solver solver = manager.createSolver(true, true);
 
 		final ExplDomain domain = ExplDomain.getInstance();
-		final STSExplInitFunction initFunction = new STSExplInitFunction(init, solver);
+		final STSExplInitFunction initFunction = new STSExplInitFunction(sts, solver);
 		final STSExplTransferFunction transferFunction = new STSExplTransferFunction(solver);
-		final STSExplTargetPredicate targetPredicate = new STSExplTargetPredicate(target, solver);
+		final STSExplTargetPredicate targetPredicate = new STSExplTargetPredicate(sts, solver);
 
 		final ExplPrecision precision = GlobalExplPrecision.create(Collections.singleton(vx), Collections.emptySet());
 

@@ -7,6 +7,7 @@ import hu.bme.mit.inf.ttmc.analysis.expl.ExplState;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.expr.impl.Exprs;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
+import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 import hu.bme.mit.inf.ttmc.formalism.utils.FormalismUtils;
 import hu.bme.mit.inf.ttmc.formalism.utils.PathUtils;
 import hu.bme.mit.inf.ttmc.solver.Solver;
@@ -16,8 +17,9 @@ public class STSExplTargetPredicate implements TargetPredicate<ExplState> {
 	private final Expr<? extends BoolType> target;
 	private final Solver solver;
 
-	public STSExplTargetPredicate(final Expr<? extends BoolType> target, final Solver solver) {
-		this.target = checkNotNull(target);
+	public STSExplTargetPredicate(final STS sts, final Solver solver) {
+		final Expr<? extends BoolType> prop = sts.getProp();
+		this.target = Exprs.Not(checkNotNull(prop));
 		this.solver = checkNotNull(solver);
 	}
 

@@ -10,7 +10,9 @@ import hu.bme.mit.inf.ttmc.analysis.TransferFunction;
 import hu.bme.mit.inf.ttmc.analysis.pred.PredPrecision;
 import hu.bme.mit.inf.ttmc.analysis.pred.PredState;
 import hu.bme.mit.inf.ttmc.analysis.sts.STSAction;
+import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.expr.impl.Exprs;
+import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.formalism.common.Valuation;
 import hu.bme.mit.inf.ttmc.formalism.utils.PathUtils;
 import hu.bme.mit.inf.ttmc.solver.Solver;
@@ -24,8 +26,7 @@ public class STSPredTransferFunction implements TransferFunction<PredState, STSA
 	}
 
 	@Override
-	public Collection<PredState> getSuccStates(final PredState state, final STSAction action,
-			final PredPrecision precision) {
+	public Collection<PredState> getSuccStates(final PredState state, final STSAction action, final PredPrecision precision) {
 		checkNotNull(state);
 		checkNotNull(action);
 		checkNotNull(precision);
@@ -33,7 +34,9 @@ public class STSPredTransferFunction implements TransferFunction<PredState, STSA
 		final Set<PredState> succStates = new HashSet<>();
 		solver.push();
 		solver.add(PathUtils.unfold(state.toExpr(), 0));
-		solver.add(PathUtils.unfold(action.getTrans(), 0));
+		for (final Expr<? extends BoolType> expr : action.getTrans()) {
+			solver.add(PathUtils.unfold(expr, 0));
+		}
 		boolean moreSuccStates;
 		do {
 			moreSuccStates = solver.check().boolValue();
