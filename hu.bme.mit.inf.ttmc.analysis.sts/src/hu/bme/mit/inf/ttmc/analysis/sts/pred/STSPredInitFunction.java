@@ -13,16 +13,17 @@ import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.expr.impl.Exprs;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.formalism.common.Valuation;
+import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 import hu.bme.mit.inf.ttmc.formalism.utils.PathUtils;
 import hu.bme.mit.inf.ttmc.solver.Solver;
 
 public class STSPredInitFunction implements InitFunction<PredState, PredPrecision> {
 
-	private final Expr<? extends BoolType> init;
+	private final Collection<Expr<? extends BoolType>> init;
 	private final Solver solver;
 
-	public STSPredInitFunction(final Expr<? extends BoolType> init, final Solver solver) {
-		this.init = checkNotNull(init);
+	public STSPredInitFunction(final STS sts, final Solver solver) {
+		this.init = checkNotNull(sts.getInit());
 		this.solver = checkNotNull(solver);
 	}
 
@@ -33,7 +34,9 @@ public class STSPredInitFunction implements InitFunction<PredState, PredPrecisio
 		final Set<PredState> initStates = new HashSet<>();
 		boolean moreInitStates;
 		solver.push();
-		solver.add(PathUtils.unfold(init, 0));
+		for (final Expr<? extends BoolType> expr : init) {
+			solver.add(PathUtils.unfold(expr, 0));
+		}
 		do {
 			moreInitStates = solver.check().boolValue();
 			if (moreInitStates) {
