@@ -5,6 +5,7 @@ import static com.google.common.base.Preconditions.checkElementIndex;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import hu.bme.mit.inf.ttmc.analysis.Action;
@@ -56,5 +57,15 @@ public class CounterexampleImpl<S extends State, A extends Action> implements Co
 		}
 		sb.append(")");
 		return sb.toString();
+	}
+
+	@Override
+	public List<S> getStates() {
+		return Collections.unmodifiableList(states);
+	}
+
+	@Override
+	public List<A> getActions() {
+		return Collections.unmodifiableList(actions);
 	}
 }

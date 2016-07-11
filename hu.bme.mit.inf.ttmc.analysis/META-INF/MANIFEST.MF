@@ -16,5 +16,8 @@ Export-Package: hu.bme.mit.inf.ttmc.analysis,
  hu.bme.mit.inf.ttmc.analysis.algorithm.impl,
  hu.bme.mit.inf.ttmc.analysis.composite,
  hu.bme.mit.inf.ttmc.analysis.expl,
+ hu.bme.mit.inf.ttmc.analysis.impl,
  hu.bme.mit.inf.ttmc.analysis.pred,
+ hu.bme.mit.inf.ttmc.analysis.refutation,
+ hu.bme.mit.inf.ttmc.analysis.refutation.impl,
  hu.bme.mit.inf.ttmc.analysis.zone
