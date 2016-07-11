@@ -42,4 +42,19 @@ public class CounterexampleImpl<S extends State, A extends Action> implements Co
 		return actions.get(i);
 	}
 
+	@Override
+	public String toString() {
+		final StringBuilder sb = new StringBuilder();
+		sb.append("Counterexample(");
+		for (int i = 0; i < size(); ++i) {
+			sb.append("S(").append(getState(i).toString()).append(")");
+			if (i < size() - 1) {
+				sb.append("; A(");
+				sb.append(getAction(i));
+				sb.append("); ");
+			}
+		}
+		sb.append(")");
+		return sb.toString();
+	}
 }
