@@ -47,13 +47,17 @@ public class STSExplTest {
 
 		final VarDecl<IntType> vx = Var("x", Int());
 		final Expr<IntType> x = vx.getRef();
+		final VarDecl<IntType> vy = Var("y", Int());
+		final Expr<IntType> y = vy.getRef();
 
 		final int mod = 10;
 
 		final Builder builder = new STSImpl.Builder();
 
 		builder.addInit(Eq(x, Int(0)));
+		builder.addInit(Eq(y, Int(0)));
 		builder.addTrans(And(Imply(Lt(x, Int(mod)), Eq(Prime(x), Add(x, Int(1)))), Imply(Geq(x, Int(mod)), Eq(Prime(x), Int(0)))));
+		builder.addTrans(Eq(Prime(y), Int(0)));
 		builder.setProp(Not(Eq(x, Int(mod))));
 
 		final STS sts = builder.build();
@@ -68,7 +72,7 @@ public class STSExplTest {
 		final STSExplTransferFunction transferFunction = new STSExplTransferFunction(solver);
 		final STSExplTargetPredicate targetPredicate = new STSExplTargetPredicate(sts, solver);
 
-		final GlobalExplPrecision precision = GlobalExplPrecision.create(Collections.singleton(vx), Collections.emptySet());
+		final GlobalExplPrecision precision = GlobalExplPrecision.create(Collections.singleton(vy), Collections.singleton(vx));
 
 		final Abstractor<ExplState, STSAction, ExplPrecision> abstractor = new AbstractorImpl<>(context, domain, initFunction, transferFunction,
 				targetPredicate);
