@@ -21,7 +21,7 @@ import hu.bme.mit.inf.ttmc.analysis.algorithm.ArgPrinter;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.AbstractorImpl;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.CEGARLoopImpl;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.RefutationBasedRefiner;
-import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.refineroperator.GlobalExplItpRefinerOperator;
+import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.refinerops.GlobalExplItpRefinerOp;
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplDomain;
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplPrecision;
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplState;
@@ -74,7 +74,7 @@ public class STSExplTest {
 				targetPredicate);
 
 		final STSExprSeqConcretizer concretizerOp = new STSExprSeqConcretizer(sts, solver);
-		final GlobalExplItpRefinerOperator<STSAction> refinerOp = new GlobalExplItpRefinerOperator<>();
+		final GlobalExplItpRefinerOp<STSAction> refinerOp = new GlobalExplItpRefinerOp<>();
 
 		final RefutationBasedRefiner<ExplState, ExplState, ItpRefutation, GlobalExplPrecision, STSAction> refiner = new RefutationBasedRefiner<>(concretizerOp,
 				refinerOp);
