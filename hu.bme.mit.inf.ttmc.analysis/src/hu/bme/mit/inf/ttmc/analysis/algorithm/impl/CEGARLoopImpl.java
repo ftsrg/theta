@@ -11,8 +11,8 @@ import hu.bme.mit.inf.ttmc.analysis.algorithm.Abstractor;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.AbstractorStatus;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.CEGARLoop;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.CEGARStatus;
-import hu.bme.mit.inf.ttmc.analysis.algorithm.Refiner;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.CounterexampleStatus;
+import hu.bme.mit.inf.ttmc.analysis.algorithm.Refiner;
 
 public class CEGARLoopImpl<S extends State, A extends Action, P extends Precision, CS extends State> implements CEGARLoop<P, CS, A> {
 
@@ -34,7 +34,7 @@ public class CEGARLoopImpl<S extends State, A extends Action, P extends Precisio
 
 			if (abstractor.getStatus() == AbstractorStatus.Counterexample) {
 				final ARG<S, A> arg = abstractor.getARG();
-				refiner.refine(arg);
+				refiner.refine(arg, precision);
 
 				if (refiner.getStatus() == CounterexampleStatus.Spurious) {
 					precision = refiner.getRefinedPrecision();
