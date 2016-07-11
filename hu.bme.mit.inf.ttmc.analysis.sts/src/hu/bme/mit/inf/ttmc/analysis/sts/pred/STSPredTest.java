@@ -76,7 +76,7 @@ public class STSPredTest {
 				targetPredicate);
 
 		final STSExprSeqConcretizer concretizerOp = new STSExprSeqConcretizer(sts, solver);
-		final GlobalPredItpRefinerOperator<STSAction> refinerOp = new GlobalPredItpRefinerOperator<STSAction>();
+		final GlobalPredItpRefinerOperator<STSAction> refinerOp = new GlobalPredItpRefinerOperator<>();
 
 		final RefutationBasedRefiner<PredState, ExplState, ItpRefutation, GlobalPredPrecision, STSAction> refiner = new RefutationBasedRefiner<>(concretizerOp,
 				refinerOp);
