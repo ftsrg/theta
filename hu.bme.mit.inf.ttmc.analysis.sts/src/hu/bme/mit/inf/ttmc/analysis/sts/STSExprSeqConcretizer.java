@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 import hu.bme.mit.inf.ttmc.analysis.Counterexample;
 import hu.bme.mit.inf.ttmc.analysis.ExprState;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.CounterexampleStatus;
-import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.ConcretizerOperator;
+import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.ConcretizerOp;
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplState;
 import hu.bme.mit.inf.ttmc.analysis.impl.CounterexampleImpl;
 import hu.bme.mit.inf.ttmc.analysis.refutation.ItpRefutation;
@@ -26,7 +26,7 @@ import hu.bme.mit.inf.ttmc.solver.ItpMarker;
 import hu.bme.mit.inf.ttmc.solver.ItpPattern;
 import hu.bme.mit.inf.ttmc.solver.ItpSolver;
 
-public class STSExprSeqConcretizer implements ConcretizerOperator<ExprState, STSAction, ExplState, ItpRefutation> {
+public class STSExprSeqConcretizer implements ConcretizerOp<ExprState, STSAction, ExplState, ItpRefutation> {
 
 	private final STS sts;
 	private final ItpSolver solver;
