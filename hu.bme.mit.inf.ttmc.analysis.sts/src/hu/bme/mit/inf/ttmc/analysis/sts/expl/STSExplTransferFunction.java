@@ -9,9 +9,7 @@ import hu.bme.mit.inf.ttmc.analysis.TransferFunction;
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplPrecision;
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplState;
 import hu.bme.mit.inf.ttmc.analysis.sts.STSAction;
-import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.expr.impl.Exprs;
-import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.formalism.common.Valuation;
 import hu.bme.mit.inf.ttmc.formalism.utils.PathUtils;
 import hu.bme.mit.inf.ttmc.solver.Solver;
@@ -34,9 +32,7 @@ class STSExplTransferFunction implements TransferFunction<ExplState, STSAction, 
 
 		solver.push();
 		solver.add(PathUtils.unfold(state.toExpr(), 0));
-		for (final Expr<? extends BoolType> expr : action.getTrans()) {
-			solver.add(PathUtils.unfold(expr, 0));
-		}
+		action.getTrans().stream().forEach(t -> solver.add(PathUtils.unfold(t, 0)));
 		boolean moreSuccStates;
 		do {
 			moreSuccStates = solver.check().boolValue();

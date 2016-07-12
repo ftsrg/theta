@@ -34,9 +34,7 @@ public class STSPredInitFunction implements InitFunction<PredState, PredPrecisio
 		final Set<PredState> initStates = new HashSet<>();
 		boolean moreInitStates;
 		solver.push();
-		for (final Expr<? extends BoolType> expr : init) {
-			solver.add(PathUtils.unfold(expr, 0));
-		}
+		init.stream().forEach(i -> solver.add(PathUtils.unfold(i, 0)));
 		do {
 			moreInitStates = solver.check().boolValue();
 			if (moreInitStates) {
