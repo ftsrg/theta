@@ -2,6 +2,7 @@ package hu.bme.mit.inf.ttmc.slicer.dependence;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -65,7 +66,7 @@ public class BasicBlockUseDefineChain {
 	private Set<Definition> definitions = new HashSet<>();
 
 	private CFG cfg;
-	private Set<CFGNode> nodes;
+	private List<CFGNode> nodes;
 
 	public BasicBlockUseDefineChain(CFG cfg) {
 		this.cfg = cfg;

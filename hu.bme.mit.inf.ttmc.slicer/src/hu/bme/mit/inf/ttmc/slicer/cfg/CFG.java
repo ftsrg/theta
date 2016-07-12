@@ -1,7 +1,9 @@
 package hu.bme.mit.inf.ttmc.slicer.cfg;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -26,7 +28,7 @@ public class CFG implements Graph {
 
 	public CFG copy(Map<CFGNode, CFGNode> map)
 	{
-		Set<CFGNode> nodes = this.nodes();
+		List<CFGNode> nodes = this.nodes();
 
 		for (CFGNode node : nodes) {
 			CFGNode newNode = node.copy();
@@ -52,15 +54,15 @@ public class CFG implements Graph {
 		return exit;
 	}
 
-	public Set<CFGNode> nodes()
+	public List<CFGNode> nodes()
 	{
-		Set<CFGNode> nodes = new HashSet<>();
+		List<CFGNode> nodes = new ArrayList<>();
 		DFS(entry, nodes);
 
 		return nodes;
 	}
 
-	private void DFS(CFGNode cfg, Set<CFGNode> visited)
+	private void DFS(CFGNode cfg, List<CFGNode> visited)
 	{
 		visited.add(cfg);
 		for (CFGNode node : cfg.getChildren()) {

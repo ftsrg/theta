@@ -2,6 +2,7 @@ package hu.bme.mit.inf.ttmc.slicer.dependence;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -35,7 +36,7 @@ public class PDG implements Graph {
 	}
 
 	public static PDG fromCFG(CFG cfg) {
-		Set<CFGNode> nodes = cfg.nodes();
+		List<CFGNode> nodes = cfg.nodes();
 
 		/*
 		 * Control dependence algorithm from J. Ferrante et al.
@@ -121,6 +122,21 @@ public class PDG implements Graph {
 		 * 	1. Q is a successor of P in the CFG
 		 * 	2. LV(P) intersect RV(Q) is not empty.
 		 */
+		UseDefineChain ud = new UseDefineChain(cfg);
+
+		cdgMap.forEach((CFGNode key, PDGNode value) -> {
+
+			if (key instanceof StmtCFGNode) {
+				StmtCFGNode node = (StmtCFGNode) key;
+				List<StmtCFGNode> definitionNodes = ud.definitionNodes(node);
+
+				for (StmtCFGNode defNode : definitionNodes) {
+					value.addFlowParent(cdgMap.get(defNode));
+				}
+			}
+		});
+
+		/*
 		for (CFGNode outer : cdgMap.keySet()) {
 			Set<CFGNode> succ = outer.getSuccessors();
 			for (CFGNode inner : succ) {
@@ -133,16 +149,19 @@ public class PDG implements Graph {
 				StmtCFGNode outerStmtNode = (StmtCFGNode) outer;
 				StmtCFGNode innerStmtNode = (StmtCFGNode) inner;
 
-				Set<VarDecl<? extends Type>> outerLVars = VariableFinderVisitor.findLeftVars(outerStmtNode.getStmt());
-				Set<VarDecl<? extends Type>> innerRVars = VariableFinderVisitor.findRightVars(innerStmtNode.getStmt());
+				// Get all defining nodes to inner
 
-				innerRVars.retainAll(outerLVars);
 
-				if (!innerRVars.isEmpty()) {
-					cdgMap.get(outer).addFlowChild(cdgMap.get(inner));
-				}
+				//Set<VarDecl<? extends Type>> outerLVars = VariableFinderVisitor.findLeftVars(outerStmtNode.getStmt());
+				//Set<VarDecl<? extends Type>> innerRVars = VariableFinderVisitor.findRightVars(innerStmtNode.getStmt());
+
+				//innerRVars.retainAll(outerLVars);
+
+				//if (!innerRVars.isEmpty()) {
+					//cdgMap.get(outer).addFlowChild(cdgMap.get(inner));
+				//}
 			}
-		}
+		}*/
 
 		PDG pdg = new PDG(pdgEntry);
 		pdg.cfgMap.putAll(cdgMap);
