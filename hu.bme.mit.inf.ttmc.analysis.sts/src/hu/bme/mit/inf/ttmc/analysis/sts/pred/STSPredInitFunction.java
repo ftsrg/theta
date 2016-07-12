@@ -20,10 +20,12 @@ import hu.bme.mit.inf.ttmc.solver.Solver;
 public class STSPredInitFunction implements InitFunction<PredState, PredPrecision> {
 
 	private final Collection<Expr<? extends BoolType>> init;
+	private final Collection<Expr<? extends BoolType>> invar;
 	private final Solver solver;
 
 	public STSPredInitFunction(final STS sts, final Solver solver) {
 		this.init = checkNotNull(sts.getInit());
+		this.invar = checkNotNull(sts.getInvar());
 		this.solver = checkNotNull(solver);
 	}
 
@@ -34,7 +36,9 @@ public class STSPredInitFunction implements InitFunction<PredState, PredPrecisio
 		final Set<PredState> initStates = new HashSet<>();
 		boolean moreInitStates;
 		solver.push();
+		// TODO: optimization: cache the unrolled init and invar for 0
 		init.stream().forEach(i -> solver.add(PathUtils.unfold(i, 0)));
+		invar.stream().forEach(i -> solver.add(PathUtils.unfold(i, 0)));
 		do {
 			moreInitStates = solver.check().boolValue();
 			if (moreInitStates) {

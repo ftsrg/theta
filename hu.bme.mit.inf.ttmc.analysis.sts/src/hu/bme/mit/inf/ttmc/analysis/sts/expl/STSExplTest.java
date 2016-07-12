@@ -69,7 +69,7 @@ public class STSExplTest {
 
 		final ExplDomain domain = ExplDomain.getInstance();
 		final STSExplInitFunction initFunction = new STSExplInitFunction(sts, solver);
-		final STSExplTransferFunction transferFunction = new STSExplTransferFunction(solver);
+		final STSExplTransferFunction transferFunction = new STSExplTransferFunction(sts, solver);
 		final STSExplTargetPredicate targetPredicate = new STSExplTargetPredicate(sts, solver);
 
 		final GlobalExplPrecision precision = GlobalExplPrecision.create(Collections.singleton(vy), Collections.singleton(vx));

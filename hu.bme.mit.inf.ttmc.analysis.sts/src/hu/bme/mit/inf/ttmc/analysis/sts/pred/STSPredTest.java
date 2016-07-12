@@ -67,7 +67,7 @@ public class STSPredTest {
 		final PredDomain domain = PredDomain.create(solver);
 
 		final STSPredInitFunction initFunction = new STSPredInitFunction(sts, solver);
-		final STSPredTransferFunction transferFunction = new STSPredTransferFunction(solver);
+		final STSPredTransferFunction transferFunction = new STSPredTransferFunction(sts, solver);
 		final STSPredTargetPredicate targetPredicate = new STSPredTargetPredicate(sts, solver);
 
 		final GlobalPredPrecision precision = GlobalPredPrecision.create(Collections.singleton(Lt(x, Int(mod))));
