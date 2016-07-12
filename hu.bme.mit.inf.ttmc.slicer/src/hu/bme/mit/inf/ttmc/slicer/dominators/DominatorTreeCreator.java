@@ -2,12 +2,14 @@ package hu.bme.mit.inf.ttmc.slicer.dominators;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import hu.bme.mit.inf.ttmc.slicer.cfg.CFG;
 import hu.bme.mit.inf.ttmc.slicer.cfg.CFGNode;
@@ -44,11 +46,104 @@ public class DominatorTreeCreator {
 		return buildTree(cfg, false);
 	}
 
+	private static DominatorTree buildTree(CFG cfg, boolean reverse)
+	{
+		Map<CFGNode, Set<CFGNode>> dominators = new HashMap<>();
+
+		CFGNode root = reverse ? cfg.getExit() : cfg.getEntry();
+		dominators.put(root, new HashSet<CFGNode>() {{
+			add(root);
+		}});
+
+		List<CFGNode> nodes = new ArrayList<CFGNode>(cfg.nodes());
+
+		for (CFGNode node : nodes) {
+			if (node == root)
+				continue;
+			dominators.put(node, new HashSet<CFGNode>(nodes));
+		}
+
+		nodes.remove(root);
+		boolean change = true;
+		while (change) {
+			change = false;
+
+			for (CFGNode node : nodes) {
+				Set<CFGNode> nodeDoms = new HashSet<>();
+				nodeDoms.add(node);
+
+				Iterator<CFGNode> iter = reverse ? node.getChildren().iterator() : node.getParents().iterator();
+				CFGNode first = iter.next();
+				Set<CFGNode> parentDoms = new HashSet<>(dominators.get(first));
+				//System.out.println("Node: " + node);
+				//System.out.println("    " + first + ": " + parentDoms);
+				while (iter.hasNext()) {
+					CFGNode next = iter.next();
+					parentDoms.retainAll(dominators.get(next));
+					//System.out.println("    " + next + ": " + parentDoms);
+				}
+
+				nodeDoms.addAll(parentDoms);
+
+				if (!dominators.get(node).equals(nodeDoms)) {
+					dominators.put(node, nodeDoms);
+					change = true;
+				}
+			}
+		}
+
+		// Find immediate dominators
+		// p is immediate dominator of q (p idom q), if:
+		//	1. p dom q
+		//	2. every other dominator of q dominates p
+
+		Map<CFGNode, DominatorTreeNode> domMapping = new HashMap<>();
+		for (CFGNode node : nodes) {
+			domMapping.put(node, new DominatorTreeNode(node));
+		}
+		domMapping.put(root, new DominatorTreeNode(root));
+
+
+		dominators.forEach((CFGNode node, Set<CFGNode> doms) -> {
+			// Node: The node being checked
+			// Doms: The dominators of this node
+
+			for (CFGNode dominator : doms) {
+				if (dominator == node)
+					continue;
+
+				boolean isIdom = true;
+
+				// Is this node an immediate dominator?
+				// 	It is immediate if all other dominators of this node dominate it.
+				for (CFGNode otherDominator : doms) {
+					if (otherDominator == node || otherDominator == dominator)
+						continue;
+
+
+					if (!dominators.get(dominator).contains(otherDominator)) {
+						isIdom = false;
+						break;
+					}
+				}
+
+				if (isIdom) {
+					domMapping.get(node).setParent(domMapping.get(dominator));
+					break;
+				}
+
+			}
+
+		});
+
+		return new DominatorTree(domMapping.get(root), domMapping);
+	}
+
 	/**
 	 * Builds a dominator tree using the Lengauer-Tarjan algorithm
 	 * @param cfg
 	 */
-	private static DominatorTree buildTree(CFG cfg, boolean reverse)
+	private static DominatorTree buildTreeOld(CFG cfg, boolean reverse)
 	{
 		Map<CFGNode, NodeInfo> infoMap = new HashMap<>();
 		List<NodeInfo> vertices = new ArrayList<>();
@@ -82,7 +177,21 @@ public class DominatorTreeCreator {
 			 * Carry out the computation vertex by vertex in decreasing order by number.
 			 */
 			Collection<CFGNode> predecessors = reverse ? wInfo.node.getChildren() : wInfo.node.getParents();
-			for (CFGNode pred : predecessors) {
+			List<CFGNode> preds = predecessors.stream().sorted(
+				(CFGNode a, CFGNode b) -> {
+					if (infoMap.get(a).dfs < infoMap.get(b).dfs) {
+						return 1;
+					} else {
+						return -1;
+					}
+				}
+			).collect(Collectors.toList());
+
+			System.out.print(wInfo.node + "\n" + "\n    ");
+			preds.forEach(s -> System.out.print(infoMap.get(s).dfs + " "));
+			System.out.print("\n");
+
+			for (CFGNode pred : preds) {
 				NodeInfo vInfo = infoMap.get(pred);
 				int u = eval(vInfo, ancestor, vertices);
 				NodeInfo uInfo = vertices.get(u);

@@ -19,7 +19,7 @@ import hu.bme.mit.inf.ttmc.slicer.cfg.CFGPrinter;
 import hu.bme.mit.inf.ttmc.slicer.cfg.StmtCFGNode;
 import hu.bme.mit.inf.ttmc.slicer.dependence.PDG;
 import hu.bme.mit.inf.ttmc.slicer.dependence.PDGPrinter;
-import hu.bme.mit.inf.ttmc.slicer.dependence.UseDefineChain;
+import hu.bme.mit.inf.ttmc.slicer.dependence.BasicBlockUseDefineChain;
 import hu.bme.mit.inf.ttmc.slicer.dominators.DominatorTree;
 import hu.bme.mit.inf.ttmc.slicer.dominators.DominatorTreeCreator;
 
@@ -30,17 +30,13 @@ public class Application {
 		ProcDecl<? extends Type> body = Compiler.createStmts("simple.c").get(0);
 
 		CFG cfg = CFGBuilder.createCFG(body);
-		/*
-		CFA cfa = CFACreator.createLBE(body.getStmt().get());
-
-		//System.out.println(CFGPrinter.toGraphvizString(cfg));
-		System.out.println(CFAPrinter.toGraphvizSting(cfa));
 
 		System.out.println(GraphPrinter.toGraphvizString(cfg));
 		PDG pdg = PDG.fromCFG(cfg);
 
 		System.out.println(PDGPrinter.toGraphvizString(pdg));
 
+/*
 		ReachabilitySlicer slicer = new ReachabilitySlicer();
 
 		for (CFGNode node : cfg.nodes()) {
@@ -53,21 +49,24 @@ public class Application {
 				}
 			}
 		}
-
+*/
+		/*
 		CFG bb = BasicBlockCFGTransformer.buildBasicBlocks(cfg);
 		System.out.println(GraphPrinter.toGraphvizString(bb));
 
 		LocalConstantPropagator constProp = new LocalConstantPropagator();
 
-		constProp.transform(bb);
-		System.out.println(GraphPrinter.toGraphvizString(bb));
+		//constProp.transform(bb);
+		//System.out.println(GraphPrinter.toGraphvizString(bb));
 
 		CFG newCfg = BasicBlockCFGTransformer.splitBasicBlocks(bb);
 		System.out.println(GraphPrinter.toGraphvizString(newCfg));
 		PDG newPdg = PDG.fromCFG(newCfg);
+		DominatorTree newPdt = DominatorTreeCreator.postDominatorTree(newCfg);
 
 		System.out.println(PDGPrinter.toGraphvizString(newPdg));
-
+		System.out.println(GraphPrinter.toGraphvizString(newPdt)); */
+/*
 		for (CFGNode node : newCfg.nodes()) {
 			if (node instanceof StmtCFGNode) {
 				Stmt stmt = ((StmtCFGNode) node).getStmt();
@@ -79,9 +78,12 @@ public class Application {
 			}
 		}
 */
-		CFG bb = BasicBlockCFGTransformer.buildBasicBlocks(cfg);
-		System.out.println(GraphPrinter.toGraphvizString(bb));
-		UseDefineChain ud = new UseDefineChain(bb);
+
+
+		//CFG bb = BasicBlockCFGTransformer.buildBasicBlocks(cfg);
+		//System.out.println(GraphPrinter.toGraphvizString(bb));
+		//BasicBlockUseDefineChain ud = new BasicBlockUseDefineChain(bb);
+
 
 
 		//PDG pdg = PDGTransformer.createPDG(cfg);

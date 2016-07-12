@@ -17,6 +17,7 @@ import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
 import hu.bme.mit.inf.ttmc.slicer.cfg.BasicBlockCFGNode;
 import hu.bme.mit.inf.ttmc.slicer.cfg.CFG;
 import hu.bme.mit.inf.ttmc.slicer.cfg.CFGNode;
+import hu.bme.mit.inf.ttmc.slicer.cfg.StmtCFGNode;
 
 /*
  * A use-define chain is a list for each use of a variable of all definitions that reach that use.
@@ -24,19 +25,15 @@ import hu.bme.mit.inf.ttmc.slicer.cfg.CFGNode;
 
 public class UseDefineChain {
 
-	private static class Definition
+	private class Definition
 	{
-		private static int cnt = 0;
-
-		public int id;
 		public Stmt stmt;
-		public BasicBlockCFGNode block;
+		public StmtCFGNode node;
 		public VarDecl<? extends Type> var;
 
-		public Definition(Stmt stmt, BasicBlockCFGNode block, VarDecl<? extends Type> var) {
-			this.id = ++cnt;
+		public Definition(Stmt stmt, StmtCFGNode node, VarDecl<? extends Type> var) {
 			this.stmt = stmt;
-			this.block = block;
+			this.node = node;
 			this.var = var;
 		}
 
@@ -46,110 +43,21 @@ public class UseDefineChain {
 		}
 	}
 
-	private static class BlockInfo
+	private class StmtInfo
 	{
-		public BasicBlockCFGNode block;
+		public Stmt stmt;
+
 		public Set<VarDecl<? extends Type>> vars = new HashSet<>();
 		public Set<Definition> gen = new HashSet<>();
 		public Set<Definition> kill = new HashSet<>();
 		public Set<Definition> in = new HashSet<>();
 		public Set<Definition> out = new HashSet<>();
 
-		public BlockInfo(BasicBlockCFGNode block) {
-			this.block = block;
+		public StmtInfo(Stmt stmt) {
+			this.stmt = stmt;
 		}
 	}
 
-	private Map<BasicBlockCFGNode, BlockInfo> blocks = new HashMap<>();
-	//private Map<Use, Set<Definition>> udInfo = new HashMap<>();
-	private Set<Definition> definitions = new HashSet<>();
-
-	private CFG cfg;
-	private Set<CFGNode> nodes;
-
-	public UseDefineChain(CFG cfg) {
-		this.cfg = cfg;
-		this.nodes = cfg.nodes();
-		this.analyzeBlocks();
-	}
-
-	private void analyzeBlocks() {
-		this.findAllDefinitions();
-
-		// Compute kill sets for basic blocks
-		for (BlockInfo blockInfo : this.blocks.values()) {
-			// Kill contains all other definitions of the variables defined in this block
-			blockInfo.kill.addAll(this.definitions.stream().filter(s -> blockInfo.vars.contains(s.var)).collect(Collectors.toSet()));
-			blockInfo.kill.removeAll(blockInfo.gen);
-			System.out.println("Block: " +  blockInfo.block + "\n    Gen: " + blockInfo.gen + "\n    Kill: " + blockInfo.kill);
-		}
-
-		/*
-		 * Iterative algorithm for reaching definitions.
-		 * (Compilers: Principles, Techniques and Tools, 1st edition, Algorithm 10.2)
-		 */
-		for (BlockInfo blockInfo : this.blocks.values()) {
-			blockInfo.out.addAll(blockInfo.gen);
-		}
-
-		boolean change = true;
-		while (change) {
-			change = false;
-			for (BlockInfo blockInfo : this.blocks.values()) {
-				/* in[B] = for all p in parent(B) Union {out[p]} */
-				Set<Definition> newIn = new HashSet<>();
-				blockInfo.block.getBlockParents().forEach(s -> {
-					newIn.addAll(this.blocks.get(s).out);
-				});
-				blockInfo.in = newIn;
-
-				/* out[B] = gen[B] union (in[B] sub kill[B]) */
-				Set<Definition> newOut = new HashSet<>(blockInfo.gen);
-				newOut.addAll(blockInfo.in.stream().filter(s -> !blockInfo.kill.contains(s)).collect(Collectors.toSet()));
-
-				if (!blockInfo.out.equals(newOut)) {
-					blockInfo.out = newOut;
-					change = true;
-				}
-			}
-		}
-
-		for (BlockInfo blockInfo : this.blocks.values()) {
-			System.out.println("Block: "
-				+  blockInfo.block +
-				"\n    Gen: " + blockInfo.gen +
-				"\n    Kill: " + blockInfo.gen +
-				"\n    In: " + blockInfo.in +
-				"\n    Out: " + blockInfo.out
-			);
-		}
-	}
-
-	private void findAllDefinitions() {
-		for (CFGNode node : this.nodes) {
-			if (node instanceof BasicBlockCFGNode) {
-				BasicBlockCFGNode bb = (BasicBlockCFGNode) node;
-				BlockInfo blockInfo = new BlockInfo(bb);
-
-				for (Stmt stmt : bb.getStmts()) {
-					Set<VarDecl<? extends Type>> defs = VariableFinderVisitor.findLeftVars(stmt);
-					Set<VarDecl<? extends Type>> uses = VariableFinderVisitor.findRightVars(stmt);
-
-					for (VarDecl<? extends Type> var : defs) {
-						Definition defInfo = new Definition(stmt, bb, var);
-						this.definitions.add(defInfo);
-						blockInfo.gen.add(defInfo);
-						blockInfo.vars.add(var);
-					}
-
-					for (VarDecl<? extends Type> var : uses) {
-						//Definition useInfo = new Definition(stmt, bb, var);
-					}
-				}
-				this.blocks.put(bb, blockInfo);
-			}
-		}
-	}
 
 
 }

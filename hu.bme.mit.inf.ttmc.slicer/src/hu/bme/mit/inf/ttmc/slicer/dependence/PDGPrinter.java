@@ -57,7 +57,7 @@ public class PDGPrinter {
 					continue;
 
 				if (node.getFlowChildren().contains(inner)) {
-					sb.append(String.format("node_%d -> node_%d [color=green]\n", nodes.get(node), nodes.get(inner)));
+					//sb.append(String.format("node_%d -> node_%d [color=green]\n", nodes.get(node), nodes.get(inner)));
 				}
 			}
 		}
