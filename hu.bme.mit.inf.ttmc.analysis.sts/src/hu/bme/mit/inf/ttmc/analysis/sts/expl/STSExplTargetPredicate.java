@@ -2,6 +2,8 @@ package hu.bme.mit.inf.ttmc.analysis.sts.expl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import java.util.Collection;
+
 import hu.bme.mit.inf.ttmc.analysis.TargetPredicate;
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplState;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
@@ -15,11 +17,13 @@ import hu.bme.mit.inf.ttmc.solver.Solver;
 public class STSExplTargetPredicate implements TargetPredicate<ExplState> {
 
 	private final Expr<? extends BoolType> target;
+	private final Collection<Expr<? extends BoolType>> invar;
 	private final Solver solver;
 
 	public STSExplTargetPredicate(final STS sts, final Solver solver) {
 		final Expr<? extends BoolType> prop = sts.getProp();
 		this.target = Exprs.Not(checkNotNull(prop));
+		this.invar = checkNotNull(sts.getInvar());
 		this.solver = checkNotNull(solver);
 	}
 
@@ -33,6 +37,8 @@ public class STSExplTargetPredicate implements TargetPredicate<ExplState> {
 		} else {
 			solver.push();
 			solver.add(PathUtils.unfold(simplified, 0));
+			// TODO: optimization: cache the unrolled invar for 0
+			invar.stream().forEach(i -> solver.add(PathUtils.unfold(i, 0)));
 			solver.check();
 			final boolean result = solver.getStatus().boolValue();
 			solver.pop();
