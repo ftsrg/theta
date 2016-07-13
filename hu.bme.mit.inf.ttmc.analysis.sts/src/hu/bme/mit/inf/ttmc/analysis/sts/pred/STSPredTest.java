@@ -18,10 +18,12 @@ import org.junit.Test;
 
 import hu.bme.mit.inf.ttmc.analysis.algorithm.Abstractor;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.ArgPrinter;
-import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.AbstractorImpl;
+import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.ARGNode;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.CEGARLoopImpl;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.RefutationBasedRefiner;
+import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.WaitlistBasedAbstractorImpl;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.refinerops.GlobalPredItpRefinerOp;
+import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.waitlist.impl.FIFOWaitlist;
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplState;
 import hu.bme.mit.inf.ttmc.analysis.pred.GlobalPredPrecision;
 import hu.bme.mit.inf.ttmc.analysis.pred.PredDomain;
@@ -72,8 +74,10 @@ public class STSPredTest {
 
 		final GlobalPredPrecision precision = GlobalPredPrecision.create(Collections.singleton(Lt(x, Int(mod))));
 
-		final Abstractor<PredState, STSAction, PredPrecision> abstractor = new AbstractorImpl<>(context, domain, initFunction, transferFunction,
-				targetPredicate);
+		final FIFOWaitlist<ARGNode<PredState, STSAction>> waitlist = new FIFOWaitlist<>();
+
+		final Abstractor<PredState, STSAction, PredPrecision> abstractor = new WaitlistBasedAbstractorImpl<>(context, domain, initFunction, transferFunction,
+				targetPredicate, waitlist);
 
 		final STSExprSeqConcretizer concretizerOp = new STSExprSeqConcretizer(sts, solver);
 		final GlobalPredItpRefinerOp<STSAction> refinerOp = new GlobalPredItpRefinerOp<>();
