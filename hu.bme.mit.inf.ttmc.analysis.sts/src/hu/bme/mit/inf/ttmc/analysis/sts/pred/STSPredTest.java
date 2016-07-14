@@ -23,7 +23,8 @@ import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.CEGARLoopImpl;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.RefutationBasedRefiner;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.WaitlistBasedAbstractorImpl;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.refinerops.GlobalPredItpRefinerOp;
-import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.waitlist.impl.FIFOWaitlist;
+import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.waitlist.Waitlist;
+import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.waitlist.impl.LIFOWaitlist;
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplState;
 import hu.bme.mit.inf.ttmc.analysis.pred.GlobalPredPrecision;
 import hu.bme.mit.inf.ttmc.analysis.pred.PredDomain;
@@ -74,7 +75,7 @@ public class STSPredTest {
 
 		final GlobalPredPrecision precision = GlobalPredPrecision.create(Collections.singleton(Lt(x, Int(mod))));
 
-		final FIFOWaitlist<ARGNode<PredState, STSAction>> waitlist = new FIFOWaitlist<>();
+		final Waitlist<ARGNode<PredState, STSAction>> waitlist = new LIFOWaitlist<>();
 
 		final Abstractor<PredState, STSAction, PredPrecision> abstractor = new WaitlistBasedAbstractorImpl<>(context, domain, initFunction, transferFunction,
 				targetPredicate, waitlist);
