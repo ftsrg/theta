@@ -20,6 +20,7 @@ import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
 import hu.bme.mit.inf.ttmc.slicer.cfg.BasicBlockCFGNode;
 import hu.bme.mit.inf.ttmc.slicer.cfg.CFG;
 import hu.bme.mit.inf.ttmc.slicer.cfg.CFGNode;
+import hu.bme.mit.inf.ttmc.slicer.cfg.SequentialStmtCFGNode;
 import hu.bme.mit.inf.ttmc.slicer.cfg.StmtCFGNode;
 
 /*

@@ -1,61 +1,57 @@
 package hu.bme.mit.inf.ttmc.slicer.cfg;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
+
+import hu.bme.mit.inf.ttmc.slicer.graph.Graph;
+import hu.bme.mit.inf.ttmc.slicer.graph.GraphNode;
+
 
 public class CFGPrinter {
 
-	private static class Edge
-	{
-		public CFGNode source;
-		public CFGNode target;
-
-		Edge(CFGNode source, CFGNode target) { this.source = source; this.target = target; }
-	}
-
-
 	private static int uniqid = 0;
 
-	public static void countEdges(CFGNode cfg, Set<Edge> edges, Map<CFGNode, Integer> nodes)
-	{
-		for (CFGNode node : cfg.getParents()) {
-			edges.add(new Edge(cfg, node));
-			if (!nodes.containsKey(node)) {
-				nodes.put(node, uniqid++);
-				countEdges(node, edges, nodes);
-			}
-		}
-	}
-
-	public static String toGraphvizString(CFG cfg)
+	public static String toGraphvizString(Graph graph)
 	{
 		StringBuilder sb = new StringBuilder();
 
-		Set<Edge> edges = new HashSet<>();
-		Map<CFGNode, Integer> nodes = new HashMap<>();
+		GraphNode entry = graph.getEntry();
 
-		CFGNode entry = cfg.getExit();
-
-		nodes.put(entry, uniqid++);
-		countEdges(entry, edges, nodes);
-
-		sb.append("digraph G {");
-		for (Entry<CFGNode, Integer> node : nodes.entrySet()) {
-			sb.append(String.format("node_%d [label=\"%s\"];\n", node.getValue(), node.getKey()));
-		}
-
-		for (Edge e : edges) {
-			sb.append(String.format("node_%d -> node_%d\n", nodes.get(e.source), nodes.get(e.target)));
-		}
-		sb.append("}");
-
+		sb.append("digraph G {\n");
+		processNode(entry, new HashMap<GraphNode, Integer>(), sb);
+		sb.append("}\n");
 
 		return sb.toString();
+	}
+
+	private static void processNode(GraphNode node, Map<GraphNode, Integer> visited, StringBuilder sb)
+	{
+		int id = ++uniqid;
+
+		visited.put(node, id);
+		sb.append(String.format("node_%d [label=\"%s\"];\n", id, node.getLabel()));
+		for (GraphNode child : node.getChildren()) {
+			if (!visited.containsKey(child)) {
+				processNode(child, visited, sb);
+			}
+
+			if (node instanceof BranchStmtCFGNode) {
+				if (child == ((BranchStmtCFGNode)node).getThenNode()) {
+					sb.append(String.format("node_%d -> node_%d [label=\" True\"]\n", id, visited.get(child)));
+				} else {
+					sb.append(String.format("node_%d -> node_%d [label=\"  False\"]\n", id, visited.get(child)));
+				}
+			} else if (node instanceof BranchingBlockCFGNode) {
+				if (child == ((BranchingBlockCFGNode)node).getThenNode()) {
+					sb.append(String.format("node_%d -> node_%d [label=\" True\"]\n", id, visited.get(child)));
+				} else {
+					sb.append(String.format("node_%d -> node_%d [label=\"  False\"]\n", id, visited.get(child)));
+				}
+
+			} else {
+				sb.append(String.format("node_%d -> node_%d\n", id, visited.get(child)));
+			}
+		}
 	}
 
 }

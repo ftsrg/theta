@@ -10,6 +10,7 @@ import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.slicer.cfg.CFG;
 import hu.bme.mit.inf.ttmc.slicer.cfg.CFGNode;
+import hu.bme.mit.inf.ttmc.slicer.cfg.SequentialStmtCFGNode;
 import hu.bme.mit.inf.ttmc.slicer.cfg.StmtCFGNode;
 import hu.bme.mit.inf.ttmc.slicer.dominators.DominatorTree;
 import hu.bme.mit.inf.ttmc.slicer.dominators.DominatorTreeCreator;

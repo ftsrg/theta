@@ -1,30 +1,28 @@
 package hu.bme.mit.inf.ttmc.slicer.cfg;
 
+import hu.bme.mit.inf.ttmc.formalism.common.stmt.AssumeStmt;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
 
-public class StmtCFGNode extends CFGNode {
+public abstract class StmtCFGNode extends CFGNode {
 
-	private Stmt stmt;
-
-	public StmtCFGNode(Stmt stmt) {
-		this.stmt = stmt;
-	}
-
-	public Stmt getStmt() { return this.stmt; }
-
-	@Override
-	public String toString() {
-		return this.stmt.toString();
-	}
+	public abstract Stmt getStmt();
 
 	@Override
 	public String getLabel() {
-		return this.stmt.toString();
+		return this.getStmt().toString();
 	}
 
 	@Override
-	public CFGNode copy() {
-		return new StmtCFGNode(this.stmt);
+	public String toString() {
+		return this.getLabel();
+	}
+
+	public static StmtCFGNode fromStmt(Stmt stmt) {
+		if (stmt instanceof AssumeStmt) {
+			return new BranchStmtCFGNode((AssumeStmt) stmt);
+		}
+
+		return new SequentialStmtCFGNode(stmt);
 	}
 
 }

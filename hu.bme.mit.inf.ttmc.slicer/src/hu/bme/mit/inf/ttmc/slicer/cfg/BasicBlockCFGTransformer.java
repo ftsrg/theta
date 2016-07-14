@@ -65,8 +65,8 @@ public class BasicBlockCFGTransformer {
 
 			List<Stmt> stmts = new ArrayList<>();
 			for (CFGNode v : visited) {
-				if (v instanceof StmtCFGNode) {
-					stmts.add(((StmtCFGNode) v).getStmt());
+				if (v instanceof SequentialStmtCFGNode) {
+					stmts.add(((SequentialStmtCFGNode) v).getStmt());
 				}
 			}
 			BasicBlockCFGNode block = new BasicBlockCFGNode(stmts);
@@ -91,13 +91,13 @@ public class BasicBlockCFGTransformer {
 				List<Stmt> stmts = block.getStmts();
 
 				Stmt head = stmts.get(0);
-				StmtCFGNode headNode = new StmtCFGNode(head);
+				SequentialStmtCFGNode headNode = new SequentialStmtCFGNode(head);
 				node.parentsReplace(headNode);
 
 				List<Stmt> tail = stmts.subList(1, stmts.size());
 				while (tail.size() != 0) {
 					head = tail.get(0);
-					StmtCFGNode localHeadNode = new StmtCFGNode(head);
+					SequentialStmtCFGNode localHeadNode = new SequentialStmtCFGNode(head);
 					headNode.addChild(localHeadNode);
 					headNode = localHeadNode;
 					tail = tail.subList(1, tail.size());

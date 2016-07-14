@@ -1,16 +1,9 @@
 package hu.bme.mit.inf.ttmc.slicer.cfg;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
-import hu.bme.mit.inf.ttmc.common.Product2;
-import hu.bme.mit.inf.ttmc.common.Tuple;
-import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.type.Type;
-import hu.bme.mit.inf.ttmc.core.utils.impl.ExprUtils;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.ProcDecl;
-import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.AssertStmt;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.AssignStmt;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.AssumeStmt;
@@ -40,7 +33,7 @@ public class CFGBuilder {
 
 		public void transform(Stmt stmt) {
 
-			CFGNode node = new StmtCFGNode(stmt);
+			CFGNode node = new SequentialStmtCFGNode(stmt);
 			node.addParent(cfg.getEntry());
 			node.addChild(cfg.getExit());
 
@@ -69,7 +62,7 @@ public class CFGBuilder {
 			Stmt head = stmts.get(0);
 			List<? extends Stmt> tail = stmts.subList(1, stmts.size());
 
-			CFGNode headNode = new StmtCFGNode(head);
+			CFGNode headNode = new SequentialStmtCFGNode(head);
 
 			node.parentsReplace(headNode);
 			if (tail.size() == 0) {
@@ -79,7 +72,7 @@ public class CFGBuilder {
 			}
 
 			BlockStmt tailBlock = Block(tail);
-			CFGNode tailNode = new StmtCFGNode(tailBlock);
+			CFGNode tailNode = new SequentialStmtCFGNode(tailBlock);
 
 			headNode.addChild(tailNode);
 
@@ -100,9 +93,9 @@ public class CFGBuilder {
 				CFGNode param) {
 			CFGNode node;
 			if (stmt.getInitVal().isPresent()) {
-				node = new StmtCFGNode(Assign(stmt.getVarDecl(), stmt.getInitVal().get()));
+				node = new SequentialStmtCFGNode(Assign(stmt.getVarDecl(), stmt.getInitVal().get()));
 			} else {
-				node = new StmtCFGNode(Havoc(stmt.getVarDecl()));
+				node = new SequentialStmtCFGNode(Havoc(stmt.getVarDecl()));
 			}
 
 			param.replace(node);
@@ -149,19 +142,20 @@ public class CFGBuilder {
 
 		@Override
 		public CFGNode visit(IfStmt stmt, CFGNode param) {
-			Stmt assume = Assume(stmt.getCond());
+			AssumeStmt assume = Assume(stmt.getCond());
 			Stmt then = stmt.getThen();
 
-			CFGNode assumeNode = new StmtCFGNode(assume);
-			CFGNode thenNode = new StmtCFGNode(then);
+			CFGNode assumeNode = new BranchStmtCFGNode(assume);
+			CFGNode thenNode = new SequentialStmtCFGNode(then);
 
 			for (CFGNode child : param.getChildren()) {
 				child.addParent(assumeNode);
+				child.parents.remove(param);
 			}
 
+			assumeNode.addChild(thenNode);
 			param.parentsReplace(assumeNode);
 			param.childrenReplace(thenNode);
-			assumeNode.addChild(thenNode);
 			processStmt(then, thenNode);
 
 			return assumeNode;
@@ -169,18 +163,18 @@ public class CFGBuilder {
 
 		@Override
 		public CFGNode visit(IfElseStmt stmt, CFGNode param) {
-			Stmt assume = Assume(stmt.getCond());
+			AssumeStmt assume = Assume(stmt.getCond());
 			Stmt then = stmt.getThen();
 			Stmt elze = stmt.getElse();
 
-			CFGNode assumeNode = new StmtCFGNode(assume);
-			CFGNode thenNode = new StmtCFGNode(then);
-			CFGNode elzeNode = new StmtCFGNode(elze);
+			CFGNode assumeNode = new BranchStmtCFGNode(assume);
+			CFGNode thenNode = new SequentialStmtCFGNode(then);
+			CFGNode elzeNode = new SequentialStmtCFGNode(elze);
 
 			for (CFGNode child : param.getChildren()) {
 				child.addParent(thenNode);
 				child.addParent(elzeNode);
-				child.removeParent(param);
+				child.parents.remove(param);
 			}
 
 			param.parentsReplace(assumeNode);
@@ -194,21 +188,19 @@ public class CFGBuilder {
 
 		@Override
 		public CFGNode visit(WhileStmt stmt, CFGNode param) {
-			Stmt assume = Assume(stmt.getCond());
+			AssumeStmt assume = Assume(stmt.getCond());
 			Stmt body = stmt.getDo();
 
-			CFGNode assumeNode = new StmtCFGNode(assume);
-			CFGNode bodyNode = new StmtCFGNode(body);
+			CFGNode assumeNode = new BranchStmtCFGNode(assume);
+			CFGNode bodyNode = new SequentialStmtCFGNode(body);
 
-
+			assumeNode.addChild(bodyNode);
 			param.parentsReplace(assumeNode);
 			param.childrenReplace(assumeNode);
-			assumeNode.addChild(bodyNode);
 			bodyNode.addChild(assumeNode);
 			processStmt(body, bodyNode);
 
 			return assumeNode;
-
 		}
 
 		@Override

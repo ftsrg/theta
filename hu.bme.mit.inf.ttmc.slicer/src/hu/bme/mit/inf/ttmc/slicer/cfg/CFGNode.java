@@ -1,27 +1,34 @@
 package hu.bme.mit.inf.ttmc.slicer.cfg;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.Stack;
 
 import hu.bme.mit.inf.ttmc.slicer.graph.GraphAlgorithm;
-import hu.bme.mit.inf.ttmc.slicer.graph.GraphNode;
 import hu.bme.mit.inf.ttmc.slicer.graph.ReversibleGraphNode;
 
 public abstract class CFGNode implements ReversibleGraphNode {
 
-	private Collection<CFGNode> parents = new HashSet<CFGNode>();
-	private Collection<CFGNode> children = new HashSet<CFGNode>();
+	protected List<CFGNode> parents = new ArrayList<CFGNode>();
+	protected List<CFGNode> children = new ArrayList<CFGNode>();
 
 	abstract public CFGNode copy();
 
 	public void addChild(CFGNode node) {
+		if (this.children.contains(node))
+			return;
+
 		this.children.add(node);
 		node.parents.add(this);
 	}
 
 	public void addParent(CFGNode node) {
+		if (this.parents.contains(node))
+			return;
+
 		this.parents.add(node);
 		node.children.add(this);
 	}
@@ -66,16 +73,34 @@ public abstract class CFGNode implements ReversibleGraphNode {
 		this.childrenReplace(newNode);
 	}
 
+	public void parentsAddAll(Collection<? extends CFGNode> nodes) {
+		for (CFGNode node : nodes) {
+			if (this.parents.contains(node))
+				continue;
+
+			this.parents.add(node);
+		}
+	}
+
+	public void childrenAddAll(Collection<? extends CFGNode> nodes) {
+		for (CFGNode node : nodes) {
+			if (this.children.contains(node))
+				continue;
+
+			this.children.add(node);
+		}
+	}
+
 	public void remove()
 	{
 		for (CFGNode parent : this.parents) {
 			parent.children.remove(this);
-			parent.children.addAll(this.children);
+			parent.childrenAddAll(this.children);
 		}
 
 		for (CFGNode child : this.children) {
 			child.parents.remove(this);
-			child.parents.addAll(this.parents);
+			child.parentsAddAll(this.parents);
 		}
 	}
 
@@ -90,13 +115,13 @@ public abstract class CFGNode implements ReversibleGraphNode {
 	}
 
 	@Override
-	public Collection<CFGNode> getChildren()
+	public List<CFGNode> getChildren()
 	{
 		return this.children;
 	}
 
 	@Override
-	public Collection<CFGNode> getParents()
+	public List<CFGNode> getParents()
 	{
 		return this.parents;
 	}
