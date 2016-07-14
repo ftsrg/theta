@@ -7,6 +7,7 @@ import hu.bme.mit.inf.ttmc.formalism.common.decl.ProcDecl;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.AssertStmt;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
 import hu.bme.mit.inf.ttmc.slicer.graph.GraphPrinter;
+import hu.bme.mit.inf.ttmc.slicer.optimizer.DeadBranchEliminator;
 import hu.bme.mit.inf.ttmc.slicer.optimizer.LocalConstantPropagator;
 import hu.bme.mit.inf.ttmc.slicer.cfg.BasicBlockCFGTransformer;
 import hu.bme.mit.inf.ttmc.slicer.cfg.BlockCFGTransformer;
@@ -33,9 +34,9 @@ public class Application {
 
 		System.out.println(PDGPrinter.toGraphvizString(pdg));
 
-/*
-		ReachabilitySlicer slicer = new ReachabilitySlicer();
 
+		ReachabilitySlicer slicer = new ReachabilitySlicer();
+/*
 		for (CFGNode node : cfg.nodes()) {
 			if (node instanceof StmtCFGNode) {
 				Stmt stmt = ((StmtCFGNode) node).getStmt();
@@ -52,9 +53,30 @@ public class Application {
 		System.out.println(CFGPrinter.toGraphvizString(bb));
 
 		LocalConstantPropagator constProp = new LocalConstantPropagator();
+		DeadBranchEliminator deadBranchElim = new DeadBranchEliminator();
 
 		constProp.transform(bb);
 		System.out.println(CFGPrinter.toGraphvizString(bb));
+		deadBranchElim.transform(bb);
+
+		System.out.println(CFGPrinter.toGraphvizString(bb));
+
+		CFG split = BlockCFGTransformer.splitBlocks(bb);
+		System.out.println(CFGPrinter.toGraphvizString(split));
+
+		PDG newPdg = PDG.fromCFG(split);
+		System.out.println(PDGPrinter.toGraphvizString(newPdg));
+
+		for (CFGNode node : split.nodes()) {
+			if (node instanceof StmtCFGNode) {
+				Stmt stmt = ((StmtCFGNode) node).getStmt();
+				if (stmt instanceof AssertStmt) {
+					CFG slice = slicer.slice(split, node);
+					System.out.println("Slice on " + stmt);
+					System.out.println(GraphPrinter.toGraphvizString(slice));
+				}
+			}
+		}
 
 //		CFG newCfg = BasicBlockCFGTransformer.splitBasicBlocks(bb);
 //		System.out.println(GraphPrinter.toGraphvizString(newCfg));

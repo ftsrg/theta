@@ -85,4 +85,23 @@ public class BlockCFGTransformer {
 		return output;
 	}
 
+	public static CFG splitBlocks(CFG input) {
+
+		CFG output = input.copy();
+
+		output.nodes().stream().filter(s -> s instanceof BlockCFGNode).forEach(node -> {
+			BlockCFGNode block = (BlockCFGNode) node;
+			List<StmtCFGNode> blockNodes = block.getContainedNodes();
+
+			StmtCFGNode head = blockNodes.get(0);
+			StmtCFGNode tail = blockNodes.get(blockNodes.size() - 1);
+
+			node.parentsReplace(head);
+			node.childrenReplace(tail);
+		});
+
+		return output;
+	}
+
+
 }
