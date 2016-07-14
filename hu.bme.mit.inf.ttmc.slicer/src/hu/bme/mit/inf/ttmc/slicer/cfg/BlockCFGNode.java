@@ -5,10 +5,14 @@ import java.util.List;
 
 public class BlockCFGNode extends CFGNode {
 
-	private List<StmtCFGNode> nodes = new ArrayList<>();
+	protected List<StmtCFGNode> nodes = new ArrayList<>();
 
 	public BlockCFGNode(List<StmtCFGNode> nodes) {
 		this.nodes = nodes;
+	}
+
+	public List<StmtCFGNode> getContainedNodes() {
+		return this.nodes;
 	}
 
 	@Override

@@ -53,8 +53,8 @@ public class Application {
 
 		LocalConstantPropagator constProp = new LocalConstantPropagator();
 
-		//constProp.transform(bb);
-		//System.out.println(GraphPrinter.toGraphvizString(bb));
+		constProp.transform(bb);
+		System.out.println(CFGPrinter.toGraphvizString(bb));
 
 //		CFG newCfg = BasicBlockCFGTransformer.splitBasicBlocks(bb);
 //		System.out.println(GraphPrinter.toGraphvizString(newCfg));

@@ -73,12 +73,12 @@ public class BlockCFGTransformer {
 				block = new BlockCFGNode(nodes);
 			}
 
-			for (CFGNode parent : head.getParents()) {
-				int idx = parent.children.lastIndexOf(head);
-				parent.children.set(idx, block);
-			}
+			//for (CFGNode parent : head.getParents()) {
+			//	int idx = parent.children.lastIndexOf(head);
+			//	parent.children.set(idx, block);
+			//}
 
-			//head.parentsReplace(block);
+			head.parentsReplace(block);
 			tail.childrenReplace(block);
 		});
 

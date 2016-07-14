@@ -148,12 +148,12 @@ public class CFGBuilder {
 			CFGNode assumeNode = new BranchStmtCFGNode(assume);
 			CFGNode thenNode = new SequentialStmtCFGNode(then);
 
-			for (CFGNode child : param.getChildren()) {
-				child.addParent(assumeNode);
-				child.parents.remove(param);
-			}
-
+			List<CFGNode> children = param.getChildren();
 			assumeNode.addChild(thenNode);
+			children.forEach(s -> {
+				assumeNode.addChild(s);
+			});
+
 			param.parentsReplace(assumeNode);
 			param.childrenReplace(thenNode);
 			processStmt(then, thenNode);

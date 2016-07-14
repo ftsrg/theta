@@ -64,8 +64,13 @@ import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.WhileStmt;
 import hu.bme.mit.inf.ttmc.formalism.utils.StmtVisitor;
 import hu.bme.mit.inf.ttmc.slicer.cfg.BasicBlockCFGNode;
+import hu.bme.mit.inf.ttmc.slicer.cfg.BlockCFGNode;
+import hu.bme.mit.inf.ttmc.slicer.cfg.BranchStmtCFGNode;
+import hu.bme.mit.inf.ttmc.slicer.cfg.BranchingBlockCFGNode;
 import hu.bme.mit.inf.ttmc.slicer.cfg.CFG;
 import hu.bme.mit.inf.ttmc.slicer.cfg.CFGNode;
+import hu.bme.mit.inf.ttmc.slicer.cfg.SequentialStmtCFGNode;
+import hu.bme.mit.inf.ttmc.slicer.cfg.StmtCFGNode;
 
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.*;
 import static hu.bme.mit.inf.ttmc.formalism.common.stmt.impl.Stmts.*;
@@ -78,22 +83,21 @@ public class LocalConstantPropagator implements CFGOptimizer {
 		/*
 		 * Perform simple local constant propagation in the given CFG.
 		 */
-		for (CFGNode node : input.nodes()) {
-			if (node instanceof BasicBlockCFGNode) {
-				BasicBlockCFGNode newBlock = this.processBasicBlock((BasicBlockCFGNode) node);
-				node.replace(newBlock);
-			}
-		}
+		input.nodes().stream().filter(s -> s instanceof BlockCFGNode).forEach(node -> {
+			BlockCFGNode newBlock = this.processBasicBlock((BlockCFGNode) node);
+			node.replace(newBlock);
+		});
 
 		return input;
 	}
 
-	private BasicBlockCFGNode processBasicBlock(BasicBlockCFGNode node) {
+	private BlockCFGNode processBasicBlock(BlockCFGNode node) {
 		Map<VarDecl<? extends Type>, LitExpr<? extends Type>> constVars = new HashMap<>();
 		ConstantFolderExprVisitor visitor = new ConstantFolderExprVisitor(constVars);
 		List<Stmt> newBlock = new ArrayList<Stmt>();
 
-		for (Stmt s : node.getStmts()) {
+		for (StmtCFGNode cn : node.getContainedNodes()) {
+			Stmt s = cn.getStmt();
 			if (s instanceof DeclStmt<?, ?>) {
 				DeclStmt<? extends Type, ? extends Type> decl = (DeclStmt<? extends Type, ? extends Type>) s;
 
@@ -148,7 +152,32 @@ public class LocalConstantPropagator implements CFGOptimizer {
 			System.out.println(constVars);
 		}
 
-		return new BasicBlockCFGNode(newBlock);
+		if (newBlock.isEmpty()) {
+			return node;
+		}
+
+		List<StmtCFGNode> newNodes = new ArrayList<StmtCFGNode>();
+		Stmt head = newBlock.get(0);
+
+		StmtCFGNode prev = head instanceof AssumeStmt
+			? new BranchStmtCFGNode((AssumeStmt) head)
+			: new SequentialStmtCFGNode(head);
+		newNodes.add(prev);
+		for (int i = 1; i < newBlock.size(); i++) {
+			head = newBlock.get(i);
+			StmtCFGNode curr = head instanceof AssumeStmt
+				? new BranchStmtCFGNode((AssumeStmt) head)
+				: new SequentialStmtCFGNode(head);
+			prev.addChild(curr);
+			newNodes.add(curr);
+			prev = curr;
+		}
+
+		StmtCFGNode tail = newNodes.get(newNodes.size() - 1);
+		if (tail instanceof BranchStmtCFGNode)
+			return new BranchingBlockCFGNode(newNodes);
+
+		return new BlockCFGNode(newNodes);
 	}
 
 

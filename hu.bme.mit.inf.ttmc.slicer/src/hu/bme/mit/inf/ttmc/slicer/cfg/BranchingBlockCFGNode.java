@@ -11,4 +11,6 @@ public class BranchingBlockCFGNode extends BlockCFGNode {
 	public CFGNode getThenNode() { return this.children.get(0); } // XXX
 	public CFGNode getElseNode() { return this.children.get(1); } // XXX
 
+	public CFGNode getBranchNode() { return this.nodes.get(this.nodes.size() - 1) ; }
+
 }
