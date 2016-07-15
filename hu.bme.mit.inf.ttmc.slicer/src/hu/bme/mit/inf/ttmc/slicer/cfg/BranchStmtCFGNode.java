@@ -15,7 +15,7 @@ public class BranchStmtCFGNode extends StmtCFGNode {
 	public CFGNode getElseNode() { return this.children.get(1); } // XXX
 
 	@Override
-	public Stmt getStmt() {
+	public AssumeStmt getStmt() {
 		return this.assume;
 	}
 

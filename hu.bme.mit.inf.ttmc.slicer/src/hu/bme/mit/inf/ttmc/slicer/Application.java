@@ -3,12 +3,16 @@ package hu.bme.mit.inf.ttmc.slicer;
 
 import hu.bme.mit.inf.ttmc.code.Compiler;
 import hu.bme.mit.inf.ttmc.core.type.Type;
+import hu.bme.mit.inf.ttmc.formalism.cfa.CFA;
+import hu.bme.mit.inf.ttmc.formalism.cfa.CFACreator;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.ProcDecl;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.AssertStmt;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
+import hu.bme.mit.inf.ttmc.formalism.utils.impl.CFAPrinter;
 import hu.bme.mit.inf.ttmc.slicer.graph.GraphPrinter;
 import hu.bme.mit.inf.ttmc.slicer.optimizer.DeadBranchEliminator;
 import hu.bme.mit.inf.ttmc.slicer.optimizer.LocalConstantPropagator;
+import hu.bme.mit.inf.ttmc.slicer.cfa.CFGToCFATransformer;
 import hu.bme.mit.inf.ttmc.slicer.cfg.BasicBlockCFGTransformer;
 import hu.bme.mit.inf.ttmc.slicer.cfg.BlockCFGTransformer;
 import hu.bme.mit.inf.ttmc.slicer.cfg.CFG;
@@ -28,8 +32,18 @@ public class Application {
 		ProcDecl<? extends Type> body = Compiler.createStmts("all.c").get(0);
 
 		CFG cfg = CFGBuilder.createCFG(body);
+		CFA cfa = CFACreator.createSBE(body.getStmt().get());
+		CFA lbe = CFACreator.createLBE(body.getStmt().get());
 
+
+		System.out.println(CFAPrinter.toGraphvizSting(cfa));
+		System.out.println(CFAPrinter.toGraphvizSting(lbe));
 		System.out.println(CFGPrinter.toGraphvizString(cfg));
+
+		CFA myCFA = CFGToCFATransformer.transform(cfg);
+		System.out.println(CFAPrinter.toGraphvizSting(myCFA));
+
+
 		PDG pdg = PDG.fromCFG(cfg);
 
 		System.out.println(PDGPrinter.toGraphvizString(pdg));
@@ -46,8 +60,7 @@ public class Application {
 					System.out.println(CFGPrinter.toGraphvizString(slice));
 				}
 			}
-		}
-*/
+		} */
 
 		CFG bb = BlockCFGTransformer.createBlocks(cfg);
 		System.out.println(CFGPrinter.toGraphvizString(bb));
@@ -73,10 +86,13 @@ public class Application {
 				if (stmt instanceof AssertStmt) {
 					CFG slice = slicer.slice(split, node);
 					System.out.println("Slice on " + stmt);
-					System.out.println(GraphPrinter.toGraphvizString(slice));
+					System.out.println(CFGPrinter.toGraphvizString(slice));
+					System.out.println("Slice CFA: ");
+					System.out.println(CFAPrinter.toGraphvizSting(CFGToCFATransformer.transform(slice)));
 				}
 			}
 		}
+
 
 //		CFG newCfg = BasicBlockCFGTransformer.splitBasicBlocks(bb);
 //		System.out.println(GraphPrinter.toGraphvizString(newCfg));
