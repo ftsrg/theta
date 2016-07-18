@@ -6,11 +6,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import hu.bme.mit.inf.ttmc.core.type.Type;
-import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.slicer.cfg.CFG;
 import hu.bme.mit.inf.ttmc.slicer.cfg.CFGNode;
-import hu.bme.mit.inf.ttmc.slicer.cfg.SequentialStmtCFGNode;
 import hu.bme.mit.inf.ttmc.slicer.cfg.StmtCFGNode;
 import hu.bme.mit.inf.ttmc.slicer.dominators.DominatorTree;
 import hu.bme.mit.inf.ttmc.slicer.dominators.DominatorTreeCreator;
@@ -121,12 +118,11 @@ public class PDG implements Graph {
 		 *
 		 * Q is data dependant on P if:
 		 * 	1. Q is a successor of P in the CFG
-		 * 	2. LV(P) intersect RV(Q) is not empty.
+		 * 	2. There is no path in the CFG from P to Q that overrides the variable defined in P.
 		 */
 		UseDefineChain ud = new UseDefineChain(cfg);
 
 		cdgMap.forEach((CFGNode key, PDGNode value) -> {
-
 			if (key instanceof StmtCFGNode) {
 				StmtCFGNode node = (StmtCFGNode) key;
 				List<StmtCFGNode> definitionNodes = ud.definitionNodes(node);
@@ -136,33 +132,6 @@ public class PDG implements Graph {
 				}
 			}
 		});
-
-		/*
-		for (CFGNode outer : cdgMap.keySet()) {
-			Set<CFGNode> succ = outer.getSuccessors();
-			for (CFGNode inner : succ) {
-				if (outer == inner)
-					continue;
-
-				if (!(outer instanceof StmtCFGNode) || !(inner instanceof StmtCFGNode))
-					continue;
-
-				StmtCFGNode outerStmtNode = (StmtCFGNode) outer;
-				StmtCFGNode innerStmtNode = (StmtCFGNode) inner;
-
-				// Get all defining nodes to inner
-
-
-				//Set<VarDecl<? extends Type>> outerLVars = VariableFinderVisitor.findLeftVars(outerStmtNode.getStmt());
-				//Set<VarDecl<? extends Type>> innerRVars = VariableFinderVisitor.findRightVars(innerStmtNode.getStmt());
-
-				//innerRVars.retainAll(outerLVars);
-
-				//if (!innerRVars.isEmpty()) {
-					//cdgMap.get(outer).addFlowChild(cdgMap.get(inner));
-				//}
-			}
-		}*/
 
 		PDG pdg = new PDG(pdgEntry);
 		pdg.cfgMap.putAll(cdgMap);

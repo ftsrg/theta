@@ -1,13 +1,7 @@
 package hu.bme.mit.inf.ttmc.slicer.graph;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
-import java.util.Map.Entry;
-
-import hu.bme.mit.inf.ttmc.slicer.cfg.CFG;
-import hu.bme.mit.inf.ttmc.slicer.cfg.CFGNode;
 
 public class GraphPrinter {
 

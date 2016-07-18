@@ -1,7 +1,6 @@
 package hu.bme.mit.inf.ttmc.slicer.cfg;
 
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.AssumeStmt;
-import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
 
 public class BranchStmtCFGNode extends StmtCFGNode {
 

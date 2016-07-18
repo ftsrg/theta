@@ -47,14 +47,9 @@ import hu.bme.mit.inf.ttmc.formalism.common.expr.VarRefExpr;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.visitor.VarRefExprVisitor;
 
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.*;
-import static hu.bme.mit.inf.ttmc.formalism.common.expr.impl.Exprs2.*;
-
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import hu.bme.mit.inf.ttmc.common.Either.Left;
 
 public class ConstantFolderExprVisitor implements VarRefExprVisitor<Void, Expr<? extends Type>> {
 

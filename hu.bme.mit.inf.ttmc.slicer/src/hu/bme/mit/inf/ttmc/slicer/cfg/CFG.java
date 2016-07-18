@@ -2,11 +2,8 @@ package hu.bme.mit.inf.ttmc.slicer.cfg;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-
 import hu.bme.mit.inf.ttmc.slicer.graph.Graph;
 
 public class CFG implements Graph {

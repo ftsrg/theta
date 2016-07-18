@@ -1,26 +1,18 @@
 package hu.bme.mit.inf.ttmc.slicer.dependence;
 
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
-import hu.bme.mit.inf.ttmc.formalism.common.stmt.AssignStmt;
-import hu.bme.mit.inf.ttmc.formalism.common.stmt.DeclStmt;
-import hu.bme.mit.inf.ttmc.formalism.common.stmt.HavocStmt;
-import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
-import hu.bme.mit.inf.ttmc.slicer.cfg.BasicBlockCFGNode;
 import hu.bme.mit.inf.ttmc.slicer.cfg.CFG;
 import hu.bme.mit.inf.ttmc.slicer.cfg.CFGNode;
-import hu.bme.mit.inf.ttmc.slicer.cfg.SequentialStmtCFGNode;
 import hu.bme.mit.inf.ttmc.slicer.cfg.StmtCFGNode;
 
 /*
@@ -29,8 +21,19 @@ import hu.bme.mit.inf.ttmc.slicer.cfg.StmtCFGNode;
 
 public class UseDefineChain {
 
+	/**
+	 * Definition information
+	 */
 	private class Definition {
+
+		/**
+		 * The node which defines this variable
+		 */
 		public StmtCFGNode node;
+
+		/**
+		 * The variable defined
+		 */
 		public VarDecl<? extends Type> var;
 
 		public Definition(StmtCFGNode node, VarDecl<? extends Type> var) {
@@ -72,6 +75,51 @@ public class UseDefineChain {
 		this.buildChain();
 	}
 
+	/**
+	 * Return all nodes which have a reaching definition to this node's used variables
+	 *
+	 * @param node
+	 *
+	 * @return
+	 */
+	public List<StmtCFGNode> definitionNodes(StmtCFGNode node) {
+		NodeInfo info = this.nodeInfo.get(node);
+
+		return info.in.stream()
+			.filter(s -> info.use.contains(s.var))
+			.map(s -> s.node)
+			.collect(Collectors.toList());
+	}
+
+	/**
+	 * Return all nodes which have a reaching definition to this node's given variable
+	 *
+	 * @param node
+	 *
+	 * @return
+	 */
+	public List<StmtCFGNode> varDefinitionNodes(StmtCFGNode node, VarDecl<? extends Type> var) {
+		NodeInfo info = this.nodeInfo.get(node);
+
+		return info.in.stream()
+			.filter(s -> s.var == var)
+			.map(s -> s.node)
+			.collect(Collectors.toList());
+	}
+
+	/**
+	 * Return a list of all variables used in this node
+	 *
+	 * @param node
+	 *
+	 * @return
+	 */
+	public List<VarDecl<? extends Type>> usedVariables(StmtCFGNode node) {
+		NodeInfo info = this.nodeInfo.get(node);
+
+		return Collections.unmodifiableList(info.use);
+	}
+
 	private void buildChain() {
 		// Find all definitions
 		for (StmtCFGNode node : this.nodes) {
@@ -101,7 +149,6 @@ public class UseDefineChain {
 
 		// Iterative algorithm for reaching definitions.
 		// Source: Compilers: Principles, Techniques and Tools, 1st edition, Algorithm 10.2
-
 		for (NodeInfo info : this.nodeInfo.values()) {
 			info.out.addAll(info.gen);
 		}
@@ -130,19 +177,4 @@ public class UseDefineChain {
 			}
 		}
 	}
-
-	/**
-	 * Return all nodes which have a reaching definition to this node's used variables
-	 *
-	 * @param node
-	 *
-	 * @return
-	 */
-	public List<StmtCFGNode> definitionNodes(StmtCFGNode node) {
-		NodeInfo info = this.nodeInfo.get(node);
-
-		return info.in.stream().filter(s -> info.use.contains(s.var)).map(s -> s.node).collect(Collectors.toList());
-	}
-
-
 }

@@ -14,7 +14,6 @@ import hu.bme.mit.inf.ttmc.formalism.common.stmt.AssertStmt;
 import hu.bme.mit.inf.ttmc.slicer.cfg.BranchStmtCFGNode;
 import hu.bme.mit.inf.ttmc.slicer.cfg.CFG;
 import hu.bme.mit.inf.ttmc.slicer.cfg.CFGNode;
-import hu.bme.mit.inf.ttmc.slicer.cfg.DecoratedCFGNode;
 import hu.bme.mit.inf.ttmc.slicer.cfg.StmtCFGNode;
 
 import static hu.bme.mit.inf.ttmc.formalism.common.stmt.impl.Stmts.Assume;
@@ -38,6 +37,8 @@ public class CFGToCFATransformer {
 			mapping.put(node, loc);
 		}
 
+		// XXX
+		// Remove/replace the orphaned init node
 		cfa.removeLoc(mapping.get(cfg.getEntry().getChildren().get(0)));
 		mapping.put(cfg.getEntry().getChildren().get(0), cfa.getInitLoc());
 

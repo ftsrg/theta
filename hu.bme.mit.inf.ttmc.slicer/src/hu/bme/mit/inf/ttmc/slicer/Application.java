@@ -1,6 +1,8 @@
 package hu.bme.mit.inf.ttmc.slicer;
 
 
+import java.util.List;
+
 import hu.bme.mit.inf.ttmc.code.Compiler;
 import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.formalism.cfa.CFA;
@@ -11,9 +13,9 @@ import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
 import hu.bme.mit.inf.ttmc.formalism.utils.impl.CFAPrinter;
 import hu.bme.mit.inf.ttmc.slicer.graph.GraphPrinter;
 import hu.bme.mit.inf.ttmc.slicer.optimizer.DeadBranchEliminator;
+import hu.bme.mit.inf.ttmc.slicer.optimizer.GlobalConstantPropagator;
 import hu.bme.mit.inf.ttmc.slicer.optimizer.LocalConstantPropagator;
 import hu.bme.mit.inf.ttmc.slicer.cfa.CFGToCFATransformer;
-import hu.bme.mit.inf.ttmc.slicer.cfg.BasicBlockCFGTransformer;
 import hu.bme.mit.inf.ttmc.slicer.cfg.BlockCFGTransformer;
 import hu.bme.mit.inf.ttmc.slicer.cfg.CFG;
 import hu.bme.mit.inf.ttmc.slicer.cfg.CFGBuilder;
@@ -67,6 +69,7 @@ public class Application {
 
 		LocalConstantPropagator constProp = new LocalConstantPropagator();
 		DeadBranchEliminator deadBranchElim = new DeadBranchEliminator();
+		GlobalConstantPropagator globConstProp = new GlobalConstantPropagator();
 
 		constProp.transform(bb);
 		System.out.println(CFGPrinter.toGraphvizString(bb));
@@ -77,21 +80,21 @@ public class Application {
 		CFG split = BlockCFGTransformer.splitBlocks(bb);
 		System.out.println(CFGPrinter.toGraphvizString(split));
 
+		CFG newSplit = globConstProp.transform(split);
+		System.out.println(CFGPrinter.toGraphvizString(split));
+		System.out.println(CFGPrinter.toGraphvizString(newSplit));
+
+		/*
 		PDG newPdg = PDG.fromCFG(split);
 		System.out.println(PDGPrinter.toGraphvizString(newPdg));
 
-		for (CFGNode node : split.nodes()) {
-			if (node instanceof StmtCFGNode) {
-				Stmt stmt = ((StmtCFGNode) node).getStmt();
-				if (stmt instanceof AssertStmt) {
-					CFG slice = slicer.slice(split, node);
-					System.out.println("Slice on " + stmt);
-					System.out.println(CFGPrinter.toGraphvizString(slice));
-					System.out.println("Slice CFA: ");
-					System.out.println(CFAPrinter.toGraphvizSting(CFGToCFATransformer.transform(slice)));
-				}
-			}
-		}
+		List<CFG> slices = slicer.allSlices(split, ReachabilitySlicer.SLICE_ON_ASSERTS);
+		slices.forEach(slice -> {
+			System.out.println("Slice");
+			System.out.println(CFGPrinter.toGraphvizString(slice));
+			System.out.println("Slice CFA: ");
+			System.out.println(CFAPrinter.toGraphvizSting(CFGToCFATransformer.transform(slice)));
+		});
 
 
 //		CFG newCfg = BasicBlockCFGTransformer.splitBasicBlocks(bb);

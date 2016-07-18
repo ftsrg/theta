@@ -63,7 +63,6 @@ import hu.bme.mit.inf.ttmc.formalism.common.stmt.SkipStmt;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.WhileStmt;
 import hu.bme.mit.inf.ttmc.formalism.utils.StmtVisitor;
-import hu.bme.mit.inf.ttmc.slicer.cfg.BasicBlockCFGNode;
 import hu.bme.mit.inf.ttmc.slicer.cfg.BlockCFGNode;
 import hu.bme.mit.inf.ttmc.slicer.cfg.BranchStmtCFGNode;
 import hu.bme.mit.inf.ttmc.slicer.cfg.BranchingBlockCFGNode;
@@ -98,22 +97,7 @@ public class LocalConstantPropagator implements CFGOptimizer {
 
 		for (StmtCFGNode cn : node.getContainedNodes()) {
 			Stmt s = cn.getStmt();
-			if (s instanceof DeclStmt<?, ?>) {
-				DeclStmt<? extends Type, ? extends Type> decl = (DeclStmt<? extends Type, ? extends Type>) s;
-
-				if (decl.getInitVal().isPresent()) {
-					Expr<? extends Type> init = decl.getInitVal().get().accept(visitor, null);
-					if (init instanceof LitExpr<?>) {
-						constVars.put(decl.getVarDecl(), (LitExpr<? extends Type>) init);
-					}
-
-					if (init != decl.getInitVal().get()) {
-						newBlock.add(Decl(decl.getVarDecl(), ExprUtils.cast(init, decl.getVarDecl().getType().getClass())));
-					} else {
-						newBlock.add(s);
-					}
-				}
-			} else if (s instanceof AssignStmt<?, ?>) {
+			if (s instanceof AssignStmt<?, ?>) {
 				AssignStmt<? extends Type, ? extends Type> assign = (AssignStmt<? extends Type, ? extends Type>) s;
 				Expr<? extends Type> expr = assign.getExpr().accept(visitor, null);
 				if (expr instanceof LitExpr<?>) {

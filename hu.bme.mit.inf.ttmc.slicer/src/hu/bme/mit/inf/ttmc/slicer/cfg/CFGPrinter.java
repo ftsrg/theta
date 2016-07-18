@@ -3,9 +3,6 @@ package hu.bme.mit.inf.ttmc.slicer.cfg;
 import java.util.HashMap;
 import java.util.Map;
 
-import hu.bme.mit.inf.ttmc.slicer.graph.Graph;
-import hu.bme.mit.inf.ttmc.slicer.graph.GraphNode;
-
 
 public class CFGPrinter {
 
