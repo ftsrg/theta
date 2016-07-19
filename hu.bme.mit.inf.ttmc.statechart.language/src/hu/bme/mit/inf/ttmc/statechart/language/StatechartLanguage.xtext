@@ -84,9 +84,10 @@ StatechartDefinition returns StatechartDefinition:
 	{StatechartDefinition} '{'
 		(
 			variableDeclarations+=VariableDeclaration |
-			timeoutDeclarations+=TimeoutDeclaration
+			timeoutDeclarations+=TimeoutDeclaration  |
+			transitions+=Transition
 		)*
-		(region=Region)?
+		(regions+=Region)*
 	'}'
 ;
 
@@ -97,8 +98,7 @@ StatechartReference returns StatechartReference:
 Region returns Region:
 	'region' name=ID '{'
 		(
-			(stateNodes+=StateNode) |
-			(transitions+=Transition)
+			(stateNodes+=StateNode)
 		)*
 	'}'
 ;
@@ -171,9 +171,9 @@ InitialState returns InitialState:
 ;
 
 ShallowHistoryState returns ShallowHistoryState:
-	'shallowHistory' name=ID
+	'shallow history' name=ID
 ;
 
 DeepHistoryState returns DeepHistoryState:
-	'deepHistory' name=ID
+	'deep history' name=ID
 ;

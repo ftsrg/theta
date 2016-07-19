@@ -20,8 +20,10 @@
         eType="#//VariableDeclaration" containment="true"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="timeoutDeclarations" upperBound="-1"
         eType="#//TimeoutDeclaration" containment="true"/>
-    <eStructuralFeatures xsi:type="ecore:EReference" name="region" lowerBound="1"
-        eType="#//Region" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="regions" lowerBound="1"
+        upperBound="-1" eType="#//Region" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="transitions" upperBound="-1"
+        eType="#//Transition" containment="true"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="TimeoutDeclaration" eSuperTypes="../../hu.bme.mit.inf.ttmc.constraint.model/model/constraint.ecore#//NamedElement"/>
   <eClassifiers xsi:type="ecore:EClass" name="StatechartReference" eSuperTypes="#//Statechart ../../hu.bme.mit.inf.ttmc.constraint.model/model/constraint.ecore#//ParameterizedElement">
@@ -31,8 +33,6 @@
   <eClassifiers xsi:type="ecore:EClass" name="Region" eSuperTypes="../../hu.bme.mit.inf.ttmc.constraint.model/model/constraint.ecore#//NamedElement">
     <eStructuralFeatures xsi:type="ecore:EReference" name="stateNodes" upperBound="-1"
         eType="#//StateNode" containment="true"/>
-    <eStructuralFeatures xsi:type="ecore:EReference" name="transitions" upperBound="-1"
-        eType="#//Transition" containment="true"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="StateNode" abstract="true" eSuperTypes="../../hu.bme.mit.inf.ttmc.constraint.model/model/constraint.ecore#//NamedElement"/>
   <eClassifiers xsi:type="ecore:EClass" name="State" eSuperTypes="#//StateNode">
