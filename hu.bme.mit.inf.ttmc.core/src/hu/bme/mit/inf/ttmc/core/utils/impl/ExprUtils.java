@@ -1,5 +1,7 @@
 package hu.bme.mit.inf.ttmc.core.utils.impl;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.util.Collection;
 import java.util.Collections;
 import java.util.stream.Collectors;
@@ -20,15 +22,21 @@ public class ExprUtils {
 	}
 
 	public static Collection<Expr<? extends BoolType>> getConjuncts(final Expr<? extends BoolType> expr) {
+		checkNotNull(expr);
+
 		if (expr instanceof AndExpr) {
 			final AndExpr andExpr = (AndExpr) expr;
-			return andExpr.getOps().stream().map(e -> getConjuncts(e)).flatMap(c -> c.stream()).collect(Collectors.toSet());
+			return andExpr.getOps().stream().map(e -> getConjuncts(e)).flatMap(c -> c.stream())
+					.collect(Collectors.toSet());
 		} else {
 			return Collections.singleton(expr);
 		}
 	}
 
 	public static <T extends Type> Expr<? extends T> cast(final Expr<? extends Type> expr, final Class<T> metaType) {
+		checkNotNull(expr);
+		checkNotNull(metaType);
+
 		if (metaType.isInstance(expr.getType())) {
 			@SuppressWarnings("unchecked")
 			final Expr<? extends T> result = (Expr<? extends T>) expr;
@@ -44,15 +52,18 @@ public class ExprUtils {
 
 	@SuppressWarnings("unchecked")
 	public static Expr<? extends BoolType> eliminateITE(final Expr<? extends BoolType> expr) {
-		return (Expr<? extends BoolType>) expr.accept(new ExprITEPropagatorVisitor(new ExprITEPusherVisitor()), null).accept(new ExprITERemoverVisitor(), null);
+		return (Expr<? extends BoolType>) expr.accept(new ExprITEPropagatorVisitor(new ExprITEPusherVisitor()), null)
+				.accept(new ExprITERemoverVisitor(), null);
 	}
 
-	public static void collectAtoms(final Expr<? extends BoolType> expr, final Collection<Expr<? extends BoolType>> collectTo) {
+	public static void collectAtoms(final Expr<? extends BoolType> expr,
+			final Collection<Expr<? extends BoolType>> collectTo) {
 		expr.accept(new AtomCollectorVisitor(), collectTo);
 	}
 
 	@SuppressWarnings("unchecked")
-	public static <ExprType extends Type> Expr<? extends ExprType> simplify(final Expr<? extends ExprType> expr, final Assignment assignment) {
+	public static <ExprType extends Type> Expr<? extends ExprType> simplify(final Expr<? extends ExprType> expr,
+			final Assignment assignment) {
 		return (Expr<? extends ExprType>) expr.accept(new ExprSimplifierVisitor(), assignment);
 	}
 
@@ -61,7 +72,8 @@ public class ExprUtils {
 	}
 
 	@SuppressWarnings("unchecked")
-	public static <ExprType extends Type> LitExpr<? extends ExprType> evaluate(final Expr<? extends ExprType> expr, final Assignment assignment) {
+	public static <ExprType extends Type> LitExpr<? extends ExprType> evaluate(final Expr<? extends ExprType> expr,
+			final Assignment assignment) {
 		final Expr<? extends ExprType> simplified = simplify(expr, assignment);
 		if (simplified instanceof LitExpr<?>) {
 			return (LitExpr<ExprType>) simplified;
