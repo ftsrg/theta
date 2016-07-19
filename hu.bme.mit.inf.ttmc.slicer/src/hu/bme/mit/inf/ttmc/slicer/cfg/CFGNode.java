@@ -38,6 +38,11 @@ public abstract class CFGNode implements ReversibleGraphNode {
 		node.children.remove(this);
 	}
 
+	public void removeChild(CFGNode node) {
+		this.children.remove(node);
+		node.parents.remove(this);
+	}
+
 	public void parentsReplace(CFGNode newNode)
 	{
 		for (CFGNode parent : this.parents) {
@@ -144,6 +149,11 @@ public abstract class CFGNode implements ReversibleGraphNode {
 		}
 
 		return visited;
+	}
+
+	public void removeChildren() {
+		this.children.forEach(s -> s.parents.remove(this));
+		this.clearChildren();
 	}
 
 }

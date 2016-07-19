@@ -46,7 +46,7 @@ public class ReachabilitySlicer implements CFGSlicer {
 
 		PDG pdg = PDG.fromCFG(output);
 
-		Set<PDGNode> visited = GraphAlgorithm.reverseDFS(pdg.findCFGNode(cfgMap.get(criteria)));
+		List<PDGNode> visited = GraphAlgorithm.reverseDFS(pdg.findCFGNode(cfgMap.get(criteria)));
 
 		for (CFGNode node : output.nodes()) {
 			if (!visited.contains(pdg.findCFGNode(node))) {

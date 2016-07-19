@@ -51,10 +51,10 @@ public class GraphAlgorithm {
 		return visited;
 	}
 
-	public static <T extends ReversibleGraphNode> Set<T> reverseDFS(T start)
+	public static <T extends ReversibleGraphNode> List<T> reverseDFS(T start)
 	{
 		Stack<T> stack = new Stack<>();
-		Set<T> visited = new HashSet<>();
+		List<T> visited = new ArrayList<>();
 
 		stack.push(start);
 		while (!stack.isEmpty()) {
@@ -70,23 +70,24 @@ public class GraphAlgorithm {
 		return visited;
 	}
 
-	public static <T extends ReversibleGraphNode> Set<T> reverseDFS(T start, Consumer<T> consumer)
+	public static <T extends ReversibleGraphNode> List<T> reverseDFS(T start, Function<T, Boolean> func)
 	{
 		Stack<T> stack = new Stack<>();
-		Set<T> visited = new HashSet<>();
+		List<T> visited = new ArrayList<>();
 
 		stack.push(start);
 		while (!stack.isEmpty()) {
 			T node = stack.pop();
 			if (!visited.contains(node)) {
+				if (func.apply(node))
+					return visited; // Function required a stop
+
 				visited.add(node);
-				consumer.accept(node);
-				for (ReversibleGraphNode child : node.getParents()) {
+				for (GraphNode child : node.getParents()) {
 					stack.push((T) child);
 				}
 			}
 		}
-
 		return visited;
 	}
 

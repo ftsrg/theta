@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import hu.bme.mit.inf.ttmc.slicer.graph.Graph;
+import hu.bme.mit.inf.ttmc.slicer.graph.GraphAlgorithm;
 
 public class CFG implements Graph {
 
