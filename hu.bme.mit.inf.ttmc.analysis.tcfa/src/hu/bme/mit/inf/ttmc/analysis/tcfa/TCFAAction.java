@@ -4,6 +4,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.StringJoiner;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -67,6 +68,15 @@ public abstract class TCFAAction implements Action {
 		@Override
 		public Collection<ClockConstr> getTargetClockInvars() {
 			return clockInvars;
+		}
+
+		@Override
+		public String toString() {
+			final StringJoiner sj = new StringJoiner(", ", "Delay(", ")");
+			for (final ClockConstr clockConstr : clockInvars) {
+				sj.add(clockConstr.toExpr().toString());
+			}
+			return sj.toString();
 		}
 
 	}
@@ -154,6 +164,20 @@ public abstract class TCFAAction implements Action {
 			return builder.build();
 		}
 
+		@Override
+		public String toString() {
+			// TODO: should the target and source invariants also be printed?
+			final StringJoiner sj = new StringJoiner(", ", "Discrete(", ")");
+
+			for (final ClockOp clockOp : clockOps) {
+				sj.add(clockOp.toStmt().toString());
+			}
+			for (final Stmt stmt : dataStmts) {
+				sj.add(stmt.toString());
+			}
+
+			return sj.toString();
+		}
 	}
 
 }
