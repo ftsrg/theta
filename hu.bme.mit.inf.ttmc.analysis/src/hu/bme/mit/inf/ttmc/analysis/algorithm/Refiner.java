@@ -1,11 +1,18 @@
 package hu.bme.mit.inf.ttmc.analysis.algorithm;
 
+import hu.bme.mit.inf.ttmc.analysis.Action;
 import hu.bme.mit.inf.ttmc.analysis.Counterexample;
 import hu.bme.mit.inf.ttmc.analysis.Precision;
 import hu.bme.mit.inf.ttmc.analysis.State;
-import hu.bme.mit.inf.ttmc.analysis.refutation.Refutation;
+import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.ARG;
 
-public interface Refiner<S extends State, P extends Precision, R extends Refutation> {
+public interface Refiner<S extends State, A extends Action, P extends Precision, CS extends State> {
 
-	P refine(P precision, Counterexample<S> abstractCex, R refutation);
+	CounterexampleStatus refine(ARG<S, A> arg, P precision);
+
+	CounterexampleStatus getStatus();
+
+	Counterexample<CS, A> getConcreteCounterexample();
+
+	P getRefinedPrecision();
 }

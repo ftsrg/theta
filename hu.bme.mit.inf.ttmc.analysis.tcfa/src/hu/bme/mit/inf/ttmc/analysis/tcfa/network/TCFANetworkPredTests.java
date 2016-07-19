@@ -16,6 +16,7 @@ import org.junit.Test;
 
 import hu.bme.mit.inf.ttmc.analysis.algorithm.Abstractor;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.ArgPrinter;
+import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.AbstractorImpl;
 import hu.bme.mit.inf.ttmc.analysis.composite.CompositeDomain;
 import hu.bme.mit.inf.ttmc.analysis.composite.CompositeInitFunction;
 import hu.bme.mit.inf.ttmc.analysis.composite.CompositePrecision;
@@ -77,19 +78,17 @@ public class TCFANetworkPredTests {
 				new CompositeDomain<>(ZoneDomain.getInstance(), PredDomain.create(solver)));
 
 		final TCFAInitFunction<CompositeState<ZoneState, PredState>, CompositePrecision<ZonePrecision, PredPrecision>> initFunction = new TCFAInitFunction<>(
-				TCFANetworkLoc.create(initLocs),
-				new CompositeInitFunction<>(new TCFAZoneInitFunction(), new TCFAPredInitFunction()));
+				TCFANetworkLoc.create(initLocs), new CompositeInitFunction<>(new TCFAZoneInitFunction(), new TCFAPredInitFunction()));
 
 		final TCFATransferFunction<CompositeState<ZoneState, PredState>, CompositePrecision<ZonePrecision, PredPrecision>> transferFunction = new TCFATransferFunction<>(
 				new CompositeTransferFunction<>(new TCFAZoneTransferFunction(), new TCFAPredTransferFunction(solver)));
 
 		final TCFALocTargetPredicate targetPredicate = new TCFALocTargetPredicate(loc -> false);
 
-		final CompositePrecision<ZonePrecision, PredPrecision> precision = CompositePrecision.create(
-				ZonePrecision.builder().addAll(clocks).build(),
+		final CompositePrecision<ZonePrecision, PredPrecision> precision = CompositePrecision.create(ZonePrecision.builder().addAll(clocks).build(),
 				GlobalPredPrecision.create(Arrays.asList(Eq(lock, Int(0)), Eq(lock, Int(1)))));
 
-		final Abstractor<TCFAState<CompositeState<ZoneState, PredState>>, TCFAAction, CompositePrecision<ZonePrecision, PredPrecision>> abstractor = new Abstractor<>(
+		final Abstractor<TCFAState<CompositeState<ZoneState, PredState>>, TCFAAction, CompositePrecision<ZonePrecision, PredPrecision>> abstractor = new AbstractorImpl<>(
 				context, domain, initFunction, transferFunction, targetPredicate);
 
 		abstractor.init(precision);

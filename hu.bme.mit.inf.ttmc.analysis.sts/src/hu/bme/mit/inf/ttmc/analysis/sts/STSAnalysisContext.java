@@ -7,16 +7,15 @@ import java.util.Collections;
 
 import hu.bme.mit.inf.ttmc.analysis.AnalysisContext;
 import hu.bme.mit.inf.ttmc.analysis.State;
-import hu.bme.mit.inf.ttmc.core.expr.Expr;
-import hu.bme.mit.inf.ttmc.core.type.BoolType;
+import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 
 public class STSAnalysisContext implements AnalysisContext<State, STSAction> {
 
 	final Collection<STSAction> actions;
 
-	public STSAnalysisContext(final Expr<? extends BoolType> trans) {
-		checkNotNull(trans);
-		this.actions = Collections.singleton(new STSAction(trans));
+	public STSAnalysisContext(final STS sts) {
+		checkNotNull(sts);
+		this.actions = Collections.singleton(new STSAction(sts));
 	}
 
 	@Override

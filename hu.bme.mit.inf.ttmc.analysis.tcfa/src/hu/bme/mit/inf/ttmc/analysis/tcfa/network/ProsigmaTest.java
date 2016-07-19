@@ -6,9 +6,10 @@ import java.util.List;
 
 import org.junit.Test;
 
-import hu.bme.mit.inf.ttmc.analysis.algorithm.ARG;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.Abstractor;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.ArgPrinter;
+import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.ARG;
+import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.AbstractorImpl;
 import hu.bme.mit.inf.ttmc.analysis.composite.CompositeDomain;
 import hu.bme.mit.inf.ttmc.analysis.composite.CompositeInitFunction;
 import hu.bme.mit.inf.ttmc.analysis.composite.CompositePrecision;
@@ -50,8 +51,7 @@ public class ProsigmaTest {
 		final TCFA fieldLG = prosigma.getFieldLG();
 		final TCFA controlLG = prosigma.getControlLG();
 
-		final List<TCFALoc> initLocs = Arrays.asList(eth.getInitLoc(), faultModel.getInitLoc(), fieldLG.getInitLoc(),
-				controlLG.getInitLoc());
+		final List<TCFALoc> initLocs = Arrays.asList(eth.getInitLoc(), faultModel.getInitLoc(), fieldLG.getInitLoc(), controlLG.getInitLoc());
 
 		final TCFAAnalysisContext context = new TCFAAnalysisContext();
 
@@ -62,8 +62,7 @@ public class ProsigmaTest {
 				new CompositeDomain<>(ZoneDomain.getInstance(), ExplDomain.getInstance()));
 
 		final TCFAInitFunction<CompositeState<ZoneState, ExplState>, CompositePrecision<ZonePrecision, ExplPrecision>> initFunction = new TCFAInitFunction<>(
-				TCFANetworkLoc.create(initLocs),
-				new CompositeInitFunction<>(new TCFAZoneInitFunction(), new TCFAExplInitFunction()));
+				TCFANetworkLoc.create(initLocs), new CompositeInitFunction<>(new TCFAZoneInitFunction(), new TCFAExplInitFunction()));
 
 		final TCFATransferFunction<CompositeState<ZoneState, ExplState>, CompositePrecision<ZonePrecision, ExplPrecision>> transferFunction = new TCFATransferFunction<>(
 				new CompositeTransferFunction<>(new TCFAZoneTransferFunction(), new TCFAExplTransferFunction(solver)));
@@ -74,7 +73,7 @@ public class ProsigmaTest {
 				ZonePrecision.builder().addAll(prosigma.getClocks()).build(),
 				GlobalExplPrecision.create(Collections.singleton(prosigma.getChan()), Collections.emptySet()));
 
-		final Abstractor<TCFAState<CompositeState<ZoneState, ExplState>>, TCFAAction, CompositePrecision<ZonePrecision, ExplPrecision>> abstractor = new Abstractor<>(
+		final Abstractor<TCFAState<CompositeState<ZoneState, ExplState>>, TCFAAction, CompositePrecision<ZonePrecision, ExplPrecision>> abstractor = new AbstractorImpl<>(
 				context, domain, initFunction, transferFunction, targetPredicate);
 
 		abstractor.init(precision);
