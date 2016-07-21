@@ -91,10 +91,10 @@ public class STSExprSeqConcretizer implements ConcretizerOp<ExprState, STSAction
 	public CounterexampleStatus getStatus() {
 		if (concreteCex.isPresent()) {
 			assert (!refutation.isPresent());
-			return CounterexampleStatus.Concrete;
+			return CounterexampleStatus.CONCRETE;
 		} else if (refutation.isPresent()) {
 			assert (!concreteCex.isPresent());
-			return CounterexampleStatus.Spurious;
+			return CounterexampleStatus.SPURIOUS;
 		} else {
 			throw new IllegalStateException("No counterexample or refutation is present!");
 		}
@@ -102,14 +102,14 @@ public class STSExprSeqConcretizer implements ConcretizerOp<ExprState, STSAction
 
 	@Override
 	public Counterexample<ExplState, STSAction> getConcreteCounterexample() {
-		checkState(getStatus() == CounterexampleStatus.Concrete);
+		checkState(getStatus() == CounterexampleStatus.CONCRETE);
 		assert (concreteCex.isPresent());
 		return concreteCex.get();
 	}
 
 	@Override
 	public ItpRefutation getRefutation() {
-		checkState(getStatus() == CounterexampleStatus.Spurious);
+		checkState(getStatus() == CounterexampleStatus.SPURIOUS);
 		assert (refutation.isPresent());
 		return refutation.get();
 	}
