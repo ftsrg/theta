@@ -1,0 +1,14 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Tac
+Bundle-SymbolicName: hu.bme.mit.inf.ttmc.tac
+Bundle-Version: 1.0.0.qualifier
+Bundle-Activator: hu.bme.mit.inf.ttmc.tac.Activator
+Require-Bundle: org.eclipse.ui,
+ org.eclipse.core.runtime,
+ hu.bme.mit.inf.ttmc.code;bundle-version="1.0.0",
+ hu.bme.mit.inf.ttmc.common;bundle-version="1.0.0",
+ hu.bme.mit.inf.ttmc.core;bundle-version="1.0.0",
+ hu.bme.mit.inf.ttmc.formalism;bundle-version="1.0.0"
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Bundle-ActivationPolicy: lazy
