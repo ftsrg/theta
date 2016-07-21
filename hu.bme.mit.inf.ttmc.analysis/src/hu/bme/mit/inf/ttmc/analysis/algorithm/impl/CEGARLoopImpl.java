@@ -54,9 +54,9 @@ public class CEGARLoopImpl<S extends State, A extends Action, P extends Precisio
 	@Override
 	public CEGARStatus getStatus() {
 		if (abstractor.getStatus() == AbstractorStatus.OK) {
-			return CEGARStatus.Ok;
+			return CEGARStatus.OK;
 		} else if (refiner.getStatus() == CounterexampleStatus.Concrete) {
-			return CEGARStatus.Counterexample;
+			return CEGARStatus.COUNTEREXAMPLE;
 		} else {
 			throw new IllegalStateException();
 		}
