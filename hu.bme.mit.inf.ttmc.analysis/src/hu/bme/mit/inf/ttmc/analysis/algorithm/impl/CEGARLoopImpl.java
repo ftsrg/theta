@@ -40,13 +40,13 @@ public class CEGARLoopImpl<S extends State, A extends Action, P extends Precisio
 				final ARG<S, A> arg = abstractor.getARG();
 				refiner.refine(arg, precision);
 
-				if (refiner.getStatus() == CounterexampleStatus.Spurious) {
+				if (refiner.getStatus() == CounterexampleStatus.SPURIOUS) {
 					precision = refiner.getRefinedPrecision();
 				}
 			}
 
 		} while (!(abstractor.getStatus() == AbstractorStatus.OK)
-				&& !(refiner.getStatus() == CounterexampleStatus.Concrete));
+				&& !(refiner.getStatus() == CounterexampleStatus.CONCRETE));
 
 		return getStatus();
 	}
@@ -55,7 +55,7 @@ public class CEGARLoopImpl<S extends State, A extends Action, P extends Precisio
 	public CEGARStatus getStatus() {
 		if (abstractor.getStatus() == AbstractorStatus.OK) {
 			return CEGARStatus.OK;
-		} else if (refiner.getStatus() == CounterexampleStatus.Concrete) {
+		} else if (refiner.getStatus() == CounterexampleStatus.CONCRETE) {
 			return CEGARStatus.COUNTEREXAMPLE;
 		} else {
 			throw new IllegalStateException();
@@ -64,7 +64,7 @@ public class CEGARLoopImpl<S extends State, A extends Action, P extends Precisio
 
 	@Override
 	public Counterexample<CS, A> getCounterexample() {
-		checkState(refiner.getStatus() == CounterexampleStatus.Concrete);
+		checkState(refiner.getStatus() == CounterexampleStatus.CONCRETE);
 		return refiner.getConcreteCounterexample();
 	}
 }

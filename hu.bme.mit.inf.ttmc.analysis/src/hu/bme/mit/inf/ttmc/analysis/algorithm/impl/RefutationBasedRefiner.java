@@ -41,7 +41,7 @@ public class RefutationBasedRefiner<S extends State, CS extends State, R extends
 
 		concretizerOp.concretize(counterexample);
 
-		if (concretizerOp.getStatus() == CounterexampleStatus.Spurious) {
+		if (concretizerOp.getStatus() == CounterexampleStatus.SPURIOUS) {
 			refinedPrecision = refinerOp.refine(precision, concretizerOp.getRefutation(), counterexample);
 		}
 
@@ -55,13 +55,13 @@ public class RefutationBasedRefiner<S extends State, CS extends State, R extends
 
 	@Override
 	public Counterexample<CS, A> getConcreteCounterexample() {
-		checkState(concretizerOp.getStatus() == CounterexampleStatus.Concrete);
+		checkState(concretizerOp.getStatus() == CounterexampleStatus.CONCRETE);
 		return concretizerOp.getConcreteCounterexample();
 	}
 
 	@Override
 	public P getRefinedPrecision() {
-		checkState(concretizerOp.getStatus() == CounterexampleStatus.Spurious);
+		checkState(concretizerOp.getStatus() == CounterexampleStatus.SPURIOUS);
 		assert (refinedPrecision != null);
 		return refinedPrecision;
 	}
