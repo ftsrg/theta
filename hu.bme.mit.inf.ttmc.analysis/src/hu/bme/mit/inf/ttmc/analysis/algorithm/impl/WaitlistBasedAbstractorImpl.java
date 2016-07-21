@@ -53,7 +53,7 @@ public class WaitlistBasedAbstractorImpl<S extends State, A extends Action, P ex
 	}
 
 	@Override
-	public AbstractorStatus check(final P precision) {
+	public void check(final P precision) {
 		waitlist.addAll(arg.getNodes());
 
 		while (!waitlist.isEmpty()) {
@@ -69,8 +69,6 @@ public class WaitlistBasedAbstractorImpl<S extends State, A extends Action, P ex
 				}
 			}
 		}
-
-		return getStatus();
 	}
 
 	@Override
