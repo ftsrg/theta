@@ -4,7 +4,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 import hu.bme.mit.inf.ttmc.analysis.Action;
-import hu.bme.mit.inf.ttmc.analysis.Counterexample;
+import hu.bme.mit.inf.ttmc.analysis.Trace;
 import hu.bme.mit.inf.ttmc.analysis.Precision;
 import hu.bme.mit.inf.ttmc.analysis.State;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.Abstractor;
@@ -63,7 +63,7 @@ public class CEGARLoopImpl<S extends State, A extends Action, P extends Precisio
 	}
 
 	@Override
-	public Counterexample<CS, A> getCounterexample() {
+	public Trace<CS, A> getCounterexample() {
 		checkState(refiner.getStatus() == CounterexampleStatus.CONCRETE);
 		return refiner.getConcreteCounterexample();
 	}
