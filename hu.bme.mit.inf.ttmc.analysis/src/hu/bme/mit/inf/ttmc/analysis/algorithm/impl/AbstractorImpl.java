@@ -50,15 +50,13 @@ public class AbstractorImpl<S extends State, A extends Action, P extends Precisi
 	}
 
 	@Override
-	public AbstractorStatus check(final P precision) {
+	public void check(final P precision) {
 		final Collection<ARGNode<S, A>> nodes = new ArrayList<>(arg.getNodes());
 		for (final ARGNode<S, A> node : nodes) {
 			if (!node.isTarget() && !node.isExpanded() && !node.isCovered()) {
 				dfs(node, precision);
 			}
 		}
-
-		return getStatus();
 	}
 
 	private void dfs(final ARGNode<S, A> node, final P precision) {

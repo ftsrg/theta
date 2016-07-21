@@ -8,7 +8,7 @@ import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.ARG;
 
 public interface Refiner<S extends State, A extends Action, P extends Precision, CS extends State> {
 
-	CounterexampleStatus refine(ARG<S, A> arg, P precision);
+	void refine(ARG<S, A> arg, P precision);
 
 	CounterexampleStatus getStatus();
 

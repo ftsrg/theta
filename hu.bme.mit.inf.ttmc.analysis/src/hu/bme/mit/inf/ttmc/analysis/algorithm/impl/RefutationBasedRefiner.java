@@ -22,20 +22,23 @@ public class RefutationBasedRefiner<S extends State, CS extends State, R extends
 
 	private P refinedPrecision;
 
-	public RefutationBasedRefiner(final ConcretizerOp<? super S, A, CS, R> concretizerOp, final RefinerOp<S, A, R, P> refinerOp) {
+	public RefutationBasedRefiner(final ConcretizerOp<? super S, A, CS, R> concretizerOp,
+			final RefinerOp<S, A, R, P> refinerOp) {
 		this.concretizerOp = checkNotNull(concretizerOp);
 		this.refinerOp = checkNotNull(refinerOp);
 		this.refinedPrecision = null;
 	}
 
 	@Override
-	public CounterexampleStatus refine(final ARG<S, A> arg, final P precision) {
+	public void refine(final ARG<S, A> arg, final P precision) {
 		checkArgument(arg.getTargetNodes().size() > 0);
 
 		refinedPrecision = null;
 
 		final Collection<Counterexample<S, A>> counterexamples = arg.getCounterexamples();
-		assert (counterexamples.size() == 1); // TODO: currently this refiner only considers one counterexample
+		assert (counterexamples.size() == 1); // TODO: currently this refiner
+												// only considers one
+												// counterexample
 
 		final Counterexample<S, A> counterexample = counterexamples.iterator().next();
 
@@ -44,8 +47,6 @@ public class RefutationBasedRefiner<S extends State, CS extends State, R extends
 		if (concretizerOp.getStatus() == CounterexampleStatus.SPURIOUS) {
 			refinedPrecision = refinerOp.refine(precision, concretizerOp.getRefutation(), counterexample);
 		}
-
-		return getStatus();
 	}
 
 	@Override
