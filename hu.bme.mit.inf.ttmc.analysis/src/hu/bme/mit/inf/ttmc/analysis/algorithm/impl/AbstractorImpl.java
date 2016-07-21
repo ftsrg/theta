@@ -77,7 +77,7 @@ public class AbstractorImpl<S extends State, A extends Action, P extends Precisi
 	@Override
 	public AbstractorStatus getStatus() {
 		checkState(arg != null);
-		return arg.getTargetNodes().size() == 0 ? AbstractorStatus.Ok : AbstractorStatus.Counterexample;
+		return arg.getTargetNodes().size() == 0 ? AbstractorStatus.OK : AbstractorStatus.COUNTEREXAMPLE;
 	}
 
 }

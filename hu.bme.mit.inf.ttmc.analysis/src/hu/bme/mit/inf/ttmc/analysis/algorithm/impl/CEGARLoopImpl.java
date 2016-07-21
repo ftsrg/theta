@@ -14,7 +14,8 @@ import hu.bme.mit.inf.ttmc.analysis.algorithm.CEGARStatus;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.CounterexampleStatus;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.Refiner;
 
-public class CEGARLoopImpl<S extends State, A extends Action, P extends Precision, CS extends State> implements CEGARLoop<P, CS, A> {
+public class CEGARLoopImpl<S extends State, A extends Action, P extends Precision, CS extends State>
+		implements CEGARLoop<P, CS, A> {
 
 	private final Abstractor<S, A, ? super P> abstractor;
 	private final Refiner<S, A, P, CS> refiner;
@@ -30,10 +31,12 @@ public class CEGARLoopImpl<S extends State, A extends Action, P extends Precisio
 		P precision = initPrecision;
 		do {
 
-			abstractor.init(precision); // TODO: currently the ARG is not pruned, so the abstractor simply restarts at every iteration
+			abstractor.init(precision); // TODO: currently the ARG is not
+										// pruned, so the abstractor simply
+										// restarts at every iteration
 			abstractor.check(precision);
 
-			if (abstractor.getStatus() == AbstractorStatus.Counterexample) {
+			if (abstractor.getStatus() == AbstractorStatus.COUNTEREXAMPLE) {
 				final ARG<S, A> arg = abstractor.getARG();
 				refiner.refine(arg, precision);
 
@@ -42,14 +45,15 @@ public class CEGARLoopImpl<S extends State, A extends Action, P extends Precisio
 				}
 			}
 
-		} while (!(abstractor.getStatus() == AbstractorStatus.Ok) && !(refiner.getStatus() == CounterexampleStatus.Concrete));
+		} while (!(abstractor.getStatus() == AbstractorStatus.OK)
+				&& !(refiner.getStatus() == CounterexampleStatus.Concrete));
 
 		return getStatus();
 	}
 
 	@Override
 	public CEGARStatus getStatus() {
-		if (abstractor.getStatus() == AbstractorStatus.Ok) {
+		if (abstractor.getStatus() == AbstractorStatus.OK) {
 			return CEGARStatus.Ok;
 		} else if (refiner.getStatus() == CounterexampleStatus.Concrete) {
 			return CEGARStatus.Counterexample;
