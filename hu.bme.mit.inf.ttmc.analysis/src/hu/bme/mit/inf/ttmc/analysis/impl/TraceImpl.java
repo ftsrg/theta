@@ -9,25 +9,25 @@ import java.util.Collections;
 import java.util.List;
 
 import hu.bme.mit.inf.ttmc.analysis.Action;
-import hu.bme.mit.inf.ttmc.analysis.Counterexample;
 import hu.bme.mit.inf.ttmc.analysis.State;
+import hu.bme.mit.inf.ttmc.analysis.Trace;
 
-public class CounterexampleImpl<S extends State, A extends Action> implements Counterexample<S, A> {
+public class TraceImpl<S extends State, A extends Action> implements Trace<S, A> {
 
 	private final List<S> states;
 	private final List<A> actions;
 
-	public CounterexampleImpl(final List<? extends S> states, final List<? extends A> actions) {
+	public TraceImpl(final List<? extends S> states, final List<? extends A> actions) {
 		checkNotNull(states);
 		checkNotNull(actions);
 		checkArgument(states.size() > 0);
 		checkArgument(states.size() == actions.size() + 1);
-		this.states = new ArrayList<S>(states);
-		this.actions = new ArrayList<A>(actions);
+		this.states = new ArrayList<>(states);
+		this.actions = new ArrayList<>(actions);
 	}
 
 	@Override
-	public int size() {
+	public int length() {
 		return states.size();
 	}
 
@@ -44,22 +44,6 @@ public class CounterexampleImpl<S extends State, A extends Action> implements Co
 	}
 
 	@Override
-	public String toString() {
-		final StringBuilder sb = new StringBuilder();
-		sb.append("Counterexample(");
-		for (int i = 0; i < size(); ++i) {
-			sb.append("S(").append(getState(i).toString()).append(")");
-			if (i < size() - 1) {
-				sb.append("; A(");
-				sb.append(getAction(i));
-				sb.append("); ");
-			}
-		}
-		sb.append(")");
-		return sb.toString();
-	}
-
-	@Override
 	public List<S> getStates() {
 		return Collections.unmodifiableList(states);
 	}
@@ -67,5 +51,21 @@ public class CounterexampleImpl<S extends State, A extends Action> implements Co
 	@Override
 	public List<A> getActions() {
 		return Collections.unmodifiableList(actions);
+	}
+
+	@Override
+	public String toString() {
+		final StringBuilder sb = new StringBuilder();
+		sb.append("Trace(");
+		for (int i = 0; i < length(); ++i) {
+			sb.append(getState(i));
+			if (i < length() - 1) {
+				sb.append(" ---");
+				sb.append(getAction(i));
+				sb.append("--> ");
+			}
+		}
+		sb.append(")");
+		return sb.toString();
 	}
 }

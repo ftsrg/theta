@@ -1,9 +1,9 @@
 package hu.bme.mit.inf.ttmc.formalism.common.decl.impl;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.List;
-import java.util.Optional;
 
 import com.google.common.collect.ImmutableList;
 
@@ -12,7 +12,6 @@ import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.core.utils.DeclVisitor;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.ProcDecl;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.ProcRefExpr;
-import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
 import hu.bme.mit.inf.ttmc.formalism.common.type.ProcType;
 
 final class ProcDeclImpl<ReturnType extends Type> implements ProcDecl<ReturnType> {
@@ -22,27 +21,20 @@ final class ProcDeclImpl<ReturnType extends Type> implements ProcDecl<ReturnType
 	private final String name;
 	private final List<ParamDecl<? extends Type>> paramDecls;
 	private final ReturnType returnType;
-	private final Optional<Stmt> stmt;
 
 	private final ProcRefExpr<ReturnType> ref;
 
 	private volatile int hashCode;
 
 	ProcDeclImpl(final String name, final List<? extends ParamDecl<? extends Type>> paramDecls,
-			final ReturnType returnType, final Stmt stmt) {
-		this.name = checkNotNull(name);
-		this.paramDecls = ImmutableList.copyOf(checkNotNull(paramDecls));
-		this.returnType = checkNotNull(returnType);
-		this.stmt = Optional.of(checkNotNull(stmt));
-		ref = new ProcRefExprImpl<>(this);
-	}
-
-	public ProcDeclImpl(final String name, final List<? extends ParamDecl<? extends Type>> paramDecls,
 			final ReturnType returnType) {
-		this.name = checkNotNull(name);
-		this.paramDecls = ImmutableList.copyOf(checkNotNull(paramDecls));
-		this.returnType = checkNotNull(returnType);
-		this.stmt = Optional.empty();
+		checkNotNull(name);
+		checkNotNull(paramDecls);
+		checkNotNull(returnType);
+		checkArgument(name.length() > 0);
+		this.name = name;
+		this.paramDecls = ImmutableList.copyOf(paramDecls);
+		this.returnType = returnType;
 		ref = new ProcRefExprImpl<>(this);
 	}
 
@@ -59,11 +51,6 @@ final class ProcDeclImpl<ReturnType extends Type> implements ProcDecl<ReturnType
 	@Override
 	public ReturnType getReturnType() {
 		return returnType;
-	}
-
-	@Override
-	public Optional<Stmt> getStmt() {
-		return stmt;
 	}
 
 	@Override
@@ -89,7 +76,7 @@ final class ProcDeclImpl<ReturnType extends Type> implements ProcDecl<ReturnType
 		if (result == 0) {
 			result = HASH_SEED;
 			result = 31 * result + getName().hashCode();
-			result = 31 * result + getType().hashCode();
+			result = 31 * result + getReturnType().hashCode();
 			hashCode = result;
 		}
 		return result;

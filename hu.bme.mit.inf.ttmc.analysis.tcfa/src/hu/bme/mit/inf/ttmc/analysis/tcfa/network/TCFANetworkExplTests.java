@@ -25,7 +25,7 @@ import hu.bme.mit.inf.ttmc.analysis.expl.ExplPrecision;
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplState;
 import hu.bme.mit.inf.ttmc.analysis.expl.GlobalExplPrecision;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAAction;
-import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAAnalysisContext;
+import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAActionFunction;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFADomain;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAInitFunction;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFALocTargetPredicate;
@@ -55,7 +55,7 @@ public class TCFANetworkExplTests {
 
 		final VarDecl<IntType> vlock = Var("lock", Int());
 
-		final List<FischerTCFA> network = new ArrayList<FischerTCFA>(n);
+		final List<FischerTCFA> network = new ArrayList<>(n);
 		for (int i = 0; i < n; i++) {
 			network.add(new FischerTCFA(i + 1, 1, 2, vlock));
 		}
@@ -65,27 +65,29 @@ public class TCFANetworkExplTests {
 
 		////
 
-		final TCFAAnalysisContext context = new TCFAAnalysisContext();
-
 		final SolverManager manager = new Z3SolverManager();
 		final Solver solver = manager.createSolver(true, true);
 
 		final TCFADomain<CompositeState<ZoneState, ExplState>> domain = new TCFADomain<>(
 				new CompositeDomain<>(ZoneDomain.getInstance(), ExplDomain.getInstance()));
 
+		final TCFAActionFunction actionFunction = new TCFAActionFunction();
+
 		final TCFAInitFunction<CompositeState<ZoneState, ExplState>, CompositePrecision<ZonePrecision, ExplPrecision>> initFunction = new TCFAInitFunction<>(
-				TCFANetworkLoc.create(initLocs), new CompositeInitFunction<>(new TCFAZoneInitFunction(), new TCFAExplInitFunction()));
+				TCFANetworkLoc.create(initLocs),
+				new CompositeInitFunction<>(new TCFAZoneInitFunction(), new TCFAExplInitFunction()));
 
 		final TCFATransferFunction<CompositeState<ZoneState, ExplState>, CompositePrecision<ZonePrecision, ExplPrecision>> transferFunction = new TCFATransferFunction<>(
 				new CompositeTransferFunction<>(new TCFAZoneTransferFunction(), new TCFAExplTransferFunction(solver)));
 
 		final TCFALocTargetPredicate targetPredicate = new TCFALocTargetPredicate(loc -> false);
 
-		final CompositePrecision<ZonePrecision, ExplPrecision> precision = CompositePrecision.create(ZonePrecision.builder().addAll(clocks).build(),
+		final CompositePrecision<ZonePrecision, ExplPrecision> precision = CompositePrecision.create(
+				ZonePrecision.builder().addAll(clocks).build(),
 				GlobalExplPrecision.create(Collections.singleton(vlock), Collections.emptySet()));
 
 		final Abstractor<TCFAState<CompositeState<ZoneState, ExplState>>, TCFAAction, CompositePrecision<ZonePrecision, ExplPrecision>> abstractor = new AbstractorImpl<>(
-				context, domain, initFunction, transferFunction, targetPredicate);
+				domain, actionFunction, initFunction, transferFunction, targetPredicate);
 
 		abstractor.init(precision);
 		abstractor.check(precision);
