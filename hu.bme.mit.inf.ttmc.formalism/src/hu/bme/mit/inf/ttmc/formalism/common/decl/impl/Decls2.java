@@ -10,7 +10,6 @@ import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.ClockDecl;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.ProcDecl;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
-import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
 
 public final class Decls2 {
 
@@ -21,7 +20,7 @@ public final class Decls2 {
 		checkNotNull(name);
 		checkNotNull(type);
 		checkArgument(name.length() > 0);
-		return new VarDeclImpl<T>(name, type);
+		return new VarDeclImpl<>(name, type);
 	}
 
 	public static ClockDecl Clock(final String name) {
@@ -37,16 +36,6 @@ public final class Decls2 {
 		checkNotNull(returnType);
 		checkArgument(name.length() > 0);
 		return new ProcDeclImpl<>(name, paramDecls, returnType);
-	}
-
-	public static <R extends Type> ProcDecl<R> Proc(final String name,
-			final List<? extends ParamDecl<? extends Type>> paramDecls, final R returnType, final Stmt stmt) {
-		checkNotNull(name);
-		checkNotNull(paramDecls);
-		checkNotNull(returnType);
-		checkNotNull(stmt);
-		checkArgument(name.length() > 0);
-		return new ProcDeclImpl<>(name, paramDecls, returnType, stmt);
 	}
 
 }
