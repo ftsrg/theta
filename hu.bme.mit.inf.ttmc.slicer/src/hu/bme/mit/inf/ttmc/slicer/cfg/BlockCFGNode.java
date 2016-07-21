@@ -23,6 +23,11 @@ public class BlockCFGNode extends CFGNode {
 	}
 
 	@Override
+	public String toString() {
+		return "BLOCK: " + this.getLabel();
+	}
+
+	@Override
 	public CFGNode copy() {
 		return new BlockCFGNode(this.nodes);
 	}

@@ -84,7 +84,9 @@ public class CFGBuilder {
 
 		@Override
 		public CFGNode visit(SkipStmt stmt, CFGNode param) {
-			// TODO Auto-generated method stub
+			// This node is not needed
+			param.remove();
+
 			return null;
 		}
 

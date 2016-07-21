@@ -37,7 +37,7 @@ public class DominatorTree implements Graph {
 	}
 
 	/**
-	 * Tells whether if A immediately dominates B (whether A is the parent of B)
+	 * Tells whether A immediately dominates B (whether A is the parent of B)
 	 *
 	 * @param a The dominator node
 	 * @param b The dominated node
@@ -49,7 +49,7 @@ public class DominatorTree implements Graph {
 	}
 
 	/**
-	 * Tells whether if A immediately dominates B (whether A is the parent of B)
+	 * Tells whether A immediately dominates B (whether A is the parent of B)
 	 *
 	 * @param a The dominator node
 	 * @param b The dominated node
@@ -61,7 +61,7 @@ public class DominatorTree implements Graph {
 	}
 
 	/**
-	 * Tells whether if A dominates B
+	 * Tells whether A dominates B
 	 *
 	 * @param a The dominator node
 	 * @param b The dominated node
@@ -73,7 +73,7 @@ public class DominatorTree implements Graph {
 	}
 
 	/**
-	 * Tells whether if A dominates B
+	 * Tells whether A dominates B
 	 *
 	 * @param a The dominator node
 	 * @param b The dominated node
@@ -95,7 +95,7 @@ public class DominatorTree implements Graph {
 	}
 
 	/**
-	 * Tells whether if A strictly dominates B (A dominates B and A != B)
+	 * Tells whether A strictly dominates B (A dominates B and A != B)
 	 *
 	 * @param a The dominator node
 	 * @param b The dominated node
@@ -107,7 +107,7 @@ public class DominatorTree implements Graph {
 	}
 
 	/**
-	 * Tells whether if A strictly dominates B (A dominates B and A != B)
+	 * Tells whether A strictly dominates B (A dominates B and A != B)
 	 *
 	 * @param a The dominator node
 	 * @param b The dominated node

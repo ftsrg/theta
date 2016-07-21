@@ -49,11 +49,11 @@ public class DeadBranchEliminator implements CFGOptimizer {
 
 		// We need to clean up orphaned nodes
 		List<CFGNode> visited = GraphAlgorithm.DFS(input.getEntry());
-		System.out.println(visited);
 
 		inputNodes.forEach(s -> {
 			if (!visited.contains(s)) {
-				s.remove();
+				s.getParents().forEach(p -> p.getChildren().remove(s));
+				s.getChildren().forEach(c -> c.getParents().remove(s));
 			}
 		});
 

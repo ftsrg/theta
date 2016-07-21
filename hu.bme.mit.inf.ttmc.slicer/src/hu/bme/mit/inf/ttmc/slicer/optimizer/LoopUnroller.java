@@ -27,24 +27,24 @@ public class LoopUnroller implements CFGOptimizer {
 
 	@Override
 	public CFG transform(CFG input) {
-		CFG cfg = input.copy();
+		CFG cfg = input;
 		DominatorTree dt = DominatorTreeCreator.dominatorTree(cfg);
-		System.out.println(CFGPrinter.toGraphvizString(cfg));
 
 		List<BranchStmtCFGNode> headers = LoopUtils.findLoopHeaders(cfg, dt);
 
 		for (BranchStmtCFGNode head : headers) {
 			CFGNode tail = LoopUtils.getBackEdgeTail(head, dt);
 			List<CFGNode> body = LoopUtils.getLoopBody(head, tail);
-			this.transformLoop(head, tail, body);
+
+			for (int i = 0; i < this.depth; i++) {
+				this.transformLoop(head, tail, body);
+			}
 		}
 
 		return cfg;
 	}
 
 	private void transformLoop(BranchStmtCFGNode head, CFGNode tail, List<CFGNode> body) {
-		System.out.println("Head: " + head + " Tail: " + tail);
-		System.out.println("    " + body);
 		Map<CFGNode, CFGNode> map = new HashMap<>();
 
 		for (CFGNode node : body) {

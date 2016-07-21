@@ -33,7 +33,7 @@ public class GlobalConstantPropagator implements CFGOptimizer {
 	@SuppressWarnings("unchecked")
 	@Override
 	public CFG transform(CFG input) {
-		CFG cfg = input.copy();
+		CFG cfg = input;
 		UseDefineChain ud = new UseDefineChain(cfg);
 
 		List<StmtCFGNode> nodes = cfg.nodes().stream()

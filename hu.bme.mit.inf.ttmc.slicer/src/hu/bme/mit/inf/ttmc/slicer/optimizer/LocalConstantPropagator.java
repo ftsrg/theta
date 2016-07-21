@@ -133,7 +133,6 @@ public class LocalConstantPropagator implements CFGOptimizer {
 			} else {
 				throw new UnsupportedOperationException();
 			}
-			System.out.println(constVars);
 		}
 
 		if (newBlock.isEmpty()) {
