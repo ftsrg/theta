@@ -1,6 +1,7 @@
 package hu.bme.mit.inf.ttmc.formalism.common.decl.impl;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.inf.ttmc.core.type.impl.Types.Rat;
 
 import java.util.HashMap;
@@ -24,6 +25,8 @@ class ClockDeclImpl implements ClockDecl {
 	private volatile int hashCode = 0;
 
 	ClockDeclImpl(final String name) {
+		checkNotNull(name);
+		checkArgument(name.length() > 0);
 		this.name = name;
 		ref = new ClockRefExprImpl(this);
 		indexToConst = new HashMap<>();

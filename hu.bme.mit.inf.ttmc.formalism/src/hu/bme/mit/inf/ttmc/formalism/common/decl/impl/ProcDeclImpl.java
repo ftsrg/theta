@@ -1,5 +1,6 @@
 package hu.bme.mit.inf.ttmc.formalism.common.decl.impl;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.List;
@@ -27,9 +28,13 @@ final class ProcDeclImpl<ReturnType extends Type> implements ProcDecl<ReturnType
 
 	ProcDeclImpl(final String name, final List<? extends ParamDecl<? extends Type>> paramDecls,
 			final ReturnType returnType) {
-		this.name = checkNotNull(name);
-		this.paramDecls = ImmutableList.copyOf(checkNotNull(paramDecls));
-		this.returnType = checkNotNull(returnType);
+		checkNotNull(name);
+		checkNotNull(paramDecls);
+		checkNotNull(returnType);
+		checkArgument(name.length() > 0);
+		this.name = name;
+		this.paramDecls = ImmutableList.copyOf(paramDecls);
+		this.returnType = returnType;
 		ref = new ProcRefExprImpl<>(this);
 	}
 
