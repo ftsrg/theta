@@ -16,9 +16,10 @@ public abstract class AbstractDecl<DeclType extends Type, DeclKind extends Decl<
 
 	protected AbstractDecl(final String name, final DeclType type) {
 		checkNotNull(name);
+		checkNotNull(type);
 		checkArgument(name.length() > 0);
 		this.name = name;
-		this.type = checkNotNull(type);
+		this.type = type;
 	}
 
 	@Override

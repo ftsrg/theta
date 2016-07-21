@@ -7,11 +7,11 @@ import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.ARG;
 
 public interface Abstractor<S extends State, A extends Action, P extends Precision> {
 
-	ARG<S, A> getARG();
-
 	void init(final P precision);
 
-	AbstractorStatus check(final P precision);
+	void check(final P precision);
+
+	ARG<S, A> getARG();
 
 	AbstractorStatus getStatus();
 

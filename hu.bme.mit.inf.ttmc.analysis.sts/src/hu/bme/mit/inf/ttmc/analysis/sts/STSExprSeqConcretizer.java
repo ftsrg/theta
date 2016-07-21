@@ -9,12 +9,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import hu.bme.mit.inf.ttmc.analysis.Counterexample;
 import hu.bme.mit.inf.ttmc.analysis.ExprState;
+import hu.bme.mit.inf.ttmc.analysis.Trace;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.CounterexampleStatus;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.ConcretizerOp;
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplState;
-import hu.bme.mit.inf.ttmc.analysis.impl.CounterexampleImpl;
+import hu.bme.mit.inf.ttmc.analysis.impl.TraceImpl;
 import hu.bme.mit.inf.ttmc.analysis.refutation.ItpRefutation;
 import hu.bme.mit.inf.ttmc.analysis.refutation.impl.ItpRefutationImpl;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
@@ -32,7 +32,7 @@ public class STSExprSeqConcretizer implements ConcretizerOp<ExprState, STSAction
 	private final ItpSolver solver;
 	private final Expr<? extends BoolType> negProp;
 
-	private Optional<Counterexample<ExplState, STSAction>> concreteCex;
+	private Optional<Trace<ExplState, STSAction>> concreteCex;
 	private Optional<ItpRefutation> refutation;
 
 	public STSExprSeqConcretizer(final STS sts, final ItpSolver solver) {
@@ -44,14 +44,14 @@ public class STSExprSeqConcretizer implements ConcretizerOp<ExprState, STSAction
 	}
 
 	@Override
-	public CounterexampleStatus concretize(final Counterexample<? extends ExprState, STSAction> counterexample) {
+	public CounterexampleStatus concretize(final Trace<? extends ExprState, STSAction> counterexample) {
 		checkNotNull(counterexample);
-		checkArgument(counterexample.size() > 0);
+		checkArgument(counterexample.length() > 0);
 		concreteCex = Optional.empty();
 		refutation = Optional.empty();
 
-		final List<ItpMarker> markers = new ArrayList<>(counterexample.size() + 1);
-		for (int i = 0; i < counterexample.size() + 1; ++i) {
+		final List<ItpMarker> markers = new ArrayList<>(counterexample.length() + 1);
+		for (int i = 0; i < counterexample.length() + 1; ++i) {
 			markers.add(solver.createMarker());
 		}
 
@@ -59,21 +59,22 @@ public class STSExprSeqConcretizer implements ConcretizerOp<ExprState, STSAction
 
 		solver.push();
 		solver.add(markers.get(0), sts.unrollInit(0));
-		for (int i = 0; i < counterexample.size(); ++i) {
+		for (int i = 0; i < counterexample.length(); ++i) {
 			solver.add(markers.get(i), sts.unrollInv(i));
 			solver.add(markers.get(i), sts.unroll(counterexample.getState(i).toExpr(), i));
 			if (i > 0) {
 				solver.add(markers.get(i), sts.unrollTrans(i - 1));
 			}
 		}
-		solver.add(markers.get(counterexample.size()), sts.unroll(negProp, counterexample.size() - 1));
+		solver.add(markers.get(counterexample.length()), sts.unroll(negProp, counterexample.length() - 1));
 
 		final boolean concretizable = solver.check().boolValue();
 
 		if (concretizable) {
-			final List<Valuation> trace = sts.extractTrace(solver.getModel(), counterexample.size());
-			final List<ExplState> explStateTrace = trace.stream().map(s -> ExplState.create(s)).collect(Collectors.toList());
-			concreteCex = Optional.of(new CounterexampleImpl<>(explStateTrace, counterexample.getActions()));
+			final List<Valuation> trace = sts.extractTrace(solver.getModel(), counterexample.length());
+			final List<ExplState> explStateTrace = trace.stream().map(s -> ExplState.create(s))
+					.collect(Collectors.toList());
+			concreteCex = Optional.of(new TraceImpl<>(explStateTrace, counterexample.getActions()));
 		} else {
 			final List<Expr<? extends BoolType>> interpolants = new ArrayList<>();
 			for (int i = 0; i < markers.size() - 1; ++i) {
@@ -91,25 +92,25 @@ public class STSExprSeqConcretizer implements ConcretizerOp<ExprState, STSAction
 	public CounterexampleStatus getStatus() {
 		if (concreteCex.isPresent()) {
 			assert (!refutation.isPresent());
-			return CounterexampleStatus.Concrete;
+			return CounterexampleStatus.CONCRETE;
 		} else if (refutation.isPresent()) {
 			assert (!concreteCex.isPresent());
-			return CounterexampleStatus.Spurious;
+			return CounterexampleStatus.SPURIOUS;
 		} else {
 			throw new IllegalStateException("No counterexample or refutation is present!");
 		}
 	}
 
 	@Override
-	public Counterexample<ExplState, STSAction> getConcreteCounterexample() {
-		checkState(getStatus() == CounterexampleStatus.Concrete);
+	public Trace<ExplState, STSAction> getConcreteCounterexample() {
+		checkState(getStatus() == CounterexampleStatus.CONCRETE);
 		assert (concreteCex.isPresent());
 		return concreteCex.get();
 	}
 
 	@Override
 	public ItpRefutation getRefutation() {
-		checkState(getStatus() == CounterexampleStatus.Spurious);
+		checkState(getStatus() == CounterexampleStatus.SPURIOUS);
 		assert (refutation.isPresent());
 		return refutation.get();
 	}

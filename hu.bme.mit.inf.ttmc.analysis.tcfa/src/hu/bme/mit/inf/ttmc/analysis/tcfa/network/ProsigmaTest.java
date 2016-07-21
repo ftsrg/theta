@@ -20,7 +20,7 @@ import hu.bme.mit.inf.ttmc.analysis.expl.ExplPrecision;
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplState;
 import hu.bme.mit.inf.ttmc.analysis.expl.GlobalExplPrecision;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAAction;
-import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAAnalysisContext;
+import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAActionFunction;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFADomain;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAInitFunction;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFALocTargetPredicate;
@@ -51,9 +51,8 @@ public class ProsigmaTest {
 		final TCFA fieldLG = prosigma.getFieldLG();
 		final TCFA controlLG = prosigma.getControlLG();
 
-		final List<TCFALoc> initLocs = Arrays.asList(eth.getInitLoc(), faultModel.getInitLoc(), fieldLG.getInitLoc(), controlLG.getInitLoc());
-
-		final TCFAAnalysisContext context = new TCFAAnalysisContext();
+		final List<TCFALoc> initLocs = Arrays.asList(eth.getInitLoc(), faultModel.getInitLoc(), fieldLG.getInitLoc(),
+				controlLG.getInitLoc());
 
 		final SolverManager manager = new Z3SolverManager();
 		final Solver solver = manager.createSolver(true, true);
@@ -61,8 +60,11 @@ public class ProsigmaTest {
 		final TCFADomain<CompositeState<ZoneState, ExplState>> domain = new TCFADomain<>(
 				new CompositeDomain<>(ZoneDomain.getInstance(), ExplDomain.getInstance()));
 
+		final TCFAActionFunction actionFunction = new TCFAActionFunction();
+
 		final TCFAInitFunction<CompositeState<ZoneState, ExplState>, CompositePrecision<ZonePrecision, ExplPrecision>> initFunction = new TCFAInitFunction<>(
-				TCFANetworkLoc.create(initLocs), new CompositeInitFunction<>(new TCFAZoneInitFunction(), new TCFAExplInitFunction()));
+				TCFANetworkLoc.create(initLocs),
+				new CompositeInitFunction<>(new TCFAZoneInitFunction(), new TCFAExplInitFunction()));
 
 		final TCFATransferFunction<CompositeState<ZoneState, ExplState>, CompositePrecision<ZonePrecision, ExplPrecision>> transferFunction = new TCFATransferFunction<>(
 				new CompositeTransferFunction<>(new TCFAZoneTransferFunction(), new TCFAExplTransferFunction(solver)));
@@ -74,7 +76,7 @@ public class ProsigmaTest {
 				GlobalExplPrecision.create(Collections.singleton(prosigma.getChan()), Collections.emptySet()));
 
 		final Abstractor<TCFAState<CompositeState<ZoneState, ExplState>>, TCFAAction, CompositePrecision<ZonePrecision, ExplPrecision>> abstractor = new AbstractorImpl<>(
-				context, domain, initFunction, transferFunction, targetPredicate);
+				domain, actionFunction, initFunction, transferFunction, targetPredicate);
 
 		abstractor.init(precision);
 		abstractor.check(precision);

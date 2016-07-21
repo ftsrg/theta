@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import hu.bme.mit.inf.ttmc.analysis.Action;
-import hu.bme.mit.inf.ttmc.analysis.AnalysisContext;
+import hu.bme.mit.inf.ttmc.analysis.ActionFunction;
 import hu.bme.mit.inf.ttmc.analysis.Domain;
 import hu.bme.mit.inf.ttmc.analysis.InitFunction;
 import hu.bme.mit.inf.ttmc.analysis.Precision;
@@ -26,16 +26,16 @@ public class AbstractorImpl<S extends State, A extends Action, P extends Precisi
 
 	private ARG<S, A> arg;
 
-	public AbstractorImpl(final AnalysisContext<? super S, ? extends A> context, final Domain<S> domain, final InitFunction<S, P> initFunction,
-			final TransferFunction<S, A, P> transferFunction, final TargetPredicate<? super S> targetPredicate) {
-		checkNotNull(context);
+	public AbstractorImpl(final Domain<S> domain, final ActionFunction<? super S, ? extends A> actionFunction,
+			final InitFunction<S, P> initFunction, final TransferFunction<S, A, P> transferFunction,
+			final TargetPredicate<? super S> targetPredicate) {
 		checkNotNull(domain);
+		checkNotNull(actionFunction);
 		checkNotNull(targetPredicate);
-
 		this.initFunction = checkNotNull(initFunction);
 		this.transferFunction = checkNotNull(transferFunction);
 
-		builder = new ARGBuilder<>(context, domain, targetPredicate);
+		builder = new ARGBuilder<>(domain, actionFunction, targetPredicate);
 	}
 
 	@Override
@@ -50,15 +50,13 @@ public class AbstractorImpl<S extends State, A extends Action, P extends Precisi
 	}
 
 	@Override
-	public AbstractorStatus check(final P precision) {
+	public void check(final P precision) {
 		final Collection<ARGNode<S, A>> nodes = new ArrayList<>(arg.getNodes());
 		for (final ARGNode<S, A> node : nodes) {
 			if (!node.isTarget() && !node.isExpanded() && !node.isCovered()) {
 				dfs(node, precision);
 			}
 		}
-
-		return getStatus();
 	}
 
 	private void dfs(final ARGNode<S, A> node, final P precision) {
@@ -77,7 +75,7 @@ public class AbstractorImpl<S extends State, A extends Action, P extends Precisi
 	@Override
 	public AbstractorStatus getStatus() {
 		checkState(arg != null);
-		return arg.getTargetNodes().size() == 0 ? AbstractorStatus.Ok : AbstractorStatus.Counterexample;
+		return arg.getTargetNodes().size() == 0 ? AbstractorStatus.OK : AbstractorStatus.COUNTEREXAMPLE;
 	}
 
 }

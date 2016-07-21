@@ -12,10 +12,10 @@ import java.util.List;
 import java.util.Optional;
 
 import hu.bme.mit.inf.ttmc.analysis.Action;
-import hu.bme.mit.inf.ttmc.analysis.Counterexample;
+import hu.bme.mit.inf.ttmc.analysis.Trace;
+import hu.bme.mit.inf.ttmc.analysis.impl.TraceImpl;
 import hu.bme.mit.inf.ttmc.analysis.Domain;
 import hu.bme.mit.inf.ttmc.analysis.State;
-import hu.bme.mit.inf.ttmc.analysis.impl.CounterexampleImpl;
 
 public class ARG<S extends State, A extends Action> {
 
@@ -55,8 +55,8 @@ public class ARG<S extends State, A extends Action> {
 		return Collections.unmodifiableCollection(targetNodes);
 	}
 
-	public Collection<Counterexample<S, A>> getCounterexamples() {
-		final List<Counterexample<S, A>> counterexamples = new ArrayList<>();
+	public Collection<Trace<S, A>> getCounterexamples() {
+		final List<Trace<S, A>> counterexamples = new ArrayList<>();
 
 		for (final ARGNode<S, A> targetNode : getTargetNodes()) {
 			final List<S> states = new ArrayList<>();
@@ -73,7 +73,7 @@ public class ARG<S extends State, A extends Action> {
 				}
 			} while (running != null);
 
-			counterexamples.add(new CounterexampleImpl<S, A>(states, actions));
+			counterexamples.add(new TraceImpl<S, A>(states, actions));
 		}
 
 		assert counterexamples.size() == getTargetNodes().size();
