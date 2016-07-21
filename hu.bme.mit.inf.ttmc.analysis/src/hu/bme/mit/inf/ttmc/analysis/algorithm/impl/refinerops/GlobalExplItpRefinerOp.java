@@ -4,7 +4,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import hu.bme.mit.inf.ttmc.analysis.Action;
-import hu.bme.mit.inf.ttmc.analysis.Counterexample;
+import hu.bme.mit.inf.ttmc.analysis.Trace;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.RefinerOp;
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplState;
 import hu.bme.mit.inf.ttmc.analysis.expl.GlobalExplPrecision;
@@ -18,7 +18,7 @@ import hu.bme.mit.inf.ttmc.formalism.utils.FormalismUtils;
 public class GlobalExplItpRefinerOp<A extends Action> implements RefinerOp<ExplState, A, ItpRefutation, GlobalExplPrecision> {
 
 	@Override
-	public GlobalExplPrecision refine(final GlobalExplPrecision precision, final ItpRefutation refutation, final Counterexample<ExplState, A> counterexample) {
+	public GlobalExplPrecision refine(final GlobalExplPrecision precision, final ItpRefutation refutation, final Trace<ExplState, A> counterexample) {
 		final Set<VarDecl<? extends Type>> newVisiblevars = new HashSet<>();
 		for (final Expr<? extends BoolType> pred : refutation) {
 			FormalismUtils.collectVars(pred, newVisiblevars);

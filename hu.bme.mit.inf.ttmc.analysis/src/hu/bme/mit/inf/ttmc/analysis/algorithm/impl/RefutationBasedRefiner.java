@@ -7,7 +7,7 @@ import static com.google.common.base.Preconditions.checkState;
 import java.util.Collection;
 
 import hu.bme.mit.inf.ttmc.analysis.Action;
-import hu.bme.mit.inf.ttmc.analysis.Counterexample;
+import hu.bme.mit.inf.ttmc.analysis.Trace;
 import hu.bme.mit.inf.ttmc.analysis.Precision;
 import hu.bme.mit.inf.ttmc.analysis.State;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.CounterexampleStatus;
@@ -35,12 +35,12 @@ public class RefutationBasedRefiner<S extends State, CS extends State, R extends
 
 		refinedPrecision = null;
 
-		final Collection<Counterexample<S, A>> counterexamples = arg.getCounterexamples();
+		final Collection<Trace<S, A>> counterexamples = arg.getCounterexamples();
 		assert (counterexamples.size() == 1); // TODO: currently this refiner
 												// only considers one
 												// counterexample
 
-		final Counterexample<S, A> counterexample = counterexamples.iterator().next();
+		final Trace<S, A> counterexample = counterexamples.iterator().next();
 
 		concretizerOp.concretize(counterexample);
 
@@ -55,7 +55,7 @@ public class RefutationBasedRefiner<S extends State, CS extends State, R extends
 	}
 
 	@Override
-	public Counterexample<CS, A> getConcreteCounterexample() {
+	public Trace<CS, A> getConcreteCounterexample() {
 		checkState(concretizerOp.getStatus() == CounterexampleStatus.CONCRETE);
 		return concretizerOp.getConcreteCounterexample();
 	}
