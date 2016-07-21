@@ -32,7 +32,7 @@ import hu.bme.mit.inf.ttmc.analysis.pred.PredPrecision;
 import hu.bme.mit.inf.ttmc.analysis.pred.PredState;
 import hu.bme.mit.inf.ttmc.analysis.refutation.ItpRefutation;
 import hu.bme.mit.inf.ttmc.analysis.sts.STSAction;
-import hu.bme.mit.inf.ttmc.analysis.sts.STSAnalysisContext;
+import hu.bme.mit.inf.ttmc.analysis.sts.STSActionFunction;
 import hu.bme.mit.inf.ttmc.analysis.sts.STSExprSeqConcretizer;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.type.IntType;
@@ -57,17 +57,17 @@ public class STSPredTest {
 		final Builder builder = new STSImpl.Builder();
 
 		builder.addInit(Eq(x, Int(0)));
-		builder.addTrans(And(Imply(Lt(x, Int(mod)), Eq(Prime(x), Add(x, Int(1)))), Imply(Geq(x, Int(mod)), Eq(Prime(x), Int(0)))));
+		builder.addTrans(And(Imply(Lt(x, Int(mod)), Eq(Prime(x), Add(x, Int(1)))),
+				Imply(Geq(x, Int(mod)), Eq(Prime(x), Int(0)))));
 		builder.setProp(Not(Eq(x, Int(mod))));
 
 		final STS sts = builder.build();
-
-		final STSAnalysisContext context = new STSAnalysisContext(sts);
 
 		final SolverManager manager = new Z3SolverManager();
 		final ItpSolver solver = manager.createItpSolver();
 
 		final PredDomain domain = PredDomain.create(solver);
+		final STSActionFunction actionFunction = new STSActionFunction(sts);
 
 		final STSPredInitFunction initFunction = new STSPredInitFunction(sts, solver);
 		final STSPredTransferFunction transferFunction = new STSPredTransferFunction(sts, solver);
@@ -77,16 +77,17 @@ public class STSPredTest {
 
 		final Waitlist<ARGNode<PredState, STSAction>> waitlist = new LIFOWaitlist<>();
 
-		final Abstractor<PredState, STSAction, PredPrecision> abstractor = new WaitlistBasedAbstractorImpl<>(context, domain, initFunction, transferFunction,
-				targetPredicate, waitlist);
+		final Abstractor<PredState, STSAction, PredPrecision> abstractor = new WaitlistBasedAbstractorImpl<>(domain,
+				actionFunction, initFunction, transferFunction, targetPredicate, waitlist);
 
 		final STSExprSeqConcretizer concretizerOp = new STSExprSeqConcretizer(sts, solver);
 		final GlobalPredItpRefinerOp<STSAction> refinerOp = new GlobalPredItpRefinerOp<>();
 
-		final RefutationBasedRefiner<PredState, ExplState, ItpRefutation, GlobalPredPrecision, STSAction> refiner = new RefutationBasedRefiner<>(concretizerOp,
-				refinerOp);
+		final RefutationBasedRefiner<PredState, ExplState, ItpRefutation, GlobalPredPrecision, STSAction> refiner = new RefutationBasedRefiner<>(
+				concretizerOp, refinerOp);
 
-		final CEGARLoopImpl<PredState, STSAction, GlobalPredPrecision, ExplState> cegarLoop = new CEGARLoopImpl<>(abstractor, refiner);
+		final CEGARLoopImpl<PredState, STSAction, GlobalPredPrecision, ExplState> cegarLoop = new CEGARLoopImpl<>(
+				abstractor, refiner);
 
 		cegarLoop.check(precision);
 

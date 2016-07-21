@@ -5,7 +5,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.util.Collection;
 
 import hu.bme.mit.inf.ttmc.analysis.Action;
-import hu.bme.mit.inf.ttmc.analysis.AnalysisContext;
+import hu.bme.mit.inf.ttmc.analysis.ActionFunction;
 import hu.bme.mit.inf.ttmc.analysis.Domain;
 import hu.bme.mit.inf.ttmc.analysis.InitFunction;
 import hu.bme.mit.inf.ttmc.analysis.Precision;
@@ -15,15 +15,15 @@ import hu.bme.mit.inf.ttmc.analysis.TransferFunction;
 
 class ARGBuilder<S extends State, A extends Action> {
 
-	private final AnalysisContext<? super S, ? extends A> context;
+	final ActionFunction<? super S, ? extends A> actionFunction;
 
 	private final Domain<S> domain;
 	private final TargetPredicate<? super S> targetPredicate;
 
-	ARGBuilder(final AnalysisContext<? super S, ? extends A> context, final Domain<S> domain,
+	ARGBuilder(final Domain<S> domain, final ActionFunction<? super S, ? extends A> actionFunction,
 			final TargetPredicate<? super S> targetPredicate) {
-		this.context = checkNotNull(context);
 		this.domain = checkNotNull(domain);
+		this.actionFunction = checkNotNull(actionFunction);
 		this.targetPredicate = checkNotNull(targetPredicate);
 	}
 
@@ -54,7 +54,7 @@ class ARGBuilder<S extends State, A extends Action> {
 		}
 
 		final S state = node.getState();
-		final Collection<? extends A> actions = context.getEnabledActionsFor(state);
+		final Collection<? extends A> actions = actionFunction.getEnabledActionsFor(state);
 		for (final A action : actions) {
 			final Collection<? extends S> succStates = transferFunction.getSuccStates(state, action, precision);
 			for (final S succState : succStates) {
