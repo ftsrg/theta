@@ -4,7 +4,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 import hu.bme.mit.inf.ttmc.analysis.Action;
-import hu.bme.mit.inf.ttmc.analysis.AnalysisContext;
+import hu.bme.mit.inf.ttmc.analysis.ActionFunction;
 import hu.bme.mit.inf.ttmc.analysis.Domain;
 import hu.bme.mit.inf.ttmc.analysis.InitFunction;
 import hu.bme.mit.inf.ttmc.analysis.Precision;
@@ -15,7 +15,8 @@ import hu.bme.mit.inf.ttmc.analysis.algorithm.Abstractor;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.AbstractorStatus;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.waitlist.Waitlist;
 
-public class WaitlistBasedAbstractorImpl<S extends State, A extends Action, P extends Precision> implements Abstractor<S, A, P> {
+public class WaitlistBasedAbstractorImpl<S extends State, A extends Action, P extends Precision>
+		implements Abstractor<S, A, P> {
 
 	private final ARGBuilder<S, A> builder;
 
@@ -26,18 +27,17 @@ public class WaitlistBasedAbstractorImpl<S extends State, A extends Action, P ex
 
 	private final Waitlist<ARGNode<S, A>> waitlist;
 
-	public WaitlistBasedAbstractorImpl(final AnalysisContext<? super S, ? extends A> context, final Domain<S> domain, final InitFunction<S, P> initFunction,
-			final TransferFunction<S, A, P> transferFunction, final TargetPredicate<? super S> targetPredicate, final Waitlist<ARGNode<S, A>> waitlist) {
-		checkNotNull(context);
+	public WaitlistBasedAbstractorImpl(final Domain<S> domain,
+			final ActionFunction<? super S, ? extends A> actionFunction, final InitFunction<S, P> initFunction,
+			final TransferFunction<S, A, P> transferFunction, final TargetPredicate<? super S> targetPredicate,
+			final Waitlist<ARGNode<S, A>> waitlist) {
 		checkNotNull(domain);
+		checkNotNull(actionFunction);
 		checkNotNull(targetPredicate);
-
 		this.initFunction = checkNotNull(initFunction);
 		this.transferFunction = checkNotNull(transferFunction);
-
-		builder = new ARGBuilder<>(context, domain, targetPredicate);
-
 		this.waitlist = checkNotNull(waitlist);
+		builder = new ARGBuilder<>(domain, actionFunction, targetPredicate);
 	}
 
 	@Override
