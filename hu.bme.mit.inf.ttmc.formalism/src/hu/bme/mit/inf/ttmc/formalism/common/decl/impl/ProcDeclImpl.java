@@ -76,7 +76,7 @@ final class ProcDeclImpl<ReturnType extends Type> implements ProcDecl<ReturnType
 		if (result == 0) {
 			result = HASH_SEED;
 			result = 31 * result + getName().hashCode();
-			result = 31 * result + getType().hashCode();
+			result = 31 * result + getReturnType().hashCode();
 			hashCode = result;
 		}
 		return result;
