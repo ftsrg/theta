@@ -9,6 +9,7 @@ import org.junit.Test;
 
 import hu.bme.mit.inf.ttmc.analysis.algorithm.Abstractor;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.ArgPrinter;
+import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.AbstractorImpl;
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplDomain;
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplPrecision;
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplState;
@@ -40,24 +41,22 @@ public class TCFAExplTests {
 		final Solver solver = manager.createSolver(true, true);
 
 		final TCFADomain<ExplState> domain = new TCFADomain<>(ExplDomain.getInstance());
-		final TCFAInitFunction<ExplState, ExplPrecision> initFunction = new TCFAInitFunction<>(fischer.getInitial(),
-				new TCFAExplInitFunction());
-		final TCFATransferFunction<ExplState, ExplPrecision> transferFunction = new TCFATransferFunction<>(
-				new TCFAExplTransferFunction(solver));
-		final TCFALocTargetPredicate targetPredicate = new TCFALocTargetPredicate(
-				loc -> loc.equals(fischer.getCritical()));
+		final TCFAInitFunction<ExplState, ExplPrecision> initFunction = new TCFAInitFunction<>(fischer.getInitial(), new TCFAExplInitFunction());
+		final TCFATransferFunction<ExplState, ExplPrecision> transferFunction = new TCFATransferFunction<>(new TCFAExplTransferFunction(solver));
+		final TCFALocTargetPredicate targetPredicate = new TCFALocTargetPredicate(loc -> loc.equals(fischer.getCritical()));
 
-		final ExplPrecision precision = GlobalExplPrecision.create(Collections.singleton(vlock),
-				Collections.emptySet());
+		final ExplPrecision precision = GlobalExplPrecision.create(Collections.singleton(vlock), Collections.emptySet());
 
-		final Abstractor<TCFAState<ExplState>, TCFAAction, ExplPrecision> abstractor = new Abstractor<>(context, domain,
-				initFunction, transferFunction, targetPredicate);
+		final Abstractor<TCFAState<ExplState>, TCFAAction, ExplPrecision> abstractor = new AbstractorImpl<>(context, domain, initFunction, transferFunction,
+				targetPredicate);
 
 		abstractor.init(precision);
 		abstractor.check(precision);
 
 		System.out.println(ArgPrinter.toGraphvizString(abstractor.getARG()));
 
+		System.out.println("\n\nCounterexample(s):");
+		System.out.println(abstractor.getARG().getCounterexamples());
 	}
 
 }

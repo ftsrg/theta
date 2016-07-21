@@ -1,17 +1,21 @@
-package hu.bme.mit.inf.ttmc.analysis.algorithm;
+package hu.bme.mit.inf.ttmc.analysis.algorithm.impl;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Optional;
 
 import hu.bme.mit.inf.ttmc.analysis.Action;
+import hu.bme.mit.inf.ttmc.analysis.Counterexample;
 import hu.bme.mit.inf.ttmc.analysis.Domain;
 import hu.bme.mit.inf.ttmc.analysis.State;
+import hu.bme.mit.inf.ttmc.analysis.impl.CounterexampleImpl;
 
 public class ARG<S extends State, A extends Action> {
 
@@ -21,6 +25,7 @@ public class ARG<S extends State, A extends Action> {
 	private final Collection<ARGEdge<S, A>> edges;
 
 	private final Collection<ARGNode<S, A>> initNodes;
+	private final Collection<ARGNode<S, A>> targetNodes;
 
 	private int nextId = 0;
 
@@ -29,6 +34,7 @@ public class ARG<S extends State, A extends Action> {
 		nodes = new LinkedHashSet<>();
 		edges = new HashSet<>();
 		initNodes = new HashSet<>();
+		targetNodes = new HashSet<>();
 	}
 
 	////
@@ -43,6 +49,35 @@ public class ARG<S extends State, A extends Action> {
 
 	public Collection<ARGNode<S, A>> getInitNodes() {
 		return Collections.unmodifiableCollection(initNodes);
+	}
+
+	public Collection<ARGNode<S, A>> getTargetNodes() {
+		return Collections.unmodifiableCollection(targetNodes);
+	}
+
+	public Collection<Counterexample<S, A>> getCounterexamples() {
+		final List<Counterexample<S, A>> counterexamples = new ArrayList<>();
+
+		for (final ARGNode<S, A> targetNode : getTargetNodes()) {
+			final List<S> states = new ArrayList<>();
+			final List<A> actions = new ArrayList<>();
+			ARGNode<S, A> running = targetNode;
+			do {
+				states.add(0, running.getState());
+				if (running.getInEdge().isPresent()) {
+					final ARGEdge<S, A> edge = running.getInEdge().get();
+					actions.add(0, edge.getAction());
+					running = edge.getSource();
+				} else {
+					running = null;
+				}
+			} while (running != null);
+
+			counterexamples.add(new CounterexampleImpl<S, A>(states, actions));
+		}
+
+		assert counterexamples.size() == getTargetNodes().size();
+		return counterexamples;
 	}
 
 	////
@@ -101,6 +136,9 @@ public class ARG<S extends State, A extends Action> {
 	private ARGNode<S, A> createNode(final S state, final boolean target) {
 		final ARGNode<S, A> node = new ARGNode<>(state, nextId, target);
 		nodes.add(node);
+		if (node.isTarget()) {
+			targetNodes.add(node);
+		}
 		nextId++;
 		return node;
 	}

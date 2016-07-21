@@ -1,4 +1,4 @@
-package hu.bme.mit.inf.ttmc.analysis.algorithm;
+package hu.bme.mit.inf.ttmc.analysis.algorithm.impl;
 
 import hu.bme.mit.inf.ttmc.analysis.Action;
 import hu.bme.mit.inf.ttmc.analysis.State;

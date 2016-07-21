@@ -7,6 +7,7 @@ import org.junit.Test;
 
 import hu.bme.mit.inf.ttmc.analysis.algorithm.Abstractor;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.ArgPrinter;
+import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.AbstractorImpl;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAAction;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAAnalysisContext;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFADomain;
@@ -31,17 +32,14 @@ public class TCFAZoneTests {
 		final TCFAAnalysisContext context = new TCFAAnalysisContext();
 
 		final TCFADomain<ZoneState> domain = new TCFADomain<>(ZoneDomain.getInstance());
-		final TCFAInitFunction<ZoneState, ZonePrecision> initFunction = new TCFAInitFunction<>(fischer.getInitial(),
-				new TCFAZoneInitFunction());
-		final TCFATransferFunction<ZoneState, ZonePrecision> transferFunction = new TCFATransferFunction<>(
-				new TCFAZoneTransferFunction());
-		final TCFALocTargetPredicate targetPredicate = new TCFALocTargetPredicate(
-				loc -> loc.equals(fischer.getCritical()));
+		final TCFAInitFunction<ZoneState, ZonePrecision> initFunction = new TCFAInitFunction<>(fischer.getInitial(), new TCFAZoneInitFunction());
+		final TCFATransferFunction<ZoneState, ZonePrecision> transferFunction = new TCFATransferFunction<>(new TCFAZoneTransferFunction());
+		final TCFALocTargetPredicate targetPredicate = new TCFALocTargetPredicate(loc -> loc.equals(fischer.getCritical()));
 
 		final ZonePrecision precision = ZonePrecision.builder().add(fischer.getClock()).build();
 
-		final Abstractor<TCFAState<ZoneState>, TCFAAction, ZonePrecision> abstractor = new Abstractor<>(context, domain,
-				initFunction, transferFunction, targetPredicate);
+		final Abstractor<TCFAState<ZoneState>, TCFAAction, ZonePrecision> abstractor = new AbstractorImpl<>(context, domain, initFunction, transferFunction,
+				targetPredicate);
 
 		abstractor.init(precision);
 		abstractor.check(precision);
