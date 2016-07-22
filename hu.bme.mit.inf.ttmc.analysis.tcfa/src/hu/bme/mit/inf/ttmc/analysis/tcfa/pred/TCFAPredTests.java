@@ -16,9 +16,7 @@ import hu.bme.mit.inf.ttmc.analysis.pred.GlobalPredPrecision;
 import hu.bme.mit.inf.ttmc.analysis.pred.PredPrecision;
 import hu.bme.mit.inf.ttmc.analysis.pred.PredState;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAAction;
-import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAActionFunction;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAAnalyis;
-import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFALocTargetPredicate;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAState;
 import hu.bme.mit.inf.ttmc.core.type.IntType;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
@@ -40,14 +38,10 @@ public class TCFAPredTests {
 		final TCFAAnalyis<PredState, PredPrecision> analysis = new TCFAAnalyis<>(fischer.getInitial(),
 				new TCFAPredAnalysis(solver));
 
-		final TCFAActionFunction actionFunction = TCFAActionFunction.getInstance();
-		final TCFALocTargetPredicate targetPredicate = new TCFALocTargetPredicate(
-				loc -> loc.equals(fischer.getCritical()));
-
 		final PredPrecision precision = GlobalPredPrecision.create(Collections.singleton(Eq(vlock.getRef(), Int(0))));
 
 		final Abstractor<TCFAState<PredState>, TCFAAction, PredPrecision> abstractor = new AbstractorImpl<>(analysis,
-				actionFunction, targetPredicate);
+				s -> s.getLoc().equals(fischer.getCritical()));
 
 		abstractor.init(precision);
 		abstractor.check(precision);

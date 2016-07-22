@@ -2,6 +2,7 @@ package hu.bme.mit.inf.ttmc.analysis.tcfa;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import hu.bme.mit.inf.ttmc.analysis.ActionFunction;
 import hu.bme.mit.inf.ttmc.analysis.Analysis;
 import hu.bme.mit.inf.ttmc.analysis.Domain;
 import hu.bme.mit.inf.ttmc.analysis.InitFunction;
@@ -37,6 +38,11 @@ public class TCFAAnalyis<S extends State, P extends Precision> implements Analys
 	@Override
 	public TransferFunction<TCFAState<S>, TCFAAction, P> getTransferFunction() {
 		return transferFunction;
+	}
+
+	@Override
+	public ActionFunction<? super TCFAState<S>, ? extends TCFAAction> getActionFunction() {
+		return TCFAActionFunction.getInstance();
 	}
 
 }

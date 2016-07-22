@@ -3,13 +3,13 @@ package hu.bme.mit.inf.ttmc.analysis.algorithm.impl;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
+import java.util.function.Predicate;
+
 import hu.bme.mit.inf.ttmc.analysis.Action;
-import hu.bme.mit.inf.ttmc.analysis.ActionFunction;
 import hu.bme.mit.inf.ttmc.analysis.Analysis;
 import hu.bme.mit.inf.ttmc.analysis.InitFunction;
 import hu.bme.mit.inf.ttmc.analysis.Precision;
 import hu.bme.mit.inf.ttmc.analysis.State;
-import hu.bme.mit.inf.ttmc.analysis.TargetPredicate;
 import hu.bme.mit.inf.ttmc.analysis.TransferFunction;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.Abstractor;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.AbstractorStatus;
@@ -27,17 +27,14 @@ public class WaitlistBasedAbstractorImpl<S extends State, A extends Action, P ex
 
 	private final Waitlist<ARGNode<S, A>> waitlist;
 
-	public WaitlistBasedAbstractorImpl(final Analysis<S, A, P> analysis,
-			final ActionFunction<? super S, ? extends A> actionFunction, final TargetPredicate<S> targetPredicate,
+	public WaitlistBasedAbstractorImpl(final Analysis<S, A, P> analysis, final Predicate<? super S> target,
 			final Waitlist<ARGNode<S, A>> waitlist) {
 		checkNotNull(analysis);
-		checkNotNull(actionFunction);
-		checkNotNull(targetPredicate);
 		checkNotNull(waitlist);
 		this.waitlist = waitlist;
 		initFunction = analysis.getInitFunction();
 		transferFunction = analysis.getTransferFunction();
-		builder = new ARGBuilder<>(analysis.getDomain(), actionFunction, targetPredicate);
+		builder = new ARGBuilder<>(analysis.getDomain(), analysis.getActionFunction(), target);
 	}
 
 	@Override

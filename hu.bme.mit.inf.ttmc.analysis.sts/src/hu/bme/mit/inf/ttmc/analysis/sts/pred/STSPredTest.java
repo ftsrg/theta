@@ -13,9 +13,11 @@ import static hu.bme.mit.inf.ttmc.formalism.common.decl.impl.Decls2.Var;
 import static hu.bme.mit.inf.ttmc.formalism.common.expr.impl.Exprs2.Prime;
 
 import java.util.Collections;
+import java.util.function.Predicate;
 
 import org.junit.Test;
 
+import hu.bme.mit.inf.ttmc.analysis.ExprState;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.Abstractor;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.ArgPrinter;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.ARGNode;
@@ -26,12 +28,12 @@ import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.refinerops.GlobalPredItpRefin
 import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.waitlist.Waitlist;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.waitlist.impl.LIFOWaitlist;
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplState;
+import hu.bme.mit.inf.ttmc.analysis.impl.ExprStatePredicate;
 import hu.bme.mit.inf.ttmc.analysis.pred.GlobalPredPrecision;
 import hu.bme.mit.inf.ttmc.analysis.pred.PredPrecision;
 import hu.bme.mit.inf.ttmc.analysis.pred.PredState;
 import hu.bme.mit.inf.ttmc.analysis.refutation.ItpRefutation;
 import hu.bme.mit.inf.ttmc.analysis.sts.STSAction;
-import hu.bme.mit.inf.ttmc.analysis.sts.STSActionFunction;
 import hu.bme.mit.inf.ttmc.analysis.sts.STSExprSeqConcretizer;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.type.IntType;
@@ -66,16 +68,14 @@ public class STSPredTest {
 		final ItpSolver solver = manager.createItpSolver();
 
 		final STSPredAnalysis analysis = new STSPredAnalysis(sts, solver);
-
-		final STSActionFunction actionFunction = new STSActionFunction(sts);
-		final STSPredTargetPredicate targetPredicate = new STSPredTargetPredicate(sts, solver);
+		final Predicate<ExprState> target = new ExprStatePredicate(Not(sts.getProp()), solver);
 
 		final GlobalPredPrecision precision = GlobalPredPrecision.create(Collections.singleton(Lt(x, Int(mod))));
 
 		final Waitlist<ARGNode<PredState, STSAction>> waitlist = new LIFOWaitlist<>();
 
 		final Abstractor<PredState, STSAction, PredPrecision> abstractor = new WaitlistBasedAbstractorImpl<>(analysis,
-				actionFunction, targetPredicate, waitlist);
+				target, waitlist);
 
 		final STSExprSeqConcretizer concretizerOp = new STSExprSeqConcretizer(sts, solver);
 		final GlobalPredItpRefinerOp<STSAction> refinerOp = new GlobalPredItpRefinerOp<>();

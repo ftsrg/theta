@@ -5,14 +5,13 @@ import static com.google.common.base.Preconditions.checkState;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.function.Predicate;
 
 import hu.bme.mit.inf.ttmc.analysis.Action;
-import hu.bme.mit.inf.ttmc.analysis.ActionFunction;
 import hu.bme.mit.inf.ttmc.analysis.Analysis;
 import hu.bme.mit.inf.ttmc.analysis.InitFunction;
 import hu.bme.mit.inf.ttmc.analysis.Precision;
 import hu.bme.mit.inf.ttmc.analysis.State;
-import hu.bme.mit.inf.ttmc.analysis.TargetPredicate;
 import hu.bme.mit.inf.ttmc.analysis.TransferFunction;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.Abstractor;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.AbstractorStatus;
@@ -26,14 +25,11 @@ public class AbstractorImpl<S extends State, A extends Action, P extends Precisi
 
 	private ARG<S, A> arg;
 
-	public AbstractorImpl(final Analysis<S, A, P> analysis, final ActionFunction<? super S, ? extends A> actionFunction,
-			final TargetPredicate<? super S> targetPredicate) {
+	public AbstractorImpl(final Analysis<S, A, P> analysis, final Predicate<? super S> target) {
 		checkNotNull(analysis);
-		checkNotNull(actionFunction);
-		checkNotNull(targetPredicate);
 		initFunction = analysis.getInitFunction();
 		transferFunction = analysis.getTransferFunction();
-		builder = new ARGBuilder<>(analysis.getDomain(), actionFunction, targetPredicate);
+		builder = new ARGBuilder<>(analysis.getDomain(), analysis.getActionFunction(), target);
 	}
 
 	@Override
