@@ -60,25 +60,31 @@ public class ARG<S extends State, A extends Action, P extends Precision> {
 		return Collections.unmodifiableCollection(targetNodes);
 	}
 
+	public Trace<S, A> getTraceTo(final ARGNode<S, A> node) {
+		checkArgument(nodes.contains(node));
+
+		final List<S> states = new ArrayList<>();
+		final List<A> actions = new ArrayList<>();
+		ARGNode<S, A> running = node;
+		do {
+			states.add(0, running.getState());
+			if (running.getInEdge().isPresent()) {
+				final ARGEdge<S, A> edge = running.getInEdge().get();
+				actions.add(0, edge.getAction());
+				running = edge.getSource();
+			} else {
+				running = null;
+			}
+		} while (running != null);
+		return new TraceImpl<>(states, actions);
+	}
+
 	public Collection<Trace<S, A>> getCounterexamples() {
 		final List<Trace<S, A>> counterexamples = new ArrayList<>();
 
 		for (final ARGNode<S, A> targetNode : getTargetNodes()) {
-			final List<S> states = new ArrayList<>();
-			final List<A> actions = new ArrayList<>();
-			ARGNode<S, A> running = targetNode;
-			do {
-				states.add(0, running.getState());
-				if (running.getInEdge().isPresent()) {
-					final ARGEdge<S, A> edge = running.getInEdge().get();
-					actions.add(0, edge.getAction());
-					running = edge.getSource();
-				} else {
-					running = null;
-				}
-			} while (running != null);
-
-			counterexamples.add(new TraceImpl<>(states, actions));
+			final Trace<S, A> trace = getTraceTo(targetNode);
+			counterexamples.add(trace);
 		}
 
 		assert counterexamples.size() == getTargetNodes().size();
