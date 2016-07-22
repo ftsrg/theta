@@ -10,12 +10,12 @@ import hu.bme.mit.inf.ttmc.analysis.Precision;
 import hu.bme.mit.inf.ttmc.analysis.State;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFALoc;
 
-public class TCFAInitFunction<S extends State, P extends Precision> implements InitFunction<TCFAState<S>, P> {
+class TCFAInitFunction<S extends State, P extends Precision> implements InitFunction<TCFAState<S>, P> {
 
 	private final TCFALoc initLoc;
 	private final InitFunction<S, P> initFunction;
 
-	public TCFAInitFunction(final TCFALoc initLoc, final InitFunction<S, P> initFunction) {
+	TCFAInitFunction(final TCFALoc initLoc, final InitFunction<S, P> initFunction) {
 		this.initLoc = checkNotNull(initLoc);
 		this.initFunction = checkNotNull(initFunction);
 	}

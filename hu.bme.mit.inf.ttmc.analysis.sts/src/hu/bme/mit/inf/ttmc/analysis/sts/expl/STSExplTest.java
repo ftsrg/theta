@@ -22,7 +22,6 @@ import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.AbstractorImpl;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.CEGARLoopImpl;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.RefutationBasedRefiner;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.refinerops.GlobalExplItpRefinerOp;
-import hu.bme.mit.inf.ttmc.analysis.expl.ExplDomain;
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplPrecision;
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplState;
 import hu.bme.mit.inf.ttmc.analysis.expl.GlobalExplPrecision;
@@ -66,18 +65,16 @@ public class STSExplTest {
 		final SolverManager manager = new Z3SolverManager();
 		final ItpSolver solver = manager.createItpSolver();
 
-		final ExplDomain domain = ExplDomain.getInstance();
-		final STSActionFunction actionFunction = new STSActionFunction(sts);
+		final STSExplAnalysis analysis = new STSExplAnalysis(sts, solver);
 
-		final STSExplInitFunction initFunction = new STSExplInitFunction(sts, solver);
-		final STSExplTransferFunction transferFunction = new STSExplTransferFunction(sts, solver);
+		final STSActionFunction actionFunction = new STSActionFunction(sts);
 		final STSExplTargetPredicate targetPredicate = new STSExplTargetPredicate(sts, solver);
 
 		final GlobalExplPrecision precision = GlobalExplPrecision.create(Collections.singleton(vy),
 				Collections.singleton(vx));
 
-		final Abstractor<ExplState, STSAction, ExplPrecision> abstractor = new AbstractorImpl<>(domain, actionFunction,
-				initFunction, transferFunction, targetPredicate);
+		final Abstractor<ExplState, STSAction, ExplPrecision> abstractor = new AbstractorImpl<>(analysis,
+				actionFunction, targetPredicate);
 
 		final STSExprSeqConcretizer concretizerOp = new STSExprSeqConcretizer(sts, solver);
 		final GlobalExplItpRefinerOp<STSAction> refinerOp = new GlobalExplItpRefinerOp<>();

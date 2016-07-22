@@ -23,7 +23,7 @@ class STSExplInitFunction implements InitFunction<ExplState, ExplPrecision> {
 	private final Collection<Expr<? extends BoolType>> invar;
 	private final Solver solver;
 
-	public STSExplInitFunction(final STS sts, final Solver solver) {
+	STSExplInitFunction(final STS sts, final Solver solver) {
 		this.init = checkNotNull(sts.getInit());
 		this.invar = checkNotNull(sts.getInvar());
 		this.solver = checkNotNull(solver);

@@ -9,7 +9,16 @@ import hu.bme.mit.inf.ttmc.analysis.InitFunction;
 import hu.bme.mit.inf.ttmc.analysis.pred.PredPrecision;
 import hu.bme.mit.inf.ttmc.analysis.pred.PredState;
 
-public class TCFAPredInitFunction implements InitFunction<PredState, PredPrecision> {
+class TCFAPredInitFunction implements InitFunction<PredState, PredPrecision> {
+
+	private static final TCFAPredInitFunction INSTANCE = new TCFAPredInitFunction();
+
+	private TCFAPredInitFunction() {
+	}
+
+	static TCFAPredInitFunction getInstance() {
+		return INSTANCE;
+	}
 
 	@Override
 	public Collection<PredState> getInitStates(final PredPrecision precision) {

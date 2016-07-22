@@ -5,11 +5,11 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import hu.bme.mit.inf.ttmc.analysis.Domain;
 import hu.bme.mit.inf.ttmc.analysis.State;
 
-public final class TCFADomain<S extends State> implements Domain<TCFAState<S>> {
+final class TCFADomain<S extends State> implements Domain<TCFAState<S>> {
 
 	private final Domain<S> domain;
 
-	public TCFADomain(final Domain<S> domain) {
+	TCFADomain(final Domain<S> domain) {
 		this.domain = checkNotNull(domain);
 	}
 

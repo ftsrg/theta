@@ -9,6 +9,15 @@ import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFALoc;
 
 public class TCFAActionFunction implements ActionFunction<TCFAState<?>, TCFAAction> {
 
+	private static final TCFAActionFunction INSTANCE = new TCFAActionFunction();
+
+	private TCFAActionFunction() {
+	}
+
+	public static TCFAActionFunction getInstance() {
+		return INSTANCE;
+	}
+
 	@Override
 	public Collection<TCFAAction> getEnabledActionsFor(final TCFAState<?> state) {
 		final Collection<TCFAAction> tcfaActions = new ArrayList<>();

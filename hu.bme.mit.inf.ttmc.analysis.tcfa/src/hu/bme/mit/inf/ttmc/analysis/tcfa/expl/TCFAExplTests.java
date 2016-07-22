@@ -10,17 +10,14 @@ import org.junit.Test;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.Abstractor;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.ArgPrinter;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.AbstractorImpl;
-import hu.bme.mit.inf.ttmc.analysis.expl.ExplDomain;
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplPrecision;
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplState;
 import hu.bme.mit.inf.ttmc.analysis.expl.GlobalExplPrecision;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAAction;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAActionFunction;
-import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFADomain;
-import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAInitFunction;
+import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAAnalyis;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFALocTargetPredicate;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAState;
-import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFATransferFunction;
 import hu.bme.mit.inf.ttmc.core.type.IntType;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.instances.FischerTCFA;
@@ -38,21 +35,18 @@ public class TCFAExplTests {
 		final SolverManager manager = new Z3SolverManager();
 		final Solver solver = manager.createSolver(true, true);
 
-		final TCFADomain<ExplState> domain = new TCFADomain<>(ExplDomain.getInstance());
-		final TCFAActionFunction actionFunction = new TCFAActionFunction();
+		final TCFAAnalyis<ExplState, ExplPrecision> analyis = new TCFAAnalyis<>(fischer.getInitial(),
+				new TCFAExplAnalysis(solver));
 
-		final TCFAInitFunction<ExplState, ExplPrecision> initFunction = new TCFAInitFunction<>(fischer.getInitial(),
-				new TCFAExplInitFunction());
-		final TCFATransferFunction<ExplState, ExplPrecision> transferFunction = new TCFATransferFunction<>(
-				new TCFAExplTransferFunction(solver));
+		final TCFAActionFunction actionFunction = TCFAActionFunction.getInstance();
 		final TCFALocTargetPredicate targetPredicate = new TCFALocTargetPredicate(
 				loc -> loc.equals(fischer.getCritical()));
 
 		final ExplPrecision precision = GlobalExplPrecision.create(Collections.singleton(vlock),
 				Collections.emptySet());
 
-		final Abstractor<TCFAState<ExplState>, TCFAAction, ExplPrecision> abstractor = new AbstractorImpl<>(domain,
-				actionFunction, initFunction, transferFunction, targetPredicate);
+		final Abstractor<TCFAState<ExplState>, TCFAAction, ExplPrecision> abstractor = new AbstractorImpl<>(analyis,
+				actionFunction, targetPredicate);
 
 		abstractor.init(precision);
 		abstractor.check(precision);
