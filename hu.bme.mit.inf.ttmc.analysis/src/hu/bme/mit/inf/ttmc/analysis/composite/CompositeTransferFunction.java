@@ -9,14 +9,14 @@ import hu.bme.mit.inf.ttmc.analysis.Precision;
 import hu.bme.mit.inf.ttmc.analysis.State;
 import hu.bme.mit.inf.ttmc.analysis.TransferFunction;
 
-public class CompositeTransferFunction<S1 extends State, S2 extends State, A extends Action, P1 extends Precision, P2 extends Precision>
+class CompositeTransferFunction<S1 extends State, S2 extends State, A extends Action, P1 extends Precision, P2 extends Precision>
 		implements TransferFunction<CompositeState<S1, S2>, A, CompositePrecision<P1, P2>> {
 
 	private final TransferFunction<S1, A, P1> transferFunction1;
 	private final TransferFunction<S2, A, P2> transferFunction2;
 	private final StrengtheningOperator<S1, S2, P1, P2> strenghteningOperator;
 
-	public CompositeTransferFunction(final TransferFunction<S1, A, P1> transferFunction1,
+	CompositeTransferFunction(final TransferFunction<S1, A, P1> transferFunction1,
 			final TransferFunction<S2, A, P2> transferFunction2,
 			final StrengtheningOperator<S1, S2, P1, P2> strenghteningOperator) {
 		this.transferFunction1 = checkNotNull(transferFunction1);

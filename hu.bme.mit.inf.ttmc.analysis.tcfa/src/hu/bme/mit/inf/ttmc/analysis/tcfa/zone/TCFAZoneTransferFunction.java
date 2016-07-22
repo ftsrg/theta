@@ -15,7 +15,16 @@ import hu.bme.mit.inf.ttmc.analysis.zone.ZoneState;
 import hu.bme.mit.inf.ttmc.formalism.ta.constr.ClockConstr;
 import hu.bme.mit.inf.ttmc.formalism.ta.op.ClockOp;
 
-public class TCFAZoneTransferFunction implements TransferFunction<ZoneState, TCFAAction, ZonePrecision> {
+class TCFAZoneTransferFunction implements TransferFunction<ZoneState, TCFAAction, ZonePrecision> {
+
+	private static TCFAZoneTransferFunction INSTANCE = new TCFAZoneTransferFunction();
+
+	private TCFAZoneTransferFunction() {
+	}
+
+	static TCFAZoneTransferFunction getInstance() {
+		return INSTANCE;
+	}
 
 	@Override
 	public Collection<ZoneState> getSuccStates(final ZoneState state, final TCFAAction action,

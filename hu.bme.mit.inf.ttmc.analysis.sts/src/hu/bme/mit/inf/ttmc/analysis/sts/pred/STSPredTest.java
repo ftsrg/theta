@@ -27,7 +27,6 @@ import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.waitlist.Waitlist;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.waitlist.impl.LIFOWaitlist;
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplState;
 import hu.bme.mit.inf.ttmc.analysis.pred.GlobalPredPrecision;
-import hu.bme.mit.inf.ttmc.analysis.pred.PredDomain;
 import hu.bme.mit.inf.ttmc.analysis.pred.PredPrecision;
 import hu.bme.mit.inf.ttmc.analysis.pred.PredState;
 import hu.bme.mit.inf.ttmc.analysis.refutation.ItpRefutation;
@@ -66,19 +65,17 @@ public class STSPredTest {
 		final SolverManager manager = new Z3SolverManager();
 		final ItpSolver solver = manager.createItpSolver();
 
-		final PredDomain domain = PredDomain.create(solver);
-		final STSActionFunction actionFunction = new STSActionFunction(sts);
+		final STSPredAnalysis analysis = new STSPredAnalysis(sts, solver);
 
-		final STSPredInitFunction initFunction = new STSPredInitFunction(sts, solver);
-		final STSPredTransferFunction transferFunction = new STSPredTransferFunction(sts, solver);
+		final STSActionFunction actionFunction = new STSActionFunction(sts);
 		final STSPredTargetPredicate targetPredicate = new STSPredTargetPredicate(sts, solver);
 
 		final GlobalPredPrecision precision = GlobalPredPrecision.create(Collections.singleton(Lt(x, Int(mod))));
 
 		final Waitlist<ARGNode<PredState, STSAction>> waitlist = new LIFOWaitlist<>();
 
-		final Abstractor<PredState, STSAction, PredPrecision> abstractor = new WaitlistBasedAbstractorImpl<>(domain,
-				actionFunction, initFunction, transferFunction, targetPredicate, waitlist);
+		final Abstractor<PredState, STSAction, PredPrecision> abstractor = new WaitlistBasedAbstractorImpl<>(analysis,
+				actionFunction, targetPredicate, waitlist);
 
 		final STSExprSeqConcretizer concretizerOp = new STSExprSeqConcretizer(sts, solver);
 		final GlobalPredItpRefinerOp<STSAction> refinerOp = new GlobalPredItpRefinerOp<>();

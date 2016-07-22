@@ -18,18 +18,19 @@ import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 import hu.bme.mit.inf.ttmc.formalism.utils.PathUtils;
 import hu.bme.mit.inf.ttmc.solver.Solver;
 
-public class STSPredTransferFunction implements TransferFunction<PredState, STSAction, PredPrecision> {
+class STSPredTransferFunction implements TransferFunction<PredState, STSAction, PredPrecision> {
 
 	private final Collection<Expr<? extends BoolType>> invar;
 	private final Solver solver;
 
-	public STSPredTransferFunction(final STS sts, final Solver solver) {
+	STSPredTransferFunction(final STS sts, final Solver solver) {
 		this.invar = checkNotNull(sts.getInvar());
 		this.solver = checkNotNull(solver);
 	}
 
 	@Override
-	public Collection<PredState> getSuccStates(final PredState state, final STSAction action, final PredPrecision precision) {
+	public Collection<PredState> getSuccStates(final PredState state, final STSAction action,
+			final PredPrecision precision) {
 		checkNotNull(state);
 		checkNotNull(action);
 		checkNotNull(precision);

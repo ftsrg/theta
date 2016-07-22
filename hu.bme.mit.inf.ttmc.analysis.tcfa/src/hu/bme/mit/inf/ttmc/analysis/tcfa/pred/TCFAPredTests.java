@@ -13,16 +13,13 @@ import hu.bme.mit.inf.ttmc.analysis.algorithm.Abstractor;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.ArgPrinter;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.AbstractorImpl;
 import hu.bme.mit.inf.ttmc.analysis.pred.GlobalPredPrecision;
-import hu.bme.mit.inf.ttmc.analysis.pred.PredDomain;
 import hu.bme.mit.inf.ttmc.analysis.pred.PredPrecision;
 import hu.bme.mit.inf.ttmc.analysis.pred.PredState;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAAction;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAActionFunction;
-import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFADomain;
-import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAInitFunction;
+import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAAnalyis;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFALocTargetPredicate;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAState;
-import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFATransferFunction;
 import hu.bme.mit.inf.ttmc.core.type.IntType;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.instances.FischerTCFA;
@@ -40,20 +37,17 @@ public class TCFAPredTests {
 		final SolverManager manager = new Z3SolverManager();
 		final Solver solver = manager.createSolver(true, true);
 
-		final TCFADomain<PredState> domain = new TCFADomain<>(PredDomain.create(solver));
-		final TCFAActionFunction actionFunction = new TCFAActionFunction();
+		final TCFAAnalyis<PredState, PredPrecision> analysis = new TCFAAnalyis<>(fischer.getInitial(),
+				new TCFAPredAnalysis(solver));
 
-		final TCFAInitFunction<PredState, PredPrecision> initFunction = new TCFAInitFunction<>(fischer.getInitial(),
-				new TCFAPredInitFunction());
-		final TCFATransferFunction<PredState, PredPrecision> transferFunction = new TCFATransferFunction<>(
-				new TCFAPredTransferFunction(solver));
+		final TCFAActionFunction actionFunction = TCFAActionFunction.getInstance();
 		final TCFALocTargetPredicate targetPredicate = new TCFALocTargetPredicate(
 				loc -> loc.equals(fischer.getCritical()));
 
 		final PredPrecision precision = GlobalPredPrecision.create(Collections.singleton(Eq(vlock.getRef(), Int(0))));
 
-		final Abstractor<TCFAState<PredState>, TCFAAction, PredPrecision> abstractor = new AbstractorImpl<>(domain,
-				actionFunction, initFunction, transferFunction, targetPredicate);
+		final Abstractor<TCFAState<PredState>, TCFAAction, PredPrecision> abstractor = new AbstractorImpl<>(analysis,
+				actionFunction, targetPredicate);
 
 		abstractor.init(precision);
 		abstractor.check(precision);

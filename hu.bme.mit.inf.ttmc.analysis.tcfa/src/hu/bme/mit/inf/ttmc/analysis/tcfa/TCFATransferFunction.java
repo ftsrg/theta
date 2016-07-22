@@ -13,12 +13,12 @@ import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAAction.TCFADelayAction;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAAction.TCFADiscreteAction;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFAEdge;
 
-public class TCFATransferFunction<S extends State, P extends Precision>
+class TCFATransferFunction<S extends State, P extends Precision>
 		implements TransferFunction<TCFAState<S>, TCFAAction, P> {
 
 	private final TransferFunction<S, TCFAAction, P> transferFunction;
 
-	public TCFATransferFunction(final TransferFunction<S, TCFAAction, P> transferFunction) {
+	TCFATransferFunction(final TransferFunction<S, TCFAAction, P> transferFunction) {
 		this.transferFunction = checkNotNull(transferFunction);
 	}
 

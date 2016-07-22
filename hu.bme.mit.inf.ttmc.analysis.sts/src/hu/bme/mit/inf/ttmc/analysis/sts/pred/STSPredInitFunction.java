@@ -17,13 +17,13 @@ import hu.bme.mit.inf.ttmc.formalism.sts.STS;
 import hu.bme.mit.inf.ttmc.formalism.utils.PathUtils;
 import hu.bme.mit.inf.ttmc.solver.Solver;
 
-public class STSPredInitFunction implements InitFunction<PredState, PredPrecision> {
+class STSPredInitFunction implements InitFunction<PredState, PredPrecision> {
 
 	private final Collection<Expr<? extends BoolType>> init;
 	private final Collection<Expr<? extends BoolType>> invar;
 	private final Solver solver;
 
-	public STSPredInitFunction(final STS sts, final Solver solver) {
+	STSPredInitFunction(final STS sts, final Solver solver) {
 		this.init = checkNotNull(sts.getInit());
 		this.invar = checkNotNull(sts.getInvar());
 		this.solver = checkNotNull(solver);

@@ -23,11 +23,11 @@ import hu.bme.mit.inf.ttmc.formalism.utils.StmtUnroller.StmtToExprResult;
 import hu.bme.mit.inf.ttmc.formalism.utils.VarIndexes;
 import hu.bme.mit.inf.ttmc.solver.Solver;
 
-public class TCFAPredTransferFunction implements TransferFunction<PredState, TCFAAction, PredPrecision> {
+class TCFAPredTransferFunction implements TransferFunction<PredState, TCFAAction, PredPrecision> {
 
 	final Solver solver;
 
-	public TCFAPredTransferFunction(final Solver solver) {
+	TCFAPredTransferFunction(final Solver solver) {
 		this.solver = checkNotNull(solver);
 	}
 

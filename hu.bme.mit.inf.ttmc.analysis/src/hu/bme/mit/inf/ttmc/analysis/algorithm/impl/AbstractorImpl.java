@@ -8,7 +8,7 @@ import java.util.Collection;
 
 import hu.bme.mit.inf.ttmc.analysis.Action;
 import hu.bme.mit.inf.ttmc.analysis.ActionFunction;
-import hu.bme.mit.inf.ttmc.analysis.Domain;
+import hu.bme.mit.inf.ttmc.analysis.Analysis;
 import hu.bme.mit.inf.ttmc.analysis.InitFunction;
 import hu.bme.mit.inf.ttmc.analysis.Precision;
 import hu.bme.mit.inf.ttmc.analysis.State;
@@ -26,16 +26,14 @@ public class AbstractorImpl<S extends State, A extends Action, P extends Precisi
 
 	private ARG<S, A> arg;
 
-	public AbstractorImpl(final Domain<S> domain, final ActionFunction<? super S, ? extends A> actionFunction,
-			final InitFunction<S, P> initFunction, final TransferFunction<S, A, P> transferFunction,
+	public AbstractorImpl(final Analysis<S, A, P> analysis, final ActionFunction<? super S, ? extends A> actionFunction,
 			final TargetPredicate<? super S> targetPredicate) {
-		checkNotNull(domain);
+		checkNotNull(analysis);
 		checkNotNull(actionFunction);
 		checkNotNull(targetPredicate);
-		this.initFunction = checkNotNull(initFunction);
-		this.transferFunction = checkNotNull(transferFunction);
-
-		builder = new ARGBuilder<>(domain, actionFunction, targetPredicate);
+		initFunction = analysis.getInitFunction();
+		transferFunction = analysis.getTransferFunction();
+		builder = new ARGBuilder<>(analysis.getDomain(), actionFunction, targetPredicate);
 	}
 
 	@Override

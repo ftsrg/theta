@@ -10,12 +10,9 @@ import hu.bme.mit.inf.ttmc.analysis.algorithm.ArgPrinter;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.AbstractorImpl;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAAction;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAActionFunction;
-import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFADomain;
-import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAInitFunction;
+import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAAnalyis;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFALocTargetPredicate;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAState;
-import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFATransferFunction;
-import hu.bme.mit.inf.ttmc.analysis.zone.ZoneDomain;
 import hu.bme.mit.inf.ttmc.analysis.zone.ZonePrecision;
 import hu.bme.mit.inf.ttmc.analysis.zone.ZoneState;
 import hu.bme.mit.inf.ttmc.core.type.IntType;
@@ -29,20 +26,17 @@ public class TCFAZoneTests {
 		final VarDecl<IntType> vlock = Var("lock", Int());
 		final FischerTCFA fischer = new FischerTCFA(1, 1, 2, vlock);
 
-		final TCFADomain<ZoneState> domain = new TCFADomain<>(ZoneDomain.getInstance());
-		final TCFAActionFunction actionFunction = new TCFAActionFunction();
+		final TCFAAnalyis<ZoneState, ZonePrecision> analyis = new TCFAAnalyis<>(fischer.getInitial(),
+				TCFAZoneAnalysis.getInstance());
 
-		final TCFAInitFunction<ZoneState, ZonePrecision> initFunction = new TCFAInitFunction<>(fischer.getInitial(),
-				new TCFAZoneInitFunction());
-		final TCFATransferFunction<ZoneState, ZonePrecision> transferFunction = new TCFATransferFunction<>(
-				new TCFAZoneTransferFunction());
+		final TCFAActionFunction actionFunction = TCFAActionFunction.getInstance();
 		final TCFALocTargetPredicate targetPredicate = new TCFALocTargetPredicate(
 				loc -> loc.equals(fischer.getCritical()));
 
 		final ZonePrecision precision = ZonePrecision.builder().add(fischer.getClock()).build();
 
-		final Abstractor<TCFAState<ZoneState>, TCFAAction, ZonePrecision> abstractor = new AbstractorImpl<>(domain,
-				actionFunction, initFunction, transferFunction, targetPredicate);
+		final Abstractor<TCFAState<ZoneState>, TCFAAction, ZonePrecision> abstractor = new AbstractorImpl<>(analyis,
+				actionFunction, targetPredicate);
 
 		abstractor.init(precision);
 		abstractor.check(precision);

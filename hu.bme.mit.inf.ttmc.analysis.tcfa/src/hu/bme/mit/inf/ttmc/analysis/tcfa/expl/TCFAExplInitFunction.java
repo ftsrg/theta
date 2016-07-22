@@ -12,6 +12,15 @@ import hu.bme.mit.inf.ttmc.formalism.common.Valuation;
 
 public class TCFAExplInitFunction implements InitFunction<ExplState, ExplPrecision> {
 
+	private static final TCFAExplInitFunction INSTANCE = new TCFAExplInitFunction();
+
+	private TCFAExplInitFunction() {
+	}
+
+	static TCFAExplInitFunction getInstance() {
+		return INSTANCE;
+	}
+
 	@Override
 	public Collection<ExplState> getInitStates(final ExplPrecision precision) {
 		checkNotNull(precision);
