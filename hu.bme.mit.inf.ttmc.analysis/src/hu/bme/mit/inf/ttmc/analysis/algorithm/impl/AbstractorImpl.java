@@ -9,38 +9,32 @@ import java.util.function.Predicate;
 
 import hu.bme.mit.inf.ttmc.analysis.Action;
 import hu.bme.mit.inf.ttmc.analysis.Analysis;
-import hu.bme.mit.inf.ttmc.analysis.InitFunction;
 import hu.bme.mit.inf.ttmc.analysis.Precision;
 import hu.bme.mit.inf.ttmc.analysis.State;
-import hu.bme.mit.inf.ttmc.analysis.TransferFunction;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.Abstractor;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.AbstractorStatus;
 
 public class AbstractorImpl<S extends State, A extends Action, P extends Precision> implements Abstractor<S, A, P> {
 
-	private final ARGBuilder<S, A> builder;
+	private final Analysis<S, A, P> analysis;
+	private final Predicate<? super S> target;
 
-	private final InitFunction<S, P> initFunction;
-	private final TransferFunction<S, A, P> transferFunction;
-
-	private ARG<S, A> arg;
+	private ARG<S, A, P> arg;
 
 	public AbstractorImpl(final Analysis<S, A, P> analysis, final Predicate<? super S> target) {
-		checkNotNull(analysis);
-		initFunction = analysis.getInitFunction();
-		transferFunction = analysis.getTransferFunction();
-		builder = new ARGBuilder<>(analysis.getDomain(), analysis.getActionFunction(), target);
+		this.analysis = checkNotNull(analysis);
+		this.target = checkNotNull(target);
 	}
 
 	@Override
-	public ARG<S, A> getARG() {
+	public ARG<S, A, P> getARG() {
 		checkState(arg != null);
 		return arg;
 	}
 
 	@Override
 	public void init(final P precision) {
-		arg = builder.create(initFunction, precision);
+		arg = new ARG<>(analysis, target, precision);
 	}
 
 	@Override
@@ -56,7 +50,7 @@ public class AbstractorImpl<S extends State, A extends Action, P extends Precisi
 	private void dfs(final ARGNode<S, A> node, final P precision) {
 		arg.close(node);
 		if (!node.isCovered()) {
-			builder.expand(arg, node, transferFunction, precision);
+			arg.expand(node, precision);
 			for (final ARGEdge<S, A> outEdge : node.getOutEdges()) {
 				final ARGNode<S, A> succNode = outEdge.getTarget();
 				if (!succNode.isTarget()) {
