@@ -60,9 +60,9 @@ public class TraceImpl<S extends State, A extends Action> implements Trace<S, A>
 		for (int i = 0; i < length(); ++i) {
 			sb.append(getState(i));
 			if (i < length() - 1) {
-				sb.append(" ---");
+				sb.append(" ---[");
 				sb.append(getAction(i));
-				sb.append("--> ");
+				sb.append("]--> ");
 			}
 		}
 		sb.append(")");
