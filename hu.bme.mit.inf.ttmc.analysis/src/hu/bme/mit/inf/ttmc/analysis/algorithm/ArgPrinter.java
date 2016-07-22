@@ -11,7 +11,7 @@ public class ArgPrinter {
 	private ArgPrinter() {
 	}
 
-	public static String toGraphvizString(final ARG<?, ?> arg) {
+	public static String toGraphvizString(final ARG<?, ?, ?> arg) {
 		final StringBuilder sb = new StringBuilder();
 
 		sb.append("digraph arg {");

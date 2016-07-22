@@ -10,16 +10,19 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Predicate;
 
 import hu.bme.mit.inf.ttmc.analysis.Action;
+import hu.bme.mit.inf.ttmc.analysis.Analysis;
+import hu.bme.mit.inf.ttmc.analysis.Precision;
+import hu.bme.mit.inf.ttmc.analysis.State;
 import hu.bme.mit.inf.ttmc.analysis.Trace;
 import hu.bme.mit.inf.ttmc.analysis.impl.TraceImpl;
-import hu.bme.mit.inf.ttmc.analysis.Domain;
-import hu.bme.mit.inf.ttmc.analysis.State;
 
-public class ARG<S extends State, A extends Action> {
+public class ARG<S extends State, A extends Action, P extends Precision> {
 
-	private final Domain<S> domain;
+	private final Analysis<S, A, P> analysis;
+	private final Predicate<? super S> target;
 
 	private final Collection<ARGNode<S, A>> nodes;
 	private final Collection<ARGEdge<S, A>> edges;
@@ -29,12 +32,14 @@ public class ARG<S extends State, A extends Action> {
 
 	private int nextId = 0;
 
-	ARG(final Domain<S> domain) {
-		this.domain = checkNotNull(domain);
+	ARG(final Analysis<S, A, P> analysis, final Predicate<? super S> target, final P precision) {
+		this.analysis = checkNotNull(analysis);
+		this.target = checkNotNull(target);
 		nodes = new LinkedHashSet<>();
 		edges = new HashSet<>();
 		initNodes = new HashSet<>();
 		targetNodes = new HashSet<>();
+		init(precision);
 	}
 
 	////
@@ -73,7 +78,7 @@ public class ARG<S extends State, A extends Action> {
 				}
 			} while (running != null);
 
-			counterexamples.add(new TraceImpl<S, A>(states, actions));
+			counterexamples.add(new TraceImpl<>(states, actions));
 		}
 
 		assert counterexamples.size() == getTargetNodes().size();
@@ -81,6 +86,29 @@ public class ARG<S extends State, A extends Action> {
 	}
 
 	////
+
+	public void expand(final ARGNode<S, A> node, final P precision) {
+		checkNotNull(node);
+		checkNotNull(precision);
+		checkArgument(nodes.contains(node));
+
+		if (node.isExpanded() || analysis.getDomain().isBottom(node.getState())) {
+			return;
+		}
+
+		final S state = node.getState();
+		final Collection<? extends A> actions = analysis.getActionFunction().getEnabledActionsFor(state);
+		for (final A action : actions) {
+			final Collection<? extends S> succStates = analysis.getTransferFunction().getSuccStates(state, action,
+					precision);
+			for (final S succState : succStates) {
+				final boolean isTarget = target.test(succState);
+				createSuccNode(node, action, succState, isTarget);
+			}
+		}
+
+		node.expanded = true;
+	}
 
 	public void close(final ARGNode<S, A> node) {
 		for (final ARGNode<S, A> nodeToCoverWith : nodes) {
@@ -90,6 +118,8 @@ public class ARG<S extends State, A extends Action> {
 			cover(node, nodeToCoverWith);
 		}
 	}
+
+	////
 
 	private void cover(final ARGNode<S, A> nodeToCover, final ARGNode<S, A> nodeToCoverWith) {
 		checkNotNull(nodeToCover);
@@ -101,21 +131,30 @@ public class ARG<S extends State, A extends Action> {
 			return;
 		}
 
-		if (domain.isLeq(nodeToCover.getState(), nodeToCoverWith.getState())) {
+		if (analysis.getDomain().isLeq(nodeToCover.getState(), nodeToCoverWith.getState())) {
 			addCoveringEdge(nodeToCover, nodeToCoverWith);
 			nodeToCover.foreachDescendants(ARGNode::clearCoveredNodes);
 		}
 	}
 
-	////
+	private void init(final P precision) {
+		checkNotNull(precision);
 
-	ARGNode<S, A> createInitNode(final S initState, final boolean target) {
+		final Collection<? extends S> initStates = analysis.getInitFunction().getInitStates(precision);
+		for (final S initState : initStates) {
+			final boolean isTarget = target.test(initState);
+			createInitNode(initState, isTarget);
+		}
+	}
+
+	private ARGNode<S, A> createInitNode(final S initState, final boolean target) {
 		final ARGNode<S, A> initNode = createNode(initState, target);
 		initNodes.add(initNode);
 		return initNode;
 	}
 
-	ARGNode<S, A> createSuccNode(final ARGNode<S, A> node, final A action, final S succState, final boolean target) {
+	private ARGNode<S, A> createSuccNode(final ARGNode<S, A> node, final A action, final S succState,
+			final boolean target) {
 		assert nodes.contains(node);
 
 		final ARGNode<S, A> succNode = createNode(succState, target);

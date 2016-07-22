@@ -7,9 +7,9 @@ import static com.google.common.base.Preconditions.checkState;
 import java.util.Collection;
 
 import hu.bme.mit.inf.ttmc.analysis.Action;
-import hu.bme.mit.inf.ttmc.analysis.Trace;
 import hu.bme.mit.inf.ttmc.analysis.Precision;
 import hu.bme.mit.inf.ttmc.analysis.State;
+import hu.bme.mit.inf.ttmc.analysis.Trace;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.CounterexampleStatus;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.Refiner;
 import hu.bme.mit.inf.ttmc.analysis.refutation.Refutation;
@@ -30,7 +30,7 @@ public class RefutationBasedRefiner<S extends State, CS extends State, R extends
 	}
 
 	@Override
-	public void refine(final ARG<S, A> arg, final P precision) {
+	public void refine(final ARG<S, A, ? super P> arg, final P precision) {
 		checkArgument(arg.getTargetNodes().size() > 0);
 
 		refinedPrecision = null;

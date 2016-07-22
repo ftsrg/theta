@@ -61,7 +61,7 @@ public class ProsigmaTest {
 		abstractor.init(precision);
 		abstractor.check(precision);
 
-		final ARG<?, ?> arg = abstractor.getARG();
+		final ARG<?, ?, ?> arg = abstractor.getARG();
 
 		System.out.println(ArgPrinter.toGraphvizString(arg));
 

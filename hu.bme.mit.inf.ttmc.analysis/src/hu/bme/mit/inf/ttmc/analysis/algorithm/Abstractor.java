@@ -11,7 +11,7 @@ public interface Abstractor<S extends State, A extends Action, P extends Precisi
 
 	void check(final P precision);
 
-	ARG<S, A> getARG();
+	ARG<S, A, P> getARG();
 
 	AbstractorStatus getStatus();
 

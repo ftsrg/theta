@@ -4,9 +4,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 import hu.bme.mit.inf.ttmc.analysis.Action;
-import hu.bme.mit.inf.ttmc.analysis.Trace;
 import hu.bme.mit.inf.ttmc.analysis.Precision;
 import hu.bme.mit.inf.ttmc.analysis.State;
+import hu.bme.mit.inf.ttmc.analysis.Trace;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.Abstractor;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.AbstractorStatus;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.CEGARLoop;
@@ -37,7 +37,7 @@ public class CEGARLoopImpl<S extends State, A extends Action, P extends Precisio
 			abstractor.check(precision);
 
 			if (abstractor.getStatus() == AbstractorStatus.COUNTEREXAMPLE) {
-				final ARG<S, A> arg = abstractor.getARG();
+				final ARG<S, A, ? super P> arg = abstractor.getARG();
 				refiner.refine(arg, precision);
 
 				if (refiner.getStatus() == CounterexampleStatus.SPURIOUS) {
