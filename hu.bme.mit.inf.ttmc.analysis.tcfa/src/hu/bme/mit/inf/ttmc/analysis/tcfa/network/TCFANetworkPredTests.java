@@ -24,9 +24,7 @@ import hu.bme.mit.inf.ttmc.analysis.pred.GlobalPredPrecision;
 import hu.bme.mit.inf.ttmc.analysis.pred.PredPrecision;
 import hu.bme.mit.inf.ttmc.analysis.pred.PredState;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAAction;
-import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAActionFunction;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAAnalyis;
-import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFALocTargetPredicate;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAState;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.pred.TCFAPredAnalysis;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.zone.TCFAZoneAnalysis;
@@ -68,15 +66,12 @@ public class TCFANetworkPredTests {
 				TCFANetworkLoc.create(initLocs),
 				new CompositeAnalysis<>(TCFAZoneAnalysis.getInstance(), new TCFAPredAnalysis(solver)));
 
-		final TCFAActionFunction actionFunction = TCFAActionFunction.getInstance();
-		final TCFALocTargetPredicate targetPredicate = new TCFALocTargetPredicate(loc -> false);
-
 		final CompositePrecision<ZonePrecision, PredPrecision> precision = CompositePrecision.create(
 				ZonePrecision.builder().addAll(clocks).build(),
 				GlobalPredPrecision.create(Arrays.asList(Eq(lock, Int(0)), Eq(lock, Int(1)))));
 
 		final Abstractor<TCFAState<CompositeState<ZoneState, PredState>>, TCFAAction, CompositePrecision<ZonePrecision, PredPrecision>> abstractor = new AbstractorImpl<>(
-				analysis, actionFunction, targetPredicate);
+				analysis, s -> false);
 
 		abstractor.init(precision);
 		abstractor.check(precision);

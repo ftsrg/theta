@@ -1,5 +1,6 @@
 package hu.bme.mit.inf.ttmc.analysis.tcfa.pred;
 
+import hu.bme.mit.inf.ttmc.analysis.ActionFunction;
 import hu.bme.mit.inf.ttmc.analysis.Analysis;
 import hu.bme.mit.inf.ttmc.analysis.Domain;
 import hu.bme.mit.inf.ttmc.analysis.InitFunction;
@@ -33,6 +34,11 @@ public class TCFAPredAnalysis implements Analysis<PredState, TCFAAction, PredPre
 	@Override
 	public TransferFunction<PredState, TCFAAction, PredPrecision> getTransferFunction() {
 		return transferFunction;
+	}
+
+	@Override
+	public ActionFunction<? super PredState, ? extends TCFAAction> getActionFunction() {
+		throw new UnsupportedOperationException();
 	}
 
 }

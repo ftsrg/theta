@@ -1,5 +1,6 @@
 package hu.bme.mit.inf.ttmc.analysis.tcfa.zone;
 
+import hu.bme.mit.inf.ttmc.analysis.ActionFunction;
 import hu.bme.mit.inf.ttmc.analysis.Analysis;
 import hu.bme.mit.inf.ttmc.analysis.Domain;
 import hu.bme.mit.inf.ttmc.analysis.InitFunction;
@@ -14,7 +15,6 @@ public class TCFAZoneAnalysis implements Analysis<ZoneState, TCFAAction, ZonePre
 	private static final TCFAZoneAnalysis INSTANCE = new TCFAZoneAnalysis();
 
 	private TCFAZoneAnalysis() {
-		// TODO Auto-generated constructor stub
 	}
 
 	public static TCFAZoneAnalysis getInstance() {
@@ -34,6 +34,11 @@ public class TCFAZoneAnalysis implements Analysis<ZoneState, TCFAAction, ZonePre
 	@Override
 	public TransferFunction<ZoneState, TCFAAction, ZonePrecision> getTransferFunction() {
 		return TCFAZoneTransferFunction.getInstance();
+	}
+
+	@Override
+	public ActionFunction<? super ZoneState, ? extends TCFAAction> getActionFunction() {
+		throw new UnsupportedOperationException();
 	}
 
 }

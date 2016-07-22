@@ -13,9 +13,11 @@ import static hu.bme.mit.inf.ttmc.formalism.common.decl.impl.Decls2.Var;
 import static hu.bme.mit.inf.ttmc.formalism.common.expr.impl.Exprs2.Prime;
 
 import java.util.Collections;
+import java.util.function.Predicate;
 
 import org.junit.Test;
 
+import hu.bme.mit.inf.ttmc.analysis.ExprState;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.Abstractor;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.ArgPrinter;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.AbstractorImpl;
@@ -25,9 +27,9 @@ import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.refinerops.GlobalExplItpRefin
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplPrecision;
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplState;
 import hu.bme.mit.inf.ttmc.analysis.expl.GlobalExplPrecision;
+import hu.bme.mit.inf.ttmc.analysis.impl.ExprStatePredicate;
 import hu.bme.mit.inf.ttmc.analysis.refutation.ItpRefutation;
 import hu.bme.mit.inf.ttmc.analysis.sts.STSAction;
-import hu.bme.mit.inf.ttmc.analysis.sts.STSActionFunction;
 import hu.bme.mit.inf.ttmc.analysis.sts.STSExprSeqConcretizer;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.type.IntType;
@@ -66,15 +68,12 @@ public class STSExplTest {
 		final ItpSolver solver = manager.createItpSolver();
 
 		final STSExplAnalysis analysis = new STSExplAnalysis(sts, solver);
-
-		final STSActionFunction actionFunction = new STSActionFunction(sts);
-		final STSExplTargetPredicate targetPredicate = new STSExplTargetPredicate(sts, solver);
+		final Predicate<ExprState> target = new ExprStatePredicate(Not(sts.getProp()), solver);
 
 		final GlobalExplPrecision precision = GlobalExplPrecision.create(Collections.singleton(vy),
 				Collections.singleton(vx));
 
-		final Abstractor<ExplState, STSAction, ExplPrecision> abstractor = new AbstractorImpl<>(analysis,
-				actionFunction, targetPredicate);
+		final Abstractor<ExplState, STSAction, ExplPrecision> abstractor = new AbstractorImpl<>(analysis, target);
 
 		final STSExprSeqConcretizer concretizerOp = new STSExprSeqConcretizer(sts, solver);
 		final GlobalExplItpRefinerOp<STSAction> refinerOp = new GlobalExplItpRefinerOp<>();

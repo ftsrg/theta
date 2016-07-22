@@ -7,14 +7,14 @@ import hu.bme.mit.inf.ttmc.analysis.ActionFunction;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFAEdge;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFALoc;
 
-public class TCFAActionFunction implements ActionFunction<TCFAState<?>, TCFAAction> {
+class TCFAActionFunction implements ActionFunction<TCFAState<?>, TCFAAction> {
 
 	private static final TCFAActionFunction INSTANCE = new TCFAActionFunction();
 
 	private TCFAActionFunction() {
 	}
 
-	public static TCFAActionFunction getInstance() {
+	static TCFAActionFunction getInstance() {
 		return INSTANCE;
 	}
 
