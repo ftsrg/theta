@@ -1,6 +1,8 @@
 package hu.bme.mit.inf.ttmc.analysis.zone;
 
 import static hu.bme.mit.inf.ttmc.formalism.common.decl.impl.Decls2.Clock;
+import static hu.bme.mit.inf.ttmc.formalism.ta.constr.impl.ClockConstrs.Leq;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Set;
 
@@ -26,4 +28,32 @@ public class DBMTests {
 		System.out.println(dbm);
 	}
 
+	@Test
+	public void tesInterpolant() {
+		final ClockDecl x1 = Clock("x1");
+		final ClockDecl x2 = Clock("x2");
+		final ClockDecl x3 = Clock("x3");
+		final ClockDecl x4 = Clock("x4");
+		final ClockDecl x5 = Clock("x5");
+
+		final Set<ClockDecl> clocks = ImmutableSet.of(x1, x2, x3, x4, x5);
+
+		final DBM dbmA = DBM.top(clocks);
+		dbmA.and(Leq(x2, x1, 1));
+		dbmA.and(Leq(x3, x2, 0));
+		dbmA.and(Leq(x5, x4, -1));
+
+		System.out.println(dbmA.getConstraints());
+
+		final DBM dbmB = DBM.top(clocks);
+		dbmB.and(Leq(x1, x5, 0));
+		dbmB.and(Leq(x4, x3, -1));
+
+		System.out.println(dbmB.getConstraints());
+
+		assertTrue(dbmA.getRelation(dbmB) == DBMRelation.DISJOINT);
+
+		final DBM interpolant = DBM.getInterpolant(dbmA, dbmB);
+		System.out.println(interpolant.getConstraints());
+	}
 }
