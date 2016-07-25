@@ -5,14 +5,16 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.inf.ttmc.analysis.zone.DiffBounds.Inf;
 import static hu.bme.mit.inf.ttmc.analysis.zone.DiffBounds.Leq;
 import static hu.bme.mit.inf.ttmc.analysis.zone.DiffBounds.Lt;
-import static hu.bme.mit.inf.ttmc.formalism.common.decl.impl.Decls2.Clock;
 
 import java.util.Collection;
-import java.util.LinkedHashMap;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.IntBinaryOperator;
 
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
 import com.google.common.collect.Sets;
 
 import hu.bme.mit.inf.ttmc.formalism.common.decl.ClockDecl;
@@ -23,6 +25,7 @@ import hu.bme.mit.inf.ttmc.formalism.ta.constr.DiffGeqConstr;
 import hu.bme.mit.inf.ttmc.formalism.ta.constr.DiffGtConstr;
 import hu.bme.mit.inf.ttmc.formalism.ta.constr.DiffLeqConstr;
 import hu.bme.mit.inf.ttmc.formalism.ta.constr.DiffLtConstr;
+import hu.bme.mit.inf.ttmc.formalism.ta.constr.FalseConstr;
 import hu.bme.mit.inf.ttmc.formalism.ta.constr.TrueConstr;
 import hu.bme.mit.inf.ttmc.formalism.ta.constr.UnitEqConstr;
 import hu.bme.mit.inf.ttmc.formalism.ta.constr.UnitGeqConstr;
@@ -41,17 +44,15 @@ import hu.bme.mit.inf.ttmc.formalism.ta.utils.ClockOpVisitor;
 final class DBM {
 
 	private static final IntBinaryOperator ZERO_DBM_VALUES = (x, y) -> Leq(0);
-	private static final IntBinaryOperator TOP_DBM_VALUES = (x, y) -> x == 0 || x == y ? Leq(0) : Inf();
-
-	private static final ClockDecl ZERO_CLOCK = Clock("_zero");
+	private static final IntBinaryOperator TOP_DBM_VALUES = SimpleDBM::defaultBound;
 
 	private final ExecuteVisitor executeVisitor;;
 	private final AndOperationVisitor andVisitor;
 
-	private final LinkedHashMap<ClockDecl, Integer> clockToIndex;
+	private final BiMap<ClockDecl, Integer> clockToIndex;
 	private final SimpleDBM dbm;
 
-	private DBM(final LinkedHashMap<ClockDecl, Integer> clockToIndex, final IntBinaryOperator values) {
+	private DBM(final BiMap<ClockDecl, Integer> clockToIndex, final IntBinaryOperator values) {
 		this.clockToIndex = clockToIndex;
 		this.dbm = new SimpleDBM(clockToIndex.size() - 1, values);
 		executeVisitor = new ExecuteVisitor();
@@ -59,7 +60,7 @@ final class DBM {
 	}
 
 	private DBM(final DBM dbm) {
-		this.clockToIndex = new LinkedHashMap<>(dbm.clockToIndex);
+		this.clockToIndex = HashBiMap.create(dbm.clockToIndex);
 		this.dbm = new SimpleDBM(dbm.dbm);
 		executeVisitor = new ExecuteVisitor();
 		andVisitor = new AndOperationVisitor();
@@ -75,23 +76,75 @@ final class DBM {
 
 	public static DBM zero(final Collection<? extends ClockDecl> clocks) {
 		checkNotNull(clocks);
-		final LinkedHashMap<ClockDecl, Integer> clockToIndex = createIndexMapFrom(clocks);
+		final BiMap<ClockDecl, Integer> clockToIndex = createIndexMapFrom(clocks);
 		return new DBM(clockToIndex, ZERO_DBM_VALUES);
 	}
 
 	public static DBM top(final Collection<? extends ClockDecl> clocks) {
 		checkNotNull(clocks);
-		final LinkedHashMap<ClockDecl, Integer> clockToIndex = createIndexMapFrom(clocks);
+		final BiMap<ClockDecl, Integer> clockToIndex = createIndexMapFrom(clocks);
 		return new DBM(clockToIndex, TOP_DBM_VALUES);
 	}
 
 	////
 
-	int getBound(final ClockDecl x, final ClockDecl y) {
+	public static DBM getInterpolant(final DBM dbmA, final DBM dbmB) {
+		checkNotNull(dbmA);
+		checkNotNull(dbmB);
+		checkArgument(dbmA.getRelation(dbmB) == DBMRelation.DISJOINT);
+
+		final Set<ClockDecl> clockDecls = Sets.intersection(dbmA.clockToIndex.keySet(), dbmB.clockToIndex.keySet());
+		final DBM interpolant = DBM.top(clockDecls);
+
+		for (final ClockDecl x : clockDecls) {
+			for (final ClockDecl y : clockDecls) {
+				if (dbmB.constrains(x) && dbmB.constrains(y)) {
+					final int boundA = dbmA.getBound(x, y);
+					final int boundB = dbmB.getBound(x, y);
+
+					if (boundA < boundB) {
+						interpolant.dbm.and(interpolant.indexOf(x), interpolant.indexOf(y), boundA);
+					}
+				}
+
+			}
+		}
+
+		assert interpolant.isInterpolantFor(dbmA, dbmB);
+		return interpolant;
+	}
+
+	private boolean isInterpolantFor(final DBM dbmA, final DBM dbmB) {
+		if (this.getRelation(dbmA) != DBMRelation.GREATER) {
+			return false;
+		}
+
+		if (this.getRelation(dbmB) != DBMRelation.DISJOINT) {
+			return false;
+		}
+
+		for (final ClockDecl clock : clockToIndex.keySet()) {
+			if (this.constrains(clock)) {
+				if (!dbmA.constrains(clock)) {
+					return false;
+				}
+
+				if (!dbmB.constrains(clock)) {
+					return false;
+				}
+			}
+		}
+
+		return true;
+	}
+
+	////
+
+	private int getBound(final ClockDecl x, final ClockDecl y) {
 		checkNotNull(x);
 		checkNotNull(y);
 
-		if (x.equals(y) || x.equals(ZERO_CLOCK)) {
+		if (x.equals(y) || x.equals(ZeroClock.getInstance())) {
 			return Leq(0);
 		}
 
@@ -129,6 +182,27 @@ final class DBM {
 			}
 		}
 		return DBMRelation.create(leq, geq);
+	}
+
+	public Collection<ClockConstr> getConstraints() {
+		final Collection<ClockConstr> result = new HashSet<>();
+
+		for (final ClockDecl leftClock : clockToIndex.keySet()) {
+			for (final ClockDecl rightClock : clockToIndex.keySet()) {
+				final int b = getBound(leftClock, rightClock);
+				final ClockConstr constr = DiffBounds.toConstr(leftClock, rightClock, b);
+
+				if (constr instanceof TrueConstr) {
+					continue;
+				} else if (constr instanceof FalseConstr) {
+					return Collections.singleton(constr);
+				} else {
+					result.add(constr);
+				}
+			}
+		}
+
+		return result;
 	}
 
 	////
@@ -223,8 +297,13 @@ final class DBM {
 		return clockToIndex.containsKey(clock);
 	}
 
+	private boolean constrains(final ClockDecl clock) {
+		checkNotNull(clock);
+		return dbm.constrains(indexOf(clock));
+	}
+
 	private boolean isZeroClock(final ClockDecl clock) {
-		return clock.equals(ZERO_CLOCK);
+		return clock.equals(ZeroClock.getInstance());
 	}
 
 	private int indexOf(final ClockDecl clock) {
@@ -232,9 +311,19 @@ final class DBM {
 		return clockToIndex.get(clock);
 	}
 
-	private static LinkedHashMap<ClockDecl, Integer> createIndexMapFrom(final Collection<? extends ClockDecl> clocks) {
-		final LinkedHashMap<ClockDecl, Integer> result = new LinkedHashMap<ClockDecl, Integer>();
-		result.put(ZERO_CLOCK, 0);
+	@SuppressWarnings("unused")
+	private ClockDecl getClock(final int index) {
+		checkArgument(index >= 0);
+		checkArgument(index < dbm.size());
+
+		final ClockDecl result = clockToIndex.inverse().get(index);
+		assert result != null;
+		return result;
+	}
+
+	private static BiMap<ClockDecl, Integer> createIndexMapFrom(final Collection<? extends ClockDecl> clocks) {
+		final BiMap<ClockDecl, Integer> result = HashBiMap.create();
+		result.put(ZeroClock.getInstance(), 0);
 		int i = 1;
 		for (final ClockDecl clock : clocks) {
 			if (!result.containsKey(clock)) {
@@ -287,6 +376,12 @@ final class DBM {
 
 		@Override
 		public Void visit(final TrueConstr constr, final Void param) {
+			return null;
+		}
+
+		@Override
+		public Void visit(final FalseConstr constr, final Void param) {
+			dbm.and(0, 0, -1);
 			return null;
 		}
 

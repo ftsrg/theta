@@ -1,5 +1,11 @@
 package hu.bme.mit.inf.ttmc.analysis.zone;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import hu.bme.mit.inf.ttmc.formalism.common.decl.ClockDecl;
+import hu.bme.mit.inf.ttmc.formalism.ta.constr.ClockConstr;
+import hu.bme.mit.inf.ttmc.formalism.ta.constr.impl.ClockConstrs;
+
 final class DiffBounds {
 
 	private static final int INF = Integer.MAX_VALUE;
@@ -16,6 +22,55 @@ final class DiffBounds {
 
 	public static int Leq(final int bound) {
 		return (bound << 1) | 1;
+	}
+
+	////
+
+	public static ClockConstr toConstr(final ClockDecl leftClock, final ClockDecl rightClock, final int b) {
+		checkNotNull(leftClock);
+		checkNotNull(rightClock);
+
+		if (b == Inf()) {
+			return ClockConstrs.True();
+		}
+
+		if (leftClock.equals(rightClock)) {
+			if (b < Leq(0)) {
+				return ClockConstrs.False();
+			} else {
+				return ClockConstrs.True();
+			}
+		}
+
+		final int bound = getBound(b);
+		final boolean strict = isStrict(b);
+
+		if (leftClock.equals(ZeroClock.getInstance())) {
+			if (rightClock.equals(ZeroClock.getInstance())) {
+				throw new AssertionError();
+			} else {
+				if (strict) {
+					return ClockConstrs.Gt(rightClock, -bound);
+				} else {
+					return ClockConstrs.Geq(rightClock, -bound);
+				}
+			}
+		} else {
+			if (rightClock.equals(ZeroClock.getInstance())) {
+				if (strict) {
+					return ClockConstrs.Lt(leftClock, bound);
+				} else {
+					return ClockConstrs.Leq(leftClock, bound);
+				}
+			} else {
+				if (strict) {
+					return ClockConstrs.Lt(leftClock, rightClock, bound);
+				} else {
+					return ClockConstrs.Leq(leftClock, rightClock, bound);
+				}
+			}
+		}
+
 	}
 
 	////

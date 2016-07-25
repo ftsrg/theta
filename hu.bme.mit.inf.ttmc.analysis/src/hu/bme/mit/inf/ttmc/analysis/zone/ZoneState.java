@@ -1,6 +1,9 @@
 package hu.bme.mit.inf.ttmc.analysis.zone;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.util.Collection;
+import java.util.StringJoiner;
 
 import hu.bme.mit.inf.ttmc.analysis.State;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.ClockDecl;
@@ -31,6 +34,12 @@ public final class ZoneState implements State {
 
 	public static ZoneState zero(final Collection<? extends ClockDecl> clocks) {
 		return new ZoneState(DBM.zero(clocks));
+	}
+
+	public static ZoneState interpolant(final ZoneState zoneA, final ZoneState zoneB) {
+		checkNotNull(zoneA);
+		checkNotNull(zoneB);
+		return new ZoneState(DBM.getInterpolant(zoneA.dbm, zoneB.dbm));
 	}
 
 	////
@@ -76,7 +85,12 @@ public final class ZoneState implements State {
 
 	@Override
 	public String toString() {
-		return "ZoneState";
+		final StringJoiner joiner = new StringJoiner(", ", "ZoneState(", ")");
+		final Collection<ClockConstr> constrs = dbm.getConstraints();
+		for (final ClockConstr constr : constrs) {
+			joiner.add(constr.toString());
+		}
+		return joiner.toString();
 	}
 
 	////////

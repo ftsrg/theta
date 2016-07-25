@@ -48,6 +48,25 @@ final class SimpleDBM {
 
 	////
 
+	public static int defaultBound(final int x, final int y) {
+		checkArgument(x >= 0);
+		checkArgument(y >= 0);
+
+		if (x == 0 || x == y) {
+			return Leq(0);
+		} else {
+			return Inf();
+		}
+	}
+
+	////
+
+	public int size() {
+		return nClocks + 1;
+	}
+
+	////
+
 	public boolean isConsistent() {
 		return matrix.get(0, 0) >= 0;
 	}
@@ -56,6 +75,20 @@ final class SimpleDBM {
 		checkArgument(isClock(x));
 		checkArgument(isClock(y));
 		return add(matrix.get(y, x), b) >= 0;
+	}
+
+	public boolean constrains(final int x) {
+		checkArgument(isClock(x));
+		for (int i = 0; i <= nClocks; i++) {
+			if (matrix.get(x, i) < defaultBound(x, i)) {
+				return true;
+			}
+
+			if (matrix.get(i, x) < defaultBound(i, x)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	////
