@@ -6,6 +6,7 @@ import hu.bme.mit.inf.ttmc.formalism.ta.constr.DiffGeqConstr;
 import hu.bme.mit.inf.ttmc.formalism.ta.constr.DiffGtConstr;
 import hu.bme.mit.inf.ttmc.formalism.ta.constr.DiffLeqConstr;
 import hu.bme.mit.inf.ttmc.formalism.ta.constr.DiffLtConstr;
+import hu.bme.mit.inf.ttmc.formalism.ta.constr.FalseConstr;
 import hu.bme.mit.inf.ttmc.formalism.ta.constr.TrueConstr;
 import hu.bme.mit.inf.ttmc.formalism.ta.constr.UnitEqConstr;
 import hu.bme.mit.inf.ttmc.formalism.ta.constr.UnitGeqConstr;
@@ -16,6 +17,8 @@ import hu.bme.mit.inf.ttmc.formalism.ta.constr.UnitLtConstr;
 public interface ClockConstrVisitor<P, R> {
 
 	public R visit(final TrueConstr constr, final P param);
+
+	public R visit(final FalseConstr constr, final P param);
 
 	public R visit(final UnitLtConstr constr, final P param);
 

@@ -10,6 +10,7 @@ import hu.bme.mit.inf.ttmc.core.expr.AndExpr;
 import hu.bme.mit.inf.ttmc.core.expr.BinaryExpr;
 import hu.bme.mit.inf.ttmc.core.expr.EqExpr;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.expr.FalseExpr;
 import hu.bme.mit.inf.ttmc.core.expr.GeqExpr;
 import hu.bme.mit.inf.ttmc.core.expr.GtExpr;
 import hu.bme.mit.inf.ttmc.core.expr.IntLitExpr;
@@ -29,6 +30,7 @@ import hu.bme.mit.inf.ttmc.formalism.ta.constr.DiffGtConstr;
 import hu.bme.mit.inf.ttmc.formalism.ta.constr.DiffLeqConstr;
 import hu.bme.mit.inf.ttmc.formalism.ta.constr.DiffLtConstr;
 import hu.bme.mit.inf.ttmc.formalism.ta.constr.EqConstr;
+import hu.bme.mit.inf.ttmc.formalism.ta.constr.FalseConstr;
 import hu.bme.mit.inf.ttmc.formalism.ta.constr.GeqConstr;
 import hu.bme.mit.inf.ttmc.formalism.ta.constr.GtConstr;
 import hu.bme.mit.inf.ttmc.formalism.ta.constr.LeqConstr;
@@ -45,10 +47,12 @@ public final class ClockConstrs {
 	private static final ExprToClockConstrVisitor VISITOR;
 
 	private static final TrueConstr TRUE_CONSTR;
+	private static final FalseConstr FALSE_CONSTR;
 
 	static {
 		VISITOR = new ExprToClockConstrVisitor();
 		TRUE_CONSTR = new TrueConstrImpl();
+		FALSE_CONSTR = new FalseConstrImpl();
 	}
 
 	private ClockConstrs() {
@@ -64,6 +68,10 @@ public final class ClockConstrs {
 
 	public static TrueConstr True() {
 		return TRUE_CONSTR;
+	}
+
+	public static FalseConstr False() {
+		return FALSE_CONSTR;
 	}
 
 	public static UnitLtConstr Lt(final ClockDecl clock, final int bound) {
@@ -143,6 +151,11 @@ public final class ClockConstrs {
 		@Override
 		public TrueConstr visit(final TrueExpr expr, final Void param) {
 			return True();
+		}
+
+		@Override
+		public FalseConstr visit(final FalseExpr expr, final Void param) {
+			return False();
 		}
 
 		@Override
