@@ -206,7 +206,7 @@ final class SimpleDBM {
 		close();
 	}
 
-	private void close() {
+	void close() {
 		for (int k = 0; k <= nClocks; k++) {
 			for (int i = 0; i <= nClocks; i++) {
 				for (int j = 0; j <= nClocks; j++) {
