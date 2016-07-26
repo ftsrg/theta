@@ -20,10 +20,10 @@ final class SimpleDBM {
 
 	////
 
-	SimpleDBM(final int nClocks, final IntBinaryOperator values) {
-		checkArgument(nClocks >= 0);
-		this.nClocks = nClocks;
-		matrix = IntMatrix.create(nClocks + 1, nClocks + 1);
+	SimpleDBM(final int size, final IntBinaryOperator values) {
+		checkArgument(size > 0);
+		this.nClocks = size - 1;
+		matrix = IntMatrix.create(size, size);
 		matrix.fill(values);
 	}
 
@@ -231,18 +231,6 @@ final class SimpleDBM {
 	}
 
 	////
-
-	@Override
-	public int hashCode() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
-	}
-
-	@Override
-	public boolean equals(final Object obj) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
-	}
 
 	@Override
 	public String toString() {

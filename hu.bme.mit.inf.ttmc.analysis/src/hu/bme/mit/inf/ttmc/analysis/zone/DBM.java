@@ -13,8 +13,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.IntBinaryOperator;
 
-import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBiMap;
 import com.google.common.collect.Sets;
 
 import hu.bme.mit.inf.ttmc.formalism.common.decl.ClockDecl;
@@ -49,18 +47,18 @@ final class DBM {
 	private final ExecuteVisitor executeVisitor;;
 	private final AndOperationVisitor andVisitor;
 
-	private final BiMap<ClockDecl, Integer> clockToIndex;
+	private final DBMSignature signature;
 	private final SimpleDBM dbm;
 
-	private DBM(final BiMap<ClockDecl, Integer> clockToIndex, final IntBinaryOperator values) {
-		this.clockToIndex = clockToIndex;
-		this.dbm = new SimpleDBM(clockToIndex.size() - 1, values);
+	private DBM(final DBMSignature signature, final IntBinaryOperator values) {
+		this.signature = signature;
+		this.dbm = new SimpleDBM(signature.size(), values);
 		executeVisitor = new ExecuteVisitor();
 		andVisitor = new AndOperationVisitor();
 	}
 
 	private DBM(final DBM dbm) {
-		this.clockToIndex = HashBiMap.create(dbm.clockToIndex);
+		this.signature = new DBMSignature(dbm.signature);
 		this.dbm = new SimpleDBM(dbm.dbm);
 		executeVisitor = new ExecuteVisitor();
 		andVisitor = new AndOperationVisitor();
@@ -76,14 +74,12 @@ final class DBM {
 
 	public static DBM zero(final Collection<? extends ClockDecl> clocks) {
 		checkNotNull(clocks);
-		final BiMap<ClockDecl, Integer> clockToIndex = createIndexMapFrom(clocks);
-		return new DBM(clockToIndex, ZERO_DBM_VALUES);
+		return new DBM(new DBMSignature(clocks), ZERO_DBM_VALUES);
 	}
 
 	public static DBM top(final Collection<? extends ClockDecl> clocks) {
 		checkNotNull(clocks);
-		final BiMap<ClockDecl, Integer> clockToIndex = createIndexMapFrom(clocks);
-		return new DBM(clockToIndex, TOP_DBM_VALUES);
+		return new DBM(new DBMSignature(clocks), TOP_DBM_VALUES);
 	}
 
 	////
@@ -93,7 +89,7 @@ final class DBM {
 		checkNotNull(dbmB);
 		checkArgument(dbmA.getRelation(dbmB) == DBMRelation.DISJOINT);
 
-		final Set<ClockDecl> clockDecls = Sets.intersection(dbmA.clockToIndex.keySet(), dbmB.clockToIndex.keySet());
+		final Set<ClockDecl> clockDecls = Sets.intersection(dbmA.signature.asSet(), dbmB.signature.asSet());
 		final DBM interpolant = DBM.top(clockDecls);
 
 		for (final ClockDecl x : clockDecls) {
@@ -103,7 +99,7 @@ final class DBM {
 					final int boundB = dbmB.getBound(x, y);
 
 					if (boundA < boundB) {
-						interpolant.dbm.and(interpolant.indexOf(x), interpolant.indexOf(y), boundA);
+						interpolant.dbm.and(interpolant.signature.indexOf(x), interpolant.signature.indexOf(y), boundA);
 					}
 				}
 
@@ -123,7 +119,7 @@ final class DBM {
 			return false;
 		}
 
-		for (final ClockDecl clock : clockToIndex.keySet()) {
+		for (final ClockDecl clock : signature) {
 			if (this.constrains(clock)) {
 				if (!dbmA.constrains(clock)) {
 					return false;
@@ -148,12 +144,12 @@ final class DBM {
 			return Leq(0);
 		}
 
-		final Integer i = clockToIndex.get(x);
-		final Integer j = clockToIndex.get(y);
-
-		if (i == null || j == null) {
+		if (!signature.isDefined(x) || !signature.isDefined(y)) {
 			return Inf();
 		}
+
+		final int i = signature.indexOf(x);
+		final int j = signature.indexOf(y);
 
 		return dbm.get(i, j);
 	}
@@ -170,13 +166,13 @@ final class DBM {
 	}
 
 	public DBMRelation getRelation(final DBM that) {
-		final Set<ClockDecl> clockDecls = Sets.union(this.clockToIndex.keySet(), that.clockToIndex.keySet());
+		final Set<ClockDecl> clocks = Sets.union(this.signature.asSet(), that.signature.asSet());
 
 		boolean leq = true;
 		boolean geq = true;
 
-		for (final ClockDecl x : clockDecls) {
-			for (final ClockDecl y : clockDecls) {
+		for (final ClockDecl x : clocks) {
+			for (final ClockDecl y : clocks) {
 				leq = leq && this.getBound(x, y) <= that.getBound(x, y);
 				geq = geq && this.getBound(x, y) >= that.getBound(x, y);
 			}
@@ -187,8 +183,8 @@ final class DBM {
 	public Collection<ClockConstr> getConstraints() {
 		final Collection<ClockConstr> result = new HashSet<>();
 
-		for (final ClockDecl leftClock : clockToIndex.keySet()) {
-			for (final ClockDecl rightClock : clockToIndex.keySet()) {
+		for (final ClockDecl leftClock : signature) {
+			for (final ClockDecl rightClock : signature) {
 				final int b = getBound(leftClock, rightClock);
 				final ClockConstr constr = DiffBounds.toConstr(leftClock, rightClock, b);
 
@@ -240,7 +236,7 @@ final class DBM {
 	public void free(final ClockDecl clock) {
 		checkNotNull(clock);
 		checkArgument(!isZeroClock(clock));
-		final int x = indexOf(clock);
+		final int x = signature.indexOf(clock);
 		dbm.free(x);
 
 	}
@@ -248,7 +244,7 @@ final class DBM {
 	public void reset(final ClockDecl clock, final int m) {
 		checkNotNull(clock);
 		checkArgument(!isZeroClock(clock));
-		final int x = indexOf(clock);
+		final int x = signature.indexOf(clock);
 		dbm.reset(x, m);
 	}
 
@@ -257,8 +253,8 @@ final class DBM {
 		checkNotNull(rhs);
 		checkArgument(!isZeroClock(lhs));
 		checkArgument(!isZeroClock(rhs));
-		final int x = indexOf(lhs);
-		final int y = indexOf(rhs);
+		final int x = signature.indexOf(lhs);
+		final int y = signature.indexOf(rhs);
 		dbm.copy(x, y);
 	}
 
@@ -293,45 +289,13 @@ final class DBM {
 
 	////
 
-	private boolean isTracked(final ClockDecl clock) {
-		return clockToIndex.containsKey(clock);
-	}
-
 	private boolean constrains(final ClockDecl clock) {
 		checkNotNull(clock);
-		return dbm.constrains(indexOf(clock));
+		return dbm.constrains(signature.indexOf(clock));
 	}
 
 	private boolean isZeroClock(final ClockDecl clock) {
 		return clock.equals(ZeroClock.getInstance());
-	}
-
-	private int indexOf(final ClockDecl clock) {
-		checkArgument(isTracked(clock));
-		return clockToIndex.get(clock);
-	}
-
-	@SuppressWarnings("unused")
-	private ClockDecl getClock(final int index) {
-		checkArgument(index >= 0);
-		checkArgument(index < dbm.size());
-
-		final ClockDecl result = clockToIndex.inverse().get(index);
-		assert result != null;
-		return result;
-	}
-
-	private static BiMap<ClockDecl, Integer> createIndexMapFrom(final Collection<? extends ClockDecl> clocks) {
-		final BiMap<ClockDecl, Integer> result = HashBiMap.create();
-		result.put(ZeroClock.getInstance(), 0);
-		int i = 1;
-		for (final ClockDecl clock : clocks) {
-			if (!result.containsKey(clock)) {
-				result.put(clock, i);
-				i++;
-			}
-		}
-		return result;
 	}
 
 	////
@@ -387,7 +351,7 @@ final class DBM {
 
 		@Override
 		public Void visit(final UnitLtConstr constr, final Void param) {
-			final int x = indexOf(constr.getClock());
+			final int x = signature.indexOf(constr.getClock());
 			final int m = constr.getBound();
 			dbm.and(x, 0, Lt(m));
 			return null;
@@ -395,7 +359,7 @@ final class DBM {
 
 		@Override
 		public Void visit(final UnitLeqConstr constr, final Void param) {
-			final int x = indexOf(constr.getClock());
+			final int x = signature.indexOf(constr.getClock());
 			final int m = constr.getBound();
 			dbm.and(x, 0, Leq(m));
 			return null;
@@ -403,7 +367,7 @@ final class DBM {
 
 		@Override
 		public Void visit(final UnitGtConstr constr, final Void param) {
-			final int x = indexOf(constr.getClock());
+			final int x = signature.indexOf(constr.getClock());
 			final int m = constr.getBound();
 			dbm.and(0, x, Lt(-m));
 			return null;
@@ -411,7 +375,7 @@ final class DBM {
 
 		@Override
 		public Void visit(final UnitGeqConstr constr, final Void param) {
-			final int x = indexOf(constr.getClock());
+			final int x = signature.indexOf(constr.getClock());
 			final int m = constr.getBound();
 			dbm.and(0, x, Leq(-m));
 			return null;
@@ -419,7 +383,7 @@ final class DBM {
 
 		@Override
 		public Void visit(final UnitEqConstr constr, final Void param) {
-			final int x = indexOf(constr.getClock());
+			final int x = signature.indexOf(constr.getClock());
 			final int m = constr.getBound();
 			dbm.and(x, 0, Leq(m));
 			dbm.and(0, x, Leq(-m));
@@ -428,8 +392,8 @@ final class DBM {
 
 		@Override
 		public Void visit(final DiffLtConstr constr, final Void param) {
-			final int x = indexOf(constr.getLeftClock());
-			final int y = indexOf(constr.getRightClock());
+			final int x = signature.indexOf(constr.getLeftClock());
+			final int y = signature.indexOf(constr.getRightClock());
 			final int m = constr.getBound();
 			dbm.and(x, y, Lt(m));
 			return null;
@@ -437,8 +401,8 @@ final class DBM {
 
 		@Override
 		public Void visit(final DiffLeqConstr constr, final Void param) {
-			final int x = indexOf(constr.getLeftClock());
-			final int y = indexOf(constr.getRightClock());
+			final int x = signature.indexOf(constr.getLeftClock());
+			final int y = signature.indexOf(constr.getRightClock());
 			final int m = constr.getBound();
 			dbm.and(x, y, Leq(m));
 			return null;
@@ -446,8 +410,8 @@ final class DBM {
 
 		@Override
 		public Void visit(final DiffGtConstr constr, final Void param) {
-			final int x = indexOf(constr.getLeftClock());
-			final int y = indexOf(constr.getRightClock());
+			final int x = signature.indexOf(constr.getLeftClock());
+			final int y = signature.indexOf(constr.getRightClock());
 			final int m = constr.getBound();
 			dbm.and(y, x, Lt(-m));
 			return null;
@@ -455,8 +419,8 @@ final class DBM {
 
 		@Override
 		public Void visit(final DiffGeqConstr constr, final Void param) {
-			final int x = indexOf(constr.getLeftClock());
-			final int y = indexOf(constr.getRightClock());
+			final int x = signature.indexOf(constr.getLeftClock());
+			final int y = signature.indexOf(constr.getRightClock());
 			final int m = constr.getBound();
 			dbm.and(y, x, Leq(-m));
 			return null;
@@ -464,8 +428,8 @@ final class DBM {
 
 		@Override
 		public Void visit(final DiffEqConstr constr, final Void param) {
-			final int x = indexOf(constr.getLeftClock());
-			final int y = indexOf(constr.getRightClock());
+			final int x = signature.indexOf(constr.getLeftClock());
+			final int y = signature.indexOf(constr.getRightClock());
 			final int m = constr.getBound();
 			dbm.and(x, y, Leq(m));
 			dbm.and(y, x, Leq(-m));
