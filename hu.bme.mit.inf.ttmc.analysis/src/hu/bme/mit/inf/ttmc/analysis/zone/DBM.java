@@ -5,6 +5,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.inf.ttmc.analysis.zone.DiffBounds.Inf;
 import static hu.bme.mit.inf.ttmc.analysis.zone.DiffBounds.Leq;
 import static hu.bme.mit.inf.ttmc.analysis.zone.DiffBounds.Lt;
+import static java.lang.Math.max;
 import static java.lang.Math.min;
 
 import java.util.Collection;
@@ -108,6 +109,23 @@ final class DBM {
 		final DBM result = new DBM(signature, values);
 		result.close();
 
+		return result;
+	}
+
+	public static DBM enclosure(final DBM dbm1, final DBM dbm2) {
+		checkNotNull(dbm1);
+		checkNotNull(dbm2);
+
+		final Set<ClockDecl> clocks = Sets.union(dbm1.signature.asSet(), dbm2.signature.asSet());
+		final DBMSignature signature = new DBMSignature(clocks);
+
+		final BiFunction<ClockDecl, ClockDecl, Integer> values = (x, y) -> {
+			final int bound1 = dbm1.getBound(x, y);
+			final int bound2 = dbm2.getBound(x, y);
+			return max(bound1, bound2);
+		};
+
+		final DBM result = new DBM(signature, values);
 		return result;
 	}
 
