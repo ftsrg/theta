@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.StringJoiner;
 
+import com.google.common.collect.Sets;
+
 import hu.bme.mit.inf.ttmc.formalism.common.decl.ClockDecl;
 
 class DBMSignature implements Iterable<ClockDecl> {
@@ -38,6 +40,22 @@ class DBMSignature implements Iterable<ClockDecl> {
 		checkNotNull(signature);
 		indexToClock = new ArrayList<>(signature.indexToClock);
 		clockToIndex = new HashMap<>(signature.clockToIndex);
+	}
+
+	////
+
+	public static DBMSignature union(final DBMSignature signature1, final DBMSignature signature2) {
+		checkNotNull(signature1);
+		checkNotNull(signature2);
+		final Set<ClockDecl> clocks = Sets.union(signature1.asSet(), signature2.asSet());
+		return new DBMSignature(clocks);
+	}
+
+	public static DBMSignature intersection(final DBMSignature signature1, final DBMSignature signature2) {
+		checkNotNull(signature1);
+		checkNotNull(signature2);
+		final Set<ClockDecl> clocks = Sets.intersection(signature1.asSet(), signature2.asSet());
+		return new DBMSignature(clocks);
 	}
 
 	////

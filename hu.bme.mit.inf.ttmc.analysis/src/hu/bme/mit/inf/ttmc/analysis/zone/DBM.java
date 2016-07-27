@@ -96,9 +96,7 @@ final class DBM {
 		checkNotNull(dbm1);
 		checkNotNull(dbm2);
 
-		final Set<ClockDecl> clocks = Sets.union(dbm1.signature.asSet(), dbm2.signature.asSet());
-		final DBMSignature signature = new DBMSignature(clocks);
-
+		final DBMSignature signature = DBMSignature.union(dbm1.signature, dbm2.signature);
 		final BiFunction<ClockDecl, ClockDecl, Integer> values = (x, y) -> {
 			final int bound1 = dbm1.get(x, y);
 			final int bound2 = dbm2.get(x, y);
@@ -115,9 +113,7 @@ final class DBM {
 		checkNotNull(dbm1);
 		checkNotNull(dbm2);
 
-		final Set<ClockDecl> clocks = Sets.union(dbm1.signature.asSet(), dbm2.signature.asSet());
-		final DBMSignature signature = new DBMSignature(clocks);
-
+		final DBMSignature signature = DBMSignature.union(dbm1.signature, dbm2.signature);
 		final BiFunction<ClockDecl, ClockDecl, Integer> values = (x, y) -> {
 			final int bound1 = dbm1.get(x, y);
 			final int bound2 = dbm2.get(x, y);
@@ -135,19 +131,15 @@ final class DBM {
 		checkNotNull(dbmB);
 		checkArgument(dbmA.getRelation(dbmB) == DBMRelation.DISJOINT);
 
-		final Set<ClockDecl> clocks = Sets.intersection(dbmA.signature.asSet(), dbmB.signature.asSet());
-		final DBMSignature signature = new DBMSignature(clocks);
-
+		final DBMSignature signature = DBMSignature.intersection(dbmA.signature, dbmB.signature);
 		final BiFunction<ClockDecl, ClockDecl, Integer> values = (x, y) -> {
 			if (dbmB.constrains(x) && dbmB.constrains(y)) {
 				final int boundA = dbmA.get(x, y);
 				final int boundB = dbmB.get(x, y);
-
 				if (boundA < boundB) {
 					return boundA;
 				}
 			}
-
 			return defaultBound(x, y);
 		};
 
