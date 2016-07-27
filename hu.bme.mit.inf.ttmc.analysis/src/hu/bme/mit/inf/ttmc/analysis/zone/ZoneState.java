@@ -39,7 +39,7 @@ public final class ZoneState implements State {
 	public static ZoneState interpolant(final ZoneState zoneA, final ZoneState zoneB) {
 		checkNotNull(zoneA);
 		checkNotNull(zoneB);
-		return new ZoneState(DBM.getInterpolant(zoneA.dbm, zoneB.dbm));
+		return new ZoneState(DBM.interpolant(zoneA.dbm, zoneB.dbm));
 	}
 
 	////
