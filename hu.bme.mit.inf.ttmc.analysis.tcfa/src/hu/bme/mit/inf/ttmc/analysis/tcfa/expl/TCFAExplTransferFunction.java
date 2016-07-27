@@ -7,10 +7,9 @@ import java.util.Collections;
 
 import com.google.common.collect.ImmutableSet;
 
-import hu.bme.mit.inf.ttmc.analysis.TransferFunction;
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplPrecision;
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplState;
-import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAAction;
+import hu.bme.mit.inf.ttmc.analysis.tcfa.AbstractTCFATransferFunction;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAAction.TCFADelayAction;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAAction.TCFADiscreteAction;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
@@ -23,7 +22,7 @@ import hu.bme.mit.inf.ttmc.formalism.utils.StmtUnroller.StmtToExprResult;
 import hu.bme.mit.inf.ttmc.formalism.utils.VarIndexes;
 import hu.bme.mit.inf.ttmc.solver.Solver;
 
-class TCFAExplTransferFunction implements TransferFunction<ExplState, TCFAAction, ExplPrecision> {
+final class TCFAExplTransferFunction extends AbstractTCFATransferFunction<ExplState, ExplPrecision> {
 
 	private final Solver solver;
 
@@ -32,22 +31,13 @@ class TCFAExplTransferFunction implements TransferFunction<ExplState, TCFAAction
 	}
 
 	@Override
-	public Collection<ExplState> getSuccStates(final ExplState state, final TCFAAction action,
-			final ExplPrecision precision) {
-		checkNotNull(state);
-		checkNotNull(action);
-		checkNotNull(precision);
-
-		if (action instanceof TCFADelayAction) {
-			return Collections.singleton(state);
-		} else if (action instanceof TCFADiscreteAction) {
-			return succStatesForDiscreteTrans(state, (TCFADiscreteAction) action, precision);
-		} else {
-			throw new AssertionError();
-		}
+	protected Collection<? extends ExplState> succStatesForDelayTrans(final ExplState state,
+			final TCFADelayAction action, final ExplPrecision precision) {
+		return Collections.singleton(state);
 	}
 
-	private Collection<ExplState> succStatesForDiscreteTrans(final ExplState state, final TCFADiscreteAction action,
+	@Override
+	protected Collection<ExplState> succStatesForDiscreteTrans(final ExplState state, final TCFADiscreteAction action,
 			final ExplPrecision precision) {
 
 		final ImmutableSet.Builder<ExplState> builder = ImmutableSet.builder();
