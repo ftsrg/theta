@@ -126,7 +126,7 @@ final class DBM {
 
 	////
 
-	public static DBM getInterpolant(final DBM dbmA, final DBM dbmB) {
+	public static DBM interpolant(final DBM dbmA, final DBM dbmB) {
 		checkNotNull(dbmA);
 		checkNotNull(dbmB);
 		checkArgument(dbmA.getRelation(dbmB) == DBMRelation.DISJOINT);

@@ -53,7 +53,7 @@ public class DBMTests {
 
 		assertTrue(dbmA.getRelation(dbmB) == DBMRelation.DISJOINT);
 
-		final DBM interpolant = DBM.getInterpolant(dbmA, dbmB);
+		final DBM interpolant = DBM.interpolant(dbmA, dbmB);
 		System.out.println(interpolant.getConstraints());
 	}
 }
