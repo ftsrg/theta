@@ -71,7 +71,6 @@ final class DBM {
 		this.dbm = new SimpleDBM(dbm.dbm);
 		executeVisitor = new ExecuteVisitor();
 		andVisitor = new AndOperationVisitor();
-
 	}
 
 	////
@@ -101,8 +100,8 @@ final class DBM {
 		final DBMSignature signature = new DBMSignature(clocks);
 
 		final BiFunction<ClockDecl, ClockDecl, Integer> values = (x, y) -> {
-			final int bound1 = dbm1.getBound(x, y);
-			final int bound2 = dbm2.getBound(x, y);
+			final int bound1 = dbm1.get(x, y);
+			final int bound2 = dbm2.get(x, y);
 			return min(bound1, bound2);
 		};
 
@@ -120,8 +119,8 @@ final class DBM {
 		final DBMSignature signature = new DBMSignature(clocks);
 
 		final BiFunction<ClockDecl, ClockDecl, Integer> values = (x, y) -> {
-			final int bound1 = dbm1.getBound(x, y);
-			final int bound2 = dbm2.getBound(x, y);
+			final int bound1 = dbm1.get(x, y);
+			final int bound2 = dbm2.get(x, y);
 			return max(bound1, bound2);
 		};
 
@@ -141,8 +140,8 @@ final class DBM {
 
 		final BiFunction<ClockDecl, ClockDecl, Integer> values = (x, y) -> {
 			if (dbmB.constrains(x) && dbmB.constrains(y)) {
-				final int boundA = dbmA.getBound(x, y);
-				final int boundB = dbmB.getBound(x, y);
+				final int boundA = dbmA.get(x, y);
+				final int boundB = dbmB.get(x, y);
 
 				if (boundA < boundB) {
 					return boundA;
@@ -185,28 +184,30 @@ final class DBM {
 
 	////
 
-	private int getBound(final ClockDecl x, final ClockDecl y) {
+	@SuppressWarnings("unused")
+	private int getOrDefault(final ClockDecl x, final ClockDecl y) {
 		checkNotNull(x);
 		checkNotNull(y);
-
-		if (x.equals(y) || x.equals(ZeroClock.getInstance())) {
-			return Leq(0);
+		if (!signature.contains(x) || !signature.contains(y)) {
+			return defaultBound(x, y);
+		} else {
+			return get(x, y);
 		}
+	}
 
-		if (!signature.isDefined(x) || !signature.isDefined(y)) {
-			return Inf();
-		}
-
+	private int get(final ClockDecl x, final ClockDecl y) {
+		checkNotNull(x);
+		checkNotNull(y);
+		checkArgument(signature.contains(x));
+		checkArgument(signature.contains(y));
 		final int i = signature.indexOf(x);
 		final int j = signature.indexOf(y);
-
 		return dbm.get(i, j);
 	}
 
 	private static int defaultBound(final ClockDecl x, final ClockDecl y) {
 		checkNotNull(x);
 		checkNotNull(y);
-
 		if (x.equals(y) || x.equals(ZeroClock.getInstance())) {
 			return Leq(0);
 		} else {
@@ -233,8 +234,8 @@ final class DBM {
 
 		for (final ClockDecl x : clocks) {
 			for (final ClockDecl y : clocks) {
-				leq = leq && this.getBound(x, y) <= that.getBound(x, y);
-				geq = geq && this.getBound(x, y) >= that.getBound(x, y);
+				leq = leq && this.get(x, y) <= that.get(x, y);
+				geq = geq && this.get(x, y) >= that.get(x, y);
 			}
 		}
 		return DBMRelation.create(leq, geq);
@@ -245,7 +246,7 @@ final class DBM {
 
 		for (final ClockDecl leftClock : signature) {
 			for (final ClockDecl rightClock : signature) {
-				final int b = getBound(leftClock, rightClock);
+				final int b = get(leftClock, rightClock);
 				final ClockConstr constr = DiffBounds.toConstr(leftClock, rightClock, b);
 
 				if (constr instanceof TrueConstr) {
