@@ -26,12 +26,22 @@ final class TCFAZoneTransferFunction extends AbstractTCFATransferFunction<ZoneSt
 	@Override
 	protected Collection<ZoneState> succStatesForDelayTrans(final ZoneState state, final TCFADelayAction action,
 			final ZonePrecision precision) {
+
 		final ZoneState.ZoneOperations succStateBuilder = state.transform();
+
 		succStateBuilder.up();
 		for (final ClockConstr invar : action.getTargetClockInvars()) {
 			succStateBuilder.and(invar);
 		}
-		return ImmutableSet.of(succStateBuilder.done());
+
+		final ZoneState succState = succStateBuilder.done();
+
+		if (succState.isBottom()) {
+			return ImmutableSet.of();
+		} else {
+			return ImmutableSet.of(succState);
+		}
+
 	}
 
 	@Override
@@ -42,12 +52,17 @@ final class TCFAZoneTransferFunction extends AbstractTCFATransferFunction<ZoneSt
 		for (final ClockOp op : action.getClockOps()) {
 			succStateBuilder.execute(op);
 		}
-
 		for (final ClockConstr invar : action.getTargetClockInvars()) {
 			succStateBuilder.and(invar);
 		}
 
-		return ImmutableSet.of(succStateBuilder.done());
+		final ZoneState succState = succStateBuilder.done();
+
+		if (succState.isBottom()) {
+			return ImmutableSet.of();
+		} else {
+			return ImmutableSet.of(succState);
+		}
 	}
 
 }
