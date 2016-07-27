@@ -7,10 +7,9 @@ import java.util.Collections;
 
 import com.google.common.collect.ImmutableSet;
 
-import hu.bme.mit.inf.ttmc.analysis.TransferFunction;
 import hu.bme.mit.inf.ttmc.analysis.pred.PredPrecision;
 import hu.bme.mit.inf.ttmc.analysis.pred.PredState;
-import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAAction;
+import hu.bme.mit.inf.ttmc.analysis.tcfa.AbstractTCFATransferFunction;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAAction.TCFADelayAction;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAAction.TCFADiscreteAction;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
@@ -23,7 +22,7 @@ import hu.bme.mit.inf.ttmc.formalism.utils.StmtUnroller.StmtToExprResult;
 import hu.bme.mit.inf.ttmc.formalism.utils.VarIndexes;
 import hu.bme.mit.inf.ttmc.solver.Solver;
 
-class TCFAPredTransferFunction implements TransferFunction<PredState, TCFAAction, PredPrecision> {
+final class TCFAPredTransferFunction extends AbstractTCFATransferFunction<PredState, PredPrecision> {
 
 	final Solver solver;
 
@@ -32,22 +31,13 @@ class TCFAPredTransferFunction implements TransferFunction<PredState, TCFAAction
 	}
 
 	@Override
-	public Collection<PredState> getSuccStates(final PredState state, final TCFAAction action,
-			final PredPrecision precision) {
-		checkNotNull(state);
-		checkNotNull(action);
-		checkNotNull(precision);
-
-		if (action instanceof TCFADelayAction) {
-			return Collections.singleton(state);
-		} else if (action instanceof TCFADiscreteAction) {
-			return succStatesForDiscreteTrans(state, (TCFADiscreteAction) action, precision);
-		} else {
-			throw new AssertionError();
-		}
+	protected Collection<? extends PredState> succStatesForDelayTrans(final PredState state,
+			final TCFADelayAction action, final PredPrecision precision) {
+		return Collections.singleton(state);
 	}
 
-	private Collection<PredState> succStatesForDiscreteTrans(final PredState state, final TCFADiscreteAction action,
+	@Override
+	protected Collection<PredState> succStatesForDiscreteTrans(final PredState state, final TCFADiscreteAction action,
 			final PredPrecision precision) {
 		checkNotNull(state);
 		checkNotNull(precision);
@@ -85,5 +75,4 @@ class TCFAPredTransferFunction implements TransferFunction<PredState, TCFAAction
 
 		return builder.build();
 	}
-
 }
