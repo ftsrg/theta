@@ -47,17 +47,12 @@ final class DBM {
 	private static final IntBinaryOperator ZERO_DBM_VALUES = (x, y) -> Leq(0);
 	private static final IntBinaryOperator TOP_DBM_VALUES = SimpleDBM::defaultBound;
 
-	private final ExecuteVisitor executeVisitor;;
-	private final AndOperationVisitor andVisitor;
-
 	private final DBMSignature signature;
 	private final SimpleDBM dbm;
 
 	private DBM(final DBMSignature signature, final IntBinaryOperator values) {
 		this.signature = signature;
 		this.dbm = new SimpleDBM(signature.size(), values);
-		executeVisitor = new ExecuteVisitor();
-		andVisitor = new AndOperationVisitor();
 	}
 
 	private DBM(final DBMSignature signature, final BiFunction<ClockDecl, ClockDecl, Integer> values) {
@@ -69,8 +64,6 @@ final class DBM {
 	private DBM(final DBM dbm) {
 		this.signature = new DBMSignature(dbm.signature);
 		this.dbm = new SimpleDBM(dbm.dbm);
-		executeVisitor = new ExecuteVisitor();
-		andVisitor = new AndOperationVisitor();
 	}
 
 	////
@@ -267,7 +260,7 @@ final class DBM {
 
 	public void execute(final ClockOp op) {
 		checkNotNull(op);
-		op.accept(executeVisitor, null);
+		op.accept(ExecuteVisitor.INSTANCE, this);
 	}
 
 	////
@@ -282,7 +275,7 @@ final class DBM {
 
 	public void and(final ClockConstr constr) {
 		checkNotNull(constr);
-		constr.accept(andVisitor, null);
+		constr.accept(AndOperationVisitor.INSTANCE, this);
 	}
 
 	public void free(final ClockDecl clock) {
@@ -346,35 +339,40 @@ final class DBM {
 
 	////
 
-	private final class ExecuteVisitor implements ClockOpVisitor<Void, Void> {
+	private static final class ExecuteVisitor implements ClockOpVisitor<DBM, Void> {
+
+		private static final ExecuteVisitor INSTANCE = new ExecuteVisitor();
+
+		private ExecuteVisitor() {
+		}
 
 		@Override
-		public Void visit(final CopyOp op, final Void param) {
-			copy(op.getClock(), op.getValue());
+		public Void visit(final CopyOp op, final DBM dbm) {
+			dbm.copy(op.getClock(), op.getValue());
 			return null;
 		}
 
 		@Override
-		public Void visit(final FreeOp op, final Void param) {
-			free(op.getClock());
+		public Void visit(final FreeOp op, final DBM dbm) {
+			dbm.free(op.getClock());
 			return null;
 		}
 
 		@Override
-		public Void visit(final GuardOp op, final Void param) {
-			and(op.getConstr());
+		public Void visit(final GuardOp op, final DBM dbm) {
+			dbm.and(op.getConstr());
 			return null;
 		}
 
 		@Override
-		public Void visit(final ResetOp op, final Void param) {
-			reset(op.getClock(), op.getValue());
+		public Void visit(final ResetOp op, final DBM dbm) {
+			dbm.reset(op.getClock(), op.getValue());
 			return null;
 		}
 
 		@Override
-		public Void visit(final ShiftOp op, final Void param) {
-			shift(op.getClock(), op.getOffset());
+		public Void visit(final ShiftOp op, final DBM dbm) {
+			dbm.shift(op.getClock(), op.getOffset());
 			return null;
 		}
 
@@ -382,111 +380,116 @@ final class DBM {
 
 	////
 
-	private final class AndOperationVisitor implements ClockConstrVisitor<Void, Void> {
+	private static final class AndOperationVisitor implements ClockConstrVisitor<DBM, Void> {
+
+		private static final AndOperationVisitor INSTANCE = new AndOperationVisitor();
+
+		private AndOperationVisitor() {
+		}
 
 		@Override
-		public Void visit(final TrueConstr constr, final Void param) {
+		public Void visit(final TrueConstr constr, final DBM dbm) {
 			return null;
 		}
 
 		@Override
-		public Void visit(final FalseConstr constr, final Void param) {
-			dbm.and(0, 0, -1);
+		public Void visit(final FalseConstr constr, final DBM dbm) {
+			dbm.dbm.and(0, 0, -1);
 			return null;
 		}
 
 		@Override
-		public Void visit(final UnitLtConstr constr, final Void param) {
-			final int x = signature.indexOf(constr.getClock());
+		public Void visit(final UnitLtConstr constr, final DBM dbm) {
+			final int x = dbm.signature.indexOf(constr.getClock());
 			final int m = constr.getBound();
-			dbm.and(x, 0, Lt(m));
+			dbm.dbm.and(x, 0, Lt(m));
 			return null;
 		}
 
 		@Override
-		public Void visit(final UnitLeqConstr constr, final Void param) {
-			final int x = signature.indexOf(constr.getClock());
+		public Void visit(final UnitLeqConstr constr, final DBM dbm) {
+			final int x = dbm.signature.indexOf(constr.getClock());
 			final int m = constr.getBound();
-			dbm.and(x, 0, Leq(m));
+			dbm.dbm.and(x, 0, Leq(m));
 			return null;
 		}
 
 		@Override
-		public Void visit(final UnitGtConstr constr, final Void param) {
-			final int x = signature.indexOf(constr.getClock());
+		public Void visit(final UnitGtConstr constr, final DBM dbm) {
+			final int x = dbm.signature.indexOf(constr.getClock());
 			final int m = constr.getBound();
-			dbm.and(0, x, Lt(-m));
+			dbm.dbm.and(0, x, Lt(-m));
 			return null;
 		}
 
 		@Override
-		public Void visit(final UnitGeqConstr constr, final Void param) {
-			final int x = signature.indexOf(constr.getClock());
+		public Void visit(final UnitGeqConstr constr, final DBM dbm) {
+			final int x = dbm.signature.indexOf(constr.getClock());
 			final int m = constr.getBound();
-			dbm.and(0, x, Leq(-m));
+			dbm.dbm.and(0, x, Leq(-m));
 			return null;
 		}
 
 		@Override
-		public Void visit(final UnitEqConstr constr, final Void param) {
-			final int x = signature.indexOf(constr.getClock());
+		public Void visit(final UnitEqConstr constr, final DBM dbm) {
+			final int x = dbm.signature.indexOf(constr.getClock());
 			final int m = constr.getBound();
-			dbm.and(x, 0, Leq(m));
-			dbm.and(0, x, Leq(-m));
+			dbm.dbm.and(x, 0, Leq(m));
+			dbm.dbm.and(0, x, Leq(-m));
 			return null;
 		}
 
 		@Override
-		public Void visit(final DiffLtConstr constr, final Void param) {
-			final int x = signature.indexOf(constr.getLeftClock());
-			final int y = signature.indexOf(constr.getRightClock());
+		public Void visit(final DiffLtConstr constr, final DBM dbm) {
+			final int x = dbm.signature.indexOf(constr.getLeftClock());
+			final int y = dbm.signature.indexOf(constr.getRightClock());
 			final int m = constr.getBound();
-			dbm.and(x, y, Lt(m));
+			dbm.dbm.and(x, y, Lt(m));
 			return null;
 		}
 
 		@Override
-		public Void visit(final DiffLeqConstr constr, final Void param) {
-			final int x = signature.indexOf(constr.getLeftClock());
-			final int y = signature.indexOf(constr.getRightClock());
+		public Void visit(final DiffLeqConstr constr, final DBM dbm) {
+			final int x = dbm.signature.indexOf(constr.getLeftClock());
+			final int y = dbm.signature.indexOf(constr.getRightClock());
 			final int m = constr.getBound();
-			dbm.and(x, y, Leq(m));
+			dbm.dbm.and(x, y, Leq(m));
 			return null;
 		}
 
 		@Override
-		public Void visit(final DiffGtConstr constr, final Void param) {
-			final int x = signature.indexOf(constr.getLeftClock());
-			final int y = signature.indexOf(constr.getRightClock());
+		public Void visit(final DiffGtConstr constr, final DBM dbm) {
+			final int x = dbm.signature.indexOf(constr.getLeftClock());
+			final int y = dbm.signature.indexOf(constr.getRightClock());
 			final int m = constr.getBound();
-			dbm.and(y, x, Lt(-m));
+			dbm.dbm.and(y, x, Lt(-m));
 			return null;
 		}
 
 		@Override
-		public Void visit(final DiffGeqConstr constr, final Void param) {
-			final int x = signature.indexOf(constr.getLeftClock());
-			final int y = signature.indexOf(constr.getRightClock());
+		public Void visit(final DiffGeqConstr constr, final DBM dbm) {
+			final int x = dbm.signature.indexOf(constr.getLeftClock());
+			final int y = dbm.signature.indexOf(constr.getRightClock());
 			final int m = constr.getBound();
-			dbm.and(y, x, Leq(-m));
+			dbm.dbm.and(y, x, Leq(-m));
 			return null;
 		}
 
 		@Override
-		public Void visit(final DiffEqConstr constr, final Void param) {
-			final int x = signature.indexOf(constr.getLeftClock());
-			final int y = signature.indexOf(constr.getRightClock());
+		public Void visit(final DiffEqConstr constr, final DBM dbm) {
+			final int x = dbm.signature.indexOf(constr.getLeftClock());
+			final int y = dbm.signature.indexOf(constr.getRightClock());
 			final int m = constr.getBound();
-			dbm.and(x, y, Leq(m));
-			dbm.and(y, x, Leq(-m));
+			dbm.dbm.and(x, y, Leq(m));
+			dbm.dbm.and(y, x, Leq(-m));
 			return null;
 		}
 
 		@Override
-		public Void visit(final AndConstr constr, final Void param) {
+		public Void visit(final AndConstr constr, final DBM dbm) {
 			for (final ClockConstr atomicConstr : constr.getConstrs()) {
-				atomicConstr.accept(this, param);
-				if (!dbm.isConsistent()) {
+				atomicConstr.accept(this, dbm);
+				if (!dbm.dbm.isConsistent()) {
 					return null;
 				}
 			}
