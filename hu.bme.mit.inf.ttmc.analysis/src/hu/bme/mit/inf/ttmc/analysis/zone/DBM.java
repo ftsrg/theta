@@ -98,8 +98,8 @@ final class DBM {
 
 		final DBMSignature signature = DBMSignature.union(dbm1.signature, dbm2.signature);
 		final BiFunction<ClockDecl, ClockDecl, Integer> values = (x, y) -> {
-			final int bound1 = dbm1.get(x, y);
-			final int bound2 = dbm2.get(x, y);
+			final int bound1 = dbm1.getOrDefault(x, y);
+			final int bound2 = dbm2.getOrDefault(x, y);
 			return min(bound1, bound2);
 		};
 
@@ -115,8 +115,8 @@ final class DBM {
 
 		final DBMSignature signature = DBMSignature.union(dbm1.signature, dbm2.signature);
 		final BiFunction<ClockDecl, ClockDecl, Integer> values = (x, y) -> {
-			final int bound1 = dbm1.get(x, y);
-			final int bound2 = dbm2.get(x, y);
+			final int bound1 = dbm1.getOrDefault(x, y);
+			final int bound2 = dbm2.getOrDefault(x, y);
 			return max(bound1, bound2);
 		};
 
@@ -176,7 +176,6 @@ final class DBM {
 
 	////
 
-	@SuppressWarnings("unused")
 	private int getOrDefault(final ClockDecl x, final ClockDecl y) {
 		checkNotNull(x);
 		checkNotNull(y);
@@ -226,8 +225,8 @@ final class DBM {
 
 		for (final ClockDecl x : clocks) {
 			for (final ClockDecl y : clocks) {
-				leq = leq && this.get(x, y) <= that.get(x, y);
-				geq = geq && this.get(x, y) >= that.get(x, y);
+				leq = leq && this.getOrDefault(x, y) <= that.getOrDefault(x, y);
+				geq = geq && this.getOrDefault(x, y) >= that.getOrDefault(x, y);
 			}
 		}
 		return DBMRelation.create(leq, geq);

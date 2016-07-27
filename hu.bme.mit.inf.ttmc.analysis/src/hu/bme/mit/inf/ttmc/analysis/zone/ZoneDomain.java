@@ -15,8 +15,7 @@ public final class ZoneDomain implements Domain<ZoneState> {
 
 	@Override
 	public boolean isTop(final ZoneState state) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		return state.isTop();
 	}
 
 	@Override
@@ -31,8 +30,7 @@ public final class ZoneDomain implements Domain<ZoneState> {
 
 	@Override
 	public ZoneState join(final ZoneState state1, final ZoneState state2) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		return ZoneState.enclosure(state1, state2);
 	}
 
 }
