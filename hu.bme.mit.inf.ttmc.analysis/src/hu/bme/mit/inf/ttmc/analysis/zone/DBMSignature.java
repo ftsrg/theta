@@ -28,7 +28,7 @@ class DBMSignature implements Iterable<ClockDecl> {
 		add(ZeroClock.getInstance());
 
 		for (final ClockDecl clock : clocks) {
-			if (!isDefined(clock)) {
+			if (!contains(clock)) {
 				add(clock);
 			}
 		}
@@ -57,17 +57,17 @@ class DBMSignature implements Iterable<ClockDecl> {
 
 	////
 
-	public boolean isDefined(final ClockDecl clock) {
-		checkNotNull(clock);
-		return clockToIndex.containsKey(clock);
-	}
-
 	public int size() {
 		return indexToClock.size();
 	}
 
+	public boolean contains(final ClockDecl clock) {
+		checkNotNull(clock);
+		return clockToIndex.containsKey(clock);
+	}
+
 	public int indexOf(final ClockDecl clock) {
-		checkArgument(isDefined(clock));
+		checkArgument(contains(clock));
 		return clockToIndex.get(clock);
 	}
 
@@ -80,7 +80,7 @@ class DBMSignature implements Iterable<ClockDecl> {
 	////
 
 	private void add(final ClockDecl clock) {
-		checkArgument(!isDefined(clock));
+		checkArgument(!contains(clock));
 		indexToClock.add(clock);
 		clockToIndex.put(clock, clockToIndex.size());
 	}
