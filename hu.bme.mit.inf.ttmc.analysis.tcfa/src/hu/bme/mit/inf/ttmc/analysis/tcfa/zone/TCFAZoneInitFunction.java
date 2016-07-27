@@ -23,7 +23,7 @@ class TCFAZoneInitFunction implements InitFunction<ZoneState, ZonePrecision> {
 	@Override
 	public Collection<ZoneState> getInitStates(final ZonePrecision precision) {
 		checkNotNull(precision);
-		return Collections.singleton(ZoneState.zero(precision.getClocks()));
+		return Collections.singleton(ZoneState.top(precision.getClocks()));
 	}
 
 }
