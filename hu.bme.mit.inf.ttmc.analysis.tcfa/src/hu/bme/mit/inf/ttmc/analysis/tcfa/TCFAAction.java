@@ -100,8 +100,23 @@ public abstract class TCFAAction implements Action {
 			sourceDataInvars = extractDataInvars(edge.getSource());
 			targetClockInvars = extractClockInvars(edge.getTarget());
 			targetDataInvars = extractDataInvars(edge.getTarget());
-			clockOps = extractClockOps(edge);
-			dataStmts = extractDataStmts(edge);
+
+			final ImmutableList.Builder<ClockOp> clockOpsBuilder = ImmutableList.builder();
+			final ImmutableList.Builder<Stmt> dataStmtsBuilder = ImmutableList.builder();
+
+			for (final Stmt stmt : edge.getStmts()) {
+				if (TCFAUtils.isClockStmt(stmt)) {
+					clockOpsBuilder.add(ClockOps.fromStmt(stmt));
+				} else if (TCFAUtils.isDataStmt(stmt)) {
+					dataStmtsBuilder.add(stmt);
+				} else {
+					throw new IllegalArgumentException();
+				}
+			}
+
+			clockOps = clockOpsBuilder.build();
+			dataStmts = dataStmtsBuilder.build();
+
 		}
 
 		public TCFAEdge getEdge() {
@@ -144,33 +159,13 @@ public abstract class TCFAAction implements Action {
 			return builder.build();
 		}
 
-		private static List<ClockOp> extractClockOps(final TCFAEdge edge) {
-			final ImmutableList.Builder<ClockOp> builder = ImmutableList.builder();
-			for (final Stmt stmt : edge.getStmts()) {
-				if (TCFAUtils.isClockStmt(stmt)) {
-					builder.add(ClockOps.fromStmt(stmt));
-				}
-			}
-			return builder.build();
-		}
-
-		private static List<Stmt> extractDataStmts(final TCFAEdge edge) {
-			final ImmutableList.Builder<Stmt> builder = ImmutableList.builder();
-			for (final Stmt stmt : edge.getStmts()) {
-				if (TCFAUtils.isDataStmt(stmt)) {
-					builder.add(stmt);
-				}
-			}
-			return builder.build();
-		}
-
 		@Override
 		public String toString() {
 			// TODO: should the target and source invariants also be printed?
 			final StringJoiner sj = new StringJoiner(", ", "Discrete(", ")");
 
 			for (final ClockOp clockOp : clockOps) {
-				sj.add(clockOp.toStmt().toString());
+				sj.add(clockOp.toString());
 			}
 			for (final Stmt stmt : dataStmts) {
 				sj.add(stmt.toString());
