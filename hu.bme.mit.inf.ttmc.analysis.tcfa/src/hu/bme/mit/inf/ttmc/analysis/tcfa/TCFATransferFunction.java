@@ -13,8 +13,7 @@ import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAAction.TCFADelayAction;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAAction.TCFADiscreteAction;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFAEdge;
 
-class TCFATransferFunction<S extends State, P extends Precision>
-		implements TransferFunction<TCFAState<S>, TCFAAction, P> {
+class TCFATransferFunction<S extends State, P extends Precision> extends AbstractTCFATransferFunction<TCFAState<S>, P> {
 
 	private final TransferFunction<S, TCFAAction, P> transferFunction;
 
@@ -23,22 +22,7 @@ class TCFATransferFunction<S extends State, P extends Precision>
 	}
 
 	@Override
-	public Collection<TCFAState<S>> getSuccStates(final TCFAState<S> state, final TCFAAction action,
-			final P precision) {
-		checkNotNull(state);
-		checkNotNull(action);
-		checkNotNull(precision);
-
-		if (action instanceof TCFADelayAction) {
-			return succStatesForDelayTrans(state, (TCFADelayAction) action, precision);
-		} else if (action instanceof TCFADiscreteAction) {
-			return succStatesForDiscreteTrans(state, (TCFADiscreteAction) action, precision);
-		} else {
-			throw new AssertionError();
-		}
-	}
-
-	private Collection<TCFAState<S>> succStatesForDelayTrans(final TCFAState<S> state, final TCFADelayAction action,
+	protected Collection<TCFAState<S>> succStatesForDelayTrans(final TCFAState<S> state, final TCFADelayAction action,
 			final P precision) {
 		final Collection<TCFAState<S>> succStates = new ArrayList<>();
 
@@ -52,7 +36,8 @@ class TCFATransferFunction<S extends State, P extends Precision>
 		return succStates;
 	}
 
-	private Collection<TCFAState<S>> succStatesForDiscreteTrans(final TCFAState<S> state,
+	@Override
+	protected Collection<TCFAState<S>> succStatesForDiscreteTrans(final TCFAState<S> state,
 			final TCFADiscreteAction action, final P precision) {
 		final Collection<TCFAState<S>> succStates = new ArrayList<>();
 
