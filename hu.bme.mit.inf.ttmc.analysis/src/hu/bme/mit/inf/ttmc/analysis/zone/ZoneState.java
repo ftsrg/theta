@@ -3,6 +3,7 @@ package hu.bme.mit.inf.ttmc.analysis.zone;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.StringJoiner;
 
 import hu.bme.mit.inf.ttmc.analysis.State;
@@ -36,12 +37,23 @@ public final class ZoneState implements State {
 		return new ZoneState(DBM.zero(clocks));
 	}
 
+	public static ZoneState intersection(final ZoneState zone1, final ZoneState zone2) {
+		checkNotNull(zone1);
+		checkNotNull(zone2);
+		return new ZoneState(DBM.intersection(zone1.dbm, zone2.dbm));
+	}
+
+	public static ZoneState enclosure(final ZoneState zone1, final ZoneState zone2) {
+		checkNotNull(zone1);
+		checkNotNull(zone2);
+		return new ZoneState(DBM.enclosure(zone1.dbm, zone2.dbm));
+	}
+
 	public static ZoneState interpolant(final ZoneState zoneA, final ZoneState zoneB) {
 		checkNotNull(zoneA);
 		checkNotNull(zoneB);
 		return new ZoneState(DBM.interpolant(zoneA.dbm, zoneB.dbm));
 	}
-
 	////
 
 	public ZoneOperations transform() {
@@ -49,6 +61,10 @@ public final class ZoneState implements State {
 	}
 
 	////
+
+	public boolean isTop() {
+		return DBM.top(Collections.emptySet()).getRelation(dbm) == DBMRelation.EQUAL;
+	}
 
 	public boolean isBottom() {
 		return !dbm.isConsistent();
