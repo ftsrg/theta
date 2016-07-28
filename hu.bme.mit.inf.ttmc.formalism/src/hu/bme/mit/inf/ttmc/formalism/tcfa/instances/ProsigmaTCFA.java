@@ -51,7 +51,7 @@ public class ProsigmaTCFA {
 
 		vchan = Var("chan", Int());
 
-		clocks = new HashSet<ClockDecl>();
+		clocks = new HashSet<>();
 
 		eth = createETH();
 		faultModel = createFaultModel();
@@ -84,7 +84,7 @@ public class ProsigmaTCFA {
 	}
 
 	private TCFA createETH() {
-		final ClockDecl vclkSync = Clock("clkSync");
+		final ClockDecl vclkSync = Clock("sync");
 		clocks.add(vclkSync);
 
 		final Expr<IntType> chan = vchan.getRef();
@@ -123,7 +123,7 @@ public class ProsigmaTCFA {
 	}
 
 	private TCFA createFieldLG() {
-		final ClockDecl vclkReset = Clock("clkReset");
+		final ClockDecl vclkReset = Clock("fieldReset");
 		clocks.add(vclkReset);
 
 		final Expr<IntType> chan = vchan.getRef();
@@ -201,7 +201,7 @@ public class ProsigmaTCFA {
 	}
 
 	private TCFA createControlLG() {
-		final ClockDecl vclkReset = Clock("clkReset");
+		final ClockDecl vclkReset = Clock("controlReset");
 		clocks.add(vclkReset);
 
 		final Expr<IntType> chan = vchan.getRef();

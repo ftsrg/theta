@@ -33,6 +33,7 @@ final class TCFAZoneTransferFunction extends AbstractTCFATransferFunction<ZoneSt
 		for (final ClockConstr invar : action.getTargetClockInvars()) {
 			succStateBuilder.and(invar);
 		}
+		succStateBuilder.norm(precision.asMap());
 
 		final ZoneState succState = succStateBuilder.done();
 
@@ -55,6 +56,7 @@ final class TCFAZoneTransferFunction extends AbstractTCFATransferFunction<ZoneSt
 		for (final ClockConstr invar : action.getTargetClockInvars()) {
 			succStateBuilder.and(invar);
 		}
+		succStateBuilder.norm(precision.asMap());
 
 		final ZoneState succState = succStateBuilder.done();
 
