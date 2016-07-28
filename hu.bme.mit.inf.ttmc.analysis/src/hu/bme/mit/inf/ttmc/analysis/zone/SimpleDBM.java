@@ -1,6 +1,7 @@
 package hu.bme.mit.inf.ttmc.analysis.zone;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.inf.ttmc.analysis.zone.DiffBounds.Inf;
 import static hu.bme.mit.inf.ttmc.analysis.zone.DiffBounds.Leq;
 import static hu.bme.mit.inf.ttmc.analysis.zone.DiffBounds.Lt;
@@ -159,7 +160,6 @@ final class SimpleDBM {
 	}
 
 	public void copy(final int x, final int y) {
-
 		checkArgument(isNonZeroClock(y));
 
 		for (int i = 0; i <= nClocks; i++) {
@@ -188,16 +188,16 @@ final class SimpleDBM {
 		assert isClosed();
 	}
 
-	////
+	public void norm(final int[] k) {
+		checkNotNull(k);
+		checkArgument(k.length == nClocks + 1);
 
-	@SuppressWarnings("unused")
-	private void norm(final int[] k) {
 		for (int i = 0; i <= nClocks; i++) {
 			for (int j = 0; j <= nClocks; j++) {
 				if (matrix.get(i, j) != Inf()) {
 					if (matrix.get(i, j) > Leq(k[i])) {
 						matrix.set(i, j, Inf());
-					} else if (matrix.get(i, j) < Leq(-k[j])) {
+					} else if (matrix.get(i, j) < Lt(-k[j])) {
 						matrix.set(i, j, Lt(-k[j]));
 					}
 				}
@@ -207,14 +207,16 @@ final class SimpleDBM {
 	}
 
 	void close() {
-		for (int k = 0; k <= nClocks; k++) {
-			for (int i = 0; i <= nClocks; i++) {
-				for (int j = 0; j <= nClocks; j++) {
-					matrix.set(i, j, min(matrix.get(i, j), add(matrix.get(i, k), matrix.get(k, j))));
+		if (isConsistent()) {
+			for (int k = 0; k <= nClocks; k++) {
+				for (int i = 0; i <= nClocks; i++) {
+					for (int j = 0; j <= nClocks; j++) {
+						matrix.set(i, j, min(matrix.get(i, j), add(matrix.get(i, k), matrix.get(k, j))));
+					}
 				}
 			}
+			assert isClosed();
 		}
-		assert isClosed();
 	}
 
 	private boolean isClosed() {

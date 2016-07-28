@@ -4,6 +4,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Map;
 import java.util.StringJoiner;
 
 import hu.bme.mit.inf.ttmc.analysis.State;
@@ -164,6 +165,11 @@ public final class ZoneState implements State {
 
 		public ZoneOperations shift(final ClockDecl clock, final int m) {
 			dbm.shift(clock, m);
+			return this;
+		}
+
+		public ZoneOperations norm(final Map<? extends ClockDecl, ? extends Integer> ceilings) {
+			dbm.norm(ceilings);
 			return this;
 		}
 	}
