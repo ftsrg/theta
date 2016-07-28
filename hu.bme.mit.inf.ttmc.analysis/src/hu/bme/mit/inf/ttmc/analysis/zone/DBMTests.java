@@ -2,7 +2,6 @@ package hu.bme.mit.inf.ttmc.analysis.zone;
 
 import static hu.bme.mit.inf.ttmc.formalism.common.decl.impl.Decls2.Clock;
 import static hu.bme.mit.inf.ttmc.formalism.ta.constr.impl.ClockConstrs.Leq;
-import static org.junit.Assert.assertTrue;
 
 import java.util.Set;
 
@@ -50,8 +49,6 @@ public class DBMTests {
 		dbmB.and(Leq(x4, x3, -1));
 
 		System.out.println(dbmB.getConstraints());
-
-		assertTrue(dbmA.getRelation(dbmB) == DBMRelation.DISJOINT);
 
 		final DBM interpolant = DBM.interpolant(dbmA, dbmB);
 		System.out.println(interpolant.getConstraints());
