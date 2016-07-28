@@ -123,7 +123,7 @@ final class DBM {
 	public static DBM interpolant(final DBM dbmA, final DBM dbmB) {
 		checkNotNull(dbmA);
 		checkNotNull(dbmB);
-		checkArgument(dbmA.getRelation(dbmB) == DBMRelation.DISJOINT);
+		checkArgument(!dbmA.isConsistentWith(dbmB));
 
 		final DBMSignature signature = interpolantSignature(dbmA, dbmB);
 		final BiFunction<ClockDecl, ClockDecl, Integer> values = (x, y) -> {
@@ -155,7 +155,7 @@ final class DBM {
 			return false;
 		}
 
-		if (this.getRelation(dbmB) != DBMRelation.DISJOINT) {
+		if (this.isConsistentWith(dbmB)) {
 			return false;
 		}
 
@@ -210,6 +210,11 @@ final class DBM {
 
 	public boolean isConsistent() {
 		return dbm.isConsistent();
+	}
+
+	public boolean isConsistentWith(final DBM dbm) {
+		checkNotNull(dbm);
+		return intersection(this, dbm).isConsistent();
 	}
 
 	public boolean isSatisfied(final ClockConstr constr) {

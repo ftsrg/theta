@@ -1,7 +1,7 @@
 package hu.bme.mit.inf.ttmc.analysis.zone;
 
 enum DBMRelation {
-	LESS(true, false), GREATER(false, true), EQUAL(true, true), DISJOINT(false, false);
+	LESS(true, false), GREATER(false, true), EQUAL(true, true), INCOMPARABLE(false, false);
 
 	private final boolean leq;
 	private final boolean geq;
@@ -22,7 +22,7 @@ enum DBMRelation {
 			if (geq) {
 				return DBMRelation.GREATER;
 			} else {
-				return DBMRelation.DISJOINT;
+				return DBMRelation.INCOMPARABLE;
 			}
 		}
 	}
