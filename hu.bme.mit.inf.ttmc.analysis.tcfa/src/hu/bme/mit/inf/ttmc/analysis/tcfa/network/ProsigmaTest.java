@@ -2,6 +2,7 @@ package hu.bme.mit.inf.ttmc.analysis.tcfa.network;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 
 import org.junit.Test;
@@ -23,6 +24,7 @@ import hu.bme.mit.inf.ttmc.analysis.tcfa.expl.TCFAExplAnalysis;
 import hu.bme.mit.inf.ttmc.analysis.tcfa.zone.TCFAZoneAnalysis;
 import hu.bme.mit.inf.ttmc.analysis.zone.ZonePrecision;
 import hu.bme.mit.inf.ttmc.analysis.zone.ZoneState;
+import hu.bme.mit.inf.ttmc.formalism.common.decl.ClockDecl;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFA;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFALoc;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.instances.ProsigmaTCFA;
@@ -51,8 +53,13 @@ public class ProsigmaTest {
 				TCFANetworkLoc.create(initLocs),
 				new CompositeAnalysis<>(TCFAZoneAnalysis.getInstance(), new TCFAExplAnalysis(solver)));
 
+		final HashMap<ClockDecl, Integer> ceilings = new HashMap<>();
+		for (final ClockDecl clock : prosigma.getClocks()) {
+			ceilings.put(clock, 7);
+		}
+
 		final CompositePrecision<ZonePrecision, ExplPrecision> precision = CompositePrecision.create(
-				ZonePrecision.builder().addAll(prosigma.getClocks()).build(),
+				new ZonePrecision(ceilings),
 				GlobalExplPrecision.create(Collections.singleton(prosigma.getChan()), Collections.emptySet()));
 
 		final Abstractor<TCFAState<CompositeState<ZoneState, ExplState>>, TCFAAction, CompositePrecision<ZonePrecision, ExplPrecision>> abstractor = new AbstractorImpl<>(
