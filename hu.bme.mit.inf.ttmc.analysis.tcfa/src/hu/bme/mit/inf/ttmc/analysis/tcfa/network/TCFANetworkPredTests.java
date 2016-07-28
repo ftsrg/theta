@@ -5,11 +5,10 @@ import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Int;
 import static hu.bme.mit.inf.ttmc.core.type.impl.Types.Int;
 import static hu.bme.mit.inf.ttmc.formalism.common.decl.impl.Decls2.Var;
 import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toSet;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 
 import org.junit.Test;
@@ -49,12 +48,15 @@ public class TCFANetworkPredTests {
 		final VarDecl<IntType> vlock = Var("lock", Int());
 		final Expr<IntType> lock = vlock.getRef();
 
+		final HashMap<ClockDecl, Integer> ceilings = new HashMap<>();
+
 		final List<FischerTCFA> network = new ArrayList<>(n);
 		for (int i = 0; i < n; i++) {
-			network.add(new FischerTCFA(i + 1, 1, 2, vlock));
+			final FischerTCFA fischer = new FischerTCFA(i + 1, 1, 2, vlock);
+			ceilings.put(fischer.getClock(), 2);
+			network.add(fischer);
 		}
 
-		final Collection<ClockDecl> clocks = network.stream().map(comp -> comp.getClock()).collect(toSet());
 		final List<TCFALoc> initLocs = network.stream().map(comp -> comp.getInitial()).collect(toList());
 
 		////
@@ -67,7 +69,7 @@ public class TCFANetworkPredTests {
 				new CompositeAnalysis<>(TCFAZoneAnalysis.getInstance(), new TCFAPredAnalysis(solver)));
 
 		final CompositePrecision<ZonePrecision, PredPrecision> precision = CompositePrecision.create(
-				ZonePrecision.builder().addAll(clocks).build(),
+				new ZonePrecision(ceilings),
 				GlobalPredPrecision.create(Arrays.asList(Eq(lock, Int(0)), Eq(lock, Int(1)))));
 
 		final Abstractor<TCFAState<CompositeState<ZoneState, PredState>>, TCFAAction, CompositePrecision<ZonePrecision, PredPrecision>> abstractor = new AbstractorImpl<>(

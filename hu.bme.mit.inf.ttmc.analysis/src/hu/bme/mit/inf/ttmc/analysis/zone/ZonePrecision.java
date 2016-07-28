@@ -1,51 +1,30 @@
 package hu.bme.mit.inf.ttmc.analysis.zone;
 
-import java.util.Collection;
+import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.common.collect.ImmutableCollection;
-import com.google.common.collect.ImmutableSet;
+import java.util.Collection;
+import java.util.Map;
+
+import com.google.common.collect.ImmutableMap;
 
 import hu.bme.mit.inf.ttmc.analysis.Precision;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.ClockDecl;
 
 public final class ZonePrecision implements Precision {
 
-	private final Collection<ClockDecl> clocks;
+	private final Map<ClockDecl, Integer> ceilings;
 
-	private ZonePrecision(final Builder builder) {
-		clocks = builder.clocksBuilder.build();
-	}
-
-	public static Builder builder() {
-		return new Builder();
+	public ZonePrecision(final Map<? extends ClockDecl, ? extends Integer> ceilings) {
+		checkNotNull(ceilings);
+		this.ceilings = ImmutableMap.copyOf(ceilings);
 	}
 
 	public Collection<ClockDecl> getClocks() {
-		return clocks;
+		return ceilings.keySet();
 	}
 
-	////
-
-	public static final class Builder {
-		private final ImmutableCollection.Builder<ClockDecl> clocksBuilder;
-
-		private Builder() {
-			clocksBuilder = ImmutableSet.builder();
-		}
-
-		public Builder add(final ClockDecl clock) {
-			clocksBuilder.add(clock);
-			return this;
-		}
-
-		public Builder addAll(final Collection<? extends ClockDecl> clocks) {
-			clocksBuilder.addAll(clocks);
-			return this;
-		}
-
-		public ZonePrecision build() {
-			return new ZonePrecision(this);
-		}
+	public Map<ClockDecl, Integer> asMap() {
+		return ceilings;
 	}
 
 }

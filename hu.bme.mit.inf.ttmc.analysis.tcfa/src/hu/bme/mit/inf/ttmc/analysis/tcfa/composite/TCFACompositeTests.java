@@ -4,6 +4,7 @@ import static hu.bme.mit.inf.ttmc.core.type.impl.Types.Int;
 import static hu.bme.mit.inf.ttmc.formalism.common.decl.impl.Decls2.Var;
 
 import java.util.Collections;
+import java.util.HashMap;
 
 import org.junit.Test;
 
@@ -24,6 +25,7 @@ import hu.bme.mit.inf.ttmc.analysis.tcfa.zone.TCFAZoneAnalysis;
 import hu.bme.mit.inf.ttmc.analysis.zone.ZonePrecision;
 import hu.bme.mit.inf.ttmc.analysis.zone.ZoneState;
 import hu.bme.mit.inf.ttmc.core.type.IntType;
+import hu.bme.mit.inf.ttmc.formalism.common.decl.ClockDecl;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.instances.FischerTCFA;
 import hu.bme.mit.inf.ttmc.solver.Solver;
@@ -44,8 +46,11 @@ public class TCFACompositeTests {
 				fischer.getInitial(),
 				new CompositeAnalysis<>(TCFAZoneAnalysis.getInstance(), new TCFAExplAnalysis(solver)));
 
+		final HashMap<ClockDecl, Integer> ceilings = new HashMap<>();
+		ceilings.put(fischer.getClock(), 2);
+
 		final CompositePrecision<ZonePrecision, ExplPrecision> precision = CompositePrecision.create(
-				ZonePrecision.builder().add(fischer.getClock()).build(),
+				new ZonePrecision(ceilings),
 				GlobalExplPrecision.create(Collections.singleton(vlock), Collections.emptySet()));
 
 		final Abstractor<TCFAState<CompositeState<ZoneState, ExplState>>, TCFAAction, CompositePrecision<ZonePrecision, ExplPrecision>> abstractor = new AbstractorImpl<>(
