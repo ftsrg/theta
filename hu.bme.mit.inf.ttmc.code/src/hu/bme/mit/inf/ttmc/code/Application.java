@@ -17,31 +17,31 @@ import hu.bme.mit.inf.ttmc.formalism.cfa.CFA;
 import hu.bme.mit.inf.ttmc.formalism.utils.impl.CFAPrinter;
 
 class Application {
-	
+
 	public static void main(String[] args)
 			throws CoreException, FileNotFoundException, IOException, InterruptedException {
-	
+
 		TranslationUnitAst root = Compiler.createAst("simple.c");
-		
+
 		graphvizOutput("ast_custom", AstPrinter.toGraphvizString(root));
-		
+
 		//CFA cfa = Compiler.createSBE("simple.c");
-		
+
 		TranslationUnitAst newRoot = Compiler.createSimplifiedAst("simple.c");
 		graphvizOutput("ast_trans", AstPrinter.toGraphvizString(newRoot));
-		
+
 		PrintCodeAstVisitor printer = new PrintCodeAstVisitor();
 		System.out.println(newRoot.accept(printer));
-		
+
 		//System.out.println(CFAPrinter.toGraphvizSting(cfa))
 
-		System.out.println(Compiler.createStmts("simple.c").get(0).getStmt().get());
-		
-		List<CFA> cfas = Compiler.createSBE("simple.c");
-		
-		for (CFA cfa : cfas) {
-			System.out.println(CFAPrinter.toGraphvizSting(cfa));
-		}
+		//System.out.println(Compiler.createStmts("simple.c").get(0).getStmt().get());
+
+		//List<CFA> cfas = Compiler.createSBE("simple.c");
+
+		//for (CFA cfa : cfas) {
+		//	System.out.println(CFAPrinter.toGraphvizSting(cfa));
+		//}
 	}
 
 	private static int nodeId = 0;
@@ -52,10 +52,10 @@ class Application {
 		sb.append("digraph G {");
 		printTree(ast, sb);
 		sb.append("}");
-		
+
 		return sb.toString();
 	}
-	
+
 	private static String printTree(IASTNode node, StringBuilder sb) {
 		String nodeName = "node_" + nodeId++;
 		sb.append(String.format("%s [label=\"%s\"];\n", nodeName, node.getClass().getSimpleName()));

@@ -1,14 +1,16 @@
 package hu.bme.mit.inf.ttmc.frontend.ir.node;
 
+import java.util.List;
+
 import hu.bme.mit.inf.ttmc.frontend.ir.BasicBlock;
 
 public interface TerminatorIrNode extends IrNode {
 
 	/**
-	 * Returns this terminator's default target.
+	 * Returns a list of this node's targets
 	 *
-	 * @return A basic block referenced by this terminator
+	 * @return A list containing all possible paths from this node
 	 */
-	public BasicBlock getDefaultTarget();
+	public List<BasicBlock> getTargets();
 
 }

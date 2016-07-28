@@ -1,6 +1,5 @@
 package hu.bme.mit.inf.ttmc.code.visitor;
 
-import static hu.bme.mit.inf.ttmc.core.decl.impl.Decls.Param;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Add;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.And;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Eq;
@@ -17,31 +16,17 @@ import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Neq;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Not;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Or;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Sub;
-import static hu.bme.mit.inf.ttmc.core.type.impl.Types.Int;
-import static hu.bme.mit.inf.ttmc.formalism.common.decl.impl.Decls2.Proc;
-import static hu.bme.mit.inf.ttmc.formalism.common.decl.impl.Decls2.Var;
-import static hu.bme.mit.inf.ttmc.formalism.common.stmt.impl.Stmts.Assert;
-import static hu.bme.mit.inf.ttmc.formalism.common.stmt.impl.Stmts.Assign;
-import static hu.bme.mit.inf.ttmc.formalism.common.stmt.impl.Stmts.Block;
-import static hu.bme.mit.inf.ttmc.formalism.common.stmt.impl.Stmts.Decl;
-import static hu.bme.mit.inf.ttmc.formalism.common.stmt.impl.Stmts.Do;
-import static hu.bme.mit.inf.ttmc.formalism.common.stmt.impl.Stmts.If;
-import static hu.bme.mit.inf.ttmc.formalism.common.stmt.impl.Stmts.Return;
-import static hu.bme.mit.inf.ttmc.formalism.common.stmt.impl.Stmts.Skip;
-import static hu.bme.mit.inf.ttmc.formalism.common.stmt.impl.Stmts.While;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 import hu.bme.mit.inf.ttmc.code.TransformException;
-import hu.bme.mit.inf.ttmc.code.ast.AssignmentInitializerAst;
 import hu.bme.mit.inf.ttmc.code.ast.BinaryExpressionAst;
-import hu.bme.mit.inf.ttmc.code.ast.BinaryExpressionAst.Operator;
 import hu.bme.mit.inf.ttmc.code.ast.BreakStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.CaseStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.CompoundStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.ContinueStatementAst;
-import hu.bme.mit.inf.ttmc.code.ast.DeclarationAst;
 import hu.bme.mit.inf.ttmc.code.ast.DeclarationStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.DefaultStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.DoStatementAst;
@@ -59,10 +44,9 @@ import hu.bme.mit.inf.ttmc.code.ast.LabeledStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.LiteralExpressionAst;
 import hu.bme.mit.inf.ttmc.code.ast.NameExpressionAst;
 import hu.bme.mit.inf.ttmc.code.ast.NullStatementAst;
-import hu.bme.mit.inf.ttmc.code.ast.ParameterDeclarationAst;
 import hu.bme.mit.inf.ttmc.code.ast.ReturnStatementAst;
-import hu.bme.mit.inf.ttmc.code.ast.StatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.SwitchStatementAst;
+import hu.bme.mit.inf.ttmc.code.ast.TranslationUnitAst;
 import hu.bme.mit.inf.ttmc.code.ast.UnaryExpressionAst;
 import hu.bme.mit.inf.ttmc.code.ast.VarDeclarationAst;
 import hu.bme.mit.inf.ttmc.code.ast.WhileStatementAst;
@@ -70,9 +54,9 @@ import hu.bme.mit.inf.ttmc.code.ast.visitor.DeclarationVisitor;
 import hu.bme.mit.inf.ttmc.code.ast.visitor.DeclaratorVisitor;
 import hu.bme.mit.inf.ttmc.code.ast.visitor.ExpressionVisitor;
 import hu.bme.mit.inf.ttmc.code.ast.visitor.StatementVisitor;
+import hu.bme.mit.inf.ttmc.code.ast.visitor.TranslationUnitVisitor;
 import hu.bme.mit.inf.ttmc.code.util.SymbolTable;
 import hu.bme.mit.inf.ttmc.core.decl.Decl;
-import hu.bme.mit.inf.ttmc.core.decl.ParamDecl;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.core.type.IntType;
@@ -84,28 +68,33 @@ import hu.bme.mit.inf.ttmc.core.type.closure.ClosedUnderNeg;
 import hu.bme.mit.inf.ttmc.core.type.closure.ClosedUnderSub;
 import hu.bme.mit.inf.ttmc.core.utils.impl.ExprUtils;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.ProcDecl;
-import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
-import hu.bme.mit.inf.ttmc.formalism.common.expr.VarRefExpr;
-import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
+import hu.bme.mit.inf.ttmc.frontend.ir.BasicBlock;
+import hu.bme.mit.inf.ttmc.frontend.ir.Function;
+import hu.bme.mit.inf.ttmc.frontend.ir.GlobalContext;
+
+import static hu.bme.mit.inf.ttmc.core.decl.impl.Decls.*;
+import static hu.bme.mit.inf.ttmc.formalism.common.decl.impl.Decls2.*;
+import static hu.bme.mit.inf.ttmc.core.type.impl.Types.*;
 
 public class TransformProgramVisitor implements
 	ExpressionVisitor<Expr<? extends Type>>,
-	StatementVisitor<Stmt>,
+	StatementVisitor<BasicBlock>,
 	DeclarationVisitor<Decl<? extends Type, ?>>,
-	DeclaratorVisitor<Decl<? extends Type, ?>>
+	DeclaratorVisitor<Decl<? extends Type, ?>>,
+	TranslationUnitVisitor<GlobalContext>
 {
 
-		
 	private SymbolTable<Decl<? extends Type, ?>> symbols = new SymbolTable<>();
-	
+	private Map<ProcDecl<? extends Type>, Function> functionTable = new HashMap<>();
+
 	@Override
 	public Expr<? extends Type> visit(BinaryExpressionAst ast) {
 		ExpressionAst lhs = ast.getLeft();
 		ExpressionAst rhs = ast.getRight();
-		
+
 		Expr<? extends Type> left  = lhs.accept(this);
 		Expr<? extends Type> right = rhs.accept(this);
-		
+
 		switch (ast.getOperator()) {
 			case OP_ADD:
 				return Add(ExprUtils.cast(left, ClosedUnderAdd.class), ExprUtils.cast(right, ClosedUnderAdd.class));
@@ -116,7 +105,7 @@ public class TransformProgramVisitor implements
 			case OP_DIV:
 				return IntDiv(ExprUtils.cast(left, IntType.class), ExprUtils.cast(right, IntType.class));
 			case OP_MOD:
-				return Mod(ExprUtils.cast(left, IntType.class), ExprUtils.cast(right, IntType.class));				
+				return Mod(ExprUtils.cast(left, IntType.class), ExprUtils.cast(right, IntType.class));
 			case OP_IS_GT:
 				return Gt(ExprUtils.cast(left, RatType.class), ExprUtils.cast(right, RatType.class));
 			case OP_IS_LT:
@@ -137,131 +126,6 @@ public class TransformProgramVisitor implements
 			default:
 				throw new UnsupportedOperationException("This code should not be reachable.");
 		}
-	}
-
-	@Override
-	public Expr<? extends Type> visit(LiteralExpressionAst ast) {
-		return Int(ast.getValue());
-	}
-
-	@Override
-	public Expr<? extends Type> visit(NameExpressionAst ast) {
-		if (!this.symbols.contains(ast.getName()))
-			throw new TransformException(String.format("Use of undeclared identifier '%s'.", ast.getName()));
-		
-		return this.symbols.get(ast.getName()).getRef();
-	}
-
-	@Override
-	public Stmt visit(IfStatementAst ast) {
-		ExpressionAst condAst = ast.getCondition();
-		StatementAst thenAst = ast.getThen();
-		StatementAst elseAst = ast.getElse();
-
-		Expr<? extends BoolType> cond = ExprUtils.cast(condAst.accept(this), BoolType.class);
-		Stmt then = thenAst.accept(this);
-		
-		if (elseAst != null) {
-			Stmt elze = elseAst.accept(this);
-			return If(cond, then, elze);
-		} else {
-			return If(cond, then);
-		}
-	}
-
-	@Override
-	public Stmt visit(CompoundStatementAst ast) {
-		List<Stmt> stmts = new ArrayList<>();
-		
-		for (StatementAst child : ast.getStatements()) {			
-			stmts.add(child.accept(this));
-		}
-		
-		return Block(stmts);
-	}
-
-	@Override
-	public Stmt visit(DeclarationStatementAst ast) {
-		List<Stmt> stmts = new ArrayList<>();
-		DeclarationAst decl = ast.getDeclaration();
-		
-		if (decl instanceof VarDeclarationAst) {
-			VarDeclarationAst varDecl = (VarDeclarationAst) decl;
-
-			// Every declaration contains a single declarator because of the earlier transformations
-			InitDeclaratorAst declarator = (InitDeclaratorAst) varDecl.getDeclarators().get(0); // TODO
-			AssignmentInitializerAst initializer = (AssignmentInitializerAst) declarator.getInitializer();
-			
-			String name = declarator.getName();
-			
-			VarDecl<? extends Type> var = Var(name, Int());
-			this.symbols.put(name, var);			
-			
-			if (null == initializer) {
-				stmts.add(Decl(var));
-			} else {
-				Expr<? extends Type> initExpr = initializer.getExpression().accept(this);
-				stmts.add(Decl(var, ExprUtils.cast(initExpr, var.getType().getClass())));
-			}
-		}
-		
-		return Block(stmts);
-	}
-	
-	@Override
-	public Stmt visit(ReturnStatementAst ast) {
-		Expr<? extends Type> expr = ast.getExpression().accept(this);
-		
-		return Return(expr);
-	}
-
-	@Override
-	public Stmt visit(ExpressionStatementAst ast) {
-		// In Stmt, assignments cannot be expressions, only statements
-		ExpressionAst expr = ast.getExpression();
-		
-		if (expr instanceof BinaryExpressionAst && ((BinaryExpressionAst) expr).getOperator() == Operator.OP_ASSIGN) {
-			BinaryExpressionAst binary = (BinaryExpressionAst) expr;
-			
-			Expr<? extends Type> lhs = binary.getLeft().accept(this);
-			Expr<?> rhs = binary.getRight().accept(this);
-			
-			if (!(lhs instanceof VarRefExpr<?>)) {
-				throw new RuntimeException("Assignment lvalue can only be a variable reference.");
-			}
-			
-			VarRefExpr<Type> left = (VarRefExpr<Type>) lhs;
-			
-			return Assign(left.getDecl(), rhs);
-		}
-		
-		// Call to assertion functions must be replaced by condition assert statements
-		if (expr instanceof FunctionCallExpressionAst) {
-			FunctionCallExpressionAst func = (FunctionCallExpressionAst) ast.getExpression();
-			
-			if (func.getName().equals("assert")) {
-				ExpressionAst cond = func.getParams().get(0); // The first parameter is the condition
-				return Assert(ExprUtils.cast(cond.accept(this), BoolType.class));
-			}
-		}
-		
-		return Skip();
-	}
-
-	@Override
-	public Stmt visit(WhileStatementAst ast) {
-		ExpressionAst condAst = ast.getCondition();
-		StatementAst  bodyAst = ast.getBody();
-		
-		Expr<? extends BoolType> cond = ExprUtils.cast(condAst.accept(this), BoolType.class);
-		Stmt body = bodyAst.accept(this);
-		
-		return While(cond, body);
-	}
-
-	@Override
-	public Decl<? extends Type, ?> visit(VarDeclarationAst ast) {
-		throw new RuntimeException("This code should not be reachable");
 	}
 
 	@Override
@@ -287,96 +151,149 @@ public class TransformProgramVisitor implements
 	}
 
 	@Override
-	public Stmt visit(DoStatementAst ast) {
-		ExpressionAst condAst = ast.getCondition();
-		StatementAst  bodyAst = ast.getBody();
-		
-		Expr<? extends BoolType> cond = ExprUtils.cast(condAst.accept(this), BoolType.class);
-		Stmt body = bodyAst.accept(this);
-		
-		return Do(body, cond);
-	}
-	
-	@Override
-	public Stmt visit(NullStatementAst ast) {
-		return Skip();
-	}
+	public Expr<? extends Type> visit(NameExpressionAst ast) {
+		if (!this.symbols.contains(ast.getName()))
+			throw new TransformException(String.format("Use of undeclared identifier '%s'.", ast.getName()));
 
-
-	@Override
-	public ProcDecl<? extends Type> visit(FunctionDefinitionAst ast) {
-		List<ParamDecl<? extends Type>> paramDecls = new ArrayList<>();
-		
-		FunctionDeclaratorAst declarator = ast.getDeclarator();
-		for (ParameterDeclarationAst pd : declarator.getParameters()) {
-			ParamDecl<? extends Type> paramDecl = Param(pd.getDeclarator().getName(), Int());
-			this.symbols.put(paramDecl.getName(), paramDecl);
-			paramDecls.add(paramDecl);
-		}
-		
-		Stmt body = ast.getBody().accept(this);
-		
-		return Proc(ast.getName(), paramDecls, Int(), body);
+		return this.symbols.get(ast.getName()).getRef();
 	}
 
 	@Override
 	public Expr<? extends Type> visit(FunctionCallExpressionAst ast) {
 		String name = ast.getName();
-		
+
 		if (!this.symbols.contains(name)) {
 			throw new RuntimeException(String.format("Use of undeclared identifier '%s'.", name));
 		}
-		
+
 		Decl<? extends Type, ?> decl = this.symbols.get(name);
 		if (!(decl instanceof ProcDecl<?>)) {
-			throw new RuntimeException(String.format("Invalid use of function indirection.", name));			
+			throw new RuntimeException(String.format("Invalid use of function indirection.", name));
 		}
-		
+
 		ProcDecl<? extends Type> proc = (ProcDecl<? extends Type>) decl;
-		
+
 		throw new UnsupportedOperationException("TODO: Function call");
 	}
-	
+
 	@Override
-	public Stmt visit(GotoStatementAst ast) {
-		throw new UnsupportedOperationException("TODO: GOTO Stmt");
+	public Expr<? extends Type> visit(LiteralExpressionAst ast) {
+		return Int(ast.getValue());
+	}
+
+
+	@Override
+	public Decl<? extends Type, ?> visit(FunctionDefinitionAst ast) {
+		ProcDecl<? extends Type> proc = Proc(ast.getName(), Collections.emptyList(), Int());
+		Function func = new Function(ast.getName(), Int());
+
+		this.functionTable.put(proc, func);
+
+		return proc;
 	}
 
 	@Override
-	public Stmt visit(LabeledStatementAst ast) {
-		throw new UnsupportedOperationException("TODO: Labeled Stmt");
+	public BasicBlock visit(IfStatementAst ast) {
+		return null;
 	}
-	
-	/* These statements are not supported since earlier transformations should eliminate them. */
-
 
 	@Override
-	public Stmt visit(ForStatementAst ast) {
+	public BasicBlock visit(DoStatementAst ast) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public BasicBlock visit(CompoundStatementAst ast) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public BasicBlock visit(DeclarationStatementAst ast) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public BasicBlock visit(ReturnStatementAst ast) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public BasicBlock visit(ExpressionStatementAst ast) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public BasicBlock visit(WhileStatementAst ast) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public BasicBlock visit(GotoStatementAst ast) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public BasicBlock visit(LabeledStatementAst ast) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public BasicBlock visit(NullStatementAst ast) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	@Override
+	public GlobalContext visit(TranslationUnitAst ast) {
+		GlobalContext context = new GlobalContext();
+
+		// Add functions to the context
+		ast.getDeclarations().stream().filter(s -> s instanceof FunctionDefinitionAst).map(s -> (FunctionDefinitionAst) s).forEach(s -> {
+			context.addFunction(this.functionTable.get(s.accept(this)));
+		});
+
+		return context;
+	}
+
+	@Override
+	public Decl<? extends Type, ?> visit(VarDeclarationAst ast) {
+		throw new RuntimeException("This code should not be reachable");
+	}
+
+	@Override
+	public BasicBlock visit(ForStatementAst ast) {
 		throw new UnsupportedOperationException("TransformProgramVisitor does not support for loops.");
 	}
 
 	@Override
-	public Stmt visit(SwitchStatementAst ast) {
+	public BasicBlock visit(SwitchStatementAst ast) {
 		throw new UnsupportedOperationException("TransformProgramVisitor does not support switch statements.");
 	}
 
 	@Override
-	public Stmt visit(CaseStatementAst ast) {
+	public BasicBlock visit(CaseStatementAst ast) {
 		throw new UnsupportedOperationException("TransformProgramVisitor does not support case statements.");
 	}
 
 	@Override
-	public Stmt visit(DefaultStatementAst ast) {
+	public BasicBlock visit(DefaultStatementAst ast) {
 		throw new UnsupportedOperationException("TransformProgramVisitor does not support default statements.");
 	}
 
 	@Override
-	public Stmt visit(ContinueStatementAst ast) {
+	public BasicBlock visit(ContinueStatementAst ast) {
 		throw new UnsupportedOperationException("TransformProgramVisitor does not support continue statements.");
 	}
 
 	@Override
-	public Stmt visit(BreakStatementAst ast) {
+	public BasicBlock visit(BreakStatementAst ast) {
 		throw new UnsupportedOperationException("TransformProgramVisitor does not support break statements.");
 	}
 

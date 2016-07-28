@@ -1,5 +1,9 @@
 package hu.bme.mit.inf.ttmc.frontend.ir.node;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.frontend.ir.BasicBlock;
@@ -39,8 +43,8 @@ public class JumpIfNode implements TerminatorIrNode {
 	}
 
 	@Override
-	public BasicBlock getDefaultTarget() {
-		return this.elseTarget;
+	public List<BasicBlock> getTargets() {
+		return Arrays.asList(this.thenTarget, this.elseTarget);
 	}
 
 

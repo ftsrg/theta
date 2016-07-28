@@ -9,6 +9,7 @@ import java.util.Map;
 
 import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
+import hu.bme.mit.inf.ttmc.frontend.ir.node.ExitNode;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.IrNode;
 
 public class Function {
@@ -17,12 +18,16 @@ public class Function {
 	private final Type type;
 	private final List<VarDecl<? extends Type>> locals = new ArrayList<>();
 	private final Map<String, BasicBlock> blocks = new HashMap<>();
-	private final BasicBlock entry;
 
-	public Function(String name, BasicBlock entry, Type type) {
+	private BasicBlock entry;
+	private BasicBlock exit;
+
+	public Function(String name, Type type) {
 		this.name = name;
-		this.entry = entry;
 		this.type = type;
+
+		this.exit = new BasicBlock(name + "_exit", this);
+		this.exit.terminate(new ExitNode());
 	}
 
 	public void addLocalVariable(VarDecl<? extends Type> variable) {
@@ -34,27 +39,28 @@ public class Function {
 	}
 
 	public Collection<BasicBlock> getBlocks() {
-		List<BasicBlock> blocks = new ArrayList<>();
-
-		BasicBlock current = this.entry;
-		while (true) {
-			blocks.add(current);
-
-			if (current.getTerminator() == null)
-				break;
-
-			current = current.getTerminator().getDefaultTarget();
-		}
-
-		return Collections.unmodifiableCollection(blocks);
+		return this.blocks.values();
 	}
 
 	public String getName() {
 		return this.name;
 	}
 
+	public void setEntryBlock(BasicBlock entry) {
+		this.entry = entry;
+		this.addBasicBlock(entry);
+	}
+
 	public BasicBlock getEntryBlock() {
-		return entry;
+		return this.entry;
+	}
+
+	public void setExitBlock(BasicBlock exit) {
+		this.exit = exit;
+	}
+
+	public BasicBlock getExitBlock() {
+		return this.exit;
 	}
 
 

@@ -1,5 +1,8 @@
 package hu.bme.mit.inf.ttmc.frontend.ir.node;
 
+import java.util.Collections;
+import java.util.List;
+
 import hu.bme.mit.inf.ttmc.frontend.ir.BasicBlock;
 
 public class GotoNode implements TerminatorIrNode {
@@ -20,8 +23,8 @@ public class GotoNode implements TerminatorIrNode {
 	}
 
 	@Override
-	public BasicBlock getDefaultTarget() {
-		return this.target;
+	public List<BasicBlock> getTargets() {
+		return Collections.singletonList(this.target);
 	}
 
 }
