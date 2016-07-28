@@ -315,9 +315,18 @@ final class DBM {
 		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
 
-	public void norm(final Map<? super ClockDecl, ? extends Integer> bounds) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+	public void norm(final Map<? extends ClockDecl, ? extends Integer> bounds) {
+		final int[] k = new int[signature.size()];
+		for (int i = 0; i < signature.size(); i++) {
+			final ClockDecl clock = signature.getClock(i);
+			final Integer bound = bounds.get(clock);
+			if (bound != null) {
+				k[i] = bound;
+			} else {
+				k[i] = DiffBounds.getBound(Inf());
+			}
+		}
+		dbm.norm(k);
 	}
 
 	////
