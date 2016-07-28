@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.IntBinaryOperator;
+import java.util.stream.Collectors;
 
 import com.google.common.collect.Sets;
 
@@ -62,7 +63,7 @@ final class DBM {
 	}
 
 	private DBM(final DBM dbm) {
-		this.signature = new DBMSignature(dbm.signature);
+		this.signature = DBMSignature.copyOf(dbm.signature);
 		this.dbm = new SimpleDBM(dbm.dbm);
 	}
 
@@ -75,12 +76,12 @@ final class DBM {
 
 	public static DBM zero(final Collection<? extends ClockDecl> clocks) {
 		checkNotNull(clocks);
-		return new DBM(new DBMSignature(clocks), ZERO_DBM_VALUES);
+		return new DBM(DBMSignature.over(clocks), ZERO_DBM_VALUES);
 	}
 
 	public static DBM top(final Collection<? extends ClockDecl> clocks) {
 		checkNotNull(clocks);
-		return new DBM(new DBMSignature(clocks), TOP_DBM_VALUES);
+		return new DBM(DBMSignature.over(clocks), TOP_DBM_VALUES);
 	}
 
 	////
@@ -124,26 +125,32 @@ final class DBM {
 		checkNotNull(dbmB);
 		checkArgument(dbmA.getRelation(dbmB) == DBMRelation.DISJOINT);
 
-		final DBMSignature signature = DBMSignature.intersection(dbmA.signature, dbmB.signature);
+		final DBMSignature signature = interpolantSignature(dbmA, dbmB);
 		final BiFunction<ClockDecl, ClockDecl, Integer> values = (x, y) -> {
-			if (dbmB.constrains(x) && dbmB.constrains(y)) {
-				final int boundA = dbmA.get(x, y);
-				final int boundB = dbmB.get(x, y);
-				if (boundA < boundB) {
-					return boundA;
-				}
+			final int boundA = dbmA.get(x, y);
+			final int boundB = dbmB.get(x, y);
+			if (boundA < boundB) {
+				return boundA;
+			} else {
+				return defaultBound(x, y);
 			}
-			return defaultBound(x, y);
 		};
 
 		final DBM result = new DBM(signature, values);
 		result.close();
 
-		assert result.isInterpolantFor(dbmA, dbmB);
+		assert result.isInterpolant(dbmA, dbmB);
 		return result;
 	}
 
-	private boolean isInterpolantFor(final DBM dbmA, final DBM dbmB) {
+	private static DBMSignature interpolantSignature(final DBM dbmA, final DBM dbmB) {
+		final Set<ClockDecl> clocksConstrainedByBothDBMS = Sets
+				.intersection(dbmA.signature.asSet(), dbmB.signature.asSet()).stream()
+				.filter(c -> dbmA.constrains(c) && dbmB.constrains(c)).collect(Collectors.toSet());
+		return DBMSignature.over(clocksConstrainedByBothDBMS);
+	}
+
+	private boolean isInterpolant(final DBM dbmA, final DBM dbmB) {
 		if (this.getRelation(dbmA) != DBMRelation.GREATER) {
 			return false;
 		}
@@ -172,7 +179,7 @@ final class DBM {
 	private int getOrDefault(final ClockDecl x, final ClockDecl y) {
 		checkNotNull(x);
 		checkNotNull(y);
-		if (!signature.contains(x) || !signature.contains(y)) {
+		if (!tracks(x) || !tracks(y)) {
 			return defaultBound(x, y);
 		} else {
 			return get(x, y);
@@ -182,8 +189,8 @@ final class DBM {
 	private int get(final ClockDecl x, final ClockDecl y) {
 		checkNotNull(x);
 		checkNotNull(y);
-		checkArgument(signature.contains(x));
-		checkArgument(signature.contains(y));
+		checkArgument(tracks(x));
+		checkArgument(tracks(y));
 		final int i = signature.indexOf(x);
 		final int j = signature.indexOf(y);
 		return dbm.get(i, j);
@@ -328,9 +335,14 @@ final class DBM {
 
 	////
 
+	private boolean tracks(final ClockDecl clock) {
+		checkNotNull(clock);
+		return signature.contains(clock);
+	}
+
 	private boolean constrains(final ClockDecl clock) {
 		checkNotNull(clock);
-		return dbm.constrains(signature.indexOf(clock));
+		return this.tracks(clock) && dbm.constrains(signature.indexOf(clock));
 	}
 
 	private boolean isZeroClock(final ClockDecl clock) {

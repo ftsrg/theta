@@ -21,7 +21,7 @@ class DBMSignature implements Iterable<ClockDecl> {
 	private final ArrayList<ClockDecl> indexToClock;
 	private final HashMap<ClockDecl, Integer> clockToIndex;
 
-	DBMSignature(final Collection<? extends ClockDecl> clocks) {
+	private DBMSignature(final Collection<? extends ClockDecl> clocks) {
 		checkNotNull(clocks);
 
 		indexToClock = new ArrayList<>(clocks.size());
@@ -36,10 +36,20 @@ class DBMSignature implements Iterable<ClockDecl> {
 		}
 	}
 
-	DBMSignature(final DBMSignature signature) {
+	private DBMSignature(final DBMSignature signature) {
 		checkNotNull(signature);
 		indexToClock = new ArrayList<>(signature.indexToClock);
 		clockToIndex = new HashMap<>(signature.clockToIndex);
+	}
+
+	////
+
+	static DBMSignature over(final Collection<? extends ClockDecl> clocks) {
+		return new DBMSignature(clocks);
+	}
+
+	static DBMSignature copyOf(final DBMSignature signature) {
+		return new DBMSignature(signature);
 	}
 
 	////
