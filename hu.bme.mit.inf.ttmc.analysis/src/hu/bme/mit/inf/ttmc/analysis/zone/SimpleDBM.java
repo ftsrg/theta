@@ -117,7 +117,7 @@ final class SimpleDBM {
 		checkArgument(isClock(x));
 		checkArgument(isClock(y));
 
-		if (add(matrix.get(y, x), b) < 0) {
+		if (!isSatisfied(x, y, b)) {
 			matrix.set(0, 0, Leq(-1));
 
 		} else if (b < matrix.get(x, y)) {
@@ -207,16 +207,20 @@ final class SimpleDBM {
 	}
 
 	void close() {
-		if (isConsistent()) {
-			for (int k = 0; k <= nClocks; k++) {
-				for (int i = 0; i <= nClocks; i++) {
-					for (int j = 0; j <= nClocks; j++) {
-						matrix.set(i, j, min(matrix.get(i, j), add(matrix.get(i, k), matrix.get(k, j))));
+		for (int k = 0; k <= nClocks; k++) {
+			for (int i = 0; i <= nClocks; i++) {
+				for (int j = 0; j <= nClocks; j++) {
+					final int newBound = min(matrix.get(i, j), add(matrix.get(i, k), matrix.get(k, j)));
+					if (i == j && newBound < Leq(0)) {
+						matrix.set(0, 0, Leq(-1));
+						return;
+					} else {
+						matrix.set(i, j, newBound);
 					}
 				}
 			}
-			assert isClosed();
 		}
+		assert isClosed();
 	}
 
 	private boolean isClosed() {
