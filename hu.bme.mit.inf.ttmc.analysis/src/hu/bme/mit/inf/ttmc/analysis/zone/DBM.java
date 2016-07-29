@@ -5,6 +5,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.inf.ttmc.analysis.zone.DiffBounds.Inf;
 import static hu.bme.mit.inf.ttmc.analysis.zone.DiffBounds.Leq;
 import static hu.bme.mit.inf.ttmc.analysis.zone.DiffBounds.Lt;
+import static hu.bme.mit.inf.ttmc.analysis.zone.DiffBounds.asString;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 
@@ -343,8 +344,35 @@ final class DBM {
 	////
 
 	@Override
+	public int hashCode() {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+	}
+
+	@Override
 	public String toString() {
-		return dbm.toString();
+		final StringBuilder sb = new StringBuilder();
+
+		sb.append(String.format("%-12s", ""));
+		for (final ClockDecl clock : signature) {
+			sb.append(String.format("%-12s", clock.getName()));
+		}
+		sb.append(System.lineSeparator());
+
+		for (final ClockDecl x : signature) {
+			sb.append(String.format("%-12s", x.getName()));
+			for (final ClockDecl y : signature) {
+				sb.append(String.format("%-12s", asString(get(x, y))));
+			}
+			sb.append(System.lineSeparator());
+		}
+		return sb.toString();
 	}
 
 	////
