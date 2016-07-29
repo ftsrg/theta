@@ -239,6 +239,18 @@ final class SimpleDBM {
 	////
 
 	@Override
+	public int hashCode() {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+	}
+
+	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
 		for (int i = 0; i <= nClocks; i++) {
