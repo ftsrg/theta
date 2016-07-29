@@ -108,7 +108,6 @@ public final class FischerTCFA {
 		edge4.getStmts().add(Assume(Neq(lock, i)));
 
 		final TCFAEdge edge5 = tcfa.createEdge(l3, l0);
-		edge5.getStmts().add(Assign(cx, zero));
 		edge5.getStmts().add(Assign(vlock, zero));
 	}
 
