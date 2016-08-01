@@ -3,15 +3,13 @@ package hu.bme.mit.inf.ttmc.analysis.tcfa.expl;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Collection;
-import java.util.Collections;
 
 import com.google.common.collect.ImmutableSet;
 
+import hu.bme.mit.inf.ttmc.analysis.TransferFunction;
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplPrecision;
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplState;
-import hu.bme.mit.inf.ttmc.analysis.tcfa.AbstractTCFATransferFunction;
-import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAAction.TCFADelayAction;
-import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAAction.TCFADiscreteAction;
+import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAAction;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.expr.impl.Exprs;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
@@ -22,7 +20,7 @@ import hu.bme.mit.inf.ttmc.formalism.utils.StmtUnroller.StmtToExprResult;
 import hu.bme.mit.inf.ttmc.formalism.utils.VarIndexes;
 import hu.bme.mit.inf.ttmc.solver.Solver;
 
-final class TCFAExplTransferFunction extends AbstractTCFATransferFunction<ExplState, ExplPrecision> {
+final class TCFAExplTransferFunction implements TransferFunction<ExplState, TCFAAction, ExplPrecision> {
 
 	private final Solver solver;
 
@@ -31,13 +29,7 @@ final class TCFAExplTransferFunction extends AbstractTCFATransferFunction<ExplSt
 	}
 
 	@Override
-	protected Collection<? extends ExplState> succStatesForDelayTrans(final ExplState state,
-			final TCFADelayAction action, final ExplPrecision precision) {
-		return Collections.singleton(state);
-	}
-
-	@Override
-	protected Collection<ExplState> succStatesForDiscreteTrans(final ExplState state, final TCFADiscreteAction action,
+	public Collection<ExplState> getSuccStates(final ExplState state, final TCFAAction action,
 			final ExplPrecision precision) {
 
 		final ImmutableSet.Builder<ExplState> builder = ImmutableSet.builder();

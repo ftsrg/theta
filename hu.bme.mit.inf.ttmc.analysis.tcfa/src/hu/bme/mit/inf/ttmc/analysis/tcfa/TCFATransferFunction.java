@@ -9,11 +9,10 @@ import java.util.Collection;
 import hu.bme.mit.inf.ttmc.analysis.Precision;
 import hu.bme.mit.inf.ttmc.analysis.State;
 import hu.bme.mit.inf.ttmc.analysis.TransferFunction;
-import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAAction.TCFADelayAction;
-import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAAction.TCFADiscreteAction;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFAEdge;
 
-class TCFATransferFunction<S extends State, P extends Precision> extends AbstractTCFATransferFunction<TCFAState<S>, P> {
+class TCFATransferFunction<S extends State, P extends Precision>
+		implements TransferFunction<TCFAState<S>, TCFAAction, P> {
 
 	private final TransferFunction<S, TCFAAction, P> transferFunction;
 
@@ -22,28 +21,12 @@ class TCFATransferFunction<S extends State, P extends Precision> extends Abstrac
 	}
 
 	@Override
-	protected Collection<TCFAState<S>> succStatesForDelayTrans(final TCFAState<S> state, final TCFADelayAction action,
+	public Collection<? extends TCFAState<S>> getSuccStates(final TCFAState<S> state, final TCFAAction action,
 			final P precision) {
-		final Collection<TCFAState<S>> succStates = new ArrayList<>();
-
-		final Collection<? extends S> subSuccStates = transferFunction.getSuccStates(state.getState(), action,
-				precision);
-		for (final S subSuccState : subSuccStates) {
-			final TCFAState<S> succState = TCFAState.create(state.getLoc(), subSuccState);
-			succStates.add(succState);
-		}
-
-		return succStates;
-	}
-
-	@Override
-	protected Collection<TCFAState<S>> succStatesForDiscreteTrans(final TCFAState<S> state,
-			final TCFADiscreteAction action, final P precision) {
-		final Collection<TCFAState<S>> succStates = new ArrayList<>();
-
 		final TCFAEdge edge = action.getEdge();
-
 		checkArgument(state.getLoc().getOutEdges().contains(edge));
+
+		final Collection<TCFAState<S>> succStates = new ArrayList<>();
 
 		final Collection<? extends S> subSuccStates = transferFunction.getSuccStates(state.getState(), action,
 				precision);

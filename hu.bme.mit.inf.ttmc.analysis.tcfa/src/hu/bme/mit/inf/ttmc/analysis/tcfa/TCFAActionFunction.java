@@ -24,11 +24,7 @@ class TCFAActionFunction implements ActionFunction<TCFAState<?>, TCFAAction> {
 		final TCFALoc loc = state.getLoc();
 
 		for (final TCFAEdge outEdge : loc.getOutEdges()) {
-			tcfaActions.add(TCFAAction.discrete(outEdge));
-		}
-
-		if (!loc.isUrgent()) {
-			tcfaActions.add(TCFAAction.delay(loc));
+			tcfaActions.add(new TCFAAction(outEdge));
 		}
 
 		return tcfaActions;
