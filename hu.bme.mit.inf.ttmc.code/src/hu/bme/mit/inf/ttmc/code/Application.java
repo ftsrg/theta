@@ -15,33 +15,17 @@ import hu.bme.mit.inf.ttmc.code.ast.utils.AstPrinter;
 import hu.bme.mit.inf.ttmc.code.visitor.PrintCodeAstVisitor;
 import hu.bme.mit.inf.ttmc.formalism.cfa.CFA;
 import hu.bme.mit.inf.ttmc.formalism.utils.impl.CFAPrinter;
+import hu.bme.mit.inf.ttmc.frontend.ir.GlobalContext;
+import hu.bme.mit.inf.ttmc.frontend.ir.utils.IrPrinter;
 
 class Application {
 
 	public static void main(String[] args)
 			throws CoreException, FileNotFoundException, IOException, InterruptedException {
 
-		TranslationUnitAst root = Compiler.createAst("simple.c");
+		GlobalContext context = Compiler.compile("hello.c");
 
-		graphvizOutput("ast_custom", AstPrinter.toGraphvizString(root));
-
-		//CFA cfa = Compiler.createSBE("simple.c");
-
-		TranslationUnitAst newRoot = Compiler.createSimplifiedAst("simple.c");
-		graphvizOutput("ast_trans", AstPrinter.toGraphvizString(newRoot));
-
-		PrintCodeAstVisitor printer = new PrintCodeAstVisitor();
-		System.out.println(newRoot.accept(printer));
-
-		//System.out.println(CFAPrinter.toGraphvizSting(cfa))
-
-		//System.out.println(Compiler.createStmts("simple.c").get(0).getStmt().get());
-
-		//List<CFA> cfas = Compiler.createSBE("simple.c");
-
-		//for (CFA cfa : cfas) {
-		//	System.out.println(CFAPrinter.toGraphvizSting(cfa));
-		//}
+		context.functions().forEach(s -> System.out.println(IrPrinter.toGraphvizString(s)));
 	}
 
 	private static int nodeId = 0;

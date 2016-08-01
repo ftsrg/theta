@@ -7,7 +7,7 @@ import hu.bme.mit.inf.ttmc.frontend.ir.BasicBlock;
 
 public class GotoNode implements TerminatorIrNode {
 
-	private final BasicBlock target;
+	private BasicBlock target;
 
 	public GotoNode(BasicBlock target) {
 		this.target = target;
@@ -15,6 +15,10 @@ public class GotoNode implements TerminatorIrNode {
 
 	public BasicBlock getTarget() {
 		return target;
+	}
+
+	public void setTarget(BasicBlock target) {
+		this.target = target;
 	}
 
 	@Override

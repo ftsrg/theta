@@ -2,7 +2,6 @@ package hu.bme.mit.inf.ttmc.frontend.ir;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -10,7 +9,6 @@ import java.util.Map;
 import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.ExitNode;
-import hu.bme.mit.inf.ttmc.frontend.ir.node.IrNode;
 
 public class Function {
 
@@ -28,6 +26,13 @@ public class Function {
 
 		this.exit = new BasicBlock(name + "_exit", this);
 		this.exit.terminate(new ExitNode());
+	}
+
+	public BasicBlock createBlock(String name) {
+		BasicBlock bb = new BasicBlock(name, this);
+		this.addBasicBlock(bb);
+
+		return bb;
 	}
 
 	public void addLocalVariable(VarDecl<? extends Type> variable) {

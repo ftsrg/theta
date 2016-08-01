@@ -1,5 +1,7 @@
 package hu.bme.mit.inf.ttmc.frontend.ir;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -13,6 +15,10 @@ public class GlobalContext {
 
 	public void addFunction(Function func) {
 		this.functions.put(func.getName(), func);
+	}
+
+	public Collection<Function> functions() {
+		return Collections.unmodifiableCollection(functions.values());
 	}
 
 }

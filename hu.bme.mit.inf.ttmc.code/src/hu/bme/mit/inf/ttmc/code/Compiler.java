@@ -19,11 +19,34 @@ import hu.bme.mit.inf.ttmc.code.ast.TranslationUnitAst;
 import hu.bme.mit.inf.ttmc.code.simplifier.AstSimplifier;
 import hu.bme.mit.inf.ttmc.code.visitor.StmtTransformProgramVisitor;
 import hu.bme.mit.inf.ttmc.core.type.Type;
+import hu.bme.mit.inf.ttmc.core.type.impl.Types;
 import hu.bme.mit.inf.ttmc.formalism.cfa.CFA;
 import hu.bme.mit.inf.ttmc.formalism.cfa.CFACreator;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.ProcDecl;
+import hu.bme.mit.inf.ttmc.frontend.ir.Function;
+import hu.bme.mit.inf.ttmc.frontend.ir.GlobalContext;
+import hu.bme.mit.inf.ttmc.frontend.ir.utils.IrPrinter;
 
 public class Compiler {
+
+	public static GlobalContext compile(String filename) {
+		TranslationUnitAst root = createSimplifiedAst(filename);
+		GlobalContext context = new GlobalContext();
+
+		root.getDeclarations().forEach(decl -> {
+			if (decl instanceof FunctionDefinitionAst) {
+				FunctionDefinitionAst funcAst = (FunctionDefinitionAst) decl;
+				Function func = new Function(funcAst.getName(), Types.Int());
+
+				IrCodeGenerator codegen = new IrCodeGenerator(func);
+				codegen.generate(funcAst);
+
+				context.addFunction(func);
+			}
+		});
+
+		return context;
+	}
 
 	/*
 	public static List<CFA> createLBE(String filename)

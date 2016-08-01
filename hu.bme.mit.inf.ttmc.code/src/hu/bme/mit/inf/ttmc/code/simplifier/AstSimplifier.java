@@ -14,26 +14,26 @@ import hu.bme.mit.inf.ttmc.code.simplifier.visitor.UnrollDeclarationsVisitor;
 public class AstSimplifier {
 
 	  private static SimplifyAstVisitor[] visitors = new SimplifyAstVisitor[] {
-		new ForToWhileStatementVisitor(),
-		new SwitchToIfElseVisitor(),
+//		new ForToWhileStatementVisitor(),
+//		new SwitchToIfElseVisitor(),
 		new UnrollDeclarationsVisitor(),
-		new BreakContinueToGotoVisitor(), 
-		new UnaryExpressionUnrollVisitor(),
+//		new BreakContinueToGotoVisitor(),
+//		new UnaryExpressionUnrollVisitor(),
 		new CombinedAssignUnrollVisitor(),
-		new ExpressionListUnrollVisitor(),
-		new AssignmentUnrollVisitor(),
-		new ScopeResolveVisitor()
+//		new ExpressionListUnrollVisitor(),
+//		new AssignmentUnrollVisitor(),
+//		new ScopeResolveVisitor()
 	};
-	
-	public static TranslationUnitAst simplify(TranslationUnitAst ast) {		
+
+	public static TranslationUnitAst simplify(TranslationUnitAst ast) {
 		TranslationUnitAst prev = ast;
-		
+
 		for (SimplifyAstVisitor visitor : visitors) {
 			ast = prev.accept(visitor);
 			prev = ast;
 		}
-		
+
 		return ast;
 	}
-	
+
 }

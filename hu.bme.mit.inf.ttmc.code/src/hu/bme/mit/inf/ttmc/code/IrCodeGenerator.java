@@ -1,4 +1,4 @@
-package hu.bme.mit.inf.ttmc.code.visitor;
+package hu.bme.mit.inf.ttmc.code;
 
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Add;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.And;
@@ -17,18 +17,15 @@ import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Not;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Or;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Sub;
 import static hu.bme.mit.inf.ttmc.core.type.impl.Types.Int;
-import static hu.bme.mit.inf.ttmc.formalism.common.decl.impl.Decls2.Proc;
+import static hu.bme.mit.inf.ttmc.formalism.common.decl.impl.Decls2.Var;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-
-import hu.bme.mit.inf.ttmc.code.TransformException;
+import hu.bme.mit.inf.ttmc.code.ast.AssignmentInitializerAst;
 import hu.bme.mit.inf.ttmc.code.ast.BinaryExpressionAst;
 import hu.bme.mit.inf.ttmc.code.ast.BreakStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.CaseStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.CompoundStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.ContinueStatementAst;
+import hu.bme.mit.inf.ttmc.code.ast.DeclarationAst;
 import hu.bme.mit.inf.ttmc.code.ast.DeclarationStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.DefaultStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.DoStatementAst;
@@ -37,7 +34,6 @@ import hu.bme.mit.inf.ttmc.code.ast.ExpressionListAst;
 import hu.bme.mit.inf.ttmc.code.ast.ExpressionStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.ForStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.FunctionCallExpressionAst;
-import hu.bme.mit.inf.ttmc.code.ast.FunctionDeclaratorAst;
 import hu.bme.mit.inf.ttmc.code.ast.FunctionDefinitionAst;
 import hu.bme.mit.inf.ttmc.code.ast.GotoStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.IfStatementAst;
@@ -47,13 +43,14 @@ import hu.bme.mit.inf.ttmc.code.ast.LiteralExpressionAst;
 import hu.bme.mit.inf.ttmc.code.ast.NameExpressionAst;
 import hu.bme.mit.inf.ttmc.code.ast.NullStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.ReturnStatementAst;
+import hu.bme.mit.inf.ttmc.code.ast.StatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.SwitchStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.TranslationUnitAst;
 import hu.bme.mit.inf.ttmc.code.ast.UnaryExpressionAst;
 import hu.bme.mit.inf.ttmc.code.ast.VarDeclarationAst;
 import hu.bme.mit.inf.ttmc.code.ast.WhileStatementAst;
+import hu.bme.mit.inf.ttmc.code.ast.BinaryExpressionAst.Operator;
 import hu.bme.mit.inf.ttmc.code.ast.visitor.DeclarationVisitor;
-import hu.bme.mit.inf.ttmc.code.ast.visitor.DeclaratorVisitor;
 import hu.bme.mit.inf.ttmc.code.ast.visitor.ExpressionVisitor;
 import hu.bme.mit.inf.ttmc.code.ast.visitor.StatementVisitor;
 import hu.bme.mit.inf.ttmc.code.ast.visitor.TranslationUnitVisitor;
@@ -70,20 +67,61 @@ import hu.bme.mit.inf.ttmc.core.type.closure.ClosedUnderNeg;
 import hu.bme.mit.inf.ttmc.core.type.closure.ClosedUnderSub;
 import hu.bme.mit.inf.ttmc.core.utils.impl.ExprUtils;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.ProcDecl;
+import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
+import hu.bme.mit.inf.ttmc.formalism.common.expr.VarRefExpr;
+import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
 import hu.bme.mit.inf.ttmc.frontend.ir.BasicBlock;
 import hu.bme.mit.inf.ttmc.frontend.ir.Function;
 import hu.bme.mit.inf.ttmc.frontend.ir.GlobalContext;
+import hu.bme.mit.inf.ttmc.frontend.ir.InstructionBuilder;
+import hu.bme.mit.inf.ttmc.frontend.ir.node.GotoNode;
 
-public class TransformProgramVisitor implements
+import static hu.bme.mit.inf.ttmc.frontend.ir.node.NodeFactory.*;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+
+public class IrCodeGenerator implements
 	ExpressionVisitor<Expr<? extends Type>>,
-	StatementVisitor<BasicBlock>,
-	DeclarationVisitor<Decl<? extends Type, ?>>,
-	DeclaratorVisitor<Decl<? extends Type, ?>>,
-	TranslationUnitVisitor<GlobalContext>
+	StatementVisitor<Void>
 {
 
 	private SymbolTable<Decl<? extends Type, ?>> symbols = new SymbolTable<>();
-	private Map<ProcDecl<? extends Type>, Function> functionTable = new HashMap<>();
+	private InstructionBuilder builder;
+	private final Map<String, BasicBlock> labels = new HashMap<>();
+	private final Map<String, BasicBlock> gotos = new HashMap<>();
+
+	public IrCodeGenerator(Function function) {
+		this.builder = new InstructionBuilder(function);
+		BasicBlock entry = this.builder.createBlock("entry");
+
+		function.setEntryBlock(entry);
+
+		this.builder.setInsertPoint(entry);
+	}
+
+	public void generate(FunctionDefinitionAst ast) {
+		ast.getBody().accept(this);
+		this.resolveGotos();
+	}
+
+	public void resolveGotos() {
+		this.gotos.forEach((String label, BasicBlock source) -> {
+			BasicBlock target = this.labels.get(label);
+			if (null == target) {
+				throw new IllegalArgumentException("Unknown label.");
+			}
+
+			if (source.getTerminator() instanceof GotoNode) {
+				GotoNode gotoNode = (GotoNode) source.getTerminator();
+				gotoNode.setTarget(target);
+			}
+
+		});
+	}
 
 	@Override
 	public Expr<? extends Type> visit(BinaryExpressionAst ast) {
@@ -179,138 +217,212 @@ public class TransformProgramVisitor implements
 		return Int(ast.getValue());
 	}
 
-
 	@Override
-	public Decl<? extends Type, ?> visit(FunctionDefinitionAst ast) {
-		ProcDecl<? extends Type> proc = Proc(ast.getName(), Collections.emptyList(), Int());
-		Function func = new Function(ast.getName(), Int());
-		this.functionTable.put(proc, func);
-
-		BasicBlock entry = func.createBlock("entry");
-
-
-
-		func.setEntryBlock(entry);
-
-		return proc;
+	public Expr<? extends Type> visit(ExpressionListAst ast) {
+		throw new UnsupportedOperationException("This code should not be reachble.");
 	}
 
 	@Override
-	public BasicBlock visit(IfStatementAst ast) {
+	public Void visit(IfStatementAst ast) {
+		Expr<? extends BoolType> cond = ExprUtils.cast(ast.getCondition().accept(this), BoolType.class);
+		StatementAst then = ast.getThen();
+		StatementAst elze = ast.getElse();
+
+		// The original block
+		BasicBlock branchBlock = this.builder.getInsertPoint();
+
+		// The new blocks
+		BasicBlock mergeBlock = this.builder.createBlock("merge");
+		BasicBlock thenBlock = this.builder.createBlock("then");
+		BasicBlock elzeBlock = this.builder.createBlock("else");
+
+		this.builder.setInsertPoint(thenBlock);
+		then.accept(this);
+		this.builder.terminateInsertPoint(Goto(mergeBlock));
+
+		this.builder.setInsertPoint(elzeBlock);
+		if (elze != null) {
+			elze.accept(this);
+		}
+		this.builder.terminateInsertPoint(Goto(mergeBlock));
+
+		this.builder.setInsertPoint(branchBlock);
+		this.builder.terminateInsertPoint(JumpIf(cond, thenBlock, elzeBlock));
+
+		this.builder.setInsertPoint(mergeBlock);
+
 		return null;
 	}
 
 	@Override
-	public BasicBlock visit(DoStatementAst ast) {
-		// TODO Auto-generated method stub
+	public Void visit(CompoundStatementAst ast) {
+		ast.getStatements().forEach(stmt -> stmt.accept(this));
+
 		return null;
 	}
 
 	@Override
-	public BasicBlock visit(CompoundStatementAst ast) {
+	public Void visit(DeclarationStatementAst ast) {
+		DeclarationAst decl = ast.getDeclaration();
+
+		if (decl instanceof VarDeclarationAst) {
+			VarDeclarationAst varDecl = (VarDeclarationAst) decl;
+
+			// Every declaration contains a single declarator because of the earlier transformations
+			InitDeclaratorAst declarator = (InitDeclaratorAst) varDecl.getDeclarators().get(0); // TODO
+			AssignmentInitializerAst initializer = (AssignmentInitializerAst) declarator.getInitializer();
+
+			String name = declarator.getName();
+
+			VarDecl<? extends Type> var = Var(name, Int());
+			this.symbols.put(name, var);
+
+			if (null != initializer) {
+				Expr<? extends Type> initExpr = initializer.getExpression().accept(this);
+				this.builder.insertNode(Assign(var, ExprUtils.cast(initExpr, var.getType().getClass())));
+			}
+		}
+
 		return null;
 	}
 
 	@Override
-	public BasicBlock visit(DeclarationStatementAst ast) {
-		// TODO Auto-generated method stub
+	public Void visit(ReturnStatementAst ast) {
+		this.builder.terminateInsertPoint(Goto(this.builder.getExitBlock()));
+
 		return null;
 	}
 
 	@Override
-	public BasicBlock visit(ReturnStatementAst ast) {
-		// TODO Auto-generated method stub
+	public Void visit(ExpressionStatementAst ast) {
+		ExpressionAst exprAst = ast.getExpression();
+
+		if (exprAst instanceof BinaryExpressionAst && ((BinaryExpressionAst) exprAst).getOperator() == Operator.OP_ASSIGN) {
+			BinaryExpressionAst binary = (BinaryExpressionAst) exprAst;
+
+			Expr<? extends Type> lhs = binary.getLeft().accept(this);
+			Expr<?> rhs = binary.getRight().accept(this);
+
+			if (!(lhs instanceof VarRefExpr<?>)) {
+				throw new RuntimeException("Assignment lvalue can only be a variable reference.");
+			}
+
+			VarRefExpr<Type> left = (VarRefExpr<Type>) lhs;
+
+			this.builder.insertNode(Assign(left.getDecl(), rhs));
+		}
+
 		return null;
 	}
 
 	@Override
-	public BasicBlock visit(ExpressionStatementAst ast) {
-		// TODO Auto-generated method stub
+	public Void visit(WhileStatementAst ast) {
+		Expr<? extends BoolType> cond = ExprUtils.cast(ast.getCondition().accept(this), BoolType.class);
+		StatementAst body = ast.getBody();
+
+		// The original block
+		BasicBlock branchBlock = this.builder.getInsertPoint();
+
+		// The new blocks
+		BasicBlock loopBlock = this.builder.createBlock("loop");
+		BasicBlock bodyBlock = this.builder.createBlock("body");
+		BasicBlock endBlock  = this.builder.createBlock("end");
+
+		this.builder.setInsertPoint(loopBlock);
+		this.builder.terminateInsertPoint(JumpIf(cond, bodyBlock, endBlock));
+
+		this.builder.setInsertPoint(bodyBlock);
+		body.accept(this);
+		this.builder.terminateInsertPoint(Goto(loopBlock));
+
+		this.builder.setInsertPoint(branchBlock);
+		this.builder.terminateInsertPoint(Goto(loopBlock));
+
+		this.builder.setInsertPoint(endBlock);
+
 		return null;
 	}
 
 	@Override
-	public BasicBlock visit(WhileStatementAst ast) {
-		// TODO Auto-generated method stub
+	public Void visit(DoStatementAst ast) {
+		Expr<? extends BoolType> cond = ExprUtils.cast(ast.getCondition().accept(this), BoolType.class);
+		StatementAst body = ast.getBody();
+
+		// The original block
+		BasicBlock branchBlock = this.builder.getInsertPoint();
+
+		// The new blocks
+		BasicBlock loopBlock = this.builder.createBlock("loop");
+		BasicBlock endBlock  = this.builder.createBlock("end");
+
+		this.builder.setInsertPoint(loopBlock);
+		body.accept(this);
+		this.builder.terminateInsertPoint(JumpIf(cond, loopBlock, endBlock));
+
+		this.builder.setInsertPoint(branchBlock);
+		this.builder.terminateInsertPoint(Goto(loopBlock));
+
+		this.builder.setInsertPoint(endBlock);
 		return null;
 	}
 
 	@Override
-	public BasicBlock visit(GotoStatementAst ast) {
-		// TODO Auto-generated method stub
+	public Void visit(GotoStatementAst ast) {
+		// terminate the current block with a temporary node
+		this.builder.terminateInsertPoint(Goto(this.builder.getExitBlock()));
+		this.gotos.put(ast.getLabel(), this.builder.getInsertPoint());
+
+		BasicBlock bb = this.builder.createBlock("after_" + ast.getLabel());
+
+		this.builder.setInsertPoint(bb);
+
 		return null;
 	}
 
 	@Override
-	public BasicBlock visit(LabeledStatementAst ast) {
-		// TODO Auto-generated method stub
+	public Void visit(LabeledStatementAst ast) {
+		BasicBlock bb = this.builder.createBlock(ast.getLabel());
+
+		this.labels.put(ast.getLabel(), bb);
+		this.builder.terminateInsertPoint(Goto(bb));
+		this.builder.setInsertPoint(bb);
+
 		return null;
 	}
 
 	@Override
-	public BasicBlock visit(NullStatementAst ast) {
-		// TODO Auto-generated method stub
+	public Void visit(NullStatementAst ast) {
 		return null;
 	}
-	@Override
-	public GlobalContext visit(TranslationUnitAst ast) {
-		GlobalContext context = new GlobalContext();
-
-		// Add functions to the context
-		ast.getDeclarations().stream().filter(s -> s instanceof FunctionDefinitionAst).map(s -> (FunctionDefinitionAst) s).forEach(s -> {
-			context.addFunction(this.functionTable.get(s.accept(this)));
-		});
-
-		return context;
-	}
 
 	@Override
-	public Decl<? extends Type, ?> visit(VarDeclarationAst ast) {
-		throw new RuntimeException("This code should not be reachable");
-	}
-
-	@Override
-	public BasicBlock visit(ForStatementAst ast) {
+	public Void visit(ForStatementAst ast) {
 		throw new UnsupportedOperationException("TransformProgramVisitor does not support for loops.");
 	}
 
 	@Override
-	public BasicBlock visit(SwitchStatementAst ast) {
+	public Void visit(SwitchStatementAst ast) {
 		throw new UnsupportedOperationException("TransformProgramVisitor does not support switch statements.");
 	}
 
 	@Override
-	public BasicBlock visit(CaseStatementAst ast) {
+	public Void visit(CaseStatementAst ast) {
 		throw new UnsupportedOperationException("TransformProgramVisitor does not support case statements.");
 	}
 
 	@Override
-	public BasicBlock visit(DefaultStatementAst ast) {
+	public Void visit(DefaultStatementAst ast) {
 		throw new UnsupportedOperationException("TransformProgramVisitor does not support default statements.");
 	}
 
 	@Override
-	public BasicBlock visit(ContinueStatementAst ast) {
+	public Void visit(ContinueStatementAst ast) {
 		throw new UnsupportedOperationException("TransformProgramVisitor does not support continue statements.");
 	}
 
 	@Override
-	public BasicBlock visit(BreakStatementAst ast) {
+	public Void visit(BreakStatementAst ast) {
 		throw new UnsupportedOperationException("TransformProgramVisitor does not support break statements.");
 	}
 
-	@Override
-	public Expr<? extends Type> visit(ExpressionListAst ast) {
-		throw new UnsupportedOperationException("TransformProgramVisitor does not support expression lists.");
-	}
-
-	@Override
-	public Decl<? extends Type, ?> visit(InitDeclaratorAst ast) {
-		throw new UnsupportedOperationException("This code should not be reachable.");
-	}
-
-	@Override
-	public Decl<? extends Type, ?> visit(FunctionDeclaratorAst ast) {
-		throw new UnsupportedOperationException("This code should not be reachable.");
-	}
 }
