@@ -7,6 +7,10 @@ import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFAEdge;
 
 public final class TCFANetworkEdge implements TCFAEdge {
 
+	private static final int HASH_SEED = 9161;
+
+	private volatile int hashCode;
+
 	private final TCFANetworkLoc source;
 	private final TCFANetworkLoc target;
 	private final int index;
@@ -46,8 +50,16 @@ public final class TCFANetworkEdge implements TCFAEdge {
 
 	@Override
 	public int hashCode() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		int result = hashCode;
+		if (result == 0) {
+			result = HASH_SEED;
+			result = 31 * result + source.hashCode();
+			result = 31 * result + target.hashCode();
+			result = 31 * result + index;
+			result = 31 * result + edge.hashCode();
+			hashCode = result;
+		}
+		return result;
 	}
 
 	@Override
