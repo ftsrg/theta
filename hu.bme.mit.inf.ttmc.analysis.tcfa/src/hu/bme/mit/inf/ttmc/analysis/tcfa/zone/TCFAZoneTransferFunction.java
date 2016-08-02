@@ -25,24 +25,38 @@ final class TCFAZoneTransferFunction implements TransferFunction<ZoneState, TCFA
 	@Override
 	public Collection<ZoneState> getSuccStates(final ZoneState state, final TCFAAction action,
 			final ZonePrecision precision) {
-		final ZoneState.ZoneOperations succStateBuilder = state.transform();
-
-		succStateBuilder.up();
-		for (final ClockOp op : action.getClockOps()) {
-			succStateBuilder.execute(op);
-		}
-		for (final ClockConstr invar : action.getTargetClockInvars()) {
-			succStateBuilder.and(invar);
-		}
-		succStateBuilder.norm(precision.asMap());
-
-		final ZoneState succState = succStateBuilder.done();
+		final ZoneState succState = post(state, action, precision);
 
 		if (succState.isBottom()) {
 			return ImmutableSet.of();
 		} else {
 			return ImmutableSet.of(succState);
 		}
+	}
+
+	ZoneState post(final ZoneState state, final TCFAAction action, final ZonePrecision precision) {
+		final ZoneState.ZoneOperations succStateBuilder = state.transform();
+
+		if (!action.getEdge().getSource().isUrgent()) {
+			succStateBuilder.up();
+		}
+
+		for (final ClockConstr invar : action.getSourceClockInvars()) {
+			succStateBuilder.and(invar);
+		}
+
+		for (final ClockOp op : action.getClockOps()) {
+			succStateBuilder.execute(op);
+
+		}
+
+		for (final ClockConstr invar : action.getTargetClockInvars()) {
+			succStateBuilder.and(invar);
+		}
+
+		succStateBuilder.norm(precision.asMap());
+
+		return succStateBuilder.done();
 	}
 
 }
