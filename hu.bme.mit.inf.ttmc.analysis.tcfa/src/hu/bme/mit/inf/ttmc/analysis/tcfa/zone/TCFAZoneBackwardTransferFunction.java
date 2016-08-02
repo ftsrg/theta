@@ -29,8 +29,18 @@ final class TCFAZoneBackwardTransferFunction implements TransferFunction<ZoneSta
 	}
 
 	@Override
-	public Collection<? extends ZoneState> getSuccStates(final ZoneState state, final TCFAAction action,
+	public Collection<ZoneState> getSuccStates(final ZoneState state, final TCFAAction action,
 			final ZonePrecision precision) {
+		final ZoneState succState = pre(state, action, precision);
+
+		if (succState.isBottom()) {
+			return ImmutableSet.of();
+		} else {
+			return ImmutableSet.of(succState);
+		}
+	}
+
+	ZoneState pre(final ZoneState state, final TCFAAction action, final ZonePrecision precision) {
 		final ZoneState.ZoneOperations prevStateBuilder = state.transform();
 
 		for (final ClockOp op : Lists.reverse(action.getClockOps())) {
@@ -40,24 +50,30 @@ final class TCFAZoneBackwardTransferFunction implements TransferFunction<ZoneSta
 				final int value = resetOp.getValue();
 				prevStateBuilder.and(Eq(clock, value));
 				prevStateBuilder.free(clock);
+
 			} else if (op instanceof GuardOp) {
 				prevStateBuilder.execute(op);
+
 			} else {
 				throw new AssertionError();
 			}
 		}
-		prevStateBuilder.down();
+
+		for (final ClockConstr invar : action.getTargetClockInvars()) {
+			prevStateBuilder.and(invar);
+		}
+
+		if (!action.getEdge().getSource().isUrgent()) {
+			prevStateBuilder.down();
+		}
+
 		for (final ClockConstr invar : action.getSourceClockInvars()) {
 			prevStateBuilder.and(invar);
 		}
-		prevStateBuilder.norm(precision.asMap());
-		final ZoneState succState = prevStateBuilder.done();
 
-		if (succState.isBottom()) {
-			return ImmutableSet.of();
-		} else {
-			return ImmutableSet.of(succState);
-		}
+		prevStateBuilder.norm(precision.asMap());
+
+		return prevStateBuilder.done();
 	}
 
 }
