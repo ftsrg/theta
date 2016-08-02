@@ -34,6 +34,10 @@ public final class ZoneState implements State {
 		return new ZoneState(DBM.top(clocks));
 	}
 
+	public static ZoneState bottom(final Collection<? extends ClockDecl> clocks) {
+		return new ZoneState(DBM.bottom(clocks));
+	}
+
 	public static ZoneState zero(final Collection<? extends ClockDecl> clocks) {
 		return new ZoneState(DBM.zero(clocks));
 	}

@@ -48,6 +48,7 @@ final class DBM {
 
 	private static final IntBinaryOperator ZERO_DBM_VALUES = (x, y) -> Leq(0);
 	private static final IntBinaryOperator TOP_DBM_VALUES = SimpleDBM::defaultBound;
+	private static final IntBinaryOperator BOTTOM_DBM_VALUES = (x, y) -> Leq(-1);
 
 	private final DBMSignature signature;
 	private final SimpleDBM dbm;
@@ -83,6 +84,11 @@ final class DBM {
 	public static DBM top(final Collection<? extends ClockDecl> clocks) {
 		checkNotNull(clocks);
 		return new DBM(DBMSignature.over(clocks), TOP_DBM_VALUES);
+	}
+
+	public static DBM bottom(final Collection<? extends ClockDecl> clocks) {
+		checkNotNull(clocks);
+		return new DBM(DBMSignature.over(clocks), BOTTOM_DBM_VALUES);
 	}
 
 	////
