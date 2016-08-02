@@ -7,6 +7,8 @@ import hu.bme.mit.inf.ttmc.frontend.ir.BasicBlock;
 
 public class ExitNode implements TerminatorIrNode {
 
+	private BasicBlock parent;
+
 	@Override
 	public String getLabel() {
 		return "exit";
@@ -15,6 +17,11 @@ public class ExitNode implements TerminatorIrNode {
 	@Override
 	public List<BasicBlock> getTargets() {
 		return Collections.emptyList();
+	}
+
+	@Override
+	public void setParentBlock(BasicBlock block) {
+		this.parent = block;
 	}
 
 }

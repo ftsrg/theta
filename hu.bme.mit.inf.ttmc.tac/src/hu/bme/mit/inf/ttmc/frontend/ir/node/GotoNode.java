@@ -8,6 +8,7 @@ import hu.bme.mit.inf.ttmc.frontend.ir.BasicBlock;
 public class GotoNode implements TerminatorIrNode {
 
 	private BasicBlock target;
+	private BasicBlock parent;
 
 	public GotoNode(BasicBlock target) {
 		this.target = target;
@@ -18,7 +19,9 @@ public class GotoNode implements TerminatorIrNode {
 	}
 
 	public void setTarget(BasicBlock target) {
+		this.target.removeParent(this.parent);
 		this.target = target;
+		this.target.addParent(this.parent);
 	}
 
 	@Override
@@ -29,6 +32,12 @@ public class GotoNode implements TerminatorIrNode {
 	@Override
 	public List<BasicBlock> getTargets() {
 		return Collections.singletonList(this.target);
+	}
+
+
+	@Override
+	public void setParentBlock(BasicBlock block) {
+		this.parent = block;
 	}
 
 }

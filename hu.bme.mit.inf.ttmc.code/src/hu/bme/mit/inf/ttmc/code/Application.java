@@ -23,7 +23,7 @@ class Application {
 	public static void main(String[] args)
 			throws CoreException, FileNotFoundException, IOException, InterruptedException {
 
-		GlobalContext context = Compiler.compile("hello.c");
+		GlobalContext context = Compiler.compile("all.c");
 
 		context.functions().forEach(s -> System.out.println(IrPrinter.toGraphvizString(s)));
 	}

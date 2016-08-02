@@ -10,6 +10,7 @@ import hu.bme.mit.inf.ttmc.frontend.ir.BasicBlock;
 public class ReturnNode implements TerminatorIrNode {
 
 	private Expr<? extends Type> expr;
+	private BasicBlock parent;
 
 	public ReturnNode(Expr<? extends Type> expr) {
 		this.expr = expr;
@@ -23,6 +24,11 @@ public class ReturnNode implements TerminatorIrNode {
 	@Override
 	public List<BasicBlock> getTargets() {
 		return Collections.emptyList();
+	}
+
+	@Override
+	public void setParentBlock(BasicBlock block) {
+		this.parent = block;
 	}
 
 }

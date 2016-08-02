@@ -73,6 +73,7 @@ public class BasicBlock {
 			s.addParent(this);
 			this.function.addBasicBlock(s);
 		});
+		this.terminator.setParentBlock(this);
 
 		this.isTerminated = true;
 	}
@@ -87,6 +88,7 @@ public class BasicBlock {
 			throw new RuntimeException("Cannot append to a terminated block.");
 
 		this.nodes.add(node);
+		node.setParentBlock(this);
 	}
 
 	/**
@@ -144,6 +146,15 @@ public class BasicBlock {
 	}
 
 	/**
+	 * Returns this block's node count
+	 *
+	 * @return The size of this block's instruction list
+	 */
+	public int countNodes() {
+		return this.nodes.size();
+	}
+
+	/**
 	 * Sets a block as a parent of this block
 	 *
 	 * @param block A block which has an edge into this block
@@ -165,6 +176,15 @@ public class BasicBlock {
 		sb.append(this.getTerminator().getLabel() + "\\n");
 
 		return sb.toString();
+	}
+
+//	@Override
+//	public String toString() {
+//		return this.getName();
+//	}
+
+	public void removeParent(BasicBlock parent) {
+		this.parents.remove(parent);
 	}
 
 

@@ -1,13 +1,16 @@
 package hu.bme.mit.inf.ttmc.frontend.ir;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
+import java.util.stream.Collectors;
 
 import hu.bme.mit.inf.ttmc.frontend.ir.node.GotoNode;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.IrNode;
+import hu.bme.mit.inf.ttmc.frontend.ir.node.JumpIfNode;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.NonTerminatorIrNode;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.TerminatorIrNode;
 
@@ -65,5 +68,7 @@ public class InstructionBuilder {
 		return this.function.getExitBlock();
 	}
 
-
+	public Function getFunction() {
+		return this.function;
+	}
 }

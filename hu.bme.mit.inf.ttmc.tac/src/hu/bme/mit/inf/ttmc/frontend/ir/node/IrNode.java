@@ -1,7 +1,11 @@
 package hu.bme.mit.inf.ttmc.frontend.ir.node;
 
+import hu.bme.mit.inf.ttmc.frontend.ir.BasicBlock;
+
 public interface IrNode {
 
 	public String getLabel();
+
+	public void setParentBlock(BasicBlock block);
 
 }

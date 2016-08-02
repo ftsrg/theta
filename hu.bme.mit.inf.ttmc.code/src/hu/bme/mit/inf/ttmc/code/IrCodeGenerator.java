@@ -106,6 +106,7 @@ public class IrCodeGenerator implements
 	public void generate(FunctionDefinitionAst ast) {
 		ast.getBody().accept(this);
 		this.resolveGotos();
+		this.builder.getFunction().normalize();
 	}
 
 	public void resolveGotos() {
@@ -386,6 +387,7 @@ public class IrCodeGenerator implements
 		this.labels.put(ast.getLabel(), bb);
 		this.builder.terminateInsertPoint(Goto(bb));
 		this.builder.setInsertPoint(bb);
+		ast.getStatement().accept(this);
 
 		return null;
 	}
