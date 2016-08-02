@@ -51,15 +51,6 @@ public final class MutableTCFA implements TCFA {
 		return loc;
 	}
 
-	public void removeLoc(final TCFALoc loc) {
-		checkNotNull(loc);
-		checkArgument(locs.contains(loc));
-		checkArgument(loc != initLoc);
-		checkArgument(loc.getInEdges().isEmpty());
-		checkArgument(loc.getOutEdges().isEmpty());
-		locs.remove(loc);
-	}
-
 	////
 
 	@Override
@@ -81,20 +72,6 @@ public final class MutableTCFA implements TCFA {
 		mutableTarget.inEdges.add(edge);
 		edges.add(edge);
 		return edge;
-	}
-
-	public void removeEdge(final TCFAEdge edge) {
-		checkNotNull(edge);
-		checkArgument(edges.contains(edge));
-
-		final MutableTCFAEdge mutableEdge = (MutableTCFAEdge) edge;
-
-		final MutableTCFALoc source = mutableEdge.source;
-		final MutableTCFALoc target = mutableEdge.target;
-
-		source.outEdges.remove(edge);
-		target.inEdges.remove(edge);
-		edges.remove(edge);
 	}
 
 }
