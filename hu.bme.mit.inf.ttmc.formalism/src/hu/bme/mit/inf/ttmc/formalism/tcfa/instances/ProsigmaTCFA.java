@@ -15,13 +15,15 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.type.IntType;
 import hu.bme.mit.inf.ttmc.core.type.RatType;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.ClockDecl;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFA;
-import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFAEdge;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFALoc;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.impl.MutableTCFA;
 
@@ -92,15 +94,10 @@ public class ProsigmaTCFA {
 
 		final MutableTCFA tcfa = new MutableTCFA();
 
-		final TCFALoc init = tcfa.getInitLoc();
-		init.getInvars().add(Leq(clkSync, tSync));
-
-		{
-			final TCFAEdge e1 = tcfa.createEdge(init, init);
-			e1.getStmts().add(Assume(Geq(clkSync, tSync)));
-			e1.getStmts().add(Assume(Eq(chan, NONE)));
-			e1.getStmts().add(Assign(vchan, SYNC));
-		}
+		final TCFALoc init = tcfa.createLoc("init", false, ImmutableSet.of(Leq(clkSync, tSync)));
+		tcfa.setInitLoc(init);
+		tcfa.createEdge(init, init,
+				ImmutableList.of(Assume(Geq(clkSync, tSync)), Assume(Eq(chan, NONE)), Assign(vchan, SYNC)));
 
 		return tcfa;
 	}
@@ -110,14 +107,12 @@ public class ProsigmaTCFA {
 
 		final MutableTCFA tcfa = new MutableTCFA();
 
-		final TCFALoc init = tcfa.getInitLoc();
-		final TCFALoc none = tcfa.createLoc("none");
+		final TCFALoc init = tcfa.createLoc("init", false, ImmutableSet.of());
+		final TCFALoc none = tcfa.createLoc("none", false, ImmutableSet.of());
 
-		{
-			final TCFAEdge e1 = tcfa.createEdge(init, none);
-			e1.getStmts().add(Assume(Neq(chan, NONE)));
-			e1.getStmts().add(Assign(vchan, NONE));
-		}
+		tcfa.setInitLoc(init);
+
+		tcfa.createEdge(init, none, ImmutableList.of(Assume(Neq(chan, NONE)), Assign(vchan, NONE)));
 
 		return tcfa;
 	}
@@ -131,71 +126,25 @@ public class ProsigmaTCFA {
 
 		final MutableTCFA tcfa = new MutableTCFA();
 
-		final TCFALoc init = tcfa.getInitLoc();
-		final TCFALoc tr = tcfa.createLoc("try");
-		final TCFALoc conn = tcfa.createLoc("conn");
+		final TCFALoc init = tcfa.createLoc("init", false, ImmutableSet.of());
+		final TCFALoc tr = tcfa.createLoc("try", false, ImmutableSet.of(Leq(clkReset, tRTMax)));
+		final TCFALoc conn = tcfa.createLoc("conn", false, ImmutableSet.of(Leq(clkReset, tRTMax)));
 
-		tr.getInvars().add(Leq(clkReset, tRTMax));
-		conn.getInvars().add(Leq(clkReset, tRTMax));
+		tcfa.setInitLoc(init);
 
-		{
-			final TCFAEdge e1 = tcfa.createEdge(init, init);
-			e1.getStmts().add(Assume(Eq(chan, OBJ2)));
-			e1.getStmts().add(Assign(vchan, NONE));
-		}
-		{
-			final TCFAEdge e2 = tcfa.createEdge(init, init);
-			e2.getStmts().add(Assume(Eq(chan, OBJDOWN)));
-			e2.getStmts().add(Assign(vchan, NONE));
-		}
-		{
-			final TCFAEdge e3 = tcfa.createEdge(init, tr);
-			e3.getStmts().add(Assume(Eq(chan, SYNC)));
-			e3.getStmts().add(Assign(vchan, OBJ1));
-			e3.getStmts().add(Assign(vclkReset, Int(0)));
-
-		}
-		{
-			final TCFAEdge e4 = tcfa.createEdge(tr, tr);
-			e4.getStmts().add(Assume(Eq(chan, SYNC)));
-			e4.getStmts().add(Assign(vchan, OBJ1));
-		}
-
-		{
-			final TCFAEdge e5 = tcfa.createEdge(tr, tr);
-			e5.getStmts().add(Assume(Eq(chan, OBJDOWN)));
-			e5.getStmts().add(Assign(vchan, NONE));
-		}
-		{
-			final TCFAEdge e6 = tcfa.createEdge(tr, init);
-			e6.getStmts().add(Assume(Geq(clkReset, tRTMax)));
-		}
-		{
-			final TCFAEdge e7 = tcfa.createEdge(tr, conn);
-			e7.getStmts().add(Assume(Eq(chan, OBJ2)));
-			e7.getStmts().add(Assign(vclkReset, Int(0)));
-		}
-
-		{
-			final TCFAEdge e8 = tcfa.createEdge(conn, init);
-			e8.getStmts().add(Assume(Geq(clkReset, tRTMax)));
-		}
-		{
-			final TCFAEdge e9 = tcfa.createEdge(conn, conn);
-			e9.getStmts().add(Assume(Eq(chan, SYNC)));
-			e9.getStmts().add(Assign(vchan, OBJUP));
-		}
-		{
-			final TCFAEdge e10 = tcfa.createEdge(conn, conn);
-			e10.getStmts().add(Assume(Eq(chan, OBJ2)));
-			e10.getStmts().add(Assign(vchan, NONE));
-		}
-		{
-			final TCFAEdge e11 = tcfa.createEdge(conn, conn);
-			e11.getStmts().add(Assume(Eq(chan, OBJDOWN)));
-			e11.getStmts().add(Assign(vchan, NONE));
-			e11.getStmts().add(Assign(vclkReset, Int(0)));
-		}
+		tcfa.createEdge(init, init, ImmutableList.of(Assume(Eq(chan, OBJ2)), Assign(vchan, NONE)));
+		tcfa.createEdge(init, init, ImmutableList.of(Assume(Eq(chan, OBJDOWN)), Assign(vchan, NONE)));
+		tcfa.createEdge(init, tr,
+				ImmutableList.of(Assume(Eq(chan, SYNC)), Assign(vchan, OBJ1), Assign(vclkReset, Int(0))));
+		tcfa.createEdge(tr, tr, ImmutableList.of(Assume(Eq(chan, SYNC)), Assign(vchan, OBJ1)));
+		tcfa.createEdge(tr, tr, ImmutableList.of(Assume(Eq(chan, OBJDOWN)), Assign(vchan, NONE)));
+		tcfa.createEdge(tr, init, ImmutableList.of(Assume(Geq(clkReset, tRTMax))));
+		tcfa.createEdge(tr, conn, ImmutableList.of(Assume(Eq(chan, OBJ2)), Assign(vclkReset, Int(0))));
+		tcfa.createEdge(conn, init, ImmutableList.of(Assume(Geq(clkReset, tRTMax))));
+		tcfa.createEdge(conn, conn, ImmutableList.of(Assume(Eq(chan, SYNC)), Assign(vchan, OBJUP)));
+		tcfa.createEdge(conn, conn, ImmutableList.of(Assume(Eq(chan, OBJ2)), Assign(vchan, NONE)));
+		tcfa.createEdge(conn, conn,
+				ImmutableList.of(Assume(Eq(chan, OBJDOWN)), Assign(vchan, NONE), Assign(vclkReset, Int(0))));
 
 		return tcfa;
 	}
@@ -209,56 +158,23 @@ public class ProsigmaTCFA {
 
 		final MutableTCFA tcfa = new MutableTCFA();
 
-		final TCFALoc init = tcfa.getInitLoc();
-		final TCFALoc tr = tcfa.createLoc("try");
-		final TCFALoc conn = tcfa.createLoc("conn");
+		final TCFALoc init = tcfa.createLoc("init", false, ImmutableSet.of());
+		final TCFALoc tr = tcfa.createLoc("try", false, ImmutableSet.of(Leq(clkReset, tRTMax)));
+		final TCFALoc conn = tcfa.createLoc("conn", false, ImmutableSet.of(Leq(clkReset, tRTMax)));
 
-		tr.getInvars().add(Leq(clkReset, tRTMax));
-		conn.getInvars().add(Leq(clkReset, tRTMax));
+		tcfa.setInitLoc(init);
 
-		{
-			final TCFAEdge e1 = tcfa.createEdge(init, init);
-			e1.getStmts().add(Assume(Eq(chan, OBJUP)));
-			e1.getStmts().add(Assign(vchan, NONE));
-		}
-		{
-			final TCFAEdge e3 = tcfa.createEdge(init, tr);
-			e3.getStmts().add(Assume(Eq(chan, OBJ1)));
-			e3.getStmts().add(Assign(vchan, OBJ2));
-			e3.getStmts().add(Assign(vclkReset, Int(0)));
-
-		}
-		{
-			final TCFAEdge e5 = tcfa.createEdge(tr, tr);
-			e5.getStmts().add(Assume(Eq(chan, OBJ1)));
-			e5.getStmts().add(Assign(vchan, NONE));
-		}
-		{
-			final TCFAEdge e6 = tcfa.createEdge(tr, init);
-			e6.getStmts().add(Assume(Geq(clkReset, tRTMax)));
-		}
-		{
-			final TCFAEdge e7 = tcfa.createEdge(tr, conn);
-			e7.getStmts().add(Assume(Eq(chan, OBJUP)));
-			e7.getStmts().add(Assign(vchan, OBJDOWN));
-			e7.getStmts().add(Assign(vclkReset, Int(0)));
-		}
-
-		{
-			final TCFAEdge e8 = tcfa.createEdge(conn, init);
-			e8.getStmts().add(Assume(Geq(clkReset, tRTMax)));
-		}
-		{
-			final TCFAEdge e10 = tcfa.createEdge(conn, conn);
-			e10.getStmts().add(Assume(Eq(chan, OBJ1)));
-			e10.getStmts().add(Assign(vchan, NONE));
-		}
-		{
-			final TCFAEdge e11 = tcfa.createEdge(conn, conn);
-			e11.getStmts().add(Assume(Eq(chan, OBJUP)));
-			e11.getStmts().add(Assign(vchan, OBJDOWN));
-			e11.getStmts().add(Assign(vclkReset, Int(0)));
-		}
+		tcfa.createEdge(init, init, ImmutableList.of(Assume(Eq(chan, OBJUP)), Assign(vchan, NONE)));
+		tcfa.createEdge(init, tr,
+				ImmutableList.of(Assume(Eq(chan, OBJ1)), Assign(vchan, OBJ2), Assign(vclkReset, Int(0))));
+		tcfa.createEdge(tr, tr, ImmutableList.of(Assume(Eq(chan, OBJ1)), Assign(vchan, NONE)));
+		tcfa.createEdge(tr, init, ImmutableList.of(Assume(Geq(clkReset, tRTMax))));
+		tcfa.createEdge(tr, conn,
+				ImmutableList.of(Assume(Eq(chan, OBJUP)), Assign(vchan, OBJDOWN), Assign(vclkReset, Int(0))));
+		tcfa.createEdge(conn, init, ImmutableList.of(Assume(Geq(clkReset, tRTMax))));
+		tcfa.createEdge(conn, conn, ImmutableList.of(Assume(Eq(chan, OBJ1)), Assign(vchan, NONE)));
+		tcfa.createEdge(conn, conn,
+				ImmutableList.of(Assume(Eq(chan, OBJUP)), Assign(vchan, OBJDOWN), Assign(vclkReset, Int(0))));
 
 		return tcfa;
 	}

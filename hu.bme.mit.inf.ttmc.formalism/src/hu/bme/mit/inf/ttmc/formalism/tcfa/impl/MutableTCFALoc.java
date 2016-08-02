@@ -4,6 +4,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 
+import com.google.common.collect.ImmutableSet;
+
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFAEdge;
@@ -12,19 +14,20 @@ import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFALoc;
 final class MutableTCFALoc implements TCFALoc {
 
 	private final String name;
+	private final boolean urgent;
+	private final Collection<Expr<? extends BoolType>> invars;
 
 	final Collection<MutableTCFAEdge> inEdges;
 	final Collection<MutableTCFAEdge> outEdges;
 
-	private final Collection<Expr<? extends BoolType>> invars;
-	private boolean urgent;
-
-	MutableTCFALoc(final String name) {
+	MutableTCFALoc(final String name, final boolean urgent,
+			final Collection<? extends Expr<? extends BoolType>> invars) {
 		this.name = name;
+		this.urgent = urgent;
+		this.invars = ImmutableSet.copyOf(invars);
 		inEdges = new LinkedList<>();
 		outEdges = new LinkedList<>();
-		invars = new LinkedList<>();
-		urgent = false;
+
 	}
 
 	@Override
@@ -32,18 +35,10 @@ final class MutableTCFALoc implements TCFALoc {
 		return name;
 	}
 
-	////
-
 	@Override
 	public boolean isUrgent() {
 		return urgent;
 	}
-
-	public void setUrgent(final boolean urgent) {
-		this.urgent = urgent;
-	}
-
-	////
 
 	@Override
 	public Collection<Expr<? extends BoolType>> getInvars() {

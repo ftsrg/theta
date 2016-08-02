@@ -1,7 +1,8 @@
 package hu.bme.mit.inf.ttmc.formalism.tcfa.impl;
 
-import java.util.LinkedList;
 import java.util.List;
+
+import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFAEdge;
@@ -9,15 +10,15 @@ import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFALoc;
 
 final class MutableTCFAEdge implements TCFAEdge {
 
-	MutableTCFALoc source;
-	MutableTCFALoc target;
+	final MutableTCFALoc source;
+	final MutableTCFALoc target;
 
 	private final List<Stmt> stmts;
 
-	MutableTCFAEdge(final MutableTCFALoc source, final MutableTCFALoc target) {
+	MutableTCFAEdge(final MutableTCFALoc source, final MutableTCFALoc target, final List<? extends Stmt> stmts) {
 		this.source = source;
 		this.target = target;
-		stmts = new LinkedList<>();
+		this.stmts = ImmutableList.copyOf(stmts);
 	}
 
 	@Override
