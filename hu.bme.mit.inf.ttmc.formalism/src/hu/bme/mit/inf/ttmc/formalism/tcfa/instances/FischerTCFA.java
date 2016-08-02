@@ -11,13 +11,15 @@ import static hu.bme.mit.inf.ttmc.formalism.common.decl.impl.Decls2.Clock;
 import static hu.bme.mit.inf.ttmc.formalism.common.stmt.impl.Stmts.Assign;
 import static hu.bme.mit.inf.ttmc.formalism.common.stmt.impl.Stmts.Assume;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.type.IntType;
 import hu.bme.mit.inf.ttmc.core.type.RatType;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.ClockDecl;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFA;
-import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFAEdge;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFALoc;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.impl.MutableTCFA;
 
@@ -81,34 +83,20 @@ public final class FischerTCFA {
 
 		final Expr<IntType> zero = Int(0);
 
-		final TCFALoc l0 = tcfa.getInitLoc();
-		final TCFALoc l1 = tcfa.createLoc("wait");
-		final TCFALoc l2 = tcfa.createLoc("try");
-		final TCFALoc l3 = tcfa.createLoc("crit");
+		final TCFALoc l0 = tcfa.createLoc("sleep", false, ImmutableSet.of());
+		final TCFALoc l1 = tcfa.createLoc("wait", false, ImmutableSet.of(Leq(x, a)));
+		final TCFALoc l2 = tcfa.createLoc("try", false, ImmutableSet.of());
+		final TCFALoc l3 = tcfa.createLoc("crit", false, ImmutableSet.of());
+		tcfa.setInitLoc(l0);
 
 		initial = l0;
 		critical = l3;
 
-		l1.getInvars().add(Leq(x, a));
-
-		final TCFAEdge edge1 = tcfa.createEdge(l0, l1);
-		edge1.getStmts().add(Assume(Eq(lock, zero)));
-		edge1.getStmts().add(Assign(cx, zero));
-
-		final TCFAEdge edge2 = tcfa.createEdge(l1, l2);
-		edge2.getStmts().add(Assign(cx, zero));
-		edge2.getStmts().add(Assign(vlock, i));
-
-		final TCFAEdge edge3 = tcfa.createEdge(l2, l3);
-		edge3.getStmts().add(Assume(Geq(x, b)));
-		edge3.getStmts().add(Assume(Eq(lock, i)));
-
-		final TCFAEdge edge4 = tcfa.createEdge(l2, l0);
-		edge4.getStmts().add(Assume(Geq(x, b)));
-		edge4.getStmts().add(Assume(Neq(lock, i)));
-
-		final TCFAEdge edge5 = tcfa.createEdge(l3, l0);
-		edge5.getStmts().add(Assign(vlock, zero));
+		tcfa.createEdge(l0, l1, ImmutableList.of(Assume(Eq(lock, zero)), Assign(cx, zero)));
+		tcfa.createEdge(l1, l2, ImmutableList.of(Assign(cx, zero), Assign(vlock, i)));
+		tcfa.createEdge(l2, l3, ImmutableList.of(Assume(Geq(x, b)), Assume(Eq(lock, i))));
+		tcfa.createEdge(l2, l0, ImmutableList.of(Assume(Geq(x, b)), Assume(Neq(lock, i))));
+		tcfa.createEdge(l3, l0, ImmutableList.of(Assign(vlock, zero)));
 	}
 
 }
