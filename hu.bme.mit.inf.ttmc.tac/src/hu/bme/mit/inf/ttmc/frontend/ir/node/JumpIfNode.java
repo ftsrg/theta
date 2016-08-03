@@ -76,5 +76,10 @@ public class JumpIfNode implements TerminatorIrNode {
 		this.parent = block;
 	}
 
+	@Override
+	public BasicBlock getParentBlock() {
+		return this.parent;
+	}
+
 
 }

@@ -16,6 +16,7 @@ import hu.bme.mit.inf.ttmc.code.visitor.PrintCodeAstVisitor;
 import hu.bme.mit.inf.ttmc.formalism.cfa.CFA;
 import hu.bme.mit.inf.ttmc.formalism.utils.impl.CFAPrinter;
 import hu.bme.mit.inf.ttmc.frontend.dependency.DominatorTree;
+import hu.bme.mit.inf.ttmc.frontend.dependency.UseDefineChain;
 import hu.bme.mit.inf.ttmc.frontend.ir.GlobalContext;
 import hu.bme.mit.inf.ttmc.frontend.ir.utils.IrPrinter;
 
@@ -38,6 +39,8 @@ class Application {
 			System.out.println("------" + "PDT" + "------");
 			DominatorTree pdt = DominatorTree.createPostDominatorTree(s);
 			System.out.println(IrPrinter.dominatorTreeGraph(pdt));
+
+			UseDefineChain.buildChain(s);
 
 		});
 	}

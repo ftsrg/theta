@@ -10,10 +10,27 @@ public class AssignNode<VarType extends Type, ExprType extends VarType> implemen
 
 	private VarDecl<VarType> var;
 	private Expr<ExprType> expr;
+
 	private BasicBlock parent;
 
 	public AssignNode(VarDecl<VarType> var, Expr<ExprType> expr) {
 		this.var = var;
+		this.expr = expr;
+	}
+
+	public VarDecl<VarType> getVar() {
+		return var;
+	}
+
+	public void setVar(VarDecl<VarType> var) {
+		this.var = var;
+	}
+
+	public Expr<ExprType> getExpr() {
+		return expr;
+	}
+
+	public void setExpr(Expr<ExprType> expr) {
 		this.expr = expr;
 	}
 
@@ -25,6 +42,11 @@ public class AssignNode<VarType extends Type, ExprType extends VarType> implemen
 	@Override
 	public void setParentBlock(BasicBlock block) {
 		this.parent = block;
+	}
+
+	@Override
+	public BasicBlock getParentBlock() {
+		return this.parent;
 	}
 
 }

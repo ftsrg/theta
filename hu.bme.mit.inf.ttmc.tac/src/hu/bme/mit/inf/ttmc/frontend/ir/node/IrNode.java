@@ -8,4 +8,6 @@ public interface IrNode {
 
 	public void setParentBlock(BasicBlock block);
 
+	public BasicBlock getParentBlock();
+
 }
