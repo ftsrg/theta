@@ -13,6 +13,7 @@ import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.ExitNode;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.GotoNode;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.JumpIfNode;
+import hu.bme.mit.inf.ttmc.frontend.ir.node.NonTerminatorIrNode;
 
 public class Function {
 
@@ -57,9 +58,12 @@ public class Function {
 					((JumpIfNode) parent.getTerminator()).replaceTarget(block, terminator.getTarget());
 				}
 			}
+
+			terminator.getTarget().removeParent(block);
 		}
 
 		this.removeUnreachableBlocks();
+		//this.mergeBlocks();
 	}
 
 	public void removeUnreachableBlocks() {
@@ -80,6 +84,35 @@ public class Function {
 
 		// retain all visited nodes
 		this.blocks.values().retainAll(visited);
+	}
+
+	/**
+	 * Merge single-child blocks into their child if they are their child's only parent
+	 *
+	 * TODO
+	 */
+	public void mergeBlocks() {
+		List<BasicBlock> blocks = this.blocks.values()
+			.stream()
+			.filter(b -> {
+				if (!(b.getTerminator() instanceof GotoNode)) // The node should have only one child
+					return false;
+
+				GotoNode term = (GotoNode) b.getTerminator();
+				if (term.getTarget() == this.exit)	// This child shouldn't be the exit node
+					return false;
+
+				return term.getTarget().parents.size() == 1; // And this block should be the child's only parent
+			})
+			.collect(Collectors.toList());
+
+		for (BasicBlock block : blocks) {
+			GotoNode terminator = (GotoNode) block.getTerminator();
+			List<NonTerminatorIrNode> nodes = new ArrayList<>();
+
+			nodes.addAll(block.getNodes());
+			nodes.addAll(terminator.getTarget().getNodes());
+		}
 	}
 
 	public void addLocalVariable(VarDecl<? extends Type> variable) {

@@ -24,7 +24,7 @@ public class JumpIfNode implements TerminatorIrNode {
 	@Override
 	public String getLabel() {
 		return
-		"JumpIf(" +
+		"Branch(" +
 			this.cond.toString() + ", " +
 			this.thenTarget.getName() + ", " +
 			this.elseTarget.getName() +

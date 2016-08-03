@@ -105,7 +105,7 @@ public class BasicBlock {
 	 *
 	 * @return An unmodifiable collection of this node's parents
 	 */
-	public Collection<? extends BasicBlock> parents() {
+	public Collection<BasicBlock> parents() {
 		return Collections.unmodifiableList(this.parents);
 	}
 
@@ -178,10 +178,10 @@ public class BasicBlock {
 		return sb.toString();
 	}
 
-//	@Override
-//	public String toString() {
-//		return this.getName();
-//	}
+	@Override
+	public String toString() {
+		return this.getName();
+	}
 
 	public void removeParent(BasicBlock parent) {
 		this.parents.remove(parent);

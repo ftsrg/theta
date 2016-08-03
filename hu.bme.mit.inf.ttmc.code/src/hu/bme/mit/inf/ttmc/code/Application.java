@@ -15,6 +15,7 @@ import hu.bme.mit.inf.ttmc.code.ast.utils.AstPrinter;
 import hu.bme.mit.inf.ttmc.code.visitor.PrintCodeAstVisitor;
 import hu.bme.mit.inf.ttmc.formalism.cfa.CFA;
 import hu.bme.mit.inf.ttmc.formalism.utils.impl.CFAPrinter;
+import hu.bme.mit.inf.ttmc.frontend.dependency.DominatorTree;
 import hu.bme.mit.inf.ttmc.frontend.ir.GlobalContext;
 import hu.bme.mit.inf.ttmc.frontend.ir.utils.IrPrinter;
 
@@ -25,7 +26,20 @@ class Application {
 
 		GlobalContext context = Compiler.compile("all.c");
 
-		context.functions().forEach(s -> System.out.println(IrPrinter.toGraphvizString(s)));
+		context.functions().forEach(s -> {
+			System.out.println("===============" + s.getName() + "===============");
+			System.out.println("------" + "CFG" + "------");
+			System.out.println(IrPrinter.toGraphvizString(s));
+
+			System.out.println("------" + "Dominators" + "------");
+			DominatorTree dt = DominatorTree.createDominatorTree(s);
+			System.out.println(IrPrinter.dominatorTreeGraph(dt));
+
+			System.out.println("------" + "PDT" + "------");
+			DominatorTree pdt = DominatorTree.createPostDominatorTree(s);
+			System.out.println(IrPrinter.dominatorTreeGraph(pdt));
+
+		});
 	}
 
 	private static int nodeId = 0;
