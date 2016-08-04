@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import hu.bme.mit.inf.ttmc.frontend.ir.node.IrNode;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.NonTerminatorIrNode;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.TerminatorIrNode;
 
@@ -143,6 +144,18 @@ public class BasicBlock {
 	 */
 	public List<NonTerminatorIrNode> getNodes() {
 		return Collections.unmodifiableList(this.nodes);
+	}
+
+	/**
+	 * Returns this block's nonterminator and terminator nodes
+	 *
+	 * @return A collcetion of all instructions of this block
+	 */
+	public List<IrNode> getAllNodes() {
+		List<IrNode> allNodes = new ArrayList<>(this.nodes);
+		allNodes.add(this.terminator);
+
+		return Collections.unmodifiableList(allNodes);
 	}
 
 	/**

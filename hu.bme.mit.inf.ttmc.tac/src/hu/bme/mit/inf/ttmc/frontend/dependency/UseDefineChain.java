@@ -1,6 +1,7 @@
 package hu.bme.mit.inf.ttmc.frontend.dependency;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -39,9 +40,9 @@ public class UseDefineChain {
 	private static class Use {
 		public Set<VarDecl<? extends Type>> vars;
 		public BasicBlock block;
-		public NonTerminatorIrNode node;
+		public IrNode node;
 
-		public Use(BasicBlock block, NonTerminatorIrNode node, Set<VarDecl<? extends Type>> vars) {
+		public Use(BasicBlock block, IrNode node, Set<VarDecl<? extends Type>> vars) {
 			this.block = block;
 			this.node = node;
 			this.vars = vars;
@@ -56,8 +57,8 @@ public class UseDefineChain {
 		public Set<Definition> in = new HashSet<>();
 		public Set<Definition> out = new HashSet<>();
 
-		public Set<VarDecl<? extends Type>> defs = new HashSet<>();
-		public Set<Use> uses = new HashSet<>();
+		public Map<IrNode, Use> uses = new HashMap<>();
+		public Map<IrNode, Definition> defs = new HashMap<>();
 
 		public BlockInfo(BasicBlock block) {
 			this.block = block;
@@ -70,6 +71,50 @@ public class UseDefineChain {
 		this.blocks = blocks;
 	}
 
+	public Collection<NonTerminatorIrNode> getDefinitions(IrNode node) {
+		BasicBlock block = node.getParentBlock();
+		BlockInfo info = this.blocks.get(block);
+
+		if (info == null)
+			throw new RuntimeException("Cannot find block '" + block.getName() + "' in the use-define chain.");
+
+		Use use = info.uses.get(node);
+
+		return this.getLocalReachingDefinitions(node).stream()
+			.filter(d -> use.vars.contains(d.var))
+			.map(d -> d.node)
+			.collect(Collectors.toList());
+	}
+
+	public Set<Definition> getLocalReachingDefinitions(IrNode node) {
+		BasicBlock block = node.getParentBlock();
+		BlockInfo info = this.blocks.get(block);
+
+		if (info == null)
+			throw new RuntimeException("Cannot find block '" + block.getName() + "' in the use-define chain.");
+
+		if (node == block.getTerminator()) {
+			// A terminator's local reaching definitions is the same as the block's out definitions
+			return new HashSet<>(info.out);
+		}
+
+		Set<Definition> defs = new HashSet<>(info.in);
+		List<NonTerminatorIrNode> nodes = block.getNodes();
+
+		int idx = nodes.indexOf(node);
+		for (int i = 0; i < idx; i++) {
+			IrNode instr = nodes.get(i);
+			if (instr instanceof AssignNode<?, ?>) {
+				AssignNode<?, ?> assign = (AssignNode<?, ?>) instr;
+				defs.removeIf(d -> d.var == assign.getVar());
+				defs.add(new Definition(assign.getVar(), block, assign));
+			}
+		}
+
+		return defs;
+	}
+
+
 	public static UseDefineChain buildChain(Function function) {
 		VariableFinderVisitor varFinder = new VariableFinderVisitor();
 		Map<BasicBlock, BlockInfo> blocks = new HashMap<>();
@@ -81,27 +126,33 @@ public class UseDefineChain {
 
 			List<Definition> defs = new ArrayList<>();
 
-			for (NonTerminatorIrNode node : block.getNodes()) {
+			for (IrNode node : block.getNodes()) {
 				Set<VarDecl<? extends Type>> usedVars = new HashSet<>();
 				if (node instanceof AssignNode<?, ?>) {
-					AssignNode<? extends Type, ? extends Type> assign = (AssignNode<? extends Type, ? extends Type>) node;
+					AssignNode<?, ?> assign = (AssignNode<?, ?>) node;
 
 					// Add this assignment to definitions
-					Definition def = new Definition(assign.getVar(), block, node);
+					Definition def = new Definition(assign.getVar(), block, assign);
 
 					defs.add(def);
 					info.gen.add(def);
+					info.defs.put(assign, def);
 
 					// Find all uses
 					assign.getExpr().accept(varFinder, usedVars);
 					Use use = new Use(block, node, usedVars);
-					info.uses.add(use);
+					info.uses.put(assign, use);
 
-				} else if (node instanceof JumpIfNode) {
-					((JumpIfNode) node).getCond().accept(varFinder, usedVars);
-					Use use = new Use(block, node, usedVars);
-					info.uses.add(use);
 				}
+			}
+
+			if (block.getTerminator() instanceof JumpIfNode) {
+				Set<VarDecl<? extends Type>> usedVars = new HashSet<>();
+				JumpIfNode jump = (JumpIfNode) block.getTerminator();
+
+				jump.getCond().accept(varFinder, usedVars);
+				Use use = new Use(block, jump, usedVars);
+				info.uses.put(jump, use);
 			}
 
 			allDefs.addAll(defs);
