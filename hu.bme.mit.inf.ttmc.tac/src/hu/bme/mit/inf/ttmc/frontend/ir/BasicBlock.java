@@ -12,7 +12,7 @@ import hu.bme.mit.inf.ttmc.frontend.ir.node.TerminatorIrNode;
 public class BasicBlock {
 
 	protected final String name;
-	protected final List<NonTerminatorIrNode> nodes;
+	protected final List<NonTerminatorIrNode> nodes = new ArrayList<>();
 	protected final List<BasicBlock> parents = new ArrayList<>();
 
 	protected Function function;
@@ -27,7 +27,6 @@ public class BasicBlock {
 	public BasicBlock(String name, Function function) {
 		this.name = name;
 		this.function = function;
-		this.nodes = new ArrayList<>();
 	}
 
 	/**
@@ -39,7 +38,7 @@ public class BasicBlock {
 	public BasicBlock(String name, Function function, List<NonTerminatorIrNode> nodes) {
 		this.name = name;
 		this.function = function;
-		this.nodes = nodes;
+		this.nodes.addAll(nodes);
 	}
 
 	/**
@@ -165,6 +164,15 @@ public class BasicBlock {
 	 */
 	public int countNodes() {
 		return this.nodes.size();
+	}
+
+	public void clearNodes() {
+		this.nodes.clear();
+	}
+
+	public void clearTerminator() {
+		this.terminator.getTargets().forEach(t -> t.removeParent(this));
+		this.isTerminated = false;
 	}
 
 	/**

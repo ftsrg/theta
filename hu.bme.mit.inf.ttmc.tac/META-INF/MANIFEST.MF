@@ -13,4 +13,5 @@ Bundle-ActivationPolicy: lazy
 Export-Package: hu.bme.mit.inf.ttmc.frontend.dependency,
  hu.bme.mit.inf.ttmc.frontend.ir,
  hu.bme.mit.inf.ttmc.frontend.ir.node,
- hu.bme.mit.inf.ttmc.frontend.ir.utils
+ hu.bme.mit.inf.ttmc.frontend.ir.utils,
+ hu.bme.mit.inf.ttmc.frontend.transform

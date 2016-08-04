@@ -14,6 +14,7 @@ import hu.bme.mit.inf.ttmc.frontend.ir.node.ExitNode;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.GotoNode;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.JumpIfNode;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.NonTerminatorIrNode;
+import hu.bme.mit.inf.ttmc.frontend.ir.node.TerminatorIrNode;
 
 public class Function {
 
@@ -38,6 +39,29 @@ public class Function {
 		this.addBasicBlock(bb);
 
 		return bb;
+	}
+
+	public void replaceBlock(BasicBlock oldBlock, BasicBlock newBlock, TerminatorIrNode terminator) {
+		if (!oldBlock.isTerminated)
+			throw new RuntimeException("The original block must be terminated.");
+
+		if (newBlock.isTerminated)
+			throw new RuntimeException("The substitue block must not be terminated.");
+
+		TerminatorIrNode oldTerminator = oldBlock.getTerminator();
+
+		// Remove references to the old block in children
+		oldBlock.terminator.getTargets().forEach(t -> t.parents.remove(oldBlock));
+		newBlock.terminate(terminator);
+
+		this.blocks.values().remove(oldBlock);
+		this.blocks.put(newBlock.getName(), newBlock);
+
+		if (this.entry == oldBlock)
+			this.entry = newBlock;
+
+		if (this.exit == oldBlock)
+			this.exit = newBlock;
 	}
 
 	public void normalize() {
@@ -66,61 +90,16 @@ public class Function {
 		//this.mergeBlocks();
 	}
 
-	public void removeUnreachableBlocks() {
-		// Perform a DFS
-		Stack<BasicBlock> stack = new Stack<>();
-		List<BasicBlock> visited = new ArrayList<>();
-		stack.push(this.entry);
-
-		while (!stack.isEmpty()) {
-			BasicBlock block = stack.pop();
-			if (!visited.contains(block)) {
-				visited.add(block);
-				for (BasicBlock child : block.children()) {
-					stack.push(child);
-				}
-			}
-		}
-
-		// retain all visited nodes
-		this.blocks.values().retainAll(visited);
-	}
-
-	/**
-	 * Merge single-child blocks into their child if they are their child's only parent
-	 *
-	 * TODO
-	 */
-	public void mergeBlocks() {
-		List<BasicBlock> blocks = this.blocks.values()
-			.stream()
-			.filter(b -> {
-				if (!(b.getTerminator() instanceof GotoNode)) // The node should have only one child
-					return false;
-
-				GotoNode term = (GotoNode) b.getTerminator();
-				if (term.getTarget() == this.exit)	// This child shouldn't be the exit node
-					return false;
-
-				return term.getTarget().parents.size() == 1; // And this block should be the child's only parent
-			})
-			.collect(Collectors.toList());
-
-		for (BasicBlock block : blocks) {
-			GotoNode terminator = (GotoNode) block.getTerminator();
-			List<NonTerminatorIrNode> nodes = new ArrayList<>();
-
-			nodes.addAll(block.getNodes());
-			nodes.addAll(terminator.getTarget().getNodes());
-		}
-	}
-
 	public void addLocalVariable(VarDecl<? extends Type> variable) {
 		this.locals.add(variable);
 	}
 
 	public void addBasicBlock(BasicBlock block) {
 		this.blocks.put(block.getName(), block);
+	}
+
+	public void removeBasicBlock(BasicBlock block) {
+		this.blocks.values().remove(block);
 	}
 
 	public Collection<BasicBlock> getBlocks() {
@@ -148,5 +127,52 @@ public class Function {
 		return this.exit;
 	}
 
+	private void removeUnreachableBlocks() {
+		// Perform a DFS
+		Stack<BasicBlock> stack = new Stack<>();
+		List<BasicBlock> visited = new ArrayList<>();
+		stack.push(this.entry);
 
+		while (!stack.isEmpty()) {
+			BasicBlock block = stack.pop();
+			if (!visited.contains(block)) {
+				visited.add(block);
+				for (BasicBlock child : block.children()) {
+					stack.push(child);
+				}
+			}
+		}
+
+		// retain all visited nodes
+		this.blocks.values().retainAll(visited);
+	}
+
+	/**
+	 * Merge single-child blocks into their child if they are their child's only parent
+	 *
+	 * TODO
+	 */
+	private void mergeBlocks() {
+		List<BasicBlock> blocks = this.blocks.values()
+			.stream()
+			.filter(b -> {
+				if (!(b.getTerminator() instanceof GotoNode)) // The node should have only one child
+					return false;
+
+				GotoNode term = (GotoNode) b.getTerminator();
+				if (term.getTarget() == this.exit)	// This child shouldn't be the exit node
+					return false;
+
+				return term.getTarget().parents.size() == 1; // And this block should be the child's only parent
+			})
+			.collect(Collectors.toList());
+
+		for (BasicBlock block : blocks) {
+			GotoNode terminator = (GotoNode) block.getTerminator();
+			List<NonTerminatorIrNode> nodes = new ArrayList<>();
+
+			nodes.addAll(block.getNodes());
+			nodes.addAll(terminator.getTarget().getNodes());
+		}
+	}
 }
