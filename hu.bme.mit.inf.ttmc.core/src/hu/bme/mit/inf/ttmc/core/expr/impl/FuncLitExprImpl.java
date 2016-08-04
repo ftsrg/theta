@@ -75,6 +75,7 @@ final class FuncLitExprImpl<ParamType extends Type, ResultType extends Type>
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
 		sb.append(OPERATOR_LABEL);
+		sb.append("(");
 		sb.append(paramDecl);
 		sb.append(" -> ");
 		sb.append(result);
