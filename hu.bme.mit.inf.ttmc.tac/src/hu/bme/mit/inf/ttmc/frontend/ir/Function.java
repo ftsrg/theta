@@ -106,6 +106,29 @@ public class Function {
 		return this.blocks.values();
 	}
 
+	/**
+	 * Returns this function's blocks in DFS order.
+	 *
+	 * The function should be normalized before calling this method.
+	 *
+	 * @return A list of basic blocks, in DFS traversal order
+	 */
+	public List<BasicBlock> getBlocksDFS() {
+		Stack<BasicBlock> ws = new Stack<>();
+		List<BasicBlock> visited = new ArrayList<>();
+		ws.push(this.entry);
+
+		while (!ws.isEmpty()) {
+			BasicBlock bb = ws.pop();
+			if (!visited.contains(bb)) {
+				visited.add(bb);
+				bb.children().forEach(s -> ws.push(s));
+			}
+		}
+
+		return visited;
+	}
+
 	public String getName() {
 		return this.name;
 	}
