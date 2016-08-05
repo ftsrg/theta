@@ -44,15 +44,15 @@ arrayType
 	;
 	
 BOOLTYPE
-	:	'Bool'
+	:	'bool'
 	;
 	
 INTTYPE
-	:	'Int'
+	:	'int'
 	;
 	
 RATTYPE
-	:	'Rat'
+	:	'rat'
 	;
 
 // E X P R E S S I O N S
