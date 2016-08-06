@@ -182,13 +182,35 @@ public class UseDefineChain {
 	}
 
 	/**
+	 * Return all reachable uses of an assignment node
+	 *
+	 * @param node An assignment node
+	 *
+	 * @return A collection of instruction nodes
+	 */
+	public Collection<IrNode> getUses(AssignNode<?, ?> node) {
+		BasicBlock block = node.getParentBlock();
+		BlockInfo info = this.blocks.get(block);
+
+		if (info == null)
+			throw new RuntimeException("Cannot find block '" + block.getName() + "' in the use-define chain.");
+
+		VarDecl<? extends Type> definedVar = info.defs.get(node).var;
+
+		return this.getLocalReachableUses(node).stream()
+			.filter(u -> u.var == definedVar)
+			.map(u -> u.node)
+			.collect(Collectors.toList());
+	}
+
+	/**
 	 * Returns the uses reaching the end of a given block
 	 *
 	 * @param block A BasicBlock
 	 *
 	 * @return A set of uses reaching block
 	 */
-	public Set<Use> getReachingUses(BasicBlock block) {
+	public Set<Use> getReachableUses(BasicBlock block) {
 		BlockInfo info = this.blocks.get(block);
 		if (info == null)
 			throw new RuntimeException("Cannot find block '" + block.getName() + "' in the use-define chain.");
@@ -196,14 +218,14 @@ public class UseDefineChain {
 		return Collections.unmodifiableSet(info.uOut);
 	}
 
-	/*
+	/**
 	 * Returns a set of uses reached by an assignment
 	 *
 	 * @param node
 	 *
 	 * @return
-	 *
-	public Set<Use> getLocalReachingUses(NonTerminatorIrNode node) {
+	 */
+	public Set<Use> getLocalReachableUses(NonTerminatorIrNode node) {
 		BasicBlock block = node.getParentBlock();
 		BlockInfo info = this.blocks.get(block);
 
@@ -211,7 +233,7 @@ public class UseDefineChain {
 			throw new RuntimeException("Cannot find block '" + block.getName() + "' in the use-define chain.");
 
 		Set<Use> uses = new HashSet<>(info.uOut);
-		List<NonTerminatorIrNode> nodes = block.getNodes();
+		List<IrNode> nodes = block.getAllNodes();
 
 		int idx = nodes.indexOf(node);
 		if (idx == -1)
@@ -219,15 +241,24 @@ public class UseDefineChain {
 
 		for (int i = nodes.size() - 1; i > idx; i--) {
 			IrNode instr = nodes.get(i);
-			if (instr instanceof AssignNode<?, ?>) {
-				AssignNode<?, ?> assign = (AssignNode<?, ?>) instr;
-				uses.removeIf(d -> d.var == assign.getVar());
-				uses.add(new Definition(assign.getVar(), assign));
-			}
+			List<Use> localUses = info.uses.get(instr);
+			if (localUses != null)
+				uses.addAll(localUses);
 		}
 
-		return defs;
-	}*/
+		return uses;
+	}
+
+	/**
+	 * Returns all definitions in a block
+	 *
+	 * @param block A block
+	 *
+	 * @return
+	 */
+	public Collection<Definition> getBlockDefines(BasicBlock block) {
+		return Collections.unmodifiableCollection(this.blocks.get(block).defs.values());
+	}
 
 	/**
 	 * Builds a new UD-chain from a function
@@ -324,7 +355,6 @@ public class UseDefineChain {
 						int idx = nodes.indexOf(u.node);
 						for (Definition def : useDefs) {
 							if (nodes.indexOf(def.node) < idx) {
-								System.out.println(u.node.getLabel() + " <<<<<<>>>>>> " + def.node.getLabel());
 								return false;
 							}
 						}
@@ -374,7 +404,7 @@ public class UseDefineChain {
 		}
 
 		/*
-		 * Iterative solution for reaching uses
+		 * Iterative solution for reachable uses
 		 * (Compilers: Principles, Techniques and Tools, 1st edition, Algorithm 10.4)
 		 */
 		change = true;
@@ -397,14 +427,6 @@ public class UseDefineChain {
 					change = true;
 				}
 			}
-		}
-
-		for (BlockInfo info : blocks.values()) {
-			System.out.println("BLOCK: " + info.block.getName());
-			System.out.println("	Use = " + info.use);
-			System.out.println("	Def = " + info.def);
-			System.out.println("	uIn = " + info.uIn);
-			System.out.println("	uOut = " + info.uOut);
 		}
 
 		return new UseDefineChain(blocks);

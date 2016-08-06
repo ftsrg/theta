@@ -41,8 +41,8 @@ public class LocalConstantPropagator implements FunctionTransformer {
 		List<NonTerminatorIrNode> nodes = new ArrayList<>(block.getNodes());
 		TerminatorIrNode terminator = block.getTerminator();
 
-		block.clearNodes();
 		block.clearTerminator();
+		block.clearNodes();
 		/* Propagate through the assignments */
 		for (NonTerminatorIrNode node : nodes) {
 			if (node instanceof AssignNode<?, ?>) {

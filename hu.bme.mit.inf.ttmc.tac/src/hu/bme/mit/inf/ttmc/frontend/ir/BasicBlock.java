@@ -5,6 +5,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import javax.management.RuntimeErrorException;
+
 import hu.bme.mit.inf.ttmc.frontend.ir.node.IrNode;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.NonTerminatorIrNode;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.TerminatorIrNode;
@@ -166,11 +168,58 @@ public class BasicBlock {
 		return this.nodes.size();
 	}
 
+	/**
+	 * Replace a node in this block with a new one
+	 *
+	 * @param oldNode The node to replace
+	 * @param newNode The node to be replaced
+	 */
+	public void replaceNode(IrNode oldNode, IrNode newNode) {
+		if (oldNode == this.terminator) {
+			if (!(newNode instanceof TerminatorIrNode))
+				throw new IllegalArgumentException("Cannot replace a terminator node with a nonterminator");
+
+			TerminatorIrNode term = (TerminatorIrNode) newNode;
+			if (!term.getTargets().equals(this.terminator.getTargets()))
+				throw new IllegalArgumentException("Use clearTerminator and terminate to replace a terminator node with a terminator of different targets");
+
+			this.terminator = term;
+		} else if (newNode instanceof NonTerminatorIrNode) {
+			int idx = this.nodes.indexOf(oldNode);
+			if (idx == -1)
+				throw new IllegalArgumentException("Old node was not found in the block");
+
+			this.nodes.set(idx, (NonTerminatorIrNode) newNode);
+		} else {
+			System.out.println(this.terminator + " " + this.terminator.getLabel());
+			System.out.println(oldNode + " " + oldNode.getLabel());
+			System.out.println(newNode + " " + newNode.getLabel());
+			throw new IllegalArgumentException("Cannot replace a nonterminator node with a terminator");
+		}
+	}
+
+	/**
+	 * Clear all nodes from this block
+	 *
+	 * If the block is already terminated, this operation fails with an exception.
+	 * Use clearTerminator to reset the block terminator.
+	 */
 	public void clearNodes() {
+		if (this.isTerminated)
+			throw new RuntimeException("Cannot clear the node list of a terminated block");
+
 		this.nodes.clear();
 	}
 
+	/**
+	 * Clear the current terminator of this block
+	 *
+	 * If the block is not terminated, this operation fails with an exception.
+	 */
 	public void clearTerminator() {
+		if (!this.isTerminated)
+			throw new RuntimeException("Cannot clear the terminator of an unterminated block");
+
 		this.terminator.getTargets().forEach(t -> t.removeParent(this));
 		this.isTerminated = false;
 	}
