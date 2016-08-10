@@ -46,7 +46,7 @@ public class VisibleInitializer extends AbstractCEGARStep implements Initializer
 		final List<VarDecl<? extends Type>> nonCnfVars = new ArrayList<>(concrSys.getVars());
 
 		// Then make variables appearing in the specification visible
-		for (final VarDecl<? extends Type> varDec : FormalismUtils.collectVars(concrSys.getProp()))
+		for (final VarDecl<? extends Type> varDec : FormalismUtils.getVars(concrSys.getProp()))
 			if (!visibleVars.contains(varDec)) {
 				invisibleVars.remove(varDec);
 				visibleVars.add(varDec);

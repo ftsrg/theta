@@ -38,7 +38,7 @@ public class ClusterCreator {
 		// Loop through formulas
 		for (final Expr<? extends BoolType> ex : formulas) {
 			// Get variables and join clusters
-			final List<VarDecl<? extends Type>> vars = new ArrayList<>(FormalismUtils.collectVars(ex));
+			final List<VarDecl<? extends Type>> vars = new ArrayList<>(FormalismUtils.getVars(ex));
 			if (vars.size() == 2)
 				joinClusters(clusters.get(vars.get(0)), clusters.get(vars.get(1)));
 			else if (vars.size() > 2)

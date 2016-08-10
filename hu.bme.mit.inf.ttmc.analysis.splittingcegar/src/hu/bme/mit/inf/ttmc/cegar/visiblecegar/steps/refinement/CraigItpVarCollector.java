@@ -76,7 +76,7 @@ public class CraigItpVarCollector extends AbstractCEGARStep implements VarCollec
 
 		logger.writeln("Interpolant: " + interpolant, 4, 0);
 		itpSolver.pop();
-		return FormalismUtils.collectVars(interpolant);
+		return FormalismUtils.getVars(interpolant);
 	}
 
 	@Override
