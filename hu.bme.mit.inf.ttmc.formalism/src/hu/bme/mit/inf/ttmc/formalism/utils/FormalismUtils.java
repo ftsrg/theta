@@ -38,7 +38,7 @@ public class FormalismUtils {
 
 	public static void collectVars(final Expr<?> expr,
 			final Collection<VarDecl<? extends Type>> collectTo) {
-		expr.accept(VarCollectorVisitor.getInstance(), collectTo);
+		expr.accept(VarCollectorExprVisitor.getInstance(), collectTo);
 	}
 
 	public static Set<VarDecl<? extends Type>> collectVars(final Expr<?> expr) {
