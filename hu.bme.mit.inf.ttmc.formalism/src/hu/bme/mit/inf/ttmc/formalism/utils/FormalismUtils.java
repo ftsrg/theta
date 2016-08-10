@@ -12,6 +12,7 @@ import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.core.utils.impl.ExprCNFCheckerVisitor.CNFStatus;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
+import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
 import hu.bme.mit.inf.ttmc.formalism.utils.impl.CNFTransformation;
 import hu.bme.mit.inf.ttmc.formalism.utils.impl.FormalismAtomCollectorVisitor;
 import hu.bme.mit.inf.ttmc.formalism.utils.impl.FormalismCNFCheckerVisitor;
@@ -36,14 +37,19 @@ public class FormalismUtils {
 				.accept(new FormalismITERemoverVisitor(), null);
 	}
 
-	public static void collectVars(final Expr<?> expr,
-			final Collection<VarDecl<? extends Type>> collectTo) {
+	public static void collectVars(final Expr<?> expr, final Collection<VarDecl<? extends Type>> collectTo) {
 		expr.accept(VarCollectorExprVisitor.getInstance(), collectTo);
 	}
 
 	public static Set<VarDecl<? extends Type>> getVars(final Expr<?> expr) {
 		final Set<VarDecl<? extends Type>> vars = new HashSet<>();
 		collectVars(expr, vars);
+		return vars;
+	}
+
+	public static Set<VarDecl<? extends Type>> getVars(final Stmt stmt) {
+		final Set<VarDecl<? extends Type>> vars = new HashSet<>();
+		stmt.accept(VarCollectorStmtVisitor.getInstance(), vars);
 		return vars;
 	}
 
