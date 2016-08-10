@@ -41,7 +41,7 @@ public class FormalismUtils {
 		expr.accept(VarCollectorExprVisitor.getInstance(), collectTo);
 	}
 
-	public static Set<VarDecl<? extends Type>> collectVars(final Expr<?> expr) {
+	public static Set<VarDecl<? extends Type>> getVars(final Expr<?> expr) {
 		final Set<VarDecl<? extends Type>> vars = new HashSet<>();
 		collectVars(expr, vars);
 		return vars;
