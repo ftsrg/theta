@@ -1,12 +1,9 @@
-package hu.bme.mit.inf.ttmc.formalism.utils.impl;
+package hu.bme.mit.inf.ttmc.formalism.tcfa;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
-import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFA;
-import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFAEdge;
-import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFALoc;
 
 public class TCFAPrinter {
 
