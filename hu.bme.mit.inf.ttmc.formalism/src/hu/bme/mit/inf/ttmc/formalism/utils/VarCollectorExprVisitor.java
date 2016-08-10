@@ -22,20 +22,20 @@ import hu.bme.mit.inf.ttmc.formalism.common.expr.ProcCallExpr;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.ProcRefExpr;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.VarRefExpr;
 
-final class VarCollectorVisitor extends ArityBasedExprVisitor<Collection<VarDecl<? extends Type>>, Void>
+final class VarCollectorExprVisitor extends ArityBasedExprVisitor<Collection<VarDecl<? extends Type>>, Void>
 		implements ExprVisitor<Collection<VarDecl<? extends Type>>, Void>,
 		FormalismExprVisitor<Collection<VarDecl<? extends Type>>, Void> {
 
-	private static final VarCollectorVisitor INSTANCE;
+	private static final VarCollectorExprVisitor INSTANCE;
 
 	static {
-		INSTANCE = new VarCollectorVisitor();
+		INSTANCE = new VarCollectorExprVisitor();
 	}
 
-	private VarCollectorVisitor() {
+	private VarCollectorExprVisitor() {
 	}
 
-	public static VarCollectorVisitor getInstance() {
+	public static VarCollectorExprVisitor getInstance() {
 		return INSTANCE;
 	}
 
