@@ -5,7 +5,7 @@ Bundle-SymbolicName: hu.bme.mit.inf.ttmc.formalism
 Bundle-Version: 1.0.0.qualifier
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Require-Bundle: org.junit,
- com.google.guava;bundle-version="15.0.0",
+ com.google.guava,
  hu.bme.mit.inf.ttmc.common,
  hu.bme.mit.inf.ttmc.core
 Export-Package: hu.bme.mit.inf.ttmc.formalism,
@@ -32,9 +32,6 @@ Export-Package: hu.bme.mit.inf.ttmc.formalism,
  hu.bme.mit.inf.ttmc.formalism.ta.op,
  hu.bme.mit.inf.ttmc.formalism.ta.op.impl,
  hu.bme.mit.inf.ttmc.formalism.ta.utils,
- hu.bme.mit.inf.ttmc.formalism.tcfa,
- hu.bme.mit.inf.ttmc.formalism.tcfa.impl,
- hu.bme.mit.inf.ttmc.formalism.tcfa.instances,
  hu.bme.mit.inf.ttmc.formalism.utils,
  hu.bme.mit.inf.ttmc.formalism.utils.impl,
  hu.bme.mit.inf.ttmc.formalism.utils.sts.impl
