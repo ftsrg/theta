@@ -14,7 +14,7 @@ public class CoreDSLTests {
 	public void testExprParser() {
 		final Decl<?, ?> x = Const("x", Bool());
 
-		final CoreDSL manager = new CoreDSL();
+		final CoreDSLManager manager = new CoreDSLManager();
 		manager.declare(x);
 
 		final Expr<?> expr = manager.parseExpr("(f : (int) -> int) -> (y : int) -> f(x) + f(y)");

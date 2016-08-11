@@ -16,11 +16,11 @@ import hu.bme.mit.inf.ttmc.core.dsl.impl.TypeCreatorVisitor;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.type.Type;
 
-public final class CoreDSL {
+public final class CoreDSLManager {
 
 	private final Scope scope;
 
-	public CoreDSL() {
+	public CoreDSLManager() {
 		this.scope = new GlobalScope();
 	}
 
