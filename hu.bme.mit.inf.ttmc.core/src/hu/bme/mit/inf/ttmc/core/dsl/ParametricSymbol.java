@@ -21,7 +21,11 @@ public abstract class ParametricSymbol extends BasicScope implements Symbol {
 		super(enclosingScope);
 		this.name = checkNotNull(name);
 		this.paramDecls = ImmutableList.copyOf(checkNotNull(paramDecls));
+		declareParams(paramDecls);
+	}
 
+	private void declareParams(final List<? extends ParamDecl<?>> paramDecls) {
+		paramDecls.forEach(d -> declare(new DeclSymbol(d)));
 	}
 
 	@Override
