@@ -2,6 +2,7 @@ package hu.bme.mit.inf.ttmc.core.dsl.impl;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.inf.ttmc.core.decl.impl.Decls.Param;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Add;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.And;
@@ -44,8 +45,8 @@ import org.antlr.v4.runtime.Token;
 
 import com.google.common.collect.ImmutableList;
 
+import hu.bme.mit.inf.ttmc.common.dsl.LocalScope;
 import hu.bme.mit.inf.ttmc.common.dsl.Scope;
-import hu.bme.mit.inf.ttmc.common.dsl.ScopeStack;
 import hu.bme.mit.inf.ttmc.common.dsl.Symbol;
 import hu.bme.mit.inf.ttmc.core.decl.Decl;
 import hu.bme.mit.inf.ttmc.core.decl.ParamDecl;
@@ -104,10 +105,19 @@ import hu.bme.mit.inf.ttmc.core.type.closure.ClosedUnderSub;
 
 public final class ExprCreatorVisitor extends CoreDSLBaseVisitor<Expr<?>> {
 
-	private final ScopeStack scopeStack;
+	private Scope currentScope;
 
 	public ExprCreatorVisitor(final Scope scope) {
-		this.scopeStack = new ScopeStack(checkNotNull(scope));
+		currentScope = checkNotNull(scope);
+	}
+
+	private void push() {
+		currentScope = new LocalScope(currentScope);
+	}
+
+	private void pop() {
+		checkState(currentScope.getEnclosingScope().isPresent());
+		currentScope = currentScope.getEnclosingScope().get();
 	}
 
 	@Override
@@ -118,12 +128,12 @@ public final class ExprCreatorVisitor extends CoreDSLBaseVisitor<Expr<?>> {
 			checkArgument(params.size() == 1);
 			final ParamDecl<?> param = params.get(0);
 
-			scopeStack.push();
-			scopeStack.currentScope().declare(new DeclSymbol(param));
+			push();
 
+			currentScope.declare(new DeclSymbol(param));
 			final Expr<?> result = ctx.result.accept(this);
 
-			scopeStack.pop();
+			pop();
 
 			return Func(param, result);
 		} else {
@@ -183,12 +193,12 @@ public final class ExprCreatorVisitor extends CoreDSLBaseVisitor<Expr<?>> {
 		if (ctx.paramDecls != null) {
 			final List<ParamDecl<?>> paramDecls = createParamList(ctx.paramDecls);
 
-			scopeStack.push();
+			push();
 
-			paramDecls.forEach(p -> scopeStack.currentScope().declare(new DeclSymbol(p)));
+			paramDecls.forEach(p -> currentScope.declare(new DeclSymbol(p)));
 			final Expr<? extends BoolType> op = cast(ctx.op.accept(this), BoolType.class);
 
-			scopeStack.pop();
+			pop();
 
 			return Forall(paramDecls, op);
 		} else {
@@ -201,12 +211,12 @@ public final class ExprCreatorVisitor extends CoreDSLBaseVisitor<Expr<?>> {
 		if (ctx.paramDecls != null) {
 			final List<ParamDecl<?>> paramDecls = createParamList(ctx.paramDecls);
 
-			scopeStack.push();
+			push();
 
-			paramDecls.forEach(p -> scopeStack.currentScope().declare(new DeclSymbol(p)));
+			paramDecls.forEach(p -> currentScope.declare(new DeclSymbol(p)));
 			final Expr<? extends BoolType> op = cast(ctx.op.accept(this), BoolType.class);
 
-			scopeStack.pop();
+			pop();
 
 			return Exists(paramDecls, op);
 		} else {
@@ -560,7 +570,7 @@ public final class ExprCreatorVisitor extends CoreDSLBaseVisitor<Expr<?>> {
 
 	@Override
 	public RefExpr<?, ?> visitIdExpr(final IdExprContext ctx) {
-		final Symbol symbol = scopeStack.currentScope().resolve(ctx.id.getText()).get();
+		final Symbol symbol = currentScope.resolve(ctx.id.getText()).get();
 		if (symbol instanceof DeclSymbol) {
 			final DeclSymbol declSymbol = (DeclSymbol) symbol;
 			final Decl<?, ?> decl = declSymbol.getDecl();
