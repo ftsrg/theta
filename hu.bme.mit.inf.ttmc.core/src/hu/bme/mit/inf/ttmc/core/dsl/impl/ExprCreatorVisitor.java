@@ -44,9 +44,12 @@ import org.antlr.v4.runtime.Token;
 
 import com.google.common.collect.ImmutableList;
 
+import hu.bme.mit.inf.ttmc.core.decl.Decl;
 import hu.bme.mit.inf.ttmc.core.decl.ParamDecl;
+import hu.bme.mit.inf.ttmc.core.dsl.DeclSymbol;
 import hu.bme.mit.inf.ttmc.core.dsl.Scope;
 import hu.bme.mit.inf.ttmc.core.dsl.ScopeStack;
+import hu.bme.mit.inf.ttmc.core.dsl.Symbol;
 import hu.bme.mit.inf.ttmc.core.dsl.gen.CoreDSLBaseVisitor;
 import hu.bme.mit.inf.ttmc.core.dsl.gen.CoreDSLParser;
 import hu.bme.mit.inf.ttmc.core.dsl.gen.CoreDSLParser.AccessContext;
@@ -116,7 +119,7 @@ public final class ExprCreatorVisitor extends CoreDSLBaseVisitor<Expr<?>> {
 			final ParamDecl<?> param = params.get(0);
 
 			scopeStack.push();
-			scopeStack.currentScope().declare(param);
+			scopeStack.currentScope().declare(new DeclSymbol(param));
 
 			final Expr<?> result = ctx.result.accept(this);
 
@@ -182,7 +185,7 @@ public final class ExprCreatorVisitor extends CoreDSLBaseVisitor<Expr<?>> {
 
 			scopeStack.push();
 
-			paramDecls.forEach(scopeStack.currentScope()::declare);
+			paramDecls.forEach(p -> scopeStack.currentScope().declare(new DeclSymbol(p)));
 			final Expr<? extends BoolType> op = cast(ctx.op.accept(this), BoolType.class);
 
 			scopeStack.pop();
@@ -200,7 +203,7 @@ public final class ExprCreatorVisitor extends CoreDSLBaseVisitor<Expr<?>> {
 
 			scopeStack.push();
 
-			paramDecls.forEach(scopeStack.currentScope()::declare);
+			paramDecls.forEach(p -> scopeStack.currentScope().declare(new DeclSymbol(p)));
 			final Expr<? extends BoolType> op = cast(ctx.op.accept(this), BoolType.class);
 
 			scopeStack.pop();
@@ -557,7 +560,14 @@ public final class ExprCreatorVisitor extends CoreDSLBaseVisitor<Expr<?>> {
 
 	@Override
 	public RefExpr<?, ?> visitIdExpr(final IdExprContext ctx) {
-		return scopeStack.currentScope().resolve(ctx.id.getText()).get().getRef();
+		final Symbol symbol = scopeStack.currentScope().resolve(ctx.id.getText()).get();
+		if (symbol instanceof DeclSymbol) {
+			final DeclSymbol declSymbol = (DeclSymbol) symbol;
+			final Decl<?, ?> decl = declSymbol.getDecl();
+			return decl.getRef();
+		} else {
+			throw new AssertionError();
+		}
 	}
 
 	@Override
