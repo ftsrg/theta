@@ -52,7 +52,7 @@ public class DeclSymbol implements Symbol {
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
-		sb.append("Symbol(");
+		sb.append("DeclSymbol(");
 		sb.append(decl.toString());
 		sb.append(")");
 		return sb.toString();
