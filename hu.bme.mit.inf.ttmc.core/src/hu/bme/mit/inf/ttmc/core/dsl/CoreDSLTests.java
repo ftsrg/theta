@@ -15,7 +15,7 @@ public class CoreDSLTests {
 		final Decl<?, ?> x = Const("x", Bool());
 
 		final Scope scope = new GlobalScope();
-		scope.declare(x);
+		scope.declare(new DeclSymbol(x));
 
 		final Expr<?> expr = CoreDSL.parseExpr(scope, "(f : (int) -> int) -> (y : int) -> f(x) + f(y)");
 

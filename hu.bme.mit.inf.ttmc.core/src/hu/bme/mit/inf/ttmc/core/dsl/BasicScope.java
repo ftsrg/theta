@@ -7,16 +7,14 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-import hu.bme.mit.inf.ttmc.core.decl.Decl;
-
 public abstract class BasicScope implements Scope {
 
 	final Optional<Scope> enclosingScope;
-	final Map<String, Decl<?, ?>> stringToDecl;
+	final Map<String, Symbol> stringToSymbol;
 
 	public BasicScope(final Scope eclosingScope) {
 		this.enclosingScope = Optional.ofNullable(eclosingScope);
-		stringToDecl = new HashMap<>();
+		stringToSymbol = new HashMap<>();
 	}
 
 	@Override
@@ -25,11 +23,11 @@ public abstract class BasicScope implements Scope {
 	}
 
 	@Override
-	public Optional<Decl<?, ?>> resolve(final String name) {
+	public Optional<Symbol> resolve(final String name) {
 		checkNotNull(name);
-		final Decl<?, ?> decl = stringToDecl.get(name);
-		if (decl != null) {
-			return Optional.of(decl);
+		final Symbol symbol = stringToSymbol.get(name);
+		if (symbol != null) {
+			return Optional.of(symbol);
 		} else if (enclosingScope.isPresent()) {
 			return enclosingScope.get().resolve(name);
 		} else {
@@ -38,10 +36,10 @@ public abstract class BasicScope implements Scope {
 	}
 
 	@Override
-	public void declare(final Decl<?, ?> decl) {
-		checkNotNull(decl);
-		checkArgument(!stringToDecl.containsKey(decl.getName()));
-		stringToDecl.put(decl.getName(), decl);
+	public void declare(final Symbol symbol) {
+		checkNotNull(symbol);
+		checkArgument(!stringToSymbol.containsKey(symbol.getName()));
+		stringToSymbol.put(symbol.getName(), symbol);
 	}
 
 }
