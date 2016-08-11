@@ -1,4 +1,4 @@
-package hu.bme.mit.inf.ttmc.core.dsl;
+package hu.bme.mit.inf.ttmc.common.dsl;
 
 public class GlobalScope extends BasicScope {
 

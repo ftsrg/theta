@@ -2,6 +2,7 @@ package hu.bme.mit.inf.ttmc.core.dsl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import hu.bme.mit.inf.ttmc.common.dsl.Symbol;
 import hu.bme.mit.inf.ttmc.core.decl.Decl;
 
 public class DeclSymbol implements Symbol {
