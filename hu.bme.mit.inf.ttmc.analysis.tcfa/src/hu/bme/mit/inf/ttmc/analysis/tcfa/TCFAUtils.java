@@ -1,6 +1,6 @@
 package hu.bme.mit.inf.ttmc.analysis.tcfa;
 
-import static hu.bme.mit.inf.ttmc.formalism.utils.FormalismUtils.collectVars;
+import static hu.bme.mit.inf.ttmc.formalism.utils.FormalismUtils.getVars;
 
 import hu.bme.mit.inf.ttmc.core.expr.AddExpr;
 import hu.bme.mit.inf.ttmc.core.expr.AndExpr;
@@ -55,7 +55,7 @@ public final class TCFAUtils {
 	}
 
 	public static boolean isDataExpr(final Expr<? extends BoolType> expr) {
-		return collectVars(expr).stream().allMatch(v -> !isClock(v));
+		return getVars(expr).stream().allMatch(v -> !isClock(v));
 	}
 
 	private static boolean isClock(final VarDecl<?> varDecl) {
@@ -203,12 +203,12 @@ public final class TCFAUtils {
 		@Override
 		public <LhsType extends Type, RhsType extends LhsType> Boolean visit(final AssignStmt<LhsType, RhsType> stmt,
 				final Void param) {
-			return !isClock(stmt.getVarDecl()) && collectVars(stmt.getExpr()).stream().allMatch(v -> !isClock(v));
+			return !isClock(stmt.getVarDecl()) && getVars(stmt.getExpr()).stream().allMatch(v -> !isClock(v));
 		}
 
 		@Override
 		public Boolean visit(final AssumeStmt stmt, final Void param) {
-			return collectVars(stmt.getCond()).stream().allMatch(v -> !isClock(v));
+			return getVars(stmt.getCond()).stream().allMatch(v -> !isClock(v));
 		}
 
 	}
