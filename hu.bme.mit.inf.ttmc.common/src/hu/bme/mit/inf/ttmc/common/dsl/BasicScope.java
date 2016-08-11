@@ -16,7 +16,7 @@ public abstract class BasicScope implements Scope {
 	}
 
 	@Override
-	public Optional<Scope> getEnclosingScope() {
+	public Optional<Scope> enclosingScope() {
 		return enclosingScope;
 	}
 
