@@ -1,4 +1,4 @@
-package hu.bme.mit.inf.ttmc.core.dsl;
+package hu.bme.mit.inf.ttmc.common.dsl;
 
 import static com.google.common.base.Preconditions.checkState;
 

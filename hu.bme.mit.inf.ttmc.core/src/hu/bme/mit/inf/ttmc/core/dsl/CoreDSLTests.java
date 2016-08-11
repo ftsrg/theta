@@ -5,6 +5,8 @@ import static hu.bme.mit.inf.ttmc.core.type.impl.Types.Bool;
 
 import org.junit.Test;
 
+import hu.bme.mit.inf.ttmc.common.dsl.GlobalScope;
+import hu.bme.mit.inf.ttmc.common.dsl.Scope;
 import hu.bme.mit.inf.ttmc.core.decl.Decl;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
 

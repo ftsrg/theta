@@ -44,12 +44,12 @@ import org.antlr.v4.runtime.Token;
 
 import com.google.common.collect.ImmutableList;
 
+import hu.bme.mit.inf.ttmc.common.dsl.Scope;
+import hu.bme.mit.inf.ttmc.common.dsl.ScopeStack;
+import hu.bme.mit.inf.ttmc.common.dsl.Symbol;
 import hu.bme.mit.inf.ttmc.core.decl.Decl;
 import hu.bme.mit.inf.ttmc.core.decl.ParamDecl;
 import hu.bme.mit.inf.ttmc.core.dsl.DeclSymbol;
-import hu.bme.mit.inf.ttmc.core.dsl.Scope;
-import hu.bme.mit.inf.ttmc.core.dsl.ScopeStack;
-import hu.bme.mit.inf.ttmc.core.dsl.Symbol;
 import hu.bme.mit.inf.ttmc.core.dsl.gen.CoreDSLBaseVisitor;
 import hu.bme.mit.inf.ttmc.core.dsl.gen.CoreDSLParser;
 import hu.bme.mit.inf.ttmc.core.dsl.gen.CoreDSLParser.AccessContext;
