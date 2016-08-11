@@ -8,6 +8,6 @@ public interface Scope {
 
 	public void declare(Symbol symbol);
 
-	public Optional<Scope> getEnclosingScope();
+	public Optional<Scope> enclosingScope();
 
 }

@@ -116,8 +116,8 @@ public final class ExprCreatorVisitor extends CoreDSLBaseVisitor<Expr<?>> {
 	}
 
 	private void pop() {
-		checkState(currentScope.getEnclosingScope().isPresent());
-		currentScope = currentScope.getEnclosingScope().get();
+		checkState(currentScope.enclosingScope().isPresent());
+		currentScope = currentScope.enclosingScope().get();
 	}
 
 	@Override
