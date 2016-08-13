@@ -68,6 +68,10 @@ public class ConstantFolderExprVisitor implements VarRefExprVisitor<Void, Expr<?
 
 	private Map<VarDecl<? extends Type>, LitExpr<? extends Type>> constVars;
 
+	public Map<VarDecl<? extends Type>, LitExpr<? extends Type>> getConstVars() {
+		return constVars;
+	}
+
 	public ConstantFolderExprVisitor(Map<VarDecl<? extends Type>, LitExpr<? extends Type>> constVars) {
 		this.constVars = constVars;
 	}

@@ -47,6 +47,10 @@ public class JumpIfNode implements TerminatorIrNode {
 		return cond;
 	}
 
+	public void setCond(Expr<? extends BoolType> cond) {
+		this.cond = cond;
+	}
+
 	public BasicBlock getThenTarget() {
 		return thenTarget;
 	}

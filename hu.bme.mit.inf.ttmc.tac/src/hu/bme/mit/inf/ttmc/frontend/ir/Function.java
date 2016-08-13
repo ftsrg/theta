@@ -166,6 +166,8 @@ public class Function {
 			}
 		}
 
+		System.out.println(visited);
+
 		// retain all visited nodes
 		this.blocks.values().retainAll(visited);
 	}

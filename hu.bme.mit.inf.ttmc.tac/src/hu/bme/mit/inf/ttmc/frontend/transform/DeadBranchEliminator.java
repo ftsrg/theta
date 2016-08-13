@@ -1,11 +1,9 @@
 package hu.bme.mit.inf.ttmc.frontend.transform;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import hu.bme.mit.inf.ttmc.core.expr.BoolLitExpr;
-import hu.bme.mit.inf.ttmc.core.expr.LitExpr;
 import hu.bme.mit.inf.ttmc.frontend.ir.BasicBlock;
 import hu.bme.mit.inf.ttmc.frontend.ir.Function;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.JumpIfNode;
