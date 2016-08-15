@@ -3,6 +3,8 @@ package hu.bme.mit.inf.ttmc.formalism.tcfa;
 import java.util.HashMap;
 import java.util.Map;
 
+import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
 
 public class TCFAPrinter {
@@ -14,8 +16,7 @@ public class TCFAPrinter {
 		final Map<TCFALoc, Integer> ids = createIds(tcfa);
 		final StringBuilder sb = new StringBuilder();
 
-		sb.append("digraph cfa {\n");
-		sb.append("edge [fontname = \"courier\"]\n");
+		sb.append("digraph tcfa {\n");
 		for (final TCFALoc loc : tcfa.getLocs()) {
 			sb.append(toGraphvizString(tcfa, loc, ids));
 		}
@@ -41,7 +42,14 @@ public class TCFAPrinter {
 	private static String toGraphvizString(final TCFA tcfa, final TCFALoc loc, final Map<TCFALoc, Integer> ids) {
 		final StringBuilder sb = new StringBuilder();
 		sb.append(ids.get(loc));
-		sb.append("\n");
+		sb.append("[label=\"\\\n");
+		sb.append(loc.getName());
+		sb.append("\\n\\\n");
+		for (final Expr<? extends BoolType> invar : loc.getInvars()) {
+			sb.append(invar.toString());
+			sb.append("\\n\\\n");
+		}
+		sb.append("\"]\n");
 		return sb.toString();
 	}
 
