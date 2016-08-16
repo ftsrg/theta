@@ -41,13 +41,29 @@ public final class AssignmentImpl implements Assignment {
 		this(new HashMap<>());
 	}
 
-	public AssignmentImpl(final Map<Decl<?, ?>, LitExpr<?>> declToExpr) {
-		checkAssignmentMap(declToExpr);
-		this.declToExpr = new HashMap<>(declToExpr);
-		this.decls = ImmutableList.copyOf(declToExpr.keySet());
+	public AssignmentImpl(final List<? extends Decl<?, ?>> decls, final List<? extends LitExpr<?>> exprs) {
+		this(zip(decls, exprs));
 	}
 
-	private static void checkAssignmentMap(final Map<Decl<?, ?>, LitExpr<?>> declToExpr) {
+	private static <K, V> Map<K, V> zip(final List<? extends K> keys, final List<? extends V> values) {
+		checkArgument(keys.size() == values.size());
+		final HashMap<K, V> result = new HashMap<>();
+		for (int i = 0; i < keys.size(); i++) {
+			final K key = keys.get(i);
+			final V value = values.get(i);
+			checkArgument(!result.keySet().contains(key));
+			result.put(key, value);
+		}
+		return result;
+	}
+
+	public AssignmentImpl(final Map<? extends Decl<?, ?>, ? extends LitExpr<?>> map) {
+		checkAssignmentMap(map);
+		this.declToExpr = new HashMap<>(map);
+		this.decls = ImmutableList.copyOf(map.keySet());
+	}
+
+	private static void checkAssignmentMap(final Map<? extends Decl<?, ?>, ? extends LitExpr<?>> declToExpr) {
 		for (final Decl<?, ?> decl : declToExpr.keySet()) {
 			final Expr<?> expr = declToExpr.get(decl);
 			checkArgument(expr.getType().isLeq(decl.getType()));
