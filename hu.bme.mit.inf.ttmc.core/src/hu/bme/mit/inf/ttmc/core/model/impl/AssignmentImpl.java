@@ -1,5 +1,6 @@
 package hu.bme.mit.inf.ttmc.core.model.impl;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.ArrayList;
@@ -40,13 +41,22 @@ public final class AssignmentImpl implements Assignment {
 		this(new HashMap<>());
 	}
 
-	public AssignmentImpl(final Map<Decl<?, ?>, LitExpr<?>> constToExpr) {
-		this.declToExpr = new HashMap<>(constToExpr);
-		this.decls = ImmutableList.copyOf(constToExpr.keySet());
+	public AssignmentImpl(final Map<Decl<?, ?>, LitExpr<?>> declToExpr) {
+		checkAssignmentMap(declToExpr);
+		this.declToExpr = new HashMap<>(declToExpr);
+		this.decls = ImmutableList.copyOf(declToExpr.keySet());
+	}
+
+	private static void checkAssignmentMap(final Map<Decl<?, ?>, LitExpr<?>> declToExpr) {
+		for (final Decl<?, ?> decl : declToExpr.keySet()) {
+			final Expr<?> expr = declToExpr.get(decl);
+			checkArgument(expr.getType().isLeq(decl.getType()));
+		}
 	}
 
 	@Override
-	public <DeclType extends Type, DeclKind extends Decl<DeclType, DeclKind>> Optional<LitExpr<DeclType>> eval(final Decl<DeclType, DeclKind> decl) {
+	public <DeclType extends Type, DeclKind extends Decl<DeclType, DeclKind>> Optional<LitExpr<DeclType>> eval(
+			final Decl<DeclType, DeclKind> decl) {
 		checkNotNull(decl);
 
 		if (declToExpr.containsKey(decl)) {
