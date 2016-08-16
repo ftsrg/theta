@@ -2,6 +2,7 @@ package hu.bme.mit.inf.ttmc.common.dsl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import java.util.Collection;
 import java.util.Optional;
 
 public abstract class BasicScope implements Scope {
@@ -34,6 +35,12 @@ public abstract class BasicScope implements Scope {
 	@Override
 	public void declare(final Symbol symbol) {
 		symbolTable.add(symbol);
+	}
+
+	@Override
+	public void declareAll(final Collection<? extends Symbol> symbols) {
+		checkNotNull(symbols);
+		symbolTable.addAll(symbols);
 	}
 
 }
