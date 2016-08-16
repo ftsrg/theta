@@ -6,9 +6,9 @@ import java.util.Optional;
 
 public abstract class BasicScope implements Scope {
 
-	final Optional<Scope> enclosingScope;
+	private final Optional<Scope> enclosingScope;
 
-	final SymbolTable symbolTable;
+	private final SymbolTable symbolTable;
 
 	public BasicScope(final Scope eclosingScope) {
 		this.enclosingScope = Optional.ofNullable(eclosingScope);
