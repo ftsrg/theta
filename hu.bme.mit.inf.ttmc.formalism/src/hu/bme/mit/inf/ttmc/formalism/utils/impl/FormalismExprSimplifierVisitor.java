@@ -5,7 +5,6 @@ import static hu.bme.mit.inf.ttmc.formalism.common.expr.impl.Exprs2.Prime;
 import java.util.Optional;
 
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
-import hu.bme.mit.inf.ttmc.core.expr.LitExpr;
 import hu.bme.mit.inf.ttmc.core.model.Assignment;
 import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.core.utils.impl.ExprSimplifierVisitor;
@@ -45,7 +44,7 @@ public class FormalismExprSimplifierVisitor extends ExprSimplifierVisitor
 	@Override
 	public <DeclType extends Type> Expr<? extends DeclType> visit(final VarRefExpr<DeclType> expr,
 			final Assignment param) {
-		final Optional<LitExpr<DeclType>> eval = param.eval(expr.getDecl());
+		final Optional<? extends Expr<DeclType>> eval = param.eval(expr.getDecl());
 		if (eval.isPresent()) {
 			return eval.get();
 		}

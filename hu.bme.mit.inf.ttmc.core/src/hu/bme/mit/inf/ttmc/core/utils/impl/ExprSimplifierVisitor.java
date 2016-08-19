@@ -37,7 +37,6 @@ import hu.bme.mit.inf.ttmc.core.expr.IntDivExpr;
 import hu.bme.mit.inf.ttmc.core.expr.IntLitExpr;
 import hu.bme.mit.inf.ttmc.core.expr.IteExpr;
 import hu.bme.mit.inf.ttmc.core.expr.LeqExpr;
-import hu.bme.mit.inf.ttmc.core.expr.LitExpr;
 import hu.bme.mit.inf.ttmc.core.expr.LtExpr;
 import hu.bme.mit.inf.ttmc.core.expr.ModExpr;
 import hu.bme.mit.inf.ttmc.core.expr.MulExpr;
@@ -65,8 +64,9 @@ import hu.bme.mit.inf.ttmc.core.utils.ExprVisitor;
 public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? extends Type>> {
 
 	@Override
-	public <DeclType extends Type> Expr<? extends DeclType> visit(final ConstRefExpr<DeclType> expr, final Assignment param) {
-		final Optional<LitExpr<DeclType>> eval = param.eval(expr.getDecl());
+	public <DeclType extends Type> Expr<? extends DeclType> visit(final ConstRefExpr<DeclType> expr,
+			final Assignment param) {
+		final Optional<? extends Expr<DeclType>> eval = param.eval(expr.getDecl());
 		if (eval.isPresent()) {
 			return eval.get();
 		}
@@ -75,9 +75,9 @@ public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? ext
 	}
 
 	@Override
-	public <DeclType extends Type> Expr<? extends Type> visit(final ParamRefExpr<DeclType> expr, final Assignment param) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO");
+	public <DeclType extends Type> Expr<? extends Type> visit(final ParamRefExpr<DeclType> expr,
+			final Assignment param) {
+		return expr;
 	}
 
 	@Override
@@ -225,7 +225,8 @@ public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? ext
 		final Expr<? extends Type> leftOp = expr.getLeftOp().accept(this, param);
 		final Expr<? extends Type> rightOp = expr.getRightOp().accept(this, param);
 
-		if ((leftOp instanceof BoolLitExpr && rightOp instanceof BoolLitExpr) || (leftOp instanceof IntLitExpr && rightOp instanceof IntLitExpr)
+		if ((leftOp instanceof BoolLitExpr && rightOp instanceof BoolLitExpr)
+				|| (leftOp instanceof IntLitExpr && rightOp instanceof IntLitExpr)
 				|| (leftOp instanceof RatLitExpr && rightOp instanceof RatLitExpr)) {
 			return Bool(leftOp.equals(rightOp));
 		} else if (leftOp instanceof ConstRefExpr && rightOp instanceof ConstRefExpr) {
@@ -241,7 +242,8 @@ public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? ext
 		final Expr<? extends Type> leftOp = expr.getLeftOp().accept(this, param);
 		final Expr<? extends Type> rightOp = expr.getRightOp().accept(this, param);
 
-		if ((leftOp instanceof BoolLitExpr && rightOp instanceof BoolLitExpr) || (leftOp instanceof IntLitExpr && rightOp instanceof IntLitExpr)
+		if ((leftOp instanceof BoolLitExpr && rightOp instanceof BoolLitExpr)
+				|| (leftOp instanceof IntLitExpr && rightOp instanceof IntLitExpr)
 				|| (leftOp instanceof RatLitExpr && rightOp instanceof RatLitExpr)) {
 			return Bool(!leftOp.equals(rightOp));
 		} else if (leftOp instanceof ConstRefExpr && rightOp instanceof ConstRefExpr) {
@@ -262,7 +264,8 @@ public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? ext
 				return True();
 		}
 
-		if ((leftOp instanceof RatLitExpr || leftOp instanceof IntLitExpr) && (rightOp instanceof RatLitExpr || rightOp instanceof IntLitExpr)) {
+		if ((leftOp instanceof RatLitExpr || leftOp instanceof IntLitExpr)
+				&& (rightOp instanceof RatLitExpr || rightOp instanceof IntLitExpr)) {
 			final long leftNum = num(leftOp);
 			final long leftDenom = denom(leftOp);
 			final long rightNum = num(rightOp);
@@ -287,7 +290,8 @@ public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? ext
 				return False();
 		}
 
-		if ((leftOp instanceof RatLitExpr || leftOp instanceof IntLitExpr) && (rightOp instanceof RatLitExpr || rightOp instanceof IntLitExpr)) {
+		if ((leftOp instanceof RatLitExpr || leftOp instanceof IntLitExpr)
+				&& (rightOp instanceof RatLitExpr || rightOp instanceof IntLitExpr)) {
 			final long leftNum = num(leftOp);
 			final long leftDenom = denom(leftOp);
 			final long rightNum = num(rightOp);
@@ -312,7 +316,8 @@ public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? ext
 				return True();
 		}
 
-		if ((leftOp instanceof RatLitExpr || leftOp instanceof IntLitExpr) && (rightOp instanceof RatLitExpr || rightOp instanceof IntLitExpr)) {
+		if ((leftOp instanceof RatLitExpr || leftOp instanceof IntLitExpr)
+				&& (rightOp instanceof RatLitExpr || rightOp instanceof IntLitExpr)) {
 			final long leftNum = num(leftOp);
 			final long leftDenom = denom(leftOp);
 			final long rightNum = num(rightOp);
@@ -337,7 +342,8 @@ public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? ext
 				return False();
 		}
 
-		if ((leftOp instanceof RatLitExpr || leftOp instanceof IntLitExpr) && (rightOp instanceof RatLitExpr || rightOp instanceof IntLitExpr)) {
+		if ((leftOp instanceof RatLitExpr || leftOp instanceof IntLitExpr)
+				&& (rightOp instanceof RatLitExpr || rightOp instanceof IntLitExpr)) {
 			final long leftNum = num(leftOp);
 			final long leftDenom = denom(leftOp);
 			final long rightNum = num(rightOp);
@@ -448,7 +454,8 @@ public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? ext
 			throw new ArithmeticException("Division by zero");
 		}
 
-		if ((leftOp instanceof RatLitExpr || leftOp instanceof IntLitExpr) && (rightOp instanceof RatLitExpr || rightOp instanceof IntLitExpr)) {
+		if ((leftOp instanceof RatLitExpr || leftOp instanceof IntLitExpr)
+				&& (rightOp instanceof RatLitExpr || rightOp instanceof IntLitExpr)) {
 			final long leftNum = num(leftOp);
 			final long leftDenom = denom(leftOp);
 			final long rightNum = num(rightOp);
@@ -461,8 +468,10 @@ public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? ext
 	}
 
 	@Override
-	public <ExprType extends ClosedUnderNeg> Expr<? extends ClosedUnderNeg> visit(final NegExpr<ExprType> expr, final Assignment param) {
-		final Expr<? extends ClosedUnderNeg> op = ExprUtils.cast(expr.getOp().accept(this, param), ClosedUnderNeg.class);
+	public <ExprType extends ClosedUnderNeg> Expr<? extends ClosedUnderNeg> visit(final NegExpr<ExprType> expr,
+			final Assignment param) {
+		final Expr<? extends ClosedUnderNeg> op = ExprUtils.cast(expr.getOp().accept(this, param),
+				ClosedUnderNeg.class);
 
 		if (op instanceof IntLitExpr) {
 			return Int(((IntLitExpr) op).getValue() * -1);
@@ -481,22 +490,28 @@ public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? ext
 	}
 
 	@Override
-	public <ExprType extends ClosedUnderSub> Expr<? extends ClosedUnderSub> visit(final SubExpr<ExprType> expr, final Assignment param) {
-		final Expr<? extends ClosedUnderSub> leftOp = ExprUtils.cast(expr.getLeftOp().accept(this, param), ClosedUnderSub.class);
-		final Expr<? extends ClosedUnderSub> rightOp = ExprUtils.cast(expr.getRightOp().accept(this, param), ClosedUnderSub.class);
+	public <ExprType extends ClosedUnderSub> Expr<? extends ClosedUnderSub> visit(final SubExpr<ExprType> expr,
+			final Assignment param) {
+		final Expr<? extends ClosedUnderSub> leftOp = ExprUtils.cast(expr.getLeftOp().accept(this, param),
+				ClosedUnderSub.class);
+		final Expr<? extends ClosedUnderSub> rightOp = ExprUtils.cast(expr.getRightOp().accept(this, param),
+				ClosedUnderSub.class);
 
 		if (leftOp instanceof ConstRefExpr && rightOp instanceof ConstRefExpr) {
 			if (leftOp.equals(rightOp))
 				return Int(0);
 		}
 
-		if ((leftOp instanceof RatLitExpr || leftOp instanceof IntLitExpr) && (rightOp instanceof RatLitExpr || rightOp instanceof IntLitExpr)) {
+		if ((leftOp instanceof RatLitExpr || leftOp instanceof IntLitExpr)
+				&& (rightOp instanceof RatLitExpr || rightOp instanceof IntLitExpr)) {
 			final long leftNum = num(leftOp);
 			final long leftDenom = denom(leftOp);
 			final long rightNum = num(rightOp);
 			final long rightDenom = denom(rightOp);
 
-			return ExprUtils.cast(Rat(leftNum * rightDenom - rightNum * leftDenom, leftDenom * rightDenom).accept(this, param), RatType.class);
+			return ExprUtils.cast(
+					Rat(leftNum * rightDenom - rightNum * leftDenom, leftDenom * rightDenom).accept(this, param),
+					RatType.class);
 		}
 
 		if (leftOp == expr.getLeftOp() && rightOp == expr.getRightOp()) {
@@ -507,13 +522,15 @@ public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? ext
 	}
 
 	@Override
-	public <ExprType extends ClosedUnderAdd> Expr<? extends ClosedUnderAdd> visit(final AddExpr<ExprType> expr, final Assignment param) {
+	public <ExprType extends ClosedUnderAdd> Expr<? extends ClosedUnderAdd> visit(final AddExpr<ExprType> expr,
+			final Assignment param) {
 		final List<Expr<? extends ClosedUnderAdd>> ops = new ArrayList<>();
 		long num = 0;
 		long denom = 1;
 
 		for (final Expr<? extends ExprType> op : expr.getOps()) {
-			final Expr<? extends ClosedUnderAdd> opVisited = ExprUtils.cast(op.accept(this, param), ClosedUnderAdd.class);
+			final Expr<? extends ClosedUnderAdd> opVisited = ExprUtils.cast(op.accept(this, param),
+					ClosedUnderAdd.class);
 			if (opVisited instanceof IntLitExpr) {
 				num += denom * ((IntLitExpr) opVisited).getValue();
 			} else if (opVisited instanceof RatLitExpr) {
@@ -527,7 +544,8 @@ public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? ext
 			}
 		}
 
-		final Expr<? extends ClosedUnderAdd> sum = ExprUtils.cast(Rat(num, denom).accept(this, param), ClosedUnderAdd.class);
+		final Expr<? extends ClosedUnderAdd> sum = ExprUtils.cast(Rat(num, denom).accept(this, param),
+				ClosedUnderAdd.class);
 
 		if (!sum.equals(Int(0))) {
 			ops.add(sum);
@@ -543,13 +561,15 @@ public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? ext
 	}
 
 	@Override
-	public <ExprType extends ClosedUnderMul> Expr<? extends ClosedUnderMul> visit(final MulExpr<ExprType> expr, final Assignment param) {
+	public <ExprType extends ClosedUnderMul> Expr<? extends ClosedUnderMul> visit(final MulExpr<ExprType> expr,
+			final Assignment param) {
 		final List<Expr<? extends ClosedUnderMul>> ops = new ArrayList<>();
 		long num = 1;
 		long denom = 1;
 
 		for (final Expr<? extends ExprType> op : expr.getOps()) {
-			final Expr<? extends ClosedUnderMul> opVisited = ExprUtils.cast(op.accept(this, param), ClosedUnderMul.class);
+			final Expr<? extends ClosedUnderMul> opVisited = ExprUtils.cast(op.accept(this, param),
+					ClosedUnderMul.class);
 			if (opVisited instanceof IntLitExpr) {
 				num *= ((IntLitExpr) opVisited).getValue();
 				if (num == 0)
@@ -565,7 +585,8 @@ public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? ext
 			}
 		}
 
-		final Expr<? extends ClosedUnderMul> prod = ExprUtils.cast(Rat(num, denom).accept(this, param), ClosedUnderMul.class);
+		final Expr<? extends ClosedUnderMul> prod = ExprUtils.cast(Rat(num, denom).accept(this, param),
+				ClosedUnderMul.class);
 
 		if (!prod.equals(Int(1))) {
 			ops.add(prod);
@@ -581,31 +602,36 @@ public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? ext
 	}
 
 	@Override
-	public <IndexType extends Type, ElemType extends Type> Expr<? extends Type> visit(final ArrayReadExpr<IndexType, ElemType> expr, final Assignment param) {
+	public <IndexType extends Type, ElemType extends Type> Expr<? extends Type> visit(
+			final ArrayReadExpr<IndexType, ElemType> expr, final Assignment param) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO");
 	}
 
 	@Override
-	public <IndexType extends Type, ElemType extends Type> Expr<? extends Type> visit(final ArrayWriteExpr<IndexType, ElemType> expr, final Assignment param) {
+	public <IndexType extends Type, ElemType extends Type> Expr<? extends Type> visit(
+			final ArrayWriteExpr<IndexType, ElemType> expr, final Assignment param) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO");
 	}
 
 	@Override
-	public <ParamType extends Type, ResultType extends Type> Expr<? extends Type> visit(final FuncLitExpr<ParamType, ResultType> expr, final Assignment param) {
+	public <ParamType extends Type, ResultType extends Type> Expr<? extends Type> visit(
+			final FuncLitExpr<ParamType, ResultType> expr, final Assignment param) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO");
 	}
 
 	@Override
-	public <ParamType extends Type, ResultType extends Type> Expr<? extends Type> visit(final FuncAppExpr<ParamType, ResultType> expr, final Assignment param) {
+	public <ParamType extends Type, ResultType extends Type> Expr<? extends Type> visit(
+			final FuncAppExpr<ParamType, ResultType> expr, final Assignment param) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO");
 	}
 
 	@Override
-	public <ExprType extends Type> Expr<? extends ExprType> visit(final IteExpr<ExprType> expr, final Assignment param) {
+	public <ExprType extends Type> Expr<? extends ExprType> visit(final IteExpr<ExprType> expr,
+			final Assignment param) {
 		final Expr<? extends BoolType> cond = ExprUtils.cast(expr.getCond().accept(this, param), BoolType.class);
 		@SuppressWarnings("unchecked")
 		final Expr<? extends ExprType> then = (Expr<? extends ExprType>) expr.getThen().accept(this, param);
