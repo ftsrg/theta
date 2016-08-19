@@ -16,7 +16,6 @@ import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.inf.ttmc.core.decl.Decl;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
-import hu.bme.mit.inf.ttmc.core.expr.LitExpr;
 import hu.bme.mit.inf.ttmc.core.expr.impl.Exprs;
 import hu.bme.mit.inf.ttmc.core.model.Assignment;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
@@ -25,7 +24,7 @@ import hu.bme.mit.inf.ttmc.core.type.Type;
 public final class AssignmentImpl implements Assignment {
 
 	private final Collection<Decl<?, ?>> decls;
-	private final Map<Decl<?, ?>, LitExpr<?>> declToExpr;
+	private final Map<Decl<?, ?>, Expr<?>> declToExpr;
 
 	private static final Assignment EMPTY;
 
@@ -41,7 +40,7 @@ public final class AssignmentImpl implements Assignment {
 		this(new HashMap<>());
 	}
 
-	public AssignmentImpl(final List<? extends Decl<?, ?>> decls, final List<? extends LitExpr<?>> exprs) {
+	public AssignmentImpl(final List<? extends Decl<?, ?>> decls, final List<? extends Expr<?>> exprs) {
 		this(zip(decls, exprs));
 	}
 
@@ -57,13 +56,13 @@ public final class AssignmentImpl implements Assignment {
 		return result;
 	}
 
-	public AssignmentImpl(final Map<? extends Decl<?, ?>, ? extends LitExpr<?>> map) {
+	public AssignmentImpl(final Map<? extends Decl<?, ?>, ? extends Expr<?>> map) {
 		checkAssignmentMap(map);
 		this.declToExpr = new HashMap<>(map);
 		this.decls = ImmutableList.copyOf(map.keySet());
 	}
 
-	private static void checkAssignmentMap(final Map<? extends Decl<?, ?>, ? extends LitExpr<?>> declToExpr) {
+	private static void checkAssignmentMap(final Map<? extends Decl<?, ?>, ? extends Expr<?>> declToExpr) {
 		for (final Decl<?, ?> decl : declToExpr.keySet()) {
 			final Expr<?> expr = declToExpr.get(decl);
 			checkArgument(expr.getType().isLeq(decl.getType()));
@@ -71,14 +70,14 @@ public final class AssignmentImpl implements Assignment {
 	}
 
 	@Override
-	public <DeclType extends Type, DeclKind extends Decl<DeclType, DeclKind>> Optional<LitExpr<DeclType>> eval(
+	public <DeclType extends Type, DeclKind extends Decl<DeclType, DeclKind>> Optional<Expr<DeclType>> eval(
 			final Decl<DeclType, DeclKind> decl) {
 		checkNotNull(decl);
 
 		if (declToExpr.containsKey(decl)) {
 
 			@SuppressWarnings("unchecked")
-			final LitExpr<DeclType> val = (LitExpr<DeclType>) declToExpr.get(decl);
+			final Expr<DeclType> val = (Expr<DeclType>) declToExpr.get(decl);
 			return Optional.of(val);
 		}
 
@@ -108,7 +107,7 @@ public final class AssignmentImpl implements Assignment {
 	@Override
 	public Expr<? extends BoolType> toExpr() {
 		final List<Expr<? extends BoolType>> ops = new ArrayList<>(declToExpr.size());
-		for (final Entry<Decl<?, ?>, LitExpr<?>> entry : declToExpr.entrySet()) {
+		for (final Entry<Decl<?, ?>, Expr<?>> entry : declToExpr.entrySet()) {
 			ops.add(Exprs.Eq(entry.getKey().getRef(), entry.getValue()));
 		}
 		if (ops.size() == 0) {
