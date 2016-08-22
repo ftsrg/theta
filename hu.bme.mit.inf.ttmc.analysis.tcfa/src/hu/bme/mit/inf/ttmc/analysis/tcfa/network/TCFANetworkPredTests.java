@@ -34,6 +34,7 @@ import hu.bme.mit.inf.ttmc.core.type.IntType;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.ClockDecl;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFALoc;
+import hu.bme.mit.inf.ttmc.formalism.tcfa.impl.NetworkTCFALoc;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.instances.FischerTCFA;
 import hu.bme.mit.inf.ttmc.solver.Solver;
 import hu.bme.mit.inf.ttmc.solver.SolverManager;
@@ -65,7 +66,7 @@ public class TCFANetworkPredTests {
 		final Solver solver = manager.createSolver(true, true);
 
 		final TCFAAnalyis<CompositeState<ZoneState, PredState>, CompositePrecision<ZonePrecision, PredPrecision>> analysis = new TCFAAnalyis<>(
-				TCFANetworkLoc.create(initLocs),
+				new NetworkTCFALoc(initLocs),
 				new CompositeAnalysis<>(TCFAZoneAnalysis.getInstance(), new TCFAPredAnalysis(solver)));
 
 		final CompositePrecision<ZonePrecision, PredPrecision> precision = CompositePrecision.create(

@@ -45,7 +45,7 @@ import org.antlr.v4.runtime.Token;
 
 import com.google.common.collect.ImmutableList;
 
-import hu.bme.mit.inf.ttmc.common.dsl.LocalScope;
+import hu.bme.mit.inf.ttmc.common.dsl.BasicScope;
 import hu.bme.mit.inf.ttmc.common.dsl.Scope;
 import hu.bme.mit.inf.ttmc.common.dsl.Symbol;
 import hu.bme.mit.inf.ttmc.core.decl.Decl;
@@ -112,7 +112,7 @@ public final class ExprCreatorVisitor extends CoreDSLBaseVisitor<Expr<?>> {
 	}
 
 	private void push() {
-		currentScope = new LocalScope(currentScope);
+		currentScope = new BasicScope(currentScope);
 	}
 
 	private void pop() {

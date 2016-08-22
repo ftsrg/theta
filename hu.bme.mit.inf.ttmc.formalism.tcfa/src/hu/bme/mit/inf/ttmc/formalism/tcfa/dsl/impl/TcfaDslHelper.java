@@ -9,7 +9,9 @@ import static hu.bme.mit.inf.ttmc.formalism.common.decl.impl.Decls2.Var;
 import static java.util.stream.Collectors.toList;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import hu.bme.mit.inf.ttmc.common.dsl.Scope;
@@ -19,6 +21,8 @@ import hu.bme.mit.inf.ttmc.core.decl.Decl;
 import hu.bme.mit.inf.ttmc.core.decl.ParamDecl;
 import hu.bme.mit.inf.ttmc.core.dsl.DeclSymbol;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.model.Assignment;
+import hu.bme.mit.inf.ttmc.core.model.impl.AssignmentImpl;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
@@ -74,55 +78,78 @@ final class TcfaDslHelper {
 		return varDecl;
 	}
 
+	public static Assignment createConstDefs(final Scope scope, final Assignment assignment,
+			final List<? extends ConstDeclContext> constDeclCtxs) {
+		final Map<Decl<?, ?>, Expr<?>> declToExpr = new HashMap<>();
+		for (final ConstDeclContext constDeclCtx : constDeclCtxs) {
+			addDef(scope, assignment, declToExpr, constDeclCtx);
+		}
+		return new AssignmentImpl(declToExpr);
+	}
+
+	private static void addDef(final Scope scope, final Assignment assignment,
+			final Map<Decl<?, ?>, Expr<?>> declToExpr, final ConstDeclContext constDeclCtx) {
+		final String name = constDeclCtx.ddecl.name.getText();
+		final DeclSymbol declSymbol = resolveDecl(scope, name);
+		final Decl<?, ?> decl = declSymbol.getDecl();
+		final Expr<?> expr = createExpr(scope, assignment, constDeclCtx.value);
+		declToExpr.put(decl, expr);
+	}
+
 	public static Type createType(final TypeContext typeCtx) {
 		final Type type = typeCtx.accept(TcfaTypeCreatorVisitor.getInstance());
 		assert type != null;
 		return type;
 	}
 
-	public static Expr<?> createExpr(final Scope scope, final ExprContext exprCtx) {
-		final Expr<?> expr = exprCtx.accept(new TcfaExprCreatorVisitor(scope));
+	public static Expr<?> createExpr(final Scope scope, final Assignment assignment, final ExprContext exprCtx) {
+		final Expr<?> expr = exprCtx.accept(new TcfaExprCreatorVisitor(scope, assignment));
 		assert expr != null;
 		return expr;
 	}
 
-	public static List<Expr<?>> createExprList(final Scope scope, final ExprListContext exprListCtx) {
+	public static List<Expr<?>> createExprList(final Scope scope, final Assignment assignment,
+			final ExprListContext exprListCtx) {
 		if (exprListCtx == null || exprListCtx.exprs == null) {
 			return Collections.emptyList();
 		} else {
-			final List<Expr<?>> exprs = exprListCtx.exprs.stream().map(ctx -> createExpr(scope, ctx)).collect(toList());
+			final List<Expr<?>> exprs = exprListCtx.exprs.stream().map(ctx -> createExpr(scope, assignment, ctx))
+					.collect(toList());
 			return exprs;
 		}
 	}
 
-	public static Expr<? extends BoolType> createBoolExpr(final Scope scope, final ExprContext exprCtx) {
-		return cast(createExpr(scope, exprCtx), BoolType.class);
+	public static Expr<? extends BoolType> createBoolExpr(final Scope scope, final Assignment assignment,
+			final ExprContext exprCtx) {
+		return cast(createExpr(scope, assignment, exprCtx), BoolType.class);
 	}
 
-	public static List<Expr<? extends BoolType>> createBoolExprList(final Scope scope,
+	public static List<Expr<? extends BoolType>> createBoolExprList(final Scope scope, final Assignment assignment,
 			final ExprListContext exprListCtx) {
-		final List<Expr<?>> exprs = createExprList(scope, exprListCtx);
+		final List<Expr<?>> exprs = createExprList(scope, assignment, exprListCtx);
 		final List<Expr<? extends BoolType>> boolExprs = exprs.stream()
 				.map(e -> (Expr<? extends BoolType>) cast(e, BoolType.class)).collect(toList());
 		return boolExprs;
 	}
 
-	public static Stmt createStmt(final Scope scope, final StmtContext stmtCtx) {
-		final Stmt stmt = stmtCtx.accept(new TcfaStmtCreatorVisitor(scope));
+	public static Stmt createStmt(final Scope scope, final Assignment assignment, final StmtContext stmtCtx) {
+		final Stmt stmt = stmtCtx.accept(new TcfaStmtCreatorVisitor(scope, assignment));
 		assert stmt != null;
 		return stmt;
 	}
 
-	public static List<Stmt> createStmtList(final Scope scope, final StmtListContext stmtListCtx) {
+	public static List<Stmt> createStmtList(final Scope scope, final Assignment assignment,
+			final StmtListContext stmtListCtx) {
 		if (stmtListCtx == null || stmtListCtx.stmts.isEmpty()) {
 			return Collections.emptyList();
 		} else {
-			final List<Stmt> stmts = stmtListCtx.stmts.stream().map(ctx -> createStmt(scope, ctx)).collect(toList());
+			final List<Stmt> stmts = stmtListCtx.stmts.stream().map(ctx -> createStmt(scope, assignment, ctx))
+					.collect(toList());
 			return stmts;
 		}
 	}
 
-	public static Decl<?, ?> resolveDecl(final Scope scope, final String name) {
+	public static DeclSymbol resolveDecl(final Scope scope, final String name) {
 		final Optional<Symbol> optSymbol = scope.resolve(name);
 
 		checkArgument(optSymbol.isPresent());
@@ -130,9 +157,20 @@ final class TcfaDslHelper {
 
 		checkArgument(symbol instanceof DeclSymbol);
 		final DeclSymbol declSymbol = (DeclSymbol) symbol;
-		final Decl<?, ?> decl = declSymbol.getDecl();
 
-		return decl;
+		return declSymbol;
+	}
+
+	public static TcfaSymbol resolveTcfa(final Scope scope, final String name) {
+		final Optional<Symbol> optSymbol = scope.resolve(name);
+
+		checkArgument(optSymbol.isPresent());
+		final Symbol symbol = optSymbol.get();
+
+		checkArgument(symbol instanceof TcfaSymbol);
+		final TcfaSymbol tcfaSymbol = (TcfaSymbol) symbol;
+
+		return tcfaSymbol;
 	}
 
 	public static void declareConstDecls(final Scope scope, final List<? extends ConstDeclContext> constDeclCtxs) {

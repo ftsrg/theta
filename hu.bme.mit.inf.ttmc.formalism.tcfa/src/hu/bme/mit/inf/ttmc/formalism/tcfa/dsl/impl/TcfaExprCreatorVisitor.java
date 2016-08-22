@@ -38,13 +38,14 @@ import static java.util.stream.Collectors.toList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.antlr.v4.runtime.Token;
 
 import com.google.common.collect.ImmutableList;
 
-import hu.bme.mit.inf.ttmc.common.dsl.LocalScope;
+import hu.bme.mit.inf.ttmc.common.dsl.BasicScope;
 import hu.bme.mit.inf.ttmc.common.dsl.Scope;
 import hu.bme.mit.inf.ttmc.common.dsl.Symbol;
 import hu.bme.mit.inf.ttmc.core.decl.Decl;
@@ -59,10 +60,10 @@ import hu.bme.mit.inf.ttmc.core.expr.ModExpr;
 import hu.bme.mit.inf.ttmc.core.expr.MulExpr;
 import hu.bme.mit.inf.ttmc.core.expr.RatDivExpr;
 import hu.bme.mit.inf.ttmc.core.expr.RatLitExpr;
-import hu.bme.mit.inf.ttmc.core.expr.RefExpr;
 import hu.bme.mit.inf.ttmc.core.expr.RemExpr;
 import hu.bme.mit.inf.ttmc.core.expr.SubExpr;
 import hu.bme.mit.inf.ttmc.core.expr.TrueExpr;
+import hu.bme.mit.inf.ttmc.core.model.Assignment;
 import hu.bme.mit.inf.ttmc.core.type.ArrayType;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.core.type.FuncType;
@@ -104,13 +105,15 @@ import hu.bme.mit.inf.ttmc.formalism.tcfa.dsl.gen.TcfaDslParser.TrueExprContext;
 final class TcfaExprCreatorVisitor extends TcfaDslBaseVisitor<Expr<?>> {
 
 	private Scope currentScope;
+	private final Assignment assignment;
 
-	TcfaExprCreatorVisitor(final Scope scope) {
+	TcfaExprCreatorVisitor(final Scope scope, final Assignment assignment) {
 		currentScope = checkNotNull(scope);
+		this.assignment = checkNotNull(assignment);
 	}
 
 	private void push() {
-		currentScope = new LocalScope(currentScope);
+		currentScope = new BasicScope(currentScope);
 	}
 
 	private void pop() {
@@ -556,15 +559,23 @@ final class TcfaExprCreatorVisitor extends TcfaDslBaseVisitor<Expr<?>> {
 	}
 
 	@Override
-	public RefExpr<?, ?> visitIdExpr(final IdExprContext ctx) {
-		final Symbol symbol = currentScope.resolve(ctx.id.getText()).get();
-		if (symbol instanceof DeclSymbol) {
-			final DeclSymbol declSymbol = (DeclSymbol) symbol;
-			final Decl<?, ?> decl = declSymbol.getDecl();
-			return decl.getRef();
+	public Expr<?> visitIdExpr(final IdExprContext ctx) {
+		final Optional<Symbol> optSymbol = currentScope.resolve(ctx.id.getText());
+
+		checkArgument(optSymbol.isPresent());
+		final Symbol symbol = optSymbol.get();
+
+		checkArgument(symbol instanceof DeclSymbol);
+		final DeclSymbol declSymbol = (DeclSymbol) symbol;
+		final Decl<?, ?> decl = declSymbol.getDecl();
+
+		final Optional<? extends Expr<?>> optValue = assignment.eval(decl);
+		if (optValue.isPresent()) {
+			return optValue.get();
 		} else {
-			throw new AssertionError();
+			return decl.getRef();
 		}
+
 	}
 
 	@Override

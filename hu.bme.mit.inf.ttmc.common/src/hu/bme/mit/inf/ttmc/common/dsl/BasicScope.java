@@ -5,7 +5,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.util.Collection;
 import java.util.Optional;
 
-public abstract class BasicScope implements Scope {
+public final class BasicScope implements Scope {
 
 	private final Optional<Scope> enclosingScope;
 

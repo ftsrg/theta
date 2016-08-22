@@ -5,7 +5,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedList;
+import java.util.HashSet;
 import java.util.List;
 
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
@@ -16,38 +16,41 @@ import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFA;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFAEdge;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFALoc;
+import hu.bme.mit.inf.ttmc.formalism.utils.FormalismUtils;
 
-public final class MutableTCFA implements TCFA {
+public final class SimpleTCFA implements TCFA {
 
 	private final Collection<TCFALoc> locs;
 	private final Collection<TCFAEdge> edges;
 
 	private TCFALoc initLoc;
 
-	public MutableTCFA() {
-		locs = new LinkedList<>();
-		edges = new LinkedList<>();
+	private final Collection<VarDecl<?>> dataVars;
+	private final Collection<ClockDecl> clockVars;
+
+	public SimpleTCFA() {
+		locs = new HashSet<>();
+		edges = new HashSet<>();
+		dataVars = new HashSet<>();
+		clockVars = new HashSet<>();
 	}
 
 	////
 
 	@Override
-	public Collection<? extends VarDecl<?>> getVars() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+	public Collection<? extends VarDecl<?>> getDataVars() {
+		return Collections.unmodifiableCollection(dataVars);
 	}
 
 	@Override
-	public Collection<? extends ClockDecl> getClocks() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+	public Collection<? extends ClockDecl> getClockVars() {
+		return Collections.unmodifiableCollection(clockVars);
 	}
 
 	////
 
 	@Override
 	public TCFALoc getInitLoc() {
-		checkNotNull(initLoc);
 		return initLoc;
 	}
 
@@ -68,7 +71,10 @@ public final class MutableTCFA implements TCFA {
 			final Collection<? extends Expr<? extends BoolType>> invars) {
 		checkNotNull(name);
 		checkNotNull(invars);
-		final MutableTCFALoc loc = new MutableTCFALoc(name, urgent, invars);
+		final SimpleTCFALoc loc = new SimpleTCFALoc(name, urgent, invars);
+
+		invars.forEach(this::addVars);
+
 		locs.add(loc);
 		return loc;
 	}
@@ -87,14 +93,36 @@ public final class MutableTCFA implements TCFA {
 		checkArgument(locs.contains(source));
 		checkArgument(locs.contains(target));
 
-		final MutableTCFALoc mutableSource = (MutableTCFALoc) source;
-		final MutableTCFALoc mutableTarget = (MutableTCFALoc) target;
+		final SimpleTCFALoc mutableSource = (SimpleTCFALoc) source;
+		final SimpleTCFALoc mutableTarget = (SimpleTCFALoc) target;
 
-		final MutableTCFAEdge edge = new MutableTCFAEdge(mutableSource, mutableTarget, stmts);
+		final SimpleTCFAEdge edge = new SimpleTCFAEdge(mutableSource, mutableTarget, stmts);
 		mutableSource.outEdges.add(edge);
 		mutableTarget.inEdges.add(edge);
+
+		stmts.forEach(this::addVars);
+
 		edges.add(edge);
 		return edge;
+	}
+
+	private void addVars(final Stmt stmt) {
+		final Collection<VarDecl<?>> varDecls = FormalismUtils.getVars(stmt);
+		varDecls.forEach(this::addVar);
+	}
+
+	private void addVars(final Expr<?> expr) {
+		final Collection<VarDecl<?>> varDecls = FormalismUtils.getVars(expr);
+		varDecls.forEach(this::addVar);
+	}
+
+	private void addVar(final VarDecl<?> varDecl) {
+		if (varDecl instanceof ClockDecl) {
+			final ClockDecl clockDecl = (ClockDecl) varDecl;
+			clockVars.add(clockDecl);
+		} else {
+			dataVars.add(varDecl);
+		}
 	}
 
 }
