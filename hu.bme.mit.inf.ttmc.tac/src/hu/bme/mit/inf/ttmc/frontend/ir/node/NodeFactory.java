@@ -16,12 +16,20 @@ public class NodeFactory {
 		return new AssignNode<VarType, ExprType>(var, expr);
 	}
 
+	public static AssertNode Assert(Expr<? extends BoolType> condition) {
+		return new AssertNode(condition);
+	}
+
 	public static JumpIfNode JumpIf(Expr<? extends BoolType> condition, BasicBlock then, BasicBlock elze) {
 		return new JumpIfNode(condition, then, elze);
 	}
 
 	public static GotoNode Goto(BasicBlock target) {
 		return new GotoNode(target);
+	}
+
+	public static ReturnNode Return(Expr<? extends Type> expr) {
+		return new ReturnNode(expr);
 	}
 
 }

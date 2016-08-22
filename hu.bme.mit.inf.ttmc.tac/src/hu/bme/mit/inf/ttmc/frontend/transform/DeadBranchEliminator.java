@@ -28,6 +28,7 @@ public class DeadBranchEliminator implements FunctionTransformer {
 				.filter(b -> ((JumpIfNode) b.getTerminator()).getCond() instanceof BoolLitExpr)
 				.findFirst();
 
+			// If such block exists
 			if (result.isPresent()) {
 				BasicBlock block = result.get();
 				JumpIfNode terminator = (JumpIfNode) block.getTerminator();

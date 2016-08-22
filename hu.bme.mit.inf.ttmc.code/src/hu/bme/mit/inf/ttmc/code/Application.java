@@ -1,24 +1,20 @@
 package hu.bme.mit.inf.ttmc.code;
 
-import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.util.List;
 
-import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.core.runtime.CoreException;
 
-import hu.bme.mit.inf.ttmc.code.ast.TranslationUnitAst;
-import hu.bme.mit.inf.ttmc.code.ast.utils.AstPrinter;
-import hu.bme.mit.inf.ttmc.code.visitor.PrintCodeAstVisitor;
-import hu.bme.mit.inf.ttmc.formalism.cfa.CFA;
-import hu.bme.mit.inf.ttmc.formalism.utils.impl.CFAPrinter;
+import hu.bme.mit.inf.ttmc.frontend.dependency.ControlDependencyGraph;
 import hu.bme.mit.inf.ttmc.frontend.dependency.DominatorTree;
 import hu.bme.mit.inf.ttmc.frontend.dependency.UseDefineChain;
+import hu.bme.mit.inf.ttmc.frontend.ir.Function;
 import hu.bme.mit.inf.ttmc.frontend.ir.GlobalContext;
 import hu.bme.mit.inf.ttmc.frontend.ir.utils.IrPrinter;
+import hu.bme.mit.inf.ttmc.frontend.transform.ConstantPropagator;
+import hu.bme.mit.inf.ttmc.frontend.transform.DeadBranchEliminator;
+import hu.bme.mit.inf.ttmc.frontend.transform.FunctionSlicer;
 
 class Application {
 
@@ -32,55 +28,38 @@ class Application {
 			System.out.println("------" + "CFG" + "------");
 			System.out.println(IrPrinter.toGraphvizString(s));
 
-			System.out.println("------" + "Dominators" + "------");
-			DominatorTree dt = DominatorTree.createDominatorTree(s);
-			System.out.println(IrPrinter.dominatorTreeGraph(dt));
+//			System.out.println("------" + "Dominators" + "------");
+//			DominatorTree dt = DominatorTree.createDominatorTree(s);
+//			System.out.println(IrPrinter.dominatorTreeGraph(dt));
+//
+
+			System.out.println("------" + "Constant prop" + "------");
+			ConstantPropagator constProp = new ConstantPropagator();
+			constProp.transform(s);
+			System.out.println(IrPrinter.toGraphvizString(s));
+
+			System.out.println("------" + "Dead branch elim" + "------");
+			DeadBranchEliminator dbe = new DeadBranchEliminator();
+			dbe.transform(s);
+			System.out.println(IrPrinter.toGraphvizString(s));
+
+			s.normalize();
+			System.out.println("------" + "final CFG" + "------");
+			System.out.println(IrPrinter.toGraphvizString(s));
 
 			System.out.println("------" + "PDT" + "------");
 			DominatorTree pdt = DominatorTree.createPostDominatorTree(s);
 			System.out.println(IrPrinter.dominatorTreeGraph(pdt));
 
-			UseDefineChain.buildChain(s);
+			System.out.println("------" + "slicer" + "------");
+			FunctionSlicer slicer = new FunctionSlicer();
+			List<Function> slices = slicer.allSlices(s, FunctionSlicer.SLICE_ON_ASSERTS);
+
+			slices.forEach(f -> {
+				System.out.println("---" + "slice" + "---");
+				System.out.println(IrPrinter.toGraphvizString(f));
+			});
 
 		});
 	}
-
-	private static int nodeId = 0;
-
-	private static String getCdtAstString(IASTNode ast)
-	{
-		StringBuilder sb = new StringBuilder();
-		sb.append("digraph G {");
-		printTree(ast, sb);
-		sb.append("}");
-
-		return sb.toString();
-	}
-
-	private static String printTree(IASTNode node, StringBuilder sb) {
-		String nodeName = "node_" + nodeId++;
-		sb.append(String.format("%s [label=\"%s\"];\n", nodeName, node.getClass().getSimpleName()));
-		for (IASTNode child : node.getChildren()) {
-			String cname = printTree(child, sb);
-			sb.append(String.format("%s -> %s;\n", nodeName, cname));
-		}
-
-		return nodeName;
-	}
-
-	private static void graphvizOutput(String basename, String content) {
-		try {
-			FileOutputStream fos = new FileOutputStream(new File(basename + ".dot"));
-			OutputStreamWriter osw = new OutputStreamWriter(fos);
-
-			osw.write(content);
-			osw.close();
-
-			Process proc = Runtime.getRuntime().exec(String.format("dot -Tpng -o %s.png %s.dot", basename, basename));
-			proc.waitFor();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-
 }

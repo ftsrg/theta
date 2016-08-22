@@ -74,6 +74,7 @@ import hu.bme.mit.inf.ttmc.frontend.ir.BasicBlock;
 import hu.bme.mit.inf.ttmc.frontend.ir.Function;
 import hu.bme.mit.inf.ttmc.frontend.ir.GlobalContext;
 import hu.bme.mit.inf.ttmc.frontend.ir.InstructionBuilder;
+import hu.bme.mit.inf.ttmc.frontend.ir.node.EntryNode;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.GotoNode;
 
 import static hu.bme.mit.inf.ttmc.frontend.ir.node.NodeFactory.*;
@@ -98,9 +99,12 @@ public class IrCodeGenerator implements
 		this.builder = new InstructionBuilder(function);
 		BasicBlock entry = this.builder.createBlock("entry");
 
+		BasicBlock codeEntry = this.builder.createBlock("code_entry");
+		entry.terminate(new EntryNode(codeEntry));
+
 		function.setEntryBlock(entry);
 
-		this.builder.setInsertPoint(entry);
+		this.builder.setInsertPoint(codeEntry);
 	}
 
 	public void generate(FunctionDefinitionAst ast) {
@@ -311,6 +315,13 @@ public class IrCodeGenerator implements
 			VarRefExpr<Type> left = (VarRefExpr<Type>) lhs;
 
 			this.builder.insertNode(Assign(left.getDecl(), rhs));
+		} else if (exprAst instanceof FunctionCallExpressionAst) {
+			FunctionCallExpressionAst func = (FunctionCallExpressionAst) ast.getExpression();
+
+			if (func.getName().equals("assert")) {
+				ExpressionAst cond = func.getParams().get(0); // The first parameter is the condition
+				this.builder.insertNode(Assert(ExprUtils.cast(cond.accept(this), BoolType.class)));
+			}
 		}
 
 		return null;

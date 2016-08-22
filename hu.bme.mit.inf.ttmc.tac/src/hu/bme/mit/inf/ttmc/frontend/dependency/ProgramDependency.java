@@ -10,44 +10,57 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import hu.bme.mit.inf.ttmc.frontend.dependency.ProgramDependency.PDGNode;
 import hu.bme.mit.inf.ttmc.frontend.ir.BasicBlock;
 import hu.bme.mit.inf.ttmc.frontend.ir.Function;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.IrNode;
 
-public class ControlDependencyGraph {
+public class ProgramDependency {
 
-	private CDGNode entry;
-	private final Map<BasicBlock, CDGNode> nodes;
+	public static class PDGNode {
+		public IrNode node;
+		public List<PDGNode> controlChildren = new ArrayList<>();
+		public List<PDGNode> controlParents = new ArrayList<>();
 
-	public static class CDGNode {
-		public final BasicBlock block;
-		public final List<CDGNode> children = new ArrayList<>();
-		public final List<CDGNode> parents = new ArrayList<>();
+		public List<PDGNode> flowParents = new ArrayList<>();
+		public List<PDGNode> flowChildren = new ArrayList<>();
 
-		public CDGNode(BasicBlock block) {
-			this.block = block;
+		public PDGNode(IrNode node) {
+			this.node = node;
+		}
+
+		public Collection<PDGNode> parents() {
+			Set<PDGNode> parents = new HashSet<>();
+			parents.addAll(this.controlParents);
+			parents.addAll(this.flowParents);
+
+			return parents;
+		}
+
+		@Override
+		public String toString() {
+			return node.getLabel();
 		}
 	}
 
-	private ControlDependencyGraph(Map<BasicBlock, CDGNode> nodes, CDGNode entry) {
+	private DominatorTree pdt;
+	private Function function;
+	private Map<IrNode, PDGNode> nodes;
+	private PDGNode entry;
+
+	public ProgramDependency(Map<IrNode, PDGNode> nodes, PDGNode entry) {
 		this.nodes = nodes;
 		this.entry = entry;
 	}
 
-	public Collection<CDGNode> getNodes() {
-		return Collections.unmodifiableCollection(this.nodes.values());
+	public PDGNode findNode(IrNode node) {
+		return this.nodes.get(node);
 	}
 
-	public Collection<BasicBlock> getParentBlocks(BasicBlock block) {
-		return this.nodes.get(block).parents.stream()
-			.map(p -> p.block)
-			.collect(Collectors.toList());
-	}
-
-	public static ControlDependencyGraph buildGraph(Function function) {
-		List<BasicBlock> blocks = function.getBlocksDFS();
+	public static ProgramDependency buildPDG(Function function) {
 		DominatorTree pdt = DominatorTree.createPostDominatorTree(function);
+		UseDefineChain ud = UseDefineChain.buildChain(function);
+
+		List<BasicBlock> blocks = function.getBlocksDFS();
 
 		/*
 		 * Control dependence algorithm from J. Ferrante et al.
@@ -95,27 +108,61 @@ public class ControlDependencyGraph {
 		}
 
 		/* After finding the control dependency relation, we can build the control dependency graph */
-		Map<BasicBlock, CDGNode> nodes = new HashMap<>();
+		Map<IrNode, PDGNode> nodes = new HashMap<>();
 		for (BasicBlock block : blocks) {
-			nodes.put(block, new CDGNode(block));
+			for (IrNode node : block.getAllNodes()) {
+				nodes.put(node, new PDGNode(node));
+			}
 		}
 
-		CDGNode entry = nodes.get(function.getEntryBlock());
+		PDGNode entry = nodes.get(function.getEntryBlock().getTerminator());
+
 		controlDeps.forEach((BasicBlock block, Set<BasicBlock> deps) -> {
-			CDGNode cdg = nodes.get(block);
-			deps.forEach(child -> {
-				CDGNode childNode = nodes.get(child);
-				cdg.children.add(childNode);
-				childNode.parents.add(cdg);
+			// If B is control dependant on A, all of A's nodes are control dependant on B's terminator
+			PDGNode terminator = nodes.get(block.getTerminator());
+			List<PDGNode> dependantNodes = new ArrayList<>();
+			deps.forEach(dep -> {
+				List<PDGNode> pdgNodes = dep.getAllNodes().stream().map(n -> nodes.get(n)).collect(Collectors.toList());
+				pdgNodes.forEach(p -> {
+					terminator.controlChildren.add(p);
+					p.controlParents.add(terminator);
+				});
 			});
 		});
 
-		nodes.values().stream().filter(n -> n.parents.size() == 0 && n != entry).forEach(n -> {
-			n.parents.add(entry);
-			entry.children.add(n);
+		// If node does not depend on any node, it should depend on the entry node
+		nodes.values().stream().filter(p -> p.controlParents.size() == 0 && p != entry).forEach(p -> {
+			p.controlParents.add(entry);
+			entry.controlChildren.add(p);
 		});
 
-		return new ControlDependencyGraph(nodes, entry);
+		/*
+		 * Perform flow dependency calculation
+		 */
+		for (PDGNode pdg : nodes.values()) {
+			ud.getDefinitions(pdg.node).stream()
+				.map(d -> nodes.get(d))
+				.filter(p -> p != pdg)
+				.forEach(p -> {
+					pdg.flowParents.add(p);
+					p.flowChildren.add(pdg);
+				});
+		}
+
+
+		return new ProgramDependency(nodes, entry);
+	}
+
+	public Collection<PDGNode> getNodes() {
+		return nodes.values();
+	}
+
+	public void setNodes(Map<IrNode, PDGNode> nodes) {
+		this.nodes = nodes;
+	}
+
+	public PDGNode getEntry() {
+		return this.entry;
 	}
 
 }

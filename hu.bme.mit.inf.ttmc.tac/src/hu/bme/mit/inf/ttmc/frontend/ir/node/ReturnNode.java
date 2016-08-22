@@ -17,6 +17,15 @@ public class ReturnNode implements TerminatorIrNode {
 	}
 
 	@Override
+	public IrNode copy() {
+		return new ReturnNode(this.expr);
+	}
+
+	public Expr<? extends Type> getExpr() {
+		return this.expr;
+	}
+
+	@Override
 	public String getLabel() {
 		return "Return(" + this.expr.toString() + ")";
 	}

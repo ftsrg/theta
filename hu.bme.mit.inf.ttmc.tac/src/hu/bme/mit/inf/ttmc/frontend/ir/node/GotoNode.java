@@ -14,6 +14,11 @@ public class GotoNode implements TerminatorIrNode {
 		this.target = target;
 	}
 
+	@Override
+	public IrNode copy() {
+		return new GotoNode(this.target);
+	}
+
 	public BasicBlock getTarget() {
 		return target;
 	}
@@ -32,6 +37,11 @@ public class GotoNode implements TerminatorIrNode {
 	@Override
 	public List<BasicBlock> getTargets() {
 		return Collections.singletonList(this.target);
+	}
+
+	@Override
+	public String toString() {
+		return this.getLabel();
 	}
 
 

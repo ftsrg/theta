@@ -5,23 +5,30 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Stack;
 import java.util.stream.Collectors;
 
 import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
+import hu.bme.mit.inf.ttmc.frontend.ir.node.EntryNode;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.ExitNode;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.GotoNode;
+import hu.bme.mit.inf.ttmc.frontend.ir.node.IrNode;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.JumpIfNode;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.NonTerminatorIrNode;
+import hu.bme.mit.inf.ttmc.frontend.ir.node.ReturnNode;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.TerminatorIrNode;
+
+import static hu.bme.mit.inf.ttmc.frontend.ir.node.NodeFactory.*;
 
 public class Function {
 
 	private final String name;
 	private final Type type;
 	private final List<VarDecl<? extends Type>> locals = new ArrayList<>();
-	private final Map<String, BasicBlock> blocks = new HashMap<>();
+	private final Map<String, BasicBlock> blocksMap = new HashMap<>();
 
 	private BasicBlock entry;
 	private BasicBlock exit;
@@ -32,6 +39,49 @@ public class Function {
 
 		this.exit = new BasicBlock(name + "_exit", this);
 		this.exit.terminate(new ExitNode());
+	}
+
+	public Function copy(Map<BasicBlock, BasicBlock> newBlocks) {
+		Function func = new Function(this.name, this.type);
+		for (BasicBlock block : this.blocksMap.values()) {
+			BasicBlock newBlock = func.createBlock(block.getName());
+			newBlocks.put(block, newBlock);
+			for (NonTerminatorIrNode node : block.getNodes()) {
+				newBlock.addNode(node.copy());
+			}
+		}
+
+		// Terminate the blocks
+		for (Entry<BasicBlock, BasicBlock> entry : newBlocks.entrySet()) {
+			BasicBlock oldBlock = entry.getKey();
+			BasicBlock newBlock = entry.getValue();
+
+			TerminatorIrNode terminator = oldBlock.getTerminator();
+
+			if (terminator instanceof GotoNode) {
+				newBlock.terminate(Goto(newBlocks.get(((GotoNode) terminator).getTarget())));
+			} else if (terminator instanceof JumpIfNode) {
+				JumpIfNode jump = (JumpIfNode) terminator;
+				newBlock.terminate(JumpIf(jump.getCond(), newBlocks.get(jump.getThenTarget()), newBlocks.get(jump.getElseTarget())));
+			} else if (terminator instanceof ReturnNode) {
+				newBlock.terminate(Return(((ReturnNode) terminator).getExpr()));
+			} else if (terminator instanceof ExitNode) {
+				newBlock.terminate(new ExitNode());
+			} else if (terminator instanceof EntryNode) {
+				newBlock.terminate(new EntryNode(newBlocks.get(((EntryNode) this.entry.getTerminator()).getTarget())));
+			} else {
+				throw new UnsupportedOperationException("Invalid terminator node");
+			}
+		}
+
+		func.setEntryBlock(newBlocks.get(this.entry));
+		func.setExitBlock(newBlocks.get(this.exit));
+
+		return func;
+	}
+
+	public Function copy() {
+		return this.copy(new HashMap<>());
 	}
 
 	public BasicBlock createBlock(String name) {
@@ -54,8 +104,8 @@ public class Function {
 		oldBlock.terminator.getTargets().forEach(t -> t.parents.remove(oldBlock));
 		newBlock.terminate(terminator);
 
-		this.blocks.values().remove(oldBlock);
-		this.blocks.put(newBlock.getName(), newBlock);
+		this.blocksMap.values().remove(oldBlock);
+		this.blocksMap.put(newBlock.getName(), newBlock);
 
 		if (this.entry == oldBlock)
 			this.entry = newBlock;
@@ -66,7 +116,7 @@ public class Function {
 
 	public void normalize() {
 		// Remove single 'goto' nodes
-		List<BasicBlock> singleGotos = this.blocks.values()
+		List<BasicBlock> singleGotos = this.blocksMap.values()
 			.stream()
 			.filter(block -> block.countNodes() == 0 && (block.getTerminator() instanceof GotoNode))
 			.collect(Collectors.toList());
@@ -87,7 +137,7 @@ public class Function {
 		}
 
 		this.removeUnreachableBlocks();
-		//this.mergeBlocks();
+		this.mergeBlocks();
 	}
 
 	public void addLocalVariable(VarDecl<? extends Type> variable) {
@@ -95,15 +145,16 @@ public class Function {
 	}
 
 	public void addBasicBlock(BasicBlock block) {
-		this.blocks.put(block.getName(), block);
+		this.blocksMap.put(block.getName(), block);
 	}
 
 	public void removeBasicBlock(BasicBlock block) {
-		this.blocks.values().remove(block);
+		block.getTerminator().getTargets().forEach(t -> t.parents.remove(block));
+		this.blocksMap.values().remove(block);
 	}
 
 	public Collection<BasicBlock> getBlocks() {
-		return this.blocks.values();
+		return this.blocksMap.values();
 	}
 
 	/**
@@ -150,6 +201,10 @@ public class Function {
 		return this.exit;
 	}
 
+	public Type getType() {
+		return this.type;
+	}
+
 	private void removeUnreachableBlocks() {
 		// Perform a DFS
 		Stack<BasicBlock> stack = new Stack<>();
@@ -169,7 +224,8 @@ public class Function {
 		System.out.println(visited);
 
 		// retain all visited nodes
-		this.blocks.values().retainAll(visited);
+		List<BasicBlock> unreachable =  this.blocksMap.values().stream().filter(b -> !visited.contains(b)).collect(Collectors.toList());
+		unreachable.forEach(b -> this.removeBasicBlock(b));
 	}
 
 	/**
@@ -178,26 +234,39 @@ public class Function {
 	 * TODO
 	 */
 	private void mergeBlocks() {
-		List<BasicBlock> blocks = this.blocks.values()
-			.stream()
-			.filter(b -> {
-				if (!(b.getTerminator() instanceof GotoNode)) // The node should have only one child
-					return false;
+		boolean change = true;
+		while (change) {
+			change = false;
 
-				GotoNode term = (GotoNode) b.getTerminator();
-				if (term.getTarget() == this.exit)	// This child shouldn't be the exit node
-					return false;
+			Optional<BasicBlock> result = this.blocksMap.values()
+				.stream()
+				.filter(b -> {
+					if (!(b.getTerminator() instanceof GotoNode)) // The node should have only one child
+						return false;
 
-				return term.getTarget().parents.size() == 1; // And this block should be the child's only parent
-			})
-			.collect(Collectors.toList());
+					GotoNode term = (GotoNode) b.getTerminator();
+					if (term.getTarget() == this.exit)	// This child shouldn't be the exit node
+						return false;
 
-		for (BasicBlock block : blocks) {
-			GotoNode terminator = (GotoNode) block.getTerminator();
-			List<NonTerminatorIrNode> nodes = new ArrayList<>();
+					return term.getTarget().parents.size() == 1; // And this block should be the child's only parent
+				})
+				.findFirst();
 
-			nodes.addAll(block.getNodes());
-			nodes.addAll(terminator.getTarget().getNodes());
+			if (result.isPresent()) {
+				BasicBlock block = result.get();
+				GotoNode terminator = (GotoNode) block.getTerminator();
+				BasicBlock child = terminator.getTarget();
+				TerminatorIrNode childTerm = child.getTerminator();
+
+				// Remove this terminator and append the child block's nodes to this block
+				block.clearTerminator();
+				child.getNodes().forEach(n -> block.addNode(n));
+				child.clearTerminator();
+				block.terminate(childTerm);
+				this.removeBasicBlock(child);
+
+				change = true;
+			}
 		}
 	}
 }

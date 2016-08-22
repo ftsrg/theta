@@ -6,6 +6,8 @@ public interface IrNode {
 
 	public String getLabel();
 
+	public IrNode copy();
+
 	public void setParentBlock(BasicBlock block);
 
 	public BasicBlock getParentBlock();

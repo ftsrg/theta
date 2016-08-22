@@ -1,6 +1,10 @@
 package hu.bme.mit.inf.ttmc.frontend.ir.utils;
 
+import hu.bme.mit.inf.ttmc.frontend.dependency.ControlDependencyGraph;
+import hu.bme.mit.inf.ttmc.frontend.dependency.ControlDependencyGraph.CDGNode;
 import hu.bme.mit.inf.ttmc.frontend.dependency.DominatorTree;
+import hu.bme.mit.inf.ttmc.frontend.dependency.ProgramDependency;
+import hu.bme.mit.inf.ttmc.frontend.dependency.ProgramDependency.PDGNode;
 import hu.bme.mit.inf.ttmc.frontend.ir.BasicBlock;
 import hu.bme.mit.inf.ttmc.frontend.ir.Function;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.IrNode;
@@ -10,6 +14,41 @@ public class IrPrinter {
 
 	public static String toText(Function func) {
 		StringBuilder sb = new StringBuilder();
+
+		return sb.toString();
+	}
+
+	public static String controlDependencyGraph(ControlDependencyGraph cdg) {
+		StringBuilder sb = new StringBuilder();
+		sb.append("digraph G {\n");
+
+		for (CDGNode node : cdg.getNodes()) {
+			sb.append(String.format("node_%s [label=\"%s\"];\n", System.identityHashCode(node), node.block.getLabel()));
+			for (CDGNode child : node.children) {
+				sb.append(String.format("node_%s -> node_%s [color=\"blue\"];\n", System.identityHashCode(node), System.identityHashCode(child)));
+			}
+		}
+
+		sb.append("}\n");
+		return sb.toString();
+	}
+
+	public static String programDependencyGraph(ProgramDependency pdg) {
+		StringBuilder sb = new StringBuilder();
+		sb.append("digraph G {\n");
+
+		int id = 0;
+		for (PDGNode n : pdg.getNodes()) {
+			sb.append(String.format("node_%s [label=\"%s\"];\n", System.identityHashCode(n), n.node.getLabel()));
+			n.controlChildren.forEach(c -> {
+				sb.append(String.format("node_%s -> node_%s [color=\"blue\"];\n", System.identityHashCode(n), System.identityHashCode(c)));
+			});
+			n.flowChildren.forEach(c -> {
+				sb.append(String.format("node_%s -> node_%s [color=\"green\"];\n", System.identityHashCode(n), System.identityHashCode(c)));
+			});
+		}
+
+		sb.append("}\n");
 
 		return sb.toString();
 	}

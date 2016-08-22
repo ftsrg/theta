@@ -14,6 +14,7 @@ import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.frontend.ir.BasicBlock;
 import hu.bme.mit.inf.ttmc.frontend.ir.Function;
+import hu.bme.mit.inf.ttmc.frontend.ir.node.AssertNode;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.AssignNode;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.IrNode;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.JumpIfNode;
@@ -119,7 +120,11 @@ public class UseDefineChain {
 		BlockInfo info = this.blocks.get(block);
 
 		if (info == null)
-			throw new RuntimeException("Cannot find block '" + block.getName() + "' in the use-define chain.");
+			throw new RuntimeException("Cannot find block '" + block.getName() + "' (containing instruction " + node.getLabel() + ") in the use-define chain.");
+
+		List<Use> uses = info.uses.get(node);
+		if (uses == null)
+			return Collections.emptyList();
 
 		List<VarDecl<? extends Type>> usedVars = info.uses.get(node).stream()
 			.map(u -> u.var)
@@ -299,6 +304,18 @@ public class UseDefineChain {
 						usedVars.forEach(v -> {
 							Use use = new Use(assign, v);
 							info.uses.get(assign).add(use);
+							allUses.add(use);
+						});
+					}
+				} else if (node instanceof AssertNode) {
+					AssertNode assrt = (AssertNode) node;
+
+					assrt.getCond().accept(varFinder, usedVars);
+					if (!usedVars.isEmpty()) {
+						info.uses.put(assrt, new ArrayList<Use>());
+						usedVars.forEach(v -> {
+							Use use = new Use(assrt, v);
+							info.uses.get(assrt).add(use);
 							allUses.add(use);
 						});
 					}

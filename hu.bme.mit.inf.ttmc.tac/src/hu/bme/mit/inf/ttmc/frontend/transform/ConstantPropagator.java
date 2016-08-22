@@ -20,6 +20,7 @@ import hu.bme.mit.inf.ttmc.frontend.dependency.UseDefineChain;
 import hu.bme.mit.inf.ttmc.frontend.dependency.UseDefineChain.Definition;
 import hu.bme.mit.inf.ttmc.frontend.ir.BasicBlock;
 import hu.bme.mit.inf.ttmc.frontend.ir.Function;
+import hu.bme.mit.inf.ttmc.frontend.ir.node.AssertNode;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.AssignNode;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.IrNode;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.JumpIfNode;
@@ -55,10 +56,13 @@ public class ConstantPropagator implements FunctionTransformer {
 					Expr<? extends BoolType> expr = ExprUtils.cast(jump.getCond().accept(visitor, null), BoolType.class);
 
 					jump.setCond(expr);
+				} else if (node instanceof AssertNode) {
+					AssertNode assrt = (AssertNode) node;
+					Expr<? extends BoolType> expr = ExprUtils.cast(assrt.getCond().accept(visitor, null), BoolType.class);
+
+					assrt.setCond(expr);
 				}
 			}
-
-
 		}
 	}
 

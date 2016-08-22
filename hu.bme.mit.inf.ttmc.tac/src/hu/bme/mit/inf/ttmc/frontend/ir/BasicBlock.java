@@ -171,8 +171,8 @@ public class BasicBlock {
 	/**
 	 * Replace a node in this block with a new one
 	 *
-	 * @param oldNode The node to replace
-	 * @param newNode The node to be replaced
+	 * @param oldNode The node to be replaced
+	 * @param newNode The new node
 	 */
 	public void replaceNode(IrNode oldNode, IrNode newNode) {
 		if (oldNode == this.terminator) {
@@ -196,6 +196,69 @@ public class BasicBlock {
 			System.out.println(newNode + " " + newNode.getLabel());
 			throw new IllegalArgumentException("Cannot replace a nonterminator node with a terminator");
 		}
+	}
+
+	/**
+	 * Replace a node at a given index
+	 *
+	 * This method cannot replace terminator nodes
+	 *
+	 * @param idx	The index of the old node
+	 * @param node	The new node
+	 */
+	public void replaceNode(int idx, NonTerminatorIrNode node) {
+		if (idx >= this.nodes.size() || idx < 0)
+			throw new IllegalArgumentException("Invalid node index");
+
+		this.nodes.set(idx, node);
+	}
+
+	/**
+	 * Returns a given node's index in the block
+	 *
+	 * This operation throws an exception if the node is not contained in the block
+	 *
+	 * @param node The node to search for
+	 *
+	 * @return The index of the given node
+	 */
+	public int getNodeIndex(IrNode node) {
+		if (node == this.terminator)
+			return this.nodes.size();
+
+		int idx = this.nodes.indexOf(node);
+		if (idx == -1)
+			throw new IllegalArgumentException("The block does not contain the given node");
+
+		return idx;
+	}
+
+	/**
+	 * Returns the node on a given index
+	 *
+	 * This operation throws an exception if the node is not contained in the block
+	 *
+	 * @param idx	Index of the node to return
+	 *
+	 * @return The node on the specified position
+	 */
+	public IrNode getNodeByIndex(int idx) {
+		if (idx == this.nodes.size())
+			return this.terminator;
+
+		return this.nodes.get(idx);
+	}
+
+	/**
+	 * Remove a node by index
+	 *
+	 * @param idx The index of the node to remove
+	 */
+	public void removeNode(int idx) {
+		if (idx < 0 || idx >= this.nodes.size())
+			throw new IllegalArgumentException("The block does not contain the given node index: " + idx);
+
+		this.nodes.remove(idx);
 	}
 
 	/**

@@ -18,6 +18,11 @@ public class AssignNode<VarType extends Type, ExprType extends VarType> implemen
 		this.expr = expr;
 	}
 
+	@Override
+	public AssignNode<VarType, ExprType> copy() {
+		return new AssignNode<VarType, ExprType>(this.var, this.expr);
+	}
+
 	public VarDecl<VarType> getVar() {
 		return var;
 	}
@@ -47,6 +52,11 @@ public class AssignNode<VarType extends Type, ExprType extends VarType> implemen
 	@Override
 	public BasicBlock getParentBlock() {
 		return this.parent;
+	}
+
+	@Override
+	public String toString() {
+		return this.getLabel();
 	}
 
 }

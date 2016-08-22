@@ -5,23 +5,32 @@ import java.util.List;
 
 import hu.bme.mit.inf.ttmc.frontend.ir.BasicBlock;
 
-public class ExitNode implements TerminatorIrNode {
+public class EntryNode implements TerminatorIrNode {
 
 	private BasicBlock parent;
+	private BasicBlock target;
+
+	public EntryNode(BasicBlock target) {
+		this.target = target;
+	}
+
+	public BasicBlock getTarget() {
+		return this.target;
+	}
 
 	@Override
 	public IrNode copy() {
-		return new ExitNode();
+		return new EntryNode(this.target);
 	}
 
 	@Override
 	public String getLabel() {
-		return "exit";
+		return "entry";
 	}
 
 	@Override
 	public List<BasicBlock> getTargets() {
-		return Collections.emptyList();
+		return Collections.singletonList(this.target);
 	}
 
 	@Override

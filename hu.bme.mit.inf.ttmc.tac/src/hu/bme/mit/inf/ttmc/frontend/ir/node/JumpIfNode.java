@@ -1,7 +1,6 @@
 package hu.bme.mit.inf.ttmc.frontend.ir.node;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
@@ -19,6 +18,11 @@ public class JumpIfNode implements TerminatorIrNode {
 		this.cond = cond;
 		this.thenTarget = thenTarget;
 		this.elseTarget = elseTarget;
+	}
+
+	@Override
+	public IrNode copy() {
+		return new JumpIfNode(this.cond, this.thenTarget, this.elseTarget);
 	}
 
 	@Override
@@ -83,6 +87,11 @@ public class JumpIfNode implements TerminatorIrNode {
 	@Override
 	public BasicBlock getParentBlock() {
 		return this.parent;
+	}
+
+	@Override
+	public String toString() {
+		return this.getLabel();
 	}
 
 
