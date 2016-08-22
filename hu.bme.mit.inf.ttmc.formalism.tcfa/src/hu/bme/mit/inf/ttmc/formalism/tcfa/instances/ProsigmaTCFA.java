@@ -25,7 +25,7 @@ import hu.bme.mit.inf.ttmc.formalism.common.decl.ClockDecl;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFA;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFALoc;
-import hu.bme.mit.inf.ttmc.formalism.tcfa.impl.MutableTCFA;
+import hu.bme.mit.inf.ttmc.formalism.tcfa.impl.SimpleTCFA;
 
 public class ProsigmaTCFA {
 
@@ -92,7 +92,7 @@ public class ProsigmaTCFA {
 		final Expr<IntType> chan = vchan.getRef();
 		final Expr<RatType> clkSync = vclkSync.getRef();
 
-		final MutableTCFA tcfa = new MutableTCFA();
+		final SimpleTCFA tcfa = new SimpleTCFA();
 
 		final TCFALoc init = tcfa.createLoc("init", false, ImmutableSet.of(Leq(clkSync, tSync)));
 		tcfa.setInitLoc(init);
@@ -105,7 +105,7 @@ public class ProsigmaTCFA {
 	private TCFA createFaultModel() {
 		final Expr<IntType> chan = vchan.getRef();
 
-		final MutableTCFA tcfa = new MutableTCFA();
+		final SimpleTCFA tcfa = new SimpleTCFA();
 
 		final TCFALoc init = tcfa.createLoc("init", false, ImmutableSet.of());
 		final TCFALoc none = tcfa.createLoc("none", false, ImmutableSet.of());
@@ -124,7 +124,7 @@ public class ProsigmaTCFA {
 		final Expr<IntType> chan = vchan.getRef();
 		final Expr<RatType> clkReset = vclkReset.getRef();
 
-		final MutableTCFA tcfa = new MutableTCFA();
+		final SimpleTCFA tcfa = new SimpleTCFA();
 
 		final TCFALoc init = tcfa.createLoc("init", false, ImmutableSet.of());
 		final TCFALoc tr = tcfa.createLoc("try", false, ImmutableSet.of(Leq(clkReset, tRTMax)));
@@ -156,7 +156,7 @@ public class ProsigmaTCFA {
 		final Expr<IntType> chan = vchan.getRef();
 		final Expr<RatType> clkReset = vclkReset.getRef();
 
-		final MutableTCFA tcfa = new MutableTCFA();
+		final SimpleTCFA tcfa = new SimpleTCFA();
 
 		final TCFALoc init = tcfa.createLoc("init", false, ImmutableSet.of());
 		final TCFALoc tr = tcfa.createLoc("try", false, ImmutableSet.of(Leq(clkReset, tRTMax)));

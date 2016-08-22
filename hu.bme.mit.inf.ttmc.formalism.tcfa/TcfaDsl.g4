@@ -2,7 +2,7 @@ grammar TcfaDsl;
 
 // S P E C I F I C A T I O N
 
-spec:	SPEC name=ID // (LPAREN (paramDecls=declList)? RPAREN)?
+spec:	SPEC name=ID (LPAREN (paramDecls=declList)? RPAREN)?
 		LBRAC
 			(	constDecls+=constDecl
 			|	varDecls+=varDecl

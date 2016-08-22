@@ -11,16 +11,16 @@ import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFAEdge;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFALoc;
 
-final class MutableTCFALoc implements TCFALoc {
+final class SimpleTCFALoc implements TCFALoc {
 
 	private final String name;
 	private final boolean urgent;
 	private final Collection<Expr<? extends BoolType>> invars;
 
-	final Collection<MutableTCFAEdge> inEdges;
-	final Collection<MutableTCFAEdge> outEdges;
+	final Collection<SimpleTCFAEdge> inEdges;
+	final Collection<SimpleTCFAEdge> outEdges;
 
-	MutableTCFALoc(final String name, final boolean urgent,
+	SimpleTCFALoc(final String name, final boolean urgent,
 			final Collection<? extends Expr<? extends BoolType>> invars) {
 		this.name = name;
 		this.urgent = urgent;

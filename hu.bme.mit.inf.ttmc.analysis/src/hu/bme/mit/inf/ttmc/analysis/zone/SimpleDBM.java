@@ -152,11 +152,14 @@ final class SimpleDBM {
 	public void reset(final int x, final int m) {
 		checkArgument(isNonZeroClock(x));
 
-		for (int i = 0; i <= nClocks; i++) {
-			matrix.set(x, i, add(Leq(m), matrix.get(0, i)));
-			matrix.set(i, x, add(matrix.get(i, 0), Leq(-m)));
+		if (isConsistent()) {
+			for (int i = 0; i <= nClocks; i++) {
+				matrix.set(x, i, add(Leq(m), matrix.get(0, i)));
+				matrix.set(i, x, add(matrix.get(i, 0), Leq(-m)));
+			}
+
+			assert isClosed();
 		}
-		assert isClosed();
 	}
 
 	public void copy(final int x, final int y) {

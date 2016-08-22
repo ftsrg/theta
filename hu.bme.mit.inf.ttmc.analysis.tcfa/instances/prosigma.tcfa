@@ -16,22 +16,21 @@ specification ProSigma(tSync : int, tRtMax : int) {
 		init loc loop { sync <= tSync }
 		
 		loop -> loop {
+			assume sync >= tSync;
 			chan := SYNC;
 			sync := 0
 		}
 	}
 	
-	automaton faults := {
-		var occured : bool
+	automaton faults := {	
+		init loc one
+		loc zero
 		
-		init loc loop
-		
-		loop -> loop {
-			assume not occured;
+		one -> zero {
+			assume chan /= NONE;
 			chan := NONE
 		}
-		
-		loop -> loop
+
 	}
 	
 	automaton field(tRtMax : int) := {

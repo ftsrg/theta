@@ -1,4 +1,4 @@
-package hu.bme.mit.inf.ttmc.analysis.tcfa.network;
+package hu.bme.mit.inf.ttmc.formalism.tcfa.impl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.stream.Collectors.toSet;
@@ -15,7 +15,7 @@ import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFAEdge;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFALoc;
 
-public final class TCFANetworkLoc implements TCFALoc {
+public final class NetworkTCFALoc implements TCFALoc {
 
 	private static final int HASH_SEED = 2543;
 
@@ -23,12 +23,8 @@ public final class TCFANetworkLoc implements TCFALoc {
 
 	private volatile int hashCode = 0;
 
-	private TCFANetworkLoc(final List<? extends TCFALoc> locs) {
+	public NetworkTCFALoc(final List<? extends TCFALoc> locs) {
 		this.locs = ImmutableList.copyOf(checkNotNull(locs));
-	}
-
-	public static TCFANetworkLoc create(final List<? extends TCFALoc> locs) {
-		return new TCFANetworkLoc(locs);
 	}
 
 	////
@@ -44,15 +40,15 @@ public final class TCFANetworkLoc implements TCFALoc {
 	}
 
 	@Override
-	public Collection<TCFANetworkEdge> getOutEdges() {
-		final Collection<TCFANetworkEdge> networkOutEdges = new ArrayList<>();
+	public Collection<NetworkTCFAEdge> getOutEdges() {
+		final Collection<NetworkTCFAEdge> networkOutEdges = new ArrayList<>();
 
 		for (int index = 0; index < locs.size(); index++) {
 			final TCFALoc loc = locs.get(index);
 
 			for (final TCFAEdge outEdge : loc.getOutEdges()) {
 				final List<TCFALoc> outLocs = replace(locs, index, outEdge.getTarget());
-				networkOutEdges.add(new TCFANetworkEdge(this, index, outEdge, create(outLocs)));
+				networkOutEdges.add(new NetworkTCFAEdge(this, index, outEdge, new NetworkTCFALoc(outLocs)));
 			}
 		}
 
@@ -71,13 +67,13 @@ public final class TCFANetworkLoc implements TCFALoc {
 		}
 
 		return succLocs;
-
 	}
 
 	@Override
 	public String getName() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		final StringJoiner joiner = new StringJoiner("_");
+		locs.forEach(l -> joiner.add(l.getName()));
+		return joiner.toString();
 	}
 
 	@Override
@@ -107,8 +103,8 @@ public final class TCFANetworkLoc implements TCFALoc {
 	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
-		} else if (obj instanceof TCFANetworkLoc) {
-			final TCFANetworkLoc that = (TCFANetworkLoc) obj;
+		} else if (obj instanceof NetworkTCFALoc) {
+			final NetworkTCFALoc that = (NetworkTCFALoc) obj;
 			return this.locs.equals(that.locs);
 		} else {
 			return false;

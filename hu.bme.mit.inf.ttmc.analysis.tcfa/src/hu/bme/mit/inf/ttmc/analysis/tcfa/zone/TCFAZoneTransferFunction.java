@@ -25,6 +25,7 @@ final class TCFAZoneTransferFunction implements TransferFunction<ZoneState, TCFA
 	@Override
 	public Collection<ZoneState> getSuccStates(final ZoneState state, final TCFAAction action,
 			final ZonePrecision precision) {
+
 		final ZoneState succState = post(state, action, precision);
 
 		if (succState.isBottom()) {
@@ -47,7 +48,6 @@ final class TCFAZoneTransferFunction implements TransferFunction<ZoneState, TCFA
 
 		for (final ClockOp op : action.getClockOps()) {
 			succStateBuilder.execute(op);
-
 		}
 
 		for (final ClockConstr invar : action.getTargetClockInvars()) {

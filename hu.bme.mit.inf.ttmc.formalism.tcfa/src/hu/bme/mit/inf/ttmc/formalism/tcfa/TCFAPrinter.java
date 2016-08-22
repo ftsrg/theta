@@ -12,34 +12,33 @@ public class TCFAPrinter {
 	private TCFAPrinter() {
 	}
 
-	public static String toGraphvizSting(final TCFA tcfa) {
-		final Map<TCFALoc, Integer> ids = createIds(tcfa);
+	public static String toGraphvizString(final TCFA tcfa) {
+
 		final StringBuilder sb = new StringBuilder();
 
 		sb.append("digraph tcfa {\n");
-		for (final TCFALoc loc : tcfa.getLocs()) {
-			sb.append(toGraphvizString(tcfa, loc, ids));
-		}
 
-		for (final TCFAEdge edge : tcfa.getEdges()) {
-			sb.append(toGraphvizString(tcfa, edge, ids));
-		}
+		final Map<TCFALoc, Integer> ids = new HashMap<>();
+		final TCFALoc initLoc = tcfa.getInitLoc();
+		traverse(sb, initLoc, ids);
 
 		sb.append("}");
 		return sb.toString();
 	}
 
-	private static Map<TCFALoc, Integer> createIds(final TCFA tcfa) {
-		final Map<TCFALoc, Integer> ids = new HashMap<>();
-		int id = 0;
-		for (final TCFALoc loc : tcfa.getLocs()) {
-			ids.put(loc, id);
-			id++;
+	private static void traverse(final StringBuilder sb, final TCFALoc loc, final Map<TCFALoc, Integer> ids) {
+		if (!ids.containsKey(loc)) {
+			ids.put(loc, ids.size());
+			sb.append(toGraphvizString(loc, ids));
+			for (final TCFAEdge outEdge : loc.getOutEdges()) {
+				final TCFALoc target = outEdge.getTarget();
+				traverse(sb, target, ids);
+				sb.append(toGraphvizString(outEdge, ids));
+			}
 		}
-		return ids;
 	}
 
-	private static String toGraphvizString(final TCFA tcfa, final TCFALoc loc, final Map<TCFALoc, Integer> ids) {
+	private static String toGraphvizString(final TCFALoc loc, final Map<TCFALoc, Integer> ids) {
 		final StringBuilder sb = new StringBuilder();
 		sb.append(ids.get(loc));
 		sb.append("[label=\"\\\n");
@@ -53,7 +52,7 @@ public class TCFAPrinter {
 		return sb.toString();
 	}
 
-	private static String toGraphvizString(final TCFA cfa, final TCFAEdge edge, final Map<TCFALoc, Integer> ids) {
+	private static String toGraphvizString(final TCFAEdge edge, final Map<TCFALoc, Integer> ids) {
 		final StringBuilder sb = new StringBuilder();
 		sb.append(ids.get(edge.getSource()));
 		sb.append(" -> ");

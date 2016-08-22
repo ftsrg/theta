@@ -19,13 +19,13 @@ public class GlobalExplPrecision implements ExplPrecision {
 	private final Set<VarDecl<? extends Type>> visibleVars;
 	private final Set<VarDecl<? extends Type>> invisibleVars;
 
-	public static GlobalExplPrecision create(final Collection<VarDecl<? extends Type>> visibleVars,
-			final Collection<VarDecl<? extends Type>> invisibleVars) {
+	public static GlobalExplPrecision create(final Collection<? extends VarDecl<?>> visibleVars,
+			final Collection<? extends VarDecl<?>> invisibleVars) {
 		return new GlobalExplPrecision(visibleVars, invisibleVars);
 	}
 
-	private GlobalExplPrecision(final Collection<VarDecl<? extends Type>> visibleVars,
-			final Collection<VarDecl<? extends Type>> invisibleVars) {
+	private GlobalExplPrecision(final Collection<? extends VarDecl<?>> visibleVars,
+			final Collection<? extends VarDecl<?>> invisibleVars) {
 		checkNotNull(visibleVars);
 		checkNotNull(invisibleVars);
 		this.visibleVars = Collections.unmodifiableSet(new HashSet<>(visibleVars));

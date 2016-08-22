@@ -1,17 +1,22 @@
 package hu.bme.mit.inf.ttmc.formalism.tcfa.dsl.impl;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import static hu.bme.mit.inf.ttmc.formalism.tcfa.dsl.impl.TcfaDslHelper.createConstDefs;
+import static hu.bme.mit.inf.ttmc.formalism.tcfa.dsl.impl.TcfaDslHelper.declareConstDecls;
+import static hu.bme.mit.inf.ttmc.formalism.tcfa.dsl.impl.TcfaDslHelper.declareVarDecls;
+import static hu.bme.mit.inf.ttmc.formalism.tcfa.dsl.impl.TcfaDslHelper.resolveTcfa;
 
 import java.util.List;
-import java.util.Optional;
 
-import hu.bme.mit.inf.ttmc.common.dsl.GlobalScope;
+import hu.bme.mit.inf.ttmc.common.dsl.BasicScope;
 import hu.bme.mit.inf.ttmc.common.dsl.Scope;
-import hu.bme.mit.inf.ttmc.common.dsl.Symbol;
 import hu.bme.mit.inf.ttmc.core.decl.ParamDecl;
+import hu.bme.mit.inf.ttmc.core.expr.Expr;
+import hu.bme.mit.inf.ttmc.core.model.Assignment;
+import hu.bme.mit.inf.ttmc.core.model.impl.AssignmentImpl;
+import hu.bme.mit.inf.ttmc.core.model.impl.NestedAssignmentImpl;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFA;
+import hu.bme.mit.inf.ttmc.formalism.tcfa.dsl.TcfaSpec;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.dsl.gen.TcfaDslParser.SpecContext;
-import hu.bme.mit.inf.ttmc.formalism.tcfa.dsl.gen.TcfaDslParser.TcfaContext;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.dsl.gen.TcfaDslParser.TcfaDeclContext;
 
 public final class TcfaSpecCreator {
@@ -19,39 +24,28 @@ public final class TcfaSpecCreator {
 	private TcfaSpecCreator() {
 	}
 
-	public static TcfaSpec createTcfaSpec(final SpecContext ctx) {
-		final Scope scope = new GlobalScope();
+	public static TcfaSpec createTcfaSpec(final SpecContext specCtx, final List<? extends Expr<?>> params) {
+		final String name = specCtx.name.getText();
+		final List<ParamDecl<?>> paramDecls = TcfaDslHelper.createParamList(specCtx.paramDecls);
+		final Assignment paramAssignment = new AssignmentImpl(paramDecls, params);
+
+		final TcfaSpecSymbol tcfaSpecSymbol = new TcfaSpecSymbol(name, paramDecls);
+		final Scope scope = new BasicScope(tcfaSpecSymbol);
+		declareConstDecls(scope, specCtx.constDecls);
+		declareVarDecls(scope, specCtx.varDecls);
+		declareTcfas(scope, specCtx.tcfaDecls);
+
+		final Assignment constAssignment = createConstDefs(scope, paramAssignment, specCtx.constDecls);
+		final Assignment assignment = new NestedAssignmentImpl(paramAssignment, constAssignment);
+
 		final TcfaSpec spec = new TcfaSpec();
 
-		TcfaDslHelper.declareConstDecls(scope, ctx.constDecls);
-		TcfaDslHelper.declareVarDecls(scope, ctx.varDecls);
-		createTcfas(spec, scope, ctx.tcfaDecls);
+		createTcfas(spec, scope, assignment, specCtx.tcfaDecls);
 
 		return spec;
 	}
 
-	private static void createTcfas(final TcfaSpec spec, final Scope scope,
-			final List<? extends TcfaDeclContext> tcfaDeclCtxs) {
-		declareTcfas(scope, tcfaDeclCtxs);
-
-		for (final TcfaDeclContext tcfaDeclCtx : tcfaDeclCtxs) {
-			final String name = tcfaDeclCtx.name.getText();
-			final TcfaSymbol tcfaSymbol = resolveTcfa(scope, name);
-			final TCFA tcfa = createTcfa(tcfaSymbol, tcfaDeclCtx.def);
-			spec.addTcfa(name, tcfa);
-		}
-	}
-
-	private static TcfaSymbol resolveTcfa(final Scope scope, final String name) {
-		final Optional<Symbol> optSymbol = scope.resolve(name);
-
-		checkArgument(optSymbol.isPresent());
-		final Symbol symbol = optSymbol.get();
-
-		checkArgument(symbol instanceof TcfaSymbol);
-		final TcfaSymbol tcfaSymbol = (TcfaSymbol) symbol;
-		return tcfaSymbol;
-	}
+	////
 
 	private static void declareTcfas(final Scope scope, final List<? extends TcfaDeclContext> tcfaDeclCtxs) {
 		tcfaDeclCtxs.forEach(ctx -> declareTcfa(scope, ctx));
@@ -60,12 +54,20 @@ public final class TcfaSpecCreator {
 	private static void declareTcfa(final Scope scope, final TcfaDeclContext tcfaDeclCtx) {
 		final String name = tcfaDeclCtx.name.getText();
 		final List<ParamDecl<?>> paramDecls = TcfaDslHelper.createParamList(tcfaDeclCtx.paramDecls);
-		final Symbol symbol = new TcfaSymbol(scope, name, paramDecls);
+		final TcfaSymbol symbol = new TcfaSymbol(name, paramDecls, scope, tcfaDeclCtx.def);
 		scope.declare(symbol);
 	}
 
-	private static TCFA createTcfa(final Scope scope, final TcfaContext tcfaContext) {
-		return tcfaContext.accept(new TcfaCreatorVisitor(scope));
+	////
+
+	private static void createTcfas(final TcfaSpec spec, final Scope scope, final Assignment assignment,
+			final List<? extends TcfaDeclContext> tcfaDeclCtxs) {
+		for (final TcfaDeclContext tcfaDeclCtx : tcfaDeclCtxs) {
+			final String name = tcfaDeclCtx.name.getText();
+			final TcfaSymbol symbol = resolveTcfa(scope, name);
+			final TCFA tcfa = TcfaCreator.createTcfa(symbol, assignment);
+			spec.addTcfa(name, tcfa);
+		}
 	}
 
 }

@@ -10,5 +10,6 @@ Require-Bundle: org.junit,
  hu.bme.mit.inf.ttmc.core,
  hu.bme.mit.inf.ttmc.formalism
 Export-Package: hu.bme.mit.inf.ttmc.formalism.tcfa,
+ hu.bme.mit.inf.ttmc.formalism.tcfa.dsl,
  hu.bme.mit.inf.ttmc.formalism.tcfa.impl,
  hu.bme.mit.inf.ttmc.formalism.tcfa.instances

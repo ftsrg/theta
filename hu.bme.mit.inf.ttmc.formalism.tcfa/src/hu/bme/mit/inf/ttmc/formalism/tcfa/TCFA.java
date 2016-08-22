@@ -8,8 +8,8 @@ import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 
 public interface TCFA extends Automaton<TCFALoc, TCFAEdge> {
 
-	public Collection<? extends VarDecl<?>> getVars();
+	public Collection<? extends VarDecl<?>> getDataVars();
 
-	public Collection<? extends ClockDecl> getClocks();
+	public Collection<? extends ClockDecl> getClockVars();
 
 }

@@ -6,7 +6,7 @@ import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 
-import hu.bme.mit.inf.ttmc.common.dsl.GlobalScope;
+import hu.bme.mit.inf.ttmc.common.dsl.BasicScope;
 import hu.bme.mit.inf.ttmc.common.dsl.Scope;
 import hu.bme.mit.inf.ttmc.core.decl.Decl;
 import hu.bme.mit.inf.ttmc.core.dsl.gen.CoreDSLLexer;
@@ -21,7 +21,7 @@ public final class CoreDSLManager {
 	private final Scope scope;
 
 	public CoreDSLManager() {
-		this.scope = new GlobalScope();
+		this.scope = new BasicScope(null);
 	}
 
 	public void declare(final Decl<?, ?> decl) {
