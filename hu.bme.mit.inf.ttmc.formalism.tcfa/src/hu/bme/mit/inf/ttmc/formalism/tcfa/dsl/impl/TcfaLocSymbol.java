@@ -3,13 +3,13 @@ package hu.bme.mit.inf.ttmc.formalism.tcfa.dsl.impl;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import hu.bme.mit.inf.ttmc.common.dsl.Symbol;
-import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFALoc;
+import hu.bme.mit.inf.ttmc.formalism.tcfa.TcfaLoc;
 
 final class TcfaLocSymbol implements Symbol {
 
-	private final TCFALoc loc;
+	private final TcfaLoc loc;
 
-	public TcfaLocSymbol(final TCFALoc loc) {
+	public TcfaLocSymbol(final TcfaLoc loc) {
 		this.loc = checkNotNull(loc);
 	}
 
@@ -18,7 +18,7 @@ final class TcfaLocSymbol implements Symbol {
 		return loc.getName();
 	}
 
-	public TCFALoc geLoc() {
+	public TcfaLoc geLoc() {
 		return loc;
 	}
 

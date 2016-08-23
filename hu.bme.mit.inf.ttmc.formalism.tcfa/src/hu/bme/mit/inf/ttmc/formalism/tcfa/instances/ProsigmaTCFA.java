@@ -24,8 +24,8 @@ import hu.bme.mit.inf.ttmc.core.type.RatType;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.ClockDecl;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFA;
-import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFALoc;
-import hu.bme.mit.inf.ttmc.formalism.tcfa.impl.SimpleTCFA;
+import hu.bme.mit.inf.ttmc.formalism.tcfa.TcfaLoc;
+import hu.bme.mit.inf.ttmc.formalism.tcfa.impl.SimpleTcfa;
 
 public class ProsigmaTCFA {
 
@@ -92,9 +92,9 @@ public class ProsigmaTCFA {
 		final Expr<IntType> chan = vchan.getRef();
 		final Expr<RatType> clkSync = vclkSync.getRef();
 
-		final SimpleTCFA tcfa = new SimpleTCFA();
+		final SimpleTcfa tcfa = new SimpleTcfa();
 
-		final TCFALoc init = tcfa.createLoc("init", false, ImmutableSet.of(Leq(clkSync, tSync)));
+		final TcfaLoc init = tcfa.createLoc("init", false, ImmutableSet.of(Leq(clkSync, tSync)));
 		tcfa.setInitLoc(init);
 		tcfa.createEdge(init, init,
 				ImmutableList.of(Assume(Geq(clkSync, tSync)), Assume(Eq(chan, NONE)), Assign(vchan, SYNC)));
@@ -105,10 +105,10 @@ public class ProsigmaTCFA {
 	private TCFA createFaultModel() {
 		final Expr<IntType> chan = vchan.getRef();
 
-		final SimpleTCFA tcfa = new SimpleTCFA();
+		final SimpleTcfa tcfa = new SimpleTcfa();
 
-		final TCFALoc init = tcfa.createLoc("init", false, ImmutableSet.of());
-		final TCFALoc none = tcfa.createLoc("none", false, ImmutableSet.of());
+		final TcfaLoc init = tcfa.createLoc("init", false, ImmutableSet.of());
+		final TcfaLoc none = tcfa.createLoc("none", false, ImmutableSet.of());
 
 		tcfa.setInitLoc(init);
 
@@ -124,11 +124,11 @@ public class ProsigmaTCFA {
 		final Expr<IntType> chan = vchan.getRef();
 		final Expr<RatType> clkReset = vclkReset.getRef();
 
-		final SimpleTCFA tcfa = new SimpleTCFA();
+		final SimpleTcfa tcfa = new SimpleTcfa();
 
-		final TCFALoc init = tcfa.createLoc("init", false, ImmutableSet.of());
-		final TCFALoc tr = tcfa.createLoc("try", false, ImmutableSet.of(Leq(clkReset, tRTMax)));
-		final TCFALoc conn = tcfa.createLoc("conn", false, ImmutableSet.of(Leq(clkReset, tRTMax)));
+		final TcfaLoc init = tcfa.createLoc("init", false, ImmutableSet.of());
+		final TcfaLoc tr = tcfa.createLoc("try", false, ImmutableSet.of(Leq(clkReset, tRTMax)));
+		final TcfaLoc conn = tcfa.createLoc("conn", false, ImmutableSet.of(Leq(clkReset, tRTMax)));
 
 		tcfa.setInitLoc(init);
 
@@ -156,11 +156,11 @@ public class ProsigmaTCFA {
 		final Expr<IntType> chan = vchan.getRef();
 		final Expr<RatType> clkReset = vclkReset.getRef();
 
-		final SimpleTCFA tcfa = new SimpleTCFA();
+		final SimpleTcfa tcfa = new SimpleTcfa();
 
-		final TCFALoc init = tcfa.createLoc("init", false, ImmutableSet.of());
-		final TCFALoc tr = tcfa.createLoc("try", false, ImmutableSet.of(Leq(clkReset, tRTMax)));
-		final TCFALoc conn = tcfa.createLoc("conn", false, ImmutableSet.of(Leq(clkReset, tRTMax)));
+		final TcfaLoc init = tcfa.createLoc("init", false, ImmutableSet.of());
+		final TcfaLoc tr = tcfa.createLoc("try", false, ImmutableSet.of(Leq(clkReset, tRTMax)));
+		final TcfaLoc conn = tcfa.createLoc("conn", false, ImmutableSet.of(Leq(clkReset, tRTMax)));
 
 		tcfa.setInitLoc(init);
 

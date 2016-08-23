@@ -25,7 +25,7 @@ import hu.bme.mit.inf.ttmc.core.model.impl.NestedAssignmentImpl;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFA;
-import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFALoc;
+import hu.bme.mit.inf.ttmc.formalism.tcfa.TcfaLoc;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.dsl.gen.TcfaDslBaseVisitor;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.dsl.gen.TcfaDslParser.DefTcfaContext;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.dsl.gen.TcfaDslParser.EdgeContext;
@@ -33,8 +33,8 @@ import hu.bme.mit.inf.ttmc.formalism.tcfa.dsl.gen.TcfaDslParser.LocContext;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.dsl.gen.TcfaDslParser.ParenTcfaContext;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.dsl.gen.TcfaDslParser.ProdTcfaContext;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.dsl.gen.TcfaDslParser.RefTcfaContext;
-import hu.bme.mit.inf.ttmc.formalism.tcfa.impl.NetworkTCFA;
-import hu.bme.mit.inf.ttmc.formalism.tcfa.impl.SimpleTCFA;
+import hu.bme.mit.inf.ttmc.formalism.tcfa.impl.NetworkTcfa;
+import hu.bme.mit.inf.ttmc.formalism.tcfa.impl.SimpleTcfa;
 
 final class TcfaCreator {
 
@@ -59,7 +59,7 @@ final class TcfaCreator {
 
 		@Override
 		public TCFA visitDefTcfa(final DefTcfaContext ctx) {
-			final SimpleTCFA tcfa = new SimpleTCFA();
+			final SimpleTcfa tcfa = new SimpleTcfa();
 
 			push();
 
@@ -85,11 +85,11 @@ final class TcfaCreator {
 			currentScope = currentScope.enclosingScope().get();
 		}
 
-		private void createLocs(final SimpleTCFA tcfa, final Scope scope, final List<? extends LocContext> locCtxs) {
+		private void createLocs(final SimpleTcfa tcfa, final Scope scope, final List<? extends LocContext> locCtxs) {
 			locCtxs.forEach(locCtx -> createLoc(tcfa, scope, locCtx));
 		}
 
-		private void createLoc(final SimpleTCFA tcfa, final Scope scope, final LocContext locCtx) {
+		private void createLoc(final SimpleTcfa tcfa, final Scope scope, final LocContext locCtx) {
 			final String name = locCtx.name.getText();
 			final boolean urgent = (locCtx.urgent != null);
 			final boolean init = (locCtx.init != null);
@@ -97,7 +97,7 @@ final class TcfaCreator {
 			final Collection<Expr<? extends BoolType>> invars = TcfaDslHelper.createBoolExprList(scope, assignment,
 					locCtx.invars);
 
-			final TCFALoc loc = tcfa.createLoc(name, urgent, invars);
+			final TcfaLoc loc = tcfa.createLoc(name, urgent, invars);
 			if (init) {
 				checkArgument(tcfa.getInitLoc() == null);
 				tcfa.setInitLoc(loc);
@@ -107,15 +107,15 @@ final class TcfaCreator {
 			scope.declare(symbol);
 		}
 
-		private void createEdges(final SimpleTCFA tcfa, final Scope scope, final List<? extends EdgeContext> edgeCtxs) {
+		private void createEdges(final SimpleTcfa tcfa, final Scope scope, final List<? extends EdgeContext> edgeCtxs) {
 			edgeCtxs.forEach(edgeCtx -> createEdge(tcfa, scope, edgeCtx));
 		}
 
-		private void createEdge(final SimpleTCFA tcfa, final Scope scope, final EdgeContext edgeCtx) {
+		private void createEdge(final SimpleTcfa tcfa, final Scope scope, final EdgeContext edgeCtx) {
 			final TcfaLocSymbol sourceSymbol = resolveLoc(scope, edgeCtx.source.getText());
 			final TcfaLocSymbol targetSymbol = resolveLoc(scope, edgeCtx.target.getText());
-			final TCFALoc source = sourceSymbol.geLoc();
-			final TCFALoc target = targetSymbol.geLoc();
+			final TcfaLoc source = sourceSymbol.geLoc();
+			final TcfaLoc target = targetSymbol.geLoc();
 			final List<Stmt> stmts = TcfaDslHelper.createStmtList(scope, assignment, edgeCtx.stmtList);
 			tcfa.createEdge(source, target, stmts);
 		}
@@ -166,7 +166,7 @@ final class TcfaCreator {
 		private TCFA createProdTcfa(final ProdTcfaContext ctx) {
 			checkArgument(ctx.ops.size() > 1);
 			final List<TCFA> tcfas = ctx.ops.stream().map(tcfaCtx -> tcfaCtx.accept(this)).collect(toList());
-			return new NetworkTCFA(tcfas);
+			return new NetworkTcfa(tcfas);
 		}
 
 		////

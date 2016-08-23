@@ -15,12 +15,12 @@ import hu.bme.mit.inf.ttmc.formalism.ta.constr.ClockConstr;
 import hu.bme.mit.inf.ttmc.formalism.ta.constr.impl.ClockConstrs;
 import hu.bme.mit.inf.ttmc.formalism.ta.op.ClockOp;
 import hu.bme.mit.inf.ttmc.formalism.ta.op.impl.ClockOps;
-import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFAEdge;
-import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFALoc;
+import hu.bme.mit.inf.ttmc.formalism.tcfa.TcfaEdge;
+import hu.bme.mit.inf.ttmc.formalism.tcfa.TcfaLoc;
 
 public final class TCFAAction implements Action {
 
-	private final TCFAEdge edge;
+	private final TcfaEdge edge;
 
 	private final Collection<ClockConstr> sourceClockInvars;
 	private final Collection<Expr<? extends BoolType>> sourceDataInvars;
@@ -31,7 +31,7 @@ public final class TCFAAction implements Action {
 	private final List<ClockOp> clockOps;
 	private final List<Stmt> dataStmts;
 
-	TCFAAction(final TCFAEdge edge) {
+	TCFAAction(final TcfaEdge edge) {
 		this.edge = edge;
 		sourceClockInvars = extractClockInvars(edge.getSource());
 		sourceDataInvars = extractDataInvars(edge.getSource());
@@ -56,7 +56,7 @@ public final class TCFAAction implements Action {
 
 	}
 
-	public TCFAEdge getEdge() {
+	public TcfaEdge getEdge() {
 		return edge;
 	}
 
@@ -98,7 +98,7 @@ public final class TCFAAction implements Action {
 		return sj.toString();
 	}
 
-	private static Collection<Expr<? extends BoolType>> extractDataInvars(final TCFALoc loc) {
+	private static Collection<Expr<? extends BoolType>> extractDataInvars(final TcfaLoc loc) {
 		final ImmutableSet.Builder<Expr<? extends BoolType>> builder = ImmutableSet.builder();
 		for (final Expr<? extends BoolType> invar : loc.getInvars()) {
 			if (TCFAUtils.isDataExpr(invar)) {
@@ -108,7 +108,7 @@ public final class TCFAAction implements Action {
 		return builder.build();
 	}
 
-	private static Collection<ClockConstr> extractClockInvars(final TCFALoc loc) {
+	private static Collection<ClockConstr> extractClockInvars(final TcfaLoc loc) {
 		final ImmutableSet.Builder<ClockConstr> builder = ImmutableSet.builder();
 		for (final Expr<? extends BoolType> invar : loc.getInvars()) {
 			if (TCFAUtils.isClockExpr(invar)) {

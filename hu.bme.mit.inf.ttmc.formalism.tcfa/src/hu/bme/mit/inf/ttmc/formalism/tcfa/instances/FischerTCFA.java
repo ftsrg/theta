@@ -20,19 +20,19 @@ import hu.bme.mit.inf.ttmc.core.type.RatType;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.ClockDecl;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFA;
-import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFALoc;
-import hu.bme.mit.inf.ttmc.formalism.tcfa.impl.SimpleTCFA;
+import hu.bme.mit.inf.ttmc.formalism.tcfa.TcfaLoc;
+import hu.bme.mit.inf.ttmc.formalism.tcfa.impl.SimpleTcfa;
 
 public final class FischerTCFA {
 
-	private final SimpleTCFA tcfa;
+	private final SimpleTcfa tcfa;
 
 	private final int id;
 	private final VarDecl<IntType> vlock;
 	private final ClockDecl cx;
 
-	private final TCFALoc initial;
-	private final TCFALoc critical;
+	private final TcfaLoc initial;
+	private final TcfaLoc critical;
 
 	////
 
@@ -52,11 +52,11 @@ public final class FischerTCFA {
 		return cx;
 	}
 
-	public TCFALoc getInitial() {
+	public TcfaLoc getInitial() {
 		return initial;
 	}
 
-	public TCFALoc getCritical() {
+	public TcfaLoc getCritical() {
 		return critical;
 	}
 
@@ -71,7 +71,7 @@ public final class FischerTCFA {
 		this.id = id;
 		this.vlock = vlock;
 
-		tcfa = new SimpleTCFA();
+		tcfa = new SimpleTcfa();
 		cx = Clock("x_" + id);
 
 		final Expr<RatType> x = cx.getRef();
@@ -83,10 +83,10 @@ public final class FischerTCFA {
 
 		final Expr<IntType> zero = Int(0);
 
-		final TCFALoc l0 = tcfa.createLoc("sleep", false, ImmutableSet.of());
-		final TCFALoc l1 = tcfa.createLoc("wait", false, ImmutableSet.of(Leq(x, a)));
-		final TCFALoc l2 = tcfa.createLoc("try", false, ImmutableSet.of());
-		final TCFALoc l3 = tcfa.createLoc("crit", false, ImmutableSet.of());
+		final TcfaLoc l0 = tcfa.createLoc("sleep", false, ImmutableSet.of());
+		final TcfaLoc l1 = tcfa.createLoc("wait", false, ImmutableSet.of(Leq(x, a)));
+		final TcfaLoc l2 = tcfa.createLoc("try", false, ImmutableSet.of());
+		final TcfaLoc l3 = tcfa.createLoc("crit", false, ImmutableSet.of());
 		tcfa.setInitLoc(l0);
 
 		initial = l0;

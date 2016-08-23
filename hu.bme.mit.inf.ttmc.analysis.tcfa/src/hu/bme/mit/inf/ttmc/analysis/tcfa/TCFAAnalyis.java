@@ -9,7 +9,7 @@ import hu.bme.mit.inf.ttmc.analysis.InitFunction;
 import hu.bme.mit.inf.ttmc.analysis.Precision;
 import hu.bme.mit.inf.ttmc.analysis.State;
 import hu.bme.mit.inf.ttmc.analysis.TransferFunction;
-import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFALoc;
+import hu.bme.mit.inf.ttmc.formalism.tcfa.TcfaLoc;
 
 public class TCFAAnalyis<S extends State, P extends Precision> implements Analysis<TCFAState<S>, TCFAAction, P> {
 
@@ -17,7 +17,7 @@ public class TCFAAnalyis<S extends State, P extends Precision> implements Analys
 	private final InitFunction<TCFAState<S>, P> initFunction;
 	private final TransferFunction<TCFAState<S>, TCFAAction, P> transferFunction;
 
-	public TCFAAnalyis(final TCFALoc initLoc, final Analysis<S, TCFAAction, P> analysis) {
+	public TCFAAnalyis(final TcfaLoc initLoc, final Analysis<S, TCFAAction, P> analysis) {
 		checkNotNull(initLoc);
 		checkNotNull(analysis);
 		domain = new TCFADomain<>(analysis.getDomain());

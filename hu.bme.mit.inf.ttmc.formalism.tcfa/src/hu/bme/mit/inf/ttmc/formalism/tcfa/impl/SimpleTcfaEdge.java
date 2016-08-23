@@ -5,29 +5,29 @@ import java.util.List;
 import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
-import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFAEdge;
-import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFALoc;
+import hu.bme.mit.inf.ttmc.formalism.tcfa.TcfaEdge;
+import hu.bme.mit.inf.ttmc.formalism.tcfa.TcfaLoc;
 
-final class SimpleTCFAEdge implements TCFAEdge {
+final class SimpleTcfaEdge implements TcfaEdge {
 
-	final SimpleTCFALoc source;
-	final SimpleTCFALoc target;
+	final SimpleTcfaLoc source;
+	final SimpleTcfaLoc target;
 
 	private final List<Stmt> stmts;
 
-	SimpleTCFAEdge(final SimpleTCFALoc source, final SimpleTCFALoc target, final List<? extends Stmt> stmts) {
+	SimpleTcfaEdge(final SimpleTcfaLoc source, final SimpleTcfaLoc target, final List<? extends Stmt> stmts) {
 		this.source = source;
 		this.target = target;
 		this.stmts = ImmutableList.copyOf(stmts);
 	}
 
 	@Override
-	public TCFALoc getSource() {
+	public TcfaLoc getSource() {
 		return source;
 	}
 
 	@Override
-	public TCFALoc getTarget() {
+	public TcfaLoc getTarget() {
 		return target;
 	}
 

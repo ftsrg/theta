@@ -6,7 +6,7 @@ import hu.bme.mit.inf.ttmc.formalism.common.automaton.Automaton;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.ClockDecl;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 
-public interface TCFA extends Automaton<TCFALoc, TCFAEdge> {
+public interface TCFA extends Automaton<TcfaLoc, TcfaEdge> {
 
 	public Collection<? extends VarDecl<?>> getDataVars();
 

@@ -30,8 +30,8 @@ import hu.bme.mit.inf.ttmc.analysis.zone.ZoneState;
 import hu.bme.mit.inf.ttmc.core.type.IntType;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.ClockDecl;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
-import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFALoc;
-import hu.bme.mit.inf.ttmc.formalism.tcfa.impl.NetworkTCFALoc;
+import hu.bme.mit.inf.ttmc.formalism.tcfa.TcfaLoc;
+import hu.bme.mit.inf.ttmc.formalism.tcfa.impl.NetworkTcfaLoc;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.instances.FischerTCFA;
 import hu.bme.mit.inf.ttmc.solver.Solver;
 import hu.bme.mit.inf.ttmc.solver.SolverManager;
@@ -54,7 +54,7 @@ public class TCFANetworkExplTests {
 			network.add(fischer);
 		}
 
-		final List<TCFALoc> initLocs = network.stream().map(comp -> comp.getInitial()).collect(toList());
+		final List<TcfaLoc> initLocs = network.stream().map(comp -> comp.getInitial()).collect(toList());
 
 		////
 
@@ -62,7 +62,7 @@ public class TCFANetworkExplTests {
 		final Solver solver = manager.createSolver(true, true);
 
 		final TCFAAnalyis<CompositeState<ZoneState, ExplState>, CompositePrecision<ZonePrecision, ExplPrecision>> analysis = new TCFAAnalyis<>(
-				new NetworkTCFALoc(initLocs),
+				new NetworkTcfaLoc(initLocs),
 				new CompositeAnalysis<>(TCFAZoneAnalysis.getInstance(), new TCFAExplAnalysis(solver)));
 
 		final CompositePrecision<ZonePrecision, ExplPrecision> precision = CompositePrecision.create(
