@@ -27,7 +27,7 @@ import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
 import hu.bme.mit.inf.ttmc.formalism.utils.DefaultValueStmtVisitor;
 import hu.bme.mit.inf.ttmc.formalism.utils.FailStmtVisitor;
 
-public final class TCFAUtils {
+public final class TcfaUtils {
 
 	private static final ClockStmtVisitor CLOCK_STMT_VISITOR;
 	private static final ClockExprVisitor CLOCK_EXPR_VISITOR;
@@ -39,7 +39,7 @@ public final class TCFAUtils {
 		DATA_STMT_VISITOR = new DataStmtVisitor();
 	}
 
-	private TCFAUtils() {
+	private TcfaUtils() {
 	}
 
 	public static boolean isClockStmt(final Stmt stmt) {

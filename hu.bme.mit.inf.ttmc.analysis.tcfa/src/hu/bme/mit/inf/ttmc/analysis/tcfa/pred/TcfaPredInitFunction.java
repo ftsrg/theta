@@ -9,14 +9,14 @@ import hu.bme.mit.inf.ttmc.analysis.InitFunction;
 import hu.bme.mit.inf.ttmc.analysis.pred.PredPrecision;
 import hu.bme.mit.inf.ttmc.analysis.pred.PredState;
 
-class TCFAPredInitFunction implements InitFunction<PredState, PredPrecision> {
+class TcfaPredInitFunction implements InitFunction<PredState, PredPrecision> {
 
-	private static final TCFAPredInitFunction INSTANCE = new TCFAPredInitFunction();
+	private static final TcfaPredInitFunction INSTANCE = new TcfaPredInitFunction();
 
-	private TCFAPredInitFunction() {
+	private TcfaPredInitFunction() {
 	}
 
-	static TCFAPredInitFunction getInstance() {
+	static TcfaPredInitFunction getInstance() {
 		return INSTANCE;
 	}
 

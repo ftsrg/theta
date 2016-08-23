@@ -8,17 +8,17 @@ import hu.bme.mit.inf.ttmc.analysis.TransferFunction;
 import hu.bme.mit.inf.ttmc.analysis.pred.PredDomain;
 import hu.bme.mit.inf.ttmc.analysis.pred.PredPrecision;
 import hu.bme.mit.inf.ttmc.analysis.pred.PredState;
-import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAAction;
+import hu.bme.mit.inf.ttmc.analysis.tcfa.TcfaAction;
 import hu.bme.mit.inf.ttmc.solver.Solver;
 
-public class TCFAPredAnalysis implements Analysis<PredState, TCFAAction, PredPrecision> {
+public class TcfaPredAnalysis implements Analysis<PredState, TcfaAction, PredPrecision> {
 
 	private final Domain<PredState> domain;
-	private final TransferFunction<PredState, TCFAAction, PredPrecision> transferFunction;
+	private final TransferFunction<PredState, TcfaAction, PredPrecision> transferFunction;
 
-	public TCFAPredAnalysis(final Solver solver) {
+	public TcfaPredAnalysis(final Solver solver) {
 		domain = PredDomain.create(solver);
-		transferFunction = new TCFAPredTransferFunction(solver);
+		transferFunction = new TcfaPredTransferFunction(solver);
 	}
 
 	@Override
@@ -28,16 +28,16 @@ public class TCFAPredAnalysis implements Analysis<PredState, TCFAAction, PredPre
 
 	@Override
 	public InitFunction<PredState, PredPrecision> getInitFunction() {
-		return TCFAPredInitFunction.getInstance();
+		return TcfaPredInitFunction.getInstance();
 	}
 
 	@Override
-	public TransferFunction<PredState, TCFAAction, PredPrecision> getTransferFunction() {
+	public TransferFunction<PredState, TcfaAction, PredPrecision> getTransferFunction() {
 		return transferFunction;
 	}
 
 	@Override
-	public ActionFunction<? super PredState, ? extends TCFAAction> getActionFunction() {
+	public ActionFunction<? super PredState, ? extends TcfaAction> getActionFunction() {
 		throw new UnsupportedOperationException();
 	}
 

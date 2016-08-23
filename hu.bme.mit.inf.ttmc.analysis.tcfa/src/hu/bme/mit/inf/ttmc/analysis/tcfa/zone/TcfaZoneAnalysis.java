@@ -5,19 +5,19 @@ import hu.bme.mit.inf.ttmc.analysis.Analysis;
 import hu.bme.mit.inf.ttmc.analysis.Domain;
 import hu.bme.mit.inf.ttmc.analysis.InitFunction;
 import hu.bme.mit.inf.ttmc.analysis.TransferFunction;
-import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAAction;
+import hu.bme.mit.inf.ttmc.analysis.tcfa.TcfaAction;
 import hu.bme.mit.inf.ttmc.analysis.zone.ZoneDomain;
 import hu.bme.mit.inf.ttmc.analysis.zone.ZonePrecision;
 import hu.bme.mit.inf.ttmc.analysis.zone.ZoneState;
 
-public class TCFAZoneAnalysis implements Analysis<ZoneState, TCFAAction, ZonePrecision> {
+public class TcfaZoneAnalysis implements Analysis<ZoneState, TcfaAction, ZonePrecision> {
 
-	private static final TCFAZoneAnalysis INSTANCE = new TCFAZoneAnalysis();
+	private static final TcfaZoneAnalysis INSTANCE = new TcfaZoneAnalysis();
 
-	private TCFAZoneAnalysis() {
+	private TcfaZoneAnalysis() {
 	}
 
-	public static TCFAZoneAnalysis getInstance() {
+	public static TcfaZoneAnalysis getInstance() {
 		return INSTANCE;
 	}
 
@@ -28,16 +28,16 @@ public class TCFAZoneAnalysis implements Analysis<ZoneState, TCFAAction, ZonePre
 
 	@Override
 	public InitFunction<ZoneState, ZonePrecision> getInitFunction() {
-		return TCFAZoneInitFunction.getInstance();
+		return TcfaZoneInitFunction.getInstance();
 	}
 
 	@Override
-	public TransferFunction<ZoneState, TCFAAction, ZonePrecision> getTransferFunction() {
-		return TCFAZoneTransferFunction.getInstance();
+	public TransferFunction<ZoneState, TcfaAction, ZonePrecision> getTransferFunction() {
+		return TcfaZoneTransferFunction.getInstance();
 	}
 
 	@Override
-	public ActionFunction<? super ZoneState, ? extends TCFAAction> getActionFunction() {
+	public ActionFunction<? super ZoneState, ? extends TcfaAction> getActionFunction() {
 		throw new UnsupportedOperationException();
 	}
 

@@ -8,7 +8,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 
 import hu.bme.mit.inf.ttmc.analysis.TransferFunction;
-import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAAction;
+import hu.bme.mit.inf.ttmc.analysis.tcfa.TcfaAction;
 import hu.bme.mit.inf.ttmc.analysis.zone.ZonePrecision;
 import hu.bme.mit.inf.ttmc.analysis.zone.ZoneState;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.ClockDecl;
@@ -17,19 +17,19 @@ import hu.bme.mit.inf.ttmc.formalism.ta.op.ClockOp;
 import hu.bme.mit.inf.ttmc.formalism.ta.op.GuardOp;
 import hu.bme.mit.inf.ttmc.formalism.ta.op.ResetOp;
 
-final class TCFAZoneBackwardTransferFunction implements TransferFunction<ZoneState, TCFAAction, ZonePrecision> {
+final class TcfaZoneBackwardTransferFunction implements TransferFunction<ZoneState, TcfaAction, ZonePrecision> {
 
-	private static TCFAZoneBackwardTransferFunction INSTANCE = new TCFAZoneBackwardTransferFunction();
+	private static TcfaZoneBackwardTransferFunction INSTANCE = new TcfaZoneBackwardTransferFunction();
 
-	private TCFAZoneBackwardTransferFunction() {
+	private TcfaZoneBackwardTransferFunction() {
 	}
 
-	static TCFAZoneBackwardTransferFunction getInstance() {
+	static TcfaZoneBackwardTransferFunction getInstance() {
 		return INSTANCE;
 	}
 
 	@Override
-	public Collection<ZoneState> getSuccStates(final ZoneState state, final TCFAAction action,
+	public Collection<ZoneState> getSuccStates(final ZoneState state, final TcfaAction action,
 			final ZonePrecision precision) {
 		final ZoneState succState = pre(state, action, precision);
 
@@ -40,7 +40,7 @@ final class TCFAZoneBackwardTransferFunction implements TransferFunction<ZoneSta
 		}
 	}
 
-	ZoneState pre(final ZoneState state, final TCFAAction action, final ZonePrecision precision) {
+	ZoneState pre(final ZoneState state, final TcfaAction action, final ZonePrecision precision) {
 		final ZoneState.ZoneOperations prevStateBuilder = state.transform();
 
 		for (final ClockOp op : Lists.reverse(action.getClockOps())) {

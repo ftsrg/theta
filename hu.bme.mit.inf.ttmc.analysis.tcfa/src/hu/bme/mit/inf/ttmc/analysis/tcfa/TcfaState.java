@@ -5,7 +5,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import hu.bme.mit.inf.ttmc.analysis.State;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.TcfaLoc;
 
-public final class TCFAState<S extends State> implements State {
+public final class TcfaState<S extends State> implements State {
 
 	private static final int HASH_SEED = 3613;
 
@@ -14,13 +14,13 @@ public final class TCFAState<S extends State> implements State {
 	private final TcfaLoc loc;
 	private final S state;
 
-	private TCFAState(final TcfaLoc loc, final S state) {
+	private TcfaState(final TcfaLoc loc, final S state) {
 		this.loc = checkNotNull(loc);
 		this.state = checkNotNull(state);
 	}
 
-	public static <S extends State> TCFAState<S> create(final TcfaLoc loc, final S state) {
-		return new TCFAState<>(loc, state);
+	public static <S extends State> TcfaState<S> create(final TcfaLoc loc, final S state) {
+		return new TcfaState<>(loc, state);
 	}
 
 	////
@@ -51,8 +51,8 @@ public final class TCFAState<S extends State> implements State {
 	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
-		} else if (obj instanceof TCFAState) {
-			final TCFAState<?> that = (TCFAState<?>) obj;
+		} else if (obj instanceof TcfaState) {
+			final TcfaState<?> that = (TcfaState<?>) obj;
 			return this.loc.equals(that.loc) && this.state.equals(that.state);
 		} else {
 			return false;

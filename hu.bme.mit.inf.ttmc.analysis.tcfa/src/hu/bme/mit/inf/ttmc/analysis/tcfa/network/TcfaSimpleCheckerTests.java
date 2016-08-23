@@ -25,10 +25,10 @@ import hu.bme.mit.inf.ttmc.analysis.expl.GlobalExplPrecision;
 import hu.bme.mit.inf.ttmc.analysis.pred.GlobalPredPrecision;
 import hu.bme.mit.inf.ttmc.analysis.pred.PredPrecision;
 import hu.bme.mit.inf.ttmc.analysis.pred.PredState;
-import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAAnalyis;
-import hu.bme.mit.inf.ttmc.analysis.tcfa.expl.TCFAExplAnalysis;
-import hu.bme.mit.inf.ttmc.analysis.tcfa.pred.TCFAPredAnalysis;
-import hu.bme.mit.inf.ttmc.analysis.tcfa.zone.TCFAZoneAnalysis;
+import hu.bme.mit.inf.ttmc.analysis.tcfa.TcfaAnalyis;
+import hu.bme.mit.inf.ttmc.analysis.tcfa.expl.TcfaExplAnalysis;
+import hu.bme.mit.inf.ttmc.analysis.tcfa.pred.TcfaPredAnalysis;
+import hu.bme.mit.inf.ttmc.analysis.tcfa.zone.TcfaZoneAnalysis;
 import hu.bme.mit.inf.ttmc.analysis.zone.ZonePrecision;
 import hu.bme.mit.inf.ttmc.analysis.zone.ZoneState;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
@@ -42,7 +42,7 @@ import hu.bme.mit.inf.ttmc.solver.Solver;
 import hu.bme.mit.inf.ttmc.solver.SolverManager;
 import hu.bme.mit.inf.ttmc.solver.z3.Z3SolverManager;
 
-public class TCFASimpleCheckerTests {
+public class TcfaSimpleCheckerTests {
 
 	@Test
 	@Ignore
@@ -67,9 +67,9 @@ public class TCFASimpleCheckerTests {
 		final SolverManager manager = new Z3SolverManager();
 		final Solver solver = manager.createSolver(true, true);
 
-		final TCFAAnalyis<CompositeState<ZoneState, ExplState>, CompositePrecision<ZonePrecision, ExplPrecision>> analysis = new TCFAAnalyis<>(
+		final TcfaAnalyis<CompositeState<ZoneState, ExplState>, CompositePrecision<ZonePrecision, ExplPrecision>> analysis = new TcfaAnalyis<>(
 				new NetworkTcfaLoc(initLocs),
-				new CompositeAnalysis<>(TCFAZoneAnalysis.getInstance(), new TCFAExplAnalysis(solver)));
+				new CompositeAnalysis<>(TcfaZoneAnalysis.getInstance(), new TcfaExplAnalysis(solver)));
 
 		final CompositePrecision<ZonePrecision, ExplPrecision> precision = CompositePrecision.create(
 				new ZonePrecision(ceilings),
@@ -101,9 +101,9 @@ public class TCFASimpleCheckerTests {
 		final SolverManager manager = new Z3SolverManager();
 		final Solver solver = manager.createSolver(true, true);
 
-		final TCFAAnalyis<CompositeState<ZoneState, PredState>, CompositePrecision<ZonePrecision, PredPrecision>> analysis = new TCFAAnalyis<>(
+		final TcfaAnalyis<CompositeState<ZoneState, PredState>, CompositePrecision<ZonePrecision, PredPrecision>> analysis = new TcfaAnalyis<>(
 				new NetworkTcfaLoc(initLocs),
-				new CompositeAnalysis<>(TCFAZoneAnalysis.getInstance(), new TCFAPredAnalysis(solver)));
+				new CompositeAnalysis<>(TcfaZoneAnalysis.getInstance(), new TcfaPredAnalysis(solver)));
 
 		final CompositePrecision<ZonePrecision, PredPrecision> precision = CompositePrecision.create(
 				new ZonePrecision(ceilings),

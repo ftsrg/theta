@@ -18,7 +18,7 @@ import hu.bme.mit.inf.ttmc.formalism.ta.op.impl.ClockOps;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.TcfaEdge;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.TcfaLoc;
 
-public final class TCFAAction implements Action {
+public final class TcfaAction implements Action {
 
 	private final TcfaEdge edge;
 
@@ -31,7 +31,7 @@ public final class TCFAAction implements Action {
 	private final List<ClockOp> clockOps;
 	private final List<Stmt> dataStmts;
 
-	TCFAAction(final TcfaEdge edge) {
+	TcfaAction(final TcfaEdge edge) {
 		this.edge = edge;
 		sourceClockInvars = extractClockInvars(edge.getSource());
 		sourceDataInvars = extractDataInvars(edge.getSource());
@@ -42,9 +42,9 @@ public final class TCFAAction implements Action {
 		final ImmutableList.Builder<Stmt> dataStmtsBuilder = ImmutableList.builder();
 
 		for (final Stmt stmt : edge.getStmts()) {
-			if (TCFAUtils.isClockStmt(stmt)) {
+			if (TcfaUtils.isClockStmt(stmt)) {
 				clockOpsBuilder.add(ClockOps.fromStmt(stmt));
-			} else if (TCFAUtils.isDataStmt(stmt)) {
+			} else if (TcfaUtils.isDataStmt(stmt)) {
 				dataStmtsBuilder.add(stmt);
 			} else {
 				throw new IllegalArgumentException();
@@ -101,7 +101,7 @@ public final class TCFAAction implements Action {
 	private static Collection<Expr<? extends BoolType>> extractDataInvars(final TcfaLoc loc) {
 		final ImmutableSet.Builder<Expr<? extends BoolType>> builder = ImmutableSet.builder();
 		for (final Expr<? extends BoolType> invar : loc.getInvars()) {
-			if (TCFAUtils.isDataExpr(invar)) {
+			if (TcfaUtils.isDataExpr(invar)) {
 				builder.add(invar);
 			}
 		}
@@ -111,7 +111,7 @@ public final class TCFAAction implements Action {
 	private static Collection<ClockConstr> extractClockInvars(final TcfaLoc loc) {
 		final ImmutableSet.Builder<ClockConstr> builder = ImmutableSet.builder();
 		for (final Expr<? extends BoolType> invar : loc.getInvars()) {
-			if (TCFAUtils.isClockExpr(invar)) {
+			if (TcfaUtils.isClockExpr(invar)) {
 				builder.add(ClockConstrs.formExpr(invar));
 			}
 		}

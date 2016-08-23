@@ -7,24 +7,24 @@ import hu.bme.mit.inf.ttmc.analysis.ActionFunction;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.TcfaEdge;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.TcfaLoc;
 
-class TCFAActionFunction implements ActionFunction<TCFAState<?>, TCFAAction> {
+class TcfaActionFunction implements ActionFunction<TcfaState<?>, TcfaAction> {
 
-	private static final TCFAActionFunction INSTANCE = new TCFAActionFunction();
+	private static final TcfaActionFunction INSTANCE = new TcfaActionFunction();
 
-	private TCFAActionFunction() {
+	private TcfaActionFunction() {
 	}
 
-	static TCFAActionFunction getInstance() {
+	static TcfaActionFunction getInstance() {
 		return INSTANCE;
 	}
 
 	@Override
-	public Collection<TCFAAction> getEnabledActionsFor(final TCFAState<?> state) {
-		final Collection<TCFAAction> tcfaActions = new ArrayList<>();
+	public Collection<TcfaAction> getEnabledActionsFor(final TcfaState<?> state) {
+		final Collection<TcfaAction> tcfaActions = new ArrayList<>();
 		final TcfaLoc loc = state.getLoc();
 
 		for (final TcfaEdge outEdge : loc.getOutEdges()) {
-			tcfaActions.add(new TCFAAction(outEdge));
+			tcfaActions.add(new TcfaAction(outEdge));
 		}
 
 		return tcfaActions;

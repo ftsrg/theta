@@ -9,14 +9,14 @@ import hu.bme.mit.inf.ttmc.analysis.InitFunction;
 import hu.bme.mit.inf.ttmc.analysis.zone.ZonePrecision;
 import hu.bme.mit.inf.ttmc.analysis.zone.ZoneState;
 
-class TCFAZoneInitFunction implements InitFunction<ZoneState, ZonePrecision> {
+class TcfaZoneInitFunction implements InitFunction<ZoneState, ZonePrecision> {
 
-	private static final TCFAZoneInitFunction INSTANCE = new TCFAZoneInitFunction();
+	private static final TcfaZoneInitFunction INSTANCE = new TcfaZoneInitFunction();
 
-	private TCFAZoneInitFunction() {
+	private TcfaZoneInitFunction() {
 	}
 
-	static TCFAZoneInitFunction getInstance() {
+	static TcfaZoneInitFunction getInstance() {
 		return INSTANCE;
 	}
 

@@ -7,20 +7,20 @@ import java.util.List;
 
 import hu.bme.mit.inf.ttmc.analysis.Domain;
 import hu.bme.mit.inf.ttmc.analysis.TransferFunction;
-import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAAction;
+import hu.bme.mit.inf.ttmc.analysis.tcfa.TcfaAction;
 import hu.bme.mit.inf.ttmc.analysis.zone.ZoneDomain;
 import hu.bme.mit.inf.ttmc.analysis.zone.ZonePrecision;
 import hu.bme.mit.inf.ttmc.analysis.zone.ZoneState;
 
-public class TCFAInterpolator {
+public class TcfaInterpolator {
 
 	private final ZonePrecision precision;
 
-	public TCFAInterpolator(final ZonePrecision precision) {
+	public TcfaInterpolator(final ZonePrecision precision) {
 		this.precision = checkNotNull(precision);
 	}
 
-	public List<ZoneState> getInterpolant(final List<? extends TCFAAction> actions) {
+	public List<ZoneState> getInterpolant(final List<? extends TcfaAction> actions) {
 		final List<ZoneState> interpolants = new ArrayList<>(actions.size() + 1);
 
 		final List<ZoneState> forwardStates = getForwardStates(actions);
@@ -34,14 +34,14 @@ public class TCFAInterpolator {
 		return interpolants;
 	}
 
-	private List<ZoneState> getForwardStates(final List<? extends TCFAAction> actions) {
+	private List<ZoneState> getForwardStates(final List<? extends TcfaAction> actions) {
 		final List<ZoneState> forwardStates = new ArrayList<>(actions.size() + 1);
 
 		ZoneState lastState = ZoneState.top(precision.getClocks());
 		forwardStates.add(lastState);
 
-		for (final TCFAAction action : actions) {
-			lastState = TCFAZoneTransferFunction.getInstance().post(lastState, action, precision);
+		for (final TcfaAction action : actions) {
+			lastState = TcfaZoneTransferFunction.getInstance().post(lastState, action, precision);
 			forwardStates.add(lastState);
 		}
 
@@ -50,14 +50,14 @@ public class TCFAInterpolator {
 		return forwardStates;
 	}
 
-	private List<ZoneState> getBakcwardStates(final List<? extends TCFAAction> actions) {
+	private List<ZoneState> getBakcwardStates(final List<? extends TcfaAction> actions) {
 		final List<ZoneState> backwardStates = new ArrayList<>(actions.size() + 1);
 
 		ZoneState lastState = ZoneState.bottom(precision.getClocks());
 		backwardStates.add(lastState);
 
-		for (final TCFAAction action : actions) {
-			lastState = TCFAZoneBackwardTransferFunction.getInstance().pre(lastState, action, precision);
+		for (final TcfaAction action : actions) {
+			lastState = TcfaZoneBackwardTransferFunction.getInstance().pre(lastState, action, precision);
 			backwardStates.add(lastState);
 		}
 
@@ -68,9 +68,9 @@ public class TCFAInterpolator {
 
 	@SuppressWarnings("unused")
 	private static boolean isInterpolant(final List<? extends ZoneState> interpolant,
-			final List<? extends TCFAAction> actions) {
+			final List<? extends TcfaAction> actions) {
 		final Domain<ZoneState> domain = ZoneDomain.getInstance();
-		final TransferFunction<ZoneState, TCFAAction, ZonePrecision> transferFunction = TCFAZoneTransferFunction
+		final TransferFunction<ZoneState, TcfaAction, ZonePrecision> transferFunction = TcfaZoneTransferFunction
 				.getInstance();
 
 		if (interpolant.size() != actions.size() + 1) {

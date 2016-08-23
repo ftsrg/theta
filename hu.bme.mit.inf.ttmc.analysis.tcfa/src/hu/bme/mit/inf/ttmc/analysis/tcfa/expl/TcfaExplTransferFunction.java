@@ -9,7 +9,7 @@ import com.google.common.collect.ImmutableSet;
 import hu.bme.mit.inf.ttmc.analysis.TransferFunction;
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplPrecision;
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplState;
-import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAAction;
+import hu.bme.mit.inf.ttmc.analysis.tcfa.TcfaAction;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.expr.impl.Exprs;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
@@ -20,16 +20,16 @@ import hu.bme.mit.inf.ttmc.formalism.utils.StmtUnroller.StmtToExprResult;
 import hu.bme.mit.inf.ttmc.formalism.utils.VarIndexes;
 import hu.bme.mit.inf.ttmc.solver.Solver;
 
-final class TCFAExplTransferFunction implements TransferFunction<ExplState, TCFAAction, ExplPrecision> {
+final class TcfaExplTransferFunction implements TransferFunction<ExplState, TcfaAction, ExplPrecision> {
 
 	private final Solver solver;
 
-	TCFAExplTransferFunction(final Solver solver) {
+	TcfaExplTransferFunction(final Solver solver) {
 		this.solver = checkNotNull(solver);
 	}
 
 	@Override
-	public Collection<ExplState> getSuccStates(final ExplState state, final TCFAAction action,
+	public Collection<ExplState> getSuccStates(final ExplState state, final TcfaAction action,
 			final ExplPrecision precision) {
 
 		final ImmutableSet.Builder<ExplState> builder = ImmutableSet.builder();

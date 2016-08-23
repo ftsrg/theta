@@ -10,22 +10,22 @@ import hu.bme.mit.inf.ttmc.analysis.Precision;
 import hu.bme.mit.inf.ttmc.analysis.State;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.TcfaLoc;
 
-class TCFAInitFunction<S extends State, P extends Precision> implements InitFunction<TCFAState<S>, P> {
+class TcfaInitFunction<S extends State, P extends Precision> implements InitFunction<TcfaState<S>, P> {
 
 	private final TcfaLoc initLoc;
 	private final InitFunction<S, P> initFunction;
 
-	TCFAInitFunction(final TcfaLoc initLoc, final InitFunction<S, P> initFunction) {
+	TcfaInitFunction(final TcfaLoc initLoc, final InitFunction<S, P> initFunction) {
 		this.initLoc = checkNotNull(initLoc);
 		this.initFunction = checkNotNull(initFunction);
 	}
 
 	@Override
-	public Collection<TCFAState<S>> getInitStates(final P precision) {
-		final Collection<TCFAState<S>> initStates = new ArrayList<>();
+	public Collection<TcfaState<S>> getInitStates(final P precision) {
+		final Collection<TcfaState<S>> initStates = new ArrayList<>();
 		final Collection<? extends S> subInitStates = initFunction.getInitStates(precision);
 		for (final S subInitState : subInitStates) {
-			final TCFAState<S> initState = TCFAState.create(initLoc, subInitState);
+			final TcfaState<S> initState = TcfaState.create(initLoc, subInitState);
 			initStates.add(initState);
 		}
 		return initStates;

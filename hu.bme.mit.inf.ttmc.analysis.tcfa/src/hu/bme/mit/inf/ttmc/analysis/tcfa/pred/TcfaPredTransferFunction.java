@@ -9,7 +9,7 @@ import com.google.common.collect.ImmutableSet;
 import hu.bme.mit.inf.ttmc.analysis.TransferFunction;
 import hu.bme.mit.inf.ttmc.analysis.pred.PredPrecision;
 import hu.bme.mit.inf.ttmc.analysis.pred.PredState;
-import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAAction;
+import hu.bme.mit.inf.ttmc.analysis.tcfa.TcfaAction;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.expr.impl.Exprs;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
@@ -20,16 +20,16 @@ import hu.bme.mit.inf.ttmc.formalism.utils.StmtUnroller.StmtToExprResult;
 import hu.bme.mit.inf.ttmc.formalism.utils.VarIndexes;
 import hu.bme.mit.inf.ttmc.solver.Solver;
 
-final class TCFAPredTransferFunction implements TransferFunction<PredState, TCFAAction, PredPrecision> {
+final class TcfaPredTransferFunction implements TransferFunction<PredState, TcfaAction, PredPrecision> {
 
 	final Solver solver;
 
-	TCFAPredTransferFunction(final Solver solver) {
+	TcfaPredTransferFunction(final Solver solver) {
 		this.solver = checkNotNull(solver);
 	}
 
 	@Override
-	public Collection<PredState> getSuccStates(final PredState state, final TCFAAction action,
+	public Collection<PredState> getSuccStates(final PredState state, final TcfaAction action,
 			final PredPrecision precision) {
 		checkNotNull(state);
 		checkNotNull(precision);
