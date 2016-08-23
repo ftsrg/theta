@@ -38,7 +38,7 @@ public final class TcfaSpecCreator {
 		final Assignment constAssignment = createConstDefs(scope, paramAssignment, specCtx.constDecls);
 		final Assignment assignment = new NestedAssignmentImpl(paramAssignment, constAssignment);
 
-		final TcfaSpec spec = new TcfaSpec();
+		final TcfaSpecImpl spec = new TcfaSpecImpl();
 
 		createTcfas(spec, scope, assignment, specCtx.tcfaDecls);
 
@@ -60,7 +60,7 @@ public final class TcfaSpecCreator {
 
 	////
 
-	private static void createTcfas(final TcfaSpec spec, final Scope scope, final Assignment assignment,
+	private static void createTcfas(final TcfaSpecImpl spec, final Scope scope, final Assignment assignment,
 			final List<? extends TcfaDeclContext> tcfaDeclCtxs) {
 		for (final TcfaDeclContext tcfaDeclCtx : tcfaDeclCtxs) {
 			final String name = tcfaDeclCtx.name.getText();
