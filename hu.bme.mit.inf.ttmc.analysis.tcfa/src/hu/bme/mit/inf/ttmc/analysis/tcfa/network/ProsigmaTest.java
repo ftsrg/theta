@@ -66,8 +66,7 @@ public class ProsigmaTest {
 		}
 
 		final CompositePrecision<ZonePrecision, ExplPrecision> precision = CompositePrecision.create(
-				new ZonePrecision(ceilings),
-				GlobalExplPrecision.create(Collections.singleton(prosigma.getChan()), Collections.emptySet()));
+				new ZonePrecision(ceilings), GlobalExplPrecision.create(Collections.singleton(prosigma.getChan())));
 
 		final Abstractor<TcfaState<CompositeState<ZoneState, ExplState>>, TcfaAction, CompositePrecision<ZonePrecision, ExplPrecision>> abstractor = new AbstractorImpl<>(
 				analysis, s -> false);
@@ -98,9 +97,8 @@ public class ProsigmaTest {
 			ceilings.put(clock, 7);
 		}
 
-		final CompositePrecision<ZonePrecision, ExplPrecision> precision = CompositePrecision.create(
-				new ZonePrecision(ceilings),
-				GlobalExplPrecision.create(prosigma.getDataVars(), Collections.emptySet()));
+		final CompositePrecision<ZonePrecision, ExplPrecision> precision = CompositePrecision
+				.create(new ZonePrecision(ceilings), GlobalExplPrecision.create(prosigma.getDataVars()));
 
 		final Abstractor<TcfaState<CompositeState<ZoneState, ExplState>>, TcfaAction, CompositePrecision<ZonePrecision, ExplPrecision>> abstractor = new AbstractorImpl<>(
 				analysis, s -> false);
