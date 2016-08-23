@@ -17,11 +17,11 @@ import hu.bme.mit.inf.ttmc.analysis.composite.CompositeState;
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplPrecision;
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplState;
 import hu.bme.mit.inf.ttmc.analysis.expl.GlobalExplPrecision;
-import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAAction;
-import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAAnalyis;
-import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAState;
-import hu.bme.mit.inf.ttmc.analysis.tcfa.expl.TCFAExplAnalysis;
-import hu.bme.mit.inf.ttmc.analysis.tcfa.zone.TCFAZoneAnalysis;
+import hu.bme.mit.inf.ttmc.analysis.tcfa.TcfaAction;
+import hu.bme.mit.inf.ttmc.analysis.tcfa.TcfaAnalyis;
+import hu.bme.mit.inf.ttmc.analysis.tcfa.TcfaState;
+import hu.bme.mit.inf.ttmc.analysis.tcfa.expl.TcfaExplAnalysis;
+import hu.bme.mit.inf.ttmc.analysis.tcfa.zone.TcfaZoneAnalysis;
 import hu.bme.mit.inf.ttmc.analysis.zone.ZonePrecision;
 import hu.bme.mit.inf.ttmc.analysis.zone.ZoneState;
 import hu.bme.mit.inf.ttmc.core.type.IntType;
@@ -32,7 +32,7 @@ import hu.bme.mit.inf.ttmc.solver.Solver;
 import hu.bme.mit.inf.ttmc.solver.SolverManager;
 import hu.bme.mit.inf.ttmc.solver.z3.Z3SolverManager;
 
-public class TCFACompositeTests {
+public class TcfaCompositeTests {
 
 	@Test
 	public void testExplicit() {
@@ -42,9 +42,9 @@ public class TCFACompositeTests {
 		final SolverManager manager = new Z3SolverManager();
 		final Solver solver = manager.createSolver(true, true);
 
-		final TCFAAnalyis<CompositeState<ZoneState, ExplState>, CompositePrecision<ZonePrecision, ExplPrecision>> analysis = new TCFAAnalyis<>(
+		final TcfaAnalyis<CompositeState<ZoneState, ExplState>, CompositePrecision<ZonePrecision, ExplPrecision>> analysis = new TcfaAnalyis<>(
 				fischer.getInitial(),
-				new CompositeAnalysis<>(TCFAZoneAnalysis.getInstance(), new TCFAExplAnalysis(solver)));
+				new CompositeAnalysis<>(TcfaZoneAnalysis.getInstance(), new TcfaExplAnalysis(solver)));
 
 		final HashMap<ClockDecl, Integer> ceilings = new HashMap<>();
 		ceilings.put(fischer.getClock(), 2);
@@ -53,7 +53,7 @@ public class TCFACompositeTests {
 				new ZonePrecision(ceilings),
 				GlobalExplPrecision.create(Collections.singleton(vlock), Collections.emptySet()));
 
-		final Abstractor<TCFAState<CompositeState<ZoneState, ExplState>>, TCFAAction, CompositePrecision<ZonePrecision, ExplPrecision>> abstractor = new AbstractorImpl<>(
+		final Abstractor<TcfaState<CompositeState<ZoneState, ExplState>>, TcfaAction, CompositePrecision<ZonePrecision, ExplPrecision>> abstractor = new AbstractorImpl<>(
 				analysis, s -> s.getLoc().equals(fischer.getCritical()));
 
 		abstractor.init(precision);

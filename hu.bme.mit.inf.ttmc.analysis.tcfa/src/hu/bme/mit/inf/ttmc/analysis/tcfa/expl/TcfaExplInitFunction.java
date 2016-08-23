@@ -10,14 +10,14 @@ import hu.bme.mit.inf.ttmc.analysis.expl.ExplPrecision;
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplState;
 import hu.bme.mit.inf.ttmc.formalism.common.Valuation;
 
-public class TCFAExplInitFunction implements InitFunction<ExplState, ExplPrecision> {
+public class TcfaExplInitFunction implements InitFunction<ExplState, ExplPrecision> {
 
-	private static final TCFAExplInitFunction INSTANCE = new TCFAExplInitFunction();
+	private static final TcfaExplInitFunction INSTANCE = new TcfaExplInitFunction();
 
-	private TCFAExplInitFunction() {
+	private TcfaExplInitFunction() {
 	}
 
-	static TCFAExplInitFunction getInstance() {
+	static TcfaExplInitFunction getInstance() {
 		return INSTANCE;
 	}
 

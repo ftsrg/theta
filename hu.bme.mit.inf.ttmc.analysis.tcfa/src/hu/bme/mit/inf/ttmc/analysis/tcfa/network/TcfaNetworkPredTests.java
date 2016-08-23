@@ -1,11 +1,13 @@
 package hu.bme.mit.inf.ttmc.analysis.tcfa.network;
 
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Eq;
+import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Int;
 import static hu.bme.mit.inf.ttmc.core.type.impl.Types.Int;
 import static hu.bme.mit.inf.ttmc.formalism.common.decl.impl.Decls2.Var;
 import static java.util.stream.Collectors.toList;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
@@ -17,16 +19,17 @@ import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.AbstractorImpl;
 import hu.bme.mit.inf.ttmc.analysis.composite.CompositeAnalysis;
 import hu.bme.mit.inf.ttmc.analysis.composite.CompositePrecision;
 import hu.bme.mit.inf.ttmc.analysis.composite.CompositeState;
-import hu.bme.mit.inf.ttmc.analysis.expl.ExplPrecision;
-import hu.bme.mit.inf.ttmc.analysis.expl.ExplState;
-import hu.bme.mit.inf.ttmc.analysis.expl.GlobalExplPrecision;
-import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAAction;
-import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAAnalyis;
-import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAState;
-import hu.bme.mit.inf.ttmc.analysis.tcfa.expl.TCFAExplAnalysis;
-import hu.bme.mit.inf.ttmc.analysis.tcfa.zone.TCFAZoneAnalysis;
+import hu.bme.mit.inf.ttmc.analysis.pred.GlobalPredPrecision;
+import hu.bme.mit.inf.ttmc.analysis.pred.PredPrecision;
+import hu.bme.mit.inf.ttmc.analysis.pred.PredState;
+import hu.bme.mit.inf.ttmc.analysis.tcfa.TcfaAction;
+import hu.bme.mit.inf.ttmc.analysis.tcfa.TcfaAnalyis;
+import hu.bme.mit.inf.ttmc.analysis.tcfa.TcfaState;
+import hu.bme.mit.inf.ttmc.analysis.tcfa.pred.TcfaPredAnalysis;
+import hu.bme.mit.inf.ttmc.analysis.tcfa.zone.TcfaZoneAnalysis;
 import hu.bme.mit.inf.ttmc.analysis.zone.ZonePrecision;
 import hu.bme.mit.inf.ttmc.analysis.zone.ZoneState;
+import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.type.IntType;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.ClockDecl;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
@@ -37,13 +40,14 @@ import hu.bme.mit.inf.ttmc.solver.Solver;
 import hu.bme.mit.inf.ttmc.solver.SolverManager;
 import hu.bme.mit.inf.ttmc.solver.z3.Z3SolverManager;
 
-public class TCFANetworkExplTests {
+public class TcfaNetworkPredTests {
 
 	@Test
 	public void test() {
 		final int n = 6;
 
 		final VarDecl<IntType> vlock = Var("lock", Int());
+		final Expr<IntType> lock = vlock.getRef();
 
 		final HashMap<ClockDecl, Integer> ceilings = new HashMap<>();
 
@@ -61,15 +65,15 @@ public class TCFANetworkExplTests {
 		final SolverManager manager = new Z3SolverManager();
 		final Solver solver = manager.createSolver(true, true);
 
-		final TCFAAnalyis<CompositeState<ZoneState, ExplState>, CompositePrecision<ZonePrecision, ExplPrecision>> analysis = new TCFAAnalyis<>(
+		final TcfaAnalyis<CompositeState<ZoneState, PredState>, CompositePrecision<ZonePrecision, PredPrecision>> analysis = new TcfaAnalyis<>(
 				new NetworkTcfaLoc(initLocs),
-				new CompositeAnalysis<>(TCFAZoneAnalysis.getInstance(), new TCFAExplAnalysis(solver)));
+				new CompositeAnalysis<>(TcfaZoneAnalysis.getInstance(), new TcfaPredAnalysis(solver)));
 
-		final CompositePrecision<ZonePrecision, ExplPrecision> precision = CompositePrecision.create(
+		final CompositePrecision<ZonePrecision, PredPrecision> precision = CompositePrecision.create(
 				new ZonePrecision(ceilings),
-				GlobalExplPrecision.create(Collections.singleton(vlock), Collections.emptySet()));
+				GlobalPredPrecision.create(Arrays.asList(Eq(lock, Int(0)), Eq(lock, Int(1)))));
 
-		final Abstractor<TCFAState<CompositeState<ZoneState, ExplState>>, TCFAAction, CompositePrecision<ZonePrecision, ExplPrecision>> abstractor = new AbstractorImpl<>(
+		final Abstractor<TcfaState<CompositeState<ZoneState, PredState>>, TcfaAction, CompositePrecision<ZonePrecision, PredPrecision>> abstractor = new AbstractorImpl<>(
 				analysis, s -> false);
 
 		abstractor.init(precision);

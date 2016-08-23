@@ -1,7 +1,5 @@
-package hu.bme.mit.inf.ttmc.analysis.tcfa.pred;
+package hu.bme.mit.inf.ttmc.analysis.tcfa.expl;
 
-import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Eq;
-import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Int;
 import static hu.bme.mit.inf.ttmc.core.type.impl.Types.Int;
 import static hu.bme.mit.inf.ttmc.formalism.common.decl.impl.Decls2.Var;
 
@@ -12,12 +10,12 @@ import org.junit.Test;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.Abstractor;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.ArgPrinter;
 import hu.bme.mit.inf.ttmc.analysis.algorithm.impl.AbstractorImpl;
-import hu.bme.mit.inf.ttmc.analysis.pred.GlobalPredPrecision;
-import hu.bme.mit.inf.ttmc.analysis.pred.PredPrecision;
-import hu.bme.mit.inf.ttmc.analysis.pred.PredState;
-import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAAction;
-import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAAnalyis;
-import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAState;
+import hu.bme.mit.inf.ttmc.analysis.expl.ExplPrecision;
+import hu.bme.mit.inf.ttmc.analysis.expl.ExplState;
+import hu.bme.mit.inf.ttmc.analysis.expl.GlobalExplPrecision;
+import hu.bme.mit.inf.ttmc.analysis.tcfa.TcfaAction;
+import hu.bme.mit.inf.ttmc.analysis.tcfa.TcfaAnalyis;
+import hu.bme.mit.inf.ttmc.analysis.tcfa.TcfaState;
 import hu.bme.mit.inf.ttmc.core.type.IntType;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.instances.FischerTCFA;
@@ -25,7 +23,7 @@ import hu.bme.mit.inf.ttmc.solver.Solver;
 import hu.bme.mit.inf.ttmc.solver.SolverManager;
 import hu.bme.mit.inf.ttmc.solver.z3.Z3SolverManager;
 
-public class TCFAPredTests {
+public class TcfaExplTests {
 
 	@Test
 	public void test() {
@@ -35,12 +33,13 @@ public class TCFAPredTests {
 		final SolverManager manager = new Z3SolverManager();
 		final Solver solver = manager.createSolver(true, true);
 
-		final TCFAAnalyis<PredState, PredPrecision> analysis = new TCFAAnalyis<>(fischer.getInitial(),
-				new TCFAPredAnalysis(solver));
+		final TcfaAnalyis<ExplState, ExplPrecision> analyis = new TcfaAnalyis<>(fischer.getInitial(),
+				new TcfaExplAnalysis(solver));
 
-		final PredPrecision precision = GlobalPredPrecision.create(Collections.singleton(Eq(vlock.getRef(), Int(0))));
+		final ExplPrecision precision = GlobalExplPrecision.create(Collections.singleton(vlock),
+				Collections.emptySet());
 
-		final Abstractor<TCFAState<PredState>, TCFAAction, PredPrecision> abstractor = new AbstractorImpl<>(analysis,
+		final Abstractor<TcfaState<ExplState>, TcfaAction, ExplPrecision> abstractor = new AbstractorImpl<>(analyis,
 				s -> s.getLoc().equals(fischer.getCritical()));
 
 		abstractor.init(precision);
@@ -50,7 +49,6 @@ public class TCFAPredTests {
 
 		System.out.println("\n\nCounterexample(s):");
 		System.out.println(abstractor.getARG().getCounterexamples());
-
 	}
 
 }

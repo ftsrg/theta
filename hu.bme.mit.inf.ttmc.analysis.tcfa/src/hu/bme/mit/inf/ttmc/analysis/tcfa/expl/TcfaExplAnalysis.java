@@ -10,16 +10,16 @@ import hu.bme.mit.inf.ttmc.analysis.TransferFunction;
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplDomain;
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplPrecision;
 import hu.bme.mit.inf.ttmc.analysis.expl.ExplState;
-import hu.bme.mit.inf.ttmc.analysis.tcfa.TCFAAction;
+import hu.bme.mit.inf.ttmc.analysis.tcfa.TcfaAction;
 import hu.bme.mit.inf.ttmc.solver.Solver;
 
-public class TCFAExplAnalysis implements Analysis<ExplState, TCFAAction, ExplPrecision> {
+public class TcfaExplAnalysis implements Analysis<ExplState, TcfaAction, ExplPrecision> {
 
-	private final TCFAExplTransferFunction transferFunction;
+	private final TcfaExplTransferFunction transferFunction;
 
-	public TCFAExplAnalysis(final Solver solver) {
+	public TcfaExplAnalysis(final Solver solver) {
 		checkNotNull(solver);
-		transferFunction = new TCFAExplTransferFunction(solver);
+		transferFunction = new TcfaExplTransferFunction(solver);
 	}
 
 	@Override
@@ -29,16 +29,16 @@ public class TCFAExplAnalysis implements Analysis<ExplState, TCFAAction, ExplPre
 
 	@Override
 	public InitFunction<ExplState, ExplPrecision> getInitFunction() {
-		return TCFAExplInitFunction.getInstance();
+		return TcfaExplInitFunction.getInstance();
 	}
 
 	@Override
-	public TransferFunction<ExplState, TCFAAction, ExplPrecision> getTransferFunction() {
+	public TransferFunction<ExplState, TcfaAction, ExplPrecision> getTransferFunction() {
 		return transferFunction;
 	}
 
 	@Override
-	public ActionFunction<? super ExplState, ? extends TCFAAction> getActionFunction() {
+	public ActionFunction<? super ExplState, ? extends TcfaAction> getActionFunction() {
 		throw new UnsupportedOperationException();
 	}
 
