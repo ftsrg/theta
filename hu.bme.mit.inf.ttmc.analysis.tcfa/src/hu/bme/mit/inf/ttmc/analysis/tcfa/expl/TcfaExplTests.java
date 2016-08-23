@@ -36,8 +36,7 @@ public class TcfaExplTests {
 		final TcfaAnalyis<ExplState, ExplPrecision> analyis = new TcfaAnalyis<>(fischer.getInitial(),
 				new TcfaExplAnalysis(solver));
 
-		final ExplPrecision precision = GlobalExplPrecision.create(Collections.singleton(vlock),
-				Collections.emptySet());
+		final ExplPrecision precision = GlobalExplPrecision.create(Collections.singleton(vlock));
 
 		final Abstractor<TcfaState<ExplState>, TcfaAction, ExplPrecision> abstractor = new AbstractorImpl<>(analyis,
 				s -> s.getLoc().equals(fischer.getCritical()));

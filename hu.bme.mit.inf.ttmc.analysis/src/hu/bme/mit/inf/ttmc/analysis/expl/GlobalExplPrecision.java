@@ -17,25 +17,14 @@ import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 public class GlobalExplPrecision implements ExplPrecision {
 
 	private final Set<VarDecl<? extends Type>> visibleVars;
-	private final Set<VarDecl<? extends Type>> invisibleVars;
 
-	public static GlobalExplPrecision create(final Collection<? extends VarDecl<?>> visibleVars,
-			final Collection<? extends VarDecl<?>> invisibleVars) {
-		return new GlobalExplPrecision(visibleVars, invisibleVars);
+	public static GlobalExplPrecision create(final Collection<? extends VarDecl<?>> visibleVars) {
+		return new GlobalExplPrecision(visibleVars);
 	}
 
-	private GlobalExplPrecision(final Collection<? extends VarDecl<?>> visibleVars,
-			final Collection<? extends VarDecl<?>> invisibleVars) {
+	private GlobalExplPrecision(final Collection<? extends VarDecl<?>> visibleVars) {
 		checkNotNull(visibleVars);
-		checkNotNull(invisibleVars);
 		this.visibleVars = Collections.unmodifiableSet(new HashSet<>(visibleVars));
-		this.invisibleVars = Collections.unmodifiableSet(new HashSet<>(invisibleVars));
-
-		for (final VarDecl<? extends Type> visibleVar : this.visibleVars) {
-			if (this.invisibleVars.contains(visibleVar)) {
-				throw new RuntimeException("Visible and invisible variables must be disjoint.");
-			}
-		}
 	}
 
 	@Override
@@ -57,23 +46,18 @@ public class GlobalExplPrecision implements ExplPrecision {
 		checkNotNull(makeVisible);
 
 		final Set<VarDecl<? extends Type>> newVisibleVars = new HashSet<>(visibleVars);
-		final Set<VarDecl<? extends Type>> newInvisibleVars = new HashSet<>(invisibleVars);
 
 		for (final VarDecl<? extends Type> var : makeVisible) {
 			if (newVisibleVars.contains(var)) {
 				continue;
-			} else if (newInvisibleVars.contains(var)) {
-				newInvisibleVars.remove(var);
-				newVisibleVars.add(var);
 			} else {
-				throw new IllegalArgumentException("Variable " + var + " is neither visible nor invisible!");
+				newVisibleVars.add(var);
 			}
 		}
 
-		assert (visibleVars.size() + invisibleVars.size() == newVisibleVars.size() + newInvisibleVars.size());
-		assert (newVisibleVars.size() > visibleVars.size());
+		assert (newVisibleVars.size() >= visibleVars.size());
 
-		return create(newVisibleVars, newInvisibleVars);
+		return create(newVisibleVars);
 	}
 
 	@Override

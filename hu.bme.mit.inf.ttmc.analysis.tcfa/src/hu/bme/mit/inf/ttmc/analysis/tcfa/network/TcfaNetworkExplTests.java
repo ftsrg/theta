@@ -65,9 +65,8 @@ public class TcfaNetworkExplTests {
 				new NetworkTcfaLoc(initLocs),
 				new CompositeAnalysis<>(TcfaZoneAnalysis.getInstance(), new TcfaExplAnalysis(solver)));
 
-		final CompositePrecision<ZonePrecision, ExplPrecision> precision = CompositePrecision.create(
-				new ZonePrecision(ceilings),
-				GlobalExplPrecision.create(Collections.singleton(vlock), Collections.emptySet()));
+		final CompositePrecision<ZonePrecision, ExplPrecision> precision = CompositePrecision
+				.create(new ZonePrecision(ceilings), GlobalExplPrecision.create(Collections.singleton(vlock)));
 
 		final Abstractor<TcfaState<CompositeState<ZoneState, ExplState>>, TcfaAction, CompositePrecision<ZonePrecision, ExplPrecision>> abstractor = new AbstractorImpl<>(
 				analysis, s -> false);

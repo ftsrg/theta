@@ -70,8 +70,7 @@ public class STSExplTest {
 		final STSExplAnalysis analysis = new STSExplAnalysis(sts, solver);
 		final Predicate<ExprState> target = new ExprStatePredicate(Not(sts.getProp()), solver);
 
-		final GlobalExplPrecision precision = GlobalExplPrecision.create(Collections.singleton(vy),
-				Collections.singleton(vx));
+		final GlobalExplPrecision precision = GlobalExplPrecision.create(Collections.singleton(vy));
 
 		final Abstractor<ExplState, STSAction, ExplPrecision> abstractor = new AbstractorImpl<>(analysis, target);
 

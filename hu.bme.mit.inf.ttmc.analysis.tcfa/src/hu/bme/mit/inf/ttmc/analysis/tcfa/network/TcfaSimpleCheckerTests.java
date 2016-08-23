@@ -71,9 +71,8 @@ public class TcfaSimpleCheckerTests {
 				new NetworkTcfaLoc(initLocs),
 				new CompositeAnalysis<>(TcfaZoneAnalysis.getInstance(), new TcfaExplAnalysis(solver)));
 
-		final CompositePrecision<ZonePrecision, ExplPrecision> precision = CompositePrecision.create(
-				new ZonePrecision(ceilings),
-				GlobalExplPrecision.create(Collections.singleton(vlock), Collections.emptySet()));
+		final CompositePrecision<ZonePrecision, ExplPrecision> precision = CompositePrecision
+				.create(new ZonePrecision(ceilings), GlobalExplPrecision.create(Collections.singleton(vlock)));
 
 		System.out.println(SimpleChecker.run(analysis, s -> false, precision));
 	}
