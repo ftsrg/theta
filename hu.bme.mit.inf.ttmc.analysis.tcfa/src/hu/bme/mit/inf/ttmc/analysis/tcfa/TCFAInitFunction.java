@@ -8,14 +8,14 @@ import java.util.Collection;
 import hu.bme.mit.inf.ttmc.analysis.InitFunction;
 import hu.bme.mit.inf.ttmc.analysis.Precision;
 import hu.bme.mit.inf.ttmc.analysis.State;
-import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFALoc;
+import hu.bme.mit.inf.ttmc.formalism.tcfa.TcfaLoc;
 
 class TCFAInitFunction<S extends State, P extends Precision> implements InitFunction<TCFAState<S>, P> {
 
-	private final TCFALoc initLoc;
+	private final TcfaLoc initLoc;
 	private final InitFunction<S, P> initFunction;
 
-	TCFAInitFunction(final TCFALoc initLoc, final InitFunction<S, P> initFunction) {
+	TCFAInitFunction(final TcfaLoc initLoc, final InitFunction<S, P> initFunction) {
 		this.initLoc = checkNotNull(initLoc);
 		this.initFunction = checkNotNull(initFunction);
 	}

@@ -3,20 +3,20 @@ package hu.bme.mit.inf.ttmc.formalism.tcfa.impl;
 import java.util.List;
 
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
-import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFAEdge;
+import hu.bme.mit.inf.ttmc.formalism.tcfa.TcfaEdge;
 
-final class NetworkTCFAEdge implements TCFAEdge {
+final class NetworkTcfaEdge implements TcfaEdge {
 
 	private static final int HASH_SEED = 9161;
 
 	private volatile int hashCode;
 
-	private final NetworkTCFALoc source;
-	private final NetworkTCFALoc target;
+	private final NetworkTcfaLoc source;
+	private final NetworkTcfaLoc target;
 	private final int index;
-	private final TCFAEdge edge;
+	private final TcfaEdge edge;
 
-	NetworkTCFAEdge(final NetworkTCFALoc source, final int index, final TCFAEdge edge, final NetworkTCFALoc target) {
+	NetworkTcfaEdge(final NetworkTcfaLoc source, final int index, final TcfaEdge edge, final NetworkTcfaLoc target) {
 		this.source = source;
 		this.edge = edge;
 		this.index = index;
@@ -27,17 +27,17 @@ final class NetworkTCFAEdge implements TCFAEdge {
 		return index;
 	}
 
-	public TCFAEdge getEdge() {
+	public TcfaEdge getEdge() {
 		return edge;
 	}
 
 	@Override
-	public NetworkTCFALoc getSource() {
+	public NetworkTcfaLoc getSource() {
 		return source;
 	}
 
 	@Override
-	public NetworkTCFALoc getTarget() {
+	public NetworkTcfaLoc getTarget() {
 		return target;
 	}
 
@@ -66,8 +66,8 @@ final class NetworkTCFAEdge implements TCFAEdge {
 	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
-		} else if (obj instanceof NetworkTCFAEdge) {
-			final NetworkTCFAEdge that = (NetworkTCFAEdge) obj;
+		} else if (obj instanceof NetworkTcfaEdge) {
+			final NetworkTcfaEdge that = (NetworkTcfaEdge) obj;
 			return this.index == that.index && this.source.equals(that.source) && this.target.equals(that.target)
 					&& this.edge.equals(that.edge);
 		} else {

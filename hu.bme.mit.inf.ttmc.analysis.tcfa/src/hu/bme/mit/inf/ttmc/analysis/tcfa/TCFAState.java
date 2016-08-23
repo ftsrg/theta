@@ -3,7 +3,7 @@ package hu.bme.mit.inf.ttmc.analysis.tcfa;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import hu.bme.mit.inf.ttmc.analysis.State;
-import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFALoc;
+import hu.bme.mit.inf.ttmc.formalism.tcfa.TcfaLoc;
 
 public final class TCFAState<S extends State> implements State {
 
@@ -11,15 +11,15 @@ public final class TCFAState<S extends State> implements State {
 
 	private volatile int hashCode = 0;
 
-	private final TCFALoc loc;
+	private final TcfaLoc loc;
 	private final S state;
 
-	private TCFAState(final TCFALoc loc, final S state) {
+	private TCFAState(final TcfaLoc loc, final S state) {
 		this.loc = checkNotNull(loc);
 		this.state = checkNotNull(state);
 	}
 
-	public static <S extends State> TCFAState<S> create(final TCFALoc loc, final S state) {
+	public static <S extends State> TCFAState<S> create(final TcfaLoc loc, final S state) {
 		return new TCFAState<>(loc, state);
 	}
 
@@ -29,7 +29,7 @@ public final class TCFAState<S extends State> implements State {
 		return state;
 	}
 
-	public TCFALoc getLoc() {
+	public TcfaLoc getLoc() {
 		return loc;
 	}
 

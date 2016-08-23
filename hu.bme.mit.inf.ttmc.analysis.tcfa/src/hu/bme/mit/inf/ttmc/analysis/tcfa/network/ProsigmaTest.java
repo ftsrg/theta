@@ -30,10 +30,10 @@ import hu.bme.mit.inf.ttmc.analysis.zone.ZonePrecision;
 import hu.bme.mit.inf.ttmc.analysis.zone.ZoneState;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.ClockDecl;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFA;
-import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFALoc;
+import hu.bme.mit.inf.ttmc.formalism.tcfa.TcfaLoc;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.dsl.TcfaDslManager;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.dsl.TcfaSpec;
-import hu.bme.mit.inf.ttmc.formalism.tcfa.impl.NetworkTCFALoc;
+import hu.bme.mit.inf.ttmc.formalism.tcfa.impl.NetworkTcfaLoc;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.instances.ProsigmaTCFA;
 import hu.bme.mit.inf.ttmc.solver.Solver;
 import hu.bme.mit.inf.ttmc.solver.SolverManager;
@@ -50,14 +50,14 @@ public class ProsigmaTest {
 		final TCFA fieldLG = prosigma.getFieldLG();
 		final TCFA controlLG = prosigma.getControlLG();
 
-		final List<TCFALoc> initLocs = Arrays.asList(eth.getInitLoc(), faultModel.getInitLoc(), fieldLG.getInitLoc(),
+		final List<TcfaLoc> initLocs = Arrays.asList(eth.getInitLoc(), faultModel.getInitLoc(), fieldLG.getInitLoc(),
 				controlLG.getInitLoc());
 
 		final SolverManager manager = new Z3SolverManager();
 		final Solver solver = manager.createSolver(true, true);
 
 		final TCFAAnalyis<CompositeState<ZoneState, ExplState>, CompositePrecision<ZonePrecision, ExplPrecision>> analysis = new TCFAAnalyis<>(
-				new NetworkTCFALoc(initLocs),
+				new NetworkTcfaLoc(initLocs),
 				new CompositeAnalysis<>(TCFAZoneAnalysis.getInstance(), new TCFAExplAnalysis(solver)));
 
 		final HashMap<ClockDecl, Integer> ceilings = new HashMap<>();

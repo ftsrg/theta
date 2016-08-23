@@ -7,9 +7,9 @@ import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
 
-public class TCFAPrinter {
+public class TcfaPrinter {
 
-	private TCFAPrinter() {
+	private TcfaPrinter() {
 	}
 
 	public static String toGraphvizString(final TCFA tcfa) {
@@ -18,27 +18,27 @@ public class TCFAPrinter {
 
 		sb.append("digraph tcfa {\n");
 
-		final Map<TCFALoc, Integer> ids = new HashMap<>();
-		final TCFALoc initLoc = tcfa.getInitLoc();
+		final Map<TcfaLoc, Integer> ids = new HashMap<>();
+		final TcfaLoc initLoc = tcfa.getInitLoc();
 		traverse(sb, initLoc, ids);
 
 		sb.append("}");
 		return sb.toString();
 	}
 
-	private static void traverse(final StringBuilder sb, final TCFALoc loc, final Map<TCFALoc, Integer> ids) {
+	private static void traverse(final StringBuilder sb, final TcfaLoc loc, final Map<TcfaLoc, Integer> ids) {
 		if (!ids.containsKey(loc)) {
 			ids.put(loc, ids.size());
 			sb.append(toGraphvizString(loc, ids));
-			for (final TCFAEdge outEdge : loc.getOutEdges()) {
-				final TCFALoc target = outEdge.getTarget();
+			for (final TcfaEdge outEdge : loc.getOutEdges()) {
+				final TcfaLoc target = outEdge.getTarget();
 				traverse(sb, target, ids);
 				sb.append(toGraphvizString(outEdge, ids));
 			}
 		}
 	}
 
-	private static String toGraphvizString(final TCFALoc loc, final Map<TCFALoc, Integer> ids) {
+	private static String toGraphvizString(final TcfaLoc loc, final Map<TcfaLoc, Integer> ids) {
 		final StringBuilder sb = new StringBuilder();
 		sb.append(ids.get(loc));
 		sb.append("[label=\"\\\n");
@@ -52,7 +52,7 @@ public class TCFAPrinter {
 		return sb.toString();
 	}
 
-	private static String toGraphvizString(final TCFAEdge edge, final Map<TCFALoc, Integer> ids) {
+	private static String toGraphvizString(final TcfaEdge edge, final Map<TcfaLoc, Integer> ids) {
 		final StringBuilder sb = new StringBuilder();
 		sb.append(ids.get(edge.getSource()));
 		sb.append(" -> ");

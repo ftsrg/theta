@@ -13,37 +13,37 @@ import com.google.common.collect.ImmutableList;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.ClockDecl;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFA;
-import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFAEdge;
-import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFALoc;
+import hu.bme.mit.inf.ttmc.formalism.tcfa.TcfaEdge;
+import hu.bme.mit.inf.ttmc.formalism.tcfa.TcfaLoc;
 
-public final class NetworkTCFA implements TCFA {
+public final class NetworkTcfa implements TCFA {
 
 	private final List<TCFA> tcfas;
-	private final TCFALoc initLoc;
+	private final TcfaLoc initLoc;
 
-	public NetworkTCFA(final List<? extends TCFA> tcfas) {
+	public NetworkTcfa(final List<? extends TCFA> tcfas) {
 		this.tcfas = ImmutableList.copyOf(checkNotNull(tcfas));
 
-		initLoc = new NetworkTCFALoc(getInitLocs(tcfas));
+		initLoc = new NetworkTcfaLoc(getInitLocs(tcfas));
 	}
 
-	private static List<TCFALoc> getInitLocs(final List<? extends TCFA> tcfas) {
+	private static List<TcfaLoc> getInitLocs(final List<? extends TCFA> tcfas) {
 		return tcfas.stream().map(TCFA::getInitLoc).collect(toList());
 	}
 
 	@Override
-	public TCFALoc getInitLoc() {
+	public TcfaLoc getInitLoc() {
 		return initLoc;
 	}
 
 	@Override
-	public Collection<? extends TCFALoc> getLocs() {
+	public Collection<? extends TcfaLoc> getLocs() {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
 
 	@Override
-	public Collection<? extends TCFAEdge> getEdges() {
+	public Collection<? extends TcfaEdge> getEdges() {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}

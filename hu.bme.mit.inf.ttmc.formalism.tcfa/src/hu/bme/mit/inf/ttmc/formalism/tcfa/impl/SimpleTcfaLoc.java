@@ -8,19 +8,19 @@ import com.google.common.collect.ImmutableSet;
 
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
-import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFAEdge;
-import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFALoc;
+import hu.bme.mit.inf.ttmc.formalism.tcfa.TcfaEdge;
+import hu.bme.mit.inf.ttmc.formalism.tcfa.TcfaLoc;
 
-final class SimpleTCFALoc implements TCFALoc {
+final class SimpleTcfaLoc implements TcfaLoc {
 
 	private final String name;
 	private final boolean urgent;
 	private final Collection<Expr<? extends BoolType>> invars;
 
-	final Collection<SimpleTCFAEdge> inEdges;
-	final Collection<SimpleTCFAEdge> outEdges;
+	final Collection<SimpleTcfaEdge> inEdges;
+	final Collection<SimpleTcfaEdge> outEdges;
 
-	SimpleTCFALoc(final String name, final boolean urgent,
+	SimpleTcfaLoc(final String name, final boolean urgent,
 			final Collection<? extends Expr<? extends BoolType>> invars) {
 		this.name = name;
 		this.urgent = urgent;
@@ -48,12 +48,12 @@ final class SimpleTCFALoc implements TCFALoc {
 	////
 
 	@Override
-	public Collection<? extends TCFAEdge> getInEdges() {
+	public Collection<? extends TcfaEdge> getInEdges() {
 		return Collections.unmodifiableCollection(inEdges);
 	}
 
 	@Override
-	public Collection<? extends TCFAEdge> getOutEdges() {
+	public Collection<? extends TcfaEdge> getOutEdges() {
 		return Collections.unmodifiableCollection(outEdges);
 	}
 

@@ -12,56 +12,56 @@ import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
-import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFAEdge;
-import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFALoc;
+import hu.bme.mit.inf.ttmc.formalism.tcfa.TcfaEdge;
+import hu.bme.mit.inf.ttmc.formalism.tcfa.TcfaLoc;
 
-public final class NetworkTCFALoc implements TCFALoc {
+public final class NetworkTcfaLoc implements TcfaLoc {
 
 	private static final int HASH_SEED = 2543;
 
-	private final List<TCFALoc> locs;
+	private final List<TcfaLoc> locs;
 
 	private volatile int hashCode = 0;
 
-	public NetworkTCFALoc(final List<? extends TCFALoc> locs) {
+	public NetworkTcfaLoc(final List<? extends TcfaLoc> locs) {
 		this.locs = ImmutableList.copyOf(checkNotNull(locs));
 	}
 
 	////
 
-	public List<TCFALoc> getLocs() {
+	public List<TcfaLoc> getLocs() {
 		return locs;
 	}
 
 	@Override
-	public Collection<? extends TCFAEdge> getInEdges() {
+	public Collection<? extends TcfaEdge> getInEdges() {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
 
 	@Override
-	public Collection<NetworkTCFAEdge> getOutEdges() {
-		final Collection<NetworkTCFAEdge> networkOutEdges = new ArrayList<>();
+	public Collection<NetworkTcfaEdge> getOutEdges() {
+		final Collection<NetworkTcfaEdge> networkOutEdges = new ArrayList<>();
 
 		for (int index = 0; index < locs.size(); index++) {
-			final TCFALoc loc = locs.get(index);
+			final TcfaLoc loc = locs.get(index);
 
-			for (final TCFAEdge outEdge : loc.getOutEdges()) {
-				final List<TCFALoc> outLocs = replace(locs, index, outEdge.getTarget());
-				networkOutEdges.add(new NetworkTCFAEdge(this, index, outEdge, new NetworkTCFALoc(outLocs)));
+			for (final TcfaEdge outEdge : loc.getOutEdges()) {
+				final List<TcfaLoc> outLocs = replace(locs, index, outEdge.getTarget());
+				networkOutEdges.add(new NetworkTcfaEdge(this, index, outEdge, new NetworkTcfaLoc(outLocs)));
 			}
 		}
 
 		return networkOutEdges;
 	}
 
-	private static List<TCFALoc> replace(final List<TCFALoc> locs, final int index, final TCFALoc target) {
-		final List<TCFALoc> succLocs;
+	private static List<TcfaLoc> replace(final List<TcfaLoc> locs, final int index, final TcfaLoc target) {
+		final List<TcfaLoc> succLocs;
 
 		if (locs.get(index) == target) {
 			succLocs = locs;
 		} else {
-			final TCFALoc[] locArray = locs.toArray(new TCFALoc[0]);
+			final TcfaLoc[] locArray = locs.toArray(new TcfaLoc[0]);
 			locArray[index] = target;
 			succLocs = ImmutableList.copyOf(locArray);
 		}
@@ -78,12 +78,12 @@ public final class NetworkTCFALoc implements TCFALoc {
 
 	@Override
 	public boolean isUrgent() {
-		return locs.stream().anyMatch(TCFALoc::isUrgent);
+		return locs.stream().anyMatch(TcfaLoc::isUrgent);
 	}
 
 	@Override
 	public Collection<Expr<? extends BoolType>> getInvars() {
-		return locs.stream().map(TCFALoc::getInvars).flatMap(Collection::stream).collect(toSet());
+		return locs.stream().map(TcfaLoc::getInvars).flatMap(Collection::stream).collect(toSet());
 	}
 
 	////
@@ -103,8 +103,8 @@ public final class NetworkTCFALoc implements TCFALoc {
 	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
-		} else if (obj instanceof NetworkTCFALoc) {
-			final NetworkTCFALoc that = (NetworkTCFALoc) obj;
+		} else if (obj instanceof NetworkTcfaLoc) {
+			final NetworkTcfaLoc that = (NetworkTcfaLoc) obj;
 			return this.locs.equals(that.locs);
 		} else {
 			return false;

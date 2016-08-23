@@ -14,21 +14,21 @@ import hu.bme.mit.inf.ttmc.formalism.common.decl.ClockDecl;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFA;
-import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFAEdge;
-import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFALoc;
+import hu.bme.mit.inf.ttmc.formalism.tcfa.TcfaEdge;
+import hu.bme.mit.inf.ttmc.formalism.tcfa.TcfaLoc;
 import hu.bme.mit.inf.ttmc.formalism.utils.FormalismUtils;
 
-public final class SimpleTCFA implements TCFA {
+public final class SimpleTcfa implements TCFA {
 
-	private final Collection<TCFALoc> locs;
-	private final Collection<TCFAEdge> edges;
+	private final Collection<TcfaLoc> locs;
+	private final Collection<TcfaEdge> edges;
 
-	private TCFALoc initLoc;
+	private TcfaLoc initLoc;
 
 	private final Collection<VarDecl<?>> dataVars;
 	private final Collection<ClockDecl> clockVars;
 
-	public SimpleTCFA() {
+	public SimpleTcfa() {
 		locs = new HashSet<>();
 		edges = new HashSet<>();
 		dataVars = new HashSet<>();
@@ -50,11 +50,11 @@ public final class SimpleTCFA implements TCFA {
 	////
 
 	@Override
-	public TCFALoc getInitLoc() {
+	public TcfaLoc getInitLoc() {
 		return initLoc;
 	}
 
-	public void setInitLoc(final TCFALoc initLoc) {
+	public void setInitLoc(final TcfaLoc initLoc) {
 		checkNotNull(initLoc);
 		checkArgument(locs.contains(initLoc));
 		this.initLoc = initLoc;
@@ -63,15 +63,15 @@ public final class SimpleTCFA implements TCFA {
 	////
 
 	@Override
-	public Collection<? extends TCFALoc> getLocs() {
+	public Collection<? extends TcfaLoc> getLocs() {
 		return Collections.unmodifiableCollection(locs);
 	}
 
-	public TCFALoc createLoc(final String name, final boolean urgent,
+	public TcfaLoc createLoc(final String name, final boolean urgent,
 			final Collection<? extends Expr<? extends BoolType>> invars) {
 		checkNotNull(name);
 		checkNotNull(invars);
-		final SimpleTCFALoc loc = new SimpleTCFALoc(name, urgent, invars);
+		final SimpleTcfaLoc loc = new SimpleTcfaLoc(name, urgent, invars);
 
 		invars.forEach(this::addVars);
 
@@ -82,21 +82,21 @@ public final class SimpleTCFA implements TCFA {
 	////
 
 	@Override
-	public Collection<? extends TCFAEdge> getEdges() {
+	public Collection<? extends TcfaEdge> getEdges() {
 		return Collections.unmodifiableCollection(edges);
 	}
 
-	public TCFAEdge createEdge(final TCFALoc source, final TCFALoc target, final List<? extends Stmt> stmts) {
+	public TcfaEdge createEdge(final TcfaLoc source, final TcfaLoc target, final List<? extends Stmt> stmts) {
 		checkNotNull(source);
 		checkNotNull(target);
 		checkNotNull(stmts);
 		checkArgument(locs.contains(source));
 		checkArgument(locs.contains(target));
 
-		final SimpleTCFALoc mutableSource = (SimpleTCFALoc) source;
-		final SimpleTCFALoc mutableTarget = (SimpleTCFALoc) target;
+		final SimpleTcfaLoc mutableSource = (SimpleTcfaLoc) source;
+		final SimpleTcfaLoc mutableTarget = (SimpleTcfaLoc) target;
 
-		final SimpleTCFAEdge edge = new SimpleTCFAEdge(mutableSource, mutableTarget, stmts);
+		final SimpleTcfaEdge edge = new SimpleTcfaEdge(mutableSource, mutableTarget, stmts);
 		mutableSource.outEdges.add(edge);
 		mutableTarget.inEdges.add(edge);
 

@@ -8,7 +8,7 @@ import java.util.Map;
 
 import hu.bme.mit.inf.ttmc.formalism.tcfa.TCFA;
 
-public class TcfaSpec {
+public final class TcfaSpec {
 
 	private final Map<String, TCFA> stringToTcfa;
 
