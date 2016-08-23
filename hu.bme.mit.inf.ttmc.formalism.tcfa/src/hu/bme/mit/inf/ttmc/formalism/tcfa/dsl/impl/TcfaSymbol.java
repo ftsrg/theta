@@ -6,6 +6,7 @@ import java.util.List;
 
 import hu.bme.mit.inf.ttmc.common.dsl.Scope;
 import hu.bme.mit.inf.ttmc.core.decl.ParamDecl;
+import hu.bme.mit.inf.ttmc.core.dsl.ParametricSymbol;
 import hu.bme.mit.inf.ttmc.formalism.tcfa.dsl.gen.TcfaDslParser.TcfaContext;
 
 final class TcfaSymbol extends ParametricSymbol {

@@ -3,6 +3,7 @@ package hu.bme.mit.inf.ttmc.formalism.tcfa.dsl.impl;
 import java.util.List;
 
 import hu.bme.mit.inf.ttmc.core.decl.ParamDecl;
+import hu.bme.mit.inf.ttmc.core.dsl.ParametricSymbol;
 
 final class TcfaSpecSymbol extends ParametricSymbol {
 
