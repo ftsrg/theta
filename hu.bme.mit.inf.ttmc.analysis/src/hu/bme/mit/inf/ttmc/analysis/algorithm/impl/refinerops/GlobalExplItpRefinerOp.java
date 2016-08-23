@@ -19,11 +19,11 @@ public class GlobalExplItpRefinerOp<A extends Action> implements RefinerOp<ExplS
 
 	@Override
 	public GlobalExplPrecision refine(final GlobalExplPrecision precision, final ItpRefutation refutation, final Trace<ExplState, A> counterexample) {
-		final Set<VarDecl<? extends Type>> newVisiblevars = new HashSet<>();
+		final Set<VarDecl<? extends Type>> newVisibleVars = new HashSet<>();
 		for (final Expr<? extends BoolType> pred : refutation) {
-			FormalismUtils.collectVars(pred, newVisiblevars);
+			FormalismUtils.collectVars(pred, newVisibleVars);
 		}
-		return precision.refine(newVisiblevars);
+		return precision.with(newVisibleVars);
 	}
 
 }
