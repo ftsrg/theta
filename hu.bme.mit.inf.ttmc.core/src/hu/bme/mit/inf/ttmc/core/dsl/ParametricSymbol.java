@@ -1,4 +1,4 @@
-package hu.bme.mit.inf.ttmc.formalism.tcfa.dsl.impl;
+package hu.bme.mit.inf.ttmc.core.dsl;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -14,7 +14,6 @@ import hu.bme.mit.inf.ttmc.common.dsl.Scope;
 import hu.bme.mit.inf.ttmc.common.dsl.ScopedSymbol;
 import hu.bme.mit.inf.ttmc.common.dsl.Symbol;
 import hu.bme.mit.inf.ttmc.core.decl.ParamDecl;
-import hu.bme.mit.inf.ttmc.core.dsl.DeclSymbol;
 
 public abstract class ParametricSymbol implements ScopedSymbol {
 
