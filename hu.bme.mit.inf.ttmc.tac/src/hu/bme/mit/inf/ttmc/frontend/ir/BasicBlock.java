@@ -68,7 +68,7 @@ public class BasicBlock {
 	 */
 	public void terminate(TerminatorIrNode node) {
 		if (this.isTerminated)
-			throw new RuntimeException("Cannot terminate an already terminated block.");
+			throw new RuntimeException("Cannot terminate an already terminated block (" + this.name + ")");
 
 		this.terminator = node;
 		this.terminator.getTargets().forEach(s -> {
@@ -256,7 +256,7 @@ public class BasicBlock {
 	 */
 	public void removeNode(int idx) {
 		if (idx < 0 || idx >= this.nodes.size())
-			throw new IllegalArgumentException("The block does not contain the given node index: " + idx);
+			throw new IllegalArgumentException("The block '" + this.name + "' does not contain the given node index: " + idx);
 
 		this.nodes.remove(idx);
 	}

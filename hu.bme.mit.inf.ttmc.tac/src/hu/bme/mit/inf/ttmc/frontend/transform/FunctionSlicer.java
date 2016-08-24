@@ -4,6 +4,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
@@ -27,6 +28,8 @@ import hu.bme.mit.inf.ttmc.frontend.ir.node.NodeFactory;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.NonTerminatorIrNode;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.TerminatorIrNode;
 import hu.bme.mit.inf.ttmc.frontend.ir.utils.IrPrinter;
+import hu.bme.mit.inf.ttmc.frontend.ir.node.EntryNode;
+import hu.bme.mit.inf.ttmc.frontend.ir.node.ExitNode;
 
 public class FunctionSlicer {
 
@@ -67,6 +70,122 @@ public class FunctionSlicer {
 	}
 
 	public Function slice(Function function, ControlDependencyGraph cdg, UseDefineChain ud, IrNode criteria) {
+		// Perform slicing
+		List<IrNode> visited = findRequiredNodes(cdg, ud, criteria);
+
+		// Find required blocks
+		Set<BasicBlock> visitedBlocks = visited.stream()
+			.map(n -> n.getParentBlock())
+			.collect(Collectors.toSet());
+		visitedBlocks.add(function.getExitBlock());
+
+		// Build a queue for blocks needing removal
+		List<BasicBlock> blocks = function.getBlocksDFS();
+		Queue<BasicBlock> blocksToRemove = new ArrayDeque<>(blocks);
+		blocksToRemove.removeAll(visitedBlocks);
+
+		Map<BasicBlock, BasicBlock> blockMap = new HashMap<>();
+		Function copy = function.copy(blockMap);
+
+		/*
+		 * Find unneeded components.
+		 *
+		 * The basic idea is to find the largest connected subgraph in the CFG, whose nodes are in the set of unneeded blocks.
+		 *
+		 * The algorithm picks a block from the removal set and explores its
+		 * parents and children. If a node has no unneeded parent, it is marked as a 'top' node,
+		 * if it has no unneeded child, it is marked as a 'bottom' node.
+		 */
+		while (!blocksToRemove.isEmpty()) {
+			Set<BasicBlock> componentBlocks = new HashSet<>();
+
+			BasicBlock start = blocksToRemove.poll();
+
+			Queue<BasicBlock> blocksToVisit = new ArrayDeque<>();
+			blocksToVisit.add(start);
+
+			Set<BasicBlock> mergeBlocks = new HashSet<>();
+			Map<BasicBlock, BasicBlock> topBlocks = new HashMap<>();
+
+			while (!blocksToVisit.isEmpty()) {
+				BasicBlock current = blocksToVisit.poll();
+
+				// If a block has no unneeded parent, it is a top node
+				for (BasicBlock parent : current.parents()) {
+					if (visitedBlocks.contains(parent)) {
+						topBlocks.put(parent, current);
+					} else if (!componentBlocks.contains(parent)) {
+						blocksToVisit.add(parent);
+						blocksToRemove.remove(parent);
+						componentBlocks.add(parent);
+					}
+				}
+
+				// If a block has no unneeded child, it is a bottom node, and its needed child is the merge node
+				for (BasicBlock child : current.children()) {
+					if (visitedBlocks.contains(child)) {
+						mergeBlocks.add(child);
+					} else if (!componentBlocks.contains(child)) {
+						blocksToVisit.add(child);
+						blocksToRemove.remove(child);
+						componentBlocks.add(child);
+					}
+				}
+			}
+
+			System.out.println("TOPS: " + topBlocks);
+			System.out.println("MERGES: " + mergeBlocks);
+
+			if (mergeBlocks.size() != 1) {
+				throw new AssertionError("This is a bug.");
+			}
+
+			BasicBlock merge = mergeBlocks.iterator().next();
+			BasicBlock newMerge = blockMap.get(merge);
+
+			topBlocks.forEach((BasicBlock block, BasicBlock target) -> {
+				BasicBlock newBlock = blockMap.get(block);
+				newBlock.clearTerminator();
+
+				TerminatorIrNode terminator = block.getTerminator();
+				TerminatorIrNode newTerm = null;
+
+				if (terminator instanceof GotoNode) {
+					newTerm = NodeFactory.Goto(newMerge);
+				} else if (terminator instanceof JumpIfNode) {
+					JumpIfNode branch = (JumpIfNode) terminator;
+					if (branch.getThenTarget() == target) {
+						newTerm = NodeFactory.JumpIf(branch.getCond(), newMerge, blockMap.get(branch.getElseTarget()));
+					} else {
+						newTerm = NodeFactory.JumpIf(branch.getCond(), blockMap.get(branch.getThenTarget()), newMerge);
+					}
+				} else if (terminator instanceof EntryNode) {
+					newTerm = new EntryNode(newMerge);
+				} else {
+					throw new AssertionError("Should not happen");
+				}
+
+				newBlock.terminate(newTerm);
+			});
+		}
+
+		// Remove unneeded instructions from needed blocks
+		for (BasicBlock block : visitedBlocks) {
+			BasicBlock newBlock = blockMap.get(block);
+			for (int idx = block.countNodes() - 1; idx >= 0; idx--) {
+				IrNode node = block.getNodeByIndex(idx);
+				if (!visited.contains(node))
+					newBlock.removeNode(idx);
+			}
+		}
+
+		// Perform a normalization pass to eliminate orphaned nodes
+		copy.normalize();
+
+		return copy;
+	}
+
+	private List<IrNode> findRequiredNodes(ControlDependencyGraph cdg, UseDefineChain ud, IrNode criteria) {
 		Queue<IrNode> worklist = new ArrayDeque<IrNode>();
 		List<IrNode> visited = new ArrayList<>();
 
@@ -92,120 +211,7 @@ public class FunctionSlicer {
 			}
 		}
 
-		System.out.println(visited);
-		Set<BasicBlock> visitedBlocks = visited.stream().map(n -> n.getParentBlock()).collect(Collectors.toSet());
-		System.out.println(visitedBlocks);
-
-
-		Map<BasicBlock, BasicBlock> blockMap = new HashMap<>();
-		Function slice = new Function(function.getName(), function.getType());
-		function.getBlocks().forEach(b -> blockMap.put(b, slice.createBlock(b.getName())));
-
-		slice.setEntryBlock(blockMap.get(function.getEntryBlock()));
-		slice.setExitBlock(blockMap.get(function.getExitBlock()));
-
-		for (BasicBlock oldBlock : function.getBlocks()) {
-			BasicBlock newBlock = blockMap.get(oldBlock);
-			for (NonTerminatorIrNode node : oldBlock.getNodes()) {
-				if (visited.contains(node)) {
-					newBlock.addNode(node);
-				}
-			}
-
-			// If the block points to a needed block, create the relationship, otherwise just point to the exit block
-			TerminatorIrNode terminator = oldBlock.getTerminator();
-			if (terminator instanceof JumpIfNode) {
-				JumpIfNode jump = (JumpIfNode) terminator;
-				BasicBlock then = jump.getThenTarget();
-				BasicBlock elze = jump.getElseTarget();
-
-				if (!visitedBlocks.contains(then)) {
-					then = slice.getExitBlock();
-				} else {
-					then = blockMap.get(then);
-				}
-
-				if (!visitedBlocks.contains(elze)) {
-					elze = slice.getExitBlock();
-				} else {
-					elze = blockMap.get(elze);
-				}
-
-				terminator = NodeFactory.JumpIf(jump.getCond(), then, elze);
-			} else if (terminator instanceof GotoNode) {
-				GotoNode gotoNode = (GotoNode) terminator;
-				BasicBlock target = gotoNode.getTarget();
-
-				if (!visitedBlocks.contains(target)) {
-					target = slice.getExitBlock();
-				} else {
-					target = blockMap.get(target);
-				}
-
-				terminator = NodeFactory.Goto(target);
-			}
-
-			newBlock.terminate(terminator);
-		}
-
-
-/*
-		Function slice = function.copy(blockMap);
-
-		for (BasicBlock oldBlock : function.getBlocks()) {
-			BasicBlock newBlock = blockMap.get(oldBlock);
-			TerminatorIrNode terminator = oldBlock.getTerminator();
-			List<NonTerminatorIrNode> nodes = new ArrayList<>(newBlock.getNodes()); // We need a copy, otherwise clearing the list would clear the reference too
-
-			newBlock.clearTerminator();
-			newBlock.clearNodes();
-
-			// Remove unneeded nonterminals
-			for (int i = 0; i < oldBlock.countNodes(); i++) {
-				IrNode node = oldBlock.getNodeByIndex(i);
-				if (visited.contains(node)) {
-					newBlock.addNode(nodes.get(i));
-				}
-			}
-
-			// Remove unneeded block targets
-			if (terminator instanceof JumpIfNode) {
-				JumpIfNode jump = (JumpIfNode) terminator;
-				BasicBlock then = jump.getThenTarget();
-				BasicBlock elze = jump.getElseTarget();
-
-				if (!visitedBlocks.contains(then)) {
-					then = slice.getExitBlock();
-				} else {
-					then = blockMap.get(then);
-				}
-
-				if (!visitedBlocks.contains(elze)) {
-					elze = slice.getExitBlock();
-				} else {
-					elze = blockMap.get(elze);
-				}
-
-				terminator = NodeFactory.JumpIf(jump.getCond(), then, elze);
-			} else if (terminator instanceof GotoNode) {
-				GotoNode gotoNode = (GotoNode) terminator;
-				BasicBlock target = gotoNode.getTarget();
-
-				if (!visitedBlocks.contains(target)) {
-					target = slice.getExitBlock();
-				} else {
-					target = blockMap.get(target);
-				}
-
-				terminator = NodeFactory.Goto(target);
-			}
-
-			newBlock.terminate(terminator);
-		}
-*/
-		//slice.normalize();
-
-		return slice;
+		return visited;
 	}
 
 }
