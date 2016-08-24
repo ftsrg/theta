@@ -1,0 +1,27 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: hu.bme.mit.inf.theta.program.language
+Bundle-Vendor: My Company
+Bundle-Version: 1.0.0.qualifier
+Bundle-SymbolicName: hu.bme.mit.inf.theta.program.language;singleton:=true
+Bundle-ActivationPolicy: lazy
+Require-Bundle: org.eclipse.xtext,
+ org.eclipse.xtext.xbase,
+ org.eclipse.equinox.common;bundle-version="3.5.0",
+ hu.bme.mit.inf.theta.program.model,
+ hu.bme.mit.inf.theta.constraint.language,
+ org.eclipse.xtext.xbase.lib,
+ org.antlr.runtime,
+ org.eclipse.xtext.util,
+ org.eclipse.xtend.lib
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Export-Package: hu.bme.mit.inf.theta.program.language.formatting,
+ hu.bme.mit.inf.theta.program.language,
+ hu.bme.mit.inf.theta.program.language.generator,
+ hu.bme.mit.inf.theta.program.language.parser.antlr,
+ hu.bme.mit.inf.theta.program.language.parser.antlr.internal,
+ hu.bme.mit.inf.theta.program.language.scoping,
+ hu.bme.mit.inf.theta.program.language.serializer,
+ hu.bme.mit.inf.theta.program.language.services,
+ hu.bme.mit.inf.theta.program.language.validation
+Import-Package: org.apache.log4j

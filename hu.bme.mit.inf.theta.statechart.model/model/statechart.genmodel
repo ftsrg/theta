@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<genmodel:GenModel xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore"
+    xmlns:genmodel="http://www.eclipse.org/emf/2002/GenModel" modelDirectory="/hu.bme.mit.inf.theta.statechart.model/src" modelPluginID="hu.bme.mit.inf.theta.statechart.model"
+    modelName="Statechart" rootExtendsClass="org.eclipse.emf.ecore.impl.MinimalEObjectImpl$Container"
+    importerID="org.eclipse.emf.importer.ecore" complianceLevel="8.0" copyrightFields="false"
+    usedGenPackages="../../hu.bme.mit.inf.theta.constraint.model/model/constraint.genmodel#//model"
+    operationReflection="true" importOrganizing="true">
+  <foreignModel>statechart.ecore</foreignModel>
+  <genPackages prefix="StatechartModel" basePackage="hu.bme.mit.inf.theta.statechart"
+      disposableProviderFactory="true" ecorePackage="statechart.ecore#/">
+    <genClasses ecoreClass="statechart.ecore#//StatechartSpecification">
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference statechart.ecore#//StatechartSpecification/signalDeclarations"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference statechart.ecore#//StatechartSpecification/patternDeclarations"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference statechart.ecore#//StatechartSpecification/statechartDeclarations"/>
+    </genClasses>
+    <genClasses ecoreClass="statechart.ecore#//SignalDeclaration"/>
+    <genClasses ecoreClass="statechart.ecore#//PatternDeclaration"/>
+    <genClasses ecoreClass="statechart.ecore#//VariableDeclaration"/>
+    <genClasses ecoreClass="statechart.ecore#//StatechartDeclaration">
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference statechart.ecore#//StatechartDeclaration/statechart"/>
+    </genClasses>
+    <genClasses image="false" ecoreClass="statechart.ecore#//Statechart"/>
+    <genClasses ecoreClass="statechart.ecore#//StatechartDefinition">
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference statechart.ecore#//StatechartDefinition/variableDeclarations"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference statechart.ecore#//StatechartDefinition/objectDeclarations"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference statechart.ecore#//StatechartDefinition/timeoutDeclarations"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference statechart.ecore#//StatechartDefinition/region"/>
+    </genClasses>
+    <genClasses ecoreClass="statechart.ecore#//ObjectDeclaration"/>
+    <genClasses ecoreClass="statechart.ecore#//TimeoutDeclaration"/>
+    <genClasses ecoreClass="statechart.ecore#//StatechartReference">
+      <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference statechart.ecore#//StatechartReference/reference"/>
+    </genClasses>
+    <genClasses ecoreClass="statechart.ecore#//Region">
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference statechart.ecore#//Region/stateNodes"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference statechart.ecore#//Region/transitions"/>
+    </genClasses>
+    <genClasses image="false" ecoreClass="statechart.ecore#//StateNode"/>
+    <genClasses ecoreClass="statechart.ecore#//State">
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference statechart.ecore#//State/invariants"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference statechart.ecore#//State/entryActions"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference statechart.ecore#//State/exitActions"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference statechart.ecore#//State/regions"/>
+    </genClasses>
+    <genClasses ecoreClass="statechart.ecore#//StateReferenceExpression">
+      <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference statechart.ecore#//StateReferenceExpression/reference"/>
+    </genClasses>
+    <genClasses image="false" ecoreClass="statechart.ecore#//PseudoState"/>
+    <genClasses ecoreClass="statechart.ecore#//ChoiceState"/>
+    <genClasses ecoreClass="statechart.ecore#//MergeState"/>
+    <genClasses ecoreClass="statechart.ecore#//ForkState"/>
+    <genClasses ecoreClass="statechart.ecore#//JoinState"/>
+    <genClasses ecoreClass="statechart.ecore#//InitialState"/>
+    <genClasses ecoreClass="statechart.ecore#//Transition">
+      <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference statechart.ecore#//Transition/sourceState"/>
+      <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference statechart.ecore#//Transition/targetState"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference statechart.ecore#//Transition/trigger"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference statechart.ecore#//Transition/guard"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference statechart.ecore#//Transition/effects"/>
+      <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference statechart.ecore#//Transition/otherStates"/>
+    </genClasses>
+    <genClasses image="false" ecoreClass="statechart.ecore#//Event"/>
+    <genClasses ecoreClass="statechart.ecore#//DefaultEvent"/>
+    <genClasses ecoreClass="statechart.ecore#//SignalEvent">
+      <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference statechart.ecore#//SignalEvent/signalDeclaration"/>
+    </genClasses>
+    <genClasses ecoreClass="statechart.ecore#//TimeoutEvent">
+      <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference statechart.ecore#//TimeoutEvent/timeoutDeclaration"/>
+    </genClasses>
+    <genClasses ecoreClass="statechart.ecore#//PatternEvent">
+      <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference statechart.ecore#//PatternEvent/patternDeclaration"/>
+    </genClasses>
+    <genClasses image="false" ecoreClass="statechart.ecore#//Action"/>
+    <genClasses ecoreClass="statechart.ecore#//SignalAction">
+      <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference statechart.ecore#//SignalAction/signalDeclaration"/>
+      <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference statechart.ecore#//SignalAction/timer"/>
+    </genClasses>
+    <genClasses image="false" ecoreClass="statechart.ecore#//TimeoutAction">
+      <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference statechart.ecore#//TimeoutAction/timeoutDeclaration"/>
+    </genClasses>
+    <genClasses ecoreClass="statechart.ecore#//SetTimeoutAction">
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference statechart.ecore#//SetTimeoutAction/time"/>
+    </genClasses>
+    <genClasses ecoreClass="statechart.ecore#//DeactivateTimeoutAction"/>
+    <genClasses ecoreClass="statechart.ecore#//AssignmentAction">
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference statechart.ecore#//AssignmentAction/lhs"/>
+      <genFeatures property="None" children="true" createChild="true" ecoreFeature="ecore:EReference statechart.ecore#//AssignmentAction/rhs"/>
+    </genClasses>
+    <genClasses image="false" ecoreClass="statechart.ecore#//AnnotatedElement">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute statechart.ecore#//AnnotatedElement/annotation"/>
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute statechart.ecore#//AnnotatedElement/annotationParameter"/>
+    </genClasses>
+    <genClasses ecoreClass="statechart.ecore#//ClassDeclaration">
+      <genFeatures notify="false" createChild="false" propertySortChoices="true" ecoreFeature="ecore:EReference statechart.ecore#//ClassDeclaration/superClass"/>
+    </genClasses>
+    <genClasses ecoreClass="statechart.ecore#//IDElement">
+      <genFeatures createChild="false" ecoreFeature="ecore:EAttribute statechart.ecore#//IDElement/id"/>
+    </genClasses>
+  </genPackages>
+</genmodel:GenModel>
