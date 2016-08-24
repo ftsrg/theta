@@ -33,12 +33,16 @@ public class Function {
 	private BasicBlock entry;
 	private BasicBlock exit;
 
+	private EntryNode entryNode;
+	private ExitNode exitNode;
+
 	public Function(String name, Type type) {
 		this.name = name;
 		this.type = type;
 
-		this.exit = new BasicBlock(name + "_exit", this);
-		this.exit.terminate(new ExitNode());
+		exit = new BasicBlock(name + "_exit", this);
+		exit.terminate(new ExitNode());
+		this.setExitBlock(exit);
 	}
 
 	public Function copy(Map<BasicBlock, BasicBlock> newBlocks) {
@@ -185,20 +189,38 @@ public class Function {
 	}
 
 	public void setEntryBlock(BasicBlock entry) {
-		this.entry = entry;
-		this.addBasicBlock(entry);
+		if (entry.getTerminator() instanceof EntryNode) {
+			this.entry = entry;
+			this.entryNode = (EntryNode) entry.getTerminator();
+			this.addBasicBlock(entry);
+		} else {
+			throw new RuntimeException("Entry blocks should have an entry node terminator");
+		}
 	}
 
 	public BasicBlock getEntryBlock() {
 		return this.entry;
 	}
 
+	public EntryNode getEntryNode() {
+		return this.entryNode;
+	}
+
 	public void setExitBlock(BasicBlock exit) {
-		this.exit = exit;
+		if (exit.getTerminator() instanceof ExitNode) {
+			this.exit = exit;
+			this.exitNode = (ExitNode) exit.getTerminator();
+		} else {
+			throw new RuntimeException("Exit blocks should have an exit node terminator");
+		}
 	}
 
 	public BasicBlock getExitBlock() {
 		return this.exit;
+	}
+
+	public ExitNode getExitNode() {
+		return this.exitNode;
 	}
 
 	public Type getType() {
@@ -221,8 +243,6 @@ public class Function {
 			}
 		}
 
-		System.out.println(visited);
-
 		// retain all visited nodes
 		List<BasicBlock> unreachable =  this.blocksMap.values().stream().filter(b -> !visited.contains(b)).collect(Collectors.toList());
 		unreachable.forEach(b -> this.removeBasicBlock(b));
@@ -230,8 +250,6 @@ public class Function {
 
 	/**
 	 * Merge single-child blocks into their child if they are their child's only parent
-	 *
-	 * TODO
 	 */
 	private void mergeBlocks() {
 		boolean change = true;

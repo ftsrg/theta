@@ -124,7 +124,6 @@ public class IrCodeGenerator implements
 				GotoNode gotoNode = (GotoNode) source.getTerminator();
 				gotoNode.setTarget(target);
 			}
-
 		});
 	}
 

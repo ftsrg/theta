@@ -10,7 +10,8 @@ Require-Bundle: org.eclipse.ui,
  hu.bme.mit.inf.ttmc.formalism;bundle-version="1.0.0"
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ActivationPolicy: lazy
-Export-Package: hu.bme.mit.inf.ttmc.frontend.dependency,
+Export-Package: hu.bme.mit.inf.ttmc.frontend.cfa,
+ hu.bme.mit.inf.ttmc.frontend.dependency,
  hu.bme.mit.inf.ttmc.frontend.ir,
  hu.bme.mit.inf.ttmc.frontend.ir.node,
  hu.bme.mit.inf.ttmc.frontend.ir.utils,

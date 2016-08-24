@@ -9,18 +9,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
-import java.util.Stack;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import hu.bme.mit.inf.ttmc.formalism.common.stmt.AssertStmt;
 import hu.bme.mit.inf.ttmc.frontend.dependency.ControlDependencyGraph;
-import hu.bme.mit.inf.ttmc.frontend.dependency.ProgramDependency;
-import hu.bme.mit.inf.ttmc.frontend.dependency.ProgramDependency.PDGNode;
 import hu.bme.mit.inf.ttmc.frontend.dependency.UseDefineChain;
 import hu.bme.mit.inf.ttmc.frontend.ir.BasicBlock;
 import hu.bme.mit.inf.ttmc.frontend.ir.Function;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.AssertNode;
+import hu.bme.mit.inf.ttmc.frontend.ir.node.EntryNode;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.GotoNode;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.IrNode;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.JumpIfNode;
@@ -28,8 +25,6 @@ import hu.bme.mit.inf.ttmc.frontend.ir.node.NodeFactory;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.NonTerminatorIrNode;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.TerminatorIrNode;
 import hu.bme.mit.inf.ttmc.frontend.ir.utils.IrPrinter;
-import hu.bme.mit.inf.ttmc.frontend.ir.node.EntryNode;
-import hu.bme.mit.inf.ttmc.frontend.ir.node.ExitNode;
 
 public class FunctionSlicer {
 
@@ -48,19 +43,7 @@ public class FunctionSlicer {
 		for (BasicBlock block : blocks) {
 			for (IrNode node : block.getAllNodes()) {
 				if (pred.test(node)) {
-					/*
-					// Create a work copy of the function
-					Map<BasicBlock, BasicBlock> blockMap = new HashMap<>();
-					Function copy = function.copy(blockMap);
-
-					// Find the old criteria node and get the new one
-					BasicBlock newBlock = blockMap.get(block);
-					int idx = block.getNodeIndex(node);
-					IrNode newNode = newBlock.getNodeByIndex(idx);
-					*/
-
 					Function slice = this.slice(function, cdg, ud, node);
-
 					result.add(slice);
 				}
 			}
@@ -95,6 +78,9 @@ public class FunctionSlicer {
 		 * The algorithm picks a block from the removal set and explores its
 		 * parents and children. If a node has no unneeded parent, it is marked as a 'top' node,
 		 * if it has no unneeded child, it is marked as a 'bottom' node.
+		 *
+		 * Edges into the top nodes need to be redirected into the common child of the bottom nodes,
+		 * thus the unneeded subgraph can be eliminiated.
 		 */
 		while (!blocksToRemove.isEmpty()) {
 			Set<BasicBlock> componentBlocks = new HashSet<>();
@@ -132,9 +118,6 @@ public class FunctionSlicer {
 					}
 				}
 			}
-
-			System.out.println("TOPS: " + topBlocks);
-			System.out.println("MERGES: " + mergeBlocks);
 
 			if (mergeBlocks.size() != 1) {
 				throw new AssertionError("This is a bug.");
