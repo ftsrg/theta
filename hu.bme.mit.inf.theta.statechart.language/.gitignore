@@ -1,0 +1,8 @@
+/bin/
+/src-gen/
+/xtend-gen/
+/.antlr-generator-3.2.0-patch.jar
+
+/src/hu/bme/mit/inf/theta/statechart/language/*
+!/src/hu/bme/mit/inf/theta/statechart/language/*.xtext
+!/src/hu/bme/mit/inf/theta/statechart/language/*.mwe2

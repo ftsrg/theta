@@ -1,1 +1,0 @@
-java -jar jar\antlr-4.5.3-complete.jar TcfaDsl.g4 -o src-gen\hu\bme\mit\inf\ttmc\formalism\tcfa\dsl\gen -package hu.bme.mit.inf.ttmc.formalism.tcfa.dsl.gen -Werror -visitor
