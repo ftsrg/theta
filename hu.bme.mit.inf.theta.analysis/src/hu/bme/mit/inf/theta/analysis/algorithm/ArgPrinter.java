@@ -3,8 +3,8 @@ package hu.bme.mit.inf.theta.analysis.algorithm;
 import static java.lang.System.lineSeparator;
 
 import hu.bme.mit.inf.theta.analysis.algorithm.impl.ARG;
-import hu.bme.mit.inf.theta.analysis.algorithm.impl.ARGEdge;
-import hu.bme.mit.inf.theta.analysis.algorithm.impl.ARGNode;
+import hu.bme.mit.inf.theta.analysis.algorithm.impl.ArgEdge;
+import hu.bme.mit.inf.theta.analysis.algorithm.impl.ArgNode;
 
 public class ArgPrinter {
 
@@ -17,7 +17,7 @@ public class ArgPrinter {
 		sb.append("digraph arg {");
 		sb.append(lineSeparator());
 
-		for (final ARGNode<?, ?> initNode : arg.getInitNodes()) {
+		for (final ArgNode<?, ?> initNode : arg.getInitNodes()) {
 			appendNode(sb, initNode);
 		}
 
@@ -25,7 +25,7 @@ public class ArgPrinter {
 		return sb.toString();
 	}
 
-	public static String toGraphvizString(final ARGNode<?, ?> node) {
+	public static String toGraphvizString(final ArgNode<?, ?> node) {
 		final StringBuilder sb = new StringBuilder();
 
 		sb.append("digraph arg {\\n");
@@ -37,7 +37,7 @@ public class ArgPrinter {
 		return sb.toString();
 	}
 
-	private static void appendNode(final StringBuilder sb, final ARGNode<?, ?> node) {
+	private static void appendNode(final StringBuilder sb, final ArgNode<?, ?> node) {
 		sb.append(Integer.toString(node.getId()));
 		sb.append(" [label=\"");
 		sb.append(node.getState());
@@ -49,7 +49,7 @@ public class ArgPrinter {
 		}
 		sb.append(lineSeparator());
 
-		for (final ARGEdge<?, ?> edge : node.getOutEdges()) {
+		for (final ArgEdge<?, ?> edge : node.getOutEdges()) {
 			appendNode(sb, edge.getTarget());
 			appendEdge(sb, edge);
 		}
@@ -59,15 +59,15 @@ public class ArgPrinter {
 		}
 	}
 
-	private static void appendEdge(final StringBuilder sb, final ARGEdge<?, ?> edge) {
+	private static void appendEdge(final StringBuilder sb, final ArgEdge<?, ?> edge) {
 		sb.append(Integer.toString(edge.getSource().getId()));
 		sb.append(" -> ");
 		sb.append(Integer.toString(edge.getTarget().getId()));
 		sb.append(lineSeparator());
 	}
 
-	private static void appendCover(final StringBuilder sb, final ARGNode<?, ?> node,
-			final ARGNode<?, ?> coveringNode) {
+	private static void appendCover(final StringBuilder sb, final ArgNode<?, ?> node,
+			final ArgNode<?, ?> coveringNode) {
 		sb.append(node.getId());
 		sb.append(" -> ");
 		sb.append(coveringNode.getId());
