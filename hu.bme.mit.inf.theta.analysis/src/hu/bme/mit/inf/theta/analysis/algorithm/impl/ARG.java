@@ -19,20 +19,20 @@ import hu.bme.mit.inf.theta.analysis.State;
 import hu.bme.mit.inf.theta.analysis.Trace;
 import hu.bme.mit.inf.theta.analysis.impl.TraceImpl;
 
-public class ARG<S extends State, A extends Action, P extends Precision> {
+public final class ARG<S extends State, A extends Action, P extends Precision> {
 
 	private final Analysis<S, A, P> analysis;
 	private final Predicate<? super S> target;
 
-	private final Collection<ARGNode<S, A>> nodes;
-	private final Collection<ARGEdge<S, A>> edges;
+	private final Collection<ArgNode<S, A>> nodes;
+	private final Collection<ArgEdge<S, A>> edges;
 
-	private final Collection<ARGNode<S, A>> initNodes;
-	private final Collection<ARGNode<S, A>> targetNodes;
+	private final Collection<ArgNode<S, A>> initNodes;
+	private final Collection<ArgNode<S, A>> targetNodes;
 
 	private int nextId = 0;
 
-	ARG(final Analysis<S, A, P> analysis, final Predicate<? super S> target, final P precision) {
+	public ARG(final Analysis<S, A, P> analysis, final Predicate<? super S> target, final P precision) {
 		this.analysis = checkNotNull(analysis);
 		this.target = checkNotNull(target);
 		nodes = new LinkedHashSet<>();
@@ -44,32 +44,32 @@ public class ARG<S extends State, A extends Action, P extends Precision> {
 
 	////
 
-	public Collection<ARGNode<S, A>> getNodes() {
+	public Collection<ArgNode<S, A>> getNodes() {
 		return Collections.unmodifiableCollection(nodes);
 	}
 
-	public Collection<ARGEdge<S, A>> getEdges() {
+	public Collection<ArgEdge<S, A>> getEdges() {
 		return Collections.unmodifiableCollection(edges);
 	}
 
-	public Collection<ARGNode<S, A>> getInitNodes() {
+	public Collection<ArgNode<S, A>> getInitNodes() {
 		return Collections.unmodifiableCollection(initNodes);
 	}
 
-	public Collection<ARGNode<S, A>> getTargetNodes() {
+	public Collection<ArgNode<S, A>> getTargetNodes() {
 		return Collections.unmodifiableCollection(targetNodes);
 	}
 
-	public Trace<S, A> getTraceTo(final ARGNode<S, A> node) {
+	public Trace<S, A> getTraceTo(final ArgNode<S, A> node) {
 		checkArgument(nodes.contains(node));
 
 		final List<S> states = new ArrayList<>();
 		final List<A> actions = new ArrayList<>();
-		ARGNode<S, A> running = node;
+		ArgNode<S, A> running = node;
 		do {
 			states.add(0, running.getState());
 			if (running.getInEdge().isPresent()) {
-				final ARGEdge<S, A> edge = running.getInEdge().get();
+				final ArgEdge<S, A> edge = running.getInEdge().get();
 				actions.add(0, edge.getAction());
 				running = edge.getSource();
 			} else {
@@ -82,7 +82,7 @@ public class ARG<S extends State, A extends Action, P extends Precision> {
 	public Collection<Trace<S, A>> getCounterexamples() {
 		final List<Trace<S, A>> counterexamples = new ArrayList<>();
 
-		for (final ARGNode<S, A> targetNode : getTargetNodes()) {
+		for (final ArgNode<S, A> targetNode : getTargetNodes()) {
 			final Trace<S, A> trace = getTraceTo(targetNode);
 			counterexamples.add(trace);
 		}
@@ -93,7 +93,7 @@ public class ARG<S extends State, A extends Action, P extends Precision> {
 
 	////
 
-	public void expand(final ARGNode<S, A> node, final P precision) {
+	public void expand(final ArgNode<S, A> node, final P precision) {
 		checkNotNull(node);
 		checkNotNull(precision);
 		checkArgument(nodes.contains(node));
@@ -116,8 +116,8 @@ public class ARG<S extends State, A extends Action, P extends Precision> {
 		node.expanded = true;
 	}
 
-	public void close(final ARGNode<S, A> node) {
-		for (final ARGNode<S, A> nodeToCoverWith : nodes) {
+	public void close(final ArgNode<S, A> node) {
+		for (final ArgNode<S, A> nodeToCoverWith : nodes) {
 			if (nodeToCoverWith.getId() >= node.getId()) {
 				break;
 			}
@@ -127,7 +127,7 @@ public class ARG<S extends State, A extends Action, P extends Precision> {
 
 	////
 
-	private void cover(final ARGNode<S, A> nodeToCover, final ARGNode<S, A> nodeToCoverWith) {
+	private void cover(final ArgNode<S, A> nodeToCover, final ArgNode<S, A> nodeToCoverWith) {
 		checkNotNull(nodeToCover);
 		checkNotNull(nodeToCoverWith);
 		checkArgument(nodes.contains(nodeToCover));
@@ -139,7 +139,7 @@ public class ARG<S extends State, A extends Action, P extends Precision> {
 
 		if (analysis.getDomain().isLeq(nodeToCover.getState(), nodeToCoverWith.getState())) {
 			addCoveringEdge(nodeToCover, nodeToCoverWith);
-			nodeToCover.foreachDescendants(ARGNode::clearCoveredNodes);
+			nodeToCover.foreachDescendants(ArgNode::clearCoveredNodes);
 		}
 	}
 
@@ -153,33 +153,33 @@ public class ARG<S extends State, A extends Action, P extends Precision> {
 		}
 	}
 
-	private ARGNode<S, A> createInitNode(final S initState, final boolean target) {
-		final ARGNode<S, A> initNode = createNode(initState, target);
+	private ArgNode<S, A> createInitNode(final S initState, final boolean target) {
+		final ArgNode<S, A> initNode = createNode(initState, target);
 		initNodes.add(initNode);
 		return initNode;
 	}
 
-	private ARGNode<S, A> createSuccNode(final ARGNode<S, A> node, final A action, final S succState,
+	private ArgNode<S, A> createSuccNode(final ArgNode<S, A> node, final A action, final S succState,
 			final boolean target) {
 		assert nodes.contains(node);
 
-		final ARGNode<S, A> succNode = createNode(succState, target);
+		final ArgNode<S, A> succNode = createNode(succState, target);
 		createEdge(node, action, succNode);
 		return succNode;
 	}
 
 	////
 
-	private ARGEdge<S, A> createEdge(final ARGNode<S, A> source, final A action, final ARGNode<S, A> target) {
-		final ARGEdge<S, A> edge = new ARGEdge<>(source, action, target);
+	private ArgEdge<S, A> createEdge(final ArgNode<S, A> source, final A action, final ArgNode<S, A> target) {
+		final ArgEdge<S, A> edge = new ArgEdge<>(source, action, target);
 		source.outEdges.add(edge);
 		target.inEdge = Optional.of(edge);
 		edges.add(edge);
 		return edge;
 	}
 
-	private ARGNode<S, A> createNode(final S state, final boolean target) {
-		final ARGNode<S, A> node = new ARGNode<>(state, nextId, target);
+	private ArgNode<S, A> createNode(final S state, final boolean target) {
+		final ArgNode<S, A> node = new ArgNode<>(state, nextId, target);
 		nodes.add(node);
 		if (node.isTarget()) {
 			targetNodes.add(node);
@@ -188,7 +188,7 @@ public class ARG<S extends State, A extends Action, P extends Precision> {
 		return node;
 	}
 
-	private void addCoveringEdge(final ARGNode<S, A> nodeToCover, final ARGNode<S, A> nodeToCoverWith) {
+	private void addCoveringEdge(final ArgNode<S, A> nodeToCover, final ArgNode<S, A> nodeToCoverWith) {
 		nodeToCover.coveringNode = Optional.of(nodeToCoverWith);
 		nodeToCoverWith.coveredNodes.add(nodeToCover);
 	}

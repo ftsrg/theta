@@ -39,20 +39,20 @@ public class AbstractorImpl<S extends State, A extends Action, P extends Precisi
 
 	@Override
 	public void check(final P precision) {
-		final Collection<ARGNode<S, A>> nodes = new ArrayList<>(arg.getNodes());
-		for (final ARGNode<S, A> node : nodes) {
+		final Collection<ArgNode<S, A>> nodes = new ArrayList<>(arg.getNodes());
+		for (final ArgNode<S, A> node : nodes) {
 			if (!node.isTarget() && !node.isExpanded() && !node.isCovered()) {
 				dfs(node, precision);
 			}
 		}
 	}
 
-	private void dfs(final ARGNode<S, A> node, final P precision) {
+	private void dfs(final ArgNode<S, A> node, final P precision) {
 		arg.close(node);
 		if (!node.isCovered()) {
 			arg.expand(node, precision);
-			for (final ARGEdge<S, A> outEdge : node.getOutEdges()) {
-				final ARGNode<S, A> succNode = outEdge.getTarget();
+			for (final ArgEdge<S, A> outEdge : node.getOutEdges()) {
+				final ArgNode<S, A> succNode = outEdge.getTarget();
 				if (!succNode.isTarget()) {
 					dfs(succNode, precision);
 				}

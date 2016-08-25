@@ -10,7 +10,7 @@ import java.util.function.Predicate;
 import hu.bme.mit.inf.theta.analysis.Action;
 import hu.bme.mit.inf.theta.analysis.State;
 
-public class ARGNode<S extends State, A extends Action> {
+public final class ArgNode<S extends State, A extends Action> {
 
 	private final int id;
 	private final S state;
@@ -18,13 +18,13 @@ public class ARGNode<S extends State, A extends Action> {
 
 	boolean expanded;
 
-	Optional<ARGEdge<S, A>> inEdge;
-	final Collection<ARGEdge<S, A>> outEdges;
+	Optional<ArgEdge<S, A>> inEdge;
+	final Collection<ArgEdge<S, A>> outEdges;
 
-	Optional<ARGNode<S, A>> coveringNode;
-	final Collection<ARGNode<S, A>> coveredNodes;
+	Optional<ArgNode<S, A>> coveringNode;
+	final Collection<ArgNode<S, A>> coveredNodes;
 
-	ARGNode(final S state, final int id, final boolean target) {
+	ArgNode(final S state, final int id, final boolean target) {
 		this.state = state;
 		this.id = id;
 		this.target = target;
@@ -38,7 +38,7 @@ public class ARGNode<S extends State, A extends Action> {
 	////
 
 	void clearCoveredNodes() {
-		for (final ARGNode<S, A> coveredNode : coveredNodes) {
+		for (final ArgNode<S, A> coveredNode : coveredNodes) {
 			coveredNode.coveringNode = Optional.empty();
 		}
 		coveredNodes.clear();
@@ -46,7 +46,7 @@ public class ARGNode<S extends State, A extends Action> {
 
 	////
 
-	public boolean existsAncestor(final Predicate<ARGNode<S, A>> predicate) {
+	public boolean existsAncestor(final Predicate<ArgNode<S, A>> predicate) {
 		if (predicate.test(this)) {
 			return true;
 		} else if (inEdge.isPresent()) {
@@ -58,35 +58,35 @@ public class ARGNode<S extends State, A extends Action> {
 
 	////
 
-	public void foreachAncestors(final Consumer<ARGNode<S, A>> consumer) {
+	public void foreachAncestors(final Consumer<ArgNode<S, A>> consumer) {
 		consumer.accept(this);
 		if (inEdge.isPresent()) {
 			inEdge.get().getSource().foreachAncestors(consumer);
 		}
 	}
 
-	public void foreachDescendants(final Consumer<ARGNode<S, A>> consumer) {
+	public void foreachDescendants(final Consumer<ArgNode<S, A>> consumer) {
 		consumer.accept(this);
-		for (final ARGEdge<S, A> outEdge : outEdges) {
+		for (final ArgEdge<S, A> outEdge : outEdges) {
 			outEdge.getTarget().foreachDescendants(consumer);
 		}
 	}
 
 	////
 
-	public Optional<ARGEdge<S, A>> getInEdge() {
+	public Optional<ArgEdge<S, A>> getInEdge() {
 		return inEdge;
 	}
 
-	public Collection<ARGEdge<S, A>> getOutEdges() {
+	public Collection<ArgEdge<S, A>> getOutEdges() {
 		return Collections.unmodifiableCollection(outEdges);
 	}
 
-	public Optional<ARGNode<S, A>> getCoveringNode() {
+	public Optional<ArgNode<S, A>> getCoveringNode() {
 		return coveringNode;
 	}
 
-	public Collection<ARGNode<S, A>> coveredNodes() {
+	public Collection<ArgNode<S, A>> coveredNodes() {
 		return Collections.unmodifiableCollection(coveredNodes);
 	}
 

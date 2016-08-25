@@ -19,12 +19,12 @@ public class WaitlistBasedAbstractorImpl<S extends State, A extends Action, P ex
 	private final Analysis<S, A, P> analysis;
 	private final Predicate<? super S> target;
 
-	private final Waitlist<ARGNode<S, A>> waitlist;
+	private final Waitlist<ArgNode<S, A>> waitlist;
 
 	private ARG<S, A, P> arg;
 
 	public WaitlistBasedAbstractorImpl(final Analysis<S, A, P> analysis, final Predicate<? super S> target,
-			final Waitlist<ARGNode<S, A>> waitlist) {
+			final Waitlist<ArgNode<S, A>> waitlist) {
 		this.analysis = checkNotNull(analysis);
 		this.target = checkNotNull(target);
 		this.waitlist = checkNotNull(waitlist);
@@ -47,12 +47,12 @@ public class WaitlistBasedAbstractorImpl<S extends State, A extends Action, P ex
 		waitlist.addAll(arg.getNodes());
 
 		while (!waitlist.isEmpty()) {
-			final ARGNode<S, A> node = waitlist.remove();
+			final ArgNode<S, A> node = waitlist.remove();
 			arg.close(node);
 			if (!node.isCovered() && !node.isTarget() && !node.isExpanded()) {
 				arg.expand(node, precision);
-				for (final ARGEdge<S, A> outEdge : node.getOutEdges()) {
-					final ARGNode<S, A> succNode = outEdge.getTarget();
+				for (final ArgEdge<S, A> outEdge : node.getOutEdges()) {
+					final ArgNode<S, A> succNode = outEdge.getTarget();
 					if (!succNode.isTarget()) {
 						waitlist.add(succNode);
 					}

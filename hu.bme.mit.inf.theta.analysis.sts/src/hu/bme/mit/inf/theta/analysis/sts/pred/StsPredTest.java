@@ -20,7 +20,7 @@ import org.junit.Test;
 import hu.bme.mit.inf.theta.analysis.ExprState;
 import hu.bme.mit.inf.theta.analysis.algorithm.Abstractor;
 import hu.bme.mit.inf.theta.analysis.algorithm.ArgPrinter;
-import hu.bme.mit.inf.theta.analysis.algorithm.impl.ARGNode;
+import hu.bme.mit.inf.theta.analysis.algorithm.impl.ArgNode;
 import hu.bme.mit.inf.theta.analysis.algorithm.impl.CEGARLoopImpl;
 import hu.bme.mit.inf.theta.analysis.algorithm.impl.RefutationBasedRefiner;
 import hu.bme.mit.inf.theta.analysis.algorithm.impl.WaitlistBasedAbstractorImpl;
@@ -72,7 +72,7 @@ public class StsPredTest {
 
 		final GlobalPredPrecision precision = GlobalPredPrecision.create(Collections.singleton(Lt(x, Int(mod))));
 
-		final Waitlist<ARGNode<PredState, StsAction>> waitlist = new LIFOWaitlist<>();
+		final Waitlist<ArgNode<PredState, StsAction>> waitlist = new LIFOWaitlist<>();
 
 		final Abstractor<PredState, StsAction, PredPrecision> abstractor = new WaitlistBasedAbstractorImpl<>(analysis,
 				target, waitlist);
