@@ -2,18 +2,14 @@ package hu.bme.mit.inf.theta.analysis.impl;
 
 import hu.bme.mit.inf.theta.analysis.Precision;
 
-public class NullPrecision implements Precision {
+public final class NullPrecision implements Precision {
 
-	private static final NullPrecision INSTANCE;
+	private static final NullPrecision INSTANCE = new NullPrecision();
 
 	private NullPrecision() {
 	}
 
-	static {
-		INSTANCE = new NullPrecision();
-	}
-
-	public static NullPrecision get() {
+	public static NullPrecision getInstance() {
 		return INSTANCE;
 	}
 
