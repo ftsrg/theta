@@ -48,6 +48,7 @@ public class GotoNode implements TerminatorIrNode {
 	@Override
 	public void setParentBlock(BasicBlock block) {
 		this.parent = block;
+		this.target.addParent(this.parent);
 	}
 
 	@Override

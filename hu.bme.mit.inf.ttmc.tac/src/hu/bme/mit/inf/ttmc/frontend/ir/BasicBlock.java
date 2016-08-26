@@ -306,6 +306,7 @@ public class BasicBlock {
 	public String getLabel() {
 		StringBuilder sb = new StringBuilder();
 		this.nodes.forEach(s -> sb.append(s.getLabel() + "\\n"));
+
 		sb.append(this.getTerminator().getLabel() + "\\n");
 
 		return sb.toString();

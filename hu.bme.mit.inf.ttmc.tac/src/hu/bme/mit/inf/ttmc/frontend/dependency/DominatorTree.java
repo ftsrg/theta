@@ -183,6 +183,10 @@ public class DominatorTree {
 				blockDoms.add(block);
 
 				Iterator<BasicBlock> iter = reverse ? block.children().iterator() : block.parents().iterator();
+
+				if (!iter.hasNext())
+					throw new RuntimeException("Cannot find any " + (reverse ? "children" : "parents") + " of block '" + block.getName() + "'");
+
 				BasicBlock first = iter.next();
 				Set<BasicBlock> parentDoms = new LinkedHashSet<>(dom.get(first));
 				while (iter.hasNext()) {
