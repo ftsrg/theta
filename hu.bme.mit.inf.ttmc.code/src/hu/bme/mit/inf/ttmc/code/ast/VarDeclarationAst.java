@@ -3,7 +3,6 @@ package hu.bme.mit.inf.ttmc.code.ast;
 import java.util.ArrayList;
 import java.util.List;
 
-
 import hu.bme.mit.inf.ttmc.code.ast.visitor.DeclarationVisitor;
 
 public class VarDeclarationAst extends DeclarationAst {

@@ -17,8 +17,8 @@ import hu.bme.mit.inf.ttmc.code.ast.LiteralExpressionAst;
 import hu.bme.mit.inf.ttmc.code.ast.NameExpressionAst;
 import hu.bme.mit.inf.ttmc.code.ast.StatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.UnaryExpressionAst;
-import hu.bme.mit.inf.ttmc.code.ast.VarDeclarationAst;
 import hu.bme.mit.inf.ttmc.code.ast.UnaryExpressionAst.Operator;
+import hu.bme.mit.inf.ttmc.code.ast.VarDeclarationAst;
 import hu.bme.mit.inf.ttmc.code.simplifier.SimplifyAstVisitor;
 import hu.bme.mit.inf.ttmc.code.simplifier.StatementListAst;
 

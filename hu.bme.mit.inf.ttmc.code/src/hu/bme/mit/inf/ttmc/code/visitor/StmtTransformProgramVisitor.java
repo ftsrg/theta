@@ -18,7 +18,6 @@ import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Not;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Or;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Sub;
 import static hu.bme.mit.inf.ttmc.core.type.impl.Types.Int;
-import static hu.bme.mit.inf.ttmc.formalism.common.decl.impl.Decls2.Proc;
 import static hu.bme.mit.inf.ttmc.formalism.common.decl.impl.Decls2.Var;
 import static hu.bme.mit.inf.ttmc.formalism.common.stmt.impl.Stmts.Assert;
 import static hu.bme.mit.inf.ttmc.formalism.common.stmt.impl.Stmts.Assign;

@@ -1,5 +1,9 @@
 package hu.bme.mit.inf.ttmc.frontend.ir;
 
+import static hu.bme.mit.inf.ttmc.frontend.ir.node.NodeFactory.Goto;
+import static hu.bme.mit.inf.ttmc.frontend.ir.node.NodeFactory.JumpIf;
+import static hu.bme.mit.inf.ttmc.frontend.ir.node.NodeFactory.Return;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -15,14 +19,14 @@ import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.EntryNode;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.ExitNode;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.GotoNode;
-import hu.bme.mit.inf.ttmc.frontend.ir.node.IrNode;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.JumpIfNode;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.NonTerminatorIrNode;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.ReturnNode;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.TerminatorIrNode;
 
-import static hu.bme.mit.inf.ttmc.frontend.ir.node.NodeFactory.*;
-
+/**
+ * Represents a function in the intermediate representation
+ */
 public class Function {
 
 	private final String name;
@@ -40,9 +44,10 @@ public class Function {
 		this.name = name;
 		this.type = type;
 
-		exit = new BasicBlock(name + "_exit", this);
-		exit.terminate(new ExitNode());
-		this.setExitBlock(exit);
+		this.exit = new BasicBlock(name + "_exit", this);
+		this.exitNode = new ExitNode();
+
+		this.exit.terminate(this.exitNode);
 	}
 
 	public Function copy(Map<BasicBlock, BasicBlock> newBlocks) {
@@ -102,8 +107,6 @@ public class Function {
 		if (newBlock.isTerminated)
 			throw new RuntimeException("The substitue block must not be terminated.");
 
-		TerminatorIrNode oldTerminator = oldBlock.getTerminator();
-
 		// Remove references to the old block in children
 		oldBlock.terminator.getTargets().forEach(t -> t.parents.remove(oldBlock));
 		newBlock.terminate(terminator);
@@ -118,6 +121,17 @@ public class Function {
 			this.exit = newBlock;
 	}
 
+	/**
+	 * Performs a normalization pass on the function. Normalized function input is a common requirement for
+	 * most transformations and should be called after each transformation pass capable of changing the function structure.
+	 *
+	 * A normalized function has the following properties:
+	 * <ul>
+	 * 	<li> Does not contain blocks only containing a single goto terminator </li>
+	 * 	<li> Does not contain unreachable blocks </li>
+	 * 	<li> Does not contain single-child blocks which are the only parent of their child </li>
+	 * </ul>
+	 */
 	public void normalize() {
 		// Remove single 'goto' nodes
 		List<BasicBlock> singleGotos = this.blocksMap.values()
@@ -227,6 +241,9 @@ public class Function {
 		return this.type;
 	}
 
+	/**
+	 * Perform a depth-first-search and remove blocks unreachable from the entry block.
+	 */
 	private void removeUnreachableBlocks() {
 		// Perform a DFS
 		Stack<BasicBlock> stack = new Stack<>();
@@ -244,7 +261,11 @@ public class Function {
 		}
 
 		// retain all visited nodes
-		List<BasicBlock> unreachable =  this.blocksMap.values().stream().filter(b -> !visited.contains(b)).collect(Collectors.toList());
+		List<BasicBlock> unreachable =  this.blocksMap.values()
+			.stream()
+			.filter(b -> !visited.contains(b))
+			.collect(Collectors.toList());
+
 		unreachable.forEach(b -> this.removeBasicBlock(b));
 	}
 

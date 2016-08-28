@@ -1,27 +1,17 @@
 package hu.bme.mit.inf.ttmc.frontend.ir;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Stack;
-import java.util.stream.Collectors;
 
-import hu.bme.mit.inf.ttmc.frontend.ir.node.GotoNode;
-import hu.bme.mit.inf.ttmc.frontend.ir.node.IrNode;
-import hu.bme.mit.inf.ttmc.frontend.ir.node.JumpIfNode;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.NonTerminatorIrNode;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.TerminatorIrNode;
 
 public class InstructionBuilder {
 
 	private final Map<String, BasicBlock> blocks = new HashMap<>();
-	private final Stack<BasicBlock> insertPoints = new Stack<>();
+	private final Function function;
 
 	private BasicBlock insertPoint;
-
-	private Function function;
 
 	public InstructionBuilder(Function function) {
 		this.function = function;
@@ -50,14 +40,6 @@ public class InstructionBuilder {
 
 	public void setInsertPoint(BasicBlock block) {
 		this.insertPoint = block;
-	}
-
-	public void pushInsertPoint(BasicBlock block) {
-		this.insertPoints.push(block);
-	}
-
-	public void popInsertPoint() {
-		this.insertPoints.pop();
 	}
 
 	public void terminateInsertPoint(TerminatorIrNode terminator) {

@@ -3,9 +3,9 @@ package hu.bme.mit.inf.ttmc.code.ast.visitor;
 import hu.bme.mit.inf.ttmc.code.ast.BinaryExpressionAst;
 import hu.bme.mit.inf.ttmc.code.ast.ExpressionListAst;
 import hu.bme.mit.inf.ttmc.code.ast.FunctionCallExpressionAst;
+import hu.bme.mit.inf.ttmc.code.ast.LiteralExpressionAst;
 import hu.bme.mit.inf.ttmc.code.ast.NameExpressionAst;
 import hu.bme.mit.inf.ttmc.code.ast.UnaryExpressionAst;
-import hu.bme.mit.inf.ttmc.code.ast.LiteralExpressionAst;
 
 public interface ExpressionVisitor<E> {
 

@@ -41,7 +41,7 @@ import org.eclipse.cdt.core.dom.ast.IASTSwitchStatement;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTWhileStatement;
-import hu.bme.mit.inf.ttmc.code.ast.TranslationUnitAst;
+
 import hu.bme.mit.inf.ttmc.code.ast.AssignmentInitializerAst;
 import hu.bme.mit.inf.ttmc.code.ast.BinaryExpressionAst;
 import hu.bme.mit.inf.ttmc.code.ast.BreakStatementAst;
@@ -50,18 +50,21 @@ import hu.bme.mit.inf.ttmc.code.ast.CompoundStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.ContinueStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.DeclarationAst;
 import hu.bme.mit.inf.ttmc.code.ast.DeclarationSpecifierAst;
-import hu.bme.mit.inf.ttmc.code.ast.InitDeclaratorAst;
-import hu.bme.mit.inf.ttmc.code.ast.LabeledStatementAst;
+import hu.bme.mit.inf.ttmc.code.ast.DeclarationStatementAst;
+import hu.bme.mit.inf.ttmc.code.ast.DeclaratorAst;
+import hu.bme.mit.inf.ttmc.code.ast.DefaultStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.DoStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.ExpressionAst;
 import hu.bme.mit.inf.ttmc.code.ast.ExpressionListAst;
 import hu.bme.mit.inf.ttmc.code.ast.ExpressionStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.ForStatementAst;
-import hu.bme.mit.inf.ttmc.code.ast.FunctionDefinitionAst;
-import hu.bme.mit.inf.ttmc.code.ast.GotoStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.FunctionCallExpressionAst;
 import hu.bme.mit.inf.ttmc.code.ast.FunctionDeclaratorAst;
+import hu.bme.mit.inf.ttmc.code.ast.FunctionDefinitionAst;
+import hu.bme.mit.inf.ttmc.code.ast.GotoStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.IfStatementAst;
+import hu.bme.mit.inf.ttmc.code.ast.InitDeclaratorAst;
+import hu.bme.mit.inf.ttmc.code.ast.LabeledStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.LiteralExpressionAst;
 import hu.bme.mit.inf.ttmc.code.ast.NameExpressionAst;
 import hu.bme.mit.inf.ttmc.code.ast.NullStatementAst;
@@ -69,12 +72,10 @@ import hu.bme.mit.inf.ttmc.code.ast.ParameterDeclarationAst;
 import hu.bme.mit.inf.ttmc.code.ast.ReturnStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.StatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.SwitchStatementAst;
+import hu.bme.mit.inf.ttmc.code.ast.TranslationUnitAst;
 import hu.bme.mit.inf.ttmc.code.ast.UnaryExpressionAst;
 import hu.bme.mit.inf.ttmc.code.ast.UnaryExpressionAst.Operator;
 import hu.bme.mit.inf.ttmc.code.ast.VarDeclarationAst;
-import hu.bme.mit.inf.ttmc.code.ast.DeclarationStatementAst;
-import hu.bme.mit.inf.ttmc.code.ast.DeclaratorAst;
-import hu.bme.mit.inf.ttmc.code.ast.DefaultStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.WhileStatementAst;
 
 public class CdtAstTransformer {
@@ -372,9 +373,9 @@ public class CdtAstTransformer {
 			case IASTUnaryExpression.op_postFixIncr:
 				return new UnaryExpressionAst(transformExpression(expr), Operator.OP_POSTFIX_INCR);
 			case IASTUnaryExpression.op_prefixDecr:
-				return new UnaryExpressionAst(transformExpression(expr), Operator.OP_PREFIX_INCR);
+				return new UnaryExpressionAst(transformExpression(expr), Operator.OP_PREFIX_DECR);
 			case IASTUnaryExpression.op_postFixDecr:
-				return new UnaryExpressionAst(transformExpression(expr), Operator.OP_PREFIX_INCR);
+				return new UnaryExpressionAst(transformExpression(expr), Operator.OP_POSTFIX_DECR);
 			case IASTUnaryExpression.op_not:
 				return new UnaryExpressionAst(transformExpression(expr), Operator.OP_NOT);
 			case IASTUnaryExpression.op_bracketedPrimary:

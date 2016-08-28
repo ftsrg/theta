@@ -7,7 +7,6 @@ import hu.bme.mit.inf.ttmc.frontend.dependency.ProgramDependency;
 import hu.bme.mit.inf.ttmc.frontend.dependency.ProgramDependency.PDGNode;
 import hu.bme.mit.inf.ttmc.frontend.ir.BasicBlock;
 import hu.bme.mit.inf.ttmc.frontend.ir.Function;
-import hu.bme.mit.inf.ttmc.frontend.ir.node.IrNode;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.JumpIfNode;
 
 public class IrPrinter {

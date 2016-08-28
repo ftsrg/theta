@@ -4,7 +4,6 @@ import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.frontend.ir.BasicBlock;
-import hu.bme.mit.inf.ttmc.frontend.ir.Variable;
 
 public class AssignNode<VarType extends Type, ExprType extends VarType> implements NonTerminatorIrNode {
 

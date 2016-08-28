@@ -18,6 +18,15 @@ import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Or;
 import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.Sub;
 import static hu.bme.mit.inf.ttmc.core.type.impl.Types.Int;
 import static hu.bme.mit.inf.ttmc.formalism.common.decl.impl.Decls2.Var;
+import static hu.bme.mit.inf.ttmc.frontend.ir.node.NodeFactory.Assert;
+import static hu.bme.mit.inf.ttmc.frontend.ir.node.NodeFactory.Assign;
+import static hu.bme.mit.inf.ttmc.frontend.ir.node.NodeFactory.Goto;
+import static hu.bme.mit.inf.ttmc.frontend.ir.node.NodeFactory.JumpIf;
+
+import java.util.EmptyStackException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Stack;
 
 import hu.bme.mit.inf.ttmc.code.ast.AssignmentInitializerAst;
 import hu.bme.mit.inf.ttmc.code.ast.BinaryExpressionAst;
@@ -27,6 +36,7 @@ import hu.bme.mit.inf.ttmc.code.ast.CompoundStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.ContinueStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.DeclarationAst;
 import hu.bme.mit.inf.ttmc.code.ast.DeclarationStatementAst;
+import hu.bme.mit.inf.ttmc.code.ast.DeclaratorAst;
 import hu.bme.mit.inf.ttmc.code.ast.DefaultStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.DoStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.ExpressionAst;
@@ -38,6 +48,7 @@ import hu.bme.mit.inf.ttmc.code.ast.FunctionDefinitionAst;
 import hu.bme.mit.inf.ttmc.code.ast.GotoStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.IfStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.InitDeclaratorAst;
+import hu.bme.mit.inf.ttmc.code.ast.InitializerAst;
 import hu.bme.mit.inf.ttmc.code.ast.LabeledStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.LiteralExpressionAst;
 import hu.bme.mit.inf.ttmc.code.ast.NameExpressionAst;
@@ -45,15 +56,11 @@ import hu.bme.mit.inf.ttmc.code.ast.NullStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.ReturnStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.StatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.SwitchStatementAst;
-import hu.bme.mit.inf.ttmc.code.ast.TranslationUnitAst;
 import hu.bme.mit.inf.ttmc.code.ast.UnaryExpressionAst;
 import hu.bme.mit.inf.ttmc.code.ast.VarDeclarationAst;
 import hu.bme.mit.inf.ttmc.code.ast.WhileStatementAst;
-import hu.bme.mit.inf.ttmc.code.ast.BinaryExpressionAst.Operator;
-import hu.bme.mit.inf.ttmc.code.ast.visitor.DeclarationVisitor;
 import hu.bme.mit.inf.ttmc.code.ast.visitor.ExpressionVisitor;
 import hu.bme.mit.inf.ttmc.code.ast.visitor.StatementVisitor;
-import hu.bme.mit.inf.ttmc.code.ast.visitor.TranslationUnitVisitor;
 import hu.bme.mit.inf.ttmc.code.util.SymbolTable;
 import hu.bme.mit.inf.ttmc.core.decl.Decl;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
@@ -66,23 +73,13 @@ import hu.bme.mit.inf.ttmc.core.type.closure.ClosedUnderMul;
 import hu.bme.mit.inf.ttmc.core.type.closure.ClosedUnderNeg;
 import hu.bme.mit.inf.ttmc.core.type.closure.ClosedUnderSub;
 import hu.bme.mit.inf.ttmc.core.utils.impl.ExprUtils;
-import hu.bme.mit.inf.ttmc.formalism.common.decl.ProcDecl;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.VarRefExpr;
-import hu.bme.mit.inf.ttmc.formalism.common.stmt.Stmt;
 import hu.bme.mit.inf.ttmc.frontend.ir.BasicBlock;
 import hu.bme.mit.inf.ttmc.frontend.ir.Function;
-import hu.bme.mit.inf.ttmc.frontend.ir.GlobalContext;
 import hu.bme.mit.inf.ttmc.frontend.ir.InstructionBuilder;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.EntryNode;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.GotoNode;
-
-import static hu.bme.mit.inf.ttmc.frontend.ir.node.NodeFactory.*;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 
 public class IrCodeGenerator implements
@@ -90,10 +87,16 @@ public class IrCodeGenerator implements
 	StatementVisitor<Void>
 {
 
-	private SymbolTable<Decl<? extends Type, ?>> symbols = new SymbolTable<>();
-	private InstructionBuilder builder;
+	private final SymbolTable<Decl<? extends Type, ?>> symbols = new SymbolTable<>();
+	private final InstructionBuilder builder;
+
 	private final Map<String, BasicBlock> labels = new HashMap<>();
 	private final Map<String, BasicBlock> gotos = new HashMap<>();
+
+	private final Stack<BasicBlock> breakTargets = new Stack<>();
+	private final Stack<BasicBlock> continueTargets = new Stack<>();
+
+	private int tmpId = 0;
 
 	public IrCodeGenerator(Function function) {
 		this.builder = new InstructionBuilder(function);
@@ -113,7 +116,7 @@ public class IrCodeGenerator implements
 		this.builder.getFunction().normalize();
 	}
 
-	public void resolveGotos() {
+	private void resolveGotos() {
 		this.gotos.forEach((String label, BasicBlock source) -> {
 			BasicBlock target = this.labels.get(label);
 			if (null == target) {
@@ -162,9 +165,103 @@ public class IrCodeGenerator implements
 				return And(ExprUtils.cast(left, BoolType.class), ExprUtils.cast(right, BoolType.class));
 			case OP_LOGIC_OR:
 				return Or(ExprUtils.cast(left, BoolType.class), ExprUtils.cast(right, BoolType.class));
-			case OP_ASSIGN: // intentional
+			case OP_ASSIGN: {
+				if (!(left instanceof VarRefExpr<?>)) {
+					throw new TransformException("Cannot assign an rvalue.");
+				}
+
+				VarRefExpr<? extends Type> varRef = (VarRefExpr<? extends Type>) left;
+				this.builder.insertNode(Assign(varRef.getDecl(), ExprUtils.cast(right, varRef.getType().getClass())));
+
+				return varRef;
+			}
+			case OP_ADD_ASSIGN: {
+				if (!(left instanceof VarRefExpr<?>)) {
+					throw new TransformException("Cannot assign an rvalue.");
+				}
+
+				if (!(left.getType() instanceof ClosedUnderAdd)) {
+					throw new TransformException("Attempting to add an expression with an incompatible type: " + left.getType().getClass());
+				}
+
+				@SuppressWarnings("unchecked")
+				VarRefExpr<? extends ClosedUnderAdd> varRef = (VarRefExpr<? extends ClosedUnderAdd>) left;
+				Expr<? extends ClosedUnderAdd> rightCasted  = ExprUtils.cast(right, ClosedUnderAdd.class);
+
+				this.builder.insertNode(Assign(varRef.getDecl(), ExprUtils.cast(Add(varRef, rightCasted), varRef.getType().getClass())));
+
+				return varRef;
+			}
+			case OP_DIV_ASSIGN: {
+				if (!(left instanceof VarRefExpr<?>)) {
+					throw new TransformException("Cannot assign an rvalue.");
+				}
+
+				if (!(left.getType() instanceof IntType)) {
+					throw new TransformException("Attempting to divide an expression with an incompatible type: " + left.getType().getClass());
+				}
+
+				@SuppressWarnings("unchecked")
+				VarRefExpr<? extends IntType> varRef = (VarRefExpr<? extends IntType>) left;
+				Expr<? extends IntType> rightCasted  = ExprUtils.cast(right, IntType.class);
+
+				this.builder.insertNode(Assign(varRef.getDecl(), ExprUtils.cast(IntDiv(varRef, rightCasted), varRef.getType().getClass())));
+
+				return varRef;
+			}
+			case OP_MOD_ASSIGN: {
+				if (!(left instanceof VarRefExpr<?>)) {
+					throw new TransformException("Cannot assign an rvalue.");
+				}
+
+				if (!(left.getType() instanceof IntType)) {
+					throw new TransformException("Attempting to mod an expression with an incompatible type: " + left.getType().getClass());
+				}
+
+				@SuppressWarnings("unchecked")
+				VarRefExpr<? extends IntType> varRef = (VarRefExpr<? extends IntType>) left;
+				Expr<? extends IntType> rightCasted  = ExprUtils.cast(right, IntType.class);
+
+				this.builder.insertNode(Assign(varRef.getDecl(), ExprUtils.cast(Mod(varRef, rightCasted), varRef.getType().getClass())));
+
+				return varRef;
+			}
+			case OP_MUL_ASSIGN: {
+				if (!(left instanceof VarRefExpr<?>)) {
+					throw new TransformException("Cannot assign an rvalue.");
+				}
+
+				if (!(left.getType() instanceof ClosedUnderMul)) {
+					throw new TransformException("Attempting to multiply an expression with an incompatible type: " + left.getType().getClass());
+				}
+
+				@SuppressWarnings("unchecked")
+				VarRefExpr<? extends ClosedUnderMul> varRef = (VarRefExpr<? extends ClosedUnderMul>) left;
+				Expr<? extends ClosedUnderMul> rightCasted  = ExprUtils.cast(right, ClosedUnderMul.class);
+
+				this.builder.insertNode(Assign(varRef.getDecl(), ExprUtils.cast(Mul(varRef, rightCasted), varRef.getType().getClass())));
+
+				return varRef;
+			}
+			case OP_SUB_ASSIGN: {
+				if (!(left instanceof VarRefExpr<?>)) {
+					throw new TransformException("Cannot assign an rvalue.");
+				}
+
+				if (!(left.getType() instanceof ClosedUnderSub)) {
+					throw new TransformException("Attempting to substract an expression with an incompatible type: " + left.getType().getClass());
+				}
+
+				@SuppressWarnings("unchecked")
+				VarRefExpr<? extends ClosedUnderSub> varRef = (VarRefExpr<? extends ClosedUnderSub>) left;
+				Expr<? extends ClosedUnderSub> rightCasted  = ExprUtils.cast(right, ClosedUnderSub.class);
+
+				this.builder.insertNode(Assign(varRef.getDecl(), ExprUtils.cast(Sub(varRef, rightCasted), varRef.getType().getClass())));
+
+				return varRef;
+			}
 			default:
-				throw new UnsupportedOperationException("This code should not be reachable.");
+				throw new AssertionError("This code should not be reachable.");
 		}
 	}
 
@@ -180,13 +277,60 @@ public class IrCodeGenerator implements
 			return ast.getOperand().accept(this);
 		case OP_NOT:
 			return Not(ExprUtils.cast(ast.getOperand().accept(this), BoolType.class));
-		case OP_POSTFIX_DECR:
-		case OP_PREFIX_DECR:
-		case OP_POSTFIX_INCR:
-		case OP_PREFIX_INCR:
+		case OP_POSTFIX_INCR: {
+			Expr<? extends ClosedUnderAdd> expr = ExprUtils.cast(ast.getOperand().accept(this), ClosedUnderAdd.class);
+			if (!(expr instanceof VarRefExpr<?>)) {
+				throw new TransformException("Lvalue required as increment operand.");
+			}
+
+			VarRefExpr<? extends ClosedUnderAdd> varRef = (VarRefExpr<? extends ClosedUnderAdd>) expr;
+			VarDecl<? extends ClosedUnderAdd> tmp  = Var("tmp_" + this.tmpId++, varRef.getType());
+
+			this.builder.insertNode(Assign(tmp, ExprUtils.cast(varRef, tmp.getType().getClass())));
+			this.builder.insertNode(Assign(varRef.getDecl(), ExprUtils.cast(Add(varRef, Int(1)), varRef.getType().getClass())));
+
+			return tmp.getRef();
+		}
+		case OP_PREFIX_INCR: {
+			Expr<? extends ClosedUnderAdd> expr = ExprUtils.cast(ast.getOperand().accept(this), ClosedUnderAdd.class);
+			if (!(expr instanceof VarRefExpr<?>)) {
+				throw new TransformException("Lvalue required as increment operand.");
+			}
+
+			VarRefExpr<? extends ClosedUnderAdd> varRef = (VarRefExpr<? extends ClosedUnderAdd>) expr;
+
+			this.builder.insertNode(Assign(varRef.getDecl(), ExprUtils.cast(Add(varRef, Int(1)), varRef.getType().getClass())));
+
+			return varRef;
+		}
+		case OP_POSTFIX_DECR: {
+			Expr<? extends ClosedUnderSub> expr = ExprUtils.cast(ast.getOperand().accept(this), ClosedUnderSub.class);
+			if (!(expr instanceof VarRefExpr<?>)) {
+				throw new TransformException("Lvalue required as increment operand.");
+			}
+
+			VarRefExpr<? extends ClosedUnderSub> varRef = (VarRefExpr<? extends ClosedUnderSub>) expr;
+			VarDecl<? extends ClosedUnderSub> tmp  = Var("tmp_" + this.tmpId++, varRef.getType());
+
+			this.builder.insertNode(Assign(tmp, ExprUtils.cast(varRef, tmp.getType().getClass())));
+			this.builder.insertNode(Assign(varRef.getDecl(), ExprUtils.cast(Sub(varRef, Int(1)), varRef.getType().getClass())));
+
+			return tmp.getRef();
+		}
+		case OP_PREFIX_DECR: {
+			Expr<? extends ClosedUnderSub> expr = ExprUtils.cast(ast.getOperand().accept(this), ClosedUnderSub.class);
+			if (!(expr instanceof VarRefExpr<?>)) {
+				throw new TransformException("Lvalue required as increment operand.");
+			}
+
+			VarRefExpr<? extends ClosedUnderSub> varRef = (VarRefExpr<? extends ClosedUnderSub>) expr;
+
+			this.builder.insertNode(Assign(varRef.getDecl(), ExprUtils.cast(Sub(varRef, Int(1)), varRef.getType().getClass())));
+
+			return varRef;
+		}
 		default:
-			// These operations should have been eliminated earlier.
-			throw new RuntimeException("This code should not be reachable.");
+			throw new AssertionError("This code should not be reachable.");
 		}
 	}
 
@@ -200,20 +344,7 @@ public class IrCodeGenerator implements
 
 	@Override
 	public Expr<? extends Type> visit(FunctionCallExpressionAst ast) {
-		String name = ast.getName();
-
-		if (!this.symbols.contains(name)) {
-			throw new RuntimeException(String.format("Use of undeclared identifier '%s'.", name));
-		}
-
-		Decl<? extends Type, ?> decl = this.symbols.get(name);
-		if (!(decl instanceof ProcDecl<?>)) {
-			throw new RuntimeException(String.format("Invalid use of function indirection.", name));
-		}
-
-		ProcDecl<? extends Type> proc = (ProcDecl<? extends Type>) decl;
-
-		throw new UnsupportedOperationException("TODO: Function call");
+		throw new AssertionError("TODO: Function call");
 	}
 
 	@Override
@@ -223,12 +354,20 @@ public class IrCodeGenerator implements
 
 	@Override
 	public Expr<? extends Type> visit(ExpressionListAst ast) {
-		throw new UnsupportedOperationException("This code should not be reachble.");
+		if (ast.getExpressions().size() == 0)
+			throw new TransformException("Expression lists cannot be empty");
+
+		Expr<? extends Type> res = null;
+		for (ExpressionAst expr : ast.getExpressions()) {
+			res = expr.accept(this);
+		}
+
+		return res;
 	}
 
 	@Override
 	public Void visit(IfStatementAst ast) {
-		Expr<? extends BoolType> cond = ExprUtils.cast(ast.getCondition().accept(this), BoolType.class);
+		Expr<? extends BoolType> cond = this.createCondition(ast.getCondition());
 		StatementAst then = ast.getThen();
 		StatementAst elze = ast.getElse();
 
@@ -260,7 +399,9 @@ public class IrCodeGenerator implements
 
 	@Override
 	public Void visit(CompoundStatementAst ast) {
-		ast.getStatements().forEach(stmt -> stmt.accept(this));
+		for (StatementAst stmt : ast.getStatements()) {
+			stmt.accept(this);
+		}
 
 		return null;
 	}
@@ -272,19 +413,25 @@ public class IrCodeGenerator implements
 		if (decl instanceof VarDeclarationAst) {
 			VarDeclarationAst varDecl = (VarDeclarationAst) decl;
 
-			// Every declaration contains a single declarator because of the earlier transformations
-			InitDeclaratorAst declarator = (InitDeclaratorAst) varDecl.getDeclarators().get(0); // TODO
-			AssignmentInitializerAst initializer = (AssignmentInitializerAst) declarator.getInitializer();
+			for (DeclaratorAst declarator : varDecl.getDeclarators()) {
+				if (declarator instanceof InitDeclaratorAst) {
+					InitializerAst initializer = ((InitDeclaratorAst) declarator).getInitializer();
+					String name = declarator.getName();
+					VarDecl<? extends Type> var = Var(name, Int());
+					this.symbols.put(name, var);
 
-			String name = declarator.getName();
-
-			VarDecl<? extends Type> var = Var(name, Int());
-			this.symbols.put(name, var);
-
-			if (null != initializer) {
-				Expr<? extends Type> initExpr = initializer.getExpression().accept(this);
-				this.builder.insertNode(Assign(var, ExprUtils.cast(initExpr, var.getType().getClass())));
+					if (initializer != null) {
+						if (initializer instanceof AssignmentInitializerAst) {
+							Expr<? extends Type> initExpr = ((AssignmentInitializerAst) initializer).getExpression().accept(this);
+							this.builder.insertNode(Assign(var, ExprUtils.cast(initExpr, var.getType().getClass())));
+						} else {
+							throw new UnsupportedOperationException("Unsupported initializer clause");
+						}
+					}
+				}
 			}
+		} else {
+			throw new UnsupportedOperationException("Unsupported declaration clause");
 		}
 
 		return null;
@@ -301,26 +448,15 @@ public class IrCodeGenerator implements
 	public Void visit(ExpressionStatementAst ast) {
 		ExpressionAst exprAst = ast.getExpression();
 
-		if (exprAst instanceof BinaryExpressionAst && ((BinaryExpressionAst) exprAst).getOperator() == Operator.OP_ASSIGN) {
-			BinaryExpressionAst binary = (BinaryExpressionAst) exprAst;
-
-			Expr<? extends Type> lhs = binary.getLeft().accept(this);
-			Expr<?> rhs = binary.getRight().accept(this);
-
-			if (!(lhs instanceof VarRefExpr<?>)) {
-				throw new RuntimeException("Assignment lvalue can only be a variable reference.");
-			}
-
-			VarRefExpr<Type> left = (VarRefExpr<Type>) lhs;
-
-			this.builder.insertNode(Assign(left.getDecl(), rhs));
-		} else if (exprAst instanceof FunctionCallExpressionAst) {
+		if (exprAst instanceof FunctionCallExpressionAst) {
 			FunctionCallExpressionAst func = (FunctionCallExpressionAst) ast.getExpression();
 
 			if (func.getName().equals("assert")) {
 				ExpressionAst cond = func.getParams().get(0); // The first parameter is the condition
 				this.builder.insertNode(Assert(ExprUtils.cast(cond.accept(this), BoolType.class)));
 			}
+		} else {
+			exprAst.accept(this);
 		}
 
 		return null;
@@ -328,7 +464,7 @@ public class IrCodeGenerator implements
 
 	@Override
 	public Void visit(WhileStatementAst ast) {
-		Expr<? extends BoolType> cond = ExprUtils.cast(ast.getCondition().accept(this), BoolType.class);
+		Expr<? extends BoolType> cond = this.createCondition(ast.getCondition());
 		StatementAst body = ast.getBody();
 
 		// The original block
@@ -342,9 +478,15 @@ public class IrCodeGenerator implements
 		this.builder.setInsertPoint(loopBlock);
 		this.builder.terminateInsertPoint(JumpIf(cond, bodyBlock, endBlock));
 
+		this.breakTargets.push(endBlock);
+		this.continueTargets.push(loopBlock);
+
 		this.builder.setInsertPoint(bodyBlock);
 		body.accept(this);
 		this.builder.terminateInsertPoint(Goto(loopBlock));
+
+		this.breakTargets.pop();
+		this.continueTargets.pop();
 
 		this.builder.setInsertPoint(branchBlock);
 		this.builder.terminateInsertPoint(Goto(loopBlock));
@@ -356,7 +498,7 @@ public class IrCodeGenerator implements
 
 	@Override
 	public Void visit(DoStatementAst ast) {
-		Expr<? extends BoolType> cond = ExprUtils.cast(ast.getCondition().accept(this), BoolType.class);
+		Expr<? extends BoolType> cond = this.createCondition(ast.getCondition());
 		StatementAst body = ast.getBody();
 
 		// The original block
@@ -366,9 +508,15 @@ public class IrCodeGenerator implements
 		BasicBlock loopBlock = this.builder.createBlock("loop");
 		BasicBlock endBlock  = this.builder.createBlock("end");
 
+		this.breakTargets.push(endBlock);
+		this.continueTargets.push(loopBlock);
+
 		this.builder.setInsertPoint(loopBlock);
 		body.accept(this);
 		this.builder.terminateInsertPoint(JumpIf(cond, loopBlock, endBlock));
+
+		this.breakTargets.pop();
+		this.continueTargets.pop();
 
 		this.builder.setInsertPoint(branchBlock);
 		this.builder.terminateInsertPoint(Goto(loopBlock));
@@ -409,7 +557,44 @@ public class IrCodeGenerator implements
 
 	@Override
 	public Void visit(ForStatementAst ast) {
-		throw new UnsupportedOperationException("TransformProgramVisitor does not support for loops.");
+		StatementAst body = ast.getBody();
+
+		// The original block
+		BasicBlock branchBlock = this.builder.getInsertPoint();
+
+		// The new blocks
+		BasicBlock headerBlock = this.builder.createBlock("header");
+		BasicBlock bodyBlock = this.builder.createBlock("body");
+		BasicBlock incrBlock = this.builder.createBlock("incr");
+
+		BasicBlock endBlock  = this.builder.createBlock("end");
+
+		ast.getInit().accept(this);
+		Expr<? extends BoolType> cond = this.createCondition(ast.getCondition());
+
+		this.builder.setInsertPoint(headerBlock);
+		this.builder.terminateInsertPoint(JumpIf(cond, bodyBlock, endBlock));
+
+		this.breakTargets.push(endBlock);
+		this.continueTargets.push(incrBlock);
+
+		this.builder.setInsertPoint(bodyBlock);
+		body.accept(this);
+		this.builder.terminateInsertPoint(Goto(incrBlock));
+
+		this.breakTargets.pop();
+		this.continueTargets.pop();
+
+		this.builder.setInsertPoint(incrBlock);
+		ast.getIteration().accept(this);
+		this.builder.terminateInsertPoint(Goto(headerBlock));
+
+		this.builder.setInsertPoint(branchBlock);
+		this.builder.terminateInsertPoint(Goto(headerBlock));
+
+		this.builder.setInsertPoint(endBlock);
+
+		return null;
 	}
 
 	@Override
@@ -429,12 +614,47 @@ public class IrCodeGenerator implements
 
 	@Override
 	public Void visit(ContinueStatementAst ast) {
-		throw new UnsupportedOperationException("TransformProgramVisitor does not support continue statements.");
+		try {
+			BasicBlock target = this.continueTargets.peek();
+			BasicBlock insertPoint = this.builder.createBlock("after_cont");
+
+			this.builder.terminateInsertPoint(Goto(target));
+			this.builder.setInsertPoint(insertPoint);
+		} catch (EmptyStackException ex) {
+			throw new TransformException("Continue statement not within a loop", ex);
+		}
+
+		return null;
 	}
 
 	@Override
 	public Void visit(BreakStatementAst ast) {
-		throw new UnsupportedOperationException("TransformProgramVisitor does not support break statements.");
+		try {
+			BasicBlock target = this.breakTargets.peek();
+			BasicBlock insertPoint = this.builder.createBlock("after_break");
+
+			this.builder.terminateInsertPoint(Goto(target));
+			this.builder.setInsertPoint(insertPoint);
+		} catch (EmptyStackException ex) {
+			throw new TransformException("Break statement not within a loop or switch", ex);
+		}
+
+		return null;
+	}
+
+	private Expr<? extends BoolType> createCondition(ExpressionAst ast) {
+		Expr<? extends Type> cond = ast.accept(this);
+
+		if (cond.getType() instanceof BoolType) {
+			return ExprUtils.cast(cond, BoolType.class);
+		} else if (cond.getType() instanceof IntType) {
+			// Cast integers to booleans by comparing them to 0.
+			// If integers are used as booleans, 0 stands for false, everything else stands for true,
+			// so a single EXPR != 0 comparation will do the required cast
+			return Neq(cond, Int(0));
+		} else {
+			throw new TransformException("Branch conditionals can only be booleans or integers");
+		}
 	}
 
 }

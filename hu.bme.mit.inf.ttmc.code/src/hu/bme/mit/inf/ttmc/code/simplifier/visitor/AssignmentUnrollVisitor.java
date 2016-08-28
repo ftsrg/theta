@@ -6,10 +6,10 @@ import java.util.Deque;
 import java.util.List;
 
 import hu.bme.mit.inf.ttmc.code.ast.BinaryExpressionAst;
+import hu.bme.mit.inf.ttmc.code.ast.BinaryExpressionAst.Operator;
 import hu.bme.mit.inf.ttmc.code.ast.ExpressionAst;
 import hu.bme.mit.inf.ttmc.code.ast.ExpressionStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.StatementAst;
-import hu.bme.mit.inf.ttmc.code.ast.BinaryExpressionAst.Operator;
 import hu.bme.mit.inf.ttmc.code.simplifier.SimplifyAstVisitor;
 import hu.bme.mit.inf.ttmc.code.simplifier.StatementListAst;
 

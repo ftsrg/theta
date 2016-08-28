@@ -2,9 +2,7 @@ package hu.bme.mit.inf.ttmc.code.visitor;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.StringJoiner;
-import java.util.function.UnaryOperator;
 
 import hu.bme.mit.inf.ttmc.code.ast.AssignmentInitializerAst;
 import hu.bme.mit.inf.ttmc.code.ast.BinaryExpressionAst;
@@ -14,8 +12,6 @@ import hu.bme.mit.inf.ttmc.code.ast.CompoundStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.ContinueStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.DeclarationAst;
 import hu.bme.mit.inf.ttmc.code.ast.DeclarationSpecifierAst;
-import hu.bme.mit.inf.ttmc.code.ast.DeclarationSpecifierAst.FunctionSpecifier;
-import hu.bme.mit.inf.ttmc.code.ast.DeclarationSpecifierAst.StorageClassSpecifier;
 import hu.bme.mit.inf.ttmc.code.ast.DeclarationSpecifierAst.TypeQualifier;
 import hu.bme.mit.inf.ttmc.code.ast.DeclarationStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.DeclaratorAst;

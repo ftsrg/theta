@@ -4,6 +4,8 @@ import hu.bme.mit.inf.ttmc.code.ast.BreakStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.CaseStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.CompoundStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.ContinueStatementAst;
+import hu.bme.mit.inf.ttmc.code.ast.DeclarationStatementAst;
+import hu.bme.mit.inf.ttmc.code.ast.DefaultStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.DoStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.ExpressionStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.ForStatementAst;
@@ -13,8 +15,6 @@ import hu.bme.mit.inf.ttmc.code.ast.LabeledStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.NullStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.ReturnStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.SwitchStatementAst;
-import hu.bme.mit.inf.ttmc.code.ast.DeclarationStatementAst;
-import hu.bme.mit.inf.ttmc.code.ast.DefaultStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.WhileStatementAst;
 
 public interface StatementVisitor<S> {
