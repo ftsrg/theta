@@ -1,13 +1,13 @@
 package hu.bme.mit.inf.ttmc.frontend.transform;
 
+import static hu.bme.mit.inf.ttmc.frontend.ir.node.NodeFactory.Goto;
+
 import java.util.Optional;
 
 import hu.bme.mit.inf.ttmc.core.expr.BoolLitExpr;
 import hu.bme.mit.inf.ttmc.frontend.ir.BasicBlock;
 import hu.bme.mit.inf.ttmc.frontend.ir.Function;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.JumpIfNode;
-
-import static hu.bme.mit.inf.ttmc.frontend.ir.node.NodeFactory.Goto;
 
 /**
  * A function transformer which replaces trivial branches with goto jumps.

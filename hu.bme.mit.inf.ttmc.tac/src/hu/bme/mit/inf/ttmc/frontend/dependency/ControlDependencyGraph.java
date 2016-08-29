@@ -10,10 +10,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import hu.bme.mit.inf.ttmc.frontend.dependency.ProgramDependency.PDGNode;
 import hu.bme.mit.inf.ttmc.frontend.ir.BasicBlock;
 import hu.bme.mit.inf.ttmc.frontend.ir.Function;
-import hu.bme.mit.inf.ttmc.frontend.ir.node.IrNode;
 
 public class ControlDependencyGraph {
 

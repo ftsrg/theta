@@ -7,7 +7,6 @@ import java.util.Set;
 
 import hu.bme.mit.inf.ttmc.frontend.ir.BasicBlock;
 import hu.bme.mit.inf.ttmc.frontend.ir.Function;
-import hu.bme.mit.inf.ttmc.frontend.ir.node.JumpIfNode;
 import hu.bme.mit.inf.ttmc.frontend.ir.utils.BasicBlockUtils;
 
 public class LoopAnalysis {

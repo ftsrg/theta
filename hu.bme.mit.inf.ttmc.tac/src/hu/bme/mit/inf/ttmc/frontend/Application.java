@@ -1,20 +1,5 @@
 package hu.bme.mit.inf.ttmc.frontend;
 
-import hu.bme.mit.inf.ttmc.frontend.ir.BasicBlock;
-import hu.bme.mit.inf.ttmc.frontend.ir.Function;
-import hu.bme.mit.inf.ttmc.frontend.ir.node.IrNode;
-import hu.bme.mit.inf.ttmc.frontend.ir.utils.IrPrinter;
-
-import static hu.bme.mit.inf.ttmc.core.type.impl.Types.*;
-import static hu.bme.mit.inf.ttmc.formalism.common.decl.impl.Decls2.*;
-import static hu.bme.mit.inf.ttmc.core.expr.impl.Exprs.*;
-
-import static hu.bme.mit.inf.ttmc.frontend.ir.node.NodeFactory.*;
-
-import hu.bme.mit.inf.ttmc.core.type.IntType;
-import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
-
-
 public class Application {
 
 	public static void main(String[] args) {

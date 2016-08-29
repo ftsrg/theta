@@ -78,9 +78,9 @@ import hu.bme.mit.inf.ttmc.formalism.common.expr.VarRefExpr;
 import hu.bme.mit.inf.ttmc.frontend.ir.BasicBlock;
 import hu.bme.mit.inf.ttmc.frontend.ir.Function;
 import hu.bme.mit.inf.ttmc.frontend.ir.InstructionBuilder;
+import hu.bme.mit.inf.ttmc.frontend.ir.node.BranchTableNode;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.EntryNode;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.GotoNode;
-
 
 public class IrCodeGenerator implements
 	ExpressionVisitor<Expr<? extends Type>>,
@@ -95,6 +95,8 @@ public class IrCodeGenerator implements
 
 	private final Stack<BasicBlock> breakTargets = new Stack<>();
 	private final Stack<BasicBlock> continueTargets = new Stack<>();
+	private final Stack<Map<Expr<? extends Type>, BasicBlock>> switchTargets = new Stack<>();
+	private final Stack<BasicBlock> switchDefaults = new Stack<>();
 
 	private int tmpId = 0;
 
@@ -167,7 +169,7 @@ public class IrCodeGenerator implements
 				return Or(ExprUtils.cast(left, BoolType.class), ExprUtils.cast(right, BoolType.class));
 			case OP_ASSIGN: {
 				if (!(left instanceof VarRefExpr<?>)) {
-					throw new TransformException("Cannot assign an rvalue.");
+					throw new ParserException("Cannot assign an rvalue.");
 				}
 
 				VarRefExpr<? extends Type> varRef = (VarRefExpr<? extends Type>) left;
@@ -177,11 +179,11 @@ public class IrCodeGenerator implements
 			}
 			case OP_ADD_ASSIGN: {
 				if (!(left instanceof VarRefExpr<?>)) {
-					throw new TransformException("Cannot assign an rvalue.");
+					throw new ParserException("Cannot assign an rvalue.");
 				}
 
 				if (!(left.getType() instanceof ClosedUnderAdd)) {
-					throw new TransformException("Attempting to add an expression with an incompatible type: " + left.getType().getClass());
+					throw new ParserException("Attempting to add an expression with an incompatible type: " + left.getType().getClass());
 				}
 
 				@SuppressWarnings("unchecked")
@@ -194,11 +196,11 @@ public class IrCodeGenerator implements
 			}
 			case OP_DIV_ASSIGN: {
 				if (!(left instanceof VarRefExpr<?>)) {
-					throw new TransformException("Cannot assign an rvalue.");
+					throw new ParserException("Cannot assign an rvalue.");
 				}
 
 				if (!(left.getType() instanceof IntType)) {
-					throw new TransformException("Attempting to divide an expression with an incompatible type: " + left.getType().getClass());
+					throw new ParserException("Attempting to divide an expression with an incompatible type: " + left.getType().getClass());
 				}
 
 				@SuppressWarnings("unchecked")
@@ -211,11 +213,11 @@ public class IrCodeGenerator implements
 			}
 			case OP_MOD_ASSIGN: {
 				if (!(left instanceof VarRefExpr<?>)) {
-					throw new TransformException("Cannot assign an rvalue.");
+					throw new ParserException("Cannot assign an rvalue.");
 				}
 
 				if (!(left.getType() instanceof IntType)) {
-					throw new TransformException("Attempting to mod an expression with an incompatible type: " + left.getType().getClass());
+					throw new ParserException("Attempting to mod an expression with an incompatible type: " + left.getType().getClass());
 				}
 
 				@SuppressWarnings("unchecked")
@@ -228,11 +230,11 @@ public class IrCodeGenerator implements
 			}
 			case OP_MUL_ASSIGN: {
 				if (!(left instanceof VarRefExpr<?>)) {
-					throw new TransformException("Cannot assign an rvalue.");
+					throw new ParserException("Cannot assign an rvalue.");
 				}
 
 				if (!(left.getType() instanceof ClosedUnderMul)) {
-					throw new TransformException("Attempting to multiply an expression with an incompatible type: " + left.getType().getClass());
+					throw new ParserException("Attempting to multiply an expression with an incompatible type: " + left.getType().getClass());
 				}
 
 				@SuppressWarnings("unchecked")
@@ -245,11 +247,11 @@ public class IrCodeGenerator implements
 			}
 			case OP_SUB_ASSIGN: {
 				if (!(left instanceof VarRefExpr<?>)) {
-					throw new TransformException("Cannot assign an rvalue.");
+					throw new ParserException("Cannot assign an rvalue.");
 				}
 
 				if (!(left.getType() instanceof ClosedUnderSub)) {
-					throw new TransformException("Attempting to substract an expression with an incompatible type: " + left.getType().getClass());
+					throw new ParserException("Attempting to substract an expression with an incompatible type: " + left.getType().getClass());
 				}
 
 				@SuppressWarnings("unchecked")
@@ -280,7 +282,7 @@ public class IrCodeGenerator implements
 		case OP_POSTFIX_INCR: {
 			Expr<? extends ClosedUnderAdd> expr = ExprUtils.cast(ast.getOperand().accept(this), ClosedUnderAdd.class);
 			if (!(expr instanceof VarRefExpr<?>)) {
-				throw new TransformException("Lvalue required as increment operand.");
+				throw new ParserException("Lvalue required as increment operand.");
 			}
 
 			VarRefExpr<? extends ClosedUnderAdd> varRef = (VarRefExpr<? extends ClosedUnderAdd>) expr;
@@ -294,7 +296,7 @@ public class IrCodeGenerator implements
 		case OP_PREFIX_INCR: {
 			Expr<? extends ClosedUnderAdd> expr = ExprUtils.cast(ast.getOperand().accept(this), ClosedUnderAdd.class);
 			if (!(expr instanceof VarRefExpr<?>)) {
-				throw new TransformException("Lvalue required as increment operand.");
+				throw new ParserException("Lvalue required as increment operand.");
 			}
 
 			VarRefExpr<? extends ClosedUnderAdd> varRef = (VarRefExpr<? extends ClosedUnderAdd>) expr;
@@ -306,7 +308,7 @@ public class IrCodeGenerator implements
 		case OP_POSTFIX_DECR: {
 			Expr<? extends ClosedUnderSub> expr = ExprUtils.cast(ast.getOperand().accept(this), ClosedUnderSub.class);
 			if (!(expr instanceof VarRefExpr<?>)) {
-				throw new TransformException("Lvalue required as increment operand.");
+				throw new ParserException("Lvalue required as increment operand.");
 			}
 
 			VarRefExpr<? extends ClosedUnderSub> varRef = (VarRefExpr<? extends ClosedUnderSub>) expr;
@@ -320,7 +322,7 @@ public class IrCodeGenerator implements
 		case OP_PREFIX_DECR: {
 			Expr<? extends ClosedUnderSub> expr = ExprUtils.cast(ast.getOperand().accept(this), ClosedUnderSub.class);
 			if (!(expr instanceof VarRefExpr<?>)) {
-				throw new TransformException("Lvalue required as increment operand.");
+				throw new ParserException("Lvalue required as increment operand.");
 			}
 
 			VarRefExpr<? extends ClosedUnderSub> varRef = (VarRefExpr<? extends ClosedUnderSub>) expr;
@@ -337,7 +339,7 @@ public class IrCodeGenerator implements
 	@Override
 	public Expr<? extends Type> visit(NameExpressionAst ast) {
 		if (!this.symbols.contains(ast.getName()))
-			throw new TransformException(String.format("Use of undeclared identifier '%s'.", ast.getName()));
+			throw new ParserException(String.format("Use of undeclared identifier '%s'.", ast.getName()));
 
 		return this.symbols.get(ast.getName()).getRef();
 	}
@@ -355,7 +357,7 @@ public class IrCodeGenerator implements
 	@Override
 	public Expr<? extends Type> visit(ExpressionListAst ast) {
 		if (ast.getExpressions().size() == 0)
-			throw new TransformException("Expression lists cannot be empty");
+			throw new ParserException("Expression lists cannot be empty");
 
 		Expr<? extends Type> res = null;
 		for (ExpressionAst expr : ast.getExpressions()) {
@@ -399,9 +401,12 @@ public class IrCodeGenerator implements
 
 	@Override
 	public Void visit(CompoundStatementAst ast) {
+
+		this.symbols.pushScope();
 		for (StatementAst stmt : ast.getStatements()) {
 			stmt.accept(this);
 		}
+		this.symbols.popScope();
 
 		return null;
 	}
@@ -414,12 +419,21 @@ public class IrCodeGenerator implements
 			VarDeclarationAst varDecl = (VarDeclarationAst) decl;
 
 			for (DeclaratorAst declarator : varDecl.getDeclarators()) {
+				String name = declarator.getName();
+
+				VarDecl<? extends Type> var;
+				if (this.symbols.currentScopeContains(name)) { // A variable was redeclared in the current scope
+					throw new ParserException(String.format("Cannot redeclare variable '%s'.", name));
+				} else if (this.symbols.contains(name)) { // The variable is declared in an outer scope, we need to override it for the current one
+					var = Var(name + "__conf" + this.tmpId++, Int());
+					this.symbols.put(name, var); // The expressions will still reference this tmp variable by the original name, so we must store it with that.
+				} else {
+					var = Var(name, Int());
+					this.symbols.put(name, var);
+				}
+
 				if (declarator instanceof InitDeclaratorAst) {
 					InitializerAst initializer = ((InitDeclaratorAst) declarator).getInitializer();
-					String name = declarator.getName();
-					VarDecl<? extends Type> var = Var(name, Int());
-					this.symbols.put(name, var);
-
 					if (initializer != null) {
 						if (initializer instanceof AssignmentInitializerAst) {
 							Expr<? extends Type> initExpr = ((AssignmentInitializerAst) initializer).getExpression().accept(this);
@@ -599,17 +613,72 @@ public class IrCodeGenerator implements
 
 	@Override
 	public Void visit(SwitchStatementAst ast) {
-		throw new UnsupportedOperationException("TransformProgramVisitor does not support switch statements.");
+		Expr<? extends Type> cond = ast.getExpression().accept(this);
+
+		BasicBlock merge = this.builder.createBlock("merge");
+		BasicBlock body  = this.builder.createBlock("body");
+		BasicBlock source = this.builder.getInsertPoint();
+
+		this.switchTargets.push(new HashMap<>());
+		this.switchDefaults.push(merge);
+		this.breakTargets.push(merge);
+
+		this.builder.setInsertPoint(body);
+		ast.getBody().accept(this);
+
+		if (this.builder.getInsertPoint() != body) {
+			this.builder.terminateInsertPoint(Goto(merge));
+		}
+
+		if (body.isTerminated()) {
+			body.clearTerminator();
+		}
+
+		this.builder.setInsertPoint(source);
+		this.builder.terminateInsertPoint(Goto(body));
+		this.builder.setInsertPoint(body);
+
+		BranchTableNode branchTable = new BranchTableNode(cond);
+		this.switchTargets.peek().forEach((value, target) -> {
+			branchTable.addTarget(value, target);
+		});
+
+		branchTable.setDefaultTarget(this.switchDefaults.peek());
+		this.builder.terminateInsertPoint(branchTable);
+
+		this.breakTargets.pop();
+		this.switchDefaults.pop();
+		this.switchTargets.pop();
+
+		this.builder.setInsertPoint(merge);
+
+		return null;
 	}
 
 	@Override
 	public Void visit(CaseStatementAst ast) {
-		throw new UnsupportedOperationException("TransformProgramVisitor does not support case statements.");
+		Expr<? extends Type> expr = ast.getExpression().accept(this);
+		BasicBlock after = this.builder.createBlock("case_" + this.tmpId++);
+
+		this.builder.terminateInsertPoint(Goto(after));
+		this.builder.setInsertPoint(after);
+
+		this.switchTargets.peek().put(expr, after);
+
+		return null;
 	}
 
 	@Override
 	public Void visit(DefaultStatementAst ast) {
-		throw new UnsupportedOperationException("TransformProgramVisitor does not support default statements.");
+		BasicBlock after = this.builder.createBlock("def_" + this.tmpId++);
+
+		this.builder.terminateInsertPoint(Goto(after));
+		this.builder.setInsertPoint(after);
+
+		this.switchDefaults.pop();
+		this.switchDefaults.push(after);
+
+		return null;
 	}
 
 	@Override
@@ -621,7 +690,7 @@ public class IrCodeGenerator implements
 			this.builder.terminateInsertPoint(Goto(target));
 			this.builder.setInsertPoint(insertPoint);
 		} catch (EmptyStackException ex) {
-			throw new TransformException("Continue statement not within a loop", ex);
+			throw new ParserException("Continue statement not within a loop", ex);
 		}
 
 		return null;
@@ -636,7 +705,7 @@ public class IrCodeGenerator implements
 			this.builder.terminateInsertPoint(Goto(target));
 			this.builder.setInsertPoint(insertPoint);
 		} catch (EmptyStackException ex) {
-			throw new TransformException("Break statement not within a loop or switch", ex);
+			throw new ParserException("Break statement not within a loop or switch", ex);
 		}
 
 		return null;
@@ -653,7 +722,7 @@ public class IrCodeGenerator implements
 			// so a single EXPR != 0 comparation will do the required cast
 			return Neq(cond, Int(0));
 		} else {
-			throw new TransformException("Branch conditionals can only be booleans or integers");
+			throw new ParserException("Branch conditionals can only be booleans or integers");
 		}
 	}
 

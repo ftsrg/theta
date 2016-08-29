@@ -7,6 +7,7 @@ import hu.bme.mit.inf.ttmc.frontend.dependency.ProgramDependency;
 import hu.bme.mit.inf.ttmc.frontend.dependency.ProgramDependency.PDGNode;
 import hu.bme.mit.inf.ttmc.frontend.ir.BasicBlock;
 import hu.bme.mit.inf.ttmc.frontend.ir.Function;
+import hu.bme.mit.inf.ttmc.frontend.ir.node.BranchTableNode;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.JumpIfNode;
 
 public class IrPrinter {
@@ -78,6 +79,12 @@ public class IrPrinter {
 				JumpIfNode terminator = (JumpIfNode) block.getTerminator();
 				sb.append(String.format("node_%s -> node_%s [label=\" True\"];\n", block.getName(), terminator.getThenTarget().getName()));
 				sb.append(String.format("node_%s -> node_%s [label=\" False\"];\n", block.getName(), terminator.getElseTarget().getName()));
+			} else if (block.getTerminator() instanceof BranchTableNode) {
+				BranchTableNode terminator = (BranchTableNode) block.getTerminator();
+				terminator.getValueEntries().forEach(e -> {
+					sb.append(String.format("node_%s -> node_%s [label=\" %s\"];\n", block.getName(), e.getTarget().getName(), e.getValue().toString()));
+				});
+				sb.append(String.format("node_%s -> node_%s [label=\" Default\"];\n", block.getName(), terminator.getDefaultTarget().getName()));
 			} else {
 				block.children().forEach(s ->
 					sb.append(String.format("node_%s -> node_%s;\n", block.getName(), s.getName()))

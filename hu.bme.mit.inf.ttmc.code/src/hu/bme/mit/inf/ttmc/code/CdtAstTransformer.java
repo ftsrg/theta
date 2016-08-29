@@ -456,7 +456,7 @@ public class CdtAstTransformer {
 			return new BinaryExpressionAst(left, right, BinaryExpressionAst.Operator.OP_LOGIC_OR);
 		}
 
-		throw new TransformException("Unknown binary operator.");
+		throw new ParserException("Unknown binary operator.");
 	}
 
 }

@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 
 import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
+import hu.bme.mit.inf.ttmc.frontend.ir.node.BranchTableNode;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.EntryNode;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.ExitNode;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.GotoNode;
@@ -148,6 +149,8 @@ public class Function {
 					((GotoNode) parent.getTerminator()).setTarget(terminator.getTarget());
 				} else if (parent.getTerminator() instanceof JumpIfNode) {
 					((JumpIfNode) parent.getTerminator()).replaceTarget(block, terminator.getTarget());
+				} else if (parent.getTerminator() instanceof BranchTableNode) {
+					((BranchTableNode) parent.getTerminator()).replaceTarget(block, terminator.getTarget());
 				}
 			}
 

@@ -1,9 +1,5 @@
 package hu.bme.mit.inf.ttmc.frontend.transform;
 
-import static hu.bme.mit.inf.ttmc.frontend.ir.node.NodeFactory.Assign;
-import static hu.bme.mit.inf.ttmc.frontend.ir.node.NodeFactory.JumpIf;
-
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,8 +20,6 @@ import hu.bme.mit.inf.ttmc.frontend.ir.node.AssertNode;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.AssignNode;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.IrNode;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.JumpIfNode;
-import hu.bme.mit.inf.ttmc.frontend.ir.node.NonTerminatorIrNode;
-import hu.bme.mit.inf.ttmc.frontend.ir.node.TerminatorIrNode;
 
 public class ConstantPropagator implements FunctionTransformer {
 

@@ -16,7 +16,7 @@ class Application {
 	public static void main(String[] args)
 			throws CoreException, FileNotFoundException, IOException, InterruptedException {
 
-		GlobalContext context = Compiler.compile("all.c");
+		GlobalContext context = Parser.parse("all.c");
 
 		context.functions().forEach(function -> {
 			System.out.println("===============" + function.getName() + "===============");
