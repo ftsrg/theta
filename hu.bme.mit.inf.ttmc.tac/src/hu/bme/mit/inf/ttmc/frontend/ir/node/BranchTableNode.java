@@ -86,6 +86,19 @@ public class BranchTableNode implements TerminatorIrNode {
 		return Collections.unmodifiableList(this.targets);
 	}
 
+	/**
+	 * Returns the size of the branch table, without the default path.
+	 *
+	 * @return The branch table size
+	 */
+	public int getEntryCount() {
+		return this.targets.size();
+	}
+
+	public void setCondition(Expr<? extends Type> expr) {
+		this.condition = expr;
+	}
+
 	public Expr<? extends Type> getCondition() {
 		return this.condition;
 	}
@@ -105,8 +118,7 @@ public class BranchTableNode implements TerminatorIrNode {
 
 	@Override
 	public IrNode copy() {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException("duh");
 	}
 
 	@Override

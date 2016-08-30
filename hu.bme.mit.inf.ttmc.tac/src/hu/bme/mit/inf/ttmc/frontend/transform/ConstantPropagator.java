@@ -18,6 +18,7 @@ import hu.bme.mit.inf.ttmc.frontend.ir.BasicBlock;
 import hu.bme.mit.inf.ttmc.frontend.ir.Function;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.AssertNode;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.AssignNode;
+import hu.bme.mit.inf.ttmc.frontend.ir.node.BranchTableNode;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.IrNode;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.JumpIfNode;
 
@@ -43,6 +44,7 @@ public class ConstantPropagator implements FunctionTransformer {
 
 			for (IrNode node : block.getAllNodes()) {
 				if (node instanceof AssignNode<?, ?>) {
+					@SuppressWarnings("unchecked")
 					AssignNode<? extends Type, ? extends Type> assign = (AssignNode<? extends Type, ? extends Type>) node;
 					this.transformAssign(assign, visitor);
 				} else if (node instanceof JumpIfNode) {
@@ -55,6 +57,11 @@ public class ConstantPropagator implements FunctionTransformer {
 					Expr<? extends BoolType> expr = ExprUtils.cast(assrt.getCond().accept(visitor, null), BoolType.class);
 
 					assrt.setCond(expr);
+				} else if (node instanceof BranchTableNode) {
+					BranchTableNode branch = (BranchTableNode) node;
+					Expr<? extends Type> expr = branch.getCondition().accept(visitor, null);
+
+					branch.setCondition(expr);
 				}
 			}
 		}

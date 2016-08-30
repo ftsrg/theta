@@ -124,7 +124,7 @@ public class Function {
 
 	/**
 	 * Performs a normalization pass on the function. Normalized function input is a common requirement for
-	 * most transformations and should be called after each transformation pass capable of changing the function structure.
+	 * most transformations and should be called at the end of each transformation pass capable of changing the function structure.
 	 *
 	 * A normalized function has the following properties:
 	 * <ul>
@@ -143,14 +143,15 @@ public class Function {
 		for (BasicBlock block : singleGotos) {
 			GotoNode terminator = (GotoNode) block.getTerminator();
 			List<BasicBlock> parents = new ArrayList<>(block.parents());
+			BasicBlock target = terminator.getTarget();
 
 			for (BasicBlock parent : parents) {
 				if (parent.getTerminator() instanceof GotoNode) {
-					((GotoNode) parent.getTerminator()).setTarget(terminator.getTarget());
+					((GotoNode) parent.getTerminator()).setTarget(target);
 				} else if (parent.getTerminator() instanceof JumpIfNode) {
-					((JumpIfNode) parent.getTerminator()).replaceTarget(block, terminator.getTarget());
+					((JumpIfNode) parent.getTerminator()).replaceTarget(block, target);
 				} else if (parent.getTerminator() instanceof BranchTableNode) {
-					((BranchTableNode) parent.getTerminator()).replaceTarget(block, terminator.getTarget());
+					((BranchTableNode) parent.getTerminator()).replaceTarget(block, target);
 				}
 			}
 
@@ -283,23 +284,39 @@ public class Function {
 			Optional<BasicBlock> result = this.blocksMap.values()
 				.stream()
 				.filter(b -> {
-					if (!(b.getTerminator() instanceof GotoNode)) // The node should have only one child
-						return false;
+					if (b.getTerminator() instanceof GotoNode) {
+						GotoNode term = (GotoNode) b.getTerminator();
+						if (term.getTarget() == this.exit)	// This child shouldn't be the exit node
+							return false;
 
-					GotoNode term = (GotoNode) b.getTerminator();
-					if (term.getTarget() == this.exit)	// This child shouldn't be the exit node
-						return false;
+						// And this block should be the child's only parent
+						return term.getTarget().parents.size() == 1;
+					} else if (b.getTerminator() instanceof BranchTableNode) {
+						BranchTableNode branch = (BranchTableNode) b.getTerminator();
+						if (branch.getEntryCount() != 0) // The switch statement has only a default branch
+							return false;
 
-					return term.getTarget().parents.size() == 1; // And this block should be the child's only parent
+						return branch.getDefaultTarget().parents.size() == 1;
+					}
+
+					return false;
 				})
 				.findFirst();
 
 			if (result.isPresent()) {
 				BasicBlock block = result.get();
-				GotoNode terminator = (GotoNode) block.getTerminator();
-				BasicBlock child = terminator.getTarget();
-				TerminatorIrNode childTerm = child.getTerminator();
+				BasicBlock child;
+				if (block.getTerminator() instanceof GotoNode) {
+					GotoNode terminator = (GotoNode) block.getTerminator();
+					child = terminator.getTarget();
+				} else if (block.getTerminator() instanceof BranchTableNode) {
+					BranchTableNode terminator = (BranchTableNode) block.getTerminator();
+					child = terminator.getDefaultTarget();
+				} else {
+					throw new AssertionError("Invalid terminator class");
+				}
 
+				TerminatorIrNode childTerm = child.getTerminator();
 				// Remove this terminator and append the child block's nodes to this block
 				block.clearTerminator();
 				child.getNodes().forEach(n -> block.addNode(n));
