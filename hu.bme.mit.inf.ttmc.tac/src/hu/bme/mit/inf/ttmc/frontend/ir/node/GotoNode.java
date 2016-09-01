@@ -47,11 +47,19 @@ public class GotoNode implements TerminatorIrNode {
 	@Override
 	public void replaceTarget(BasicBlock oldBlock, BasicBlock newBlock) {
 		if (oldBlock == this.target) {
-			oldBlock.children().forEach(child -> child.removeParent(this.parent));
+			oldBlock.removeParent(this.parent);
 			this.target = newBlock;
 			this.target.addParent(this.parent);
 		} else {
-			throw new IllegalArgumentException("Can only replace an existing block");
+			throw new IllegalArgumentException(
+				"Can only replace an existing block (current target: "
+				+ this.target.getName()
+				+ ", needed target: "
+				+ oldBlock.getName()
+				+ ", terminator parent: "
+				+ this.parent.getName()
+				+ ")"
+			);
 		}
 	}
 
