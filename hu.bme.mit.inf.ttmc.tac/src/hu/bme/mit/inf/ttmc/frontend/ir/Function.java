@@ -41,6 +41,8 @@ public class Function {
 	private EntryNode entryNode;
 	private ExitNode exitNode;
 
+	private int copyId = 0;
+
 	public Function(String name, Type type) {
 		this.name = name;
 		this.type = type;
@@ -88,6 +90,16 @@ public class Function {
 		func.setExitBlock(newBlocks.get(this.exit));
 
 		return func;
+	}
+
+	public BasicBlock copyBlock(BasicBlock block) {
+		BasicBlock copy = this.createBlock(block.getName() + "_cpy" + this.copyId++);
+
+		for (NonTerminatorIrNode node : block.getNodes()) {
+			copy.addNode(node.copy());
+		}
+
+		return copy;
 	}
 
 	public Function copy() {

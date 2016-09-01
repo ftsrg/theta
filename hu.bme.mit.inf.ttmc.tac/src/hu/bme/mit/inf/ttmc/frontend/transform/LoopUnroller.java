@@ -3,56 +3,61 @@ package hu.bme.mit.inf.ttmc.frontend.transform;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.Map.Entry;
 
-import hu.bme.mit.inf.ttmc.frontend.dependency.LoopAnalysis;
-import hu.bme.mit.inf.ttmc.frontend.dependency.LoopAnalysis.LoopInfo;
+import hu.bme.mit.inf.ttmc.frontend.dependency.LoopInfo;
 import hu.bme.mit.inf.ttmc.frontend.ir.BasicBlock;
 import hu.bme.mit.inf.ttmc.frontend.ir.Function;
-import hu.bme.mit.inf.ttmc.frontend.ir.node.GotoNode;
-import hu.bme.mit.inf.ttmc.frontend.ir.node.JumpIfNode;
-import hu.bme.mit.inf.ttmc.frontend.ir.node.NodeFactory;
-import hu.bme.mit.inf.ttmc.frontend.ir.node.TerminatorIrNode;
 
-public class LoopUnroller implements FunctionTransformer {
+public class LoopUnroller {
 
-	private int depth;
 	private int copyId = 0;
 
-	public LoopUnroller(int depth) {
-		this.depth = depth;
-	}
+	public void unroll(LoopInfo loop, int depth) {
+		BasicBlock header = loop.getHeader();
+		List<BasicBlock> blocks = loop.getBlocks();
+		Function function = header.getFunction();
 
-	@Override
-	public void transform(Function function) {
-		List<LoopInfo> loops = LoopAnalysis.findLoops(function)
+		Map<BasicBlock, BasicBlock> mapping = new HashMap<>();
+		blocks.forEach(block -> {
+			BasicBlock copy = function.copyBlock(block);
+			copy.terminate(block.getTerminator().copy());
+
+			mapping.put(block, copy);
+		});
+
+		/*
+		 * Rewire header parents into the header copy
+		 */
+		BasicBlock headerCopy = mapping.get(header);
+		header.parents()
 			.stream()
-			.filter(l -> l.head.getTerminator() instanceof JumpIfNode)
-			.collect(Collectors.toList());
+			.filter(parent -> !blocks.contains(parent))
+			.filter(parent -> !mapping.containsValue(parent))
+			.forEach(parent -> parent.getTerminator().replaceTarget(header, headerCopy));
 
-		for (LoopInfo loop : loops) {
-			Map<BasicBlock, BasicBlock> loopBlocks = new HashMap<>();
-			BasicBlock head = loop.head;
-			JumpIfNode headBranch = (JumpIfNode) head.getTerminator();
-			BasicBlock headCopy = function.createBlock(head.getName() + "_unrolled_" + this.copyId++);
+		/*
+		 * Rewire copy terminators into the appropiate targets.
+		 * 	- All loop body nodes need to be rewired to their corresponding copy
+		 *  - All loop exits must point to their original locations
+		 *  - Back edges need to point to the original loop header
+		 */
+		for (Entry<BasicBlock, BasicBlock> entry : mapping.entrySet()) {
+			BasicBlock orig = entry.getKey();
+			BasicBlock copy = entry.getValue();
 
-			head.parents().forEach(parent -> {
-				// Rewire the parent terminators into this block
-				TerminatorIrNode pTerm = parent.getTerminator();
-				if (pTerm instanceof GotoNode) {
-					((GotoNode) pTerm).setTarget(headCopy);
-				} else if (pTerm instanceof JumpIfNode) {
-					JumpIfNode pBranch = (JumpIfNode) pTerm;
-					if (pBranch.getThenTarget() == head) {
-						pBranch.setThenTarget(headCopy);
-					} else {
-						pBranch.setElseTarget(headCopy);
-					}
- 				}
-			});
+			for (BasicBlock child : orig.children()) {
+				if (child == header)
+					continue;
 
-			headCopy.terminate(NodeFactory.JumpIf(headBranch.getCond(), head, headBranch.getElseTarget()));
+				BasicBlock childCopy = mapping.get(child);
+				if (childCopy != null) {
+					copy.getTerminator().replaceTarget(child, childCopy);
+				}
+			}
 		}
+
+
 
 	}
 

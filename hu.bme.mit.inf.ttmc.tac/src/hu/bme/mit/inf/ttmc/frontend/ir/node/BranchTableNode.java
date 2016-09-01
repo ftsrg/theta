@@ -66,6 +66,7 @@ public class BranchTableNode implements TerminatorIrNode {
 			.orElseThrow(() -> new RuntimeException("The target " + target.getName() + " was not found in the branch table."));
 	}
 
+	@Override
 	public void replaceTarget(BasicBlock oldTarget, BasicBlock newTarget) {
 		if (oldTarget == this.defaultTarget) {
 			this.defaultTarget.removeParent(this.parent);
@@ -117,7 +118,7 @@ public class BranchTableNode implements TerminatorIrNode {
 	}
 
 	@Override
-	public IrNode copy() {
+	public TerminatorIrNode copy() {
 		throw new UnsupportedOperationException("duh");
 	}
 

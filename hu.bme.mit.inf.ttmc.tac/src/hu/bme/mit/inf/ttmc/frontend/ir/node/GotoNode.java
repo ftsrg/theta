@@ -15,7 +15,7 @@ public class GotoNode implements TerminatorIrNode {
 	}
 
 	@Override
-	public IrNode copy() {
+	public TerminatorIrNode copy() {
 		return new GotoNode(this.target);
 	}
 
@@ -44,6 +44,16 @@ public class GotoNode implements TerminatorIrNode {
 		return this.getLabel();
 	}
 
+	@Override
+	public void replaceTarget(BasicBlock oldBlock, BasicBlock newBlock) {
+		if (oldBlock == this.target) {
+			oldBlock.children().forEach(child -> child.removeParent(this.parent));
+			this.target = newBlock;
+			this.target.addParent(this.parent);
+		} else {
+			throw new IllegalArgumentException("Can only replace an existing block");
+		}
+	}
 
 	@Override
 	public void setParentBlock(BasicBlock block) {

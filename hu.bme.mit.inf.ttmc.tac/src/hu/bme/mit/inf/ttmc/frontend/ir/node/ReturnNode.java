@@ -17,7 +17,7 @@ public class ReturnNode implements TerminatorIrNode {
 	}
 
 	@Override
-	public IrNode copy() {
+	public TerminatorIrNode copy() {
 		return new ReturnNode(this.expr);
 	}
 
@@ -43,6 +43,12 @@ public class ReturnNode implements TerminatorIrNode {
 	@Override
 	public BasicBlock getParentBlock() {
 		return this.parent;
+	}
+
+	@Override
+	public void replaceTarget(BasicBlock oldBlock, BasicBlock newBlock) {
+		throw new UnsupportedOperationException("Cannot replace an exit block");
+
 	}
 
 }

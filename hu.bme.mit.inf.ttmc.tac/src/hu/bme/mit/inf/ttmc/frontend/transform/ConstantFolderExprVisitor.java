@@ -22,6 +22,7 @@ import hu.bme.mit.inf.ttmc.core.expr.AddExpr;
 import hu.bme.mit.inf.ttmc.core.expr.AndExpr;
 import hu.bme.mit.inf.ttmc.core.expr.ArrayReadExpr;
 import hu.bme.mit.inf.ttmc.core.expr.ArrayWriteExpr;
+import hu.bme.mit.inf.ttmc.core.expr.BoolLitExpr;
 import hu.bme.mit.inf.ttmc.core.expr.ConstRefExpr;
 import hu.bme.mit.inf.ttmc.core.expr.EqExpr;
 import hu.bme.mit.inf.ttmc.core.expr.ExistsExpr;
@@ -286,6 +287,9 @@ public class ConstantFolderExprVisitor implements VarRefExprVisitor<Void, Expr<?
 		for (Expr<? extends Type> s : expr.getOps()) {
 			Expr<? extends Type> res = s.accept(this, param);
 			if (res instanceof LitExpr<?>) {
+				if (((IntLitExpr) res).getValue() == 0) // Ignore zeros
+					continue;
+
 				constCount++;
 			}
 			allOps.add(ExprUtils.cast(res, ClosedUnderAdd.class));
@@ -301,6 +305,10 @@ public class ConstantFolderExprVisitor implements VarRefExprVisitor<Void, Expr<?
 			return Int(sum);
 		}
 
+		if (allOps.size() == 1) {
+			return allOps.get(0);
+		}
+
 		return Add(allOps);
 	}
 
@@ -313,6 +321,9 @@ public class ConstantFolderExprVisitor implements VarRefExprVisitor<Void, Expr<?
 		for (Expr<? extends Type> s : expr.getOps()) {
 			Expr<? extends Type> res = s.accept(this, param);
 			if (res instanceof LitExpr<?>) {
+				if (((IntLitExpr) res).getValue() == 0)
+					return Int(0); // multiplying anything with zero results is zero
+
 				constCount++;
 			}
 			allOps.add(ExprUtils.cast(res, ClosedUnderMul.class));
@@ -326,6 +337,10 @@ public class ConstantFolderExprVisitor implements VarRefExprVisitor<Void, Expr<?
 			}
 
 			return Int(sum);
+		}
+
+		if (allOps.size() == 1) {
+			return allOps.get(0);
 		}
 
 		return Mul(allOps);

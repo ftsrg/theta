@@ -21,7 +21,7 @@ public class JumpIfNode implements TerminatorIrNode {
 	}
 
 	@Override
-	public IrNode copy() {
+	public TerminatorIrNode copy() {
 		return new JumpIfNode(this.cond, this.thenTarget, this.elseTarget);
 	}
 
@@ -35,6 +35,7 @@ public class JumpIfNode implements TerminatorIrNode {
 		")";
 	}
 
+	@Override
 	public void replaceTarget(BasicBlock oldTarget, BasicBlock newTarget) {
 		if (this.thenTarget == oldTarget) {
 			this.thenTarget = newTarget;
@@ -44,6 +45,8 @@ public class JumpIfNode implements TerminatorIrNode {
 			this.elseTarget = newTarget;
 			oldTarget.removeParent(this.parent);
 			this.elseTarget.addParent(this.parent);
+		} else {
+			throw new UnsupportedOperationException("Cannot replace a nonexistant target");
 		}
 	}
 

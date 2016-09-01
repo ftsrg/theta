@@ -13,4 +13,9 @@ public interface TerminatorIrNode extends IrNode {
 	 */
 	public List<BasicBlock> getTargets();
 
+	public void replaceTarget(BasicBlock oldBlock, BasicBlock newBlock);
+
+	@Override
+	public TerminatorIrNode copy();
+
 }

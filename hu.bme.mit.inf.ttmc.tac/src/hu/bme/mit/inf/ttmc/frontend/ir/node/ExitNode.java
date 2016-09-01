@@ -10,7 +10,7 @@ public class ExitNode implements TerminatorIrNode {
 	private BasicBlock parent;
 
 	@Override
-	public IrNode copy() {
+	public TerminatorIrNode copy() {
 		return new ExitNode();
 	}
 
@@ -37,6 +37,12 @@ public class ExitNode implements TerminatorIrNode {
 	@Override
 	public String toString() {
 		return this.getLabel();
+	}
+
+	@Override
+	public void replaceTarget(BasicBlock oldBlock, BasicBlock newBlock) {
+		throw new UnsupportedOperationException("Cannot replace an exit block");
+
 	}
 
 }

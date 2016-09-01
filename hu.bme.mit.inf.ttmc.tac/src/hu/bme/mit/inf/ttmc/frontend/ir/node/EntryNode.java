@@ -19,7 +19,7 @@ public class EntryNode implements TerminatorIrNode {
         }
 
         @Override
-        public IrNode copy() {
+        public TerminatorIrNode copy() {
                 return new EntryNode(this.target);
         }
 
@@ -47,5 +47,11 @@ public class EntryNode implements TerminatorIrNode {
         public String toString() {
                 return this.getLabel();
         }
+
+		@Override
+		public void replaceTarget(BasicBlock oldBlock, BasicBlock newBlock) {
+			throw new UnsupportedOperationException("Cannot replace an entry block");
+
+		}
 
 }
