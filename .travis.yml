@@ -4,7 +4,9 @@ language: java
 jdk:
   - oraclejdk8
 install:
-  - sudo apt-get install antlr
+  - curl http://www.antlr.org/download/antlr-4.4-complete.jar > ~/antlr4.jar
+  - export CLASSPATH=".:~/antlr4.jar:$CLASSPATH"
+  - alias antlr4='java -jar ~/antlr4.jar'
 script:
   - cd hu.bme.mit.inf.theta.core
   - antlr4 CoreDsl.g4 -o src-gen/hu/bme/mit/inf/theta/core/dsl/gen -package hu.bme.mit.inf.theta.core.dsl.gen -Werror -visitor
