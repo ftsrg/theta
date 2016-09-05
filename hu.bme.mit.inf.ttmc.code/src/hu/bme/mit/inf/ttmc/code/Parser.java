@@ -1,5 +1,7 @@
 package hu.bme.mit.inf.ttmc.code;
 
+import java.util.Collections;
+
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 import org.eclipse.cdt.core.dom.ast.gnu.c.GCCLanguage;
 import org.eclipse.cdt.core.index.IIndex;
@@ -11,9 +13,17 @@ import org.eclipse.cdt.internal.core.index.CIndex;
 import org.eclipse.cdt.internal.core.parser.ParserLogService;
 import org.eclipse.core.runtime.CoreException;
 
+import hu.bme.mit.inf.ttmc.code.ast.DeclarationAst;
+import hu.bme.mit.inf.ttmc.code.ast.DeclaratorAst;
+import hu.bme.mit.inf.ttmc.code.ast.FunctionDeclaratorAst;
 import hu.bme.mit.inf.ttmc.code.ast.FunctionDefinitionAst;
 import hu.bme.mit.inf.ttmc.code.ast.TranslationUnitAst;
+import hu.bme.mit.inf.ttmc.code.ast.VarDeclarationAst;
+import hu.bme.mit.inf.ttmc.code.ast.utils.AstPrinter;
+import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.core.type.impl.Types;
+import hu.bme.mit.inf.ttmc.formalism.common.decl.ProcDecl;
+import hu.bme.mit.inf.ttmc.formalism.common.decl.impl.Decls2;
 import hu.bme.mit.inf.ttmc.frontend.ir.Function;
 import hu.bme.mit.inf.ttmc.frontend.ir.GlobalContext;
 
@@ -23,17 +33,36 @@ public class Parser {
 		TranslationUnitAst root = createAst(filename);
 		GlobalContext context = new GlobalContext();
 
-		root.getDeclarations().forEach(decl -> {
+		for (DeclarationAst decl : root.getDeclarations()) {
 			if (decl instanceof FunctionDefinitionAst) {
 				FunctionDefinitionAst funcAst = (FunctionDefinitionAst) decl;
 				Function func = new Function(funcAst.getName(), Types.Int());
 
+				// Store this declaration in the symbol table
+				ProcDecl<? extends Type> proc = Decls2.Proc(func.getName(), Collections.emptyList(), Types.Int());
+				context.addFunction(func, proc);
+				context.getSymbolTable().put(func.getName(), proc);
+
 				IrCodeGenerator codegen = new IrCodeGenerator(context, func);
 				codegen.generate(funcAst);
+			} else if (decl instanceof VarDeclarationAst) {
+				// It may be a global variable or a function declaration
+				for (DeclaratorAst declarator : ((VarDeclarationAst) decl).getDeclarators()) {
+					if (declarator instanceof FunctionDeclaratorAst) {
+						FunctionDeclaratorAst funcDeclarator = (FunctionDeclaratorAst) declarator;
 
-				context.addFunction(func);
+						Function func = new Function(funcDeclarator.getName(), Types.Int());
+
+						ProcDecl<? extends Type> proc = Decls2.Proc(funcDeclarator.getName(), Collections.emptyList(), Types.Int());
+						context.addFunction(func, proc);
+						context.getSymbolTable().put(func.getName(), proc);
+					} else {
+						// TODO: Treat it as a global variable
+						throw new UnsupportedOperationException("Global variables are not supported");
+					}
+				}
 			}
-		});
+		}
 
 		return context;
 	}
@@ -45,6 +74,10 @@ public class Parser {
 			IASTTranslationUnit cdtAst = parseFile(filename);
 			// Transform the CDT representation into our custom AST
 			TranslationUnitAst root = CdtAstTransformer.transform(cdtAst);
+
+			System.out.println("======AST=======");
+			System.out.println(AstPrinter.toGraphvizString(root));
+
 			return root;
 		} catch (CoreException e) {
 			throw new ParserException("Error occured during transform.", e);

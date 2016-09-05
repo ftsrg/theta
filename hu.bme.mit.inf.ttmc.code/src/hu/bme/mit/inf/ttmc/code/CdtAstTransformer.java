@@ -83,34 +83,60 @@ public class CdtAstTransformer {
 	public static TranslationUnitAst transform(IASTTranslationUnit ast) {
 		List<DeclarationAst> functions = new ArrayList<>();
 
-		for (IASTNode child : ast.getChildren()) {
-			if (child instanceof IASTFunctionDefinition) {
-				functions.add(transformFunction((IASTFunctionDefinition) child));
-			}
+		for (IASTDeclaration child : ast.getDeclarations()) {
+			functions.add(transformDeclaration(child));
 		}
 
 		return new TranslationUnitAst(functions);
 	}
 
-	public static FunctionDefinitionAst transformFunction(IASTFunctionDefinition ast) {
-		IASTFunctionDeclarator decl = ast.getDeclarator();
-		String name = decl.getName().toString();
-		List<ParameterDeclarationAst> params = new ArrayList<>();
+	public static DeclarationAst transformDeclaration(IASTDeclaration ast) {
+		if (ast instanceof IASTSimpleDeclaration) {
+			IASTSimpleDeclaration varDecl = (IASTSimpleDeclaration) ast;
+			IASTDeclSpecifier spec = varDecl.getDeclSpecifier();
 
-		if (decl instanceof IASTStandardFunctionDeclarator) {
-			IASTParameterDeclaration[] paramDecls = ((IASTStandardFunctionDeclarator) decl).getParameters();
-			for (IASTParameterDeclaration pd : paramDecls) {
-				params.add(new ParameterDeclarationAst(transformDeclSpecifier(pd.getDeclSpecifier()), transformDeclarator(pd.getDeclarator())));
+			DeclarationSpecifierAst declSpec = transformDeclSpecifier(spec);
+
+			List<DeclaratorAst> declarators = new ArrayList<>();
+			for (IASTDeclarator declarator : varDecl.getDeclarators()) {
+				DeclaratorAst declaratorRes = transformDeclarator(declarator);
+				declarators.add(declaratorRes);
 			}
+
+			return new VarDeclarationAst(declSpec, declarators);
+		} else if (ast instanceof IASTFunctionDefinition) {
+			return transformFunctionDefinition((IASTFunctionDefinition) ast);
+		} else {
+			throw new UnsupportedOperationException("Unsupported declaration type: " + ast.getClass());
 		}
 
-		FunctionDeclaratorAst funcDeclarator = new FunctionDeclaratorAst(name, params);
+	}
 
+	public static FunctionDefinitionAst transformFunctionDefinition(IASTFunctionDefinition ast) {
+		IASTFunctionDeclarator decl = ast.getDeclarator();
+		String name = decl.getName().toString();
+
+		FunctionDeclaratorAst funcDeclarator = transformFunctionDeclarator(decl);
 		CompoundStatementAst body = transformCompoundStatement((IASTCompoundStatement)ast.getBody());
-
 		DeclarationSpecifierAst spec = transformDeclSpecifier(ast.getDeclSpecifier());
 
 		return new FunctionDefinitionAst(name, spec, funcDeclarator, body);
+	}
+
+	private static FunctionDeclaratorAst transformFunctionDeclarator(IASTFunctionDeclarator ast) {
+		String name = ast.getName().toString();
+		List<ParameterDeclarationAst> params = new ArrayList<>();
+
+		if (ast instanceof IASTStandardFunctionDeclarator) {
+			IASTParameterDeclaration[] paramDecls = ((IASTStandardFunctionDeclarator) ast).getParameters();
+			for (IASTParameterDeclaration pd : paramDecls) {
+				params.add(new ParameterDeclarationAst(transformDeclSpecifier(pd.getDeclSpecifier()), transformDeclarator(pd.getDeclarator())));
+			}
+		} else {
+			throw new UnsupportedOperationException("Unsupported function declarator");
+		}
+
+		return new FunctionDeclaratorAst(name, params);
 	}
 
 	private static StatementAst transformStatement(IASTStatement ast) {
@@ -226,39 +252,9 @@ public class CdtAstTransformer {
 	private static DeclarationStatementAst transformDeclarationStatement(IASTDeclarationStatement ast) {
 		IASTDeclaration decl = ast.getDeclaration();
 
-		if (decl instanceof IASTSimpleDeclaration) {
-			IASTSimpleDeclaration varDecl = (IASTSimpleDeclaration) decl;
-			IASTDeclSpecifier spec = varDecl.getDeclSpecifier();
+		DeclarationAst declaration = transformDeclaration(decl);
 
-			DeclarationSpecifierAst declSpec = transformDeclSpecifier(spec);
-
-			List<DeclaratorAst> declarators = new ArrayList<>();
-			for (IASTDeclarator declarator : varDecl.getDeclarators()) {
-				String name = declarator.getName().toString();
-				IASTInitializer init = declarator.getInitializer();
-
-				if (init == null) {
-					InitDeclaratorAst declAst = new InitDeclaratorAst(name);
-					declarators.add(declAst);
-				} else if (init instanceof IASTEqualsInitializer) {
-					IASTInitializerClause clause = ((IASTEqualsInitializer) init).getInitializerClause();
-					if (clause instanceof IASTExpression) {
-						IASTExpression exprAst = (IASTExpression) clause;
-
-						InitDeclaratorAst declAst = new InitDeclaratorAst(name, new AssignmentInitializerAst(transformExpression(exprAst)));
-						declarators.add(declAst);
-					} else {
-						throw new UnsupportedOperationException("Only assignment initializators are supported");
-					}
-				} else {
-					throw new UnsupportedOperationException();
-				}
-			}
-
-			return new DeclarationStatementAst(new VarDeclarationAst(declSpec, declarators));
-		}
-
-		return null;
+		return new DeclarationStatementAst(declaration);
 	}
 
 	private static DeclarationSpecifierAst transformDeclSpecifier(IASTDeclSpecifier spec) {
@@ -299,10 +295,28 @@ public class CdtAstTransformer {
 		return new DeclarationSpecifierAst(storage, type, func);
 	}
 
-	private static InitDeclaratorAst transformDeclarator(IASTDeclarator ast) {
-		String name = ast.getName().toString();
+	private static DeclaratorAst transformDeclarator(IASTDeclarator ast) {
+		if (ast instanceof IASTFunctionDeclarator) {
+			return transformFunctionDeclarator((IASTFunctionDeclarator) ast);
+		} else {
+			String name = ast.getName().toString();
+			IASTInitializer init = ast.getInitializer();
 
-		return new InitDeclaratorAst(name);
+			if (init == null) {
+				return new InitDeclaratorAst(name);
+			} else if (init instanceof IASTEqualsInitializer) {
+				IASTInitializerClause clause = ((IASTEqualsInitializer) init).getInitializerClause();
+				if (clause instanceof IASTExpression) {
+					IASTExpression exprAst = (IASTExpression) clause;
+
+					return new InitDeclaratorAst(name, new AssignmentInitializerAst(transformExpression(exprAst)));
+				} else {
+					throw new UnsupportedOperationException("Only assignment initializators are supported");
+				}
+			} else {
+				throw new UnsupportedOperationException("Unsupported initializer: " + init.getClass().getName());
+			}
+		}
 	}
 
 	private static ExpressionStatementAst transformExpressionStatement(IASTExpressionStatement ast) {

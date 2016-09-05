@@ -1,4 +1,4 @@
-package hu.bme.mit.inf.ttmc.code.util;
+package hu.bme.mit.inf.ttmc.frontend.ir.utils;
 
 import java.util.HashMap;
 import java.util.NoSuchElementException;

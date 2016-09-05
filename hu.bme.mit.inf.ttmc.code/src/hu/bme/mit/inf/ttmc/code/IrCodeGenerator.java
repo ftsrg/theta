@@ -61,7 +61,6 @@ import hu.bme.mit.inf.ttmc.code.ast.VarDeclarationAst;
 import hu.bme.mit.inf.ttmc.code.ast.WhileStatementAst;
 import hu.bme.mit.inf.ttmc.code.ast.visitor.ExpressionVisitor;
 import hu.bme.mit.inf.ttmc.code.ast.visitor.StatementVisitor;
-import hu.bme.mit.inf.ttmc.code.util.SymbolTable;
 import hu.bme.mit.inf.ttmc.core.decl.Decl;
 import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.type.BoolType;
@@ -73,6 +72,7 @@ import hu.bme.mit.inf.ttmc.core.type.closure.ClosedUnderMul;
 import hu.bme.mit.inf.ttmc.core.type.closure.ClosedUnderNeg;
 import hu.bme.mit.inf.ttmc.core.type.closure.ClosedUnderSub;
 import hu.bme.mit.inf.ttmc.core.utils.impl.ExprUtils;
+import hu.bme.mit.inf.ttmc.formalism.common.decl.ProcDecl;
 import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.VarRefExpr;
 import hu.bme.mit.inf.ttmc.frontend.ir.BasicBlock;
@@ -82,13 +82,13 @@ import hu.bme.mit.inf.ttmc.frontend.ir.InstructionBuilder;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.BranchTableNode;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.EntryNode;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.GotoNode;
+import hu.bme.mit.inf.ttmc.frontend.ir.utils.SymbolTable;
 
 public class IrCodeGenerator implements
 	ExpressionVisitor<Expr<? extends Type>>,
 	StatementVisitor<Void>
 {
 
-	private final SymbolTable<Decl<? extends Type, ?>> symbols = new SymbolTable<>();
 	private final InstructionBuilder builder;
 	private final GlobalContext context;
 
@@ -342,15 +342,18 @@ public class IrCodeGenerator implements
 
 	@Override
 	public Expr<? extends Type> visit(NameExpressionAst ast) {
-		if (!this.symbols.contains(ast.getName()))
+		if (!this.context.getSymbolTable().contains(ast.getName()))
 			throw new ParserException(String.format("Use of undeclared identifier '%s'.", ast.getName()));
 
-		return this.symbols.get(ast.getName()).getRef();
+		return this.context.getSymbolTable().get(ast.getName()).getRef();
 	}
 
 	@Override
 	public Expr<? extends Type> visit(FunctionCallExpressionAst ast) {
-		throw new AssertionError("TODO: Function call");
+		if (!this.context.getSymbolTable().contains(ast.getName()))
+			throw new ParserException(String.format("Use of undeclared identifier '%s'.", ast.getName()));
+
+		return this.context.getSymbolTable().get(ast.getName()).getRef();
 	}
 
 	@Override
@@ -406,11 +409,11 @@ public class IrCodeGenerator implements
 	@Override
 	public Void visit(CompoundStatementAst ast) {
 
-		this.symbols.pushScope();
+		this.context.getSymbolTable().pushScope();
 		for (StatementAst stmt : ast.getStatements()) {
 			stmt.accept(this);
 		}
-		this.symbols.popScope();
+		this.context.getSymbolTable().popScope();
 
 		return null;
 	}
@@ -426,14 +429,14 @@ public class IrCodeGenerator implements
 				String name = declarator.getName();
 
 				VarDecl<? extends Type> var;
-				if (this.symbols.currentScopeContains(name)) { // A variable was redeclared in the current scope
+				if (this.context.getSymbolTable().currentScopeContains(name)) { // A variable was redeclared in the current scope
 					throw new ParserException(String.format("Cannot redeclare variable '%s'.", name));
-				} else if (this.symbols.contains(name)) { // The variable is declared in an outer scope, we need to override it for the current one
+				} else if (this.context.getSymbolTable().contains(name)) { // The variable is declared in an outer scope, we need to override it for the current one
 					var = Var(name + "__conf" + this.tmpId++, Int());
-					this.symbols.put(name, var); // The expressions will still reference this tmp variable by the original name, so we must store it with that.
+					this.context.getSymbolTable().put(name, var); // The expressions will still reference this tmp variable by the original name, so we must store it with that.
 				} else {
 					var = Var(name, Int());
-					this.symbols.put(name, var);
+					this.context.getSymbolTable().put(name, var);
 				}
 
 				if (declarator instanceof InitDeclaratorAst) {

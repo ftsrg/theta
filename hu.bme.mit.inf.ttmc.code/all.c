@@ -1,31 +1,44 @@
+#include <assert.h>
+
+extern int nondet();
+
 int main()
 {
-	int sum = 0;
-	int i = 0;
-	int x = 1;
+	int sum = 0, i = 0, x = 2;
 
-	while (i < 11) {
-		sum = sum + i;
-		i = i + 1;
-		x = x * 2;
-	}
+	int y = nondet();
 
-	if (sum == 0) {
-		sum = 10;
+	if (x == 0) {
+		i = 1;
 	} else {
-		x = 30;
-		if (i < 10) {
-			x = x + i;
-		} else {
-			x = x + 2;
-		}
-		x = x + 40;
+		i = 3;
 	}
 
-	//assert(x != 0);
-	int u;
+	if (i == 0) {
+		sum = 1;
+	} else {
+		sum = 3;
+	}
 
-	assert(u != 0);
+	switch (x) {
+	case 1:
+		sum = 1;
+		break;
+	case 2:
+		sum = 2;
+	case 3:
+		i = 0;
+		break;
+	case 4:
+	case 5:
+		sum = 4;
+		break;
+	default:
+		sum = 10;
+	}
+
+	assert(i != 0);
+	assert(sum != 0);
 
 	return 0;
 }
