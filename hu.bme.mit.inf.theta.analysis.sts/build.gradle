@@ -1,0 +1,14 @@
+dependencies {
+  compile project(':hu.bme.mit.inf.theta.common')
+  compile project(':hu.bme.mit.inf.theta.core')
+  compile project(':hu.bme.mit.inf.theta.formalism')
+  compile project(':hu.bme.mit.inf.theta.solver')
+  compile project(':hu.bme.mit.inf.theta.solver.z3')
+  compile project(':hu.bme.mit.inf.theta.analysis')
+}
+
+sourceSets {
+  main {
+    java { srcDir 'src' }
+  }
+}
