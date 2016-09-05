@@ -8,7 +8,9 @@ install:
 script:
   - cd hu.bme.mit.inf.theta.core
   - antlr4 CoreDsl.g4 -o src-gen/hu/bme/mit/inf/theta/core/dsl/gen -package hu.bme.mit.inf.theta.core.dsl.gen -Werror -visitor
+  - cd ..
   - hu.bme.mit.inf.theta.formalism
   - antlr4 TcfaDsl.g4 -o src-gen/hu/bme/mit/inf/theta/formalism/tcfa/dsl/gen -package hu.bme.mit.inf.theta.formalism.tcfa.dsl.gen -Werror -visitor
+  - cd ..
   - ./gradlew assemble
   - ./gradlew check --continue
