@@ -13,15 +13,15 @@ import hu.bme.mit.inf.ttmc.frontend.ir.BasicBlock;
 import hu.bme.mit.inf.ttmc.frontend.ir.Function;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.IrNode;
 
-public class ProgramDependency {
+public final class ProgramDependency {
 
 	public static class PDGNode {
-		public IrNode node;
-		public List<PDGNode> controlChildren = new ArrayList<>();
-		public List<PDGNode> controlParents = new ArrayList<>();
+		private final IrNode node;
+		private final List<PDGNode> controlChildren = new ArrayList<>();
+		private final List<PDGNode> controlParents = new ArrayList<>();
 
-		public List<PDGNode> flowParents = new ArrayList<>();
-		public List<PDGNode> flowChildren = new ArrayList<>();
+		private final List<PDGNode> flowParents = new ArrayList<>();
+		private final List<PDGNode> flowChildren = new ArrayList<>();
 
 		public PDGNode(IrNode node) {
 			this.node = node;
@@ -35,20 +35,40 @@ public class ProgramDependency {
 			return parents;
 		}
 
+		public IrNode getNode() {
+			return node;
+		}
+
+		public List<PDGNode> getControlChildren() {
+			return controlChildren;
+		}
+
+		public List<PDGNode> getControlParents() {
+			return controlParents;
+		}
+
+		public List<PDGNode> getFlowParents() {
+			return flowParents;
+		}
+
+		public List<PDGNode> getFlowChildren() {
+			return flowChildren;
+		}
+
 		@Override
 		public String toString() {
 			return node.getLabel();
 		}
 	}
 
-	private DominatorTree pdt;
-	private Function function;
-	private Map<IrNode, PDGNode> nodes;
-	private PDGNode entry;
+	private final Function function;
+	private final Map<IrNode, PDGNode> nodes;
+	private final PDGNode entry;
 
-	public ProgramDependency(Map<IrNode, PDGNode> nodes, PDGNode entry) {
+	private ProgramDependency(Map<IrNode, PDGNode> nodes, PDGNode entry, Function function) {
 		this.nodes = nodes;
 		this.entry = entry;
+		this.function = function;
 	}
 
 	public PDGNode findNode(IrNode node) {
@@ -119,7 +139,6 @@ public class ProgramDependency {
 		controlDeps.forEach((BasicBlock block, Set<BasicBlock> deps) -> {
 			// If B is control dependant on A, all of A's nodes are control dependant on B's terminator
 			PDGNode terminator = nodes.get(block.getTerminator());
-			List<PDGNode> dependantNodes = new ArrayList<>();
 			deps.forEach(dep -> {
 				List<PDGNode> pdgNodes = dep.getAllNodes().stream().map(n -> nodes.get(n)).collect(Collectors.toList());
 				pdgNodes.forEach(p -> {
@@ -149,15 +168,11 @@ public class ProgramDependency {
 		}
 
 
-		return new ProgramDependency(nodes, entry);
+		return new ProgramDependency(nodes, entry, function);
 	}
 
 	public Collection<PDGNode> getNodes() {
 		return nodes.values();
-	}
-
-	public void setNodes(Map<IrNode, PDGNode> nodes) {
-		this.nodes = nodes;
 	}
 
 	public PDGNode getEntry() {

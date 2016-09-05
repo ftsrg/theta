@@ -39,11 +39,11 @@ public class IrPrinter {
 
 		int id = 0;
 		for (PDGNode n : pdg.getNodes()) {
-			sb.append(String.format("node_%s [label=\"%s\"];\n", System.identityHashCode(n), n.node.getLabel()));
-			n.controlChildren.forEach(c -> {
+			sb.append(String.format("node_%s [label=\"%s\"];\n", System.identityHashCode(n), n.getNode().getLabel()));
+			n.getControlChildren().forEach(c -> {
 				sb.append(String.format("node_%s -> node_%s [color=\"blue\"];\n", System.identityHashCode(n), System.identityHashCode(c)));
 			});
-			n.flowChildren.forEach(c -> {
+			n.getFlowChildren().forEach(c -> {
 				sb.append(String.format("node_%s -> node_%s [color=\"green\"];\n", System.identityHashCode(n), System.identityHashCode(c)));
 			});
 		}

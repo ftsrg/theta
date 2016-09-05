@@ -2,14 +2,21 @@ package hu.bme.mit.inf.ttmc.code;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.List;
 
 import org.eclipse.core.runtime.CoreException;
 
 import hu.bme.mit.inf.ttmc.formalism.cfa.CFA;
 import hu.bme.mit.inf.ttmc.formalism.utils.impl.CFAPrinter;
 import hu.bme.mit.inf.ttmc.frontend.cfa.FunctionToCFATransformer;
+import hu.bme.mit.inf.ttmc.frontend.dependency.ControlDependencyGraph;
+import hu.bme.mit.inf.ttmc.frontend.dependency.DominatorTree;
+import hu.bme.mit.inf.ttmc.frontend.dependency.LoopInfo;
 import hu.bme.mit.inf.ttmc.frontend.ir.GlobalContext;
 import hu.bme.mit.inf.ttmc.frontend.ir.utils.IrPrinter;
+import hu.bme.mit.inf.ttmc.frontend.transform.ConstantPropagator;
+import hu.bme.mit.inf.ttmc.frontend.transform.DeadBranchEliminator;
+import hu.bme.mit.inf.ttmc.frontend.transform.LoopUnroller;
 
 class Application {
 
@@ -22,13 +29,24 @@ class Application {
 			System.out.println("===============" + function.getName() + "===============");
 			System.out.println("------" + "CFG" + "------");
 			System.out.println(IrPrinter.toGraphvizString(function));
-
+/*
+			System.out.println("------" + "const prop" + "------");
+			ConstantPropagator constProp = new ConstantPropagator();
+			constProp.transform(function);
+			System.out.println(IrPrinter.toGraphvizString(function));
+			System.out.println("------" + "dead branch" + "------");
+			DeadBranchEliminator dead = new DeadBranchEliminator();
+			dead.transform(function);
+			System.out.println(IrPrinter.toGraphvizString(function));
+*/
 			System.out.println("------" + "CFA SBE" + "------");
 			CFA cfa = FunctionToCFATransformer.createSBE(function);
 			System.out.println(CFAPrinter.toGraphvizSting(cfa));
 			System.out.println("------" + "CFA LBE" + "------");
 			cfa = FunctionToCFATransformer.createLBE(function);
 			System.out.println(CFAPrinter.toGraphvizSting(cfa));
+
+
 
 //
 //			System.out.println("------" + "Constant prop" + "------");

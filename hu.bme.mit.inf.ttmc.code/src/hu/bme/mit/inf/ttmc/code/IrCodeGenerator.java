@@ -77,6 +77,7 @@ import hu.bme.mit.inf.ttmc.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.ttmc.formalism.common.expr.VarRefExpr;
 import hu.bme.mit.inf.ttmc.frontend.ir.BasicBlock;
 import hu.bme.mit.inf.ttmc.frontend.ir.Function;
+import hu.bme.mit.inf.ttmc.frontend.ir.GlobalContext;
 import hu.bme.mit.inf.ttmc.frontend.ir.InstructionBuilder;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.BranchTableNode;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.EntryNode;
@@ -89,6 +90,7 @@ public class IrCodeGenerator implements
 
 	private final SymbolTable<Decl<? extends Type, ?>> symbols = new SymbolTable<>();
 	private final InstructionBuilder builder;
+	private final GlobalContext context;
 
 	private final Map<String, BasicBlock> labels = new HashMap<>();
 	private final Map<String, BasicBlock> gotos = new HashMap<>();
@@ -100,8 +102,10 @@ public class IrCodeGenerator implements
 
 	private int tmpId = 0;
 
-	public IrCodeGenerator(Function function) {
+	public IrCodeGenerator(GlobalContext context, Function function) {
 		this.builder = new InstructionBuilder(function);
+		this.context = context;
+
 		BasicBlock entry = this.builder.createBlock("entry");
 
 		BasicBlock codeEntry = this.builder.createBlock("code_entry");

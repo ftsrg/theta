@@ -9,7 +9,6 @@ import java.util.stream.Collectors;
 import hu.bme.mit.inf.ttmc.frontend.dependency.LoopInfo;
 import hu.bme.mit.inf.ttmc.frontend.ir.BasicBlock;
 import hu.bme.mit.inf.ttmc.frontend.ir.Function;
-import hu.bme.mit.inf.ttmc.frontend.ir.utils.IrPrinter;
 
 public class LoopUnroller {
 

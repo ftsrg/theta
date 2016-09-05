@@ -1,11 +1,13 @@
 package hu.bme.mit.inf.ttmc.frontend.cfa;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
+import hu.bme.mit.inf.ttmc.core.expr.Expr;
 import hu.bme.mit.inf.ttmc.core.expr.impl.Exprs;
+import hu.bme.mit.inf.ttmc.core.type.BoolType;
 import hu.bme.mit.inf.ttmc.core.type.Type;
 import hu.bme.mit.inf.ttmc.core.utils.impl.ExprUtils;
 import hu.bme.mit.inf.ttmc.formalism.cfa.CFA;
@@ -17,6 +19,8 @@ import hu.bme.mit.inf.ttmc.frontend.ir.BasicBlock;
 import hu.bme.mit.inf.ttmc.frontend.ir.Function;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.AssertNode;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.AssignNode;
+import hu.bme.mit.inf.ttmc.frontend.ir.node.BranchTableNode;
+import hu.bme.mit.inf.ttmc.frontend.ir.node.BranchTableNode.BranchTableEntry;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.EntryNode;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.ExitNode;
 import hu.bme.mit.inf.ttmc.frontend.ir.node.GotoNode;
@@ -37,20 +41,22 @@ public class FunctionToCFATransformer {
 		List<BasicBlock> blocks = func.getBlocksDFS();
 		Map<BasicBlock, CFALoc> mapping = new HashMap<>();
 
-		// We only need locations for the begin, end and multiple parent blocks in LBE
-		blocks
-			.stream()
-			.filter(b -> b.parents().size() > 1)
-			.forEach(b -> mapping.put(b, cfa.createLoc()));
+		blocks.forEach(block -> mapping.put(block, cfa.createLoc()));
 
-		mapping.put(func.getEntryBlock(), cfa.getInitLoc());
-		mapping.put(func.getExitBlock(), cfa.getFinalLoc());
+		BasicBlock entry = func.getEntryBlock();
+		BasicBlock exit = func.getExitBlock();
 
-		for (Entry<BasicBlock, CFALoc> entry : mapping.entrySet()) {
-			BasicBlock block = entry.getKey();
-			CFALoc loc = entry.getValue();
+		// Replace the initial node
+		cfa.removeLoc(mapping.get(entry));
+		cfa.removeLoc(mapping.get(exit));
+		mapping.put(entry, cfa.getInitLoc());
+		mapping.put(exit, cfa.getFinalLoc());
 
+		for (BasicBlock block : blocks) {
+			CFALoc source = mapping.get(block);
 			for (BasicBlock child : block.children()) {
+				CFALoc target = mapping.get(child);
+
 			}
 		}
 
@@ -77,7 +83,7 @@ public class FunctionToCFATransformer {
 			}
 
 			// Branch nodes need a separate location on their own
-			if (block.getTerminator() instanceof JumpIfNode) {
+			if (block.getTerminator() instanceof JumpIfNode || block.getTerminator() instanceof BranchTableNode) {
 				mapping.put(block.getTerminator(), cfa.createLoc());
 			}
 		}
@@ -116,37 +122,21 @@ public class FunctionToCFATransformer {
 					CFALoc jumpTarget = mapping.get(((GotoNode) terminator).getTarget().getNodeByIndex(0));
 					createCFAEdge(cfa, last, jumpSource, jumpTarget);
 				} else if (terminator instanceof JumpIfNode) {
-					JumpIfNode branch = (JumpIfNode) terminator;
-					CFALoc branchLoc = mapping.get(branch);
-
-					// Jump to the location corresponding to the first node in each branch
-					CFALoc then = mapping.get(branch.getThenTarget().getNodeByIndex(0));
-					CFALoc elze = mapping.get(branch.getElseTarget().getNodeByIndex(0));
-
-					// Add the then and else edges with the required Assume statements
-					CFAEdge thenEdge = cfa.createEdge(branchLoc, then);
-					thenEdge.getStmts().add(Stmts.Assume(branch.getCond()));
-
-					CFAEdge elzeEdge = cfa.createEdge(branchLoc, elze);
-					elzeEdge.getStmts().add(Stmts.Assume(Exprs.Not(branch.getCond())));
-
+					CFALoc branchLoc = handleBranch(cfa, mapping, terminator);
+					// Create the last -> branch node edge.
+					// This will also annotate the edge with the statement corrseponding to the last instruction node
+					createCFAEdge(cfa, last, jumpSource, branchLoc);
+				} else if (terminator instanceof BranchTableNode) {
+					CFALoc branchLoc = handleBranchTable(cfa, mapping, terminator);
 					// Create the last -> branch node edge.
 					// This will also annotate the edge with the statement corrseponding to the last instruction node
 					createCFAEdge(cfa, last, jumpSource, branchLoc);
 				}
 			} else {
 				if (terminator instanceof JumpIfNode) {
-					JumpIfNode branch = (JumpIfNode) terminator;
-					CFALoc branchLoc = mapping.get(branch);
-
-					CFALoc then = mapping.get(branch.getThenTarget().getNodeByIndex(0));
-					CFALoc elze = mapping.get(branch.getElseTarget().getNodeByIndex(0));
-
-					CFAEdge thenEdge = cfa.createEdge(branchLoc, then);
-					thenEdge.getStmts().add(Stmts.Assume(branch.getCond()));
-
-					CFAEdge elzeEdge = cfa.createEdge(branchLoc, elze);
-					elzeEdge.getStmts().add(Stmts.Assume(Exprs.Not(branch.getCond())));
+					handleBranch(cfa, mapping, terminator);
+				} else if (terminator instanceof BranchTableNode) {
+					handleBranchTable(cfa, mapping, terminator);
 				} else if (!(terminator instanceof EntryNode) && !(terminator instanceof ExitNode)) {
 					// The goto case should be impossible for normalized CFGs, as they cannot have a block with a single goto node
 					throw new RuntimeException(String.format(
@@ -159,6 +149,47 @@ public class FunctionToCFATransformer {
 		}
 
 		return cfa;
+	}
+
+	private static CFALoc handleBranchTable(MutableCFA cfa, Map<IrNode, CFALoc> mapping, TerminatorIrNode terminator) {
+		BranchTableNode branch = (BranchTableNode) terminator;
+		CFALoc branchLoc = mapping.get(branch);
+		List<Expr<? extends BoolType>> conditions = new ArrayList<>();
+
+		for (BranchTableEntry entry : branch.getValueEntries()) {
+			Expr<? extends BoolType> cond = Exprs.Eq(branch.getCondition(), entry.getValue());
+			conditions.add(cond);
+
+			CFALoc target = mapping.get(entry.getTarget().getNodeByIndex(0));
+
+			CFAEdge edge = cfa.createEdge(branchLoc, target);
+			edge.getStmts().add(Stmts.Assume(cond));
+		}
+
+		// Create the edge to the default target
+		Expr<? extends BoolType> defaultCond = Exprs.Not(Exprs.Or(conditions));
+		CFALoc defaultTarget = mapping.get(branch.getDefaultTarget().getNodeByIndex(0));
+
+		CFAEdge edge = cfa.createEdge(branchLoc, defaultTarget);
+		edge.getStmts().add(Stmts.Assume(defaultCond));
+		return branchLoc;
+	}
+
+	private static CFALoc handleBranch(MutableCFA cfa, Map<IrNode, CFALoc> mapping, TerminatorIrNode terminator) {
+		JumpIfNode branch = (JumpIfNode) terminator;
+		CFALoc branchLoc = mapping.get(branch);
+
+		// Jump to the location corresponding to the first node in each branch
+		CFALoc then = mapping.get(branch.getThenTarget().getNodeByIndex(0));
+		CFALoc elze = mapping.get(branch.getElseTarget().getNodeByIndex(0));
+
+		// Add the then and else edges with the required Assume statements
+		CFAEdge thenEdge = cfa.createEdge(branchLoc, then);
+		thenEdge.getStmts().add(Stmts.Assume(branch.getCond()));
+
+		CFAEdge elzeEdge = cfa.createEdge(branchLoc, elze);
+		elzeEdge.getStmts().add(Stmts.Assume(Exprs.Not(branch.getCond())));
+		return branchLoc;
 	}
 
 	/**

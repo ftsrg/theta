@@ -1,6 +1,5 @@
 package hu.bme.mit.inf.ttmc.code;
 
-import org.eclipse.cdt.core.CCorePlugin;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 import org.eclipse.cdt.core.dom.ast.gnu.c.GCCLanguage;
 import org.eclipse.cdt.core.index.IIndex;
@@ -29,7 +28,7 @@ public class Parser {
 				FunctionDefinitionAst funcAst = (FunctionDefinitionAst) decl;
 				Function func = new Function(funcAst.getName(), Types.Int());
 
-				IrCodeGenerator codegen = new IrCodeGenerator(func);
+				IrCodeGenerator codegen = new IrCodeGenerator(context, func);
 				codegen.generate(funcAst);
 
 				context.addFunction(func);
