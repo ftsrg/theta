@@ -1,0 +1,15 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Tests
+Bundle-SymbolicName: hu.bme.mit.inf.theta.analysis.splittingcegar.tests
+Bundle-Version: 1.0.0.qualifier
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Require-Bundle: hu.bme.mit.inf.theta.analysis.splittingcegar,
+ org.junit,
+ hu.bme.mit.inf.theta.formalism,
+ hu.bme.mit.inf.theta.solver.z3,
+ hu.bme.mit.inf.theta.system.ui,
+ hu.bme.mit.inf.theta.core,
+ hu.bme.mit.inf.theta.system.model,
+ hu.bme.mit.inf.theta.aiger,
+ hu.bme.mit.inf.theta.common

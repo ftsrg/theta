@@ -1,0 +1,14 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Sts
+Bundle-SymbolicName: hu.bme.mit.inf.theta.analysis.sts
+Bundle-Version: 1.0.0.qualifier
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Require-Bundle: org.junit,
+ com.google.guava;bundle-version="15.0.0",
+ hu.bme.mit.inf.theta.common;bundle-version="1.0.0",
+ hu.bme.mit.inf.theta.core;bundle-version="1.0.0",
+ hu.bme.mit.inf.theta.formalism;bundle-version="1.0.0",
+ hu.bme.mit.inf.theta.solver;bundle-version="1.0.0",
+ hu.bme.mit.inf.theta.solver.z3;bundle-version="1.0.0",
+ hu.bme.mit.inf.theta.analysis;bundle-version="1.0.0"

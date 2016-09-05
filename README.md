@@ -1,2 +1,1 @@
-# ttmc
-Timed Transition Model Checker
+# theta
