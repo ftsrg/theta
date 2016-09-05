@@ -1,8 +1,0 @@
-/bin/
-/src-gen/
-/xtend-gen/
-/.antlr-generator-3.2.0-patch.jar
-
-/src/hu/bme/mit/inf/ttmc/constraint/language/*
-!/src/hu/bme/mit/inf/ttmc/constraint/language/*.xtext
-!/src/hu/bme/mit/inf/ttmc/constraint/language/*.mwe2

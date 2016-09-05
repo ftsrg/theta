@@ -1,0 +1,15 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Tcfa
+Bundle-SymbolicName: hu.bme.mit.inf.theta.analysis.tcfa
+Bundle-Version: 1.0.0.qualifier
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Require-Bundle: org.junit,
+ com.google.guava,
+ hu.bme.mit.inf.theta.common,
+ hu.bme.mit.inf.theta.core,
+ hu.bme.mit.inf.theta.formalism,
+ hu.bme.mit.inf.theta.formalism.tcfa,
+ hu.bme.mit.inf.theta.analysis,
+ hu.bme.mit.inf.theta.solver,
+ hu.bme.mit.inf.theta.solver.z3

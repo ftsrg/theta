@@ -1,0 +1,148 @@
+specification ProSigma(tSync : int, tRtMax : int) {
+	const NONE : int := 0
+	const OBJ1 : int := 1
+	const OBJ2 : int := 2
+	const OBJUP : int := 3
+	const OBJDOWN : int := 4
+	const SYNC : int := 5
+	
+	var chan : int := 0
+	
+	automaton prosigma := eth(tSync) || field(tRtMax) || control(tRtMax) || faults()
+	
+	automaton eth(tSync : int) := {
+		var sync : clock
+		
+		init loc loop { sync <= tSync }
+		
+		loop -> loop {
+			chan := SYNC;
+			sync := 0
+		}
+	}
+	
+	automaton faults := {
+		var occured : bool
+		
+		init loc loop
+		
+		loop -> loop {
+			assume not occured;
+			chan := NONE
+		}
+		
+		loop -> loop
+	}
+	
+	automaton field(tRtMax : int) := {
+		var reset : clock
+		
+		init loc wait
+		loc try { reset <= tRtMax }
+		loc conn { reset <= tRtMax }
+		
+		wait -> wait {
+			assume chan = OBJ2;
+			chan := NONE
+		}
+		
+		wait -> wait {
+			assume chan = OBJDOWN;
+			chan := NONE
+		}
+		
+		wait -> try {
+			assume chan = SYNC;
+			chan := OBJ1;
+			reset := 0
+		}
+		
+		try -> wait {
+			assume reset >= tRtMax
+		}
+		
+		try -> try {
+			assume chan = SYNC;
+			chan := OBJ1
+		}
+		
+		try -> try {
+			assume chan = OBJDOWN;
+			chan := NONE
+		}
+		
+		try -> conn {
+			assume chan = OBJ2;
+			reset := 0
+		}
+		
+		conn -> wait {
+			assume reset >= tRtMax
+		}
+		
+		conn -> conn {
+			assume chan = SYNC;
+			chan := OBJUP
+		}
+		
+		conn -> conn {
+			assume chan = OBJ2;
+			chan := NONE
+		}
+		
+		conn -> conn {
+			assume chan = OBJDOWN;
+			reset := 0
+		}
+	}
+	
+	automaton control(tRtMax : int) := {
+		var reset : clock
+		
+		init loc wait
+		loc try { reset <= tRtMax }
+		loc conn { reset <= tRtMax }
+		
+		wait -> wait {
+			assume chan = OBJUP;
+			chan := NONE
+		}
+		
+		wait -> try {
+			assume chan = OBJ1;
+			chan := OBJ2;
+			reset := 0
+		}
+		
+		try -> wait {
+			assume reset >= tRtMax
+		}
+		
+		try -> try {
+			assume chan = OBJ1;
+			chan := NONE // OBJ2
+		}
+		
+		try -> conn {
+			assume chan = OBJUP;
+			chan := OBJDOWN;
+			reset := 0
+		}
+		
+		conn -> wait {
+			assume reset >= tRtMax
+		}
+		
+		conn -> conn {
+			assume chan = OBJ1;
+			chan := NONE
+		}
+		
+		conn -> conn {
+			assume chan = OBJUP;
+			chan := OBJDOWN;
+			reset := 0
+		}
+	}
+	
+}
