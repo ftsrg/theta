@@ -44,7 +44,7 @@ public class Z3SolverManager implements SolverManager {
 	final Z3SymbolTable symbolTable;
 
 	public Z3SolverManager() {
-		z3Context = new com.microsoft.z3.InterpolationContext();
+		z3Context = com.microsoft.z3.InterpolationContext.mkContext();
 		symbolTable = new Z3SymbolTable();
 	}
 

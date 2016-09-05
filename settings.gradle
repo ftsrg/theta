@@ -1,9 +1,9 @@
 rootProject.name = 'theta'
 
 include ':hu.bme.mit.inf.theta.analysis'
-include ':hu.bme.mit.inf.theta.analysis.splittingcegar'
-include ':hu.bme.mit.inf.theta.analysis.splittingcegar.tests'
-include ':hu.bme.mit.inf.theta.analysis.splittingcegar.ui'
+//include ':hu.bme.mit.inf.theta.analysis.splittingcegar'
+//include ':hu.bme.mit.inf.theta.analysis.splittingcegar.tests'
+//include ':hu.bme.mit.inf.theta.analysis.splittingcegar.ui'
 include ':hu.bme.mit.inf.theta.analysis.sts'
 include ':hu.bme.mit.inf.theta.analysis.tcfa'
 include ':hu.bme.mit.inf.theta.common'

@@ -6,6 +6,6 @@ dependencies {
 
 sourceSets {
   main {
-    java { srcDir 'src' }
+    java { srcDirs = ['src', 'src-gen'] }
   }
 }
