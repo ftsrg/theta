@@ -1,5 +1,7 @@
 # theta
 
+[![Build Status](https://travis-ci.com/FTSRG/theta.svg?token=dduaCwDzExdmU27AvBiK&branch=master)](https://travis-ci.com/FTSRG/theta)
+
 ## Importing to Eclipse
 
 The projects are developed and tested with **Eclipse Neon**.
