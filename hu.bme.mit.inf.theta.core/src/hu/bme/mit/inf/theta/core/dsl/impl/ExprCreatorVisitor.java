@@ -126,12 +126,14 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
 			final List<ParamDecl<?>> params = createParamList(ctx.paramDecls);
 
 			checkArgument(params.size() == 1);
-			final ParamDecl<?> param = params.get(0);
+			@SuppressWarnings("unchecked")
+			final ParamDecl<Type> param = (ParamDecl<Type>) params.get(0);
 
 			push();
 
 			currentScope.declare(new DeclSymbol(param));
-			final Expr<?> result = ctx.result.accept(this);
+			@SuppressWarnings("unchecked")
+			final Expr<Type> result = (Expr<Type>) ctx.result.accept(this);
 
 			pop();
 
@@ -227,9 +229,9 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
 	@Override
 	public Expr<?> visitOrExpr(final OrExprContext ctx) {
 		if (ctx.ops.size() > 1) {
-			final Stream<Expr<? extends BoolType>> opsStream = ctx.ops.stream()
+			final Stream<Expr<? extends BoolType>> opStream = ctx.ops.stream()
 					.map(op -> cast(op.accept(this), BoolType.class));
-			final Collection<Expr<? extends BoolType>> ops = opsStream.collect(toList());
+			final Collection<Expr<? extends BoolType>> ops = opStream.collect(toList());
 			return Or(ops);
 		} else {
 			return visitChildren(ctx);
@@ -239,9 +241,9 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
 	@Override
 	public Expr<?> visitAndExpr(final AndExprContext ctx) {
 		if (ctx.ops.size() > 1) {
-			final Stream<Expr<? extends BoolType>> opsStream = ctx.ops.stream()
+			final Stream<Expr<? extends BoolType>> opStream = ctx.ops.stream()
 					.map(op -> cast(op.accept(this), BoolType.class));
-			final Collection<Expr<? extends BoolType>> ops = opsStream.collect(toList());
+			final Collection<Expr<? extends BoolType>> ops = opStream.collect(toList());
 			return And(ops);
 		} else {
 			return visitChildren(ctx);
@@ -307,7 +309,8 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
 	@Override
 	public Expr<?> visitAdditiveExpr(final AdditiveExprContext ctx) {
 		if (ctx.ops.size() > 1) {
-			final List<Expr<?>> ops = ctx.ops.stream().map(op -> op.accept(this)).collect(toList());
+			final Stream<Expr<?>> opStream = ctx.ops.stream().map(op -> op.accept(this));
+			final List<Expr<?>> ops = opStream.collect(toList());
 
 			final Expr<?> opsHead = ops.get(0);
 			final List<? extends Expr<?>> opsTail = ops.subList(1, ops.size());
@@ -376,7 +379,8 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
 	@Override
 	public Expr<?> visitMultiplicativeExpr(final MultiplicativeExprContext ctx) {
 		if (ctx.ops.size() > 1) {
-			final List<Expr<?>> ops = ctx.ops.stream().map(op -> op.accept(this)).collect(toList());
+			final Stream<Expr<?>> opStream = ctx.ops.stream().map(op -> op.accept(this));
+			final List<Expr<?>> ops = opStream.collect(toList());
 
 			final Expr<?> opsHead = ops.get(0);
 			final List<? extends Expr<?>> opsTail = ops.subList(1, ops.size());
@@ -538,7 +542,8 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
 		if (ctx.exprs == null) {
 			return Collections.emptyList();
 		} else {
-			final List<Expr<?>> exprs = ctx.exprs.stream().map(p -> p.accept(this)).collect(toList());
+			final Stream<Expr<?>> exprStream = ctx.exprs.stream().map(e -> (Expr<?>) e.accept(this));
+			final List<Expr<?>> exprs = exprStream.collect(toList());
 			return exprs;
 		}
 	}
