@@ -4,9 +4,3 @@ dependencies {
   compile project(':hu.bme.mit.inf.theta.solver')
   compile group: 'org.sosy-lab', name: 'javasmt-solver-z3', version: 'z3-4.4.1-1558-gf96cfea'
 }
-
-sourceSets {
-  main {
-    java { srcDir 'src' }
-  }
-}

@@ -4,9 +4,3 @@ dependencies {
   compile project(':hu.bme.mit.inf.theta.solver.z3')
   compile project(':hu.bme.mit.inf.theta.common')
 }
-
-sourceSets {
-  main {
-    java { srcDir 'src' }
-  }
-}
