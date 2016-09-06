@@ -24,10 +24,10 @@ public class Types2 {
 		return UNIT_TYPE;
 	}
 
-	public static <R extends Type> ProcType<R> Proc(final List<? extends Type> paramTypes, final R resultType) {
+	public static <R extends Type> ProcType<R> Proc(final List<? extends Type> paramTypes, final R returnType) {
 		checkNotNull(paramTypes);
-		checkNotNull(resultType);
-		return new ProcTypeImpl<>(paramTypes, resultType);
+		checkNotNull(returnType);
+		return new ProcTypeImpl<>(paramTypes, returnType);
 	}
 
 	public static <T extends Type> PointerType<T> Pointer(final T pointedType) {
