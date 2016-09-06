@@ -1,11 +1,13 @@
+apply plugin: 'antlr'
+
 dependencies {
+  antlr group: 'org.antlr', name: 'antlr4', version: antlrVersion
   compile project(':hu.bme.mit.inf.theta.common')
   compile project(':hu.bme.mit.inf.theta.core')
   compile project(':hu.bme.mit.inf.theta.formalism')
 }
 
-sourceSets {
-  main {
-    java { srcDirs = ['src', 'src-gen'] }
-  }
+generateGrammarSource {
+    arguments += ["-package", "hu.bme.mit.inf.theta.formalism.tcfa.dsl.gen"]
+    arguments += ["-Werror", "-visitor"]
 }
