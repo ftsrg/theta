@@ -2,8 +2,11 @@ package hu.bme.mit.inf.theta.formalism.common.decl.impl;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.inf.theta.formalism.common.type.impl.Types2.Proc;
+import static java.util.stream.Collectors.toList;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 import com.google.common.collect.ImmutableList;
 
@@ -23,6 +26,7 @@ final class ProcDeclImpl<ReturnType extends Type> implements ProcDecl<ReturnType
 	private final ReturnType returnType;
 
 	private final ProcRefExpr<ReturnType> ref;
+	private final ProcType<ReturnType> type;
 
 	private volatile int hashCode;
 
@@ -35,7 +39,16 @@ final class ProcDeclImpl<ReturnType extends Type> implements ProcDecl<ReturnType
 		this.name = name;
 		this.paramDecls = ImmutableList.copyOf(paramDecls);
 		this.returnType = returnType;
+
 		ref = new ProcRefExprImpl<>(this);
+		type = createProcType(paramDecls, returnType);
+	}
+
+	private static <ReturnType extends Type> ProcType<ReturnType> createProcType(
+			final List<? extends ParamDecl<? extends Type>> paramDecls, final ReturnType returnType) {
+		final Stream<? extends Type> paramTypeStream = paramDecls.stream().map(p -> p.getType());
+		final List<? extends Type> paramTypes = paramTypeStream.collect(toList());
+		return Proc(paramTypes, returnType);
 	}
 
 	@Override
@@ -60,8 +73,7 @@ final class ProcDeclImpl<ReturnType extends Type> implements ProcDecl<ReturnType
 
 	@Override
 	public ProcType<ReturnType> getType() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+		return type;
 	}
 
 	@Override
