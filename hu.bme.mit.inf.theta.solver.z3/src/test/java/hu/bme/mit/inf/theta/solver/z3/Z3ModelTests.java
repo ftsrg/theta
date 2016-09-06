@@ -28,7 +28,5 @@ public class Z3ModelTests {
 
 		System.out.println(model.getConstInterp(a));
 		System.out.println(model.getConstInterp(b));
-
-		context.close();
 	}
 }
