@@ -1,1 +1,0 @@
-java -jar jar\antlr-4.5.3-complete.jar CoreDsl.g4 -o src-gen\hu\bme\mit\inf\theta\core\dsl\gen -package hu.bme.mit.inf.theta.core.dsl.gen -Werror -visitor
