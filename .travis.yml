@@ -1,17 +1,7 @@
-sudo: required
-dist: trusty
 language: java
 jdk:
   - oraclejdk8
-install:
-  - curl http://www.antlr.org/download/antlr-4.4-complete.jar > ~/antlr4.jar
-  - export CLASSPATH=".:~/antlr4.jar:$CLASSPATH"
+install: false
 script:
-  - cd hu.bme.mit.inf.theta.core
-  - java -jar ~/antlr4.jar CoreDsl.g4 -o src-gen/hu/bme/mit/inf/theta/core/dsl/gen -package hu.bme.mit.inf.theta.core.dsl.gen -Werror -visitor
-  - cd ..
-  - cd hu.bme.mit.inf.theta.formalism
-  - java -jar ~/antlr4.jar TcfaDsl.g4 -o src-gen/hu/bme/mit/inf/theta/formalism/tcfa/dsl/gen -package hu.bme.mit.inf.theta.formalism.tcfa.dsl.gen -Werror -visitor
-  - cd ..
   - ./gradlew assemble
   - ./gradlew check --continue
