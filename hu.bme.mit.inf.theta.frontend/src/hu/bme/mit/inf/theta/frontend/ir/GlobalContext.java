@@ -14,14 +14,17 @@ import hu.bme.mit.inf.theta.frontend.ir.utils.SymbolTable;
 public class GlobalContext {
 
 	private final SymbolTable<Decl<? extends Type, ?>> symbols = new SymbolTable<>();
-	private final Map<String, Function> functions = new HashMap<>();
-	private final Map<Function, ProcDecl<? extends Type>> procs = new HashMap<>();
 
+	private final Map<String, Function> functions = new HashMap<>();
 	private Map<String, VarDecl<? extends Type>> globals = new HashMap<>();
 
 	public void addFunction(Function func, ProcDecl<? extends Type> proc) {
 		this.functions.put(func.getName(), func);
-		this.procs.put(func, proc);
+		this.symbols.put(func.getName(), proc);
+	}
+
+	public void addFunctionDeclaration(String name, ProcDecl<? extends Type> proc) {
+		this.symbols.put(name, proc);
 	}
 
 	public SymbolTable<Decl<? extends Type, ?>> getSymbolTable() {

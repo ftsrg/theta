@@ -12,6 +12,8 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import hu.bme.mit.inf.theta.core.expr.Expr;
+import hu.bme.mit.inf.theta.core.type.Type;
 import hu.bme.mit.inf.theta.frontend.dependency.ControlDependencyGraph;
 import hu.bme.mit.inf.theta.frontend.dependency.UseDefineChain;
 import hu.bme.mit.inf.theta.frontend.ir.BasicBlock;
@@ -24,7 +26,9 @@ import hu.bme.mit.inf.theta.frontend.ir.node.JumpIfNode;
 import hu.bme.mit.inf.theta.frontend.ir.node.NodeFactory;
 import hu.bme.mit.inf.theta.frontend.ir.node.NonTerminatorIrNode;
 import hu.bme.mit.inf.theta.frontend.ir.node.TerminatorIrNode;
+import hu.bme.mit.inf.theta.frontend.ir.node.BranchTableNode.BranchTableEntry;
 import hu.bme.mit.inf.theta.frontend.ir.utils.IrPrinter;
+import hu.bme.mit.inf.theta.frontend.ir.node.BranchTableNode;
 
 public class FunctionSlicer {
 
@@ -126,7 +130,7 @@ public class FunctionSlicer {
 			BasicBlock merge = mergeBlocks.iterator().next();
 			BasicBlock newMerge = blockMap.get(merge);
 
-			topBlocks.forEach((BasicBlock block, BasicBlock target) -> {
+			topBlocks.forEach((block, target) -> {
 				BasicBlock newBlock = blockMap.get(block);
 				newBlock.clearTerminator();
 
@@ -138,12 +142,31 @@ public class FunctionSlicer {
 				} else if (terminator instanceof JumpIfNode) {
 					JumpIfNode branch = (JumpIfNode) terminator;
 					if (branch.getThenTarget() == target) {
-						newTerm = NodeFactory.JumpIf(branch.getCond(), newMerge, blockMap.get(branch.getElseTarget()));
+						newTerm = NodeFactory.JumpIf(branch.getCondition(), newMerge, blockMap.get(branch.getElseTarget()));
 					} else {
-						newTerm = NodeFactory.JumpIf(branch.getCond(), blockMap.get(branch.getThenTarget()), newMerge);
+						newTerm = NodeFactory.JumpIf(branch.getCondition(), blockMap.get(branch.getThenTarget()), newMerge);
 					}
 				} else if (terminator instanceof EntryNode) {
 					newTerm = new EntryNode(newMerge);
+				} else if (terminator instanceof BranchTableNode) {
+					BranchTableNode bt = (BranchTableNode) terminator;
+
+					BranchTableNode newBt = new BranchTableNode(bt.getCondition());
+					bt.getValueEntries().forEach(e -> {
+						newBt.addTarget(e.getValue(), blockMap.get(e.getTarget()));
+					});
+					newBt.setDefaultTarget(blockMap.get(bt.getDefaultTarget()));
+
+					if (bt.getDefaultTarget() != target) {
+						Expr<? extends Type> value = bt.getValueFromTarget(target);
+						BasicBlock newTarget = newBt.getTargetFromValue(value);
+
+						newBt.replaceTarget(newTarget, newMerge);
+					} else {
+						newBt.setDefaultTarget(newMerge);
+					}
+
+					newTerm = newBt;
 				} else {
 					throw new AssertionError("Should not happen");
 				}

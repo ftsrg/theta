@@ -12,7 +12,7 @@ import hu.bme.mit.inf.theta.frontend.ir.BasicBlock;
 /**
  * This terminator node allows multiple branched targets from a condition node
  */
-public class BranchTableNode implements TerminatorIrNode {
+public class BranchTableNode implements ConditionalTerminatorNode {
 
 	public static class BranchTableEntry {
 		private Expr<? extends Type> value;
@@ -100,6 +100,7 @@ public class BranchTableNode implements TerminatorIrNode {
 		this.condition = expr;
 	}
 
+	@Override
 	public Expr<? extends Type> getCondition() {
 		return this.condition;
 	}

@@ -49,9 +49,9 @@ public class ConstantPropagator implements FunctionTransformer {
 					this.transformAssign(assign, visitor);
 				} else if (node instanceof JumpIfNode) {
 					JumpIfNode jump = (JumpIfNode) node;
-					Expr<? extends BoolType> expr = ExprUtils.cast(jump.getCond().accept(visitor, null), BoolType.class);
+					Expr<? extends BoolType> expr = ExprUtils.cast(jump.getCondition().accept(visitor, null), BoolType.class);
 
-					jump.setCond(expr);
+					jump.setCondition(expr);
 				} else if (node instanceof AssertNode) {
 					AssertNode assrt = (AssertNode) node;
 					Expr<? extends BoolType> expr = ExprUtils.cast(assrt.getCond().accept(visitor, null), BoolType.class);

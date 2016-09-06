@@ -1,7 +1,6 @@
 package hu.bme.mit.inf.theta.frontend.dependency;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;

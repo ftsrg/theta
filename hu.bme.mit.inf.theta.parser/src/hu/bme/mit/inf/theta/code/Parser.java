@@ -51,11 +51,8 @@ public class Parser {
 					if (declarator instanceof FunctionDeclaratorAst) {
 						FunctionDeclaratorAst funcDeclarator = (FunctionDeclaratorAst) declarator;
 
-						Function func = new Function(funcDeclarator.getName(), Types.Int());
-
 						ProcDecl<? extends Type> proc = Decls2.Proc(funcDeclarator.getName(), Collections.emptyList(), Types.Int());
-						context.addFunction(func, proc);
-						context.getSymbolTable().put(func.getName(), proc);
+						context.addFunctionDeclaration(funcDeclarator.getName(), proc);
 					} else {
 						// TODO: Treat it as a global variable
 						throw new UnsupportedOperationException("Global variables are not supported");
@@ -74,9 +71,6 @@ public class Parser {
 			IASTTranslationUnit cdtAst = parseFile(filename);
 			// Transform the CDT representation into our custom AST
 			TranslationUnitAst root = CdtAstTransformer.transform(cdtAst);
-
-			System.out.println("======AST=======");
-			System.out.println(AstPrinter.toGraphvizString(root));
 
 			return root;
 		} catch (CoreException e) {

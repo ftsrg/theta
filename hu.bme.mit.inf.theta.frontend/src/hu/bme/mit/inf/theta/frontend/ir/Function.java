@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 import hu.bme.mit.inf.theta.core.type.Type;
 import hu.bme.mit.inf.theta.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.theta.frontend.ir.node.BranchTableNode;
+import hu.bme.mit.inf.theta.frontend.ir.node.BranchTableNode.BranchTableEntry;
 import hu.bme.mit.inf.theta.frontend.ir.node.EntryNode;
 import hu.bme.mit.inf.theta.frontend.ir.node.ExitNode;
 import hu.bme.mit.inf.theta.frontend.ir.node.GotoNode;
@@ -74,13 +75,21 @@ public class Function {
 				newBlock.terminate(Goto(newBlocks.get(((GotoNode) terminator).getTarget())));
 			} else if (terminator instanceof JumpIfNode) {
 				JumpIfNode jump = (JumpIfNode) terminator;
-				newBlock.terminate(JumpIf(jump.getCond(), newBlocks.get(jump.getThenTarget()), newBlocks.get(jump.getElseTarget())));
+				newBlock.terminate(JumpIf(jump.getCondition(), newBlocks.get(jump.getThenTarget()), newBlocks.get(jump.getElseTarget())));
 			} else if (terminator instanceof ReturnNode) {
 				newBlock.terminate(Return(((ReturnNode) terminator).getExpr()));
 			} else if (terminator instanceof ExitNode) {
 				newBlock.terminate(new ExitNode());
 			} else if (terminator instanceof EntryNode) {
 				newBlock.terminate(new EntryNode(newBlocks.get(((EntryNode) this.entry.getTerminator()).getTarget())));
+			} else if (terminator instanceof BranchTableNode) {
+				BranchTableNode branchTable = new BranchTableNode(((BranchTableNode) terminator).getCondition());
+				((BranchTableNode) terminator).getValueEntries().forEach(e -> {
+					branchTable.addTarget(e.getValue(), newBlocks.get(e.getTarget()));
+				});
+				branchTable.setDefaultTarget(newBlocks.get(((BranchTableNode) terminator).getDefaultTarget()));
+
+				newBlock.terminate(branchTable);
 			} else {
 				throw new UnsupportedOperationException("Invalid terminator node");
 			}

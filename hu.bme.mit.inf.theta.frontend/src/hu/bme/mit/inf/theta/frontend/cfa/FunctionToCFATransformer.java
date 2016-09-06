@@ -185,10 +185,10 @@ public class FunctionToCFATransformer {
 
 		// Add the then and else edges with the required Assume statements
 		CfaEdge thenEdge = cfa.createEdge(branchLoc, then);
-		thenEdge.getStmts().add(Stmts.Assume(branch.getCond()));
+		thenEdge.getStmts().add(Stmts.Assume(branch.getCondition()));
 
 		CfaEdge elzeEdge = cfa.createEdge(branchLoc, elze);
-		elzeEdge.getStmts().add(Stmts.Assume(Exprs.Not(branch.getCond())));
+		elzeEdge.getStmts().add(Stmts.Assume(Exprs.Not(branch.getCondition())));
 		return branchLoc;
 	}
 

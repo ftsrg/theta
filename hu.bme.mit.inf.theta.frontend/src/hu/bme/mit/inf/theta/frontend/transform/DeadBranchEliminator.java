@@ -10,8 +10,8 @@ import hu.bme.mit.inf.theta.core.type.Type;
 import hu.bme.mit.inf.theta.frontend.ir.BasicBlock;
 import hu.bme.mit.inf.theta.frontend.ir.Function;
 import hu.bme.mit.inf.theta.frontend.ir.node.BranchTableNode;
-import hu.bme.mit.inf.theta.frontend.ir.node.JumpIfNode;
 import hu.bme.mit.inf.theta.frontend.ir.node.BranchTableNode.BranchTableEntry;
+import hu.bme.mit.inf.theta.frontend.ir.node.JumpIfNode;
 
 /**
  * A function transformer which replaces trivial branches with goto jumps.
@@ -29,7 +29,7 @@ public class DeadBranchEliminator implements FunctionTransformer {
 			// Find a suitable basic block
 			Optional<BasicBlock> result = function.getBlocksDFS().stream()
 				.filter(block -> {
-					if (block.getTerminator() instanceof JumpIfNode && ((JumpIfNode) block.getTerminator()).getCond() instanceof BoolLitExpr) {
+					if (block.getTerminator() instanceof JumpIfNode && ((JumpIfNode) block.getTerminator()).getCondition() instanceof BoolLitExpr) {
 						return true;
 					}
 
@@ -48,7 +48,7 @@ public class DeadBranchEliminator implements FunctionTransformer {
 
 				if (block.getTerminator() instanceof JumpIfNode) {
 					JumpIfNode terminator = (JumpIfNode) block.getTerminator();
-					BoolLitExpr cond = (BoolLitExpr) terminator.getCond();
+					BoolLitExpr cond = (BoolLitExpr) terminator.getCondition();
 
 					BasicBlock target = cond.getValue() == true ? terminator.getThenTarget() : terminator.getElseTarget();
 

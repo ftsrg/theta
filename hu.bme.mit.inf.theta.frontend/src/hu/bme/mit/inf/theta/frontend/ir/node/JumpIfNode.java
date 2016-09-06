@@ -5,9 +5,10 @@ import java.util.List;
 
 import hu.bme.mit.inf.theta.core.expr.Expr;
 import hu.bme.mit.inf.theta.core.type.BoolType;
+import hu.bme.mit.inf.theta.core.type.Type;
 import hu.bme.mit.inf.theta.frontend.ir.BasicBlock;
 
-public class JumpIfNode implements TerminatorIrNode {
+public class JumpIfNode implements ConditionalTerminatorNode {
 
 	private Expr<? extends BoolType> cond;
 	private BasicBlock thenTarget;
@@ -50,11 +51,12 @@ public class JumpIfNode implements TerminatorIrNode {
 		}
 	}
 
-	public Expr<? extends BoolType> getCond() {
+	@Override
+	public Expr<? extends BoolType> getCondition() {
 		return cond;
 	}
 
-	public void setCond(Expr<? extends BoolType> cond) {
+	public void setCondition(Expr<? extends BoolType> cond) {
 		this.cond = cond;
 	}
 
@@ -96,6 +98,5 @@ public class JumpIfNode implements TerminatorIrNode {
 	public String toString() {
 		return this.getLabel();
 	}
-
 
 }

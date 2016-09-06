@@ -6,7 +6,7 @@ int main()
 {
 	int sum = 0, i = 0, x = 2;
 
-	int y = nondet();
+	//int y = nondet();
 
 	if (x == 0) {
 		i = 1;

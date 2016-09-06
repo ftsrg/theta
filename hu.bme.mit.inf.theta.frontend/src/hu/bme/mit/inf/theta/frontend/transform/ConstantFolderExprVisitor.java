@@ -22,7 +22,6 @@ import hu.bme.mit.inf.theta.core.expr.AddExpr;
 import hu.bme.mit.inf.theta.core.expr.AndExpr;
 import hu.bme.mit.inf.theta.core.expr.ArrayReadExpr;
 import hu.bme.mit.inf.theta.core.expr.ArrayWriteExpr;
-import hu.bme.mit.inf.theta.core.expr.BoolLitExpr;
 import hu.bme.mit.inf.theta.core.expr.ConstRefExpr;
 import hu.bme.mit.inf.theta.core.expr.EqExpr;
 import hu.bme.mit.inf.theta.core.expr.ExistsExpr;

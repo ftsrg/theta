@@ -10,10 +10,12 @@ import hu.bme.mit.inf.theta.frontend.cfa.FunctionToCFATransformer;
 import hu.bme.mit.inf.theta.frontend.dependency.ControlDependencyGraph;
 import hu.bme.mit.inf.theta.frontend.dependency.DominatorTree;
 import hu.bme.mit.inf.theta.frontend.dependency.LoopInfo;
+import hu.bme.mit.inf.theta.frontend.ir.Function;
 import hu.bme.mit.inf.theta.frontend.ir.GlobalContext;
 import hu.bme.mit.inf.theta.frontend.ir.utils.IrPrinter;
 import hu.bme.mit.inf.theta.frontend.transform.ConstantPropagator;
 import hu.bme.mit.inf.theta.frontend.transform.DeadBranchEliminator;
+import hu.bme.mit.inf.theta.frontend.transform.FunctionSlicer;
 import hu.bme.mit.inf.theta.frontend.transform.LoopUnroller;
 import hu.bme.mit.inf.theta.formalism.cfa.CFA;
 import hu.bme.mit.inf.theta.formalism.utils.impl.CfaPrinter;
@@ -45,8 +47,6 @@ class Application {
 			System.out.println("------" + "CFA LBE" + "------");
 			cfa = FunctionToCFATransformer.createLBE(function);
 			System.out.println(CfaPrinter.toGraphvizSting(cfa));
-
-
 
 //
 //			System.out.println("------" + "Constant prop" + "------");
@@ -97,17 +97,14 @@ class Application {
 ////			DominatorTree pdt = DominatorTree.createPostDominatorTree(s);
 ////			System.out.println(IrPrinter.dominatorTreeGraph(pdt));
 ////
-//			System.out.println("------" + "slicer" + "------");
-//			FunctionSlicer slicer = new FunctionSlicer();
-//			List<Function> slices = slicer.allSlices(function, FunctionSlicer.SLICE_ON_ASSERTS);
-//
-//			slices.forEach(f -> {
-//				System.out.println("---" + "slice" + "---");
-//				System.out.println(IrPrinter.toGraphvizString(f));
-//				System.out.println("---" + "cfa" + "---");
-//				CFA c = FunctionToCFATransformer.createSBE(f);
-//				System.out.println(CFAPrinter.toGraphvizSting(c));
-//			});
+			System.out.println("------" + "slicer" + "------");
+			FunctionSlicer slicer = new FunctionSlicer();
+			List<Function> slices = slicer.allSlices(function, FunctionSlicer.SLICE_ON_ASSERTS);
+
+			slices.forEach(f -> {
+				System.out.println("---" + "slice" + "---");
+				System.out.println(IrPrinter.toGraphvizString(f));
+			});
 		});
 	}
 }

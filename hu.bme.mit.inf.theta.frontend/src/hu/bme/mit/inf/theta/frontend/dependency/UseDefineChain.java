@@ -16,6 +16,8 @@ import hu.bme.mit.inf.theta.frontend.ir.BasicBlock;
 import hu.bme.mit.inf.theta.frontend.ir.Function;
 import hu.bme.mit.inf.theta.frontend.ir.node.AssertNode;
 import hu.bme.mit.inf.theta.frontend.ir.node.AssignNode;
+import hu.bme.mit.inf.theta.frontend.ir.node.BranchTableNode;
+import hu.bme.mit.inf.theta.frontend.ir.node.ConditionalTerminatorNode;
 import hu.bme.mit.inf.theta.frontend.ir.node.IrNode;
 import hu.bme.mit.inf.theta.frontend.ir.node.JumpIfNode;
 import hu.bme.mit.inf.theta.frontend.ir.node.NonTerminatorIrNode;
@@ -322,17 +324,17 @@ public class UseDefineChain {
 				}
 			}
 
-			if (block.getTerminator() instanceof JumpIfNode) {
+			if (block.getTerminator() instanceof ConditionalTerminatorNode) {
 				Set<VarDecl<? extends Type>> usedVars = new HashSet<>();
-				JumpIfNode jump = (JumpIfNode) block.getTerminator();
+				ConditionalTerminatorNode term = (ConditionalTerminatorNode) block.getTerminator();
 
-				jump.getCond().accept(varFinder, usedVars);
+				term.getCondition().accept(varFinder, usedVars);
 
 				if (!usedVars.isEmpty()) {
-					info.uses.put(jump, new ArrayList<Use>());
+					info.uses.put(term, new ArrayList<Use>());
 					usedVars.forEach(v -> {
-						Use use = new Use(jump, v);
-						info.uses.get(jump).add(use);
+						Use use = new Use(term, v);
+						info.uses.get(term).add(use);
 						allUses.add(use);
 					});
 				}
