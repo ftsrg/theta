@@ -2,5 +2,5 @@ dependencies {
   compile project(':hu.bme.mit.inf.theta.common')
   compile project(':hu.bme.mit.inf.theta.core')
   compile project(':hu.bme.mit.inf.theta.solver')
-  compile group: 'org.sosy-lab', name: 'javasmt-solver-z3', version: 'z3-4.4.1-1558-gf96cfea'
+  compile files('./jar/com.microsoft.z3.jar')
 }
