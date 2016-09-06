@@ -10,7 +10,7 @@ script:
   - cd hu.bme.mit.inf.theta.core
   - java -jar ~/antlr4.jar CoreDsl.g4 -o src-gen/hu/bme/mit/inf/theta/core/dsl/gen -package hu.bme.mit.inf.theta.core.dsl.gen -Werror -visitor
   - cd ..
-  - hu.bme.mit.inf.theta.formalism
+  - cd hu.bme.mit.inf.theta.formalism
   - java -jar ~/antlr4.jar TcfaDsl.g4 -o src-gen/hu/bme/mit/inf/theta/formalism/tcfa/dsl/gen -package hu.bme.mit.inf.theta.formalism.tcfa.dsl.gen -Werror -visitor
   - cd ..
   - ./gradlew assemble
