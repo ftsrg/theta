@@ -5,9 +5,3 @@ dependencies {
   compile project(':hu.bme.mit.inf.theta.core')
   compile project(':hu.bme.mit.inf.theta.common')
 }
-
-sourceSets {
-  main {
-    java { srcDir 'src' }
-  }
-}

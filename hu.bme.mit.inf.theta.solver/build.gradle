@@ -2,9 +2,3 @@ dependencies {
   compile project(':hu.bme.mit.inf.theta.common')
   compile project(':hu.bme.mit.inf.theta.core')
 }
-
-sourceSets {
-  main {
-    java { srcDir 'src' }
-  }
-}
