@@ -46,8 +46,8 @@ final class ProcDeclImpl<ReturnType extends Type> implements ProcDecl<ReturnType
 
 	private static <ReturnType extends Type> ProcType<ReturnType> createProcType(
 			final List<? extends ParamDecl<? extends Type>> paramDecls, final ReturnType returnType) {
-		final Stream<? extends Type> paramTypeStream = paramDecls.stream().map(p -> p.getType());
-		final List<? extends Type> paramTypes = paramTypeStream.collect(toList());
+		final Stream<Type> paramTypeStream = paramDecls.stream().map(p -> p.getType());
+		final List<Type> paramTypes = paramTypeStream.collect(toList());
 		return Proc(paramTypes, returnType);
 	}
 
