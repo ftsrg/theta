@@ -20,7 +20,7 @@ import hu.bme.mit.inf.theta.formalism.common.decl.ClockDecl;
 import hu.bme.mit.inf.theta.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.theta.formalism.tcfa.instances.FischerTCFA;
 
-public class TcfaZoneTests {
+public class TcfaZoneTest {
 
 	@Test
 	public void test() {

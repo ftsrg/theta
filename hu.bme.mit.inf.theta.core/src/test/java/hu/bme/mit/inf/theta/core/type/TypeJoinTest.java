@@ -23,9 +23,9 @@ import hu.bme.mit.inf.theta.core.type.RatType;
 import hu.bme.mit.inf.theta.core.type.Type;
 
 @RunWith(Parameterized.class)
-public class TypeMeetTests {
+public class TypeJoinTest {
 
-	private static final Type BOTTOM;
+	private static final Type TOP;
 	private static final BoolType BOOL;
 	private static final IntType INT;
 	private static final RatType RAT;
@@ -41,7 +41,7 @@ public class TypeMeetTests {
 	public Type type2;
 
 	@Parameter(value = 2)
-	public Type meet;
+	public Type join;
 
 	@Parameters
 	public static Collection<Object[]> data() {
@@ -49,39 +49,39 @@ public class TypeMeetTests {
 
 				{ BOOL, BOOL, BOOL },
 
-				{ BOOL, INT, BOTTOM },
+				{ BOOL, INT, TOP },
 
-				{ BOOL, RAT, BOTTOM },
+				{ BOOL, RAT, TOP },
 
-				{ BOOL, INT_TO_RAT, BOTTOM },
+				{ BOOL, INT_TO_RAT, TOP },
 
 				{ INT, INT, INT },
 
-				{ INT, RAT, INT },
+				{ INT, RAT, RAT },
 
-				{ INT, INT_TO_RAT, BOTTOM },
+				{ INT, INT_TO_RAT, TOP },
 
 				{ RAT, RAT, RAT },
 
-				{ RAT, INT_TO_RAT, BOTTOM },
+				{ RAT, INT_TO_RAT, TOP },
 
 				{ RAT_TO_INT, RAT_TO_INT, RAT_TO_INT },
 
-				{ RAT_TO_INT, INT_TO_INT, RAT_TO_INT },
+				{ RAT_TO_INT, INT_TO_INT, INT_TO_INT },
 
-				{ RAT_TO_INT, RAT_TO_RAT, RAT_TO_INT },
+				{ RAT_TO_INT, RAT_TO_RAT, RAT_TO_RAT },
 
-				{ RAT_TO_INT, INT_TO_RAT, RAT_TO_INT },
+				{ RAT_TO_INT, INT_TO_RAT, INT_TO_RAT },
 
 				{ INT_TO_INT, INT_TO_INT, INT_TO_INT },
 
-				{ INT_TO_INT, RAT_TO_RAT, RAT_TO_INT },
+				{ INT_TO_INT, RAT_TO_RAT, INT_TO_RAT },
 
-				{ INT_TO_INT, INT_TO_RAT, INT_TO_INT },
+				{ INT_TO_INT, INT_TO_RAT, INT_TO_RAT },
 
 				{ RAT_TO_RAT, RAT_TO_RAT, RAT_TO_RAT },
 
-				{ RAT_TO_RAT, INT_TO_RAT, RAT_TO_RAT },
+				{ RAT_TO_RAT, INT_TO_RAT, INT_TO_RAT },
 
 				{ INT_TO_RAT, INT_TO_RAT, INT_TO_RAT }
 
@@ -89,7 +89,7 @@ public class TypeMeetTests {
 	}
 
 	static {
-		BOTTOM = null;
+		TOP = null;
 		BOOL = Bool();
 		INT = Int();
 		RAT = Rat();
@@ -100,10 +100,10 @@ public class TypeMeetTests {
 	}
 
 	@Test
-	public void testMeet() {
-		final Optional<Type> expected = Optional.ofNullable(meet);
-		assertEquals(type1.meet(type2), expected);
-		assertEquals(type2.meet(type1), expected);
+	public void testJoin() {
+		final Optional<Type> expected = Optional.ofNullable(join);
+		assertEquals(type1.join(type2), expected);
+		assertEquals(type2.join(type1), expected);
 	}
 
 }

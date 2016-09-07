@@ -7,7 +7,7 @@ import com.microsoft.z3.Context;
 import com.microsoft.z3.Model;
 import com.microsoft.z3.Solver;
 
-public class Z3ModelTests {
+public class Z3ModelTest {
 
 	static {
 		new Z3SolverManager();

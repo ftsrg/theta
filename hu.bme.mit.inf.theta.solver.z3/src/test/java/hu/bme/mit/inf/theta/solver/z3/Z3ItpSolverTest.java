@@ -33,7 +33,7 @@ import hu.bme.mit.inf.theta.solver.ItpSolver;
 import hu.bme.mit.inf.theta.solver.SolverManager;
 import hu.bme.mit.inf.theta.solver.z3.Z3SolverManager;
 
-public class Z3ItpSolverTests {
+public class Z3ItpSolverTest {
 
 	ItpSolver solver;
 

@@ -20,7 +20,7 @@ import hu.bme.mit.inf.theta.core.model.Assignment;
 import hu.bme.mit.inf.theta.core.model.impl.AssignmentImpl;
 import hu.bme.mit.inf.theta.core.type.IntType;
 
-public class AssignmentTests {
+public class AssignmentTest {
 	private final ConstDecl<IntType> ca = Decls.Const("a", Int());
 	private final ConstDecl<IntType> cb = Decls.Const("b", Int());
 

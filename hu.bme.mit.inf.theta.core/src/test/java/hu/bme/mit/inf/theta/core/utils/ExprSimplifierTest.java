@@ -42,7 +42,7 @@ import hu.bme.mit.inf.theta.core.model.impl.AssignmentImpl;
 import hu.bme.mit.inf.theta.core.type.BoolType;
 import hu.bme.mit.inf.theta.core.type.IntType;
 
-public class ExprSimplifierTests {
+public class ExprSimplifierTest {
 
 	private final ConstDecl<BoolType> cx = Decls.Const("x", Bool());
 	private final ConstDecl<BoolType> cy = Decls.Const("y", Bool());

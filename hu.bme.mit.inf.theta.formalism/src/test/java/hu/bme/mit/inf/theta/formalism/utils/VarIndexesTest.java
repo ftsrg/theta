@@ -9,7 +9,7 @@ import org.junit.Test;
 import hu.bme.mit.inf.theta.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.theta.formalism.utils.VarIndexes;
 
-public class VarIndexesTests {
+public class VarIndexesTest {
 
 	final VarDecl<?> x = Var("x", Int());
 	final VarDecl<?> y = Var("y", Int());

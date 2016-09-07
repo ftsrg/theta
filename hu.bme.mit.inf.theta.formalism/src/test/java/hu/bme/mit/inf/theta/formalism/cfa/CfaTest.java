@@ -8,7 +8,7 @@ import hu.bme.mit.inf.theta.formalism.cfa.impl.ImmutableCfa;
 import hu.bme.mit.inf.theta.formalism.cfa.impl.MutableCfa;
 import hu.bme.mit.inf.theta.formalism.utils.impl.CfaPrinter;
 
-public class CfaTests {
+public class CfaTest {
 	
 	@Test
 	public void testCreation() {

@@ -29,7 +29,7 @@ import hu.bme.mit.inf.theta.core.type.Type;
 import hu.bme.mit.inf.theta.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.theta.formalism.utils.FormalismUtils;
 
-public class VarCollectorVisitorTests {
+public class VarCollectorVisitorTest {
 
 	VarDecl<BoolType> va;
 	VarDecl<IntType> vb;

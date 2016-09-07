@@ -8,7 +8,7 @@ import org.junit.Test;
 
 import hu.bme.mit.inf.theta.core.utils.impl.ExprUtils;
 
-public class PonateTests {
+public class PonateTest {
 	@Test
 	public void test() {
 		Assert.assertEquals(True(), ExprUtils.ponate(True()));
