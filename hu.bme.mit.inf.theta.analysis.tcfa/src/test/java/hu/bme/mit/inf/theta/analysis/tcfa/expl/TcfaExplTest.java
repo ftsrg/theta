@@ -23,7 +23,7 @@ import hu.bme.mit.inf.theta.solver.Solver;
 import hu.bme.mit.inf.theta.solver.SolverManager;
 import hu.bme.mit.inf.theta.solver.z3.Z3SolverManager;
 
-public class TcfaExplTests {
+public class TcfaExplTest {
 
 	@Test
 	public void test() {

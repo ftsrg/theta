@@ -24,7 +24,7 @@ import hu.bme.mit.inf.theta.core.type.BoolType;
 import hu.bme.mit.inf.theta.core.type.IntType;
 import hu.bme.mit.inf.theta.core.utils.impl.ExprUtils;
 
-public class AtomCollectorTests {
+public class AtomCollectorTest {
 
 	@Test
 	public void test() {

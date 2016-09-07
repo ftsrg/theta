@@ -22,7 +22,7 @@ import hu.bme.mit.inf.theta.core.type.RatType;
 import hu.bme.mit.inf.theta.core.type.Type;
 
 @RunWith(Parameterized.class)
-public class TypeIsLeqTests {
+public class TypeIsLeqTest {
 
 	private static final BoolType BOOL;
 	private static final IntType INT;

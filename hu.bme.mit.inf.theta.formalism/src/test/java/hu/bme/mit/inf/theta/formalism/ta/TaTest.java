@@ -11,7 +11,7 @@ import hu.bme.mit.inf.theta.formalism.common.decl.ClockDecl;
 import hu.bme.mit.inf.theta.formalism.ta.constr.ClockConstr;
 import hu.bme.mit.inf.theta.formalism.ta.impl.MutableTa;
 
-public class TaTests {
+public class TaTest {
 
 	@Test
 	public void testConstraints() {
