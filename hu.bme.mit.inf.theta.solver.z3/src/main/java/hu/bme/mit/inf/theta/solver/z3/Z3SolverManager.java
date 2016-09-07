@@ -21,9 +21,6 @@ public class Z3SolverManager implements SolverManager {
 	private static void loadLibraries() {
 		switch (OSHelper.getOS()) {
 		case WINDOWS:
-			System.loadLibrary("msvcr110");
-			System.loadLibrary("msvcp110");
-			System.loadLibrary("vcomp110");
 			System.loadLibrary("libz3");
 			System.loadLibrary("libz3java");
 			break;
