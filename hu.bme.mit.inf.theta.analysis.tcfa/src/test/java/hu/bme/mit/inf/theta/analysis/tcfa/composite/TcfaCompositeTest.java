@@ -6,6 +6,7 @@ import static hu.bme.mit.inf.theta.formalism.common.decl.impl.Decls2.Var;
 import java.util.Collections;
 import java.util.HashMap;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import hu.bme.mit.inf.theta.analysis.algorithm.Abstractor;
@@ -35,6 +36,7 @@ import hu.bme.mit.inf.theta.solver.z3.Z3SolverManager;
 public class TcfaCompositeTest {
 
 	@Test
+	@Ignore
 	public void testExplicit() {
 		final VarDecl<IntType> vlock = Var("lock", Int());
 		final FischerTCFA fischer = new FischerTCFA(1, 1, 2, vlock);

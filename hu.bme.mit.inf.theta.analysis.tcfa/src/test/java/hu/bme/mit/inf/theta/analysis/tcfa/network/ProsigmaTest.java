@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import hu.bme.mit.inf.theta.analysis.algorithm.Abstractor;
@@ -42,6 +43,7 @@ import hu.bme.mit.inf.theta.solver.z3.Z3SolverManager;
 public class ProsigmaTest {
 
 	@Test
+	@Ignore
 	public void test() {
 		final ProsigmaTCFA prosigma = new ProsigmaTCFA(3, 7);
 
@@ -81,6 +83,7 @@ public class ProsigmaTest {
 	}
 
 	@Test
+	@Ignore
 	public void test2() throws FileNotFoundException, IOException {
 		final TcfaSpec prosigmaSpec = TcfaDslManager.parse("instances/prosigma.tcfa", Arrays.asList(Int(3), Int(7)));
 		final TCFA prosigma = prosigmaSpec.getTcfa("prosigma");

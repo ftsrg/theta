@@ -78,6 +78,7 @@ public class TcfaSimpleCheckerTest {
 	}
 
 	@Test
+	@Ignore
 	public void testPredicate() {
 		final int n = 3;
 

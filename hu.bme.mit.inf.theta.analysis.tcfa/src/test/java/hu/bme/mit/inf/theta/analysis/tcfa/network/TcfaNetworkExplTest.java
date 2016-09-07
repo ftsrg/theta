@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import hu.bme.mit.inf.theta.analysis.algorithm.Abstractor;
@@ -40,6 +41,7 @@ import hu.bme.mit.inf.theta.solver.z3.Z3SolverManager;
 public class TcfaNetworkExplTest {
 
 	@Test
+	@Ignore
 	public void test() {
 		final int n = 2;
 

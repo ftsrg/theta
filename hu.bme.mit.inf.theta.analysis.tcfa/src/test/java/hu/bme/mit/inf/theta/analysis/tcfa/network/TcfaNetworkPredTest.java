@@ -11,8 +11,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
-import org.junit.Test;
-
 import hu.bme.mit.inf.theta.analysis.algorithm.Abstractor;
 import hu.bme.mit.inf.theta.analysis.algorithm.ArgPrinter;
 import hu.bme.mit.inf.theta.analysis.algorithm.impl.AbstractorImpl;
@@ -42,7 +40,7 @@ import hu.bme.mit.inf.theta.solver.z3.Z3SolverManager;
 
 public class TcfaNetworkPredTest {
 
-	@Test
+	// @Test
 	public void test() {
 		final int n = 6;
 
