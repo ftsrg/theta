@@ -1,5 +1,6 @@
 package hu.bme.mit.inf.theta.solver.z3;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.microsoft.z3.BoolExpr;
@@ -14,6 +15,7 @@ public class Z3ModelTest {
 	}
 
 	@Test
+	@Ignore
 	public void test() {
 		final Context context = new Context();
 		final Solver solver = context.mkSimpleSolver();
