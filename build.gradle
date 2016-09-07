@@ -23,6 +23,7 @@ subprojects {
 	
 	test {
 		systemProperties['java.library.path'] = ".." + File.separator + "lib"
+		System.println(systemProperties)
 	}
 }
 
