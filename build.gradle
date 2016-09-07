@@ -20,11 +20,7 @@ subprojects {
 	repositories {
 		mavenCentral()
 	}
-	
-	InstallExecutable {
-		
-	}
-	
+
 	test {
 		environment.put('PATH', environment.get("PATH") + ";" + ".." + File.separator + "lib")
 		environment.put('LD_LIBRARY_PATH', ".." + File.separator + "lib")
