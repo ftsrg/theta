@@ -16,6 +16,7 @@ import static hu.bme.mit.inf.theta.core.type.impl.Types.Func;
 import static hu.bme.mit.inf.theta.core.type.impl.Types.Int;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.google.common.collect.ImmutableList;
@@ -31,7 +32,6 @@ import hu.bme.mit.inf.theta.solver.ItpMarker;
 import hu.bme.mit.inf.theta.solver.ItpPattern;
 import hu.bme.mit.inf.theta.solver.ItpSolver;
 import hu.bme.mit.inf.theta.solver.SolverManager;
-import hu.bme.mit.inf.theta.solver.z3.Z3SolverManager;
 
 public class Z3ItpSolverTest {
 
@@ -131,6 +131,7 @@ public class Z3ItpSolverTest {
 	}
 
 	@Test
+	@Ignore
 	public void testEUF() {
 		final ItpMarker A = solver.createMarker();
 		final ItpMarker B = solver.createMarker();
@@ -165,6 +166,7 @@ public class Z3ItpSolverTest {
 	}
 
 	@Test
+	@Ignore
 	public void testQuantifiers() {
 		final ItpMarker A = solver.createMarker();
 		final ItpMarker B = solver.createMarker();
