@@ -3,6 +3,7 @@ allprojects  {
 
 	group = 'hu.bme.mit.inf.theta'
 	version = '1.0.0-SNAPSHOT'
+	
 }
 
 subprojects {
@@ -18,6 +19,10 @@ subprojects {
 	artifacts.archives packageSources
 	repositories {
 		mavenCentral()
+	}
+	
+	test {
+		systemProperties['java.library.path'] = ".." + File.separator + "lib"
 	}
 }
 
