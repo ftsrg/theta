@@ -22,8 +22,9 @@ subprojects {
 	}
 
 	test {
-		environment.put('PATH', environment.get("PATH") + ";" + ".." + File.separator + "lib")
-		environment.put('LD_LIBRARY_PATH', ".." + File.separator + "lib")
+		String libPath = ".." + File.separator + "lib"
+		environment.put('PATH', libPath)
+		environment.put('LD_LIBRARY_PATH', libPath)
 	}
 }
 
