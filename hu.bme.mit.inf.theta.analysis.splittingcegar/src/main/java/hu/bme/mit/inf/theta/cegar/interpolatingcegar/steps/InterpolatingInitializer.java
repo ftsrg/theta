@@ -27,8 +27,8 @@ import hu.bme.mit.inf.theta.core.type.Type;
 import hu.bme.mit.inf.theta.formalism.common.Valuation;
 import hu.bme.mit.inf.theta.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.theta.formalism.sts.STS;
-import hu.bme.mit.inf.theta.formalism.utils.sts.impl.StsCnfTransformation;
-import hu.bme.mit.inf.theta.formalism.utils.sts.impl.StsIteTransformation;
+import hu.bme.mit.inf.theta.formalism.sts.utils.impl.StsCnfTransformation;
+import hu.bme.mit.inf.theta.formalism.sts.utils.impl.StsIteTransformation;
 import hu.bme.mit.inf.theta.solver.Solver;
 
 public class InterpolatingInitializer extends AbstractCEGARStep implements Initializer<InterpolatedAbstractSystem> {
@@ -37,9 +37,9 @@ public class InterpolatingInitializer extends AbstractCEGARStep implements Initi
 	private final boolean useCNFTransformation;
 	private final Set<String> explicitVarNames;
 
-	public InterpolatingInitializer(final SolverWrapper solvers, final StopHandler stopHandler, final Logger logger, final Visualizer visualizer,
-			final boolean collectFromConditions, final boolean collectFromSpecification, final boolean useCNFTransformation,
-			final Collection<String> explicitVariables) {
+	public InterpolatingInitializer(final SolverWrapper solvers, final StopHandler stopHandler, final Logger logger,
+			final Visualizer visualizer, final boolean collectFromConditions, final boolean collectFromSpecification,
+			final boolean useCNFTransformation, final Collection<String> explicitVariables) {
 		super(solvers, stopHandler, logger, visualizer);
 		this.collectFromConditions = collectFromConditions;
 		this.collectFromSpecification = collectFromSpecification;
@@ -169,7 +169,8 @@ public class InterpolatingInitializer extends AbstractCEGARStep implements Initi
 			final InterpolatedAbstractState actual = stack.pop();
 
 			// Add the next formula unnegated
-			final InterpolatedAbstractState s1 = actual.cloneAndAdd(system.getInitialPredicates().get(actual.getLabels().size()));
+			final InterpolatedAbstractState s1 = actual
+					.cloneAndAdd(system.getInitialPredicates().get(actual.getLabels().size()));
 			if (isStateFeasible(s1, solver, sts)) {
 				// If the state is feasible and there are no more formulas, this
 				// state is finished
@@ -207,7 +208,8 @@ public class InterpolatingInitializer extends AbstractCEGARStep implements Initi
 						return null;
 					if (SolverHelper.checkSat(solver)) {
 						// Keep only explicitly tracked variables
-						final Valuation model = sts.getConcreteState(solver.getModel(), 0, system.getExplicitVariables());
+						final Valuation model = sts.getConcreteState(solver.getModel(), 0,
+								system.getExplicitVariables());
 						ks.addState(as.cloneAndAddExplicit(model));
 
 						// Exclude this state
@@ -272,7 +274,8 @@ public class InterpolatingInitializer extends AbstractCEGARStep implements Initi
 		return ret;
 	}
 
-	private boolean isTransitionFeasible(final InterpolatedAbstractState s0, final InterpolatedAbstractState s1, final Solver solver, final STS sts) {
+	private boolean isTransitionFeasible(final InterpolatedAbstractState s0, final InterpolatedAbstractState s1,
+			final Solver solver, final STS sts) {
 		solver.push();
 		SolverHelper.unrollAndAssert(solver, s0.getLabels(), sts, 0);
 		SolverHelper.unrollAndAssert(solver, s1.getLabels(), sts, 1);
@@ -285,7 +288,7 @@ public class InterpolatingInitializer extends AbstractCEGARStep implements Initi
 
 	@Override
 	public String toString() {
-		final List<String> tokens = new ArrayList<String>();
+		final List<String> tokens = new ArrayList<>();
 		if (collectFromConditions)
 			tokens.add("collectFromCond");
 		if (collectFromSpecification)

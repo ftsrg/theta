@@ -20,10 +20,8 @@ import hu.bme.mit.inf.theta.common.logging.Logger;
 import hu.bme.mit.inf.theta.common.logging.impl.ConsoleLogger;
 import hu.bme.mit.inf.theta.common.logging.impl.FileLogger;
 import hu.bme.mit.inf.theta.formalism.sts.STS;
-import hu.bme.mit.inf.theta.system.model.SystemSpecification;
-import hu.bme.mit.inf.theta.system.ui.SystemModel;
-import hu.bme.mit.inf.theta.system.ui.SystemModelCreator;
-import hu.bme.mit.inf.theta.system.ui.SystemModelLoader;
+import hu.bme.mit.inf.theta.formalism.sts.dsl.StsDslManager;
+import hu.bme.mit.inf.theta.formalism.sts.dsl.impl.StsSpec;
 
 public class CLI {
 
@@ -179,10 +177,9 @@ public class CLI {
 		// Run algorithm
 		try {
 			if (model.endsWith(".system")) {
-				final SystemSpecification sysSpec = SystemModelLoader.getInstance().load(model);
-				final SystemModel systemModel = SystemModelCreator.create(sysSpec);
-				assert (systemModel.getSTSs().size() == 1);
-				problem = systemModel.getSTSs().iterator().next();
+				final StsSpec stsSpec = StsDslManager.parse(model);
+				assert (stsSpec.getAllSts().size() == 1);
+				problem = stsSpec.getAllSts().iterator().next();
 			} else if (model.endsWith(".aag")) {
 				problem = new AIGERLoaderSimple().load(model);
 			}
