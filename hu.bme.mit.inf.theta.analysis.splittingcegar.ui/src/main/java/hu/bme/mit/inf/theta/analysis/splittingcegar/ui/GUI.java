@@ -46,9 +46,8 @@ import hu.bme.mit.inf.theta.cegar.visiblecegar.VisibleCEGARBuilder;
 import hu.bme.mit.inf.theta.cegar.visiblecegar.VisibleCEGARBuilder.VarCollectionMethod;
 import hu.bme.mit.inf.theta.common.logging.Logger;
 import hu.bme.mit.inf.theta.formalism.sts.STS;
-import hu.bme.mit.inf.theta.system.ui.SystemModel;
-import hu.bme.mit.inf.theta.system.ui.SystemModelCreator;
-import hu.bme.mit.inf.theta.system.ui.SystemModelLoader;
+import hu.bme.mit.inf.theta.formalism.sts.dsl.StsDslManager;
+import hu.bme.mit.inf.theta.formalism.sts.dsl.impl.StsSpec;
 
 public class GUI extends JFrame {
 	private static final long serialVersionUID = 5481134854291548278L;
@@ -251,13 +250,16 @@ public class GUI extends JFrame {
 				cegar = new ClusteredCEGARBuilder().visualizer(visualizer).debug(debugVisualizer).logger(this).build();
 				break;
 			case 1:
-				cegar = new VisibleCEGARBuilder().visualizer(visualizer).debug(debugVisualizer).logger(this).useCNFTransformation(cb_usecnf.isSelected())
+				cegar = new VisibleCEGARBuilder().visualizer(visualizer).debug(debugVisualizer).logger(this)
+						.useCNFTransformation(cb_usecnf.isSelected())
 						.varCollectionMethod((VarCollectionMethod) cb_varCollMethod.getSelectedItem()).build();
 				break;
 			case 2:
-				final InterpolatingCEGARBuilder builder = new InterpolatingCEGARBuilder().visualizer(visualizer).logger(this).debug(debugVisualizer)
-						.useCNFTransformation(cb_usecnf.isSelected()).collectFromConditions(cb_collectFromCond.isSelected())
-						.interpolationMethod((InterpolationMethod) cb_itpMethod.getSelectedItem()).collectFromSpecification(cb_collectFromProp.isSelected())
+				final InterpolatingCEGARBuilder builder = new InterpolatingCEGARBuilder().visualizer(visualizer)
+						.logger(this).debug(debugVisualizer).useCNFTransformation(cb_usecnf.isSelected())
+						.collectFromConditions(cb_collectFromCond.isSelected())
+						.interpolationMethod((InterpolationMethod) cb_itpMethod.getSelectedItem())
+						.collectFromSpecification(cb_collectFromProp.isSelected())
 						.incrementalModelChecking(cb_incrMC.isSelected());
 				if (!txt_explVars.getText().equals(""))
 					for (final String var : txt_explVars.getText().split(","))
@@ -348,9 +350,9 @@ public class GUI extends JFrame {
 	private STS loadSystem() throws IOException {
 		STS sts = null;
 		if (stsPath.endsWith(".system")) {
-			final SystemModel systemModel = SystemModelCreator.create(SystemModelLoader.getInstance().load(stsPath));
-			assert (systemModel.getSTSs().size() == 1);
-			sts = systemModel.getSTSs().iterator().next();
+			final StsSpec stsSpec = StsDslManager.parse(stsPath);
+			assert (stsSpec.getAllSts().size() == 1);
+			sts = stsSpec.getAllSts().iterator().next();
 		} else if (stsPath.endsWith(".aag")) {
 			sts = new AIGERLoaderSimple().load(stsPath);
 		}
@@ -359,7 +361,8 @@ public class GUI extends JFrame {
 
 	private void enableSpecificControls() {
 		for (final Component comp : algorithmSpecificSettings.keySet()) {
-			comp.setEnabled(Arrays.asList(algorithmSpecificSettings.get(comp)).contains(cb_algorithm.getSelectedItem()));
+			comp.setEnabled(
+					Arrays.asList(algorithmSpecificSettings.get(comp)).contains(cb_algorithm.getSelectedItem()));
 		}
 	}
 }

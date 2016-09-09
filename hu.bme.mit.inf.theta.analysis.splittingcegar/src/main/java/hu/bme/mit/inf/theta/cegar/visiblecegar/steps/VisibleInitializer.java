@@ -13,16 +13,16 @@ import hu.bme.mit.inf.theta.common.logging.Logger;
 import hu.bme.mit.inf.theta.core.type.Type;
 import hu.bme.mit.inf.theta.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.theta.formalism.sts.STS;
+import hu.bme.mit.inf.theta.formalism.sts.utils.impl.StsCnfTransformation;
+import hu.bme.mit.inf.theta.formalism.sts.utils.impl.StsIteTransformation;
 import hu.bme.mit.inf.theta.formalism.utils.FormalismUtils;
-import hu.bme.mit.inf.theta.formalism.utils.sts.impl.StsCnfTransformation;
-import hu.bme.mit.inf.theta.formalism.utils.sts.impl.StsIteTransformation;
 
 public class VisibleInitializer extends AbstractCEGARStep implements Initializer<VisibleAbstractSystem> {
 
 	private final boolean useCNFTransformation;
 
-	public VisibleInitializer(final SolverWrapper solvers, final StopHandler stopHandler, final Logger logger, final Visualizer visualizer,
-			final boolean useCNFTransformation) {
+	public VisibleInitializer(final SolverWrapper solvers, final StopHandler stopHandler, final Logger logger,
+			final Visualizer visualizer, final boolean useCNFTransformation) {
 		super(solvers, stopHandler, logger, visualizer);
 		this.useCNFTransformation = useCNFTransformation;
 	}
@@ -41,7 +41,13 @@ public class VisibleInitializer extends AbstractCEGARStep implements Initializer
 		logger.writeln("done.", 3);
 
 		final List<VarDecl<? extends Type>> visibleVars = new ArrayList<>();
-		final List<VarDecl<? extends Type>> invisibleVars = new ArrayList<>(concrSys.getVars()); // First assume that each variable is invisible
+		final List<VarDecl<? extends Type>> invisibleVars = new ArrayList<>(concrSys.getVars()); // First
+																									// assume
+																									// that
+																									// each
+																									// variable
+																									// is
+																									// invisible
 		final List<VarDecl<? extends Type>> cnfVars = new ArrayList<>();
 		final List<VarDecl<? extends Type>> nonCnfVars = new ArrayList<>(concrSys.getVars());
 

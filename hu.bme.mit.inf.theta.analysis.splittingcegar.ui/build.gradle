@@ -1,7 +1,9 @@
 dependencies {
   compile project(':hu.bme.mit.inf.theta.analysis.splittingcegar')
   compile project(':hu.bme.mit.inf.theta.common')
+   compile project(':hu.bme.mit.inf.theta.core')
   compile project(':hu.bme.mit.inf.theta.formalism')
+  compile project(':hu.bme.mit.inf.theta.formalism.sts')
   compile project(':hu.bme.mit.inf.theta.solver.z3')
-  compile project(':hu.bme.mit.inf.theta.core')
+  compile project(':hu.bme.mit.inf.theta.aiger')
 }
