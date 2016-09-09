@@ -26,8 +26,8 @@ public class NodeFactory {
 		return new GotoNode(target);
 	}
 
-	public static ReturnNode Return(Expr<? extends Type> expr) {
-		return new ReturnNode(expr);
+	public static ReturnNode Return(Expr<? extends Type> expr, BasicBlock exitBlock, BasicBlock parent) {
+		return new ReturnNode(expr, exitBlock, parent);
 	}
 
 }

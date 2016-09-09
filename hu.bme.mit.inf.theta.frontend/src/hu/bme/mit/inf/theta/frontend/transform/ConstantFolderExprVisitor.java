@@ -13,8 +13,16 @@ import static hu.bme.mit.inf.theta.core.expr.impl.Exprs.Mod;
 import static hu.bme.mit.inf.theta.core.expr.impl.Exprs.Mul;
 import static hu.bme.mit.inf.theta.core.expr.impl.Exprs.Neq;
 import static hu.bme.mit.inf.theta.core.expr.impl.Exprs.Sub;
+import static hu.bme.mit.inf.theta.core.expr.impl.Exprs.And;
+import static hu.bme.mit.inf.theta.core.expr.impl.Exprs.Or;
+import static hu.bme.mit.inf.theta.core.expr.impl.Exprs.False;
+import static hu.bme.mit.inf.theta.core.expr.impl.Exprs.True;
+import static hu.bme.mit.inf.theta.core.expr.impl.Exprs.Not;
+import static hu.bme.mit.inf.theta.core.expr.impl.Exprs.Neg;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -22,6 +30,7 @@ import hu.bme.mit.inf.theta.core.expr.AddExpr;
 import hu.bme.mit.inf.theta.core.expr.AndExpr;
 import hu.bme.mit.inf.theta.core.expr.ArrayReadExpr;
 import hu.bme.mit.inf.theta.core.expr.ArrayWriteExpr;
+import hu.bme.mit.inf.theta.core.expr.BoolLitExpr;
 import hu.bme.mit.inf.theta.core.expr.ConstRefExpr;
 import hu.bme.mit.inf.theta.core.expr.EqExpr;
 import hu.bme.mit.inf.theta.core.expr.ExistsExpr;
@@ -52,6 +61,7 @@ import hu.bme.mit.inf.theta.core.expr.RatLitExpr;
 import hu.bme.mit.inf.theta.core.expr.RemExpr;
 import hu.bme.mit.inf.theta.core.expr.SubExpr;
 import hu.bme.mit.inf.theta.core.expr.TrueExpr;
+import hu.bme.mit.inf.theta.core.type.BoolType;
 import hu.bme.mit.inf.theta.core.type.IntType;
 import hu.bme.mit.inf.theta.core.type.RatType;
 import hu.bme.mit.inf.theta.core.type.Type;
@@ -61,10 +71,13 @@ import hu.bme.mit.inf.theta.core.type.closure.ClosedUnderNeg;
 import hu.bme.mit.inf.theta.core.type.closure.ClosedUnderSub;
 import hu.bme.mit.inf.theta.core.utils.impl.ExprUtils;
 import hu.bme.mit.inf.theta.formalism.common.decl.VarDecl;
+import hu.bme.mit.inf.theta.formalism.common.expr.ProcCallExpr;
 import hu.bme.mit.inf.theta.formalism.common.expr.VarRefExpr;
+import hu.bme.mit.inf.theta.formalism.common.expr.impl.Exprs2;
+import hu.bme.mit.inf.theta.formalism.common.expr.visitor.ProcCallExprVisitor;
 import hu.bme.mit.inf.theta.formalism.common.expr.visitor.VarRefExprVisitor;
 
-public class ConstantFolderExprVisitor implements VarRefExprVisitor<Void, Expr<? extends Type>> {
+public class ConstantFolderExprVisitor implements VarRefExprVisitor<Void, Expr<? extends Type>>, ProcCallExprVisitor<Void, Expr<? extends Type>> {
 
 	private Map<VarDecl<? extends Type>, LitExpr<? extends Type>> constVars;
 
@@ -98,17 +111,77 @@ public class ConstantFolderExprVisitor implements VarRefExprVisitor<Void, Expr<?
 
 	@Override
 	public Expr<? extends Type> visit(NotExpr expr, Void param) {
-		throw new UnsupportedOperationException();
+		Expr<? extends Type> res = expr.getOp().accept(this, param);
+
+		if (res instanceof BoolLitExpr) {
+			BoolLitExpr lit = (BoolLitExpr) res;
+
+			return Bool(!lit.getValue());
+		}
+
+		return Not(ExprUtils.cast(res, BoolType.class));
 	}
 
 	@Override
 	public Expr<? extends Type> visit(AndExpr expr, Void param) {
-		throw new UnsupportedOperationException();
+		List<Expr<? extends BoolType>> newOps = new ArrayList<>();
+
+		boolean ans = true;
+		for (Expr<? extends Type> operand : expr.getOps()) {
+			Expr<? extends Type> res = operand.accept(this, param);
+			if (res instanceof BoolLitExpr) {
+				BoolLitExpr lit = (BoolLitExpr) res;
+				if (lit.getValue() == false) {
+					return False();
+				}
+
+				ans = ans && lit.getValue();
+			}
+
+			newOps.add(ExprUtils.cast(res, BoolType.class));
+		}
+
+		// if it was all constants
+		if (newOps.size() == 0)
+			return Bool(ans);
+
+		// if the product did not change
+		if (expr.getOps().size() == newOps.size())
+			return And(newOps);
+
+		newOps.add(Bool(ans));
+		return And(newOps);
 	}
 
 	@Override
 	public Expr<? extends Type> visit(OrExpr expr, Void param) {
-		throw new UnsupportedOperationException();
+		List<Expr<? extends BoolType>> newOps = new ArrayList<>();
+
+		boolean ans = false;
+		for (Expr<? extends Type> operand : expr.getOps()) {
+			Expr<? extends Type> res = operand.accept(this, param);
+			if (res instanceof BoolLitExpr) {
+				BoolLitExpr lit = (BoolLitExpr) res;
+				if (lit.getValue() == true) {
+					return True();
+				}
+
+				ans = ans || lit.getValue();
+			}
+
+			newOps.add(ExprUtils.cast(res, BoolType.class));
+		}
+
+		// if it was all constants
+		if (newOps.size() == 0)
+			return Bool(ans);
+
+		// if the product did not change
+		if (expr.getOps().size() == newOps.size())
+			return Or(newOps);
+
+		newOps.add(Bool(ans));
+		return Or(newOps);
 	}
 
 	@Override
@@ -257,8 +330,13 @@ public class ConstantFolderExprVisitor implements VarRefExprVisitor<Void, Expr<?
 
 	@Override
 	public <ExprType extends ClosedUnderNeg> Expr<? extends Type> visit(NegExpr<ExprType> expr, Void param) {
-		// TODO Auto-generated method stub
-		return expr;
+		Expr<? extends Type> res = expr.getOp().accept(this, param);
+
+		if (res instanceof IntLitExpr) {
+			return Int(-1 * ((IntLitExpr) res).getValue());
+		}
+
+		return Neg(ExprUtils.cast(res, ClosedUnderNeg.class));
 	}
 
 	@Override
@@ -279,70 +357,59 @@ public class ConstantFolderExprVisitor implements VarRefExprVisitor<Void, Expr<?
 
 	@Override
 	public <ExprType extends ClosedUnderAdd> Expr<? extends Type> visit(AddExpr<ExprType> expr, Void param) {
-		int constCount = 0;
-		List<Expr<? extends ClosedUnderAdd>> allOps = new ArrayList<>();
+		List<Expr<? extends ClosedUnderAdd>> newOps = new ArrayList<>();
 
-		/* Find all constant operations */
-		for (Expr<? extends Type> s : expr.getOps()) {
-			Expr<? extends Type> res = s.accept(this, param);
-			if (res instanceof LitExpr<?>) {
-				if (((IntLitExpr) res).getValue() == 0) // Ignore zeros
-					continue;
-
-				constCount++;
+		int sum = 0;
+		for (Expr<? extends ExprType> operand : expr.getOps()) {
+			Expr<? extends Type> res = operand.accept(this, param);
+			if (res instanceof IntLitExpr) {
+				IntLitExpr lit = (IntLitExpr) res;
+				sum += lit.getValue();
+			} else {
+				newOps.add(ExprUtils.cast(res, ClosedUnderAdd.class));
 			}
-			allOps.add(ExprUtils.cast(res, ClosedUnderAdd.class));
 		}
 
-		/* If all operands are constants, we can calculate their value compile time */
-		if (constCount == allOps.size()) {
-			long sum = 0;
-			for (Expr<? extends Type> s : allOps) {
-				sum += ((IntLitExpr) s).getValue();
-			}
-
+		// if it was all constants
+		if (newOps.size() == 0)
 			return Int(sum);
-		}
 
-		if (allOps.size() == 1) {
-			return allOps.get(0);
-		}
+		// if the product did not change
+		if (sum == 0)
+			return Add(newOps);
 
-		return Add(allOps);
+		newOps.add(Int(sum));
+		return Add(newOps);
 	}
 
 	@Override
 	public <ExprType extends ClosedUnderMul> Expr<? extends Type> visit(MulExpr<ExprType> expr, Void param) {
-		int constCount = 0;
-		List<Expr<? extends ClosedUnderMul>> allOps = new ArrayList<>();
+		List<Expr<? extends ClosedUnderMul>> newOps = new ArrayList<>();
 
-		/* Find all constant operations */
-		for (Expr<? extends Type> s : expr.getOps()) {
-			Expr<? extends Type> res = s.accept(this, param);
-			if (res instanceof LitExpr<?>) {
-				if (((IntLitExpr) res).getValue() == 0)
-					return Int(0); // multiplying anything with zero results is zero
+		int product = 1;
+		for (Expr<? extends ExprType> operand : expr.getOps()) {
+			Expr<? extends Type> res = operand.accept(this, param);
+			if (res instanceof IntLitExpr) {
+				IntLitExpr lit = (IntLitExpr) res;
+				if (lit.getValue() == 0)
+					return Int(0);
 
-				constCount++;
+				product *= lit.getValue();
+			} else {
+				newOps.add(ExprUtils.cast(res, ClosedUnderMul.class));
 			}
-			allOps.add(ExprUtils.cast(res, ClosedUnderMul.class));
 		}
 
-		/* If all operands are constants, we can calculate their value compile time */
-		if (constCount == allOps.size()) {
-			long sum = 1;
-			for (Expr<? extends Type> s : allOps) {
-				sum *= ((IntLitExpr) s).getValue();
-			}
+		// if it was all constants
+		if (newOps.size() == 0)
+			return Int(product);
 
-			return Int(sum);
-		}
+		// if the product did not change
+		if (product == 1)
+			return Mul(newOps);
 
-		if (allOps.size() == 1) {
-			return allOps.get(0);
-		}
-
-		return Mul(allOps);
+		newOps.add(Int(product));
+		return Mul(newOps);
 	}
 
 	@Override
@@ -407,6 +474,16 @@ public class ConstantFolderExprVisitor implements VarRefExprVisitor<Void, Expr<?
 	@Override
 	public Expr<? extends Type> visit(IffExpr expr, Void param) {
 		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public <ReturnType extends Type> Expr<? extends Type> visit(ProcCallExpr<ReturnType> expr, Void param) {
+		List<Expr<? extends Type>> newArgs = new ArrayList<>();
+		for (Expr<? extends Type> arg : expr.getParams()) {
+			newArgs.add(arg.accept(this, param));
+		}
+
+		return Exprs2.Call(expr.getProc(), newArgs);
 	}
 
 }

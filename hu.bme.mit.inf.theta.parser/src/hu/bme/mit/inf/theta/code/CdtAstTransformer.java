@@ -366,7 +366,7 @@ public class CdtAstTransformer {
 			return transformExpressionList((IASTExpressionList) ast);
 		}
 
-		return null; // @todo
+		throw new UnsupportedOperationException("Unsupported expression type " + ast.getClass());
 	}
 
 	private static ExpressionListAst transformExpressionList(IASTExpressionList ast) {
@@ -392,6 +392,8 @@ public class CdtAstTransformer {
 				return new UnaryExpressionAst(transformExpression(expr), Operator.OP_POSTFIX_DECR);
 			case IASTUnaryExpression.op_not:
 				return new UnaryExpressionAst(transformExpression(expr), Operator.OP_NOT);
+			case IASTUnaryExpression.op_minus:
+				return new UnaryExpressionAst(transformExpression(expr), Operator.OP_MINUS);
 			case IASTUnaryExpression.op_bracketedPrimary:
 				return transformExpression(expr);
 		}

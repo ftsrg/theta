@@ -77,7 +77,7 @@ public class Function {
 				JumpIfNode jump = (JumpIfNode) terminator;
 				newBlock.terminate(JumpIf(jump.getCondition(), newBlocks.get(jump.getThenTarget()), newBlocks.get(jump.getElseTarget())));
 			} else if (terminator instanceof ReturnNode) {
-				newBlock.terminate(Return(((ReturnNode) terminator).getExpr()));
+				newBlock.terminate(Return(((ReturnNode) terminator).getExpr(), newBlocks.get(this.exit), newBlock));
 			} else if (terminator instanceof ExitNode) {
 				newBlock.terminate(new ExitNode());
 			} else if (terminator instanceof EntryNode) {
@@ -285,10 +285,11 @@ public class Function {
 			}
 		}
 
-		// retain all visited nodes
+		// retain all visited and marked nodes
 		List<BasicBlock> unreachable =  this.blocksMap.values()
 			.stream()
 			.filter(b -> !visited.contains(b))
+			.filter(b -> b != this.entry && b != this.exit)
 			.collect(Collectors.toList());
 
 		unreachable.forEach(b -> this.removeBasicBlock(b));

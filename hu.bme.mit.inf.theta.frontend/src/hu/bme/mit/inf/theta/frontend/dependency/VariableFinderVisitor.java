@@ -31,12 +31,15 @@ import hu.bme.mit.inf.theta.core.type.closure.ClosedUnderNeg;
 import hu.bme.mit.inf.theta.core.type.closure.ClosedUnderSub;
 import hu.bme.mit.inf.theta.core.utils.impl.FailExprVisitor;
 import hu.bme.mit.inf.theta.formalism.common.decl.VarDecl;
+import hu.bme.mit.inf.theta.formalism.common.expr.ProcCallExpr;
 import hu.bme.mit.inf.theta.formalism.common.expr.VarRefExpr;
+import hu.bme.mit.inf.theta.formalism.common.expr.visitor.ProcCallExprVisitor;
 import hu.bme.mit.inf.theta.formalism.common.expr.visitor.VarRefExprVisitor;
 
 public class VariableFinderVisitor
 	extends FailExprVisitor<Set<VarDecl<? extends Type>>, Set<VarDecl<? extends Type>>>
-	implements VarRefExprVisitor<Set<VarDecl<? extends Type>>, Set<VarDecl<? extends Type>>>
+	implements VarRefExprVisitor<Set<VarDecl<? extends Type>>, Set<VarDecl<? extends Type>>>,
+	ProcCallExprVisitor<Set<VarDecl<? extends Type>>, Set<VarDecl<? extends Type>>>
 {
 
 
@@ -166,6 +169,12 @@ public class VariableFinderVisitor
 
 	@Override
 	public Set<VarDecl<? extends Type>> visit(TrueExpr expr, Set<VarDecl<? extends Type>> param) {
+		return param;
+	}
+
+	@Override
+	public <ReturnType extends Type> Set<VarDecl<? extends Type>> visit(ProcCallExpr<ReturnType> expr,
+			Set<VarDecl<? extends Type>> param) {
 		return param;
 	}
 

@@ -1,6 +1,8 @@
 package hu.bme.mit.inf.theta.code;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 import org.eclipse.cdt.core.dom.ast.gnu.c.GCCLanguage;
@@ -17,15 +19,20 @@ import hu.bme.mit.inf.theta.code.ast.DeclarationAst;
 import hu.bme.mit.inf.theta.code.ast.DeclaratorAst;
 import hu.bme.mit.inf.theta.code.ast.FunctionDeclaratorAst;
 import hu.bme.mit.inf.theta.code.ast.FunctionDefinitionAst;
+import hu.bme.mit.inf.theta.code.ast.ParameterDeclarationAst;
 import hu.bme.mit.inf.theta.code.ast.TranslationUnitAst;
 import hu.bme.mit.inf.theta.code.ast.VarDeclarationAst;
 import hu.bme.mit.inf.theta.code.ast.utils.AstPrinter;
 import hu.bme.mit.inf.theta.frontend.ir.Function;
 import hu.bme.mit.inf.theta.frontend.ir.GlobalContext;
+import hu.bme.mit.inf.theta.core.decl.ParamDecl;
+import hu.bme.mit.inf.theta.core.decl.impl.Decls;
+import hu.bme.mit.inf.theta.core.expr.impl.Exprs;
 import hu.bme.mit.inf.theta.core.type.Type;
 import hu.bme.mit.inf.theta.core.type.impl.Types;
 import hu.bme.mit.inf.theta.formalism.common.decl.ProcDecl;
 import hu.bme.mit.inf.theta.formalism.common.decl.impl.Decls2;
+import hu.bme.mit.inf.theta.formalism.common.expr.impl.Exprs2;
 
 public class Parser {
 
@@ -38,13 +45,19 @@ public class Parser {
 				FunctionDefinitionAst funcAst = (FunctionDefinitionAst) decl;
 				Function func = new Function(funcAst.getName(), Types.Int());
 
-				// Store this declaration in the symbol table
-				ProcDecl<? extends Type> proc = Decls2.Proc(func.getName(), Collections.emptyList(), Types.Int());
+				List<ParamDecl<?>> params = new ArrayList<>();
+				for (ParameterDeclarationAst param : funcAst.getDeclarator().getParameters()) {
+					params.add(Decls.Param(param.getDeclarator().getName(), Types.Int()));
+				}
+
+				ProcDecl<? extends Type> proc = Decls2.Proc(func.getName(), params, Types.Int());
 				context.addFunction(func, proc);
 				context.getSymbolTable().put(func.getName(), proc);
 
+				// create a new function scope and add all function parameters to it
 				IrCodeGenerator codegen = new IrCodeGenerator(context, func);
 				codegen.generate(funcAst);
+
 			} else if (decl instanceof VarDeclarationAst) {
 				// It may be a global variable or a function declaration
 				for (DeclaratorAst declarator : ((VarDeclarationAst) decl).getDeclarators()) {

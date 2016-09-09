@@ -1,9 +1,5 @@
 package hu.bme.mit.inf.theta.code;
 
-import static hu.bme.mit.inf.theta.frontend.ir.node.NodeFactory.Assert;
-import static hu.bme.mit.inf.theta.frontend.ir.node.NodeFactory.Assign;
-import static hu.bme.mit.inf.theta.frontend.ir.node.NodeFactory.Goto;
-import static hu.bme.mit.inf.theta.frontend.ir.node.NodeFactory.JumpIf;
 import static hu.bme.mit.inf.theta.core.expr.impl.Exprs.Add;
 import static hu.bme.mit.inf.theta.core.expr.impl.Exprs.And;
 import static hu.bme.mit.inf.theta.core.expr.impl.Exprs.Eq;
@@ -22,9 +18,17 @@ import static hu.bme.mit.inf.theta.core.expr.impl.Exprs.Or;
 import static hu.bme.mit.inf.theta.core.expr.impl.Exprs.Sub;
 import static hu.bme.mit.inf.theta.core.type.impl.Types.Int;
 import static hu.bme.mit.inf.theta.formalism.common.decl.impl.Decls2.Var;
+import static hu.bme.mit.inf.theta.frontend.ir.node.NodeFactory.Assert;
+import static hu.bme.mit.inf.theta.frontend.ir.node.NodeFactory.Assign;
+import static hu.bme.mit.inf.theta.frontend.ir.node.NodeFactory.Goto;
+import static hu.bme.mit.inf.theta.frontend.ir.node.NodeFactory.JumpIf;
+import static hu.bme.mit.inf.theta.frontend.ir.node.NodeFactory.Return;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EmptyStackException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 
@@ -53,6 +57,7 @@ import hu.bme.mit.inf.theta.code.ast.LabeledStatementAst;
 import hu.bme.mit.inf.theta.code.ast.LiteralExpressionAst;
 import hu.bme.mit.inf.theta.code.ast.NameExpressionAst;
 import hu.bme.mit.inf.theta.code.ast.NullStatementAst;
+import hu.bme.mit.inf.theta.code.ast.ParameterDeclarationAst;
 import hu.bme.mit.inf.theta.code.ast.ReturnStatementAst;
 import hu.bme.mit.inf.theta.code.ast.StatementAst;
 import hu.bme.mit.inf.theta.code.ast.SwitchStatementAst;
@@ -71,10 +76,13 @@ import hu.bme.mit.inf.theta.core.type.closure.ClosedUnderAdd;
 import hu.bme.mit.inf.theta.core.type.closure.ClosedUnderMul;
 import hu.bme.mit.inf.theta.core.type.closure.ClosedUnderNeg;
 import hu.bme.mit.inf.theta.core.type.closure.ClosedUnderSub;
+import hu.bme.mit.inf.theta.core.type.impl.Types;
 import hu.bme.mit.inf.theta.core.utils.impl.ExprUtils;
 import hu.bme.mit.inf.theta.formalism.common.decl.ProcDecl;
 import hu.bme.mit.inf.theta.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.theta.formalism.common.expr.VarRefExpr;
+import hu.bme.mit.inf.theta.formalism.common.expr.impl.Exprs2;
+import hu.bme.mit.inf.theta.formalism.common.type.ProcType;
 import hu.bme.mit.inf.theta.frontend.ir.BasicBlock;
 import hu.bme.mit.inf.theta.frontend.ir.Function;
 import hu.bme.mit.inf.theta.frontend.ir.GlobalContext;
@@ -82,7 +90,7 @@ import hu.bme.mit.inf.theta.frontend.ir.InstructionBuilder;
 import hu.bme.mit.inf.theta.frontend.ir.node.BranchTableNode;
 import hu.bme.mit.inf.theta.frontend.ir.node.EntryNode;
 import hu.bme.mit.inf.theta.frontend.ir.node.GotoNode;
-import hu.bme.mit.inf.theta.frontend.ir.utils.SymbolTable;
+import hu.bme.mit.inf.theta.frontend.ir.utils.IrPrinter;
 
 public class IrCodeGenerator implements
 	ExpressionVisitor<Expr<? extends Type>>,
@@ -117,8 +125,29 @@ public class IrCodeGenerator implements
 	}
 
 	public void generate(FunctionDefinitionAst ast) {
+		// Create a new scope for this function and add all parameters to it
+		this.context.getSymbolTable().pushScope();
+
+		for (ParameterDeclarationAst param : ast.getDeclarator().getParameters()) {
+			String name = param.getDeclarator().getName();
+			VarDecl<? extends IntType> var = Var(name, Types.Int());
+
+			this.context.getSymbolTable().put(name, var);
+		}
+
 		ast.getBody().accept(this);
+
+		// The insert point may not be terminated in some unstructured programs,
+		// in that case we should terminate it manually
+		if (!this.builder.getInsertPoint().isTerminated()) {
+			this.builder.terminateInsertPoint(Goto(this.builder.getExitBlock()));
+		}
+
 		this.resolveGotos();
+		this.context.getSymbolTable().popScope();
+
+		//System.out.println(IrPrinter.toGraphvizString(this.builder.getFunction()));
+
 		this.builder.getFunction().normalize();
 	}
 
@@ -281,8 +310,15 @@ public class IrCodeGenerator implements
 			// The unary plus operator promotes the operand to an integral type
 			// Since only integer variables are supported atm, this means a no-op
 			return ast.getOperand().accept(this);
-		case OP_NOT:
-			return Not(ExprUtils.cast(ast.getOperand().accept(this), BoolType.class));
+		case OP_NOT: {
+			// If the variable is an integer, convert it into a bool
+			Expr<? extends Type> expr = ast.getOperand().accept(this);
+			if (expr.getType() instanceof IntType) {
+				expr = Neq(ExprUtils.cast(expr, IntType.class), Int(0));
+			}
+
+			return Not(ExprUtils.cast(expr, BoolType.class));
+		}
 		case OP_POSTFIX_INCR: {
 			Expr<? extends ClosedUnderAdd> expr = ExprUtils.cast(ast.getOperand().accept(this), ClosedUnderAdd.class);
 			if (!(expr instanceof VarRefExpr<?>)) {
@@ -348,12 +384,26 @@ public class IrCodeGenerator implements
 		return this.context.getSymbolTable().get(ast.getName()).getRef();
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public Expr<? extends Type> visit(FunctionCallExpressionAst ast) {
 		if (!this.context.getSymbolTable().contains(ast.getName()))
 			throw new ParserException(String.format("Use of undeclared identifier '%s'.", ast.getName()));
 
-		return this.context.getSymbolTable().get(ast.getName()).getRef();
+		Decl<?, ?> proc = this.context.getSymbolTable().get(ast.getName());
+		if (!(proc instanceof ProcDecl<?>))
+			throw new ParserException(String.format("Attempting to use non-function ('%s') as a function", ast.getName()));
+
+		List<Expr<? extends Type>> args = new ArrayList<>();
+		for (ExpressionAst argAst : ast.getParams()) {
+			args.add(argAst.accept(this));
+		}
+
+		if (args.size() != ((ProcDecl<?>) proc).getParamDecls().size()) {
+			throw new ParserException(String.format("Invalid argument count in function call to '%s'.", ast.getName()));
+		}
+
+		return Exprs2.Call(((ProcDecl<? extends Type>) proc).getRef(), args);
 	}
 
 	@Override
@@ -460,7 +510,12 @@ public class IrCodeGenerator implements
 
 	@Override
 	public Void visit(ReturnStatementAst ast) {
-		this.builder.terminateInsertPoint(Goto(this.builder.getExitBlock()));
+		Expr<? extends Type> expr = ast.getExpression().accept(this);
+		this.builder.terminateInsertPoint(Return(expr, this.builder.getExitBlock(), this.builder.getInsertPoint()));
+
+		// There may be something after this block
+		BasicBlock after = this.builder.createBlock("after_return");
+		this.builder.setInsertPoint(after);
 
 		return null;
 	}
@@ -474,7 +529,9 @@ public class IrCodeGenerator implements
 
 			if (func.getName().equals("assert")) {
 				ExpressionAst cond = func.getParams().get(0); // The first parameter is the condition
-				this.builder.insertNode(Assert(ExprUtils.cast(cond.accept(this), BoolType.class)));
+				Expr<? extends BoolType> assertCond = this.createCondition(cond);
+
+				this.builder.insertNode(Assert(assertCond));
 			}
 		} else {
 			exprAst.accept(this);

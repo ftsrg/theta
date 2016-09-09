@@ -27,6 +27,7 @@ import hu.bme.mit.inf.theta.frontend.ir.node.GotoNode;
 import hu.bme.mit.inf.theta.frontend.ir.node.IrNode;
 import hu.bme.mit.inf.theta.frontend.ir.node.JumpIfNode;
 import hu.bme.mit.inf.theta.frontend.ir.node.NonTerminatorIrNode;
+import hu.bme.mit.inf.theta.frontend.ir.node.ReturnNode;
 import hu.bme.mit.inf.theta.frontend.ir.node.TerminatorIrNode;
 
 /**
@@ -131,6 +132,8 @@ public class FunctionToCFATransformer {
 					// Create the last -> branch node edge.
 					// This will also annotate the edge with the statement corrseponding to the last instruction node
 					createCfaEdge(cfa, last, jumpSource, branchLoc);
+				} else if (terminator instanceof ReturnNode) {
+					createCfaEdge(cfa, last, jumpSource, cfa.getFinalLoc());
 				}
 			} else {
 				if (terminator instanceof JumpIfNode) {

@@ -10,15 +10,20 @@ import hu.bme.mit.inf.theta.frontend.ir.BasicBlock;
 public class ReturnNode implements TerminatorIrNode {
 
 	private Expr<? extends Type> expr;
+	private final BasicBlock exitBlock;
 	private BasicBlock parent;
 
-	public ReturnNode(Expr<? extends Type> expr) {
+	public ReturnNode(Expr<? extends Type> expr, BasicBlock exitBlock, BasicBlock parentBlock) {
 		this.expr = expr;
+		this.exitBlock = exitBlock;
+		this.parent = parentBlock;
+
+		this.exitBlock.addParent(this.parent);
 	}
 
 	@Override
 	public TerminatorIrNode copy() {
-		return new ReturnNode(this.expr);
+		return new ReturnNode(this.expr, this.exitBlock, this.parent);
 	}
 
 	public Expr<? extends Type> getExpr() {
@@ -32,7 +37,7 @@ public class ReturnNode implements TerminatorIrNode {
 
 	@Override
 	public List<BasicBlock> getTargets() {
-		return Collections.emptyList();
+		return Collections.singletonList(this.exitBlock);
 	}
 
 	@Override

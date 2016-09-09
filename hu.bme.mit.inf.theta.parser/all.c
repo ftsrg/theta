@@ -6,8 +6,18 @@ int main()
 {
 	int sum = 0, i = 0, x = 2;
 
-	//int y = nondet();
+	int y = nondet();
 
+	if (x == 0)
+		goto err;
+
+
+	out:
+		return 0;
+	err:
+		return 0;
+
+/*
 	if (x == 0) {
 		i = 1;
 	} else {
@@ -40,5 +50,5 @@ int main()
 	assert(i != 0);
 	assert(sum != 0);
 
-	return 0;
+	return 0;*/
 }
