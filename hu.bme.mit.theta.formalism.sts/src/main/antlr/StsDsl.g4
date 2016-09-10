@@ -68,7 +68,7 @@ transConstr
 	;
 	
 refSts
-	:	ref=ID LPAREN (params=exprList)? RPAREN
+	:	ref=ID (LPAREN (params=exprList)? RPAREN)?
 	;
 	
 PROPERTY
