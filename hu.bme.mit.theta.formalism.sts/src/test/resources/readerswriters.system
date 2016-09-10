@@ -1,5 +1,6 @@
 specification PetriNet {
-	property s : {
+	
+	system readerswriters := {
 		var reading : integer
 		var writing : integer
 		var idle : integer
@@ -17,6 +18,7 @@ specification PetriNet {
 			(writing > 0 and reading' = reading and idle' = idle + 1 and writing' = writing - 1) or
 			(idle > 0 and writing = 0 and reading' = reading + 1 and idle' = idle - 1 and writing' = writing) or
 			(idle > 0 and writing = 0 and reading = 0 and reading' = reading and idle' = idle - 1 and writing' = writing + 1)
-		
-	} models G((writing = 0 or reading = 0))
+	}
+	
+	property safe : readerswriters models G(writing = 0 or reading = 0)
 }
