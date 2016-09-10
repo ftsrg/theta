@@ -13,7 +13,7 @@ import hu.bme.mit.theta.formalism.tcfa.TcfaPrinter;
 import hu.bme.mit.theta.formalism.tcfa.dsl.TcfaDslManager;
 import hu.bme.mit.theta.formalism.tcfa.dsl.TcfaSpec;
 
-public class TcfaDslTests {
+public class TcfaDslTest {
 
 	@Test
 	public void testFischer() throws FileNotFoundException, IOException {
