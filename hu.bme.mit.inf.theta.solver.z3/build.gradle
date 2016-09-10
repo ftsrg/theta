@@ -1,6 +1,0 @@
-dependencies {
-  compile project(':hu.bme.mit.inf.theta.common')
-  compile project(':hu.bme.mit.inf.theta.core')
-  compile project(':hu.bme.mit.inf.theta.solver')
-  compile files('./jar/com.microsoft.z3.jar')
-}

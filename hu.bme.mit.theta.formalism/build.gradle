@@ -1,0 +1,4 @@
+dependencies {
+  compile project(':hu.bme.mit.theta.common')
+  compile project(':hu.bme.mit.theta.core')
+}

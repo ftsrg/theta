@@ -1,0 +1,6 @@
+dependencies {
+  compile project(':hu.bme.mit.theta.common')
+  compile project(':hu.bme.mit.theta.core')
+  compile project(':hu.bme.mit.theta.solver')
+  compile files('./jar/com.microsoft.z3.jar')
+}

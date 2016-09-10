@@ -1,7 +1,7 @@
 allprojects  {
 	apply plugin: 'maven'
 
-	group = 'hu.bme.mit.inf.theta'
+	group = 'hu.bme.mit.theta'
 	version = '1.0.0-SNAPSHOT'
 	
 }
