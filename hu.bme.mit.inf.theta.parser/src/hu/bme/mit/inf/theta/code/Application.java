@@ -13,6 +13,7 @@ import hu.bme.mit.inf.theta.frontend.ir.GlobalContext;
 import hu.bme.mit.inf.theta.frontend.ir.utils.IrPrinter;
 import hu.bme.mit.inf.theta.frontend.transform.ConstantPropagator;
 import hu.bme.mit.inf.theta.frontend.transform.DeadBranchEliminator;
+import hu.bme.mit.inf.theta.frontend.transform.FunctionInliner;
 import hu.bme.mit.inf.theta.frontend.transform.FunctionSlicer;
 
 class Application {
@@ -20,17 +21,22 @@ class Application {
 	public static void main(String[] args)
 			throws CoreException, FileNotFoundException, IOException, InterruptedException {
 
-		GlobalContext context = Parser.parse("functions.c");
+		GlobalContext context = Parser.parse("benchmarks/simple/base_n.c");
 
 		context.functions().forEach(function -> {
 			System.out.println("===============" + function.getName() + "===============");
 			System.out.println("------" + "CFG" + "------");
 			System.out.println(IrPrinter.toGraphvizString(function));
-
-			System.out.println("------" + "const prop" + "------");
-			ConstantPropagator constProp = new ConstantPropagator();
-			constProp.transform(function);
+			System.out.println("------" + "inline" + "------");
+			FunctionInliner inliner = new FunctionInliner();
+			inliner.transform(function);
 			System.out.println(IrPrinter.toGraphvizString(function));
+
+
+//			System.out.println("------" + "const prop" + "------");
+//			ConstantPropagator constProp = new ConstantPropagator();
+//			constProp.transform(function);
+//			System.out.println(IrPrinter.toGraphvizString(function));
 //			System.out.println("------" + "dead branch" + "------");
 //			DeadBranchEliminator dead = new DeadBranchEliminator();
 //			dead.transform(function);

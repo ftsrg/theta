@@ -67,6 +67,7 @@ import hu.bme.mit.inf.theta.code.ast.WhileStatementAst;
 import hu.bme.mit.inf.theta.code.ast.visitor.ExpressionVisitor;
 import hu.bme.mit.inf.theta.code.ast.visitor.StatementVisitor;
 import hu.bme.mit.inf.theta.core.decl.Decl;
+import hu.bme.mit.inf.theta.core.decl.ParamDecl;
 import hu.bme.mit.inf.theta.core.expr.Expr;
 import hu.bme.mit.inf.theta.core.type.BoolType;
 import hu.bme.mit.inf.theta.core.type.IntType;
@@ -80,6 +81,7 @@ import hu.bme.mit.inf.theta.core.type.impl.Types;
 import hu.bme.mit.inf.theta.core.utils.impl.ExprUtils;
 import hu.bme.mit.inf.theta.formalism.common.decl.ProcDecl;
 import hu.bme.mit.inf.theta.formalism.common.decl.VarDecl;
+import hu.bme.mit.inf.theta.formalism.common.expr.ProcCallExpr;
 import hu.bme.mit.inf.theta.formalism.common.expr.VarRefExpr;
 import hu.bme.mit.inf.theta.formalism.common.expr.impl.Exprs2;
 import hu.bme.mit.inf.theta.formalism.common.type.ProcType;
@@ -128,10 +130,17 @@ public class IrCodeGenerator implements
 		// Create a new scope for this function and add all parameters to it
 		this.context.getSymbolTable().pushScope();
 
-		for (ParameterDeclarationAst param : ast.getDeclarator().getParameters()) {
-			String name = param.getDeclarator().getName();
-			VarDecl<? extends IntType> var = Var(name, Types.Int());
+		ProcDecl<? extends Type> proc = this.builder.getFunction().getProcDecl();
+		List<ParameterDeclarationAst> params = ast.getDeclarator().getParameters();
 
+		for (int i = 0; i < params.size(); ++i) {
+			ParameterDeclarationAst paramAst = params.get(i);
+			ParamDecl<? extends Type> paramDecl = proc.getParamDecls().get(i);
+
+			String name = paramAst.getDeclarator().getName();
+			VarDecl<? extends Type> var = Var(name, paramDecl.getType());
+
+			this.builder.getFunction().addParam(paramDecl, var);
 			this.context.getSymbolTable().put(name, var);
 		}
 
@@ -146,9 +155,9 @@ public class IrCodeGenerator implements
 		this.resolveGotos();
 		this.context.getSymbolTable().popScope();
 
-		//System.out.println(IrPrinter.toGraphvizString(this.builder.getFunction()));
+		System.out.println(IrPrinter.toGraphvizString(this.builder.getFunction()));
 
-		this.builder.getFunction().normalize();
+		//this.builder.getFunction().normalize();
 	}
 
 	private void resolveGotos() {
@@ -403,7 +412,12 @@ public class IrCodeGenerator implements
 			throw new ParserException(String.format("Invalid argument count in function call to '%s'.", ast.getName()));
 		}
 
-		return Exprs2.Call(((ProcDecl<? extends Type>) proc).getRef(), args);
+		ProcCallExpr<? extends Type> call =  Exprs2.Call(((ProcDecl<? extends Type>) proc).getRef(), args);
+		VarDecl<? extends Type> tmp  = Var("tmp_" + this.tmpId++, call.getType());
+
+		this.builder.insertNode(Assign(tmp, ExprUtils.cast(call, tmp.getType().getClass())));
+
+		return tmp.getRef();
 	}
 
 	@Override

@@ -50,8 +50,10 @@ public class EntryNode implements TerminatorIrNode {
 
 		@Override
 		public void replaceTarget(BasicBlock oldBlock, BasicBlock newBlock) {
-			throw new UnsupportedOperationException("Cannot replace an entry block");
+			if (this.target != oldBlock)
+				throw new RuntimeException();
 
+			this.target = newBlock;
 		}
 
 }

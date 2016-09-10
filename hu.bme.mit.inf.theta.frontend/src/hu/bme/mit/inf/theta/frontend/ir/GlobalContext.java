@@ -19,6 +19,7 @@ public class GlobalContext {
 	private Map<String, VarDecl<? extends Type>> globals = new HashMap<>();
 
 	public void addFunction(Function func, ProcDecl<? extends Type> proc) {
+		func.setContext(this);
 		this.functions.put(func.getName(), func);
 		this.symbols.put(func.getName(), proc);
 	}
@@ -29,6 +30,10 @@ public class GlobalContext {
 
 	public SymbolTable<Decl<? extends Type, ?>> getSymbolTable() {
 		return this.symbols;
+	}
+
+	public Function getFunctionByName(String name) {
+		return this.functions.get(name);
 	}
 
 	public Collection<Function> functions() {

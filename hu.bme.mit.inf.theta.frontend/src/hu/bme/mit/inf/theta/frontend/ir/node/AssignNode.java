@@ -8,11 +8,11 @@ import hu.bme.mit.inf.theta.frontend.ir.BasicBlock;
 public class AssignNode<VarType extends Type, ExprType extends VarType> implements NonTerminatorIrNode {
 
 	private VarDecl<VarType> var;
-	private Expr<ExprType> expr;
+	private Expr<? extends Type> expr;
 
 	private BasicBlock parent;
 
-	public AssignNode(VarDecl<VarType> var, Expr<ExprType> expr) {
+	public AssignNode(VarDecl<VarType> var, Expr<? extends Type> expr) {
 		this.var = var;
 		this.expr = expr;
 	}
@@ -30,11 +30,11 @@ public class AssignNode<VarType extends Type, ExprType extends VarType> implemen
 		this.var = var;
 	}
 
-	public Expr<ExprType> getExpr() {
+	public Expr<? extends Type> getExpr() {
 		return expr;
 	}
 
-	public void setExpr(Expr<ExprType> expr) {
+	public void setExpr(Expr<? extends Type> expr) {
 		this.expr = expr;
 	}
 

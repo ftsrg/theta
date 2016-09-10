@@ -1,4 +1,4 @@
-package hu.bme.mit.inf.theta.frontend.transform;
+package hu.bme.mit.inf.theta.frontend.transform.expr;
 
 import static hu.bme.mit.inf.theta.core.expr.impl.Exprs.Add;
 import static hu.bme.mit.inf.theta.core.expr.impl.Exprs.Bool;

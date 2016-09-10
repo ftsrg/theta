@@ -43,16 +43,18 @@ public class Parser {
 		for (DeclarationAst decl : root.getDeclarations()) {
 			if (decl instanceof FunctionDefinitionAst) {
 				FunctionDefinitionAst funcAst = (FunctionDefinitionAst) decl;
-				Function func = new Function(funcAst.getName(), Types.Int());
+				String name = funcAst.getName();
 
 				List<ParamDecl<?>> params = new ArrayList<>();
 				for (ParameterDeclarationAst param : funcAst.getDeclarator().getParameters()) {
 					params.add(Decls.Param(param.getDeclarator().getName(), Types.Int()));
 				}
 
-				ProcDecl<? extends Type> proc = Decls2.Proc(func.getName(), params, Types.Int());
+				ProcDecl<? extends Type> proc = Decls2.Proc(name, params, Types.Int());
+
+				Function func = new Function(name, proc);
 				context.addFunction(func, proc);
-				context.getSymbolTable().put(func.getName(), proc);
+				context.getSymbolTable().put(name, proc);
 
 				// create a new function scope and add all function parameters to it
 				IrCodeGenerator codegen = new IrCodeGenerator(context, func);

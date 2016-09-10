@@ -14,13 +14,19 @@ import java.util.Optional;
 import java.util.Stack;
 import java.util.stream.Collectors;
 
+import hu.bme.mit.inf.theta.common.Product3;
+import hu.bme.mit.inf.theta.common.Tuple;
+import hu.bme.mit.inf.theta.common.Tuple3;
+import hu.bme.mit.inf.theta.core.decl.ParamDecl;
 import hu.bme.mit.inf.theta.core.type.Type;
+import hu.bme.mit.inf.theta.formalism.common.decl.ProcDecl;
 import hu.bme.mit.inf.theta.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.theta.frontend.ir.node.BranchTableNode;
 import hu.bme.mit.inf.theta.frontend.ir.node.BranchTableNode.BranchTableEntry;
 import hu.bme.mit.inf.theta.frontend.ir.node.EntryNode;
 import hu.bme.mit.inf.theta.frontend.ir.node.ExitNode;
 import hu.bme.mit.inf.theta.frontend.ir.node.GotoNode;
+import hu.bme.mit.inf.theta.frontend.ir.node.IrNode;
 import hu.bme.mit.inf.theta.frontend.ir.node.JumpIfNode;
 import hu.bme.mit.inf.theta.frontend.ir.node.NonTerminatorIrNode;
 import hu.bme.mit.inf.theta.frontend.ir.node.ReturnNode;
@@ -31,10 +37,13 @@ import hu.bme.mit.inf.theta.frontend.ir.node.TerminatorIrNode;
  */
 public class Function {
 
+
 	private final String name;
-	private final Type type;
+	private final ProcDecl<? extends Type> proc;
 	private final List<VarDecl<? extends Type>> locals = new ArrayList<>();
-	private final Map<String, BasicBlock> blocksMap = new HashMap<>();
+	//private final Map<String, BasicBlock> blocksMap = new HashMap<>();
+	private final Map<ParamDecl<? extends Type>, VarDecl<? extends Type>> args = new HashMap<>();
+	private final List<BasicBlock> blocks = new ArrayList<>();
 
 	private BasicBlock entry;
 	private BasicBlock exit;
@@ -42,11 +51,13 @@ public class Function {
 	private EntryNode entryNode;
 	private ExitNode exitNode;
 
-	private int copyId = 0;
+	private static int copyId = 0;
 
-	public Function(String name, Type type) {
+	private GlobalContext context;
+
+	public Function(String name, ProcDecl<? extends Type> proc) {
 		this.name = name;
-		this.type = type;
+		this.proc = proc;
 
 		this.exit = new BasicBlock(name + "_exit", this);
 		this.exitNode = new ExitNode();
@@ -55,9 +66,9 @@ public class Function {
 	}
 
 	public Function copy(Map<BasicBlock, BasicBlock> newBlocks) {
-		Function func = new Function(this.name, this.type);
-		for (BasicBlock block : this.blocksMap.values()) {
-			BasicBlock newBlock = func.createBlock(block.getName());
+		Function func = new Function(this.name, this.proc);
+		for (BasicBlock block : this.blocks) {
+			BasicBlock newBlock = func.createBlock(block.getName() + "_cpy" + copyId++);
 			newBlocks.put(block, newBlock);
 			for (NonTerminatorIrNode node : block.getNodes()) {
 				newBlock.addNode(node.copy());
@@ -115,6 +126,10 @@ public class Function {
 		return this.copy(new HashMap<>());
 	}
 
+	public void addParam(ParamDecl<? extends Type> param, VarDecl<? extends Type> local) {
+		this.args.put(param, local);
+	}
+
 	public BasicBlock createBlock(String name) {
 		BasicBlock bb = new BasicBlock(name, this);
 		this.addBasicBlock(bb);
@@ -133,8 +148,8 @@ public class Function {
 		oldBlock.terminator.getTargets().forEach(t -> t.parents.remove(oldBlock));
 		newBlock.terminate(terminator);
 
-		this.blocksMap.values().remove(oldBlock);
-		this.blocksMap.put(newBlock.getName(), newBlock);
+		this.blocks.remove(oldBlock);
+		this.addBasicBlock(newBlock);
 
 		if (this.entry == oldBlock)
 			this.entry = newBlock;
@@ -156,7 +171,7 @@ public class Function {
 	 */
 	public void normalize() {
 		// Remove single 'goto' nodes
-		List<BasicBlock> singleGotos = this.blocksMap.values()
+		List<BasicBlock> singleGotos = this.blocks
 			.stream()
 			.filter(block -> block.countNodes() == 0 && (block.getTerminator() instanceof GotoNode))
 			.collect(Collectors.toList());
@@ -188,16 +203,17 @@ public class Function {
 	}
 
 	public void addBasicBlock(BasicBlock block) {
-		this.blocksMap.put(block.getName(), block);
+		if (!this.blocks.contains(block))
+			this.blocks.add(block);
 	}
 
 	public void removeBasicBlock(BasicBlock block) {
 		block.getTerminator().getTargets().forEach(t -> t.parents.remove(block));
-		this.blocksMap.values().remove(block);
+		this.blocks.remove(block);
 	}
 
 	public Collection<BasicBlock> getBlocks() {
-		return this.blocksMap.values();
+		return this.blocks;
 	}
 
 	/**
@@ -263,7 +279,15 @@ public class Function {
 	}
 
 	public Type getType() {
-		return this.type;
+		return this.proc.getReturnType();
+	}
+
+	public GlobalContext getContext() {
+		return context;
+	}
+
+	public void setContext(GlobalContext context) {
+		this.context = context;
 	}
 
 	/**
@@ -286,7 +310,7 @@ public class Function {
 		}
 
 		// retain all visited and marked nodes
-		List<BasicBlock> unreachable =  this.blocksMap.values()
+		List<BasicBlock> unreachable =  this.blocks
 			.stream()
 			.filter(b -> !visited.contains(b))
 			.filter(b -> b != this.entry && b != this.exit)
@@ -303,7 +327,7 @@ public class Function {
 		while (change) {
 			change = false;
 
-			Optional<BasicBlock> result = this.blocksMap.values()
+			Optional<BasicBlock> result = this.blocks
 				.stream()
 				.filter(b -> {
 					if (b.getTerminator() instanceof GotoNode) {
@@ -349,5 +373,44 @@ public class Function {
 				change = true;
 			}
 		}
+	}
+
+	public Product3<BasicBlock, BasicBlock, BasicBlock> splitBlock(BasicBlock block, int idx) {
+		BasicBlock before = this.createBlock("before_split_" + block.getName());
+		BasicBlock split  = this.createBlock("split_" + block.getName());
+		BasicBlock after  = this.createBlock("after_split_" + block.getName());
+
+		// Add the nodes in the required range.
+		block.getNodes().subList(0, idx).forEach(n -> before.addNode(n));
+		split.addNode((NonTerminatorIrNode) block.getNodeByIndex(idx));
+		block.getNodes().subList(idx + 1, block.getNodes().size()).forEach(n -> after.addNode(n));
+
+		// Rewire parent terminators into the before block
+		List<BasicBlock> parents = new ArrayList<>(block.parents());
+
+		parents.forEach(p -> p.terminator.replaceTarget(block, before));
+
+		before.terminate(Goto(split));
+		split.terminate(Goto(after));
+
+		// Rewire child targets
+		TerminatorIrNode terminator = block.getTerminator();
+		block.clearTerminator();
+
+		after.terminate(terminator);
+
+		// Clean up the old block
+		block.clearNodes();
+		this.blocks.remove(block);
+
+		return Tuple.of(before, split, after);
+	}
+
+	public ProcDecl<? extends Type> getProcDecl() {
+		return this.proc;
+	}
+
+	public VarDecl<? extends Type> getArgument(ParamDecl<?> param) {
+		return this.args.get(param);
 	}
 }

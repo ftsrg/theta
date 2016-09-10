@@ -30,6 +30,10 @@ public class ReturnNode implements TerminatorIrNode {
 		return this.expr;
 	}
 
+	public void setExpr(Expr<? extends Type> expr) {
+		this.expr = expr;
+	}
+
 	@Override
 	public String getLabel() {
 		return "Return(" + this.expr.toString() + ")";

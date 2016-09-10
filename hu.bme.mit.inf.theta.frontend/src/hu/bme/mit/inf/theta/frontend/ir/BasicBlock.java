@@ -279,7 +279,7 @@ public class BasicBlock {
 	 */
 	public void clearTerminator() {
 		if (!this.isTerminated)
-			throw new RuntimeException("Cannot clear the terminator of an unterminated block");
+			throw new RuntimeException("Cannot clear the terminator of an unterminated block (" + this.name + ")");
 
 		this.terminator.getTargets().forEach(t -> t.removeParent(this));
 		this.isTerminated = false;

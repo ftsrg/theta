@@ -34,7 +34,7 @@ class ProcCallExprImpl<ReturnType extends Type> implements ProcCallExpr<ReturnTy
 	}
 
 	@Override
-	public final Collection<? extends Expr<? extends Type>> getParams() {
+	public final List<? extends Expr<? extends Type>> getParams() {
 		return params;
 	}
 

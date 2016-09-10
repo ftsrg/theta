@@ -9,7 +9,7 @@ import hu.bme.mit.inf.theta.frontend.ir.BasicBlock;
 public class NodeFactory {
 
 	public static <VarType extends Type, ExprType extends VarType> AssignNode<VarType, ExprType> Assign(
-			VarDecl<VarType> var, Expr<ExprType> expr)
+			VarDecl<VarType> var, Expr<? extends Type> expr)
 	{
 		return new AssignNode<VarType, ExprType>(var, expr);
 	}

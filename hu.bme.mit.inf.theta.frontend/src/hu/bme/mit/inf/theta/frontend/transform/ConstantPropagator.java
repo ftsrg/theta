@@ -21,6 +21,7 @@ import hu.bme.mit.inf.theta.frontend.ir.node.AssignNode;
 import hu.bme.mit.inf.theta.frontend.ir.node.BranchTableNode;
 import hu.bme.mit.inf.theta.frontend.ir.node.IrNode;
 import hu.bme.mit.inf.theta.frontend.ir.node.JumpIfNode;
+import hu.bme.mit.inf.theta.frontend.transform.expr.ConstantFolderExprVisitor;
 
 public class ConstantPropagator implements FunctionTransformer {
 
