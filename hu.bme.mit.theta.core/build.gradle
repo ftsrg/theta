@@ -1,0 +1,23 @@
+apply plugin: 'antlr'
+
+dependencies {
+  antlr group: 'org.antlr', name: 'antlr4', version: antlrVersion
+  compile group: 'org.antlr', name: 'antlr4-runtime', version: antlrVersion
+  compile group: 'com.google.guava', name: 'guava', version: '19.0'
+  compile group: 'junit', name: 'junit', version: '4.12'
+  compile project(':hu.bme.mit.theta.common')
+}
+
+generateGrammarSource {
+    outputDirectory = new File("src/gen/java/hu/bme/mit/theta/core/dsl/gen")
+    arguments += ["-package", "hu.bme.mit.theta.core.dsl.gen"]
+    arguments += ["-Werror", "-visitor"]
+}
+
+sourceSets {
+    main {
+        java {
+            srcDirs = [ "src/main/java", "src/gen/java" ]
+        }
+    } 
+}
