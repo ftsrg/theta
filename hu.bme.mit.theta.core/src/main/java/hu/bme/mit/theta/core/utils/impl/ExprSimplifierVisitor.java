@@ -37,6 +37,7 @@ import hu.bme.mit.theta.core.expr.IntDivExpr;
 import hu.bme.mit.theta.core.expr.IntLitExpr;
 import hu.bme.mit.theta.core.expr.IteExpr;
 import hu.bme.mit.theta.core.expr.LeqExpr;
+import hu.bme.mit.theta.core.expr.LitExpr;
 import hu.bme.mit.theta.core.expr.LtExpr;
 import hu.bme.mit.theta.core.expr.ModExpr;
 import hu.bme.mit.theta.core.expr.MulExpr;
@@ -225,9 +226,7 @@ public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? ext
 		final Expr<? extends Type> leftOp = expr.getLeftOp().accept(this, param);
 		final Expr<? extends Type> rightOp = expr.getRightOp().accept(this, param);
 
-		if ((leftOp instanceof BoolLitExpr && rightOp instanceof BoolLitExpr)
-				|| (leftOp instanceof IntLitExpr && rightOp instanceof IntLitExpr)
-				|| (leftOp instanceof RatLitExpr && rightOp instanceof RatLitExpr)) {
+		if (leftOp instanceof LitExpr && rightOp instanceof LitExpr) {
 			return Bool(leftOp.equals(rightOp));
 		} else if (leftOp instanceof ConstRefExpr && rightOp instanceof ConstRefExpr) {
 			if (leftOp.equals(rightOp))
@@ -242,9 +241,7 @@ public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? ext
 		final Expr<? extends Type> leftOp = expr.getLeftOp().accept(this, param);
 		final Expr<? extends Type> rightOp = expr.getRightOp().accept(this, param);
 
-		if ((leftOp instanceof BoolLitExpr && rightOp instanceof BoolLitExpr)
-				|| (leftOp instanceof IntLitExpr && rightOp instanceof IntLitExpr)
-				|| (leftOp instanceof RatLitExpr && rightOp instanceof RatLitExpr)) {
+		if (leftOp instanceof LitExpr && rightOp instanceof LitExpr) {
 			return Bool(!leftOp.equals(rightOp));
 		} else if (leftOp instanceof ConstRefExpr && rightOp instanceof ConstRefExpr) {
 			if (leftOp.equals(rightOp))
