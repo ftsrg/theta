@@ -45,18 +45,21 @@ import hu.bme.mit.theta.core.utils.ExprVisitor;
 
 public class AtomCollectorVisitor implements ExprVisitor<Collection<Expr<? extends BoolType>>, Void> {
 
-	protected Void visitNonBoolConnective(final Expr<? extends Type> expr, final Collection<Expr<? extends BoolType>> param) {
+	protected Void visitNonBoolConnective(final Expr<? extends Type> expr,
+			final Collection<Expr<? extends BoolType>> param) {
 		param.add(ExprUtils.cast(expr, BoolType.class));
 		return null;
 	}
 
 	@Override
-	public <DeclType extends Type> Void visit(final ConstRefExpr<DeclType> expr, final Collection<Expr<? extends BoolType>> param) {
+	public <DeclType extends Type> Void visit(final ConstRefExpr<DeclType> expr,
+			final Collection<Expr<? extends BoolType>> param) {
 		return visitNonBoolConnective(expr, param);
 	}
 
 	@Override
-	public <DeclType extends Type> Void visit(final ParamRefExpr<DeclType> expr, final Collection<Expr<? extends BoolType>> param) {
+	public <DeclType extends Type> Void visit(final ParamRefExpr<DeclType> expr,
+			final Collection<Expr<? extends BoolType>> param) {
 		return visitNonBoolConnective(expr, param);
 	}
 
@@ -94,15 +97,13 @@ public class AtomCollectorVisitor implements ExprVisitor<Collection<Expr<? exten
 
 	@Override
 	public Void visit(final AndExpr expr, final Collection<Expr<? extends BoolType>> param) {
-		for (final Expr<? extends BoolType> op : expr.getOps())
-			op.accept(this, param);
+		expr.getOps().forEach(op -> op.accept(this, param));
 		return null;
 	}
 
 	@Override
 	public Void visit(final OrExpr expr, final Collection<Expr<? extends BoolType>> param) {
-		for (final Expr<? extends BoolType> op : expr.getOps())
-			op.accept(this, param);
+		expr.getOps().forEach(op -> op.accept(this, param));
 		return null;
 	}
 
@@ -179,22 +180,26 @@ public class AtomCollectorVisitor implements ExprVisitor<Collection<Expr<? exten
 	}
 
 	@Override
-	public <ExprType extends ClosedUnderNeg> Void visit(final NegExpr<ExprType> expr, final Collection<Expr<? extends BoolType>> param) {
+	public <ExprType extends ClosedUnderNeg> Void visit(final NegExpr<ExprType> expr,
+			final Collection<Expr<? extends BoolType>> param) {
 		return visitNonBoolConnective(expr, param);
 	}
 
 	@Override
-	public <ExprType extends ClosedUnderSub> Void visit(final SubExpr<ExprType> expr, final Collection<Expr<? extends BoolType>> param) {
+	public <ExprType extends ClosedUnderSub> Void visit(final SubExpr<ExprType> expr,
+			final Collection<Expr<? extends BoolType>> param) {
 		return visitNonBoolConnective(expr, param);
 	}
 
 	@Override
-	public <ExprType extends ClosedUnderAdd> Void visit(final AddExpr<ExprType> expr, final Collection<Expr<? extends BoolType>> param) {
+	public <ExprType extends ClosedUnderAdd> Void visit(final AddExpr<ExprType> expr,
+			final Collection<Expr<? extends BoolType>> param) {
 		return visitNonBoolConnective(expr, param);
 	}
 
 	@Override
-	public <ExprType extends ClosedUnderMul> Void visit(final MulExpr<ExprType> expr, final Collection<Expr<? extends BoolType>> param) {
+	public <ExprType extends ClosedUnderMul> Void visit(final MulExpr<ExprType> expr,
+			final Collection<Expr<? extends BoolType>> param) {
 		return visitNonBoolConnective(expr, param);
 	}
 
@@ -223,7 +228,8 @@ public class AtomCollectorVisitor implements ExprVisitor<Collection<Expr<? exten
 	}
 
 	@Override
-	public <ExprType extends Type> Void visit(final IteExpr<ExprType> expr, final Collection<Expr<? extends BoolType>> param) {
+	public <ExprType extends Type> Void visit(final IteExpr<ExprType> expr,
+			final Collection<Expr<? extends BoolType>> param) {
 		return visitNonBoolConnective(expr, param);
 	}
 
