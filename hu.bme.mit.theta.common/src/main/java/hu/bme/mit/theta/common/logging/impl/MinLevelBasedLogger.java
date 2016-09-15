@@ -4,18 +4,18 @@ import hu.bme.mit.theta.common.logging.Logger;
 
 public abstract class MinLevelBasedLogger implements Logger {
 	protected int minLevel; // Only write below this level
-	
-	public MinLevelBasedLogger(int minLevel) {
+
+	public MinLevelBasedLogger(final int minLevel) {
 		this.minLevel = minLevel;
 	}
-	
+
 	@Override
-	public void write(Object obj, int level) {
+	public void write(final Object obj, final int level) {
 		write(obj, level, 0);
 	}
 
 	@Override
-	public void writeln(Object obj, int level) {
+	public void writeln(final Object obj, final int level) {
 		writeln(obj, level, 0);
 	}
 }
