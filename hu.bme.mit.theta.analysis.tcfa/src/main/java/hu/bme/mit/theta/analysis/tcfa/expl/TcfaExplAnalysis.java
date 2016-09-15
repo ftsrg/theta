@@ -19,7 +19,7 @@ public class TcfaExplAnalysis implements Analysis<ExplState, TcfaAction, ExplPre
 
 	public TcfaExplAnalysis(final Solver solver) {
 		checkNotNull(solver);
-		transferFunction = new TcfaExplTransferFunction(solver);
+		transferFunction = TcfaExplTransferFunction.create(solver);
 	}
 
 	@Override
