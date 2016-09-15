@@ -22,19 +22,19 @@ public class ExprRewriterVisitor<P> extends ArityBasedExprVisitor<P, Expr<?>> {
 
 	@Override
 	public <ParamType extends Type, ResultType extends Type> Expr<ResultType> visit(
-			FuncAppExpr<ParamType, ResultType> expr, P param) {
+			final FuncAppExpr<ParamType, ResultType> expr, final P param) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public <ParamType extends Type, ResultType extends Type> Expr<?> visit(FuncLitExpr<ParamType, ResultType> expr,
-			P param) {
+	public <ParamType extends Type, ResultType extends Type> Expr<?> visit(
+			final FuncLitExpr<ParamType, ResultType> expr, final P param) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public <IndexType extends Type, ElemType extends Type> Expr<?> visit(ArrayReadExpr<IndexType, ElemType> expr,
-			P param) {
+	public <IndexType extends Type, ElemType extends Type> Expr<?> visit(final ArrayReadExpr<IndexType, ElemType> expr,
+			final P param) {
 		final Expr<? extends ArrayType<? super IndexType, ? extends ElemType>> array = expr.getArray();
 		final Expr<? extends IndexType> index = expr.getIndex();
 
@@ -48,9 +48,9 @@ public class ExprRewriterVisitor<P> extends ArityBasedExprVisitor<P, Expr<?>> {
 	}
 
 	@Override
-	public <IndexType extends Type, ElemType extends Type> Expr<?> visit(ArrayWriteExpr<IndexType, ElemType> expr,
-			P param) {
-		
+	public <IndexType extends Type, ElemType extends Type> Expr<?> visit(final ArrayWriteExpr<IndexType, ElemType> expr,
+			final P param) {
+
 		final Expr<? extends ArrayType<? super IndexType, ? extends ElemType>> array = expr.getArray();
 		final Expr<? extends IndexType> index = expr.getIndex();
 		final Expr<? extends ElemType> elem = expr.getElem();
@@ -67,7 +67,7 @@ public class ExprRewriterVisitor<P> extends ArityBasedExprVisitor<P, Expr<?>> {
 	}
 
 	@Override
-	public <ExprType extends Type> Expr<ExprType> visit(IteExpr<ExprType> expr, P param) {
+	public <ExprType extends Type> Expr<ExprType> visit(final IteExpr<ExprType> expr, final P param) {
 		final Expr<? extends BoolType> cond = expr.getCond();
 		final Expr<? extends ExprType> then = expr.getThen();
 		final Expr<? extends ExprType> elze = expr.getElse();
@@ -85,13 +85,14 @@ public class ExprRewriterVisitor<P> extends ArityBasedExprVisitor<P, Expr<?>> {
 	////
 
 	@Override
-	protected <ExprType extends Type> NullaryExpr<ExprType> visitNullary(NullaryExpr<ExprType> expr, P param) {
+	protected <ExprType extends Type> NullaryExpr<ExprType> visitNullary(final NullaryExpr<ExprType> expr,
+			final P param) {
 		return expr;
 	}
 
 	@Override
 	protected <OpType extends Type, ExprType extends Type> UnaryExpr<OpType, ExprType> visitUnary(
-			UnaryExpr<OpType, ExprType> expr, P param) {
+			final UnaryExpr<OpType, ExprType> expr, final P param) {
 		final Expr<? extends OpType> op = expr.getOp();
 
 		@SuppressWarnings("unchecked")
@@ -102,7 +103,7 @@ public class ExprRewriterVisitor<P> extends ArityBasedExprVisitor<P, Expr<?>> {
 
 	@Override
 	protected <LeftOpType extends Type, RightOpType extends Type, ExprType extends Type> BinaryExpr<LeftOpType, RightOpType, ExprType> visitBinary(
-			BinaryExpr<LeftOpType, RightOpType, ExprType> expr, P param) {
+			final BinaryExpr<LeftOpType, RightOpType, ExprType> expr, final P param) {
 
 		final Expr<? extends LeftOpType> leftOp = expr.getLeftOp();
 		final Expr<? extends RightOpType> rightOp = expr.getRightOp();
@@ -115,7 +116,7 @@ public class ExprRewriterVisitor<P> extends ArityBasedExprVisitor<P, Expr<?>> {
 
 	@Override
 	protected <OpsType extends Type, ExprType extends Type> MultiaryExpr<OpsType, ExprType> visitMultiary(
-			MultiaryExpr<OpsType, ExprType> expr, P param) {
+			final MultiaryExpr<OpsType, ExprType> expr, final P param) {
 
 		final Collection<? extends Expr<? extends OpsType>> ops = expr.getOps();
 		@SuppressWarnings("unchecked")
