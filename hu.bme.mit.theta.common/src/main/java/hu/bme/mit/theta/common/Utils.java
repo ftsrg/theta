@@ -10,7 +10,7 @@ public final class Utils {
 	private Utils() {
 	}
 
-	public static <T> T getOnlyElement(final Collection<? extends T> collection) {
+	public static <T> T getSingleElement(final Collection<? extends T> collection) {
 		checkArgument(collection.size() == 1);
 		return collection.iterator().next();
 	}
