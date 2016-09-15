@@ -6,25 +6,24 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 
-
 public class StackImpl<T> implements Stack<T> {
 
 	public final LinkedList<T> stack;
 	private final LinkedList<Integer> sizes;
-	
+
 	public StackImpl() {
 		stack = new LinkedList<>();
 		sizes = new LinkedList<>();
 		sizes.add(0);
 	}
-	
+
 	@Override
-	public void add(T elem) {
+	public void add(final T elem) {
 		stack.add(elem);
 	}
 
 	@Override
-	public void add(Collection<? extends T> elems) {
+	public void add(final Collection<? extends T> elems) {
 		stack.addAll(elems);
 	}
 
@@ -34,12 +33,12 @@ public class StackImpl<T> implements Stack<T> {
 	}
 
 	@Override
-	public void pop(int n) {
+	public void pop(final int n) {
 		final int depth = sizes.size();
 		checkArgument(depth > n);
 
+		final int size = sizes.get(depth - n);
 		sizes.subList(depth - n, depth).clear();
-		final int size = sizes.getLast();
 		stack.subList(size, stack.size()).clear();
 	}
 
