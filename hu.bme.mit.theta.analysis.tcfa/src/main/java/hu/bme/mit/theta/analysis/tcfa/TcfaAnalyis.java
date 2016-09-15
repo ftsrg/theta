@@ -20,7 +20,7 @@ public class TcfaAnalyis<S extends State, P extends Precision> implements Analys
 	public TcfaAnalyis(final TcfaLoc initLoc, final Analysis<S, TcfaAction, P> analysis) {
 		checkNotNull(initLoc);
 		checkNotNull(analysis);
-		domain = new TcfaDomain<>(analysis.getDomain());
+		domain = TcfaDomain.create(analysis.getDomain());
 		initFunction = new TcfaInitFunction<>(initLoc, analysis.getInitFunction());
 		transferFunction = new TcfaTransferFunction<>(analysis.getTransferFunction());
 	}

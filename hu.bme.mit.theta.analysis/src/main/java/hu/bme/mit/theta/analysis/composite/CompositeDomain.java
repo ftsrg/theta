@@ -5,14 +5,19 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import hu.bme.mit.theta.analysis.Domain;
 import hu.bme.mit.theta.analysis.State;
 
-class CompositeDomain<S1 extends State, S2 extends State> implements Domain<CompositeState<S1, S2>> {
+public final class CompositeDomain<S1 extends State, S2 extends State> implements Domain<CompositeState<S1, S2>> {
 
 	private final Domain<S1> domain1;
 	private final Domain<S2> domain2;
 
-	CompositeDomain(final Domain<S1> domain1, final Domain<S2> domain2) {
+	private CompositeDomain(final Domain<S1> domain1, final Domain<S2> domain2) {
 		this.domain1 = checkNotNull(domain1);
 		this.domain2 = checkNotNull(domain2);
+	}
+
+	public static <S1 extends State, S2 extends State> CompositeDomain<S1, S2> create(final Domain<S1> domain1,
+			final Domain<S2> domain2) {
+		return new CompositeDomain<>(domain1, domain2);
 	}
 
 	@Override

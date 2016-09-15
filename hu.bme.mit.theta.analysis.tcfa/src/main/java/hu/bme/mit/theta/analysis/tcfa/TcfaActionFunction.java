@@ -7,14 +7,14 @@ import hu.bme.mit.theta.analysis.ActionFunction;
 import hu.bme.mit.theta.formalism.tcfa.TcfaEdge;
 import hu.bme.mit.theta.formalism.tcfa.TcfaLoc;
 
-class TcfaActionFunction implements ActionFunction<TcfaState<?>, TcfaAction> {
+public final class TcfaActionFunction implements ActionFunction<TcfaState<?>, TcfaAction> {
 
 	private static final TcfaActionFunction INSTANCE = new TcfaActionFunction();
 
 	private TcfaActionFunction() {
 	}
 
-	static TcfaActionFunction getInstance() {
+	public static TcfaActionFunction getInstance() {
 		return INSTANCE;
 	}
 
