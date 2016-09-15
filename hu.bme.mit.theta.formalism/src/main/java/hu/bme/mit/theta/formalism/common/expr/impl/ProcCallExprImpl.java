@@ -2,7 +2,6 @@ package hu.bme.mit.theta.formalism.common.expr.impl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.StringJoiner;
 
@@ -34,7 +33,7 @@ class ProcCallExprImpl<ReturnType extends Type> implements ProcCallExpr<ReturnTy
 	}
 
 	@Override
-	public final Collection<? extends Expr<? extends Type>> getParams() {
+	public final List<? extends Expr<? extends Type>> getParams() {
 		return params;
 	}
 
