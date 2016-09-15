@@ -2,11 +2,6 @@ package hu.bme.mit.theta.common.logging.impl;
 
 import hu.bme.mit.theta.common.logging.Logger;
 
-/**
- * Null logger, which does not write anything
- *
- * @author Akos
- */
 public class NullLogger implements Logger {
 
 	@Override
