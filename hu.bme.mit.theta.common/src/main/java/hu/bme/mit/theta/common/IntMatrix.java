@@ -11,63 +11,63 @@ import java.util.function.IntBinaryOperator;
 
 public final class IntMatrix {
 
-	private int rows;
-	private int cols;
+	private int nRows;
+	private int nCols;
 	private int[] matrix;
 
 	private int actualSize;
 
-	private IntMatrix(final int rows, final int cols) {
-		checkArgument(rows > 0);
-		checkArgument(cols > 0);
-		this.rows = rows;
-		this.cols = cols;
-		actualSize = matrixSizeFor(rows, cols);
+	private IntMatrix(final int nRows, final int nCols) {
+		checkArgument(nRows > 0);
+		checkArgument(nCols > 0);
+		this.nRows = nRows;
+		this.nCols = nCols;
+		actualSize = matrixSizeFor(nRows, nCols);
 		matrix = new int[actualSize * actualSize];
 	}
 
-	private IntMatrix(final int[] matrix, final int cols, final int rows) {
-		this.rows = rows;
-		this.cols = cols;
-		actualSize = matrixSizeFor(rows, cols);
+	private IntMatrix(final int[] matrix, final int nCols, final int nRows) {
+		this.nRows = nRows;
+		this.nCols = nCols;
+		actualSize = matrixSizeFor(nRows, nCols);
 		this.matrix = Arrays.copyOf(matrix, actualSize * actualSize);
 	}
 
-	public static IntMatrix create(final int rows, final int cols) {
-		return new IntMatrix(cols, rows);
+	public static IntMatrix create(final int nRows, final int nCols) {
+		return new IntMatrix(nCols, nRows);
 	}
 
 	public static IntMatrix copyOf(final IntMatrix other) {
-		return new IntMatrix(other.matrix, other.cols, other.rows);
+		return new IntMatrix(other.matrix, other.nCols, other.nRows);
 	}
 
 	////
 
 	public int get(final int row, final int col) {
-		checkPositionIndex(row, rows);
-		checkPositionIndex(col, cols);
+		checkPositionIndex(row, nRows);
+		checkPositionIndex(col, nCols);
 		return matrix[index(row, col)];
 	}
 
 	public void set(final int row, final int col, final int value) {
-		checkPositionIndex(row, rows);
-		checkPositionIndex(col, cols);
+		checkPositionIndex(row, nRows);
+		checkPositionIndex(col, nCols);
 		matrix[index(row, col)] = value;
 	}
 
 	////
 
 	public void fill(final int value) {
-		for (int i = 0; i < rows; i++) {
-			for (int j = 0; j < cols; j++) {
+		for (int i = 0; i < nRows; i++) {
+			for (int j = 0; j < nCols; j++) {
 				set(i, j, value);
 			}
 		}
 	}
 
 	public void fill(final IntBinaryOperator op) {
-		for (int i = 0; i < rows; i++) {
-			for (int j = 0; j < cols; j++) {
+		for (int i = 0; i < nRows; i++) {
+			for (int j = 0; j < nCols; j++) {
 				set(i, j, op.applyAsInt(i, j));
 			}
 		}
@@ -75,22 +75,22 @@ public final class IntMatrix {
 
 	////
 
-	public int rows() {
-		return rows;
+	public int getNRows() {
+		return nRows;
 	}
 
-	public int cols() {
-		return cols;
+	public int getNCols() {
+		return nCols;
 	}
 
 	////
 
 	public void expand(final int rows, final int cols) {
-		checkArgument(rows >= this.rows);
-		checkArgument(cols >= this.cols);
+		checkArgument(rows >= this.nRows);
+		checkArgument(cols >= this.nCols);
 
-		this.rows = rows;
-		this.cols = cols;
+		this.nRows = rows;
+		this.nCols = cols;
 
 		final int minSize = max(rows, cols);
 		if (minSize > actualSize) {
@@ -116,14 +116,14 @@ public final class IntMatrix {
 	@Override
 	public final String toString() {
 		final StringBuilder sb = new StringBuilder();
-		final int maxLength = maxLength();
-		for (int i = 0; i < rows; i++) {
-			for (int j = 0; j < cols; j++) {
-				if (j < cols - 1) {
+		final int maxLength = maxNDigits();
+		for (int i = 0; i < nRows; i++) {
+			for (int j = 0; j < nCols; j++) {
+				if (j < nCols - 1) {
 					sb.append(String.format("%" + Integer.toString(-maxLength - 1) + "s", get(i, j)));
 				} else {
 					sb.append(get(i, j));
-					if (i < rows() - 1) {
+					if (i < getNRows() - 1) {
 						sb.append(System.lineSeparator());
 					}
 				}
@@ -144,17 +144,17 @@ public final class IntMatrix {
 
 	////////
 
-	private int maxLength() {
+	private int maxNDigits() {
 		int result = 0;
-		for (int i = 0; i < rows(); i++) {
-			for (int j = 0; j < cols(); j++) {
-				result = max(result, length(get(i, j)));
+		for (int i = 0; i < getNRows(); i++) {
+			for (int j = 0; j < getNCols(); j++) {
+				result = max(result, nDigits(get(i, j)));
 			}
 		}
 		return result;
 	}
 
-	private static int length(final int n) {
+	private static int nDigits(final int n) {
 		if (n == 0) {
 			return 1;
 		} else {
