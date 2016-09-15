@@ -11,13 +11,13 @@ import java.util.Map;
 
 import com.microsoft.z3.Status;
 
-import hu.bme.mit.theta.common.Stack;
-import hu.bme.mit.theta.common.StackImpl;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.model.Model;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverStatus;
+import hu.bme.mit.theta.solver.Stack;
+import hu.bme.mit.theta.solver.impl.StackImpl;
 import hu.bme.mit.theta.solver.z3.trasform.Z3SymbolTable;
 import hu.bme.mit.theta.solver.z3.trasform.Z3TermTransformer;
 import hu.bme.mit.theta.solver.z3.trasform.Z3TransformationManager;

@@ -1,8 +1,11 @@
-package hu.bme.mit.theta.common;
+package hu.bme.mit.theta.solver;
 
 import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
+
+import hu.bme.mit.theta.solver.Stack;
+import hu.bme.mit.theta.solver.impl.StackImpl;
 
 public class StackTest {
 	@Test

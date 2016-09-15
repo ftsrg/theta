@@ -2,11 +2,10 @@ package hu.bme.mit.theta.solver.impl;
 
 import java.util.Collection;
 
-import hu.bme.mit.theta.common.Stack;
-import hu.bme.mit.theta.common.StackImpl;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.solver.ItpMarker;
+import hu.bme.mit.theta.solver.Stack;
 
 public class ItpMarkerImpl implements ItpMarker {
 

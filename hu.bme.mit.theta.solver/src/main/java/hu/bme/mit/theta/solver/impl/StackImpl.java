@@ -1,10 +1,12 @@
-package hu.bme.mit.theta.common;
+package hu.bme.mit.theta.solver.impl;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
+
+import hu.bme.mit.theta.solver.Stack;
 
 public class StackImpl<T> implements Stack<T> {
 
