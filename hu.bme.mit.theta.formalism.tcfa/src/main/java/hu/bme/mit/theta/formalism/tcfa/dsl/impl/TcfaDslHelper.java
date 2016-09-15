@@ -80,18 +80,18 @@ final class TcfaDslHelper {
 
 	public static Assignment createConstDefs(final Scope scope, final Assignment assignment,
 			final List<? extends ConstDeclContext> constDeclCtxs) {
-		final Map<Decl<?, ?>, Expr<?>> declToExpr = new HashMap<>();
+		final Map<Decl<?>, Expr<?>> declToExpr = new HashMap<>();
 		for (final ConstDeclContext constDeclCtx : constDeclCtxs) {
 			addDef(scope, assignment, declToExpr, constDeclCtx);
 		}
 		return new AssignmentImpl(declToExpr);
 	}
 
-	private static void addDef(final Scope scope, final Assignment assignment,
-			final Map<Decl<?, ?>, Expr<?>> declToExpr, final ConstDeclContext constDeclCtx) {
+	private static void addDef(final Scope scope, final Assignment assignment, final Map<Decl<?>, Expr<?>> declToExpr,
+			final ConstDeclContext constDeclCtx) {
 		final String name = constDeclCtx.ddecl.name.getText();
 		final DeclSymbol declSymbol = resolveDecl(scope, name);
-		final Decl<?, ?> decl = declSymbol.getDecl();
+		final Decl<?> decl = declSymbol.getDecl();
 		final Expr<?> expr = createExpr(scope, assignment, constDeclCtx.value);
 		declToExpr.put(decl, expr);
 	}

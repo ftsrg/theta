@@ -12,7 +12,7 @@ public class CoreDslTests {
 
 	@Test
 	public void testExprParser() {
-		final Decl<?, ?> x = Const("x", Bool());
+		final Decl<?> x = Const("x", Bool());
 
 		final CoreDslManager manager = new CoreDslManager();
 		manager.declare(x);

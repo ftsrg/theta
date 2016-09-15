@@ -574,11 +574,11 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
 	}
 
 	@Override
-	public RefExpr<?, ?> visitIdExpr(final IdExprContext ctx) {
+	public RefExpr<?> visitIdExpr(final IdExprContext ctx) {
 		final Symbol symbol = currentScope.resolve(ctx.id.getText()).get();
 		if (symbol instanceof DeclSymbol) {
 			final DeclSymbol declSymbol = (DeclSymbol) symbol;
-			final Decl<?, ?> decl = declSymbol.getDecl();
+			final Decl<?> decl = declSymbol.getDecl();
 			return decl.getRef();
 		} else {
 			throw new AssertionError();

@@ -38,7 +38,7 @@ public class TcfaStmtCreatorVisitor extends TcfaDslBaseVisitor<Stmt> {
 
 	private VarDecl<Type> resolveVar(final Scope scope, final String name) {
 		final DeclSymbol declSymbol = TcfaDslHelper.resolveDecl(scope, name);
-		final Decl<?, ?> decl = declSymbol.getDecl();
+		final Decl<?> decl = declSymbol.getDecl();
 		checkArgument(decl instanceof VarDecl);
 		@SuppressWarnings("unchecked")
 		final VarDecl<Type> varDecl = (VarDecl<Type>) decl;

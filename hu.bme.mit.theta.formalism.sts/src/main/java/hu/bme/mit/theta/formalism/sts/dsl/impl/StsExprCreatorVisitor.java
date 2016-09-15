@@ -579,7 +579,7 @@ final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
 
 		checkArgument(symbol instanceof DeclSymbol);
 		final DeclSymbol declSymbol = (DeclSymbol) symbol;
-		final Decl<?, ?> decl = declSymbol.getDecl();
+		final Decl<?> decl = declSymbol.getDecl();
 
 		final Optional<? extends Expr<?>> optValue = assignment.eval(decl);
 		if (optValue.isPresent()) {

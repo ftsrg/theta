@@ -32,7 +32,7 @@ class Z3DeclTransformer {
 		visitor = new Z3DeclTransformerVisitor();
 	}
 
-	public com.microsoft.z3.FuncDecl toSymbol(final Decl<?, ?> decl) {
+	public com.microsoft.z3.FuncDecl toSymbol(final Decl<?> decl) {
 		return decl.accept(visitor, null);
 	}
 
@@ -87,7 +87,7 @@ class Z3DeclTransformer {
 				final Product2<List<Type>, Type> subResult = extractTypes(resultType);
 				final List<Type> paramTypes = subResult._1();
 				final Type newResultType = subResult._2();
-				final List<Type> newParamTypes = ImmutableList.<Type> builder().add(paramType).addAll(paramTypes)
+				final List<Type> newParamTypes = ImmutableList.<Type>builder().add(paramType).addAll(paramTypes)
 						.build();
 				final Product2<List<Type>, Type> result = Tuple.of(newParamTypes, newResultType);
 

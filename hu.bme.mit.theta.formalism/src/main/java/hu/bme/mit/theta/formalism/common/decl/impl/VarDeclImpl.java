@@ -12,8 +12,7 @@ import hu.bme.mit.theta.formalism.common.decl.IndexedConstDecl;
 import hu.bme.mit.theta.formalism.common.decl.VarDecl;
 import hu.bme.mit.theta.formalism.common.expr.VarRefExpr;
 
-final class VarDeclImpl<DeclType extends Type> extends AbstractDecl<DeclType, VarDecl<DeclType>>
-		implements VarDecl<DeclType> {
+final class VarDeclImpl<DeclType extends Type> extends AbstractDecl<DeclType> implements VarDecl<DeclType> {
 
 	private static final int HASH_SEED = 3761;
 	private static final String DECL_LABEL = "Var";
