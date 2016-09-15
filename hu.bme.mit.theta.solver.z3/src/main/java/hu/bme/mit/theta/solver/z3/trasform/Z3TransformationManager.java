@@ -22,7 +22,7 @@ public class Z3TransformationManager {
 		return typeTransformer.toSort(type);
 	}
 
-	public com.microsoft.z3.FuncDecl toSymbol(final Decl<?, ?> decl) {
+	public com.microsoft.z3.FuncDecl toSymbol(final Decl<?> decl) {
 		return declTransformer.toSymbol(decl);
 	}
 

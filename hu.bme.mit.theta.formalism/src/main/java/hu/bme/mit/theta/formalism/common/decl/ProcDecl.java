@@ -8,7 +8,7 @@ import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.formalism.common.expr.ProcRefExpr;
 import hu.bme.mit.theta.formalism.common.type.ProcType;
 
-public interface ProcDecl<ReturnType extends Type> extends Decl<ProcType<ReturnType>, ProcDecl<ReturnType>> {
+public interface ProcDecl<ReturnType extends Type> extends Decl<ProcType<ReturnType>> {
 
 	@Override
 	public ProcRefExpr<ReturnType> getRef();

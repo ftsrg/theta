@@ -246,7 +246,7 @@ public class ExprSimplifierTest {
 
 	@Test
 	public void testModel() {
-		final Map<Decl<?, ?>, LitExpr<?>> declToExpr = new HashMap<>();
+		final Map<Decl<?>, LitExpr<?>> declToExpr = new HashMap<>();
 		declToExpr.put(ca, Int(5));
 		declToExpr.put(cb, Int(9));
 		final Assignment assignment = new AssignmentImpl(declToExpr);

@@ -46,8 +46,7 @@ public class ExplState implements ExprState, Assignment {
 	}
 
 	@Override
-	public <DeclType extends Type, DeclKind extends Decl<DeclType, DeclKind>> Optional<LitExpr<DeclType>> eval(
-			final Decl<DeclType, DeclKind> decl) {
+	public <DeclType extends Type> Optional<LitExpr<DeclType>> eval(final Decl<DeclType> decl) {
 		return values.eval(decl);
 	}
 

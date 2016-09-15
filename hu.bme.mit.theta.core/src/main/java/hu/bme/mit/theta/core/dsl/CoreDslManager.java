@@ -24,7 +24,7 @@ public final class CoreDslManager {
 		this.scope = new BasicScope(null);
 	}
 
-	public void declare(final Decl<?, ?> decl) {
+	public void declare(final Decl<?> decl) {
 		checkNotNull(decl);
 		scope.declare(new DeclSymbol(decl));
 	}

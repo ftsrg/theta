@@ -22,14 +22,13 @@ public class NestedAssignmentImpl implements Assignment {
 	}
 
 	@Override
-	public Collection<? extends Decl<?, ?>> getDecls() {
+	public Collection<? extends Decl<?>> getDecls() {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
 
 	@Override
-	public <DeclType extends Type, DeclKind extends Decl<DeclType, DeclKind>> Optional<? extends Expr<DeclType>> eval(
-			final Decl<DeclType, DeclKind> decl) {
+	public <DeclType extends Type> Optional<? extends Expr<DeclType>> eval(final Decl<DeclType> decl) {
 		final Optional<? extends Expr<DeclType>> optExpr = assignment.eval(decl);
 		if (optExpr.isPresent()) {
 			return optExpr;

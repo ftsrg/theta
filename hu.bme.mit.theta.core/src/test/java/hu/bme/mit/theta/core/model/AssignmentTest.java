@@ -16,7 +16,6 @@ import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.impl.Decls;
 import hu.bme.mit.theta.core.expr.LitExpr;
-import hu.bme.mit.theta.core.model.Assignment;
 import hu.bme.mit.theta.core.model.impl.AssignmentImpl;
 import hu.bme.mit.theta.core.type.IntType;
 
@@ -33,7 +32,7 @@ public class AssignmentTest {
 
 	@Test
 	public void testUnary() {
-		final Map<Decl<?, ?>, LitExpr<?>> declToExpr = new HashMap<>();
+		final Map<Decl<?>, LitExpr<?>> declToExpr = new HashMap<>();
 		declToExpr.put(ca, Int(5));
 		final Assignment assignment = new AssignmentImpl(declToExpr);
 
@@ -42,7 +41,7 @@ public class AssignmentTest {
 
 	@Test
 	public void testMultiary() {
-		final Map<Decl<?, ?>, LitExpr<?>> declToExpr = new HashMap<>();
+		final Map<Decl<?>, LitExpr<?>> declToExpr = new HashMap<>();
 		declToExpr.put(ca, Int(5));
 		declToExpr.put(cb, Int(9));
 		final Assignment assignment = new AssignmentImpl(declToExpr);

@@ -6,13 +6,12 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.type.Type;
 
-public abstract class AbstractDecl<DeclType extends Type, DeclKind extends Decl<DeclType, DeclKind>>
-		implements Decl<DeclType, DeclKind> {
+public abstract class AbstractDecl<DeclType extends Type> implements Decl<DeclType> {
 
 	private final String name;
 	private final DeclType type;
 
-	private volatile int hashCode;
+	private volatile int hashCode = 0;
 
 	protected AbstractDecl(final String name, final DeclType type) {
 		checkNotNull(name);

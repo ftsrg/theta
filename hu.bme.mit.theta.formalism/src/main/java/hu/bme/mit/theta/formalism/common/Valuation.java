@@ -50,13 +50,11 @@ public final class Valuation implements Assignment {
 	}
 
 	@Override
-	public <DeclType extends Type, DeclKind extends Decl<DeclType, DeclKind>> Optional<LitExpr<DeclType>> eval(
-			final Decl<DeclType, DeclKind> decl) {
+	public <DeclType extends Type> Optional<LitExpr<DeclType>> eval(final Decl<DeclType> decl) {
 		checkNotNull(decl);
 		assert (decl instanceof VarDecl<?>);
 
 		if (declToExpr.containsKey(decl)) {
-
 			@SuppressWarnings("unchecked")
 			final LitExpr<DeclType> val = (LitExpr<DeclType>) declToExpr.get(decl);
 			return Optional.of(val);

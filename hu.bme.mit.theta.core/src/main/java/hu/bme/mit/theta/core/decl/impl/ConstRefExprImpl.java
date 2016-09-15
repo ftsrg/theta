@@ -1,22 +1,47 @@
 package hu.bme.mit.theta.core.decl.impl;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.expr.ConstRefExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.utils.ExprVisitor;
 
-final class ConstRefExprImpl<DeclType extends Type> extends AbstractRefExpr<DeclType, ConstDecl<DeclType>>
-		implements ConstRefExpr<DeclType> {
+final class ConstRefExprImpl<DeclType extends Type> implements ConstRefExpr<DeclType> {
 
 	private static final int HASH_SEED = 167;
+	private volatile int hashCode = 0;
+
+	private final ConstDecl<DeclType> constDecl;
 
 	ConstRefExprImpl(final ConstDecl<DeclType> constDecl) {
-		super(constDecl);
+		this.constDecl = checkNotNull(constDecl);
+	}
+
+	@Override
+	public ConstDecl<DeclType> getDecl() {
+		return constDecl;
+	}
+
+	@Override
+	public DeclType getType() {
+		return constDecl.getType();
 	}
 
 	@Override
 	public <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
 		return visitor.visit(this, param);
+	}
+
+	@Override
+	public int hashCode() {
+		int result = hashCode;
+		if (result == 0) {
+			result = HASH_SEED;
+			result = 31 * result + constDecl.hashCode();
+			hashCode = result;
+		}
+		return result;
 	}
 
 	@Override
@@ -32,8 +57,8 @@ final class ConstRefExprImpl<DeclType extends Type> extends AbstractRefExpr<Decl
 	}
 
 	@Override
-	protected int getHashSeed() {
-		return HASH_SEED;
+	public String toString() {
+		return constDecl.getName();
 	}
 
 }
