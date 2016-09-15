@@ -5,5 +5,5 @@ dependencies {
   compile project(':hu.bme.mit.theta.formalism')
   compile project(':hu.bme.mit.theta.formalism.sts')
   compile project(':hu.bme.mit.theta.solver.z3')
-  compile project(':hu.bme.mit.theta.aiger')
+  compile project(':hu.bme.mit.theta.frontend.aiger')
 }

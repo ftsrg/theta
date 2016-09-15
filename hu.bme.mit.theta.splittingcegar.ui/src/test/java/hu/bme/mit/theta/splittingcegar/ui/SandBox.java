@@ -6,7 +6,6 @@ import java.util.List;
 
 import org.junit.Test;
 
-import hu.bme.mit.theta.aiger.impl.AIGERLoaderSimple;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.impl.ConsoleLogger;
 import hu.bme.mit.theta.core.expr.Expr;
@@ -14,6 +13,7 @@ import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.formalism.sts.dsl.StsDslManager;
 import hu.bme.mit.theta.formalism.sts.dsl.impl.StsSpec;
+import hu.bme.mit.theta.frontend.aiger.impl.AIGERLoaderSimple;
 import hu.bme.mit.theta.splittingcegar.common.CEGARLoop;
 import hu.bme.mit.theta.splittingcegar.common.CEGARResult;
 import hu.bme.mit.theta.splittingcegar.common.data.AbstractState;
