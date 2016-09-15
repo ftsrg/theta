@@ -10,14 +10,14 @@ import hu.bme.mit.theta.analysis.expl.ExplPrecision;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.formalism.common.Valuation;
 
-public class TcfaExplInitFunction implements InitFunction<ExplState, ExplPrecision> {
+public final class TcfaExplInitFunction implements InitFunction<ExplState, ExplPrecision> {
 
 	private static final TcfaExplInitFunction INSTANCE = new TcfaExplInitFunction();
 
 	private TcfaExplInitFunction() {
 	}
 
-	static TcfaExplInitFunction getInstance() {
+	public static TcfaExplInitFunction getInstance() {
 		return INSTANCE;
 	}
 

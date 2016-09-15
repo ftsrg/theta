@@ -5,12 +5,16 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import hu.bme.mit.theta.analysis.Domain;
 import hu.bme.mit.theta.analysis.State;
 
-final class TcfaDomain<S extends State> implements Domain<TcfaState<S>> {
+public final class TcfaDomain<S extends State> implements Domain<TcfaState<S>> {
 
 	private final Domain<S> domain;
 
-	TcfaDomain(final Domain<S> domain) {
+	private TcfaDomain(final Domain<S> domain) {
 		this.domain = checkNotNull(domain);
+	}
+
+	public static <S extends State> TcfaDomain<S> create(final Domain<S> domain) {
+		return new TcfaDomain<>(domain);
 	}
 
 	@Override
