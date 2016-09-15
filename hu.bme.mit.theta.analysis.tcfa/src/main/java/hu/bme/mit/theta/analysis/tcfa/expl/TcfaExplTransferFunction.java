@@ -16,16 +16,20 @@ import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.formalism.common.Valuation;
 import hu.bme.mit.theta.formalism.utils.PathUtils;
 import hu.bme.mit.theta.formalism.utils.StmtUnroller;
-import hu.bme.mit.theta.formalism.utils.VarIndexes;
 import hu.bme.mit.theta.formalism.utils.StmtUnroller.StmtToExprResult;
+import hu.bme.mit.theta.formalism.utils.VarIndexes;
 import hu.bme.mit.theta.solver.Solver;
 
-final class TcfaExplTransferFunction implements TransferFunction<ExplState, TcfaAction, ExplPrecision> {
+public final class TcfaExplTransferFunction implements TransferFunction<ExplState, TcfaAction, ExplPrecision> {
 
 	private final Solver solver;
 
-	TcfaExplTransferFunction(final Solver solver) {
+	private TcfaExplTransferFunction(final Solver solver) {
 		this.solver = checkNotNull(solver);
+	}
+
+	public static TcfaExplTransferFunction create(final Solver solver) {
+		return new TcfaExplTransferFunction(solver);
 	}
 
 	@Override
