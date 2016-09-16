@@ -9,8 +9,8 @@ import com.google.common.collect.ImmutableSet;
 
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.core.expr.Expr;
+import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.BoolType;
-import hu.bme.mit.theta.formalism.common.stmt.Stmt;
 import hu.bme.mit.theta.formalism.ta.constr.ClockConstr;
 import hu.bme.mit.theta.formalism.ta.constr.impl.ClockConstrs;
 import hu.bme.mit.theta.formalism.ta.op.ClockOp;

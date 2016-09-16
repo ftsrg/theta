@@ -31,11 +31,15 @@ import hu.bme.mit.theta.core.expr.NeqExpr;
 import hu.bme.mit.theta.core.expr.NotExpr;
 import hu.bme.mit.theta.core.expr.OrExpr;
 import hu.bme.mit.theta.core.expr.ParamRefExpr;
+import hu.bme.mit.theta.core.expr.PrimedExpr;
+import hu.bme.mit.theta.core.expr.ProcCallExpr;
+import hu.bme.mit.theta.core.expr.ProcRefExpr;
 import hu.bme.mit.theta.core.expr.RatDivExpr;
 import hu.bme.mit.theta.core.expr.RatLitExpr;
 import hu.bme.mit.theta.core.expr.RemExpr;
 import hu.bme.mit.theta.core.expr.SubExpr;
 import hu.bme.mit.theta.core.expr.TrueExpr;
+import hu.bme.mit.theta.core.expr.VarRefExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.closure.ClosedUnderAdd;
 import hu.bme.mit.theta.core.type.closure.ClosedUnderMul;
@@ -95,6 +99,22 @@ class Z3ExprTransformer {
 				final Void param) {
 			final com.microsoft.z3.FuncDecl funcDecl = transformer.toSymbol(expr.getDecl());
 			return context.mkConst(funcDecl);
+		}
+
+		@Override
+		public <DeclType extends Type> com.microsoft.z3.Expr visit(final VarRefExpr<DeclType> expr, final Void param) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public <ReturnType extends Type> com.microsoft.z3.Expr visit(final ProcRefExpr<ReturnType> expr,
+				final Void param) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public <ExprType extends Type> com.microsoft.z3.Expr visit(final PrimedExpr<ExprType> expr, final Void param) {
+			throw new UnsupportedOperationException();
 		}
 
 		@Override
@@ -314,12 +334,19 @@ class Z3ExprTransformer {
 		}
 
 		@Override
+		public <ReturnType extends Type> com.microsoft.z3.Expr visit(final ProcCallExpr<ReturnType> expr,
+				final Void param) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
 		public <ExprType extends Type> com.microsoft.z3.Expr visit(final IteExpr<ExprType> expr, final Void param) {
 			final com.microsoft.z3.BoolExpr condTerm = (com.microsoft.z3.BoolExpr) toTerm(expr.getCond());
 			final com.microsoft.z3.Expr thenTerm = toTerm(expr.getThen());
 			final com.microsoft.z3.Expr elzeTerm = toTerm(expr.getElse());
 			return context.mkITE(condTerm, thenTerm, elzeTerm);
 		}
+
 	}
 
 }

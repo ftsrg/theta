@@ -1,8 +1,8 @@
 package hu.bme.mit.theta.formalism.cfa;
 
+import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.formalism.cfa.impl.LbeCreator;
 import hu.bme.mit.theta.formalism.cfa.impl.SbeCreator;
-import hu.bme.mit.theta.formalism.common.stmt.Stmt;
 
 public class CfaCreator {
 

@@ -8,12 +8,12 @@ import java.util.List;
 import java.util.Set;
 
 import hu.bme.mit.theta.common.logging.Logger;
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.formalism.common.decl.VarDecl;
+import hu.bme.mit.theta.core.utils.impl.ExprUtils;
 import hu.bme.mit.theta.formalism.sts.STS;
-import hu.bme.mit.theta.formalism.utils.FormalismUtils;
 import hu.bme.mit.theta.solver.ItpMarker;
 import hu.bme.mit.theta.solver.ItpPattern;
 import hu.bme.mit.theta.solver.ItpSolver;
@@ -28,13 +28,14 @@ import hu.bme.mit.theta.splittingcegar.visible.data.VisibleAbstractSystem;
 
 public class SeqItpVarCollector extends AbstractCEGARStep implements VarCollector {
 
-	public SeqItpVarCollector(final SolverWrapper solvers, final StopHandler stopHandler, final Logger logger, final Visualizer visualizer) {
+	public SeqItpVarCollector(final SolverWrapper solvers, final StopHandler stopHandler, final Logger logger,
+			final Visualizer visualizer) {
 		super(solvers, stopHandler, logger, visualizer);
 	}
 
 	@Override
-	public Collection<VarDecl<? extends Type>> collectVars(final VisibleAbstractSystem system, final List<VisibleAbstractState> abstractCounterEx,
-			final ConcreteTrace concreteCounterEx) {
+	public Collection<VarDecl<? extends Type>> collectVars(final VisibleAbstractSystem system,
+			final List<VisibleAbstractState> abstractCounterEx, final ConcreteTrace concreteCounterEx) {
 
 		final ItpSolver itpSolver = solvers.getItpSolver();
 
@@ -81,7 +82,7 @@ public class SeqItpVarCollector extends AbstractCEGARStep implements VarCollecto
 
 		final Set<VarDecl<? extends Type>> vars = new HashSet<>();
 		for (final Expr<? extends BoolType> interpolant : interpolants)
-			FormalismUtils.collectVars(interpolant, vars);
+			ExprUtils.collectVars(interpolant, vars);
 
 		return vars;
 	}

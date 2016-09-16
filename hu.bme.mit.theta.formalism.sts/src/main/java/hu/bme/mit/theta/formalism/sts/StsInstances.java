@@ -1,5 +1,6 @@
 package hu.bme.mit.theta.formalism.sts;
 
+import static hu.bme.mit.theta.core.decl.impl.Decls.Var;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.Add;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.And;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.Eq;
@@ -10,12 +11,11 @@ import static hu.bme.mit.theta.core.expr.impl.Exprs.Leq;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.Lt;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.Not;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.Or;
-import static hu.bme.mit.theta.formalism.common.expr.impl.Exprs2.Prime;
+import static hu.bme.mit.theta.core.expr.impl.Exprs.Prime;
 
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.IntType;
 import hu.bme.mit.theta.core.type.impl.Types;
-import hu.bme.mit.theta.formalism.common.decl.VarDecl;
-import hu.bme.mit.theta.formalism.common.decl.impl.Decls2;
 import hu.bme.mit.theta.formalism.sts.impl.StsImpl;
 import hu.bme.mit.theta.formalism.sts.impl.StsImpl.Builder;
 
@@ -26,9 +26,9 @@ public class StsInstances {
 
 	public static STS simpleSTS() {
 		final Builder builder = new StsImpl.Builder();
-		final VarDecl<IntType> r = Decls2.Var("r", Types.Int());
-		final VarDecl<IntType> x = Decls2.Var("x", Types.Int());
-		final VarDecl<IntType> y = Decls2.Var("y", Types.Int());
+		final VarDecl<IntType> r = Var("r", Types.Int());
+		final VarDecl<IntType> x = Var("x", Types.Int());
+		final VarDecl<IntType> y = Var("y", Types.Int());
 
 		builder.addInvar(Leq(Int(0), r.getRef()));
 		builder.addInvar(Leq(Int(0), x.getRef()));
@@ -44,12 +44,9 @@ public class StsInstances {
 		builder.addTrans(And(Geq(Prime(r.getRef()), Int(0)), Leq(Prime(r.getRef()), Int(1))));
 		builder.addTrans(Eq(Prime(x.getRef()), Ite(Eq(r.getRef(), Int(1)), Int(0), Ite(Lt(x.getRef(), y.getRef()),
 				Add(x.getRef(), Int(1)), Ite(Eq(x.getRef(), y.getRef()), Int(0), x.getRef())))));
-		builder.addTrans(
-				Eq(Prime(y.getRef()),
-						Ite(Eq(r.getRef(), Int(1)), Int(0),
-								Ite(And(Eq(x.getRef(), y.getRef()), Not(Eq(y.getRef(), Int(2)))),
-										Add(y.getRef(), Int(1)),
-										Ite(Eq(x.getRef(), y.getRef()), Int(0), y.getRef())))));
+		builder.addTrans(Eq(Prime(y.getRef()),
+				Ite(Eq(r.getRef(), Int(1)), Int(0), Ite(And(Eq(x.getRef(), y.getRef()), Not(Eq(y.getRef(), Int(2)))),
+						Add(y.getRef(), Int(1)), Ite(Eq(x.getRef(), y.getRef()), Int(0), y.getRef())))));
 
 		builder.setProp(Or(Lt(x.getRef(), y.getRef()), Eq(r.getRef(), Int(1))));
 

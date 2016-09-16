@@ -6,7 +6,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.util.Iterator;
 import java.util.List;
 
-import hu.bme.mit.theta.formalism.common.Valuation;
+import hu.bme.mit.theta.core.model.impl.Valuation;
 
 public class ConcreteTrace implements Iterable<Valuation> {
 	private final List<Valuation> trace;

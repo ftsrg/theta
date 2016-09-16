@@ -1,12 +1,12 @@
 package hu.bme.mit.theta.formalism.ta.op.impl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.formalism.common.stmt.impl.Stmts.Assume;
+import static hu.bme.mit.theta.core.stmt.impl.Stmts.Assume;
 
 import java.util.Collection;
 
+import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.formalism.common.decl.ClockDecl;
-import hu.bme.mit.theta.formalism.common.stmt.AssumeStmt;
 import hu.bme.mit.theta.formalism.ta.constr.ClockConstr;
 import hu.bme.mit.theta.formalism.ta.op.GuardOp;
 import hu.bme.mit.theta.formalism.ta.utils.ClockOpVisitor;

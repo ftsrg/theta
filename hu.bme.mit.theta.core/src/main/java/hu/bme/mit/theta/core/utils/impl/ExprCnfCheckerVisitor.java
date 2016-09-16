@@ -27,11 +27,15 @@ import hu.bme.mit.theta.core.expr.NeqExpr;
 import hu.bme.mit.theta.core.expr.NotExpr;
 import hu.bme.mit.theta.core.expr.OrExpr;
 import hu.bme.mit.theta.core.expr.ParamRefExpr;
+import hu.bme.mit.theta.core.expr.PrimedExpr;
+import hu.bme.mit.theta.core.expr.ProcCallExpr;
+import hu.bme.mit.theta.core.expr.ProcRefExpr;
 import hu.bme.mit.theta.core.expr.RatDivExpr;
 import hu.bme.mit.theta.core.expr.RatLitExpr;
 import hu.bme.mit.theta.core.expr.RemExpr;
 import hu.bme.mit.theta.core.expr.SubExpr;
 import hu.bme.mit.theta.core.expr.TrueExpr;
+import hu.bme.mit.theta.core.expr.VarRefExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.closure.ClosedUnderAdd;
 import hu.bme.mit.theta.core.type.closure.ClosedUnderMul;
@@ -40,9 +44,9 @@ import hu.bme.mit.theta.core.type.closure.ClosedUnderSub;
 import hu.bme.mit.theta.core.utils.ExprVisitor;
 import hu.bme.mit.theta.core.utils.impl.ExprCnfCheckerVisitor.CNFStatus;
 
-public class ExprCnfCheckerVisitor implements ExprVisitor<CNFStatus, Boolean> {
+final class ExprCnfCheckerVisitor implements ExprVisitor<CNFStatus, Boolean> {
 
-	public enum CNFStatus {
+	enum CNFStatus {
 		START(0), INSIDE_AND(1), INSIDE_OR(2), INSIDE_NOT(3);
 		private final int value;
 
@@ -63,6 +67,21 @@ public class ExprCnfCheckerVisitor implements ExprVisitor<CNFStatus, Boolean> {
 	@Override
 	public <DeclType extends Type> Boolean visit(final ParamRefExpr<DeclType> expr, final CNFStatus param) {
 		return true;
+	}
+
+	@Override
+	public <DeclType extends Type> Boolean visit(final VarRefExpr<DeclType> expr, final CNFStatus param) {
+		return true;
+	}
+
+	@Override
+	public <ReturnType extends Type> Boolean visit(final ProcRefExpr<ReturnType> expr, final CNFStatus param) {
+		return true;
+	}
+
+	@Override
+	public <ExprType extends Type> Boolean visit(final PrimedExpr<ExprType> expr, final CNFStatus param) {
+		return expr.getOp().accept(this, CNFStatus.INSIDE_NOT);
 	}
 
 	@Override
@@ -227,7 +246,13 @@ public class ExprCnfCheckerVisitor implements ExprVisitor<CNFStatus, Boolean> {
 	}
 
 	@Override
+	public <ReturnType extends Type> Boolean visit(final ProcCallExpr<ReturnType> expr, final CNFStatus param) {
+		return true;
+	}
+
+	@Override
 	public <ExprType extends Type> Boolean visit(final IteExpr<ExprType> expr, final CNFStatus param) {
 		return false;
 	}
+
 }

@@ -27,11 +27,15 @@ import hu.bme.mit.theta.core.expr.NeqExpr;
 import hu.bme.mit.theta.core.expr.NotExpr;
 import hu.bme.mit.theta.core.expr.OrExpr;
 import hu.bme.mit.theta.core.expr.ParamRefExpr;
+import hu.bme.mit.theta.core.expr.PrimedExpr;
+import hu.bme.mit.theta.core.expr.ProcCallExpr;
+import hu.bme.mit.theta.core.expr.ProcRefExpr;
 import hu.bme.mit.theta.core.expr.RatDivExpr;
 import hu.bme.mit.theta.core.expr.RatLitExpr;
 import hu.bme.mit.theta.core.expr.RemExpr;
 import hu.bme.mit.theta.core.expr.SubExpr;
 import hu.bme.mit.theta.core.expr.TrueExpr;
+import hu.bme.mit.theta.core.expr.VarRefExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.closure.ClosedUnderAdd;
 import hu.bme.mit.theta.core.type.closure.ClosedUnderMul;
@@ -43,6 +47,12 @@ public interface ExprVisitor<P, R> {
 	public <DeclType extends Type> R visit(ConstRefExpr<DeclType> expr, P param);
 
 	public <DeclType extends Type> R visit(ParamRefExpr<DeclType> expr, P param);
+
+	public <DeclType extends Type> R visit(VarRefExpr<DeclType> expr, P param);
+
+	public <ReturnType extends Type> R visit(ProcRefExpr<ReturnType> expr, P param);
+
+	public <ExprType extends Type> R visit(PrimedExpr<ExprType> expr, P param);
 
 	public R visit(FalseExpr expr, P param);
 
@@ -101,6 +111,8 @@ public interface ExprVisitor<P, R> {
 	public <ParamType extends Type, ResultType extends Type> R visit(FuncLitExpr<ParamType, ResultType> expr, P param);
 
 	public <ParamType extends Type, ResultType extends Type> R visit(FuncAppExpr<ParamType, ResultType> expr, P param);
+
+	public <ReturnType extends Type> R visit(ProcCallExpr<ReturnType> expr, P param);
 
 	public <ExprType extends Type> R visit(IteExpr<ExprType> expr, P param);
 }

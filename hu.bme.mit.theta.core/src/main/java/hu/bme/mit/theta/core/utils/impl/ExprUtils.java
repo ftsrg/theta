@@ -4,8 +4,11 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.stream.Collectors;
 
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.AndExpr;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.LitExpr;
@@ -19,6 +22,10 @@ import hu.bme.mit.theta.core.utils.impl.ExprCnfCheckerVisitor.CNFStatus;
 public class ExprUtils {
 
 	private ExprUtils() {
+	}
+
+	public static CnfTransformation createCNFTransformation() {
+		return new CnfTransformation();
 	}
 
 	public static Collection<Expr<? extends BoolType>> getConjuncts(final Expr<? extends BoolType> expr) {
@@ -44,6 +51,16 @@ public class ExprUtils {
 		} else {
 			throw new ClassCastException("The type of expression " + expr + " is not of type " + metaType.getName());
 		}
+	}
+
+	public static void collectVars(final Expr<?> expr, final Collection<VarDecl<? extends Type>> collectTo) {
+		expr.accept(VarCollectorExprVisitor.getInstance(), collectTo);
+	}
+
+	public static Set<VarDecl<? extends Type>> getVars(final Expr<?> expr) {
+		final Set<VarDecl<? extends Type>> vars = new HashSet<>();
+		collectVars(expr, vars);
+		return vars;
 	}
 
 	public static boolean isExprCNF(final Expr<? extends BoolType> expr) {

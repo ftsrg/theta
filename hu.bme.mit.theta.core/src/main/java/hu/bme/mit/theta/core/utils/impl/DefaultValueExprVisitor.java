@@ -27,11 +27,15 @@ import hu.bme.mit.theta.core.expr.NeqExpr;
 import hu.bme.mit.theta.core.expr.NotExpr;
 import hu.bme.mit.theta.core.expr.OrExpr;
 import hu.bme.mit.theta.core.expr.ParamRefExpr;
+import hu.bme.mit.theta.core.expr.PrimedExpr;
+import hu.bme.mit.theta.core.expr.ProcCallExpr;
+import hu.bme.mit.theta.core.expr.ProcRefExpr;
 import hu.bme.mit.theta.core.expr.RatDivExpr;
 import hu.bme.mit.theta.core.expr.RatLitExpr;
 import hu.bme.mit.theta.core.expr.RemExpr;
 import hu.bme.mit.theta.core.expr.SubExpr;
 import hu.bme.mit.theta.core.expr.TrueExpr;
+import hu.bme.mit.theta.core.expr.VarRefExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.closure.ClosedUnderAdd;
 import hu.bme.mit.theta.core.type.closure.ClosedUnderMul;
@@ -50,6 +54,21 @@ public abstract class DefaultValueExprVisitor<P, R> implements ExprVisitor<P, R>
 
 	@Override
 	public <DeclType extends Type> R visit(final ParamRefExpr<DeclType> expr, final P param) {
+		return defaultValue(param);
+	}
+
+	@Override
+	public <DeclType extends Type> R visit(final VarRefExpr<DeclType> expr, final P param) {
+		return defaultValue(param);
+	}
+
+	@Override
+	public <ReturnType extends Type> R visit(final ProcRefExpr<ReturnType> expr, final P param) {
+		return defaultValue(param);
+	}
+
+	@Override
+	public <ExprType extends Type> R visit(final PrimedExpr<ExprType> expr, final P param) {
 		return defaultValue(param);
 	}
 
@@ -199,6 +218,11 @@ public abstract class DefaultValueExprVisitor<P, R> implements ExprVisitor<P, R>
 	@Override
 	public <ParamType extends Type, ResultType extends Type> R visit(final FuncAppExpr<ParamType, ResultType> expr,
 			final P param) {
+		return defaultValue(param);
+	}
+
+	@Override
+	public <ReturnType extends Type> R visit(final ProcCallExpr<ReturnType> expr, final P param) {
 		return defaultValue(param);
 	}
 

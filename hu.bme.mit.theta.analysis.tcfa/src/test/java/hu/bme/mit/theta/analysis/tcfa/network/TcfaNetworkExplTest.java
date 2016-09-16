@@ -1,7 +1,7 @@
 package hu.bme.mit.theta.analysis.tcfa.network;
 
+import static hu.bme.mit.theta.core.decl.impl.Decls.Var;
 import static hu.bme.mit.theta.core.type.impl.Types.Int;
-import static hu.bme.mit.theta.formalism.common.decl.impl.Decls2.Var;
 import static java.util.stream.Collectors.toList;
 
 import java.util.ArrayList;
@@ -28,9 +28,9 @@ import hu.bme.mit.theta.analysis.tcfa.expl.TcfaExplAnalysis;
 import hu.bme.mit.theta.analysis.tcfa.zone.TcfaZoneAnalysis;
 import hu.bme.mit.theta.analysis.zone.ZonePrecision;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.IntType;
 import hu.bme.mit.theta.formalism.common.decl.ClockDecl;
-import hu.bme.mit.theta.formalism.common.decl.VarDecl;
 import hu.bme.mit.theta.formalism.tcfa.TcfaLoc;
 import hu.bme.mit.theta.formalism.tcfa.impl.NetworkTcfaLoc;
 import hu.bme.mit.theta.formalism.tcfa.instances.FischerTCFA;

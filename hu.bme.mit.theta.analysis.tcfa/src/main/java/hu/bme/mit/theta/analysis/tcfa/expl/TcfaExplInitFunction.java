@@ -8,7 +8,7 @@ import java.util.Collections;
 import hu.bme.mit.theta.analysis.InitFunction;
 import hu.bme.mit.theta.analysis.expl.ExplPrecision;
 import hu.bme.mit.theta.analysis.expl.ExplState;
-import hu.bme.mit.theta.formalism.common.Valuation;
+import hu.bme.mit.theta.core.model.impl.Valuation;
 
 public final class TcfaExplInitFunction implements InitFunction<ExplState, ExplPrecision> {
 

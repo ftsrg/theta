@@ -1,7 +1,7 @@
 package hu.bme.mit.theta.analysis.tcfa.expl;
 
+import static hu.bme.mit.theta.core.decl.impl.Decls.Var;
 import static hu.bme.mit.theta.core.type.impl.Types.Int;
-import static hu.bme.mit.theta.formalism.common.decl.impl.Decls2.Var;
 
 import java.util.Collections;
 
@@ -17,9 +17,8 @@ import hu.bme.mit.theta.analysis.expl.GlobalExplPrecision;
 import hu.bme.mit.theta.analysis.tcfa.TcfaAction;
 import hu.bme.mit.theta.analysis.tcfa.TcfaAnalyis;
 import hu.bme.mit.theta.analysis.tcfa.TcfaState;
-import hu.bme.mit.theta.analysis.tcfa.expl.TcfaExplAnalysis;
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.IntType;
-import hu.bme.mit.theta.formalism.common.decl.VarDecl;
 import hu.bme.mit.theta.formalism.tcfa.instances.FischerTCFA;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverManager;

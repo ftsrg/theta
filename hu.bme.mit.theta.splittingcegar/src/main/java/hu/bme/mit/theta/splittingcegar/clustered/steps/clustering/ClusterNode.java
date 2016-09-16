@@ -1,12 +1,12 @@
 package hu.bme.mit.theta.splittingcegar.clustered.steps.clustering;
 
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.formalism.common.decl.VarDecl;
 import hu.bme.mit.theta.splittingcegar.clustered.data.Cluster;
 
 /**
  * Represents a cluster node in the disjoint-set data structure
- * 
+ *
  * @author Akos
  */
 public class ClusterNode {
@@ -15,7 +15,7 @@ public class ClusterNode {
 
 	/**
 	 * Create a cluster from a single variable
-	 * 
+	 *
 	 * @param vd
 	 *            Variable declaration
 	 */
@@ -27,7 +27,7 @@ public class ClusterNode {
 
 	/**
 	 * Get the cluster
-	 * 
+	 *
 	 * @return Cluster
 	 */
 	public Cluster getCluster() {
@@ -36,7 +36,7 @@ public class ClusterNode {
 
 	/**
 	 * Set the cluster
-	 * 
+	 *
 	 * @param cluster
 	 *            Cluster
 	 */
@@ -46,7 +46,7 @@ public class ClusterNode {
 
 	/**
 	 * Get the parent cluster
-	 * 
+	 *
 	 * @return Parent cluster
 	 */
 	public ClusterNode getParent() {
@@ -55,7 +55,7 @@ public class ClusterNode {
 
 	/**
 	 * Set the parent cluster
-	 * 
+	 *
 	 * @param parent
 	 *            Parent cluster
 	 */

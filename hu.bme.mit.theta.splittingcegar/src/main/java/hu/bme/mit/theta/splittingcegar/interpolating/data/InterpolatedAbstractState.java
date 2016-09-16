@@ -4,13 +4,13 @@ import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
 
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.NotExpr;
 import hu.bme.mit.theta.core.expr.impl.Exprs;
+import hu.bme.mit.theta.core.model.impl.Valuation;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.formalism.common.Valuation;
-import hu.bme.mit.theta.formalism.common.decl.VarDecl;
 import hu.bme.mit.theta.splittingcegar.common.data.AbstractState;
 
 /**
@@ -72,7 +72,9 @@ public class InterpolatedAbstractState implements AbstractState {
 		ret.labels.addAll(this.labels);
 		ret.labels.add(label);
 		ret.bitset = (BitSet) this.bitset.clone(); // Clone bitset
-		ret.bitset.set(ret.labels.size() - 1, !(label instanceof NotExpr)); // Set new bit
+		ret.bitset.set(ret.labels.size() - 1, !(label instanceof NotExpr)); // Set
+																			// new
+																			// bit
 		ret.explicitValues = this.explicitValues;
 		return ret;
 	}
@@ -80,7 +82,8 @@ public class InterpolatedAbstractState implements AbstractState {
 	public InterpolatedAbstractState cloneAndAddExplicit(final Valuation valuation) {
 		final InterpolatedAbstractState ret = new InterpolatedAbstractState();
 		ret.labels.addAll(this.labels);
-		ret.labels.add(0, valuation.toExpr()); // Insert new label to the beginning
+		ret.labels.add(0, valuation.toExpr()); // Insert new label to the
+												// beginning
 		ret.bitset = (BitSet) this.bitset.clone();
 		for (final VarDecl<? extends Type> varDecl : valuation.getDecls())
 			ret.explicitValues += valuation.eval(varDecl).get() + " ";

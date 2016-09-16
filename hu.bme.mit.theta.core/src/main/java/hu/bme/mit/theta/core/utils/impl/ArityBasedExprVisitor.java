@@ -30,12 +30,16 @@ import hu.bme.mit.theta.core.expr.NotExpr;
 import hu.bme.mit.theta.core.expr.NullaryExpr;
 import hu.bme.mit.theta.core.expr.OrExpr;
 import hu.bme.mit.theta.core.expr.ParamRefExpr;
+import hu.bme.mit.theta.core.expr.PrimedExpr;
+import hu.bme.mit.theta.core.expr.ProcCallExpr;
+import hu.bme.mit.theta.core.expr.ProcRefExpr;
 import hu.bme.mit.theta.core.expr.RatDivExpr;
 import hu.bme.mit.theta.core.expr.RatLitExpr;
 import hu.bme.mit.theta.core.expr.RemExpr;
 import hu.bme.mit.theta.core.expr.SubExpr;
 import hu.bme.mit.theta.core.expr.TrueExpr;
 import hu.bme.mit.theta.core.expr.UnaryExpr;
+import hu.bme.mit.theta.core.expr.VarRefExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.closure.ClosedUnderAdd;
 import hu.bme.mit.theta.core.type.closure.ClosedUnderMul;
@@ -44,159 +48,189 @@ import hu.bme.mit.theta.core.type.closure.ClosedUnderSub;
 import hu.bme.mit.theta.core.utils.ExprVisitor;
 
 public abstract class ArityBasedExprVisitor<P, R> implements ExprVisitor<P, R> {
-	
+
 	protected abstract <ExprType extends Type> R visitNullary(NullaryExpr<ExprType> expr, P param);
-	
-	protected abstract <OpType extends Type, ExprType extends Type> R visitUnary(UnaryExpr<OpType, ExprType> expr, P param);
-	
-	protected abstract<LeftOpType extends Type, RightOpType extends Type, ExprType extends Type> R visitBinary(BinaryExpr<LeftOpType, RightOpType, ExprType> expr, P param);
-	
-	protected abstract <OpsType extends Type, ExprType extends Type> R visitMultiary(MultiaryExpr<OpsType, ExprType> expr, P param);
-	
-	public abstract <IndexType extends Type, ElemType extends Type> R visit(ArrayReadExpr<IndexType, ElemType> expr, P param);
 
-	public abstract <IndexType extends Type, ElemType extends Type> R visit(ArrayWriteExpr<IndexType, ElemType> expr, P param);
+	protected abstract <OpType extends Type, ExprType extends Type> R visitUnary(UnaryExpr<OpType, ExprType> expr,
+			P param);
 
-	public abstract <ParamType extends Type, ResultType extends Type> R visit(FuncLitExpr<ParamType, ResultType> expr, P param);
+	protected abstract <LeftOpType extends Type, RightOpType extends Type, ExprType extends Type> R visitBinary(
+			BinaryExpr<LeftOpType, RightOpType, ExprType> expr, P param);
 
-	public abstract <ParamType extends Type, ResultType extends Type> R visit(FuncAppExpr<ParamType, ResultType> expr, P param);
+	protected abstract <OpsType extends Type, ExprType extends Type> R visitMultiary(
+			MultiaryExpr<OpsType, ExprType> expr, P param);
 
+	@Override
+	public abstract <IndexType extends Type, ElemType extends Type> R visit(ArrayReadExpr<IndexType, ElemType> expr,
+			P param);
+
+	@Override
+	public abstract <IndexType extends Type, ElemType extends Type> R visit(ArrayWriteExpr<IndexType, ElemType> expr,
+			P param);
+
+	@Override
+	public abstract <ParamType extends Type, ResultType extends Type> R visit(FuncLitExpr<ParamType, ResultType> expr,
+			P param);
+
+	@Override
+	public abstract <ParamType extends Type, ResultType extends Type> R visit(FuncAppExpr<ParamType, ResultType> expr,
+			P param);
+
+	@Override
+	public abstract <ReturnType extends Type> R visit(final ProcCallExpr<ReturnType> expr, final P param);
+
+	@Override
 	public abstract <ExprType extends Type> R visit(IteExpr<ExprType> expr, P param);
-	
+
 	/////
-	
+
 	@Override
-	public <DeclType extends Type> R visit(ConstRefExpr<DeclType> expr, P param) {
+	public <DeclType extends Type> R visit(final ConstRefExpr<DeclType> expr, final P param) {
 		return visitNullary(expr, param);
 	}
 
 	@Override
-	public <DeclType extends Type> R visit(ParamRefExpr<DeclType> expr, P param) {
+	public <DeclType extends Type> R visit(final ParamRefExpr<DeclType> expr, final P param) {
 		return visitNullary(expr, param);
 	}
 
 	@Override
-	public R visit(FalseExpr expr, P param) {
+	public <DeclType extends Type> R visit(final VarRefExpr<DeclType> expr, final P param) {
 		return visitNullary(expr, param);
 	}
 
 	@Override
-	public R visit(TrueExpr expr, P param) {
+	public <ReturnType extends Type> R visit(final ProcRefExpr<ReturnType> expr, final P param) {
 		return visitNullary(expr, param);
 	}
 
 	@Override
-	public R visit(NotExpr expr, P param) {
+	public <ExprType extends Type> R visit(final PrimedExpr<ExprType> expr, final P param) {
 		return visitUnary(expr, param);
 	}
 
 	@Override
-	public R visit(ImplyExpr expr, P param) {
+	public R visit(final FalseExpr expr, final P param) {
+		return visitNullary(expr, param);
+	}
+
+	@Override
+	public R visit(final TrueExpr expr, final P param) {
+		return visitNullary(expr, param);
+	}
+
+	@Override
+	public R visit(final NotExpr expr, final P param) {
+		return visitUnary(expr, param);
+	}
+
+	@Override
+	public R visit(final ImplyExpr expr, final P param) {
 		return visitBinary(expr, param);
 	}
 
 	@Override
-	public R visit(IffExpr expr, P param) {
+	public R visit(final IffExpr expr, final P param) {
 		return visitBinary(expr, param);
 	}
 
 	@Override
-	public R visit(AndExpr expr, P param) {
+	public R visit(final AndExpr expr, final P param) {
 		return visitMultiary(expr, param);
 	}
 
 	@Override
-	public R visit(OrExpr expr, P param) {
+	public R visit(final OrExpr expr, final P param) {
 		return visitMultiary(expr, param);
 	}
 
 	@Override
-	public R visit(ExistsExpr expr, P param) {
+	public R visit(final ExistsExpr expr, final P param) {
 		return visitUnary(expr, param);
 	}
 
 	@Override
-	public R visit(ForallExpr expr, P param) {
+	public R visit(final ForallExpr expr, final P param) {
 		return visitUnary(expr, param);
 	}
 
 	@Override
-	public R visit(EqExpr expr, P param) {
+	public R visit(final EqExpr expr, final P param) {
 		return visitBinary(expr, param);
 	}
 
 	@Override
-	public R visit(NeqExpr expr, P param) {
+	public R visit(final NeqExpr expr, final P param) {
 		return visitBinary(expr, param);
 	}
 
 	@Override
-	public R visit(GeqExpr expr, P param) {
+	public R visit(final GeqExpr expr, final P param) {
 		return visitBinary(expr, param);
 	}
 
 	@Override
-	public R visit(GtExpr expr, P param) {
+	public R visit(final GtExpr expr, final P param) {
 		return visitBinary(expr, param);
 	}
 
 	@Override
-	public R visit(LeqExpr expr, P param) {
+	public R visit(final LeqExpr expr, final P param) {
 		return visitBinary(expr, param);
 	}
 
 	@Override
-	public R visit(LtExpr expr, P param) {
+	public R visit(final LtExpr expr, final P param) {
 		return visitBinary(expr, param);
 	}
 
 	@Override
-	public R visit(IntLitExpr expr, P param) {
+	public R visit(final IntLitExpr expr, final P param) {
 		return visitNullary(expr, param);
 	}
 
 	@Override
-	public R visit(IntDivExpr expr, P param) {
+	public R visit(final IntDivExpr expr, final P param) {
 		return visitBinary(expr, param);
 	}
 
 	@Override
-	public R visit(RemExpr expr, P param) {
+	public R visit(final RemExpr expr, final P param) {
 		return visitBinary(expr, param);
 	}
 
 	@Override
-	public R visit(ModExpr expr, P param) {
+	public R visit(final ModExpr expr, final P param) {
 		return visitBinary(expr, param);
 	}
 
 	@Override
-	public R visit(RatLitExpr expr, P param) {
+	public R visit(final RatLitExpr expr, final P param) {
 		return visitNullary(expr, param);
 	}
 
 	@Override
-	public R visit(RatDivExpr expr, P param) {
+	public R visit(final RatDivExpr expr, final P param) {
 		return visitBinary(expr, param);
 	}
 
 	@Override
-	public <ExprType extends ClosedUnderNeg> R visit(NegExpr<ExprType> expr, P param) {
+	public <ExprType extends ClosedUnderNeg> R visit(final NegExpr<ExprType> expr, final P param) {
 		return visitUnary(expr, param);
 	}
 
 	@Override
-	public <ExprType extends ClosedUnderSub> R visit(SubExpr<ExprType> expr, P param) {
+	public <ExprType extends ClosedUnderSub> R visit(final SubExpr<ExprType> expr, final P param) {
 		return visitBinary(expr, param);
 	}
 
 	@Override
-	public <ExprType extends ClosedUnderAdd> R visit(AddExpr<ExprType> expr, P param) {
+	public <ExprType extends ClosedUnderAdd> R visit(final AddExpr<ExprType> expr, final P param) {
 		return visitMultiary(expr, param);
 	}
 
 	@Override
-	public <ExprType extends ClosedUnderMul> R visit(MulExpr<ExprType> expr, P param) {
+	public <ExprType extends ClosedUnderMul> R visit(final MulExpr<ExprType> expr, final P param) {
 		return visitMultiary(expr, param);
 	}
 

@@ -11,22 +11,19 @@ import hu.bme.mit.theta.core.expr.FuncLitExpr;
 import hu.bme.mit.theta.core.expr.IteExpr;
 import hu.bme.mit.theta.core.expr.MultiaryExpr;
 import hu.bme.mit.theta.core.expr.NullaryExpr;
+import hu.bme.mit.theta.core.expr.PrimedExpr;
+import hu.bme.mit.theta.core.expr.ProcCallExpr;
+import hu.bme.mit.theta.core.expr.ProcRefExpr;
 import hu.bme.mit.theta.core.expr.UnaryExpr;
+import hu.bme.mit.theta.core.expr.VarRefExpr;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.utils.impl.ArityBasedExprVisitor;
-import hu.bme.mit.theta.formalism.common.expr.ClockRefExpr;
-import hu.bme.mit.theta.formalism.common.expr.PrimedExpr;
-import hu.bme.mit.theta.formalism.common.expr.ProcCallExpr;
-import hu.bme.mit.theta.formalism.common.expr.ProcRefExpr;
-import hu.bme.mit.theta.formalism.common.expr.VarRefExpr;
-import hu.bme.mit.theta.formalism.utils.FormalismExprVisitor;
 
 /**
  * Collect condition formulas of ITE expressions.
  */
-public class ITECondCollectorVisitor extends ArityBasedExprVisitor<Collection<Expr<? extends BoolType>>, Void>
-		implements FormalismExprVisitor<Collection<Expr<? extends BoolType>>, Void> {
+public class ITECondCollectorVisitor extends ArityBasedExprVisitor<Collection<Expr<? extends BoolType>>, Void> {
 
 	@Override
 	public <ExprType extends Type> Void visit(final PrimedExpr<ExprType> expr,
@@ -51,11 +48,6 @@ public class ITECondCollectorVisitor extends ArityBasedExprVisitor<Collection<Ex
 	@Override
 	public <DeclType extends Type> Void visit(final VarRefExpr<DeclType> expr,
 			final Collection<Expr<? extends BoolType>> param) {
-		return visitNullary(expr, param);
-	}
-
-	@Override
-	public Void visit(final ClockRefExpr expr, final Collection<Expr<? extends BoolType>> param) {
 		return visitNullary(expr, param);
 	}
 

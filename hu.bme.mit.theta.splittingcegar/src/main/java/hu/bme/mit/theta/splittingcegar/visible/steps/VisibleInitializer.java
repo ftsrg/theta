@@ -4,12 +4,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import hu.bme.mit.theta.common.logging.Logger;
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.formalism.common.decl.VarDecl;
+import hu.bme.mit.theta.core.utils.impl.ExprUtils;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.formalism.sts.utils.impl.StsCnfTransformation;
 import hu.bme.mit.theta.formalism.sts.utils.impl.StsIteTransformation;
-import hu.bme.mit.theta.formalism.utils.FormalismUtils;
 import hu.bme.mit.theta.splittingcegar.common.data.SolverWrapper;
 import hu.bme.mit.theta.splittingcegar.common.data.StopHandler;
 import hu.bme.mit.theta.splittingcegar.common.steps.AbstractCEGARStep;
@@ -52,7 +52,7 @@ public class VisibleInitializer extends AbstractCEGARStep implements Initializer
 		final List<VarDecl<? extends Type>> nonCnfVars = new ArrayList<>(concrSys.getVars());
 
 		// Then make variables appearing in the specification visible
-		for (final VarDecl<? extends Type> varDec : FormalismUtils.getVars(concrSys.getProp()))
+		for (final VarDecl<? extends Type> varDec : ExprUtils.getVars(concrSys.getProp()))
 			if (!visibleVars.contains(varDec)) {
 				invisibleVars.remove(varDec);
 				visibleVars.add(varDec);

@@ -10,7 +10,7 @@ import java.util.Set;
 import java.util.Stack;
 
 import hu.bme.mit.theta.core.expr.impl.Exprs;
-import hu.bme.mit.theta.formalism.common.Valuation;
+import hu.bme.mit.theta.core.model.impl.Valuation;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.splittingcegar.common.data.ConcreteTrace;
@@ -22,7 +22,8 @@ import hu.bme.mit.theta.splittingcegar.common.utils.visualization.Visualizer;
 import hu.bme.mit.theta.splittingcegar.interpolating.data.InterpolatedAbstractState;
 import hu.bme.mit.theta.splittingcegar.interpolating.data.InterpolatedAbstractSystem;
 
-public class InterpolatingCEGARDebugger extends AbstractDebugger<InterpolatedAbstractSystem, InterpolatedAbstractState> {
+public class InterpolatingCEGARDebugger
+		extends AbstractDebugger<InterpolatedAbstractSystem, InterpolatedAbstractState> {
 
 	private final Map<InterpolatedAbstractState, List<ConcreteState>> stateSpace;
 	private final Set<InterpolatedAbstractState> reachableStates;
@@ -35,9 +36,11 @@ public class InterpolatingCEGARDebugger extends AbstractDebugger<InterpolatedAbs
 	}
 
 	@Override
-	public Debugger<InterpolatedAbstractSystem, InterpolatedAbstractState> explore(final InterpolatedAbstractSystem system) {
+	public Debugger<InterpolatedAbstractSystem, InterpolatedAbstractState> explore(
+			final InterpolatedAbstractSystem system) {
 		if (system.getAbstractKripkeStructure() == null)
-			throw new RuntimeException("Abstract state space must be explored by the algorithm before exploring the concrete state space.");
+			throw new RuntimeException(
+					"Abstract state space must be explored by the algorithm before exploring the concrete state space.");
 		clearStateSpace();
 
 		// Collect abstract states
@@ -113,7 +116,8 @@ public class InterpolatingCEGARDebugger extends AbstractDebugger<InterpolatedAbs
 	}
 
 	@Override
-	public Debugger<InterpolatedAbstractSystem, InterpolatedAbstractState> setAbstractCE(final List<InterpolatedAbstractState> ace) {
+	public Debugger<InterpolatedAbstractSystem, InterpolatedAbstractState> setAbstractCE(
+			final List<InterpolatedAbstractState> ace) {
 		if (stateSpace.isEmpty())
 			throw new RuntimeException("State space is not explored");
 		clearAbstractCE();
@@ -124,7 +128,8 @@ public class InterpolatingCEGARDebugger extends AbstractDebugger<InterpolatedAbs
 		// up-to-date
 		for (final InterpolatedAbstractState as : ace) {
 			if (!stateSpace.containsKey(as))
-				throw new RuntimeException("A state in the counterexample is not included in the state space. The actual state space may not be up to date.");
+				throw new RuntimeException(
+						"A state in the counterexample is not included in the state space. The actual state space may not be up to date.");
 		}
 		return this;
 	}
