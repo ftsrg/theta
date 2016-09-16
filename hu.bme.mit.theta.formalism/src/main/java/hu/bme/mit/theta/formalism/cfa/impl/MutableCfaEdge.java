@@ -3,9 +3,9 @@ package hu.bme.mit.theta.formalism.cfa.impl;
 import java.util.ArrayList;
 import java.util.List;
 
+import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.formalism.cfa.CfaEdge;
 import hu.bme.mit.theta.formalism.cfa.CfaLoc;
-import hu.bme.mit.theta.formalism.common.stmt.Stmt;
 
 class MutableCfaEdge implements CfaEdge {
 

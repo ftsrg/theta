@@ -12,12 +12,12 @@ import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.tcfa.TcfaAction;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.impl.Exprs;
+import hu.bme.mit.theta.core.model.impl.Valuation;
 import hu.bme.mit.theta.core.type.BoolType;
-import hu.bme.mit.theta.formalism.common.Valuation;
-import hu.bme.mit.theta.formalism.utils.PathUtils;
-import hu.bme.mit.theta.formalism.utils.StmtUnroller;
-import hu.bme.mit.theta.formalism.utils.StmtUnroller.StmtToExprResult;
-import hu.bme.mit.theta.formalism.utils.VarIndexes;
+import hu.bme.mit.theta.core.utils.impl.PathUtils;
+import hu.bme.mit.theta.core.utils.impl.StmtUnroller;
+import hu.bme.mit.theta.core.utils.impl.StmtUnroller.StmtToExprResult;
+import hu.bme.mit.theta.core.utils.impl.VarIndexes;
 import hu.bme.mit.theta.solver.Solver;
 
 public final class TcfaExplTransferFunction implements TransferFunction<ExplState, TcfaAction, ExplPrecision> {

@@ -1,9 +1,9 @@
 package hu.bme.mit.theta.formalism.cfa.impl;
 
 import static hu.bme.mit.theta.core.expr.impl.Exprs.Not;
-import static hu.bme.mit.theta.formalism.common.stmt.impl.Stmts.Assign;
-import static hu.bme.mit.theta.formalism.common.stmt.impl.Stmts.Assume;
-import static hu.bme.mit.theta.formalism.common.stmt.impl.Stmts.Havoc;
+import static hu.bme.mit.theta.core.stmt.impl.Stmts.Assign;
+import static hu.bme.mit.theta.core.stmt.impl.Stmts.Assume;
+import static hu.bme.mit.theta.core.stmt.impl.Stmts.Havoc;
 
 import java.util.Collections;
 import java.util.LinkedList;
@@ -13,24 +13,24 @@ import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.theta.common.Product4;
 import hu.bme.mit.theta.common.Tuple;
+import hu.bme.mit.theta.core.stmt.AssertStmt;
+import hu.bme.mit.theta.core.stmt.AssignStmt;
+import hu.bme.mit.theta.core.stmt.AssumeStmt;
+import hu.bme.mit.theta.core.stmt.BlockStmt;
+import hu.bme.mit.theta.core.stmt.DeclStmt;
+import hu.bme.mit.theta.core.stmt.DoStmt;
+import hu.bme.mit.theta.core.stmt.HavocStmt;
+import hu.bme.mit.theta.core.stmt.IfElseStmt;
+import hu.bme.mit.theta.core.stmt.IfStmt;
+import hu.bme.mit.theta.core.stmt.ReturnStmt;
+import hu.bme.mit.theta.core.stmt.SkipStmt;
+import hu.bme.mit.theta.core.stmt.Stmt;
+import hu.bme.mit.theta.core.stmt.WhileStmt;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.utils.StmtVisitor;
 import hu.bme.mit.theta.formalism.cfa.CFA;
 import hu.bme.mit.theta.formalism.cfa.CfaEdge;
 import hu.bme.mit.theta.formalism.cfa.CfaLoc;
-import hu.bme.mit.theta.formalism.common.stmt.AssertStmt;
-import hu.bme.mit.theta.formalism.common.stmt.AssignStmt;
-import hu.bme.mit.theta.formalism.common.stmt.AssumeStmt;
-import hu.bme.mit.theta.formalism.common.stmt.BlockStmt;
-import hu.bme.mit.theta.formalism.common.stmt.DeclStmt;
-import hu.bme.mit.theta.formalism.common.stmt.DoStmt;
-import hu.bme.mit.theta.formalism.common.stmt.HavocStmt;
-import hu.bme.mit.theta.formalism.common.stmt.IfElseStmt;
-import hu.bme.mit.theta.formalism.common.stmt.IfStmt;
-import hu.bme.mit.theta.formalism.common.stmt.ReturnStmt;
-import hu.bme.mit.theta.formalism.common.stmt.SkipStmt;
-import hu.bme.mit.theta.formalism.common.stmt.Stmt;
-import hu.bme.mit.theta.formalism.common.stmt.WhileStmt;
-import hu.bme.mit.theta.formalism.utils.StmtVisitor;
 
 public class LbeCreator {
 
@@ -65,13 +65,14 @@ public class LbeCreator {
 			}
 		}
 
-		private Void visitSimpleStatement(final Stmt stmt, final Product4<CfaLoc, CfaLoc, List<Stmt>, List<Stmt>> param) {
+		private Void visitSimpleStatement(final Stmt stmt,
+				final Product4<CfaLoc, CfaLoc, List<Stmt>, List<Stmt>> param) {
 			final CfaLoc source = param._1();
 			final CfaLoc target = param._2();
 			final List<Stmt> prefix = param._3();
 			final List<Stmt> postfix = param._4();
 
-			final List<Stmt> newPrefix = ImmutableList.<Stmt> builder().addAll(prefix).add(stmt).build();
+			final List<Stmt> newPrefix = ImmutableList.<Stmt>builder().addAll(prefix).add(stmt).build();
 			final List<Stmt> newPostfix = postfix;
 
 			createEdges(source, target, newPrefix, newPostfix);
@@ -99,7 +100,7 @@ public class LbeCreator {
 			final List<Stmt> prefix = param._3();
 			final List<Stmt> postfix = param._4();
 
-			final List<Stmt> newPrefix = ImmutableList.<Stmt> builder().addAll(prefix).add(initStmt(stmt)).build();
+			final List<Stmt> newPrefix = ImmutableList.<Stmt>builder().addAll(prefix).add(initStmt(stmt)).build();
 			final List<Stmt> newPostfix = postfix;
 			createEdges(source, target, newPrefix, newPostfix);
 
@@ -128,12 +129,12 @@ public class LbeCreator {
 			final List<Stmt> postfix = param._4();
 
 			final Stmt assumeCorrect = Assume(stmt.getCond());
-			final List<Stmt> correctPrefix = ImmutableList.<Stmt> builder().addAll(prefix).add(assumeCorrect).build();
+			final List<Stmt> correctPrefix = ImmutableList.<Stmt>builder().addAll(prefix).add(assumeCorrect).build();
 			final List<Stmt> correctPostfix = postfix;
 			createEdges(source, target, correctPrefix, correctPostfix);
 
 			final Stmt assumeError = Assume(Not(stmt.getCond()));
-			final List<Stmt> errorPrefix = ImmutableList.<Stmt> builder().addAll(prefix).add(assumeError).build();
+			final List<Stmt> errorPrefix = ImmutableList.<Stmt>builder().addAll(prefix).add(assumeError).build();
 			final List<Stmt> errorPostfix = ImmutableList.of();
 			createEdges(source, cfa.getErrorLoc(), errorPrefix, errorPostfix);
 
@@ -160,8 +161,7 @@ public class LbeCreator {
 			final List<Stmt> postfix = param._4();
 
 			final List<Stmt> newPrefix = prefix;
-			final List<Stmt> newPostfix = ImmutableList.<Stmt> builder().addAll(stmt.getStmts()).addAll(postfix)
-					.build();
+			final List<Stmt> newPostfix = ImmutableList.<Stmt>builder().addAll(stmt.getStmts()).addAll(postfix).build();
 			createEdges(source, target, newPrefix, newPostfix);
 
 			return null;
@@ -173,7 +173,7 @@ public class LbeCreator {
 			final CfaLoc source = param._1();
 			final List<Stmt> prefix = param._3();
 
-			final List<Stmt> newPrefix = ImmutableList.<Stmt> builder().addAll(prefix).add(stmt).build();
+			final List<Stmt> newPrefix = ImmutableList.<Stmt>builder().addAll(prefix).add(stmt).build();
 			final List<Stmt> newPostfix = ImmutableList.of();
 			createEdges(source, cfa.getFinalLoc(), newPrefix, newPostfix);
 
@@ -188,12 +188,12 @@ public class LbeCreator {
 			final List<Stmt> postfix = param._4();
 
 			final Stmt assumeThen = Assume(stmt.getCond());
-			final List<Stmt> thenPrefix = ImmutableList.<Stmt> builder().addAll(prefix).add(assumeThen).build();
-			final List<Stmt> thenPostfix = ImmutableList.<Stmt> builder().add(stmt.getThen()).addAll(postfix).build();
+			final List<Stmt> thenPrefix = ImmutableList.<Stmt>builder().addAll(prefix).add(assumeThen).build();
+			final List<Stmt> thenPostfix = ImmutableList.<Stmt>builder().add(stmt.getThen()).addAll(postfix).build();
 			createEdges(source, target, thenPrefix, thenPostfix);
 
 			final Stmt assumeElse = Assume(Not(stmt.getCond()));
-			final List<Stmt> elsePrefix = ImmutableList.<Stmt> builder().addAll(prefix).add(assumeElse).build();
+			final List<Stmt> elsePrefix = ImmutableList.<Stmt>builder().addAll(prefix).add(assumeElse).build();
 			final List<Stmt> elsePostfix = postfix;
 			createEdges(source, target, elsePrefix, elsePostfix);
 
@@ -208,13 +208,13 @@ public class LbeCreator {
 			final List<Stmt> postfix = param._4();
 
 			final Stmt assumeThen = Assume(stmt.getCond());
-			final List<Stmt> thenPrefix = ImmutableList.<Stmt> builder().addAll(prefix).add(assumeThen).build();
-			final List<Stmt> thenPostfix = ImmutableList.<Stmt> builder().add(stmt.getThen()).addAll(postfix).build();
+			final List<Stmt> thenPrefix = ImmutableList.<Stmt>builder().addAll(prefix).add(assumeThen).build();
+			final List<Stmt> thenPostfix = ImmutableList.<Stmt>builder().add(stmt.getThen()).addAll(postfix).build();
 			createEdges(source, target, thenPrefix, thenPostfix);
 
 			final Stmt assumeElse = Assume(Not(stmt.getCond()));
-			final List<Stmt> elsePrefix = ImmutableList.<Stmt> builder().addAll(prefix).add(assumeElse).build();
-			final List<Stmt> elsePostfix = ImmutableList.<Stmt> builder().add(stmt.getElse()).addAll(postfix).build();
+			final List<Stmt> elsePrefix = ImmutableList.<Stmt>builder().addAll(prefix).add(assumeElse).build();
+			final List<Stmt> elsePostfix = ImmutableList.<Stmt>builder().add(stmt.getElse()).addAll(postfix).build();
 			createEdges(source, target, elsePrefix, elsePostfix);
 
 			return null;

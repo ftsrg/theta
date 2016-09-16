@@ -4,10 +4,10 @@ import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 
+import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.formalism.cfa.CfaEdge;
 import hu.bme.mit.theta.formalism.cfa.CfaLoc;
 import hu.bme.mit.theta.formalism.cfa.impl.ImmutableCfaLoc.CFALocBuilder;
-import hu.bme.mit.theta.formalism.common.stmt.Stmt;
 
 final class ImmutableCfaEdge implements CfaEdge {
 

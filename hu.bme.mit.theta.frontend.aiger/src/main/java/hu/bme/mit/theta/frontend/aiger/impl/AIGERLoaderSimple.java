@@ -9,13 +9,12 @@ import java.util.List;
 
 import com.google.common.collect.ImmutableSet;
 
+import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.decl.impl.Decls;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.impl.Exprs;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.impl.Types;
-import hu.bme.mit.theta.formalism.common.decl.VarDecl;
-import hu.bme.mit.theta.formalism.common.decl.impl.Decls2;
-import hu.bme.mit.theta.formalism.common.expr.impl.Exprs2;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.formalism.sts.impl.StsImpl;
 import hu.bme.mit.theta.frontend.aiger.AIGERLoader;
@@ -40,7 +39,7 @@ public class AIGERLoaderSimple implements AIGERLoader {
 		final List<VarDecl<BoolType>> vars = new ArrayList<>(maxVars + 1);
 		final List<Expr<? extends BoolType>> outVars = new ArrayList<>(1);
 		for (int i = 0; i <= maxVars; ++i)
-			vars.add(Decls2.Var("v" + i, Types.Bool()));
+			vars.add(Decls.Var("v" + i, Types.Bool()));
 		// v0 is the constant 'false'
 		builder.addInvar(Exprs.Not(vars.get(0).getRef()));
 
@@ -54,7 +53,7 @@ public class AIGERLoaderSimple implements AIGERLoader {
 			final int v1 = Integer.parseInt(v[0]);
 			final int v2 = Integer.parseInt(v[1]);
 			builder.addInit(Exprs.Not(vars.get(v1 / 2).getRef()));
-			builder.addTrans(Exprs.Iff(Exprs2.Prime(vars.get(v1 / 2).getRef()),
+			builder.addTrans(Exprs.Iff(Exprs.Prime(vars.get(v1 / 2).getRef()),
 					v2 % 2 == 0 ? vars.get(v2 / 2).getRef() : Exprs.Not(vars.get(v2 / 2).getRef())));
 		}
 

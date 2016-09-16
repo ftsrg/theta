@@ -1,17 +1,18 @@
 package hu.bme.mit.theta.formalism.ta.op.impl;
 
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.AddExpr;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.IntLitExpr;
+import hu.bme.mit.theta.core.stmt.AssignStmt;
+import hu.bme.mit.theta.core.stmt.AssumeStmt;
+import hu.bme.mit.theta.core.stmt.HavocStmt;
+import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.utils.impl.FailStmtVisitor;
 import hu.bme.mit.theta.formalism.common.decl.ClockDecl;
-import hu.bme.mit.theta.formalism.common.decl.VarDecl;
 import hu.bme.mit.theta.formalism.common.expr.ClockRefExpr;
-import hu.bme.mit.theta.formalism.common.stmt.AssignStmt;
-import hu.bme.mit.theta.formalism.common.stmt.AssumeStmt;
-import hu.bme.mit.theta.formalism.common.stmt.HavocStmt;
-import hu.bme.mit.theta.formalism.common.stmt.Stmt;
 import hu.bme.mit.theta.formalism.ta.constr.ClockConstr;
 import hu.bme.mit.theta.formalism.ta.constr.impl.ClockConstrs;
 import hu.bme.mit.theta.formalism.ta.op.ClockOp;
@@ -20,7 +21,6 @@ import hu.bme.mit.theta.formalism.ta.op.FreeOp;
 import hu.bme.mit.theta.formalism.ta.op.GuardOp;
 import hu.bme.mit.theta.formalism.ta.op.ResetOp;
 import hu.bme.mit.theta.formalism.ta.op.ShiftOp;
-import hu.bme.mit.theta.formalism.utils.FailStmtVisitor;
 
 public final class ClockOps {
 

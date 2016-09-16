@@ -5,10 +5,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.formalism.common.decl.VarDecl;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.splittingcegar.common.data.AbstractSystemBase;
 import hu.bme.mit.theta.splittingcegar.common.data.KripkeStructure;
@@ -23,7 +23,9 @@ public class InterpolatedAbstractSystem extends AbstractSystemBase {
 	private final Set<VarDecl<? extends Type>> explicitVars;
 	private final Set<VarDecl<? extends Type>> vars;
 	private final Set<VarDecl<? extends Type>> cnfVars;
-	private int previousSplitIndex; // Index of the first state (in the counterexample) that was split in the previous iteration
+	private int previousSplitIndex; // Index of the first state (in the
+									// counterexample) that was split in the
+									// previous iteration
 
 	public InterpolatedAbstractSystem(final STS system) {
 		super(system);

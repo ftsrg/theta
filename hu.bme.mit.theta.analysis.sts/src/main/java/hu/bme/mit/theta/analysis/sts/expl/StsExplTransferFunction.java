@@ -11,10 +11,10 @@ import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.sts.StsAction;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.impl.Exprs;
+import hu.bme.mit.theta.core.model.impl.Valuation;
 import hu.bme.mit.theta.core.type.BoolType;
-import hu.bme.mit.theta.formalism.common.Valuation;
+import hu.bme.mit.theta.core.utils.impl.PathUtils;
 import hu.bme.mit.theta.formalism.sts.STS;
-import hu.bme.mit.theta.formalism.utils.PathUtils;
 import hu.bme.mit.theta.solver.Solver;
 
 class StsExplTransferFunction implements TransferFunction<ExplState, StsAction, ExplPrecision> {
@@ -28,7 +28,8 @@ class StsExplTransferFunction implements TransferFunction<ExplState, StsAction, 
 	}
 
 	@Override
-	public Collection<ExplState> getSuccStates(final ExplState state, final StsAction action, final ExplPrecision precision) {
+	public Collection<ExplState> getSuccStates(final ExplState state, final StsAction action,
+			final ExplPrecision precision) {
 		checkNotNull(state);
 		checkNotNull(action);
 		checkNotNull(precision);

@@ -26,6 +26,7 @@ import static hu.bme.mit.theta.core.expr.impl.Exprs.Neg;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.Neq;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.Not;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.Or;
+import static hu.bme.mit.theta.core.expr.impl.Exprs.Prime;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.Rat;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.RatDiv;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.Read;
@@ -33,7 +34,6 @@ import static hu.bme.mit.theta.core.expr.impl.Exprs.Rem;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.Sub;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.True;
 import static hu.bme.mit.theta.core.utils.impl.ExprUtils.cast;
-import static hu.bme.mit.theta.formalism.common.expr.impl.Exprs2.Prime;
 import static java.util.stream.Collectors.toList;
 
 import java.util.Collection;

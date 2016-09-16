@@ -1,5 +1,6 @@
 package hu.bme.mit.theta.formalism.common.decl;
 
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.RatType;
 import hu.bme.mit.theta.formalism.common.expr.ClockRefExpr;
 

@@ -11,6 +11,7 @@ import static hu.bme.mit.theta.core.expr.impl.Exprs.Ite;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.Neg;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.Not;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.Or;
+import static hu.bme.mit.theta.core.expr.impl.Exprs.Prime;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.Sub;
 import static hu.bme.mit.theta.core.type.impl.Types.Bool;
 import static hu.bme.mit.theta.core.type.impl.Types.Int;
@@ -117,5 +118,14 @@ public class ExprIteEliminatorTest {
 
 		for (final Expr<? extends BoolType> expr : expressions)
 			assertEquals(expr, eliminateITE(expr));
+	}
+
+	@Test
+	public void testProgExprIteEliminator() {
+		// D = if A then X else Y
+		assertEquals(eliminateITE(Eq(z, Ite(a, x, y))), And(Or(Not(a), Eq(z, x)), Or(a, Eq(z, y))));
+		// D = (if A then X else Y)'
+		assertEquals(eliminateITE(Eq(z, Prime(Ite(a, x, y)))),
+				And(Or(Not(a), Eq(z, Prime(x))), Or(a, Eq(z, Prime(y)))));
 	}
 }

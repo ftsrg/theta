@@ -1,15 +1,15 @@
 package hu.bme.mit.theta.formalism.ta.op.impl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.formalism.common.stmt.impl.Stmts.Assign;
+import static hu.bme.mit.theta.core.stmt.impl.Stmts.Assign;
 
 import java.util.Collection;
 
 import com.google.common.collect.ImmutableSet;
 
+import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.type.RatType;
 import hu.bme.mit.theta.formalism.common.decl.ClockDecl;
-import hu.bme.mit.theta.formalism.common.stmt.AssignStmt;
 import hu.bme.mit.theta.formalism.ta.op.CopyOp;
 import hu.bme.mit.theta.formalism.ta.utils.ClockOpVisitor;
 
