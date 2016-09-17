@@ -30,7 +30,7 @@ import hu.bme.mit.theta.core.expr.IntLitExpr;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.IntType;
 
-public class ExprIteEliminatorTest {
+public class IteEliminatorTest {
 
 	// Constants for testing
 	private ConstRefExpr<BoolType> a, b, c, d, e;

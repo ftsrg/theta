@@ -14,11 +14,15 @@ import hu.bme.mit.theta.core.expr.MultiaryExpr;
 import hu.bme.mit.theta.core.expr.NullaryExpr;
 import hu.bme.mit.theta.core.expr.ProcCallExpr;
 import hu.bme.mit.theta.core.expr.UnaryExpr;
-import hu.bme.mit.theta.core.expr.impl.Exprs;
-import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.utils.ExprVisitor;
 
-public class ExprIteRemoverVisitor extends ArityBasedExprVisitor<Void, Expr<? extends Type>> {
+public class ItePropagatorVisitor extends ArityBasedExprVisitor<Void, Expr<? extends Type>> {
+	private final ExprVisitor<Void, Expr<? extends Type>> exprITEPusherVisitor;
+
+	public ItePropagatorVisitor(final ExprVisitor<Void, Expr<? extends Type>> exprITEPusherVisitor) {
+		this.exprITEPusherVisitor = exprITEPusherVisitor;
+	}
 
 	@Override
 	protected <ExprType extends Type> Expr<? extends Type> visitNullary(final NullaryExpr<ExprType> expr,
@@ -30,25 +34,31 @@ public class ExprIteRemoverVisitor extends ArityBasedExprVisitor<Void, Expr<? ex
 	@Override
 	protected <OpType extends Type, ExprType extends Type> Expr<? extends Type> visitUnary(
 			final UnaryExpr<OpType, ExprType> expr, final Void param) {
-		return expr.withOp((Expr<? extends OpType>) expr.getOp().accept(this, param));
+		// Apply propagation to operand(s) first, then apply pushdown
+		return expr.withOp((Expr<? extends OpType>) expr.getOp().accept(this, param)).accept(exprITEPusherVisitor,
+				param);
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	protected <LeftOpType extends Type, RightOpType extends Type, ExprType extends Type> Expr<? extends Type> visitBinary(
 			final BinaryExpr<LeftOpType, RightOpType, ExprType> expr, final Void param) {
-		return expr.withOps((Expr<? extends LeftOpType>) expr.getLeftOp().accept(this, param),
-				(Expr<? extends RightOpType>) expr.getRightOp().accept(this, param));
+		// Apply propagation to operand(s) first, then apply pushdown
+		return expr
+				.withOps((Expr<? extends LeftOpType>) expr.getLeftOp().accept(this, param),
+						(Expr<? extends RightOpType>) expr.getRightOp().accept(this, param))
+				.accept(exprITEPusherVisitor, param);
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	protected <OpsType extends Type, ExprType extends Type> Expr<? extends Type> visitMultiary(
 			final MultiaryExpr<OpsType, ExprType> expr, final Void param) {
+		// Apply propagation to operand(s) first, then apply pushdown
 		final List<Expr<? extends OpsType>> ops = new ArrayList<>(expr.getOps().size());
 		for (final Expr<? extends OpsType> op : expr.getOps())
 			ops.add((Expr<? extends OpsType>) op.accept(this, param));
-		return expr.withOps(ops);
+		return expr.withOps(ops).accept(exprITEPusherVisitor, param);
 	}
 
 	@Override
@@ -88,12 +98,9 @@ public class ExprIteRemoverVisitor extends ArityBasedExprVisitor<Void, Expr<? ex
 	@SuppressWarnings("unchecked")
 	@Override
 	public <ExprType extends Type> Expr<? extends Type> visit(final IteExpr<ExprType> expr, final Void param) {
-		// Apply ite(C,T,E) <=> (!C or T) and (C or E) transformation
-		final Expr<? extends BoolType> cond = (Expr<? extends BoolType>) expr.getCond().accept(this, param);
-		final Expr<? extends Type> then = expr.getThen().accept(this, param);
-		final Expr<? extends Type> elze = expr.getElse().accept(this, param);
-		return Exprs.And(Exprs.Or(Exprs.Not(cond), (Expr<? extends BoolType>) then),
-				Exprs.Or(cond, (Expr<? extends BoolType>) elze));
+		// Apply propagation to operand(s)
+		return expr.withOps(expr.getCond(), (Expr<? extends ExprType>) expr.getThen().accept(this, param),
+				(Expr<? extends ExprType>) expr.getElse().accept(this, param));
 	}
 
 }

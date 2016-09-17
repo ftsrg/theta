@@ -17,7 +17,7 @@ import hu.bme.mit.theta.core.model.Assignment;
 import hu.bme.mit.theta.core.model.impl.AssignmentImpl;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.utils.impl.ExprCnfCheckerVisitor.CNFStatus;
+import hu.bme.mit.theta.core.utils.impl.CnfCheckerVisitor.CNFStatus;
 
 public class ExprUtils {
 
@@ -64,13 +64,13 @@ public class ExprUtils {
 	}
 
 	public static boolean isExprCNF(final Expr<? extends BoolType> expr) {
-		return expr.accept(new ExprCnfCheckerVisitor(), CNFStatus.START);
+		return expr.accept(new CnfCheckerVisitor(), CNFStatus.START);
 	}
 
 	@SuppressWarnings("unchecked")
 	public static Expr<? extends BoolType> eliminateITE(final Expr<? extends BoolType> expr) {
-		return (Expr<? extends BoolType>) expr.accept(new ExprItePropagatorVisitor(new ExprItePusherVisitor()), null)
-				.accept(new ExprIteRemoverVisitor(), null);
+		return (Expr<? extends BoolType>) expr.accept(new ItePropagatorVisitor(new ItePusherVisitor()), null)
+				.accept(new IteRemoverVisitor(), null);
 	}
 
 	public static void collectAtoms(final Expr<? extends BoolType> expr,
