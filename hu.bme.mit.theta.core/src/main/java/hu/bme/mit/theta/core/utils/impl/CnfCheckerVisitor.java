@@ -42,9 +42,9 @@ import hu.bme.mit.theta.core.type.closure.ClosedUnderMul;
 import hu.bme.mit.theta.core.type.closure.ClosedUnderNeg;
 import hu.bme.mit.theta.core.type.closure.ClosedUnderSub;
 import hu.bme.mit.theta.core.utils.ExprVisitor;
-import hu.bme.mit.theta.core.utils.impl.ExprCnfCheckerVisitor.CNFStatus;
+import hu.bme.mit.theta.core.utils.impl.CnfCheckerVisitor.CNFStatus;
 
-final class ExprCnfCheckerVisitor implements ExprVisitor<CNFStatus, Boolean> {
+final class CnfCheckerVisitor implements ExprVisitor<CNFStatus, Boolean> {
 
 	enum CNFStatus {
 		START(0), INSIDE_AND(1), INSIDE_OR(2), INSIDE_NOT(3);

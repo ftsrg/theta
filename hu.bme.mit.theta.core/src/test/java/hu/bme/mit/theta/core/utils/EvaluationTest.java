@@ -40,7 +40,7 @@ import hu.bme.mit.theta.core.model.Assignment;
 import hu.bme.mit.theta.core.model.impl.AssignmentImpl;
 import hu.bme.mit.theta.core.type.IntType;
 
-public class ExprEvaluationTest {
+public class EvaluationTest {
 
 	private final ConstDecl<IntType> ca = Decls.Const("a", Int());
 	private final ConstDecl<IntType> cb = Decls.Const("b", Int());

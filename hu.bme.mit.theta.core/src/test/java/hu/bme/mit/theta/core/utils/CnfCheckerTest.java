@@ -18,7 +18,7 @@ import org.junit.Test;
 import hu.bme.mit.theta.core.expr.ConstRefExpr;
 import hu.bme.mit.theta.core.type.BoolType;
 
-public class ExprCnfCheckerTest {
+public class CnfCheckerTest {
 	// Constants for testing
 	private ConstRefExpr<BoolType> a, b, c;
 
