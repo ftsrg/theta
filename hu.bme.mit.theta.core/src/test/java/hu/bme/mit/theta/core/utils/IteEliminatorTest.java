@@ -121,9 +121,7 @@ public class IteEliminatorTest {
 	}
 
 	@Test
-	public void testProgExprIteEliminator() {
-		// D = if A then X else Y
-		assertEquals(eliminateITE(Eq(z, Ite(a, x, y))), And(Or(Not(a), Eq(z, x)), Or(a, Eq(z, y))));
+	public void testPrime() {
 		// D = (if A then X else Y)'
 		assertEquals(eliminateITE(Eq(z, Prime(Ite(a, x, y)))),
 				And(Or(Not(a), Eq(z, Prime(x))), Or(a, Eq(z, Prime(y)))));
