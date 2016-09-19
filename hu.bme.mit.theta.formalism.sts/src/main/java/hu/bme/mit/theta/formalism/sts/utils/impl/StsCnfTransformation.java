@@ -18,20 +18,22 @@ public final class StsCnfTransformation implements STSTransformation {
 	public STS transform(final STS system) {
 
 		final StsImpl.Builder builder = new StsImpl.Builder();
-		final CnfTransformation cnfTransf = ExprUtils.createCNFTransformation();
 
+		// A new transformation is required for each formula group (init, trans,
+		// inv) because they may be added to the solver separately
+		CnfTransformation cnfTransf = ExprUtils.createCNFTransformation();
 		for (final Expr<? extends BoolType> expr : system.getInit())
 			builder.addInit(transformIfNonCNF(expr, cnfTransf));
-		cnfTransf.clearRepresentatives();
 
+		cnfTransf = ExprUtils.createCNFTransformation();
 		for (final Expr<? extends BoolType> expr : system.getInvar())
 			builder.addInvar(transformIfNonCNF(expr, cnfTransf));
-		cnfTransf.clearRepresentatives();
 
+		cnfTransf = ExprUtils.createCNFTransformation();
 		for (final Expr<? extends BoolType> expr : system.getTrans())
 			builder.addTrans(transformIfNonCNF(expr, cnfTransf));
-		cnfTransf.clearRepresentatives();
 
+		// Should not convert to the property to CNF, because it may be negated
 		builder.setProp(system.getProp());
 
 		return builder.build();
