@@ -8,6 +8,7 @@ import static hu.bme.mit.theta.core.expr.impl.Exprs.Ite;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.Mul;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.Neg;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.Not;
+import static hu.bme.mit.theta.core.expr.impl.Exprs.Prime;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.Rat;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.Sub;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.True;
@@ -46,11 +47,15 @@ import hu.bme.mit.theta.core.expr.NeqExpr;
 import hu.bme.mit.theta.core.expr.NotExpr;
 import hu.bme.mit.theta.core.expr.OrExpr;
 import hu.bme.mit.theta.core.expr.ParamRefExpr;
+import hu.bme.mit.theta.core.expr.PrimedExpr;
+import hu.bme.mit.theta.core.expr.ProcCallExpr;
+import hu.bme.mit.theta.core.expr.ProcRefExpr;
 import hu.bme.mit.theta.core.expr.RatDivExpr;
 import hu.bme.mit.theta.core.expr.RatLitExpr;
 import hu.bme.mit.theta.core.expr.RemExpr;
 import hu.bme.mit.theta.core.expr.SubExpr;
 import hu.bme.mit.theta.core.expr.TrueExpr;
+import hu.bme.mit.theta.core.expr.VarRefExpr;
 import hu.bme.mit.theta.core.model.Assignment;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.IntType;
@@ -79,6 +84,31 @@ public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? ext
 	public <DeclType extends Type> Expr<? extends Type> visit(final ParamRefExpr<DeclType> expr,
 			final Assignment param) {
 		return expr;
+	}
+
+	@Override
+	public <DeclType extends Type> Expr<? extends Type> visit(final VarRefExpr<DeclType> expr, final Assignment param) {
+		final Optional<? extends Expr<DeclType>> eval = param.eval(expr.getDecl());
+		if (eval.isPresent()) {
+			return eval.get();
+		}
+
+		return expr;
+	}
+
+	@Override
+	public <ReturnType extends Type> Expr<? extends Type> visit(final ProcRefExpr<ReturnType> expr,
+			final Assignment param) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+	}
+
+	@Override
+	public <ExprType extends Type> Expr<? extends ExprType> visit(final PrimedExpr<ExprType> expr,
+			final Assignment param) {
+		@SuppressWarnings("unchecked")
+		final Expr<? extends ExprType> op = (Expr<? extends ExprType>) expr.getOp().accept(this, param);
+		return Prime(op);
 	}
 
 	@Override
@@ -666,5 +696,12 @@ public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? ext
 			return 1;
 		else
 			return ((RatLitExpr) expr).getDenom();
+	}
+
+	@Override
+	public <ReturnType extends Type> Expr<? extends Type> visit(final ProcCallExpr<ReturnType> expr,
+			final Assignment param) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
 }

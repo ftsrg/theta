@@ -2,11 +2,11 @@ package hu.bme.mit.theta.frontend.aiger.impl.elements;
 
 import java.util.List;
 
+import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.decl.impl.Decls;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.impl.Types;
-import hu.bme.mit.theta.formalism.common.decl.VarDecl;
-import hu.bme.mit.theta.formalism.common.decl.impl.Decls2;
 
 public final class InVar extends HWElement {
 	private final VarDecl<BoolType> varDecl;
@@ -17,7 +17,7 @@ public final class InVar extends HWElement {
 
 	public InVar(final int nr, final int literal) {
 		super(literal / 2);
-		varDecl = Decls2.Var("I" + nr + "_l" + varId, Types.Bool());
+		varDecl = Decls.Var("I" + nr + "_l" + varId, Types.Bool());
 	}
 
 	@Override

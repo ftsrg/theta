@@ -3,9 +3,9 @@ package hu.bme.mit.theta.formalism.tcfa.dsl.impl;
 import static com.google.common.base.Preconditions.checkArgument;
 import static hu.bme.mit.theta.core.decl.impl.Decls.Const;
 import static hu.bme.mit.theta.core.decl.impl.Decls.Param;
+import static hu.bme.mit.theta.core.decl.impl.Decls.Var;
 import static hu.bme.mit.theta.core.utils.impl.ExprUtils.cast;
 import static hu.bme.mit.theta.formalism.common.decl.impl.Decls2.Clock;
-import static hu.bme.mit.theta.formalism.common.decl.impl.Decls2.Var;
 import static java.util.stream.Collectors.toList;
 
 import java.util.Collections;
@@ -19,14 +19,14 @@ import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.ParamDecl;
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.dsl.DeclSymbol;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.model.Assignment;
 import hu.bme.mit.theta.core.model.impl.AssignmentImpl;
+import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.formalism.common.decl.VarDecl;
-import hu.bme.mit.theta.formalism.common.stmt.Stmt;
 import hu.bme.mit.theta.formalism.tcfa.dsl.gen.TcfaDslParser.ConstDeclContext;
 import hu.bme.mit.theta.formalism.tcfa.dsl.gen.TcfaDslParser.DeclContext;
 import hu.bme.mit.theta.formalism.tcfa.dsl.gen.TcfaDslParser.DeclListContext;
@@ -80,18 +80,18 @@ final class TcfaDslHelper {
 
 	public static Assignment createConstDefs(final Scope scope, final Assignment assignment,
 			final List<? extends ConstDeclContext> constDeclCtxs) {
-		final Map<Decl<?, ?>, Expr<?>> declToExpr = new HashMap<>();
+		final Map<Decl<?>, Expr<?>> declToExpr = new HashMap<>();
 		for (final ConstDeclContext constDeclCtx : constDeclCtxs) {
 			addDef(scope, assignment, declToExpr, constDeclCtx);
 		}
 		return new AssignmentImpl(declToExpr);
 	}
 
-	private static void addDef(final Scope scope, final Assignment assignment,
-			final Map<Decl<?, ?>, Expr<?>> declToExpr, final ConstDeclContext constDeclCtx) {
+	private static void addDef(final Scope scope, final Assignment assignment, final Map<Decl<?>, Expr<?>> declToExpr,
+			final ConstDeclContext constDeclCtx) {
 		final String name = constDeclCtx.ddecl.name.getText();
 		final DeclSymbol declSymbol = resolveDecl(scope, name);
-		final Decl<?, ?> decl = declSymbol.getDecl();
+		final Decl<?> decl = declSymbol.getDecl();
 		final Expr<?> expr = createExpr(scope, assignment, constDeclCtx.value);
 		declToExpr.put(decl, expr);
 	}

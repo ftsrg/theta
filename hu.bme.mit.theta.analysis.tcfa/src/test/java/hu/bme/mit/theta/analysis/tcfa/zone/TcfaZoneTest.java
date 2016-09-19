@@ -1,7 +1,7 @@
 package hu.bme.mit.theta.analysis.tcfa.zone;
 
+import static hu.bme.mit.theta.core.decl.impl.Decls.Var;
 import static hu.bme.mit.theta.core.type.impl.Types.Int;
-import static hu.bme.mit.theta.formalism.common.decl.impl.Decls2.Var;
 
 import java.util.HashMap;
 
@@ -14,12 +14,11 @@ import hu.bme.mit.theta.analysis.algorithm.impl.AbstractorImpl;
 import hu.bme.mit.theta.analysis.tcfa.TcfaAction;
 import hu.bme.mit.theta.analysis.tcfa.TcfaAnalyis;
 import hu.bme.mit.theta.analysis.tcfa.TcfaState;
-import hu.bme.mit.theta.analysis.tcfa.zone.TcfaZoneAnalysis;
 import hu.bme.mit.theta.analysis.zone.ZonePrecision;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.IntType;
 import hu.bme.mit.theta.formalism.common.decl.ClockDecl;
-import hu.bme.mit.theta.formalism.common.decl.VarDecl;
 import hu.bme.mit.theta.formalism.tcfa.instances.FischerTCFA;
 
 public class TcfaZoneTest {

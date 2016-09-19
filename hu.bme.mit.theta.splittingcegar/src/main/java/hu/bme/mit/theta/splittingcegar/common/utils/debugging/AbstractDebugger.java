@@ -9,8 +9,8 @@ import java.util.Stack;
 
 import hu.bme.mit.theta.core.expr.AndExpr;
 import hu.bme.mit.theta.core.expr.Expr;
+import hu.bme.mit.theta.core.model.impl.Valuation;
 import hu.bme.mit.theta.core.type.BoolType;
-import hu.bme.mit.theta.formalism.common.Valuation;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.splittingcegar.common.data.AbstractState;
@@ -82,7 +82,8 @@ public abstract class AbstractDebugger<AbstractSystemType extends AbstractSystem
 		}
 	}
 
-	protected void markUnsafeStates(final Collection<ConcreteState> concreteStates, final Expr<? extends BoolType> unsafeExpr, final STS sts) {
+	protected void markUnsafeStates(final Collection<ConcreteState> concreteStates,
+			final Expr<? extends BoolType> unsafeExpr, final STS sts) {
 		final Solver solver = solvers.getSolver();
 		solver.push();
 		solver.add(sts.unroll(unsafeExpr, 0));
@@ -119,19 +120,20 @@ public abstract class AbstractDebugger<AbstractSystemType extends AbstractSystem
 				labelString.append(labelExpr);
 			}
 
-			final ClusterNode cn = new ClusterNode(("cluster_cas_" + ids.get(as)).replace('-', '_'), labelString.toString(),
-					reachableStates.contains(as) ? "black" : "gray", as.isPartOfCounterexample() ? "pink" : "white", "", as.isInitial());
+			final ClusterNode cn = new ClusterNode(("cluster_cas_" + ids.get(as)).replace('-', '_'),
+					labelString.toString(), reachableStates.contains(as) ? "black" : "gray",
+					as.isPartOfCounterexample() ? "pink" : "white", "", as.isInitial());
 			g.addNode(cn);
 			for (final AbstractState as1 : as.getSuccessors())
 				cn.addSuccessor(("cluster_cas_" + ids.get(as1)).replace('-', '_'), "");
 
 			for (final ConcreteState cs0 : stateSpace.get(as)) {
-				final Node n = new Node("cs_" + cs0.createId(), cs0.toString(), (cs0.isReachable ? "" : "grey"), (cs0.isPartOfCounterExample ? "red" : ""),
-						(cs0.isUnsafe ? "dashed" : ""), cs0.isInitial);
+				final Node n = new Node("cs_" + cs0.createId(), cs0.toString(), (cs0.isReachable ? "" : "grey"),
+						(cs0.isPartOfCounterExample ? "red" : ""), (cs0.isUnsafe ? "dashed" : ""), cs0.isInitial);
 				cn.addSubNode(n);
 				for (final ConcreteState cs1 : cs0.successors)
-					n.addSuccessor("cs_" + cs1.createId(),
-							(cs0.isPartOfCounterExample && cs1.isPartOfCounterExample && cs0.counterExampleIndex < cs1.counterExampleIndex ? "red" : ""));
+					n.addSuccessor("cs_" + cs1.createId(), (cs0.isPartOfCounterExample && cs1.isPartOfCounterExample
+							&& cs0.counterExampleIndex < cs1.counterExampleIndex ? "red" : ""));
 			}
 		}
 
@@ -159,7 +161,7 @@ public abstract class AbstractDebugger<AbstractSystemType extends AbstractSystem
 			this.isPartOfCounterExample = false;
 			this.isReachable = false;
 			this.isUnsafe = false;
-			successors = new ArrayList<ConcreteState>();
+			successors = new ArrayList<>();
 		}
 
 		@Override

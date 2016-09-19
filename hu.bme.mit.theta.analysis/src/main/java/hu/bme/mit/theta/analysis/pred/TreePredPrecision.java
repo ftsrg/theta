@@ -14,10 +14,9 @@ import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.LitExpr;
 import hu.bme.mit.theta.core.expr.NotExpr;
 import hu.bme.mit.theta.core.expr.impl.Exprs;
+import hu.bme.mit.theta.core.model.impl.Valuation;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.utils.impl.ExprUtils;
-import hu.bme.mit.theta.formalism.common.Valuation;
-import hu.bme.mit.theta.formalism.utils.FormalismUtils;
 
 public final class TreePredPrecision implements PredPrecision {
 
@@ -102,7 +101,7 @@ public final class TreePredPrecision implements PredPrecision {
 		Node node = root;
 
 		while (node != null) {
-			final LitExpr<? extends BoolType> predHolds = FormalismUtils.evaluate(node.getPonPred(), valuation);
+			final LitExpr<? extends BoolType> predHolds = ExprUtils.evaluate(node.getPonPred(), valuation);
 			if (predHolds.equals(Exprs.True())) {
 				statePreds.add(node.getPonPred());
 				node = node.getPonRefined().isPresent() ? node.getPonRefined().get() : null;

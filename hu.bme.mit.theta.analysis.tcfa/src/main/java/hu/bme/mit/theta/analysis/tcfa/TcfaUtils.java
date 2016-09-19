@@ -1,7 +1,8 @@
 package hu.bme.mit.theta.analysis.tcfa;
 
-import static hu.bme.mit.theta.formalism.utils.FormalismUtils.getVars;
+import static hu.bme.mit.theta.core.utils.impl.ExprUtils.getVars;
 
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.AddExpr;
 import hu.bme.mit.theta.core.expr.AndExpr;
 import hu.bme.mit.theta.core.expr.BinaryExpr;
@@ -14,18 +15,17 @@ import hu.bme.mit.theta.core.expr.LeqExpr;
 import hu.bme.mit.theta.core.expr.LtExpr;
 import hu.bme.mit.theta.core.expr.SubExpr;
 import hu.bme.mit.theta.core.expr.TrueExpr;
+import hu.bme.mit.theta.core.stmt.AssignStmt;
+import hu.bme.mit.theta.core.stmt.AssumeStmt;
+import hu.bme.mit.theta.core.stmt.HavocStmt;
+import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.utils.impl.DefaultValueExprVisitor;
+import hu.bme.mit.theta.core.utils.impl.DefaultValueStmtVisitor;
+import hu.bme.mit.theta.core.utils.impl.FailStmtVisitor;
 import hu.bme.mit.theta.formalism.common.decl.ClockDecl;
-import hu.bme.mit.theta.formalism.common.decl.VarDecl;
 import hu.bme.mit.theta.formalism.common.expr.ClockRefExpr;
-import hu.bme.mit.theta.formalism.common.stmt.AssignStmt;
-import hu.bme.mit.theta.formalism.common.stmt.AssumeStmt;
-import hu.bme.mit.theta.formalism.common.stmt.HavocStmt;
-import hu.bme.mit.theta.formalism.common.stmt.Stmt;
-import hu.bme.mit.theta.formalism.utils.DefaultValueStmtVisitor;
-import hu.bme.mit.theta.formalism.utils.FailStmtVisitor;
 
 public final class TcfaUtils {
 

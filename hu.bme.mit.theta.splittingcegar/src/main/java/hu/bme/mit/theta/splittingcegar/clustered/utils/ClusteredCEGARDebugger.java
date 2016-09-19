@@ -11,8 +11,8 @@ import java.util.Stack;
 
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.impl.Exprs;
+import hu.bme.mit.theta.core.model.impl.Valuation;
 import hu.bme.mit.theta.core.type.BoolType;
-import hu.bme.mit.theta.formalism.common.Valuation;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.splittingcegar.clustered.data.ClusteredAbstractState;
@@ -26,8 +26,14 @@ import hu.bme.mit.theta.splittingcegar.common.utils.debugging.Debugger;
 import hu.bme.mit.theta.splittingcegar.common.utils.visualization.Visualizer;
 
 public class ClusteredCEGARDebugger extends AbstractDebugger<ClusteredAbstractSystem, ClusteredAbstractState> {
-	private final Map<ClusteredAbstractState, List<ConcreteState>> stateSpace; // Abstract and concrete state space
-	private final Set<ClusteredAbstractState> reachableStates; // Set of reachable states
+	private final Map<ClusteredAbstractState, List<ConcreteState>> stateSpace; // Abstract
+																				// and
+																				// concrete
+																				// state
+																				// space
+	private final Set<ClusteredAbstractState> reachableStates; // Set of
+																// reachable
+																// states
 
 	public ClusteredCEGARDebugger(final SolverWrapper solvers, final Visualizer visualizer) {
 		super(solvers, visualizer);
@@ -55,7 +61,14 @@ public class ClusteredCEGARDebugger extends AbstractDebugger<ClusteredAbstractSy
 		} while (nextCAS != null);
 
 		// Explore corresponding concrete states
-		final Collection<ConcreteState> allConcreteStates = new ArrayList<>(); // Also store them temporary in a flat collection
+		final Collection<ConcreteState> allConcreteStates = new ArrayList<>(); // Also
+																				// store
+																				// them
+																				// temporary
+																				// in
+																				// a
+																				// flat
+																				// collection
 		solver.push(); // 1
 		solver.add(sts.unrollInv(0));
 		for (final ClusteredAbstractState cas : stateSpace.keySet()) {
@@ -141,7 +154,8 @@ public class ClusteredCEGARDebugger extends AbstractDebugger<ClusteredAbstractSy
 	}
 
 	@Override
-	public Debugger<ClusteredAbstractSystem, ClusteredAbstractState> setAbstractCE(final List<ClusteredAbstractState> ace) {
+	public Debugger<ClusteredAbstractSystem, ClusteredAbstractState> setAbstractCE(
+			final List<ClusteredAbstractState> ace) {
 		if (stateSpace.isEmpty())
 			throw new RuntimeException("State space is not explored");
 		clearAbstractCE();
@@ -194,7 +208,8 @@ public class ClusteredCEGARDebugger extends AbstractDebugger<ClusteredAbstractSy
 	}
 
 	// Get the next abstract state in the product
-	private ClusteredAbstractState getNextState(final ClusteredAbstractSystem system, final int[] previous, final Solver solver, final STS sts) {
+	private ClusteredAbstractState getNextState(final ClusteredAbstractSystem system, final int[] previous,
+			final Solver solver, final STS sts) {
 
 		previous[0]++;
 		for (int i = 0; i < previous.length; ++i) {
@@ -222,7 +237,8 @@ public class ClusteredCEGARDebugger extends AbstractDebugger<ClusteredAbstractSy
 		if (isInitial) {
 			solver.push();
 			for (int i = 0; i < previous.length; ++i)
-				SolverHelper.unrollAndAssert(solver, system.getAbstractKripkeStructure(i).getState(previous[i]).getLabels(), sts, 0);
+				SolverHelper.unrollAndAssert(solver,
+						system.getAbstractKripkeStructure(i).getState(previous[i]).getLabels(), sts, 0);
 			solver.add(sts.unrollInit(0));
 
 			isInitial = SolverHelper.checkSat(solver);

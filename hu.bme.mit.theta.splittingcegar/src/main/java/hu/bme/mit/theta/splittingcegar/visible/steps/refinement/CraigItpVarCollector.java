@@ -4,11 +4,11 @@ import java.util.Collection;
 import java.util.List;
 
 import hu.bme.mit.theta.common.logging.Logger;
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.formalism.common.decl.VarDecl;
+import hu.bme.mit.theta.core.utils.impl.ExprUtils;
 import hu.bme.mit.theta.formalism.sts.STS;
-import hu.bme.mit.theta.formalism.utils.FormalismUtils;
 import hu.bme.mit.theta.solver.ItpMarker;
 import hu.bme.mit.theta.solver.ItpPattern;
 import hu.bme.mit.theta.solver.ItpSolver;
@@ -22,13 +22,14 @@ import hu.bme.mit.theta.splittingcegar.visible.data.VisibleAbstractSystem;
 
 public class CraigItpVarCollector extends AbstractCEGARStep implements VarCollector {
 
-	public CraigItpVarCollector(final SolverWrapper solvers, final StopHandler stopHandler, final Logger logger, final Visualizer visualizer) {
+	public CraigItpVarCollector(final SolverWrapper solvers, final StopHandler stopHandler, final Logger logger,
+			final Visualizer visualizer) {
 		super(solvers, stopHandler, logger, visualizer);
 	}
 
 	@Override
-	public Collection<VarDecl<? extends Type>> collectVars(final VisibleAbstractSystem system, final List<VisibleAbstractState> abstractCounterEx,
-			final ConcreteTrace concreteTrace) {
+	public Collection<VarDecl<? extends Type>> collectVars(final VisibleAbstractSystem system,
+			final List<VisibleAbstractState> abstractCounterEx, final ConcreteTrace concreteTrace) {
 		final int traceLength = concreteTrace.size();
 		assert (traceLength < abstractCounterEx.size());
 		final ItpSolver itpSolver = solvers.getItpSolver();
@@ -76,7 +77,7 @@ public class CraigItpVarCollector extends AbstractCEGARStep implements VarCollec
 
 		logger.writeln("Interpolant: " + interpolant, 4, 0);
 		itpSolver.pop();
-		return FormalismUtils.getVars(interpolant);
+		return ExprUtils.getVars(interpolant);
 	}
 
 	@Override

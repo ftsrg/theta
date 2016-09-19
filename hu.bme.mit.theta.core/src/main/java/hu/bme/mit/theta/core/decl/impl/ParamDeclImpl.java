@@ -5,8 +5,7 @@ import hu.bme.mit.theta.core.expr.ParamRefExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.utils.DeclVisitor;
 
-final class ParamDeclImpl<DeclType extends Type> extends AbstractDecl<DeclType, ParamDecl<DeclType>>
-		implements ParamDecl<DeclType> {
+final class ParamDeclImpl<DeclType extends Type> extends AbstractDecl<DeclType> implements ParamDecl<DeclType> {
 
 	private static final int HASH_SEED = 6949;
 	private static final String DECL_LABEL = "Param";

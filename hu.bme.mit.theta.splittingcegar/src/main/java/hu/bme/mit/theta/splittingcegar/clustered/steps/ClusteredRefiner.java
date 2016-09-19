@@ -6,12 +6,12 @@ import java.util.List;
 import java.util.Set;
 
 import hu.bme.mit.theta.common.logging.Logger;
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.impl.Exprs;
+import hu.bme.mit.theta.core.model.impl.Valuation;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.formalism.common.Valuation;
-import hu.bme.mit.theta.formalism.common.decl.VarDecl;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.splittingcegar.clustered.data.ClusteredAbstractState;
@@ -26,15 +26,17 @@ import hu.bme.mit.theta.splittingcegar.common.steps.Refiner;
 import hu.bme.mit.theta.splittingcegar.common.utils.SolverHelper;
 import hu.bme.mit.theta.splittingcegar.common.utils.visualization.Visualizer;
 
-public class ClusteredRefiner extends AbstractCEGARStep implements Refiner<ClusteredAbstractSystem, ClusteredAbstractState> {
+public class ClusteredRefiner extends AbstractCEGARStep
+		implements Refiner<ClusteredAbstractSystem, ClusteredAbstractState> {
 
-	public ClusteredRefiner(final SolverWrapper solvers, final StopHandler stopHandler, final Logger logger, final Visualizer visualizer) {
+	public ClusteredRefiner(final SolverWrapper solvers, final StopHandler stopHandler, final Logger logger,
+			final Visualizer visualizer) {
 		super(solvers, stopHandler, logger, visualizer);
 	}
 
 	@Override
-	public ClusteredAbstractSystem refine(final ClusteredAbstractSystem system, final List<ClusteredAbstractState> abstractCounterEx,
-			final ConcreteTrace concreteTrace) {
+	public ClusteredAbstractSystem refine(final ClusteredAbstractSystem system,
+			final List<ClusteredAbstractState> abstractCounterEx, final ConcreteTrace concreteTrace) {
 
 		final int traceLength = concreteTrace.size();
 		assert (1 <= traceLength && traceLength < abstractCounterEx.size());
@@ -89,9 +91,14 @@ public class ClusteredRefiner extends AbstractCEGARStep implements Refiner<Clust
 				if (stopHandler.isStopped())
 					return null;
 				final List<Expr<? extends BoolType>> comp = new ArrayList<>();
-				comp.add(concreteStates.get(i).toExpr()); // The state is compatible with itself
-				for (int j = i + 1; j < concreteStates.size(); ++j) // Check other states
-					if (checkPair(as, concreteStates.get(i), concreteStates.get(j), deadEndStates, otherVars, solver, sts))
+				comp.add(concreteStates.get(i).toExpr()); // The state is
+															// compatible with
+															// itself
+				for (int j = i + 1; j < concreteStates.size(); ++j) // Check
+																	// other
+																	// states
+					if (checkPair(as, concreteStates.get(i), concreteStates.get(j), deadEndStates, otherVars, solver,
+							sts))
 
 						comp.add(concreteStates.get(j).toExpr());
 				compatibility.add(comp);
@@ -115,12 +122,12 @@ public class ClusteredRefiner extends AbstractCEGARStep implements Refiner<Clust
 					return null;
 				if (!includedStates.contains(concreteStates.get(i))) {
 					if (compatibility.get(i).size() == 1) // If it is a single
-																// state ->
+															// state ->
 															// expression of the
 															// state
 						eqclasses.add(compatibility.get(i).get(0));
 					else // If there are more states -> or expression of the
-								// expressions of the states
+							// expressions of the states
 						eqclasses.add(Exprs.Or(compatibility.get(i)));
 
 					for (final Expr<? extends BoolType> cs : compatibility.get(i))
@@ -256,7 +263,8 @@ public class ClusteredRefiner extends AbstractCEGARStep implements Refiner<Clust
 		return system;
 	}
 
-	private List<Valuation> getDeadEndStates(final List<ClusteredAbstractState> abstractCounterEx, final int traceLength, final STS sts) {
+	private List<Valuation> getDeadEndStates(final List<ClusteredAbstractState> abstractCounterEx,
+			final int traceLength, final STS sts) {
 		final Solver solver = solvers.getSolver();
 
 		final List<Valuation> deadEndStates = new ArrayList<>();
@@ -290,7 +298,8 @@ public class ClusteredRefiner extends AbstractCEGARStep implements Refiner<Clust
 	}
 
 	@SuppressWarnings("unused")
-	private List<Valuation> getBadStates(final List<ClusteredAbstractState> abstractCounterEx, final int traceLength, final STS sts) {
+	private List<Valuation> getBadStates(final List<ClusteredAbstractState> abstractCounterEx, final int traceLength,
+			final STS sts) {
 		final Solver solver = solvers.getSolver();
 
 		final List<Valuation> badStates = new ArrayList<>();
@@ -324,7 +333,8 @@ public class ClusteredRefiner extends AbstractCEGARStep implements Refiner<Clust
 		return badStates;
 	}
 
-	private List<Valuation> getConcreteStatesOfAbstractState(final ComponentAbstractState abstractState, final STS sts) {
+	private List<Valuation> getConcreteStatesOfAbstractState(final ComponentAbstractState abstractState,
+			final STS sts) {
 		final Solver solver = solvers.getSolver();
 
 		final List<Valuation> concreteStates = new ArrayList<>();
@@ -350,8 +360,9 @@ public class ClusteredRefiner extends AbstractCEGARStep implements Refiner<Clust
 		return concreteStates;
 	}
 
-	private boolean checkPair(final ComponentAbstractState as, final Valuation cs0, final Valuation cs1, final List<Valuation> deadEndStates,
-			final Set<VarDecl<? extends Type>> otherVars, final Solver solver, final STS sts) {
+	private boolean checkPair(final ComponentAbstractState as, final Valuation cs0, final Valuation cs1,
+			final List<Valuation> deadEndStates, final Set<VarDecl<? extends Type>> otherVars, final Solver solver,
+			final STS sts) {
 
 		// Project the dead-end states and check if they are equal
 		final List<Valuation> proj0 = projectDeadEndStates(as, cs0, deadEndStates, otherVars, solver, sts);
@@ -374,8 +385,9 @@ public class ClusteredRefiner extends AbstractCEGARStep implements Refiner<Clust
 		return true;
 	}
 
-	private List<Valuation> projectDeadEndStates(final ComponentAbstractState as, final Valuation cs, final List<Valuation> deadEndStates,
-			final Set<VarDecl<? extends Type>> otherVars, final Solver solver, final STS sts) {
+	private List<Valuation> projectDeadEndStates(final ComponentAbstractState as, final Valuation cs,
+			final List<Valuation> deadEndStates, final Set<VarDecl<? extends Type>> otherVars, final Solver solver,
+			final STS sts) {
 
 		// Example: concrete state: (x=1,y=2)
 		// The dead-end states are: (x=1,y=2,z=3), (x=1,y=3,z=2), (x=1,y=2,z=5)

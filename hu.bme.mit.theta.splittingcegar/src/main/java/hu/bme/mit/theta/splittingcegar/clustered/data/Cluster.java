@@ -5,10 +5,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.formalism.common.decl.VarDecl;
 
 /**
  * Represents a cluster of variables and formulas
@@ -21,7 +21,8 @@ public class Cluster {
 	public Cluster() {
 		vars = new HashSet<>();
 		formulas = new ArrayList<>();
-		clusterId = -1; // ID must be set by the one who creates the cluster using setId()
+		clusterId = -1; // ID must be set by the one who creates the cluster
+						// using setId()
 	}
 
 	public Set<VarDecl<? extends Type>> getVars() {

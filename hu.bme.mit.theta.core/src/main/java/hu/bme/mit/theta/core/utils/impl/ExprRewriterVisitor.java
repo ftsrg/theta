@@ -13,6 +13,7 @@ import hu.bme.mit.theta.core.expr.FuncLitExpr;
 import hu.bme.mit.theta.core.expr.IteExpr;
 import hu.bme.mit.theta.core.expr.MultiaryExpr;
 import hu.bme.mit.theta.core.expr.NullaryExpr;
+import hu.bme.mit.theta.core.expr.ProcCallExpr;
 import hu.bme.mit.theta.core.expr.UnaryExpr;
 import hu.bme.mit.theta.core.type.ArrayType;
 import hu.bme.mit.theta.core.type.BoolType;
@@ -23,13 +24,15 @@ public class ExprRewriterVisitor<P> extends ArityBasedExprVisitor<P, Expr<?>> {
 	@Override
 	public <ParamType extends Type, ResultType extends Type> Expr<ResultType> visit(
 			final FuncAppExpr<ParamType, ResultType> expr, final P param) {
-		throw new UnsupportedOperationException();
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
 
 	@Override
 	public <ParamType extends Type, ResultType extends Type> Expr<?> visit(
 			final FuncLitExpr<ParamType, ResultType> expr, final P param) {
-		throw new UnsupportedOperationException();
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
 
 	@Override
@@ -64,6 +67,12 @@ public class ExprRewriterVisitor<P> extends ArityBasedExprVisitor<P, Expr<?>> {
 		final Expr<? extends ElemType> newElem = (Expr<? extends ElemType>) elem.accept(this, param);
 
 		return expr.with(newArray, newIndex, newElem);
+	}
+
+	@Override
+	public <ReturnType extends Type> Expr<?> visit(final ProcCallExpr<ReturnType> expr, final P param) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
 
 	@Override

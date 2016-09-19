@@ -1,5 +1,6 @@
 package hu.bme.mit.theta.analysis.sts.expl;
 
+import static hu.bme.mit.theta.core.decl.impl.Decls.Var;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.Add;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.And;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.Eq;
@@ -8,9 +9,8 @@ import static hu.bme.mit.theta.core.expr.impl.Exprs.Imply;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.Int;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.Lt;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.Not;
+import static hu.bme.mit.theta.core.expr.impl.Exprs.Prime;
 import static hu.bme.mit.theta.core.type.impl.Types.Int;
-import static hu.bme.mit.theta.formalism.common.decl.impl.Decls2.Var;
-import static hu.bme.mit.theta.formalism.common.expr.impl.Exprs2.Prime;
 
 import java.util.Collections;
 import java.util.function.Predicate;
@@ -31,10 +31,9 @@ import hu.bme.mit.theta.analysis.impl.ExprStatePredicate;
 import hu.bme.mit.theta.analysis.refutation.ItpRefutation;
 import hu.bme.mit.theta.analysis.sts.StsAction;
 import hu.bme.mit.theta.analysis.sts.StsExprSeqConcretizer;
-import hu.bme.mit.theta.analysis.sts.expl.StsExplAnalysis;
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.IntType;
-import hu.bme.mit.theta.formalism.common.decl.VarDecl;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.formalism.sts.impl.StsImpl;
 import hu.bme.mit.theta.formalism.sts.impl.StsImpl.Builder;

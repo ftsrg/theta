@@ -34,8 +34,8 @@ class Z3Model implements Model {
 	final Collection<ConstDecl<?>> constDecls;
 	final Map<ConstDecl<?>, LitExpr<?>> constToExpr;
 
-	public Z3Model(final Z3SymbolTable symbolTable, final Z3TransformationManager transformationManager, final Z3TermTransformer termTransformer,
-			final com.microsoft.z3.Model z3Model) {
+	public Z3Model(final Z3SymbolTable symbolTable, final Z3TransformationManager transformationManager,
+			final Z3TermTransformer termTransformer, final com.microsoft.z3.Model z3Model) {
 		this.symbolTable = symbolTable;
 		this.transformationManager = transformationManager;
 		this.termTransformer = termTransformer;
@@ -51,11 +51,10 @@ class Z3Model implements Model {
 	}
 
 	@Override
-	public <DeclType extends Type, DeclKind extends Decl<DeclType, DeclKind>> Optional<LitExpr<DeclType>> eval(final Decl<DeclType, DeclKind> decl) {
+	public <DeclType extends Type> Optional<LitExpr<DeclType>> eval(final Decl<DeclType> decl) {
 		checkNotNull(decl);
 		checkArgument(decl instanceof ConstDecl<?>);
 
-		@SuppressWarnings("unchecked")
 		final ConstDecl<DeclType> constDecl = (ConstDecl<DeclType>) decl;
 
 		LitExpr<?> val = constToExpr.get(constDecl);

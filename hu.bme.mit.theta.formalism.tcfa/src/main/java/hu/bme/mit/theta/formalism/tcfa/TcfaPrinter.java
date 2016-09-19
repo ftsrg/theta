@@ -4,8 +4,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import hu.bme.mit.theta.core.expr.Expr;
+import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.BoolType;
-import hu.bme.mit.theta.formalism.common.stmt.Stmt;
 
 public class TcfaPrinter {
 

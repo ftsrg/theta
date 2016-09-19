@@ -10,7 +10,7 @@ import java.util.Collection;
 import hu.bme.mit.theta.analysis.Domain;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.BoolType;
-import hu.bme.mit.theta.formalism.utils.PathUtils;
+import hu.bme.mit.theta.core.utils.impl.PathUtils;
 import hu.bme.mit.theta.solver.Solver;
 
 public class PredDomain implements Domain<PredState> {

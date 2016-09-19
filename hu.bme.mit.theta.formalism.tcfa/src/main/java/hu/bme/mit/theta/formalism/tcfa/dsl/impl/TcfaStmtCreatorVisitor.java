@@ -2,19 +2,19 @@ package hu.bme.mit.theta.formalism.tcfa.dsl.impl;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.formalism.common.stmt.impl.Stmts.Assign;
-import static hu.bme.mit.theta.formalism.common.stmt.impl.Stmts.Assume;
+import static hu.bme.mit.theta.core.stmt.impl.Stmts.Assign;
+import static hu.bme.mit.theta.core.stmt.impl.Stmts.Assume;
 
 import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.core.decl.Decl;
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.dsl.DeclSymbol;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.model.Assignment;
+import hu.bme.mit.theta.core.stmt.AssumeStmt;
+import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.formalism.common.decl.VarDecl;
-import hu.bme.mit.theta.formalism.common.stmt.AssumeStmt;
-import hu.bme.mit.theta.formalism.common.stmt.Stmt;
 import hu.bme.mit.theta.formalism.tcfa.dsl.gen.TcfaDslBaseVisitor;
 import hu.bme.mit.theta.formalism.tcfa.dsl.gen.TcfaDslParser.AssignStmtContext;
 import hu.bme.mit.theta.formalism.tcfa.dsl.gen.TcfaDslParser.AssumeStmtContext;
@@ -38,7 +38,7 @@ public class TcfaStmtCreatorVisitor extends TcfaDslBaseVisitor<Stmt> {
 
 	private VarDecl<Type> resolveVar(final Scope scope, final String name) {
 		final DeclSymbol declSymbol = TcfaDslHelper.resolveDecl(scope, name);
-		final Decl<?, ?> decl = declSymbol.getDecl();
+		final Decl<?> decl = declSymbol.getDecl();
 		checkArgument(decl instanceof VarDecl);
 		@SuppressWarnings("unchecked")
 		final VarDecl<Type> varDecl = (VarDecl<Type>) decl;

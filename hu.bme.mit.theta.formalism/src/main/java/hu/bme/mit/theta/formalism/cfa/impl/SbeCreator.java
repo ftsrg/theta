@@ -1,32 +1,32 @@
 package hu.bme.mit.theta.formalism.cfa.impl;
 
 import static hu.bme.mit.theta.core.expr.impl.Exprs.Not;
-import static hu.bme.mit.theta.formalism.common.stmt.impl.Stmts.Assign;
-import static hu.bme.mit.theta.formalism.common.stmt.impl.Stmts.Assume;
-import static hu.bme.mit.theta.formalism.common.stmt.impl.Stmts.Havoc;
+import static hu.bme.mit.theta.core.stmt.impl.Stmts.Assign;
+import static hu.bme.mit.theta.core.stmt.impl.Stmts.Assume;
+import static hu.bme.mit.theta.core.stmt.impl.Stmts.Havoc;
 
 import java.util.List;
 
 import hu.bme.mit.theta.common.Product2;
 import hu.bme.mit.theta.common.Tuple;
+import hu.bme.mit.theta.core.stmt.AssertStmt;
+import hu.bme.mit.theta.core.stmt.AssignStmt;
+import hu.bme.mit.theta.core.stmt.AssumeStmt;
+import hu.bme.mit.theta.core.stmt.BlockStmt;
+import hu.bme.mit.theta.core.stmt.DeclStmt;
+import hu.bme.mit.theta.core.stmt.DoStmt;
+import hu.bme.mit.theta.core.stmt.HavocStmt;
+import hu.bme.mit.theta.core.stmt.IfElseStmt;
+import hu.bme.mit.theta.core.stmt.IfStmt;
+import hu.bme.mit.theta.core.stmt.ReturnStmt;
+import hu.bme.mit.theta.core.stmt.SkipStmt;
+import hu.bme.mit.theta.core.stmt.Stmt;
+import hu.bme.mit.theta.core.stmt.WhileStmt;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.utils.StmtVisitor;
 import hu.bme.mit.theta.formalism.cfa.CFA;
 import hu.bme.mit.theta.formalism.cfa.CfaEdge;
 import hu.bme.mit.theta.formalism.cfa.CfaLoc;
-import hu.bme.mit.theta.formalism.common.stmt.AssertStmt;
-import hu.bme.mit.theta.formalism.common.stmt.AssignStmt;
-import hu.bme.mit.theta.formalism.common.stmt.AssumeStmt;
-import hu.bme.mit.theta.formalism.common.stmt.BlockStmt;
-import hu.bme.mit.theta.formalism.common.stmt.DeclStmt;
-import hu.bme.mit.theta.formalism.common.stmt.DoStmt;
-import hu.bme.mit.theta.formalism.common.stmt.HavocStmt;
-import hu.bme.mit.theta.formalism.common.stmt.IfElseStmt;
-import hu.bme.mit.theta.formalism.common.stmt.IfStmt;
-import hu.bme.mit.theta.formalism.common.stmt.ReturnStmt;
-import hu.bme.mit.theta.formalism.common.stmt.SkipStmt;
-import hu.bme.mit.theta.formalism.common.stmt.Stmt;
-import hu.bme.mit.theta.formalism.common.stmt.WhileStmt;
-import hu.bme.mit.theta.formalism.utils.StmtVisitor;
 
 public class SbeCreator {
 
@@ -107,7 +107,8 @@ public class SbeCreator {
 		}
 
 		@Override
-		public <DeclType extends Type> Void visit(final HavocStmt<DeclType> stmt, final Product2<CfaLoc, CfaLoc> param) {
+		public <DeclType extends Type> Void visit(final HavocStmt<DeclType> stmt,
+				final Product2<CfaLoc, CfaLoc> param) {
 			return visitSimple(stmt, param);
 		}
 

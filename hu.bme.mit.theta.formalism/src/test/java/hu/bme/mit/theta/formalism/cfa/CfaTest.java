@@ -6,7 +6,6 @@ import hu.bme.mit.theta.formalism.cfa.CFA;
 import hu.bme.mit.theta.formalism.cfa.CfaLoc;
 import hu.bme.mit.theta.formalism.cfa.impl.ImmutableCfa;
 import hu.bme.mit.theta.formalism.cfa.impl.MutableCfa;
-import hu.bme.mit.theta.formalism.utils.impl.CfaPrinter;
 
 public class CfaTest {
 	

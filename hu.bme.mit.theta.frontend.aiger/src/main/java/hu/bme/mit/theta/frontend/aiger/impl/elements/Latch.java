@@ -1,16 +1,16 @@
 package hu.bme.mit.theta.frontend.aiger.impl.elements;
 
+import static hu.bme.mit.theta.core.decl.impl.Decls.Var;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.Iff;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.Not;
+import static hu.bme.mit.theta.core.expr.impl.Exprs.Prime;
 import static hu.bme.mit.theta.core.type.impl.Types.Bool;
-import static hu.bme.mit.theta.formalism.common.decl.impl.Decls2.Var;
-import static hu.bme.mit.theta.formalism.common.expr.impl.Exprs2.Prime;
 
 import java.util.List;
 
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.BoolType;
-import hu.bme.mit.theta.formalism.common.decl.VarDecl;
 
 public final class Latch extends HWElement {
 	private final int nextState;

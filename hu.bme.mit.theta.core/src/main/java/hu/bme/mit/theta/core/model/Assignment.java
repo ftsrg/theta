@@ -10,10 +10,9 @@ import hu.bme.mit.theta.core.type.Type;
 
 public interface Assignment {
 
-	Collection<? extends Decl<?, ?>> getDecls();
+	Collection<? extends Decl<?>> getDecls();
 
-	<DeclType extends Type, DeclKind extends Decl<DeclType, DeclKind>> Optional<? extends Expr<DeclType>> eval(
-			final Decl<DeclType, DeclKind> decl);
+	<DeclType extends Type> Optional<? extends Expr<DeclType>> eval(final Decl<DeclType> decl);
 
 	public Expr<? extends BoolType> toExpr();
 }

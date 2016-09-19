@@ -1,8 +1,8 @@
 package hu.bme.mit.theta.analysis.expl;
 
 import hu.bme.mit.theta.analysis.Domain;
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.formalism.common.decl.VarDecl;
 
 public class ExplDomain implements Domain<ExplState> {
 

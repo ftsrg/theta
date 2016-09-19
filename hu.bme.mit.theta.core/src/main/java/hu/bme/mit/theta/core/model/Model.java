@@ -15,7 +15,6 @@ public interface Model extends Assignment {
 	Collection<? extends ConstDecl<?>> getDecls();
 
 	@Override
-	<DeclType extends Type, DeclKind extends Decl<DeclType, DeclKind>> Optional<LitExpr<DeclType>> eval(
-			final Decl<DeclType, DeclKind> decl);
+	<DeclType extends Type> Optional<LitExpr<DeclType>> eval(final Decl<DeclType> decl);
 
 }
