@@ -2,11 +2,11 @@ package hu.bme.mit.theta.formalism.sts.utils.impl;
 
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.BoolType;
+import hu.bme.mit.theta.core.utils.impl.CnfTransformation;
+import hu.bme.mit.theta.core.utils.impl.ExprUtils;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.formalism.sts.impl.StsImpl;
 import hu.bme.mit.theta.formalism.sts.utils.STSTransformation;
-import hu.bme.mit.theta.formalism.utils.FormalismUtils;
-import hu.bme.mit.theta.formalism.utils.impl.CnfTransformation;
 
 public final class StsCnfTransformation implements STSTransformation {
 
@@ -18,20 +18,22 @@ public final class StsCnfTransformation implements STSTransformation {
 	public STS transform(final STS system) {
 
 		final StsImpl.Builder builder = new StsImpl.Builder();
-		final CnfTransformation cnfTransf = FormalismUtils.createCNFTransformation();
 
+		// A new transformation is required for each formula group (init, trans,
+		// inv) because they may be added to the solver separately
+		CnfTransformation cnfTransf = ExprUtils.createCNFTransformation();
 		for (final Expr<? extends BoolType> expr : system.getInit())
 			builder.addInit(transformIfNonCNF(expr, cnfTransf));
-		cnfTransf.clearRepresentatives();
 
+		cnfTransf = ExprUtils.createCNFTransformation();
 		for (final Expr<? extends BoolType> expr : system.getInvar())
 			builder.addInvar(transformIfNonCNF(expr, cnfTransf));
-		cnfTransf.clearRepresentatives();
 
+		cnfTransf = ExprUtils.createCNFTransformation();
 		for (final Expr<? extends BoolType> expr : system.getTrans())
 			builder.addTrans(transformIfNonCNF(expr, cnfTransf));
-		cnfTransf.clearRepresentatives();
 
+		// Should not convert to the property to CNF, because it may be negated
 		builder.setProp(system.getProp());
 
 		return builder.build();
@@ -39,7 +41,7 @@ public final class StsCnfTransformation implements STSTransformation {
 
 	private Expr<? extends BoolType> transformIfNonCNF(final Expr<? extends BoolType> expr,
 			final CnfTransformation cnfTransf) {
-		if (FormalismUtils.isExprCNF(expr))
+		if (ExprUtils.isExprCNF(expr))
 			return expr;
 		else
 			return cnfTransf.transform(expr);

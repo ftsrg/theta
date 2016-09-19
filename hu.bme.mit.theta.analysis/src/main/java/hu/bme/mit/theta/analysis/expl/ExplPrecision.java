@@ -1,7 +1,7 @@
 package hu.bme.mit.theta.analysis.expl;
 
 import hu.bme.mit.theta.analysis.Precision;
-import hu.bme.mit.theta.formalism.common.Valuation;
+import hu.bme.mit.theta.core.model.impl.Valuation;
 
 public interface ExplPrecision extends Precision {
 

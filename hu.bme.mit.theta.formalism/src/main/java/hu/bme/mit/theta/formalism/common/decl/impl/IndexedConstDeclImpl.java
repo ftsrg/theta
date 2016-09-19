@@ -3,11 +3,11 @@ package hu.bme.mit.theta.formalism.common.decl.impl;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import hu.bme.mit.theta.core.decl.IndexedConstDecl;
+import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.expr.IndexedConstRefExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.utils.DeclVisitor;
-import hu.bme.mit.theta.formalism.common.decl.IndexedConstDecl;
-import hu.bme.mit.theta.formalism.common.decl.VarDecl;
-import hu.bme.mit.theta.formalism.common.expr.IndexedConstRefExpr;
 
 final class IndexedConstDeclImpl<DeclType extends Type> implements IndexedConstDecl<DeclType> {
 

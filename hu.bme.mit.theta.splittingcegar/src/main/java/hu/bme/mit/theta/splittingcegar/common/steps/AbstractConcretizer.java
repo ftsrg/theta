@@ -4,11 +4,11 @@ import java.util.Collection;
 import java.util.List;
 
 import hu.bme.mit.theta.common.logging.Logger;
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.model.Model;
+import hu.bme.mit.theta.core.model.impl.Valuation;
 import hu.bme.mit.theta.core.type.BoolType;
-import hu.bme.mit.theta.formalism.common.Valuation;
-import hu.bme.mit.theta.formalism.common.decl.VarDecl;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverStatus;
@@ -25,7 +25,8 @@ import hu.bme.mit.theta.splittingcegar.common.utils.visualization.Visualizer;
  */
 public abstract class AbstractConcretizer extends AbstractCEGARStep {
 
-	public AbstractConcretizer(final SolverWrapper solvers, final StopHandler stopHandler, final Logger logger, final Visualizer visualizer) {
+	public AbstractConcretizer(final SolverWrapper solvers, final StopHandler stopHandler, final Logger logger,
+			final Visualizer visualizer) {
 		super(solvers, stopHandler, logger, visualizer);
 	}
 
@@ -34,8 +35,8 @@ public abstract class AbstractConcretizer extends AbstractCEGARStep {
 	 * expressions. Returns the longest concrete trace that corresponds to a
 	 * prefix of the abstract counterexample.
 	 */
-	protected ConcreteTrace concretize(final AbstractSystem system, final List<? extends AbstractState> counterEx, final Expr<? extends BoolType> lastState,
-			final Collection<VarDecl<?>> requiredVars) {
+	protected ConcreteTrace concretize(final AbstractSystem system, final List<? extends AbstractState> counterEx,
+			final Expr<? extends BoolType> lastState, final Collection<VarDecl<?>> requiredVars) {
 		// Do an iterative bounded model checking to find a concrete
 		// counterexample.
 		// Iterative method is required because if no counterexample exists, we

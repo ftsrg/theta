@@ -9,11 +9,11 @@ import java.util.Set;
 import java.util.Stack;
 
 import hu.bme.mit.theta.common.logging.Logger;
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.impl.Exprs;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.formalism.common.decl.VarDecl;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.splittingcegar.clustered.data.Cluster;
@@ -32,7 +32,8 @@ import hu.bme.mit.theta.splittingcegar.common.utils.visualization.Visualizer;
 
 public class ClusteredInitializer extends AbstractCEGARStep implements Initializer<ClusteredAbstractSystem> {
 
-	public ClusteredInitializer(final SolverWrapper solvers, final StopHandler stopHandler, final Logger logger, final Visualizer visualizer) {
+	public ClusteredInitializer(final SolverWrapper solvers, final StopHandler stopHandler, final Logger logger,
+			final Visualizer visualizer) {
 		super(solvers, stopHandler, logger, visualizer);
 	}
 
@@ -92,7 +93,8 @@ public class ClusteredInitializer extends AbstractCEGARStep implements Initializ
 		return system;
 	}
 
-	private KripkeStructure<ComponentAbstractState> createAbstractKripkeStructure(final Cluster cluster, final STS sts) {
+	private KripkeStructure<ComponentAbstractState> createAbstractKripkeStructure(final Cluster cluster,
+			final STS sts) {
 		final KripkeStructure<ComponentAbstractState> ks = new KripkeStructure<>();
 		// If there is no formula for the cluster, add a default one
 		if (cluster.getFormulas().size() == 0)
@@ -146,7 +148,7 @@ public class ClusteredInitializer extends AbstractCEGARStep implements Initializ
 		// Calculate initial states and transition relation
 		logger.writeln(", abstract states [" + ks.getStates().size() + "]", 2);
 		for (final ComponentAbstractState s0 : ks.getStates()) { // Loop through
-																		// the
+																	// the
 																	// states
 			s0.setInitial(isStateInit(s0, sts)); // Check whether it is
 													// initial
@@ -155,7 +157,7 @@ public class ClusteredInitializer extends AbstractCEGARStep implements Initializ
 				ks.addInitialState(s0);
 
 			for (final ComponentAbstractState s1 : ks.getStates()) // Calculate
-																		// successors
+																	// successors
 				if (isTransFeasible(s0, s1, sts))
 
 					s0.getSuccessors().add(s1);

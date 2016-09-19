@@ -11,13 +11,13 @@ public class DeclSymbol implements Symbol {
 
 	private volatile int hashCode = 0;
 
-	private final Decl<?, ?> decl;
+	private final Decl<?> decl;
 
-	public DeclSymbol(final Decl<?, ?> decl) {
+	public DeclSymbol(final Decl<?> decl) {
 		this.decl = checkNotNull(decl);
 	}
 
-	public Decl<?, ?> getDecl() {
+	public Decl<?> getDecl() {
 		return decl;
 	}
 

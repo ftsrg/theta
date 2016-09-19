@@ -7,13 +7,13 @@ import static hu.bme.mit.theta.core.type.impl.Types.Rat;
 import java.util.HashMap;
 import java.util.Map;
 
+import hu.bme.mit.theta.core.decl.IndexedConstDecl;
 import hu.bme.mit.theta.core.type.RatType;
 import hu.bme.mit.theta.core.utils.DeclVisitor;
 import hu.bme.mit.theta.formalism.common.decl.ClockDecl;
-import hu.bme.mit.theta.formalism.common.decl.IndexedConstDecl;
 import hu.bme.mit.theta.formalism.common.expr.ClockRefExpr;
 
-class ClockDeclImpl implements ClockDecl {
+final class ClockDeclImpl implements ClockDecl {
 
 	private static final int HASH_SEED = 8053;
 	private static final String DECL_LABEL = "Clock";

@@ -5,15 +5,15 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.LitExpr;
 import hu.bme.mit.theta.core.model.Model;
+import hu.bme.mit.theta.core.model.impl.Valuation;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.formalism.common.Valuation;
-import hu.bme.mit.theta.formalism.common.decl.VarDecl;
+import hu.bme.mit.theta.core.utils.impl.PathUtils;
 import hu.bme.mit.theta.formalism.sts.STS;
-import hu.bme.mit.theta.formalism.utils.PathUtils;
 
 class StsUnrollerImpl {
 

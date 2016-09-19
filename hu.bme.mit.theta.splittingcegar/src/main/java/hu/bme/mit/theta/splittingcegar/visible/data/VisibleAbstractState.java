@@ -5,11 +5,11 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.util.ArrayList;
 import java.util.List;
 
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.Expr;
+import hu.bme.mit.theta.core.model.impl.Valuation;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.formalism.common.Valuation;
-import hu.bme.mit.theta.formalism.common.decl.VarDecl;
 import hu.bme.mit.theta.splittingcegar.common.data.AbstractState;
 
 /**

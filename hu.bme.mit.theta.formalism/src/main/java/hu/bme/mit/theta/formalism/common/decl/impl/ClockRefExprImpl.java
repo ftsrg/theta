@@ -2,11 +2,11 @@ package hu.bme.mit.theta.formalism.common.decl.impl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import hu.bme.mit.theta.core.expr.VarRefExpr;
 import hu.bme.mit.theta.core.type.RatType;
 import hu.bme.mit.theta.core.utils.ExprVisitor;
 import hu.bme.mit.theta.formalism.common.decl.ClockDecl;
 import hu.bme.mit.theta.formalism.common.expr.ClockRefExpr;
-import hu.bme.mit.theta.formalism.common.expr.visitor.ClockRefExprVisitor;
 
 final class ClockRefExprImpl implements ClockRefExpr {
 
@@ -32,12 +32,7 @@ final class ClockRefExprImpl implements ClockRefExpr {
 
 	@Override
 	public <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
-		if (visitor instanceof ClockRefExprVisitor<?, ?>) {
-			final ClockRefExprVisitor<? super P, ? extends R> sVisitor = (ClockRefExprVisitor<? super P, ? extends R>) visitor;
-			return sVisitor.visit(this, param);
-		} else {
-			throw new UnsupportedOperationException();
-		}
+		return visitor.visit((VarRefExpr<RatType>) this, param);
 	}
 
 	@Override

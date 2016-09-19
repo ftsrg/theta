@@ -9,15 +9,15 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.AndExpr;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.model.Model;
+import hu.bme.mit.theta.core.model.impl.Valuation;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.formalism.common.Valuation;
-import hu.bme.mit.theta.formalism.common.decl.VarDecl;
+import hu.bme.mit.theta.core.utils.impl.ExprUtils;
 import hu.bme.mit.theta.formalism.sts.STS;
-import hu.bme.mit.theta.formalism.utils.FormalismUtils;
 
 /**
  * Symbolic Transition System (STS) implementation.
@@ -33,7 +33,8 @@ public final class StsImpl implements STS {
 
 	// Protected constructor --> use the builder
 	protected StsImpl(final Collection<VarDecl<? extends Type>> vars, final Collection<Expr<? extends BoolType>> init,
-			final Collection<Expr<? extends BoolType>> invar, final Collection<Expr<? extends BoolType>> trans, final Expr<? extends BoolType> prop) {
+			final Collection<Expr<? extends BoolType>> invar, final Collection<Expr<? extends BoolType>> trans,
+			final Expr<? extends BoolType> prop) {
 		checkNotNull(vars);
 		checkNotNull(init);
 		checkNotNull(invar);
@@ -83,7 +84,8 @@ public final class StsImpl implements STS {
 		return sb.toString();
 	}
 
-	private void appendCollection(final StringBuilder sb, final String prefix, final Collection<?> collection, final String postfix) {
+	private void appendCollection(final StringBuilder sb, final String prefix, final Collection<?> collection,
+			final String postfix) {
 		sb.append(prefix);
 		sb.append(String.join(", ", collection.stream().map(i -> i.toString()).collect(Collectors.toList())));
 		sb.append(postfix);
@@ -192,12 +194,12 @@ public final class StsImpl implements STS {
 			checkNotNull(prop);
 			// Collect variables from the expressions
 			for (final Expr<? extends BoolType> expr : init)
-				FormalismUtils.collectVars(expr, vars);
+				ExprUtils.collectVars(expr, vars);
 			for (final Expr<? extends BoolType> expr : invar)
-				FormalismUtils.collectVars(expr, vars);
+				ExprUtils.collectVars(expr, vars);
 			for (final Expr<? extends BoolType> expr : trans)
-				FormalismUtils.collectVars(expr, vars);
-			FormalismUtils.collectVars(prop, vars);
+				ExprUtils.collectVars(expr, vars);
+			ExprUtils.collectVars(prop, vars);
 
 			return new StsImpl(vars, init, invar, trans, prop);
 		}
@@ -209,7 +211,8 @@ public final class StsImpl implements STS {
 	}
 
 	@Override
-	public Collection<? extends Expr<? extends BoolType>> unroll(final Collection<? extends Expr<? extends BoolType>> exprs, final int i) {
+	public Collection<? extends Expr<? extends BoolType>> unroll(
+			final Collection<? extends Expr<? extends BoolType>> exprs, final int i) {
 		return unroller.unroll(exprs, i);
 	}
 
@@ -239,7 +242,8 @@ public final class StsImpl implements STS {
 	}
 
 	@Override
-	public Valuation getConcreteState(final Model model, final int i, final Collection<VarDecl<? extends Type>> variables) {
+	public Valuation getConcreteState(final Model model, final int i,
+			final Collection<VarDecl<? extends Type>> variables) {
 		return unroller.getConcreteState(model, i, variables);
 	}
 
@@ -249,7 +253,8 @@ public final class StsImpl implements STS {
 	}
 
 	@Override
-	public List<Valuation> extractTrace(final Model model, final int length, final Collection<VarDecl<? extends Type>> variables) {
+	public List<Valuation> extractTrace(final Model model, final int length,
+			final Collection<VarDecl<? extends Type>> variables) {
 		return unroller.extractTrace(model, length, variables);
 	}
 

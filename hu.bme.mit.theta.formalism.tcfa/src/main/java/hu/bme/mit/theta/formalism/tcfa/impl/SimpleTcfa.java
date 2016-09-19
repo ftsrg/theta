@@ -8,15 +8,16 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.Expr;
+import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.BoolType;
+import hu.bme.mit.theta.core.utils.impl.ExprUtils;
+import hu.bme.mit.theta.core.utils.impl.StmtUtils;
 import hu.bme.mit.theta.formalism.common.decl.ClockDecl;
-import hu.bme.mit.theta.formalism.common.decl.VarDecl;
-import hu.bme.mit.theta.formalism.common.stmt.Stmt;
 import hu.bme.mit.theta.formalism.tcfa.TCFA;
 import hu.bme.mit.theta.formalism.tcfa.TcfaEdge;
 import hu.bme.mit.theta.formalism.tcfa.TcfaLoc;
-import hu.bme.mit.theta.formalism.utils.FormalismUtils;
 
 public final class SimpleTcfa implements TCFA {
 
@@ -107,12 +108,12 @@ public final class SimpleTcfa implements TCFA {
 	}
 
 	private void addVars(final Stmt stmt) {
-		final Collection<VarDecl<?>> varDecls = FormalismUtils.getVars(stmt);
+		final Collection<VarDecl<?>> varDecls = StmtUtils.getVars(stmt);
 		varDecls.forEach(this::addVar);
 	}
 
 	private void addVars(final Expr<?> expr) {
-		final Collection<VarDecl<?>> varDecls = FormalismUtils.getVars(expr);
+		final Collection<VarDecl<?>> varDecls = ExprUtils.getVars(expr);
 		varDecls.forEach(this::addVar);
 	}
 

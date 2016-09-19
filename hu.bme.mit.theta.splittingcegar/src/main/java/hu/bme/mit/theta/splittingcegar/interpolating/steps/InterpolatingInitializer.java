@@ -10,12 +10,12 @@ import java.util.Set;
 import java.util.Stack;
 
 import hu.bme.mit.theta.common.logging.Logger;
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.impl.Exprs;
+import hu.bme.mit.theta.core.model.impl.Valuation;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.formalism.common.Valuation;
-import hu.bme.mit.theta.formalism.common.decl.VarDecl;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.formalism.sts.utils.impl.StsCnfTransformation;
 import hu.bme.mit.theta.formalism.sts.utils.impl.StsIteTransformation;

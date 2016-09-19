@@ -7,8 +7,10 @@ import hu.bme.mit.theta.core.type.ArrayType;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.FuncType;
 import hu.bme.mit.theta.core.type.IntType;
+import hu.bme.mit.theta.core.type.ProcType;
 import hu.bme.mit.theta.core.type.RatType;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.UnitType;
 import hu.bme.mit.theta.core.utils.TypeVisitor;
 
 class Z3TypeTransformer {
@@ -57,6 +59,11 @@ class Z3TypeTransformer {
 		}
 
 		@Override
+		public Sort visit(final UnitType type, final Void param) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
 		public <ParamType extends Type, ResultType extends Type> com.microsoft.z3.Sort visit(
 				final FuncType<ParamType, ResultType> type, final Void param) {
 			// TODO Auto-generated method stub
@@ -69,6 +76,11 @@ class Z3TypeTransformer {
 			final Sort indexSort = type.getIndexType().accept(this, param);
 			final Sort elemSort = type.getElemType().accept(this, param);
 			return context.mkArraySort(indexSort, elemSort);
+		}
+
+		@Override
+		public <ReturnType extends Type> Sort visit(final ProcType<ReturnType> type, final Void param) {
+			throw new UnsupportedOperationException();
 		}
 
 	}

@@ -2,8 +2,8 @@ package hu.bme.mit.theta.splittingcegar.common.data;
 
 import java.util.Set;
 
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.formalism.common.decl.VarDecl;
 import hu.bme.mit.theta.formalism.sts.STS;
 
 /**

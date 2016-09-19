@@ -6,11 +6,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.formalism.common.decl.VarDecl;
-import hu.bme.mit.theta.formalism.utils.FormalismUtils;
+import hu.bme.mit.theta.core.utils.impl.ExprUtils;
 import hu.bme.mit.theta.splittingcegar.clustered.data.Cluster;
 
 /**
@@ -29,7 +29,8 @@ public class ClusterCreator {
 	 *            Atomic formulas
 	 * @return Variable clusters
 	 */
-	public List<Cluster> getClusters(final Set<VarDecl<? extends Type>> variables, final List<Expr<? extends BoolType>> formulas) {
+	public List<Cluster> getClusters(final Set<VarDecl<? extends Type>> variables,
+			final List<Expr<? extends BoolType>> formulas) {
 		// Create a separate cluster for each variable
 		final Map<VarDecl<? extends Type>, ClusterNode> clusters = new HashMap<>();
 		for (final VarDecl<? extends Type> entry : variables)
@@ -38,7 +39,7 @@ public class ClusterCreator {
 		// Loop through formulas
 		for (final Expr<? extends BoolType> ex : formulas) {
 			// Get variables and join clusters
-			final List<VarDecl<? extends Type>> vars = new ArrayList<>(FormalismUtils.getVars(ex));
+			final List<VarDecl<? extends Type>> vars = new ArrayList<>(ExprUtils.getVars(ex));
 			if (vars.size() == 2)
 				joinClusters(clusters.get(vars.get(0)), clusters.get(vars.get(1)));
 			else if (vars.size() > 2)
@@ -49,7 +50,7 @@ public class ClusterCreator {
 		}
 
 		// Return only the top-level clusters
-		final List<Cluster> ret = new ArrayList<Cluster>();
+		final List<Cluster> ret = new ArrayList<>();
 		int nextId = 0;
 		for (final VarDecl<? extends Type> var : variables) {
 			final ClusterNode cn = clusters.get(var);

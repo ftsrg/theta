@@ -1,15 +1,15 @@
 package hu.bme.mit.theta.formalism.tcfa.instances;
 
+import static hu.bme.mit.theta.core.decl.impl.Decls.Var;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.Eq;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.Geq;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.Int;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.Leq;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.Neq;
+import static hu.bme.mit.theta.core.stmt.impl.Stmts.Assign;
+import static hu.bme.mit.theta.core.stmt.impl.Stmts.Assume;
 import static hu.bme.mit.theta.core.type.impl.Types.Int;
 import static hu.bme.mit.theta.formalism.common.decl.impl.Decls2.Clock;
-import static hu.bme.mit.theta.formalism.common.decl.impl.Decls2.Var;
-import static hu.bme.mit.theta.formalism.common.stmt.impl.Stmts.Assign;
-import static hu.bme.mit.theta.formalism.common.stmt.impl.Stmts.Assume;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -18,11 +18,11 @@ import java.util.HashSet;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.IntType;
 import hu.bme.mit.theta.core.type.RatType;
 import hu.bme.mit.theta.formalism.common.decl.ClockDecl;
-import hu.bme.mit.theta.formalism.common.decl.VarDecl;
 import hu.bme.mit.theta.formalism.tcfa.TCFA;
 import hu.bme.mit.theta.formalism.tcfa.TcfaLoc;
 import hu.bme.mit.theta.formalism.tcfa.impl.SimpleTcfa;

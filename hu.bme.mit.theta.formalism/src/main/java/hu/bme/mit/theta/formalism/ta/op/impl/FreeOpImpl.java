@@ -1,15 +1,15 @@
 package hu.bme.mit.theta.formalism.ta.op.impl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.formalism.common.stmt.impl.Stmts.Havoc;
+import static hu.bme.mit.theta.core.stmt.impl.Stmts.Havoc;
 
 import java.util.Collection;
 
 import com.google.common.collect.ImmutableSet;
 
+import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.type.RatType;
 import hu.bme.mit.theta.formalism.common.decl.ClockDecl;
-import hu.bme.mit.theta.formalism.common.stmt.HavocStmt;
 import hu.bme.mit.theta.formalism.ta.op.FreeOp;
 import hu.bme.mit.theta.formalism.ta.utils.ClockOpVisitor;
 

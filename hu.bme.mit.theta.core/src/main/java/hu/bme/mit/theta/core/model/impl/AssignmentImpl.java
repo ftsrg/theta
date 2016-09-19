@@ -23,8 +23,8 @@ import hu.bme.mit.theta.core.type.Type;
 
 public final class AssignmentImpl implements Assignment {
 
-	private final Collection<Decl<?, ?>> decls;
-	private final Map<Decl<?, ?>, Expr<?>> declToExpr;
+	private final Collection<Decl<?>> decls;
+	private final Map<Decl<?>, Expr<?>> declToExpr;
 
 	private static final Assignment EMPTY;
 
@@ -40,7 +40,7 @@ public final class AssignmentImpl implements Assignment {
 		this(new HashMap<>());
 	}
 
-	public AssignmentImpl(final List<? extends Decl<?, ?>> decls, final List<? extends Expr<?>> exprs) {
+	public AssignmentImpl(final List<? extends Decl<?>> decls, final List<? extends Expr<?>> exprs) {
 		this(zip(decls, exprs));
 	}
 
@@ -56,22 +56,21 @@ public final class AssignmentImpl implements Assignment {
 		return result;
 	}
 
-	public AssignmentImpl(final Map<? extends Decl<?, ?>, ? extends Expr<?>> map) {
+	public AssignmentImpl(final Map<? extends Decl<?>, ? extends Expr<?>> map) {
 		checkAssignmentMap(map);
 		this.declToExpr = new HashMap<>(map);
 		this.decls = ImmutableList.copyOf(map.keySet());
 	}
 
-	private static void checkAssignmentMap(final Map<? extends Decl<?, ?>, ? extends Expr<?>> declToExpr) {
-		for (final Decl<?, ?> decl : declToExpr.keySet()) {
+	private static void checkAssignmentMap(final Map<? extends Decl<?>, ? extends Expr<?>> declToExpr) {
+		for (final Decl<?> decl : declToExpr.keySet()) {
 			final Expr<?> expr = declToExpr.get(decl);
 			checkArgument(expr.getType().isLeq(decl.getType()));
 		}
 	}
 
 	@Override
-	public <DeclType extends Type, DeclKind extends Decl<DeclType, DeclKind>> Optional<Expr<DeclType>> eval(
-			final Decl<DeclType, DeclKind> decl) {
+	public <DeclType extends Type> Optional<Expr<DeclType>> eval(final Decl<DeclType> decl) {
 		checkNotNull(decl);
 
 		if (declToExpr.containsKey(decl)) {
@@ -85,14 +84,14 @@ public final class AssignmentImpl implements Assignment {
 	}
 
 	@Override
-	public Collection<? extends Decl<?, ?>> getDecls() {
+	public Collection<? extends Decl<?>> getDecls() {
 		return decls;
 	}
 
 	@Override
 	public String toString() {
 		final StringJoiner sj = new StringJoiner(", ", "Assignment(", ")");
-		for (final Decl<?, ?> decl : decls) {
+		for (final Decl<?> decl : decls) {
 			final StringBuilder sb = new StringBuilder();
 			sb.append(decl.getName());
 			sb.append(" <- ");
@@ -107,7 +106,7 @@ public final class AssignmentImpl implements Assignment {
 	@Override
 	public Expr<? extends BoolType> toExpr() {
 		final List<Expr<? extends BoolType>> ops = new ArrayList<>(declToExpr.size());
-		for (final Entry<Decl<?, ?>, Expr<?>> entry : declToExpr.entrySet()) {
+		for (final Entry<Decl<?>, Expr<?>> entry : declToExpr.entrySet()) {
 			ops.add(Exprs.Eq(entry.getKey().getRef(), entry.getValue()));
 		}
 		if (ops.size() == 0) {

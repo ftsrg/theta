@@ -3,13 +3,13 @@ package hu.bme.mit.theta.formalism.sts;
 import java.util.Collection;
 import java.util.List;
 
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.model.Model;
+import hu.bme.mit.theta.core.model.impl.Valuation;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.formalism.Formalism;
-import hu.bme.mit.theta.formalism.common.Valuation;
-import hu.bme.mit.theta.formalism.common.decl.VarDecl;
 import hu.bme.mit.theta.formalism.utils.ExprUnroller;
 
 /**
@@ -39,11 +39,13 @@ public interface STS extends Formalism, ExprUnroller {
 
 	public Valuation getConcreteState(final Model model, final int i);
 
-	public Valuation getConcreteState(final Model model, final int i, final Collection<VarDecl<? extends Type>> variables);
+	public Valuation getConcreteState(final Model model, final int i,
+			final Collection<VarDecl<? extends Type>> variables);
 
 	public List<Valuation> extractTrace(final Model model, final int length);
 
-	public List<Valuation> extractTrace(final Model model, final int length, final Collection<VarDecl<? extends Type>> variables);
+	public List<Valuation> extractTrace(final Model model, final int length,
+			final Collection<VarDecl<? extends Type>> variables);
 
 	public Expr<? extends BoolType> foldin(final Expr<? extends BoolType> expr, final int i);
 }

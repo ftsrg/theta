@@ -8,10 +8,10 @@ import java.util.StringJoiner;
 
 import com.google.common.collect.ImmutableSet;
 
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.LitExpr;
+import hu.bme.mit.theta.core.model.impl.Valuation;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.formalism.common.Valuation;
-import hu.bme.mit.theta.formalism.common.decl.VarDecl;
 
 public class GlobalExplPrecision implements ExplPrecision {
 

@@ -11,7 +11,7 @@ import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.impl.NullPrecision;
 import hu.bme.mit.theta.analysis.tcfa.TcfaState;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
-import hu.bme.mit.theta.formalism.common.Valuation;
+import hu.bme.mit.theta.core.model.impl.Valuation;
 import hu.bme.mit.theta.formalism.tcfa.TCFA;
 import hu.bme.mit.theta.formalism.tcfa.TcfaLoc;
 
