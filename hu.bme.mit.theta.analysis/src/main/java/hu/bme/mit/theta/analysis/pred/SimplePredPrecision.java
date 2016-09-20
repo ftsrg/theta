@@ -18,14 +18,15 @@ import hu.bme.mit.theta.core.model.impl.Valuation;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.utils.impl.ExprUtils;
 
-public class GlobalPredPrecision implements PredPrecision {
+public final class SimplePredPrecision implements PredPrecision {
+
 	private final Map<Expr<? extends BoolType>, Expr<? extends BoolType>> preds;
 
-	public static GlobalPredPrecision create(final Collection<Expr<? extends BoolType>> preds) {
-		return new GlobalPredPrecision(preds);
+	public static SimplePredPrecision create(final Collection<Expr<? extends BoolType>> preds) {
+		return new SimplePredPrecision(preds);
 	}
 
-	private GlobalPredPrecision(final Collection<Expr<? extends BoolType>> preds) {
+	private SimplePredPrecision(final Collection<Expr<? extends BoolType>> preds) {
 		checkNotNull(preds);
 		this.preds = new HashMap<>();
 
@@ -60,7 +61,7 @@ public class GlobalPredPrecision implements PredPrecision {
 		return PredState.create(statePreds);
 	}
 
-	public GlobalPredPrecision refine(final Collection<Expr<? extends BoolType>> preds) {
+	public SimplePredPrecision refine(final Collection<Expr<? extends BoolType>> preds) {
 		checkNotNull(preds);
 		final Set<Expr<? extends BoolType>> newPreds = new HashSet<>();
 		newPreds.addAll(this.preds.keySet());
@@ -68,7 +69,7 @@ public class GlobalPredPrecision implements PredPrecision {
 		return create(newPreds);
 	}
 
-	public GlobalPredPrecision refine(final Expr<? extends BoolType> pred) {
+	public SimplePredPrecision refine(final Expr<? extends BoolType> pred) {
 		return refine(Collections.singleton(pred));
 	}
 

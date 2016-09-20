@@ -29,7 +29,7 @@ import hu.bme.mit.theta.analysis.algorithm.impl.waitlist.Waitlist;
 import hu.bme.mit.theta.analysis.algorithm.impl.waitlist.impl.LIFOWaitlist;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.impl.ExprStatePredicate;
-import hu.bme.mit.theta.analysis.pred.GlobalPredPrecision;
+import hu.bme.mit.theta.analysis.pred.SimplePredPrecision;
 import hu.bme.mit.theta.analysis.pred.PredPrecision;
 import hu.bme.mit.theta.analysis.pred.PredState;
 import hu.bme.mit.theta.analysis.refutation.ItpRefutation;
@@ -70,7 +70,7 @@ public class StsPredTest {
 		final StsPredAnalysis analysis = new StsPredAnalysis(sts, solver);
 		final Predicate<ExprState> target = new ExprStatePredicate(Not(sts.getProp()), solver);
 
-		final GlobalPredPrecision precision = GlobalPredPrecision.create(Collections.singleton(Lt(x, Int(mod))));
+		final SimplePredPrecision precision = SimplePredPrecision.create(Collections.singleton(Lt(x, Int(mod))));
 
 		final Waitlist<ArgNode<PredState, StsAction>> waitlist = new LIFOWaitlist<>();
 
@@ -80,10 +80,10 @@ public class StsPredTest {
 		final StsExprSeqConcretizer concretizerOp = new StsExprSeqConcretizer(sts, solver);
 		final GlobalPredItpRefinerOp<StsAction> refinerOp = new GlobalPredItpRefinerOp<>();
 
-		final RefutationBasedRefiner<PredState, ExplState, ItpRefutation, GlobalPredPrecision, StsAction> refiner = new RefutationBasedRefiner<>(
+		final RefutationBasedRefiner<PredState, ExplState, ItpRefutation, SimplePredPrecision, StsAction> refiner = new RefutationBasedRefiner<>(
 				concretizerOp, refinerOp);
 
-		final CEGARLoopImpl<PredState, StsAction, GlobalPredPrecision, ExplState> cegarLoop = new CEGARLoopImpl<>(
+		final CEGARLoopImpl<PredState, StsAction, SimplePredPrecision, ExplState> cegarLoop = new CEGARLoopImpl<>(
 				abstractor, refiner);
 
 		cegarLoop.check(precision);

@@ -71,8 +71,6 @@ final class TcfaZoneBackwardTransferFunction implements TransferFunction<ZoneSta
 			prevStateBuilder.and(invar);
 		}
 
-		prevStateBuilder.norm(precision.asMap());
-
 		return prevStateBuilder.done();
 	}
 

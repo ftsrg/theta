@@ -11,14 +11,18 @@ import hu.bme.mit.theta.analysis.pred.PredState;
 import hu.bme.mit.theta.analysis.tcfa.TcfaAction;
 import hu.bme.mit.theta.solver.Solver;
 
-public class TcfaPredAnalysis implements Analysis<PredState, TcfaAction, PredPrecision> {
+public final class TcfaPredAnalysis implements Analysis<PredState, TcfaAction, PredPrecision> {
 
 	private final Domain<PredState> domain;
 	private final TransferFunction<PredState, TcfaAction, PredPrecision> transferFunction;
 
-	public TcfaPredAnalysis(final Solver solver) {
+	private TcfaPredAnalysis(final Solver solver) {
 		domain = PredDomain.create(solver);
 		transferFunction = new TcfaPredTransferFunction(solver);
+	}
+
+	public static TcfaPredAnalysis create(final Solver solver) {
+		return new TcfaPredAnalysis(solver);
 	}
 
 	@Override

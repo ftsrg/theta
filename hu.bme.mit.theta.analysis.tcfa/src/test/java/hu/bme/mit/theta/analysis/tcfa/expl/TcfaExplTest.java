@@ -13,7 +13,6 @@ import hu.bme.mit.theta.analysis.algorithm.ArgPrinter;
 import hu.bme.mit.theta.analysis.algorithm.impl.AbstractorImpl;
 import hu.bme.mit.theta.analysis.expl.ExplPrecision;
 import hu.bme.mit.theta.analysis.expl.ExplState;
-import hu.bme.mit.theta.analysis.expl.GlobalExplPrecision;
 import hu.bme.mit.theta.analysis.tcfa.TcfaAction;
 import hu.bme.mit.theta.analysis.tcfa.TcfaAnalyis;
 import hu.bme.mit.theta.analysis.tcfa.TcfaState;
@@ -35,10 +34,10 @@ public class TcfaExplTest {
 		final SolverManager manager = new Z3SolverManager();
 		final Solver solver = manager.createSolver(true, true);
 
-		final TcfaAnalyis<ExplState, ExplPrecision> analyis = new TcfaAnalyis<>(fischer.getInitial(),
-				new TcfaExplAnalysis(solver));
+		final TcfaAnalyis<ExplState, ExplPrecision> analyis = TcfaAnalyis.create(fischer.getInitial(),
+				TcfaExplAnalysis.create(solver));
 
-		final ExplPrecision precision = GlobalExplPrecision.create(Collections.singleton(vlock));
+		final ExplPrecision precision = ExplPrecision.create(Collections.singleton(vlock));
 
 		final Abstractor<TcfaState<ExplState>, TcfaAction, ExplPrecision> abstractor = new AbstractorImpl<>(analyis,
 				s -> s.getLoc().equals(fischer.getCritical()));

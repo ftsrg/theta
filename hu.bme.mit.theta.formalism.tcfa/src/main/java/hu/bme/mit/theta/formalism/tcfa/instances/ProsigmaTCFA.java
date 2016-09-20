@@ -27,6 +27,7 @@ import hu.bme.mit.theta.formalism.tcfa.TCFA;
 import hu.bme.mit.theta.formalism.tcfa.TcfaLoc;
 import hu.bme.mit.theta.formalism.tcfa.impl.SimpleTcfa;
 
+@Deprecated
 public class ProsigmaTCFA {
 
 	private static final Expr<IntType> NONE = Int(0);

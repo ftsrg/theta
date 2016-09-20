@@ -23,7 +23,7 @@ public final class NetworkTcfaLoc implements TcfaLoc {
 
 	private volatile int hashCode = 0;
 
-	public NetworkTcfaLoc(final List<? extends TcfaLoc> locs) {
+	NetworkTcfaLoc(final List<? extends TcfaLoc> locs) {
 		this.locs = ImmutableList.copyOf(checkNotNull(locs));
 	}
 

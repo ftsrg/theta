@@ -43,7 +43,7 @@ class StsExplInitFunction implements InitFunction<ExplState, ExplPrecision> {
 			moreInitStates = solver.check().boolValue();
 			if (moreInitStates) {
 				final Valuation nextInitStateVal = PathUtils.extractValuation(solver.getModel(), 0);
-				final ExplState nextInitState = precision.mapToAbstractState(nextInitStateVal);
+				final ExplState nextInitState = precision.createState(nextInitStateVal);
 				initStates.add(nextInitState);
 				solver.add(PathUtils.unfold(Exprs.Not(nextInitState.toExpr()), 0));
 			}

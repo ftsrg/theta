@@ -3,6 +3,7 @@ package hu.bme.mit.theta.formalism.tcfa.impl;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.stream.Collectors.toList;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -21,10 +22,17 @@ public final class NetworkTcfa implements TCFA {
 	private final List<TCFA> tcfas;
 	private final TcfaLoc initLoc;
 
-	public NetworkTcfa(final List<? extends TCFA> tcfas) {
+	private NetworkTcfa(final List<? extends TCFA> tcfas) {
 		this.tcfas = ImmutableList.copyOf(checkNotNull(tcfas));
-
 		initLoc = new NetworkTcfaLoc(getInitLocs(tcfas));
+	}
+
+	public static NetworkTcfa of(final List<? extends TCFA> tcfas) {
+		return new NetworkTcfa(tcfas);
+	}
+
+	public static NetworkTcfa of(final TCFA... tcfas) {
+		return of(Arrays.asList(tcfas));
 	}
 
 	private static List<TcfaLoc> getInitLocs(final List<? extends TCFA> tcfas) {

@@ -6,17 +6,17 @@ import java.util.Set;
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.impl.RefinerOp;
-import hu.bme.mit.theta.analysis.pred.GlobalPredPrecision;
+import hu.bme.mit.theta.analysis.pred.SimplePredPrecision;
 import hu.bme.mit.theta.analysis.pred.PredState;
 import hu.bme.mit.theta.analysis.refutation.ItpRefutation;
 import hu.bme.mit.theta.core.expr.BoolLitExpr;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.BoolType;
 
-public class GlobalPredItpRefinerOp<A extends Action> implements RefinerOp<PredState, A, ItpRefutation, GlobalPredPrecision> {
+public class GlobalPredItpRefinerOp<A extends Action> implements RefinerOp<PredState, A, ItpRefutation, SimplePredPrecision> {
 
 	@Override
-	public GlobalPredPrecision refine(final GlobalPredPrecision precision, final ItpRefutation refutation, final Trace<PredState, A> counterexample) {
+	public SimplePredPrecision refine(final SimplePredPrecision precision, final ItpRefutation refutation, final Trace<PredState, A> counterexample) {
 		final Set<Expr<? extends BoolType>> preds = new HashSet<>();
 		for (final Expr<? extends BoolType> pred : refutation) {
 			if (!(pred instanceof BoolLitExpr)) {
