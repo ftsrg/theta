@@ -3,7 +3,7 @@ package hu.bme.mit.theta.analysis.tcfa.zone;
 import static hu.bme.mit.theta.core.decl.impl.Decls.Var;
 import static hu.bme.mit.theta.core.type.impl.Types.Int;
 
-import java.util.HashMap;
+import java.util.Collections;
 
 import org.junit.Ignore;
 import org.junit.Test;
@@ -18,7 +18,6 @@ import hu.bme.mit.theta.analysis.zone.ZonePrecision;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.IntType;
-import hu.bme.mit.theta.formalism.common.decl.ClockDecl;
 import hu.bme.mit.theta.formalism.tcfa.instances.FischerTCFA;
 
 public class TcfaZoneTest {
@@ -29,13 +28,10 @@ public class TcfaZoneTest {
 		final VarDecl<IntType> vlock = Var("lock", Int());
 		final FischerTCFA fischer = new FischerTCFA(1, 1, 2, vlock);
 
-		final TcfaAnalyis<ZoneState, ZonePrecision> analyis = new TcfaAnalyis<>(fischer.getInitial(),
+		final TcfaAnalyis<ZoneState, ZonePrecision> analyis = TcfaAnalyis.create(fischer.getInitial(),
 				TcfaZoneAnalysis.getInstance());
 
-		final HashMap<ClockDecl, Integer> ceilings = new HashMap<>();
-		ceilings.put(fischer.getClock(), 2);
-
-		final ZonePrecision precision = new ZonePrecision(ceilings);
+		final ZonePrecision precision = ZonePrecision.create(Collections.singleton(fischer.getClock()));
 
 		final Abstractor<TcfaState<ZoneState>, TcfaAction, ZonePrecision> abstractor = new AbstractorImpl<>(analyis,
 				s -> s.getLoc().equals(fischer.getCritical()));

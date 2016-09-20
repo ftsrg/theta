@@ -26,7 +26,6 @@ import hu.bme.mit.theta.analysis.algorithm.impl.RefutationBasedRefiner;
 import hu.bme.mit.theta.analysis.algorithm.impl.refinerops.GlobalExplItpRefinerOp;
 import hu.bme.mit.theta.analysis.expl.ExplPrecision;
 import hu.bme.mit.theta.analysis.expl.ExplState;
-import hu.bme.mit.theta.analysis.expl.GlobalExplPrecision;
 import hu.bme.mit.theta.analysis.impl.ExprStatePredicate;
 import hu.bme.mit.theta.analysis.refutation.ItpRefutation;
 import hu.bme.mit.theta.analysis.sts.StsAction;
@@ -70,18 +69,18 @@ public class StsExplTest {
 		final StsExplAnalysis analysis = new StsExplAnalysis(sts, solver);
 		final Predicate<ExprState> target = new ExprStatePredicate(Not(sts.getProp()), solver);
 
-		final GlobalExplPrecision precision = GlobalExplPrecision.create(Collections.singleton(vy));
+		final ExplPrecision precision = ExplPrecision.create(Collections.singleton(vy));
 
 		final Abstractor<ExplState, StsAction, ExplPrecision> abstractor = new AbstractorImpl<>(analysis, target);
 
 		final StsExprSeqConcretizer concretizerOp = new StsExprSeqConcretizer(sts, solver);
 		final GlobalExplItpRefinerOp<StsAction> refinerOp = new GlobalExplItpRefinerOp<>();
 
-		final RefutationBasedRefiner<ExplState, ExplState, ItpRefutation, GlobalExplPrecision, StsAction> refiner = new RefutationBasedRefiner<>(
+		final RefutationBasedRefiner<ExplState, ExplState, ItpRefutation, ExplPrecision, StsAction> refiner = new RefutationBasedRefiner<>(
 				concretizerOp, refinerOp);
 
-		final CEGARLoopImpl<ExplState, StsAction, GlobalExplPrecision, ExplState> cegarLoop = new CEGARLoopImpl<>(
-				abstractor, refiner);
+		final CEGARLoopImpl<ExplState, StsAction, ExplPrecision, ExplState> cegarLoop = new CEGARLoopImpl<>(abstractor,
+				refiner);
 
 		cegarLoop.check(precision);
 		System.out.println(ArgPrinter.toGraphvizString(abstractor.getARG()));

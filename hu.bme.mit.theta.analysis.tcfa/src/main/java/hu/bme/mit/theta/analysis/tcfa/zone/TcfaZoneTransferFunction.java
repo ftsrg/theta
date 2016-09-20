@@ -54,8 +54,6 @@ final class TcfaZoneTransferFunction implements TransferFunction<ZoneState, Tcfa
 			succStateBuilder.and(invar);
 		}
 
-		succStateBuilder.norm(precision.asMap());
-
 		return succStateBuilder.done();
 	}
 

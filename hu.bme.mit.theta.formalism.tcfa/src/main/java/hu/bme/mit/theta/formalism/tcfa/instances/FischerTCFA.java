@@ -23,6 +23,7 @@ import hu.bme.mit.theta.formalism.tcfa.TCFA;
 import hu.bme.mit.theta.formalism.tcfa.TcfaLoc;
 import hu.bme.mit.theta.formalism.tcfa.impl.SimpleTcfa;
 
+@Deprecated
 public final class FischerTCFA {
 
 	private final SimpleTcfa tcfa;

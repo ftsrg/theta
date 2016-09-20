@@ -56,7 +56,7 @@ public final class TcfaExplTransferFunction implements TransferFunction<ExplStat
 			moreSuccStates = solver.check().boolValue();
 			if (moreSuccStates) {
 				final Valuation nextSuccStateVal = PathUtils.extractValuation(solver.getModel(), indexes);
-				final ExplState nextSuccState = precision.mapToAbstractState(nextSuccStateVal);
+				final ExplState nextSuccState = precision.createState(nextSuccStateVal);
 				builder.add(nextSuccState);
 				solver.add(PathUtils.unfold(Exprs.Not(nextSuccState.toExpr()), indexes));
 			}

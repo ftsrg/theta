@@ -3,7 +3,7 @@ package hu.bme.mit.theta.formalism.tcfa.dsl;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.List;
 
 import org.antlr.v4.runtime.ANTLRInputStream;
@@ -20,10 +20,6 @@ public final class TcfaDslManager {
 	private TcfaDslManager() {
 	}
 
-	public static TcfaSpec parse(final String filepath) throws FileNotFoundException, IOException {
-		return parse(filepath, Collections.emptyList());
-	}
-
 	public static TcfaSpec parse(final String filepath, final List<? extends LitExpr<?>> params)
 			throws FileNotFoundException, IOException {
 		final ANTLRInputStream input = new ANTLRInputStream(new FileInputStream(filepath));
@@ -37,6 +33,11 @@ public final class TcfaDslManager {
 		final TcfaSpec spec = TcfaSpecCreator.createTcfaSpec(ctx, params);
 
 		return spec;
+	}
+
+	public static TcfaSpec parse(final String filepath, final LitExpr<?>... params)
+			throws FileNotFoundException, IOException {
+		return parse(filepath, Arrays.asList(params));
 	}
 
 }

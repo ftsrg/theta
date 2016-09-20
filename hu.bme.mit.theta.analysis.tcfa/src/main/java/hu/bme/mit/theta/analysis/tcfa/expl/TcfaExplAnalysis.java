@@ -13,13 +13,17 @@ import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.tcfa.TcfaAction;
 import hu.bme.mit.theta.solver.Solver;
 
-public class TcfaExplAnalysis implements Analysis<ExplState, TcfaAction, ExplPrecision> {
+public final class TcfaExplAnalysis implements Analysis<ExplState, TcfaAction, ExplPrecision> {
 
 	private final TcfaExplTransferFunction transferFunction;
 
-	public TcfaExplAnalysis(final Solver solver) {
+	private TcfaExplAnalysis(final Solver solver) {
 		checkNotNull(solver);
 		transferFunction = TcfaExplTransferFunction.create(solver);
+	}
+
+	public static TcfaExplAnalysis create(final Solver solver) {
+		return new TcfaExplAnalysis(solver);
 	}
 
 	@Override

@@ -13,9 +13,9 @@ import org.junit.Test;
 import hu.bme.mit.theta.analysis.algorithm.Abstractor;
 import hu.bme.mit.theta.analysis.algorithm.ArgPrinter;
 import hu.bme.mit.theta.analysis.algorithm.impl.AbstractorImpl;
-import hu.bme.mit.theta.analysis.pred.GlobalPredPrecision;
 import hu.bme.mit.theta.analysis.pred.PredPrecision;
 import hu.bme.mit.theta.analysis.pred.PredState;
+import hu.bme.mit.theta.analysis.pred.SimplePredPrecision;
 import hu.bme.mit.theta.analysis.tcfa.TcfaAction;
 import hu.bme.mit.theta.analysis.tcfa.TcfaAnalyis;
 import hu.bme.mit.theta.analysis.tcfa.TcfaState;
@@ -37,10 +37,10 @@ public class TcfaPredTest {
 		final SolverManager manager = new Z3SolverManager();
 		final Solver solver = manager.createSolver(true, true);
 
-		final TcfaAnalyis<PredState, PredPrecision> analysis = new TcfaAnalyis<>(fischer.getInitial(),
-				new TcfaPredAnalysis(solver));
+		final TcfaAnalyis<PredState, PredPrecision> analysis = TcfaAnalyis.create(fischer.getInitial(),
+				TcfaPredAnalysis.create(solver));
 
-		final PredPrecision precision = GlobalPredPrecision.create(Collections.singleton(Eq(vlock.getRef(), Int(0))));
+		final PredPrecision precision = SimplePredPrecision.create(Collections.singleton(Eq(vlock.getRef(), Int(0))));
 
 		final Abstractor<TcfaState<PredState>, TcfaAction, PredPrecision> abstractor = new AbstractorImpl<>(analysis,
 				s -> s.getLoc().equals(fischer.getCritical()));

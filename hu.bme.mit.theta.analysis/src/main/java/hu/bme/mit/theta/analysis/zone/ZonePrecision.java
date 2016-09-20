@@ -3,28 +3,28 @@ package hu.bme.mit.theta.analysis.zone;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Collection;
-import java.util.Map;
+import java.util.Set;
 
-import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 
 import hu.bme.mit.theta.analysis.Precision;
 import hu.bme.mit.theta.formalism.common.decl.ClockDecl;
 
 public final class ZonePrecision implements Precision {
 
-	private final Map<ClockDecl, Integer> ceilings;
+	private final Set<ClockDecl> clocks;
 
-	public ZonePrecision(final Map<? extends ClockDecl, ? extends Integer> ceilings) {
-		checkNotNull(ceilings);
-		this.ceilings = ImmutableMap.copyOf(ceilings);
+	private ZonePrecision(final Collection<? extends ClockDecl> clocks) {
+		checkNotNull(clocks);
+		this.clocks = ImmutableSet.copyOf(clocks);
 	}
 
-	public Collection<ClockDecl> getClocks() {
-		return ceilings.keySet();
+	public static ZonePrecision create(final Collection<? extends ClockDecl> clocks) {
+		return new ZonePrecision(clocks);
 	}
 
-	public Map<ClockDecl, Integer> asMap() {
-		return ceilings;
+	public Set<ClockDecl> getClocks() {
+		return clocks;
 	}
 
 }

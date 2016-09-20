@@ -28,16 +28,21 @@ public final class ARG<S extends State, A extends Action, P extends Precision> {
 	private final Collection<ArgEdge<S, A>> edges;
 
 	private final Collection<ArgNode<S, A>> initNodes;
+	private final Collection<ArgNode<S, A>> leafNodes;
 	private final Collection<ArgNode<S, A>> targetNodes;
 
 	private int nextId = 0;
 
 	public ARG(final Analysis<S, A, P> analysis, final Predicate<? super S> target, final P precision) {
-		this.analysis = checkNotNull(analysis);
-		this.target = checkNotNull(target);
+		checkNotNull(analysis);
+		checkNotNull(target);
+		checkNotNull(precision);
+		this.analysis = analysis;
+		this.target = target;
 		nodes = new LinkedHashSet<>();
 		edges = new HashSet<>();
 		initNodes = new HashSet<>();
+		leafNodes = new HashSet<>();
 		targetNodes = new HashSet<>();
 		init(precision);
 	}
@@ -56,9 +61,15 @@ public final class ARG<S extends State, A extends Action, P extends Precision> {
 		return Collections.unmodifiableCollection(initNodes);
 	}
 
+	public Collection<ArgNode<S, A>> getLeafNodes() {
+		return Collections.unmodifiableCollection(leafNodes);
+	}
+
 	public Collection<ArgNode<S, A>> getTargetNodes() {
 		return Collections.unmodifiableCollection(targetNodes);
 	}
+
+	////
 
 	public Trace<S, A> getTraceTo(final ArgNode<S, A> node) {
 		checkArgument(nodes.contains(node));
@@ -144,8 +155,6 @@ public final class ARG<S extends State, A extends Action, P extends Precision> {
 	}
 
 	private void init(final P precision) {
-		checkNotNull(precision);
-
 		final Collection<? extends S> initStates = analysis.getInitFunction().getInitStates(precision);
 		for (final S initState : initStates) {
 			final boolean isTarget = target.test(initState);
@@ -153,16 +162,14 @@ public final class ARG<S extends State, A extends Action, P extends Precision> {
 		}
 	}
 
-	private ArgNode<S, A> createInitNode(final S initState, final boolean target) {
+	private void createInitNode(final S initState, final boolean target) {
 		final ArgNode<S, A> initNode = createNode(initState, target);
 		initNodes.add(initNode);
-		return initNode;
 	}
 
 	private ArgNode<S, A> createSuccNode(final ArgNode<S, A> node, final A action, final S succState,
 			final boolean target) {
 		assert nodes.contains(node);
-
 		final ArgNode<S, A> succNode = createNode(succState, target);
 		createEdge(node, action, succNode);
 		return succNode;
@@ -170,22 +177,24 @@ public final class ARG<S extends State, A extends Action, P extends Precision> {
 
 	////
 
+	private ArgNode<S, A> createNode(final S state, final boolean target) {
+		final ArgNode<S, A> node = new ArgNode<>(state, nextId, target);
+		nodes.add(node);
+		leafNodes.add(node);
+		if (node.isTarget()) {
+			targetNodes.add(node);
+		}
+		nextId = nextId + 1;
+		return node;
+	}
+
 	private ArgEdge<S, A> createEdge(final ArgNode<S, A> source, final A action, final ArgNode<S, A> target) {
 		final ArgEdge<S, A> edge = new ArgEdge<>(source, action, target);
 		source.outEdges.add(edge);
 		target.inEdge = Optional.of(edge);
+		leafNodes.remove(source);
 		edges.add(edge);
 		return edge;
-	}
-
-	private ArgNode<S, A> createNode(final S state, final boolean target) {
-		final ArgNode<S, A> node = new ArgNode<>(state, nextId, target);
-		nodes.add(node);
-		if (node.isTarget()) {
-			targetNodes.add(node);
-		}
-		nextId++;
-		return node;
 	}
 
 	private void addCoveringEdge(final ArgNode<S, A> nodeToCover, final ArgNode<S, A> nodeToCoverWith) {

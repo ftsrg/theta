@@ -49,7 +49,13 @@ public final class ArgNode<S extends State, A extends Action> {
 	public boolean existsAncestor(final Predicate<ArgNode<S, A>> predicate) {
 		if (predicate.test(this)) {
 			return true;
-		} else if (inEdge.isPresent()) {
+		} else {
+			return existsProperAncestor(predicate);
+		}
+	}
+
+	public boolean existsProperAncestor(final Predicate<ArgNode<S, A>> predicate) {
+		if (inEdge.isPresent()) {
 			return inEdge.get().getSource().existsAncestor(predicate);
 		} else {
 			return false;
@@ -60,13 +66,30 @@ public final class ArgNode<S extends State, A extends Action> {
 
 	public void foreachAncestors(final Consumer<ArgNode<S, A>> consumer) {
 		consumer.accept(this);
+		foreachProperAncestors(consumer);
+	}
+
+	public void foreachProperAncestors(final Consumer<ArgNode<S, A>> consumer) {
 		if (inEdge.isPresent()) {
 			inEdge.get().getSource().foreachAncestors(consumer);
 		}
 	}
 
+	////
+
+	public void foreachChildren(final Consumer<ArgNode<S, A>> consumer) {
+		for (final ArgEdge<S, A> outEdge : outEdges) {
+			final ArgNode<S, A> child = outEdge.getTarget();
+			consumer.accept(child);
+		}
+	}
+
 	public void foreachDescendants(final Consumer<ArgNode<S, A>> consumer) {
 		consumer.accept(this);
+		foreachProperDescendants(consumer);
+	}
+
+	public void foreachProperDescendants(final Consumer<ArgNode<S, A>> consumer) {
 		for (final ArgEdge<S, A> outEdge : outEdges) {
 			outEdge.getTarget().foreachDescendants(consumer);
 		}

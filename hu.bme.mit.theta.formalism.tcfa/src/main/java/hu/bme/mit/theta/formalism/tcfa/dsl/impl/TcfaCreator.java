@@ -166,7 +166,7 @@ final class TcfaCreator {
 		private TCFA createProdTcfa(final ProdTcfaContext ctx) {
 			checkArgument(ctx.ops.size() > 1);
 			final List<TCFA> tcfas = ctx.ops.stream().map(tcfaCtx -> tcfaCtx.accept(this)).collect(toList());
-			return new NetworkTcfa(tcfas);
+			return NetworkTcfa.of(tcfas);
 		}
 
 		////
