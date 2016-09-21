@@ -44,7 +44,7 @@ class StsExplTransferFunction implements TransferFunction<ExplState, StsAction, 
 		invar.stream().forEach(i -> solver.add(PathUtils.unfold(i, 1)));
 		boolean moreSuccStates;
 		do {
-			moreSuccStates = solver.check().boolValue();
+			moreSuccStates = solver.check().isSat();
 			if (moreSuccStates) {
 				final Valuation nextSuccStateVal = PathUtils.extractValuation(solver.getModel(), 1);
 				final ExplState nextSuccState = precision.createState(nextSuccStateVal);

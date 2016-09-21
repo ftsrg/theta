@@ -1,14 +1,20 @@
 package hu.bme.mit.theta.solver;
 
 public enum SolverStatus {
-	SAT, UNSAT, UNKNOWN;
+	SAT(true), UNSAT(false);
 
-	public boolean boolValue() {
-		if (this == SAT)
-			return true;
-		else if (this == UNSAT)
-			return false;
-		else
-			throw new UnknownSolverStatusException();
+	private final boolean sat;
+
+	private SolverStatus(final boolean sat) {
+		this.sat = sat;
 	}
+
+	public boolean isSat() {
+		return sat;
+	}
+
+	public boolean isUnsat() {
+		return !sat;
+	}
+
 }

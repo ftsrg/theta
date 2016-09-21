@@ -34,7 +34,7 @@ public class PredDomain implements Domain<PredState> {
 			conjuncts.add(PathUtils.unfold(pred, 0));
 		}
 		solver.add(Not(And(conjuncts)));
-		final boolean result = !solver.check().boolValue();
+		final boolean result = solver.check().isUnsat();
 
 		solver.pop();
 		return result;
@@ -48,7 +48,7 @@ public class PredDomain implements Domain<PredState> {
 			solver.add(PathUtils.unfold(pred, 0));
 		}
 
-		final boolean result = !solver.check().boolValue();
+		final boolean result = solver.check().isUnsat();
 
 		solver.pop();
 		return result;
@@ -68,7 +68,7 @@ public class PredDomain implements Domain<PredState> {
 		}
 		solver.add(Not(And(unfoldedPreds)));
 
-		final boolean isLeq = !solver.check().boolValue();
+		final boolean isLeq = solver.check().isUnsat();
 		solver.pop();
 		return isLeq;
 	}

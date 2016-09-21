@@ -17,6 +17,7 @@ import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverStatus;
 import hu.bme.mit.theta.solver.Stack;
+import hu.bme.mit.theta.solver.UnknownSolverStatusException;
 import hu.bme.mit.theta.solver.impl.StackImpl;
 import hu.bme.mit.theta.solver.z3.trasform.Z3SymbolTable;
 import hu.bme.mit.theta.solver.z3.trasform.Z3TermTransformer;
@@ -64,7 +65,7 @@ public class Z3Solver implements Solver {
 		final com.microsoft.z3.BoolExpr term = (com.microsoft.z3.BoolExpr) transformationManager.toTerm(assertion);
 		z3Solver.add(term);
 
-		setStatus(SolverStatus.UNKNOWN);
+		clearState();
 	}
 
 	@Override
@@ -80,22 +81,25 @@ public class Z3Solver implements Solver {
 
 		z3Solver.assertAndTrack(term, labelTerm);
 
-		setStatus(SolverStatus.UNKNOWN);
+		clearState();
 	}
 
 	@Override
 	public SolverStatus check() {
 		final Status z3Status = z3Solver.check();
-
-		if (z3Status == Status.SATISFIABLE) {
-			setStatus(SolverStatus.SAT);
-		} else if (z3Status == Status.UNSATISFIABLE) {
-			setStatus(SolverStatus.UNSAT);
-		} else {
-			setStatus(SolverStatus.UNKNOWN);
-		}
-
+		status = transformStatus(z3Status);
 		return status;
+	}
+
+	private SolverStatus transformStatus(final Status z3Status) {
+		switch (z3Status) {
+		case SATISFIABLE:
+			return SolverStatus.SAT;
+		case UNSATISFIABLE:
+			return SolverStatus.UNSAT;
+		default:
+			throw new UnknownSolverStatusException();
+		}
 	}
 
 	@Override
@@ -108,7 +112,7 @@ public class Z3Solver implements Solver {
 	public void pop(final int n) {
 		assertions.pop(n);
 		z3Solver.pop(n);
-		setStatus(SolverStatus.UNKNOWN);
+		clearState();
 	}
 
 	@Override
@@ -133,6 +137,16 @@ public class Z3Solver implements Solver {
 		return model;
 	}
 
+	private Model extractModel() {
+		assert status == SolverStatus.SAT;
+		assert model == null;
+
+		final com.microsoft.z3.Model z3Model = z3Solver.getModel();
+		assert z3Model != null;
+
+		return new Z3Model(symbolTable, transformationManager, termTransformer, z3Model);
+	}
+
 	@Override
 	public Collection<Expr<? extends BoolType>> getUnsatCore() {
 		checkState(status == SolverStatus.UNSAT);
@@ -143,29 +157,6 @@ public class Z3Solver implements Solver {
 
 		assert unsatCore != null;
 		return Collections.unmodifiableCollection(unsatCore);
-	}
-
-	@Override
-	public Collection<Expr<? extends BoolType>> getAssertions() {
-		return assertions.toCollection();
-	}
-
-	////
-
-	private void setStatus(final SolverStatus status) {
-		this.status = status;
-		model = null;
-		unsatCore = null;
-	}
-
-	private Model extractModel() {
-		assert status == SolverStatus.SAT;
-		assert model == null;
-
-		final com.microsoft.z3.Model z3Model = z3Solver.getModel();
-		assert z3Model != null;
-
-		return new Z3Model(symbolTable, transformationManager, termTransformer, z3Model);
 	}
 
 	private Collection<Expr<? extends BoolType>> extractUnsatCore() {
@@ -189,6 +180,17 @@ public class Z3Solver implements Solver {
 		}
 
 		return unsatCore;
+	}
+
+	@Override
+	public Collection<Expr<? extends BoolType>> getAssertions() {
+		return assertions.toCollection();
+	}
+
+	private void clearState() {
+		status = null;
+		model = null;
+		unsatCore = null;
 	}
 
 }
