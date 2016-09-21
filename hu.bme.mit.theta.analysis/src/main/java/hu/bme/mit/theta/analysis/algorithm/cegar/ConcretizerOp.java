@@ -1,10 +1,8 @@
-package hu.bme.mit.theta.analysis.algorithm.impl;
+package hu.bme.mit.theta.analysis.algorithm.cegar;
 
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.Trace;
-import hu.bme.mit.theta.analysis.algorithm.CounterexampleStatus;
-import hu.bme.mit.theta.analysis.refutation.Refutation;
 
 public interface ConcretizerOp<S extends State, A extends Action, CS extends State, R extends Refutation> {
 

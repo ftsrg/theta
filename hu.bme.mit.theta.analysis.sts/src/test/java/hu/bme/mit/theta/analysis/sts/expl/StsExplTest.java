@@ -18,16 +18,16 @@ import java.util.function.Predicate;
 import org.junit.Test;
 
 import hu.bme.mit.theta.analysis.ExprState;
-import hu.bme.mit.theta.analysis.algorithm.Abstractor;
 import hu.bme.mit.theta.analysis.algorithm.ArgPrinter;
-import hu.bme.mit.theta.analysis.algorithm.impl.AbstractorImpl;
-import hu.bme.mit.theta.analysis.algorithm.impl.CEGARLoopImpl;
-import hu.bme.mit.theta.analysis.algorithm.impl.RefutationBasedRefiner;
-import hu.bme.mit.theta.analysis.algorithm.impl.refinerops.GlobalExplItpRefinerOp;
+import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
+import hu.bme.mit.theta.analysis.algorithm.cegar.AbstractorImpl;
+import hu.bme.mit.theta.analysis.algorithm.cegar.CegarLoopImpl;
+import hu.bme.mit.theta.analysis.algorithm.cegar.GlobalExplItpRefinerOp;
+import hu.bme.mit.theta.analysis.algorithm.cegar.ItpRefutation;
+import hu.bme.mit.theta.analysis.algorithm.cegar.RefutationBasedRefiner;
 import hu.bme.mit.theta.analysis.expl.ExplPrecision;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.impl.ExprStatePredicate;
-import hu.bme.mit.theta.analysis.refutation.ItpRefutation;
 import hu.bme.mit.theta.analysis.sts.StsAction;
 import hu.bme.mit.theta.analysis.sts.StsExprSeqConcretizer;
 import hu.bme.mit.theta.core.decl.VarDecl;
@@ -79,7 +79,7 @@ public class StsExplTest {
 		final RefutationBasedRefiner<ExplState, ExplState, ItpRefutation, ExplPrecision, StsAction> refiner = new RefutationBasedRefiner<>(
 				concretizerOp, refinerOp);
 
-		final CEGARLoopImpl<ExplState, StsAction, ExplPrecision, ExplState> cegarLoop = new CEGARLoopImpl<>(abstractor,
+		final CegarLoopImpl<ExplState, StsAction, ExplPrecision, ExplState> cegarLoop = new CegarLoopImpl<>(abstractor,
 				refiner);
 
 		cegarLoop.check(precision);

@@ -1,14 +1,12 @@
-package hu.bme.mit.theta.analysis.algorithm.impl.refinerops;
+package hu.bme.mit.theta.analysis.algorithm.cegar;
 
 import java.util.HashSet;
 import java.util.Set;
 
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Trace;
-import hu.bme.mit.theta.analysis.algorithm.impl.RefinerOp;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expl.ExplPrecision;
-import hu.bme.mit.theta.analysis.refutation.ItpRefutation;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.BoolType;

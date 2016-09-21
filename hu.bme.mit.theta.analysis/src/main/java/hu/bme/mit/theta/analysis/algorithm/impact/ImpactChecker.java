@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.analysis.tcfa.lawi;
+package hu.bme.mit.theta.analysis.algorithm.impact;
 
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -7,10 +7,10 @@ import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.Precision;
 import hu.bme.mit.theta.analysis.State;
-import hu.bme.mit.theta.analysis.algorithm.impl.ARG;
-import hu.bme.mit.theta.analysis.algorithm.impl.ArgNode;
+import hu.bme.mit.theta.analysis.algorithm.ARG;
+import hu.bme.mit.theta.analysis.algorithm.ArgNode;
 
-public final class TcfaLawiChecker {
+public final class ImpactChecker {
 
 	public static <S extends State, A extends Action, P extends Precision> ARG<?, ?, ?> unwind(
 			final Analysis<S, A, P> analysis, final Predicate<? super S> target, final P precision) {

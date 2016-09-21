@@ -8,9 +8,9 @@ import java.util.Collections;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import hu.bme.mit.theta.analysis.algorithm.Abstractor;
 import hu.bme.mit.theta.analysis.algorithm.ArgPrinter;
-import hu.bme.mit.theta.analysis.algorithm.impl.AbstractorImpl;
+import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
+import hu.bme.mit.theta.analysis.algorithm.cegar.AbstractorImpl;
 import hu.bme.mit.theta.analysis.tcfa.TcfaAction;
 import hu.bme.mit.theta.analysis.tcfa.TcfaAnalyis;
 import hu.bme.mit.theta.analysis.tcfa.TcfaState;

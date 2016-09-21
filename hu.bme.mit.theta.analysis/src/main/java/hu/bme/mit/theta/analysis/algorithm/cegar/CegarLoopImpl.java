@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.analysis.algorithm.impl;
+package hu.bme.mit.theta.analysis.algorithm.cegar;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -7,26 +7,21 @@ import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Precision;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.Trace;
-import hu.bme.mit.theta.analysis.algorithm.Abstractor;
-import hu.bme.mit.theta.analysis.algorithm.AbstractorStatus;
-import hu.bme.mit.theta.analysis.algorithm.CEGARLoop;
-import hu.bme.mit.theta.analysis.algorithm.CEGARStatus;
-import hu.bme.mit.theta.analysis.algorithm.CounterexampleStatus;
-import hu.bme.mit.theta.analysis.algorithm.Refiner;
+import hu.bme.mit.theta.analysis.algorithm.ARG;
 
-public class CEGARLoopImpl<S extends State, A extends Action, P extends Precision, CS extends State>
-		implements CEGARLoop<P, CS, A> {
+public class CegarLoopImpl<S extends State, A extends Action, P extends Precision, CS extends State>
+		implements CegarLoop<P, CS, A> {
 
 	private final Abstractor<S, A, ? super P> abstractor;
 	private final Refiner<S, A, P, CS> refiner;
 
-	public CEGARLoopImpl(final Abstractor<S, A, ? super P> abstractor, final Refiner<S, A, P, CS> refiner) {
+	public CegarLoopImpl(final Abstractor<S, A, ? super P> abstractor, final Refiner<S, A, P, CS> refiner) {
 		this.abstractor = checkNotNull(abstractor);
 		this.refiner = checkNotNull(refiner);
 	}
 
 	@Override
-	public CEGARStatus check(final P initPrecision) {
+	public CegarStatus check(final P initPrecision) {
 
 		P precision = initPrecision;
 		do {
@@ -52,11 +47,11 @@ public class CEGARLoopImpl<S extends State, A extends Action, P extends Precisio
 	}
 
 	@Override
-	public CEGARStatus getStatus() {
+	public CegarStatus getStatus() {
 		if (abstractor.getStatus() == AbstractorStatus.OK) {
-			return CEGARStatus.OK;
+			return CegarStatus.OK;
 		} else if (refiner.getStatus() == CounterexampleStatus.CONCRETE) {
-			return CEGARStatus.COUNTEREXAMPLE;
+			return CegarStatus.COUNTEREXAMPLE;
 		} else {
 			throw new IllegalStateException();
 		}

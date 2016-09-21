@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.analysis.refutation;
+package hu.bme.mit.theta.analysis.algorithm.cegar;
 
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.BoolType;

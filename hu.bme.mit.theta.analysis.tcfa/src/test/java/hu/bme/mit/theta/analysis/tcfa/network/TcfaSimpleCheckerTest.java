@@ -11,7 +11,7 @@ import java.util.Collections;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import hu.bme.mit.theta.analysis.algorithm.impl.SimpleChecker;
+import hu.bme.mit.theta.analysis.algorithm.simple.SimpleChecker;
 import hu.bme.mit.theta.analysis.composite.CompositeAnalysis;
 import hu.bme.mit.theta.analysis.composite.CompositePrecision;
 import hu.bme.mit.theta.analysis.composite.CompositeState;

@@ -1,28 +1,26 @@
-package hu.bme.mit.theta.analysis.algorithm.impl.waitlist.impl;
+package hu.bme.mit.theta.analysis.algorithm;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.ArrayDeque;
 import java.util.Collection;
-import java.util.Queue;
+import java.util.Deque;
 
-import hu.bme.mit.theta.analysis.algorithm.impl.waitlist.Waitlist;
+public class LifoWaitlist<T> implements Waitlist<T> {
 
-public class FIFOWaitlist<T> implements Waitlist<T> {
+	private final Deque<T> waitlist;
 
-	private final Queue<T> waitlist;
-
-	public FIFOWaitlist() {
+	public LifoWaitlist() {
 		waitlist = new ArrayDeque<>();
 	}
 
-	public FIFOWaitlist(final Collection<? extends T> items) {
+	public LifoWaitlist(final Collection<? extends T> items) {
 		waitlist = new ArrayDeque<>(items);
 	}
 
 	@Override
 	public void add(final T item) {
-		waitlist.add(checkNotNull(item));
+		waitlist.push(checkNotNull(item));
 	}
 
 	@Override
@@ -37,7 +35,7 @@ public class FIFOWaitlist<T> implements Waitlist<T> {
 
 	@Override
 	public T remove() {
-		return waitlist.remove();
+		return waitlist.pop();
 	}
 
 	@Override

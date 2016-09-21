@@ -1,10 +1,10 @@
-package hu.bme.mit.theta.analysis.algorithm;
+package hu.bme.mit.theta.analysis.algorithm.cegar;
 
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Precision;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.Trace;
-import hu.bme.mit.theta.analysis.algorithm.impl.ARG;
+import hu.bme.mit.theta.analysis.algorithm.ARG;
 
 public interface Refiner<S extends State, A extends Action, P extends Precision, CS extends State> {
 
