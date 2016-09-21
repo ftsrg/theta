@@ -38,10 +38,4 @@ public class ExplDomain implements Domain<ExplState> {
 		return true;
 	}
 
-	@Override
-	public ExplState join(final ExplState state1, final ExplState state2) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO");
-	}
-
 }

@@ -33,10 +33,4 @@ public final class TcfaDomain<S extends State> implements Domain<TcfaState<S>> {
 		return state1.getLoc().equals(state2.getLoc()) && domain.isLeq(state1.getState(), state2.getState());
 	}
 
-	@Override
-	public TcfaState<S> join(final TcfaState<S> state1, final TcfaState<S> state2) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
-	}
-
 }

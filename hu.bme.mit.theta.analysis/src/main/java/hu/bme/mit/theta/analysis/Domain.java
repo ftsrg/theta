@@ -8,6 +8,4 @@ public interface Domain<S extends State> {
 
 	public boolean isLeq(S state1, S state2);
 
-	public S join(S state1, S state2);
-
 }

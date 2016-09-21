@@ -28,9 +28,4 @@ public final class ZoneDomain implements Domain<ZoneState> {
 		return state1.isLeq(state2);
 	}
 
-	@Override
-	public ZoneState join(final ZoneState state1, final ZoneState state2) {
-		return ZoneState.enclosure(state1, state2);
-	}
-
 }

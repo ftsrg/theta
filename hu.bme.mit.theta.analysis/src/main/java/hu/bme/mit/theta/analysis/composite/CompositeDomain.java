@@ -35,10 +35,4 @@ public final class CompositeDomain<S1 extends State, S2 extends State> implement
 		return domain1.isLeq(state1._1(), state2._1()) && domain2.isLeq(state1._2(), state2._2());
 	}
 
-	@Override
-	public CompositeState<S1, S2> join(final CompositeState<S1, S2> state1, final CompositeState<S1, S2> state2) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
-	}
-
 }
