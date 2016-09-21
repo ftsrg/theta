@@ -40,7 +40,7 @@ class StsPredInitFunction implements InitFunction<PredState, PredPrecision> {
 		init.stream().forEach(i -> solver.add(PathUtils.unfold(i, 0)));
 		invar.stream().forEach(i -> solver.add(PathUtils.unfold(i, 0)));
 		do {
-			moreInitStates = solver.check().boolValue();
+			moreInitStates = solver.check().isSat();
 			if (moreInitStates) {
 				final Valuation nextInitStateVal = PathUtils.extractValuation(solver.getModel(), 0);
 

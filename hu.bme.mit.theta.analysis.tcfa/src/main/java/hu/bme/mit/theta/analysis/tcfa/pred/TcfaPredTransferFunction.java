@@ -54,7 +54,7 @@ final class TcfaPredTransferFunction implements TransferFunction<PredState, Tcfa
 
 		boolean moreSuccStates;
 		do {
-			moreSuccStates = solver.check().boolValue();
+			moreSuccStates = solver.check().isSat();
 			if (moreSuccStates) {
 				final Valuation nextSuccStateVal = PathUtils.extractValuation(solver.getModel(), indexes);
 

@@ -33,7 +33,7 @@ public class TcfaNetworkExplTest {
 	@Test
 	@Ignore
 	public void test() {
-		final int n = 4;
+		final int n = 2;
 		final VarDecl<IntType> vlock = Var("lock", Int());
 		final TCFA fischer = TcfaNetworkTestHelper.fischer(n, vlock);
 

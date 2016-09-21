@@ -1,6 +1,7 @@
 package hu.bme.mit.theta.analysis.expr;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.expr.impl.Exprs.Not;
 
 import java.util.function.Predicate;
 
@@ -23,11 +24,10 @@ public class ExprStatePredicate implements Predicate<ExprState> {
 	public boolean test(final ExprState state) {
 		solver.push();
 		solver.add(PathUtils.unfold(state.toExpr(), 0));
-		solver.add(PathUtils.unfold(expr, 0));
-		solver.check();
-		final boolean target = solver.getStatus().boolValue();
+		solver.add(Not(PathUtils.unfold(expr, 0)));
+		final boolean result = solver.check().isUnsat();
 		solver.pop();
-		return target;
+		return result;
 	}
 
 }

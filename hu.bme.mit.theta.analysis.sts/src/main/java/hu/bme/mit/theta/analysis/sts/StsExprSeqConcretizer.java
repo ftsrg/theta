@@ -67,7 +67,7 @@ public class StsExprSeqConcretizer implements ConcretizerOp<ExprState, StsAction
 		}
 		solver.add(markers.get(counterexample.length()), sts.unroll(negProp, counterexample.length() - 1));
 
-		final boolean concretizable = solver.check().boolValue();
+		final boolean concretizable = solver.check().isSat();
 
 		if (concretizable) {
 			final List<Valuation> trace = sts.extractTrace(solver.getModel(), counterexample.length());
