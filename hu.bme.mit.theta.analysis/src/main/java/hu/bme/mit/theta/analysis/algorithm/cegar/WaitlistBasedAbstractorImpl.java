@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.analysis.algorithm.impl;
+package hu.bme.mit.theta.analysis.algorithm.cegar;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -9,9 +9,10 @@ import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.Precision;
 import hu.bme.mit.theta.analysis.State;
-import hu.bme.mit.theta.analysis.algorithm.Abstractor;
-import hu.bme.mit.theta.analysis.algorithm.AbstractorStatus;
-import hu.bme.mit.theta.analysis.algorithm.impl.waitlist.Waitlist;
+import hu.bme.mit.theta.analysis.algorithm.ARG;
+import hu.bme.mit.theta.analysis.algorithm.ArgEdge;
+import hu.bme.mit.theta.analysis.algorithm.ArgNode;
+import hu.bme.mit.theta.analysis.algorithm.Waitlist;
 
 public class WaitlistBasedAbstractorImpl<S extends State, A extends Action, P extends Precision>
 		implements Abstractor<S, A, P> {

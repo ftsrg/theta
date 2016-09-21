@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.analysis.algorithm.impl;
+package hu.bme.mit.theta.analysis.algorithm;
 
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.State;

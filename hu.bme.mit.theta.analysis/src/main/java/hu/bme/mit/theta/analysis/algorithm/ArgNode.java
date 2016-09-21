@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.analysis.algorithm.impl;
+package hu.bme.mit.theta.analysis.algorithm;
 
 import java.util.Collection;
 import java.util.Collections;

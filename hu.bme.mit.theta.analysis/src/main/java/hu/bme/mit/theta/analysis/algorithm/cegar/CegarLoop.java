@@ -1,15 +1,15 @@
-package hu.bme.mit.theta.analysis.algorithm;
+package hu.bme.mit.theta.analysis.algorithm.cegar;
 
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Precision;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.Trace;
 
-public interface CEGARLoop<P extends Precision, CS extends State, A extends Action> {
+public interface CegarLoop<P extends Precision, CS extends State, A extends Action> {
 
-	CEGARStatus check(final P initPrecision);
+	CegarStatus check(final P initPrecision);
 
-	CEGARStatus getStatus();
+	CegarStatus getStatus();
 
 	Trace<CS, A> getCounterexample();
 }

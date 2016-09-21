@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.analysis.algorithm.impl.waitlist;
+package hu.bme.mit.theta.analysis.algorithm;
 
 import java.util.Collection;
 

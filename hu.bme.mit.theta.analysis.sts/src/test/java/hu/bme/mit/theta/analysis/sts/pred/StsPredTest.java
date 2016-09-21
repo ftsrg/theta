@@ -18,21 +18,21 @@ import java.util.function.Predicate;
 import org.junit.Test;
 
 import hu.bme.mit.theta.analysis.ExprState;
-import hu.bme.mit.theta.analysis.algorithm.Abstractor;
+import hu.bme.mit.theta.analysis.algorithm.ArgNode;
 import hu.bme.mit.theta.analysis.algorithm.ArgPrinter;
-import hu.bme.mit.theta.analysis.algorithm.impl.ArgNode;
-import hu.bme.mit.theta.analysis.algorithm.impl.CEGARLoopImpl;
-import hu.bme.mit.theta.analysis.algorithm.impl.RefutationBasedRefiner;
-import hu.bme.mit.theta.analysis.algorithm.impl.WaitlistBasedAbstractorImpl;
-import hu.bme.mit.theta.analysis.algorithm.impl.refinerops.GlobalPredItpRefinerOp;
-import hu.bme.mit.theta.analysis.algorithm.impl.waitlist.Waitlist;
-import hu.bme.mit.theta.analysis.algorithm.impl.waitlist.impl.LIFOWaitlist;
+import hu.bme.mit.theta.analysis.algorithm.LifoWaitlist;
+import hu.bme.mit.theta.analysis.algorithm.Waitlist;
+import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
+import hu.bme.mit.theta.analysis.algorithm.cegar.CegarLoopImpl;
+import hu.bme.mit.theta.analysis.algorithm.cegar.GlobalPredItpRefinerOp;
+import hu.bme.mit.theta.analysis.algorithm.cegar.ItpRefutation;
+import hu.bme.mit.theta.analysis.algorithm.cegar.RefutationBasedRefiner;
+import hu.bme.mit.theta.analysis.algorithm.cegar.WaitlistBasedAbstractorImpl;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.impl.ExprStatePredicate;
 import hu.bme.mit.theta.analysis.pred.SimplePredPrecision;
 import hu.bme.mit.theta.analysis.pred.PredPrecision;
 import hu.bme.mit.theta.analysis.pred.PredState;
-import hu.bme.mit.theta.analysis.refutation.ItpRefutation;
 import hu.bme.mit.theta.analysis.sts.StsAction;
 import hu.bme.mit.theta.analysis.sts.StsExprSeqConcretizer;
 import hu.bme.mit.theta.core.decl.VarDecl;
@@ -72,7 +72,7 @@ public class StsPredTest {
 
 		final SimplePredPrecision precision = SimplePredPrecision.create(Collections.singleton(Lt(x, Int(mod))));
 
-		final Waitlist<ArgNode<PredState, StsAction>> waitlist = new LIFOWaitlist<>();
+		final Waitlist<ArgNode<PredState, StsAction>> waitlist = new LifoWaitlist<>();
 
 		final Abstractor<PredState, StsAction, PredPrecision> abstractor = new WaitlistBasedAbstractorImpl<>(analysis,
 				target, waitlist);
@@ -83,7 +83,7 @@ public class StsPredTest {
 		final RefutationBasedRefiner<PredState, ExplState, ItpRefutation, SimplePredPrecision, StsAction> refiner = new RefutationBasedRefiner<>(
 				concretizerOp, refinerOp);
 
-		final CEGARLoopImpl<PredState, StsAction, SimplePredPrecision, ExplState> cegarLoop = new CEGARLoopImpl<>(
+		final CegarLoopImpl<PredState, StsAction, SimplePredPrecision, ExplState> cegarLoop = new CegarLoopImpl<>(
 				abstractor, refiner);
 
 		cegarLoop.check(precision);

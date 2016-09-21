@@ -2,10 +2,6 @@ package hu.bme.mit.theta.analysis.algorithm;
 
 import static java.lang.System.lineSeparator;
 
-import hu.bme.mit.theta.analysis.algorithm.impl.ARG;
-import hu.bme.mit.theta.analysis.algorithm.impl.ArgEdge;
-import hu.bme.mit.theta.analysis.algorithm.impl.ArgNode;
-
 public class ArgPrinter {
 
 	private ArgPrinter() {
