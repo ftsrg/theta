@@ -13,7 +13,6 @@ import hu.bme.mit.theta.core.expr.LitExpr;
 import hu.bme.mit.theta.formalism.tcfa.dsl.gen.TcfaDslLexer;
 import hu.bme.mit.theta.formalism.tcfa.dsl.gen.TcfaDslParser;
 import hu.bme.mit.theta.formalism.tcfa.dsl.gen.TcfaDslParser.SpecContext;
-import hu.bme.mit.theta.formalism.tcfa.dsl.impl.TcfaSpecCreator;
 
 public final class TcfaDslManager {
 

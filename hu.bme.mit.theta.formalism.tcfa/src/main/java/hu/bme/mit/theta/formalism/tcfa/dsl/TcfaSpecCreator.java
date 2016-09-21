@@ -1,9 +1,9 @@
-package hu.bme.mit.theta.formalism.tcfa.dsl.impl;
+package hu.bme.mit.theta.formalism.tcfa.dsl;
 
-import static hu.bme.mit.theta.formalism.tcfa.dsl.impl.TcfaDslHelper.createConstDefs;
-import static hu.bme.mit.theta.formalism.tcfa.dsl.impl.TcfaDslHelper.declareConstDecls;
-import static hu.bme.mit.theta.formalism.tcfa.dsl.impl.TcfaDslHelper.declareVarDecls;
-import static hu.bme.mit.theta.formalism.tcfa.dsl.impl.TcfaDslHelper.resolveTcfa;
+import static hu.bme.mit.theta.formalism.tcfa.dsl.TcfaDslHelper.createConstDefs;
+import static hu.bme.mit.theta.formalism.tcfa.dsl.TcfaDslHelper.declareConstDecls;
+import static hu.bme.mit.theta.formalism.tcfa.dsl.TcfaDslHelper.declareVarDecls;
+import static hu.bme.mit.theta.formalism.tcfa.dsl.TcfaDslHelper.resolveTcfa;
 
 import java.util.List;
 
@@ -15,7 +15,6 @@ import hu.bme.mit.theta.core.model.Assignment;
 import hu.bme.mit.theta.core.model.impl.AssignmentImpl;
 import hu.bme.mit.theta.core.model.impl.NestedAssignmentImpl;
 import hu.bme.mit.theta.formalism.tcfa.TCFA;
-import hu.bme.mit.theta.formalism.tcfa.dsl.TcfaSpec;
 import hu.bme.mit.theta.formalism.tcfa.dsl.gen.TcfaDslParser.SpecContext;
 import hu.bme.mit.theta.formalism.tcfa.dsl.gen.TcfaDslParser.TcfaDeclContext;
 
@@ -38,7 +37,7 @@ public final class TcfaSpecCreator {
 		final Assignment constAssignment = createConstDefs(scope, paramAssignment, specCtx.constDecls);
 		final Assignment assignment = new NestedAssignmentImpl(paramAssignment, constAssignment);
 
-		final TcfaSpecImpl spec = new TcfaSpecImpl();
+		final TcfaSpec spec = new TcfaSpec();
 
 		createTcfas(spec, scope, assignment, specCtx.tcfaDecls);
 
@@ -60,7 +59,7 @@ public final class TcfaSpecCreator {
 
 	////
 
-	private static void createTcfas(final TcfaSpecImpl spec, final Scope scope, final Assignment assignment,
+	private static void createTcfas(final TcfaSpec spec, final Scope scope, final Assignment assignment,
 			final List<? extends TcfaDeclContext> tcfaDeclCtxs) {
 		for (final TcfaDeclContext tcfaDeclCtx : tcfaDeclCtxs) {
 			final String name = tcfaDeclCtx.name.getText();
