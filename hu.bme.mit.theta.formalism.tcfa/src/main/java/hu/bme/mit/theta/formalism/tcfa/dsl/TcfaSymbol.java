@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.formalism.tcfa.dsl.impl;
+package hu.bme.mit.theta.formalism.tcfa.dsl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 

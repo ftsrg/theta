@@ -1,13 +1,13 @@
-package hu.bme.mit.theta.formalism.tcfa.dsl.impl;
+package hu.bme.mit.theta.formalism.tcfa.dsl;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.utils.impl.ExprUtils.simplify;
-import static hu.bme.mit.theta.formalism.tcfa.dsl.impl.TcfaDslHelper.createConstDefs;
-import static hu.bme.mit.theta.formalism.tcfa.dsl.impl.TcfaDslHelper.declareConstDecls;
-import static hu.bme.mit.theta.formalism.tcfa.dsl.impl.TcfaDslHelper.declareVarDecls;
-import static hu.bme.mit.theta.formalism.tcfa.dsl.impl.TcfaDslHelper.resolveTcfa;
+import static hu.bme.mit.theta.formalism.tcfa.dsl.TcfaDslHelper.createConstDefs;
+import static hu.bme.mit.theta.formalism.tcfa.dsl.TcfaDslHelper.declareConstDecls;
+import static hu.bme.mit.theta.formalism.tcfa.dsl.TcfaDslHelper.declareVarDecls;
+import static hu.bme.mit.theta.formalism.tcfa.dsl.TcfaDslHelper.resolveTcfa;
 import static java.util.stream.Collectors.toList;
 
 import java.util.Collection;
