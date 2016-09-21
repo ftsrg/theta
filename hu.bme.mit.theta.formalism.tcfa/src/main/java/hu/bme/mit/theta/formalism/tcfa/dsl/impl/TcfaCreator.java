@@ -24,6 +24,8 @@ import hu.bme.mit.theta.core.model.impl.AssignmentImpl;
 import hu.bme.mit.theta.core.model.impl.NestedAssignmentImpl;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.BoolType;
+import hu.bme.mit.theta.formalism.tcfa.NetworkTcfa;
+import hu.bme.mit.theta.formalism.tcfa.SimpleTcfa;
 import hu.bme.mit.theta.formalism.tcfa.TCFA;
 import hu.bme.mit.theta.formalism.tcfa.TcfaLoc;
 import hu.bme.mit.theta.formalism.tcfa.dsl.gen.TcfaDslBaseVisitor;
@@ -33,8 +35,6 @@ import hu.bme.mit.theta.formalism.tcfa.dsl.gen.TcfaDslParser.LocContext;
 import hu.bme.mit.theta.formalism.tcfa.dsl.gen.TcfaDslParser.ParenTcfaContext;
 import hu.bme.mit.theta.formalism.tcfa.dsl.gen.TcfaDslParser.ProdTcfaContext;
 import hu.bme.mit.theta.formalism.tcfa.dsl.gen.TcfaDslParser.RefTcfaContext;
-import hu.bme.mit.theta.formalism.tcfa.impl.NetworkTcfa;
-import hu.bme.mit.theta.formalism.tcfa.impl.SimpleTcfa;
 
 final class TcfaCreator {
 

@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.formalism.tcfa.impl;
+package hu.bme.mit.theta.formalism.tcfa;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -8,8 +8,6 @@ import com.google.common.collect.ImmutableSet;
 
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.BoolType;
-import hu.bme.mit.theta.formalism.tcfa.TcfaEdge;
-import hu.bme.mit.theta.formalism.tcfa.TcfaLoc;
 
 final class SimpleTcfaLoc implements TcfaLoc {
 

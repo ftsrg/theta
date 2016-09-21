@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.formalism.tcfa.impl;
+package hu.bme.mit.theta.formalism.tcfa;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -15,9 +15,6 @@ import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.utils.impl.ExprUtils;
 import hu.bme.mit.theta.core.utils.impl.StmtUtils;
 import hu.bme.mit.theta.formalism.common.decl.ClockDecl;
-import hu.bme.mit.theta.formalism.tcfa.TCFA;
-import hu.bme.mit.theta.formalism.tcfa.TcfaEdge;
-import hu.bme.mit.theta.formalism.tcfa.TcfaLoc;
 
 public final class SimpleTcfa implements TCFA {
 

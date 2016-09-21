@@ -5,8 +5,8 @@ import java.util.List;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.IntType;
+import hu.bme.mit.theta.formalism.tcfa.NetworkTcfa;
 import hu.bme.mit.theta.formalism.tcfa.TCFA;
-import hu.bme.mit.theta.formalism.tcfa.impl.NetworkTcfa;
 import hu.bme.mit.theta.formalism.tcfa.instances.FischerTCFA;
 import hu.bme.mit.theta.formalism.tcfa.instances.ProsigmaTCFA;
 
