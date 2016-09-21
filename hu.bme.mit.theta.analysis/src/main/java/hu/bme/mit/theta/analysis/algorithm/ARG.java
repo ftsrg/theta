@@ -17,7 +17,6 @@ import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.Precision;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.Trace;
-import hu.bme.mit.theta.analysis.impl.TraceImpl;
 
 public final class ARG<S extends State, A extends Action, P extends Precision> {
 
@@ -87,7 +86,7 @@ public final class ARG<S extends State, A extends Action, P extends Precision> {
 				running = null;
 			}
 		} while (running != null);
-		return new TraceImpl<>(states, actions);
+		return new Trace<>(states, actions);
 	}
 
 	public Collection<Trace<S, A>> getCounterexamples() {
