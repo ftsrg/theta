@@ -23,9 +23,9 @@ import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.IntType;
 import hu.bme.mit.theta.core.type.RatType;
 import hu.bme.mit.theta.formalism.common.decl.ClockDecl;
+import hu.bme.mit.theta.formalism.tcfa.SimpleTcfa;
 import hu.bme.mit.theta.formalism.tcfa.TCFA;
 import hu.bme.mit.theta.formalism.tcfa.TcfaLoc;
-import hu.bme.mit.theta.formalism.tcfa.impl.SimpleTcfa;
 
 @Deprecated
 public class ProsigmaTCFA {

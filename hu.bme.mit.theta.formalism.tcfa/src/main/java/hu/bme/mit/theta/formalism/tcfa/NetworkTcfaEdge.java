@@ -1,9 +1,8 @@
-package hu.bme.mit.theta.formalism.tcfa.impl;
+package hu.bme.mit.theta.formalism.tcfa;
 
 import java.util.List;
 
 import hu.bme.mit.theta.core.stmt.Stmt;
-import hu.bme.mit.theta.formalism.tcfa.TcfaEdge;
 
 final class NetworkTcfaEdge implements TcfaEdge {
 

@@ -1,12 +1,10 @@
-package hu.bme.mit.theta.formalism.tcfa.impl;
+package hu.bme.mit.theta.formalism.tcfa;
 
 import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.theta.core.stmt.Stmt;
-import hu.bme.mit.theta.formalism.tcfa.TcfaEdge;
-import hu.bme.mit.theta.formalism.tcfa.TcfaLoc;
 
 final class SimpleTcfaEdge implements TcfaEdge {
 

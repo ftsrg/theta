@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.formalism.tcfa.impl;
+package hu.bme.mit.theta.formalism.tcfa;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.stream.Collectors.toSet;
@@ -12,8 +12,6 @@ import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.BoolType;
-import hu.bme.mit.theta.formalism.tcfa.TcfaEdge;
-import hu.bme.mit.theta.formalism.tcfa.TcfaLoc;
 
 public final class NetworkTcfaLoc implements TcfaLoc {
 
