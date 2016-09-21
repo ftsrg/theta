@@ -38,7 +38,7 @@ class StsExplTransferFunction implements TransferFunction<ExplState, StsAction, 
 
 		solver.push();
 		solver.add(PathUtils.unfold(state.toExpr(), 0));
-		action.getTrans().stream().forEach(t -> solver.add(PathUtils.unfold(t, 0)));
+		solver.add(PathUtils.unfold(action.getTrans(), 0));
 		// TODO: optimization: cache the unfolded invar for 0 and 1
 		invar.stream().forEach(i -> solver.add(PathUtils.unfold(i, 0)));
 		invar.stream().forEach(i -> solver.add(PathUtils.unfold(i, 1)));
