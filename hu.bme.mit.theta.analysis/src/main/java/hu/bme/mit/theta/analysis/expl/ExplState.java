@@ -6,7 +6,7 @@ import java.util.Collection;
 import java.util.Optional;
 import java.util.StringJoiner;
 
-import hu.bme.mit.theta.analysis.ExprState;
+import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.Expr;

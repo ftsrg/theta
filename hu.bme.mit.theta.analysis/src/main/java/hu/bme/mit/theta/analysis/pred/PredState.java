@@ -8,7 +8,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.StringJoiner;
 
-import hu.bme.mit.theta.analysis.ExprState;
+import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.impl.Exprs;
 import hu.bme.mit.theta.core.type.BoolType;
