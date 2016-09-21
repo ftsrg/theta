@@ -73,10 +73,4 @@ public class PredDomain implements Domain<PredState> {
 		return isLeq;
 	}
 
-	@Override
-	public PredState join(final PredState state1, final PredState state2) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
-	}
-
 }

@@ -6,7 +6,6 @@ import hu.bme.mit.theta.analysis.composite.CompositeState;
 import hu.bme.mit.theta.analysis.expl.ExplDomain;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.tcfa.TcfaDomain;
-import hu.bme.mit.theta.analysis.tcfa.TcfaState;
 import hu.bme.mit.theta.analysis.zone.ZoneDomain;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
 
@@ -40,12 +39,6 @@ final class TcfaLawiDomain implements Domain<TcfaLawiState> {
 	@Override
 	public boolean isLeq(final TcfaLawiState state1, final TcfaLawiState state2) {
 		return domain.isLeq(state1.getState(), state2.getState());
-	}
-
-	@Override
-	public TcfaLawiState join(final TcfaLawiState state1, final TcfaLawiState state2) {
-		final TcfaState<CompositeState<ZoneState, ExplState>> state = domain.join(state1.getState(), state2.getState());
-		return TcfaLawiState.create(state);
 	}
 
 }

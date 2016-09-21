@@ -27,10 +27,4 @@ public class LocDomain<L extends Loc<L, ?>> implements Domain<LocState<L>> {
 		return state1.equals(state2);
 	}
 
-	@Override
-	public LocState<L> join(final LocState<L> state1, final LocState<L> state2) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
-	}
-
 }
