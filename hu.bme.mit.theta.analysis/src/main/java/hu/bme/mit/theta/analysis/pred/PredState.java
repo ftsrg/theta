@@ -3,17 +3,17 @@ package hu.bme.mit.theta.analysis.pred;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.StringJoiner;
+
+import com.google.common.collect.ImmutableSet;
 
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.impl.Exprs;
 import hu.bme.mit.theta.core.type.BoolType;
 
-public class PredState implements ExprState {
+public final class PredState implements ExprState {
 
 	private static final int HASH_SEED = 7621;
 
@@ -23,17 +23,49 @@ public class PredState implements ExprState {
 
 	private volatile int hashCode;
 
-	// Constructor does not copy the set, the static initializers should do the copying
-	private PredState(final Set<Expr<? extends BoolType>> preds) {
-		this.preds = checkNotNull(preds);
+	private PredState(final Collection<? extends Expr<? extends BoolType>> preds) {
+		checkNotNull(preds);
+		this.preds = ImmutableSet.copyOf(preds);
 	}
 
-	public static PredState create(final Collection<Expr<? extends BoolType>> preds) {
-		return new PredState(new HashSet<>(checkNotNull(preds)));
+	public static PredState create(final Collection<? extends Expr<? extends BoolType>> preds) {
+		return new PredState(preds);
 	}
 
-	public Collection<Expr<? extends BoolType>> getPreds() {
-		return Collections.unmodifiableCollection(preds);
+	// Convenience factory methods
+
+	public static PredState create() {
+		return new PredState(ImmutableSet.of());
+	}
+
+	public static PredState create(final Expr<? extends BoolType> pred) {
+		return new PredState(ImmutableSet.of(pred));
+	}
+
+	public static PredState create(final Expr<? extends BoolType> pred1, final Expr<? extends BoolType> pred2) {
+		return new PredState(ImmutableSet.of(pred1, pred2));
+	}
+
+	public static PredState create(final Expr<? extends BoolType> pred1, final Expr<? extends BoolType> pred2,
+			final Expr<? extends BoolType> pred3) {
+		return new PredState(ImmutableSet.of(pred1, pred2, pred3));
+	}
+
+	public static PredState create(final Expr<? extends BoolType> pred1, final Expr<? extends BoolType> pred2,
+			final Expr<? extends BoolType> pred3, final Expr<? extends BoolType> pred4) {
+		return new PredState(ImmutableSet.of(pred1, pred2, pred3, pred4));
+	}
+
+	public static PredState create(final Expr<? extends BoolType> pred1, final Expr<? extends BoolType> pred2,
+			final Expr<? extends BoolType> pred3, final Expr<? extends BoolType> pred4,
+			final Expr<? extends BoolType> pred5) {
+		return new PredState(ImmutableSet.of(pred1, pred2, pred3, pred4, pred5));
+	}
+
+	////
+
+	public Set<Expr<? extends BoolType>> getPreds() {
+		return preds;
 	}
 
 	@Override
