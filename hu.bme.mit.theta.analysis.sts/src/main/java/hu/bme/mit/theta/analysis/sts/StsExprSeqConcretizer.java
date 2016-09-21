@@ -16,7 +16,6 @@ import hu.bme.mit.theta.analysis.algorithm.cegar.CounterexampleStatus;
 import hu.bme.mit.theta.analysis.algorithm.cegar.ItpRefutation;
 import hu.bme.mit.theta.analysis.algorithm.cegar.ItpRefutationImpl;
 import hu.bme.mit.theta.analysis.expl.ExplState;
-import hu.bme.mit.theta.analysis.impl.TraceImpl;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.impl.Exprs;
 import hu.bme.mit.theta.core.model.impl.Valuation;
@@ -74,7 +73,7 @@ public class StsExprSeqConcretizer implements ConcretizerOp<ExprState, StsAction
 			final List<Valuation> trace = sts.extractTrace(solver.getModel(), counterexample.length());
 			final List<ExplState> explStateTrace = trace.stream().map(s -> ExplState.create(s))
 					.collect(Collectors.toList());
-			concreteCex = Optional.of(new TraceImpl<>(explStateTrace, counterexample.getActions()));
+			concreteCex = Optional.of(new Trace<>(explStateTrace, counterexample.getActions()));
 		} else {
 			final List<Expr<? extends BoolType>> interpolants = new ArrayList<>();
 			for (int i = 0; i < markers.size() - 1; ++i) {
