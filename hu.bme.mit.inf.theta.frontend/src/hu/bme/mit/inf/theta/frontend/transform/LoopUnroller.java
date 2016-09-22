@@ -6,12 +6,27 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
+import hu.bme.mit.inf.theta.frontend.dependency.LoopAnalysis;
 import hu.bme.mit.inf.theta.frontend.dependency.LoopInfo;
 import hu.bme.mit.inf.theta.frontend.ir.BasicBlock;
 import hu.bme.mit.inf.theta.frontend.ir.Function;
 
-public class LoopUnroller {
+public class LoopUnroller implements FunctionTransformer {
 
+	private int maxDepth;
+
+	public LoopUnroller(int depth) {
+		this.maxDepth = depth;
+	}
+
+	@Override
+	public void transform(Function function) {
+		List<LoopInfo> loops = LoopInfo.findLoops(function);
+
+		for (LoopInfo loop : loops) {
+			this.unroll(loop, this.maxDepth);
+		}
+	}
 
 	public void unroll(LoopInfo loop, int depth) {
 		BasicBlock header = loop.getHeader();
@@ -62,8 +77,11 @@ public class LoopUnroller {
 				}
 			}
 		}
+	}
 
-
+	@Override
+	public String getTransformationName() {
+		return "LoopUnroll";
 	}
 
 }

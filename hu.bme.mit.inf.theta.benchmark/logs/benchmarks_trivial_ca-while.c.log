@@ -1,0 +1,191 @@
+
+----------CFA SLICES----------
+digraph cfa {
+edge [fontname = "courier"]
+0
+error [peripheries=2]
+1
+end
+2
+begin
+0 -> error[label="\
+Assume(Not(Neq(i, 0)))\n\
+"]
+1 -> 2[label="\
+Assign(i, Add(i, 1))\n\
+"]
+0 -> end[label="\
+Assume(Neq(i, 0))\n\
+"]
+2 -> 0[label="\
+Assume(Not(Lt(i, 5)))\n\
+"]
+begin -> 2[label="\
+Assign(i, 0)\n\
+"]
+2 -> 1[label="\
+Assume(Lt(i, 5))\n\
+"]
+}
+
+----------CFA SLICES----------
+digraph cfa {
+edge [fontname = "courier"]
+error [peripheries=2]
+0
+1
+2
+begin
+end
+3
+4
+3 -> 2[label="\
+Assume(Lt(i, 5))\n\
+"]
+0 -> end[label="\
+Assume(Neq(sum, 0))\n\
+"]
+3 -> 0[label="\
+Assume(Not(Lt(i, 5)))\n\
+"]
+2 -> 4[label="\
+Assign(sum, Add(sum, i))\n\
+"]
+0 -> error[label="\
+Assume(Not(Neq(sum, 0)))\n\
+"]
+begin -> 1[label="\
+Assign(i, 0)\n\
+"]
+1 -> 3[label="\
+Assign(sum, 0)\n\
+"]
+4 -> 3[label="\
+Assign(i, Add(i, 1))\n\
+"]
+}
+
+----------CFA SLICES----------
+digraph cfa {
+edge [fontname = "courier"]
+0
+begin
+1
+2
+3
+4
+end
+error [peripheries=2]
+3 -> end[label="\
+Assume(Eq(sum, 10))\n\
+"]
+1 -> 0[label="\
+Assume(Lt(i, 5))\n\
+"]
+1 -> 3[label="\
+Assume(Not(Lt(i, 5)))\n\
+"]
+2 -> 1[label="\
+Assign(sum, 0)\n\
+"]
+4 -> 1[label="\
+Assign(i, Add(i, 1))\n\
+"]
+3 -> error[label="\
+Assume(Not(Eq(sum, 10)))\n\
+"]
+begin -> 2[label="\
+Assign(i, 0)\n\
+"]
+0 -> 4[label="\
+Assign(sum, Add(sum, i))\n\
+"]
+}
+
+----------CFA SLICES----------
+digraph cfa {
+edge [fontname = "courier"]
+0
+error [peripheries=2]
+begin
+1
+2
+3
+end
+4
+2 -> 1[label="\
+Assume(Not(Lt(i, 5)))\n\
+"]
+1 -> error[label="\
+Assume(Not(Neq(sum, 10)))\n\
+"]
+begin -> 3[label="\
+Assign(i, 0)\n\
+"]
+0 -> 2[label="\
+Assign(i, Add(i, 1))\n\
+"]
+2 -> 4[label="\
+Assume(Lt(i, 5))\n\
+"]
+1 -> end[label="\
+Assume(Neq(sum, 10))\n\
+"]
+3 -> 2[label="\
+Assign(sum, 0)\n\
+"]
+4 -> 0[label="\
+Assign(sum, Add(sum, i))\n\
+"]
+}
+Found an error path with length of 3
+Found an error path with length of 5
+Found an error path with length of 7
+Found an error path with length of 9
+Found an error path with length of 11
+Found an error path with length of 13
+Found an error path with length of 15
+Found an error path with length of 17
+Found an error path with length of 19
+Found an error path with length of 21
+Found an error path with length of 23
+Found an error path with length of 25
+Found an error path with length of 27
+Found an error path with length of 29
+Found an error path with length of 31
+Found an error path with length of 33
+Found an error path with length of 35
+Found an error path with length of 37
+Found an error path with length of 39
+Found an error path with length of 4
+Found an error path with length of 7
+Found an error path with length of 10
+Found an error path with length of 13
+Found an error path with length of 16
+Found an error path with length of 19
+Found an error path with length of 22
+Found an error path with length of 25
+Found an error path with length of 28
+Found an error path with length of 31
+Found an error path with length of 34
+Found an error path with length of 37
+Found an error path with length of 4
+Found an error path with length of 7
+Found an error path with length of 10
+Found an error path with length of 13
+Found an error path with length of 16
+Found an error path with length of 19
+Found an error path with length of 22
+Found an error path with length of 25
+Found an error path with length of 28
+Found an error path with length of 31
+Found an error path with length of 34
+Found an error path with length of 37
+Found an error path with length of 4
+Found an error path with length of 7
+Found an error path with length of 10
+Found an error path with length of 13
+Found an error path with length of 16
+Found an error path with length of 19
+Check FAILED, system model:
+   Model(_i_2 <- 1, _sum_2 <- 0, _sum_3 <- 1, _sum_4 <- 3, _i_5 <- 4, _i_1 <- 0, _i_3 <- 2, _sum_5 <- 6, _i_6 <- 5, _sum_6 <- 10, _sum_1 <- 0, _i_4 <- 3)

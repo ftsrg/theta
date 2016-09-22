@@ -1,0 +1,107 @@
+
+----------CFA SLICES----------
+digraph cfa {
+edge [fontname = "courier"]
+error [peripheries=2]
+end
+0
+begin
+1
+1 -> 0[label="\
+Assign(x, tmp_0)\n\
+"]
+0 -> end[label="\
+Assume(Gt(x, 0))\n\
+"]
+0 -> error[label="\
+Assume(Not(Gt(x, 0)))\n\
+"]
+begin -> 1[label="\
+Havoc(tmp_0)\n\
+"]
+}
+
+----------CFA SLICES----------
+digraph cfa {
+edge [fontname = "courier"]
+0
+1
+2
+begin
+error [peripheries=2]
+3
+4
+end
+5
+6
+6 -> 2[label="\
+Assign(sum, Add(sum, i))\n\
+"]
+2 -> 4[label="\
+Assign(i, Add(i, 1))\n\
+"]
+3 -> end[label="\
+Assume(Eq(sum, 0))\n\
+"]
+5 -> 4[label="\
+Assign(sum, 0)\n\
+"]
+1 -> 5[label="\
+Assign(i, 0)\n\
+"]
+begin -> 0[label="\
+Havoc(tmp_0)\n\
+"]
+4 -> 6[label="\
+Assume(Lt(i, x))\n\
+"]
+4 -> 3[label="\
+Assume(Not(Lt(i, x)))\n\
+"]
+3 -> error[label="\
+Assume(Not(Eq(sum, 0)))\n\
+"]
+0 -> 1[label="\
+Assign(x, tmp_0)\n\
+"]
+}
+
+----------CFA SLICES----------
+digraph cfa {
+edge [fontname = "courier"]
+begin
+0
+error [peripheries=2]
+1
+2
+3
+end
+4
+4 -> 3[label="\
+Assign(x, tmp_0)\n\
+"]
+begin -> 4[label="\
+Havoc(tmp_0)\n\
+"]
+2 -> 1[label="\
+Assume(Lt(i, x))\n\
+"]
+0 -> error[label="\
+Assume(Not(Eq(i, 0)))\n\
+"]
+2 -> 0[label="\
+Assume(Not(Lt(i, x)))\n\
+"]
+0 -> end[label="\
+Assume(Eq(i, 0))\n\
+"]
+1 -> 2[label="\
+Assign(i, Add(i, 1))\n\
+"]
+3 -> 2[label="\
+Assign(i, 0)\n\
+"]
+}
+Found an error path with length of 3
+Check FAILED, system model:
+   Model(_x_1 <- 0, _tmp_0_1 <- 0)

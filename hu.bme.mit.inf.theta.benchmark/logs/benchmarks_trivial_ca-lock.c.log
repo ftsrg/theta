@@ -1,0 +1,40 @@
+
+----------CFA SLICES----------
+digraph cfa {
+edge [fontname = "courier"]
+begin
+0
+end
+error [peripheries=2]
+1
+2
+3
+4
+2 -> error[label="\
+Assume(Not(Neq(lock, 0)))\n\
+"]
+4 -> 2[label="\
+Assign(lock, 0)\n\
+"]
+0 -> 3[label="\
+Havoc(tmp_0)\n\
+"]
+1 -> 2[label="\
+Assume(Not(Eq(Mod(pv, 2), 0)))\n\
+"]
+1 -> 4[label="\
+Assume(Eq(Mod(pv, 2), 0))\n\
+"]
+3 -> 1[label="\
+Assign(pv, tmp_0)\n\
+"]
+begin -> 0[label="\
+Assign(lock, 0)\n\
+"]
+2 -> end[label="\
+Assume(Neq(lock, 0))\n\
+"]
+}
+Found an error path with length of 5
+Check FAILED, system model:
+   Model(_lock_1 <- 0, _pv_1 <- -1, _tmp_0_1 <- -1)

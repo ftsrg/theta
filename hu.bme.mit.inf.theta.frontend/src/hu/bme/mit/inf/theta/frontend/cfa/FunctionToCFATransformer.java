@@ -14,6 +14,7 @@ import hu.bme.mit.inf.theta.formalism.cfa.CFA;
 import hu.bme.mit.inf.theta.formalism.cfa.CfaEdge;
 import hu.bme.mit.inf.theta.formalism.cfa.CfaLoc;
 import hu.bme.mit.inf.theta.formalism.cfa.impl.MutableCfa;
+import hu.bme.mit.inf.theta.formalism.common.expr.ProcCallExpr;
 import hu.bme.mit.inf.theta.formalism.common.stmt.impl.Stmts;
 import hu.bme.mit.inf.theta.frontend.ir.BasicBlock;
 import hu.bme.mit.inf.theta.frontend.ir.Function;
@@ -210,7 +211,15 @@ public class FunctionToCFATransformer {
 
 		if (node instanceof AssignNode<?, ?>) {
 			AssignNode<? extends Type, ? extends Type> assign = (AssignNode<?, ?>) node;
-			edge.getStmts().add(Stmts.Assign(assign.getVar(), ExprUtils.cast(assign.getExpr(), assign.getVar().getType().getClass())));
+
+			// TODO: Temporary hack.
+			// Currently procedure calls are not supported in the solver, this workaround assigns
+			// an undefined value to each function call results
+			if (assign.getExpr() instanceof ProcCallExpr<?>) {
+				edge.getStmts().add(Stmts.Havoc(assign.getVar()));
+			} else {
+				edge.getStmts().add(Stmts.Assign(assign.getVar(), ExprUtils.cast(assign.getExpr(), assign.getVar().getType().getClass())));
+			}
 		} else if (node instanceof AssertNode) {
 			AssertNode assrt = (AssertNode) node;
 			edge.getStmts().add(Stmts.Assume(assrt.getCond()));

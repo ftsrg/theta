@@ -10,7 +10,8 @@ Require-Bundle: org.eclipse.ui,
  hu.bme.mit.inf.theta.formalism;bundle-version="1.0.0"
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ActivationPolicy: lazy
-Export-Package: hu.bme.mit.inf.theta.frontend.cfa,
+Export-Package: hu.bme.mit.inf.theta.frontend,
+ hu.bme.mit.inf.theta.frontend.cfa,
  hu.bme.mit.inf.theta.frontend.dependency,
  hu.bme.mit.inf.theta.frontend.ir,
  hu.bme.mit.inf.theta.frontend.ir.node,

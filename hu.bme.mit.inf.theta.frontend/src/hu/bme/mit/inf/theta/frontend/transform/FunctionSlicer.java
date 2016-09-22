@@ -41,8 +41,6 @@ public class FunctionSlicer {
 		ControlDependencyGraph cdg = ControlDependencyGraph.buildGraph(function);
 		UseDefineChain ud = UseDefineChain.buildChain(function);
 
-		System.out.println(IrPrinter.controlDependencyGraph(cdg));
-
 		// Find the predicate nodes
 		for (BasicBlock block : blocks) {
 			for (IrNode node : block.getAllNodes()) {

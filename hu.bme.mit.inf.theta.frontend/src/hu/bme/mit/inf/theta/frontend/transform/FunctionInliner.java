@@ -129,5 +129,10 @@ public class FunctionInliner implements FunctionTransformer {
 		return ref.getDecl();
 	}
 
+	@Override
+	public String getTransformationName() {
+		return "FunctionInline";
+	}
+
 
 }

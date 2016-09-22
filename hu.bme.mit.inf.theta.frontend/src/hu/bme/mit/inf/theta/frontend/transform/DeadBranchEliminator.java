@@ -84,4 +84,9 @@ public class DeadBranchEliminator implements FunctionTransformer {
 		function.normalize();
 	}
 
+	@Override
+	public String getTransformationName() {
+		return "DeadBranchElimination";
+	}
+
 }

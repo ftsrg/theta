@@ -82,7 +82,12 @@ public class ConstantPropagator implements FunctionTransformer {
 			visitor.getConstVars().remove(assign.getVar());
 		}
 
-		assign.setExpr((Expr<ExprType>) expr);
+		assign.setExpr(expr);
+	}
+
+	@Override
+	public String getTransformationName() {
+		return "ConstantPropagation";
 	}
 
 }

@@ -6,4 +6,6 @@ public interface FunctionTransformer {
 
 	public void transform(Function function);
 
+	public String getTransformationName();
+
 }
