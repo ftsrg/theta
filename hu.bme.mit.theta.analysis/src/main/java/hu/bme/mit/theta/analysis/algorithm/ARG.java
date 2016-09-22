@@ -48,6 +48,12 @@ public final class ARG<S extends State, A extends Action, P extends Precision> {
 
 	////
 
+	public boolean isComplete() {
+		return leafNodes.stream().allMatch(ArgNode::isCovered);
+	}
+
+	////
+
 	public Collection<ArgNode<S, A>> getNodes() {
 		return Collections.unmodifiableCollection(nodes);
 	}
