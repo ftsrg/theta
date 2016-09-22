@@ -11,13 +11,15 @@ import static hu.bme.mit.theta.core.expr.impl.Exprs.Lt;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.Not;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.Prime;
 import static hu.bme.mit.theta.core.type.impl.Types.Int;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Collections;
 import java.util.function.Predicate;
 
 import org.junit.Test;
 
-import hu.bme.mit.theta.analysis.algorithm.ArgPrinter;
+import hu.bme.mit.theta.analysis.algorithm.ARG;
+import hu.bme.mit.theta.analysis.algorithm.ArgChecker;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
 import hu.bme.mit.theta.analysis.algorithm.cegar.AbstractorImpl;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarLoopImpl;
@@ -83,8 +85,10 @@ public class StsExplTest {
 				refiner);
 
 		cegarLoop.check(precision);
-		System.out.println(ArgPrinter.toGraphvizString(abstractor.getARG()));
-		System.out.println(cegarLoop.getStatus());
+
+		final ARG<ExplState, StsAction, ?> arg = abstractor.getARG();
+		final ArgChecker checker = ArgChecker.create(solver);
+		assertTrue(checker.isWellLabeled(arg));
 	}
 
 }

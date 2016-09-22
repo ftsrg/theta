@@ -11,14 +11,16 @@ import static hu.bme.mit.theta.core.expr.impl.Exprs.Lt;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.Not;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.Prime;
 import static hu.bme.mit.theta.core.type.impl.Types.Int;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Collections;
 import java.util.function.Predicate;
 
 import org.junit.Test;
 
+import hu.bme.mit.theta.analysis.algorithm.ARG;
+import hu.bme.mit.theta.analysis.algorithm.ArgChecker;
 import hu.bme.mit.theta.analysis.algorithm.ArgNode;
-import hu.bme.mit.theta.analysis.algorithm.ArgPrinter;
 import hu.bme.mit.theta.analysis.algorithm.LifoWaitlist;
 import hu.bme.mit.theta.analysis.algorithm.Waitlist;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
@@ -30,9 +32,9 @@ import hu.bme.mit.theta.analysis.algorithm.cegar.WaitlistBasedAbstractorImpl;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.ExprStatePredicate;
-import hu.bme.mit.theta.analysis.pred.SimplePredPrecision;
 import hu.bme.mit.theta.analysis.pred.PredPrecision;
 import hu.bme.mit.theta.analysis.pred.PredState;
+import hu.bme.mit.theta.analysis.pred.SimplePredPrecision;
 import hu.bme.mit.theta.analysis.sts.StsAction;
 import hu.bme.mit.theta.analysis.sts.StsExprSeqConcretizer;
 import hu.bme.mit.theta.core.decl.VarDecl;
@@ -88,9 +90,9 @@ public class StsPredTest {
 
 		cegarLoop.check(precision);
 
-		System.out.println(ArgPrinter.toGraphvizString(abstractor.getARG()));
-		System.out.println(cegarLoop.getStatus());
-
+		final ARG<PredState, StsAction, ?> arg = abstractor.getARG();
+		final ArgChecker checker = ArgChecker.create(solver);
+		assertTrue(checker.isWellLabeled(arg));
 	}
 
 }
