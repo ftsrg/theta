@@ -12,11 +12,11 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 public class VarIndexes {
 
 	private final int defaultIndex;
-	private final Map<VarDecl<?>, Integer> varToIndex;
+	private final Map<VarDecl<?>, Integer> varToOffset;
 
 	private VarIndexes(final Builder builder) {
 		defaultIndex = builder.defaultIndex;
-		varToIndex = builder.varToIndex;
+		varToOffset = builder.varToOffset;
 	}
 
 	public static VarIndexes all(final int defaultIndex) {
@@ -40,22 +40,19 @@ public class VarIndexes {
 
 	public int get(final VarDecl<?> varDecl) {
 		checkNotNull(varDecl);
-		Integer index = varToIndex.get(varDecl);
-		if (index == null) {
-			index = defaultIndex;
-		}
-		return index;
+		final Integer offset = varToOffset.getOrDefault(varDecl, 0);
+		return defaultIndex + offset;
 	}
 
 	@Override
 	public String toString() {
 		final StringJoiner sj = new StringJoiner(", ", "IndexMap(", ")");
 		sj.add(Integer.toString(defaultIndex));
-		for (final VarDecl<?> varDecl : varToIndex.keySet()) {
+		for (final VarDecl<?> varDecl : varToOffset.keySet()) {
 			final StringBuilder sb = new StringBuilder();
 			sb.append(varDecl.getName());
 			sb.append(" -> ");
-			sb.append(varToIndex.get(varDecl));
+			sb.append(get(varDecl));
 			sj.add(sb);
 		}
 		return sj.toString();
@@ -65,34 +62,30 @@ public class VarIndexes {
 
 	public static final class Builder {
 		private int defaultIndex;
-		private final Map<VarDecl<?>, Integer> varToIndex;
+		private final Map<VarDecl<?>, Integer> varToOffset;
 
 		private Builder(final int defaultIndex) {
 			checkArgument(defaultIndex >= 0);
 			this.defaultIndex = defaultIndex;
-			varToIndex = new HashMap<>();
+			varToOffset = new HashMap<>();
 		}
 
 		private Builder(final VarIndexes varIndexes) {
 			this.defaultIndex = varIndexes.defaultIndex;
-			this.varToIndex = new HashMap<>(varIndexes.varToIndex);
+			this.varToOffset = new HashMap<>(varIndexes.varToOffset);
 		}
 
 		public Builder inc(final VarDecl<?> varDecl) {
-			final Integer index = varToIndex.get(varDecl);
-			if (index == null) {
-				varToIndex.put(varDecl, defaultIndex + 1);
+			final Integer offset = varToOffset.get(varDecl);
+			if (offset == null) {
+				varToOffset.put(varDecl, 1);
 			} else {
-				varToIndex.put(varDecl, index + 1);
+				varToOffset.put(varDecl, offset + 1);
 			}
 			return this;
 		}
 
 		public Builder incAll() {
-			for (final VarDecl<?> varDecl : varToIndex.keySet()) {
-				final int index = varToIndex.get(varDecl);
-				varToIndex.put(varDecl, index + 1);
-			}
 			defaultIndex = defaultIndex + 1;
 			return this;
 		}
