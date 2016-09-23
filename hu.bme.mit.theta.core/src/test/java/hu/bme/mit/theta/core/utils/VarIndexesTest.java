@@ -47,4 +47,15 @@ public class VarIndexesTest {
 		assertEquals(1, indexes.get(z));
 	}
 
+	@Test
+	public void testJoin() {
+		final VarIndexes indexes1 = VarIndexes.builder(0).inc(x).inc(y).build();
+		final VarIndexes indexes2 = VarIndexes.builder(1).inc(x).inc(z).build();
+		final VarIndexes joinedIndexes = indexes1.join(indexes2);
+		
+				assertEquals(2, joinedIndexes.get(x));
+		assertEquals(1, joinedIndexes.get(y));
+		assertEquals(2, joinedIndexes.get(z));
+	}
+
 }

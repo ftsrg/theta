@@ -2,10 +2,15 @@ package hu.bme.mit.theta.core.utils.impl;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.lang.Math.max;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.StringJoiner;
+
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Sets;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
 
@@ -16,7 +21,7 @@ public class VarIndexes {
 
 	private VarIndexes(final Builder builder) {
 		defaultIndex = builder.defaultIndex;
-		varToOffset = builder.varToOffset;
+		varToOffset = ImmutableMap.copyOf(builder.varToOffset);
 	}
 
 	public static VarIndexes all(final int defaultIndex) {
@@ -33,9 +38,19 @@ public class VarIndexes {
 		return new Builder(this);
 	}
 
-	public VarIndexes inc(final VarDecl<?> varDecl) {
+	public VarIndexes inc(final VarDecl<?> varDecl, final int n) {
 		checkNotNull(varDecl);
-		return transform().inc(varDecl).build();
+		checkArgument(n >= 0);
+		return transform().inc(varDecl, n).build();
+	}
+
+	public VarIndexes inc(final VarDecl<?> varDecl) {
+		return inc(varDecl, 1);
+	}
+
+	public VarIndexes join(final VarIndexes indexes) {
+		checkNotNull(indexes);
+		return transform().join(indexes.transform()).build();
 	}
 
 	public int get(final VarDecl<?> varDecl) {
@@ -62,7 +77,7 @@ public class VarIndexes {
 
 	public static final class Builder {
 		private int defaultIndex;
-		private final Map<VarDecl<?>, Integer> varToOffset;
+		private Map<VarDecl<?>, Integer> varToOffset;
 
 		private Builder(final int defaultIndex) {
 			checkArgument(defaultIndex >= 0);
@@ -75,19 +90,52 @@ public class VarIndexes {
 			this.varToOffset = new HashMap<>(varIndexes.varToOffset);
 		}
 
-		public Builder inc(final VarDecl<?> varDecl) {
-			final Integer offset = varToOffset.get(varDecl);
-			if (offset == null) {
-				varToOffset.put(varDecl, 1);
-			} else {
-				varToOffset.put(varDecl, offset + 1);
+		public Builder inc(final VarDecl<?> varDecl, final int n) {
+			checkNotNull(varDecl);
+			checkArgument(n >= 0);
+
+			if (n > 0) {
+				final Integer offset = varToOffset.getOrDefault(varDecl, 0);
+				varToOffset.put(varDecl, offset + n);
 			}
 			return this;
+		}
+
+		public Builder inc(final VarDecl<?> varDecl) {
+			return inc(varDecl, 1);
 		}
 
 		public Builder incAll() {
 			defaultIndex = defaultIndex + 1;
 			return this;
+		}
+
+		public Builder join(final Builder that) {
+			checkNotNull(that);
+
+			final int newDefaultIndex = max(this.defaultIndex, that.defaultIndex);
+			final Map<VarDecl<?>, Integer> newVarToOffset = new HashMap<>();
+
+			final Set<VarDecl<?>> varDecls = Sets.union(this.varToOffset.keySet(), that.varToOffset.keySet());
+			for (final VarDecl<?> varDecl : varDecls) {
+				final int index1 = this.get(varDecl);
+				final int index2 = that.get(varDecl);
+				final int newIndex = max(index1, index2);
+				final int newOffset = newIndex - newDefaultIndex;
+				if (newOffset > 0) {
+					newVarToOffset.put(varDecl, newOffset);
+				}
+			}
+
+			this.defaultIndex = newDefaultIndex;
+			this.varToOffset = newVarToOffset;
+			return this;
+		}
+
+		public int get(final VarDecl<?> varDecl) {
+			checkNotNull(varDecl);
+			final Integer offset = varToOffset.getOrDefault(varDecl, 0);
+			return defaultIndex + offset;
 		}
 
 		public VarIndexes build() {
