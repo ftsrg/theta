@@ -12,8 +12,10 @@ import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.dsl.gen.CoreDslLexer;
 import hu.bme.mit.theta.core.dsl.gen.CoreDslParser;
 import hu.bme.mit.theta.core.dsl.impl.ExprCreatorVisitor;
+import hu.bme.mit.theta.core.dsl.impl.StmtCreatorVisitor;
 import hu.bme.mit.theta.core.dsl.impl.TypeCreatorVisitor;
 import hu.bme.mit.theta.core.expr.Expr;
+import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Type;
 
 public final class CoreDslManager {
@@ -42,6 +44,15 @@ public final class CoreDslManager {
 		final ParseTree tree = parser.expr();
 		return tree.accept(new ExprCreatorVisitor(scope));
 	}
+
+	public Stmt parseStmt(final String string) {
+		checkNotNull(string);
+		final CoreDslParser parser = createParserForString(string);
+		final ParseTree tree = parser.expr();
+		return tree.accept(new StmtCreatorVisitor(scope));
+	}
+
+	////
 
 	private static CoreDslParser createParserForString(final String string) {
 		final ANTLRInputStream input = new ANTLRInputStream(string);
