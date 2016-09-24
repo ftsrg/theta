@@ -27,6 +27,7 @@ import static hu.bme.mit.theta.core.expr.impl.Exprs.Neg;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.Neq;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.Not;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.Or;
+import static hu.bme.mit.theta.core.expr.impl.Exprs.Prime;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.Rat;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.RatDiv;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.Read;
@@ -511,6 +512,8 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
 			return createFuncAppExpr(op, access.params);
 		} else if (access.indexes != null) {
 			return createArrayReadExpr(op, access.indexes);
+		} else if (access.prime != null) {
+			return createPrimeExpr(op);
 		} else {
 			throw new AssertionError();
 		}
@@ -536,6 +539,10 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
 		final Expr<?> index = indexes.get(0);
 
 		return Read(array, index);
+	}
+
+	private Expr<?> createPrimeExpr(final Expr<?> op) {
+		return Prime(op);
 	}
 
 	private List<Expr<?>> createExprList(final ExprListContext ctx) {
