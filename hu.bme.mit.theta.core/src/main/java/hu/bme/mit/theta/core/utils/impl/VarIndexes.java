@@ -16,6 +16,9 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 
 public class VarIndexes {
 
+	private static final VarIndexes ALL_ZERO = new Builder(0).build();
+	private static final VarIndexes ALL_ONE = new Builder(1).build();
+
 	private final int defaultIndex;
 	private final Map<VarDecl<?>, Integer> varToOffset;
 
@@ -26,7 +29,14 @@ public class VarIndexes {
 
 	public static VarIndexes all(final int defaultIndex) {
 		checkArgument(defaultIndex >= 0);
-		return new Builder(defaultIndex).build();
+		switch (defaultIndex) {
+		case 0:
+			return ALL_ZERO;
+		case 1:
+			return ALL_ONE;
+		default:
+			return new Builder(defaultIndex).build();
+		}
 	}
 
 	public static Builder builder(final int defaultIndex) {

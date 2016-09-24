@@ -25,6 +25,12 @@ public class PathUtils {
 
 	////
 
+	public static VarIndexes countPrimes(final Expr<?> expr) {
+		return PrimeCounter.countPrimes(expr);
+	}
+
+	////
+
 	public static <T extends Type> Expr<T> unfold(final Expr<T> expr, final VarIndexes indexes) {
 		checkNotNull(expr);
 		checkNotNull(indexes);
