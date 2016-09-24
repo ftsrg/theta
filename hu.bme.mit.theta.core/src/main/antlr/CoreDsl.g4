@@ -137,6 +137,7 @@ accessorExpr
 access
 	:	params=funcAccess
 	|	indexes=arrayAccess
+	|	prime=primeAccess
 	;
 
 funcAccess
@@ -145,6 +146,10 @@ funcAccess
 	
 arrayAccess
 	:	LBRACK (indexes=exprList)? RBRACK
+	;
+	
+primeAccess
+	:	PRIME
 	;
 	
 primaryExpr
@@ -257,6 +262,10 @@ REM	:	'rem'
 	
 PERCENT
 	:	'%'
+	;
+	
+PRIME
+	:	'\''
 	;
 	
 TRUE:	'true'
