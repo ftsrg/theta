@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.formalism.utils;
+package hu.bme.mit.theta.formalism.sts.utils;
 
 import java.util.Collection;
 
