@@ -10,12 +10,15 @@ import hu.bme.mit.theta.core.model.impl.Valuation;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.formalism.Formalism;
-import hu.bme.mit.theta.formalism.utils.ExprUnroller;
 
 /**
  * Symbolic Transition System (STS) interface.
  */
-public interface STS extends Formalism, ExprUnroller {
+public interface STS extends Formalism {
+	Expr<? extends BoolType> unroll(final Expr<? extends BoolType> expr, final int i);
+
+	Collection<? extends Expr<? extends BoolType>> unroll(final Collection<? extends Expr<? extends BoolType>> exprs,
+			final int i);
 
 	public Collection<VarDecl<? extends Type>> getVars();
 
