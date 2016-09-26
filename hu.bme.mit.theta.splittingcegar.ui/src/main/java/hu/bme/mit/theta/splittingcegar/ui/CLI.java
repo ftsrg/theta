@@ -12,7 +12,7 @@ import hu.bme.mit.theta.common.logging.impl.FileLogger;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.formalism.sts.dsl.StsDslManager;
 import hu.bme.mit.theta.formalism.sts.dsl.impl.StsSpec;
-import hu.bme.mit.theta.frontend.aiger.impl.AIGERLoaderSimple;
+import hu.bme.mit.theta.frontend.aiger.impl.SimpleAigerLoader;
 import hu.bme.mit.theta.splittingcegar.clustered.ClusteredCEGARBuilder;
 import hu.bme.mit.theta.splittingcegar.common.CEGARLoop;
 import hu.bme.mit.theta.splittingcegar.common.utils.visualization.GraphVizVisualizer;
@@ -181,7 +181,7 @@ public class CLI {
 				assert (stsSpec.getAllSts().size() == 1);
 				problem = stsSpec.getAllSts().iterator().next();
 			} else if (model.endsWith(".aag")) {
-				problem = new AIGERLoaderSimple().load(model);
+				problem = new SimpleAigerLoader().load(model);
 			}
 		} catch (final Exception ex) {
 			error("Could not load model: " + ex.getMessage());

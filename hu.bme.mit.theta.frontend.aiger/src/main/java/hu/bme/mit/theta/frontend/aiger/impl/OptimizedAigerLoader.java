@@ -10,7 +10,7 @@ import java.util.List;
 import hu.bme.mit.theta.core.expr.impl.Exprs;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.formalism.sts.impl.StsImpl;
-import hu.bme.mit.theta.frontend.aiger.AIGERLoader;
+import hu.bme.mit.theta.frontend.aiger.AigerLoader;
 import hu.bme.mit.theta.frontend.aiger.impl.elements.AndGate;
 import hu.bme.mit.theta.frontend.aiger.impl.elements.FalseConst;
 import hu.bme.mit.theta.frontend.aiger.impl.elements.HWElement;
@@ -18,7 +18,7 @@ import hu.bme.mit.theta.frontend.aiger.impl.elements.InVar;
 import hu.bme.mit.theta.frontend.aiger.impl.elements.Latch;
 import hu.bme.mit.theta.frontend.aiger.impl.elements.OutVar;
 
-public class AIGERLoaderOptimized implements AIGERLoader {
+public class OptimizedAigerLoader implements AigerLoader {
 
 	@Override
 	public STS load(final String fileName) throws IOException {
