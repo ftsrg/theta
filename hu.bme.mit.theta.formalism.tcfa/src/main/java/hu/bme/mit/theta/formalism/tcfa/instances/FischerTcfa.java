@@ -23,7 +23,7 @@ import hu.bme.mit.theta.formalism.tcfa.TCFA;
 import hu.bme.mit.theta.formalism.tcfa.TcfaLoc;
 import hu.bme.mit.theta.formalism.tcfa.impl.SimpleTcfa;
 
-public final class FischerTCFA {
+public final class FischerTcfa {
 
 	private final SimpleTcfa tcfa;
 
@@ -62,7 +62,7 @@ public final class FischerTCFA {
 
 	////
 
-	public FischerTCFA(final int id, final int ia, final int ib, final VarDecl<IntType> vlock) {
+	public FischerTcfa(final int id, final int ia, final int ib, final VarDecl<IntType> vlock) {
 		checkArgument(id > 0);
 		checkArgument(ia >= 0);
 		checkArgument(ib >= 0);

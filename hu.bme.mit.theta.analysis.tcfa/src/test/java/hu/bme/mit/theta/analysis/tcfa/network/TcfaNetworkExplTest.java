@@ -33,7 +33,7 @@ import hu.bme.mit.theta.core.type.IntType;
 import hu.bme.mit.theta.formalism.common.decl.ClockDecl;
 import hu.bme.mit.theta.formalism.tcfa.TcfaLoc;
 import hu.bme.mit.theta.formalism.tcfa.impl.NetworkTcfaLoc;
-import hu.bme.mit.theta.formalism.tcfa.instances.FischerTCFA;
+import hu.bme.mit.theta.formalism.tcfa.instances.FischerTcfa;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverManager;
 import hu.bme.mit.theta.solver.z3.Z3SolverManager;
@@ -49,9 +49,9 @@ public class TcfaNetworkExplTest {
 
 		final HashMap<ClockDecl, Integer> ceilings = new HashMap<>();
 
-		final List<FischerTCFA> network = new ArrayList<>(n);
+		final List<FischerTcfa> network = new ArrayList<>(n);
 		for (int i = 0; i < n; i++) {
-			final FischerTCFA fischer = new FischerTCFA(i + 1, 1, 2, vlock);
+			final FischerTcfa fischer = new FischerTcfa(i + 1, 1, 2, vlock);
 			ceilings.put(fischer.getClock(), 2);
 			network.add(fischer);
 		}
