@@ -28,7 +28,7 @@ import hu.bme.mit.theta.analysis.zone.ZoneState;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.IntType;
 import hu.bme.mit.theta.formalism.common.decl.ClockDecl;
-import hu.bme.mit.theta.formalism.tcfa.instances.FischerTCFA;
+import hu.bme.mit.theta.formalism.tcfa.instances.FischerTcfa;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverManager;
 import hu.bme.mit.theta.solver.z3.Z3SolverManager;
@@ -39,7 +39,7 @@ public class TcfaCompositeTest {
 	@Ignore
 	public void testExplicit() {
 		final VarDecl<IntType> vlock = Var("lock", Int());
-		final FischerTCFA fischer = new FischerTCFA(1, 1, 2, vlock);
+		final FischerTcfa fischer = new FischerTcfa(1, 1, 2, vlock);
 
 		final SolverManager manager = new Z3SolverManager();
 		final Solver solver = manager.createSolver(true, true);

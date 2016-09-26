@@ -35,7 +35,7 @@ import hu.bme.mit.theta.formalism.tcfa.TcfaLoc;
 import hu.bme.mit.theta.formalism.tcfa.dsl.TcfaDslManager;
 import hu.bme.mit.theta.formalism.tcfa.dsl.TcfaSpec;
 import hu.bme.mit.theta.formalism.tcfa.impl.NetworkTcfaLoc;
-import hu.bme.mit.theta.formalism.tcfa.instances.ProsigmaTCFA;
+import hu.bme.mit.theta.formalism.tcfa.instances.ProsigmaTcfa;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverManager;
 import hu.bme.mit.theta.solver.z3.Z3SolverManager;
@@ -45,7 +45,7 @@ public class ProsigmaTest {
 	@Test
 	@Ignore
 	public void test() {
-		final ProsigmaTCFA prosigma = new ProsigmaTCFA(3, 7);
+		final ProsigmaTcfa prosigma = new ProsigmaTcfa(3, 7);
 
 		final TCFA eth = prosigma.getETH();
 		final TCFA faultModel = prosigma.getFaultModel();
