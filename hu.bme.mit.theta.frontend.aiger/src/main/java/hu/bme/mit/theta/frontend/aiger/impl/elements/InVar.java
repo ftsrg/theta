@@ -8,7 +8,7 @@ import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.impl.Types;
 
-public final class InVar extends HWElement {
+public final class InVar extends HwElement {
 	private final VarDecl<BoolType> varDecl;
 
 	public InVar(final int nr, final String token) {
@@ -21,7 +21,7 @@ public final class InVar extends HWElement {
 	}
 
 	@Override
-	public Expr<? extends BoolType> getExpr(final List<HWElement> elements) {
+	public Expr<? extends BoolType> getExpr(final List<HwElement> elements) {
 		return varDecl.getRef();
 	}
 

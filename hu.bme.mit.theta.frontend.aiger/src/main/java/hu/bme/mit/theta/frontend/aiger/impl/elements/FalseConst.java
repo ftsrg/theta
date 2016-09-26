@@ -6,14 +6,14 @@ import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.impl.Exprs;
 import hu.bme.mit.theta.core.type.BoolType;
 
-public class FalseConst extends HWElement {
+public class FalseConst extends HwElement {
 
 	public FalseConst() {
 		super(0);
 	}
 
 	@Override
-	public Expr<? extends BoolType> getExpr(final List<HWElement> elements) {
+	public Expr<? extends BoolType> getExpr(final List<HwElement> elements) {
 		return Exprs.False();
 	}
 
