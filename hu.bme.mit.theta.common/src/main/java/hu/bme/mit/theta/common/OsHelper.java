@@ -12,7 +12,7 @@ public class OsHelper {
 		WINDOWS, LINUX
 	}
 
-	public static OperatingSystem getOS() {
+	public static OperatingSystem getOs() {
 
 		final String os = StandardSystemProperty.OS_NAME.value();
 
@@ -25,6 +25,6 @@ public class OsHelper {
 	}
 
 	public static void main(final String[] args) {
-		System.out.println(getOS());
+		System.out.println(getOs());
 	}
 }

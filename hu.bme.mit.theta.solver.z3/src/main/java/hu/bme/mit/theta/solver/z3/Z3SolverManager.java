@@ -19,7 +19,7 @@ public class Z3SolverManager implements SolverManager {
 	////////
 
 	private static void loadLibraries() {
-		switch (OsHelper.getOS()) {
+		switch (OsHelper.getOs()) {
 		case WINDOWS:
 			System.loadLibrary("libz3");
 			System.loadLibrary("libz3java");
