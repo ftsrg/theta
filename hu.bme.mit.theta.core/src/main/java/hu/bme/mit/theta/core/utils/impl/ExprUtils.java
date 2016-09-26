@@ -53,13 +53,27 @@ public class ExprUtils {
 		}
 	}
 
-	public static void collectVars(final Expr<?> expr, final Collection<VarDecl<? extends Type>> collectTo) {
+	public static void collectVars(final Expr<? extends Type> expr,
+			final Collection<VarDecl<? extends Type>> collectTo) {
 		expr.accept(VarCollectorExprVisitor.getInstance(), collectTo);
 	}
 
-	public static Set<VarDecl<? extends Type>> getVars(final Expr<?> expr) {
+	public static void collectVars(final Collection<? extends Expr<? extends Type>> exprs,
+			final Collection<VarDecl<? extends Type>> collectTo) {
+		for (final Expr<? extends Type> expr : exprs) {
+			collectVars(expr, collectTo);
+		}
+	}
+
+	public static Set<VarDecl<? extends Type>> getVars(final Expr<? extends Type> expr) {
 		final Set<VarDecl<? extends Type>> vars = new HashSet<>();
 		collectVars(expr, vars);
+		return vars;
+	}
+
+	public static Set<VarDecl<? extends Type>> getVars(final Collection<? extends Expr<? extends Type>> exprs) {
+		final Set<VarDecl<? extends Type>> vars = new HashSet<>();
+		collectVars(exprs, vars);
 		return vars;
 	}
 
