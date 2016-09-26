@@ -1,6 +1,6 @@
 package hu.bme.mit.theta.solver.z3;
 
-import hu.bme.mit.theta.common.OSHelper;
+import hu.bme.mit.theta.common.OsHelper;
 import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverManager;
@@ -19,7 +19,7 @@ public class Z3SolverManager implements SolverManager {
 	////////
 
 	private static void loadLibraries() {
-		switch (OSHelper.getOS()) {
+		switch (OsHelper.getOS()) {
 		case WINDOWS:
 			System.loadLibrary("libz3");
 			System.loadLibrary("libz3java");
