@@ -13,7 +13,7 @@ import hu.bme.mit.theta.formalism.sts.impl.StsImpl;
 import hu.bme.mit.theta.frontend.aiger.AigerLoader;
 import hu.bme.mit.theta.frontend.aiger.impl.elements.AndGate;
 import hu.bme.mit.theta.frontend.aiger.impl.elements.FalseConst;
-import hu.bme.mit.theta.frontend.aiger.impl.elements.HWElement;
+import hu.bme.mit.theta.frontend.aiger.impl.elements.HwElement;
 import hu.bme.mit.theta.frontend.aiger.impl.elements.InVar;
 import hu.bme.mit.theta.frontend.aiger.impl.elements.Latch;
 import hu.bme.mit.theta.frontend.aiger.impl.elements.OutVar;
@@ -33,7 +33,7 @@ public class OptimizedAigerLoader implements AigerLoader {
 		outputs = Integer.parseInt(header[4]);
 		andGates = Integer.parseInt(header[5]);
 
-		final List<HWElement> elements = new ArrayList<>(inputs + latches + andGates + 1);
+		final List<HwElement> elements = new ArrayList<>(inputs + latches + andGates + 1);
 		for (int i = 0; i < inputs + latches + andGates + 1; ++i)
 			elements.add(null);
 		elements.set(0, new FalseConst());

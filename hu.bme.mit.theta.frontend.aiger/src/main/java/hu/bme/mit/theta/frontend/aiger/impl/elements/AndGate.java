@@ -8,7 +8,7 @@ import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.impl.Exprs;
 import hu.bme.mit.theta.core.type.BoolType;
 
-public final class AndGate extends HWElement {
+public final class AndGate extends HwElement {
 	private final int rhs1, rhs2;
 
 	public AndGate(final String[] tokens) {
@@ -22,7 +22,7 @@ public final class AndGate extends HWElement {
 	}
 
 	@Override
-	public Expr<? extends BoolType> getExpr(final List<HWElement> elements) {
+	public Expr<? extends BoolType> getExpr(final List<HwElement> elements) {
 		Expr<? extends BoolType> expr1 = elements.get(rhs1 / 2).getExpr(elements);
 		if (rhs1 % 2 != 0)
 			expr1 = Exprs.Not(expr1);
