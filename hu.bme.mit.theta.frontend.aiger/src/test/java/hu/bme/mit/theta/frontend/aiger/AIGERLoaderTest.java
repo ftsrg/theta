@@ -5,20 +5,20 @@ import java.io.IOException;
 import org.junit.Test;
 
 import hu.bme.mit.theta.formalism.sts.STS;
-import hu.bme.mit.theta.frontend.aiger.AIGERLoader;
-import hu.bme.mit.theta.frontend.aiger.impl.AIGERLoaderOptimized;
-import hu.bme.mit.theta.frontend.aiger.utils.AIGERVisualizer;
+import hu.bme.mit.theta.frontend.aiger.AigerLoader;
+import hu.bme.mit.theta.frontend.aiger.impl.OptimizedAigerLoader;
+import hu.bme.mit.theta.frontend.aiger.utils.AigerVisualizer;
 
 public class AIGERLoaderTest {
 
 	@Test
 	public void testAIGERLoader() throws IOException {
-		AIGERLoader loader = null;
+		AigerLoader loader = null;
 		// loader = new AIGERLoaderSimple();
-		loader = new AIGERLoaderOptimized();
+		loader = new OptimizedAigerLoader();
 		final STS sts = loader.load("src/test/resources/simple3.aag");
 
-		AIGERVisualizer.visualize("src/test/resources/simple3.aag", "src/test/resources/simple3.dot");
+		AigerVisualizer.visualize("src/test/resources/simple3.aag", "src/test/resources/simple3.dot");
 
 		System.out.println("Vars:  " + sts.getVars());
 		System.out.println("Init:  " + sts.getInit());
