@@ -4,7 +4,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.awt.Color;
 
-public class Edge {
+public final class Edge {
 
 	private final Node source;
 	private final Node target;
@@ -12,8 +12,7 @@ public class Edge {
 	private final Color edgeColor;
 	private final String lineStyle;
 
-	public Edge(final Node source, final Node target, final String label, final Color edgeColor,
-			final String lineStyle) {
+	Edge(final Node source, final Node target, final String label, final Color edgeColor, final String lineStyle) {
 		this.source = checkNotNull(source);
 		this.target = checkNotNull(target);
 		this.label = checkNotNull(label);

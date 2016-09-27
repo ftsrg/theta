@@ -6,21 +6,26 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 
-public final class CompositeNode extends Node {
+final class CompositeNode extends Node {
 
 	private final Collection<Node> children;
 
-	public CompositeNode(final String id, final String label, final Color fillColor, final Color edgeColor,
-			final String lineStyle) {
-		super(id, label, fillColor, edgeColor, lineStyle);
+	CompositeNode(final String id, final String label, final Color fillColor, final Color edgeColor,
+			final String lineStyle, final int peripheries) {
+		super(id, label, fillColor, edgeColor, lineStyle, peripheries);
 		this.children = new ArrayList<Node>();
 	}
 
-	public void addChild(final Node child) {
+	void addChild(final Node child) {
 		checkNotNull(child);
 		checkArgument(child != this);
 
 		children.add(child);
+	}
+
+	public Collection<Node> getChildren() {
+		return Collections.unmodifiableCollection(children);
 	}
 }
