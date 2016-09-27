@@ -41,12 +41,12 @@ public class ClusteredCEGARBuilder implements CEGARBuilder {
 	@Override
 	public GenericCEGARLoop<ClusteredAbstractSystem, ClusteredAbstractState> build() {
 		final SolverManager manager = new Z3SolverManager();
-		final SolverWrapper solvers = new SolverWrapper(manager.createSolver(true, true), manager.createItpSolver());
+		final SolverWrapper solvers = new SolverWrapper(manager.createSolver(), manager.createItpSolver());
 		final StopHandler stopHandler = new StopHandler();
 		ClusteredCEGARDebugger debugger = null;
 		if (debugVisualizer != null)
 			debugger = new ClusteredCEGARDebugger(solvers, debugVisualizer);
-		return new GenericCEGARLoop<ClusteredAbstractSystem, ClusteredAbstractState>(solvers, stopHandler,
+		return new GenericCEGARLoop<>(solvers, stopHandler,
 				new ClusteredInitializer(solvers, stopHandler, logger, visualizer),
 				new ClusteredChecker(solvers, stopHandler, logger, visualizer),
 				new ClusteredConcretizer(solvers, stopHandler, logger, visualizer),

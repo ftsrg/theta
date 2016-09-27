@@ -45,7 +45,7 @@ public class TcfaNetworkPredTest {
 		final TCFA fischer = TcfaNetworkTestHelper.fischer(n, vlock);
 
 		final SolverManager manager = new Z3SolverManager();
-		final Solver solver = manager.createSolver(true, true);
+		final Solver solver = manager.createSolver();
 
 		final TcfaAnalyis<CompositeState<ZoneState, PredState>, CompositePrecision<ZonePrecision, PredPrecision>> analysis = TcfaAnalyis
 				.create(fischer.getInitLoc(),

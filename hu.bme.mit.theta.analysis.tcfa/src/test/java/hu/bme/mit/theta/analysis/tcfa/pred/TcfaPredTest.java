@@ -35,7 +35,7 @@ public class TcfaPredTest {
 		final FischerTcfa fischer = new FischerTcfa(1, 1, 2, vlock);
 
 		final SolverManager manager = new Z3SolverManager();
-		final Solver solver = manager.createSolver(true, true);
+		final Solver solver = manager.createSolver();
 
 		final TcfaAnalyis<PredState, PredPrecision> analysis = TcfaAnalyis.create(fischer.getInitial(),
 				TcfaPredAnalysis.create(solver));

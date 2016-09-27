@@ -32,7 +32,7 @@ public class TcfaExplTest {
 		final FischerTcfa fischer = new FischerTcfa(1, 1, 2, vlock);
 
 		final SolverManager manager = new Z3SolverManager();
-		final Solver solver = manager.createSolver(true, true);
+		final Solver solver = manager.createSolver();
 
 		final TcfaAnalyis<ExplState, ExplPrecision> analyis = TcfaAnalyis.create(fischer.getInitial(),
 				TcfaExplAnalysis.create(solver));

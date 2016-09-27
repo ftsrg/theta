@@ -62,7 +62,7 @@ public final class ExprDomainTopTest {
 
 	@Test
 	public void testIsTop() {
-		final Solver solver = new Z3SolverManager().createSolver(true, true);
+		final Solver solver = new Z3SolverManager().createSolver();
 		final Domain<ExprState> domain = ExprDomain.create(solver);
 		assertEquals(domain.isTop(state), top);
 	}
