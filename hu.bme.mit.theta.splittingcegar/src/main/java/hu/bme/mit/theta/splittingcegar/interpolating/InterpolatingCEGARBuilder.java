@@ -87,7 +87,7 @@ public class InterpolatingCEGARBuilder implements CEGARBuilder {
 	@Override
 	public GenericCEGARLoop<InterpolatedAbstractSystem, InterpolatedAbstractState> build() {
 		final SolverManager manager = new Z3SolverManager();
-		final SolverWrapper solvers = new SolverWrapper(manager.createSolver(true, true), manager.createItpSolver());
+		final SolverWrapper solvers = new SolverWrapper(manager.createSolver(), manager.createItpSolver());
 		final StopHandler stopHandler = new StopHandler();
 		InterpolatingCEGARDebugger debugger = null;
 		if (debugVisualizer != null)

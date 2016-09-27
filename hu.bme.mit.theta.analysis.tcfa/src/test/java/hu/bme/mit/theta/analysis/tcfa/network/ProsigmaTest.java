@@ -32,7 +32,7 @@ public class ProsigmaTest {
 		final TCFA prosigma = TcfaNetworkTestHelper.prosigma();
 
 		final SolverManager manager = new Z3SolverManager();
-		final Solver solver = manager.createSolver(true, true);
+		final Solver solver = manager.createSolver();
 
 		final TcfaAnalyis<CompositeState<ZoneState, ExplState>, CompositePrecision<ZonePrecision, ExplPrecision>> analysis = TcfaAnalyis
 				.create(prosigma.getInitLoc(),

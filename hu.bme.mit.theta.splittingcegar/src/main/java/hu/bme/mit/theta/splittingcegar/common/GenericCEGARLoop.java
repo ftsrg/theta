@@ -52,7 +52,7 @@ public class GenericCEGARLoop<AbstractSystemType extends AbstractSystem, Abstrac
 	private void reset() {
 		stopHandler.reset();
 		final SolverManager manager = new Z3SolverManager();
-		solvers.setSolver(manager.createSolver(true, true));
+		solvers.setSolver(manager.createSolver());
 		solvers.setItpSolver(manager.createItpSolver());
 	}
 

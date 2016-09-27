@@ -62,7 +62,7 @@ public final class ExprDomainBottomTest {
 
 	@Test
 	public void testIsBottom() {
-		final Solver solver = new Z3SolverManager().createSolver(true, true);
+		final Solver solver = new Z3SolverManager().createSolver();
 		final Domain<ExprState> domain = ExprDomain.create(solver);
 		assertEquals(domain.isBottom(state), bottom);
 	}

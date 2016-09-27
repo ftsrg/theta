@@ -46,7 +46,7 @@ public class Z3SolverManager implements SolverManager {
 	}
 
 	@Override
-	public Solver createSolver(final boolean genModels, final boolean genUnsatCores) {
+	public Solver createSolver() {
 		final com.microsoft.z3.Solver z3Solver = z3Context.mkSimpleSolver();
 		final Z3TransformationManager transformationManager = new Z3TransformationManager(symbolTable, z3Context);
 		final Z3TermTransformer termTransformer = new Z3TermTransformer(symbolTable);

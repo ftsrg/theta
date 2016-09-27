@@ -34,7 +34,7 @@ public class TcfaCompositeTest {
 		final TCFA fischers = spec.getTcfa("fischers");
 
 		final SolverManager manager = new Z3SolverManager();
-		final Solver solver = manager.createSolver(true, true);
+		final Solver solver = manager.createSolver();
 
 		final BasicTcfaAnalysis analysis = BasicTcfaAnalysis.create(fischers, solver);
 
