@@ -1,6 +1,7 @@
 package hu.bme.mit.theta.core.expr.impl;
 
 import hu.bme.mit.theta.core.expr.IntLitExpr;
+import hu.bme.mit.theta.core.expr.RatLitExpr;
 import hu.bme.mit.theta.core.type.IntType;
 import hu.bme.mit.theta.core.type.impl.Types;
 import hu.bme.mit.theta.core.utils.ExprVisitor;
@@ -8,10 +9,10 @@ import hu.bme.mit.theta.core.utils.ExprVisitor;
 final class IntLitExprImpl extends AbstractNullaryExpr<IntType> implements IntLitExpr {
 
 	private static final int HASH_SEED = 4111;
+	private volatile int hashCode = 0;
 
 	private final long value;
-
-	private volatile int hashCode = 0;
+	private volatile RatLitExpr ratLitExpr = null;
 
 	IntLitExprImpl(final long value) {
 		this.value = value;
@@ -20,6 +21,16 @@ final class IntLitExprImpl extends AbstractNullaryExpr<IntType> implements IntLi
 	@Override
 	public long getValue() {
 		return value;
+	}
+
+	@Override
+	public RatLitExpr toRatLit() {
+		RatLitExpr result = ratLitExpr;
+		if (result == null) {
+			result = Exprs.Rat(value, 1);
+			ratLitExpr = result;
+		}
+		return result;
 	}
 
 	@Override
