@@ -46,21 +46,21 @@ public class CraigInterpolater extends AbstractCEGARStep implements Interpolater
 		// The first formula (A) describes the dead-end states
 
 		// Start from an initial state
-		itpSolver.add(A, sts.unrollInit(0));
+		itpSolver.add(A, sts.unfoldInit(0));
 
 		for (int i = 0; i < traceLength; ++i) {
 			for (final Expr<? extends BoolType> label : abstractCounterEx.get(i).getLabels()) {
 				// Labels of the abstract state
-				itpSolver.add(A, sts.unroll(label, i));
+				itpSolver.add(A, sts.unfold(label, i));
 			}
 
 			if (i > 0) {
 				// Transition relation
-				itpSolver.add(A, sts.unrollTrans(i - 1));
+				itpSolver.add(A, sts.unfoldTrans(i - 1));
 			}
 
 			// Invariants
-			itpSolver.add(A, sts.unrollInv(i));
+			itpSolver.add(A, sts.unfoldInv(i));
 
 		}
 
@@ -72,16 +72,16 @@ public class CraigInterpolater extends AbstractCEGARStep implements Interpolater
 														// the last
 			for (final Expr<? extends BoolType> label : abstractCounterEx.get(traceLength).getLabels())
 				// Labels of the next abstract state
-				itpSolver.add(B, sts.unroll(label, traceLength));
+				itpSolver.add(B, sts.unfold(label, traceLength));
 			// Invariants for the next abstract state
-			itpSolver.add(B, sts.unrollInv(traceLength));
+			itpSolver.add(B, sts.unfoldInv(traceLength));
 			// Transition to the next abstract state
-			itpSolver.add(B, sts.unrollTrans(traceLength - 1));
+			itpSolver.add(B, sts.unfoldTrans(traceLength - 1));
 
 		} else { // Failure state is the last
 			final NotExpr negSpec = Exprs.Not(system.getSTS().getProp());
 			// Property violation
-			itpSolver.add(B, sts.unroll(negSpec, traceLength - 1));
+			itpSolver.add(B, sts.unfold(negSpec, traceLength - 1));
 
 		}
 		// Since A and B is unsatisfiable (otherwise there would be a concrete

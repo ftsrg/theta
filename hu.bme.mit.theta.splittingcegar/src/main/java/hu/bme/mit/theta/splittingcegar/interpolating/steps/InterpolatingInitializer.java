@@ -159,7 +159,7 @@ public class InterpolatingInitializer extends AbstractCEGARStep implements Initi
 
 		final Solver solver = solvers.getSolver();
 		solver.push();
-		solver.add(sts.unrollInv(0));
+		solver.add(sts.unfoldInv(0));
 
 		while (!stack.isEmpty()) {
 			if (stopHandler.isStopped())
@@ -213,7 +213,7 @@ public class InterpolatingInitializer extends AbstractCEGARStep implements Initi
 						ks.addState(as.cloneAndAddExplicit(model));
 
 						// Exclude this state
-						solver.add(sts.unroll(Exprs.Not(model.toExpr()), 0));
+						solver.add(sts.unfold(Exprs.Not(model.toExpr()), 0));
 					} else
 						break;
 				} while (true);
@@ -268,7 +268,7 @@ public class InterpolatingInitializer extends AbstractCEGARStep implements Initi
 	private boolean isStateInitial(final InterpolatedAbstractState s, final Solver solver, final STS sts) {
 		solver.push();
 		SolverHelper.unrollAndAssert(solver, s.getLabels(), sts, 0);
-		solver.add(sts.unrollInit(0));
+		solver.add(sts.unfoldInit(0));
 		final boolean ret = SolverHelper.checkSat(solver);
 		solver.pop();
 		return ret;
@@ -279,8 +279,8 @@ public class InterpolatingInitializer extends AbstractCEGARStep implements Initi
 		solver.push();
 		SolverHelper.unrollAndAssert(solver, s0.getLabels(), sts, 0);
 		SolverHelper.unrollAndAssert(solver, s1.getLabels(), sts, 1);
-		solver.add(sts.unrollTrans(0));
-		solver.add(sts.unrollInv(1));
+		solver.add(sts.unfoldTrans(0));
+		solver.add(sts.unfoldInv(1));
 		final boolean ret = SolverHelper.checkSat(solver);
 		solver.pop();
 		return ret;
