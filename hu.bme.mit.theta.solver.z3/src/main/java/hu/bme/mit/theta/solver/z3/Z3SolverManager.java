@@ -4,8 +4,6 @@ import hu.bme.mit.theta.common.OsHelper;
 import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverManager;
-import hu.bme.mit.theta.solver.z3.solver.Z3ItpSolver;
-import hu.bme.mit.theta.solver.z3.solver.Z3Solver;
 import hu.bme.mit.theta.solver.z3.trasform.Z3SymbolTable;
 import hu.bme.mit.theta.solver.z3.trasform.Z3TermTransformer;
 import hu.bme.mit.theta.solver.z3.trasform.Z3TransformationManager;
