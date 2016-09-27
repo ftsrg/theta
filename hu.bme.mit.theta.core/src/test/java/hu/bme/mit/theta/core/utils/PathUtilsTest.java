@@ -36,13 +36,13 @@ public class PathUtilsTest {
 	@Test
 	public void testFold() {
 		Assert.assertEquals(Eq(Prime(vx.getRef()), Add(vy.getRef(), Int(1))),
-				PathUtils.fold(Eq(x1.getRef(), Add(y0.getRef(), Int(1))), 0));
+				PathUtils.foldin(Eq(x1.getRef(), Add(y0.getRef(), Int(1))), 0));
 
 		Assert.assertEquals(Eq(Prime(vx.getRef(), 2), Add(Prime(vy.getRef()), Int(1))),
-				PathUtils.fold(Eq(x2.getRef(), Add(y1.getRef(), Int(1))), 0));
+				PathUtils.foldin(Eq(x2.getRef(), Add(y1.getRef(), Int(1))), 0));
 
 		Assert.assertEquals(Eq(Prime(vx.getRef()), Add(vy.getRef(), Int(1))),
-				PathUtils.fold(Eq(x2.getRef(), Add(y1.getRef(), Int(1))), 1));
+				PathUtils.foldin(Eq(x2.getRef(), Add(y1.getRef(), Int(1))), 1));
 	}
 
 }
