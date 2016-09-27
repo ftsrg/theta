@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.solver.z3.solver;
+package hu.bme.mit.theta.solver.z3;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -23,7 +23,7 @@ import hu.bme.mit.theta.solver.z3.trasform.Z3SymbolTable;
 import hu.bme.mit.theta.solver.z3.trasform.Z3TermTransformer;
 import hu.bme.mit.theta.solver.z3.trasform.Z3TransformationManager;
 
-public class Z3Solver implements Solver {
+final class Z3Solver implements Solver {
 
 	private final Z3SymbolTable symbolTable;
 	private final Z3TransformationManager transformationManager;

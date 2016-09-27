@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.solver.z3.solver;
+package hu.bme.mit.theta.solver.z3;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -9,7 +9,7 @@ import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.solver.Interpolant;
 import hu.bme.mit.theta.solver.ItpMarker;
 
-public class Z3Interpolant implements Interpolant {
+final class Z3Interpolant implements Interpolant {
 
 	private final Map<ItpMarker, Expr<BoolType>> itpMap;
 
