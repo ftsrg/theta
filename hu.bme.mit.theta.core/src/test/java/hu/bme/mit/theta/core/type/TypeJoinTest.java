@@ -16,11 +16,7 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
-import hu.bme.mit.theta.core.type.BoolType;
-import hu.bme.mit.theta.core.type.FuncType;
-import hu.bme.mit.theta.core.type.IntType;
-import hu.bme.mit.theta.core.type.RatType;
-import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.utils.impl.TypeUtils;
 
 @RunWith(Parameterized.class)
 public class TypeJoinTest {
@@ -104,6 +100,7 @@ public class TypeJoinTest {
 		final Optional<Type> expected = Optional.ofNullable(join);
 		assertEquals(type1.join(type2), expected);
 		assertEquals(type2.join(type1), expected);
+		assertEquals(TypeUtils.join(type1, type2), expected);
 	}
 
 }

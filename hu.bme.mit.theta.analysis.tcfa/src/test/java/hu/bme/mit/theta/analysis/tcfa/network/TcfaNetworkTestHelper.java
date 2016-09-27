@@ -7,8 +7,8 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.IntType;
 import hu.bme.mit.theta.formalism.tcfa.NetworkTcfa;
 import hu.bme.mit.theta.formalism.tcfa.TCFA;
-import hu.bme.mit.theta.formalism.tcfa.instances.FischerTCFA;
-import hu.bme.mit.theta.formalism.tcfa.instances.ProsigmaTCFA;
+import hu.bme.mit.theta.formalism.tcfa.instances.FischerTcfa;
+import hu.bme.mit.theta.formalism.tcfa.instances.ProsigmaTcfa;
 
 final class TcfaNetworkTestHelper {
 
@@ -16,7 +16,7 @@ final class TcfaNetworkTestHelper {
 	}
 
 	public static TCFA prosigma() {
-		final ProsigmaTCFA prosigma = new ProsigmaTCFA(3, 7);
+		final ProsigmaTcfa prosigma = new ProsigmaTcfa(3, 7);
 
 		final TCFA eth = prosigma.getETH();
 		final TCFA fieldLG = prosigma.getFieldLG();
@@ -30,7 +30,7 @@ final class TcfaNetworkTestHelper {
 	public static TCFA fischer(final int n, final VarDecl<IntType> vlock) {
 		final List<TCFA> tcfas = new ArrayList<>(n);
 		for (int i = 0; i < n; i++) {
-			final TCFA fischer = new FischerTCFA(i + 1, 1, 2, vlock).getTCFA();
+			final TCFA fischer = new FischerTcfa(i + 1, 1, 2, vlock).getTCFA();
 			tcfas.add(fischer);
 		}
 		final TCFA fischers = NetworkTcfa.of(tcfas);

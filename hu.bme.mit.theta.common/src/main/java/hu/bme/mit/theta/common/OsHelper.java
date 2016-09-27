@@ -2,9 +2,9 @@ package hu.bme.mit.theta.common;
 
 import com.google.common.base.StandardSystemProperty;
 
-public class OSHelper {
+public class OsHelper {
 
-	private OSHelper() {
+	private OsHelper() {
 
 	}
 
@@ -12,7 +12,7 @@ public class OSHelper {
 		WINDOWS, LINUX
 	}
 
-	public static OperatingSystem getOS() {
+	public static OperatingSystem getOs() {
 
 		final String os = StandardSystemProperty.OS_NAME.value();
 
@@ -25,6 +25,6 @@ public class OSHelper {
 	}
 
 	public static void main(final String[] args) {
-		System.out.println(getOS());
+		System.out.println(getOs());
 	}
 }

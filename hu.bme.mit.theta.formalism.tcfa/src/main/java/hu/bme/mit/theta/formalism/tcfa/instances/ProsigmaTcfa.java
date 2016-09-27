@@ -27,8 +27,7 @@ import hu.bme.mit.theta.formalism.tcfa.SimpleTcfa;
 import hu.bme.mit.theta.formalism.tcfa.TCFA;
 import hu.bme.mit.theta.formalism.tcfa.TcfaLoc;
 
-@Deprecated
-public class ProsigmaTCFA {
+public class ProsigmaTcfa {
 
 	private static final Expr<IntType> NONE = Int(0);
 	private static final Expr<IntType> OBJ1 = Int(1);
@@ -48,7 +47,7 @@ public class ProsigmaTCFA {
 	private final TCFA fieldLG;
 	private final TCFA controlLG;
 
-	public ProsigmaTCFA(final int sync, final int rtmax) {
+	public ProsigmaTcfa(final int sync, final int rtmax) {
 		tSync = Int(sync);
 		tRTMax = Int(rtmax);
 

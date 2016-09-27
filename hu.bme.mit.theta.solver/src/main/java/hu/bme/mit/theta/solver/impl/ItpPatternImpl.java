@@ -11,14 +11,14 @@ import hu.bme.mit.theta.solver.ItpMarker;
 import hu.bme.mit.theta.solver.ItpPattern;
 
 public class ItpPatternImpl implements ItpPattern {
-	
+
 	private ItpPattern parent;
 	private final List<ItpPattern> children;
-	
+
 	private final ItpMarker marker;
-	
+
 	public ItpPatternImpl(final ItpMarker marker) {
-		this.marker = marker;
+		this.marker = checkNotNull(marker);
 		children = new LinkedList<>();
 	}
 
@@ -45,5 +45,5 @@ public class ItpPatternImpl implements ItpPattern {
 		child.parent = this;
 		return child;
 	}
-	
+
 }

@@ -13,7 +13,7 @@ import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.formalism.sts.dsl.StsDslManager;
 import hu.bme.mit.theta.formalism.sts.dsl.impl.StsSpec;
-import hu.bme.mit.theta.frontend.aiger.impl.AIGERLoaderSimple;
+import hu.bme.mit.theta.frontend.aiger.impl.SimpleAigerLoader;
 import hu.bme.mit.theta.splittingcegar.common.CEGARLoop;
 import hu.bme.mit.theta.splittingcegar.common.CEGARResult;
 import hu.bme.mit.theta.splittingcegar.common.data.AbstractState;
@@ -47,7 +47,7 @@ public class SandBox {
 			final StsSpec stsSpec = StsDslManager.parse(MODELSPATH + subPath + modelName);
 			problem = stsSpec.getAllSts().iterator().next();
 		} else if (modelName.endsWith(".aag")) {
-			problem = new AIGERLoaderSimple().load(MODELSPATH + subPath + modelName);
+			problem = new SimpleAigerLoader().load(MODELSPATH + subPath + modelName);
 		}
 
 		CEGARLoop cegar = null;
