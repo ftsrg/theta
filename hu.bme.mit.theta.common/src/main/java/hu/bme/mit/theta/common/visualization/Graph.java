@@ -10,7 +10,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-public class Graph {
+public final class Graph {
 	private final String id;
 	private final String label;
 	private final Map<String, Node> nodes;
@@ -24,29 +24,29 @@ public class Graph {
 	}
 
 	public void addNode(final String id, final String label, final Color fillColor, final Color edgeColor,
-			final String lineStyle) {
-		checkArgument(!nodes.containsKey(id));
-		nodes.put(id, new Node(id, label, fillColor, edgeColor, lineStyle));
+			final String lineStyle, final int peripheries) {
+		checkArgument(!nodes.containsKey(id), "A node with the same id is already present!");
+		nodes.put(id, new Node(id, label, fillColor, edgeColor, lineStyle, peripheries));
 	}
 
 	public void addCompositeNode(final String id, final String label, final Color fillColor, final Color edgeColor,
-			final String lineStyle) {
-		checkArgument(!nodes.containsKey(id));
-		nodes.put(id, new CompositeNode(id, label, fillColor, edgeColor, lineStyle));
+			final String lineStyle, final int peripheries) {
+		checkArgument(!nodes.containsKey(id), "A node with the same id is already present!");
+		nodes.put(id, new CompositeNode(id, label, fillColor, edgeColor, lineStyle, peripheries));
 	}
 
 	public void setChild(final String parentId, final String childId) {
-		checkArgument(nodes.containsKey(parentId));
-		checkArgument(nodes.containsKey(childId));
+		checkArgument(nodes.containsKey(parentId), "Parent node does not exist!");
+		checkArgument(nodes.containsKey(childId), "Child node does not exist!");
 		final Node parent = nodes.get(parentId);
-		checkArgument(parent instanceof CompositeNode);
+		checkArgument(parent instanceof CompositeNode, "Parent node is not composite!");
 		((CompositeNode) parent).addChild(nodes.get(childId));
 	}
 
 	public void addEdge(final String sourceId, final String targetId, final String label, final Color edgeColor,
 			final String lineStyle) {
-		checkArgument(nodes.containsKey(sourceId));
-		checkArgument(nodes.containsKey(targetId));
+		checkArgument(nodes.containsKey(sourceId), "Source node does not exist!");
+		checkArgument(nodes.containsKey(targetId), "Target node does not exist!");
 		final Node source = nodes.get(sourceId);
 		final Node target = nodes.get(targetId);
 		final Edge edge = new Edge(source, target, label, edgeColor, lineStyle);
@@ -70,5 +70,4 @@ public class Graph {
 	public Collection<Edge> getEdges() {
 		return Collections.unmodifiableCollection(edges);
 	}
-
 }

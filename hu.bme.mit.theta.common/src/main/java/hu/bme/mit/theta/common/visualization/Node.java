@@ -15,17 +15,19 @@ public class Node {
 	private final Color edgeColor;
 	private final Color fillColor;
 	private final String lineStyle;
+	private final int peripheries;
 
 	private final Collection<Edge> inEdges;
 	private final Collection<Edge> outEdges;
 
-	public Node(final String id, final String label, final Color fillColor, final Color edgeColor,
-			final String lineStyle) {
+	Node(final String id, final String label, final Color fillColor, final Color edgeColor, final String lineStyle,
+			final int peripheries) {
 		this.id = checkNotNull(id);
 		this.label = checkNotNull(label);
 		this.edgeColor = checkNotNull(edgeColor);
 		this.fillColor = checkNotNull(fillColor);
 		this.lineStyle = checkNotNull(lineStyle);
+		this.peripheries = peripheries;
 
 		this.inEdges = new ArrayList<>();
 		this.outEdges = new ArrayList<>();
@@ -49,6 +51,10 @@ public class Node {
 
 	public String getLineStyle() {
 		return lineStyle;
+	}
+
+	public int getPeripheries() {
+		return peripheries;
 	}
 
 	public Collection<Edge> getInEdges() {
