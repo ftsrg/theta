@@ -7,7 +7,7 @@ import java.io.IOException;
 
 import org.junit.Test;
 
-import hu.bme.mit.theta.common.visualization.GraphVizPrinter;
+import hu.bme.mit.theta.common.visualization.YedPrinter;
 import hu.bme.mit.theta.formalism.tcfa.TCFA;
 import hu.bme.mit.theta.formalism.tcfa.TcfaPrinter;
 import hu.bme.mit.theta.formalism.tcfa.utils.TcfaVisualizer;
@@ -20,7 +20,7 @@ public class TcfaDslTest {
 		final TCFA fischer = spec.getTcfa("fischers");
 		System.out.println(TcfaPrinter.toGraphvizString(fischer));
 		System.out.println("==================");
-		System.out.println(new GraphVizPrinter().print(TcfaVisualizer.visualize(fischer)));
+		System.out.println(new YedPrinter().print(TcfaVisualizer.visualize(fischer)));
 	}
 
 	@Test
@@ -29,7 +29,7 @@ public class TcfaDslTest {
 		final TCFA field = spec.getTcfa("prosigma");
 		System.out.println(TcfaPrinter.toGraphvizString(field));
 		System.out.println("==================");
-		System.out.println(new GraphVizPrinter().print(TcfaVisualizer.visualize(field)));
+		System.out.println(new YedPrinter().print(TcfaVisualizer.visualize(field)));
 	}
 
 }
