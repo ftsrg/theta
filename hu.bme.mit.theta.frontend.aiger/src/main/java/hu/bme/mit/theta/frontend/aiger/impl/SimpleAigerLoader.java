@@ -17,9 +17,9 @@ import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.impl.Types;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.formalism.sts.impl.StsImpl;
-import hu.bme.mit.theta.frontend.aiger.AIGERLoader;
+import hu.bme.mit.theta.frontend.aiger.AigerLoader;
 
-public class AIGERLoaderSimple implements AIGERLoader {
+public class SimpleAigerLoader implements AigerLoader {
 
 	@Override
 	public STS load(final String fileName) throws IOException {

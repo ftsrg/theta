@@ -12,7 +12,7 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.BoolType;
 
-public final class Latch extends HWElement {
+public final class Latch extends HwElement {
 	private final int nextState;
 	private final VarDecl<BoolType> varDecl;
 
@@ -27,7 +27,7 @@ public final class Latch extends HWElement {
 	}
 
 	@Override
-	public Expr<? extends BoolType> getExpr(final List<HWElement> elements) {
+	public Expr<? extends BoolType> getExpr(final List<HwElement> elements) {
 		return varDecl.getRef();
 	}
 
@@ -35,7 +35,7 @@ public final class Latch extends HWElement {
 		return Not(varDecl.getRef());
 	}
 
-	public Expr<? extends BoolType> getTransExpr(final List<HWElement> elements) {
+	public Expr<? extends BoolType> getTransExpr(final List<HwElement> elements) {
 		Expr<? extends BoolType> expr = elements.get(nextState / 2).getExpr(elements);
 		if (nextState % 2 != 0)
 			expr = Not(expr);

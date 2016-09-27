@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 
-public class AIGERVisualizer {
+public class AigerVisualizer {
 
 	private static final String INPUTSHAPE = "invhouse";
 	private static final String LATCHSHAPE = "rectangle";

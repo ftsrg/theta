@@ -35,37 +35,32 @@ public final class StsImpl implements STS {
 	protected StsImpl(final Collection<VarDecl<? extends Type>> vars, final Collection<Expr<? extends BoolType>> init,
 			final Collection<Expr<? extends BoolType>> invar, final Collection<Expr<? extends BoolType>> trans,
 			final Expr<? extends BoolType> prop) {
-		checkNotNull(vars);
-		checkNotNull(init);
-		checkNotNull(invar);
-		checkNotNull(trans);
-		checkNotNull(prop);
-		this.vars = new ArrayList<>(vars);
-		this.init = new ArrayList<>(init);
-		this.invar = new ArrayList<>(invar);
-		this.trans = new ArrayList<>(trans);
-		this.prop = prop;
+		this.vars = Collections.unmodifiableCollection(new ArrayList<>(checkNotNull(vars)));
+		this.init = Collections.unmodifiableCollection(new ArrayList<>(checkNotNull(init)));
+		this.invar = Collections.unmodifiableCollection(new ArrayList<>(checkNotNull(invar)));
+		this.trans = Collections.unmodifiableCollection(new ArrayList<>(checkNotNull(trans)));
+		this.prop = checkNotNull(prop);
 		this.unroller = new StsUnrollerImpl(this);
 	}
 
 	@Override
 	public Collection<VarDecl<? extends Type>> getVars() {
-		return Collections.unmodifiableCollection(vars);
+		return vars;
 	}
 
 	@Override
 	public Collection<Expr<? extends BoolType>> getInit() {
-		return Collections.unmodifiableCollection(init);
+		return init;
 	}
 
 	@Override
 	public Collection<Expr<? extends BoolType>> getInvar() {
-		return Collections.unmodifiableCollection(invar);
+		return invar;
 	}
 
 	@Override
 	public Collection<Expr<? extends BoolType>> getTrans() {
-		return Collections.unmodifiableCollection(trans);
+		return trans;
 	}
 
 	@Override
@@ -125,9 +120,9 @@ public final class StsImpl implements STS {
 		 * will be split into its conjuncts. Duplicate constraints are included
 		 * only once.
 		 */
-		public Builder addInit(final Collection<? extends Expr<? extends BoolType>> init) {
-			checkNotNull(init);
-			for (final Expr<? extends BoolType> expr : init)
+		public Builder addInit(final Collection<? extends Expr<? extends BoolType>> exprs) {
+			checkNotNull(exprs);
+			for (final Expr<? extends BoolType> expr : exprs)
 				addInit(expr);
 			return this;
 		}
@@ -151,9 +146,9 @@ public final class StsImpl implements STS {
 		 * will be split into its conjuncts. Duplicate constraints are included
 		 * only once.
 		 */
-		public Builder addInvar(final Collection<? extends Expr<? extends BoolType>> invar) {
-			checkNotNull(invar);
-			for (final Expr<? extends BoolType> expr : invar)
+		public Builder addInvar(final Collection<? extends Expr<? extends BoolType>> exprs) {
+			checkNotNull(exprs);
+			for (final Expr<? extends BoolType> expr : exprs)
 				addInvar(expr);
 			return this;
 		}
@@ -177,28 +172,25 @@ public final class StsImpl implements STS {
 		 * will be split into its conjuncts. Duplicate constraints are included
 		 * only once.
 		 */
-		public Builder addTrans(final Collection<? extends Expr<? extends BoolType>> trans) {
-			checkNotNull(trans);
-			for (final Expr<? extends BoolType> expr : trans)
+		public Builder addTrans(final Collection<? extends Expr<? extends BoolType>> exprs) {
+			checkNotNull(exprs);
+			for (final Expr<? extends BoolType> expr : exprs)
 				addTrans(expr);
 			return this;
 		}
 
-		public Builder setProp(final Expr<? extends BoolType> prop) {
-			checkNotNull(prop);
-			this.prop = prop;
+		public Builder setProp(final Expr<? extends BoolType> expr) {
+			checkNotNull(expr);
+			this.prop = expr;
 			return this;
 		}
 
 		public STS build() {
 			checkNotNull(prop);
-			// Collect variables from the expressions
-			for (final Expr<? extends BoolType> expr : init)
-				ExprUtils.collectVars(expr, vars);
-			for (final Expr<? extends BoolType> expr : invar)
-				ExprUtils.collectVars(expr, vars);
-			for (final Expr<? extends BoolType> expr : trans)
-				ExprUtils.collectVars(expr, vars);
+
+			ExprUtils.collectVars(init, vars);
+			ExprUtils.collectVars(invar, vars);
+			ExprUtils.collectVars(trans, vars);
 			ExprUtils.collectVars(prop, vars);
 
 			return new StsImpl(vars, init, invar, trans, prop);

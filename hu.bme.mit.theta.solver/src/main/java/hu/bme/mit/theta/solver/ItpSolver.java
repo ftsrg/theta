@@ -1,7 +1,7 @@
 package hu.bme.mit.theta.solver;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -15,23 +15,22 @@ import hu.bme.mit.theta.core.type.BoolType;
 public interface ItpSolver extends Solver {
 
 	public ItpPattern createPattern(final ItpMarker marker);
-	
+
 	public default ItpPattern createBinPattern(final ItpMarker markerA, final ItpMarker markerB) {
-		if (markerA == null || markerB == null) {
-			throw new NullPointerException();
-		}
-		
+		checkNotNull(markerA);
+		checkNotNull(markerB);
+
 		return createSeqPattern(Arrays.asList(markerA, markerB));
 	}
-	
+
 	public default ItpPattern createSeqPattern(final List<? extends ItpMarker> markers) {
 		checkNotNull(markers);
 		checkArgument(!markers.isEmpty());
-		
+
 		ItpPattern result = null;
 		ItpPattern current = null;
-		
-		for (ItpMarker marker : Lists.reverse(markers)) {
+
+		for (final ItpMarker marker : Lists.reverse(markers)) {
 			if (result == null) {
 				current = createPattern(marker);
 				result = current;
@@ -41,14 +40,15 @@ public interface ItpSolver extends Solver {
 		}
 		return result;
 	}
-	
+
 	public ItpMarker createMarker();
 
 	public void add(final ItpMarker marker, final Expr<? extends BoolType> assertion);
+
 	public default void add(final ItpMarker marker, final Collection<? extends Expr<? extends BoolType>> assertions) {
 		checkNotNull(marker);
 		checkNotNull(assertions);
-		for (Expr<? extends BoolType> assertion : assertions) {
+		for (final Expr<? extends BoolType> assertion : assertions) {
 			add(marker, assertion);
 		}
 	}
