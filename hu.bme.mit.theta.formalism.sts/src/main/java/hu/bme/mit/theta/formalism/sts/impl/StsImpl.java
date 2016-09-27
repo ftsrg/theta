@@ -12,11 +12,13 @@ import java.util.stream.Collectors;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.AndExpr;
 import hu.bme.mit.theta.core.expr.Expr;
+import hu.bme.mit.theta.core.expr.LitExpr;
 import hu.bme.mit.theta.core.model.Model;
 import hu.bme.mit.theta.core.model.impl.Valuation;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.utils.impl.ExprUtils;
+import hu.bme.mit.theta.core.utils.impl.PathUtils;
 import hu.bme.mit.theta.formalism.sts.STS;
 
 /**
@@ -29,7 +31,6 @@ public final class StsImpl implements STS {
 	private final Collection<Expr<? extends BoolType>> invar;
 	private final Collection<Expr<? extends BoolType>> trans;
 	private final Expr<? extends BoolType> prop;
-	private final StsUnrollerImpl unroller;
 
 	// Protected constructor --> use the builder
 	protected StsImpl(final Collection<VarDecl<? extends Type>> vars, final Collection<Expr<? extends BoolType>> init,
@@ -40,7 +41,6 @@ public final class StsImpl implements STS {
 		this.invar = Collections.unmodifiableCollection(new ArrayList<>(checkNotNull(invar)));
 		this.trans = Collections.unmodifiableCollection(new ArrayList<>(checkNotNull(trans)));
 		this.prop = checkNotNull(prop);
-		this.unroller = new StsUnrollerImpl(this);
 	}
 
 	@Override
@@ -199,33 +199,33 @@ public final class StsImpl implements STS {
 
 	@Override
 	public Expr<? extends BoolType> unroll(final Expr<? extends BoolType> expr, final int i) {
-		return unroller.unroll(expr, i);
+		return PathUtils.unfold(expr, i);
 	}
 
 	@Override
 	public Collection<? extends Expr<? extends BoolType>> unroll(
 			final Collection<? extends Expr<? extends BoolType>> exprs, final int i) {
-		return unroller.unroll(exprs, i);
+		return exprs.stream().map(e -> unroll(e, i)).collect(Collectors.toSet());
 	}
 
 	@Override
 	public Collection<? extends Expr<? extends BoolType>> unrollInit(final int i) {
-		return unroller.init(i);
+		return unroll(getInit(), i);
 	}
 
 	@Override
 	public Collection<? extends Expr<? extends BoolType>> unrollTrans(final int i) {
-		return unroller.trans(i);
+		return unroll(getTrans(), i);
 	}
 
 	@Override
 	public Collection<? extends Expr<? extends BoolType>> unrollInv(final int i) {
-		return unroller.inv(i);
+		return unroll(getInvar(), i);
 	}
 
 	@Override
 	public Expr<? extends BoolType> unrollProp(final int i) {
-		return unroller.prop(i);
+		return unroll(getProp(), i);
 	}
 
 	@Override
@@ -236,7 +236,19 @@ public final class StsImpl implements STS {
 	@Override
 	public Valuation getConcreteState(final Model model, final int i,
 			final Collection<VarDecl<? extends Type>> variables) {
-		return unroller.getConcreteState(model, i, variables);
+		final Valuation.Builder builder = Valuation.builder();
+
+		for (final VarDecl<? extends Type> varDecl : variables) {
+			LitExpr<? extends Type> value = null;
+			try {
+				value = model.eval(varDecl.getConstDecl(i)).get();
+			} catch (final Exception ex) {
+				value = varDecl.getType().getAny();
+			}
+			builder.put(varDecl, value);
+		}
+
+		return builder.build();
 	}
 
 	@Override
@@ -247,12 +259,15 @@ public final class StsImpl implements STS {
 	@Override
 	public List<Valuation> extractTrace(final Model model, final int length,
 			final Collection<VarDecl<? extends Type>> variables) {
-		return unroller.extractTrace(model, length, variables);
+		final List<Valuation> trace = new ArrayList<>(length);
+		for (int i = 0; i < length; ++i)
+			trace.add(getConcreteState(model, i, variables));
+		return trace;
 	}
 
 	@Override
 	public Expr<? extends BoolType> foldin(final Expr<? extends BoolType> expr, final int i) {
-		return unroller.foldin(expr, i);
+		return PathUtils.foldin(expr, i);
 	}
 
 }
