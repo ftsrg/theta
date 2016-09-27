@@ -7,7 +7,7 @@ import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.VarRefExpr;
 import hu.bme.mit.theta.core.type.Type;
 
-public class VarToConstRewriter {
+final class VarToConstRewriter {
 
 	private static final VarToConstVisitor VISITOR;
 
