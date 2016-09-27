@@ -22,7 +22,7 @@ import hu.bme.mit.theta.core.utils.impl.PathUtils;
 import hu.bme.mit.theta.formalism.sts.STS;
 
 /**
- * Symbolic Transition System (STS) implementation.
+ * An immutable STS implementation.
  */
 public final class StsImpl implements STS {
 
@@ -86,6 +86,11 @@ public final class StsImpl implements STS {
 		sb.append(postfix);
 	}
 
+	/**
+	 * Helper class for building the immutable STS. It splits AND expressions
+	 * into conjuncts, eliminates duplicate expressions and collects the
+	 * variables from the expressions automatically.
+	 */
 	public static class Builder {
 		private final Collection<VarDecl<? extends Type>> vars;
 		private final Collection<Expr<? extends BoolType>> init;
@@ -116,7 +121,7 @@ public final class StsImpl implements STS {
 		}
 
 		/**
-		 * Add initial constraints. If the constraint is an AND expression it
+		 * Add initial constraints. If any constraint is an AND expression it
 		 * will be split into its conjuncts. Duplicate constraints are included
 		 * only once.
 		 */
@@ -142,7 +147,7 @@ public final class StsImpl implements STS {
 		}
 
 		/**
-		 * Add invariant constraints. If the constraint is an AND expression it
+		 * Add invariant constraints. If any constraint is an AND expression it
 		 * will be split into its conjuncts. Duplicate constraints are included
 		 * only once.
 		 */
@@ -168,7 +173,7 @@ public final class StsImpl implements STS {
 		}
 
 		/**
-		 * Add transition constraints. If the constraint is an AND expression it
+		 * Add transition constraints. If any constraint is an AND expression it
 		 * will be split into its conjuncts. Duplicate constraints are included
 		 * only once.
 		 */

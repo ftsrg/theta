@@ -11,7 +11,9 @@ import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.Type;
 
 /**
- * Symbolic Transition System (STS) interface.
+ * Interface for a Symbolic Transition System (STS). An STS consists of
+ * variables, initial formula, invariant formula, transition relation and a
+ * property.
  */
 public interface STS {
 
