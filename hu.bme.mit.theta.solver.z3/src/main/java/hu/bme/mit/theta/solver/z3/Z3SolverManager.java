@@ -10,7 +10,7 @@ import hu.bme.mit.theta.solver.z3.trasform.Z3SymbolTable;
 import hu.bme.mit.theta.solver.z3.trasform.Z3TermTransformer;
 import hu.bme.mit.theta.solver.z3.trasform.Z3TransformationManager;
 
-public class Z3SolverManager implements SolverManager {
+public final class Z3SolverManager implements SolverManager {
 
 	static {
 		loadLibraries();
