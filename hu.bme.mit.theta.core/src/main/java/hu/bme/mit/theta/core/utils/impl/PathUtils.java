@@ -4,6 +4,9 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.Prime;
 
+import java.util.Collection;
+import java.util.Optional;
+
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.IndexedConstDecl;
 import hu.bme.mit.theta.core.decl.VarDecl;
@@ -83,6 +86,26 @@ public class PathUtils {
 	public static Valuation extractValuation(final Model model, final int i) {
 		checkArgument(i >= 0);
 		return extractValuation(model, VarIndexes.all(i));
+	}
+
+	public static Valuation extractValuation(final Model model, final VarIndexes indexes,
+			final Collection<? extends VarDecl<? extends Type>> varDecls) {
+		final Valuation.Builder builder = Valuation.builder();
+		for (final VarDecl<? extends Type> varDecl : varDecls) {
+			final int index = indexes.get(varDecl);
+			final IndexedConstDecl<?> constDecl = varDecl.getConstDecl(index);
+			final Optional<? extends LitExpr<?>> eval = model.eval(constDecl);
+			if (eval.isPresent()) {
+				builder.put(varDecl, eval.get());
+			}
+		}
+		return builder.build();
+	}
+
+	public static Valuation extractValuation(final Model model, final int i,
+			final Collection<? extends VarDecl<? extends Type>> varDecls) {
+		checkArgument(i >= 0);
+		return extractValuation(model, VarIndexes.all(i), varDecls);
 	}
 
 	////
