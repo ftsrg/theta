@@ -59,7 +59,7 @@ public class ClusteredChecker extends AbstractCEGARStep implements Checker<Clust
 		final Solver solver = solvers.getSolver();
 
 		solver.push();
-		solver.add(sts.unrollInv(0));
+		solver.add(sts.unfoldInv(0));
 
 		// Loop through each initial state and do a search
 		while ((actualInit = getNextInitialState(system, prevInit)) != null && counterExample == null) {
@@ -158,7 +158,7 @@ public class ClusteredChecker extends AbstractCEGARStep implements Checker<Clust
 		solver.push();
 		for (final ComponentAbstractState as : state.getStates())
 			SolverHelper.unrollAndAssert(solver, as.getLabels(), sts, 0);
-		solver.add(sts.unroll(expr, 0));
+		solver.add(sts.unfold(expr, 0));
 		final boolean ret = SolverHelper.checkSat(solver);
 		solver.pop();
 		return ret;
@@ -172,8 +172,8 @@ public class ClusteredChecker extends AbstractCEGARStep implements Checker<Clust
 		for (final ComponentAbstractState as : s1.getStates())
 			SolverHelper.unrollAndAssert(solver, as.getLabels(), sts, 1);
 
-		solver.add(sts.unrollInv(1));
-		solver.add(sts.unrollTrans(0));
+		solver.add(sts.unfoldInv(1));
+		solver.add(sts.unfoldTrans(0));
 
 		final boolean ret = SolverHelper.checkSat(solver);
 		solver.pop();
@@ -184,7 +184,7 @@ public class ClusteredChecker extends AbstractCEGARStep implements Checker<Clust
 		solver.push();
 		for (final ComponentAbstractState as : s.getStates())
 			SolverHelper.unrollAndAssert(solver, as.getLabels(), sts, 0);
-		solver.add(sts.unrollInit(0));
+		solver.add(sts.unfoldInit(0));
 
 		final boolean ret = SolverHelper.checkSat(solver);
 		solver.pop();

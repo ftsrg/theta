@@ -198,34 +198,34 @@ public final class StsImpl implements STS {
 	}
 
 	@Override
-	public Expr<? extends BoolType> unroll(final Expr<? extends BoolType> expr, final int i) {
+	public Expr<? extends BoolType> unfold(final Expr<? extends BoolType> expr, final int i) {
 		return PathUtils.unfold(expr, i);
 	}
 
 	@Override
-	public Collection<? extends Expr<? extends BoolType>> unroll(
+	public Collection<? extends Expr<? extends BoolType>> unfold(
 			final Collection<? extends Expr<? extends BoolType>> exprs, final int i) {
-		return exprs.stream().map(e -> unroll(e, i)).collect(Collectors.toSet());
+		return exprs.stream().map(e -> unfold(e, i)).collect(Collectors.toSet());
 	}
 
 	@Override
-	public Collection<? extends Expr<? extends BoolType>> unrollInit(final int i) {
-		return unroll(getInit(), i);
+	public Collection<? extends Expr<? extends BoolType>> unfoldInit(final int i) {
+		return unfold(getInit(), i);
 	}
 
 	@Override
-	public Collection<? extends Expr<? extends BoolType>> unrollTrans(final int i) {
-		return unroll(getTrans(), i);
+	public Collection<? extends Expr<? extends BoolType>> unfoldTrans(final int i) {
+		return unfold(getTrans(), i);
 	}
 
 	@Override
-	public Collection<? extends Expr<? extends BoolType>> unrollInv(final int i) {
-		return unroll(getInvar(), i);
+	public Collection<? extends Expr<? extends BoolType>> unfoldInv(final int i) {
+		return unfold(getInvar(), i);
 	}
 
 	@Override
-	public Expr<? extends BoolType> unrollProp(final int i) {
-		return unroll(getProp(), i);
+	public Expr<? extends BoolType> unfoldProp(final int i) {
+		return unfold(getProp(), i);
 	}
 
 	@Override

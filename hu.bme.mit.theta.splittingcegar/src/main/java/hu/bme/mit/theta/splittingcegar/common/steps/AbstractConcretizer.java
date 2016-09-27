@@ -50,7 +50,7 @@ public abstract class AbstractConcretizer extends AbstractCEGARStep {
 		Model model = null;
 
 		solver.push();
-		solver.add(sts.unrollInit(0)); // Assert initial conditions
+		solver.add(sts.unfoldInit(0)); // Assert initial conditions
 
 		// Loop through each abstract state in the abstract counterexample and
 		// assert:
@@ -62,10 +62,10 @@ public abstract class AbstractConcretizer extends AbstractCEGARStep {
 		for (int i = 0; i < counterEx.size(); ++i) {
 			if (stopHandler.isStopped())
 				return null;
-			solver.add(sts.unrollInv(i)); // Invariants
-			solver.add(sts.unroll(counterEx.get(i).createExpression(), i)); // Labels
+			solver.add(sts.unfoldInv(i)); // Invariants
+			solver.add(sts.unfold(counterEx.get(i).createExpression(), i)); // Labels
 			if (i > 0)
-				solver.add(sts.unrollTrans(i - 1)); // Transition relation
+				solver.add(sts.unfoldTrans(i - 1)); // Transition relation
 
 			if (SolverHelper.checkSat(solver))
 				model = solver.getModel();
@@ -81,7 +81,7 @@ public abstract class AbstractConcretizer extends AbstractCEGARStep {
 		// If a trace as long as the abstract counterexample was found,
 		// check if the last state violates the specification
 		if (lastState != null && solver.getStatus() == SolverStatus.SAT) {
-			solver.add(sts.unroll(lastState, counterEx.size() - 1));
+			solver.add(sts.unfold(lastState, counterEx.size() - 1));
 			if (SolverHelper.checkSat(solver))
 				model = solver.getModel();
 		}

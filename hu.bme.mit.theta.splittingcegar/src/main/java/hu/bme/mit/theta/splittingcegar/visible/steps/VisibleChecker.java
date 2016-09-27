@@ -49,8 +49,8 @@ public class VisibleChecker extends AbstractCEGARStep implements Checker<Visible
 		final List<Expr<? extends BoolType>> prevInits = new ArrayList<>();
 		// Get the first initial state
 		solver.push();
-		solver.add(sts.unrollInv(0));
-		solver.add(sts.unrollInit(0));
+		solver.add(sts.unfoldInv(0));
+		solver.add(sts.unfoldInit(0));
 		if (SolverHelper.checkSat(solver))
 			actualInit = new VisibleAbstractState(sts.getConcreteState(solver.getModel(), 0, system.getVisibleVars()), true);
 
@@ -122,9 +122,9 @@ public class VisibleChecker extends AbstractCEGARStep implements Checker<Visible
 			// Get next initial state
 			prevInits.add(actualInit.getValuation().toExpr());
 			solver.push();
-			solver.add(sts.unrollInv(0));
-			solver.add(sts.unrollInit(0));
-			solver.add(sts.unroll(Exprs.Not(Exprs.Or(prevInits)), 0));
+			solver.add(sts.unfoldInv(0));
+			solver.add(sts.unfoldInit(0));
+			solver.add(sts.unfold(Exprs.Not(Exprs.Or(prevInits)), 0));
 
 			if (SolverHelper.checkSat(solver)) {
 				actualInit = new VisibleAbstractState(sts.getConcreteState(solver.getModel(), 0, system.getVisibleVars()), true);
@@ -165,10 +165,10 @@ public class VisibleChecker extends AbstractCEGARStep implements Checker<Visible
 																			// successors
 
 		solver.push();
-		solver.add(sts.unrollInv(0));
-		solver.add(sts.unrollInv(1));
-		solver.add(sts.unrollTrans(0));
-		solver.add(sts.unroll(state.getValuation().toExpr(), 0));
+		solver.add(sts.unfoldInv(0));
+		solver.add(sts.unfoldInv(1));
+		solver.add(sts.unfoldTrans(0));
+		solver.add(sts.unfold(state.getValuation().toExpr(), 0));
 		// Loop until a new successor is found
 		do {
 			if (stopHandler.isStopped())
@@ -182,7 +182,7 @@ public class VisibleChecker extends AbstractCEGARStep implements Checker<Visible
 
 				successors.add(succ);
 				// Force new successors
-				solver.add(sts.unroll(Exprs.Not(succ.getValuation().toExpr()), 1));
+				solver.add(sts.unfold(Exprs.Not(succ.getValuation().toExpr()), 1));
 			} else
 				break;
 		} while (true);
@@ -192,9 +192,9 @@ public class VisibleChecker extends AbstractCEGARStep implements Checker<Visible
 
 	private boolean checkState(final VisibleAbstractState state, final Expr<? extends BoolType> expr, final Solver solver, final STS sts) {
 		solver.push();
-		solver.add(sts.unroll(state.getValuation().toExpr(), 0));
-		solver.add(sts.unrollInv(0));
-		solver.add(sts.unroll(expr, 0));
+		solver.add(sts.unfold(state.getValuation().toExpr(), 0));
+		solver.add(sts.unfoldInv(0));
+		solver.add(sts.unfold(expr, 0));
 		final boolean ret = SolverHelper.checkSat(solver);
 		solver.pop();
 		return ret;

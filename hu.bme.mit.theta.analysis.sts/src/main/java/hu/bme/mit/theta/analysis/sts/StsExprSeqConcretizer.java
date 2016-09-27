@@ -57,15 +57,15 @@ public class StsExprSeqConcretizer implements ConcretizerOp<ExprState, StsAction
 		final ItpPattern pattern = solver.createSeqPattern(markers);
 
 		solver.push();
-		solver.add(markers.get(0), sts.unrollInit(0));
+		solver.add(markers.get(0), sts.unfoldInit(0));
 		for (int i = 0; i < counterexample.length(); ++i) {
-			solver.add(markers.get(i), sts.unrollInv(i));
-			solver.add(markers.get(i), sts.unroll(counterexample.getState(i).toExpr(), i));
+			solver.add(markers.get(i), sts.unfoldInv(i));
+			solver.add(markers.get(i), sts.unfold(counterexample.getState(i).toExpr(), i));
 			if (i > 0) {
-				solver.add(markers.get(i), sts.unrollTrans(i - 1));
+				solver.add(markers.get(i), sts.unfoldTrans(i - 1));
 			}
 		}
-		solver.add(markers.get(counterexample.length()), sts.unroll(negProp, counterexample.length() - 1));
+		solver.add(markers.get(counterexample.length()), sts.unfold(negProp, counterexample.length() - 1));
 
 		final boolean concretizable = solver.check().isSat();
 

@@ -38,23 +38,23 @@ public abstract class AbstractDebugger<AbstractSystemType extends AbstractSystem
 	protected void exploreConcrTransRelAndInits(final Collection<ConcreteState> concreteStates, final STS sts) {
 		final Solver solver = solvers.getSolver();
 		solver.push();
-		solver.add(sts.unrollInv(0));
+		solver.add(sts.unfoldInv(0));
 		// Loop through each state
 		for (final ConcreteState cs0 : concreteStates) {
 			// Assert its expression
 			solver.push();
-			solver.add(sts.unroll(cs0.model.toExpr(), 0));
+			solver.add(sts.unfold(cs0.model.toExpr(), 0));
 			// Check if it is initial
 			solver.push();
-			solver.add(sts.unrollInit(0));
+			solver.add(sts.unfoldInit(0));
 			cs0.isInitial = SolverHelper.checkSat(solver);
 			solver.pop();
 			// Loop through other states to get successors
 			for (final ConcreteState cs1 : concreteStates) {
 				solver.push();
-				solver.add(sts.unrollInv(1));
-				solver.add(sts.unroll(cs1.model.toExpr(), 1));
-				solver.add(sts.unrollTrans(0));
+				solver.add(sts.unfoldInv(1));
+				solver.add(sts.unfold(cs1.model.toExpr(), 1));
+				solver.add(sts.unfoldTrans(0));
 				if (SolverHelper.checkSat(solver))
 					cs0.successors.add(cs1);
 				solver.pop();
@@ -86,10 +86,10 @@ public abstract class AbstractDebugger<AbstractSystemType extends AbstractSystem
 			final Expr<? extends BoolType> unsafeExpr, final STS sts) {
 		final Solver solver = solvers.getSolver();
 		solver.push();
-		solver.add(sts.unroll(unsafeExpr, 0));
+		solver.add(sts.unfold(unsafeExpr, 0));
 		for (final ConcreteState cs0 : concreteStates) {
 			solver.push();
-			solver.add(sts.unroll(cs0.model.toExpr(), 0));
+			solver.add(sts.unfold(cs0.model.toExpr(), 0));
 			if (SolverHelper.checkSat(solver))
 				cs0.isUnsafe = true;
 			solver.pop();

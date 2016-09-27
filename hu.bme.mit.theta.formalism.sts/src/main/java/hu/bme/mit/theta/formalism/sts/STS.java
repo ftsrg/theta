@@ -14,10 +14,6 @@ import hu.bme.mit.theta.core.type.Type;
  * Symbolic Transition System (STS) interface.
  */
 public interface STS {
-	Expr<? extends BoolType> unroll(final Expr<? extends BoolType> expr, final int i);
-
-	Collection<? extends Expr<? extends BoolType>> unroll(final Collection<? extends Expr<? extends BoolType>> exprs,
-			final int i);
 
 	public Collection<VarDecl<? extends Type>> getVars();
 
@@ -29,15 +25,19 @@ public interface STS {
 
 	public Expr<? extends BoolType> getProp();
 
-	// Unrolling methods
+	// Unfolding / folding methods
+	Expr<? extends BoolType> unfold(final Expr<? extends BoolType> expr, final int i);
 
-	public Collection<? extends Expr<? extends BoolType>> unrollInit(final int i);
+	Collection<? extends Expr<? extends BoolType>> unfold(final Collection<? extends Expr<? extends BoolType>> exprs,
+			final int i);
 
-	public Collection<? extends Expr<? extends BoolType>> unrollTrans(final int i);
+	public Collection<? extends Expr<? extends BoolType>> unfoldInit(final int i);
 
-	public Collection<? extends Expr<? extends BoolType>> unrollInv(final int i);
+	public Collection<? extends Expr<? extends BoolType>> unfoldTrans(final int i);
 
-	public Expr<? extends BoolType> unrollProp(final int i);
+	public Collection<? extends Expr<? extends BoolType>> unfoldInv(final int i);
+
+	public Expr<? extends BoolType> unfoldProp(final int i);
 
 	public Valuation getConcreteState(final Model model, final int i);
 

@@ -52,29 +52,29 @@ public class SequenceInterpolater extends AbstractCEGARStep implements Interpola
 		itpSolver.push();
 
 		// Initial conditions for the first marker
-		itpSolver.add(markers[0], sts.unrollInit(0));
+		itpSolver.add(markers[0], sts.unfoldInit(0));
 
 		// Loop through each marker except the last one
 		for (int i = 0; i < abstractCounterEx.size(); ++i) {
 
 			for (final Expr<? extends BoolType> label : abstractCounterEx.get(i).getLabels()) {
 				// Assert labels
-				itpSolver.add(markers[i], sts.unroll(label, i));
+				itpSolver.add(markers[i], sts.unfold(label, i));
 			}
 
 			if (i > 0) {
 				// Assert transition relation
-				itpSolver.add(markers[i], sts.unrollTrans(i - 1));
+				itpSolver.add(markers[i], sts.unfoldTrans(i - 1));
 			}
 
 			// Assert invariants
-			itpSolver.add(markers[i], sts.unrollInv(i));
+			itpSolver.add(markers[i], sts.unfoldInv(i));
 
 		}
 
 		// Set the last marker
 		final NotExpr negSpec = Exprs.Not(system.getSTS().getProp());
-		itpSolver.add(markers[abstractCounterEx.size()], sts.unroll(negSpec, abstractCounterEx.size() - 1)); // Property
+		itpSolver.add(markers[abstractCounterEx.size()], sts.unfold(negSpec, abstractCounterEx.size() - 1)); // Property
 																												// violation
 
 		// The conjunction of the markers is unsatisfiable (otherwise there
