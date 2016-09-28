@@ -14,8 +14,8 @@ import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.impl.NullLogger;
 import hu.bme.mit.theta.core.model.impl.Valuation;
 import hu.bme.mit.theta.formalism.sts.STS;
-import hu.bme.mit.theta.solver.SolverManager;
-import hu.bme.mit.theta.solver.z3.Z3SolverManager;
+import hu.bme.mit.theta.solver.SolverFactory;
+import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.splittingcegar.common.data.AbstractResult;
 import hu.bme.mit.theta.splittingcegar.common.data.AbstractState;
 import hu.bme.mit.theta.splittingcegar.common.data.AbstractSystem;
@@ -51,9 +51,9 @@ public class GenericCEGARLoop<AbstractSystemType extends AbstractSystem, Abstrac
 
 	private void reset() {
 		stopHandler.reset();
-		final SolverManager manager = new Z3SolverManager();
-		solvers.setSolver(manager.createSolver());
-		solvers.setItpSolver(manager.createItpSolver());
+		final SolverFactory factory = Z3SolverFactory.getInstace();
+		solvers.setSolver(factory.createSolver());
+		solvers.setItpSolver(factory.createItpSolver());
 	}
 
 	@Override

@@ -22,8 +22,7 @@ import hu.bme.mit.theta.formalism.tcfa.TCFA;
 import hu.bme.mit.theta.formalism.tcfa.dsl.TcfaDslManager;
 import hu.bme.mit.theta.formalism.tcfa.dsl.TcfaSpec;
 import hu.bme.mit.theta.solver.Solver;
-import hu.bme.mit.theta.solver.SolverManager;
-import hu.bme.mit.theta.solver.z3.Z3SolverManager;
+import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 
 public class TcfaCompositeTest {
 
@@ -33,8 +32,7 @@ public class TcfaCompositeTest {
 		final TcfaSpec spec = TcfaDslManager.parse("src/test/resources/fischer.tcfa", Int(1), Int(2));
 		final TCFA fischers = spec.getTcfa("fischers");
 
-		final SolverManager manager = new Z3SolverManager();
-		final Solver solver = manager.createSolver();
+		final Solver solver = Z3SolverFactory.getInstace().createSolver();
 
 		final BasicTcfaAnalysis analysis = BasicTcfaAnalysis.create(fischers, solver);
 

@@ -3,20 +3,26 @@ package hu.bme.mit.theta.solver.z3;
 import hu.bme.mit.theta.common.OsHelper;
 import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.solver.Solver;
-import hu.bme.mit.theta.solver.SolverManager;
-import hu.bme.mit.theta.solver.z3.solver.Z3ItpSolver;
-import hu.bme.mit.theta.solver.z3.solver.Z3Solver;
+import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.z3.trasform.Z3SymbolTable;
 import hu.bme.mit.theta.solver.z3.trasform.Z3TermTransformer;
 import hu.bme.mit.theta.solver.z3.trasform.Z3TransformationManager;
 
-public final class Z3SolverManager implements SolverManager {
+public final class Z3SolverFactory implements SolverFactory {
+
+	private static final Z3SolverFactory INSTACE;
 
 	static {
 		loadLibraries();
+		INSTACE = new Z3SolverFactory();
 	}
 
-	////////
+	private Z3SolverFactory() {
+	}
+
+	public static Z3SolverFactory getInstace() {
+		return INSTACE;
+	}
 
 	private static void loadLibraries() {
 		switch (OsHelper.getOs()) {
@@ -31,10 +37,6 @@ public final class Z3SolverManager implements SolverManager {
 		default:
 			throw new RuntimeException("Operating system not supported.");
 		}
-
-	}
-
-	public Z3SolverManager() {
 	}
 
 	@Override
