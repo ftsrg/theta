@@ -12,19 +12,19 @@ public class Node {
 
 	private final String id;
 	private final String label;
-	private final Color edgeColor;
+	private final Color lineColor;
 	private final Color fillColor;
-	private final String lineStyle;
+	private final LineStyle lineStyle;
 	private final int peripheries;
 
 	private final Collection<Edge> inEdges;
 	private final Collection<Edge> outEdges;
 
-	Node(final String id, final String label, final Color fillColor, final Color edgeColor, final String lineStyle,
+	Node(final String id, final String label, final Color fillColor, final Color lineColor, final LineStyle lineStyle,
 			final int peripheries) {
 		this.id = checkNotNull(id);
 		this.label = checkNotNull(label);
-		this.edgeColor = checkNotNull(edgeColor);
+		this.lineColor = checkNotNull(lineColor);
 		this.fillColor = checkNotNull(fillColor);
 		this.lineStyle = checkNotNull(lineStyle);
 		this.peripheries = peripheries;
@@ -41,15 +41,15 @@ public class Node {
 		return label;
 	}
 
-	public Color getEdgeColor() {
-		return edgeColor;
+	public Color getLineColor() {
+		return lineColor;
 	}
 
 	public Color getFillColor() {
 		return fillColor;
 	}
 
-	public String getLineStyle() {
+	public LineStyle getLineStyle() {
 		return lineStyle;
 	}
 

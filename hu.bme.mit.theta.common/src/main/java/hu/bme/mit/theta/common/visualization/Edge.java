@@ -10,9 +10,9 @@ public final class Edge {
 	private final Node target;
 	private final String label;
 	private final Color edgeColor;
-	private final String lineStyle;
+	private final LineStyle lineStyle;
 
-	Edge(final Node source, final Node target, final String label, final Color edgeColor, final String lineStyle) {
+	Edge(final Node source, final Node target, final String label, final Color edgeColor, final LineStyle lineStyle) {
 		this.source = checkNotNull(source);
 		this.target = checkNotNull(target);
 		this.label = checkNotNull(label);
@@ -36,7 +36,7 @@ public final class Edge {
 		return edgeColor;
 	}
 
-	public String getLineStyle() {
+	public LineStyle getLineStyle() {
 		return lineStyle;
 	}
 
