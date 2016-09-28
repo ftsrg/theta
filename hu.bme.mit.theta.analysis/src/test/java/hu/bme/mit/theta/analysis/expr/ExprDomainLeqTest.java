@@ -24,7 +24,7 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.IntType;
 import hu.bme.mit.theta.solver.Solver;
-import hu.bme.mit.theta.solver.z3.Z3SolverManager;
+import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 
 @RunWith(Parameterized.class)
 public final class ExprDomainLeqTest {
@@ -64,7 +64,7 @@ public final class ExprDomainLeqTest {
 
 	@Test
 	public void testIsTop() {
-		final Solver solver = new Z3SolverManager().createSolver();
+		final Solver solver = new Z3SolverFactory().createSolver();
 		final Domain<ExprState> domain = ExprDomain.create(solver);
 		assertEquals(domain.isLeq(state1, state2), leq);
 	}

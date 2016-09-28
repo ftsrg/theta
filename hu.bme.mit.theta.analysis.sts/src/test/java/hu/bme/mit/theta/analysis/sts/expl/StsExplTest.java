@@ -39,8 +39,8 @@ import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.formalism.sts.impl.StsImpl;
 import hu.bme.mit.theta.formalism.sts.impl.StsImpl.Builder;
 import hu.bme.mit.theta.solver.ItpSolver;
-import hu.bme.mit.theta.solver.SolverManager;
-import hu.bme.mit.theta.solver.z3.Z3SolverManager;
+import hu.bme.mit.theta.solver.SolverFactory;
+import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 
 public class StsExplTest {
 
@@ -65,8 +65,8 @@ public class StsExplTest {
 
 		final STS sts = builder.build();
 
-		final SolverManager manager = new Z3SolverManager();
-		final ItpSolver solver = manager.createItpSolver();
+		final SolverFactory factory = new Z3SolverFactory();
+		final ItpSolver solver = factory.createItpSolver();
 
 		final StsExplAnalysis analysis = new StsExplAnalysis(sts, solver);
 		final Predicate<ExprState> target = new ExprStatePredicate(Not(sts.getProp()), solver);

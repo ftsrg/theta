@@ -31,8 +31,8 @@ import hu.bme.mit.theta.solver.Interpolant;
 import hu.bme.mit.theta.solver.ItpMarker;
 import hu.bme.mit.theta.solver.ItpPattern;
 import hu.bme.mit.theta.solver.ItpSolver;
-import hu.bme.mit.theta.solver.SolverManager;
-import hu.bme.mit.theta.solver.z3.Z3SolverManager;
+import hu.bme.mit.theta.solver.SolverFactory;
+import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 
 public class Z3ItpSolverTest {
 
@@ -48,9 +48,9 @@ public class Z3ItpSolverTest {
 
 	@Before
 	public void initialize() {
-		final SolverManager manager = new Z3SolverManager();
+		final SolverFactory factory = new Z3SolverFactory();
 
-		solver = manager.createItpSolver();
+		solver = factory.createItpSolver();
 
 		final ConstDecl<IntType> ad = Const("a", Int());
 		final ConstDecl<IntType> bd = Const("b", Int());
