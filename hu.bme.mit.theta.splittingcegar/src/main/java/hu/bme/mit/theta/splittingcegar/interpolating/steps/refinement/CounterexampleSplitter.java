@@ -92,8 +92,8 @@ public class CounterexampleSplitter extends AbstractCEGARStep implements Splitte
 		// assertion)
 		if (stateToSplit.isInitial()) {
 			solver.push();
-			solver.add(sts.unrollInv(0));
-			solver.add(sts.unrollInit(0));
+			solver.add(sts.unfoldInv(0));
+			solver.add(sts.unfoldInit(0));
 			boolean isInitial = false;
 			for (final InterpolatedAbstractState refined : refinedStates) {
 				solver.push();
@@ -116,9 +116,9 @@ public class CounterexampleSplitter extends AbstractCEGARStep implements Splitte
 		// of the
 		// refined states --> assertion)
 		solver.push();
-		solver.add(sts.unrollInv(0));
-		solver.add(sts.unrollInv(1));
-		solver.add(sts.unrollTrans(0));
+		solver.add(sts.unfoldInv(0));
+		solver.add(sts.unfoldInv(1));
+		solver.add(sts.unfoldTrans(0));
 		for (final InterpolatedAbstractState succ : stateToSplit.getSuccessors()) {
 			if (stopHandler.isStopped())
 				return;

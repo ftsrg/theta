@@ -13,7 +13,7 @@ public class SolverHelper {
 	public static void unrollAndAssert(final Solver solver, final Collection<Expr<? extends BoolType>> expressions,
 			final STS sts, final int k) {
 		for (final Expr<? extends BoolType> ex : expressions)
-			solver.add(sts.unroll(ex, k));
+			solver.add(sts.unfold(ex, k));
 	}
 
 	public static boolean checkSat(final Solver solver) {

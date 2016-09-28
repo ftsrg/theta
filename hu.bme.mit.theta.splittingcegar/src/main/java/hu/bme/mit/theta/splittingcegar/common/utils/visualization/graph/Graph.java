@@ -5,7 +5,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Graph {
+public final class Graph {
 	private final String id;
 	private final String label;
 	private final List<Node> nodes;

@@ -159,8 +159,8 @@ public class ClusteredRefiner extends AbstractCEGARStep
 			// assertion)
 			if (as.isInitial()) {
 				solver.push();
-				solver.add(sts.unrollInv(0));
-				solver.add(sts.unrollInit(0));
+				solver.add(sts.unfoldInv(0));
+				solver.add(sts.unfoldInit(0));
 				boolean isInitial = false;
 				for (final ComponentAbstractState refined : refinedStates) {
 					solver.push();
@@ -181,9 +181,9 @@ public class ClusteredRefiner extends AbstractCEGARStep
 			// one of the
 			// refined states --> assertion)
 			solver.push();
-			solver.add(sts.unrollInv(0));
-			solver.add(sts.unrollInv(1));
-			solver.add(sts.unrollTrans(0));
+			solver.add(sts.unfoldInv(0));
+			solver.add(sts.unfoldInv(1));
+			solver.add(sts.unfoldTrans(0));
 			for (final ComponentAbstractState succ : as.getSuccessors()) {
 				if (stopHandler.isStopped())
 					return null;
@@ -269,14 +269,14 @@ public class ClusteredRefiner extends AbstractCEGARStep
 
 		final List<Valuation> deadEndStates = new ArrayList<>();
 		solver.push();
-		solver.add(sts.unrollInit(0)); // Assert initial conditions
+		solver.add(sts.unfoldInit(0)); // Assert initial conditions
 		for (int i = 0; i < traceLength; ++i) {
-			solver.add(sts.unrollInv(i)); // Invariants
+			solver.add(sts.unfoldInv(i)); // Invariants
 			for (final ComponentAbstractState as : abstractCounterEx.get(i).getStates())
 				for (final Expr<? extends BoolType> label : as.getLabels())
-					solver.add(sts.unroll(label, i)); // Labels
+					solver.add(sts.unfold(label, i)); // Labels
 			if (i > 0)
-				solver.add(sts.unrollTrans(i - 1)); // Transition relation
+				solver.add(sts.unfoldTrans(i - 1)); // Transition relation
 		}
 
 		do {
@@ -288,7 +288,7 @@ public class ClusteredRefiner extends AbstractCEGARStep
 				deadEndStates.add(ds);
 
 				// Exclude this state in order to get new dead end states
-				solver.add(sts.unroll(Exprs.Not(ds.toExpr()), traceLength - 1));
+				solver.add(sts.unfold(Exprs.Not(ds.toExpr()), traceLength - 1));
 			} else
 				break;
 		} while (true);
@@ -304,17 +304,17 @@ public class ClusteredRefiner extends AbstractCEGARStep
 
 		final List<Valuation> badStates = new ArrayList<>();
 		solver.push();
-		solver.add(sts.unrollInv(0)); // Invariants
-		solver.add(sts.unrollInv(1)); // Invariants
+		solver.add(sts.unfoldInv(0)); // Invariants
+		solver.add(sts.unfoldInv(1)); // Invariants
 		// Failure state
 		for (final ComponentAbstractState as : abstractCounterEx.get(traceLength - 1).getStates())
 			for (final Expr<? extends BoolType> label : as.getLabels())
-				solver.add(sts.unroll(label, 0)); // Labels
+				solver.add(sts.unfold(label, 0)); // Labels
 		// Next state
 		for (final ComponentAbstractState as : abstractCounterEx.get(traceLength).getStates())
 			for (final Expr<? extends BoolType> label : as.getLabels())
-				solver.add(sts.unroll(label, 1)); // Labels
-		solver.add(sts.unrollTrans(0)); // Transition relation
+				solver.add(sts.unfold(label, 1)); // Labels
+		solver.add(sts.unfoldTrans(0)); // Transition relation
 
 		do {
 			if (SolverHelper.checkSat(solver)) {
@@ -325,7 +325,7 @@ public class ClusteredRefiner extends AbstractCEGARStep
 				badStates.add(bs);
 
 				// Exclude this state in order to get new dead end states
-				solver.add(sts.unroll(Exprs.Not(bs.toExpr()), 0));
+				solver.add(sts.unfold(Exprs.Not(bs.toExpr()), 0));
 			} else
 				break;
 		} while (true);
@@ -339,10 +339,10 @@ public class ClusteredRefiner extends AbstractCEGARStep
 
 		final List<Valuation> concreteStates = new ArrayList<>();
 		solver.push();
-		solver.add(sts.unrollInv(0));
+		solver.add(sts.unfoldInv(0));
 		// Assert the labels of the state
 		for (final Expr<? extends BoolType> label : abstractState.getLabels())
-			solver.add(sts.unroll(label, 0));
+			solver.add(sts.unfold(label, 0));
 		do {
 			if (SolverHelper.checkSat(solver)) {
 				// Get the model and project
@@ -350,7 +350,7 @@ public class ClusteredRefiner extends AbstractCEGARStep
 
 				concreteStates.add(cs);
 				// Exclude this state to get new ones
-				solver.add(sts.unroll(Exprs.Not(cs.toExpr()), 0));
+				solver.add(sts.unfold(Exprs.Not(cs.toExpr()), 0));
 				logger.write("Concrete state: ", 7, 3);
 				logger.writeln(cs, 7, 0);
 			} else
@@ -395,10 +395,10 @@ public class ClusteredRefiner extends AbstractCEGARStep
 
 		final List<Valuation> ret = new ArrayList<>();
 		solver.push();
-		solver.add(sts.unroll(cs.toExpr(), 0));
+		solver.add(sts.unfold(cs.toExpr(), 0));
 		for (final Valuation ds : deadEndStates) {
 			solver.push();
-			solver.add(sts.unroll(ds.toExpr(), 0));
+			solver.add(sts.unfold(ds.toExpr(), 0));
 			if (SolverHelper.checkSat(solver))
 				ret.add(sts.getConcreteState(solver.getModel(), 0, otherVars));
 			solver.pop();

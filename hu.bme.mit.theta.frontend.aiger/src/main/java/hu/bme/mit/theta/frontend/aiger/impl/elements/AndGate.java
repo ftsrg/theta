@@ -2,8 +2,6 @@ package hu.bme.mit.theta.frontend.aiger.impl.elements;
 
 import java.util.List;
 
-import com.google.common.collect.ImmutableSet;
-
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.impl.Exprs;
 import hu.bme.mit.theta.core.type.BoolType;
@@ -31,7 +29,7 @@ public final class AndGate extends HwElement {
 		if (rhs2 % 2 != 0)
 			expr2 = Exprs.Not(expr2);
 
-		return Exprs.And(ImmutableSet.of(expr1, expr2));
+		return Exprs.And(expr1, expr2);
 	}
 
 }

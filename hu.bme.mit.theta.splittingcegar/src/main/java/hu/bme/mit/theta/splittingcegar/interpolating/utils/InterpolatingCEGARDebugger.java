@@ -56,7 +56,7 @@ public class InterpolatingCEGARDebugger
 		final Solver solver = solvers.getSolver();
 
 		solver.push(); // 1
-		solver.add(sts.unrollInv(0));
+		solver.add(sts.unfoldInv(0));
 		for (final InterpolatedAbstractState as : stateSpace.keySet()) {
 			solver.push(); // 2
 			SolverHelper.unrollAndAssert(solver, as.getLabels(), sts, 0);
@@ -67,7 +67,7 @@ public class InterpolatingCEGARDebugger
 					final ConcreteState cs = new ConcreteState(csExpr);
 					stateSpace.get(as).add(cs);
 					allConcreteStates.add(cs);
-					solver.add(sts.unroll(Exprs.Not(csExpr.toExpr()), 0));
+					solver.add(sts.unfold(Exprs.Not(csExpr.toExpr()), 0));
 				} else {
 					break;
 				}

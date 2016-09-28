@@ -1,5 +1,7 @@
 package hu.bme.mit.theta.core.expr.impl;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import java.util.Collection;
 import java.util.List;
 
@@ -294,6 +296,17 @@ public final class Exprs {
 	public static <T extends ClosedUnderMul> MulExpr<T> Mul(final Expr<? extends T> op1, final Expr<? extends T> op2,
 			final Expr<? extends T> op3, final Expr<? extends T> op4, final Expr<? extends T> op5) {
 		return Mul(ImmutableMultiset.of(op1, op2, op3, op4, op5));
+	}
+
+	////
+
+	public static <T extends Type> PrimedExpr<T> Prime(final Expr<? extends T> op, final int i) {
+		checkArgument(i > 0);
+		if (i == 1) {
+			return new PrimedExprImpl<>(op);
+		} else {
+			return new PrimedExprImpl<>(Prime(op, i - 1));
+		}
 	}
 
 }
