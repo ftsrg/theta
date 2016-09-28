@@ -4,10 +4,13 @@ import java.awt.Color;
 import java.util.HashMap;
 import java.util.Map;
 
-public final class GraphVizPrinter implements GraphPrinter {
+/**
+ * Class for writing graphs in GraphViz format.
+ */
+public final class GraphVizWriter extends AbstractGraphWriter {
 
 	@Override
-	public String print(final Graph graph) {
+	public String writeString(final Graph graph) {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("digraph ").append(graph.getId()).append(" {").append(System.lineSeparator());
 		sb.append("\tlabel=\"").append(graph.getLabel()).append("\";").append(System.lineSeparator());

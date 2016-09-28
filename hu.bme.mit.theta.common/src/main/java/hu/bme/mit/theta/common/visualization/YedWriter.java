@@ -4,10 +4,13 @@ import java.awt.Color;
 import java.util.HashMap;
 import java.util.Map;
 
-public class YedPrinter implements GraphPrinter {
+/**
+ * Class for writing graphs in yED (GraphML) format.
+ */
+public class YedWriter extends AbstractGraphWriter {
 
 	@Override
-	public String print(final Graph graph) {
+	public String writeString(final Graph graph) {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>").append(System.lineSeparator());
 		sb.append("<graphml xmlns=\"http://graphml.graphdrawing.org/xmlns\"").append(System.lineSeparator());
