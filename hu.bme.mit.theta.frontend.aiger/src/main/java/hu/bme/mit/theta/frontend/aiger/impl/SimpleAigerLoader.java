@@ -7,8 +7,6 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.google.common.collect.ImmutableSet;
-
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.decl.impl.Decls;
 import hu.bme.mit.theta.core.expr.Expr;
@@ -70,9 +68,8 @@ public class SimpleAigerLoader implements AigerLoader {
 			final int vi1 = Integer.parseInt(v[1]);
 			final int vi2 = Integer.parseInt(v[2]);
 			builder.addInvar(Exprs.Iff(vars.get(vo / 2).getRef(),
-					Exprs.And(ImmutableSet.of(
-							vi1 % 2 == 0 ? vars.get(vi1 / 2).getRef() : Exprs.Not(vars.get(vi1 / 2).getRef()),
-							vi2 % 2 == 0 ? vars.get(vi2 / 2).getRef() : Exprs.Not(vars.get(vi2 / 2).getRef())))));
+					Exprs.And(vi1 % 2 == 0 ? vars.get(vi1 / 2).getRef() : Exprs.Not(vars.get(vi1 / 2).getRef()),
+							vi2 % 2 == 0 ? vars.get(vi2 / 2).getRef() : Exprs.Not(vars.get(vi2 / 2).getRef()))));
 		}
 
 		br.close();

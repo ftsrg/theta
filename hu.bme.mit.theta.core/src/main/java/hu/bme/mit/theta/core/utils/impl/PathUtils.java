@@ -4,6 +4,9 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.Prime;
 
+import java.util.Collection;
+import java.util.Optional;
+
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.IndexedConstDecl;
 import hu.bme.mit.theta.core.decl.VarDecl;
@@ -48,11 +51,11 @@ public class PathUtils {
 		return unfold(expr, VarIndexes.all(i));
 	}
 
-	public static <T extends Type> Expr<T> fold(final Expr<T> expr, final VarIndexes indexes) {
+	public static <T extends Type> Expr<T> foldin(final Expr<T> expr, final VarIndexes indexes) {
 		checkNotNull(expr);
 		checkNotNull(indexes);
 
-		final FoldVisitor visitor = new FoldVisitor(indexes);
+		final FoldinVisitor visitor = new FoldinVisitor(indexes);
 
 		@SuppressWarnings("unchecked")
 		final Expr<T> result = (Expr<T>) expr.accept(visitor, null);
@@ -60,9 +63,9 @@ public class PathUtils {
 		return result;
 	}
 
-	public static <T extends Type> Expr<T> fold(final Expr<T> expr, final int i) {
+	public static <T extends Type> Expr<T> foldin(final Expr<T> expr, final int i) {
 		checkArgument(i >= 0);
-		return fold(expr, VarIndexes.all(i));
+		return foldin(expr, VarIndexes.all(i));
 	}
 
 	public static Valuation extractValuation(final Model model, final VarIndexes indexes) {
@@ -83,6 +86,26 @@ public class PathUtils {
 	public static Valuation extractValuation(final Model model, final int i) {
 		checkArgument(i >= 0);
 		return extractValuation(model, VarIndexes.all(i));
+	}
+
+	public static Valuation extractValuation(final Model model, final VarIndexes indexes,
+			final Collection<? extends VarDecl<? extends Type>> varDecls) {
+		final Valuation.Builder builder = Valuation.builder();
+		for (final VarDecl<? extends Type> varDecl : varDecls) {
+			final int index = indexes.get(varDecl);
+			final IndexedConstDecl<?> constDecl = varDecl.getConstDecl(index);
+			final Optional<? extends LitExpr<?>> eval = model.eval(constDecl);
+			if (eval.isPresent()) {
+				builder.put(varDecl, eval.get());
+			}
+		}
+		return builder.build();
+	}
+
+	public static Valuation extractValuation(final Model model, final int i,
+			final Collection<? extends VarDecl<? extends Type>> varDecls) {
+		checkArgument(i >= 0);
+		return extractValuation(model, VarIndexes.all(i), varDecls);
 	}
 
 	////
@@ -129,11 +152,11 @@ public class PathUtils {
 		}
 	}
 
-	private static final class FoldVisitor extends ExprRewriterVisitor<Void> {
+	private static final class FoldinVisitor extends ExprRewriterVisitor<Void> {
 
 		private final VarIndexes indexes;
 
-		private FoldVisitor(final VarIndexes indexes) {
+		private FoldinVisitor(final VarIndexes indexes) {
 			this.indexes = indexes;
 		}
 

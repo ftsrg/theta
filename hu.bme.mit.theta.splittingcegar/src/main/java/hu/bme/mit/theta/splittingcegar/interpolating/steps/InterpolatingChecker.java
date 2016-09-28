@@ -96,8 +96,8 @@ public class InterpolatingChecker extends AbstractCEGARStep implements Checker<I
 		final Solver solver = solvers.getSolver();
 
 		solver.push();
-		solver.add(sts.unrollInv(0)); // Assert invariants
-		solver.add(sts.unroll(negProp, 0)); // Assert the negate of the
+		solver.add(sts.unfoldInv(0)); // Assert invariants
+		solver.add(sts.unfold(negProp, 0)); // Assert the negate of the
 											// specification
 
 		// Flag for storing whether the actual search is a continuation from a

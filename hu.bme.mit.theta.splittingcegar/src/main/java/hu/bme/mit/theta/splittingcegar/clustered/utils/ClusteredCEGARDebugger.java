@@ -70,12 +70,12 @@ public class ClusteredCEGARDebugger extends AbstractDebugger<ClusteredAbstractSy
 																				// flat
 																				// collection
 		solver.push(); // 1
-		solver.add(sts.unrollInv(0));
+		solver.add(sts.unfoldInv(0));
 		for (final ClusteredAbstractState cas : stateSpace.keySet()) {
 			solver.push(); // 2
 			for (final ComponentAbstractState as : cas.getStates())
 				for (final Expr<? extends BoolType> label : as.getLabels())
-					solver.add(sts.unroll(label, 0));
+					solver.add(sts.unfold(label, 0));
 			do {
 				if (SolverHelper.checkSat(solver)) {
 					final Valuation csExpr = sts.getConcreteState(solver.getModel(), 0, system.getVars());
@@ -83,7 +83,7 @@ public class ClusteredCEGARDebugger extends AbstractDebugger<ClusteredAbstractSy
 					final ConcreteState cs = new ConcreteState(csExpr);
 					stateSpace.get(cas).add(cs);
 					allConcreteStates.add(cs);
-					solver.add(sts.unroll(Exprs.Not(csExpr.toExpr()), 0));
+					solver.add(sts.unfold(Exprs.Not(csExpr.toExpr()), 0));
 				} else {
 					break;
 				}
@@ -93,18 +93,18 @@ public class ClusteredCEGARDebugger extends AbstractDebugger<ClusteredAbstractSy
 
 		// Explore abstract transition relation
 		solver.push(); // 2
-		solver.add(sts.unrollInv(1));
-		solver.add(sts.unrollTrans(0));
+		solver.add(sts.unfoldInv(1));
+		solver.add(sts.unfoldTrans(0));
 		for (final ClusteredAbstractState cas0 : stateSpace.keySet()) {
 			solver.push(); // 3
 			for (final ComponentAbstractState as : cas0.getStates())
 				for (final Expr<? extends BoolType> label : as.getLabels())
-					solver.add(sts.unroll(label, 0));
+					solver.add(sts.unfold(label, 0));
 			for (final ClusteredAbstractState cas1 : stateSpace.keySet()) {
 				solver.push(); // 4
 				for (final ComponentAbstractState as : cas1.getStates())
 					for (final Expr<? extends BoolType> label : as.getLabels())
-						solver.add(sts.unroll(label, 1));
+						solver.add(sts.unfold(label, 1));
 				if (SolverHelper.checkSat(solver))
 					cas0.getSuccessors().add(cas1);
 				solver.pop(); // 4
@@ -239,7 +239,7 @@ public class ClusteredCEGARDebugger extends AbstractDebugger<ClusteredAbstractSy
 			for (int i = 0; i < previous.length; ++i)
 				SolverHelper.unrollAndAssert(solver,
 						system.getAbstractKripkeStructure(i).getState(previous[i]).getLabels(), sts, 0);
-			solver.add(sts.unrollInit(0));
+			solver.add(sts.unfoldInit(0));
 
 			isInitial = SolverHelper.checkSat(solver);
 			solver.pop();

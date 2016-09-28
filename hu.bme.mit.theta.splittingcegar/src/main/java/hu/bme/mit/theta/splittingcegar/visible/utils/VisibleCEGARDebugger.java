@@ -41,7 +41,7 @@ public class VisibleCEGARDebugger extends AbstractDebugger<VisibleAbstractSystem
 		// Explore all abstract states
 		final STS sts = system.getSTS();
 		solver.push(); // 1
-		solver.add(sts.unrollInv(0));
+		solver.add(sts.unfoldInv(0));
 
 		solver.push(); // 2
 		do {
@@ -50,7 +50,7 @@ public class VisibleCEGARDebugger extends AbstractDebugger<VisibleAbstractSystem
 				final VisibleAbstractState vas = new VisibleAbstractState(vasExpr, false);
 				stateSpace.put(vas, new ArrayList<>());
 				// Exclude
-				solver.add(sts.unroll(Exprs.Not(vasExpr.toExpr()), 0));
+				solver.add(sts.unfold(Exprs.Not(vasExpr.toExpr()), 0));
 			} else {
 				break;
 			}
@@ -59,10 +59,10 @@ public class VisibleCEGARDebugger extends AbstractDebugger<VisibleAbstractSystem
 
 		// Check initial states
 		solver.push(); // 2
-		solver.add(sts.unrollInit(0));
+		solver.add(sts.unfoldInit(0));
 		for (final VisibleAbstractState vas : stateSpace.keySet()) {
 			solver.push(); // 3
-			solver.add(sts.unroll(vas.getValuation().toExpr(), 0));
+			solver.add(sts.unfold(vas.getValuation().toExpr(), 0));
 			vas.setInitial(SolverHelper.checkSat(solver));
 			solver.pop(); // 3
 		}
@@ -74,7 +74,7 @@ public class VisibleCEGARDebugger extends AbstractDebugger<VisibleAbstractSystem
 
 		for (final VisibleAbstractState vas : stateSpace.keySet()) {
 			solver.push(); // 2
-			solver.add(sts.unroll(vas.getValuation().toExpr(), 0));
+			solver.add(sts.unfold(vas.getValuation().toExpr(), 0));
 			do {
 				if (SolverHelper.checkSat(solver)) { // New concrete state found
 					final Valuation csExpr = sts.getConcreteState(solver.getModel(), 0, system.getVars());
@@ -82,7 +82,7 @@ public class VisibleCEGARDebugger extends AbstractDebugger<VisibleAbstractSystem
 					final ConcreteState cs = new ConcreteState(csExpr);
 					stateSpace.get(vas).add(cs);
 					allConcreteStates.add(cs);
-					solver.add(sts.unroll(Exprs.Not(csExpr.toExpr()), 0));
+					solver.add(sts.unfold(Exprs.Not(csExpr.toExpr()), 0));
 				} else {
 					break;
 				}
@@ -92,14 +92,14 @@ public class VisibleCEGARDebugger extends AbstractDebugger<VisibleAbstractSystem
 
 		// Explore abstract transition relation
 		solver.push(); // 2
-		solver.add(sts.unrollInv(1));
-		solver.add(sts.unrollTrans(0));
+		solver.add(sts.unfoldInv(1));
+		solver.add(sts.unfoldTrans(0));
 		for (final VisibleAbstractState vas0 : stateSpace.keySet()) {
 			solver.push(); // 3
-			solver.add(sts.unroll(vas0.getValuation().toExpr(), 0));
+			solver.add(sts.unfold(vas0.getValuation().toExpr(), 0));
 			for (final VisibleAbstractState vas1 : stateSpace.keySet()) {
 				solver.push(); // 4
-				solver.add(sts.unroll(vas1.getValuation().toExpr(), 1));
+				solver.add(sts.unfold(vas1.getValuation().toExpr(), 1));
 				if (SolverHelper.checkSat(solver))
 					vas0.addSuccessor(vas1);
 				solver.pop(); // 4
