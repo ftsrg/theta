@@ -3,12 +3,12 @@ package hu.bme.mit.theta.solver.z3;
 import hu.bme.mit.theta.common.OsHelper;
 import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.solver.Solver;
-import hu.bme.mit.theta.solver.SolverManager;
+import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.z3.trasform.Z3SymbolTable;
 import hu.bme.mit.theta.solver.z3.trasform.Z3TermTransformer;
 import hu.bme.mit.theta.solver.z3.trasform.Z3TransformationManager;
 
-public final class Z3SolverManager implements SolverManager {
+public final class Z3SolverFactory implements SolverFactory {
 
 	static {
 		loadLibraries();
@@ -32,7 +32,7 @@ public final class Z3SolverManager implements SolverManager {
 
 	}
 
-	public Z3SolverManager() {
+	public Z3SolverFactory() {
 	}
 
 	@Override

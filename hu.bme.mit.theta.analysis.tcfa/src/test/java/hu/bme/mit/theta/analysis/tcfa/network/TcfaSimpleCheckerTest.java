@@ -31,8 +31,8 @@ import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.IntType;
 import hu.bme.mit.theta.formalism.tcfa.TCFA;
 import hu.bme.mit.theta.solver.Solver;
-import hu.bme.mit.theta.solver.SolverManager;
-import hu.bme.mit.theta.solver.z3.Z3SolverManager;
+import hu.bme.mit.theta.solver.SolverFactory;
+import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 
 public class TcfaSimpleCheckerTest {
 
@@ -43,8 +43,8 @@ public class TcfaSimpleCheckerTest {
 		final VarDecl<IntType> vlock = Var("lock", Int());
 		final TCFA fischer = TcfaNetworkTestHelper.fischer(n, vlock);
 
-		final SolverManager manager = new Z3SolverManager();
-		final Solver solver = manager.createSolver();
+		final SolverFactory factory = new Z3SolverFactory();
+		final Solver solver = factory.createSolver();
 
 		final TcfaAnalyis<CompositeState<ZoneState, ExplState>, CompositePrecision<ZonePrecision, ExplPrecision>> analysis = TcfaAnalyis
 				.create(fischer.getInitLoc(),
@@ -64,8 +64,8 @@ public class TcfaSimpleCheckerTest {
 		final Expr<IntType> lock = vlock.getRef();
 		final TCFA fischer = TcfaNetworkTestHelper.fischer(n, vlock);
 
-		final SolverManager manager = new Z3SolverManager();
-		final Solver solver = manager.createSolver();
+		final SolverFactory factory = new Z3SolverFactory();
+		final Solver solver = factory.createSolver();
 
 		final TcfaAnalyis<CompositeState<ZoneState, PredState>, CompositePrecision<ZonePrecision, PredPrecision>> analysis = TcfaAnalyis
 				.create(fischer.getInitLoc(),

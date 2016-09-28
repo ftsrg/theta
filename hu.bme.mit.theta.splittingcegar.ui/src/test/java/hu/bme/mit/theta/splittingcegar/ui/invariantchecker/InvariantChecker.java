@@ -5,13 +5,13 @@ import hu.bme.mit.theta.core.expr.impl.Exprs;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.solver.Solver;
-import hu.bme.mit.theta.solver.SolverManager;
+import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.SolverStatus;
 
 public class InvariantChecker {
-	public static boolean check(final STS sts, final Expr<? extends BoolType> invariant, final SolverManager manager) {
+	public static boolean check(final STS sts, final Expr<? extends BoolType> invariant, final SolverFactory factory) {
 
-		final Solver solver = manager.createSolver();
+		final Solver solver = factory.createSolver();
 
 		solver.push();
 

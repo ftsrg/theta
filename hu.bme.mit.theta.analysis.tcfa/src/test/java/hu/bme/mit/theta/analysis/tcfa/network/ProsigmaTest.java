@@ -21,8 +21,8 @@ import hu.bme.mit.theta.analysis.zone.ZonePrecision;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
 import hu.bme.mit.theta.formalism.tcfa.TCFA;
 import hu.bme.mit.theta.solver.Solver;
-import hu.bme.mit.theta.solver.SolverManager;
-import hu.bme.mit.theta.solver.z3.Z3SolverManager;
+import hu.bme.mit.theta.solver.SolverFactory;
+import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 
 public class ProsigmaTest {
 
@@ -31,8 +31,8 @@ public class ProsigmaTest {
 	public void test() {
 		final TCFA prosigma = TcfaNetworkTestHelper.prosigma();
 
-		final SolverManager manager = new Z3SolverManager();
-		final Solver solver = manager.createSolver();
+		final SolverFactory factory = new Z3SolverFactory();
+		final Solver solver = factory.createSolver();
 
 		final TcfaAnalyis<CompositeState<ZoneState, ExplState>, CompositePrecision<ZonePrecision, ExplPrecision>> analysis = TcfaAnalyis
 				.create(prosigma.getInitLoc(),

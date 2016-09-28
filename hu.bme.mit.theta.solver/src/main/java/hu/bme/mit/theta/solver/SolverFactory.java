@@ -1,6 +1,6 @@
 package hu.bme.mit.theta.solver;
 
-public interface SolverManager {
+public interface SolverFactory {
 
 	public Solver createSolver();
 

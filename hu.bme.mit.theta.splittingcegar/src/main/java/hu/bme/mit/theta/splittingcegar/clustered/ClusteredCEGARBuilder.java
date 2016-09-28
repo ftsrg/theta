@@ -2,8 +2,8 @@ package hu.bme.mit.theta.splittingcegar.clustered;
 
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.impl.NullLogger;
-import hu.bme.mit.theta.solver.SolverManager;
-import hu.bme.mit.theta.solver.z3.Z3SolverManager;
+import hu.bme.mit.theta.solver.SolverFactory;
+import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.splittingcegar.clustered.data.ClusteredAbstractState;
 import hu.bme.mit.theta.splittingcegar.clustered.data.ClusteredAbstractSystem;
 import hu.bme.mit.theta.splittingcegar.clustered.steps.ClusteredChecker;
@@ -40,8 +40,8 @@ public class ClusteredCEGARBuilder implements CEGARBuilder {
 
 	@Override
 	public GenericCEGARLoop<ClusteredAbstractSystem, ClusteredAbstractState> build() {
-		final SolverManager manager = new Z3SolverManager();
-		final SolverWrapper solvers = new SolverWrapper(manager.createSolver(), manager.createItpSolver());
+		final SolverFactory factory = new Z3SolverFactory();
+		final SolverWrapper solvers = new SolverWrapper(factory.createSolver(), factory.createItpSolver());
 		final StopHandler stopHandler = new StopHandler();
 		ClusteredCEGARDebugger debugger = null;
 		if (debugVisualizer != null)
