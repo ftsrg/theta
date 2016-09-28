@@ -12,9 +12,9 @@ final class CompositeNode extends Node {
 
 	private final Collection<Node> children;
 
-	CompositeNode(final String id, final String label, final Color fillColor, final Color edgeColor,
-			final String lineStyle, final int peripheries) {
-		super(id, label, fillColor, edgeColor, lineStyle, peripheries);
+	CompositeNode(final String id, final String label, final Color fillColor, final Color lineColor,
+			final LineStyle lineStyle, final int peripheries) {
+		super(id, label, fillColor, lineColor, lineStyle, peripheries);
 		this.children = new ArrayList<Node>();
 	}
 

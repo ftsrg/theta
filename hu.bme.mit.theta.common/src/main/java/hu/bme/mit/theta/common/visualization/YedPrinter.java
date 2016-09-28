@@ -46,7 +46,7 @@ public class YedPrinter implements GraphPrinter {
 		sb.append("<y:Fill color=\"").append(mapColorToString(node.getFillColor()))
 				.append("\" transparent=\"false\"/>");
 		sb.append("<y:BorderStyle");
-		sb.append(" color=\"").append(mapColorToString(node.getEdgeColor())).append("\"");
+		sb.append(" color=\"").append(mapColorToString(node.getLineColor())).append("\"");
 		// TODO: edge style, peripheries?
 		sb.append("/>");
 		sb.append("<y:Shape type=\"ellipse\"/></y:ShapeNode></data></node>").append(System.lineSeparator());
@@ -61,7 +61,7 @@ public class YedPrinter implements GraphPrinter {
 		sb.append("\t<y:Fill color=\"").append(mapColorToString(node.getFillColor()))
 				.append("\" transparent=\"false\"/>").append(System.lineSeparator());
 		sb.append("<y:BorderStyle");
-		sb.append(" color=\"").append(mapColorToString(node.getEdgeColor())).append("\"");
+		sb.append(" color=\"").append(mapColorToString(node.getLineColor())).append("\"");
 		// TODO: edge style, peripheries?
 		sb.append("/>");
 		sb.append("<y:Shape type=\"ellipse\"/></y:ShapeNode></data></node>").append(System.lineSeparator());

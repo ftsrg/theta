@@ -23,16 +23,16 @@ public final class Graph {
 		this.edges = new ArrayList<>();
 	}
 
-	public void addNode(final String id, final String label, final Color fillColor, final Color edgeColor,
-			final String lineStyle, final int peripheries) {
+	public void addNode(final String id, final String label, final Color fillColor, final Color lineColor,
+			final LineStyle lineStyle, final int peripheries) {
 		checkArgument(!nodes.containsKey(id), "A node with the same id is already present!");
-		nodes.put(id, new Node(id, label, fillColor, edgeColor, lineStyle, peripheries));
+		nodes.put(id, new Node(id, label, fillColor, lineColor, lineStyle, peripheries));
 	}
 
-	public void addCompositeNode(final String id, final String label, final Color fillColor, final Color edgeColor,
-			final String lineStyle, final int peripheries) {
+	public void addCompositeNode(final String id, final String label, final Color fillColor, final Color lineColor,
+			final LineStyle lineStyle, final int peripheries) {
 		checkArgument(!nodes.containsKey(id), "A node with the same id is already present!");
-		nodes.put(id, new CompositeNode(id, label, fillColor, edgeColor, lineStyle, peripheries));
+		nodes.put(id, new CompositeNode(id, label, fillColor, lineColor, lineStyle, peripheries));
 	}
 
 	public void setChild(final String parentId, final String childId) {
@@ -44,7 +44,7 @@ public final class Graph {
 	}
 
 	public void addEdge(final String sourceId, final String targetId, final String label, final Color edgeColor,
-			final String lineStyle) {
+			final LineStyle lineStyle) {
 		checkArgument(nodes.containsKey(sourceId), "Source node does not exist!");
 		checkArgument(nodes.containsKey(targetId), "Target node does not exist!");
 		final Node source = nodes.get(sourceId);
