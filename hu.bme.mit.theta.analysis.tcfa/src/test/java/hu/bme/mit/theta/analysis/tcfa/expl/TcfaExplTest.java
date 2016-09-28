@@ -20,8 +20,7 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.IntType;
 import hu.bme.mit.theta.formalism.tcfa.instances.FischerTcfa;
 import hu.bme.mit.theta.solver.Solver;
-import hu.bme.mit.theta.solver.SolverManager;
-import hu.bme.mit.theta.solver.z3.Z3SolverManager;
+import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 
 public class TcfaExplTest {
 
@@ -31,8 +30,7 @@ public class TcfaExplTest {
 		final VarDecl<IntType> vlock = Var("lock", Int());
 		final FischerTcfa fischer = new FischerTcfa(1, 1, 2, vlock);
 
-		final SolverManager manager = new Z3SolverManager();
-		final Solver solver = manager.createSolver();
+		final Solver solver = Z3SolverFactory.getInstace().createSolver();
 
 		final TcfaAnalyis<ExplState, ExplPrecision> analyis = TcfaAnalyis.create(fischer.getInitial(),
 				TcfaExplAnalysis.create(solver));

@@ -31,8 +31,7 @@ import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.IntType;
 import hu.bme.mit.theta.formalism.tcfa.TCFA;
 import hu.bme.mit.theta.solver.Solver;
-import hu.bme.mit.theta.solver.SolverManager;
-import hu.bme.mit.theta.solver.z3.Z3SolverManager;
+import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 
 public class TcfaNetworkPredTest {
 
@@ -44,8 +43,7 @@ public class TcfaNetworkPredTest {
 		final Expr<IntType> lock = vlock.getRef();
 		final TCFA fischer = TcfaNetworkTestHelper.fischer(n, vlock);
 
-		final SolverManager manager = new Z3SolverManager();
-		final Solver solver = manager.createSolver();
+		final Solver solver = Z3SolverFactory.getInstace().createSolver();
 
 		final TcfaAnalyis<CompositeState<ZoneState, PredState>, CompositePrecision<ZonePrecision, PredPrecision>> analysis = TcfaAnalyis
 				.create(fischer.getInitLoc(),

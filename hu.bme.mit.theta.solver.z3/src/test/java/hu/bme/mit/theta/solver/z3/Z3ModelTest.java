@@ -8,12 +8,10 @@ import com.microsoft.z3.Context;
 import com.microsoft.z3.Model;
 import com.microsoft.z3.Solver;
 
-import hu.bme.mit.theta.solver.z3.Z3SolverManager;
-
-public class Z3ModelTest {
+public final class Z3ModelTest {
 
 	static {
-		new Z3SolverManager();
+		Z3SolverFactory.getInstace();
 	}
 
 	@Test

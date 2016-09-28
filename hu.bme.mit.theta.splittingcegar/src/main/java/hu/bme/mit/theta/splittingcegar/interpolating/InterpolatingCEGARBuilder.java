@@ -5,8 +5,8 @@ import java.util.List;
 
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.impl.NullLogger;
-import hu.bme.mit.theta.solver.SolverManager;
-import hu.bme.mit.theta.solver.z3.Z3SolverManager;
+import hu.bme.mit.theta.solver.SolverFactory;
+import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.splittingcegar.common.CEGARBuilder;
 import hu.bme.mit.theta.splittingcegar.common.GenericCEGARLoop;
 import hu.bme.mit.theta.splittingcegar.common.data.SolverWrapper;
@@ -86,8 +86,8 @@ public class InterpolatingCEGARBuilder implements CEGARBuilder {
 
 	@Override
 	public GenericCEGARLoop<InterpolatedAbstractSystem, InterpolatedAbstractState> build() {
-		final SolverManager manager = new Z3SolverManager();
-		final SolverWrapper solvers = new SolverWrapper(manager.createSolver(), manager.createItpSolver());
+		final SolverFactory factory = Z3SolverFactory.getInstace();
+		final SolverWrapper solvers = new SolverWrapper(factory.createSolver(), factory.createItpSolver());
 		final StopHandler stopHandler = new StopHandler();
 		InterpolatingCEGARDebugger debugger = null;
 		if (debugVisualizer != null)
