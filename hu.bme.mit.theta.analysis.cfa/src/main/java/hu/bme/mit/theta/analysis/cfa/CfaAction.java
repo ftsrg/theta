@@ -4,6 +4,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.And;
 import static hu.bme.mit.theta.core.utils.impl.VarIndexes.all;
 
+import hu.bme.mit.theta.analysis.automaton.AutomatonAction;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.BoolType;
@@ -11,8 +12,9 @@ import hu.bme.mit.theta.core.utils.impl.StmtUnroller;
 import hu.bme.mit.theta.core.utils.impl.StmtUnroller.StmtToExprResult;
 import hu.bme.mit.theta.core.utils.impl.VarIndexes;
 import hu.bme.mit.theta.formalism.cfa.CfaEdge;
+import hu.bme.mit.theta.formalism.cfa.CfaLoc;
 
-public final class CfaAction implements ExprAction {
+public final class CfaAction implements AutomatonAction<CfaLoc, CfaEdge>, ExprAction {
 
 	private final CfaEdge edge;
 	private final Expr<? extends BoolType> expr;
@@ -26,6 +28,11 @@ public final class CfaAction implements ExprAction {
 		nextIndexes = toExprResult.getIndexes();
 	}
 
+	public static CfaAction create(final CfaEdge edge) {
+		return new CfaAction(edge);
+	}
+
+	@Override
 	public CfaEdge getEdge() {
 		return edge;
 	}
