@@ -7,6 +7,7 @@ import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.Domain;
 import hu.bme.mit.theta.analysis.InitFunction;
 import hu.bme.mit.theta.analysis.TransferFunction;
+import hu.bme.mit.theta.analysis.automaton.AutomatonState;
 import hu.bme.mit.theta.analysis.composite.CompositeAnalysis;
 import hu.bme.mit.theta.analysis.composite.CompositePrecision;
 import hu.bme.mit.theta.analysis.composite.CompositeState;
@@ -19,18 +20,20 @@ import hu.bme.mit.theta.analysis.tcfa.zone.TcfaZoneAnalysis;
 import hu.bme.mit.theta.analysis.zone.ZonePrecision;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
 import hu.bme.mit.theta.formalism.tcfa.TCFA;
+import hu.bme.mit.theta.formalism.tcfa.TcfaEdge;
+import hu.bme.mit.theta.formalism.tcfa.TcfaLoc;
 import hu.bme.mit.theta.solver.Solver;
 
-public final class BasicTcfaAnalysis
-		implements Analysis<TcfaState<CompositeState<ZoneState, ExplState>>, TcfaAction, NullPrecision> {
+public final class BasicTcfaAnalysis implements
+		Analysis<AutomatonState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction, NullPrecision> {
 
-	private final Analysis<TcfaState<CompositeState<ZoneState, ExplState>>, TcfaAction, NullPrecision> analysis;
+	private final Analysis<AutomatonState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction, NullPrecision> analysis;
 
 	private BasicTcfaAnalysis(final TCFA tcfa, final Solver solver) {
 		checkNotNull(tcfa);
 		checkNotNull(solver);
 
-		final Analysis<TcfaState<CompositeState<ZoneState, ExplState>>, TcfaAction, CompositePrecision<ZonePrecision, ExplPrecision>> componentAnalysis = TcfaAnalyis
+		final Analysis<AutomatonState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction, CompositePrecision<ZonePrecision, ExplPrecision>> componentAnalysis = TcfaAnalyis
 				.create(tcfa.getInitLoc(),
 						CompositeAnalysis.create(TcfaZoneAnalysis.getInstance(), TcfaExplAnalysis.create(solver)));
 
@@ -45,22 +48,22 @@ public final class BasicTcfaAnalysis
 	}
 
 	@Override
-	public Domain<TcfaState<CompositeState<ZoneState, ExplState>>> getDomain() {
+	public Domain<AutomatonState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>> getDomain() {
 		return analysis.getDomain();
 	}
 
 	@Override
-	public InitFunction<TcfaState<CompositeState<ZoneState, ExplState>>, NullPrecision> getInitFunction() {
+	public InitFunction<AutomatonState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, NullPrecision> getInitFunction() {
 		return analysis.getInitFunction();
 	}
 
 	@Override
-	public TransferFunction<TcfaState<CompositeState<ZoneState, ExplState>>, TcfaAction, NullPrecision> getTransferFunction() {
+	public TransferFunction<AutomatonState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction, NullPrecision> getTransferFunction() {
 		return analysis.getTransferFunction();
 	}
 
 	@Override
-	public ActionFunction<? super TcfaState<CompositeState<ZoneState, ExplState>>, ? extends TcfaAction> getActionFunction() {
+	public ActionFunction<? super AutomatonState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, ? extends TcfaAction> getActionFunction() {
 		return analysis.getActionFunction();
 	}
 
