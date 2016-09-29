@@ -6,7 +6,6 @@ import static hu.bme.mit.theta.core.type.impl.Types.Int;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import hu.bme.mit.theta.analysis.algorithm.ArgPrinter;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
 import hu.bme.mit.theta.analysis.algorithm.cegar.AbstractorImpl;
 import hu.bme.mit.theta.analysis.composite.CompositeAnalysis;
@@ -19,8 +18,10 @@ import hu.bme.mit.theta.analysis.tcfa.TcfaAnalyis;
 import hu.bme.mit.theta.analysis.tcfa.TcfaState;
 import hu.bme.mit.theta.analysis.tcfa.expl.TcfaExplAnalysis;
 import hu.bme.mit.theta.analysis.tcfa.zone.TcfaZoneAnalysis;
+import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.analysis.zone.ZonePrecision;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
+import hu.bme.mit.theta.common.visualization.GraphVizWriter;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.IntType;
 import hu.bme.mit.theta.formalism.tcfa.TCFA;
@@ -51,7 +52,7 @@ public class TcfaNetworkExplTest {
 		abstractor.init(precision);
 		abstractor.check(precision);
 
-		System.out.println(ArgPrinter.toGraphvizString(abstractor.getARG()));
+		System.out.println(new GraphVizWriter().writeString(ArgVisualizer.visualize(abstractor.getARG())));
 	}
 
 }
