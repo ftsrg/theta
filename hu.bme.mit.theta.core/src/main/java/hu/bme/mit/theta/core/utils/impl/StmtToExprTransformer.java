@@ -1,5 +1,7 @@
 package hu.bme.mit.theta.core.utils.impl;
 
+import static hu.bme.mit.theta.core.utils.impl.PrimeApplier.applyPrimes;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -16,27 +18,21 @@ import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.Type;
 
-public class StmtUnroller {
+final class StmtToExprTransformer {
 
-	private static final StmtToExprVisitor VISITOR;
-
-	static {
-		VISITOR = new StmtToExprVisitor();
+	private StmtToExprTransformer() {
 	}
 
-	private StmtUnroller() {
+	public static StmtToExprResult toExpr(final Stmt stmt, final VarIndexes indexes) {
+		return stmt.accept(StmtToExprVisitor.INSTANCE, indexes);
 	}
 
-	public static StmtToExprResult transform(final Stmt stmt, final VarIndexes indexes) {
-		return stmt.accept(VISITOR, indexes);
-	}
-
-	public static StmtToExprResult transform(final List<? extends Stmt> stmts, final VarIndexes indexes) {
+	public static StmtToExprResult toExpr(final List<? extends Stmt> stmts, final VarIndexes indexes) {
 		final Collection<Expr<? extends BoolType>> resultExprs = new ArrayList<>();
 		VarIndexes resultIndexes = indexes;
 
 		for (final Stmt stmt : stmts) {
-			final StmtToExprResult subResult = transform(stmt, resultIndexes);
+			final StmtToExprResult subResult = toExpr(stmt, resultIndexes);
 			resultExprs.addAll(subResult.exprs);
 			resultIndexes = subResult.indexes;
 		}
@@ -46,32 +42,8 @@ public class StmtUnroller {
 
 	////////
 
-	public static class StmtToExprResult {
-		final Collection<Expr<? extends BoolType>> exprs;
-		final VarIndexes indexes;
-
-		private StmtToExprResult(final Collection<? extends Expr<? extends BoolType>> exprs, final VarIndexes indexes) {
-			this.exprs = ImmutableList.copyOf(exprs);
-			this.indexes = indexes;
-		}
-
-		private static StmtToExprResult of(final Collection<? extends Expr<? extends BoolType>> exprs,
-				final VarIndexes indexes) {
-			return new StmtToExprResult(exprs, indexes);
-		}
-
-		public Collection<? extends Expr<? extends BoolType>> getExprs() {
-			return exprs;
-		}
-
-		public VarIndexes getIndexes() {
-			return indexes;
-		}
-	}
-
-	////////
-
 	private static class StmtToExprVisitor extends FailStmtVisitor<VarIndexes, StmtToExprResult> {
+		private static final StmtToExprVisitor INSTANCE = new StmtToExprVisitor();
 
 		private StmtToExprVisitor() {
 		}
@@ -81,7 +53,7 @@ public class StmtUnroller {
 		@Override
 		public StmtToExprResult visit(final AssumeStmt stmt, final VarIndexes indexes) {
 			final Expr<? extends BoolType> cond = stmt.getCond();
-			final Expr<? extends BoolType> expr = VarToConstRewriter.rewrite(cond, indexes);
+			final Expr<? extends BoolType> expr = applyPrimes(cond, indexes);
 			return StmtToExprResult.of(ImmutableList.of(expr), indexes);
 		}
 
@@ -98,13 +70,12 @@ public class StmtUnroller {
 				final AssignStmt<DeclType, ExprType> stmt, final VarIndexes indexes) {
 			final VarDecl<?> varDecl = stmt.getVarDecl();
 			final VarIndexes newIndexes = indexes.inc(varDecl);
-			final Expr<?> rhs = VarToConstRewriter.rewrite(stmt.getExpr(), indexes);
-			final Expr<?> lhs = VarToConstRewriter.rewrite(varDecl.getRef(), newIndexes);
+			final Expr<?> rhs = applyPrimes(stmt.getExpr(), indexes);
+			final Expr<?> lhs = applyPrimes(varDecl.getRef(), newIndexes);
 
 			final Expr<? extends BoolType> expr = Exprs.Eq(lhs, rhs);
 			return StmtToExprResult.of(ImmutableList.of(expr), newIndexes);
 		}
-
 	}
 
 }

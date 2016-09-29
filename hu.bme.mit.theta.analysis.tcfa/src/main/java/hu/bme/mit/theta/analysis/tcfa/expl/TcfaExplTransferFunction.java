@@ -1,6 +1,7 @@
 package hu.bme.mit.theta.analysis.tcfa.expl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.stream.Collectors.toList;
 
 import java.util.Collection;
 
@@ -15,8 +16,8 @@ import hu.bme.mit.theta.core.expr.impl.Exprs;
 import hu.bme.mit.theta.core.model.impl.Valuation;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.utils.impl.PathUtils;
-import hu.bme.mit.theta.core.utils.impl.StmtUnroller;
-import hu.bme.mit.theta.core.utils.impl.StmtUnroller.StmtToExprResult;
+import hu.bme.mit.theta.core.utils.impl.StmtToExprResult;
+import hu.bme.mit.theta.core.utils.impl.StmtUtils;
 import hu.bme.mit.theta.core.utils.impl.VarIndexes;
 import hu.bme.mit.theta.solver.Solver;
 
@@ -41,8 +42,9 @@ public final class TcfaExplTransferFunction implements TransferFunction<ExplStat
 		solver.push();
 		solver.add(PathUtils.unfold(state.toExpr(), 0));
 
-		final StmtToExprResult transformResult = StmtUnroller.transform(action.getDataStmts(), VarIndexes.all(0));
-		final Collection<? extends Expr<? extends BoolType>> stmtExprs = transformResult.getExprs();
+		final StmtToExprResult transformResult = StmtUtils.toExpr(action.getDataStmts(), VarIndexes.all(0));
+		final Collection<? extends Expr<? extends BoolType>> stmtExprs = transformResult.getExprs().stream()
+				.map(e -> PathUtils.unfold(e, 0)).collect(toList());
 		final VarIndexes indexes = transformResult.getIndexes();
 
 		solver.add(stmtExprs);
