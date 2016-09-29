@@ -18,7 +18,7 @@ public final class TcfaAnalyis<S extends State, P extends Precision>
 	private final AutomatonAnalysis<S, TcfaAction, P, TcfaLoc, TcfaEdge> automatonAnalysis;
 
 	private TcfaAnalyis(final TcfaLoc initLoc, final Analysis<S, TcfaAction, P> analysis) {
-		automatonAnalysis = AutomatonAnalysis.create(initLoc, analysis, (e) -> TcfaAction.create(e));
+		automatonAnalysis = AutomatonAnalysis.create(initLoc, analysis, TcfaAction::create);
 	}
 
 	public static <S extends State, P extends Precision> TcfaAnalyis<S, P> create(final TcfaLoc initLoc,
