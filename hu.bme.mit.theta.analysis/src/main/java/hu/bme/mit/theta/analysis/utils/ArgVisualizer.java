@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.analysis.algorithm.utils;
+package hu.bme.mit.theta.analysis.utils;
 
 import java.awt.Color;
 
