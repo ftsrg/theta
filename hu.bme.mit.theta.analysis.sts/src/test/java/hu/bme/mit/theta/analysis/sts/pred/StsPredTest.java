@@ -21,7 +21,6 @@ import org.junit.Test;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.ArgChecker;
 import hu.bme.mit.theta.analysis.algorithm.ArgNode;
-import hu.bme.mit.theta.analysis.algorithm.ArgPrinter;
 import hu.bme.mit.theta.analysis.algorithm.LifoWaitlist;
 import hu.bme.mit.theta.analysis.algorithm.Waitlist;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
@@ -95,8 +94,6 @@ public class StsPredTest {
 		final ArgChecker checker = ArgChecker.create(solver);
 		assertTrue(checker.isWellLabeled(arg));
 
-		System.out.println(ArgPrinter.toGraphvizString(arg));
-		System.out.println("==================================");
 		System.out.println(new GraphVizWriter().writeString(ArgVisualizer.visualize(arg)));
 	}
 
