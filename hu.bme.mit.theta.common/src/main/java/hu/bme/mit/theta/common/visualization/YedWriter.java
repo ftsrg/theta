@@ -43,14 +43,15 @@ public class YedWriter extends AbstractGraphWriter {
 			printCompositeNode((CompositeNode) node, sb);
 		}
 
+		final NodeAttributes attributes = node.getAttributes();
 		sb.append("\t<node id=\"").append(node.getId()).append("\">");
 		sb.append("<data key=\"d6\"><y:ShapeNode>");
-		sb.append("<y:NodeLabel>").append(replaceLabel(node.getLabel())).append("</y:NodeLabel>");
-		sb.append("<y:Fill color=\"").append(mapColorToString(node.getFillColor()))
+		sb.append("<y:NodeLabel>").append(replaceLabel(attributes.getLabel())).append("</y:NodeLabel>");
+		sb.append("<y:Fill color=\"").append(mapColorToString(attributes.getFillColor()))
 				.append("\" transparent=\"false\"/>");
 		sb.append("<y:BorderStyle");
-		sb.append(" color=\"").append(mapColorToString(node.getLineColor())).append("\"");
-		final String style = mapLineStyleToString(node.getLineStyle());
+		sb.append(" color=\"").append(mapColorToString(attributes.getLineColor())).append("\"");
+		final String style = mapLineStyleToString(attributes.getLineStyle());
 		if (!style.equals("")) {
 			sb.append(" type=\"").append(style).append("\"");
 		}
@@ -60,16 +61,17 @@ public class YedWriter extends AbstractGraphWriter {
 	}
 
 	private void printCompositeNode(final CompositeNode node, final StringBuilder sb) {
+		final NodeAttributes attributes = node.getAttributes();
 		sb.append("<node id=\"").append(node.getId()).append("\">").append(System.lineSeparator());
 		sb.append("\t<data key=\"d6\"><y:ProxyAutoBoundsNode><y:Realizers active=\"0\"><y:GroupNode>")
 				.append(System.lineSeparator());
-		sb.append("\t<y:NodeLabel modelName=\"internal\" modelPosition=\"t\">").append(replaceLabel(node.getLabel()))
-				.append("</y:NodeLabel>").append(System.lineSeparator());
-		sb.append("\t<y:Fill color=\"").append(mapColorToString(node.getFillColor()))
+		sb.append("\t<y:NodeLabel modelName=\"internal\" modelPosition=\"t\">")
+				.append(replaceLabel(attributes.getLabel())).append("</y:NodeLabel>").append(System.lineSeparator());
+		sb.append("\t<y:Fill color=\"").append(mapColorToString(attributes.getFillColor()))
 				.append("\" transparent=\"false\"/>").append(System.lineSeparator());
 		sb.append("<y:BorderStyle");
-		sb.append(" color=\"").append(mapColorToString(node.getLineColor())).append("\"");
-		final String style = mapLineStyleToString(node.getLineStyle());
+		sb.append(" color=\"").append(mapColorToString(attributes.getLineColor())).append("\"");
+		final String style = mapLineStyleToString(attributes.getLineStyle());
 		if (!style.equals("")) {
 			sb.append(" type=\"").append(style).append("\"");
 		}
