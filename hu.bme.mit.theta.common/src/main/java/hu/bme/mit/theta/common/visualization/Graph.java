@@ -43,13 +43,12 @@ public final class Graph {
 		((CompositeNode) parent).addChild(nodes.get(childId));
 	}
 
-	public void addEdge(final String sourceId, final String targetId, final String label, final Color edgeColor,
-			final LineStyle lineStyle) {
+	public void addEdge(final String sourceId, final String targetId, final EdgeAttributes attributes) {
 		checkArgument(nodes.containsKey(sourceId), "Source node does not exist!");
 		checkArgument(nodes.containsKey(targetId), "Target node does not exist!");
 		final Node source = nodes.get(sourceId);
 		final Node target = nodes.get(targetId);
-		final Edge edge = new Edge(source, target, label, edgeColor, lineStyle);
+		final Edge edge = new Edge(source, target, attributes);
 		edges.add(edge);
 		source.addOutEdge(edge);
 		target.addInEdge(edge);

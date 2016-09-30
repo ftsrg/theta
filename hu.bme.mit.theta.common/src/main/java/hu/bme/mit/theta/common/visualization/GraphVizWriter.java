@@ -74,10 +74,11 @@ public final class GraphVizWriter extends AbstractGraphWriter {
 			}
 		} else {
 			for (final Edge edge : node.getOutEdges()) {
+				final EdgeAttributes attributes = edge.getAttributes();
 				sb.append("\t").append(edge.getSource().getId()).append(" -> ").append(edge.getTarget().getId());
-				sb.append(" [label=\"").append(edge.getLabel().replace("\n", "\\n")).append("\"");
-				sb.append(",color=").append(mapColorToString(edge.getEdgeColor()));
-				final String style = mapLineStyleToString(edge.getLineStyle());
+				sb.append(" [label=\"").append(attributes.getLabel().replace("\n", "\\n")).append("\"");
+				sb.append(",color=").append(mapColorToString(attributes.getEdgeColor()));
+				final String style = mapLineStyleToString(attributes.getLineStyle());
 				if (!style.equals("")) {
 					sb.append(",style=").append(style);
 				}
