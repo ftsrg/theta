@@ -90,17 +90,18 @@ public class YedWriter extends AbstractGraphWriter {
 
 	private void printEdges(final Node node, final StringBuilder sb) {
 		for (final Edge edge : node.getOutEdges()) {
+			final EdgeAttributes attributes = edge.getAttributes();
 			sb.append("\t<edge id=\"").append(edge.hashCode()).append("\" source=\"").append(edge.getSource().getId())
 					.append("\" target=\"").append(edge.getTarget().getId()).append("\">");
 			sb.append("<data key=\"d9\"><y:PolyLineEdge><y:LineStyle color=\"")
-					.append(mapColorToString(edge.getEdgeColor())).append("\"");
-			final String style = mapLineStyleToString(edge.getLineStyle());
+					.append(mapColorToString(attributes.getEdgeColor())).append("\"");
+			final String style = mapLineStyleToString(attributes.getLineStyle());
 			if (!style.equals("")) {
 				sb.append(" type=\"").append(style).append("\"");
 			}
 			sb.append("/>");
 			sb.append("<y:Arrows source=\"none\" target=\"standard\"/>");
-			sb.append("<y:EdgeLabel>").append(edge.getLabel()).append("</y:EdgeLabel>");
+			sb.append("<y:EdgeLabel>").append(attributes.getLabel()).append("</y:EdgeLabel>");
 			sb.append("</y:PolyLineEdge></data></edge>");
 			sb.append(System.lineSeparator());
 		}

@@ -5,6 +5,7 @@ import java.awt.Color;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.ArgEdge;
 import hu.bme.mit.theta.analysis.algorithm.ArgNode;
+import hu.bme.mit.theta.common.visualization.EdgeAttributes;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.LineStyle;
 
@@ -37,13 +38,17 @@ public class ArgVisualizer {
 			traverse(graph, edge.getTarget());
 			final String sourceId = NODE_ID_PREFIX + edge.getSource().getId();
 			final String targetId = NODE_ID_PREFIX + edge.getTarget().getId();
-			graph.addEdge(sourceId, targetId, "", LINE_COLOR, LineStyle.NORMAL);
+			final EdgeAttributes attributes = EdgeAttributes.builder().label("").edgeColor(LINE_COLOR)
+					.lineStyle(LineStyle.NORMAL).build();
+			graph.addEdge(sourceId, targetId, attributes);
 		}
 
 		if (node.getCoveringNode().isPresent()) {
 			final String sourceId = NODE_ID_PREFIX + node.getId();
 			final String targetId = NODE_ID_PREFIX + node.getCoveringNode().get().getId();
-			graph.addEdge(sourceId, targetId, "", LINE_COLOR, LineStyle.DASHED);
+			final EdgeAttributes attributes = EdgeAttributes.builder().label("").edgeColor(LINE_COLOR)
+					.lineStyle(LineStyle.DASHED).build();
+			graph.addEdge(sourceId, targetId, attributes);
 		}
 	}
 

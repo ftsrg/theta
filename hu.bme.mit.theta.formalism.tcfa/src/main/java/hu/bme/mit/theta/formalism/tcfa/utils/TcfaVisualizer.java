@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.StringJoiner;
 
+import hu.bme.mit.theta.common.visualization.EdgeAttributes;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.LineStyle;
 import hu.bme.mit.theta.formalism.tcfa.TCFA;
@@ -28,7 +29,9 @@ public class TcfaVisualizer {
 		final Map<TcfaLoc, String> ids = new HashMap<>();
 		traverse(graph, tcfa.getInitLoc(), ids);
 		graph.addNode(PHANTOM_INIT_ID, "", FILL_COLOR, FILL_COLOR, LOC_LINE_STYLE, LOC_PERIPHERIES);
-		graph.addEdge(PHANTOM_INIT_ID, ids.get(tcfa.getInitLoc()), "", LINE_COLOR, EDGE_LINE_STYLE);
+		final EdgeAttributes attributes = EdgeAttributes.builder().label("").edgeColor(LINE_COLOR)
+				.lineStyle(EDGE_LINE_STYLE).build();
+		graph.addEdge(PHANTOM_INIT_ID, ids.get(tcfa.getInitLoc()), attributes);
 		return graph;
 	}
 
@@ -54,8 +57,9 @@ public class TcfaVisualizer {
 	private static void addEdge(final Graph graph, final Map<TcfaLoc, String> ids, final TcfaEdge outEdge) {
 		final StringJoiner edgeLabel = new StringJoiner("\n");
 		outEdge.getStmts().stream().forEach(stmt -> edgeLabel.add(stmt.toString()));
-		graph.addEdge(ids.get(outEdge.getSource()), ids.get(outEdge.getTarget()), edgeLabel.toString(), LINE_COLOR,
-				EDGE_LINE_STYLE);
+		final EdgeAttributes attributes = EdgeAttributes.builder().label(edgeLabel.toString()).edgeColor(LINE_COLOR)
+				.lineStyle(EDGE_LINE_STYLE).build();
+		graph.addEdge(ids.get(outEdge.getSource()), ids.get(outEdge.getTarget()), attributes);
 	}
 
 }
