@@ -32,7 +32,7 @@ public class TcfaVisualizer {
 		final NodeAttributes nAttributes = NodeAttributes.builder().label("").fillColor(FILL_COLOR)
 				.lineColor(LINE_COLOR).lineStyle(LOC_LINE_STYLE).peripheries(LOC_PERIPHERIES).build();
 		graph.addNode(PHANTOM_INIT_ID, nAttributes);
-		final EdgeAttributes eAttributes = EdgeAttributes.builder().label("").edgeColor(LINE_COLOR)
+		final EdgeAttributes eAttributes = EdgeAttributes.builder().label("").color(LINE_COLOR)
 				.lineStyle(EDGE_LINE_STYLE).build();
 		graph.addEdge(PHANTOM_INIT_ID, ids.get(tcfa.getInitLoc()), eAttributes);
 		return graph;
@@ -62,7 +62,7 @@ public class TcfaVisualizer {
 	private static void addEdge(final Graph graph, final Map<TcfaLoc, String> ids, final TcfaEdge outEdge) {
 		final StringJoiner edgeLabel = new StringJoiner("\n");
 		outEdge.getStmts().stream().forEach(stmt -> edgeLabel.add(stmt.toString()));
-		final EdgeAttributes attributes = EdgeAttributes.builder().label(edgeLabel.toString()).edgeColor(LINE_COLOR)
+		final EdgeAttributes attributes = EdgeAttributes.builder().label(edgeLabel.toString()).color(LINE_COLOR)
 				.lineStyle(EDGE_LINE_STYLE).build();
 		graph.addEdge(ids.get(outEdge.getSource()), ids.get(outEdge.getTarget()), attributes);
 	}

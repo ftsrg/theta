@@ -4,12 +4,12 @@ import java.awt.Color;
 
 public final class EdgeAttributes {
 	private final String label;
-	private final Color edgeColor;
+	private final Color color;
 	private final LineStyle lineStyle;
 
-	private EdgeAttributes(final String label, final Color edgeColor, final LineStyle lineStyle) {
+	private EdgeAttributes(final String label, final Color color, final LineStyle lineStyle) {
 		this.label = label;
-		this.edgeColor = edgeColor;
+		this.color = color;
 		this.lineStyle = lineStyle;
 	}
 
@@ -17,8 +17,8 @@ public final class EdgeAttributes {
 		return label;
 	}
 
-	public Color getEdgeColor() {
-		return edgeColor;
+	public Color getColor() {
+		return color;
 	}
 
 	public LineStyle getLineStyle() {
@@ -31,7 +31,7 @@ public final class EdgeAttributes {
 
 	public static class Builder {
 		private String label = "";
-		private Color edgeColor = Color.BLACK;
+		private Color color = Color.BLACK;
 		private LineStyle lineStyle = LineStyle.NORMAL;
 
 		public Builder label(final String label) {
@@ -39,8 +39,8 @@ public final class EdgeAttributes {
 			return this;
 		}
 
-		public Builder edgeColor(final Color edgeColor) {
-			this.edgeColor = edgeColor;
+		public Builder color(final Color color) {
+			this.color = color;
 			return this;
 		}
 
@@ -50,7 +50,7 @@ public final class EdgeAttributes {
 		}
 
 		public EdgeAttributes build() {
-			return new EdgeAttributes(label, edgeColor, lineStyle);
+			return new EdgeAttributes(label, color, lineStyle);
 		}
 	}
 }

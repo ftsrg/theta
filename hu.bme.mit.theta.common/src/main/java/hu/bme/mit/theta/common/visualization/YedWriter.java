@@ -96,7 +96,7 @@ public class YedWriter extends AbstractGraphWriter {
 			sb.append("\t<edge id=\"").append(edge.hashCode()).append("\" source=\"").append(edge.getSource().getId())
 					.append("\" target=\"").append(edge.getTarget().getId()).append("\">");
 			sb.append("<data key=\"d9\"><y:PolyLineEdge><y:LineStyle color=\"")
-					.append(mapColorToString(attributes.getEdgeColor())).append("\"");
+					.append(mapColorToString(attributes.getColor())).append("\"");
 			final String style = mapLineStyleToString(attributes.getLineStyle());
 			if (!style.equals("")) {
 				sb.append(" type=\"").append(style).append("\"");
