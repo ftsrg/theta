@@ -28,20 +28,16 @@ public class Optimizer {
 		this.context = context;
 	}
 
+
 	public void addFunctionTransformer(FunctionTransformer pass) {
 		this.funcTransformers.add(pass);
 	}
 
-	public void transform() {
-		// Perform global transformations
-		for (ContextTransformer pass : this.contextTransformers) {
-			pass.transform(this.context);
-				this.log.writeln(
-					String.format("Executing global pass '%s'", pass.getTransformationName()),
-					7
-				);
-		}
+	public void addContextTransformer(ContextTransformer pass) {
+		this.contextTransformers.add(pass);
+	}
 
+	public void transform() {
 		// Perform local function transformations
 		for (FunctionTransformer pass : this.funcTransformers) {
 			for (Function func : this.context.functions()) {
@@ -52,26 +48,41 @@ public class Optimizer {
 				pass.transform(func);
 			}
 		}
+
+		// Perform global transformations
+		for (ContextTransformer pass : this.contextTransformers) {
+			pass.transform(this.context);
+				this.log.writeln(
+					String.format("Executing global pass '%s'", pass.getTransformationName()),
+					7
+				);
+		}
+	}
+
+	public List<CFA> createCfas() {
+		return this.context.functions()
+			.stream()
+			.map(func -> FunctionToCFATransformer.createSBE(func))
+			.collect(Collectors.toList());
+	}
+
+	public List<Function> createSlices() {
+		List<Function> slices = new ArrayList<>();
+
+		this.context.functions().forEach(func -> {
+			slices.addAll(this.slicer.allSlices(func, FunctionSlicer.SLICE_ON_ASSERTS));
+		});
+
+		this.log.writeln(String.format("Found %d slices.", slices.size()), 7);
+
+		return slices;
 	}
 
 	public List<CFA> createCfaSlices() {
-		List<CFA> cfas = new ArrayList<>();
-
-		for (Function func : this.context.functions()) {
-			List<Function> slices = this.slicer.allSlices(func, FunctionSlicer.SLICE_ON_ASSERTS);
-			cfas.addAll(slices.stream()
-				.map(slice -> FunctionToCFATransformer.createSBE(slice))
-				.collect(Collectors.toList())
-			);
-		}
-
-		this.log.writeln(String.format("Found %d slices.", cfas.size()), 7);
-
-		return cfas;
-	}
-
-	public List<CFA> createSlices() {
-		return this.context.functions().stream().map(func -> FunctionToCFATransformer.createSBE(func)).collect(Collectors.toList());
+		return this.createSlices()
+			.stream()
+			.map(slice -> FunctionToCFATransformer.createSBE(slice))
+			.collect(Collectors.toList());
 	}
 
 	public void dump() {

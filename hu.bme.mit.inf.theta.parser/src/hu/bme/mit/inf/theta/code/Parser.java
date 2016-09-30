@@ -15,24 +15,29 @@ import org.eclipse.cdt.internal.core.index.CIndex;
 import org.eclipse.cdt.internal.core.parser.ParserLogService;
 import org.eclipse.core.runtime.CoreException;
 
+import hu.bme.mit.inf.theta.code.ast.AssignmentInitializerAst;
 import hu.bme.mit.inf.theta.code.ast.DeclarationAst;
 import hu.bme.mit.inf.theta.code.ast.DeclaratorAst;
 import hu.bme.mit.inf.theta.code.ast.FunctionDeclaratorAst;
 import hu.bme.mit.inf.theta.code.ast.FunctionDefinitionAst;
+import hu.bme.mit.inf.theta.code.ast.InitDeclaratorAst;
+import hu.bme.mit.inf.theta.code.ast.InitializerAst;
+import hu.bme.mit.inf.theta.code.ast.LiteralExpressionAst;
 import hu.bme.mit.inf.theta.code.ast.ParameterDeclarationAst;
 import hu.bme.mit.inf.theta.code.ast.TranslationUnitAst;
 import hu.bme.mit.inf.theta.code.ast.VarDeclarationAst;
-import hu.bme.mit.inf.theta.code.ast.utils.AstPrinter;
-import hu.bme.mit.inf.theta.frontend.ir.Function;
-import hu.bme.mit.inf.theta.frontend.ir.GlobalContext;
 import hu.bme.mit.inf.theta.core.decl.ParamDecl;
 import hu.bme.mit.inf.theta.core.decl.impl.Decls;
+import hu.bme.mit.inf.theta.core.expr.Expr;
 import hu.bme.mit.inf.theta.core.expr.impl.Exprs;
 import hu.bme.mit.inf.theta.core.type.Type;
 import hu.bme.mit.inf.theta.core.type.impl.Types;
+import hu.bme.mit.inf.theta.core.utils.impl.ExprUtils;
 import hu.bme.mit.inf.theta.formalism.common.decl.ProcDecl;
+import hu.bme.mit.inf.theta.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.theta.formalism.common.decl.impl.Decls2;
-import hu.bme.mit.inf.theta.formalism.common.expr.impl.Exprs2;
+import hu.bme.mit.inf.theta.frontend.ir.Function;
+import hu.bme.mit.inf.theta.frontend.ir.GlobalContext;
 
 public class Parser {
 
@@ -47,7 +52,9 @@ public class Parser {
 
 				List<ParamDecl<?>> params = new ArrayList<>();
 				for (ParameterDeclarationAst param : funcAst.getDeclarator().getParameters()) {
-					params.add(Decls.Param(param.getDeclarator().getName(), Types.Int()));
+					String paramName = param.getDeclarator().getName();
+
+					params.add(Decls.Param(paramName, Types.Int()));
 				}
 
 				ProcDecl<? extends Type> proc = Decls2.Proc(name, params, Types.Int());
@@ -68,9 +75,28 @@ public class Parser {
 
 						ProcDecl<? extends Type> proc = Decls2.Proc(funcDeclarator.getName(), Collections.emptyList(), Types.Int());
 						context.addFunctionDeclaration(funcDeclarator.getName(), proc);
-					} else {
-						// TODO: Treat it as a global variable
-						throw new UnsupportedOperationException("Global variables are not supported");
+					} else if (declarator instanceof InitDeclaratorAst) { // It is a global variable
+						InitDeclaratorAst initDecl = (InitDeclaratorAst) declarator;
+
+						Expr<? extends Type> initExpr;
+						// XXX
+						if (initDecl.getInitializer() != null && initDecl.getInitializer() instanceof AssignmentInitializerAst) {
+							AssignmentInitializerAst init = (AssignmentInitializerAst) initDecl.getInitializer();
+							if (init.getExpression() instanceof LiteralExpressionAst) {
+								initExpr = Exprs.Int(((LiteralExpressionAst) init.getExpression()).getValue());
+							} else {
+								initExpr = Exprs.Int(0);
+							}
+						} else {
+							initExpr = Exprs.Int(0);
+						}
+
+						String varName = initDecl.getName();
+
+						VarDecl<? extends Type> var = Decls2.Var(varName, Types.Int());
+						context.addGlobal(varName, var, ExprUtils.cast(initExpr, var.getType().getClass()));
+				 	} else {
+						throw new UnsupportedOperationException("Unsupported declarator type");
 					}
 				}
 			}

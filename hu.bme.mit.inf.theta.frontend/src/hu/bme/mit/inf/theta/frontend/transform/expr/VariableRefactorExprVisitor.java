@@ -52,7 +52,10 @@ import hu.bme.mit.inf.theta.core.utils.ExprVisitor;
 import hu.bme.mit.inf.theta.core.utils.impl.ExprUtils;
 import hu.bme.mit.inf.theta.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.theta.formalism.common.decl.impl.Decls2;
+import hu.bme.mit.inf.theta.formalism.common.expr.ProcCallExpr;
 import hu.bme.mit.inf.theta.formalism.common.expr.VarRefExpr;
+import hu.bme.mit.inf.theta.formalism.common.expr.impl.Exprs2;
+import hu.bme.mit.inf.theta.formalism.common.expr.visitor.ProcCallExprVisitor;
 import hu.bme.mit.inf.theta.formalism.common.expr.visitor.VarRefExprVisitor;
 import hu.bme.mit.inf.theta.frontend.ir.node.AssertNode;
 import hu.bme.mit.inf.theta.frontend.ir.node.AssignNode;
@@ -63,7 +66,7 @@ import hu.bme.mit.inf.theta.frontend.ir.node.JumpIfNode;
 import hu.bme.mit.inf.theta.frontend.ir.node.NodeFactory;
 import hu.bme.mit.inf.theta.frontend.ir.node.ReturnNode;
 
-public class VariableRefactorExprVisitor implements ExprVisitor<Void, Expr<? extends Type>>, VarRefExprVisitor<Void, Expr<? extends Type>> {
+public class VariableRefactorExprVisitor implements ExprVisitor<Void, Expr<? extends Type>>, VarRefExprVisitor<Void, Expr<? extends Type>>, ProcCallExprVisitor<Void, Expr<? extends Type>> {
 
 	private final String suffix;
 	private final Map<VarDecl<? extends Type>, VarDecl<? extends Type>> varMap = new HashMap<>();
@@ -323,6 +326,16 @@ public class VariableRefactorExprVisitor implements ExprVisitor<Void, Expr<? ext
 		}
 	}
 
+	@Override
+	public <ReturnType extends Type> Expr<? extends Type> visit(ProcCallExpr<ReturnType> expr, Void param) {
+		List<Expr<?>> params = expr.getParams()
+			.stream()
+			.map(p -> p.accept(this, null))
+			.collect(Collectors.toList());
+
+		return Exprs2.Call(expr.getProc(), params);
+	}
+
 	public void refactor(IrNode node) {
 		if (node instanceof AssignNode<?, ?>) {
 			@SuppressWarnings("unchecked")
@@ -350,4 +363,5 @@ public class VariableRefactorExprVisitor implements ExprVisitor<Void, Expr<? ext
 			ret.setExpr(ret.getExpr().accept(this, null));
 		}
 	}
+
 }

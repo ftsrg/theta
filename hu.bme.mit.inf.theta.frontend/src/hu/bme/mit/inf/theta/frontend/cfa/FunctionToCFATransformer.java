@@ -187,6 +187,9 @@ public class FunctionToCFATransformer {
 		CfaLoc then = mapping.get(branch.getThenTarget().getNodeByIndex(0));
 		CfaLoc elze = mapping.get(branch.getElseTarget().getNodeByIndex(0));
 
+		if (then == null)
+			System.out.println(branch.getThenTarget());
+
 		// Add the then and else edges with the required Assume statements
 		CfaEdge thenEdge = cfa.createEdge(branchLoc, then);
 		thenEdge.getStmts().add(Stmts.Assume(branch.getCondition()));

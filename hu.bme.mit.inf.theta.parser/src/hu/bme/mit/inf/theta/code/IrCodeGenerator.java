@@ -155,9 +155,9 @@ public class IrCodeGenerator implements
 		this.resolveGotos();
 		this.context.getSymbolTable().popScope();
 
-		System.out.println(IrPrinter.toGraphvizString(this.builder.getFunction()));
+		//System.out.println(IrPrinter.toGraphvizString(this.builder.getFunction()));
 
-		//this.builder.getFunction().normalize();
+		this.builder.getFunction().normalize();
 	}
 
 	private void resolveGotos() {

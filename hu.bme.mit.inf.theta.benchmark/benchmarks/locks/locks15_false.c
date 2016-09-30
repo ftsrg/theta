@@ -50,7 +50,7 @@ int main()
     while(1) {
         cond = __VERIFIER_nondet_int();
         if (cond == 0) {
-            goto out;
+            return 0;
         } else {}
         lk1 = 0; // initially lock is open
 
@@ -211,8 +211,6 @@ int main()
         } else {assert(0);}
 
     }
-  out:
-    return 0;
-  ERROR: assert(0);
+
     return 0;
 }

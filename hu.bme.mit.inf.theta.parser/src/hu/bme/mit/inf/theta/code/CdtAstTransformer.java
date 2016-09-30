@@ -424,6 +424,11 @@ public class CdtAstTransformer {
 	}
 
 	public static LiteralExpressionAst transformLiteral(IASTLiteralExpression ast) {
+		String value = new String(ast.getValue()).toUpperCase();
+		if (value.endsWith("L")) { // TODO: Hack
+			return new LiteralExpressionAst((int) Long.parseLong(value.replace("L", "")));
+		}
+
 		return new LiteralExpressionAst(Integer.parseInt(new String(ast.getValue())));
 	}
 

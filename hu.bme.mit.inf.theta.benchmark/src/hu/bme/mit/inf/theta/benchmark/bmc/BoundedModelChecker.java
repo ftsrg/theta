@@ -21,7 +21,7 @@ import hu.bme.mit.inf.theta.solver.z3.Z3SolverManager;
 public class BoundedModelChecker {
 
 	public enum CheckResult {
-		CHECK_FAILED, CHECK_PASSED, CHECK_UNKNOWN
+		CHECK_FAILED, CHECK_PASSED, CHECK_UNKNOWN, CHECK_INTERNAL_ERROR, CHECK_TIMEOUT
 	}
 
 	private Logger log;

@@ -25,7 +25,7 @@ import hu.bme.mit.inf.theta.frontend.ir.node.NonTerminatorIrNode;
 import hu.bme.mit.inf.theta.frontend.ir.node.ReturnNode;
 import hu.bme.mit.inf.theta.frontend.transform.expr.VariableRefactorExprVisitor;
 
-public class FunctionInliner implements FunctionTransformer {
+public class FunctionInliner implements ContextTransformer {
 
 	private static class FunctionInlineInfo {
 		public AssignNode<?, ?> node;
@@ -41,8 +41,7 @@ public class FunctionInliner implements FunctionTransformer {
 
 	private static int inlineId = 0;
 
-	@Override
-	public void transform(Function function) {
+	private void transformFunction(Function function) {
 		GlobalContext context = function.getContext();
 		List<FunctionInlineInfo> inlinables = new ArrayList<>();
 
@@ -113,7 +112,8 @@ public class FunctionInliner implements FunctionTransformer {
 				tuple._1().terminate(NodeFactory.Goto(child));
 			});
 
-			copy.getExitBlock().parents().forEach(parent -> {
+			List<BasicBlock> exitParents = new ArrayList<>(copy.getExitBlock().parents());
+			exitParents.forEach(parent -> {
 				parent.getTerminator().replaceTarget(copy.getExitBlock(), tuple._3());
 			});
 		}
@@ -132,6 +132,13 @@ public class FunctionInliner implements FunctionTransformer {
 	@Override
 	public String getTransformationName() {
 		return "FunctionInline";
+	}
+
+	@Override
+	public void transform(GlobalContext context) {
+		for (Function func : context.functions()) {
+			this.transformFunction(func);
+		}
 	}
 
 
