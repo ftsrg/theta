@@ -42,7 +42,7 @@ public class ArgVisualizer {
 			traverse(graph, edge.getTarget());
 			final String sourceId = NODE_ID_PREFIX + edge.getSource().getId();
 			final String targetId = NODE_ID_PREFIX + edge.getTarget().getId();
-			final EdgeAttributes eAttributes = EdgeAttributes.builder().label("").edgeColor(LINE_COLOR)
+			final EdgeAttributes eAttributes = EdgeAttributes.builder().label("").color(LINE_COLOR)
 					.lineStyle(LineStyle.NORMAL).build();
 			graph.addEdge(sourceId, targetId, eAttributes);
 		}
@@ -50,7 +50,7 @@ public class ArgVisualizer {
 		if (node.getCoveringNode().isPresent()) {
 			final String sourceId = NODE_ID_PREFIX + node.getId();
 			final String targetId = NODE_ID_PREFIX + node.getCoveringNode().get().getId();
-			final EdgeAttributes eAttributes = EdgeAttributes.builder().label("").edgeColor(LINE_COLOR)
+			final EdgeAttributes eAttributes = EdgeAttributes.builder().label("").color(LINE_COLOR)
 					.lineStyle(LineStyle.DASHED).build();
 			graph.addEdge(sourceId, targetId, eAttributes);
 		}

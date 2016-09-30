@@ -80,7 +80,7 @@ public final class GraphVizWriter extends AbstractGraphWriter {
 				final EdgeAttributes attributes = edge.getAttributes();
 				sb.append("\t").append(edge.getSource().getId()).append(" -> ").append(edge.getTarget().getId());
 				sb.append(" [label=\"").append(attributes.getLabel().replace("\n", "\\n")).append("\"");
-				sb.append(",color=").append(mapColorToString(attributes.getEdgeColor()));
+				sb.append(",color=").append(mapColorToString(attributes.getColor()));
 				final String style = mapLineStyleToString(attributes.getLineStyle());
 				if (!style.equals("")) {
 					sb.append(",style=").append(style);
