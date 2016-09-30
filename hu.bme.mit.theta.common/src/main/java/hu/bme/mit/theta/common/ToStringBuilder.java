@@ -15,16 +15,19 @@ public final class ToStringBuilder {
 		joiner = new StringJoiner(",", prefix + "(", ")");
 	}
 
-	public void add(final Object object) {
+	public ToStringBuilder add(final Object object) {
 		joiner.add(object.toString());
+		return this;
 	}
 
-	public void addAll(final Collection<? extends Object> objects) {
+	public ToStringBuilder addAll(final Collection<? extends Object> objects) {
 		objects.forEach(o -> joiner.add(o.toString()));
+		return this;
 	}
 
-	public void addAll(final Object... objects) {
+	public ToStringBuilder addAll(final Object... objects) {
 		addAll(asList(objects));
+		return this;
 	}
 
 	@Override
