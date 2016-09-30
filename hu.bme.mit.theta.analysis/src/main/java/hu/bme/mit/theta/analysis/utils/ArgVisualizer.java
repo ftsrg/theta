@@ -8,6 +8,7 @@ import hu.bme.mit.theta.analysis.algorithm.ArgNode;
 import hu.bme.mit.theta.common.visualization.EdgeAttributes;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.LineStyle;
+import hu.bme.mit.theta.common.visualization.NodeAttributes;
 
 public class ArgVisualizer {
 
@@ -32,23 +33,26 @@ public class ArgVisualizer {
 		final LineStyle lineStyle = node.isExpanded() || node.isTarget() ? LineStyle.NORMAL : LineStyle.DASHED;
 		final int peripheries = node.isTarget() ? 2 : 1;
 
-		graph.addNode(nodeId, node.getState().toString(), FILL_COLOR, LINE_COLOR, lineStyle, peripheries);
+		final NodeAttributes nAttributes = NodeAttributes.builder().label(node.getState().toString())
+				.fillColor(FILL_COLOR).lineColor(LINE_COLOR).lineStyle(lineStyle).peripheries(peripheries).build();
+
+		graph.addNode(nodeId, nAttributes);
 
 		for (final ArgEdge<?, ?> edge : node.getOutEdges()) {
 			traverse(graph, edge.getTarget());
 			final String sourceId = NODE_ID_PREFIX + edge.getSource().getId();
 			final String targetId = NODE_ID_PREFIX + edge.getTarget().getId();
-			final EdgeAttributes attributes = EdgeAttributes.builder().label("").edgeColor(LINE_COLOR)
+			final EdgeAttributes eAttributes = EdgeAttributes.builder().label("").edgeColor(LINE_COLOR)
 					.lineStyle(LineStyle.NORMAL).build();
-			graph.addEdge(sourceId, targetId, attributes);
+			graph.addEdge(sourceId, targetId, eAttributes);
 		}
 
 		if (node.getCoveringNode().isPresent()) {
 			final String sourceId = NODE_ID_PREFIX + node.getId();
 			final String targetId = NODE_ID_PREFIX + node.getCoveringNode().get().getId();
-			final EdgeAttributes attributes = EdgeAttributes.builder().label("").edgeColor(LINE_COLOR)
+			final EdgeAttributes eAttributes = EdgeAttributes.builder().label("").edgeColor(LINE_COLOR)
 					.lineStyle(LineStyle.DASHED).build();
-			graph.addEdge(sourceId, targetId, attributes);
+			graph.addEdge(sourceId, targetId, eAttributes);
 		}
 	}
 

@@ -3,7 +3,6 @@ package hu.bme.mit.theta.common.visualization;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -23,16 +22,14 @@ public final class Graph {
 		this.edges = new ArrayList<>();
 	}
 
-	public void addNode(final String id, final String label, final Color fillColor, final Color lineColor,
-			final LineStyle lineStyle, final int peripheries) {
+	public void addNode(final String id, final NodeAttributes attributes) {
 		checkArgument(!nodes.containsKey(id), "A node with the same id is already present!");
-		nodes.put(id, new Node(id, label, fillColor, lineColor, lineStyle, peripheries));
+		nodes.put(id, new Node(id, attributes));
 	}
 
-	public void addCompositeNode(final String id, final String label, final Color fillColor, final Color lineColor,
-			final LineStyle lineStyle, final int peripheries) {
+	public void addCompositeNode(final String id, final NodeAttributes attributes) {
 		checkArgument(!nodes.containsKey(id), "A node with the same id is already present!");
-		nodes.put(id, new CompositeNode(id, label, fillColor, lineColor, lineStyle, peripheries));
+		nodes.put(id, new CompositeNode(id, attributes));
 	}
 
 	public void setChild(final String parentId, final String childId) {

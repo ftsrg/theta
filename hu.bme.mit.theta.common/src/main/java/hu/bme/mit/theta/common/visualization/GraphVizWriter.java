@@ -30,29 +30,32 @@ public final class GraphVizWriter extends AbstractGraphWriter {
 		if (node instanceof CompositeNode) {
 			printCompositeNode((CompositeNode) node, sb);
 		}
-		String style = mapLineStyleToString(node.getLineStyle());
+		final NodeAttributes attributes = node.getAttributes();
+
+		String style = mapLineStyleToString(attributes.getLineStyle());
 		if (!style.equals("")) {
 			style += ",";
 		}
 		style += "filled";
 
 		sb.append("\t\t").append(node.getId());
-		sb.append(" [label=\"").append(node.getLabel().replace("\n", "\\n")).append("\"");
-		if (node.getPeripheries() > 1) {
-			sb.append(",peripheries=").append(node.getPeripheries());
+		sb.append(" [label=\"").append(attributes.getLabel().replace("\n", "\\n")).append("\"");
+		if (attributes.getPeripheries() > 1) {
+			sb.append(",peripheries=").append(attributes.getPeripheries());
 		}
 		sb.append(",style=\"").append(style).append("\"");
-		sb.append(",fillcolor=").append(mapColorToString(node.getFillColor()));
-		sb.append(",color=").append(mapColorToString(node.getLineColor()));
+		sb.append(",fillcolor=").append(mapColorToString(attributes.getFillColor()));
+		sb.append(",color=").append(mapColorToString(attributes.getLineColor()));
 		sb.append("];").append(System.lineSeparator());
 	}
 
 	private void printCompositeNode(final CompositeNode node, final StringBuilder sb) {
+		final NodeAttributes attributes = node.getAttributes();
 		sb.append("\tsubgraph ").append(node.getId()).append(" {").append(System.lineSeparator());
-		sb.append("\t\tcolor=").append(node.getLineColor()).append(";").append(System.lineSeparator());
+		sb.append("\t\tcolor=").append(attributes.getLineColor()).append(";").append(System.lineSeparator());
 		sb.append("\t\tstyle=filled;").append(System.lineSeparator());
-		sb.append("\t\tfillcolor=").append(node.getFillColor()).append(";").append(System.lineSeparator());
-		sb.append("\t\tlabel=\"").append(node.getLabel().replace("\n", "\\n")).append("\";")
+		sb.append("\t\tfillcolor=").append(attributes.getFillColor()).append(";").append(System.lineSeparator());
+		sb.append("\t\tlabel=\"").append(attributes.getLabel().replace("\n", "\\n")).append("\";")
 				.append(System.lineSeparator());
 		// TODO: peripheries?
 		for (final Node child : node.getChildren()) {

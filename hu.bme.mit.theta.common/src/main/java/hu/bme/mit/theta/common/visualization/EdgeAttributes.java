@@ -7,8 +7,7 @@ public final class EdgeAttributes {
 	private final Color edgeColor;
 	private final LineStyle lineStyle;
 
-	public EdgeAttributes(final String label, final Color edgeColor, final LineStyle lineStyle) {
-		super();
+	private EdgeAttributes(final String label, final Color edgeColor, final LineStyle lineStyle) {
 		this.label = label;
 		this.edgeColor = edgeColor;
 		this.lineStyle = lineStyle;
