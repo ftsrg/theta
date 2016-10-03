@@ -54,6 +54,7 @@ public class EntryNode implements TerminatorIrNode {
 				throw new RuntimeException();
 
 			this.target = newBlock;
+			this.target.addParent(this.parent);
 		}
 
 }

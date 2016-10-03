@@ -47,7 +47,10 @@ public class BasicBlock {
 	 * @return An unmodifiable collection of this node's children
 	 */
 	public List<BasicBlock> children() {
-		return this.terminator.getTargets();
+		if (this.isTerminated)
+			return this.terminator.getTargets();
+
+		return Collections.emptyList();
 	}
 
 	/**
@@ -282,6 +285,7 @@ public class BasicBlock {
 			throw new RuntimeException("Cannot clear the terminator of an unterminated block (" + this.name + ")");
 
 		this.terminator.getTargets().forEach(t -> t.removeParent(this));
+		this.terminator = null;
 		this.isTerminated = false;
 	}
 
@@ -305,7 +309,8 @@ public class BasicBlock {
 		StringBuilder sb = new StringBuilder();
 		this.nodes.forEach(s -> sb.append(s.getLabel() + "\\n"));
 
-		sb.append(this.getTerminator().getLabel() + "\\n");
+		if (this.isTerminated)
+			sb.append(this.getTerminator().getLabel() + "\\n");
 
 		return sb.toString();
 	}

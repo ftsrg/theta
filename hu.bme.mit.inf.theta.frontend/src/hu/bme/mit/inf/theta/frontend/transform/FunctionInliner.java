@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 import hu.bme.mit.inf.theta.common.Product3;
@@ -19,6 +20,7 @@ import hu.bme.mit.inf.theta.frontend.ir.BasicBlock;
 import hu.bme.mit.inf.theta.frontend.ir.Function;
 import hu.bme.mit.inf.theta.frontend.ir.GlobalContext;
 import hu.bme.mit.inf.theta.frontend.ir.node.AssignNode;
+import hu.bme.mit.inf.theta.frontend.ir.node.EntryNode;
 import hu.bme.mit.inf.theta.frontend.ir.node.IrNode;
 import hu.bme.mit.inf.theta.frontend.ir.node.NodeFactory;
 import hu.bme.mit.inf.theta.frontend.ir.node.NonTerminatorIrNode;
@@ -84,7 +86,7 @@ public class FunctionInliner implements ContextTransformer {
 			}
 
 
-			VariableRefactorExprVisitor visitor = new VariableRefactorExprVisitor("inline" + inlineId++, boundParams);
+			//VariableRefactorExprVisitor visitor = new VariableRefactorExprVisitor("inline" + inlineId++, boundParams);
 			Function copy = info.function.copy();
 			List<BasicBlock> copyBlocks = copy.getBlocksDFS().stream()
 				.filter(b -> b != copy.getEntryBlock())
@@ -93,9 +95,6 @@ public class FunctionInliner implements ContextTransformer {
 
 			for (BasicBlock copyBlock : copyBlocks) {
 				function.addBasicBlock(copyBlock);
-				for (IrNode copyNode : copyBlock.getAllNodes()) {
-					visitor.refactor(copyNode);
-				}
 
 				if (copyBlock.getTerminator() instanceof ReturnNode) {
 					ReturnNode ret = (ReturnNode) copyBlock.getTerminator();
@@ -105,12 +104,31 @@ public class FunctionInliner implements ContextTransformer {
 				}
 			}
 
-			// There is one entry child
-			copy.getEntryBlock().children().forEach(child -> {
-				child.removeParent(copy.getEntryBlock());
-				tuple._1().clearTerminator();
-				tuple._1().terminate(NodeFactory.Goto(child));
-			});
+			// Create a new entry child, assigning local variables the values of the function call
+			BasicBlock inlineEntry = copy.createBlock("inline_entry");
+			for (Entry<VarDecl<? extends Type>, Expr<? extends Type>> bp : boundParams.entrySet()) {
+				VarDecl<? extends Type> var = bp.getKey();
+				Expr<? extends Type> expr = bp.getValue();
+
+				inlineEntry.addNode(NodeFactory.Assign(var, expr));
+			}
+
+			EntryNode entryNode = (EntryNode) copy.getEntryBlock().getTerminator();
+			BasicBlock entryTarget = entryNode.getTarget();
+
+			entryTarget.removeParent(copy.getEntryBlock());
+			inlineEntry.terminate(NodeFactory.Goto(entryTarget));
+			tuple._1().clearTerminator();
+			tuple._1().terminate(NodeFactory.Goto(inlineEntry));
+
+			entryNode.replaceTarget(entryTarget, inlineEntry);
+
+			// There can be only one entry child
+//			copy.getEntryBlock().children().forEach(child -> {
+//				child.removeParent(copy.getEntryBlock());
+//				tuple._1().clearTerminator();
+//				tuple._1().terminate(NodeFactory.Goto(child));
+//			});
 
 			List<BasicBlock> exitParents = new ArrayList<>(copy.getExitBlock().parents());
 			exitParents.forEach(parent -> {

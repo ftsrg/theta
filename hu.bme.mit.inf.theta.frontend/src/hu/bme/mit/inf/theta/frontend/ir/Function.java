@@ -167,9 +167,15 @@ public class Function {
 	 * 	<li> Does not contain blocks only containing a single goto terminator </li>
 	 * 	<li> Does not contain unreachable blocks </li>
 	 * 	<li> Does not contain single-child blocks which are the only parent of their child </li>
+	 * 	<li> Does not contain unterminated blocks </li>
 	 * </ul>
 	 */
 	public void normalize() {
+		// Normalization attempt on a function with an unterminated block is an error
+		if (this.blocks.stream().anyMatch(b -> !b.isTerminated)) {
+			throw new RuntimeException("Cannot normalize function: There were unterminated blocks");
+		}
+
 		// Remove single 'goto' nodes
 		List<BasicBlock> singleGotos = this.blocks
 			.stream()
@@ -188,6 +194,8 @@ public class Function {
 					((JumpIfNode) parent.getTerminator()).replaceTarget(block, target);
 				} else if (parent.getTerminator() instanceof BranchTableNode) {
 					((BranchTableNode) parent.getTerminator()).replaceTarget(block, target);
+				} else if (parent.getTerminator() instanceof EntryNode) {
+					parent.getTerminator().replaceTarget(block, target);
 				}
 			}
 
@@ -208,7 +216,10 @@ public class Function {
 	}
 
 	public void removeBasicBlock(BasicBlock block) {
-		block.getTerminator().getTargets().forEach(t -> t.parents.remove(block));
+		if (block.isTerminated) {
+			block.getTerminator().getTargets().forEach(t -> t.parents.remove(block));
+		}
+
 		this.blocks.remove(block);
 	}
 

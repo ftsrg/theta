@@ -84,10 +84,15 @@ public class FunctionToCFATransformer {
 				mapping.put(node, cfa.createLoc());
 			}
 
-			// Branch nodes need a separate location on their own
 			if (block.getTerminator() instanceof JumpIfNode || block.getTerminator() instanceof BranchTableNode) {
+				// Branch nodes need a separate location on their own
+				mapping.put(block.getTerminator(), cfa.createLoc());
+			} else if (block.countNodes() == 0 && block.getTerminator() instanceof ReturnNode) {
+				// If there is a block with a single return terminator without any assignment nodes,
+				// we must create a location for this block as well.
 				mapping.put(block.getTerminator(), cfa.createLoc());
 			}
+
 		}
 
 		IrNode firstNode = func.getEntryNode().getTarget().getNodeByIndex(0);
@@ -141,6 +146,12 @@ public class FunctionToCFATransformer {
 					handleBranch(cfa, mapping, terminator);
 				} else if (terminator instanceof BranchTableNode) {
 					handleBranchTable(cfa, mapping, terminator);
+				} else if (terminator instanceof ReturnNode) {
+					ReturnNode ret = (ReturnNode) terminator;
+					CfaLoc retLoc = mapping.get(ret);
+
+					CfaEdge edge = cfa.createEdge(retLoc, cfa.getFinalLoc());
+					edge.getStmts().add(Stmts.Return(ret.getExpr()));
 				} else if (!(terminator instanceof EntryNode) && !(terminator instanceof ExitNode)) {
 					// The goto case should be impossible for normalized CFGs, as they cannot have a block with a single goto node
 					throw new RuntimeException(String.format(
@@ -187,9 +198,6 @@ public class FunctionToCFATransformer {
 		CfaLoc then = mapping.get(branch.getThenTarget().getNodeByIndex(0));
 		CfaLoc elze = mapping.get(branch.getElseTarget().getNodeByIndex(0));
 
-		if (then == null)
-			System.out.println(branch.getThenTarget());
-
 		// Add the then and else edges with the required Assume statements
 		CfaEdge thenEdge = cfa.createEdge(branchLoc, then);
 		thenEdge.getStmts().add(Stmts.Assume(branch.getCondition()));
@@ -215,8 +223,7 @@ public class FunctionToCFATransformer {
 		if (node instanceof AssignNode<?, ?>) {
 			AssignNode<? extends Type, ? extends Type> assign = (AssignNode<?, ?>) node;
 
-			// TODO: Temporary hack.
-			// Currently procedure calls are not supported in the solver, this workaround assigns
+			// Procedure calls are not supported in the solver, this workaround assigns
 			// an undefined value to each function call results
 			if (assign.getExpr() instanceof ProcCallExpr<?>) {
 				edge.getStmts().add(Stmts.Havoc(assign.getVar()));
