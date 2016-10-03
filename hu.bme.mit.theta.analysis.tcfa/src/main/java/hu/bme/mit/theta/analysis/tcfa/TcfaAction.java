@@ -1,5 +1,7 @@
 package hu.bme.mit.theta.analysis.tcfa;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.util.Collection;
 import java.util.List;
 import java.util.StringJoiner;
@@ -7,7 +9,7 @@ import java.util.StringJoiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
-import hu.bme.mit.theta.analysis.Action;
+import hu.bme.mit.theta.analysis.automaton.AutomatonAction;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.BoolType;
@@ -18,7 +20,7 @@ import hu.bme.mit.theta.formalism.ta.op.impl.ClockOps;
 import hu.bme.mit.theta.formalism.tcfa.TcfaEdge;
 import hu.bme.mit.theta.formalism.tcfa.TcfaLoc;
 
-public final class TcfaAction implements Action {
+public final class TcfaAction implements AutomatonAction<TcfaLoc, TcfaEdge> {
 
 	private final TcfaEdge edge;
 
@@ -31,8 +33,8 @@ public final class TcfaAction implements Action {
 	private final List<ClockOp> clockOps;
 	private final List<Stmt> dataStmts;
 
-	TcfaAction(final TcfaEdge edge) {
-		this.edge = edge;
+	private TcfaAction(final TcfaEdge edge) {
+		this.edge = checkNotNull(edge);
 		sourceClockInvars = extractClockInvars(edge.getSource());
 		sourceDataInvars = extractDataInvars(edge.getSource());
 		targetClockInvars = extractClockInvars(edge.getTarget());
@@ -53,9 +55,13 @@ public final class TcfaAction implements Action {
 
 		clockOps = clockOpsBuilder.build();
 		dataStmts = dataStmtsBuilder.build();
-
 	}
 
+	public static TcfaAction create(final TcfaEdge edge) {
+		return new TcfaAction(edge);
+	}
+
+	@Override
 	public TcfaEdge getEdge() {
 		return edge;
 	}
