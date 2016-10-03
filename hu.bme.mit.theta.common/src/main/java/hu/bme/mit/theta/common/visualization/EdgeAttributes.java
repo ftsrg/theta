@@ -1,16 +1,20 @@
 package hu.bme.mit.theta.common.visualization;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.awt.Color;
 
 public final class EdgeAttributes {
 	private final String label;
 	private final Color color;
 	private final LineStyle lineStyle;
+	private final String font;
 
-	private EdgeAttributes(final String label, final Color color, final LineStyle lineStyle) {
-		this.label = label;
-		this.color = color;
-		this.lineStyle = lineStyle;
+	private EdgeAttributes(final String label, final Color color, final LineStyle lineStyle, final String font) {
+		this.label = checkNotNull(label);
+		this.color = checkNotNull(color);
+		this.lineStyle = checkNotNull(lineStyle);
+		this.font = checkNotNull(font);
 	}
 
 	public String getLabel() {
@@ -25,6 +29,10 @@ public final class EdgeAttributes {
 		return lineStyle;
 	}
 
+	public String getFont() {
+		return font;
+	}
+
 	public static Builder builder() {
 		return new Builder();
 	}
@@ -33,6 +41,7 @@ public final class EdgeAttributes {
 		private String label = "";
 		private Color color = Color.BLACK;
 		private LineStyle lineStyle = LineStyle.NORMAL;
+		private String font = "";
 
 		public Builder label(final String label) {
 			this.label = label;
@@ -49,8 +58,13 @@ public final class EdgeAttributes {
 			return this;
 		}
 
+		public Builder font(final String font) {
+			this.font = font;
+			return this;
+		}
+
 		public EdgeAttributes build() {
-			return new EdgeAttributes(label, color, lineStyle);
+			return new EdgeAttributes(label, color, lineStyle, font);
 		}
 	}
 }

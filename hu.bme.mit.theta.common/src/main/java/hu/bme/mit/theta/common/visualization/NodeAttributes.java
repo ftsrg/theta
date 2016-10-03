@@ -10,14 +10,16 @@ public final class NodeAttributes {
 	private final Color fillColor;
 	private final LineStyle lineStyle;
 	private final int peripheries;
+	private final Shape shape;
 
 	private NodeAttributes(final String label, final Color lineColor, final Color fillColor, final LineStyle lineStyle,
-			final int peripheries) {
+			final int peripheries, final Shape shape) {
 		this.label = checkNotNull(label);
 		this.lineColor = checkNotNull(lineColor);
 		this.fillColor = checkNotNull(fillColor);
 		this.lineStyle = checkNotNull(lineStyle);
 		this.peripheries = peripheries;
+		this.shape = checkNotNull(shape);
 	}
 
 	public String getLabel() {
@@ -40,6 +42,10 @@ public final class NodeAttributes {
 		return peripheries;
 	}
 
+	public Shape getShape() {
+		return shape;
+	}
+
 	public static Builder builder() {
 		return new Builder();
 	}
@@ -50,6 +56,7 @@ public final class NodeAttributes {
 		private Color fillColor = Color.WHITE;
 		private LineStyle lineStyle = LineStyle.NORMAL;
 		private int peripheries = 1;
+		private Shape shape = Shape.CIRCLE;
 
 		public Builder label(final String label) {
 			this.label = label;
@@ -76,8 +83,13 @@ public final class NodeAttributes {
 			return this;
 		}
 
+		public Builder shape(final Shape shape) {
+			this.shape = shape;
+			return this;
+		}
+
 		public NodeAttributes build() {
-			return new NodeAttributes(label, lineColor, fillColor, lineStyle, peripheries);
+			return new NodeAttributes(label, lineColor, fillColor, lineStyle, peripheries, shape);
 		}
 	}
 }
