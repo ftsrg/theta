@@ -1,7 +1,5 @@
 package hu.bme.mit.theta.analysis.tcfa;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import hu.bme.mit.theta.analysis.ActionFunction;
 import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.Domain;
@@ -9,20 +7,18 @@ import hu.bme.mit.theta.analysis.InitFunction;
 import hu.bme.mit.theta.analysis.Precision;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.TransferFunction;
+import hu.bme.mit.theta.analysis.automaton.AutomatonAnalysis;
+import hu.bme.mit.theta.analysis.automaton.AutomatonState;
+import hu.bme.mit.theta.formalism.tcfa.TcfaEdge;
 import hu.bme.mit.theta.formalism.tcfa.TcfaLoc;
 
-public final class TcfaAnalyis<S extends State, P extends Precision> implements Analysis<TcfaState<S>, TcfaAction, P> {
+public final class TcfaAnalyis<S extends State, P extends Precision>
+		implements Analysis<AutomatonState<S, TcfaLoc, TcfaEdge>, TcfaAction, P> {
 
-	private final Domain<TcfaState<S>> domain;
-	private final InitFunction<TcfaState<S>, P> initFunction;
-	private final TransferFunction<TcfaState<S>, TcfaAction, P> transferFunction;
+	private final AutomatonAnalysis<S, TcfaAction, P, TcfaLoc, TcfaEdge> automatonAnalysis;
 
 	private TcfaAnalyis(final TcfaLoc initLoc, final Analysis<S, TcfaAction, P> analysis) {
-		checkNotNull(initLoc);
-		checkNotNull(analysis);
-		domain = TcfaDomain.create(analysis.getDomain());
-		initFunction = new TcfaInitFunction<>(initLoc, analysis.getInitFunction());
-		transferFunction = new TcfaTransferFunction<>(analysis.getTransferFunction());
+		automatonAnalysis = AutomatonAnalysis.create(initLoc, analysis, TcfaAction::create);
 	}
 
 	public static <S extends State, P extends Precision> TcfaAnalyis<S, P> create(final TcfaLoc initLoc,
@@ -31,23 +27,23 @@ public final class TcfaAnalyis<S extends State, P extends Precision> implements 
 	}
 
 	@Override
-	public Domain<TcfaState<S>> getDomain() {
-		return domain;
+	public Domain<AutomatonState<S, TcfaLoc, TcfaEdge>> getDomain() {
+		return automatonAnalysis.getDomain();
 	}
 
 	@Override
-	public InitFunction<TcfaState<S>, P> getInitFunction() {
-		return initFunction;
+	public InitFunction<AutomatonState<S, TcfaLoc, TcfaEdge>, P> getInitFunction() {
+		return automatonAnalysis.getInitFunction();
 	}
 
 	@Override
-	public TransferFunction<TcfaState<S>, TcfaAction, P> getTransferFunction() {
-		return transferFunction;
+	public TransferFunction<AutomatonState<S, TcfaLoc, TcfaEdge>, TcfaAction, P> getTransferFunction() {
+		return automatonAnalysis.getTransferFunction();
 	}
 
 	@Override
-	public ActionFunction<? super TcfaState<S>, ? extends TcfaAction> getActionFunction() {
-		return TcfaActionFunction.getInstance();
+	public ActionFunction<? super AutomatonState<S, TcfaLoc, TcfaEdge>, ? extends TcfaAction> getActionFunction() {
+		return automatonAnalysis.getActionFunction();
 	}
 
 }

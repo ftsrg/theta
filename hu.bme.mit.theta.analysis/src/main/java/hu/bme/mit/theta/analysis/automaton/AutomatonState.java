@@ -1,36 +1,38 @@
-package hu.bme.mit.theta.analysis.tcfa;
+package hu.bme.mit.theta.analysis.automaton;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import hu.bme.mit.theta.analysis.State;
-import hu.bme.mit.theta.formalism.tcfa.TcfaLoc;
+import hu.bme.mit.theta.formalism.common.Edge;
+import hu.bme.mit.theta.formalism.common.Loc;
 
-public final class TcfaState<S extends State> implements State {
+public final class AutomatonState<S extends State, L extends Loc<L, E>, E extends Edge<L, E>> implements State {
 
 	private static final int HASH_SEED = 3613;
 
 	private volatile int hashCode = 0;
 
-	private final TcfaLoc loc;
+	private final L loc;
 	private final S state;
 
-	private TcfaState(final TcfaLoc loc, final S state) {
+	private AutomatonState(final L loc, final S state) {
 		this.loc = checkNotNull(loc);
 		this.state = checkNotNull(state);
 	}
 
-	public static <S extends State> TcfaState<S> create(final TcfaLoc loc, final S state) {
-		return new TcfaState<>(loc, state);
+	public static <S extends State, L extends Loc<L, E>, E extends Edge<L, E>> AutomatonState<S, L, E> create(
+			final L loc, final S state) {
+		return new AutomatonState<>(loc, state);
 	}
 
 	////
 
-	public S getState() {
-		return state;
+	public L getLoc() {
+		return loc;
 	}
 
-	public TcfaLoc getLoc() {
-		return loc;
+	public S getState() {
+		return state;
 	}
 
 	////
@@ -51,8 +53,8 @@ public final class TcfaState<S extends State> implements State {
 	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
-		} else if (obj instanceof TcfaState) {
-			final TcfaState<?> that = (TcfaState<?>) obj;
+		} else if (obj instanceof AutomatonState) {
+			final AutomatonState<?, ?, ?> that = (AutomatonState<?, ?, ?>) obj;
 			return this.loc.equals(that.loc) && this.state.equals(that.state);
 		} else {
 			return false;
@@ -62,7 +64,7 @@ public final class TcfaState<S extends State> implements State {
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
-		sb.append("TCFAState(");
+		sb.append("AutomatonState(");
 		sb.append(loc);
 		sb.append(", ");
 		sb.append(state);
