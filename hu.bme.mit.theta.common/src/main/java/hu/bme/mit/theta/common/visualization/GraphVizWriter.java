@@ -46,6 +46,7 @@ public final class GraphVizWriter extends AbstractGraphWriter {
 		sb.append(",style=\"").append(style).append("\"");
 		sb.append(",fillcolor=").append(mapColorToString(attributes.getFillColor()));
 		sb.append(",color=").append(mapColorToString(attributes.getLineColor()));
+		sb.append(",shape=").append(mapShapeToString(attributes.getShape()));
 		sb.append("];").append(System.lineSeparator());
 	}
 
@@ -85,6 +86,9 @@ public final class GraphVizWriter extends AbstractGraphWriter {
 				if (!style.equals("")) {
 					sb.append(",style=").append(style);
 				}
+				if (!attributes.getFont().equals("")) {
+					sb.append(",fontname=\"").append(attributes.getFont()).append("\"");
+				}
 				sb.append("];").append(System.lineSeparator());
 			}
 		}
@@ -98,6 +102,7 @@ public final class GraphVizWriter extends AbstractGraphWriter {
 			put(Color.RED, "red");
 			put(Color.BLUE, "blue");
 			put(Color.GREEN, "green");
+			put(Color.YELLOW, "yellow");
 		}
 	};
 
@@ -120,6 +125,19 @@ public final class GraphVizWriter extends AbstractGraphWriter {
 			return "";
 		default:
 			throw new UnsupportedOperationException("Unknown line style: " + lineStyle + ".");
+		}
+	}
+
+	private String mapShapeToString(final Shape shape) {
+		switch (shape) {
+		case CIRCLE:
+			return "circle";
+		case ELLIPSE:
+			return "ellipse";
+		case RECTANGLE:
+			return "rectangle";
+		default:
+			throw new UnsupportedOperationException("Unknown shape: " + shape + ".");
 		}
 	}
 }
