@@ -7,6 +7,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
+/**
+ * Represents a simple node of the visualizable graph.
+ */
 public class Node {
 
 	private final String id;
@@ -38,13 +41,23 @@ public class Node {
 		return Collections.unmodifiableCollection(outEdges);
 	}
 
+	/**
+	 * Add an outgoing edge. The source of the edge must be set to this node.
+	 *
+	 * @param edge
+	 */
 	void addOutEdge(final Edge edge) {
-		checkArgument(edge.getSource() == this);
+		checkArgument(edge.getSource() == this, "The source of the edge must be set to this node.");
 		outEdges.add(edge);
 	}
 
+	/**
+	 * Add an incoming edge. The target of the edge must be set to this node.
+	 *
+	 * @param edge
+	 */
 	void addInEdge(final Edge edge) {
-		checkArgument(edge.getTarget() == this);
+		checkArgument(edge.getTarget() == this, "The target of the edge must be set to this node.");
 		inEdges.add(edge);
 	}
 }
