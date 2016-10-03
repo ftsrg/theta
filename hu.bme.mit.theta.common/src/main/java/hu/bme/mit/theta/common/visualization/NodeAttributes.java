@@ -56,7 +56,7 @@ public final class NodeAttributes {
 		private Color fillColor = Color.WHITE;
 		private LineStyle lineStyle = LineStyle.NORMAL;
 		private int peripheries = 1;
-		private Shape shape = Shape.CIRCLE;
+		private Shape shape = Shape.ELLIPSE;
 
 		public Builder label(final String label) {
 			this.label = label;
