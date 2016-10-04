@@ -10,8 +10,9 @@ import java.util.Arrays;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import hu.bme.mit.theta.analysis.algorithm.LifoWaitlist;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
-import hu.bme.mit.theta.analysis.algorithm.cegar.AbstractorImpl;
+import hu.bme.mit.theta.analysis.algorithm.cegar.WaitlistBasedAbstractor;
 import hu.bme.mit.theta.analysis.automaton.AutomatonState;
 import hu.bme.mit.theta.analysis.composite.CompositeAnalysis;
 import hu.bme.mit.theta.analysis.composite.CompositePrecision;
@@ -41,7 +42,7 @@ public class TcfaNetworkPredTest {
 	@Test
 	@Ignore
 	public void test() {
-		final int n = 4;
+		final int n = 2;
 		final VarDecl<IntType> vlock = Var("lock", Int());
 		final Expr<IntType> lock = vlock.getRef();
 		final TCFA fischer = TcfaNetworkTestHelper.fischer(n, vlock);
@@ -56,8 +57,8 @@ public class TcfaNetworkPredTest {
 				ZonePrecision.create(fischer.getClockVars()),
 				SimplePredPrecision.create(Arrays.asList(Eq(lock, Int(0)), Eq(lock, Int(1)))));
 
-		final Abstractor<AutomatonState<CompositeState<ZoneState, PredState>, TcfaLoc, TcfaEdge>, TcfaAction, CompositePrecision<ZonePrecision, PredPrecision>> abstractor = new AbstractorImpl<>(
-				analysis, s -> false);
+		final Abstractor<AutomatonState<CompositeState<ZoneState, PredState>, TcfaLoc, TcfaEdge>, TcfaAction, CompositePrecision<ZonePrecision, PredPrecision>> abstractor = new WaitlistBasedAbstractor<>(
+				analysis, s -> false, new LifoWaitlist<>());
 
 		abstractor.init(precision);
 		abstractor.check(precision);

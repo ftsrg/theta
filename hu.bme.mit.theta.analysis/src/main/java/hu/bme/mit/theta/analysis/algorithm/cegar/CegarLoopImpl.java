@@ -32,7 +32,7 @@ public class CegarLoopImpl<S extends State, A extends Action, P extends Precisio
 			abstractor.check(precision);
 
 			if (abstractor.getStatus() == AbstractorStatus.COUNTEREXAMPLE) {
-				final ARG<S, A, ? super P> arg = abstractor.getARG();
+				final ARG<S, A> arg = abstractor.getARG();
 				refiner.refine(arg, precision);
 
 				if (refiner.getStatus() == CounterexampleStatus.SPURIOUS) {
