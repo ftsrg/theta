@@ -19,8 +19,10 @@ final class CompositeNode extends Node {
 	void addChild(final Node child) {
 		checkNotNull(child);
 		checkArgument(child != this);
+		checkArgument(child.getParent() == null);
 
 		children.add(child);
+		child.setParent(this);
 	}
 
 	public Collection<Node> getChildren() {

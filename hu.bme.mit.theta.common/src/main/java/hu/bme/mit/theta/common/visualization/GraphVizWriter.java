@@ -24,7 +24,9 @@ public final class GraphVizWriter extends AbstractGraphWriter {
 		sb.append("\tlabel=\"").append(graph.getLabel()).append("\";").append(System.lineSeparator());
 
 		for (final Node node : graph.getNodes()) {
-			printNode(node, sb);
+			if (node.getParent() == null) {
+				printNode(node, sb);
+			}
 		}
 
 		for (final Node node : graph.getNodes()) {
