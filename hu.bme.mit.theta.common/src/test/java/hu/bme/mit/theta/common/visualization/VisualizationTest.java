@@ -12,12 +12,13 @@ public class VisualizationTest {
 		g.addNode("n4", NodeAttributes.builder().peripheries(3).label("4").shape(Shape.RECTANGLE).build());
 
 		g.addCompositeNode("c1",
-				NodeAttributes.builder().label("c1").lineStyle(LineStyle.DOTTED).peripheries(2).build());
-		g.addCompositeNode("c2", NodeAttributes.builder().shape(Shape.RECTANGLE).build());
+				NodeAttributes.builder().label("cluster1").lineStyle(LineStyle.DOTTED).peripheries(2).build());
+		g.addCompositeNode("c2", NodeAttributes.builder().label("cluster2").shape(Shape.ELLIPSE).build());
 
 		g.setChild("c1", "n1");
 		g.setChild("c1", "n2");
 		g.setChild("c2", "n3");
+		g.setChild("c1", "c2");
 
 		g.addEdge("n1", "n2", EdgeAttributes.builder().color(Color.YELLOW).label("e").build());
 		g.addEdge("n2", "n3", EdgeAttributes.builder().lineStyle(LineStyle.DASHED).build());

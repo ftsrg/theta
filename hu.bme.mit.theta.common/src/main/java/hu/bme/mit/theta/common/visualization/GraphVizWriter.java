@@ -6,6 +6,14 @@ import java.util.Map;
 
 /**
  * Class for writing graphs in GraphViz format.
+ *
+ * Known limitations (due to GraphViz):
+ *
+ * - Fill color of composite nodes is ignored.
+ *
+ * - Shape of composite nodes is ignored.
+ *
+ * - Peripheries of composite nodes are ignored.
  */
 public final class GraphVizWriter extends AbstractGraphWriter {
 
@@ -66,12 +74,8 @@ public final class GraphVizWriter extends AbstractGraphWriter {
 		if (!style.equals("")) {
 			sb.append("\t\tstyle=").append(style).append(";").append(System.lineSeparator());
 		}
-		// TODO: GraphViz either supports border or fill color for composite
-		// nodes. Currently I implemented border, but we must somehow notify the
-		// user about the missing fill color.
 		sb.append("\t\tlabel=\"").append(attributes.getLabel().replace("\n", "\\n")).append("\";")
 				.append(System.lineSeparator());
-		// TODO: also no support for peripheries
 		for (final Node child : node.getChildren()) {
 			printNode(child, sb);
 		}
@@ -128,7 +132,7 @@ public final class GraphVizWriter extends AbstractGraphWriter {
 		case DOTTED:
 			return "dotted";
 		case NORMAL:
-			return "";
+			return "solid";
 		default:
 			throw new UnsupportedOperationException("Unknown line style: " + lineStyle + ".");
 		}
