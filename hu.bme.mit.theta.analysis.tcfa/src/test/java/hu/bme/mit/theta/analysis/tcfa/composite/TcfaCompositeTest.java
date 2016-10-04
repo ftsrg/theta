@@ -8,8 +8,9 @@ import java.io.IOException;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import hu.bme.mit.theta.analysis.algorithm.LifoWaitlist;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
-import hu.bme.mit.theta.analysis.algorithm.cegar.AbstractorImpl;
+import hu.bme.mit.theta.analysis.algorithm.cegar.WaitlistBasedAbstractor;
 import hu.bme.mit.theta.analysis.automaton.AutomatonState;
 import hu.bme.mit.theta.analysis.composite.CompositeState;
 import hu.bme.mit.theta.analysis.expl.ExplState;
@@ -39,8 +40,8 @@ public class TcfaCompositeTest {
 
 		final BasicTcfaAnalysis analysis = BasicTcfaAnalysis.create(fischers, solver);
 
-		final Abstractor<AutomatonState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction, NullPrecision> abstractor = new AbstractorImpl<>(
-				analysis, s -> s.getLoc().getName().equals("(crit, crit)"));
+		final Abstractor<AutomatonState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction, NullPrecision> abstractor = new WaitlistBasedAbstractor<>(
+				analysis, s -> s.getLoc().getName().equals("(crit, crit)"), new LifoWaitlist<>());
 
 		abstractor.init(NullPrecision.getInstance());
 		abstractor.check(NullPrecision.getInstance());
