@@ -38,6 +38,8 @@ import hu.bme.mit.theta.analysis.pred.PredState;
 import hu.bme.mit.theta.analysis.pred.SimplePredPrecision;
 import hu.bme.mit.theta.analysis.sts.StsAction;
 import hu.bme.mit.theta.analysis.sts.StsExprSeqConcretizer;
+import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
+import hu.bme.mit.theta.common.visualization.GraphVizWriter;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.IntType;
@@ -94,6 +96,8 @@ public class StsPredTest {
 
 		final ArgChecker checker = ArgChecker.create(solver);
 		assertTrue(checker.isWellLabeled(arg));
+
+		System.out.println(new GraphVizWriter().writeString(ArgVisualizer.visualize(arg)));
 	}
 
 }

@@ -3,32 +3,24 @@ package hu.bme.mit.theta.common.visualization;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
+/**
+ * Represents a simple node of the visualizable graph.
+ */
 public class Node {
 
 	private final String id;
-	private final String label;
-	private final Color edgeColor;
-	private final Color fillColor;
-	private final String lineStyle;
-	private final int peripheries;
+	private final NodeAttributes attributes;
 
 	private final Collection<Edge> inEdges;
 	private final Collection<Edge> outEdges;
 
-	Node(final String id, final String label, final Color fillColor, final Color edgeColor, final String lineStyle,
-			final int peripheries) {
+	Node(final String id, final NodeAttributes attributes) {
 		this.id = checkNotNull(id);
-		this.label = checkNotNull(label);
-		this.edgeColor = checkNotNull(edgeColor);
-		this.fillColor = checkNotNull(fillColor);
-		this.lineStyle = checkNotNull(lineStyle);
-		this.peripheries = peripheries;
-
+		this.attributes = checkNotNull(attributes);
 		this.inEdges = new ArrayList<>();
 		this.outEdges = new ArrayList<>();
 	}
@@ -37,24 +29,8 @@ public class Node {
 		return id;
 	}
 
-	public String getLabel() {
-		return label;
-	}
-
-	public Color getEdgeColor() {
-		return edgeColor;
-	}
-
-	public Color getFillColor() {
-		return fillColor;
-	}
-
-	public String getLineStyle() {
-		return lineStyle;
-	}
-
-	public int getPeripheries() {
-		return peripheries;
+	public NodeAttributes getAttributes() {
+		return attributes;
 	}
 
 	public Collection<Edge> getInEdges() {
@@ -65,13 +41,23 @@ public class Node {
 		return Collections.unmodifiableCollection(outEdges);
 	}
 
+	/**
+	 * Add an outgoing edge. The source of the edge must be set to this node.
+	 *
+	 * @param edge
+	 */
 	void addOutEdge(final Edge edge) {
-		checkArgument(edge.getSource() == this);
+		checkArgument(edge.getSource() == this, "The source of the edge must be set to this node.");
 		outEdges.add(edge);
 	}
 
+	/**
+	 * Add an incoming edge. The target of the edge must be set to this node.
+	 *
+	 * @param edge
+	 */
 	void addInEdge(final Edge edge) {
-		checkArgument(edge.getTarget() == this);
+		checkArgument(edge.getTarget() == this, "The target of the edge must be set to this node.");
 		inEdges.add(edge);
 	}
 }
