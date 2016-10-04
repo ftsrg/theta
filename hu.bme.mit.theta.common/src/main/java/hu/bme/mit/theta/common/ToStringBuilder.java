@@ -12,7 +12,7 @@ public final class ToStringBuilder {
 
 	ToStringBuilder(final String prefix) {
 		checkNotNull(prefix);
-		joiner = new StringJoiner(",", prefix + "(", ")");
+		joiner = new StringJoiner(", ", prefix + "(", ")");
 	}
 
 	public ToStringBuilder add(final Object object) {

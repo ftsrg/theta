@@ -8,7 +8,7 @@ import hu.bme.mit.theta.analysis.algorithm.ARG;
 
 public interface Refiner<S extends State, A extends Action, P extends Precision, CS extends State> {
 
-	void refine(ARG<S, A, ? super P> arg, P precision);
+	void refine(ARG<S, A> arg, P precision);
 
 	CounterexampleStatus getStatus();
 

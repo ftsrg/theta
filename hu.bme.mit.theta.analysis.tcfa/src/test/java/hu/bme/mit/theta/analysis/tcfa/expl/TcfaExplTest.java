@@ -9,8 +9,9 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import hu.bme.mit.theta.analysis.algorithm.ArgPrinter;
+import hu.bme.mit.theta.analysis.algorithm.LifoWaitlist;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
-import hu.bme.mit.theta.analysis.algorithm.cegar.AbstractorImpl;
+import hu.bme.mit.theta.analysis.algorithm.cegar.WaitlistBasedAbstractor;
 import hu.bme.mit.theta.analysis.automaton.AutomatonState;
 import hu.bme.mit.theta.analysis.expl.ExplPrecision;
 import hu.bme.mit.theta.analysis.expl.ExplState;
@@ -39,8 +40,8 @@ public class TcfaExplTest {
 
 		final ExplPrecision precision = ExplPrecision.create(Collections.singleton(vlock));
 
-		final Abstractor<AutomatonState<ExplState, TcfaLoc, TcfaEdge>, TcfaAction, ExplPrecision> abstractor = new AbstractorImpl<>(
-				analyis, s -> s.getLoc().equals(fischer.getCritical()));
+		final Abstractor<AutomatonState<ExplState, TcfaLoc, TcfaEdge>, TcfaAction, ExplPrecision> abstractor = new WaitlistBasedAbstractor<>(
+				analyis, s -> s.getLoc().equals(fischer.getCritical()), new LifoWaitlist<>());
 
 		abstractor.init(precision);
 		abstractor.check(precision);

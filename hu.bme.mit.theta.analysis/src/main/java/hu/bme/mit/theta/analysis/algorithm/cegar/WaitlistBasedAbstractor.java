@@ -10,54 +10,64 @@ import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.Precision;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
+import hu.bme.mit.theta.analysis.algorithm.ArgBuilder;
 import hu.bme.mit.theta.analysis.algorithm.ArgEdge;
 import hu.bme.mit.theta.analysis.algorithm.ArgNode;
 import hu.bme.mit.theta.analysis.algorithm.Waitlist;
 
-public class WaitlistBasedAbstractorImpl<S extends State, A extends Action, P extends Precision>
+public class WaitlistBasedAbstractor<S extends State, A extends Action, P extends Precision>
 		implements Abstractor<S, A, P> {
 
-	private final Analysis<S, A, P> analysis;
-	private final Predicate<? super S> target;
-
 	private final Waitlist<ArgNode<S, A>> waitlist;
+	private final ArgBuilder<S, A, P> argBuilder;
 
-	private ARG<S, A, P> arg;
+	private ARG<S, A> arg;
 
-	public WaitlistBasedAbstractorImpl(final Analysis<S, A, P> analysis, final Predicate<? super S> target,
+	public WaitlistBasedAbstractor(final Analysis<S, A, P> analysis, final Predicate<? super S> target,
 			final Waitlist<ArgNode<S, A>> waitlist) {
-		this.analysis = checkNotNull(analysis);
-		this.target = checkNotNull(target);
+		checkNotNull(analysis);
+		checkNotNull(target);
 		this.waitlist = checkNotNull(waitlist);
+		argBuilder = ArgBuilder.create(analysis, target);
 	}
 
 	@Override
-	public ARG<S, A, P> getARG() {
+	public ARG<S, A> getARG() {
 		checkState(arg != null);
 		return arg;
 	}
 
 	@Override
 	public void init(final P precision) {
-		arg = new ARG<>(analysis, target, precision);
+		arg = argBuilder.createArg(precision);
 		waitlist.clear();
 	}
 
 	@Override
 	public void check(final P precision) {
-		waitlist.addAll(arg.getNodes());
+		checkState(arg != null);
 
+		waitlist.addAll(arg.getNodes());
 		while (!waitlist.isEmpty()) {
 			final ArgNode<S, A> node = waitlist.remove();
-			arg.close(node);
-			if (!node.isCovered() && !node.isTarget() && !node.isExpanded()) {
-				arg.expand(node, precision);
-				for (final ArgEdge<S, A> outEdge : node.getOutEdges()) {
-					final ArgNode<S, A> succNode = outEdge.getTarget();
-					if (!succNode.isTarget()) {
-						waitlist.add(succNode);
-					}
-				}
+
+			if (node.isTarget()) {
+				return;
+			}
+
+			argBuilder.closeNode(node);
+			if (!node.isCovered()) {
+				expand(precision, node);
+			}
+		}
+	}
+
+	private void expand(final P precision, final ArgNode<S, A> node) {
+		argBuilder.expandNode(node, precision);
+		for (final ArgEdge<S, A> outEdge : node.getOutEdges()) {
+			final ArgNode<S, A> succNode = outEdge.getTarget();
+			if (!succNode.isTarget()) {
+				waitlist.add(succNode);
 			}
 		}
 	}
