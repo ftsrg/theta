@@ -34,7 +34,7 @@ public final class ArgChecker {
 
 	////
 
-	public boolean isWellLabeled(final ARG<? extends ExprState, ? extends ExprAction, ?> arg) {
+	public boolean isWellLabeled(final ARG<? extends ExprState, ? extends ExprAction> arg) {
 		return arg.getInitNodes().stream().allMatch(this::subtreeIsWellLabeled);
 	}
 
@@ -57,7 +57,7 @@ public final class ArgChecker {
 	////
 
 	private boolean nodeIsWellLabeledForCoverage(final ArgNode<? extends ExprState, ?> node) {
-		final Optional<? extends ArgNode<? extends ExprState, ?>> optCoveringNode = node.coveringNode;
+		final Optional<? extends ArgNode<? extends ExprState, ?>> optCoveringNode = node.getCoveringNode();
 		if (optCoveringNode.isPresent()) {
 			final ArgNode<? extends ExprState, ?> coveringNode = optCoveringNode.get();
 			return isCoveredBy(node, coveringNode) && !coveringNode.isCovered();

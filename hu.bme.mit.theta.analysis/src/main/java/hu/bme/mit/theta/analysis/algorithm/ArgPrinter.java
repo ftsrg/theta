@@ -7,7 +7,7 @@ public class ArgPrinter {
 	private ArgPrinter() {
 	}
 
-	public static String toGraphvizString(final ARG<?, ?, ?> arg) {
+	public static String toGraphvizString(final ARG<?, ?> arg) {
 		final StringBuilder sb = new StringBuilder();
 
 		sb.append("digraph arg {");
@@ -40,8 +40,6 @@ public class ArgPrinter {
 		sb.append("\"]");
 		if (node.isTarget()) {
 			sb.append("[peripheries=2]");
-		} else if (!node.isExpanded()) {
-			sb.append("[style=\"dashed\"]");
 		}
 		sb.append(lineSeparator());
 

@@ -20,12 +20,16 @@ import org.junit.Test;
 
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.ArgChecker;
+import hu.bme.mit.theta.analysis.algorithm.ArgNode;
+import hu.bme.mit.theta.analysis.algorithm.ArgPrinter;
+import hu.bme.mit.theta.analysis.algorithm.LifoWaitlist;
+import hu.bme.mit.theta.analysis.algorithm.Waitlist;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
-import hu.bme.mit.theta.analysis.algorithm.cegar.AbstractorImpl;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarLoopImpl;
 import hu.bme.mit.theta.analysis.algorithm.cegar.GlobalExplItpRefinerOp;
 import hu.bme.mit.theta.analysis.algorithm.cegar.ItpRefutation;
 import hu.bme.mit.theta.analysis.algorithm.cegar.RefutationBasedRefiner;
+import hu.bme.mit.theta.analysis.algorithm.cegar.WaitlistBasedAbstractor;
 import hu.bme.mit.theta.analysis.expl.ExplPrecision;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.ExprState;
@@ -71,7 +75,10 @@ public class StsExplTest {
 
 		final ExplPrecision precision = ExplPrecision.create(Collections.singleton(vy));
 
-		final Abstractor<ExplState, StsAction, ExplPrecision> abstractor = new AbstractorImpl<>(analysis, target);
+		final Waitlist<ArgNode<ExplState, StsAction>> waitlist = new LifoWaitlist<>();
+
+		final Abstractor<ExplState, StsAction, ExplPrecision> abstractor = new WaitlistBasedAbstractor<>(analysis,
+				target, waitlist);
 
 		final StsExprSeqConcretizer concretizerOp = new StsExprSeqConcretizer(sts, solver);
 		final GlobalExplItpRefinerOp<StsAction> refinerOp = new GlobalExplItpRefinerOp<>();
@@ -84,7 +91,9 @@ public class StsExplTest {
 
 		cegarLoop.check(precision);
 
-		final ARG<ExplState, StsAction, ?> arg = abstractor.getARG();
+		final ARG<ExplState, StsAction> arg = abstractor.getARG();
+		System.out.println(ArgPrinter.toGraphvizString(arg));
+
 		final ArgChecker checker = ArgChecker.create(solver);
 		assertTrue(checker.isWellLabeled(arg));
 	}

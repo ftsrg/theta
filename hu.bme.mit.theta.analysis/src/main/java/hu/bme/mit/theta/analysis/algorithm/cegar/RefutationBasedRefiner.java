@@ -11,6 +11,7 @@ import hu.bme.mit.theta.analysis.Precision;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
+import hu.bme.mit.theta.common.Utils;
 
 public class RefutationBasedRefiner<S extends State, CS extends State, R extends Refutation, P extends Precision, A extends Action>
 		implements Refiner<S, A, P, CS> {
@@ -28,17 +29,13 @@ public class RefutationBasedRefiner<S extends State, CS extends State, R extends
 	}
 
 	@Override
-	public void refine(final ARG<S, A, ? super P> arg, final P precision) {
+	public void refine(final ARG<S, A> arg, final P precision) {
 		checkArgument(arg.getTargetNodes().size() > 0);
 
 		refinedPrecision = null;
 
 		final Collection<Trace<S, A>> counterexamples = arg.getCounterexamples();
-		assert (counterexamples.size() == 1); // TODO: currently this refiner
-												// only considers one
-												// counterexample
-
-		final Trace<S, A> counterexample = counterexamples.iterator().next();
+		final Trace<S, A> counterexample = Utils.anyElement(counterexamples);
 
 		concretizerOp.concretize(counterexample);
 

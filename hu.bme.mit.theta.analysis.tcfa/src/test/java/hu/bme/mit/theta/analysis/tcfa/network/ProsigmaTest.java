@@ -1,12 +1,12 @@
 package hu.bme.mit.theta.analysis.tcfa.network;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.ArgPrinter;
+import hu.bme.mit.theta.analysis.algorithm.LifoWaitlist;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
-import hu.bme.mit.theta.analysis.algorithm.cegar.AbstractorImpl;
+import hu.bme.mit.theta.analysis.algorithm.cegar.WaitlistBasedAbstractor;
 import hu.bme.mit.theta.analysis.automaton.AutomatonState;
 import hu.bme.mit.theta.analysis.composite.CompositeAnalysis;
 import hu.bme.mit.theta.analysis.composite.CompositePrecision;
@@ -28,7 +28,6 @@ import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 public class ProsigmaTest {
 
 	@Test
-	@Ignore
 	public void test() {
 		final TCFA prosigma = TcfaNetworkTestHelper.prosigma();
 
@@ -41,13 +40,13 @@ public class ProsigmaTest {
 		final CompositePrecision<ZonePrecision, ExplPrecision> precision = CompositePrecision
 				.create(ZonePrecision.create(prosigma.getClockVars()), ExplPrecision.create(prosigma.getDataVars()));
 
-		final Abstractor<AutomatonState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction, CompositePrecision<ZonePrecision, ExplPrecision>> abstractor = new AbstractorImpl<>(
-				analysis, s -> false);
+		final Abstractor<AutomatonState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction, CompositePrecision<ZonePrecision, ExplPrecision>> abstractor = new WaitlistBasedAbstractor<>(
+				analysis, s -> false, new LifoWaitlist<>());
 
 		abstractor.init(precision);
 		abstractor.check(precision);
 
-		final ARG<?, ?, ?> arg = abstractor.getARG();
+		final ARG<?, ?> arg = abstractor.getARG();
 
 		System.out.println(ArgPrinter.toGraphvizString(arg));
 	}
