@@ -4,10 +4,13 @@ import java.awt.Color;
 import java.util.HashMap;
 import java.util.Map;
 
-public class YedPrinter implements GraphPrinter {
+/**
+ * Class for writing graphs in yED (GraphML) format.
+ */
+public class YedWriter extends AbstractGraphWriter {
 
 	@Override
-	public String print(final Graph graph) {
+	public String writeString(final Graph graph) {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>").append(System.lineSeparator());
 		sb.append("<graphml xmlns=\"http://graphml.graphdrawing.org/xmlns\"").append(System.lineSeparator());
@@ -40,29 +43,40 @@ public class YedPrinter implements GraphPrinter {
 			printCompositeNode((CompositeNode) node, sb);
 		}
 
+		final NodeAttributes attributes = node.getAttributes();
 		sb.append("\t<node id=\"").append(node.getId()).append("\">");
 		sb.append("<data key=\"d6\"><y:ShapeNode>");
-		sb.append("<y:NodeLabel>").append(replaceLabel(node.getLabel())).append("</y:NodeLabel>");
-		sb.append("<y:Fill color=\"").append(mapColorToString(node.getFillColor()))
+		sb.append("<y:NodeLabel>").append(replaceLabel(attributes.getLabel())).append("</y:NodeLabel>");
+		sb.append("<y:Fill color=\"").append(mapColorToString(attributes.getFillColor()))
 				.append("\" transparent=\"false\"/>");
 		sb.append("<y:BorderStyle");
-		sb.append(" color=\"").append(mapColorToString(node.getEdgeColor())).append("\"");
-		// TODO: edge style, peripheries?
+		sb.append(" color=\"").append(mapColorToString(attributes.getLineColor())).append("\"");
+		final String style = mapLineStyleToString(attributes.getLineStyle());
+		if (!style.equals("")) {
+			sb.append(" type=\"").append(style).append("\"");
+		}
+		// TODO: peripheries
 		sb.append("/>");
 		sb.append("<y:Shape type=\"ellipse\"/></y:ShapeNode></data></node>").append(System.lineSeparator());
 	}
 
 	private void printCompositeNode(final CompositeNode node, final StringBuilder sb) {
+		final NodeAttributes attributes = node.getAttributes();
 		sb.append("<node id=\"").append(node.getId()).append("\">").append(System.lineSeparator());
 		sb.append("\t<data key=\"d6\"><y:ProxyAutoBoundsNode><y:Realizers active=\"0\"><y:GroupNode>")
 				.append(System.lineSeparator());
-		sb.append("\t<y:NodeLabel modelName=\"internal\" modelPosition=\"t\">").append(replaceLabel(node.getLabel()))
-				.append("</y:NodeLabel>").append(System.lineSeparator());
-		sb.append("\t<y:Fill color=\"").append(mapColorToString(node.getFillColor()))
+		sb.append("\t<y:NodeLabel modelName=\"internal\" modelPosition=\"t\">")
+				.append(replaceLabel(attributes.getLabel())).append("</y:NodeLabel>").append(System.lineSeparator());
+		sb.append("\t<y:Fill color=\"").append(mapColorToString(attributes.getFillColor()))
 				.append("\" transparent=\"false\"/>").append(System.lineSeparator());
 		sb.append("<y:BorderStyle");
-		sb.append(" color=\"").append(mapColorToString(node.getEdgeColor())).append("\"");
-		// TODO: edge style, peripheries?
+		sb.append(" color=\"").append(mapColorToString(attributes.getLineColor())).append("\"");
+		final String style = mapLineStyleToString(attributes.getLineStyle());
+		if (!style.equals("")) {
+			sb.append(" type=\"").append(style).append("\"");
+		}
+
+		// TODO: peripheries
 		sb.append("/>");
 		sb.append("<y:Shape type=\"ellipse\"/></y:ShapeNode></data></node>").append(System.lineSeparator());
 
@@ -78,12 +92,18 @@ public class YedPrinter implements GraphPrinter {
 
 	private void printEdges(final Node node, final StringBuilder sb) {
 		for (final Edge edge : node.getOutEdges()) {
+			final EdgeAttributes attributes = edge.getAttributes();
 			sb.append("\t<edge id=\"").append(edge.hashCode()).append("\" source=\"").append(edge.getSource().getId())
 					.append("\" target=\"").append(edge.getTarget().getId()).append("\">");
 			sb.append("<data key=\"d9\"><y:PolyLineEdge><y:LineStyle color=\"")
-					.append(mapColorToString(edge.getEdgeColor())).append("\"/>");
+					.append(mapColorToString(attributes.getColor())).append("\"");
+			final String style = mapLineStyleToString(attributes.getLineStyle());
+			if (!style.equals("")) {
+				sb.append(" type=\"").append(style).append("\"");
+			}
+			sb.append("/>");
 			sb.append("<y:Arrows source=\"none\" target=\"standard\"/>");
-			sb.append("<y:EdgeLabel>").append(edge.getLabel()).append("</y:EdgeLabel>");
+			sb.append("<y:EdgeLabel>").append(attributes.getLabel()).append("</y:EdgeLabel>");
 			sb.append("</y:PolyLineEdge></data></edge>");
 			sb.append(System.lineSeparator());
 		}
@@ -110,6 +130,19 @@ public class YedPrinter implements GraphPrinter {
 		} else {
 			// TODO
 			return "#000000";
+		}
+	}
+
+	private String mapLineStyleToString(final LineStyle lineStyle) {
+		switch (lineStyle) {
+		case DASHED:
+			return "dashed";
+		case DOTTED:
+			return "dotted";
+		case NORMAL:
+			return "";
+		default:
+			throw new UnsupportedOperationException("Unknown line style: " + lineStyle + ".");
 		}
 	}
 }

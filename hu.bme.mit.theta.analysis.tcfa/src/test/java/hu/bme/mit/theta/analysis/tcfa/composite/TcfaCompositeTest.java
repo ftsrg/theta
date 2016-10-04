@@ -8,7 +8,6 @@ import java.io.IOException;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import hu.bme.mit.theta.analysis.algorithm.ArgPrinter;
 import hu.bme.mit.theta.analysis.algorithm.LifoWaitlist;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
 import hu.bme.mit.theta.analysis.algorithm.cegar.WaitlistBasedAbstractor;
@@ -18,7 +17,9 @@ import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.impl.NullPrecision;
 import hu.bme.mit.theta.analysis.tcfa.BasicTcfaAnalysis;
 import hu.bme.mit.theta.analysis.tcfa.TcfaAction;
+import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
+import hu.bme.mit.theta.common.visualization.GraphVizWriter;
 import hu.bme.mit.theta.formalism.tcfa.TCFA;
 import hu.bme.mit.theta.formalism.tcfa.TcfaEdge;
 import hu.bme.mit.theta.formalism.tcfa.TcfaLoc;
@@ -45,7 +46,7 @@ public class TcfaCompositeTest {
 		abstractor.init(NullPrecision.getInstance());
 		abstractor.check(NullPrecision.getInstance());
 
-		System.out.println(ArgPrinter.toGraphvizString(abstractor.getARG()));
+		System.out.println(new GraphVizWriter().writeString(ArgVisualizer.visualize(abstractor.getARG())));
 	}
 
 }
