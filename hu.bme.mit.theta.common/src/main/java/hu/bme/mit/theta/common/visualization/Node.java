@@ -18,11 +18,14 @@ public class Node {
 	private final Collection<Edge> inEdges;
 	private final Collection<Edge> outEdges;
 
+	private Node parent;
+
 	Node(final String id, final NodeAttributes attributes) {
 		this.id = checkNotNull(id);
 		this.attributes = checkNotNull(attributes);
 		this.inEdges = new ArrayList<>();
 		this.outEdges = new ArrayList<>();
+		this.parent = null;
 	}
 
 	public String getId() {
@@ -60,4 +63,13 @@ public class Node {
 		checkArgument(edge.getTarget() == this, "The target of the edge must be set to this node.");
 		inEdges.add(edge);
 	}
+
+	public Node getParent() {
+		return parent;
+	}
+
+	void setParent(final Node parent) {
+		this.parent = parent;
+	}
+
 }
