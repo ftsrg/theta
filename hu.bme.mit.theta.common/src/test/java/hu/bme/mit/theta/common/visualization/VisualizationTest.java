@@ -11,9 +11,9 @@ public class VisualizationTest {
 		g.addNode("n3", NodeAttributes.builder().lineStyle(LineStyle.DASHED).label("3").build());
 		g.addNode("n4", NodeAttributes.builder().peripheries(3).label("4").shape(Shape.RECTANGLE).build());
 
-		g.addCompositeNode("c1",
-				NodeAttributes.builder().label("cluster1").lineStyle(LineStyle.DOTTED).peripheries(2).build());
-		g.addCompositeNode("c2", NodeAttributes.builder().label("cluster2").shape(Shape.ELLIPSE).build());
+		g.addCompositeNode("c1", NodeAttributes.builder().label("cluster1").lineStyle(LineStyle.DOTTED)
+				.shape(Shape.RECTANGLE).peripheries(2).build());
+		g.addCompositeNode("c2", NodeAttributes.builder().label("cluster2").shape(Shape.RECTANGLE).build());
 
 		g.setChild("c1", "n1");
 		g.setChild("c1", "n2");
@@ -24,6 +24,6 @@ public class VisualizationTest {
 		g.addEdge("n2", "n3", EdgeAttributes.builder().lineStyle(LineStyle.DASHED).build());
 		g.addEdge("n4", "n3", EdgeAttributes.builder().lineStyle(LineStyle.DOTTED).build());
 
-		System.out.println(new GraphVizWriter().writeString(g));
+		System.out.println(new YedWriter().writeString(g));
 	}
 }

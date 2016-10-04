@@ -1,8 +1,6 @@
 package hu.bme.mit.theta.common.visualization;
 
 import java.awt.Color;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Class for writing graphs in yED (GraphML) format.
@@ -25,7 +23,9 @@ public class YedWriter extends AbstractGraphWriter {
 		sb.append("<graph edgedefault=\"directed\" id=\"" + graph.getId() + "\">").append(System.lineSeparator());
 
 		for (final Node node : graph.getNodes()) {
-			printNode(node, sb);
+			if (node.getParent() == null) {
+				printNode(node, sb);
+			}
 		}
 
 		for (final Node node : graph.getNodes()) {
@@ -41,12 +41,16 @@ public class YedWriter extends AbstractGraphWriter {
 	private void printNode(final Node node, final StringBuilder sb) {
 		if (node instanceof CompositeNode) {
 			printCompositeNode((CompositeNode) node, sb);
+		} else {
+			printSimpleNode(node, sb);
 		}
+	}
 
+	private void printSimpleNode(final Node node, final StringBuilder sb) {
 		final NodeAttributes attributes = node.getAttributes();
 		sb.append("\t<node id=\"").append(node.getId()).append("\">");
 		sb.append("<data key=\"d6\"><y:ShapeNode>");
-		sb.append("<y:NodeLabel>").append(replaceLabel(attributes.getLabel())).append("</y:NodeLabel>");
+		sb.append("<y:NodeLabel>").append(escape(attributes.getLabel())).append("</y:NodeLabel>");
 		sb.append("<y:Fill color=\"").append(mapColorToString(attributes.getFillColor()))
 				.append("\" transparent=\"false\"/>");
 		sb.append("<y:BorderStyle");
@@ -57,7 +61,8 @@ public class YedWriter extends AbstractGraphWriter {
 		}
 		// TODO: peripheries
 		sb.append("/>");
-		sb.append("<y:Shape type=\"ellipse\"/></y:ShapeNode></data></node>").append(System.lineSeparator());
+		sb.append("<y:Shape type=\"").append(mapShapeToString(attributes.getShape()))
+				.append("\"/></y:ShapeNode></data></node>").append(System.lineSeparator());
 	}
 
 	private void printCompositeNode(final CompositeNode node, final StringBuilder sb) {
@@ -65,8 +70,8 @@ public class YedWriter extends AbstractGraphWriter {
 		sb.append("<node id=\"").append(node.getId()).append("\">").append(System.lineSeparator());
 		sb.append("\t<data key=\"d6\"><y:ProxyAutoBoundsNode><y:Realizers active=\"0\"><y:GroupNode>")
 				.append(System.lineSeparator());
-		sb.append("\t<y:NodeLabel modelName=\"internal\" modelPosition=\"t\">")
-				.append(replaceLabel(attributes.getLabel())).append("</y:NodeLabel>").append(System.lineSeparator());
+		sb.append("\t<y:NodeLabel modelName=\"internal\" modelPosition=\"t\">").append(escape(attributes.getLabel()))
+				.append("</y:NodeLabel>").append(System.lineSeparator());
 		sb.append("\t<y:Fill color=\"").append(mapColorToString(attributes.getFillColor()))
 				.append("\" transparent=\"false\"/>").append(System.lineSeparator());
 		sb.append("<y:BorderStyle");
@@ -78,10 +83,9 @@ public class YedWriter extends AbstractGraphWriter {
 
 		// TODO: peripheries
 		sb.append("/>");
-		sb.append("<y:Shape type=\"ellipse\"/></y:ShapeNode></data></node>").append(System.lineSeparator());
 
-		sb.append("\t<y:Shape type=\"rectangle\"/></y:GroupNode></y:Realizers></y:ProxyAutoBoundsNode>")
-				.append(System.lineSeparator());
+		sb.append("\t<y:Shape type=\"").append(mapShapeToString(attributes.getShape()))
+				.append("\"/></y:GroupNode></y:Realizers></y:ProxyAutoBoundsNode>").append(System.lineSeparator());
 		sb.append("\t</data>").append(System.lineSeparator());
 		sb.append("\t<graph edgedefault=\"directed\" id=\"").append(node.getId()).append(":\">");
 		for (final Node child : node.getChildren()) {
@@ -109,28 +113,13 @@ public class YedWriter extends AbstractGraphWriter {
 		}
 	}
 
-	private static String replaceLabel(String label) {
-		label = label.replace("<", "&lt;");
-		label = label.replace(">", "&lt;");
-		return label;
+	private static String escape(final String str) {
+		return str.replace("<", "&lt;").replace(">", "&lt;");
+
 	}
 
-	@SuppressWarnings("serial")
-	private static final Map<Color, String> colors = new HashMap<Color, String>() {
-		{
-			put(Color.BLACK, "#000000");
-			put(Color.WHITE, "#FFFFFF");
-			put(Color.RED, "#FF0000");
-		}
-	};
-
 	private String mapColorToString(final Color color) {
-		if (colors.containsKey(color)) {
-			return colors.get(color);
-		} else {
-			// TODO
-			return "#000000";
-		}
+		return String.format("#%02X%02X%02X", color.getRed(), color.getGreen(), color.getBlue());
 	}
 
 	private String mapLineStyleToString(final LineStyle lineStyle) {
@@ -143,6 +132,19 @@ public class YedWriter extends AbstractGraphWriter {
 			return "";
 		default:
 			throw new UnsupportedOperationException("Unknown line style: " + lineStyle + ".");
+		}
+	}
+
+	private String mapShapeToString(final Shape shape) {
+		switch (shape) {
+		case CIRCLE:
+			return "circle";
+		case ELLIPSE:
+			return "ellipse";
+		case RECTANGLE:
+			return "rectangle";
+		default:
+			throw new UnsupportedOperationException("Unknown shape: " + shape + ".");
 		}
 	}
 }
