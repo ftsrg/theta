@@ -1,6 +1,8 @@
 package hu.bme.mit.theta.analysis.utils;
 
 import java.awt.Color;
+import java.util.HashSet;
+import java.util.Set;
 
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.ArgEdge;
@@ -21,16 +23,23 @@ public class ArgVisualizer {
 	public static Graph visualize(final ARG<?, ?> arg) {
 		final Graph graph = new Graph(ARG_ID, ARG_LABEL);
 
+		final Set<ArgNode<?, ?>> traversed = new HashSet<>();
+
 		for (final ArgNode<?, ?> initNode : arg.getInitNodes()) {
-			traverse(graph, initNode);
+			traverse(graph, initNode, traversed);
 		}
 
 		return graph;
 	}
 
-	private static void traverse(final Graph graph, final ArgNode<?, ?> node) {
+	private static void traverse(final Graph graph, final ArgNode<?, ?> node, final Set<ArgNode<?, ?>> traversed) {
+		if (traversed.contains(node)) {
+			return;
+		} else {
+			traversed.add(node);
+		}
 		final String nodeId = NODE_ID_PREFIX + node.getId();
-		final LineStyle lineStyle = node.isTarget() ? LineStyle.NORMAL : LineStyle.DASHED;
+		final LineStyle lineStyle = LineStyle.NORMAL;
 		final int peripheries = node.isTarget() ? 2 : 1;
 
 		final NodeAttributes nAttributes = NodeAttributes.builder().label(node.getState().toString())
@@ -39,7 +48,7 @@ public class ArgVisualizer {
 		graph.addNode(nodeId, nAttributes);
 
 		for (final ArgEdge<?, ?> edge : node.getOutEdges()) {
-			traverse(graph, edge.getTarget());
+			traverse(graph, edge.getTarget(), traversed);
 			final String sourceId = NODE_ID_PREFIX + edge.getSource().getId();
 			final String targetId = NODE_ID_PREFIX + edge.getTarget().getId();
 			final EdgeAttributes eAttributes = EdgeAttributes.builder().label("").color(LINE_COLOR)
@@ -48,6 +57,7 @@ public class ArgVisualizer {
 		}
 
 		if (node.getCoveringNode().isPresent()) {
+			traverse(graph, node.getCoveringNode().get(), traversed);
 			final String sourceId = NODE_ID_PREFIX + node.getId();
 			final String targetId = NODE_ID_PREFIX + node.getCoveringNode().get().getId();
 			final EdgeAttributes eAttributes = EdgeAttributes.builder().label("").color(LINE_COLOR)
