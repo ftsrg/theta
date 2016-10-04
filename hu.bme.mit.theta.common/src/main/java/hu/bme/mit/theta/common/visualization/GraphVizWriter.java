@@ -29,7 +29,13 @@ public final class GraphVizWriter extends AbstractGraphWriter {
 	private void printNode(final Node node, final StringBuilder sb) {
 		if (node instanceof CompositeNode) {
 			printCompositeNode((CompositeNode) node, sb);
+		} else {
+			printSimpleNode(node, sb);
 		}
+
+	}
+
+	private void printSimpleNode(final Node node, final StringBuilder sb) {
 		final NodeAttributes attributes = node.getAttributes();
 
 		String style = mapLineStyleToString(attributes.getLineStyle());
@@ -52,29 +58,30 @@ public final class GraphVizWriter extends AbstractGraphWriter {
 
 	private void printCompositeNode(final CompositeNode node, final StringBuilder sb) {
 		final NodeAttributes attributes = node.getAttributes();
-		sb.append("\tsubgraph ").append(node.getId()).append(" {").append(System.lineSeparator());
-		sb.append("\t\tcolor=").append(attributes.getLineColor()).append(";").append(System.lineSeparator());
-		sb.append("\t\tstyle=filled;").append(System.lineSeparator());
-		sb.append("\t\tfillcolor=").append(attributes.getFillColor()).append(";").append(System.lineSeparator());
+		final String style = mapLineStyleToString(attributes.getLineStyle());
+
+		sb.append("\tsubgraph cluster_").append(node.getId()).append(" {").append(System.lineSeparator());
+		sb.append("\t\tcolor=").append(mapColorToString(attributes.getLineColor())).append(";")
+				.append(System.lineSeparator());
+		if (!style.equals("")) {
+			sb.append("\t\tstyle=").append(style).append(";").append(System.lineSeparator());
+		}
+		// TODO: GraphViz either supports border or fill color for composite
+		// nodes. Currently I implemented border, but we must somehow notify the
+		// user about the missing fill color.
 		sb.append("\t\tlabel=\"").append(attributes.getLabel().replace("\n", "\\n")).append("\";")
 				.append(System.lineSeparator());
-		// TODO: peripheries?
+		// TODO: also no support for peripheries
 		for (final Node child : node.getChildren()) {
-			if (node instanceof CompositeNode) {
-				printCompositeNode((CompositeNode) child, sb);
-			} else {
-				printNode(child, sb);
-			}
+			printNode(child, sb);
 		}
 		sb.append("\t}").append(System.lineSeparator());
 	}
 
 	private void printEdges(final Node node, final StringBuilder sb) {
-		// To the best of my knowledge, GraphViz does not support edges between
-		// clusters, thus such edges are ignored
 		if (node instanceof CompositeNode) {
-			for (final Node child : ((CompositeNode) node).getChildren()) {
-				printEdges(child, sb);
+			if (node.getOutEdges().size() != 0) {
+				throw new UnsupportedOperationException("GraphViz does not support edges between clusters.");
 			}
 		} else {
 			for (final Edge edge : node.getOutEdges()) {
@@ -110,8 +117,7 @@ public final class GraphVizWriter extends AbstractGraphWriter {
 		if (colors.containsKey(color)) {
 			return colors.get(color);
 		} else {
-			// TODO
-			return "black";
+			throw new UnsupportedOperationException("Unknown color: " + color + ".");
 		}
 	}
 
