@@ -15,11 +15,11 @@ import hu.bme.mit.theta.formalism.common.Edge;
 import hu.bme.mit.theta.formalism.common.Loc;
 
 public final class AutomatonAnalysis<S extends State, A extends AutomatonAction<L, E>, P extends Precision, L extends Loc<L, E>, E extends Edge<L, E>>
-		implements Analysis<AutomatonState<S, L, E>, A, P> {
+		implements Analysis<AutomatonState<S, L, E>, A, AutomatonPrecision<P, L, E>> {
 
 	private final Domain<AutomatonState<S, L, E>> domain;
-	private final InitFunction<AutomatonState<S, L, E>, P> initFunction;
-	private final TransferFunction<AutomatonState<S, L, E>, A, P> transferFunction;
+	private final InitFunction<AutomatonState<S, L, E>, AutomatonPrecision<P, L, E>> initFunction;
+	private final TransferFunction<AutomatonState<S, L, E>, A, AutomatonPrecision<P, L, E>> transferFunction;
 	private final ActionFunction<? super AutomatonState<S, L, E>, ? extends A> actionFunction;
 
 	private AutomatonAnalysis(final L initLoc, final Analysis<S, A, P> analysis,
@@ -44,12 +44,12 @@ public final class AutomatonAnalysis<S extends State, A extends AutomatonAction<
 	}
 
 	@Override
-	public InitFunction<AutomatonState<S, L, E>, P> getInitFunction() {
+	public InitFunction<AutomatonState<S, L, E>, AutomatonPrecision<P, L, E>> getInitFunction() {
 		return initFunction;
 	}
 
 	@Override
-	public TransferFunction<AutomatonState<S, L, E>, A, P> getTransferFunction() {
+	public TransferFunction<AutomatonState<S, L, E>, A, AutomatonPrecision<P, L, E>> getTransferFunction() {
 		return transferFunction;
 	}
 

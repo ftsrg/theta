@@ -7,12 +7,12 @@ import static hu.bme.mit.theta.core.type.impl.Types.Int;
 
 import java.util.Arrays;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import hu.bme.mit.theta.analysis.algorithm.LifoWaitlist;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
 import hu.bme.mit.theta.analysis.algorithm.cegar.WaitlistBasedAbstractor;
+import hu.bme.mit.theta.analysis.automaton.AutomatonPrecision;
 import hu.bme.mit.theta.analysis.automaton.AutomatonState;
 import hu.bme.mit.theta.analysis.composite.CompositeAnalysis;
 import hu.bme.mit.theta.analysis.composite.CompositePrecision;
@@ -40,7 +40,6 @@ import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 public class TcfaNetworkPredTest {
 
 	@Test
-	@Ignore
 	public void test() {
 		final int n = 2;
 		final VarDecl<IntType> vlock = Var("lock", Int());
@@ -53,11 +52,13 @@ public class TcfaNetworkPredTest {
 				.create(fischer.getInitLoc(),
 						CompositeAnalysis.create(TcfaZoneAnalysis.getInstance(), TcfaPredAnalysis.create(solver)));
 
-		final CompositePrecision<ZonePrecision, PredPrecision> precision = CompositePrecision.create(
+		final CompositePrecision<ZonePrecision, PredPrecision> subPrecision = CompositePrecision.create(
 				ZonePrecision.create(fischer.getClockVars()),
 				SimplePredPrecision.create(Arrays.asList(Eq(lock, Int(0)), Eq(lock, Int(1)))));
+		final AutomatonPrecision<CompositePrecision<ZonePrecision, PredPrecision>, TcfaLoc, TcfaEdge> precision = AutomatonPrecision
+				.create(l -> subPrecision);
 
-		final Abstractor<AutomatonState<CompositeState<ZoneState, PredState>, TcfaLoc, TcfaEdge>, TcfaAction, CompositePrecision<ZonePrecision, PredPrecision>> abstractor = new WaitlistBasedAbstractor<>(
+		final Abstractor<AutomatonState<CompositeState<ZoneState, PredState>, TcfaLoc, TcfaEdge>, TcfaAction, AutomatonPrecision<CompositePrecision<ZonePrecision, PredPrecision>, TcfaLoc, TcfaEdge>> abstractor = new WaitlistBasedAbstractor<>(
 				analysis, s -> false, new LifoWaitlist<>());
 
 		abstractor.init(precision);
