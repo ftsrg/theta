@@ -8,6 +8,7 @@ import java.util.Set;
 import com.google.common.collect.ImmutableSet;
 
 import hu.bme.mit.theta.analysis.Precision;
+import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.formalism.common.decl.ClockDecl;
 
 public final class ZonePrecision implements Precision {
@@ -27,4 +28,8 @@ public final class ZonePrecision implements Precision {
 		return clocks;
 	}
 
+	@Override
+	public String toString() {
+		return ObjectUtils.toStringBuilder("ZonePrecision").addAll(clocks).toString();
+	}
 }

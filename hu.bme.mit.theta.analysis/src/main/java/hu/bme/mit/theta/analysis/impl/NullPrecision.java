@@ -13,4 +13,8 @@ public final class NullPrecision implements Precision {
 		return INSTANCE;
 	}
 
+	@Override
+	public String toString() {
+		return "NullPrecision";
+	}
 }
