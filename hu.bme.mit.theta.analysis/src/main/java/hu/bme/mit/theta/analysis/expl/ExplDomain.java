@@ -4,7 +4,7 @@ import hu.bme.mit.theta.analysis.Domain;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Type;
 
-public class ExplDomain implements Domain<ExplState> {
+public final class ExplDomain implements Domain<ExplState> {
 
 	private static final ExplDomain INSTANCE;
 

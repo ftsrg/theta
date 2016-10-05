@@ -2,7 +2,7 @@ package hu.bme.mit.theta.common;
 
 import com.google.common.base.StandardSystemProperty;
 
-public class OsHelper {
+public final class OsHelper {
 
 	private OsHelper() {
 

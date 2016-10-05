@@ -13,7 +13,7 @@ import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.utils.impl.PathUtils;
 import hu.bme.mit.theta.solver.Solver;
 
-public class PredDomain implements Domain<PredState> {
+public final class PredDomain implements Domain<PredState> {
 
 	private final Solver solver;
 

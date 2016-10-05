@@ -17,7 +17,7 @@ import hu.bme.mit.theta.core.model.impl.Valuation;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.Type;
 
-public class ExplState implements ExprState, Assignment {
+public final class ExplState implements ExprState, Assignment {
 
 	private static final int HASH_SEED = 6659;
 
