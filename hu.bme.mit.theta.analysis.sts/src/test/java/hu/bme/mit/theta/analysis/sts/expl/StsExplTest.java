@@ -1,5 +1,6 @@
 package hu.bme.mit.theta.analysis.sts.expl;
 
+import static hu.bme.mit.theta.analysis.algorithm.ArgUtils.isWellLabeled;
 import static hu.bme.mit.theta.core.decl.impl.Decls.Var;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.Add;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.And;
@@ -19,9 +20,7 @@ import java.util.function.Predicate;
 import org.junit.Test;
 
 import hu.bme.mit.theta.analysis.algorithm.ARG;
-import hu.bme.mit.theta.analysis.algorithm.ArgChecker;
 import hu.bme.mit.theta.analysis.algorithm.ArgNode;
-import hu.bme.mit.theta.analysis.algorithm.ArgPrinter;
 import hu.bme.mit.theta.analysis.algorithm.LifoWaitlist;
 import hu.bme.mit.theta.analysis.algorithm.Waitlist;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
@@ -36,6 +35,8 @@ import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.ExprStatePredicate;
 import hu.bme.mit.theta.analysis.sts.StsAction;
 import hu.bme.mit.theta.analysis.sts.StsExprSeqConcretizer;
+import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
+import hu.bme.mit.theta.common.visualization.GraphVizWriter;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.IntType;
@@ -92,10 +93,9 @@ public class StsExplTest {
 		cegarLoop.check(precision);
 
 		final ARG<ExplState, StsAction> arg = abstractor.getARG();
-		System.out.println(ArgPrinter.toGraphvizString(arg));
+		assertTrue(isWellLabeled(arg, solver));
 
-		final ArgChecker checker = ArgChecker.create(solver);
-		assertTrue(checker.isWellLabeled(arg));
+		System.out.println(new GraphVizWriter().writeString(ArgVisualizer.visualize(arg)));
 	}
 
 }

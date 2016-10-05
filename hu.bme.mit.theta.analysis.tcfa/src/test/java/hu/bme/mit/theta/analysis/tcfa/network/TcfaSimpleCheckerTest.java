@@ -8,10 +8,10 @@ import static hu.bme.mit.theta.core.type.impl.Types.Int;
 import java.util.Arrays;
 import java.util.Collections;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import hu.bme.mit.theta.analysis.algorithm.simple.SimpleChecker;
+import hu.bme.mit.theta.analysis.automaton.AutomatonPrecision;
 import hu.bme.mit.theta.analysis.composite.CompositeAnalysis;
 import hu.bme.mit.theta.analysis.composite.CompositePrecision;
 import hu.bme.mit.theta.analysis.composite.CompositeState;
@@ -30,15 +30,16 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.IntType;
 import hu.bme.mit.theta.formalism.tcfa.TCFA;
+import hu.bme.mit.theta.formalism.tcfa.TcfaEdge;
+import hu.bme.mit.theta.formalism.tcfa.TcfaLoc;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 
 public class TcfaSimpleCheckerTest {
 
 	@Test
-	@Ignore
 	public void testExplicit() {
-		final int n = 5;
+		final int n = 2;
 		final VarDecl<IntType> vlock = Var("lock", Int());
 		final TCFA fischer = TcfaNetworkTestHelper.fischer(n, vlock);
 
@@ -48,16 +49,17 @@ public class TcfaSimpleCheckerTest {
 				.create(fischer.getInitLoc(),
 						CompositeAnalysis.create(TcfaZoneAnalysis.getInstance(), TcfaExplAnalysis.create(solver)));
 
-		final CompositePrecision<ZonePrecision, ExplPrecision> precision = CompositePrecision.create(
+		final CompositePrecision<ZonePrecision, ExplPrecision> subPrecision = CompositePrecision.create(
 				ZonePrecision.create(fischer.getClockVars()), ExplPrecision.create(Collections.singleton(vlock)));
+		final AutomatonPrecision<CompositePrecision<ZonePrecision, ExplPrecision>, TcfaLoc, TcfaEdge> precision = AutomatonPrecision
+				.create(l -> subPrecision);
 
 		System.out.println(SimpleChecker.run(analysis, s -> false, precision));
 	}
 
 	@Test
-	@Ignore
 	public void testPredicate() {
-		final int n = 4;
+		final int n = 2;
 		final VarDecl<IntType> vlock = Var("lock", Int());
 		final Expr<IntType> lock = vlock.getRef();
 		final TCFA fischer = TcfaNetworkTestHelper.fischer(n, vlock);
@@ -68,9 +70,11 @@ public class TcfaSimpleCheckerTest {
 				.create(fischer.getInitLoc(),
 						CompositeAnalysis.create(TcfaZoneAnalysis.getInstance(), TcfaPredAnalysis.create(solver)));
 
-		final CompositePrecision<ZonePrecision, PredPrecision> precision = CompositePrecision.create(
+		final CompositePrecision<ZonePrecision, PredPrecision> subPrecision = CompositePrecision.create(
 				ZonePrecision.create(fischer.getClockVars()),
 				SimplePredPrecision.create(Arrays.asList(Eq(lock, Int(0)), Eq(lock, Int(1)))));
+		final AutomatonPrecision<CompositePrecision<ZonePrecision, PredPrecision>, TcfaLoc, TcfaEdge> precision = AutomatonPrecision
+				.create(l -> subPrecision);
 
 		System.out.println(SimpleChecker.run(analysis, s -> false, precision));
 	}
