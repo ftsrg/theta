@@ -6,6 +6,7 @@ import java.util.LinkedList;
 
 import com.google.common.collect.ImmutableSet;
 
+import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.BoolType;
 
@@ -59,7 +60,7 @@ final class SimpleTcfaLoc implements TcfaLoc {
 
 	@Override
 	public String toString() {
-		return "TCFALoc(" + name + ")";
+		return ObjectUtils.toStringBuilder("TcfaLoc").add(name).toString();
 	}
 
 }
