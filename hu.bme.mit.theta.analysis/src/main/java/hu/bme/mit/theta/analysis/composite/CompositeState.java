@@ -9,6 +9,7 @@ import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableSet;
 
 import hu.bme.mit.theta.analysis.State;
+import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.common.Product2;
 
 public final class CompositeState<S1 extends State, S2 extends State> implements State, Product2<S1, S2> {
@@ -90,14 +91,7 @@ public final class CompositeState<S1 extends State, S2 extends State> implements
 
 	@Override
 	public String toString() {
-		final StringBuilder sb = new StringBuilder();
-		sb.append("CompositeState");
-		sb.append("(");
-		sb.append(state1);
-		sb.append(", ");
-		sb.append(state2);
-		sb.append(")");
-		return sb.toString();
+		return ObjectUtils.toStringBuilder("CompositeState").add(state1).add(state2).toString();
 	}
 
 }

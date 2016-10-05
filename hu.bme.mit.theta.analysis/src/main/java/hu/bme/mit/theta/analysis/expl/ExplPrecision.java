@@ -5,11 +5,11 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.Set;
-import java.util.StringJoiner;
 
 import com.google.common.collect.ImmutableSet;
 
 import hu.bme.mit.theta.analysis.Precision;
+import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.LitExpr;
 import hu.bme.mit.theta.core.model.impl.Valuation;
@@ -51,10 +51,6 @@ public final class ExplPrecision implements Precision {
 
 	@Override
 	public String toString() {
-		final String prefix = "ExplPrecision(";
-		final String suffix = ")";
-		final StringJoiner sj = new StringJoiner(", ", prefix, suffix);
-		vars.forEach(v -> sj.add(v.toString()));
-		return sj.toString();
+		return ObjectUtils.toStringBuilder("ExplPrecision").addAll(vars).toString();
 	}
 }
