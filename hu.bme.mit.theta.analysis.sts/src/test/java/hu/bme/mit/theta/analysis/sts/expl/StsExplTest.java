@@ -21,7 +21,6 @@ import org.junit.Test;
 
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.ArgNode;
-import hu.bme.mit.theta.analysis.algorithm.ArgPrinter;
 import hu.bme.mit.theta.analysis.algorithm.LifoWaitlist;
 import hu.bme.mit.theta.analysis.algorithm.Waitlist;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
@@ -94,12 +93,9 @@ public class StsExplTest {
 		cegarLoop.check(precision);
 
 		final ARG<ExplState, StsAction> arg = abstractor.getARG();
-		System.out.println(ArgPrinter.toGraphvizString(arg));
-
 		assertTrue(isWellLabeled(arg, solver));
 
 		System.out.println(new GraphVizWriter().writeString(ArgVisualizer.visualize(arg)));
-
 	}
 
 }
