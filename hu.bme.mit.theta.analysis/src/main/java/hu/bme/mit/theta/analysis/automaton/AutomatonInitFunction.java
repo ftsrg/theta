@@ -12,7 +12,7 @@ import hu.bme.mit.theta.formalism.common.Edge;
 import hu.bme.mit.theta.formalism.common.Loc;
 
 public final class AutomatonInitFunction<S extends State, P extends Precision, L extends Loc<L, E>, E extends Edge<L, E>>
-		implements InitFunction<AutomatonState<S, L, E>, P> {
+		implements InitFunction<AutomatonState<S, L, E>, AutomatonPrecision<P, L, E>> {
 
 	private final L initLoc;
 	private final InitFunction<S, P> initFunction;
@@ -28,11 +28,12 @@ public final class AutomatonInitFunction<S extends State, P extends Precision, L
 	}
 
 	@Override
-	public Collection<AutomatonState<S, L, E>> getInitStates(final P precision) {
+	public Collection<AutomatonState<S, L, E>> getInitStates(final AutomatonPrecision<P, L, E> precision) {
 		checkNotNull(precision);
 
 		final Collection<AutomatonState<S, L, E>> initStates = new ArrayList<>();
-		final Collection<? extends S> subInitStates = initFunction.getInitStates(precision);
+		final P subPrecision = precision.getPrecision(initLoc);
+		final Collection<? extends S> subInitStates = initFunction.getInitStates(subPrecision);
 		for (final S subInitState : subInitStates) {
 			final AutomatonState<S, L, E> initState = AutomatonState.create(initLoc, subInitState);
 			initStates.add(initState);

@@ -7,6 +7,7 @@ import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.Domain;
 import hu.bme.mit.theta.analysis.InitFunction;
 import hu.bme.mit.theta.analysis.TransferFunction;
+import hu.bme.mit.theta.analysis.automaton.AutomatonPrecision;
 import hu.bme.mit.theta.analysis.automaton.AutomatonState;
 import hu.bme.mit.theta.analysis.composite.CompositeAnalysis;
 import hu.bme.mit.theta.analysis.composite.CompositePrecision;
@@ -33,12 +34,15 @@ public final class BasicTcfaAnalysis implements
 		checkNotNull(tcfa);
 		checkNotNull(solver);
 
-		final Analysis<AutomatonState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction, CompositePrecision<ZonePrecision, ExplPrecision>> componentAnalysis = TcfaAnalyis
+		final Analysis<AutomatonState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction, AutomatonPrecision<CompositePrecision<ZonePrecision, ExplPrecision>, TcfaLoc, TcfaEdge>> componentAnalysis = TcfaAnalyis
 				.create(tcfa.getInitLoc(),
 						CompositeAnalysis.create(TcfaZoneAnalysis.getInstance(), TcfaExplAnalysis.create(solver)));
 
-		final CompositePrecision<ZonePrecision, ExplPrecision> fixedPrecision = CompositePrecision
+		final CompositePrecision<ZonePrecision, ExplPrecision> precision = CompositePrecision
 				.create(ZonePrecision.create(tcfa.getClockVars()), ExplPrecision.create(tcfa.getDataVars()));
+
+		final AutomatonPrecision<CompositePrecision<ZonePrecision, ExplPrecision>, TcfaLoc, TcfaEdge> fixedPrecision = AutomatonPrecision
+				.create(l -> precision);
 
 		analysis = FixedPrecisionAnalysis.create(componentAnalysis, fixedPrecision);
 	}
