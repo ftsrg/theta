@@ -4,12 +4,12 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.StringJoiner;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
 import hu.bme.mit.theta.analysis.automaton.AutomatonAction;
+import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.BoolType;
@@ -92,16 +92,7 @@ public final class TcfaAction implements AutomatonAction<TcfaLoc, TcfaEdge> {
 
 	@Override
 	public String toString() {
-		final StringJoiner sj = new StringJoiner(", ", "TCFAAction(", ")");
-
-		for (final ClockOp clockOp : clockOps) {
-			sj.add(clockOp.toString());
-		}
-		for (final Stmt stmt : dataStmts) {
-			sj.add(stmt.toString());
-		}
-
-		return sj.toString();
+		return ObjectUtils.toStringBuilder("TcfaAction").addAll(clockOps).addAll(dataStmts).toString();
 	}
 
 	private static Collection<Expr<? extends BoolType>> extractDataInvars(final TcfaLoc loc) {

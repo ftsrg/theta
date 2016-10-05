@@ -8,12 +8,13 @@ import hu.bme.mit.theta.analysis.Precision;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.TransferFunction;
 import hu.bme.mit.theta.analysis.automaton.AutomatonAnalysis;
+import hu.bme.mit.theta.analysis.automaton.AutomatonPrecision;
 import hu.bme.mit.theta.analysis.automaton.AutomatonState;
 import hu.bme.mit.theta.formalism.cfa.CfaEdge;
 import hu.bme.mit.theta.formalism.cfa.CfaLoc;
 
 public final class CfaAnalysis<S extends State, P extends Precision>
-		implements Analysis<AutomatonState<S, CfaLoc, CfaEdge>, CfaAction, P> {
+		implements Analysis<AutomatonState<S, CfaLoc, CfaEdge>, CfaAction, AutomatonPrecision<P, CfaLoc, CfaEdge>> {
 
 	private final AutomatonAnalysis<S, CfaAction, P, CfaLoc, CfaEdge> automatonAnalysis;
 
@@ -32,12 +33,12 @@ public final class CfaAnalysis<S extends State, P extends Precision>
 	}
 
 	@Override
-	public InitFunction<AutomatonState<S, CfaLoc, CfaEdge>, P> getInitFunction() {
+	public InitFunction<AutomatonState<S, CfaLoc, CfaEdge>, AutomatonPrecision<P, CfaLoc, CfaEdge>> getInitFunction() {
 		return automatonAnalysis.getInitFunction();
 	}
 
 	@Override
-	public TransferFunction<AutomatonState<S, CfaLoc, CfaEdge>, CfaAction, P> getTransferFunction() {
+	public TransferFunction<AutomatonState<S, CfaLoc, CfaEdge>, CfaAction, AutomatonPrecision<P, CfaLoc, CfaEdge>> getTransferFunction() {
 		return automatonAnalysis.getTransferFunction();
 	}
 

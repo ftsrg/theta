@@ -5,12 +5,12 @@ import static hu.bme.mit.theta.core.type.impl.Types.Int;
 
 import java.util.Collections;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import hu.bme.mit.theta.analysis.algorithm.LifoWaitlist;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
 import hu.bme.mit.theta.analysis.algorithm.cegar.WaitlistBasedAbstractor;
+import hu.bme.mit.theta.analysis.automaton.AutomatonPrecision;
 import hu.bme.mit.theta.analysis.automaton.AutomatonState;
 import hu.bme.mit.theta.analysis.expl.ExplPrecision;
 import hu.bme.mit.theta.analysis.expl.ExplState;
@@ -29,7 +29,6 @@ import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 public class TcfaExplTest {
 
 	@Test
-	@Ignore
 	public void test() {
 		final VarDecl<IntType> vlock = Var("lock", Int());
 		final FischerTcfa fischer = new FischerTcfa(1, 1, 2, vlock);
@@ -39,9 +38,11 @@ public class TcfaExplTest {
 		final TcfaAnalyis<ExplState, ExplPrecision> analyis = TcfaAnalyis.create(fischer.getInitial(),
 				TcfaExplAnalysis.create(solver));
 
-		final ExplPrecision precision = ExplPrecision.create(Collections.singleton(vlock));
+		final ExplPrecision subPrecision = ExplPrecision.create(Collections.singleton(vlock));
+		final AutomatonPrecision<ExplPrecision, TcfaLoc, TcfaEdge> precision = AutomatonPrecision
+				.create(l -> subPrecision);
 
-		final Abstractor<AutomatonState<ExplState, TcfaLoc, TcfaEdge>, TcfaAction, ExplPrecision> abstractor = new WaitlistBasedAbstractor<>(
+		final Abstractor<AutomatonState<ExplState, TcfaLoc, TcfaEdge>, TcfaAction, AutomatonPrecision<ExplPrecision, TcfaLoc, TcfaEdge>> abstractor = new WaitlistBasedAbstractor<>(
 				analyis, s -> s.getLoc().equals(fischer.getCritical()), new LifoWaitlist<>());
 
 		abstractor.init(precision);

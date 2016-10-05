@@ -13,7 +13,7 @@ import hu.bme.mit.theta.formalism.common.Edge;
 import hu.bme.mit.theta.formalism.common.Loc;
 
 public final class AutomatonTransferFunction<S extends State, A extends AutomatonAction<L, E>, P extends Precision, L extends Loc<L, E>, E extends Edge<L, E>>
-		implements TransferFunction<AutomatonState<S, L, E>, A, P> {
+		implements TransferFunction<AutomatonState<S, L, E>, A, AutomatonPrecision<P, L, E>> {
 
 	private final TransferFunction<S, A, P> transferFunction;
 
@@ -28,20 +28,24 @@ public final class AutomatonTransferFunction<S extends State, A extends Automato
 
 	@Override
 	public Collection<AutomatonState<S, L, E>> getSuccStates(final AutomatonState<S, L, E> state, final A action,
-			final P precision) {
+			final AutomatonPrecision<P, L, E> precision) {
 		checkNotNull(state);
 		checkNotNull(action);
 		checkNotNull(precision);
 
 		final E edge = action.getEdge();
-		checkArgument(state.getLoc().getOutEdges().contains(edge));
+		final L source = edge.getSource();
+		final L target = edge.getTarget();
+		checkArgument(state.getLoc() == source);
 
 		final Collection<AutomatonState<S, L, E>> succStates = new ArrayList<>();
 
-		final Collection<? extends S> subSuccStates = transferFunction.getSuccStates(state.getState(), action,
-				precision);
+		final P subPrecision = precision.getPrecision(target);
+		final S subState = state.getState();
+
+		final Collection<? extends S> subSuccStates = transferFunction.getSuccStates(subState, action, subPrecision);
 		for (final S subSuccState : subSuccStates) {
-			final AutomatonState<S, L, E> succState = AutomatonState.create(edge.getTarget(), subSuccState);
+			final AutomatonState<S, L, E> succState = AutomatonState.create(target, subSuccState);
 			succStates.add(succState);
 		}
 
