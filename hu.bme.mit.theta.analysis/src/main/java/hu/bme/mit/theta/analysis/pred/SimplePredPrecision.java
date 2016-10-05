@@ -9,8 +9,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.StringJoiner;
 
+import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.LitExpr;
 import hu.bme.mit.theta.core.expr.impl.Exprs;
@@ -75,12 +75,6 @@ public final class SimplePredPrecision implements PredPrecision {
 
 	@Override
 	public String toString() {
-		final String prefix = "GlobalPredPrecision(";
-		final String suffix = ")";
-		final StringJoiner sj = new StringJoiner(", ", prefix, suffix);
-		for (final Expr<? extends BoolType> pred : preds.keySet()) {
-			sj.add(pred.toString());
-		}
-		return sj.toString();
+		return ObjectUtils.toStringBuilder("SimplePredPrecision").addAll(preds.keySet()).toString();
 	}
 }

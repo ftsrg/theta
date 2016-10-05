@@ -4,6 +4,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkPositionIndex;
 
 import hu.bme.mit.theta.analysis.Precision;
+import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.common.Product2;
 
 public final class CompositePrecision<P1 extends Precision, P2 extends Precision>
@@ -73,14 +74,7 @@ public final class CompositePrecision<P1 extends Precision, P2 extends Precision
 
 	@Override
 	public String toString() {
-		final StringBuilder sb = new StringBuilder();
-		sb.append("CompositePrecision");
-		sb.append("(");
-		sb.append(prec1);
-		sb.append(", ");
-		sb.append(prec2);
-		sb.append(")");
-		return sb.toString();
+		return ObjectUtils.toStringBuilder("CompositePrecision").add(prec1).add(prec2).toString();
 	}
 
 }
