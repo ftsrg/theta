@@ -5,9 +5,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
-import java.util.StringJoiner;
 
 import hu.bme.mit.theta.analysis.State;
+import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.formalism.common.decl.ClockDecl;
 import hu.bme.mit.theta.formalism.ta.constr.ClockConstr;
 import hu.bme.mit.theta.formalism.ta.op.ClockOp;
@@ -106,12 +106,7 @@ public final class ZoneState implements State {
 
 	@Override
 	public String toString() {
-		final StringJoiner joiner = new StringJoiner(", ", "ZoneState(", ")");
-		final Collection<ClockConstr> constrs = dbm.getConstraints();
-		for (final ClockConstr constr : constrs) {
-			joiner.add(constr.toString());
-		}
-		return joiner.toString();
+		return ObjectUtils.toStringBuilder("ZoneState").addAll(dbm.getConstraints()).toString();
 	}
 
 	////////

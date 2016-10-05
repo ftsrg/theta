@@ -4,9 +4,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Collection;
 import java.util.Optional;
-import java.util.StringJoiner;
 
 import hu.bme.mit.theta.analysis.expr.ExprState;
+import hu.bme.mit.theta.common.ObjectUtils;
+import hu.bme.mit.theta.common.ToStringBuilder;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.Expr;
@@ -80,14 +81,10 @@ public class ExplState implements ExprState, Assignment {
 
 	@Override
 	public String toString() {
-		final StringBuilder sb = new StringBuilder();
-		sb.append("ExplState(");
-		final String prefix = sb.toString();
-		final String suffix = ")";
-		final StringJoiner sj = new StringJoiner(", ", prefix, suffix);
+		final ToStringBuilder builder = ObjectUtils.toStringBuilder("ExplState");
 		for (final VarDecl<? extends Type> varDecl : values.getDecls()) {
-			sj.add(varDecl.getName() + " = " + getValue(varDecl));
+			builder.add(varDecl.getName() + " = " + getValue(varDecl));
 		}
-		return sj.toString();
+		return builder.toString();
 	}
 }

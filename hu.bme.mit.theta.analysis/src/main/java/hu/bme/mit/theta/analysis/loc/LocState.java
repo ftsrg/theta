@@ -3,6 +3,7 @@ package hu.bme.mit.theta.analysis.loc;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import hu.bme.mit.theta.analysis.State;
+import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.formalism.common.Loc;
 
 public final class LocState<L extends Loc<L, ?>> implements State {
@@ -50,12 +51,7 @@ public final class LocState<L extends Loc<L, ?>> implements State {
 
 	@Override
 	public String toString() {
-		final StringBuilder sb = new StringBuilder();
-		sb.append("LocState");
-		sb.append("(");
-		sb.append(loc.toString());
-		sb.append(")");
-		return sb.toString();
+		return ObjectUtils.toStringBuilder("LocState").add(loc).toString();
 	}
 
 }
