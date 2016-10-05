@@ -3,6 +3,7 @@ package hu.bme.mit.theta.analysis.automaton;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import hu.bme.mit.theta.analysis.State;
+import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.formalism.common.Edge;
 import hu.bme.mit.theta.formalism.common.Loc;
 
@@ -63,13 +64,7 @@ public final class AutomatonState<S extends State, L extends Loc<L, E>, E extend
 
 	@Override
 	public String toString() {
-		final StringBuilder sb = new StringBuilder();
-		sb.append("AutomatonState(");
-		sb.append(loc);
-		sb.append(", ");
-		sb.append(state);
-		sb.append(")");
-		return sb.toString();
+		return ObjectUtils.toStringBuilder("AutomatonState").add(loc).add(state).toString();
 	}
 
 }

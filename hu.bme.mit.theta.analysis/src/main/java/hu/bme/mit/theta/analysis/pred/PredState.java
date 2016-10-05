@@ -4,11 +4,11 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Collection;
 import java.util.Set;
-import java.util.StringJoiner;
 
 import com.google.common.collect.ImmutableSet;
 
 import hu.bme.mit.theta.analysis.expr.ExprState;
+import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.impl.Exprs;
 import hu.bme.mit.theta.core.type.BoolType;
@@ -103,14 +103,6 @@ public final class PredState implements ExprState {
 
 	@Override
 	public String toString() {
-		final StringBuilder sb = new StringBuilder();
-		sb.append("PredState(");
-		final String prefix = sb.toString();
-		final String suffix = ")";
-		final StringJoiner sj = new StringJoiner(", ", prefix, suffix);
-		for (final Expr<? extends BoolType> pred : preds) {
-			sj.add(pred.toString());
-		}
-		return sj.toString();
+		return ObjectUtils.toStringBuilder("PredState").addAll(preds).toString();
 	}
 }
