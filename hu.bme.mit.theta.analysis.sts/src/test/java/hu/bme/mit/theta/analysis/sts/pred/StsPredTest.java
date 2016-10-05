@@ -1,5 +1,6 @@
 package hu.bme.mit.theta.analysis.sts.pred;
 
+import static hu.bme.mit.theta.analysis.algorithm.ArgUtils.isWellLabeled;
 import static hu.bme.mit.theta.core.decl.impl.Decls.Var;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.Add;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.And;
@@ -19,7 +20,6 @@ import java.util.function.Predicate;
 import org.junit.Test;
 
 import hu.bme.mit.theta.analysis.algorithm.ARG;
-import hu.bme.mit.theta.analysis.algorithm.ArgChecker;
 import hu.bme.mit.theta.analysis.algorithm.ArgNode;
 import hu.bme.mit.theta.analysis.algorithm.ArgPrinter;
 import hu.bme.mit.theta.analysis.algorithm.LifoWaitlist;
@@ -94,8 +94,7 @@ public class StsPredTest {
 		final ARG<PredState, StsAction> arg = abstractor.getARG();
 		System.out.println(ArgPrinter.toGraphvizString(arg));
 
-		final ArgChecker checker = ArgChecker.create(solver);
-		assertTrue(checker.isWellLabeled(arg));
+		assertTrue(isWellLabeled(arg, solver));
 
 		System.out.println(new GraphVizWriter().writeString(ArgVisualizer.visualize(arg)));
 	}

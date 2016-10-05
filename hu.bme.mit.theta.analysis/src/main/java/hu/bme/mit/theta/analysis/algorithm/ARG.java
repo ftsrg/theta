@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Optional;
 
 import hu.bme.mit.theta.analysis.Action;
+import hu.bme.mit.theta.analysis.Domain;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.Trace;
 
@@ -53,6 +54,16 @@ public final class ARG<S extends State, A extends Action> {
 
 	public Collection<ArgNode<S, A>> getLeafNodes() {
 		return Collections.unmodifiableCollection(leafNodes);
+	}
+
+	////
+
+	public boolean isComplete() {
+		return leafNodes.stream().allMatch(ArgNode::isCovered);
+	}
+
+	public boolean isSafe(final Domain<S> domain) {
+		return targetNodes.stream().map(ArgNode::getState).allMatch(domain::isBottom);
 	}
 
 	////
