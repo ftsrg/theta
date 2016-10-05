@@ -63,8 +63,10 @@ public final class AssignmentImpl implements Assignment {
 	}
 
 	private static void checkAssignmentMap(final Map<? extends Decl<?>, ? extends Expr<?>> declToExpr) {
-		for (final Decl<?> decl : declToExpr.keySet()) {
-			final Expr<?> expr = declToExpr.get(decl);
+
+		for (final Entry<? extends Decl<?>, ? extends Expr<?>> entry : declToExpr.entrySet()) {
+			final Decl<?> decl = entry.getKey();
+			final Expr<?> expr = entry.getValue();
 			checkArgument(expr.getType().isLeq(decl.getType()));
 		}
 	}
