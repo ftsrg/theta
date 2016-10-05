@@ -4,9 +4,9 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkElementIndex;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+
+import com.google.common.collect.ImmutableList;
 
 /**
  * Represents a trace in the form of a (State, Action, State, ..., State,
@@ -27,8 +27,8 @@ public final class Trace<S extends State, A extends Action> {
 		checkNotNull(actions);
 		checkArgument(states.size() > 0, "A trace must contain at least one state.");
 		checkArgument(states.size() == actions.size() + 1, "#states = #actions + 1 must hold.");
-		this.states = Collections.unmodifiableList(new ArrayList<>(states));
-		this.actions = Collections.unmodifiableList(new ArrayList<>(actions));
+		this.states = ImmutableList.copyOf(states);
+		this.actions = ImmutableList.copyOf(actions);
 	}
 
 	/**
