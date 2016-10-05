@@ -136,6 +136,9 @@ public final class TreePredPrecision implements PredPrecision {
 					node.refineNeg(refiningPred);
 					node = null;
 				}
+			} else {
+				throw new IllegalStateException(
+						String.format("State %s contains neither %s nor its negation!", state, pred));
 			}
 		}
 	}
