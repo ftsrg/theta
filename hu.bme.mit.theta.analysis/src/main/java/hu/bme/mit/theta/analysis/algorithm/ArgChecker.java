@@ -18,7 +18,7 @@ import hu.bme.mit.theta.analysis.expr.ExprDomain;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.solver.Solver;
 
-public final class ArgChecker {
+final class ArgChecker {
 
 	private final Solver solver;
 	private final Domain<ExprState> domain;
