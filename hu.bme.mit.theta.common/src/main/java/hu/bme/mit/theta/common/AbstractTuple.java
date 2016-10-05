@@ -2,6 +2,7 @@ package hu.bme.mit.theta.common;
 
 import static com.google.common.base.Preconditions.checkPositionIndex;
 
+import java.util.Arrays;
 import java.util.StringJoiner;
 
 abstract class AbstractTuple implements Product {
@@ -30,7 +31,7 @@ abstract class AbstractTuple implements Product {
 		int result = hashCode;
 		if (result == 0) {
 			result = arity();
-			result = 31 * hashCode + elems.hashCode();
+			result = 31 * hashCode + Arrays.hashCode(elems);
 			hashCode = result;
 		}
 		return hashCode;
@@ -44,7 +45,7 @@ abstract class AbstractTuple implements Product {
 			return false;
 		} else if (this.getClass() == obj.getClass()) {
 			final AbstractTuple that = (AbstractTuple) obj;
-			return this.elems.equals(that.elems);
+			return Arrays.equals(this.elems, that.elems);
 		} else {
 			return false;
 		}
