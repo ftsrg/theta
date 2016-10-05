@@ -3,7 +3,7 @@ package hu.bme.mit.theta.analysis.loc;
 import hu.bme.mit.theta.analysis.Domain;
 import hu.bme.mit.theta.formalism.common.Loc;
 
-public class LocDomain<L extends Loc<L, ?>> implements Domain<LocState<L>> {
+public final class LocDomain<L extends Loc<L, ?>> implements Domain<LocState<L>> {
 
 	private LocDomain() {
 	}
