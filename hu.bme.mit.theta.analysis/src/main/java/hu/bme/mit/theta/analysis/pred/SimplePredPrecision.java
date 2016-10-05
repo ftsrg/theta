@@ -9,8 +9,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.StringJoiner;
 
+import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.LitExpr;
 import hu.bme.mit.theta.core.expr.impl.Exprs;
@@ -20,7 +20,7 @@ import hu.bme.mit.theta.core.utils.impl.ExprUtils;
 
 public final class SimplePredPrecision implements PredPrecision {
 
-	private final Map<Expr<? extends BoolType>, Expr<? extends BoolType>> preds;
+	private final Map<Expr<? extends BoolType>, Expr<? extends BoolType>> predToNegMap;
 
 	public static SimplePredPrecision create(final Collection<Expr<? extends BoolType>> preds) {
 		return new SimplePredPrecision(preds);
@@ -28,18 +28,18 @@ public final class SimplePredPrecision implements PredPrecision {
 
 	private SimplePredPrecision(final Collection<Expr<? extends BoolType>> preds) {
 		checkNotNull(preds);
-		this.preds = new HashMap<>();
+		this.predToNegMap = new HashMap<>();
 
 		for (final Expr<? extends BoolType> pred : preds) {
-			final Expr<? extends BoolType> predSimplified = ExprUtils.ponate(pred);
-			if (!this.preds.containsKey(predSimplified)) {
-				this.preds.put(predSimplified, Exprs.Not(predSimplified));
+			final Expr<? extends BoolType> ponatedPred = ExprUtils.ponate(pred);
+			if (!this.predToNegMap.containsKey(ponatedPred)) {
+				this.predToNegMap.put(ponatedPred, Exprs.Not(ponatedPred));
 			}
 		}
 	}
 
 	private Expr<? extends BoolType> negate(final Expr<? extends BoolType> pred) {
-		final Expr<? extends BoolType> negated = preds.get(pred);
+		final Expr<? extends BoolType> negated = predToNegMap.get(pred);
 		checkArgument(negated != null);
 		return negated;
 	}
@@ -49,7 +49,7 @@ public final class SimplePredPrecision implements PredPrecision {
 		checkNotNull(valuation);
 		final Set<Expr<? extends BoolType>> statePreds = new HashSet<>();
 
-		for (final Expr<? extends BoolType> pred : preds.keySet()) {
+		for (final Expr<? extends BoolType> pred : predToNegMap.keySet()) {
 			final LitExpr<? extends BoolType> predHolds = ExprUtils.evaluate(pred, valuation);
 			if (predHolds.equals(Exprs.True())) {
 				statePreds.add(pred);
@@ -61,26 +61,20 @@ public final class SimplePredPrecision implements PredPrecision {
 		return PredState.create(statePreds);
 	}
 
-	public SimplePredPrecision refine(final Collection<Expr<? extends BoolType>> preds) {
-		checkNotNull(preds);
-		final Set<Expr<? extends BoolType>> newPreds = new HashSet<>();
-		newPreds.addAll(this.preds.keySet());
-		newPreds.addAll(preds);
-		return create(newPreds);
+	public SimplePredPrecision refine(final Collection<Expr<? extends BoolType>> extraPreds) {
+		checkNotNull(extraPreds);
+		final Set<Expr<? extends BoolType>> joinedPreds = new HashSet<>();
+		joinedPreds.addAll(this.predToNegMap.keySet());
+		joinedPreds.addAll(extraPreds);
+		return create(joinedPreds);
 	}
 
-	public SimplePredPrecision refine(final Expr<? extends BoolType> pred) {
-		return refine(Collections.singleton(pred));
+	public SimplePredPrecision refine(final Expr<? extends BoolType> extraPred) {
+		return refine(Collections.singleton(extraPred));
 	}
 
 	@Override
 	public String toString() {
-		final String prefix = "GlobalPredPrecision(";
-		final String suffix = ")";
-		final StringJoiner sj = new StringJoiner(", ", prefix, suffix);
-		for (final Expr<? extends BoolType> pred : preds.keySet()) {
-			sj.add(pred.toString());
-		}
-		return sj.toString();
+		return ObjectUtils.toStringBuilder("SimplePredPrecision").addAll(predToNegMap.keySet()).toString();
 	}
 }

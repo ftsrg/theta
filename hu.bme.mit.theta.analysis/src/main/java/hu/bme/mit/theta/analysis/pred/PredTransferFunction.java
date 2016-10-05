@@ -21,6 +21,10 @@ public final class PredTransferFunction implements TransferFunction<PredState, E
 		this.solver = checkNotNull(solver);
 	}
 
+	public static PredTransferFunction create(final Solver solver) {
+		return new PredTransferFunction(solver);
+	}
+
 	@Override
 	public Collection<? extends PredState> getSuccStates(final PredState state, final ExprAction action,
 			final PredPrecision precision) {
