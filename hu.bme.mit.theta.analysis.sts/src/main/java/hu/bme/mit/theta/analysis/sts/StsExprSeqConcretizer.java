@@ -78,8 +78,8 @@ public class StsExprSeqConcretizer implements ConcretizerOp<ExprState, StsAction
 			final List<Expr<? extends BoolType>> interpolants = new ArrayList<>();
 			for (int i = 0; i < markers.size() - 1; ++i) {
 				interpolants.add(sts.foldin(solver.getInterpolant(pattern).eval(markers.get(i)), i));
-				refutation = Optional.of(ItpRefutationImpl.createSequence(interpolants));
 			}
+			refutation = Optional.of(ItpRefutationImpl.createSequence(interpolants));
 		}
 
 		solver.pop();
