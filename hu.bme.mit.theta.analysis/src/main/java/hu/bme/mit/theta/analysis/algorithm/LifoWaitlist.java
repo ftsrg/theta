@@ -6,6 +6,12 @@ import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Deque;
 
+import hu.bme.mit.theta.common.ObjectUtils;
+
+/**
+ * LIFO (Last In First Out) waitlist. Items are removed in the reverse order as
+ * they were added.
+ */
 public class LifoWaitlist<T> implements Waitlist<T> {
 
 	private final Deque<T> waitlist;
@@ -15,17 +21,17 @@ public class LifoWaitlist<T> implements Waitlist<T> {
 	}
 
 	public LifoWaitlist(final Collection<? extends T> items) {
-		waitlist = new ArrayDeque<>(items);
+		waitlist = new ArrayDeque<>(checkNotNull(items));
 	}
 
 	@Override
 	public void add(final T item) {
-		waitlist.push(checkNotNull(item));
+		waitlist.push(item);
 	}
 
 	@Override
 	public void addAll(final Collection<? extends T> items) {
-		waitlist.addAll(items);
+		waitlist.addAll(checkNotNull(items));
 	}
 
 	@Override
@@ -45,6 +51,11 @@ public class LifoWaitlist<T> implements Waitlist<T> {
 
 	@Override
 	public String toString() {
-		return waitlist.toString();
+		return ObjectUtils.toStringBuilder("LifoWaitlist").addAll(waitlist).toString();
+	}
+
+	@Override
+	public int size() {
+		return waitlist.size();
 	}
 }

@@ -6,6 +6,12 @@ import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Queue;
 
+import hu.bme.mit.theta.common.ObjectUtils;
+
+/**
+ * FIFO (First In First Out) waitlist. Items are removed in the same order as
+ * they were added.
+ */
 public class FifoWaitlist<T> implements Waitlist<T> {
 
 	private final Queue<T> waitlist;
@@ -15,17 +21,17 @@ public class FifoWaitlist<T> implements Waitlist<T> {
 	}
 
 	public FifoWaitlist(final Collection<? extends T> items) {
-		waitlist = new ArrayDeque<>(items);
+		waitlist = new ArrayDeque<>(checkNotNull(items));
 	}
 
 	@Override
 	public void add(final T item) {
-		waitlist.add(checkNotNull(item));
+		waitlist.add(item);
 	}
 
 	@Override
 	public void addAll(final Collection<? extends T> items) {
-		waitlist.addAll(items);
+		waitlist.addAll(checkNotNull(items));
 	}
 
 	@Override
@@ -45,6 +51,11 @@ public class FifoWaitlist<T> implements Waitlist<T> {
 
 	@Override
 	public String toString() {
-		return waitlist.toString();
+		return ObjectUtils.toStringBuilder("FifoWaitlist").addAll(waitlist).toString();
+	}
+
+	@Override
+	public int size() {
+		return waitlist.size();
 	}
 }
