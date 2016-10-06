@@ -58,7 +58,7 @@ public class ExprUtils {
 		expr.accept(VarCollectorExprVisitor.getInstance(), collectTo);
 	}
 
-	public static void collectVars(final Collection<? extends Expr<? extends Type>> exprs,
+	public static void collectVars(final Iterable<? extends Expr<? extends Type>> exprs,
 			final Collection<VarDecl<? extends Type>> collectTo) {
 		for (final Expr<? extends Type> expr : exprs) {
 			collectVars(expr, collectTo);
@@ -71,7 +71,7 @@ public class ExprUtils {
 		return vars;
 	}
 
-	public static Set<VarDecl<? extends Type>> getVars(final Collection<? extends Expr<? extends Type>> exprs) {
+	public static Set<VarDecl<? extends Type>> getVars(final Iterable<? extends Expr<? extends Type>> exprs) {
 		final Set<VarDecl<? extends Type>> vars = new HashSet<>();
 		collectVars(exprs, vars);
 		return vars;
