@@ -28,7 +28,6 @@ public class Optimizer {
 		this.context = context;
 	}
 
-
 	public void addFunctionTransformer(FunctionTransformer pass) {
 		this.funcTransformers.add(pass);
 	}

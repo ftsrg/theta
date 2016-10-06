@@ -21,7 +21,6 @@ import hu.bme.mit.inf.theta.code.ast.DeclaratorAst;
 import hu.bme.mit.inf.theta.code.ast.FunctionDeclaratorAst;
 import hu.bme.mit.inf.theta.code.ast.FunctionDefinitionAst;
 import hu.bme.mit.inf.theta.code.ast.InitDeclaratorAst;
-import hu.bme.mit.inf.theta.code.ast.InitializerAst;
 import hu.bme.mit.inf.theta.code.ast.LiteralExpressionAst;
 import hu.bme.mit.inf.theta.code.ast.ParameterDeclarationAst;
 import hu.bme.mit.inf.theta.code.ast.TranslationUnitAst;
@@ -50,14 +49,7 @@ public class Parser {
 				FunctionDefinitionAst funcAst = (FunctionDefinitionAst) decl;
 				String name = funcAst.getName();
 
-				List<ParamDecl<?>> params = new ArrayList<>();
-				for (ParameterDeclarationAst param : funcAst.getDeclarator().getParameters()) {
-					String paramName = param.getDeclarator().getName();
-
-					params.add(Decls.Param(paramName, Types.Int()));
-				}
-
-				ProcDecl<? extends Type> proc = Decls2.Proc(name, params, Types.Int());
+				ProcDecl<?> proc = createProc(funcAst.getDeclarator());
 
 				Function func = new Function(name, proc);
 				context.addFunction(func, proc);
@@ -68,12 +60,13 @@ public class Parser {
 				codegen.generate(funcAst);
 
 			} else if (decl instanceof VarDeclarationAst) {
+
 				// It may be a global variable or a function declaration
 				for (DeclaratorAst declarator : ((VarDeclarationAst) decl).getDeclarators()) {
 					if (declarator instanceof FunctionDeclaratorAst) {
 						FunctionDeclaratorAst funcDeclarator = (FunctionDeclaratorAst) declarator;
+						ProcDecl<? extends Type> proc = createProc(funcDeclarator);
 
-						ProcDecl<? extends Type> proc = Decls2.Proc(funcDeclarator.getName(), Collections.emptyList(), Types.Int());
 						context.addFunctionDeclaration(funcDeclarator.getName(), proc);
 					} else if (declarator instanceof InitDeclaratorAst) { // It is a global variable
 						InitDeclaratorAst initDecl = (InitDeclaratorAst) declarator;
@@ -103,6 +96,17 @@ public class Parser {
 		}
 
 		return context;
+	}
+
+	private static ProcDecl<? extends Type> createProc(FunctionDeclaratorAst declarator) {
+		List<ParamDecl<?>> params = new ArrayList<>();
+		for (ParameterDeclarationAst param : declarator.getParameters()) {
+			String paramName = param.getDeclarator().getName();
+			params.add(Decls.Param(paramName, Types.Int()));
+		}
+
+		ProcDecl<? extends Type> proc = Decls2.Proc(declarator.getName(), params, Types.Int());
+		return proc;
 	}
 
 	public static TranslationUnitAst createAst(String filename)

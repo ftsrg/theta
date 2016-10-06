@@ -25,6 +25,7 @@ import hu.bme.mit.inf.theta.frontend.ir.node.IrNode;
 import hu.bme.mit.inf.theta.frontend.ir.node.NodeFactory;
 import hu.bme.mit.inf.theta.frontend.ir.node.NonTerminatorIrNode;
 import hu.bme.mit.inf.theta.frontend.ir.node.ReturnNode;
+import hu.bme.mit.inf.theta.frontend.ir.utils.IrPrinter;
 import hu.bme.mit.inf.theta.frontend.transform.expr.VariableRefactorExprVisitor;
 
 public class FunctionInliner implements ContextTransformer {
@@ -40,8 +41,6 @@ public class FunctionInliner implements ContextTransformer {
 			this.proc = proc;
 		}
 	}
-
-	private static int inlineId = 0;
 
 	private void transformFunction(Function function) {
 		GlobalContext context = function.getContext();
@@ -88,6 +87,8 @@ public class FunctionInliner implements ContextTransformer {
 
 			//VariableRefactorExprVisitor visitor = new VariableRefactorExprVisitor("inline" + inlineId++, boundParams);
 			Function copy = info.function.copy();
+
+
 			List<BasicBlock> copyBlocks = copy.getBlocksDFS().stream()
 				.filter(b -> b != copy.getEntryBlock())
 				.filter(b -> b != copy.getExitBlock())
@@ -121,18 +122,15 @@ public class FunctionInliner implements ContextTransformer {
 			tuple._1().clearTerminator();
 			tuple._1().terminate(NodeFactory.Goto(inlineEntry));
 
-			entryNode.replaceTarget(entryTarget, inlineEntry);
-
 			// There can be only one entry child
-//			copy.getEntryBlock().children().forEach(child -> {
-//				child.removeParent(copy.getEntryBlock());
-//				tuple._1().clearTerminator();
-//				tuple._1().terminate(NodeFactory.Goto(child));
-//			});
+			copy.getEntryBlock().children().forEach(child -> {
+				child.removeParent(copy.getEntryBlock());
+			});
 
 			List<BasicBlock> exitParents = new ArrayList<>(copy.getExitBlock().parents());
 			exitParents.forEach(parent -> {
 				parent.getTerminator().replaceTarget(copy.getExitBlock(), tuple._3());
+
 			});
 		}
 
@@ -141,7 +139,7 @@ public class FunctionInliner implements ContextTransformer {
 
 
 	private ProcDecl<?> findProcDecl(ProcCallExpr<?> call) {
-		// TODO: I have no idea what I'm doing. Why is this cast even needed?
+		// TODO: Why is this cast even needed?
 		ProcRefExpr<?> ref = (ProcRefExpr<?>) call.getProc();
 
 		return ref.getDecl();

@@ -1,5 +1,7 @@
 package hu.bme.mit.inf.theta.frontend.ir.utils;
 
+import hu.bme.mit.inf.theta.frontend.dependency.CallGraph;
+import hu.bme.mit.inf.theta.frontend.dependency.CallGraph.CallGraphNode;
 import hu.bme.mit.inf.theta.frontend.dependency.ControlDependencyGraph;
 import hu.bme.mit.inf.theta.frontend.dependency.ControlDependencyGraph.CDGNode;
 import hu.bme.mit.inf.theta.frontend.dependency.DominatorTree;
@@ -37,7 +39,6 @@ public class IrPrinter {
 		StringBuilder sb = new StringBuilder();
 		sb.append("digraph G {\n");
 
-		int id = 0;
 		for (PDGNode n : pdg.getNodes()) {
 			sb.append(String.format("node_%s [label=\"%s\"];\n", System.identityHashCode(n), n.getNode().getLabel()));
 			n.getControlChildren().forEach(c -> {
@@ -50,6 +51,20 @@ public class IrPrinter {
 
 		sb.append("}\n");
 
+		return sb.toString();
+	}
+
+	public static String callGraph(CallGraph cg) {
+		StringBuilder sb = new StringBuilder();
+		sb.append("digraph G {\n");
+		for (CallGraphNode cgNode : cg.getNodes()) {
+			sb.append(String.format("node_%s [label=\"%s\"];\n", System.identityHashCode(cgNode), cgNode.getProc().getName()));
+			cgNode.getTargetNodes().forEach(t -> {
+				sb.append(String.format("node_%s -> node_%s; \n", System.identityHashCode(cgNode), System.identityHashCode(t)));
+			});
+		}
+
+		sb.append("}\n");
 		return sb.toString();
 	}
 

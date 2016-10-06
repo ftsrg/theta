@@ -393,23 +393,28 @@ public class IrCodeGenerator implements
 		return this.context.getSymbolTable().get(ast.getName()).getRef();
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public Expr<? extends Type> visit(FunctionCallExpressionAst ast) {
 		if (!this.context.getSymbolTable().contains(ast.getName()))
 			throw new ParserException(String.format("Use of undeclared identifier '%s'.", ast.getName()));
 
-		Decl<?, ?> proc = this.context.getSymbolTable().get(ast.getName());
-		if (!(proc instanceof ProcDecl<?>))
+		Decl<?, ?> decl = this.context.getSymbolTable().get(ast.getName());
+		if (!(decl instanceof ProcDecl<?>))
 			throw new ParserException(String.format("Attempting to use non-function ('%s') as a function", ast.getName()));
+
+		ProcDecl<?> proc = (ProcDecl<?>) decl;
 
 		List<Expr<? extends Type>> args = new ArrayList<>();
 		for (ExpressionAst argAst : ast.getParams()) {
 			args.add(argAst.accept(this));
 		}
 
-		if (args.size() != ((ProcDecl<?>) proc).getParamDecls().size()) {
-			throw new ParserException(String.format("Invalid argument count in function call to '%s'.", ast.getName()));
+		if (args.size() != proc.getParamDecls().size()) {
+			throw new ParserException(String.format("Invalid argument count in function call to '%s' (expected '%d', got '%d').",
+				ast.getName(),
+				proc.getParamDecls().size(),
+				args.size()
+			));
 		}
 
 		ProcCallExpr<? extends Type> call =  Exprs2.Call(((ProcDecl<? extends Type>) proc).getRef(), args);

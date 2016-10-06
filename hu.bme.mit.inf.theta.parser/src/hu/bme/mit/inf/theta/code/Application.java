@@ -6,8 +6,13 @@ import java.util.List;
 
 import org.eclipse.core.runtime.CoreException;
 
+import hu.bme.mit.inf.theta.common.logging.impl.ConsoleLogger;
+import hu.bme.mit.inf.theta.formalism.cfa.CFA;
 import hu.bme.mit.inf.theta.formalism.utils.impl.CfaPrinter;
+import hu.bme.mit.inf.theta.frontend.Optimizer;
 import hu.bme.mit.inf.theta.frontend.cfa.FunctionToCFATransformer;
+import hu.bme.mit.inf.theta.frontend.dependency.CallGraph;
+import hu.bme.mit.inf.theta.frontend.dependency.ProgramDependency;
 import hu.bme.mit.inf.theta.frontend.ir.Function;
 import hu.bme.mit.inf.theta.frontend.ir.GlobalContext;
 import hu.bme.mit.inf.theta.frontend.ir.utils.IrPrinter;
@@ -21,93 +26,24 @@ class Application {
 	public static void main(String[] args)
 			throws CoreException, FileNotFoundException, IOException, InterruptedException {
 
-		GlobalContext context = Parser.parse("locks5.c");
+		GlobalContext context = Parser.parse("func-cg.c");
+		Optimizer opt = new Optimizer(context);
+		opt.setLogger(new ConsoleLogger(7));
 
-		context.functions().forEach(function -> {
-			System.out.println("===============" + function.getName() + "===============");
-			System.out.println("------" + "CFG" + "------");
-			System.out.println(IrPrinter.toGraphvizString(function));
-			System.out.println("------" + "inline" + "------");
-			FunctionInliner inliner = new FunctionInliner();
-			inliner.transform(function.getContext());
-			System.out.println(IrPrinter.toGraphvizString(function));
+		CallGraph cg = CallGraph.buildCallGraph(context);
 
+		//opt.addFunctionTransformer(new ConstantPropagator());
+		//opt.addFunctionTransformer(new DeadBranchEliminator());
+		//opt.addContextTransformer(new FunctionInliner());
+		//opt.dump();
 
-			System.out.println("------" + "const prop" + "------");
-			ConstantPropagator constProp = new ConstantPropagator();
-			constProp.transform(function);
-			System.out.println(IrPrinter.toGraphvizString(function));
-			System.out.println("------" + "dead branch" + "------");
-			DeadBranchEliminator dead = new DeadBranchEliminator();
-			dead.transform(function);
-			System.out.println(IrPrinter.toGraphvizString(function));
-//
-//			System.out.println("------" + "CFA SBE" + "------");
-//			CFA cfa = FunctionToCFATransformer.createSBE(function);
-//			System.out.println(CfaPrinter.toGraphvizSting(cfa));
-//			System.out.println("------" + "CFA LBE" + "------");
-//			cfa = FunctionToCFATransformer.createLBE(function);
-//			System.out.println(CfaPrinter.toGraphvizSting(cfa));
+		opt.transform();
 
-//
-//			System.out.println("------" + "Constant prop" + "------");
-//			ConstantPropagator constProp = new ConstantPropagator();
-//			constProp.transform(function);
-//			//System.out.println(IrPrinter.toGraphvizString(function));
-//
-//			System.out.println("------" + "Dead branch elim" + "------");
-//			DeadBranchEliminator dbe = new DeadBranchEliminator();
-//			dbe.transform(function);
-//			//System.out.println(IrPrinter.toGraphvizString(function));
-//
-//			function.normalize();
-//			System.out.println("------" + "final CFG" + "------");
-//			System.out.println(IrPrinter.toGraphvizString(function));
-//			System.out.println("------" + "PDT" + "------");
-//			//DominatorTree pdt = DominatorTree.createDominatorTree(function);
-//			//System.out.println(IrPrinter.dominatorTreeGraph(pdt));
-//
-//			System.out.println("------" + "LoopUtils" + "------");
-//			LoopAnalysis.findLoops(function).forEach(l -> System.out.println(l.head + " " + l.body));
-//			LoopUnroller unroll = new LoopUnroller(1);
-//
-//			//unroll.transform(function);
-//			System.out.println(IrPrinter.toGraphvizString(function));
-//
-//
-////			System.out.println("------" + "Dominators" + "------");
-////			DominatorTree dt = DominatorTree.createDominatorTree(s);
-////			System.out.println(IrPrinter.dominatorTreeGraph(dt));
-////
-//
-////			System.out.println("------" + "Constant prop" + "------");
-////			ConstantPropagator constProp = new ConstantPropagator();
-////			constProp.transform(s);
-////			System.out.println(IrPrinter.toGraphvizString(s));
-////
-////			System.out.println("------" + "Dead branch elim" + "------");
-////			DeadBranchEliminator dbe = new DeadBranchEliminator();
-////			dbe.transform(s);
-////			System.out.println(IrPrinter.toGraphvizString(s));
-////
-////			s.normalize();
-////			System.out.println("------" + "final CFG" + "------");
-////			System.out.println(IrPrinter.toGraphvizString(s));
-////
-////			System.out.println("------" + "PDT" + "------");
-////			DominatorTree pdt = DominatorTree.createPostDominatorTree(s);
-////			System.out.println(IrPrinter.dominatorTreeGraph(pdt));
-////
-			System.out.println("------" + "slicer" + "------");
-			FunctionSlicer slicer = new FunctionSlicer();
-			List<Function> slices = slicer.allSlices(function, FunctionSlicer.SLICE_ON_ASSERTS);
+		System.out.println(IrPrinter.callGraph(cg));
+		//opt.dump();
 
-			slices.forEach(f -> {
-				System.out.println("---" + "slice" + "---");
-				System.out.println(IrPrinter.toGraphvizString(f));
-				System.out.println("---" + "slice CFA" + "---");
-				System.out.println(CfaPrinter.toGraphvizSting(FunctionToCFATransformer.createSBE(f)));
-			});
-		});
+		//System.out.println(IrPrinter.toGraphvizString(context.getFunctionByName("main")));
+
+		//List<CFA> cfas = opt.createCfaSlices();
 	}
 }

@@ -22,12 +22,14 @@ import hu.bme.mit.inf.theta.core.type.Type;
 import hu.bme.mit.inf.theta.formalism.common.decl.ProcDecl;
 import hu.bme.mit.inf.theta.formalism.common.decl.VarDecl;
 import hu.bme.mit.inf.theta.frontend.ir.node.BranchTableNode;
+import hu.bme.mit.inf.theta.frontend.ir.node.ConditionalTerminatorNode;
 import hu.bme.mit.inf.theta.frontend.ir.node.BranchTableNode.BranchTableEntry;
 import hu.bme.mit.inf.theta.frontend.ir.node.EntryNode;
 import hu.bme.mit.inf.theta.frontend.ir.node.ExitNode;
 import hu.bme.mit.inf.theta.frontend.ir.node.GotoNode;
 import hu.bme.mit.inf.theta.frontend.ir.node.IrNode;
 import hu.bme.mit.inf.theta.frontend.ir.node.JumpIfNode;
+import hu.bme.mit.inf.theta.frontend.ir.node.NodeFactory;
 import hu.bme.mit.inf.theta.frontend.ir.node.NonTerminatorIrNode;
 import hu.bme.mit.inf.theta.frontend.ir.node.ReturnNode;
 import hu.bme.mit.inf.theta.frontend.ir.node.TerminatorIrNode;
@@ -168,12 +170,37 @@ public class Function {
 	 * 	<li> Does not contain unreachable blocks </li>
 	 * 	<li> Does not contain single-child blocks which are the only parent of their child </li>
 	 * 	<li> Does not contain unterminated blocks </li>
+	 *  <li> Does not contain branching terminators with all edges pointing at the same block </li>
 	 * </ul>
 	 */
 	public void normalize() {
 		// Normalization attempt on a function with an unterminated block is an error
 		if (this.blocks.stream().anyMatch(b -> !b.isTerminated)) {
 			throw new RuntimeException("Cannot normalize function: There were unterminated blocks");
+		}
+
+		// Replace branches pointing to the same block with gotos
+		List<BasicBlock> falseBranches = this.blocks
+			.stream()
+			.filter(block -> block.getTerminator() instanceof ConditionalTerminatorNode)
+			.filter(block -> {
+				ConditionalTerminatorNode branch = (ConditionalTerminatorNode) block.getTerminator();
+
+				for (int i = 0; i < branch.getTargets().size(); i++) {
+					for (int j = i + 1; j < branch.getTargets().size(); j++) {
+						if (branch.getTargets().get(i) != branch.getTargets().get(j))
+							return false;
+					}
+				}
+
+				return true;
+			})
+			.collect(Collectors.toList());
+
+		for (BasicBlock fb : falseBranches) {
+			BasicBlock target = fb.getTerminator().getTargets().get(0); // Does not matter which we one do we choose
+			fb.clearTerminator();
+			fb.terminate(NodeFactory.Goto(target));
 		}
 
 		// Remove single 'goto' nodes
@@ -423,5 +450,10 @@ public class Function {
 
 	public VarDecl<? extends Type> getArgument(ParamDecl<?> param) {
 		return this.args.get(param);
+	}
+
+	@Override
+	public String toString() {
+		return this.name;
 	}
 }

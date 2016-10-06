@@ -97,6 +97,8 @@ public class FunctionToCFATransformer {
 
 		IrNode firstNode = func.getEntryNode().getTarget().getNodeByIndex(0);
 
+		System.out.println(firstNode);
+
 		// Replace the initial node
 		cfa.removeLoc(mapping.get(firstNode));
 		mapping.put(firstNode, cfa.getInitLoc());
