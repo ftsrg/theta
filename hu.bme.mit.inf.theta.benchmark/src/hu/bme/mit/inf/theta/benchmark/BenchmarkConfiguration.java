@@ -78,8 +78,11 @@ public class BenchmarkConfiguration {
 					.map(p -> p.toString())
 					.collect(Collectors.toList());
 
+			String logDirName = "logs/" + this.name;
+
+
 			for (String test : tests) {
-				String logFileName = "logs/" + test.replace('/', '_') + ".log";
+				String logFileName = logDirName + test.replace('/', '_') + ".log";
 				File logFile = new File(logFileName);
 
 				if (!logFile.exists() && !logFile.isDirectory())
