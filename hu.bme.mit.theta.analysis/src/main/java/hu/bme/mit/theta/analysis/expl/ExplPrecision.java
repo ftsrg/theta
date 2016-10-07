@@ -28,7 +28,7 @@ public final class ExplPrecision implements Precision {
 		return new ExplPrecision(vars);
 	}
 
-	public ExplPrecision with(final Collection<? extends VarDecl<?>> newVars) {
+	public ExplPrecision refine(final Collection<? extends VarDecl<?>> newVars) {
 		checkNotNull(newVars);
 		final Collection<VarDecl<?>> newVisibleVars = ImmutableSet.<VarDecl<?>>builder().addAll(vars).addAll(newVars)
 				.build();
