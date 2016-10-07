@@ -12,18 +12,23 @@ import hu.bme.mit.theta.solver.Solver;
 public class ExprStatePredicate implements Predicate<ExprState> {
 
 	private final Expr<? extends BoolType> expr;
+	private Expr<? extends BoolType> expr0;
 	private final Solver solver;
 
 	public ExprStatePredicate(final Expr<? extends BoolType> expr, final Solver solver) {
 		this.expr = checkNotNull(expr);
 		this.solver = checkNotNull(solver);
+		this.expr0 = null;
 	}
 
 	@Override
 	public boolean test(final ExprState state) {
+		if (expr0 == null) {
+			expr0 = PathUtils.unfold(expr, 0);
+		}
 		solver.push();
 		solver.add(PathUtils.unfold(state.toExpr(), 0));
-		solver.add(PathUtils.unfold(expr, 0));
+		solver.add(expr0);
 		final boolean result = solver.check().isSat();
 		solver.pop();
 		return result;
