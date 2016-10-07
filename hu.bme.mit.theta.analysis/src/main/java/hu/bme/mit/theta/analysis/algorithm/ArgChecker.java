@@ -3,7 +3,6 @@ package hu.bme.mit.theta.analysis.algorithm;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.Not;
 import static hu.bme.mit.theta.core.utils.impl.PathUtils.unfold;
-import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 
 import java.util.Collection;
@@ -44,9 +43,7 @@ final class ArgChecker {
 		if (!nodeIsWellLabeled(node)) {
 			return false;
 		} else {
-			final Collection<ArgNode<? extends ExprState, ? extends ExprAction>> succNodes = node.outEdges.stream()
-					.map(e -> e.getTarget()).collect(toList());
-			return succNodes.stream().allMatch(succNode -> nodeIsWellLabeled(succNode));
+			return node.getSuccNodes().stream().allMatch(succNode -> nodeIsWellLabeled(succNode));
 		}
 	}
 
