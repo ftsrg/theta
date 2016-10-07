@@ -16,7 +16,7 @@ import com.google.common.collect.Sets;
 
 import hu.bme.mit.theta.formalism.common.decl.ClockDecl;
 
-class DbmSignature implements Iterable<ClockDecl> {
+final class DbmSignature implements Iterable<ClockDecl> {
 
 	private final ArrayList<ClockDecl> indexToClock;
 	private final HashMap<ClockDecl, Integer> clockToIndex;

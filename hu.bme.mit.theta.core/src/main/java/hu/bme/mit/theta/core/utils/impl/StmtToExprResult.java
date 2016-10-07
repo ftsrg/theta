@@ -7,7 +7,7 @@ import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.BoolType;
 
-public class StmtToExprResult {
+public final class StmtToExprResult {
 	final Collection<Expr<? extends BoolType>> exprs;
 	final VarIndexes indexes;
 

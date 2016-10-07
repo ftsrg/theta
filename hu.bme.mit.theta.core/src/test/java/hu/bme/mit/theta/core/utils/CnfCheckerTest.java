@@ -26,9 +26,9 @@ import hu.bme.mit.theta.core.type.BoolType;
 @RunWith(Parameterized.class)
 public class CnfCheckerTest {
 	// Constants for testing
-	private static final ConstRefExpr<BoolType> a = Const("a", Bool()).getRef();
-	private static final ConstRefExpr<BoolType> b = Const("b", Bool()).getRef();
-	private static final ConstRefExpr<BoolType> c = Const("c", Bool()).getRef();
+	private static final ConstRefExpr<BoolType> A = Const("a", Bool()).getRef();
+	private static final ConstRefExpr<BoolType> B = Const("b", Bool()).getRef();
+	private static final ConstRefExpr<BoolType> C = Const("c", Bool()).getRef();
 
 	@Parameter(value = 0)
 	public Expr<? extends BoolType> expr;
@@ -40,31 +40,31 @@ public class CnfCheckerTest {
 	public static Collection<Object[]> data() {
 		return Arrays.asList(new Object[][] {
 				// A
-				{ a, true },
+				{ A, true },
 				// !A
-				{ Not(a), true },
+				{ Not(A), true },
 				// !A or B or !C
-				{ Or(Not(a), b, Not(c)), true },
+				{ Or(Not(A), B, Not(C)), true },
 				// !A and B and !C
-				{ And(Not(a), b, Not(c)), true },
+				{ And(Not(A), B, Not(C)), true },
 				// !A and (B and !C)
-				{ And(Not(a), And(b, Not(c))), true },
+				{ And(Not(A), And(B, Not(C))), true },
 				// !A and (B or !C)
-				{ And(Not(a), Or(b, Not(c))), true },
+				{ And(Not(A), Or(B, Not(C))), true },
 				// !!A
-				{ Not(Not(a)), false },
+				{ Not(Not(A)), false },
 				// !A and B and !C
-				{ And(Not(a), b, Not(c)), true },
+				{ And(Not(A), B, Not(C)), true },
 				// !A or (B and !C)
-				{ Or(Not(a), And(b, Not(c))), false },
+				{ Or(Not(A), And(B, Not(C))), false },
 				// !(A and B)
-				{ Not(And(a, b)), false },
+				{ Not(And(A, B)), false },
 				// !(A or B)
-				{ Not(Or(a, b)), false },
+				{ Not(Or(A, B)), false },
 				// A -> B
-				{ Imply(a, b), false },
+				{ Imply(A, B), false },
 				// A <-> B
-				{ Iff(a, b), false }, });
+				{ Iff(A, B), false }, });
 
 	}
 

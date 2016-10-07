@@ -6,7 +6,7 @@ import java.util.Optional;
 
 import hu.bme.mit.theta.core.type.Type;
 
-public class TypeUtils {
+public final class TypeUtils {
 
 	private TypeUtils() {
 	}

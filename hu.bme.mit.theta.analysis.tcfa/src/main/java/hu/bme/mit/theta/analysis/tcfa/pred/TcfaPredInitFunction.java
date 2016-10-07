@@ -9,7 +9,7 @@ import hu.bme.mit.theta.analysis.InitFunction;
 import hu.bme.mit.theta.analysis.pred.PredPrecision;
 import hu.bme.mit.theta.analysis.pred.PredState;
 
-class TcfaPredInitFunction implements InitFunction<PredState, PredPrecision> {
+final class TcfaPredInitFunction implements InitFunction<PredState, PredPrecision> {
 
 	private static final TcfaPredInitFunction INSTANCE = new TcfaPredInitFunction();
 

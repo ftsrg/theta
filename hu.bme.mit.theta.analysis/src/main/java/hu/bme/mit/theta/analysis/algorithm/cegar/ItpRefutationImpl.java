@@ -12,7 +12,7 @@ import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.impl.Exprs;
 import hu.bme.mit.theta.core.type.BoolType;
 
-public class ItpRefutationImpl implements ItpRefutation {
+public final class ItpRefutationImpl implements ItpRefutation {
 
 	private final List<Expr<? extends BoolType>> itpSequence;
 

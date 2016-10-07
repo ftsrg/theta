@@ -10,7 +10,7 @@ import hu.bme.mit.theta.analysis.zone.ZoneDomain;
 import hu.bme.mit.theta.analysis.zone.ZonePrecision;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
 
-public class TcfaZoneAnalysis implements Analysis<ZoneState, TcfaAction, ZonePrecision> {
+public final class TcfaZoneAnalysis implements Analysis<ZoneState, TcfaAction, ZonePrecision> {
 
 	private static final TcfaZoneAnalysis INSTANCE = new TcfaZoneAnalysis();
 

@@ -28,7 +28,7 @@ import hu.bme.mit.theta.core.utils.impl.StmtUtils;
 @RunWith(Parameterized.class)
 public class SubStmtTest {
 
-	private static final VarDecl<BoolType> va = Var("a", Bool());
+	private static final VarDecl<BoolType> VA = Var("a", Bool());
 
 	@Parameter(value = 0)
 	public Stmt statement;
@@ -42,12 +42,12 @@ public class SubStmtTest {
 
 				{ Skip(), of(Skip()) },
 
-				{ Havoc(va), of(Havoc(va)) },
+				{ Havoc(VA), of(Havoc(VA)) },
 
-				{ Block(of(Skip(), Havoc(va))), of(Skip(), Havoc(va)) },
+				{ Block(of(Skip(), Havoc(VA))), of(Skip(), Havoc(VA)) },
 
-				{ Block(of(Skip(), Block(of(Havoc(va), Assign(va, True()))))),
-						of(Skip(), Havoc(va), Assign(va, True())) },
+				{ Block(of(Skip(), Block(of(Havoc(VA), Assign(VA, True()))))),
+						of(Skip(), Havoc(VA), Assign(VA, True())) },
 
 		});
 	}

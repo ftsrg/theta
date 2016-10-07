@@ -5,13 +5,13 @@ public final class Unit {
 	private static final int HASH_CODE = 1261289;
 	private static final String TO_STRING = "()";
 
-	private static final Unit unit = new Unit();
+	private static final Unit UNIT = new Unit();
 
 	private Unit() {
 	}
 
 	public static Unit unit() {
-		return unit;
+		return UNIT;
 	}
 
 	@Override

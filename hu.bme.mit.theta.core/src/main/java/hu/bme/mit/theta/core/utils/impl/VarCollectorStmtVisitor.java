@@ -20,8 +20,8 @@ import hu.bme.mit.theta.core.utils.StmtVisitor;
 
 final class VarCollectorStmtVisitor implements StmtVisitor<Collection<VarDecl<?>>, Void> {
 
-	private static VarCollectorStmtVisitor INSTANCE = new VarCollectorStmtVisitor();
-	private static VarCollectorExprVisitor EXPR_VISITOR = VarCollectorExprVisitor.getInstance();
+	private final static VarCollectorStmtVisitor INSTANCE = new VarCollectorStmtVisitor();
+	private final static VarCollectorExprVisitor EXPR_VISITOR = VarCollectorExprVisitor.getInstance();
 
 	private VarCollectorStmtVisitor() {
 	}

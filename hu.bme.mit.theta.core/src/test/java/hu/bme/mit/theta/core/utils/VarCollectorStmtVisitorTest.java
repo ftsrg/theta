@@ -36,17 +36,17 @@ import hu.bme.mit.theta.core.utils.impl.StmtUtils;
 
 @RunWith(Parameterized.class)
 public class VarCollectorStmtVisitorTest {
-	private static final VarDecl<BoolType> va = Var("a", Bool());
-	private static final VarDecl<IntType> vb = Var("b", Int());
-	private static final VarDecl<RatType> vc = Var("c", Rat());
-	private static final VarDecl<BoolType> vd = Var("d", Bool());
-	private static final VarDecl<IntType> ve = Var("e", Int());
+	private static final VarDecl<BoolType> VA = Var("a", Bool());
+	private static final VarDecl<IntType> VB = Var("b", Int());
+	private static final VarDecl<RatType> VC = Var("c", Rat());
+	private static final VarDecl<BoolType> VD = Var("d", Bool());
+	private static final VarDecl<IntType> VE = Var("e", Int());
 
-	private static final Expr<BoolType> a = va.getRef();
-	private static final Expr<IntType> b = vb.getRef();
-	private static final Expr<RatType> c = vc.getRef();
-	private static final Expr<BoolType> d = vd.getRef();
-	private static final Expr<IntType> e = ve.getRef();
+	private static final Expr<BoolType> A = VA.getRef();
+	private static final Expr<IntType> B = VB.getRef();
+	private static final Expr<RatType> C = VC.getRef();
+	private static final Expr<BoolType> D = VD.getRef();
+	private static final Expr<IntType> E = VE.getRef();
 
 	@Parameter(value = 0)
 	public Stmt statement;
@@ -60,31 +60,31 @@ public class VarCollectorStmtVisitorTest {
 
 				{ Stmts.Skip(), of() },
 
-				{ Stmts.Assign(va, d), of(va, vd) },
+				{ Stmts.Assign(VA, D), of(VA, VD) },
 
-				{ Stmts.Assign(va, True()), of(va) },
+				{ Stmts.Assign(VA, True()), of(VA) },
 
-				{ Stmts.Assert(And(Imply(a, d), Eq(c, Sub(b, e)))), of(va, vb, vc, vd, ve) },
+				{ Stmts.Assert(And(Imply(A, D), Eq(C, Sub(B, E)))), of(VA, VB, VC, VD, VE) },
 
-				{ Stmts.Assume(Imply(a, d)), of(va, vd) },
+				{ Stmts.Assume(Imply(A, D)), of(VA, VD) },
 
-				{ Stmts.Decl(va), of(va) },
+				{ Stmts.Decl(VA), of(VA) },
 
-				{ Stmts.Decl(va, d), of(va, vd) },
+				{ Stmts.Decl(VA, D), of(VA, VD) },
 
-				{ Stmts.Do(Stmts.Assign(va, d), Eq(c, Sub(b, e))), of(va, vb, vc, vd, ve) },
+				{ Stmts.Do(Stmts.Assign(VA, D), Eq(C, Sub(B, E))), of(VA, VB, VC, VD, VE) },
 
-				{ Stmts.Havoc(va), of(va) },
+				{ Stmts.Havoc(VA), of(VA) },
 
-				{ Stmts.If(a, Stmts.Assign(vb, e)), of(va, vb, ve) },
+				{ Stmts.If(A, Stmts.Assign(VB, E)), of(VA, VB, VE) },
 
-				{ Stmts.If(a, Stmts.Assign(vb, e), Stmts.Assign(vc, e)), of(va, vb, vc, ve) },
+				{ Stmts.If(A, Stmts.Assign(VB, E), Stmts.Assign(VC, E)), of(VA, VB, VC, VE) },
 
-				{ Stmts.Return(a), of(va) },
+				{ Stmts.Return(A), of(VA) },
 
-				{ Stmts.While(Eq(c, Sub(b, e)), Stmts.Assign(va, d)), of(va, vb, vc, vd, ve) },
+				{ Stmts.While(Eq(C, Sub(B, E)), Stmts.Assign(VA, D)), of(VA, VB, VC, VD, VE) },
 
-				{ Stmts.Block(ImmutableList.of(Stmts.Assign(va, d), Stmts.Assign(vb, e))), of(va, vb, vd, ve) },
+				{ Stmts.Block(ImmutableList.of(Stmts.Assign(VA, D), Stmts.Assign(VB, E))), of(VA, VB, VD, VE) },
 
 		});
 	}

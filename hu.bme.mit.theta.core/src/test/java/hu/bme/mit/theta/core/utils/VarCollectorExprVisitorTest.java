@@ -36,17 +36,17 @@ import hu.bme.mit.theta.core.utils.impl.ExprUtils;
 @RunWith(Parameterized.class)
 public class VarCollectorExprVisitorTest {
 
-	private static final VarDecl<BoolType> va = Var("a", Bool());
-	private static final VarDecl<IntType> vb = Var("b", Int());
-	private static final VarDecl<RatType> vc = Var("c", Rat());
-	private static final VarDecl<BoolType> vd = Var("d", Bool());
-	private static final VarDecl<IntType> ve = Var("e", Int());
+	private static final VarDecl<BoolType> VA = Var("a", Bool());
+	private static final VarDecl<IntType> VB = Var("b", Int());
+	private static final VarDecl<RatType> VC = Var("c", Rat());
+	private static final VarDecl<BoolType> VD = Var("d", Bool());
+	private static final VarDecl<IntType> VE = Var("e", Int());
 
-	private static final Expr<BoolType> a = va.getRef();
-	private static final Expr<IntType> b = vb.getRef();
-	private static final Expr<RatType> c = vc.getRef();
-	private static final Expr<BoolType> d = vd.getRef();
-	private static final Expr<IntType> e = ve.getRef();
+	private static final Expr<BoolType> A = VA.getRef();
+	private static final Expr<IntType> B = VB.getRef();
+	private static final Expr<RatType> C = VC.getRef();
+	private static final Expr<BoolType> D = VD.getRef();
+	private static final Expr<IntType> E = VE.getRef();
 
 	@Parameter(value = 0)
 	public Expr<? extends Type> expr;
@@ -60,9 +60,9 @@ public class VarCollectorExprVisitorTest {
 
 				{ And(True(), False(), Eq(Int(1), Int(2))), of() },
 
-				{ And(a, Not(d)), of(va, vd) },
+				{ And(A, Not(D)), of(VA, VD) },
 
-				{ And(Imply(a, d), Eq(c, Sub(b, e))), of(va, vb, vc, vd, ve) }, });
+				{ And(Imply(A, D), Eq(C, Sub(B, E))), of(VA, VB, VC, VD, VE) }, });
 	}
 
 	@Test
