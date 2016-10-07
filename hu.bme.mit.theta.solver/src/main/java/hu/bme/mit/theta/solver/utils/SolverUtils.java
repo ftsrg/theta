@@ -28,9 +28,9 @@ public final class SolverUtils {
 		checkNotNull(antecedents);
 		checkNotNull(consequents);
 		return using(solver, s -> {
-			antecedents.forEach(antecedent -> solver.add(antecedent));
-			consequents.forEach(consequent -> solver.add(Not(consequent)));
-			return solver.check().isUnsat();
+			antecedents.forEach(antecedent -> s.add(antecedent));
+			consequents.forEach(consequent -> s.add(Not(consequent)));
+			return s.check().isUnsat();
 		});
 	}
 
