@@ -60,7 +60,7 @@ final class TcfaPredTransferFunction implements TransferFunction<PredState, Tcfa
 			if (moreSuccStates) {
 				final Valuation nextSuccStateVal = PathUtils.extractValuation(solver.getModel(), indexes);
 
-				final PredState nextSuccState = precision.mapToAbstractState(nextSuccStateVal);
+				final PredState nextSuccState = precision.createState(nextSuccStateVal);
 				builder.add(nextSuccState);
 				solver.add(PathUtils.unfold(Exprs.Not(nextSuccState.toExpr()), indexes));
 			}

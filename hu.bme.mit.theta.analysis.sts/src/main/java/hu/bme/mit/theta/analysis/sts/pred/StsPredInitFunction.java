@@ -44,7 +44,7 @@ class StsPredInitFunction implements InitFunction<PredState, PredPrecision> {
 			if (moreInitStates) {
 				final Valuation nextInitStateVal = PathUtils.extractValuation(solver.getModel(), 0);
 
-				final PredState nextInitState = precision.mapToAbstractState(nextInitStateVal);
+				final PredState nextInitState = precision.createState(nextInitStateVal);
 				initStates.add(nextInitState);
 				solver.add(PathUtils.unfold(Exprs.Not(nextInitState.toExpr()), 0));
 			}

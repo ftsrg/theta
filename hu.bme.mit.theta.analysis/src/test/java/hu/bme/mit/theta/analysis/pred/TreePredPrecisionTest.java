@@ -39,8 +39,8 @@ public class TreePredPrecisionTest {
 		final Valuation v011 = Valuation.builder().put(va, int0).put(vb, int1).put(vc, int1).build();
 		final Valuation v101 = Valuation.builder().put(va, int1).put(vb, int0).put(vc, int1).build();
 
-		final PredState ps0 = prec.mapToAbstractState(v011);
-		final PredState ps1 = prec.mapToAbstractState(v111);
+		final PredState ps0 = prec.createState(v011);
+		final PredState ps1 = prec.createState(v111);
 		System.out.println(ps0);
 		System.out.println(ps1);
 		System.out.println("-----");
@@ -49,9 +49,9 @@ public class TreePredPrecisionTest {
 
 		prec.refine(ps1, pb);
 
-		final PredState ps0r = prec.mapToAbstractState(v011);
-		final PredState ps11 = prec.mapToAbstractState(v111);
-		final PredState ps10 = prec.mapToAbstractState(v101);
+		final PredState ps0r = prec.createState(v011);
+		final PredState ps11 = prec.createState(v111);
+		final PredState ps10 = prec.createState(v101);
 		System.out.println(ps0r);
 		System.out.println(ps11);
 		System.out.println(ps10);
@@ -62,9 +62,9 @@ public class TreePredPrecisionTest {
 		assertEquals(ImmutableSet.of(pa, Exprs.Not(pb)), ps10.getPreds());
 
 		prec.refine(ps10, pc);
-		final PredState ps0rr = prec.mapToAbstractState(v011);
-		final PredState ps11r = prec.mapToAbstractState(v111);
-		final PredState ps101 = prec.mapToAbstractState(v101);
+		final PredState ps0rr = prec.createState(v011);
+		final PredState ps11r = prec.createState(v111);
+		final PredState ps101 = prec.createState(v101);
 		System.out.println(ps0rr);
 		System.out.println(ps11r);
 		System.out.println(ps101);
