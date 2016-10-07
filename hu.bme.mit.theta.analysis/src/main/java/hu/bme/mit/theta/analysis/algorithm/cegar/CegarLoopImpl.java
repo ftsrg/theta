@@ -31,17 +31,17 @@ public class CegarLoopImpl<S extends State, A extends Action, P extends Precisio
 										// restarts at every iteration
 			abstractor.check(precision);
 
-			if (abstractor.getStatus() == AbstractorStatus.COUNTEREXAMPLE) {
+			if (abstractor.getStatus() == AbstractorStatus.CEX) {
 				final ARG<S, A> arg = abstractor.getARG();
 				refiner.refine(arg, precision);
 
-				if (refiner.getStatus() == CounterexampleStatus.SPURIOUS) {
+				if (refiner.getStatus() == CexStatus.SPURIOUS) {
 					precision = refiner.getRefinedPrecision();
 				}
 			}
 
 		} while (!(abstractor.getStatus() == AbstractorStatus.OK)
-				&& !(refiner.getStatus() == CounterexampleStatus.CONCRETE));
+				&& !(refiner.getStatus() == CexStatus.CONCRETE));
 
 		return getStatus();
 	}
@@ -50,16 +50,16 @@ public class CegarLoopImpl<S extends State, A extends Action, P extends Precisio
 	public CegarStatus getStatus() {
 		if (abstractor.getStatus() == AbstractorStatus.OK) {
 			return CegarStatus.OK;
-		} else if (refiner.getStatus() == CounterexampleStatus.CONCRETE) {
-			return CegarStatus.COUNTEREXAMPLE;
+		} else if (refiner.getStatus() == CexStatus.CONCRETE) {
+			return CegarStatus.CEX;
 		} else {
 			throw new IllegalStateException();
 		}
 	}
 
 	@Override
-	public Trace<CS, A> getCounterexample() {
-		checkState(refiner.getStatus() == CounterexampleStatus.CONCRETE);
-		return refiner.getConcreteCounterexample();
+	public Trace<CS, A> getCex() {
+		checkState(refiner.getStatus() == CexStatus.CONCRETE);
+		return refiner.getConcreteCex();
 	}
 }
