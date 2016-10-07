@@ -12,7 +12,6 @@ import java.util.Set;
 
 import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.expr.LitExpr;
 import hu.bme.mit.theta.core.expr.impl.Exprs;
 import hu.bme.mit.theta.core.model.impl.Valuation;
 import hu.bme.mit.theta.core.type.BoolType;
@@ -50,10 +49,10 @@ public final class SimplePredPrecision implements PredPrecision {
 		final Set<Expr<? extends BoolType>> statePreds = new HashSet<>();
 
 		for (final Expr<? extends BoolType> pred : predToNegMap.keySet()) {
-			final LitExpr<? extends BoolType> predHolds = ExprUtils.evaluate(pred, valuation);
-			if (predHolds.equals(Exprs.True())) {
+			final Expr<? extends BoolType> simplified = ExprUtils.simplify(pred, valuation);
+			if (simplified.equals(Exprs.True())) {
 				statePreds.add(pred);
-			} else {
+			} else if (simplified.equals(Exprs.False())) {
 				statePreds.add(negate(pred));
 			}
 		}
