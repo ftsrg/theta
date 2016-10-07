@@ -47,7 +47,8 @@ public class WaitlistBasedAbstractor<S extends State, A extends Action, P extend
 	public void check(final P precision) {
 		checkState(arg != null);
 
-		waitlist.addAll(arg.getNodes());
+		waitlist.clear();
+		waitlist.addAll(arg.getLeafNodes());
 		while (!waitlist.isEmpty()) {
 			final ArgNode<S, A> node = waitlist.remove();
 
@@ -57,17 +58,14 @@ public class WaitlistBasedAbstractor<S extends State, A extends Action, P extend
 
 			argBuilder.tryToClose(node);
 			if (!node.isCovered()) {
-				expand(precision, node);
-			}
-		}
-	}
-
-	private void expand(final P precision, final ArgNode<S, A> node) {
-		argBuilder.expandNode(node, precision);
-		for (final ArgEdge<S, A> outEdge : node.getOutEdges()) {
-			final ArgNode<S, A> succNode = outEdge.getTarget();
-			if (!succNode.isTarget()) {
-				waitlist.add(succNode);
+				argBuilder.expandNode(node, precision);
+				for (final ArgEdge<S, A> outEdge : node.getOutEdges()) {
+					final ArgNode<S, A> succNode = outEdge.getTarget();
+					if (succNode.isTarget()) {
+						return;
+					}
+					waitlist.add(succNode);
+				}
 			}
 		}
 	}
