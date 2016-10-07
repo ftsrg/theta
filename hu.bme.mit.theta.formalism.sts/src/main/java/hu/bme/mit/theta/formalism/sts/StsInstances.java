@@ -19,7 +19,7 @@ import hu.bme.mit.theta.core.type.impl.Types;
 import hu.bme.mit.theta.formalism.sts.impl.StsImpl;
 import hu.bme.mit.theta.formalism.sts.impl.StsImpl.Builder;
 
-public class StsInstances {
+public final class StsInstances {
 
 	private StsInstances() {
 	}
