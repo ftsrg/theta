@@ -15,6 +15,9 @@ import hu.bme.mit.theta.analysis.Domain;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.Trace;
 
+/**
+ * Represents an abstract reachability graph (ARG).
+ */
 public final class ARG<S extends State, A extends Action> {
 
 	private final Collection<ArgNode<S, A>> nodes;
@@ -131,7 +134,10 @@ public final class ARG<S extends State, A extends Action> {
 		return new Trace<>(states, actions);
 	}
 
-	public Collection<Trace<S, A>> getCexs() {
+	/**
+	 * Gets all counterexamples, i.e., traces leading to target states.
+	 */
+	public Collection<Trace<S, A>> getAllCexs() {
 		final List<Trace<S, A>> cexs = new ArrayList<>();
 
 		for (final ArgNode<S, A> targetNode : getTargetNodes()) {
@@ -141,6 +147,19 @@ public final class ARG<S extends State, A extends Action> {
 
 		assert cexs.size() == getTargetNodes().size();
 		return cexs;
+	}
+
+	/**
+	 * Gets a single counterexample, i.e., a trace leading to a target state (if
+	 * at least one target state exists in the ARG).
+	 */
+	public Optional<Trace<S, A>> getAnyCex() {
+		if (getTargetNodes().size() == 0) {
+			return Optional.empty();
+		} else {
+			final ArgNode<S, A> targetNode = getTargetNodes().iterator().next();
+			return Optional.of(getTraceTo(targetNode));
+		}
 	}
 
 }
