@@ -35,10 +35,10 @@ import hu.bme.mit.theta.core.utils.impl.ExprUtils;
 @RunWith(Parameterized.class)
 public class AtomCollectorTest {
 
-	private static final ConstRefExpr<BoolType> ca = Const("a", Bool()).getRef();
-	private static final ConstRefExpr<BoolType> cb = Const("b", Bool()).getRef();
-	private static final ConstRefExpr<IntType> cx = Const("x", Int()).getRef();
-	private static final ConstRefExpr<IntType> cy = Const("y", Int()).getRef();
+	private static final ConstRefExpr<BoolType> CA = Const("a", Bool()).getRef();
+	private static final ConstRefExpr<BoolType> CB = Const("b", Bool()).getRef();
+	private static final ConstRefExpr<IntType> CX = Const("x", Int()).getRef();
+	private static final ConstRefExpr<IntType> CY = Const("y", Int()).getRef();
 
 	@Parameter(value = 0)
 	public Expr<? extends BoolType> expr;
@@ -50,13 +50,13 @@ public class AtomCollectorTest {
 	public static Collection<Object[]> data() {
 		return Arrays.asList(new Object[][] {
 
-				{ And(ca, Or(ca, Not(cb))), of(ca, cb) },
+				{ And(CA, Or(CA, Not(CB))), of(CA, CB) },
 
-				{ Imply(Eq(cx, Int(2)), Not(Leq(cx, cy))), of(Eq(cx, Int(2)), Leq(cx, cy)) },
+				{ Imply(Eq(CX, Int(2)), Not(Leq(CX, CY))), of(Eq(CX, Int(2)), Leq(CX, CY)) },
 
-				{ Iff(And(Leq(cx, cy), Eq(cx, cy)), Or(Not(Leq(cx, cy)), ca)), of(ca, Leq(cx, cy), Eq(cx, cy)) },
+				{ Iff(And(Leq(CX, CY), Eq(CX, CY)), Or(Not(Leq(CX, CY)), CA)), of(CA, Leq(CX, CY), Eq(CX, CY)) },
 
-				{ And(Ite(ca, ca, cb), Not(ca)), of(ca, Ite(ca, ca, cb)) },
+				{ And(Ite(CA, CA, CB), Not(CA)), of(CA, Ite(CA, CA, CB)) },
 
 		});
 	}

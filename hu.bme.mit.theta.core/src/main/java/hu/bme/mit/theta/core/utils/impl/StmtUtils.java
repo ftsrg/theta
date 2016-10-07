@@ -11,7 +11,7 @@ import hu.bme.mit.theta.core.stmt.BlockStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Type;
 
-public class StmtUtils {
+public final class StmtUtils {
 
 	private StmtUtils() {
 	}

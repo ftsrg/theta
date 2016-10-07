@@ -19,7 +19,7 @@ import hu.bme.mit.theta.formalism.ta.op.ResetOp;
 
 final class TcfaZoneBackwardTransferFunction implements TransferFunction<ZoneState, TcfaAction, ZonePrecision> {
 
-	private static TcfaZoneBackwardTransferFunction INSTANCE = new TcfaZoneBackwardTransferFunction();
+	private final static TcfaZoneBackwardTransferFunction INSTANCE = new TcfaZoneBackwardTransferFunction();
 
 	private TcfaZoneBackwardTransferFunction() {
 	}

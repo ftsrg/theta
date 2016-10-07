@@ -13,7 +13,7 @@ import hu.bme.mit.theta.formalism.ta.op.ClockOp;
 
 final class TcfaZoneTransferFunction implements TransferFunction<ZoneState, TcfaAction, ZonePrecision> {
 
-	private static TcfaZoneTransferFunction INSTANCE = new TcfaZoneTransferFunction();
+	private final static TcfaZoneTransferFunction INSTANCE = new TcfaZoneTransferFunction();
 
 	private TcfaZoneTransferFunction() {
 	}

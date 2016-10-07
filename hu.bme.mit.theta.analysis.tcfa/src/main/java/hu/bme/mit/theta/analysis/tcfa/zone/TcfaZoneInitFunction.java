@@ -9,7 +9,7 @@ import hu.bme.mit.theta.analysis.InitFunction;
 import hu.bme.mit.theta.analysis.zone.ZonePrecision;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
 
-class TcfaZoneInitFunction implements InitFunction<ZoneState, ZonePrecision> {
+final class TcfaZoneInitFunction implements InitFunction<ZoneState, ZonePrecision> {
 
 	private static final TcfaZoneInitFunction INSTANCE = new TcfaZoneInitFunction();
 

@@ -108,7 +108,7 @@ public final class GraphVizWriter extends AbstractGraphWriter {
 	}
 
 	@SuppressWarnings("serial")
-	private static final Map<Color, String> colors = new HashMap<Color, String>() {
+	private static final Map<Color, String> COLORS = new HashMap<Color, String>() {
 		{
 			put(Color.BLACK, "black");
 			put(Color.WHITE, "white");
@@ -120,8 +120,8 @@ public final class GraphVizWriter extends AbstractGraphWriter {
 	};
 
 	private String mapColorToString(final Color color) {
-		if (colors.containsKey(color)) {
-			return colors.get(color);
+		if (COLORS.containsKey(color)) {
+			return COLORS.get(color);
 		} else {
 			throw new UnsupportedOperationException("Unknown color: " + color + ".");
 		}
