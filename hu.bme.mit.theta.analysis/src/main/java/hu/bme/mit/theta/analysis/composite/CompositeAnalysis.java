@@ -54,6 +54,8 @@ public final class CompositeAnalysis<S1 extends State, S2 extends State, A exten
 
 	@Override
 	public ActionFunction<? super CompositeState<S1, S2>, ? extends A> getActionFunction() {
+		// The actionFunction is initialized lazily because some analysis may
+		// not define it.
 		ActionFunction<? super CompositeState<S1, S2>, ? extends A> result = actionFunction;
 		if (result == null) {
 			result = new CompositeActionFunction<>(analysis1.getActionFunction(), analysis2.getActionFunction());

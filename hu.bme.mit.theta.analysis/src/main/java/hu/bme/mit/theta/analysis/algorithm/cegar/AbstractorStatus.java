@@ -1,5 +1,5 @@
 package hu.bme.mit.theta.analysis.algorithm.cegar;
 
 public enum AbstractorStatus {
-	OK, COUNTEREXAMPLE
+	OK, CEX
 }

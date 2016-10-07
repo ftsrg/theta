@@ -19,16 +19,16 @@ public final class ExplPrecision implements Precision {
 
 	private final Set<VarDecl<?>> vars;
 
-	private ExplPrecision(final Collection<? extends VarDecl<?>> vars) {
+	private ExplPrecision(final Iterable<? extends VarDecl<?>> vars) {
 		checkNotNull(vars);
 		this.vars = ImmutableSet.copyOf(vars);
 	}
 
-	public static ExplPrecision create(final Collection<? extends VarDecl<?>> vars) {
+	public static ExplPrecision create(final Iterable<? extends VarDecl<?>> vars) {
 		return new ExplPrecision(vars);
 	}
 
-	public ExplPrecision refine(final Collection<? extends VarDecl<?>> newVars) {
+	public ExplPrecision refine(final Iterable<? extends VarDecl<?>> newVars) {
 		checkNotNull(newVars);
 		final Collection<VarDecl<?>> newVisibleVars = ImmutableSet.<VarDecl<?>>builder().addAll(vars).addAll(newVars)
 				.build();

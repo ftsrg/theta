@@ -3,12 +3,13 @@ package hu.bme.mit.theta.analysis.pred;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+
+import com.google.common.collect.Iterables;
 
 import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.expr.Expr;
@@ -21,11 +22,11 @@ public final class SimplePredPrecision implements PredPrecision {
 
 	private final Map<Expr<? extends BoolType>, Expr<? extends BoolType>> predToNegMap;
 
-	public static SimplePredPrecision create(final Collection<Expr<? extends BoolType>> preds) {
+	public static SimplePredPrecision create(final Iterable<Expr<? extends BoolType>> preds) {
 		return new SimplePredPrecision(preds);
 	}
 
-	private SimplePredPrecision(final Collection<Expr<? extends BoolType>> preds) {
+	private SimplePredPrecision(final Iterable<Expr<? extends BoolType>> preds) {
 		checkNotNull(preds);
 		this.predToNegMap = new HashMap<>();
 
@@ -60,11 +61,11 @@ public final class SimplePredPrecision implements PredPrecision {
 		return PredState.create(statePreds);
 	}
 
-	public SimplePredPrecision refine(final Collection<Expr<? extends BoolType>> extraPreds) {
+	public SimplePredPrecision refine(final Iterable<Expr<? extends BoolType>> extraPreds) {
 		checkNotNull(extraPreds);
 		final Set<Expr<? extends BoolType>> joinedPreds = new HashSet<>();
 		joinedPreds.addAll(this.predToNegMap.keySet());
-		joinedPreds.addAll(extraPreds);
+		Iterables.addAll(joinedPreds, extraPreds);
 		return create(joinedPreds);
 	}
 

@@ -1,8 +1,6 @@
 package hu.bme.mit.theta.analysis.algorithm.simple;
 
-import java.util.ArrayDeque;
 import java.util.Collection;
-import java.util.Deque;
 import java.util.LinkedList;
 import java.util.function.Predicate;
 
@@ -10,20 +8,22 @@ import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.Precision;
 import hu.bme.mit.theta.analysis.State;
+import hu.bme.mit.theta.analysis.algorithm.LifoWaitlist;
+import hu.bme.mit.theta.analysis.algorithm.Waitlist;
 
 public class SimpleChecker {
 
 	public static <S extends State, A extends Action, P extends Precision> boolean run(final Analysis<S, A, P> analysis,
 			final Predicate<? super S> target, final P precision) {
 
-		final Deque<S> waiting = new ArrayDeque<>(100000);
+		final Waitlist<S> waiting = new LifoWaitlist<>();
 		final Collection<S> passed = new LinkedList<>();
 
 		final Collection<? extends S> initStates = analysis.getInitFunction().getInitStates(precision);
 		waiting.addAll(initStates);
 
 		while (!waiting.isEmpty()) {
-			final S state = waiting.pop();
+			final S state = waiting.remove();
 
 			if (target.test(state)) {
 				return false;
@@ -35,9 +35,7 @@ public class SimpleChecker {
 				for (final A action : analysis.getActionFunction().getEnabledActionsFor(state)) {
 					final Collection<? extends S> succStates = analysis.getTransferFunction().getSuccStates(state,
 							action, precision);
-					for (final S succState : succStates) {
-						waiting.add(succState);
-					}
+					waiting.addAll(succStates);
 				}
 			}
 		}

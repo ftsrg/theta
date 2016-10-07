@@ -10,7 +10,7 @@ public class GlobalExplItpRefinerOp<A extends Action> implements RefinerOp<ExplS
 
 	@Override
 	public ExplPrecision refine(final ExplPrecision precision, final ItpRefutation refutation,
-			final Trace<ExplState, A> counterexample) {
+			final Trace<ExplState, A> cex) {
 		return precision.refine(ExprUtils.getVars(refutation));
 	}
 

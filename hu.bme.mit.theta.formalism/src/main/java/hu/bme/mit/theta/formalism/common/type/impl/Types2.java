@@ -5,7 +5,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.formalism.common.type.PointerType;
 
-public class Types2 {
+public final class Types2 {
 
 	private Types2() {
 	}
