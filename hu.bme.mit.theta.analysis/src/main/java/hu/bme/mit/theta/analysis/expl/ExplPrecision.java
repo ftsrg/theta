@@ -42,8 +42,6 @@ public final class ExplPrecision implements Precision {
 			final Optional<? extends LitExpr<? extends Type>> eval = valuation.eval(var);
 			if (eval.isPresent()) {
 				builder.put(var, eval.get());
-			} else {
-				builder.put(var, var.getType().getAny());
 			}
 		}
 		return ExplState.create(builder.build());
