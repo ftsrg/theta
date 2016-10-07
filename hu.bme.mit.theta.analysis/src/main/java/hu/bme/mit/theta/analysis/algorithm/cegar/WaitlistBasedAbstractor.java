@@ -55,7 +55,7 @@ public class WaitlistBasedAbstractor<S extends State, A extends Action, P extend
 				return;
 			}
 
-			argBuilder.closeNode(node);
+			argBuilder.tryToClose(node);
 			if (!node.isCovered()) {
 				expand(precision, node);
 			}
