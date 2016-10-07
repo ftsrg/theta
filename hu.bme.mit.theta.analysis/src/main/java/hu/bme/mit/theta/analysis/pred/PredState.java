@@ -2,7 +2,6 @@ package hu.bme.mit.theta.analysis.pred;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.util.Collection;
 import java.util.Set;
 
 import com.google.common.collect.ImmutableSet;
@@ -23,12 +22,12 @@ public final class PredState implements ExprState {
 
 	private volatile int hashCode;
 
-	private PredState(final Collection<? extends Expr<? extends BoolType>> preds) {
+	private PredState(final Iterable<? extends Expr<? extends BoolType>> preds) {
 		checkNotNull(preds);
 		this.preds = ImmutableSet.copyOf(preds);
 	}
 
-	public static PredState create(final Collection<? extends Expr<? extends BoolType>> preds) {
+	public static PredState create(final Iterable<? extends Expr<? extends BoolType>> preds) {
 		return new PredState(preds);
 	}
 

@@ -12,7 +12,7 @@ import hu.bme.mit.theta.core.utils.DeclVisitor;
 final class IndexedConstDeclImpl<DeclType extends Type> implements IndexedConstDecl<DeclType> {
 
 	private static final String NAME_FORMAT = "_%s_%d";
-	private static final String DECl_LABEL = "Const";
+	private static final String DECL_LABEL = "Const";
 	private static final int HASH_SEED = 4603;
 
 	private final VarDecl<DeclType> varDecl;
@@ -82,7 +82,7 @@ final class IndexedConstDeclImpl<DeclType extends Type> implements IndexedConstD
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
-		sb.append(DECl_LABEL);
+		sb.append(DECL_LABEL);
 		sb.append("(");
 		sb.append(varDecl.getName());
 		sb.append(", ");

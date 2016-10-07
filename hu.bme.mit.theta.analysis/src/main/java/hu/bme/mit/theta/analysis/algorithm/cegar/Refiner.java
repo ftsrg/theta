@@ -10,9 +10,9 @@ public interface Refiner<S extends State, A extends Action, P extends Precision,
 
 	void refine(ARG<S, A> arg, P precision);
 
-	CounterexampleStatus getStatus();
+	CexStatus getStatus();
 
-	Trace<CS, A> getConcreteCounterexample();
+	Trace<CS, A> getConcreteCex();
 
 	P getRefinedPrecision();
 }

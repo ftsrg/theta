@@ -125,7 +125,7 @@ public final class StsImpl implements STS {
 		 * will be split into its conjuncts. Duplicate constraints are included
 		 * only once.
 		 */
-		public Builder addInit(final Collection<? extends Expr<? extends BoolType>> exprs) {
+		public Builder addInit(final Iterable<? extends Expr<? extends BoolType>> exprs) {
 			checkNotNull(exprs);
 			for (final Expr<? extends BoolType> expr : exprs)
 				addInit(expr);
@@ -151,7 +151,7 @@ public final class StsImpl implements STS {
 		 * will be split into its conjuncts. Duplicate constraints are included
 		 * only once.
 		 */
-		public Builder addInvar(final Collection<? extends Expr<? extends BoolType>> exprs) {
+		public Builder addInvar(final Iterable<? extends Expr<? extends BoolType>> exprs) {
 			checkNotNull(exprs);
 			for (final Expr<? extends BoolType> expr : exprs)
 				addInvar(expr);
@@ -177,7 +177,7 @@ public final class StsImpl implements STS {
 		 * will be split into its conjuncts. Duplicate constraints are included
 		 * only once.
 		 */
-		public Builder addTrans(final Collection<? extends Expr<? extends BoolType>> exprs) {
+		public Builder addTrans(final Iterable<? extends Expr<? extends BoolType>> exprs) {
 			checkNotNull(exprs);
 			for (final Expr<? extends BoolType> expr : exprs)
 				addTrans(expr);

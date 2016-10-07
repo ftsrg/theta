@@ -4,14 +4,11 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
-import java.util.Collection;
-
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Precision;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
-import hu.bme.mit.theta.common.Utils;
 
 public class RefutationBasedRefiner<S extends State, CS extends State, R extends Refutation, P extends Precision, A extends Action>
 		implements Refiner<S, A, P, CS> {
@@ -34,30 +31,29 @@ public class RefutationBasedRefiner<S extends State, CS extends State, R extends
 
 		refinedPrecision = null;
 
-		final Collection<Trace<S, A>> counterexamples = arg.getCounterexamples();
-		final Trace<S, A> counterexample = Utils.anyElement(counterexamples);
+		final Trace<S, A> cex = arg.getAnyCex().get();
 
-		concretizerOp.concretize(counterexample);
+		concretizerOp.concretize(cex);
 
-		if (concretizerOp.getStatus() == CounterexampleStatus.SPURIOUS) {
-			refinedPrecision = refinerOp.refine(precision, concretizerOp.getRefutation(), counterexample);
+		if (concretizerOp.getStatus() == CexStatus.SPURIOUS) {
+			refinedPrecision = refinerOp.refine(precision, concretizerOp.getRefutation(), cex);
 		}
 	}
 
 	@Override
-	public CounterexampleStatus getStatus() {
+	public CexStatus getStatus() {
 		return concretizerOp.getStatus();
 	}
 
 	@Override
-	public Trace<CS, A> getConcreteCounterexample() {
-		checkState(concretizerOp.getStatus() == CounterexampleStatus.CONCRETE);
-		return concretizerOp.getConcreteCounterexample();
+	public Trace<CS, A> getConcreteCex() {
+		checkState(concretizerOp.getStatus() == CexStatus.CONCRETE);
+		return concretizerOp.getConcreteCex();
 	}
 
 	@Override
 	public P getRefinedPrecision() {
-		checkState(concretizerOp.getStatus() == CounterexampleStatus.SPURIOUS);
+		checkState(concretizerOp.getStatus() == CexStatus.SPURIOUS);
 		assert (refinedPrecision != null);
 		return refinedPrecision;
 	}

@@ -14,7 +14,7 @@ import hu.bme.mit.theta.formalism.ta.TaEdge;
 import hu.bme.mit.theta.formalism.ta.TaLoc;
 import hu.bme.mit.theta.formalism.ta.constr.ClockConstr;
 
-public class MutableTa implements TA {
+public final class MutableTa implements TA {
 
 	final Collection<ClockDecl> clocks;
 

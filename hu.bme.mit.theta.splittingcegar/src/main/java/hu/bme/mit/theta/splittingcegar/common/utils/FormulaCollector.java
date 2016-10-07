@@ -8,7 +8,7 @@ import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.utils.impl.ExprUtils;
 import hu.bme.mit.theta.formalism.sts.STS;
 
-public class FormulaCollector {
+public final class FormulaCollector {
 
 	private FormulaCollector() {
 	}

@@ -51,7 +51,7 @@ public class TcfaExplTest {
 		System.out.println(new GraphVizWriter().writeString(ArgVisualizer.visualize(abstractor.getARG())));
 
 		System.out.println("\n\nCounterexample(s):");
-		System.out.println(abstractor.getARG().getCounterexamples());
+		System.out.println(abstractor.getARG().getAllCexs());
 	}
 
 }

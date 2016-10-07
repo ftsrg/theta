@@ -70,7 +70,7 @@ public class YedVisualizer implements Visualizer {
 		for(String succId : node.getSuccessors())
 			pw.println("\t<edge id=\"" + node.getId() + succId + "\" source=\"" + node.getId() + "\" target=\"" + succId + "\">"
 					+ "<data key=\"d9\"><y:PolyLineEdge>"
-					+ (node.getArcColor(succId).equals("") ? "" : "<y:LineStyle color=\"" + colorMap.get(node.getArcColor(succId)) + "\"/>")
+					+ (node.getArcColor(succId).equals("") ? "" : "<y:LineStyle color=\"" + COLORMAP.get(node.getArcColor(succId)) + "\"/>")
 					+ "<y:Arrows source=\"none\" target=\"standard\"/></y:PolyLineEdge></data></edge>");
 		if (node instanceof ClusterNode)
 			for (Node sub : ((ClusterNode)node).getSubNodes()) visualizeArcs(sub, pw);
@@ -79,10 +79,10 @@ public class YedVisualizer implements Visualizer {
 	private void visualize(Node node, PrintWriter pw) {
 		pw.println("\t<node id=\"" + node.getId() + "\"><data key=\"d6\"><y:ShapeNode>"
 				+ "<y:NodeLabel>" + replaceLabel(node.getLabel()) + "</y:NodeLabel>"
-				+ (!node.getFillColor().equals("") ? ("<y:Fill color=\"" + colorMap.get(node.getFillColor()) + "\" transparent=\"false\"/>") : "<y:Fill transparent=\"true\"/>\r\n"));
+				+ (!node.getFillColor().equals("") ? ("<y:Fill color=\"" + COLORMAP.get(node.getFillColor()) + "\" transparent=\"false\"/>") : "<y:Fill transparent=\"true\"/>\r\n"));
 		if (!node.getColor().equals("") || !node.getLineStyle().equals("") || node.isInitial()) {
 			pw.println("<y:BorderStyle"
-					+ (node.getColor().equals("") ? "" : " color=\"" + colorMap.get(node.getColor()) + "\"")
+					+ (node.getColor().equals("") ? "" : " color=\"" + COLORMAP.get(node.getColor()) + "\"")
 					+ (node.getLineStyle().equals("") ? "" : " type=\"" + node.getLineStyle() + "\"")
 					+ (node.isInitial() ? " width=\"2.0\"" : "")
 					+ "/>");
@@ -94,10 +94,10 @@ public class YedVisualizer implements Visualizer {
 		pw.println("<node id=\"" + node.getId() + "\">\r\n" + 
 				"\t<data key=\"d6\"><y:ProxyAutoBoundsNode><y:Realizers active=\"0\"><y:GroupNode>\r\n" + 
 				"\t<y:NodeLabel modelName=\"internal\" modelPosition=\"t\">" + replaceLabel(node.getLabel()) + "</y:NodeLabel>\r\n" + 
-				(!node.getFillColor().equals("") ? ("\t<y:Fill color=\"" + colorMap.get(node.getFillColor()) + "\" transparent=\"false\"/>\r\n") : "\t<y:Fill transparent=\"true\"/>\r\n"));
+				(!node.getFillColor().equals("") ? ("\t<y:Fill color=\"" + COLORMAP.get(node.getFillColor()) + "\" transparent=\"false\"/>\r\n") : "\t<y:Fill transparent=\"true\"/>\r\n"));
 		if (!node.getColor().equals("") || !node.getLineStyle().equals("") || node.isInitial()) {
 			pw.println("\t<y:BorderStyle"
-					+ (node.getColor().equals("") ? "" : " color=\"" + colorMap.get(node.getColor()) + "\"")
+					+ (node.getColor().equals("") ? "" : " color=\"" + COLORMAP.get(node.getColor()) + "\"")
 					+ (node.getLineStyle().equals("") ? "": " type=\"" + node.getLineStyle() + "\"")
 					+ (node.isInitial() ? " width=\"2.0\"" : "")
 					+ "/>\r\n");
@@ -118,7 +118,7 @@ public class YedVisualizer implements Visualizer {
 	}
 	
 	@SuppressWarnings("serial")
-	private static final Map<String, String> colorMap = new HashMap<String, String>(){
+	private static final Map<String, String> COLORMAP = new HashMap<String, String>(){
 		{
 		put("red",  "#FF0000");
 		put("pink", "#F5A9A9");
