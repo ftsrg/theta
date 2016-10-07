@@ -94,7 +94,7 @@ public final class TreePredPrecision implements PredPrecision {
 	}
 
 	@Override
-	public PredState mapToAbstractState(final Valuation valuation) {
+	public PredState createState(final Valuation valuation) {
 		checkNotNull(valuation);
 		final Set<Expr<? extends BoolType>> statePreds = new HashSet<>();
 

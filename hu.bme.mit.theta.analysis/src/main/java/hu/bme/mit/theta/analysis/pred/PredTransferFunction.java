@@ -43,7 +43,7 @@ public final class PredTransferFunction implements TransferFunction<PredState, E
 			if (moreSuccStates) {
 				final Valuation nextSuccStateVal = PathUtils.extractValuation(solver.getModel(), action.nextIndexes());
 
-				final PredState nextSuccState = precision.mapToAbstractState(nextSuccStateVal);
+				final PredState nextSuccState = precision.createState(nextSuccStateVal);
 				succStates.add(nextSuccState);
 				solver.add(PathUtils.unfold(Exprs.Not(nextSuccState.toExpr()), action.nextIndexes()));
 			}
