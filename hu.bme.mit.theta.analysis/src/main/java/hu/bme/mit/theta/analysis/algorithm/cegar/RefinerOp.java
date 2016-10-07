@@ -7,5 +7,5 @@ import hu.bme.mit.theta.analysis.Trace;
 
 public interface RefinerOp<S extends State, A extends Action, R extends Refutation, P extends Precision> {
 
-	P refine(P precision, R refutation, Trace<S, A> counterexample);
+	P refine(P precision, R refutation, Trace<S, A> cex);
 }

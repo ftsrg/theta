@@ -11,5 +11,5 @@ public interface CegarLoop<P extends Precision, CS extends State, A extends Acti
 
 	CegarStatus getStatus();
 
-	Trace<CS, A> getCounterexample();
+	Trace<CS, A> getCex();
 }

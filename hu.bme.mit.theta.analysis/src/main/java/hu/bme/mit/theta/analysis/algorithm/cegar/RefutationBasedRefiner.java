@@ -34,30 +34,30 @@ public class RefutationBasedRefiner<S extends State, CS extends State, R extends
 
 		refinedPrecision = null;
 
-		final Collection<Trace<S, A>> counterexamples = arg.getCounterexamples();
-		final Trace<S, A> counterexample = Utils.anyElement(counterexamples);
+		final Collection<Trace<S, A>> cexs = arg.getCexs();
+		final Trace<S, A> cex = Utils.anyElement(cexs);
 
-		concretizerOp.concretize(counterexample);
+		concretizerOp.concretize(cex);
 
-		if (concretizerOp.getStatus() == CounterexampleStatus.SPURIOUS) {
-			refinedPrecision = refinerOp.refine(precision, concretizerOp.getRefutation(), counterexample);
+		if (concretizerOp.getStatus() == CexStatus.SPURIOUS) {
+			refinedPrecision = refinerOp.refine(precision, concretizerOp.getRefutation(), cex);
 		}
 	}
 
 	@Override
-	public CounterexampleStatus getStatus() {
+	public CexStatus getStatus() {
 		return concretizerOp.getStatus();
 	}
 
 	@Override
-	public Trace<CS, A> getConcreteCounterexample() {
-		checkState(concretizerOp.getStatus() == CounterexampleStatus.CONCRETE);
-		return concretizerOp.getConcreteCounterexample();
+	public Trace<CS, A> getConcreteCex() {
+		checkState(concretizerOp.getStatus() == CexStatus.CONCRETE);
+		return concretizerOp.getConcreteCex();
 	}
 
 	@Override
 	public P getRefinedPrecision() {
-		checkState(concretizerOp.getStatus() == CounterexampleStatus.SPURIOUS);
+		checkState(concretizerOp.getStatus() == CexStatus.SPURIOUS);
 		assert (refinedPrecision != null);
 		return refinedPrecision;
 	}

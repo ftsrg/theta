@@ -14,7 +14,7 @@ import hu.bme.mit.theta.core.type.BoolType;
 public class GlobalPredItpRefinerOp<A extends Action> implements RefinerOp<PredState, A, ItpRefutation, SimplePredPrecision> {
 
 	@Override
-	public SimplePredPrecision refine(final SimplePredPrecision precision, final ItpRefutation refutation, final Trace<PredState, A> counterexample) {
+	public SimplePredPrecision refine(final SimplePredPrecision precision, final ItpRefutation refutation, final Trace<PredState, A> cex) {
 		final Set<Expr<? extends BoolType>> preds = new HashSet<>();
 		for (final Expr<? extends BoolType> pred : refutation) {
 			if (!(pred instanceof BoolLitExpr)) {

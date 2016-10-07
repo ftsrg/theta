@@ -131,16 +131,16 @@ public final class ARG<S extends State, A extends Action> {
 		return new Trace<>(states, actions);
 	}
 
-	public Collection<Trace<S, A>> getCounterexamples() {
-		final List<Trace<S, A>> counterexamples = new ArrayList<>();
+	public Collection<Trace<S, A>> getCexs() {
+		final List<Trace<S, A>> cexs = new ArrayList<>();
 
 		for (final ArgNode<S, A> targetNode : getTargetNodes()) {
 			final Trace<S, A> trace = getTraceTo(targetNode);
-			counterexamples.add(trace);
+			cexs.add(trace);
 		}
 
-		assert counterexamples.size() == getTargetNodes().size();
-		return counterexamples;
+		assert cexs.size() == getTargetNodes().size();
+		return cexs;
 	}
 
 }
