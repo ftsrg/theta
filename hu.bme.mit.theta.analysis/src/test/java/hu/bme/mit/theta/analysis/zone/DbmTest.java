@@ -1,7 +1,9 @@
 package hu.bme.mit.theta.analysis.zone;
 
 import static hu.bme.mit.theta.formalism.common.decl.impl.Decls2.Clock;
+import static hu.bme.mit.theta.formalism.ta.constr.impl.ClockConstrs.Geq;
 import static hu.bme.mit.theta.formalism.ta.constr.impl.ClockConstrs.Leq;
+import static java.util.Arrays.asList;
 
 import java.util.Set;
 
@@ -52,5 +54,19 @@ public class DbmTest {
 
 		final DBM interpolant = DBM.interpolant(dbmA, dbmB);
 		System.out.println(interpolant.getConstrs());
+	}
+
+	@Test
+	public void testProjection() {
+		final ClockDecl x1 = Clock("x1");
+		final ClockDecl x2 = Clock("x2");
+		final ClockDecl x3 = Clock("x3");
+
+		final DBM dbm1 = DBM.top(asList(x1, x2));
+		dbm1.and(Geq(x1, 1));
+		dbm1.and(Leq(x2, 2));
+
+		final DBM dbm2 = DBM.project(dbm1, asList(x1, x3));
+		System.out.println(dbm2);
 	}
 }
