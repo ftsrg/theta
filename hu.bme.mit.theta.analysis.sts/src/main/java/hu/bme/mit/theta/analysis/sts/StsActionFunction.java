@@ -9,7 +9,7 @@ import hu.bme.mit.theta.analysis.ActionFunction;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.formalism.sts.STS;
 
-public class StsActionFunction implements ActionFunction<State, StsAction> {
+public final class StsActionFunction implements ActionFunction<State, StsAction> {
 
 	final Collection<StsAction> actions;
 
