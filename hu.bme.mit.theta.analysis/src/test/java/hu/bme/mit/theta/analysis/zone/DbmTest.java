@@ -42,15 +42,15 @@ public class DbmTest {
 		dbmA.and(Leq(x3, x2, 0));
 		dbmA.and(Leq(x5, x4, -1));
 
-		System.out.println(dbmA.getConstraints());
+		System.out.println(dbmA.getConstrs());
 
 		final DBM dbmB = DBM.top(clocks);
 		dbmB.and(Leq(x1, x5, 0));
 		dbmB.and(Leq(x4, x3, -1));
 
-		System.out.println(dbmB.getConstraints());
+		System.out.println(dbmB.getConstrs());
 
 		final DBM interpolant = DBM.interpolant(dbmA, dbmB);
-		System.out.println(interpolant.getConstraints());
+		System.out.println(interpolant.getConstrs());
 	}
 }

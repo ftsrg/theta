@@ -91,7 +91,7 @@ public final class ZoneState implements ExprState {
 	public Expr<? extends BoolType> toExpr() {
 		Expr<? extends BoolType> result = expr;
 		if (result == null) {
-			final Collection<Expr<? extends BoolType>> exprs = dbm.getConstraints().stream().map(ClockConstr::toExpr)
+			final Collection<Expr<? extends BoolType>> exprs = dbm.getConstrs().stream().map(ClockConstr::toExpr)
 					.collect(toList());
 			result = And(exprs);
 			expr = result;
@@ -126,7 +126,7 @@ public final class ZoneState implements ExprState {
 
 	@Override
 	public String toString() {
-		return ObjectUtils.toStringBuilder("ZoneState").addAll(dbm.getConstraints()).toString();
+		return ObjectUtils.toStringBuilder("ZoneState").addAll(dbm.getConstrs()).toString();
 	}
 
 	////////

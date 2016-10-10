@@ -238,7 +238,7 @@ final class DBM {
 		return DbmRelation.create(leq, geq);
 	}
 
-	public Collection<ClockConstr> getConstraints() {
+	public Collection<ClockConstr> getConstrs() {
 		final Collection<ClockConstr> result = new HashSet<>();
 
 		for (final ClockDecl leftClock : signature) {
