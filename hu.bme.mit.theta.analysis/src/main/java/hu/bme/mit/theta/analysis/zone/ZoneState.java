@@ -18,6 +18,9 @@ import hu.bme.mit.theta.formalism.ta.op.ClockOp;
 
 public final class ZoneState implements ExprState {
 
+	private static final ZoneState TOP = new ZoneState(DBM.top(Collections.emptySet()));
+	private static final ZoneState BOTTOM = new ZoneState(DBM.bottom(Collections.emptySet()));
+
 	private static final int HASH_SEED = 4349;
 
 	private volatile int hashCode = 0;
@@ -35,16 +38,21 @@ public final class ZoneState implements ExprState {
 
 	////
 
-	public static ZoneState top(final Collection<? extends ClockDecl> clocks) {
-		return new ZoneState(DBM.top(clocks));
+	public static ZoneState top() {
+		return TOP;
 	}
 
-	public static ZoneState bottom(final Collection<? extends ClockDecl> clocks) {
-		return new ZoneState(DBM.bottom(clocks));
+	public static ZoneState bottom() {
+		return BOTTOM;
 	}
 
 	public static ZoneState zero(final Collection<? extends ClockDecl> clocks) {
 		return new ZoneState(DBM.zero(clocks));
+	}
+
+	public static ZoneState nonnegative(final Collection<? extends ClockDecl> clocks) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
 
 	public static ZoneState intersection(final ZoneState zone1, final ZoneState zone2) {

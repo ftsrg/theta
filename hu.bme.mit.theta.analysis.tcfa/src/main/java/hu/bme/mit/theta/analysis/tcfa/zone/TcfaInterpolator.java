@@ -37,7 +37,7 @@ public class TcfaInterpolator {
 	private List<ZoneState> getForwardStates(final List<? extends TcfaAction> actions) {
 		final List<ZoneState> forwardStates = new ArrayList<>(actions.size() + 1);
 
-		ZoneState lastState = ZoneState.top(precision.getClocks());
+		ZoneState lastState = ZoneState.top();
 		forwardStates.add(lastState);
 
 		for (final TcfaAction action : actions) {
@@ -53,7 +53,7 @@ public class TcfaInterpolator {
 	private List<ZoneState> getBakcwardStates(final List<? extends TcfaAction> actions) {
 		final List<ZoneState> backwardStates = new ArrayList<>(actions.size() + 1);
 
-		ZoneState lastState = ZoneState.bottom(precision.getClocks());
+		ZoneState lastState = ZoneState.bottom();
 		backwardStates.add(lastState);
 
 		for (final TcfaAction action : actions) {
