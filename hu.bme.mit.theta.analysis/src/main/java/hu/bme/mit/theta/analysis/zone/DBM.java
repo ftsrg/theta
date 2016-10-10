@@ -261,22 +261,10 @@ final class DBM {
 
 	////
 
-	public void track(final ClockDecl clock) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
-	}
-
-	public void untrack(final ClockDecl clock) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
-	}
-
 	public void execute(final ClockOp op) {
 		checkNotNull(op);
 		op.accept(ExecuteVisitor.INSTANCE, this);
 	}
-
-	////
 
 	public void up() {
 		dbm.up();
@@ -317,8 +305,10 @@ final class DBM {
 	}
 
 	public void shift(final ClockDecl clock, final int m) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		checkNotNull(clock);
+		checkArgument(!isZeroClock(clock));
+		final int x = signature.indexOf(clock);
+		dbm.shift(x, m);
 	}
 
 	public void norm(final Map<? extends ClockDecl, ? extends Integer> bounds) {
@@ -334,8 +324,6 @@ final class DBM {
 		}
 		dbm.norm(k);
 	}
-
-	////
 
 	private void close() {
 		dbm.close();
