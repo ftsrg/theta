@@ -41,7 +41,7 @@ final class TcfaZoneBackwardTransferFunction implements TransferFunction<ZoneSta
 	}
 
 	ZoneState pre(final ZoneState state, final TcfaAction action, final ZonePrecision precision) {
-		final ZoneState.ZoneOperations prevStateBuilder = state.transform();
+		final ZoneState.ZoneOperations prevStateBuilder = state.project(precision.getClocks());
 
 		for (final ClockOp op : Lists.reverse(action.getClockOps())) {
 			if (op instanceof ResetOp) {

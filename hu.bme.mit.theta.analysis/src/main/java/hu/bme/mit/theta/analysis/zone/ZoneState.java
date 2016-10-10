@@ -68,7 +68,12 @@ public final class ZoneState implements ExprState {
 	////
 
 	public ZoneOperations transform() {
-		return new ZoneOperations(this);
+		return ZoneOperations.transform(this);
+	}
+
+	public ZoneOperations project(final Collection<? extends ClockDecl> clocks) {
+		checkNotNull(clocks);
+		return ZoneOperations.project(this, clocks);
 	}
 
 	////
@@ -134,17 +139,27 @@ public final class ZoneState implements ExprState {
 	public static class ZoneOperations {
 		private final DBM dbm;
 
-		private ZoneOperations(final ZoneState zone) {
-			dbm = DBM.copyOf(zone.dbm);
+		private ZoneOperations(final DBM dbm) {
+			this.dbm = dbm;
 		}
 
-		////////
+		////
+
+		private static ZoneOperations transform(final ZoneState state) {
+			return new ZoneOperations(DBM.copyOf(state.dbm));
+		}
+
+		private static ZoneOperations project(final ZoneState state, final Collection<? extends ClockDecl> clocks) {
+			return new ZoneOperations(DBM.project(state.dbm, clocks));
+		}
+
+		////
 
 		public ZoneState done() {
 			return new ZoneState(this);
 		}
 
-		////////
+		////
 
 		public ZoneOperations up() {
 			dbm.up();
