@@ -7,7 +7,6 @@ import static hu.bme.mit.theta.analysis.zone.DiffBounds.Leq;
 import static hu.bme.mit.theta.analysis.zone.DiffBounds.Lt;
 import static hu.bme.mit.theta.analysis.zone.DiffBounds.add;
 import static hu.bme.mit.theta.analysis.zone.DiffBounds.asString;
-import static java.lang.Math.max;
 import static java.lang.Math.min;
 
 import java.util.function.IntBinaryOperator;
@@ -103,7 +102,7 @@ final class SimpleDbm {
 
 	public void down() {
 		for (int i = 1; i <= nClocks; i++) {
-			matrix.set(0, i, Leq(0));
+			matrix.set(0, i, Inf());
 			for (int j = 1; j <= nClocks; j++) {
 				if (matrix.get(j, i) < matrix.get(0, i)) {
 					matrix.set(0, i, matrix.get(j, i));
@@ -176,8 +175,7 @@ final class SimpleDbm {
 		assert isClosed();
 	}
 
-	@SuppressWarnings("unused")
-	private void shift(final int x, final int m) {
+	public void shift(final int x, final int m) {
 		checkArgument(isNonZeroClock(x));
 
 		for (int i = 0; i <= nClocks; i++) {
@@ -186,8 +184,6 @@ final class SimpleDbm {
 				matrix.set(i, x, add(matrix.get(i, x), Leq(-m)));
 			}
 		}
-		matrix.set(x, 0, max(matrix.get(x, 0), Leq(0)));
-		matrix.set(0, x, min(matrix.get(0, x), Leq(0)));
 		assert isClosed();
 	}
 
