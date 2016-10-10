@@ -52,7 +52,7 @@ public final class ArgBuilder<S extends State, A extends Action, P extends Preci
 		}
 	}
 
-	public void tryToClose(final ArgNode<S, A> node) {
+	public void close(final ArgNode<S, A> node) {
 		checkNotNull(node);
 
 		final S state = node.getState();

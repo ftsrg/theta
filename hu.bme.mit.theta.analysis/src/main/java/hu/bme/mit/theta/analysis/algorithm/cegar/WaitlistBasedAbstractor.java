@@ -11,7 +11,6 @@ import hu.bme.mit.theta.analysis.Precision;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.ArgBuilder;
-import hu.bme.mit.theta.analysis.algorithm.ArgEdge;
 import hu.bme.mit.theta.analysis.algorithm.ArgNode;
 import hu.bme.mit.theta.analysis.algorithm.Waitlist;
 
@@ -56,16 +55,10 @@ public class WaitlistBasedAbstractor<S extends State, A extends Action, P extend
 				return;
 			}
 
-			argBuilder.tryToClose(node);
+			argBuilder.close(node);
 			if (!node.isCovered()) {
 				argBuilder.expandNode(node, precision);
-				for (final ArgEdge<S, A> outEdge : node.getOutEdges()) {
-					final ArgNode<S, A> succNode = outEdge.getTarget();
-					if (succNode.isTarget()) {
-						return;
-					}
-					waitlist.add(succNode);
-				}
+				node.getSuccNodes().forEach(waitlist::add);
 			}
 		}
 	}
