@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.IntBinaryOperator;
+import java.util.function.IntConsumer;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.Sets;
@@ -282,16 +283,13 @@ final class DBM {
 	public void free(final ClockDecl clock) {
 		checkNotNull(clock);
 		checkArgument(!isZeroClock(clock));
-		final int x = signature.indexOf(clock);
-		dbm.free(x);
-
+		ifTracks(clock, dbm::free);
 	}
 
 	public void reset(final ClockDecl clock, final int m) {
 		checkNotNull(clock);
 		checkArgument(!isZeroClock(clock));
-		final int x = signature.indexOf(clock);
-		dbm.reset(x, m);
+		ifTracks(clock, x -> dbm.reset(x, m));
 	}
 
 	public void copy(final ClockDecl lhs, final ClockDecl rhs) {
@@ -299,16 +297,13 @@ final class DBM {
 		checkNotNull(rhs);
 		checkArgument(!isZeroClock(lhs));
 		checkArgument(!isZeroClock(rhs));
-		final int x = signature.indexOf(lhs);
-		final int y = signature.indexOf(rhs);
-		dbm.copy(x, y);
+		ifTracks(lhs, x -> ifTracksElse(rhs, y -> dbm.copy(x, y), () -> dbm.free(x)));
 	}
 
 	public void shift(final ClockDecl clock, final int m) {
 		checkNotNull(clock);
 		checkArgument(!isZeroClock(clock));
-		final int x = signature.indexOf(clock);
-		dbm.shift(x, m);
+		ifTracks(clock, x -> dbm.shift(x, m));
 	}
 
 	public void norm(final Map<? extends ClockDecl, ? extends Integer> bounds) {
@@ -368,6 +363,22 @@ final class DBM {
 	private boolean tracks(final ClockDecl clock) {
 		checkNotNull(clock);
 		return signature.contains(clock);
+	}
+
+	private void ifTracks(final ClockDecl clock, final IntConsumer consumer) {
+		if (tracks(clock)) {
+			final int x = signature.indexOf(clock);
+			consumer.accept(x);
+		}
+	}
+
+	private void ifTracksElse(final ClockDecl clock, final IntConsumer consumer, final Procedure procedure) {
+		if (tracks(clock)) {
+			final int x = signature.indexOf(clock);
+			consumer.accept(x);
+		} else {
+			procedure.execute();
+		}
 	}
 
 	private boolean constrains(final ClockDecl clock) {
@@ -442,88 +453,123 @@ final class DBM {
 
 		@Override
 		public Void visit(final UnitLtConstr constr, final DBM dbm) {
-			final int x = dbm.signature.indexOf(constr.getClock());
-			final int m = constr.getBound();
-			dbm.dbm.and(x, 0, Lt(m));
+			final ClockDecl clock = constr.getClock();
+			if (dbm.tracks(clock)) {
+				final int x = dbm.signature.indexOf(clock);
+				final int m = constr.getBound();
+				dbm.dbm.and(x, 0, Lt(m));
+			}
 			return null;
 		}
 
 		@Override
 		public Void visit(final UnitLeqConstr constr, final DBM dbm) {
-			final int x = dbm.signature.indexOf(constr.getClock());
-			final int m = constr.getBound();
-			dbm.dbm.and(x, 0, Leq(m));
+			final ClockDecl clock = constr.getClock();
+			if (dbm.tracks(clock)) {
+				final int x = dbm.signature.indexOf(clock);
+				final int m = constr.getBound();
+				dbm.dbm.and(x, 0, Leq(m));
+			}
 			return null;
 		}
 
 		@Override
 		public Void visit(final UnitGtConstr constr, final DBM dbm) {
-			final int x = dbm.signature.indexOf(constr.getClock());
-			final int m = constr.getBound();
-			dbm.dbm.and(0, x, Lt(-m));
+			final ClockDecl clock = constr.getClock();
+			if (dbm.tracks(clock)) {
+				final int x = dbm.signature.indexOf(clock);
+				final int m = constr.getBound();
+				dbm.dbm.and(0, x, Lt(-m));
+			}
 			return null;
 		}
 
 		@Override
 		public Void visit(final UnitGeqConstr constr, final DBM dbm) {
-			final int x = dbm.signature.indexOf(constr.getClock());
-			final int m = constr.getBound();
-			dbm.dbm.and(0, x, Leq(-m));
+			final ClockDecl clock = constr.getClock();
+			if (dbm.tracks(clock)) {
+				final int x = dbm.signature.indexOf(clock);
+				final int m = constr.getBound();
+				dbm.dbm.and(0, x, Leq(-m));
+			}
 			return null;
 		}
 
 		@Override
 		public Void visit(final UnitEqConstr constr, final DBM dbm) {
-			final int x = dbm.signature.indexOf(constr.getClock());
-			final int m = constr.getBound();
-			dbm.dbm.and(x, 0, Leq(m));
-			dbm.dbm.and(0, x, Leq(-m));
+			final ClockDecl clock = constr.getClock();
+			if (dbm.tracks(clock)) {
+				final int x = dbm.signature.indexOf(clock);
+				final int m = constr.getBound();
+				dbm.dbm.and(x, 0, Leq(m));
+				dbm.dbm.and(0, x, Leq(-m));
+			}
 			return null;
 		}
 
 		@Override
 		public Void visit(final DiffLtConstr constr, final DBM dbm) {
-			final int x = dbm.signature.indexOf(constr.getLeftClock());
-			final int y = dbm.signature.indexOf(constr.getRightClock());
-			final int m = constr.getBound();
-			dbm.dbm.and(x, y, Lt(m));
+			final ClockDecl leftClock = constr.getLeftClock();
+			final ClockDecl rightClock = constr.getRightClock();
+			if (dbm.tracks(leftClock) && dbm.tracks(rightClock)) {
+				final int x = dbm.signature.indexOf(leftClock);
+				final int y = dbm.signature.indexOf(rightClock);
+				final int m = constr.getBound();
+				dbm.dbm.and(x, y, Lt(m));
+			}
 			return null;
 		}
 
 		@Override
 		public Void visit(final DiffLeqConstr constr, final DBM dbm) {
-			final int x = dbm.signature.indexOf(constr.getLeftClock());
-			final int y = dbm.signature.indexOf(constr.getRightClock());
-			final int m = constr.getBound();
-			dbm.dbm.and(x, y, Leq(m));
+			final ClockDecl leftClock = constr.getLeftClock();
+			final ClockDecl rightClock = constr.getRightClock();
+			if (dbm.tracks(leftClock) && dbm.tracks(rightClock)) {
+				final int x = dbm.signature.indexOf(leftClock);
+				final int y = dbm.signature.indexOf(rightClock);
+				final int m = constr.getBound();
+				dbm.dbm.and(x, y, Leq(m));
+			}
 			return null;
 		}
 
 		@Override
 		public Void visit(final DiffGtConstr constr, final DBM dbm) {
-			final int x = dbm.signature.indexOf(constr.getLeftClock());
-			final int y = dbm.signature.indexOf(constr.getRightClock());
-			final int m = constr.getBound();
-			dbm.dbm.and(y, x, Lt(-m));
+			final ClockDecl leftClock = constr.getLeftClock();
+			final ClockDecl rightClock = constr.getRightClock();
+			if (dbm.tracks(leftClock) && dbm.tracks(rightClock)) {
+				final int x = dbm.signature.indexOf(leftClock);
+				final int y = dbm.signature.indexOf(rightClock);
+				final int m = constr.getBound();
+				dbm.dbm.and(y, x, Lt(-m));
+			}
 			return null;
 		}
 
 		@Override
 		public Void visit(final DiffGeqConstr constr, final DBM dbm) {
-			final int x = dbm.signature.indexOf(constr.getLeftClock());
-			final int y = dbm.signature.indexOf(constr.getRightClock());
-			final int m = constr.getBound();
-			dbm.dbm.and(y, x, Leq(-m));
+			final ClockDecl leftClock = constr.getLeftClock();
+			final ClockDecl rightClock = constr.getRightClock();
+			if (dbm.tracks(leftClock) && dbm.tracks(rightClock)) {
+				final int x = dbm.signature.indexOf(leftClock);
+				final int y = dbm.signature.indexOf(rightClock);
+				final int m = constr.getBound();
+				dbm.dbm.and(y, x, Leq(-m));
+			}
 			return null;
 		}
 
 		@Override
 		public Void visit(final DiffEqConstr constr, final DBM dbm) {
-			final int x = dbm.signature.indexOf(constr.getLeftClock());
-			final int y = dbm.signature.indexOf(constr.getRightClock());
-			final int m = constr.getBound();
-			dbm.dbm.and(x, y, Leq(m));
-			dbm.dbm.and(y, x, Leq(-m));
+			final ClockDecl leftClock = constr.getLeftClock();
+			final ClockDecl rightClock = constr.getRightClock();
+			if (dbm.tracks(leftClock) && dbm.tracks(rightClock)) {
+				final int x = dbm.signature.indexOf(leftClock);
+				final int y = dbm.signature.indexOf(rightClock);
+				final int m = constr.getBound();
+				dbm.dbm.and(x, y, Leq(m));
+				dbm.dbm.and(y, x, Leq(-m));
+			}
 			return null;
 		}
 
@@ -539,4 +585,8 @@ final class DBM {
 		}
 	}
 
+	@FunctionalInterface
+	private static interface Procedure {
+		public void execute();
+	}
 }
