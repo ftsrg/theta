@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 
@@ -30,7 +31,7 @@ public final class ARG<S extends State, A extends Action> {
 	private int nextId = 0;
 
 	public ARG() {
-		nodes = new HashSet<>();
+		nodes = new LinkedHashSet<>();
 		edges = new HashSet<>();
 		initNodes = new HashSet<>();
 		leafNodes = new HashSet<>();
