@@ -184,8 +184,6 @@ final class DBM {
 	////
 
 	private int getOrDefault(final ClockDecl x, final ClockDecl y) {
-		checkNotNull(x);
-		checkNotNull(y);
 		if (!tracks(x) || !tracks(y)) {
 			return defaultBound(x, y);
 		} else {
@@ -194,8 +192,6 @@ final class DBM {
 	}
 
 	private int get(final ClockDecl x, final ClockDecl y) {
-		checkNotNull(x);
-		checkNotNull(y);
 		checkArgument(tracks(x));
 		checkArgument(tracks(y));
 		final int i = signature.indexOf(x);
@@ -204,9 +200,7 @@ final class DBM {
 	}
 
 	private static int defaultBound(final ClockDecl x, final ClockDecl y) {
-		checkNotNull(x);
-		checkNotNull(y);
-		if (x.equals(y) || x.equals(ZeroClock.getInstance())) {
+		if (x.equals(y)) {
 			return Leq(0);
 		} else {
 			return Inf();
