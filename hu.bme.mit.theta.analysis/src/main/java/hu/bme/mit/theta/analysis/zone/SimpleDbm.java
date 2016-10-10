@@ -53,7 +53,7 @@ final class SimpleDbm {
 		checkArgument(x >= 0);
 		checkArgument(y >= 0);
 
-		if (x == 0 || x == y) {
+		if (x == y) {
 			return Leq(0);
 		} else {
 			return Inf();
