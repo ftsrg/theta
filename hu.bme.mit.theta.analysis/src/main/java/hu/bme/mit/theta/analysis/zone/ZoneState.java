@@ -1,22 +1,27 @@
 package hu.bme.mit.theta.analysis.zone;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.expr.impl.Exprs.And;
+import static java.util.stream.Collectors.toList;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
-import hu.bme.mit.theta.analysis.State;
+import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.common.ObjectUtils;
+import hu.bme.mit.theta.core.expr.Expr;
+import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.formalism.common.decl.ClockDecl;
 import hu.bme.mit.theta.formalism.ta.constr.ClockConstr;
 import hu.bme.mit.theta.formalism.ta.op.ClockOp;
 
-public final class ZoneState implements State {
+public final class ZoneState implements ExprState {
 
 	private static final int HASH_SEED = 4349;
 
 	private volatile int hashCode = 0;
+	private volatile Expr<? extends BoolType> expr = null;
 
 	private final DBM dbm;
 
@@ -59,6 +64,7 @@ public final class ZoneState implements State {
 		checkNotNull(zoneB);
 		return new ZoneState(DBM.interpolant(zoneA.dbm, zoneB.dbm));
 	}
+
 	////
 
 	public ZoneOperations transform() {
@@ -77,6 +83,20 @@ public final class ZoneState implements State {
 
 	public boolean isLeq(final ZoneState that) {
 		return this.dbm.getRelation(that.dbm).isLeq();
+	}
+
+	////
+
+	@Override
+	public Expr<? extends BoolType> toExpr() {
+		Expr<? extends BoolType> result = expr;
+		if (result == null) {
+			final Collection<Expr<? extends BoolType>> exprs = dbm.getConstraints().stream().map(ClockConstr::toExpr)
+					.collect(toList());
+			result = And(exprs);
+			expr = result;
+		}
+		return result;
 	}
 
 	////
@@ -112,7 +132,6 @@ public final class ZoneState implements State {
 	////////
 
 	public static class ZoneOperations {
-
 		private final DBM dbm;
 
 		private ZoneOperations(final ZoneState zone) {
@@ -172,4 +191,5 @@ public final class ZoneState implements State {
 			return this;
 		}
 	}
+
 }
