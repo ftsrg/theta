@@ -92,6 +92,11 @@ final class DBM {
 		return new DBM(DbmSignature.over(clocks), BOTTOM_DBM_VALUES);
 	}
 
+	public static DBM project(final DBM dbm, final Collection<? extends ClockDecl> clocks) {
+		checkNotNull(clocks);
+		return new DBM(DbmSignature.over(clocks), dbm::getOrDefault);
+	}
+
 	////
 
 	public static DBM intersection(final DBM dbm1, final DBM dbm2) {
