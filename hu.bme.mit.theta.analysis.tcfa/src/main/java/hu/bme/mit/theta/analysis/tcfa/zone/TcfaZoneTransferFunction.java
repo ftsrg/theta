@@ -36,7 +36,7 @@ final class TcfaZoneTransferFunction implements TransferFunction<ZoneState, Tcfa
 	}
 
 	ZoneState post(final ZoneState state, final TcfaAction action, final ZonePrecision precision) {
-		final ZoneState.ZoneOperations succStateBuilder = state.transform();
+		final ZoneState.ZoneOperations succStateBuilder = state.project(precision.getClocks());
 
 		if (!action.getEdge().getSource().isUrgent()) {
 			succStateBuilder.up();
