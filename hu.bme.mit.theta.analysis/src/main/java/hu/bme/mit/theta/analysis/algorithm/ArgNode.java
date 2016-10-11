@@ -82,7 +82,7 @@ public final class ArgNode<S extends State, A extends Action> {
 
 	////
 
-	public void cover(final ArgNode<S, A> that) {
+	public void coverWith(final ArgNode<S, A> that) {
 		checkNotNull(that);
 		checkArgument(that.arg == this.arg);
 		checkArgument(that.id < this.id);
