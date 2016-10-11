@@ -26,7 +26,7 @@ public final class ArgNode<S extends State, A extends Action> {
 	final Collection<ArgEdge<S, A>> outEdges;
 
 	private Optional<ArgNode<S, A>> coveringNode;
-	private final Collection<ArgNode<S, A>> coveredNodes;
+	final Collection<ArgNode<S, A>> coveredNodes;
 
 	ArgNode(final ARG<S, A> arg, final S state, final int id, final boolean target) {
 		this.arg = arg;
