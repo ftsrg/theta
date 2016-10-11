@@ -5,6 +5,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.common.ObjectUtils.toStringBuilder;
 import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toSet;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -73,6 +74,10 @@ public final class ArgNode<S extends State, A extends Action> {
 
 	public Collection<ArgNode<S, A>> getSuccNodes() {
 		return outEdges.stream().map(ArgEdge::getTarget).collect(toList());
+	}
+
+	public Collection<S> getSuccStates() {
+		return outEdges.stream().map(e -> e.getTarget().getState()).collect(toSet());
 	}
 
 	////
