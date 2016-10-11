@@ -82,7 +82,7 @@ public final class ArgBuilder<S extends State, A extends Action, P extends Preci
 
 			final S stateToCoverWith = nodeToCoverWith.getState();
 			if (analysis.getDomain().isLeq(state, stateToCoverWith)) {
-				node.cover(nodeToCoverWith);
+				node.coverWith(nodeToCoverWith);
 				return;
 			}
 		}
