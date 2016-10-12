@@ -16,12 +16,14 @@ public class RefutationBasedRefiner<S extends State, CS extends State, R extends
 	private final ConcretizerOp<? super S, A, CS, R> concretizerOp;
 	private final RefinerOp<S, A, R, P> refinerOp;
 
+	private Trace<S, A> cex;
 	private P refinedPrecision;
 
 	public RefutationBasedRefiner(final ConcretizerOp<? super S, A, CS, R> concretizerOp,
 			final RefinerOp<S, A, R, P> refinerOp) {
 		this.concretizerOp = checkNotNull(concretizerOp);
 		this.refinerOp = checkNotNull(refinerOp);
+		this.cex = null;
 		this.refinedPrecision = null;
 	}
 
@@ -31,12 +33,14 @@ public class RefutationBasedRefiner<S extends State, CS extends State, R extends
 
 		refinedPrecision = null;
 
-		final Trace<S, A> cex = arg.getAnyCex().get();
+		final Trace<S, A> cexToConcretize = arg.getAnyCex().get();
 
-		concretizerOp.concretize(cex);
+		concretizerOp.concretize(cexToConcretize);
 
 		if (concretizerOp.getStatus() == CexStatus.SPURIOUS) {
-			refinedPrecision = refinerOp.refine(precision, concretizerOp.getRefutation(), cex);
+			refinedPrecision = refinerOp.refine(precision, concretizerOp.getRefutation(), cexToConcretize);
+		} else {
+			cex = cexToConcretize;
 		}
 	}
 
@@ -46,9 +50,10 @@ public class RefutationBasedRefiner<S extends State, CS extends State, R extends
 	}
 
 	@Override
-	public Trace<CS, A> getConcreteCex() {
+	public Trace<S, A> getCex() {
 		checkState(concretizerOp.getStatus() == CexStatus.CONCRETE);
-		return concretizerOp.getConcreteCex();
+		assert (cex != null);
+		return cex;
 	}
 
 	@Override

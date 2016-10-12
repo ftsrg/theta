@@ -12,7 +12,7 @@ public interface Refiner<S extends State, A extends Action, P extends Precision,
 
 	CexStatus getStatus();
 
-	Trace<CS, A> getConcreteCex();
+	Trace<S, A> getCex();
 
 	P getRefinedPrecision();
 }
