@@ -2,6 +2,7 @@ package hu.bme.mit.theta.analysis.algorithm;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.common.Utils.anyElementOf;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -29,11 +30,15 @@ public final class ARG<S extends State, A extends Action> {
 
 	private int nextId = 0;
 
-	public ARG() {
+	private ARG() {
 		nodes = new LinkedHashSet<>();
 		initNodes = new HashSet<>();
 		leafNodes = new HashSet<>();
 		targetNodes = new HashSet<>();
+	}
+
+	public static <S extends State, A extends Action> ARG<S, A> create() {
+		return new ARG<>();
 	}
 
 	////
@@ -187,7 +192,7 @@ public final class ARG<S extends State, A extends Action> {
 		if (getTargetNodes().size() == 0) {
 			return Optional.empty();
 		} else {
-			final ArgNode<S, A> targetNode = getTargetNodes().iterator().next();
+			final ArgNode<S, A> targetNode = anyElementOf(targetNodes);
 			return Optional.of(getTraceTo(targetNode));
 		}
 	}

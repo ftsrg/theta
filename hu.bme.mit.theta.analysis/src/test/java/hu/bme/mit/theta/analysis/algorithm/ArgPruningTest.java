@@ -29,7 +29,7 @@ public class ArgPruningTest {
 
 	@Test
 	public void test() {
-		final ARG<State, Action> arg = new ARG<>();
+		final ARG<State, Action> arg = ARG.create();
 
 		final State s0 = new NullState("0");
 		final State s00 = new NullState("00");
