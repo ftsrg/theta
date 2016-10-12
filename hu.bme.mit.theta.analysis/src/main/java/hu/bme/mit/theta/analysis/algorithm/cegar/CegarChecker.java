@@ -9,12 +9,12 @@ import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 
-public class CegarLoop<S extends State, A extends Action, P extends Precision, CS extends State> {
+public class CegarChecker<S extends State, A extends Action, P extends Precision, CS extends State> {
 
 	private final Abstractor<S, A, ? super P> abstractor;
 	private final Refiner<S, A, P, CS> refiner;
 
-	public CegarLoop(final Abstractor<S, A, ? super P> abstractor, final Refiner<S, A, P, CS> refiner) {
+	public CegarChecker(final Abstractor<S, A, ? super P> abstractor, final Refiner<S, A, P, CS> refiner) {
 		this.abstractor = checkNotNull(abstractor);
 		this.refiner = checkNotNull(refiner);
 	}
