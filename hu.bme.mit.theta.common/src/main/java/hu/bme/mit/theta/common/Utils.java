@@ -10,12 +10,12 @@ public final class Utils {
 	private Utils() {
 	}
 
-	public static <T> T singleElement(final Collection<? extends T> collection) {
+	public static <T> T singleElementOf(final Collection<? extends T> collection) {
 		checkArgument(collection.size() == 1);
 		return collection.iterator().next();
 	}
 
-	public static <T> T anyElement(final Collection<? extends T> collection) {
+	public static <T> T anyElementOf(final Collection<? extends T> collection) {
 		checkArgument(collection.size() > 0);
 		return collection.iterator().next();
 	}

@@ -26,14 +26,7 @@ public final class ArgBuilder<S extends State, A extends Action, P extends Preci
 		return new ArgBuilder<>(analysis, target);
 	}
 
-	public ARG<S, A> createArg(final P precision) {
-		checkNotNull(precision);
-		final ARG<S, A> arg = new ARG<>();
-		initNodes(arg, precision);
-		return arg;
-	}
-
-	public void initNodes(final ARG<S, A> arg, final P precision) {
+	public void init(final ARG<S, A> arg, final P precision) {
 		final Collection<S> oldInitStates = arg.getInitNodes().stream().map(ArgNode::getState)
 				.collect(Collectors.toSet());
 		final Collection<? extends S> newInitStates = analysis.getInitFunction().getInitStates(precision);
@@ -46,7 +39,7 @@ public final class ArgBuilder<S extends State, A extends Action, P extends Preci
 		}
 	}
 
-	public void expandNode(final ArgNode<S, A> node, final P precision) {
+	public void expand(final ArgNode<S, A> node, final P precision) {
 		checkNotNull(node);
 		checkNotNull(precision);
 

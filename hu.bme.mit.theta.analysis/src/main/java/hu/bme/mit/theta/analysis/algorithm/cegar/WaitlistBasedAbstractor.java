@@ -38,7 +38,8 @@ public class WaitlistBasedAbstractor<S extends State, A extends Action, P extend
 
 	@Override
 	public void init(final P precision) {
-		arg = argBuilder.createArg(precision);
+		arg = ARG.create();
+		argBuilder.init(arg, precision);
 		waitlist.clear();
 	}
 
@@ -57,7 +58,7 @@ public class WaitlistBasedAbstractor<S extends State, A extends Action, P extend
 
 			argBuilder.close(node);
 			if (!node.isCovered()) {
-				argBuilder.expandNode(node, precision);
+				argBuilder.expand(node, precision);
 				node.getSuccNodes().forEach(waitlist::add);
 			}
 		}
