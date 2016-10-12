@@ -15,7 +15,7 @@ public abstract class SafetyStatus<S extends State, A extends Action> {
 		return new Safe<>(proof);
 	}
 
-	public static <S extends State, A extends Action> Unsafe<S, A> safe(final Trace<S, A> cex) {
+	public static <S extends State, A extends Action> Unsafe<S, A> unsafe(final Trace<S, A> cex) {
 		return new Unsafe<>(cex);
 	}
 
