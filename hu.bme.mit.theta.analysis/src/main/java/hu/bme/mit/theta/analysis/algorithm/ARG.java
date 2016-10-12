@@ -22,7 +22,6 @@ import hu.bme.mit.theta.analysis.Trace;
 public final class ARG<S extends State, A extends Action> {
 
 	private final Collection<ArgNode<S, A>> nodes;
-	private final Collection<ArgEdge<S, A>> edges;
 
 	private final Collection<ArgNode<S, A>> initNodes;
 	private final Collection<ArgNode<S, A>> targetNodes;
@@ -32,7 +31,6 @@ public final class ARG<S extends State, A extends Action> {
 
 	public ARG() {
 		nodes = new LinkedHashSet<>();
-		edges = new HashSet<>();
 		initNodes = new HashSet<>();
 		leafNodes = new HashSet<>();
 		targetNodes = new HashSet<>();
@@ -42,10 +40,6 @@ public final class ARG<S extends State, A extends Action> {
 
 	public Collection<ArgNode<S, A>> getNodes() {
 		return Collections.unmodifiableCollection(nodes);
-	}
-
-	public Collection<ArgEdge<S, A>> getEdges() {
-		return Collections.unmodifiableCollection(edges);
 	}
 
 	public Collection<ArgNode<S, A>> getInitNodes() {
@@ -94,6 +88,42 @@ public final class ARG<S extends State, A extends Action> {
 		return succNode;
 	}
 
+	/**
+	 * Removes a node along with its subtree
+	 *
+	 * @param node
+	 */
+	public void prune(final ArgNode<S, A> node) {
+		checkNotNull(node);
+		checkArgument(node.arg == this);
+
+		for (final ArgNode<S, A> succ : node.getSuccNodes()) {
+			prune(succ);
+		}
+
+		assert node.getOutEdges().size() == 0;
+
+		nodes.remove(node);
+		targetNodes.remove(node);
+		leafNodes.remove(node);
+		initNodes.remove(node);
+
+		if (node.getInEdge().isPresent()) {
+			final ArgEdge<S, A> edge = node.getInEdge().get();
+			final ArgNode<S, A> parent = edge.getSource();
+			parent.outEdges.remove(edge);
+			if (parent.outEdges.size() == 0) {
+				leafNodes.add(parent);
+			}
+		}
+
+		if (node.getCoveringNode().isPresent()) {
+			final ArgNode<S, A> coverer = node.getCoveringNode().get();
+			coverer.coveredNodes.remove(node);
+		}
+
+	}
+
 	////
 
 	private ArgNode<S, A> createNode(final S state, final boolean target) {
@@ -110,7 +140,6 @@ public final class ARG<S extends State, A extends Action> {
 		final ArgEdge<S, A> edge = new ArgEdge<>(source, action, target);
 		source.outEdges.add(edge);
 		target.inEdge = Optional.of(edge);
-		edges.add(edge);
 		return edge;
 	}
 
