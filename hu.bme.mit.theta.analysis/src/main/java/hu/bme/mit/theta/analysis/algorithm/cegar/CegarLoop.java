@@ -38,7 +38,7 @@ public class CegarLoop<S extends State, A extends Action, P extends Precision, C
 				}
 			}
 
-		} while (!(abstractor.getStatus() == AbstractorStatus.OK) && !(refiner.getStatus() == CexStatus.CONCRETE));
+		} while (abstractor.getStatus() != AbstractorStatus.OK && refiner.getStatus() != CexStatus.CONCRETE);
 
 		return getStatus();
 	}
