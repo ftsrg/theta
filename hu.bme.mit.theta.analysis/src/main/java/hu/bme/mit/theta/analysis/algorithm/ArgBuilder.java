@@ -4,6 +4,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Collection;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Analysis;
@@ -28,12 +29,21 @@ public final class ArgBuilder<S extends State, A extends Action, P extends Preci
 	public ARG<S, A> createArg(final P precision) {
 		checkNotNull(precision);
 		final ARG<S, A> arg = new ARG<>();
-		final Collection<? extends S> initStates = analysis.getInitFunction().getInitStates(precision);
-		for (final S initState : initStates) {
-			final boolean isTarget = target.test(initState);
-			arg.createInitNode(initState, isTarget);
-		}
+		initNodes(arg, precision);
 		return arg;
+	}
+
+	public void initNodes(final ARG<S, A> arg, final P precision) {
+		final Collection<S> oldInitStates = arg.getInitNodes().stream().map(ArgNode::getState)
+				.collect(Collectors.toSet());
+		final Collection<? extends S> newInitStates = analysis.getInitFunction().getInitStates(precision);
+		for (final S initState : newInitStates) {
+			if (oldInitStates.size() == 0
+					|| !oldInitStates.stream().anyMatch(s -> analysis.getDomain().isLeq(initState, s))) {
+				final boolean isTarget = target.test(initState);
+				arg.createInitNode(initState, isTarget);
+			}
+		}
 	}
 
 	public void expandNode(final ArgNode<S, A> node, final P precision) {
@@ -41,13 +51,18 @@ public final class ArgBuilder<S extends State, A extends Action, P extends Preci
 		checkNotNull(precision);
 
 		final S state = node.getState();
+		final Collection<S> oldSuccStates = node.getSuccStates();
 		final Collection<? extends A> actions = analysis.getActionFunction().getEnabledActionsFor(state);
 		for (final A action : actions) {
-			final Collection<? extends S> succStates = analysis.getTransferFunction().getSuccStates(state, action,
+			final Collection<? extends S> newSuccStates = analysis.getTransferFunction().getSuccStates(state, action,
 					precision);
-			for (final S succState : succStates) {
-				final boolean isTarget = target.test(succState);
-				node.arg.createSuccNode(node, action, succState, isTarget);
+			for (final S newSuccState : newSuccStates) {
+				if (oldSuccStates.size() == 0
+						|| !oldSuccStates.stream().anyMatch(s -> analysis.getDomain().isLeq(newSuccState, s))) {
+					final boolean isTarget = target.test(newSuccState);
+					node.arg.createSuccNode(node, action, newSuccState, isTarget);
+				}
+
 			}
 		}
 	}
@@ -67,7 +82,7 @@ public final class ArgBuilder<S extends State, A extends Action, P extends Preci
 
 			final S stateToCoverWith = nodeToCoverWith.getState();
 			if (analysis.getDomain().isLeq(state, stateToCoverWith)) {
-				node.cover(nodeToCoverWith);
+				node.coverWith(nodeToCoverWith);
 				return;
 			}
 		}
