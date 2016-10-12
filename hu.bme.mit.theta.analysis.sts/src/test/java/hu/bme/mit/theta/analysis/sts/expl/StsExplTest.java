@@ -85,7 +85,7 @@ public class StsExplTest {
 		final StsExprSeqConcretizer concretizerOp = new StsExprSeqConcretizer(sts, solver);
 		final GlobalExplItpRefinerOp<StsAction> refinerOp = new GlobalExplItpRefinerOp<>();
 
-		final RefutationBasedRefiner<ExplState, ExplState, ItpRefutation, ExplPrecision, StsAction> refiner = new RefutationBasedRefiner<>(
+		final RefutationBasedRefiner<ExplState, ItpRefutation, ExplPrecision, StsAction> refiner = new RefutationBasedRefiner<>(
 				concretizerOp, refinerOp);
 
 		final SafetyChecker<ExplState, StsAction, ExplPrecision> checker = new CegarChecker<>(abstractor, refiner);

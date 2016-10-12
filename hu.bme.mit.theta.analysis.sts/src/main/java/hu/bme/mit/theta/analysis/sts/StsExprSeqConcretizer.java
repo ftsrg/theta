@@ -24,7 +24,7 @@ import hu.bme.mit.theta.solver.ItpMarker;
 import hu.bme.mit.theta.solver.ItpPattern;
 import hu.bme.mit.theta.solver.ItpSolver;
 
-public class StsExprSeqConcretizer implements ConcretizerOp<ExprState, StsAction, ExplState, ItpRefutation> {
+public class StsExprSeqConcretizer implements ConcretizerOp<ExprState, StsAction, ItpRefutation> {
 
 	private final STS sts;
 	private final ItpSolver solver;
@@ -97,13 +97,6 @@ public class StsExprSeqConcretizer implements ConcretizerOp<ExprState, StsAction
 		} else {
 			throw new IllegalStateException("No counterexample or refutation is present!");
 		}
-	}
-
-	@Override
-	public Trace<ExplState, StsAction> getConcreteCex() {
-		checkState(getStatus() == CexStatus.CONCRETE);
-		assert (concreteCex.isPresent());
-		return concreteCex.get();
 	}
 
 	@Override
