@@ -15,7 +15,7 @@ import java.util.Map;
  *
  * - Peripheries of composite nodes are ignored.
  */
-public final class GraphVizWriter extends AbstractGraphWriter {
+public final class GraphvizWriter extends AbstractGraphWriter {
 
 	@Override
 	public String writeString(final Graph graph) {

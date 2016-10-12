@@ -7,7 +7,7 @@ import org.junit.Test;
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
-import hu.bme.mit.theta.common.visualization.GraphVizWriter;
+import hu.bme.mit.theta.common.visualization.GraphvizWriter;
 
 public class ArgPruningTest {
 
@@ -53,7 +53,7 @@ public class ArgPruningTest {
 		assertEquals(1, arg.getTargetNodes().size());
 		assertEquals(n001, arg.getTargetNodes().iterator().next());
 
-		System.out.println(new GraphVizWriter().writeString(ArgVisualizer.visualize(arg)));
+		System.out.println(new GraphvizWriter().writeString(ArgVisualizer.visualize(arg)));
 		System.out.println("=========================");
 
 		arg.prune(n00);
@@ -62,6 +62,6 @@ public class ArgPruningTest {
 		assertEquals(1, arg.getInitNodes().size());
 		assertEquals(0, arg.getTargetNodes().size());
 
-		System.out.println(new GraphVizWriter().writeString(ArgVisualizer.visualize(arg)));
+		System.out.println(new GraphvizWriter().writeString(ArgVisualizer.visualize(arg)));
 	}
 }
