@@ -22,6 +22,7 @@ import org.junit.Test;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.ArgNode;
 import hu.bme.mit.theta.analysis.algorithm.LifoWaitlist;
+import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.Waitlist;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker;
@@ -85,10 +86,10 @@ public class StsPredTest {
 		final RefutationBasedRefiner<PredState, ExplState, ItpRefutation, SimplePredPrecision, StsAction> refiner = new RefutationBasedRefiner<>(
 				concretizerOp, refinerOp);
 
-		final CegarChecker<PredState, StsAction, SimplePredPrecision, ExplState> cegarLoop = new CegarChecker<>(
-				abstractor, refiner);
+		final SafetyChecker<PredState, StsAction, SimplePredPrecision> checker = new CegarChecker<>(abstractor,
+				refiner);
 
-		cegarLoop.check(precision);
+		checker.check(precision);
 
 		final ARG<PredState, StsAction> arg = abstractor.getARG();
 		assertTrue(isWellLabeled(arg, solver));
