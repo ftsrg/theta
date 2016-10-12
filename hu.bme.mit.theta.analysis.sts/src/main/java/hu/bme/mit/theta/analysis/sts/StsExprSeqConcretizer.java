@@ -10,10 +10,9 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import hu.bme.mit.theta.analysis.Trace;
-import hu.bme.mit.theta.analysis.algorithm.cegar.ConcretizerOp;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CexStatus;
+import hu.bme.mit.theta.analysis.algorithm.cegar.ConcretizerOp;
 import hu.bme.mit.theta.analysis.algorithm.cegar.ItpRefutation;
-import hu.bme.mit.theta.analysis.algorithm.cegar.ItpRefutationImpl;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.core.expr.Expr;
@@ -79,7 +78,7 @@ public class StsExprSeqConcretizer implements ConcretizerOp<ExprState, StsAction
 			for (int i = 0; i < markers.size() - 1; ++i) {
 				interpolants.add(sts.foldin(solver.getInterpolant(pattern).eval(markers.get(i)), i));
 			}
-			refutation = Optional.of(ItpRefutationImpl.createSequence(interpolants));
+			refutation = Optional.of(ItpRefutation.createSequence(interpolants));
 		}
 
 		solver.pop();
