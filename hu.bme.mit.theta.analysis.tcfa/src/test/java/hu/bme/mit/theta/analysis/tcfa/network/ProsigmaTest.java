@@ -14,7 +14,7 @@ import hu.bme.mit.theta.analysis.tcfa.BasicTcfaAnalysis;
 import hu.bme.mit.theta.analysis.tcfa.TcfaAction;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
-import hu.bme.mit.theta.common.visualization.GraphVizWriter;
+import hu.bme.mit.theta.common.visualization.GraphvizWriter;
 import hu.bme.mit.theta.formalism.tcfa.TCFA;
 import hu.bme.mit.theta.formalism.tcfa.TcfaEdge;
 import hu.bme.mit.theta.formalism.tcfa.TcfaLoc;
@@ -39,7 +39,7 @@ public class ProsigmaTest {
 
 		final ARG<?, ?> arg = abstractor.getARG();
 
-		System.out.println(new GraphVizWriter().writeString(ArgVisualizer.visualize(arg)));
+		System.out.println(new GraphvizWriter().writeString(ArgVisualizer.visualize(arg)));
 	}
 
 }

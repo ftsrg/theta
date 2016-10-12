@@ -22,7 +22,7 @@ import hu.bme.mit.theta.analysis.tcfa.zone.TcfaZoneAnalysis;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.analysis.zone.ZonePrecision;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
-import hu.bme.mit.theta.common.visualization.GraphVizWriter;
+import hu.bme.mit.theta.common.visualization.GraphvizWriter;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.IntType;
 import hu.bme.mit.theta.formalism.tcfa.TCFA;
@@ -56,7 +56,7 @@ public class TcfaNetworkExplTest {
 		abstractor.init(precision);
 		abstractor.check(precision);
 
-		System.out.println(new GraphVizWriter().writeString(ArgVisualizer.visualize(abstractor.getARG())));
+		System.out.println(new GraphvizWriter().writeString(ArgVisualizer.visualize(abstractor.getARG())));
 	}
 
 }

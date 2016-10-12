@@ -19,7 +19,7 @@ import hu.bme.mit.theta.analysis.tcfa.BasicTcfaAnalysis;
 import hu.bme.mit.theta.analysis.tcfa.TcfaAction;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
-import hu.bme.mit.theta.common.visualization.GraphVizWriter;
+import hu.bme.mit.theta.common.visualization.GraphvizWriter;
 import hu.bme.mit.theta.formalism.tcfa.TCFA;
 import hu.bme.mit.theta.formalism.tcfa.TcfaEdge;
 import hu.bme.mit.theta.formalism.tcfa.TcfaLoc;
@@ -46,7 +46,7 @@ public class TcfaCompositeTest {
 		abstractor.init(NullPrecision.getInstance());
 		abstractor.check(NullPrecision.getInstance());
 
-		System.out.println(new GraphVizWriter().writeString(ArgVisualizer.visualize(abstractor.getARG())));
+		System.out.println(new GraphvizWriter().writeString(ArgVisualizer.visualize(abstractor.getARG())));
 	}
 
 }

@@ -38,7 +38,7 @@ import hu.bme.mit.theta.analysis.pred.SimplePredPrecision;
 import hu.bme.mit.theta.analysis.sts.StsAction;
 import hu.bme.mit.theta.analysis.sts.StsExprSeqConcretizer;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
-import hu.bme.mit.theta.common.visualization.GraphVizWriter;
+import hu.bme.mit.theta.common.visualization.GraphvizWriter;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.IntType;
@@ -93,7 +93,7 @@ public class StsPredTest {
 		final ARG<PredState, StsAction> arg = abstractor.getARG();
 		assertTrue(isWellLabeled(arg, solver));
 
-		System.out.println(new GraphVizWriter().writeString(ArgVisualizer.visualize(arg)));
+		System.out.println(new GraphvizWriter().writeString(ArgVisualizer.visualize(arg)));
 	}
 
 }
