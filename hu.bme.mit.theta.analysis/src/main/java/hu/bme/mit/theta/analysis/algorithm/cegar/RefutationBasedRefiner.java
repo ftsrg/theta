@@ -10,16 +10,16 @@ import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 
-public class RefutationBasedRefiner<S extends State, CS extends State, R extends Refutation, P extends Precision, A extends Action>
-		implements Refiner<S, A, P, CS> {
+public class RefutationBasedRefiner<S extends State, R extends Refutation, P extends Precision, A extends Action>
+		implements Refiner<S, A, P> {
 
-	private final ConcretizerOp<? super S, A, CS, R> concretizerOp;
+	private final ConcretizerOp<? super S, A, R> concretizerOp;
 	private final RefinerOp<S, A, R, P> refinerOp;
 
 	private Trace<S, A> cex;
 	private P refinedPrecision;
 
-	public RefutationBasedRefiner(final ConcretizerOp<? super S, A, CS, R> concretizerOp,
+	public RefutationBasedRefiner(final ConcretizerOp<? super S, A, R> concretizerOp,
 			final RefinerOp<S, A, R, P> refinerOp) {
 		this.concretizerOp = checkNotNull(concretizerOp);
 		this.refinerOp = checkNotNull(refinerOp);
