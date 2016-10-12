@@ -10,7 +10,7 @@ import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 
-public class RefutationBasedRefiner<S extends State, R extends Refutation, P extends Precision, A extends Action>
+public class RefutationBasedRefiner<S extends State, A extends Action, P extends Precision, R extends Refutation>
 		implements Refiner<S, A, P> {
 
 	private final ConcretizerOp<? super S, A, R> concretizerOp;
