@@ -24,7 +24,7 @@ import hu.bme.mit.theta.analysis.algorithm.ArgNode;
 import hu.bme.mit.theta.analysis.algorithm.LifoWaitlist;
 import hu.bme.mit.theta.analysis.algorithm.Waitlist;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
-import hu.bme.mit.theta.analysis.algorithm.cegar.CegarLoopImpl;
+import hu.bme.mit.theta.analysis.algorithm.cegar.CegarLoop;
 import hu.bme.mit.theta.analysis.algorithm.cegar.GlobalPredItpRefinerOp;
 import hu.bme.mit.theta.analysis.algorithm.cegar.ItpRefutation;
 import hu.bme.mit.theta.analysis.algorithm.cegar.RefutationBasedRefiner;
@@ -85,7 +85,7 @@ public class StsPredTest {
 		final RefutationBasedRefiner<PredState, ExplState, ItpRefutation, SimplePredPrecision, StsAction> refiner = new RefutationBasedRefiner<>(
 				concretizerOp, refinerOp);
 
-		final CegarLoopImpl<PredState, StsAction, SimplePredPrecision, ExplState> cegarLoop = new CegarLoopImpl<>(
+		final CegarLoop<PredState, StsAction, SimplePredPrecision, ExplState> cegarLoop = new CegarLoop<>(
 				abstractor, refiner);
 
 		cegarLoop.check(precision);
