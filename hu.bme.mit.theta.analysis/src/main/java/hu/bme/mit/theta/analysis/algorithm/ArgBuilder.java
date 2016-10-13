@@ -27,6 +27,9 @@ public final class ArgBuilder<S extends State, A extends Action, P extends Preci
 	}
 
 	public void init(final ARG<S, A> arg, final P precision) {
+		checkNotNull(arg);
+		checkNotNull(precision);
+
 		final Collection<S> oldInitStates = arg.getInitNodes().stream().map(ArgNode::getState)
 				.collect(Collectors.toSet());
 		final Collection<? extends S> newInitStates = analysis.getInitFunction().getInitStates(precision);
