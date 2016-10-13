@@ -84,12 +84,13 @@ public final class ArgBuilder<S extends State, A extends Action, P extends Preci
 		}
 	}
 
-	public void prune(final ARG<S, A> arg, final ArgNode<S, A> node, final P newPrecision) {
-		checkNotNull(arg);
+	public void pruneAndExpand(final ArgNode<S, A> node, final P newPrecision) {
 		checkNotNull(node);
 		checkNotNull(newPrecision);
 
+		final ARG<S, A> arg = node.arg;
 		arg.prune(node);
+
 		if (node.getInEdge().isPresent()) {
 			final ArgEdge<S, A> edge = node.getInEdge().get();
 			final ArgNode<S, A> parent = edge.getSource();
