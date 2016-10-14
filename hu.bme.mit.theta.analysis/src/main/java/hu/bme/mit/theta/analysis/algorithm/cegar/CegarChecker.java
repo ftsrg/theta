@@ -9,14 +9,20 @@ import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyStatus;
 
-public class CegarChecker<S extends State, A extends Action, P extends Precision> implements SafetyChecker<S, A, P> {
+public final class CegarChecker<S extends State, A extends Action, P extends Precision>
+		implements SafetyChecker<S, A, P> {
 
 	private final Abstractor<S, A, ? super P> abstractor;
 	private final Refiner<S, A, P> refiner;
 
-	public CegarChecker(final Abstractor<S, A, ? super P> abstractor, final Refiner<S, A, P> refiner) {
+	private CegarChecker(final Abstractor<S, A, ? super P> abstractor, final Refiner<S, A, P> refiner) {
 		this.abstractor = checkNotNull(abstractor);
 		this.refiner = checkNotNull(refiner);
+	}
+
+	public static <S extends State, A extends Action, P extends Precision> CegarChecker<S, A, P> create(
+			final Abstractor<S, A, ? super P> abstractor, final Refiner<S, A, P> refiner) {
+		return new CegarChecker<>(abstractor, refiner);
 	}
 
 	@Override
