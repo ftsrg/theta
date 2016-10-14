@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.analysis.automaton;
+package hu.bme.mit.theta.analysis.loc;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -7,7 +7,7 @@ import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.formalism.common.Edge;
 import hu.bme.mit.theta.formalism.common.Loc;
 
-public final class AutomatonState<S extends State, L extends Loc<L, E>, E extends Edge<L, E>> implements State {
+public final class LocState<S extends State, L extends Loc<L, E>, E extends Edge<L, E>> implements State {
 
 	private static final int HASH_SEED = 3613;
 
@@ -16,14 +16,14 @@ public final class AutomatonState<S extends State, L extends Loc<L, E>, E extend
 	private final L loc;
 	private final S state;
 
-	private AutomatonState(final L loc, final S state) {
+	private LocState(final L loc, final S state) {
 		this.loc = checkNotNull(loc);
 		this.state = checkNotNull(state);
 	}
 
-	public static <S extends State, L extends Loc<L, E>, E extends Edge<L, E>> AutomatonState<S, L, E> create(
+	public static <S extends State, L extends Loc<L, E>, E extends Edge<L, E>> LocState<S, L, E> create(
 			final L loc, final S state) {
-		return new AutomatonState<>(loc, state);
+		return new LocState<>(loc, state);
 	}
 
 	////
@@ -54,8 +54,8 @@ public final class AutomatonState<S extends State, L extends Loc<L, E>, E extend
 	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
-		} else if (obj instanceof AutomatonState) {
-			final AutomatonState<?, ?, ?> that = (AutomatonState<?, ?, ?>) obj;
+		} else if (obj instanceof LocState) {
+			final LocState<?, ?, ?> that = (LocState<?, ?, ?>) obj;
 			return this.loc.equals(that.loc) && this.state.equals(that.state);
 		} else {
 			return false;

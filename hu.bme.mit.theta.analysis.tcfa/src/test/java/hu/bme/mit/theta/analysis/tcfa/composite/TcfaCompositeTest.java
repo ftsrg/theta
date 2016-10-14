@@ -11,10 +11,10 @@ import org.junit.Test;
 import hu.bme.mit.theta.analysis.algorithm.LifoWaitlist;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
 import hu.bme.mit.theta.analysis.algorithm.cegar.WaitlistBasedAbstractor;
-import hu.bme.mit.theta.analysis.automaton.AutomatonState;
 import hu.bme.mit.theta.analysis.composite.CompositeState;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.impl.NullPrecision;
+import hu.bme.mit.theta.analysis.loc.LocState;
 import hu.bme.mit.theta.analysis.tcfa.BasicTcfaAnalysis;
 import hu.bme.mit.theta.analysis.tcfa.TcfaAction;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
@@ -40,7 +40,7 @@ public class TcfaCompositeTest {
 
 		final BasicTcfaAnalysis analysis = BasicTcfaAnalysis.create(fischers, solver);
 
-		final Abstractor<AutomatonState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction, NullPrecision> abstractor = new WaitlistBasedAbstractor<>(
+		final Abstractor<LocState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction, NullPrecision> abstractor = new WaitlistBasedAbstractor<>(
 				analysis, s -> s.getLoc().getName().equals("(crit, crit)"), new LifoWaitlist<>());
 
 		abstractor.init(NullPrecision.getInstance());

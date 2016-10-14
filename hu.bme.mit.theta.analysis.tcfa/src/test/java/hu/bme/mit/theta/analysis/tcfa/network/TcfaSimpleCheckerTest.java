@@ -11,12 +11,12 @@ import java.util.Collections;
 import org.junit.Test;
 
 import hu.bme.mit.theta.analysis.algorithm.simple.SimpleChecker;
-import hu.bme.mit.theta.analysis.automaton.AutomatonPrecision;
 import hu.bme.mit.theta.analysis.composite.CompositeAnalysis;
 import hu.bme.mit.theta.analysis.composite.CompositePrecision;
 import hu.bme.mit.theta.analysis.composite.CompositeState;
 import hu.bme.mit.theta.analysis.expl.ExplPrecision;
 import hu.bme.mit.theta.analysis.expl.ExplState;
+import hu.bme.mit.theta.analysis.loc.LocPrecision;
 import hu.bme.mit.theta.analysis.pred.PredPrecision;
 import hu.bme.mit.theta.analysis.pred.PredState;
 import hu.bme.mit.theta.analysis.pred.SimplePredPrecision;
@@ -51,7 +51,7 @@ public class TcfaSimpleCheckerTest {
 
 		final CompositePrecision<ZonePrecision, ExplPrecision> subPrecision = CompositePrecision.create(
 				ZonePrecision.create(fischer.getClockVars()), ExplPrecision.create(Collections.singleton(vlock)));
-		final AutomatonPrecision<CompositePrecision<ZonePrecision, ExplPrecision>, TcfaLoc, TcfaEdge> precision = AutomatonPrecision
+		final LocPrecision<CompositePrecision<ZonePrecision, ExplPrecision>, TcfaLoc, TcfaEdge> precision = LocPrecision
 				.create(l -> subPrecision);
 
 		System.out.println(SimpleChecker.run(analysis, s -> false, precision));
@@ -73,7 +73,7 @@ public class TcfaSimpleCheckerTest {
 		final CompositePrecision<ZonePrecision, PredPrecision> subPrecision = CompositePrecision.create(
 				ZonePrecision.create(fischer.getClockVars()),
 				SimplePredPrecision.create(Arrays.asList(Eq(lock, Int(0)), Eq(lock, Int(1)))));
-		final AutomatonPrecision<CompositePrecision<ZonePrecision, PredPrecision>, TcfaLoc, TcfaEdge> precision = AutomatonPrecision
+		final LocPrecision<CompositePrecision<ZonePrecision, PredPrecision>, TcfaLoc, TcfaEdge> precision = LocPrecision
 				.create(l -> subPrecision);
 
 		System.out.println(SimpleChecker.run(analysis, s -> false, precision));
