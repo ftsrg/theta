@@ -88,7 +88,7 @@ public class StsExplTest {
 		final RefutationBasedRefiner<ExplState, StsAction, ExplPrecision, ItpRefutation> refiner = new RefutationBasedRefiner<>(
 				concretizerOp, refinerOp);
 
-		final SafetyChecker<ExplState, StsAction, ExplPrecision> checker = new CegarChecker<>(abstractor, refiner);
+		final SafetyChecker<ExplState, StsAction, ExplPrecision> checker = CegarChecker.create(abstractor, refiner);
 
 		checker.check(precision);
 
