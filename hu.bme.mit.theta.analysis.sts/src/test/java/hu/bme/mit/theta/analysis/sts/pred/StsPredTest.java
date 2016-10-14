@@ -76,7 +76,7 @@ public class StsPredTest {
 
 		final Waitlist<ArgNode<PredState, StsAction>> waitlist = new LifoWaitlist<>();
 
-		final Abstractor<PredState, StsAction, PredPrecision> abstractor = new WaitlistBasedAbstractor<>(analysis,
+		final Abstractor<PredState, StsAction, PredPrecision> abstractor = WaitlistBasedAbstractor.create(analysis,
 				target, waitlist);
 
 		final StsExprSeqConcretizer concretizerOp = new StsExprSeqConcretizer(sts, solver);
