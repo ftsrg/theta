@@ -58,8 +58,8 @@ public class TcfaNetworkPredTest {
 		final LocPrecision<CompositePrecision<ZonePrecision, PredPrecision>, TcfaLoc, TcfaEdge> precision = LocPrecision
 				.create(l -> subPrecision);
 
-		final Abstractor<LocState<CompositeState<ZoneState, PredState>, TcfaLoc, TcfaEdge>, TcfaAction, LocPrecision<CompositePrecision<ZonePrecision, PredPrecision>, TcfaLoc, TcfaEdge>> abstractor = new WaitlistBasedAbstractor<>(
-				analysis, s -> false, new LifoWaitlist<>());
+		final Abstractor<LocState<CompositeState<ZoneState, PredState>, TcfaLoc, TcfaEdge>, TcfaAction, LocPrecision<CompositePrecision<ZonePrecision, PredPrecision>, TcfaLoc, TcfaEdge>> abstractor = WaitlistBasedAbstractor
+				.create(analysis, s -> false, new LifoWaitlist<>());
 
 		abstractor.init(precision);
 		abstractor.check(precision);

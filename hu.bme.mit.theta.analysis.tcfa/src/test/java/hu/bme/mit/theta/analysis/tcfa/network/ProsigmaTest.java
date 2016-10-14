@@ -31,8 +31,8 @@ public class ProsigmaTest {
 
 		final BasicTcfaAnalysis analysis = BasicTcfaAnalysis.create(prosigma, solver);
 
-		final Abstractor<LocState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction, NullPrecision> abstractor = new WaitlistBasedAbstractor<>(
-				analysis, s -> false, new LifoWaitlist<>());
+		final Abstractor<LocState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction, NullPrecision> abstractor = WaitlistBasedAbstractor
+				.create(analysis, s -> false, new LifoWaitlist<>());
 
 		abstractor.init(NullPrecision.getInstance());
 		abstractor.check(NullPrecision.getInstance());

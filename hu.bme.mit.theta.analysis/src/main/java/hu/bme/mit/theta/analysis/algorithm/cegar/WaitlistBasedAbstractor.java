@@ -22,12 +22,18 @@ public class WaitlistBasedAbstractor<S extends State, A extends Action, P extend
 
 	private ARG<S, A> arg;
 
-	public WaitlistBasedAbstractor(final Analysis<S, A, P> analysis, final Predicate<? super S> target,
+	private WaitlistBasedAbstractor(final Analysis<S, A, P> analysis, final Predicate<? super S> target,
 			final Waitlist<ArgNode<S, A>> waitlist) {
 		checkNotNull(analysis);
 		checkNotNull(target);
 		this.waitlist = checkNotNull(waitlist);
 		argBuilder = ArgBuilder.create(analysis, target);
+	}
+
+	public static <S extends State, A extends Action, P extends Precision> WaitlistBasedAbstractor<S, A, P> create(
+			final Analysis<S, A, P> analysis, final Predicate<? super S> target,
+			final Waitlist<ArgNode<S, A>> waitlist) {
+		return new WaitlistBasedAbstractor<>(analysis, target, waitlist);
 	}
 
 	@Override

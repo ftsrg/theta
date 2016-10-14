@@ -39,11 +39,10 @@ public class TcfaExplTest {
 				TcfaExplAnalysis.create(solver));
 
 		final ExplPrecision subPrecision = ExplPrecision.create(Collections.singleton(vlock));
-		final LocPrecision<ExplPrecision, TcfaLoc, TcfaEdge> precision = LocPrecision
-				.create(l -> subPrecision);
+		final LocPrecision<ExplPrecision, TcfaLoc, TcfaEdge> precision = LocPrecision.create(l -> subPrecision);
 
-		final Abstractor<LocState<ExplState, TcfaLoc, TcfaEdge>, TcfaAction, LocPrecision<ExplPrecision, TcfaLoc, TcfaEdge>> abstractor = new WaitlistBasedAbstractor<>(
-				analyis, s -> s.getLoc().equals(fischer.getCritical()), new LifoWaitlist<>());
+		final Abstractor<LocState<ExplState, TcfaLoc, TcfaEdge>, TcfaAction, LocPrecision<ExplPrecision, TcfaLoc, TcfaEdge>> abstractor = WaitlistBasedAbstractor
+				.create(analyis, s -> s.getLoc().equals(fischer.getCritical()), new LifoWaitlist<>());
 
 		abstractor.init(precision);
 		abstractor.check(precision);
