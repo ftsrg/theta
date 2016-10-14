@@ -7,8 +7,6 @@ import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.Domain;
 import hu.bme.mit.theta.analysis.InitFunction;
 import hu.bme.mit.theta.analysis.TransferFunction;
-import hu.bme.mit.theta.analysis.automaton.AutomatonPrecision;
-import hu.bme.mit.theta.analysis.automaton.AutomatonState;
 import hu.bme.mit.theta.analysis.composite.CompositeAnalysis;
 import hu.bme.mit.theta.analysis.composite.CompositePrecision;
 import hu.bme.mit.theta.analysis.composite.CompositeState;
@@ -16,6 +14,8 @@ import hu.bme.mit.theta.analysis.expl.ExplPrecision;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.impl.FixedPrecisionAnalysis;
 import hu.bme.mit.theta.analysis.impl.NullPrecision;
+import hu.bme.mit.theta.analysis.loc.LocPrecision;
+import hu.bme.mit.theta.analysis.loc.LocState;
 import hu.bme.mit.theta.analysis.tcfa.expl.TcfaExplAnalysis;
 import hu.bme.mit.theta.analysis.tcfa.zone.TcfaZoneAnalysis;
 import hu.bme.mit.theta.analysis.zone.ZonePrecision;
@@ -26,22 +26,22 @@ import hu.bme.mit.theta.formalism.tcfa.TcfaLoc;
 import hu.bme.mit.theta.solver.Solver;
 
 public final class BasicTcfaAnalysis implements
-		Analysis<AutomatonState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction, NullPrecision> {
+		Analysis<LocState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction, NullPrecision> {
 
-	private final Analysis<AutomatonState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction, NullPrecision> analysis;
+	private final Analysis<LocState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction, NullPrecision> analysis;
 
 	private BasicTcfaAnalysis(final TCFA tcfa, final Solver solver) {
 		checkNotNull(tcfa);
 		checkNotNull(solver);
 
-		final Analysis<AutomatonState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction, AutomatonPrecision<CompositePrecision<ZonePrecision, ExplPrecision>, TcfaLoc, TcfaEdge>> componentAnalysis = TcfaAnalyis
+		final Analysis<LocState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction, LocPrecision<CompositePrecision<ZonePrecision, ExplPrecision>, TcfaLoc, TcfaEdge>> componentAnalysis = TcfaAnalyis
 				.create(tcfa.getInitLoc(),
 						CompositeAnalysis.create(TcfaZoneAnalysis.getInstance(), TcfaExplAnalysis.create(solver)));
 
 		final CompositePrecision<ZonePrecision, ExplPrecision> precision = CompositePrecision
 				.create(ZonePrecision.create(tcfa.getClockVars()), ExplPrecision.create(tcfa.getDataVars()));
 
-		final AutomatonPrecision<CompositePrecision<ZonePrecision, ExplPrecision>, TcfaLoc, TcfaEdge> fixedPrecision = AutomatonPrecision
+		final LocPrecision<CompositePrecision<ZonePrecision, ExplPrecision>, TcfaLoc, TcfaEdge> fixedPrecision = LocPrecision
 				.create(l -> precision);
 
 		analysis = FixedPrecisionAnalysis.create(componentAnalysis, fixedPrecision);
@@ -52,22 +52,22 @@ public final class BasicTcfaAnalysis implements
 	}
 
 	@Override
-	public Domain<AutomatonState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>> getDomain() {
+	public Domain<LocState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>> getDomain() {
 		return analysis.getDomain();
 	}
 
 	@Override
-	public InitFunction<AutomatonState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, NullPrecision> getInitFunction() {
+	public InitFunction<LocState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, NullPrecision> getInitFunction() {
 		return analysis.getInitFunction();
 	}
 
 	@Override
-	public TransferFunction<AutomatonState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction, NullPrecision> getTransferFunction() {
+	public TransferFunction<LocState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction, NullPrecision> getTransferFunction() {
 		return analysis.getTransferFunction();
 	}
 
 	@Override
-	public ActionFunction<? super AutomatonState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, ? extends TcfaAction> getActionFunction() {
+	public ActionFunction<? super LocState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, ? extends TcfaAction> getActionFunction() {
 		return analysis.getActionFunction();
 	}
 

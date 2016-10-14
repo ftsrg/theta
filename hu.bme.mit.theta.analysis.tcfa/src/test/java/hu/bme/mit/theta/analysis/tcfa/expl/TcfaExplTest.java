@@ -10,10 +10,10 @@ import org.junit.Test;
 import hu.bme.mit.theta.analysis.algorithm.LifoWaitlist;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
 import hu.bme.mit.theta.analysis.algorithm.cegar.WaitlistBasedAbstractor;
-import hu.bme.mit.theta.analysis.automaton.AutomatonPrecision;
-import hu.bme.mit.theta.analysis.automaton.AutomatonState;
 import hu.bme.mit.theta.analysis.expl.ExplPrecision;
 import hu.bme.mit.theta.analysis.expl.ExplState;
+import hu.bme.mit.theta.analysis.loc.LocPrecision;
+import hu.bme.mit.theta.analysis.loc.LocState;
 import hu.bme.mit.theta.analysis.tcfa.TcfaAction;
 import hu.bme.mit.theta.analysis.tcfa.TcfaAnalyis;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
@@ -39,10 +39,10 @@ public class TcfaExplTest {
 				TcfaExplAnalysis.create(solver));
 
 		final ExplPrecision subPrecision = ExplPrecision.create(Collections.singleton(vlock));
-		final AutomatonPrecision<ExplPrecision, TcfaLoc, TcfaEdge> precision = AutomatonPrecision
+		final LocPrecision<ExplPrecision, TcfaLoc, TcfaEdge> precision = LocPrecision
 				.create(l -> subPrecision);
 
-		final Abstractor<AutomatonState<ExplState, TcfaLoc, TcfaEdge>, TcfaAction, AutomatonPrecision<ExplPrecision, TcfaLoc, TcfaEdge>> abstractor = new WaitlistBasedAbstractor<>(
+		final Abstractor<LocState<ExplState, TcfaLoc, TcfaEdge>, TcfaAction, LocPrecision<ExplPrecision, TcfaLoc, TcfaEdge>> abstractor = new WaitlistBasedAbstractor<>(
 				analyis, s -> s.getLoc().equals(fischer.getCritical()), new LifoWaitlist<>());
 
 		abstractor.init(precision);

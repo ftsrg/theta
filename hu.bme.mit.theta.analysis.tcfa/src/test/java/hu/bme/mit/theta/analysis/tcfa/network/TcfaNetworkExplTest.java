@@ -8,13 +8,13 @@ import org.junit.Test;
 import hu.bme.mit.theta.analysis.algorithm.LifoWaitlist;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
 import hu.bme.mit.theta.analysis.algorithm.cegar.WaitlistBasedAbstractor;
-import hu.bme.mit.theta.analysis.automaton.AutomatonPrecision;
-import hu.bme.mit.theta.analysis.automaton.AutomatonState;
 import hu.bme.mit.theta.analysis.composite.CompositeAnalysis;
 import hu.bme.mit.theta.analysis.composite.CompositePrecision;
 import hu.bme.mit.theta.analysis.composite.CompositeState;
 import hu.bme.mit.theta.analysis.expl.ExplPrecision;
 import hu.bme.mit.theta.analysis.expl.ExplState;
+import hu.bme.mit.theta.analysis.loc.LocPrecision;
+import hu.bme.mit.theta.analysis.loc.LocState;
 import hu.bme.mit.theta.analysis.tcfa.TcfaAction;
 import hu.bme.mit.theta.analysis.tcfa.TcfaAnalyis;
 import hu.bme.mit.theta.analysis.tcfa.expl.TcfaExplAnalysis;
@@ -47,10 +47,10 @@ public class TcfaNetworkExplTest {
 
 		final CompositePrecision<ZonePrecision, ExplPrecision> subPrecision = CompositePrecision
 				.create(ZonePrecision.create(fischer.getClockVars()), ExplPrecision.create(fischer.getDataVars()));
-		final AutomatonPrecision<CompositePrecision<ZonePrecision, ExplPrecision>, TcfaLoc, TcfaEdge> precision = AutomatonPrecision
+		final LocPrecision<CompositePrecision<ZonePrecision, ExplPrecision>, TcfaLoc, TcfaEdge> precision = LocPrecision
 				.create(l -> subPrecision);
 
-		final Abstractor<AutomatonState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction, AutomatonPrecision<CompositePrecision<ZonePrecision, ExplPrecision>, TcfaLoc, TcfaEdge>> abstractor = new WaitlistBasedAbstractor<>(
+		final Abstractor<LocState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction, LocPrecision<CompositePrecision<ZonePrecision, ExplPrecision>, TcfaLoc, TcfaEdge>> abstractor = new WaitlistBasedAbstractor<>(
 				analysis, s -> false, new LifoWaitlist<>());
 
 		abstractor.init(precision);

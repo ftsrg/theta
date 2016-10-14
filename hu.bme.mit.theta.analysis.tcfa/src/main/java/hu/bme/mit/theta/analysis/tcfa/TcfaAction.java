@@ -8,7 +8,7 @@ import java.util.List;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
-import hu.bme.mit.theta.analysis.automaton.AutomatonAction;
+import hu.bme.mit.theta.analysis.loc.LocAction;
 import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.stmt.Stmt;
@@ -20,7 +20,7 @@ import hu.bme.mit.theta.formalism.ta.op.impl.ClockOps;
 import hu.bme.mit.theta.formalism.tcfa.TcfaEdge;
 import hu.bme.mit.theta.formalism.tcfa.TcfaLoc;
 
-public final class TcfaAction implements AutomatonAction<TcfaLoc, TcfaEdge> {
+public final class TcfaAction implements LocAction<TcfaLoc, TcfaEdge> {
 
 	private final TcfaEdge edge;
 

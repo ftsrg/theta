@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.analysis.automaton;
+package hu.bme.mit.theta.analysis.loc;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -7,33 +7,33 @@ import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.formalism.common.Edge;
 import hu.bme.mit.theta.formalism.common.Loc;
 
-public final class AutomatonDomain<S extends State, L extends Loc<L, E>, E extends Edge<L, E>>
-		implements Domain<AutomatonState<S, L, E>> {
+public final class LocDomain<S extends State, L extends Loc<L, E>, E extends Edge<L, E>>
+		implements Domain<LocState<S, L, E>> {
 
 	private final Domain<S> domain;
 
-	private AutomatonDomain(final Domain<S> domain) {
+	private LocDomain(final Domain<S> domain) {
 		this.domain = checkNotNull(domain);
 	}
 
-	public static <S extends State, L extends Loc<L, E>, E extends Edge<L, E>> AutomatonDomain<S, L, E> create(
+	public static <S extends State, L extends Loc<L, E>, E extends Edge<L, E>> LocDomain<S, L, E> create(
 			final Domain<S> domain) {
-		return new AutomatonDomain<>(domain);
+		return new LocDomain<>(domain);
 	}
 
 	@Override
-	public boolean isTop(final AutomatonState<S, L, E> state) {
+	public boolean isTop(final LocState<S, L, E> state) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
 
 	@Override
-	public boolean isBottom(final AutomatonState<S, L, E> state) {
+	public boolean isBottom(final LocState<S, L, E> state) {
 		return domain.isBottom(state.getState());
 	}
 
 	@Override
-	public boolean isLeq(final AutomatonState<S, L, E> state1, final AutomatonState<S, L, E> state2) {
+	public boolean isLeq(final LocState<S, L, E> state1, final LocState<S, L, E> state2) {
 		return state1.getLoc().equals(state2.getLoc()) && domain.isLeq(state1.getState(), state2.getState());
 	}
 
