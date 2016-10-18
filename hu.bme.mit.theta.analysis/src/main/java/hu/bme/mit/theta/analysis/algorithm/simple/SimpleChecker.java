@@ -29,9 +29,8 @@ public class SimpleChecker {
 				return false;
 			}
 
-			if (passed.stream().allMatch(s -> !analysis.getDomain().isLeq(state, s))) {
+			if (!isCovered(state, passed, analysis)) {
 				passed.add(state);
-				System.out.println(passed.size());
 				for (final A action : analysis.getActionFunction().getEnabledActionsFor(state)) {
 					final Collection<? extends S> succStates = analysis.getTransferFunction().getSuccStates(state,
 							action, precision);
@@ -41,6 +40,11 @@ public class SimpleChecker {
 		}
 
 		return true;
+	}
+
+	private static <S extends State, A extends Action, P extends Precision> boolean isCovered(final S state,
+			final Collection<S> passed, final Analysis<S, A, P> analysis) {
+		return passed.stream().anyMatch(s -> analysis.getDomain().isLeq(state, s));
 	}
 
 }
