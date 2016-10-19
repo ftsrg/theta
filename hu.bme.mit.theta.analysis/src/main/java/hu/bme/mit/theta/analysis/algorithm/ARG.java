@@ -129,6 +129,16 @@ public final class ARG<S extends State, A extends Action> {
 
 	}
 
+	public void cover(final ArgNode<S, A> node, final ArgNode<S, A> coveringNode) {
+		checkNotNull(node);
+		checkNotNull(coveringNode);
+		checkArgument(node.arg == this);
+		checkArgument(coveringNode.arg == this);
+		checkArgument(!node.coveringNode.isPresent());
+		node.coveringNode = Optional.of(coveringNode);
+		coveringNode.coveredNodes.add(node);
+	}
+
 	////
 
 	private ArgNode<S, A> createNode(final S state, final boolean target) {

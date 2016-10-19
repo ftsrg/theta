@@ -1,8 +1,5 @@
 package hu.bme.mit.theta.analysis.algorithm;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.common.ObjectUtils.toStringBuilder;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
@@ -26,7 +23,7 @@ public final class ArgNode<S extends State, A extends Action> {
 	Optional<ArgEdge<S, A>> inEdge;
 	final Collection<ArgEdge<S, A>> outEdges;
 
-	private Optional<ArgNode<S, A>> coveringNode;
+	Optional<ArgNode<S, A>> coveringNode;
 	final Collection<ArgNode<S, A>> coveredNodes;
 
 	ArgNode(final ARG<S, A> arg, final S state, final int id, final boolean target) {
@@ -82,28 +79,9 @@ public final class ArgNode<S extends State, A extends Action> {
 
 	////
 
-	public void coverWith(final ArgNode<S, A> that) {
-		checkNotNull(that);
-		checkArgument(that.arg == this.arg);
-		checkArgument(that.id < this.id);
-		checkArgument(!that.isCovered());
-		checkState(!this.isCovered());
-		checkState(descendantsHaveNoCoveringNode());
-		this.coveringNode = Optional.of(that);
-		that.coveredNodes.add(this);
-	}
-
 	public boolean mayCover(final ArgNode<S, A> that) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO: auto-generated method stub");
-	}
-
-	private boolean descendantsHaveNoCoveringNode() {
-		if (this.coveringNode.isPresent()) {
-			return false;
-		} else {
-			return outEdges.stream().map(ArgEdge::getTarget).allMatch(ArgNode::descendantsHaveNoCoveringNode);
-		}
 	}
 
 	public boolean isCovered() {

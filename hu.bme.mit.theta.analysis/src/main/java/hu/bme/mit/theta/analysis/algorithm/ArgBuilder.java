@@ -66,20 +66,21 @@ public final class ArgBuilder<S extends State, A extends Action, P extends Preci
 	public void close(final ArgNode<S, A> node) {
 		checkNotNull(node);
 
+		final ARG<S, A> arg = node.arg;
 		final S state = node.getState();
-		for (final ArgNode<S, A> nodeToCoverWith : node.arg.getNodes()) {
+
+		for (final ArgNode<S, A> nodeToCoverWith : arg.getNodes()) {
 			if (nodeToCoverWith.getId() >= node.getId()) {
 				return;
 			}
 
-			if (nodeToCoverWith.isCovered()) {
-				continue;
-			}
-
 			final S stateToCoverWith = nodeToCoverWith.getState();
+
 			if (analysis.getDomain().isLeq(state, stateToCoverWith)) {
-				node.coverWith(nodeToCoverWith);
-				return;
+				if (!nodeToCoverWith.isCovered()) {
+					arg.cover(node, nodeToCoverWith);
+					return;
+				}
 			}
 		}
 	}
