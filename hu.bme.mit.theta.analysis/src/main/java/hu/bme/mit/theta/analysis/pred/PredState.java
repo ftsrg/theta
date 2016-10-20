@@ -71,7 +71,13 @@ public final class PredState implements ExprState {
 	public Expr<? extends BoolType> toExpr() {
 		Expr<? extends BoolType> result = expr;
 		if (result == null) {
-			result = Exprs.And(preds);
+			if (preds.size() == 0) {
+				result = Exprs.True();
+			} else if (preds.size() == 1) {
+				result = preds.iterator().next();
+			} else {
+				result = Exprs.And(preds);
+			}
 			expr = result;
 		}
 		return result;
