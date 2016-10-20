@@ -11,12 +11,12 @@ public final class StmtToExprResult {
 	final Collection<Expr<? extends BoolType>> exprs;
 	final VarIndexes indexes;
 
-	private StmtToExprResult(final Collection<? extends Expr<? extends BoolType>> exprs, final VarIndexes indexes) {
+	private StmtToExprResult(final Iterable<? extends Expr<? extends BoolType>> exprs, final VarIndexes indexes) {
 		this.exprs = ImmutableList.copyOf(exprs);
 		this.indexes = indexes;
 	}
 
-	static StmtToExprResult of(final Collection<? extends Expr<? extends BoolType>> exprs, final VarIndexes indexes) {
+	static StmtToExprResult of(final Iterable<? extends Expr<? extends BoolType>> exprs, final VarIndexes indexes) {
 		return new StmtToExprResult(exprs, indexes);
 	}
 

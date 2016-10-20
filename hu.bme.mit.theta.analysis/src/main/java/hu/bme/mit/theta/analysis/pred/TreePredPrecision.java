@@ -3,7 +3,6 @@ package hu.bme.mit.theta.analysis.pred;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -22,11 +21,11 @@ public final class TreePredPrecision implements PredPrecision {
 
 	private final Node root;
 
-	public static TreePredPrecision create(final Collection<? extends Expr<? extends BoolType>> preds) {
+	public static TreePredPrecision create(final Iterable<? extends Expr<? extends BoolType>> preds) {
 		return new TreePredPrecision(preds);
 	}
 
-	private TreePredPrecision(final Collection<? extends Expr<? extends BoolType>> preds) {
+	private TreePredPrecision(final Iterable<? extends Expr<? extends BoolType>> preds) {
 		checkNotNull(preds);
 
 		final Set<Expr<? extends BoolType>> ponatedPreds = new HashSet<>();
