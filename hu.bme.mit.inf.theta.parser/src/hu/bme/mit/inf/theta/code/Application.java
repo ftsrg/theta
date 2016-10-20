@@ -2,7 +2,9 @@ package hu.bme.mit.inf.theta.code;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.eclipse.core.runtime.CoreException;
 
@@ -13,6 +15,8 @@ import hu.bme.mit.inf.theta.frontend.Optimizer;
 import hu.bme.mit.inf.theta.frontend.cfa.FunctionToCFATransformer;
 import hu.bme.mit.inf.theta.frontend.dependency.CallGraph;
 import hu.bme.mit.inf.theta.frontend.dependency.ProgramDependency;
+import hu.bme.mit.inf.theta.frontend.dependency.ProgramDependency.PDGNode;
+import hu.bme.mit.inf.theta.frontend.dependency.CallGraph.CallGraphNode;
 import hu.bme.mit.inf.theta.frontend.ir.Function;
 import hu.bme.mit.inf.theta.frontend.ir.GlobalContext;
 import hu.bme.mit.inf.theta.frontend.ir.utils.IrPrinter;
@@ -26,24 +30,31 @@ class Application {
 	public static void main(String[] args)
 			throws CoreException, FileNotFoundException, IOException, InterruptedException {
 
-		GlobalContext context = Parser.parse("func-cg.c");
+		GlobalContext context = Parser.parse("hello.c");
 		Optimizer opt = new Optimizer(context);
 		opt.setLogger(new ConsoleLogger(7));
 
 		CallGraph cg = CallGraph.buildCallGraph(context);
 
-		//opt.addFunctionTransformer(new ConstantPropagator());
-		//opt.addFunctionTransformer(new DeadBranchEliminator());
-		//opt.addContextTransformer(new FunctionInliner());
+		opt.addFunctionTransformer(new ConstantPropagator());
+		opt.addFunctionTransformer(new DeadBranchEliminator());
+		opt.addContextTransformer(new FunctionInliner());
+		//opt.addPostContextFunctionTransformer(new ConstantPropagator());
+		//opt.addPostContextFunctionTransformer(new DeadBranchEliminator());
 		//opt.dump();
 
+		opt.inlineGlobalVariables();
 		opt.transform();
 
-		System.out.println(IrPrinter.callGraph(cg));
-		//opt.dump();
+		opt.dump();
+
 
 		//System.out.println(IrPrinter.toGraphvizString(context.getFunctionByName("main")));
 
-		//List<CFA> cfas = opt.createCfaSlices();
+
+		List<CFA> cfas = opt.getProgramSlices();
+		cfas.forEach(cfa -> {
+			System.out.println(CfaPrinter.toGraphvizSting(cfa));
+		});
 	}
 }

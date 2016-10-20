@@ -8,8 +8,10 @@ import hu.bme.mit.inf.theta.common.logging.Logger;
 import hu.bme.mit.inf.theta.common.logging.impl.NullLogger;
 import hu.bme.mit.inf.theta.formalism.cfa.CFA;
 import hu.bme.mit.inf.theta.frontend.cfa.FunctionToCFATransformer;
+import hu.bme.mit.inf.theta.frontend.ir.BasicBlock;
 import hu.bme.mit.inf.theta.frontend.ir.Function;
 import hu.bme.mit.inf.theta.frontend.ir.GlobalContext;
+import hu.bme.mit.inf.theta.frontend.ir.node.NodeFactory;
 import hu.bme.mit.inf.theta.frontend.ir.utils.IrPrinter;
 import hu.bme.mit.inf.theta.frontend.transform.ContextTransformer;
 import hu.bme.mit.inf.theta.frontend.transform.FunctionSlicer;
@@ -19,6 +21,10 @@ public class Optimizer {
 
 	private final List<FunctionTransformer> funcTransformers = new ArrayList<>();
 	private final List<ContextTransformer> contextTransformers = new ArrayList<>();
+
+	private final List<FunctionTransformer> postContextFunctionTransformers = new ArrayList<>();
+
+
 	private final FunctionSlicer slicer = new FunctionSlicer();
 	private final GlobalContext context;
 
@@ -36,10 +42,15 @@ public class Optimizer {
 		this.contextTransformers.add(pass);
 	}
 
+	public void addPostContextFunctionTransformer(FunctionTransformer pass) {
+		this.postContextFunctionTransformers.add(pass);
+	}
+
 	public void transform() {
 		// Perform local function transformations
 		for (FunctionTransformer pass : this.funcTransformers) {
-			for (Function func : this.context.functions()) {
+			List<Function> functions = this.context.functions().stream().filter(f -> f.isEnabled()).collect(Collectors.toList());
+			for (Function func : functions) {
 				this.log.writeln(
 					String.format("Executing pass '%s' on function '%s'", pass.getTransformationName(), func.getName()),
 					7
@@ -56,6 +67,36 @@ public class Optimizer {
 					7
 				);
 		}
+
+		// Perform local function transformations
+		for (FunctionTransformer pass : this.postContextFunctionTransformers) {
+			List<Function> functions = this.context.functions().stream().filter(f -> f.isEnabled()).collect(Collectors.toList());
+			for (Function func : functions) {
+				this.log.writeln(
+					String.format("Executing pass '%s' on function '%s'", pass.getTransformationName(), func.getName()),
+					7
+				);
+				pass.transform(func);
+			}
+		}
+	}
+
+	/**
+	 * Inlines global variable initialization into 'main'.
+	 */
+	public void inlineGlobalVariables() {
+		Function main = this.context.getFunctionByName("main");
+		BasicBlock bb = main.createBlock("globals_init");
+
+		this.context.globals().forEach(glob -> {
+			bb.addNode(glob.getAssignment());
+		});
+
+		BasicBlock codeEntry = main.getEntryNode().getTarget();
+		bb.terminate(NodeFactory.Goto(codeEntry));
+
+		main.getEntryNode().replaceTarget(codeEntry, bb);
+		main.normalize();
 	}
 
 	public List<CFA> createCfas() {
@@ -65,12 +106,25 @@ public class Optimizer {
 			.collect(Collectors.toList());
 	}
 
+	public List<CFA> getProgramSlices() {
+		Function main = this.context.getFunctionByName("main");
+		List<Function> slices = this.slicer.allSlices(main, FunctionSlicer.SLICE_ON_ASSERTS);
+
+		return slices
+			.stream()
+			.map(slice -> FunctionToCFATransformer.createSBE(slice))
+			.collect(Collectors.toList());
+	}
+
 	public List<Function> createSlices() {
 		List<Function> slices = new ArrayList<>();
 
-		this.context.functions().forEach(func -> {
-			slices.addAll(this.slicer.allSlices(func, FunctionSlicer.SLICE_ON_ASSERTS));
-		});
+		this.context.functions()
+			.stream()
+			.filter(func -> func.isEnabled())
+			.forEach(func -> {
+				slices.addAll(this.slicer.allSlices(func, FunctionSlicer.SLICE_ON_ASSERTS));
+			});
 
 		this.log.writeln(String.format("Found %d slices.", slices.size()), 7);
 

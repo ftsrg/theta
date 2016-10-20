@@ -422,7 +422,7 @@ extern int __VERIFIER_nondet_int();
 	    	error_21: exit(0);
 	    }
 	    if(((((((!(a17==1)&&!(a7==1))&&!(a20==1))&&(a8==13))&&(a12==8))&&(a16==4))&&(a21==1))){
-	    	error_44: assert(0);
+	    	error_44: exit(0);
 	    }
 	    if((((((((a17==1)&&!(a7==1))&&!(a20==1))&&(a8==13))&&(a12==8))&&(a16==4))&&(a21==1))){
 	    	error_41: exit(0);
@@ -494,7 +494,7 @@ extern int __VERIFIER_nondet_int();
 	    	error_49: exit(0);
 	    }
 	    if((((((((a17==1)&&(a7==1))&&(a20==1))&&(a8==13))&&(a12==8))&&(a16==5))&&(a21==1))){
-	    	error_0: exit(0);
+	    	error_0: assert(0);
 	    }
 	    if((((((((a17==1)&&(a7==1))&&(a20==1))&&(a8==14))&&(a12==8))&&(a16==4))&&(a21==1))){
 	    	error_11: exit(0);
@@ -580,12 +580,12 @@ int main()
     while(1)
     {
         // read input
-        int xy;
-        xy = __VERIFIER_nondet_int();
-        if ((xy != 1) && (xy != 2) && (xy != 3) && (xy != 4) && (xy != 5) && (xy != 6)) return -2;
+        int input;
+        input = __VERIFIER_nondet_int();
+        if ((input != 1) && (input != 2) && (input != 3) && (input != 4) && (input != 5) && (input != 6)) return -2;
 
         // operate eca engine
-        output = calculate_output(xy);
+        output = calculate_output(input);
 
     }
 }

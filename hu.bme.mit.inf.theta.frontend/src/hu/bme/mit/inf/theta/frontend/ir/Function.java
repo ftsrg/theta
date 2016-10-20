@@ -43,7 +43,6 @@ public class Function {
 	private final String name;
 	private final ProcDecl<? extends Type> proc;
 	private final List<VarDecl<? extends Type>> locals = new ArrayList<>();
-	//private final Map<String, BasicBlock> blocksMap = new HashMap<>();
 	private final Map<ParamDecl<? extends Type>, VarDecl<? extends Type>> args = new HashMap<>();
 	private final List<BasicBlock> blocks = new ArrayList<>();
 
@@ -56,6 +55,8 @@ public class Function {
 	private static int copyId = 0;
 
 	private GlobalContext context;
+
+	private boolean isEnabled = true;
 
 	public Function(String name, ProcDecl<? extends Type> proc) {
 		this.name = name;
@@ -442,6 +443,14 @@ public class Function {
 		this.blocks.remove(block);
 
 		return Tuple.of(before, split, after);
+	}
+
+	public void disable() {
+		this.isEnabled = false;
+	}
+
+	public boolean isEnabled() {
+		return this.isEnabled;
 	}
 
 	public ProcDecl<? extends Type> getProcDecl() {

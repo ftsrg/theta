@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import hu.bme.mit.inf.theta.common.Product3;
 import hu.bme.mit.inf.theta.core.expr.Expr;
 import hu.bme.mit.inf.theta.core.expr.impl.Exprs;
 import hu.bme.mit.inf.theta.core.type.BoolType;
@@ -40,8 +41,22 @@ public class FunctionToCFATransformer {
 
 	public static CFA createLBE(Function func) {
 		MutableCfa cfa = new MutableCfa();
-		List<BasicBlock> blocks = func.getBlocksDFS();
 		Map<BasicBlock, CfaLoc> mapping = new HashMap<>();
+
+		// Create a work copy of the input function
+		Function copy = func.copy();
+		List<BasicBlock> blocks = copy.getBlocksDFS();
+		for (BasicBlock block : blocks) {
+			for (int i = 0; i < block.countNodes(); i++) {
+				IrNode node = block.getNodeByIndex(i);
+				if (node instanceof AssertNode) {
+					// (pre, split, post)
+					Product3<BasicBlock, BasicBlock, BasicBlock> split = copy.splitBlock(block, i);
+
+				}
+			}
+		}
+
 
 		blocks.forEach(block -> mapping.put(block, cfa.createLoc()));
 
@@ -96,8 +111,6 @@ public class FunctionToCFATransformer {
 		}
 
 		IrNode firstNode = func.getEntryNode().getTarget().getNodeByIndex(0);
-
-		System.out.println(firstNode);
 
 		// Replace the initial node
 		cfa.removeLoc(mapping.get(firstNode));

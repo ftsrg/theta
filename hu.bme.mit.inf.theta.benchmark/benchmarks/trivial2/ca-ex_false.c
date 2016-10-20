@@ -2,7 +2,7 @@
 extern int nondet_int();
 
 int main() {
-	int x = nondet_int();
+	int x = 11;
 	int i = 0;
 	int sum = 0;
 

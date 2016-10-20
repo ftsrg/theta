@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Timer;
 import java.util.concurrent.Callable;
@@ -38,7 +39,8 @@ public class BenchmarkConfiguration {
 	private OptConfig optConfig = new OptConfig();
 	private int timeout = 0;
 	private boolean slice;
-	private int maxBmcDepth = 100;
+	private int maxBmcDepth = 20;
+	private int logLevel = 7;
 
 	/// Timers
 	private final Timer suiteTimer = new Timer();
@@ -61,12 +63,20 @@ public class BenchmarkConfiguration {
 		this.optConfig.contextTransformers.add(pass);
 	}
 
+	public void addPostContextFunctionTransformer(FunctionTransformer pass) {
+		this.optConfig.postContextFunctionTransformers.add(pass);
+	}
+
 	public void setMaxBmcDepth(int depth) {
 		this.maxBmcDepth = depth;
 	}
 
 	public void setSlice(boolean slice) {
 		this.slice = slice;
+	}
+
+	public void setLogLevel(int level) {
+		this.logLevel = level;
 	}
 
 	public void run() {
@@ -88,7 +98,7 @@ public class BenchmarkConfiguration {
 				if (!logFile.exists() && !logFile.isDirectory())
 					logFile.createNewFile();
 
-				Logger log = new FileLogger(7, logFileName, true);
+				Logger log = new FileLogger(this.logLevel, logFileName, true);
 
 				System.out.print("TEST " + test + "...");
 
@@ -126,11 +136,15 @@ public class BenchmarkConfiguration {
 		GlobalContext context = Parser.parse(file);
 		Optimizer opt = optConfig.createOpt(context, log);
 
+		opt.inlineGlobalVariables();
 		opt.transform();
 
 		opt.dump();
 
 		List<CFA> cfas = slice ? opt.createCfaSlices() : opt.createCfas();
+
+		if (cfas.size() == 0) // if no slices were found for asserts, then no asserts can fail
+			return CheckResult.CHECK_PASSED;
 
 		cfas.forEach(cfa -> {
 			log.writeHeader("CFA SLICES", 1);
@@ -139,9 +153,9 @@ public class BenchmarkConfiguration {
 
 		BoundedModelChecker bmc = new BoundedModelChecker(log);
 
-		for (CFA cfa : cfas) {
+		//for (CFA cfa : cfas) {
 			ExecutorService exec = Executors.newSingleThreadExecutor();
-			BmcRunner runner = new BmcRunner(bmc, this.maxBmcDepth, cfa);
+			BmcRunner runner = new BmcRunner(bmc, this.maxBmcDepth, cfas);
 			Future<CheckResult> future = exec.submit(runner);
 
 			try {
@@ -163,7 +177,7 @@ public class BenchmarkConfiguration {
 				exec.shutdown();
 			}
 
-		}
+		//}
 
 		return CheckResult.CHECK_UNKNOWN;
 	}
@@ -173,17 +187,17 @@ public class BenchmarkConfiguration {
 		public volatile CheckResult res = CheckResult.CHECK_INTERNAL_ERROR;
 		public BoundedModelChecker bmc;
 		public int k;
-		public CFA cfa;
+		public Collection<CFA> cfas;
 
-		public BmcRunner(BoundedModelChecker bmc, int k, CFA cfa) {
+		public BmcRunner(BoundedModelChecker bmc, int k, Collection<CFA> cfas) {
 			this.bmc = bmc;
 			this.k = k;
-			this.cfa = cfa;
+			this.cfas = cfas;
 		}
 
 		@Override
 		public CheckResult call() {
-			return this.bmc.check(this.cfa, this.k);
+			return this.bmc.checkAll(this.cfas, this.k);
 		}
 
 	}
@@ -191,6 +205,7 @@ public class BenchmarkConfiguration {
 	protected static class OptConfig {
 		public List<FunctionTransformer> funcTransformers = new ArrayList<>();
 		public List<ContextTransformer> contextTransformers = new ArrayList<>();
+		public List<FunctionTransformer> postContextFunctionTransformers = new ArrayList<>();
 
 		public Optimizer createOpt(GlobalContext context, Logger log) {
 			Optimizer opt = new Optimizer(context);
@@ -198,6 +213,7 @@ public class BenchmarkConfiguration {
 
 			this.funcTransformers.forEach(t -> opt.addFunctionTransformer(t));
 			this.contextTransformers.forEach(t -> opt.addContextTransformer(t));
+			this.postContextFunctionTransformers.forEach(t -> opt.addPostContextFunctionTransformer(t));
 
 			return opt;
 		}

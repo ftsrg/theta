@@ -53,6 +53,8 @@ public class EntryNode implements TerminatorIrNode {
 			if (this.target != oldBlock)
 				throw new RuntimeException();
 
+			oldBlock.removeParent(this.parent);
+
 			this.target = newBlock;
 			this.target.addParent(this.parent);
 		}
