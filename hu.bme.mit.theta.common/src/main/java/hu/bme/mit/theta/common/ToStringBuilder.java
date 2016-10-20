@@ -3,7 +3,6 @@ package hu.bme.mit.theta.common;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Arrays.asList;
 
-import java.util.Collection;
 import java.util.StringJoiner;
 
 public final class ToStringBuilder {
@@ -20,7 +19,7 @@ public final class ToStringBuilder {
 		return this;
 	}
 
-	public ToStringBuilder addAll(final Collection<? extends Object> objects) {
+	public ToStringBuilder addAll(final Iterable<? extends Object> objects) {
 		objects.forEach(o -> joiner.add(o.toString()));
 		return this;
 	}

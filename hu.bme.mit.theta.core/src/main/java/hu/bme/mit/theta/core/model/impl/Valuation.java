@@ -147,13 +147,6 @@ public final class Valuation implements Assignment {
 			return this;
 		}
 
-		public Builder project(final Collection<? extends VarDecl<?>> decls) {
-			for (final VarDecl<?> decl : decls) {
-				remove(decl);
-			}
-			return this;
-		}
-
 		public Valuation build() {
 			return new Valuation(this);
 		}
