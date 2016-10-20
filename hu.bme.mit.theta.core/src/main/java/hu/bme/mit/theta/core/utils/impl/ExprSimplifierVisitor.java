@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.expr.AddExpr;
 import hu.bme.mit.theta.core.expr.AndExpr;
 import hu.bme.mit.theta.core.expr.ArrayReadExpr;
@@ -204,7 +205,7 @@ public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? ext
 		if (ops.size() == 0) {
 			return True();
 		} else if (ops.size() == 1) {
-			return ops.iterator().next();
+			return Utils.singleElementOf(ops);
 		}
 
 		return expr.withOps(ops);
@@ -233,7 +234,7 @@ public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? ext
 		if (ops.size() == 0) {
 			return False();
 		} else if (ops.size() == 1) {
-			return ops.iterator().next();
+			return Utils.singleElementOf(ops);
 		}
 
 		return expr.withOps(ops);
@@ -581,7 +582,7 @@ public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? ext
 		if (ops.size() == 0) {
 			return Int(0);
 		} else if (ops.size() == 1) {
-			return ops.iterator().next();
+			return Utils.singleElementOf(ops);
 		}
 
 		return Add(ops);
@@ -622,7 +623,7 @@ public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? ext
 		if (ops.size() == 0) {
 			return Int(1);
 		} else if (ops.size() == 1) {
-			return ops.iterator().next();
+			return Utils.singleElementOf(ops);
 		}
 
 		return Mul(ops);

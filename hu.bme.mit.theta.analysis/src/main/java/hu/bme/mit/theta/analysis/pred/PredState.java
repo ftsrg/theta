@@ -8,6 +8,7 @@ import com.google.common.collect.ImmutableSet;
 
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.common.ObjectUtils;
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.impl.Exprs;
 import hu.bme.mit.theta.core.type.BoolType;
@@ -74,7 +75,7 @@ public final class PredState implements ExprState {
 			if (preds.size() == 0) {
 				result = Exprs.True();
 			} else if (preds.size() == 1) {
-				result = preds.iterator().next();
+				result = Utils.singleElementOf(preds);
 			} else {
 				result = Exprs.And(preds);
 			}
