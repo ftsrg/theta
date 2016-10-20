@@ -72,7 +72,8 @@ public class StsPredTest {
 		final StsPredAnalysis analysis = new StsPredAnalysis(sts, solver);
 		final Predicate<ExprState> target = new ExprStatePredicate(Not(sts.getProp()), solver);
 
-		final SimplePredPrecision precision = SimplePredPrecision.create(Collections.singleton(Lt(x, Int(mod))));
+		final SimplePredPrecision precision = SimplePredPrecision.create(Collections.singleton(Lt(x, Int(mod))),
+				solver);
 
 		final Waitlist<ArgNode<PredState, StsAction>> waitlist = new LifoWaitlist<>();
 
