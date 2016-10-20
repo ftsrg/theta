@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.analysis.algorithm;
+package hu.bme.mit.theta.common.waitlist;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 

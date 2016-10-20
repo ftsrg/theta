@@ -21,9 +21,7 @@ import org.junit.Test;
 
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.ArgNode;
-import hu.bme.mit.theta.analysis.algorithm.LifoWaitlist;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
-import hu.bme.mit.theta.analysis.algorithm.Waitlist;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker;
 import hu.bme.mit.theta.analysis.algorithm.cegar.GlobalPredItpRefinerOp;
@@ -39,6 +37,8 @@ import hu.bme.mit.theta.analysis.sts.StsAction;
 import hu.bme.mit.theta.analysis.sts.StsExprSeqConcretizer;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.common.visualization.GraphvizWriter;
+import hu.bme.mit.theta.common.waitlist.LifoWaitlist;
+import hu.bme.mit.theta.common.waitlist.Waitlist;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.IntType;

@@ -12,7 +12,7 @@ import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.ArgBuilder;
 import hu.bme.mit.theta.analysis.algorithm.ArgNode;
-import hu.bme.mit.theta.analysis.algorithm.Waitlist;
+import hu.bme.mit.theta.common.waitlist.Waitlist;
 
 public class WaitlistBasedAbstractor<S extends State, A extends Action, P extends Precision>
 		implements Abstractor<S, A, P> {
