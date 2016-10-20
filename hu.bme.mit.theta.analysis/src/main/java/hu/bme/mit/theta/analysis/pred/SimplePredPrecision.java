@@ -17,17 +17,21 @@ import hu.bme.mit.theta.core.expr.impl.Exprs;
 import hu.bme.mit.theta.core.model.impl.Valuation;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.utils.impl.ExprUtils;
+import hu.bme.mit.theta.core.utils.impl.PathUtils;
+import hu.bme.mit.theta.solver.Solver;
 
 public final class SimplePredPrecision implements PredPrecision {
 
 	private final Map<Expr<? extends BoolType>, Expr<? extends BoolType>> predToNegMap;
+	private final Solver solver;
 
-	public static SimplePredPrecision create(final Iterable<Expr<? extends BoolType>> preds) {
-		return new SimplePredPrecision(preds);
+	public static SimplePredPrecision create(final Iterable<Expr<? extends BoolType>> preds, final Solver solver) {
+		return new SimplePredPrecision(preds, solver);
 	}
 
-	private SimplePredPrecision(final Iterable<Expr<? extends BoolType>> preds) {
+	private SimplePredPrecision(final Iterable<Expr<? extends BoolType>> preds, final Solver solver) {
 		checkNotNull(preds);
+		this.solver = checkNotNull(solver);
 		this.predToNegMap = new HashMap<>();
 
 		for (final Expr<? extends BoolType> pred : preds) {
@@ -55,6 +59,25 @@ public final class SimplePredPrecision implements PredPrecision {
 				statePreds.add(pred);
 			} else if (simplified.equals(Exprs.False())) {
 				statePreds.add(negate(pred));
+			} else {
+				final Expr<? extends BoolType> simplified0 = PathUtils.unfold(simplified, 0);
+
+				solver.push();
+				solver.add(Exprs.Not(simplified0));
+				final boolean ponValid = solver.check().isUnsat();
+				solver.pop();
+
+				solver.push();
+				solver.add(simplified0);
+				final boolean negValid = solver.check().isUnsat();
+				solver.pop();
+
+				assert !(ponValid && negValid);
+				if (ponValid) {
+					statePreds.add(pred);
+				} else {
+					statePreds.add(negate(pred));
+				}
 			}
 		}
 
@@ -66,7 +89,7 @@ public final class SimplePredPrecision implements PredPrecision {
 		final Set<Expr<? extends BoolType>> joinedPreds = new HashSet<>();
 		joinedPreds.addAll(this.predToNegMap.keySet());
 		Iterables.addAll(joinedPreds, extraPreds);
-		return create(joinedPreds);
+		return create(joinedPreds, solver);
 	}
 
 	public SimplePredPrecision refine(final Expr<? extends BoolType> extraPred) {

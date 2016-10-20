@@ -41,8 +41,8 @@ public class TcfaPredTest {
 		final TcfaAnalyis<PredState, PredPrecision> analysis = TcfaAnalyis.create(fischer.getInitial(),
 				TcfaPredAnalysis.create(solver));
 
-		final PredPrecision subPrecision = SimplePredPrecision
-				.create(Collections.singleton(Eq(vlock.getRef(), Int(0))));
+		final PredPrecision subPrecision = SimplePredPrecision.create(Collections.singleton(Eq(vlock.getRef(), Int(0))),
+				solver);
 		final LocPrecision<PredPrecision, TcfaLoc, TcfaEdge> precision = LocPrecision.create(l -> subPrecision);
 
 		final Abstractor<LocState<PredState, TcfaLoc, TcfaEdge>, TcfaAction, LocPrecision<PredPrecision, TcfaLoc, TcfaEdge>> abstractor = WaitlistBasedAbstractor

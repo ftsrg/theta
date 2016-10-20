@@ -72,7 +72,7 @@ public class TcfaSimpleCheckerTest {
 
 		final CompositePrecision<ZonePrecision, PredPrecision> subPrecision = CompositePrecision.create(
 				ZonePrecision.create(fischer.getClockVars()),
-				SimplePredPrecision.create(Arrays.asList(Eq(lock, Int(0)), Eq(lock, Int(1)))));
+				SimplePredPrecision.create(Arrays.asList(Eq(lock, Int(0)), Eq(lock, Int(1))), solver));
 		final LocPrecision<CompositePrecision<ZonePrecision, PredPrecision>, TcfaLoc, TcfaEdge> precision = LocPrecision
 				.create(l -> subPrecision);
 
