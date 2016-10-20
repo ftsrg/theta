@@ -3,7 +3,6 @@ package hu.bme.mit.theta.solver.utils;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.Not;
 
-import java.util.Collection;
 import java.util.function.Function;
 
 import hu.bme.mit.theta.core.expr.Expr;
@@ -22,8 +21,8 @@ public final class SolverUtils {
 		return result;
 	}
 
-	public static boolean entails(final Solver solver, final Collection<? extends Expr<? extends BoolType>> antecedents,
-			final Collection<? extends Expr<? extends BoolType>> consequents) {
+	public static boolean entails(final Solver solver, final Iterable<? extends Expr<? extends BoolType>> antecedents,
+			final Iterable<? extends Expr<? extends BoolType>> consequents) {
 		checkNotNull(solver);
 		checkNotNull(antecedents);
 		checkNotNull(consequents);
