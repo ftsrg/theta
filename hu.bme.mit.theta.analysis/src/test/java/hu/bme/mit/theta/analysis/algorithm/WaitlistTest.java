@@ -6,6 +6,10 @@ import java.util.NoSuchElementException;
 
 import org.junit.Test;
 
+import hu.bme.mit.theta.common.waitlist.FifoWaitlist;
+import hu.bme.mit.theta.common.waitlist.LifoWaitlist;
+import hu.bme.mit.theta.common.waitlist.Waitlist;
+
 public class WaitlistTest {
 
 	@Test

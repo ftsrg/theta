@@ -8,8 +8,8 @@ import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.Precision;
 import hu.bme.mit.theta.analysis.State;
-import hu.bme.mit.theta.analysis.algorithm.LifoWaitlist;
-import hu.bme.mit.theta.analysis.algorithm.Waitlist;
+import hu.bme.mit.theta.common.waitlist.LifoWaitlist;
+import hu.bme.mit.theta.common.waitlist.Waitlist;
 
 public class SimpleChecker {
 
