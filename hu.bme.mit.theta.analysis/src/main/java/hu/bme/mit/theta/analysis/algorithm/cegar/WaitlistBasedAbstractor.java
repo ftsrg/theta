@@ -44,7 +44,7 @@ public class WaitlistBasedAbstractor<S extends State, A extends Action, P extend
 	}
 
 	@Override
-	public void check(final P precision) {
+	public AbstractorStatus<S, A> check(final P precision) {
 		checkState(arg != null);
 
 		waitlist.clear();
@@ -53,7 +53,7 @@ public class WaitlistBasedAbstractor<S extends State, A extends Action, P extend
 			final ArgNode<S, A> node = waitlist.remove();
 
 			if (node.isTarget()) {
-				return;
+				return getStatus();
 			}
 
 			argBuilder.close(node);
@@ -62,10 +62,11 @@ public class WaitlistBasedAbstractor<S extends State, A extends Action, P extend
 				waitlist.addAll(node.getSuccNodes());
 			}
 		}
+
+		return getStatus();
 	}
 
-	@Override
-	public AbstractorStatus<S, A> getStatus() {
+	private AbstractorStatus<S, A> getStatus() {
 		checkState(arg != null);
 		return AbstractorStatus.create(arg);
 	}

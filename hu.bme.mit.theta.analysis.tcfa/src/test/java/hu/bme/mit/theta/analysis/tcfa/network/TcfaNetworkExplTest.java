@@ -6,6 +6,7 @@ import static hu.bme.mit.theta.core.type.impl.Types.Int;
 import org.junit.Test;
 
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
+import hu.bme.mit.theta.analysis.algorithm.cegar.AbstractorStatus;
 import hu.bme.mit.theta.analysis.algorithm.cegar.WaitlistBasedAbstractor;
 import hu.bme.mit.theta.analysis.composite.CompositeAnalysis;
 import hu.bme.mit.theta.analysis.composite.CompositePrecision;
@@ -54,9 +55,10 @@ public class TcfaNetworkExplTest {
 				.create(analysis, s -> false, new LifoWaitlist<>());
 
 		abstractor.init(precision);
-		abstractor.check(precision);
+		final AbstractorStatus<LocState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction> abstractorStatus = abstractor
+				.check(precision);
 
-		System.out.println(new GraphvizWriter().writeString(ArgVisualizer.visualize(abstractor.getStatus().getArg())));
+		System.out.println(new GraphvizWriter().writeString(ArgVisualizer.visualize(abstractorStatus.getArg())));
 	}
 
 }

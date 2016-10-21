@@ -9,6 +9,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
+import hu.bme.mit.theta.analysis.algorithm.cegar.AbstractorStatus;
 import hu.bme.mit.theta.analysis.algorithm.cegar.WaitlistBasedAbstractor;
 import hu.bme.mit.theta.analysis.composite.CompositeState;
 import hu.bme.mit.theta.analysis.expl.ExplState;
@@ -44,9 +45,9 @@ public class TcfaCompositeTest {
 				.create(analysis, s -> s.getLoc().getName().equals("(crit, crit)"), new LifoWaitlist<>());
 
 		abstractor.init(NullPrecision.getInstance());
-		abstractor.check(NullPrecision.getInstance());
+		final AbstractorStatus<?, ?> abstractorStatus = abstractor.check(NullPrecision.getInstance());
 
-		System.out.println(new GraphvizWriter().writeString(ArgVisualizer.visualize(abstractor.getStatus().getArg())));
+		System.out.println(new GraphvizWriter().writeString(ArgVisualizer.visualize(abstractorStatus.getArg())));
 	}
 
 }
