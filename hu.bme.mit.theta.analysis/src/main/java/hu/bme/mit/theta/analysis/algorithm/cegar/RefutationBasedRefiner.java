@@ -53,7 +53,7 @@ public class RefutationBasedRefiner<S extends State, A extends Action, P extends
 		switch (concretizerOp.getStatus()) {
 		case CONCRETE:
 			assert cex != null;
-			return RefinerStatus.concretizable(cex);
+			return RefinerStatus.concretizable(arg, cex);
 		case SPURIOUS:
 			assert refinedPrecision != null;
 			assert arg != null;

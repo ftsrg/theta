@@ -9,18 +9,24 @@ import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 
 public abstract class RefinerStatus<S extends State, A extends Action, P extends Precision> {
+	private final ARG<S, A> arg;
 
-	private RefinerStatus() {
+	private RefinerStatus(final ARG<S, A> arg) {
+		this.arg = checkNotNull(arg);
+	}
+
+	public ARG<S, A> getArg() {
+		return arg;
 	}
 
 	public static <S extends State, A extends Action, P extends Precision> Spurious<S, A, P> spurious(
-			final ARG<S, A> prunedArg, final P refinedPrecision) {
-		return new Spurious<>(prunedArg, refinedPrecision);
+			final ARG<S, A> arg, final P refinedPrecision) {
+		return new Spurious<>(arg, refinedPrecision);
 	}
 
 	public static <S extends State, A extends Action, P extends Precision> Concretizable<S, A, P> concretizable(
-			final Trace<S, A> cex) {
-		return new Concretizable<>(cex);
+			final ARG<S, A> arg, final Trace<S, A> cex) {
+		return new Concretizable<>(arg, cex);
 	}
 
 	public abstract boolean isSpurious();
@@ -35,16 +41,11 @@ public abstract class RefinerStatus<S extends State, A extends Action, P extends
 
 	public static final class Spurious<S extends State, A extends Action, P extends Precision>
 			extends RefinerStatus<S, A, P> {
-		private final ARG<S, A> prunedArg;
 		private final P refinedPrecision;
 
-		private Spurious(final ARG<S, A> prunedArg, final P refinedPrecision) {
-			this.prunedArg = checkNotNull(prunedArg);
+		private Spurious(final ARG<S, A> arg, final P refinedPrecision) {
+			super(arg);
 			this.refinedPrecision = checkNotNull(refinedPrecision);
-		}
-
-		public ARG<S, A> getPrunedArg() {
-			return prunedArg;
 		}
 
 		public P getRefinedPrecision() {
@@ -77,7 +78,8 @@ public abstract class RefinerStatus<S extends State, A extends Action, P extends
 			extends RefinerStatus<S, A, P> {
 		private final Trace<S, A> cex;
 
-		private Concretizable(final Trace<S, A> cex) {
+		private Concretizable(final ARG<S, A> arg, final Trace<S, A> cex) {
+			super(arg);
 			this.cex = checkNotNull(cex);
 		}
 
