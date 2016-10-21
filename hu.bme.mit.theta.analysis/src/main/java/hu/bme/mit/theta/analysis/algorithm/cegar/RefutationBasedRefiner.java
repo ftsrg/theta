@@ -2,7 +2,6 @@ package hu.bme.mit.theta.analysis.algorithm.cegar;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
 
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Precision;
@@ -18,6 +17,7 @@ public class RefutationBasedRefiner<S extends State, A extends Action, P extends
 
 	private Trace<S, A> cex;
 	private P refinedPrecision;
+	private ARG<S, A> arg;
 
 	public RefutationBasedRefiner(final ConcretizerOp<? super S, A, R> concretizerOp,
 			final RefinerOp<S, A, R, P> refinerOp) {
@@ -25,6 +25,7 @@ public class RefutationBasedRefiner<S extends State, A extends Action, P extends
 		this.refinerOp = checkNotNull(refinerOp);
 		this.cex = null;
 		this.refinedPrecision = null;
+		this.arg = null;
 	}
 
 	@Override
@@ -32,6 +33,7 @@ public class RefutationBasedRefiner<S extends State, A extends Action, P extends
 		checkArgument(arg.getTargetNodes().size() > 0);
 
 		refinedPrecision = null;
+		this.arg = arg;
 
 		final Trace<S, A> cexToConcretize = arg.getAnyCex().get();
 
@@ -45,22 +47,19 @@ public class RefutationBasedRefiner<S extends State, A extends Action, P extends
 	}
 
 	@Override
-	public CexStatus getStatus() {
-		return concretizerOp.getStatus();
-	}
+	public RefinerStatus<S, A, P> getStatus() {
 
-	@Override
-	public Trace<S, A> getCex() {
-		checkState(concretizerOp.getStatus() == CexStatus.CONCRETE);
-		assert (cex != null);
-		return cex;
-	}
-
-	@Override
-	public P getRefinedPrecision() {
-		checkState(concretizerOp.getStatus() == CexStatus.SPURIOUS);
-		assert (refinedPrecision != null);
-		return refinedPrecision;
+		switch (concretizerOp.getStatus()) {
+		case CONCRETE:
+			assert cex != null;
+			return RefinerStatus.concretizable(cex);
+		case SPURIOUS:
+			assert refinedPrecision != null;
+			assert arg != null;
+			return RefinerStatus.spurious(arg, refinedPrecision);
+		default:
+			throw new IllegalStateException();
+		}
 	}
 
 }
