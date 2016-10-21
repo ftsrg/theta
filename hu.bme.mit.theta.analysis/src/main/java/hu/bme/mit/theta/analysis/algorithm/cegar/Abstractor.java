@@ -10,4 +10,10 @@ public interface Abstractor<S extends State, A extends Action, P extends Precisi
 	ARG<S, A> init(final P precision);
 
 	AbstractorStatus<S, A> check(ARG<S, A> arg, final P precision);
+
+	default AbstractorStatus<S, A> initAndCheck(final P precision) {
+		final ARG<S, A> arg = init(precision);
+		final AbstractorStatus<S, A> status = check(arg, precision);
+		return status;
+	}
 }
