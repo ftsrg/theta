@@ -14,8 +14,6 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 
 	private final Abstractor<S, A, ? super P> abstractor;
 	private final Refiner<S, A, P> refiner;
-	RefinerStatus<S, A, P> refinerStatus;
-	AbstractorStatus<S, A> abstractorStatus;
 
 	private CegarChecker(final Abstractor<S, A, ? super P> abstractor, final Refiner<S, A, P> refiner) {
 		this.abstractor = checkNotNull(abstractor);
@@ -29,14 +27,14 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 
 	@Override
 	public SafetyStatus<S, A> check(final P initPrecision) {
-
+		RefinerStatus<S, A, P> refinerStatus = null;
+		AbstractorStatus<S, A> abstractorStatus = null;
 		P precision = initPrecision;
 		do {
-
-			abstractor.init(precision); // TODO: currently the ARG is not
-										// pruned, so the abstractor simply
-										// restarts at every iteration
-			abstractorStatus = abstractor.check(precision);
+			// TODO: currently the ARG is not pruned, so the abstractor simply
+			// restarts at every iteration
+			final ARG<S, A> initArg = abstractor.init(precision);
+			abstractorStatus = abstractor.check(initArg, precision);
 
 			if (abstractorStatus.isUnsafe()) {
 				final ARG<S, A> arg = abstractorStatus.getArg();
@@ -49,10 +47,9 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 
 		} while (!abstractorStatus.isSafe() && !refinerStatus.isConcretizable());
 
-		return extractStatus();
-	}
+		assert abstractorStatus != null;
+		assert abstractorStatus.isSafe() || refinerStatus != null;
 
-	public SafetyStatus<S, A> extractStatus() {
 		if (abstractorStatus.isSafe()) {
 			return SafetyStatus.safe(abstractorStatus.getArg());
 		} else if (refinerStatus.isConcretizable()) {
@@ -61,5 +58,4 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 			throw new IllegalStateException();
 		}
 	}
-
 }

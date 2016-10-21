@@ -35,10 +35,9 @@ public class ProsigmaTest {
 		final Abstractor<LocState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction, NullPrecision> abstractor = WaitlistBasedAbstractor
 				.create(analysis, s -> false, new LifoWaitlist<>());
 
-		abstractor.init(NullPrecision.getInstance());
-		final AbstractorStatus<LocState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction> abstractorStatus = abstractor
-				.check(NullPrecision.getInstance());
-
+		final ARG<LocState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction> initArg = abstractor
+				.init(NullPrecision.getInstance());
+		final AbstractorStatus<?, ?> abstractorStatus = abstractor.check(initArg, NullPrecision.getInstance());
 		final ARG<?, ?> arg = abstractorStatus.getArg();
 
 		System.out.println(new GraphvizWriter().writeString(ArgVisualizer.visualize(arg)));
