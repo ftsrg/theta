@@ -8,6 +8,7 @@ import java.io.IOException;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
 import hu.bme.mit.theta.analysis.algorithm.cegar.AbstractorStatus;
 import hu.bme.mit.theta.analysis.algorithm.cegar.WaitlistBasedAbstractor;
@@ -44,8 +45,9 @@ public class TcfaCompositeTest {
 		final Abstractor<LocState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction, NullPrecision> abstractor = WaitlistBasedAbstractor
 				.create(analysis, s -> s.getLoc().getName().equals("(crit, crit)"), new LifoWaitlist<>());
 
-		abstractor.init(NullPrecision.getInstance());
-		final AbstractorStatus<?, ?> abstractorStatus = abstractor.check(NullPrecision.getInstance());
+		final ARG<LocState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction> arg = abstractor
+				.init(NullPrecision.getInstance());
+		final AbstractorStatus<?, ?> abstractorStatus = abstractor.check(arg, NullPrecision.getInstance());
 
 		System.out.println(new GraphvizWriter().writeString(ArgVisualizer.visualize(abstractorStatus.getArg())));
 	}

@@ -1,7 +1,6 @@
 package hu.bme.mit.theta.analysis.algorithm.cegar;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
 
 import java.util.function.Predicate;
 
@@ -20,8 +19,6 @@ public class WaitlistBasedAbstractor<S extends State, A extends Action, P extend
 	private final Waitlist<ArgNode<S, A>> waitlist;
 	private final ArgBuilder<S, A, P> argBuilder;
 
-	private ARG<S, A> arg;
-
 	private WaitlistBasedAbstractor(final Analysis<S, A, P> analysis, final Predicate<? super S> target,
 			final Waitlist<ArgNode<S, A>> waitlist) {
 		checkNotNull(analysis);
@@ -37,15 +34,16 @@ public class WaitlistBasedAbstractor<S extends State, A extends Action, P extend
 	}
 
 	@Override
-	public void init(final P precision) {
-		arg = ARG.create();
+	public ARG<S, A> init(final P precision) {
+		final ARG<S, A> arg = ARG.create();
 		argBuilder.init(arg, precision);
-		waitlist.clear();
+		return arg;
 	}
 
 	@Override
-	public AbstractorStatus<S, A> check(final P precision) {
-		checkState(arg != null);
+	public AbstractorStatus<S, A> check(final ARG<S, A> arg, final P precision) {
+		checkNotNull(arg);
+		checkNotNull(precision);
 
 		waitlist.clear();
 		waitlist.addAll(arg.getLeafNodes());
@@ -53,7 +51,8 @@ public class WaitlistBasedAbstractor<S extends State, A extends Action, P extend
 			final ArgNode<S, A> node = waitlist.remove();
 
 			if (node.isTarget()) {
-				return getStatus();
+				waitlist.clear();
+				return AbstractorStatus.create(arg);
 			}
 
 			argBuilder.close(node);
@@ -63,11 +62,7 @@ public class WaitlistBasedAbstractor<S extends State, A extends Action, P extend
 			}
 		}
 
-		return getStatus();
-	}
-
-	private AbstractorStatus<S, A> getStatus() {
-		checkState(arg != null);
+		waitlist.clear();
 		return AbstractorStatus.create(arg);
 	}
 

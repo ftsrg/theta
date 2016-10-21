@@ -9,6 +9,7 @@ import java.util.Arrays;
 
 import org.junit.Test;
 
+import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
 import hu.bme.mit.theta.analysis.algorithm.cegar.AbstractorStatus;
 import hu.bme.mit.theta.analysis.algorithm.cegar.WaitlistBasedAbstractor;
@@ -62,8 +63,9 @@ public class TcfaNetworkPredTest {
 		final Abstractor<LocState<CompositeState<ZoneState, PredState>, TcfaLoc, TcfaEdge>, TcfaAction, LocPrecision<CompositePrecision<ZonePrecision, PredPrecision>, TcfaLoc, TcfaEdge>> abstractor = WaitlistBasedAbstractor
 				.create(analysis, s -> false, new LifoWaitlist<>());
 
-		abstractor.init(precision);
-		final AbstractorStatus<?, ?> abstractorStatus = abstractor.check(precision);
+		final ARG<LocState<CompositeState<ZoneState, PredState>, TcfaLoc, TcfaEdge>, TcfaAction> arg = abstractor
+				.init(precision);
+		final AbstractorStatus<?, ?> abstractorStatus = abstractor.check(arg, precision);
 
 		System.out.println(new GraphvizWriter().writeString(ArgVisualizer.visualize(abstractorStatus.getArg())));
 	}
