@@ -43,7 +43,7 @@ public class TcfaZoneTest {
 		abstractor.init(precision);
 		abstractor.check(precision);
 
-		System.out.println(new GraphvizWriter().writeString(ArgVisualizer.visualize(abstractor.getARG())));
+		System.out.println(new GraphvizWriter().writeString(ArgVisualizer.visualize(abstractor.getStatus().getArg())));
 	}
 
 }

@@ -37,7 +37,7 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 			abstractor.check(precision);
 
 			if (abstractor.getStatus().isUnsafe()) {
-				final ARG<S, A> arg = abstractor.getARG();
+				final ARG<S, A> arg = abstractor.getStatus().getArg();
 				refiner.refine(arg, precision);
 
 				if (refiner.getStatus().isSpurious()) {
@@ -52,7 +52,7 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 
 	public SafetyStatus<S, A> extractStatus() {
 		if (abstractor.getStatus().isSafe()) {
-			return SafetyStatus.safe(abstractor.getARG());
+			return SafetyStatus.safe(abstractor.getStatus().getArg());
 		} else if (refiner.getStatus().isConcretizable()) {
 			return SafetyStatus.unsafe(refiner.getStatus().asConcretizable().getCex());
 		} else {
