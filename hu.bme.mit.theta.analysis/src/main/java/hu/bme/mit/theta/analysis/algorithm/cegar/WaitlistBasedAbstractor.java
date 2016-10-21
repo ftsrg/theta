@@ -71,9 +71,9 @@ public class WaitlistBasedAbstractor<S extends State, A extends Action, P extend
 	}
 
 	@Override
-	public AbstractorStatus getStatus() {
+	public AbstractorStatus<S, A> getStatus() {
 		checkState(arg != null);
-		return arg.getTargetNodes().size() == 0 ? AbstractorStatus.OK : AbstractorStatus.CEX;
+		return AbstractorStatus.create(arg);
 	}
 
 }

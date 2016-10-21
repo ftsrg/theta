@@ -36,7 +36,7 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 										// restarts at every iteration
 			abstractor.check(precision);
 
-			if (abstractor.getStatus() == AbstractorStatus.CEX) {
+			if (abstractor.getStatus().isUnsafe()) {
 				final ARG<S, A> arg = abstractor.getARG();
 				refiner.refine(arg, precision);
 
@@ -45,13 +45,13 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 				}
 			}
 
-		} while (abstractor.getStatus() != AbstractorStatus.OK && refiner.getStatus() != CexStatus.CONCRETE);
+		} while (!abstractor.getStatus().isSafe() && refiner.getStatus() != CexStatus.CONCRETE);
 
 		return extractStatus();
 	}
 
 	public SafetyStatus<S, A> extractStatus() {
-		if (abstractor.getStatus() == AbstractorStatus.OK) {
+		if (abstractor.getStatus().isSafe()) {
 			return SafetyStatus.safe(abstractor.getARG());
 		} else if (refiner.getStatus() == CexStatus.CONCRETE) {
 			return SafetyStatus.unsafe(refiner.getCex());
