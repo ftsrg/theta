@@ -27,7 +27,7 @@ public class RefutationBasedRefiner<S extends State, A extends Action, P extends
 
 		final Trace<S, A> cexToConcretize = arg.getAnyCex().get();
 
-		final CexStatus<R> cexStatus = concretizerOp.concretize(cexToConcretize);
+		final CexStatus<R> cexStatus = concretizerOp.checkConcretizable(cexToConcretize);
 
 		if (cexStatus.isSpurious()) {
 			final R refutation = cexStatus.asSpurious().getRefutation();

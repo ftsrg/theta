@@ -7,6 +7,7 @@ import hu.bme.mit.theta.analysis.Precision;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
+import hu.bme.mit.theta.common.ObjectUtils;
 
 public abstract class RefinerStatus<S extends State, A extends Action, P extends Precision> {
 	private final ARG<S, A> arg;
@@ -70,7 +71,13 @@ public abstract class RefinerStatus<S extends State, A extends Action, P extends
 		@Override
 		public Concretizable<S, A, P> asConcretizable() {
 			throw new ClassCastException(
-					"Cannot cast " + Spurious.class.getName() + " to " + Concretizable.class.getName());
+					"Cannot cast " + Spurious.class.getSimpleName() + " to " + Concretizable.class.getSimpleName());
+		}
+
+		@Override
+		public String toString() {
+			return ObjectUtils.toStringBuilder(RefinerStatus.class.getSimpleName()).add(getClass().getSimpleName())
+					.toString();
 		}
 	}
 
@@ -100,12 +107,18 @@ public abstract class RefinerStatus<S extends State, A extends Action, P extends
 		@Override
 		public Spurious<S, A, P> asSpurious() {
 			throw new ClassCastException(
-					"Cannot cast " + Concretizable.class.getName() + " to " + Spurious.class.getName());
+					"Cannot cast " + Concretizable.class.getSimpleName() + " to " + Spurious.class.getSimpleName());
 		}
 
 		@Override
 		public Concretizable<S, A, P> asConcretizable() {
 			return this;
+		}
+
+		@Override
+		public String toString() {
+			return ObjectUtils.toStringBuilder(RefinerStatus.class.getSimpleName()).add(getClass().getSimpleName())
+					.toString();
 		}
 	}
 }

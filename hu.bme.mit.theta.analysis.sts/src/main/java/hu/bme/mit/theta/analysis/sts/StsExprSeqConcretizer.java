@@ -32,7 +32,7 @@ public class StsExprSeqConcretizer implements ConcretizerOp<ExprState, StsAction
 	}
 
 	@Override
-	public CexStatus<ItpRefutation> concretize(final Trace<? extends ExprState, StsAction> cex) {
+	public CexStatus<ItpRefutation> checkConcretizable(final Trace<? extends ExprState, StsAction> cex) {
 		checkNotNull(cex);
 		checkArgument(cex.length() > 0);
 

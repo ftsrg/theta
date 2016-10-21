@@ -5,6 +5,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.Trace;
+import hu.bme.mit.theta.common.ObjectUtils;
 
 public abstract class SafetyStatus<S extends State, A extends Action> {
 	private final ARG<S, A> arg;
@@ -57,7 +58,14 @@ public abstract class SafetyStatus<S extends State, A extends Action> {
 
 		@Override
 		public Unsafe<S, A> asUnsafe() {
-			throw new ClassCastException("Cannot cast " + Safe.class.getName() + " to " + Unsafe.class.getName());
+			throw new ClassCastException(
+					"Cannot cast " + Safe.class.getSimpleName() + " to " + Unsafe.class.getSimpleName());
+		}
+
+		@Override
+		public String toString() {
+			return ObjectUtils.toStringBuilder(SafetyStatus.class.getSimpleName()).add(Safe.class.getSimpleName())
+					.toString();
 		}
 	}
 
@@ -85,12 +93,19 @@ public abstract class SafetyStatus<S extends State, A extends Action> {
 
 		@Override
 		public Safe<S, A> asSafe() {
-			throw new ClassCastException("Cannot cast " + Unsafe.class.getName() + " to " + Safe.class.getName());
+			throw new ClassCastException(
+					"Cannot cast " + Unsafe.class.getSimpleName() + " to " + Safe.class.getSimpleName());
 		}
 
 		@Override
 		public Unsafe<S, A> asUnsafe() {
 			return this;
+		}
+
+		@Override
+		public String toString() {
+			return ObjectUtils.toStringBuilder(SafetyStatus.class.getSimpleName()).add(Unsafe.class.getSimpleName())
+					.toString();
 		}
 	}
 
