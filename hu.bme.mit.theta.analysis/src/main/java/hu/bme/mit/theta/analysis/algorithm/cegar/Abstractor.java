@@ -13,6 +13,6 @@ public interface Abstractor<S extends State, A extends Action, P extends Precisi
 
 	ARG<S, A> getARG();
 
-	AbstractorStatus getStatus();
+	AbstractorStatus<S, A> getStatus();
 
 }
