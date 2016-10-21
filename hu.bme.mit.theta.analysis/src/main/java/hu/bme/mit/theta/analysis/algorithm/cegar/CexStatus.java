@@ -2,6 +2,8 @@ package hu.bme.mit.theta.analysis.algorithm.cegar;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import hu.bme.mit.theta.common.ObjectUtils;
+
 public abstract class CexStatus<R extends Refutation> {
 
 	private CexStatus() {
@@ -52,7 +54,13 @@ public abstract class CexStatus<R extends Refutation> {
 		@Override
 		public Concretizable<R> asConcretizable() {
 			throw new ClassCastException(
-					"Cannot cast " + Spurious.class.getName() + " to " + Concretizable.class.getName());
+					"Cannot cast " + Spurious.class.getSimpleName() + " to " + Concretizable.class.getSimpleName());
+		}
+
+		@Override
+		public String toString() {
+			return ObjectUtils.toStringBuilder(CexStatus.class.getSimpleName()).add(getClass().getSimpleName())
+					.toString();
 		}
 
 	}
@@ -72,12 +80,18 @@ public abstract class CexStatus<R extends Refutation> {
 		@Override
 		public Spurious<R> asSpurious() {
 			throw new ClassCastException(
-					"Cannot cast " + Concretizable.class.getName() + " to " + Spurious.class.getName());
+					"Cannot cast " + Concretizable.class.getSimpleName() + " to " + Spurious.class.getSimpleName());
 		}
 
 		@Override
 		public Concretizable<R> asConcretizable() {
 			return this;
+		}
+
+		@Override
+		public String toString() {
+			return ObjectUtils.toStringBuilder(CexStatus.class.getSimpleName()).add(getClass().getSimpleName())
+					.toString();
 		}
 
 	}
