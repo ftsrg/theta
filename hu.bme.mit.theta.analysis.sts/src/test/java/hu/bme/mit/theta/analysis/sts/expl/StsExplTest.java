@@ -92,7 +92,7 @@ public class StsExplTest {
 
 		checker.check(precision);
 
-		final ARG<ExplState, StsAction> arg = abstractor.getARG();
+		final ARG<ExplState, StsAction> arg = abstractor.getStatus().getArg();
 		assertTrue(isWellLabeled(arg, solver));
 
 		System.out.println(new GraphvizWriter().writeString(ArgVisualizer.visualize(arg)));

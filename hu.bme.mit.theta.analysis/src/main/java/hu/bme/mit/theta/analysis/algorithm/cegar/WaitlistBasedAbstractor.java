@@ -37,12 +37,6 @@ public class WaitlistBasedAbstractor<S extends State, A extends Action, P extend
 	}
 
 	@Override
-	public ARG<S, A> getARG() {
-		checkState(arg != null);
-		return arg;
-	}
-
-	@Override
 	public void init(final P precision) {
 		arg = ARG.create();
 		argBuilder.init(arg, precision);

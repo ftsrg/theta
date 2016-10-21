@@ -46,7 +46,7 @@ public class TcfaCompositeTest {
 		abstractor.init(NullPrecision.getInstance());
 		abstractor.check(NullPrecision.getInstance());
 
-		System.out.println(new GraphvizWriter().writeString(ArgVisualizer.visualize(abstractor.getARG())));
+		System.out.println(new GraphvizWriter().writeString(ArgVisualizer.visualize(abstractor.getStatus().getArg())));
 	}
 
 }

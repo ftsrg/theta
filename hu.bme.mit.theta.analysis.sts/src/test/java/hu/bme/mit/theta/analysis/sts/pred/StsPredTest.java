@@ -91,7 +91,7 @@ public class StsPredTest {
 
 		checker.check(precision);
 
-		final ARG<PredState, StsAction> arg = abstractor.getARG();
+		final ARG<PredState, StsAction> arg = abstractor.getStatus().getArg();
 		assertTrue(isWellLabeled(arg, solver));
 
 		System.out.println(new GraphvizWriter().writeString(ArgVisualizer.visualize(arg)));

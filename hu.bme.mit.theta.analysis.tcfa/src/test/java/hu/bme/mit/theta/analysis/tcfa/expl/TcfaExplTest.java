@@ -47,10 +47,10 @@ public class TcfaExplTest {
 		abstractor.init(precision);
 		abstractor.check(precision);
 
-		System.out.println(new GraphvizWriter().writeString(ArgVisualizer.visualize(abstractor.getARG())));
+		System.out.println(new GraphvizWriter().writeString(ArgVisualizer.visualize(abstractor.getStatus().getArg())));
 
 		System.out.println("\n\nCounterexample(s):");
-		System.out.println(abstractor.getARG().getAllCexs());
+		System.out.println(abstractor.getStatus().getArg().getAllCexs());
 	}
 
 }
