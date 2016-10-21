@@ -22,6 +22,7 @@ import org.junit.Test;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.ArgNode;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
+import hu.bme.mit.theta.analysis.algorithm.SafetyStatus;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker;
 import hu.bme.mit.theta.analysis.algorithm.cegar.GlobalExplItpRefinerOp;
@@ -90,9 +91,9 @@ public class StsExplTest {
 
 		final SafetyChecker<ExplState, StsAction, ExplPrecision> checker = CegarChecker.create(abstractor, refiner);
 
-		checker.check(precision);
+		final SafetyStatus<ExplState, StsAction> safetyStatus = checker.check(precision);
 
-		final ARG<ExplState, StsAction> arg = abstractor.getStatus().getArg();
+		final ARG<ExplState, StsAction> arg = safetyStatus.getArg();
 		assertTrue(isWellLabeled(arg, solver));
 
 		System.out.println(new GraphvizWriter().writeString(ArgVisualizer.visualize(arg)));

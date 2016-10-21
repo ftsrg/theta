@@ -4,6 +4,7 @@ import org.junit.Test;
 
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
+import hu.bme.mit.theta.analysis.algorithm.cegar.AbstractorStatus;
 import hu.bme.mit.theta.analysis.algorithm.cegar.WaitlistBasedAbstractor;
 import hu.bme.mit.theta.analysis.composite.CompositeState;
 import hu.bme.mit.theta.analysis.expl.ExplState;
@@ -35,9 +36,10 @@ public class ProsigmaTest {
 				.create(analysis, s -> false, new LifoWaitlist<>());
 
 		abstractor.init(NullPrecision.getInstance());
-		abstractor.check(NullPrecision.getInstance());
+		final AbstractorStatus<LocState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction> abstractorStatus = abstractor
+				.check(NullPrecision.getInstance());
 
-		final ARG<?, ?> arg = abstractor.getStatus().getArg();
+		final ARG<?, ?> arg = abstractorStatus.getArg();
 
 		System.out.println(new GraphvizWriter().writeString(ArgVisualizer.visualize(arg)));
 	}

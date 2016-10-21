@@ -14,6 +14,8 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 
 	private final Abstractor<S, A, ? super P> abstractor;
 	private final Refiner<S, A, P> refiner;
+	RefinerStatus<S, A, P> refinerStatus;
+	AbstractorStatus<S, A> abstractorStatus;
 
 	private CegarChecker(final Abstractor<S, A, ? super P> abstractor, final Refiner<S, A, P> refiner) {
 		this.abstractor = checkNotNull(abstractor);
@@ -34,27 +36,27 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 			abstractor.init(precision); // TODO: currently the ARG is not
 										// pruned, so the abstractor simply
 										// restarts at every iteration
-			abstractor.check(precision);
+			abstractorStatus = abstractor.check(precision);
 
-			if (abstractor.getStatus().isUnsafe()) {
-				final ARG<S, A> arg = abstractor.getStatus().getArg();
-				refiner.refine(arg, precision);
+			if (abstractorStatus.isUnsafe()) {
+				final ARG<S, A> arg = abstractorStatus.getArg();
+				refinerStatus = refiner.refine(arg, precision);
 
-				if (refiner.getStatus().isSpurious()) {
-					precision = refiner.getStatus().asSpurious().getRefinedPrecision();
+				if (refinerStatus.isSpurious()) {
+					precision = refinerStatus.asSpurious().getRefinedPrecision();
 				}
 			}
 
-		} while (!abstractor.getStatus().isSafe() && !refiner.getStatus().isConcretizable());
+		} while (!abstractorStatus.isSafe() && !refinerStatus.isConcretizable());
 
 		return extractStatus();
 	}
 
 	public SafetyStatus<S, A> extractStatus() {
-		if (abstractor.getStatus().isSafe()) {
-			return SafetyStatus.safe(abstractor.getStatus().getArg());
-		} else if (refiner.getStatus().isConcretizable()) {
-			return SafetyStatus.unsafe(refiner.getStatus().asConcretizable().getCex());
+		if (abstractorStatus.isSafe()) {
+			return SafetyStatus.safe(abstractorStatus.getArg());
+		} else if (refinerStatus.isConcretizable()) {
+			return SafetyStatus.unsafe(refinerStatus.asConcretizable().getCex(), abstractorStatus.getArg());
 		} else {
 			throw new IllegalStateException();
 		}

@@ -10,6 +10,7 @@ import java.util.Arrays;
 import org.junit.Test;
 
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
+import hu.bme.mit.theta.analysis.algorithm.cegar.AbstractorStatus;
 import hu.bme.mit.theta.analysis.algorithm.cegar.WaitlistBasedAbstractor;
 import hu.bme.mit.theta.analysis.composite.CompositeAnalysis;
 import hu.bme.mit.theta.analysis.composite.CompositePrecision;
@@ -62,9 +63,9 @@ public class TcfaNetworkPredTest {
 				.create(analysis, s -> false, new LifoWaitlist<>());
 
 		abstractor.init(precision);
-		abstractor.check(precision);
+		final AbstractorStatus<?, ?> abstractorStatus = abstractor.check(precision);
 
-		System.out.println(new GraphvizWriter().writeString(ArgVisualizer.visualize(abstractor.getStatus().getArg())));
+		System.out.println(new GraphvizWriter().writeString(ArgVisualizer.visualize(abstractorStatus.getArg())));
 	}
 
 }

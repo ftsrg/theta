@@ -29,7 +29,7 @@ public class RefutationBasedRefiner<S extends State, A extends Action, P extends
 	}
 
 	@Override
-	public void refine(final ARG<S, A> arg, final P precision) {
+	public RefinerStatus<S, A, P> refine(final ARG<S, A> arg, final P precision) {
 		checkArgument(arg.getTargetNodes().size() > 0);
 
 		refinedPrecision = null;
@@ -44,10 +44,11 @@ public class RefutationBasedRefiner<S extends State, A extends Action, P extends
 		} else {
 			cex = cexToConcretize;
 		}
+
+		return getStatus();
 	}
 
-	@Override
-	public RefinerStatus<S, A, P> getStatus() {
+	private RefinerStatus<S, A, P> getStatus() {
 
 		switch (concretizerOp.getStatus()) {
 		case CONCRETE:
