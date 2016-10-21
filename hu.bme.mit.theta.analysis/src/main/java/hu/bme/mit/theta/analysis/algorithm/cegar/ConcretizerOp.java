@@ -6,9 +6,6 @@ import hu.bme.mit.theta.analysis.Trace;
 
 public interface ConcretizerOp<S extends State, A extends Action, R extends Refutation> {
 
-	CexStatus concretize(Trace<? extends S, A> cex);
+	CexStatus<R> concretize(Trace<? extends S, A> cex);
 
-	CexStatus getStatus();
-
-	R getRefutation();
 }

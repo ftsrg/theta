@@ -15,52 +15,28 @@ public class RefutationBasedRefiner<S extends State, A extends Action, P extends
 	private final ConcretizerOp<? super S, A, R> concretizerOp;
 	private final RefinerOp<S, A, R, P> refinerOp;
 
-	private Trace<S, A> cex;
-	private P refinedPrecision;
-	private ARG<S, A> arg;
-
 	public RefutationBasedRefiner(final ConcretizerOp<? super S, A, R> concretizerOp,
 			final RefinerOp<S, A, R, P> refinerOp) {
 		this.concretizerOp = checkNotNull(concretizerOp);
 		this.refinerOp = checkNotNull(refinerOp);
-		this.cex = null;
-		this.refinedPrecision = null;
-		this.arg = null;
 	}
 
 	@Override
 	public RefinerStatus<S, A, P> refine(final ARG<S, A> arg, final P precision) {
 		checkArgument(arg.getTargetNodes().size() > 0);
 
-		refinedPrecision = null;
-		this.arg = arg;
-
 		final Trace<S, A> cexToConcretize = arg.getAnyCex().get();
 
-		concretizerOp.concretize(cexToConcretize);
+		final CexStatus<R> cexStatus = concretizerOp.concretize(cexToConcretize);
 
-		if (concretizerOp.getStatus() == CexStatus.SPURIOUS) {
-			refinedPrecision = refinerOp.refine(precision, concretizerOp.getRefutation(), cexToConcretize);
-		} else {
-			cex = cexToConcretize;
-		}
-
-		return getStatus();
-	}
-
-	private RefinerStatus<S, A, P> getStatus() {
-
-		switch (concretizerOp.getStatus()) {
-		case CONCRETE:
-			assert cex != null;
-			return RefinerStatus.concretizable(arg, cex);
-		case SPURIOUS:
-			assert refinedPrecision != null;
-			assert arg != null;
+		if (cexStatus.isSpurious()) {
+			final R refutation = cexStatus.asSpurious().getRefutation();
+			final P refinedPrecision = refinerOp.refine(precision, refutation, cexToConcretize);
 			return RefinerStatus.spurious(arg, refinedPrecision);
-		default:
-			throw new IllegalStateException();
+		} else if (cexStatus.isConcretizable()) {
+			return RefinerStatus.concretizable(arg, cexToConcretize);
+		} else {
+			throw new IllegalStateException("Unknown status.");
 		}
 	}
-
 }
