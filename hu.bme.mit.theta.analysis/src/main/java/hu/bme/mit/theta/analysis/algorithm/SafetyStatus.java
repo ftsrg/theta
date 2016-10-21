@@ -57,7 +57,7 @@ public abstract class SafetyStatus<S extends State, A extends Action> {
 
 		@Override
 		public Unsafe<S, A> asUnsafe() {
-			throw new ClassCastException("Trying to cast a Safe to Unsafe");
+			throw new ClassCastException("Cannot cast " + Safe.class.getName() + " to " + Unsafe.class.getName());
 		}
 	}
 
@@ -84,7 +84,7 @@ public abstract class SafetyStatus<S extends State, A extends Action> {
 
 		@Override
 		public Safe<S, A> asSafe() {
-			throw new ClassCastException("Trying to cast an Unsafe as Safe");
+			throw new ClassCastException("Cannot cast " + Unsafe.class.getName() + " to " + Safe.class.getName());
 		}
 
 		@Override

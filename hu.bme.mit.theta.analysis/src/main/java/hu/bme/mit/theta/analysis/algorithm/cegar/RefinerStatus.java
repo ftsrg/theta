@@ -68,7 +68,8 @@ public abstract class RefinerStatus<S extends State, A extends Action, P extends
 
 		@Override
 		public Concretizable<S, A, P> asConcretizable() {
-			throw new ClassCastException("Trying to cast a Spurious to Concretizable");
+			throw new ClassCastException(
+					"Cannot cast " + Spurious.class.getName() + " to " + Concretizable.class.getName());
 		}
 	}
 
@@ -96,7 +97,8 @@ public abstract class RefinerStatus<S extends State, A extends Action, P extends
 
 		@Override
 		public Spurious<S, A, P> asSpurious() {
-			throw new ClassCastException("Trying to cast a Concretizable to Spurious");
+			throw new ClassCastException(
+					"Cannot cast " + Concretizable.class.getName() + " to " + Spurious.class.getName());
 		}
 
 		@Override
