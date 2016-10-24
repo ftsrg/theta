@@ -65,7 +65,7 @@ public class StsExprSeqConcretizer implements ConcretizerOp<ExprState, StsAction
 			for (int i = 0; i < markers.size() - 1; ++i) {
 				interpolants.add(sts.foldin(solver.getInterpolant(pattern).eval(markers.get(i)), i));
 			}
-			status = CexStatus.spurious(ItpRefutation.createSequence(interpolants));
+			status = CexStatus.spurious(ItpRefutation.sequence(interpolants));
 		}
 
 		solver.pop();

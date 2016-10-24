@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
+import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.impl.Exprs;
 import hu.bme.mit.theta.core.type.BoolType;
@@ -22,11 +23,11 @@ public final class ItpRefutation implements Refutation, Iterable<Expr<? extends 
 		this.itpSequence = Collections.unmodifiableList(itpSequence);
 	}
 
-	public static ItpRefutation createSequence(final List<Expr<? extends BoolType>> itpSequence) {
+	public static ItpRefutation sequence(final List<Expr<? extends BoolType>> itpSequence) {
 		return new ItpRefutation(itpSequence);
 	}
 
-	public static ItpRefutation createCraig(final Expr<? extends BoolType> itp, final int i, final int n) {
+	public static ItpRefutation craig(final Expr<? extends BoolType> itp, final int i, final int n) {
 		checkNotNull(itp);
 		checkArgument(n > 0);
 		checkArgument(0 <= i && i < n);
@@ -60,14 +61,6 @@ public final class ItpRefutation implements Refutation, Iterable<Expr<? extends 
 
 	@Override
 	public String toString() {
-		final StringBuilder sb = new StringBuilder();
-		sb.append("ItpRefutation(");
-		for (int i = 0; i < size(); ++i) {
-			sb.append(get(i).toString());
-			if (i < size() - 1)
-				sb.append("; ");
-		}
-		sb.append(")");
-		return sb.toString();
+		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).addAll(itpSequence).toString();
 	}
 }
