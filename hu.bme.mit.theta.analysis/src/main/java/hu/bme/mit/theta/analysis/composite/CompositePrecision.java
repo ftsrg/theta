@@ -74,7 +74,7 @@ public final class CompositePrecision<P1 extends Precision, P2 extends Precision
 
 	@Override
 	public String toString() {
-		return ObjectUtils.toStringBuilder("CompositePrecision").add(prec1).add(prec2).toString();
+		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).add(prec1).add(prec2).toString();
 	}
 
 }

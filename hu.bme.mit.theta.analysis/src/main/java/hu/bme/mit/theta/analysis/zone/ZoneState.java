@@ -139,7 +139,7 @@ public final class ZoneState implements ExprState {
 
 	@Override
 	public String toString() {
-		return ObjectUtils.toStringBuilder("ZoneState").addAll(dbm.getConstrs()).toString();
+		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).addAll(dbm.getConstrs()).toString();
 	}
 
 	////////

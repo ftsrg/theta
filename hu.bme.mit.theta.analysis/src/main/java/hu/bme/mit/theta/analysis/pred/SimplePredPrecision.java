@@ -98,6 +98,6 @@ public final class SimplePredPrecision implements PredPrecision {
 
 	@Override
 	public String toString() {
-		return ObjectUtils.toStringBuilder("SimplePredPrecision").addAll(predToNegMap.keySet()).toString();
+		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).addAll(predToNegMap.keySet()).toString();
 	}
 }
