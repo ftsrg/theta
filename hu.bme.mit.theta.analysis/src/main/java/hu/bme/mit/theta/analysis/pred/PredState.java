@@ -109,6 +109,6 @@ public final class PredState implements ExprState {
 
 	@Override
 	public String toString() {
-		return ObjectUtils.toStringBuilder("PredState").addAll(preds).toString();
+		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).addAll(preds).toString();
 	}
 }

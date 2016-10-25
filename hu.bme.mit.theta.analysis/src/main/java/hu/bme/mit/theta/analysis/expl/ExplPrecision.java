@@ -49,6 +49,6 @@ public final class ExplPrecision implements Precision {
 
 	@Override
 	public String toString() {
-		return ObjectUtils.toStringBuilder("ExplPrecision").addAll(vars).toString();
+		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).addAll(vars).toString();
 	}
 }

@@ -30,6 +30,6 @@ public final class ZonePrecision implements Precision {
 
 	@Override
 	public String toString() {
-		return ObjectUtils.toStringBuilder("ZonePrecision").addAll(clocks).toString();
+		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).addAll(clocks).toString();
 	}
 }

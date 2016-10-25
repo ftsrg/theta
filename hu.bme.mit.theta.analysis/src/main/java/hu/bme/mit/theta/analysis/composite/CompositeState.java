@@ -91,7 +91,7 @@ public final class CompositeState<S1 extends State, S2 extends State> implements
 
 	@Override
 	public String toString() {
-		return ObjectUtils.toStringBuilder("CompositeState").add(state1).add(state2).toString();
+		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).add(state1).add(state2).toString();
 	}
 
 }
