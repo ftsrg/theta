@@ -1,3 +1,4 @@
+
 extern int __VERIFIER_nondet_int();
 
 	// inputs
@@ -386,22 +387,22 @@ extern int __VERIFIER_nondet_int();
 	    	return -1;
 	    }
 	    if(((((((!(a17==1)&&(a7==1))&&!(a20==1))&&(a8==14))&&(a12==8))&&(a16==4))&&(a21==1))){
-	    	error_20: exit(0);
+	    	error_20: assert(0);
 	    }
 	    if((((((((a17==1)&&!(a7==1))&&(a20==1))&&(a8==14))&&(a12==8))&&(a16==4))&&(a21==1))){
 	    	error_47: exit(0);
 	    }
 	    if(((((((!(a17==1)&&(a7==1))&&!(a20==1))&&(a8==15))&&(a12==8))&&(a16==4))&&(a21==1))){
-	    	error_32: exit(0);
+	    	error_32: assert(0);
 	    }
 	    if((((((((a17==1)&&!(a7==1))&&(a20==1))&&(a8==13))&&(a12==8))&&(a16==6))&&(a21==1))){
-	    	error_37: exit(0);
+	    	error_37: assert(0);
 	    }
 	    if(((((((!(a17==1)&&!(a7==1))&&!(a20==1))&&(a8==14))&&(a12==8))&&(a16==4))&&(a21==1))){
 	    	error_56: exit(0);
 	    }
 	    if(((((((!(a17==1)&&(a7==1))&&!(a20==1))&&(a8==15))&&(a12==8))&&(a16==5))&&(a21==1))){
-	    	error_33: exit(0);
+	    	error_33: assert(0);
 	    }
 	    if(((((((!(a17==1)&&!(a7==1))&&!(a20==1))&&(a8==14))&&(a12==8))&&(a16==5))&&(a21==1))){
 	    	error_57: exit(0);
@@ -410,19 +411,19 @@ extern int __VERIFIER_nondet_int();
 	    	error_50: exit(0);
 	    }
 	    if((((((((a17==1)&&!(a7==1))&&(a20==1))&&(a8==13))&&(a12==8))&&(a16==4))&&(a21==1))){
-	    	error_35: exit(0);
+	    	error_35: assert(0);
 	    }
 	    if(((((((!(a17==1)&&(a7==1))&&(a20==1))&&(a8==14))&&(a12==8))&&(a16==5))&&(a21==1))){
-	    	error_15: exit(0);
+	    	error_15: assert(0);
 	    }
 	    if(((((((!(a17==1)&&!(a7==1))&&(a20==1))&&(a8==13))&&(a12==8))&&(a16==4))&&(a21==1))){
-	    	error_38: exit(0);
+	    	error_38: assert(0);
 	    }
 	    if(((((((!(a17==1)&&(a7==1))&&!(a20==1))&&(a8==14))&&(a12==8))&&(a16==5))&&(a21==1))){
-	    	error_21: exit(0);
+	    	error_21: assert(0);
 	    }
 	    if(((((((!(a17==1)&&!(a7==1))&&!(a20==1))&&(a8==13))&&(a12==8))&&(a16==4))&&(a21==1))){
-	    	error_44: assert(0);
+	    	error_44: exit(0);
 	    }
 	    if((((((((a17==1)&&!(a7==1))&&!(a20==1))&&(a8==13))&&(a12==8))&&(a16==4))&&(a21==1))){
 	    	error_41: exit(0);
@@ -494,7 +495,7 @@ extern int __VERIFIER_nondet_int();
 	    	error_49: exit(0);
 	    }
 	    if((((((((a17==1)&&(a7==1))&&(a20==1))&&(a8==13))&&(a12==8))&&(a16==5))&&(a21==1))){
-	    	error_0: exit(0);
+	    	error_0: __VERIFIER_error();
 	    }
 	    if((((((((a17==1)&&(a7==1))&&(a20==1))&&(a8==14))&&(a12==8))&&(a16==4))&&(a21==1))){
 	    	error_11: exit(0);
@@ -573,19 +574,19 @@ extern int __VERIFIER_nondet_int();
 
 int main()
 {
-	// default output
-	int output = -1;
+    // default output
+    int output = -1;
 
-	// main i/o-loop
-	while(1)
-	{
-		// read input
-		int xy;
-		xy = __VERIFIER_nondet_int();
-		if ((xy != 1) && (xy != 2) && (xy != 3) && (xy != 4) && (xy != 5) && (xy != 6)) return -2;
+    // main i/o-loop
+    while(1)
+    {
+        // read input
+        int x;
+        x = __VERIFIER_nondet_int();
+        if ((x != 1) && (x != 2) && (x != 3) && (x != 4) && (x != 5) && (x != 6)) return -2;
 
-		// operate eca engine
-		output = calculate_output(xy);
+        // operate eca engine
+        output = calculate_output(x);
 
-	}
+    }
 }

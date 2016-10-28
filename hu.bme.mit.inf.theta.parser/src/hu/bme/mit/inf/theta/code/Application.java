@@ -13,6 +13,7 @@ import hu.bme.mit.inf.theta.formalism.cfa.CFA;
 import hu.bme.mit.inf.theta.formalism.utils.impl.CfaPrinter;
 import hu.bme.mit.inf.theta.frontend.Optimizer;
 import hu.bme.mit.inf.theta.frontend.cfa.FunctionToCFATransformer;
+import hu.bme.mit.inf.theta.frontend.cfa.SbeToLbeTransformer;
 import hu.bme.mit.inf.theta.frontend.dependency.CallGraph;
 import hu.bme.mit.inf.theta.frontend.dependency.ProgramDependency;
 import hu.bme.mit.inf.theta.frontend.dependency.ProgramDependency.PDGNode;
@@ -30,7 +31,7 @@ class Application {
 	public static void main(String[] args)
 			throws CoreException, FileNotFoundException, IOException, InterruptedException {
 
-		GlobalContext context = Parser.parse("hello.c");
+		GlobalContext context = Parser.parse("simple.c");
 		Optimizer opt = new Optimizer(context);
 		opt.setLogger(new ConsoleLogger(7));
 
@@ -51,10 +52,10 @@ class Application {
 
 		//System.out.println(IrPrinter.toGraphvizString(context.getFunctionByName("main")));
 
-
 		List<CFA> cfas = opt.getProgramSlices();
 		cfas.forEach(cfa -> {
 			System.out.println(CfaPrinter.toGraphvizSting(cfa));
+			System.out.println(CfaPrinter.toGraphvizSting(SbeToLbeTransformer.transform(cfa)));
 		});
 	}
 }

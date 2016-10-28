@@ -1,5 +1,5 @@
-extern int __VERIFIER_nondet_int();
 
+extern int __VERIFIER_nondet_int();
 int main()
 {
     int p1 = __VERIFIER_nondet_int();  // condition variable
@@ -44,6 +44,9 @@ int main()
     int p14 = __VERIFIER_nondet_int();  // condition variable
     int lk14; // lock variable
 
+    int p15 = __VERIFIER_nondet_int();  // condition variable
+    int lk15; // lock variable
+
 
     int cond;
 
@@ -79,6 +82,8 @@ int main()
         lk13 = 0; // initially lock is open
 
         lk14 = 0; // initially lock is open
+
+        lk15 = 0; // initially lock is open
 
 
     // lock phase
@@ -138,6 +143,10 @@ int main()
             lk14 = 1; // acquire lock
         } else {}
 
+        if (p15 != 0) {
+            lk15 = 1; // acquire lock
+        } else {}
+
 
     // unlock phase
         if (p1 != 0) {
@@ -148,7 +157,7 @@ int main()
         if (p2 != 0) {
             if (lk2 != 1) assert(0); // assertion failure
             lk2 = 0;
-        } else {assert(0);}
+        } else { assert(0); }
 
         if (p3 != 0) {
             if (lk3 != 1) assert(0); // assertion failure
@@ -208,7 +217,12 @@ int main()
         if (p14 != 0) {
             if (lk14 != 1) assert(0); // assertion failure
             lk14 = 0;
-        } else {assert(0);}
+        } else { assert(0); }
+
+        if (p15 != 0) {
+            if (lk15 != 1) assert(0); // assertion failure
+            lk15 = 0;
+        } else {}
 
     }
 

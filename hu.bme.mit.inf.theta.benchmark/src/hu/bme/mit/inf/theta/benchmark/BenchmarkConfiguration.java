@@ -18,8 +18,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
+import com.google.common.base.Stopwatch;
+
 import hu.bme.mit.inf.theta.benchmark.bmc.BoundedModelChecker;
 import hu.bme.mit.inf.theta.benchmark.bmc.BoundedModelChecker.CheckResult;
+import hu.bme.mit.inf.theta.benchmark.utils.CfaMeasures;
 import hu.bme.mit.inf.theta.code.Parser;
 import hu.bme.mit.inf.theta.common.logging.Logger;
 import hu.bme.mit.inf.theta.common.logging.impl.FileLogger;
@@ -34,6 +37,7 @@ import hu.bme.mit.inf.theta.frontend.transform.FunctionTransformer;
 
 public class BenchmarkConfiguration {
 
+
 	private String name;
 	private Path testPath;
 	private OptConfig optConfig = new OptConfig();
@@ -41,6 +45,8 @@ public class BenchmarkConfiguration {
 	private boolean slice;
 	private int maxBmcDepth = 20;
 	private int logLevel = 7;
+	private boolean isLBE = false;
+	private boolean runnable = true;
 
 	/// Timers
 	private final Timer suiteTimer = new Timer();
@@ -75,8 +81,16 @@ public class BenchmarkConfiguration {
 		this.slice = slice;
 	}
 
+	public void setIsLBE(boolean isLBE) {
+		this.isLBE = isLBE;
+	}
+
 	public void setLogLevel(int level) {
 		this.logLevel = level;
+	}
+
+	public void setRunnable(boolean runnable) {
+		this.runnable = runnable;
 	}
 
 	public void run() {
@@ -89,7 +103,6 @@ public class BenchmarkConfiguration {
 					.collect(Collectors.toList());
 
 			String logDirName = "logs/" + this.name;
-
 
 			for (String test : tests) {
 				String logFileName = logDirName + test.replace('/', '_') + ".log";
@@ -130,18 +143,98 @@ public class BenchmarkConfiguration {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+
+	}
+
+	public List<MeasureResult> measure() {
+		List<MeasureResult> results = new ArrayList<>();
+
+		System.out.println("========== " + "MEASURE" + " ==========");
+		System.out.println("========== " + this.name + " ==========");
+		try {
+			List<String> tests = Files.walk(this.testPath)
+					.filter(Files::isRegularFile)
+					.filter(p -> p.toString().endsWith(".c"))
+					.map(p -> p.toString())
+					.collect(Collectors.toList());
+
+			String logDirName = "logs/measure/" + this.name;
+
+			for (String test : tests) {
+				String logFileName = logDirName + test.replace('/', '_') + ".log";
+				File logFile = new File(logFileName);
+
+				if (!logFile.exists() && !logFile.isDirectory())
+					logFile.createNewFile();
+
+				Logger log = new FileLogger(this.logLevel, logFileName, true);
+
+				System.out.print("MEASURE " + test + "...");
+				List<MeasureResult> r = this.benchmark(test, log, slice);
+
+				results.addAll(r);
+				System.out.println("\tDONE");
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		return results;
+	}
+
+	protected List<MeasureResult> benchmark(String file, Logger log, boolean slice) {
+		List<MeasureResult> results = new ArrayList<>();
+		List<CFA> cfas = this.compile(file, log, slice);
+
+		if (cfas.size() == 0) // if no slices were found for asserts, then no asserts can fail
+			throw new AssertionError("There should be at least one slice");
+
+		int count = 0;
+		BoundedModelChecker bmc = new BoundedModelChecker(log);
+
+		for (CFA cfa : cfas) {
+			log.writeHeader("CFA SLICE", 1);
+			log.writeln(CfaPrinter.toGraphvizSting(cfa), 1);
+			MeasureResult res = new MeasureResult(cfa, file, count++, this.name);
+
+			if (this.runnable) {
+				ExecutorService exec = Executors.newSingleThreadExecutor();
+				BmcRunner runner = new BmcRunner(bmc, this.maxBmcDepth, cfa);
+				Future<CheckResult> future = exec.submit(runner);
+
+				Stopwatch sw = Stopwatch.createUnstarted();
+
+				try {
+					sw.start();
+					CheckResult check = future.get(this.timeout, TimeUnit.MILLISECONDS);
+					sw.stop();
+
+					res.check = check;
+					res.runtime = sw.elapsed(TimeUnit.MILLISECONDS);
+				} catch (TimeoutException ex) {
+					future.cancel(true);
+					sw.stop();
+					res.check = CheckResult.CHECK_TIMEOUT;
+					res.runtime = sw.elapsed(TimeUnit.MILLISECONDS);
+				} catch (Exception ex) {
+					ex.printStackTrace();
+					throw new AssertionError("Don't do this please");
+				} finally {
+					future.cancel(true);
+					exec.shutdown();
+					sw.reset();
+				}
+
+			}
+
+			results.add(res);
+		}
+
+		return results;
 	}
 
 	protected CheckResult runBenchmark(String file, Logger log, boolean slice) {
-		GlobalContext context = Parser.parse(file);
-		Optimizer opt = optConfig.createOpt(context, log);
-
-		opt.inlineGlobalVariables();
-		opt.transform();
-
-		opt.dump();
-
-		List<CFA> cfas = slice ? opt.createCfaSlices() : opt.createCfas();
+		List<CFA> cfas = this.compile(file, log, slice);
 
 		if (cfas.size() == 0) // if no slices were found for asserts, then no asserts can fail
 			return CheckResult.CHECK_PASSED;
@@ -153,9 +246,10 @@ public class BenchmarkConfiguration {
 
 		BoundedModelChecker bmc = new BoundedModelChecker(log);
 
-		//for (CFA cfa : cfas) {
+		for (CFA cfa : cfas) {
 			ExecutorService exec = Executors.newSingleThreadExecutor();
-			BmcRunner runner = new BmcRunner(bmc, this.maxBmcDepth, cfas);
+			BmcRunner runner = new BmcRunner(bmc, this.maxBmcDepth, cfa);
+
 			Future<CheckResult> future = exec.submit(runner);
 
 			try {
@@ -176,10 +270,22 @@ public class BenchmarkConfiguration {
 				future.cancel(true);
 				exec.shutdown();
 			}
-
-		//}
+		}
 
 		return CheckResult.CHECK_UNKNOWN;
+	}
+
+	private List<CFA> compile(String file, Logger log, boolean slice) {
+		GlobalContext context = Parser.parse(file);
+		Optimizer opt = optConfig.createOpt(context, log);
+
+		opt.inlineGlobalVariables();
+		opt.transform();
+
+		opt.dump();
+
+		List<CFA> cfas = slice ? opt.createCfaSlices(this.isLBE) : opt.createCfas();
+		return cfas;
 	}
 
 	protected static class BmcRunner implements Callable<CheckResult> {
@@ -187,17 +293,17 @@ public class BenchmarkConfiguration {
 		public volatile CheckResult res = CheckResult.CHECK_INTERNAL_ERROR;
 		public BoundedModelChecker bmc;
 		public int k;
-		public Collection<CFA> cfas;
+		public CFA cfa;
 
-		public BmcRunner(BoundedModelChecker bmc, int k, Collection<CFA> cfas) {
+		public BmcRunner(BoundedModelChecker bmc, int k, CFA cfa) {
 			this.bmc = bmc;
 			this.k = k;
-			this.cfas = cfas;
+			this.cfa = cfa;
 		}
 
 		@Override
 		public CheckResult call() {
-			return this.bmc.checkAll(this.cfas, this.k);
+			return this.bmc.check(this.cfa, this.k);
 		}
 
 	}
@@ -219,6 +325,32 @@ public class BenchmarkConfiguration {
 		}
 
 	}
+
+	public static class MeasureResult {
+		public static int count = 0;
+		public int id;
+		public CFA cfa;
+		public String filename;
+		public String set;
+
+		public int locCount;
+		public int depth;
+		public int edgeCount;
+		public CheckResult check = CheckResult.CHECK_TIMEOUT;
+		public long runtime = -1;
+
+		public MeasureResult(CFA cfa, String filename, int id, String set) {
+			this.cfa = cfa;
+			this.filename = filename;
+			this.id = id;
+			this.set = set;
+
+			this.locCount = cfa.getLocs().size();
+			this.edgeCount = cfa.getEdges().size();
+			this.depth = CfaMeasures.depth(cfa);
+		}
+	}
+
 
 
 }

@@ -8,6 +8,7 @@ import hu.bme.mit.inf.theta.common.logging.Logger;
 import hu.bme.mit.inf.theta.common.logging.impl.NullLogger;
 import hu.bme.mit.inf.theta.formalism.cfa.CFA;
 import hu.bme.mit.inf.theta.frontend.cfa.FunctionToCFATransformer;
+import hu.bme.mit.inf.theta.frontend.cfa.SbeToLbeTransformer;
 import hu.bme.mit.inf.theta.frontend.ir.BasicBlock;
 import hu.bme.mit.inf.theta.frontend.ir.Function;
 import hu.bme.mit.inf.theta.frontend.ir.GlobalContext;
@@ -102,6 +103,7 @@ public class Optimizer {
 	public List<CFA> createCfas() {
 		return this.context.functions()
 			.stream()
+			.filter(func -> func.isEnabled())
 			.map(func -> FunctionToCFATransformer.createSBE(func))
 			.collect(Collectors.toList());
 	}
@@ -113,6 +115,17 @@ public class Optimizer {
 		return slices
 			.stream()
 			.map(slice -> FunctionToCFATransformer.createSBE(slice))
+			.collect(Collectors.toList());
+	}
+
+	public List<CFA> getProgramSlicesLBE() {
+		Function main = this.context.getFunctionByName("main");
+		List<Function> slices = this.slicer.allSlices(main, FunctionSlicer.SLICE_ON_ASSERTS);
+
+		return slices
+			.stream()
+			.map(slice -> FunctionToCFATransformer.createLBE(slice))
+			.map(cfa -> SbeToLbeTransformer.transform(cfa))
 			.collect(Collectors.toList());
 	}
 
@@ -131,10 +144,11 @@ public class Optimizer {
 		return slices;
 	}
 
-	public List<CFA> createCfaSlices() {
+	public List<CFA> createCfaSlices(boolean lbe) {
 		return this.createSlices()
 			.stream()
 			.map(slice -> FunctionToCFATransformer.createSBE(slice))
+			.map(cfa -> lbe ? SbeToLbeTransformer.transform(cfa) : cfa)
 			.collect(Collectors.toList());
 	}
 

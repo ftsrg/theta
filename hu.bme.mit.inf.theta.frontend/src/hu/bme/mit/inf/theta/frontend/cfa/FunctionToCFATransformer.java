@@ -23,6 +23,7 @@ import hu.bme.mit.inf.theta.frontend.ir.node.AssertNode;
 import hu.bme.mit.inf.theta.frontend.ir.node.AssignNode;
 import hu.bme.mit.inf.theta.frontend.ir.node.BranchTableNode;
 import hu.bme.mit.inf.theta.frontend.ir.node.BranchTableNode.BranchTableEntry;
+import hu.bme.mit.inf.theta.frontend.ir.utils.IrPrinter;
 import hu.bme.mit.inf.theta.frontend.ir.node.EntryNode;
 import hu.bme.mit.inf.theta.frontend.ir.node.ExitNode;
 import hu.bme.mit.inf.theta.frontend.ir.node.GotoNode;
@@ -40,51 +41,14 @@ import hu.bme.mit.inf.theta.frontend.ir.node.TerminatorIrNode;
 public class FunctionToCFATransformer {
 
 	public static CFA createLBE(Function func) {
-		MutableCfa cfa = new MutableCfa();
-		Map<BasicBlock, CfaLoc> mapping = new HashMap<>();
-
-		// Create a work copy of the input function
-		Function copy = func.copy();
-		List<BasicBlock> blocks = copy.getBlocksDFS();
-		for (BasicBlock block : blocks) {
-			for (int i = 0; i < block.countNodes(); i++) {
-				IrNode node = block.getNodeByIndex(i);
-				if (node instanceof AssertNode) {
-					// (pre, split, post)
-					Product3<BasicBlock, BasicBlock, BasicBlock> split = copy.splitBlock(block, i);
-
-				}
-			}
-		}
-
-
-		blocks.forEach(block -> mapping.put(block, cfa.createLoc()));
-
-		BasicBlock entry = func.getEntryBlock();
-		BasicBlock exit = func.getExitBlock();
-
-		// Replace the initial node
-		cfa.removeLoc(mapping.get(entry));
-		cfa.removeLoc(mapping.get(exit));
-		mapping.put(entry, cfa.getInitLoc());
-		mapping.put(exit, cfa.getFinalLoc());
-
-		for (BasicBlock block : blocks) {
-			CfaLoc source = mapping.get(block);
-			for (BasicBlock child : block.children()) {
-				CfaLoc target = mapping.get(child);
-
-			}
-		}
-
-		return cfa;
+		return SbeToLbeTransformer.transform(createSBE(func));
 	}
 
 	/**
 	 * Creates a singe-block encoded CFA from an input function
 	 *
 	 * @param func The function to transform
-	 *
+
 	 * @return A CFA instance semantically equivalent to the given function
 	 */
 	public static CFA createSBE(Function func) {
