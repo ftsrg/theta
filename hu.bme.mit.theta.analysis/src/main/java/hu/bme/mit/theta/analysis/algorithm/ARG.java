@@ -139,6 +139,15 @@ public final class ARG<S extends State, A extends Action> {
 		coveringNode.coveredNodes.add(node);
 	}
 
+	public void uncover(final ArgNode<S, A> node) {
+		checkNotNull(node);
+		checkArgument(node.arg == this);
+		if (node.coveringNode.isPresent()) {
+			node.coveringNode.get().coveredNodes.remove(node);
+			node.coveringNode = Optional.empty();
+		}
+	}
+
 	////
 
 	private ArgNode<S, A> createNode(final S state, final boolean target) {
