@@ -185,7 +185,7 @@ public final class ARG<S extends State, A extends Action> {
 				running = null;
 			}
 		} while (running != null);
-		return new Trace<>(states, actions);
+		return Trace.create(states, actions);
 	}
 
 	/**

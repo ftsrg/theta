@@ -18,17 +18,22 @@ public final class Trace<S extends State, A extends Action> {
 	private final List<S> states;
 	private final List<A> actions;
 
-	/**
-	 * Initialize a trace. The size of states must be at least one, and the size
-	 * of the actions must be one less than the number of states.
-	 */
-	public Trace(final List<? extends S> states, final List<? extends A> actions) {
+	private Trace(final List<? extends S> states, final List<? extends A> actions) {
 		checkNotNull(states);
 		checkNotNull(actions);
 		checkArgument(states.size() > 0, "A trace must contain at least one state.");
 		checkArgument(states.size() == actions.size() + 1, "#states = #actions + 1 must hold.");
 		this.states = ImmutableList.copyOf(states);
 		this.actions = ImmutableList.copyOf(actions);
+	}
+
+	/**
+	 * Create a trace. The size of states must be at least one, and the size of
+	 * the actions must be one less than the number of states.
+	 */
+	public static <S extends State, A extends Action> Trace<S, A> create(final List<? extends S> states,
+			final List<? extends A> actions) {
+		return new Trace<>(states, actions);
 	}
 
 	/**
