@@ -46,12 +46,12 @@ public final class ArgTrace<S extends State, A extends Action> implements Iterab
 
 	////
 
-	public static <S extends State, A extends Action> ArgTrace<S, A> create(final ArgNode<S, A> node) {
+	public static <S extends State, A extends Action> ArgTrace<S, A> of(final ArgNode<S, A> node) {
 		checkNotNull(node);
 		return new ArgTrace<>(node, Collections.emptyList());
 	}
 
-	public static <S extends State, A extends Action> ArgTrace<S, A> create(final List<? extends ArgEdge<S, A>> edges) {
+	public static <S extends State, A extends Action> ArgTrace<S, A> of(final List<? extends ArgEdge<S, A>> edges) {
 		checkNotNull(edges);
 		checkArgument(!edges.isEmpty());
 		return new ArgTrace<>(edges.get(0).getSource(), edges);

@@ -15,7 +15,6 @@ import java.util.Optional;
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Domain;
 import hu.bme.mit.theta.analysis.State;
-import hu.bme.mit.theta.analysis.Trace;
 
 /**
  * Represents an abstract reachability graph (ARG).
@@ -169,33 +168,32 @@ public final class ARG<S extends State, A extends Action> {
 
 	////
 
-	public Trace<S, A> getTraceTo(final ArgNode<S, A> node) {
+	public ArgTrace<S, A> getTraceTo(final ArgNode<S, A> node) {
 		checkArgument(nodes.contains(node));
+		final List<ArgEdge<S, A>> edges = new ArrayList<>();
 
-		final List<S> states = new ArrayList<>();
-		final List<A> actions = new ArrayList<>();
-		ArgNode<S, A> running = node;
-		do {
-			states.add(0, running.getState());
-			if (running.getInEdge().isPresent()) {
-				final ArgEdge<S, A> edge = running.getInEdge().get();
-				actions.add(0, edge.getAction());
-				running = edge.getSource();
-			} else {
-				running = null;
-			}
-		} while (running != null);
-		return Trace.create(states, actions);
+		ArgNode<S, A> target = node;
+		while (target.inEdge.isPresent()) {
+			final ArgEdge<S, A> edge = target.inEdge.get();
+			edges.add(0, edge);
+			target = edge.getSource();
+		}
+
+		if (edges.isEmpty()) {
+			return ArgTrace.of(node);
+		} else {
+			return ArgTrace.of(edges);
+		}
 	}
 
 	/**
 	 * Gets all counterexamples, i.e., traces leading to target states.
 	 */
-	public Collection<Trace<S, A>> getAllCexs() {
-		final List<Trace<S, A>> cexs = new ArrayList<>();
+	public Collection<ArgTrace<S, A>> getAllCexs() {
+		final List<ArgTrace<S, A>> cexs = new ArrayList<>();
 
 		for (final ArgNode<S, A> targetNode : getTargetNodes()) {
-			final Trace<S, A> trace = getTraceTo(targetNode);
+			final ArgTrace<S, A> trace = getTraceTo(targetNode);
 			cexs.add(trace);
 		}
 
@@ -207,7 +205,7 @@ public final class ARG<S extends State, A extends Action> {
 	 * Gets a single counterexample, i.e., a trace leading to a target state (if
 	 * at least one target state exists in the ARG).
 	 */
-	public Optional<Trace<S, A>> getAnyCex() {
+	public Optional<ArgTrace<S, A>> getAnyCex() {
 		if (getTargetNodes().size() == 0) {
 			return Optional.empty();
 		} else {
