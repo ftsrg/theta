@@ -18,7 +18,7 @@ import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.utils.impl.PathUtils;
 import hu.bme.mit.theta.core.utils.impl.StmtToExprResult;
 import hu.bme.mit.theta.core.utils.impl.StmtUtils;
-import hu.bme.mit.theta.core.utils.impl.VarIndexes;
+import hu.bme.mit.theta.core.utils.impl.VarIndexing;
 import hu.bme.mit.theta.solver.Solver;
 
 public final class TcfaExplTransferFunction implements TransferFunction<ExplState, TcfaAction, ExplPrecision> {
@@ -42,25 +42,25 @@ public final class TcfaExplTransferFunction implements TransferFunction<ExplStat
 		solver.push();
 		solver.add(PathUtils.unfold(state.toExpr(), 0));
 
-		final StmtToExprResult transformResult = StmtUtils.toExpr(action.getDataStmts(), VarIndexes.all(0));
+		final StmtToExprResult transformResult = StmtUtils.toExpr(action.getDataStmts(), VarIndexing.all(0));
 		final Collection<? extends Expr<? extends BoolType>> stmtExprs = transformResult.getExprs().stream()
 				.map(e -> PathUtils.unfold(e, 0)).collect(toList());
-		final VarIndexes indexes = transformResult.getIndexes();
+		final VarIndexing indexing = transformResult.getIndexing();
 
 		solver.add(stmtExprs);
 
 		for (final Expr<? extends BoolType> invar : action.getTargetDataInvars()) {
-			solver.add(PathUtils.unfold(invar, indexes));
+			solver.add(PathUtils.unfold(invar, indexing));
 		}
 
 		boolean moreSuccStates;
 		do {
 			moreSuccStates = solver.check().isSat();
 			if (moreSuccStates) {
-				final Valuation nextSuccStateVal = PathUtils.extractValuation(solver.getModel(), indexes);
+				final Valuation nextSuccStateVal = PathUtils.extractValuation(solver.getModel(), indexing);
 				final ExplState nextSuccState = precision.createState(nextSuccStateVal);
 				builder.add(nextSuccState);
-				solver.add(PathUtils.unfold(Exprs.Not(nextSuccState.toExpr()), indexes));
+				solver.add(PathUtils.unfold(Exprs.Not(nextSuccState.toExpr()), indexing));
 			}
 		} while (moreSuccStates);
 		solver.pop();
