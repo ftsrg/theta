@@ -59,6 +59,10 @@ public final class ArgTrace<S extends State, A extends Action> implements Iterab
 
 	////
 
+	public int length() {
+		return edges.size();
+	}
+
 	public ArgNode<S, A> node(final int index) {
 		return nodes.get(index);
 	}
