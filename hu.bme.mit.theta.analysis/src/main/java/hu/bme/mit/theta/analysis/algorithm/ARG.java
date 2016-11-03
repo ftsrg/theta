@@ -166,26 +166,6 @@ public final class ARG<S extends State, A extends Action> {
 		return edge;
 	}
 
-	////
-
-	public ArgTrace<S, A> getTraceTo(final ArgNode<S, A> node) {
-		checkArgument(nodes.contains(node));
-		final List<ArgEdge<S, A>> edges = new ArrayList<>();
-
-		ArgNode<S, A> target = node;
-		while (target.inEdge.isPresent()) {
-			final ArgEdge<S, A> edge = target.inEdge.get();
-			edges.add(0, edge);
-			target = edge.getSource();
-		}
-
-		if (edges.isEmpty()) {
-			return ArgTrace.of(node);
-		} else {
-			return ArgTrace.of(edges);
-		}
-	}
-
 	/**
 	 * Gets all counterexamples, i.e., traces leading to target states.
 	 */
@@ -193,7 +173,7 @@ public final class ARG<S extends State, A extends Action> {
 		final List<ArgTrace<S, A>> cexs = new ArrayList<>();
 
 		for (final ArgNode<S, A> targetNode : getTargetNodes()) {
-			final ArgTrace<S, A> trace = getTraceTo(targetNode);
+			final ArgTrace<S, A> trace = ArgTrace.to(targetNode);
 			cexs.add(trace);
 		}
 
@@ -210,7 +190,7 @@ public final class ARG<S extends State, A extends Action> {
 			return Optional.empty();
 		} else {
 			final ArgNode<S, A> targetNode = anyElementOf(targetNodes);
-			return Optional.of(getTraceTo(targetNode));
+			return Optional.of(ArgTrace.to(targetNode));
 		}
 	}
 
