@@ -14,20 +14,20 @@ import com.google.common.collect.Sets;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
 
-public class VarIndexes {
+public class VarIndexing {
 
-	private static final VarIndexes ALL_ZERO = new Builder(0).build();
-	private static final VarIndexes ALL_ONE = new Builder(1).build();
+	private static final VarIndexing ALL_ZERO = new Builder(0).build();
+	private static final VarIndexing ALL_ONE = new Builder(1).build();
 
 	private final int defaultIndex;
 	private final Map<VarDecl<?>, Integer> varToOffset;
 
-	private VarIndexes(final Builder builder) {
+	private VarIndexing(final Builder builder) {
 		defaultIndex = builder.defaultIndex;
 		varToOffset = ImmutableMap.copyOf(builder.varToOffset);
 	}
 
-	public static VarIndexes all(final int defaultIndex) {
+	public static VarIndexing all(final int defaultIndex) {
 		checkArgument(defaultIndex >= 0);
 		switch (defaultIndex) {
 		case 0:
@@ -48,19 +48,19 @@ public class VarIndexes {
 		return new Builder(this);
 	}
 
-	public VarIndexes inc(final VarDecl<?> varDecl, final int n) {
+	public VarIndexing inc(final VarDecl<?> varDecl, final int n) {
 		checkNotNull(varDecl);
 		checkArgument(n >= 0);
 		return transform().inc(varDecl, n).build();
 	}
 
-	public VarIndexes inc(final VarDecl<?> varDecl) {
+	public VarIndexing inc(final VarDecl<?> varDecl) {
 		return inc(varDecl, 1);
 	}
 
-	public VarIndexes join(final VarIndexes indexes) {
-		checkNotNull(indexes);
-		return transform().join(indexes.transform()).build();
+	public VarIndexing join(final VarIndexing indexing) {
+		checkNotNull(indexing);
+		return transform().join(indexing.transform()).build();
 	}
 
 	public int get(final VarDecl<?> varDecl) {
@@ -95,9 +95,9 @@ public class VarIndexes {
 			varToOffset = new HashMap<>();
 		}
 
-		private Builder(final VarIndexes varIndexes) {
-			this.defaultIndex = varIndexes.defaultIndex;
-			this.varToOffset = new HashMap<>(varIndexes.varToOffset);
+		private Builder(final VarIndexing indexing) {
+			this.defaultIndex = indexing.defaultIndex;
+			this.varToOffset = new HashMap<>(indexing.varToOffset);
 		}
 
 		public Builder inc(final VarDecl<?> varDecl, final int n) {
@@ -148,8 +148,8 @@ public class VarIndexes {
 			return defaultIndex + offset;
 		}
 
-		public VarIndexes build() {
-			return new VarIndexes(this);
+		public VarIndexing build() {
+			return new VarIndexing(this);
 		}
 
 	}

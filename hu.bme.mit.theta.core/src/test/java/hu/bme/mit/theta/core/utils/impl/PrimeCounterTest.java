@@ -78,11 +78,11 @@ public final class PrimeCounterTest {
 		final Expr<?> expr = manager.parseExpr(exprString);
 
 		// Act
-		final VarIndexes indexes = PrimeCounter.countPrimes(expr);
+		final VarIndexing indexing = PrimeCounter.countPrimes(expr);
 
 		// Assert
-		assertEquals(nPrimesOnX, indexes.get(x));
-		assertEquals(nPrimesOnY, indexes.get(y));
+		assertEquals(nPrimesOnX, indexing.get(x));
+		assertEquals(nPrimesOnY, indexing.get(y));
 	}
 
 }

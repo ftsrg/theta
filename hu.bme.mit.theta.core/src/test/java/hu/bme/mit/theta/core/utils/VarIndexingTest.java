@@ -7,9 +7,9 @@ import static org.junit.Assert.assertEquals;
 import org.junit.Test;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.utils.impl.VarIndexes;
+import hu.bme.mit.theta.core.utils.impl.VarIndexing;
 
-public class VarIndexesTest {
+public class VarIndexingTest {
 
 	final VarDecl<?> x = Var("x", Int());
 	final VarDecl<?> y = Var("y", Int());
@@ -17,8 +17,8 @@ public class VarIndexesTest {
 
 	@Test
 	public void testAll() {
-		final VarIndexes all0 = VarIndexes.all(0);
-		final VarIndexes all1 = VarIndexes.all(1);
+		final VarIndexing all0 = VarIndexing.all(0);
+		final VarIndexing all1 = VarIndexing.all(1);
 
 		assertEquals(0, all0.get(x));
 		assertEquals(0, all0.get(y));
@@ -31,7 +31,7 @@ public class VarIndexesTest {
 
 	@Test
 	public void testInc() {
-		final VarIndexes indexes = VarIndexes.builder(0).inc(x).inc(z).inc(x).build();
+		final VarIndexing indexes = VarIndexing.builder(0).inc(x).inc(z).inc(x).build();
 
 		assertEquals(2, indexes.get(x));
 		assertEquals(0, indexes.get(y));
@@ -40,18 +40,18 @@ public class VarIndexesTest {
 
 	@Test
 	public void testIncAll() {
-		final VarIndexes indexes = VarIndexes.builder(0).inc(x).incAll().build();
+		final VarIndexing indexing = VarIndexing.builder(0).inc(x).incAll().build();
 
-		assertEquals(2, indexes.get(x));
-		assertEquals(1, indexes.get(y));
-		assertEquals(1, indexes.get(z));
+		assertEquals(2, indexing.get(x));
+		assertEquals(1, indexing.get(y));
+		assertEquals(1, indexing.get(z));
 	}
 
 	@Test
 	public void testJoin() {
-		final VarIndexes indexes1 = VarIndexes.builder(0).inc(x).inc(y).build();
-		final VarIndexes indexes2 = VarIndexes.builder(1).inc(x).inc(z).build();
-		final VarIndexes joinedIndexes = indexes1.join(indexes2);
+		final VarIndexing indexes1 = VarIndexing.builder(0).inc(x).inc(y).build();
+		final VarIndexing indexes2 = VarIndexing.builder(1).inc(x).inc(z).build();
+		final VarIndexing joinedIndexes = indexes1.join(indexes2);
 		
 				assertEquals(2, joinedIndexes.get(x));
 		assertEquals(1, joinedIndexes.get(y));
