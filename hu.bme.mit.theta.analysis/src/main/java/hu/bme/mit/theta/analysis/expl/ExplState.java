@@ -83,9 +83,7 @@ public final class ExplState implements ExprState, Assignment {
 	public String toString() {
 		final ToStringBuilder builder = ObjectUtils.toStringBuilder(getClass().getSimpleName());
 		for (final VarDecl<? extends Type> varDecl : values.getDecls()) {
-			builder.add(varDecl.getName());
-			builder.add(" = ");
-			builder.add(getValue(varDecl));
+			builder.add(varDecl.getName() + " = " + getValue(varDecl));
 		}
 		return builder.toString();
 	}
