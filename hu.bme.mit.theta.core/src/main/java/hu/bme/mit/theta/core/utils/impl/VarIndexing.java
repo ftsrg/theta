@@ -58,6 +58,11 @@ public class VarIndexing {
 		return inc(varDecl, 1);
 	}
 
+	public VarIndexing add(final VarIndexing indexing) {
+		checkNotNull(indexing);
+		return transform().add(indexing.transform()).build();
+	}
+
 	public VarIndexing join(final VarIndexing indexing) {
 		checkNotNull(indexing);
 		return transform().join(indexing.transform()).build();
@@ -117,6 +122,28 @@ public class VarIndexing {
 
 		public Builder incAll() {
 			defaultIndex = defaultIndex + 1;
+			return this;
+		}
+
+		public Builder add(final Builder that) {
+			checkNotNull(that);
+
+			final int newDefaultIndex = this.defaultIndex + that.defaultIndex;
+			final Map<VarDecl<?>, Integer> newVarToOffset = new HashMap<>();
+
+			final Set<VarDecl<?>> varDecls = Sets.union(this.varToOffset.keySet(), that.varToOffset.keySet());
+			for (final VarDecl<?> varDecl : varDecls) {
+				final int index1 = this.get(varDecl);
+				final int index2 = that.get(varDecl);
+				final int newIndex = index1 + index2;
+				final int newOffset = newIndex - newDefaultIndex;
+				if (newOffset > 0) {
+					newVarToOffset.put(varDecl, newOffset);
+				}
+			}
+
+			this.defaultIndex = newDefaultIndex;
+			this.varToOffset = newVarToOffset;
 			return this;
 		}
 
