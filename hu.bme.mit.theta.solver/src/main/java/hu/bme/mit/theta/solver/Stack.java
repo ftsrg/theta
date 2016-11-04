@@ -2,7 +2,7 @@ package hu.bme.mit.theta.solver;
 
 import java.util.Collection;
 
-public interface Stack<T> {
+public interface Stack<T> extends Iterable<T> {
 
 	public void add(final T elem);
 

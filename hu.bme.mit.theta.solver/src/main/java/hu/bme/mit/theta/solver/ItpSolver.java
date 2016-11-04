@@ -55,6 +55,6 @@ public interface ItpSolver extends Solver {
 
 	public Interpolant getInterpolant(final ItpPattern pattern);
 
-	public Collection<ItpMarker> getMarkers();
+	public Collection<? extends ItpMarker> getMarkers();
 
 }
