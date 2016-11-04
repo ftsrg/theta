@@ -1,6 +1,7 @@
 package hu.bme.mit.theta.analysis.expr;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.solver.utils.SolverUtils.using;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,32 +41,31 @@ public final class ExprTrace {
 	}
 
 	public ExprTraceStatus check(final ItpSolver solver) {
-		solver.push();
+		return using(solver, s -> {
+			final List<ItpMarker> markers = new ArrayList<>();
 
-		final List<ItpMarker> markers = new ArrayList<>();
+			markers.add(s.createMarker());
+			for (final Expr<? extends BoolType> expr : exprs) {
+				final ItpMarker marker = s.createMarker();
+				markers.add(marker);
+				s.add(marker, expr);
+			}
 
-		markers.add(solver.createMarker());
-		for (final Expr<? extends BoolType> expr : exprs) {
-			final ItpMarker marker = solver.createMarker();
-			markers.add(marker);
-			solver.add(marker, expr);
-		}
+			final ItpPattern pattern = s.createSeqPattern(markers);
 
-		final ItpPattern pattern = solver.createSeqPattern(markers);
+			final SolverStatus status = s.check();
+			final ExprTraceStatus result;
 
-		final SolverStatus status = solver.check();
-		final ExprTraceStatus result;
+			if (status.isSat()) {
+				final Model model = s.getModel();
+				result = ExprTraceStatus.feasable(model, indexings);
+			} else {
+				final Interpolant interpolant = s.getInterpolant(pattern);
+				result = ExprTraceStatus.unfeasable(interpolant, markers, indexings);
+			}
 
-		if (status.isSat()) {
-			final Model model = solver.getModel();
-			result = ExprTraceStatus.feasable(model, indexings);
-		} else {
-			final Interpolant interpolant = solver.getInterpolant(pattern);
-			result = ExprTraceStatus.unfeasable(interpolant, markers, indexings);
-		}
-		solver.pop();
-
-		return result;
+			return result;
+		});
 	}
 
 	////
