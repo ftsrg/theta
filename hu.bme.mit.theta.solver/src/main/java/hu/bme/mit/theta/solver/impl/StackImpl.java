@@ -4,6 +4,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.LinkedList;
 
 import hu.bme.mit.theta.solver.Stack;
@@ -47,6 +48,11 @@ public class StackImpl<T> implements Stack<T> {
 	@Override
 	public Collection<T> toCollection() {
 		return Collections.unmodifiableCollection(stack);
+	}
+
+	@Override
+	public Iterator<T> iterator() {
+		return stack.iterator();
 	}
 
 }
