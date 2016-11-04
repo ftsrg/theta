@@ -16,7 +16,6 @@ public class StackImpl<T> implements Stack<T> {
 	public StackImpl() {
 		stack = new LinkedList<>();
 		sizes = new LinkedList<>();
-		sizes.add(0);
 	}
 
 	@Override
@@ -36,8 +35,9 @@ public class StackImpl<T> implements Stack<T> {
 
 	@Override
 	public void pop(final int n) {
+		checkArgument(n > 0);
 		final int depth = sizes.size();
-		checkArgument(depth > n);
+		checkArgument(depth >= n);
 
 		final int size = sizes.get(depth - n);
 		sizes.subList(depth - n, depth).clear();
