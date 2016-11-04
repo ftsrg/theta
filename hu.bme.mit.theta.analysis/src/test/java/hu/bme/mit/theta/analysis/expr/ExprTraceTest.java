@@ -17,7 +17,6 @@ import java.util.List;
 
 import org.junit.Test;
 
-import hu.bme.mit.theta.analysis.expr.ExprTrace.TraceStatus;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.IntType;
@@ -43,7 +42,7 @@ public final class ExprTraceTest {
 		final ExprTrace exprTrace = ExprTrace.of(actions);
 
 		// Act
-		final TraceStatus status = exprTrace.check(solver);
+		final ExprTraceStatus status = exprTrace.check(solver);
 
 		// Assert
 		assertTrue(status.isFeasable());
@@ -71,7 +70,7 @@ public final class ExprTraceTest {
 		final ExprTrace exprTrace = ExprTrace.of(actions);
 
 		// Act
-		final TraceStatus status = exprTrace.check(solver);
+		final ExprTraceStatus status = exprTrace.check(solver);
 
 		// Assert
 		assertTrue(status.isUnfeasable());
