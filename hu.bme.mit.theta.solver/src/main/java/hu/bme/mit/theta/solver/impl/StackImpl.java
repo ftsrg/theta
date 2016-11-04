@@ -11,48 +11,48 @@ import hu.bme.mit.theta.solver.Stack;
 
 public class StackImpl<T> implements Stack<T> {
 
-	public final LinkedList<T> stack;
+	public final LinkedList<T> items;
 	private final LinkedList<Integer> sizes;
 
 	public StackImpl() {
-		stack = new LinkedList<>();
+		items = new LinkedList<>();
 		sizes = new LinkedList<>();
-		sizes.add(0);
 	}
 
 	@Override
 	public void add(final T elem) {
-		stack.add(elem);
+		items.add(elem);
 	}
 
 	@Override
 	public void add(final Collection<? extends T> elems) {
-		stack.addAll(elems);
+		items.addAll(elems);
 	}
 
 	@Override
 	public void push() {
-		sizes.add(stack.size());
+		sizes.add(items.size());
 	}
 
 	@Override
 	public void pop(final int n) {
+		checkArgument(n > 0);
 		final int depth = sizes.size();
-		checkArgument(depth > n);
+		checkArgument(depth >= n);
 
 		final int size = sizes.get(depth - n);
 		sizes.subList(depth - n, depth).clear();
-		stack.subList(size, stack.size()).clear();
+		items.subList(size, items.size()).clear();
 	}
 
 	@Override
 	public Collection<T> toCollection() {
-		return Collections.unmodifiableCollection(stack);
+		return Collections.unmodifiableCollection(items);
 	}
 
 	@Override
 	public Iterator<T> iterator() {
-		return stack.iterator();
+		return items.iterator();
 	}
 
 }
