@@ -1,5 +1,6 @@
 package hu.bme.mit.theta.analysis.algorithm;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.common.ObjectUtils.toStringBuilder;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
@@ -8,6 +9,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.State;
@@ -17,8 +19,9 @@ public final class ArgNode<S extends State, A extends Action> {
 	final ARG<S, A> arg;
 
 	private final int id;
-	private final S state;
 	private final boolean target;
+
+	private S state;
 
 	Optional<ArgEdge<S, A>> inEdge;
 	final Collection<ArgEdge<S, A>> outEdges;
@@ -47,9 +50,12 @@ public final class ArgNode<S extends State, A extends Action> {
 		return state;
 	}
 
-	public boolean isTarget() {
-		return target;
+	public void setState(final S state) {
+		checkNotNull(state);
+		this.state = state;
 	}
+
+	////
 
 	public Optional<ArgEdge<S, A>> getInEdge() {
 		return inEdge;
@@ -63,7 +69,7 @@ public final class ArgNode<S extends State, A extends Action> {
 		return coveringNode;
 	}
 
-	public Collection<ArgNode<S, A>> coveredNodes() {
+	public Collection<ArgNode<S, A>> getCoveredNodes() {
 		return Collections.unmodifiableCollection(coveredNodes);
 	}
 
@@ -92,6 +98,49 @@ public final class ArgNode<S extends State, A extends Action> {
 		} else {
 			return false;
 		}
+	}
+
+	public boolean isTarget() {
+		return target;
+	}
+
+	public boolean isLeaf() {
+		return outEdges.isEmpty();
+	}
+
+	////
+
+	public Optional<ArgNode<S, A>> parent() {
+		if (inEdge.isPresent()) {
+			return Optional.of(inEdge.get().getTarget());
+		} else {
+			return Optional.empty();
+		}
+	}
+
+	public Stream<ArgNode<S, A>> properAncestors() {
+		final Optional<ArgNode<S, A>> parent = this.parent();
+		if (parent.isPresent()) {
+			return Stream.concat(Stream.of(this), parent.get().properAncestors());
+		} else {
+			return Stream.empty();
+		}
+	}
+
+	public Stream<ArgNode<S, A>> ancestors() {
+		return Stream.concat(Stream.of(this), this.properAncestors());
+	}
+
+	public Stream<ArgNode<S, A>> children() {
+		return outEdges.stream().map(e -> e.getTarget());
+	}
+
+	public Stream<ArgNode<S, A>> properDescendants() {
+		return Stream.concat(this.children(), this.children().flatMap(ArgNode::properDescendants));
+	}
+
+	public Stream<ArgNode<S, A>> descendants() {
+		return Stream.concat(Stream.of(this), this.properDescendants());
 	}
 
 	////
