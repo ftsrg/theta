@@ -99,9 +99,10 @@ public final class ImpactChecker<S extends State, A extends Action, P extends Pr
 					} else {
 						return Optional.of(v);
 					}
+				} else {
+					expand(v);
 				}
-				expand(v);
-				v.children().forEach(w -> dfs(w));
+				return v.children().map(w -> dfs(w)).filter(n -> n.isPresent()).map(n -> n.get()).findFirst();
 			}
 
 			return Optional.empty();
@@ -110,19 +111,19 @@ public final class ImpactChecker<S extends State, A extends Action, P extends Pr
 		private Optional<ArgNode<S, A>> unwind() {
 			argBuilder.init(arg, precision);
 			while (true) {
-				final Optional<ArgNode<S, A>> uncoveredLeaf = anyUncoveredLeaf();
+				final Optional<ArgNode<S, A>> incompleteNode = firstIncompleteNode();
 
-				if (uncoveredLeaf.isPresent()) {
-					final ArgNode<S, A> v = uncoveredLeaf.get();
+				if (incompleteNode.isPresent()) {
+					final ArgNode<S, A> v = incompleteNode.get();
 					v.properAncestors().forEach(w -> close(w));
 
-					final Optional<ArgNode<S, A>> unsafeNode = dfs(v);
-					if (unsafeNode.isPresent()) {
-						return unsafeNode;
+					final Optional<ArgNode<S, A>> unsafeDescendant = dfs(v);
+					if (unsafeDescendant.isPresent()) {
+						return unsafeDescendant;
 					}
+				} else {
+					return Optional.empty();
 				}
-
-				return Optional.empty();
 			}
 		}
 
@@ -143,9 +144,12 @@ public final class ImpactChecker<S extends State, A extends Action, P extends Pr
 
 				if (refinementResult.isSuccesful()) {
 					final Trace<S, A> refinedTrace = refinementResult.asSuccesful().getTrace();
-					for (int i = 0; i < argTrace.length(); i++) {
-						argTrace.node(i).setState(refinedTrace.getState(i));
+					for (int i = 0; i < argTrace.nodes().size(); i++) {
+						final ArgNode<S, A> vi = argTrace.node(i);
+						vi.clearCoveredNodes();
+						vi.setState(refinedTrace.getState(i));
 					}
+					return true;
 				} else {
 					return false;
 				}
@@ -158,17 +162,16 @@ public final class ImpactChecker<S extends State, A extends Action, P extends Pr
 			if (!v.isCovered() && !w.ancestors().anyMatch(n -> n == v)) {
 				if (domain.isLeq(v.getState(), w.getState())) {
 					arg.cover(v, w);
-					v.descendants().forEach(y -> y.getCoveredNodes().stream().forEach(x -> arg.uncover(x)));
+					v.descendants().forEach(y -> y.clearCoveredNodes());
 				}
 			}
 		}
 
 		////
 
-		private Optional<ArgNode<S, A>> anyUncoveredLeaf() {
-			return arg.getLeafNodes().stream().filter(n -> !n.isCovered()).findFirst();
+		private Optional<ArgNode<S, A>> firstIncompleteNode() {
+			return arg.getLeafNodes().stream().filter(v -> !v.isComplete()).findFirst();
 		}
-
 	}
 
 }
