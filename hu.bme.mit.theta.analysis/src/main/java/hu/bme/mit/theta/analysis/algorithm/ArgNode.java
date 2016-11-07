@@ -12,6 +12,7 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 import hu.bme.mit.theta.analysis.Action;
+import hu.bme.mit.theta.analysis.Domain;
 import hu.bme.mit.theta.analysis.State;
 
 public final class ArgNode<S extends State, A extends Action> {
@@ -29,6 +30,8 @@ public final class ArgNode<S extends State, A extends Action> {
 	Optional<ArgNode<S, A>> coveringNode;
 	final Collection<ArgNode<S, A>> coveredNodes;
 
+	boolean expanded;
+
 	ArgNode(final ARG<S, A> arg, final S state, final int id, final boolean target) {
 		this.arg = arg;
 		this.state = state;
@@ -38,6 +41,7 @@ public final class ArgNode<S extends State, A extends Action> {
 		outEdges = new HashSet<>();
 		coveringNode = Optional.empty();
 		coveredNodes = new HashSet<>();
+		expanded = false;
 	}
 
 	////
@@ -144,6 +148,22 @@ public final class ArgNode<S extends State, A extends Action> {
 	}
 
 	////
+
+	public boolean isExpanded() {
+		return expanded;
+	}
+
+	public boolean isFeasible(final Domain<S> domain) {
+		return !domain.isBottom(state);
+	}
+
+	public boolean isSafe(final Domain<S> domain) {
+		return !(isFeasible(domain) && isTarget());
+	}
+
+	public boolean isComplete() {
+		return isExpanded() || isTarget() || isCovered();
+	}
 
 	@Override
 	public int hashCode() {

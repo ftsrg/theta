@@ -29,15 +29,18 @@ public final class ARG<S extends State, A extends Action> {
 
 	private int nextId = 0;
 
-	private ARG() {
+	private final Domain<S> domain;
+
+	private ARG(final Domain<S> domain) {
 		nodes = new LinkedHashSet<>();
 		initNodes = new HashSet<>();
 		leafNodes = new HashSet<>();
 		targetNodes = new HashSet<>();
+		this.domain = domain;
 	}
 
-	public static <S extends State, A extends Action> ARG<S, A> create() {
-		return new ARG<>();
+	public static <S extends State, A extends Action> ARG<S, A> create(final Domain<S> domain) {
+		return new ARG<>(domain);
 	}
 
 	////
@@ -61,11 +64,14 @@ public final class ARG<S extends State, A extends Action> {
 	////
 
 	public boolean isComplete() {
-		return leafNodes.stream().allMatch(ArgNode::isCovered);
+		return nodes.stream().allMatch(ArgNode::isComplete);
 	}
 
-	public boolean isSafe(final Domain<S> domain) {
-		return targetNodes.stream().map(ArgNode::getState).allMatch(domain::isBottom);
+	public boolean isSafe() {
+		// TODO: the current implementetion is only the definition of "safe".
+		// More efficient implementation can be done by checking if all states
+		// in the "targetNodes" collection are not feasible.
+		return nodes.stream().allMatch(n -> n.isSafe(domain));
 	}
 
 	////
@@ -119,6 +125,7 @@ public final class ARG<S extends State, A extends Action> {
 			if (parent.outEdges.size() == 0) {
 				leafNodes.add(parent);
 			}
+			parent.expanded = false;
 		}
 
 		if (node.getCoveringNode().isPresent()) {

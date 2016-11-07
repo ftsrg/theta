@@ -61,7 +61,7 @@ public final class ImpactChecker<S extends State, A extends Action, P extends Pr
 			this.precision = checkNotNull(precision);
 			domain = analysis.getDomain();
 			argBuilder = ArgBuilder.create(analysis, target);
-			arg = ARG.create();
+			arg = ARG.create(domain);
 		}
 
 		private SafetyStatus<S, A> run() {
