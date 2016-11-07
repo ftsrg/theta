@@ -15,14 +15,14 @@ import hu.bme.mit.theta.formalism.common.Loc;
 public final class LocTransferFunction<S extends State, A extends LocAction<L, E>, P extends Precision, L extends Loc<L, E>, E extends Edge<L, E>>
 		implements TransferFunction<LocState<S, L, E>, A, LocPrecision<P, L, E>> {
 
-	private final TransferFunction<S, A, P> transferFunction;
+	private final TransferFunction<S, ? super A, P> transferFunction;
 
-	private LocTransferFunction(final TransferFunction<S, A, P> transferFunction) {
+	private LocTransferFunction(final TransferFunction<S, ? super A, P> transferFunction) {
 		this.transferFunction = checkNotNull(transferFunction);
 	}
 
 	public static <S extends State, A extends LocAction<L, E>, P extends Precision, L extends Loc<L, E>, E extends Edge<L, E>> LocTransferFunction<S, A, P, L, E> create(
-			final TransferFunction<S, A, P> transferFunction) {
+			final TransferFunction<S, ? super A, P> transferFunction) {
 		return new LocTransferFunction<>(transferFunction);
 	}
 

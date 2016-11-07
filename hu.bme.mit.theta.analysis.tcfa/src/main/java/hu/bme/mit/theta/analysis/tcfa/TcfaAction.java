@@ -13,6 +13,7 @@ import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.BoolType;
+import hu.bme.mit.theta.core.utils.impl.VarIndexing;
 import hu.bme.mit.theta.formalism.ta.constr.ClockConstr;
 import hu.bme.mit.theta.formalism.ta.constr.impl.ClockConstrs;
 import hu.bme.mit.theta.formalism.ta.op.ClockOp;
@@ -88,6 +89,18 @@ public final class TcfaAction implements LocAction<TcfaLoc, TcfaEdge> {
 
 	public List<Stmt> getDataStmts() {
 		return dataStmts;
+	}
+
+	@Override
+	public Expr<? extends BoolType> toExpr() {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+	}
+
+	@Override
+	public VarIndexing nextIndexing() {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
 
 	@Override

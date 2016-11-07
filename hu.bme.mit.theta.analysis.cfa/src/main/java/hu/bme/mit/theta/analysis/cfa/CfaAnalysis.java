@@ -18,12 +18,12 @@ public final class CfaAnalysis<S extends State, P extends Precision>
 
 	private final LocAnalysis<S, CfaAction, P, CfaLoc, CfaEdge> locAnalysis;
 
-	private CfaAnalysis(final CfaLoc initLoc, final Analysis<S, CfaAction, P> analysis) {
+	private CfaAnalysis(final CfaLoc initLoc, final Analysis<S, ? super CfaAction, P> analysis) {
 		locAnalysis = LocAnalysis.create(initLoc, analysis, CfaAction::create);
 	}
 
 	public static <S extends State, P extends Precision> CfaAnalysis<S, P> create(final CfaLoc initLoc,
-			final Analysis<S, CfaAction, P> analysis) {
+			final Analysis<S, ? super CfaAction, P> analysis) {
 		return new CfaAnalysis<>(initLoc, analysis);
 	}
 
