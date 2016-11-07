@@ -61,6 +61,7 @@ public final class ArgBuilder<S extends State, A extends Action, P extends Preci
 
 			}
 		}
+		node.expanded = true;
 	}
 
 	public void close(final ArgNode<S, A> node) {

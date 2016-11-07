@@ -122,6 +122,7 @@ public final class ARG<S extends State, A extends Action> {
 			if (parent.outEdges.size() == 0) {
 				leafNodes.add(parent);
 			}
+			parent.expanded = false;
 		}
 
 		if (node.getCoveringNode().isPresent()) {
