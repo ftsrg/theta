@@ -28,7 +28,6 @@ import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.analysis.zone.ZonePrecision;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
 import hu.bme.mit.theta.common.visualization.GraphvizWriter;
-import hu.bme.mit.theta.common.waitlist.LifoWaitlist;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.IntType;
@@ -60,9 +59,9 @@ public class TcfaNetworkPredTest {
 				.create(l -> subPrecision);
 
 		final Abstractor<LocState<CompositeState<ZoneState, PredState>, TcfaLoc, TcfaEdge>, TcfaAction, LocPrecision<CompositePrecision<ZonePrecision, PredPrecision>, TcfaLoc, TcfaEdge>> abstractor = WaitlistBasedAbstractor
-				.create(analysis, s -> false, new LifoWaitlist<>());
+				.create(analysis, s -> false);
 
-		final AbstractorStatus<?, ?> abstractorStatus = abstractor.initAndCheck(precision);
+		final AbstractorStatus<?, ?, ?> abstractorStatus = abstractor.initAndCheck(precision);
 
 		System.out.println(new GraphvizWriter().writeString(ArgVisualizer.visualize(abstractorStatus.getArg())));
 	}

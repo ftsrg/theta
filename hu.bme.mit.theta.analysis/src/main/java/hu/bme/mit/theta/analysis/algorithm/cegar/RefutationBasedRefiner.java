@@ -22,7 +22,10 @@ public class RefutationBasedRefiner<S extends State, A extends Action, P extends
 	}
 
 	@Override
-	public RefinerStatus<S, A, P> refine(final ARG<S, A> arg, final P precision) {
+	public RefinerStatus<S, A, P> refine(final AbstractionState<S, A, P> abstractionState) {
+		checkNotNull(abstractionState);
+		final ARG<S, A> arg = abstractionState.getArg();
+		final P precision = abstractionState.getPrecision();
 		checkArgument(arg.getTargetNodes().size() > 0);
 
 		final Trace<S, A> cexToConcretize = arg.getAnyCex().get().toTrace();
@@ -32,9 +35,12 @@ public class RefutationBasedRefiner<S extends State, A extends Action, P extends
 		if (cexStatus.isSpurious()) {
 			final R refutation = cexStatus.asSpurious().getRefutation();
 			final P refinedPrecision = refinerOp.refine(precision, refutation, cexToConcretize);
-			return RefinerStatus.spurious(arg, refinedPrecision);
+			// TODO: prune ARG
+			return RefinerStatus.spurious(
+					AbstractionState.create(arg, abstractionState.getWaitlist(), refinedPrecision), refinedPrecision);
 		} else if (cexStatus.isConcretizable()) {
-			return RefinerStatus.concretizable(arg, cexToConcretize);
+			return RefinerStatus.concretizable(AbstractionState.create(arg, abstractionState.getWaitlist(), precision),
+					cexToConcretize);
 		} else {
 			throw new IllegalStateException("Unknown status.");
 		}
