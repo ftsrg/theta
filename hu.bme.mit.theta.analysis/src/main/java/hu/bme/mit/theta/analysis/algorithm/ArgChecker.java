@@ -17,7 +17,7 @@ import hu.bme.mit.theta.analysis.expr.ExprDomain;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.solver.Solver;
 
-final class ArgChecker {
+public final class ArgChecker {
 
 	private final Solver solver;
 	private final Domain<ExprState> domain;
@@ -32,6 +32,11 @@ final class ArgChecker {
 	}
 
 	////
+
+	public boolean isUnwinding(final ARG<?, ?> arg) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+	}
 
 	public boolean isWellLabeled(final ARG<? extends ExprState, ? extends ExprAction> arg) {
 		return arg.getInitNodes().stream().allMatch(this::subtreeIsWellLabeled);
