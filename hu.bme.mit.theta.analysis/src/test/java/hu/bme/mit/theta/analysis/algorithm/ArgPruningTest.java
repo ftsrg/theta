@@ -5,6 +5,7 @@ import static org.junit.Assert.assertEquals;
 import org.junit.Test;
 
 import hu.bme.mit.theta.analysis.Action;
+import hu.bme.mit.theta.analysis.Domain;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.common.visualization.GraphvizWriter;
@@ -27,9 +28,28 @@ public class ArgPruningTest {
 	private final class NullAction implements Action {
 	}
 
+	private final class NullDomain implements Domain<State> {
+
+		@Override
+		public boolean isTop(final State state) {
+			return false;
+		}
+
+		@Override
+		public boolean isBottom(final State state) {
+			return false;
+		}
+
+		@Override
+		public boolean isLeq(final State state1, final State state2) {
+			return false;
+		}
+
+	}
+
 	@Test
 	public void test() {
-		final ARG<State, Action> arg = ARG.create();
+		final ARG<State, Action> arg = ARG.create(new NullDomain());
 
 		final State s0 = new NullState("0");
 		final State s00 = new NullState("00");
