@@ -112,7 +112,7 @@ public final class ArgNode<S extends State, A extends Action> {
 
 	public Optional<ArgNode<S, A>> parent() {
 		if (inEdge.isPresent()) {
-			return Optional.of(inEdge.get().getTarget());
+			return Optional.of(inEdge.get().getSource());
 		} else {
 			return Optional.empty();
 		}
@@ -121,7 +121,7 @@ public final class ArgNode<S extends State, A extends Action> {
 	public Stream<ArgNode<S, A>> properAncestors() {
 		final Optional<ArgNode<S, A>> parent = this.parent();
 		if (parent.isPresent()) {
-			return Stream.concat(Stream.of(this), parent.get().properAncestors());
+			return Stream.concat(Stream.of(parent.get()), parent.get().properAncestors());
 		} else {
 			return Stream.empty();
 		}
