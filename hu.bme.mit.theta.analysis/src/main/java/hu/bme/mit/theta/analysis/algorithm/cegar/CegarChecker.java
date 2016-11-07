@@ -5,7 +5,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Precision;
 import hu.bme.mit.theta.analysis.State;
-import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyStatus;
 
@@ -37,8 +36,7 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 			abstractorStatus = abstractor.check(initArg);
 
 			if (abstractorStatus.isUnsafe()) {
-				final ARG<S, A> arg = abstractorStatus.getArg();
-				refinerStatus = refiner.refine(arg, precision);
+				refinerStatus = refiner.refine(abstractorStatus.getAbstractionState());
 
 				if (refinerStatus.isSpurious()) {
 					precision = refinerStatus.asSpurious().getRefinedPrecision();
