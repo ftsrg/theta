@@ -44,7 +44,7 @@ public class TcfaCompositeTest {
 		final Abstractor<LocState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction, NullPrecision> abstractor = WaitlistBasedAbstractor
 				.create(analysis, s -> s.getLoc().getName().equals("(crit, crit)"), new LifoWaitlist<>());
 
-		final AbstractorStatus<?, ?> abstractorStatus = abstractor.initAndCheck(NullPrecision.getInstance());
+		final AbstractorStatus<?, ?, ?> abstractorStatus = abstractor.initAndCheck(NullPrecision.getInstance());
 
 		System.out.println(new GraphvizWriter().writeString(ArgVisualizer.visualize(abstractorStatus.getArg())));
 	}

@@ -49,7 +49,7 @@ public class TcfaPredTest {
 		final Abstractor<LocState<PredState, TcfaLoc, TcfaEdge>, TcfaAction, LocPrecision<PredPrecision, TcfaLoc, TcfaEdge>> abstractor = WaitlistBasedAbstractor
 				.create(analysis, s -> s.getLoc().equals(fischer.getCritical()), new LifoWaitlist<>());
 
-		final AbstractorStatus<?, ?> abstractorStatus = abstractor.initAndCheck(precision);
+		final AbstractorStatus<?, ?, ?> abstractorStatus = abstractor.initAndCheck(precision);
 
 		System.out.println(new GraphvizWriter().writeString(ArgVisualizer.visualize(abstractorStatus.getArg())));
 
