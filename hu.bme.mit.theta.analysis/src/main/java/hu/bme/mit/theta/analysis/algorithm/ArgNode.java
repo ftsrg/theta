@@ -59,6 +59,11 @@ public final class ArgNode<S extends State, A extends Action> {
 		this.state = state;
 	}
 
+	public void clearCoveredNodes() {
+		coveredNodes.forEach(n -> n.coveringNode = Optional.empty());
+		coveredNodes.clear();
+	}
+
 	////
 
 	public Optional<ArgEdge<S, A>> getInEdge() {
