@@ -10,24 +10,28 @@ import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.common.ObjectUtils;
 
 public abstract class RefinerStatus<S extends State, A extends Action, P extends Precision> {
-	private final ARG<S, A> arg;
+	private final AbstractionState<S, A, P> abstractionState;
 
-	private RefinerStatus(final ARG<S, A> arg) {
-		this.arg = checkNotNull(arg);
+	private RefinerStatus(final AbstractionState<S, A, P> abstractionState) {
+		this.abstractionState = checkNotNull(abstractionState);
 	}
 
 	public ARG<S, A> getArg() {
-		return arg;
+		return abstractionState.getArg();
+	}
+
+	public AbstractionState<S, A, P> getAbstractionState() {
+		return abstractionState;
 	}
 
 	public static <S extends State, A extends Action, P extends Precision> Spurious<S, A, P> spurious(
-			final ARG<S, A> arg, final P refinedPrecision) {
-		return new Spurious<>(arg, refinedPrecision);
+			final AbstractionState<S, A, P> abstractionState, final P refinedPrecision) {
+		return new Spurious<>(abstractionState, refinedPrecision);
 	}
 
 	public static <S extends State, A extends Action, P extends Precision> Concretizable<S, A, P> concretizable(
-			final ARG<S, A> arg, final Trace<S, A> cex) {
-		return new Concretizable<>(arg, cex);
+			final AbstractionState<S, A, P> abstractionState, final Trace<S, A> cex) {
+		return new Concretizable<>(abstractionState, cex);
 	}
 
 	public abstract boolean isSpurious();
@@ -44,8 +48,8 @@ public abstract class RefinerStatus<S extends State, A extends Action, P extends
 			extends RefinerStatus<S, A, P> {
 		private final P refinedPrecision;
 
-		private Spurious(final ARG<S, A> arg, final P refinedPrecision) {
-			super(arg);
+		private Spurious(final AbstractionState<S, A, P> abstractionState, final P refinedPrecision) {
+			super(abstractionState);
 			this.refinedPrecision = checkNotNull(refinedPrecision);
 		}
 
@@ -85,8 +89,8 @@ public abstract class RefinerStatus<S extends State, A extends Action, P extends
 			extends RefinerStatus<S, A, P> {
 		private final Trace<S, A> cex;
 
-		private Concretizable(final ARG<S, A> arg, final Trace<S, A> cex) {
-			super(arg);
+		private Concretizable(final AbstractionState<S, A, P> abstractionState, final Trace<S, A> cex) {
+			super(abstractionState);
 			this.cex = checkNotNull(cex);
 		}
 
