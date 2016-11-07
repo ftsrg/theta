@@ -62,7 +62,7 @@ public class TcfaNetworkPredTest {
 		final Abstractor<LocState<CompositeState<ZoneState, PredState>, TcfaLoc, TcfaEdge>, TcfaAction, LocPrecision<CompositePrecision<ZonePrecision, PredPrecision>, TcfaLoc, TcfaEdge>> abstractor = WaitlistBasedAbstractor
 				.create(analysis, s -> false, new LifoWaitlist<>());
 
-		final AbstractorStatus<?, ?> abstractorStatus = abstractor.initAndCheck(precision);
+		final AbstractorStatus<?, ?, ?> abstractorStatus = abstractor.initAndCheck(precision);
 
 		System.out.println(new GraphvizWriter().writeString(ArgVisualizer.visualize(abstractorStatus.getArg())));
 	}

@@ -28,7 +28,7 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 	@Override
 	public SafetyStatus<S, A> check(final P initPrecision) {
 		RefinerStatus<S, A, P> refinerStatus = null;
-		AbstractorStatus<S, A> abstractorStatus = null;
+		AbstractorStatus<S, A, ? super P> abstractorStatus = null;
 		P precision = initPrecision;
 		do {
 			// TODO: currently the ARG is not pruned, so the abstractor simply
