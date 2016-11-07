@@ -18,10 +18,11 @@ public class WaitlistBasedAbstractor<S extends State, A extends Action, P extend
 
 	private final Waitlist<ArgNode<S, A>> waitlist;
 	private final ArgBuilder<S, A, P> argBuilder;
+	private final Analysis<S, A, P> analysis;
 
 	private WaitlistBasedAbstractor(final Analysis<S, A, P> analysis, final Predicate<? super S> target,
 			final Waitlist<ArgNode<S, A>> waitlist) {
-		checkNotNull(analysis);
+		this.analysis = checkNotNull(analysis);
 		checkNotNull(target);
 		this.waitlist = checkNotNull(waitlist);
 		argBuilder = ArgBuilder.create(analysis, target);
@@ -35,7 +36,7 @@ public class WaitlistBasedAbstractor<S extends State, A extends Action, P extend
 
 	@Override
 	public ARG<S, A> init(final P precision) {
-		final ARG<S, A> arg = ARG.create();
+		final ARG<S, A> arg = ARG.create(analysis.getDomain());
 		argBuilder.init(arg, precision);
 		return arg;
 	}

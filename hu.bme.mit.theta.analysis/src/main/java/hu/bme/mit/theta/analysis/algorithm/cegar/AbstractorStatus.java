@@ -23,7 +23,7 @@ public final class AbstractorStatus<S extends State, A extends Action> {
 	}
 
 	public boolean isSafe() {
-		return arg.getTargetNodes().size() == 0;
+		return arg.isSafe();
 	}
 
 	public boolean isUnsafe() {
