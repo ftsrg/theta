@@ -22,7 +22,10 @@ public class RefutationBasedRefiner<S extends State, A extends Action, P extends
 	}
 
 	@Override
-	public RefinerStatus<S, A, P> refine(final ARG<S, A> arg, final P precision) {
+	public RefinerStatus<S, A, P> refine(final AbstractionState<S, A, P> abstractionState) {
+		checkNotNull(abstractionState);
+		final ARG<S, A> arg = abstractionState.getArg();
+		final P precision = abstractionState.getPrecision();
 		checkArgument(arg.getTargetNodes().size() > 0);
 
 		final Trace<S, A> cexToConcretize = arg.getAnyCex().get().toTrace();
