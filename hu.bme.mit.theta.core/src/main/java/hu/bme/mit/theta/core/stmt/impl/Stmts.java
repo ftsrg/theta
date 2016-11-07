@@ -1,6 +1,7 @@
 package hu.bme.mit.theta.core.stmt.impl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Arrays.asList;
 
 import java.util.List;
 
@@ -42,7 +43,7 @@ public class Stmts {
 			final Expr<T2> initVal) {
 		checkNotNull(varDecl);
 		checkNotNull(initVal);
-		return new DeclStmtImpl<T1, T2>(varDecl, initVal);
+		return new DeclStmtImpl<>(varDecl, initVal);
 	}
 
 	public static AssumeStmt Assume(final Expr<? extends BoolType> cond) {
@@ -70,6 +71,10 @@ public class Stmts {
 	public static BlockStmt Block(final List<? extends Stmt> stmts) {
 		checkNotNull(stmts);
 		return new BlockStmtImpl(stmts);
+	}
+
+	public static BlockStmt Block(final Stmt... stmts) {
+		return Block(asList(stmts));
 	}
 
 	public static <T extends Type> ReturnStmt<T> Return(final Expr<? extends T> expr) {
