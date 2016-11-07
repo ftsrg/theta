@@ -18,8 +18,11 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
+import hu.bme.mit.theta.analysis.algorithm.ARG;
+import hu.bme.mit.theta.analysis.algorithm.ArgChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyStatus;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
+import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.impl.NullPrecision;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
@@ -55,9 +58,14 @@ public final class CfaImpactCheckerTest {
 		final CfaImpactChecker checker = CfaImpactChecker.create(cfa, solver);
 
 		// Act
-		final SafetyStatus<?, ? extends ExprAction> status = checker.check(NullPrecision.getInstance());
+		final SafetyStatus<? extends ExprState, ? extends ExprAction> status = checker
+				.check(NullPrecision.getInstance());
 
 		// Assert
 		assertTrue(status.isSafe());
+		final ARG<? extends ExprState, ? extends ExprAction> arg = status.asSafe().getArg();
+
+		final ArgChecker argChecker = ArgChecker.create(solver);
+		assertTrue(argChecker.isWellLabeled(arg));
 	}
 }
