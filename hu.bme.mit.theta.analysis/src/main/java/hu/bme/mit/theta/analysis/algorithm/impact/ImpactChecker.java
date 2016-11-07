@@ -1,5 +1,6 @@
 package hu.bme.mit.theta.analysis.algorithm.impact;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Optional;
@@ -100,6 +101,7 @@ public final class ImpactChecker<S extends State, A extends Action, P extends Pr
 						return Optional.of(v);
 					}
 				} else {
+					assert !v.isExpanded();
 					expand(v);
 				}
 				return v.children().map(w -> dfs(w)).filter(n -> n.isPresent()).map(n -> n.get()).findFirst();
@@ -130,32 +132,29 @@ public final class ImpactChecker<S extends State, A extends Action, P extends Pr
 		////
 
 		private void expand(final ArgNode<S, A> v) {
-			if (v.isLeaf() && !v.isCovered()) {
-				argBuilder.expand(v, precision);
-			}
+			checkArgument(!v.isComplete());
+			argBuilder.expand(v, precision);
 		}
 
 		private boolean refine(final ArgNode<S, A> v) {
-			if (v.isTarget() && !domain.isBottom(v.getState())) {
-				final ArgTrace<S, A> argTrace = ArgTrace.to(v);
+			checkArgument(!v.isSafe(domain));
 
-				final Trace<S, A> trace = argTrace.toTrace();
-				final RefinementResult<S, A> refinementResult = refiner.refine(trace);
+			final ArgTrace<S, A> argTrace = ArgTrace.to(v);
 
-				if (refinementResult.isSuccesful()) {
-					final Trace<S, A> refinedTrace = refinementResult.asSuccesful().getTrace();
-					for (int i = 0; i < argTrace.nodes().size(); i++) {
-						final ArgNode<S, A> vi = argTrace.node(i);
-						vi.clearCoveredNodes();
-						vi.setState(refinedTrace.getState(i));
-					}
-					return true;
-				} else {
-					return false;
+			final Trace<S, A> trace = argTrace.toTrace();
+			final RefinementResult<S, A> refinementResult = refiner.refine(trace);
+
+			if (refinementResult.isSuccesful()) {
+				final Trace<S, A> refinedTrace = refinementResult.asSuccesful().getTrace();
+				for (int i = 0; i < argTrace.nodes().size(); i++) {
+					final ArgNode<S, A> vi = argTrace.node(i);
+					vi.clearCoveredNodes();
+					vi.setState(refinedTrace.getState(i));
 				}
+				return true;
+			} else {
+				return false;
 			}
-
-			return true;
 		}
 
 		private void cover(final ArgNode<S, A> v, final ArgNode<S, A> w) {
