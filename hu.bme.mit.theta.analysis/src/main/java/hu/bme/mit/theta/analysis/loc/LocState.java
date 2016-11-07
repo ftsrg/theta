@@ -21,8 +21,8 @@ public final class LocState<S extends State, L extends Loc<L, E>, E extends Edge
 		this.state = checkNotNull(state);
 	}
 
-	public static <S extends State, L extends Loc<L, E>, E extends Edge<L, E>> LocState<S, L, E> create(
-			final L loc, final S state) {
+	public static <S extends State, L extends Loc<L, E>, E extends Edge<L, E>> LocState<S, L, E> create(final L loc,
+			final S state) {
 		return new LocState<>(loc, state);
 	}
 
@@ -64,7 +64,7 @@ public final class LocState<S extends State, L extends Loc<L, E>, E extends Edge
 
 	@Override
 	public String toString() {
-		return ObjectUtils.toStringBuilder("AutomatonState").add(loc).add(state).toString();
+		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).add(loc).add(state).toString();
 	}
 
 }
