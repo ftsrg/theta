@@ -94,11 +94,6 @@ public final class ArgNode<S extends State, A extends Action> {
 
 	////
 
-	public boolean mayCover(final ArgNode<S, A> that) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
-	}
-
 	public boolean isCovered() {
 		if (coveringNode.isPresent()) {
 			return true;

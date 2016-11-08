@@ -3,6 +3,7 @@ package hu.bme.mit.theta.analysis.algorithm;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Collection;
+import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -65,24 +66,24 @@ public final class ArgBuilder<S extends State, A extends Action, P extends Preci
 
 	public void close(final ArgNode<S, A> node) {
 		checkNotNull(node);
+		if (!node.isCovered()) {
+			final ARG<S, A> arg = node.arg;
+			final Optional<ArgNode<S, A>> nodeToCoverWith = arg.getNodes().filter(n -> mayCover(n, node)).findFirst();
+			nodeToCoverWith.ifPresent(n -> arg.cover(node, n));
+		}
+	}
 
-		final ARG<S, A> arg = node.arg;
-		final S state = node.getState();
-
-		arg.getNodes().forEach(nodeToCoverWith -> {
-			if (nodeToCoverWith.getId() >= node.getId()) {
-				return;
-			}
-
+	private boolean mayCover(final ArgNode<S, A> nodeToCoverWith, final ArgNode<S, A> node) {
+		if (nodeToCoverWith.getId() < node.getId()) {
+			final S state = node.getState();
 			final S stateToCoverWith = nodeToCoverWith.getState();
-
 			if (analysis.getDomain().isLeq(state, stateToCoverWith)) {
 				if (!nodeToCoverWith.isCovered()) {
-					arg.cover(node, nodeToCoverWith);
-					return;
+					return true;
 				}
 			}
-		});
+		}
+		return false;
 	}
 
 	public void pruneAndExpand(final ArgNode<S, A> node, final P newPrecision) {
