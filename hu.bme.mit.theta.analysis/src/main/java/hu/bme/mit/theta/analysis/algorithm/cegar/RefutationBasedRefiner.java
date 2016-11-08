@@ -26,9 +26,9 @@ public class RefutationBasedRefiner<S extends State, A extends Action, P extends
 		checkNotNull(abstractionState);
 		final ARG<S, A> arg = abstractionState.getArg();
 		final P precision = abstractionState.getPrecision();
-		checkArgument(arg.getTargetNodes().size() > 0);
+		checkArgument(arg.getTargetNodes().findFirst().isPresent());
 
-		final Trace<S, A> cexToConcretize = arg.getAnyCex().get().toTrace();
+		final Trace<S, A> cexToConcretize = arg.getAllCexs().findFirst().get().toTrace();
 
 		final CexStatus<R> cexStatus = concretizerOp.checkConcretizable(cexToConcretize);
 

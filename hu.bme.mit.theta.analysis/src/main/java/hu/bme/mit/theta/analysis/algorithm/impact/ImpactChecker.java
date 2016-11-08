@@ -78,7 +78,7 @@ public final class ImpactChecker<S extends State, A extends Action, P extends Pr
 		////
 
 		public void close(final ArgNode<S, A> v) {
-			for (final ArgNode<S, A> w : arg.getNodes()) {
+			arg.getNodes().forEach(w -> {
 				if (w.getId() >= v.getId()) {
 					return;
 				}
@@ -87,7 +87,7 @@ public final class ImpactChecker<S extends State, A extends Action, P extends Pr
 				if (v.getCoveringNode().isPresent()) {
 					return;
 				}
-			}
+			});
 		}
 
 		private Optional<ArgNode<S, A>> dfs(final ArgNode<S, A> v) {
@@ -113,10 +113,10 @@ public final class ImpactChecker<S extends State, A extends Action, P extends Pr
 		private Optional<ArgNode<S, A>> unwind() {
 			argBuilder.init(arg, precision);
 			while (true) {
-				final Optional<ArgNode<S, A>> incompleteLeaf = firstIncompleteLeaf();
+				final Optional<ArgNode<S, A>> incompleteNode = arg.getIncompleteNodes().findFirst();
 
-				if (incompleteLeaf.isPresent()) {
-					final ArgNode<S, A> v = incompleteLeaf.get();
+				if (incompleteNode.isPresent()) {
+					final ArgNode<S, A> v = incompleteNode.get();
 					v.properAncestors().forEach(w -> close(w));
 
 					final Optional<ArgNode<S, A>> unsafeDescendant = dfs(v);
@@ -166,11 +166,6 @@ public final class ImpactChecker<S extends State, A extends Action, P extends Pr
 			}
 		}
 
-		////
-
-		private Optional<ArgNode<S, A>> firstIncompleteLeaf() {
-			return arg.getLeafNodes().stream().filter(v -> !v.isComplete()).findFirst();
-		}
 	}
 
 }
