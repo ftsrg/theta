@@ -40,7 +40,7 @@ public class WaitlistBasedAbstractor<S extends State, A extends Action, P extend
 	}
 
 	@Override
-	public AbstractorStatus check(final ARG<S, A> arg, final P precision) {
+	public AbstractorResult check(final ARG<S, A> arg, final P precision) {
 		checkNotNull(arg);
 		checkNotNull(precision);
 
@@ -52,7 +52,7 @@ public class WaitlistBasedAbstractor<S extends State, A extends Action, P extend
 			final ArgNode<S, A> node = waitlist.remove();
 
 			if (!node.isSafe(analysis.getDomain())) {
-				return AbstractorStatus.unsafe();
+				return AbstractorResult.unsafe();
 			}
 
 			if (node.isTarget()) {
@@ -67,7 +67,7 @@ public class WaitlistBasedAbstractor<S extends State, A extends Action, P extend
 			waitlist.addAll(node.getSuccNodes());
 		}
 
-		return AbstractorStatus.safe();
+		return AbstractorResult.safe();
 	}
 
 }
