@@ -52,7 +52,7 @@ public class TcfaExplTest {
 		System.out.println(new GraphvizWriter().writeString(ArgVisualizer.visualize(arg)));
 
 		System.out.println("\n\nCounterexample(s):");
-		System.out.println(arg.getAllCexs());
+		System.out.println(arg.getCexs());
 	}
 
 }
