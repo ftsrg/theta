@@ -107,15 +107,9 @@ public final class ARG<S extends State, A extends Action> {
 			initNodes.remove(node);
 			this.initialized = false;
 		}
-		pruneSuccessors(node);
-	}
+		node.descendants().forEach(this::uncover);
+		node.descendants().forEach(ArgNode::clearCoveredNodes);
 
-	private void pruneSuccessors(final ArgNode<S, A> node) {
-		checkNotNull(node);
-		checkArgument(node.arg == this);
-		node.getSuccNodes().forEach(this::pruneSuccessors);
-		uncover(node);
-		node.clearCoveredNodes();
 	}
 
 	public void cover(final ArgNode<S, A> node, final ArgNode<S, A> coveringNode) {
