@@ -6,6 +6,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import hu.bme.mit.theta.analysis.Action;
@@ -93,7 +94,7 @@ public final class ARG<S extends State, A extends Action> {
 		checkNotNull(node);
 		checkArgument(node.arg == this);
 
-		for (final ArgNode<S, A> succ : node.getSuccNodes()) {
+		for (final ArgNode<S, A> succ : node.getSuccNodes().collect(Collectors.toList())) {
 			prune(succ);
 		}
 
