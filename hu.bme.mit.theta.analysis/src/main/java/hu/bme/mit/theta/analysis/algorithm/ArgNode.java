@@ -2,7 +2,6 @@ package hu.bme.mit.theta.analysis.algorithm;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.common.ObjectUtils.toStringBuilder;
-import static java.util.stream.Collectors.toSet;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -87,8 +86,8 @@ public final class ArgNode<S extends State, A extends Action> {
 		return outEdges.stream().map(ArgEdge::getTarget);
 	}
 
-	public Collection<S> getSuccStates() {
-		return outEdges.stream().map(e -> e.getTarget().getState()).collect(toSet());
+	public Stream<S> getSuccStates() {
+		return getSuccNodes().map(ArgNode::getState);
 	}
 
 	////

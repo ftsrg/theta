@@ -47,7 +47,7 @@ public final class ArgBuilder<S extends State, A extends Action, P extends Preci
 		checkNotNull(precision);
 
 		final S state = node.getState();
-		final Collection<S> oldSuccStates = node.getSuccStates();
+		final Collection<S> oldSuccStates = node.getSuccStates().collect(Collectors.toSet());
 		final Collection<? extends A> actions = analysis.getActionFunction().getEnabledActionsFor(state);
 		for (final A action : actions) {
 			final Collection<? extends S> newSuccStates = analysis.getTransferFunction().getSuccStates(state, action,
