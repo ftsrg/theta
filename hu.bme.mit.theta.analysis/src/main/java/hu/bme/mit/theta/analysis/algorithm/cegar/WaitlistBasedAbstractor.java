@@ -32,38 +32,42 @@ public class WaitlistBasedAbstractor<S extends State, A extends Action, P extend
 	}
 
 	@Override
-	public AbstractionState<S, A, P> init(final P precision) {
+	public ARG<S, A> init(final P precision) {
+		checkNotNull(precision);
 		final ARG<S, A> arg = ARG.create(analysis.getDomain());
 		argBuilder.init(arg, precision);
-		// TODO: parameterize the type of waitlist created
-		final FifoWaitlist<ArgNode<S, A>> waitlist = new FifoWaitlist<>();
-		waitlist.addAll(arg.getInitNodes());
-		return AbstractionState.create(arg, waitlist, precision);
+		return arg;
 	}
 
 	@Override
-	public AbstractorStatus<S, A, P> check(final AbstractionState<S, A, P> abstractionState) {
-		checkNotNull(abstractionState);
+	public AbstractorStatus check(final ARG<S, A> arg, final P precision) {
+		checkNotNull(arg);
+		checkNotNull(precision);
 
-		final ARG<S, A> arg = abstractionState.getArg();
-		final Waitlist<ArgNode<S, A>> waitlist = abstractionState.getWaitlist();
-		final P precision = abstractionState.getPrecision();
+		// TODO Waitlist as parameter
+		final Waitlist<ArgNode<S, A>> waitlist = new FifoWaitlist<>();
+		waitlist.addAll(arg.getIncompleteNodes());
 
 		while (!waitlist.isEmpty()) {
 			final ArgNode<S, A> node = waitlist.remove();
 
-			if (node.isTarget()) {
-				return AbstractorStatus.create(AbstractionState.create(arg, waitlist, precision));
+			if (!node.isSafe(analysis.getDomain())) {
+				return AbstractorStatus.unsafe();
 			}
 
-			argBuilder.close(node);
-			if (!node.isCovered()) {
-				argBuilder.expand(node, precision);
-				waitlist.addAll(node.getSuccNodes());
+			if (node.isTarget()) {
+				continue;
 			}
+			argBuilder.close(node);
+
+			if (node.isCovered()) {
+				continue;
+			}
+			argBuilder.expand(node, precision);
+			waitlist.addAll(node.getSuccNodes());
 		}
 
-		return AbstractorStatus.create(AbstractionState.create(arg, waitlist, precision));
+		return AbstractorStatus.safe();
 	}
 
 }
