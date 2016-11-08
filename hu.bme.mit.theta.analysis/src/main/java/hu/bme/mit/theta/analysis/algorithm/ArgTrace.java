@@ -43,6 +43,10 @@ public final class ArgTrace<S extends State, A extends Action> implements Iterab
 
 	////
 
+	public int length() {
+		return edges.size();
+	}
+
 	public ArgNode<S, A> node(final int index) {
 		return nodes.get(index);
 	}
@@ -64,7 +68,7 @@ public final class ArgTrace<S extends State, A extends Action> implements Iterab
 	public Trace<S, A> toTrace() {
 		final List<S> states = nodes.stream().map(ArgNode::getState).collect(toList());
 		final List<A> actions = edges.stream().map(ArgEdge::getAction).collect(toList());
-		return Trace.create(states, actions);
+		return Trace.of(states, actions);
 	}
 
 	////

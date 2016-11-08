@@ -41,10 +41,10 @@ public final class ExplTransferFunction implements TransferFunction<ExplState, E
 		do {
 			moreSuccStates = solver.check().isSat();
 			if (moreSuccStates) {
-				final Valuation nextSuccStateVal = PathUtils.extractValuation(solver.getModel(), action.nextIndexes());
+				final Valuation nextSuccStateVal = PathUtils.extractValuation(solver.getModel(), action.nextIndexing());
 				final ExplState nextSuccState = precision.createState(nextSuccStateVal);
 				succStates.add(nextSuccState);
-				solver.add(PathUtils.unfold(Exprs.Not(nextSuccState.toExpr()), action.nextIndexes()));
+				solver.add(PathUtils.unfold(Exprs.Not(nextSuccState.toExpr()), action.nextIndexing()));
 			}
 		} while (moreSuccStates);
 		solver.pop();

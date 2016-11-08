@@ -23,26 +23,26 @@ final class StmtToExprTransformer {
 	private StmtToExprTransformer() {
 	}
 
-	public static StmtToExprResult toExpr(final Stmt stmt, final VarIndexes indexes) {
-		return stmt.accept(StmtToExprVisitor.INSTANCE, indexes);
+	public static StmtToExprResult toExpr(final Stmt stmt, final VarIndexing indexing) {
+		return stmt.accept(StmtToExprVisitor.INSTANCE, indexing);
 	}
 
-	public static StmtToExprResult toExpr(final List<? extends Stmt> stmts, final VarIndexes indexes) {
+	public static StmtToExprResult toExpr(final List<? extends Stmt> stmts, final VarIndexing indexing) {
 		final Collection<Expr<? extends BoolType>> resultExprs = new ArrayList<>();
-		VarIndexes resultIndexes = indexes;
+		VarIndexing resultIndexing = indexing;
 
 		for (final Stmt stmt : stmts) {
-			final StmtToExprResult subResult = toExpr(stmt, resultIndexes);
+			final StmtToExprResult subResult = toExpr(stmt, resultIndexing);
 			resultExprs.addAll(subResult.exprs);
-			resultIndexes = subResult.indexes;
+			resultIndexing = subResult.indexing;
 		}
 
-		return StmtToExprResult.of(resultExprs, resultIndexes);
+		return StmtToExprResult.of(resultExprs, resultIndexing);
 	}
 
 	////////
 
-	private static class StmtToExprVisitor extends FailStmtVisitor<VarIndexes, StmtToExprResult> {
+	private static class StmtToExprVisitor extends FailStmtVisitor<VarIndexing, StmtToExprResult> {
 		private static final StmtToExprVisitor INSTANCE = new StmtToExprVisitor();
 
 		private StmtToExprVisitor() {
@@ -51,30 +51,30 @@ final class StmtToExprTransformer {
 		////////
 
 		@Override
-		public StmtToExprResult visit(final AssumeStmt stmt, final VarIndexes indexes) {
+		public StmtToExprResult visit(final AssumeStmt stmt, final VarIndexing indexing) {
 			final Expr<? extends BoolType> cond = stmt.getCond();
-			final Expr<? extends BoolType> expr = applyPrimes(cond, indexes);
-			return StmtToExprResult.of(ImmutableList.of(expr), indexes);
+			final Expr<? extends BoolType> expr = applyPrimes(cond, indexing);
+			return StmtToExprResult.of(ImmutableList.of(expr), indexing);
 		}
 
 		@Override
 		public <DeclType extends Type> StmtToExprResult visit(final HavocStmt<DeclType> stmt,
-				final VarIndexes indexes) {
+				final VarIndexing indexing) {
 			final VarDecl<?> varDecl = stmt.getVarDecl();
-			final VarIndexes newIndexMap = indexes.inc(varDecl);
-			return StmtToExprResult.of(ImmutableList.of(), newIndexMap);
+			final VarIndexing newIndexing = indexing.inc(varDecl);
+			return StmtToExprResult.of(ImmutableList.of(), newIndexing);
 		}
 
 		@Override
 		public <DeclType extends Type, ExprType extends DeclType> StmtToExprResult visit(
-				final AssignStmt<DeclType, ExprType> stmt, final VarIndexes indexes) {
+				final AssignStmt<DeclType, ExprType> stmt, final VarIndexing indexing) {
 			final VarDecl<?> varDecl = stmt.getVarDecl();
-			final VarIndexes newIndexes = indexes.inc(varDecl);
-			final Expr<?> rhs = applyPrimes(stmt.getExpr(), indexes);
-			final Expr<?> lhs = applyPrimes(varDecl.getRef(), newIndexes);
+			final VarIndexing newIndexing = indexing.inc(varDecl);
+			final Expr<?> rhs = applyPrimes(stmt.getExpr(), indexing);
+			final Expr<?> lhs = applyPrimes(varDecl.getRef(), newIndexing);
 
 			final Expr<? extends BoolType> expr = Exprs.Eq(lhs, rhs);
-			return StmtToExprResult.of(ImmutableList.of(expr), newIndexes);
+			return StmtToExprResult.of(ImmutableList.of(expr), newIndexing);
 		}
 	}
 

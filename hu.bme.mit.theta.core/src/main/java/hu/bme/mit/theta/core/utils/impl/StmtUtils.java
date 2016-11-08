@@ -32,8 +32,8 @@ public final class StmtUtils {
 		return vars;
 	}
 
-	public static StmtToExprResult toExpr(final List<? extends Stmt> stmts, final VarIndexes indexes) {
-		return StmtToExprTransformer.toExpr(stmts, indexes);
+	public static StmtToExprResult toExpr(final List<? extends Stmt> stmts, final VarIndexing indexing) {
+		return StmtToExprTransformer.toExpr(stmts, indexing);
 	}
 
 }

@@ -9,22 +9,22 @@ import hu.bme.mit.theta.core.type.BoolType;
 
 public final class StmtToExprResult {
 	final Collection<Expr<? extends BoolType>> exprs;
-	final VarIndexes indexes;
+	final VarIndexing indexing;
 
-	private StmtToExprResult(final Iterable<? extends Expr<? extends BoolType>> exprs, final VarIndexes indexes) {
+	private StmtToExprResult(final Iterable<? extends Expr<? extends BoolType>> exprs, final VarIndexing indexing) {
 		this.exprs = ImmutableList.copyOf(exprs);
-		this.indexes = indexes;
+		this.indexing = indexing;
 	}
 
-	static StmtToExprResult of(final Iterable<? extends Expr<? extends BoolType>> exprs, final VarIndexes indexes) {
-		return new StmtToExprResult(exprs, indexes);
+	static StmtToExprResult of(final Iterable<? extends Expr<? extends BoolType>> exprs, final VarIndexing indexing) {
+		return new StmtToExprResult(exprs, indexing);
 	}
 
 	public Collection<? extends Expr<? extends BoolType>> getExprs() {
 		return exprs;
 	}
 
-	public VarIndexes getIndexes() {
-		return indexes;
+	public VarIndexing getIndexing() {
+		return indexing;
 	}
 }

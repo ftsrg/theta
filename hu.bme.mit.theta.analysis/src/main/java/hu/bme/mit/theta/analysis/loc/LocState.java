@@ -3,11 +3,14 @@ package hu.bme.mit.theta.analysis.loc;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import hu.bme.mit.theta.analysis.State;
+import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.common.ObjectUtils;
+import hu.bme.mit.theta.core.expr.Expr;
+import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.formalism.common.Edge;
 import hu.bme.mit.theta.formalism.common.Loc;
 
-public final class LocState<S extends State, L extends Loc<L, E>, E extends Edge<L, E>> implements State {
+public final class LocState<S extends State, L extends Loc<L, E>, E extends Edge<L, E>> implements ExprState {
 
 	private static final int HASH_SEED = 3613;
 
@@ -21,8 +24,8 @@ public final class LocState<S extends State, L extends Loc<L, E>, E extends Edge
 		this.state = checkNotNull(state);
 	}
 
-	public static <S extends State, L extends Loc<L, E>, E extends Edge<L, E>> LocState<S, L, E> create(
-			final L loc, final S state) {
+	public static <S extends State, L extends Loc<L, E>, E extends Edge<L, E>> LocState<S, L, E> create(final L loc,
+			final S state) {
 		return new LocState<>(loc, state);
 	}
 
@@ -34,6 +37,16 @@ public final class LocState<S extends State, L extends Loc<L, E>, E extends Edge
 
 	public S getState() {
 		return state;
+	}
+
+	@Override
+	public Expr<? extends BoolType> toExpr() {
+		// TODO Should be loc = l and toExpr(state)
+		if (state instanceof ExprState) {
+			return ((ExprState) state).toExpr();
+		} else {
+			throw new UnsupportedOperationException();
+		}
 	}
 
 	////
@@ -64,7 +77,7 @@ public final class LocState<S extends State, L extends Loc<L, E>, E extends Edge
 
 	@Override
 	public String toString() {
-		return ObjectUtils.toStringBuilder("AutomatonState").add(loc).add(state).toString();
+		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).add(loc).add(state).toString();
 	}
 
 }

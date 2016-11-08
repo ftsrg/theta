@@ -28,17 +28,17 @@ public class PathUtils {
 
 	////
 
-	public static VarIndexes countPrimes(final Expr<?> expr) {
+	public static VarIndexing countPrimes(final Expr<?> expr) {
 		return PrimeCounter.countPrimes(expr);
 	}
 
 	////
 
-	public static <T extends Type> Expr<T> unfold(final Expr<T> expr, final VarIndexes indexes) {
+	public static <T extends Type> Expr<T> unfold(final Expr<T> expr, final VarIndexing indexing) {
 		checkNotNull(expr);
-		checkNotNull(indexes);
+		checkNotNull(indexing);
 
-		final UnfoldVisitor visitor = new UnfoldVisitor(indexes);
+		final UnfoldVisitor visitor = new UnfoldVisitor(indexing);
 
 		@SuppressWarnings("unchecked")
 		final Expr<T> result = (Expr<T>) expr.accept(visitor, 0);
@@ -48,14 +48,14 @@ public class PathUtils {
 
 	public static <T extends Type> Expr<T> unfold(final Expr<T> expr, final int i) {
 		checkArgument(i >= 0);
-		return unfold(expr, VarIndexes.all(i));
+		return unfold(expr, VarIndexing.all(i));
 	}
 
-	public static <T extends Type> Expr<T> foldin(final Expr<T> expr, final VarIndexes indexes) {
+	public static <T extends Type> Expr<T> foldin(final Expr<T> expr, final VarIndexing indexing) {
 		checkNotNull(expr);
-		checkNotNull(indexes);
+		checkNotNull(indexing);
 
-		final FoldinVisitor visitor = new FoldinVisitor(indexes);
+		final FoldinVisitor visitor = new FoldinVisitor(indexing);
 
 		@SuppressWarnings("unchecked")
 		final Expr<T> result = (Expr<T>) expr.accept(visitor, null);
@@ -65,16 +65,16 @@ public class PathUtils {
 
 	public static <T extends Type> Expr<T> foldin(final Expr<T> expr, final int i) {
 		checkArgument(i >= 0);
-		return foldin(expr, VarIndexes.all(i));
+		return foldin(expr, VarIndexing.all(i));
 	}
 
-	public static Valuation extractValuation(final Model model, final VarIndexes indexes) {
+	public static Valuation extractValuation(final Model model, final VarIndexing indexing) {
 		final Valuation.Builder builder = Valuation.builder();
 		for (final ConstDecl<?> constDecl : model.getDecls()) {
 			if (constDecl instanceof IndexedConstDecl) {
 				final IndexedConstDecl<?> indexedConstDecl = (IndexedConstDecl<?>) constDecl;
 				final VarDecl<?> varDecl = indexedConstDecl.getVarDecl();
-				if (indexedConstDecl.getIndex() == indexes.get(varDecl)) {
+				if (indexedConstDecl.getIndex() == indexing.get(varDecl)) {
 					final LitExpr<?> value = model.eval(indexedConstDecl).get();
 					builder.put(varDecl, value);
 				}
@@ -85,14 +85,14 @@ public class PathUtils {
 
 	public static Valuation extractValuation(final Model model, final int i) {
 		checkArgument(i >= 0);
-		return extractValuation(model, VarIndexes.all(i));
+		return extractValuation(model, VarIndexing.all(i));
 	}
 
-	public static Valuation extractValuation(final Model model, final VarIndexes indexes,
+	public static Valuation extractValuation(final Model model, final VarIndexing indexing,
 			final Collection<? extends VarDecl<? extends Type>> varDecls) {
 		final Valuation.Builder builder = Valuation.builder();
 		for (final VarDecl<? extends Type> varDecl : varDecls) {
-			final int index = indexes.get(varDecl);
+			final int index = indexing.get(varDecl);
 			final IndexedConstDecl<?> constDecl = varDecl.getConstDecl(index);
 			final Optional<? extends LitExpr<?>> eval = model.eval(constDecl);
 			if (eval.isPresent()) {
@@ -105,17 +105,17 @@ public class PathUtils {
 	public static Valuation extractValuation(final Model model, final int i,
 			final Collection<? extends VarDecl<? extends Type>> varDecls) {
 		checkArgument(i >= 0);
-		return extractValuation(model, VarIndexes.all(i), varDecls);
+		return extractValuation(model, VarIndexing.all(i), varDecls);
 	}
 
 	////
 
 	private static final class UnfoldVisitor extends ExprRewriterVisitor<Integer> {
 
-		private final VarIndexes indexes;
+		private final VarIndexing indexing;
 
-		private UnfoldVisitor(final VarIndexes indexes) {
-			this.indexes = indexes;
+		private UnfoldVisitor(final VarIndexing indexing) {
+			this.indexing = indexing;
 		}
 
 		////
@@ -133,7 +133,7 @@ public class PathUtils {
 		public <DeclType extends Type> Expr<? extends DeclType> visit(final VarRefExpr<DeclType> expr,
 				final Integer offset) {
 			final VarDecl<DeclType> varDecl = expr.getDecl();
-			final int index = indexes.get(varDecl) + offset;
+			final int index = indexing.get(varDecl) + offset;
 			final ConstDecl<DeclType> constDecl = varDecl.getConstDecl(index);
 			final ConstRefExpr<DeclType> constRefExpr = constDecl.getRef();
 			return constRefExpr;
@@ -154,10 +154,10 @@ public class PathUtils {
 
 	private static final class FoldinVisitor extends ExprRewriterVisitor<Void> {
 
-		private final VarIndexes indexes;
+		private final VarIndexing indexing;
 
-		private FoldinVisitor(final VarIndexes indexes) {
-			this.indexes = indexes;
+		private FoldinVisitor(final VarIndexing indexing) {
+			this.indexing = indexing;
 		}
 
 		////
@@ -172,7 +172,7 @@ public class PathUtils {
 
 				final int index = indexedConstDecl.getIndex();
 
-				int nPrimes = index - indexes.get(varDecl);
+				int nPrimes = index - indexing.get(varDecl);
 				checkArgument(nPrimes >= 0);
 
 				Expr<DeclType> res = varDecl.getRef();
