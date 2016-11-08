@@ -15,53 +15,54 @@ import hu.bme.mit.theta.common.ObjectUtils;
  */
 public class LifoWaitlist<T> implements Waitlist<T> {
 
-	private final Deque<T> waitlist;
+	private final Deque<T> items;
 
 	public LifoWaitlist() {
-		waitlist = new ArrayDeque<>();
+		this.items = new ArrayDeque<>();
 	}
 
 	public LifoWaitlist(final Collection<? extends T> items) {
-		waitlist = new ArrayDeque<>(checkNotNull(items));
+		this.items = new ArrayDeque<>(checkNotNull(items));
 	}
 
 	@Override
 	public void add(final T item) {
-		waitlist.push(item);
+		items.push(item);
 	}
 
 	@Override
 	public void addAll(final Collection<? extends T> items) {
-		waitlist.addAll(checkNotNull(items));
+		this.items.addAll(checkNotNull(items));
 	}
 
 	@Override
 	public boolean isEmpty() {
-		return waitlist.isEmpty();
+		return items.isEmpty();
 	}
 
 	@Override
 	public T remove() {
-		return waitlist.pop();
+		return items.pop();
 	}
 
 	@Override
 	public void clear() {
-		waitlist.clear();
+		items.clear();
 	}
 
 	@Override
 	public String toString() {
-		return ObjectUtils.toStringBuilder("LifoWaitlist").addAll(waitlist).toString();
+		return ObjectUtils.toStringBuilder("LifoWaitlist").addAll(items).toString();
 	}
 
 	@Override
 	public int size() {
-		return waitlist.size();
+		return items.size();
 	}
 
 	@Override
 	public void addAll(final Stream<? extends T> items) {
-		items.forEach(waitlist::add);
+		checkNotNull(items);
+		items.forEach(this::add);
 	}
 }
