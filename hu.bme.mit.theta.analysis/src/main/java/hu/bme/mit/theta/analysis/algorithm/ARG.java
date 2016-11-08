@@ -115,9 +115,7 @@ public final class ARG<S extends State, A extends Action> {
 		checkArgument(node.arg == this);
 		node.getSuccNodes().forEach(this::pruneSuccessors);
 		uncover(node);
-		for (final ArgNode<S, A> covered : node.getCoveredNodes()) {
-			covered.coveringNode = Optional.empty();
-		}
+		node.clearCoveredNodes();
 	}
 
 	public void cover(final ArgNode<S, A> node, final ArgNode<S, A> coveringNode) {
