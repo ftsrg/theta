@@ -106,10 +106,6 @@ public final class ArgNode<S extends State, A extends Action> {
 		return target;
 	}
 
-	public boolean isLeaf() {
-		return outEdges.isEmpty();
-	}
-
 	////
 
 	public Optional<ArgNode<S, A>> parent() {
