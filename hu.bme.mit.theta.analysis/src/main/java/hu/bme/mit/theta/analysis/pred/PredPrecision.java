@@ -31,7 +31,7 @@ public interface PredPrecision extends Precision {
 				final Valuation valuation = PathUtils.extractValuation(model, 0);
 				final PredState state = createState(valuation);
 				result.add(state);
-				s.add(Not(model.toExpr()));
+				s.add(Not(PathUtils.unfold(state.toExpr(), 0)));
 			}
 
 			return result;
