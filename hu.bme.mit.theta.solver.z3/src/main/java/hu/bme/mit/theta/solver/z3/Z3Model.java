@@ -2,9 +2,13 @@ package hu.bme.mit.theta.solver.z3;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.expr.impl.Exprs.And;
+import static hu.bme.mit.theta.core.expr.impl.Exprs.Eq;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.StringJoiner;
@@ -74,8 +78,12 @@ final class Z3Model implements Model {
 
 	@Override
 	public Expr<? extends BoolType> toExpr() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		final List<Expr<? extends BoolType>> exprs = new ArrayList<>();
+		for (final ConstDecl<?> constDecl : constDecls) {
+			final Expr<? extends BoolType> expr = Eq(constDecl.getRef(), eval(constDecl).get());
+			exprs.add(expr);
+		}
+		return And(exprs);
 	}
 
 	////

@@ -2,12 +2,12 @@ package hu.bme.mit.theta.analysis.sts;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.And;
-import static hu.bme.mit.theta.core.utils.impl.VarIndexes.all;
+import static hu.bme.mit.theta.core.utils.impl.VarIndexing.all;
 
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.BoolType;
-import hu.bme.mit.theta.core.utils.impl.VarIndexes;
+import hu.bme.mit.theta.core.utils.impl.VarIndexing;
 import hu.bme.mit.theta.formalism.sts.STS;
 
 public final class StsAction implements ExprAction {
@@ -29,7 +29,7 @@ public final class StsAction implements ExprAction {
 	}
 
 	@Override
-	public VarIndexes nextIndexes() {
+	public VarIndexing nextIndexing() {
 		return all(1);
 	}
 

@@ -31,7 +31,7 @@ public final class Trace<S extends State, A extends Action> {
 	 * Create a trace. The size of states must be at least one, and the size of
 	 * the actions must be one less than the number of states.
 	 */
-	public static <S extends State, A extends Action> Trace<S, A> create(final List<? extends S> states,
+	public static <S extends State, A extends Action> Trace<S, A> of(final List<? extends S> states,
 			final List<? extends A> actions) {
 		return new Trace<>(states, actions);
 	}

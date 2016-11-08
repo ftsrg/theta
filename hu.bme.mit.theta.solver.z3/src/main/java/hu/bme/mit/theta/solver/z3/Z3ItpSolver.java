@@ -5,9 +5,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -21,8 +19,10 @@ import hu.bme.mit.theta.solver.ItpPattern;
 import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverStatus;
+import hu.bme.mit.theta.solver.Stack;
 import hu.bme.mit.theta.solver.impl.ItpMarkerImpl;
 import hu.bme.mit.theta.solver.impl.ItpPatternImpl;
+import hu.bme.mit.theta.solver.impl.StackImpl;
 import hu.bme.mit.theta.solver.z3.trasform.Z3SymbolTable;
 import hu.bme.mit.theta.solver.z3.trasform.Z3TermTransformer;
 import hu.bme.mit.theta.solver.z3.trasform.Z3TransformationManager;
@@ -37,7 +37,7 @@ final class Z3ItpSolver implements ItpSolver {
 
 	private final Solver solver;
 
-	private final Collection<ItpMarkerImpl> markers;
+	private final Stack<ItpMarkerImpl> markers;
 
 	public Z3ItpSolver(final Z3SymbolTable symbolTable, final Z3TransformationManager transformationManager,
 			final Z3TermTransformer termTransformer, final com.microsoft.z3.InterpolationContext z3Context,
@@ -49,7 +49,7 @@ final class Z3ItpSolver implements ItpSolver {
 
 		solver = new Z3Solver(symbolTable, transformationManager, termTransformer, z3Context, z3Solver);
 
-		markers = new HashSet<>();
+		markers = new StackImpl<>();
 	}
 
 	@Override
@@ -69,7 +69,7 @@ final class Z3ItpSolver implements ItpSolver {
 	public void add(final ItpMarker marker, final Expr<? extends BoolType> assertion) {
 		checkNotNull(marker);
 		checkNotNull(assertion);
-		checkArgument(markers.contains(marker));
+		checkArgument(markers.toCollection().contains(marker));
 
 		final ItpMarkerImpl markerImpl = (ItpMarkerImpl) marker;
 		markerImpl.add(assertion);
@@ -131,8 +131,8 @@ final class Z3ItpSolver implements ItpSolver {
 	}
 
 	@Override
-	public Collection<ItpMarker> getMarkers() {
-		return Collections.unmodifiableCollection(markers);
+	public Collection<? extends ItpMarker> getMarkers() {
+		return markers.toCollection();
 	}
 
 	// delegate
@@ -156,6 +156,7 @@ final class Z3ItpSolver implements ItpSolver {
 
 	@Override
 	public void push() {
+		markers.push();
 		for (final ItpMarkerImpl marker : markers) {
 			marker.push();
 		}
@@ -164,6 +165,7 @@ final class Z3ItpSolver implements ItpSolver {
 
 	@Override
 	public void pop(final int n) {
+		markers.pop(n);
 		for (final ItpMarkerImpl marker : markers) {
 			marker.pop(n);
 		}

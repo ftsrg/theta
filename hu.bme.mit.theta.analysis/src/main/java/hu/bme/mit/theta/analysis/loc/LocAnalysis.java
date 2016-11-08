@@ -22,7 +22,7 @@ public final class LocAnalysis<S extends State, A extends LocAction<L, E>, P ext
 	private final TransferFunction<LocState<S, L, E>, A, LocPrecision<P, L, E>> transferFunction;
 	private final ActionFunction<? super LocState<S, L, E>, ? extends A> actionFunction;
 
-	private LocAnalysis(final L initLoc, final Analysis<S, A, P> analysis,
+	private LocAnalysis(final L initLoc, final Analysis<S, ? super A, P> analysis,
 			final Function<? super E, ? extends A> actionCreator) {
 		checkNotNull(initLoc);
 		checkNotNull(analysis);
@@ -34,7 +34,8 @@ public final class LocAnalysis<S extends State, A extends LocAction<L, E>, P ext
 	}
 
 	public static <S extends State, A extends LocAction<L, E>, P extends Precision, L extends Loc<L, E>, E extends Edge<L, E>> LocAnalysis<S, A, P, L, E> create(
-			final L initLoc, final Analysis<S, A, P> analysis, final Function<? super E, ? extends A> actionCreator) {
+			final L initLoc, final Analysis<S, ? super A, P> analysis,
+			final Function<? super E, ? extends A> actionCreator) {
 		return new LocAnalysis<>(initLoc, analysis, actionCreator);
 	}
 
