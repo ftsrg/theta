@@ -45,8 +45,8 @@ public final class ARG<S extends State, A extends Action> {
 		return initNodes.stream();
 	}
 
-	public Stream<ArgNode<S, A>> getTargetNodes() {
-		return getNodes().filter(ArgNode::isTarget);
+	public Stream<ArgNode<S, A>> getUnsafeNodes() {
+		return getNodes().filter(n -> !n.isSafe(domain));
 	}
 
 	public Stream<ArgNode<S, A>> getIncompleteNodes() {
@@ -97,6 +97,8 @@ public final class ARG<S extends State, A extends Action> {
 	 * @param node
 	 */
 	public void prune(final ArgNode<S, A> node) {
+		checkNotNull(node);
+		checkArgument(node.arg == this);
 		if (node.getInEdge().isPresent()) {
 			final ArgEdge<S, A> edge = node.getInEdge().get();
 			final ArgNode<S, A> parent = edge.getSource();
@@ -149,7 +151,7 @@ public final class ARG<S extends State, A extends Action> {
 	/**
 	 * Gets all counterexamples, i.e., traces leading to target states.
 	 */
-	public Stream<ArgTrace<S, A>> getAllCexs() {
-		return getTargetNodes().map(n -> ArgTrace.to(n));
+	public Stream<ArgTrace<S, A>> getCexs() {
+		return getUnsafeNodes().map(n -> ArgTrace.to(n));
 	}
 }
