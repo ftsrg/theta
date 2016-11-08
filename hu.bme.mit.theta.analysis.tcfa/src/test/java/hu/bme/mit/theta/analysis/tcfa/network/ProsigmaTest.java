@@ -35,7 +35,7 @@ public class ProsigmaTest {
 				.create(analysis, s -> false, new FifoWaitlist<>());
 
 		final ARG<LocState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction> arg = abstractor
-				.init(NullPrecision.getInstance());
+				.createArg();
 		abstractor.check(arg, NullPrecision.getInstance());
 
 		System.out.println(new GraphvizWriter().writeString(ArgVisualizer.visualize(arg)));
