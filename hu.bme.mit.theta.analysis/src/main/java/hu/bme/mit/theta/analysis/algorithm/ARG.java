@@ -127,12 +127,10 @@ public final class ARG<S extends State, A extends Action> {
 			}
 			parent.expanded = false;
 		}
-
-		if (node.getCoveringNode().isPresent()) {
-			final ArgNode<S, A> coverer = node.getCoveringNode().get();
-			coverer.coveredNodes.remove(node);
+		uncover(node);
+		for (final ArgNode<S, A> covered : node.coveredNodes()) {
+			covered.coveringNode = Optional.empty();
 		}
-
 	}
 
 	public void cover(final ArgNode<S, A> node, final ArgNode<S, A> coveringNode) {

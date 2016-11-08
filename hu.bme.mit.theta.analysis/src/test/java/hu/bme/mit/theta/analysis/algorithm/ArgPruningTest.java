@@ -54,6 +54,7 @@ public class ArgPruningTest {
 		final State s0 = new NullState("0");
 		final State s00 = new NullState("00");
 		final State s01 = new NullState("01");
+		final State s02 = new NullState("02");
 		final State s000 = new NullState("000");
 		final State s001 = new NullState("001");
 
@@ -62,25 +63,30 @@ public class ArgPruningTest {
 		final ArgNode<State, Action> n0 = arg.createInitNode(s0, false);
 		final ArgNode<State, Action> n00 = arg.createSuccNode(n0, a, s00, false);
 		final ArgNode<State, Action> n01 = arg.createSuccNode(n0, a, s01, false);
+		final ArgNode<State, Action> n02 = arg.createSuccNode(n0, a, s02, false);
 		final ArgNode<State, Action> n000 = arg.createSuccNode(n00, a, s000, false);
 		final ArgNode<State, Action> n001 = arg.createSuccNode(n00, a, s001, true);
 
 		arg.cover(n000, n0);
 		arg.cover(n01, n0);
+		arg.cover(n02, n00);
 
-		assertEquals(5, arg.getNodes().size());
+		assertEquals(6, arg.getNodes().size());
 		assertEquals(1, arg.getInitNodes().size());
 		assertEquals(1, arg.getTargetNodes().size());
 		assertEquals(n001, arg.getTargetNodes().iterator().next());
+		assertEquals(2, n0.coveredNodes().size());
 
 		System.out.println(new GraphvizWriter().writeString(ArgVisualizer.visualize(arg)));
 		System.out.println("=========================");
 
 		arg.prune(n00);
 
-		assertEquals(2, arg.getNodes().size());
+		assertEquals(3, arg.getNodes().size());
 		assertEquals(1, arg.getInitNodes().size());
 		assertEquals(0, arg.getTargetNodes().size());
+		assertEquals(1, n0.coveredNodes.size());
+		assertEquals(false, n02.getCoveringNode().isPresent());
 
 		System.out.println(new GraphvizWriter().writeString(ArgVisualizer.visualize(arg)));
 	}
