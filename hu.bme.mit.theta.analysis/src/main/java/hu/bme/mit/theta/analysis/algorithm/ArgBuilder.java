@@ -30,8 +30,7 @@ public final class ArgBuilder<S extends State, A extends Action, P extends Preci
 		checkNotNull(arg);
 		checkNotNull(precision);
 
-		final Collection<S> oldInitStates = arg.getInitNodes().stream().map(ArgNode::getState)
-				.collect(Collectors.toSet());
+		final Collection<S> oldInitStates = arg.getInitNodes().map(ArgNode::getState).collect(Collectors.toSet());
 		final Collection<? extends S> newInitStates = analysis.getInitFunction().getInitStates(precision);
 		for (final S initState : newInitStates) {
 			if (oldInitStates.size() == 0
@@ -70,7 +69,7 @@ public final class ArgBuilder<S extends State, A extends Action, P extends Preci
 		final ARG<S, A> arg = node.arg;
 		final S state = node.getState();
 
-		for (final ArgNode<S, A> nodeToCoverWith : arg.getNodes()) {
+		arg.getNodes().forEach(nodeToCoverWith -> {
 			if (nodeToCoverWith.getId() >= node.getId()) {
 				return;
 			}
@@ -83,7 +82,7 @@ public final class ArgBuilder<S extends State, A extends Action, P extends Preci
 					return;
 				}
 			}
-		}
+		});
 	}
 
 	public void pruneAndExpand(final ArgNode<S, A> node, final P newPrecision) {

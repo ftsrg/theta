@@ -3,6 +3,7 @@ package hu.bme.mit.theta.analysis.utils;
 import java.awt.Color;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.ArgEdge;
@@ -25,7 +26,7 @@ public class ArgVisualizer {
 
 		final Set<ArgNode<?, ?>> traversed = new HashSet<>();
 
-		for (final ArgNode<?, ?> initNode : arg.getInitNodes()) {
+		for (final ArgNode<?, ?> initNode : arg.getInitNodes().collect(Collectors.toSet())) {
 			traverse(graph, initNode, traversed);
 		}
 

@@ -39,7 +39,7 @@ public final class ArgChecker {
 	}
 
 	public boolean isWellLabeled(final ARG<? extends ExprState, ? extends ExprAction> arg) {
-		return arg.getInitNodes().stream().allMatch(this::subtreeIsWellLabeled);
+		return arg.getInitNodes().allMatch(this::subtreeIsWellLabeled);
 	}
 
 	////

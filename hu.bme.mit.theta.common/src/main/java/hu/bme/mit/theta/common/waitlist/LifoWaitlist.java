@@ -5,6 +5,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Deque;
+import java.util.stream.Stream;
 
 import hu.bme.mit.theta.common.ObjectUtils;
 
@@ -57,5 +58,10 @@ public class LifoWaitlist<T> implements Waitlist<T> {
 	@Override
 	public int size() {
 		return waitlist.size();
+	}
+
+	@Override
+	public void addAll(final Stream<? extends T> items) {
+		items.forEach(waitlist::add);
 	}
 }

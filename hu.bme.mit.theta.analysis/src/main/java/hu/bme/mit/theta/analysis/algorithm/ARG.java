@@ -2,15 +2,11 @@ package hu.bme.mit.theta.analysis.algorithm;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.common.Utils.anyElementOf;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Domain;
@@ -21,21 +17,14 @@ import hu.bme.mit.theta.analysis.State;
  */
 public final class ARG<S extends State, A extends Action> {
 
-	private final Collection<ArgNode<S, A>> nodes;
-
 	private final Collection<ArgNode<S, A>> initNodes;
-	private final Collection<ArgNode<S, A>> targetNodes;
-	private final Collection<ArgNode<S, A>> leafNodes;
 
 	private int nextId = 0;
 
 	private final Domain<S> domain;
 
 	private ARG(final Domain<S> domain) {
-		nodes = new LinkedHashSet<>();
 		initNodes = new HashSet<>();
-		leafNodes = new HashSet<>();
-		targetNodes = new HashSet<>();
 		this.domain = domain;
 	}
 
@@ -45,33 +34,33 @@ public final class ARG<S extends State, A extends Action> {
 
 	////
 
-	public Collection<ArgNode<S, A>> getNodes() {
-		return Collections.unmodifiableCollection(nodes);
+	public Stream<ArgNode<S, A>> getNodes() {
+		return getInitNodes().flatMap(ArgNode::descendants);
 	}
 
-	public Collection<ArgNode<S, A>> getInitNodes() {
-		return Collections.unmodifiableCollection(initNodes);
+	public Stream<ArgNode<S, A>> getInitNodes() {
+		return initNodes.stream();
 	}
 
-	public Collection<ArgNode<S, A>> getTargetNodes() {
-		return Collections.unmodifiableCollection(targetNodes);
+	public Stream<ArgNode<S, A>> getTargetNodes() {
+		return getNodes().filter(ArgNode::isTarget);
 	}
 
-	public Collection<ArgNode<S, A>> getLeafNodes() {
-		return Collections.unmodifiableCollection(leafNodes);
+	public Stream<ArgNode<S, A>> getIncompleteNodes() {
+		return getNodes().filter(n -> !n.isComplete());
 	}
 
 	////
 
 	public boolean isComplete() {
-		return nodes.stream().allMatch(ArgNode::isComplete);
+		return getNodes().allMatch(ArgNode::isComplete);
 	}
 
 	public boolean isSafe() {
 		// TODO: the current implementetion is only the definition of "safe".
 		// More efficient implementation can be done by checking if all states
 		// in the "targetNodes" collection are not feasible.
-		return nodes.stream().allMatch(n -> n.isSafe(domain));
+		return getNodes().allMatch(n -> n.isSafe(domain));
 	}
 
 	////
@@ -80,7 +69,6 @@ public final class ARG<S extends State, A extends Action> {
 		checkNotNull(initState);
 		final ArgNode<S, A> initNode = createNode(initState, target);
 		initNodes.add(initNode);
-		leafNodes.add(initNode);
 		return initNode;
 	}
 
@@ -93,8 +81,6 @@ public final class ARG<S extends State, A extends Action> {
 		checkArgument(!node.isTarget());
 		final ArgNode<S, A> succNode = createNode(succState, target);
 		createEdge(node, action, succNode);
-		leafNodes.add(succNode);
-		leafNodes.remove(node);
 		return succNode;
 	}
 
@@ -113,18 +99,12 @@ public final class ARG<S extends State, A extends Action> {
 
 		assert node.getOutEdges().size() == 0;
 
-		nodes.remove(node);
-		targetNodes.remove(node);
-		leafNodes.remove(node);
 		initNodes.remove(node);
 
 		if (node.getInEdge().isPresent()) {
 			final ArgEdge<S, A> edge = node.getInEdge().get();
 			final ArgNode<S, A> parent = edge.getSource();
 			parent.outEdges.remove(edge);
-			if (parent.outEdges.size() == 0) {
-				leafNodes.add(parent);
-			}
 			parent.expanded = false;
 		}
 		uncover(node);
@@ -156,10 +136,6 @@ public final class ARG<S extends State, A extends Action> {
 
 	private ArgNode<S, A> createNode(final S state, final boolean target) {
 		final ArgNode<S, A> node = new ArgNode<>(this, state, nextId, target);
-		nodes.add(node);
-		if (target) {
-			targetNodes.add(node);
-		}
 		nextId = nextId + 1;
 		return node;
 	}
@@ -174,29 +150,7 @@ public final class ARG<S extends State, A extends Action> {
 	/**
 	 * Gets all counterexamples, i.e., traces leading to target states.
 	 */
-	public Collection<ArgTrace<S, A>> getAllCexs() {
-		final List<ArgTrace<S, A>> cexs = new ArrayList<>();
-
-		for (final ArgNode<S, A> targetNode : getTargetNodes()) {
-			final ArgTrace<S, A> trace = ArgTrace.to(targetNode);
-			cexs.add(trace);
-		}
-
-		assert cexs.size() == getTargetNodes().size();
-		return cexs;
+	public Stream<ArgTrace<S, A>> getAllCexs() {
+		return getTargetNodes().map(n -> ArgTrace.to(n));
 	}
-
-	/**
-	 * Gets a single counterexample, i.e., a trace leading to a target state (if
-	 * at least one target state exists in the ARG).
-	 */
-	public Optional<ArgTrace<S, A>> getAnyCex() {
-		if (getTargetNodes().size() == 0) {
-			return Optional.empty();
-		} else {
-			final ArgNode<S, A> targetNode = anyElementOf(targetNodes);
-			return Optional.of(ArgTrace.to(targetNode));
-		}
-	}
-
 }

@@ -71,9 +71,9 @@ public class ArgPruningTest {
 		arg.cover(n01, n0);
 		arg.cover(n02, n00);
 
-		assertEquals(6, arg.getNodes().size());
-		assertEquals(1, arg.getInitNodes().size());
-		assertEquals(1, arg.getTargetNodes().size());
+		assertEquals(6, arg.getNodes().count());
+		assertEquals(1, arg.getInitNodes().count());
+		assertEquals(1, arg.getTargetNodes().count());
 		assertEquals(n001, arg.getTargetNodes().iterator().next());
 		assertEquals(2, n0.getCoveredNodes().size());
 
@@ -82,9 +82,9 @@ public class ArgPruningTest {
 
 		arg.prune(n00);
 
-		assertEquals(3, arg.getNodes().size());
-		assertEquals(1, arg.getInitNodes().size());
-		assertEquals(0, arg.getTargetNodes().size());
+		assertEquals(3, arg.getNodes().count());
+		assertEquals(1, arg.getInitNodes().count());
+		assertEquals(0, arg.getTargetNodes().count());
 		assertEquals(1, n0.coveredNodes.size());
 		assertEquals(false, n02.getCoveringNode().isPresent());
 
