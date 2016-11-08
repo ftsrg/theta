@@ -113,10 +113,10 @@ public final class ImpactChecker<S extends State, A extends Action, P extends Pr
 		private Optional<ArgNode<S, A>> unwind() {
 			argBuilder.init(arg, precision);
 			while (true) {
-				final Optional<ArgNode<S, A>> incompleteNode = firstIncompleteNode();
+				final Optional<ArgNode<S, A>> incompleteLeaf = firstIncompleteLeaf();
 
-				if (incompleteNode.isPresent()) {
-					final ArgNode<S, A> v = incompleteNode.get();
+				if (incompleteLeaf.isPresent()) {
+					final ArgNode<S, A> v = incompleteLeaf.get();
 					v.properAncestors().forEach(w -> close(w));
 
 					final Optional<ArgNode<S, A>> unsafeDescendant = dfs(v);
@@ -168,7 +168,7 @@ public final class ImpactChecker<S extends State, A extends Action, P extends Pr
 
 		////
 
-		private Optional<ArgNode<S, A>> firstIncompleteNode() {
+		private Optional<ArgNode<S, A>> firstIncompleteLeaf() {
 			return arg.getLeafNodes().stream().filter(v -> !v.isComplete()).findFirst();
 		}
 	}
