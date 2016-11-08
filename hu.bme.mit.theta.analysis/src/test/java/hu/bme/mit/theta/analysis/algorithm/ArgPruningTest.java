@@ -75,7 +75,7 @@ public class ArgPruningTest {
 		assertEquals(1, arg.getInitNodes().size());
 		assertEquals(1, arg.getTargetNodes().size());
 		assertEquals(n001, arg.getTargetNodes().iterator().next());
-		assertEquals(2, n0.coveredNodes().size());
+		assertEquals(2, n0.getCoveredNodes().size());
 
 		System.out.println(new GraphvizWriter().writeString(ArgVisualizer.visualize(arg)));
 		System.out.println("=========================");
