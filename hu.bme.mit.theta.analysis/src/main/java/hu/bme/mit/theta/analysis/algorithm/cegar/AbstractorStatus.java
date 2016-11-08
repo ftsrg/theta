@@ -1,35 +1,30 @@
 package hu.bme.mit.theta.analysis.algorithm.cegar;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
-import hu.bme.mit.theta.analysis.Action;
-import hu.bme.mit.theta.analysis.Precision;
-import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.common.ObjectUtils;
 
-public final class AbstractorStatus<S extends State, A extends Action, P extends Precision> {
-	private final AbstractionState<S, A, P> abstractionState;
+public final class AbstractorStatus {
 
-	private AbstractorStatus(final AbstractionState<S, A, P> abstractionState) {
-		this.abstractionState = checkNotNull(abstractionState);
+	private final boolean safe;
+
+	private AbstractorStatus(final boolean safe) {
+		this.safe = safe;
 	}
 
-	public static <S extends State, A extends Action, P extends Precision> AbstractorStatus<S, A, P> create(
-			final AbstractionState<S, A, P> abstractionState) {
-		return new AbstractorStatus<>(abstractionState);
+	public static AbstractorStatus create(final ARG<?, ?> arg) {
+		return new AbstractorStatus(arg.isSafe());
 	}
 
-	public AbstractionState<S, A, P> getAbstractionState() {
-		return abstractionState;
+	public static AbstractorStatus safe() {
+		return new AbstractorStatus(true);
 	}
 
-	public ARG<S, A> getArg() {
-		return abstractionState.getArg();
+	public static AbstractorStatus unsafe() {
+		return new AbstractorStatus(false);
 	}
 
 	public boolean isSafe() {
-		return getArg().isSafe();
+		return safe;
 	}
 
 	public boolean isUnsafe() {

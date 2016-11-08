@@ -7,8 +7,8 @@ import java.util.Collections;
 
 import org.junit.Test;
 
+import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
-import hu.bme.mit.theta.analysis.algorithm.cegar.AbstractorStatus;
 import hu.bme.mit.theta.analysis.algorithm.cegar.WaitlistBasedAbstractor;
 import hu.bme.mit.theta.analysis.loc.LocPrecision;
 import hu.bme.mit.theta.analysis.loc.LocState;
@@ -40,9 +40,10 @@ public class TcfaZoneTest {
 		final Abstractor<LocState<ZoneState, TcfaLoc, TcfaEdge>, TcfaAction, LocPrecision<ZonePrecision, TcfaLoc, TcfaEdge>> abstractor = WaitlistBasedAbstractor
 				.create(analyis, s -> s.getLoc().equals(fischer.getCritical()));
 
-		final AbstractorStatus<?, ?, ?> abstractorStatus = abstractor.initAndCheck(precision);
+		final ARG<LocState<ZoneState, TcfaLoc, TcfaEdge>, TcfaAction> arg = abstractor.init(precision);
+		abstractor.check(arg, precision);
 
-		System.out.println(new GraphvizWriter().writeString(ArgVisualizer.visualize(abstractorStatus.getArg())));
+		System.out.println(new GraphvizWriter().writeString(ArgVisualizer.visualize(arg)));
 	}
 
 }

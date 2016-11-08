@@ -9,8 +9,8 @@ import java.util.Collections;
 
 import org.junit.Test;
 
+import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
-import hu.bme.mit.theta.analysis.algorithm.cegar.AbstractorStatus;
 import hu.bme.mit.theta.analysis.algorithm.cegar.WaitlistBasedAbstractor;
 import hu.bme.mit.theta.analysis.loc.LocPrecision;
 import hu.bme.mit.theta.analysis.loc.LocState;
@@ -48,12 +48,13 @@ public class TcfaPredTest {
 		final Abstractor<LocState<PredState, TcfaLoc, TcfaEdge>, TcfaAction, LocPrecision<PredPrecision, TcfaLoc, TcfaEdge>> abstractor = WaitlistBasedAbstractor
 				.create(analysis, s -> s.getLoc().equals(fischer.getCritical()));
 
-		final AbstractorStatus<?, ?, ?> abstractorStatus = abstractor.initAndCheck(precision);
+		final ARG<LocState<PredState, TcfaLoc, TcfaEdge>, TcfaAction> arg = abstractor.init(precision);
+		abstractor.check(arg, precision);
 
-		System.out.println(new GraphvizWriter().writeString(ArgVisualizer.visualize(abstractorStatus.getArg())));
+		System.out.println(new GraphvizWriter().writeString(ArgVisualizer.visualize(arg)));
 
 		System.out.println("\n\nCounterexample(s):");
-		System.out.println(abstractorStatus.getArg().getAllCexs());
+		System.out.println(arg.getAllCexs());
 
 	}
 
