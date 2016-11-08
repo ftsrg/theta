@@ -10,7 +10,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.StringJoiner;
 
@@ -80,8 +79,8 @@ final class Z3Model implements Model {
 	@Override
 	public Expr<? extends BoolType> toExpr() {
 		final List<Expr<? extends BoolType>> exprs = new ArrayList<>();
-		for (final Entry<ConstDecl<?>, LitExpr<?>> entry : constToExpr.entrySet()) {
-			final Expr<? extends BoolType> expr = Eq(entry.getKey().getRef(), entry.getValue());
+		for (final ConstDecl<?> constDecl : constDecls) {
+			final Expr<? extends BoolType> expr = Eq(constDecl.getRef(), eval(constDecl).get());
 			exprs.add(expr);
 		}
 		return And(exprs);
