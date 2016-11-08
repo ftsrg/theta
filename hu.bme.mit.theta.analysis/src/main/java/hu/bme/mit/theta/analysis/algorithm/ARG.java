@@ -6,7 +6,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import hu.bme.mit.theta.analysis.Action;
@@ -20,6 +19,8 @@ public final class ARG<S extends State, A extends Action> {
 
 	private final Collection<ArgNode<S, A>> initNodes;
 
+	boolean initialized;
+
 	private int nextId = 0;
 
 	private final Domain<S> domain;
@@ -27,6 +28,7 @@ public final class ARG<S extends State, A extends Action> {
 	private ARG(final Domain<S> domain) {
 		initNodes = new HashSet<>();
 		this.domain = domain;
+		this.initialized = false;
 	}
 
 	public static <S extends State, A extends Action> ARG<S, A> create(final Domain<S> domain) {
@@ -64,6 +66,10 @@ public final class ARG<S extends State, A extends Action> {
 		return getNodes().allMatch(n -> n.isSafe(domain));
 	}
 
+	public boolean isInitialized() {
+		return initialized;
+	}
+
 	////
 
 	public ArgNode<S, A> createInitNode(final S initState, final boolean target) {
@@ -91,23 +97,23 @@ public final class ARG<S extends State, A extends Action> {
 	 * @param node
 	 */
 	public void prune(final ArgNode<S, A> node) {
-		checkNotNull(node);
-		checkArgument(node.arg == this);
-
-		for (final ArgNode<S, A> succ : node.getSuccNodes().collect(Collectors.toList())) {
-			prune(succ);
-		}
-
-		assert node.getOutEdges().size() == 0;
-
-		initNodes.remove(node);
-
 		if (node.getInEdge().isPresent()) {
 			final ArgEdge<S, A> edge = node.getInEdge().get();
 			final ArgNode<S, A> parent = edge.getSource();
 			parent.outEdges.remove(edge);
 			parent.expanded = false;
+		} else {
+			assert initNodes.contains(node);
+			initNodes.remove(node);
+			this.initialized = false;
 		}
+		pruneSuccessors(node);
+	}
+
+	private void pruneSuccessors(final ArgNode<S, A> node) {
+		checkNotNull(node);
+		checkArgument(node.arg == this);
+		node.getSuccNodes().forEach(this::pruneSuccessors);
 		uncover(node);
 		for (final ArgNode<S, A> covered : node.getCoveredNodes()) {
 			covered.coveringNode = Optional.empty();

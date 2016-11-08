@@ -29,12 +29,12 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 	public SafetyStatus<S, A> check(final P initPrecision) {
 		RefinerResult<S, A, P> refinerStatus = null;
 		AbstractorResult abstractorStatus = null;
-		ARG<S, A> arg = null;
+		ARG<S, A> arg = abstractor.createArg();
 		P precision = initPrecision;
 		do {
 			// TODO: currently the ARG is not pruned, so the abstractor simply
 			// restarts at every iteration
-			arg = abstractor.init(precision);
+			arg = abstractor.createArg();
 			abstractorStatus = abstractor.check(arg, precision);
 
 			if (abstractorStatus.isUnsafe()) {

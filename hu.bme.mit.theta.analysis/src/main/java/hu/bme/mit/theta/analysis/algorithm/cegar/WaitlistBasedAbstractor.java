@@ -35,17 +35,18 @@ public class WaitlistBasedAbstractor<S extends State, A extends Action, P extend
 	}
 
 	@Override
-	public ARG<S, A> init(final P precision) {
-		checkNotNull(precision);
-		final ARG<S, A> arg = ARG.create(analysis.getDomain());
-		argBuilder.init(arg, precision);
-		return arg;
+	public ARG<S, A> createArg() {
+		return ARG.create(analysis.getDomain());
 	}
 
 	@Override
 	public AbstractorResult check(final ARG<S, A> arg, final P precision) {
 		checkNotNull(arg);
 		checkNotNull(precision);
+
+		if (!arg.isInitialized()) {
+			argBuilder.init(arg, precision);
+		}
 
 		waitlist.clear();
 		waitlist.addAll(arg.getIncompleteNodes());

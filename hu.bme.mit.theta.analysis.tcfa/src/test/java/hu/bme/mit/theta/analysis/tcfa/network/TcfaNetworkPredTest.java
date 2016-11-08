@@ -63,7 +63,7 @@ public class TcfaNetworkPredTest {
 				.create(analysis, s -> false, new FifoWaitlist<>());
 
 		final ARG<LocState<CompositeState<ZoneState, PredState>, TcfaLoc, TcfaEdge>, TcfaAction> arg = abstractor
-				.init(precision);
+				.createArg();
 		abstractor.check(arg, precision);
 
 		System.out.println(new GraphvizWriter().writeString(ArgVisualizer.visualize(arg)));

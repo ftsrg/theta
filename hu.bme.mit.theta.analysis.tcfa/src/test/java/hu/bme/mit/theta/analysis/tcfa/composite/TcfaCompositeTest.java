@@ -45,7 +45,7 @@ public class TcfaCompositeTest {
 				.create(analysis, s -> s.getLoc().getName().equals("(crit, crit)"), new FifoWaitlist<>());
 
 		final ARG<LocState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction> arg = abstractor
-				.init(NullPrecision.getInstance());
+				.createArg();
 		abstractor.check(arg, NullPrecision.getInstance());
 
 		System.out.println(new GraphvizWriter().writeString(ArgVisualizer.visualize(arg)));
