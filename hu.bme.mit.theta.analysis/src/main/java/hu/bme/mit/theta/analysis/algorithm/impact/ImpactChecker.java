@@ -77,17 +77,25 @@ public final class ImpactChecker<S extends State, A extends Action, P extends Pr
 
 		////
 
-		public void close(final ArgNode<S, A> v) {
-			arg.getNodes().forEach(w -> {
-				if (w.getId() >= v.getId()) {
-					return;
-				}
+		private void close(final ArgNode<S, A> node) {
+			if (!node.isCovered()) {
+				final Optional<ArgNode<S, A>> nodeToCoverWith = arg.getNodes().filter(n -> mayCover(n, node))
+						.findFirst();
+				nodeToCoverWith.ifPresent(n -> cover(node, n));
+			}
+		}
 
-				cover(v, w);
-				if (v.getCoveringNode().isPresent()) {
-					return;
+		private boolean mayCover(final ArgNode<S, A> nodeToCoverWith, final ArgNode<S, A> node) {
+			if (nodeToCoverWith.getId() < node.getId()) {
+				final S state = node.getState();
+				final S stateToCoverWith = nodeToCoverWith.getState();
+				if (domain.isLeq(state, stateToCoverWith)) {
+					if (!nodeToCoverWith.isCovered()) {
+						return true;
+					}
 				}
-			});
+			}
+			return false;
 		}
 
 		private Optional<ArgNode<S, A>> dfs(final ArgNode<S, A> v) {
@@ -158,12 +166,12 @@ public final class ImpactChecker<S extends State, A extends Action, P extends Pr
 		}
 
 		private void cover(final ArgNode<S, A> v, final ArgNode<S, A> w) {
-			if (!v.isCovered() && !w.ancestors().anyMatch(n -> n == v)) {
-				if (domain.isLeq(v.getState(), w.getState())) {
-					arg.cover(v, w);
-					v.descendants().forEach(y -> y.clearCoveredNodes());
-				}
-			}
+			checkArgument(!v.isCovered());
+			checkArgument(!w.isCovered());
+			checkArgument(!w.ancestors().anyMatch(n -> n == v));
+			checkArgument((domain.isLeq(v.getState(), w.getState())));
+			arg.cover(v, w);
+			v.descendants().forEach(y -> y.clearCoveredNodes());
 		}
 
 	}
