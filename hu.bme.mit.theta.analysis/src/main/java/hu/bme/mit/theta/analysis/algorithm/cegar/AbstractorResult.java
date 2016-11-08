@@ -1,26 +1,21 @@
 package hu.bme.mit.theta.analysis.algorithm.cegar;
 
-import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.common.ObjectUtils;
 
-public final class AbstractorStatus {
+public final class AbstractorResult {
 
 	private final boolean safe;
 
-	private AbstractorStatus(final boolean safe) {
+	private AbstractorResult(final boolean safe) {
 		this.safe = safe;
 	}
 
-	public static AbstractorStatus create(final ARG<?, ?> arg) {
-		return new AbstractorStatus(arg.isSafe());
+	public static AbstractorResult safe() {
+		return new AbstractorResult(true);
 	}
 
-	public static AbstractorStatus safe() {
-		return new AbstractorStatus(true);
-	}
-
-	public static AbstractorStatus unsafe() {
-		return new AbstractorStatus(false);
+	public static AbstractorResult unsafe() {
+		return new AbstractorResult(false);
 	}
 
 	public boolean isSafe() {

@@ -27,8 +27,8 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 
 	@Override
 	public SafetyStatus<S, A> check(final P initPrecision) {
-		RefinerStatus<S, A, P> refinerStatus = null;
-		AbstractorStatus abstractorStatus = null;
+		RefinerResult<S, A, P> refinerStatus = null;
+		AbstractorResult abstractorStatus = null;
 		ARG<S, A> arg = null;
 		P precision = initPrecision;
 		do {
@@ -45,15 +45,15 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 				}
 			}
 
-		} while (!abstractorStatus.isSafe() && !refinerStatus.isConcretizable());
+		} while (!abstractorStatus.isSafe() && !refinerStatus.isUnsafe());
 
 		assert abstractorStatus != null;
 		assert abstractorStatus.isSafe() || refinerStatus != null;
 
 		if (abstractorStatus.isSafe()) {
 			return SafetyStatus.safe(arg);
-		} else if (refinerStatus.isConcretizable()) {
-			return SafetyStatus.unsafe(refinerStatus.asConcretizable().getCex(), arg);
+		} else if (refinerStatus.isUnsafe()) {
+			return SafetyStatus.unsafe(refinerStatus.asUnsafe().getCex(), arg);
 		} else {
 			throw new IllegalStateException();
 		}

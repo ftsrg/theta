@@ -9,5 +9,5 @@ public interface Abstractor<S extends State, A extends Action, P extends Precisi
 
 	ARG<S, A> init(final P precision);
 
-	AbstractorStatus check(ARG<S, A> arg, P precision);
+	AbstractorResult check(ARG<S, A> arg, P precision);
 }

@@ -8,9 +8,9 @@ import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.common.ObjectUtils;
 
-public abstract class RefinerStatus<S extends State, A extends Action, P extends Precision> {
+public abstract class RefinerResult<S extends State, A extends Action, P extends Precision> {
 
-	private RefinerStatus() {
+	private RefinerResult() {
 	}
 
 	public static <S extends State, A extends Action, P extends Precision> Spurious<S, A, P> spurious(
@@ -18,23 +18,23 @@ public abstract class RefinerStatus<S extends State, A extends Action, P extends
 		return new Spurious<>(refinedPrecision);
 	}
 
-	public static <S extends State, A extends Action, P extends Precision> Concretizable<S, A, P> concretizable(
+	public static <S extends State, A extends Action, P extends Precision> Unsafe<S, A, P> concretizable(
 			final Trace<S, A> cex) {
-		return new Concretizable<>(cex);
+		return new Unsafe<>(cex);
 	}
 
 	public abstract boolean isSpurious();
 
-	public abstract boolean isConcretizable();
+	public abstract boolean isUnsafe();
 
 	public abstract Spurious<S, A, P> asSpurious();
 
-	public abstract Concretizable<S, A, P> asConcretizable();
+	public abstract Unsafe<S, A, P> asUnsafe();
 
 	////
 
 	public static final class Spurious<S extends State, A extends Action, P extends Precision>
-			extends RefinerStatus<S, A, P> {
+			extends RefinerResult<S, A, P> {
 		private final P refinedPrecision;
 
 		private Spurious(final P refinedPrecision) {
@@ -51,7 +51,7 @@ public abstract class RefinerStatus<S extends State, A extends Action, P extends
 		}
 
 		@Override
-		public boolean isConcretizable() {
+		public boolean isUnsafe() {
 			return false;
 		}
 
@@ -61,23 +61,23 @@ public abstract class RefinerStatus<S extends State, A extends Action, P extends
 		}
 
 		@Override
-		public Concretizable<S, A, P> asConcretizable() {
+		public Unsafe<S, A, P> asUnsafe() {
 			throw new ClassCastException(
-					"Cannot cast " + Spurious.class.getSimpleName() + " to " + Concretizable.class.getSimpleName());
+					"Cannot cast " + Spurious.class.getSimpleName() + " to " + Unsafe.class.getSimpleName());
 		}
 
 		@Override
 		public String toString() {
-			return ObjectUtils.toStringBuilder(RefinerStatus.class.getSimpleName()).add(getClass().getSimpleName())
+			return ObjectUtils.toStringBuilder(RefinerResult.class.getSimpleName()).add(getClass().getSimpleName())
 					.toString();
 		}
 	}
 
-	public static final class Concretizable<S extends State, A extends Action, P extends Precision>
-			extends RefinerStatus<S, A, P> {
+	public static final class Unsafe<S extends State, A extends Action, P extends Precision>
+			extends RefinerResult<S, A, P> {
 		private final Trace<S, A> cex;
 
-		private Concretizable(final Trace<S, A> cex) {
+		private Unsafe(final Trace<S, A> cex) {
 			this.cex = checkNotNull(cex);
 		}
 
@@ -91,24 +91,24 @@ public abstract class RefinerStatus<S extends State, A extends Action, P extends
 		}
 
 		@Override
-		public boolean isConcretizable() {
+		public boolean isUnsafe() {
 			return true;
 		}
 
 		@Override
 		public Spurious<S, A, P> asSpurious() {
 			throw new ClassCastException(
-					"Cannot cast " + Concretizable.class.getSimpleName() + " to " + Spurious.class.getSimpleName());
+					"Cannot cast " + Unsafe.class.getSimpleName() + " to " + Spurious.class.getSimpleName());
 		}
 
 		@Override
-		public Concretizable<S, A, P> asConcretizable() {
+		public Unsafe<S, A, P> asUnsafe() {
 			return this;
 		}
 
 		@Override
 		public String toString() {
-			return ObjectUtils.toStringBuilder(RefinerStatus.class.getSimpleName()).add(getClass().getSimpleName())
+			return ObjectUtils.toStringBuilder(RefinerResult.class.getSimpleName()).add(getClass().getSimpleName())
 					.toString();
 		}
 	}
