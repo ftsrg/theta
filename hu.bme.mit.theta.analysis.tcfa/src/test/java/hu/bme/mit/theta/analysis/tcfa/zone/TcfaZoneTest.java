@@ -18,6 +18,7 @@ import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.analysis.zone.ZonePrecision;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
 import hu.bme.mit.theta.common.visualization.GraphvizWriter;
+import hu.bme.mit.theta.common.waitlist.FifoWaitlist;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.IntType;
 import hu.bme.mit.theta.formalism.tcfa.TcfaEdge;
@@ -38,7 +39,7 @@ public class TcfaZoneTest {
 		final LocPrecision<ZonePrecision, TcfaLoc, TcfaEdge> precision = LocPrecision.create(l -> subPrecision);
 
 		final Abstractor<LocState<ZoneState, TcfaLoc, TcfaEdge>, TcfaAction, LocPrecision<ZonePrecision, TcfaLoc, TcfaEdge>> abstractor = WaitlistBasedAbstractor
-				.create(analyis, s -> s.getLoc().equals(fischer.getCritical()));
+				.create(analyis, s -> s.getLoc().equals(fischer.getCritical()), new FifoWaitlist<>());
 
 		final ARG<LocState<ZoneState, TcfaLoc, TcfaEdge>, TcfaAction> arg = abstractor.init(precision);
 		abstractor.check(arg, precision);
