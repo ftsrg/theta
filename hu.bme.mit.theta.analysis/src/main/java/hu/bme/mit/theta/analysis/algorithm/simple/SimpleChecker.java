@@ -16,7 +16,7 @@ public class SimpleChecker {
 	public static <S extends State, A extends Action, P extends Precision> boolean run(final Analysis<S, A, P> analysis,
 			final Predicate<? super S> target, final P precision) {
 
-		final Waitlist<S> waiting = new LifoWaitlist<>();
+		final Waitlist<S> waiting = LifoWaitlist.create();
 		final Collection<S> passed = new LinkedList<>();
 
 		final Collection<? extends S> initStates = analysis.getInitFunction().getInitStates(precision);

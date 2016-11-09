@@ -74,7 +74,7 @@ public class StsPredTest {
 				solver);
 
 		final Abstractor<PredState, StsAction, SimplePredPrecision> abstractor = WaitlistBasedAbstractor
-				.create(analysis, target, FifoWaitlist::new);
+				.create(analysis, target, () -> FifoWaitlist.create());
 
 		final StsExprSeqConcretizer concretizerOp = new StsExprSeqConcretizer(sts, solver);
 		final GlobalPredItpRefinerOp<StsAction> refinerOp = new GlobalPredItpRefinerOp<>();

@@ -39,7 +39,7 @@ public class TcfaZoneTest {
 		final LocPrecision<ZonePrecision, TcfaLoc, TcfaEdge> precision = LocPrecision.create(l -> subPrecision);
 
 		final Abstractor<LocState<ZoneState, TcfaLoc, TcfaEdge>, TcfaAction, LocPrecision<ZonePrecision, TcfaLoc, TcfaEdge>> abstractor = WaitlistBasedAbstractor
-				.create(analyis, s -> s.getLoc().equals(fischer.getCritical()), FifoWaitlist::new);
+				.create(analyis, s -> s.getLoc().equals(fischer.getCritical()), () -> FifoWaitlist.create());
 
 		final ARG<LocState<ZoneState, TcfaLoc, TcfaEdge>, TcfaAction> arg = abstractor.createArg();
 		abstractor.check(arg, precision);
