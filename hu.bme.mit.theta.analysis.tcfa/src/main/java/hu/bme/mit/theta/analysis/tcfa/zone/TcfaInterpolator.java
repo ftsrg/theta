@@ -12,12 +12,16 @@ import hu.bme.mit.theta.analysis.zone.ZoneDomain;
 import hu.bme.mit.theta.analysis.zone.ZonePrecision;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
 
-public class TcfaInterpolator {
+public final class TcfaInterpolator {
 
 	private final ZonePrecision precision;
 
-	public TcfaInterpolator(final ZonePrecision precision) {
+	private TcfaInterpolator(final ZonePrecision precision) {
 		this.precision = checkNotNull(precision);
+	}
+
+	public static TcfaInterpolator create(final ZonePrecision precision) {
+		return new TcfaInterpolator(precision);
 	}
 
 	public List<ZoneState> getInterpolant(final List<? extends TcfaAction> actions) {
@@ -44,6 +48,9 @@ public class TcfaInterpolator {
 			lastState = TcfaZoneTransferFunction.getInstance().post(lastState, action, precision);
 			forwardStates.add(lastState);
 		}
+
+		// TODO
+		assert forwardStates.get(forwardStates.size() - 1).isBottom();
 
 		assert forwardStates.size() == actions.size() + 1;
 
