@@ -81,7 +81,7 @@ public final class SimplePredPrecision implements PredPrecision {
 			}
 		}
 
-		return PredState.create(statePreds);
+		return PredState.of(statePreds);
 	}
 
 	public SimplePredPrecision refine(final Iterable<Expr<? extends BoolType>> extraPreds) {

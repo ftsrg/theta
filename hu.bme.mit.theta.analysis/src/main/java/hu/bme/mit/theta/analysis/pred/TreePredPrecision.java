@@ -110,7 +110,7 @@ public final class TreePredPrecision implements PredPrecision {
 			}
 		}
 
-		return PredState.create(statePreds);
+		return PredState.of(statePreds);
 	}
 
 	public void refine(final PredState state, final Expr<? extends BoolType> pred) {
