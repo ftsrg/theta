@@ -23,7 +23,7 @@ final class TcfaPredInitFunction implements InitFunction<PredState, PredPrecisio
 	@Override
 	public Collection<PredState> getInitStates(final PredPrecision precision) {
 		checkNotNull(precision);
-		return Collections.singleton(PredState.create(Collections.emptySet()));
+		return Collections.singleton(PredState.of());
 	}
 
 }

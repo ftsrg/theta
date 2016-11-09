@@ -28,35 +28,35 @@ public final class PredState implements ExprState {
 		this.preds = ImmutableSet.copyOf(preds);
 	}
 
-	public static PredState create(final Iterable<? extends Expr<? extends BoolType>> preds) {
+	public static PredState of(final Iterable<? extends Expr<? extends BoolType>> preds) {
 		return new PredState(preds);
 	}
 
 	// Convenience factory methods
 
-	public static PredState create() {
+	public static PredState of() {
 		return new PredState(ImmutableSet.of());
 	}
 
-	public static PredState create(final Expr<? extends BoolType> pred) {
+	public static PredState of(final Expr<? extends BoolType> pred) {
 		return new PredState(ImmutableSet.of(pred));
 	}
 
-	public static PredState create(final Expr<? extends BoolType> pred1, final Expr<? extends BoolType> pred2) {
+	public static PredState of(final Expr<? extends BoolType> pred1, final Expr<? extends BoolType> pred2) {
 		return new PredState(ImmutableSet.of(pred1, pred2));
 	}
 
-	public static PredState create(final Expr<? extends BoolType> pred1, final Expr<? extends BoolType> pred2,
+	public static PredState of(final Expr<? extends BoolType> pred1, final Expr<? extends BoolType> pred2,
 			final Expr<? extends BoolType> pred3) {
 		return new PredState(ImmutableSet.of(pred1, pred2, pred3));
 	}
 
-	public static PredState create(final Expr<? extends BoolType> pred1, final Expr<? extends BoolType> pred2,
+	public static PredState of(final Expr<? extends BoolType> pred1, final Expr<? extends BoolType> pred2,
 			final Expr<? extends BoolType> pred3, final Expr<? extends BoolType> pred4) {
 		return new PredState(ImmutableSet.of(pred1, pred2, pred3, pred4));
 	}
 
-	public static PredState create(final Expr<? extends BoolType> pred1, final Expr<? extends BoolType> pred2,
+	public static PredState of(final Expr<? extends BoolType> pred1, final Expr<? extends BoolType> pred2,
 			final Expr<? extends BoolType> pred3, final Expr<? extends BoolType> pred4,
 			final Expr<? extends BoolType> pred5) {
 		return new PredState(ImmutableSet.of(pred1, pred2, pred3, pred4, pred5));
