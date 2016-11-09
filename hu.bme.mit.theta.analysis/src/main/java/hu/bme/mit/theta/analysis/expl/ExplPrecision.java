@@ -9,11 +9,15 @@ import java.util.Set;
 import com.google.common.collect.ImmutableSet;
 
 import hu.bme.mit.theta.analysis.Precision;
+import hu.bme.mit.theta.analysis.expr.ExprStates;
 import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.LitExpr;
 import hu.bme.mit.theta.core.model.impl.Valuation;
+import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.solver.Solver;
 
 public final class ExplPrecision implements Precision {
 
@@ -45,6 +49,12 @@ public final class ExplPrecision implements Precision {
 			}
 		}
 		return ExplState.create(builder.build());
+	}
+
+	public Collection<ExplState> createStates(final Solver solver, final Expr<? extends BoolType> expr) {
+		checkNotNull(solver);
+		checkNotNull(expr);
+		return ExprStates.createStates(solver, expr, this::createState);
 	}
 
 	@Override
