@@ -26,7 +26,7 @@ public final class CompositeState<S1 extends State, S2 extends State> implements
 		this.state2 = checkNotNull(state2);
 	}
 
-	public static <S1 extends State, S2 extends State> CompositeState<S1, S2> create(final S1 state1, final S2 state2) {
+	public static <S1 extends State, S2 extends State> CompositeState<S1, S2> of(final S1 state1, final S2 state2) {
 		return new CompositeState<>(state1, state2);
 	}
 
@@ -38,7 +38,7 @@ public final class CompositeState<S1 extends State, S2 extends State> implements
 		final ImmutableCollection.Builder<CompositeState<S1, S2>> builder = ImmutableSet.builder();
 		for (final S1 state1 : states1) {
 			for (final S2 state2 : states2) {
-				builder.add(create(state1, state2));
+				builder.add(CompositeState.of(state1, state2));
 			}
 		}
 		return builder.build();
@@ -64,6 +64,18 @@ public final class CompositeState<S1 extends State, S2 extends State> implements
 		checkPositionIndex(n, 2);
 		return n == 0 ? _1() : _2();
 	}
+
+	////
+
+	public <S extends State> CompositeState<S, S2> with1(final S state) {
+		return CompositeState.of(state, this.state2);
+	}
+
+	public <S extends State> CompositeState<S1, S> with2(final S state) {
+		return CompositeState.of(this.state1, state);
+	}
+
+	////
 
 	@Override
 	public int hashCode() {
