@@ -17,8 +17,12 @@ public class FifoWaitlist<T> implements Waitlist<T> {
 
 	private final Queue<T> items;
 
-	public FifoWaitlist() {
+	private FifoWaitlist() {
 		this.items = new ArrayDeque<>();
+	}
+
+	public static <T> FifoWaitlist<T> create() {
+		return new FifoWaitlist<>();
 	}
 
 	public FifoWaitlist(final Collection<? extends T> items) {

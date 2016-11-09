@@ -77,7 +77,7 @@ public class StsExplTest {
 		final ExplPrecision precision = ExplPrecision.create(Collections.singleton(vy));
 
 		final Abstractor<ExplState, StsAction, ExplPrecision> abstractor = WaitlistBasedAbstractor.create(analysis,
-				target, new FifoWaitlist<>());
+				target, () -> FifoWaitlist.create());
 
 		final StsExprSeqConcretizer concretizerOp = new StsExprSeqConcretizer(sts, solver);
 		final GlobalExplItpRefinerOp<StsAction> refinerOp = new GlobalExplItpRefinerOp<>();
