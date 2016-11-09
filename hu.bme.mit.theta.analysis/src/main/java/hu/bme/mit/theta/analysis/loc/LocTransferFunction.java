@@ -45,7 +45,7 @@ public final class LocTransferFunction<S extends State, A extends LocAction<L, E
 
 		final Collection<? extends S> subSuccStates = transferFunction.getSuccStates(subState, action, subPrecision);
 		for (final S subSuccState : subSuccStates) {
-			final LocState<S, L, E> succState = LocState.create(target, subSuccState);
+			final LocState<S, L, E> succState = LocState.of(target, subSuccState);
 			succStates.add(succState);
 		}
 

@@ -54,7 +54,7 @@ public final class CfaImpactRefiner implements ImpactRefiner<LocState<PredState,
 				newPreds.addAll(state.getState().getPreds());
 				newPreds.add(expr);
 
-				final LocState<PredState, CfaLoc, CfaEdge> refinedState = LocState.create(state.getLoc(),
+				final LocState<PredState, CfaLoc, CfaEdge> refinedState = state.withState(
 						PredState.create(newPreds));
 
 				refinedStates.add(refinedState);
