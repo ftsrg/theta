@@ -14,7 +14,7 @@ public class WaitlistTest {
 
 	@Test
 	public void testFifo() {
-		final Waitlist<String> waitlist = new FifoWaitlist<>();
+		final Waitlist<String> waitlist = FifoWaitlist.create();
 		assertEquals(0, waitlist.size());
 
 		waitlist.add("A");
@@ -52,7 +52,7 @@ public class WaitlistTest {
 
 	@Test
 	public void testLifo() {
-		final Waitlist<String> waitlist = new LifoWaitlist<>();
+		final Waitlist<String> waitlist = LifoWaitlist.create();
 		assertEquals(0, waitlist.size());
 
 		waitlist.add("A");
@@ -90,13 +90,13 @@ public class WaitlistTest {
 
 	@Test(expected = NoSuchElementException.class)
 	public void testLifoException() {
-		final Waitlist<String> waitlist = new LifoWaitlist<>();
+		final Waitlist<String> waitlist = LifoWaitlist.create();
 		waitlist.remove();
 	}
 
 	@Test(expected = NoSuchElementException.class)
 	public void testFifoException() {
-		final Waitlist<String> waitlist = new FifoWaitlist<>();
+		final Waitlist<String> waitlist = FifoWaitlist.create();
 		waitlist.remove();
 	}
 }
