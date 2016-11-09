@@ -15,53 +15,54 @@ import hu.bme.mit.theta.common.ObjectUtils;
  */
 public class FifoWaitlist<T> implements Waitlist<T> {
 
-	private final Queue<T> waitlist;
+	private final Queue<T> items;
 
 	public FifoWaitlist() {
-		waitlist = new ArrayDeque<>();
+		this.items = new ArrayDeque<>();
 	}
 
 	public FifoWaitlist(final Collection<? extends T> items) {
-		waitlist = new ArrayDeque<>(checkNotNull(items));
+		this.items = new ArrayDeque<>(checkNotNull(items));
 	}
 
 	@Override
 	public void add(final T item) {
-		waitlist.add(item);
+		items.add(item);
 	}
 
 	@Override
 	public void addAll(final Collection<? extends T> items) {
-		waitlist.addAll(checkNotNull(items));
+		this.items.addAll(checkNotNull(items));
 	}
 
 	@Override
 	public boolean isEmpty() {
-		return waitlist.isEmpty();
+		return items.isEmpty();
 	}
 
 	@Override
 	public T remove() {
-		return waitlist.remove();
+		return items.remove();
 	}
 
 	@Override
 	public void clear() {
-		waitlist.clear();
+		items.clear();
 	}
 
 	@Override
 	public String toString() {
-		return ObjectUtils.toStringBuilder("FifoWaitlist").addAll(waitlist).toString();
+		return ObjectUtils.toStringBuilder("FifoWaitlist").addAll(items).toString();
 	}
 
 	@Override
 	public int size() {
-		return waitlist.size();
+		return items.size();
 	}
 
 	@Override
 	public void addAll(final Stream<? extends T> items) {
-		items.forEach(waitlist::add);
+		checkNotNull(items);
+		items.forEach(this::add);
 	}
 }

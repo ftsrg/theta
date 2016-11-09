@@ -5,6 +5,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Precision;
 import hu.bme.mit.theta.analysis.State;
+import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyStatus;
 
@@ -26,32 +27,33 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 
 	@Override
 	public SafetyStatus<S, A> check(final P initPrecision) {
-		RefinerStatus<S, A, P> refinerStatus = null;
-		AbstractorStatus<S, A, P> abstractorStatus = null;
+		RefinerResult<S, A, P> refinerStatus = null;
+		AbstractorResult abstractorStatus = null;
+		ARG<S, A> arg = abstractor.createArg();
 		P precision = initPrecision;
 		do {
 			// TODO: currently the ARG is not pruned, so the abstractor simply
 			// restarts at every iteration
-			final AbstractionState<S, A, P> initArg = abstractor.init(precision);
-			abstractorStatus = abstractor.check(initArg);
+			arg = abstractor.createArg();
+			abstractorStatus = abstractor.check(arg, precision);
 
 			if (abstractorStatus.isUnsafe()) {
-				refinerStatus = refiner.refine(abstractorStatus.getAbstractionState());
+				refinerStatus = refiner.refine(arg, precision);
 
 				if (refinerStatus.isSpurious()) {
 					precision = refinerStatus.asSpurious().getRefinedPrecision();
 				}
 			}
 
-		} while (!abstractorStatus.isSafe() && !refinerStatus.isConcretizable());
+		} while (!abstractorStatus.isSafe() && !refinerStatus.isUnsafe());
 
 		assert abstractorStatus != null;
 		assert abstractorStatus.isSafe() || refinerStatus != null;
 
 		if (abstractorStatus.isSafe()) {
-			return SafetyStatus.safe(abstractorStatus.getArg());
-		} else if (refinerStatus.isConcretizable()) {
-			return SafetyStatus.unsafe(refinerStatus.asConcretizable().getCex(), abstractorStatus.getArg());
+			return SafetyStatus.safe(arg);
+		} else if (refinerStatus.isUnsafe()) {
+			return SafetyStatus.unsafe(refinerStatus.asUnsafe().getCex(), arg);
 		} else {
 			throw new IllegalStateException();
 		}

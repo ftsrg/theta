@@ -11,7 +11,6 @@ import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.ArgBuilder;
 import hu.bme.mit.theta.analysis.algorithm.ArgNode;
-import hu.bme.mit.theta.common.waitlist.FifoWaitlist;
 import hu.bme.mit.theta.common.waitlist.Waitlist;
 
 public class WaitlistBasedAbstractor<S extends State, A extends Action, P extends Precision>
@@ -19,51 +18,61 @@ public class WaitlistBasedAbstractor<S extends State, A extends Action, P extend
 
 	private final ArgBuilder<S, A, ? super P> argBuilder;
 	private final Analysis<S, A, ? super P> analysis;
+	private final Waitlist<ArgNode<S, A>> waitlist;
 
-	private WaitlistBasedAbstractor(final Analysis<S, A, ? super P> analysis, final Predicate<? super S> target) {
+	private WaitlistBasedAbstractor(final Analysis<S, A, ? super P> analysis, final Predicate<? super S> target,
+			final Waitlist<ArgNode<S, A>> waitlist) {
 		this.analysis = checkNotNull(analysis);
 		checkNotNull(target);
 		argBuilder = ArgBuilder.create(analysis, target);
+		this.waitlist = checkNotNull(waitlist);
 	}
 
 	public static <S extends State, A extends Action, P extends Precision> WaitlistBasedAbstractor<S, A, P> create(
-			final Analysis<S, A, ? super P> analysis, final Predicate<? super S> target) {
-		return new WaitlistBasedAbstractor<>(analysis, target);
+			final Analysis<S, A, ? super P> analysis, final Predicate<? super S> target,
+			final Waitlist<ArgNode<S, A>> waitlist) {
+		return new WaitlistBasedAbstractor<>(analysis, target, waitlist);
 	}
 
 	@Override
-	public AbstractionState<S, A, P> init(final P precision) {
-		final ARG<S, A> arg = ARG.create(analysis.getDomain());
-		argBuilder.init(arg, precision);
-		// TODO: parameterize the type of waitlist created
-		final FifoWaitlist<ArgNode<S, A>> waitlist = new FifoWaitlist<>();
-		waitlist.addAll(arg.getInitNodes());
-		return AbstractionState.create(arg, waitlist, precision);
+	public ARG<S, A> createArg() {
+		return ARG.create(analysis.getDomain());
 	}
 
 	@Override
-	public AbstractorStatus<S, A, P> check(final AbstractionState<S, A, P> abstractionState) {
-		checkNotNull(abstractionState);
+	public AbstractorResult check(final ARG<S, A> arg, final P precision) {
+		checkNotNull(arg);
+		checkNotNull(precision);
 
-		final ARG<S, A> arg = abstractionState.getArg();
-		final Waitlist<ArgNode<S, A>> waitlist = abstractionState.getWaitlist();
-		final P precision = abstractionState.getPrecision();
+		if (!arg.isInitialized()) {
+			argBuilder.init(arg, precision);
+		}
+
+		waitlist.clear();
+		waitlist.addAll(arg.getIncompleteNodes());
 
 		while (!waitlist.isEmpty()) {
 			final ArgNode<S, A> node = waitlist.remove();
 
-			if (node.isTarget()) {
-				return AbstractorStatus.create(AbstractionState.create(arg, waitlist, precision));
+			if (!node.isSafe(analysis.getDomain())) {
+				waitlist.clear();
+				return AbstractorResult.unsafe();
 			}
 
-			argBuilder.close(node);
-			if (!node.isCovered()) {
-				argBuilder.expand(node, precision);
-				waitlist.addAll(node.getSuccNodes());
+			if (node.isTarget()) {
+				continue;
 			}
+			argBuilder.close(node);
+
+			if (node.isCovered()) {
+				continue;
+			}
+			argBuilder.expand(node, precision);
+			waitlist.addAll(node.getSuccNodes());
 		}
 
-		return AbstractorStatus.create(AbstractionState.create(arg, waitlist, precision));
+		waitlist.clear();
+		return AbstractorResult.safe();
 	}
 
 }
