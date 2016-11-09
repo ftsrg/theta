@@ -42,7 +42,7 @@ public class TcfaCompositeTest {
 		final BasicTcfaAnalysis analysis = BasicTcfaAnalysis.create(fischers, solver);
 
 		final Abstractor<LocState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction, NullPrecision> abstractor = WaitlistBasedAbstractor
-				.create(analysis, s -> s.getLoc().getName().equals("(crit, crit)"), new FifoWaitlist<>());
+				.create(analysis, s -> s.getLoc().getName().equals("(crit, crit)"), FifoWaitlist::new);
 
 		final ARG<LocState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction> arg = abstractor
 				.createArg();

@@ -47,7 +47,7 @@ public class TcfaPredTest {
 		final LocPrecision<PredPrecision, TcfaLoc, TcfaEdge> precision = LocPrecision.create(l -> subPrecision);
 
 		final Abstractor<LocState<PredState, TcfaLoc, TcfaEdge>, TcfaAction, LocPrecision<PredPrecision, TcfaLoc, TcfaEdge>> abstractor = WaitlistBasedAbstractor
-				.create(analysis, s -> s.getLoc().equals(fischer.getCritical()), new FifoWaitlist<>());
+				.create(analysis, s -> s.getLoc().equals(fischer.getCritical()), FifoWaitlist::new);
 
 		final ARG<LocState<PredState, TcfaLoc, TcfaEdge>, TcfaAction> arg = abstractor.createArg();
 		abstractor.check(arg, precision);
