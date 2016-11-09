@@ -2,6 +2,7 @@ package hu.bme.mit.theta.analysis.tcfa.impact;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import hu.bme.mit.theta.analysis.Trace;
@@ -37,7 +38,7 @@ public final class TcfaImpactRefiner
 		final List<TcfaAction> actions = cex.getActions();
 
 		final List<ZoneState> itpZones = interpolator.getInterpolant(actions);
-		final List<LocState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>> refinedStates = cex.getStates();
+		final List<LocState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>> refinedStates = new ArrayList<>();
 		for (int i = 0; i < itpZones.size(); i++) {
 			final LocState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge> state = cex.getState(i);
 

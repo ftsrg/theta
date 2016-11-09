@@ -94,22 +94,21 @@ final class SimpleDbm {
 	////
 
 	public void up() {
-		for (int i = 1; i <= nClocks; i++) {
-			matrix.set(i, 0, Inf());
+		if (isConsistent()) {
+			for (int i = 1; i <= nClocks; i++) {
+				matrix.set(i, 0, Inf());
+			}
+			assert isClosed();
 		}
-		assert isClosed();
 	}
 
 	public void down() {
-		for (int i = 1; i <= nClocks; i++) {
-			matrix.set(0, i, Inf());
-			for (int j = 1; j <= nClocks; j++) {
-				if (matrix.get(j, i) < matrix.get(0, i)) {
-					matrix.set(0, i, matrix.get(j, i));
-				}
+		if (isConsistent()) {
+			for (int i = 1; i <= nClocks; i++) {
+				matrix.set(0, i, Inf());
 			}
+			assert isClosed();
 		}
-		assert isClosed();
 	}
 
 	public void and(final int x, final int y, final int b) {
@@ -139,13 +138,15 @@ final class SimpleDbm {
 	public void free(final int x) {
 		checkArgument(isNonZeroClock(x));
 
-		for (int i = 0; i <= nClocks; i++) {
-			if (i != x) {
-				matrix.set(x, i, Inf());
-				matrix.set(i, x, matrix.get(i, 0));
+		if (isConsistent()) {
+			for (int i = 0; i <= nClocks; i++) {
+				if (i != x) {
+					matrix.set(x, i, Inf());
+					matrix.set(i, x, matrix.get(i, 0));
+				}
 			}
+			assert isClosed();
 		}
-		assert isClosed();
 	}
 
 	public void reset(final int x, final int m) {

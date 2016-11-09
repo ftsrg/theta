@@ -28,10 +28,12 @@ public final class TcfaInterpolator {
 		final List<ZoneState> interpolants = new ArrayList<>(actions.size() + 1);
 
 		final List<ZoneState> forwardStates = getForwardStates(actions);
-		final List<ZoneState> backwardStates = getBakcwardStates(actions);
+		final List<ZoneState> backwardStates = getBackwardStates(actions);
 
 		for (int i = 0; i < forwardStates.size(); i++) {
-			final ZoneState interpolant = ZoneState.interpolant(forwardStates.get(i), backwardStates.get(i));
+			final ZoneState forwardState = forwardStates.get(i);
+			final ZoneState backwardState = backwardStates.get(i);
+			final ZoneState interpolant = ZoneState.interpolant(forwardState, backwardState);
 			interpolants.add(interpolant);
 		}
 
@@ -57,15 +59,15 @@ public final class TcfaInterpolator {
 		return forwardStates;
 	}
 
-	private List<ZoneState> getBakcwardStates(final List<? extends TcfaAction> actions) {
+	private List<ZoneState> getBackwardStates(final List<? extends TcfaAction> actions) {
 		final List<ZoneState> backwardStates = new ArrayList<>(actions.size() + 1);
 
-		ZoneState lastState = ZoneState.bottom();
+		ZoneState lastState = ZoneState.top();
 		backwardStates.add(lastState);
 
 		for (final TcfaAction action : actions) {
 			lastState = TcfaZoneBackwardTransferFunction.getInstance().pre(lastState, action, precision);
-			backwardStates.add(lastState);
+			backwardStates.add(0, lastState);
 		}
 
 		assert backwardStates.size() == actions.size() + 1;
