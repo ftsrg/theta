@@ -17,8 +17,12 @@ public class LifoWaitlist<T> implements Waitlist<T> {
 
 	private final Deque<T> items;
 
-	public LifoWaitlist() {
+	private LifoWaitlist() {
 		this.items = new ArrayDeque<>();
+	}
+
+	public static <T> LifoWaitlist<T> create() {
+		return new LifoWaitlist<>();
 	}
 
 	public LifoWaitlist(final Collection<? extends T> items) {

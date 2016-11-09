@@ -32,7 +32,7 @@ public class ProsigmaTest {
 		final BasicTcfaAnalysis analysis = BasicTcfaAnalysis.create(prosigma, solver);
 
 		final Abstractor<LocState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction, NullPrecision> abstractor = WaitlistBasedAbstractor
-				.create(analysis, s -> false, new FifoWaitlist<>());
+				.create(analysis, s -> false, () -> FifoWaitlist.create());
 
 		final ARG<LocState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction> arg = abstractor
 				.createArg();
