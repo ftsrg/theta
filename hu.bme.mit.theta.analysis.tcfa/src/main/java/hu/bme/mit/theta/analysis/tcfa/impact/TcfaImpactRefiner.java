@@ -45,8 +45,8 @@ public final class TcfaImpactRefiner
 			final ZoneState itpZone = itpZones.get(i);
 			final ZoneState refinedZone = ZoneState.intersection(zone, itpZone);
 
-			final LocState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge> refinedState = LocState
-					.create(state.getLoc(), CompositeState.create(refinedZone, state.getState()._2()));
+			final LocState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge> refinedState = state
+					.withState(CompositeState.create(refinedZone, state.getState()._2()));
 			refinedStates.add(refinedState);
 		}
 
