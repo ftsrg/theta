@@ -7,8 +7,8 @@ import java.util.Collections;
 
 import org.junit.Test;
 
+import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
-import hu.bme.mit.theta.analysis.algorithm.cegar.AbstractorStatus;
 import hu.bme.mit.theta.analysis.algorithm.cegar.WaitlistBasedAbstractor;
 import hu.bme.mit.theta.analysis.expl.ExplPrecision;
 import hu.bme.mit.theta.analysis.expl.ExplState;
@@ -18,6 +18,7 @@ import hu.bme.mit.theta.analysis.tcfa.TcfaAction;
 import hu.bme.mit.theta.analysis.tcfa.TcfaAnalyis;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.common.visualization.GraphvizWriter;
+import hu.bme.mit.theta.common.waitlist.FifoWaitlist;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.IntType;
 import hu.bme.mit.theta.formalism.tcfa.TcfaEdge;
@@ -42,14 +43,16 @@ public class TcfaExplTest {
 		final LocPrecision<ExplPrecision, TcfaLoc, TcfaEdge> precision = LocPrecision.create(l -> subPrecision);
 
 		final Abstractor<LocState<ExplState, TcfaLoc, TcfaEdge>, TcfaAction, LocPrecision<ExplPrecision, TcfaLoc, TcfaEdge>> abstractor = WaitlistBasedAbstractor
-				.create(analyis, s -> s.getLoc().equals(fischer.getCritical()));
+				.create(analyis, s -> s.getLoc().equals(fischer.getCritical()), new FifoWaitlist<>());
 
-		final AbstractorStatus<?, ?, ?> abstractorStatus = abstractor.initAndCheck(precision);
+		final ARG<LocState<ExplState, TcfaLoc, TcfaEdge>, TcfaAction> arg = abstractor.createArg();
 
-		System.out.println(new GraphvizWriter().writeString(ArgVisualizer.visualize(abstractorStatus.getArg())));
+		abstractor.check(arg, precision);
+
+		System.out.println(new GraphvizWriter().writeString(ArgVisualizer.visualize(arg)));
 
 		System.out.println("\n\nCounterexample(s):");
-		System.out.println(abstractorStatus.getArg().getAllCexs());
+		System.out.println(arg.getCexs());
 	}
 
 }

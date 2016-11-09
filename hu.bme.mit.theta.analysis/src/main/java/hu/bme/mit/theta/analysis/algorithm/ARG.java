@@ -19,6 +19,8 @@ public final class ARG<S extends State, A extends Action> {
 
 	private final Collection<ArgNode<S, A>> initNodes;
 
+	boolean initialized;
+
 	private int nextId = 0;
 
 	private final Domain<S> domain;
@@ -26,6 +28,7 @@ public final class ARG<S extends State, A extends Action> {
 	private ARG(final Domain<S> domain) {
 		initNodes = new HashSet<>();
 		this.domain = domain;
+		this.initialized = false;
 	}
 
 	public static <S extends State, A extends Action> ARG<S, A> create(final Domain<S> domain) {
@@ -42,8 +45,8 @@ public final class ARG<S extends State, A extends Action> {
 		return initNodes.stream();
 	}
 
-	public Stream<ArgNode<S, A>> getTargetNodes() {
-		return getNodes().filter(ArgNode::isTarget);
+	public Stream<ArgNode<S, A>> getUnsafeNodes() {
+		return getNodes().filter(n -> !n.isSafe(domain));
 	}
 
 	public Stream<ArgNode<S, A>> getIncompleteNodes() {
@@ -61,6 +64,10 @@ public final class ARG<S extends State, A extends Action> {
 		// More efficient implementation can be done by checking if all states
 		// in the "targetNodes" collection are not feasible.
 		return getNodes().allMatch(n -> n.isSafe(domain));
+	}
+
+	public boolean isInitialized() {
+		return initialized;
 	}
 
 	////
@@ -92,25 +99,19 @@ public final class ARG<S extends State, A extends Action> {
 	public void prune(final ArgNode<S, A> node) {
 		checkNotNull(node);
 		checkArgument(node.arg == this);
-
-		for (final ArgNode<S, A> succ : node.getSuccNodes()) {
-			prune(succ);
-		}
-
-		assert node.getOutEdges().size() == 0;
-
-		initNodes.remove(node);
-
 		if (node.getInEdge().isPresent()) {
 			final ArgEdge<S, A> edge = node.getInEdge().get();
 			final ArgNode<S, A> parent = edge.getSource();
 			parent.outEdges.remove(edge);
 			parent.expanded = false;
+		} else {
+			assert initNodes.contains(node);
+			initNodes.remove(node);
+			this.initialized = false;
 		}
-		uncover(node);
-		for (final ArgNode<S, A> covered : node.getCoveredNodes()) {
-			covered.coveringNode = Optional.empty();
-		}
+		node.descendants().forEach(this::uncover);
+		node.descendants().forEach(ArgNode::clearCoveredNodes);
+
 	}
 
 	public void cover(final ArgNode<S, A> node, final ArgNode<S, A> coveringNode) {
@@ -150,7 +151,7 @@ public final class ARG<S extends State, A extends Action> {
 	/**
 	 * Gets all counterexamples, i.e., traces leading to target states.
 	 */
-	public Stream<ArgTrace<S, A>> getAllCexs() {
-		return getTargetNodes().map(n -> ArgTrace.to(n));
+	public Stream<ArgTrace<S, A>> getCexs() {
+		return getUnsafeNodes().map(n -> ArgTrace.to(n));
 	}
 }

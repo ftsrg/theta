@@ -5,8 +5,8 @@ import static hu.bme.mit.theta.core.type.impl.Types.Int;
 
 import org.junit.Test;
 
+import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
-import hu.bme.mit.theta.analysis.algorithm.cegar.AbstractorStatus;
 import hu.bme.mit.theta.analysis.algorithm.cegar.WaitlistBasedAbstractor;
 import hu.bme.mit.theta.analysis.composite.CompositeAnalysis;
 import hu.bme.mit.theta.analysis.composite.CompositePrecision;
@@ -23,6 +23,7 @@ import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.analysis.zone.ZonePrecision;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
 import hu.bme.mit.theta.common.visualization.GraphvizWriter;
+import hu.bme.mit.theta.common.waitlist.FifoWaitlist;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.IntType;
 import hu.bme.mit.theta.formalism.tcfa.TCFA;
@@ -51,11 +52,13 @@ public class TcfaNetworkExplTest {
 				.create(l -> subPrecision);
 
 		final Abstractor<LocState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction, LocPrecision<CompositePrecision<ZonePrecision, ExplPrecision>, TcfaLoc, TcfaEdge>> abstractor = WaitlistBasedAbstractor
-				.create(analysis, s -> false);
+				.create(analysis, s -> false, new FifoWaitlist<>());
 
-		final AbstractorStatus<?, ?, ?> abstractorStatus = abstractor.initAndCheck(precision);
+		final ARG<LocState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction> arg = abstractor
+				.createArg();
+		abstractor.check(arg, precision);
 
-		System.out.println(new GraphvizWriter().writeString(ArgVisualizer.visualize(abstractorStatus.getArg())));
+		System.out.println(new GraphvizWriter().writeString(ArgVisualizer.visualize(arg)));
 	}
 
 }

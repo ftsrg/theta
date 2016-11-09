@@ -48,7 +48,7 @@ public final class ArgChecker {
 		if (!nodeIsWellLabeled(node)) {
 			return false;
 		} else {
-			return node.getSuccNodes().stream().allMatch(succNode -> nodeIsWellLabeled(succNode));
+			return node.getSuccNodes().allMatch(succNode -> nodeIsWellLabeled(succNode));
 		}
 	}
 
