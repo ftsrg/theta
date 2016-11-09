@@ -164,7 +164,7 @@ final class DBM {
 	}
 
 	private boolean isInterpolant(final DBM dbmA, final DBM dbmB) {
-		if (this.getRelation(dbmA) != DbmRelation.GREATER) {
+		if (!this.getRelation(dbmA).isGeq()) {
 			return false;
 		}
 
