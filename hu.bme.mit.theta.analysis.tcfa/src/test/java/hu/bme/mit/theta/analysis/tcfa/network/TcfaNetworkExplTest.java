@@ -52,7 +52,7 @@ public class TcfaNetworkExplTest {
 				.create(l -> subPrecision);
 
 		final Abstractor<LocState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction, LocPrecision<CompositePrecision<ZonePrecision, ExplPrecision>, TcfaLoc, TcfaEdge>> abstractor = WaitlistBasedAbstractor
-				.create(analysis, s -> false, () -> FifoWaitlist.create());
+				.create(analysis, s -> false, FifoWaitlist.supplier());
 
 		final ARG<LocState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction> arg = abstractor
 				.createArg();

@@ -6,6 +6,7 @@ import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Queue;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import hu.bme.mit.theta.common.ObjectUtils;
@@ -69,5 +70,9 @@ public class FifoWaitlist<T> implements Waitlist<T> {
 	public void addAll(final Stream<? extends T> items) {
 		checkNotNull(items);
 		items.forEach(this::add);
+	}
+
+	public static <T> Supplier<FifoWaitlist<T>> supplier() {
+		return FifoWaitlist::create;
 	}
 }
