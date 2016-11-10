@@ -10,26 +10,32 @@ public class ArgNodeComparators {
 	private ArgNodeComparators() {
 	}
 
-	public static <S extends State, A extends Action> Comparator<ArgNode<S, A>> depthFirst() {
-		return new DepthFirst<>();
+	////
+
+	public static <S extends State, A extends Action> Comparator<ArgNode<S, A>> invert(
+			final Comparator<ArgNode<S, A>> comparator) {
+		return new Inverter<>(comparator);
 	}
 
-	public static <S extends State, A extends Action> Comparator<ArgNode<S, A>> breadthFirst() {
-		return new BreadthFirst<>();
+	public static <S extends State, A extends Action> Comparator<ArgNode<S, A>> bfs() {
+		return new DepthOrder<>();
 	}
 
-	public static <S extends State, A extends Action> Comparator<ArgNode<S, A>> creationOrder() {
+	public static <S extends State, A extends Action> Comparator<ArgNode<S, A>> dfs() {
+		return invert(bfs());
+	}
+
+	public static <S extends State, A extends Action> Comparator<ArgNode<S, A>> creationAsc() {
 		return new CreationOrder<>();
 	}
 
-	private static final class DepthFirst<S extends State, A extends Action> implements Comparator<ArgNode<S, A>> {
-		@Override
-		public int compare(final ArgNode<S, A> n1, final ArgNode<S, A> n2) {
-			return Integer.compare(n1.getDepth(), n2.getDepth()) * -1;
-		}
+	public static <S extends State, A extends Action> Comparator<ArgNode<S, A>> creationDesc() {
+		return invert(creationAsc());
 	}
 
-	private static final class BreadthFirst<S extends State, A extends Action> implements Comparator<ArgNode<S, A>> {
+	////
+
+	private static final class DepthOrder<S extends State, A extends Action> implements Comparator<ArgNode<S, A>> {
 		@Override
 		public int compare(final ArgNode<S, A> n1, final ArgNode<S, A> n2) {
 			return Integer.compare(n1.getDepth(), n2.getDepth());
@@ -43,4 +49,16 @@ public class ArgNodeComparators {
 		}
 	}
 
+	private static final class Inverter<S extends State, A extends Action> implements Comparator<ArgNode<S, A>> {
+		private final Comparator<ArgNode<S, A>> comparator;
+
+		private Inverter(final Comparator<ArgNode<S, A>> comparator) {
+			this.comparator = comparator;
+		}
+
+		@Override
+		public int compare(final ArgNode<S, A> n1, final ArgNode<S, A> n2) {
+			return comparator.compare(n1, n2) * -1;
+		}
+	}
 }
