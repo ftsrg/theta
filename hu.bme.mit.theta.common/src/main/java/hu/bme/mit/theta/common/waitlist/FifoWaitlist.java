@@ -4,6 +4,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.ArrayDeque;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Queue;
 import java.util.stream.Stream;
 
@@ -17,16 +18,16 @@ public class FifoWaitlist<T> implements Waitlist<T> {
 
 	private final Queue<T> items;
 
-	private FifoWaitlist() {
-		this.items = new ArrayDeque<>();
+	private FifoWaitlist(final Collection<? extends T> items) {
+		this.items = new ArrayDeque<>(checkNotNull(items));
+	}
+
+	public static <T> FifoWaitlist<T> create(final Collection<? extends T> items) {
+		return new FifoWaitlist<>(items);
 	}
 
 	public static <T> FifoWaitlist<T> create() {
-		return new FifoWaitlist<>();
-	}
-
-	public FifoWaitlist(final Collection<? extends T> items) {
-		this.items = new ArrayDeque<>(checkNotNull(items));
+		return new FifoWaitlist<>(Collections.emptySet());
 	}
 
 	@Override

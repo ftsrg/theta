@@ -4,6 +4,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.ArrayDeque;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.stream.Stream;
 
@@ -17,16 +18,16 @@ public class LifoWaitlist<T> implements Waitlist<T> {
 
 	private final Deque<T> items;
 
-	private LifoWaitlist() {
-		this.items = new ArrayDeque<>();
+	private LifoWaitlist(final Collection<? extends T> items) {
+		this.items = new ArrayDeque<>(checkNotNull(items));
 	}
 
 	public static <T> LifoWaitlist<T> create() {
-		return new LifoWaitlist<>();
+		return new LifoWaitlist<>(Collections.emptySet());
 	}
 
-	public LifoWaitlist(final Collection<? extends T> items) {
-		this.items = new ArrayDeque<>(checkNotNull(items));
+	public static <T> LifoWaitlist<T> create(final Collection<? extends T> items) {
+		return new LifoWaitlist<>(items);
 	}
 
 	@Override
