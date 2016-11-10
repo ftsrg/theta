@@ -30,6 +30,8 @@ public final class ArgNode<S extends State, A extends Action> {
 
 	boolean expanded;
 
+	private volatile int depth;
+
 	ArgNode(final ARG<S, A> arg, final S state, final int id, final boolean target) {
 		this.arg = arg;
 		this.state = state;
@@ -40,6 +42,7 @@ public final class ArgNode<S extends State, A extends Action> {
 		coveringNode = Optional.empty();
 		coveredNodes = new HashSet<>();
 		expanded = false;
+		this.depth = -1;
 	}
 
 	////
@@ -157,6 +160,20 @@ public final class ArgNode<S extends State, A extends Action> {
 
 	public boolean isComplete() {
 		return isExpanded() || isTarget() || isCovered();
+	}
+
+	public int getDepth() {
+		int result = depth;
+
+		if (result == -1) {
+			if (inEdge.isPresent()) {
+				result = inEdge.get().getSource().getDepth() + 1;
+			} else {
+				result = 1;
+			}
+		}
+
+		return result;
 	}
 
 	@Override
