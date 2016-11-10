@@ -10,7 +10,11 @@ import java.util.stream.Stream;
 
 import hu.bme.mit.theta.common.ObjectUtils;
 
-public class PriorityWaitlist<T> implements Waitlist<T> {
+/**
+ * Priority waitlist. The least item is always removed based on a comaprator or
+ * on the natural ordering (if no comparator is given).
+ */
+public final class PriorityWaitlist<T> implements Waitlist<T> {
 
 	private final PriorityQueue<T> items;
 

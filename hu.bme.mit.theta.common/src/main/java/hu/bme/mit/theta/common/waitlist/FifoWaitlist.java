@@ -15,7 +15,7 @@ import hu.bme.mit.theta.common.ObjectUtils;
  * FIFO (First In First Out) waitlist. Items are removed in the same order as
  * they were added.
  */
-public class FifoWaitlist<T> implements Waitlist<T> {
+public final class FifoWaitlist<T> implements Waitlist<T> {
 
 	private final Queue<T> items;
 
