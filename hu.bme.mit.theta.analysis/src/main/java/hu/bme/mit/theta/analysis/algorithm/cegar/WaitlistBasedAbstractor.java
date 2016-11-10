@@ -49,6 +49,10 @@ public class WaitlistBasedAbstractor<S extends State, A extends Action, P extend
 			argBuilder.init(arg, precision);
 		}
 
+		if (arg.getUnsafeNodes().findAny().isPresent()) {
+			return AbstractorResult.unsafe();
+		}
+
 		final Waitlist<ArgNode<S, A>> waitlist = waitlistSupplier.get();
 		waitlist.addAll(arg.getIncompleteNodes());
 
