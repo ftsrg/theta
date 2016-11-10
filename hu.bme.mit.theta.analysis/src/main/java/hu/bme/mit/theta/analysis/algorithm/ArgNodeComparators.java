@@ -38,6 +38,10 @@ public class ArgNodeComparators {
 		return combine(invert(new DepthOrder<>()), new CreationOrder<>());
 	}
 
+	public static <S extends State, A extends Action> Comparator<ArgNode<S, A>> targetFirst() {
+		return new TargetFirst<>();
+	}
+
 	////
 
 	private static final class DepthOrder<S extends State, A extends Action> implements Comparator<ArgNode<S, A>> {
@@ -51,6 +55,13 @@ public class ArgNodeComparators {
 		@Override
 		public int compare(final ArgNode<S, A> n1, final ArgNode<S, A> n2) {
 			return Integer.compare(n1.getId(), n2.getId());
+		}
+	}
+
+	private static final class TargetFirst<S extends State, A extends Action> implements Comparator<ArgNode<S, A>> {
+		@Override
+		public int compare(final ArgNode<S, A> n1, final ArgNode<S, A> n2) {
+			return Boolean.compare(n1.isTarget(), n2.isTarget()) * -1;
 		}
 	}
 
