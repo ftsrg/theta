@@ -5,60 +5,27 @@ import static org.junit.Assert.assertEquals;
 import org.junit.Test;
 
 import hu.bme.mit.theta.analysis.Action;
-import hu.bme.mit.theta.analysis.Domain;
 import hu.bme.mit.theta.analysis.State;
+import hu.bme.mit.theta.analysis.stubs.ActionStub;
+import hu.bme.mit.theta.analysis.stubs.DomainStub;
+import hu.bme.mit.theta.analysis.stubs.StateStub;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.common.visualization.GraphvizWriter;
 
 public class ArgPruningTest {
 
-	private final class NullState implements State {
-		private final String label;
-
-		public NullState(final String label) {
-			this.label = label;
-		}
-
-		@Override
-		public String toString() {
-			return label;
-		}
-	}
-
-	private final class NullAction implements Action {
-	}
-
-	private final class NullDomain implements Domain<State> {
-
-		@Override
-		public boolean isTop(final State state) {
-			return false;
-		}
-
-		@Override
-		public boolean isBottom(final State state) {
-			return false;
-		}
-
-		@Override
-		public boolean isLeq(final State state1, final State state2) {
-			return false;
-		}
-
-	}
-
 	@Test
 	public void test() {
-		final ARG<State, Action> arg = ARG.create(new NullDomain());
+		final ARG<State, Action> arg = ARG.create(new DomainStub());
 
-		final State s0 = new NullState("0");
-		final State s00 = new NullState("00");
-		final State s01 = new NullState("01");
-		final State s02 = new NullState("02");
-		final State s000 = new NullState("000");
-		final State s001 = new NullState("001");
+		final State s0 = new StateStub("0");
+		final State s00 = new StateStub("00");
+		final State s01 = new StateStub("01");
+		final State s02 = new StateStub("02");
+		final State s000 = new StateStub("000");
+		final State s001 = new StateStub("001");
 
-		final Action a = new NullAction();
+		final Action a = new ActionStub("A");
 
 		final ArgNode<State, Action> n0 = arg.createInitNode(s0, false);
 		final ArgNode<State, Action> n00 = arg.createSuccNode(n0, a, s00, false);
