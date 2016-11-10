@@ -14,8 +14,6 @@ import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.utils.impl.VarIndexing;
-import hu.bme.mit.theta.formalism.ta.constr.ClockConstr;
-import hu.bme.mit.theta.formalism.ta.constr.impl.ClockConstrs;
 import hu.bme.mit.theta.formalism.ta.op.ClockOp;
 import hu.bme.mit.theta.formalism.ta.op.impl.ClockOps;
 import hu.bme.mit.theta.formalism.tcfa.TcfaEdge;
@@ -25,21 +23,16 @@ public final class TcfaAction implements LocAction<TcfaLoc, TcfaEdge> {
 
 	private final TcfaEdge edge;
 
-	private final Collection<ClockConstr> sourceClockInvars;
-	private final Collection<Expr<? extends BoolType>> sourceDataInvars;
-
-	private final Collection<ClockConstr> targetClockInvars;
-	private final Collection<Expr<? extends BoolType>> targetDataInvars;
+	private final Collection<TcfaInvar> sourceInvars;
+	private final Collection<TcfaInvar> targetInvars;
 
 	private final List<ClockOp> clockOps;
 	private final List<Stmt> dataStmts;
 
 	private TcfaAction(final TcfaEdge edge) {
 		this.edge = checkNotNull(edge);
-		sourceClockInvars = extractClockInvars(edge.getSource());
-		sourceDataInvars = extractDataInvars(edge.getSource());
-		targetClockInvars = extractClockInvars(edge.getTarget());
-		targetDataInvars = extractDataInvars(edge.getTarget());
+		sourceInvars = invarsOf(edge.getSource());
+		targetInvars = invarsOf(edge.getTarget());
 
 		final ImmutableList.Builder<ClockOp> clockOpsBuilder = ImmutableList.builder();
 		final ImmutableList.Builder<Stmt> dataStmtsBuilder = ImmutableList.builder();
@@ -67,20 +60,12 @@ public final class TcfaAction implements LocAction<TcfaLoc, TcfaEdge> {
 		return edge;
 	}
 
-	public Collection<ClockConstr> getSourceClockInvars() {
-		return sourceClockInvars;
+	public Collection<TcfaInvar> getSourceInvars() {
+		return sourceInvars;
 	}
 
-	public Collection<ClockConstr> getTargetClockInvars() {
-		return targetClockInvars;
-	}
-
-	public Collection<Expr<? extends BoolType>> getSourceDataInvars() {
-		return sourceDataInvars;
-	}
-
-	public Collection<Expr<? extends BoolType>> getTargetDataInvars() {
-		return targetDataInvars;
+	public Collection<TcfaInvar> getTargetInvars() {
+		return targetInvars;
 	}
 
 	public List<ClockOp> getClockOps() {
@@ -97,6 +82,8 @@ public final class TcfaAction implements LocAction<TcfaLoc, TcfaEdge> {
 		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
 
+	////
+
 	@Override
 	public VarIndexing nextIndexing() {
 		// TODO Auto-generated method stub
@@ -108,22 +95,13 @@ public final class TcfaAction implements LocAction<TcfaLoc, TcfaEdge> {
 		return ObjectUtils.toStringBuilder("TcfaAction").addAll(clockOps).addAll(dataStmts).toString();
 	}
 
-	private static Collection<Expr<? extends BoolType>> extractDataInvars(final TcfaLoc loc) {
-		final ImmutableSet.Builder<Expr<? extends BoolType>> builder = ImmutableSet.builder();
-		for (final Expr<? extends BoolType> invar : loc.getInvars()) {
-			if (TcfaUtils.isDataExpr(invar)) {
-				builder.add(invar);
-			}
-		}
-		return builder.build();
-	}
+	////
 
-	private static Collection<ClockConstr> extractClockInvars(final TcfaLoc loc) {
-		final ImmutableSet.Builder<ClockConstr> builder = ImmutableSet.builder();
-		for (final Expr<? extends BoolType> invar : loc.getInvars()) {
-			if (TcfaUtils.isClockExpr(invar)) {
-				builder.add(ClockConstrs.formExpr(invar));
-			}
+	private static Collection<TcfaInvar> invarsOf(final TcfaLoc loc) {
+		final ImmutableSet.Builder<TcfaInvar> builder = ImmutableSet.builder();
+		for (final Expr<? extends BoolType> expr : loc.getInvars()) {
+			final TcfaInvar invar = TcfaInvar.of(expr);
+			builder.add(invar);
 		}
 		return builder.build();
 	}
