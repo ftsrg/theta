@@ -6,6 +6,8 @@ import com.google.common.collect.ImmutableSet;
 
 import hu.bme.mit.theta.analysis.TransferFunction;
 import hu.bme.mit.theta.analysis.tcfa.TcfaAction;
+import hu.bme.mit.theta.analysis.tcfa.TcfaInvar;
+import hu.bme.mit.theta.analysis.tcfa.TcfaInvar.ClockInvar;
 import hu.bme.mit.theta.analysis.zone.ZonePrecision;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
 import hu.bme.mit.theta.formalism.ta.constr.ClockConstr;
@@ -42,16 +44,24 @@ final class TcfaZoneTransferFunction implements TransferFunction<ZoneState, Tcfa
 			succStateBuilder.up();
 		}
 
-		for (final ClockConstr invar : action.getSourceClockInvars()) {
-			succStateBuilder.and(invar);
+		for (final TcfaInvar invar : action.getSourceInvars()) {
+			if (invar.isClockInvar()) {
+				final ClockInvar clockInvar = invar.asClockInvar();
+				final ClockConstr constr = clockInvar.getConstr();
+				succStateBuilder.and(constr);
+			}
 		}
 
 		for (final ClockOp op : action.getClockOps()) {
 			succStateBuilder.execute(op);
 		}
 
-		for (final ClockConstr invar : action.getTargetClockInvars()) {
-			succStateBuilder.and(invar);
+		for (final TcfaInvar invar : action.getTargetInvars()) {
+			if (invar.isClockInvar()) {
+				final ClockInvar clockInvar = invar.asClockInvar();
+				final ClockConstr constr = clockInvar.getConstr();
+				succStateBuilder.and(constr);
+			}
 		}
 
 		return succStateBuilder.done();
