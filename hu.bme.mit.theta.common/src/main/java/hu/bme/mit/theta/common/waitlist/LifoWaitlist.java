@@ -15,7 +15,7 @@ import hu.bme.mit.theta.common.ObjectUtils;
  * LIFO (Last In First Out) waitlist. Items are removed in the reverse order as
  * they were added.
  */
-public class LifoWaitlist<T> implements Waitlist<T> {
+public final class LifoWaitlist<T> implements Waitlist<T> {
 
 	private final Deque<T> items;
 
