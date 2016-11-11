@@ -19,7 +19,7 @@ import hu.bme.mit.theta.analysis.stubs.ActionStub;
 import hu.bme.mit.theta.analysis.stubs.DomainStub;
 import hu.bme.mit.theta.analysis.stubs.StateStub;
 
-public class ArgNodeComparatorsTests {
+public class ArgNodeComparatorsTest {
 
 	final ARG<State, Action> arg = ARG.create(new DomainStub());
 	final Action act = new ActionStub("A");
