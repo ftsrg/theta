@@ -11,8 +11,8 @@ import hu.bme.mit.theta.analysis.TransferFunction;
 import hu.bme.mit.theta.analysis.expl.ExplPrecision;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.tcfa.TcfaAction;
-import hu.bme.mit.theta.analysis.tcfa.TcfaInvar;
-import hu.bme.mit.theta.analysis.tcfa.TcfaInvar.DataInvar;
+import hu.bme.mit.theta.analysis.tcfa.TcfaExpr;
+import hu.bme.mit.theta.analysis.tcfa.TcfaExpr.DataExpr;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.impl.Exprs;
 import hu.bme.mit.theta.core.model.impl.Valuation;
@@ -51,10 +51,10 @@ public final class TcfaExplTransferFunction implements TransferFunction<ExplStat
 
 		solver.add(stmtExprs);
 
-		for (final TcfaInvar invar : action.getTargetInvars()) {
-			if (invar.isDataInvar()) {
-				final DataInvar dataInvar = invar.asDataInvar();
-				final Expr<? extends BoolType> expr = dataInvar.getExpr();
+		for (final TcfaExpr invar : action.getTargetInvars()) {
+			if (invar.isDataExpr()) {
+				final DataExpr dataExpr = invar.asDataExpr();
+				final Expr<? extends BoolType> expr = dataExpr.getExpr();
 				solver.add(PathUtils.unfold(expr, indexing));
 			}
 		}

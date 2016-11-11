@@ -23,8 +23,8 @@ public final class TcfaAction implements LocAction<TcfaLoc, TcfaEdge> {
 
 	private final TcfaEdge edge;
 
-	private final Collection<TcfaInvar> sourceInvars;
-	private final Collection<TcfaInvar> targetInvars;
+	private final Collection<TcfaExpr> sourceInvars;
+	private final Collection<TcfaExpr> targetInvars;
 
 	private final List<ClockOp> clockOps;
 	private final List<Stmt> dataStmts;
@@ -60,11 +60,11 @@ public final class TcfaAction implements LocAction<TcfaLoc, TcfaEdge> {
 		return edge;
 	}
 
-	public Collection<TcfaInvar> getSourceInvars() {
+	public Collection<TcfaExpr> getSourceInvars() {
 		return sourceInvars;
 	}
 
-	public Collection<TcfaInvar> getTargetInvars() {
+	public Collection<TcfaExpr> getTargetInvars() {
 		return targetInvars;
 	}
 
@@ -97,10 +97,10 @@ public final class TcfaAction implements LocAction<TcfaLoc, TcfaEdge> {
 
 	////
 
-	private static Collection<TcfaInvar> invarsOf(final TcfaLoc loc) {
-		final ImmutableSet.Builder<TcfaInvar> builder = ImmutableSet.builder();
+	private static Collection<TcfaExpr> invarsOf(final TcfaLoc loc) {
+		final ImmutableSet.Builder<TcfaExpr> builder = ImmutableSet.builder();
 		for (final Expr<? extends BoolType> expr : loc.getInvars()) {
-			final TcfaInvar invar = TcfaInvar.of(expr);
+			final TcfaExpr invar = TcfaExpr.of(expr);
 			builder.add(invar);
 		}
 		return builder.build();
