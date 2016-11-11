@@ -52,8 +52,8 @@ public class ArgVisualizer {
 			traverse(graph, edge.getTarget(), traversed);
 			final String sourceId = NODE_ID_PREFIX + edge.getSource().getId();
 			final String targetId = NODE_ID_PREFIX + edge.getTarget().getId();
-			final EdgeAttributes eAttributes = EdgeAttributes.builder().label("").color(LINE_COLOR)
-					.lineStyle(LineStyle.NORMAL).build();
+			final EdgeAttributes eAttributes = EdgeAttributes.builder().label(edge.getAction().toString())
+					.color(LINE_COLOR).lineStyle(LineStyle.NORMAL).build();
 			graph.addEdge(sourceId, targetId, eAttributes);
 		}
 
