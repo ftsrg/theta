@@ -10,21 +10,17 @@ import hu.bme.mit.theta.analysis.TransferFunction;
 import hu.bme.mit.theta.analysis.pred.PredPrecision;
 import hu.bme.mit.theta.analysis.pred.PredState;
 import hu.bme.mit.theta.analysis.sts.StsAction;
-import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.impl.Exprs;
 import hu.bme.mit.theta.core.model.impl.Valuation;
-import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.utils.impl.PathUtils;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.solver.Solver;
 
 class StsPredTransferFunction implements TransferFunction<PredState, StsAction, PredPrecision> {
 
-	private final Collection<Expr<? extends BoolType>> invar;
 	private final Solver solver;
 
 	StsPredTransferFunction(final STS sts, final Solver solver) {
-		this.invar = checkNotNull(sts.getInvar());
 		this.solver = checkNotNull(solver);
 	}
 
@@ -38,10 +34,7 @@ class StsPredTransferFunction implements TransferFunction<PredState, StsAction, 
 		final Set<PredState> succStates = new HashSet<>();
 		solver.push();
 		solver.add(PathUtils.unfold(state.toExpr(), 0));
-		solver.add(PathUtils.unfold(action.getTrans(), 0));
-		// TODO: optimization: cache the unfolded invar for 0 and 1
-		invar.stream().forEach(i -> solver.add(PathUtils.unfold(i, 0)));
-		invar.stream().forEach(i -> solver.add(PathUtils.unfold(i, 1)));
+		solver.add(PathUtils.unfold(action.toExpr(), 0));
 		boolean moreSuccStates;
 		do {
 			moreSuccStates = solver.check().isSat();
