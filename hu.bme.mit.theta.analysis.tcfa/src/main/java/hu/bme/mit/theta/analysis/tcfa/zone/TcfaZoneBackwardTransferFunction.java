@@ -11,6 +11,7 @@ import hu.bme.mit.theta.analysis.TransferFunction;
 import hu.bme.mit.theta.analysis.tcfa.TcfaAction;
 import hu.bme.mit.theta.analysis.tcfa.TcfaExpr;
 import hu.bme.mit.theta.analysis.tcfa.TcfaExpr.ClockExpr;
+import hu.bme.mit.theta.analysis.tcfa.TcfaStmt;
 import hu.bme.mit.theta.analysis.zone.ZonePrecision;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
 import hu.bme.mit.theta.formalism.common.decl.ClockDecl;
@@ -45,26 +46,29 @@ final class TcfaZoneBackwardTransferFunction implements TransferFunction<ZoneSta
 	ZoneState pre(final ZoneState state, final TcfaAction action, final ZonePrecision precision) {
 		final ZoneState.ZoneOperations prevStateBuilder = state.project(precision.getClocks());
 
-		for (final ClockOp op : Lists.reverse(action.getClockOps())) {
-			if (op instanceof ResetOp) {
-				final ResetOp resetOp = (ResetOp) op;
-				final ClockDecl clock = resetOp.getClock();
-				final int value = resetOp.getValue();
-				prevStateBuilder.and(Eq(clock, value));
-				prevStateBuilder.free(clock);
+		for (final TcfaStmt tcfaStmt : Lists.reverse(action.getTcfaStmts())) {
+			if (tcfaStmt.isClockStmt()) {
+				final ClockOp op = tcfaStmt.asClockStmt().getClockOp();
+				if (op instanceof ResetOp) {
+					final ResetOp resetOp = (ResetOp) op;
+					final ClockDecl clock = resetOp.getClock();
+					final int value = resetOp.getValue();
+					prevStateBuilder.and(Eq(clock, value));
+					prevStateBuilder.free(clock);
 
-			} else if (op instanceof GuardOp) {
-				prevStateBuilder.execute(op);
+				} else if (op instanceof GuardOp) {
+					prevStateBuilder.execute(op);
 
-			} else {
-				throw new AssertionError();
+				} else {
+					throw new AssertionError();
+				}
 			}
 		}
 
 		for (final TcfaExpr invar : action.getTargetInvars()) {
 			if (invar.isClockExpr()) {
 				final ClockExpr clockExpr = invar.asClockExpr();
-				final ClockConstr constr = clockExpr.getConstr();
+				final ClockConstr constr = clockExpr.getClockConstr();
 				prevStateBuilder.and(constr);
 			}
 		}
@@ -76,7 +80,7 @@ final class TcfaZoneBackwardTransferFunction implements TransferFunction<ZoneSta
 		for (final TcfaExpr invar : action.getSourceInvars()) {
 			if (invar.isClockExpr()) {
 				final ClockExpr clockExpr = invar.asClockExpr();
-				final ClockConstr constr = clockExpr.getConstr();
+				final ClockConstr constr = clockExpr.getClockConstr();
 				prevStateBuilder.and(constr);
 			}
 		}

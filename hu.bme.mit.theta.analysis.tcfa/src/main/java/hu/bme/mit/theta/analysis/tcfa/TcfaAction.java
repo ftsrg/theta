@@ -1,6 +1,7 @@
 package hu.bme.mit.theta.analysis.tcfa;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.stream.Collectors.toList;
 
 import java.util.Collection;
 import java.util.List;
@@ -11,11 +12,8 @@ import com.google.common.collect.ImmutableSet;
 import hu.bme.mit.theta.analysis.loc.LocAction;
 import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.utils.impl.VarIndexing;
-import hu.bme.mit.theta.formalism.ta.op.ClockOp;
-import hu.bme.mit.theta.formalism.ta.op.impl.ClockOps;
 import hu.bme.mit.theta.formalism.tcfa.TcfaEdge;
 import hu.bme.mit.theta.formalism.tcfa.TcfaLoc;
 
@@ -25,30 +23,13 @@ public final class TcfaAction implements LocAction<TcfaLoc, TcfaEdge> {
 
 	private final Collection<TcfaExpr> sourceInvars;
 	private final Collection<TcfaExpr> targetInvars;
-
-	private final List<ClockOp> clockOps;
-	private final List<Stmt> dataStmts;
+	private final List<TcfaStmt> tcfaStmts;
 
 	private TcfaAction(final TcfaEdge edge) {
 		this.edge = checkNotNull(edge);
 		sourceInvars = invarsOf(edge.getSource());
 		targetInvars = invarsOf(edge.getTarget());
-
-		final ImmutableList.Builder<ClockOp> clockOpsBuilder = ImmutableList.builder();
-		final ImmutableList.Builder<Stmt> dataStmtsBuilder = ImmutableList.builder();
-
-		for (final Stmt stmt : edge.getStmts()) {
-			if (TcfaUtils.isClockStmt(stmt)) {
-				clockOpsBuilder.add(ClockOps.fromStmt(stmt));
-			} else if (TcfaUtils.isDataStmt(stmt)) {
-				dataStmtsBuilder.add(stmt);
-			} else {
-				throw new IllegalArgumentException();
-			}
-		}
-
-		clockOps = clockOpsBuilder.build();
-		dataStmts = dataStmtsBuilder.build();
+		tcfaStmts = ImmutableList.copyOf(edge.getStmts().stream().map(TcfaStmt::of).collect(toList()));
 	}
 
 	public static TcfaAction create(final TcfaEdge edge) {
@@ -68,13 +49,11 @@ public final class TcfaAction implements LocAction<TcfaLoc, TcfaEdge> {
 		return targetInvars;
 	}
 
-	public List<ClockOp> getClockOps() {
-		return clockOps;
+	public List<TcfaStmt> getTcfaStmts() {
+		return tcfaStmts;
 	}
 
-	public List<Stmt> getDataStmts() {
-		return dataStmts;
-	}
+	////
 
 	@Override
 	public Expr<? extends BoolType> toExpr() {
@@ -82,17 +61,17 @@ public final class TcfaAction implements LocAction<TcfaLoc, TcfaEdge> {
 		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
 
-	////
-
 	@Override
 	public VarIndexing nextIndexing() {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
 
+	////
+
 	@Override
 	public String toString() {
-		return ObjectUtils.toStringBuilder("TcfaAction").addAll(clockOps).addAll(dataStmts).toString();
+		return ObjectUtils.toStringBuilder("TcfaAction").addAll(tcfaStmts).toString();
 	}
 
 	////

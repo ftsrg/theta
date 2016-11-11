@@ -40,15 +40,15 @@ public abstract class TcfaExpr {
 	////
 
 	public static final class ClockExpr extends TcfaExpr {
-		private final ClockConstr constr;
+		private final ClockConstr clockConstr;
 
 		private ClockExpr(final Expr<? extends BoolType> expr) {
 			super(expr);
-			constr = ClockConstrs.formExpr(expr);
+			clockConstr = ClockConstrs.formExpr(expr);
 		}
 
-		public ClockConstr getConstr() {
-			return constr;
+		public ClockConstr getClockConstr() {
+			return clockConstr;
 		}
 
 		@Override
