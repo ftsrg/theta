@@ -37,7 +37,7 @@ public class RefutationBasedRefiner<S extends State, A extends Action, P extends
 			// TODO: prune ARG
 			return RefinerResult.spurious(refinedPrecision);
 		} else if (cexStatus.isConcretizable()) {
-			return RefinerResult.concretizable(cexToConcretize);
+			return RefinerResult.unsafe(cexToConcretize);
 		} else {
 			throw new IllegalStateException("Unknown status.");
 		}

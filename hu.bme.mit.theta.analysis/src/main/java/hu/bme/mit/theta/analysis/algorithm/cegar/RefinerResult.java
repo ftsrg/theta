@@ -18,7 +18,7 @@ public abstract class RefinerResult<S extends State, A extends Action, P extends
 		return new Spurious<>(refinedPrecision);
 	}
 
-	public static <S extends State, A extends Action, P extends Precision> Unsafe<S, A, P> concretizable(
+	public static <S extends State, A extends Action, P extends Precision> Unsafe<S, A, P> unsafe(
 			final Trace<S, A> cex) {
 		return new Unsafe<>(cex);
 	}
