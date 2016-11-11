@@ -11,43 +11,43 @@ public class ArgNodeComparators {
 	private ArgNodeComparators() {
 	}
 
+	public static interface ArgNodeComparator
+			extends Comparator<ArgNode<? extends State, ? extends Action>>, Serializable {
+	}
+
 	////
 
-	public static Comparator<ArgNode<? extends State, ? extends Action>> creationAsc() {
+	public static ArgNodeComparator creationAsc() {
 		return new CreationOrder();
 	}
 
-	public static Comparator<ArgNode<? extends State, ? extends Action>> creationDesc() {
+	public static ArgNodeComparator creationDesc() {
 		return invert(creationAsc());
 	}
 
-	public static Comparator<ArgNode<? extends State, ? extends Action>> invert(
-			final Comparator<ArgNode<? extends State, ? extends Action>> comparator) {
+	public static ArgNodeComparator invert(final ArgNodeComparator comparator) {
 		return new Inverter(comparator);
 	}
 
-	public static Comparator<ArgNode<? extends State, ? extends Action>> combine(
-			final Comparator<ArgNode<? extends State, ? extends Action>> first,
-			final Comparator<ArgNode<? extends State, ? extends Action>> then) {
+	public static ArgNodeComparator combine(final ArgNodeComparator first, final ArgNodeComparator then) {
 		return new Combinator(first, then);
 	}
 
-	public static Comparator<ArgNode<? extends State, ? extends Action>> bfs() {
+	public static ArgNodeComparator bfs() {
 		return combine(new DepthOrder(), new CreationOrder());
 	}
 
-	public static Comparator<ArgNode<? extends State, ? extends Action>> dfs() {
+	public static ArgNodeComparator dfs() {
 		return combine(invert(new DepthOrder()), new CreationOrder());
 	}
 
-	public static Comparator<ArgNode<? extends State, ? extends Action>> targetFirst() {
+	public static ArgNodeComparator targetFirst() {
 		return new TargetFirst();
 	}
 
 	////
 
-	private static final class DepthOrder
-			implements Comparator<ArgNode<? extends State, ? extends Action>>, Serializable {
+	private static final class DepthOrder implements ArgNodeComparator {
 		private static final long serialVersionUID = 6538293612674961734L;
 
 		@Override
@@ -57,8 +57,7 @@ public class ArgNodeComparators {
 		}
 	}
 
-	private static final class CreationOrder
-			implements Comparator<ArgNode<? extends State, ? extends Action>>, Serializable {
+	private static final class CreationOrder implements ArgNodeComparator {
 		private static final long serialVersionUID = -8221009565128954827L;
 
 		@Override
@@ -68,8 +67,7 @@ public class ArgNodeComparators {
 		}
 	}
 
-	private static final class TargetFirst
-			implements Comparator<ArgNode<? extends State, ? extends Action>>, Serializable {
+	private static final class TargetFirst implements ArgNodeComparator {
 		private static final long serialVersionUID = 4913094714715832187L;
 
 		@Override
@@ -79,12 +77,11 @@ public class ArgNodeComparators {
 		}
 	}
 
-	private static final class Inverter
-			implements Comparator<ArgNode<? extends State, ? extends Action>>, Serializable {
+	private static final class Inverter implements ArgNodeComparator {
 		private static final long serialVersionUID = -4371396024975241987L;
-		private final Comparator<ArgNode<? extends State, ? extends Action>> comparator;
+		private final ArgNodeComparator comparator;
 
-		private Inverter(final Comparator<ArgNode<? extends State, ? extends Action>> comparator) {
+		private Inverter(final ArgNodeComparator comparator) {
 			this.comparator = comparator;
 		}
 
@@ -95,13 +92,11 @@ public class ArgNodeComparators {
 		}
 	}
 
-	private static final class Combinator
-			implements Comparator<ArgNode<? extends State, ? extends Action>>, Serializable {
+	private static final class Combinator implements ArgNodeComparator {
 		private static final long serialVersionUID = 732184663163863464L;
-		private final Comparator<ArgNode<? extends State, ? extends Action>> first, then;
+		private final ArgNodeComparator first, then;
 
-		private Combinator(final Comparator<ArgNode<? extends State, ? extends Action>> first,
-				final Comparator<ArgNode<? extends State, ? extends Action>> then) {
+		private Combinator(final ArgNodeComparator first, final ArgNodeComparator then) {
 			this.first = first;
 			this.then = then;
 		}
