@@ -1,5 +1,6 @@
 package hu.bme.mit.theta.analysis.algorithm;
 
+import java.io.Serializable;
 import java.util.Comparator;
 
 import hu.bme.mit.theta.analysis.Action;
@@ -45,7 +46,10 @@ public class ArgNodeComparators {
 
 	////
 
-	private static final class DepthOrder implements Comparator<ArgNode<? extends State, ? extends Action>> {
+	private static final class DepthOrder
+			implements Comparator<ArgNode<? extends State, ? extends Action>>, Serializable {
+		private static final long serialVersionUID = 6538293612674961734L;
+
 		@Override
 		public int compare(final ArgNode<? extends State, ? extends Action> n1,
 				final ArgNode<? extends State, ? extends Action> n2) {
@@ -53,7 +57,10 @@ public class ArgNodeComparators {
 		}
 	}
 
-	private static final class CreationOrder implements Comparator<ArgNode<? extends State, ? extends Action>> {
+	private static final class CreationOrder
+			implements Comparator<ArgNode<? extends State, ? extends Action>>, Serializable {
+		private static final long serialVersionUID = -8221009565128954827L;
+
 		@Override
 		public int compare(final ArgNode<? extends State, ? extends Action> n1,
 				final ArgNode<? extends State, ? extends Action> n2) {
@@ -61,7 +68,10 @@ public class ArgNodeComparators {
 		}
 	}
 
-	private static final class TargetFirst implements Comparator<ArgNode<? extends State, ? extends Action>> {
+	private static final class TargetFirst
+			implements Comparator<ArgNode<? extends State, ? extends Action>>, Serializable {
+		private static final long serialVersionUID = 4913094714715832187L;
+
 		@Override
 		public int compare(final ArgNode<? extends State, ? extends Action> n1,
 				final ArgNode<? extends State, ? extends Action> n2) {
@@ -69,7 +79,9 @@ public class ArgNodeComparators {
 		}
 	}
 
-	private static final class Inverter implements Comparator<ArgNode<? extends State, ? extends Action>> {
+	private static final class Inverter
+			implements Comparator<ArgNode<? extends State, ? extends Action>>, Serializable {
+		private static final long serialVersionUID = -4371396024975241987L;
 		private final Comparator<ArgNode<? extends State, ? extends Action>> comparator;
 
 		private Inverter(final Comparator<ArgNode<? extends State, ? extends Action>> comparator) {
@@ -83,7 +95,9 @@ public class ArgNodeComparators {
 		}
 	}
 
-	private static final class Combinator implements Comparator<ArgNode<? extends State, ? extends Action>> {
+	private static final class Combinator
+			implements Comparator<ArgNode<? extends State, ? extends Action>>, Serializable {
+		private static final long serialVersionUID = 732184663163863464L;
 		private final Comparator<ArgNode<? extends State, ? extends Action>> first, then;
 
 		private Combinator(final Comparator<ArgNode<? extends State, ? extends Action>> first,
