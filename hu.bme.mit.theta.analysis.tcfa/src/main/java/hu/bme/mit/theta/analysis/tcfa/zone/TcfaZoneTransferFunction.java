@@ -8,6 +8,7 @@ import hu.bme.mit.theta.analysis.TransferFunction;
 import hu.bme.mit.theta.analysis.tcfa.TcfaAction;
 import hu.bme.mit.theta.analysis.tcfa.TcfaExpr;
 import hu.bme.mit.theta.analysis.tcfa.TcfaExpr.ClockExpr;
+import hu.bme.mit.theta.analysis.tcfa.TcfaStmt;
 import hu.bme.mit.theta.analysis.zone.ZonePrecision;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
 import hu.bme.mit.theta.formalism.ta.constr.ClockConstr;
@@ -47,19 +48,22 @@ final class TcfaZoneTransferFunction implements TransferFunction<ZoneState, Tcfa
 		for (final TcfaExpr invar : action.getSourceInvars()) {
 			if (invar.isClockExpr()) {
 				final ClockExpr clockExpr = invar.asClockExpr();
-				final ClockConstr constr = clockExpr.getConstr();
+				final ClockConstr constr = clockExpr.getClockConstr();
 				succStateBuilder.and(constr);
 			}
 		}
 
-		for (final ClockOp op : action.getClockOps()) {
-			succStateBuilder.execute(op);
+		for (final TcfaStmt tcfaStmt : action.getTcfaStmts()) {
+			if (tcfaStmt.isClockStmt()) {
+				final ClockOp op = tcfaStmt.asClockStmt().getClockOp();
+				succStateBuilder.execute(op);
+			}
 		}
 
 		for (final TcfaExpr invar : action.getTargetInvars()) {
 			if (invar.isClockExpr()) {
 				final ClockExpr clockExpr = invar.asClockExpr();
-				final ClockConstr constr = clockExpr.getConstr();
+				final ClockConstr constr = clockExpr.getClockConstr();
 				succStateBuilder.and(constr);
 			}
 		}
