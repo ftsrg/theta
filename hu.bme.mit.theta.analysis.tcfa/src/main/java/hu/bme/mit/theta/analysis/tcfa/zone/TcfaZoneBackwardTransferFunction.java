@@ -9,8 +9,8 @@ import com.google.common.collect.Lists;
 
 import hu.bme.mit.theta.analysis.TransferFunction;
 import hu.bme.mit.theta.analysis.tcfa.TcfaAction;
-import hu.bme.mit.theta.analysis.tcfa.TcfaInvar;
-import hu.bme.mit.theta.analysis.tcfa.TcfaInvar.ClockInvar;
+import hu.bme.mit.theta.analysis.tcfa.TcfaExpr;
+import hu.bme.mit.theta.analysis.tcfa.TcfaExpr.ClockExpr;
 import hu.bme.mit.theta.analysis.zone.ZonePrecision;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
 import hu.bme.mit.theta.formalism.common.decl.ClockDecl;
@@ -61,10 +61,10 @@ final class TcfaZoneBackwardTransferFunction implements TransferFunction<ZoneSta
 			}
 		}
 
-		for (final TcfaInvar invar : action.getTargetInvars()) {
-			if (invar.isClockInvar()) {
-				final ClockInvar clockInvar = invar.asClockInvar();
-				final ClockConstr constr = clockInvar.getConstr();
+		for (final TcfaExpr invar : action.getTargetInvars()) {
+			if (invar.isClockExpr()) {
+				final ClockExpr clockExpr = invar.asClockExpr();
+				final ClockConstr constr = clockExpr.getConstr();
 				prevStateBuilder.and(constr);
 			}
 		}
@@ -73,10 +73,10 @@ final class TcfaZoneBackwardTransferFunction implements TransferFunction<ZoneSta
 			prevStateBuilder.down();
 		}
 
-		for (final TcfaInvar invar : action.getSourceInvars()) {
-			if (invar.isClockInvar()) {
-				final ClockInvar clockInvar = invar.asClockInvar();
-				final ClockConstr constr = clockInvar.getConstr();
+		for (final TcfaExpr invar : action.getSourceInvars()) {
+			if (invar.isClockExpr()) {
+				final ClockExpr clockExpr = invar.asClockExpr();
+				final ClockConstr constr = clockExpr.getConstr();
 				prevStateBuilder.and(constr);
 			}
 		}
