@@ -17,7 +17,7 @@ public class DomainStub implements Domain<State> {
 
 	@Override
 	public boolean isLeq(final State state1, final State state2) {
-		return false;
+		return state1.equals(state2);
 	}
 
 }
