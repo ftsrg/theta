@@ -4,6 +4,7 @@ import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.expl.ExplPrecision;
 import hu.bme.mit.theta.analysis.expl.ExplState;
+import hu.bme.mit.theta.analysis.expr.ItpRefutation;
 import hu.bme.mit.theta.core.utils.impl.ExprUtils;
 
 public class GlobalExplItpRefinerOp<A extends Action> implements RefinerOp<ExplState, A, ItpRefutation, ExplPrecision> {
