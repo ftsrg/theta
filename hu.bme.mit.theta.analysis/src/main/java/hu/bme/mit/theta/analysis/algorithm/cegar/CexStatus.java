@@ -2,6 +2,7 @@ package hu.bme.mit.theta.analysis.algorithm.cegar;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import hu.bme.mit.theta.analysis.expr.Refutation;
 import hu.bme.mit.theta.common.ObjectUtils;
 
 public abstract class CexStatus<R extends Refutation> {

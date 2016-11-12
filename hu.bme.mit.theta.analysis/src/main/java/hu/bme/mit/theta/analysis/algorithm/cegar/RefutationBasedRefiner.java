@@ -8,6 +8,7 @@ import hu.bme.mit.theta.analysis.Precision;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
+import hu.bme.mit.theta.analysis.expr.Refutation;
 
 public class RefutationBasedRefiner<S extends State, A extends Action, P extends Precision, R extends Refutation>
 		implements Refiner<S, A, P> {
