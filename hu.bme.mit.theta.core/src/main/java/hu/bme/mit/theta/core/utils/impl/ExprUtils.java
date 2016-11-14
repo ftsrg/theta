@@ -125,4 +125,8 @@ public final class ExprUtils {
 			return expr;
 		}
 	}
+
+	public static <T extends Type> Expr<T> applyPrimes(final Expr<T> expr, final VarIndexing indexing) {
+		return PrimeApplier.applyPrimes(expr, indexing);
+	}
 }
