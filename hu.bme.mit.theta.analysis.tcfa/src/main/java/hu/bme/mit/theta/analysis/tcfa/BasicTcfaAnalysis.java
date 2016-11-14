@@ -35,7 +35,7 @@ public final class BasicTcfaAnalysis implements
 		checkNotNull(solver);
 
 		final Analysis<LocState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction, LocPrecision<CompositePrecision<ZonePrecision, ExplPrecision>, TcfaLoc, TcfaEdge>> componentAnalysis = TcfaAnalyis
-				.create(tcfa.getInitLoc(),
+				.create(tcfa, tcfa.getInitLoc(),
 						CompositeAnalysis.create(TcfaZoneAnalysis.getInstance(), TcfaExplAnalysis.create(solver)));
 
 		final CompositePrecision<ZonePrecision, ExplPrecision> precision = CompositePrecision

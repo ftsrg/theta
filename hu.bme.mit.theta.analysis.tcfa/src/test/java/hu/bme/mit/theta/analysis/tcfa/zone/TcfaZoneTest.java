@@ -32,8 +32,8 @@ public class TcfaZoneTest {
 		final VarDecl<IntType> vlock = Var("lock", Int());
 		final FischerTcfa fischer = new FischerTcfa(1, 1, 2, vlock);
 
-		final TcfaAnalyis<ZoneState, ZonePrecision> analyis = TcfaAnalyis.create(fischer.getInitial(),
-				TcfaZoneAnalysis.getInstance());
+		final TcfaAnalyis<ZoneState, ZonePrecision> analyis = TcfaAnalyis.create(fischer.getTCFA(),
+				fischer.getInitial(), TcfaZoneAnalysis.getInstance());
 
 		final ZonePrecision subPrecision = ZonePrecision.create(Collections.singleton(fischer.getClock()));
 		final LocPrecision<ZonePrecision, TcfaLoc, TcfaEdge> precision = LocPrecision.create(l -> subPrecision);

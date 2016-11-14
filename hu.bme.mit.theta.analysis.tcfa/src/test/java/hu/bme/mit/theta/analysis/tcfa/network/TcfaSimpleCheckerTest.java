@@ -46,7 +46,7 @@ public class TcfaSimpleCheckerTest {
 		final Solver solver = Z3SolverFactory.getInstace().createSolver();
 
 		final TcfaAnalyis<CompositeState<ZoneState, ExplState>, CompositePrecision<ZonePrecision, ExplPrecision>> analysis = TcfaAnalyis
-				.create(fischer.getInitLoc(),
+				.create(fischer, fischer.getInitLoc(),
 						CompositeAnalysis.create(TcfaZoneAnalysis.getInstance(), TcfaExplAnalysis.create(solver)));
 
 		final CompositePrecision<ZonePrecision, ExplPrecision> subPrecision = CompositePrecision.create(
@@ -67,7 +67,7 @@ public class TcfaSimpleCheckerTest {
 		final Solver solver = Z3SolverFactory.getInstace().createSolver();
 
 		final TcfaAnalyis<CompositeState<ZoneState, PredState>, CompositePrecision<ZonePrecision, PredPrecision>> analysis = TcfaAnalyis
-				.create(fischer.getInitLoc(),
+				.create(fischer, fischer.getInitLoc(),
 						CompositeAnalysis.create(TcfaZoneAnalysis.getInstance(), TcfaPredAnalysis.create(solver)));
 
 		final CompositePrecision<ZonePrecision, PredPrecision> subPrecision = CompositePrecision.create(

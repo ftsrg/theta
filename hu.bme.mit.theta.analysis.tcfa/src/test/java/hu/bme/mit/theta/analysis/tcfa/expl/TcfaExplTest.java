@@ -36,8 +36,8 @@ public class TcfaExplTest {
 
 		final Solver solver = Z3SolverFactory.getInstace().createSolver();
 
-		final TcfaAnalyis<ExplState, ExplPrecision> analyis = TcfaAnalyis.create(fischer.getInitial(),
-				TcfaExplAnalysis.create(solver));
+		final TcfaAnalyis<ExplState, ExplPrecision> analyis = TcfaAnalyis.create(fischer.getTCFA(),
+				fischer.getInitial(), TcfaExplAnalysis.create(solver));
 
 		final ExplPrecision subPrecision = ExplPrecision.create(Collections.singleton(vlock));
 		final LocPrecision<ExplPrecision, TcfaLoc, TcfaEdge> precision = LocPrecision.create(l -> subPrecision);
