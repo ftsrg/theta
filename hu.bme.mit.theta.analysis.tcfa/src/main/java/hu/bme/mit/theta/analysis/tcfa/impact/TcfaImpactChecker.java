@@ -51,7 +51,7 @@ public final class TcfaImpactChecker implements
 		final Analysis<CompositeState<ZoneState, ExplState>, TcfaAction, CompositePrecision<ZonePrecision, ExplPrecision>> compositeAnalysis = CompositeAnalysis
 				.create(zoneAnalysis, explAnalysis);
 		final Analysis<LocState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction, LocPrecision<CompositePrecision<ZonePrecision, ExplPrecision>, TcfaLoc, TcfaEdge>> locAnalysis = TcfaAnalyis
-				.create(tcfa.getInitLoc(), compositeAnalysis);
+				.create(tcfa, tcfa.getInitLoc(), compositeAnalysis);
 
 		final Analysis<LocState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction, NullPrecision> analysis = FixedPrecisionAnalysis
 				.create(locAnalysis, locPrecision);

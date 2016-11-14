@@ -39,8 +39,8 @@ public class TcfaPredTest {
 
 		final Solver solver = Z3SolverFactory.getInstace().createSolver();
 
-		final TcfaAnalyis<PredState, PredPrecision> analysis = TcfaAnalyis.create(fischer.getInitial(),
-				TcfaPredAnalysis.create(solver));
+		final TcfaAnalyis<PredState, PredPrecision> analysis = TcfaAnalyis.create(fischer.getTCFA(),
+				fischer.getInitial(), TcfaPredAnalysis.create(solver));
 
 		final PredPrecision subPrecision = SimplePredPrecision.create(Collections.singleton(Eq(vlock.getRef(), Int(0))),
 				solver);

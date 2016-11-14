@@ -50,7 +50,7 @@ public class TcfaNetworkPredTest {
 		final Solver solver = Z3SolverFactory.getInstace().createSolver();
 
 		final TcfaAnalyis<CompositeState<ZoneState, PredState>, CompositePrecision<ZonePrecision, PredPrecision>> analysis = TcfaAnalyis
-				.create(fischer.getInitLoc(),
+				.create(fischer, fischer.getInitLoc(),
 						CompositeAnalysis.create(TcfaZoneAnalysis.getInstance(), TcfaPredAnalysis.create(solver)));
 
 		final CompositePrecision<ZonePrecision, PredPrecision> subPrecision = CompositePrecision.create(

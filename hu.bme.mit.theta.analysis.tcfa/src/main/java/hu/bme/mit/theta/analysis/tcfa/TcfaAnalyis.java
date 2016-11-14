@@ -10,6 +10,7 @@ import hu.bme.mit.theta.analysis.TransferFunction;
 import hu.bme.mit.theta.analysis.loc.LocAnalysis;
 import hu.bme.mit.theta.analysis.loc.LocPrecision;
 import hu.bme.mit.theta.analysis.loc.LocState;
+import hu.bme.mit.theta.formalism.tcfa.TCFA;
 import hu.bme.mit.theta.formalism.tcfa.TcfaEdge;
 import hu.bme.mit.theta.formalism.tcfa.TcfaLoc;
 
@@ -18,13 +19,13 @@ public final class TcfaAnalyis<S extends State, P extends Precision>
 
 	private final LocAnalysis<S, TcfaAction, P, TcfaLoc, TcfaEdge> locAnalysis;
 
-	private TcfaAnalyis(final TcfaLoc initLoc, final Analysis<S, TcfaAction, P> analysis) {
-		locAnalysis = LocAnalysis.create(initLoc, analysis, TcfaAction::create);
+	private TcfaAnalyis(final TCFA tcfa, final TcfaLoc initLoc, final Analysis<S, TcfaAction, P> analysis) {
+		locAnalysis = LocAnalysis.create(initLoc, analysis, e -> TcfaAction.create(tcfa, e));
 	}
 
-	public static <S extends State, P extends Precision> TcfaAnalyis<S, P> create(final TcfaLoc initLoc,
-			final Analysis<S, TcfaAction, P> analysis) {
-		return new TcfaAnalyis<>(initLoc, analysis);
+	public static <S extends State, P extends Precision> TcfaAnalyis<S, P> create(final TCFA tcfa,
+			final TcfaLoc initLoc, final Analysis<S, TcfaAction, P> analysis) {
+		return new TcfaAnalyis<>(tcfa, initLoc, analysis);
 	}
 
 	@Override
