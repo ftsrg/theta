@@ -1,7 +1,5 @@
 package hu.bme.mit.theta.core.utils.impl;
 
-import static hu.bme.mit.theta.core.utils.impl.PrimeApplier.applyPrimes;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -53,7 +51,7 @@ final class StmtToExprTransformer {
 		@Override
 		public StmtToExprResult visit(final AssumeStmt stmt, final VarIndexing indexing) {
 			final Expr<? extends BoolType> cond = stmt.getCond();
-			final Expr<? extends BoolType> expr = applyPrimes(cond, indexing);
+			final Expr<? extends BoolType> expr = ExprUtils.applyPrimes(cond, indexing);
 			return StmtToExprResult.of(ImmutableList.of(expr), indexing);
 		}
 
@@ -70,8 +68,8 @@ final class StmtToExprTransformer {
 				final AssignStmt<DeclType, ExprType> stmt, final VarIndexing indexing) {
 			final VarDecl<?> varDecl = stmt.getVarDecl();
 			final VarIndexing newIndexing = indexing.inc(varDecl);
-			final Expr<?> rhs = applyPrimes(stmt.getExpr(), indexing);
-			final Expr<?> lhs = applyPrimes(varDecl.getRef(), newIndexing);
+			final Expr<?> rhs = ExprUtils.applyPrimes(stmt.getExpr(), indexing);
+			final Expr<?> lhs = ExprUtils.applyPrimes(varDecl.getRef(), newIndexing);
 
 			final Expr<? extends BoolType> expr = Exprs.Eq(lhs, rhs);
 			return StmtToExprResult.of(ImmutableList.of(expr), newIndexing);

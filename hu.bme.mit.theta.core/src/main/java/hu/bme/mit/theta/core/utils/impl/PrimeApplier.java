@@ -12,7 +12,7 @@ final class PrimeApplier {
 	private PrimeApplier() {
 	}
 
-	public static <T extends Type> Expr<T> applyPrimes(final Expr<T> expr, final VarIndexing indexing) {
+	static <T extends Type> Expr<T> applyPrimes(final Expr<T> expr, final VarIndexing indexing) {
 		@SuppressWarnings("unchecked")
 		final Expr<T> result = (Expr<T>) expr.accept(PrimeApplierVisitor.INSTANCE, indexing);
 		return result;
@@ -27,7 +27,8 @@ final class PrimeApplier {
 		////////
 
 		@Override
-		public <DeclType extends Type> Expr<DeclType> visit(final VarRefExpr<DeclType> expr, final VarIndexing indexing) {
+		public <DeclType extends Type> Expr<DeclType> visit(final VarRefExpr<DeclType> expr,
+				final VarIndexing indexing) {
 			final VarDecl<DeclType> varDecl = expr.getDecl();
 			final int index = indexing.get(varDecl);
 			if (index == 0) {
