@@ -21,7 +21,7 @@ import hu.bme.mit.theta.core.model.impl.Valuation;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.utils.impl.PathUtils;
-import hu.bme.mit.theta.core.utils.impl.StmtToExprResult;
+import hu.bme.mit.theta.core.utils.impl.UnfoldResult;
 import hu.bme.mit.theta.core.utils.impl.StmtUtils;
 import hu.bme.mit.theta.core.utils.impl.VarIndexing;
 import hu.bme.mit.theta.solver.Solver;
@@ -49,7 +49,7 @@ public final class TcfaExplTransferFunction implements TransferFunction<ExplStat
 
 		final List<Stmt> stmts = action.getTcfaStmts().stream().filter(TcfaStmt::isDataStmt).map(TcfaStmt::getStmt)
 				.collect(toList());
-		final StmtToExprResult transformResult = StmtUtils.toExpr(stmts, VarIndexing.all(0));
+		final UnfoldResult transformResult = StmtUtils.toExpr(stmts, VarIndexing.all(0));
 		final Collection<? extends Expr<? extends BoolType>> stmtExprs = transformResult.getExprs().stream()
 				.map(e -> PathUtils.unfold(e, 0)).collect(toList());
 		final VarIndexing indexing = transformResult.getIndexing();
