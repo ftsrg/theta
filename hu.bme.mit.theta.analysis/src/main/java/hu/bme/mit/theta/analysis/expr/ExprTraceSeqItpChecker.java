@@ -22,18 +22,23 @@ import hu.bme.mit.theta.solver.ItpSolver;
 public class ExprTraceSeqItpChecker implements ExprTraceChecker<ItpRefutation> {
 
 	private final ItpSolver solver;
+	private final ExprStatePredicate init;
+	private final ExprStatePredicate target;
 
-	private ExprTraceSeqItpChecker(final ItpSolver solver) {
+	private ExprTraceSeqItpChecker(final ExprStatePredicate init, final ExprStatePredicate target,
+			final ItpSolver solver) {
 		this.solver = checkNotNull(solver);
+		this.init = checkNotNull(init);
+		this.target = checkNotNull(target);
 	}
 
-	public static ExprTraceSeqItpChecker create(final ItpSolver solver) {
-		return new ExprTraceSeqItpChecker(solver);
+	public static ExprTraceSeqItpChecker create(final ExprStatePredicate init, final ExprStatePredicate target,
+			final ItpSolver solver) {
+		return new ExprTraceSeqItpChecker(init, target, solver);
 	}
 
 	@Override
-	public ExprTraceStatus2<ItpRefutation> check(final Trace<? extends ExprState, ? extends ExprAction> trace,
-			final ExprStatePredicate init, final ExprStatePredicate target) {
+	public ExprTraceStatus2<ItpRefutation> check(final Trace<? extends ExprState, ? extends ExprAction> trace) {
 		checkNotNull(trace);
 
 		final List<ItpMarker> markers = new ArrayList<>(trace.length() + 1);
