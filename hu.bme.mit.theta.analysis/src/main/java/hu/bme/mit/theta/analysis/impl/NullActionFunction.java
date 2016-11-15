@@ -3,10 +3,10 @@ package hu.bme.mit.theta.analysis.impl;
 import java.util.Collection;
 
 import hu.bme.mit.theta.analysis.Action;
-import hu.bme.mit.theta.analysis.ActionFunction;
+import hu.bme.mit.theta.analysis.LTS;
 import hu.bme.mit.theta.analysis.State;
 
-public final class NullActionFunction<A extends Action> implements ActionFunction<State, A> {
+public final class NullActionFunction<A extends Action> implements LTS<State, A> {
 
 	private static final NullActionFunction<?> INSTANCE = new NullActionFunction<>();
 

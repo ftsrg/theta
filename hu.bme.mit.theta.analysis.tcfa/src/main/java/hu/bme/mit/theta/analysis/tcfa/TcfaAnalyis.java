@@ -1,6 +1,6 @@
 package hu.bme.mit.theta.analysis.tcfa;
 
-import hu.bme.mit.theta.analysis.ActionFunction;
+import hu.bme.mit.theta.analysis.LTS;
 import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.Domain;
 import hu.bme.mit.theta.analysis.InitFunction;
@@ -44,7 +44,7 @@ public final class TcfaAnalyis<S extends State, P extends Precision>
 	}
 
 	@Override
-	public ActionFunction<? super LocState<S, TcfaLoc, TcfaEdge>, ? extends TcfaAction> getActionFunction() {
+	public LTS<? super LocState<S, TcfaLoc, TcfaEdge>, ? extends TcfaAction> getActionFunction() {
 		return locAnalysis.getActionFunction();
 	}
 

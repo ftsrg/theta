@@ -1,6 +1,6 @@
 package hu.bme.mit.theta.analysis.tcfa.pred;
 
-import hu.bme.mit.theta.analysis.ActionFunction;
+import hu.bme.mit.theta.analysis.LTS;
 import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.Domain;
 import hu.bme.mit.theta.analysis.InitFunction;
@@ -42,7 +42,7 @@ public final class TcfaPredAnalysis implements Analysis<PredState, TcfaAction, P
 	}
 
 	@Override
-	public ActionFunction<? super PredState, ? extends TcfaAction> getActionFunction() {
+	public LTS<? super PredState, ? extends TcfaAction> getActionFunction() {
 		return NullActionFunction.getInstance();
 	}
 

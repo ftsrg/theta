@@ -2,7 +2,7 @@ package hu.bme.mit.theta.analysis.sts.pred;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import hu.bme.mit.theta.analysis.ActionFunction;
+import hu.bme.mit.theta.analysis.LTS;
 import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.Domain;
 import hu.bme.mit.theta.analysis.InitFunction;
@@ -20,7 +20,7 @@ public class StsPredAnalysis implements Analysis<PredState, StsAction, PredPreci
 	private final PredDomain domain;
 	private final StsPredInitFunction initFunction;
 	private final StsPredTransferFunction transferFunction;
-	private final ActionFunction<? super PredState, ? extends StsAction> actionFunction;
+	private final LTS<? super PredState, ? extends StsAction> actionFunction;
 
 	public StsPredAnalysis(final STS sts, final Solver solver) {
 		checkNotNull(sts);
@@ -47,7 +47,7 @@ public class StsPredAnalysis implements Analysis<PredState, StsAction, PredPreci
 	}
 
 	@Override
-	public ActionFunction<? super PredState, ? extends StsAction> getActionFunction() {
+	public LTS<? super PredState, ? extends StsAction> getActionFunction() {
 		return actionFunction;
 	}
 

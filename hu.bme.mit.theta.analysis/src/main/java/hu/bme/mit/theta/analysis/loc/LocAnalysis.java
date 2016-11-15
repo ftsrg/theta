@@ -4,7 +4,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.function.Function;
 
-import hu.bme.mit.theta.analysis.ActionFunction;
+import hu.bme.mit.theta.analysis.LTS;
 import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.Domain;
 import hu.bme.mit.theta.analysis.InitFunction;
@@ -20,7 +20,7 @@ public final class LocAnalysis<S extends State, A extends LocAction<L, E>, P ext
 	private final Domain<LocState<S, L, E>> domain;
 	private final InitFunction<LocState<S, L, E>, LocPrecision<P, L, E>> initFunction;
 	private final TransferFunction<LocState<S, L, E>, A, LocPrecision<P, L, E>> transferFunction;
-	private final ActionFunction<? super LocState<S, L, E>, ? extends A> actionFunction;
+	private final LTS<? super LocState<S, L, E>, ? extends A> actionFunction;
 
 	private LocAnalysis(final L initLoc, final Analysis<S, ? super A, P> analysis,
 			final Function<? super E, ? extends A> actionCreator) {
@@ -55,7 +55,7 @@ public final class LocAnalysis<S extends State, A extends LocAction<L, E>, P ext
 	}
 
 	@Override
-	public ActionFunction<? super LocState<S, L, E>, ? extends A> getActionFunction() {
+	public LTS<? super LocState<S, L, E>, ? extends A> getActionFunction() {
 		return actionFunction;
 	}
 
