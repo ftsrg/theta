@@ -2,7 +2,7 @@ package hu.bme.mit.theta.analysis.tcfa.expl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import hu.bme.mit.theta.analysis.ActionFunction;
+import hu.bme.mit.theta.analysis.LTS;
 import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.Domain;
 import hu.bme.mit.theta.analysis.InitFunction;
@@ -43,7 +43,7 @@ public final class TcfaExplAnalysis implements Analysis<ExplState, TcfaAction, E
 	}
 
 	@Override
-	public ActionFunction<? super ExplState, ? extends TcfaAction> getActionFunction() {
+	public LTS<? super ExplState, ? extends TcfaAction> getActionFunction() {
 		return NullActionFunction.getInstance();
 	}
 

@@ -3,7 +3,7 @@ package hu.bme.mit.theta.analysis.composite;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import hu.bme.mit.theta.analysis.Action;
-import hu.bme.mit.theta.analysis.ActionFunction;
+import hu.bme.mit.theta.analysis.LTS;
 import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.Domain;
 import hu.bme.mit.theta.analysis.InitFunction;
@@ -17,7 +17,7 @@ public final class CompositeAnalysis<S1 extends State, S2 extends State, A exten
 	private final Domain<CompositeState<S1, S2>> domain;
 	private final InitFunction<CompositeState<S1, S2>, CompositePrecision<P1, P2>> initFunction;
 	private final TransferFunction<CompositeState<S1, S2>, A, CompositePrecision<P1, P2>> transferFunction;
-	private final ActionFunction<? super CompositeState<S1, S2>, ? extends A> actionFunction;
+	private final LTS<? super CompositeState<S1, S2>, ? extends A> actionFunction;
 
 	private CompositeAnalysis(final Analysis<S1, A, P1> analysis1, final Analysis<S2, A, P2> analysis2) {
 		checkNotNull(analysis1);
@@ -50,7 +50,7 @@ public final class CompositeAnalysis<S1 extends State, S2 extends State, A exten
 	}
 
 	@Override
-	public ActionFunction<? super CompositeState<S1, S2>, ? extends A> getActionFunction() {
+	public LTS<? super CompositeState<S1, S2>, ? extends A> getActionFunction() {
 		return actionFunction;
 	}
 

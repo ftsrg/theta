@@ -2,7 +2,7 @@ package hu.bme.mit.theta.analysis.expl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import hu.bme.mit.theta.analysis.ActionFunction;
+import hu.bme.mit.theta.analysis.LTS;
 import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.Domain;
 import hu.bme.mit.theta.analysis.InitFunction;
@@ -17,10 +17,10 @@ public final class ExplAnalysis implements Analysis<ExplState, ExprAction, ExplP
 	private final Domain<ExplState> domain;
 	private final InitFunction<ExplState, ExplPrecision> initFunction;
 	private final TransferFunction<ExplState, ExprAction, ExplPrecision> transferFunction;
-	private final ActionFunction<? super ExplState, ? extends ExprAction> actionFunction;
+	private final LTS<? super ExplState, ? extends ExprAction> actionFunction;
 
 	private ExplAnalysis(final Solver solver, final Expr<? extends BoolType> initExpr,
-			final ActionFunction<? super ExplState, ? extends ExprAction> actionFunction) {
+			final LTS<? super ExplState, ? extends ExprAction> actionFunction) {
 		checkNotNull(solver);
 		checkNotNull(initExpr);
 		this.domain = ExplDomain.getInstance();
@@ -31,7 +31,7 @@ public final class ExplAnalysis implements Analysis<ExplState, ExprAction, ExplP
 	}
 
 	public static ExplAnalysis create(final Solver solver, final Expr<? extends BoolType> initExpr,
-			final ActionFunction<? super ExplState, ? extends ExprAction> actionFunction) {
+			final LTS<? super ExplState, ? extends ExprAction> actionFunction) {
 		return new ExplAnalysis(solver, initExpr, actionFunction);
 	}
 
@@ -51,7 +51,7 @@ public final class ExplAnalysis implements Analysis<ExplState, ExprAction, ExplP
 	}
 
 	@Override
-	public ActionFunction<? super ExplState, ? extends ExprAction> getActionFunction() {
+	public LTS<? super ExplState, ? extends ExprAction> getActionFunction() {
 		return actionFunction;
 	}
 

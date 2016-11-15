@@ -9,24 +9,24 @@ import java.util.Set;
 import com.google.common.collect.Sets;
 
 import hu.bme.mit.theta.analysis.Action;
-import hu.bme.mit.theta.analysis.ActionFunction;
+import hu.bme.mit.theta.analysis.LTS;
 import hu.bme.mit.theta.analysis.State;
 
 final class CompositeActionFunction<S1 extends State, S2 extends State, A extends Action>
-		implements ActionFunction<CompositeState<? extends S1, ? extends S2>, A> {
+		implements LTS<CompositeState<? extends S1, ? extends S2>, A> {
 
-	private final ActionFunction<? super S1, ? extends A> actionFunction1;
-	private final ActionFunction<? super S2, ? extends A> actionFunction2;
+	private final LTS<? super S1, ? extends A> actionFunction1;
+	private final LTS<? super S2, ? extends A> actionFunction2;
 
-	private CompositeActionFunction(final ActionFunction<? super S1, ? extends A> actionFunction1,
-			final ActionFunction<? super S2, ? extends A> actionFunction2) {
+	private CompositeActionFunction(final LTS<? super S1, ? extends A> actionFunction1,
+			final LTS<? super S2, ? extends A> actionFunction2) {
 		this.actionFunction1 = checkNotNull(actionFunction1);
 		this.actionFunction2 = checkNotNull(actionFunction2);
 	}
 
 	public static <S1 extends State, S2 extends State, A extends Action> CompositeActionFunction<S1, S2, A> create(
-			final ActionFunction<? super S1, ? extends A> actionFunction1,
-			final ActionFunction<? super S2, ? extends A> actionFunction2) {
+			final LTS<? super S1, ? extends A> actionFunction1,
+			final LTS<? super S2, ? extends A> actionFunction2) {
 		return new CompositeActionFunction<>(actionFunction1, actionFunction2);
 	}
 

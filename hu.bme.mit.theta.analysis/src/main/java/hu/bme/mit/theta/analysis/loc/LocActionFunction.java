@@ -6,12 +6,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.function.Function;
 
-import hu.bme.mit.theta.analysis.ActionFunction;
+import hu.bme.mit.theta.analysis.LTS;
 import hu.bme.mit.theta.formalism.common.Edge;
 import hu.bme.mit.theta.formalism.common.Loc;
 
 public final class LocActionFunction<A extends LocAction<L, E>, L extends Loc<L, E>, E extends Edge<L, E>>
-		implements ActionFunction<LocState<?, L, E>, A> {
+		implements LTS<LocState<?, L, E>, A> {
 
 	public final Function<? super E, ? extends A> actionCreator;
 

@@ -2,7 +2,7 @@ package hu.bme.mit.theta.analysis.sts.expl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import hu.bme.mit.theta.analysis.ActionFunction;
+import hu.bme.mit.theta.analysis.LTS;
 import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.Domain;
 import hu.bme.mit.theta.analysis.InitFunction;
@@ -20,7 +20,7 @@ public class StsExplAnalysis implements Analysis<ExplState, StsAction, ExplPreci
 	private final ExplDomain domain;
 	private final StsExplInitFunction initFunction;
 	private final StsExplTransferFunction transferFunction;
-	private final ActionFunction<? super ExplState, ? extends StsAction> actionFunction;
+	private final LTS<? super ExplState, ? extends StsAction> actionFunction;
 
 	public StsExplAnalysis(final STS sts, final Solver solver) {
 		checkNotNull(sts);
@@ -47,7 +47,7 @@ public class StsExplAnalysis implements Analysis<ExplState, StsAction, ExplPreci
 	}
 
 	@Override
-	public ActionFunction<? super ExplState, ? extends StsAction> getActionFunction() {
+	public LTS<? super ExplState, ? extends StsAction> getActionFunction() {
 		return actionFunction;
 	}
 

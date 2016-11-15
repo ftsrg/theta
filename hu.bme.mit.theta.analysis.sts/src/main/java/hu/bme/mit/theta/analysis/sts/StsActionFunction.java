@@ -5,11 +5,11 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.util.Collection;
 import java.util.Collections;
 
-import hu.bme.mit.theta.analysis.ActionFunction;
+import hu.bme.mit.theta.analysis.LTS;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.formalism.sts.STS;
 
-public final class StsActionFunction implements ActionFunction<State, StsAction> {
+public final class StsActionFunction implements LTS<State, StsAction> {
 
 	final Collection<StsAction> actions;
 

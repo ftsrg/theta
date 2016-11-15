@@ -2,7 +2,7 @@ package hu.bme.mit.theta.analysis.tcfa;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import hu.bme.mit.theta.analysis.ActionFunction;
+import hu.bme.mit.theta.analysis.LTS;
 import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.Domain;
 import hu.bme.mit.theta.analysis.InitFunction;
@@ -67,7 +67,7 @@ public final class BasicTcfaAnalysis implements
 	}
 
 	@Override
-	public ActionFunction<? super LocState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, ? extends TcfaAction> getActionFunction() {
+	public LTS<? super LocState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, ? extends TcfaAction> getActionFunction() {
 		return analysis.getActionFunction();
 	}
 
