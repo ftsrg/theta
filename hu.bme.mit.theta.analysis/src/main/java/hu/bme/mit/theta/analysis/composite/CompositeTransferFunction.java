@@ -9,14 +9,14 @@ import hu.bme.mit.theta.analysis.Precision;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.TransferFunction;
 
-class CompositeTransferFunction<S1 extends State, S2 extends State, A extends Action, P1 extends Precision, P2 extends Precision>
+final class CompositeTransferFunction<S1 extends State, S2 extends State, A extends Action, P1 extends Precision, P2 extends Precision>
 		implements TransferFunction<CompositeState<S1, S2>, A, CompositePrecision<P1, P2>> {
 
 	private final TransferFunction<S1, A, P1> transferFunction1;
 	private final TransferFunction<S2, A, P2> transferFunction2;
 	private final StrengtheningOperator<S1, S2, P1, P2> strenghteningOperator;
 
-	CompositeTransferFunction(final TransferFunction<S1, A, P1> transferFunction1,
+	private CompositeTransferFunction(final TransferFunction<S1, A, P1> transferFunction1,
 			final TransferFunction<S2, A, P2> transferFunction2,
 			final StrengtheningOperator<S1, S2, P1, P2> strenghteningOperator) {
 		this.transferFunction1 = checkNotNull(transferFunction1);
@@ -24,9 +24,15 @@ class CompositeTransferFunction<S1 extends State, S2 extends State, A extends Ac
 		this.strenghteningOperator = checkNotNull(strenghteningOperator);
 	}
 
-	public CompositeTransferFunction(final TransferFunction<S1, A, P1> transferFunction1,
-			final TransferFunction<S2, A, P2> transferFunction2) {
-		this(transferFunction1, transferFunction2, (states, precision) -> states);
+	public static <S1 extends State, S2 extends State, A extends Action, P1 extends Precision, P2 extends Precision> CompositeTransferFunction<S1, S2, A, P1, P2> create(
+			final TransferFunction<S1, A, P1> transferFunction1, final TransferFunction<S2, A, P2> transferFunction2,
+			final StrengtheningOperator<S1, S2, P1, P2> strenghteningOperator) {
+		return new CompositeTransferFunction<>(transferFunction1, transferFunction2, strenghteningOperator);
+	}
+
+	public static <S1 extends State, S2 extends State, A extends Action, P1 extends Precision, P2 extends Precision> CompositeTransferFunction<S1, S2, A, P1, P2> create(
+			final TransferFunction<S1, A, P1> transferFunction1, final TransferFunction<S2, A, P2> transferFunction2) {
+		return new CompositeTransferFunction<>(transferFunction1, transferFunction2, (states, precision) -> states);
 	}
 
 	@Override
