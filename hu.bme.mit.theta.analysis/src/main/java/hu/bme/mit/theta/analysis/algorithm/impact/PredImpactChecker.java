@@ -1,0 +1,68 @@
+package hu.bme.mit.theta.analysis.algorithm.impact;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.expr.impl.Exprs.True;
+import static java.util.Collections.emptySet;
+
+import java.util.function.Function;
+import java.util.function.Predicate;
+
+import hu.bme.mit.theta.analysis.Analysis;
+import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
+import hu.bme.mit.theta.analysis.algorithm.SafetyStatus;
+import hu.bme.mit.theta.analysis.expr.ExprAction;
+import hu.bme.mit.theta.analysis.impl.FixedPrecisionAnalysis;
+import hu.bme.mit.theta.analysis.impl.NullActionFunction;
+import hu.bme.mit.theta.analysis.impl.NullPrecision;
+import hu.bme.mit.theta.analysis.loc.LocAction;
+import hu.bme.mit.theta.analysis.loc.LocAnalysis;
+import hu.bme.mit.theta.analysis.loc.LocPrecision;
+import hu.bme.mit.theta.analysis.loc.LocState;
+import hu.bme.mit.theta.analysis.pred.PredAnalysis;
+import hu.bme.mit.theta.analysis.pred.PredPrecision;
+import hu.bme.mit.theta.analysis.pred.PredState;
+import hu.bme.mit.theta.analysis.pred.SimplePredPrecision;
+import hu.bme.mit.theta.formalism.common.Edge;
+import hu.bme.mit.theta.formalism.common.Loc;
+import hu.bme.mit.theta.solver.ItpSolver;
+
+public final class PredImpactChecker<L extends Loc<L, E>, E extends Edge<L, E>>
+		implements SafetyChecker<LocState<PredState, L, E>, LocAction<L, E>, NullPrecision> {
+
+	private final ImpactChecker<LocState<PredState, L, E>, LocAction<L, E>, NullPrecision> checker;
+
+	private PredImpactChecker(final L initLoc, final Predicate<? super L> target,
+			final Function<? super E, ? extends LocAction<L, E>> actionCreator, final ItpSolver solver) {
+		checkNotNull(initLoc);
+		checkNotNull(actionCreator);
+		checkNotNull(solver);
+
+		final Analysis<PredState, ExprAction, PredPrecision> predAnalysis = PredAnalysis.create(solver, True(),
+				NullActionFunction.getInstance());
+
+		final LocPrecision<PredPrecision, L, E> fixedPrecision = LocPrecision
+				.constant(SimplePredPrecision.create(emptySet(), solver));
+
+		final Analysis<LocState<PredState, L, E>, LocAction<L, E>, LocPrecision<PredPrecision, L, E>> cfaAnalysis = LocAnalysis
+				.create(initLoc, predAnalysis, actionCreator);
+
+		final Analysis<LocState<PredState, L, E>, LocAction<L, E>, NullPrecision> analysis = FixedPrecisionAnalysis
+				.create(cfaAnalysis, fixedPrecision);
+
+		final ImpactRefiner<LocState<PredState, L, E>, LocAction<L, E>> refiner = PredImpactRefiner.create(solver);
+
+		checker = ImpactChecker.create(analysis, refiner, s -> target.test(s.getLoc()));
+	}
+
+	public static <L extends Loc<L, E>, E extends Edge<L, E>> PredImpactChecker<L, E> create(final L initLoc,
+			final Predicate<? super L> target, final Function<? super E, ? extends LocAction<L, E>> actionCreator,
+			final ItpSolver solver) {
+		return new PredImpactChecker<>(initLoc, target, actionCreator, solver);
+	}
+
+	@Override
+	public SafetyStatus<LocState<PredState, L, E>, LocAction<L, E>> check(final NullPrecision precision) {
+		return checker.check(precision);
+	}
+
+}
