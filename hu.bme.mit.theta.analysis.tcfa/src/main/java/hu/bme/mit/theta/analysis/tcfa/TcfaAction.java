@@ -121,6 +121,8 @@ public final class TcfaAction implements LocAction<TcfaLoc, TcfaEdge> {
 	private static final UnfoldResult unfold(final TCFA tcfa, final TcfaEdge edge) {
 		final List<Expr<? extends BoolType>> exprs = new ArrayList<>();
 
+		VarIndexing indexing = all(0);
+
 		for (final Expr<? extends BoolType> invar : edge.getSource().getInvars()) {
 			exprs.add(invar);
 		}
@@ -129,23 +131,18 @@ public final class TcfaAction implements LocAction<TcfaLoc, TcfaEdge> {
 			final Expr<RatType> primedDelay = Prime(DELAY_VAR.getRef());
 
 			exprs.add(Geq(primedDelay, Rat(0, 1)));
+			indexing = indexing.inc(DELAY_VAR);
 
 			for (final ClockDecl clockDecl : tcfa.getClockVars()) {
 				final Expr<RatType> clock = clockDecl.getRef();
 				final Expr<RatType> primedClock = Prime(clock);
 				exprs.add(Eq(primedClock, Add(clock, primedDelay)));
+				indexing = indexing.inc(clockDecl);
 			}
 
 			for (final Expr<? extends BoolType> invar : edge.getSource().getInvars()) {
-				exprs.add(ExprUtils.applyPrimes(invar, all(1)));
+				exprs.add(ExprUtils.applyPrimes(invar, indexing));
 			}
-		}
-
-		VarIndexing indexing = all(0);
-		if (edge.getSource().isUrgent()) {
-			indexing = all(0);
-		} else {
-			indexing = all(1);
 		}
 
 		final UnfoldResult stmtToExprResult = StmtUtils.toExpr(edge.getStmts(), indexing);
