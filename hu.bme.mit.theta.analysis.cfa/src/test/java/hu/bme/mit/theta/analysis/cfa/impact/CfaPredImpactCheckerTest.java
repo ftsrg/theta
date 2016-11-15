@@ -72,9 +72,6 @@ public final class CfaPredImpactCheckerTest {
 		assertTrue(status.isSafe());
 		final ARG<? extends ExprState, ? extends ExprAction> arg = status.asSafe().getArg();
 
-		assertTrue(arg.isSafe());
-		assertTrue(arg.isComplete());
-
 		final ArgChecker argChecker = ArgChecker.create(solver);
 		assertTrue(argChecker.isWellLabeled(arg));
 
