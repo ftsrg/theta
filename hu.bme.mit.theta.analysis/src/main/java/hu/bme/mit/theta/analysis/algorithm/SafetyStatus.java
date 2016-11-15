@@ -1,5 +1,6 @@
 package hu.bme.mit.theta.analysis.algorithm;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import hu.bme.mit.theta.analysis.Action;
@@ -18,8 +19,8 @@ public abstract class SafetyStatus<S extends State, A extends Action> {
 		return arg;
 	}
 
-	public static <S extends State, A extends Action> Safe<S, A> safe(final ARG<S, A> proof) {
-		return new Safe<>(proof);
+	public static <S extends State, A extends Action> Safe<S, A> safe(final ARG<S, A> arg) {
+		return new Safe<>(arg);
 	}
 
 	public static <S extends State, A extends Action> Unsafe<S, A> unsafe(final Trace<S, A> cex, final ARG<S, A> arg) {
@@ -37,8 +38,11 @@ public abstract class SafetyStatus<S extends State, A extends Action> {
 	////
 
 	public static final class Safe<S extends State, A extends Action> extends SafetyStatus<S, A> {
-		private Safe(final ARG<S, A> proof) {
-			super(proof);
+		private Safe(final ARG<S, A> arg) {
+			super(arg);
+			checkArgument(arg.isInitialized());
+			checkArgument(arg.isComplete());
+			checkArgument(arg.isSafe());
 		}
 
 		@Override
