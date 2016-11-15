@@ -25,7 +25,7 @@ public final class LocActionFunction<A extends LocAction<L, E>, L extends Loc<L,
 	}
 
 	@Override
-	public Collection<? extends A> getEnabledActionsFor(final LocState<?, L, E> state) {
+	public Collection<A> getEnabledActionsFor(final LocState<?, L, E> state) {
 		final Collection<A> actions = new ArrayList<>();
 		final L loc = state.getLoc();
 
