@@ -19,7 +19,7 @@ public final class StsActionFunction implements ActionFunction<State, StsAction>
 	}
 
 	@Override
-	public Collection<? extends StsAction> getEnabledActionsFor(final State state) {
+	public Collection<StsAction> getEnabledActionsFor(final State state) {
 		return actions;
 	}
 
