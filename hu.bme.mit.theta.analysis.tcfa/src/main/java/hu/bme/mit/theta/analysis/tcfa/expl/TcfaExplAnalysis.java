@@ -10,6 +10,7 @@ import hu.bme.mit.theta.analysis.TransferFunction;
 import hu.bme.mit.theta.analysis.expl.ExplDomain;
 import hu.bme.mit.theta.analysis.expl.ExplPrecision;
 import hu.bme.mit.theta.analysis.expl.ExplState;
+import hu.bme.mit.theta.analysis.impl.NullActionFunction;
 import hu.bme.mit.theta.analysis.tcfa.TcfaAction;
 import hu.bme.mit.theta.solver.Solver;
 
@@ -43,7 +44,7 @@ public final class TcfaExplAnalysis implements Analysis<ExplState, TcfaAction, E
 
 	@Override
 	public ActionFunction<? super ExplState, ? extends TcfaAction> getActionFunction() {
-		throw new UnsupportedOperationException();
+		return NullActionFunction.getInstance();
 	}
 
 }

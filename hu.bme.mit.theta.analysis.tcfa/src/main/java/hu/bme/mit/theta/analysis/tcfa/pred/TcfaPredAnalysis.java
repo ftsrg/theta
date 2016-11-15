@@ -5,6 +5,7 @@ import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.Domain;
 import hu.bme.mit.theta.analysis.InitFunction;
 import hu.bme.mit.theta.analysis.TransferFunction;
+import hu.bme.mit.theta.analysis.impl.NullActionFunction;
 import hu.bme.mit.theta.analysis.pred.PredDomain;
 import hu.bme.mit.theta.analysis.pred.PredPrecision;
 import hu.bme.mit.theta.analysis.pred.PredState;
@@ -42,7 +43,7 @@ public final class TcfaPredAnalysis implements Analysis<PredState, TcfaAction, P
 
 	@Override
 	public ActionFunction<? super PredState, ? extends TcfaAction> getActionFunction() {
-		throw new UnsupportedOperationException();
+		return NullActionFunction.getInstance();
 	}
 
 }
