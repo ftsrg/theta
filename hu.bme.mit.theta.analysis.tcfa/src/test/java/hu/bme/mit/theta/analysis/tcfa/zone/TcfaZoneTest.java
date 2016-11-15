@@ -2,12 +2,14 @@ package hu.bme.mit.theta.analysis.tcfa.zone;
 
 import static hu.bme.mit.theta.core.decl.impl.Decls.Var;
 import static hu.bme.mit.theta.core.type.impl.Types.Int;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Collections;
 
 import org.junit.Test;
 
 import hu.bme.mit.theta.analysis.algorithm.ARG;
+import hu.bme.mit.theta.analysis.algorithm.ArgChecker;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
 import hu.bme.mit.theta.analysis.algorithm.cegar.WaitlistBasedAbstractor;
 import hu.bme.mit.theta.analysis.loc.LocPrecision;
@@ -24,6 +26,8 @@ import hu.bme.mit.theta.core.type.IntType;
 import hu.bme.mit.theta.formalism.tcfa.TcfaEdge;
 import hu.bme.mit.theta.formalism.tcfa.TcfaLoc;
 import hu.bme.mit.theta.formalism.tcfa.instances.FischerTcfa;
+import hu.bme.mit.theta.solver.Solver;
+import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 
 public class TcfaZoneTest {
 
@@ -45,6 +49,11 @@ public class TcfaZoneTest {
 		abstractor.check(arg, precision);
 
 		System.out.println(new GraphvizWriter().writeString(ArgVisualizer.visualize(arg)));
+
+		final Solver solver = Z3SolverFactory.getInstace().createSolver();
+
+		final ArgChecker checker = ArgChecker.create(solver);
+		assertTrue(checker.isWellLabeled(arg));
 	}
 
 }
