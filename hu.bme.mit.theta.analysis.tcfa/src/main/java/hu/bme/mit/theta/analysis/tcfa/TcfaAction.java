@@ -1,8 +1,18 @@
 package hu.bme.mit.theta.analysis.tcfa;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.decl.impl.Decls.Var;
+import static hu.bme.mit.theta.core.expr.impl.Exprs.Add;
+import static hu.bme.mit.theta.core.expr.impl.Exprs.And;
+import static hu.bme.mit.theta.core.expr.impl.Exprs.Eq;
+import static hu.bme.mit.theta.core.expr.impl.Exprs.Geq;
+import static hu.bme.mit.theta.core.expr.impl.Exprs.Prime;
+import static hu.bme.mit.theta.core.expr.impl.Exprs.Rat;
+import static hu.bme.mit.theta.core.type.impl.Types.Rat;
+import static hu.bme.mit.theta.core.utils.impl.VarIndexing.all;
 import static java.util.stream.Collectors.toList;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -11,13 +21,22 @@ import com.google.common.collect.ImmutableSet;
 
 import hu.bme.mit.theta.analysis.loc.LocAction;
 import hu.bme.mit.theta.common.ObjectUtils;
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.BoolType;
+import hu.bme.mit.theta.core.type.RatType;
+import hu.bme.mit.theta.core.utils.impl.ExprUtils;
+import hu.bme.mit.theta.core.utils.impl.StmtUtils;
+import hu.bme.mit.theta.core.utils.impl.UnfoldResult;
 import hu.bme.mit.theta.core.utils.impl.VarIndexing;
+import hu.bme.mit.theta.formalism.common.decl.ClockDecl;
+import hu.bme.mit.theta.formalism.tcfa.TCFA;
 import hu.bme.mit.theta.formalism.tcfa.TcfaEdge;
 import hu.bme.mit.theta.formalism.tcfa.TcfaLoc;
 
 public final class TcfaAction implements LocAction<TcfaLoc, TcfaEdge> {
+
+	private static final VarDecl<RatType> DELAY_VAR = Var("_delay", Rat());
 
 	private final TcfaEdge edge;
 
@@ -25,15 +44,31 @@ public final class TcfaAction implements LocAction<TcfaLoc, TcfaEdge> {
 	private final Collection<TcfaExpr> targetInvars;
 	private final List<TcfaStmt> tcfaStmts;
 
-	private TcfaAction(final TcfaEdge edge) {
-		this.edge = checkNotNull(edge);
+	private final Expr<? extends BoolType> expr;
+	private final VarIndexing nextIndexing;
+
+	private TcfaAction(final TCFA tcfa, final TcfaEdge edge) {
+		checkNotNull(tcfa);
+		checkNotNull(edge);
+		// checkArgument(tcfa.getEdges().contains(edge));
+
+		this.edge = edge;
+
 		sourceInvars = invarsOf(edge.getSource());
 		targetInvars = invarsOf(edge.getTarget());
 		tcfaStmts = ImmutableList.copyOf(edge.getStmts().stream().map(TcfaStmt::of).collect(toList()));
+
+		final UnfoldResult unfoldResult = unfold(tcfa, edge);
+		expr = And(unfoldResult.getExprs());
+		nextIndexing = unfoldResult.getIndexing();
 	}
 
-	public static TcfaAction create(final TcfaEdge edge) {
-		return new TcfaAction(edge);
+	public static TcfaAction create(final TCFA tcfa, final TcfaEdge edge) {
+		return new TcfaAction(tcfa, edge);
+	}
+
+	public static VarDecl<RatType> getDelayVar() {
+		return DELAY_VAR;
 	}
 
 	@Override
@@ -57,14 +92,12 @@ public final class TcfaAction implements LocAction<TcfaLoc, TcfaEdge> {
 
 	@Override
 	public Expr<? extends BoolType> toExpr() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		return expr;
 	}
 
 	@Override
 	public VarIndexing nextIndexing() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		return nextIndexing;
 	}
 
 	////
@@ -83,6 +116,48 @@ public final class TcfaAction implements LocAction<TcfaLoc, TcfaEdge> {
 			builder.add(invar);
 		}
 		return builder.build();
+	}
+
+	private static final UnfoldResult unfold(final TCFA tcfa, final TcfaEdge edge) {
+		final List<Expr<? extends BoolType>> exprs = new ArrayList<>();
+
+		for (final Expr<? extends BoolType> invar : edge.getSource().getInvars()) {
+			exprs.add(invar);
+		}
+
+		if (!edge.getSource().isUrgent()) {
+			final Expr<RatType> primedDelay = Prime(DELAY_VAR.getRef());
+
+			exprs.add(Geq(primedDelay, Rat(0, 1)));
+
+			for (final ClockDecl clockDecl : tcfa.getClockVars()) {
+				final Expr<RatType> clock = clockDecl.getRef();
+				final Expr<RatType> primedClock = Prime(clock);
+				exprs.add(Eq(primedClock, Add(clock, primedDelay)));
+			}
+
+			for (final Expr<? extends BoolType> invar : edge.getSource().getInvars()) {
+				exprs.add(ExprUtils.applyPrimes(invar, all(1)));
+			}
+		}
+
+		VarIndexing indexing = all(0);
+		if (edge.getSource().isUrgent()) {
+			indexing = all(0);
+		} else {
+			indexing = all(1);
+		}
+
+		final UnfoldResult stmtToExprResult = StmtUtils.toExpr(edge.getStmts(), indexing);
+
+		exprs.addAll(stmtToExprResult.getExprs());
+		indexing = stmtToExprResult.getIndexing();
+
+		for (final Expr<? extends BoolType> invar : edge.getTarget().getInvars()) {
+			exprs.add(ExprUtils.applyPrimes(invar, all(1)));
+		}
+
+		return UnfoldResult.of(exprs, indexing);
 	}
 
 }
