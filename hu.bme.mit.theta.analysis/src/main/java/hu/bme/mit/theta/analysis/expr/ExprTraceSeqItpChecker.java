@@ -22,18 +22,18 @@ import hu.bme.mit.theta.solver.ItpSolver;
 public class ExprTraceSeqItpChecker implements ExprTraceChecker<ItpRefutation> {
 
 	private final ItpSolver solver;
-	private final ExprStatePredicate init;
-	private final ExprStatePredicate target;
+	private final Expr<? extends BoolType> init;
+	private final Expr<? extends BoolType> target;
 
-	private ExprTraceSeqItpChecker(final ExprStatePredicate init, final ExprStatePredicate target,
+	private ExprTraceSeqItpChecker(final Expr<? extends BoolType> init, final Expr<? extends BoolType> target,
 			final ItpSolver solver) {
 		this.solver = checkNotNull(solver);
 		this.init = checkNotNull(init);
 		this.target = checkNotNull(target);
 	}
 
-	public static ExprTraceSeqItpChecker create(final ExprStatePredicate init, final ExprStatePredicate target,
-			final ItpSolver solver) {
+	public static ExprTraceSeqItpChecker create(final Expr<? extends BoolType> init,
+			final Expr<? extends BoolType> target, final ItpSolver solver) {
 		return new ExprTraceSeqItpChecker(init, target, solver);
 	}
 
@@ -53,7 +53,7 @@ public class ExprTraceSeqItpChecker implements ExprTraceChecker<ItpRefutation> {
 		final ItpPattern pattern = solver.createSeqPattern(markers);
 
 		solver.push();
-		solver.add(markers.get(0), PathUtils.unfold(init.toExpr(), currentIndexing));
+		solver.add(markers.get(0), PathUtils.unfold(init, currentIndexing));
 		for (int i = 0; i < trace.length(); ++i) {
 			solver.add(markers.get(i), PathUtils.unfold(trace.getState(i).toExpr(), currentIndexing));
 			if (i > 0) {
@@ -64,7 +64,7 @@ public class ExprTraceSeqItpChecker implements ExprTraceChecker<ItpRefutation> {
 				indexings.add(currentIndexing);
 			}
 		}
-		solver.add(markers.get(trace.length()), PathUtils.unfold(target.toExpr(), currentIndexing));
+		solver.add(markers.get(trace.length()), PathUtils.unfold(target, currentIndexing));
 
 		final boolean concretizable = solver.check().isSat();
 
