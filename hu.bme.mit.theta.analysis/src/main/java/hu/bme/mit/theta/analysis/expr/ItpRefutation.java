@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Stream;
 
 import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.expr.Expr;
@@ -62,5 +63,9 @@ public final class ItpRefutation implements Refutation, Iterable<Expr<? extends 
 	@Override
 	public String toString() {
 		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).addAll(itpSequence).toString();
+	}
+
+	public Stream<Expr<? extends BoolType>> stream() {
+		return itpSequence.stream();
 	}
 }
