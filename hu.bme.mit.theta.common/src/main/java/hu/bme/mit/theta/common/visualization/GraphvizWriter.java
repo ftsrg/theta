@@ -1,6 +1,8 @@
 package hu.bme.mit.theta.common.visualization;
 
 import java.awt.Color;
+import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -16,6 +18,20 @@ import java.util.Map;
  * - Peripheries of composite nodes are ignored.
  */
 public final class GraphvizWriter extends AbstractGraphWriter {
+
+	public static enum Format {
+		PDF("Tpdf"), PNG("Tpng");
+
+		private final String option;
+
+		private Format(final String option) {
+			this.option = option;
+		}
+
+		public String getOption() {
+			return option;
+		}
+	}
 
 	@Override
 	public String writeString(final Graph graph) {
@@ -34,6 +50,16 @@ public final class GraphvizWriter extends AbstractGraphWriter {
 		}
 		sb.append("}");
 		return sb.toString();
+	}
+
+	public void writeFile(final Graph graph, final String fileName, final Format format)
+			throws IOException, InterruptedException {
+		final String dotFile = fileName + ".dot";
+		super.writeFile(graph, dotFile);
+		final Process proc = Runtime.getRuntime()
+				.exec("dot.exe -" + format.getOption() + " \"" + dotFile + "\" -o \"" + fileName + "\"");
+		proc.waitFor();
+		new File(dotFile).delete();
 	}
 
 	private void printNode(final Node node, final StringBuilder sb) {
