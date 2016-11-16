@@ -18,12 +18,13 @@ import hu.bme.mit.theta.common.waitlist.Waitlist;
 public class WaitlistBasedAbstractor<S extends State, A extends Action, P extends Precision>
 		implements Abstractor<S, A, P> {
 
-	private final ArgBuilder<S, A, ? super P> argBuilder;
-	private final Analysis<S, A, ? super P> analysis;
+	private final ArgBuilder<S, A, P> argBuilder;
+	private final Analysis<S, ? super A, ? super P> analysis;
 	private final Supplier<? extends Waitlist<ArgNode<S, A>>> waitlistSupplier;
 
-	private WaitlistBasedAbstractor(final LTS<? super S, ? extends A> lts, final Analysis<S, A, ? super P> analysis,
-			final Predicate<? super S> target, final Supplier<? extends Waitlist<ArgNode<S, A>>> waitlistSupplier) {
+	private WaitlistBasedAbstractor(final LTS<? super S, ? extends A> lts,
+			final Analysis<S, ? super A, ? super P> analysis, final Predicate<? super S> target,
+			final Supplier<? extends Waitlist<ArgNode<S, A>>> waitlistSupplier) {
 		this.analysis = checkNotNull(analysis);
 		checkNotNull(lts);
 		checkNotNull(target);
@@ -32,7 +33,7 @@ public class WaitlistBasedAbstractor<S extends State, A extends Action, P extend
 	}
 
 	public static <S extends State, A extends Action, P extends Precision> WaitlistBasedAbstractor<S, A, P> create(
-			final LTS<? super S, ? extends A> lts, final Analysis<S, A, ? super P> analysis,
+			final LTS<? super S, ? extends A> lts, final Analysis<S, ? super A, ? super P> analysis,
 			final Predicate<? super S> target, final Supplier<? extends Waitlist<ArgNode<S, A>>> waitlistSupplier) {
 		return new WaitlistBasedAbstractor<>(lts, analysis, target, waitlistSupplier);
 	}
