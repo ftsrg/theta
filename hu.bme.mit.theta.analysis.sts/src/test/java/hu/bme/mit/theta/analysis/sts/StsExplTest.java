@@ -27,8 +27,7 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyStatus;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker;
-import hu.bme.mit.theta.analysis.algorithm.cegar.GlobalExplItpRefinerOp;
-import hu.bme.mit.theta.analysis.algorithm.cegar.RefutationBasedRefiner;
+import hu.bme.mit.theta.analysis.algorithm.cegar.ExplItpRefiner;
 import hu.bme.mit.theta.analysis.algorithm.cegar.WaitlistBasedAbstractor;
 import hu.bme.mit.theta.analysis.expl.ExplAnalysis;
 import hu.bme.mit.theta.analysis.expl.ExplPrecision;
@@ -36,10 +35,7 @@ import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.ExprStatePredicate;
-import hu.bme.mit.theta.analysis.expr.ItpRefutation;
-import hu.bme.mit.theta.analysis.sts.StsAction;
-import hu.bme.mit.theta.analysis.sts.StsExprSeqConcretizer;
-import hu.bme.mit.theta.analysis.sts.StsLts;
+import hu.bme.mit.theta.analysis.expr.ExprTraceSeqItpChecker;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.common.visualization.GraphvizWriter;
 import hu.bme.mit.theta.common.waitlist.FifoWaitlist;
@@ -87,11 +83,9 @@ public class StsExplTest {
 		final Abstractor<ExplState, StsAction, ExplPrecision> abstractor = WaitlistBasedAbstractor.create(lts, analysis,
 				target, FifoWaitlist.supplier());
 
-		final StsExprSeqConcretizer concretizerOp = new StsExprSeqConcretizer(sts, solver);
-		final GlobalExplItpRefinerOp<StsAction> refinerOp = new GlobalExplItpRefinerOp<>();
-
-		final RefutationBasedRefiner<ExplState, StsAction, ExplPrecision, ItpRefutation> refiner = new RefutationBasedRefiner<>(
-				concretizerOp, refinerOp);
+		final ExprTraceSeqItpChecker exprTraceChecker = ExprTraceSeqItpChecker.create(And(sts.getInit()),
+				Not(sts.getProp()), solver);
+		final ExplItpRefiner<StsAction> refiner = ExplItpRefiner.create(exprTraceChecker);
 
 		final SafetyChecker<ExplState, StsAction, ExplPrecision> checker = CegarChecker.create(abstractor, refiner);
 
