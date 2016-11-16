@@ -62,7 +62,7 @@ public class WaitlistBasedAbstractor<S extends State, A extends Action, P extend
 		while (!waitlist.isEmpty()) {
 			final ArgNode<S, A> node = waitlist.remove();
 
-			if (!node.isSafe(analysis.getDomain())) {
+			if (!node.isSafe()) {
 				return AbstractorResult.unsafe();
 			}
 
