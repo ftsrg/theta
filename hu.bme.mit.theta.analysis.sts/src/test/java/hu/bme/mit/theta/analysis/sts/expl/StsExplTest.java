@@ -19,6 +19,8 @@ import java.util.function.Predicate;
 
 import org.junit.Test;
 
+import hu.bme.mit.theta.analysis.LTS;
+import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyStatus;
@@ -34,6 +36,7 @@ import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.ExprStatePredicate;
 import hu.bme.mit.theta.analysis.sts.StsAction;
 import hu.bme.mit.theta.analysis.sts.StsExprSeqConcretizer;
+import hu.bme.mit.theta.analysis.sts.StsLts;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.common.visualization.GraphvizWriter;
 import hu.bme.mit.theta.common.waitlist.FifoWaitlist;
@@ -76,7 +79,9 @@ public class StsExplTest {
 
 		final ExplPrecision precision = ExplPrecision.create(Collections.singleton(vy));
 
-		final Abstractor<ExplState, StsAction, ExplPrecision> abstractor = WaitlistBasedAbstractor.create(analysis,
+		final LTS<State, StsAction> lts = StsLts.create(sts);
+
+		final Abstractor<ExplState, StsAction, ExplPrecision> abstractor = WaitlistBasedAbstractor.create(lts, analysis,
 				target, FifoWaitlist.supplier());
 
 		final StsExprSeqConcretizer concretizerOp = new StsExprSeqConcretizer(sts, solver);

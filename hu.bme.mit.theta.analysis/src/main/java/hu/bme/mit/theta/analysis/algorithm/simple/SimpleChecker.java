@@ -6,6 +6,7 @@ import java.util.function.Predicate;
 
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Analysis;
+import hu.bme.mit.theta.analysis.LTS;
 import hu.bme.mit.theta.analysis.Precision;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.common.waitlist.LifoWaitlist;
@@ -13,8 +14,8 @@ import hu.bme.mit.theta.common.waitlist.Waitlist;
 
 public class SimpleChecker {
 
-	public static <S extends State, A extends Action, P extends Precision> boolean run(final Analysis<S, A, P> analysis,
-			final Predicate<? super S> target, final P precision) {
+	public static <S extends State, A extends Action, P extends Precision> boolean run(final LTS<S, A> lts,
+			final Analysis<S, A, P> analysis, final Predicate<? super S> target, final P precision) {
 
 		final Waitlist<S> waiting = LifoWaitlist.create();
 		final Collection<S> passed = new LinkedList<>();
@@ -31,7 +32,7 @@ public class SimpleChecker {
 
 			if (!isCovered(state, passed, analysis)) {
 				passed.add(state);
-				for (final A action : analysis.getActionFunction().getEnabledActionsFor(state)) {
+				for (final A action : lts.getEnabledActionsFor(state)) {
 					final Collection<? extends S> succStates = analysis.getTransferFunction().getSuccStates(state,
 							action, precision);
 					waiting.addAll(succStates);

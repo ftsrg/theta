@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.analysis.tcfa.network;
+package hu.bme.mit.theta.analysis.tcfa;
 
 import static hu.bme.mit.theta.core.decl.impl.Decls.Var;
 import static hu.bme.mit.theta.core.type.impl.Types.Int;
@@ -26,7 +26,7 @@ public final class TcfaImpactCheckerTest {
 	public void test() {
 		final int n = 2;
 		final VarDecl<IntType> vlock = Var("lock", Int());
-		final TCFA fischer = TcfaNetworkTestHelper.fischer(n, vlock);
+		final TCFA fischer = TcfaTestHelper.fischer(n, vlock);
 
 		final Solver solver = Z3SolverFactory.getInstace().createSolver();
 

@@ -9,6 +9,7 @@ import java.util.function.Predicate;
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.Domain;
+import hu.bme.mit.theta.analysis.LTS;
 import hu.bme.mit.theta.analysis.Precision;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.Trace;
@@ -23,27 +24,30 @@ import hu.bme.mit.theta.analysis.algorithm.impact.ImpactRefiner.RefinementResult
 public final class ImpactChecker<S extends State, A extends Action, P extends Precision>
 		implements SafetyChecker<S, A, P> {
 
+	private final LTS<? super S, ? extends A> lts;
 	private final Analysis<S, A, P> analysis;
 	private final ImpactRefiner<S, A> refiner;
 	private final Predicate<? super S> target;
 
-	private ImpactChecker(final Analysis<S, A, P> analysis, final ImpactRefiner<S, A> refiner,
-			final Predicate<? super S> target) {
+	private ImpactChecker(final LTS<? super S, ? extends A> lts, final Analysis<S, A, P> analysis,
+			final ImpactRefiner<S, A> refiner, final Predicate<? super S> target) {
+		this.lts = checkNotNull(lts);
 		this.analysis = checkNotNull(analysis);
 		this.refiner = checkNotNull(refiner);
 		this.target = checkNotNull(target);
 	}
 
 	public static <S extends State, A extends Action, P extends Precision> ImpactChecker<S, A, P> create(
-			final Analysis<S, A, P> analysis, final ImpactRefiner<S, A> refiner, final Predicate<? super S> target) {
-		return new ImpactChecker<>(analysis, refiner, target);
+			final LTS<? super S, ? extends A> lts, final Analysis<S, A, P> analysis, final ImpactRefiner<S, A> refiner,
+			final Predicate<? super S> target) {
+		return new ImpactChecker<>(lts, analysis, refiner, target);
 	}
 
 	////
 
 	@Override
 	public SafetyStatus<S, A> check(final P precision) {
-		return new CheckMethod<>(analysis, refiner, target, precision).run();
+		return new CheckMethod<>(lts, analysis, refiner, target, precision).run();
 	}
 
 	////
@@ -56,12 +60,12 @@ public final class ImpactChecker<S extends State, A extends Action, P extends Pr
 		private final ArgBuilder<S, A, P> argBuilder;
 		private final ARG<S, A> arg;
 
-		private CheckMethod(final Analysis<S, A, P> analysis, final ImpactRefiner<S, A> refiner,
-				final Predicate<? super S> target, final P precision) {
+		private CheckMethod(final LTS<? super S, ? extends A> lts, final Analysis<S, A, P> analysis,
+				final ImpactRefiner<S, A> refiner, final Predicate<? super S> target, final P precision) {
 			this.refiner = refiner;
 			this.precision = checkNotNull(precision);
 			domain = analysis.getDomain();
-			argBuilder = ArgBuilder.create(analysis, target);
+			argBuilder = ArgBuilder.create(lts, analysis, target);
 			arg = ARG.create(domain);
 		}
 

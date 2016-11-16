@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.analysis.tcfa.network;
+package hu.bme.mit.theta.analysis.tcfa;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,9 +10,9 @@ import hu.bme.mit.theta.formalism.tcfa.TCFA;
 import hu.bme.mit.theta.formalism.tcfa.instances.FischerTcfa;
 import hu.bme.mit.theta.formalism.tcfa.instances.ProsigmaTcfa;
 
-final class TcfaNetworkTestHelper {
+final class TcfaTestHelper {
 
-	private TcfaNetworkTestHelper() {
+	private TcfaTestHelper() {
 	}
 
 	public static TCFA prosigma() {
