@@ -42,7 +42,7 @@ public abstract class SafetyStatus<S extends State, A extends Action> {
 			super(arg);
 			checkArgument(arg.isInitialized());
 			checkArgument(arg.isComplete());
-			// checkArgument(arg.isSafe());
+			checkArgument(arg.isSafe());
 		}
 
 		@Override
