@@ -16,10 +16,10 @@ import hu.bme.mit.theta.analysis.State;
 public final class ArgBuilder<S extends State, A extends Action, P extends Precision> {
 
 	private final LTS<? super S, ? extends A> lts;
-	private final Analysis<S, A, P> analysis;
+	private final Analysis<S, ? super A, ? super P> analysis;
 	private final Predicate<? super S> target;
 
-	private ArgBuilder(final LTS<? super S, ? extends A> lts, final Analysis<S, A, P> analysis,
+	private ArgBuilder(final LTS<? super S, ? extends A> lts, final Analysis<S, ? super A, ? super P> analysis,
 			final Predicate<? super S> target) {
 		this.lts = checkNotNull(lts);
 		this.analysis = checkNotNull(analysis);
@@ -27,7 +27,7 @@ public final class ArgBuilder<S extends State, A extends Action, P extends Preci
 	}
 
 	public static <S extends State, A extends Action, P extends Precision> ArgBuilder<S, A, P> create(
-			final LTS<? super S, ? extends A> lts, final Analysis<S, A, P> analysis,
+			final LTS<? super S, ? extends A> lts, final Analysis<S, ? super A, ? super P> analysis,
 			final Predicate<? super S> target) {
 		return new ArgBuilder<>(lts, analysis, target);
 	}

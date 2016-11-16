@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.analysis.sts.expl;
+package hu.bme.mit.theta.analysis.sts;
 
 import static hu.bme.mit.theta.analysis.algorithm.ArgUtils.isWellLabeled;
 import static hu.bme.mit.theta.core.decl.impl.Decls.Var;
@@ -19,6 +19,7 @@ import java.util.function.Predicate;
 
 import org.junit.Test;
 
+import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.LTS;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
@@ -26,14 +27,17 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyStatus;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker;
-import hu.bme.mit.theta.analysis.algorithm.cegar.GlobalExplItpRefinerOp;
+import hu.bme.mit.theta.analysis.algorithm.cegar.GlobalPredItpRefinerOp;
 import hu.bme.mit.theta.analysis.algorithm.cegar.ItpRefutation;
 import hu.bme.mit.theta.analysis.algorithm.cegar.RefutationBasedRefiner;
 import hu.bme.mit.theta.analysis.algorithm.cegar.WaitlistBasedAbstractor;
-import hu.bme.mit.theta.analysis.expl.ExplPrecision;
-import hu.bme.mit.theta.analysis.expl.ExplState;
+import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.ExprStatePredicate;
+import hu.bme.mit.theta.analysis.pred.PredAnalysis;
+import hu.bme.mit.theta.analysis.pred.PredPrecision;
+import hu.bme.mit.theta.analysis.pred.PredState;
+import hu.bme.mit.theta.analysis.pred.SimplePredPrecision;
 import hu.bme.mit.theta.analysis.sts.StsAction;
 import hu.bme.mit.theta.analysis.sts.StsExprSeqConcretizer;
 import hu.bme.mit.theta.analysis.sts.StsLts;
@@ -49,57 +53,53 @@ import hu.bme.mit.theta.formalism.sts.impl.StsImpl.Builder;
 import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 
-public class StsExplTest {
+public class StsPredTest {
 
 	@Test
 	public void test() {
 
 		final VarDecl<IntType> vx = Var("x", Int());
 		final Expr<IntType> x = vx.getRef();
-		final VarDecl<IntType> vy = Var("y", Int());
-		final Expr<IntType> y = vy.getRef();
 
 		final int mod = 10;
 
 		final Builder builder = new StsImpl.Builder();
 
 		builder.addInit(Eq(x, Int(0)));
-		builder.addInit(Eq(y, Int(0)));
 		builder.addTrans(And(Imply(Lt(x, Int(mod)), Eq(Prime(x), Add(x, Int(1)))),
 				Imply(Geq(x, Int(mod)), Eq(Prime(x), Int(0)))));
-		builder.addTrans(Eq(Prime(y), Int(0)));
 		builder.setProp(Not(Eq(x, Int(mod))));
 
 		final STS sts = builder.build();
 
 		final ItpSolver solver = Z3SolverFactory.getInstace().createItpSolver();
 
-		final StsExplAnalysis analysis = new StsExplAnalysis(sts, solver);
+		final Analysis<PredState, ExprAction, PredPrecision> analysis = PredAnalysis.create(solver, And(sts.getInit()));
 		final Predicate<ExprState> target = new ExprStatePredicate(Not(sts.getProp()), solver);
 
-		final ExplPrecision precision = ExplPrecision.create(Collections.singleton(vy));
+		final SimplePredPrecision precision = SimplePredPrecision.create(Collections.singleton(Lt(x, Int(mod))),
+				solver);
 
 		final LTS<State, StsAction> lts = StsLts.create(sts);
 
-		final Abstractor<ExplState, StsAction, ExplPrecision> abstractor = WaitlistBasedAbstractor.create(lts, analysis,
-				target, FifoWaitlist.supplier());
+		final Abstractor<PredState, StsAction, SimplePredPrecision> abstractor = WaitlistBasedAbstractor.create(lts,
+				analysis, target, FifoWaitlist.supplier());
 
 		final StsExprSeqConcretizer concretizerOp = new StsExprSeqConcretizer(sts, solver);
-		final GlobalExplItpRefinerOp<StsAction> refinerOp = new GlobalExplItpRefinerOp<>();
+		final GlobalPredItpRefinerOp<StsAction> refinerOp = new GlobalPredItpRefinerOp<>();
 
-		final RefutationBasedRefiner<ExplState, StsAction, ExplPrecision, ItpRefutation> refiner = new RefutationBasedRefiner<>(
+		final RefutationBasedRefiner<PredState, StsAction, SimplePredPrecision, ItpRefutation> refiner = new RefutationBasedRefiner<>(
 				concretizerOp, refinerOp);
 
-		final SafetyChecker<ExplState, StsAction, ExplPrecision> checker = CegarChecker.create(abstractor, refiner);
+		final SafetyChecker<PredState, StsAction, SimplePredPrecision> checker = CegarChecker.create(abstractor,
+				refiner);
 
-		final SafetyStatus<ExplState, StsAction> safetyStatus = checker.check(precision);
+		final SafetyStatus<PredState, StsAction> safetyStatus = checker.check(precision);
 
-		final ARG<ExplState, StsAction> arg = safetyStatus.getArg();
+		final ARG<PredState, StsAction> arg = safetyStatus.getArg();
 		assertTrue(isWellLabeled(arg, solver));
 
 		System.out.println(new GraphvizWriter().writeString(ArgVisualizer.visualize(arg)));
-
-		System.out.println(safetyStatus);
 	}
 
 }
