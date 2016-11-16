@@ -2,6 +2,7 @@ package hu.bme.mit.theta.analysis.algorithm;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.stream.Collectors.toList;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -60,9 +61,6 @@ public final class ARG<S extends State, A extends Action> {
 	}
 
 	public boolean isSafe() {
-		// TODO: the current implementetion is only the definition of "safe".
-		// More efficient implementation can be done by checking if all states
-		// in the "targetNodes" collection are not feasible.
 		return getNodes().allMatch(n -> n.isSafe());
 	}
 
@@ -112,6 +110,19 @@ public final class ARG<S extends State, A extends Action> {
 		node.descendants().forEach(this::uncover);
 		node.descendants().forEach(ArgNode::clearCoveredNodes);
 
+	}
+
+	public void minimize() {
+		initNodes.forEach(this::minimizeSubTree);
+	}
+
+	private void minimizeSubTree(final ArgNode<S, A> node) {
+		final Stream<ArgNode<S, A>> children = node.children().collect(toList()).stream();
+		if (node.isCovered()) {
+			children.forEach(this::prune);
+		} else {
+			children.forEach(this::minimizeSubTree);
+		}
 	}
 
 	public void cover(final ArgNode<S, A> node, final ArgNode<S, A> coveringNode) {
