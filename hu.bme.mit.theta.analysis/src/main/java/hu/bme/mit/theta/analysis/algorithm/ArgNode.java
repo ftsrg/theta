@@ -10,7 +10,6 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 import hu.bme.mit.theta.analysis.Action;
-import hu.bme.mit.theta.analysis.Domain;
 import hu.bme.mit.theta.analysis.State;
 
 public final class ArgNode<S extends State, A extends Action> {
@@ -150,12 +149,12 @@ public final class ArgNode<S extends State, A extends Action> {
 		return expanded;
 	}
 
-	public boolean isFeasible(final Domain<S> domain) {
-		return !domain.isBottom(state);
+	public boolean isFeasible() {
+		return !arg.domain.isBottom(state);
 	}
 
-	public boolean isSafe(final Domain<S> domain) {
-		return !(isFeasible(domain) && isTarget());
+	public boolean isSafe() {
+		return !(isFeasible() && isTarget());
 	}
 
 	public boolean isComplete() {

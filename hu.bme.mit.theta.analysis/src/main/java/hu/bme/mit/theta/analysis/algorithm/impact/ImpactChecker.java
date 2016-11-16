@@ -149,7 +149,7 @@ public final class ImpactChecker<S extends State, A extends Action, P extends Pr
 		}
 
 		private boolean refine(final ArgNode<S, A> v) {
-			checkArgument(!v.isSafe(domain));
+			checkArgument(!v.isSafe());
 
 			final ArgTrace<S, A> argTrace = ArgTrace.to(v);
 

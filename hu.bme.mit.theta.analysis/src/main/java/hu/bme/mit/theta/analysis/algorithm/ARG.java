@@ -23,7 +23,7 @@ public final class ARG<S extends State, A extends Action> {
 
 	private int nextId = 0;
 
-	private final Domain<S> domain;
+	final Domain<S> domain;
 
 	private ARG(final Domain<S> domain) {
 		initNodes = new HashSet<>();
@@ -46,7 +46,7 @@ public final class ARG<S extends State, A extends Action> {
 	}
 
 	public Stream<ArgNode<S, A>> getUnsafeNodes() {
-		return getNodes().filter(n -> !n.isSafe(domain));
+		return getNodes().filter(n -> !n.isSafe());
 	}
 
 	public Stream<ArgNode<S, A>> getIncompleteNodes() {
@@ -63,7 +63,7 @@ public final class ARG<S extends State, A extends Action> {
 		// TODO: the current implementetion is only the definition of "safe".
 		// More efficient implementation can be done by checking if all states
 		// in the "targetNodes" collection are not feasible.
-		return getNodes().allMatch(n -> n.isSafe(domain));
+		return getNodes().allMatch(n -> n.isSafe());
 	}
 
 	public boolean isInitialized() {
