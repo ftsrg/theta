@@ -7,12 +7,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 import hu.bme.mit.theta.analysis.Trace;
-import hu.bme.mit.theta.analysis.algorithm.cegar.CexStatus;
 import hu.bme.mit.theta.analysis.algorithm.cegar.ConcretizerOp;
-import hu.bme.mit.theta.analysis.algorithm.cegar.ItpRefutation;
 import hu.bme.mit.theta.analysis.expr.ExprState;
+import hu.bme.mit.theta.analysis.expr.ExprTraceStatus2;
+import hu.bme.mit.theta.analysis.expr.ItpRefutation;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.impl.Exprs;
+import hu.bme.mit.theta.core.model.impl.Valuation;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.solver.ItpMarker;
@@ -32,7 +33,7 @@ public class StsExprSeqConcretizer implements ConcretizerOp<ExprState, StsAction
 	}
 
 	@Override
-	public CexStatus<ItpRefutation> checkConcretizable(final Trace<? extends ExprState, StsAction> cex) {
+	public ExprTraceStatus2<ItpRefutation> checkConcretizable(final Trace<? extends ExprState, StsAction> cex) {
 		checkNotNull(cex);
 		checkArgument(cex.length() > 0);
 
@@ -56,16 +57,17 @@ public class StsExprSeqConcretizer implements ConcretizerOp<ExprState, StsAction
 
 		final boolean concretizable = solver.check().isSat();
 
-		CexStatus<ItpRefutation> status = null;
+		ExprTraceStatus2<ItpRefutation> status = null;
 
 		if (concretizable) {
-			status = CexStatus.concretizable();
+			final List<Valuation> trace = sts.extractTrace(solver.getModel(), cex.length());
+			status = ExprTraceStatus2.feasible(trace);
 		} else {
 			final List<Expr<? extends BoolType>> interpolants = new ArrayList<>();
 			for (int i = 0; i < markers.size() - 1; ++i) {
 				interpolants.add(sts.foldin(solver.getInterpolant(pattern).eval(markers.get(i)), i));
 			}
-			status = CexStatus.spurious(ItpRefutation.sequence(interpolants));
+			status = ExprTraceStatus2.infeasible(ItpRefutation.sequence(interpolants));
 		}
 
 		solver.pop();
