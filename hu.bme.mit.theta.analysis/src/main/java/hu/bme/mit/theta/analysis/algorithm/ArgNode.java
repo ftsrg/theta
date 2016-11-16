@@ -3,6 +3,7 @@ package hu.bme.mit.theta.analysis.algorithm;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.common.ObjectUtils.toStringBuilder;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -13,6 +14,9 @@ import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.State;
 
 public final class ArgNode<S extends State, A extends Action> {
+
+	private static final int HASH_SEED = 8543;
+	private volatile int hashCode = 0;
 
 	final ARG<S, A> arg;
 
@@ -37,7 +41,7 @@ public final class ArgNode<S extends State, A extends Action> {
 		this.id = id;
 		this.target = target;
 		inEdge = Optional.empty();
-		outEdges = new HashSet<>();
+		outEdges = new ArrayList<>();
 		coveringNode = Optional.empty();
 		coveredNodes = new HashSet<>();
 		expanded = false;
@@ -95,7 +99,7 @@ public final class ArgNode<S extends State, A extends Action> {
 	////
 
 	public boolean isCovered() {
-		if (coveringNode.isPresent()) {
+		if (coveringNode.isPresent() || !isFeasible()) {
 			return true;
 		} else if (inEdge.isPresent()) {
 			return inEdge.get().getSource().isCovered();
@@ -154,7 +158,7 @@ public final class ArgNode<S extends State, A extends Action> {
 	}
 
 	public boolean isSafe() {
-		return !(isFeasible() && isTarget());
+		return !isTarget() || isCovered();
 	}
 
 	public boolean isComplete() {
@@ -177,7 +181,13 @@ public final class ArgNode<S extends State, A extends Action> {
 
 	@Override
 	public int hashCode() {
-		return super.hashCode();
+		int result = hashCode;
+		if (result == 0) {
+			result = HASH_SEED;
+			result = 31 * result + id;
+			hashCode = result;
+		}
+		return result;
 	}
 
 	@Override
