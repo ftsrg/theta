@@ -9,22 +9,27 @@ import java.util.stream.Collectors;
 
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Analysis;
+import hu.bme.mit.theta.analysis.LTS;
 import hu.bme.mit.theta.analysis.Precision;
 import hu.bme.mit.theta.analysis.State;
 
 public final class ArgBuilder<S extends State, A extends Action, P extends Precision> {
 
+	private final LTS<? super S, ? extends A> lts;
 	private final Analysis<S, A, P> analysis;
 	private final Predicate<? super S> target;
 
-	private ArgBuilder(final Analysis<S, A, P> analysis, final Predicate<? super S> target) {
+	private ArgBuilder(final LTS<? super S, ? extends A> lts, final Analysis<S, A, P> analysis,
+			final Predicate<? super S> target) {
+		this.lts = checkNotNull(lts);
 		this.analysis = checkNotNull(analysis);
 		this.target = checkNotNull(target);
 	}
 
 	public static <S extends State, A extends Action, P extends Precision> ArgBuilder<S, A, P> create(
-			final Analysis<S, A, P> analysis, final Predicate<? super S> target) {
-		return new ArgBuilder<>(analysis, target);
+			final LTS<? super S, ? extends A> lts, final Analysis<S, A, P> analysis,
+			final Predicate<? super S> target) {
+		return new ArgBuilder<>(lts, analysis, target);
 	}
 
 	public void init(final ARG<S, A> arg, final P precision) {
@@ -49,7 +54,7 @@ public final class ArgBuilder<S extends State, A extends Action, P extends Preci
 
 		final S state = node.getState();
 		final Collection<S> oldSuccStates = node.getSuccStates().collect(Collectors.toSet());
-		final Collection<? extends A> actions = analysis.getActionFunction().getEnabledActionsFor(state);
+		final Collection<? extends A> actions = lts.getEnabledActionsFor(state);
 		for (final A action : actions) {
 			final Collection<? extends S> newSuccStates = analysis.getTransferFunction().getSuccStates(state, action,
 					precision);

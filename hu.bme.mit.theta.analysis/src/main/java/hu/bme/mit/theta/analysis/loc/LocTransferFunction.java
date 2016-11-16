@@ -36,7 +36,7 @@ public final class LocTransferFunction<S extends State, A extends LocAction<L, E
 		final E edge = action.getEdge();
 		final L source = edge.getSource();
 		final L target = edge.getTarget();
-		checkArgument(state.getLoc() == source);
+		checkArgument(state.getLoc().equals(source));
 
 		final Collection<LocState<S, L, E>> succStates = new ArrayList<>();
 

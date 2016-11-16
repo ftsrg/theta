@@ -2,7 +2,6 @@ package hu.bme.mit.theta.analysis.sts.expl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import hu.bme.mit.theta.analysis.LTS;
 import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.Domain;
 import hu.bme.mit.theta.analysis.InitFunction;
@@ -11,7 +10,6 @@ import hu.bme.mit.theta.analysis.expl.ExplDomain;
 import hu.bme.mit.theta.analysis.expl.ExplPrecision;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.sts.StsAction;
-import hu.bme.mit.theta.analysis.sts.StsActionFunction;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.solver.Solver;
 
@@ -20,7 +18,6 @@ public class StsExplAnalysis implements Analysis<ExplState, StsAction, ExplPreci
 	private final ExplDomain domain;
 	private final StsExplInitFunction initFunction;
 	private final StsExplTransferFunction transferFunction;
-	private final LTS<? super ExplState, ? extends StsAction> actionFunction;
 
 	public StsExplAnalysis(final STS sts, final Solver solver) {
 		checkNotNull(sts);
@@ -28,7 +25,6 @@ public class StsExplAnalysis implements Analysis<ExplState, StsAction, ExplPreci
 		domain = ExplDomain.getInstance();
 		initFunction = new StsExplInitFunction(sts, solver);
 		transferFunction = new StsExplTransferFunction(sts, solver);
-		actionFunction = new StsActionFunction(sts);
 	}
 
 	@Override
@@ -44,11 +40,6 @@ public class StsExplAnalysis implements Analysis<ExplState, StsAction, ExplPreci
 	@Override
 	public TransferFunction<ExplState, StsAction, ExplPrecision> getTransferFunction() {
 		return transferFunction;
-	}
-
-	@Override
-	public LTS<? super ExplState, ? extends StsAction> getActionFunction() {
-		return actionFunction;
 	}
 
 }

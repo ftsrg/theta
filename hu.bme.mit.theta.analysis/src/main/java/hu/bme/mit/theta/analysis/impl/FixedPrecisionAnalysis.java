@@ -3,7 +3,6 @@ package hu.bme.mit.theta.analysis.impl;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import hu.bme.mit.theta.analysis.Action;
-import hu.bme.mit.theta.analysis.LTS;
 import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.Domain;
 import hu.bme.mit.theta.analysis.InitFunction;
@@ -43,11 +42,6 @@ public final class FixedPrecisionAnalysis<S extends State, A extends Action, P e
 	@Override
 	public TransferFunction<S, A, NullPrecision> getTransferFunction() {
 		return transferFunction;
-	}
-
-	@Override
-	public LTS<? super S, ? extends A> getActionFunction() {
-		return analysis.getActionFunction();
 	}
 
 }

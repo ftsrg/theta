@@ -22,7 +22,7 @@ import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.ArgChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyStatus;
 import hu.bme.mit.theta.analysis.algorithm.impact.PredImpactChecker;
-import hu.bme.mit.theta.analysis.cfa.CfaAction;
+import hu.bme.mit.theta.analysis.cfa.CfaLts;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.impl.NullPrecision;
@@ -61,8 +61,8 @@ public final class CfaPredImpactCheckerTest {
 
 		final ItpSolver solver = Z3SolverFactory.getInstace().createItpSolver();
 
-		final PredImpactChecker<CfaLoc, CfaEdge> checker = PredImpactChecker.create(cfa.getInitLoc(),
-				l -> l.equals(cfa.getErrorLoc()), CfaAction::create, solver);
+		final PredImpactChecker<CfaLoc, CfaEdge> checker = PredImpactChecker.create(CfaLts.getInstance(),
+				cfa.getInitLoc(), l -> l.equals(cfa.getErrorLoc()), solver);
 
 		// Act
 		final SafetyStatus<? extends ExprState, ? extends ExprAction> status = checker

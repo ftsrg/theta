@@ -2,7 +2,6 @@ package hu.bme.mit.theta.analysis.expl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import hu.bme.mit.theta.analysis.LTS;
 import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.Domain;
 import hu.bme.mit.theta.analysis.InitFunction;
@@ -17,22 +16,18 @@ public final class ExplAnalysis implements Analysis<ExplState, ExprAction, ExplP
 	private final Domain<ExplState> domain;
 	private final InitFunction<ExplState, ExplPrecision> initFunction;
 	private final TransferFunction<ExplState, ExprAction, ExplPrecision> transferFunction;
-	private final LTS<? super ExplState, ? extends ExprAction> actionFunction;
 
-	private ExplAnalysis(final Solver solver, final Expr<? extends BoolType> initExpr,
-			final LTS<? super ExplState, ? extends ExprAction> actionFunction) {
+	private ExplAnalysis(final Solver solver, final Expr<? extends BoolType> initExpr) {
 		checkNotNull(solver);
 		checkNotNull(initExpr);
 		this.domain = ExplDomain.getInstance();
 		this.initFunction = ExplInitFunction.create(solver, initExpr);
 		this.transferFunction = ExplTransferFunction.create(solver);
-		this.actionFunction = checkNotNull(actionFunction);
 
 	}
 
-	public static ExplAnalysis create(final Solver solver, final Expr<? extends BoolType> initExpr,
-			final LTS<? super ExplState, ? extends ExprAction> actionFunction) {
-		return new ExplAnalysis(solver, initExpr, actionFunction);
+	public static ExplAnalysis create(final Solver solver, final Expr<? extends BoolType> initExpr) {
+		return new ExplAnalysis(solver, initExpr);
 	}
 
 	@Override
@@ -48,11 +43,6 @@ public final class ExplAnalysis implements Analysis<ExplState, ExprAction, ExplP
 	@Override
 	public TransferFunction<ExplState, ExprAction, ExplPrecision> getTransferFunction() {
 		return transferFunction;
-	}
-
-	@Override
-	public LTS<? super ExplState, ? extends ExprAction> getActionFunction() {
-		return actionFunction;
 	}
 
 }

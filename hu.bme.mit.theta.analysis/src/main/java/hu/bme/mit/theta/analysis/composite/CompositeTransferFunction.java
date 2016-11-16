@@ -12,12 +12,12 @@ import hu.bme.mit.theta.analysis.TransferFunction;
 final class CompositeTransferFunction<S1 extends State, S2 extends State, A extends Action, P1 extends Precision, P2 extends Precision>
 		implements TransferFunction<CompositeState<S1, S2>, A, CompositePrecision<P1, P2>> {
 
-	private final TransferFunction<S1, A, P1> transferFunction1;
-	private final TransferFunction<S2, A, P2> transferFunction2;
+	private final TransferFunction<S1, ? super A, P1> transferFunction1;
+	private final TransferFunction<S2, ? super A, P2> transferFunction2;
 	private final StrengtheningOperator<S1, S2, P1, P2> strenghteningOperator;
 
-	private CompositeTransferFunction(final TransferFunction<S1, A, P1> transferFunction1,
-			final TransferFunction<S2, A, P2> transferFunction2,
+	private CompositeTransferFunction(final TransferFunction<S1, ? super A, P1> transferFunction1,
+			final TransferFunction<S2, ? super A, P2> transferFunction2,
 			final StrengtheningOperator<S1, S2, P1, P2> strenghteningOperator) {
 		this.transferFunction1 = checkNotNull(transferFunction1);
 		this.transferFunction2 = checkNotNull(transferFunction2);
@@ -31,7 +31,8 @@ final class CompositeTransferFunction<S1 extends State, S2 extends State, A exte
 	}
 
 	public static <S1 extends State, S2 extends State, A extends Action, P1 extends Precision, P2 extends Precision> CompositeTransferFunction<S1, S2, A, P1, P2> create(
-			final TransferFunction<S1, A, P1> transferFunction1, final TransferFunction<S2, A, P2> transferFunction2) {
+			final TransferFunction<S1, ? super A, P1> transferFunction1,
+			final TransferFunction<S2, ? super A, P2> transferFunction2) {
 		return new CompositeTransferFunction<>(transferFunction1, transferFunction2, (states, precision) -> states);
 	}
 

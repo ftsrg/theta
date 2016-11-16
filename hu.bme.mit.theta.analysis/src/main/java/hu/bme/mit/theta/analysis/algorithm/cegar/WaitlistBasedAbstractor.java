@@ -7,6 +7,7 @@ import java.util.function.Supplier;
 
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Analysis;
+import hu.bme.mit.theta.analysis.LTS;
 import hu.bme.mit.theta.analysis.Precision;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
@@ -21,18 +22,19 @@ public class WaitlistBasedAbstractor<S extends State, A extends Action, P extend
 	private final Analysis<S, A, ? super P> analysis;
 	private final Supplier<? extends Waitlist<ArgNode<S, A>>> waitlistSupplier;
 
-	private WaitlistBasedAbstractor(final Analysis<S, A, ? super P> analysis, final Predicate<? super S> target,
-			final Supplier<? extends Waitlist<ArgNode<S, A>>> waitlistSupplier) {
+	private WaitlistBasedAbstractor(final LTS<? super S, ? extends A> lts, final Analysis<S, A, ? super P> analysis,
+			final Predicate<? super S> target, final Supplier<? extends Waitlist<ArgNode<S, A>>> waitlistSupplier) {
 		this.analysis = checkNotNull(analysis);
+		checkNotNull(lts);
 		checkNotNull(target);
-		argBuilder = ArgBuilder.create(analysis, target);
+		argBuilder = ArgBuilder.create(lts, analysis, target);
 		this.waitlistSupplier = checkNotNull(waitlistSupplier);
 	}
 
 	public static <S extends State, A extends Action, P extends Precision> WaitlistBasedAbstractor<S, A, P> create(
-			final Analysis<S, A, ? super P> analysis, final Predicate<? super S> target,
-			final Supplier<? extends Waitlist<ArgNode<S, A>>> waitlistSupplier) {
-		return new WaitlistBasedAbstractor<>(analysis, target, waitlistSupplier);
+			final LTS<? super S, ? extends A> lts, final Analysis<S, A, ? super P> analysis,
+			final Predicate<? super S> target, final Supplier<? extends Waitlist<ArgNode<S, A>>> waitlistSupplier) {
+		return new WaitlistBasedAbstractor<>(lts, analysis, target, waitlistSupplier);
 	}
 
 	@Override

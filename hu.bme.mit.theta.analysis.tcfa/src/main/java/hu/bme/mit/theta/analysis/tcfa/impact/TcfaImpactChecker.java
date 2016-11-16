@@ -1,6 +1,7 @@
 package hu.bme.mit.theta.analysis.tcfa.impact;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.expr.impl.Exprs.True;
 
 import java.util.Collections;
 import java.util.function.Predicate;
@@ -12,15 +13,17 @@ import hu.bme.mit.theta.analysis.algorithm.impact.ImpactChecker;
 import hu.bme.mit.theta.analysis.composite.CompositeAnalysis;
 import hu.bme.mit.theta.analysis.composite.CompositePrecision;
 import hu.bme.mit.theta.analysis.composite.CompositeState;
+import hu.bme.mit.theta.analysis.expl.ExplAnalysis;
 import hu.bme.mit.theta.analysis.expl.ExplPrecision;
 import hu.bme.mit.theta.analysis.expl.ExplState;
+import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.impl.FixedPrecisionAnalysis;
 import hu.bme.mit.theta.analysis.impl.NullPrecision;
+import hu.bme.mit.theta.analysis.loc.LocAnalysis;
 import hu.bme.mit.theta.analysis.loc.LocPrecision;
 import hu.bme.mit.theta.analysis.loc.LocState;
 import hu.bme.mit.theta.analysis.tcfa.TcfaAction;
-import hu.bme.mit.theta.analysis.tcfa.TcfaAnalyis;
-import hu.bme.mit.theta.analysis.tcfa.expl.TcfaExplAnalysis;
+import hu.bme.mit.theta.analysis.tcfa.TcfaLts;
 import hu.bme.mit.theta.analysis.tcfa.zone.TcfaZoneAnalysis;
 import hu.bme.mit.theta.analysis.zone.ZonePrecision;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
@@ -39,6 +42,8 @@ public final class TcfaImpactChecker implements
 		checkNotNull(solver);
 		checkNotNull(target);
 
+		final TcfaLts lts = TcfaLts.create(tcfa);
+
 		final ZonePrecision zonePrecision = ZonePrecision.create(Collections.emptySet());
 		final ExplPrecision explPrecision = ExplPrecision.create(tcfa.getDataVars());
 		final CompositePrecision<ZonePrecision, ExplPrecision> compositePrecision = CompositePrecision
@@ -47,18 +52,18 @@ public final class TcfaImpactChecker implements
 				.constant(compositePrecision);
 
 		final Analysis<ZoneState, TcfaAction, ZonePrecision> zoneAnalysis = TcfaZoneAnalysis.getInstance();
-		final Analysis<ExplState, TcfaAction, ExplPrecision> explAnalysis = TcfaExplAnalysis.create(solver);
+		final Analysis<ExplState, ExprAction, ExplPrecision> explAnalysis = ExplAnalysis.create(solver, True());
 		final Analysis<CompositeState<ZoneState, ExplState>, TcfaAction, CompositePrecision<ZonePrecision, ExplPrecision>> compositeAnalysis = CompositeAnalysis
 				.create(zoneAnalysis, explAnalysis);
-		final Analysis<LocState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction, LocPrecision<CompositePrecision<ZonePrecision, ExplPrecision>, TcfaLoc, TcfaEdge>> locAnalysis = TcfaAnalyis
-				.create(tcfa, tcfa.getInitLoc(), compositeAnalysis);
+		final Analysis<LocState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction, LocPrecision<CompositePrecision<ZonePrecision, ExplPrecision>, TcfaLoc, TcfaEdge>> locAnalysis = LocAnalysis
+				.create(tcfa.getInitLoc(), compositeAnalysis);
 
 		final Analysis<LocState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction, NullPrecision> analysis = FixedPrecisionAnalysis
 				.create(locAnalysis, locPrecision);
 
 		final TcfaImpactRefiner refiner = TcfaImpactRefiner.create(tcfa);
 
-		checker = ImpactChecker.create(analysis, refiner, s -> target.test(s.getLoc()));
+		checker = ImpactChecker.create(lts, analysis, refiner, s -> target.test(s.getLoc()));
 	}
 
 	public static TcfaImpactChecker create(final TCFA tcfa, final Solver solver,
