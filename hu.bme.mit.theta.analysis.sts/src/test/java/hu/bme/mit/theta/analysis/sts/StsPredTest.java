@@ -27,13 +27,12 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyStatus;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker;
-import hu.bme.mit.theta.analysis.algorithm.cegar.GlobalPredItpRefinerOp;
-import hu.bme.mit.theta.analysis.algorithm.cegar.RefutationBasedRefiner;
+import hu.bme.mit.theta.analysis.algorithm.cegar.SimplePredItpRefiner;
 import hu.bme.mit.theta.analysis.algorithm.cegar.WaitlistBasedAbstractor;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.ExprStatePredicate;
-import hu.bme.mit.theta.analysis.expr.ItpRefutation;
+import hu.bme.mit.theta.analysis.expr.ExprTraceSeqItpChecker;
 import hu.bme.mit.theta.analysis.pred.PredAnalysis;
 import hu.bme.mit.theta.analysis.pred.PredPrecision;
 import hu.bme.mit.theta.analysis.pred.PredState;
@@ -82,16 +81,15 @@ public class StsPredTest {
 		final Abstractor<PredState, StsAction, SimplePredPrecision> abstractor = WaitlistBasedAbstractor.create(lts,
 				analysis, target, FifoWaitlist.supplier());
 
-		final StsExprSeqConcretizer concretizerOp = new StsExprSeqConcretizer(sts, solver);
-		final GlobalPredItpRefinerOp<StsAction> refinerOp = new GlobalPredItpRefinerOp<>();
-
-		final RefutationBasedRefiner<PredState, StsAction, SimplePredPrecision, ItpRefutation> refiner = new RefutationBasedRefiner<>(
-				concretizerOp, refinerOp);
+		final ExprTraceSeqItpChecker exprTraceChecker = ExprTraceSeqItpChecker.create(And(sts.getInit()),
+				Not(sts.getProp()), solver);
+		final SimplePredItpRefiner<StsAction> refiner = SimplePredItpRefiner.create(exprTraceChecker);
 
 		final SafetyChecker<PredState, StsAction, SimplePredPrecision> checker = CegarChecker.create(abstractor,
 				refiner);
 
 		final SafetyStatus<PredState, StsAction> safetyStatus = checker.check(precision);
+		System.out.println(safetyStatus);
 
 		final ARG<PredState, StsAction> arg = safetyStatus.getArg();
 		assertTrue(isWellLabeled(arg, solver));
