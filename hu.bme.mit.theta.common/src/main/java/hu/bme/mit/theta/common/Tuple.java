@@ -2,17 +2,19 @@ package hu.bme.mit.theta.common;
 
 import static com.google.common.base.Preconditions.checkPositionIndex;
 
-import java.util.Arrays;
-import java.util.StringJoiner;
+import java.util.Iterator;
+import java.util.List;
+
+import com.google.common.collect.ImmutableList;
 
 abstract class Tuple implements Product {
 
 	private volatile int hashCode = 0;
 
-	private final Object[] elems;
+	private final List<Object> elems;
 
 	Tuple(final Object... elems) {
-		this.elems = elems;
+		this.elems = ImmutableList.copyOf(elems);
 	}
 
 	////
@@ -52,13 +54,23 @@ abstract class Tuple implements Product {
 
 	@Override
 	public final int arity() {
-		return elems.length;
+		return elems.size();
 	}
 
 	@Override
 	public final Object elem(final int n) {
-		checkPositionIndex(n, elems.length);
-		return elems[n];
+		checkPositionIndex(n, elems.size());
+		return elems.get(n);
+	}
+
+	@Override
+	public List<Object> toList() {
+		return elems;
+	}
+
+	@Override
+	public Iterator<Object> iterator() {
+		return elems.iterator();
 	}
 
 	@Override
@@ -66,7 +78,7 @@ abstract class Tuple implements Product {
 		int result = hashCode;
 		if (result == 0) {
 			result = arity();
-			result = 31 * hashCode + Arrays.hashCode(elems);
+			result = 31 * hashCode + elems.hashCode();
 			hashCode = result;
 		}
 		return hashCode;
@@ -80,7 +92,7 @@ abstract class Tuple implements Product {
 			return false;
 		} else if (this.getClass() == obj.getClass()) {
 			final Tuple that = (Tuple) obj;
-			return Arrays.equals(this.elems, that.elems);
+			return this.elems.equals(that.elems);
 		} else {
 			return false;
 		}
@@ -88,11 +100,7 @@ abstract class Tuple implements Product {
 
 	@Override
 	public final String toString() {
-		final StringJoiner sj = new StringJoiner(", ", "Tuple(", ")");
-		for (final Object elem : elems) {
-			sj.add(elem.toString());
-		}
-		return sj.toString();
+		return ObjectUtils.toStringBuilder("Tuple").addAll(elems).toString();
 	}
 
 }
