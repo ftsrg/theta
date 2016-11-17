@@ -2,7 +2,7 @@ package hu.bme.mit.theta.common;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public final class Tuple4<T1, T2, T3, T4> extends AbstractTuple implements Product4<T1, T2, T3, T4> {
+public final class Tuple4<T1, T2, T3, T4> extends Tuple implements Product4<T1, T2, T3, T4> {
 
 	Tuple4(final T1 e1, final T2 e2, final T3 e3, final T4 e4) {
 		super(e1, e2, e3, e4);
