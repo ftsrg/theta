@@ -1,5 +1,6 @@
 package hu.bme.mit.theta.common;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkPositionIndex;
 
 import java.util.Iterator;
@@ -7,14 +8,14 @@ import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 
-abstract class Tuple implements Product {
+public abstract class Tuple implements Product, Iterable<Object> {
 
 	private volatile int hashCode = 0;
 
 	private final List<Object> elems;
 
 	Tuple(final Object... elems) {
-		this.elems = ImmutableList.copyOf(elems);
+		this.elems = ImmutableList.copyOf(checkNotNull(elems));
 	}
 
 	////
@@ -59,19 +60,21 @@ abstract class Tuple implements Product {
 
 	@Override
 	public final Object elem(final int n) {
-		checkPositionIndex(n, elems.size());
+		checkPositionIndex(n, arity());
 		return elems.get(n);
 	}
 
 	@Override
-	public List<Object> toList() {
+	public final List<Object> toList() {
 		return elems;
 	}
 
 	@Override
-	public Iterator<Object> iterator() {
+	public final Iterator<Object> iterator() {
 		return elems.iterator();
 	}
+
+	////
 
 	@Override
 	public final int hashCode() {
