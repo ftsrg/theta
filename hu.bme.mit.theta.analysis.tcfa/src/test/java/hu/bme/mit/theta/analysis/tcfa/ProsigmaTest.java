@@ -17,10 +17,8 @@ import hu.bme.mit.theta.analysis.loc.LocAnalysis;
 import hu.bme.mit.theta.analysis.loc.LocPrecision;
 import hu.bme.mit.theta.analysis.loc.LocState;
 import hu.bme.mit.theta.analysis.prod.Prod2Analysis;
-import hu.bme.mit.theta.analysis.prod.Prod2Precision;
 import hu.bme.mit.theta.analysis.prod.Prod2State;
-import hu.bme.mit.theta.analysis.tcfa.TcfaAction;
-import hu.bme.mit.theta.analysis.tcfa.TcfaLts;
+import hu.bme.mit.theta.analysis.prod.ProdPrecision;
 import hu.bme.mit.theta.analysis.tcfa.zone.TcfaZoneAnalysis;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.analysis.zone.ZonePrecision;
@@ -46,7 +44,7 @@ public class ProsigmaTest {
 		final Analysis<LocState<Prod2State<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction, NullPrecision> analysis = FixedPrecisionAnalysis
 				.create(LocAnalysis.create(prosigma.getInitLoc(),
 						Prod2Analysis.create(TcfaZoneAnalysis.getInstance(), ExplAnalysis.create(solver, True()))),
-						LocPrecision.constant(Prod2Precision.create(ZonePrecision.create(prosigma.getClockVars()),
+						LocPrecision.constant(ProdPrecision.of(ZonePrecision.create(prosigma.getClockVars()),
 								ExplPrecision.create(prosigma.getDataVars()))));
 
 		final Abstractor<LocState<Prod2State<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction, NullPrecision> abstractor = WaitlistBasedAbstractor
