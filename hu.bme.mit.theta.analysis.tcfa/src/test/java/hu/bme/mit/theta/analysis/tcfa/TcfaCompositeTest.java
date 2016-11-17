@@ -13,9 +13,6 @@ import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
 import hu.bme.mit.theta.analysis.algorithm.cegar.WaitlistBasedAbstractor;
-import hu.bme.mit.theta.analysis.composite.CompositeAnalysis;
-import hu.bme.mit.theta.analysis.composite.CompositePrecision;
-import hu.bme.mit.theta.analysis.composite.CompositeState;
 import hu.bme.mit.theta.analysis.expl.ExplAnalysis;
 import hu.bme.mit.theta.analysis.expl.ExplPrecision;
 import hu.bme.mit.theta.analysis.expl.ExplState;
@@ -24,6 +21,9 @@ import hu.bme.mit.theta.analysis.impl.NullPrecision;
 import hu.bme.mit.theta.analysis.loc.LocAnalysis;
 import hu.bme.mit.theta.analysis.loc.LocPrecision;
 import hu.bme.mit.theta.analysis.loc.LocState;
+import hu.bme.mit.theta.analysis.prod.Prod2Analysis;
+import hu.bme.mit.theta.analysis.prod.Prod2Precision;
+import hu.bme.mit.theta.analysis.prod.Prod2State;
 import hu.bme.mit.theta.analysis.tcfa.zone.TcfaZoneAnalysis;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.analysis.zone.ZonePrecision;
@@ -50,16 +50,16 @@ public class TcfaCompositeTest {
 
 		final TcfaLts lts = TcfaLts.create(fischer);
 
-		final Analysis<LocState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction, NullPrecision> analysis = FixedPrecisionAnalysis
+		final Analysis<LocState<Prod2State<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction, NullPrecision> analysis = FixedPrecisionAnalysis
 				.create(LocAnalysis.create(fischer.getInitLoc(),
-						CompositeAnalysis.create(TcfaZoneAnalysis.getInstance(), ExplAnalysis.create(solver, True()))),
-						LocPrecision.constant(CompositePrecision.create(ZonePrecision.create(fischer.getClockVars()),
+						Prod2Analysis.create(TcfaZoneAnalysis.getInstance(), ExplAnalysis.create(solver, True()))),
+						LocPrecision.constant(Prod2Precision.create(ZonePrecision.create(fischer.getClockVars()),
 								ExplPrecision.create(fischer.getDataVars()))));
 
-		final Abstractor<LocState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction, NullPrecision> abstractor = WaitlistBasedAbstractor
+		final Abstractor<LocState<Prod2State<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction, NullPrecision> abstractor = WaitlistBasedAbstractor
 				.create(lts, analysis, s -> s.getLoc().getName().equals("(crit, crit)"), FifoWaitlist.supplier());
 
-		final ARG<LocState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction> arg = abstractor
+		final ARG<LocState<Prod2State<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction> arg = abstractor
 				.createArg();
 		abstractor.check(arg, NullPrecision.getInstance());
 

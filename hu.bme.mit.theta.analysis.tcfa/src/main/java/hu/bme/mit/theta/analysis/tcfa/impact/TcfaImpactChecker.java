@@ -10,9 +10,6 @@ import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyStatus;
 import hu.bme.mit.theta.analysis.algorithm.impact.ImpactChecker;
-import hu.bme.mit.theta.analysis.composite.CompositeAnalysis;
-import hu.bme.mit.theta.analysis.composite.CompositePrecision;
-import hu.bme.mit.theta.analysis.composite.CompositeState;
 import hu.bme.mit.theta.analysis.expl.ExplAnalysis;
 import hu.bme.mit.theta.analysis.expl.ExplPrecision;
 import hu.bme.mit.theta.analysis.expl.ExplState;
@@ -22,6 +19,9 @@ import hu.bme.mit.theta.analysis.impl.NullPrecision;
 import hu.bme.mit.theta.analysis.loc.LocAnalysis;
 import hu.bme.mit.theta.analysis.loc.LocPrecision;
 import hu.bme.mit.theta.analysis.loc.LocState;
+import hu.bme.mit.theta.analysis.prod.Prod2Analysis;
+import hu.bme.mit.theta.analysis.prod.Prod2Precision;
+import hu.bme.mit.theta.analysis.prod.Prod2State;
 import hu.bme.mit.theta.analysis.tcfa.TcfaAction;
 import hu.bme.mit.theta.analysis.tcfa.TcfaLts;
 import hu.bme.mit.theta.analysis.tcfa.zone.TcfaZoneAnalysis;
@@ -33,9 +33,9 @@ import hu.bme.mit.theta.formalism.tcfa.TcfaLoc;
 import hu.bme.mit.theta.solver.Solver;
 
 public final class TcfaImpactChecker implements
-		SafetyChecker<LocState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction, NullPrecision> {
+		SafetyChecker<LocState<Prod2State<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction, NullPrecision> {
 
-	private final ImpactChecker<LocState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction, NullPrecision> checker;
+	private final ImpactChecker<LocState<Prod2State<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction, NullPrecision> checker;
 
 	private TcfaImpactChecker(final TCFA tcfa, final Solver solver, final Predicate<? super TcfaLoc> target) {
 		checkNotNull(tcfa);
@@ -46,19 +46,19 @@ public final class TcfaImpactChecker implements
 
 		final ZonePrecision zonePrecision = ZonePrecision.create(Collections.emptySet());
 		final ExplPrecision explPrecision = ExplPrecision.create(tcfa.getDataVars());
-		final CompositePrecision<ZonePrecision, ExplPrecision> compositePrecision = CompositePrecision
+		final Prod2Precision<ZonePrecision, ExplPrecision> compositePrecision = Prod2Precision
 				.create(zonePrecision, explPrecision);
-		final LocPrecision<CompositePrecision<ZonePrecision, ExplPrecision>, TcfaLoc, TcfaEdge> locPrecision = LocPrecision
+		final LocPrecision<Prod2Precision<ZonePrecision, ExplPrecision>, TcfaLoc, TcfaEdge> locPrecision = LocPrecision
 				.constant(compositePrecision);
 
 		final Analysis<ZoneState, TcfaAction, ZonePrecision> zoneAnalysis = TcfaZoneAnalysis.getInstance();
 		final Analysis<ExplState, ExprAction, ExplPrecision> explAnalysis = ExplAnalysis.create(solver, True());
-		final Analysis<CompositeState<ZoneState, ExplState>, TcfaAction, CompositePrecision<ZonePrecision, ExplPrecision>> compositeAnalysis = CompositeAnalysis
+		final Analysis<Prod2State<ZoneState, ExplState>, TcfaAction, Prod2Precision<ZonePrecision, ExplPrecision>> compositeAnalysis = Prod2Analysis
 				.create(zoneAnalysis, explAnalysis);
-		final Analysis<LocState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction, LocPrecision<CompositePrecision<ZonePrecision, ExplPrecision>, TcfaLoc, TcfaEdge>> locAnalysis = LocAnalysis
+		final Analysis<LocState<Prod2State<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction, LocPrecision<Prod2Precision<ZonePrecision, ExplPrecision>, TcfaLoc, TcfaEdge>> locAnalysis = LocAnalysis
 				.create(tcfa.getInitLoc(), compositeAnalysis);
 
-		final Analysis<LocState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction, NullPrecision> analysis = FixedPrecisionAnalysis
+		final Analysis<LocState<Prod2State<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction, NullPrecision> analysis = FixedPrecisionAnalysis
 				.create(locAnalysis, locPrecision);
 
 		final TcfaImpactRefiner refiner = TcfaImpactRefiner.create(tcfa);
@@ -72,7 +72,7 @@ public final class TcfaImpactChecker implements
 	}
 
 	@Override
-	public SafetyStatus<LocState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction> check(
+	public SafetyStatus<LocState<Prod2State<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction> check(
 			final NullPrecision precision) {
 		checkNotNull(precision);
 		return checker.check(precision);

@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.analysis.composite;
+package hu.bme.mit.theta.analysis.prod;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkPositionIndex;
@@ -7,7 +7,7 @@ import hu.bme.mit.theta.analysis.Precision;
 import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.common.Product2;
 
-public final class CompositePrecision<P1 extends Precision, P2 extends Precision>
+public final class Prod2Precision<P1 extends Precision, P2 extends Precision>
 		implements Precision, Product2<P1, P2> {
 
 	private static final int HASH_SEED = 5479;
@@ -17,14 +17,14 @@ public final class CompositePrecision<P1 extends Precision, P2 extends Precision
 	private final P1 prec1;
 	private final P2 prec2;
 
-	private CompositePrecision(final P1 prec1, final P2 prec2) {
+	private Prod2Precision(final P1 prec1, final P2 prec2) {
 		this.prec1 = checkNotNull(prec1);
 		this.prec2 = checkNotNull(prec2);
 	}
 
-	public static <P1 extends Precision, P2 extends Precision> CompositePrecision<P1, P2> create(final P1 prec1,
+	public static <P1 extends Precision, P2 extends Precision> Prod2Precision<P1, P2> create(final P1 prec1,
 			final P2 prec2) {
-		return new CompositePrecision<>(prec1, prec2);
+		return new Prod2Precision<>(prec1, prec2);
 	}
 
 	@Override
@@ -64,8 +64,8 @@ public final class CompositePrecision<P1 extends Precision, P2 extends Precision
 	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
-		} else if (obj instanceof CompositePrecision) {
-			final CompositePrecision<?, ?> that = (CompositePrecision<?, ?>) obj;
+		} else if (obj instanceof Prod2Precision) {
+			final Prod2Precision<?, ?> that = (Prod2Precision<?, ?>) obj;
 			return this.prec1.equals(that.prec1) && this.prec2.equals(that.prec2);
 		} else {
 			return false;
