@@ -7,9 +7,9 @@ import java.util.List;
 
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.impact.ImpactRefiner;
-import hu.bme.mit.theta.analysis.composite.CompositeState;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.loc.LocState;
+import hu.bme.mit.theta.analysis.prod.Prod2State;
 import hu.bme.mit.theta.analysis.tcfa.TcfaAction;
 import hu.bme.mit.theta.analysis.tcfa.zone.TcfaInterpolator;
 import hu.bme.mit.theta.analysis.zone.ZonePrecision;
@@ -19,7 +19,7 @@ import hu.bme.mit.theta.formalism.tcfa.TcfaEdge;
 import hu.bme.mit.theta.formalism.tcfa.TcfaLoc;
 
 public final class TcfaImpactRefiner
-		implements ImpactRefiner<LocState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction> {
+		implements ImpactRefiner<LocState<Prod2State<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction> {
 
 	private final TcfaInterpolator interpolator;
 
@@ -33,25 +33,25 @@ public final class TcfaImpactRefiner
 	}
 
 	@Override
-	public RefinementResult<LocState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction> refine(
-			final Trace<LocState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction> cex) {
+	public RefinementResult<LocState<Prod2State<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction> refine(
+			final Trace<LocState<Prod2State<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction> cex) {
 		final List<TcfaAction> actions = cex.getActions();
 
 		final List<ZoneState> itpZones = interpolator.getInterpolant(actions);
-		final List<LocState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>> refinedStates = new ArrayList<>();
+		final List<LocState<Prod2State<ZoneState, ExplState>, TcfaLoc, TcfaEdge>> refinedStates = new ArrayList<>();
 		for (int i = 0; i < itpZones.size(); i++) {
-			final LocState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge> state = cex.getState(i);
+			final LocState<Prod2State<ZoneState, ExplState>, TcfaLoc, TcfaEdge> state = cex.getState(i);
 
 			final ZoneState zone = state.getState()._1();
 			final ZoneState itpZone = itpZones.get(i);
 			final ZoneState refinedZone = ZoneState.intersection(zone, itpZone);
 
-			final LocState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge> refinedState = state
+			final LocState<Prod2State<ZoneState, ExplState>, TcfaLoc, TcfaEdge> refinedState = state
 					.withState(state.getState().with1(refinedZone));
 			refinedStates.add(refinedState);
 		}
 
-		final Trace<LocState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction> refinedTrace = Trace
+		final Trace<LocState<Prod2State<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction> refinedTrace = Trace
 				.of(refinedStates, actions);
 		return RefinementResult.succesful(refinedTrace);
 	}
