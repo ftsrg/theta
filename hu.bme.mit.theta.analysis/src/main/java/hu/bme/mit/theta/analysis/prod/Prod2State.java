@@ -12,7 +12,7 @@ import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.common.Product2;
 
-public final class Prod2State<S1 extends State, S2 extends State> implements State, Product2<S1, S2> {
+public final class Prod2State<S1 extends State, S2 extends State> implements ProdState, Product2<S1, S2> {
 
 	private static final int HASH_SEED = 7573;
 
