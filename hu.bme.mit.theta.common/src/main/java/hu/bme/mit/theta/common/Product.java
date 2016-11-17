@@ -1,9 +1,13 @@
 package hu.bme.mit.theta.common;
 
-public interface Product {
+import java.util.List;
+
+public interface Product extends Iterable<Object> {
 
 	public int arity();
 
 	public Object elem(int n);
+
+	public List<Object> toList();
 
 }
