@@ -22,6 +22,7 @@ import hu.bme.mit.theta.analysis.loc.LocState;
 import hu.bme.mit.theta.analysis.prod.Prod2Analysis;
 import hu.bme.mit.theta.analysis.prod.Prod2Precision;
 import hu.bme.mit.theta.analysis.prod.Prod2State;
+import hu.bme.mit.theta.analysis.prod.ProdPrecision;
 import hu.bme.mit.theta.analysis.tcfa.TcfaAction;
 import hu.bme.mit.theta.analysis.tcfa.TcfaLts;
 import hu.bme.mit.theta.analysis.tcfa.zone.TcfaZoneAnalysis;
@@ -46,8 +47,8 @@ public final class TcfaImpactChecker implements
 
 		final ZonePrecision zonePrecision = ZonePrecision.create(Collections.emptySet());
 		final ExplPrecision explPrecision = ExplPrecision.create(tcfa.getDataVars());
-		final Prod2Precision<ZonePrecision, ExplPrecision> compositePrecision = Prod2Precision
-				.create(zonePrecision, explPrecision);
+		final Prod2Precision<ZonePrecision, ExplPrecision> compositePrecision = ProdPrecision.of(zonePrecision,
+				explPrecision);
 		final LocPrecision<Prod2Precision<ZonePrecision, ExplPrecision>, TcfaLoc, TcfaEdge> locPrecision = LocPrecision
 				.constant(compositePrecision);
 

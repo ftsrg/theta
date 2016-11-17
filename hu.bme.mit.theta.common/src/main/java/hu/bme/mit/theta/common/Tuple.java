@@ -14,7 +14,7 @@ public abstract class Tuple implements Product, Iterable<Object> {
 
 	private final List<Object> elems;
 
-	Tuple(final Object... elems) {
+	Tuple(final List<? extends Object> elems) {
 		this.elems = ImmutableList.copyOf(checkNotNull(elems));
 	}
 
