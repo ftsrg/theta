@@ -12,10 +12,11 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
 import hu.bme.mit.theta.analysis.State;
+import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.common.Product;
 
-public abstract class ProdState implements State, Product, Iterable<State> {
+public abstract class ProdState implements ExprState, Product, Iterable<State> {
 
 	private static final int HASH_SEED = 7573;
 	private volatile int hashCode = 0;

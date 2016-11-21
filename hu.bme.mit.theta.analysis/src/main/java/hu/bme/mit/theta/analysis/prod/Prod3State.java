@@ -1,9 +1,14 @@
 package hu.bme.mit.theta.analysis.prod;
 
+import static hu.bme.mit.theta.core.expr.impl.Exprs.And;
+
 import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.theta.analysis.State;
+import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.common.Product3;
+import hu.bme.mit.theta.core.expr.Expr;
+import hu.bme.mit.theta.core.type.BoolType;
 
 public final class Prod3State<S1 extends State, S2 extends State, S3 extends State> extends ProdState
 		implements Product3<S1, S2, S3> {
@@ -45,6 +50,20 @@ public final class Prod3State<S1 extends State, S2 extends State, S3 extends Sta
 
 	public <S extends State> Prod3State<S1, S2, S> with3(final S state) {
 		return ProdState.of(_1(), _2(), state);
+	}
+
+	////
+
+	@Override
+	public Expr<? extends BoolType> toExpr() {
+		if (_1() instanceof ExprState && _2() instanceof ExprState && _3() instanceof ExprState) {
+			final ExprState exprState1 = (ExprState) _1();
+			final ExprState exprState2 = (ExprState) _2();
+			final ExprState exprState3 = (ExprState) _3();
+			return And(exprState1.toExpr(), exprState2.toExpr(), exprState3.toExpr());
+		} else {
+			throw new UnsupportedOperationException();
+		}
 	}
 
 }
