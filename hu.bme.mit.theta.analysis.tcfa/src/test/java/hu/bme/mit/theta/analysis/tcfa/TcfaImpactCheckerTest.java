@@ -4,11 +4,15 @@ import static hu.bme.mit.theta.core.decl.impl.Decls.Var;
 import static hu.bme.mit.theta.core.type.impl.Types.Int;
 import static org.junit.Assert.assertTrue;
 
-import org.junit.Ignore;
+import java.util.Collections;
+
 import org.junit.Test;
 
 import hu.bme.mit.theta.analysis.algorithm.ARG;
+import hu.bme.mit.theta.analysis.algorithm.ArgChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyStatus;
+import hu.bme.mit.theta.analysis.expr.ExprAction;
+import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.impl.NullPrecision;
 import hu.bme.mit.theta.analysis.tcfa.impact.TcfaImpactChecker;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
@@ -22,21 +26,29 @@ import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 public final class TcfaImpactCheckerTest {
 
 	@Test
-	@Ignore
 	public void test() {
+		// Arrange
 		final int n = 2;
 		final VarDecl<IntType> vlock = Var("lock", Int());
 		final TCFA fischer = TcfaTestHelper.fischer(n, vlock);
 
 		final Solver solver = Z3SolverFactory.getInstace().createSolver();
 
+		final String errorLabel = String.join("_", Collections.nCopies(n, "crit"));
 		final TcfaImpactChecker checker = TcfaImpactChecker.create(fischer, solver,
-				l -> l.getName().equals("crit_crit"));
+				l -> l.getName().equals(errorLabel));
 
-		final SafetyStatus<?, ?> status = checker.check(NullPrecision.getInstance());
+		// Act
+		final SafetyStatus<? extends ExprState, ? extends ExprAction> status = checker
+				.check(NullPrecision.getInstance());
 
+		// Assert
 		assertTrue(status.isSafe());
-		final ARG<?, ?> arg = status.asSafe().getArg();
+		final ARG<? extends ExprState, ? extends ExprAction> arg = status.getArg();
+		arg.minimize();
+
+		final ArgChecker argChecker = ArgChecker.create(solver);
+		assertTrue(argChecker.isWellLabeled(arg));
 
 		System.out.println(new GraphvizWriter().writeString(ArgVisualizer.visualize(arg)));
 	}
