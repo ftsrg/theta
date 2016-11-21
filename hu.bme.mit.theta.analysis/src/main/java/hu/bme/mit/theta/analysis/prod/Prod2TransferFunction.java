@@ -37,8 +37,8 @@ final class Prod2TransferFunction<S1 extends State, S2 extends State, A extends 
 	}
 
 	@Override
-	public Collection<? extends Prod2State<S1, S2>> getSuccStates(final Prod2State<S1, S2> state,
-			final A action, final Prod2Precision<P1, P2> precision) {
+	public Collection<? extends Prod2State<S1, S2>> getSuccStates(final Prod2State<S1, S2> state, final A action,
+			final Prod2Precision<P1, P2> precision) {
 		checkNotNull(state);
 		checkNotNull(action);
 		checkNotNull(precision);
@@ -47,7 +47,7 @@ final class Prod2TransferFunction<S1 extends State, S2 extends State, A extends 
 				precision._1());
 		final Collection<? extends S2> succStates2 = transferFunction2.getSuccStates(state._2(), action,
 				precision._2());
-		final Collection<Prod2State<S1, S2>> compositeIniStates = Prod2State.product(succStates1, succStates2);
+		final Collection<Prod2State<S1, S2>> compositeIniStates = ProdState.product(succStates1, succStates2);
 		return strenghteningOperator.strengthen(compositeIniStates, precision);
 	}
 

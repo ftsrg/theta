@@ -39,7 +39,7 @@ final class Prod2InitFunction<S1 extends State, S2 extends State, P1 extends Pre
 
 		final Collection<? extends S1> initStates1 = initFunction1.getInitStates(precision._1());
 		final Collection<? extends S2> initStates2 = initFunction2.getInitStates(precision._2());
-		final Collection<Prod2State<S1, S2>> compositeIniStates = Prod2State.product(initStates1, initStates2);
+		final Collection<Prod2State<S1, S2>> compositeIniStates = ProdState.product(initStates1, initStates2);
 		return strenghteningOperator.strengthen(compositeIniStates, precision);
 	}
 
