@@ -2,11 +2,13 @@ package hu.bme.mit.theta.analysis.algorithm.cegar;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 import java.util.stream.Collectors;
 
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
+import hu.bme.mit.theta.analysis.algorithm.ArgNode;
 import hu.bme.mit.theta.analysis.algorithm.ArgTrace;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprTraceChecker;
@@ -47,7 +49,10 @@ public class SimplePredItpRefiner<A extends ExprAction> implements Refiner<PredS
 			final ItpRefutation interpolant = cexStatus.asInfeasible().getRefutation();
 			final SimplePredPrecision refinedPrecision = precision
 					.refine(interpolant.stream().filter(p -> !(p instanceof BoolLitExpr)).collect(Collectors.toSet()));
-			// TODO: prune ARG
+			final int pruneIndex = interpolant.getPruneIndex();
+			checkState(0 <= pruneIndex && pruneIndex <= cexToConcretize.length());
+			final ArgNode<PredState, A> nodeToPrune = cexToConcretize.node(pruneIndex);
+			arg.prune(nodeToPrune);
 			return RefinerResult.spurious(refinedPrecision);
 		} else {
 			throw new IllegalStateException("Unknown status.");
