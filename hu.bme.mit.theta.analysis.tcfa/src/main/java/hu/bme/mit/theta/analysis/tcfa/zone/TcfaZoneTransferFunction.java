@@ -41,15 +41,23 @@ final class TcfaZoneTransferFunction implements TransferFunction<ZoneState, Tcfa
 	ZoneState post(final ZoneState state, final TcfaAction action, final ZonePrecision precision) {
 		final ZoneState.ZoneOperations succStateBuilder = state.project(precision.getClocks());
 
-		if (!action.getEdge().getSource().isUrgent()) {
-			succStateBuilder.up();
-		}
-
 		for (final TcfaExpr invar : action.getSourceInvars()) {
 			if (invar.isClockExpr()) {
 				final ClockExpr clockExpr = invar.asClockExpr();
 				final ClockConstr constr = clockExpr.getClockConstr();
 				succStateBuilder.and(constr);
+			}
+		}
+
+		if (!action.getEdge().getSource().isUrgent()) {
+			succStateBuilder.up();
+
+			for (final TcfaExpr invar : action.getSourceInvars()) {
+				if (invar.isClockExpr()) {
+					final ClockExpr clockExpr = invar.asClockExpr();
+					final ClockConstr constr = clockExpr.getClockConstr();
+					succStateBuilder.and(constr);
+				}
 			}
 		}
 

@@ -5,6 +5,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.common.collect.Lists;
+
 import hu.bme.mit.theta.analysis.Domain;
 import hu.bme.mit.theta.analysis.TransferFunction;
 import hu.bme.mit.theta.analysis.tcfa.TcfaAction;
@@ -65,7 +67,7 @@ public final class TcfaInterpolator {
 		ZoneState lastState = ZoneState.top();
 		backwardStates.add(lastState);
 
-		for (final TcfaAction action : actions) {
+		for (final TcfaAction action : Lists.reverse(actions)) {
 			lastState = TcfaZoneBackwardTransferFunction.getInstance().pre(lastState, action, precision);
 			backwardStates.add(0, lastState);
 		}

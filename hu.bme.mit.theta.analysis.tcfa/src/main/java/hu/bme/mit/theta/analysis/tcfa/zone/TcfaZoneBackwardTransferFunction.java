@@ -46,6 +46,14 @@ final class TcfaZoneBackwardTransferFunction implements TransferFunction<ZoneSta
 	ZoneState pre(final ZoneState state, final TcfaAction action, final ZonePrecision precision) {
 		final ZoneState.ZoneOperations prevStateBuilder = state.project(precision.getClocks());
 
+		for (final TcfaExpr invar : action.getTargetInvars()) {
+			if (invar.isClockExpr()) {
+				final ClockExpr clockExpr = invar.asClockExpr();
+				final ClockConstr constr = clockExpr.getClockConstr();
+				prevStateBuilder.and(constr);
+			}
+		}
+
 		for (final TcfaStmt tcfaStmt : Lists.reverse(action.getTcfaStmts())) {
 			if (tcfaStmt.isClockStmt()) {
 				final ClockOp op = tcfaStmt.asClockStmt().getClockOp();
@@ -57,7 +65,8 @@ final class TcfaZoneBackwardTransferFunction implements TransferFunction<ZoneSta
 					prevStateBuilder.free(clock);
 
 				} else if (op instanceof GuardOp) {
-					prevStateBuilder.execute(op);
+					final GuardOp guardOp = (GuardOp) op;
+					prevStateBuilder.and(guardOp.getConstr());
 
 				} else {
 					throw new AssertionError();
@@ -65,7 +74,7 @@ final class TcfaZoneBackwardTransferFunction implements TransferFunction<ZoneSta
 			}
 		}
 
-		for (final TcfaExpr invar : action.getTargetInvars()) {
+		for (final TcfaExpr invar : action.getSourceInvars()) {
 			if (invar.isClockExpr()) {
 				final ClockExpr clockExpr = invar.asClockExpr();
 				final ClockConstr constr = clockExpr.getClockConstr();
@@ -75,13 +84,13 @@ final class TcfaZoneBackwardTransferFunction implements TransferFunction<ZoneSta
 
 		if (!action.getEdge().getSource().isUrgent()) {
 			prevStateBuilder.down();
-		}
 
-		for (final TcfaExpr invar : action.getSourceInvars()) {
-			if (invar.isClockExpr()) {
-				final ClockExpr clockExpr = invar.asClockExpr();
-				final ClockConstr constr = clockExpr.getClockConstr();
-				prevStateBuilder.and(constr);
+			for (final TcfaExpr invar : action.getSourceInvars()) {
+				if (invar.isClockExpr()) {
+					final ClockExpr clockExpr = invar.asClockExpr();
+					final ClockConstr constr = clockExpr.getClockConstr();
+					prevStateBuilder.and(constr);
+				}
 			}
 		}
 

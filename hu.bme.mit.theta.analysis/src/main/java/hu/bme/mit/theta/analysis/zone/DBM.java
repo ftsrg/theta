@@ -172,17 +172,17 @@ final class DBM {
 			return false;
 		}
 
-		for (final ClockDecl clock : signature) {
-			if (this.constrains(clock)) {
-				if (!dbmA.constrains(clock)) {
-					return false;
-				}
-
-				if (!dbmB.constrains(clock)) {
-					return false;
-				}
-			}
-		}
+		// for (final ClockDecl clock : signature) {
+		// if (this.constrains(clock)) {
+		// if (!dbmA.constrains(clock)) {
+		// return false;
+		// }
+		//
+		// if (!dbmB.constrains(clock)) {
+		// return false;
+		// }
+		// }
+		// }
 
 		return true;
 	}
@@ -452,7 +452,7 @@ final class DBM {
 
 		@Override
 		public Void visit(final FalseConstr constr, final DBM dbm) {
-			dbm.dbm.and(0, 0, -1);
+			dbm.dbm.and(0, 0, Lt(-1));
 			return null;
 		}
 
