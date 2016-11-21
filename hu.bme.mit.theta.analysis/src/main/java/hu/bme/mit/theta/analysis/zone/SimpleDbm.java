@@ -142,7 +142,7 @@ final class SimpleDbm {
 			for (int i = 0; i <= nClocks; i++) {
 				if (i != x) {
 					matrix.set(x, i, Inf());
-					matrix.set(i, x, matrix.get(i, 0));
+					matrix.set(i, x, Inf());
 				}
 			}
 			assert isClosed();
