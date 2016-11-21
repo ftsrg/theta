@@ -5,7 +5,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import hu.bme.mit.theta.analysis.Domain;
 import hu.bme.mit.theta.analysis.State;
 
-public final class Prod2Domain<S1 extends State, S2 extends State> implements Domain<Prod2State<S1, S2>> {
+final class Prod2Domain<S1 extends State, S2 extends State> implements Domain<Prod2State<S1, S2>> {
 
 	private final Domain<S1> domain1;
 	private final Domain<S2> domain2;

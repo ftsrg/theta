@@ -17,8 +17,7 @@ public final class Prod2Analysis<S1 extends State, S2 extends State, A extends A
 	private final InitFunction<Prod2State<S1, S2>, Prod2Precision<P1, P2>> initFunction;
 	private final TransferFunction<Prod2State<S1, S2>, A, Prod2Precision<P1, P2>> transferFunction;
 
-	private Prod2Analysis(final Analysis<S1, ? super A, P1> analysis1,
-			final Analysis<S2, ? super A, P2> analysis2) {
+	private Prod2Analysis(final Analysis<S1, ? super A, P1> analysis1, final Analysis<S2, ? super A, P2> analysis2) {
 		checkNotNull(analysis1);
 		checkNotNull(analysis2);
 		domain = Prod2Domain.create(analysis1.getDomain(), analysis2.getDomain());

@@ -25,9 +25,14 @@ public abstract class ProdPrecision implements Precision, Product, Iterable<Prec
 
 	////
 
-	public static <P1 extends Precision, P2 extends Precision> Prod2Precision<P1, P2> of(final P1 prec1,
-			final P2 prec2) {
-		return new Prod2Precision<>(prec1, prec2);
+	public static <P1 extends Precision, P2 extends Precision> Prod2Precision<P1, P2> of(final P1 precision1,
+			final P2 precision2) {
+		return new Prod2Precision<>(precision1, precision2);
+	}
+
+	public static <P1 extends Precision, P2 extends Precision, P3 extends Precision> Prod3Precision<P1, P2, P3> of(
+			final P1 precision1, final P2 precision2, final P3 precision3) {
+		return new Prod3Precision<>(precision1, precision2, precision3);
 	}
 
 	////
