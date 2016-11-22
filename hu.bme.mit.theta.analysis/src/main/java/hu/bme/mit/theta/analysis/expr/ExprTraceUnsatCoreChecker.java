@@ -50,7 +50,7 @@ public class ExprTraceUnsatCoreChecker implements ExprTraceChecker<UnsatCoreRefu
 		for (int i = 0; i < stateCount; ++i) {
 			solver.track(PathUtils.unfold(trace.getState(i).toExpr(), indexings.get(i)));
 			if (i > 0) {
-				solver.track(PathUtils.unfold(trace.getAction(i).toExpr(), indexings.get(i - 1)));
+				solver.track(PathUtils.unfold(trace.getAction(i - 1).toExpr(), indexings.get(i - 1)));
 			}
 
 			if (solver.check().isSat()) {
