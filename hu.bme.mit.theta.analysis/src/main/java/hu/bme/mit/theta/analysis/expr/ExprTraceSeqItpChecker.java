@@ -73,7 +73,7 @@ public class ExprTraceSeqItpChecker implements ExprTraceChecker<ItpRefutation> {
 			for (final VarIndexing indexing : indexings) {
 				builder.add(PathUtils.extractValuation(model, indexing));
 			}
-			return ExprTraceStatus2.feasible(builder.build());
+			status = ExprTraceStatus2.feasible(builder.build());
 		} else {
 			final List<Expr<? extends BoolType>> interpolants = new ArrayList<>();
 			final Interpolant interpolant = solver.getInterpolant(pattern);
