@@ -39,17 +39,16 @@ public class ExprTraceUnsatCoreChecker implements ExprTraceChecker<UnsatCoreRefu
 	@Override
 	public ExprTraceStatus2<UnsatCoreRefutation> check(final Trace<? extends ExprState, ? extends ExprAction> trace) {
 		checkNotNull(trace);
+		final int stateCount = trace.getStates().size();
 
-		VarIndexing currentIndexing = VarIndexing.all(0);
-		final List<VarIndexing> indexings = new ArrayList<>(trace.getStates().size());
-		indexings.add(currentIndexing);
+		final List<VarIndexing> indexings = new ArrayList<>(stateCount);
+		indexings.add(VarIndexing.all(0));
 
 		int satPrefix = -1;
-
 		solver.push();
-		solver.track(PathUtils.unfold(init, currentIndexing));
-		for (int i = 0; i < trace.getStates().size(); ++i) {
-			solver.track(PathUtils.unfold(trace.getState(i).toExpr(), currentIndexing));
+		solver.track(PathUtils.unfold(init, indexings.get(0)));
+		for (int i = 0; i < stateCount; ++i) {
+			solver.track(PathUtils.unfold(trace.getState(i).toExpr(), indexings.get(i)));
 			if (i > 0) {
 				solver.track(PathUtils.unfold(trace.getAction(i).toExpr(), indexings.get(i - 1)));
 			}
@@ -60,22 +59,21 @@ public class ExprTraceUnsatCoreChecker implements ExprTraceChecker<UnsatCoreRefu
 				break;
 			}
 
-			if (i < trace.getStates().size() - 1) {
-				currentIndexing = currentIndexing.add(trace.getAction(i).nextIndexing());
-				indexings.add(currentIndexing);
+			if (i < stateCount - 1) {
+				indexings.add(indexings.get(i).add(trace.getAction(i).nextIndexing()));
 			}
 		}
 
 		boolean concretizable;
 
-		if (satPrefix == trace.getStates().size() - 1) {
-			solver.track(PathUtils.unfold(target, currentIndexing));
+		if (satPrefix == stateCount - 1) {
+			solver.track(PathUtils.unfold(target, indexings.get(stateCount - 1)));
 			concretizable = solver.check().isSat();
 		} else {
 			concretizable = false;
 		}
 
-		assert 0 <= satPrefix && satPrefix < trace.getStates().size();
+		assert 0 <= satPrefix && satPrefix < stateCount;
 
 		ExprTraceStatus2<UnsatCoreRefutation> status = null;
 
