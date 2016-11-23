@@ -3,9 +3,7 @@ package hu.bme.mit.theta.common.logging.impl;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 
-import hu.bme.mit.theta.common.logging.Logger;
-
-public final class FileLogger extends MinLevelBasedLogger implements Logger {
+public final class FileLogger extends MinLevelBasedLogger {
 	private final PrintWriter pw;
 	private final boolean instantFlush;
 
