@@ -20,7 +20,7 @@ import java.util.Map;
 public final class GraphvizWriter extends AbstractGraphWriter {
 
 	public static enum Format {
-		PDF("Tpdf"), PNG("Tpng");
+		PDF("Tpdf"), PNG("Tpng"), SVG("Tsvg"), GIF("Tgif"), EPS("Teps"), JPG("Tjpg");
 
 		private final String option;
 
