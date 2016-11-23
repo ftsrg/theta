@@ -1,5 +1,6 @@
 package hu.bme.mit.theta.solver.z3;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
@@ -8,12 +9,20 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Optional;
 
+import com.google.common.collect.ImmutableList;
+import com.microsoft.z3.FuncDecl;
 import com.microsoft.z3.Status;
 
+import hu.bme.mit.theta.core.decl.ConstDecl;
+import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.expr.Expr;
+import hu.bme.mit.theta.core.expr.LitExpr;
 import hu.bme.mit.theta.core.model.Model;
+import hu.bme.mit.theta.core.model.impl.AbstractModel;
 import hu.bme.mit.theta.core.type.BoolType;
+import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverStatus;
 import hu.bme.mit.theta.solver.Stack;
@@ -144,7 +153,7 @@ final class Z3Solver implements Solver {
 		final com.microsoft.z3.Model z3Model = z3Solver.getModel();
 		assert z3Model != null;
 
-		return new Z3Model(symbolTable, transformationManager, termTransformer, z3Model);
+		return new Z3Model(z3Model);
 	}
 
 	@Override
@@ -191,6 +200,65 @@ final class Z3Solver implements Solver {
 		status = null;
 		model = null;
 		unsatCore = null;
+	}
+
+	////
+
+	private final class Z3Model extends AbstractModel {
+		final com.microsoft.z3.Model z3Model;
+
+		final Collection<ConstDecl<?>> constDecls;
+		final Map<ConstDecl<?>, LitExpr<?>> constToExpr;
+
+		public Z3Model(final com.microsoft.z3.Model z3Model) {
+			this.z3Model = z3Model;
+			constDecls = constDeclsOf(z3Model);
+			constToExpr = new HashMap<>();
+		}
+
+		@Override
+		public Collection<? extends ConstDecl<?>> getDecls() {
+			return constDecls;
+		}
+
+		@Override
+		public <DeclType extends Type> Optional<LitExpr<DeclType>> eval(final Decl<DeclType> decl) {
+			checkNotNull(decl);
+			checkArgument(decl instanceof ConstDecl<?>);
+
+			final ConstDecl<DeclType> constDecl = (ConstDecl<DeclType>) decl;
+
+			LitExpr<?> val = constToExpr.get(constDecl);
+			if (val == null) {
+				final FuncDecl funcDecl = transformationManager.toSymbol(constDecl);
+				final com.microsoft.z3.Expr term = z3Model.getConstInterp(funcDecl);
+				if (term != null) {
+					val = (LitExpr<?>) termTransformer.toExpr(term);
+					constToExpr.put(constDecl, val);
+				}
+			}
+
+			@SuppressWarnings("unchecked")
+			final LitExpr<DeclType> tVal = (LitExpr<DeclType>) val;
+			return Optional.of(tVal);
+		}
+
+		////
+
+		private Collection<ConstDecl<?>> constDeclsOf(final com.microsoft.z3.Model z3Model) {
+			final ImmutableList.Builder<ConstDecl<?>> builder = ImmutableList.builder();
+			for (final com.microsoft.z3.FuncDecl symbol : z3Model.getDecls()) {
+				if (symbolTable.definesSymbol(symbol)) {
+					final ConstDecl<?> constDecl = symbolTable.getConst(symbol);
+					builder.add(constDecl);
+				} else {
+					if (!assumptions.containsKey(symbol.getName().toString())) {
+						throw new AssertionError();
+					}
+				}
+			}
+			return builder.build();
+		}
 	}
 
 }
