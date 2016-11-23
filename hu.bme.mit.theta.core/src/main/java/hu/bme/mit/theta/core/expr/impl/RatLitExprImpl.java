@@ -1,6 +1,7 @@
 package hu.bme.mit.theta.core.expr.impl;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static hu.bme.mit.theta.core.expr.impl.Exprs.Rat;
 
 import com.google.common.math.LongMath;
 
@@ -39,6 +40,61 @@ final class RatLitExprImpl extends AbstractNullaryExpr<RatType> implements RatLi
 	@Override
 	public long getDenom() {
 		return denom;
+	}
+
+	@Override
+	public int sign() {
+		return (num < 0) ? -1 : (num == 0) ? 0 : 1;
+	}
+
+	@Override
+	public long floor() {
+		if (num >= 0 || num % denom == 0) {
+			return num / denom;
+		} else {
+			return num / denom - 1;
+		}
+	}
+
+	@Override
+	public long ceil() {
+		if (num <= 0 || num % denom == 0) {
+			return num / denom;
+		} else {
+			return num / denom + 1;
+		}
+	}
+
+	@Override
+	public RatLitExpr add(final RatLitExpr that) {
+		return Rat(this.getNum() * that.getDenom() + this.getDenom() * that.getNum(),
+				this.getDenom() * that.getDenom());
+	}
+
+	@Override
+	public RatLitExpr sub(final RatLitExpr that) {
+		return Rat(this.getNum() * that.getDenom() - this.getDenom() * that.getNum(),
+				this.getDenom() * that.getDenom());
+	}
+
+	@Override
+	public RatLitExpr mul(final RatLitExpr that) {
+		return Rat(this.getNum() * that.getNum(), this.getDenom() * that.getDenom());
+	}
+
+	@Override
+	public RatLitExpr div(final RatLitExpr that) {
+		return Rat(this.getNum() * that.getDenom(), this.getDenom() * that.getNum());
+	}
+
+	@Override
+	public RatLitExpr abs() {
+		return Rat(Math.abs(num), denom);
+	}
+
+	@Override
+	public RatLitExpr frac() {
+		return sub(Rat(floor(), 1));
 	}
 
 	@Override
