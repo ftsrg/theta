@@ -1,8 +1,6 @@
 package hu.bme.mit.theta.common.logging.impl;
 
-import hu.bme.mit.theta.common.logging.Logger;
-
-public final class ConsoleLogger extends MinLevelBasedLogger implements Logger {
+public final class ConsoleLogger extends MinLevelBasedLogger {
 
 	public ConsoleLogger(final int minLevel) {
 		super(minLevel);

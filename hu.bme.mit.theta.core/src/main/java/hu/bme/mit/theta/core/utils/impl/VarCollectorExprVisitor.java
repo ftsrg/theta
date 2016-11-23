@@ -16,10 +16,8 @@ import hu.bme.mit.theta.core.expr.ProcCallExpr;
 import hu.bme.mit.theta.core.expr.UnaryExpr;
 import hu.bme.mit.theta.core.expr.VarRefExpr;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.utils.ExprVisitor;
 
-final class VarCollectorExprVisitor extends ArityBasedExprVisitor<Collection<VarDecl<? extends Type>>, Void>
-		implements ExprVisitor<Collection<VarDecl<? extends Type>>, Void> {
+final class VarCollectorExprVisitor extends ArityBasedExprVisitor<Collection<VarDecl<? extends Type>>, Void> {
 
 	private static final VarCollectorExprVisitor INSTANCE;
 

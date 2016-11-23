@@ -31,7 +31,7 @@ abstract class AbstractTuple implements Product {
 		int result = hashCode;
 		if (result == 0) {
 			result = arity();
-			result = 31 * hashCode + Arrays.hashCode(elems);
+			result = 31 * result + Arrays.hashCode(elems);
 			hashCode = result;
 		}
 		return hashCode;
