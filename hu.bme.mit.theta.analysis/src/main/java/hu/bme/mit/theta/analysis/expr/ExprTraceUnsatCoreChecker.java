@@ -1,6 +1,8 @@
 package hu.bme.mit.theta.analysis.expr;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,27 +42,27 @@ public class ExprTraceUnsatCoreChecker implements ExprTraceChecker<UnsatCoreRefu
 	public ExprTraceStatus2<UnsatCoreRefutation> check(final Trace<? extends ExprState, ? extends ExprAction> trace) {
 		checkNotNull(trace);
 		final int stateCount = trace.getStates().size();
+		checkArgument(stateCount > 0);
 
 		final List<VarIndexing> indexings = new ArrayList<>(stateCount);
 		indexings.add(VarIndexing.all(0));
 
-		int satPrefix = -1;
 		solver.push();
+
 		solver.track(PathUtils.unfold(init, indexings.get(0)));
-		for (int i = 0; i < stateCount; ++i) {
+		solver.track(PathUtils.unfold(trace.getState(0).toExpr(), indexings.get(0)));
+		checkState(solver.check().isSat());
+		int satPrefix = 0;
+
+		for (int i = 1; i < stateCount; ++i) {
+			indexings.add(indexings.get(i - 1).add(trace.getAction(i - 1).nextIndexing()));
 			solver.track(PathUtils.unfold(trace.getState(i).toExpr(), indexings.get(i)));
-			if (i > 0) {
-				solver.track(PathUtils.unfold(trace.getAction(i - 1).toExpr(), indexings.get(i - 1)));
-			}
+			solver.track(PathUtils.unfold(trace.getAction(i - 1).toExpr(), indexings.get(i - 1)));
 
 			if (solver.check().isSat()) {
 				satPrefix = i;
 			} else {
 				break;
-			}
-
-			if (i < stateCount - 1) {
-				indexings.add(indexings.get(i).add(trace.getAction(i).nextIndexing()));
 			}
 		}
 
