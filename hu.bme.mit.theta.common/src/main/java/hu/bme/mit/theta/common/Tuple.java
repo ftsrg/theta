@@ -81,7 +81,7 @@ public abstract class Tuple implements Product, Iterable<Object> {
 		int result = hashCode;
 		if (result == 0) {
 			result = arity();
-			result = 31 * hashCode + elems.hashCode();
+			result = 31 * result + elems.hashCode();
 			hashCode = result;
 		}
 		return hashCode;
