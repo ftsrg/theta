@@ -17,11 +17,18 @@ import hu.bme.mit.theta.core.type.BoolType;
 public final class ItpRefutation implements Refutation, Iterable<Expr<? extends BoolType>> {
 
 	private final List<Expr<? extends BoolType>> itpSequence;
+	private final int pruneIndex;
 
 	private ItpRefutation(final List<Expr<? extends BoolType>> itpSequence) {
 		checkNotNull(itpSequence);
 		checkArgument(itpSequence.size() > 0);
 		this.itpSequence = Collections.unmodifiableList(itpSequence);
+		int i = 0;
+		while (i < itpSequence.size() && itpSequence.get(i).equals(Exprs.True())) {
+			++i;
+		}
+		this.pruneIndex = i;
+		assert 0 <= this.pruneIndex && this.pruneIndex < itpSequence.size();
 	}
 
 	public static ItpRefutation sequence(final List<Expr<? extends BoolType>> itpSequence) {
@@ -67,5 +74,10 @@ public final class ItpRefutation implements Refutation, Iterable<Expr<? extends 
 
 	public Stream<Expr<? extends BoolType>> stream() {
 		return itpSequence.stream();
+	}
+
+	@Override
+	public int getPruneIndex() {
+		return pruneIndex;
 	}
 }

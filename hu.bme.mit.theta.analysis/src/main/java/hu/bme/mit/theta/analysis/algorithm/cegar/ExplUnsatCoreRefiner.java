@@ -13,20 +13,20 @@ import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprTraceChecker;
 import hu.bme.mit.theta.analysis.expr.ExprTraceStatus2;
-import hu.bme.mit.theta.analysis.expr.ItpRefutation;
+import hu.bme.mit.theta.analysis.expr.UnsatCoreRefutation;
 import hu.bme.mit.theta.core.utils.impl.ExprUtils;
 
-public class ExplItpRefiner<A extends ExprAction> implements Refiner<ExplState, A, ExplPrecision> {
+public class ExplUnsatCoreRefiner<A extends ExprAction> implements Refiner<ExplState, A, ExplPrecision> {
 
-	ExprTraceChecker<ItpRefutation> exprTraceChecker;
+	ExprTraceChecker<UnsatCoreRefutation> exprTraceChecker;
 
-	private ExplItpRefiner(final ExprTraceChecker<ItpRefutation> exprTraceChecker) {
+	private ExplUnsatCoreRefiner(final ExprTraceChecker<UnsatCoreRefutation> exprTraceChecker) {
 		this.exprTraceChecker = checkNotNull(exprTraceChecker);
 	}
 
-	public static <A extends ExprAction> ExplItpRefiner<A> create(
-			final ExprTraceChecker<ItpRefutation> exprTraceChecker) {
-		return new ExplItpRefiner<>(exprTraceChecker);
+	public static <A extends ExprAction> ExplUnsatCoreRefiner<A> create(
+			final ExprTraceChecker<UnsatCoreRefutation> exprTraceChecker) {
+		return new ExplUnsatCoreRefiner<>(exprTraceChecker);
 	}
 
 	@Override
@@ -39,15 +39,15 @@ public class ExplItpRefiner<A extends ExprAction> implements Refiner<ExplState, 
 		final ArgTrace<ExplState, A> cexToConcretize = arg.getCexs().findFirst().get();
 		final Trace<ExplState, A> traceToConcretize = cexToConcretize.toTrace();
 
-		final ExprTraceStatus2<ItpRefutation> cexStatus = exprTraceChecker.check(traceToConcretize);
+		final ExprTraceStatus2<UnsatCoreRefutation> cexStatus = exprTraceChecker.check(traceToConcretize);
 
 		if (cexStatus.isFeasible()) {
 			return RefinerResult.unsafe(traceToConcretize);
 		} else if (cexStatus.isInfeasible()) {
-			final ItpRefutation interpolant = cexStatus.asInfeasible().getRefutation();
+			final UnsatCoreRefutation refutation = cexStatus.asInfeasible().getRefutation();
 
-			final ExplPrecision refinedPrecision = precision.refine(ExprUtils.getVars(interpolant));
-			final int pruneIndex = interpolant.getPruneIndex();
+			final ExplPrecision refinedPrecision = precision.refine(ExprUtils.getVars(refutation.getUnsatCore()));
+			final int pruneIndex = refutation.getPruneIndex();
 			checkState(0 <= pruneIndex && pruneIndex <= cexToConcretize.length());
 			final ArgNode<ExplState, A> nodeToPrune = cexToConcretize.node(pruneIndex);
 			arg.prune(nodeToPrune);

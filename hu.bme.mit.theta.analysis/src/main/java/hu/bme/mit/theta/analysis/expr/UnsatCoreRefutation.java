@@ -15,15 +15,18 @@ import hu.bme.mit.theta.core.type.BoolType;
 public class UnsatCoreRefutation implements Refutation, Iterable<Expr<? extends BoolType>> {
 
 	private final Collection<Expr<? extends BoolType>> unsatCore;
+	private final int pruneIndex;
 
-	private UnsatCoreRefutation(final Collection<Expr<? extends BoolType>> unsatCore) {
+	private UnsatCoreRefutation(final Collection<Expr<? extends BoolType>> unsatCore, final int pruneIndex) {
 		checkNotNull(unsatCore);
 		checkArgument(unsatCore.size() > 0);
 		this.unsatCore = ImmutableSet.copyOf(unsatCore);
+		this.pruneIndex = pruneIndex;
 	}
 
-	public static UnsatCoreRefutation create(final Collection<Expr<? extends BoolType>> unsatCore) {
-		return new UnsatCoreRefutation(unsatCore);
+	public static UnsatCoreRefutation create(final Collection<Expr<? extends BoolType>> unsatCore,
+			final int pruneIndex) {
+		return new UnsatCoreRefutation(unsatCore, pruneIndex);
 	}
 
 	public Collection<Expr<? extends BoolType>> getUnsatCore() {
@@ -38,5 +41,10 @@ public class UnsatCoreRefutation implements Refutation, Iterable<Expr<? extends 
 	@Override
 	public String toString() {
 		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).addAll(unsatCore).toString();
+	}
+
+	@Override
+	public int getPruneIndex() {
+		return pruneIndex;
 	}
 }
