@@ -59,7 +59,7 @@ public class ExprTraceSeqItpChecker implements ExprTraceChecker<ItpRefutation> {
 		solver.add(markers.get(0), PathUtils.unfold(trace.getState(0).toExpr(), indexings.get(0)));
 		checkState(solver.check().isSat());
 
-		for (int i = 1; i < trace.getStates().size(); ++i) {
+		for (int i = 1; i < stateCount; ++i) {
 			indexings.add(indexings.get(i - 1).add(trace.getAction(i - 1).nextIndexing()));
 			solver.add(markers.get(i), PathUtils.unfold(trace.getState(i).toExpr(), indexings.get(i)));
 			solver.add(markers.get(i), PathUtils.unfold(trace.getAction(i - 1).toExpr(), indexings.get(i - 1)));
