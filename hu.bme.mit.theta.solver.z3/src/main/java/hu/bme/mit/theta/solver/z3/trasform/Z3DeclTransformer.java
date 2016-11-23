@@ -41,9 +41,11 @@ class Z3DeclTransformer {
 		@Override
 		public <DeclType extends Type> com.microsoft.z3.FuncDecl visit(final ConstDecl<DeclType> decl,
 				final Void param) {
+			final com.microsoft.z3.FuncDecl symbol;
 
-			com.microsoft.z3.FuncDecl symbol = symbolTable.getSymbol(decl);
-			if (symbol == null) {
+			if (symbolTable.definesConst(decl)) {
+				symbol = symbolTable.getSymbol(decl);
+			} else {
 				final Type type = decl.getType();
 
 				final Product2<List<Type>, Type> extractedTypes = extractTypes(type);
