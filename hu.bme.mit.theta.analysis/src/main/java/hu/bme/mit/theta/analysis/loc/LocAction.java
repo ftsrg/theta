@@ -6,6 +6,6 @@ import hu.bme.mit.theta.formalism.common.Loc;
 
 public interface LocAction<L extends Loc<L, E>, E extends Edge<L, E>> extends ExprAction {
 
-	public E getEdge();
+	E getEdge();
 
 }
