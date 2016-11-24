@@ -27,7 +27,7 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyStatus;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker;
-import hu.bme.mit.theta.analysis.algorithm.cegar.ExplItpRefiner;
+import hu.bme.mit.theta.analysis.algorithm.cegar.ExplVarSetsRefiner;
 import hu.bme.mit.theta.analysis.algorithm.cegar.WaitlistBasedAbstractor;
 import hu.bme.mit.theta.analysis.expl.ExplAnalysis;
 import hu.bme.mit.theta.analysis.expl.ExplPrecision;
@@ -36,8 +36,8 @@ import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.ExprStatePredicate;
 import hu.bme.mit.theta.analysis.expr.ExprTraceChecker;
-import hu.bme.mit.theta.analysis.expr.ExprTraceCraigItpChecker;
-import hu.bme.mit.theta.analysis.expr.ItpRefutation;
+import hu.bme.mit.theta.analysis.expr.ExprTraceUnsatCoreChecker;
+import hu.bme.mit.theta.analysis.expr.VarSetsRefutation;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.common.visualization.GraphvizWriter;
 import hu.bme.mit.theta.common.waitlist.FifoWaitlist;
@@ -85,9 +85,9 @@ public class StsExplTest {
 		final Abstractor<ExplState, StsAction, ExplPrecision> abstractor = WaitlistBasedAbstractor.create(lts, analysis,
 				target, FifoWaitlist.supplier());
 
-		final ExprTraceChecker<ItpRefutation> exprTraceChecker = ExprTraceCraigItpChecker.create(And(sts.getInit()),
-				Not(sts.getProp()), solver);
-		final ExplItpRefiner<StsAction> refiner = ExplItpRefiner.create(exprTraceChecker);
+		final ExprTraceChecker<VarSetsRefutation> exprTraceChecker = ExprTraceUnsatCoreChecker
+				.create(And(sts.getInit()), Not(sts.getProp()), solver);
+		final ExplVarSetsRefiner<StsAction> refiner = ExplVarSetsRefiner.create(exprTraceChecker);
 
 		final SafetyChecker<ExplState, StsAction, ExplPrecision> checker = CegarChecker.create(abstractor, refiner);
 

@@ -84,6 +84,15 @@ public final class ExprUtils {
 		return indexedConstDecls;
 	}
 
+	public static Set<IndexedConstDecl<? extends Type>> getIndexedConstDecls(
+			final Iterable<? extends Expr<? extends Type>> exprs) {
+		final Set<IndexedConstDecl<? extends Type>> indexedConstDecls = new HashSet<>();
+		for (final Expr<? extends Type> expr : exprs) {
+			expr.accept(IndexedConstDeclCollectorVisitor.getInstance(), indexedConstDecls);
+		}
+		return indexedConstDecls;
+	}
+
 	public static boolean isExprCNF(final Expr<? extends BoolType> expr) {
 		return expr.accept(new CnfCheckerVisitor(), CNFStatus.START);
 	}

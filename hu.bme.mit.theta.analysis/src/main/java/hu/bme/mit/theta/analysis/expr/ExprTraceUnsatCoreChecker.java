@@ -5,6 +5,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -12,15 +13,19 @@ import java.util.stream.Collectors;
 import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.theta.analysis.Trace;
+import hu.bme.mit.theta.core.decl.IndexedConstDecl;
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.model.Model;
 import hu.bme.mit.theta.core.model.impl.Valuation;
 import hu.bme.mit.theta.core.type.BoolType;
+import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.utils.impl.ExprUtils;
 import hu.bme.mit.theta.core.utils.impl.PathUtils;
 import hu.bme.mit.theta.core.utils.impl.VarIndexing;
 import hu.bme.mit.theta.solver.Solver;
 
-public final class ExprTraceUnsatCoreChecker implements ExprTraceChecker<UnsatCoreRefutation> {
+public final class ExprTraceUnsatCoreChecker implements ExprTraceChecker<VarSetsRefutation> {
 
 	private final Solver solver;
 	private final Expr<? extends BoolType> init;
@@ -39,7 +44,7 @@ public final class ExprTraceUnsatCoreChecker implements ExprTraceChecker<UnsatCo
 	}
 
 	@Override
-	public ExprTraceStatus2<UnsatCoreRefutation> check(final Trace<? extends ExprState, ? extends ExprAction> trace) {
+	public ExprTraceStatus2<VarSetsRefutation> check(final Trace<? extends ExprState, ? extends ExprAction> trace) {
 		checkNotNull(trace);
 		final int stateCount = trace.getStates().size();
 		checkArgument(stateCount > 0);
@@ -52,32 +57,25 @@ public final class ExprTraceUnsatCoreChecker implements ExprTraceChecker<UnsatCo
 		solver.track(PathUtils.unfold(init, indexings.get(0)));
 		solver.track(PathUtils.unfold(trace.getState(0).toExpr(), indexings.get(0)));
 		checkState(solver.check().isSat());
-		int satPrefix = 0;
+		boolean concretizable = true;
 
 		for (int i = 1; i < stateCount; ++i) {
 			indexings.add(indexings.get(i - 1).add(trace.getAction(i - 1).nextIndexing()));
 			solver.track(PathUtils.unfold(trace.getState(i).toExpr(), indexings.get(i)));
 			solver.track(PathUtils.unfold(trace.getAction(i - 1).toExpr(), indexings.get(i - 1)));
 
-			if (solver.check().isSat()) {
-				satPrefix = i;
-			} else {
+			if (!solver.check().isSat()) {
+				concretizable = false;
 				break;
 			}
 		}
 
-		boolean concretizable;
-
-		if (satPrefix == stateCount - 1) {
+		if (concretizable) {
 			solver.track(PathUtils.unfold(target, indexings.get(stateCount - 1)));
 			concretizable = solver.check().isSat();
-		} else {
-			concretizable = false;
 		}
 
-		assert 0 <= satPrefix && satPrefix < stateCount;
-
-		ExprTraceStatus2<UnsatCoreRefutation> status = null;
+		ExprTraceStatus2<VarSetsRefutation> status = null;
 
 		if (concretizable) {
 			final Model model = solver.getModel();
@@ -87,9 +85,16 @@ public final class ExprTraceUnsatCoreChecker implements ExprTraceChecker<UnsatCo
 			}
 			status = ExprTraceStatus2.feasible(builder.build());
 		} else {
-			final Set<Expr<? extends BoolType>> uc = solver.getUnsatCore().stream().map(p -> PathUtils.foldin(p, 0))
-					.collect(Collectors.toSet());
-			status = ExprTraceStatus2.infeasible(UnsatCoreRefutation.create(uc, satPrefix));
+			final Collection<Expr<? extends BoolType>> unsatCore = solver.getUnsatCore();
+			final Set<IndexedConstDecl<? extends Type>> consts = ExprUtils.getIndexedConstDecls(unsatCore);
+			final List<Set<VarDecl<? extends Type>>> varSets = new ArrayList<>();
+			for (int i = 0; i < stateCount; ++i) {
+				final int idx = i;
+				varSets.add(consts.stream().filter(c -> c.getIndex() == idx).map(c -> c.getVarDecl())
+						.collect(Collectors.toSet()));
+			}
+
+			status = ExprTraceStatus2.infeasible(VarSetsRefutation.create(varSets));
 		}
 
 		solver.pop();
