@@ -4,21 +4,21 @@ import hu.bme.mit.theta.core.type.RatType;
 
 public interface RatLitExpr extends LitExpr<RatType>, NullaryExpr<RatType>, Comparable<RatLitExpr> {
 
-	public long getNum();
+	public int getNum();
 
-	public long getDenom();
+	public int getDenom();
 
 	public int sign();
 
 	/**
 	 * @return the largest integer less than or equal to the number
 	 */
-	public long floor();
+	public int floor();
 
 	/**
 	 * @return the smallest integer greater than or equal to the number
 	 */
-	public long ceil();
+	public int ceil();
 
 	public RatLitExpr add(final RatLitExpr that);
 

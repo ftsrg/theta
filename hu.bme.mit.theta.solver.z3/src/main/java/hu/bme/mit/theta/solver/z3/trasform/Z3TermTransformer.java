@@ -144,7 +144,7 @@ public class Z3TermTransformer {
 
 	private Expr<?> transformInt(final com.microsoft.z3.IntExpr term) {
 		if (term.isIntNum()) {
-			final long value = ((IntNum) term).getInt64();
+			final int value = ((IntNum) term).getInt();
 			return Exprs.Int(value);
 
 		} else if (term.isConst()) {
@@ -174,8 +174,8 @@ public class Z3TermTransformer {
 
 	private Expr<?> transformArith(final com.microsoft.z3.ArithExpr term) {
 		if (term.isRatNum()) {
-			final long num = ((RatNum) term).getNumerator().getInt64();
-			final long denom = ((RatNum) term).getDenominator().getInt64();
+			final int num = ((RatNum) term).getNumerator().getInt();
+			final int denom = ((RatNum) term).getDenominator().getInt();
 			return Exprs.Rat(num, denom);
 
 		} else if (term.isConst()) {
