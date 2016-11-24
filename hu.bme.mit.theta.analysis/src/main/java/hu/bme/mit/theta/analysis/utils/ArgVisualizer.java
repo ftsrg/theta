@@ -13,7 +13,11 @@ import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.LineStyle;
 import hu.bme.mit.theta.common.visualization.NodeAttributes;
 
-public class ArgVisualizer {
+public final class ArgVisualizer {
+
+	private ArgVisualizer() {
+
+	}
 
 	private static final String ARG_LABEL = "";
 	private static final String ARG_ID = "arg";
