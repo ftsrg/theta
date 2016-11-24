@@ -33,7 +33,7 @@ public final class TreePredPrecision implements PredPrecision {
 			ponatedPreds.add(ExprUtils.ponate(pred));
 		}
 
-		if (ponatedPreds.size() == 0) {
+		if (ponatedPreds.isEmpty()) {
 			ponatedPreds.add(Exprs.True());
 		}
 
@@ -52,7 +52,7 @@ public final class TreePredPrecision implements PredPrecision {
 		}
 
 		public Node(final List<? extends Expr<? extends BoolType>> preds) {
-			assert preds.size() > 0;
+			assert !preds.isEmpty();
 			assert !(preds.get(0) instanceof NotExpr);
 			this.ponPred = preds.get(0);
 			this.negPred = Exprs.Not(this.ponPred);

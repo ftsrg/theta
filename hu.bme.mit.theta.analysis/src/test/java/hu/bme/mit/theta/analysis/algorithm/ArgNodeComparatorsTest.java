@@ -21,16 +21,16 @@ import hu.bme.mit.theta.analysis.stubs.StateStub;
 
 public class ArgNodeComparatorsTest {
 
-	final ARG<State, Action> arg = ARG.create(new DomainStub());
-	final Action act = new ActionStub("A");
+	private final ARG<State, Action> arg = ARG.create(new DomainStub());
+	private final Action act = new ActionStub("A");
 
-	final ArgNode<State, Action> s0 = arg.createInitNode(new StateStub("s0"), false);
-	final ArgNode<State, Action> s10 = arg.createSuccNode(s0, act, new StateStub("s10"), false);
-	final ArgNode<State, Action> s20 = arg.createSuccNode(s10, act, new StateStub("s20"), true);
-	final ArgNode<State, Action> s21 = arg.createSuccNode(s10, act, new StateStub("s21"), false);
-	final ArgNode<State, Action> s11 = arg.createSuccNode(s0, act, new StateStub("s11"), true);
-	final ArgNode<State, Action> s12 = arg.createSuccNode(s0, act, new StateStub("s12"), false);
-	final List<ArgNode<State, Action>> nodes = arg.getNodes().collect(Collectors.toList());
+	private final ArgNode<State, Action> s0 = arg.createInitNode(new StateStub("s0"), false);
+	private final ArgNode<State, Action> s10 = arg.createSuccNode(s0, act, new StateStub("s10"), false);
+	private final ArgNode<State, Action> s20 = arg.createSuccNode(s10, act, new StateStub("s20"), true);
+	private final ArgNode<State, Action> s21 = arg.createSuccNode(s10, act, new StateStub("s21"), false);
+	private final ArgNode<State, Action> s11 = arg.createSuccNode(s0, act, new StateStub("s11"), true);
+	private final ArgNode<State, Action> s12 = arg.createSuccNode(s0, act, new StateStub("s12"), false);
+	private final List<ArgNode<State, Action>> nodes = arg.getNodes().collect(Collectors.toList());
 
 	@Test
 	public void testBfs() {
