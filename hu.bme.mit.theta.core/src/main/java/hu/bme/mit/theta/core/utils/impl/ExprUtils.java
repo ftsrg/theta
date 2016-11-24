@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import hu.bme.mit.theta.core.decl.IndexedConstDecl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.AndExpr;
 import hu.bme.mit.theta.core.expr.Expr;
@@ -75,6 +76,12 @@ public final class ExprUtils {
 		final Set<VarDecl<? extends Type>> vars = new HashSet<>();
 		collectVars(exprs, vars);
 		return vars;
+	}
+
+	public static Set<IndexedConstDecl<? extends Type>> getIndexedConstDecls(final Expr<? extends Type> expr) {
+		final Set<IndexedConstDecl<? extends Type>> indexedConstDecls = new HashSet<>();
+		expr.accept(IndexedConstDeclCollectorVisitor.getInstance(), indexedConstDecls);
+		return indexedConstDecls;
 	}
 
 	public static boolean isExprCNF(final Expr<? extends BoolType> expr) {
