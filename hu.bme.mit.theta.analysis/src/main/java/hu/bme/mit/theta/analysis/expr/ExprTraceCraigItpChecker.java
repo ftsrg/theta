@@ -21,7 +21,7 @@ import hu.bme.mit.theta.solver.ItpMarker;
 import hu.bme.mit.theta.solver.ItpPattern;
 import hu.bme.mit.theta.solver.ItpSolver;
 
-public class ExprTraceCraigItpChecker implements ExprTraceChecker<ItpRefutation> {
+public final class ExprTraceCraigItpChecker implements ExprTraceChecker<ItpRefutation> {
 
 	private final ItpSolver solver;
 	private final Expr<? extends BoolType> init;

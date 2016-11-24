@@ -12,7 +12,7 @@ import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.BoolType;
 
-public class UnsatCoreRefutation implements Refutation, Iterable<Expr<? extends BoolType>> {
+public final class UnsatCoreRefutation implements Refutation, Iterable<Expr<? extends BoolType>> {
 
 	private final Collection<Expr<? extends BoolType>> unsatCore;
 	private final int pruneIndex;

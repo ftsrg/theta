@@ -18,7 +18,7 @@ import hu.bme.mit.theta.analysis.pred.PredState;
 import hu.bme.mit.theta.analysis.pred.SimplePredPrecision;
 import hu.bme.mit.theta.core.expr.BoolLitExpr;
 
-public class SimplePredItpRefiner<A extends ExprAction> implements Refiner<PredState, A, SimplePredPrecision> {
+public final class SimplePredItpRefiner<A extends ExprAction> implements Refiner<PredState, A, SimplePredPrecision> {
 
 	ExprTraceChecker<ItpRefutation> exprTraceChecker;
 
