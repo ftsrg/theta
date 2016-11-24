@@ -4,10 +4,11 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Stream;
+
+import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.expr.Expr;
@@ -22,7 +23,7 @@ public final class ItpRefutation implements Refutation, Iterable<Expr<? extends 
 	private ItpRefutation(final List<Expr<? extends BoolType>> itpSequence) {
 		checkNotNull(itpSequence);
 		checkArgument(itpSequence.size() > 0);
-		this.itpSequence = Collections.unmodifiableList(itpSequence);
+		this.itpSequence = ImmutableList.copyOf(itpSequence);
 		int i = 0;
 		while (i < itpSequence.size() && itpSequence.get(i).equals(Exprs.True())) {
 			++i;
