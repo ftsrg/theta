@@ -3,7 +3,7 @@ package hu.bme.mit.theta.core.expr.impl;
 import static com.google.common.base.Preconditions.checkArgument;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.Rat;
 
-import com.google.common.math.LongMath;
+import com.google.common.math.IntMath;
 
 import hu.bme.mit.theta.core.expr.RatLitExpr;
 import hu.bme.mit.theta.core.type.RatType;
@@ -14,15 +14,15 @@ final class RatLitExprImpl extends AbstractNullaryExpr<RatType> implements RatLi
 
 	private static final int HASH_SEED = 149;
 
-	private final long num;
-	private final long denom;
+	private final int num;
+	private final int denom;
 
 	private volatile int hashCode = 0;
 
-	RatLitExprImpl(final long num, final long denom) {
+	RatLitExprImpl(final int num, final int denom) {
 		checkArgument(denom != 0);
 
-		final long gcd = LongMath.gcd(Math.abs(num), Math.abs(denom));
+		final int gcd = IntMath.gcd(Math.abs(num), Math.abs(denom));
 		if (denom >= 0) {
 			this.num = num / gcd;
 			this.denom = denom / gcd;
@@ -33,12 +33,12 @@ final class RatLitExprImpl extends AbstractNullaryExpr<RatType> implements RatLi
 	}
 
 	@Override
-	public long getNum() {
+	public int getNum() {
 		return num;
 	}
 
 	@Override
-	public long getDenom() {
+	public int getDenom() {
 		return denom;
 	}
 
@@ -48,7 +48,7 @@ final class RatLitExprImpl extends AbstractNullaryExpr<RatType> implements RatLi
 	}
 
 	@Override
-	public long floor() {
+	public int floor() {
 		if (num >= 0 || num % denom == 0) {
 			return num / denom;
 		} else {
@@ -57,7 +57,7 @@ final class RatLitExprImpl extends AbstractNullaryExpr<RatType> implements RatLi
 	}
 
 	@Override
-	public long ceil() {
+	public int ceil() {
 		if (num <= 0 || num % denom == 0) {
 			return num / denom;
 		} else {
@@ -112,8 +112,8 @@ final class RatLitExprImpl extends AbstractNullaryExpr<RatType> implements RatLi
 		int result = hashCode;
 		if (result == 0) {
 			result = HASH_SEED;
-			result = 31 * result + (int) (num ^ (num >>> 32));
-			result = 31 * result + (int) (denom ^ (denom >>> 32));
+			result = 31 * result + num;
+			result = 31 * result + denom;
 			hashCode = result;
 		}
 		return hashCode;
@@ -142,8 +142,7 @@ final class RatLitExprImpl extends AbstractNullaryExpr<RatType> implements RatLi
 
 	@Override
 	public int compareTo(final RatLitExpr that) {
-		return Long.compare(LongMath.checkedMultiply(this.getNum(), that.getDenom()),
-				LongMath.checkedMultiply(that.getNum(), this.getDenom()));
+		return Integer.compare(this.getNum() * that.getDenom(), this.getDenom() * that.getNum());
 	}
 
 }
