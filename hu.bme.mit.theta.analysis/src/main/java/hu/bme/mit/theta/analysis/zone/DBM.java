@@ -66,7 +66,7 @@ final class DBM {
 	}
 
 	private DBM(final DBM dbm) {
-		this.signature = DbmSignature.copyOf(dbm.signature);
+		this.signature = dbm.signature;
 		this.dbm = new SimpleDbm(dbm.dbm);
 	}
 
@@ -158,7 +158,7 @@ final class DBM {
 
 	private static DbmSignature interpolantSignature(final DBM dbmA, final DBM dbmB) {
 		final Set<ClockDecl> clocksConstrainedByBothDBMS = Sets
-				.intersection(dbmA.signature.asSet(), dbmB.signature.asSet()).stream()
+				.intersection(dbmA.signature.toSet(), dbmB.signature.toSet()).stream()
 				.filter(c -> dbmA.constrains(c) && dbmB.constrains(c)).collect(Collectors.toSet());
 		return DbmSignature.over(clocksConstrainedByBothDBMS);
 	}
@@ -230,7 +230,7 @@ final class DBM {
 	}
 
 	public DbmRelation getRelation(final DBM that) {
-		final Set<ClockDecl> clocks = Sets.union(this.signature.asSet(), that.signature.asSet());
+		final Set<ClockDecl> clocks = Sets.union(this.signature.toSet(), that.signature.toSet());
 
 		boolean leq = true;
 		boolean geq = true;
