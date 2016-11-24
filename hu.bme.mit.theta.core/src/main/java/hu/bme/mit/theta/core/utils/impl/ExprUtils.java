@@ -4,7 +4,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -76,6 +78,19 @@ public final class ExprUtils {
 		final Set<VarDecl<? extends Type>> vars = new HashSet<>();
 		collectVars(exprs, vars);
 		return vars;
+	}
+
+	public static Map<Integer, Set<VarDecl<? extends Type>>> getVarsIndexed(final Expr<? extends Type> expr) {
+		final Map<Integer, Set<VarDecl<? extends Type>>> varsIndexed = new HashMap<>();
+		expr.accept(IndexedVarCollectorVisitor.getInstance(), varsIndexed);
+		return varsIndexed;
+	}
+
+	public static Map<Integer, Set<VarDecl<? extends Type>>> getVarsIndexed(
+			final Iterable<Expr<? extends Type>> exprs) {
+		final Map<Integer, Set<VarDecl<? extends Type>>> varsIndexed = new HashMap<>();
+		exprs.forEach(e -> e.accept(IndexedVarCollectorVisitor.getInstance(), varsIndexed));
+		return varsIndexed;
 	}
 
 	public static Set<IndexedConstDecl<? extends Type>> getIndexedConstDecls(final Expr<? extends Type> expr) {
