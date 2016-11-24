@@ -13,7 +13,7 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
-public class DiffBoundTests {
+public class DiffBoundTest {
 	@Test
 	public void testCompare() {
 		assertTrue(Lt(0) < Inf());
