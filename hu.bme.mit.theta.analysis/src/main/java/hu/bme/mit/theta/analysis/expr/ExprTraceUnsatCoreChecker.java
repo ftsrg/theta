@@ -20,7 +20,7 @@ import hu.bme.mit.theta.core.utils.impl.PathUtils;
 import hu.bme.mit.theta.core.utils.impl.VarIndexing;
 import hu.bme.mit.theta.solver.Solver;
 
-public class ExprTraceUnsatCoreChecker implements ExprTraceChecker<UnsatCoreRefutation> {
+public final class ExprTraceUnsatCoreChecker implements ExprTraceChecker<UnsatCoreRefutation> {
 
 	private final Solver solver;
 	private final Expr<? extends BoolType> init;
