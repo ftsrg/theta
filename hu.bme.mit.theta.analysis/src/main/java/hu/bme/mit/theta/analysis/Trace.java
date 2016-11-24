@@ -73,7 +73,7 @@ public final class Trace<S extends State, A extends Action> {
 				sb.append("]--> ");
 			}
 		}
-		sb.append(")");
+		sb.append(')');
 		return sb.toString();
 	}
 }
