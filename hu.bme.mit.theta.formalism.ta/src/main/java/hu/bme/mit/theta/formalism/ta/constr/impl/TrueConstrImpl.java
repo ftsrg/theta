@@ -15,7 +15,7 @@ final class TrueConstrImpl implements TrueConstr {
 
 	private static final int HASH_SEED = 2014099;
 
-	private static final String CC_LABEL = "CC(true)";
+	private static final String CC_LABEL = "true";
 
 	@Override
 	public Collection<? extends ClockDecl> getClocks() {
