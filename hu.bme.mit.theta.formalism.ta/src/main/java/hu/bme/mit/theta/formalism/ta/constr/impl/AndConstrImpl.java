@@ -85,7 +85,7 @@ final class AndConstrImpl implements AndConstr {
 
 	@Override
 	public String toString() {
-		final StringJoiner sj = new StringJoiner(", ", "CC(", ")");
+		final StringJoiner sj = new StringJoiner(" and ");
 		constrs.forEach(c -> sj.add(c.toString()));
 		return sj.toString();
 	}

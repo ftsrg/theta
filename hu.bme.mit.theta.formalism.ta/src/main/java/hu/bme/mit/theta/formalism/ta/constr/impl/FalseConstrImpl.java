@@ -15,7 +15,7 @@ final class FalseConstrImpl implements FalseConstr {
 
 	private static final int HASH_SEED = 242101;
 
-	private static final String CC_LABEL = "CC(false)";
+	private static final String CC_LABEL = "false";
 
 	@Override
 	public Collection<? extends ClockDecl> getClocks() {
