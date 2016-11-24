@@ -1,6 +1,7 @@
 package hu.bme.mit.theta.analysis.algorithm;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 import org.junit.Test;
 
@@ -53,7 +54,7 @@ public class ArgPruningTest {
 		assertEquals(1, arg.getInitNodes().count());
 		assertEquals(0, arg.getUnsafeNodes().count());
 		assertEquals(1, n0.coveredNodes.size());
-		assertEquals(false, n02.getCoveringNode().isPresent());
+		assertFalse(n02.getCoveringNode().isPresent());
 
 		System.out.println(new GraphvizWriter().writeString(ArgVisualizer.visualize(arg)));
 	}
