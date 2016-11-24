@@ -77,22 +77,22 @@ final class DBM {
 		return new DBM(dbm);
 	}
 
-	public static DBM zero(final Collection<? extends ClockDecl> clocks) {
+	public static DBM zero(final Iterable<? extends ClockDecl> clocks) {
 		checkNotNull(clocks);
 		return new DBM(DbmSignature.over(clocks), ZERO_DBM_VALUES);
 	}
 
-	public static DBM top(final Collection<? extends ClockDecl> clocks) {
+	public static DBM top(final Iterable<? extends ClockDecl> clocks) {
 		checkNotNull(clocks);
 		return new DBM(DbmSignature.over(clocks), TOP_DBM_VALUES);
 	}
 
-	public static DBM bottom(final Collection<? extends ClockDecl> clocks) {
+	public static DBM bottom(final Iterable<? extends ClockDecl> clocks) {
 		checkNotNull(clocks);
 		return new DBM(DbmSignature.over(clocks), BOTTOM_DBM_VALUES);
 	}
 
-	public static DBM project(final DBM dbm, final Collection<? extends ClockDecl> clocks) {
+	public static DBM project(final DBM dbm, final Iterable<? extends ClockDecl> clocks) {
 		checkNotNull(clocks);
 		return new DBM(DbmSignature.over(clocks), dbm::getOrDefault);
 	}

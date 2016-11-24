@@ -2,15 +2,22 @@ package hu.bme.mit.theta.analysis.zone;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.And;
+import static hu.bme.mit.theta.formalism.ta.constr.impl.ClockConstrs.Eq;
+import static hu.bme.mit.theta.formalism.ta.constr.impl.ClockConstrs.Gt;
+import static hu.bme.mit.theta.formalism.ta.constr.impl.ClockConstrs.Lt;
 import static java.util.stream.Collectors.toList;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
+import com.google.common.collect.Iterables;
+
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.expr.Expr;
+import hu.bme.mit.theta.core.expr.RatLitExpr;
+import hu.bme.mit.theta.core.model.impl.Valuation;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.formalism.common.decl.ClockDecl;
 import hu.bme.mit.theta.formalism.ta.constr.ClockConstr;
@@ -37,6 +44,43 @@ public final class ZoneState implements ExprState {
 	}
 
 	////
+
+	public static ZoneState region(final Valuation valuation) {
+		checkNotNull(valuation);
+		final Iterable<ClockDecl> clocks = Iterables.filter(valuation.getDecls(), ClockDecl.class);
+
+		final DBM dbm = DBM.top(clocks);
+
+		for (final ClockDecl c : clocks) {
+			final RatLitExpr sc = (RatLitExpr) valuation.eval(c).get();
+			final RatLitExpr fc = sc.frac();
+
+			if (fc.getNum() == 0) {
+				dbm.and(Eq(c, sc.getNum()));
+			} else {
+				dbm.and(Lt(c, sc.ceil()));
+				dbm.and(Gt(c, sc.floor()));
+			}
+
+			for (final ClockDecl d : clocks) {
+				if (c == d) {
+					continue;
+				}
+
+				final RatLitExpr sd = (RatLitExpr) valuation.eval(d).get();
+				final RatLitExpr fd = sd.frac();
+
+				final int compareResult = fc.compareTo(fd);
+				if (compareResult == 0) {
+					dbm.and(Eq(c, d, sc.floor() - sd.floor()));
+				} else if (compareResult < 0) {
+					dbm.and(Lt(c, d, sc.floor() - sd.floor()));
+				}
+			}
+		}
+
+		return new ZoneState(dbm);
+	}
 
 	public static ZoneState top() {
 		return TOP;
