@@ -8,22 +8,29 @@ import hu.bme.mit.theta.analysis.InitFunction;
 import hu.bme.mit.theta.analysis.Precision;
 import hu.bme.mit.theta.analysis.State;
 
-class CompositeInitFunction<S1 extends State, S2 extends State, P1 extends Precision, P2 extends Precision>
+final class CompositeInitFunction<S1 extends State, S2 extends State, P1 extends Precision, P2 extends Precision>
 		implements InitFunction<CompositeState<S1, S2>, CompositePrecision<P1, P2>> {
 
 	private final InitFunction<S1, P1> initFunction1;
 	private final InitFunction<S2, P2> initFunction2;
 	private final StrengtheningOperator<S1, S2, P1, P2> strenghteningOperator;
 
-	CompositeInitFunction(final InitFunction<S1, P1> initFunction1, final InitFunction<S2, P2> initFunction2,
+	private CompositeInitFunction(final InitFunction<S1, P1> initFunction1, final InitFunction<S2, P2> initFunction2,
 			final StrengtheningOperator<S1, S2, P1, P2> strenghteningOperator) {
 		this.initFunction1 = checkNotNull(initFunction1);
 		this.initFunction2 = checkNotNull(initFunction2);
 		this.strenghteningOperator = checkNotNull(strenghteningOperator);
 	}
 
-	public CompositeInitFunction(final InitFunction<S1, P1> initFunction1, final InitFunction<S2, P2> initFunction2) {
-		this(initFunction1, initFunction2, (states, precision) -> states);
+	public static <S1 extends State, S2 extends State, P1 extends Precision, P2 extends Precision> CompositeInitFunction<S1, S2, P1, P2> create(
+			final InitFunction<S1, P1> initFunction1, final InitFunction<S2, P2> initFunction2,
+			final StrengtheningOperator<S1, S2, P1, P2> strenghteningOperator) {
+		return new CompositeInitFunction<>(initFunction1, initFunction2, strenghteningOperator);
+	}
+
+	public static <S1 extends State, S2 extends State, P1 extends Precision, P2 extends Precision> CompositeInitFunction<S1, S2, P1, P2> create(
+			final InitFunction<S1, P1> initFunction1, final InitFunction<S2, P2> initFunction2) {
+		return new CompositeInitFunction<>(initFunction1, initFunction2, (states, precision) -> states);
 	}
 
 	@Override

@@ -35,6 +35,10 @@ public class ExprStatePredicate implements Predicate<ExprState> {
 		return result;
 	}
 
+	public Expr<? extends BoolType> toExpr() {
+		return expr;
+	}
+
 	@Override
 	public String toString() {
 		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).add(expr).toString();

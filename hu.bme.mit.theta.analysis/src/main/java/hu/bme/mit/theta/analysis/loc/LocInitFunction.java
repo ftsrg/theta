@@ -35,7 +35,7 @@ public final class LocInitFunction<S extends State, P extends Precision, L exten
 		final P subPrecision = precision.getPrecision(initLoc);
 		final Collection<? extends S> subInitStates = initFunction.getInitStates(subPrecision);
 		for (final S subInitState : subInitStates) {
-			final LocState<S, L, E> initState = LocState.create(initLoc, subInitState);
+			final LocState<S, L, E> initState = LocState.of(initLoc, subInitState);
 			initStates.add(initState);
 		}
 		return initStates;

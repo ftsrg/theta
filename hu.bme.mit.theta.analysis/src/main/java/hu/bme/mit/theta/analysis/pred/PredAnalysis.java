@@ -1,8 +1,5 @@
 package hu.bme.mit.theta.analysis.pred;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
-import hu.bme.mit.theta.analysis.ActionFunction;
 import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.Domain;
 import hu.bme.mit.theta.analysis.InitFunction;
@@ -17,19 +14,15 @@ public final class PredAnalysis implements Analysis<PredState, ExprAction, PredP
 	private final Domain<PredState> domain;
 	private final InitFunction<PredState, PredPrecision> initFunction;
 	private final TransferFunction<PredState, ExprAction, PredPrecision> transferFunction;
-	private final ActionFunction<? super PredState, ? extends ExprAction> actionFunction;
 
-	private PredAnalysis(final Solver solver, final Expr<? extends BoolType> initExpr,
-			final ActionFunction<? super PredState, ? extends ExprAction> actionFunction) {
+	private PredAnalysis(final Solver solver, final Expr<? extends BoolType> initExpr) {
 		domain = PredDomain.create(solver);
 		initFunction = PredInitFunction.create(solver, initExpr);
 		transferFunction = PredTransferFunction.create(solver);
-		this.actionFunction = checkNotNull(actionFunction);
 	}
 
-	public static PredAnalysis create(final Solver solver, final Expr<? extends BoolType> initExpr,
-			final ActionFunction<? super PredState, ? extends ExprAction> actionFunction) {
-		return new PredAnalysis(solver, initExpr, actionFunction);
+	public static PredAnalysis create(final Solver solver, final Expr<? extends BoolType> initExpr) {
+		return new PredAnalysis(solver, initExpr);
 	}
 
 	////
@@ -47,11 +40,6 @@ public final class PredAnalysis implements Analysis<PredState, ExprAction, PredP
 	@Override
 	public TransferFunction<PredState, ExprAction, PredPrecision> getTransferFunction() {
 		return transferFunction;
-	}
-
-	@Override
-	public ActionFunction<? super PredState, ? extends ExprAction> getActionFunction() {
-		return actionFunction;
 	}
 
 }

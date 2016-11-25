@@ -41,15 +41,15 @@ public final class ExprDomainBottomTest {
 	public static Collection<Object[]> data() {
 		return Arrays.asList(new Object[][] {
 
-				{ PredState.create(False()), true },
+				{ PredState.of(False()), true },
 
-				{ PredState.create(And(Leq(X, Int(0)), Geq(X, Int(1)))), true },
+				{ PredState.of(And(Leq(X, Int(0)), Geq(X, Int(1)))), true },
 
-				{ PredState.create(Geq(X, Int(0))), false },
+				{ PredState.of(Geq(X, Int(0))), false },
 
-				{ PredState.create(), false },
+				{ PredState.of(), false },
 
-				{ PredState.create(True()), false }
+				{ PredState.of(True()), false }
 
 		});
 	}
