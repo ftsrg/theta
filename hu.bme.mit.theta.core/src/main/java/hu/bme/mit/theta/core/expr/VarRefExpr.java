@@ -6,6 +6,6 @@ import hu.bme.mit.theta.core.type.Type;
 public interface VarRefExpr<DeclType extends Type> extends RefExpr<DeclType> {
 
 	@Override
-	public VarDecl<DeclType> getDecl();
+	VarDecl<DeclType> getDecl();
 
 }

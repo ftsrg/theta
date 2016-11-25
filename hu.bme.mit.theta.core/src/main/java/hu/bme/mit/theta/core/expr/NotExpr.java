@@ -4,6 +4,6 @@ import hu.bme.mit.theta.core.type.BoolType;
 
 public interface NotExpr extends UnaryExpr<BoolType, BoolType> {
 	@Override
-	public NotExpr withOp(final Expr<? extends BoolType> op);
+	NotExpr withOp(final Expr<? extends BoolType> op);
 
 }

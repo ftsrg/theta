@@ -7,6 +7,6 @@ import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.Type;
 
 public interface QuantifiedExpr extends UnaryExpr<BoolType, BoolType> {
-	
-	public List<ParamDecl<? extends Type>> getParamDecls();
+
+	List<ParamDecl<? extends Type>> getParamDecls();
 }

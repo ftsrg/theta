@@ -2,8 +2,8 @@ package hu.bme.mit.theta.common;
 
 public interface Product {
 
-	public int arity();
+	int arity();
 
-	public Object elem(int n);
+	Object elem(int n);
 
 }

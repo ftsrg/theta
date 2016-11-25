@@ -59,16 +59,15 @@ public abstract class AbstractDiffConstr implements DiffConstr {
 	@Override
 	public final String toString() {
 		final StringBuilder sb = new StringBuilder();
-		sb.append("CC");
-		sb.append("(");
+		sb.append("CC(");
 		sb.append(leftClock.getName());
 		sb.append(" - ");
 		sb.append(rightClock.getName());
-		sb.append(" ");
+		sb.append(' ');
 		sb.append(getOperatorLabel());
-		sb.append(" ");
+		sb.append(' ');
 		sb.append(bound);
-		sb.append(")");
+		sb.append(')');
 		return sb.toString();
 	}
 

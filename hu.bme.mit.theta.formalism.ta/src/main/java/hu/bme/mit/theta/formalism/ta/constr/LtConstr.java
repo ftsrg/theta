@@ -5,6 +5,6 @@ import hu.bme.mit.theta.core.expr.LtExpr;
 public interface LtConstr extends AtomicConstr {
 
 	@Override
-	public LtExpr toExpr();
+	LtExpr toExpr();
 
 }

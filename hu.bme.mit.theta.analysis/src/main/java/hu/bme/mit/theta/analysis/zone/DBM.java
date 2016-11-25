@@ -591,7 +591,7 @@ final class DBM {
 	}
 
 	@FunctionalInterface
-	private static interface Procedure {
-		public void execute();
+	private interface Procedure {
+		void execute();
 	}
 }

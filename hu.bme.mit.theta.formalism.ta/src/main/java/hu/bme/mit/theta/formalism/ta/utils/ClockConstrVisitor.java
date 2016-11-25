@@ -16,30 +16,30 @@ import hu.bme.mit.theta.formalism.ta.constr.UnitLtConstr;
 
 public interface ClockConstrVisitor<P, R> {
 
-	public R visit(final TrueConstr constr, final P param);
+	R visit(final TrueConstr constr, final P param);
 
-	public R visit(final FalseConstr constr, final P param);
+	R visit(final FalseConstr constr, final P param);
 
-	public R visit(final UnitLtConstr constr, final P param);
+	R visit(final UnitLtConstr constr, final P param);
 
-	public R visit(final UnitLeqConstr constr, final P param);
+	R visit(final UnitLeqConstr constr, final P param);
 
-	public R visit(final UnitGtConstr constr, final P param);
+	R visit(final UnitGtConstr constr, final P param);
 
-	public R visit(final UnitGeqConstr constr, final P param);
+	R visit(final UnitGeqConstr constr, final P param);
 
-	public R visit(final UnitEqConstr constr, final P param);
+	R visit(final UnitEqConstr constr, final P param);
 
-	public R visit(final DiffLtConstr constr, final P param);
+	R visit(final DiffLtConstr constr, final P param);
 
-	public R visit(final DiffLeqConstr constr, final P param);
+	R visit(final DiffLeqConstr constr, final P param);
 
-	public R visit(final DiffGtConstr constr, final P param);
+	R visit(final DiffGtConstr constr, final P param);
 
-	public R visit(final DiffGeqConstr constr, final P param);
+	R visit(final DiffGeqConstr constr, final P param);
 
-	public R visit(final DiffEqConstr constr, final P param);
+	R visit(final DiffEqConstr constr, final P param);
 
-	public R visit(final AndConstr constr, final P param);
+	R visit(final AndConstr constr, final P param);
 
 }

@@ -4,6 +4,6 @@ import hu.bme.mit.theta.core.type.Type;
 
 public interface PointerType<PointedType extends Type> extends Type {
 
-	public PointedType getPointedType();
+	PointedType getPointedType();
 
 }

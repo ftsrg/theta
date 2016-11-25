@@ -5,9 +5,9 @@ import hu.bme.mit.theta.formalism.ta.constr.ClockConstr;
 
 public interface GuardOp extends ClockOp {
 
-	public ClockConstr getConstr();
+	ClockConstr getConstr();
 
 	@Override
-	public AssumeStmt toStmt();
+	AssumeStmt toStmt();
 
 }

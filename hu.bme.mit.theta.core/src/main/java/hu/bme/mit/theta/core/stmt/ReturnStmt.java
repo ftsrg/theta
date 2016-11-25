@@ -9,7 +9,7 @@ public interface ReturnStmt<ReturnType extends Type> extends Stmt {
 	Expr<? extends ReturnType> getExpr();
 
 	@Override
-	public default <P, R> R accept(final StmtVisitor<? super P, ? extends R> visitor, final P param) {
+	default <P, R> R accept(final StmtVisitor<? super P, ? extends R> visitor, final P param) {
 		return visitor.visit(this, param);
 	}
 }

@@ -4,10 +4,10 @@ import java.util.Collection;
 
 public interface Automaton<L extends Loc<L, E>, E extends Edge<L, E>> {
 
-	public L getInitLoc();
+	L getInitLoc();
 
-	public Collection<? extends L> getLocs();
+	Collection<? extends L> getLocs();
 
-	public Collection<? extends E> getEdges();
+	Collection<? extends E> getEdges();
 
 }

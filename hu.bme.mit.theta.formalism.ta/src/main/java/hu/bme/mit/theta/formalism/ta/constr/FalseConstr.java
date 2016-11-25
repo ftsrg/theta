@@ -5,6 +5,6 @@ import hu.bme.mit.theta.core.expr.FalseExpr;
 public interface FalseConstr extends ClockConstr {
 
 	@Override
-	public FalseExpr toExpr();
+	FalseExpr toExpr();
 
 }

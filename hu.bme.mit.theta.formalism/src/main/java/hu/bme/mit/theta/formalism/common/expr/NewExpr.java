@@ -6,6 +6,6 @@ import hu.bme.mit.theta.formalism.common.type.PointerType;
 
 public interface NewExpr<PointedType extends Type> extends Expr<PointerType<PointedType>> {
 
-	public PointedType getPointedType();
+	PointedType getPointedType();
 
 }

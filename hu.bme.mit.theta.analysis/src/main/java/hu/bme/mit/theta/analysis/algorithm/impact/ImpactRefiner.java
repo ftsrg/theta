@@ -8,9 +8,9 @@ import hu.bme.mit.theta.analysis.Trace;
 
 public interface ImpactRefiner<S extends State, A extends Action> {
 
-	public RefinementResult<S, A> refine(final Trace<S, A> cex);
+	RefinementResult<S, A> refine(final Trace<S, A> cex);
 
-	public static abstract class RefinementResult<S extends State, A extends Action> {
+	static abstract class RefinementResult<S extends State, A extends Action> {
 
 		private RefinementResult() {
 		}
@@ -32,7 +32,7 @@ public interface ImpactRefiner<S extends State, A extends Action> {
 		public abstract Unsuccesful<S, A> asUnsuccesful();
 	}
 
-	public static final class Succesful<S extends State, A extends Action> extends RefinementResult<S, A> {
+	static final class Succesful<S extends State, A extends Action> extends RefinementResult<S, A> {
 		private final Trace<S, A> trace;
 
 		private Succesful(final Trace<S, A> trace) {
@@ -64,7 +64,7 @@ public interface ImpactRefiner<S extends State, A extends Action> {
 		}
 	}
 
-	public static final class Unsuccesful<S extends State, A extends Action> extends RefinementResult<S, A> {
+	static final class Unsuccesful<S extends State, A extends Action> extends RefinementResult<S, A> {
 
 		private Unsuccesful() {
 		}

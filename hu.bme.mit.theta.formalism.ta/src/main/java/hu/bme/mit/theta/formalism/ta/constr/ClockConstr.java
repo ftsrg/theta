@@ -9,10 +9,10 @@ import hu.bme.mit.theta.formalism.ta.utils.ClockConstrVisitor;
 
 public interface ClockConstr {
 
-	public Collection<? extends ClockDecl> getClocks();
+	Collection<? extends ClockDecl> getClocks();
 
-	public Expr<? extends BoolType> toExpr();
+	Expr<? extends BoolType> toExpr();
 
-	public <P, R> R accept(final ClockConstrVisitor<? super P, ? extends R> visitor, final P param);
+	<P, R> R accept(final ClockConstrVisitor<? super P, ? extends R> visitor, final P param);
 
 }

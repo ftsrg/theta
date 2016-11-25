@@ -83,10 +83,8 @@ public final class ArgBuilder<S extends State, A extends Action, P extends Preci
 		if (nodeToCoverWith.getId() < node.getId()) {
 			final S state = node.getState();
 			final S stateToCoverWith = nodeToCoverWith.getState();
-			if (analysis.getDomain().isLeq(state, stateToCoverWith)) {
-				if (!nodeToCoverWith.isCovered()) {
-					return true;
-				}
+			if (analysis.getDomain().isLeq(state, stateToCoverWith) && !nodeToCoverWith.isCovered()) {
+				return true;
 			}
 		}
 		return false;

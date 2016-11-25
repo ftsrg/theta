@@ -8,10 +8,10 @@ import hu.bme.mit.theta.formalism.common.Loc;
 
 public interface TcfaLoc extends Loc<TcfaLoc, TcfaEdge> {
 
-	public String getName();
+	String getName();
 
-	public boolean isUrgent();
+	boolean isUrgent();
 
-	public Collection<Expr<? extends BoolType>> getInvars();
+	Collection<Expr<? extends BoolType>> getInvars();
 
 }
