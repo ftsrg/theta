@@ -1,6 +1,7 @@
 package hu.bme.mit.theta.formalism.sts.impl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -36,10 +37,10 @@ public final class StsImpl implements STS {
 	protected StsImpl(final Collection<VarDecl<? extends Type>> vars, final Collection<Expr<? extends BoolType>> init,
 			final Collection<Expr<? extends BoolType>> invar, final Collection<Expr<? extends BoolType>> trans,
 			final Expr<? extends BoolType> prop) {
-		this.vars = Collections.unmodifiableCollection(new ArrayList<>(checkNotNull(vars)));
-		this.init = Collections.unmodifiableCollection(new ArrayList<>(checkNotNull(init)));
-		this.invar = Collections.unmodifiableCollection(new ArrayList<>(checkNotNull(invar)));
-		this.trans = Collections.unmodifiableCollection(new ArrayList<>(checkNotNull(trans)));
+		this.vars = Collections.unmodifiableCollection(checkNotNull(vars));
+		this.init = Collections.unmodifiableCollection(checkNotNull(init));
+		this.invar = Collections.unmodifiableCollection(checkNotNull(invar));
+		this.trans = Collections.unmodifiableCollection(checkNotNull(trans));
 		this.prop = checkNotNull(prop);
 	}
 
@@ -97,6 +98,7 @@ public final class StsImpl implements STS {
 		private final Collection<Expr<? extends BoolType>> invar;
 		private final Collection<Expr<? extends BoolType>> trans;
 		private Expr<? extends BoolType> prop;
+		private boolean built;
 
 		public Builder() {
 			vars = new HashSet<>();
@@ -104,6 +106,7 @@ public final class StsImpl implements STS {
 			invar = new HashSet<>();
 			trans = new HashSet<>();
 			prop = null;
+			built = false;
 		}
 
 		/**
@@ -113,6 +116,7 @@ public final class StsImpl implements STS {
 		 */
 		public Builder addInit(final Expr<? extends BoolType> expr) {
 			checkNotNull(expr);
+			checkState(!built);
 			if (expr instanceof AndExpr)
 				addInit(((AndExpr) expr).getOps());
 			else
@@ -127,6 +131,7 @@ public final class StsImpl implements STS {
 		 */
 		public Builder addInit(final Iterable<? extends Expr<? extends BoolType>> exprs) {
 			checkNotNull(exprs);
+			checkState(!built);
 			for (final Expr<? extends BoolType> expr : exprs)
 				addInit(expr);
 			return this;
@@ -139,6 +144,7 @@ public final class StsImpl implements STS {
 		 */
 		public Builder addInvar(final Expr<? extends BoolType> expr) {
 			checkNotNull(expr);
+			checkState(!built);
 			if (expr instanceof AndExpr)
 				addInvar(((AndExpr) expr).getOps());
 			else
@@ -153,6 +159,7 @@ public final class StsImpl implements STS {
 		 */
 		public Builder addInvar(final Iterable<? extends Expr<? extends BoolType>> exprs) {
 			checkNotNull(exprs);
+			checkState(!built);
 			for (final Expr<? extends BoolType> expr : exprs)
 				addInvar(expr);
 			return this;
@@ -165,6 +172,7 @@ public final class StsImpl implements STS {
 		 */
 		public Builder addTrans(final Expr<? extends BoolType> expr) {
 			checkNotNull(expr);
+			checkState(!built);
 			if (expr instanceof AndExpr)
 				addTrans(((AndExpr) expr).getOps());
 			else
@@ -179,6 +187,7 @@ public final class StsImpl implements STS {
 		 */
 		public Builder addTrans(final Iterable<? extends Expr<? extends BoolType>> exprs) {
 			checkNotNull(exprs);
+			checkState(!built);
 			for (final Expr<? extends BoolType> expr : exprs)
 				addTrans(expr);
 			return this;
@@ -186,12 +195,15 @@ public final class StsImpl implements STS {
 
 		public Builder setProp(final Expr<? extends BoolType> expr) {
 			checkNotNull(expr);
+			checkState(!built);
 			this.prop = expr;
 			return this;
 		}
 
 		public STS build() {
 			checkNotNull(prop);
+			checkState(!built);
+			built = true;
 
 			ExprUtils.collectVars(init, vars);
 			ExprUtils.collectVars(invar, vars);
