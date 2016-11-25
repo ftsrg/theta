@@ -4,9 +4,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -20,6 +18,7 @@ import hu.bme.mit.theta.core.model.impl.AssignmentImpl;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.utils.impl.CnfCheckerVisitor.CNFStatus;
+import hu.bme.mit.theta.core.utils.impl.IndexedVars.Builder;
 
 public final class ExprUtils {
 
@@ -79,17 +78,16 @@ public final class ExprUtils {
 		return vars;
 	}
 
-	public static Map<Integer, Set<VarDecl<? extends Type>>> getVarsIndexed(final Expr<? extends Type> expr) {
-		final Map<Integer, Set<VarDecl<? extends Type>>> varsIndexed = new HashMap<>();
-		expr.accept(IndexedVarCollectorVisitor.getInstance(), varsIndexed);
-		return varsIndexed;
+	public static IndexedVars getVarsIndexed(final Expr<? extends Type> expr) {
+		final Builder builder = IndexedVars.builder();
+		expr.accept(IndexedVarCollectorVisitor.getInstance(), builder);
+		return builder.build();
 	}
 
-	public static Map<Integer, Set<VarDecl<? extends Type>>> getVarsIndexed(
-			final Iterable<? extends Expr<? extends Type>> exprs) {
-		final Map<Integer, Set<VarDecl<? extends Type>>> varsIndexed = new HashMap<>();
-		exprs.forEach(e -> e.accept(IndexedVarCollectorVisitor.getInstance(), varsIndexed));
-		return varsIndexed;
+	public static IndexedVars getVarsIndexed(final Iterable<? extends Expr<? extends Type>> exprs) {
+		final Builder builder = IndexedVars.builder();
+		exprs.forEach(e -> e.accept(IndexedVarCollectorVisitor.getInstance(), builder));
+		return builder.build();
 	}
 
 	public static boolean isExprCNF(final Expr<? extends BoolType> expr) {

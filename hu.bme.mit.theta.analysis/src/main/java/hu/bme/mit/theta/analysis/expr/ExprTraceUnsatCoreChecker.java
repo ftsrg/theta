@@ -6,21 +6,17 @@ import static com.google.common.base.Preconditions.checkState;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.theta.analysis.Trace;
-import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.model.Model;
 import hu.bme.mit.theta.core.model.impl.Valuation;
 import hu.bme.mit.theta.core.type.BoolType;
-import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.utils.impl.ExprUtils;
+import hu.bme.mit.theta.core.utils.impl.IndexedVars;
 import hu.bme.mit.theta.core.utils.impl.PathUtils;
 import hu.bme.mit.theta.core.utils.impl.VarIndexing;
 import hu.bme.mit.theta.solver.Solver;
@@ -86,17 +82,8 @@ public final class ExprTraceUnsatCoreChecker implements ExprTraceChecker<VarSets
 			status = ExprTraceStatus2.feasible(builder.build());
 		} else {
 			final Collection<Expr<? extends BoolType>> unsatCore = solver.getUnsatCore();
-			final List<Set<VarDecl<? extends Type>>> varSets = new ArrayList<>();
-			final Map<Integer, Set<VarDecl<? extends Type>>> varMap = ExprUtils.getVarsIndexed(unsatCore);
-			for (int i = 0; i < stateCount; ++i) {
-				if (varMap.containsKey(i)) {
-					varSets.add(varMap.get(i));
-				} else {
-					varSets.add(Collections.emptySet());
-				}
-			}
-
-			status = ExprTraceStatus2.infeasible(VarSetsRefutation.create(varSets));
+			final IndexedVars indexedVars = ExprUtils.getVarsIndexed(unsatCore);
+			status = ExprTraceStatus2.infeasible(VarSetsRefutation.create(indexedVars));
 		}
 
 		solver.pop();

@@ -4,7 +4,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
-import java.util.HashSet;
 import java.util.Set;
 
 import hu.bme.mit.theta.analysis.Trace;
@@ -49,10 +48,7 @@ public final class ExplVarSetsRefiner<A extends ExprAction> implements Refiner<E
 			return RefinerResult.unsafe(traceToConcretize);
 		} else if (cexStatus.isInfeasible()) {
 			final VarSetsRefutation refutation = cexStatus.asInfeasible().getRefutation();
-			final Set<VarDecl<? extends Type>> vars = new HashSet<>();
-			for (final Set<VarDecl<? extends Type>> varSet : refutation) {
-				vars.addAll(varSet);
-			}
+			final Set<VarDecl<? extends Type>> vars = refutation.getVarSets().getAllVars();
 			final ExplPrecision refinedPrecision = precision.refine(vars);
 			final int pruneIndex = refutation.getPruneIndex();
 			checkState(0 <= pruneIndex && pruneIndex <= cexToConcretize.length());

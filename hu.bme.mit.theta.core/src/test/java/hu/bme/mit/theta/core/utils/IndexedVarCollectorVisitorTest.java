@@ -10,13 +10,15 @@ import static hu.bme.mit.theta.core.expr.impl.Exprs.Not;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.True;
 import static hu.bme.mit.theta.core.type.impl.Types.Bool;
 import static hu.bme.mit.theta.core.type.impl.Types.Int;
-import static org.junit.Assert.assertEquals;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -30,6 +32,7 @@ import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.IntType;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.utils.impl.ExprUtils;
+import hu.bme.mit.theta.core.utils.impl.IndexedVars;
 
 @RunWith(Parameterized.class)
 public class IndexedVarCollectorVisitorTest {
@@ -65,7 +68,16 @@ public class IndexedVarCollectorVisitorTest {
 
 	@Test
 	public void test() {
-		final Map<Integer, Set<VarDecl<? extends Type>>> actualVars = ExprUtils.getVarsIndexed(expr);
-		assertEquals(expectedVars, actualVars);
+		final IndexedVars actualVars = ExprUtils.getVarsIndexed(expr);
+
+		Assert.assertEquals(expectedVars.keySet(), actualVars.getNonEmptyIndexes());
+
+		for (final Entry<Integer, Set<VarDecl<? extends Type>>> entry : expectedVars.entrySet()) {
+			Assert.assertEquals(entry.getValue(), actualVars.getVars(entry.getKey()));
+		}
+
+		Assert.assertEquals(expectedVars.values().stream().flatMap(s -> s.stream()).collect(Collectors.toSet()),
+				actualVars.getAllVars());
+
 	}
 }
