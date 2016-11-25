@@ -2,6 +2,7 @@ package hu.bme.mit.theta.core.expr.impl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.FuncAppExpr;
 import hu.bme.mit.theta.core.type.FuncType;
@@ -73,14 +74,7 @@ final class FuncAppExprImpl<ParamType extends Type, ResultType extends Type> ext
 
 	@Override
 	public String toString() {
-		final StringBuilder sb = new StringBuilder();
-		sb.append(OPERATOR_LABEL);
-		sb.append("(");
-		sb.append(func);
-		sb.append(", ");
-		sb.append(param);
-		sb.append(")");
-		return sb.toString();
+		return ObjectUtils.toStringBuilder(OPERATOR_LABEL).add(func).add(param).toString();
 	}
 
 }

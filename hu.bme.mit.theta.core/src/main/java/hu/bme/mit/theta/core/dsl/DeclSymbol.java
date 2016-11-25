@@ -2,6 +2,7 @@ package hu.bme.mit.theta.core.dsl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.core.decl.Decl;
 
@@ -51,11 +52,7 @@ public class DeclSymbol implements Symbol {
 
 	@Override
 	public String toString() {
-		final StringBuilder sb = new StringBuilder();
-		sb.append("DeclSymbol(");
-		sb.append(decl.toString());
-		sb.append(")");
-		return sb.toString();
+		return ObjectUtils.toStringBuilder("DeclSymbol").add(decl).toString();
 	}
 
 }

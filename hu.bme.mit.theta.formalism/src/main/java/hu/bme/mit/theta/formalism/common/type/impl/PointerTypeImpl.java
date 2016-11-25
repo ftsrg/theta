@@ -5,6 +5,7 @@ import static hu.bme.mit.theta.formalism.common.expr.impl.Exprs2.Null;
 
 import java.util.Optional;
 
+import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.expr.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.utils.TypeVisitor;
@@ -86,12 +87,7 @@ final class PointerTypeImpl<PointedType extends Type> implements PointerType<Poi
 
 	@Override
 	public String toString() {
-		final StringBuilder sb = new StringBuilder();
-		sb.append(TYPE_LABEL);
-		sb.append("(");
-		sb.append(type);
-		sb.append(")");
-		return sb.toString();
+		return ObjectUtils.toStringBuilder(TYPE_LABEL).add(type).toString();
 	}
 
 }

@@ -2,6 +2,7 @@ package hu.bme.mit.theta.core.stmt.impl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.stmt.AssertStmt;
 import hu.bme.mit.theta.core.type.BoolType;
@@ -47,11 +48,6 @@ final class AssertStmtImpl extends AbstractStmt implements AssertStmt {
 
 	@Override
 	public String toString() {
-		final StringBuilder sb = new StringBuilder();
-		sb.append("Assert");
-		sb.append("(");
-		sb.append(cond.toString());
-		sb.append(")");
-		return sb.toString();
+		return ObjectUtils.toStringBuilder("Assert").add(cond).toString();
 	}
 }

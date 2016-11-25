@@ -3,6 +3,7 @@ package hu.bme.mit.theta.formalism.common.expr.impl;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.formalism.common.type.impl.Types2.Pointer;
 
+import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.utils.ExprVisitor;
 import hu.bme.mit.theta.formalism.common.expr.NewExpr;
@@ -62,13 +63,7 @@ final class NewExprImpl<PointedType extends Type> implements NewExpr<PointedType
 
 	@Override
 	public String toString() {
-		final StringBuilder sb = new StringBuilder();
-		sb.append(EXPR_LABEL);
-		sb.append("(");
-		sb.append(pointedType);
-		sb.append(")");
-		return sb.toString();
-
+		return ObjectUtils.toStringBuilder(EXPR_LABEL).add(pointedType).toString();
 	}
 
 }

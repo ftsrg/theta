@@ -2,6 +2,7 @@ package hu.bme.mit.theta.core.stmt.impl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.stmt.WhileStmt;
@@ -56,13 +57,6 @@ final class WhileStmtImpl extends AbstractStmt implements WhileStmt {
 
 	@Override
 	public String toString() {
-		final StringBuilder sb = new StringBuilder();
-		sb.append("While");
-		sb.append("(");
-		sb.append(cond.toString());
-		sb.append(", ");
-		sb.append(doStmt.toString());
-		sb.append(")");
-		return sb.toString();
+		return ObjectUtils.toStringBuilder("While").add(cond).add(doStmt).toString();
 	}
 }

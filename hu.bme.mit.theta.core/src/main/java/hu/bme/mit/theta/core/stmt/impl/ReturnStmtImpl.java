@@ -2,6 +2,7 @@ package hu.bme.mit.theta.core.stmt.impl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.stmt.ReturnStmt;
 import hu.bme.mit.theta.core.type.Type;
@@ -47,12 +48,7 @@ final class ReturnStmtImpl<ReturnType extends Type> implements ReturnStmt<Return
 
 	@Override
 	public String toString() {
-		final StringBuilder sb = new StringBuilder();
-		sb.append("Return");
-		sb.append("(");
-		sb.append(expr.toString());
-		sb.append(")");
-		return sb.toString();
+		return ObjectUtils.toStringBuilder("Return").add(expr).toString();
 	}
 
 }

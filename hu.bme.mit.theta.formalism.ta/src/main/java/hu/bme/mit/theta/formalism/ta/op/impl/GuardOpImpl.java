@@ -5,6 +5,7 @@ import static hu.bme.mit.theta.core.stmt.impl.Stmts.Assume;
 
 import java.util.Collection;
 
+import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.formalism.common.decl.ClockDecl;
 import hu.bme.mit.theta.formalism.ta.constr.ClockConstr;
@@ -74,11 +75,7 @@ final class GuardOpImpl implements GuardOp {
 
 	@Override
 	public String toString() {
-		final StringBuilder sb = new StringBuilder();
-		sb.append("Guard(");
-		sb.append(constr);
-		sb.append(")");
-		return sb.toString();
+		return ObjectUtils.toStringBuilder("Guard").add(constr).toString();
 	}
 
 }
