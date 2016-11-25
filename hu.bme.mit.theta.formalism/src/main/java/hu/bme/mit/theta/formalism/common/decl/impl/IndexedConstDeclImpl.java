@@ -3,6 +3,7 @@ package hu.bme.mit.theta.formalism.common.decl.impl;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.decl.IndexedConstDecl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.IndexedConstRefExpr;
@@ -81,14 +82,7 @@ final class IndexedConstDeclImpl<DeclType extends Type> implements IndexedConstD
 
 	@Override
 	public String toString() {
-		final StringBuilder sb = new StringBuilder();
-		sb.append(DECL_LABEL);
-		sb.append("(");
-		sb.append(varDecl.getName());
-		sb.append(", ");
-		sb.append(index);
-		sb.append(")");
-		return sb.toString();
+		return ObjectUtils.toStringBuilder(DECL_LABEL).add(varDecl.getName()).add(index).toString();
 	}
 
 }

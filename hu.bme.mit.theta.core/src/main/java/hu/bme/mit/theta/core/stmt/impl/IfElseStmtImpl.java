@@ -2,6 +2,7 @@ package hu.bme.mit.theta.core.stmt.impl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.stmt.IfElseStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
@@ -65,15 +66,6 @@ final class IfElseStmtImpl extends AbstractStmt implements IfElseStmt {
 
 	@Override
 	public String toString() {
-		final StringBuilder sb = new StringBuilder();
-		sb.append("If");
-		sb.append("(");
-		sb.append(cond.toString());
-		sb.append(", ");
-		sb.append(then.toString());
-		sb.append(", ");
-		sb.append(elze.toString());
-		sb.append(")");
-		return sb.toString();
+		return ObjectUtils.toStringBuilder("If").add(cond).add(then).add(elze).toString();
 	}
 }

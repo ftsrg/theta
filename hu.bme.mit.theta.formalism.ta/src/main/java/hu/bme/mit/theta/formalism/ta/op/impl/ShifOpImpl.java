@@ -9,6 +9,7 @@ import java.util.Collection;
 
 import com.google.common.collect.ImmutableSet;
 
+import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.type.RatType;
 import hu.bme.mit.theta.formalism.common.decl.ClockDecl;
@@ -86,13 +87,7 @@ public class ShifOpImpl implements ShiftOp {
 
 	@Override
 	public String toString() {
-		final StringBuilder sb = new StringBuilder();
-		sb.append("Shift(");
-		sb.append(clock.getName());
-		sb.append(", ");
-		sb.append(offset);
-		sb.append(")");
-		return sb.toString();
+		return ObjectUtils.toStringBuilder("Shift").add(clock.getName()).add(offset).toString();
 	}
 
 }

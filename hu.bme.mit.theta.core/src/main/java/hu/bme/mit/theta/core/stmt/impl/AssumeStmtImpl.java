@@ -2,6 +2,7 @@ package hu.bme.mit.theta.core.stmt.impl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.type.BoolType;
@@ -47,11 +48,6 @@ final class AssumeStmtImpl extends AbstractStmt implements AssumeStmt {
 
 	@Override
 	public String toString() {
-		final StringBuilder sb = new StringBuilder();
-		sb.append("Assume");
-		sb.append("(");
-		sb.append(cond.toString());
-		sb.append(")");
-		return sb.toString();
+		return ObjectUtils.toStringBuilder("Assume").add(cond).toString();
 	}
 }
