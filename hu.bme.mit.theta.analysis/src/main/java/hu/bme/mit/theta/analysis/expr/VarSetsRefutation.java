@@ -2,46 +2,32 @@ package hu.bme.mit.theta.analysis.expr;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
-
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
-
-import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.theta.common.ObjectUtils;
-import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.utils.impl.IndexedVars;
 
-public final class VarSetsRefutation implements Refutation, Iterable<Set<VarDecl<? extends Type>>> {
+public final class VarSetsRefutation implements Refutation {
 
-	private final List<Set<VarDecl<? extends Type>>> varSets;
+	private final IndexedVars varSets;
 	private final int pruneIndex;
 
-	private VarSetsRefutation(final List<Set<VarDecl<? extends Type>>> varSets) {
+	private VarSetsRefutation(final IndexedVars varSets) {
 		checkNotNull(varSets);
 		checkArgument(!varSets.isEmpty());
-		this.varSets = ImmutableList.copyOf(varSets);
+		this.varSets = varSets;
 		int i = 0;
-		while (i < varSets.size() && varSets.get(i).isEmpty()) {
+		while (varSets.getVars(i).isEmpty()) {
 			++i;
 		}
 		this.pruneIndex = i;
-		checkState(0 <= this.pruneIndex && this.pruneIndex < varSets.size());
 	}
 
-	public static VarSetsRefutation create(final List<Set<VarDecl<? extends Type>>> varSets) {
+	public static VarSetsRefutation create(final IndexedVars varSets) {
 		return new VarSetsRefutation(varSets);
 	}
 
-	public List<Set<VarDecl<? extends Type>>> getVarSets() {
+	public IndexedVars getVarSets() {
 		return varSets;
-	}
-
-	@Override
-	public Iterator<Set<VarDecl<? extends Type>>> iterator() {
-		return varSets.iterator();
 	}
 
 	@Override
