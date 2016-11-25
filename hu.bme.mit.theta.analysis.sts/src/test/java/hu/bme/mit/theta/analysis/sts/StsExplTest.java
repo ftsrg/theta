@@ -37,7 +37,7 @@ import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.ExprStatePredicate;
 import hu.bme.mit.theta.analysis.expr.ExprTraceChecker;
 import hu.bme.mit.theta.analysis.expr.ExprTraceUnsatCoreChecker;
-import hu.bme.mit.theta.analysis.expr.VarSetsRefutation;
+import hu.bme.mit.theta.analysis.expr.IndexedVarsRefutation;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.common.visualization.GraphvizWriter;
 import hu.bme.mit.theta.common.waitlist.FifoWaitlist;
@@ -85,7 +85,7 @@ public class StsExplTest {
 		final Abstractor<ExplState, StsAction, ExplPrecision> abstractor = WaitlistBasedAbstractor.create(lts, analysis,
 				target, FifoWaitlist.supplier());
 
-		final ExprTraceChecker<VarSetsRefutation> exprTraceChecker = ExprTraceUnsatCoreChecker
+		final ExprTraceChecker<IndexedVarsRefutation> exprTraceChecker = ExprTraceUnsatCoreChecker
 				.create(And(sts.getInit()), Not(sts.getProp()), solver);
 		final ExplVarSetsRefiner<StsAction> refiner = ExplVarSetsRefiner.create(exprTraceChecker);
 
