@@ -40,15 +40,15 @@ public final class ExprDomainLeqTest {
 	public static Collection<Object[]> data() {
 		return Arrays.asList(new Object[][] {
 
-				{ PredState.create(), PredState.create(), true },
+				{ PredState.of(), PredState.of(), true },
 
-				{ PredState.create(Geq(X, Int(0))), PredState.create(True()), true },
+				{ PredState.of(Geq(X, Int(0))), PredState.of(True()), true },
 
-				{ PredState.create(False()), PredState.create(Leq(X, Int(1))), true },
+				{ PredState.of(False()), PredState.of(Leq(X, Int(1))), true },
 
-				{ PredState.create(True()), PredState.create(Geq(X, Int(0))), false },
+				{ PredState.of(True()), PredState.of(Geq(X, Int(0))), false },
 
-				{ PredState.create(Geq(X, Int(0))), PredState.create(False()), false }
+				{ PredState.of(Geq(X, Int(0))), PredState.of(False()), false }
 
 		});
 	}

@@ -40,7 +40,7 @@ public final class Trace<S extends State, A extends Action> {
 	 * Gets the length of the trace, which is the number of states.
 	 */
 	public int length() {
-		return states.size();
+		return actions.size();
 	}
 
 	public S getState(final int i) {

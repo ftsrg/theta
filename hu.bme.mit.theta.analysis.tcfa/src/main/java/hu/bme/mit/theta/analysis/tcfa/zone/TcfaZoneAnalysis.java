@@ -1,6 +1,5 @@
 package hu.bme.mit.theta.analysis.tcfa.zone;
 
-import hu.bme.mit.theta.analysis.ActionFunction;
 import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.Domain;
 import hu.bme.mit.theta.analysis.InitFunction;
@@ -34,11 +33,6 @@ public final class TcfaZoneAnalysis implements Analysis<ZoneState, TcfaAction, Z
 	@Override
 	public TransferFunction<ZoneState, TcfaAction, ZonePrecision> getTransferFunction() {
 		return TcfaZoneTransferFunction.getInstance();
-	}
-
-	@Override
-	public ActionFunction<? super ZoneState, ? extends TcfaAction> getActionFunction() {
-		throw new UnsupportedOperationException();
 	}
 
 }

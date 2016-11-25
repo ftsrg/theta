@@ -8,6 +8,4 @@ public interface Analysis<S extends State, A extends Action, P extends Precision
 
 	TransferFunction<S, A, P> getTransferFunction();
 
-	ActionFunction<? super S, ? extends A> getActionFunction();
-
 }

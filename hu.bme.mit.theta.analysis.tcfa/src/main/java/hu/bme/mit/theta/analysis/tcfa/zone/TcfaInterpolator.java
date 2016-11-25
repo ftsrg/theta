@@ -12,22 +12,28 @@ import hu.bme.mit.theta.analysis.zone.ZoneDomain;
 import hu.bme.mit.theta.analysis.zone.ZonePrecision;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
 
-public class TcfaInterpolator {
+public final class TcfaInterpolator {
 
 	private final ZonePrecision precision;
 
-	public TcfaInterpolator(final ZonePrecision precision) {
+	private TcfaInterpolator(final ZonePrecision precision) {
 		this.precision = checkNotNull(precision);
+	}
+
+	public static TcfaInterpolator create(final ZonePrecision precision) {
+		return new TcfaInterpolator(precision);
 	}
 
 	public List<ZoneState> getInterpolant(final List<? extends TcfaAction> actions) {
 		final List<ZoneState> interpolants = new ArrayList<>(actions.size() + 1);
 
 		final List<ZoneState> forwardStates = getForwardStates(actions);
-		final List<ZoneState> backwardStates = getBakcwardStates(actions);
+		final List<ZoneState> backwardStates = getBackwardStates(actions);
 
 		for (int i = 0; i < forwardStates.size(); i++) {
-			final ZoneState interpolant = ZoneState.interpolant(forwardStates.get(i), backwardStates.get(i));
+			final ZoneState forwardState = forwardStates.get(i);
+			final ZoneState backwardState = backwardStates.get(i);
+			final ZoneState interpolant = ZoneState.interpolant(forwardState, backwardState);
 			interpolants.add(interpolant);
 		}
 
@@ -45,20 +51,23 @@ public class TcfaInterpolator {
 			forwardStates.add(lastState);
 		}
 
+		// TODO
+		assert forwardStates.get(forwardStates.size() - 1).isBottom();
+
 		assert forwardStates.size() == actions.size() + 1;
 
 		return forwardStates;
 	}
 
-	private List<ZoneState> getBakcwardStates(final List<? extends TcfaAction> actions) {
+	private List<ZoneState> getBackwardStates(final List<? extends TcfaAction> actions) {
 		final List<ZoneState> backwardStates = new ArrayList<>(actions.size() + 1);
 
-		ZoneState lastState = ZoneState.bottom();
+		ZoneState lastState = ZoneState.top();
 		backwardStates.add(lastState);
 
 		for (final TcfaAction action : actions) {
 			lastState = TcfaZoneBackwardTransferFunction.getInstance().pre(lastState, action, precision);
-			backwardStates.add(lastState);
+			backwardStates.add(0, lastState);
 		}
 
 		assert backwardStates.size() == actions.size() + 1;

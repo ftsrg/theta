@@ -79,7 +79,7 @@ public class TreePredPrecisionTest {
 	public void testException() {
 		final TreePredPrecision prec = TreePredPrecision.create(ImmutableSet.of(Exprs.Eq(Exprs.Int(2), Exprs.Int(4))));
 
-		final PredState state = PredState.create(Exprs.Eq(Exprs.Int(0), Exprs.Int(1)));
+		final PredState state = PredState.of(Exprs.Eq(Exprs.Int(0), Exprs.Int(1)));
 
 		prec.refine(state, Exprs.True());
 

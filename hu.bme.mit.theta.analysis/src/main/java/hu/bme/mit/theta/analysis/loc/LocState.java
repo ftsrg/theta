@@ -24,7 +24,7 @@ public final class LocState<S extends State, L extends Loc<L, E>, E extends Edge
 		this.state = checkNotNull(state);
 	}
 
-	public static <S extends State, L extends Loc<L, E>, E extends Edge<L, E>> LocState<S, L, E> create(final L loc,
+	public static <S extends State, L extends Loc<L, E>, E extends Edge<L, E>> LocState<S, L, E> of(final L loc,
 			final S state) {
 		return new LocState<>(loc, state);
 	}
@@ -38,6 +38,18 @@ public final class LocState<S extends State, L extends Loc<L, E>, E extends Edge
 	public S getState() {
 		return state;
 	}
+
+	////
+
+	public <L2 extends Loc<L2, E2>, E2 extends Edge<L2, E2>> LocState<S, L2, E2> withLoc(final L2 loc) {
+		return LocState.of(loc, this.state);
+	}
+
+	public <S2 extends State> LocState<S2, L, E> withState(final S2 state) {
+		return LocState.of(this.loc, state);
+	}
+
+	////
 
 	@Override
 	public Expr<? extends BoolType> toExpr() {
