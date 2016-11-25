@@ -6,8 +6,8 @@ import hu.bme.mit.theta.core.type.Type;
 public interface VarDecl<DeclType extends Type> extends Decl<DeclType> {
 
 	@Override
-	public VarRefExpr<DeclType> getRef();
+	VarRefExpr<DeclType> getRef();
 
-	public IndexedConstDecl<DeclType> getConstDecl(int index);
+	IndexedConstDecl<DeclType> getConstDecl(int index);
 
 }

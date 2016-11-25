@@ -5,7 +5,6 @@ import java.io.IOException;
 import org.junit.Test;
 
 import hu.bme.mit.theta.formalism.sts.STS;
-import hu.bme.mit.theta.frontend.aiger.AigerLoader;
 import hu.bme.mit.theta.frontend.aiger.impl.OptimizedAigerLoader;
 import hu.bme.mit.theta.frontend.aiger.utils.AigerVisualizer;
 

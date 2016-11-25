@@ -7,11 +7,11 @@ import hu.bme.mit.theta.formalism.common.decl.ClockDecl;
 
 public interface ResetOp extends ClockOp {
 
-	public ClockDecl getClock();
+	ClockDecl getClock();
 
-	public int getValue();
+	int getValue();
 
 	@Override
-	public AssignStmt<RatType, IntType> toStmt();
+	AssignStmt<RatType, IntType> toStmt();
 
 }

@@ -44,75 +44,75 @@ import hu.bme.mit.theta.core.type.closure.ClosedUnderSub;
 
 public interface ExprVisitor<P, R> {
 
-	public <DeclType extends Type> R visit(ConstRefExpr<DeclType> expr, P param);
+	<DeclType extends Type> R visit(ConstRefExpr<DeclType> expr, P param);
 
-	public <DeclType extends Type> R visit(ParamRefExpr<DeclType> expr, P param);
+	<DeclType extends Type> R visit(ParamRefExpr<DeclType> expr, P param);
 
-	public <DeclType extends Type> R visit(VarRefExpr<DeclType> expr, P param);
+	<DeclType extends Type> R visit(VarRefExpr<DeclType> expr, P param);
 
-	public <ReturnType extends Type> R visit(ProcRefExpr<ReturnType> expr, P param);
+	<ReturnType extends Type> R visit(ProcRefExpr<ReturnType> expr, P param);
 
-	public <ExprType extends Type> R visit(PrimedExpr<ExprType> expr, P param);
+	<ExprType extends Type> R visit(PrimedExpr<ExprType> expr, P param);
 
-	public R visit(FalseExpr expr, P param);
+	R visit(FalseExpr expr, P param);
 
-	public R visit(TrueExpr expr, P param);
+	R visit(TrueExpr expr, P param);
 
-	public R visit(NotExpr expr, P param);
+	R visit(NotExpr expr, P param);
 
-	public R visit(ImplyExpr expr, P param);
+	R visit(ImplyExpr expr, P param);
 
-	public R visit(IffExpr expr, P param);
+	R visit(IffExpr expr, P param);
 
-	public R visit(AndExpr expr, P param);
+	R visit(AndExpr expr, P param);
 
-	public R visit(OrExpr expr, P param);
+	R visit(OrExpr expr, P param);
 
-	public R visit(ExistsExpr expr, P param);
+	R visit(ExistsExpr expr, P param);
 
-	public R visit(ForallExpr expr, P param);
+	R visit(ForallExpr expr, P param);
 
-	public R visit(EqExpr expr, P param);
+	R visit(EqExpr expr, P param);
 
-	public R visit(NeqExpr expr, P param);
+	R visit(NeqExpr expr, P param);
 
-	public R visit(GeqExpr expr, P param);
+	R visit(GeqExpr expr, P param);
 
-	public R visit(GtExpr expr, P param);
+	R visit(GtExpr expr, P param);
 
-	public R visit(LeqExpr expr, P param);
+	R visit(LeqExpr expr, P param);
 
-	public R visit(LtExpr expr, P param);
+	R visit(LtExpr expr, P param);
 
-	public R visit(IntLitExpr expr, P param);
+	R visit(IntLitExpr expr, P param);
 
-	public R visit(IntDivExpr expr, P param);
+	R visit(IntDivExpr expr, P param);
 
-	public R visit(RemExpr expr, P param);
+	R visit(RemExpr expr, P param);
 
-	public R visit(ModExpr expr, P param);
+	R visit(ModExpr expr, P param);
 
-	public R visit(RatLitExpr expr, P param);
+	R visit(RatLitExpr expr, P param);
 
-	public R visit(RatDivExpr expr, P param);
+	R visit(RatDivExpr expr, P param);
 
-	public <ExprType extends ClosedUnderNeg> R visit(NegExpr<ExprType> expr, P param);
+	<ExprType extends ClosedUnderNeg> R visit(NegExpr<ExprType> expr, P param);
 
-	public <ExprType extends ClosedUnderSub> R visit(SubExpr<ExprType> expr, P param);
+	<ExprType extends ClosedUnderSub> R visit(SubExpr<ExprType> expr, P param);
 
-	public <ExprType extends ClosedUnderAdd> R visit(AddExpr<ExprType> expr, P param);
+	<ExprType extends ClosedUnderAdd> R visit(AddExpr<ExprType> expr, P param);
 
-	public <ExprType extends ClosedUnderMul> R visit(MulExpr<ExprType> expr, P param);
+	<ExprType extends ClosedUnderMul> R visit(MulExpr<ExprType> expr, P param);
 
-	public <IndexType extends Type, ElemType extends Type> R visit(ArrayReadExpr<IndexType, ElemType> expr, P param);
+	<IndexType extends Type, ElemType extends Type> R visit(ArrayReadExpr<IndexType, ElemType> expr, P param);
 
-	public <IndexType extends Type, ElemType extends Type> R visit(ArrayWriteExpr<IndexType, ElemType> expr, P param);
+	<IndexType extends Type, ElemType extends Type> R visit(ArrayWriteExpr<IndexType, ElemType> expr, P param);
 
-	public <ParamType extends Type, ResultType extends Type> R visit(FuncLitExpr<ParamType, ResultType> expr, P param);
+	<ParamType extends Type, ResultType extends Type> R visit(FuncLitExpr<ParamType, ResultType> expr, P param);
 
-	public <ParamType extends Type, ResultType extends Type> R visit(FuncAppExpr<ParamType, ResultType> expr, P param);
+	<ParamType extends Type, ResultType extends Type> R visit(FuncAppExpr<ParamType, ResultType> expr, P param);
 
-	public <ReturnType extends Type> R visit(ProcCallExpr<ReturnType> expr, P param);
+	<ReturnType extends Type> R visit(ProcCallExpr<ReturnType> expr, P param);
 
-	public <ExprType extends Type> R visit(IteExpr<ExprType> expr, P param);
+	<ExprType extends Type> R visit(IteExpr<ExprType> expr, P param);
 }

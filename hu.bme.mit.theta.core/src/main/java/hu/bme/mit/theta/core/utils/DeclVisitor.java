@@ -6,8 +6,8 @@ import hu.bme.mit.theta.core.type.Type;
 
 public interface DeclVisitor<P, R> {
 
-	public <DeclType extends Type> R visit(ConstDecl<DeclType> decl, P param);
+	<DeclType extends Type> R visit(ConstDecl<DeclType> decl, P param);
 
-	public <DeclType extends Type> R visit(ParamDecl<DeclType> decl, P param);
+	<DeclType extends Type> R visit(ParamDecl<DeclType> decl, P param);
 
 }

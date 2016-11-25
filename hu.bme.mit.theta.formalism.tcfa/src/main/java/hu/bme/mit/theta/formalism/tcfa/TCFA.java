@@ -8,8 +8,8 @@ import hu.bme.mit.theta.formalism.common.decl.ClockDecl;
 
 public interface TCFA extends Automaton<TcfaLoc, TcfaEdge> {
 
-	public Collection<? extends VarDecl<?>> getDataVars();
+	Collection<? extends VarDecl<?>> getDataVars();
 
-	public Collection<? extends ClockDecl> getClockVars();
+	Collection<? extends ClockDecl> getClockVars();
 
 }

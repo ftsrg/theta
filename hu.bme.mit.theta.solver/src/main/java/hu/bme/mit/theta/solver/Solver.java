@@ -8,39 +8,39 @@ import hu.bme.mit.theta.core.type.BoolType;
 
 public interface Solver {
 
-	public void add(Expr<? extends BoolType> assertion);
+	void add(Expr<? extends BoolType> assertion);
 
-	public default void add(final Iterable<? extends Expr<? extends BoolType>> assertions) {
+	default void add(final Iterable<? extends Expr<? extends BoolType>> assertions) {
 		for (final Expr<? extends BoolType> assertion : assertions) {
 			add(assertion);
 		}
 	}
 
-	public void track(Expr<? extends BoolType> assertion);
+	void track(Expr<? extends BoolType> assertion);
 
-	public default void track(final Iterable<? extends Expr<? extends BoolType>> assertions) {
+	default void track(final Iterable<? extends Expr<? extends BoolType>> assertions) {
 		for (final Expr<? extends BoolType> assertion : assertions) {
 			track(assertion);
 		}
 	}
 
-	public SolverStatus check();
+	SolverStatus check();
 
-	public void push();
+	void push();
 
-	public void pop(final int n);
+	void pop(final int n);
 
-	public default void pop() {
+	default void pop() {
 		pop(1);
 	}
 
-	public void reset();
+	void reset();
 
-	public SolverStatus getStatus();
+	SolverStatus getStatus();
 
-	public Model getModel();
+	Model getModel();
 
-	public Collection<Expr<? extends BoolType>> getUnsatCore();
+	Collection<Expr<? extends BoolType>> getUnsatCore();
 
-	public Collection<Expr<? extends BoolType>> getAssertions();
+	Collection<Expr<? extends BoolType>> getAssertions();
 }

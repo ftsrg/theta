@@ -11,18 +11,18 @@ import hu.bme.mit.theta.core.type.UnitType;
 
 public interface TypeVisitor<P, R> {
 
-	public R visit(BoolType type, P param);
+	R visit(BoolType type, P param);
 
-	public R visit(IntType type, P param);
+	R visit(IntType type, P param);
 
-	public R visit(RatType type, P param);
+	R visit(RatType type, P param);
 
-	public <ParamType extends Type, ResultType extends Type> R visit(FuncType<ParamType, ResultType> type, P param);
+	<ParamType extends Type, ResultType extends Type> R visit(FuncType<ParamType, ResultType> type, P param);
 
-	public <IndexType extends Type, ElemType extends Type> R visit(ArrayType<IndexType, ElemType> type, P param);
+	<IndexType extends Type, ElemType extends Type> R visit(ArrayType<IndexType, ElemType> type, P param);
 
-	public <ReturnType extends Type> R visit(ProcType<ReturnType> type, P param);
+	<ReturnType extends Type> R visit(ProcType<ReturnType> type, P param);
 
-	public R visit(UnitType type, P param);
+	R visit(UnitType type, P param);
 
 }

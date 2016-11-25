@@ -3,7 +3,6 @@ package hu.bme.mit.theta.common;
 import static com.google.common.base.Preconditions.checkPositionIndex;
 
 import java.util.Arrays;
-import java.util.StringJoiner;
 
 abstract class AbstractTuple implements Product {
 
@@ -53,11 +52,7 @@ abstract class AbstractTuple implements Product {
 
 	@Override
 	public final String toString() {
-		final StringJoiner sj = new StringJoiner(", ", "Tuple(", ")");
-		for (final Object elem : elems) {
-			sj.add(elem.toString());
-		}
-		return sj.toString();
+		return ObjectUtils.toStringBuilder("Tuple").addAll(elems).toString();
 	}
 
 }

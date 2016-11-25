@@ -4,8 +4,8 @@ import hu.bme.mit.theta.core.type.RatType;
 
 public interface RatLitExpr extends LitExpr<RatType>, NullaryExpr<RatType>, Comparable<RatLitExpr> {
 
-	public long getNum();
+	long getNum();
 
-	public long getDenom();
+	long getDenom();
 
 }

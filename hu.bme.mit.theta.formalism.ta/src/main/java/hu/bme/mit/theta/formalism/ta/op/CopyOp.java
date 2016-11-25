@@ -6,11 +6,11 @@ import hu.bme.mit.theta.formalism.common.decl.ClockDecl;
 
 public interface CopyOp extends ClockOp {
 
-	public ClockDecl getClock();
+	ClockDecl getClock();
 
-	public ClockDecl getValue();
+	ClockDecl getValue();
 
 	@Override
-	public AssignStmt<RatType, RatType> toStmt();
+	AssignStmt<RatType, RatType> toStmt();
 
 }

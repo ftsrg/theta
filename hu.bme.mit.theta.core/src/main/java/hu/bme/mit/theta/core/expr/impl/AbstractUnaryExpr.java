@@ -2,6 +2,7 @@ package hu.bme.mit.theta.core.expr.impl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.UnaryExpr;
 import hu.bme.mit.theta.core.type.Type;
@@ -35,12 +36,7 @@ public abstract class AbstractUnaryExpr<OpType extends Type, ExprType extends Ty
 
 	@Override
 	public final String toString() {
-		final StringBuilder sb = new StringBuilder();
-		sb.append(getOperatorLabel());
-		sb.append("(");
-		sb.append(op.toString());
-		sb.append(")");
-		return sb.toString();
+		return ObjectUtils.toStringBuilder(getOperatorLabel()).add(op).toString();
 	}
 
 	protected abstract int getHashSeed();

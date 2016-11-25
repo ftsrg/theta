@@ -5,6 +5,6 @@ import hu.bme.mit.theta.core.expr.LeqExpr;
 public interface LeqConstr extends AtomicConstr {
 
 	@Override
-	public LeqExpr toExpr();
+	LeqExpr toExpr();
 
 }
