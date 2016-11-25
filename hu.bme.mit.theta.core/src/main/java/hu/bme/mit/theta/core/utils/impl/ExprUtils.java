@@ -61,9 +61,7 @@ public final class ExprUtils {
 
 	public static void collectVars(final Iterable<? extends Expr<? extends Type>> exprs,
 			final Collection<VarDecl<? extends Type>> collectTo) {
-		for (final Expr<? extends Type> expr : exprs) {
-			collectVars(expr, collectTo);
-		}
+		exprs.forEach(e -> collectVars(e, collectTo));
 	}
 
 	public static Set<VarDecl<? extends Type>> getVars(final Expr<? extends Type> expr) {
