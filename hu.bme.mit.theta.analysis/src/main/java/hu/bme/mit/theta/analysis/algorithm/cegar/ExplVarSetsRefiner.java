@@ -15,20 +15,20 @@ import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprTraceChecker;
 import hu.bme.mit.theta.analysis.expr.ExprTraceStatus2;
-import hu.bme.mit.theta.analysis.expr.VarSetsRefutation;
+import hu.bme.mit.theta.analysis.expr.IndexedVarsRefutation;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Type;
 
 public final class ExplVarSetsRefiner<A extends ExprAction> implements Refiner<ExplState, A, ExplPrecision> {
 
-	ExprTraceChecker<VarSetsRefutation> exprTraceChecker;
+	ExprTraceChecker<IndexedVarsRefutation> exprTraceChecker;
 
-	private ExplVarSetsRefiner(final ExprTraceChecker<VarSetsRefutation> exprTraceChecker) {
+	private ExplVarSetsRefiner(final ExprTraceChecker<IndexedVarsRefutation> exprTraceChecker) {
 		this.exprTraceChecker = checkNotNull(exprTraceChecker);
 	}
 
 	public static <A extends ExprAction> ExplVarSetsRefiner<A> create(
-			final ExprTraceChecker<VarSetsRefutation> exprTraceChecker) {
+			final ExprTraceChecker<IndexedVarsRefutation> exprTraceChecker) {
 		return new ExplVarSetsRefiner<>(exprTraceChecker);
 	}
 
@@ -42,12 +42,12 @@ public final class ExplVarSetsRefiner<A extends ExprAction> implements Refiner<E
 		final ArgTrace<ExplState, A> cexToConcretize = arg.getCexs().findFirst().get();
 		final Trace<ExplState, A> traceToConcretize = cexToConcretize.toTrace();
 
-		final ExprTraceStatus2<VarSetsRefutation> cexStatus = exprTraceChecker.check(traceToConcretize);
+		final ExprTraceStatus2<IndexedVarsRefutation> cexStatus = exprTraceChecker.check(traceToConcretize);
 
 		if (cexStatus.isFeasible()) {
 			return RefinerResult.unsafe(traceToConcretize);
 		} else if (cexStatus.isInfeasible()) {
-			final VarSetsRefutation refutation = cexStatus.asInfeasible().getRefutation();
+			final IndexedVarsRefutation refutation = cexStatus.asInfeasible().getRefutation();
 			final Set<VarDecl<? extends Type>> vars = refutation.getVarSets().getAllVars();
 			final ExplPrecision refinedPrecision = precision.refine(vars);
 			final int pruneIndex = refutation.getPruneIndex();
