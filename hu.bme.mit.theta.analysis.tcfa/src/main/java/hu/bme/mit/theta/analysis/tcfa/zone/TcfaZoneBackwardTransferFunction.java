@@ -94,7 +94,17 @@ final class TcfaZoneBackwardTransferFunction implements TransferFunction<ZoneSta
 			}
 		}
 
-		return prevStateBuilder.done();
+		final ZoneState prevState = prevStateBuilder.done();
+
+		// final Solver solver = Z3SolverFactory.getInstace().createSolver();
+		// final Optional<Valuation> uncoveredPredecessor =
+		// anyUncoveredPredecessor(singleton(prevState), action, state,
+		// solver);
+		// if (uncoveredPredecessor.isPresent()) {
+		// throw new AssertionError();
+		// }
+
+		return prevState;
 	}
 
 }

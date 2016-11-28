@@ -1,18 +1,23 @@
 package hu.bme.mit.theta.analysis.tcfa.zone;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.analysis.expr.ExprStateUtils.anyUncoveredSuccessor;
+import static java.util.Collections.singleton;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import com.google.common.collect.Lists;
 
 import hu.bme.mit.theta.analysis.Domain;
-import hu.bme.mit.theta.analysis.TransferFunction;
 import hu.bme.mit.theta.analysis.tcfa.TcfaAction;
 import hu.bme.mit.theta.analysis.zone.ZoneDomain;
 import hu.bme.mit.theta.analysis.zone.ZonePrecision;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
+import hu.bme.mit.theta.core.model.impl.Valuation;
+import hu.bme.mit.theta.solver.Solver;
+import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 
 public final class TcfaInterpolator {
 
@@ -39,6 +44,7 @@ public final class TcfaInterpolator {
 			interpolants.add(interpolant);
 		}
 
+		assert isInterpolant(interpolants, actions);
 		return interpolants;
 	}
 
@@ -77,12 +83,9 @@ public final class TcfaInterpolator {
 		return backwardStates;
 	}
 
-	@SuppressWarnings("unused")
 	private static boolean isInterpolant(final List<? extends ZoneState> interpolant,
 			final List<? extends TcfaAction> actions) {
 		final Domain<ZoneState> domain = ZoneDomain.getInstance();
-		final TransferFunction<ZoneState, TcfaAction, ZonePrecision> transferFunction = TcfaZoneTransferFunction
-				.getInstance();
 
 		if (interpolant.size() != actions.size() + 1) {
 			return false;
@@ -98,8 +101,17 @@ public final class TcfaInterpolator {
 			return false;
 		}
 
+		final Solver solver = Z3SolverFactory.getInstace().createSolver();
 		for (int i = 0; i < actions.size(); i++) {
+			final ZoneState state = interpolant.get(i);
+			final TcfaAction action = actions.get(i);
+			final ZoneState succState = interpolant.get(i + 1);
 
+			final Optional<Valuation> uncoveredSuccessor = anyUncoveredSuccessor(state, action, singleton(succState),
+					solver);
+			if (uncoveredSuccessor.isPresent()) {
+				return false;
+			}
 		}
 
 		return true;
