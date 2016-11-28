@@ -19,13 +19,6 @@ public final class CompositeLogger implements Logger {
 	}
 
 	@Override
-	public Logger write(final Object obj, final int level) {
-		for (final Logger logger : loggers)
-			logger.write(obj, level);
-		return this;
-	}
-
-	@Override
 	public Logger write(final Object obj, final int level, final int padding) {
 		for (final Logger logger : loggers)
 			logger.write(obj, level, padding);
@@ -36,20 +29,6 @@ public final class CompositeLogger implements Logger {
 	public Logger writeln(final int level) {
 		for (final Logger logger : loggers)
 			logger.writeln(level);
-		return this;
-	}
-
-	@Override
-	public Logger writeln(final Object obj, final int level) {
-		for (final Logger logger : loggers)
-			logger.writeln(obj, level);
-		return this;
-	}
-
-	@Override
-	public Logger writeln(final Object obj, final int level, final int padding) {
-		for (final Logger logger : loggers)
-			logger.writeln(obj, level, padding);
 		return this;
 	}
 

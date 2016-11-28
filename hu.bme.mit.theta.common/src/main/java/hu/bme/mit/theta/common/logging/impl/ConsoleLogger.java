@@ -26,13 +26,6 @@ public final class ConsoleLogger extends MinLevelBasedLogger {
 	}
 
 	@Override
-	public Logger writeln(final Object obj, final int level, final int padding) {
-		write(obj, level, padding);
-		writeln(level);
-		return this;
-	}
-
-	@Override
 	public Logger writeHeader(final Object obj, final int level) {
 		if (level <= minLevel) {
 			System.out.println();
