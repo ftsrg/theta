@@ -2,8 +2,8 @@
 extern int nondet_int();
 
 int main() {
-	int x = nondet_int();
-	int i = 0;
+	int x = 11;
+	int i = 1;
 	int sum = 0;
 
 	assert(x > 0);
@@ -14,7 +14,7 @@ int main() {
 	}
 
 	assert(sum == 0);
-	assert(i == 0);
+	assert(i != 0);
 
 	return 0;
 }

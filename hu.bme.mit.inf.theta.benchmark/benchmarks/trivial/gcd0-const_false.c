@@ -11,6 +11,6 @@ int main() {
 		b = c;
 	}
 
-	assert(b != 0);
+	assert(b == 0);
 
 }

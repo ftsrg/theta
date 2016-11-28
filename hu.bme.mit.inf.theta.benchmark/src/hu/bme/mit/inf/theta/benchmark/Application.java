@@ -28,10 +28,15 @@ public class Application {
 
 
 	public static void main(String args[]) {
-		GlobalContext context = Parser.parse("benchmarks/locks/locks14_false.c");
+		GlobalContext context = Parser.parse("benchmarks/eca/eca-problem0-label20_false.c");
 
 		Optimizer opt = new Optimizer(context);
+		opt.addContextTransformer(new FunctionInliner());
+		opt.transform();
+
 		opt.getProgramSlices().forEach(slice -> {
+			//System.out.println(CfaPrinter.toGraphvizSting(slice));
+
 			SolverManager sm = new Z3SolverManager();
 			Logger log = new ConsoleLogger(2);
 

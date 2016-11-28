@@ -77,9 +77,19 @@ public class ErrorSearch {
 		Queue<SearchTreeNode> queue = new ArrayDeque<>();
 		queue.add(new SearchTreeNode(0, null, this.init(), Collections.emptyList()));
 
+		Queue<SearchTreeNode> revQueue = new ArrayDeque<>();
+		revQueue.add(new SearchTreeNode(0, null, this.error(), Collections.emptyList()));
+
 		while (k < max) {
+			this.log.writeln("Checking forward direction with bound of k=" + k, 7);
 			Queue<SearchTreeNode> newQueue = new ArrayDeque<>();
 
+			/*
+			 * Check the forward direction.
+			 *
+			 * If we are able to find an error path with the length of k, we need to check its feasibility.
+			 * If the error path is feasible, we can terminate the error search and return a counter-example.
+			 */
 			while (!queue.isEmpty()) {
 				SearchTreeNode node = queue.poll();
 				int depth = node.getDepth();
@@ -110,12 +120,86 @@ public class ErrorSearch {
 				}
 			}
 
-			this.log.writeln("Increasing bound to " + (k + 1), 7);
-			k = k + 1;
-			queue = newQueue;
+			this.log.writeln("Checking backwards direction...", 6);
+			Queue<SearchTreeNode> newRevQueue = new ArrayDeque<>();
+
+			/*
+			 * Check the backwards direction.
+			 *
+			 * For every added node we need to check its feasibility.
+			 * If a path is feasible, then we can terminate the backwards search and increase the bound.
+			 * If no feasible path was found, then we can terminate the search and return a passed check.
+			 */
+			boolean revRes = true;
+			while (!revQueue.isEmpty()) {
+				SearchTreeNode node = revQueue.poll();
+				int depth = node.getDepth();
+
+				// Check whether this is error path is possible
+				this.solver.push();
+
+				List<Stmt> stmts = this.getNodeStatements(node);
+				Collections.reverse(stmts);
+
+				StmtToExprResult exprs = StmtUnroller.transform(stmts, this.vi);
+				this.solver.add(exprs.getExprs());
+
+				this.log.writeln("Backwards assertions: " + solver.getAssertions().toString(), 7, 1);
+
+				this.log.writeln("Running backwards solver...", 6, 1);
+				this.solver.check();
+				if (this.solver.getStatus() == SolverStatus.SAT) {
+					this.log.writeln("Solver found a solution, failure is possible.", 6, 1);
+					this.log.writeln("System model: " + solver.getModel().toString(), 6, 1);
+
+					revRes = false;
+					revQueue.addAll(this.getParentNodes(node));
+
+					this.solver.pop();
+					break;
+				}
+
+				this.log.writeln("Solver finished, status: " + solver.getStatus(), 6, 1);
+				this.solver.pop();
+
+				// Add this node's children to the search tree
+				if (depth + 1 < k) {
+					revQueue.addAll(this.getParentNodes(node));
+				} else {
+					// These nodes cannot be added now because they would cause an infinite loop
+					newRevQueue.addAll(this.getParentNodes(node));
+				}
+			}
+
+			if (revRes) {
+				this.log.writeln("No forward or backward error paths were found, check PASSED.", 1);
+				return CheckResult.CHECK_PASSED;
+			} else {
+				this.log.writeln("Increasing bound to " + (k + 1), 7);
+				k = k + 1;
+				queue = newQueue;
+				revQueue.addAll(newRevQueue);
+			}
+
 		}
 
+		this.log.writeln("Maximum bound reached, cannot continue. Check result is UNKNOWN.", 1);
 		return CheckResult.CHECK_UNKNOWN;
+	}
+
+	private List<SearchTreeNode> getParentNodes(SearchTreeNode node) {
+		List<SearchTreeNode> children = new ArrayList<>();
+
+		for (CfaEdge edge : node.getLoc().getInEdges()) {
+			CfaLoc loc = edge.getSource();
+			List<Stmt> stmts = edge.getStmts();
+			int d2 = node.getDepth() + 1;
+
+			SearchTreeNode stn = new SearchTreeNode(d2, node, loc, stmts);
+			children.add(stn);
+		}
+
+		return children;
 	}
 
 	private List<SearchTreeNode> getChildrenNodes(SearchTreeNode node) {
