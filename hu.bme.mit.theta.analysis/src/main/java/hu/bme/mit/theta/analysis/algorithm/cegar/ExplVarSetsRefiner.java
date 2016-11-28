@@ -16,20 +16,23 @@ import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprTraceChecker;
 import hu.bme.mit.theta.analysis.expr.ExprTraceStatus2;
 import hu.bme.mit.theta.analysis.expr.IndexedVarsRefutation;
+import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Type;
 
 public final class ExplVarSetsRefiner<A extends ExprAction> implements Refiner<ExplState, A, ExplPrecision> {
 
 	private final ExprTraceChecker<IndexedVarsRefutation> exprTraceChecker;
+	private final Logger logger;
 
-	private ExplVarSetsRefiner(final ExprTraceChecker<IndexedVarsRefutation> exprTraceChecker) {
+	private ExplVarSetsRefiner(final ExprTraceChecker<IndexedVarsRefutation> exprTraceChecker, final Logger logger) {
 		this.exprTraceChecker = checkNotNull(exprTraceChecker);
+		this.logger = checkNotNull(logger);
 	}
 
 	public static <A extends ExprAction> ExplVarSetsRefiner<A> create(
-			final ExprTraceChecker<IndexedVarsRefutation> exprTraceChecker) {
-		return new ExplVarSetsRefiner<>(exprTraceChecker);
+			final ExprTraceChecker<IndexedVarsRefutation> exprTraceChecker, final Logger logger) {
+		return new ExplVarSetsRefiner<>(exprTraceChecker, logger);
 	}
 
 	@Override
@@ -41,6 +44,7 @@ public final class ExplVarSetsRefiner<A extends ExprAction> implements Refiner<E
 
 		final ArgTrace<ExplState, A> cexToConcretize = arg.getCexs().findFirst().get();
 		final Trace<ExplState, A> traceToConcretize = cexToConcretize.toTrace();
+		logger.writeln("Trace: ", traceToConcretize, 4, 3);
 
 		final ExprTraceStatus2<IndexedVarsRefutation> cexStatus = exprTraceChecker.check(traceToConcretize);
 

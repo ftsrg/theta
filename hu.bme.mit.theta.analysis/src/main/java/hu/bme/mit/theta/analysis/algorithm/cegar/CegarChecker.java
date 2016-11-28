@@ -49,12 +49,10 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 		int iteration = 0;
 		do {
 			++iteration;
-
 			logger.writeln("Iteration ", iteration, 2, 0);
+
 			logger.writeln("Checking abstraction...", 2, 1);
-
 			abstractorResult = abstractor.check(arg, precision);
-
 			logger.writeln("Checking abstraction done, result: ", abstractorResult, 2, 1);
 
 			if (abstractorResult.isUnsafe()) {

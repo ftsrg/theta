@@ -89,7 +89,7 @@ public class StsExplTest {
 
 		final ExprTraceChecker<IndexedVarsRefutation> exprTraceChecker = ExprTraceUnsatCoreChecker
 				.create(And(sts.getInit()), Not(sts.getProp()), solver);
-		final ExplVarSetsRefiner<StsAction> refiner = ExplVarSetsRefiner.create(exprTraceChecker);
+		final ExplVarSetsRefiner<StsAction> refiner = ExplVarSetsRefiner.create(exprTraceChecker, logger);
 
 		final SafetyChecker<ExplState, StsAction, ExplPrecision> checker = CegarChecker.create(abstractor, refiner,
 				logger);
