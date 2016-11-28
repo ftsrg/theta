@@ -19,7 +19,7 @@ import hu.bme.mit.theta.splittingcegar.common.utils.visualization.NullVisualizer
 import hu.bme.mit.theta.splittingcegar.common.utils.visualization.Visualizer;
 
 public class ClusteredCEGARBuilder implements CEGARBuilder {
-	private Logger logger = new NullLogger();
+	private Logger logger = NullLogger.getInstance();
 	private Visualizer visualizer = new NullVisualizer();
 	private Visualizer debugVisualizer = null;
 
