@@ -28,6 +28,6 @@ public final class AbstractorResult {
 
 	@Override
 	public String toString() {
-		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).add("Safe: " + isSafe()).toString();
+		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).add(isSafe() ? "Safe" : "Unsafe").toString();
 	}
 }
