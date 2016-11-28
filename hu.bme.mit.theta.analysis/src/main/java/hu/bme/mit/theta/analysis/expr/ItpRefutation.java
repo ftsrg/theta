@@ -60,6 +60,10 @@ public final class ItpRefutation implements Refutation, Iterable<Expr<? extends 
 		return itpSequence.size();
 	}
 
+	public List<Expr<? extends BoolType>> toList() {
+		return itpSequence;
+	}
+
 	public Expr<? extends BoolType> get(final int i) {
 		checkArgument(0 <= i);
 		checkArgument(i < size());
