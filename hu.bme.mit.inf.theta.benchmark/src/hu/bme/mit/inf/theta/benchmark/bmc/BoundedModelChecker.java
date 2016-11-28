@@ -117,21 +117,21 @@ public class BoundedModelChecker {
 		VarIndexes.Builder viBuilder = VarIndexes.builder(0);
 		VarIndexes vi = viBuilder.build();
 
-		List<CfaLoc> avoid = new ArrayList<>();
-		// Find all nodes which cannot reach error
-		Stack<CfaLoc> errorReach = new Stack<>();
-		List<CfaLoc> discovered = new ArrayList<>();
-		errorReach.push(error);
+			List<CfaLoc> avoid = new ArrayList<>();
+			// Find all nodes which cannot reach error
+			Stack<CfaLoc> errorReach = new Stack<>();
+			List<CfaLoc> discovered = new ArrayList<>();
+			errorReach.push(error);
 
-		while (!errorReach.isEmpty()) {
-			CfaLoc loc = errorReach.pop();
-			if (!discovered.contains(loc)) {
-				discovered.add(loc);
-				for (CfaEdge edge : loc.getInEdges()) {
-					errorReach.push(edge.getSource());
+			while (!errorReach.isEmpty()) {
+				CfaLoc loc = errorReach.pop();
+				if (!discovered.contains(loc)) {
+					discovered.add(loc);
+					for (CfaEdge edge : loc.getInEdges()) {
+						errorReach.push(edge.getSource());
+					}
 				}
 			}
-		}
 
 		cfa.getLocs().stream().filter(l -> !discovered.contains(l)).forEach(l -> avoid.add(l));
 
