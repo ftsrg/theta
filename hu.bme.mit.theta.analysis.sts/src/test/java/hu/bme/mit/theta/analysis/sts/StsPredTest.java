@@ -40,6 +40,7 @@ import hu.bme.mit.theta.analysis.pred.PredPrecision;
 import hu.bme.mit.theta.analysis.pred.PredState;
 import hu.bme.mit.theta.analysis.pred.SimplePredPrecision;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
+import hu.bme.mit.theta.common.logging.impl.ConsoleLogger;
 import hu.bme.mit.theta.common.visualization.GraphvizWriter;
 import hu.bme.mit.theta.common.waitlist.FifoWaitlist;
 import hu.bme.mit.theta.core.decl.VarDecl;
@@ -88,7 +89,7 @@ public class StsPredTest {
 		final SimplePredItpRefiner<StsAction> refiner = SimplePredItpRefiner.create(exprTraceChecker);
 
 		final SafetyChecker<PredState, StsAction, SimplePredPrecision> checker = CegarChecker.create(abstractor,
-				refiner);
+				refiner, new ConsoleLogger(100));
 
 		final SafetyStatus<PredState, StsAction> safetyStatus = checker.check(precision);
 		System.out.println(safetyStatus);
