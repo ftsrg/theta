@@ -72,7 +72,7 @@ public final class ARG<S extends State, A extends Action> {
 
 	public ArgNode<S, A> createInitNode(final S initState, final boolean target) {
 		checkNotNull(initState);
-		final ArgNode<S, A> initNode = createNode(initState, target);
+		final ArgNode<S, A> initNode = createNode(initState, 0, target);
 		initNodes.add(initNode);
 		return initNode;
 	}
@@ -84,7 +84,7 @@ public final class ARG<S extends State, A extends Action> {
 		checkNotNull(succState);
 		checkArgument(node.arg == this);
 		checkArgument(!node.isTarget());
-		final ArgNode<S, A> succNode = createNode(succState, target);
+		final ArgNode<S, A> succNode = createNode(succState, node.getDepth() + 1, target);
 		createEdge(node, action, succNode);
 		return succNode;
 	}
@@ -146,8 +146,8 @@ public final class ARG<S extends State, A extends Action> {
 
 	////
 
-	private ArgNode<S, A> createNode(final S state, final boolean target) {
-		final ArgNode<S, A> node = new ArgNode<>(this, state, nextId, target);
+	private ArgNode<S, A> createNode(final S state, final int depth, final boolean target) {
+		final ArgNode<S, A> node = new ArgNode<>(this, state, nextId, depth, target);
 		nextId = nextId + 1;
 		return node;
 	}
