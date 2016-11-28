@@ -52,7 +52,6 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 
 			logger.writeln("Iteration " + iteration, 2);
 			logger.writeln("Checking abstraction...", 2, 1);
-			logger.write("Precision: ", 3, 2).writeln(precision, 3);
 
 			abstractorResult = abstractor.check(arg, precision);
 
