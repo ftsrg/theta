@@ -4,8 +4,6 @@ import static hu.bme.mit.theta.core.decl.impl.Decls.Var;
 import static hu.bme.mit.theta.core.type.impl.Types.Int;
 import static org.junit.Assert.assertTrue;
 
-import java.util.Collections;
-
 import org.junit.Test;
 
 import hu.bme.mit.theta.analysis.algorithm.ARG;
@@ -38,9 +36,8 @@ public final class TcfaPredImpactCheckerTest {
 
 		final TcfaLts lts = TcfaLts.create(fischer);
 
-		final String errorLabel = String.join("_", Collections.nCopies(n, "crit"));
 		final PredImpactChecker<TcfaLoc, TcfaEdge> checker = PredImpactChecker.create(lts, fischer.getInitLoc(),
-				l -> l.getName().equals(errorLabel), solver);
+				l -> l.getName().startsWith("crit_crit"), solver);
 
 		// Act
 		final SafetyStatus<? extends ExprState, ? extends ExprAction> status = checker
