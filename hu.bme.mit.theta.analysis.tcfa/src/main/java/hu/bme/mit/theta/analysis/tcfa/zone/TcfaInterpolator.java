@@ -33,21 +33,25 @@ public final class TcfaInterpolator {
 
 	public List<ZoneState> getInterpolant(final List<? extends TcfaAction> actions) {
 		final List<ZoneState> interpolants = new ArrayList<>(actions.size() + 1);
-
-		final List<ZoneState> forwardStates = getForwardStates(actions);
+		// final List<ZoneState> forwardStates = getForwardStates(actions);
 		final List<ZoneState> backwardStates = getBackwardStates(actions);
 
-		for (int i = 0; i < forwardStates.size(); i++) {
-			final ZoneState forwardState = forwardStates.get(i);
-			final ZoneState backwardState = backwardStates.get(i);
+		interpolants.add(ZoneState.top());
+		for (int i = 0; i < actions.size() - 1; i++) {
+			final TcfaAction action = actions.get(i);
+			final ZoneState prevItp = interpolants.get(i);
+			final ZoneState forwardState = TcfaZoneTransferFunction.getInstance().post(prevItp, action, precision);
+			final ZoneState backwardState = backwardStates.get(i + 1);
 			final ZoneState interpolant = ZoneState.interpolant(forwardState, backwardState);
 			interpolants.add(interpolant);
 		}
+		interpolants.add(ZoneState.bottom());
 
 		assert isInterpolant(interpolants, actions);
 		return interpolants;
 	}
 
+	@SuppressWarnings("unused")
 	private List<ZoneState> getForwardStates(final List<? extends TcfaAction> actions) {
 		final List<ZoneState> forwardStates = new ArrayList<>(actions.size() + 1);
 
