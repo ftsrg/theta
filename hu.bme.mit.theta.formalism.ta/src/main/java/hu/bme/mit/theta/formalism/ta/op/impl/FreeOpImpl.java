@@ -7,6 +7,7 @@ import java.util.Collection;
 
 import com.google.common.collect.ImmutableSet;
 
+import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.type.RatType;
 import hu.bme.mit.theta.formalism.common.decl.ClockDecl;
@@ -76,11 +77,7 @@ final class FreeOpImpl implements FreeOp {
 
 	@Override
 	public String toString() {
-		final StringBuilder sb = new StringBuilder();
-		sb.append("Free(");
-		sb.append(clock.getName());
-		sb.append(")");
-		return sb.toString();
+		return ObjectUtils.toStringBuilder("Free").add(clock.getName()).toString();
 	}
 
 }

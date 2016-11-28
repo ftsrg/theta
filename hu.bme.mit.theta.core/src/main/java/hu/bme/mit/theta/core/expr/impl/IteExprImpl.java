@@ -4,6 +4,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Optional;
 
+import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.IteExpr;
 import hu.bme.mit.theta.core.type.BoolType;
@@ -113,16 +114,7 @@ final class IteExprImpl<ExprType extends Type> extends AbstractExpr<ExprType> im
 
 	@Override
 	public String toString() {
-		final StringBuilder sb = new StringBuilder();
-		sb.append(OPERATOR_LABEL);
-		sb.append("(");
-		sb.append(getCond().toString());
-		sb.append(", ");
-		sb.append(getThen().toString());
-		sb.append(", ");
-		sb.append(getElse().toString());
-		sb.append(")");
-		return sb.toString();
+		return ObjectUtils.toStringBuilder(OPERATOR_LABEL).add(getCond()).add(getThen()).add(getElse()).toString();
 	}
 
 }

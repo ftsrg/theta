@@ -5,12 +5,12 @@ import java.util.Optional;
 
 public interface Scope {
 
-	public Optional<Symbol> resolve(String name);
+	Optional<Symbol> resolve(String name);
 
-	public void declare(Symbol symbol);
+	void declare(Symbol symbol);
 
-	public void declareAll(Collection<? extends Symbol> symbols);
+	void declareAll(Collection<? extends Symbol> symbols);
 
-	public Optional<Scope> enclosingScope();
+	Optional<Scope> enclosingScope();
 
 }

@@ -47,10 +47,10 @@ public final class ArgChecker {
 	////
 
 	private boolean subtreeIsWellLabeled(final ArgNode<? extends ExprState, ? extends ExprAction> node) {
-		if (!nodeIsWellLabeled(node)) {
-			return false;
-		} else {
+		if (nodeIsWellLabeled(node)) {
 			return node.getSuccNodes().allMatch(succNode -> nodeIsWellLabeled(succNode));
+		} else {
+			return false;
 		}
 	}
 

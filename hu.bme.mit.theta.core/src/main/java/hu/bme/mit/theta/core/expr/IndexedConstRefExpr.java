@@ -6,5 +6,5 @@ import hu.bme.mit.theta.core.type.Type;
 public interface IndexedConstRefExpr<DeclType extends Type> extends ConstRefExpr<DeclType> {
 
 	@Override
-	public IndexedConstDecl<DeclType> getDecl();
+	IndexedConstDecl<DeclType> getDecl();
 }

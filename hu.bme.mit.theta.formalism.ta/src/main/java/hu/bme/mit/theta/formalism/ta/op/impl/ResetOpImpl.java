@@ -9,6 +9,7 @@ import java.util.Collection;
 
 import com.google.common.collect.ImmutableSet;
 
+import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.type.IntType;
 import hu.bme.mit.theta.core.type.RatType;
@@ -88,13 +89,7 @@ final class ResetOpImpl implements ResetOp {
 
 	@Override
 	public String toString() {
-		final StringBuilder sb = new StringBuilder();
-		sb.append("Reset(");
-		sb.append(clock.getName());
-		sb.append(", ");
-		sb.append(value);
-		sb.append(")");
-		return sb.toString();
+		return ObjectUtils.toStringBuilder("Reset").add(clock.getName()).add(value).toString();
 	}
 
 }

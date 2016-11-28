@@ -18,6 +18,7 @@ import hu.bme.mit.theta.core.model.impl.AssignmentImpl;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.utils.impl.CnfCheckerVisitor.CNFStatus;
+import hu.bme.mit.theta.core.utils.impl.IndexedVars.Builder;
 
 public final class ExprUtils {
 
@@ -60,9 +61,7 @@ public final class ExprUtils {
 
 	public static void collectVars(final Iterable<? extends Expr<? extends Type>> exprs,
 			final Collection<VarDecl<? extends Type>> collectTo) {
-		for (final Expr<? extends Type> expr : exprs) {
-			collectVars(expr, collectTo);
-		}
+		exprs.forEach(e -> collectVars(e, collectTo));
 	}
 
 	public static Set<VarDecl<? extends Type>> getVars(final Expr<? extends Type> expr) {
@@ -75,6 +74,18 @@ public final class ExprUtils {
 		final Set<VarDecl<? extends Type>> vars = new HashSet<>();
 		collectVars(exprs, vars);
 		return vars;
+	}
+
+	public static IndexedVars getVarsIndexed(final Expr<? extends Type> expr) {
+		final Builder builder = IndexedVars.builder();
+		expr.accept(IndexedVarCollectorVisitor.getInstance(), builder);
+		return builder.build();
+	}
+
+	public static IndexedVars getVarsIndexed(final Iterable<? extends Expr<? extends Type>> exprs) {
+		final Builder builder = IndexedVars.builder();
+		exprs.forEach(e -> e.accept(IndexedVarCollectorVisitor.getInstance(), builder));
+		return builder.build();
 	}
 
 	public static boolean isExprCNF(final Expr<? extends BoolType> expr) {

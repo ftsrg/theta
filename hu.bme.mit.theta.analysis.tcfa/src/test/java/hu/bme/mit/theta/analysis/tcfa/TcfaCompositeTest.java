@@ -42,7 +42,7 @@ public class TcfaCompositeTest {
 
 	@Test
 	public void test() throws FileNotFoundException, IOException {
-		final int n = 4;
+		final int n = 2;
 		final VarDecl<IntType> vlock = Var("lock", Int());
 		final TCFA fischer = TcfaTestHelper.fischer(n, vlock);
 

@@ -39,7 +39,7 @@ public final class ArgBuilder<S extends State, A extends Action, P extends Preci
 		final Collection<S> oldInitStates = arg.getInitNodes().map(ArgNode::getState).collect(Collectors.toSet());
 		final Collection<? extends S> newInitStates = analysis.getInitFunction().getInitStates(precision);
 		for (final S initState : newInitStates) {
-			if (oldInitStates.size() == 0
+			if (oldInitStates.isEmpty()
 					|| !oldInitStates.stream().anyMatch(s -> analysis.getDomain().isLeq(initState, s))) {
 				final boolean isTarget = target.test(initState);
 				arg.createInitNode(initState, isTarget);
@@ -59,7 +59,7 @@ public final class ArgBuilder<S extends State, A extends Action, P extends Preci
 			final Collection<? extends S> newSuccStates = analysis.getTransferFunction().getSuccStates(state, action,
 					precision);
 			for (final S newSuccState : newSuccStates) {
-				if (oldSuccStates.size() == 0
+				if (oldSuccStates.isEmpty()
 						|| !oldSuccStates.stream().anyMatch(s -> analysis.getDomain().isLeq(newSuccState, s))) {
 					final boolean isTarget = target.test(newSuccState);
 					node.arg.createSuccNode(node, action, newSuccState, isTarget);
@@ -83,10 +83,8 @@ public final class ArgBuilder<S extends State, A extends Action, P extends Preci
 		if (nodeToCoverWith.getId() < node.getId()) {
 			final S state = node.getState();
 			final S stateToCoverWith = nodeToCoverWith.getState();
-			if (analysis.getDomain().isLeq(state, stateToCoverWith)) {
-				if (!nodeToCoverWith.isCovered()) {
-					return true;
-				}
+			if (analysis.getDomain().isLeq(state, stateToCoverWith) && !nodeToCoverWith.isCovered()) {
+				return true;
 			}
 		}
 		return false;

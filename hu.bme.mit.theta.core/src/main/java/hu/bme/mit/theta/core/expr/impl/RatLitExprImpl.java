@@ -135,7 +135,7 @@ final class RatLitExprImpl extends AbstractNullaryExpr<RatType> implements RatLi
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
 		sb.append(getNum());
-		sb.append("%");
+		sb.append('%');
 		sb.append(getDenom());
 		return sb.toString();
 	}

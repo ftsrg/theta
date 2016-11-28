@@ -32,8 +32,9 @@ public final class ExplDomain implements Domain<ExplState> {
 	@Override
 	public boolean isLeq(final ExplState state1, final ExplState state2) {
 		for (final VarDecl<? extends Type> varDecl : state2.getDecls()) {
-			if (!state1.getDecls().contains(varDecl) || !state2.getValue(varDecl).equals(state1.getValue(varDecl)))
+			if (!state1.getDecls().contains(varDecl) || !state2.getValue(varDecl).equals(state1.getValue(varDecl))) {
 				return false;
+			}
 		}
 		return true;
 	}

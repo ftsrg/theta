@@ -8,10 +8,10 @@ import hu.bme.mit.theta.formalism.ta.utils.ClockOpVisitor;
 
 public interface ClockOp {
 
-	public Collection<? extends ClockDecl> getClocks();
+	Collection<? extends ClockDecl> getClocks();
 
-	public Stmt toStmt();
+	Stmt toStmt();
 
-	public <P, R> R accept(final ClockOpVisitor<? super P, ? extends R> visitor, final P param);
+	<P, R> R accept(final ClockOpVisitor<? super P, ? extends R> visitor, final P param);
 
 }

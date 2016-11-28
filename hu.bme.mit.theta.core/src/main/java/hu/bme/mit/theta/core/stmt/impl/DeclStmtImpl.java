@@ -4,6 +4,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Optional;
 
+import hu.bme.mit.theta.common.ObjectUtils;
+import hu.bme.mit.theta.common.ToStringBuilder;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.stmt.DeclStmt;
@@ -66,16 +68,11 @@ final class DeclStmtImpl<DeclType extends Type, ExprType extends DeclType> exten
 
 	@Override
 	public String toString() {
-		final StringBuilder sb = new StringBuilder();
-		sb.append("Decl");
-		sb.append("(");
-		sb.append(varDecl);
+		final ToStringBuilder builder = ObjectUtils.toStringBuilder("Decl").add(varDecl);
 		if (initVal.isPresent()) {
-			sb.append(", ");
-			sb.append(initVal.get());
+			builder.add(initVal.get());
 		}
-		sb.append(")");
-		return sb.toString();
+		return builder.toString();
 	}
 
 }

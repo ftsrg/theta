@@ -17,15 +17,15 @@ import hu.bme.mit.theta.core.type.Type;
  */
 public interface STS {
 
-	public Collection<VarDecl<? extends Type>> getVars();
+	Collection<VarDecl<? extends Type>> getVars();
 
-	public Collection<Expr<? extends BoolType>> getInit();
+	Collection<Expr<? extends BoolType>> getInit();
 
-	public Collection<Expr<? extends BoolType>> getInvar();
+	Collection<Expr<? extends BoolType>> getInvar();
 
-	public Collection<Expr<? extends BoolType>> getTrans();
+	Collection<Expr<? extends BoolType>> getTrans();
 
-	public Expr<? extends BoolType> getProp();
+	Expr<? extends BoolType> getProp();
 
 	// Unfolding / folding methods
 	Expr<? extends BoolType> unfold(final Expr<? extends BoolType> expr, final int i);
@@ -33,23 +33,22 @@ public interface STS {
 	Collection<? extends Expr<? extends BoolType>> unfold(final Collection<? extends Expr<? extends BoolType>> exprs,
 			final int i);
 
-	public Collection<? extends Expr<? extends BoolType>> unfoldInit(final int i);
+	Collection<? extends Expr<? extends BoolType>> unfoldInit(final int i);
 
-	public Collection<? extends Expr<? extends BoolType>> unfoldTrans(final int i);
+	Collection<? extends Expr<? extends BoolType>> unfoldTrans(final int i);
 
-	public Collection<? extends Expr<? extends BoolType>> unfoldInv(final int i);
+	Collection<? extends Expr<? extends BoolType>> unfoldInv(final int i);
 
-	public Expr<? extends BoolType> unfoldProp(final int i);
+	Expr<? extends BoolType> unfoldProp(final int i);
 
-	public Valuation getConcreteState(final Model model, final int i);
+	Valuation getConcreteState(final Model model, final int i);
 
-	public Valuation getConcreteState(final Model model, final int i,
+	Valuation getConcreteState(final Model model, final int i, final Collection<VarDecl<? extends Type>> variables);
+
+	List<Valuation> extractTrace(final Model model, final int length);
+
+	List<Valuation> extractTrace(final Model model, final int length,
 			final Collection<VarDecl<? extends Type>> variables);
 
-	public List<Valuation> extractTrace(final Model model, final int length);
-
-	public List<Valuation> extractTrace(final Model model, final int length,
-			final Collection<VarDecl<? extends Type>> variables);
-
-	public Expr<? extends BoolType> foldin(final Expr<? extends BoolType> expr, final int i);
+	Expr<? extends BoolType> foldin(final Expr<? extends BoolType> expr, final int i);
 }

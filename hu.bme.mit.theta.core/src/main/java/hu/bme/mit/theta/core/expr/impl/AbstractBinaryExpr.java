@@ -2,6 +2,7 @@ package hu.bme.mit.theta.core.expr.impl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.expr.BinaryExpr;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.Type;
@@ -43,14 +44,7 @@ public abstract class AbstractBinaryExpr<LeftOpType extends Type, RightOpType ex
 
 	@Override
 	public final String toString() {
-		final StringBuilder sb = new StringBuilder();
-		sb.append(getOperatorLabel());
-		sb.append("(");
-		sb.append(leftOp.toString());
-		sb.append(", ");
-		sb.append(rightOp.toString());
-		sb.append(")");
-		return sb.toString();
+		return ObjectUtils.toStringBuilder(getOperatorLabel()).add(leftOp).add(rightOp).toString();
 	}
 
 	protected abstract int getHashSeed();

@@ -11,8 +11,7 @@ public class ArgNodeComparators {
 	private ArgNodeComparators() {
 	}
 
-	public static interface ArgNodeComparator
-			extends Comparator<ArgNode<? extends State, ? extends Action>>, Serializable {
+	public interface ArgNodeComparator extends Comparator<ArgNode<? extends State, ? extends Action>>, Serializable {
 	}
 
 	////
@@ -105,10 +104,10 @@ public class ArgNodeComparators {
 		public int compare(final ArgNode<? extends State, ? extends Action> n1,
 				final ArgNode<? extends State, ? extends Action> n2) {
 			final int compareFirst = first.compare(n1, n2);
-			if (compareFirst != 0) {
-				return compareFirst;
-			} else {
+			if (compareFirst == 0) {
 				return then.compare(n1, n2);
+			} else {
+				return compareFirst;
 			}
 
 		}

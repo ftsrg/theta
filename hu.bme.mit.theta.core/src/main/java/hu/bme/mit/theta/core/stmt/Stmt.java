@@ -4,6 +4,6 @@ import hu.bme.mit.theta.core.utils.StmtVisitor;
 
 public interface Stmt {
 
-	public <P, R> R accept(StmtVisitor<? super P, ? extends R> visitor, P param);
+	<P, R> R accept(StmtVisitor<? super P, ? extends R> visitor, P param);
 
 }

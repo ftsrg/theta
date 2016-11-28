@@ -3,6 +3,7 @@ package hu.bme.mit.theta.core.decl.impl;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.type.Type;
 
@@ -50,14 +51,7 @@ public abstract class AbstractDecl<DeclType extends Type> implements Decl<DeclTy
 
 	@Override
 	public final String toString() {
-		final StringBuilder sb = new StringBuilder();
-		sb.append(getDeclLabel());
-		sb.append("(");
-		sb.append(getName());
-		sb.append(", ");
-		sb.append(getType());
-		sb.append(")");
-		return sb.toString();
+		return ObjectUtils.toStringBuilder(getDeclLabel()).add(getName()).add(getType()).toString();
 	}
 
 	protected abstract int getHashSeed();

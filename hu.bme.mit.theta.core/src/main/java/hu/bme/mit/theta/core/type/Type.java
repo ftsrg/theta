@@ -7,14 +7,14 @@ import hu.bme.mit.theta.core.utils.TypeVisitor;
 
 public interface Type {
 
-	public LitExpr<? extends Type> getAny();
+	LitExpr<? extends Type> getAny();
 
-	public boolean isLeq(Type type);
+	boolean isLeq(Type type);
 
-	public Optional<? extends Type> meet(Type type);
+	Optional<? extends Type> meet(Type type);
 
-	public Optional<? extends Type> join(Type type);
+	Optional<? extends Type> join(Type type);
 
-	public <P, R> R accept(TypeVisitor<? super P, ? extends R> visitor, P param);
+	<P, R> R accept(TypeVisitor<? super P, ? extends R> visitor, P param);
 
 }

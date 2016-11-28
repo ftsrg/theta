@@ -5,6 +5,6 @@ import hu.bme.mit.theta.formalism.ta.constr.ClockConstr;
 
 public interface TaLoc extends Loc<TaLoc, TaEdge> {
 
-	public ClockConstr getInvar();
+	ClockConstr getInvar();
 
 }

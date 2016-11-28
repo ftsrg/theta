@@ -7,6 +7,6 @@ import hu.bme.mit.theta.core.type.Type;
 public interface ProcRefExpr<ReturnType extends Type> extends RefExpr<ProcType<ReturnType>> {
 
 	@Override
-	public ProcDecl<ReturnType> getDecl();
+	ProcDecl<ReturnType> getDecl();
 
 }

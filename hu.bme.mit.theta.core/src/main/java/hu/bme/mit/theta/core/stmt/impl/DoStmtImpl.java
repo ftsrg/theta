@@ -2,6 +2,7 @@ package hu.bme.mit.theta.core.stmt.impl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.stmt.DoStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
@@ -56,13 +57,6 @@ final class DoStmtImpl extends AbstractStmt implements DoStmt {
 
 	@Override
 	public String toString() {
-		final StringBuilder sb = new StringBuilder();
-		sb.append("Do");
-		sb.append("(");
-		sb.append(doStmt.toString());
-		sb.append(", ");
-		sb.append(cond.toString());
-		sb.append(")");
-		return sb.toString();
+		return ObjectUtils.toStringBuilder("Do").add(doStmt).add(cond).toString();
 	}
 }

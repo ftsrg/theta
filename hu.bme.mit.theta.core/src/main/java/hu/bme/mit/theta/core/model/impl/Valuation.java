@@ -2,6 +2,7 @@ package hu.bme.mit.theta.core.model.impl;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -126,9 +127,11 @@ public final class Valuation implements Assignment {
 
 	public static final class Builder {
 		private final Map<VarDecl<? extends Type>, LitExpr<?>> declToExpr;
+		private boolean built;
 
 		private Builder() {
 			this.declToExpr = new HashMap<>();
+			this.built = false;
 		}
 
 		private Builder(final Map<VarDecl<? extends Type>, LitExpr<?>> declToExpr) {
@@ -137,17 +140,21 @@ public final class Valuation implements Assignment {
 
 		public Builder put(final VarDecl<?> decl, final LitExpr<?> value) {
 			checkArgument(value.getType().isLeq(decl.getType()));
+			checkState(!built);
 
 			declToExpr.put(decl, value);
 			return this;
 		}
 
 		public Builder remove(final VarDecl<?> decl) {
+			checkState(!built);
 			declToExpr.remove(decl);
 			return this;
 		}
 
 		public Valuation build() {
+			checkState(!built);
+			built = true;
 			return new Valuation(this);
 		}
 

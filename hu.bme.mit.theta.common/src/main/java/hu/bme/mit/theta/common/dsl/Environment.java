@@ -5,12 +5,12 @@ import java.util.Optional;
 
 public interface Environment {
 
-	public Optional<Object> valuation(Symbol symbol);
+	Optional<Object> valuation(Symbol symbol);
 
-	public void define(Symbol symbol, Object value);
+	void define(Symbol symbol, Object value);
 
-	public void defineAll(List<? extends Symbol> symbols, List<? extends Object> values);
+	void defineAll(List<? extends Symbol> symbols, List<? extends Object> values);
 
-	public Optional<Environment> enclosingEnvironment();
+	Optional<Environment> enclosingEnvironment();
 
 }

@@ -11,10 +11,9 @@ import hu.bme.mit.theta.solver.Solver;
 
 public interface PredPrecision extends Precision {
 
-	public PredState createState(final Valuation valuation);
+	PredState createState(final Valuation valuation);
 
-	public default Collection<? extends PredState> createStates(final Solver solver,
-			final Expr<? extends BoolType> expr) {
+	default Collection<? extends PredState> createStates(final Solver solver, final Expr<? extends BoolType> expr) {
 		return ExprStates.createStates(solver, expr, this::createState);
 	}
 }

@@ -4,8 +4,8 @@ import hu.bme.mit.theta.formalism.common.decl.ClockDecl;
 
 public interface DiffConstr extends AtomicConstr {
 
-	public ClockDecl getLeftClock();
+	ClockDecl getLeftClock();
 
-	public ClockDecl getRightClock();
+	ClockDecl getRightClock();
 
 }

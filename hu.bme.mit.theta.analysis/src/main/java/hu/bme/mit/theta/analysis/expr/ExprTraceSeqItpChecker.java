@@ -1,6 +1,8 @@
 package hu.bme.mit.theta.analysis.expr;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,7 +21,7 @@ import hu.bme.mit.theta.solver.ItpMarker;
 import hu.bme.mit.theta.solver.ItpPattern;
 import hu.bme.mit.theta.solver.ItpSolver;
 
-public class ExprTraceSeqItpChecker implements ExprTraceChecker<ItpRefutation> {
+public final class ExprTraceSeqItpChecker implements ExprTraceChecker<ItpRefutation> {
 
 	private final ItpSolver solver;
 	private final Expr<? extends BoolType> init;
@@ -41,28 +43,28 @@ public class ExprTraceSeqItpChecker implements ExprTraceChecker<ItpRefutation> {
 	public ExprTraceStatus2<ItpRefutation> check(final Trace<? extends ExprState, ? extends ExprAction> trace) {
 		checkNotNull(trace);
 		final int stateCount = trace.getStates().size();
+		checkArgument(stateCount > 0);
 
 		final List<ItpMarker> markers = new ArrayList<>(stateCount + 1);
 		for (int i = 0; i < stateCount + 1; ++i) {
 			markers.add(solver.createMarker());
 		}
+		final ItpPattern pattern = solver.createSeqPattern(markers);
 
 		final List<VarIndexing> indexings = new ArrayList<>(stateCount);
 		indexings.add(VarIndexing.all(0));
 
-		final ItpPattern pattern = solver.createSeqPattern(markers);
-
 		solver.push();
 		solver.add(markers.get(0), PathUtils.unfold(init, indexings.get(0)));
-		for (int i = 0; i < trace.getStates().size(); ++i) {
+		solver.add(markers.get(0), PathUtils.unfold(trace.getState(0).toExpr(), indexings.get(0)));
+		checkState(solver.check().isSat());
+
+		for (int i = 1; i < stateCount; ++i) {
+			indexings.add(indexings.get(i - 1).add(trace.getAction(i - 1).nextIndexing()));
 			solver.add(markers.get(i), PathUtils.unfold(trace.getState(i).toExpr(), indexings.get(i)));
-			if (i > 0) {
-				solver.add(markers.get(i), PathUtils.unfold(trace.getAction(i - 1).toExpr(), indexings.get(i - 1)));
-			}
-			if (i < stateCount - 1) {
-				indexings.add(indexings.get(i).add(trace.getAction(i).nextIndexing()));
-			}
+			solver.add(markers.get(i), PathUtils.unfold(trace.getAction(i - 1).toExpr(), indexings.get(i - 1)));
 		}
+
 		solver.add(markers.get(trace.getStates().size()), PathUtils.unfold(target, indexings.get(stateCount - 1)));
 		final boolean concretizable = solver.check().isSat();
 
