@@ -25,7 +25,7 @@ import hu.bme.mit.theta.splittingcegar.interpolating.steps.refinement.SequenceIn
 import hu.bme.mit.theta.splittingcegar.interpolating.utils.InterpolatingCEGARDebugger;
 
 public class InterpolatingCEGARBuilder implements CEGARBuilder {
-	private Logger logger = new NullLogger();
+	private Logger logger = NullLogger.getInstance();
 	private Visualizer visualizer = new NullVisualizer();
 	private boolean collectFromConditions = false;
 	private boolean collectFromSpecification = false;
