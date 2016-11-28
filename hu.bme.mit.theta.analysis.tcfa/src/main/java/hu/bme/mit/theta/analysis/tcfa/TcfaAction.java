@@ -104,7 +104,8 @@ public final class TcfaAction implements LocAction<TcfaLoc, TcfaEdge> {
 
 	@Override
 	public String toString() {
-		return ObjectUtils.toStringBuilder("TcfaAction")/* .addAll(tcfaStmts) */.toString();
+		return ObjectUtils.toStringBuilder("TcfaAction")
+				.addAll(tcfaStmts.stream().map(TcfaStmt::getStmt).collect(toList())).toString();
 	}
 
 	////
