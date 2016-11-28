@@ -3,8 +3,8 @@ package hu.bme.mit.theta.core.expr.impl;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Collection;
-import java.util.StringJoiner;
 
+import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.MultiaryExpr;
 import hu.bme.mit.theta.core.type.Type;
@@ -38,16 +38,7 @@ public abstract class AbstractMultiaryExpr<OpsType extends Type, ExprType extend
 
 	@Override
 	public final String toString() {
-		final StringBuilder sb = new StringBuilder();
-		sb.append(getOperatorLabel());
-		sb.append("(");
-		final String prefix = sb.toString();
-		final String suffix = ")";
-		final StringJoiner sj = new StringJoiner(", ", prefix, suffix);
-		for (final Expr<? extends OpsType> op : ops) {
-			sj.add(op.toString());
-		}
-		return sj.toString();
+		return ObjectUtils.toStringBuilder(getOperatorLabel()).addAll(ops).toString();
 	}
 
 	protected abstract int getHashSeed();

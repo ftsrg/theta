@@ -7,6 +7,6 @@ import hu.bme.mit.theta.formalism.common.expr.ClockRefExpr;
 public interface ClockDecl extends VarDecl<RatType>, Comparable<ClockDecl> {
 
 	@Override
-	public ClockRefExpr getRef();
+	ClockRefExpr getRef();
 
 }

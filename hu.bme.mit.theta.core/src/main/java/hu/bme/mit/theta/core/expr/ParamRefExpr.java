@@ -6,6 +6,6 @@ import hu.bme.mit.theta.core.type.Type;
 public interface ParamRefExpr<DeclType extends Type> extends RefExpr<DeclType> {
 
 	@Override
-	public ParamDecl<DeclType> getDecl();
+	ParamDecl<DeclType> getDecl();
 
 }

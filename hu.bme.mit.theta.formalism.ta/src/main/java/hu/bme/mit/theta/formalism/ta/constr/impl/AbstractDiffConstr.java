@@ -62,9 +62,9 @@ public abstract class AbstractDiffConstr implements DiffConstr {
 		sb.append(leftClock.getName());
 		sb.append(" - ");
 		sb.append(rightClock.getName());
-		sb.append(" ");
+		sb.append(' ');
 		sb.append(getOperatorLabel());
-		sb.append(" ");
+		sb.append(' ');
 		sb.append(bound);
 		return sb.toString();
 	}

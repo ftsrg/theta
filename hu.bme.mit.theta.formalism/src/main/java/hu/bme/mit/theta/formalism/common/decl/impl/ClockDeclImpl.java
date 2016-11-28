@@ -7,6 +7,7 @@ import static hu.bme.mit.theta.core.type.impl.Types.Rat;
 import java.util.HashMap;
 import java.util.Map;
 
+import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.decl.IndexedConstDecl;
 import hu.bme.mit.theta.core.type.RatType;
 import hu.bme.mit.theta.core.utils.DeclVisitor;
@@ -87,12 +88,7 @@ final class ClockDeclImpl implements ClockDecl {
 
 	@Override
 	public String toString() {
-		final StringBuilder sb = new StringBuilder();
-		sb.append(DECL_LABEL);
-		sb.append("(");
-		sb.append(name);
-		sb.append(")");
-		return sb.toString();
+		return ObjectUtils.toStringBuilder(DECL_LABEL).add(name).toString();
 	}
 
 }

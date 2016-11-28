@@ -16,7 +16,7 @@ import hu.bme.mit.theta.analysis.expr.ExprTraceStatus2;
 import hu.bme.mit.theta.analysis.expr.ItpRefutation;
 import hu.bme.mit.theta.core.utils.impl.ExprUtils;
 
-public class ExplItpRefiner<A extends ExprAction> implements Refiner<ExplState, A, ExplPrecision> {
+public final class ExplItpRefiner<A extends ExprAction> implements Refiner<ExplState, A, ExplPrecision> {
 
 	ExprTraceChecker<ItpRefutation> exprTraceChecker;
 

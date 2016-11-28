@@ -14,16 +14,16 @@ import hu.bme.mit.theta.core.type.BoolType;
 
 public interface ItpSolver extends Solver {
 
-	public ItpPattern createPattern(final ItpMarker marker);
+	ItpPattern createPattern(final ItpMarker marker);
 
-	public default ItpPattern createBinPattern(final ItpMarker markerA, final ItpMarker markerB) {
+	default ItpPattern createBinPattern(final ItpMarker markerA, final ItpMarker markerB) {
 		checkNotNull(markerA);
 		checkNotNull(markerB);
 
 		return createSeqPattern(Arrays.asList(markerA, markerB));
 	}
 
-	public default ItpPattern createSeqPattern(final List<? extends ItpMarker> markers) {
+	default ItpPattern createSeqPattern(final List<? extends ItpMarker> markers) {
 		checkNotNull(markers);
 		checkArgument(!markers.isEmpty());
 
@@ -41,11 +41,11 @@ public interface ItpSolver extends Solver {
 		return result;
 	}
 
-	public ItpMarker createMarker();
+	ItpMarker createMarker();
 
-	public void add(final ItpMarker marker, final Expr<? extends BoolType> assertion);
+	void add(final ItpMarker marker, final Expr<? extends BoolType> assertion);
 
-	public default void add(final ItpMarker marker, final Iterable<? extends Expr<? extends BoolType>> assertions) {
+	default void add(final ItpMarker marker, final Iterable<? extends Expr<? extends BoolType>> assertions) {
 		checkNotNull(marker);
 		checkNotNull(assertions);
 		for (final Expr<? extends BoolType> assertion : assertions) {
@@ -53,8 +53,8 @@ public interface ItpSolver extends Solver {
 		}
 	}
 
-	public Interpolant getInterpolant(final ItpPattern pattern);
+	Interpolant getInterpolant(final ItpPattern pattern);
 
-	public Collection<? extends ItpMarker> getMarkers();
+	Collection<? extends ItpMarker> getMarkers();
 
 }

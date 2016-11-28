@@ -4,8 +4,8 @@ import hu.bme.mit.theta.formalism.common.Automaton;
 
 public interface CFA extends Automaton<CfaLoc, CfaEdge> {
 
-	public CfaLoc getFinalLoc();
+	CfaLoc getFinalLoc();
 
-	public CfaLoc getErrorLoc();
+	CfaLoc getErrorLoc();
 
 }

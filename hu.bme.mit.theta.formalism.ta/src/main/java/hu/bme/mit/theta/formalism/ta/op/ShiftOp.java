@@ -6,11 +6,11 @@ import hu.bme.mit.theta.formalism.common.decl.ClockDecl;
 
 public interface ShiftOp extends ClockOp {
 
-	public ClockDecl getClock();
+	ClockDecl getClock();
 
-	public int getOffset();
+	int getOffset();
 
 	@Override
-	public AssignStmt<RatType, RatType> toStmt();
+	AssignStmt<RatType, RatType> toStmt();
 
 }

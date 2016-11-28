@@ -7,6 +7,6 @@ import hu.bme.mit.theta.formalism.common.decl.ClockDecl;
 
 public interface TA extends Automaton<TaLoc, TaEdge> {
 
-	public Collection<? extends ClockDecl> getClocks();
+	Collection<? extends ClockDecl> getClocks();
 
 }

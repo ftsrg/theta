@@ -8,7 +8,7 @@ import hu.bme.mit.theta.formalism.ta.constr.ClockConstr;
 
 public interface TaEdge extends Edge<TaLoc, TaEdge> {
 
-	public ClockConstr getGuard();
+	ClockConstr getGuard();
 
-	public Collection<? extends ClockDecl> getResets();
+	Collection<? extends ClockDecl> getResets();
 }

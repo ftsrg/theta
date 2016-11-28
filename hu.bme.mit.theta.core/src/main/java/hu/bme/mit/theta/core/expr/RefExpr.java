@@ -5,6 +5,6 @@ import hu.bme.mit.theta.core.type.Type;
 
 public interface RefExpr<DeclType extends Type> extends NullaryExpr<DeclType> {
 
-	public Decl<DeclType> getDecl();
+	Decl<DeclType> getDecl();
 
 }

@@ -7,8 +7,8 @@ import hu.bme.mit.theta.core.type.Type;
 
 public interface ProcCallExpr<ReturnType extends Type> extends Expr<ReturnType> {
 
-	public Expr<? extends ProcType<? extends ReturnType>> getProc();
+	Expr<? extends ProcType<? extends ReturnType>> getProc();
 
-	public List<? extends Expr<? extends Type>> getParams();
+	List<? extends Expr<? extends Type>> getParams();
 
 }

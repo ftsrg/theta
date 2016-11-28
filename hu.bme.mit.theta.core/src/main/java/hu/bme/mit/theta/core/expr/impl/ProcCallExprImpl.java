@@ -3,10 +3,10 @@ package hu.bme.mit.theta.core.expr.impl;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.List;
-import java.util.StringJoiner;
 
 import com.google.common.collect.ImmutableList;
 
+import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.ProcCallExpr;
 import hu.bme.mit.theta.core.type.ProcType;
@@ -72,17 +72,7 @@ class ProcCallExprImpl<ReturnType extends Type> implements ProcCallExpr<ReturnTy
 
 	@Override
 	public final String toString() {
-		final StringBuilder sb = new StringBuilder();
-		sb.append("Call");
-		sb.append("(");
-		final String prefix = sb.toString();
-		final String suffix = ")";
-		final StringJoiner sj = new StringJoiner(", ", prefix, suffix);
-		sj.add(proc.toString());
-		for (final Expr<? extends Type> param : params) {
-			sj.add(param.toString());
-		}
-		return sj.toString();
+		return ObjectUtils.toStringBuilder("Call").add(proc).addAll(params).toString();
 	}
 
 }

@@ -13,13 +13,16 @@ import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.LineStyle;
 import hu.bme.mit.theta.common.visualization.NodeAttributes;
 
-public class ArgVisualizer {
+public final class ArgVisualizer {
 
 	private static final String ARG_LABEL = "";
 	private static final String ARG_ID = "arg";
 	private static final String NODE_ID_PREFIX = "node_";
 	private static final Color FILL_COLOR = Color.WHITE;
 	private static final Color LINE_COLOR = Color.BLACK;
+
+	private ArgVisualizer() {
+	}
 
 	public static Graph visualize(final ARG<?, ?> arg) {
 		final Graph graph = new Graph(ARG_ID, ARG_LABEL);

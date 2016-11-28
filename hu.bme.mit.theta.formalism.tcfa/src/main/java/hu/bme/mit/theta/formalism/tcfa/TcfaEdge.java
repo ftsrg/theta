@@ -7,6 +7,6 @@ import hu.bme.mit.theta.formalism.common.Edge;
 
 public interface TcfaEdge extends Edge<TcfaLoc, TcfaEdge> {
 
-	public List<Stmt> getStmts();
+	List<Stmt> getStmts();
 
 }

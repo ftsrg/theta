@@ -5,6 +5,6 @@ import hu.bme.mit.theta.core.type.BoolType;
 
 public interface Interpolant {
 
-	public Expr<BoolType> eval(final ItpMarker marker);
-	
+	Expr<BoolType> eval(final ItpMarker marker);
+
 }

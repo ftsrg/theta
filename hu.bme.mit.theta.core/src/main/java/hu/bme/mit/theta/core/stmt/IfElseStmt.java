@@ -6,14 +6,14 @@ import hu.bme.mit.theta.core.utils.StmtVisitor;
 
 public interface IfElseStmt extends Stmt {
 
-	public Expr<? extends BoolType> getCond();
+	Expr<? extends BoolType> getCond();
 
-	public Stmt getThen();
+	Stmt getThen();
 
-	public Stmt getElse();
+	Stmt getElse();
 
 	@Override
-	public default <P, R> R accept(final StmtVisitor<? super P, ? extends R> visitor, final P param) {
+	default <P, R> R accept(final StmtVisitor<? super P, ? extends R> visitor, final P param) {
 		return visitor.visit(this, param);
 	}
 
