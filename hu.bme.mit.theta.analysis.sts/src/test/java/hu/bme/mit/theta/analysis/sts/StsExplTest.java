@@ -38,9 +38,8 @@ import hu.bme.mit.theta.analysis.expr.ExprStatePredicate;
 import hu.bme.mit.theta.analysis.expr.ExprTraceChecker;
 import hu.bme.mit.theta.analysis.expr.ExprTraceUnsatCoreChecker;
 import hu.bme.mit.theta.analysis.expr.IndexedVarsRefutation;
-import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
+import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.impl.ConsoleLogger;
-import hu.bme.mit.theta.common.visualization.GraphvizWriter;
 import hu.bme.mit.theta.common.waitlist.FifoWaitlist;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.Expr;
@@ -55,6 +54,8 @@ public class StsExplTest {
 
 	@Test
 	public void test() {
+
+		final Logger logger = new ConsoleLogger(100);
 
 		final VarDecl<IntType> vx = Var("x", Int());
 		final Expr<IntType> x = vx.getRef();
@@ -84,21 +85,22 @@ public class StsExplTest {
 		final LTS<State, StsAction> lts = StsLts.create(sts);
 
 		final Abstractor<ExplState, StsAction, ExplPrecision> abstractor = WaitlistBasedAbstractor.create(lts, analysis,
-				target, FifoWaitlist.supplier());
+				target, FifoWaitlist.supplier(), logger);
 
 		final ExprTraceChecker<IndexedVarsRefutation> exprTraceChecker = ExprTraceUnsatCoreChecker
 				.create(And(sts.getInit()), Not(sts.getProp()), solver);
 		final ExplVarSetsRefiner<StsAction> refiner = ExplVarSetsRefiner.create(exprTraceChecker);
 
 		final SafetyChecker<ExplState, StsAction, ExplPrecision> checker = CegarChecker.create(abstractor, refiner,
-				new ConsoleLogger(100));
+				logger);
 
 		final SafetyStatus<ExplState, StsAction> safetyStatus = checker.check(precision);
 
 		final ARG<ExplState, StsAction> arg = safetyStatus.getArg();
 		assertTrue(isWellLabeled(arg, solver));
 
-		System.out.println(new GraphvizWriter().writeString(ArgVisualizer.visualize(arg)));
+		// System.out.println(new
+		// GraphvizWriter().writeString(ArgVisualizer.visualize(arg)));
 	}
 
 }
