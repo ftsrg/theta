@@ -10,12 +10,14 @@ public abstract class MinLevelBasedLogger implements Logger {
 	}
 
 	@Override
-	public void write(final Object obj, final int level) {
+	public Logger write(final Object obj, final int level) {
 		write(obj, level, 0);
+		return this;
 	}
 
 	@Override
-	public void writeln(final Object obj, final int level) {
+	public Logger writeln(final Object obj, final int level) {
 		writeln(obj, level, 0);
+		return this;
 	}
 }

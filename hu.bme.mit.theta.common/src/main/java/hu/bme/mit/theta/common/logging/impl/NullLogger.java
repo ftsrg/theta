@@ -18,27 +18,33 @@ public final class NullLogger implements Logger {
 	}
 
 	@Override
-	public void write(final Object obj, final int level) {
+	public Logger write(final Object obj, final int level) {
+		return this;
 	}
 
 	@Override
-	public void write(final Object obj, final int level, final int padding) {
+	public Logger write(final Object obj, final int level, final int padding) {
+		return this;
 	}
 
 	@Override
-	public void writeln(final int level) {
+	public Logger writeln(final int level) {
+		return this;
 	}
 
 	@Override
-	public void writeln(final Object obj, final int level) {
+	public Logger writeln(final Object obj, final int level) {
+		return this;
 	}
 
 	@Override
-	public void writeln(final Object obj, final int level, final int padding) {
+	public Logger writeln(final Object obj, final int level, final int padding) {
+		return this;
 	}
 
 	@Override
-	public void writeHeader(final Object obj, final int level) {
+	public Logger writeHeader(final Object obj, final int level) {
+		return this;
 	}
 
 }
