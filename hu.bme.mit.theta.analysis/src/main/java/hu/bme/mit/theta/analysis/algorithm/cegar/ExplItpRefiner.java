@@ -18,7 +18,7 @@ import hu.bme.mit.theta.core.utils.impl.ExprUtils;
 
 public final class ExplItpRefiner<A extends ExprAction> implements Refiner<ExplState, A, ExplPrecision> {
 
-	ExprTraceChecker<ItpRefutation> exprTraceChecker;
+	private final ExprTraceChecker<ItpRefutation> exprTraceChecker;
 
 	private ExplItpRefiner(final ExprTraceChecker<ItpRefutation> exprTraceChecker) {
 		this.exprTraceChecker = checkNotNull(exprTraceChecker);
