@@ -138,6 +138,14 @@ final class DBM {
 		checkNotNull(dbmB);
 		checkArgument(!dbmA.isConsistentWith(dbmB));
 
+		if (!dbmA.isConsistent()) {
+			return bottom(Collections.emptySet());
+		}
+
+		if (!dbmB.isConsistent()) {
+			return top(Collections.emptySet());
+		}
+
 		final DbmSignature signature = interpolantSignature(dbmA, dbmB);
 		final BiFunction<ClockDecl, ClockDecl, Integer> values = (x, y) -> {
 			final int boundA = dbmA.get(x, y);
