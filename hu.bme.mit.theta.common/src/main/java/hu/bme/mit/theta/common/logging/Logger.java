@@ -1,15 +1,25 @@
 package hu.bme.mit.theta.common.logging;
 
 public interface Logger {
-	Logger write(Object obj, int level);
+	default Logger write(final Object obj, final int level) {
+		write(obj, level, 0);
+		return this;
+	}
 
 	Logger write(Object obj, int level, int padding);
 
 	Logger writeln(int level);
 
-	Logger writeln(Object obj, int level);
+	default Logger writeln(final Object obj, final int level) {
+		writeln(obj, level, 0);
+		return this;
+	}
 
-	Logger writeln(Object obj, int level, int padding);
+	default Logger writeln(final Object obj, final int level, final int padding) {
+		write(obj, level, padding);
+		writeln(level);
+		return this;
+	}
 
 	Logger writeHeader(Object obj, int level);
 }
