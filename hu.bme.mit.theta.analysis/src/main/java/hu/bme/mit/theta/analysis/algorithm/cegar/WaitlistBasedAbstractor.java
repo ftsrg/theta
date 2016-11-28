@@ -58,7 +58,7 @@ public final class WaitlistBasedAbstractor<S extends State, A extends Action, P 
 	public AbstractorResult check(final ARG<S, A> arg, final P precision) {
 		checkNotNull(arg);
 		checkNotNull(precision);
-		logger.write("Precision: ", 3, 2).writeln(precision, 3);
+		logger.writeln("Precision: ", precision, 3, 2);
 
 		if (!arg.isInitialized()) {
 			logger.write("(Re)initializing ARG...", 3, 2);
@@ -66,8 +66,8 @@ public final class WaitlistBasedAbstractor<S extends State, A extends Action, P 
 			logger.writeln("done.", 3);
 		}
 
-		logger.write(arg.getNodes().count(), 3, 2).write(" node(s), ", 3).write(arg.getIncompleteNodes().count(), 3)
-				.write(" incomplete, ", 3).write(arg.getUnsafeNodes().count(), 3).write(" unsafe", 3).writeln(3);
+		logger.writeln(String.format("Starting ARG: %d nodes, %d incomplete, %d unsafe", arg.getNodes().count(),
+				arg.getIncompleteNodes().count(), arg.getUnsafeNodes().count()), 3, 2);
 
 		if (arg.getUnsafeNodes().findAny().isPresent()) {
 			return AbstractorResult.unsafe();
@@ -77,6 +77,8 @@ public final class WaitlistBasedAbstractor<S extends State, A extends Action, P 
 
 		final Waitlist<ArgNode<S, A>> waitlist = waitlistSupplier.get();
 		waitlist.addAll(arg.getIncompleteNodes());
+
+		logger.write("Building ARG...", 3, 2);
 
 		while (!waitlist.isEmpty() && unsafeNode == null) {
 			final ArgNode<S, A> node = waitlist.remove();
@@ -97,9 +99,9 @@ public final class WaitlistBasedAbstractor<S extends State, A extends Action, P 
 			waitlist.addAll(node.getSuccNodes());
 		}
 
-		logger.write("ARG finished: ", 3, 2).write(arg.getNodes().count(), 3).write(" node(s), ", 3)
-				.write(arg.getIncompleteNodes().count(), 3).write(" incomplete, ", 3)
-				.write(arg.getUnsafeNodes().count(), 3).write(" unsafe", 3).writeln(3);
+		logger.writeln("done", 3);
+		logger.writeln(String.format("Explored ARG: %d nodes, %d incomplete, %d unsafe", arg.getNodes().count(),
+				arg.getIncompleteNodes().count(), arg.getUnsafeNodes().count()), 3, 2);
 
 		if (unsafeNode == null) {
 			return AbstractorResult.safe();
