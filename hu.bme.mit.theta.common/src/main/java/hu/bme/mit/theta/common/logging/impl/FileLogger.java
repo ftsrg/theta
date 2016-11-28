@@ -3,6 +3,8 @@ package hu.bme.mit.theta.common.logging.impl;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 
+import hu.bme.mit.theta.common.logging.Logger;
+
 public final class FileLogger extends MinLevelBasedLogger {
 	private final PrintWriter pw;
 	private final boolean instantFlush;
@@ -15,7 +17,7 @@ public final class FileLogger extends MinLevelBasedLogger {
 	}
 
 	@Override
-	public void write(final Object obj, final int level, final int padding) {
+	public Logger write(final Object obj, final int level, final int padding) {
 		if (level <= minLevel) {
 			for (int i = 0; i < padding; ++i)
 				pw.print("   ");
@@ -23,31 +25,35 @@ public final class FileLogger extends MinLevelBasedLogger {
 			if (instantFlush)
 				pw.flush();
 		}
+		return this;
 	}
 
 	@Override
-	public void writeln(final int level) {
+	public Logger writeln(final int level) {
 		if (level <= minLevel) {
 			pw.println();
 			if (instantFlush)
 				pw.flush();
 		}
+		return this;
 	}
 
 	@Override
-	public void writeln(final Object obj, final int level, final int padding) {
+	public Logger writeln(final Object obj, final int level, final int padding) {
 		write(obj, level, padding);
 		writeln(level);
+		return this;
 	}
 
 	@Override
-	public void writeHeader(final Object obj, final int level) {
+	public Logger writeHeader(final Object obj, final int level) {
 		if (level <= minLevel) {
 			pw.println();
 			pw.println("----------" + obj + "----------");
 			if (instantFlush)
 				pw.flush();
 		}
+		return this;
 	}
 
 	public void close() {

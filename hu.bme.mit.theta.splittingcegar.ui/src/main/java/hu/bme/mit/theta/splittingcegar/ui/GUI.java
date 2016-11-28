@@ -295,42 +295,48 @@ public class GUI extends JFrame {
 		}
 
 		@Override
-		public void write(final Object obj, final int level) {
+		public Logger write(final Object obj, final int level) {
 			write(obj, level, 0);
+			return this;
 		}
 
 		@Override
-		public void write(final Object obj, final int level, final int padding) {
+		public Logger write(final Object obj, final int level, final int padding) {
 			if (level <= (int) sp_loglevel.getValue()) {
 				for (int i = 0; i < padding; ++i)
 					publish("   ");
 				publish(obj.toString());
 			}
+			return this;
 		}
 
 		@Override
-		public void writeln(final int level) {
+		public Logger writeln(final int level) {
 			if (level <= (int) sp_loglevel.getValue())
 				publish("\n");
+			return this;
 		}
 
 		@Override
-		public void writeln(final Object obj, final int level) {
+		public Logger writeln(final Object obj, final int level) {
 			writeln(obj, level, 0);
+			return this;
 		}
 
 		@Override
-		public void writeln(final Object obj, final int level, final int padding) {
+		public Logger writeln(final Object obj, final int level, final int padding) {
 			write(obj, level, padding);
 			writeln(level);
+			return this;
 		}
 
 		@Override
-		public void writeHeader(final Object obj, final int level) {
+		public Logger writeHeader(final Object obj, final int level) {
 			if (level <= (int) sp_loglevel.getValue()) {
 				publish("\n");
 				publish("----------" + obj + "----------\n");
 			}
+			return this;
 		}
 	}
 
