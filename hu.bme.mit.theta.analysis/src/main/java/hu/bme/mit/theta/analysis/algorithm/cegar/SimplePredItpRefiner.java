@@ -20,7 +20,7 @@ import hu.bme.mit.theta.core.expr.BoolLitExpr;
 
 public final class SimplePredItpRefiner<A extends ExprAction> implements Refiner<PredState, A, SimplePredPrecision> {
 
-	ExprTraceChecker<ItpRefutation> exprTraceChecker;
+	private final ExprTraceChecker<ItpRefutation> exprTraceChecker;
 
 	private SimplePredItpRefiner(final ExprTraceChecker<ItpRefutation> exprTraceChecker) {
 		this.exprTraceChecker = checkNotNull(exprTraceChecker);

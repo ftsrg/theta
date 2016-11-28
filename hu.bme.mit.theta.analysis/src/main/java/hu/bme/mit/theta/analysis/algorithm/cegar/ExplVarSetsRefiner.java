@@ -21,7 +21,7 @@ import hu.bme.mit.theta.core.type.Type;
 
 public final class ExplVarSetsRefiner<A extends ExprAction> implements Refiner<ExplState, A, ExplPrecision> {
 
-	ExprTraceChecker<IndexedVarsRefutation> exprTraceChecker;
+	private final ExprTraceChecker<IndexedVarsRefutation> exprTraceChecker;
 
 	private ExplVarSetsRefiner(final ExprTraceChecker<IndexedVarsRefutation> exprTraceChecker) {
 		this.exprTraceChecker = checkNotNull(exprTraceChecker);
