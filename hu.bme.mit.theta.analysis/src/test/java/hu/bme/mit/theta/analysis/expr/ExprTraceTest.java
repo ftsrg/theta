@@ -46,7 +46,7 @@ public final class ExprTraceTest {
 		final ExprTraceChecker<?> traceChecker = ExprTraceSeqItpChecker.create(True(), True(), solver);
 
 		// Act
-		final ExprTraceStatus2<?> status = traceChecker.check(trace);
+		final ExprTraceStatus<?> status = traceChecker.check(trace);
 
 		// Assert
 		assertTrue(status.isFeasible());
@@ -76,7 +76,7 @@ public final class ExprTraceTest {
 		final ExprTraceChecker<ItpRefutation> traceChecker = ExprTraceSeqItpChecker.create(True(), True(), solver);
 
 		// Act
-		final ExprTraceStatus2<ItpRefutation> status = traceChecker.check(trace);
+		final ExprTraceStatus<ItpRefutation> status = traceChecker.check(trace);
 
 		// Assert
 		assertTrue(status.isInfeasible());

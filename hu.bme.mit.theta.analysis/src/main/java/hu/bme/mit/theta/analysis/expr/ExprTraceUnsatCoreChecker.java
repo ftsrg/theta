@@ -40,7 +40,7 @@ public final class ExprTraceUnsatCoreChecker implements ExprTraceChecker<Indexed
 	}
 
 	@Override
-	public ExprTraceStatus2<IndexedVarsRefutation> check(final Trace<? extends ExprState, ? extends ExprAction> trace) {
+	public ExprTraceStatus<IndexedVarsRefutation> check(final Trace<? extends ExprState, ? extends ExprAction> trace) {
 		checkNotNull(trace);
 		final int stateCount = trace.getStates().size();
 		checkArgument(stateCount > 0);
@@ -71,7 +71,7 @@ public final class ExprTraceUnsatCoreChecker implements ExprTraceChecker<Indexed
 			concretizable = solver.check().isSat();
 		}
 
-		ExprTraceStatus2<IndexedVarsRefutation> status = null;
+		ExprTraceStatus<IndexedVarsRefutation> status = null;
 
 		if (concretizable) {
 			final Model model = solver.getModel();
@@ -79,11 +79,11 @@ public final class ExprTraceUnsatCoreChecker implements ExprTraceChecker<Indexed
 			for (final VarIndexing indexing : indexings) {
 				builder.add(PathUtils.extractValuation(model, indexing));
 			}
-			status = ExprTraceStatus2.feasible(builder.build());
+			status = ExprTraceStatus.feasible(builder.build());
 		} else {
 			final Collection<Expr<? extends BoolType>> unsatCore = solver.getUnsatCore();
 			final IndexedVars indexedVars = ExprUtils.getVarsIndexed(unsatCore);
-			status = ExprTraceStatus2.infeasible(IndexedVarsRefutation.create(indexedVars));
+			status = ExprTraceStatus.infeasible(IndexedVarsRefutation.create(indexedVars));
 		}
 
 		solver.pop();

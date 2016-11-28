@@ -12,7 +12,7 @@ import hu.bme.mit.theta.analysis.expl.ExplPrecision;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprTraceChecker;
-import hu.bme.mit.theta.analysis.expr.ExprTraceStatus2;
+import hu.bme.mit.theta.analysis.expr.ExprTraceStatus;
 import hu.bme.mit.theta.analysis.expr.ItpRefutation;
 import hu.bme.mit.theta.core.utils.impl.ExprUtils;
 
@@ -39,7 +39,7 @@ public final class ExplItpRefiner<A extends ExprAction> implements Refiner<ExplS
 		final ArgTrace<ExplState, A> cexToConcretize = arg.getCexs().findFirst().get();
 		final Trace<ExplState, A> traceToConcretize = cexToConcretize.toTrace();
 
-		final ExprTraceStatus2<ItpRefutation> cexStatus = exprTraceChecker.check(traceToConcretize);
+		final ExprTraceStatus<ItpRefutation> cexStatus = exprTraceChecker.check(traceToConcretize);
 
 		if (cexStatus.isFeasible()) {
 			return RefinerResult.unsafe(traceToConcretize);

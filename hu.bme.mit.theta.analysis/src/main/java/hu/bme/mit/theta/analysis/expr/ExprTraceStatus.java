@@ -9,9 +9,9 @@ import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.model.impl.Valuation;
 
-public abstract class ExprTraceStatus2<R extends Refutation> {
+public abstract class ExprTraceStatus<R extends Refutation> {
 
-	private ExprTraceStatus2() {
+	private ExprTraceStatus() {
 	}
 
 	public static <R extends Refutation> Infeasible<R> infeasible(final R refutation) {
@@ -30,7 +30,7 @@ public abstract class ExprTraceStatus2<R extends Refutation> {
 
 	public abstract Feasible<R> asFeasible();
 
-	public final static class Infeasible<R extends Refutation> extends ExprTraceStatus2<R> {
+	public final static class Infeasible<R extends Refutation> extends ExprTraceStatus<R> {
 		private final R refutation;
 
 		private Infeasible(final R refutation) {
@@ -64,13 +64,13 @@ public abstract class ExprTraceStatus2<R extends Refutation> {
 
 		@Override
 		public String toString() {
-			return ObjectUtils.toStringBuilder(ExprTraceStatus2.class.getSimpleName()).add(getClass().getSimpleName())
+			return ObjectUtils.toStringBuilder(ExprTraceStatus.class.getSimpleName()).add(getClass().getSimpleName())
 					.toString();
 		}
 
 	}
 
-	public final static class Feasible<R extends Refutation> extends ExprTraceStatus2<R> {
+	public final static class Feasible<R extends Refutation> extends ExprTraceStatus<R> {
 		private final List<Valuation> valuations;
 
 		private Feasible(final List<Valuation> valuations) {
@@ -104,7 +104,7 @@ public abstract class ExprTraceStatus2<R extends Refutation> {
 
 		@Override
 		public String toString() {
-			return ObjectUtils.toStringBuilder(ExprTraceStatus2.class.getSimpleName()).add(getClass().getSimpleName())
+			return ObjectUtils.toStringBuilder(ExprTraceStatus.class.getSimpleName()).add(getClass().getSimpleName())
 					.toString();
 		}
 

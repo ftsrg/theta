@@ -11,7 +11,7 @@ import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.ExprTrace;
 import hu.bme.mit.theta.analysis.expr.ExprTraceSeqItpChecker;
-import hu.bme.mit.theta.analysis.expr.ExprTraceStatus2;
+import hu.bme.mit.theta.analysis.expr.ExprTraceStatus;
 import hu.bme.mit.theta.analysis.expr.ItpRefutation;
 import hu.bme.mit.theta.analysis.loc.LocAction;
 import hu.bme.mit.theta.analysis.loc.LocState;
@@ -42,7 +42,7 @@ public final class PredImpactRefiner<L extends Loc<L, E>, E extends Edge<L, E>>
 		final List<LocAction<L, E>> actions = cex.getActions();
 
 		final Trace<ExprState, ExprAction> exprTrace = ExprTrace.of(actions);
-		final ExprTraceStatus2<ItpRefutation> traceStatus = traceChecker.check(exprTrace);
+		final ExprTraceStatus<ItpRefutation> traceStatus = traceChecker.check(exprTrace);
 
 		if (traceStatus.isFeasible()) {
 			return RefinementResult.unsuccesful();
