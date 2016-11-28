@@ -40,7 +40,7 @@ public final class ExprTraceCraigItpChecker implements ExprTraceChecker<ItpRefut
 	}
 
 	@Override
-	public ExprTraceStatus2<ItpRefutation> check(final Trace<? extends ExprState, ? extends ExprAction> trace) {
+	public ExprTraceStatus<ItpRefutation> check(final Trace<? extends ExprState, ? extends ExprAction> trace) {
 		checkNotNull(trace);
 		final int stateCount = trace.getStates().size();
 		checkArgument(stateCount > 0);
@@ -87,18 +87,18 @@ public final class ExprTraceCraigItpChecker implements ExprTraceChecker<ItpRefut
 			concretizable = false;
 		}
 
-		ExprTraceStatus2<ItpRefutation> status = null;
+		ExprTraceStatus<ItpRefutation> status = null;
 		if (concretizable) {
 			final Model model = solver.getModel();
 			final ImmutableList.Builder<Valuation> builder = ImmutableList.builder();
 			for (final VarIndexing indexing : indexings) {
 				builder.add(PathUtils.extractValuation(model, indexing));
 			}
-			status = ExprTraceStatus2.feasible(builder.build());
+			status = ExprTraceStatus.feasible(builder.build());
 		} else {
 			final Interpolant interpolant = solver.getInterpolant(pattern);
 			final Expr<BoolType> itpFolded = PathUtils.foldin(interpolant.eval(A), indexings.get(satPrefix));
-			status = ExprTraceStatus2.infeasible(ItpRefutation.craig(itpFolded, satPrefix, stateCount));
+			status = ExprTraceStatus.infeasible(ItpRefutation.craig(itpFolded, satPrefix, stateCount));
 		}
 
 		solver.pop(nPush);
