@@ -76,7 +76,17 @@ final class TcfaZoneTransferFunction implements TransferFunction<ZoneState, Tcfa
 			}
 		}
 
-		return succStateBuilder.done();
+		final ZoneState succState = succStateBuilder.done();
+
+		// final Solver solver = Z3SolverFactory.getInstace().createSolver();
+		// final Optional<Valuation> uncoveredSuccessor =
+		// anyUncoveredSuccessor(state, action, singleton(succState),
+		// solver);
+		// if (uncoveredSuccessor.isPresent()) {
+		// throw new AssertionError();
+		// }
+
+		return succState;
 	}
 
 }
