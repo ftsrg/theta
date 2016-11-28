@@ -42,7 +42,7 @@ public class TcfaCompositeTest {
 
 	@Test
 	public void test() throws FileNotFoundException, IOException {
-		final int n = 2;
+		final int n = 4;
 		final VarDecl<IntType> vlock = Var("lock", Int());
 		final TCFA fischer = TcfaTestHelper.fischer(n, vlock);
 
@@ -57,7 +57,7 @@ public class TcfaCompositeTest {
 								ExplPrecision.create(fischer.getDataVars()))));
 
 		final Abstractor<LocState<Prod2State<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction, NullPrecision> abstractor = WaitlistBasedAbstractor
-				.create(lts, analysis, s -> s.getLoc().getName().equals("(crit, crit)"), FifoWaitlist.supplier());
+				.create(lts, analysis, s -> s.getLoc().getName().startsWith("crit, crit"), FifoWaitlist.supplier());
 
 		final ARG<LocState<Prod2State<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction> arg = abstractor
 				.createArg();

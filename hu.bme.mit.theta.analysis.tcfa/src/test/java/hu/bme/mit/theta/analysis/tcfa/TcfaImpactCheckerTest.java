@@ -4,8 +4,6 @@ import static hu.bme.mit.theta.core.decl.impl.Decls.Var;
 import static hu.bme.mit.theta.core.type.impl.Types.Int;
 import static org.junit.Assert.assertTrue;
 
-import java.util.Collections;
-
 import org.junit.Test;
 
 import hu.bme.mit.theta.analysis.algorithm.ARG;
@@ -34,9 +32,8 @@ public final class TcfaImpactCheckerTest {
 
 		final Solver solver = Z3SolverFactory.getInstace().createSolver();
 
-		final String errorLabel = String.join("_", Collections.nCopies(n, "crit"));
 		final TcfaImpactChecker checker = TcfaImpactChecker.create(fischer, solver,
-				l -> l.getName().equals(errorLabel));
+				l -> l.getName().startsWith("crit_crit"));
 
 		// Act
 		final SafetyStatus<? extends ExprState, ? extends ExprAction> status = checker
