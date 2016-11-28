@@ -50,17 +50,17 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 		do {
 			++iteration;
 
-			logger.writeln("Iteration " + iteration, 2);
+			logger.writeln("Iteration ", iteration, 2, 0);
 			logger.writeln("Checking abstraction...", 2, 1);
 
 			abstractorResult = abstractor.check(arg, precision);
 
-			logger.write("Checking abstraction done, result: ", 2, 1).writeln(abstractorResult, 2);
+			logger.writeln("Checking abstraction done, result: ", abstractorResult, 2, 1);
 
 			if (abstractorResult.isUnsafe()) {
 				logger.writeln("Refining abstraction...", 2, 1);
 				refinerResult = refiner.refine(arg, precision);
-				logger.write("Refining abstraction done, result: ", 2, 1).writeln(refinerResult, 2);
+				logger.writeln("Refining abstraction done, result: ", refinerResult, 2, 1);
 
 				if (refinerResult.isSpurious()) {
 					precision = refinerResult.asSpurious().getRefinedPrecision();
@@ -84,7 +84,7 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 		}
 
 		assert cegarResult != null;
-		logger.write("Done, result: ", 1).writeln(cegarResult, 1);
+		logger.writeln("Done, result: ", cegarResult, 1, 0);
 		logger.writeln(stats, 1);
 		return cegarResult;
 	}

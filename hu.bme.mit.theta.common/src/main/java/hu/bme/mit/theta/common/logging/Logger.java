@@ -21,5 +21,12 @@ public interface Logger {
 		return this;
 	}
 
+	default Logger writeln(final Object o1, final Object o2, final int level, final int padding) {
+		write(o1, level, padding);
+		write(o2, level);
+		writeln(level);
+		return this;
+	}
+
 	Logger writeHeader(Object obj, int level);
 }
