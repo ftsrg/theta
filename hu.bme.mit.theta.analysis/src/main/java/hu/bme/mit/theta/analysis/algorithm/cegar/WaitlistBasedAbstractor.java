@@ -86,6 +86,7 @@ public final class WaitlistBasedAbstractor<S extends State, A extends Action, P 
 
 			if (!node.isSafe(analysis.getDomain())) {
 				unsafeNode = node;
+				continue;
 			}
 
 			if (node.isTarget()) {
