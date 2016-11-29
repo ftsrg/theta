@@ -56,13 +56,10 @@ public final class ARG<S extends State, A extends Action> {
 	////
 
 	public boolean isComplete() {
-		return getNodes().allMatch(ArgNode::isComplete);
+		return isInitialized() && getNodes().allMatch(ArgNode::isComplete);
 	}
 
 	public boolean isSafe() {
-		// TODO: the current implementetion is only the definition of "safe".
-		// More efficient implementation can be done by checking if all states
-		// in the "targetNodes" collection are not feasible.
 		return getNodes().allMatch(n -> n.isSafe(domain));
 	}
 
