@@ -1,17 +1,11 @@
-package hu.bme.mit.theta.analysis.tcfa.zone;
+package hu.bme.mit.theta.analysis.tcfa;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.formalism.ta.constr.impl.ClockConstrs.Eq;
 
-import java.util.Collection;
-
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 
-import hu.bme.mit.theta.analysis.TransferFunction;
-import hu.bme.mit.theta.analysis.tcfa.TcfaAction;
-import hu.bme.mit.theta.analysis.tcfa.TcfaExpr;
 import hu.bme.mit.theta.analysis.tcfa.TcfaExpr.ClockExpr;
-import hu.bme.mit.theta.analysis.tcfa.TcfaStmt;
 import hu.bme.mit.theta.analysis.zone.ZonePrecision;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
 import hu.bme.mit.theta.formalism.common.decl.ClockDecl;
@@ -20,30 +14,62 @@ import hu.bme.mit.theta.formalism.ta.op.ClockOp;
 import hu.bme.mit.theta.formalism.ta.op.GuardOp;
 import hu.bme.mit.theta.formalism.ta.op.ResetOp;
 
-final class TcfaZoneBackwardTransferFunction implements TransferFunction<ZoneState, TcfaAction, ZonePrecision> {
+public final class TcfaZoneUtils {
 
-	private final static TcfaZoneBackwardTransferFunction INSTANCE = new TcfaZoneBackwardTransferFunction();
-
-	private TcfaZoneBackwardTransferFunction() {
+	private TcfaZoneUtils() {
 	}
 
-	static TcfaZoneBackwardTransferFunction getInstance() {
-		return INSTANCE;
-	}
+	public static ZoneState post(final ZoneState state, final TcfaAction action, final ZonePrecision precision) {
+		checkNotNull(state);
+		checkNotNull(action);
+		checkNotNull(precision);
 
-	@Override
-	public Collection<ZoneState> getSuccStates(final ZoneState state, final TcfaAction action,
-			final ZonePrecision precision) {
-		final ZoneState succState = pre(state, action, precision);
+		final ZoneState.ZoneOperations succStateBuilder = state.project(precision.getClocks());
 
-		if (succState.isBottom()) {
-			return ImmutableSet.of();
-		} else {
-			return ImmutableSet.of(succState);
+		for (final TcfaExpr invar : action.getSourceInvars()) {
+			if (invar.isClockExpr()) {
+				final ClockExpr clockExpr = invar.asClockExpr();
+				final ClockConstr constr = clockExpr.getClockConstr();
+				succStateBuilder.and(constr);
+			}
 		}
+
+		if (!action.getEdge().getSource().isUrgent()) {
+			succStateBuilder.up();
+
+			for (final TcfaExpr invar : action.getSourceInvars()) {
+				if (invar.isClockExpr()) {
+					final ClockExpr clockExpr = invar.asClockExpr();
+					final ClockConstr constr = clockExpr.getClockConstr();
+					succStateBuilder.and(constr);
+				}
+			}
+		}
+
+		for (final TcfaStmt tcfaStmt : action.getTcfaStmts()) {
+			if (tcfaStmt.isClockStmt()) {
+				final ClockOp op = tcfaStmt.asClockStmt().getClockOp();
+				succStateBuilder.execute(op);
+			}
+		}
+
+		for (final TcfaExpr invar : action.getTargetInvars()) {
+			if (invar.isClockExpr()) {
+				final ClockExpr clockExpr = invar.asClockExpr();
+				final ClockConstr constr = clockExpr.getClockConstr();
+				succStateBuilder.and(constr);
+			}
+		}
+
+		final ZoneState succState = succStateBuilder.done();
+		return succState;
 	}
 
-	ZoneState pre(final ZoneState state, final TcfaAction action, final ZonePrecision precision) {
+	public static ZoneState pre(final ZoneState state, final TcfaAction action, final ZonePrecision precision) {
+		checkNotNull(state);
+		checkNotNull(action);
+		checkNotNull(precision);
+
 		final ZoneState.ZoneOperations prevStateBuilder = state.project(precision.getClocks());
 
 		for (final TcfaExpr invar : action.getTargetInvars()) {
@@ -95,15 +121,6 @@ final class TcfaZoneBackwardTransferFunction implements TransferFunction<ZoneSta
 		}
 
 		final ZoneState prevState = prevStateBuilder.done();
-
-		// final Solver solver = Z3SolverFactory.getInstace().createSolver();
-		// final Optional<Valuation> uncoveredPredecessor =
-		// anyUncoveredPredecessor(singleton(prevState), action, state,
-		// solver);
-		// if (uncoveredPredecessor.isPresent()) {
-		// throw new AssertionError();
-		// }
-
 		return prevState;
 	}
 
