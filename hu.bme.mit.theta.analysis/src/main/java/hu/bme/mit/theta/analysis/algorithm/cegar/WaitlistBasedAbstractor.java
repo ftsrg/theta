@@ -98,10 +98,8 @@ public final class WaitlistBasedAbstractor<S extends State, A extends Action, P 
 			argBuilder.expand(node, precision);
 			waitlist.addAll(node.getSuccNodes());
 		}
-
-		logger.writeln("done", 3);
-		logger.writeln(String.format("Explored ARG: %d nodes, %d incomplete, %d unsafe", arg.getNodes().count(),
-				arg.getIncompleteNodes().count(), arg.getUnsafeNodes().count()), 3, 2);
+		logger.writeln(String.format("done: %d nodes, %d incomplete, %d unsafe", arg.getNodes().count(),
+				arg.getIncompleteNodes().count(), arg.getUnsafeNodes().count()), 3);
 
 		if (unsafeNode == null) {
 			return AbstractorResult.safe();
