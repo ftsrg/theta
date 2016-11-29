@@ -23,6 +23,7 @@ import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.LTS;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
+import hu.bme.mit.theta.analysis.algorithm.ArgNodeComparators;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyStatus;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
@@ -40,7 +41,7 @@ import hu.bme.mit.theta.analysis.expr.ExprTraceUnsatCoreChecker;
 import hu.bme.mit.theta.analysis.expr.IndexedVarsRefutation;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.impl.ConsoleLogger;
-import hu.bme.mit.theta.common.waitlist.FifoWaitlist;
+import hu.bme.mit.theta.common.waitlist.PriorityWaitlist;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.IntType;
@@ -85,7 +86,7 @@ public class StsExplTest {
 		final LTS<State, StsAction> lts = StsLts.create(sts);
 
 		final Abstractor<ExplState, StsAction, ExplPrecision> abstractor = WaitlistBasedAbstractor.create(lts, analysis,
-				target, FifoWaitlist.supplier(), logger);
+				target, PriorityWaitlist.supplier(ArgNodeComparators.bfs()), logger);
 
 		final ExprTraceChecker<IndexedVarsRefutation> exprTraceChecker = ExprTraceUnsatCoreChecker
 				.create(And(sts.getInit()), Not(sts.getProp()), solver);

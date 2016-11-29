@@ -81,6 +81,6 @@ public final class PriorityWaitlist<T> implements Waitlist<T> {
 
 	@Override
 	public String toString() {
-		return ObjectUtils.toStringBuilder("PriorityWaitlist").addAll(items).toString();
+		return ObjectUtils.toStringBuilder("PriorityWaitlist").add(items.comparator()).addAll(items).toString();
 	}
 }
