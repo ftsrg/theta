@@ -48,8 +48,7 @@ public final class SimplePredItpRefiner<A extends ExprAction> implements Refiner
 
 		logger.write("Checking...", 3, 2);
 		final ExprTraceStatus2<ItpRefutation> cexStatus = exprTraceChecker.check(traceToConcretize);
-		logger.writeln("done.", 3);
-		logger.writeln(cexStatus, 3, 2);
+		logger.writeln("done: ", cexStatus, 3, 0);
 
 		if (cexStatus.isFeasible()) {
 			return RefinerResult.unsafe(traceToConcretize);
