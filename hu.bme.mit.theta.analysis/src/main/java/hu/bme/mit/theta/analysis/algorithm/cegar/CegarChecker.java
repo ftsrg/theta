@@ -13,6 +13,7 @@ import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyStatus;
 import hu.bme.mit.theta.analysis.algorithm.Statistics;
+import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.impl.NullLogger;
 
@@ -41,6 +42,7 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 
 	@Override
 	public SafetyStatus<S, A> check(final P initPrecision) {
+		logger.writeln("Configuration: ", this, 1, 0);
 		final Stopwatch stopwatch = Stopwatch.createStarted();
 		RefinerResult<S, A, P> refinerResult = null;
 		AbstractorResult abstractorResult = null;
@@ -85,5 +87,10 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 		logger.writeln("Done, result: ", cegarResult, 1, 0);
 		logger.writeln(stats, 1);
 		return cegarResult;
+	}
+
+	@Override
+	public String toString() {
+		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).add(abstractor).add(refiner).toString();
 	}
 }

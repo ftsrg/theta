@@ -14,6 +14,7 @@ import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprTraceChecker;
 import hu.bme.mit.theta.analysis.expr.ExprTraceStatus2;
 import hu.bme.mit.theta.analysis.expr.ItpRefutation;
+import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.core.utils.impl.ExprUtils;
 
@@ -66,4 +67,8 @@ public final class ExplItpRefiner<A extends ExprAction> implements Refiner<ExplS
 		}
 	}
 
+	@Override
+	public String toString() {
+		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).add(exprTraceChecker).toString();
+	}
 }

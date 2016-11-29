@@ -107,4 +107,9 @@ public final class ExprTraceCraigItpChecker implements ExprTraceChecker<ItpRefut
 		return status;
 	}
 
+	@Override
+	public String toString() {
+		return getClass().getSimpleName();
+	}
+
 }

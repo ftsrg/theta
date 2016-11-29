@@ -16,6 +16,7 @@ import hu.bme.mit.theta.analysis.expr.ExprTraceStatus2;
 import hu.bme.mit.theta.analysis.expr.ItpRefutation;
 import hu.bme.mit.theta.analysis.pred.PredState;
 import hu.bme.mit.theta.analysis.pred.SimplePredPrecision;
+import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.core.expr.BoolLitExpr;
 
@@ -68,4 +69,8 @@ public final class SimplePredItpRefiner<A extends ExprAction> implements Refiner
 		}
 	}
 
+	@Override
+	public String toString() {
+		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).add(exprTraceChecker).toString();
+	}
 }

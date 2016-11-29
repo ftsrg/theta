@@ -16,6 +16,7 @@ import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprTraceChecker;
 import hu.bme.mit.theta.analysis.expr.ExprTraceStatus2;
 import hu.bme.mit.theta.analysis.expr.IndexedVarsRefutation;
+import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Type;
@@ -69,4 +70,8 @@ public final class ExplVarSetsRefiner<A extends ExprAction> implements Refiner<E
 		}
 	}
 
+	@Override
+	public String toString() {
+		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).add(exprTraceChecker).toString();
+	}
 }
