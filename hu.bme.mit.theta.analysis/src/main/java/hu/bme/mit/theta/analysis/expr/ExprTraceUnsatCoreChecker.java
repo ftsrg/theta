@@ -92,4 +92,8 @@ public final class ExprTraceUnsatCoreChecker implements ExprTraceChecker<Indexed
 		return status;
 	}
 
+	@Override
+	public String toString() {
+		return getClass().getSimpleName();
+	}
 }
