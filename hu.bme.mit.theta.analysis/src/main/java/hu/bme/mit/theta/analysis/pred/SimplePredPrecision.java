@@ -25,6 +25,10 @@ public final class SimplePredPrecision implements PredPrecision {
 	private final Map<Expr<? extends BoolType>, Expr<? extends BoolType>> predToNegMap;
 	private final Solver solver;
 
+	public static SimplePredPrecision create(final Solver solver) {
+		return new SimplePredPrecision(Collections.emptySet(), solver);
+	}
+
 	public static SimplePredPrecision create(final Iterable<Expr<? extends BoolType>> preds, final Solver solver) {
 		return new SimplePredPrecision(preds, solver);
 	}
