@@ -45,14 +45,15 @@ public final class ExprTraceCraigItpChecker implements ExprTraceChecker<ItpRefut
 		final int stateCount = trace.getStates().size();
 		checkArgument(stateCount > 0);
 
-		final ItpMarker A = solver.createMarker();
-		final ItpMarker B = solver.createMarker();
-		final ItpPattern pattern = solver.createBinPattern(A, B);
-
 		final List<VarIndexing> indexings = new ArrayList<>(stateCount);
 		indexings.add(VarIndexing.all(0));
 
 		solver.push();
+
+		final ItpMarker A = solver.createMarker();
+		final ItpMarker B = solver.createMarker();
+		final ItpPattern pattern = solver.createBinPattern(A, B);
+
 		int nPush = 1;
 		solver.add(A, PathUtils.unfold(init, indexings.get(0)));
 		solver.add(A, PathUtils.unfold(trace.getState(0).toExpr(), indexings.get(0)));

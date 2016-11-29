@@ -45,6 +45,7 @@ public final class ExprTraceSeqItpChecker implements ExprTraceChecker<ItpRefutat
 		final int stateCount = trace.getStates().size();
 		checkArgument(stateCount > 0);
 
+		solver.push();
 		final List<ItpMarker> markers = new ArrayList<>(stateCount + 1);
 		for (int i = 0; i < stateCount + 1; ++i) {
 			markers.add(solver.createMarker());
@@ -54,7 +55,6 @@ public final class ExprTraceSeqItpChecker implements ExprTraceChecker<ItpRefutat
 		final List<VarIndexing> indexings = new ArrayList<>(stateCount);
 		indexings.add(VarIndexing.all(0));
 
-		solver.push();
 		solver.add(markers.get(0), PathUtils.unfold(init, indexings.get(0)));
 		solver.add(markers.get(0), PathUtils.unfold(trace.getState(0).toExpr(), indexings.get(0)));
 		checkState(solver.check().isSat());
