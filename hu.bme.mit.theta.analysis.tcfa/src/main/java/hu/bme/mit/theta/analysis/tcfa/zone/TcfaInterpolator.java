@@ -12,6 +12,7 @@ import com.google.common.collect.Lists;
 
 import hu.bme.mit.theta.analysis.Domain;
 import hu.bme.mit.theta.analysis.tcfa.TcfaAction;
+import hu.bme.mit.theta.analysis.tcfa.TcfaZoneUtils;
 import hu.bme.mit.theta.analysis.zone.ZoneDomain;
 import hu.bme.mit.theta.analysis.zone.ZonePrecision;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
@@ -40,7 +41,7 @@ public final class TcfaInterpolator {
 		for (int i = 0; i < actions.size() - 1; i++) {
 			final TcfaAction action = actions.get(i);
 			final ZoneState prevItp = interpolants.get(i);
-			final ZoneState forwardState = TcfaZoneTransferFunction.getInstance().post(prevItp, action, precision);
+			final ZoneState forwardState = TcfaZoneUtils.post(prevItp, action, precision);
 			final ZoneState backwardState = backwardStates.get(i + 1);
 			final ZoneState interpolant = ZoneState.interpolant(forwardState, backwardState);
 			interpolants.add(interpolant);
@@ -59,7 +60,7 @@ public final class TcfaInterpolator {
 		forwardStates.add(lastState);
 
 		for (final TcfaAction action : actions) {
-			lastState = TcfaZoneTransferFunction.getInstance().post(lastState, action, precision);
+			lastState = TcfaZoneUtils.post(lastState, action, precision);
 			forwardStates.add(lastState);
 		}
 
@@ -78,7 +79,7 @@ public final class TcfaInterpolator {
 		backwardStates.add(lastState);
 
 		for (final TcfaAction action : Lists.reverse(actions)) {
-			lastState = TcfaZoneBackwardTransferFunction.getInstance().pre(lastState, action, precision);
+			lastState = TcfaZoneUtils.pre(lastState, action, precision);
 			backwardStates.add(0, lastState);
 		}
 
