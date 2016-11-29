@@ -573,19 +573,19 @@ extern int __VERIFIER_nondet_int();
 
 int main()
 {
-    // default output
-    int output = -1;
+	// default output
+	int output = -1;
 
-    // main i/o-loop
-    while(1)
-    {
-        // read input
-        int input;
-        input = __VERIFIER_nondet_int();
-        if ((input != 1) && (input != 2) && (input != 3) && (input != 4) && (input != 5) && (input != 6)) return -2;
+	// main i/o-loop
+	while(1)
+	{
+		// read input
+		int xy;
+		xy = __VERIFIER_nondet_int();
+		if ((xy != 1) && (xy != 2) && (xy != 3) && (xy != 4) && (xy != 5) && (xy != 6)) return -2;
 
-        // operate eca engine
-        output = calculate_output(input);
+		// operate eca engine
+		output = calculate_output(xy);
 
-    }
+	}
 }

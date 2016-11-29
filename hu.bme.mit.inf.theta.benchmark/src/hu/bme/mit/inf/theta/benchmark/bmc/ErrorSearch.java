@@ -102,11 +102,12 @@ public class ErrorSearch {
 					StmtToExprResult exprs = StmtUnroller.transform(stmts, this.vi);
 					this.solver.add(exprs.getExprs());
 
+					this.log.writeln("Found an error path with the length of " + k, 6);
 					this.log.writeln("Running solver...", 6);
 					this.solver.check();
 					if (this.solver.getStatus() == SolverStatus.SAT) {
-						this.log.writeln("Solver found a solution, check FAILED.", 1);
-						this.log.writeln("System model: " + solver.getModel().toString(), 2);
+						this.log.writeln("Solver found a solution, check FAILED.", 1, 1);
+						this.log.writeln("System model: " + solver.getModel().toString(), 2, 1);
 
 						return CheckResult.CHECK_FAILED;
 					}
@@ -150,7 +151,7 @@ public class ErrorSearch {
 				this.solver.check();
 				if (this.solver.getStatus() == SolverStatus.SAT) {
 					this.log.writeln("Solver found a solution, failure is possible.", 6, 1);
-					this.log.writeln("System model: " + solver.getModel().toString(), 6, 1);
+					this.log.writeln("System model: " + solver.getModel().toString(), 7, 1);
 
 					revRes = false;
 					revQueue.addAll(this.getParentNodes(node));
@@ -175,7 +176,7 @@ public class ErrorSearch {
 				this.log.writeln("No forward or backward error paths were found, check PASSED.", 1);
 				return CheckResult.CHECK_PASSED;
 			} else {
-				this.log.writeln("Increasing bound to " + (k + 1), 7);
+				this.log.writeln("Increasing bound to " + (k + 1), 5);
 				k = k + 1;
 				queue = newQueue;
 				revQueue.addAll(newRevQueue);
