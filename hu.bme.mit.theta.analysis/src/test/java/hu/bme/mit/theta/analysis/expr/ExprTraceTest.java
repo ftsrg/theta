@@ -41,7 +41,7 @@ public final class ExprTraceTest {
 		when(actionMock.nextIndexing()).thenReturn(VarIndexing.all(1));
 
 		final List<ExprAction> actions = Arrays.asList(actionMock, actionMock, actionMock);
-		final Trace<ExprState, ExprAction> trace = ExprTrace.of(actions);
+		final Trace<ExprState, ExprAction> trace = ExprTraceUtils.traceFrom(actions);
 
 		final ExprTraceChecker<?> traceChecker = ExprTraceSeqItpChecker.create(True(), True(), solver);
 
@@ -71,7 +71,7 @@ public final class ExprTraceTest {
 		when(action2Mock.nextIndexing()).thenReturn(VarIndexing.all(0));
 
 		final List<ExprAction> actions = Arrays.asList(action1Mock, action2Mock);
-		final Trace<ExprState, ExprAction> trace = ExprTrace.of(actions);
+		final Trace<ExprState, ExprAction> trace = ExprTraceUtils.traceFrom(actions);
 
 		final ExprTraceChecker<ItpRefutation> traceChecker = ExprTraceSeqItpChecker.create(True(), True(), solver);
 
