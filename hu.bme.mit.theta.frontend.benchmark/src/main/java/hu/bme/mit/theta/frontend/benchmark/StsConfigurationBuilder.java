@@ -42,6 +42,7 @@ import hu.bme.mit.theta.common.logging.impl.NullLogger;
 import hu.bme.mit.theta.common.waitlist.PriorityWaitlist;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.BoolType;
+import hu.bme.mit.theta.core.utils.impl.ExprUtils;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.solver.SolverFactory;
@@ -55,6 +56,10 @@ public final class StsConfigurationBuilder {
 
 	public enum Refinement {
 		CRAIGITP, SEQITP, UNSATCORE
+	};
+
+	public enum InitPrecision {
+		EMPTY, FROMPROP
 	};
 
 	public enum Search {
@@ -74,6 +79,7 @@ public final class StsConfigurationBuilder {
 	private final Domain domain;
 	private final Refinement refinement;
 	private Search search = Search.BFS;
+	private InitPrecision initPrecision = InitPrecision.EMPTY;
 
 	public StsConfigurationBuilder(final Domain domain, final Refinement refinement) {
 		this.domain = domain;
@@ -95,6 +101,11 @@ public final class StsConfigurationBuilder {
 		return this;
 	}
 
+	public StsConfigurationBuilder initPrecision(final InitPrecision initPrecision) {
+		this.initPrecision = initPrecision;
+		return this;
+	}
+
 	public Search getSearch() {
 		return search;
 	}
@@ -105,6 +116,10 @@ public final class StsConfigurationBuilder {
 
 	public Refinement getRefinement() {
 		return refinement;
+	}
+
+	public InitPrecision getInitPrecision() {
+		return initPrecision;
 	}
 
 	public Configuration<? extends State, ? extends Action, ? extends Precision> build(final STS sts) {
@@ -138,7 +153,17 @@ public final class StsConfigurationBuilder {
 
 			final SafetyChecker<ExplState, StsAction, ExplPrecision> checker = CegarChecker.create(abstractor, refiner,
 					logger);
-			final ExplPrecision precision = ExplPrecision.create();
+			ExplPrecision precision = null;
+			switch (initPrecision) {
+			case EMPTY:
+				precision = ExplPrecision.create();
+				break;
+			case FROMPROP:
+				precision = ExplPrecision.create(ExprUtils.getVars(negProp));
+				break;
+			default:
+				throw new UnsupportedOperationException();
+			}
 
 			return Configuration.create(checker, precision);
 
@@ -164,7 +189,17 @@ public final class StsConfigurationBuilder {
 
 			final SafetyChecker<PredState, StsAction, SimplePredPrecision> checker = CegarChecker.create(abstractor,
 					refiner, logger);
-			final SimplePredPrecision precision = SimplePredPrecision.create(solver);
+			SimplePredPrecision precision = null;
+			switch (initPrecision) {
+			case EMPTY:
+				precision = SimplePredPrecision.create(solver);
+				break;
+			case FROMPROP:
+				precision = SimplePredPrecision.create(ExprUtils.getAtoms(negProp), solver);
+				break;
+			default:
+				throw new UnsupportedOperationException();
+			}
 
 			return Configuration.create(checker, precision);
 		} else {
