@@ -1,9 +1,6 @@
 package hu.bme.mit.theta.analysis.algorithm;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.expr.impl.Exprs.Not;
-import static hu.bme.mit.theta.core.utils.impl.PathUtils.unfold;
-import static hu.bme.mit.theta.solver.utils.SolverUtils.using;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 
@@ -17,6 +14,7 @@ import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprDomain;
 import hu.bme.mit.theta.analysis.expr.ExprState;
+import hu.bme.mit.theta.analysis.expr.ExprStateUtils;
 import hu.bme.mit.theta.solver.Solver;
 
 public final class ArgChecker {
@@ -92,15 +90,7 @@ public final class ArgChecker {
 
 	private boolean hasSuccStates(final ExprState state, final ExprAction action,
 			final Collection<? extends ExprState> succStates) {
-		return using(solver, s -> {
-			s.add(unfold(state.toExpr(), 0));
-			s.add(unfold(action.toExpr(), 0));
-			for (final ExprState succState : succStates) {
-				s.add(Not(unfold(succState.toExpr(), action.nextIndexing())));
-			}
-			final boolean result = s.check().isUnsat();
-			return result;
-		});
+		return !ExprStateUtils.anyUncoveredSuccessor(state, action, succStates, solver).isPresent();
 	}
 
 	////
