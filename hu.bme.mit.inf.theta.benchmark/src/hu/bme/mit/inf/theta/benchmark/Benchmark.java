@@ -14,6 +14,7 @@ import hu.bme.mit.inf.theta.benchmark.utils.CfaMeasures;
 import hu.bme.mit.inf.theta.common.logging.Logger;
 import hu.bme.mit.inf.theta.formalism.cfa.CFA;
 import hu.bme.mit.inf.theta.solver.SolverManager;
+import hu.bme.mit.inf.theta.solver.z3.Z3SolverManager;
 
 public class Benchmark {
 
@@ -91,6 +92,7 @@ public class Benchmark {
 		private CheckResult result = CheckResult.CHECK_TIMEOUT;
 
 		public BmcRunner(CFA cfa, int maxBound, Logger log, SolverManager manager) {
+			//this.manager = new Z3SolverManager();
 			this.cfa = cfa;
 			this.maxBound = maxBound;
 			this.log = log;

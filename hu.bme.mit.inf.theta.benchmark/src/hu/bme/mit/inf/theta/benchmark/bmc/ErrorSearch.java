@@ -103,6 +103,7 @@ public class ErrorSearch {
 					this.solver.add(exprs.getExprs());
 
 					this.log.writeln("Found an error path with the length of " + k, 6);
+					this.log.writeln("Assertions:" + solver.getAssertions().toString(), 7, 1);
 					this.log.writeln("Running solver...", 6);
 					this.solver.check();
 					if (this.solver.getStatus() == SolverStatus.SAT) {
@@ -143,6 +144,7 @@ public class ErrorSearch {
 				Collections.reverse(stmts);
 
 				StmtToExprResult exprs = StmtUnroller.transform(stmts, this.vi);
+				this.log.writeln("Backwards exprs: " + exprs.getExprs().toString(), 7, 1);
 				this.solver.add(exprs.getExprs());
 
 				this.log.writeln("Backwards assertions: " + solver.getAssertions().toString(), 7, 1);
@@ -154,13 +156,12 @@ public class ErrorSearch {
 					this.log.writeln("System model: " + solver.getModel().toString(), 7, 1);
 
 					revRes = false;
-					revQueue.addAll(this.getParentNodes(node));
+					//revQueue.addAll(this.getParentNodes(node));
 
-					this.solver.pop();
-					break;
+					//this.solver.pop();
+				} else {
+					this.log.writeln("Solver finished, status: " + solver.getStatus(), 6, 1);
 				}
-
-				this.log.writeln("Solver finished, status: " + solver.getStatus(), 6, 1);
 				this.solver.pop();
 
 				// Add this node's children to the search tree
