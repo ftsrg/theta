@@ -6,16 +6,17 @@ import java.util.List;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import hu.bme.mit.theta.common.logging.impl.ConsoleLogger;
+import hu.bme.mit.theta.frontend.benchmark.formatters.Formatter;
+import hu.bme.mit.theta.frontend.benchmark.formatters.impl.CsvFormatter;
 import hu.bme.mit.theta.splittingcegar.common.CEGARBuilder;
 import hu.bme.mit.theta.splittingcegar.interpolating.InterpolatingCEGARBuilder;
 import hu.bme.mit.theta.splittingcegar.interpolating.InterpolatingCEGARBuilder.InterpolationMethod;
-import hu.bme.mit.theta.splittingcegar.ui.formatters.Formatter;
-import hu.bme.mit.theta.splittingcegar.ui.formatters.impl.ExcelFormatter;
 
 public class PerfTestFischer extends PerfTestBase {
 
 	private static final int TIMEOUT = 5 * 60 * 1000;
-	private static final Formatter FORMATTER = new ExcelFormatter();
+	private static final Formatter FORMATTER = new CsvFormatter(new ConsoleLogger(100), "\t");
 
 	@SuppressWarnings("serial")
 	@Test
