@@ -9,7 +9,7 @@ import java.util.List;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
-import hu.bme.mit.theta.analysis.expr.ExprTrace;
+import hu.bme.mit.theta.analysis.expr.ExprTraceUtils;
 import hu.bme.mit.theta.analysis.expr.ExprTraceSeqItpChecker;
 import hu.bme.mit.theta.analysis.expr.ExprTraceStatus;
 import hu.bme.mit.theta.analysis.expr.ItpRefutation;
@@ -41,7 +41,7 @@ public final class PredImpactRefiner<L extends Loc<L, E>, E extends Edge<L, E>>
 			final Trace<LocState<PredState, L, E>, LocAction<L, E>> cex) {
 		final List<LocAction<L, E>> actions = cex.getActions();
 
-		final Trace<ExprState, ExprAction> exprTrace = ExprTrace.of(actions);
+		final Trace<ExprState, ExprAction> exprTrace = ExprTraceUtils.traceFrom(actions);
 		final ExprTraceStatus<ItpRefutation> traceStatus = traceChecker.check(exprTrace);
 
 		if (traceStatus.isFeasible()) {

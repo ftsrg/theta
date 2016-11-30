@@ -8,12 +8,12 @@ import java.util.List;
 
 import hu.bme.mit.theta.analysis.Trace;
 
-public final class ExprTrace {
+public final class ExprTraceUtils {
 
-	private ExprTrace() {
+	private ExprTraceUtils() {
 	}
 
-	public static Trace<ExprState, ExprAction> of(final List<? extends ExprAction> actions) {
+	public static Trace<ExprState, ExprAction> traceFrom(final List<? extends ExprAction> actions) {
 		checkNotNull(actions);
 		final List<ExprState> states = new ArrayList<>(actions.size() + 1);
 		for (int i = 0; i < actions.size() + 1; i++) {
