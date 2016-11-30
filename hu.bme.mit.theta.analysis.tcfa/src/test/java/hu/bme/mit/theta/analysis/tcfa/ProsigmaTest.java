@@ -8,9 +8,6 @@ import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
 import hu.bme.mit.theta.analysis.algorithm.cegar.WaitlistBasedAbstractor;
-import hu.bme.mit.theta.analysis.composite.CompositeAnalysis;
-import hu.bme.mit.theta.analysis.composite.CompositePrecision;
-import hu.bme.mit.theta.analysis.composite.CompositeState;
 import hu.bme.mit.theta.analysis.expl.ExplAnalysis;
 import hu.bme.mit.theta.analysis.expl.ExplPrecision;
 import hu.bme.mit.theta.analysis.expl.ExplState;
@@ -19,8 +16,9 @@ import hu.bme.mit.theta.analysis.impl.NullPrecision;
 import hu.bme.mit.theta.analysis.loc.LocAnalysis;
 import hu.bme.mit.theta.analysis.loc.LocPrecision;
 import hu.bme.mit.theta.analysis.loc.LocState;
-import hu.bme.mit.theta.analysis.tcfa.TcfaAction;
-import hu.bme.mit.theta.analysis.tcfa.TcfaLts;
+import hu.bme.mit.theta.analysis.prod.Prod2Analysis;
+import hu.bme.mit.theta.analysis.prod.Prod2State;
+import hu.bme.mit.theta.analysis.prod.ProdPrecision;
 import hu.bme.mit.theta.analysis.tcfa.zone.TcfaZoneAnalysis;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.analysis.zone.ZonePrecision;
@@ -43,16 +41,16 @@ public class ProsigmaTest {
 
 		final TcfaLts lts = TcfaLts.create(prosigma);
 
-		final Analysis<LocState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction, NullPrecision> analysis = FixedPrecisionAnalysis
+		final Analysis<LocState<Prod2State<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction, NullPrecision> analysis = FixedPrecisionAnalysis
 				.create(LocAnalysis.create(prosigma.getInitLoc(),
-						CompositeAnalysis.create(TcfaZoneAnalysis.getInstance(), ExplAnalysis.create(solver, True()))),
-						LocPrecision.constant(CompositePrecision.create(ZonePrecision.create(prosigma.getClockVars()),
+						Prod2Analysis.create(TcfaZoneAnalysis.getInstance(), ExplAnalysis.create(solver, True()))),
+						LocPrecision.constant(ProdPrecision.of(ZonePrecision.create(prosigma.getClockVars()),
 								ExplPrecision.create(prosigma.getDataVars()))));
 
-		final Abstractor<LocState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction, NullPrecision> abstractor = WaitlistBasedAbstractor
+		final Abstractor<LocState<Prod2State<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction, NullPrecision> abstractor = WaitlistBasedAbstractor
 				.create(lts, analysis, s -> false, FifoWaitlist.supplier());
 
-		final ARG<LocState<CompositeState<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction> arg = abstractor
+		final ARG<LocState<Prod2State<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction> arg = abstractor
 				.createArg();
 		abstractor.check(arg, NullPrecision.getInstance());
 

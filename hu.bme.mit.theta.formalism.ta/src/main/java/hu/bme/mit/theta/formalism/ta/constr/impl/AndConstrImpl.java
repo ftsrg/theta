@@ -5,10 +5,10 @@ import static hu.bme.mit.theta.core.expr.impl.Exprs.And;
 import static java.util.stream.Collectors.toSet;
 
 import java.util.Collection;
+import java.util.StringJoiner;
 
 import com.google.common.collect.ImmutableSet;
 
-import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.expr.AndExpr;
 import hu.bme.mit.theta.formalism.common.decl.ClockDecl;
 import hu.bme.mit.theta.formalism.ta.constr.AndConstr;
@@ -85,7 +85,9 @@ final class AndConstrImpl implements AndConstr {
 
 	@Override
 	public String toString() {
-		return ObjectUtils.toStringBuilder("CC").addAll(constrs).toString();
+		final StringJoiner sj = new StringJoiner(" and ");
+		constrs.forEach(c -> sj.add(c.toString()));
+		return sj.toString();
 	}
 
 	////////

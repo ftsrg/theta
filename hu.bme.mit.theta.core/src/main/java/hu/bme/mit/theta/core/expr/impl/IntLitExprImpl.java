@@ -11,15 +11,15 @@ final class IntLitExprImpl extends AbstractNullaryExpr<IntType> implements IntLi
 	private static final int HASH_SEED = 4111;
 	private volatile int hashCode = 0;
 
-	private final long value;
+	private final int value;
 	private volatile RatLitExpr ratLitExpr = null;
 
-	IntLitExprImpl(final long value) {
+	IntLitExprImpl(final int value) {
 		this.value = value;
 	}
 
 	@Override
-	public long getValue() {
+	public int getValue() {
 		return value;
 	}
 
@@ -48,7 +48,7 @@ final class IntLitExprImpl extends AbstractNullaryExpr<IntType> implements IntLi
 		int result = hashCode;
 		if (result == 0) {
 			result = HASH_SEED;
-			result = 31 * result + (int) (value ^ (value >>> 32));
+			result = 31 * result + value;
 			hashCode = result;
 		}
 		return result;

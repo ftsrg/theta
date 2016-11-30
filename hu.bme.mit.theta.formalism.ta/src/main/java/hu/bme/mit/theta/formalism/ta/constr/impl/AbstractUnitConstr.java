@@ -51,14 +51,11 @@ public abstract class AbstractUnitConstr implements UnitConstr {
 	@Override
 	public final String toString() {
 		final StringBuilder sb = new StringBuilder();
-		sb.append("CC");
-		sb.append("(");
 		sb.append(clock.getName());
 		sb.append(" ");
 		sb.append(getOperatorLabel());
 		sb.append(" ");
 		sb.append(bound);
-		sb.append(")");
 		return sb.toString();
 	}
 

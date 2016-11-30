@@ -401,8 +401,8 @@ public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? ext
 		}
 
 		if (leftOp instanceof IntLitExpr && rightOp instanceof IntLitExpr) {
-			final long leftInt = ((IntLitExpr) leftOp).getValue();
-			final long rightInt = ((IntLitExpr) rightOp).getValue();
+			final int leftInt = ((IntLitExpr) leftOp).getValue();
+			final int rightInt = ((IntLitExpr) rightOp).getValue();
 			return Int(leftInt / rightInt);
 		}
 
@@ -450,8 +450,8 @@ public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? ext
 	@Override
 	public Expr<? extends RatType> visit(final RatLitExpr expr, final Assignment param) {
 
-		long denom = expr.getDenom();
-		long num = expr.getNum();
+		int denom = expr.getDenom();
+		int num = expr.getNum();
 
 		if (denom < 0) {
 			denom *= -1;
@@ -484,10 +484,10 @@ public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? ext
 
 		if ((leftOp instanceof RatLitExpr || leftOp instanceof IntLitExpr)
 				&& (rightOp instanceof RatLitExpr || rightOp instanceof IntLitExpr)) {
-			final long leftNum = num(leftOp);
-			final long leftDenom = denom(leftOp);
-			final long rightNum = num(rightOp);
-			final long rightDenom = denom(rightOp);
+			final int leftNum = num(leftOp);
+			final int leftDenom = denom(leftOp);
+			final int rightNum = num(rightOp);
+			final int rightDenom = denom(rightOp);
 
 			return ExprUtils.cast(Rat(leftNum * rightDenom, leftDenom * rightNum).accept(this, param), RatType.class);
 		}
@@ -532,10 +532,10 @@ public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? ext
 
 		if ((leftOp instanceof RatLitExpr || leftOp instanceof IntLitExpr)
 				&& (rightOp instanceof RatLitExpr || rightOp instanceof IntLitExpr)) {
-			final long leftNum = num(leftOp);
-			final long leftDenom = denom(leftOp);
-			final long rightNum = num(rightOp);
-			final long rightDenom = denom(rightOp);
+			final int leftNum = num(leftOp);
+			final int leftDenom = denom(leftOp);
+			final int rightNum = num(rightOp);
+			final int rightDenom = denom(rightOp);
 
 			return ExprUtils.cast(
 					Rat(leftNum * rightDenom - rightNum * leftDenom, leftDenom * rightDenom).accept(this, param),
@@ -553,8 +553,8 @@ public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? ext
 	public <ExprType extends ClosedUnderAdd> Expr<? extends ClosedUnderAdd> visit(final AddExpr<ExprType> expr,
 			final Assignment param) {
 		final List<Expr<? extends ClosedUnderAdd>> ops = new ArrayList<>();
-		long num = 0;
-		long denom = 1;
+		int num = 0;
+		int denom = 1;
 
 		for (final Expr<? extends ExprType> op : expr.getOps()) {
 			final Expr<? extends ClosedUnderAdd> opVisited = ExprUtils.cast(op.accept(this, param),
@@ -592,8 +592,8 @@ public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? ext
 	public <ExprType extends ClosedUnderMul> Expr<? extends ClosedUnderMul> visit(final MulExpr<ExprType> expr,
 			final Assignment param) {
 		final List<Expr<? extends ClosedUnderMul>> ops = new ArrayList<>();
-		long num = 1;
-		long denom = 1;
+		int num = 1;
+		int denom = 1;
 
 		for (final Expr<? extends ExprType> op : expr.getOps()) {
 			final Expr<? extends ClosedUnderMul> opVisited = ExprUtils.cast(op.accept(this, param),
@@ -681,7 +681,7 @@ public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? ext
 
 	// TODO: refactor these helper methods as soon as IntLit and RatLit has some
 	// common interface
-	private long num(final Expr<? extends Type> expr) {
+	private int num(final Expr<? extends Type> expr) {
 		assert (expr instanceof IntLitExpr || expr instanceof RatLitExpr);
 		if (expr instanceof IntLitExpr)
 			return ((IntLitExpr) expr).getValue();
@@ -691,7 +691,7 @@ public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? ext
 
 	// TODO: refactor these helper methods as soon as IntLit and RatLit has some
 	// common interface
-	private long denom(final Expr<? extends Type> expr) {
+	private int denom(final Expr<? extends Type> expr) {
 		assert (expr instanceof IntLitExpr || expr instanceof RatLitExpr);
 		if (expr instanceof IntLitExpr)
 			return 1;

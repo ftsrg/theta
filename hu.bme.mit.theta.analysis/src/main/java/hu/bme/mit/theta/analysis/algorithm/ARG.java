@@ -2,6 +2,7 @@ package hu.bme.mit.theta.analysis.algorithm;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.stream.Collectors.toList;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -23,7 +24,7 @@ public final class ARG<S extends State, A extends Action> {
 
 	private int nextId = 0;
 
-	private final Domain<S> domain;
+	final Domain<S> domain;
 
 	private ARG(final Domain<S> domain) {
 		initNodes = new HashSet<>();
@@ -46,7 +47,7 @@ public final class ARG<S extends State, A extends Action> {
 	}
 
 	public Stream<ArgNode<S, A>> getUnsafeNodes() {
-		return getNodes().filter(n -> !n.isSafe(domain));
+		return getNodes().filter(n -> !n.isSafe());
 	}
 
 	public Stream<ArgNode<S, A>> getIncompleteNodes() {
@@ -60,7 +61,7 @@ public final class ARG<S extends State, A extends Action> {
 	}
 
 	public boolean isSafe() {
-		return getNodes().allMatch(n -> n.isSafe(domain));
+		return getNodes().allMatch(n -> n.isSafe());
 	}
 
 	public boolean isInitialized() {
@@ -71,7 +72,7 @@ public final class ARG<S extends State, A extends Action> {
 
 	public ArgNode<S, A> createInitNode(final S initState, final boolean target) {
 		checkNotNull(initState);
-		final ArgNode<S, A> initNode = createNode(initState, target);
+		final ArgNode<S, A> initNode = createNode(initState, 0, target);
 		initNodes.add(initNode);
 		return initNode;
 	}
@@ -83,7 +84,7 @@ public final class ARG<S extends State, A extends Action> {
 		checkNotNull(succState);
 		checkArgument(node.arg == this);
 		checkArgument(!node.isTarget());
-		final ArgNode<S, A> succNode = createNode(succState, target);
+		final ArgNode<S, A> succNode = createNode(succState, node.getDepth() + 1, target);
 		createEdge(node, action, succNode);
 		return succNode;
 	}
@@ -111,6 +112,19 @@ public final class ARG<S extends State, A extends Action> {
 
 	}
 
+	public void minimize() {
+		initNodes.forEach(this::minimizeSubTree);
+	}
+
+	private void minimizeSubTree(final ArgNode<S, A> node) {
+		final Stream<ArgNode<S, A>> children = node.children().collect(toList()).stream();
+		if (node.isCovered()) {
+			children.forEach(this::prune);
+		} else {
+			children.forEach(this::minimizeSubTree);
+		}
+	}
+
 	public void cover(final ArgNode<S, A> node, final ArgNode<S, A> coveringNode) {
 		checkNotNull(node);
 		checkNotNull(coveringNode);
@@ -132,8 +146,8 @@ public final class ARG<S extends State, A extends Action> {
 
 	////
 
-	private ArgNode<S, A> createNode(final S state, final boolean target) {
-		final ArgNode<S, A> node = new ArgNode<>(this, state, nextId, target);
+	private ArgNode<S, A> createNode(final S state, final int depth, final boolean target) {
+		final ArgNode<S, A> node = new ArgNode<>(this, state, nextId, depth, target);
 		nextId = nextId + 1;
 		return node;
 	}

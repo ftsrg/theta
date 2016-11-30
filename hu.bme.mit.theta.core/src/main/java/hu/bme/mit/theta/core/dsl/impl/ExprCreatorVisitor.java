@@ -569,14 +569,14 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
 
 	@Override
 	public IntLitExpr visitIntLitExpr(final IntLitExprContext ctx) {
-		final long value = Long.parseLong(ctx.value.getText());
+		final int value = Integer.parseInt(ctx.value.getText());
 		return Int(value);
 	}
 
 	@Override
 	public RatLitExpr visitRatLitExpr(final RatLitExprContext ctx) {
-		final long num = Long.parseLong(ctx.num.getText());
-		final long denom = Long.parseLong(ctx.denom.getText());
+		final int num = Integer.parseInt(ctx.num.getText());
+		final int denom = Integer.parseInt(ctx.denom.getText());
 		return Rat(num, denom);
 	}
 
