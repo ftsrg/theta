@@ -2,6 +2,7 @@ package hu.bme.mit.theta.analysis.algorithm;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 import static java.util.stream.Collectors.toList;
 
 import java.util.Collection;
@@ -73,7 +74,7 @@ public final class ARG<S extends State, A extends Action> {
 
 	public ArgNode<S, A> createInitNode(final S initState, final boolean target) {
 		checkNotNull(initState);
-		final ArgNode<S, A> initNode = createNode(initState, 1, target);
+		final ArgNode<S, A> initNode = createNode(initState, 0, target);
 		initNodes.add(initNode);
 		return initNode;
 	}
@@ -175,11 +176,13 @@ public final class ARG<S extends State, A extends Action> {
 	}
 
 	/**
-	 * Gets the depth of the ARG, i.e., the maximal depth of its nodes
+	 * Gets the depth of the ARG, i.e., the maximal depth of its nodes. Depth
+	 * starts (at the initial nodes) from 0.
 	 */
 	public int getDepth() {
 		final OptionalInt maxOpt = getNodes().mapToInt(ArgNode::getDepth).max();
-		return maxOpt.isPresent() ? maxOpt.getAsInt() : 0;
+		checkState(maxOpt.isPresent(), "Depth is undefined for an empty ARG.");
+		return maxOpt.getAsInt();
 	}
 
 }
