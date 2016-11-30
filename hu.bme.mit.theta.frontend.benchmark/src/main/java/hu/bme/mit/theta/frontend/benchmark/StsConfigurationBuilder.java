@@ -95,6 +95,18 @@ public final class StsConfigurationBuilder {
 		return this;
 	}
 
+	public Search getSearch() {
+		return search;
+	}
+
+	public Domain getDomain() {
+		return domain;
+	}
+
+	public Refinement getRefinement() {
+		return refinement;
+	}
+
 	public Configuration<? extends State, ? extends Action, ? extends Precision> build(final STS sts) {
 		final ItpSolver solver = solverFactory.createItpSolver();
 		final LTS<State, StsAction> lts = StsLts.create(sts);
