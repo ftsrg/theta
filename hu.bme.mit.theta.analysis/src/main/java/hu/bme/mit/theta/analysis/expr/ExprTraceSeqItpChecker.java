@@ -40,11 +40,12 @@ public final class ExprTraceSeqItpChecker implements ExprTraceChecker<ItpRefutat
 	}
 
 	@Override
-	public ExprTraceStatus2<ItpRefutation> check(final Trace<? extends ExprState, ? extends ExprAction> trace) {
+	public ExprTraceStatus<ItpRefutation> check(final Trace<? extends ExprState, ? extends ExprAction> trace) {
 		checkNotNull(trace);
 		final int stateCount = trace.getStates().size();
 		checkArgument(stateCount > 0);
 
+		solver.push();
 		final List<ItpMarker> markers = new ArrayList<>(stateCount + 1);
 		for (int i = 0; i < stateCount + 1; ++i) {
 			markers.add(solver.createMarker());
@@ -54,7 +55,6 @@ public final class ExprTraceSeqItpChecker implements ExprTraceChecker<ItpRefutat
 		final List<VarIndexing> indexings = new ArrayList<>(stateCount);
 		indexings.add(VarIndexing.all(0));
 
-		solver.push();
 		solver.add(markers.get(0), PathUtils.unfold(init, indexings.get(0)));
 		solver.add(markers.get(0), PathUtils.unfold(trace.getState(0).toExpr(), indexings.get(0)));
 		checkState(solver.check().isSat());
@@ -68,7 +68,7 @@ public final class ExprTraceSeqItpChecker implements ExprTraceChecker<ItpRefutat
 		solver.add(markers.get(trace.getStates().size()), PathUtils.unfold(target, indexings.get(stateCount - 1)));
 		final boolean concretizable = solver.check().isSat();
 
-		ExprTraceStatus2<ItpRefutation> status = null;
+		ExprTraceStatus<ItpRefutation> status = null;
 
 		if (concretizable) {
 			final Model model = solver.getModel();
@@ -76,14 +76,14 @@ public final class ExprTraceSeqItpChecker implements ExprTraceChecker<ItpRefutat
 			for (final VarIndexing indexing : indexings) {
 				builder.add(PathUtils.extractValuation(model, indexing));
 			}
-			status = ExprTraceStatus2.feasible(builder.build());
+			status = ExprTraceStatus.feasible(builder.build());
 		} else {
 			final List<Expr<? extends BoolType>> interpolants = new ArrayList<>();
 			final Interpolant interpolant = solver.getInterpolant(pattern);
 			for (int i = 0; i < markers.size() - 1; ++i) {
 				interpolants.add(PathUtils.foldin(interpolant.eval(markers.get(i)), indexings.get(i)));
 			}
-			status = ExprTraceStatus2.infeasible(ItpRefutation.sequence(interpolants));
+			status = ExprTraceStatus.infeasible(ItpRefutation.sequence(interpolants));
 		}
 
 		solver.pop();

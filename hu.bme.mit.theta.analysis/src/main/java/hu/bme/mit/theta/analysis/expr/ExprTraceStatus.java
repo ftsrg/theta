@@ -1,51 +1,80 @@
 package hu.bme.mit.theta.analysis.expr;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 
-import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.model.Model;
+import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.model.impl.Valuation;
-import hu.bme.mit.theta.core.type.BoolType;
-import hu.bme.mit.theta.core.utils.impl.PathUtils;
-import hu.bme.mit.theta.core.utils.impl.VarIndexing;
-import hu.bme.mit.theta.solver.Interpolant;
-import hu.bme.mit.theta.solver.ItpMarker;
 
-public abstract class ExprTraceStatus {
+public abstract class ExprTraceStatus<R extends Refutation> {
 
 	private ExprTraceStatus() {
 	}
 
-	static Feasable feasable(final Model model, final List<? extends VarIndexing> indexings) {
-		return new Feasable(model, indexings);
+	public static <R extends Refutation> Infeasible<R> infeasible(final R refutation) {
+		return new Infeasible<>(refutation);
 	}
 
-	static Unfeasable unfeasable(final Interpolant interpolant, final List<? extends ItpMarker> markers,
-			final List<? extends VarIndexing> indexings) {
-		return new Unfeasable(interpolant, markers, indexings);
+	public static <R extends Refutation> Feasible<R> feasible(final List<Valuation> valuations) {
+		return new Feasible<>(valuations);
 	}
 
-	public abstract boolean isFeasable();
+	public abstract boolean isInfeasible();
 
-	public abstract boolean isUnfeasable();
+	public abstract boolean isFeasible();
 
-	public abstract Feasable asFeasable();
+	public abstract Infeasible<R> asInfeasible();
 
-	public abstract Unfeasable asUnfeasable();
+	public abstract Feasible<R> asFeasible();
 
-	////
+	public final static class Infeasible<R extends Refutation> extends ExprTraceStatus<R> {
+		private final R refutation;
 
-	public static final class Feasable extends ExprTraceStatus {
+		private Infeasible(final R refutation) {
+			this.refutation = checkNotNull(refutation);
+		}
+
+		public R getRefutation() {
+			return refutation;
+		}
+
+		@Override
+		public boolean isInfeasible() {
+			return true;
+		}
+
+		@Override
+		public boolean isFeasible() {
+			return false;
+		}
+
+		@Override
+		public Infeasible<R> asInfeasible() {
+			return this;
+		}
+
+		@Override
+		public Feasible<R> asFeasible() {
+			throw new ClassCastException(
+					"Cannot cast " + Infeasible.class.getSimpleName() + " to " + Feasible.class.getSimpleName());
+		}
+
+		@Override
+		public String toString() {
+			return ObjectUtils.toStringBuilder(ExprTraceStatus.class.getSimpleName()).add(getClass().getSimpleName())
+					.toString();
+		}
+
+	}
+
+	public final static class Feasible<R extends Refutation> extends ExprTraceStatus<R> {
 		private final List<Valuation> valuations;
 
-		private Feasable(final Model model, final List<? extends VarIndexing> indexings) {
-			final ImmutableList.Builder<Valuation> builder = ImmutableList.builder();
-			for (final VarIndexing indexing : indexings) {
-				builder.add(PathUtils.extractValuation(model, indexing));
-			}
-			valuations = builder.build();
+		private Feasible(final List<Valuation> valuations) {
+			this.valuations = ImmutableList.copyOf(valuations);
 		}
 
 		public List<Valuation> getValuations() {
@@ -53,64 +82,31 @@ public abstract class ExprTraceStatus {
 		}
 
 		@Override
-		public boolean isFeasable() {
-			return true;
-		}
-
-		@Override
-		public boolean isUnfeasable() {
+		public boolean isInfeasible() {
 			return false;
 		}
 
 		@Override
-		public Feasable asFeasable() {
-			return this;
-		}
-
-		@Override
-		public Unfeasable asUnfeasable() {
-			throw new ClassCastException();
-		}
-	}
-
-	////
-
-	public static final class Unfeasable extends ExprTraceStatus {
-		private final List<Expr<? extends BoolType>> exprs;
-
-		private Unfeasable(final Interpolant interpolant, final List<? extends ItpMarker> markers,
-				final List<? extends VarIndexing> indexings) {
-			final ImmutableList.Builder<Expr<? extends BoolType>> builder = ImmutableList.builder();
-			for (int i = 0; i < markers.size(); i++) {
-				final ItpMarker marker = markers.get(i);
-				final VarIndexing indexing = indexings.get(i);
-				builder.add(PathUtils.foldin(interpolant.eval(marker), indexing));
-			}
-			exprs = builder.build();
-		}
-
-		public List<Expr<? extends BoolType>> getExprs() {
-			return exprs;
-		}
-
-		@Override
-		public boolean isFeasable() {
-			return false;
-		}
-
-		@Override
-		public boolean isUnfeasable() {
+		public boolean isFeasible() {
 			return true;
 		}
 
 		@Override
-		public Feasable asFeasable() {
-			throw new ClassCastException();
+		public Infeasible<R> asInfeasible() {
+			throw new ClassCastException(
+					"Cannot cast " + Feasible.class.getSimpleName() + " to " + Infeasible.class.getSimpleName());
 		}
 
 		@Override
-		public Unfeasable asUnfeasable() {
+		public Feasible<R> asFeasible() {
 			return this;
 		}
+
+		@Override
+		public String toString() {
+			return ObjectUtils.toStringBuilder(ExprTraceStatus.class.getSimpleName()).add(getClass().getSimpleName())
+					.toString();
+		}
+
 	}
 }

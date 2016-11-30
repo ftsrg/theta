@@ -1,12 +1,11 @@
 package hu.bme.mit.theta.common;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import com.google.common.collect.ImmutableList;
 
-public final class Tuple1<T1> extends AbstractTuple implements Product1<T1> {
+public final class Tuple1<T1> extends Tuple implements Product1<T1> {
 
 	Tuple1(final T1 e1) {
-		super(e1);
-		checkNotNull(e1);
+		super(ImmutableList.of(e1));
 	}
 
 	@Override

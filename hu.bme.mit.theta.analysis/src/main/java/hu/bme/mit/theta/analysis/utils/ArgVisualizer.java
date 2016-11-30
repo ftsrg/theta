@@ -65,7 +65,7 @@ public final class ArgVisualizer {
 			final String sourceId = NODE_ID_PREFIX + node.getId();
 			final String targetId = NODE_ID_PREFIX + node.getCoveringNode().get().getId();
 			final EdgeAttributes eAttributes = EdgeAttributes.builder().label("").color(LINE_COLOR)
-					.lineStyle(LineStyle.DASHED).build();
+					.lineStyle(LineStyle.DASHED).weight(0).build();
 			graph.addEdge(sourceId, targetId, eAttributes);
 		}
 	}

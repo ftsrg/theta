@@ -3,6 +3,7 @@ package hu.bme.mit.theta.analysis.algorithm;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.common.ObjectUtils.toStringBuilder;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -10,14 +11,17 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 import hu.bme.mit.theta.analysis.Action;
-import hu.bme.mit.theta.analysis.Domain;
 import hu.bme.mit.theta.analysis.State;
 
 public final class ArgNode<S extends State, A extends Action> {
 
+	private static final int HASH_SEED = 8543;
+	private volatile int hashCode = 0;
+
 	final ARG<S, A> arg;
 
 	private final int id;
+	private final int depth;
 	private final boolean target;
 
 	private S state;
@@ -30,25 +34,27 @@ public final class ArgNode<S extends State, A extends Action> {
 
 	boolean expanded;
 
-	private volatile int depth;
-
-	ArgNode(final ARG<S, A> arg, final S state, final int id, final boolean target) {
+	ArgNode(final ARG<S, A> arg, final S state, final int id, final int depth, final boolean target) {
 		this.arg = arg;
 		this.state = state;
 		this.id = id;
+		this.depth = depth;
 		this.target = target;
 		inEdge = Optional.empty();
-		outEdges = new HashSet<>();
+		outEdges = new ArrayList<>();
 		coveringNode = Optional.empty();
 		coveredNodes = new HashSet<>();
 		expanded = false;
-		this.depth = -1;
 	}
 
 	////
 
 	public int getId() {
 		return id;
+	}
+
+	public int getDepth() {
+		return depth;
 	}
 
 	public S getState() {
@@ -96,7 +102,7 @@ public final class ArgNode<S extends State, A extends Action> {
 	////
 
 	public boolean isCovered() {
-		if (coveringNode.isPresent()) {
+		if (coveringNode.isPresent() || !isFeasible()) {
 			return true;
 		} else if (inEdge.isPresent()) {
 			return inEdge.get().getSource().isCovered();
@@ -150,35 +156,27 @@ public final class ArgNode<S extends State, A extends Action> {
 		return expanded;
 	}
 
-	public boolean isFeasible(final Domain<S> domain) {
-		return !domain.isBottom(state);
+	public boolean isFeasible() {
+		return !arg.domain.isBottom(state);
 	}
 
-	public boolean isSafe(final Domain<S> domain) {
-		return !(isFeasible(domain) && isTarget());
+	public boolean isSafe() {
+		return !isTarget() || isCovered();
 	}
 
 	public boolean isComplete() {
 		return isExpanded() || isTarget() || isCovered();
 	}
 
-	public int getDepth() {
-		int result = depth;
-
-		if (result == -1) {
-			if (inEdge.isPresent()) {
-				result = inEdge.get().getSource().getDepth() + 1;
-			} else {
-				result = 1;
-			}
-		}
-
-		return result;
-	}
-
 	@Override
 	public int hashCode() {
-		return super.hashCode();
+		int result = hashCode;
+		if (result == 0) {
+			result = HASH_SEED;
+			result = 31 * result + id;
+			hashCode = result;
+		}
+		return result;
 	}
 
 	@Override

@@ -66,7 +66,7 @@ final class DBM {
 	}
 
 	private DBM(final DBM dbm) {
-		this.signature = DbmSignature.copyOf(dbm.signature);
+		this.signature = dbm.signature;
 		this.dbm = new SimpleDbm(dbm.dbm);
 	}
 
@@ -77,22 +77,22 @@ final class DBM {
 		return new DBM(dbm);
 	}
 
-	public static DBM zero(final Collection<? extends ClockDecl> clocks) {
+	public static DBM zero(final Iterable<? extends ClockDecl> clocks) {
 		checkNotNull(clocks);
 		return new DBM(DbmSignature.over(clocks), ZERO_DBM_VALUES);
 	}
 
-	public static DBM top(final Collection<? extends ClockDecl> clocks) {
+	public static DBM top(final Iterable<? extends ClockDecl> clocks) {
 		checkNotNull(clocks);
 		return new DBM(DbmSignature.over(clocks), TOP_DBM_VALUES);
 	}
 
-	public static DBM bottom(final Collection<? extends ClockDecl> clocks) {
+	public static DBM bottom(final Iterable<? extends ClockDecl> clocks) {
 		checkNotNull(clocks);
 		return new DBM(DbmSignature.over(clocks), BOTTOM_DBM_VALUES);
 	}
 
-	public static DBM project(final DBM dbm, final Collection<? extends ClockDecl> clocks) {
+	public static DBM project(final DBM dbm, final Iterable<? extends ClockDecl> clocks) {
 		checkNotNull(clocks);
 		return new DBM(DbmSignature.over(clocks), dbm::getOrDefault);
 	}
@@ -138,6 +138,14 @@ final class DBM {
 		checkNotNull(dbmB);
 		checkArgument(!dbmA.isConsistentWith(dbmB));
 
+		if (!dbmA.isConsistent()) {
+			return bottom(Collections.emptySet());
+		}
+
+		if (!dbmB.isConsistent()) {
+			return top(Collections.emptySet());
+		}
+
 		final DbmSignature signature = interpolantSignature(dbmA, dbmB);
 		final BiFunction<ClockDecl, ClockDecl, Integer> values = (x, y) -> {
 			final int boundA = dbmA.get(x, y);
@@ -152,39 +160,17 @@ final class DBM {
 		final DBM result = new DBM(signature, values);
 		result.close();
 
-		assert result.isInterpolant(dbmA, dbmB);
+		assert dbmA.getRelation(result).isLeq();
+		assert !dbmB.isConsistentWith(result);
+
 		return result;
 	}
 
 	private static DbmSignature interpolantSignature(final DBM dbmA, final DBM dbmB) {
 		final Set<ClockDecl> clocksConstrainedByBothDBMS = Sets
-				.intersection(dbmA.signature.asSet(), dbmB.signature.asSet()).stream()
+				.intersection(dbmA.signature.toSet(), dbmB.signature.toSet()).stream()
 				.filter(c -> dbmA.constrains(c) && dbmB.constrains(c)).collect(Collectors.toSet());
 		return DbmSignature.over(clocksConstrainedByBothDBMS);
-	}
-
-	private boolean isInterpolant(final DBM dbmA, final DBM dbmB) {
-		if (!this.getRelation(dbmA).isGeq()) {
-			return false;
-		}
-
-		if (this.isConsistentWith(dbmB)) {
-			return false;
-		}
-
-		for (final ClockDecl clock : signature) {
-			if (this.constrains(clock)) {
-				if (!dbmA.constrains(clock)) {
-					return false;
-				}
-
-				if (!dbmB.constrains(clock)) {
-					return false;
-				}
-			}
-		}
-
-		return true;
 	}
 
 	////
@@ -230,7 +216,7 @@ final class DBM {
 	}
 
 	public DbmRelation getRelation(final DBM that) {
-		final Set<ClockDecl> clocks = Sets.union(this.signature.asSet(), that.signature.asSet());
+		final Set<ClockDecl> clocks = Sets.union(this.signature.toSet(), that.signature.toSet());
 
 		boolean leq = true;
 		boolean geq = true;
@@ -452,7 +438,7 @@ final class DBM {
 
 		@Override
 		public Void visit(final FalseConstr constr, final DBM dbm) {
-			dbm.dbm.and(0, 0, -1);
+			dbm.dbm.and(0, 0, Lt(-1));
 			return null;
 		}
 

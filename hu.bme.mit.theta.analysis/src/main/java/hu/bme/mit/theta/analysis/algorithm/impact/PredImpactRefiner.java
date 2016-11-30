@@ -1,13 +1,18 @@
 package hu.bme.mit.theta.analysis.algorithm.impact;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.expr.impl.Exprs.True;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import hu.bme.mit.theta.analysis.Trace;
-import hu.bme.mit.theta.analysis.expr.ExprTrace;
+import hu.bme.mit.theta.analysis.expr.ExprAction;
+import hu.bme.mit.theta.analysis.expr.ExprState;
+import hu.bme.mit.theta.analysis.expr.ExprTraceUtils;
+import hu.bme.mit.theta.analysis.expr.ExprTraceSeqItpChecker;
 import hu.bme.mit.theta.analysis.expr.ExprTraceStatus;
+import hu.bme.mit.theta.analysis.expr.ItpRefutation;
 import hu.bme.mit.theta.analysis.loc.LocAction;
 import hu.bme.mit.theta.analysis.loc.LocState;
 import hu.bme.mit.theta.analysis.pred.PredState;
@@ -20,10 +25,11 @@ import hu.bme.mit.theta.solver.ItpSolver;
 public final class PredImpactRefiner<L extends Loc<L, E>, E extends Edge<L, E>>
 		implements ImpactRefiner<LocState<PredState, L, E>, LocAction<L, E>> {
 
-	final ItpSolver solver;
+	private final ExprTraceSeqItpChecker traceChecker;
 
 	private PredImpactRefiner(final ItpSolver solver) {
-		this.solver = checkNotNull(solver);
+		checkNotNull(solver);
+		traceChecker = ExprTraceSeqItpChecker.create(True(), True(), solver);
 	}
 
 	public static <L extends Loc<L, E>, E extends Edge<L, E>> PredImpactRefiner<L, E> create(final ItpSolver solver) {
@@ -35,14 +41,15 @@ public final class PredImpactRefiner<L extends Loc<L, E>, E extends Edge<L, E>>
 			final Trace<LocState<PredState, L, E>, LocAction<L, E>> cex) {
 		final List<LocAction<L, E>> actions = cex.getActions();
 
-		final ExprTrace exprTrace = ExprTrace.of(actions);
-		final ExprTraceStatus traceStatus = exprTrace.check(solver);
+		final Trace<ExprState, ExprAction> exprTrace = ExprTraceUtils.traceFrom(actions);
+		final ExprTraceStatus<ItpRefutation> traceStatus = traceChecker.check(exprTrace);
 
-		if (traceStatus.isFeasable()) {
+		if (traceStatus.isFeasible()) {
 			return RefinementResult.unsuccesful();
 
-		} else if (traceStatus.isUnfeasable()) {
-			final List<Expr<? extends BoolType>> exprs = traceStatus.asUnfeasable().getExprs();
+		} else if (traceStatus.isInfeasible()) {
+			final ItpRefutation refuation = traceStatus.asInfeasible().getRefutation();
+			final List<Expr<? extends BoolType>> exprs = refuation.toList();
 
 			final List<LocState<PredState, L, E>> refinedStates = new ArrayList<>();
 			for (int i = 0; i < exprs.size(); i++) {

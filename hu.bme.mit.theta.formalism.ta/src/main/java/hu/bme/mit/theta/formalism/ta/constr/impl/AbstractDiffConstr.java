@@ -59,7 +59,6 @@ public abstract class AbstractDiffConstr implements DiffConstr {
 	@Override
 	public final String toString() {
 		final StringBuilder sb = new StringBuilder();
-		sb.append("CC(");
 		sb.append(leftClock.getName());
 		sb.append(" - ");
 		sb.append(rightClock.getName());
@@ -67,7 +66,6 @@ public abstract class AbstractDiffConstr implements DiffConstr {
 		sb.append(getOperatorLabel());
 		sb.append(' ');
 		sb.append(bound);
-		sb.append(')');
 		return sb.toString();
 	}
 

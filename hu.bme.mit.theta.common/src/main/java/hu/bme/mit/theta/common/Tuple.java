@@ -1,9 +1,24 @@
 package hu.bme.mit.theta.common;
 
-public final class Tuple {
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkPositionIndex;
 
-	private Tuple() {
+import java.util.Iterator;
+import java.util.List;
+
+import com.google.common.collect.ImmutableList;
+
+public abstract class Tuple implements Product, Iterable<Object> {
+
+	private volatile int hashCode = 0;
+
+	private final List<Object> elems;
+
+	Tuple(final List<? extends Object> elems) {
+		this.elems = ImmutableList.copyOf(checkNotNull(elems));
 	}
+
+	////
 
 	public static <T1, T2> Tuple1<T1> of(final T1 e1) {
 		return new Tuple1<>(e1);
@@ -34,6 +49,61 @@ public final class Tuple {
 	public static <T1, T2, T3, T4, T5, T6, T7> Tuple7<T1, T2, T3, T4, T5, T6, T7> of(final T1 e1, final T2 e2,
 			final T3 e3, final T4 e4, final T5 e5, final T6 e6, final T7 e7) {
 		return new Tuple7<>(e1, e2, e3, e4, e5, e6, e7);
+	}
+
+	////
+
+	@Override
+	public final int arity() {
+		return elems.size();
+	}
+
+	@Override
+	public final Object elem(final int n) {
+		checkPositionIndex(n, arity());
+		return elems.get(n);
+	}
+
+	@Override
+	public final List<Object> toList() {
+		return elems;
+	}
+
+	@Override
+	public final Iterator<Object> iterator() {
+		return elems.iterator();
+	}
+
+	////
+
+	@Override
+	public final int hashCode() {
+		int result = hashCode;
+		if (result == 0) {
+			result = arity();
+			result = 31 * result + elems.hashCode();
+			hashCode = result;
+		}
+		return hashCode;
+	}
+
+	@Override
+	public final boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		} else if (obj == null) {
+			return false;
+		} else if (this.getClass() == obj.getClass()) {
+			final Tuple that = (Tuple) obj;
+			return this.elems.equals(that.elems);
+		} else {
+			return false;
+		}
+	}
+
+	@Override
+	public final String toString() {
+		return ObjectUtils.toStringBuilder("Tuple").addAll(elems).toString();
 	}
 
 }

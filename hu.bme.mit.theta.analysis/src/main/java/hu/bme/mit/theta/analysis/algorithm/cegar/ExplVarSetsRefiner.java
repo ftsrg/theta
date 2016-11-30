@@ -14,7 +14,7 @@ import hu.bme.mit.theta.analysis.expl.ExplPrecision;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprTraceChecker;
-import hu.bme.mit.theta.analysis.expr.ExprTraceStatus2;
+import hu.bme.mit.theta.analysis.expr.ExprTraceStatus;
 import hu.bme.mit.theta.analysis.expr.IndexedVarsRefutation;
 import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.common.logging.Logger;
@@ -49,7 +49,7 @@ public final class ExplVarSetsRefiner<A extends ExprAction> implements Refiner<E
 		logger.writeln("Trace: ", traceToConcretize, 4, 3);
 
 		logger.write("Checking...", 3, 2);
-		final ExprTraceStatus2<IndexedVarsRefutation> cexStatus = exprTraceChecker.check(traceToConcretize);
+		final ExprTraceStatus<IndexedVarsRefutation> cexStatus = exprTraceChecker.check(traceToConcretize);
 		logger.writeln("done: ", cexStatus, 3, 0);
 
 		if (cexStatus.isFeasible()) {

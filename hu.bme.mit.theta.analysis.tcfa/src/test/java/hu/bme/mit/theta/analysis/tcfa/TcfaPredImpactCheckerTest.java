@@ -13,7 +13,6 @@ import hu.bme.mit.theta.analysis.algorithm.impact.PredImpactChecker;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.impl.NullPrecision;
-import hu.bme.mit.theta.analysis.tcfa.TcfaLts;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.common.visualization.GraphvizWriter;
 import hu.bme.mit.theta.core.decl.VarDecl;
@@ -28,6 +27,7 @@ public final class TcfaPredImpactCheckerTest {
 
 	@Test
 	public void test() {
+		// Arrange
 		final int n = 2;
 		final VarDecl<IntType> vlock = Var("lock", Int());
 		final TCFA fischer = TcfaTestHelper.fischer(n, vlock);
@@ -37,15 +37,16 @@ public final class TcfaPredImpactCheckerTest {
 		final TcfaLts lts = TcfaLts.create(fischer);
 
 		final PredImpactChecker<TcfaLoc, TcfaEdge> checker = PredImpactChecker.create(lts, fischer.getInitLoc(),
-				l -> l.getName().equals("crit_crit"), solver);
+				l -> l.getName().startsWith("crit_crit"), solver);
 
 		// Act
 		final SafetyStatus<? extends ExprState, ? extends ExprAction> status = checker
 				.check(NullPrecision.getInstance());
 
 		// Assert
-		// assertTrue(status.isSafe());
+		assertTrue(status.isSafe());
 		final ARG<? extends ExprState, ? extends ExprAction> arg = status.getArg();
+		arg.minimize();
 
 		final ArgChecker argChecker = ArgChecker.create(solver);
 		assertTrue(argChecker.isWellLabeled(arg));

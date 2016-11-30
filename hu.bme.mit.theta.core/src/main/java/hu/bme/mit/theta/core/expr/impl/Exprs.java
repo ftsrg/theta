@@ -82,11 +82,11 @@ public final class Exprs {
 		return False();
 	}
 
-	public static IntLitExpr Int(final long value) {
+	public static IntLitExpr Int(final int value) {
 		return new IntLitExprImpl(value);
 	}
 
-	public static RatLitExpr Rat(final long num, final long denom) {
+	public static RatLitExpr Rat(final int num, final int denom) {
 		return new RatLitExprImpl(num, denom);
 	}
 

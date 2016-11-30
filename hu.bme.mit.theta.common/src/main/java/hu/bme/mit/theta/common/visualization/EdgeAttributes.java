@@ -9,12 +9,15 @@ public final class EdgeAttributes {
 	private final Color color;
 	private final LineStyle lineStyle;
 	private final String font;
+	private final int weight;
 
-	private EdgeAttributes(final String label, final Color color, final LineStyle lineStyle, final String font) {
-		this.label = checkNotNull(label);
-		this.color = checkNotNull(color);
-		this.lineStyle = checkNotNull(lineStyle);
-		this.font = checkNotNull(font);
+	private EdgeAttributes(final String label, final Color color, final LineStyle lineStyle, final String font,
+			final int weight) {
+		this.label = label;
+		this.color = color;
+		this.lineStyle = lineStyle;
+		this.font = font;
+		this.weight = weight;
 	}
 
 	public String getLabel() {
@@ -33,6 +36,10 @@ public final class EdgeAttributes {
 		return font;
 	}
 
+	public int getWeight() {
+		return weight;
+	}
+
 	public static Builder builder() {
 		return new Builder();
 	}
@@ -42,29 +49,35 @@ public final class EdgeAttributes {
 		private Color color = Color.BLACK;
 		private LineStyle lineStyle = LineStyle.NORMAL;
 		private String font = "";
+		private int weight = 1;
 
 		public Builder label(final String label) {
-			this.label = label;
+			this.label = checkNotNull(label);
 			return this;
 		}
 
 		public Builder color(final Color color) {
-			this.color = color;
+			this.color = checkNotNull(color);
 			return this;
 		}
 
 		public Builder lineStyle(final LineStyle lineStyle) {
-			this.lineStyle = lineStyle;
+			this.lineStyle = checkNotNull(lineStyle);
 			return this;
 		}
 
 		public Builder font(final String font) {
-			this.font = font;
+			this.font = checkNotNull(font);
+			return this;
+		}
+
+		public Builder weight(final int weight) {
+			this.weight = weight;
 			return this;
 		}
 
 		public EdgeAttributes build() {
-			return new EdgeAttributes(label, color, lineStyle, font);
+			return new EdgeAttributes(label, color, lineStyle, font, weight);
 		}
 	}
 }

@@ -128,6 +128,9 @@ public final class GraphvizWriter extends AbstractGraphWriter {
 				if (!attributes.getFont().equals("")) {
 					sb.append(",fontname=\"").append(attributes.getFont()).append("\"");
 				}
+				if (attributes.getWeight() != 1) {
+					sb.append(",weight=\"").append(attributes.getWeight()).append("\"");
+				}
 				sb.append("];").append(System.lineSeparator());
 			}
 		}
