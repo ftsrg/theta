@@ -167,6 +167,14 @@ public class Z3TermTransformer {
 			final Expr<? extends IntType> rightOp = ExprUtils.cast(toExpr(rightOpTerm), IntType.class);
 			return Exprs.IntDiv(lExprstOp, rightOp);
 
+		} else if (term.isITE()) {
+			final com.microsoft.z3.Expr condTerm = term.getArgs()[0];
+			final com.microsoft.z3.Expr thenTerm = term.getArgs()[1];
+			final com.microsoft.z3.Expr elzeTerm = term.getArgs()[2];
+			final Expr<? extends BoolType> cond = ExprUtils.cast(toExpr(condTerm), BoolType.class);
+			final Expr<? extends IntType> then = ExprUtils.cast(toExpr(thenTerm), IntType.class);
+			final Expr<? extends IntType> elze = ExprUtils.cast(toExpr(elzeTerm), IntType.class);
+			return Exprs.Ite(cond, then, elze);
 		}
 
 		throw new AssertionError("Unhandled case: " + term.toString());
