@@ -30,6 +30,15 @@ public class StsBenchmark {
 		final int runs = 1;
 
 		final List<StsInput> inputs = new ArrayList<>();
+		inputs.add(new StsInput(basePath + "simple/counter.system", true));
+		inputs.add(new StsInput(basePath + "simple/counter_bad.system", false));
+		inputs.add(new StsInput(basePath + "simple/counter_parametric.system", true));
+		inputs.add(new StsInput(basePath + "simple/boolean1.system", false));
+		inputs.add(new StsInput(basePath + "simple/boolean2.system", false));
+		inputs.add(new StsInput(basePath + "simple/readerswriters.system", true));
+		inputs.add(new StsInput(basePath + "simple/loop.system", true));
+		inputs.add(new StsInput(basePath + "simple/loop_bad.system", false));
+
 		inputs.add(new StsInput(basePath + "simple/simple1.system", false));
 		inputs.add(new StsInput(basePath + "simple/simple2.system", true));
 		inputs.add(new StsInput(basePath + "simple/simple3.system", false));
