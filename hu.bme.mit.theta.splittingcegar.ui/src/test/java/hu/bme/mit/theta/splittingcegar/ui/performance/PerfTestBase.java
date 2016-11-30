@@ -14,10 +14,10 @@ import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.formalism.sts.dsl.StsDslManager;
 import hu.bme.mit.theta.frontend.aiger.impl.OptimizedAigerLoader;
 import hu.bme.mit.theta.frontend.aiger.impl.SimpleAigerLoader;
+import hu.bme.mit.theta.frontend.benchmark.formatters.Formatter;
 import hu.bme.mit.theta.splittingcegar.common.CEGARBuilder;
 import hu.bme.mit.theta.splittingcegar.common.CEGARLoop;
 import hu.bme.mit.theta.splittingcegar.common.CEGARResult;
-import hu.bme.mit.theta.splittingcegar.ui.formatters.Formatter;
 
 public class PerfTestBase {
 
@@ -38,10 +38,7 @@ public class PerfTestBase {
 		formatter.newRow();
 		formatter.cell("");
 		for (int i = 0; i < configurations.size(); ++i) {
-			formatter.cell("#");
-			formatter.cell("T");
-			formatter.cell("#R");
-			formatter.cell("#S");
+			formatter.cell("#").cell("T").cell("#R").cell("#S");
 		}
 		formatter.newRow();
 
