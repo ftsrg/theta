@@ -55,15 +55,14 @@ public final class StsConfigurationBuilder {
 	};
 
 	public enum Refinement {
-		CRAIGITP, SEQITP, UNSATCORE
+		CRAIG_ITP, SEQ_ITP, UNSAT_CORE
 	};
 
 	public enum InitPrecision {
-		EMPTY, FROMPROP
+		EMPTY, PROP
 	};
 
 	public enum Search {
-
 		BFS(ArgNodeComparators.bfs()), DFS(ArgNodeComparators.dfs());
 
 		public final ArgNodeComparator comparator;
@@ -138,13 +137,13 @@ public final class StsConfigurationBuilder {
 			Refiner<ExplState, StsAction, ExplPrecision> refiner = null;
 
 			switch (refinement) {
-			case CRAIGITP:
+			case CRAIG_ITP:
 				refiner = ExplItpRefiner.create(ExprTraceCraigItpChecker.create(init, negProp, solver), logger);
 				break;
-			case SEQITP:
+			case SEQ_ITP:
 				refiner = ExplItpRefiner.create(ExprTraceSeqItpChecker.create(init, negProp, solver), logger);
 				break;
-			case UNSATCORE:
+			case UNSAT_CORE:
 				refiner = ExplVarSetsRefiner.create(ExprTraceUnsatCoreChecker.create(init, negProp, solver), logger);
 				break;
 			default:
@@ -158,7 +157,7 @@ public final class StsConfigurationBuilder {
 			case EMPTY:
 				precision = ExplPrecision.create();
 				break;
-			case FROMPROP:
+			case PROP:
 				precision = ExplPrecision.create(ExprUtils.getVars(negProp));
 				break;
 			default:
@@ -174,10 +173,10 @@ public final class StsConfigurationBuilder {
 
 			ExprTraceChecker<ItpRefutation> exprTraceChecker = null;
 			switch (refinement) {
-			case CRAIGITP:
+			case CRAIG_ITP:
 				exprTraceChecker = ExprTraceCraigItpChecker.create(init, negProp, solver);
 				break;
-			case SEQITP:
+			case SEQ_ITP:
 				exprTraceChecker = ExprTraceSeqItpChecker.create(init, negProp, solver);
 				break;
 			default:
@@ -194,7 +193,7 @@ public final class StsConfigurationBuilder {
 			case EMPTY:
 				precision = SimplePredPrecision.create(solver);
 				break;
-			case FROMPROP:
+			case PROP:
 				precision = SimplePredPrecision.create(ExprUtils.getAtoms(negProp), solver);
 				break;
 			default:

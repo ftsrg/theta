@@ -29,7 +29,7 @@ public class SandBox {
 		final Logger logger = new ConsoleLogger(100);
 
 		final Configuration<? extends State, ? extends Action, ? extends Precision> configuration = new StsConfigurationBuilder(
-				Domain.EXPL, Refinement.CRAIGITP).logger(logger).search(Search.BFS)
+				Domain.EXPL, Refinement.CRAIG_ITP).logger(logger).search(Search.BFS)
 						.solverFactory(Z3SolverFactory.getInstace()).build(sts);
 
 		final SafetyStatus<? extends State, ? extends Action> status = configuration.check();
