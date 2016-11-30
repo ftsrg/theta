@@ -7,6 +7,7 @@ import static java.util.stream.Collectors.toList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.stream.Stream;
 
 import hu.bme.mit.theta.analysis.Action;
@@ -72,7 +73,7 @@ public final class ARG<S extends State, A extends Action> {
 
 	public ArgNode<S, A> createInitNode(final S initState, final boolean target) {
 		checkNotNull(initState);
-		final ArgNode<S, A> initNode = createNode(initState, 0, target);
+		final ArgNode<S, A> initNode = createNode(initState, 1, target);
 		initNodes.add(initNode);
 		return initNode;
 	}
@@ -160,9 +161,25 @@ public final class ARG<S extends State, A extends Action> {
 	}
 
 	/**
-	 * Gets all counterexamples, i.e., traces leading to target states.
+	 * Gets all counterexamples, i.e., traces leading to target nodes.
 	 */
 	public Stream<ArgTrace<S, A>> getCexs() {
 		return getUnsafeNodes().map(n -> ArgTrace.to(n));
 	}
+
+	/**
+	 * Gets the size of the ARG, i.e., the number of nodes.
+	 */
+	public long size() {
+		return getNodes().count();
+	}
+
+	/**
+	 * Gets the depth of the ARG, i.e., the maximal depth of its nodes
+	 */
+	public int getDepth() {
+		final OptionalInt maxOpt = getNodes().mapToInt(ArgNode::getDepth).max();
+		return maxOpt.isPresent() ? maxOpt.getAsInt() : 0;
+	}
+
 }
