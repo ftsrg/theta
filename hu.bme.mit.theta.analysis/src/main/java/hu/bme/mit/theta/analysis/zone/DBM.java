@@ -160,7 +160,9 @@ final class DBM {
 		final DBM result = new DBM(signature, values);
 		result.close();
 
-		assert result.isInterpolant(dbmA, dbmB);
+		assert dbmA.getRelation(result).isLeq();
+		assert !dbmB.isConsistentWith(result);
+
 		return result;
 	}
 
@@ -169,30 +171,6 @@ final class DBM {
 				.intersection(dbmA.signature.toSet(), dbmB.signature.toSet()).stream()
 				.filter(c -> dbmA.constrains(c) && dbmB.constrains(c)).collect(Collectors.toSet());
 		return DbmSignature.over(clocksConstrainedByBothDBMS);
-	}
-
-	private boolean isInterpolant(final DBM dbmA, final DBM dbmB) {
-		if (!this.getRelation(dbmA).isGeq()) {
-			return false;
-		}
-
-		if (this.isConsistentWith(dbmB)) {
-			return false;
-		}
-
-		// for (final ClockDecl clock : signature) {
-		// if (this.constrains(clock)) {
-		// if (!dbmA.constrains(clock)) {
-		// return false;
-		// }
-		//
-		// if (!dbmB.constrains(clock)) {
-		// return false;
-		// }
-		// }
-		// }
-
-		return true;
 	}
 
 	////
