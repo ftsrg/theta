@@ -4,11 +4,12 @@ import static java.util.Collections.emptyList;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
+import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.SafetyStatus;
 import hu.bme.mit.theta.analysis.algorithm.Statistics;
-import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.impl.ConsoleLogger;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.formalism.sts.dsl.StsDslManager;
@@ -19,12 +20,14 @@ import hu.bme.mit.theta.frontend.benchmark.StsConfigurationBuilder.Domain;
 import hu.bme.mit.theta.frontend.benchmark.StsConfigurationBuilder.InitPrecision;
 import hu.bme.mit.theta.frontend.benchmark.StsConfigurationBuilder.Refinement;
 import hu.bme.mit.theta.frontend.benchmark.StsConfigurationBuilder.Search;
+import hu.bme.mit.theta.frontend.benchmark.formatters.Formatter;
+import hu.bme.mit.theta.frontend.benchmark.formatters.impl.CsvFormatter;
 
 public class StsBenchmark {
 
 	public static void main(final String[] args) {
 		final String basePath = "src/test/resources/";
-		final Logger logger = new ConsoleLogger(100);
+		final Formatter formatter = new CsvFormatter(new ConsoleLogger(100), "\t");
 		final int runs = 1;
 
 		final List<StsInput> inputs = new ArrayList<>();
@@ -64,51 +67,64 @@ public class StsBenchmark {
 		builders.add(new StsConfigurationBuilder(Domain.EXPL, Refinement.UNSATCORE).initPrecision(InitPrecision.FROMPROP).search(Search.DFS));
 		//@formatter:on
 
-		run(inputs, builders, logger, runs);
+		run(inputs, builders, runs, formatter);
 	}
 
-	private static void run(final Iterable<StsInput> inputs, final Iterable<StsConfigurationBuilder> configBuilders,
-			final Logger logger, final int runs) {
-		logger.writeln(
-				"Model,IsSafe,Domain,Refinement,Initital precision,Search strategy,Time (ms),Iterations,ARG size, ARG depth,Cex length",
-				0);
+	private static void run(final Collection<StsInput> inputs, final Collection<StsConfigurationBuilder> builders,
+			final int runs, final Formatter formatter) {
+		System.out.println(String.format("Running %d configurations on %d inputs with %d repetitions.", builders.size(),
+				inputs.size(), runs));
+
+		formatter.cell("Model").cell("IsSafe").cell("Domain").cell("Refinement").cell("Initital precision")
+				.cell("Search strategy").cell("Time (ms)").cell("Iterations").cell("ARG size").cell("ARG depth")
+				.cell("Cex length").newRow();
+
 		for (final StsInput input : inputs) {
-			for (final StsConfigurationBuilder builder : configBuilders) {
+			for (final StsConfigurationBuilder builder : builders) {
 				for (int i = 0; i < runs; ++i) {
-					run(input, builder, logger);
+					run(input, builder, formatter);
 				}
 			}
 		}
 		System.out.println("DONE");
 	}
 
-	private static void run(final StsInput input, final StsConfigurationBuilder configBuilder, final Logger logger) {
-		logger.write(input.path, 0);
-		logger.write("," + input.expected, 0);
-		logger.write("," + configBuilder.getDomain(), 0);
-		logger.write("," + configBuilder.getRefinement(), 0);
-		logger.write("," + configBuilder.getInitPrecision(), 0);
-		logger.write("," + configBuilder.getSearch(), 0);
+	private static void run(final StsInput input, final StsConfigurationBuilder configBuilder,
+			final Formatter formatter) {
+		formatter.cell(input.path);
+		formatter.cell(input.expected + "");
+		formatter.cell(configBuilder.getDomain() + "");
+		formatter.cell(configBuilder.getRefinement() + "");
+		formatter.cell(configBuilder.getInitPrecision() + "");
+		formatter.cell(configBuilder.getSearch() + "");
 		try {
 			final STS sts = input.load();
 			final Configuration<?, ?, ?> configuration = configBuilder.build(sts);
 			final SafetyStatus<?, ?> status = configuration.check();
 
 			if (status.isSafe() != input.expected) {
-				logger.writeln(",FALSE", 0);
+				formatter.cell("FALSE", 5);
 			} else {
 				final Statistics stats = status.getStats().get();
-				logger.write(String.format(",%d,%d", stats.getElapsedMillis(), stats.getIterations()), 0);
-				logger.write(String.format(",%d,%d", status.getArg().size(), status.getArg().getDepth()), 0);
+				final ARG<?, ?> arg = status.getArg();
+
+				formatter.cell(stats.getElapsedMillis() + "");
+				formatter.cell(stats.getIterations() + "");
+				formatter.cell(arg.size() + "");
+				formatter.cell(arg.getDepth() + "");
 				if (status.isUnsafe()) {
-					logger.write(String.format(",%d", status.asUnsafe().getTrace().length()), 0);
+					formatter.cell(status.asUnsafe().getTrace().length() + "");
+				} else {
+					formatter.cell("");
 				}
-				logger.writeln(0);
 			}
 
 		} catch (final IOException e) {
-			logger.writeln(",IOEXCEPTION", 0);
+			formatter.cell("IO EXCEPTION", 5);
+		} catch (final Exception e) {
+			formatter.cell("EXCEPTION", 5);
 		}
+		formatter.newRow();
 
 	}
 
