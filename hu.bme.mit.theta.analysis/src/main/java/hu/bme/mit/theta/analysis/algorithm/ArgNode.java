@@ -5,7 +5,6 @@ import static hu.bme.mit.theta.common.ObjectUtils.toStringBuilder;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -81,22 +80,22 @@ public final class ArgNode<S extends State, A extends Action> {
 		return inEdge;
 	}
 
-	public Collection<ArgEdge<S, A>> getOutEdges() {
-		return Collections.unmodifiableCollection(outEdges);
+	public Stream<ArgEdge<S, A>> getOutEdges() {
+		return outEdges.stream();
 	}
 
 	public Optional<ArgNode<S, A>> getCoveringNode() {
 		return coveringNode;
 	}
 
-	public Collection<ArgNode<S, A>> getCoveredNodes() {
-		return Collections.unmodifiableCollection(coveredNodes);
+	public Stream<ArgNode<S, A>> getCoveredNodes() {
+		return coveredNodes.stream();
 	}
 
 	////
 
 	public Stream<ArgNode<S, A>> getSuccNodes() {
-		return outEdges.stream().map(ArgEdge::getTarget);
+		return getOutEdges().map(ArgEdge::getTarget);
 	}
 
 	public Stream<S> getSuccStates() {
