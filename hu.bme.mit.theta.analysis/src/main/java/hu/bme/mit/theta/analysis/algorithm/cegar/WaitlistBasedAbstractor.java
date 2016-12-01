@@ -56,7 +56,7 @@ public final class WaitlistBasedAbstractor<S extends State, A extends Action, P 
 	}
 
 	@Override
-	public AbstractorResult check(final ARG<S, A> arg, final P precision) {
+	public AbstractorResult check(final ARG<S, A> arg, final P precision) throws InterruptedException {
 		checkNotNull(arg);
 		checkNotNull(precision);
 		logger.writeln("Precision: ", precision, 3, 2);
@@ -82,6 +82,9 @@ public final class WaitlistBasedAbstractor<S extends State, A extends Action, P 
 		logger.write("Building ARG...", 3, 2);
 
 		while (!waitlist.isEmpty() && unsafeNode == null) {
+			if (Thread.interrupted()) {
+				throw new InterruptedException();
+			}
 			final ArgNode<S, A> node = waitlist.remove();
 
 			if (!node.isSafe()) {
