@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import hu.bme.mit.theta.common.logging.Logger;
@@ -27,6 +28,7 @@ public class SandBox {
 	private static final String MODELSPATH = "src/test/resources/models/";
 
 	@Test
+	@Ignore
 	public void test() throws IOException {
 
 		// System.in.read();

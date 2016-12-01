@@ -19,11 +19,7 @@ public class AIGERLoaderTest {
 
 		AigerVisualizer.visualize("src/test/resources/simple3.aag", "src/test/resources/simple3.dot");
 
-		System.out.println("Vars:  " + sts.getVars());
-		System.out.println("Init:  " + sts.getInit());
-		System.out.println("Invar: " + sts.getInvar());
-		System.out.println("Trans: " + sts.getTrans());
-		System.out.println("Prop:  " + sts.getProp());
+		System.out.println(sts);
 	}
 
 }

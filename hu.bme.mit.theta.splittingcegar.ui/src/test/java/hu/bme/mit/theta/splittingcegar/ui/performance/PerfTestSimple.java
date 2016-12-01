@@ -9,7 +9,6 @@ import org.junit.Test;
 import hu.bme.mit.theta.common.logging.impl.ConsoleLogger;
 import hu.bme.mit.theta.frontend.benchmark.formatters.Formatter;
 import hu.bme.mit.theta.frontend.benchmark.formatters.impl.CsvFormatter;
-import hu.bme.mit.theta.splittingcegar.clustered.ClusteredCEGARBuilder;
 import hu.bme.mit.theta.splittingcegar.common.CEGARBuilder;
 import hu.bme.mit.theta.splittingcegar.interpolating.InterpolatingCEGARBuilder;
 import hu.bme.mit.theta.splittingcegar.interpolating.InterpolatingCEGARBuilder.InterpolationMethod;
@@ -44,7 +43,8 @@ public class PerfTestSimple extends PerfTestBase {
 		};
 		final List<CEGARBuilder> configurations = new ArrayList<CEGARBuilder>() {
 			{
-				add(new ClusteredCEGARBuilder().logger(null).visualizer(null));
+				// add(new
+				// ClusteredCEGARBuilder().logger(null).visualizer(null));
 				add(new VisibleCEGARBuilder().logger(null).visualizer(null).useCNFTransformation(false)
 						.varCollectionMethod(VarCollectionMethod.CraigItp));
 				add(new VisibleCEGARBuilder().logger(null).visualizer(null).useCNFTransformation(false)

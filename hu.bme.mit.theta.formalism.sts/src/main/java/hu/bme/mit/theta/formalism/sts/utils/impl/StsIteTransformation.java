@@ -14,8 +14,6 @@ public final class StsIteTransformation implements STSTransformation {
 		final StsImpl.Builder builder = new StsImpl.Builder();
 		for (final Expr<? extends BoolType> expr : system.getInit())
 			builder.addInit(ExprUtils.eliminateITE(expr));
-		for (final Expr<? extends BoolType> expr : system.getInvar())
-			builder.addInvar(ExprUtils.eliminateITE(expr));
 		for (final Expr<? extends BoolType> expr : system.getTrans())
 			builder.addTrans(ExprUtils.eliminateITE(expr));
 		builder.setProp(ExprUtils.eliminateITE(system.getProp()));

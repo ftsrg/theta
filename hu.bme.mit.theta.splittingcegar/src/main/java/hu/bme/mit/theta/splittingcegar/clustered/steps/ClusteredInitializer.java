@@ -76,7 +76,6 @@ public class ClusteredInitializer extends AbstractCEGARStep implements Initializ
 		final Solver solver = solvers.getSolver();
 
 		solver.push();
-		solver.add(sts.unfoldInv(0));
 		// Loop through clusters and create abstract Kripke structures
 		int c = 0;
 		for (final Cluster cluster : system.getClusters()) {
@@ -192,7 +191,6 @@ public class ClusteredInitializer extends AbstractCEGARStep implements Initializ
 		SolverHelper.unrollAndAssert(solver, s0.getLabels(), sts, 0);
 		SolverHelper.unrollAndAssert(solver, s1.getLabels(), sts, 1);
 		solver.add(sts.unfoldTrans(0));
-		solver.add(sts.unfoldInv(1));
 		final boolean ret = SolverHelper.checkSat(solver);
 		solver.pop();
 		return ret;

@@ -26,10 +26,6 @@ public final class StsCnfTransformation implements STSTransformation {
 			builder.addInit(transformIfNonCNF(expr, cnfTransf));
 
 		cnfTransf = ExprUtils.createCNFTransformation();
-		for (final Expr<? extends BoolType> expr : system.getInvar())
-			builder.addInvar(transformIfNonCNF(expr, cnfTransf));
-
-		cnfTransf = ExprUtils.createCNFTransformation();
 		for (final Expr<? extends BoolType> expr : system.getTrans())
 			builder.addTrans(transformIfNonCNF(expr, cnfTransf));
 

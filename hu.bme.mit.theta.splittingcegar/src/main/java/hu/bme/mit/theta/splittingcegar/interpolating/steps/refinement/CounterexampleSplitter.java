@@ -28,12 +28,14 @@ import hu.bme.mit.theta.splittingcegar.interpolating.data.InterpolatedAbstractSy
  */
 public class CounterexampleSplitter extends AbstractCEGARStep implements Splitter {
 
-	public CounterexampleSplitter(final SolverWrapper solvers, final StopHandler stopHandler, final Logger logger, final Visualizer visualizer) {
+	public CounterexampleSplitter(final SolverWrapper solvers, final StopHandler stopHandler, final Logger logger,
+			final Visualizer visualizer) {
 		super(solvers, stopHandler, logger, visualizer);
 	}
 
 	@Override
-	public int split(final InterpolatedAbstractSystem system, final List<InterpolatedAbstractState> abstractCounterEx, final Interpolant interpolant) {
+	public int split(final InterpolatedAbstractSystem system, final List<InterpolatedAbstractState> abstractCounterEx,
+			final Interpolant interpolant) {
 		assert (0 < interpolant.size() && interpolant.size() <= abstractCounterEx.size());
 		int firstSplit = -1;
 		for (int i = 0; i < interpolant.size(); ++i) {
@@ -49,7 +51,8 @@ public class CounterexampleSplitter extends AbstractCEGARStep implements Splitte
 		return firstSplit;
 	}
 
-	private void splitSingleState(final InterpolatedAbstractSystem system, final InterpolatedAbstractState stateToSplit, Expr<? extends BoolType> interpolant) {
+	private void splitSingleState(final InterpolatedAbstractSystem system, final InterpolatedAbstractState stateToSplit,
+			Expr<? extends BoolType> interpolant) {
 		final STS sts = system.getSTS();
 
 		final Solver solver = solvers.getSolver();
@@ -92,7 +95,6 @@ public class CounterexampleSplitter extends AbstractCEGARStep implements Splitte
 		// assertion)
 		if (stateToSplit.isInitial()) {
 			solver.push();
-			solver.add(sts.unfoldInv(0));
 			solver.add(sts.unfoldInit(0));
 			boolean isInitial = false;
 			for (final InterpolatedAbstractState refined : refinedStates) {
@@ -116,8 +118,6 @@ public class CounterexampleSplitter extends AbstractCEGARStep implements Splitte
 		// of the
 		// refined states --> assertion)
 		solver.push();
-		solver.add(sts.unfoldInv(0));
-		solver.add(sts.unfoldInv(1));
 		solver.add(sts.unfoldTrans(0));
 		for (final InterpolatedAbstractState succ : stateToSplit.getSuccessors()) {
 			if (stopHandler.isStopped())

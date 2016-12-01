@@ -59,9 +59,6 @@ public class CraigInterpolater extends AbstractCEGARStep implements Interpolater
 				itpSolver.add(A, sts.unfoldTrans(i - 1));
 			}
 
-			// Invariants
-			itpSolver.add(A, sts.unfoldInv(i));
-
 		}
 
 		// The second formula (B) describes the bad states, which are:
@@ -73,8 +70,6 @@ public class CraigInterpolater extends AbstractCEGARStep implements Interpolater
 			for (final Expr<? extends BoolType> label : abstractCounterEx.get(traceLength).getLabels())
 				// Labels of the next abstract state
 				itpSolver.add(B, sts.unfold(label, traceLength));
-			// Invariants for the next abstract state
-			itpSolver.add(B, sts.unfoldInv(traceLength));
 			// Transition to the next abstract state
 			itpSolver.add(B, sts.unfoldTrans(traceLength - 1));
 
