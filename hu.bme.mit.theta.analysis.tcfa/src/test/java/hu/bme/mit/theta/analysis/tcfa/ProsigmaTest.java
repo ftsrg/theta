@@ -34,7 +34,7 @@ import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 public class ProsigmaTest {
 
 	@Test
-	public void test() {
+	public void test() throws InterruptedException {
 		final TCFA prosigma = TcfaTestHelper.prosigma();
 
 		final Solver solver = Z3SolverFactory.getInstace().createSolver();

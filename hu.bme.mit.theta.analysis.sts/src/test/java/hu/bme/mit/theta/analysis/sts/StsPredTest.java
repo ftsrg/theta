@@ -54,7 +54,7 @@ import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 public class StsPredTest {
 
 	@Test
-	public void test() {
+	public void test() throws InterruptedException {
 		final Logger logger = new ConsoleLogger(100);
 
 		final VarDecl<IntType> vx = Var("x", Int());

@@ -41,7 +41,7 @@ import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 public class TcfaCompositeTest {
 
 	@Test
-	public void test() throws FileNotFoundException, IOException {
+	public void test() throws FileNotFoundException, IOException, InterruptedException {
 		final int n = 2;
 		final VarDecl<IntType> vlock = Var("lock", Int());
 		final TCFA fischer = TcfaTestHelper.fischer(n, vlock);
