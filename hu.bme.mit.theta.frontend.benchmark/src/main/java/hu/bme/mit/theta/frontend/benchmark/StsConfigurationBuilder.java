@@ -124,7 +124,7 @@ public final class StsConfigurationBuilder {
 	public Configuration<? extends State, ? extends Action, ? extends Precision> build(final STS sts) {
 		final ItpSolver solver = solverFactory.createItpSolver();
 		final LTS<State, StsAction> lts = StsLts.create(sts);
-		final Expr<? extends BoolType> init = And(sts.getInit());
+		final Expr<? extends BoolType> init = And(And(sts.getInit()), And(sts.getInvar()));
 		final Expr<? extends BoolType> negProp = Not(sts.getProp());
 		final Predicate<ExprState> target = new ExprStatePredicate(negProp, solver);
 
