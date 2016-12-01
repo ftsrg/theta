@@ -26,13 +26,13 @@ public final class ArgNode<S extends State, A extends Action> {
 
 	private S state;
 
-	Optional<ArgEdge<S, A>> inEdge;
+	Optional<ArgEdge<S, A>> inEdge; // Set by ARG
 	final Collection<ArgEdge<S, A>> outEdges;
 
-	Optional<ArgNode<S, A>> coveringNode;
+	Optional<ArgNode<S, A>> coveringNode; // Set by ARG
 	final Collection<ArgNode<S, A>> coveredNodes;
 
-	boolean expanded;
+	boolean expanded; // Set by ArgBuilder
 
 	ArgNode(final ARG<S, A> arg, final S state, final int id, final int depth, final boolean target) {
 		this.arg = arg;
@@ -53,6 +53,10 @@ public final class ArgNode<S extends State, A extends Action> {
 		return id;
 	}
 
+	/**
+	 * Gets the depth of the node, which is 0 if the node has no parent, and
+	 * depth(parent) + 1 otherwise.
+	 */
 	public int getDepth() {
 		return depth;
 	}
@@ -101,6 +105,10 @@ public final class ArgNode<S extends State, A extends Action> {
 
 	////
 
+	/**
+	 * Checks if the node is covered, i.e., the node is not feasible or there is
+	 * a covering edge for the node or its parent is covered.
+	 */
 	public boolean isCovered() {
 		if (coveringNode.isPresent() || !isFeasible()) {
 			return true;
@@ -111,8 +119,40 @@ public final class ArgNode<S extends State, A extends Action> {
 		}
 	}
 
+	/**
+	 * Checks if the node is target, i.e., the target predicate holds (e.g., it
+	 * is an error state).
+	 */
 	public boolean isTarget() {
 		return target;
+	}
+
+	/**
+	 * Checks if the node is expanded, i.e., all of its successors are present.
+	 */
+	public boolean isExpanded() {
+		return expanded;
+	}
+
+	/**
+	 * Checks if the node is not a bottom state.
+	 */
+	public boolean isFeasible() {
+		return !arg.domain.isBottom(state);
+	}
+
+	/**
+	 * Checks if the node is safe, i.e., not target or covered.
+	 */
+	public boolean isSafe() {
+		return !isTarget() || isCovered();
+	}
+
+	/**
+	 * Checks if the node is complete, i.e., expanded or target or covered.
+	 */
+	public boolean isComplete() {
+		return isExpanded() || isTarget() || isCovered();
 	}
 
 	////
@@ -151,22 +191,6 @@ public final class ArgNode<S extends State, A extends Action> {
 	}
 
 	////
-
-	public boolean isExpanded() {
-		return expanded;
-	}
-
-	public boolean isFeasible() {
-		return !arg.domain.isBottom(state);
-	}
-
-	public boolean isSafe() {
-		return !isTarget() || isCovered();
-	}
-
-	public boolean isComplete() {
-		return isExpanded() || isTarget() || isCovered();
-	}
 
 	@Override
 	public int hashCode() {
