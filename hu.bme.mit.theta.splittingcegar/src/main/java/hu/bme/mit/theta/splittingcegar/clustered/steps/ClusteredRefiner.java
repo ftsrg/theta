@@ -159,7 +159,6 @@ public class ClusteredRefiner extends AbstractCEGARStep
 			// assertion)
 			if (as.isInitial()) {
 				solver.push();
-				solver.add(sts.unfoldInv(0));
 				solver.add(sts.unfoldInit(0));
 				boolean isInitial = false;
 				for (final ComponentAbstractState refined : refinedStates) {
@@ -181,8 +180,6 @@ public class ClusteredRefiner extends AbstractCEGARStep
 			// one of the
 			// refined states --> assertion)
 			solver.push();
-			solver.add(sts.unfoldInv(0));
-			solver.add(sts.unfoldInv(1));
 			solver.add(sts.unfoldTrans(0));
 			for (final ComponentAbstractState succ : as.getSuccessors()) {
 				if (stopHandler.isStopped())
@@ -271,7 +268,6 @@ public class ClusteredRefiner extends AbstractCEGARStep
 		solver.push();
 		solver.add(sts.unfoldInit(0)); // Assert initial conditions
 		for (int i = 0; i < traceLength; ++i) {
-			solver.add(sts.unfoldInv(i)); // Invariants
 			for (final ComponentAbstractState as : abstractCounterEx.get(i).getStates())
 				for (final Expr<? extends BoolType> label : as.getLabels())
 					solver.add(sts.unfold(label, i)); // Labels
@@ -304,8 +300,6 @@ public class ClusteredRefiner extends AbstractCEGARStep
 
 		final List<Valuation> badStates = new ArrayList<>();
 		solver.push();
-		solver.add(sts.unfoldInv(0)); // Invariants
-		solver.add(sts.unfoldInv(1)); // Invariants
 		// Failure state
 		for (final ComponentAbstractState as : abstractCounterEx.get(traceLength - 1).getStates())
 			for (final Expr<? extends BoolType> label : as.getLabels())
@@ -339,7 +333,6 @@ public class ClusteredRefiner extends AbstractCEGARStep
 
 		final List<Valuation> concreteStates = new ArrayList<>();
 		solver.push();
-		solver.add(sts.unfoldInv(0));
 		// Assert the labels of the state
 		for (final Expr<? extends BoolType> label : abstractState.getLabels())
 			solver.add(sts.unfold(label, 0));

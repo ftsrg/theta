@@ -29,13 +29,14 @@ import hu.bme.mit.theta.splittingcegar.interpolating.data.InterpolatedAbstractSy
  */
 public class SequenceInterpolater extends AbstractCEGARStep implements Interpolater {
 
-	public SequenceInterpolater(final SolverWrapper solvers, final StopHandler stopHandler, final Logger logger, final Visualizer visualizer) {
+	public SequenceInterpolater(final SolverWrapper solvers, final StopHandler stopHandler, final Logger logger,
+			final Visualizer visualizer) {
 		super(solvers, stopHandler, logger, visualizer);
 	}
 
 	@Override
-	public Interpolant interpolate(final InterpolatedAbstractSystem system, final List<InterpolatedAbstractState> abstractCounterEx,
-			final ConcreteTrace concreteTrace) {
+	public Interpolant interpolate(final InterpolatedAbstractSystem system,
+			final List<InterpolatedAbstractState> abstractCounterEx, final ConcreteTrace concreteTrace) {
 
 		final ItpSolver itpSolver = solvers.getItpSolver();
 
@@ -66,10 +67,6 @@ public class SequenceInterpolater extends AbstractCEGARStep implements Interpola
 				// Assert transition relation
 				itpSolver.add(markers[i], sts.unfoldTrans(i - 1));
 			}
-
-			// Assert invariants
-			itpSolver.add(markers[i], sts.unfoldInv(i));
-
 		}
 
 		// Set the last marker

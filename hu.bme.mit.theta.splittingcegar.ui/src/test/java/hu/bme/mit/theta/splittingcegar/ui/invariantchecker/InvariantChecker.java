@@ -13,10 +13,6 @@ public class InvariantChecker {
 
 		final Solver solver = factory.createSolver();
 
-		solver.push();
-
-		solver.add(sts.unfoldInv(0));
-
 		// init => invariant
 		solver.push();
 		solver.add(sts.unfoldInit(0));
@@ -40,8 +36,7 @@ public class InvariantChecker {
 		}
 		solver.pop();
 
-		solver.add(sts.unfoldInv(1));
-
+		solver.push();
 		// invariant & trans => invariant'
 		solver.add(sts.unfoldTrans(0));
 		solver.add(sts.unfold(Exprs.Not(invariant), 1));
@@ -50,6 +45,7 @@ public class InvariantChecker {
 			solver.pop();
 			return false;
 		}
+		solver.pop();
 
 		return true;
 	}

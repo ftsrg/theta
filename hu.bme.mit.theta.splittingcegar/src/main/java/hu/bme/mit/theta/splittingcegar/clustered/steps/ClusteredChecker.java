@@ -25,9 +25,11 @@ import hu.bme.mit.theta.splittingcegar.common.steps.Checker;
 import hu.bme.mit.theta.splittingcegar.common.utils.SolverHelper;
 import hu.bme.mit.theta.splittingcegar.common.utils.visualization.Visualizer;
 
-public class ClusteredChecker extends AbstractCEGARStep implements Checker<ClusteredAbstractSystem, ClusteredAbstractState> {
+public class ClusteredChecker extends AbstractCEGARStep
+		implements Checker<ClusteredAbstractSystem, ClusteredAbstractState> {
 
-	public ClusteredChecker(final SolverWrapper solvers, final StopHandler stopHandler, final Logger logger, final Visualizer visualizer) {
+	public ClusteredChecker(final SolverWrapper solvers, final StopHandler stopHandler, final Logger logger,
+			final Visualizer visualizer) {
 		super(solvers, stopHandler, logger, visualizer);
 	}
 
@@ -59,7 +61,6 @@ public class ClusteredChecker extends AbstractCEGARStep implements Checker<Clust
 		final Solver solver = solvers.getSolver();
 
 		solver.push();
-		solver.add(sts.unfoldInv(0));
 
 		// Loop through each initial state and do a search
 		while ((actualInit = getNextInitialState(system, prevInit)) != null && counterExample == null) {
@@ -125,7 +126,7 @@ public class ClusteredChecker extends AbstractCEGARStep implements Checker<Clust
 						deletedArcs++;
 					}
 				} else { // If the actual state has no more successors, then
-								// backtrack
+							// backtrack
 					stateStack.pop();
 					successorStack.pop();
 				}
@@ -150,11 +151,13 @@ public class ClusteredChecker extends AbstractCEGARStep implements Checker<Clust
 			VisualizationHelper.visualizeCompositeAbstractKripkeStructure(exploredStates.keySet(), visualizer, 6);
 		}
 
-		return counterExample == null ? new AbstractResult<ClusteredAbstractState>(null, exploredStates.keySet(), exploredStates.size())
+		return counterExample == null
+				? new AbstractResult<ClusteredAbstractState>(null, exploredStates.keySet(), exploredStates.size())
 				: new AbstractResult<ClusteredAbstractState>(counterExample, null, exploredStates.size());
 	}
 
-	private boolean checkProp(final ClusteredAbstractState state, final Expr<? extends BoolType> expr, final Solver solver, final STS sts) {
+	private boolean checkProp(final ClusteredAbstractState state, final Expr<? extends BoolType> expr,
+			final Solver solver, final STS sts) {
 		solver.push();
 		for (final ComponentAbstractState as : state.getStates())
 			SolverHelper.unrollAndAssert(solver, as.getLabels(), sts, 0);
@@ -164,7 +167,8 @@ public class ClusteredChecker extends AbstractCEGARStep implements Checker<Clust
 		return ret;
 	}
 
-	private boolean checkTrans(final ClusteredAbstractState s0, final ClusteredAbstractState s1, final Solver solver, final STS sts) {
+	private boolean checkTrans(final ClusteredAbstractState s0, final ClusteredAbstractState s1, final Solver solver,
+			final STS sts) {
 		solver.push();
 		for (final ComponentAbstractState as : s0.getStates())
 			SolverHelper.unrollAndAssert(solver, as.getLabels(), sts, 0);
@@ -172,7 +176,6 @@ public class ClusteredChecker extends AbstractCEGARStep implements Checker<Clust
 		for (final ComponentAbstractState as : s1.getStates())
 			SolverHelper.unrollAndAssert(solver, as.getLabels(), sts, 1);
 
-		solver.add(sts.unfoldInv(1));
 		solver.add(sts.unfoldTrans(0));
 
 		final boolean ret = SolverHelper.checkSat(solver);
