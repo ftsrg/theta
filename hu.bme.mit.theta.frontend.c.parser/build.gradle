@@ -1,0 +1,8 @@
+dependencies {
+  compile group: 'org.eclipse.core', name: 'runtime', version: '3.10.0-v20140318-2214'
+  compile group: 'org.eclipse.core', name: 'resources', version: '3.3.0-v20070604'
+  compile project(':hu.bme.mit.theta.common')
+  compile project(':hu.bme.mit.theta.core')
+  compile project(':hu.bme.mit.theta.frontend.c')
+  compile files('./jar/org.eclipse.cdt.core.jar')
+}

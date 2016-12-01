@@ -1,0 +1,21 @@
+specification System {
+
+	system simple := {
+		var x : integer
+		var r : boolean
+		
+		invariant x >= 1 and x <= 4
+		
+		initial x = 1
+		initial r = false
+		
+		transition x' = (
+			if x < 4 and not r then x + 1
+			else 1
+		)
+		
+		transition (r' = true and x = 2) or r' = false
+	}
+
+	property safe : simple models G(not r or not x = 2)
+}

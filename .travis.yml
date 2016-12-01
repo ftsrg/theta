@@ -1,0 +1,9 @@
+addons:
+  apt:
+    packages:
+      - oracle-java8-installer
+language: java
+jdk:
+  - oraclejdk8
+notifications:
+  slack: ftsrg:4L2WFnNwpMjl9jtbqKCfy2dh

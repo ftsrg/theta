@@ -1,0 +1,281 @@
+specification MutualExclusion_check {
+
+	property safe: {
+		// delay
+		var d : real
+		
+		// normal variables
+		var lock_b0 : boolean
+		var lock_b1 : boolean
+		var location1_b0 : boolean
+		var location1_b1 : boolean
+		var location2_b0 : boolean
+		var location2_b1 : boolean
+		var location3_b0 : boolean
+		var location3_b1 : boolean
+				
+		// clock variables
+		var c1 : real
+		var c2 : real
+		var c3 : real
+
+		// type invariants
+		invariant c1 >= 0%1
+		invariant c2 >= 0%1
+		invariant c3 >= 0%1
+		invariant d >= 0%1
+		
+		// normal invariants
+		invariant not location1_b0 or location1_b1 or c1 + d <= 1%1
+		invariant not location2_b0 or location2_b1 or c2 + d <= 1%1
+		invariant not location3_b0 or location3_b1 or c3 + d <= 1%1
+
+		initial not lock_b0
+		initial not lock_b1
+		initial not location1_b0
+		initial not location1_b1
+		initial not location2_b0
+		initial not location2_b1
+		initial not location3_b0
+		initial not location3_b1
+		initial c1 = 0%1
+		initial c2 = 0%1
+		initial c3 = 0%1
+
+		transition (
+			not location1_b0 and
+			not location1_b1 and
+			not lock_b0 and
+			not lock_b1 and
+			(lock_b0' equal lock_b0) and
+			(lock_b1' equal lock_b1) and
+			location1_b0' and
+			not location1_b1' and
+			(location2_b0' equal location2_b0) and
+			(location2_b1' equal location2_b1) and
+			(location3_b0' equal location3_b0) and
+			(location3_b1' equal location3_b1) and
+			c1' = 0%1 and
+			c2' = c2 + d and
+			c3' = c3 + d
+		) or (
+			location1_b0 and
+			not location1_b1 and
+			c1 + d <= 1%1 and
+			lock_b0' and
+			not lock_b1' and
+			not location1_b0' and
+			location1_b1' and
+			(location2_b0' equal location2_b0) and
+			(location2_b1' equal location2_b1) and
+			(location3_b0' equal location3_b0) and
+			(location3_b1' equal location3_b1) and
+			c1' = 0%1 and
+			c2' = c2 + d and
+			c3' = c3 + d
+		) or (
+			not location1_b0 and
+			location1_b1 and c1 + d >= 1%1 and
+			(not lock_b0 or lock_b1) and
+			(lock_b0' equal lock_b0) and
+			(lock_b1' equal lock_b1) and
+			not location1_b0' and
+			not location1_b1' and
+			(location2_b0' equal location2_b0) and
+			(location2_b1' equal location2_b1) and
+			(location3_b0' equal location3_b0) and
+			(location3_b1' equal location3_b1) and
+			c1' = c1 + d and
+			c2' = c2 + d and
+			c3' = c3 + d
+		) or (
+			not location1_b0 and
+			location1_b1 and
+			c1 + d >= 1%1 and
+			lock_b0 and
+			not lock_b1 and
+			(lock_b0' equal lock_b0) and
+			(lock_b1' equal lock_b1) and
+			location1_b0' and
+			location1_b1' and
+			(location2_b0' equal location2_b0) and
+			(location2_b1' equal location2_b1) and
+			(location3_b0' equal location3_b0) and
+			(location3_b1' equal location3_b1) and
+			c1' = c1 + d and
+			c2' = c2 + d and
+			c3' = c3 + d
+		) or (
+			location1_b0 and
+			location1_b1 and
+			not lock_b0' and
+			not lock_b1' and
+			not location1_b0' and
+			not location1_b1' and
+			(location2_b0' equal location2_b0) and
+			(location2_b1' equal location2_b1) and
+			(location3_b0' equal location3_b0) and
+			(location3_b1' equal location3_b1) and
+			c1' = c1 + d and
+			c2' = c2 + d and
+			c3' = c3 + d
+		) or (
+			not location2_b0 and
+			not location2_b1 and
+			not lock_b0 and
+			not lock_b1 and
+			(lock_b0' equal lock_b0) and
+			(lock_b1' equal lock_b1) and
+			(location1_b0' equal location1_b0) and
+			(location1_b1' equal location1_b1) and
+			location2_b0' and
+			not location2_b1' and
+			(location3_b0' equal location3_b0) and
+			(location3_b1' equal location3_b1) and
+			c1' = c1 + d and
+			c2' = 0%1 and
+			c3' = c3 + d
+		) or (
+			location2_b0 and
+			not location2_b1 and
+			c2 + d <= 1%1 and
+			not lock_b0' and
+			lock_b1' and
+			(location1_b0' equal location1_b0) and
+			(location1_b1' equal location1_b1) and
+			not location2_b0' and
+			location2_b1' and
+			(location3_b0' equal location3_b0) and
+			(location3_b1' equal location3_b1) and
+			c1' = c1 + d and
+			c2' = 0%1 and
+			c3' = c3 + d
+		) or (
+			not location2_b0 and
+			location2_b1 and
+			c2 + d >= 1%1 and
+			(lock_b0 or not lock_b1) and
+			(lock_b0' equal lock_b0) and
+			(lock_b1' equal lock_b1) and
+			(location1_b0' equal location1_b0) and
+			(location1_b1' equal location1_b1) and
+			not location2_b0' and
+			not location2_b1' and
+			(location3_b0' equal location3_b0) and
+			(location3_b1' equal location3_b1) and
+			c1' = c1 + d and
+			c2' = c2 + d and
+			c3' = c3 + d
+		) or (
+			not location2_b0 and
+			location2_b1 and
+			c2 + d >= 1%1 and
+			not lock_b0 and
+			lock_b1 and
+			(lock_b0' equal lock_b0) and
+			(lock_b1' equal lock_b1) and
+			(location1_b0' equal location1_b0) and
+			(location1_b1' equal location1_b1) and
+			location2_b0' and
+			location2_b1' and
+			(location3_b0' equal location3_b0) and
+			(location3_b1' equal location3_b1) and
+			c1' = c1 + d and
+			c2' = c2 + d and
+			c3' = c3 + d
+		) or (
+			location2_b0 and
+			location2_b1 and
+			not lock_b0' and
+			not lock_b1' and
+			(location1_b0' equal location1_b0) and
+			(location1_b1' equal location1_b1) and
+			not location2_b0' and
+			not location2_b1' and
+			(location3_b0' equal location3_b0) and
+			(location3_b1' equal location3_b1) and
+			c1' = c1 + d and
+			c2' = c2 + d and
+			c3' = c3 + d
+		) or (
+			not location3_b0 and
+			not location3_b1 and
+			not lock_b0 and
+			not lock_b1 and
+			(lock_b0' equal lock_b0) and
+			(lock_b1' equal lock_b1) and
+			(location1_b0' equal location1_b0) and
+			(location1_b1' equal location1_b1) and
+			(location2_b0' equal location2_b0) and
+			(location2_b1' equal location2_b1) and
+			location3_b0' and
+			not location3_b1' and
+			c1' = c1 + d and
+			c2' = c2 + d and
+			c3' = 0%1
+		) or (
+			location3_b0 and
+			not location3_b1 and
+			c3 + d <= 1%1 and
+			lock_b0' and
+			lock_b1' and
+			(location1_b0' equal location1_b0) and
+			(location1_b1' equal location1_b1) and
+			(location2_b0' equal location2_b0) and
+			(location2_b1' equal location2_b1) and
+			not location3_b0' and
+			location3_b1' and
+			c1' = c1 + d and
+			c2' = c2 + d and
+			c3' = 0%1
+		) or (
+			not location3_b0 and
+			location3_b1 and
+			c3 + d >= 1%1 and
+			(not lock_b0 or not lock_b1) and
+			(lock_b0' equal lock_b0) and
+			(lock_b1' equal lock_b1) and
+			(location1_b0' equal location1_b0) and
+			(location1_b1' equal location1_b1) and
+			(location2_b0' equal location2_b0) and
+			(location2_b1' equal location2_b1) and
+			not location3_b0' and
+			not location3_b1' and
+			c1' = c1 + d and
+			c2' = c2 + d and
+			c3' = c3 + d
+		) or (
+			not location3_b0 and
+			location3_b1 and
+			c3 + d >= 1%1 and
+			lock_b0 and
+			lock_b1 and
+			(lock_b0' equal lock_b0) and
+			(lock_b1' equal lock_b1) and
+			(location1_b0' equal location1_b0) and
+			(location1_b1' equal location1_b1) and
+			(location2_b0' equal location2_b0) and
+			(location2_b1' equal location2_b1) and
+			location3_b0' and
+			location3_b1' and
+			c1' = c1 + d and
+			c2' = c2 + d and
+			c3' = c3 + d
+		) or (
+			location3_b0 and
+			location3_b1 and
+			not lock_b0' and
+			not lock_b1' and
+			(location1_b0' equal location1_b0) and
+			(location1_b1' equal location1_b1) and
+			(location2_b0' equal location2_b0) and
+			(location2_b1' equal location2_b1) and
+			not location3_b0' and
+			not location3_b1' and
+			c1' = c1 + d and
+			c2' = c2 + d and
+			c3' = c3 + d
+		)
+	} models 
+		G(not location1_b0 or not location1_b1 or not location2_b0 or not location2_b1)
+}

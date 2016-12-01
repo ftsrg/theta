@@ -1,0 +1,33 @@
+allprojects  {
+	apply plugin: 'maven'
+
+	group = 'hu.bme.mit.theta'
+	version = '1.0.0-SNAPSHOT'
+	
+}
+
+subprojects {
+	apply plugin: 'java'
+	sourceCompatibility = 1.8
+	targetCompatibility = 1.8
+
+	task packageSources(type: Jar) {
+		classifier = 'sources'
+		from sourceSets.main.allSource
+	}
+
+	artifacts.archives packageSources
+	repositories {
+		mavenCentral()
+	}
+
+	test {
+		String libPath = ".." + File.separator + "lib"
+		environment.put('PATH', libPath)
+		environment.put('LD_LIBRARY_PATH', libPath)
+	}
+}
+
+ext {
+  antlrVersion = "4.5.3"
+}
