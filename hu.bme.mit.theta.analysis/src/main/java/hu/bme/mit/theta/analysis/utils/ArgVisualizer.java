@@ -51,7 +51,7 @@ public final class ArgVisualizer {
 
 		graph.addNode(nodeId, nAttributes);
 
-		for (final ArgEdge<?, ?> edge : node.getOutEdges()) {
+		for (final ArgEdge<?, ?> edge : node.getOutEdges().collect(Collectors.toSet())) {
 			traverse(graph, edge.getTarget(), traversed);
 			final String sourceId = NODE_ID_PREFIX + edge.getSource().getId();
 			final String targetId = NODE_ID_PREFIX + edge.getTarget().getId();

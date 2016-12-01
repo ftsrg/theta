@@ -97,7 +97,7 @@ public final class ArgChecker {
 
 	private static <S extends State, A extends Action> Set<A> getActionsForNode(
 			final ArgNode<? extends S, ? extends A> node) {
-		return node.getOutEdges().stream().map(e -> e.getAction()).collect(toSet());
+		return node.getOutEdges().map(e -> e.getAction()).collect(toSet());
 	}
 
 	private static <S extends State, A extends Action> Collection<S> getSuccStatesOfNodeForAction(
