@@ -40,10 +40,12 @@ public class ArgPruningTest {
 		arg.cover(n02, n00);
 
 		assertEquals(6, arg.getNodes().count());
+		assertEquals(6, arg.size());
+		assertEquals(2, arg.getDepth());
 		assertEquals(1, arg.getInitNodes().count());
 		assertEquals(1, arg.getUnsafeNodes().count());
 		assertEquals(n001, arg.getUnsafeNodes().iterator().next());
-		assertEquals(2, n0.getCoveredNodes().size());
+		assertEquals(2, n0.getCoveredNodes().count());
 
 		System.out.println(new GraphvizWriter().writeString(ArgVisualizer.visualize(arg)));
 		System.out.println("=========================");
@@ -51,6 +53,8 @@ public class ArgPruningTest {
 		arg.prune(n00);
 
 		assertEquals(3, arg.getNodes().count());
+		assertEquals(3, arg.size());
+		assertEquals(1, arg.getDepth());
 		assertEquals(1, arg.getInitNodes().count());
 		assertEquals(0, arg.getUnsafeNodes().count());
 		assertEquals(1, n0.coveredNodes.size());

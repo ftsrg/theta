@@ -103,6 +103,12 @@ public final class ExprUtils {
 		expr.accept(new AtomCollectorVisitor(), collectTo);
 	}
 
+	public static Set<Expr<? extends BoolType>> getAtoms(final Expr<? extends BoolType> expr) {
+		final Set<Expr<? extends BoolType>> atoms = new HashSet<>();
+		collectAtoms(expr, atoms);
+		return atoms;
+	}
+
 	@SuppressWarnings("unchecked")
 	public static <ExprType extends Type> Expr<? extends ExprType> simplify(final Expr<? extends ExprType> expr,
 			final Assignment assignment) {

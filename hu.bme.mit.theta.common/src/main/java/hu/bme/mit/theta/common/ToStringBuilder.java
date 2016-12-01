@@ -4,6 +4,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Arrays.asList;
 
 import java.util.StringJoiner;
+import java.util.function.Function;
 
 public final class ToStringBuilder {
 
@@ -21,6 +22,11 @@ public final class ToStringBuilder {
 
 	public ToStringBuilder addAll(final Iterable<? extends Object> objects) {
 		objects.forEach(o -> joiner.add(o.toString()));
+		return this;
+	}
+
+	public <T> ToStringBuilder addAll(final Iterable<? extends T> objects, final Function<T, String> toStringFunc) {
+		objects.forEach(o -> joiner.add(toStringFunc.apply(o)));
 		return this;
 	}
 

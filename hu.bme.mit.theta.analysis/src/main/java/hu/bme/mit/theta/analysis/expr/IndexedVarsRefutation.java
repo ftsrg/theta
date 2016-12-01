@@ -32,7 +32,7 @@ public final class IndexedVarsRefutation implements Refutation {
 
 	@Override
 	public String toString() {
-		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).addAll(indexedVars).toString();
+		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).add(indexedVars).toString();
 	}
 
 	@Override

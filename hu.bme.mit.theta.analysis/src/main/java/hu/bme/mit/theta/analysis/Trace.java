@@ -37,7 +37,7 @@ public final class Trace<S extends State, A extends Action> {
 	}
 
 	/**
-	 * Gets the length of the trace, which is the number of states.
+	 * Gets the length of the trace, which is the number of actions.
 	 */
 	public int length() {
 		return actions.size();
@@ -65,9 +65,9 @@ public final class Trace<S extends State, A extends Action> {
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("Trace(");
-		for (int i = 0; i < length(); ++i) {
+		for (int i = 0; i < states.size(); ++i) {
 			sb.append(getState(i));
-			if (i < length() - 1) {
+			if (i < actions.size()) {
 				sb.append(" ---[");
 				sb.append(getAction(i));
 				sb.append("]--> ");

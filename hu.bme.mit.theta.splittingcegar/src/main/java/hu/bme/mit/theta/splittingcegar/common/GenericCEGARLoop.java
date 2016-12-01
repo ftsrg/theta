@@ -72,7 +72,7 @@ public class GenericCEGARLoop<AbstractSystemType extends AbstractSystem, Abstrac
 		this.concretizer = checkNotNull(concretizer);
 		this.refiner = checkNotNull(refiner);
 		this.debugger = debugger; // Can be null
-		this.logger = logger == null ? new NullLogger() : logger;
+		this.logger = logger == null ? NullLogger.getInstance() : logger;
 		this.name = name == null ? "" : name;
 		this.stopwatch = Stopwatch.createUnstarted();
 		this.stopHandler = stopHandler;

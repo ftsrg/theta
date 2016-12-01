@@ -92,4 +92,8 @@ public final class ExprTraceSeqItpChecker implements ExprTraceChecker<ItpRefutat
 		return status;
 	}
 
+	@Override
+	public String toString() {
+		return getClass().getSimpleName();
+	}
 }

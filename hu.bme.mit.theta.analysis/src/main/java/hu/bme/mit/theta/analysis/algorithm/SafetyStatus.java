@@ -3,6 +3,8 @@ package hu.bme.mit.theta.analysis.algorithm;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import java.util.Optional;
+
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.Trace;
@@ -10,21 +12,36 @@ import hu.bme.mit.theta.common.ObjectUtils;
 
 public abstract class SafetyStatus<S extends State, A extends Action> {
 	private final ARG<S, A> arg;
+	private final Optional<Statistics> stats;
 
-	private SafetyStatus(final ARG<S, A> arg) {
+	private SafetyStatus(final ARG<S, A> arg, final Optional<Statistics> stats) {
 		this.arg = checkNotNull(arg);
+		this.stats = checkNotNull(stats);
 	}
 
 	public ARG<S, A> getArg() {
 		return arg;
 	}
 
+	public Optional<Statistics> getStats() {
+		return stats;
+	}
+
 	public static <S extends State, A extends Action> Safe<S, A> safe(final ARG<S, A> arg) {
-		return new Safe<>(arg);
+		return new Safe<>(arg, Optional.empty());
 	}
 
 	public static <S extends State, A extends Action> Unsafe<S, A> unsafe(final Trace<S, A> cex, final ARG<S, A> arg) {
-		return new Unsafe<>(cex, arg);
+		return new Unsafe<>(cex, arg, Optional.empty());
+	}
+
+	public static <S extends State, A extends Action> Safe<S, A> safe(final ARG<S, A> arg, final Statistics stats) {
+		return new Safe<>(arg, Optional.of(stats));
+	}
+
+	public static <S extends State, A extends Action> Unsafe<S, A> unsafe(final Trace<S, A> cex, final ARG<S, A> arg,
+			final Statistics stats) {
+		return new Unsafe<>(cex, arg, Optional.of(stats));
 	}
 
 	public abstract boolean isSafe();
@@ -38,8 +55,8 @@ public abstract class SafetyStatus<S extends State, A extends Action> {
 	////
 
 	public static final class Safe<S extends State, A extends Action> extends SafetyStatus<S, A> {
-		private Safe(final ARG<S, A> arg) {
-			super(arg);
+		private Safe(final ARG<S, A> arg, final Optional<Statistics> stats) {
+			super(arg, stats);
 			checkArgument(arg.isInitialized());
 			checkArgument(arg.isComplete());
 			checkArgument(arg.isSafe());
@@ -76,8 +93,8 @@ public abstract class SafetyStatus<S extends State, A extends Action> {
 	public static final class Unsafe<S extends State, A extends Action> extends SafetyStatus<S, A> {
 		private final Trace<S, A> cex;
 
-		private Unsafe(final Trace<S, A> cex, final ARG<S, A> arg) {
-			super(arg);
+		private Unsafe(final Trace<S, A> cex, final ARG<S, A> arg, final Optional<Statistics> stats) {
+			super(arg, stats);
 			this.cex = checkNotNull(cex);
 		}
 

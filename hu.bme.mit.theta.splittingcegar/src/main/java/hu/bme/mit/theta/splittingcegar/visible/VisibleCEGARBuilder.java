@@ -23,7 +23,7 @@ import hu.bme.mit.theta.splittingcegar.visible.steps.refinement.VarCollector;
 import hu.bme.mit.theta.splittingcegar.visible.utils.VisibleCEGARDebugger;
 
 public class VisibleCEGARBuilder implements CEGARBuilder {
-	private Logger logger = new NullLogger();
+	private Logger logger = NullLogger.getInstance();
 	private Visualizer visualizer = new NullVisualizer();
 	private boolean useCNFTransformation = false;
 	private VarCollectionMethod varCollMethod = VarCollectionMethod.CraigItp;

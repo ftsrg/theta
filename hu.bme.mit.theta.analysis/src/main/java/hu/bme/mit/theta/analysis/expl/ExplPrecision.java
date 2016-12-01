@@ -3,6 +3,7 @@ package hu.bme.mit.theta.analysis.expl;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
 
@@ -26,6 +27,10 @@ public final class ExplPrecision implements Precision {
 	private ExplPrecision(final Iterable<? extends VarDecl<?>> vars) {
 		checkNotNull(vars);
 		this.vars = ImmutableSet.copyOf(vars);
+	}
+
+	public static ExplPrecision create() {
+		return create(Collections.emptySet());
 	}
 
 	public static ExplPrecision create(final Iterable<? extends VarDecl<?>> vars) {
@@ -59,6 +64,6 @@ public final class ExplPrecision implements Precision {
 
 	@Override
 	public String toString() {
-		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).addAll(vars).toString();
+		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).addAll(vars, VarDecl::getName).toString();
 	}
 }

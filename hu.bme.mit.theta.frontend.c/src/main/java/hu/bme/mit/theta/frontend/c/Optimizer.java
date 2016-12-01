@@ -28,7 +28,7 @@ public class Optimizer {
 	private final FunctionSlicer slicer = new FunctionSlicer();
 	private final GlobalContext context;
 
-	private Logger log = new NullLogger();
+	private Logger log = NullLogger.getInstance();
 
 	public Optimizer(GlobalContext context) {
 		this.context = context;

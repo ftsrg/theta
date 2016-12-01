@@ -5,6 +5,7 @@ import java.util.Comparator;
 
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.State;
+import hu.bme.mit.theta.common.ObjectUtils;
 
 public class ArgNodeComparators {
 
@@ -54,6 +55,11 @@ public class ArgNodeComparators {
 				final ArgNode<? extends State, ? extends Action> n2) {
 			return Integer.compare(n1.getDepth(), n2.getDepth());
 		}
+
+		@Override
+		public String toString() {
+			return getClass().getSimpleName();
+		}
 	}
 
 	private static final class CreationOrder implements ArgNodeComparator {
@@ -64,6 +70,11 @@ public class ArgNodeComparators {
 				final ArgNode<? extends State, ? extends Action> n2) {
 			return Integer.compare(n1.getId(), n2.getId());
 		}
+
+		@Override
+		public String toString() {
+			return getClass().getSimpleName();
+		}
 	}
 
 	private static final class TargetFirst implements ArgNodeComparator {
@@ -73,6 +84,11 @@ public class ArgNodeComparators {
 		public int compare(final ArgNode<? extends State, ? extends Action> n1,
 				final ArgNode<? extends State, ? extends Action> n2) {
 			return Boolean.compare(n1.isTarget(), n2.isTarget()) * -1;
+		}
+
+		@Override
+		public String toString() {
+			return getClass().getSimpleName();
 		}
 	}
 
@@ -88,6 +104,11 @@ public class ArgNodeComparators {
 		public int compare(final ArgNode<? extends State, ? extends Action> n1,
 				final ArgNode<? extends State, ? extends Action> n2) {
 			return comparator.compare(n1, n2) * -1;
+		}
+
+		@Override
+		public String toString() {
+			return ObjectUtils.toStringBuilder(getClass().getSimpleName()).add(comparator).toString();
 		}
 	}
 
@@ -109,8 +130,11 @@ public class ArgNodeComparators {
 			} else {
 				return compareFirst;
 			}
-
 		}
 
+		@Override
+		public String toString() {
+			return ObjectUtils.toStringBuilder(getClass().getSimpleName()).add(first).add(then).toString();
+		}
 	}
 }

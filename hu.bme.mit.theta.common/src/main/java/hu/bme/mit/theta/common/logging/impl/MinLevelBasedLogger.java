@@ -9,13 +9,4 @@ public abstract class MinLevelBasedLogger implements Logger {
 		this.minLevel = minLevel;
 	}
 
-	@Override
-	public void write(final Object obj, final int level) {
-		write(obj, level, 0);
-	}
-
-	@Override
-	public void writeln(final Object obj, final int level) {
-		writeln(obj, level, 0);
-	}
 }

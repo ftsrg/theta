@@ -7,9 +7,13 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
+import java.util.StringJoiner;
 import java.util.stream.Collectors;
 
+import hu.bme.mit.theta.common.ObjectUtils;
+import hu.bme.mit.theta.common.ToStringBuilder;
 import hu.bme.mit.theta.core.decl.IndexedConstDecl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Type;
@@ -84,5 +88,17 @@ public final class IndexedVars {
 			built = true;
 			return new IndexedVars(varSets);
 		}
+	}
+
+	@Override
+	public String toString() {
+		final ToStringBuilder builder = ObjectUtils.toStringBuilder(getClass().getSimpleName());
+
+		for (final Entry<Integer, Set<VarDecl<? extends Type>>> entry : varSets.entrySet()) {
+			final StringJoiner sj = new StringJoiner(", ", entry.getKey() + ": ", "");
+			entry.getValue().forEach(v -> sj.add(v.getName()));
+			builder.add(sj.toString());
+		}
+		return builder.toString();
 	}
 }

@@ -109,7 +109,7 @@ public class BenchmarkTest {
 		GlobalContext context = Parser.parse(file);
 
 		Optimizer opt = new Optimizer(context);
-		opt.setLogger(new NullLogger());
+		opt.setLogger(NullLogger.getInstance());
 
 		opt.inlineGlobalVariables();
 		// opt.addFunctionTransformer(new ConstantPropagator());

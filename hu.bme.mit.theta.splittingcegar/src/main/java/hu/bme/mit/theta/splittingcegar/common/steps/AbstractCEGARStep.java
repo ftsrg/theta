@@ -16,8 +16,9 @@ public class AbstractCEGARStep {
 	protected final SolverWrapper solvers;
 	protected final StopHandler stopHandler;
 
-	public AbstractCEGARStep(final SolverWrapper solvers, final StopHandler stopHandler, final Logger logger, final Visualizer visualizer) {
-		this.logger = logger == null ? new NullLogger() : logger;
+	public AbstractCEGARStep(final SolverWrapper solvers, final StopHandler stopHandler, final Logger logger,
+			final Visualizer visualizer) {
+		this.logger = logger == null ? NullLogger.getInstance() : logger;
 		this.visualizer = visualizer == null ? new NullVisualizer() : visualizer;
 		this.solvers = solvers;
 		this.stopHandler = stopHandler;

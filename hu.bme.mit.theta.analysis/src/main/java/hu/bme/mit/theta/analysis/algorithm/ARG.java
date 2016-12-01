@@ -2,11 +2,13 @@ package hu.bme.mit.theta.analysis.algorithm;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 import static java.util.stream.Collectors.toList;
 
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.stream.Stream;
 
 import hu.bme.mit.theta.analysis.Action;
@@ -19,11 +21,8 @@ import hu.bme.mit.theta.analysis.State;
 public final class ARG<S extends State, A extends Action> {
 
 	private final Collection<ArgNode<S, A>> initNodes;
-
-	boolean initialized;
-
+	boolean initialized; // Set by ArgBuilder
 	private int nextId = 0;
-
 	final Domain<S> domain;
 
 	private ARG(final Domain<S> domain) {
@@ -56,14 +55,25 @@ public final class ARG<S extends State, A extends Action> {
 
 	////
 
+	/**
+	 * Checks if the ARG is complete, i.e., whether it is initialized and all of
+	 * its nodes are complete.
+	 */
 	public boolean isComplete() {
 		return isInitialized() && getNodes().allMatch(ArgNode::isComplete);
 	}
 
+	/**
+	 * Checks if the ARG is safe, i.e., whether all of its nodes are safe.
+	 */
 	public boolean isSafe() {
 		return getNodes().allMatch(n -> n.isSafe());
 	}
 
+	/**
+	 * Checks if the ARG is initialized, i.e., all of its initial nodes are
+	 * present.
+	 */
 	public boolean isInitialized() {
 		return initialized;
 	}
@@ -89,10 +99,21 @@ public final class ARG<S extends State, A extends Action> {
 		return succNode;
 	}
 
+	private ArgNode<S, A> createNode(final S state, final int depth, final boolean target) {
+		final ArgNode<S, A> node = new ArgNode<>(this, state, nextId, depth, target);
+		nextId = nextId + 1;
+		return node;
+	}
+
+	private ArgEdge<S, A> createEdge(final ArgNode<S, A> source, final A action, final ArgNode<S, A> target) {
+		final ArgEdge<S, A> edge = new ArgEdge<>(source, action, target);
+		source.outEdges.add(edge);
+		target.inEdge = Optional.of(edge);
+		return edge;
+	}
+
 	/**
-	 * Removes a node along with its subtree
-	 *
-	 * @param node
+	 * Removes a node along with its subtree.
 	 */
 	public void prune(final ArgNode<S, A> node) {
 		checkNotNull(node);
@@ -146,23 +167,29 @@ public final class ARG<S extends State, A extends Action> {
 
 	////
 
-	private ArgNode<S, A> createNode(final S state, final int depth, final boolean target) {
-		final ArgNode<S, A> node = new ArgNode<>(this, state, nextId, depth, target);
-		nextId = nextId + 1;
-		return node;
-	}
-
-	private ArgEdge<S, A> createEdge(final ArgNode<S, A> source, final A action, final ArgNode<S, A> target) {
-		final ArgEdge<S, A> edge = new ArgEdge<>(source, action, target);
-		source.outEdges.add(edge);
-		target.inEdge = Optional.of(edge);
-		return edge;
-	}
-
 	/**
-	 * Gets all counterexamples, i.e., traces leading to target states.
+	 * Gets all counterexamples, i.e., traces leading to target nodes.
 	 */
 	public Stream<ArgTrace<S, A>> getCexs() {
 		return getUnsafeNodes().map(n -> ArgTrace.to(n));
 	}
+
+	/**
+	 * Gets the size of the ARG, i.e., the number of nodes.
+	 */
+	public long size() {
+		return getNodes().count();
+	}
+
+	/**
+	 * Gets the depth of the ARG, i.e., the maximal depth of its nodes. Depth
+	 * starts (at the initial nodes) from 0. Depth is undefined for an empty
+	 * ARG.
+	 */
+	public int getDepth() {
+		final OptionalInt maxOpt = getNodes().mapToInt(ArgNode::getDepth).max();
+		checkState(maxOpt.isPresent(), "Depth is undefined for an empty ARG.");
+		return maxOpt.getAsInt();
+	}
+
 }
