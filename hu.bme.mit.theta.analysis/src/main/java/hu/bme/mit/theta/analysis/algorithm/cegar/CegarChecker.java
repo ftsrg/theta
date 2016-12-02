@@ -41,7 +41,7 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 	}
 
 	@Override
-	public SafetyStatus<S, A> check(final P initPrecision) throws InterruptedException {
+	public SafetyStatus<S, A> check(final P initPrecision) {
 		logger.writeln("Configuration: ", this, 1, 0);
 		final Stopwatch stopwatch = Stopwatch.createStarted();
 		RefinerResult<S, A, P> refinerResult = null;
@@ -50,9 +50,6 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 		P precision = initPrecision;
 		int iteration = 0;
 		do {
-			if (Thread.interrupted()) {
-				throw new InterruptedException();
-			}
 			++iteration;
 			logger.writeln("Iteration ", iteration, 2, 0);
 

@@ -54,7 +54,7 @@ import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 public class StsExplTest {
 
 	@Test
-	public void test() throws InterruptedException {
+	public void test() {
 
 		final Logger logger = new ConsoleLogger(100);
 

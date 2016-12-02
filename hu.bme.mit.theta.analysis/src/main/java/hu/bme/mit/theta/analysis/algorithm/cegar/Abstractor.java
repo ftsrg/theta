@@ -9,6 +9,6 @@ public interface Abstractor<S extends State, A extends Action, P extends Precisi
 
 	ARG<S, A> createArg();
 
-	AbstractorResult check(ARG<S, A> arg, P precision) throws InterruptedException;
+	AbstractorResult check(ARG<S, A> arg, P precision);
 
 }

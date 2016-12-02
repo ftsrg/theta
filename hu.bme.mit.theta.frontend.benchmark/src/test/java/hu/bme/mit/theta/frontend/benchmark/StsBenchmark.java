@@ -6,8 +6,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.SafetyStatus;
@@ -26,8 +24,6 @@ import hu.bme.mit.theta.frontend.benchmark.formatters.Formatter;
 import hu.bme.mit.theta.frontend.benchmark.formatters.impl.CsvFormatter;
 
 public class StsBenchmark {
-
-	private static final long TIMEOUT_MS = 100;
 
 	public static void main(final String[] args) {
 		final String basePath = "src/test/resources/";
@@ -104,26 +100,22 @@ public class StsBenchmark {
 		try {
 			final STS sts = input.load();
 			final Configuration<?, ?, ?> configuration = configBuilder.build(sts);
-			final Optional<SafetyStatus<?, ?>> statusOpt = configuration.check(TIMEOUT_MS, TimeUnit.MILLISECONDS);
-			if (!statusOpt.isPresent()) {
-				formatter.cell("TIMEOUT", 5);
-			} else {
-				final SafetyStatus<?, ?> status = statusOpt.get();
-				if (status.isSafe() != input.expected) {
-					formatter.cell("FALSE", 5);
-				} else {
-					final Statistics stats = status.getStats().get();
-					final ARG<?, ?> arg = status.getArg();
+			final SafetyStatus<?, ?> status = configuration.check();
 
-					formatter.cell(stats.getElapsedMillis() + "");
-					formatter.cell(stats.getIterations() + "");
-					formatter.cell(arg.size() + "");
-					formatter.cell(arg.getDepth() + "");
-					if (status.isUnsafe()) {
-						formatter.cell(status.asUnsafe().getTrace().length() + "");
-					} else {
-						formatter.cell("");
-					}
+			if (status.isSafe() != input.expected) {
+				formatter.cell("FALSE", 5);
+			} else {
+				final Statistics stats = status.getStats().get();
+				final ARG<?, ?> arg = status.getArg();
+
+				formatter.cell(stats.getElapsedMillis() + "");
+				formatter.cell(stats.getIterations() + "");
+				formatter.cell(arg.size() + "");
+				formatter.cell(arg.getDepth() + "");
+				if (status.isUnsafe()) {
+					formatter.cell(status.asUnsafe().getTrace().length() + "");
+				} else {
+					formatter.cell("");
 				}
 			}
 
