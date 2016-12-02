@@ -4,6 +4,14 @@ import static java.util.Collections.emptyList;
 
 import java.io.IOException;
 
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
+
 import hu.bme.mit.theta.analysis.algorithm.SafetyStatus;
 import hu.bme.mit.theta.analysis.algorithm.Statistics;
 import hu.bme.mit.theta.common.logging.impl.ConsoleLogger;
@@ -22,28 +30,53 @@ import hu.bme.mit.theta.frontend.benchmark.formatters.impl.CsvFormatter;
 public class Main {
 
 	public static void main(final String[] args) {
-		String model = null;
-		StsConfigurationBuilder.Domain domain = null;
-		StsConfigurationBuilder.Refinement refinement = null;
-		StsConfigurationBuilder.InitPrecision initPrecision = InitPrecision.EMPTY;
-		StsConfigurationBuilder.Search search = Search.BFS;
+		final Options options = new Options();
+
+		final Option optModel = new Option("m", "model", true, "Path of the input model");
+		optModel.setRequired(true);
+		optModel.setArgName("MODEL");
+		options.addOption(optModel);
+
+		final Option optDomain = new Option("d", "domain", true, "Abstract domain");
+		optDomain.setRequired(true);
+		optDomain.setArgName("DOMAIN");
+		options.addOption(optDomain);
+
+		final Option optRefinement = new Option("r", "refinement", true, "Refinement strategy");
+		optRefinement.setRequired(true);
+		optRefinement.setArgName("REFINEMENT");
+		options.addOption(optRefinement);
+
+		final Option optInitPrecision = new Option("i", "initprec", true, "Initial precision");
+		optInitPrecision.setArgName("INITPRECISION");
+		options.addOption(optInitPrecision);
+
+		final Option optSearch = new Option("s", "search", true, "Search strategy");
+		optSearch.setArgName("SEARCH");
+		options.addOption(optSearch);
+
+		final CommandLineParser parser = new DefaultParser();
+		final HelpFormatter helpFormatter = new HelpFormatter();
+		final CommandLine cmd;
+
+		try {
+			cmd = parser.parse(options, args);
+		} catch (final ParseException e) {
+			helpFormatter.printHelp("theta.jar", options, true);
+			return;
+		}
+
+		final String model = cmd.getOptionValue(optModel.getOpt());
+		final Domain domain = Domain.valueOf(cmd.getOptionValue(optDomain.getOpt()));
+		final Refinement refinement = Refinement.valueOf(cmd.getOptionValue(optRefinement.getOpt()));
+
+		final InitPrecision initPrecision = InitPrecision
+				.valueOf(cmd.getOptionValue(optInitPrecision.getOpt(), InitPrecision.EMPTY.toString()));
+		final Search search = Search.valueOf(cmd.getOptionValue(optSearch.getOpt(), Search.BFS.toString()));
 
 		final Formatter formatter = new CsvFormatter(new ConsoleLogger(100), ";");
 
 		try {
-			for (int i = 0; i < args.length; i += 2) {
-				if (args[i].equals("-m")) {
-					model = args[i + 1];
-				} else if (args[i].equals("-d")) {
-					domain = Domain.valueOf(args[i + 1]);
-				} else if (args[i].equals("-r")) {
-					refinement = Refinement.valueOf(args[i + 1]);
-				} else if (args[i].equals("-i")) {
-					initPrecision = InitPrecision.valueOf(args[i + 1]);
-				} else if (args[i].equals("-s")) {
-					search = Search.valueOf(args[i + 1]);
-				}
-			}
 
 			formatter.cell(model).cell(domain.toString()).cell(refinement.toString()).cell(initPrecision.toString())
 					.cell(search.toString());
