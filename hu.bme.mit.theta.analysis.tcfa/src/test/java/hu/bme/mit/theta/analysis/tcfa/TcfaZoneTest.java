@@ -1,7 +1,5 @@
 package hu.bme.mit.theta.analysis.tcfa;
 
-import static hu.bme.mit.theta.core.decl.impl.Decls.Var;
-import static hu.bme.mit.theta.core.type.impl.Types.Int;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
@@ -22,11 +20,10 @@ import hu.bme.mit.theta.analysis.zone.ZonePrecision;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
 import hu.bme.mit.theta.common.visualization.GraphvizWriter;
 import hu.bme.mit.theta.common.waitlist.FifoWaitlist;
-import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.type.IntType;
 import hu.bme.mit.theta.formalism.tcfa.TCFA;
 import hu.bme.mit.theta.formalism.tcfa.TcfaEdge;
 import hu.bme.mit.theta.formalism.tcfa.TcfaLoc;
+import hu.bme.mit.theta.formalism.tcfa.instances.TcfaModels;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 
@@ -35,8 +32,7 @@ public class TcfaZoneTest {
 	@Test
 	public void test() {
 		final int n = 2;
-		final VarDecl<IntType> vlock = Var("lock", Int());
-		final TCFA fischer = TcfaTestHelper.fischer(n, vlock);
+		final TCFA fischer = TcfaModels.fischer(n, 1, 2);
 
 		final TcfaLts lts = TcfaLts.create(fischer);
 

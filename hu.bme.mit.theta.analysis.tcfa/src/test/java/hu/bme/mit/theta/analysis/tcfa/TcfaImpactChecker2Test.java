@@ -1,7 +1,5 @@
 package hu.bme.mit.theta.analysis.tcfa;
 
-import static hu.bme.mit.theta.core.decl.impl.Decls.Var;
-import static hu.bme.mit.theta.core.type.impl.Types.Int;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
@@ -15,9 +13,8 @@ import hu.bme.mit.theta.analysis.impl.NullPrecision;
 import hu.bme.mit.theta.analysis.tcfa.impact.TcfaImpactChecker2;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.common.visualization.GraphvizWriter;
-import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.type.IntType;
 import hu.bme.mit.theta.formalism.tcfa.TCFA;
+import hu.bme.mit.theta.formalism.tcfa.instances.TcfaModels;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 
@@ -27,8 +24,7 @@ public final class TcfaImpactChecker2Test {
 	public void test() {
 		// Arrange
 		final int n = 2;
-		final VarDecl<IntType> vlock = Var("lock", Int());
-		final TCFA fischer = TcfaTestHelper.fischer(n, vlock);
+		final TCFA fischer = TcfaModels.fischer(n, 1, 2);
 
 		final Solver solver = Z3SolverFactory.getInstace().createSolver();
 
