@@ -28,7 +28,7 @@ public final class TcfaModels {
 		final URL url = TcfaModels.class.getResource("/prosigma.tcfa");
 
 		try {
-			final TcfaSpec spec = TcfaDslManager.createTcfaSpec(url.getPath(), Int(tSync), Int(tRtMax));
+			final TcfaSpec spec = TcfaDslManager.createTcfaSpec(url.getFile(), Int(tSync), Int(tRtMax));
 			final TCFA tcfa = spec.createTcfa("prosigma");
 			return tcfa;
 		} catch (final FileNotFoundException e) {
@@ -43,7 +43,7 @@ public final class TcfaModels {
 		final URL url = TcfaModels.class.getResource("/fischer.tcfa");
 
 		try {
-			final TcfaSpec spec = TcfaDslManager.createTcfaSpec(url.getPath(), lock, Int(a), Int(b));
+			final TcfaSpec spec = TcfaDslManager.createTcfaSpec(url.getFile(), lock, Int(a), Int(b));
 			final List<TCFA> tcfas = new ArrayList<>(n);
 			for (int i = 1; i <= n; i++) {
 				final Expr<RatType> x_i = Clock("x" + i).getRef();
