@@ -6,6 +6,7 @@ import java.io.IOException;
 
 import hu.bme.mit.theta.analysis.algorithm.SafetyStatus;
 import hu.bme.mit.theta.analysis.algorithm.Statistics;
+import hu.bme.mit.theta.common.logging.impl.ConsoleLogger;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.formalism.sts.dsl.StsDslManager;
 import hu.bme.mit.theta.formalism.sts.dsl.impl.StsSpec;
@@ -15,6 +16,8 @@ import hu.bme.mit.theta.frontend.benchmark.StsConfigurationBuilder.Domain;
 import hu.bme.mit.theta.frontend.benchmark.StsConfigurationBuilder.InitPrecision;
 import hu.bme.mit.theta.frontend.benchmark.StsConfigurationBuilder.Refinement;
 import hu.bme.mit.theta.frontend.benchmark.StsConfigurationBuilder.Search;
+import hu.bme.mit.theta.frontend.benchmark.formatters.Formatter;
+import hu.bme.mit.theta.frontend.benchmark.formatters.impl.CsvFormatter;
 
 public class Main {
 
@@ -24,6 +27,8 @@ public class Main {
 		StsConfigurationBuilder.Refinement refinement = null;
 		StsConfigurationBuilder.InitPrecision initPrecision = InitPrecision.EMPTY;
 		StsConfigurationBuilder.Search search = Search.BFS;
+
+		final Formatter formatter = new CsvFormatter(new ConsoleLogger(100), ";");
 
 		try {
 			for (int i = 0; i < args.length; i += 2) {
@@ -40,7 +45,8 @@ public class Main {
 				}
 			}
 
-			System.out.print(String.format("%s,%s,%s,%s,%s", model, domain, refinement, initPrecision, search));
+			formatter.cell(model).cell(domain.toString()).cell(refinement.toString()).cell(initPrecision.toString())
+					.cell(search.toString());
 
 			STS sts = null;
 
@@ -58,17 +64,20 @@ public class Main {
 					.initPrecision(initPrecision).search(search).build(sts);
 			final SafetyStatus<?, ?> status = configuration.check();
 			final Statistics stats = status.getStats().get();
-			System.out.print(String.format(",%s,%d,%d,%d,%d", status.isSafe() + "", stats.getElapsedMillis(),
-					stats.getIterations(), status.getArg().size(), status.getArg().getDepth()));
+
+			formatter.cell(status.isSafe() + "").cell(stats.getElapsedMillis() + "").cell(stats.getIterations() + "")
+					.cell(status.getArg().size() + "").cell(status.getArg().getDepth() + "");
+
 			if (status.isUnsafe()) {
-				System.out.print("," + status.asUnsafe().getTrace().length());
+				formatter.cell(status.asUnsafe().getTrace().length() + "");
 			}
 			System.out.println();
 
 		} catch (final Exception ex) {
-			System.out.println(",EX: " + ex.getClass().getSimpleName());
-			ex.printStackTrace();
+			formatter.cell("EX: " + ex.getClass().getSimpleName());
 		}
+
+		formatter.newRow();
 	}
 
 }
