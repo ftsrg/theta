@@ -14,8 +14,12 @@ public class DeclSymbol implements Symbol {
 
 	private final Decl<?> decl;
 
-	public DeclSymbol(final Decl<?> decl) {
+	private DeclSymbol(final Decl<?> decl) {
 		this.decl = checkNotNull(decl);
+	}
+
+	public static DeclSymbol of(final Decl<?> decl) {
+		return new DeclSymbol(decl);
 	}
 
 	public Decl<?> getDecl() {

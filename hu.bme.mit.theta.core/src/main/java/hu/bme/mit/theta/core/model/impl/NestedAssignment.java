@@ -11,15 +11,21 @@ import hu.bme.mit.theta.core.model.Assignment;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.Type;
 
-public class NestedAssignmentImpl implements Assignment {
+public class NestedAssignment implements Assignment {
 
 	private final Assignment enclosingAssignment;
 	private final Assignment assignment;
 
-	public NestedAssignmentImpl(final Assignment enclosingAssignment, final Assignment assignment) {
+	private NestedAssignment(final Assignment enclosingAssignment, final Assignment assignment) {
 		this.enclosingAssignment = checkNotNull(enclosingAssignment);
 		this.assignment = checkNotNull(assignment);
 	}
+
+	public static NestedAssignment create(final Assignment enclosingAssignment, final Assignment assignment) {
+		return new NestedAssignment(enclosingAssignment, assignment);
+	}
+
+	////
 
 	@Override
 	public Collection<? extends Decl<?>> getDecls() {

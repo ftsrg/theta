@@ -12,13 +12,13 @@ import static java.util.stream.Collectors.toList;
 
 import java.util.List;
 
-import hu.bme.mit.theta.common.dsl.BasicScope;
-import hu.bme.mit.theta.common.dsl.Scope;
+import hu.bme.mit.theta.common.dsl.BasicScope2;
+import hu.bme.mit.theta.common.dsl.Scope2;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.model.Assignment;
 import hu.bme.mit.theta.core.model.impl.AssignmentImpl;
-import hu.bme.mit.theta.core.model.impl.NestedAssignmentImpl;
+import hu.bme.mit.theta.core.model.impl.NestedAssignment;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.formalism.sts.dsl.gen.StsDslBaseVisitor;
 import hu.bme.mit.theta.formalism.sts.dsl.gen.StsDslParser.DefStsContext;
@@ -35,7 +35,7 @@ final class StsCreator {
 	private StsCreator() {
 	}
 
-	public static StsCreationResult createSts(final StsContext stsContext, final Scope scope,
+	public static StsCreationResult createSts(final StsContext stsContext, final Scope2 scope,
 			final Assignment assignment) {
 		return stsContext.accept(new StsCreatorVisitor(scope, assignment));
 	}
@@ -45,15 +45,15 @@ final class StsCreator {
 	}
 
 	public static final class StsCreationResult {
-		private final Scope scope;
+		private final Scope2 scope;
 		private final StsImpl.Builder builder;
 
-		public StsCreationResult(final Scope scope, final StsImpl.Builder builder) {
+		public StsCreationResult(final Scope2 scope, final StsImpl.Builder builder) {
 			this.scope = checkNotNull(scope);
 			this.builder = checkNotNull(builder);
 		}
 
-		public Scope getScope() {
+		public Scope2 getScope() {
 			return scope;
 		}
 
@@ -64,10 +64,10 @@ final class StsCreator {
 
 	private static final class StsCreatorVisitor extends StsDslBaseVisitor<StsCreationResult> {
 
-		private Scope currentScope;
+		private Scope2 currentScope;
 		private Assignment currentAssignment;
 
-		private StsCreatorVisitor(final Scope scope, final Assignment assignment) {
+		private StsCreatorVisitor(final Scope2 scope, final Assignment assignment) {
 			currentScope = checkNotNull(scope);
 			currentAssignment = checkNotNull(assignment);
 		}
@@ -84,7 +84,7 @@ final class StsCreator {
 			declareVarDecls(currentScope, ctx.varDecls);
 
 			final Assignment constAssignment = createConstDefs(currentScope, currentAssignment, ctx.constDecls);
-			currentAssignment = new NestedAssignmentImpl(currentAssignment, constAssignment);
+			currentAssignment = NestedAssignment.create(currentAssignment, constAssignment);
 
 			createInvarConstrs(stsBuilder, ctx.invarConstrs);
 			createInitConstrs(stsBuilder, ctx.initConstrs);
@@ -128,7 +128,7 @@ final class StsCreator {
 		}
 
 		private void push() {
-			currentScope = new BasicScope(currentScope);
+			currentScope = new BasicScope2(currentScope);
 		}
 
 		private void pop() {
@@ -146,7 +146,7 @@ final class StsCreator {
 			final List<Expr<?>> paramsToEval = StsDslHelper.createExprList(currentScope, currentAssignment, ctx.params);
 			final List<Expr<?>> params = simplifyAll(paramsToEval, currentAssignment);
 			final Assignment paramAssignment = new AssignmentImpl(paramDecls, params);
-			final Assignment newAssignment = new NestedAssignmentImpl(currentAssignment, paramAssignment);
+			final Assignment newAssignment = NestedAssignment.create(currentAssignment, paramAssignment);
 
 			final StsCreationResult result = createSts(symbol, newAssignment);
 

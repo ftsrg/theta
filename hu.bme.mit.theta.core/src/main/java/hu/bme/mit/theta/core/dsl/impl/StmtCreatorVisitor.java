@@ -5,7 +5,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.stmt.impl.Stmts.Assign;
 import static hu.bme.mit.theta.core.stmt.impl.Stmts.Assume;
 
-import hu.bme.mit.theta.common.dsl.Scope;
+import hu.bme.mit.theta.common.dsl.Scope2;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.dsl.DeclSymbol;
@@ -20,9 +20,9 @@ import hu.bme.mit.theta.core.type.Type;
 
 public final class StmtCreatorVisitor extends CoreDslBaseVisitor<Stmt> {
 
-	final Scope scope;
+	final Scope2 scope;
 
-	public StmtCreatorVisitor(final Scope scope) {
+	public StmtCreatorVisitor(final Scope2 scope) {
 		this.scope = checkNotNull(scope);
 	}
 
@@ -33,7 +33,7 @@ public final class StmtCreatorVisitor extends CoreDslBaseVisitor<Stmt> {
 		return Assign(lhs, value);
 	}
 
-	private VarDecl<Type> resolveVar(final Scope scope, final String name) {
+	private VarDecl<Type> resolveVar(final Scope2 scope, final String name) {
 		final DeclSymbol declSymbol = CoreDslHelper.resolveDecl(scope, name);
 		final Decl<?> decl = declSymbol.getDecl();
 		checkArgument(decl instanceof VarDecl);
