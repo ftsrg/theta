@@ -10,7 +10,6 @@ import java.util.List;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.SafetyStatus;
 import hu.bme.mit.theta.analysis.algorithm.Statistics;
-import hu.bme.mit.theta.common.logging.impl.ConsoleLogger;
 import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.common.table.impl.SimpleTableWriter;
 import hu.bme.mit.theta.formalism.sts.STS;
@@ -27,7 +26,7 @@ public class StsBenchmark {
 
 	public static void main(final String[] args) {
 		final String basePath = "src/test/resources/";
-		final TableWriter formatter = new SimpleTableWriter(new ConsoleLogger(100), "\t");
+		final TableWriter formatter = new SimpleTableWriter(System.out, "\t");
 		final int runs = 1;
 
 		final List<StsInput> inputs = new ArrayList<>();

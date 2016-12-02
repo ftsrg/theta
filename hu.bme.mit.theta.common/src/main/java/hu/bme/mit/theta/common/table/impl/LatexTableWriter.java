@@ -1,33 +1,41 @@
 package hu.bme.mit.theta.common.table.impl;
 
-import hu.bme.mit.theta.common.logging.Logger;
+import java.io.PrintStream;
+
 import hu.bme.mit.theta.common.table.TableWriter;
 
+/**
+ * Table writer that prints tables to a PrintStream in LaTeX format.
+ */
 public class LatexTableWriter implements TableWriter {
 
-	private final Logger logger;
+	private final PrintStream stream;
 	boolean isFirstCell = true;
 
-	public LatexTableWriter(final Logger logger) {
-		this.logger = logger;
+	public LatexTableWriter(final PrintStream stream) {
+		this.stream = stream;
+	}
+
+	public LatexTableWriter() {
+		this(System.out);
 	}
 
 	@Override
 	public TableWriter cell(final Object obj, final int colspan) {
 		final String text = obj.toString().replace("_", "\\_").replace("#", "\\#").replace("%", "\\%");
 		if (!isFirstCell)
-			logger.write(" & ", 0);
+			stream.print(" & ");
 		if (colspan != 1)
-			logger.write("\\multicolumn{" + colspan + "}{c}{" + text + "}", 0);
+			stream.print("\\multicolumn{" + colspan + "}{c}{" + text + "}");
 		else
-			logger.write(text, 0);
+			stream.print(text);
 		isFirstCell = false;
 		return this;
 	}
 
 	@Override
 	public TableWriter newRow() {
-		logger.writeln("\\\\\\hline", 0);
+		stream.println("\\\\\\hline");
 		isFirstCell = true;
 		return this;
 	}

@@ -1,9 +1,11 @@
 package hu.bme.mit.theta.common.table;
 
+/**
+ * Interface for printing tables with cells and rows.
+ */
 public interface TableWriter {
 	default TableWriter cell(final Object obj) {
-		cell(obj, 1);
-		return this;
+		return cell(obj, 1);
 	}
 
 	default TableWriter cells(final Iterable<?> objs) {
@@ -14,4 +16,8 @@ public interface TableWriter {
 	TableWriter cell(Object obj, int colspan);
 
 	TableWriter newRow();
+
+	default TableWriter newRow(final Object obj) {
+		return cell(obj).newRow();
+	}
 }
