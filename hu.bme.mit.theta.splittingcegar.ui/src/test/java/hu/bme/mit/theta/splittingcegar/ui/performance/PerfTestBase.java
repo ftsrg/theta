@@ -10,11 +10,11 @@ import java.util.Locale;
 
 import org.junit.Assert;
 
+import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.formalism.sts.dsl.StsDslManager;
 import hu.bme.mit.theta.frontend.aiger.impl.OptimizedAigerLoader;
 import hu.bme.mit.theta.frontend.aiger.impl.SimpleAigerLoader;
-import hu.bme.mit.theta.frontend.benchmark.formatters.Formatter;
 import hu.bme.mit.theta.splittingcegar.common.CEGARBuilder;
 import hu.bme.mit.theta.splittingcegar.common.CEGARLoop;
 import hu.bme.mit.theta.splittingcegar.common.CEGARResult;
@@ -22,7 +22,7 @@ import hu.bme.mit.theta.splittingcegar.common.CEGARResult;
 public class PerfTestBase {
 
 	protected void run(final List<TestCase> testCases, final List<CEGARBuilder> configurations, final int timeOut,
-			final Formatter formatter) {
+			final TableWriter formatter) {
 		boolean allOk = true;
 
 		final TestResult[][] results = new TestResult[testCases.size()][configurations.size()];

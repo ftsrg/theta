@@ -11,6 +11,8 @@ import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.SafetyStatus;
 import hu.bme.mit.theta.analysis.algorithm.Statistics;
 import hu.bme.mit.theta.common.logging.impl.ConsoleLogger;
+import hu.bme.mit.theta.common.table.TableWriter;
+import hu.bme.mit.theta.common.table.impl.SimpleTableWriter;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.formalism.sts.dsl.StsDslManager;
 import hu.bme.mit.theta.formalism.sts.dsl.impl.StsSpec;
@@ -20,14 +22,12 @@ import hu.bme.mit.theta.frontend.benchmark.StsConfigurationBuilder.Domain;
 import hu.bme.mit.theta.frontend.benchmark.StsConfigurationBuilder.InitPrecision;
 import hu.bme.mit.theta.frontend.benchmark.StsConfigurationBuilder.Refinement;
 import hu.bme.mit.theta.frontend.benchmark.StsConfigurationBuilder.Search;
-import hu.bme.mit.theta.frontend.benchmark.formatters.Formatter;
-import hu.bme.mit.theta.frontend.benchmark.formatters.impl.CsvFormatter;
 
 public class StsBenchmark {
 
 	public static void main(final String[] args) {
 		final String basePath = "src/test/resources/";
-		final Formatter formatter = new CsvFormatter(new ConsoleLogger(100), "\t");
+		final TableWriter formatter = new SimpleTableWriter(new ConsoleLogger(100), "\t");
 		final int runs = 1;
 
 		final List<StsInput> inputs = new ArrayList<>();
@@ -72,7 +72,7 @@ public class StsBenchmark {
 	}
 
 	private static void run(final Collection<StsInput> inputs, final Collection<StsConfigurationBuilder> builders,
-			final int runs, final Formatter formatter) {
+			final int runs, final TableWriter formatter) {
 		System.out.println(String.format("Running %d configurations on %d inputs with %d repetitions.", builders.size(),
 				inputs.size(), runs));
 
@@ -91,7 +91,7 @@ public class StsBenchmark {
 	}
 
 	private static void run(final StsInput input, final StsConfigurationBuilder configBuilder,
-			final Formatter formatter) {
+			final TableWriter formatter) {
 		formatter.cell(input.path);
 		formatter.cell(input.expected + "");
 		formatter.cell(configBuilder.getDomain() + "");
