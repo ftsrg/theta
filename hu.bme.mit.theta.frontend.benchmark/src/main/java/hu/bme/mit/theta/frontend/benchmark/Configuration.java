@@ -1,13 +1,5 @@
 package hu.bme.mit.theta.frontend.benchmark;
 
-import java.util.Optional;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Precision;
 import hu.bme.mit.theta.analysis.State;
@@ -28,26 +20,8 @@ public class Configuration<S extends State, A extends Action, P extends Precisio
 		return new Configuration<>(checker, initPrecision);
 	}
 
-	public SafetyStatus<S, A> check() throws InterruptedException {
+	public SafetyStatus<S, A> check() {
 		return checker.check(initPrecision);
-	}
-
-	public Optional<SafetyStatus<?, ?>> check(final long timeout, final TimeUnit unit) {
-		final ExecutorService executor = Executors.newFixedThreadPool(1);
-		final Future<SafetyStatus<S, A>> future = executor.submit(() -> {
-			return checker.check(initPrecision);
-		});
-
-		try {
-			final SafetyStatus<S, A> result = future.get(timeout, unit);
-			return Optional.of(result);
-		} catch (final InterruptedException | ExecutionException | TimeoutException e) {
-			return Optional.empty();
-		} finally {
-			future.cancel(true);
-			executor.shutdownNow();
-		}
-
 	}
 
 }

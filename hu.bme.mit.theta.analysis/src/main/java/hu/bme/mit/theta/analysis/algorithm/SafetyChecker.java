@@ -6,6 +6,6 @@ import hu.bme.mit.theta.analysis.State;
 
 public interface SafetyChecker<S extends State, A extends Action, P extends Precision> {
 
-	SafetyStatus<S, A> check(final P precision) throws InterruptedException;
+	SafetyStatus<S, A> check(final P precision);
 
 }

@@ -36,7 +36,7 @@ import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 public class TcfaPredTest {
 
 	@Test
-	public void test() throws InterruptedException {
+	public void test() {
 		final int n = 2;
 		final VarDecl<IntType> vlock = Var("lock", Int());
 		final TCFA fischer = TcfaTestHelper.fischer(n, vlock);
