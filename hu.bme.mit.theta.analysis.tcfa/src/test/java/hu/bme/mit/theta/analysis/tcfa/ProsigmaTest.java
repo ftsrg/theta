@@ -28,6 +28,7 @@ import hu.bme.mit.theta.common.waitlist.FifoWaitlist;
 import hu.bme.mit.theta.formalism.tcfa.TCFA;
 import hu.bme.mit.theta.formalism.tcfa.TcfaEdge;
 import hu.bme.mit.theta.formalism.tcfa.TcfaLoc;
+import hu.bme.mit.theta.formalism.tcfa.instances.TcfaModels;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 
@@ -35,7 +36,7 @@ public class ProsigmaTest {
 
 	@Test
 	public void test() {
-		final TCFA prosigma = TcfaTestHelper.prosigma();
+		final TCFA prosigma = TcfaModels.prosigma(3, 7);
 
 		final Solver solver = Z3SolverFactory.getInstace().createSolver();
 
