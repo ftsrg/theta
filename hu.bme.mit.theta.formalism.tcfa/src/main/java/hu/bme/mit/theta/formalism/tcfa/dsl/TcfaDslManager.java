@@ -1,8 +1,8 @@
 package hu.bme.mit.theta.formalism.tcfa.dsl;
 
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
 
@@ -19,9 +19,9 @@ public final class TcfaDslManager {
 	private TcfaDslManager() {
 	}
 
-	public static TcfaSpec createTcfaSpec(final String filepath, final List<? extends Expr<?>> params)
+	public static TcfaSpec createTcfaSpec(final InputStream inputStream, final List<? extends Expr<?>> params)
 			throws FileNotFoundException, IOException {
-		final ANTLRInputStream input = new ANTLRInputStream(new FileInputStream(filepath));
+		final ANTLRInputStream input = new ANTLRInputStream(inputStream);
 
 		final TcfaDslLexer lexer = new TcfaDslLexer(input);
 		final CommonTokenStream tokens = new CommonTokenStream(lexer);
@@ -34,9 +34,9 @@ public final class TcfaDslManager {
 		return tcfaSpec;
 	}
 
-	public static TcfaSpec createTcfaSpec(final String filepath, final Expr<?>... params)
+	public static TcfaSpec createTcfaSpec(final InputStream inputStream, final Expr<?>... params)
 			throws FileNotFoundException, IOException {
-		return createTcfaSpec(filepath, Arrays.asList(params));
+		return createTcfaSpec(inputStream, Arrays.asList(params));
 	}
 
 }
