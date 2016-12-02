@@ -14,7 +14,6 @@ import org.apache.commons.cli.ParseException;
 
 import hu.bme.mit.theta.analysis.algorithm.SafetyStatus;
 import hu.bme.mit.theta.analysis.algorithm.Statistics;
-import hu.bme.mit.theta.common.logging.impl.ConsoleLogger;
 import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.common.table.impl.SimpleTableWriter;
 import hu.bme.mit.theta.formalism.sts.STS;
@@ -74,7 +73,7 @@ public class Main {
 				.valueOf(cmd.getOptionValue(optInitPrecision.getOpt(), InitPrecision.EMPTY.toString()));
 		final Search search = Search.valueOf(cmd.getOptionValue(optSearch.getOpt(), Search.BFS.toString()));
 
-		final TableWriter formatter = new SimpleTableWriter(new ConsoleLogger(100), ";");
+		final TableWriter formatter = new SimpleTableWriter(System.out, ";");
 
 		try {
 

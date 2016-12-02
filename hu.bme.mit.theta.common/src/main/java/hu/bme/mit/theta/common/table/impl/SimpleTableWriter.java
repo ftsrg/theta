@@ -1,20 +1,29 @@
 package hu.bme.mit.theta.common.table.impl;
 
-import hu.bme.mit.theta.common.logging.Logger;
+import java.io.PrintStream;
+
 import hu.bme.mit.theta.common.table.TableWriter;
 
+/**
+ * A simple table writer that prints tables to a PrintStream using an arbitrary
+ * delimeter.
+ */
 public class SimpleTableWriter implements TableWriter {
 
-	private final Logger logger;
+	private final PrintStream stream;
 	private final String delimeter;
 
-	public SimpleTableWriter(final Logger logger, final String delimeter) {
-		this.logger = logger;
+	public SimpleTableWriter(final PrintStream stream, final String delimeter) {
+		this.stream = stream;
 		this.delimeter = delimeter;
 	}
 
-	public SimpleTableWriter(final Logger logger) {
-		this(logger, ",");
+	public SimpleTableWriter(final PrintStream stream) {
+		this(stream, ",");
+	}
+
+	public SimpleTableWriter() {
+		this(System.out);
 	}
 
 	boolean isFirstCell = true;
@@ -22,17 +31,17 @@ public class SimpleTableWriter implements TableWriter {
 	@Override
 	public TableWriter cell(final Object obj, final int colspan) {
 		if (!isFirstCell)
-			logger.write(delimeter, 0);
-		logger.write(obj, 0);
+			stream.print(delimeter);
+		stream.print(obj);
 		for (int i = 0; i < colspan - 1; ++i)
-			logger.write(delimeter, 0);
+			stream.print(delimeter);
 		isFirstCell = false;
 		return this;
 	}
 
 	@Override
 	public TableWriter newRow() {
-		logger.writeln(0);
+		stream.println();
 		isFirstCell = true;
 		return this;
 	}
