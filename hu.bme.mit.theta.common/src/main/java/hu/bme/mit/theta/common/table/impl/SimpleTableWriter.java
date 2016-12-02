@@ -1,35 +1,29 @@
-package hu.bme.mit.theta.frontend.benchmark.formatters.impl;
+package hu.bme.mit.theta.common.table.impl;
 
 import hu.bme.mit.theta.common.logging.Logger;
-import hu.bme.mit.theta.frontend.benchmark.formatters.Formatter;
+import hu.bme.mit.theta.common.table.TableWriter;
 
-public class CsvFormatter implements Formatter {
+public class SimpleTableWriter implements TableWriter {
 
 	private final Logger logger;
 	private final String delimeter;
 
-	public CsvFormatter(final Logger logger, final String delimeter) {
+	public SimpleTableWriter(final Logger logger, final String delimeter) {
 		this.logger = logger;
 		this.delimeter = delimeter;
 	}
 
-	public CsvFormatter(final Logger logger) {
+	public SimpleTableWriter(final Logger logger) {
 		this(logger, ",");
 	}
 
 	boolean isFirstCell = true;
 
 	@Override
-	public Formatter cell(final String text) {
-		cell(text, 1);
-		return this;
-	}
-
-	@Override
-	public Formatter cell(final String text, final int colspan) {
+	public TableWriter cell(final Object obj, final int colspan) {
 		if (!isFirstCell)
 			logger.write(delimeter, 0);
-		logger.write(text, 0);
+		logger.write(obj, 0);
 		for (int i = 0; i < colspan - 1; ++i)
 			logger.write(delimeter, 0);
 		isFirstCell = false;
@@ -37,7 +31,7 @@ public class CsvFormatter implements Formatter {
 	}
 
 	@Override
-	public Formatter newRow() {
+	public TableWriter newRow() {
 		logger.writeln(0);
 		isFirstCell = true;
 		return this;

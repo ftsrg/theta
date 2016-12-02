@@ -15,6 +15,8 @@ import org.apache.commons.cli.ParseException;
 import hu.bme.mit.theta.analysis.algorithm.SafetyStatus;
 import hu.bme.mit.theta.analysis.algorithm.Statistics;
 import hu.bme.mit.theta.common.logging.impl.ConsoleLogger;
+import hu.bme.mit.theta.common.table.TableWriter;
+import hu.bme.mit.theta.common.table.impl.SimpleTableWriter;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.formalism.sts.dsl.StsDslManager;
 import hu.bme.mit.theta.formalism.sts.dsl.impl.StsSpec;
@@ -24,8 +26,6 @@ import hu.bme.mit.theta.frontend.benchmark.StsConfigurationBuilder.Domain;
 import hu.bme.mit.theta.frontend.benchmark.StsConfigurationBuilder.InitPrecision;
 import hu.bme.mit.theta.frontend.benchmark.StsConfigurationBuilder.Refinement;
 import hu.bme.mit.theta.frontend.benchmark.StsConfigurationBuilder.Search;
-import hu.bme.mit.theta.frontend.benchmark.formatters.Formatter;
-import hu.bme.mit.theta.frontend.benchmark.formatters.impl.CsvFormatter;
 
 public class Main {
 
@@ -74,7 +74,7 @@ public class Main {
 				.valueOf(cmd.getOptionValue(optInitPrecision.getOpt(), InitPrecision.EMPTY.toString()));
 		final Search search = Search.valueOf(cmd.getOptionValue(optSearch.getOpt(), Search.BFS.toString()));
 
-		final Formatter formatter = new CsvFormatter(new ConsoleLogger(100), ";");
+		final TableWriter formatter = new SimpleTableWriter(new ConsoleLogger(100), ";");
 
 		try {
 
