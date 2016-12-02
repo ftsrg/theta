@@ -6,4 +6,5 @@ dependencies {
   compile project(':hu.bme.mit.theta.analysis')
   compile project(':hu.bme.mit.theta.analysis.sts')
   compile project(':hu.bme.mit.theta.frontend.aiger')
+  compile group: 'commons-cli', name: 'commons-cli', version: '1.3.1'
 }
