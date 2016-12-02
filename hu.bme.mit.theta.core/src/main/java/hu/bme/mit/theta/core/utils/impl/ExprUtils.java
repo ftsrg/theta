@@ -2,9 +2,11 @@ package hu.bme.mit.theta.core.utils.impl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -113,6 +115,15 @@ public final class ExprUtils {
 	public static <ExprType extends Type> Expr<? extends ExprType> simplify(final Expr<? extends ExprType> expr,
 			final Assignment assignment) {
 		return (Expr<? extends ExprType>) expr.accept(new ExprSimplifierVisitor(), assignment);
+	}
+
+	public static List<Expr<?>> simplifyAll(final List<? extends Expr<?>> exprs) {
+		final List<Expr<?>> simplifiedArgs = new ArrayList<>();
+		for (final Expr<?> expr : exprs) {
+			final Expr<?> simplifiedArg = simplify(expr);
+			simplifiedArgs.add(simplifiedArg);
+		}
+		return simplifiedArgs;
 	}
 
 	public static <ExprType extends Type> Expr<? extends ExprType> simplify(final Expr<? extends ExprType> expr) {

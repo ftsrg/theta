@@ -35,11 +35,11 @@ specification ProSigma(tSync : int, tRtMax : int) {
 	}
 	
 	automaton field(tRtMax : int) := {
-		var reset : clock
+		var field_reset : clock
 		
 		init loc wait
-		loc try { reset <= tRtMax }
-		loc conn { reset <= tRtMax }
+		loc try { field_reset <= tRtMax }
+		loc conn { field_reset <= tRtMax }
 		
 		wait -> wait {
 			assume chan = OBJ2;
@@ -54,11 +54,11 @@ specification ProSigma(tSync : int, tRtMax : int) {
 		wait -> try {
 			assume chan = SYNC;
 			chan := OBJ1;
-			reset := 0
+			field_reset := 0
 		}
 		
 		try -> wait {
-			assume reset >= tRtMax
+			assume field_reset >= tRtMax
 		}
 		
 		try -> try {
@@ -73,11 +73,11 @@ specification ProSigma(tSync : int, tRtMax : int) {
 		
 		try -> conn {
 			assume chan = OBJ2;
-			reset := 0
+			field_reset := 0
 		}
 		
 		conn -> wait {
-			assume reset >= tRtMax
+			assume field_reset >= tRtMax
 		}
 		
 		conn -> conn {
@@ -92,16 +92,16 @@ specification ProSigma(tSync : int, tRtMax : int) {
 		
 		conn -> conn {
 			assume chan = OBJDOWN;
-			reset := 0
+			field_reset := 0
 		}
 	}
 	
 	automaton control(tRtMax : int) := {
-		var reset : clock
+		var control_reset : clock
 		
 		init loc wait
-		loc try { reset <= tRtMax }
-		loc conn { reset <= tRtMax }
+		loc try { control_reset <= tRtMax }
+		loc conn { control_reset <= tRtMax }
 		
 		wait -> wait {
 			assume chan = OBJUP;
@@ -111,11 +111,11 @@ specification ProSigma(tSync : int, tRtMax : int) {
 		wait -> try {
 			assume chan = OBJ1;
 			chan := OBJ2;
-			reset := 0
+			control_reset := 0
 		}
 		
 		try -> wait {
-			assume reset >= tRtMax
+			assume control_reset >= tRtMax
 		}
 		
 		try -> try {
@@ -126,11 +126,11 @@ specification ProSigma(tSync : int, tRtMax : int) {
 		try -> conn {
 			assume chan = OBJUP;
 			chan := OBJDOWN;
-			reset := 0
+			control_reset := 0
 		}
 		
 		conn -> wait {
-			assume reset >= tRtMax
+			assume control_reset >= tRtMax
 		}
 		
 		conn -> conn {
@@ -141,7 +141,7 @@ specification ProSigma(tSync : int, tRtMax : int) {
 		conn -> conn {
 			assume chan = OBJUP;
 			chan := OBJDOWN;
-			reset := 0
+			control_reset := 0
 		}
 	}
 	

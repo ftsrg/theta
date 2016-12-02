@@ -5,11 +5,15 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.stmt.impl.Stmts.Assign;
 import static hu.bme.mit.theta.core.stmt.impl.Stmts.Assume;
 
+import java.util.Optional;
+
 import hu.bme.mit.theta.common.dsl.Scope;
+import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.dsl.DeclSymbol;
 import hu.bme.mit.theta.core.expr.Expr;
+import hu.bme.mit.theta.core.expr.VarRefExpr;
 import hu.bme.mit.theta.core.model.Assignment;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
@@ -29,20 +33,27 @@ public class TcfaStmtCreatorVisitor extends TcfaDslBaseVisitor<Stmt> {
 		this.assignment = checkNotNull(assignment);
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public Stmt visitAssignStmt(final AssignStmtContext ctx) {
-		final VarDecl<Type> lhs = resolveVar(scope, ctx.lhs.getText());
+		final Optional<? extends Symbol> optLhsSymbol = scope.resolve(ctx.lhs.getText());
+		checkArgument(optLhsSymbol.isPresent());
+		final Symbol lhsSymbol = optLhsSymbol.get();
+		checkArgument(lhsSymbol instanceof DeclSymbol);
+		final DeclSymbol declSymbol = (DeclSymbol) lhsSymbol;
+		final Decl<?> decl = declSymbol.getDecl();
+
+		final VarDecl<Type> lhs;
+		if (decl instanceof VarDecl) {
+			lhs = (VarDecl<Type>) decl;
+		} else if (decl instanceof TcfaParamDecl) {
+			final VarRefExpr<Type> varRef = (VarRefExpr<Type>) assignment.eval(decl).get();
+			lhs = varRef.getDecl();
+		} else {
+			throw new AssertionError();
+		}
 		final Expr<? extends Type> value = TcfaDslHelper.createExpr(scope, assignment, ctx.value);
 		return Assign(lhs, value);
-	}
-
-	private VarDecl<Type> resolveVar(final Scope scope, final String name) {
-		final DeclSymbol declSymbol = TcfaDslHelper.resolveDecl(scope, name);
-		final Decl<?> decl = declSymbol.getDecl();
-		checkArgument(decl instanceof VarDecl);
-		@SuppressWarnings("unchecked")
-		final VarDecl<Type> varDecl = (VarDecl<Type>) decl;
-		return varDecl;
 	}
 
 	@Override

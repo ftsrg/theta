@@ -6,8 +6,8 @@ import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 
-import hu.bme.mit.theta.common.dsl.BasicScope;
-import hu.bme.mit.theta.common.dsl.Scope;
+import hu.bme.mit.theta.common.dsl.BasicScope2;
+import hu.bme.mit.theta.common.dsl.Scope2;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.dsl.gen.CoreDslLexer;
 import hu.bme.mit.theta.core.dsl.gen.CoreDslParser;
@@ -20,15 +20,15 @@ import hu.bme.mit.theta.core.type.Type;
 
 public final class CoreDslManager {
 
-	private final Scope scope;
+	private final Scope2 scope;
 
 	public CoreDslManager() {
-		this.scope = new BasicScope(null);
+		this.scope = new BasicScope2(null);
 	}
 
 	public void declare(final Decl<?> decl) {
 		checkNotNull(decl);
-		scope.declare(new DeclSymbol(decl));
+		scope.declare(DeclSymbol.of(decl));
 	}
 
 	public Type parseType(final String string) {

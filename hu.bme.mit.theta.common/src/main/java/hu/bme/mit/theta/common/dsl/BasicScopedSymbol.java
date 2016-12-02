@@ -9,13 +9,13 @@ import java.util.Optional;
 public class BasicScopedSymbol implements ScopedSymbol {
 
 	private final String name;
-	private final Scope scope;
+	private final Scope2 scope;
 
-	public BasicScopedSymbol(final String name, final Scope eclosingScope) {
+	public BasicScopedSymbol(final String name, final Scope2 eclosingScope) {
 		checkNotNull(name);
 		checkArgument(name.length() > 0);
 		this.name = name;
-		scope = new BasicScope(eclosingScope);
+		scope = new BasicScope2(eclosingScope);
 	}
 
 	@Override
@@ -39,7 +39,7 @@ public class BasicScopedSymbol implements ScopedSymbol {
 	}
 
 	@Override
-	public Optional<Scope> enclosingScope() {
+	public Optional<Scope2> enclosingScope() {
 		return scope.enclosingScope();
 	}
 

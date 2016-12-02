@@ -2,7 +2,7 @@ grammar TcfaDsl;
 
 // S P E C I F I C A T I O N
 
-spec:	SPEC name=ID (LPAREN (paramDecls=declList)? RPAREN)?
+tcfaSpec:	SPEC name=ID (LPAREN (tcfaParamDecls=tcfaParamDeclList)? RPAREN)?
 		LBRAC
 			(	constDecls+=constDecl
 			|	varDecls+=varDecl
@@ -18,6 +18,14 @@ constDecl
 varDecl
 	:	VAR ddecl=decl (ASSIGN value=expr)?
 	;
+	
+tcfaParamDecl
+	:	modifier=(REF | VAL)? ddecl=decl
+	;
+	
+tcfaParamDeclList
+	:	(decls+=tcfaParamDecl)(COMMA decls+=tcfaParamDecl)*
+	;
 
 SPEC:	'specification'
 	;
@@ -29,10 +37,16 @@ CONST
 VAR	:	'var'
 	;
 
+REF	:	'ref'
+	;
+	
+VAL	:	'val'
+	;
+
 // T C F A
 
 tcfaDecl
-	:	AUTOMATON name=ID (LPAREN (paramDecls=declList)? RPAREN)? ASSIGN def=tcfa
+	:	AUTOMATON name=ID (LPAREN (tcfaParamDecls=tcfaParamDeclList)? RPAREN)? ASSIGN def=tcfa
 	;
 
 tcfa:	prodTcfa
@@ -103,7 +117,6 @@ decl:	name=ID COLON ttype=type
 declList
 	:	(decls+=decl)(COMMA decls+=decl)*
 	;
-
 
 // T Y P E S
 

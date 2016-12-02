@@ -4,6 +4,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static hu.bme.mit.theta.core.decl.impl.Decls.Const;
 import static hu.bme.mit.theta.core.decl.impl.Decls.Param;
 import static hu.bme.mit.theta.core.decl.impl.Decls.Var;
+import static hu.bme.mit.theta.core.type.impl.Types.Rat;
 import static hu.bme.mit.theta.core.utils.impl.ExprUtils.cast;
 import static hu.bme.mit.theta.formalism.common.decl.impl.Decls2.Clock;
 import static java.util.stream.Collectors.toList;
@@ -27,6 +28,7 @@ import hu.bme.mit.theta.core.model.impl.AssignmentImpl;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.formalism.tcfa.dsl.gen.TcfaDslLexer;
 import hu.bme.mit.theta.formalism.tcfa.dsl.gen.TcfaDslParser.ConstDeclContext;
 import hu.bme.mit.theta.formalism.tcfa.dsl.gen.TcfaDslParser.DeclContext;
 import hu.bme.mit.theta.formalism.tcfa.dsl.gen.TcfaDslParser.DeclListContext;
@@ -34,6 +36,8 @@ import hu.bme.mit.theta.formalism.tcfa.dsl.gen.TcfaDslParser.ExprContext;
 import hu.bme.mit.theta.formalism.tcfa.dsl.gen.TcfaDslParser.ExprListContext;
 import hu.bme.mit.theta.formalism.tcfa.dsl.gen.TcfaDslParser.StmtContext;
 import hu.bme.mit.theta.formalism.tcfa.dsl.gen.TcfaDslParser.StmtListContext;
+import hu.bme.mit.theta.formalism.tcfa.dsl.gen.TcfaDslParser.TcfaParamDeclContext;
+import hu.bme.mit.theta.formalism.tcfa.dsl.gen.TcfaDslParser.TcfaParamDeclListContext;
 import hu.bme.mit.theta.formalism.tcfa.dsl.gen.TcfaDslParser.TypeContext;
 import hu.bme.mit.theta.formalism.tcfa.dsl.gen.TcfaDslParser.VarDeclContext;
 
@@ -57,14 +61,49 @@ final class TcfaDslHelper {
 		}
 	}
 
-	public static ConstDecl<?> createConstDecl(final DeclContext declCtx) {
+	public static TcfaParamDecl<?> createTcfaParamDecl(final TcfaParamDeclContext tcfaParamDeclCtx) {
+		final int modifier = (tcfaParamDeclCtx.modifier == null) ? TcfaDslLexer.VAL
+				: tcfaParamDeclCtx.modifier.getType();
+		final DeclContext declCtx = tcfaParamDeclCtx.ddecl;
+		final String name = declCtx.name.getText();
+
+		if (modifier == TcfaDslLexer.VAL) {
+			final Type type = createType(declCtx.ttype);
+			final TcfaParamDecl<?> paramDecl = TcfaParamDecl.of(name, type, TcfaParamDecl.Kind.VAL);
+			return paramDecl;
+		} else if (modifier == TcfaDslLexer.REF) {
+			if (declCtx.ttype.clockType() == null) {
+				final Type type = createType(declCtx.ttype);
+				final TcfaParamDecl<?> paramDecl = TcfaParamDecl.of(name, type, TcfaParamDecl.Kind.VAR_REF);
+				return paramDecl;
+			} else {
+				final Type type = Rat();
+				final TcfaParamDecl<?> paramDecl = TcfaParamDecl.of(name, type, TcfaParamDecl.Kind.CLOCK_REF);
+				return paramDecl;
+			}
+		} else {
+			throw new AssertionError();
+		}
+	}
+
+	public static List<TcfaParamDecl<?>> createTcfaParamList(final TcfaParamDeclListContext tcfaParamDeclListCtx) {
+		if (tcfaParamDeclListCtx == null || tcfaParamDeclListCtx.decls == null) {
+			return Collections.emptyList();
+		} else {
+			return tcfaParamDeclListCtx.decls.stream().map(TcfaDslHelper::createTcfaParamDecl).collect(toList());
+		}
+	}
+
+	public static ConstDecl<?> createConstDecl(final ConstDeclContext constDeclCtx) {
+		final DeclContext declCtx = constDeclCtx.ddecl;
 		final String name = declCtx.name.getText();
 		final Type type = createType(declCtx.ttype);
 		final ConstDecl<?> constDecl = Const(name, type);
 		return constDecl;
 	}
 
-	public static VarDecl<?> createVarDecl(final DeclContext declCtx) {
+	public static VarDecl<?> createVarDecl(final VarDeclContext varDeclCtx) {
+		final DeclContext declCtx = varDeclCtx.ddecl;
 		final String name = declCtx.name.getText();
 		final VarDecl<?> varDecl;
 
@@ -150,7 +189,7 @@ final class TcfaDslHelper {
 	}
 
 	public static DeclSymbol resolveDecl(final Scope scope, final String name) {
-		final Optional<Symbol> optSymbol = scope.resolve(name);
+		final Optional<? extends Symbol> optSymbol = scope.resolve(name);
 
 		checkArgument(optSymbol.isPresent());
 		final Symbol symbol = optSymbol.get();
@@ -161,40 +200,16 @@ final class TcfaDslHelper {
 		return declSymbol;
 	}
 
-	public static TcfaSymbol resolveTcfa(final Scope scope, final String name) {
-		final Optional<Symbol> optSymbol = scope.resolve(name);
+	public static TcfaDeclSymbol resolveTcfa(final Scope scope, final String name) {
+		final Optional<? extends Symbol> optSymbol = scope.resolve(name);
 
 		checkArgument(optSymbol.isPresent());
 		final Symbol symbol = optSymbol.get();
 
-		checkArgument(symbol instanceof TcfaSymbol);
-		final TcfaSymbol tcfaSymbol = (TcfaSymbol) symbol;
+		checkArgument(symbol instanceof TcfaDeclSymbol);
+		final TcfaDeclSymbol tcfaSymbol = (TcfaDeclSymbol) symbol;
 
 		return tcfaSymbol;
-	}
-
-	public static void declareConstDecls(final Scope scope, final List<? extends ConstDeclContext> constDeclCtxs) {
-		for (final ConstDeclContext constDeclCtx : constDeclCtxs) {
-			declareConstDecl(scope, constDeclCtx);
-		}
-	}
-
-	private static void declareConstDecl(final Scope scope, final ConstDeclContext constDeclCtx) {
-		final ConstDecl<?> constDecl = createConstDecl(constDeclCtx.ddecl);
-		final Symbol symbol = new DeclSymbol(constDecl);
-		scope.declare(symbol);
-	}
-
-	public static void declareVarDecls(final Scope scope, final List<? extends VarDeclContext> varDeclCtxs) {
-		for (final VarDeclContext varDeclCtx : varDeclCtxs) {
-			declareVarDecl(scope, varDeclCtx);
-		}
-	}
-
-	private static void declareVarDecl(final Scope scope, final VarDeclContext varDeclCtx) {
-		final VarDecl<?> varDecl = createVarDecl(varDeclCtx.ddecl);
-		final Symbol symbol = new DeclSymbol(varDecl);
-		scope.declare(symbol);
 	}
 
 }
