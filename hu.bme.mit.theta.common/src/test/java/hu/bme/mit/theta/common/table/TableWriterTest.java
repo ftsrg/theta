@@ -16,7 +16,7 @@ public class TableWriterTest {
 	public void test() {
 		final ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		final PrintStream ps = new PrintStream(baos);
-		final TableWriter tw = new SimpleTableWriter(ps, ",");
+		final TableWriter tw = new SimpleTableWriter(ps, ",", "X", "Y");
 
 		tw.cell(11).cell(12).newRow();
 		tw.cell(2, 2).newRow();
@@ -26,7 +26,7 @@ public class TableWriterTest {
 		final String actual = new String(baos.toByteArray(), StandardCharsets.UTF_8);
 
 		final String nl = System.lineSeparator();
-		final String expected = "11,12" + nl + "2," + nl + "31,32" + nl + "41,42" + nl;
+		final String expected = "X11Y,X12Y" + nl + "X2Y," + nl + "X31Y,X32Y" + nl + "X41Y,X42Y" + nl;
 
 		Assert.assertEquals(expected, actual);
 	}

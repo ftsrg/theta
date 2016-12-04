@@ -7,10 +7,10 @@ import hu.bme.mit.theta.common.table.TableWriter;
 /**
  * Table writer that prints tables to a PrintStream in LaTeX format.
  */
-public class LatexTableWriter implements TableWriter {
+public final class LatexTableWriter implements TableWriter {
 
 	private final PrintStream stream;
-	boolean isFirstCell = true;
+	private boolean isFirstCell = true;
 
 	public LatexTableWriter(final PrintStream stream) {
 		this.stream = stream;

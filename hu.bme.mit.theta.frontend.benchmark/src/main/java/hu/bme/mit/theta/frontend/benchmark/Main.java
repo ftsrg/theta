@@ -81,11 +81,11 @@ public class Main {
 		final Optional<Boolean> expected = cmd.hasOption(optExpected.getOpt())
 				? Optional.of(Boolean.parseBoolean(cmd.getOptionValue(optExpected.getOpt()))) : Optional.empty();
 
-		final TableWriter formatter = new SimpleTableWriter(System.out, ";");
+		final TableWriter tableWriter = new SimpleTableWriter(System.out, ";", "\"", "\"");
 
 		try {
 
-			formatter.cell(model).cell(domain.toString()).cell(refinement.toString()).cell(initPrecision.toString())
+			tableWriter.cell(model).cell(domain.toString()).cell(refinement.toString()).cell(initPrecision.toString())
 					.cell(search.toString());
 
 			STS sts = null;
@@ -106,22 +106,22 @@ public class Main {
 			final Statistics stats = status.getStats().get();
 
 			if (expected.isPresent() && !expected.get().equals(status.isSafe())) {
-				formatter.cell("ERROR: expected safe = " + expected.get());
+				tableWriter.cell("ERROR: expected safe = " + expected.get());
 			} else {
 
-				formatter.cell(status.isSafe() + "").cell(stats.getElapsedMillis() + "")
+				tableWriter.cell(status.isSafe() + "").cell(stats.getElapsedMillis() + "")
 						.cell(stats.getIterations() + "").cell(status.getArg().size() + "")
 						.cell(status.getArg().getDepth() + "");
 
 				if (status.isUnsafe()) {
-					formatter.cell(status.asUnsafe().getTrace().length() + "");
+					tableWriter.cell(status.asUnsafe().getTrace().length() + "");
 				}
 			}
 		} catch (final Exception ex) {
-			formatter.cell("EX: " + ex.getClass().getSimpleName());
+			tableWriter.cell("EX: " + ex.getClass().getSimpleName());
 		}
 
-		formatter.newRow();
+		tableWriter.newRow();
 	}
 
 }
