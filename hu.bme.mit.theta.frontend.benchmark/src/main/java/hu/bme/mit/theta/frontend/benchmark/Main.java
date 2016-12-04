@@ -3,6 +3,7 @@ package hu.bme.mit.theta.frontend.benchmark;
 import static java.util.Collections.emptyList;
 
 import java.io.IOException;
+import java.util.Optional;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -54,6 +55,10 @@ public class Main {
 		optSearch.setArgName("SEARCH");
 		options.addOption(optSearch);
 
+		final Option optExpected = new Option("e", "expected", true, "Expected result (safe)");
+		optExpected.setArgName("true|false");
+		options.addOption(optExpected);
+
 		final CommandLineParser parser = new DefaultParser();
 		final HelpFormatter helpFormatter = new HelpFormatter();
 		final CommandLine cmd;
@@ -72,6 +77,9 @@ public class Main {
 		final InitPrecision initPrecision = InitPrecision
 				.valueOf(cmd.getOptionValue(optInitPrecision.getOpt(), InitPrecision.EMPTY.toString()));
 		final Search search = Search.valueOf(cmd.getOptionValue(optSearch.getOpt(), Search.BFS.toString()));
+
+		final Optional<Boolean> expected = cmd.hasOption(optExpected.getOpt())
+				? Optional.of(Boolean.parseBoolean(cmd.getOptionValue(optExpected.getOpt()))) : Optional.empty();
 
 		final TableWriter formatter = new SimpleTableWriter(System.out, ";");
 
@@ -97,14 +105,18 @@ public class Main {
 			final SafetyStatus<?, ?> status = configuration.check();
 			final Statistics stats = status.getStats().get();
 
-			formatter.cell(status.isSafe() + "").cell(stats.getElapsedMillis() + "").cell(stats.getIterations() + "")
-					.cell(status.getArg().size() + "").cell(status.getArg().getDepth() + "");
+			if (expected.isPresent() && !expected.get().equals(status.isSafe())) {
+				formatter.cell("ERROR: expected safe = " + expected.get());
+			} else {
 
-			if (status.isUnsafe()) {
-				formatter.cell(status.asUnsafe().getTrace().length() + "");
+				formatter.cell(status.isSafe() + "").cell(stats.getElapsedMillis() + "")
+						.cell(stats.getIterations() + "").cell(status.getArg().size() + "")
+						.cell(status.getArg().getDepth() + "");
+
+				if (status.isUnsafe()) {
+					formatter.cell(status.asUnsafe().getTrace().length() + "");
+				}
 			}
-			System.out.println();
-
 		} catch (final Exception ex) {
 			formatter.cell("EX: " + ex.getClass().getSimpleName());
 		}

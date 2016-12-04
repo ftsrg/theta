@@ -58,7 +58,7 @@ foreach($model in $models) {
         for($r = 1; $r -le $runs; $r++) {
             Write-Host (" " + $r) -NoNewLine
             
-            $p = Start-Process java -ArgumentList '-jar', $jarFile, '-m', $model[0], '-d', $conf[0], '-r', $conf[1], '-i', $conf[2], '-s', $conf[3] -RedirectStandardOutput $tmpFile -PassThru -NoNewWindow
+            $p = Start-Process java -ArgumentList '-jar', $jarFile, '-m', $model[0], '-e', $model[1], '-d', $conf[0], '-r', $conf[1], '-i', $conf[2], '-s', $conf[3] -RedirectStandardOutput $tmpFile -PassThru -NoNewWindow
             $id = $p.id
             if (!$p.WaitForExit($timeOutMs)){ # Timeout
                 Stop-Process -Id $id
