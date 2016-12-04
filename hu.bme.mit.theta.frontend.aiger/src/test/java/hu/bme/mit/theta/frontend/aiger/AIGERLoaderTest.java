@@ -5,17 +5,17 @@ import java.io.IOException;
 import org.junit.Test;
 
 import hu.bme.mit.theta.formalism.sts.STS;
-import hu.bme.mit.theta.frontend.aiger.impl.OptimizedAigerLoader;
+import hu.bme.mit.theta.frontend.aiger.impl.AigerParserOptimized;
 import hu.bme.mit.theta.frontend.aiger.utils.AigerVisualizer;
 
 public class AIGERLoaderTest {
 
 	@Test
 	public void testAIGERLoader() throws IOException {
-		AigerLoader loader = null;
+		AigerParser loader = null;
 		// loader = new AIGERLoaderSimple();
-		loader = new OptimizedAigerLoader();
-		final STS sts = loader.load("src/test/resources/simple3.aag");
+		loader = new AigerParserOptimized();
+		final STS sts = loader.parse("src/test/resources/simple3.aag");
 
 		AigerVisualizer.visualize("src/test/resources/simple3.aag", "src/test/resources/simple3.dot");
 

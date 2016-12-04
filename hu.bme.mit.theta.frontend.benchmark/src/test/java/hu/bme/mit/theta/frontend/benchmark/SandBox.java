@@ -12,7 +12,7 @@ import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.impl.ConsoleLogger;
 import hu.bme.mit.theta.common.visualization.GraphvizWriter;
 import hu.bme.mit.theta.formalism.sts.STS;
-import hu.bme.mit.theta.frontend.aiger.impl.SimpleAigerLoader;
+import hu.bme.mit.theta.frontend.aiger.impl.AigerParserSimple;
 import hu.bme.mit.theta.frontend.benchmark.StsConfigurationBuilder.Domain;
 import hu.bme.mit.theta.frontend.benchmark.StsConfigurationBuilder.InitPrecision;
 import hu.bme.mit.theta.frontend.benchmark.StsConfigurationBuilder.Refinement;
@@ -27,7 +27,7 @@ public class SandBox {
 		// STS sts = spec.getAllSts().iterator().next();
 		// sts = new StsIteTransformation().transform(sts);
 
-		final STS sts = new SimpleAigerLoader().load("src/test/resources/hw/srg5ptimonegnv.aag");
+		final STS sts = new AigerParserSimple().parse("src/test/resources/hw/srg5ptimonegnv.aag");
 
 		System.out.println(sts);
 

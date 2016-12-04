@@ -13,8 +13,8 @@ import org.junit.Assert;
 import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.formalism.sts.dsl.StsDslManager;
-import hu.bme.mit.theta.frontend.aiger.impl.OptimizedAigerLoader;
-import hu.bme.mit.theta.frontend.aiger.impl.SimpleAigerLoader;
+import hu.bme.mit.theta.frontend.aiger.impl.AigerParserOptimized;
+import hu.bme.mit.theta.frontend.aiger.impl.AigerParserSimple;
 import hu.bme.mit.theta.splittingcegar.common.CEGARBuilder;
 import hu.bme.mit.theta.splittingcegar.common.CEGARLoop;
 import hu.bme.mit.theta.splittingcegar.common.CEGARResult;
@@ -134,7 +134,7 @@ public class PerfTestBase {
 
 		@Override
 		public STS load(final String path) throws IOException {
-			return new OptimizedAigerLoader().load(path);
+			return new AigerParserOptimized().parse(path);
 		}
 	}
 
@@ -142,7 +142,7 @@ public class PerfTestBase {
 
 		@Override
 		public STS load(final String path) throws IOException {
-			return new SimpleAigerLoader().load(path);
+			return new AigerParserSimple().parse(path);
 		}
 	}
 

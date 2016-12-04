@@ -20,7 +20,7 @@ import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.formalism.sts.dsl.StsDslManager;
 import hu.bme.mit.theta.formalism.sts.dsl.impl.StsSpec;
 import hu.bme.mit.theta.formalism.sts.utils.impl.StsIteTransformation;
-import hu.bme.mit.theta.frontend.aiger.impl.SimpleAigerLoader;
+import hu.bme.mit.theta.frontend.aiger.impl.AigerParserSimple;
 import hu.bme.mit.theta.frontend.benchmark.StsConfigurationBuilder.Domain;
 import hu.bme.mit.theta.frontend.benchmark.StsConfigurationBuilder.InitPrecision;
 import hu.bme.mit.theta.frontend.benchmark.StsConfigurationBuilder.Refinement;
@@ -83,7 +83,7 @@ public class Main {
 			STS sts = null;
 
 			if (model.endsWith(".aag")) {
-				sts = new SimpleAigerLoader().load(model);
+				sts = new AigerParserSimple().parse(model);
 			} else {
 				final StsSpec spec = StsDslManager.parse(model, emptyList());
 				if (spec.getAllSts().size() != 1) {
