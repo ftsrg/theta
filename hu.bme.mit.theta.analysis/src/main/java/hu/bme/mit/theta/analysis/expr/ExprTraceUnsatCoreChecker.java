@@ -50,15 +50,16 @@ public final class ExprTraceUnsatCoreChecker implements ExprTraceChecker<Indexed
 
 		solver.push();
 
-		solver.track(PathUtils.unfold(init, indexings.get(0)));
-		solver.track(PathUtils.unfold(trace.getState(0).toExpr(), indexings.get(0)));
+		solver.track(ExprUtils.getConjuncts(PathUtils.unfold(init, indexings.get(0))));
+		solver.track(ExprUtils.getConjuncts(PathUtils.unfold(trace.getState(0).toExpr(), indexings.get(0))));
 		checkState(solver.check().isSat());
 		boolean concretizable = true;
 
 		for (int i = 1; i < stateCount; ++i) {
 			indexings.add(indexings.get(i - 1).add(trace.getAction(i - 1).nextIndexing()));
-			solver.track(PathUtils.unfold(trace.getState(i).toExpr(), indexings.get(i)));
-			solver.track(PathUtils.unfold(trace.getAction(i - 1).toExpr(), indexings.get(i - 1)));
+			solver.track(ExprUtils.getConjuncts(PathUtils.unfold(trace.getState(i).toExpr(), indexings.get(i))));
+			solver.track(
+					ExprUtils.getConjuncts(PathUtils.unfold(trace.getAction(i - 1).toExpr(), indexings.get(i - 1))));
 
 			if (!solver.check().isSat()) {
 				concretizable = false;
@@ -67,7 +68,7 @@ public final class ExprTraceUnsatCoreChecker implements ExprTraceChecker<Indexed
 		}
 
 		if (concretizable) {
-			solver.track(PathUtils.unfold(target, indexings.get(stateCount - 1)));
+			solver.track(ExprUtils.getConjuncts(PathUtils.unfold(target, indexings.get(stateCount - 1))));
 			concretizable = solver.check().isSat();
 		}
 
