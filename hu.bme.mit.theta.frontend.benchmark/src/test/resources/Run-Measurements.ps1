@@ -1,12 +1,31 @@
-# This script can run several configurations on several models.
-# The output is logged into a file.
-# Timeout can be specified.
+<#
+.SYNOPSIS
+Run measurements on several models and configurations with a
+given number of repetitions and timeout.
 
-$timeOutMs = 30000;
-$runs = 3;
+.PARAMETER timeOut
+Timeout in seconds. Note, that starting the JVM and the
+application is also included in the time.
+
+.PARAMETER runs
+Number of repetitions for each measurement.
+
+.PARAMETER jarFile
+Path of the jar file containing the algorithm.
+
+.NOTES
+Author: Akos Hajdu
+#>
+
+param (
+    [int]$timeOut = 30,
+    [int]$runs = 3,
+    [string]$jarFile = "theta.jar"
+)
+
 $tmpFile = [System.IO.Path]::GetTempFileName();
 $logFile = "log_" + (Get-Date -format "yyyyMMdd_HHmmss") + ".txt";
-$jarFile = "theta.jar"
+
 
 # List of models: path and expected output
 $models = @(
@@ -62,7 +81,7 @@ foreach($model in $models) {
             
             $p = Start-Process java -ArgumentList '-jar', $jarFile, '-m', $model[0], '-e', $model[1], '-d', $conf[0], '-r', $conf[1], '-i', $conf[2], '-s', $conf[3] -RedirectStandardOutput $tmpFile -PassThru -NoNewWindow
             $id = $p.id
-            if (!$p.WaitForExit($timeOutMs)){ # Timeout
+            if (!$p.WaitForExit($timeOut*1000)){ # Timeout
                 Stop-Process -Id $id
                 Wait-Process -Id $id
                 Start-Sleep -m 100 # Wait a bit so that the file is closed
