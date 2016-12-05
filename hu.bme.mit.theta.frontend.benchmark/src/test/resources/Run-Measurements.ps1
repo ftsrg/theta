@@ -49,6 +49,10 @@ $configs = @(
 	@("EXPL", "UNSAT_CORE", "PROP", "DFS")
 );
 
+$completed = 0
+$total = $models.length * $configs.length * $runs
+Write-Progress -Activity "Running measurements" -PercentComplete 0
+
 foreach($model in $models) {
     Write-Host ("Model: " + $model[0])
 
@@ -68,6 +72,9 @@ foreach($model in $models) {
             } else { # Normal execution
                 Get-Content $tmpFile | where {$_ -ne ""} | Out-File $logFile -Append
             }
+            
+            $completed++
+            Write-Progress -Activity "Running measurements" -PercentComplete ($completed*100/$total)
         }
         Write-Host ""
     }
@@ -75,3 +82,4 @@ foreach($model in $models) {
 
 Remove-Item $tmpFile
 
+Write-Progress -Activity "Running measurements" -PercentComplete 100 -Completed
