@@ -57,4 +57,29 @@ public final class TcfaModels {
 		}
 	}
 
+	public static TCFA critRegion(final int n, final int a, final int b) {
+		try {
+			final InputStream inputStream = TcfaModels.class.getResourceAsStream("/critregion.tcfa");
+			final TcfaSpec spec = TcfaDslManager.createTcfaSpec(inputStream, Int(a), Int(b));
+			final List<TCFA> tcfas = new ArrayList<>(n);
+
+			final TCFA counter = spec.createTcfa("counter", Int(n));
+			tcfas.add(counter);
+
+			for (int i = 1; i <= n; i++) {
+				final Expr<RatType> x_i = Clock("x" + i).getRef();
+				final TCFA cell_i = spec.createTcfa("cell", x_i, Int(i));
+				tcfas.add(cell_i);
+			}
+
+			final TCFA fischers = NetworkTcfa.of(tcfas);
+			return fischers;
+
+		} catch (final FileNotFoundException e) {
+			throw new AssertionError();
+		} catch (final IOException e) {
+			throw new AssertionError();
+		}
+	}
+
 }

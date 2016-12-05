@@ -19,6 +19,7 @@ import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.utils.impl.ExprUtils;
 import hu.bme.mit.theta.formalism.tcfa.dsl.gen.TcfaDslBaseVisitor;
 import hu.bme.mit.theta.formalism.tcfa.dsl.gen.TcfaDslParser.AssignStmtContext;
 import hu.bme.mit.theta.formalism.tcfa.dsl.gen.TcfaDslParser.AssumeStmtContext;
@@ -53,13 +54,13 @@ public class TcfaStmtCreatorVisitor extends TcfaDslBaseVisitor<Stmt> {
 			throw new AssertionError();
 		}
 		final Expr<? extends Type> value = TcfaDslHelper.createExpr(scope, assignment, ctx.value);
-		return Assign(lhs, value);
+		return Assign(lhs, ExprUtils.simplify(value));
 	}
 
 	@Override
 	public AssumeStmt visitAssumeStmt(final AssumeStmtContext ctx) {
 		final Expr<? extends BoolType> cond = TcfaDslHelper.createBoolExpr(scope, assignment, ctx.cond);
-		return Assume(cond);
+		return Assume(ExprUtils.simplify(cond));
 	}
 
 }
