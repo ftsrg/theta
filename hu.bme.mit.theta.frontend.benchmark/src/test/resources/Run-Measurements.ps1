@@ -49,18 +49,16 @@ $configs = @(
 	@("EXPL", "UNSAT_CORE", "PROP", "DFS")
 );
 
-$completed = 0
-$total = $models.length * $configs.length * $runs
-Write-Progress -Activity "Running measurements" -PercentComplete 0
-
+$m = 0
 foreach($model in $models) {
-    Write-Host ("Model: " + $model[0])
-
+    Write-Progress -Activity "Running measurements" -PercentComplete ($m*100/$models.length) -Status "Model: $($model[0]) ($($m+1)/$($models.length))"
+    
+    $c = 0
     foreach($conf in $configs) {
-        Write-Host ("`tConfig: " + $conf) -NoNewLine
+        Write-Progress -Activity " " -PercentComplete ($c*100/$configs.length) -Status "Config: $conf ($($c+1)/$($configs.length))" -Id 1
 
-        for($r = 1; $r -le $runs; $r++) {
-            Write-Host (" " + $r) -NoNewLine
+        for($r = 0; $r -lt $runs; $r++) {
+            Write-Progress -Activity " " -PercentComplete (($r)*100/$runs) -Status "Run: $($r+1)/$runs " -Id 2
             
             $p = Start-Process java -ArgumentList '-jar', $jarFile, '-m', $model[0], '-e', $model[1], '-d', $conf[0], '-r', $conf[1], '-i', $conf[2], '-s', $conf[3] -RedirectStandardOutput $tmpFile -PassThru -NoNewWindow
             $id = $p.id
@@ -72,12 +70,10 @@ foreach($model in $models) {
             } else { # Normal execution
                 Get-Content $tmpFile | where {$_ -ne ""} | Out-File $logFile -Append
             }
-            
-            $completed++
-            Write-Progress -Activity "Running measurements" -PercentComplete ($completed*100/$total)
         }
-        Write-Host ""
+        $c++
     }
+    $m++
 }
 
 Remove-Item $tmpFile
