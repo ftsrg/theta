@@ -27,4 +27,10 @@ public class TcfaDslTest {
 		System.out.println(new GraphvizWriter().writeString(TcfaVisualizer.visualize(tcfa)));
 	}
 
+	@Test
+	public void testLynch() {
+		final TCFA tcfa = TcfaModels.lynch(2, 16);
+		System.out.println(new GraphvizWriter().writeString(TcfaVisualizer.visualize(tcfa)));
+	}
+
 }
