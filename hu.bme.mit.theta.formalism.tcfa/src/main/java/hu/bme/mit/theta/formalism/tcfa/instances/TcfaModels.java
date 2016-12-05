@@ -104,4 +104,28 @@ public final class TcfaModels {
 		}
 	}
 
+	public static TCFA fddi(final int n, final int ttrt, final int sa) {
+		try {
+			final InputStream inputStream = TcfaModels.class.getResourceAsStream("/fddi.tcfa");
+			final TcfaSpec spec = TcfaDslManager.createTcfaSpec(inputStream, Int(n), Int(ttrt), Int(sa));
+			final List<TCFA> tcfas = new ArrayList<>(n);
+
+			for (int i = 1; i <= n; i++) {
+				final Expr<RatType> trt_i = Clock("trt" + i).getRef();
+				final Expr<RatType> xa_i = Clock("xa" + i).getRef();
+				final Expr<RatType> xb_i = Clock("xb" + i).getRef();
+				final TCFA station_i = spec.createTcfa("station", trt_i, xa_i, xb_i, Int(i));
+				tcfas.add(station_i);
+			}
+
+			final TCFA fischers = NetworkTcfa.of(tcfas);
+			return fischers;
+
+		} catch (final FileNotFoundException e) {
+			throw new AssertionError();
+		} catch (final IOException e) {
+			throw new AssertionError();
+		}
+	}
+
 }

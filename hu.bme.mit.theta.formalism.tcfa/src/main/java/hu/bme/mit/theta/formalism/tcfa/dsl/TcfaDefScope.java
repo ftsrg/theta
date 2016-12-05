@@ -5,6 +5,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.formalism.tcfa.dsl.TcfaDslHelper.createConstDecl;
 import static hu.bme.mit.theta.formalism.tcfa.dsl.TcfaDslHelper.createVarDecl;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -20,6 +21,7 @@ import hu.bme.mit.theta.core.model.Assignment;
 import hu.bme.mit.theta.core.model.impl.NestedAssignment;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.BoolType;
+import hu.bme.mit.theta.core.utils.impl.ExprUtils;
 import hu.bme.mit.theta.formalism.tcfa.SimpleTcfa;
 import hu.bme.mit.theta.formalism.tcfa.TCFA;
 import hu.bme.mit.theta.formalism.tcfa.TcfaLoc;
@@ -119,8 +121,12 @@ final class TcfaDefScope implements Scope {
 
 		final Collection<Expr<? extends BoolType>> invars = TcfaDslHelper.createBoolExprList(this, assignment,
 				locContext.invars);
+		final Collection<Expr<? extends BoolType>> simplifiedInvars = new ArrayList<>();
+		for (final Expr<? extends BoolType> invar : invars) {
+			simplifiedInvars.add(ExprUtils.simplify(invar));
+		}
 
-		final TcfaLoc loc = tcfa.createLoc(name, urgent, invars);
+		final TcfaLoc loc = tcfa.createLoc(name, urgent, simplifiedInvars);
 		if (init) {
 			checkArgument(tcfa.getInitLoc() == null);
 			tcfa.setInitLoc(loc);
