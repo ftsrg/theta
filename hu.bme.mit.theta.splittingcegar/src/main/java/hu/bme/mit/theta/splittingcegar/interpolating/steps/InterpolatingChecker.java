@@ -21,7 +21,8 @@ import hu.bme.mit.theta.splittingcegar.interpolating.data.InterpolatedAbstractSt
 import hu.bme.mit.theta.splittingcegar.interpolating.data.InterpolatedAbstractSystem;
 import hu.bme.mit.theta.splittingcegar.interpolating.utils.VisualizationHelper;
 
-public class InterpolatingChecker extends AbstractCEGARStep implements Checker<InterpolatedAbstractSystem, InterpolatedAbstractState> {
+public class InterpolatingChecker extends AbstractCEGARStep
+		implements Checker<InterpolatedAbstractSystem, InterpolatedAbstractState> {
 
 	private final boolean isIncremental;
 	private int actualInit;
@@ -30,8 +31,8 @@ public class InterpolatingChecker extends AbstractCEGARStep implements Checker<I
 	private final Stack<InterpolatedAbstractState> stateStack;
 	private final Stack<Integer> successorStack;
 
-	public InterpolatingChecker(final SolverWrapper solvers, final StopHandler stopHandler, final Logger logger, final Visualizer visualizer,
-			final boolean isIncremental) {
+	public InterpolatingChecker(final SolverWrapper solvers, final StopHandler stopHandler, final Logger logger,
+			final Visualizer visualizer, final boolean isIncremental) {
 		super(solvers, stopHandler, logger, visualizer);
 		this.isIncremental = isIncremental;
 		exploredStates = new HashSet<>();
@@ -96,7 +97,6 @@ public class InterpolatingChecker extends AbstractCEGARStep implements Checker<I
 		final Solver solver = solvers.getSolver();
 
 		solver.push();
-		solver.add(sts.unfoldInv(0)); // Assert invariants
 		solver.add(sts.unfold(negProp, 0)); // Assert the negate of the
 											// specification
 
@@ -165,7 +165,7 @@ public class InterpolatingChecker extends AbstractCEGARStep implements Checker<I
 						}
 					}
 				} else { // If the actual state has no more successors, then
-								// backtrack
+							// backtrack
 					stateStack.pop();
 					successorStack.pop();
 				}
@@ -197,8 +197,11 @@ public class InterpolatingChecker extends AbstractCEGARStep implements Checker<I
 		// TODO: optimization: clear data structures if not incremental. Note
 		// that the returned counterexample is a reference to the state stack
 
-		return counterExample == null ? new AbstractResult<InterpolatedAbstractState>(null, exploredStates, exploredStates.size() - stateSpaceSizeAfterClear)
-				: new AbstractResult<InterpolatedAbstractState>(counterExample, null, exploredStates.size() - stateSpaceSizeAfterClear);
+		return counterExample == null
+				? new AbstractResult<InterpolatedAbstractState>(null, exploredStates,
+						exploredStates.size() - stateSpaceSizeAfterClear)
+				: new AbstractResult<InterpolatedAbstractState>(counterExample, null,
+						exploredStates.size() - stateSpaceSizeAfterClear);
 	}
 
 	private boolean checkState(final InterpolatedAbstractState s, final Solver solver, final STS sts) {

@@ -15,12 +15,16 @@ import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.impl.Types;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.formalism.sts.impl.StsImpl;
-import hu.bme.mit.theta.frontend.aiger.AigerLoader;
+import hu.bme.mit.theta.frontend.aiger.AigerParser;
 
-public class SimpleAigerLoader implements AigerLoader {
+/**
+ * A simple AIGER parser that encodes each variable of the circuit with a STS
+ * variable. It supports AIGER format 1.7.
+ */
+public class AigerParserSimple implements AigerParser {
 
 	@Override
-	public STS load(final String fileName) throws IOException {
+	public STS parse(final String fileName) throws IOException {
 
 		final StsImpl.Builder builder = new StsImpl.Builder();
 		final BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(fileName)));

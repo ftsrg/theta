@@ -10,35 +10,35 @@ import java.util.List;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.SafetyStatus;
 import hu.bme.mit.theta.analysis.algorithm.Statistics;
-import hu.bme.mit.theta.common.logging.impl.ConsoleLogger;
+import hu.bme.mit.theta.common.table.TableWriter;
+import hu.bme.mit.theta.common.table.impl.SimpleTableWriter;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.formalism.sts.dsl.StsDslManager;
 import hu.bme.mit.theta.formalism.sts.dsl.impl.StsSpec;
 import hu.bme.mit.theta.formalism.sts.utils.impl.StsIteTransformation;
-import hu.bme.mit.theta.frontend.aiger.impl.SimpleAigerLoader;
+import hu.bme.mit.theta.frontend.aiger.impl.AigerParserSimple;
 import hu.bme.mit.theta.frontend.benchmark.StsConfigurationBuilder.Domain;
 import hu.bme.mit.theta.frontend.benchmark.StsConfigurationBuilder.InitPrecision;
 import hu.bme.mit.theta.frontend.benchmark.StsConfigurationBuilder.Refinement;
 import hu.bme.mit.theta.frontend.benchmark.StsConfigurationBuilder.Search;
-import hu.bme.mit.theta.frontend.benchmark.formatters.Formatter;
-import hu.bme.mit.theta.frontend.benchmark.formatters.impl.CsvFormatter;
 
 public class StsBenchmark {
 
 	public static void main(final String[] args) {
 		final String basePath = "src/test/resources/";
-		final Formatter formatter = new CsvFormatter(new ConsoleLogger(100), "\t");
+		final TableWriter formatter = new SimpleTableWriter(System.out, "\t");
 		final int runs = 1;
 
 		final List<StsInput> inputs = new ArrayList<>();
+		inputs.add(new StsInput(basePath + "simple/boolean1.system", false));
+		inputs.add(new StsInput(basePath + "simple/boolean2.system", false));
 		inputs.add(new StsInput(basePath + "simple/counter.system", true));
 		inputs.add(new StsInput(basePath + "simple/counter_bad.system", false));
 		inputs.add(new StsInput(basePath + "simple/counter_parametric.system", true));
-		inputs.add(new StsInput(basePath + "simple/boolean1.system", false));
-		inputs.add(new StsInput(basePath + "simple/boolean2.system", false));
-		inputs.add(new StsInput(basePath + "simple/readerswriters.system", true));
 		inputs.add(new StsInput(basePath + "simple/loop.system", true));
 		inputs.add(new StsInput(basePath + "simple/loop_bad.system", false));
+		inputs.add(new StsInput(basePath + "simple/multipleinitial.system", false));
+		inputs.add(new StsInput(basePath + "simple/readerswriters.system", true));
 		inputs.add(new StsInput(basePath + "simple/simple1.system", false));
 		inputs.add(new StsInput(basePath + "simple/simple2.system", true));
 		inputs.add(new StsInput(basePath + "simple/simple3.system", false));
@@ -71,7 +71,7 @@ public class StsBenchmark {
 	}
 
 	private static void run(final Collection<StsInput> inputs, final Collection<StsConfigurationBuilder> builders,
-			final int runs, final Formatter formatter) {
+			final int runs, final TableWriter formatter) {
 		System.out.println(String.format("Running %d configurations on %d inputs with %d repetitions.", builders.size(),
 				inputs.size(), runs));
 
@@ -90,7 +90,7 @@ public class StsBenchmark {
 	}
 
 	private static void run(final StsInput input, final StsConfigurationBuilder configBuilder,
-			final Formatter formatter) {
+			final TableWriter formatter) {
 		formatter.cell(input.path);
 		formatter.cell(input.expected + "");
 		formatter.cell(configBuilder.getDomain() + "");
@@ -139,7 +139,7 @@ public class StsBenchmark {
 
 		public STS load() throws IOException {
 			if (path.endsWith(".aag")) {
-				return new SimpleAigerLoader().load(path);
+				return new AigerParserSimple().parse(path);
 			} else {
 				final StsSpec spec = StsDslManager.parse(path, emptyList());
 				if (spec.getAllSts().size() != 1) {

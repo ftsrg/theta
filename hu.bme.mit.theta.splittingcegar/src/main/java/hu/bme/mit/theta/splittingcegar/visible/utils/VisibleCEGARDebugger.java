@@ -41,7 +41,6 @@ public class VisibleCEGARDebugger extends AbstractDebugger<VisibleAbstractSystem
 		// Explore all abstract states
 		final STS sts = system.getSTS();
 		solver.push(); // 1
-		solver.add(sts.unfoldInv(0));
 
 		solver.push(); // 2
 		do {
@@ -92,7 +91,6 @@ public class VisibleCEGARDebugger extends AbstractDebugger<VisibleAbstractSystem
 
 		// Explore abstract transition relation
 		solver.push(); // 2
-		solver.add(sts.unfoldInv(1));
 		solver.add(sts.unfoldTrans(0));
 		for (final VisibleAbstractState vas0 : stateSpace.keySet()) {
 			solver.push(); // 3

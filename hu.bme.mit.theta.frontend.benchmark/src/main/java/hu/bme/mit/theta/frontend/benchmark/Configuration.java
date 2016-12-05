@@ -6,7 +6,7 @@ import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyStatus;
 
-public class Configuration<S extends State, A extends Action, P extends Precision> {
+public final class Configuration<S extends State, A extends Action, P extends Precision> {
 	private final SafetyChecker<S, A, P> checker;
 	private final P initPrecision;
 

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import hu.bme.mit.theta.common.logging.Logger;
@@ -13,7 +14,7 @@ import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.formalism.sts.dsl.StsDslManager;
 import hu.bme.mit.theta.formalism.sts.dsl.impl.StsSpec;
-import hu.bme.mit.theta.frontend.aiger.impl.SimpleAigerLoader;
+import hu.bme.mit.theta.frontend.aiger.impl.AigerParserSimple;
 import hu.bme.mit.theta.splittingcegar.common.CEGARLoop;
 import hu.bme.mit.theta.splittingcegar.common.CEGARResult;
 import hu.bme.mit.theta.splittingcegar.common.data.AbstractState;
@@ -27,6 +28,7 @@ public class SandBox {
 	private static final String MODELSPATH = "src/test/resources/models/";
 
 	@Test
+	@Ignore
 	public void test() throws IOException {
 
 		// System.in.read();
@@ -47,7 +49,7 @@ public class SandBox {
 			final StsSpec stsSpec = StsDslManager.parse(MODELSPATH + subPath + modelName);
 			problem = stsSpec.getAllSts().iterator().next();
 		} else if (modelName.endsWith(".aag")) {
-			problem = new SimpleAigerLoader().load(MODELSPATH + subPath + modelName);
+			problem = new AigerParserSimple().parse(MODELSPATH + subPath + modelName);
 		}
 
 		CEGARLoop cegar = null;

@@ -38,7 +38,6 @@ public abstract class AbstractDebugger<AbstractSystemType extends AbstractSystem
 	protected void exploreConcrTransRelAndInits(final Collection<ConcreteState> concreteStates, final STS sts) {
 		final Solver solver = solvers.getSolver();
 		solver.push();
-		solver.add(sts.unfoldInv(0));
 		// Loop through each state
 		for (final ConcreteState cs0 : concreteStates) {
 			// Assert its expression
@@ -52,7 +51,6 @@ public abstract class AbstractDebugger<AbstractSystemType extends AbstractSystem
 			// Loop through other states to get successors
 			for (final ConcreteState cs1 : concreteStates) {
 				solver.push();
-				solver.add(sts.unfoldInv(1));
 				solver.add(sts.unfold(cs1.model.toExpr(), 1));
 				solver.add(sts.unfoldTrans(0));
 				if (SolverHelper.checkSat(solver))

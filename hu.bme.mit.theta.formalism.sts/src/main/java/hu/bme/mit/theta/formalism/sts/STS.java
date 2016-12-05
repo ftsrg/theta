@@ -21,8 +21,6 @@ public interface STS {
 
 	Collection<Expr<? extends BoolType>> getInit();
 
-	Collection<Expr<? extends BoolType>> getInvar();
-
 	Collection<Expr<? extends BoolType>> getTrans();
 
 	Expr<? extends BoolType> getProp();
@@ -36,8 +34,6 @@ public interface STS {
 	Collection<? extends Expr<? extends BoolType>> unfoldInit(final int i);
 
 	Collection<? extends Expr<? extends BoolType>> unfoldTrans(final int i);
-
-	Collection<? extends Expr<? extends BoolType>> unfoldInv(final int i);
 
 	Expr<? extends BoolType> unfoldProp(final int i);
 

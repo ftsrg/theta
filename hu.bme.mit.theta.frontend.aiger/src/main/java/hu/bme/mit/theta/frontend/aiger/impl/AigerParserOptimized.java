@@ -10,7 +10,7 @@ import java.util.List;
 import hu.bme.mit.theta.core.expr.impl.Exprs;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.formalism.sts.impl.StsImpl;
-import hu.bme.mit.theta.frontend.aiger.AigerLoader;
+import hu.bme.mit.theta.frontend.aiger.AigerParser;
 import hu.bme.mit.theta.frontend.aiger.impl.elements.AndGate;
 import hu.bme.mit.theta.frontend.aiger.impl.elements.FalseConst;
 import hu.bme.mit.theta.frontend.aiger.impl.elements.HwElement;
@@ -18,10 +18,15 @@ import hu.bme.mit.theta.frontend.aiger.impl.elements.InVar;
 import hu.bme.mit.theta.frontend.aiger.impl.elements.Latch;
 import hu.bme.mit.theta.frontend.aiger.impl.elements.OutVar;
 
-public class OptimizedAigerLoader implements AigerLoader {
+/**
+ * An optimized AIGER parser that minimizes the number of STS variables used. It
+ * only associates a STS variable to inputs and latches. Note, that the reduced
+ * number of variables may not be suitable for each algorithm.
+ */
+public class AigerParserOptimized implements AigerParser {
 
 	@Override
-	public STS load(final String fileName) throws IOException {
+	public STS parse(final String fileName) throws IOException {
 		final StsImpl.Builder builder = new StsImpl.Builder();
 		final BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(fileName)));
 
@@ -78,7 +83,8 @@ public class OptimizedAigerLoader implements AigerLoader {
 			builder.setProp(Exprs.Not(outVarElements.get(0).getExpr(elements)));
 		} else {
 			throw new UnsupportedOperationException(
-					"Currently only models with a single output variable are supported (this model has " + outVarElements.size() + ").");
+					"Currently only models with a single output variable are supported (this model has "
+							+ outVarElements.size() + ").");
 		}
 
 		return builder.build();
