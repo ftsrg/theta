@@ -25,6 +25,8 @@ param (
 
 $tmpFile = [System.IO.Path]::GetTempFileName();
 $logFile = "log_" + (Get-Date -format "yyyyMMdd_HHmmss") + ".txt";
+# Header
+"Model;Domain;Refinement;Initial precision;Search;Safe;Time (ms);Iterations;ARG size;ARG depth;CEX length" | Out-File $logFile
 
 
 # List of models: path and expected output
