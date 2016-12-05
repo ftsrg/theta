@@ -62,7 +62,6 @@ public abstract class AbstractConcretizer extends AbstractCEGARStep {
 		for (int i = 0; i < counterEx.size(); ++i) {
 			if (stopHandler.isStopped())
 				return null;
-			solver.add(sts.unfoldInv(i)); // Invariants
 			solver.add(sts.unfold(counterEx.get(i).createExpression(), i)); // Labels
 			if (i > 0)
 				solver.add(sts.unfoldTrans(i - 1)); // Transition relation
