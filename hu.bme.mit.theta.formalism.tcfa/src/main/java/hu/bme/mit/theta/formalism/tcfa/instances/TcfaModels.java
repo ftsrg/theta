@@ -47,8 +47,8 @@ public final class TcfaModels {
 				tcfas.add(fischer_i);
 			}
 
-			final TCFA fischers = NetworkTcfa.of(tcfas);
-			return fischers;
+			final TCFA tcfa = NetworkTcfa.of(tcfas);
+			return tcfa;
 
 		} catch (final FileNotFoundException e) {
 			throw new AssertionError();
@@ -70,6 +70,28 @@ public final class TcfaModels {
 				final Expr<RatType> x_i = Clock("x" + i).getRef();
 				final TCFA cell_i = spec.createTcfa("cell", x_i, Int(i));
 				tcfas.add(cell_i);
+			}
+
+			final TCFA tcfa = NetworkTcfa.of(tcfas);
+			return tcfa;
+
+		} catch (final FileNotFoundException e) {
+			throw new AssertionError();
+		} catch (final IOException e) {
+			throw new AssertionError();
+		}
+	}
+
+	public static TCFA lynch(final int n, final int t) {
+		try {
+			final InputStream inputStream = TcfaModels.class.getResourceAsStream("/lynch.tcfa");
+			final TcfaSpec spec = TcfaDslManager.createTcfaSpec(inputStream, Int(t));
+			final List<TCFA> tcfas = new ArrayList<>(n);
+
+			for (int i = 1; i <= n; i++) {
+				final Expr<RatType> x_i = Clock("x" + i).getRef();
+				final TCFA process_i = spec.createTcfa("process", x_i, Int(i));
+				tcfas.add(process_i);
 			}
 
 			final TCFA fischers = NetworkTcfa.of(tcfas);
