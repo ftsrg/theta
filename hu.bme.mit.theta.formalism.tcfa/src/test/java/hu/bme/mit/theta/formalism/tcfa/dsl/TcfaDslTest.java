@@ -10,14 +10,14 @@ import hu.bme.mit.theta.formalism.tcfa.utils.TcfaVisualizer;
 public class TcfaDslTest {
 
 	@Test
-	public void testFischer() {
-		final TCFA tcfa = TcfaModels.fischer(2, 1, 2);
+	public void testProsigma() {
+		final TCFA tcfa = TcfaModels.prosigma(3, 7);
 		System.out.println(new GraphvizWriter().writeString(TcfaVisualizer.visualize(tcfa)));
 	}
 
 	@Test
-	public void testProsigma() {
-		final TCFA tcfa = TcfaModels.prosigma(3, 7);
+	public void testFischer() {
+		final TCFA tcfa = TcfaModels.fischer(2, 1, 2);
 		System.out.println(new GraphvizWriter().writeString(TcfaVisualizer.visualize(tcfa)));
 	}
 
@@ -30,6 +30,12 @@ public class TcfaDslTest {
 	@Test
 	public void testLynch() {
 		final TCFA tcfa = TcfaModels.lynch(2, 16);
+		System.out.println(new GraphvizWriter().writeString(TcfaVisualizer.visualize(tcfa)));
+	}
+
+	@Test
+	public void testFddi() {
+		final TCFA tcfa = TcfaModels.fddi(2, 50 * 2, 20);
 		System.out.println(new GraphvizWriter().writeString(TcfaVisualizer.visualize(tcfa)));
 	}
 
