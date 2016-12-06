@@ -94,7 +94,7 @@ public final class WaitlistBasedAbstractor<S extends State, A extends Action, P 
 			}
 			argBuilder.close(node);
 
-			if (node.isCovered()) {
+			if (node.isExcluded()) {
 				continue;
 			}
 			argBuilder.expand(node, precision);

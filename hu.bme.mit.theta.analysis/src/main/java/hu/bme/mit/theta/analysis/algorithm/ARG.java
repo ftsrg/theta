@@ -139,7 +139,7 @@ public final class ARG<S extends State, A extends Action> {
 
 	private void minimizeSubTree(final ArgNode<S, A> node) {
 		final Stream<ArgNode<S, A>> children = node.children().collect(toList()).stream();
-		if (node.isCovered()) {
+		if (node.isExcluded()) {
 			children.forEach(this::prune);
 		} else {
 			children.forEach(this::minimizeSubTree);

@@ -105,14 +105,14 @@ public final class ArgNode<S extends State, A extends Action> {
 	////
 
 	/**
-	 * Checks if the node is covered, i.e., the node is not feasible or there is
-	 * a covering edge for the node or its parent is covered.
+	 * Checks if the node is excluded, i.e., the node is not feasible or there
+	 * is a covering edge for the node or its parent is excluded.
 	 */
-	public boolean isCovered() {
+	public boolean isExcluded() {
 		if (coveringNode.isPresent() || !isFeasible()) {
 			return true;
 		} else if (inEdge.isPresent()) {
-			return inEdge.get().getSource().isCovered();
+			return inEdge.get().getSource().isExcluded();
 		} else {
 			return false;
 		}
@@ -144,14 +144,14 @@ public final class ArgNode<S extends State, A extends Action> {
 	 * Checks if the node is safe, i.e., not target or covered.
 	 */
 	public boolean isSafe() {
-		return !isTarget() || isCovered();
+		return !isTarget() || isExcluded();
 	}
 
 	/**
 	 * Checks if the node is complete, i.e., expanded or target or covered.
 	 */
 	public boolean isComplete() {
-		return isExpanded() || isTarget() || isCovered();
+		return isExpanded() || isTarget() || isExcluded();
 	}
 
 	////

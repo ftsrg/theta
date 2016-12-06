@@ -82,7 +82,7 @@ public final class ImpactChecker<S extends State, A extends Action, P extends Pr
 		////
 
 		private void close(final ArgNode<S, A> node) {
-			if (!node.isCovered()) {
+			if (!node.isExcluded()) {
 				final Optional<ArgNode<S, A>> nodeToCoverWith = arg.getNodes().filter(n -> mayCover(n, node))
 						.findFirst();
 				nodeToCoverWith.ifPresent(n -> cover(node, n));
@@ -94,7 +94,7 @@ public final class ImpactChecker<S extends State, A extends Action, P extends Pr
 				final S state = node.getState();
 				final S stateToCoverWith = nodeToCoverWith.getState();
 				if (domain.isLeq(state, stateToCoverWith)) {
-					if (!nodeToCoverWith.isCovered()) {
+					if (!nodeToCoverWith.isExcluded()) {
 						return true;
 					}
 				}
@@ -104,7 +104,7 @@ public final class ImpactChecker<S extends State, A extends Action, P extends Pr
 
 		private Optional<ArgNode<S, A>> dfs(final ArgNode<S, A> v) {
 			close(v);
-			if (!v.isCovered()) {
+			if (!v.isExcluded()) {
 				if (v.isTarget()) {
 					final boolean refined = refine(v);
 					if (refined) {
@@ -126,7 +126,7 @@ public final class ImpactChecker<S extends State, A extends Action, P extends Pr
 			argBuilder.init(arg, precision);
 			while (true) {
 				final Optional<ArgNode<S, A>> uncoveredLeaf = arg.getNodes()
-						.filter(n -> !n.isExpanded() && !n.isCovered()).findFirst();
+						.filter(n -> !n.isExpanded() && !n.isExcluded()).findFirst();
 
 				if (uncoveredLeaf.isPresent()) {
 					final ArgNode<S, A> v = uncoveredLeaf.get();
@@ -171,8 +171,8 @@ public final class ImpactChecker<S extends State, A extends Action, P extends Pr
 		}
 
 		private void cover(final ArgNode<S, A> v, final ArgNode<S, A> w) {
-			checkArgument(!v.isCovered());
-			checkArgument(!w.isCovered());
+			checkArgument(!v.isExcluded());
+			checkArgument(!w.isExcluded());
 			checkArgument(!w.ancestors().anyMatch(n -> n == v));
 			checkArgument((domain.isLeq(v.getState(), w.getState())));
 			arg.cover(v, w);
