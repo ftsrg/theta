@@ -1,6 +1,5 @@
 package hu.bme.mit.theta.analysis.algorithm.impact;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Optional;
@@ -82,7 +81,7 @@ public final class ImpactChecker<S extends State, A extends Action, P extends Pr
 		////
 
 		private void close(final ArgNode<S, A> node) {
-			if (!node.isCovered()) {
+			if (!node.isExcluded()) {
 				final Optional<ArgNode<S, A>> nodeToCoverWith = arg.getNodes().filter(n -> mayCover(n, node))
 						.findFirst();
 				nodeToCoverWith.ifPresent(n -> cover(node, n));
@@ -94,7 +93,7 @@ public final class ImpactChecker<S extends State, A extends Action, P extends Pr
 				final S state = node.getState();
 				final S stateToCoverWith = nodeToCoverWith.getState();
 				if (domain.isLeq(state, stateToCoverWith)) {
-					if (!nodeToCoverWith.isCovered()) {
+					if (!nodeToCoverWith.isExcluded()) {
 						return true;
 					}
 				}
@@ -104,7 +103,7 @@ public final class ImpactChecker<S extends State, A extends Action, P extends Pr
 
 		private Optional<ArgNode<S, A>> dfs(final ArgNode<S, A> v) {
 			close(v);
-			if (!v.isCovered()) {
+			if (!v.isExcluded()) {
 				if (v.isTarget()) {
 					final boolean refined = refine(v);
 					if (refined) {
@@ -125,11 +124,10 @@ public final class ImpactChecker<S extends State, A extends Action, P extends Pr
 		private Optional<ArgNode<S, A>> unwind() {
 			argBuilder.init(arg, precision);
 			while (true) {
-				final Optional<ArgNode<S, A>> uncoveredLeaf = arg.getNodes()
-						.filter(n -> !n.isExpanded() && !n.isCovered()).findFirst();
+				final Optional<ArgNode<S, A>> anyIncompleteNode = arg.getIncompleteNodes().findAny();
 
-				if (uncoveredLeaf.isPresent()) {
-					final ArgNode<S, A> v = uncoveredLeaf.get();
+				if (anyIncompleteNode.isPresent()) {
+					final ArgNode<S, A> v = anyIncompleteNode.get();
 					v.properAncestors().forEach(w -> close(w));
 
 					final Optional<ArgNode<S, A>> unsafeDescendant = dfs(v);
@@ -145,12 +143,12 @@ public final class ImpactChecker<S extends State, A extends Action, P extends Pr
 		////
 
 		private void expand(final ArgNode<S, A> v) {
-			checkArgument(!v.isComplete());
+			assert !v.isExcluded();
 			argBuilder.expand(v, precision);
 		}
 
 		private boolean refine(final ArgNode<S, A> v) {
-			checkArgument(!v.isSafe());
+			assert !v.isSafe();
 
 			final ArgTrace<S, A> argTrace = ArgTrace.to(v);
 
@@ -171,10 +169,10 @@ public final class ImpactChecker<S extends State, A extends Action, P extends Pr
 		}
 
 		private void cover(final ArgNode<S, A> v, final ArgNode<S, A> w) {
-			checkArgument(!v.isCovered());
-			checkArgument(!w.isCovered());
-			checkArgument(!w.ancestors().anyMatch(n -> n == v));
-			checkArgument((domain.isLeq(v.getState(), w.getState())));
+			assert !v.isExcluded();
+			assert !w.isExcluded();
+			assert !w.ancestors().anyMatch(n -> n == v);
+			assert domain.isLeq(v.getState(), w.getState());
 			arg.cover(v, w);
 			v.descendants().forEach(y -> y.clearCoveredNodes());
 		}

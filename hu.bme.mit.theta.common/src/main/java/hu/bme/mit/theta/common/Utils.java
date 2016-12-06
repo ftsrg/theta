@@ -5,6 +5,8 @@ import static com.google.common.base.Preconditions.checkArgument;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
+import java.util.function.Predicate;
 
 public final class Utils {
 
@@ -34,6 +36,24 @@ public final class Utils {
 	public static <T> List<? extends T> tail(final List<? extends T> list) {
 		checkArgument(!list.isEmpty());
 		return list.subList(1, list.size());
+	}
+
+	////
+
+	public static <T> boolean anyMatch(final Optional<T> optional, final Predicate<? super T> predicate) {
+		if (optional.isPresent()) {
+			return predicate.test(optional.get());
+		} else {
+			return false;
+		}
+	}
+
+	public static <T> boolean allMatch(final Optional<T> optional, final Predicate<? super T> predicate) {
+		if (optional.isPresent()) {
+			return predicate.test(optional.get());
+		} else {
+			return true;
+		}
 	}
 
 }
