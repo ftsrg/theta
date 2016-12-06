@@ -2,6 +2,7 @@ package hu.bme.mit.theta.analysis.algorithm;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.common.ObjectUtils.toStringBuilder;
+import static hu.bme.mit.theta.common.Utils.anyMatch;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -76,6 +77,10 @@ public final class ArgNode<S extends State, A extends Action> {
 
 	////
 
+	public Optional<ArgNode<S, A>> getParent() {
+		return inEdge.map(ArgEdge::getSource);
+	}
+
 	public Optional<ArgEdge<S, A>> getInEdge() {
 		return inEdge;
 	}
@@ -105,17 +110,11 @@ public final class ArgNode<S extends State, A extends Action> {
 	////
 
 	/**
-	 * Checks if the node is excluded, i.e., the node is covered or not
-	 * feasible, or its parent is excluded.
+	 * Checks if the node is excluded, i.e., the node is covered or not feasible
+	 * or has an excluded parent.
 	 */
 	public boolean isExcluded() {
-		if (isCovered() || !isFeasible()) {
-			return true;
-		} else if (inEdge.isPresent()) {
-			return inEdge.get().getSource().isExcluded();
-		} else {
-			return false;
-		}
+		return isCovered() || !isFeasible() || anyMatch(getParent(), ArgNode::isExcluded);
 	}
 
 	/**
@@ -164,16 +163,8 @@ public final class ArgNode<S extends State, A extends Action> {
 
 	////
 
-	public Optional<ArgNode<S, A>> parent() {
-		if (inEdge.isPresent()) {
-			return Optional.of(inEdge.get().getSource());
-		} else {
-			return Optional.empty();
-		}
-	}
-
 	public Stream<ArgNode<S, A>> properAncestors() {
-		final Optional<ArgNode<S, A>> parent = this.parent();
+		final Optional<ArgNode<S, A>> parent = getParent();
 		if (parent.isPresent()) {
 			return Stream.concat(Stream.of(parent.get()), parent.get().properAncestors());
 		} else {
