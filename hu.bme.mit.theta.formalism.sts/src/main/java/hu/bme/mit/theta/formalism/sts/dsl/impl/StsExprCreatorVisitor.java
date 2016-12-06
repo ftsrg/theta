@@ -46,8 +46,8 @@ import org.antlr.v4.runtime.Token;
 
 import com.google.common.collect.ImmutableList;
 
-import hu.bme.mit.theta.common.dsl.BasicScope;
-import hu.bme.mit.theta.common.dsl.Scope;
+import hu.bme.mit.theta.common.dsl.BasicScope2;
+import hu.bme.mit.theta.common.dsl.Scope2;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.ParamDecl;
@@ -105,16 +105,16 @@ import hu.bme.mit.theta.formalism.sts.dsl.gen.StsDslParser.TrueExprContext;
 
 final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
 
-	private Scope currentScope;
+	private Scope2 currentScope;
 	private final Assignment assignment;
 
-	StsExprCreatorVisitor(final Scope scope, final Assignment assignment) {
+	StsExprCreatorVisitor(final Scope2 scope, final Assignment assignment) {
 		currentScope = checkNotNull(scope);
 		this.assignment = checkNotNull(assignment);
 	}
 
 	private void push() {
-		currentScope = new BasicScope(currentScope);
+		currentScope = new BasicScope2(currentScope);
 	}
 
 	private void pop() {
@@ -133,7 +133,7 @@ final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
 
 			push();
 
-			currentScope.declare(new DeclSymbol(param));
+			currentScope.declare(DeclSymbol.of(param));
 			@SuppressWarnings("unchecked")
 			final Expr<Type> result = (Expr<Type>) ctx.result.accept(this);
 
@@ -188,7 +188,7 @@ final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
 
 			push();
 
-			paramDecls.forEach(p -> currentScope.declare(new DeclSymbol(p)));
+			paramDecls.forEach(p -> currentScope.declare(DeclSymbol.of(p)));
 			final Expr<? extends BoolType> op = cast(ctx.op.accept(this), BoolType.class);
 
 			pop();
@@ -206,7 +206,7 @@ final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
 
 			push();
 
-			paramDecls.forEach(p -> currentScope.declare(new DeclSymbol(p)));
+			paramDecls.forEach(p -> currentScope.declare(DeclSymbol.of(p)));
 			final Expr<? extends BoolType> op = cast(ctx.op.accept(this), BoolType.class);
 
 			pop();

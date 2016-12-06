@@ -1,11 +1,7 @@
-specification Fischer(a : int, b : int) {
-	var lock : int := 0
-	
-	automaton fischers := fischer(1, a, b) || fischer(2, a, b)
-	
-	automaton fischer(i : int, a : int, b : int) := {
-		var x : clock := 0
+specification Fischer(a : int, b : int) {	
+	var lock : int
 		
+	automaton fischer(ref x : clock, i : int) := {	
 		init loc sleep
 		loc wait { x <= a }
 		loc try

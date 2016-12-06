@@ -68,13 +68,13 @@ final class SimpleDbm {
 	////
 
 	public boolean isConsistent() {
-		return matrix.get(0, 0) >= 0;
+		return matrix.get(0, 0) > 0;
 	}
 
 	public boolean isSatisfied(final int x, final int y, final int b) {
 		checkArgument(isClock(x));
 		checkArgument(isClock(y));
-		return add(matrix.get(y, x), b) >= 0;
+		return add(matrix.get(y, x), b) > 0;
 	}
 
 	public boolean constrains(final int x) {
@@ -115,7 +115,10 @@ final class SimpleDbm {
 		checkArgument(isClock(x));
 		checkArgument(isClock(y));
 
-		if (!isSatisfied(x, y, b)) {
+		if (!isConsistent()) {
+			// do nothing
+
+		} else if (!isSatisfied(x, y, b)) {
 			matrix.set(0, 0, Leq(-1));
 
 		} else if (b < matrix.get(x, y)) {

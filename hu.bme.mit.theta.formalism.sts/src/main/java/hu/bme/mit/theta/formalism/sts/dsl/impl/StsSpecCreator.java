@@ -7,13 +7,13 @@ import static hu.bme.mit.theta.formalism.sts.dsl.impl.StsDslHelper.declareVarDec
 
 import java.util.List;
 
-import hu.bme.mit.theta.common.dsl.BasicScope;
-import hu.bme.mit.theta.common.dsl.Scope;
+import hu.bme.mit.theta.common.dsl.BasicScope2;
+import hu.bme.mit.theta.common.dsl.Scope2;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.model.Assignment;
 import hu.bme.mit.theta.core.model.impl.AssignmentImpl;
-import hu.bme.mit.theta.core.model.impl.NestedAssignmentImpl;
+import hu.bme.mit.theta.core.model.impl.NestedAssignment;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.formalism.sts.dsl.gen.StsDslParser.PropDeclContext;
@@ -34,13 +34,13 @@ public final class StsSpecCreator {
 		final Assignment paramAssignment = new AssignmentImpl(paramDecls, params);
 
 		final StsSpecSymbol tcfaSpecSymbol = new StsSpecSymbol(name, paramDecls);
-		final Scope scope = new BasicScope(tcfaSpecSymbol);
+		final Scope2 scope = new BasicScope2(tcfaSpecSymbol);
 		declareConstDecls(scope, specCtx.constDecls);
 		declareVarDecls(scope, specCtx.varDecls);
 		declareEachSts(scope, specCtx.stsDecls);
 
 		final Assignment constAssignment = createConstDefs(scope, paramAssignment, specCtx.constDecls);
-		final Assignment assignment = new NestedAssignmentImpl(paramAssignment, constAssignment);
+		final Assignment assignment = NestedAssignment.create(paramAssignment, constAssignment);
 
 		final StsSpec spec = new StsSpec();
 
@@ -51,11 +51,11 @@ public final class StsSpecCreator {
 
 	////
 
-	private static void declareEachSts(final Scope scope, final List<? extends StsDeclContext> tcfaDeclCtxs) {
+	private static void declareEachSts(final Scope2 scope, final List<? extends StsDeclContext> tcfaDeclCtxs) {
 		tcfaDeclCtxs.forEach(ctx -> declareSts(scope, ctx));
 	}
 
-	private static void declareSts(final Scope scope, final StsDeclContext stsDeclCtx) {
+	private static void declareSts(final Scope2 scope, final StsDeclContext stsDeclCtx) {
 		final String name = stsDeclCtx.name.getText();
 		final List<ParamDecl<?>> paramDecls = StsDslHelper.createParamList(stsDeclCtx.paramDecls);
 		final StsSymbol symbol = new StsSymbol(name, paramDecls, scope, stsDeclCtx.def);
@@ -64,19 +64,19 @@ public final class StsSpecCreator {
 
 	////
 
-	private static void createPropDecls(final StsSpec spec, final Scope scope, final Assignment assignment,
+	private static void createPropDecls(final StsSpec spec, final Scope2 scope, final Assignment assignment,
 			final List<? extends PropDeclContext> propDeclCtxs) {
 		propDeclCtxs.forEach(ctx -> createPropDecl(spec, scope, assignment, ctx));
 	}
 
-	private static void createPropDecl(final StsSpec spec, final Scope scope, final Assignment assignment,
+	private static void createPropDecl(final StsSpec spec, final Scope2 scope, final Assignment assignment,
 			final PropDeclContext propDeclCtx) {
 		final StsContext stsCtx = propDeclCtx.system;
 
 		final StsCreationResult creationResult = StsCreator.createSts(stsCtx, scope, assignment);
 
 		final StsImpl.Builder stsBuilder = creationResult.getBuilder();
-		final Scope stsScope = creationResult.getScope();
+		final Scope2 stsScope = creationResult.getScope();
 
 		final Expr<? extends BoolType> prop = createBoolExpr(stsScope, assignment, propDeclCtx.cond);
 		stsBuilder.setProp(prop);
