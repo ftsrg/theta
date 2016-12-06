@@ -1,0 +1,12 @@
+"hw/ringp0.aag", false
+"hw/ringp0neg.aag", false
+"hw/shortp0.aag", false
+"hw/shortp0neg.aag", false
+"hw/srg5ptimo.aag", false
+"hw/srg5ptimoneg.aag", false
+"hw/srg5ptimonegnv.aag", false
+"hw/nusmv.syncarb5_2.B.aag", "true"
+"hw/nusmv.syncarb10_2.B.aag", "true"
+"hw/mutexp0.aag", false
+"hw/mutexp0neg.aag", false
+"hw/pdtpmsarbiter.aag", "true"
