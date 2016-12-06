@@ -121,7 +121,7 @@ public final class ArgNode<S extends State, A extends Action> {
 	 * Checks if the node is covered, i.e., there is a covering edge for the
 	 * node.
 	 */
-	private boolean isCovered() {
+	public boolean isCovered() {
 		return coveringNode.isPresent();
 	}
 
