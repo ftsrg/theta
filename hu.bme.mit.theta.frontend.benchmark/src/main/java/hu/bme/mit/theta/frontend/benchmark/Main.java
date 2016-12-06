@@ -81,7 +81,7 @@ public class Main {
 		final Optional<Boolean> expected = cmd.hasOption(optExpected.getOpt())
 				? Optional.of(Boolean.parseBoolean(cmd.getOptionValue(optExpected.getOpt()))) : Optional.empty();
 
-		final TableWriter tableWriter = new SimpleTableWriter(System.out, ";", "", "");
+		final TableWriter tableWriter = new SimpleTableWriter(System.out, ",", "", "");
 
 		try {
 

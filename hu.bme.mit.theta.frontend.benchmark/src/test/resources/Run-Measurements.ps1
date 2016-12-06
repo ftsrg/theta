@@ -25,10 +25,10 @@ param (
     [string]$configsFile = "configs.csv"
 )
 
-$tmpFile = [System.IO.Path]::GetTempFileName();
-$logFile = "log_" + (Get-Date -format "yyyyMMdd_HHmmss") + ".txt";
+$tmpFile = [System.IO.Path]::GetTempFileName()
+$logFile = "log_" + (Get-Date -format "yyyyMMdd_HHmmss") + ".csv"
 # Header
-"Model;Domain;Refinement;Initial precision;Search;Safe;Time (ms);Iterations;ARG size;ARG depth;CEX length" | Out-File $logFile
+"Model,Domain,Refinement,Initial precision,Search,Safe,Time (ms),Iterations,ARG size,ARG depth,CEX length" | Out-File $logFile
 
 $models = Import-CSV $modelsFile -Header Name, Expected
 $configs = Import-CSV $configsFile -Header Domain, Refinement, InitPrec, Search
@@ -50,7 +50,7 @@ foreach($model in $models) {
                 Stop-Process -Id $id
                 Wait-Process -Id $id
                 Start-Sleep -m 100 # Wait a bit so that the file is closed
-                ($model.Name+";"+$conf[0]+";"+$conf[1]+";"+$conf[2]+";"+$conf[3]+";TO") | Out-File $logFile -Append
+                ($model.Name+","+$conf[0]+","+$conf[1]+","+$conf[2]+","+$conf[3]+",TO") | Out-File $logFile -Append
             } else { # Normal execution
                 Get-Content $tmpFile | where {$_ -ne ""} | Out-File $logFile -Append
             }
