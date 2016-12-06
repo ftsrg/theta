@@ -20,7 +20,9 @@ Author: Akos Hajdu
 param (
     [int]$timeOut = 30,
     [int]$runs = 3,
-    [string]$jarFile = "theta.jar"
+    [string]$jarFile = "theta.jar",
+    [string]$modelsFile = "models.csv",
+    [string]$configsFile = "configs.csv"
 )
 
 $tmpFile = [System.IO.Path]::GetTempFileName();
@@ -28,51 +30,12 @@ $logFile = "log_" + (Get-Date -format "yyyyMMdd_HHmmss") + ".txt";
 # Header
 "Model;Domain;Refinement;Initial precision;Search;Safe;Time (ms);Iterations;ARG size;ARG depth;CEX length" | Out-File $logFile
 
-
-# List of models: path and expected output
-$models = @(
-    #@("hw/srg5ptimonegnv.aag", $False),
-    @("simple/boolean1.system", $False),
-    @("simple/boolean2.system", $False),
-    @("simple/counter.system", $True),
-    @("simple/counter_bad.system", $False),
-	@("simple/counter_parametric.system", $True),
-	@("simple/loop.system", $True),
-	@("simple/loop_bad.system", $False),
-	@("simple/multipleinitial.system", $False),
-	@("simple/readerswriters.system", $True),
-	@("simple/simple1.system", $False),
-	@("simple/simple2.system", $True),
-	@("simple/simple3.system", $False)
-);
-
-# List of configurations: domain, refinement, init. prec., search
-$configs = @(
-	@("PRED", "CRAIG_ITP", "EMPTY", "BFS"),
-	@("PRED", "CRAIG_ITP", "EMPTY", "DFS"),
-	@("PRED", "CRAIG_ITP", "PROP", "BFS"),
-	@("PRED", "CRAIG_ITP", "PROP", "DFS"),
-	@("PRED", "SEQ_ITP", "EMPTY", "BFS"),
-	@("PRED", "SEQ_ITP", "EMPTY", "DFS"),
-	@("PRED", "SEQ_ITP", "PROP", "BFS"),
-	@("PRED", "SEQ_ITP", "PROP", "DFS"),
-	@("EXPL", "CRAIG_ITP", "EMPTY", "BFS"),
-	@("EXPL", "CRAIG_ITP", "EMPTY", "DFS"),
-	@("EXPL", "CRAIG_ITP", "PROP", "BFS"),
-	@("EXPL", "CRAIG_ITP", "PROP", "DFS"),
-	@("EXPL", "SEQ_ITP", "EMPTY", "BFS"),
-	@("EXPL", "SEQ_ITP", "EMPTY", "DFS"),
-	@("EXPL", "SEQ_ITP", "PROP", "BFS"),
-	@("EXPL", "SEQ_ITP", "PROP", "DFS"),
-	@("EXPL", "UNSAT_CORE", "EMPTY", "BFS"),
-	@("EXPL", "UNSAT_CORE", "EMPTY", "DFS"),
-	@("EXPL", "UNSAT_CORE", "PROP", "BFS"),
-	@("EXPL", "UNSAT_CORE", "PROP", "DFS")
-);
+$models = Import-CSV $modelsFile -Header Name, Expected
+$configs = Import-CSV $configsFile -Header Domain, Refinement, InitPrec, Search
 
 $m = 0
 foreach($model in $models) {
-    Write-Progress -Activity "Running measurements" -PercentComplete ($m*100/$models.length) -Status "Model: $($model[0]) ($($m+1)/$($models.length))"
+    Write-Progress -Activity "Running measurements" -PercentComplete ($m*100/$models.length) -Status "Model: $($model.Name) ($($m+1)/$($models.length))"
     
     $c = 0
     foreach($conf in $configs) {
@@ -81,13 +44,13 @@ foreach($model in $models) {
         for($r = 0; $r -lt $runs; $r++) {
             Write-Progress -Activity " " -PercentComplete (($r)*100/$runs) -Status "Run: $($r+1)/$runs " -Id 2
             
-            $p = Start-Process java -ArgumentList '-jar', $jarFile, '-m', $model[0], '-e', $model[1], '-d', $conf[0], '-r', $conf[1], '-i', $conf[2], '-s', $conf[3] -RedirectStandardOutput $tmpFile -PassThru -NoNewWindow
+            $p = Start-Process java -ArgumentList '-jar', $jarFile, '-m', $model.Name, '-e', $model.Expected, '-d', $conf.Domain, '-r', $conf.Refinement, '-i', $conf.InitPrec, '-s', $conf.Search -RedirectStandardOutput $tmpFile -PassThru -NoNewWindow
             $id = $p.id
             if (!$p.WaitForExit($timeOut*1000)){ # Timeout
                 Stop-Process -Id $id
                 Wait-Process -Id $id
                 Start-Sleep -m 100 # Wait a bit so that the file is closed
-                ($model[0]+";"+$conf[0]+";"+$conf[1]+";"+$conf[2]+";"+$conf[3]+";TO") | Out-File $logFile -Append
+                ($model.Name+";"+$conf[0]+";"+$conf[1]+";"+$conf[2]+";"+$conf[3]+";TO") | Out-File $logFile -Append
             } else { # Normal execution
                 Get-Content $tmpFile | where {$_ -ne ""} | Out-File $logFile -Append
             }
