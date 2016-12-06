@@ -105,17 +105,25 @@ public final class ArgNode<S extends State, A extends Action> {
 	////
 
 	/**
-	 * Checks if the node is excluded, i.e., the node is not feasible or there
-	 * is a covering edge for the node or its parent is excluded.
+	 * Checks if the node is excluded, i.e., the node is covered or not
+	 * feasible, or its parent is excluded.
 	 */
 	public boolean isExcluded() {
-		if (coveringNode.isPresent() || !isFeasible()) {
+		if (isCovered() || !isFeasible()) {
 			return true;
 		} else if (inEdge.isPresent()) {
 			return inEdge.get().getSource().isExcluded();
 		} else {
 			return false;
 		}
+	}
+
+	/**
+	 * Checks if the node is covered, i.e., there is a covering edge for the
+	 * node.
+	 */
+	private boolean isCovered() {
+		return coveringNode.isPresent();
 	}
 
 	/**
