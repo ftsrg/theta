@@ -75,4 +75,4 @@ foreach($model in $models) {
 
 Remove-Item $tmpFile
 
-Write-Progress -Activity "Running measurements" -PercentComplete 100 -Completed
+Write-Progress -Activity "Running measurements" -PercentComplete 100 -Completed -Status " "

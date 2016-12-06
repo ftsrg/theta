@@ -31,7 +31,7 @@ public class SandBox {
 
 		System.out.println(sts);
 
-		final Logger logger = new ConsoleLogger(100);
+		final Logger logger = new ConsoleLogger(0);
 
 		final Configuration<? extends State, ? extends Action, ? extends Precision> configuration = new StsConfigurationBuilder(
 				Domain.EXPL, Refinement.SEQ_ITP).initPrecision(InitPrecision.PROP).logger(logger).search(Search.BFS)
