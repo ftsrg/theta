@@ -46,8 +46,8 @@ import org.antlr.v4.runtime.Token;
 
 import com.google.common.collect.ImmutableList;
 
-import hu.bme.mit.theta.common.dsl.BasicScope;
-import hu.bme.mit.theta.common.dsl.Scope;
+import hu.bme.mit.theta.common.dsl.BasicScope2;
+import hu.bme.mit.theta.common.dsl.Scope2;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.ParamDecl;
@@ -106,14 +106,14 @@ import hu.bme.mit.theta.core.type.closure.ClosedUnderSub;
 
 public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
 
-	private Scope currentScope;
+	private Scope2 currentScope;
 
-	public ExprCreatorVisitor(final Scope scope) {
+	public ExprCreatorVisitor(final Scope2 scope) {
 		currentScope = checkNotNull(scope);
 	}
 
 	private void push() {
-		currentScope = new BasicScope(currentScope);
+		currentScope = new BasicScope2(currentScope);
 	}
 
 	private void pop() {
@@ -132,7 +132,7 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
 
 			push();
 
-			currentScope.declare(new DeclSymbol(param));
+			currentScope.declare(DeclSymbol.of(param));
 			@SuppressWarnings("unchecked")
 			final Expr<Type> result = (Expr<Type>) ctx.result.accept(this);
 
@@ -198,7 +198,7 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
 
 			push();
 
-			paramDecls.forEach(p -> currentScope.declare(new DeclSymbol(p)));
+			paramDecls.forEach(p -> currentScope.declare(DeclSymbol.of(p)));
 			final Expr<? extends BoolType> op = cast(ctx.op.accept(this), BoolType.class);
 
 			pop();
@@ -216,7 +216,7 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
 
 			push();
 
-			paramDecls.forEach(p -> currentScope.declare(new DeclSymbol(p)));
+			paramDecls.forEach(p -> currentScope.declare(DeclSymbol.of(p)));
 			final Expr<? extends BoolType> op = cast(ctx.op.accept(this), BoolType.class);
 
 			pop();

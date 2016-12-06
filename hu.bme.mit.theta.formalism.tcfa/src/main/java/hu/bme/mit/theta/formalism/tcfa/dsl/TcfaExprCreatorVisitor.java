@@ -112,8 +112,10 @@ final class TcfaExprCreatorVisitor extends TcfaDslBaseVisitor<Expr<?>> {
 		this.assignment = checkNotNull(assignment);
 	}
 
-	private void push() {
-		currentScope = new BasicScope(currentScope);
+	private void push(final Collection<? extends Decl<?>> decls) {
+		final Collection<DeclSymbol> symbols = decls.stream().map(DeclSymbol::of).collect(toList());
+		final BasicScope scope = new BasicScope(currentScope, symbols);
+		currentScope = scope;
 	}
 
 	private void pop() {
@@ -130,9 +132,8 @@ final class TcfaExprCreatorVisitor extends TcfaDslBaseVisitor<Expr<?>> {
 			@SuppressWarnings("unchecked")
 			final ParamDecl<Type> param = (ParamDecl<Type>) params.get(0);
 
-			push();
+			push(params);
 
-			currentScope.declare(new DeclSymbol(param));
 			@SuppressWarnings("unchecked")
 			final Expr<Type> result = (Expr<Type>) ctx.result.accept(this);
 
@@ -185,9 +186,8 @@ final class TcfaExprCreatorVisitor extends TcfaDslBaseVisitor<Expr<?>> {
 		if (ctx.paramDecls != null) {
 			final List<ParamDecl<?>> paramDecls = TcfaDslHelper.createParamList(ctx.paramDecls);
 
-			push();
+			push(paramDecls);
 
-			paramDecls.forEach(p -> currentScope.declare(new DeclSymbol(p)));
 			final Expr<? extends BoolType> op = cast(ctx.op.accept(this), BoolType.class);
 
 			pop();
@@ -203,9 +203,8 @@ final class TcfaExprCreatorVisitor extends TcfaDslBaseVisitor<Expr<?>> {
 		if (ctx.paramDecls != null) {
 			final List<ParamDecl<?>> paramDecls = TcfaDslHelper.createParamList(ctx.paramDecls);
 
-			push();
+			push(paramDecls);
 
-			paramDecls.forEach(p -> currentScope.declare(new DeclSymbol(p)));
 			final Expr<? extends BoolType> op = cast(ctx.op.accept(this), BoolType.class);
 
 			pop();
@@ -565,7 +564,7 @@ final class TcfaExprCreatorVisitor extends TcfaDslBaseVisitor<Expr<?>> {
 
 	@Override
 	public Expr<?> visitIdExpr(final IdExprContext ctx) {
-		final Optional<Symbol> optSymbol = currentScope.resolve(ctx.id.getText());
+		final Optional<? extends Symbol> optSymbol = currentScope.resolve(ctx.id.getText());
 
 		checkArgument(optSymbol.isPresent());
 		final Symbol symbol = optSymbol.get();

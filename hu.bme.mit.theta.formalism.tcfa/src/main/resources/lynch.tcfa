@@ -1,0 +1,74 @@
+specification LynchShavit(t : int) {
+	var v1 : int
+	var v2 : bool	
+	
+	automaton process(ref x : clock, i : int) := {
+		init loc l1
+		loc l2 { x <= t }
+		loc l3
+		loc l4
+		loc l5 { x <= t }
+		loc l6
+		loc cs7
+		loc l8 { x <= t }
+		loc l9 { x <= t }
+		
+		l1 -> l2 {
+			assume v1 = 0;
+			x := 0
+		}
+		
+		l2 -> l3 {
+			assume x <= t;
+			v1 := i;
+			x := 0
+		}
+		
+		l3 -> l1 {
+			assume v1 /= i
+		}
+		
+		l3 -> l4 {
+			assume v1 = i;
+			assume x > t
+		}
+		
+		l4 -> l1 {
+			assume v2
+		}
+		
+		l4 -> l5 {
+			assume not v2;
+			x := 0
+		}
+		
+		l5 -> l6 {
+			assume x <= t;
+			v2 := true;
+			x := 0
+		}
+		
+		l6 -> l1 {
+			assume v1 /= i
+		}
+		
+		l6 -> cs7 {
+			assume v1 = i
+		}
+		
+		cs7 -> l8 {
+			x := 0
+		}
+		
+		l8 -> l9 {
+			assume x <= t;
+			v2 := false;
+			x := 0
+		}
+		
+		l9 -> l1 {
+			assume x <= t;
+			v1 := 0
+		}
+	}
+}

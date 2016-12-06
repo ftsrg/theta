@@ -5,6 +5,7 @@ import static hu.bme.mit.theta.core.expr.impl.Exprs.Bool;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.False;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.Int;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.Ite;
+import static hu.bme.mit.theta.core.expr.impl.Exprs.Mod;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.Mul;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.Neg;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.Not;
@@ -430,21 +431,21 @@ public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? ext
 
 	@Override
 	public Expr<? extends IntType> visit(final ModExpr expr, final Assignment param) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO");
-		/*
-		 * final Expr<? extends IntType> leftOp =
-		 * ExprUtils.cast(expr.getLeftOp().accept(this, param), IntType.class);
-		 * final Expr<? extends IntType> rightOp =
-		 * ExprUtils.cast(expr.getRightOp().accept(this, param), IntType.class);
-		 *
-		 * if (leftOp instanceof IntLitExpr && rightOp instanceof IntLitExpr) {
-		 * final long leftInt = ((IntLitExpr) leftOp).getValue(); final long
-		 * rightInt = ((IntLitExpr) rightOp).getValue(); return
-		 * Int(Math.floorMod(leftInt, rightInt)); }
-		 *
-		 * return IntDiv(leftOp, rightOp);
-		 */
+		final Expr<? extends IntType> leftOp = ExprUtils.cast(expr.getLeftOp().accept(this, param), IntType.class);
+		final Expr<? extends IntType> rightOp = ExprUtils.cast(expr.getRightOp().accept(this, param), IntType.class);
+
+		if (leftOp instanceof IntLitExpr && rightOp instanceof IntLitExpr) {
+			final int leftInt = ((IntLitExpr) leftOp).getValue();
+			final int rightInt = ((IntLitExpr) rightOp).getValue();
+
+			if (leftInt >= 0 && rightInt >= 0) {
+				return Int(leftInt % rightInt);
+			} else {
+				throw new UnsupportedOperationException("TODO");
+			}
+		} else {
+			return Mod(leftOp, rightOp);
+		}
 	}
 
 	@Override

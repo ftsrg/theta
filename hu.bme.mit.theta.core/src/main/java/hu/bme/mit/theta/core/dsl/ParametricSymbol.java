@@ -9,8 +9,8 @@ import java.util.Optional;
 
 import com.google.common.collect.ImmutableList;
 
-import hu.bme.mit.theta.common.dsl.BasicScope;
-import hu.bme.mit.theta.common.dsl.Scope;
+import hu.bme.mit.theta.common.dsl.BasicScope2;
+import hu.bme.mit.theta.common.dsl.Scope2;
 import hu.bme.mit.theta.common.dsl.ScopedSymbol;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.core.decl.ParamDecl;
@@ -20,22 +20,22 @@ public abstract class ParametricSymbol implements ScopedSymbol {
 	private final String name;
 	private final List<ParamDecl<?>> paramDecls;
 
-	private final Scope scope;
+	private final Scope2 scope;
 
 	public ParametricSymbol(final String name, final List<? extends ParamDecl<?>> paramDecls,
-			final Scope enclosingScope) {
+			final Scope2 enclosingScope) {
 		checkNotNull(name);
 		checkNotNull(paramDecls);
 		checkArgument(name.length() > 0);
 		this.name = name;
 		this.paramDecls = ImmutableList.copyOf(paramDecls);
-		scope = new BasicScope(enclosingScope);
+		scope = new BasicScope2(enclosingScope);
 
 		declareParamDecls(paramDecls);
 	}
 
 	private void declareParamDecls(final List<? extends ParamDecl<?>> paramDecls) {
-		paramDecls.forEach(p -> scope.declare(new DeclSymbol(p)));
+		paramDecls.forEach(p -> scope.declare(DeclSymbol.of(p)));
 	}
 
 	public List<ParamDecl<?>> getParamDecls() {
@@ -62,7 +62,7 @@ public abstract class ParametricSymbol implements ScopedSymbol {
 	}
 
 	@Override
-	public Optional<Scope> enclosingScope() {
+	public Optional<Scope2> enclosingScope() {
 		return scope.enclosingScope();
 	}
 

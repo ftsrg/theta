@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import hu.bme.mit.theta.common.dsl.Scope;
+import hu.bme.mit.theta.common.dsl.Scope2;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.Decl;
@@ -66,7 +66,7 @@ final class StsDslHelper {
 		return Var(name, type);
 	}
 
-	public static Assignment createConstDefs(final Scope scope, final Assignment assignment,
+	public static Assignment createConstDefs(final Scope2 scope, final Assignment assignment,
 			final List<? extends ConstDeclContext> constDeclCtxs) {
 		final Map<Decl<?>, Expr<?>> declToExpr = new HashMap<>();
 		for (final ConstDeclContext constDeclCtx : constDeclCtxs) {
@@ -75,7 +75,7 @@ final class StsDslHelper {
 		return new AssignmentImpl(declToExpr);
 	}
 
-	private static void addDef(final Scope scope, final Assignment assignment, final Map<Decl<?>, Expr<?>> declToExpr,
+	private static void addDef(final Scope2 scope, final Assignment assignment, final Map<Decl<?>, Expr<?>> declToExpr,
 			final ConstDeclContext constDeclCtx) {
 		final String name = constDeclCtx.ddecl.name.getText();
 		final DeclSymbol declSymbol = resolveDecl(scope, name);
@@ -90,13 +90,13 @@ final class StsDslHelper {
 		return type;
 	}
 
-	public static Expr<?> createExpr(final Scope scope, final Assignment assignment, final ExprContext exprCtx) {
+	public static Expr<?> createExpr(final Scope2 scope, final Assignment assignment, final ExprContext exprCtx) {
 		final Expr<?> expr = exprCtx.accept(new StsExprCreatorVisitor(scope, assignment));
 		assert expr != null;
 		return expr;
 	}
 
-	public static List<Expr<?>> createExprList(final Scope scope, final Assignment assignment,
+	public static List<Expr<?>> createExprList(final Scope2 scope, final Assignment assignment,
 			final ExprListContext exprListCtx) {
 		if (exprListCtx == null || exprListCtx.exprs == null) {
 			return Collections.emptyList();
@@ -107,12 +107,12 @@ final class StsDslHelper {
 		}
 	}
 
-	public static Expr<? extends BoolType> createBoolExpr(final Scope scope, final Assignment assignment,
+	public static Expr<? extends BoolType> createBoolExpr(final Scope2 scope, final Assignment assignment,
 			final ExprContext exprCtx) {
 		return cast(createExpr(scope, assignment, exprCtx), BoolType.class);
 	}
 
-	public static List<Expr<? extends BoolType>> createBoolExprList(final Scope scope, final Assignment assignment,
+	public static List<Expr<? extends BoolType>> createBoolExprList(final Scope2 scope, final Assignment assignment,
 			final ExprListContext exprListCtx) {
 		final List<Expr<?>> exprs = createExprList(scope, assignment, exprListCtx);
 		final List<Expr<? extends BoolType>> boolExprs = exprs.stream()
@@ -120,7 +120,7 @@ final class StsDslHelper {
 		return boolExprs;
 	}
 
-	public static DeclSymbol resolveDecl(final Scope scope, final String name) {
+	public static DeclSymbol resolveDecl(final Scope2 scope, final String name) {
 		final Optional<Symbol> optSymbol = scope.resolve(name);
 
 		checkArgument(optSymbol.isPresent());
@@ -132,7 +132,7 @@ final class StsDslHelper {
 		return declSymbol;
 	}
 
-	public static StsSymbol resolveSts(final Scope scope, final String name) {
+	public static StsSymbol resolveSts(final Scope2 scope, final String name) {
 		final Optional<Symbol> optSymbol = scope.resolve(name);
 
 		checkArgument(optSymbol.isPresent());
@@ -144,27 +144,27 @@ final class StsDslHelper {
 		return stsSymbol;
 	}
 
-	public static void declareConstDecls(final Scope scope, final List<? extends ConstDeclContext> constDeclCtxs) {
+	public static void declareConstDecls(final Scope2 scope, final List<? extends ConstDeclContext> constDeclCtxs) {
 		for (final ConstDeclContext constDeclCtx : constDeclCtxs) {
 			declareConstDecl(scope, constDeclCtx);
 		}
 	}
 
-	private static void declareConstDecl(final Scope scope, final ConstDeclContext constDeclCtx) {
+	private static void declareConstDecl(final Scope2 scope, final ConstDeclContext constDeclCtx) {
 		final ConstDecl<?> constDecl = createConstDecl(constDeclCtx.ddecl);
-		final Symbol symbol = new DeclSymbol(constDecl);
+		final Symbol symbol = DeclSymbol.of(constDecl);
 		scope.declare(symbol);
 	}
 
-	public static void declareVarDecls(final Scope scope, final List<? extends VarDeclContext> varDeclCtxs) {
+	public static void declareVarDecls(final Scope2 scope, final List<? extends VarDeclContext> varDeclCtxs) {
 		for (final VarDeclContext varDeclCtx : varDeclCtxs) {
 			declareVarDecl(scope, varDeclCtx);
 		}
 	}
 
-	private static void declareVarDecl(final Scope scope, final VarDeclContext varDeclCtx) {
+	private static void declareVarDecl(final Scope2 scope, final VarDeclContext varDeclCtx) {
 		final VarDecl<?> varDecl = createVarDecl(varDeclCtx.ddecl);
-		final Symbol symbol = new DeclSymbol(varDecl);
+		final Symbol symbol = DeclSymbol.of(varDecl);
 		scope.declare(symbol);
 	}
 
