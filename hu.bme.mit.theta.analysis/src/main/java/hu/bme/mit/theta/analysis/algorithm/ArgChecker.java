@@ -62,7 +62,7 @@ public final class ArgChecker {
 		final Optional<? extends ArgNode<? extends ExprState, ?>> optCoveringNode = node.getCoveringNode();
 		if (optCoveringNode.isPresent()) {
 			final ArgNode<? extends ExprState, ?> coveringNode = optCoveringNode.get();
-			return isCoveredBy(node, coveringNode) && !coveringNode.isCovered();
+			return isCoveredBy(node, coveringNode) && !coveringNode.isExcluded();
 		} else {
 			return true;
 		}
