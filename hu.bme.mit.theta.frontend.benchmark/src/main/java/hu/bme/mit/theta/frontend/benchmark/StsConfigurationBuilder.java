@@ -63,7 +63,8 @@ public final class StsConfigurationBuilder {
 	};
 
 	public enum Search {
-		BFS(ArgNodeComparators.bfs()), DFS(ArgNodeComparators.dfs());
+		BFS(ArgNodeComparators.combine(ArgNodeComparators.targetFirst(), ArgNodeComparators.bfs())), DFS(
+				ArgNodeComparators.combine(ArgNodeComparators.targetFirst(), ArgNodeComparators.dfs()));
 
 		public final ArgNodeComparator comparator;
 
