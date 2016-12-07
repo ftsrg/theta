@@ -65,7 +65,7 @@ public class CLI {
 				break;
 			default:
 				try {
-					logger = new FileLogger(logLevel, parsedArgs.get(Options.Log), true);
+					logger = new FileLogger(logLevel, parsedArgs.get(Options.Log), true, false);
 				} catch (final FileNotFoundException ex) {
 					error("File " + parsedArgs.get(Options.Log) + " cannot be opened.");
 				}
