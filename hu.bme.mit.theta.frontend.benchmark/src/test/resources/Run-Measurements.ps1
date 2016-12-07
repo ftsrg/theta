@@ -37,8 +37,8 @@ $logFile = "log_" + (Get-Date -format "yyyyMMdd_HHmmss") + ".csv"
 "Model,Domain,Refinement,Initial precision,Search,Safe,Time (ms),Iterations,ARG size,ARG depth,CEX length" | Out-File $logFile
 
 # Load models and configurations from external files
-$models = Import-CSV $modelsFile -Header Name, Expected
-$configs = Import-CSV $configsFile -Header Domain, Refinement, InitPrec, Search
+$models = @(Import-CSV $modelsFile -Header Name, Expected)
+$configs = @(Import-CSV $configsFile -Header Domain, Refinement, InitPrec, Search)
 
 # Loop through models
 $m = 0
