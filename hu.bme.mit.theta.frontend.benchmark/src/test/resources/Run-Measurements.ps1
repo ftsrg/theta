@@ -62,7 +62,7 @@ foreach($model in $models) {
                 Wait-Process -Id $id
                 Start-Sleep -m 100 # Wait a bit so that the file is closed
                 # Write timeout to the log
-                ($model.Name+","+$conf.Domain+","+$conf.Refinement+","+$conf.InitPrec+","+$conf.Search+",TO") | Out-File $logFile -Append
+                ($model.Name+","+$conf.Domain+","+$conf.Refinement+","+$conf.InitPrec+","+$conf.Search) | Out-File $logFile -Append
             } else { # Normal execution
                 # Copy contents of the temp file to the log
                 Get-Content $tmpFile | where {$_ -ne ""} | Out-File $logFile -Append
