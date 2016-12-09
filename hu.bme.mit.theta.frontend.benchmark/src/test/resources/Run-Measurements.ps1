@@ -34,7 +34,7 @@ param (
 $tmpFile = [System.IO.Path]::GetTempFileName()
 $logFile = "log_" + (Get-Date -format "yyyyMMdd_HHmmss") + ".csv"
 # Header
-"Model,Domain,Refinement,Initial precision,Search,Safe,Time (ms),Iterations,ARG size,ARG depth,CEX length" | Out-File $logFile
+"Model,Domain,Refinement,InitPrec,Search,Vars,Safe,TimeMs,Iterations,ARGsize,ARGdepth,CEXlen" | Out-File $logFile
 
 # Load models and configurations from external files
 $models = @(Import-CSV $modelsFile -Header Name, Expected)
