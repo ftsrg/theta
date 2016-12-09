@@ -24,15 +24,16 @@ Author: Akos Hajdu
 #>
 
 param (
-    [int]$timeOut = 30,
-    [int]$runs = 3,
+    [int]$timeOut = 60,
+    [int]$runs = 1,
     [string]$jarFile = "theta.jar",
     [Parameter(Mandatory=$true)][string]$modelsFile,
-    [string]$configsFile = "configs.csv"
+    [Parameter(Mandatory=$true)][string]$configsFile,
+    [string]$outDir = "./"
 )
 
 $tmpFile = [System.IO.Path]::GetTempFileName()
-$logFile = "log_" + (Get-Date -format "yyyyMMdd_HHmmss") + ".csv"
+$logFile = $outDir + "log_" + (Get-Date -format "yyyyMMdd_HHmmss") + ".csv"
 # Header
 "Model,Domain,Refinement,InitPrec,Search,Vars,Safe,TimeMs,Iterations,ARGsize,ARGdepth,CEXlen" | Out-File $logFile
 
