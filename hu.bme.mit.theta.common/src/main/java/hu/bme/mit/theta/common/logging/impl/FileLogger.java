@@ -1,6 +1,7 @@
 package hu.bme.mit.theta.common.logging.impl;
 
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.PrintWriter;
 
 import hu.bme.mit.theta.common.logging.Logger;
@@ -9,10 +10,10 @@ public final class FileLogger extends MinLevelBasedLogger {
 	private final PrintWriter pw;
 	private final boolean instantFlush;
 
-	public FileLogger(final int minLevel, final String fileName, final boolean instantFlush)
+	public FileLogger(final int minLevel, final String fileName, final boolean instantFlush, final boolean append)
 			throws FileNotFoundException {
 		super(minLevel);
-		pw = new PrintWriter(fileName);
+		pw = new PrintWriter(new FileOutputStream(fileName, append));
 		this.instantFlush = instantFlush;
 	}
 
