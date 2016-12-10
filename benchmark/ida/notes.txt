@@ -13,7 +13,8 @@ Kérdések:
 library(ggplot2)
 library(dplyr)
 library(iplots)
-library(party)d <- read.csv("data/log_20161206_154049.csv", sep=",")# check column type
+library(party)
+d <- read.csv("data/log_20161206_154049.csv", sep=",")# check column type
 str(d)# check summary values
 summary(d)# iplots interactive
 ibar(d$Model)
