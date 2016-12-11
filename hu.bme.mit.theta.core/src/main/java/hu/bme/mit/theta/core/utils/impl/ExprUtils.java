@@ -157,4 +157,8 @@ public final class ExprUtils {
 	public static <T extends Type> Expr<T> applyPrimes(final Expr<T> expr, final VarIndexing indexing) {
 		return PrimeApplier.applyPrimes(expr, indexing);
 	}
+
+	public static int size(final Expr<? extends Type> expr, final ExprMetrics.ExprMetric metric) {
+		return expr.accept(metric, null);
+	}
 }
