@@ -59,6 +59,15 @@ final class DBM {
 		this.dbm = new SimpleDbm(signature.size(), values);
 	}
 
+	private DBM(final DbmSignature signature, final SimpleDbm dbm) {
+		checkNotNull(signature);
+		checkNotNull(dbm);
+		checkArgument(signature.size() == dbm.size());
+		this.signature = signature;
+		this.dbm = dbm;
+	}
+
+	// TODO replace BiFunction by IntBiFunction
 	private DBM(final DbmSignature signature, final BiFunction<ClockDecl, ClockDecl, Integer> values) {
 		this(signature, (final int x, final int y) -> {
 			return values.apply(signature.getClock(x), signature.getClock(y));
@@ -133,7 +142,7 @@ final class DBM {
 
 	////
 
-	public static DBM interpolant(final DBM dbmA, final DBM dbmB) {
+	public static DBM interpolant2(final DBM dbmA, final DBM dbmB) {
 		checkNotNull(dbmA);
 		checkNotNull(dbmB);
 		checkArgument(!dbmA.isConsistentWith(dbmB));
@@ -166,6 +175,48 @@ final class DBM {
 		return result;
 	}
 
+	public static DBM interpolant(final DBM dbmA, final DBM dbmB) {
+		checkNotNull(dbmA);
+		checkNotNull(dbmB);
+
+		if (!dbmA.isConsistent()) {
+			return bottom(Collections.emptySet());
+		}
+
+		if (!dbmB.isConsistent()) {
+			return top(Collections.emptySet());
+		}
+
+		final DbmSignature signature = interpolantSignature(dbmA, dbmB);
+		final BiFunction<ClockDecl, ClockDecl, Integer> values = (x, y) -> {
+			final int bound1 = dbmA.get(x, y);
+			final int bound2 = dbmB.get(x, y);
+			return min(bound1, bound2);
+		};
+
+		final DBM result = new DBM(signature, values);
+		final int[] cycle = result.dbm.closeItp();
+		result.free();
+
+		for (int i = 0; i + 1 < cycle.length; i++) {
+			final int x = cycle[i];
+			final int y = cycle[i + 1];
+			final ClockDecl leftClock = result.signature.getClock(x);
+			final ClockDecl rightClock = result.signature.getClock(y);
+			final int boundA = dbmA.get(leftClock, rightClock);
+			final int boundB = dbmB.get(leftClock, rightClock);
+			if (boundA < boundB) {
+				result.dbm.set(x, y, boundA);
+			}
+		}
+
+		assert result.isClosed();
+		assert dbmA.getRelation(result).isLeq();
+		assert !dbmB.isConsistentWith(result);
+
+		return result;
+	}
+
 	private static DbmSignature interpolantSignature(final DBM dbmA, final DBM dbmB) {
 		final Set<ClockDecl> clocksConstrainedByBothDBMS = Sets
 				.intersection(dbmA.signature.toSet(), dbmB.signature.toSet()).stream()
@@ -181,6 +232,15 @@ final class DBM {
 		} else {
 			return get(x, y);
 		}
+	}
+
+	@SuppressWarnings("unused")
+	private void set(final ClockDecl x, final ClockDecl y, final int b) {
+		checkArgument(tracks(x));
+		checkArgument(tracks(y));
+		final int i = signature.indexOf(x);
+		final int j = signature.indexOf(y);
+		dbm.set(i, j, b);
 	}
 
 	private int get(final ClockDecl x, final ClockDecl y) {
@@ -200,6 +260,10 @@ final class DBM {
 	}
 
 	////
+
+	private boolean isClosed() {
+		return dbm.isClosed();
+	}
 
 	public boolean isConsistent() {
 		return dbm.isConsistent();
@@ -275,6 +339,10 @@ final class DBM {
 		checkNotNull(clock);
 		checkArgument(!isZeroClock(clock));
 		ifTracks(clock, dbm::free);
+	}
+
+	public void free() {
+		dbm.free();
 	}
 
 	public void reset(final ClockDecl clock, final int m) {
