@@ -81,10 +81,11 @@ public class Main {
 		final Optional<Boolean> expected = cmd.hasOption(optExpected.getOpt())
 				? Optional.of(Boolean.parseBoolean(cmd.getOptionValue(optExpected.getOpt()))) : Optional.empty();
 
-		final TableWriter tableWriter = new SimpleTableWriter(System.out, ";", "\"", "\"");
+		final TableWriter tableWriter = new SimpleTableWriter(System.out, ",", "", "");
 
 		try {
 
+			// Output: configuration parameters
 			tableWriter.cell(model).cell(domain.toString()).cell(refinement.toString()).cell(initPrecision.toString())
 					.cell(search.toString());
 
@@ -99,6 +100,8 @@ public class Main {
 				}
 				sts = new StsIteTransformation().transform(spec.getAllSts().iterator().next());
 			}
+
+			tableWriter.cell(sts.getVars().size());
 
 			final Configuration<?, ?, ?> configuration = new StsConfigurationBuilder(domain, refinement)
 					.initPrecision(initPrecision).search(search).build(sts);
