@@ -1,0 +1,26 @@
+- IDA házinál: esélyteleneket kivenni, maradékot 10-szer újrafuttatni
+- TO helyett üres, így R-ben NA lesz
+- Olvasni: http://www.slideshare.net/AndreaArcuri/issta16-summer-school-intro-to-statistics
+    + a végén cikk
+
+Kérdések:
+- Minden bemenő és kimenő változó párra az eloszlás, pl. EXPL vagy PRED esetén a futásidő --> Vince féle TACAS-os diagramok (automatikusan minden oszloppárra?)
+- Próbák: pl. EXPL-nél nagyobb az ARG mint PRED-nél
+- Kimeneti változók korrelációja (egyazon modellre leginkább, pl. iterációk száma és idő, gráfméret és idő)
+- Tanulás: pl. ha cél a time, akkor milyen faktorok működnek közre, vagy pl. egy decision tree arról, hogy mi befolyásolja a futásidőt
+
+
+library(ggplot2)
+library(dplyr)
+library(iplots)
+library(party)d <- read.csv("data/log_20161206_154049.csv", sep=",")# check column type
+str(d)# check summary values
+summary(d)# iplots interactive
+ibar(d$Model)
+ibar(d$Safe)
+ibox(d$Time..ms.)# filtering, grouping
+d %>% filter(Model == "hw/shortp0.aag") %>% group_by(Domain) %>% summarize(median(Time, na.rm=TRUE))# plotting
+qplot(data=d, Safe, CEX.length, geom="boxplot")qplot(data=d, Iterations, ARG.size, color=Domain) + facet_wrap(~Model)# decision tree
+d.no.to <- d %>% filter(! is.na(Time))
+tree <- ctree(  Time ~ Model + Domain + Refinement + Search, data = d.no.to)
+plot(tree)
