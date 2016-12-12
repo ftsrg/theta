@@ -56,7 +56,13 @@ foreach($model in $models) {
             Write-Progress -Activity " " -PercentComplete (($r)*100/$runs) -Status "Run: $($r+1)/$runs " -Id 2
             
             # Run the jar file with the given parameters, the output is redirected to a temp file
-            $p = Start-Process java -ArgumentList '-jar', $jarFile, '-m', $model.Name, '-e', $model.Expected, '-d', $conf.Domain, '-r', $conf.Refinement, '-i', $conf.InitPrec, '-s', $conf.Search -RedirectStandardOutput $tmpFile -PassThru -NoNewWindow
+            $args = @('-jar', $jarFile, '-m', $model.Name, '-d', $conf.Domain, '-r', $conf.Refinement, '-i', $conf.InitPrec, '-s', $conf.Search)
+            # If expected result is present in the CSV add it as a parameter
+            if ($model.Expected -ne $Null) {
+                $args += '-e'
+                $args += $model.Expected
+            }
+            $p = Start-Process java -ArgumentList $args -RedirectStandardOutput $tmpFile -PassThru -NoNewWindow
             $id = $p.id
             if (!$p.WaitForExit($timeOut*1000)){ # Timeout
                 Stop-Process -Id $id
