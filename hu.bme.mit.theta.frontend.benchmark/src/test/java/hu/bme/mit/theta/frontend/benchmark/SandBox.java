@@ -27,11 +27,11 @@ public class SandBox {
 		System.out.println("Press a key to start");
 		System.in.read();
 
-		final STS sts = new AigerParserSimple().parse("src/test/resources/hw/nusmv.syncarb10_2.B.aag");
+		final STS sts = new AigerParserSimple().parse("src/test/resources/hw/power2sum32.aag");
 
 		System.out.println(sts);
 
-		final Logger logger = new ConsoleLogger(0);
+		final Logger logger = new ConsoleLogger(3);
 
 		final Configuration<? extends State, ? extends Action, ? extends Precision> configuration = new StsConfigurationBuilder(
 				Domain.EXPL, Refinement.SEQ_ITP).initPrecision(InitPrecision.PROP).logger(logger).search(Search.BFS)
