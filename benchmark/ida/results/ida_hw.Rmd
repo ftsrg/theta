@@ -6,6 +6,36 @@ output:
   html_document: default
   pdf_document: default
 ---
+## Introduction
+
+### Background
+
+In my research, I am working on the formal verification of software and hardware systems. I create a formal representation of the system and the desired property using first order logic formulas. Then, the set of possible states of the system (state space) can be explored to check if the desired property holds for each reachable state. However, a major drawback of formal verification techniques is the so-called state space explosion problem, which means that the set of possible states of a system can be unmanageably or even infinitely large. To overcome this problem, I use abstraction-based techniques, which reduce complexity by hiding information that is not relevant for verification. However, finding the proper precision of abstraction is a difficult task. Counterexample-Guided Abstraction Refinement (CEGAR) is an automatic verification algorithm that starts with a coarse abstraction and refines it iteratively until the proper precision is obtained. CEGAR is a general concept, having numerous variants in the literature. However, different variants perform better for different tasks.
+
+In my research I am developing a generic CEGAR framework that can incorporate different variants of the CEGAR algorithm. In this homework I run several variants of the algorithm on different models and analyze the results.
+
+### Variables
+Input variables
+
+* Parameters of the model
+    + **Type** of the model (hardware or software)
+    + **Name** of the model
+    + Number of **variables** in the model
+    + **Size** of the formulas describing the model
+* Parameters of the algorithm
+    + Abstract **domain** (predicate or explicit)
+    + **Refinement** strategy (Craig itp., sequence itp., unsat core)
+    + **Initial precision** of the abstraction (empty or property-based)
+    + **Search** strategy (BFS or DFS)
+
+Output variables
+
+* Is the model **safe**, i.e., does the property hold
+* **Runtime**
+* Number of refinement **iterations**
+* **Size** of the ARG (abstract state space)
+* **Depth** of the ARG
+* **Length** of the counterexample (if the model is not safe)
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
