@@ -1,0 +1,139 @@
+---
+title: "IDA Homework"
+author: "Akos Hajdu"
+date: '2016'
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(dplyr)
+library(party)
+library(cluster)
+library(corrgram)
+```
+
+## Common variables
+```{r}
+timeout.ms <- 480000                           # Timeout, which was used during the measurements
+csv.path = "log_20161209_153530_hw_plc_vm.csv" # Path of the data
+
+```
+
+
+## Load and clean data, summarize
+ 
+```{r}
+d <- read.csv(csv.path, header=T, sep=",", quote="", na.strings="")
+# Formatting: trim the name of the model, determine new variable 'Type'
+d$Model <- as.factor(gsub("models/", "", d$Model))
+d$Model <- as.factor(substr(d$Model, 0, regexpr("\\.[^\\.]*$", d$Model) - 1))
+d <- data.frame(Type = as.factor(substr(d$Model, 0, regexpr('/', d$Model) - 1)), d)
+# Filter timeouts
+d.no.to <- d %>% filter(!is.na(TimeMs))
+```
+There are **`r nrow(d)`** measurement points with **`r nrow(d.no.to)`** non-timeouts (**`r nrow(d.no.to)/nrow(d)*100`%**). Details:
+
+```{r}
+str(d) # Check column types
+summary(d) # Check summary values
+```
+
+## Analysis
+
+### Correlations
+```{r}
+# Select numerical data
+d.corr <- select(d, TimeMs, Vars, Iterations, ARGsize, ARGdepth, CEXlen)
+cor(d.corr, use="pairwise.complete.obs")
+corrgram(d.corr, order=TRUE, lower.panel = panel.shade, upper.panel = panel.pie)
+corrgram(d.corr, order=TRUE, lower.panel = panel.ellipse, upper.panel = panel.pts)
+```
+
+
+### Comparison of runtime for predicate and explicit domains
+
+```{r}
+# Select only input variables and runtime
+d.inputs.time <- select(d, Type, Model, Domain, Refinement, InitPrec, Search, TimeMs)
+# Fill NAs with timeout value
+d.inputs.time[is.na(d.inputs.time)] <- timeout.ms
+# Filter for the different domains and join by the other columns
+d.domain.time <- inner_join(filter(d.inputs.time, Domain=="PRED"), filter(d.inputs.time, Domain=="EXPL"), by=c("Type", "Model", "Refinement", "InitPrec", "Search"))
+# Filter where both times are timeout
+d.domain.time <- filter(d.domain.time, TimeMs.x != timeout.ms | TimeMs.y != timeout.ms)
+
+# Plot
+ggplot(d.domain.time, aes(TimeMs.x, TimeMs.y, color=Type)) +
+  scale_y_log10() + scale_x_log10() +
+  geom_bin2d(bins=12) + scale_fill_gradient(low = "gray", high = "black") + 
+  geom_point(alpha=1/20, size=3) +
+  geom_abline() +
+  labs(title = "Runtime of different domains", x = "Pred", y = "Expl")
+```
+
+#### Clustering
+
+```{r}
+# Extract data for clustering
+d.dom.time.clust <- scale(select(d.domain.time, TimeMs.x, TimeMs.y))
+# Determine number of clusters
+set.seed(1)
+wss <- (nrow(d.dom.time.clust)-1)*sum(apply(d.dom.time.clust,2,var))
+for (i in 2:15) wss[i] <- sum(kmeans(d.dom.time.clust,centers=i)$withinss)
+ggplot(data.frame(x = 1:15, wss), aes(x, wss)) +
+  geom_point(size=3) + geom_line() +
+  labs(x = "Number of Clusters", y = "Within groups sum of squares")
+```
+
+```{r}
+# K-Means Cluster Analysis
+fit <- kmeans(d.dom.time.clust, 3)
+# Get cluster means
+aggregate(d.dom.time.clust,by=list(fit$cluster),FUN=mean)
+# Append clusters
+d.dom.time.clust <- data.frame(d.domain.time, cluster = as.factor(fit$cluster))
+# Plot
+ggplot(d.dom.time.clust, aes(TimeMs.x, TimeMs.y, color = cluster)) +
+  scale_y_log10() + scale_x_log10() +
+  geom_point(alpha=1/5, size=3) +
+  geom_abline() +
+  labs(title = "Runtime of different domains", x = "Pred", y = "Expl")
+```
+
+
+### Comparison of iterations for Craig and sequence itp refinements
+```{r}
+# Select only input variables and iterations
+d.inputs.iters <- select(d, Type, Model, Domain, Refinement, InitPrec, Search, Iterations)
+d.inputs.iters <- filter(d.inputs.iters, !is.na(Iterations))
+# Filter for the different refinements and join by the other columns
+d.refin.iters <- inner_join(filter(d.inputs.iters, Refinement=="CRAIG_ITP"), filter(d.inputs.iters, Refinement=="SEQ_ITP"), by=c("Type", "Model", "Domain", "InitPrec", "Search"))
+
+# Plot
+ggplot(d.refin.iters, aes(Iterations.x, Iterations.y, color=Type)) +
+  scale_y_log10() + scale_x_log10() +
+  geom_bin2d(bins=12) + scale_fill_gradient(low = "gray", high = "black") + 
+  geom_point(alpha=1/20, size=3) +
+  geom_abline() +
+  labs(title = "Iterations for different refinements", x = "Craig itp", y = "Seqence itp")
+```
+
+
+### Decision tree
+
+#### Runtime
+```{r}
+tree <- ctree(TimeMs ~ Type + Domain + Refinement + InitPrec + Search, data = d.no.to)
+plot(tree, type = "simple")
+```
+
+#### Counterexample length
+```{r}
+d.cex <- d %>% filter(!is.na(CEXlen))
+tree <- ctree(CEXlen ~ Type + Domain + Refinement + InitPrec + Search, data = d.cex)
+plot(tree, type = "simple")
+```
