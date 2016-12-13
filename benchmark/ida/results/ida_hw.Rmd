@@ -19,7 +19,7 @@ Input variables
 
 * Parameters of the model
     + **Type** of the model (hardware or software)
-    + **Name** of the model
+    + Name of the **model**
     + Number of **variables** in the model
     + **Size** of the formulas describing the model
 * Parameters of the algorithm
@@ -77,7 +77,7 @@ summary(d) # Check summary values
 ### Correlations
 ```{r}
 # Select numerical data
-d.corr <- select(d, TimeMs, Vars, Iterations, ARGsize, ARGdepth, CEXlen)
+d.corr <- select(d, TimeMs, Vars, Size, Iterations, ARGsize, ARGdepth, CEXlen)
 cor(d.corr, use="pairwise.complete.obs")
 corrgram(d.corr, order=TRUE, lower.panel = panel.shade, upper.panel = panel.pie)
 corrgram(d.corr, order=TRUE, lower.panel = panel.ellipse, upper.panel = panel.pts)
