@@ -8,7 +8,6 @@ Kérdések:
 - Próbák: pl. EXPL-nél nagyobb az ARG mint PRED-nél
 - Kimeneti változók korrelációja (egyazon modellre leginkább, pl. iterációk száma és idő, gráfméret és idő) + minden mindennel
 - Tanulás: pl. ha cél a time, akkor milyen faktorok működnek közre, vagy pl. egy decision tree arról, hogy mi befolyásolja a futásidőt
-
 - Konfiguráció x Modell táblázat, melyik hányszor timeout-ol, stb
 
 - Ismétlések szórása: milyen metrika?
