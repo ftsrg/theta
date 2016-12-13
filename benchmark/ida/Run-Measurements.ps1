@@ -35,7 +35,7 @@ param (
 $tmpFile = [System.IO.Path]::GetTempFileName()
 $logFile = $outDir + "log_" + (Get-Date -format "yyyyMMdd_HHmmss") + ".csv"
 # Header
-"Model,Domain,Refinement,InitPrec,Search,Vars,Safe,TimeMs,Iterations,ARGsize,ARGdepth,CEXlen" | Out-File $logFile
+"Model,Domain,Refinement,InitPrec,Search,Vars,Size,Safe,TimeMs,Iterations,ARGsize,ARGdepth,CEXlen" | Out-File $logFile
 
 # Load models and configurations from external files
 $models = @(Import-CSV $modelsFile -Header Name, Expected)
@@ -68,12 +68,9 @@ foreach($model in $models) {
                 Stop-Process -Id $id
                 Wait-Process -Id $id
                 Start-Sleep -m 100 # Wait a bit so that the file is closed
-                # Write timeout to the log
-                ($model.Name+","+$conf.Domain+","+$conf.Refinement+","+$conf.InitPrec+","+$conf.Search) | Out-File $logFile -Append
-            } else { # Normal execution
-                # Copy contents of the temp file to the log
-                Get-Content $tmpFile | where {$_ -ne ""} | Out-File $logFile -Append
-            }
+            } 
+            # Copy contents of the temp file to the log
+            Get-Content $tmpFile | where {$_ -ne ""} | Out-File $logFile -Append
         }
         $c++
     }
