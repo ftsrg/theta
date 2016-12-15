@@ -4,6 +4,7 @@
 "models/hw/nusmv.syncarb5_2.B.aag", "true"
 "models/hw/nusmv.syncarb10_2.B.aag", "true"
 "models/hw/pdtpmsarbiter.aag", "true"
+"models/hw/power2bit8.aag", "true"
 "models/hw/shortp0.aag", "false"
 "models/hw/shortp0neg.aag", "false"
 "models/hw/srg5ptimo.aag", "false"

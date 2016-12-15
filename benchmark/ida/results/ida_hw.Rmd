@@ -1,9 +1,13 @@
 ---
-title: "IDA Homework"
+title: "IDA Homework - Analysis of Formal Verification Algorithms"
 author: "Akos Hajdu"
 date: '2016'
 output:
-  html_document: default
+  html_document:
+    number_sections: true
+    toc: true
+    toc_depth: 2
+    code_folding: show
   pdf_document:
     number_sections: yes
     toc: yes
@@ -14,9 +18,7 @@ classoption: a4paper
 
 ## Background
 
-In my research, I am working on the formal verification of software and hardware systems. I create a formal model (a formal representation) of the system and the desired property using first order logic formulas. Then, the set of possible states of the system (state space) can be explored to check if the desired property holds for each reachable state. However, a major drawback of formal verification techniques is the so-called state space explosion problem, which means that the set of possible states of a system can be unmanageably or even infinitely large. To overcome this problem, I use abstraction-based techniques, which reduce complexity by hiding information that is not relevant for verification. However, finding the proper precision of abstraction is a difficult task. Counterexample-Guided Abstraction Refinement (CEGAR) is an automatic verification algorithm that starts with a coarse abstraction and refines it iteratively until the proper precision is obtained. CEGAR is a general concept, having numerous variants in the literature. However, different variants perform better for different tasks.
-
-In my research I am developing a generic CEGAR framework that can incorporate different variants of the CEGAR algorithm. In this homework I run several variants of the algorithm on different models and analyze the results.
+In my research, I am working on the formal verification of software and hardware systems. I create a formal model (a formal representation) of the system and the desired property using first order logic formulas. Then, the set of possible states of the system (state space) can be explored to check if the desired property holds for each reachable state (e.g., a variable `x` should never be negative during the execution of a software). However, a major drawback of formal verification techniques is the so-called state space explosion problem, which means that the set of possible states of a system can be unmanageably or even infinitely large. To overcome this problem, I use abstraction-based techniques, which reduce complexity by hiding information that is not relevant for verification. However, finding the proper precision of abstraction is a difficult task. Counterexample-Guided Abstraction Refinement (CEGAR) is an automatic verification algorithm that starts with a coarse abstraction and refines it iteratively until the proper precision is obtained. CEGAR is a general concept, having numerous variants in the literature, with different variants performing better for different tasks. In my research I am developing a generic CEGAR framework that can incorporate different variants of the CEGAR algorithm. In this homework I run several variants of the algorithm on different models and analyze the results.
 
 ## Variables of the problem
 
@@ -27,18 +29,18 @@ In my research I am developing a generic CEGAR framework that can incorporate di
     + Name of the **model**
     + Number of **variables** in the model
     + **Size** of the formulas describing the model
-* Parameters of the algorithm
+* Parameters of the algorithm (the algorithm configuration)
     + Abstract **domain** (predicate or explicit)
-    + **Refinement** strategy (Craig itp., sequence itp., unsat core)
+    + **Refinement** strategy (Craig interpolation, sequence interpolation, unsat core)
     + **Initial precision** of the abstraction (empty or property-based)
     + **Search** strategy (BFS or DFS)
 
-*Constraints: unsat core refinement cannot be used in predicate domain. Besides that, all combinations of the algorithm parameters are valid.*
+Constraints: unsat core refinement cannot be used with predicate domain. Besides that, all combinations of the algorithm parameters are valid configurations.
 
 ### Output variables
 
 * Is the model **safe**, i.e., does the property hold
-* Execution **time**
+* Execution **time** of the verification
 * Number of refinement **iterations**
 * **Size** of the ARG (Abstract Reachability Graph, i.e., the abstract state space)
 * **Depth** of the ARG
@@ -46,7 +48,7 @@ In my research I am developing a generic CEGAR framework that can incorporate di
 
 *Constraints: it is possible that the algorithm did not terminate within a specified time (see later). In this case all output variables are `NA` values. Furthermore, the lenght of the counterexample is `NA` if the model is safe.*
 
-# Loading data, initialization
+# Load data, initialization, summary
 
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -59,7 +61,7 @@ library(lubridate)
 library(gridExtra)
 ```
 
-## Common variables for the script
+Common variables for the script:
 
 ```{r}
 timeout.ms <- 480000                           # Timeout used during the measurements
@@ -67,7 +69,7 @@ csv.path = "log_20161209_153530_hw_plc_vm.csv" # Path of the data
 
 ```
 
-## Load and clean data, summarize
+## Load and clean data
  
 ```{r}
 d <- read.csv(csv.path, header = T, sep = ",", quote = "", na.strings = "")
@@ -79,6 +81,8 @@ d <- data.frame(Type = as.factor(substr(d$Model, 0, regexpr('/', d$Model) - 1)),
 d.no.to <- d %>% filter(!is.na(TimeMs))
 ```
 
+## Summary
+
 ```{r, include = FALSE}
 models.count <- length(unique(d$Model))
 configs.count <- nrow(unique(select(d, Domain, Refinement, InitPrec, Search)))
@@ -87,14 +91,10 @@ total.time <- seconds_to_period(sum(ifelse(is.na(d$TimeMs), timeout.ms, d$TimeMs
 
 There are **`r models.count`** input models and **`r configs.count`** algorithm configurations. Each measurement was repeated **`r nrow(d)/models.count/configs.count`** times, yielding a total number of **`r nrow(d)`** measurement points with **`r nrow(d.no.to)`** non-timeouts (**`r nrow(d.no.to)/nrow(d)*100`%**). Total time of the measurements: **`r total.time$day` days `r total.time$hour` hours**.
 
-Details:
-
 ```{r}
 str(d, width = 80, strict.width = "cut") # Check column types
 summary(d) # Check summary values
 ```
-
-# Basic analysis
 
 ## Histograms of output variables
 
@@ -114,6 +114,10 @@ plots[[6]] <- qplot(filter(d.no.to, !is.na(d.no.to$CEXlen))$CEXlen,
                     geom = "histogram", bins = 20, xlab = "Counterexample length")
 do.call(grid.arrange, plots)
 ```
+
+The histograms above show an overview of the distribution of the output variables.
+
+# Basic analysis
 
 ## Number of successful executions
 ```{r}
