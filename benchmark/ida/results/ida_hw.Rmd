@@ -3,11 +3,11 @@ title: "IDA Homework"
 author: "Akos Hajdu"
 date: '2016'
 output:
-  pdf_document:
-    number_sections: true
-    toc: true
-    toc_depth: 2
   html_document: default
+  pdf_document:
+    number_sections: yes
+    toc: yes
+    toc_depth: 2
 classoption: a4paper
 ---
 # Introduction
@@ -356,7 +356,14 @@ ggplot(d.refin.iters, aes(Iterations.x, Iterations.y, color = Type)) +
        x = "Craig itp", y = "Seqence itp")
 ```
 
-Each point in the plot above represents two executions for the same model: one with Craig interpolation-based refinement and one with sequence interpolation. It can be observed, that for hardware models, sequence interpolation yields slightly less iterations. However, for PLC models, there are much less iterations with sequence interpolation.
+Each point in the plot above represents two executions for the same model: one with Craig interpolation-based refinement and one with sequence interpolation. It can be observed, that for hardware models, sequence interpolation yields slightly less iterations. However, for PLC models, there are much less iterations with sequence interpolation. This observation can also be confirmed with a Wilcoxon test: checking whether the number of iterations has identical distribution for different refinement strategies.
+
+```{r}
+wilcox.test(Iterations ~ Refinement ,data = filter(d.no.to, Refinement != "SEQ_ITP"))
+```
+
+The p-value is lower than 0.05, therefore the null hypothesis can be rejected, the distribution of the number of iterations is different for the refinement strategies.
+
 
 # Decision tree
 

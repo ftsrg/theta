@@ -23,17 +23,24 @@ str(d)
 # Check summary values
 summary(d)
 
+
+
 d.cex <- d %>% filter(!is.na(CEXlen))
 tree <- ctree(CEXlen ~ Type + Domain + Refinement + InitPrec + Search, data = d.cex)
 plot(tree, type = "simple", gp = gpar(fontsize = 8))
 
 
-d.cex.sel <- select(d.cex, Model, Domain, Refinement, InitPrec, Search, CEXlen)
+d.cex.sel <- select(d.cex, Model, Domain, Refinement, InitPrec, Search, CEXlen, Type)
 d.cex.test <- inner_join(filter(d.cex.sel, Search == "BFS"), filter(d.cex.sel, Search == "DFS"), by = c("Model", "Domain", "Refinement", "InitPrec"))
+
+ggplot(d.cex.test, aes(CEXlen.x, CEXlen.y, color = Refinement)) +
+  geom_point(alpha = 1/5, size = 3) +
+  geom_abline()
+
 
 wilcox.test(d.cex.test$CEXlen.x, d.cex.test$CEXlen.y, paired = TRUE)
 
-wilcox.test(CEXlen ~ Search, data=d.cex) 
+wilcox.test( CEXlen ~ Search, data = d.cex)
 
 qplot(d.cex.test$CEXlen.x, geom = "histogram")
 qplot(d.cex.test$CEXlen.y, geom = "histogram")
