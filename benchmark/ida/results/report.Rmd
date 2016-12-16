@@ -3,13 +3,13 @@ title: "IDA Homework - Analysis of Formal Verification Algorithms"
 author: "Akos Hajdu"
 date: '2016'
 output:
-  pdf_document:
-    highlight: zenburn
+  html_document:
+    code_folding: show
     number_sections: yes
     toc: yes
     toc_depth: 2
-  html_document:
-    code_folding: show
+  pdf_document:
+    highlight: zenburn
     number_sections: yes
     toc: yes
     toc_depth: 2
@@ -19,14 +19,14 @@ classoption: a4paper
 
 ## Background
 
-In my research, I am working on the formal verification of software and hardware systems. I create a formal model (a formal representation) of the system and the desired property using first order logic formulas. Then, the set of possible states of the system (state space) can be explored to check whether it is safe, i.e., the desired property holds for each reachable state (e.g., a variable `x` should never be negative during the execution of a software). However, a major drawback of formal verification techniques is the so-called state space explosion problem, which means that the set of possible states of a system can be unmanageably or even infinitely large. To overcome this problem, I use abstraction-based techniques, which reduce complexity by hiding information that is not relevant for verification. However, finding the proper precision of abstraction is a difficult task. Counterexample-Guided Abstraction Refinement (CEGAR) is an automatic verification algorithm that starts with a coarse abstraction and refines it iteratively until the proper precision is obtained. CEGAR is a general concept, having numerous variants in the literature, with different variants performing better for different tasks. In my research I am developing a generic CEGAR framework that can incorporate different variants of the CEGAR algorithm. In this homework I run several variants of the algorithm on different models and analyze the results.
+In my research, I am working on the formal verification of software and hardware systems. I create a formal model (a formal representation) of the system and the desired property using first order logic formulas. Then, the set of possible states of the system (state space) can be explored to check whether it is safe, i.e., the desired property holds for each reachable state (e.g., a variable `x` should never be negative during the execution of a software). However, a major drawback of formal verification techniques is the so-called state space explosion problem, which means that the set of possible states of a system can be unmanageably or even infinitely large. To overcome this problem, I use abstraction-based techniques, which reduce complexity by hiding information that is not relevant for verification. However, finding the proper precision of abstraction is a difficult task. Counterexample-Guided Abstraction Refinement (CEGAR) is an automatic verification algorithm that starts with a coarse abstraction and refines it iteratively until the proper precision is obtained. CEGAR is a general concept, having numerous variants in the literature, with different variants performing better for different tasks. The main focus of my research is the development of a generic CEGAR framework that can incorporate different variants of the CEGAR algorithm. This way, the most appropriate variant can be choosed for a particular verification task. In this homework I run several variants of the algorithm on different models and analyze the results.
 
 ## Variables of the problem
 
 ### Input variables
 
 * Parameters of the model (the formal representation of the system under verification)
-    + **Type** of the model (hardware or software)
+    + **Type** of the model (hardware or plc)
     + Name of the **model**
     + Number of **variables** in the model
     + **Size** of the formulas describing the model
@@ -386,7 +386,7 @@ I also created some decision trees to check which input parameters influence cer
 
 ## Success of verification
 
-Most of the leaves of the following tree categorize successful (SUCC) and timeout (TO) executions quite well. For example, choosing predicate abstraction for PLCs will most likely not succeed. On the other hand, it is likely to succeed for hardware models. It can also be seen that explicit abstraction with Craig or sequence itp. refinement is likely to succeed regardless of the model type.
+Most of the leaves of the following tree categorize successful (SUCC) and timeout (TO) executions quite well. For example, choosing predicate abstraction for PLCs will most likely not succeed. On the other hand, it is likely to succeed for hardware models. It can also be seen that explicit abstraction with Craig interpolation refinement is likely to succeed regardless of the model type.
 
 ```{r fig.width = 12, fig.height = 6}
 # Create success column
