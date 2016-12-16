@@ -35,7 +35,7 @@ param (
 $tmpFile = [System.IO.Path]::GetTempFileName()
 $logFile = $outDir + "log_" + (Get-Date -format "yyyyMMdd_HHmmss") + ".csv"
 # Header
-"Model,Domain,Refinement,InitPrec,Search,Vars,Safe,TimeMs,Iterations,ARGsize,ARGdepth,CEXlen" | Out-File $logFile
+"Model,Vars,Size,Domain,Refinement,InitPrec,Search,Safe,TimeMs,Iterations,ARGsize,ARGdepth,CEXlen" | Out-File $logFile
 
 # Load models and configurations from external files
 $models = @(Import-CSV $modelsFile -Header Name, Expected)
@@ -56,18 +56,21 @@ foreach($model in $models) {
             Write-Progress -Activity " " -PercentComplete (($r)*100/$runs) -Status "Run: $($r+1)/$runs " -Id 2
             
             # Run the jar file with the given parameters, the output is redirected to a temp file
-            $p = Start-Process java -ArgumentList '-jar', $jarFile, '-m', $model.Name, '-e', $model.Expected, '-d', $conf.Domain, '-r', $conf.Refinement, '-i', $conf.InitPrec, '-s', $conf.Search -RedirectStandardOutput $tmpFile -PassThru -NoNewWindow
+            $args = @('-jar', $jarFile, '-m', $model.Name, '-d', $conf.Domain, '-r', $conf.Refinement, '-i', $conf.InitPrec, '-s', $conf.Search)
+            # If expected result is present in the CSV add it as a parameter
+            if ($model.Expected -ne $Null) {
+                $args += '-e'
+                $args += $model.Expected
+            }
+            $p = Start-Process java -ArgumentList $args -RedirectStandardOutput $tmpFile -PassThru -NoNewWindow
             $id = $p.id
             if (!$p.WaitForExit($timeOut*1000)){ # Timeout
                 Stop-Process -Id $id
                 Wait-Process -Id $id
                 Start-Sleep -m 100 # Wait a bit so that the file is closed
-                # Write timeout to the log
-                ($model.Name+","+$conf.Domain+","+$conf.Refinement+","+$conf.InitPrec+","+$conf.Search) | Out-File $logFile -Append
-            } else { # Normal execution
-                # Copy contents of the temp file to the log
-                Get-Content $tmpFile | where {$_ -ne ""} | Out-File $logFile -Append
-            }
+            } 
+            # Copy contents of the temp file to the log
+            Get-Content $tmpFile | where {$_ -ne ""} | Out-File $logFile -Append
         }
         $c++
     }

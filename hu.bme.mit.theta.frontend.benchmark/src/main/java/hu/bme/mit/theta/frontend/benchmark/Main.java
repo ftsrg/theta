@@ -17,6 +17,9 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyStatus;
 import hu.bme.mit.theta.analysis.algorithm.Statistics;
 import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.common.table.impl.SimpleTableWriter;
+import hu.bme.mit.theta.core.expr.impl.Exprs;
+import hu.bme.mit.theta.core.utils.impl.ExprMetrics;
+import hu.bme.mit.theta.core.utils.impl.ExprUtils;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.formalism.sts.dsl.StsDslManager;
 import hu.bme.mit.theta.formalism.sts.dsl.impl.StsSpec;
@@ -86,8 +89,7 @@ public class Main {
 		try {
 
 			// Output: configuration parameters
-			tableWriter.cell(model).cell(domain.toString()).cell(refinement.toString()).cell(initPrecision.toString())
-					.cell(search.toString());
+			tableWriter.cell(model);
 
 			STS sts = null;
 
@@ -102,6 +104,11 @@ public class Main {
 			}
 
 			tableWriter.cell(sts.getVars().size());
+			tableWriter.cell(ExprUtils.size(Exprs.And(Exprs.And(sts.getInit()), Exprs.And(sts.getTrans())),
+					ExprMetrics.absoluteSize()));
+			tableWriter.cell(domain.toString()).cell(refinement.toString()).cell(initPrecision.toString())
+					.cell(search.toString());
+			System.out.flush();
 
 			final Configuration<?, ?, ?> configuration = new StsConfigurationBuilder(domain, refinement)
 					.initPrecision(initPrecision).search(search).build(sts);
