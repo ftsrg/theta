@@ -3,13 +3,13 @@ title: "IDA Homework - Analysis of Formal Verification Algorithms"
 author: "Akos Hajdu"
 date: '2016'
 output:
-  html_document:
-    code_folding: show
+  pdf_document:
+    highlight: zenburn
     number_sections: yes
     toc: yes
     toc_depth: 2
-  pdf_document:
-    highlight: zenburn
+  html_document:
+    code_folding: show
     number_sections: yes
     toc: yes
     toc_depth: 2
@@ -377,7 +377,7 @@ ggplot(d.refin.iters, aes(Iterations.x, Iterations.y, color = Type)) +
 The previous observation can also be confirmed with a Wilcoxon test: checking whether the number of iterations has identical distribution for different refinement strategies. The p-value is lower than 0.05, therefore the null hypothesis can be rejected, the distribution of the number of iterations is different for the refinement strategies.
 
 ```{r}
-wilcox.test(Iterations ~ Refinement ,data = filter(d.no.to, Refinement != "SEQ_ITP"))
+wilcox.test(Iterations ~ Refinement ,data = filter(d.no.to, Refinement != "UNSAT_CORE"))
 ```
 
 # Decision tree
