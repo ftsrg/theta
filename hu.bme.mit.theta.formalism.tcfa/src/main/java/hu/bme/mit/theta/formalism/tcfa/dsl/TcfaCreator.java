@@ -30,11 +30,11 @@ final class TcfaCreator {
 	}
 
 	private static final class TcfaCreatorVisitor extends TcfaDslBaseVisitor<TCFA> {
-		private final Scope currentScope;
+		private final Scope scope;
 		private final Assignment assignment;
 
 		private TcfaCreatorVisitor(final Scope scope, final Assignment assignment) {
-			currentScope = checkNotNull(scope);
+			this.scope = checkNotNull(scope);
 			this.assignment = checkNotNull(assignment);
 		}
 
@@ -42,15 +42,15 @@ final class TcfaCreator {
 
 		@Override
 		public TCFA visitDefTcfa(final DefTcfaContext ctx) {
-			final TcfaDefScope scope = TcfaDefScope.create(currentScope, assignment, ctx);
-			final TCFA tcfa = scope.getTcfa();
+			final TcfaDefScope tcfaDefScope = TcfaDefScope.create(scope, assignment, ctx);
+			final TCFA tcfa = tcfaDefScope.getTcfa();
 			return tcfa;
 		}
 
 		@Override
 		public TCFA visitRefTcfa(final RefTcfaContext ctx) {
-			final TcfaDeclSymbol symbol = resolveTcfa(currentScope, ctx.ref.getText());
-			final List<Expr<?>> args = TcfaDslHelper.createExprList(currentScope, assignment, ctx.params);
+			final TcfaDeclSymbol symbol = resolveTcfa(scope, ctx.ref.getText());
+			final List<Expr<?>> args = TcfaDslHelper.createExprList(scope, assignment, ctx.params);
 			return symbol.instantiate(assignment, args);
 		}
 

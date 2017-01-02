@@ -1,6 +1,10 @@
 package hu.bme.mit.theta.splittingcegar.ui;
 
+import static hu.bme.mit.theta.common.Utils.singleElementOf;
+
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,7 +17,7 @@ import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.formalism.sts.dsl.StsDslManager;
-import hu.bme.mit.theta.formalism.sts.dsl.impl.StsSpec;
+import hu.bme.mit.theta.formalism.sts.dsl.StsSpec;
 import hu.bme.mit.theta.frontend.aiger.impl.AigerParserSimple;
 import hu.bme.mit.theta.splittingcegar.common.CEGARLoop;
 import hu.bme.mit.theta.splittingcegar.common.CEGARResult;
@@ -46,8 +50,9 @@ public class SandBox {
 		STS problem = null;
 
 		if (modelName.endsWith(".system")) {
-			final StsSpec stsSpec = StsDslManager.parse(MODELSPATH + subPath + modelName);
-			problem = stsSpec.getAllSts().iterator().next();
+			final InputStream inputStream = new FileInputStream(MODELSPATH + subPath + modelName);
+			final StsSpec stsSpec = StsDslManager.createStsSpec(inputStream);
+			problem = singleElementOf(stsSpec.getAllSts());
 		} else if (modelName.endsWith(".aag")) {
 			problem = new AigerParserSimple().parse(MODELSPATH + subPath + modelName);
 		}

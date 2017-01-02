@@ -1,8 +1,9 @@
-package hu.bme.mit.theta.formalism.sts.dsl.impl;
+package hu.bme.mit.theta.formalism.sts.dsl;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static hu.bme.mit.theta.common.Utils.singleElementOf;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.Add;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.And;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.App;
@@ -34,6 +35,7 @@ import static hu.bme.mit.theta.core.expr.impl.Exprs.Rem;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.Sub;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.True;
 import static hu.bme.mit.theta.core.utils.impl.ExprUtils.cast;
+import static hu.bme.mit.theta.formalism.sts.dsl.StsDslHelper.createParamList;
 import static java.util.stream.Collectors.toList;
 
 import java.util.Collection;
@@ -46,6 +48,8 @@ import org.antlr.v4.runtime.Token;
 
 import com.google.common.collect.ImmutableList;
 
+import hu.bme.mit.theta.common.dsl.BasicScope;
+import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.ParamDecl;
@@ -103,16 +107,20 @@ import hu.bme.mit.theta.formalism.sts.dsl.gen.StsDslParser.TrueExprContext;
 
 final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
 
-	private Scope2 currentScope;
+	private Scope currentScope;
 	private final Assignment assignment;
 
-	StsExprCreatorVisitor(final Scope2 scope, final Assignment assignment) {
+	StsExprCreatorVisitor(final Scope scope, final Assignment assignment) {
 		currentScope = checkNotNull(scope);
 		this.assignment = checkNotNull(assignment);
 	}
 
-	private void push() {
-		currentScope = new BasicScope2(currentScope);
+	////
+
+	private void push(final Collection<? extends Decl<?>> decls) {
+		final BasicScope scope = new BasicScope(currentScope);
+		decls.forEach(p -> scope.declare(DeclSymbol.of(p)));
+		currentScope = scope;
 	}
 
 	private void pop() {
@@ -120,18 +128,19 @@ final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
 		currentScope = currentScope.enclosingScope().get();
 	}
 
+	////
+
 	@Override
 	public Expr<?> visitFuncLitExpr(final FuncLitExprContext ctx) {
 		if (ctx.result != null) {
-			final List<ParamDecl<?>> params = StsDslHelper.createParamList(ctx.paramDecls);
+			final List<ParamDecl<?>> params = createParamList(ctx.paramDecls);
 
 			checkArgument(params.size() == 1);
 			@SuppressWarnings("unchecked")
-			final ParamDecl<Type> param = (ParamDecl<Type>) params.get(0);
+			final ParamDecl<Type> param = (ParamDecl<Type>) singleElementOf(params);
 
-			push();
+			push(params);
 
-			currentScope.declare(DeclSymbol.of(param));
 			@SuppressWarnings("unchecked")
 			final Expr<Type> result = (Expr<Type>) ctx.result.accept(this);
 
@@ -182,13 +191,10 @@ final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
 	@Override
 	public Expr<?> visitForallExpr(final ForallExprContext ctx) {
 		if (ctx.paramDecls != null) {
-			final List<ParamDecl<?>> paramDecls = StsDslHelper.createParamList(ctx.paramDecls);
+			final List<ParamDecl<?>> paramDecls = createParamList(ctx.paramDecls);
 
-			push();
-
-			paramDecls.forEach(p -> currentScope.declare(DeclSymbol.of(p)));
+			push(paramDecls);
 			final Expr<? extends BoolType> op = cast(ctx.op.accept(this), BoolType.class);
-
 			pop();
 
 			return Forall(paramDecls, op);
@@ -200,13 +206,10 @@ final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
 	@Override
 	public Expr<?> visitExistsExpr(final ExistsExprContext ctx) {
 		if (ctx.paramDecls != null) {
-			final List<ParamDecl<?>> paramDecls = StsDslHelper.createParamList(ctx.paramDecls);
+			final List<ParamDecl<?>> paramDecls = createParamList(ctx.paramDecls);
 
-			push();
-
-			paramDecls.forEach(p -> currentScope.declare(DeclSymbol.of(p)));
+			push(paramDecls);
 			final Expr<? extends BoolType> op = cast(ctx.op.accept(this), BoolType.class);
-
 			pop();
 
 			return Exists(paramDecls, op);
@@ -570,7 +573,7 @@ final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
 
 	@Override
 	public Expr<?> visitIdExpr(final IdExprContext ctx) {
-		final Optional<Symbol> optSymbol = currentScope.resolve(ctx.id.getText());
+		final Optional<? extends Symbol> optSymbol = currentScope.resolve(ctx.id.getText());
 
 		checkArgument(optSymbol.isPresent());
 		final Symbol symbol = optSymbol.get();

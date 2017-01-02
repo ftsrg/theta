@@ -1,6 +1,10 @@
 package hu.bme.mit.theta.splittingcegar.ui;
 
+import static hu.bme.mit.theta.common.Utils.singleElementOf;
+
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -11,7 +15,7 @@ import hu.bme.mit.theta.common.logging.impl.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.impl.FileLogger;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.formalism.sts.dsl.StsDslManager;
-import hu.bme.mit.theta.formalism.sts.dsl.impl.StsSpec;
+import hu.bme.mit.theta.formalism.sts.dsl.StsSpec;
 import hu.bme.mit.theta.frontend.aiger.impl.AigerParserSimple;
 import hu.bme.mit.theta.splittingcegar.clustered.ClusteredCEGARBuilder;
 import hu.bme.mit.theta.splittingcegar.common.CEGARLoop;
@@ -177,9 +181,9 @@ public class CLI {
 		// Run algorithm
 		try {
 			if (model.endsWith(".system")) {
-				final StsSpec stsSpec = StsDslManager.parse(model);
-				assert (stsSpec.getAllSts().size() == 1);
-				problem = stsSpec.getAllSts().iterator().next();
+				final InputStream inputStream = new FileInputStream(model);
+				final StsSpec stsSpec = StsDslManager.createStsSpec(inputStream);
+				problem = singleElementOf(stsSpec.getAllSts());
 			} else if (model.endsWith(".aag")) {
 				problem = new AigerParserSimple().parse(model);
 			}

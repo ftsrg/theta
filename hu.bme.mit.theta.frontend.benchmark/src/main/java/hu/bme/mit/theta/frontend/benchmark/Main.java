@@ -1,8 +1,7 @@
 package hu.bme.mit.theta.frontend.benchmark;
 
-import static java.util.Collections.emptyList;
-
-import java.io.IOException;
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.util.Optional;
 
 import org.apache.commons.cli.CommandLine;
@@ -22,7 +21,7 @@ import hu.bme.mit.theta.core.utils.impl.ExprMetrics;
 import hu.bme.mit.theta.core.utils.impl.ExprUtils;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.formalism.sts.dsl.StsDslManager;
-import hu.bme.mit.theta.formalism.sts.dsl.impl.StsSpec;
+import hu.bme.mit.theta.formalism.sts.dsl.StsSpec;
 import hu.bme.mit.theta.formalism.sts.utils.impl.StsIteTransformation;
 import hu.bme.mit.theta.frontend.aiger.impl.AigerParserSimple;
 import hu.bme.mit.theta.frontend.benchmark.StsConfigurationBuilder.Domain;
@@ -39,6 +38,11 @@ public class Main {
 		optModel.setRequired(true);
 		optModel.setArgName("MODEL");
 		options.addOption(optModel);
+
+		final Option optProp = new Option("p", "property", true, "Property to be verified");
+		optModel.setRequired(true);
+		optModel.setArgName("PROPERTY");
+		options.addOption(optProp);
 
 		final Option optDomain = new Option("d", "domain", true, "Abstract domain");
 		optDomain.setRequired(true);
@@ -74,6 +78,7 @@ public class Main {
 		}
 
 		final String model = cmd.getOptionValue(optModel.getOpt());
+		final String prop = cmd.getOptionValue(optProp.getOpt());
 		final Domain domain = Domain.valueOf(cmd.getOptionValue(optDomain.getOpt()));
 		final Refinement refinement = Refinement.valueOf(cmd.getOptionValue(optRefinement.getOpt()));
 
@@ -96,11 +101,9 @@ public class Main {
 			if (model.endsWith(".aag")) {
 				sts = new AigerParserSimple().parse(model);
 			} else {
-				final StsSpec spec = StsDslManager.parse(model, emptyList());
-				if (spec.getAllSts().size() != 1) {
-					throw new IOException("File must contain exactly one STS.");
-				}
-				sts = new StsIteTransformation().transform(spec.getAllSts().iterator().next());
+				final InputStream inputStream = new FileInputStream(model);
+				final StsSpec spec = StsDslManager.createStsSpec(inputStream);
+				sts = new StsIteTransformation().transform(spec.createProp(prop));
 			}
 
 			tableWriter.cell(sts.getVars().size());
