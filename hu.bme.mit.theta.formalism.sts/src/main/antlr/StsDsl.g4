@@ -2,7 +2,7 @@ grammar StsDsl;
 
 // S P E C I F I C A T I O N
 
-spec:	SPECIFICATION name=ID (LPAREN (paramDecls=declList)? RPAREN)? LBRAC
+stsSpec:	SPECIFICATION name=ID (LPAREN (paramDecls=declList)? RPAREN)? LBRAC
 			(	constDecls+=constDecl
 			|	varDecls+=varDecl
 			|	stsDecls+=stsDecl

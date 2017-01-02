@@ -1,8 +1,7 @@
 package hu.bme.mit.theta.frontend.benchmark;
 
-import static java.util.Collections.emptyList;
-
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -14,7 +13,7 @@ import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.common.table.impl.SimpleTableWriter;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.formalism.sts.dsl.StsDslManager;
-import hu.bme.mit.theta.formalism.sts.dsl.impl.StsSpec;
+import hu.bme.mit.theta.formalism.sts.dsl.StsSpec;
 import hu.bme.mit.theta.formalism.sts.utils.impl.StsIteTransformation;
 import hu.bme.mit.theta.frontend.aiger.impl.AigerParserSimple;
 import hu.bme.mit.theta.frontend.benchmark.StsConfigurationBuilder.Domain;
@@ -25,23 +24,23 @@ import hu.bme.mit.theta.frontend.benchmark.StsConfigurationBuilder.Search;
 public class StsBenchmark {
 
 	public static void main(final String[] args) {
-		final String basePath = "src/test/resources/";
+		final String basePath = "/";
 		final TableWriter formatter = new SimpleTableWriter(System.out, "\t");
 		final int runs = 1;
 
 		final List<StsInput> inputs = new ArrayList<>();
-		inputs.add(new StsInput(basePath + "simple/boolean1.system", false));
-		inputs.add(new StsInput(basePath + "simple/boolean2.system", false));
-		inputs.add(new StsInput(basePath + "simple/counter.system", true));
-		inputs.add(new StsInput(basePath + "simple/counter_bad.system", false));
-		inputs.add(new StsInput(basePath + "simple/counter_parametric.system", true));
-		inputs.add(new StsInput(basePath + "simple/loop.system", true));
-		inputs.add(new StsInput(basePath + "simple/loop_bad.system", false));
-		inputs.add(new StsInput(basePath + "simple/multipleinitial.system", false));
-		inputs.add(new StsInput(basePath + "simple/readerswriters.system", true));
-		inputs.add(new StsInput(basePath + "simple/simple1.system", false));
-		inputs.add(new StsInput(basePath + "simple/simple2.system", true));
-		inputs.add(new StsInput(basePath + "simple/simple3.system", false));
+		inputs.add(new StsInput(basePath + "simple/boolean1.system", "safe", false));
+		inputs.add(new StsInput(basePath + "simple/boolean2.system", "safe", false));
+		inputs.add(new StsInput(basePath + "simple/counter.system", "safe", true));
+		inputs.add(new StsInput(basePath + "simple/counter_bad.system", "safe", false));
+		inputs.add(new StsInput(basePath + "simple/counter_parametric.system", "safe", true));
+		inputs.add(new StsInput(basePath + "simple/loop.system", "s", true));
+		inputs.add(new StsInput(basePath + "simple/loop_bad.system", "s", false));
+		inputs.add(new StsInput(basePath + "simple/multipleinitial.system", "s", false));
+		inputs.add(new StsInput(basePath + "simple/readerswriters.system", "s", true));
+		inputs.add(new StsInput(basePath + "simple/simple1.system", "s", false));
+		inputs.add(new StsInput(basePath + "simple/simple2.system", "s", true));
+		inputs.add(new StsInput(basePath + "simple/simple3.system", "s", false));
 
 		final List<StsConfigurationBuilder> builders = new ArrayList<>();
 		//@formatter:off
@@ -130,10 +129,12 @@ public class StsBenchmark {
 
 	public static class StsInput {
 		public final String path;
+		public final String prop;
 		public final boolean expected;
 
-		public StsInput(final String path, final boolean expected) {
+		public StsInput(final String path, final String prop, final boolean expected) {
 			this.path = path;
+			this.prop = prop;
 			this.expected = expected;
 		}
 
@@ -141,11 +142,10 @@ public class StsBenchmark {
 			if (path.endsWith(".aag")) {
 				return new AigerParserSimple().parse(path);
 			} else {
-				final StsSpec spec = StsDslManager.parse(path, emptyList());
-				if (spec.getAllSts().size() != 1) {
-					throw new IOException("File must contain exactly one STS.");
-				}
-				return new StsIteTransformation().transform(spec.getAllSts().iterator().next());
+				final InputStream inputStream = StsBenchmark.class.getResourceAsStream(path);
+				final StsSpec spec = StsDslManager.createStsSpec(inputStream);
+				final STS sts = spec.createProp(prop);
+				return new StsIteTransformation().transform(sts);
 			}
 		}
 	}

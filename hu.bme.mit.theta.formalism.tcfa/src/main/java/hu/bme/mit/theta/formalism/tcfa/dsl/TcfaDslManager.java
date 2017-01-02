@@ -19,7 +19,7 @@ public final class TcfaDslManager {
 	private TcfaDslManager() {
 	}
 
-	public static TcfaSpec createTcfaSpec(final InputStream inputStream, final List<? extends Expr<?>> params)
+	public static TcfaSpec createTcfaSpec(final InputStream inputStream, final List<? extends Expr<?>> args)
 			throws FileNotFoundException, IOException {
 		final ANTLRInputStream input = new ANTLRInputStream(inputStream);
 
@@ -29,14 +29,14 @@ public final class TcfaDslManager {
 
 		final TcfaSpecContext ctx = parser.tcfaSpec();
 		final TcfaSpecSymbol tcfaSpecSymbol = TcfaSpecSymbol.create(ctx);
-		final TcfaSpec tcfaSpec = tcfaSpecSymbol.instantiate(params);
+		final TcfaSpec tcfaSpec = tcfaSpecSymbol.instantiate(args);
 
 		return tcfaSpec;
 	}
 
-	public static TcfaSpec createTcfaSpec(final InputStream inputStream, final Expr<?>... params)
+	public static TcfaSpec createTcfaSpec(final InputStream inputStream, final Expr<?>... args)
 			throws FileNotFoundException, IOException {
-		return createTcfaSpec(inputStream, Arrays.asList(params));
+		return createTcfaSpec(inputStream, Arrays.asList(args));
 	}
 
 }

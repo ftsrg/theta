@@ -1,7 +1,11 @@
 package hu.bme.mit.theta.splittingcegar.ui.performance;
 
+import static hu.bme.mit.theta.common.Utils.singleElementOf;
+
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -13,6 +17,7 @@ import org.junit.Assert;
 import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.formalism.sts.dsl.StsDslManager;
+import hu.bme.mit.theta.formalism.sts.dsl.StsSpec;
 import hu.bme.mit.theta.frontend.aiger.impl.AigerParserOptimized;
 import hu.bme.mit.theta.frontend.aiger.impl.AigerParserSimple;
 import hu.bme.mit.theta.splittingcegar.common.CEGARBuilder;
@@ -125,8 +130,9 @@ public class PerfTestBase {
 
 		@Override
 		public STS load(final String path) throws FileNotFoundException, IOException {
-			return StsDslManager.parse(path).getAllSts().iterator().next();
-
+			final InputStream inputStream = new FileInputStream(path);
+			final StsSpec stsSpec = StsDslManager.createStsSpec(inputStream);
+			return singleElementOf(stsSpec.getAllSts());
 		}
 	}
 
