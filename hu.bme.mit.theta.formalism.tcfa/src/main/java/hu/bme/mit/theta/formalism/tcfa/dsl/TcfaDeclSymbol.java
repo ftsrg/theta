@@ -5,7 +5,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.util.List;
 import java.util.Optional;
 
-import hu.bme.mit.theta.common.dsl.Scope;
+import hu.bme.mit.theta.common.dsl.ScopedSymbol;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.common.dsl.SymbolTable;
 import hu.bme.mit.theta.core.dsl.DeclSymbol;
@@ -16,7 +16,7 @@ import hu.bme.mit.theta.core.utils.impl.ExprUtils;
 import hu.bme.mit.theta.formalism.tcfa.TCFA;
 import hu.bme.mit.theta.formalism.tcfa.dsl.gen.TcfaDslParser.TcfaDeclContext;
 
-final class TcfaDeclSymbol implements Symbol, Scope {
+final class TcfaDeclSymbol implements ScopedSymbol {
 
 	private final TcfaDeclContext tcfaDeclContext;
 

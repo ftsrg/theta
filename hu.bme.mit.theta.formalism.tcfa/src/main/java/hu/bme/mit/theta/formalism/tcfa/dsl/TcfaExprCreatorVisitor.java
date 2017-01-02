@@ -3,6 +3,7 @@ package hu.bme.mit.theta.formalism.tcfa.dsl;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static hu.bme.mit.theta.common.Utils.singleElementOf;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.Add;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.And;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.App;
@@ -112,9 +113,11 @@ final class TcfaExprCreatorVisitor extends TcfaDslBaseVisitor<Expr<?>> {
 		this.assignment = checkNotNull(assignment);
 	}
 
+	////
+
 	private void push(final Collection<? extends Decl<?>> decls) {
-		final Collection<DeclSymbol> symbols = decls.stream().map(DeclSymbol::of).collect(toList());
-		final BasicScope scope = new BasicScope(currentScope, symbols);
+		final BasicScope scope = new BasicScope(currentScope);
+		decls.forEach(p -> scope.declare(DeclSymbol.of(p)));
 		currentScope = scope;
 	}
 
@@ -123,6 +126,8 @@ final class TcfaExprCreatorVisitor extends TcfaDslBaseVisitor<Expr<?>> {
 		currentScope = currentScope.enclosingScope().get();
 	}
 
+	////
+
 	@Override
 	public Expr<?> visitFuncLitExpr(final FuncLitExprContext ctx) {
 		if (ctx.result != null) {
@@ -130,7 +135,7 @@ final class TcfaExprCreatorVisitor extends TcfaDslBaseVisitor<Expr<?>> {
 
 			checkArgument(params.size() == 1);
 			@SuppressWarnings("unchecked")
-			final ParamDecl<Type> param = (ParamDecl<Type>) params.get(0);
+			final ParamDecl<Type> param = (ParamDecl<Type>) singleElementOf(params);
 
 			push(params);
 
@@ -187,9 +192,7 @@ final class TcfaExprCreatorVisitor extends TcfaDslBaseVisitor<Expr<?>> {
 			final List<ParamDecl<?>> paramDecls = TcfaDslHelper.createParamList(ctx.paramDecls);
 
 			push(paramDecls);
-
 			final Expr<? extends BoolType> op = cast(ctx.op.accept(this), BoolType.class);
-
 			pop();
 
 			return Forall(paramDecls, op);
@@ -204,9 +207,7 @@ final class TcfaExprCreatorVisitor extends TcfaDslBaseVisitor<Expr<?>> {
 			final List<ParamDecl<?>> paramDecls = TcfaDslHelper.createParamList(ctx.paramDecls);
 
 			push(paramDecls);
-
 			final Expr<? extends BoolType> op = cast(ctx.op.accept(this), BoolType.class);
-
 			pop();
 
 			return Exists(paramDecls, op);

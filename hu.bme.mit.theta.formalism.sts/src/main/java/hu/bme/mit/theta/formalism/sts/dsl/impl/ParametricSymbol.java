@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.core.dsl;
+package hu.bme.mit.theta.formalism.sts.dsl.impl;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -9,13 +9,11 @@ import java.util.Optional;
 
 import com.google.common.collect.ImmutableList;
 
-import hu.bme.mit.theta.common.dsl.BasicScope2;
-import hu.bme.mit.theta.common.dsl.Scope2;
-import hu.bme.mit.theta.common.dsl.ScopedSymbol;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.core.decl.ParamDecl;
+import hu.bme.mit.theta.core.dsl.DeclSymbol;
 
-public abstract class ParametricSymbol implements ScopedSymbol {
+public abstract class ParametricSymbol implements ScopedSymbol2 {
 
 	private final String name;
 	private final List<ParamDecl<?>> paramDecls;

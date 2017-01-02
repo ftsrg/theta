@@ -4,9 +4,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.List;
 
-import hu.bme.mit.theta.common.dsl.Scope2;
 import hu.bme.mit.theta.core.decl.ParamDecl;
-import hu.bme.mit.theta.core.dsl.ParametricSymbol;
 import hu.bme.mit.theta.formalism.sts.dsl.gen.StsDslParser.StsContext;
 
 final class StsSymbol extends ParametricSymbol {

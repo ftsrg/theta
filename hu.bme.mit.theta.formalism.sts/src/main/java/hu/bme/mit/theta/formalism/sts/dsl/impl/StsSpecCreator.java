@@ -7,8 +7,6 @@ import static hu.bme.mit.theta.formalism.sts.dsl.impl.StsDslHelper.declareVarDec
 
 import java.util.List;
 
-import hu.bme.mit.theta.common.dsl.BasicScope2;
-import hu.bme.mit.theta.common.dsl.Scope2;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.model.Assignment;
@@ -33,8 +31,8 @@ public final class StsSpecCreator {
 		final List<ParamDecl<?>> paramDecls = StsDslHelper.createParamList(specCtx.paramDecls);
 		final Assignment paramAssignment = new AssignmentImpl(paramDecls, params);
 
-		final StsSpecSymbol tcfaSpecSymbol = new StsSpecSymbol(name, paramDecls);
-		final Scope2 scope = new BasicScope2(tcfaSpecSymbol);
+		final StsSpecSymbol stsSpecSymbol = new StsSpecSymbol(name, paramDecls);
+		final Scope2 scope = new BasicScope2(stsSpecSymbol);
 		declareConstDecls(scope, specCtx.constDecls);
 		declareVarDecls(scope, specCtx.varDecls);
 		declareEachSts(scope, specCtx.stsDecls);
