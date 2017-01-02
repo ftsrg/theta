@@ -12,8 +12,6 @@ import static java.util.stream.Collectors.toList;
 
 import java.util.List;
 
-import hu.bme.mit.theta.common.dsl.BasicScope2;
-import hu.bme.mit.theta.common.dsl.Scope2;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.model.Assignment;

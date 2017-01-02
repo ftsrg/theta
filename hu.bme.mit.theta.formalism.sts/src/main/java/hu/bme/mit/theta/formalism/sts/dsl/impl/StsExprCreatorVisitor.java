@@ -46,8 +46,6 @@ import org.antlr.v4.runtime.Token;
 
 import com.google.common.collect.ImmutableList;
 
-import hu.bme.mit.theta.common.dsl.BasicScope2;
-import hu.bme.mit.theta.common.dsl.Scope2;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.ParamDecl;

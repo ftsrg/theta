@@ -1,8 +1,11 @@
-package hu.bme.mit.theta.common.dsl;
+package hu.bme.mit.theta.formalism.sts.dsl.impl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Optional;
+
+import hu.bme.mit.theta.common.dsl.Symbol;
+import hu.bme.mit.theta.common.dsl.SymbolTable;
 
 public final class BasicScope2 implements Scope2 {
 

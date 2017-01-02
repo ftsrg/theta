@@ -9,7 +9,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import hu.bme.mit.theta.common.dsl.Scope2;
+import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.dsl.DeclSymbol;
@@ -51,13 +51,13 @@ public final class CoreDslHelper {
 		return type;
 	}
 
-	public static Expr<?> createExpr(final Scope2 scope, final ExprContext exprCtx) {
+	public static Expr<?> createExpr(final Scope scope, final ExprContext exprCtx) {
 		final Expr<?> expr = exprCtx.accept(new ExprCreatorVisitor(scope));
 		assert expr != null;
 		return expr;
 	}
 
-	public static List<Expr<?>> createExprList(final Scope2 scope, final ExprListContext exprListCtx) {
+	public static List<Expr<?>> createExprList(final Scope scope, final ExprListContext exprListCtx) {
 		if (exprListCtx == null || exprListCtx.exprs == null) {
 			return Collections.emptyList();
 		} else {
@@ -66,11 +66,11 @@ public final class CoreDslHelper {
 		}
 	}
 
-	public static Expr<? extends BoolType> createBoolExpr(final Scope2 scope, final ExprContext exprCtx) {
+	public static Expr<? extends BoolType> createBoolExpr(final Scope scope, final ExprContext exprCtx) {
 		return cast(createExpr(scope, exprCtx), BoolType.class);
 	}
 
-	public static List<Expr<? extends BoolType>> createBoolExprList(final Scope2 scope,
+	public static List<Expr<? extends BoolType>> createBoolExprList(final Scope scope,
 			final ExprListContext exprListCtx) {
 		final List<Expr<?>> exprs = createExprList(scope, exprListCtx);
 		final List<Expr<? extends BoolType>> boolExprs = exprs.stream()
@@ -78,13 +78,13 @@ public final class CoreDslHelper {
 		return boolExprs;
 	}
 
-	public static Stmt createStmt(final Scope2 scope, final StmtContext stmtCtx) {
+	public static Stmt createStmt(final Scope scope, final StmtContext stmtCtx) {
 		final Stmt stmt = stmtCtx.accept(new StmtCreatorVisitor(scope));
 		assert stmt != null;
 		return stmt;
 	}
 
-	public static List<Stmt> createStmtList(final Scope2 scope, final StmtListContext stmtListCtx) {
+	public static List<Stmt> createStmtList(final Scope scope, final StmtListContext stmtListCtx) {
 		if (stmtListCtx == null || stmtListCtx.stmts.isEmpty()) {
 			return Collections.emptyList();
 		} else {
@@ -93,8 +93,8 @@ public final class CoreDslHelper {
 		}
 	}
 
-	public static DeclSymbol resolveDecl(final Scope2 scope, final String name) {
-		final Optional<Symbol> optSymbol = scope.resolve(name);
+	public static DeclSymbol resolveDecl(final Scope scope, final String name) {
+		final Optional<? extends Symbol> optSymbol = scope.resolve(name);
 
 		checkArgument(optSymbol.isPresent());
 		final Symbol symbol = optSymbol.get();

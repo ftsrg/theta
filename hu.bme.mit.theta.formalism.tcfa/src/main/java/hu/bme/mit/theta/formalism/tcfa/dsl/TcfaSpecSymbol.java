@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Optional;
 
 import hu.bme.mit.theta.common.dsl.Scope;
+import hu.bme.mit.theta.common.dsl.ScopedSymbol;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.common.dsl.SymbolTable;
 import hu.bme.mit.theta.core.decl.ConstDecl;
@@ -22,7 +23,7 @@ import hu.bme.mit.theta.formalism.tcfa.dsl.gen.TcfaDslParser.TcfaDeclContext;
 import hu.bme.mit.theta.formalism.tcfa.dsl.gen.TcfaDslParser.TcfaSpecContext;
 import hu.bme.mit.theta.formalism.tcfa.dsl.gen.TcfaDslParser.VarDeclContext;
 
-final class TcfaSpecSymbol implements Scope, Symbol {
+final class TcfaSpecSymbol implements ScopedSymbol {
 
 	private final TcfaSpecContext tcfaSpecContext;
 

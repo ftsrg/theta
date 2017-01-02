@@ -3,6 +3,7 @@ package hu.bme.mit.theta.core.dsl.impl;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static hu.bme.mit.theta.common.Utils.singleElementOf;
 import static hu.bme.mit.theta.core.decl.impl.Decls.Param;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.Add;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.And;
@@ -46,8 +47,8 @@ import org.antlr.v4.runtime.Token;
 
 import com.google.common.collect.ImmutableList;
 
-import hu.bme.mit.theta.common.dsl.BasicScope2;
-import hu.bme.mit.theta.common.dsl.Scope2;
+import hu.bme.mit.theta.common.dsl.BasicScope;
+import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.ParamDecl;
@@ -106,20 +107,26 @@ import hu.bme.mit.theta.core.type.closure.ClosedUnderSub;
 
 public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
 
-	private Scope2 currentScope;
+	private Scope currentScope;
 
-	public ExprCreatorVisitor(final Scope2 scope) {
-		currentScope = checkNotNull(scope);
+	public ExprCreatorVisitor(final Scope scope) {
+		this.currentScope = checkNotNull(scope);
 	}
 
-	private void push() {
-		currentScope = new BasicScope2(currentScope);
+	////
+
+	private void push(final Collection<? extends Decl<?>> decls) {
+		final BasicScope scope = new BasicScope(currentScope);
+		decls.forEach(p -> scope.declare(DeclSymbol.of(p)));
+		currentScope = scope;
 	}
 
 	private void pop() {
 		checkState(currentScope.enclosingScope().isPresent());
 		currentScope = currentScope.enclosingScope().get();
 	}
+
+	////
 
 	@Override
 	public Expr<?> visitFuncLitExpr(final FuncLitExprContext ctx) {
@@ -128,17 +135,17 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
 
 			checkArgument(params.size() == 1);
 			@SuppressWarnings("unchecked")
-			final ParamDecl<Type> param = (ParamDecl<Type>) params.get(0);
+			final ParamDecl<Type> param = (ParamDecl<Type>) singleElementOf(params);
 
-			push();
+			push(params);
 
-			currentScope.declare(DeclSymbol.of(param));
 			@SuppressWarnings("unchecked")
 			final Expr<Type> result = (Expr<Type>) ctx.result.accept(this);
 
 			pop();
 
 			return Func(param, result);
+
 		} else {
 			return visitChildren(ctx);
 		}
@@ -196,11 +203,8 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
 		if (ctx.paramDecls != null) {
 			final List<ParamDecl<?>> paramDecls = createParamList(ctx.paramDecls);
 
-			push();
-
-			paramDecls.forEach(p -> currentScope.declare(DeclSymbol.of(p)));
+			push(paramDecls);
 			final Expr<? extends BoolType> op = cast(ctx.op.accept(this), BoolType.class);
-
 			pop();
 
 			return Forall(paramDecls, op);
@@ -214,11 +218,8 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
 		if (ctx.paramDecls != null) {
 			final List<ParamDecl<?>> paramDecls = createParamList(ctx.paramDecls);
 
-			push();
-
-			paramDecls.forEach(p -> currentScope.declare(DeclSymbol.of(p)));
+			push(paramDecls);
 			final Expr<? extends BoolType> op = cast(ctx.op.accept(this), BoolType.class);
-
 			pop();
 
 			return Exists(paramDecls, op);

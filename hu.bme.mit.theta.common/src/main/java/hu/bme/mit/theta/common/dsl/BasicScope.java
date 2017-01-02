@@ -10,11 +10,22 @@ public final class BasicScope implements Scope {
 	private final Optional<Scope> enclosingScope;
 	private final SymbolTable symbolTable;
 
-	public BasicScope(final Scope eclosingScope, final Collection<? extends Symbol> symbols) {
+	public BasicScope(final Scope eclosingScope) {
 		this.enclosingScope = Optional.ofNullable(eclosingScope);
 		symbolTable = new SymbolTable();
+	}
+
+	////
+
+	public void declare(final Symbol symbol) {
+		symbolTable.add(symbol);
+	}
+
+	public void declareAll(final Collection<? extends Symbol> symbols) {
 		symbolTable.addAll(symbols);
 	}
+
+	////
 
 	@Override
 	public Optional<Scope> enclosingScope() {
