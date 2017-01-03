@@ -6,7 +6,7 @@ import static hu.bme.mit.theta.core.decl.impl.Decls.Param;
 import static hu.bme.mit.theta.core.decl.impl.Decls.Var;
 import static hu.bme.mit.theta.core.type.impl.Types.Rat;
 import static hu.bme.mit.theta.core.utils.impl.ExprUtils.cast;
-import static hu.bme.mit.theta.formalism.common.decl.impl.Decls2.Clock;
+import static hu.bme.mit.theta.formalism.ta.decl.impl.Decls2.Clock;
 import static java.util.stream.Collectors.toList;
 
 import java.util.Collections;

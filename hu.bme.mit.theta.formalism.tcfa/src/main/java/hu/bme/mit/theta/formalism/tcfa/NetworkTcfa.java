@@ -9,7 +9,7 @@ import java.util.List;
 import com.google.common.collect.ImmutableSet;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.formalism.common.decl.ClockDecl;
+import hu.bme.mit.theta.formalism.ta.decl.ClockDecl;
 
 public final class NetworkTcfa implements TCFA {
 

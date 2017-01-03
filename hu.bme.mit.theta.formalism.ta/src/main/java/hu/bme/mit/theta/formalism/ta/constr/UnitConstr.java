@@ -1,6 +1,6 @@
 package hu.bme.mit.theta.formalism.ta.constr;
 
-import hu.bme.mit.theta.formalism.common.decl.ClockDecl;
+import hu.bme.mit.theta.formalism.ta.decl.ClockDecl;
 
 public interface UnitConstr extends AtomicConstr {
 

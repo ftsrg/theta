@@ -6,10 +6,10 @@ import java.util.Collection;
 
 import com.google.common.collect.ImmutableSet;
 
-import hu.bme.mit.theta.formalism.common.decl.ClockDecl;
 import hu.bme.mit.theta.formalism.ta.TaEdge;
 import hu.bme.mit.theta.formalism.ta.TaLoc;
 import hu.bme.mit.theta.formalism.ta.constr.ClockConstr;
+import hu.bme.mit.theta.formalism.ta.decl.ClockDecl;
 
 final class MutableTaEdge implements TaEdge {
 

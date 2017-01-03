@@ -13,7 +13,7 @@ import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.type.IntType;
 import hu.bme.mit.theta.core.type.RatType;
-import hu.bme.mit.theta.formalism.common.decl.ClockDecl;
+import hu.bme.mit.theta.formalism.ta.decl.ClockDecl;
 import hu.bme.mit.theta.formalism.ta.op.ResetOp;
 import hu.bme.mit.theta.formalism.ta.utils.ClockOpVisitor;
 

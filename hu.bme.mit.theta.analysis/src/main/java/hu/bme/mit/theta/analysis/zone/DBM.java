@@ -21,7 +21,6 @@ import java.util.stream.Collectors;
 
 import com.google.common.collect.Sets;
 
-import hu.bme.mit.theta.formalism.common.decl.ClockDecl;
 import hu.bme.mit.theta.formalism.ta.constr.AndConstr;
 import hu.bme.mit.theta.formalism.ta.constr.ClockConstr;
 import hu.bme.mit.theta.formalism.ta.constr.DiffEqConstr;
@@ -36,6 +35,7 @@ import hu.bme.mit.theta.formalism.ta.constr.UnitGeqConstr;
 import hu.bme.mit.theta.formalism.ta.constr.UnitGtConstr;
 import hu.bme.mit.theta.formalism.ta.constr.UnitLeqConstr;
 import hu.bme.mit.theta.formalism.ta.constr.UnitLtConstr;
+import hu.bme.mit.theta.formalism.ta.decl.ClockDecl;
 import hu.bme.mit.theta.formalism.ta.op.ClockOp;
 import hu.bme.mit.theta.formalism.ta.op.CopyOp;
 import hu.bme.mit.theta.formalism.ta.op.FreeOp;

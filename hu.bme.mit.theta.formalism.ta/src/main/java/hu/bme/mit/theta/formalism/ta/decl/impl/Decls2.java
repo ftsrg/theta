@@ -1,6 +1,6 @@
-package hu.bme.mit.theta.formalism.common.decl.impl;
+package hu.bme.mit.theta.formalism.ta.decl.impl;
 
-import hu.bme.mit.theta.formalism.common.decl.ClockDecl;
+import hu.bme.mit.theta.formalism.ta.decl.ClockDecl;
 
 public final class Decls2 {
 

@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.formalism.common.decl.impl;
+package hu.bme.mit.theta.formalism.ta.decl.impl;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;

@@ -29,7 +29,7 @@ import hu.bme.mit.theta.core.utils.impl.ExprUtils;
 import hu.bme.mit.theta.core.utils.impl.StmtUtils;
 import hu.bme.mit.theta.core.utils.impl.UnfoldResult;
 import hu.bme.mit.theta.core.utils.impl.VarIndexing;
-import hu.bme.mit.theta.formalism.common.decl.ClockDecl;
+import hu.bme.mit.theta.formalism.ta.decl.ClockDecl;
 import hu.bme.mit.theta.formalism.tcfa.TCFA;
 import hu.bme.mit.theta.formalism.tcfa.TcfaEdge;
 import hu.bme.mit.theta.formalism.tcfa.TcfaLoc;

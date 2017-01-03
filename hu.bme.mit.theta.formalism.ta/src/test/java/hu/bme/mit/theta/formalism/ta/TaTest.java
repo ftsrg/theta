@@ -1,14 +1,14 @@
 package hu.bme.mit.theta.formalism.ta;
 
-import static hu.bme.mit.theta.formalism.common.decl.impl.Decls2.Clock;
 import static hu.bme.mit.theta.formalism.ta.constr.impl.ClockConstrs.And;
 import static hu.bme.mit.theta.formalism.ta.constr.impl.ClockConstrs.Eq;
 import static hu.bme.mit.theta.formalism.ta.constr.impl.ClockConstrs.True;
+import static hu.bme.mit.theta.formalism.ta.decl.impl.Decls2.Clock;
 
 import org.junit.Test;
 
-import hu.bme.mit.theta.formalism.common.decl.ClockDecl;
 import hu.bme.mit.theta.formalism.ta.constr.ClockConstr;
+import hu.bme.mit.theta.formalism.ta.decl.ClockDecl;
 import hu.bme.mit.theta.formalism.ta.impl.MutableTa;
 
 public class TaTest {
