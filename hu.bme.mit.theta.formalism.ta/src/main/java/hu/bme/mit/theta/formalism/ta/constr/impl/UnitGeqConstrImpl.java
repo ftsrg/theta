@@ -4,9 +4,9 @@ import static hu.bme.mit.theta.core.expr.impl.Exprs.Geq;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.Int;
 
 import hu.bme.mit.theta.core.expr.GeqExpr;
-import hu.bme.mit.theta.formalism.common.decl.ClockDecl;
-import hu.bme.mit.theta.formalism.common.expr.ClockRefExpr;
 import hu.bme.mit.theta.formalism.ta.constr.UnitGeqConstr;
+import hu.bme.mit.theta.formalism.ta.decl.ClockDecl;
+import hu.bme.mit.theta.formalism.ta.expr.ClockRefExpr;
 import hu.bme.mit.theta.formalism.ta.utils.ClockConstrVisitor;
 
 final class UnitGeqConstrImpl extends AbstractUnitConstr implements UnitGeqConstr {

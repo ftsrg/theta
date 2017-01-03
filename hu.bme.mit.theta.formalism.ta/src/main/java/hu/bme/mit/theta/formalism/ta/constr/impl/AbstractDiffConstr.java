@@ -6,8 +6,8 @@ import java.util.Collection;
 
 import com.google.common.collect.ImmutableSet;
 
-import hu.bme.mit.theta.formalism.common.decl.ClockDecl;
 import hu.bme.mit.theta.formalism.ta.constr.DiffConstr;
+import hu.bme.mit.theta.formalism.ta.decl.ClockDecl;
 
 public abstract class AbstractDiffConstr implements DiffConstr {
 

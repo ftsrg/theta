@@ -1,8 +1,8 @@
 package hu.bme.mit.theta.analysis.zone;
 
-import static hu.bme.mit.theta.formalism.common.decl.impl.Decls2.Clock;
 import static hu.bme.mit.theta.formalism.ta.constr.impl.ClockConstrs.Geq;
 import static hu.bme.mit.theta.formalism.ta.constr.impl.ClockConstrs.Leq;
+import static hu.bme.mit.theta.formalism.ta.decl.impl.Decls2.Clock;
 import static java.util.Arrays.asList;
 
 import java.util.Set;
@@ -11,7 +11,7 @@ import org.junit.Test;
 
 import com.google.common.collect.ImmutableSet;
 
-import hu.bme.mit.theta.formalism.common.decl.ClockDecl;
+import hu.bme.mit.theta.formalism.ta.decl.ClockDecl;
 
 public class DbmTest {
 

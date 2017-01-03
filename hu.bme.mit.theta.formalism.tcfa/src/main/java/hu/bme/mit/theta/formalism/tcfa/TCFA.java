@@ -4,7 +4,7 @@ import java.util.Collection;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.formalism.common.Automaton;
-import hu.bme.mit.theta.formalism.common.decl.ClockDecl;
+import hu.bme.mit.theta.formalism.ta.decl.ClockDecl;
 
 public interface TCFA extends Automaton<TcfaLoc, TcfaEdge> {
 

@@ -8,11 +8,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 
-import hu.bme.mit.theta.formalism.common.decl.ClockDecl;
 import hu.bme.mit.theta.formalism.ta.TA;
 import hu.bme.mit.theta.formalism.ta.TaEdge;
 import hu.bme.mit.theta.formalism.ta.TaLoc;
 import hu.bme.mit.theta.formalism.ta.constr.ClockConstr;
+import hu.bme.mit.theta.formalism.ta.decl.ClockDecl;
 
 public final class MutableTa implements TA {
 

@@ -4,9 +4,9 @@ import static hu.bme.mit.theta.core.expr.impl.Exprs.Int;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.Leq;
 
 import hu.bme.mit.theta.core.expr.LeqExpr;
-import hu.bme.mit.theta.formalism.common.decl.ClockDecl;
-import hu.bme.mit.theta.formalism.common.expr.ClockRefExpr;
 import hu.bme.mit.theta.formalism.ta.constr.UnitLeqConstr;
+import hu.bme.mit.theta.formalism.ta.decl.ClockDecl;
+import hu.bme.mit.theta.formalism.ta.expr.ClockRefExpr;
 import hu.bme.mit.theta.formalism.ta.utils.ClockConstrVisitor;
 
 final class UnitLeqConstrImpl extends AbstractUnitConstr implements UnitLeqConstr {

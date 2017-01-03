@@ -7,8 +7,8 @@ import java.util.Collection;
 import com.google.common.collect.ImmutableSet;
 
 import hu.bme.mit.theta.core.expr.TrueExpr;
-import hu.bme.mit.theta.formalism.common.decl.ClockDecl;
 import hu.bme.mit.theta.formalism.ta.constr.TrueConstr;
+import hu.bme.mit.theta.formalism.ta.decl.ClockDecl;
 import hu.bme.mit.theta.formalism.ta.utils.ClockConstrVisitor;
 
 final class TrueConstrImpl implements TrueConstr {

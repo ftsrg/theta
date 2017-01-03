@@ -1,12 +1,12 @@
-package hu.bme.mit.theta.formalism.common.decl.impl;
+package hu.bme.mit.theta.formalism.ta.decl.impl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import hu.bme.mit.theta.core.expr.VarRefExpr;
 import hu.bme.mit.theta.core.type.RatType;
 import hu.bme.mit.theta.core.utils.ExprVisitor;
-import hu.bme.mit.theta.formalism.common.decl.ClockDecl;
-import hu.bme.mit.theta.formalism.common.expr.ClockRefExpr;
+import hu.bme.mit.theta.formalism.ta.decl.ClockDecl;
+import hu.bme.mit.theta.formalism.ta.expr.ClockRefExpr;
 
 final class ClockRefExprImpl implements ClockRefExpr {
 

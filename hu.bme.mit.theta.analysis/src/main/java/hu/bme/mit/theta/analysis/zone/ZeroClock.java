@@ -1,8 +1,8 @@
 package hu.bme.mit.theta.analysis.zone;
 
-import static hu.bme.mit.theta.formalism.common.decl.impl.Decls2.Clock;
+import static hu.bme.mit.theta.formalism.ta.decl.impl.Decls2.Clock;
 
-import hu.bme.mit.theta.formalism.common.decl.ClockDecl;
+import hu.bme.mit.theta.formalism.ta.decl.ClockDecl;
 
 final class ZeroClock {
 

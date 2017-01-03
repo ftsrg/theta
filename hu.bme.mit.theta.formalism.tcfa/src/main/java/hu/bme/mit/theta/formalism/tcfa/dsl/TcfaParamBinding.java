@@ -17,7 +17,7 @@ import hu.bme.mit.theta.core.expr.VarRefExpr;
 import hu.bme.mit.theta.core.model.Assignment;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.formalism.common.expr.ClockRefExpr;
+import hu.bme.mit.theta.formalism.ta.expr.ClockRefExpr;
 import hu.bme.mit.theta.formalism.tcfa.dsl.TcfaParamDecl.Kind;
 
 public class TcfaParamBinding implements Assignment {
