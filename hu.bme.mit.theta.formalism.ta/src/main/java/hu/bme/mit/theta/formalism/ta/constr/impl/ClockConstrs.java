@@ -20,8 +20,6 @@ import hu.bme.mit.theta.core.expr.SubExpr;
 import hu.bme.mit.theta.core.expr.TrueExpr;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.utils.impl.FailExprVisitor;
-import hu.bme.mit.theta.formalism.common.decl.ClockDecl;
-import hu.bme.mit.theta.formalism.common.expr.ClockRefExpr;
 import hu.bme.mit.theta.formalism.ta.constr.AndConstr;
 import hu.bme.mit.theta.formalism.ta.constr.ClockConstr;
 import hu.bme.mit.theta.formalism.ta.constr.DiffEqConstr;
@@ -41,6 +39,8 @@ import hu.bme.mit.theta.formalism.ta.constr.UnitGeqConstr;
 import hu.bme.mit.theta.formalism.ta.constr.UnitGtConstr;
 import hu.bme.mit.theta.formalism.ta.constr.UnitLeqConstr;
 import hu.bme.mit.theta.formalism.ta.constr.UnitLtConstr;
+import hu.bme.mit.theta.formalism.ta.decl.ClockDecl;
+import hu.bme.mit.theta.formalism.ta.expr.ClockRefExpr;
 
 public final class ClockConstrs {
 

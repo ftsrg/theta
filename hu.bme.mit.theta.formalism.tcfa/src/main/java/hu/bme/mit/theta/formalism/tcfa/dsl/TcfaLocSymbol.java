@@ -9,8 +9,12 @@ final class TcfaLocSymbol implements Symbol {
 
 	private final TcfaLoc loc;
 
-	public TcfaLocSymbol(final TcfaLoc loc) {
+	private TcfaLocSymbol(final TcfaLoc loc) {
 		this.loc = checkNotNull(loc);
+	}
+
+	public static TcfaLocSymbol of(final TcfaLoc loc) {
+		return new TcfaLocSymbol(loc);
 	}
 
 	@Override

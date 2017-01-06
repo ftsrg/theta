@@ -1,5 +1,7 @@
 package hu.bme.mit.theta.splittingcegar.ui;
 
+import static hu.bme.mit.theta.common.Utils.singleElementOf;
+
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
@@ -8,7 +10,9 @@ import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
@@ -37,8 +41,8 @@ import javax.swing.UIManager;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.formalism.sts.dsl.StsDslManager;
-import hu.bme.mit.theta.formalism.sts.dsl.impl.StsSpec;
-import hu.bme.mit.theta.frontend.aiger.impl.SimpleAigerLoader;
+import hu.bme.mit.theta.formalism.sts.dsl.StsSpec;
+import hu.bme.mit.theta.frontend.aiger.impl.AigerParserSimple;
 import hu.bme.mit.theta.splittingcegar.clustered.ClusteredCEGARBuilder;
 import hu.bme.mit.theta.splittingcegar.common.CEGARLoop;
 import hu.bme.mit.theta.splittingcegar.common.utils.visualization.GraphVizVisualizer;
@@ -356,11 +360,11 @@ public class GUI extends JFrame {
 	private STS loadSystem() throws IOException {
 		STS sts = null;
 		if (stsPath.endsWith(".system")) {
-			final StsSpec stsSpec = StsDslManager.parse(stsPath);
-			assert (stsSpec.getAllSts().size() == 1);
-			sts = stsSpec.getAllSts().iterator().next();
+			final InputStream inputStream = new FileInputStream(stsPath);
+			final StsSpec stsSpec = StsDslManager.createStsSpec(inputStream);
+			return singleElementOf(stsSpec.getAllSts());
 		} else if (stsPath.endsWith(".aag")) {
-			sts = new SimpleAigerLoader().load(stsPath);
+			sts = new AigerParserSimple().parse(stsPath);
 		}
 		return sts;
 	}

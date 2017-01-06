@@ -1,16 +1,11 @@
 package hu.bme.mit.theta.common.dsl;
 
-import java.util.Collection;
 import java.util.Optional;
 
 public interface Scope {
 
-	Optional<Symbol> resolve(String name);
+	Optional<? extends Scope> enclosingScope();
 
-	void declare(Symbol symbol);
-
-	void declareAll(Collection<? extends Symbol> symbols);
-
-	Optional<Scope> enclosingScope();
+	Optional<? extends Symbol> resolve(String name);
 
 }

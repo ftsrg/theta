@@ -14,7 +14,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 
 import hu.bme.mit.theta.common.ObjectUtils;
-import hu.bme.mit.theta.formalism.common.decl.ClockDecl;
+import hu.bme.mit.theta.formalism.ta.decl.ClockDecl;
 
 final class DbmSignature implements Iterable<ClockDecl> {
 

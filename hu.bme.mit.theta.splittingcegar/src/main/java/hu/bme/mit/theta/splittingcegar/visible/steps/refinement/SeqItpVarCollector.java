@@ -61,9 +61,6 @@ public class SeqItpVarCollector extends AbstractCEGARStep implements VarCollecto
 				itpSolver.add(markers[i], sts.unfoldTrans(i - 1));
 			}
 
-			// Assert invariants
-			itpSolver.add(markers[i], sts.unfoldInv(i));
-
 		}
 
 		// The conjunction of the markers is unsatisfiable (otherwise there

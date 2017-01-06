@@ -7,8 +7,8 @@ import java.util.Collection;
 
 import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
-import hu.bme.mit.theta.formalism.common.decl.ClockDecl;
 import hu.bme.mit.theta.formalism.ta.constr.ClockConstr;
+import hu.bme.mit.theta.formalism.ta.decl.ClockDecl;
 import hu.bme.mit.theta.formalism.ta.op.GuardOp;
 import hu.bme.mit.theta.formalism.ta.utils.ClockOpVisitor;
 

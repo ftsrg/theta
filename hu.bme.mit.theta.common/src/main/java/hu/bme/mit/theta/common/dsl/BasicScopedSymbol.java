@@ -6,17 +6,29 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.util.Collection;
 import java.util.Optional;
 
-public class BasicScopedSymbol implements ScopedSymbol {
+public final class BasicScopedSymbol implements ScopedSymbol {
 
 	private final String name;
-	private final Scope scope;
+	private final BasicScope scope;
 
-	public BasicScopedSymbol(final String name, final Scope eclosingScope) {
+	public BasicScopedSymbol(final String name, final Scope eclosingScope, final Collection<? extends Symbol> symbols) {
 		checkNotNull(name);
 		checkArgument(name.length() > 0);
 		this.name = name;
 		scope = new BasicScope(eclosingScope);
 	}
+
+	////
+
+	public void declare(final Symbol symbol) {
+		scope.declare(symbol);
+	}
+
+	public void declareAll(final Collection<? extends Symbol> symbols) {
+		scope.declareAll(symbols);
+	}
+
+	////
 
 	@Override
 	public String getName() {
@@ -24,22 +36,12 @@ public class BasicScopedSymbol implements ScopedSymbol {
 	}
 
 	@Override
-	public Optional<Symbol> resolve(final String name) {
+	public Optional<? extends Symbol> resolve(final String name) {
 		return scope.resolve(name);
 	}
 
 	@Override
-	public void declare(final Symbol symbol) {
-		scope.declare(symbol);
-	}
-
-	@Override
-	public void declareAll(final Collection<? extends Symbol> symbols) {
-		scope.declareAll(symbols);
-	}
-
-	@Override
-	public Optional<Scope> enclosingScope() {
+	public Optional<? extends Scope> enclosingScope() {
 		return scope.enclosingScope();
 	}
 

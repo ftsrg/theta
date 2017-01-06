@@ -14,6 +14,7 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.AndExpr;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.LitExpr;
+import hu.bme.mit.theta.core.expr.impl.Exprs;
 import hu.bme.mit.theta.core.model.Model;
 import hu.bme.mit.theta.core.model.impl.Valuation;
 import hu.bme.mit.theta.core.type.BoolType;
@@ -29,17 +30,14 @@ public final class StsImpl implements STS {
 
 	private final Collection<VarDecl<? extends Type>> vars;
 	private final Collection<Expr<? extends BoolType>> init;
-	private final Collection<Expr<? extends BoolType>> invar;
 	private final Collection<Expr<? extends BoolType>> trans;
 	private final Expr<? extends BoolType> prop;
 
 	// Protected constructor --> use the builder
 	protected StsImpl(final Collection<VarDecl<? extends Type>> vars, final Collection<Expr<? extends BoolType>> init,
-			final Collection<Expr<? extends BoolType>> invar, final Collection<Expr<? extends BoolType>> trans,
-			final Expr<? extends BoolType> prop) {
+			final Collection<Expr<? extends BoolType>> trans, final Expr<? extends BoolType> prop) {
 		this.vars = Collections.unmodifiableCollection(checkNotNull(vars));
 		this.init = Collections.unmodifiableCollection(checkNotNull(init));
-		this.invar = Collections.unmodifiableCollection(checkNotNull(invar));
 		this.trans = Collections.unmodifiableCollection(checkNotNull(trans));
 		this.prop = checkNotNull(prop);
 	}
@@ -52,11 +50,6 @@ public final class StsImpl implements STS {
 	@Override
 	public Collection<Expr<? extends BoolType>> getInit() {
 		return init;
-	}
-
-	@Override
-	public Collection<Expr<? extends BoolType>> getInvar() {
-		return invar;
 	}
 
 	@Override
@@ -74,7 +67,6 @@ public final class StsImpl implements STS {
 		final StringBuilder sb = new StringBuilder("STS [" + System.lineSeparator());
 		appendCollection(sb, "\tVars:  ", vars, System.lineSeparator());
 		appendCollection(sb, "\tInit:  ", init, System.lineSeparator());
-		appendCollection(sb, "\tInvar: ", invar, System.lineSeparator());
 		appendCollection(sb, "\tTrans: ", trans, System.lineSeparator());
 		sb.append("\tProp: ").append(prop).append(System.lineSeparator()).append("]");
 		return sb.toString();
@@ -95,7 +87,6 @@ public final class StsImpl implements STS {
 	public static class Builder {
 		private final Collection<VarDecl<? extends Type>> vars;
 		private final Collection<Expr<? extends BoolType>> init;
-		private final Collection<Expr<? extends BoolType>> invar;
 		private final Collection<Expr<? extends BoolType>> trans;
 		private Expr<? extends BoolType> prop;
 		private boolean built;
@@ -103,7 +94,6 @@ public final class StsImpl implements STS {
 		public Builder() {
 			vars = new HashSet<>();
 			init = new HashSet<>();
-			invar = new HashSet<>();
 			trans = new HashSet<>();
 			prop = null;
 			built = false;
@@ -145,10 +135,14 @@ public final class StsImpl implements STS {
 		public Builder addInvar(final Expr<? extends BoolType> expr) {
 			checkNotNull(expr);
 			checkState(!built);
-			if (expr instanceof AndExpr)
+			if (expr instanceof AndExpr) {
 				addInvar(((AndExpr) expr).getOps());
-			else
-				invar.add(expr);
+			} else {
+				addInit(expr);
+				addTrans(expr);
+				addTrans(Exprs.Prime(expr));
+			}
+
 			return this;
 		}
 
@@ -206,11 +200,10 @@ public final class StsImpl implements STS {
 			built = true;
 
 			ExprUtils.collectVars(init, vars);
-			ExprUtils.collectVars(invar, vars);
 			ExprUtils.collectVars(trans, vars);
 			ExprUtils.collectVars(prop, vars);
 
-			return new StsImpl(vars, init, invar, trans, prop);
+			return new StsImpl(vars, init, trans, prop);
 		}
 	}
 
@@ -233,11 +226,6 @@ public final class StsImpl implements STS {
 	@Override
 	public Collection<? extends Expr<? extends BoolType>> unfoldTrans(final int i) {
 		return unfold(getTrans(), i);
-	}
-
-	@Override
-	public Collection<? extends Expr<? extends BoolType>> unfoldInv(final int i) {
-		return unfold(getInvar(), i);
 	}
 
 	@Override

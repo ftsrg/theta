@@ -159,7 +159,6 @@ public class InterpolatingInitializer extends AbstractCEGARStep implements Initi
 
 		final Solver solver = solvers.getSolver();
 		solver.push();
-		solver.add(sts.unfoldInv(0));
 
 		while (!stack.isEmpty()) {
 			if (stopHandler.isStopped())
@@ -280,7 +279,6 @@ public class InterpolatingInitializer extends AbstractCEGARStep implements Initi
 		SolverHelper.unrollAndAssert(solver, s0.getLabels(), sts, 0);
 		SolverHelper.unrollAndAssert(solver, s1.getLabels(), sts, 1);
 		solver.add(sts.unfoldTrans(0));
-		solver.add(sts.unfoldInv(1));
 		final boolean ret = SolverHelper.checkSat(solver);
 		solver.pop();
 		return ret;

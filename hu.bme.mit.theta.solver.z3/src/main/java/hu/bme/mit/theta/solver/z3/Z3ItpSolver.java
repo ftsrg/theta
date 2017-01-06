@@ -17,10 +17,8 @@ import hu.bme.mit.theta.solver.Interpolant;
 import hu.bme.mit.theta.solver.ItpMarker;
 import hu.bme.mit.theta.solver.ItpPattern;
 import hu.bme.mit.theta.solver.ItpSolver;
-import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverStatus;
 import hu.bme.mit.theta.solver.Stack;
-import hu.bme.mit.theta.solver.impl.ItpMarkerImpl;
 import hu.bme.mit.theta.solver.impl.ItpPatternImpl;
 import hu.bme.mit.theta.solver.impl.StackImpl;
 import hu.bme.mit.theta.solver.z3.trasform.Z3SymbolTable;
@@ -35,9 +33,9 @@ final class Z3ItpSolver implements ItpSolver {
 	private final com.microsoft.z3.InterpolationContext z3Context;
 	private final com.microsoft.z3.Solver z3Solver;
 
-	private final Solver solver;
+	private final Z3Solver solver;
 
-	private final Stack<ItpMarkerImpl> markers;
+	private final Stack<Z3ItpMarker> markers;
 
 	public Z3ItpSolver(final Z3SymbolTable symbolTable, final Z3TransformationManager transformationManager,
 			final Z3TermTransformer termTransformer, final com.microsoft.z3.InterpolationContext z3Context,
@@ -60,7 +58,7 @@ final class Z3ItpSolver implements ItpSolver {
 
 	@Override
 	public ItpMarker createMarker() {
-		final ItpMarkerImpl marker = new ItpMarkerImpl();
+		final Z3ItpMarker marker = new Z3ItpMarker();
 		markers.add(marker);
 		return marker;
 	}
@@ -70,10 +68,10 @@ final class Z3ItpSolver implements ItpSolver {
 		checkNotNull(marker);
 		checkNotNull(assertion);
 		checkArgument(markers.toCollection().contains(marker));
-
-		final ItpMarkerImpl markerImpl = (ItpMarkerImpl) marker;
-		markerImpl.add(assertion);
-		solver.add(assertion);
+		final Z3ItpMarker z3Marker = (Z3ItpMarker) marker;
+		final com.microsoft.z3.BoolExpr term = (com.microsoft.z3.BoolExpr) transformationManager.toTerm(assertion);
+		solver.add(assertion, term);
+		z3Marker.add(term);
 	}
 
 	@Override
@@ -100,15 +98,11 @@ final class Z3ItpSolver implements ItpSolver {
 	}
 
 	private com.microsoft.z3.BoolExpr patternToTerm(final ItpPattern pattern) {
-		final ItpMarker marker = pattern.getMarker();
-		final Collection<? extends Expr<? extends BoolType>> assertions = marker.getAssertions();
-
 		final Collection<com.microsoft.z3.BoolExpr> opTerms = new LinkedList<>();
-		for (final Expr<? extends BoolType> assertion : assertions) {
-			final com.microsoft.z3.BoolExpr subTerm = (com.microsoft.z3.BoolExpr) transformationManager
-					.toTerm(assertion);
-			opTerms.add(subTerm);
-		}
+
+		final Z3ItpMarker marker = (Z3ItpMarker) pattern.getMarker();
+		opTerms.addAll(marker.getTerms());
+
 		for (final ItpPattern child : pattern.getChildren()) {
 			final com.microsoft.z3.BoolExpr childTerm = patternToTerm(child);
 			opTerms.add(childTerm);
@@ -157,7 +151,7 @@ final class Z3ItpSolver implements ItpSolver {
 	@Override
 	public void push() {
 		markers.push();
-		for (final ItpMarkerImpl marker : markers) {
+		for (final Z3ItpMarker marker : markers) {
 			marker.push();
 		}
 		solver.push();
@@ -166,7 +160,7 @@ final class Z3ItpSolver implements ItpSolver {
 	@Override
 	public void pop(final int n) {
 		markers.pop(n);
-		for (final ItpMarkerImpl marker : markers) {
+		for (final Z3ItpMarker marker : markers) {
 			marker.pop(n);
 		}
 		solver.pop(n);

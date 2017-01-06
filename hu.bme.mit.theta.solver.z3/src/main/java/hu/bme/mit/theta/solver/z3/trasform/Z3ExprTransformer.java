@@ -1,5 +1,9 @@
 package hu.bme.mit.theta.solver.z3.trasform;
 
+import java.util.concurrent.ExecutionException;
+
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.microsoft.z3.Context;
 
 import hu.bme.mit.theta.core.decl.ParamDecl;
@@ -49,30 +53,29 @@ import hu.bme.mit.theta.core.utils.ExprVisitor;
 
 class Z3ExprTransformer {
 
-	// private static final int CACHE_SIZE = 1000;
+	private static final int CACHE_SIZE = 1000;
 
 	private final Z3TransformationManager transformer;
 	private final Context context;
 
 	private final Z3ExprTransformerVisitor visitor;
 
-	// private final Cache<Expr<?>, com.microsoft.z3.Expr> exprToTerm;
+	private final Cache<Expr<?>, com.microsoft.z3.Expr> exprToTerm;
 
 	Z3ExprTransformer(final Z3TransformationManager transformer, final Context context) {
 		this.context = context;
 		this.transformer = transformer;
 		visitor = new Z3ExprTransformerVisitor();
-		// exprToTerm =
-		// CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).build();
+		exprToTerm = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).build();
 	}
 
 	public com.microsoft.z3.Expr toTerm(final Expr<?> expr) {
-		// try {
-		// return exprToTerm.get(expr, (() -> expr.accept(visitor, null)));
-		// } catch (final ExecutionException e) {
-		// throw new AssertionError();
-		// }
-		return expr.accept(visitor, null);
+		try {
+			return exprToTerm.get(expr, (() -> expr.accept(visitor, null)));
+		} catch (final ExecutionException e) {
+			throw new AssertionError();
+		}
+		// return expr.accept(visitor, null);
 	}
 
 	private class Z3ExprTransformerVisitor implements ExprVisitor<Void, com.microsoft.z3.Expr> {

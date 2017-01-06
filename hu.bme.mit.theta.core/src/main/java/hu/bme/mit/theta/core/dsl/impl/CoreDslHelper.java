@@ -94,7 +94,7 @@ public final class CoreDslHelper {
 	}
 
 	public static DeclSymbol resolveDecl(final Scope scope, final String name) {
-		final Optional<Symbol> optSymbol = scope.resolve(name);
+		final Optional<? extends Symbol> optSymbol = scope.resolve(name);
 
 		checkArgument(optSymbol.isPresent());
 		final Symbol symbol = optSymbol.get();

@@ -9,6 +9,7 @@ import static hu.bme.mit.theta.analysis.zone.DiffBounds.add;
 import static hu.bme.mit.theta.analysis.zone.DiffBounds.asString;
 import static java.lang.Math.min;
 
+import java.util.Arrays;
 import java.util.function.IntBinaryOperator;
 
 import hu.bme.mit.theta.common.IntMatrix;
@@ -22,28 +23,15 @@ final class SimpleDbm {
 
 	SimpleDbm(final int size, final IntBinaryOperator values) {
 		checkArgument(size > 0);
+		checkNotNull(values);
 		this.nClocks = size - 1;
 		matrix = IntMatrix.create(size, size);
-		matrix.fill(values);
+		fill(values);
 	}
 
 	SimpleDbm(final SimpleDbm dbm) {
 		this.nClocks = dbm.nClocks;
 		this.matrix = IntMatrix.copyOf(dbm.matrix);
-	}
-
-	////
-
-	int get(final int x, final int y) {
-		checkArgument(isClock(x));
-		checkArgument(isClock(y));
-		return matrix.get(x, y);
-	}
-
-	void set(final int x, final int y, final int b) {
-		checkArgument(isClock(x));
-		checkArgument(isClock(y));
-		matrix.set(x, y, b);
 	}
 
 	////
@@ -61,6 +49,25 @@ final class SimpleDbm {
 
 	////
 
+	int get(final int x, final int y) {
+		checkArgument(isClock(x));
+		checkArgument(isClock(y));
+		return matrix.get(x, y);
+	}
+
+	void set(final int x, final int y, final int b) {
+		checkArgument(isClock(x));
+		checkArgument(isClock(y));
+		matrix.set(x, y, b);
+	}
+
+	void fill(final IntBinaryOperator values) {
+		checkNotNull(values);
+		matrix.fill(values);
+	}
+
+	////
+
 	public int size() {
 		return nClocks + 1;
 	}
@@ -68,13 +75,13 @@ final class SimpleDbm {
 	////
 
 	public boolean isConsistent() {
-		return matrix.get(0, 0) >= 0;
+		return matrix.get(0, 0) > 0;
 	}
 
 	public boolean isSatisfied(final int x, final int y, final int b) {
 		checkArgument(isClock(x));
 		checkArgument(isClock(y));
-		return add(matrix.get(y, x), b) >= 0;
+		return add(matrix.get(y, x), b) >= Leq(0);
 	}
 
 	public boolean constrains(final int x) {
@@ -115,7 +122,10 @@ final class SimpleDbm {
 		checkArgument(isClock(x));
 		checkArgument(isClock(y));
 
-		if (!isSatisfied(x, y, b)) {
+		if (!isConsistent()) {
+			// do nothing
+
+		} else if (!isSatisfied(x, y, b)) {
 			matrix.set(0, 0, Leq(-1));
 
 		} else if (b < matrix.get(x, y)) {
@@ -147,6 +157,10 @@ final class SimpleDbm {
 			}
 			assert isClosed();
 		}
+	}
+
+	public void free() {
+		fill(SimpleDbm::defaultBound);
 	}
 
 	public void reset(final int x, final int m) {
@@ -223,7 +237,45 @@ final class SimpleDbm {
 		assert isClosed();
 	}
 
-	private boolean isClosed() {
+	int[] closeItp() {
+		final IntMatrix next = IntMatrix.create(nClocks + 1, nClocks + 1);
+		next.fill((x, y) -> y);
+
+		for (int k = 0; k <= nClocks; k++) {
+			for (int i = 0; i <= nClocks; i++) {
+				for (int j = 0; j <= nClocks; j++) {
+					final int newBound = add(matrix.get(i, k), matrix.get(k, j));
+					if (newBound < matrix.get(i, j)) {
+						matrix.set(i, j, newBound);
+						next.set(i, j, next.get(i, k));
+						if (i == j && newBound < Leq(0)) {
+							final int[] cycle = path(next, i, j);
+							return cycle;
+						}
+					}
+				}
+			}
+		}
+
+		throw new IllegalStateException();
+	}
+
+	private int[] path(final IntMatrix next, final int u, final int v) {
+		final int[] path = new int[nClocks + 2];
+
+		int w = u;
+		path[0] = w;
+		int i = 1;
+		do {
+			w = next.get(w, v);
+			path[i] = w;
+			i++;
+		} while (w != v);
+
+		return Arrays.copyOf(path, i);
+	}
+
+	boolean isClosed() {
 		for (int i = 0; i <= nClocks; i++) {
 			for (int j = 0; j <= nClocks; j++) {
 				for (int k = 0; k <= nClocks; k++) {

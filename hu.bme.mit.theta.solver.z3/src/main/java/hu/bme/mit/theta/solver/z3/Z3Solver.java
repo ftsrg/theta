@@ -69,11 +69,13 @@ final class Z3Solver implements Solver {
 	@Override
 	public void add(final Expr<? extends BoolType> assertion) {
 		checkNotNull(assertion);
-
-		assertions.add(assertion);
 		final com.microsoft.z3.BoolExpr term = (com.microsoft.z3.BoolExpr) transformationManager.toTerm(assertion);
-		z3Solver.add(term);
+		add(assertion, term);
+	}
 
+	void add(final Expr<? extends BoolType> assertion, final com.microsoft.z3.BoolExpr term) {
+		assertions.add(assertion);
+		z3Solver.add(term);
 		clearState();
 	}
 

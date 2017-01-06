@@ -1,7 +1,11 @@
 package hu.bme.mit.theta.splittingcegar.ui.performance;
 
+import static hu.bme.mit.theta.common.Utils.singleElementOf;
+
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -10,11 +14,12 @@ import java.util.Locale;
 
 import org.junit.Assert;
 
+import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.formalism.sts.dsl.StsDslManager;
-import hu.bme.mit.theta.frontend.aiger.impl.OptimizedAigerLoader;
-import hu.bme.mit.theta.frontend.aiger.impl.SimpleAigerLoader;
-import hu.bme.mit.theta.frontend.benchmark.formatters.Formatter;
+import hu.bme.mit.theta.formalism.sts.dsl.StsSpec;
+import hu.bme.mit.theta.frontend.aiger.impl.AigerParserOptimized;
+import hu.bme.mit.theta.frontend.aiger.impl.AigerParserSimple;
 import hu.bme.mit.theta.splittingcegar.common.CEGARBuilder;
 import hu.bme.mit.theta.splittingcegar.common.CEGARLoop;
 import hu.bme.mit.theta.splittingcegar.common.CEGARResult;
@@ -22,7 +27,7 @@ import hu.bme.mit.theta.splittingcegar.common.CEGARResult;
 public class PerfTestBase {
 
 	protected void run(final List<TestCase> testCases, final List<CEGARBuilder> configurations, final int timeOut,
-			final Formatter formatter) {
+			final TableWriter formatter) {
 		boolean allOk = true;
 
 		final TestResult[][] results = new TestResult[testCases.size()][configurations.size()];
@@ -125,8 +130,9 @@ public class PerfTestBase {
 
 		@Override
 		public STS load(final String path) throws FileNotFoundException, IOException {
-			return StsDslManager.parse(path).getAllSts().iterator().next();
-
+			final InputStream inputStream = new FileInputStream(path);
+			final StsSpec stsSpec = StsDslManager.createStsSpec(inputStream);
+			return singleElementOf(stsSpec.getAllSts());
 		}
 	}
 
@@ -134,7 +140,7 @@ public class PerfTestBase {
 
 		@Override
 		public STS load(final String path) throws IOException {
-			return new OptimizedAigerLoader().load(path);
+			return new AigerParserOptimized().parse(path);
 		}
 	}
 
@@ -142,7 +148,7 @@ public class PerfTestBase {
 
 		@Override
 		public STS load(final String path) throws IOException {
-			return new SimpleAigerLoader().load(path);
+			return new AigerParserSimple().parse(path);
 		}
 	}
 

@@ -15,11 +15,14 @@ import hu.bme.mit.theta.common.visualization.NodeAttributes;
 
 public final class ArgVisualizer {
 
+	private static final LineStyle COVER_EDGE_STYLE = LineStyle.DASHED;
+	private static final LineStyle SUCC_EDGE_STYLE = LineStyle.NORMAL;
 	private static final String ARG_LABEL = "";
 	private static final String ARG_ID = "arg";
 	private static final String NODE_ID_PREFIX = "node_";
 	private static final Color FILL_COLOR = Color.WHITE;
 	private static final Color LINE_COLOR = Color.BLACK;
+	private static final String PHANTOM_INIT_ID = "phantom_init";
 
 	private ArgVisualizer() {
 	}
@@ -31,6 +34,12 @@ public final class ArgVisualizer {
 
 		for (final ArgNode<?, ?> initNode : arg.getInitNodes().collect(Collectors.toSet())) {
 			traverse(graph, initNode, traversed);
+			final NodeAttributes nAttributes = NodeAttributes.builder().label("").fillColor(FILL_COLOR)
+					.lineColor(FILL_COLOR).lineStyle(SUCC_EDGE_STYLE).peripheries(1).build();
+			graph.addNode(PHANTOM_INIT_ID + initNode.getId(), nAttributes);
+			final EdgeAttributes eAttributes = EdgeAttributes.builder().label("").color(LINE_COLOR)
+					.lineStyle(SUCC_EDGE_STYLE).build();
+			graph.addEdge(PHANTOM_INIT_ID + initNode.getId(), NODE_ID_PREFIX + initNode.getId(), eAttributes);
 		}
 
 		return graph;
@@ -43,7 +52,7 @@ public final class ArgVisualizer {
 			traversed.add(node);
 		}
 		final String nodeId = NODE_ID_PREFIX + node.getId();
-		final LineStyle lineStyle = LineStyle.NORMAL;
+		final LineStyle lineStyle = SUCC_EDGE_STYLE;
 		final int peripheries = node.isTarget() ? 2 : 1;
 
 		final NodeAttributes nAttributes = NodeAttributes.builder().label(node.getState().toString())
@@ -56,7 +65,7 @@ public final class ArgVisualizer {
 			final String sourceId = NODE_ID_PREFIX + edge.getSource().getId();
 			final String targetId = NODE_ID_PREFIX + edge.getTarget().getId();
 			final EdgeAttributes eAttributes = EdgeAttributes.builder().label(edge.getAction().toString())
-					.color(LINE_COLOR).lineStyle(LineStyle.NORMAL).build();
+					.color(LINE_COLOR).lineStyle(SUCC_EDGE_STYLE).build();
 			graph.addEdge(sourceId, targetId, eAttributes);
 		}
 
@@ -65,7 +74,7 @@ public final class ArgVisualizer {
 			final String sourceId = NODE_ID_PREFIX + node.getId();
 			final String targetId = NODE_ID_PREFIX + node.getCoveringNode().get().getId();
 			final EdgeAttributes eAttributes = EdgeAttributes.builder().label("").color(LINE_COLOR)
-					.lineStyle(LineStyle.DASHED).weight(0).build();
+					.lineStyle(COVER_EDGE_STYLE).weight(0).build();
 			graph.addEdge(sourceId, targetId, eAttributes);
 		}
 	}

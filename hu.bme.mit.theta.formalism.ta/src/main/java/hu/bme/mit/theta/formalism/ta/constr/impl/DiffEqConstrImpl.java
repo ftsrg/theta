@@ -5,9 +5,9 @@ import static hu.bme.mit.theta.core.expr.impl.Exprs.Int;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.Sub;
 
 import hu.bme.mit.theta.core.expr.EqExpr;
-import hu.bme.mit.theta.formalism.common.decl.ClockDecl;
-import hu.bme.mit.theta.formalism.common.expr.ClockRefExpr;
 import hu.bme.mit.theta.formalism.ta.constr.DiffEqConstr;
+import hu.bme.mit.theta.formalism.ta.decl.ClockDecl;
+import hu.bme.mit.theta.formalism.ta.expr.ClockRefExpr;
 import hu.bme.mit.theta.formalism.ta.utils.ClockConstrVisitor;
 
 final class DiffEqConstrImpl extends AbstractDiffConstr implements DiffEqConstr {

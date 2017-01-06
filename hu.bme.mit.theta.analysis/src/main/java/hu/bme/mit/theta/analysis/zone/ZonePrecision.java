@@ -9,7 +9,7 @@ import com.google.common.collect.ImmutableSet;
 
 import hu.bme.mit.theta.analysis.Precision;
 import hu.bme.mit.theta.common.ObjectUtils;
-import hu.bme.mit.theta.formalism.common.decl.ClockDecl;
+import hu.bme.mit.theta.formalism.ta.decl.ClockDecl;
 
 public final class ZonePrecision implements Precision {
 

@@ -27,5 +27,5 @@ specification Test {
 			if z < y and z < 2 then z + 1
 			else y
 		)
-	} models G((not y < 2) or (not x = 1)) // Holds
+	} models G(((not y < 2) or (not x = 1)) and (z=z)) // Does not hold
 }

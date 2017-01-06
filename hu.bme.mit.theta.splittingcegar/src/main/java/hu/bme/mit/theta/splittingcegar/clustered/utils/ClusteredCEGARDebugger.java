@@ -70,7 +70,6 @@ public class ClusteredCEGARDebugger extends AbstractDebugger<ClusteredAbstractSy
 																				// flat
 																				// collection
 		solver.push(); // 1
-		solver.add(sts.unfoldInv(0));
 		for (final ClusteredAbstractState cas : stateSpace.keySet()) {
 			solver.push(); // 2
 			for (final ComponentAbstractState as : cas.getStates())
@@ -93,7 +92,6 @@ public class ClusteredCEGARDebugger extends AbstractDebugger<ClusteredAbstractSy
 
 		// Explore abstract transition relation
 		solver.push(); // 2
-		solver.add(sts.unfoldInv(1));
 		solver.add(sts.unfoldTrans(0));
 		for (final ClusteredAbstractState cas0 : stateSpace.keySet()) {
 			solver.push(); // 3

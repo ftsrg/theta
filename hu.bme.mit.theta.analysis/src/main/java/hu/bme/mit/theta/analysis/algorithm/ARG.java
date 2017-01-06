@@ -50,7 +50,17 @@ public final class ARG<S extends State, A extends Action> {
 	}
 
 	public Stream<ArgNode<S, A>> getIncompleteNodes() {
-		return getNodes().filter(n -> !n.isComplete());
+		return getInitNodes().flatMap(this::getIncompleteNodes);
+	}
+
+	private Stream<ArgNode<S, A>> getIncompleteNodes(final ArgNode<S, A> node) {
+		if (node.isCovered() || !node.isFeasible()) {
+			return Stream.empty();
+		} else if (!node.isExpanded()) {
+			return Stream.of(node);
+		} else {
+			return node.children().flatMap(this::getIncompleteNodes);
+		}
 	}
 
 	////
@@ -139,7 +149,7 @@ public final class ARG<S extends State, A extends Action> {
 
 	private void minimizeSubTree(final ArgNode<S, A> node) {
 		final Stream<ArgNode<S, A>> children = node.children().collect(toList()).stream();
-		if (node.isCovered()) {
+		if (node.isExcluded()) {
 			children.forEach(this::prune);
 		} else {
 			children.forEach(this::minimizeSubTree);

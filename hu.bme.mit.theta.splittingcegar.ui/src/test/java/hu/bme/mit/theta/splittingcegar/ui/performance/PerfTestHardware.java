@@ -6,9 +6,8 @@ import java.util.List;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import hu.bme.mit.theta.common.logging.impl.ConsoleLogger;
-import hu.bme.mit.theta.frontend.benchmark.formatters.Formatter;
-import hu.bme.mit.theta.frontend.benchmark.formatters.impl.CsvFormatter;
+import hu.bme.mit.theta.common.table.TableWriter;
+import hu.bme.mit.theta.common.table.impl.SimpleTableWriter;
 import hu.bme.mit.theta.splittingcegar.common.CEGARBuilder;
 import hu.bme.mit.theta.splittingcegar.interpolating.InterpolatingCEGARBuilder;
 import hu.bme.mit.theta.splittingcegar.interpolating.InterpolatingCEGARBuilder.InterpolationMethod;
@@ -16,7 +15,7 @@ import hu.bme.mit.theta.splittingcegar.interpolating.InterpolatingCEGARBuilder.I
 public class PerfTestHardware extends PerfTestBase {
 
 	private static final int TIMEOUT = 5 * 60 * 1000;
-	private static final Formatter FORMATTER = new CsvFormatter(new ConsoleLogger(100), "\t");
+	private static final TableWriter FORMATTER = new SimpleTableWriter(System.out, "\t");
 
 	@SuppressWarnings("serial")
 	@Test

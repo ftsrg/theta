@@ -1,30 +1,42 @@
 package hu.bme.mit.theta.formalism.tcfa.dsl;
 
-import static hu.bme.mit.theta.core.expr.impl.Exprs.Int;
-
-import java.io.FileNotFoundException;
-import java.io.IOException;
-
 import org.junit.Test;
 
-import hu.bme.mit.theta.common.visualization.YedWriter;
+import hu.bme.mit.theta.common.visualization.GraphvizWriter;
 import hu.bme.mit.theta.formalism.tcfa.TCFA;
+import hu.bme.mit.theta.formalism.tcfa.instances.TcfaModels;
 import hu.bme.mit.theta.formalism.tcfa.utils.TcfaVisualizer;
 
 public class TcfaDslTest {
 
 	@Test
-	public void testFischer() throws FileNotFoundException, IOException {
-		final TcfaSpec spec = TcfaDslManager.parse("src/test/resources/fischer.tcfa", Int(1), Int(2));
-		final TCFA fischer = spec.getTcfa("fischers");
-		System.out.println(new YedWriter().writeString(TcfaVisualizer.visualize(fischer)));
+	public void testProsigma() {
+		final TCFA tcfa = TcfaModels.prosigma(3, 7);
+		System.out.println(new GraphvizWriter().writeString(TcfaVisualizer.visualize(tcfa)));
 	}
 
 	@Test
-	public void testProsigma() throws FileNotFoundException, IOException {
-		final TcfaSpec spec = TcfaDslManager.parse("src/test/resources/prosigma.tcfa", Int(3), Int(7));
-		final TCFA field = spec.getTcfa("prosigma");
-		System.out.println(new YedWriter().writeString(TcfaVisualizer.visualize(field)));
+	public void testFischer() {
+		final TCFA tcfa = TcfaModels.fischer(2, 1, 2);
+		System.out.println(new GraphvizWriter().writeString(TcfaVisualizer.visualize(tcfa)));
+	}
+
+	@Test
+	public void testCritRegion() {
+		final TCFA tcfa = TcfaModels.critRegion(2, 10, 20);
+		System.out.println(new GraphvizWriter().writeString(TcfaVisualizer.visualize(tcfa)));
+	}
+
+	@Test
+	public void testLynch() {
+		final TCFA tcfa = TcfaModels.lynch(2, 16);
+		System.out.println(new GraphvizWriter().writeString(TcfaVisualizer.visualize(tcfa)));
+	}
+
+	@Test
+	public void testFddi() {
+		final TCFA tcfa = TcfaModels.fddi(2, 50 * 2, 20);
+		System.out.println(new GraphvizWriter().writeString(TcfaVisualizer.visualize(tcfa)));
 	}
 
 }

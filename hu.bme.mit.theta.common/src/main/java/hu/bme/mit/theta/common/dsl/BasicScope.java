@@ -8,7 +8,6 @@ import java.util.Optional;
 public final class BasicScope implements Scope {
 
 	private final Optional<Scope> enclosingScope;
-
 	private final SymbolTable symbolTable;
 
 	public BasicScope(final Scope eclosingScope) {
@@ -16,13 +15,25 @@ public final class BasicScope implements Scope {
 		symbolTable = new SymbolTable();
 	}
 
+	////
+
+	public void declare(final Symbol symbol) {
+		symbolTable.add(symbol);
+	}
+
+	public void declareAll(final Collection<? extends Symbol> symbols) {
+		symbolTable.addAll(symbols);
+	}
+
+	////
+
 	@Override
 	public Optional<Scope> enclosingScope() {
 		return enclosingScope;
 	}
 
 	@Override
-	public Optional<Symbol> resolve(final String name) {
+	public Optional<? extends Symbol> resolve(final String name) {
 		checkNotNull(name);
 		final Optional<Symbol> symbol = symbolTable.get(name);
 		if (symbol.isPresent() || !enclosingScope.isPresent()) {
@@ -30,17 +41,6 @@ public final class BasicScope implements Scope {
 		} else {
 			return enclosingScope.get().resolve(name);
 		}
-	}
-
-	@Override
-	public void declare(final Symbol symbol) {
-		symbolTable.add(symbol);
-	}
-
-	@Override
-	public void declareAll(final Collection<? extends Symbol> symbols) {
-		checkNotNull(symbols);
-		symbolTable.addAll(symbols);
 	}
 
 }

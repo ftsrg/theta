@@ -1,6 +1,10 @@
 package hu.bme.mit.theta.splittingcegar.ui;
 
+import static hu.bme.mit.theta.common.Utils.singleElementOf;
+
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -11,8 +15,8 @@ import hu.bme.mit.theta.common.logging.impl.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.impl.FileLogger;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.formalism.sts.dsl.StsDslManager;
-import hu.bme.mit.theta.formalism.sts.dsl.impl.StsSpec;
-import hu.bme.mit.theta.frontend.aiger.impl.SimpleAigerLoader;
+import hu.bme.mit.theta.formalism.sts.dsl.StsSpec;
+import hu.bme.mit.theta.frontend.aiger.impl.AigerParserSimple;
 import hu.bme.mit.theta.splittingcegar.clustered.ClusteredCEGARBuilder;
 import hu.bme.mit.theta.splittingcegar.common.CEGARLoop;
 import hu.bme.mit.theta.splittingcegar.common.utils.visualization.GraphVizVisualizer;
@@ -65,7 +69,7 @@ public class CLI {
 				break;
 			default:
 				try {
-					logger = new FileLogger(logLevel, parsedArgs.get(Options.Log), true);
+					logger = new FileLogger(logLevel, parsedArgs.get(Options.Log), true, false);
 				} catch (final FileNotFoundException ex) {
 					error("File " + parsedArgs.get(Options.Log) + " cannot be opened.");
 				}
@@ -177,11 +181,11 @@ public class CLI {
 		// Run algorithm
 		try {
 			if (model.endsWith(".system")) {
-				final StsSpec stsSpec = StsDslManager.parse(model);
-				assert (stsSpec.getAllSts().size() == 1);
-				problem = stsSpec.getAllSts().iterator().next();
+				final InputStream inputStream = new FileInputStream(model);
+				final StsSpec stsSpec = StsDslManager.createStsSpec(inputStream);
+				problem = singleElementOf(stsSpec.getAllSts());
 			} else if (model.endsWith(".aag")) {
-				problem = new SimpleAigerLoader().load(model);
+				problem = new AigerParserSimple().parse(model);
 			}
 		} catch (final Exception ex) {
 			error("Could not load model: " + ex.getMessage());

@@ -48,7 +48,6 @@ public class UnsatCoreVarCollector extends AbstractCEGARStep implements VarColle
 
 			if (i > 0)
 				solver.track(sts.unfoldTrans(i - 1));
-			solver.track(sts.unfoldInv(i));
 		}
 
 		solver.check();
