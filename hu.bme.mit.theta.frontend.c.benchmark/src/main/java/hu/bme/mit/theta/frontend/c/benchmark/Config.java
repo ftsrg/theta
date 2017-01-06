@@ -97,7 +97,7 @@ public class Config {
 				if (!logFile.exists() && !logFile.isDirectory())
 					logFile.createNewFile();
 
-				Logger log = new FileLogger(this.logLevel, logFileName, true);
+				Logger log = new FileLogger(this.logLevel, logFileName, true, false);
 
 				System.out.print("MEASURE " + test + "...");
 				List<MeasureResult> r = this.runBenchmark(test, log);

@@ -104,7 +104,7 @@ public class BenchmarkConfiguration {
 				if (!logFile.exists() && !logFile.isDirectory())
 					logFile.createNewFile();
 
-				Logger log = new FileLogger(this.logLevel, logFileName, true);
+				Logger log = new FileLogger(this.logLevel, logFileName, true, true);
 
 				System.out.print("TEST " + test + "...");
 
@@ -157,7 +157,7 @@ public class BenchmarkConfiguration {
 				if (!logFile.exists() && !logFile.isDirectory())
 					logFile.createNewFile();
 
-				Logger log = new FileLogger(this.logLevel, logFileName, true);
+				Logger log = new FileLogger(this.logLevel, logFileName, true, false);
 
 				System.out.print("MEASURE " + test + "...");
 				List<MeasureResult> r = this.benchmark(test, log, slice);

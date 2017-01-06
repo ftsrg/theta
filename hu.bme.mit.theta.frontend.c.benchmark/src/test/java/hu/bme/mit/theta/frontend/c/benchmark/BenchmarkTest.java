@@ -127,7 +127,7 @@ public class BenchmarkTest {
 			System.out.println(new GraphvizWriter().writeString(CfaVisualizer.visualize(slice)));
 
 			SolverFactory sf = Z3SolverFactory.getInstace();
-			Logger log = new FileLogger(10, "src/test/tmp/check_" + i + ".log", true);
+			Logger log = new FileLogger(10, "src/test/tmp/check_" + i + ".log", true, false);
 
 			Benchmark benchmark = new Benchmark(file, "test", 2000, 10, sf, 100, log);
 			MeasureResult res = benchmark.run(slice, i);
