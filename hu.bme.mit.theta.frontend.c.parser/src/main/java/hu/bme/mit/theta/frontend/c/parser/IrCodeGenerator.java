@@ -31,6 +31,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
+import java.util.Collection;
+
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
 
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.ParamDecl;
@@ -55,6 +59,7 @@ import hu.bme.mit.theta.frontend.c.ir.InstructionBuilder;
 import hu.bme.mit.theta.frontend.c.ir.node.BranchTableNode;
 import hu.bme.mit.theta.frontend.c.ir.node.EntryNode;
 import hu.bme.mit.theta.frontend.c.ir.node.GotoNode;
+import hu.bme.mit.theta.frontend.c.ir.utils.IrPrinter;
 import hu.bme.mit.theta.frontend.c.parser.ast.AssignmentInitializerAst;
 import hu.bme.mit.theta.frontend.c.parser.ast.BinaryExpressionAst;
 import hu.bme.mit.theta.frontend.c.parser.ast.BreakStatementAst;
@@ -97,7 +102,7 @@ public class IrCodeGenerator implements ExpressionVisitor<Expr<? extends Type>>,
 	private final GlobalContext context;
 
 	private final Map<String, BasicBlock> labels = new HashMap<>();
-	private final Map<String, BasicBlock> gotos = new HashMap<>();
+	private final Multimap<String, BasicBlock> gotos = ArrayListMultimap.create();
 
 	private final Stack<BasicBlock> breakTargets = new Stack<>();
 	private final Stack<BasicBlock> continueTargets = new Stack<>();
@@ -149,21 +154,24 @@ public class IrCodeGenerator implements ExpressionVisitor<Expr<? extends Type>>,
 		this.resolveGotos();
 		this.context.getSymbolTable().popScope();
 
-		// System.out.println(IrPrinter.toGraphvizString(this.builder.getFunction()));
+		
+		//System.out.println(IrPrinter.toGraphvizString(this.builder.getFunction()));
 
 		this.builder.getFunction().normalize();
 	}
 
 	private void resolveGotos() {
-		this.gotos.forEach((String label, BasicBlock source) -> {
+		this.gotos.asMap().forEach((String label, Collection<BasicBlock> sources) -> {
 			BasicBlock target = this.labels.get(label);
 			if (null == target) {
 				throw new IllegalArgumentException("Unknown label.");
 			}
 
-			if (source.getTerminator() instanceof GotoNode) {
-				GotoNode gotoNode = (GotoNode) source.getTerminator();
-				gotoNode.setTarget(target);
+			for (BasicBlock source : sources) {			
+				if (source.getTerminator() instanceof GotoNode) {
+					GotoNode gotoNode = (GotoNode) source.getTerminator();
+					gotoNode.setTarget(target);
+				}
 			}
 		});
 	}

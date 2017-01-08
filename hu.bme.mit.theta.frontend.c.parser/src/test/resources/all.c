@@ -8,28 +8,31 @@ int main()
 
 	int y = nondet();
 
-	if (x == 0)
-		goto err;
+	long n = (long) sum;
 
-
-	out:
-		return 0;
-	err:
-		return 0;
-
-/*
 	if (x == 0) {
-		i = 1;
+		goto ERROR;
 	} else {
 		i = 3;
 	}
 
+	x = x + 1;
+
 	if (i == 0) {
-		sum = 1;
+		goto ERROR;
 	} else {
-		sum = 3;
+		goto out;
 	}
 
+/*
+	if (i == 0) {
+		goto ERROR;
+	} else {
+		goto out;
+	} */
+
+	/*
+	 *
 	switch (x) {
 	case 1:
 		sum = 1;
@@ -45,10 +48,11 @@ int main()
 		break;
 	default:
 		sum = 10;
-	}
+	} */
 
-	assert(i != 0);
-	assert(sum != 0);
+	out: return 0;
 
-	return 0;*/
+	ERROR: assert(0);
+	return 1;
+
 }

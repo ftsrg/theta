@@ -18,8 +18,8 @@ import hu.bme.mit.theta.frontend.c.transform.FunctionInliner;
 public class Application {
 
 	public static void main(String[] args) throws Exception {
-		final String file = "src/test/resources/all.c";
-		//final String file = "src/test/resources/s3_clnt_1_false.c";
+		//final String file = "src/test/resources/all.c";
+		final String file = "src/test/resources/s3_clnt_1_false.c";
 		//Parser.dumpEclipseAst(file);
 		
 		GlobalContext context = Parser.parse(file);
