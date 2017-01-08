@@ -3,6 +3,7 @@ package hu.bme.mit.theta.frontend.c.parser;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 import org.eclipse.cdt.core.dom.ast.gnu.c.GCCLanguage;
 import org.eclipse.cdt.core.index.IIndex;
@@ -140,4 +141,25 @@ public class Parser {
 		return ast;
 	}
 
+	private static int nodeId = 0;
+	
+	public static void dumpEclipseAst(String file) throws Exception {
+		IASTTranslationUnit ast = parseFile(file);
+
+	    System.out.println("digraph G {");
+		printTree(ast);
+	    System.out.println("}");
+	}
+
+	private static String printTree(IASTNode node) {
+	    String nodeName = "node_" + nodeId++;
+	    System.out.println( String.format("%s [label=\"%s\"];", nodeName, node.getClass().getSimpleName()));
+	    for (IASTNode child : node.getChildren()) {
+	        String cname = printTree(child);
+	        System.out.println(String.format("%s -> %s;", nodeName, cname));
+	    }
+	    
+	    return nodeName;
+	}
+	
 }

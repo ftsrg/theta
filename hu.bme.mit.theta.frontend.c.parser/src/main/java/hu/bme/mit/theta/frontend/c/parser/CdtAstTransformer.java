@@ -7,6 +7,7 @@ import java.util.List;
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTBreakStatement;
 import org.eclipse.cdt.core.dom.ast.IASTCaseStatement;
+import org.eclipse.cdt.core.dom.ast.IASTCastExpression;
 import org.eclipse.cdt.core.dom.ast.IASTCompoundStatement;
 import org.eclipse.cdt.core.dom.ast.IASTContinueStatement;
 import org.eclipse.cdt.core.dom.ast.IASTDeclSpecifier;
@@ -38,6 +39,7 @@ import org.eclipse.cdt.core.dom.ast.IASTStandardFunctionDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTStatement;
 import org.eclipse.cdt.core.dom.ast.IASTSwitchStatement;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
+import org.eclipse.cdt.core.dom.ast.IASTTypeId;
 import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTWhileStatement;
 
@@ -45,6 +47,7 @@ import hu.bme.mit.theta.frontend.c.parser.ast.AssignmentInitializerAst;
 import hu.bme.mit.theta.frontend.c.parser.ast.BinaryExpressionAst;
 import hu.bme.mit.theta.frontend.c.parser.ast.BreakStatementAst;
 import hu.bme.mit.theta.frontend.c.parser.ast.CaseStatementAst;
+import hu.bme.mit.theta.frontend.c.parser.ast.CastExpressionAst;
 import hu.bme.mit.theta.frontend.c.parser.ast.CompoundStatementAst;
 import hu.bme.mit.theta.frontend.c.parser.ast.ContinueStatementAst;
 import hu.bme.mit.theta.frontend.c.parser.ast.DeclarationAst;
@@ -72,6 +75,7 @@ import hu.bme.mit.theta.frontend.c.parser.ast.ReturnStatementAst;
 import hu.bme.mit.theta.frontend.c.parser.ast.StatementAst;
 import hu.bme.mit.theta.frontend.c.parser.ast.SwitchStatementAst;
 import hu.bme.mit.theta.frontend.c.parser.ast.TranslationUnitAst;
+import hu.bme.mit.theta.frontend.c.parser.ast.TypeNameAst;
 import hu.bme.mit.theta.frontend.c.parser.ast.UnaryExpressionAst;
 import hu.bme.mit.theta.frontend.c.parser.ast.UnaryExpressionAst.Operator;
 import hu.bme.mit.theta.frontend.c.parser.ast.VarDeclarationAst;
@@ -296,6 +300,17 @@ public class CdtAstTransformer {
 		return new DeclarationSpecifierAst(storage, type, func);
 	}
 
+	private static TypeNameAst transformTypeId(IASTTypeId ast) {
+		DeclarationSpecifierAst spec = transformDeclSpecifier(ast.getDeclSpecifier());
+		IASTDeclarator declaratorAst = ast.getAbstractDeclarator();
+		
+		if (declaratorAst == null) {
+			return new TypeNameAst(spec);
+		}
+		
+		return new TypeNameAst(spec, transformDeclarator(declaratorAst));
+	}
+	
 	private static DeclaratorAst transformDeclarator(IASTDeclarator ast) {
 		if (ast instanceof IASTFunctionDeclarator) {
 			return transformFunctionDeclarator((IASTFunctionDeclarator) ast);
@@ -366,8 +381,19 @@ public class CdtAstTransformer {
 		if (ast instanceof IASTExpressionList) {
 			return transformExpressionList((IASTExpressionList) ast);
 		}
+		
+		if (ast instanceof IASTCastExpression) {
+			return transformCastExpression((IASTCastExpression) ast);
+		}
 
 		throw new UnsupportedOperationException("Unsupported expression type " + ast.getClass());
+	}
+
+	private static CastExpressionAst transformCastExpression(IASTCastExpression ast) {
+		TypeNameAst typeName = transformTypeId(ast.getTypeId());
+		ExpressionAst operand = transformExpression(ast.getOperand());
+		
+		return new CastExpressionAst(typeName, operand);
 	}
 
 	private static ExpressionListAst transformExpressionList(IASTExpressionList ast) {

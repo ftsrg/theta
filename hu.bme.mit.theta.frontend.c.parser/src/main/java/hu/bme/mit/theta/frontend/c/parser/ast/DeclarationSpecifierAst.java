@@ -13,7 +13,8 @@ public class DeclarationSpecifierAst extends AstNode {
 	}
 
 	public enum TypeSpecifier {
-		VOID, CHAR, SHORT, INT, LONG, FLOAT, DOUBLE, SIGNED, UNSIGNED
+		VOID, CHAR, SHORT, INT, LONG, FLOAT, DOUBLE, SIGNED, UNSIGNED,
+		// TODO: struct/union spec, enum spec, arbitrary type name
 	}
 
 	public enum FunctionSpecifier {

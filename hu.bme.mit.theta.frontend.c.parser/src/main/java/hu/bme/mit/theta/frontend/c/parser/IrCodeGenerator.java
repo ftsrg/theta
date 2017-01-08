@@ -59,6 +59,7 @@ import hu.bme.mit.theta.frontend.c.parser.ast.AssignmentInitializerAst;
 import hu.bme.mit.theta.frontend.c.parser.ast.BinaryExpressionAst;
 import hu.bme.mit.theta.frontend.c.parser.ast.BreakStatementAst;
 import hu.bme.mit.theta.frontend.c.parser.ast.CaseStatementAst;
+import hu.bme.mit.theta.frontend.c.parser.ast.CastExpressionAst;
 import hu.bme.mit.theta.frontend.c.parser.ast.CompoundStatementAst;
 import hu.bme.mit.theta.frontend.c.parser.ast.ContinueStatementAst;
 import hu.bme.mit.theta.frontend.c.parser.ast.DeclarationAst;
@@ -449,6 +450,12 @@ public class IrCodeGenerator implements ExpressionVisitor<Expr<? extends Type>>,
 
 		return res;
 	}
+	
+	@Override
+	public Expr<? extends Type> visit(CastExpressionAst ast) {
+		// TODO: Needs a cast expression
+		return ast.getOperand().accept(this);
+	}
 
 	@Override
 	public Void visit(IfStatementAst ast) {
@@ -823,5 +830,6 @@ public class IrCodeGenerator implements ExpressionVisitor<Expr<? extends Type>>,
 			throw new ParserException("Branch conditionals can only be booleans or integers");
 		}
 	}
+
 
 }
