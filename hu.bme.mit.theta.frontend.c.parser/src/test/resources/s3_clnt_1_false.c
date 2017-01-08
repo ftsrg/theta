@@ -541,7 +541,7 @@ int ssl3_connect(int initial_state )
 
   }
   return (ret);
-  ERROR: assert(0);
+  ERROR: __VERIFIER_error();
   return (-1);
 }
 }

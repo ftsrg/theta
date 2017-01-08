@@ -3,6 +3,7 @@ package hu.bme.mit.theta.frontend.c.parser;
 
 import java.util.stream.Collectors;
 
+import hu.bme.mit.theta.common.logging.impl.ConsoleLogger;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.GraphvizWriter;
 import hu.bme.mit.theta.frontend.c.Optimizer;
@@ -27,18 +28,17 @@ public class Application {
 		
 		System.out.println(writer.writeString(DependencyVisualizer.visualizeCallGraph(CallGraph.buildCallGraph(context))));
 
-		for (Function cfg : context.functions().stream().filter(f -> f.isEnabled()).collect(Collectors.toList())) {
-			Graph graph = FunctionVisualizer.visualize(cfg);
-			System.out.println(writer.writeString(graph));
-		}
-		
 		Optimizer opt = new Optimizer(context);
-		opt.addContextTransformer(new FunctionInliner());
-		opt.addPostContextFunctionTransformer(new ConstantPropagator());
-		opt.addPostContextFunctionTransformer(new DeadBranchEliminator());
+		opt.setLogger(new ConsoleLogger(1000));
+		
+		//opt.addTransformation(new FunctionInliner());
+		opt.addTransformation(new ConstantPropagator());
+		opt.addTransformation(new DeadBranchEliminator());
 		opt.transform();
 		
+		opt.dump();
 		
+				
 	}
 	
 }

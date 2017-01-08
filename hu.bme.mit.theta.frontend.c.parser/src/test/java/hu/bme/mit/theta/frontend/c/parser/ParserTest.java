@@ -30,9 +30,6 @@ public class ParserTest {
 
 		CallGraph cg = CallGraph.buildCallGraph(context);
 
-		opt.addFunctionTransformer(new ConstantPropagator());
-		opt.addFunctionTransformer(new DeadBranchEliminator());
-		opt.addContextTransformer(new FunctionInliner());
 		// opt.addPostContextFunctionTransformer(new ConstantPropagator());
 		// opt.addPostContextFunctionTransformer(new DeadBranchEliminator());
 		// opt.dump();

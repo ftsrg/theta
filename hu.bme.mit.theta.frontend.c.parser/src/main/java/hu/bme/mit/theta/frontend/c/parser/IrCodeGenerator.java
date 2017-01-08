@@ -42,6 +42,7 @@ import hu.bme.mit.theta.core.decl.ProcDecl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.ProcCallExpr;
+import hu.bme.mit.theta.core.expr.ProcRefExpr;
 import hu.bme.mit.theta.core.expr.VarRefExpr;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.IntType;
@@ -580,10 +581,12 @@ public class IrCodeGenerator implements ExpressionVisitor<Expr<? extends Type>>,
 				Expr<? extends BoolType> assertCond = this.createCondition(cond);
 
 				this.builder.insertNode(Assert(assertCond));
+				
+				return null;
 			}
-		} else {
-			exprAst.accept(this);
 		}
+		
+		exprAst.accept(this);
 
 		return null;
 	}
