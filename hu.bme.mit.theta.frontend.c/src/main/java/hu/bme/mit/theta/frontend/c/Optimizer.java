@@ -14,17 +14,14 @@ import hu.bme.mit.theta.frontend.c.ir.Function;
 import hu.bme.mit.theta.frontend.c.ir.GlobalContext;
 import hu.bme.mit.theta.frontend.c.ir.node.NodeFactory;
 import hu.bme.mit.theta.frontend.c.ir.utils.IrPrinter;
-import hu.bme.mit.theta.frontend.c.transform.ContextTransformer;
 import hu.bme.mit.theta.frontend.c.transform.FunctionSlicer;
 import hu.bme.mit.theta.frontend.c.transform.FunctionTransformer;
+import hu.bme.mit.theta.frontend.c.transform.Transformer;
 
 public class Optimizer {
 
-	private final List<FunctionTransformer> funcTransformers = new ArrayList<>();
-	private final List<ContextTransformer> contextTransformers = new ArrayList<>();
-
-	private final List<FunctionTransformer> postContextFunctionTransformers = new ArrayList<>();
-
+	private final List<Transformer> transforms = new ArrayList<>();
+	
 	private final FunctionSlicer slicer = new FunctionSlicer();
 	private final GlobalContext context;
 
@@ -33,46 +30,16 @@ public class Optimizer {
 	public Optimizer(GlobalContext context) {
 		this.context = context;
 	}
-
-	public void addFunctionTransformer(FunctionTransformer pass) {
-		this.funcTransformers.add(pass);
-	}
-
-	public void addContextTransformer(ContextTransformer pass) {
-		this.contextTransformers.add(pass);
-	}
-
-	public void addPostContextFunctionTransformer(FunctionTransformer pass) {
-		this.postContextFunctionTransformers.add(pass);
+	
+	public void addTransformation(Transformer pass) {
+		this.transforms.add(pass);
 	}
 
 	public void transform() {
-		// Perform local function transformations
-		for (FunctionTransformer pass : this.funcTransformers) {
-			List<Function> functions = this.context.functions().stream().filter(f -> f.isEnabled())
-					.collect(Collectors.toList());
-			for (Function func : functions) {
-				this.log.writeln(String.format("Executing pass '%s' on function '%s'", pass.getTransformationName(),
-						func.getName()), 7);
-				pass.transform(func);
-			}
-		}
-
 		// Perform global transformations
-		for (ContextTransformer pass : this.contextTransformers) {
+		for (Transformer pass : this.transforms) {
+			this.log.writeln(String.format("Executing transformation pass '%s'", pass.getTransformationName()), 7);
 			pass.transform(this.context);
-			this.log.writeln(String.format("Executing global pass '%s'", pass.getTransformationName()), 7);
-		}
-
-		// Perform local function transformations
-		for (FunctionTransformer pass : this.postContextFunctionTransformers) {
-			List<Function> functions = this.context.functions().stream().filter(f -> f.isEnabled())
-					.collect(Collectors.toList());
-			for (Function func : functions) {
-				this.log.writeln(String.format("Executing pass '%s' on function '%s'", pass.getTransformationName(),
-						func.getName()), 7);
-				pass.transform(func);
-			}
 		}
 	}
 

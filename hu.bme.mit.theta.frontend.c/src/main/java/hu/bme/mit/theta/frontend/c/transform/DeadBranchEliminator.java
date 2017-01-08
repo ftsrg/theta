@@ -19,7 +19,7 @@ import hu.bme.mit.theta.frontend.c.ir.node.JumpIfNode;
  * This transformation may introduce orphaned and split blocks, so a
  * normalization must be run on the resulting graph.
  */
-public class DeadBranchEliminator implements FunctionTransformer {
+public class DeadBranchEliminator extends FunctionTransformer {
 
 	@Override
 	public void transform(Function function) {

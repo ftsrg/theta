@@ -27,7 +27,7 @@ import hu.bme.mit.theta.frontend.c.ir.node.NodeFactory;
 import hu.bme.mit.theta.frontend.c.ir.node.NonTerminatorIrNode;
 import hu.bme.mit.theta.frontend.c.ir.node.ReturnNode;
 
-public class FunctionInliner implements ContextTransformer {
+public class FunctionInliner implements Transformer {
 
 	private static class FunctionInlineInfo {
 		public AssignNode<?, ?> node;
@@ -42,13 +42,14 @@ public class FunctionInliner implements ContextTransformer {
 	}
 
 	@Override
-	public void transform(GlobalContext context) {
+	public void transform(GlobalContext context) {		
 		CallGraph cg = CallGraph.buildCallGraph(context);
 		List<CallGraphNode> inlineables = cg.getNodesDFS().stream().filter(n -> !n.isRecursive())
 				// TODO
 				.filter(n -> cg.hasDefinition(n)).filter(n -> !n.getProc().getName().equals("main"))
 				.collect(Collectors.toList());
 		Collections.reverse(inlineables);
+
 
 		for (CallGraphNode callerCg : inlineables) {
 			ProcDecl<?> calleeProc = callerCg.getProc();

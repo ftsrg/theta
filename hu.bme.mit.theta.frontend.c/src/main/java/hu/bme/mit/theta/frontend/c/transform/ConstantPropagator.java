@@ -23,7 +23,7 @@ import hu.bme.mit.theta.frontend.c.ir.node.IrNode;
 import hu.bme.mit.theta.frontend.c.ir.node.JumpIfNode;
 import hu.bme.mit.theta.frontend.c.transform.expr.ConstantFolderExprVisitor;
 
-public class ConstantPropagator implements FunctionTransformer {
+public class ConstantPropagator extends FunctionTransformer {
 
 	@Override
 	public void transform(Function function) {

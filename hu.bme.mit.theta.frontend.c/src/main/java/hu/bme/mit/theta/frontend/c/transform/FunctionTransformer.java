@@ -1,11 +1,19 @@
 package hu.bme.mit.theta.frontend.c.transform;
 
 import hu.bme.mit.theta.frontend.c.ir.Function;
+import hu.bme.mit.theta.frontend.c.ir.GlobalContext;
 
-public interface FunctionTransformer {
+abstract public class FunctionTransformer implements Transformer {
 
-	public void transform(Function function);
+	@Override
+	public void transform(GlobalContext context) {
+		for (Function function : context.functions()) {
+			this.transform(function);
+		}
+	}
+	
+	abstract public void transform(Function function);
 
-	public String getTransformationName();
+	abstract public String getTransformationName();
 
 }

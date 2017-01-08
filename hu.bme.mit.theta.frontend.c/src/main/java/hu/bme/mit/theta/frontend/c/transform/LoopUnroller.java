@@ -10,7 +10,7 @@ import hu.bme.mit.theta.frontend.c.dependency.LoopInfo;
 import hu.bme.mit.theta.frontend.c.ir.BasicBlock;
 import hu.bme.mit.theta.frontend.c.ir.Function;
 
-public class LoopUnroller implements FunctionTransformer {
+public class LoopUnroller extends FunctionTransformer {
 
 	private int maxDepth;
 

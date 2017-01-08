@@ -8,7 +8,7 @@ import hu.bme.mit.theta.frontend.c.ir.BasicBlock;
 import hu.bme.mit.theta.frontend.c.ir.Function;
 import hu.bme.mit.theta.frontend.c.ir.node.AssignNode;
 
-public class DeadInstructionElimination implements FunctionTransformer {
+public class DeadInstructionElimination extends FunctionTransformer {
 
 	@Override
 	public void transform(Function function) {
