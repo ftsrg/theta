@@ -75,6 +75,17 @@ public final class ArgNode<S extends State, A extends Action> {
 		coveredNodes.clear();
 	}
 
+	public boolean mayCover(final ArgNode<S, A> node) {
+		if (this.getId() < node.getId()) {
+			if (arg.domain.isLeq(node.getState(), this.getState())) {
+				if (!this.isExcluded()) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
 	////
 
 	public Optional<ArgNode<S, A>> getParent() {

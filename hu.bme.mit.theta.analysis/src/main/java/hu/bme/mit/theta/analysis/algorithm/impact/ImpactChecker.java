@@ -82,23 +82,10 @@ public final class ImpactChecker<S extends State, A extends Action, P extends Pr
 
 		private void close(final ArgNode<S, A> node) {
 			if (!node.isExcluded()) {
-				final Optional<ArgNode<S, A>> nodeToCoverWith = arg.getNodes().filter(n -> mayCover(n, node))
+				final Optional<ArgNode<S, A>> nodeToCoverWith = arg.getNodes().filter(n -> n.mayCover(node))
 						.findFirst();
 				nodeToCoverWith.ifPresent(n -> cover(node, n));
 			}
-		}
-
-		private boolean mayCover(final ArgNode<S, A> nodeToCoverWith, final ArgNode<S, A> node) {
-			if (nodeToCoverWith.getId() < node.getId()) {
-				final S state = node.getState();
-				final S stateToCoverWith = nodeToCoverWith.getState();
-				if (domain.isLeq(state, stateToCoverWith)) {
-					if (!nodeToCoverWith.isExcluded()) {
-						return true;
-					}
-				}
-			}
-			return false;
 		}
 
 		private Optional<ArgNode<S, A>> dfs(final ArgNode<S, A> v) {
