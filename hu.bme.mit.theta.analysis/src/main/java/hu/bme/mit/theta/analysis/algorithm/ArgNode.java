@@ -141,6 +141,13 @@ public final class ArgNode<S extends State, A extends Action> {
 	}
 
 	/**
+	 * Checks if the node is leaf, i.e., it has no successors.
+	 */
+	public boolean isLeaf() {
+		return outEdges.isEmpty();
+	}
+
+	/**
 	 * Checks if the node is not a bottom state.
 	 */
 	public boolean isFeasible() {
