@@ -84,7 +84,7 @@ public final class ImpactChecker<S extends State, A extends Action, P extends Pr
 			if (!node.isExcluded()) {
 				final Optional<ArgNode<S, A>> nodeToCoverWith = arg.getNodes().filter(n -> n.mayCover(node))
 						.findFirst();
-				nodeToCoverWith.ifPresent(n -> cover(node, n));
+				nodeToCoverWith.ifPresent(node::cover);
 			}
 		}
 
@@ -156,11 +156,6 @@ public final class ImpactChecker<S extends State, A extends Action, P extends Pr
 			} else {
 				return false;
 			}
-		}
-
-		private void cover(final ArgNode<S, A> v, final ArgNode<S, A> w) {
-			v.setCoveringNode(w);
-			v.descendants().forEach(ArgNode::clearCoveredNodes);
 		}
 
 	}

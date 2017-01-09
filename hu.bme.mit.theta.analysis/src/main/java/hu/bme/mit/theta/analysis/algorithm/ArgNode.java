@@ -102,6 +102,12 @@ public final class ArgNode<S extends State, A extends Action> {
 		coveredNodes.clear();
 	}
 
+	public void cover(final ArgNode<S, A> node) {
+		checkArgument(!node.isExcluded());
+		setCoveringNode(node);
+		descendants().forEach(ArgNode::clearCoveredNodes);
+	}
+
 	////
 
 	public Optional<ArgNode<S, A>> getParent() {
