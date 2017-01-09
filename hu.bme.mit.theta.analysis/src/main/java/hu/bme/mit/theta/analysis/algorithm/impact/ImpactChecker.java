@@ -128,6 +128,9 @@ public final class ImpactChecker<S extends State, A extends Action, P extends Pr
 
 				if (anyIncompleteNode.isPresent()) {
 					final ArgNode<S, A> v = anyIncompleteNode.get();
+
+					assert v.isLeaf();
+
 					v.properAncestors().forEach(w -> close(w));
 
 					final Optional<ArgNode<S, A>> unsafeDescendant = dfs(v);
