@@ -1,5 +1,6 @@
 package hu.bme.mit.theta.analysis.algorithm;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.common.ObjectUtils.toStringBuilder;
 import static hu.bme.mit.theta.common.Utils.anyMatch;
@@ -70,11 +71,6 @@ public final class ArgNode<S extends State, A extends Action> {
 		this.state = state;
 	}
 
-	public void clearCoveredNodes() {
-		coveredNodes.forEach(n -> n.coveringNode = Optional.empty());
-		coveredNodes.clear();
-	}
-
 	public boolean mayCover(final ArgNode<S, A> node) {
 		if (this.getId() < node.getId()) {
 			if (arg.domain.isLeq(node.getState(), this.getState())) {
@@ -84,6 +80,21 @@ public final class ArgNode<S extends State, A extends Action> {
 			}
 		}
 		return false;
+	}
+
+	public void setCoveringNode(final ArgNode<S, A> node) {
+		checkNotNull(node);
+		checkArgument(node.arg == this.arg);
+		if (coveringNode.isPresent()) {
+			coveringNode.get().coveredNodes.remove(this);
+		}
+		coveringNode = Optional.of(node);
+		node.coveredNodes.add(this);
+	}
+
+	public void clearCoveredNodes() {
+		coveredNodes.forEach(n -> n.coveringNode = Optional.empty());
+		coveredNodes.clear();
 	}
 
 	////

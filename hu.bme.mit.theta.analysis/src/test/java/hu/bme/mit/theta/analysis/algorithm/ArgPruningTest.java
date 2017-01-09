@@ -35,9 +35,9 @@ public class ArgPruningTest {
 		final ArgNode<State, Action> n000 = arg.createSuccNode(n00, a, s000, false);
 		final ArgNode<State, Action> n001 = arg.createSuccNode(n00, a, s001, true);
 
-		arg.cover(n000, n0);
-		arg.cover(n01, n0);
-		arg.cover(n02, n00);
+		n000.setCoveringNode(n0);
+		n01.setCoveringNode(n0);
+		n02.setCoveringNode(n00);
 
 		assertEquals(6, arg.getNodes().count());
 		assertEquals(6, arg.size());
