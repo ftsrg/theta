@@ -19,6 +19,8 @@ import hu.bme.mit.theta.analysis.algorithm.ArgTrace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyStatus;
 import hu.bme.mit.theta.analysis.algorithm.impact.ImpactRefiner.RefinementResult;
+import hu.bme.mit.theta.analysis.waitlist.LifoWaitlist;
+import hu.bme.mit.theta.analysis.waitlist.Waitlist;
 
 public final class ImpactChecker<S extends State, A extends Action, P extends Precision>
 		implements SafetyChecker<S, A, P> {
@@ -80,29 +82,26 @@ public final class ImpactChecker<S extends State, A extends Action, P extends Pr
 
 		////
 
-		private void close(final ArgNode<S, A> node) {
-			if (!node.isExcluded()) {
-				final Optional<ArgNode<S, A>> nodeToCoverWith = arg.getNodes().filter(n -> n.mayCover(node))
-						.findFirst();
-				nodeToCoverWith.ifPresent(node::cover);
-			}
-		}
+		private Optional<ArgNode<S, A>> dfs(final ArgNode<S, A> node) {
+			final Waitlist<ArgNode<S, A>> waitlist = LifoWaitlist.create();
+			waitlist.add(node);
 
-		private Optional<ArgNode<S, A>> dfs(final ArgNode<S, A> v) {
-			close(v);
-			if (!v.isExcluded()) {
-				if (v.isTarget()) {
-					final boolean refined = refine(v);
-					if (refined) {
-						v.ancestors().forEach(w -> close(w));
+			while (!waitlist.isEmpty()) {
+				final ArgNode<S, A> v = waitlist.remove();
+				close(v);
+				if (!v.isExcluded()) {
+					if (v.isTarget()) {
+						refine(v);
+						if (v.isExcluded()) {
+							closeProperAncestorsOf(v);
+						} else {
+							return Optional.of(v);
+						}
 					} else {
-						return Optional.of(v);
+						expand(v);
+						waitlist.addAll(v.getSuccNodes());
 					}
-				} else {
-					assert !v.isExpanded();
-					expand(v);
 				}
-				return v.children().map(w -> dfs(w)).filter(n -> n.isPresent()).map(n -> n.get()).findFirst();
 			}
 
 			return Optional.empty();
@@ -110,6 +109,7 @@ public final class ImpactChecker<S extends State, A extends Action, P extends Pr
 
 		private Optional<ArgNode<S, A>> unwind() {
 			argBuilder.init(arg, precision);
+
 			while (true) {
 				final Optional<ArgNode<S, A>> anyIncompleteNode = arg.getIncompleteNodes().findAny();
 
@@ -118,7 +118,7 @@ public final class ImpactChecker<S extends State, A extends Action, P extends Pr
 
 					assert v.isLeaf();
 
-					v.properAncestors().forEach(w -> close(w));
+					closeProperAncestorsOf(v);
 
 					final Optional<ArgNode<S, A>> unsafeDescendant = dfs(v);
 					if (unsafeDescendant.isPresent()) {
@@ -132,14 +132,23 @@ public final class ImpactChecker<S extends State, A extends Action, P extends Pr
 
 		////
 
+		private void close(final ArgNode<S, A> node) {
+			if (!node.isExcluded()) {
+				final Optional<ArgNode<S, A>> nodeToCoverWith = arg.getNodes().filter(n -> n.mayCover(node))
+						.findFirst();
+				nodeToCoverWith.ifPresent(node::cover);
+			}
+		}
+
+		private void closeProperAncestorsOf(final ArgNode<S, A> v) {
+			v.properAncestors().forEach(w -> close(w));
+		}
+
 		private void expand(final ArgNode<S, A> v) {
-			assert !v.isExcluded();
 			argBuilder.expand(v, precision);
 		}
 
-		private boolean refine(final ArgNode<S, A> v) {
-			assert !v.isSafe();
-
+		private void refine(final ArgNode<S, A> v) {
 			final ArgTrace<S, A> argTrace = ArgTrace.to(v);
 
 			final Trace<S, A> trace = argTrace.toTrace();
@@ -152,9 +161,6 @@ public final class ImpactChecker<S extends State, A extends Action, P extends Pr
 					vi.clearCoveredNodes();
 					vi.setState(refinedTrace.getState(i));
 				}
-				return true;
-			} else {
-				return false;
 			}
 		}
 
