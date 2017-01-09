@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.common.waitlist;
+package hu.bme.mit.theta.analysis.waitlist;
 
 import java.util.Collection;
 import java.util.stream.Stream;

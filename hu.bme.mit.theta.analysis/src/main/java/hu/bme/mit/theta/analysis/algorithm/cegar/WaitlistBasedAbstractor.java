@@ -13,10 +13,10 @@ import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.ArgBuilder;
 import hu.bme.mit.theta.analysis.algorithm.ArgNode;
+import hu.bme.mit.theta.analysis.waitlist.Waitlist;
 import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.impl.NullLogger;
-import hu.bme.mit.theta.common.waitlist.Waitlist;
 
 public final class WaitlistBasedAbstractor<S extends State, A extends Action, P extends Precision>
 		implements Abstractor<S, A, P> {
