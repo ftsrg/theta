@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.common.waitlist;
+package hu.bme.mit.theta.analysis.waitlist;
 
 import static org.junit.Assert.assertEquals;
 
@@ -6,6 +6,11 @@ import java.util.NoSuchElementException;
 
 import org.junit.Assert;
 import org.junit.Test;
+
+import hu.bme.mit.theta.analysis.waitlist.FifoWaitlist;
+import hu.bme.mit.theta.analysis.waitlist.LifoWaitlist;
+import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist;
+import hu.bme.mit.theta.analysis.waitlist.Waitlist;
 
 public class WaitlistTest {
 
