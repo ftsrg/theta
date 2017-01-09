@@ -159,11 +159,8 @@ public final class ImpactChecker<S extends State, A extends Action, P extends Pr
 		}
 
 		private void cover(final ArgNode<S, A> v, final ArgNode<S, A> w) {
-			assert !w.isExcluded();
-			assert !w.ancestors().anyMatch(n -> n == v);
-			assert domain.isLeq(v.getState(), w.getState());
 			v.setCoveringNode(w);
-			v.descendants().forEach(y -> y.clearCoveredNodes());
+			v.descendants().forEach(ArgNode::clearCoveredNodes);
 		}
 
 	}
