@@ -85,11 +85,16 @@ public final class ArgNode<S extends State, A extends Action> {
 	public void setCoveringNode(final ArgNode<S, A> node) {
 		checkNotNull(node);
 		checkArgument(node.arg == this.arg);
-		if (coveringNode.isPresent()) {
-			coveringNode.get().coveredNodes.remove(this);
-		}
+		unsetCoveringNode();
 		coveringNode = Optional.of(node);
 		node.coveredNodes.add(this);
+	}
+
+	public void unsetCoveringNode() {
+		if (coveringNode.isPresent()) {
+			coveringNode.get().coveredNodes.remove(this);
+			coveringNode = Optional.empty();
+		}
 	}
 
 	public void clearCoveredNodes() {

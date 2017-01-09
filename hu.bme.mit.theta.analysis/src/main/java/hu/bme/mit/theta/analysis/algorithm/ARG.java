@@ -138,7 +138,7 @@ public final class ARG<S extends State, A extends Action> {
 			initNodes.remove(node);
 			this.initialized = false;
 		}
-		node.descendants().forEach(this::uncover);
+		node.descendants().forEach(ArgNode::unsetCoveringNode);
 		node.descendants().forEach(ArgNode::clearCoveredNodes);
 
 	}
@@ -153,15 +153,6 @@ public final class ARG<S extends State, A extends Action> {
 			children.forEach(this::prune);
 		} else {
 			children.forEach(this::minimizeSubTree);
-		}
-	}
-
-	public void uncover(final ArgNode<S, A> node) {
-		checkNotNull(node);
-		checkArgument(node.arg == this);
-		if (node.coveringNode.isPresent()) {
-			node.coveringNode.get().coveredNodes.remove(node);
-			node.coveringNode = Optional.empty();
 		}
 	}
 
