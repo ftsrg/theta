@@ -37,30 +37,20 @@ public final class ARG<S extends State, A extends Action> {
 
 	////
 
-	public Stream<ArgNode<S, A>> getNodes() {
-		return getInitNodes().flatMap(ArgNode::descendants);
-	}
-
 	public Stream<ArgNode<S, A>> getInitNodes() {
 		return initNodes.stream();
 	}
 
+	public Stream<ArgNode<S, A>> getNodes() {
+		return getInitNodes().flatMap(ArgNode::descendants);
+	}
+
 	public Stream<ArgNode<S, A>> getUnsafeNodes() {
-		return getNodes().filter(n -> !n.isSafe());
+		return getInitNodes().flatMap(ArgNode::unexcludedDescendants).filter(n -> n.isTarget());
 	}
 
 	public Stream<ArgNode<S, A>> getIncompleteNodes() {
-		return getInitNodes().flatMap(this::getIncompleteNodes);
-	}
-
-	private Stream<ArgNode<S, A>> getIncompleteNodes(final ArgNode<S, A> node) {
-		if (node.isCovered() || !node.isFeasible()) {
-			return Stream.empty();
-		} else if (!node.isExpanded()) {
-			return Stream.of(node);
-		} else {
-			return node.children().flatMap(this::getIncompleteNodes);
-		}
+		return getInitNodes().flatMap(ArgNode::unexcludedDescendants).filter(n -> !n.isExpanded());
 	}
 
 	////

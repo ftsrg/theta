@@ -228,6 +228,14 @@ public final class ArgNode<S extends State, A extends Action> {
 		return Stream.concat(Stream.of(this), this.properDescendants());
 	}
 
+	public Stream<ArgNode<S, A>> unexcludedDescendants() {
+		if (isCovered() || !isFeasible()) {
+			return Stream.empty();
+		} else {
+			return Stream.concat(Stream.of(this), this.children().flatMap(ArgNode::unexcludedDescendants));
+		}
+	}
+
 	////
 
 	@Override
