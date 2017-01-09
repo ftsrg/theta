@@ -74,20 +74,9 @@ public final class ArgBuilder<S extends State, A extends Action, P extends Preci
 		checkNotNull(node);
 		if (!node.isExcluded()) {
 			final ARG<S, A> arg = node.arg;
-			final Optional<ArgNode<S, A>> nodeToCoverWith = arg.getNodes().filter(n -> mayCover(n, node)).findFirst();
+			final Optional<ArgNode<S, A>> nodeToCoverWith = arg.getNodes().filter(n -> n.mayCover(node)).findFirst();
 			nodeToCoverWith.ifPresent(n -> arg.cover(node, n));
 		}
-	}
-
-	private boolean mayCover(final ArgNode<S, A> nodeToCoverWith, final ArgNode<S, A> node) {
-		if (nodeToCoverWith.getId() < node.getId()) {
-			final S state = node.getState();
-			final S stateToCoverWith = nodeToCoverWith.getState();
-			if (analysis.getDomain().isLeq(state, stateToCoverWith) && !nodeToCoverWith.isExcluded()) {
-				return true;
-			}
-		}
-		return false;
 	}
 
 }
