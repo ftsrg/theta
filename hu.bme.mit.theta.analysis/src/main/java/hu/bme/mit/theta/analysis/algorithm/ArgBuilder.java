@@ -32,6 +32,10 @@ public final class ArgBuilder<S extends State, A extends Action, P extends Preci
 		return new ArgBuilder<>(lts, analysis, target);
 	}
 
+	public ARG<S, A> createArg() {
+		return ARG.create(analysis.getDomain());
+	}
+
 	public void init(final ARG<S, A> arg, final P precision) {
 		checkNotNull(arg);
 		checkNotNull(precision);

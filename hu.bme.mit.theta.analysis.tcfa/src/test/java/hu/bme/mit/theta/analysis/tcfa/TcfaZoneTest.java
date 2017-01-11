@@ -2,10 +2,14 @@ package hu.bme.mit.theta.analysis.tcfa;
 
 import static org.junit.Assert.assertTrue;
 
+import java.util.function.Predicate;
+
 import org.junit.Test;
 
 import hu.bme.mit.theta.analysis.Analysis;
+import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
+import hu.bme.mit.theta.analysis.algorithm.ArgBuilder;
 import hu.bme.mit.theta.analysis.algorithm.ArgChecker;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
 import hu.bme.mit.theta.analysis.algorithm.cegar.WaitlistBasedAbstractor;
@@ -40,8 +44,13 @@ public class TcfaZoneTest {
 				.create(LocAnalysis.create(fischer.getInitLoc(), TcfaZoneAnalysis.getInstance()),
 						LocPrecision.constant(ZonePrecision.create(fischer.getClockVars())));
 
+		final Predicate<State> target = s -> false;
+
+		final ArgBuilder<LocState<ZoneState, TcfaLoc, TcfaEdge>, TcfaAction, NullPrecision> argBuilder = ArgBuilder
+				.create(lts, analysis, target);
+
 		final Abstractor<LocState<ZoneState, TcfaLoc, TcfaEdge>, TcfaAction, NullPrecision> abstractor = WaitlistBasedAbstractor
-				.create(lts, analysis, s -> false, FifoWaitlist.supplier());
+				.create(argBuilder, FifoWaitlist.supplier());
 
 		final ARG<LocState<ZoneState, TcfaLoc, TcfaEdge>, TcfaAction> arg = abstractor.createArg();
 		abstractor.check(arg, NullPrecision.getInstance());

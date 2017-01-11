@@ -10,6 +10,7 @@ import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.LTS;
 import hu.bme.mit.theta.analysis.Precision;
 import hu.bme.mit.theta.analysis.State;
+import hu.bme.mit.theta.analysis.algorithm.ArgBuilder;
 import hu.bme.mit.theta.analysis.algorithm.ArgNodeComparators;
 import hu.bme.mit.theta.analysis.algorithm.ArgNodeComparators.ArgNodeComparator;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
@@ -132,8 +133,9 @@ public final class StsConfigurationBuilder {
 		if (domain == Domain.EXPL) {
 
 			final Analysis<ExplState, ExprAction, ExplPrecision> analysis = ExplAnalysis.create(solver, init);
-			final Abstractor<ExplState, StsAction, ExplPrecision> abstractor = WaitlistBasedAbstractor.create(lts,
-					analysis, target, PriorityWaitlist.supplier(search.comparator), logger);
+			final ArgBuilder<ExplState, StsAction, ExplPrecision> argBuilder = ArgBuilder.create(lts, analysis, target);
+			final Abstractor<ExplState, StsAction, ExplPrecision> abstractor = WaitlistBasedAbstractor
+					.create(argBuilder, PriorityWaitlist.supplier(search.comparator), logger);
 
 			Refiner<ExplState, StsAction, ExplPrecision> refiner = null;
 
@@ -169,8 +171,10 @@ public final class StsConfigurationBuilder {
 
 		} else if (domain == Domain.PRED) {
 			final Analysis<PredState, ExprAction, PredPrecision> analysis = PredAnalysis.create(solver, init);
-			final Abstractor<PredState, StsAction, SimplePredPrecision> abstractor = WaitlistBasedAbstractor.create(lts,
-					analysis, target, PriorityWaitlist.supplier(search.comparator), logger);
+			final ArgBuilder<PredState, StsAction, SimplePredPrecision> argBuilder = ArgBuilder.create(lts, analysis,
+					target);
+			final Abstractor<PredState, StsAction, SimplePredPrecision> abstractor = WaitlistBasedAbstractor
+					.create(argBuilder, PriorityWaitlist.supplier(search.comparator), logger);
 
 			ExprTraceChecker<ItpRefutation> exprTraceChecker = null;
 			switch (refinement) {
