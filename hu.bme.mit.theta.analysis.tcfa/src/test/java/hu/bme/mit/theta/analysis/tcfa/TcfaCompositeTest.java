@@ -4,11 +4,13 @@ import static hu.bme.mit.theta.core.expr.impl.Exprs.True;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.function.Predicate;
 
 import org.junit.Test;
 
 import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
+import hu.bme.mit.theta.analysis.algorithm.ArgBuilder;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
 import hu.bme.mit.theta.analysis.algorithm.cegar.WaitlistBasedAbstractor;
 import hu.bme.mit.theta.analysis.expl.ExplAnalysis;
@@ -52,11 +54,17 @@ public class TcfaCompositeTest {
 						LocPrecision.constant(ProdPrecision.of(ZonePrecision.create(fischer.getClockVars()),
 								ExplPrecision.create(fischer.getDataVars()))));
 
+		final Predicate<LocState<?, TcfaLoc, TcfaEdge>> target = s -> s.getLoc().getName().startsWith("crit, crit");
+
+		final ArgBuilder<LocState<Prod2State<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction, NullPrecision> argBuilder = ArgBuilder
+				.create(lts, analysis, target);
+
 		final Abstractor<LocState<Prod2State<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction, NullPrecision> abstractor = WaitlistBasedAbstractor
-				.create(lts, analysis, s -> s.getLoc().getName().startsWith("crit, crit"), FifoWaitlist.supplier());
+				.create(argBuilder, FifoWaitlist.supplier());
 
 		final ARG<LocState<Prod2State<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction> arg = abstractor
 				.createArg();
+
 		abstractor.check(arg, NullPrecision.getInstance());
 
 		System.out.println(new GraphvizWriter().writeString(ArgVisualizer.visualize(arg)));

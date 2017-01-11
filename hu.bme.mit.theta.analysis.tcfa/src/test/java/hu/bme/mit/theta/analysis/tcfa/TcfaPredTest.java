@@ -5,11 +5,14 @@ import static hu.bme.mit.theta.core.expr.impl.Exprs.Int;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.True;
 
 import java.util.Collections;
+import java.util.function.Predicate;
 
 import org.junit.Test;
 
 import hu.bme.mit.theta.analysis.Analysis;
+import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
+import hu.bme.mit.theta.analysis.algorithm.ArgBuilder;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
 import hu.bme.mit.theta.analysis.algorithm.cegar.WaitlistBasedAbstractor;
 import hu.bme.mit.theta.analysis.impl.FixedPrecisionAnalysis;
@@ -48,8 +51,13 @@ public class TcfaPredTest {
 								Collections.singleton(Eq(Utils.anyElementOf(fischer.getDataVars()).getRef(), Int(0))),
 								solver)));
 
+		final Predicate<State> target = s -> false;
+
+		final ArgBuilder<LocState<PredState, TcfaLoc, TcfaEdge>, TcfaAction, NullPrecision> argBuilder = ArgBuilder
+				.create(lts, analysis, target);
+
 		final Abstractor<LocState<PredState, TcfaLoc, TcfaEdge>, TcfaAction, NullPrecision> abstractor = WaitlistBasedAbstractor
-				.create(lts, analysis, s -> false, FifoWaitlist.supplier());
+				.create(argBuilder, FifoWaitlist.supplier());
 
 		final ARG<LocState<PredState, TcfaLoc, TcfaEdge>, TcfaAction> arg = abstractor.createArg();
 
