@@ -6,6 +6,7 @@ import static hu.bme.mit.theta.core.expr.impl.Exprs.True;
 import java.util.function.Predicate;
 
 import hu.bme.mit.theta.analysis.Analysis;
+import hu.bme.mit.theta.analysis.algorithm.ArgBuilder;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyStatus;
 import hu.bme.mit.theta.analysis.algorithm.impact.ImpactChecker;
@@ -37,14 +38,10 @@ public final class TcfaImpactChecker2 implements
 
 	private final ImpactChecker<LocState<Prod2State<ItpZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction, NullPrecision> checker;
 
-	private TcfaImpactChecker2(final TCFA tcfa, final Solver solver, final Predicate<? super TcfaLoc> target) {
+	private TcfaImpactChecker2(final TCFA tcfa, final Solver solver, final Predicate<? super TcfaLoc> targetLocs) {
 		checkNotNull(tcfa);
 		checkNotNull(solver);
-		checkNotNull(target);
-
-		final Predicate<LocState<Prod2State<ItpZoneState, ExplState>, TcfaLoc, TcfaEdge>> actualTarget = s -> target
-				.test(s.getLoc())
-				|| (s.getState()._1().getState().isBottom() && !s.getState()._1().getInterpolant().isBottom());
+		checkNotNull(targetLocs);
 
 		final TcfaLts lts = TcfaLts.create(tcfa);
 
@@ -65,9 +62,16 @@ public final class TcfaImpactChecker2 implements
 		final Analysis<LocState<Prod2State<ItpZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction, NullPrecision> analysis = FixedPrecisionAnalysis
 				.create(locAnalysis, locPrecision);
 
+		final Predicate<LocState<Prod2State<ItpZoneState, ExplState>, TcfaLoc, TcfaEdge>> target = s -> targetLocs
+				.test(s.getLoc())
+				|| (s.getState()._1().getState().isBottom() && !s.getState()._1().getInterpolant().isBottom());
+
+		final ArgBuilder<LocState<Prod2State<ItpZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction, NullPrecision> argBuilder = ArgBuilder
+				.create(lts, analysis, target);
+
 		final TcfaImpactRefiner2 refiner = TcfaImpactRefiner2.create(tcfa);
 
-		checker = ImpactChecker.create(lts, analysis, refiner, actualTarget, s -> s.getLoc());
+		checker = ImpactChecker.create(argBuilder, refiner, s -> s.getLoc());
 	}
 
 	public static TcfaImpactChecker2 create(final TCFA tcfa, final Solver solver,

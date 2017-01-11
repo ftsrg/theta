@@ -4,12 +4,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Optional;
 import java.util.function.Function;
-import java.util.function.Predicate;
 
 import hu.bme.mit.theta.analysis.Action;
-import hu.bme.mit.theta.analysis.Analysis;
-import hu.bme.mit.theta.analysis.Domain;
-import hu.bme.mit.theta.analysis.LTS;
 import hu.bme.mit.theta.analysis.Precision;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.Trace;
@@ -26,55 +22,47 @@ import hu.bme.mit.theta.analysis.waitlist.Waitlist;
 public final class ImpactChecker<S extends State, A extends Action, P extends Precision>
 		implements SafetyChecker<S, A, P> {
 
-	private final LTS<? super S, ? extends A> lts;
-	private final Analysis<S, A, P> analysis;
+	private final ArgBuilder<S, A, P> argBuilder;
 	private final ImpactRefiner<S, A> refiner;
-	private final Predicate<? super S> target;
 	private final Function<? super S, ?> partitioning;
 
-	private ImpactChecker(final LTS<? super S, ? extends A> lts, final Analysis<S, A, P> analysis,
-			final ImpactRefiner<S, A> refiner, final Predicate<? super S> target,
+	private ImpactChecker(final ArgBuilder<S, A, P> argBuilder, final ImpactRefiner<S, A> refiner,
 			final Function<? super S, ?> partitioning) {
-		this.lts = checkNotNull(lts);
-		this.analysis = checkNotNull(analysis);
+		this.argBuilder = checkNotNull(argBuilder);
 		this.refiner = checkNotNull(refiner);
-		this.target = checkNotNull(target);
 		this.partitioning = checkNotNull(partitioning);
 	}
 
 	public static <S extends State, A extends Action, P extends Precision> ImpactChecker<S, A, P> create(
-			final LTS<? super S, ? extends A> lts, final Analysis<S, A, P> analysis, final ImpactRefiner<S, A> refiner,
-			final Predicate<? super S> target, final Function<? super S, ?> partitioning) {
-		return new ImpactChecker<>(lts, analysis, refiner, target, partitioning);
+			final ArgBuilder<S, A, P> argBuilder, final ImpactRefiner<S, A> refiner,
+			final Function<? super S, ?> partitioning) {
+		return new ImpactChecker<>(argBuilder, refiner, partitioning);
 	}
 
 	////
 
 	@Override
 	public SafetyStatus<S, A> check(final P precision) {
-		return new CheckMethod<>(lts, analysis, refiner, target, partitioning, precision).run();
+		return new CheckMethod<>(argBuilder, refiner, partitioning, precision).run();
 	}
 
 	////
 
 	private static final class CheckMethod<S extends State, A extends Action, P extends Precision> {
+		private final ArgBuilder<S, A, P> argBuilder;
 		private final ImpactRefiner<S, A> refiner;
 		private final P precision;
 
-		private final Domain<S> domain;
-		private final ArgBuilder<S, A, P> argBuilder;
 		private final ARG<S, A> arg;
 
 		private final ReachedSet<S, A> reachedSet;
 
-		private CheckMethod(final LTS<? super S, ? extends A> lts, final Analysis<S, A, P> analysis,
-				final ImpactRefiner<S, A> refiner, final Predicate<? super S> target,
+		private CheckMethod(final ArgBuilder<S, A, P> argBuilder, final ImpactRefiner<S, A> refiner,
 				final Function<? super S, ?> partitioning, final P precision) {
+			this.argBuilder = argBuilder;
 			this.refiner = refiner;
 			this.precision = checkNotNull(precision);
-			domain = analysis.getDomain();
-			argBuilder = ArgBuilder.create(lts, analysis, target);
-			arg = ARG.create(domain);
+			arg = argBuilder.createArg();
 			reachedSet = ImpactReachedSet.create(partitioning);
 		}
 
