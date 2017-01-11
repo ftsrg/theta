@@ -64,7 +64,7 @@ public final class TcfaImpactChecker implements
 
 		final TcfaImpactRefiner refiner = TcfaImpactRefiner.create(tcfa);
 
-		checker = ImpactChecker.create(lts, analysis, refiner, s -> target.test(s.getLoc()));
+		checker = ImpactChecker.create(lts, analysis, refiner, s -> target.test(s.getLoc()), s -> s.getLoc());
 	}
 
 	public static TcfaImpactChecker create(final TCFA tcfa, final Solver solver,

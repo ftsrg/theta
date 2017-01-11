@@ -72,12 +72,8 @@ public final class ArgNode<S extends State, A extends Action> {
 	}
 
 	public boolean mayCover(final ArgNode<S, A> node) {
-		if (this.getId() < node.getId()) {
-			if (arg.domain.isLeq(node.getState(), this.getState())) {
-				if (!this.isExcluded()) {
-					return true;
-				}
-			}
+		if (arg.domain.isLeq(node.getState(), this.getState())) {
+			return ancestors().noneMatch(n -> n.equals(node) || n.isCovered() || !n.isFeasible());
 		}
 		return false;
 	}
