@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.function.Predicate;
 
 import hu.bme.mit.theta.analysis.Analysis;
+import hu.bme.mit.theta.analysis.algorithm.ArgBuilder;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyStatus;
 import hu.bme.mit.theta.analysis.algorithm.impact.ImpactChecker;
@@ -38,10 +39,10 @@ public final class TcfaImpactChecker implements
 
 	private final ImpactChecker<LocState<Prod2State<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction, NullPrecision> checker;
 
-	private TcfaImpactChecker(final TCFA tcfa, final Solver solver, final Predicate<? super TcfaLoc> target) {
+	private TcfaImpactChecker(final TCFA tcfa, final Solver solver, final Predicate<? super TcfaLoc> targetLocs) {
 		checkNotNull(tcfa);
 		checkNotNull(solver);
-		checkNotNull(target);
+		checkNotNull(targetLocs);
 
 		final TcfaLts lts = TcfaLts.create(tcfa);
 
@@ -62,9 +63,14 @@ public final class TcfaImpactChecker implements
 		final Analysis<LocState<Prod2State<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction, NullPrecision> analysis = FixedPrecisionAnalysis
 				.create(locAnalysis, locPrecision);
 
+		final Predicate<LocState<?, TcfaLoc, ?>> target = s -> targetLocs.test(s.getLoc());
+
+		final ArgBuilder<LocState<Prod2State<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction, NullPrecision> argBuilder = ArgBuilder
+				.create(lts, analysis, target);
+
 		final TcfaImpactRefiner refiner = TcfaImpactRefiner.create(tcfa);
 
-		checker = ImpactChecker.create(lts, analysis, refiner, s -> target.test(s.getLoc()), s -> s.getLoc());
+		checker = ImpactChecker.create(argBuilder, refiner, s -> s.getLoc());
 	}
 
 	public static TcfaImpactChecker create(final TCFA tcfa, final Solver solver,

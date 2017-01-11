@@ -8,6 +8,7 @@ import java.util.function.Predicate;
 
 import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.LTS;
+import hu.bme.mit.theta.analysis.algorithm.ArgBuilder;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyStatus;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
@@ -31,7 +32,7 @@ public final class PredImpactChecker<L extends Loc<L, E>, E extends Edge<L, E>>
 	private final ImpactChecker<LocState<PredState, L, E>, LocAction<L, E>, NullPrecision> checker;
 
 	private PredImpactChecker(final LTS<? super LocState<PredState, L, E>, ? extends LocAction<L, E>> lts,
-			final L initLoc, final Predicate<? super L> target, final ItpSolver solver) {
+			final L initLoc, final Predicate<? super L> targetLocs, final ItpSolver solver) {
 		checkNotNull(lts);
 		checkNotNull(initLoc);
 		checkNotNull(solver);
@@ -47,15 +48,20 @@ public final class PredImpactChecker<L extends Loc<L, E>, E extends Edge<L, E>>
 		final Analysis<LocState<PredState, L, E>, LocAction<L, E>, NullPrecision> analysis = FixedPrecisionAnalysis
 				.create(cfaAnalysis, fixedPrecision);
 
+		final Predicate<LocState<?, L, ?>> target = s -> targetLocs.test(s.getLoc());
+
+		final ArgBuilder<LocState<PredState, L, E>, LocAction<L, E>, NullPrecision> argBuilder = ArgBuilder.create(lts,
+				analysis, target);
+
 		final ImpactRefiner<LocState<PredState, L, E>, LocAction<L, E>> refiner = PredImpactRefiner.create(solver);
 
-		checker = ImpactChecker.create(lts, analysis, refiner, s -> target.test(s.getLoc()), s -> s.getLoc());
+		checker = ImpactChecker.create(argBuilder, refiner, s -> s.getLoc());
 	}
 
 	public static <L extends Loc<L, E>, E extends Edge<L, E>> PredImpactChecker<L, E> create(
 			final LTS<? super LocState<PredState, L, E>, ? extends LocAction<L, E>> lts, final L initLoc,
-			final Predicate<? super L> target, final ItpSolver solver) {
-		return new PredImpactChecker<>(lts, initLoc, target, solver);
+			final Predicate<? super L> targetLocs, final ItpSolver solver) {
+		return new PredImpactChecker<>(lts, initLoc, targetLocs, solver);
 	}
 
 	@Override
