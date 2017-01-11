@@ -28,8 +28,7 @@ public final class TcfaImpactChecker2Test {
 
 		final Solver solver = Z3SolverFactory.getInstace().createSolver();
 
-		final TcfaImpactChecker2 checker = TcfaImpactChecker2.create(fischer, solver,
-				l -> l.getName().startsWith("crit_crit"));
+		final TcfaImpactChecker2 checker = TcfaImpactChecker2.create(fischer, solver, l -> false);
 
 		// Act
 		final SafetyStatus<? extends ExprState, ? extends ExprAction> status = checker

@@ -49,7 +49,7 @@ public final class PredImpactChecker<L extends Loc<L, E>, E extends Edge<L, E>>
 
 		final ImpactRefiner<LocState<PredState, L, E>, LocAction<L, E>> refiner = PredImpactRefiner.create(solver);
 
-		checker = ImpactChecker.create(lts, analysis, refiner, s -> target.test(s.getLoc()));
+		checker = ImpactChecker.create(lts, analysis, refiner, s -> target.test(s.getLoc()), s -> s.getLoc());
 	}
 
 	public static <L extends Loc<L, E>, E extends Edge<L, E>> PredImpactChecker<L, E> create(
