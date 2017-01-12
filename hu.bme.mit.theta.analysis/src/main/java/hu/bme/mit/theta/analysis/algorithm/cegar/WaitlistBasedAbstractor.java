@@ -2,6 +2,7 @@ package hu.bme.mit.theta.analysis.algorithm.cegar;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import java.util.Optional;
 import java.util.function.Supplier;
 
 import hu.bme.mit.theta.analysis.Action;
@@ -60,44 +61,43 @@ public final class WaitlistBasedAbstractor<S extends State, A extends Action, P 
 		logger.writeln(String.format("Starting ARG: %d nodes, %d incomplete, %d unsafe", arg.getNodes().count(),
 				arg.getIncompleteNodes().count(), arg.getUnsafeNodes().count()), 3, 2);
 
-		if (arg.getUnsafeNodes().findAny().isPresent()) {
-			return AbstractorResult.unsafe();
-		}
+		final Optional<ArgNode<S, A>> unsafeNode = searchForUnsafeNode(arg, precision);
 
-		ArgNode<S, A> unsafeNode = null;
+		logger.writeln(String.format("done: %d nodes, %d incomplete, %d unsafe", arg.getNodes().count(),
+				arg.getIncompleteNodes().count(), arg.getUnsafeNodes().count()), 3);
+
+		if (unsafeNode.isPresent()) {
+			return AbstractorResult.unsafe();
+		} else {
+			return AbstractorResult.safe();
+		}
+	}
+
+	private Optional<ArgNode<S, A>> searchForUnsafeNode(final ARG<S, A> arg, final P precision) {
+		final Optional<ArgNode<S, A>> unsafeNode = arg.getUnsafeNodes().findAny();
+		if (unsafeNode.isPresent()) {
+			return unsafeNode;
+		}
 
 		final Waitlist<ArgNode<S, A>> waitlist = waitlistSupplier.get();
 		waitlist.addAll(arg.getIncompleteNodes());
 
 		logger.write("Building ARG...", 3, 2);
 
-		while (!waitlist.isEmpty() && unsafeNode == null) {
+		while (!waitlist.isEmpty()) {
 			final ArgNode<S, A> node = waitlist.remove();
 
-			if (!node.isSafe()) {
-				unsafeNode = node;
-				continue;
-			}
-
-			if (node.isTarget()) {
-				continue;
-			}
 			argBuilder.close(node);
-
-			if (node.isExcluded()) {
-				continue;
+			if (!node.isExcluded()) {
+				if (node.isSafe()) {
+					argBuilder.expand(node, precision);
+					waitlist.addAll(node.getSuccNodes());
+				} else {
+					return Optional.of(node);
+				}
 			}
-			argBuilder.expand(node, precision);
-			waitlist.addAll(node.getSuccNodes());
 		}
-		logger.writeln(String.format("done: %d nodes, %d incomplete, %d unsafe", arg.getNodes().count(),
-				arg.getIncompleteNodes().count(), arg.getUnsafeNodes().count()), 3);
-
-		if (unsafeNode == null) {
-			return AbstractorResult.safe();
-		} else {
-			return AbstractorResult.unsafe();
-		}
+		return Optional.empty();
 	}
 
 	@Override
