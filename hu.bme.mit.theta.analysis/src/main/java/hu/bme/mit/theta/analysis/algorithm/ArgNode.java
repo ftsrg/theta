@@ -208,9 +208,10 @@ public final class ArgNode<S extends State, A extends Action> {
 	////
 
 	public Stream<ArgNode<S, A>> properAncestors() {
-		final Optional<ArgNode<S, A>> parent = getParent();
-		if (parent.isPresent()) {
-			return Stream.concat(Stream.of(parent.get()), parent.get().properAncestors());
+		final Optional<ArgNode<S, A>> optParent = getParent();
+		if (optParent.isPresent()) {
+			final ArgNode<S, A> parent = optParent.get();
+			return Stream.concat(Stream.of(parent), parent.properAncestors());
 		} else {
 			return Stream.empty();
 		}
