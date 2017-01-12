@@ -88,7 +88,7 @@ public final class WaitlistBasedAbstractor<S extends State, A extends Action, P 
 			final ArgNode<S, A> node = waitlist.remove();
 
 			argBuilder.close(node);
-			if (!node.isExcluded()) {
+			if (!node.isCovered()) {
 				if (node.isTarget()) {
 					return Optional.of(node);
 				} else {

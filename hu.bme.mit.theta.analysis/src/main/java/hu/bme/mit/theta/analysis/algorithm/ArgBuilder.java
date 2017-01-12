@@ -74,10 +74,10 @@ public final class ArgBuilder<S extends State, A extends Action, P extends Preci
 
 	public void close(final ArgNode<S, A> node) {
 		checkNotNull(node);
-		if (!node.isExcluded()) {
+		if (!node.isSubsumed()) {
 			final ARG<S, A> arg = node.arg;
 			final Optional<ArgNode<S, A>> nodeToCoverWith = arg.getNodes().filter(n -> n.mayCover(node)).findFirst();
-			nodeToCoverWith.ifPresent(node::setCoveringNode);
+			nodeToCoverWith.ifPresent(node::cover);
 		}
 	}
 
