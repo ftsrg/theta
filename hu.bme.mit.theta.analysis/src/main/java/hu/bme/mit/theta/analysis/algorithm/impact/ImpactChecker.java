@@ -16,7 +16,7 @@ import hu.bme.mit.theta.analysis.algorithm.ArgTrace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyStatus;
 import hu.bme.mit.theta.analysis.algorithm.impact.ImpactRefiner.RefinementResult;
-import hu.bme.mit.theta.analysis.waitlist.LifoWaitlist;
+import hu.bme.mit.theta.analysis.waitlist.FifoWaitlist;
 import hu.bme.mit.theta.analysis.waitlist.Waitlist;
 
 public final class ImpactChecker<S extends State, A extends Action, P extends Precision>
@@ -78,8 +78,8 @@ public final class ImpactChecker<S extends State, A extends Action, P extends Pr
 
 		////
 
-		private Optional<ArgNode<S, A>> dfs(final ArgNode<S, A> node) {
-			final Waitlist<ArgNode<S, A>> waitlist = LifoWaitlist.create();
+		private Optional<ArgNode<S, A>> searchForUnsafeNode(final ArgNode<S, A> node) {
+			final Waitlist<ArgNode<S, A>> waitlist = FifoWaitlist.create();
 			waitlist.add(node);
 
 			while (!waitlist.isEmpty()) {
@@ -118,7 +118,7 @@ public final class ImpactChecker<S extends State, A extends Action, P extends Pr
 
 					closeProperAncestorsOf(v);
 
-					final Optional<ArgNode<S, A>> unsafeDescendant = dfs(v);
+					final Optional<ArgNode<S, A>> unsafeDescendant = searchForUnsafeNode(v);
 					if (unsafeDescendant.isPresent()) {
 						return unsafeDescendant;
 					}
