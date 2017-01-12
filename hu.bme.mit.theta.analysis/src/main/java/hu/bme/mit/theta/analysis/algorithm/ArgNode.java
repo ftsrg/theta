@@ -73,7 +73,7 @@ public final class ArgNode<S extends State, A extends Action> {
 
 	public boolean mayCover(final ArgNode<S, A> node) {
 		if (arg.domain.isLeq(node.getState(), this.getState())) {
-			return ancestors().noneMatch(n -> n.equals(node) || n.isCovered() || !n.isFeasible());
+			return ancestors().noneMatch(n -> n.equals(node) || n.isSubsumed());
 		}
 		return false;
 	}
@@ -139,19 +139,34 @@ public final class ArgNode<S extends State, A extends Action> {
 	////
 
 	/**
-	 * Checks if the node is excluded, i.e., the node is covered or not feasible
-	 * or has an excluded parent.
-	 */
-	public boolean isExcluded() {
-		return isCovered() || !isFeasible() || anyMatch(getParent(), ArgNode::isExcluded);
-	}
-
-	/**
 	 * Checks if the node is covered, i.e., there is a covering edge for the
 	 * node.
 	 */
 	public boolean isCovered() {
 		return coveringNode.isPresent();
+	}
+
+	/**
+	 * Checks if the node is not a bottom state.
+	 */
+	public boolean isFeasible() {
+		return !arg.domain.isBottom(state);
+	}
+
+	/**
+	 * Checks if the node is subsumed, i.e., the node is covered or not
+	 * feasible.
+	 */
+	public boolean isSubsumed() {
+		return isCovered() || !isFeasible();
+	}
+
+	/**
+	 * Checks if the node is excluded, i.e., the node is subsumed or has an
+	 * excluded parent.
+	 */
+	public boolean isExcluded() {
+		return isSubsumed() || anyMatch(getParent(), ArgNode::isExcluded);
 	}
 
 	/**
@@ -174,13 +189,6 @@ public final class ArgNode<S extends State, A extends Action> {
 	 */
 	public boolean isLeaf() {
 		return outEdges.isEmpty();
-	}
-
-	/**
-	 * Checks if the node is not a bottom state.
-	 */
-	public boolean isFeasible() {
-		return !arg.domain.isBottom(state);
 	}
 
 	/**
@@ -225,7 +233,7 @@ public final class ArgNode<S extends State, A extends Action> {
 	}
 
 	public Stream<ArgNode<S, A>> unexcludedDescendants() {
-		if (isCovered() || !isFeasible()) {
+		if (this.isSubsumed()) {
 			return Stream.empty();
 		} else {
 			return Stream.concat(Stream.of(this), this.children().flatMap(ArgNode::unexcludedDescendants));
