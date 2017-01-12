@@ -88,10 +88,10 @@ public final class ImpactChecker<S extends State, A extends Action, P extends Pr
 				if (!v.isExcluded()) {
 					if (v.isTarget()) {
 						refine(v);
-						if (v.isExcluded()) {
-							closeProperAncestorsOf(v);
-						} else {
+						if (v.isFeasible()) {
 							return Optional.of(v);
+						} else {
+							closeProperAncestorsOf(v);
 						}
 					} else {
 						expand(v);
