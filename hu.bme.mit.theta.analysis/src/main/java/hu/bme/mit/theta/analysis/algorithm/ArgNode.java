@@ -208,13 +208,7 @@ public final class ArgNode<S extends State, A extends Action> {
 	////
 
 	public Stream<ArgNode<S, A>> properAncestors() {
-		final Optional<ArgNode<S, A>> optParent = getParent();
-		if (optParent.isPresent()) {
-			final ArgNode<S, A> parent = optParent.get();
-			return Stream.concat(Stream.of(parent), parent.properAncestors());
-		} else {
-			return Stream.empty();
-		}
+		return getParent().map(p -> Stream.concat(Stream.of(p), p.properAncestors())).orElse(Stream.empty());
 	}
 
 	public Stream<ArgNode<S, A>> ancestors() {
@@ -234,10 +228,19 @@ public final class ArgNode<S extends State, A extends Action> {
 	}
 
 	public Stream<ArgNode<S, A>> unexcludedDescendants() {
+		if (this.isExcluded()) {
+			return Stream.empty();
+		} else {
+			return unexcludedDescendantsOfNode();
+		}
+	}
+
+	private Stream<ArgNode<S, A>> unexcludedDescendantsOfNode() {
 		if (this.isSubsumed()) {
 			return Stream.empty();
 		} else {
-			return Stream.concat(Stream.of(this), this.children().flatMap(ArgNode::unexcludedDescendants));
+			return Stream.concat(Stream.of(this),
+					this.children().flatMap(ArgNode::unexcludedDescendantsOfNode));
 		}
 	}
 
