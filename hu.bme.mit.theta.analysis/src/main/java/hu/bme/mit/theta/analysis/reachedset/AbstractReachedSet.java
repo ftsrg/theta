@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.analysis.algorithm.impact;
+package hu.bme.mit.theta.analysis.reachedset;
 
 import java.util.Collection;
 

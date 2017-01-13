@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.analysis.algorithm.impact;
+package hu.bme.mit.theta.analysis.reachedset;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 

@@ -16,6 +16,7 @@ import hu.bme.mit.theta.analysis.algorithm.ArgTrace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyStatus;
 import hu.bme.mit.theta.analysis.algorithm.impact.ImpactRefiner.RefinementResult;
+import hu.bme.mit.theta.analysis.reachedset.ReachedSet;
 import hu.bme.mit.theta.analysis.waitlist.FifoWaitlist;
 import hu.bme.mit.theta.analysis.waitlist.Waitlist;
 
