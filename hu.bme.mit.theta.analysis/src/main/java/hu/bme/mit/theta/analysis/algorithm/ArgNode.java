@@ -74,8 +74,9 @@ public final class ArgNode<S extends State, A extends Action> {
 	public boolean mayCover(final ArgNode<S, A> node) {
 		if (arg.domain.isLeq(node.getState(), this.getState())) {
 			return ancestors().noneMatch(n -> n.equals(node) || n.isSubsumed());
+		} else {
+			return false;
 		}
-		return false;
 	}
 
 	public void setCoveringNode(final ArgNode<S, A> node) {
@@ -100,8 +101,10 @@ public final class ArgNode<S extends State, A extends Action> {
 
 	public void cover(final ArgNode<S, A> node) {
 		checkArgument(!node.isExcluded());
-		setCoveringNode(node);
+		final Collection<ArgNode<S, A>> oldCoveredNodes = new ArrayList<>(coveredNodes);
 		descendants().forEach(ArgNode::clearCoveredNodes);
+		setCoveringNode(node);
+		oldCoveredNodes.forEach(n -> n.setCoveringNode(node));
 	}
 
 	////
@@ -239,8 +242,7 @@ public final class ArgNode<S extends State, A extends Action> {
 		if (this.isSubsumed()) {
 			return Stream.empty();
 		} else {
-			return Stream.concat(Stream.of(this),
-					this.children().flatMap(ArgNode::unexcludedDescendantsOfNode));
+			return Stream.concat(Stream.of(this), this.children().flatMap(ArgNode::unexcludedDescendantsOfNode));
 		}
 	}
 
