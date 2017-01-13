@@ -13,6 +13,7 @@ import java.util.function.Function;
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.ArgNode;
+import hu.bme.mit.theta.analysis.reachedset.ReachedSet;
 
 public final class ImpactReachedSet<S extends State, A extends Action, K> implements ReachedSet<S, A> {
 
