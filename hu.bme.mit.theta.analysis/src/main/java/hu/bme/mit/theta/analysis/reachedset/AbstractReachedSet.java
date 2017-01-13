@@ -12,11 +12,10 @@ public abstract class AbstractReachedSet<S extends State, A extends Action> impl
 
 	@Override
 	public final void tryToCover(final ArgNode<S, A> node) {
-		if (!node.isExcluded()) {
-			for (final ArgNode<S, A> candidate : getCandidatesForCovering(node)) {
-				if (candidate.mayCover(node)) {
-					node.cover(candidate);
-				}
+		for (final ArgNode<S, A> candidate : getCandidatesForCovering(node)) {
+			if (candidate.mayCover(node)) {
+				node.cover(candidate);
+				return;
 			}
 		}
 	}
