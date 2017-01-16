@@ -44,24 +44,18 @@ public final class ImpactChecker<S extends State, A extends Action, P extends Pr
 
 	@Override
 	public SafetyStatus<S, A> check(final P precision) {
-		return new CheckMethod<>(argBuilder, refiner, partitioning, precision).run();
+		return new CheckMethod(precision).run();
 	}
 
 	////
 
-	private static final class CheckMethod<S extends State, A extends Action, P extends Precision> {
-		private final ArgBuilder<S, A, P> argBuilder;
-		private final ImpactRefiner<S, A> refiner;
+	private final class CheckMethod {
 		private final P precision;
 
 		private final ARG<S, A> arg;
-
 		private final ReachedSet<S, A> reachedSet;
 
-		private CheckMethod(final ArgBuilder<S, A, P> argBuilder, final ImpactRefiner<S, A> refiner,
-				final Function<? super S, ?> partitioning, final P precision) {
-			this.argBuilder = argBuilder;
-			this.refiner = refiner;
+		private CheckMethod(final P precision) {
 			this.precision = checkNotNull(precision);
 			arg = argBuilder.createArg();
 			reachedSet = ImpactReachedSet.create(partitioning);
