@@ -40,8 +40,7 @@ public class Main {
 		options.addOption(optModel);
 
 		final Option optProp = new Option("p", "property", true, "Property to be verified");
-		optModel.setRequired(true);
-		optModel.setArgName("PROPERTY");
+		optProp.setArgName("PROPERTY");
 		options.addOption(optProp);
 
 		final Option optDomain = new Option("d", "domain", true, "Abstract domain");
@@ -78,7 +77,6 @@ public class Main {
 		}
 
 		final String model = cmd.getOptionValue(optModel.getOpt());
-		final String prop = cmd.getOptionValue(optProp.getOpt());
 		final Domain domain = Domain.valueOf(cmd.getOptionValue(optDomain.getOpt()));
 		final Refinement refinement = Refinement.valueOf(cmd.getOptionValue(optRefinement.getOpt()));
 
@@ -101,6 +99,7 @@ public class Main {
 			if (model.endsWith(".aag")) {
 				sts = new AigerParserSimple().parse(model);
 			} else {
+				final String prop = cmd.getOptionValue(optProp.getOpt());
 				final InputStream inputStream = new FileInputStream(model);
 				final StsSpec spec = StsDslManager.createStsSpec(inputStream);
 				sts = new StsIteTransformation().transform(spec.createProp(prop));
