@@ -74,11 +74,6 @@ public final class WaitlistBasedAbstractor<S extends State, A extends Action, P 
 	}
 
 	private Optional<ArgNode<S, A>> searchForUnsafeNode(final ARG<S, A> arg, final P precision) {
-		final Optional<ArgNode<S, A>> unsafeNode = arg.getUnsafeNodes().findAny();
-		if (unsafeNode.isPresent()) {
-			return unsafeNode;
-		}
-
 		final Waitlist<ArgNode<S, A>> waitlist = waitlistSupplier.get();
 		waitlist.addAll(arg.getIncompleteNodes());
 
@@ -88,7 +83,7 @@ public final class WaitlistBasedAbstractor<S extends State, A extends Action, P 
 			final ArgNode<S, A> node = waitlist.remove();
 
 			argBuilder.close(node);
-			if (!node.isCovered()) {
+			if (!node.isComplete()) {
 				if (node.isTarget()) {
 					return Optional.of(node);
 				} else {
