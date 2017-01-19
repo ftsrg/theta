@@ -27,14 +27,14 @@ public class SandBox {
 		System.out.println("Press a key to start");
 		System.in.read();
 
-		final STS sts = new AigerParserSimple().parse("src/test/resources/hw/power2sum32.aag");
+		final STS sts = new AigerParserSimple().parse("src/test/resources/hw/bob2.aag");
 
 		System.out.println(sts);
 
 		final Logger logger = new ConsoleLogger(3);
 
 		final Configuration<? extends State, ? extends Action, ? extends Precision> configuration = new StsConfigurationBuilder(
-				Domain.EXPL, Refinement.SEQ_ITP).initPrecision(InitPrecision.PROP).logger(logger).search(Search.BFS)
+				Domain.PRED, Refinement.SEQ_ITP).initPrecision(InitPrecision.EMPTY).logger(logger).search(Search.BFS)
 						.solverFactory(Z3SolverFactory.getInstace()).build(sts);
 
 		configuration.check();
