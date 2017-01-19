@@ -3,7 +3,6 @@ package hu.bme.mit.theta.analysis.algorithm;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.common.ObjectUtils.toStringBuilder;
-import static hu.bme.mit.theta.common.Utils.anyMatch;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -169,7 +168,7 @@ public final class ArgNode<S extends State, A extends Action> {
 	 * excluded parent.
 	 */
 	public boolean isExcluded() {
-		return isSubsumed() || anyMatch(getParent(), ArgNode::isExcluded);
+		return ancestors().anyMatch(ArgNode::isSubsumed);
 	}
 
 	/**
