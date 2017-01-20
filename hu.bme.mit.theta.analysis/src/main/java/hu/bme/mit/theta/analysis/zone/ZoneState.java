@@ -119,6 +119,11 @@ public final class ZoneState implements ExprState {
 
 	////
 
+	public Collection<ZoneState> complement() {
+		final Collection<DBM> dbms = dbm.complement();
+		return dbms.stream().map(ZoneState::new).collect(toList());
+	}
+
 	public ZoneOperations transform() {
 		return ZoneOperations.transform(this);
 	}
