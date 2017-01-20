@@ -6,9 +6,12 @@ import static hu.bme.mit.theta.analysis.zone.DiffBounds.Inf;
 import static hu.bme.mit.theta.analysis.zone.DiffBounds.Leq;
 import static hu.bme.mit.theta.analysis.zone.DiffBounds.Lt;
 import static hu.bme.mit.theta.analysis.zone.DiffBounds.asString;
+import static hu.bme.mit.theta.analysis.zone.DiffBounds.negate;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -68,7 +71,8 @@ final class DBM {
 	}
 
 	// TODO replace BiFunction by IntBiFunction
-	private DBM(final DbmSignature signature, final BiFunction<ClockDecl, ClockDecl, Integer> values) {
+	private DBM(final DbmSignature signature,
+			final BiFunction<? super ClockDecl, ? super ClockDecl, ? extends Integer> values) {
 		this(signature, (final int x, final int y) -> {
 			return values.apply(signature.getClock(x), signature.getClock(y));
 		});
@@ -77,6 +81,30 @@ final class DBM {
 	private DBM(final DBM dbm) {
 		this.signature = dbm.signature;
 		this.dbm = new SimpleDbm(dbm.dbm);
+	}
+
+	////
+
+	public Collection<DBM> complement() {
+		final Collection<DBM> result = new ArrayList<>();
+		if (!dbm.isConsistent()) {
+			result.add(DBM.top(Collections.emptySet()));
+		} else {
+			for (final ClockDecl x : signature) {
+				for (final ClockDecl y : signature) {
+					final int bound = get(x, y);
+					if (bound != defaultBound(x, y)) {
+						final int newBound = negate(bound);
+						final DbmSignature newSignature = DbmSignature.over(Arrays.asList(x, y));
+						final BiFunction<ClockDecl, ClockDecl, Integer> newValues = (c1, c2) -> (c1 == y && c2 == x)
+								? newBound : defaultBound(c1, c2);
+						final DBM newDBM = new DBM(newSignature, newValues);
+						result.add(newDBM);
+					}
+				}
+			}
+		}
+		return result;
 	}
 
 	////
