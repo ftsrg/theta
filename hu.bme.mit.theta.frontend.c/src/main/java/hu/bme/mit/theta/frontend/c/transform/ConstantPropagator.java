@@ -43,7 +43,8 @@ public class ConstantPropagator extends FunctionTransformer {
 					.filter(b -> ((AssignNode<?, ?>) b.node).getExpr() instanceof LitExpr<?>)
 					// and it is the only reaching definition of its variable
 					.filter(b -> defs.stream().noneMatch(d -> d != b && d.var == b.var)).forEach(
-							b -> constVars.put(b.var, (LitExpr<? extends Type>) ((AssignNode<?, ?>) b.node).getExpr()));
+						b -> constVars.put(b.var, (LitExpr<? extends Type>) ((AssignNode<?, ?>) b.node).getExpr())
+					);
 
 			for (IrNode node : block.getAllNodes()) {
 				if (node instanceof AssignNode<?, ?>) {

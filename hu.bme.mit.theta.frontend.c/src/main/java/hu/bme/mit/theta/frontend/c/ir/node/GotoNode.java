@@ -31,7 +31,8 @@ public class GotoNode implements TerminatorIrNode {
 
 	@Override
 	public String getLabel() {
-		return "Goto(" + this.target.getName() + ")";
+		//return "Goto(" + this.target.getName() + ")";
+		return "Jump()";
 	}
 
 	@Override

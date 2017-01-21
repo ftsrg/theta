@@ -27,8 +27,8 @@ public class JumpIfNode implements ConditionalTerminatorNode {
 
 	@Override
 	public String getLabel() {
-		return "Branch(" + this.cond.toString() + ", " + this.thenTarget.getName() + ", " + this.elseTarget.getName()
-				+ ")";
+		//return "Branch(" + this.cond.toString() + ", " + this.thenTarget.getName() + ", " + this.elseTarget.getName()+ ")";
+		return "Branch(" + this.cond.toString() + ")";
 	}
 
 	@Override

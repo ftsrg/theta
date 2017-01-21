@@ -175,6 +175,8 @@ public class VariableFinderVisitor extends FailExprVisitor<Set<VarDecl<? extends
 	@Override
 	public <ReturnType extends Type> Set<VarDecl<? extends Type>> visit(ProcCallExpr<ReturnType> expr,
 			Set<VarDecl<? extends Type>> param) {
+		expr.getParams().forEach(arg -> arg.accept(this, param));
+		
 		return param;
 	}
 

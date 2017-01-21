@@ -33,10 +33,10 @@ public final class CallGraph {
 			if (callNodes == null) {
 				callNodes = new ArrayList<>();
 				this.targets.put(target, callNodes);
-				target.addCall(this, call);
 			}
 
 			callNodes.add(call);
+			target.addCall(this, call);
 		}
 
 		public ProcDecl<?> getProc() {
@@ -56,7 +56,7 @@ public final class CallGraph {
 		}
 
 		private void addCall(CallGraphNode caller, NonTerminatorIrNode call) {
-			List<NonTerminatorIrNode> callNodes = this.targets.get(caller);
+			List<NonTerminatorIrNode> callNodes = this.calls.get(caller);
 			if (callNodes == null) {
 				callNodes = new ArrayList<>();
 				this.calls.put(caller, callNodes);
@@ -83,25 +83,29 @@ public final class CallGraph {
 		Map<ProcDecl<?>, CallGraphNode> nodes = new HashMap<>();
 
 		for (Function func : context.functions()) {
-			CallGraphNode cgNode = new CallGraphNode(func.getProcDecl());
+			CallGraphNode cg = new CallGraphNode(func.getProcDecl());
+			nodes.put(func.getProcDecl(), cg);
+		}
+		
+		for (Function func : context.functions()) {
+			CallGraphNode cgNode = nodes.get(func.getProcDecl());
 			for (BasicBlock block : func.getBlocks()) {
 				for (NonTerminatorIrNode node : block.getNodes()) {
 					if (node instanceof AssignNode<?, ?>
 							&& ((AssignNode<?, ?>) node).getExpr() instanceof ProcCallExpr<?>) {
 						ProcCallExpr<?> procCall = (ProcCallExpr<?>) ((AssignNode<?, ?>) node).getExpr();
-						ProcDecl<?> proc = ((ProcRefExpr<?>) procCall.getProc()).getDecl();
-
+						ProcDecl<?> proc = ((ProcRefExpr<?>) procCall.getProc()).getDecl();						
+						
 						CallGraphNode cgTarget = nodes.get(proc);
 						if (cgTarget == null) {
 							cgTarget = new CallGraphNode(proc);
 							nodes.put(proc, cgTarget);
 						}
-
+						
 						cgNode.addTarget(cgTarget, node);
 					}
 				}
 			}
-			nodes.put(func.getProcDecl(), cgNode);
 		}
 
 		CallGraph cg = new CallGraph(context, nodes);

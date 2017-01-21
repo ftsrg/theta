@@ -44,17 +44,18 @@ public class FunctionInliner implements Transformer {
 	@Override
 	public void transform(GlobalContext context) {		
 		CallGraph cg = CallGraph.buildCallGraph(context);
-		List<CallGraphNode> inlineables = cg.getNodesDFS().stream().filter(n -> !n.isRecursive())
+		List<CallGraphNode> inlineables = cg.getNodesDFS().stream()
+				.filter(n -> !n.isRecursive()) // recursive functions cannot be inlined at the moment
 				// TODO
-				.filter(n -> cg.hasDefinition(n)).filter(n -> !n.getProc().getName().equals("main"))
+				.filter(n -> cg.hasDefinition(n)) // we can only inline functions with definitions
+				.filter(n -> !n.getProc().getName().equals("main")) // never inline the entry function
 				.collect(Collectors.toList());
-		Collections.reverse(inlineables);
-
-
-		for (CallGraphNode callerCg : inlineables) {
-			ProcDecl<?> calleeProc = callerCg.getProc();
-			Function func = context.getFunctionByName(callerCg.getProc().getName());
-			for (Entry<CallGraphNode, List<NonTerminatorIrNode>> callInfo : callerCg.getCalls().entrySet()) {
+		Collections.reverse(inlineables); // start with the leaves of the DFS search tree
+		
+		for (CallGraphNode calleeCg : inlineables) {
+			ProcDecl<?> calleeProc = calleeCg.getProc();
+			Function func = context.getFunctionByName(calleeCg.getProc().getName());
+			for (Entry<CallGraphNode, List<NonTerminatorIrNode>> callInfo : calleeCg.getCalls().entrySet()) {
 				ProcDecl<?> callerProc = callInfo.getKey().getProc();
 				Function caller = context.getFunctionByProc(callerProc);
 
@@ -125,9 +126,9 @@ public class FunctionInliner implements Transformer {
 						parent.getTerminator().replaceTarget(copy.getExitBlock(), tuple._3());
 
 					});
+					caller.normalize();
 				}
 
-				caller.normalize();
 			}
 
 			// This function is no longer needed

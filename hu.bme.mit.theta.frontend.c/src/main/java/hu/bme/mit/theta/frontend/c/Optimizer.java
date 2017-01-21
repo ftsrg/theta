@@ -9,26 +9,28 @@ import hu.bme.mit.theta.common.logging.impl.NullLogger;
 import hu.bme.mit.theta.formalism.cfa.CFA;
 import hu.bme.mit.theta.frontend.c.cfa.FunctionToCFATransformer;
 import hu.bme.mit.theta.frontend.c.cfa.SbeToLbeTransformer;
+import hu.bme.mit.theta.frontend.c.dependency.ProgramDependency;
 import hu.bme.mit.theta.frontend.c.ir.BasicBlock;
 import hu.bme.mit.theta.frontend.c.ir.Function;
 import hu.bme.mit.theta.frontend.c.ir.GlobalContext;
 import hu.bme.mit.theta.frontend.c.ir.node.NodeFactory;
 import hu.bme.mit.theta.frontend.c.ir.utils.IrPrinter;
-import hu.bme.mit.theta.frontend.c.transform.FunctionSlicer;
 import hu.bme.mit.theta.frontend.c.transform.FunctionTransformer;
 import hu.bme.mit.theta.frontend.c.transform.Transformer;
+import hu.bme.mit.theta.frontend.c.transform.slicer.FunctionSlicer;
 
 public class Optimizer {
 
 	private final List<Transformer> transforms = new ArrayList<>();
+	private final FunctionSlicer slicer;
 	
-	private final FunctionSlicer slicer = new FunctionSlicer();
 	private final GlobalContext context;
 
 	private Logger log = NullLogger.getInstance();
 
-	public Optimizer(GlobalContext context) {
+	public Optimizer(GlobalContext context, FunctionSlicer slicer) {
 		this.context = context;
+		this.slicer = slicer;
 	}
 	
 	public void addTransformation(Transformer pass) {
@@ -103,6 +105,7 @@ public class Optimizer {
 		this.context.functions().forEach(fun -> {
 			this.log.writeln("-----" + fun.getName() + "-----", 7);
 			this.log.writeln(IrPrinter.toGraphvizString(fun), 7);
+			this.log.writeln(IrPrinter.programDependencyGraph(ProgramDependency.buildPDG(fun)), 7);
 		});
 	}
 

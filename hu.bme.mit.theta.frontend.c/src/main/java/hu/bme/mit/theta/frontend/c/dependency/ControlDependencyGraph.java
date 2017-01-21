@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Stack;
 import java.util.stream.Collectors;
 
 import hu.bme.mit.theta.frontend.c.ir.BasicBlock;
@@ -41,6 +42,29 @@ public class ControlDependencyGraph {
 		return this.nodes.get(block).parents.stream().map(p -> p.block).collect(Collectors.toList());
 	}
 
+	public List<BasicBlock> predecessors(BasicBlock block) {
+		CDGNode node = this.nodes.get(block);
+		if (node == null)
+			throw new RuntimeException("Cannot find block " + block.getName() + " in the control dependency graph.");
+				
+		Stack<CDGNode> wl = new Stack<>();
+		List<CDGNode> pred = new ArrayList<>();
+		
+		wl.push(node);
+		while (!wl.isEmpty()) {
+			CDGNode current = wl.pop();
+			pred.add(current);
+			for (CDGNode parent : current.parents) {
+				if (!pred.contains(parent)) {
+					wl.push(parent);
+				}
+			}
+		}
+		
+		return pred.stream().map(cdg -> cdg.block).collect(Collectors.toList());
+	}
+	
+	
 	public static ControlDependencyGraph buildGraph(Function function) {
 		List<BasicBlock> blocks = function.getBlocksDFS();
 		DominatorTree pdt = DominatorTree.createPostDominatorTree(function);

@@ -349,37 +349,24 @@ public class UseDefineChain {
 
 		/* Compute initial sets */
 		for (BlockInfo info : blocks.values()) {
-			List<VarDecl<? extends Type>> vars = info.gen.stream() // Get a list
-																	// of all
-																	// variables
-																	// defined
-																	// in this
-																	// block
+			List<VarDecl<? extends Type>> vars = info.gen.stream() // Get a list of all variables defined in this block
 					.map(d -> d.var).collect(Collectors.toList());
-			List<Definition> defs = allDefs.stream() // Find all definitions
-														// which define the
-														// variables of this
-														// block
+			List<Definition> defs = allDefs.stream() // Find all definitions which define the variables of this block
 					.filter(d -> vars.contains(d.var)).collect(Collectors.toList());
 
-			// A definition is killed in this block, if it's not defined here
-			// but defines a variable also defined here
+			// A definition is killed in this block, if it's not defined here but defines a variable also defined here
 			info.kill.addAll(defs);
 			info.kill.removeAll(info.gen);
 
-			// use[B] is a set of (s, x) pairs in B, such
-			info.use.addAll(allUses.stream().filter(u -> info.block.getAllNodes().contains(u.node)) // s
-																									// is
-																									// in
-																									// B
+			// use[B] is a set of (s, x) pairs in B, such...
+			info.use.addAll(allUses.stream().filter(u -> info.block.getAllNodes().contains(u.node)) // ...s is in B...
 					.filter(u -> {
 						List<Definition> useDefs = defs.stream().filter(d -> d.var == u.var)
 								.filter(d -> d.node.getParentBlock() == info.block).collect(Collectors.toList());
-						if (useDefs.isEmpty()) // and there is no definition of
-												// x in B
+						if (useDefs.isEmpty()) // ...and there is no definition of x in B...
 							return true;
 
-						// or if there is, it is not prior X
+						// ...or if there is, it is not prior X
 						List<IrNode> nodes = u.node.getParentBlock().getAllNodes();
 						int idx = nodes.indexOf(u.node);
 						for (Definition def : useDefs) {
@@ -391,20 +378,14 @@ public class UseDefineChain {
 						return true;
 					}).collect(Collectors.toSet()));
 
-			// def[B] is a set of (s, x) pairs, such
-			info.def.addAll(allUses.stream().filter(u -> !info.block.getAllNodes().contains(u.node)) // s
-																										// is
-																										// not
-																										// in
-																										// B
-					.filter(u -> vars.contains(u.var)) // and there is a
-														// definition of x in B
+			// def[B] is a set of (s, x) pairs, such...
+			info.def.addAll(allUses.stream().filter(u -> !info.block.getAllNodes().contains(u.node)) // ...s is not in B...
+					.filter(u -> vars.contains(u.var)) // ...and there is a definition of x in B
 					.collect(Collectors.toSet()));
 		}
 
 		/*
-		 * Iterative solution for reaching definitions. (Compilers: Principles,
-		 * Techniques and Tools, 1st edition, Algorithm 10.2)
+		 * Iterative solution for reaching definitions. (Compilers: Principles, Techniques and Tools, 1st edition, Algorithm 10.2)
 		 */
 		for (BlockInfo blockInfo : blocks.values()) {
 			blockInfo.out.addAll(blockInfo.gen);
@@ -434,8 +415,7 @@ public class UseDefineChain {
 		}
 
 		/*
-		 * Iterative solution for reachable uses (Compilers: Principles,
-		 * Techniques and Tools, 1st edition, Algorithm 10.4)
+		 * Iterative solution for reachable uses (Compilers: Principles, Techniques and Tools, 1st edition, Algorithm 10.4)
 		 */
 		change = true;
 		while (change) {
