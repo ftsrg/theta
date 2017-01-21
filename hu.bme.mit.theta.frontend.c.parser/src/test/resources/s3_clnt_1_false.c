@@ -1,4 +1,4 @@
-void __VERIFIER_error() { assert(0); }
+extern void __VERIFIER_error();
 
 extern char __VERIFIER_nondet_char();
 extern int __VERIFIER_nondet_int();
@@ -541,7 +541,7 @@ int ssl3_connect(int initial_state )
 
   }
   return (ret);
-  ERROR: __VERIFIER_error();
+  ERROR: assert(0);
   return (-1);
 }
 }

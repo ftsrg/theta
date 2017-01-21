@@ -3,26 +3,14 @@ package hu.bme.mit.theta.frontend.c.transform.slicer;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Queue;
-import java.util.Set;
 import java.util.stream.Collectors;
 
-import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.frontend.c.dependency.ControlDependencyGraph;
 import hu.bme.mit.theta.frontend.c.dependency.UseDefineChain;
-import hu.bme.mit.theta.frontend.c.ir.BasicBlock;
 import hu.bme.mit.theta.frontend.c.ir.Function;
-import hu.bme.mit.theta.frontend.c.ir.node.BranchTableNode;
-import hu.bme.mit.theta.frontend.c.ir.node.EntryNode;
-import hu.bme.mit.theta.frontend.c.ir.node.GotoNode;
 import hu.bme.mit.theta.frontend.c.ir.node.IrNode;
-import hu.bme.mit.theta.frontend.c.ir.node.JumpIfNode;
-import hu.bme.mit.theta.frontend.c.ir.node.NodeFactory;
 import hu.bme.mit.theta.frontend.c.ir.node.NonTerminatorIrNode;
 import hu.bme.mit.theta.frontend.c.ir.node.TerminatorIrNode;
 

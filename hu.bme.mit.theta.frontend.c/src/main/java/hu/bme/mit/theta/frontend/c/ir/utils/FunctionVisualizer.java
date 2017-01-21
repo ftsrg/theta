@@ -5,14 +5,12 @@ import java.util.Map;
 
 import hu.bme.mit.theta.common.visualization.EdgeAttributes;
 import hu.bme.mit.theta.common.visualization.Graph;
-import hu.bme.mit.theta.common.visualization.Node;
 import hu.bme.mit.theta.common.visualization.NodeAttributes;
-import hu.bme.mit.theta.formalism.cfa.utils.CfaVisualizer;
 import hu.bme.mit.theta.frontend.c.ir.BasicBlock;
 import hu.bme.mit.theta.frontend.c.ir.Function;
 import hu.bme.mit.theta.frontend.c.ir.node.BranchTableNode;
-import hu.bme.mit.theta.frontend.c.ir.node.JumpIfNode;
 import hu.bme.mit.theta.frontend.c.ir.node.BranchTableNode.BranchTableEntry;
+import hu.bme.mit.theta.frontend.c.ir.node.JumpIfNode;
 
 public class FunctionVisualizer {
 	

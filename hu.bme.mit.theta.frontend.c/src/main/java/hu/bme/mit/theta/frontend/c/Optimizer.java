@@ -15,7 +15,6 @@ import hu.bme.mit.theta.frontend.c.ir.Function;
 import hu.bme.mit.theta.frontend.c.ir.GlobalContext;
 import hu.bme.mit.theta.frontend.c.ir.node.NodeFactory;
 import hu.bme.mit.theta.frontend.c.ir.utils.IrPrinter;
-import hu.bme.mit.theta.frontend.c.transform.FunctionTransformer;
 import hu.bme.mit.theta.frontend.c.transform.Transformer;
 import hu.bme.mit.theta.frontend.c.transform.slicer.FunctionSlicer;
 
