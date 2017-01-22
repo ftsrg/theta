@@ -14,12 +14,12 @@ import hu.bme.mit.theta.frontend.c.ir.node.IrNode;
 import hu.bme.mit.theta.frontend.c.ir.node.NonTerminatorIrNode;
 import hu.bme.mit.theta.frontend.c.ir.node.TerminatorIrNode;
 
-public class BackwardSlicer extends FunctionSlicer {
+public class BackwardSlicer extends AbstractFunctionSlicer {
 
 	@Override
 	protected List<IrNode> markRequiredNodes(Function function, IrNode criteria) {
 		// Build dependency structures
-		// XXX: These structures should be cached, as they are the same for a single allSlice call
+		// TODO: These structures should be cached, as they are the same for a single allSlice call
 		UseDefineChain ud = UseDefineChain.buildChain(function);
 		ControlDependencyGraph cdg = ControlDependencyGraph.buildGraph(function);
 		

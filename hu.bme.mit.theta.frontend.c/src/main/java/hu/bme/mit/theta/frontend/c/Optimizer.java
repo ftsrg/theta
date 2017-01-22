@@ -2,6 +2,7 @@ package hu.bme.mit.theta.frontend.c;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import hu.bme.mit.theta.common.logging.Logger;
@@ -13,9 +14,11 @@ import hu.bme.mit.theta.frontend.c.dependency.ProgramDependency;
 import hu.bme.mit.theta.frontend.c.ir.BasicBlock;
 import hu.bme.mit.theta.frontend.c.ir.Function;
 import hu.bme.mit.theta.frontend.c.ir.GlobalContext;
+import hu.bme.mit.theta.frontend.c.ir.node.IrNode;
 import hu.bme.mit.theta.frontend.c.ir.node.NodeFactory;
 import hu.bme.mit.theta.frontend.c.ir.utils.IrPrinter;
 import hu.bme.mit.theta.frontend.c.transform.Transformer;
+import hu.bme.mit.theta.frontend.c.transform.slicer.AbstractFunctionSlicer;
 import hu.bme.mit.theta.frontend.c.transform.slicer.FunctionSlicer;
 
 public class Optimizer {
@@ -24,6 +27,8 @@ public class Optimizer {
 	private final FunctionSlicer slicer;
 	
 	private final GlobalContext context;
+	
+	private Predicate<IrNode> slicerPred = FunctionSlicer.SLICE_ON_ASSERTS;
 
 	private Logger log = NullLogger.getInstance();
 
@@ -44,6 +49,29 @@ public class Optimizer {
 		}
 	}
 
+	public List<Function> createSlices() {
+		List<Function> result = new ArrayList<>();
+		
+		for (Function func : this.context.functions()) {
+			// Don't bother with disabled functions
+			if (!func.isEnabled())
+				continue;
+
+			List<BasicBlock> blocks = func.getBlocksDFS();
+			
+			for (BasicBlock block : blocks) {
+				for (IrNode node : block.getAllNodes()) {
+					if (this.slicerPred.test(node)) {
+						Function slice = this.slicer.slice(func, node);
+						result.add(slice);
+					}
+				}
+			}
+		}
+		
+		return result;
+	}
+	
 	/**
 	 * Inlines global variable initialization into 'main'.
 	 */
@@ -61,44 +89,7 @@ public class Optimizer {
 		main.getEntryNode().replaceTarget(codeEntry, bb);
 		main.normalize();
 	}
-
-	public List<CFA> createCfas() {
-		return this.context.functions().stream().filter(func -> func.isEnabled())
-				.map(func -> FunctionToCFATransformer.createSBE(func)).collect(Collectors.toList());
-	}
-
-	public List<CFA> getProgramSlices() {
-		Function main = this.context.getFunctionByName("main");
-		List<Function> slices = this.slicer.allSlices(main, FunctionSlicer.SLICE_ON_ASSERTS);
-
-		return slices.stream().map(slice -> FunctionToCFATransformer.createSBE(slice)).collect(Collectors.toList());
-	}
-
-	public List<CFA> getProgramSlicesLBE() {
-		Function main = this.context.getFunctionByName("main");
-		List<Function> slices = this.slicer.allSlices(main, FunctionSlicer.SLICE_ON_ASSERTS);
-
-		return slices.stream().map(slice -> FunctionToCFATransformer.createLBE(slice))
-				.map(cfa -> SbeToLbeTransformer.transform(cfa)).collect(Collectors.toList());
-	}
-
-	public List<Function> createSlices() {
-		List<Function> slices = new ArrayList<>();
-
-		this.context.functions().stream().filter(func -> func.isEnabled()).forEach(func -> {
-			slices.addAll(this.slicer.allSlices(func, FunctionSlicer.SLICE_ON_ASSERTS));
-		});
-
-		this.log.writeln(String.format("Found %d slices.", slices.size()), 7);
-
-		return slices;
-	}
-
-	public List<CFA> createCfaSlices(boolean lbe) {
-		return this.createSlices().stream().map(slice -> FunctionToCFATransformer.createSBE(slice))
-				.map(cfa -> lbe ? SbeToLbeTransformer.transform(cfa) : cfa).collect(Collectors.toList());
-	}
-
+	
 	public void dump() {
 		this.log.writeHeader("DEBUG DUMP of Optimizer.", 7);
 		this.context.functions().forEach(fun -> {
