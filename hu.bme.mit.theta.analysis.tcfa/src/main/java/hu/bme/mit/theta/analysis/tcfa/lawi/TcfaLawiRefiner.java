@@ -85,7 +85,7 @@ public final class TcfaLawiRefiner {
 	private void clearCoverage(final ArgNode<TcfaLawiState, TcfaAction> node) {
 		assert node.isLeaf();
 		node.unsetCoveringNode();
-		node.ancestors().forEach(n -> n.setState(n.getState().withAbstractZone(ZoneState.top())));
+		node.getState().withAbstractZone(ZoneState.top());
 		waitlist.add(node);
 	}
 
