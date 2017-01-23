@@ -38,7 +38,8 @@ public final class TcfaLawiRefiner {
 	}
 
 	private ZoneState blockZone(final ArgNode<TcfaLawiState, TcfaAction> node, final ZoneState zone) {
-		if (!zone.isBottom()) {
+		final ZoneState abstractZone = node.getState().getAbstractZone();
+		if (abstractZone.isConsistentWith(zone)) {
 			assert node.getInEdge().isPresent();
 
 			final ArgEdge<TcfaLawiState, TcfaAction> inEdge = node.getInEdge().get();
@@ -58,7 +59,7 @@ public final class TcfaLawiRefiner {
 
 			return interpolant;
 		} else {
-			return ZoneState.top();
+			return abstractZone;
 		}
 	}
 
