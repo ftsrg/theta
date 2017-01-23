@@ -147,6 +147,10 @@ public final class ZoneState implements ExprState {
 		return this.dbm.getRelation(that.dbm).isLeq();
 	}
 
+	public boolean isConsistentWith(final ZoneState that) {
+		return this.dbm.isConsistentWith(that.dbm);
+	}
+
 	////
 
 	@Override
