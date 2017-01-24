@@ -60,7 +60,7 @@ public class TcfaCompositeTest {
 				.create(lts, analysis, target);
 
 		final Abstractor<LocState<Prod2State<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction, NullPrecision> abstractor = WaitlistBasedAbstractor
-				.create(argBuilder, FifoWaitlist.supplier());
+				.create(argBuilder, LocState::getLoc, FifoWaitlist.supplier());
 
 		final ARG<LocState<Prod2State<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction> arg = abstractor
 				.createArg();

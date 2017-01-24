@@ -57,7 +57,7 @@ public class TcfaPredTest {
 				.create(lts, analysis, target);
 
 		final Abstractor<LocState<PredState, TcfaLoc, TcfaEdge>, TcfaAction, NullPrecision> abstractor = WaitlistBasedAbstractor
-				.create(argBuilder, FifoWaitlist.supplier());
+				.create(argBuilder, LocState::getLoc, FifoWaitlist.supplier());
 
 		final ARG<LocState<PredState, TcfaLoc, TcfaEdge>, TcfaAction> arg = abstractor.createArg();
 
