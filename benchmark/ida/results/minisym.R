@@ -147,3 +147,6 @@ d.succ <- data.frame(d, Success = ifelse(!is.na(d$TimeMs), "SUCC", "TO") )
 # Generate tree
 tree <- ctree(Success ~ Type + Domain + Refinement + InitPrec + Search, data = d.succ)
 plot(tree, tp_args = list(fill = c("red", "green3"), id = FALSE), ip_args = list(id = FALSE, pval = FALSE))
+
+# Some additional stuff
+d %>% select(Model, Vars, Size) %>% group_by(Model, Vars, Size) %>% summarise()
