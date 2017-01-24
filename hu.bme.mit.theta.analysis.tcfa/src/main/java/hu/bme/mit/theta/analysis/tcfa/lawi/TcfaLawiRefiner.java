@@ -54,7 +54,6 @@ public final class TcfaLawiRefiner {
 			final ZoneState interpolant = ZoneState.interpolant(A, B);
 
 			refine(node, interpolant);
-			// TODO optimize: if not modified, do not propagte
 			maintainCoverage(node, interpolant);
 
 			return interpolant;
