@@ -119,6 +119,11 @@ public final class ZoneState implements ExprState {
 
 	////
 
+	public Collection<ZoneState> complement() {
+		final Collection<DBM> dbms = dbm.complement();
+		return dbms.stream().map(ZoneState::new).collect(toList());
+	}
+
 	public ZoneOperations transform() {
 		return ZoneOperations.transform(this);
 	}
@@ -140,6 +145,10 @@ public final class ZoneState implements ExprState {
 
 	public boolean isLeq(final ZoneState that) {
 		return this.dbm.getRelation(that.dbm).isLeq();
+	}
+
+	public boolean isConsistentWith(final ZoneState that) {
+		return this.dbm.isConsistentWith(that.dbm);
 	}
 
 	////

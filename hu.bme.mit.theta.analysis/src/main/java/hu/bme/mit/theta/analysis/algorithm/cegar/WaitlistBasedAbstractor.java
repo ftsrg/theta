@@ -2,7 +2,9 @@ package hu.bme.mit.theta.analysis.algorithm.cegar;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import java.util.Collection;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import hu.bme.mit.theta.analysis.Action;
@@ -11,6 +13,7 @@ import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.ArgBuilder;
 import hu.bme.mit.theta.analysis.algorithm.ArgNode;
+import hu.bme.mit.theta.analysis.reachedset.Partition;
 import hu.bme.mit.theta.analysis.waitlist.Waitlist;
 import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.common.logging.Logger;
@@ -20,25 +23,34 @@ public final class WaitlistBasedAbstractor<S extends State, A extends Action, P 
 		implements Abstractor<S, A, P> {
 
 	private final ArgBuilder<S, A, P> argBuilder;
+	private final Function<? super S, ?> projection;
 	private final Supplier<? extends Waitlist<ArgNode<S, A>>> waitlistSupplier;
 	private final Logger logger;
 
-	private WaitlistBasedAbstractor(final ArgBuilder<S, A, P> argBuilder,
+	private WaitlistBasedAbstractor(final ArgBuilder<S, A, P> argBuilder, final Function<? super S, ?> projection,
 			final Supplier<? extends Waitlist<ArgNode<S, A>>> waitlistSupplier, final Logger logger) {
 		this.argBuilder = checkNotNull(argBuilder);
+		this.projection = checkNotNull(projection);
 		this.waitlistSupplier = checkNotNull(waitlistSupplier);
 		this.logger = checkNotNull(logger);
 	}
 
 	public static <S extends State, A extends Action, P extends Precision> WaitlistBasedAbstractor<S, A, P> create(
-			final ArgBuilder<S, A, P> argBuilder, final Supplier<? extends Waitlist<ArgNode<S, A>>> waitlistSupplier,
-			final Logger logger) {
-		return new WaitlistBasedAbstractor<>(argBuilder, waitlistSupplier, logger);
+			final ArgBuilder<S, A, P> argBuilder, final Function<? super S, ?> projection,
+			final Supplier<? extends Waitlist<ArgNode<S, A>>> waitlistSupplier, final Logger logger) {
+		return new WaitlistBasedAbstractor<>(argBuilder, projection, waitlistSupplier, logger);
 	}
 
 	public static <S extends State, A extends Action, P extends Precision> WaitlistBasedAbstractor<S, A, P> create(
-			final ArgBuilder<S, A, P> argBuilder, final Supplier<? extends Waitlist<ArgNode<S, A>>> waitlistSupplier) {
-		return new WaitlistBasedAbstractor<>(argBuilder, waitlistSupplier, NullLogger.getInstance());
+			final ArgBuilder<S, A, P> argBuilder, final Supplier<? extends Waitlist<ArgNode<S, A>>> waitlistSupplier,
+			final Logger logger) {
+		return new WaitlistBasedAbstractor<>(argBuilder, s -> 0, waitlistSupplier, logger);
+	}
+
+	public static <S extends State, A extends Action, P extends Precision> WaitlistBasedAbstractor<S, A, P> create(
+			final ArgBuilder<S, A, P> argBuilder, final Function<? super S, ?> projection,
+			final Supplier<? extends Waitlist<ArgNode<S, A>>> waitlistSupplier) {
+		return new WaitlistBasedAbstractor<>(argBuilder, projection, waitlistSupplier, NullLogger.getInstance());
 	}
 
 	@Override
@@ -74,7 +86,10 @@ public final class WaitlistBasedAbstractor<S extends State, A extends Action, P 
 	}
 
 	private Optional<ArgNode<S, A>> searchForUnsafeNode(final ARG<S, A> arg, final P precision) {
+		final Partition<ArgNode<S, A>, ?> reachedSet = Partition.of(n -> projection.apply(n.getState()));
 		final Waitlist<ArgNode<S, A>> waitlist = waitlistSupplier.get();
+
+		reachedSet.addAll(arg.getIncompleteNodes());
 		waitlist.addAll(arg.getIncompleteNodes());
 
 		logger.write("Building ARG...", 3, 2);
@@ -82,17 +97,27 @@ public final class WaitlistBasedAbstractor<S extends State, A extends Action, P 
 		while (!waitlist.isEmpty()) {
 			final ArgNode<S, A> node = waitlist.remove();
 
-			argBuilder.close(node);
-			if (!node.isComplete()) {
+			close(node, reachedSet.get(node));
+			if (!node.isCovered()) {
 				if (node.isTarget()) {
 					return Optional.of(node);
 				} else {
 					argBuilder.expand(node, precision);
+					reachedSet.addAll(node.getSuccNodes());
 					waitlist.addAll(node.getSuccNodes());
 				}
 			}
 		}
 		return Optional.empty();
+	}
+
+	private void close(final ArgNode<S, A> node, final Collection<ArgNode<S, A>> candidates) {
+		for (final ArgNode<S, A> candidate : candidates) {
+			if (candidate.mayCover(node)) {
+				node.cover(candidate);
+				return;
+			}
+		}
 	}
 
 	@Override
