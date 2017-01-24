@@ -88,6 +88,8 @@ abstract public class AbstractFunctionSlicer implements FunctionSlicer {
 		Map<BasicBlock, BasicBlock> blockMap = new HashMap<>();
 		Function copy = function.copy(blockMap);
 
+		System.out.println(blocksToRemove);
+		
 		/*
 		 * Find unneeded components.
 		 *
@@ -141,7 +143,7 @@ abstract public class AbstractFunctionSlicer implements FunctionSlicer {
 			}
 
 			if (mergeBlocks.size() != 1) {
-				throw new AssertionError("This is a bug.");
+				throw new AssertionError("BUG: There should be only one merging block after slicing. Current blocks are: " + mergeBlocks.toString());
 			}
 
 			BasicBlock merge = mergeBlocks.iterator().next();

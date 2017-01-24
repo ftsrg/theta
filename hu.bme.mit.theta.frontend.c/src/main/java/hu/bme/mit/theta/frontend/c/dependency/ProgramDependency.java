@@ -160,8 +160,8 @@ public final class ProgramDependency {
 		// If node does not depend on any node, it should depend on the entry
 		// node
 		nodes.values().stream().filter(p -> p.controlParents.size() == 0 && p != entry).forEach(p -> {
-			p.controlParents.add(entry);
-			entry.controlChildren.add(p);
+		//	p.controlParents.add(entry);
+		//	entry.controlChildren.add(p);
 		});
 
 		/*

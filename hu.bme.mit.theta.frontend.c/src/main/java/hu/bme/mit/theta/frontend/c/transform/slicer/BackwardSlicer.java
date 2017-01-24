@@ -8,6 +8,7 @@ import java.util.Queue;
 import java.util.stream.Collectors;
 
 import hu.bme.mit.theta.frontend.c.dependency.ControlDependencyGraph;
+import hu.bme.mit.theta.frontend.c.dependency.ControlDependencyGraph.CDGNode;
 import hu.bme.mit.theta.frontend.c.dependency.UseDefineChain;
 import hu.bme.mit.theta.frontend.c.ir.Function;
 import hu.bme.mit.theta.frontend.c.ir.node.IrNode;
@@ -36,7 +37,7 @@ public class BackwardSlicer extends AbstractFunctionSlicer {
 
 				Collection<NonTerminatorIrNode> flowDeps = ud.getDefinitions(current).stream()
 						.filter(d -> !visited.contains(d)).collect(Collectors.toList());
-
+				
 				Collection<TerminatorIrNode> controlDeps = cdg.getParentBlocks(current.getParentBlock()).stream()
 						.map(b -> b.getTerminator()).filter(t -> !visited.contains(t)).collect(Collectors.toList());
 
@@ -45,6 +46,12 @@ public class BackwardSlicer extends AbstractFunctionSlicer {
 			}
 		}
 
+		// the entry nodes must always be present
+		//visited.add(function.getEntryNode());
+		//visited.add(function.getExitNode());
+		
+		System.out.println(visited);
+		
 		return visited;
 	}
 

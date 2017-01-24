@@ -4,6 +4,7 @@ import hu.bme.mit.theta.frontend.c.dependency.CallGraph;
 import hu.bme.mit.theta.frontend.c.dependency.CallGraph.CallGraphNode;
 import hu.bme.mit.theta.frontend.c.dependency.ControlDependencyGraph;
 import hu.bme.mit.theta.frontend.c.dependency.ControlDependencyGraph.CDGNode;
+import hu.bme.mit.theta.frontend.c.dependency.ControlDependencyGraph.CdgEdge;
 import hu.bme.mit.theta.frontend.c.dependency.DominatorTree;
 import hu.bme.mit.theta.frontend.c.dependency.ProgramDependency;
 import hu.bme.mit.theta.frontend.c.dependency.ProgramDependency.PDGNode;
@@ -26,7 +27,8 @@ public class IrPrinter {
 
 		for (CDGNode node : cdg.getNodes()) {
 			sb.append(String.format("node_%s [label=\"%s\"];\n", System.identityHashCode(node), node.block.getLabel()));
-			for (CDGNode child : node.children) {
+			for (CdgEdge childEdge : node.childEdges) {
+				CDGNode child = childEdge.getTarget();
 				sb.append(String.format("node_%s -> node_%s [color=\"blue\"];\n", System.identityHashCode(node),
 						System.identityHashCode(child)));
 			}

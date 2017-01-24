@@ -1,5 +1,6 @@
 package hu.bme.mit.theta.frontend.c.dependency;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -7,25 +8,64 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
 import java.util.Stack;
 import java.util.stream.Collectors;
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
+
+import hu.bme.mit.theta.common.Product2;
+import hu.bme.mit.theta.common.Tuple;
+import hu.bme.mit.theta.common.Tuple2;
+import hu.bme.mit.theta.frontend.c.dependency.ControlDependencyGraph.CDGNode;
 import hu.bme.mit.theta.frontend.c.ir.BasicBlock;
 import hu.bme.mit.theta.frontend.c.ir.Function;
+import hu.bme.mit.theta.frontend.c.ir.utils.CfgEdge;
 
 public class ControlDependencyGraph {
 
 	private CDGNode entry;
 	private final Map<BasicBlock, CDGNode> nodes;
-
+	
 	public static class CDGNode {
 		public final BasicBlock block;
-		public final List<CDGNode> children = new ArrayList<>();
-		public final List<CDGNode> parents = new ArrayList<>();
+		public final List<CdgEdge> childEdges = new ArrayList<>();
+		public final List<CdgEdge> parentEdges = new ArrayList<>();
 
 		public CDGNode(BasicBlock block) {
 			this.block = block;
+		}
+		
+		@Override
+		public String toString() {
+			return this.block.toString();
+		}
+	}
+	
+	public static class CdgEdge {
+		private final CDGNode source;
+		private final CDGNode target;
+		
+		private final CfgEdge dependingEdge;
+		
+		public CdgEdge(CDGNode source, CDGNode target, CfgEdge parentEdge) {
+			this.source = source;
+			this.target = target;
+			this.dependingEdge = parentEdge;
+		}
+		
+		public CDGNode getSource() {
+			return this.source;
+		}
+		
+		public CDGNode  getTarget() {
+			return this.target;
+		}
+		
+		public CfgEdge getDependingEdge() {
+			return this.dependingEdge;
 		}
 	}
 
@@ -38,30 +78,36 @@ public class ControlDependencyGraph {
 		return Collections.unmodifiableCollection(this.nodes.values());
 	}
 
-	public Collection<BasicBlock> getParentBlocks(BasicBlock block) {
-		return this.nodes.get(block).parents.stream().map(p -> p.block).collect(Collectors.toList());
+	public List<BasicBlock> getParentBlocks(BasicBlock block) {		
+		return this.nodes.get(block).parentEdges.stream().map(p -> p.source.block).collect(Collectors.toList());
 	}
 
-	public List<BasicBlock> predecessors(BasicBlock block) {
-		CDGNode node = this.nodes.get(block);
-		if (node == null)
-			throw new RuntimeException("Cannot find block " + block.getName() + " in the control dependency graph.");
-				
-		Stack<CDGNode> wl = new Stack<>();
-		List<CDGNode> pred = new ArrayList<>();
+	public Multimap<CDGNode, CfgEdge> cdgPredecessors(CDGNode node) {
+		Queue<CdgEdge> wl = new ArrayDeque<>();
+		Multimap<CDGNode, CfgEdge> pred = ArrayListMultimap.create();
 		
-		wl.push(node);
+		for (CdgEdge edge : node.parentEdges) {
+			wl.add(edge);
+		}
+		
 		while (!wl.isEmpty()) {
-			CDGNode current = wl.pop();
-			pred.add(current);
-			for (CDGNode parent : current.parents) {
-				if (!pred.contains(parent)) {
-					wl.push(parent);
+			CdgEdge current = wl.poll();
+			pred.put(current.source, current.dependingEdge);
+			
+			for (CdgEdge parentEdge : current.source.parentEdges) {
+				if (!pred.containsEntry(parentEdge.source, parentEdge.dependingEdge)) {
+					wl.add(parentEdge);
 				}
 			}
 		}
 		
-		return pred.stream().map(cdg -> cdg.block).collect(Collectors.toList());
+		return pred;		
+	}
+		
+	public List<BasicBlock> predecessors(BasicBlock block) {
+		CDGNode node = this.getNode(block);
+		
+		return this.cdgPredecessors(node).keySet().stream().map(cdg -> cdg.block).collect(Collectors.toList());
 	}
 	
 	
@@ -96,23 +142,27 @@ public class ControlDependencyGraph {
 		 * until we reach A’s parent (if it exists), marking all nodes visited
 		 * before A’s parent as control dependent on A.
 		 */
-		Map<BasicBlock, Set<BasicBlock>> controlDeps = new HashMap<>();
-		blocks.forEach(b -> controlDeps.put(b, new HashSet<>()));
+		Map<BasicBlock, Multimap<CfgEdge, BasicBlock>> controlDeps = new HashMap<>();
+		blocks.forEach(b -> controlDeps.put(b, ArrayListMultimap.create()));
 
-		for (BasicBlock block : controlDeps.keySet()) {
+		for (BasicBlock block : blocks) {
 			// Get the block's (A's) parent
 			BasicBlock blockIdom = pdt.getParent(block);
-			Set<BasicBlock> dependants = controlDeps.get(block);
+						
+			Multimap<CfgEdge, BasicBlock> dependants = controlDeps.get(block);
 
 			// Get all block -> child (A -> B) edges
-			for (BasicBlock child : block.children()) {
+			for (BasicBlock child : block.children()) {				
 				if (!pdt.dominates(child, block)) { // B must not dominate A
+					CfgEdge edge = new CfgEdge(block, child);
+
 					BasicBlock parent = child;
 					while (parent != block && parent != blockIdom) {
 						if (parent == null)
 							break;
 
-						dependants.add(parent);
+						//dependants.add(parent);
+						dependants.put(edge, parent);
 						parent = pdt.getParent(parent);
 					}
 				}
@@ -129,21 +179,35 @@ public class ControlDependencyGraph {
 		}
 
 		CDGNode entry = nodes.get(function.getEntryBlock());
-		controlDeps.forEach((BasicBlock block, Set<BasicBlock> deps) -> {
+		controlDeps.forEach((BasicBlock block, Multimap<CfgEdge, BasicBlock> deps) -> {
 			CDGNode cdg = nodes.get(block);
-			deps.forEach(child -> {
-				CDGNode childNode = nodes.get(child);
-				cdg.children.add(childNode);
-				childNode.parents.add(cdg);
+			deps.asMap().forEach((edge, dependants) -> {
+				dependants.forEach(d -> {
+					CDGNode depCdg = nodes.get(d);
+					CdgEdge cdgEdge = new CdgEdge(cdg, depCdg, edge);
+					
+					cdg.childEdges.add(cdgEdge);
+					depCdg.parentEdges.add(cdgEdge);
+				});
 			});
+			
 		});
 
-		nodes.values().stream().filter(n -> n.parents.size() == 0 && n != entry).forEach(n -> {
-			n.parents.add(entry);
-			entry.children.add(n);
-		});
+		//nodes.values().stream().filter(n -> n.parentEdges.size() == 0 && n != entry).forEach(n -> {
+		//	CdgEdge edge = new CdgEdge(entry, n, null);
+		//	n.parentEdges.add(edge);
+		//	entry.childEdges.add(edge);
+		//});
 
 		return new ControlDependencyGraph(nodes, entry);
+	}
+
+	public CDGNode getNode(BasicBlock block) {
+		CDGNode node = this.nodes.get(block);
+		if (node == null)
+			throw new RuntimeException("Cannot find block " + block.getName() + " in the control dependency graph.");
+		
+		return node;
 	}
 
 }
