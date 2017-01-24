@@ -50,7 +50,7 @@ public class TcfaZoneTest {
 				.create(lts, analysis, target);
 
 		final Abstractor<LocState<ZoneState, TcfaLoc, TcfaEdge>, TcfaAction, NullPrecision> abstractor = WaitlistBasedAbstractor
-				.create(argBuilder, FifoWaitlist.supplier());
+				.create(argBuilder, LocState::getLoc, FifoWaitlist.supplier());
 
 		final ARG<LocState<ZoneState, TcfaLoc, TcfaEdge>, TcfaAction> arg = abstractor.createArg();
 		abstractor.check(arg, NullPrecision.getInstance());

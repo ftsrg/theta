@@ -17,6 +17,7 @@ import hu.bme.mit.theta.analysis.algorithm.ArgTrace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyStatus;
 import hu.bme.mit.theta.analysis.impl.NullPrecision;
+import hu.bme.mit.theta.analysis.reachedset.Partition;
 import hu.bme.mit.theta.analysis.tcfa.TcfaAction;
 import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist;
 import hu.bme.mit.theta.analysis.waitlist.Waitlist;
