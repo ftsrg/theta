@@ -1,9 +1,7 @@
 package hu.bme.mit.theta.frontend.c.ir.utils;
 
-import java.util.List;
 import java.util.Optional;
 
-import hu.bme.mit.theta.common.Product2;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.frontend.c.ir.BasicBlock;

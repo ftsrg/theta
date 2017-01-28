@@ -92,7 +92,7 @@ public class UseDefineChain {
 	private UseDefineChain(Map<BasicBlock, BlockInfo> blocks) {
 		this.blocks = blocks;
 	}
-
+	
 	/**
 	 * Returns all definitions generated inside a given block
 	 *
@@ -117,7 +117,7 @@ public class UseDefineChain {
 	 *
 	 * @return A collection of assignment instructions whose values reach node
 	 */
-	public Collection<NonTerminatorIrNode> getDefinitions(IrNode node) {
+	public List<NonTerminatorIrNode> getDefinitions(IrNode node) {
 		BasicBlock block = node.getParentBlock();
 		BlockInfo info = this.blocks.get(block);
 
@@ -413,33 +413,7 @@ public class UseDefineChain {
 				}
 			}
 		}
-
-		/*
-		 * Iterative solution for reachable uses (Compilers: Principles, Techniques and Tools, 1st edition, Algorithm 10.4)
-		 */
-		change = true;
-		while (change) {
-			change = false;
-			for (BlockInfo blockInfo : blocks.values()) {
-				/* u_out[B] = for all S in succ(B) Union {in[S]} */
-				Set<Use> newOut = new HashSet<>();
-				blockInfo.block.children().forEach(s -> {
-					newOut.addAll(blocks.get(s).uIn);
-				});
-				blockInfo.uOut = newOut;
-
-				/* u_in[B] = use[B] union (in[B] sub def[B]) */
-				Set<Use> newIn = new HashSet<>(blockInfo.use);
-				newIn.addAll(
-						blockInfo.uOut.stream().filter(s -> !blockInfo.def.contains(s)).collect(Collectors.toSet()));
-
-				if (!blockInfo.uIn.equals(newIn)) {
-					blockInfo.uIn = newIn;
-					change = true;
-				}
-			}
-		}
-
+		
 		return new UseDefineChain(blocks);
 	}
 

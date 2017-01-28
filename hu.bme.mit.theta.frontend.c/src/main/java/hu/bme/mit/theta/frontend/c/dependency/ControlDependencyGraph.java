@@ -5,21 +5,14 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
-import java.util.Set;
-import java.util.Stack;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 
-import hu.bme.mit.theta.common.Product2;
-import hu.bme.mit.theta.common.Tuple;
-import hu.bme.mit.theta.common.Tuple2;
-import hu.bme.mit.theta.frontend.c.dependency.ControlDependencyGraph.CDGNode;
 import hu.bme.mit.theta.frontend.c.ir.BasicBlock;
 import hu.bme.mit.theta.frontend.c.ir.Function;
 import hu.bme.mit.theta.frontend.c.ir.utils.CfgEdge;

@@ -8,7 +8,6 @@ import java.util.Queue;
 import java.util.stream.Collectors;
 
 import hu.bme.mit.theta.frontend.c.dependency.ControlDependencyGraph;
-import hu.bme.mit.theta.frontend.c.dependency.ControlDependencyGraph.CDGNode;
 import hu.bme.mit.theta.frontend.c.dependency.UseDefineChain;
 import hu.bme.mit.theta.frontend.c.ir.Function;
 import hu.bme.mit.theta.frontend.c.ir.node.IrNode;
