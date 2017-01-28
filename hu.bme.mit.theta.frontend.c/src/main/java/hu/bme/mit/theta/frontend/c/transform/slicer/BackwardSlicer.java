@@ -14,11 +14,12 @@ import hu.bme.mit.theta.frontend.c.ir.Function;
 import hu.bme.mit.theta.frontend.c.ir.node.IrNode;
 import hu.bme.mit.theta.frontend.c.ir.node.NonTerminatorIrNode;
 import hu.bme.mit.theta.frontend.c.ir.node.TerminatorIrNode;
+import hu.bme.mit.theta.frontend.c.transform.slicer.utils.SliceCreator;
 
-public class BackwardSlicer extends AbstractFunctionSlicer {
-
+public class BackwardSlicer implements FunctionSlicer {
+	
 	@Override
-	protected List<IrNode> markRequiredNodes(Function function, IrNode criteria) {
+	public Function slice(Function function, IrNode criteria) {
 		// Build dependency structures
 		// TODO: These structures should be cached, as they are the same for a single allSlice call
 		UseDefineChain ud = UseDefineChain.buildChain(function);
@@ -45,14 +46,8 @@ public class BackwardSlicer extends AbstractFunctionSlicer {
 				worklist.addAll(controlDeps);
 			}
 		}
-
-		// the entry nodes must always be present
-		//visited.add(function.getEntryNode());
-		//visited.add(function.getExitNode());
 		
-		System.out.println(visited);
-		
-		return visited;
+		return SliceCreator.constructSlice(function, visited);
 	}
 
 }

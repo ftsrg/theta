@@ -6,8 +6,6 @@ import hu.bme.mit.theta.frontend.c.dependency.ControlDependencyGraph;
 import hu.bme.mit.theta.frontend.c.dependency.ControlDependencyGraph.CDGNode;
 import hu.bme.mit.theta.frontend.c.dependency.ControlDependencyGraph.CdgEdge;
 import hu.bme.mit.theta.frontend.c.dependency.DominatorTree;
-import hu.bme.mit.theta.frontend.c.dependency.ProgramDependency;
-import hu.bme.mit.theta.frontend.c.dependency.ProgramDependency.PDGNode;
 import hu.bme.mit.theta.frontend.c.ir.BasicBlock;
 import hu.bme.mit.theta.frontend.c.ir.Function;
 import hu.bme.mit.theta.frontend.c.ir.node.BranchTableNode;
@@ -37,7 +35,7 @@ public class IrPrinter {
 		sb.append("}\n");
 		return sb.toString();
 	}
-
+/*
 	public static String programDependencyGraph(ProgramDependency pdg) {
 		StringBuilder sb = new StringBuilder();
 		sb.append("digraph G {\n");
@@ -57,7 +55,7 @@ public class IrPrinter {
 		sb.append("}\n");
 
 		return sb.toString();
-	}
+	}*/
 
 	public static String callGraph(CallGraph cg) {
 		StringBuilder sb = new StringBuilder();

@@ -1,22 +1,18 @@
-package hu.bme.mit.theta.frontend.c.transform.slicer;
+package hu.bme.mit.theta.frontend.c.transform.slicer.utils;
 
 import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.frontend.c.ir.BasicBlock;
 import hu.bme.mit.theta.frontend.c.ir.Function;
-import hu.bme.mit.theta.frontend.c.ir.node.AssertNode;
 import hu.bme.mit.theta.frontend.c.ir.node.BranchTableNode;
 import hu.bme.mit.theta.frontend.c.ir.node.EntryNode;
 import hu.bme.mit.theta.frontend.c.ir.node.GotoNode;
@@ -25,57 +21,19 @@ import hu.bme.mit.theta.frontend.c.ir.node.JumpIfNode;
 import hu.bme.mit.theta.frontend.c.ir.node.NodeFactory;
 import hu.bme.mit.theta.frontend.c.ir.node.TerminatorIrNode;
 
-abstract public class AbstractFunctionSlicer implements FunctionSlicer {
+public class SliceCreator {
 	
+	private SliceCreator() {}
+
+	public static Function constructSlice(Function function, List<IrNode> visited) throws AssertionError {
+		Map<BasicBlock, BasicBlock> blockMap = new HashMap<>();
+		Function copy = function.copy();
+		
+		return constructSlice(function, visited, blockMap, copy);
+	}
 	
-	/**
-	 * Slices a given function for all nodes matching a given a predicate
-	 * 
-	 * @param function The function to slice
-	 * @param pred A predicate which marks the criteria nodes
-	 * 
-	 * @return A list of slices
-	 */
-	public List<Function> allSlices(Function function, Predicate<IrNode> pred) {
-		// Do not bother with disabled functions
-		if (!function.isEnabled()) {
-			return Collections.emptyList();
-		}
-		
-		List<Function> result = new ArrayList<>();
-		List<BasicBlock> blocks = function.getBlocksDFS();
-
-		// Find the predicate nodes
-		for (BasicBlock block : blocks) {
-			for (IrNode node : block.getAllNodes()) {
-				if (pred.test(node)) {
-					Function slice = this.slice(function, node);
-					result.add(slice);
-				}
-			}
-		}
-		
-		return result;
-	}
-
-	/**
-	 * Performs program slicing with a given criteria and reconstructs the slice
-	 * 
-	 * @param function
-	 * @param criteria
-	 * 
-	 * @return
-	 */
-	public Function slice(Function function, IrNode criteria) {
-		// Perform slicing
-		List<IrNode> visited = this.markRequiredNodes(function, criteria);
-		
-		Function copy = this.constructSlice(function, visited);
-
-		return copy;
-	}
-
-	protected Function constructSlice(Function function, List<IrNode> visited) throws AssertionError {
+	public static Function constructSlice(Function function, List<IrNode> visited, Map<BasicBlock, BasicBlock> blockMap,
+			Function copy) throws AssertionError {
 		// Find required blocks
 		Set<BasicBlock> visitedBlocks = visited.stream().map(n -> n.getParentBlock()).collect(Collectors.toSet());
 		visitedBlocks.add(function.getExitBlock());
@@ -84,11 +42,6 @@ abstract public class AbstractFunctionSlicer implements FunctionSlicer {
 		List<BasicBlock> blocks = function.getBlocksDFS();
 		Queue<BasicBlock> blocksToRemove = new ArrayDeque<>(blocks);
 		blocksToRemove.removeAll(visitedBlocks);
-
-		Map<BasicBlock, BasicBlock> blockMap = new HashMap<>();
-		Function copy = function.copy(blockMap);
-
-		System.out.println(blocksToRemove);
 		
 		/*
 		 * Find unneeded components.
@@ -143,7 +96,7 @@ abstract public class AbstractFunctionSlicer implements FunctionSlicer {
 			}
 
 			if (mergeBlocks.size() != 1) {
-				throw new AssertionError("BUG: There should be only one merging block after slicing. Current blocks are: " + mergeBlocks.toString());
+				throw new AssertionError("This is a bug.");
 			}
 
 			BasicBlock merge = mergeBlocks.iterator().next();
@@ -151,10 +104,11 @@ abstract public class AbstractFunctionSlicer implements FunctionSlicer {
 
 			topBlocks.forEach((block, target) -> {
 				BasicBlock newBlock = blockMap.get(block);
-				newBlock.clearTerminator();
 
-				TerminatorIrNode terminator = block.getTerminator();
+				TerminatorIrNode terminator = newBlock.getTerminator();
 				TerminatorIrNode newTerm = null;
+				
+				newBlock.clearTerminator();
 
 				if (terminator instanceof GotoNode) {
 					newTerm = NodeFactory.Goto(newMerge);
@@ -162,10 +116,9 @@ abstract public class AbstractFunctionSlicer implements FunctionSlicer {
 					JumpIfNode branch = (JumpIfNode) terminator;
 					if (branch.getThenTarget() == target) {
 						newTerm = NodeFactory.JumpIf(branch.getCondition(), newMerge,
-								blockMap.get(branch.getElseTarget()));
+								branch.getElseTarget());
 					} else {
-						newTerm = NodeFactory.JumpIf(branch.getCondition(), blockMap.get(branch.getThenTarget()),
-								newMerge);
+						newTerm = NodeFactory.JumpIf(branch.getCondition(), branch.getThenTarget(),	newMerge);
 					}
 				} else if (terminator instanceof EntryNode) {
 					newTerm = new EntryNode(newMerge);
@@ -189,7 +142,7 @@ abstract public class AbstractFunctionSlicer implements FunctionSlicer {
 
 					newTerm = newBt;
 				} else {
-					throw new AssertionError("Should not happen");
+					throw new AssertionError("Should not happen: " + terminator.getClass().getName());
 				}
 
 				newBlock.terminate(newTerm);
@@ -201,24 +154,16 @@ abstract public class AbstractFunctionSlicer implements FunctionSlicer {
 			BasicBlock newBlock = blockMap.get(block);
 			for (int idx = block.countNodes() - 1; idx >= 0; idx--) {
 				IrNode node = block.getNodeByIndex(idx);
-				if (!visited.contains(node))
+				if (!visited.contains(node)) {
 					newBlock.removeNode(idx);
+				}
 			}
 		}
 
 		// Perform a normalization pass to eliminate orphaned nodes
 		copy.normalize();
+		
 		return copy;
 	}
-
-	/**
-	 * Returns a list of nodes required for the slice
-	 * 
-	 * @param function	The function to slice
-	 * @param criteria	The criteria node
-	 * 
-	 * @return
-	 */
-	protected abstract List<IrNode> markRequiredNodes(Function function, IrNode criteria);
 	
 }

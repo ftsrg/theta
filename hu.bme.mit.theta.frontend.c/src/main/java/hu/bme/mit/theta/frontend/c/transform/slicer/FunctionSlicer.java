@@ -1,6 +1,5 @@
 package hu.bme.mit.theta.frontend.c.transform.slicer;
 
-import java.util.List;
 import java.util.function.Predicate;
 
 import hu.bme.mit.theta.frontend.c.ir.Function;
