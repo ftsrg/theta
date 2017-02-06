@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -27,7 +28,7 @@ public class SliceCreator {
 
 	public static Function constructSlice(Function function, List<IrNode> visited) throws AssertionError {
 		Map<BasicBlock, BasicBlock> blockMap = new HashMap<>();
-		Function copy = function.copy();
+		Function copy = function.copy(blockMap);
 		
 		return constructSlice(function, visited, blockMap, copy);
 	}
@@ -61,6 +62,7 @@ public class SliceCreator {
 			Set<BasicBlock> componentBlocks = new HashSet<>();
 
 			BasicBlock start = blocksToRemove.poll();
+			componentBlocks.add(start);
 
 			Queue<BasicBlock> blocksToVisit = new ArrayDeque<>();
 			blocksToVisit.add(start);
@@ -101,9 +103,14 @@ public class SliceCreator {
 
 			BasicBlock merge = mergeBlocks.iterator().next();
 			BasicBlock newMerge = blockMap.get(merge);
-
-			topBlocks.forEach((block, target) -> {
+			
+			// Remove unneeded blocks
+			for (Entry<BasicBlock, BasicBlock> entry : topBlocks.entrySet()) {
+				BasicBlock block = entry.getKey();
+				BasicBlock target = entry.getValue();
+				
 				BasicBlock newBlock = blockMap.get(block);
+				BasicBlock newTarget = blockMap.get(target);
 
 				TerminatorIrNode terminator = newBlock.getTerminator();
 				TerminatorIrNode newTerm = null;
@@ -114,7 +121,7 @@ public class SliceCreator {
 					newTerm = NodeFactory.Goto(newMerge);
 				} else if (terminator instanceof JumpIfNode) {
 					JumpIfNode branch = (JumpIfNode) terminator;
-					if (branch.getThenTarget() == target) {
+					if (branch.getThenTarget() == newTarget) {
 						newTerm = NodeFactory.JumpIf(branch.getCondition(), newMerge,
 								branch.getElseTarget());
 					} else {
@@ -131,11 +138,11 @@ public class SliceCreator {
 					});
 					newBt.setDefaultTarget(blockMap.get(bt.getDefaultTarget()));
 
-					if (bt.getDefaultTarget() != target) {
+					if (bt.getDefaultTarget() != newTarget) {
 						Expr<? extends Type> value = bt.getValueFromTarget(target);
-						BasicBlock newTarget = newBt.getTargetFromValue(value);
+						BasicBlock nnewTarget = newBt.getTargetFromValue(value);
 
-						newBt.replaceTarget(newTarget, newMerge);
+						newBt.replaceTarget(nnewTarget, newMerge);
 					} else {
 						newBt.setDefaultTarget(newMerge);
 					}
@@ -146,7 +153,7 @@ public class SliceCreator {
 				}
 
 				newBlock.terminate(newTerm);
-			});
+			}			
 		}
 
 		// Remove unneeded instructions from needed blocks

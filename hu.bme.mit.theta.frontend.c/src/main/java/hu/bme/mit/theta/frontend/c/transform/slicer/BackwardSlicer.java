@@ -18,7 +18,7 @@ import hu.bme.mit.theta.frontend.c.transform.slicer.utils.SliceCreator;
 public class BackwardSlicer implements FunctionSlicer {
 	
 	@Override
-	public Function slice(Function function, IrNode criteria) {
+	public Function slice(Function function, IrNode criteria, Collection<IrNode> additional) {
 		// Build dependency structures
 		// TODO: These structures should be cached, as they are the same for a single allSlice call
 		UseDefineChain ud = UseDefineChain.buildChain(function);
@@ -28,6 +28,7 @@ public class BackwardSlicer implements FunctionSlicer {
 		List<IrNode> visited = new ArrayList<>();
 
 		worklist.add(criteria);
+		worklist.addAll(additional);
 
 		while (!worklist.isEmpty()) {
 			IrNode current = worklist.poll();
@@ -45,6 +46,9 @@ public class BackwardSlicer implements FunctionSlicer {
 				worklist.addAll(controlDeps);
 			}
 		}
+		
+		//visited.add(function.getEntryNode());
+		visited.add(function.getExitNode());
 		
 		return SliceCreator.constructSlice(function, visited);
 	}

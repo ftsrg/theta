@@ -33,7 +33,7 @@ import hu.bme.mit.theta.frontend.c.transform.slicer.utils.SliceCreator;
 public class ValueSlicer implements FunctionSlicer {
 
 	@Override
-	public Function slice(Function function, IrNode criteria) {
+	public Function slice(Function function, IrNode criteria, Collection<IrNode> additional) {
 		// Build the dependency structures
 		UseDefineChain ud = UseDefineChain.buildChain(function);
 		ControlDependencyGraph cdg = ControlDependencyGraph.buildGraph(function);
