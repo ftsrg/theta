@@ -62,11 +62,7 @@ final class IndexedConstRefExprImpl<DeclType extends Type> implements IndexedCon
 
 	@Override
 	public String toString() {
-		final StringBuilder sb = new StringBuilder();
-		sb.append(decl.getName());
-		sb.append(":");
-		sb.append(decl.getIndex());
-		return sb.toString();
+		return decl.getName();
 	}
 
 }
