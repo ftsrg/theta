@@ -12,10 +12,10 @@ public interface FunctionSlicer {
 
 	public static final Predicate<IrNode> SLICE_ON_ASSERTS = (IrNode s) -> s instanceof AssertNode;
 	
-	public default Function slice(Function function, IrNode criteria) {
+	public default Slice slice(Function function, IrNode criteria) {
 		return this.slice(function, criteria, Collections.emptyList());
 	}
 	
-	public Function slice(Function function, IrNode criteria, Collection<IrNode> additional);
+	public Slice slice(Function function, IrNode criteria, Collection<IrNode> additional);
 	
 }

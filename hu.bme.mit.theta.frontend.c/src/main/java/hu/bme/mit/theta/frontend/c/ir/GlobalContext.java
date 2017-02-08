@@ -14,7 +14,7 @@ import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.frontend.c.ir.node.AssignNode;
 import hu.bme.mit.theta.frontend.c.ir.node.NodeFactory;
-import hu.bme.mit.theta.frontend.c.ir.utils.SymbolTable;
+import hu.bme.mit.theta.frontend.c.ir.utils.NestedSymbolTable;
 
 public class GlobalContext {
 
@@ -40,7 +40,7 @@ public class GlobalContext {
 		}
 	}
 
-	private final SymbolTable<Decl<? extends Type>> symbols = new SymbolTable<>();
+	private final NestedSymbolTable<Decl<? extends Type>> symbols = new NestedSymbolTable<>();
 
 	private final Map<String, Function> functions = new HashMap<>();
 	private final List<GlobalVariable<?>> globals = new ArrayList<>();
@@ -55,7 +55,7 @@ public class GlobalContext {
 		this.symbols.put(name, proc);
 	}
 
-	public SymbolTable<Decl<? extends Type>> getSymbolTable() {
+	public NestedSymbolTable<Decl<? extends Type>> getSymbolTable() {
 		return this.symbols;
 	}
 

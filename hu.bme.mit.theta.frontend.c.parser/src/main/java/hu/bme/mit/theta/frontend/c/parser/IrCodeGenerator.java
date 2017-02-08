@@ -40,9 +40,11 @@ import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.decl.ProcDecl;
 import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.decl.impl.Decls;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.ProcCallExpr;
 import hu.bme.mit.theta.core.expr.VarRefExpr;
+import hu.bme.mit.theta.core.expr.impl.Exprs;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.IntType;
 import hu.bme.mit.theta.core.type.RatType;
@@ -51,6 +53,7 @@ import hu.bme.mit.theta.core.type.closure.ClosedUnderAdd;
 import hu.bme.mit.theta.core.type.closure.ClosedUnderMul;
 import hu.bme.mit.theta.core.type.closure.ClosedUnderNeg;
 import hu.bme.mit.theta.core.type.closure.ClosedUnderSub;
+import hu.bme.mit.theta.core.type.impl.Types;
 import hu.bme.mit.theta.core.utils.impl.ExprUtils;
 import hu.bme.mit.theta.frontend.c.ir.BasicBlock;
 import hu.bme.mit.theta.frontend.c.ir.Function;
@@ -59,6 +62,7 @@ import hu.bme.mit.theta.frontend.c.ir.InstructionBuilder;
 import hu.bme.mit.theta.frontend.c.ir.node.BranchTableNode;
 import hu.bme.mit.theta.frontend.c.ir.node.EntryNode;
 import hu.bme.mit.theta.frontend.c.ir.node.GotoNode;
+import hu.bme.mit.theta.frontend.c.ir.node.NodeFactory;
 import hu.bme.mit.theta.frontend.c.parser.ast.AssignmentInitializerAst;
 import hu.bme.mit.theta.frontend.c.parser.ast.BinaryExpressionAst;
 import hu.bme.mit.theta.frontend.c.parser.ast.BreakStatementAst;
@@ -465,38 +469,6 @@ public class IrCodeGenerator implements ExpressionVisitor<Expr<? extends Type>>,
 	}
 
 	@Override
-	public Void visit(IfStatementAst ast) {
-		Expr<? extends BoolType> cond = this.createCondition(ast.getCondition());
-		StatementAst then = ast.getThen();
-		StatementAst elze = ast.getElse();
-
-		// The original block
-		BasicBlock branchBlock = this.builder.getInsertPoint();
-
-		// The new blocks
-		BasicBlock mergeBlock = this.builder.createBlock("merge");
-		BasicBlock thenBlock = this.builder.createBlock("then");
-		BasicBlock elzeBlock = this.builder.createBlock("else");
-
-		this.builder.setInsertPoint(thenBlock);
-		then.accept(this);
-		this.builder.terminateInsertPoint(Goto(mergeBlock));
-
-		this.builder.setInsertPoint(elzeBlock);
-		if (elze != null) {
-			elze.accept(this);
-		}
-		this.builder.terminateInsertPoint(Goto(mergeBlock));
-
-		this.builder.setInsertPoint(branchBlock);
-		this.builder.terminateInsertPoint(JumpIf(cond, thenBlock, elzeBlock));
-
-		this.builder.setInsertPoint(mergeBlock);
-
-		return null;
-	}
-
-	@Override
 	public Void visit(CompoundStatementAst ast) {
 
 		this.context.getSymbolTable().pushScope();
@@ -581,6 +553,13 @@ public class IrCodeGenerator implements ExpressionVisitor<Expr<? extends Type>>,
 				this.builder.insertNode(Assert(assertCond));
 				
 				return null;
+			} else if (func.getName().equals("exit")) {
+				this.builder.terminateInsertPoint(NodeFactory.Goto(this.builder.getExitBlock()));
+
+				BasicBlock after = this.builder.createBlock("after_exit");
+				this.builder.setInsertPoint(after);
+				
+				return null;
 			}
 		}
 		
@@ -590,8 +569,44 @@ public class IrCodeGenerator implements ExpressionVisitor<Expr<? extends Type>>,
 	}
 
 	@Override
+	public Void visit(IfStatementAst ast) {
+		Expr<? extends BoolType> cond = this.createCondition(ast.getCondition());
+		VarDecl<? extends BoolType> condVar = Decls.Var("__br" + this.tmpId++ + "__", Types.Bool());
+		
+		StatementAst then = ast.getThen();
+		StatementAst elze = ast.getElse();
+
+		// The original block
+		BasicBlock branchBlock = this.builder.getInsertPoint();
+
+		// The new blocks
+		BasicBlock mergeBlock = this.builder.createBlock("merge");
+		BasicBlock thenBlock = this.builder.createBlock("then");
+		BasicBlock elzeBlock = this.builder.createBlock("else");
+
+		this.builder.setInsertPoint(thenBlock);
+		then.accept(this);
+		this.builder.terminateInsertPoint(Goto(mergeBlock));
+
+		this.builder.setInsertPoint(elzeBlock);
+		if (elze != null) {
+			elze.accept(this);
+		}
+		this.builder.terminateInsertPoint(Goto(mergeBlock));
+
+		this.builder.setInsertPoint(branchBlock);
+		this.builder.insertNode(NodeFactory.Assign(condVar, cond));
+		this.builder.terminateInsertPoint(JumpIf(condVar.getRef(), thenBlock, elzeBlock));
+
+		this.builder.setInsertPoint(mergeBlock);
+
+		return null;
+	}
+	
+	@Override
 	public Void visit(WhileStatementAst ast) {
 		Expr<? extends BoolType> cond = this.createCondition(ast.getCondition());
+		VarDecl<? extends BoolType> condVar = Decls.Var("__br" + this.tmpId++ + "__", Types.Bool());
 		StatementAst body = ast.getBody();
 
 		// The original block
@@ -603,7 +618,8 @@ public class IrCodeGenerator implements ExpressionVisitor<Expr<? extends Type>>,
 		BasicBlock endBlock = this.builder.createBlock("end");
 
 		this.builder.setInsertPoint(loopBlock);
-		this.builder.terminateInsertPoint(JumpIf(cond, bodyBlock, endBlock));
+		this.builder.insertNode(NodeFactory.Assign(condVar, cond));
+		this.builder.terminateInsertPoint(JumpIf(condVar.getRef(), bodyBlock, endBlock));
 
 		this.breakTargets.push(endBlock);
 		this.continueTargets.push(loopBlock);
@@ -626,6 +642,8 @@ public class IrCodeGenerator implements ExpressionVisitor<Expr<? extends Type>>,
 	@Override
 	public Void visit(DoStatementAst ast) {
 		Expr<? extends BoolType> cond = this.createCondition(ast.getCondition());
+		VarDecl<? extends BoolType> condVar = Decls.Var("__br" + this.tmpId++ + "__", Types.Bool());
+				
 		StatementAst body = ast.getBody();
 
 		// The original block
@@ -640,7 +658,8 @@ public class IrCodeGenerator implements ExpressionVisitor<Expr<? extends Type>>,
 
 		this.builder.setInsertPoint(loopBlock);
 		body.accept(this);
-		this.builder.terminateInsertPoint(JumpIf(cond, loopBlock, endBlock));
+		this.builder.insertNode(NodeFactory.Assign(condVar, cond));
+		this.builder.terminateInsertPoint(JumpIf(condVar.getRef(), loopBlock, endBlock));
 
 		this.breakTargets.pop();
 		this.continueTargets.pop();
@@ -698,9 +717,12 @@ public class IrCodeGenerator implements ExpressionVisitor<Expr<? extends Type>>,
 
 		ast.getInit().accept(this);
 		Expr<? extends BoolType> cond = this.createCondition(ast.getCondition());
+		VarDecl<? extends BoolType> condVar = Decls.Var("__br" + this.tmpId++ + "__", Types.Bool());
 
 		this.builder.setInsertPoint(headerBlock);
-		this.builder.terminateInsertPoint(JumpIf(cond, bodyBlock, endBlock));
+
+		this.builder.insertNode(NodeFactory.Assign(condVar, cond));
+		this.builder.terminateInsertPoint(JumpIf(condVar.getRef(), bodyBlock, endBlock));
 
 		this.breakTargets.push(endBlock);
 		this.continueTargets.push(incrBlock);

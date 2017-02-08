@@ -14,6 +14,7 @@ import hu.bme.mit.theta.frontend.c.ir.node.NodeFactory;
 import hu.bme.mit.theta.frontend.c.ir.utils.IrPrinter;
 import hu.bme.mit.theta.frontend.c.transform.Transformer;
 import hu.bme.mit.theta.frontend.c.transform.slicer.FunctionSlicer;
+import hu.bme.mit.theta.frontend.c.transform.slicer.Slice;
 
 public class Optimizer {
 
@@ -43,8 +44,8 @@ public class Optimizer {
 		}
 	}
 
-	public List<Function> createSlices() {
-		List<Function> result = new ArrayList<>();
+	public List<Slice> createSlices() {
+		List<Slice> result = new ArrayList<>();
 		
 		for (Function func : this.context.functions()) {
 			// Don't bother with disabled functions
@@ -56,7 +57,7 @@ public class Optimizer {
 			for (BasicBlock block : blocks) {
 				for (IrNode node : block.getAllNodes()) {
 					if (this.slicerPred.test(node)) {
-						Function slice = this.slicer.slice(func, node);
+						Slice slice = this.slicer.slice(func, node);
 						result.add(slice);
 					}
 				}

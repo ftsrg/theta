@@ -24,16 +24,19 @@ import hu.bme.mit.theta.frontend.c.dependency.ControlDependencyGraph.CDGNode;
 import hu.bme.mit.theta.frontend.c.dependency.UseDefineChain;
 import hu.bme.mit.theta.frontend.c.ir.BasicBlock;
 import hu.bme.mit.theta.frontend.c.ir.Function;
+import hu.bme.mit.theta.frontend.c.ir.node.ConditionalTerminatorNode;
 import hu.bme.mit.theta.frontend.c.ir.node.IrNode;
 import hu.bme.mit.theta.frontend.c.ir.node.JumpIfNode;
 import hu.bme.mit.theta.frontend.c.ir.node.TerminatorIrNode;
 import hu.bme.mit.theta.frontend.c.ir.utils.CfgEdge;
+import hu.bme.mit.theta.frontend.c.transform.slicer.Slice.SliceBuilder;
 import hu.bme.mit.theta.frontend.c.transform.slicer.utils.SliceCreator;
 
 public class ValueSlicer implements FunctionSlicer {
 
 	@Override
-	public Function slice(Function function, IrNode criteria, Collection<IrNode> additional) {
+	public Slice slice(Function function, IrNode criteria, Collection<IrNode> additional) {
+		SliceBuilder builder = Slice.builder(function, criteria);
 		// Build the dependency structures
 		UseDefineChain ud = UseDefineChain.buildChain(function);
 		ControlDependencyGraph cdg = ControlDependencyGraph.buildGraph(function);
@@ -145,9 +148,12 @@ public class ValueSlicer implements FunctionSlicer {
 		visited.addAll(controlDeps);
 		visited.addAll(vi);
 		
-
+		builder.setVisited(visited);
+		
 		Map<BasicBlock, BasicBlock> blockMap = new HashMap<>();
 		Function copy = function.copy(blockMap);
+		
+		builder.setCopy(copy, blockMap);
 		
 		int brId = 0;
 		
@@ -162,15 +168,16 @@ public class ValueSlicer implements FunctionSlicer {
 					JumpIfNode branch = (JumpIfNode) newBlock.getTerminator();
 					
 					// Create a new temporary variable to represent a nondeterministic branch
-					VarDecl<?> brTmp = Decls.Var("__br" + (brId++) + "__", Types.Int());
+					VarDecl<?> brTmp = Decls.Var("__abr" + (brId++) + "__", Types.Int());
 					Expr<? extends BoolType> brCond = Exprs.Neq(brTmp.getRef(), Exprs.Int(0));
 					
 					branch.setCondition(brCond);					
+					builder.addAbstractPredicate((ConditionalTerminatorNode) terminator, branch);
 				}
 			}
 		}		
 		
-		return SliceCreator.constructSlice(function, visited, blockMap, copy);
+		return builder.build();
 	}
 	
 	/**

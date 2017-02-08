@@ -3,22 +3,28 @@ package hu.bme.mit.theta.frontend.c.transform.slicer;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 import java.util.stream.Collectors;
 
 import hu.bme.mit.theta.frontend.c.dependency.ControlDependencyGraph;
 import hu.bme.mit.theta.frontend.c.dependency.UseDefineChain;
+import hu.bme.mit.theta.frontend.c.ir.BasicBlock;
 import hu.bme.mit.theta.frontend.c.ir.Function;
 import hu.bme.mit.theta.frontend.c.ir.node.IrNode;
 import hu.bme.mit.theta.frontend.c.ir.node.NonTerminatorIrNode;
 import hu.bme.mit.theta.frontend.c.ir.node.TerminatorIrNode;
+import hu.bme.mit.theta.frontend.c.transform.slicer.Slice.SliceBuilder;
 import hu.bme.mit.theta.frontend.c.transform.slicer.utils.SliceCreator;
 
 public class BackwardSlicer implements FunctionSlicer {
 	
 	@Override
-	public Function slice(Function function, IrNode criteria, Collection<IrNode> additional) {
+	public Slice slice(Function function, IrNode criteria, Collection<IrNode> additional) {
+		SliceBuilder builder = Slice.builder(function, criteria);
+		
 		// Build dependency structures
 		// TODO: These structures should be cached, as they are the same for a single allSlice call
 		UseDefineChain ud = UseDefineChain.buildChain(function);
@@ -49,8 +55,15 @@ public class BackwardSlicer implements FunctionSlicer {
 		
 		//visited.add(function.getEntryNode());
 		visited.add(function.getExitNode());
+
+		builder.setVisited(visited);
 		
-		return SliceCreator.constructSlice(function, visited);
+		Map<BasicBlock, BasicBlock> blockMap = new HashMap<>();
+		Function copy = function.copy(blockMap);
+		
+		builder.setCopy(copy, blockMap);
+		
+		return builder.build();
 	}
 
 }
