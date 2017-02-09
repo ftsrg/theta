@@ -63,7 +63,7 @@ public class Slice {
 	}
 	
 	public void refine() {
-		ConditionalTerminatorNode refinedNode = this.pickRefinedNode();		
+		ConditionalTerminatorNode refinedNode = this.pickRefinedNode();
 			
 		List<IrNode> adds = new ArrayList<IrNode>(this.additional);
 		adds.add(refinedNode);
@@ -131,7 +131,7 @@ public class Slice {
 			
 			Function sliced = SliceCreator.constructSlice(this.function, this.visited, this.blockMap, this.copy);
 			
-			return new Slice(this.function, this.copy, this.blockMap, this.criterion, this.abstractPreds, this.additional);
+			return new Slice(this.function, sliced, this.blockMap, this.criterion, this.abstractPreds, this.additional);
 		}
 		
 	}

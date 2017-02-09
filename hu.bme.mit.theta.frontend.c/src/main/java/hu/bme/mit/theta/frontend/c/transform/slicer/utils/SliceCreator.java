@@ -96,7 +96,7 @@ public class SliceCreator {
 					}
 				}
 			}
-
+			
 			if (mergeBlocks.size() != 1) {
 				throw new AssertionError("This is a bug.");
 			}

@@ -140,7 +140,9 @@ public class ValueSlicer implements FunctionSlicer {
 					controlDeps.add(current);
 				
 				cdg.getParentBlocks(current.getParentBlock()).stream().map(block -> block.getTerminator()).forEach(terminator -> {
-					wl.add(terminator);
+					if (!vi.contains(terminator)) {
+						wl.add(terminator);
+					}
 				});
 			}			
 		}

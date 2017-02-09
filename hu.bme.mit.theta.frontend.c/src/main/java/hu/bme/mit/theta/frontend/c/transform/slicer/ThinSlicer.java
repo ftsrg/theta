@@ -12,6 +12,7 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import hu.bme.mit.theta.common.visualization.GraphvizWriter;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.decl.impl.Decls;
 import hu.bme.mit.theta.core.expr.Expr;
@@ -20,7 +21,9 @@ import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.impl.Types;
 import hu.bme.mit.theta.frontend.c.dependency.ControlDependencyGraph;
+import hu.bme.mit.theta.frontend.c.dependency.ProgramDependenceGraph;
 import hu.bme.mit.theta.frontend.c.dependency.UseDefineChain;
+import hu.bme.mit.theta.frontend.c.dependency.utils.DependencyVisualizer;
 import hu.bme.mit.theta.frontend.c.ir.BasicBlock;
 import hu.bme.mit.theta.frontend.c.ir.Function;
 import hu.bme.mit.theta.frontend.c.ir.node.BranchTableNode;
@@ -31,6 +34,7 @@ import hu.bme.mit.theta.frontend.c.ir.node.IrNode;
 import hu.bme.mit.theta.frontend.c.ir.node.JumpIfNode;
 import hu.bme.mit.theta.frontend.c.ir.node.NodeFactory;
 import hu.bme.mit.theta.frontend.c.ir.node.TerminatorIrNode;
+import hu.bme.mit.theta.frontend.c.ir.utils.IrPrinter;
 import hu.bme.mit.theta.frontend.c.transform.slicer.Slice.SliceBuilder;
 import hu.bme.mit.theta.frontend.c.transform.slicer.utils.SliceCreator;
 
@@ -40,13 +44,12 @@ public class ThinSlicer implements FunctionSlicer {
 	public Slice slice(Function function, IrNode criteria, Collection<IrNode> additional) {		
 		SliceBuilder builder = Slice.builder(function, criteria);
 		builder.addAdditional(additional);
-		
+				
 		// Build the dependency structures
 		UseDefineChain ud = UseDefineChain.buildChain(function);
 		ControlDependencyGraph cdg = ControlDependencyGraph.buildGraph(function);
-		
 		List<IrNode> dataDeps = new ArrayList<>();
-		
+
 		Queue<IrNode> wl = new ArrayDeque<>();
 		wl.add(criteria);
 		wl.addAll(additional);
@@ -67,16 +70,19 @@ public class ThinSlicer implements FunctionSlicer {
 		
 		// Find required control dependencies
 		List<IrNode> controlDeps = new ArrayList<>();
-		
+
 		wl.addAll(dataDeps);
 		while (!wl.isEmpty()) {
 			IrNode current = wl.poll();
 			if (!controlDeps.contains(current)) {
-				if (!dataDeps.contains(current))
-					controlDeps.add(current);
+				if (!dataDeps.contains(current)) {
+					controlDeps.add(current);					
+				}
 				
 				cdg.getParentBlocks(current.getParentBlock()).stream().map(block -> block.getTerminator()).forEach(terminator -> {
-					wl.add(terminator);
+					if (!dataDeps.contains(terminator)) {
+						wl.add(terminator);
+					}
 				});
 			}			
 		}
