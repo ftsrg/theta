@@ -37,6 +37,8 @@ public class ValueSlicer implements FunctionSlicer {
 	@Override
 	public Slice slice(Function function, IrNode criteria, Collection<IrNode> additional) {
 		SliceBuilder builder = Slice.builder(function, criteria);
+		builder.addAdditional(additional);
+		
 		// Build the dependency structures
 		UseDefineChain ud = UseDefineChain.buildChain(function);
 		ControlDependencyGraph cdg = ControlDependencyGraph.buildGraph(function);
@@ -51,6 +53,7 @@ public class ValueSlicer implements FunctionSlicer {
 		
 		Queue<IrNode> wl = new ArrayDeque<>();
 		wl.add(criteria);
+		wl.addAll(additional);
 		
 		// Find value-impacting nodes
 		while (!wl.isEmpty()) {

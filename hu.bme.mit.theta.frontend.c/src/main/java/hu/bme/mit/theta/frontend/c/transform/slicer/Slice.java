@@ -58,22 +58,30 @@ public class Slice {
 		this.additional = other.additional;
 	}
 	
-	public void refine() {		
-		Iterator<Entry<ConditionalTerminatorNode, ConditionalTerminatorNode>> it = this.abstractPreds.entrySet().iterator();
-		
-		if (it.hasNext()) {
-			Entry<ConditionalTerminatorNode, ConditionalTerminatorNode> next = it.next();
-			
-			ConditionalTerminatorNode oldNode = next.getKey();
-			
-			List<IrNode> adds = new ArrayList<IrNode>(this.additional);
-			adds.add(oldNode);
-			
-			Slice refined = this.refinementSlicer.slice(this.original, this.criterion, adds);
-			this.copyFrom(refined);
-		}
+	public boolean canRefine() {
+		return !this.abstractPreds.isEmpty();
 	}
 	
+	public void refine() {
+		ConditionalTerminatorNode refinedNode = this.pickRefinedNode();		
+			
+		List<IrNode> adds = new ArrayList<IrNode>(this.additional);
+		adds.add(refinedNode);
+		
+		Slice refined = this.refinementSlicer.slice(this.original, this.criterion, adds);
+		this.copyFrom(refined);
+	}
+	
+	protected ConditionalTerminatorNode pickRefinedNode() {		
+		// Currently we just pick a random node for refinement		
+		Iterator<Entry<ConditionalTerminatorNode, ConditionalTerminatorNode>> it = this.abstractPreds.entrySet().iterator();
+		if (!it.hasNext()) {
+			throw new RuntimeException("Unable to refine: no abstract predicates are present.");
+		}
+		
+		return it.next().getKey();
+	}
+
 	public Function getSlicedFunction() {
 		return this.sliced;
 	}
