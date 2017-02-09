@@ -13,6 +13,7 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker;
 import hu.bme.mit.theta.analysis.algorithm.cegar.ExplItpRefiner;
+import hu.bme.mit.theta.analysis.algorithm.cegar.ExplVarSetsRefiner;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Refiner;
 import hu.bme.mit.theta.analysis.algorithm.cegar.WaitlistBasedAbstractor;
 import hu.bme.mit.theta.analysis.cfa.CfaAction;
@@ -22,6 +23,8 @@ import hu.bme.mit.theta.analysis.expl.ExplPrecision;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.ExprTraceCraigItpChecker;
+import hu.bme.mit.theta.analysis.expr.ExprTraceSeqItpChecker;
+import hu.bme.mit.theta.analysis.expr.ExprTraceUnsatCoreChecker;
 import hu.bme.mit.theta.analysis.loc.LocAction;
 import hu.bme.mit.theta.analysis.loc.LocAnalysis;
 import hu.bme.mit.theta.analysis.loc.LocPrecision;
@@ -121,8 +124,14 @@ public class CfaConfigurationBuilder {
 								LocState<ExplState, CfaLoc, CfaEdge>::getState, logger));
 				break;
 			case SEQ_ITP:
+				refiner = LocRefiner
+						.create(ExplItpRefiner.create(ExprTraceSeqItpChecker.create(Exprs.True(), Exprs.True(), solver),
+								LocState<ExplState, CfaLoc, CfaEdge>::getState, logger));
 				break;
 			case UNSAT_CORE:
+				refiner = LocRefiner.create(
+						ExplVarSetsRefiner.create(ExprTraceUnsatCoreChecker.create(Exprs.True(), Exprs.True(), solver),
+								LocState<ExplState, CfaLoc, CfaEdge>::getState, logger));
 				break;
 			default:
 				throw new UnsupportedOperationException();

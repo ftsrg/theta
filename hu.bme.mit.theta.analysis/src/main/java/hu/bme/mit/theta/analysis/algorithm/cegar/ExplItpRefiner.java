@@ -30,7 +30,7 @@ public final class ExplItpRefiner<S extends State, A extends ExprAction> impleme
 	private ExplItpRefiner(final ExprTraceChecker<ItpRefutation> exprTraceChecker, final Function<S, ExplState> mapper,
 			final Logger logger) {
 		this.exprTraceChecker = checkNotNull(exprTraceChecker);
-		this.mapper = mapper;
+		this.mapper = checkNotNull(mapper);
 		this.logger = checkNotNull(logger);
 	}
 
