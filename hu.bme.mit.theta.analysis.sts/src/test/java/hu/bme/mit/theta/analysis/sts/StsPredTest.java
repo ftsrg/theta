@@ -90,7 +90,8 @@ public class StsPredTest {
 
 		final ExprTraceChecker<ItpRefutation> exprTraceChecker = ExprTraceCraigItpChecker.create(And(sts.getInit()),
 				Not(sts.getProp()), solver);
-		final SimplePredItpRefiner<StsAction> refiner = SimplePredItpRefiner.create(exprTraceChecker, logger);
+		final SimplePredItpRefiner<PredState, StsAction> refiner = SimplePredItpRefiner.create(exprTraceChecker,
+				logger);
 
 		final SafetyChecker<PredState, StsAction, SimplePredPrecision> checker = CegarChecker.create(abstractor,
 				refiner, logger);
