@@ -12,6 +12,7 @@ import hu.bme.mit.theta.formalism.cfa.CfaEdge;
 import hu.bme.mit.theta.formalism.cfa.CfaLoc;
 
 public final class MutableCfa implements CFA {
+	private int nextId;
 
 	private CfaLoc initLoc;
 	private CfaLoc finalLoc;
@@ -26,6 +27,7 @@ public final class MutableCfa implements CFA {
 		initLoc = createLoc();
 		finalLoc = createLoc();
 		errorLoc = createLoc();
+		nextId = 0;
 	}
 
 	////
@@ -75,7 +77,8 @@ public final class MutableCfa implements CFA {
 	}
 
 	public MutableCfaLoc createLoc() {
-		final MutableCfaLoc loc = new MutableCfaLoc();
+		final MutableCfaLoc loc = new MutableCfaLoc(nextId + "");
+		++nextId;
 		locs.add(loc);
 		return loc;
 	}

@@ -45,7 +45,7 @@ public class CfaVisualizer {
 	private static void addLocation(final Graph graph, final CFA cfa, final CfaLoc loc, final Map<CfaLoc, String> ids) {
 		final String id = LOC_ID_PREFIX + ids.size();
 		ids.put(loc, id);
-		String label = id;
+		String label = loc.getName();
 		if (loc == cfa.getInitLoc()) {
 			label += " (init)";
 		} else if (loc == cfa.getFinalLoc()) {
