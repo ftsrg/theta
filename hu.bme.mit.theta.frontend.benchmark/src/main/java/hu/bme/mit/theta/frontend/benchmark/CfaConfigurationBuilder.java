@@ -1,7 +1,5 @@
 package hu.bme.mit.theta.frontend.benchmark;
 
-import java.util.function.Predicate;
-
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.Precision;
@@ -22,7 +20,6 @@ import hu.bme.mit.theta.analysis.cfa.CfaLts;
 import hu.bme.mit.theta.analysis.expl.ExplAnalysis;
 import hu.bme.mit.theta.analysis.expl.ExplPrecision;
 import hu.bme.mit.theta.analysis.expl.ExplState;
-import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.ExprTraceCraigItpChecker;
 import hu.bme.mit.theta.analysis.expr.ExprTraceSeqItpChecker;
 import hu.bme.mit.theta.analysis.expr.ExprTraceUnsatCoreChecker;
@@ -108,13 +105,12 @@ public class CfaConfigurationBuilder {
 	public Configuration<? extends State, ? extends Action, ? extends Precision> build(final CFA cfa) {
 		final ItpSolver solver = solverFactory.createItpSolver();
 		final CfaLts lts = CfaLts.getInstance();
-		final Predicate<ExprState> target = s -> false;
 
 		if (domain == Domain.EXPL) {
 			final Analysis<LocState<ExplState, CfaLoc, CfaEdge>, LocAction<CfaLoc, CfaEdge>, LocPrecision<ExplPrecision, CfaLoc, CfaEdge>> analysis = LocAnalysis
 					.create(cfa.getInitLoc(), ExplAnalysis.create(solver, Exprs.True()));
 			final ArgBuilder<LocState<ExplState, CfaLoc, CfaEdge>, CfaAction, LocPrecision<ExplPrecision, CfaLoc, CfaEdge>> argBuilder = ArgBuilder
-					.create(lts, analysis, target);
+					.create(lts, analysis, s -> s.getLoc().equals(cfa.getErrorLoc()));
 			final Abstractor<LocState<ExplState, CfaLoc, CfaEdge>, CfaAction, LocPrecision<ExplPrecision, CfaLoc, CfaEdge>> abstractor = WaitlistBasedAbstractor
 					.create(argBuilder, LocState::getLoc, PriorityWaitlist.supplier(search.comparator), logger);
 
@@ -148,7 +144,7 @@ public class CfaConfigurationBuilder {
 			final Analysis<LocState<PredState, CfaLoc, CfaEdge>, CfaAction, LocPrecision<SimplePredPrecision, CfaLoc, CfaEdge>> analysis = LocAnalysis
 					.create(cfa.getInitLoc(), PredAnalysis.create(solver, Exprs.True()));
 			final ArgBuilder<LocState<PredState, CfaLoc, CfaEdge>, CfaAction, LocPrecision<SimplePredPrecision, CfaLoc, CfaEdge>> argBuilder = ArgBuilder
-					.create(lts, analysis, target);
+					.create(lts, analysis, s -> s.getLoc().equals(cfa.getErrorLoc()));
 			final Abstractor<LocState<PredState, CfaLoc, CfaEdge>, CfaAction, LocPrecision<SimplePredPrecision, CfaLoc, CfaEdge>> abstractor = WaitlistBasedAbstractor
 					.create(argBuilder, LocState::getLoc, PriorityWaitlist.supplier(search.comparator), logger);
 
