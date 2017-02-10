@@ -32,6 +32,7 @@ import hu.bme.mit.theta.frontend.benchmark.StsConfigurationBuilder.Search;
 public class Main {
 
 	public static void main(final String[] args) {
+		// Setting up argument parser
 		final Options options = new Options();
 
 		final Option optModel = new Option("m", "model", true, "Path of the input model");
@@ -69,6 +70,7 @@ public class Main {
 		final HelpFormatter helpFormatter = new HelpFormatter();
 		final CommandLine cmd;
 
+		// Parse arguments
 		try {
 			cmd = parser.parse(options, args);
 		} catch (final ParseException e) {
@@ -76,26 +78,23 @@ public class Main {
 			return;
 		}
 
+		// Convert string arguments to the proper values
 		final String model = cmd.getOptionValue(optModel.getOpt());
 		final Domain domain = Domain.valueOf(cmd.getOptionValue(optDomain.getOpt()));
 		final Refinement refinement = Refinement.valueOf(cmd.getOptionValue(optRefinement.getOpt()));
-
 		final InitPrecision initPrecision = InitPrecision
 				.valueOf(cmd.getOptionValue(optInitPrecision.getOpt(), InitPrecision.EMPTY.toString()));
 		final Search search = Search.valueOf(cmd.getOptionValue(optSearch.getOpt(), Search.BFS.toString()));
-
 		final Optional<Boolean> expected = cmd.hasOption(optExpected.getOpt())
 				? Optional.of(Boolean.parseBoolean(cmd.getOptionValue(optExpected.getOpt()))) : Optional.empty();
 
+		// Run the algorithm
 		final TableWriter tableWriter = new SimpleTableWriter(System.out, ",", "", "");
-
 		try {
-
-			// Output: configuration parameters
 			tableWriter.cell(model);
 
+			// Read input model
 			STS sts = null;
-
 			if (model.endsWith(".aag")) {
 				sts = new AigerParserSimple().parse(model);
 			} else {
@@ -112,11 +111,14 @@ public class Main {
 					.cell(search.toString());
 			System.out.flush();
 
+			// Build configuration
 			final Configuration<?, ?, ?> configuration = new StsConfigurationBuilder(domain, refinement)
 					.initPrecision(initPrecision).search(search).build(sts);
+			// Run algorithm
 			final SafetyStatus<?, ?> status = configuration.check();
 			final Statistics stats = status.getStats().get();
 
+			// Check result
 			if (expected.isPresent() && !expected.get().equals(status.isSafe())) {
 				tableWriter.cell("ERROR: expected safe = " + expected.get());
 			} else {
