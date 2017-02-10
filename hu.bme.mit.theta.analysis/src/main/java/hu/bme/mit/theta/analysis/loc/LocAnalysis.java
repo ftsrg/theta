@@ -18,7 +18,7 @@ public final class LocAnalysis<S extends State, A extends LocAction<L, E>, P ext
 	private final InitFunction<LocState<S, L, E>, LocPrecision<P, L, E>> initFunction;
 	private final TransferFunction<LocState<S, L, E>, A, LocPrecision<P, L, E>> transferFunction;
 
-	private LocAnalysis(final L initLoc, final Analysis<S, ? super A, P> analysis) {
+	private LocAnalysis(final L initLoc, final Analysis<S, ? super A, ? super P> analysis) {
 		checkNotNull(initLoc);
 		checkNotNull(analysis);
 		domain = LocDomain.create(analysis.getDomain());
@@ -27,7 +27,7 @@ public final class LocAnalysis<S extends State, A extends LocAction<L, E>, P ext
 	}
 
 	public static <S extends State, A extends LocAction<L, E>, P extends Precision, L extends Loc<L, E>, E extends Edge<L, E>> LocAnalysis<S, A, P, L, E> create(
-			final L initLoc, final Analysis<S, ? super A, P> analysis) {
+			final L initLoc, final Analysis<S, ? super A, ? super P> analysis) {
 		return new LocAnalysis<>(initLoc, analysis);
 	}
 
