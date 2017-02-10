@@ -12,7 +12,7 @@ import hu.bme.mit.theta.core.utils.DeclVisitor;
 
 final class IndexedConstDeclImpl<DeclType extends Type> implements IndexedConstDecl<DeclType> {
 
-	private static final String NAME_FORMAT = "_%s_%d";
+	private static final String NAME_FORMAT = "_%s:%d";
 	private static final String DECL_LABEL = "Const";
 	private static final int HASH_SEED = 4603;
 

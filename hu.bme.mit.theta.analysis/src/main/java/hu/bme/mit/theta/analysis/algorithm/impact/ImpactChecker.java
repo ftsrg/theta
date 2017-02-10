@@ -3,12 +3,9 @@ package hu.bme.mit.theta.analysis.algorithm.impact;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Optional;
-import java.util.function.Predicate;
+import java.util.function.Function;
 
 import hu.bme.mit.theta.analysis.Action;
-import hu.bme.mit.theta.analysis.Analysis;
-import hu.bme.mit.theta.analysis.Domain;
-import hu.bme.mit.theta.analysis.LTS;
 import hu.bme.mit.theta.analysis.Precision;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.Trace;
@@ -19,53 +16,49 @@ import hu.bme.mit.theta.analysis.algorithm.ArgTrace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyStatus;
 import hu.bme.mit.theta.analysis.algorithm.impact.ImpactRefiner.RefinementResult;
+import hu.bme.mit.theta.analysis.reachedset.ReachedSet;
+import hu.bme.mit.theta.analysis.waitlist.FifoWaitlist;
+import hu.bme.mit.theta.analysis.waitlist.Waitlist;
 
 public final class ImpactChecker<S extends State, A extends Action, P extends Precision>
 		implements SafetyChecker<S, A, P> {
 
-	private final LTS<? super S, ? extends A> lts;
-	private final Analysis<S, A, P> analysis;
+	private final ArgBuilder<S, A, P> argBuilder;
 	private final ImpactRefiner<S, A> refiner;
-	private final Predicate<? super S> target;
+	private final Function<? super S, ?> partitioning;
 
-	private ImpactChecker(final LTS<? super S, ? extends A> lts, final Analysis<S, A, P> analysis,
-			final ImpactRefiner<S, A> refiner, final Predicate<? super S> target) {
-		this.lts = checkNotNull(lts);
-		this.analysis = checkNotNull(analysis);
+	private ImpactChecker(final ArgBuilder<S, A, P> argBuilder, final ImpactRefiner<S, A> refiner,
+			final Function<? super S, ?> partitioning) {
+		this.argBuilder = checkNotNull(argBuilder);
 		this.refiner = checkNotNull(refiner);
-		this.target = checkNotNull(target);
+		this.partitioning = checkNotNull(partitioning);
 	}
 
 	public static <S extends State, A extends Action, P extends Precision> ImpactChecker<S, A, P> create(
-			final LTS<? super S, ? extends A> lts, final Analysis<S, A, P> analysis, final ImpactRefiner<S, A> refiner,
-			final Predicate<? super S> target) {
-		return new ImpactChecker<>(lts, analysis, refiner, target);
+			final ArgBuilder<S, A, P> argBuilder, final ImpactRefiner<S, A> refiner,
+			final Function<? super S, ?> partitioning) {
+		return new ImpactChecker<>(argBuilder, refiner, partitioning);
 	}
 
 	////
 
 	@Override
 	public SafetyStatus<S, A> check(final P precision) {
-		return new CheckMethod<>(lts, analysis, refiner, target, precision).run();
+		return new CheckMethod(precision).run();
 	}
 
 	////
 
-	private static final class CheckMethod<S extends State, A extends Action, P extends Precision> {
-		private final ImpactRefiner<S, A> refiner;
+	private final class CheckMethod {
 		private final P precision;
 
-		private final Domain<S> domain;
-		private final ArgBuilder<S, A, P> argBuilder;
 		private final ARG<S, A> arg;
+		private final ReachedSet<S, A> reachedSet;
 
-		private CheckMethod(final LTS<? super S, ? extends A> lts, final Analysis<S, A, P> analysis,
-				final ImpactRefiner<S, A> refiner, final Predicate<? super S> target, final P precision) {
-			this.refiner = refiner;
+		private CheckMethod(final P precision) {
 			this.precision = checkNotNull(precision);
-			domain = analysis.getDomain();
-			argBuilder = ArgBuilder.create(lts, analysis, target);
-			arg = ARG.create(domain);
+			arg = argBuilder.createArg();
+			reachedSet = ImpactReachedSet.create(partitioning);
 		}
 
 		private SafetyStatus<S, A> run() {
@@ -80,42 +73,27 @@ public final class ImpactChecker<S extends State, A extends Action, P extends Pr
 
 		////
 
-		private void close(final ArgNode<S, A> node) {
-			if (!node.isExcluded()) {
-				final Optional<ArgNode<S, A>> nodeToCoverWith = arg.getNodes().filter(n -> mayCover(n, node))
-						.findFirst();
-				nodeToCoverWith.ifPresent(n -> cover(node, n));
-			}
-		}
+		private Optional<ArgNode<S, A>> searchForUnsafeNode(final ArgNode<S, A> node) {
+			final Waitlist<ArgNode<S, A>> waitlist = FifoWaitlist.create();
+			waitlist.add(node);
 
-		private boolean mayCover(final ArgNode<S, A> nodeToCoverWith, final ArgNode<S, A> node) {
-			if (nodeToCoverWith.getId() < node.getId()) {
-				final S state = node.getState();
-				final S stateToCoverWith = nodeToCoverWith.getState();
-				if (domain.isLeq(state, stateToCoverWith)) {
-					if (!nodeToCoverWith.isExcluded()) {
-						return true;
-					}
-				}
-			}
-			return false;
-		}
-
-		private Optional<ArgNode<S, A>> dfs(final ArgNode<S, A> v) {
-			close(v);
-			if (!v.isExcluded()) {
-				if (v.isTarget()) {
-					final boolean refined = refine(v);
-					if (refined) {
-						v.ancestors().forEach(w -> close(w));
+			while (!waitlist.isEmpty()) {
+				final ArgNode<S, A> v = waitlist.remove();
+				close(v);
+				if (!v.isExcluded()) {
+					if (v.isTarget()) {
+						refine(v);
+						if (v.isFeasible()) {
+							return Optional.of(v);
+						} else {
+							closeProperAncestorsOf(v);
+						}
 					} else {
-						return Optional.of(v);
+						expand(v);
+						reachedSet.addAll(v.getSuccNodes());
+						waitlist.addAll(v.getSuccNodes());
 					}
-				} else {
-					assert !v.isExpanded();
-					expand(v);
 				}
-				return v.children().map(w -> dfs(w)).filter(n -> n.isPresent()).map(n -> n.get()).findFirst();
 			}
 
 			return Optional.empty();
@@ -123,14 +101,19 @@ public final class ImpactChecker<S extends State, A extends Action, P extends Pr
 
 		private Optional<ArgNode<S, A>> unwind() {
 			argBuilder.init(arg, precision);
+			reachedSet.addAll(arg.getInitNodes());
+
 			while (true) {
 				final Optional<ArgNode<S, A>> anyIncompleteNode = arg.getIncompleteNodes().findAny();
 
 				if (anyIncompleteNode.isPresent()) {
 					final ArgNode<S, A> v = anyIncompleteNode.get();
-					v.properAncestors().forEach(w -> close(w));
 
-					final Optional<ArgNode<S, A>> unsafeDescendant = dfs(v);
+					assert v.isLeaf();
+
+					closeProperAncestorsOf(v);
+
+					final Optional<ArgNode<S, A>> unsafeDescendant = searchForUnsafeNode(v);
 					if (unsafeDescendant.isPresent()) {
 						return unsafeDescendant;
 					}
@@ -142,14 +125,19 @@ public final class ImpactChecker<S extends State, A extends Action, P extends Pr
 
 		////
 
+		private void close(final ArgNode<S, A> node) {
+			reachedSet.tryToCover(node);
+		}
+
+		private void closeProperAncestorsOf(final ArgNode<S, A> v) {
+			v.properAncestors().forEach(w -> close(w));
+		}
+
 		private void expand(final ArgNode<S, A> v) {
-			assert !v.isExcluded();
 			argBuilder.expand(v, precision);
 		}
 
-		private boolean refine(final ArgNode<S, A> v) {
-			assert !v.isSafe();
-
+		private void refine(final ArgNode<S, A> v) {
 			final ArgTrace<S, A> argTrace = ArgTrace.to(v);
 
 			final Trace<S, A> trace = argTrace.toTrace();
@@ -162,21 +150,8 @@ public final class ImpactChecker<S extends State, A extends Action, P extends Pr
 					vi.clearCoveredNodes();
 					vi.setState(refinedTrace.getState(i));
 				}
-				return true;
-			} else {
-				return false;
 			}
 		}
 
-		private void cover(final ArgNode<S, A> v, final ArgNode<S, A> w) {
-			assert !v.isExcluded();
-			assert !w.isExcluded();
-			assert !w.ancestors().anyMatch(n -> n == v);
-			assert domain.isLeq(v.getState(), w.getState());
-			arg.cover(v, w);
-			v.descendants().forEach(y -> y.clearCoveredNodes());
-		}
-
 	}
-
 }

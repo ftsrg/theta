@@ -7,6 +7,7 @@ import static hu.bme.mit.theta.analysis.zone.DiffBounds.add;
 import static hu.bme.mit.theta.analysis.zone.DiffBounds.asString;
 import static hu.bme.mit.theta.analysis.zone.DiffBounds.getBound;
 import static hu.bme.mit.theta.analysis.zone.DiffBounds.isStrict;
+import static hu.bme.mit.theta.analysis.zone.DiffBounds.negate;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -94,6 +95,16 @@ public class DiffBoundTest {
 		assertEquals(0, getBound(Leq(0)));
 		assertEquals(10, getBound(Leq(10)));
 		assertEquals(-10, getBound(Leq(-10)));
+	}
+
+	@Test
+	public void testNegate() {
+		assertEquals(Lt(0), negate(Leq(0)));
+		assertEquals(Leq(0), negate(Lt(0)));
+		assertEquals(Lt(1), negate(Leq(-1)));
+		assertEquals(Leq(1), negate(Lt(-1)));
+		assertEquals(Lt(-1), negate(Leq(1)));
+		assertEquals(Leq(-1), negate(Lt(1)));
 	}
 
 	@Test

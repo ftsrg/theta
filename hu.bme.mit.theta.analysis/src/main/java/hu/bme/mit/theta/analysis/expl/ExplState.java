@@ -56,6 +56,19 @@ public final class ExplState implements ExprState, Assignment {
 		return values.toExpr();
 	}
 
+	////
+
+	public boolean isLeq(final ExplState that) {
+		for (final VarDecl<? extends Type> varDecl : that.getDecls()) {
+			if (!this.getDecls().contains(varDecl) || !that.getValue(varDecl).equals(this.getValue(varDecl))) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	////
+
 	@Override
 	public int hashCode() {
 		int result = hashCode;

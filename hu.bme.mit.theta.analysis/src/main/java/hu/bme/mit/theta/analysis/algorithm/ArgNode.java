@@ -1,8 +1,8 @@
 package hu.bme.mit.theta.analysis.algorithm;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.common.ObjectUtils.toStringBuilder;
-import static hu.bme.mit.theta.common.Utils.anyMatch;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -70,9 +70,40 @@ public final class ArgNode<S extends State, A extends Action> {
 		this.state = state;
 	}
 
+	public boolean mayCover(final ArgNode<S, A> node) {
+		if (arg.domain.isLeq(node.getState(), this.getState())) {
+			return ancestors().noneMatch(n -> n.equals(node) || n.isSubsumed());
+		} else {
+			return false;
+		}
+	}
+
+	public void setCoveringNode(final ArgNode<S, A> node) {
+		checkNotNull(node);
+		checkArgument(node.arg == this.arg);
+		unsetCoveringNode();
+		coveringNode = Optional.of(node);
+		node.coveredNodes.add(this);
+	}
+
+	public void unsetCoveringNode() {
+		if (coveringNode.isPresent()) {
+			coveringNode.get().coveredNodes.remove(this);
+			coveringNode = Optional.empty();
+		}
+	}
+
 	public void clearCoveredNodes() {
 		coveredNodes.forEach(n -> n.coveringNode = Optional.empty());
 		coveredNodes.clear();
+	}
+
+	public void cover(final ArgNode<S, A> node) {
+		checkArgument(!node.isExcluded());
+		final Collection<ArgNode<S, A>> oldCoveredNodes = new ArrayList<>(coveredNodes);
+		descendants().forEach(ArgNode::clearCoveredNodes);
+		setCoveringNode(node);
+		oldCoveredNodes.forEach(n -> n.setCoveringNode(node));
 	}
 
 	////
@@ -110,19 +141,34 @@ public final class ArgNode<S extends State, A extends Action> {
 	////
 
 	/**
-	 * Checks if the node is excluded, i.e., the node is covered or not feasible
-	 * or has an excluded parent.
-	 */
-	public boolean isExcluded() {
-		return isCovered() || !isFeasible() || anyMatch(getParent(), ArgNode::isExcluded);
-	}
-
-	/**
 	 * Checks if the node is covered, i.e., there is a covering edge for the
 	 * node.
 	 */
 	public boolean isCovered() {
 		return coveringNode.isPresent();
+	}
+
+	/**
+	 * Checks if the node is not a bottom state.
+	 */
+	public boolean isFeasible() {
+		return !arg.domain.isBottom(state);
+	}
+
+	/**
+	 * Checks if the node is subsumed, i.e., the node is covered or not
+	 * feasible.
+	 */
+	public boolean isSubsumed() {
+		return isCovered() || !isFeasible();
+	}
+
+	/**
+	 * Checks if the node is excluded, i.e., the node is subsumed or has an
+	 * excluded parent.
+	 */
+	public boolean isExcluded() {
+		return ancestors().anyMatch(ArgNode::isSubsumed);
 	}
 
 	/**
@@ -141,10 +187,10 @@ public final class ArgNode<S extends State, A extends Action> {
 	}
 
 	/**
-	 * Checks if the node is not a bottom state.
+	 * Checks if the node is leaf, i.e., it has no successors.
 	 */
-	public boolean isFeasible() {
-		return !arg.domain.isBottom(state);
+	public boolean isLeaf() {
+		return outEdges.isEmpty();
 	}
 
 	/**
@@ -164,12 +210,7 @@ public final class ArgNode<S extends State, A extends Action> {
 	////
 
 	public Stream<ArgNode<S, A>> properAncestors() {
-		final Optional<ArgNode<S, A>> parent = getParent();
-		if (parent.isPresent()) {
-			return Stream.concat(Stream.of(parent.get()), parent.get().properAncestors());
-		} else {
-			return Stream.empty();
-		}
+		return getParent().map(p -> Stream.concat(Stream.of(p), p.properAncestors())).orElse(Stream.empty());
 	}
 
 	public Stream<ArgNode<S, A>> ancestors() {
@@ -186,6 +227,22 @@ public final class ArgNode<S extends State, A extends Action> {
 
 	public Stream<ArgNode<S, A>> descendants() {
 		return Stream.concat(Stream.of(this), this.properDescendants());
+	}
+
+	public Stream<ArgNode<S, A>> unexcludedDescendants() {
+		if (this.isExcluded()) {
+			return Stream.empty();
+		} else {
+			return unexcludedDescendantsOfNode();
+		}
+	}
+
+	private Stream<ArgNode<S, A>> unexcludedDescendantsOfNode() {
+		if (this.isSubsumed()) {
+			return Stream.empty();
+		} else {
+			return Stream.concat(Stream.of(this), this.children().flatMap(ArgNode::unexcludedDescendantsOfNode));
+		}
 	}
 
 	////

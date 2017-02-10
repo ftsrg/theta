@@ -1,5 +1,6 @@
 package hu.bme.mit.theta.analysis.zone;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import hu.bme.mit.theta.formalism.ta.constr.ClockConstr;
@@ -16,12 +17,16 @@ final class DiffBounds {
 		return INF;
 	}
 
-	public static int Lt(final int bound) {
-		return bound << 1;
+	public static int Bound(final int m, final boolean strict) {
+		return strict ? Lt(m) : Leq(m);
 	}
 
-	public static int Leq(final int bound) {
-		return (bound << 1) | 1;
+	public static int Lt(final int m) {
+		return m << 1;
+	}
+
+	public static int Leq(final int m) {
+		return (m << 1) | 1;
 	}
 
 	////
@@ -77,6 +82,11 @@ final class DiffBounds {
 
 	public static int add(final int b1, final int b2) {
 		return (b1 == INF || b2 == INF) ? INF : b1 + b2 - ((b1 & 1) | (b2 & 1));
+	}
+
+	public static int negate(final int b) {
+		checkArgument(b != INF);
+		return Bound(-getBound(b), !isStrict(b));
 	}
 
 	////

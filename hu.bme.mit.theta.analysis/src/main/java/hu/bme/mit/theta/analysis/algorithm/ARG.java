@@ -37,30 +37,20 @@ public final class ARG<S extends State, A extends Action> {
 
 	////
 
-	public Stream<ArgNode<S, A>> getNodes() {
-		return getInitNodes().flatMap(ArgNode::descendants);
-	}
-
 	public Stream<ArgNode<S, A>> getInitNodes() {
 		return initNodes.stream();
 	}
 
+	public Stream<ArgNode<S, A>> getNodes() {
+		return getInitNodes().flatMap(ArgNode::descendants);
+	}
+
 	public Stream<ArgNode<S, A>> getUnsafeNodes() {
-		return getNodes().filter(n -> !n.isSafe());
+		return getInitNodes().flatMap(ArgNode::unexcludedDescendants).filter(n -> n.isTarget());
 	}
 
 	public Stream<ArgNode<S, A>> getIncompleteNodes() {
-		return getInitNodes().flatMap(this::getIncompleteNodes);
-	}
-
-	private Stream<ArgNode<S, A>> getIncompleteNodes(final ArgNode<S, A> node) {
-		if (node.isCovered() || !node.isFeasible()) {
-			return Stream.empty();
-		} else if (!node.isExpanded()) {
-			return Stream.of(node);
-		} else {
-			return node.children().flatMap(this::getIncompleteNodes);
-		}
+		return getInitNodes().flatMap(ArgNode::unexcludedDescendants).filter(n -> !n.isExpanded());
 	}
 
 	////
@@ -138,7 +128,7 @@ public final class ARG<S extends State, A extends Action> {
 			initNodes.remove(node);
 			this.initialized = false;
 		}
-		node.descendants().forEach(this::uncover);
+		node.descendants().forEach(ArgNode::unsetCoveringNode);
 		node.descendants().forEach(ArgNode::clearCoveredNodes);
 
 	}
@@ -153,25 +143,6 @@ public final class ARG<S extends State, A extends Action> {
 			children.forEach(this::prune);
 		} else {
 			children.forEach(this::minimizeSubTree);
-		}
-	}
-
-	public void cover(final ArgNode<S, A> node, final ArgNode<S, A> coveringNode) {
-		checkNotNull(node);
-		checkNotNull(coveringNode);
-		checkArgument(node.arg == this);
-		checkArgument(coveringNode.arg == this);
-		checkArgument(!node.coveringNode.isPresent());
-		node.coveringNode = Optional.of(coveringNode);
-		coveringNode.coveredNodes.add(node);
-	}
-
-	public void uncover(final ArgNode<S, A> node) {
-		checkNotNull(node);
-		checkArgument(node.arg == this);
-		if (node.coveringNode.isPresent()) {
-			node.coveringNode.get().coveredNodes.remove(node);
-			node.coveringNode = Optional.empty();
 		}
 	}
 
