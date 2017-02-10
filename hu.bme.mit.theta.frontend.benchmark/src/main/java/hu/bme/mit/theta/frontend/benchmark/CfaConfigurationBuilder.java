@@ -15,6 +15,7 @@ import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker;
 import hu.bme.mit.theta.analysis.algorithm.cegar.ExplItpRefiner;
 import hu.bme.mit.theta.analysis.algorithm.cegar.ExplVarSetsRefiner;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Refiner;
+import hu.bme.mit.theta.analysis.algorithm.cegar.SimplePredItpRefiner;
 import hu.bme.mit.theta.analysis.algorithm.cegar.WaitlistBasedAbstractor;
 import hu.bme.mit.theta.analysis.cfa.CfaAction;
 import hu.bme.mit.theta.analysis.cfa.CfaLts;
@@ -30,6 +31,9 @@ import hu.bme.mit.theta.analysis.loc.LocAnalysis;
 import hu.bme.mit.theta.analysis.loc.LocPrecision;
 import hu.bme.mit.theta.analysis.loc.LocRefiner;
 import hu.bme.mit.theta.analysis.loc.LocState;
+import hu.bme.mit.theta.analysis.pred.PredAnalysis;
+import hu.bme.mit.theta.analysis.pred.PredState;
+import hu.bme.mit.theta.analysis.pred.SimplePredPrecision;
 import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.impl.NullLogger;
@@ -116,7 +120,6 @@ public class CfaConfigurationBuilder {
 
 			Refiner<LocState<ExplState, CfaLoc, CfaEdge>, CfaAction, LocPrecision<ExplPrecision, CfaLoc, CfaEdge>> refiner = null;
 
-			// TODO
 			switch (refinement) {
 			case CRAIG_ITP:
 				refiner = LocRefiner.create(
@@ -141,6 +144,36 @@ public class CfaConfigurationBuilder {
 					.create(abstractor, refiner, logger);
 
 			return Configuration.create(checker, LocPrecision.constant(ExplPrecision.create()));
+		} else if (domain == Domain.PRED) {
+			final Analysis<LocState<PredState, CfaLoc, CfaEdge>, CfaAction, LocPrecision<SimplePredPrecision, CfaLoc, CfaEdge>> analysis = LocAnalysis
+					.create(cfa.getInitLoc(), PredAnalysis.create(solver, Exprs.True()));
+			final ArgBuilder<LocState<PredState, CfaLoc, CfaEdge>, CfaAction, LocPrecision<SimplePredPrecision, CfaLoc, CfaEdge>> argBuilder = ArgBuilder
+					.create(lts, analysis, target);
+			final Abstractor<LocState<PredState, CfaLoc, CfaEdge>, CfaAction, LocPrecision<SimplePredPrecision, CfaLoc, CfaEdge>> abstractor = WaitlistBasedAbstractor
+					.create(argBuilder, LocState::getLoc, PriorityWaitlist.supplier(search.comparator), logger);
+
+			Refiner<LocState<PredState, CfaLoc, CfaEdge>, CfaAction, LocPrecision<SimplePredPrecision, CfaLoc, CfaEdge>> refiner = null;
+
+			switch (refinement) {
+			case CRAIG_ITP:
+				refiner = LocRefiner.create(
+						SimplePredItpRefiner.create(ExprTraceCraigItpChecker.create(Exprs.True(), Exprs.True(), solver),
+								LocState<PredState, CfaLoc, CfaEdge>::getState, logger));
+				break;
+			case SEQ_ITP:
+				refiner = LocRefiner.create(
+						SimplePredItpRefiner.create(ExprTraceSeqItpChecker.create(Exprs.True(), Exprs.True(), solver),
+								LocState<PredState, CfaLoc, CfaEdge>::getState, logger));
+				break;
+			default:
+				throw new UnsupportedOperationException();
+			}
+
+			final SafetyChecker<LocState<PredState, CfaLoc, CfaEdge>, CfaAction, LocPrecision<SimplePredPrecision, CfaLoc, CfaEdge>> checker = CegarChecker
+					.create(abstractor, refiner, logger);
+
+			return Configuration.create(checker, LocPrecision.constant(SimplePredPrecision.create(solver)));
+
 		} else {
 			throw new UnsupportedOperationException();
 		}

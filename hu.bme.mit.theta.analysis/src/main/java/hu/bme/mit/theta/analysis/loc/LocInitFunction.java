@@ -15,15 +15,15 @@ public final class LocInitFunction<S extends State, P extends Precision, L exten
 		implements InitFunction<LocState<S, L, E>, LocPrecision<P, L, E>> {
 
 	private final L initLoc;
-	private final InitFunction<S, P> initFunction;
+	private final InitFunction<S, ? super P> initFunction;
 
-	private LocInitFunction(final L initLoc, final InitFunction<S, P> initFunction) {
+	private LocInitFunction(final L initLoc, final InitFunction<S, ? super P> initFunction) {
 		this.initLoc = checkNotNull(initLoc);
 		this.initFunction = checkNotNull(initFunction);
 	}
 
 	public static <S extends State, P extends Precision, L extends Loc<L, E>, E extends Edge<L, E>> LocInitFunction<S, P, L, E> create(
-			final L initLoc, final InitFunction<S, P> initFunction) {
+			final L initLoc, final InitFunction<S, ? super P> initFunction) {
 		return new LocInitFunction<>(initLoc, initFunction);
 	}
 
