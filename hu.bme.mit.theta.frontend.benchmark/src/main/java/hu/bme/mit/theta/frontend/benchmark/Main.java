@@ -24,10 +24,10 @@ import hu.bme.mit.theta.formalism.sts.dsl.StsDslManager;
 import hu.bme.mit.theta.formalism.sts.dsl.StsSpec;
 import hu.bme.mit.theta.formalism.sts.utils.impl.StsIteTransformation;
 import hu.bme.mit.theta.frontend.aiger.impl.AigerParserSimple;
-import hu.bme.mit.theta.frontend.benchmark.StsConfigurationBuilder.Domain;
+import hu.bme.mit.theta.frontend.benchmark.ConfigurationBuilder.Domain;
+import hu.bme.mit.theta.frontend.benchmark.ConfigurationBuilder.Refinement;
+import hu.bme.mit.theta.frontend.benchmark.ConfigurationBuilder.Search;
 import hu.bme.mit.theta.frontend.benchmark.StsConfigurationBuilder.InitPrecision;
-import hu.bme.mit.theta.frontend.benchmark.StsConfigurationBuilder.Refinement;
-import hu.bme.mit.theta.frontend.benchmark.StsConfigurationBuilder.Search;
 
 public class Main {
 

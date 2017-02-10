@@ -10,10 +10,10 @@ import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.impl.ConsoleLogger;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.frontend.aiger.impl.AigerParserSimple;
-import hu.bme.mit.theta.frontend.benchmark.StsConfigurationBuilder.Domain;
+import hu.bme.mit.theta.frontend.benchmark.ConfigurationBuilder.Domain;
+import hu.bme.mit.theta.frontend.benchmark.ConfigurationBuilder.Refinement;
+import hu.bme.mit.theta.frontend.benchmark.ConfigurationBuilder.Search;
 import hu.bme.mit.theta.frontend.benchmark.StsConfigurationBuilder.InitPrecision;
-import hu.bme.mit.theta.frontend.benchmark.StsConfigurationBuilder.Refinement;
-import hu.bme.mit.theta.frontend.benchmark.StsConfigurationBuilder.Search;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 
 public class SandBox {
