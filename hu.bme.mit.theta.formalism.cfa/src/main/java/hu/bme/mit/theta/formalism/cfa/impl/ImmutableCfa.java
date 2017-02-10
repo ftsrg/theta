@@ -14,7 +14,6 @@ import hu.bme.mit.theta.formalism.cfa.impl.ImmutableCfaEdge.CFAEdgeBuilder;
 import hu.bme.mit.theta.formalism.cfa.impl.ImmutableCfaLoc.CFALocBuilder;
 
 public final class ImmutableCfa implements CFA {
-
 	final ImmutableCfaLoc initLoc;
 	final ImmutableCfaLoc finalLoc;
 	final ImmutableCfaLoc errorLoc;
@@ -29,13 +28,13 @@ public final class ImmutableCfa implements CFA {
 		errorLoc = builder.errorLoc.build();
 
 		final ImmutableSet.Builder<ImmutableCfaLoc> locSet = ImmutableSet.builder();
-		for (CFALocBuilder loc : builder.locs) {
+		for (final CFALocBuilder loc : builder.locs) {
 			locSet.add(loc.build());
 		}
 		locs = locSet.build();
 
 		final ImmutableSet.Builder<ImmutableCfaEdge> edgeSet = ImmutableSet.builder();
-		for (CFAEdgeBuilder edge : builder.edges) {
+		for (final CFAEdgeBuilder edge : builder.edges) {
 			edgeSet.add(edge.build());
 		}
 		edges = edgeSet.build();
@@ -49,12 +48,12 @@ public final class ImmutableCfa implements CFA {
 
 		final CFABuilder cfaBuilder = new CFABuilder();
 
-		for (CfaLoc loc : cfa.getLocs()) {
-			final CFALocBuilder locBuilder = new CFALocBuilder();
+		for (final CfaLoc loc : cfa.getLocs()) {
+			final CFALocBuilder locBuilder = new CFALocBuilder(loc.getName());
 			locToBuilder.put(loc, locBuilder);
 		}
 
-		for (CfaEdge edge : cfa.getEdges()) {
+		for (final CfaEdge edge : cfa.getEdges()) {
 			final CFAEdgeBuilder edgeBuilder = new CFAEdgeBuilder(edge.getStmts());
 			edgeBuilders.add(edgeBuilder);
 			edgeBuilder.setSource(locToBuilder.get(edge.getSource()));
@@ -109,8 +108,8 @@ public final class ImmutableCfa implements CFA {
 		private CFALocBuilder initLoc;
 		private CFALocBuilder finalLoc;
 		private CFALocBuilder errorLoc;
-		private Collection<CFALocBuilder> locs;
-		private Collection<CFAEdgeBuilder> edges;
+		private final Collection<CFALocBuilder> locs;
+		private final Collection<CFAEdgeBuilder> edges;
 
 		CFABuilder() {
 			locs = new HashSet<>();
@@ -125,5 +124,5 @@ public final class ImmutableCfa implements CFA {
 			return cfa;
 		}
 	}
-	
+
 }
