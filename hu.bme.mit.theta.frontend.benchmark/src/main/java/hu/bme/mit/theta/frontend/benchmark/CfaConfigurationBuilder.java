@@ -5,8 +5,6 @@ import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.Precision;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.ArgBuilder;
-import hu.bme.mit.theta.analysis.algorithm.ArgNodeComparators;
-import hu.bme.mit.theta.analysis.algorithm.ArgNodeComparators.ArgNodeComparator;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker;
@@ -33,135 +31,96 @@ import hu.bme.mit.theta.analysis.pred.PredState;
 import hu.bme.mit.theta.analysis.pred.SimplePredPrecision;
 import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist;
 import hu.bme.mit.theta.common.logging.Logger;
-import hu.bme.mit.theta.common.logging.impl.NullLogger;
 import hu.bme.mit.theta.core.expr.impl.Exprs;
 import hu.bme.mit.theta.formalism.cfa.CFA;
 import hu.bme.mit.theta.formalism.cfa.CfaEdge;
 import hu.bme.mit.theta.formalism.cfa.CfaLoc;
 import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.solver.SolverFactory;
-import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 
-public class CfaConfigurationBuilder {
-
-	public enum Domain {
-		EXPL, PRED
-	};
-
-	public enum Refinement {
-		CRAIG_ITP, SEQ_ITP, UNSAT_CORE
-	};
-
-	public enum Search {
-		BFS(ArgNodeComparators.combine(ArgNodeComparators.targetFirst(), ArgNodeComparators.bfs())), DFS(
-				ArgNodeComparators.combine(ArgNodeComparators.targetFirst(), ArgNodeComparators.dfs()));
-
-		public final ArgNodeComparator comparator;
-
-		private Search(final ArgNodeComparator comparator) {
-			this.comparator = comparator;
-		}
-
-	};
-
-	private Logger logger = NullLogger.getInstance();
-	private SolverFactory solverFactory = Z3SolverFactory.getInstace();
-	private final Domain domain;
-	private final Refinement refinement;
-	private Search search = Search.BFS;
+public class CfaConfigurationBuilder extends ConfigurationBuilder {
 
 	public CfaConfigurationBuilder(final Domain domain, final Refinement refinement) {
-		this.domain = domain;
-		this.refinement = refinement;
+		super(domain, refinement);
 	}
 
 	public CfaConfigurationBuilder logger(final Logger logger) {
-		this.logger = logger;
+		setLogger(logger);
 		return this;
 	}
 
 	public CfaConfigurationBuilder solverFactory(final SolverFactory solverFactory) {
-		this.solverFactory = solverFactory;
+		setSolverFactory(solverFactory);
 		return this;
 	}
 
 	public CfaConfigurationBuilder search(final Search search) {
-		this.search = search;
+		setSearch(search);
 		return this;
 	}
 
-	public Search getSearch() {
-		return search;
-	}
-
-	public Domain getDomain() {
-		return domain;
-	}
-
-	public Refinement getRefinement() {
-		return refinement;
-	}
-
 	public Configuration<? extends State, ? extends Action, ? extends Precision> build(final CFA cfa) {
-		final ItpSolver solver = solverFactory.createItpSolver();
+		final ItpSolver solver = getSolverFactory().createItpSolver();
 		final CfaLts lts = CfaLts.getInstance();
 
-		if (domain == Domain.EXPL) {
+		if (getDomain() == Domain.EXPL) {
 			final Analysis<LocState<ExplState, CfaLoc, CfaEdge>, LocAction<CfaLoc, CfaEdge>, LocPrecision<ExplPrecision, CfaLoc, CfaEdge>> analysis = LocAnalysis
 					.create(cfa.getInitLoc(), ExplAnalysis.create(solver, Exprs.True()));
 			final ArgBuilder<LocState<ExplState, CfaLoc, CfaEdge>, CfaAction, LocPrecision<ExplPrecision, CfaLoc, CfaEdge>> argBuilder = ArgBuilder
 					.create(lts, analysis, s -> s.getLoc().equals(cfa.getErrorLoc()));
 			final Abstractor<LocState<ExplState, CfaLoc, CfaEdge>, CfaAction, LocPrecision<ExplPrecision, CfaLoc, CfaEdge>> abstractor = WaitlistBasedAbstractor
-					.create(argBuilder, LocState::getLoc, PriorityWaitlist.supplier(search.comparator), logger);
+					.create(argBuilder, LocState::getLoc, PriorityWaitlist.supplier(getSearch().comparator),
+							getLogger());
 
 			Refiner<LocState<ExplState, CfaLoc, CfaEdge>, CfaAction, LocPrecision<ExplPrecision, CfaLoc, CfaEdge>> refiner = null;
 
-			switch (refinement) {
+			switch (getRefinement()) {
 			case CRAIG_ITP:
 				refiner = LocRefiner.create(ExplItpRefiner
-						.create(ExprTraceCraigItpChecker.create(Exprs.True(), Exprs.True(), solver), logger));
+						.create(ExprTraceCraigItpChecker.create(Exprs.True(), Exprs.True(), solver), getLogger()));
 				break;
 			case SEQ_ITP:
 				refiner = LocRefiner.create(ExplItpRefiner
-						.create(ExprTraceSeqItpChecker.create(Exprs.True(), Exprs.True(), solver), logger));
+						.create(ExprTraceSeqItpChecker.create(Exprs.True(), Exprs.True(), solver), getLogger()));
 				break;
 			case UNSAT_CORE:
 				refiner = LocRefiner.create(ExplVarSetsRefiner
-						.create(ExprTraceUnsatCoreChecker.create(Exprs.True(), Exprs.True(), solver), logger));
+						.create(ExprTraceUnsatCoreChecker.create(Exprs.True(), Exprs.True(), solver), getLogger()));
 				break;
 			default:
 				throw new UnsupportedOperationException();
 			}
 
 			final SafetyChecker<LocState<ExplState, CfaLoc, CfaEdge>, CfaAction, LocPrecision<ExplPrecision, CfaLoc, CfaEdge>> checker = CegarChecker
-					.create(abstractor, refiner, logger);
+					.create(abstractor, refiner, getLogger());
 
 			return Configuration.create(checker, LocPrecision.constant(ExplPrecision.create()));
-		} else if (domain == Domain.PRED) {
+		} else if (getDomain() == Domain.PRED) {
 			final Analysis<LocState<PredState, CfaLoc, CfaEdge>, CfaAction, LocPrecision<SimplePredPrecision, CfaLoc, CfaEdge>> analysis = LocAnalysis
 					.create(cfa.getInitLoc(), PredAnalysis.create(solver, Exprs.True()));
 			final ArgBuilder<LocState<PredState, CfaLoc, CfaEdge>, CfaAction, LocPrecision<SimplePredPrecision, CfaLoc, CfaEdge>> argBuilder = ArgBuilder
 					.create(lts, analysis, s -> s.getLoc().equals(cfa.getErrorLoc()));
 			final Abstractor<LocState<PredState, CfaLoc, CfaEdge>, CfaAction, LocPrecision<SimplePredPrecision, CfaLoc, CfaEdge>> abstractor = WaitlistBasedAbstractor
-					.create(argBuilder, LocState::getLoc, PriorityWaitlist.supplier(search.comparator), logger);
+					.create(argBuilder, LocState::getLoc, PriorityWaitlist.supplier(getSearch().comparator),
+							getLogger());
 
 			Refiner<LocState<PredState, CfaLoc, CfaEdge>, CfaAction, LocPrecision<SimplePredPrecision, CfaLoc, CfaEdge>> refiner = null;
 
-			switch (refinement) {
+			switch (getRefinement()) {
 			case CRAIG_ITP:
 				refiner = LocRefiner.create(SimplePredItpRefiner
-						.create(ExprTraceCraigItpChecker.create(Exprs.True(), Exprs.True(), solver), logger));
+						.create(ExprTraceCraigItpChecker.create(Exprs.True(), Exprs.True(), solver), getLogger()));
 				break;
 			case SEQ_ITP:
 				refiner = LocRefiner.create(SimplePredItpRefiner
-						.create(ExprTraceSeqItpChecker.create(Exprs.True(), Exprs.True(), solver), logger));
+						.create(ExprTraceSeqItpChecker.create(Exprs.True(), Exprs.True(), solver), getLogger()));
 				break;
 			default:
 				throw new UnsupportedOperationException();
 			}
 
 			final SafetyChecker<LocState<PredState, CfaLoc, CfaEdge>, CfaAction, LocPrecision<SimplePredPrecision, CfaLoc, CfaEdge>> checker = CegarChecker
-					.create(abstractor, refiner, logger);
+					.create(abstractor, refiner, getLogger());
 
 			return Configuration.create(checker, LocPrecision.constant(SimplePredPrecision.create(solver)));
 
