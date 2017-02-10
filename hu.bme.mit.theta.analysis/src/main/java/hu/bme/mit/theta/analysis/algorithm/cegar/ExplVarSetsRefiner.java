@@ -5,16 +5,14 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 import java.util.Set;
-import java.util.function.Function;
 
-import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.ArgNode;
 import hu.bme.mit.theta.analysis.algorithm.ArgTrace;
 import hu.bme.mit.theta.analysis.expl.ExplPrecision;
-import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
+import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.ExprTraceChecker;
 import hu.bme.mit.theta.analysis.expr.ExprTraceStatus;
 import hu.bme.mit.theta.analysis.expr.IndexedVarsRefutation;
@@ -23,28 +21,20 @@ import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Type;
 
-public final class ExplVarSetsRefiner<S extends State, A extends ExprAction> implements Refiner<S, A, ExplPrecision> {
+public final class ExplVarSetsRefiner<S extends ExprState, A extends ExprAction>
+		implements Refiner<S, A, ExplPrecision> {
 
 	private final ExprTraceChecker<IndexedVarsRefutation> exprTraceChecker;
 	private final Logger logger;
-	private final Function<S, ExplState> mapper;
 
-	private ExplVarSetsRefiner(final ExprTraceChecker<IndexedVarsRefutation> exprTraceChecker,
-			final Function<S, ExplState> mapper, final Logger logger) {
+	private ExplVarSetsRefiner(final ExprTraceChecker<IndexedVarsRefutation> exprTraceChecker, final Logger logger) {
 		this.exprTraceChecker = checkNotNull(exprTraceChecker);
-		this.mapper = checkNotNull(mapper);
 		this.logger = checkNotNull(logger);
 	}
 
-	public static <S extends State, A extends ExprAction> ExplVarSetsRefiner<S, A> create(
-			final ExprTraceChecker<IndexedVarsRefutation> exprTraceChecker, final Function<S, ExplState> mapper,
-			final Logger logger) {
-		return new ExplVarSetsRefiner<>(exprTraceChecker, mapper, logger);
-	}
-
-	public static <A extends ExprAction> ExplVarSetsRefiner<ExplState, A> create(
+	public static <S extends ExprState, A extends ExprAction> ExplVarSetsRefiner<S, A> create(
 			final ExprTraceChecker<IndexedVarsRefutation> exprTraceChecker, final Logger logger) {
-		return create(exprTraceChecker, s -> s, logger);
+		return new ExplVarSetsRefiner<>(exprTraceChecker, logger);
 	}
 
 	@Override
@@ -55,12 +45,11 @@ public final class ExplVarSetsRefiner<S extends State, A extends ExprAction> imp
 
 		final ArgTrace<S, A> cexToConcretize = arg.getCexs().findFirst().get();
 		final Trace<S, A> traceToConcretize = cexToConcretize.toTrace();
-		final Trace<ExplState, A> explStateTrace = traceToConcretize.mapStates(mapper);
 		logger.writeln("Trace length: ", traceToConcretize.length(), 3, 2);
 		logger.writeln("Trace: ", traceToConcretize, 4, 3);
 
 		logger.write("Checking...", 3, 2);
-		final ExprTraceStatus<IndexedVarsRefutation> cexStatus = exprTraceChecker.check(explStateTrace);
+		final ExprTraceStatus<IndexedVarsRefutation> cexStatus = exprTraceChecker.check(traceToConcretize);
 		logger.writeln("done: ", cexStatus, 3, 0);
 
 		if (cexStatus.isFeasible()) {

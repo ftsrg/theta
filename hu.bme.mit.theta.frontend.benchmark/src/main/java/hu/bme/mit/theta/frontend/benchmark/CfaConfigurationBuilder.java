@@ -118,19 +118,16 @@ public class CfaConfigurationBuilder {
 
 			switch (refinement) {
 			case CRAIG_ITP:
-				refiner = LocRefiner.create(
-						ExplItpRefiner.create(ExprTraceCraigItpChecker.create(Exprs.True(), Exprs.True(), solver),
-								LocState<ExplState, CfaLoc, CfaEdge>::getState, logger));
+				refiner = LocRefiner.create(ExplItpRefiner
+						.create(ExprTraceCraigItpChecker.create(Exprs.True(), Exprs.True(), solver), logger));
 				break;
 			case SEQ_ITP:
-				refiner = LocRefiner
-						.create(ExplItpRefiner.create(ExprTraceSeqItpChecker.create(Exprs.True(), Exprs.True(), solver),
-								LocState<ExplState, CfaLoc, CfaEdge>::getState, logger));
+				refiner = LocRefiner.create(ExplItpRefiner
+						.create(ExprTraceSeqItpChecker.create(Exprs.True(), Exprs.True(), solver), logger));
 				break;
 			case UNSAT_CORE:
-				refiner = LocRefiner.create(
-						ExplVarSetsRefiner.create(ExprTraceUnsatCoreChecker.create(Exprs.True(), Exprs.True(), solver),
-								LocState<ExplState, CfaLoc, CfaEdge>::getState, logger));
+				refiner = LocRefiner.create(ExplVarSetsRefiner
+						.create(ExprTraceUnsatCoreChecker.create(Exprs.True(), Exprs.True(), solver), logger));
 				break;
 			default:
 				throw new UnsupportedOperationException();
@@ -152,14 +149,12 @@ public class CfaConfigurationBuilder {
 
 			switch (refinement) {
 			case CRAIG_ITP:
-				refiner = LocRefiner.create(
-						SimplePredItpRefiner.create(ExprTraceCraigItpChecker.create(Exprs.True(), Exprs.True(), solver),
-								LocState<PredState, CfaLoc, CfaEdge>::getState, logger));
+				refiner = LocRefiner.create(SimplePredItpRefiner
+						.create(ExprTraceCraigItpChecker.create(Exprs.True(), Exprs.True(), solver), logger));
 				break;
 			case SEQ_ITP:
-				refiner = LocRefiner.create(
-						SimplePredItpRefiner.create(ExprTraceSeqItpChecker.create(Exprs.True(), Exprs.True(), solver),
-								LocState<PredState, CfaLoc, CfaEdge>::getState, logger));
+				refiner = LocRefiner.create(SimplePredItpRefiner
+						.create(ExprTraceSeqItpChecker.create(Exprs.True(), Exprs.True(), solver), logger));
 				break;
 			default:
 				throw new UnsupportedOperationException();

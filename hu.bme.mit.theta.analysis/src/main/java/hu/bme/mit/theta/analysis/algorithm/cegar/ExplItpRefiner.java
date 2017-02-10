@@ -4,16 +4,13 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
-import java.util.function.Function;
-
-import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.ArgNode;
 import hu.bme.mit.theta.analysis.algorithm.ArgTrace;
 import hu.bme.mit.theta.analysis.expl.ExplPrecision;
-import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
+import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.ExprTraceChecker;
 import hu.bme.mit.theta.analysis.expr.ExprTraceStatus;
 import hu.bme.mit.theta.analysis.expr.ItpRefutation;
@@ -21,28 +18,19 @@ import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.core.utils.impl.ExprUtils;
 
-public final class ExplItpRefiner<S extends State, A extends ExprAction> implements Refiner<S, A, ExplPrecision> {
+public final class ExplItpRefiner<S extends ExprState, A extends ExprAction> implements Refiner<S, A, ExplPrecision> {
 
 	private final ExprTraceChecker<ItpRefutation> exprTraceChecker;
 	private final Logger logger;
-	private final Function<S, ExplState> mapper;
 
-	private ExplItpRefiner(final ExprTraceChecker<ItpRefutation> exprTraceChecker, final Function<S, ExplState> mapper,
-			final Logger logger) {
+	private ExplItpRefiner(final ExprTraceChecker<ItpRefutation> exprTraceChecker, final Logger logger) {
 		this.exprTraceChecker = checkNotNull(exprTraceChecker);
-		this.mapper = checkNotNull(mapper);
 		this.logger = checkNotNull(logger);
 	}
 
-	public static <S extends State, A extends ExprAction> ExplItpRefiner<S, A> create(
-			final ExprTraceChecker<ItpRefutation> exprTraceChecker, final Function<S, ExplState> mapper,
-			final Logger logger) {
-		return new ExplItpRefiner<>(exprTraceChecker, mapper, logger);
-	}
-
-	public static <A extends ExprAction> ExplItpRefiner<ExplState, A> create(
+	public static <S extends ExprState, A extends ExprAction> ExplItpRefiner<S, A> create(
 			final ExprTraceChecker<ItpRefutation> exprTraceChecker, final Logger logger) {
-		return create(exprTraceChecker, s -> s, logger);
+		return new ExplItpRefiner<>(exprTraceChecker, logger);
 	}
 
 	@Override
@@ -53,12 +41,11 @@ public final class ExplItpRefiner<S extends State, A extends ExprAction> impleme
 
 		final ArgTrace<S, A> cexToConcretize = arg.getCexs().findFirst().get();
 		final Trace<S, A> traceToConcretize = cexToConcretize.toTrace();
-		final Trace<ExplState, A> explStateTrace = traceToConcretize.mapStates(mapper);
 		logger.writeln("Trace length: ", traceToConcretize.length(), 3, 2);
 		logger.writeln("Trace: ", traceToConcretize, 4, 3);
 
 		logger.write("Checking...", 3, 2);
-		final ExprTraceStatus<ItpRefutation> cexStatus = exprTraceChecker.check(explStateTrace);
+		final ExprTraceStatus<ItpRefutation> cexStatus = exprTraceChecker.check(traceToConcretize);
 		logger.writeln("done: ", cexStatus, 3, 0);
 
 		if (cexStatus.isFeasible()) {
