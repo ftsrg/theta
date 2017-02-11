@@ -49,7 +49,7 @@ public final class CfaAction implements LocAction<CfaLoc, CfaEdge> {
 
 	@Override
 	public String toString() {
-		return ObjectUtils.toStringBuilder("CfaAction").addAll(edge.getStmts()).toString();
+		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).addAll(edge.getStmts()).toString();
 	}
 
 }
