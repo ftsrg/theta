@@ -87,6 +87,6 @@ final class ImmutableCfaLoc implements CfaLoc {
 
 	@Override
 	public String toString() {
-		return ObjectUtils.toStringBuilder("ImmutableCfaLoc").add(name).toString();
+		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).add(name).toString();
 	}
 }
