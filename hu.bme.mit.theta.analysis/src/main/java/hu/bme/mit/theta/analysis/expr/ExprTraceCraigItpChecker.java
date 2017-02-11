@@ -95,7 +95,7 @@ public final class ExprTraceCraigItpChecker implements ExprTraceChecker<ItpRefut
 			for (final VarIndexing indexing : indexings) {
 				builder.add(PathUtils.extractValuation(model, indexing));
 			}
-			status = ExprTraceStatus.feasible(builder.build());
+			status = ExprTraceStatus.feasible(Trace.of(builder.build(), trace.getActions()));
 		} else {
 			final Interpolant interpolant = solver.getInterpolant(pattern);
 			final Expr<BoolType> itpFolded = PathUtils.foldin(interpolant.eval(A), indexings.get(satPrefix));

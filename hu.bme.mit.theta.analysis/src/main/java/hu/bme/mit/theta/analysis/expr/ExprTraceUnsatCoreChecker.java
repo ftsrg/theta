@@ -80,7 +80,7 @@ public final class ExprTraceUnsatCoreChecker implements ExprTraceChecker<Indexed
 			for (final VarIndexing indexing : indexings) {
 				builder.add(PathUtils.extractValuation(model, indexing));
 			}
-			status = ExprTraceStatus.feasible(builder.build());
+			status = ExprTraceStatus.feasible(Trace.of(builder.build(), trace.getActions()));
 		} else {
 			final Collection<Expr<? extends BoolType>> unsatCore = solver.getUnsatCore();
 			final IndexedVars indexedVars = ExprUtils.getVarsIndexed(unsatCore);
