@@ -5,8 +5,6 @@ import static com.google.common.base.Preconditions.checkElementIndex;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.List;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import com.google.common.collect.ImmutableList;
 
@@ -77,9 +75,5 @@ public final class Trace<S extends State, A extends Action> {
 		}
 		sb.append(')');
 		return sb.toString();
-	}
-
-	public <S2 extends State> Trace<S2, A> mapStates(final Function<S, S2> f) {
-		return of(getStates().stream().map(f).collect(Collectors.toList()), getActions());
 	}
 }
