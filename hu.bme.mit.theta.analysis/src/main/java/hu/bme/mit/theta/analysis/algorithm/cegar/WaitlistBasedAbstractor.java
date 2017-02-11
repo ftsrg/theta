@@ -72,6 +72,7 @@ public final class WaitlistBasedAbstractor<S extends State, A extends Action, P 
 
 		logger.writeln(String.format("Starting ARG: %d nodes, %d incomplete, %d unsafe", arg.getNodes().count(),
 				arg.getIncompleteNodes().count(), arg.getUnsafeNodes().count()), 3, 2);
+		logger.write("Building ARG...", 3, 2);
 
 		final Optional<ArgNode<S, A>> unsafeNode = searchForUnsafeNode(arg, precision);
 
@@ -91,8 +92,6 @@ public final class WaitlistBasedAbstractor<S extends State, A extends Action, P 
 
 		reachedSet.addAll(arg.getIncompleteNodes());
 		waitlist.addAll(arg.getIncompleteNodes());
-
-		logger.write("Building ARG...", 3, 2);
 
 		while (!waitlist.isEmpty()) {
 			final ArgNode<S, A> node = waitlist.remove();
