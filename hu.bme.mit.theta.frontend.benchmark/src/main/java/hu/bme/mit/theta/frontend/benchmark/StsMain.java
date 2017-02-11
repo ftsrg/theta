@@ -29,7 +29,12 @@ import hu.bme.mit.theta.frontend.benchmark.ConfigurationBuilder.Refinement;
 import hu.bme.mit.theta.frontend.benchmark.ConfigurationBuilder.Search;
 import hu.bme.mit.theta.frontend.benchmark.StsConfigurationBuilder.InitPrecision;
 
-public class Main {
+/**
+ * A command line interface for running a CEGAR configuration on an STS. The
+ * output is a single row containing parameters of the configuration and the
+ * model, and output metrics.
+ */
+public class StsMain {
 
 	public static void main(final String[] args) {
 		// Setting up argument parser
