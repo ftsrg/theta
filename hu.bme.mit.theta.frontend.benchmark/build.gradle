@@ -16,5 +16,5 @@ dependencies {
 shadowJar {
     classifier = 'fat'
     mergeServiceFiles()
-    manifest { attributes 'Main-Class': 'hu.bme.mit.theta.frontend.benchmark.Main' }
+    manifest { attributes 'Main-Class': 'hu.bme.mit.theta.frontend.benchmark.StsMain' }
 }
