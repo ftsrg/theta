@@ -14,10 +14,11 @@ import hu.bme.mit.theta.analysis.algorithm.ArgBuilder;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker;
-import hu.bme.mit.theta.analysis.algorithm.cegar.ExplItpRefiner;
-import hu.bme.mit.theta.analysis.algorithm.cegar.ExplVarSetsRefiner;
+import hu.bme.mit.theta.analysis.algorithm.cegar.ExplItpTraceRefiner;
+import hu.bme.mit.theta.analysis.algorithm.cegar.ExplVarSetsTraceRefiner;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Refiner;
-import hu.bme.mit.theta.analysis.algorithm.cegar.SimplePredItpRefiner;
+import hu.bme.mit.theta.analysis.algorithm.cegar.SimplePredItpTraceRefiner;
+import hu.bme.mit.theta.analysis.algorithm.cegar.SingleExprTraceRefiner;
 import hu.bme.mit.theta.analysis.algorithm.cegar.WaitlistBasedAbstractor;
 import hu.bme.mit.theta.analysis.expl.ExplAnalysis;
 import hu.bme.mit.theta.analysis.expl.ExplPrecision;
@@ -99,14 +100,16 @@ public final class StsConfigurationBuilder extends ConfigurationBuilder {
 
 			switch (getRefinement()) {
 			case CRAIG_ITP:
-				refiner = ExplItpRefiner.create(ExprTraceCraigItpChecker.create(init, negProp, solver), getLogger());
+				refiner = SingleExprTraceRefiner.create(ExprTraceCraigItpChecker.create(init, negProp, solver),
+						new ExplItpTraceRefiner<>(), getLogger());
 				break;
 			case SEQ_ITP:
-				refiner = ExplItpRefiner.create(ExprTraceSeqItpChecker.create(init, negProp, solver), getLogger());
+				refiner = SingleExprTraceRefiner.create(ExprTraceSeqItpChecker.create(init, negProp, solver),
+						new ExplItpTraceRefiner<>(), getLogger());
 				break;
 			case UNSAT_CORE:
-				refiner = ExplVarSetsRefiner.create(ExprTraceUnsatCoreChecker.create(init, negProp, solver),
-						getLogger());
+				refiner = SingleExprTraceRefiner.create(ExprTraceUnsatCoreChecker.create(init, negProp, solver),
+						new ExplVarSetsTraceRefiner<>(), getLogger());
 				break;
 			default:
 				throw new UnsupportedOperationException();
@@ -146,9 +149,8 @@ public final class StsConfigurationBuilder extends ConfigurationBuilder {
 			default:
 				throw new UnsupportedOperationException();
 			}
-
-			final Refiner<PredState, StsAction, SimplePredPrecision> refiner = SimplePredItpRefiner
-					.create(exprTraceChecker, getLogger());
+			final Refiner<PredState, StsAction, SimplePredPrecision> refiner = SingleExprTraceRefiner
+					.create(exprTraceChecker, new SimplePredItpTraceRefiner<>(), getLogger());
 
 			final SafetyChecker<PredState, StsAction, SimplePredPrecision> checker = CegarChecker.create(abstractor,
 					refiner, getLogger());

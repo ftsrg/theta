@@ -8,10 +8,11 @@ import hu.bme.mit.theta.analysis.algorithm.ArgBuilder;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker;
-import hu.bme.mit.theta.analysis.algorithm.cegar.ExplItpRefiner;
-import hu.bme.mit.theta.analysis.algorithm.cegar.ExplVarSetsRefiner;
+import hu.bme.mit.theta.analysis.algorithm.cegar.ExplItpTraceRefiner;
+import hu.bme.mit.theta.analysis.algorithm.cegar.ExplVarSetsTraceRefiner;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Refiner;
-import hu.bme.mit.theta.analysis.algorithm.cegar.SimplePredItpRefiner;
+import hu.bme.mit.theta.analysis.algorithm.cegar.SimplePredItpTraceRefiner;
+import hu.bme.mit.theta.analysis.algorithm.cegar.SingleExprTraceRefiner;
 import hu.bme.mit.theta.analysis.algorithm.cegar.WaitlistBasedAbstractor;
 import hu.bme.mit.theta.analysis.cfa.CfaAction;
 import hu.bme.mit.theta.analysis.cfa.CfaLts;
@@ -76,16 +77,19 @@ public class CfaConfigurationBuilder extends ConfigurationBuilder {
 
 			switch (getRefinement()) {
 			case CRAIG_ITP:
-				refiner = LocRefiner.create(ExplItpRefiner
-						.create(ExprTraceCraigItpChecker.create(Exprs.True(), Exprs.True(), solver), getLogger()));
+				refiner = LocRefiner.create(SingleExprTraceRefiner.create(
+						ExprTraceCraigItpChecker.create(Exprs.True(), Exprs.True(), solver),
+						new ExplItpTraceRefiner<>(), getLogger()));
 				break;
 			case SEQ_ITP:
-				refiner = LocRefiner.create(ExplItpRefiner
-						.create(ExprTraceSeqItpChecker.create(Exprs.True(), Exprs.True(), solver), getLogger()));
+				refiner = LocRefiner.create(
+						SingleExprTraceRefiner.create(ExprTraceSeqItpChecker.create(Exprs.True(), Exprs.True(), solver),
+								new ExplItpTraceRefiner<>(), getLogger()));
 				break;
 			case UNSAT_CORE:
-				refiner = LocRefiner.create(ExplVarSetsRefiner
-						.create(ExprTraceUnsatCoreChecker.create(Exprs.True(), Exprs.True(), solver), getLogger()));
+				refiner = LocRefiner.create(SingleExprTraceRefiner.create(
+						ExprTraceUnsatCoreChecker.create(Exprs.True(), Exprs.True(), solver),
+						new ExplVarSetsTraceRefiner<>(), getLogger()));
 				break;
 			default:
 				throw new UnsupportedOperationException();
@@ -108,12 +112,14 @@ public class CfaConfigurationBuilder extends ConfigurationBuilder {
 
 			switch (getRefinement()) {
 			case CRAIG_ITP:
-				refiner = LocRefiner.create(SimplePredItpRefiner
-						.create(ExprTraceCraigItpChecker.create(Exprs.True(), Exprs.True(), solver), getLogger()));
+				refiner = LocRefiner.create(SingleExprTraceRefiner.create(
+						ExprTraceCraigItpChecker.create(Exprs.True(), Exprs.True(), solver),
+						new SimplePredItpTraceRefiner<>(), getLogger()));
 				break;
 			case SEQ_ITP:
-				refiner = LocRefiner.create(SimplePredItpRefiner
-						.create(ExprTraceSeqItpChecker.create(Exprs.True(), Exprs.True(), solver), getLogger()));
+				refiner = LocRefiner.create(
+						SingleExprTraceRefiner.create(ExprTraceSeqItpChecker.create(Exprs.True(), Exprs.True(), solver),
+								new SimplePredItpTraceRefiner<>(), getLogger()));
 				break;
 			default:
 				throw new UnsupportedOperationException();

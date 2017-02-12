@@ -23,11 +23,17 @@ public class SingleExprTraceRefiner<S extends ExprState, A extends ExprAction, P
 	private final TraceRefiner<S, A, P, R> traceRefiner;
 	private final Logger logger;
 
-	public SingleExprTraceRefiner(final ExprTraceChecker<R> exprTraceChecker,
+	private SingleExprTraceRefiner(final ExprTraceChecker<R> exprTraceChecker,
 			final TraceRefiner<S, A, P, R> traceRefiner, final Logger logger) {
 		this.exprTraceChecker = exprTraceChecker;
 		this.traceRefiner = traceRefiner;
 		this.logger = logger;
+	}
+
+	public static <S extends ExprState, A extends ExprAction, P extends Precision, R extends Refutation> SingleExprTraceRefiner<S, A, P, R> create(
+			final ExprTraceChecker<R> exprTraceChecker, final TraceRefiner<S, A, P, R> traceRefiner,
+			final Logger logger) {
+		return new SingleExprTraceRefiner<>(exprTraceChecker, traceRefiner, logger);
 	}
 
 	@Override
