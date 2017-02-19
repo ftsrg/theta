@@ -2,6 +2,7 @@ package hu.bme.mit.theta.analysis.pred;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -9,9 +10,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import com.google.common.collect.Iterables;
-
 import hu.bme.mit.theta.common.ObjectUtils;
+import hu.bme.mit.theta.core.expr.BoolLitExpr;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.impl.Exprs;
 import hu.bme.mit.theta.core.model.impl.Valuation;
@@ -20,6 +20,10 @@ import hu.bme.mit.theta.core.utils.impl.ExprUtils;
 import hu.bme.mit.theta.core.utils.impl.PathUtils;
 import hu.bme.mit.theta.solver.Solver;
 
+/**
+ * Represents an immutable, simple predicate precision that is a set of
+ * predicates.
+ */
 public final class SimplePredPrecision implements PredPrecision {
 
 	private final Map<Expr<? extends BoolType>, Expr<? extends BoolType>> predToNegMap;
@@ -39,6 +43,9 @@ public final class SimplePredPrecision implements PredPrecision {
 		this.predToNegMap = new HashMap<>();
 
 		for (final Expr<? extends BoolType> pred : preds) {
+			if (pred instanceof BoolLitExpr) {
+				continue;
+			}
 			final Expr<? extends BoolType> ponatedPred = ExprUtils.ponate(pred);
 			if (!this.predToNegMap.containsKey(ponatedPred)) {
 				this.predToNegMap.put(ponatedPred, Exprs.Not(ponatedPred));
@@ -76,10 +83,10 @@ public final class SimplePredPrecision implements PredPrecision {
 				final boolean negValid = solver.check().isUnsat();
 				solver.pop();
 
-				assert !(ponValid && negValid);
+				checkState(!(ponValid && negValid));
 				if (ponValid) {
 					statePreds.add(pred);
-				} else {
+				} else if (negValid) {
 					statePreds.add(negate(pred));
 				}
 			}
@@ -92,8 +99,17 @@ public final class SimplePredPrecision implements PredPrecision {
 		checkNotNull(extraPreds);
 		final Set<Expr<? extends BoolType>> joinedPreds = new HashSet<>();
 		joinedPreds.addAll(this.predToNegMap.keySet());
-		Iterables.addAll(joinedPreds, extraPreds);
-		return create(joinedPreds, solver);
+		for (final Expr<? extends BoolType> pred : extraPreds) {
+			if (!(pred instanceof BoolLitExpr)) {
+				joinedPreds.add(pred);
+			}
+		}
+		// If no new predicate was added return itself (immutable)
+		if (joinedPreds.size() == this.predToNegMap.size()) {
+			return this;
+		} else {
+			return create(joinedPreds, solver);
+		}
 	}
 
 	public SimplePredPrecision refine(final Expr<? extends BoolType> extraPred) {
