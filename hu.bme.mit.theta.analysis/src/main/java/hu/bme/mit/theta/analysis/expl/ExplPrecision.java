@@ -20,6 +20,10 @@ import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.solver.Solver;
 
+/**
+ * Represents an immutable, simple explicit precision that is a set of
+ * variables.
+ */
 public final class ExplPrecision implements Precision {
 
 	private final Set<VarDecl<?>> vars;
@@ -37,11 +41,21 @@ public final class ExplPrecision implements Precision {
 		return new ExplPrecision(vars);
 	}
 
-	public ExplPrecision refine(final Iterable<? extends VarDecl<?>> newVars) {
-		checkNotNull(newVars);
-		final Collection<VarDecl<?>> newVisibleVars = ImmutableSet.<VarDecl<?>>builder().addAll(vars).addAll(newVars)
+	public ExplPrecision refine(final Iterable<? extends VarDecl<?>> extraVars) {
+		checkNotNull(extraVars);
+		final Collection<VarDecl<?>> newVars = ImmutableSet.<VarDecl<?>>builder().addAll(vars).addAll(extraVars)
 				.build();
-		return create(newVisibleVars);
+		// If no new variable was added, return same instance (immutable)
+		if (newVars.size() == this.vars.size()) {
+			return this;
+		} else {
+			return create(newVars);
+		}
+	}
+
+	public ExplPrecision refine(final VarDecl<?> extraVar) {
+		checkNotNull(extraVar);
+		return refine(Collections.singleton(extraVar));
 	}
 
 	public ExplState createState(final Valuation valuation) {
