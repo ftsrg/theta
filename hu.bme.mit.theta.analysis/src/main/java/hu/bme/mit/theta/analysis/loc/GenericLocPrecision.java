@@ -37,7 +37,7 @@ public final class GenericLocPrecision<P extends Precision, L extends Loc<L, E>,
 
 	public static <P extends Precision, L extends Loc<L, E>, E extends Edge<L, E>> GenericLocPrecision<P, L, E> create(
 			final P defaultPrecision) {
-		return new GenericLocPrecision<>(Collections.emptyMap(), Optional.of(defaultPrecision));
+		return new GenericLocPrecision<P, L, E>(Collections.emptyMap(), Optional.of(defaultPrecision));
 	}
 
 	public static <P extends Precision, L extends Loc<L, E>, E extends Edge<L, E>> GenericLocPrecision<P, L, E> create(
