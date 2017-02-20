@@ -17,8 +17,8 @@ import hu.bme.mit.theta.analysis.expl.ExplPrecision;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.impl.FixedPrecisionAnalysis;
 import hu.bme.mit.theta.analysis.impl.NullPrecision;
+import hu.bme.mit.theta.analysis.loc.ConstLocPrecision;
 import hu.bme.mit.theta.analysis.loc.LocAnalysis;
-import hu.bme.mit.theta.analysis.loc.LocPrecision;
 import hu.bme.mit.theta.analysis.loc.LocState;
 import hu.bme.mit.theta.analysis.prod.Prod2Analysis;
 import hu.bme.mit.theta.analysis.prod.Prod2State;
@@ -49,7 +49,7 @@ public class ProsigmaTest {
 		final Analysis<LocState<Prod2State<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction, NullPrecision> analysis = FixedPrecisionAnalysis
 				.create(LocAnalysis.create(prosigma.getInitLoc(),
 						Prod2Analysis.create(TcfaZoneAnalysis.getInstance(), ExplAnalysis.create(solver, True()))),
-						LocPrecision.constant(ProdPrecision.of(ZonePrecision.create(prosigma.getClockVars()),
+						ConstLocPrecision.create(ProdPrecision.of(ZonePrecision.create(prosigma.getClockVars()),
 								ExplPrecision.create(prosigma.getDataVars()))));
 
 		final Predicate<State> target = s -> false;

@@ -13,6 +13,7 @@ import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.impl.FixedPrecisionAnalysis;
 import hu.bme.mit.theta.analysis.impl.NullPrecision;
+import hu.bme.mit.theta.analysis.loc.ConstLocPrecision;
 import hu.bme.mit.theta.analysis.loc.LocAnalysis;
 import hu.bme.mit.theta.analysis.loc.LocPrecision;
 import hu.bme.mit.theta.analysis.loc.LocState;
@@ -43,8 +44,8 @@ final class TcfaLawiAnalysis implements Analysis<TcfaLawiState, TcfaAction, Null
 		final ZonePrecision zonePrecision = ZonePrecision.create(tcfa.getClockVars());
 		final Prod2Precision<ExplPrecision, ZonePrecision> compositePrecision = ProdPrecision.of(explPrecision,
 				zonePrecision);
-		final LocPrecision<Prod2Precision<ExplPrecision, ZonePrecision>, TcfaLoc, TcfaEdge> locPrecision = LocPrecision
-				.constant(compositePrecision);
+		final LocPrecision<Prod2Precision<ExplPrecision, ZonePrecision>, TcfaLoc, TcfaEdge> locPrecision = ConstLocPrecision
+				.create(compositePrecision);
 
 		final Analysis<ExplState, ExprAction, ExplPrecision> explAnalysis = ExplAnalysis.create(solver, True());
 		final Analysis<ItpZoneState, TcfaAction, ZonePrecision> itpZoneAnalysis = TcfaItpZoneAnalysis.getInstance();
