@@ -17,8 +17,8 @@ import hu.bme.mit.theta.analysis.expl.ExplPrecision;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.impl.FixedPrecisionAnalysis;
 import hu.bme.mit.theta.analysis.impl.NullPrecision;
+import hu.bme.mit.theta.analysis.loc.ConstLocPrecision;
 import hu.bme.mit.theta.analysis.loc.LocAnalysis;
-import hu.bme.mit.theta.analysis.loc.LocPrecision;
 import hu.bme.mit.theta.analysis.loc.LocState;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.analysis.waitlist.FifoWaitlist;
@@ -43,7 +43,7 @@ public class TcfaExplTest {
 
 		final Analysis<LocState<ExplState, TcfaLoc, TcfaEdge>, TcfaAction, NullPrecision> analysis = FixedPrecisionAnalysis
 				.create(LocAnalysis.create(fischer.getInitLoc(), ExplAnalysis.create(solver, True())),
-						LocPrecision.constant(ExplPrecision.create(fischer.getDataVars())));
+						ConstLocPrecision.create(ExplPrecision.create(fischer.getDataVars())));
 
 		final Predicate<State> target = s -> false;
 

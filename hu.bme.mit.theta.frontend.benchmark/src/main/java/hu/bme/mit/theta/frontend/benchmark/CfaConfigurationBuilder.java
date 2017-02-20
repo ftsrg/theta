@@ -22,6 +22,7 @@ import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.ExprTraceCraigItpChecker;
 import hu.bme.mit.theta.analysis.expr.ExprTraceSeqItpChecker;
 import hu.bme.mit.theta.analysis.expr.ExprTraceUnsatCoreChecker;
+import hu.bme.mit.theta.analysis.loc.ConstLocPrecision;
 import hu.bme.mit.theta.analysis.loc.LocAction;
 import hu.bme.mit.theta.analysis.loc.LocAnalysis;
 import hu.bme.mit.theta.analysis.loc.LocPrecision;
@@ -98,7 +99,7 @@ public class CfaConfigurationBuilder extends ConfigurationBuilder {
 			final SafetyChecker<LocState<ExplState, CfaLoc, CfaEdge>, CfaAction, LocPrecision<ExplPrecision, CfaLoc, CfaEdge>> checker = CegarChecker
 					.create(abstractor, refiner, getLogger());
 
-			return Configuration.create(checker, LocPrecision.constant(ExplPrecision.create()));
+			return Configuration.create(checker, ConstLocPrecision.create(ExplPrecision.create()));
 		} else if (getDomain() == Domain.PRED) {
 			final Analysis<LocState<PredState, CfaLoc, CfaEdge>, CfaAction, LocPrecision<SimplePredPrecision, CfaLoc, CfaEdge>> analysis = LocAnalysis
 					.create(cfa.getInitLoc(), PredAnalysis.create(solver, Exprs.True()));
@@ -128,7 +129,7 @@ public class CfaConfigurationBuilder extends ConfigurationBuilder {
 			final SafetyChecker<LocState<PredState, CfaLoc, CfaEdge>, CfaAction, LocPrecision<SimplePredPrecision, CfaLoc, CfaEdge>> checker = CegarChecker
 					.create(abstractor, refiner, getLogger());
 
-			return Configuration.create(checker, LocPrecision.constant(SimplePredPrecision.create(solver)));
+			return Configuration.create(checker, ConstLocPrecision.create(SimplePredPrecision.create(solver)));
 
 		} else {
 			throw new UnsupportedOperationException();

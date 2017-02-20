@@ -17,8 +17,8 @@ import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
 import hu.bme.mit.theta.analysis.algorithm.cegar.WaitlistBasedAbstractor;
 import hu.bme.mit.theta.analysis.impl.FixedPrecisionAnalysis;
 import hu.bme.mit.theta.analysis.impl.NullPrecision;
+import hu.bme.mit.theta.analysis.loc.ConstLocPrecision;
 import hu.bme.mit.theta.analysis.loc.LocAnalysis;
-import hu.bme.mit.theta.analysis.loc.LocPrecision;
 import hu.bme.mit.theta.analysis.loc.LocState;
 import hu.bme.mit.theta.analysis.pred.PredAnalysis;
 import hu.bme.mit.theta.analysis.pred.PredState;
@@ -47,7 +47,7 @@ public class TcfaPredTest {
 
 		final Analysis<LocState<PredState, TcfaLoc, TcfaEdge>, TcfaAction, NullPrecision> analysis = FixedPrecisionAnalysis
 				.create(LocAnalysis.create(fischer.getInitLoc(), PredAnalysis.create(solver, True())),
-						LocPrecision.constant(SimplePredPrecision.create(
+						ConstLocPrecision.create(SimplePredPrecision.create(
 								Collections.singleton(Eq(Utils.anyElementOf(fischer.getDataVars()).getRef(), Int(0))),
 								solver)));
 

@@ -14,6 +14,7 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyStatus;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.impl.FixedPrecisionAnalysis;
 import hu.bme.mit.theta.analysis.impl.NullPrecision;
+import hu.bme.mit.theta.analysis.loc.ConstLocPrecision;
 import hu.bme.mit.theta.analysis.loc.LocAction;
 import hu.bme.mit.theta.analysis.loc.LocAnalysis;
 import hu.bme.mit.theta.analysis.loc.LocPrecision;
@@ -39,8 +40,8 @@ public final class PredImpactChecker<L extends Loc<L, E>, E extends Edge<L, E>>
 
 		final Analysis<PredState, ExprAction, PredPrecision> predAnalysis = PredAnalysis.create(solver, True());
 
-		final LocPrecision<PredPrecision, L, E> fixedPrecision = LocPrecision
-				.constant(SimplePredPrecision.create(emptySet(), solver));
+		final LocPrecision<PredPrecision, L, E> fixedPrecision = ConstLocPrecision
+				.create(SimplePredPrecision.create(emptySet(), solver));
 
 		final Analysis<LocState<PredState, L, E>, LocAction<L, E>, LocPrecision<PredPrecision, L, E>> cfaAnalysis = LocAnalysis
 				.create(initLoc, predAnalysis);
