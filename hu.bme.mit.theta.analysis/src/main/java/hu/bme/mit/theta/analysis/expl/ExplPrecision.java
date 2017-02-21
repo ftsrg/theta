@@ -46,21 +46,18 @@ public final class ExplPrecision implements Precision {
 		}
 	}
 
-	public ExplPrecision refine(final Iterable<? extends VarDecl<?>> extraVars) {
-		checkNotNull(extraVars);
-		final Collection<VarDecl<?>> newVars = ImmutableSet.<VarDecl<?>>builder().addAll(vars).addAll(extraVars)
+	public ExplPrecision join(final ExplPrecision other) {
+		checkNotNull(other);
+		final Collection<VarDecl<?>> newVars = ImmutableSet.<VarDecl<?>>builder().addAll(vars).addAll(other.vars)
 				.build();
 		// If no new variable was added, return same instance (immutable)
 		if (newVars.size() == this.vars.size()) {
 			return this;
+		} else if (newVars.size() == other.vars.size()) {
+			return other;
 		} else {
 			return create(newVars);
 		}
-	}
-
-	public ExplPrecision refine(final VarDecl<?> extraVar) {
-		checkNotNull(extraVar);
-		return refine(Collections.singleton(extraVar));
 	}
 
 	public ExplState createState(final Valuation valuation) {

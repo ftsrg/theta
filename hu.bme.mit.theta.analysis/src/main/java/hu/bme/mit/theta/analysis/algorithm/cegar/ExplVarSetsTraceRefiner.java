@@ -20,7 +20,7 @@ public class ExplVarSetsTraceRefiner<S extends ExprState, A extends ExprAction>
 	public ExplPrecision refine(final Trace<S, A> trace, final ExplPrecision precision,
 			final IndexedVarsRefutation refutation) {
 		final Set<VarDecl<? extends Type>> vars = refutation.getVarSets().getAllVars();
-		final ExplPrecision refinedPrecision = precision.refine(vars);
+		final ExplPrecision refinedPrecision = precision.join(ExplPrecision.create(vars));
 		return refinedPrecision;
 	}
 
@@ -29,7 +29,7 @@ public class ExplVarSetsTraceRefiner<S extends ExprState, A extends ExprAction>
 			final IndexedVarsRefutation refutation) {
 		final List<ExplPrecision> refinedPrecisions = new ArrayList<>(precisions.size());
 		for (int i = 0; i < precisions.size(); ++i) {
-			refinedPrecisions.add(precisions.get(i).refine(refutation.getVarSets().getVars(i)));
+			refinedPrecisions.add(precisions.get(i).join(ExplPrecision.create(refutation.getVarSets().getVars(i))));
 		}
 		return refinedPrecisions;
 	}
