@@ -27,6 +27,7 @@ import hu.bme.mit.theta.solver.Solver;
 public final class ExplPrecision implements Precision {
 
 	private final Set<VarDecl<?>> vars;
+	private static ExplPrecision EMPTY = new ExplPrecision(Collections.emptySet());
 
 	private ExplPrecision(final Iterable<? extends VarDecl<?>> vars) {
 		checkNotNull(vars);
@@ -38,7 +39,11 @@ public final class ExplPrecision implements Precision {
 	}
 
 	public static ExplPrecision create(final Iterable<? extends VarDecl<?>> vars) {
-		return new ExplPrecision(vars);
+		if (vars.iterator().hasNext()) {
+			return new ExplPrecision(vars);
+		} else {
+			return EMPTY;
+		}
 	}
 
 	public ExplPrecision refine(final Iterable<? extends VarDecl<?>> extraVars) {
