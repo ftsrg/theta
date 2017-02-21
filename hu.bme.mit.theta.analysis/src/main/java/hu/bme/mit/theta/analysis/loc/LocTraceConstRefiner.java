@@ -12,18 +12,18 @@ import hu.bme.mit.theta.analysis.expr.Refutation;
 import hu.bme.mit.theta.formalism.common.Edge;
 import hu.bme.mit.theta.formalism.common.Loc;
 
-public class LocTraceRefiner<S extends State, A extends Action, P extends Precision, R extends Refutation, L extends Loc<L, E>, E extends Edge<L, E>>
+public class LocTraceConstRefiner<S extends State, A extends Action, P extends Precision, R extends Refutation, L extends Loc<L, E>, E extends Edge<L, E>>
 		implements TraceRefiner<LocState<S, L, E>, A, LocPrecision<P, L, E>, R> {
 
 	private final TraceRefiner<LocState<S, L, E>, A, P, R> refiner;
 
-	private LocTraceRefiner(final TraceRefiner<LocState<S, L, E>, A, P, R> refiner) {
+	private LocTraceConstRefiner(final TraceRefiner<LocState<S, L, E>, A, P, R> refiner) {
 		this.refiner = checkNotNull(refiner);
 	}
 
-	public static <S extends State, A extends Action, P extends Precision, R extends Refutation, L extends Loc<L, E>, E extends Edge<L, E>> LocTraceRefiner<S, A, P, R, L, E> create(
+	public static <S extends State, A extends Action, P extends Precision, R extends Refutation, L extends Loc<L, E>, E extends Edge<L, E>> LocTraceConstRefiner<S, A, P, R, L, E> create(
 			final TraceRefiner<LocState<S, L, E>, A, P, R> refiner) {
-		return new LocTraceRefiner<>(refiner);
+		return new LocTraceConstRefiner<>(refiner);
 	}
 
 	@Override
