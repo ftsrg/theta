@@ -13,6 +13,8 @@ import java.util.Optional;
 import com.google.common.collect.ImmutableMap;
 
 import hu.bme.mit.theta.analysis.Precision;
+import hu.bme.mit.theta.common.ObjectUtils;
+import hu.bme.mit.theta.common.ToStringBuilder;
 import hu.bme.mit.theta.formalism.common.Edge;
 import hu.bme.mit.theta.formalism.common.Loc;
 
@@ -72,6 +74,16 @@ public final class GenericLocPrecision<P extends Precision, L extends Loc<L, E>,
 
 	public GenericLocPrecision<P, L, E> refine(final L loc, final P refinedPrecision) {
 		return refine(Collections.singletonList(loc), Collections.singletonList(refinedPrecision));
+	}
+
+	@Override
+	public String toString() {
+		final ToStringBuilder builder = ObjectUtils.toStringBuilder(getClass().getSimpleName());
+		builder.add("Precisions: " + mapping.size());
+		if (defaultPrecision.isPresent()) {
+			builder.add("Default: " + defaultPrecision.get());
+		}
+		return builder.toString();
 	}
 
 }
