@@ -4,11 +4,14 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+
+import com.google.common.collect.ImmutableSet;
 
 import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.expr.BoolLitExpr;
@@ -53,6 +56,10 @@ public final class SimplePredPrecision implements PredPrecision {
 		}
 	}
 
+	public Solver getSolver() {
+		return solver;
+	}
+
 	private Expr<? extends BoolType> negate(final Expr<? extends BoolType> pred) {
 		final Expr<? extends BoolType> negated = predToNegMap.get(pred);
 		checkArgument(negated != null);
@@ -95,25 +102,18 @@ public final class SimplePredPrecision implements PredPrecision {
 		return PredState.of(statePreds);
 	}
 
-	public SimplePredPrecision refine(final Iterable<Expr<? extends BoolType>> extraPreds) {
-		checkNotNull(extraPreds);
-		final Set<Expr<? extends BoolType>> joinedPreds = new HashSet<>();
-		joinedPreds.addAll(this.predToNegMap.keySet());
-		for (final Expr<? extends BoolType> pred : extraPreds) {
-			if (!(pred instanceof BoolLitExpr)) {
-				joinedPreds.add(pred);
-			}
-		}
-		// If no new predicate was added return itself (immutable)
+	public SimplePredPrecision join(final SimplePredPrecision other) {
+		checkNotNull(other);
+		final Collection<Expr<? extends BoolType>> joinedPreds = ImmutableSet.<Expr<? extends BoolType>>builder()
+				.addAll(this.predToNegMap.keySet()).addAll(other.predToNegMap.keySet()).build();
+		// If no new predicate was added, return same instance (immutable)
 		if (joinedPreds.size() == this.predToNegMap.size()) {
 			return this;
-		} else {
-			return create(joinedPreds, solver);
+		} else if (joinedPreds.size() == other.predToNegMap.size()) {
+			return other;
 		}
-	}
 
-	public SimplePredPrecision refine(final Expr<? extends BoolType> extraPred) {
-		return refine(Collections.singleton(extraPred));
+		return create(joinedPreds, solver);
 	}
 
 	@Override

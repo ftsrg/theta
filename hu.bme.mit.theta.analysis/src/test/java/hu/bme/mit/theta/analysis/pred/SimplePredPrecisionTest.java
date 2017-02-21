@@ -40,15 +40,18 @@ public class SimplePredPrecisionTest {
 
 	@Test
 	public void testRefinement() {
-		final SimplePredPrecision prec = SimplePredPrecision.create(Collections.singleton(pred), solver);
+		final SimplePredPrecision p0 = SimplePredPrecision.create(solver);
+		final SimplePredPrecision p1 = SimplePredPrecision.create(Collections.singleton(pred), solver);
+		final SimplePredPrecision p2 = SimplePredPrecision
+				.create(Collections.singleton(Exprs.Eq(x.getRef(), y.getRef())), solver);
 
-		final SimplePredPrecision refine1 = prec.refine(Exprs.True());
-		final SimplePredPrecision refine2 = prec.refine(Exprs.False());
-		final SimplePredPrecision refine3 = prec.refine(Exprs.Eq(x.getRef(), y.getRef()));
+		final SimplePredPrecision r1 = p1.join(p0);
+		final SimplePredPrecision r2 = p1.join(p2);
+		final SimplePredPrecision r3 = p1.join(r2);
 
-		Assert.assertTrue(prec == refine1);
-		Assert.assertTrue(prec == refine2);
-		Assert.assertTrue(prec != refine3);
+		Assert.assertTrue(p1 == r1);
+		Assert.assertTrue(p1 != r2);
+		Assert.assertTrue(r2 == r3);
 
 	}
 }
