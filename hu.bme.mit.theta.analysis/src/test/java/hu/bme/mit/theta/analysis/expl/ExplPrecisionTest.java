@@ -5,6 +5,8 @@ import java.util.Collections;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.google.common.collect.ImmutableSet;
+
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.decl.impl.Decls;
 import hu.bme.mit.theta.core.expr.impl.Exprs;
@@ -43,12 +45,17 @@ public class ExplPrecisionTest {
 
 	@Test
 	public void testRefinement() {
-		final ExplPrecision prec = ExplPrecision.create(Collections.singleton(x));
-		final ExplPrecision r1 = prec.refine(x);
-		final ExplPrecision r2 = prec.refine(y);
+		final ExplPrecision px = ExplPrecision.create(Collections.singleton(x));
+		final ExplPrecision py = ExplPrecision.create(Collections.singleton(y));
+		final ExplPrecision pxy = ExplPrecision.create(ImmutableSet.of(x, y));
 
-		Assert.assertTrue(r1 == prec);
-		Assert.assertTrue(r2 != prec);
+		final ExplPrecision r1 = px.join(px);
+		final ExplPrecision r2 = px.join(py);
+		final ExplPrecision r3 = px.join(pxy);
+
+		Assert.assertTrue(r1 == px);
+		Assert.assertTrue(r2 != px);
+		Assert.assertTrue(r3 == pxy);
 
 	}
 }

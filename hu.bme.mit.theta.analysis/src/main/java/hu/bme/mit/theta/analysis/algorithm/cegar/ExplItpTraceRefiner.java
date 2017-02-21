@@ -16,7 +16,7 @@ public class ExplItpTraceRefiner<S extends ExprState, A extends ExprAction> impl
 	@Override
 	public ExplPrecision refine(final Trace<S, A> trace, final ExplPrecision precision,
 			final ItpRefutation refutation) {
-		final ExplPrecision refinedPrecision = precision.refine(ExprUtils.getVars(refutation));
+		final ExplPrecision refinedPrecision = precision.join(ExplPrecision.create(ExprUtils.getVars(refutation)));
 		return refinedPrecision;
 	}
 
@@ -25,7 +25,7 @@ public class ExplItpTraceRefiner<S extends ExprState, A extends ExprAction> impl
 			final ItpRefutation refutation) {
 		final List<ExplPrecision> refinedPrecisions = new ArrayList<>(precisions.size());
 		for (int i = 0; i < precisions.size(); ++i) {
-			refinedPrecisions.add(precisions.get(i).refine(ExprUtils.getVars(refutation.get(i))));
+			refinedPrecisions.add(precisions.get(i).join(ExplPrecision.create(ExprUtils.getVars(refutation.get(i)))));
 		}
 		return refinedPrecisions;
 	}
