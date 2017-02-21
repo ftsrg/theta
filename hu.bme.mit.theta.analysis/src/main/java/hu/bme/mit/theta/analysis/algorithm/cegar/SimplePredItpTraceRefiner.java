@@ -1,6 +1,7 @@
 package hu.bme.mit.theta.analysis.algorithm.cegar;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import hu.bme.mit.theta.analysis.Trace;
@@ -16,7 +17,8 @@ public class SimplePredItpTraceRefiner<S extends ExprState, A extends ExprAction
 	@Override
 	public SimplePredPrecision refine(final Trace<S, A> trace, final SimplePredPrecision precision,
 			final ItpRefutation refutation) {
-		final SimplePredPrecision refinedPrecision = precision.refine(refutation);
+		final SimplePredPrecision refinedPrecision = precision
+				.join(SimplePredPrecision.create(refutation, precision.getSolver()));
 		return refinedPrecision;
 	}
 
@@ -25,7 +27,8 @@ public class SimplePredItpTraceRefiner<S extends ExprState, A extends ExprAction
 			final ItpRefutation refutation) {
 		final List<SimplePredPrecision> refinedPrecisions = new ArrayList<>(precisions.size());
 		for (int i = 0; i < precisions.size(); ++i) {
-			refinedPrecisions.add(precisions.get(i).refine(refutation.get(i)));
+			refinedPrecisions.add(precisions.get(i).join(SimplePredPrecision
+					.create(Collections.singleton(refutation.get(i)), precisions.get(i).getSolver())));
 		}
 		return refinedPrecisions;
 	}
