@@ -3,6 +3,7 @@ package hu.bme.mit.theta.analysis.loc;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import hu.bme.mit.theta.analysis.Precision;
+import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.formalism.common.Edge;
 import hu.bme.mit.theta.formalism.common.Loc;
 
@@ -39,6 +40,11 @@ public final class ConstLocPrecision<P extends Precision, L extends Loc<L, E>, E
 
 	public P getPrecision() {
 		return precision;
+	}
+
+	@Override
+	public String toString() {
+		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).add(precision).toString();
 	}
 
 }
