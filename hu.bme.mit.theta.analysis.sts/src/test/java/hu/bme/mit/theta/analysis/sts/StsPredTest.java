@@ -28,7 +28,7 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyStatus;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker;
-import hu.bme.mit.theta.analysis.algorithm.cegar.SimplePredItpTraceRefiner;
+import hu.bme.mit.theta.analysis.algorithm.cegar.SimplePredItpRefiner;
 import hu.bme.mit.theta.analysis.algorithm.cegar.SingleExprTraceRefiner;
 import hu.bme.mit.theta.analysis.algorithm.cegar.WaitlistBasedAbstractor;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
@@ -93,7 +93,7 @@ public class StsPredTest {
 				Not(sts.getProp()), solver);
 
 		final SingleExprTraceRefiner<PredState, StsAction, SimplePredPrecision, ItpRefutation> refiner = SingleExprTraceRefiner
-				.create(exprTraceChecker, new SimplePredItpTraceRefiner<>(), logger);
+				.create(exprTraceChecker, new SimplePredItpRefiner<>(), logger);
 
 		final SafetyChecker<PredState, StsAction, SimplePredPrecision> checker = CegarChecker.create(abstractor,
 				refiner, logger);

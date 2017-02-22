@@ -14,10 +14,10 @@ import hu.bme.mit.theta.analysis.algorithm.ArgBuilder;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker;
-import hu.bme.mit.theta.analysis.algorithm.cegar.ExplItpTraceRefiner;
-import hu.bme.mit.theta.analysis.algorithm.cegar.ExplVarSetsTraceRefiner;
+import hu.bme.mit.theta.analysis.algorithm.cegar.ExplItpRefiner;
+import hu.bme.mit.theta.analysis.algorithm.cegar.ExplVarsRefiner;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Refiner;
-import hu.bme.mit.theta.analysis.algorithm.cegar.SimplePredItpTraceRefiner;
+import hu.bme.mit.theta.analysis.algorithm.cegar.SimplePredItpRefiner;
 import hu.bme.mit.theta.analysis.algorithm.cegar.SingleExprTraceRefiner;
 import hu.bme.mit.theta.analysis.algorithm.cegar.WaitlistBasedAbstractor;
 import hu.bme.mit.theta.analysis.expl.ExplAnalysis;
@@ -101,15 +101,15 @@ public final class StsConfigurationBuilder extends ConfigurationBuilder {
 			switch (getRefinement()) {
 			case CRAIG_ITP:
 				refiner = SingleExprTraceRefiner.create(ExprTraceCraigItpChecker.create(init, negProp, solver),
-						new ExplItpTraceRefiner<>(), getLogger());
+						new ExplItpRefiner<>(), getLogger());
 				break;
 			case SEQ_ITP:
 				refiner = SingleExprTraceRefiner.create(ExprTraceSeqItpChecker.create(init, negProp, solver),
-						new ExplItpTraceRefiner<>(), getLogger());
+						new ExplItpRefiner<>(), getLogger());
 				break;
 			case UNSAT_CORE:
 				refiner = SingleExprTraceRefiner.create(ExprTraceUnsatCoreChecker.create(init, negProp, solver),
-						new ExplVarSetsTraceRefiner<>(), getLogger());
+						new ExplVarsRefiner<>(), getLogger());
 				break;
 			default:
 				throw new UnsupportedOperationException();
@@ -150,7 +150,7 @@ public final class StsConfigurationBuilder extends ConfigurationBuilder {
 				throw new UnsupportedOperationException();
 			}
 			final Refiner<PredState, StsAction, SimplePredPrecision> refiner = SingleExprTraceRefiner
-					.create(exprTraceChecker, new SimplePredItpTraceRefiner<>(), getLogger());
+					.create(exprTraceChecker, new SimplePredItpRefiner<>(), getLogger());
 
 			final SafetyChecker<PredState, StsAction, SimplePredPrecision> checker = CegarChecker.create(abstractor,
 					refiner, getLogger());
