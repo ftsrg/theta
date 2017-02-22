@@ -29,6 +29,7 @@ import hu.bme.mit.theta.analysis.loc.LocAnalysis;
 import hu.bme.mit.theta.analysis.loc.LocPrecision;
 import hu.bme.mit.theta.analysis.loc.LocState;
 import hu.bme.mit.theta.analysis.loc.LocTraceConstRefiner;
+import hu.bme.mit.theta.analysis.loc.LocTraceGenericRefiner;
 import hu.bme.mit.theta.analysis.pred.PredAnalysis;
 import hu.bme.mit.theta.analysis.pred.PredState;
 import hu.bme.mit.theta.analysis.pred.SimplePredPrecision;
@@ -90,19 +91,37 @@ public class CfaConfigurationBuilder extends ConfigurationBuilder {
 
 			switch (getRefinement()) {
 			case CRAIG_ITP:
-				refiner = SingleExprTraceRefiner.create(
-						ExprTraceCraigItpChecker.create(Exprs.True(), Exprs.True(), solver),
-						LocTraceConstRefiner.create(new ExplItpTraceRefiner<>()), getLogger());
+				if (locPrec == LocPrec.CONST) {
+					refiner = SingleExprTraceRefiner.create(
+							ExprTraceCraigItpChecker.create(Exprs.True(), Exprs.True(), solver),
+							LocTraceConstRefiner.create(new ExplItpTraceRefiner<>()), getLogger());
+				} else {
+					refiner = SingleExprTraceRefiner.create(
+							ExprTraceCraigItpChecker.create(Exprs.True(), Exprs.True(), solver),
+							LocTraceGenericRefiner.create(new ExplItpTraceRefiner<>()), getLogger());
+				}
 				break;
 			case SEQ_ITP:
-				refiner = SingleExprTraceRefiner.create(
-						ExprTraceSeqItpChecker.create(Exprs.True(), Exprs.True(), solver),
-						LocTraceConstRefiner.create(new ExplItpTraceRefiner<>()), getLogger());
+				if (locPrec == LocPrec.CONST) {
+					refiner = SingleExprTraceRefiner.create(
+							ExprTraceSeqItpChecker.create(Exprs.True(), Exprs.True(), solver),
+							LocTraceConstRefiner.create(new ExplItpTraceRefiner<>()), getLogger());
+				} else {
+					refiner = SingleExprTraceRefiner.create(
+							ExprTraceSeqItpChecker.create(Exprs.True(), Exprs.True(), solver),
+							LocTraceGenericRefiner.create(new ExplItpTraceRefiner<>()), getLogger());
+				}
 				break;
 			case UNSAT_CORE:
-				refiner = SingleExprTraceRefiner.create(
-						ExprTraceUnsatCoreChecker.create(Exprs.True(), Exprs.True(), solver),
-						LocTraceConstRefiner.create(new ExplVarSetsTraceRefiner<>()), getLogger());
+				if (locPrec == LocPrec.CONST) {
+					refiner = SingleExprTraceRefiner.create(
+							ExprTraceUnsatCoreChecker.create(Exprs.True(), Exprs.True(), solver),
+							LocTraceConstRefiner.create(new ExplVarSetsTraceRefiner<>()), getLogger());
+				} else {
+					refiner = SingleExprTraceRefiner.create(
+							ExprTraceUnsatCoreChecker.create(Exprs.True(), Exprs.True(), solver),
+							LocTraceGenericRefiner.create(new ExplVarSetsTraceRefiner<>()), getLogger());
+				}
 				break;
 			default:
 				throw new UnsupportedOperationException();
@@ -138,14 +157,26 @@ public class CfaConfigurationBuilder extends ConfigurationBuilder {
 
 			switch (getRefinement()) {
 			case CRAIG_ITP:
-				refiner = SingleExprTraceRefiner.create(
-						ExprTraceCraigItpChecker.create(Exprs.True(), Exprs.True(), solver),
-						LocTraceConstRefiner.create(new SimplePredItpTraceRefiner<>()), getLogger());
-				break;
+				if (locPrec == LocPrec.CONST) {
+					refiner = SingleExprTraceRefiner.create(
+							ExprTraceCraigItpChecker.create(Exprs.True(), Exprs.True(), solver),
+							LocTraceConstRefiner.create(new SimplePredItpTraceRefiner<>()), getLogger());
+					break;
+				} else {
+					refiner = SingleExprTraceRefiner.create(
+							ExprTraceCraigItpChecker.create(Exprs.True(), Exprs.True(), solver),
+							LocTraceGenericRefiner.create(new SimplePredItpTraceRefiner<>()), getLogger());
+				}
 			case SEQ_ITP:
-				refiner = SingleExprTraceRefiner.create(
-						ExprTraceSeqItpChecker.create(Exprs.True(), Exprs.True(), solver),
-						LocTraceConstRefiner.create(new SimplePredItpTraceRefiner<>()), getLogger());
+				if (locPrec == LocPrec.CONST) {
+					refiner = SingleExprTraceRefiner.create(
+							ExprTraceSeqItpChecker.create(Exprs.True(), Exprs.True(), solver),
+							LocTraceConstRefiner.create(new SimplePredItpTraceRefiner<>()), getLogger());
+				} else {
+					refiner = SingleExprTraceRefiner.create(
+							ExprTraceSeqItpChecker.create(Exprs.True(), Exprs.True(), solver),
+							LocTraceGenericRefiner.create(new SimplePredItpTraceRefiner<>()), getLogger());
+				}
 				break;
 			default:
 				throw new UnsupportedOperationException();
