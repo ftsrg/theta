@@ -13,16 +13,16 @@ import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.ArgBuilder;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
+import hu.bme.mit.theta.analysis.algorithm.cegar.BasicPrecRefiner;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker;
-import hu.bme.mit.theta.analysis.algorithm.cegar.ExplItpRefiner;
-import hu.bme.mit.theta.analysis.algorithm.cegar.ExplVarsRefiner;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Refiner;
-import hu.bme.mit.theta.analysis.algorithm.cegar.SimplePredItpRefiner;
 import hu.bme.mit.theta.analysis.algorithm.cegar.SingleExprTraceRefiner;
 import hu.bme.mit.theta.analysis.algorithm.cegar.WaitlistBasedAbstractor;
 import hu.bme.mit.theta.analysis.expl.ExplAnalysis;
 import hu.bme.mit.theta.analysis.expl.ExplPrec;
 import hu.bme.mit.theta.analysis.expl.ExplState;
+import hu.bme.mit.theta.analysis.expl.ItpRefToExplPrec;
+import hu.bme.mit.theta.analysis.expl.VarsRefToExplPrec;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.ExprStatePredicate;
@@ -31,6 +31,7 @@ import hu.bme.mit.theta.analysis.expr.ExprTraceCraigItpChecker;
 import hu.bme.mit.theta.analysis.expr.ExprTraceSeqItpChecker;
 import hu.bme.mit.theta.analysis.expr.ExprTraceUnsatCoreChecker;
 import hu.bme.mit.theta.analysis.expr.ItpRefutation;
+import hu.bme.mit.theta.analysis.pred.ItpRefToSimplePredPrec;
 import hu.bme.mit.theta.analysis.pred.PredAnalysis;
 import hu.bme.mit.theta.analysis.pred.PredPrec;
 import hu.bme.mit.theta.analysis.pred.PredState;
@@ -93,23 +94,23 @@ public final class StsConfigurationBuilder extends ConfigurationBuilder {
 
 			final Analysis<ExplState, ExprAction, ExplPrec> analysis = ExplAnalysis.create(solver, init);
 			final ArgBuilder<ExplState, StsAction, ExplPrec> argBuilder = ArgBuilder.create(lts, analysis, target);
-			final Abstractor<ExplState, StsAction, ExplPrec> abstractor = WaitlistBasedAbstractor
-					.create(argBuilder, PriorityWaitlist.supplier(getSearch().comparator), getLogger());
+			final Abstractor<ExplState, StsAction, ExplPrec> abstractor = WaitlistBasedAbstractor.create(argBuilder,
+					PriorityWaitlist.supplier(getSearch().comparator), getLogger());
 
 			Refiner<ExplState, StsAction, ExplPrec> refiner = null;
 
 			switch (getRefinement()) {
 			case CRAIG_ITP:
 				refiner = SingleExprTraceRefiner.create(ExprTraceCraigItpChecker.create(init, negProp, solver),
-						new ExplItpRefiner<>(), getLogger());
+						BasicPrecRefiner.create(new ItpRefToExplPrec()), getLogger());
 				break;
 			case SEQ_ITP:
 				refiner = SingleExprTraceRefiner.create(ExprTraceSeqItpChecker.create(init, negProp, solver),
-						new ExplItpRefiner<>(), getLogger());
+						BasicPrecRefiner.create(new ItpRefToExplPrec()), getLogger());
 				break;
 			case UNSAT_CORE:
 				refiner = SingleExprTraceRefiner.create(ExprTraceUnsatCoreChecker.create(init, negProp, solver),
-						new ExplVarsRefiner<>(), getLogger());
+						BasicPrecRefiner.create(new VarsRefToExplPrec()), getLogger());
 				break;
 			default:
 				throw new UnsupportedOperationException();
@@ -150,10 +151,10 @@ public final class StsConfigurationBuilder extends ConfigurationBuilder {
 				throw new UnsupportedOperationException();
 			}
 			final Refiner<PredState, StsAction, SimplePredPrec> refiner = SingleExprTraceRefiner
-					.create(exprTraceChecker, new SimplePredItpRefiner<>(), getLogger());
+					.create(exprTraceChecker, BasicPrecRefiner.create(new ItpRefToSimplePredPrec(solver)), getLogger());
 
-			final SafetyChecker<PredState, StsAction, SimplePredPrec> checker = CegarChecker.create(abstractor,
-					refiner, getLogger());
+			final SafetyChecker<PredState, StsAction, SimplePredPrec> checker = CegarChecker.create(abstractor, refiner,
+					getLogger());
 			SimplePredPrec prec = null;
 			switch (initPrec) {
 			case EMPTY:
