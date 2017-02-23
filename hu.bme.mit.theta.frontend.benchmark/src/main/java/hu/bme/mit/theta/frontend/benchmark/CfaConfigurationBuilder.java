@@ -8,10 +8,7 @@ import hu.bme.mit.theta.analysis.algorithm.ArgBuilder;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker;
-import hu.bme.mit.theta.analysis.algorithm.cegar.ExplItpRefiner;
-import hu.bme.mit.theta.analysis.algorithm.cegar.ExplVarsRefiner;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Refiner;
-import hu.bme.mit.theta.analysis.algorithm.cegar.SimplePredItpRefiner;
 import hu.bme.mit.theta.analysis.algorithm.cegar.SingleExprTraceRefiner;
 import hu.bme.mit.theta.analysis.algorithm.cegar.WaitlistBasedAbstractor;
 import hu.bme.mit.theta.analysis.cfa.CfaAction;
@@ -19,17 +16,20 @@ import hu.bme.mit.theta.analysis.cfa.CfaLts;
 import hu.bme.mit.theta.analysis.expl.ExplAnalysis;
 import hu.bme.mit.theta.analysis.expl.ExplPrec;
 import hu.bme.mit.theta.analysis.expl.ExplState;
+import hu.bme.mit.theta.analysis.expl.ItpRefToExplPrec;
+import hu.bme.mit.theta.analysis.expl.VarsRefToExplPrec;
 import hu.bme.mit.theta.analysis.expr.ExprTraceCraigItpChecker;
 import hu.bme.mit.theta.analysis.expr.ExprTraceSeqItpChecker;
 import hu.bme.mit.theta.analysis.expr.ExprTraceUnsatCoreChecker;
-import hu.bme.mit.theta.analysis.loc.ConstLocPrecRefiner;
 import hu.bme.mit.theta.analysis.loc.ConstLocPrec;
-import hu.bme.mit.theta.analysis.loc.GenericLocPrecRefiner;
+import hu.bme.mit.theta.analysis.loc.ConstLocPrecRefiner;
 import hu.bme.mit.theta.analysis.loc.GenericLocPrec;
+import hu.bme.mit.theta.analysis.loc.GenericLocPrecRefiner;
 import hu.bme.mit.theta.analysis.loc.LocAction;
 import hu.bme.mit.theta.analysis.loc.LocAnalysis;
 import hu.bme.mit.theta.analysis.loc.LocPrec;
 import hu.bme.mit.theta.analysis.loc.LocState;
+import hu.bme.mit.theta.analysis.pred.ItpRefToSimplePredPrec;
 import hu.bme.mit.theta.analysis.pred.PredAnalysis;
 import hu.bme.mit.theta.analysis.pred.PredState;
 import hu.bme.mit.theta.analysis.pred.SimplePredPrec;
@@ -94,33 +94,33 @@ public class CfaConfigurationBuilder extends ConfigurationBuilder {
 				if (precGranularity == PrecGranularity.CONST) {
 					refiner = SingleExprTraceRefiner.create(
 							ExprTraceCraigItpChecker.create(Exprs.True(), Exprs.True(), solver),
-							ConstLocPrecRefiner.create(new ExplItpRefiner<>()), getLogger());
+							ConstLocPrecRefiner.create(new ItpRefToExplPrec()), getLogger());
 				} else {
 					refiner = SingleExprTraceRefiner.create(
 							ExprTraceCraigItpChecker.create(Exprs.True(), Exprs.True(), solver),
-							new GenericLocPrecRefiner<>(new ExplItpRefiner<>()), getLogger());
+							GenericLocPrecRefiner.create(new ItpRefToExplPrec()), getLogger());
 				}
 				break;
 			case SEQ_ITP:
 				if (precGranularity == PrecGranularity.CONST) {
 					refiner = SingleExprTraceRefiner.create(
 							ExprTraceSeqItpChecker.create(Exprs.True(), Exprs.True(), solver),
-							ConstLocPrecRefiner.create(new ExplItpRefiner<>()), getLogger());
+							ConstLocPrecRefiner.create(new ItpRefToExplPrec()), getLogger());
 				} else {
 					refiner = SingleExprTraceRefiner.create(
 							ExprTraceSeqItpChecker.create(Exprs.True(), Exprs.True(), solver),
-							new GenericLocPrecRefiner<>(new ExplItpRefiner<>()), getLogger());
+							GenericLocPrecRefiner.create(new ItpRefToExplPrec()), getLogger());
 				}
 				break;
 			case UNSAT_CORE:
 				if (precGranularity == PrecGranularity.CONST) {
 					refiner = SingleExprTraceRefiner.create(
 							ExprTraceUnsatCoreChecker.create(Exprs.True(), Exprs.True(), solver),
-							ConstLocPrecRefiner.create(new ExplVarsRefiner<>()), getLogger());
+							ConstLocPrecRefiner.create(new VarsRefToExplPrec()), getLogger());
 				} else {
 					refiner = SingleExprTraceRefiner.create(
 							ExprTraceUnsatCoreChecker.create(Exprs.True(), Exprs.True(), solver),
-							new GenericLocPrecRefiner<>(new ExplVarsRefiner<>()), getLogger());
+							GenericLocPrecRefiner.create(new VarsRefToExplPrec()), getLogger());
 				}
 				break;
 			default:
@@ -160,22 +160,22 @@ public class CfaConfigurationBuilder extends ConfigurationBuilder {
 				if (precGranularity == PrecGranularity.CONST) {
 					refiner = SingleExprTraceRefiner.create(
 							ExprTraceCraigItpChecker.create(Exprs.True(), Exprs.True(), solver),
-							ConstLocPrecRefiner.create(new SimplePredItpRefiner<>()), getLogger());
+							ConstLocPrecRefiner.create(new ItpRefToSimplePredPrec(solver)), getLogger());
 					break;
 				} else {
 					refiner = SingleExprTraceRefiner.create(
 							ExprTraceCraigItpChecker.create(Exprs.True(), Exprs.True(), solver),
-							new GenericLocPrecRefiner<>(new SimplePredItpRefiner<>()), getLogger());
+							GenericLocPrecRefiner.create(new ItpRefToSimplePredPrec(solver)), getLogger());
 				}
 			case SEQ_ITP:
 				if (precGranularity == PrecGranularity.CONST) {
 					refiner = SingleExprTraceRefiner.create(
 							ExprTraceSeqItpChecker.create(Exprs.True(), Exprs.True(), solver),
-							ConstLocPrecRefiner.create(new SimplePredItpRefiner<>()), getLogger());
+							ConstLocPrecRefiner.create(new ItpRefToSimplePredPrec(solver)), getLogger());
 				} else {
 					refiner = SingleExprTraceRefiner.create(
 							ExprTraceSeqItpChecker.create(Exprs.True(), Exprs.True(), solver),
-							new GenericLocPrecRefiner<>(new SimplePredItpRefiner<>()), getLogger());
+							GenericLocPrecRefiner.create(new ItpRefToSimplePredPrec(solver)), getLogger());
 				}
 				break;
 			default:

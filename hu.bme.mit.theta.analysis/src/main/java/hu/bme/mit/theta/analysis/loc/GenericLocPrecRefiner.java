@@ -2,29 +2,29 @@ package hu.bme.mit.theta.analysis.loc;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 import hu.bme.mit.theta.analysis.Action;
-import hu.bme.mit.theta.analysis.PrecTrace;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.cegar.PrecRefiner;
-import hu.bme.mit.theta.analysis.algorithm.cegar.PrecTraceRefiner;
 import hu.bme.mit.theta.analysis.expr.Refutation;
+import hu.bme.mit.theta.analysis.expr.RefutationToPrec;
 import hu.bme.mit.theta.formalism.common.Edge;
 import hu.bme.mit.theta.formalism.common.Loc;
 
 public class GenericLocPrecRefiner<S extends State, A extends Action, P extends Prec, R extends Refutation, L extends Loc<L, E>, E extends Edge<L, E>>
 		implements PrecRefiner<LocState<S, L, E>, A, LocPrec<P, L, E>, R> {
 
-	PrecTraceRefiner<S, A, P, R> refiner;
+	private final RefutationToPrec<P, R> refToPrec;
 
-	public GenericLocPrecRefiner(final PrecTraceRefiner<S, A, P, R> refiner) {
-		this.refiner = checkNotNull(refiner);
+	private GenericLocPrecRefiner(final RefutationToPrec<P, R> refToPrec) {
+		this.refToPrec = checkNotNull(refToPrec);
+	}
+
+	public static <S extends State, A extends Action, P extends Prec, R extends Refutation, L extends Loc<L, E>, E extends Edge<L, E>> GenericLocPrecRefiner<S, A, P, R, L, E> create(
+			final RefutationToPrec<P, R> refToPrec) {
+		return new GenericLocPrecRefiner<>(refToPrec);
 	}
 
 	@Override
@@ -32,14 +32,8 @@ public class GenericLocPrecRefiner<S extends State, A extends Action, P extends 
 			final R refutation) {
 		checkArgument(prec instanceof GenericLocPrec); // TODO: enforce this in a better way
 		final GenericLocPrec<P, L, E> genPrec = (GenericLocPrec<P, L, E>) prec;
-		final List<L> locs = trace.getStates().stream().map(LocState::getLoc).collect(Collectors.toList());
-		final List<P> precs = locs.stream().map(l -> genPrec.getPrec(l)).collect(Collectors.toList());
-		final List<S> states = trace.getStates().stream().map(LocState::getState).collect(Collectors.toList());
-		final List<A> acts = trace.getActions();
 
-		final PrecTrace<S, A, P> refinedPrecs = refiner.refine(PrecTrace.of(Trace.of(states, acts), precs), refutation);
-		checkState(refinedPrecs.getPrecs().size() == locs.size());
-		return genPrec.refine(locs, refinedPrecs.getPrecs());
+		throw new UnsupportedOperationException("Not implemented"); // TODO
 	}
 
 }
