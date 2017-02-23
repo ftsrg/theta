@@ -3,6 +3,9 @@ package hu.bme.mit.theta.analysis.loc;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
@@ -32,8 +35,19 @@ public class GenericLocPrecRefiner<S extends State, A extends Action, P extends 
 			final R refutation) {
 		checkArgument(prec instanceof GenericLocPrec); // TODO: enforce this in a better way
 		final GenericLocPrec<P, L, E> genPrec = (GenericLocPrec<P, L, E>) prec;
+		final Map<L, P> runningPrecs = new HashMap<>();
+		for (final LocState<S, L, E> state : trace.getStates()) {
+			runningPrecs.put(state.getLoc(), genPrec.getPrec(state.getLoc()));
+		}
 
-		throw new UnsupportedOperationException("Not implemented"); // TODO
+		for (int i = 0; i < trace.getStates().size(); ++i) {
+			final L loc = trace.getState(i).getLoc();
+			final P precForLoc = runningPrecs.get(loc);
+			final P newPrecForLoc = refToPrec.toPrec(refutation, i);
+			runningPrecs.put(loc, refToPrec.join(precForLoc, newPrecForLoc));
+		}
+
+		return genPrec.refine(runningPrecs);
 	}
 
 }

@@ -1,12 +1,11 @@
 package hu.bme.mit.theta.analysis.loc;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
@@ -58,26 +57,27 @@ public final class GenericLocPrec<P extends Prec, L extends Loc<L, E>, E extends
 		throw new NoSuchElementException("Location not found.");
 	}
 
-	public GenericLocPrec<P, L, E> refine(final List<L> locs, final List<P> refinedPrecs) {
-		checkNotNull(locs);
+	public GenericLocPrec<P, L, E> refine(final Map<L, P> refinedPrecs) {
 		checkNotNull(refinedPrecs);
-		checkArgument(locs.size() == refinedPrecs.size());
 
 		final Map<L, P> refinedMapping = new HashMap<>(this.mapping);
 
-		for (int i = 0; i < locs.size(); ++i) {
+		for (final Entry<L, P> entry : refinedPrecs.entrySet()) {
+			final L loc = entry.getKey();
+			final P prec = entry.getValue();
+
 			// TODO: instead of == this should be 'equals' (it is correct this way as well, but it would be more efficient)
-			if (defaultPrec.isPresent() && !mapping.containsKey(locs.get(i))
-					&& defaultPrec.get() == refinedPrecs.get(i))
+			if (defaultPrec.isPresent() && !mapping.containsKey(loc) && defaultPrec.get() == prec) {
 				continue;
-			refinedMapping.put(locs.get(i), refinedPrecs.get(i));
+			}
+			refinedMapping.put(loc, prec);
 		}
 
 		return new GenericLocPrec<>(refinedMapping, this.defaultPrec);
 	}
 
 	public GenericLocPrec<P, L, E> refine(final L loc, final P refinedPrec) {
-		return refine(Collections.singletonList(loc), Collections.singletonList(refinedPrec));
+		return refine(Collections.singletonMap(loc, refinedPrec));
 	}
 
 	@Override
