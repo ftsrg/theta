@@ -50,4 +50,8 @@ public class GenericLocPrecRefiner<S extends State, A extends Action, P extends 
 		return genPrec.refine(runningPrecs);
 	}
 
+	@Override
+	public String toString() {
+		return getClass().getSimpleName();
+	}
 }

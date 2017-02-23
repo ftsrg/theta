@@ -14,6 +14,7 @@ import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.ExprTraceChecker;
 import hu.bme.mit.theta.analysis.expr.ExprTraceStatus;
 import hu.bme.mit.theta.analysis.expr.Refutation;
+import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.common.logging.Logger;
 
 public class SingleExprTraceRefiner<S extends ExprState, A extends ExprAction, P extends Prec, R extends Refutation>
@@ -65,6 +66,12 @@ public class SingleExprTraceRefiner<S extends ExprState, A extends ExprAction, P
 			return RefinerResult.spurious(refinedPrec);
 		}
 		throw new IllegalStateException("Unknown status.");
+	}
+
+	@Override
+	public String toString() {
+		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).add(exprTraceChecker).add(traceRefiner)
+				.toString();
 	}
 
 }

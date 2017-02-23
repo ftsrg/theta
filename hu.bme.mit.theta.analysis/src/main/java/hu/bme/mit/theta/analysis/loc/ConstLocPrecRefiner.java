@@ -40,4 +40,9 @@ public class ConstLocPrecRefiner<S extends State, A extends Action, P extends Pr
 		return constPrec.refine(runningPrec);
 	}
 
+	@Override
+	public String toString() {
+		return getClass().getSimpleName();
+	}
+
 }

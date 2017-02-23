@@ -30,4 +30,9 @@ public class BasicPrecRefiner<S extends State, A extends Action, P extends Prec,
 		}
 		return runningPrec;
 	}
+
+	@Override
+	public String toString() {
+		return getClass().getSimpleName();
+	}
 }
