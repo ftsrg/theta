@@ -24,9 +24,7 @@ import hu.bme.mit.theta.analysis.expr.ExprTraceSeqItpChecker;
 import hu.bme.mit.theta.analysis.expr.ExprTraceUnsatCoreChecker;
 import hu.bme.mit.theta.analysis.loc.ConstLocPrecRefiner;
 import hu.bme.mit.theta.analysis.loc.ConstLocPrecision;
-import hu.bme.mit.theta.analysis.loc.GenLocExplPrecItpRefiner;
-import hu.bme.mit.theta.analysis.loc.GenLocExplPrecVarsRefiner;
-import hu.bme.mit.theta.analysis.loc.GenLocSimplePredPrecItpRefiner;
+import hu.bme.mit.theta.analysis.loc.GenericLocPrecRefiner;
 import hu.bme.mit.theta.analysis.loc.GenericLocPrecision;
 import hu.bme.mit.theta.analysis.loc.LocAction;
 import hu.bme.mit.theta.analysis.loc.LocAnalysis;
@@ -100,7 +98,7 @@ public class CfaConfigurationBuilder extends ConfigurationBuilder {
 				} else {
 					refiner = SingleExprTraceRefiner.create(
 							ExprTraceCraigItpChecker.create(Exprs.True(), Exprs.True(), solver),
-							new GenLocExplPrecItpRefiner<>(), getLogger());
+							new GenericLocPrecRefiner<>(new ExplItpRefiner<>()), getLogger());
 				}
 				break;
 			case SEQ_ITP:
@@ -111,7 +109,7 @@ public class CfaConfigurationBuilder extends ConfigurationBuilder {
 				} else {
 					refiner = SingleExprTraceRefiner.create(
 							ExprTraceSeqItpChecker.create(Exprs.True(), Exprs.True(), solver),
-							new GenLocExplPrecItpRefiner<>(), getLogger());
+							new GenericLocPrecRefiner<>(new ExplItpRefiner<>()), getLogger());
 				}
 				break;
 			case UNSAT_CORE:
@@ -122,7 +120,7 @@ public class CfaConfigurationBuilder extends ConfigurationBuilder {
 				} else {
 					refiner = SingleExprTraceRefiner.create(
 							ExprTraceUnsatCoreChecker.create(Exprs.True(), Exprs.True(), solver),
-							new GenLocExplPrecVarsRefiner<>(), getLogger());
+							new GenericLocPrecRefiner<>(new ExplVarsRefiner<>()), getLogger());
 				}
 				break;
 			default:
@@ -167,7 +165,7 @@ public class CfaConfigurationBuilder extends ConfigurationBuilder {
 				} else {
 					refiner = SingleExprTraceRefiner.create(
 							ExprTraceCraigItpChecker.create(Exprs.True(), Exprs.True(), solver),
-							new GenLocSimplePredPrecItpRefiner<>(), getLogger());
+							new GenericLocPrecRefiner<>(new SimplePredItpRefiner<>()), getLogger());
 				}
 			case SEQ_ITP:
 				if (locPrec == LocPrec.CONST) {
@@ -177,7 +175,7 @@ public class CfaConfigurationBuilder extends ConfigurationBuilder {
 				} else {
 					refiner = SingleExprTraceRefiner.create(
 							ExprTraceSeqItpChecker.create(Exprs.True(), Exprs.True(), solver),
-							new GenLocSimplePredPrecItpRefiner<>(), getLogger());
+							new GenericLocPrecRefiner<>(new SimplePredItpRefiner<>()), getLogger());
 				}
 				break;
 			default:
