@@ -2,7 +2,7 @@ package hu.bme.mit.theta.frontend.benchmark;
 
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Analysis;
-import hu.bme.mit.theta.analysis.Precision;
+import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.ArgBuilder;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
@@ -17,22 +17,22 @@ import hu.bme.mit.theta.analysis.algorithm.cegar.WaitlistBasedAbstractor;
 import hu.bme.mit.theta.analysis.cfa.CfaAction;
 import hu.bme.mit.theta.analysis.cfa.CfaLts;
 import hu.bme.mit.theta.analysis.expl.ExplAnalysis;
-import hu.bme.mit.theta.analysis.expl.ExplPrecision;
+import hu.bme.mit.theta.analysis.expl.ExplPrec;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.ExprTraceCraigItpChecker;
 import hu.bme.mit.theta.analysis.expr.ExprTraceSeqItpChecker;
 import hu.bme.mit.theta.analysis.expr.ExprTraceUnsatCoreChecker;
 import hu.bme.mit.theta.analysis.loc.ConstLocPrecRefiner;
-import hu.bme.mit.theta.analysis.loc.ConstLocPrecision;
+import hu.bme.mit.theta.analysis.loc.ConstLocPrec;
 import hu.bme.mit.theta.analysis.loc.GenericLocPrecRefiner;
 import hu.bme.mit.theta.analysis.loc.GenericLocPrecision;
 import hu.bme.mit.theta.analysis.loc.LocAction;
 import hu.bme.mit.theta.analysis.loc.LocAnalysis;
-import hu.bme.mit.theta.analysis.loc.LocPrecision;
+import hu.bme.mit.theta.analysis.loc.LocPrec;
 import hu.bme.mit.theta.analysis.loc.LocState;
 import hu.bme.mit.theta.analysis.pred.PredAnalysis;
 import hu.bme.mit.theta.analysis.pred.PredState;
-import hu.bme.mit.theta.analysis.pred.SimplePredPrecision;
+import hu.bme.mit.theta.analysis.pred.SimplePredPrec;
 import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.core.expr.impl.Exprs;
@@ -44,11 +44,11 @@ import hu.bme.mit.theta.solver.SolverFactory;
 
 public class CfaConfigurationBuilder extends ConfigurationBuilder {
 
-	public enum LocPrec {
+	public enum PrecGranularity {
 		CONST, GEN
 	};
 
-	private LocPrec locPrec = LocPrec.CONST;
+	private PrecGranularity precGranularity = PrecGranularity.CONST;
 
 	public CfaConfigurationBuilder(final Domain domain, final Refinement refinement) {
 		super(domain, refinement);
@@ -69,29 +69,29 @@ public class CfaConfigurationBuilder extends ConfigurationBuilder {
 		return this;
 	}
 
-	public CfaConfigurationBuilder locPrec(final LocPrec locPrec) {
-		this.locPrec = locPrec;
+	public CfaConfigurationBuilder precGranularity(final PrecGranularity precGranularity) {
+		this.precGranularity = precGranularity;
 		return this;
 	}
 
-	public Configuration<? extends State, ? extends Action, ? extends Precision> build(final CFA cfa) {
+	public Configuration<? extends State, ? extends Action, ? extends Prec> build(final CFA cfa) {
 		final ItpSolver solver = getSolverFactory().createItpSolver();
 		final CfaLts lts = CfaLts.getInstance();
 
 		if (getDomain() == Domain.EXPL) {
-			final Analysis<LocState<ExplState, CfaLoc, CfaEdge>, LocAction<CfaLoc, CfaEdge>, LocPrecision<ExplPrecision, CfaLoc, CfaEdge>> analysis = LocAnalysis
+			final Analysis<LocState<ExplState, CfaLoc, CfaEdge>, LocAction<CfaLoc, CfaEdge>, LocPrec<ExplPrec, CfaLoc, CfaEdge>> analysis = LocAnalysis
 					.create(cfa.getInitLoc(), ExplAnalysis.create(solver, Exprs.True()));
-			final ArgBuilder<LocState<ExplState, CfaLoc, CfaEdge>, CfaAction, LocPrecision<ExplPrecision, CfaLoc, CfaEdge>> argBuilder = ArgBuilder
+			final ArgBuilder<LocState<ExplState, CfaLoc, CfaEdge>, CfaAction, LocPrec<ExplPrec, CfaLoc, CfaEdge>> argBuilder = ArgBuilder
 					.create(lts, analysis, s -> s.getLoc().equals(cfa.getErrorLoc()));
-			final Abstractor<LocState<ExplState, CfaLoc, CfaEdge>, CfaAction, LocPrecision<ExplPrecision, CfaLoc, CfaEdge>> abstractor = WaitlistBasedAbstractor
+			final Abstractor<LocState<ExplState, CfaLoc, CfaEdge>, CfaAction, LocPrec<ExplPrec, CfaLoc, CfaEdge>> abstractor = WaitlistBasedAbstractor
 					.create(argBuilder, LocState::getLoc, PriorityWaitlist.supplier(getSearch().comparator),
 							getLogger());
 
-			Refiner<LocState<ExplState, CfaLoc, CfaEdge>, CfaAction, LocPrecision<ExplPrecision, CfaLoc, CfaEdge>> refiner = null;
+			Refiner<LocState<ExplState, CfaLoc, CfaEdge>, CfaAction, LocPrec<ExplPrec, CfaLoc, CfaEdge>> refiner = null;
 
 			switch (getRefinement()) {
 			case CRAIG_ITP:
-				if (locPrec == LocPrec.CONST) {
+				if (precGranularity == PrecGranularity.CONST) {
 					refiner = SingleExprTraceRefiner.create(
 							ExprTraceCraigItpChecker.create(Exprs.True(), Exprs.True(), solver),
 							ConstLocPrecRefiner.create(new ExplItpRefiner<>()), getLogger());
@@ -102,7 +102,7 @@ public class CfaConfigurationBuilder extends ConfigurationBuilder {
 				}
 				break;
 			case SEQ_ITP:
-				if (locPrec == LocPrec.CONST) {
+				if (precGranularity == PrecGranularity.CONST) {
 					refiner = SingleExprTraceRefiner.create(
 							ExprTraceSeqItpChecker.create(Exprs.True(), Exprs.True(), solver),
 							ConstLocPrecRefiner.create(new ExplItpRefiner<>()), getLogger());
@@ -113,7 +113,7 @@ public class CfaConfigurationBuilder extends ConfigurationBuilder {
 				}
 				break;
 			case UNSAT_CORE:
-				if (locPrec == LocPrec.CONST) {
+				if (precGranularity == PrecGranularity.CONST) {
 					refiner = SingleExprTraceRefiner.create(
 							ExprTraceUnsatCoreChecker.create(Exprs.True(), Exprs.True(), solver),
 							ConstLocPrecRefiner.create(new ExplVarsRefiner<>()), getLogger());
@@ -127,16 +127,16 @@ public class CfaConfigurationBuilder extends ConfigurationBuilder {
 				throw new UnsupportedOperationException();
 			}
 
-			final SafetyChecker<LocState<ExplState, CfaLoc, CfaEdge>, CfaAction, LocPrecision<ExplPrecision, CfaLoc, CfaEdge>> checker = CegarChecker
+			final SafetyChecker<LocState<ExplState, CfaLoc, CfaEdge>, CfaAction, LocPrec<ExplPrec, CfaLoc, CfaEdge>> checker = CegarChecker
 					.create(abstractor, refiner, getLogger());
 
-			LocPrecision<ExplPrecision, CfaLoc, CfaEdge> prec = null;
-			switch (locPrec) {
+			LocPrec<ExplPrec, CfaLoc, CfaEdge> prec = null;
+			switch (precGranularity) {
 			case CONST:
-				prec = ConstLocPrecision.create(ExplPrecision.create());
+				prec = ConstLocPrec.create(ExplPrec.create());
 				break;
 			case GEN:
-				prec = GenericLocPrecision.create(ExplPrecision.create());
+				prec = GenericLocPrecision.create(ExplPrec.create());
 				break;
 			default:
 				throw new UnsupportedOperationException();
@@ -145,19 +145,19 @@ public class CfaConfigurationBuilder extends ConfigurationBuilder {
 			return Configuration.create(checker, prec);
 
 		} else if (getDomain() == Domain.PRED) {
-			final Analysis<LocState<PredState, CfaLoc, CfaEdge>, CfaAction, LocPrecision<SimplePredPrecision, CfaLoc, CfaEdge>> analysis = LocAnalysis
+			final Analysis<LocState<PredState, CfaLoc, CfaEdge>, CfaAction, LocPrec<SimplePredPrec, CfaLoc, CfaEdge>> analysis = LocAnalysis
 					.create(cfa.getInitLoc(), PredAnalysis.create(solver, Exprs.True()));
-			final ArgBuilder<LocState<PredState, CfaLoc, CfaEdge>, CfaAction, LocPrecision<SimplePredPrecision, CfaLoc, CfaEdge>> argBuilder = ArgBuilder
+			final ArgBuilder<LocState<PredState, CfaLoc, CfaEdge>, CfaAction, LocPrec<SimplePredPrec, CfaLoc, CfaEdge>> argBuilder = ArgBuilder
 					.create(lts, analysis, s -> s.getLoc().equals(cfa.getErrorLoc()));
-			final Abstractor<LocState<PredState, CfaLoc, CfaEdge>, CfaAction, LocPrecision<SimplePredPrecision, CfaLoc, CfaEdge>> abstractor = WaitlistBasedAbstractor
+			final Abstractor<LocState<PredState, CfaLoc, CfaEdge>, CfaAction, LocPrec<SimplePredPrec, CfaLoc, CfaEdge>> abstractor = WaitlistBasedAbstractor
 					.create(argBuilder, LocState::getLoc, PriorityWaitlist.supplier(getSearch().comparator),
 							getLogger());
 
-			Refiner<LocState<PredState, CfaLoc, CfaEdge>, CfaAction, LocPrecision<SimplePredPrecision, CfaLoc, CfaEdge>> refiner = null;
+			Refiner<LocState<PredState, CfaLoc, CfaEdge>, CfaAction, LocPrec<SimplePredPrec, CfaLoc, CfaEdge>> refiner = null;
 
 			switch (getRefinement()) {
 			case CRAIG_ITP:
-				if (locPrec == LocPrec.CONST) {
+				if (precGranularity == PrecGranularity.CONST) {
 					refiner = SingleExprTraceRefiner.create(
 							ExprTraceCraigItpChecker.create(Exprs.True(), Exprs.True(), solver),
 							ConstLocPrecRefiner.create(new SimplePredItpRefiner<>()), getLogger());
@@ -168,7 +168,7 @@ public class CfaConfigurationBuilder extends ConfigurationBuilder {
 							new GenericLocPrecRefiner<>(new SimplePredItpRefiner<>()), getLogger());
 				}
 			case SEQ_ITP:
-				if (locPrec == LocPrec.CONST) {
+				if (precGranularity == PrecGranularity.CONST) {
 					refiner = SingleExprTraceRefiner.create(
 							ExprTraceSeqItpChecker.create(Exprs.True(), Exprs.True(), solver),
 							ConstLocPrecRefiner.create(new SimplePredItpRefiner<>()), getLogger());
@@ -182,17 +182,17 @@ public class CfaConfigurationBuilder extends ConfigurationBuilder {
 				throw new UnsupportedOperationException();
 			}
 
-			final SafetyChecker<LocState<PredState, CfaLoc, CfaEdge>, CfaAction, LocPrecision<SimplePredPrecision, CfaLoc, CfaEdge>> checker = CegarChecker
+			final SafetyChecker<LocState<PredState, CfaLoc, CfaEdge>, CfaAction, LocPrec<SimplePredPrec, CfaLoc, CfaEdge>> checker = CegarChecker
 					.create(abstractor, refiner, getLogger());
 
-			LocPrecision<SimplePredPrecision, CfaLoc, CfaEdge> prec = null;
+			LocPrec<SimplePredPrec, CfaLoc, CfaEdge> prec = null;
 
-			switch (locPrec) {
+			switch (precGranularity) {
 			case CONST:
-				prec = ConstLocPrecision.create(SimplePredPrecision.create(solver));
+				prec = ConstLocPrec.create(SimplePredPrec.create(solver));
 				break;
 			case GEN:
-				prec = GenericLocPrecision.create(SimplePredPrecision.create(solver));
+				prec = GenericLocPrecision.create(SimplePredPrec.create(solver));
 				break;
 			default:
 				throw new UnsupportedOperationException();

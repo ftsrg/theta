@@ -11,19 +11,19 @@ import hu.bme.mit.theta.analysis.algorithm.ArgEdge;
 import hu.bme.mit.theta.analysis.algorithm.ArgNode;
 import hu.bme.mit.theta.analysis.tcfa.TcfaAction;
 import hu.bme.mit.theta.analysis.waitlist.Waitlist;
-import hu.bme.mit.theta.analysis.zone.ZonePrecision;
+import hu.bme.mit.theta.analysis.zone.ZonePrec;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
 import hu.bme.mit.theta.formalism.tcfa.TCFA;
 
 public final class TcfaLawiRefiner {
 
-	private final ZonePrecision precision;
+	private final ZonePrec precision;
 	private final Waitlist<ArgNode<TcfaLawiState, TcfaAction>> waitlist;
 
 	private TcfaLawiRefiner(final TCFA tcfa, final Waitlist<ArgNode<TcfaLawiState, TcfaAction>> waitlist) {
 		checkNotNull(tcfa);
 		this.waitlist = checkNotNull(waitlist);
-		precision = ZonePrecision.create(tcfa.getClockVars());
+		precision = ZonePrec.create(tcfa.getClockVars());
 	}
 
 	public static TcfaLawiRefiner create(final TCFA tcfa, final Waitlist<ArgNode<TcfaLawiState, TcfaAction>> waitlist) {

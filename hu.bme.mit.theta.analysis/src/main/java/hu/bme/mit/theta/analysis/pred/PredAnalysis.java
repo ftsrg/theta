@@ -9,11 +9,11 @@ import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.solver.Solver;
 
-public final class PredAnalysis implements Analysis<PredState, ExprAction, PredPrecision> {
+public final class PredAnalysis implements Analysis<PredState, ExprAction, PredPrec> {
 
 	private final Domain<PredState> domain;
-	private final InitFunction<PredState, PredPrecision> initFunction;
-	private final TransferFunction<PredState, ExprAction, PredPrecision> transferFunction;
+	private final InitFunction<PredState, PredPrec> initFunction;
+	private final TransferFunction<PredState, ExprAction, PredPrec> transferFunction;
 
 	private PredAnalysis(final Solver solver, final Expr<? extends BoolType> initExpr) {
 		domain = PredDomain.create(solver);
@@ -33,12 +33,12 @@ public final class PredAnalysis implements Analysis<PredState, ExprAction, PredP
 	}
 
 	@Override
-	public InitFunction<PredState, PredPrecision> getInitFunction() {
+	public InitFunction<PredState, PredPrec> getInitFunction() {
 		return initFunction;
 	}
 
 	@Override
-	public TransferFunction<PredState, ExprAction, PredPrecision> getTransferFunction() {
+	public TransferFunction<PredState, ExprAction, PredPrec> getTransferFunction() {
 		return transferFunction;
 	}
 

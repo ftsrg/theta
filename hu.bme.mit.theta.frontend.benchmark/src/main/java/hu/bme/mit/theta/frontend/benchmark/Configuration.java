@@ -1,12 +1,12 @@
 package hu.bme.mit.theta.frontend.benchmark;
 
 import hu.bme.mit.theta.analysis.Action;
-import hu.bme.mit.theta.analysis.Precision;
+import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyStatus;
 
-public final class Configuration<S extends State, A extends Action, P extends Precision> {
+public final class Configuration<S extends State, A extends Action, P extends Prec> {
 	private final SafetyChecker<S, A, P> checker;
 	private final P initPrecision;
 
@@ -15,7 +15,7 @@ public final class Configuration<S extends State, A extends Action, P extends Pr
 		this.initPrecision = initPrecision;
 	}
 
-	public static <S extends State, A extends Action, P extends Precision> Configuration<S, A, P> create(
+	public static <S extends State, A extends Action, P extends Prec> Configuration<S, A, P> create(
 			final SafetyChecker<S, A, P> checker, final P initPrecision) {
 		return new Configuration<>(checker, initPrecision);
 	}

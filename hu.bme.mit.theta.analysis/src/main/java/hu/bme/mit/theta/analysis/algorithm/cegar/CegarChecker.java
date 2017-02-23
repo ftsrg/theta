@@ -7,7 +7,7 @@ import java.util.concurrent.TimeUnit;
 import com.google.common.base.Stopwatch;
 
 import hu.bme.mit.theta.analysis.Action;
-import hu.bme.mit.theta.analysis.Precision;
+import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
@@ -17,7 +17,7 @@ import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.impl.NullLogger;
 
-public final class CegarChecker<S extends State, A extends Action, P extends Precision>
+public final class CegarChecker<S extends State, A extends Action, P extends Prec>
 		implements SafetyChecker<S, A, P> {
 
 	private final Abstractor<S, A, P> abstractor;
@@ -30,12 +30,12 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 		this.logger = checkNotNull(logger);
 	}
 
-	public static <S extends State, A extends Action, P extends Precision> CegarChecker<S, A, P> create(
+	public static <S extends State, A extends Action, P extends Prec> CegarChecker<S, A, P> create(
 			final Abstractor<S, A, P> abstractor, final Refiner<S, A, P> refiner) {
 		return new CegarChecker<>(abstractor, refiner, NullLogger.getInstance());
 	}
 
-	public static <S extends State, A extends Action, P extends Precision> CegarChecker<S, A, P> create(
+	public static <S extends State, A extends Action, P extends Prec> CegarChecker<S, A, P> create(
 			final Abstractor<S, A, P> abstractor, final Refiner<S, A, P> refiner, final Logger logger) {
 		return new CegarChecker<>(abstractor, refiner, logger);
 	}

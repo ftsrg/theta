@@ -12,7 +12,7 @@ import hu.bme.mit.theta.core.model.impl.Valuation;
 import hu.bme.mit.theta.core.utils.impl.PathUtils;
 import hu.bme.mit.theta.solver.Solver;
 
-public final class ExplTransferFunction implements TransferFunction<ExplState, ExprAction, ExplPrecision> {
+public final class ExplTransferFunction implements TransferFunction<ExplState, ExprAction, ExplPrec> {
 
 	private final Solver solver;
 
@@ -26,7 +26,7 @@ public final class ExplTransferFunction implements TransferFunction<ExplState, E
 
 	@Override
 	public Collection<? extends ExplState> getSuccStates(final ExplState state, final ExprAction action,
-			final ExplPrecision precision) {
+			final ExplPrec precision) {
 		checkNotNull(state);
 		checkNotNull(action);
 		checkNotNull(precision);

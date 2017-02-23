@@ -33,7 +33,7 @@ import hu.bme.mit.theta.analysis.algorithm.cegar.ExplVarsRefiner;
 import hu.bme.mit.theta.analysis.algorithm.cegar.SingleExprTraceRefiner;
 import hu.bme.mit.theta.analysis.algorithm.cegar.WaitlistBasedAbstractor;
 import hu.bme.mit.theta.analysis.expl.ExplAnalysis;
-import hu.bme.mit.theta.analysis.expl.ExplPrecision;
+import hu.bme.mit.theta.analysis.expl.ExplPrec;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
@@ -80,25 +80,25 @@ public class StsExplTest {
 
 		final ItpSolver solver = Z3SolverFactory.getInstace().createItpSolver();
 
-		final Analysis<ExplState, ExprAction, ExplPrecision> analysis = ExplAnalysis.create(solver, And(sts.getInit()));
+		final Analysis<ExplState, ExprAction, ExplPrec> analysis = ExplAnalysis.create(solver, And(sts.getInit()));
 		final Predicate<ExprState> target = new ExprStatePredicate(Not(sts.getProp()), solver);
 
-		final ExplPrecision precision = ExplPrecision.create(Collections.singleton(vy));
+		final ExplPrec precision = ExplPrec.create(Collections.singleton(vy));
 
 		final LTS<State, StsAction> lts = StsLts.create(sts);
 
-		final ArgBuilder<ExplState, StsAction, ExplPrecision> argBuilder = ArgBuilder.create(lts, analysis, target);
+		final ArgBuilder<ExplState, StsAction, ExplPrec> argBuilder = ArgBuilder.create(lts, analysis, target);
 
-		final Abstractor<ExplState, StsAction, ExplPrecision> abstractor = WaitlistBasedAbstractor.create(argBuilder,
+		final Abstractor<ExplState, StsAction, ExplPrec> abstractor = WaitlistBasedAbstractor.create(argBuilder,
 				PriorityWaitlist.supplier(ArgNodeComparators.bfs()), logger);
 
 		final ExprTraceChecker<IndexedVarsRefutation> exprTraceChecker = ExprTraceUnsatCoreChecker
 				.create(And(sts.getInit()), Not(sts.getProp()), solver);
 
-		final SingleExprTraceRefiner<ExplState, StsAction, ExplPrecision, IndexedVarsRefutation> refiner = SingleExprTraceRefiner
+		final SingleExprTraceRefiner<ExplState, StsAction, ExplPrec, IndexedVarsRefutation> refiner = SingleExprTraceRefiner
 				.create(exprTraceChecker, new ExplVarsRefiner<>(), logger);
 
-		final SafetyChecker<ExplState, StsAction, ExplPrecision> checker = CegarChecker.create(abstractor, refiner,
+		final SafetyChecker<ExplState, StsAction, ExplPrec> checker = CegarChecker.create(abstractor, refiner,
 				logger);
 
 		final SafetyStatus<ExplState, StsAction> safetyStatus = checker.check(precision);

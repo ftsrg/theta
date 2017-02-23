@@ -8,7 +8,7 @@ import java.util.function.Predicate;
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.LTS;
-import hu.bme.mit.theta.analysis.Precision;
+import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.ArgBuilder;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
@@ -21,7 +21,7 @@ import hu.bme.mit.theta.analysis.algorithm.cegar.SimplePredItpRefiner;
 import hu.bme.mit.theta.analysis.algorithm.cegar.SingleExprTraceRefiner;
 import hu.bme.mit.theta.analysis.algorithm.cegar.WaitlistBasedAbstractor;
 import hu.bme.mit.theta.analysis.expl.ExplAnalysis;
-import hu.bme.mit.theta.analysis.expl.ExplPrecision;
+import hu.bme.mit.theta.analysis.expl.ExplPrec;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
@@ -32,9 +32,9 @@ import hu.bme.mit.theta.analysis.expr.ExprTraceSeqItpChecker;
 import hu.bme.mit.theta.analysis.expr.ExprTraceUnsatCoreChecker;
 import hu.bme.mit.theta.analysis.expr.ItpRefutation;
 import hu.bme.mit.theta.analysis.pred.PredAnalysis;
-import hu.bme.mit.theta.analysis.pred.PredPrecision;
+import hu.bme.mit.theta.analysis.pred.PredPrec;
 import hu.bme.mit.theta.analysis.pred.PredState;
-import hu.bme.mit.theta.analysis.pred.SimplePredPrecision;
+import hu.bme.mit.theta.analysis.pred.SimplePredPrec;
 import hu.bme.mit.theta.analysis.sts.StsAction;
 import hu.bme.mit.theta.analysis.sts.StsLts;
 import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist;
@@ -82,7 +82,7 @@ public final class StsConfigurationBuilder extends ConfigurationBuilder {
 		return initPrecision;
 	}
 
-	public Configuration<? extends State, ? extends Action, ? extends Precision> build(final STS sts) {
+	public Configuration<? extends State, ? extends Action, ? extends Prec> build(final STS sts) {
 		final ItpSolver solver = getSolverFactory().createItpSolver();
 		final LTS<State, StsAction> lts = StsLts.create(sts);
 		final Expr<? extends BoolType> init = And(sts.getInit());
@@ -91,12 +91,12 @@ public final class StsConfigurationBuilder extends ConfigurationBuilder {
 
 		if (getDomain() == Domain.EXPL) {
 
-			final Analysis<ExplState, ExprAction, ExplPrecision> analysis = ExplAnalysis.create(solver, init);
-			final ArgBuilder<ExplState, StsAction, ExplPrecision> argBuilder = ArgBuilder.create(lts, analysis, target);
-			final Abstractor<ExplState, StsAction, ExplPrecision> abstractor = WaitlistBasedAbstractor
+			final Analysis<ExplState, ExprAction, ExplPrec> analysis = ExplAnalysis.create(solver, init);
+			final ArgBuilder<ExplState, StsAction, ExplPrec> argBuilder = ArgBuilder.create(lts, analysis, target);
+			final Abstractor<ExplState, StsAction, ExplPrec> abstractor = WaitlistBasedAbstractor
 					.create(argBuilder, PriorityWaitlist.supplier(getSearch().comparator), getLogger());
 
-			Refiner<ExplState, StsAction, ExplPrecision> refiner = null;
+			Refiner<ExplState, StsAction, ExplPrec> refiner = null;
 
 			switch (getRefinement()) {
 			case CRAIG_ITP:
@@ -115,15 +115,15 @@ public final class StsConfigurationBuilder extends ConfigurationBuilder {
 				throw new UnsupportedOperationException();
 			}
 
-			final SafetyChecker<ExplState, StsAction, ExplPrecision> checker = CegarChecker.create(abstractor, refiner,
+			final SafetyChecker<ExplState, StsAction, ExplPrec> checker = CegarChecker.create(abstractor, refiner,
 					getLogger());
-			ExplPrecision precision = null;
+			ExplPrec precision = null;
 			switch (initPrecision) {
 			case EMPTY:
-				precision = ExplPrecision.create();
+				precision = ExplPrec.create();
 				break;
 			case PROP:
-				precision = ExplPrecision.create(ExprUtils.getVars(negProp));
+				precision = ExplPrec.create(ExprUtils.getVars(negProp));
 				break;
 			default:
 				throw new UnsupportedOperationException();
@@ -132,10 +132,10 @@ public final class StsConfigurationBuilder extends ConfigurationBuilder {
 			return Configuration.create(checker, precision);
 
 		} else if (getDomain() == Domain.PRED) {
-			final Analysis<PredState, ExprAction, PredPrecision> analysis = PredAnalysis.create(solver, init);
-			final ArgBuilder<PredState, StsAction, SimplePredPrecision> argBuilder = ArgBuilder.create(lts, analysis,
+			final Analysis<PredState, ExprAction, PredPrec> analysis = PredAnalysis.create(solver, init);
+			final ArgBuilder<PredState, StsAction, SimplePredPrec> argBuilder = ArgBuilder.create(lts, analysis,
 					target);
-			final Abstractor<PredState, StsAction, SimplePredPrecision> abstractor = WaitlistBasedAbstractor
+			final Abstractor<PredState, StsAction, SimplePredPrec> abstractor = WaitlistBasedAbstractor
 					.create(argBuilder, PriorityWaitlist.supplier(getSearch().comparator), getLogger());
 
 			ExprTraceChecker<ItpRefutation> exprTraceChecker = null;
@@ -149,18 +149,18 @@ public final class StsConfigurationBuilder extends ConfigurationBuilder {
 			default:
 				throw new UnsupportedOperationException();
 			}
-			final Refiner<PredState, StsAction, SimplePredPrecision> refiner = SingleExprTraceRefiner
+			final Refiner<PredState, StsAction, SimplePredPrec> refiner = SingleExprTraceRefiner
 					.create(exprTraceChecker, new SimplePredItpRefiner<>(), getLogger());
 
-			final SafetyChecker<PredState, StsAction, SimplePredPrecision> checker = CegarChecker.create(abstractor,
+			final SafetyChecker<PredState, StsAction, SimplePredPrec> checker = CegarChecker.create(abstractor,
 					refiner, getLogger());
-			SimplePredPrecision precision = null;
+			SimplePredPrec precision = null;
 			switch (initPrecision) {
 			case EMPTY:
-				precision = SimplePredPrecision.create(solver);
+				precision = SimplePredPrec.create(solver);
 				break;
 			case PROP:
-				precision = SimplePredPrecision.create(ExprUtils.getAtoms(negProp), solver);
+				precision = SimplePredPrec.create(ExprUtils.getAtoms(negProp), solver);
 				break;
 			default:
 				throw new UnsupportedOperationException();

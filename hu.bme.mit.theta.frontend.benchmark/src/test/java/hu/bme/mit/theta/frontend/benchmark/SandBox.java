@@ -4,7 +4,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import hu.bme.mit.theta.analysis.Action;
-import hu.bme.mit.theta.analysis.Precision;
+import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.impl.ConsoleLogger;
@@ -33,7 +33,7 @@ public class SandBox {
 
 		final Logger logger = new ConsoleLogger(3);
 
-		final Configuration<? extends State, ? extends Action, ? extends Precision> configuration = new StsConfigurationBuilder(
+		final Configuration<? extends State, ? extends Action, ? extends Prec> configuration = new StsConfigurationBuilder(
 				Domain.PRED, Refinement.SEQ_ITP).initPrecision(InitPrecision.EMPTY).logger(logger).search(Search.BFS)
 						.solverFactory(Z3SolverFactory.getInstace()).build(sts);
 

@@ -6,16 +6,16 @@ import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.Domain;
 import hu.bme.mit.theta.analysis.InitFunction;
-import hu.bme.mit.theta.analysis.Precision;
+import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.TransferFunction;
 
-public final class Prod2Analysis<S1 extends State, S2 extends State, A extends Action, P1 extends Precision, P2 extends Precision>
-		implements Analysis<Prod2State<S1, S2>, A, Prod2Precision<P1, P2>> {
+public final class Prod2Analysis<S1 extends State, S2 extends State, A extends Action, P1 extends Prec, P2 extends Prec>
+		implements Analysis<Prod2State<S1, S2>, A, Prod2Prec<P1, P2>> {
 
 	private final Domain<Prod2State<S1, S2>> domain;
-	private final InitFunction<Prod2State<S1, S2>, Prod2Precision<P1, P2>> initFunction;
-	private final TransferFunction<Prod2State<S1, S2>, A, Prod2Precision<P1, P2>> transferFunction;
+	private final InitFunction<Prod2State<S1, S2>, Prod2Prec<P1, P2>> initFunction;
+	private final TransferFunction<Prod2State<S1, S2>, A, Prod2Prec<P1, P2>> transferFunction;
 
 	private Prod2Analysis(final Analysis<S1, ? super A, P1> analysis1, final Analysis<S2, ? super A, P2> analysis2) {
 		checkNotNull(analysis1);
@@ -26,7 +26,7 @@ public final class Prod2Analysis<S1 extends State, S2 extends State, A extends A
 				analysis2.getTransferFunction());
 	}
 
-	public static <S1 extends State, S2 extends State, A extends Action, P1 extends Precision, P2 extends Precision> Prod2Analysis<S1, S2, A, P1, P2> create(
+	public static <S1 extends State, S2 extends State, A extends Action, P1 extends Prec, P2 extends Prec> Prod2Analysis<S1, S2, A, P1, P2> create(
 			final Analysis<S1, ? super A, P1> analysis1, final Analysis<S2, ? super A, P2> analysis2) {
 		return new Prod2Analysis<>(analysis1, analysis2);
 	}
@@ -37,12 +37,12 @@ public final class Prod2Analysis<S1 extends State, S2 extends State, A extends A
 	}
 
 	@Override
-	public InitFunction<Prod2State<S1, S2>, Prod2Precision<P1, P2>> getInitFunction() {
+	public InitFunction<Prod2State<S1, S2>, Prod2Prec<P1, P2>> getInitFunction() {
 		return initFunction;
 	}
 
 	@Override
-	public TransferFunction<Prod2State<S1, S2>, A, Prod2Precision<P1, P2>> getTransferFunction() {
+	public TransferFunction<Prod2State<S1, S2>, A, Prod2Prec<P1, P2>> getTransferFunction() {
 		return transferFunction;
 	}
 

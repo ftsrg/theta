@@ -27,24 +27,24 @@ import hu.bme.mit.theta.solver.Solver;
  * Represents an immutable, simple predicate precision that is a set of
  * predicates.
  */
-public final class SimplePredPrecision implements PredPrecision {
+public final class SimplePredPrec implements PredPrec {
 
 	private final Map<Expr<? extends BoolType>, Expr<? extends BoolType>> predToNegMap;
 	private final Solver solver;
 
-	public static SimplePredPrecision create(final Solver solver) {
-		return new SimplePredPrecision(Collections.emptySet(), solver);
+	public static SimplePredPrec create(final Solver solver) {
+		return new SimplePredPrec(Collections.emptySet(), solver);
 	}
 
-	public static SimplePredPrecision create(final Iterable<Expr<? extends BoolType>> preds, final Solver solver) {
-		return new SimplePredPrecision(preds, solver);
+	public static SimplePredPrec create(final Iterable<Expr<? extends BoolType>> preds, final Solver solver) {
+		return new SimplePredPrec(preds, solver);
 	}
 
-	public static SimplePredPrecision create(final Expr<? extends BoolType> pred, final Solver solver) {
-		return new SimplePredPrecision(Collections.singleton(pred), solver);
+	public static SimplePredPrec create(final Expr<? extends BoolType> pred, final Solver solver) {
+		return new SimplePredPrec(Collections.singleton(pred), solver);
 	}
 
-	private SimplePredPrecision(final Iterable<Expr<? extends BoolType>> preds, final Solver solver) {
+	private SimplePredPrec(final Iterable<Expr<? extends BoolType>> preds, final Solver solver) {
 		checkNotNull(preds);
 		this.solver = checkNotNull(solver);
 		this.predToNegMap = new HashMap<>();
@@ -106,7 +106,7 @@ public final class SimplePredPrecision implements PredPrecision {
 		return PredState.of(statePreds);
 	}
 
-	public SimplePredPrecision join(final SimplePredPrecision other) {
+	public SimplePredPrec join(final SimplePredPrec other) {
 		checkNotNull(other);
 		final Collection<Expr<? extends BoolType>> joinedPreds = ImmutableSet.<Expr<? extends BoolType>>builder()
 				.addAll(this.predToNegMap.keySet()).addAll(other.predToNegMap.keySet()).build();

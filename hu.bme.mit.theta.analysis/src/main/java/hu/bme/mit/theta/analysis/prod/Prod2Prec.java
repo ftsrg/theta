@@ -2,13 +2,13 @@ package hu.bme.mit.theta.analysis.prod;
 
 import com.google.common.collect.ImmutableList;
 
-import hu.bme.mit.theta.analysis.Precision;
+import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.common.Product2;
 
-public final class Prod2Precision<P1 extends Precision, P2 extends Precision> extends ProdPrecision
+public final class Prod2Prec<P1 extends Prec, P2 extends Prec> extends ProdPrec
 		implements Product2<P1, P2> {
 
-	Prod2Precision(final P1 precision1, final P2 precision2) {
+	Prod2Prec(final P1 precision1, final P2 precision2) {
 		super(ImmutableList.of(precision1, precision2));
 	}
 

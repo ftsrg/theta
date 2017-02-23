@@ -17,15 +17,15 @@ import hu.bme.mit.theta.core.model.impl.Valuation;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.utils.impl.ExprUtils;
 
-public final class TreePredPrecision implements PredPrecision {
+public final class TreePredPrec implements PredPrec {
 
 	private final Node root;
 
-	public static TreePredPrecision create(final Iterable<? extends Expr<? extends BoolType>> preds) {
-		return new TreePredPrecision(preds);
+	public static TreePredPrec create(final Iterable<? extends Expr<? extends BoolType>> preds) {
+		return new TreePredPrec(preds);
 	}
 
-	private TreePredPrecision(final Iterable<? extends Expr<? extends BoolType>> preds) {
+	private TreePredPrec(final Iterable<? extends Expr<? extends BoolType>> preds) {
 		checkNotNull(preds);
 
 		final Set<Expr<? extends BoolType>> ponatedPreds = new HashSet<>();

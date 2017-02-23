@@ -8,53 +8,53 @@ import hu.bme.mit.theta.analysis.Domain;
 import hu.bme.mit.theta.analysis.InitFunction;
 import hu.bme.mit.theta.analysis.TransferFunction;
 import hu.bme.mit.theta.analysis.expl.ExplAnalysis;
-import hu.bme.mit.theta.analysis.expl.ExplPrecision;
+import hu.bme.mit.theta.analysis.expl.ExplPrec;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
-import hu.bme.mit.theta.analysis.impl.FixedPrecisionAnalysis;
-import hu.bme.mit.theta.analysis.impl.NullPrecision;
-import hu.bme.mit.theta.analysis.loc.ConstLocPrecision;
+import hu.bme.mit.theta.analysis.impl.FixedPrecAnalysis;
+import hu.bme.mit.theta.analysis.impl.NullPrec;
+import hu.bme.mit.theta.analysis.loc.ConstLocPrec;
 import hu.bme.mit.theta.analysis.loc.LocAnalysis;
-import hu.bme.mit.theta.analysis.loc.LocPrecision;
+import hu.bme.mit.theta.analysis.loc.LocPrec;
 import hu.bme.mit.theta.analysis.loc.LocState;
 import hu.bme.mit.theta.analysis.prod.Prod2Analysis;
-import hu.bme.mit.theta.analysis.prod.Prod2Precision;
+import hu.bme.mit.theta.analysis.prod.Prod2Prec;
 import hu.bme.mit.theta.analysis.prod.Prod2State;
-import hu.bme.mit.theta.analysis.prod.ProdPrecision;
+import hu.bme.mit.theta.analysis.prod.ProdPrec;
 import hu.bme.mit.theta.analysis.tcfa.TcfaAction;
 import hu.bme.mit.theta.analysis.tcfa.zone.itp.ItpZoneState;
 import hu.bme.mit.theta.analysis.tcfa.zone.itp.TcfaItpZoneAnalysis;
-import hu.bme.mit.theta.analysis.zone.ZonePrecision;
+import hu.bme.mit.theta.analysis.zone.ZonePrec;
 import hu.bme.mit.theta.formalism.tcfa.TCFA;
 import hu.bme.mit.theta.formalism.tcfa.TcfaEdge;
 import hu.bme.mit.theta.formalism.tcfa.TcfaLoc;
 import hu.bme.mit.theta.solver.Solver;
 
-final class TcfaLawiAnalysis implements Analysis<TcfaLawiState, TcfaAction, NullPrecision> {
+final class TcfaLawiAnalysis implements Analysis<TcfaLawiState, TcfaAction, NullPrec> {
 
 	private final Domain<TcfaLawiState> domain;
-	private final InitFunction<TcfaLawiState, NullPrecision> initFunction;
-	private final TransferFunction<TcfaLawiState, TcfaAction, NullPrecision> transferFunction;
+	private final InitFunction<TcfaLawiState, NullPrec> initFunction;
+	private final TransferFunction<TcfaLawiState, TcfaAction, NullPrec> transferFunction;
 
 	private TcfaLawiAnalysis(final TCFA tcfa, final Solver solver) {
 		checkNotNull(tcfa);
 		checkNotNull(solver);
 
-		final ExplPrecision explPrecision = ExplPrecision.create(tcfa.getDataVars());
-		final ZonePrecision zonePrecision = ZonePrecision.create(tcfa.getClockVars());
-		final Prod2Precision<ExplPrecision, ZonePrecision> compositePrecision = ProdPrecision.of(explPrecision,
+		final ExplPrec explPrecision = ExplPrec.create(tcfa.getDataVars());
+		final ZonePrec zonePrecision = ZonePrec.create(tcfa.getClockVars());
+		final Prod2Prec<ExplPrec, ZonePrec> compositePrecision = ProdPrec.of(explPrecision,
 				zonePrecision);
-		final LocPrecision<Prod2Precision<ExplPrecision, ZonePrecision>, TcfaLoc, TcfaEdge> locPrecision = ConstLocPrecision
+		final LocPrec<Prod2Prec<ExplPrec, ZonePrec>, TcfaLoc, TcfaEdge> locPrecision = ConstLocPrec
 				.create(compositePrecision);
 
-		final Analysis<ExplState, ExprAction, ExplPrecision> explAnalysis = ExplAnalysis.create(solver, True());
-		final Analysis<ItpZoneState, TcfaAction, ZonePrecision> itpZoneAnalysis = TcfaItpZoneAnalysis.getInstance();
-		final Analysis<Prod2State<ExplState, ItpZoneState>, TcfaAction, Prod2Precision<ExplPrecision, ZonePrecision>> compositeAnalysis = Prod2Analysis
+		final Analysis<ExplState, ExprAction, ExplPrec> explAnalysis = ExplAnalysis.create(solver, True());
+		final Analysis<ItpZoneState, TcfaAction, ZonePrec> itpZoneAnalysis = TcfaItpZoneAnalysis.getInstance();
+		final Analysis<Prod2State<ExplState, ItpZoneState>, TcfaAction, Prod2Prec<ExplPrec, ZonePrec>> compositeAnalysis = Prod2Analysis
 				.create(explAnalysis, itpZoneAnalysis);
-		final Analysis<LocState<Prod2State<ExplState, ItpZoneState>, TcfaLoc, TcfaEdge>, TcfaAction, LocPrecision<Prod2Precision<ExplPrecision, ZonePrecision>, TcfaLoc, TcfaEdge>> locAnalysis = LocAnalysis
+		final Analysis<LocState<Prod2State<ExplState, ItpZoneState>, TcfaLoc, TcfaEdge>, TcfaAction, LocPrec<Prod2Prec<ExplPrec, ZonePrec>, TcfaLoc, TcfaEdge>> locAnalysis = LocAnalysis
 				.create(tcfa.getInitLoc(), compositeAnalysis);
 
-		final Analysis<LocState<Prod2State<ExplState, ItpZoneState>, TcfaLoc, TcfaEdge>, TcfaAction, NullPrecision> analysis = FixedPrecisionAnalysis
+		final Analysis<LocState<Prod2State<ExplState, ItpZoneState>, TcfaLoc, TcfaEdge>, TcfaAction, NullPrec> analysis = FixedPrecAnalysis
 				.create(locAnalysis, locPrecision);
 
 		domain = TcfaLawiDomain.create(analysis.getDomain());
@@ -72,12 +72,12 @@ final class TcfaLawiAnalysis implements Analysis<TcfaLawiState, TcfaAction, Null
 	}
 
 	@Override
-	public InitFunction<TcfaLawiState, NullPrecision> getInitFunction() {
+	public InitFunction<TcfaLawiState, NullPrec> getInitFunction() {
 		return initFunction;
 	}
 
 	@Override
-	public TransferFunction<TcfaLawiState, TcfaAction, NullPrecision> getTransferFunction() {
+	public TransferFunction<TcfaLawiState, TcfaAction, NullPrec> getTransferFunction() {
 		return transferFunction;
 	}
 

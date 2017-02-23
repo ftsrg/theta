@@ -4,7 +4,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
-import hu.bme.mit.theta.analysis.Precision;
+import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.ArgNode;
@@ -16,7 +16,7 @@ import hu.bme.mit.theta.analysis.expr.ExprTraceStatus;
 import hu.bme.mit.theta.analysis.expr.Refutation;
 import hu.bme.mit.theta.common.logging.Logger;
 
-public class SingleExprTraceRefiner<S extends ExprState, A extends ExprAction, P extends Precision, R extends Refutation>
+public class SingleExprTraceRefiner<S extends ExprState, A extends ExprAction, P extends Prec, R extends Refutation>
 		implements Refiner<S, A, P> {
 
 	private final ExprTraceChecker<R> exprTraceChecker;
@@ -30,7 +30,7 @@ public class SingleExprTraceRefiner<S extends ExprState, A extends ExprAction, P
 		this.logger = logger;
 	}
 
-	public static <S extends ExprState, A extends ExprAction, P extends Precision, R extends Refutation> SingleExprTraceRefiner<S, A, P, R> create(
+	public static <S extends ExprState, A extends ExprAction, P extends Prec, R extends Refutation> SingleExprTraceRefiner<S, A, P, R> create(
 			final ExprTraceChecker<R> exprTraceChecker, final PrecRefiner<S, A, P, R> traceRefiner,
 			final Logger logger) {
 		return new SingleExprTraceRefiner<>(exprTraceChecker, traceRefiner, logger);

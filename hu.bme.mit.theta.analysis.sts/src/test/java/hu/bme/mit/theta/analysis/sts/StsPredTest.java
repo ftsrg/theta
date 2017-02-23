@@ -38,9 +38,9 @@ import hu.bme.mit.theta.analysis.expr.ExprTraceChecker;
 import hu.bme.mit.theta.analysis.expr.ExprTraceCraigItpChecker;
 import hu.bme.mit.theta.analysis.expr.ItpRefutation;
 import hu.bme.mit.theta.analysis.pred.PredAnalysis;
-import hu.bme.mit.theta.analysis.pred.PredPrecision;
+import hu.bme.mit.theta.analysis.pred.PredPrec;
 import hu.bme.mit.theta.analysis.pred.PredState;
-import hu.bme.mit.theta.analysis.pred.SimplePredPrecision;
+import hu.bme.mit.theta.analysis.pred.SimplePredPrec;
 import hu.bme.mit.theta.analysis.waitlist.FifoWaitlist;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.impl.ConsoleLogger;
@@ -75,27 +75,27 @@ public class StsPredTest {
 
 		final ItpSolver solver = Z3SolverFactory.getInstace().createItpSolver();
 
-		final Analysis<PredState, ExprAction, PredPrecision> analysis = PredAnalysis.create(solver, And(sts.getInit()));
+		final Analysis<PredState, ExprAction, PredPrec> analysis = PredAnalysis.create(solver, And(sts.getInit()));
 		final Predicate<ExprState> target = new ExprStatePredicate(Not(sts.getProp()), solver);
 
-		final SimplePredPrecision precision = SimplePredPrecision.create(Collections.singleton(Lt(x, Int(mod))),
+		final SimplePredPrec precision = SimplePredPrec.create(Collections.singleton(Lt(x, Int(mod))),
 				solver);
 
 		final LTS<State, StsAction> lts = StsLts.create(sts);
 
-		final ArgBuilder<PredState, StsAction, SimplePredPrecision> argBuilder = ArgBuilder.create(lts, analysis,
+		final ArgBuilder<PredState, StsAction, SimplePredPrec> argBuilder = ArgBuilder.create(lts, analysis,
 				target);
 
-		final Abstractor<PredState, StsAction, SimplePredPrecision> abstractor = WaitlistBasedAbstractor
+		final Abstractor<PredState, StsAction, SimplePredPrec> abstractor = WaitlistBasedAbstractor
 				.create(argBuilder, FifoWaitlist.supplier(), logger);
 
 		final ExprTraceChecker<ItpRefutation> exprTraceChecker = ExprTraceCraigItpChecker.create(And(sts.getInit()),
 				Not(sts.getProp()), solver);
 
-		final SingleExprTraceRefiner<PredState, StsAction, SimplePredPrecision, ItpRefutation> refiner = SingleExprTraceRefiner
+		final SingleExprTraceRefiner<PredState, StsAction, SimplePredPrec, ItpRefutation> refiner = SingleExprTraceRefiner
 				.create(exprTraceChecker, new SimplePredItpRefiner<>(), logger);
 
-		final SafetyChecker<PredState, StsAction, SimplePredPrecision> checker = CegarChecker.create(abstractor,
+		final SafetyChecker<PredState, StsAction, SimplePredPrec> checker = CegarChecker.create(abstractor,
 				refiner, logger);
 
 		final SafetyStatus<PredState, StsAction> safetyStatus = checker.check(precision);

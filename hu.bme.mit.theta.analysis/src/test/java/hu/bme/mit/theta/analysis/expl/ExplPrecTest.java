@@ -14,16 +14,16 @@ import hu.bme.mit.theta.core.model.impl.Valuation;
 import hu.bme.mit.theta.core.type.IntType;
 import hu.bme.mit.theta.core.type.impl.Types;
 
-public class ExplPrecisionTest {
+public class ExplPrecTest {
 	private final VarDecl<IntType> x = Decls.Var("x", Types.Int());
 	private final VarDecl<IntType> y = Decls.Var("y", Types.Int());
 
 	@Test
 	public void testInstances() {
-		final ExplPrecision p1 = ExplPrecision.create();
-		final ExplPrecision p2 = ExplPrecision.create();
-		final ExplPrecision p3 = ExplPrecision.create(Collections.emptySet());
-		final ExplPrecision p4 = ExplPrecision.create(Collections.singleton(x));
+		final ExplPrec p1 = ExplPrec.create();
+		final ExplPrec p2 = ExplPrec.create();
+		final ExplPrec p3 = ExplPrec.create(Collections.emptySet());
+		final ExplPrec p4 = ExplPrec.create(Collections.singleton(x));
 
 		Assert.assertTrue(p1 == p2);
 		Assert.assertTrue(p1 == p3);
@@ -35,7 +35,7 @@ public class ExplPrecisionTest {
 
 	@Test
 	public void testMapping() {
-		final ExplPrecision prec = ExplPrecision.create(Collections.singleton(x));
+		final ExplPrec prec = ExplPrec.create(Collections.singleton(x));
 		final ExplState s1 = prec.createState(Valuation.builder().put(x, Exprs.Int(1)).put(y, Exprs.Int(2)).build());
 		final ExplState s2 = prec.createState(Valuation.builder().put(y, Exprs.Int(2)).build());
 
@@ -45,13 +45,13 @@ public class ExplPrecisionTest {
 
 	@Test
 	public void testRefinement() {
-		final ExplPrecision px = ExplPrecision.create(Collections.singleton(x));
-		final ExplPrecision py = ExplPrecision.create(Collections.singleton(y));
-		final ExplPrecision pxy = ExplPrecision.create(ImmutableSet.of(x, y));
+		final ExplPrec px = ExplPrec.create(Collections.singleton(x));
+		final ExplPrec py = ExplPrec.create(Collections.singleton(y));
+		final ExplPrec pxy = ExplPrec.create(ImmutableSet.of(x, y));
 
-		final ExplPrecision r1 = px.join(px);
-		final ExplPrecision r2 = px.join(py);
-		final ExplPrecision r3 = px.join(pxy);
+		final ExplPrec r1 = px.join(px);
+		final ExplPrec r2 = px.join(py);
+		final ExplPrec r3 = px.join(pxy);
 
 		Assert.assertTrue(r1 == px);
 		Assert.assertTrue(r2 != px);

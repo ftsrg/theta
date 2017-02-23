@@ -12,7 +12,7 @@ import com.google.common.collect.ImmutableList;
  * Represents a trace of states and actions where each state is associated with
  * a precision.
  */
-public final class PrecTrace<S extends State, A extends Action, P extends Precision> {
+public final class PrecTrace<S extends State, A extends Action, P extends Prec> {
 	private final List<P> precs;
 	private final Trace<S, A> trace;
 
@@ -22,7 +22,7 @@ public final class PrecTrace<S extends State, A extends Action, P extends Precis
 		checkArgument(precs.size() == trace.getStates().size());
 	}
 
-	public static <S extends State, A extends Action, P extends Precision> PrecTrace<S, A, P> of(
+	public static <S extends State, A extends Action, P extends Prec> PrecTrace<S, A, P> of(
 			final Trace<S, A> trace, final List<? extends P> precs) {
 		return new PrecTrace<>(trace, precs);
 	}

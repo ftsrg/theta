@@ -9,18 +9,18 @@ import com.google.common.collect.Lists;
 
 import hu.bme.mit.theta.analysis.tcfa.TcfaAction;
 import hu.bme.mit.theta.analysis.tcfa.TcfaZoneUtils;
-import hu.bme.mit.theta.analysis.zone.ZonePrecision;
+import hu.bme.mit.theta.analysis.zone.ZonePrec;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
 
 public final class TcfaInterpolator {
 
-	private final ZonePrecision precision;
+	private final ZonePrec precision;
 
-	private TcfaInterpolator(final ZonePrecision precision) {
+	private TcfaInterpolator(final ZonePrec precision) {
 		this.precision = checkNotNull(precision);
 	}
 
-	public static TcfaInterpolator create(final ZonePrecision precision) {
+	public static TcfaInterpolator create(final ZonePrec precision) {
 		return new TcfaInterpolator(precision);
 	}
 

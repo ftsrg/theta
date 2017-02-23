@@ -3,22 +3,22 @@ package hu.bme.mit.theta.analysis.algorithm.cegar;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import hu.bme.mit.theta.analysis.Action;
-import hu.bme.mit.theta.analysis.Precision;
+import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.common.ObjectUtils;
 
-public abstract class RefinerResult<S extends State, A extends Action, P extends Precision> {
+public abstract class RefinerResult<S extends State, A extends Action, P extends Prec> {
 
 	private RefinerResult() {
 	}
 
-	public static <S extends State, A extends Action, P extends Precision> Spurious<S, A, P> spurious(
+	public static <S extends State, A extends Action, P extends Prec> Spurious<S, A, P> spurious(
 			final P refinedPrecision) {
 		return new Spurious<>(refinedPrecision);
 	}
 
-	public static <S extends State, A extends Action, P extends Precision> Unsafe<S, A, P> unsafe(
+	public static <S extends State, A extends Action, P extends Prec> Unsafe<S, A, P> unsafe(
 			final Trace<S, A> cex) {
 		return new Unsafe<>(cex);
 	}
@@ -33,7 +33,7 @@ public abstract class RefinerResult<S extends State, A extends Action, P extends
 
 	////
 
-	public static final class Spurious<S extends State, A extends Action, P extends Precision>
+	public static final class Spurious<S extends State, A extends Action, P extends Prec>
 			extends RefinerResult<S, A, P> {
 		private final P refinedPrecision;
 
@@ -73,7 +73,7 @@ public abstract class RefinerResult<S extends State, A extends Action, P extends
 		}
 	}
 
-	public static final class Unsafe<S extends State, A extends Action, P extends Precision>
+	public static final class Unsafe<S extends State, A extends Action, P extends Prec>
 			extends RefinerResult<S, A, P> {
 		private final Trace<S, A> cex;
 

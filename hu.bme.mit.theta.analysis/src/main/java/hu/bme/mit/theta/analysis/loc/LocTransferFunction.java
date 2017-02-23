@@ -6,14 +6,14 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import hu.bme.mit.theta.analysis.Precision;
+import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.TransferFunction;
 import hu.bme.mit.theta.formalism.common.Edge;
 import hu.bme.mit.theta.formalism.common.Loc;
 
-public final class LocTransferFunction<S extends State, A extends LocAction<L, E>, P extends Precision, L extends Loc<L, E>, E extends Edge<L, E>>
-		implements TransferFunction<LocState<S, L, E>, A, LocPrecision<P, L, E>> {
+public final class LocTransferFunction<S extends State, A extends LocAction<L, E>, P extends Prec, L extends Loc<L, E>, E extends Edge<L, E>>
+		implements TransferFunction<LocState<S, L, E>, A, LocPrec<P, L, E>> {
 
 	private final TransferFunction<S, ? super A, ? super P> transferFunction;
 
@@ -21,14 +21,14 @@ public final class LocTransferFunction<S extends State, A extends LocAction<L, E
 		this.transferFunction = checkNotNull(transferFunction);
 	}
 
-	public static <S extends State, A extends LocAction<L, E>, P extends Precision, L extends Loc<L, E>, E extends Edge<L, E>> LocTransferFunction<S, A, P, L, E> create(
+	public static <S extends State, A extends LocAction<L, E>, P extends Prec, L extends Loc<L, E>, E extends Edge<L, E>> LocTransferFunction<S, A, P, L, E> create(
 			final TransferFunction<S, ? super A, ? super P> transferFunction) {
 		return new LocTransferFunction<>(transferFunction);
 	}
 
 	@Override
 	public Collection<LocState<S, L, E>> getSuccStates(final LocState<S, L, E> state, final A action,
-			final LocPrecision<P, L, E> precision) {
+			final LocPrec<P, L, E> precision) {
 		checkNotNull(state);
 		checkNotNull(action);
 		checkNotNull(precision);
