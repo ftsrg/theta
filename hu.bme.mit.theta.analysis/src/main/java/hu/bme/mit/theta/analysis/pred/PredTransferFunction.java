@@ -27,10 +27,10 @@ public final class PredTransferFunction implements TransferFunction<PredState, E
 
 	@Override
 	public Collection<? extends PredState> getSuccStates(final PredState state, final ExprAction action,
-			final PredPrec precision) {
+			final PredPrec prec) {
 		checkNotNull(state);
 		checkNotNull(action);
-		checkNotNull(precision);
+		checkNotNull(prec);
 
 		final Set<PredState> succStates = new HashSet<>();
 		solver.push();
@@ -43,7 +43,7 @@ public final class PredTransferFunction implements TransferFunction<PredState, E
 			if (moreSuccStates) {
 				final Valuation nextSuccStateVal = PathUtils.extractValuation(solver.getModel(), action.nextIndexing());
 
-				final PredState nextSuccState = precision.createState(nextSuccStateVal);
+				final PredState nextSuccState = prec.createState(nextSuccStateVal);
 				succStates.add(nextSuccState);
 				solver.add(PathUtils.unfold(Exprs.Not(nextSuccState.toExpr()), action.nextIndexing()));
 			}

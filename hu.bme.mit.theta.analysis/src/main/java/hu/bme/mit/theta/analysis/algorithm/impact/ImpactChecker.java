@@ -43,8 +43,8 @@ public final class ImpactChecker<S extends State, A extends Action, P extends Pr
 	////
 
 	@Override
-	public SafetyStatus<S, A> check(final P precision) {
-		return new CheckMethod(precision).run();
+	public SafetyStatus<S, A> check(final P prec) {
+		return new CheckMethod(prec).run();
 	}
 
 	////

@@ -26,16 +26,16 @@ final class TcfaItpZoneTransferFunction implements TransferFunction<ItpZoneState
 
 	@Override
 	public Collection<? extends ItpZoneState> getSuccStates(final ItpZoneState state, final TcfaAction action,
-			final ZonePrec precision) {
+			final ZonePrec prec) {
 		checkNotNull(state);
 		checkNotNull(action);
-		checkNotNull(precision);
+		checkNotNull(prec);
 
 		final ZoneState subState = state.getState();
 		if (subState.isBottom()) {
 			return Collections.emptySet();
 		} else {
-			final ZoneState succSubState = TcfaZoneUtils.post(state.getState(), action, precision);
+			final ZoneState succSubState = TcfaZoneUtils.post(state.getState(), action, prec);
 			final ItpZoneState succState = ItpZoneState.of(succSubState, ZoneState.top());
 			return Collections.singleton(succState);
 		}

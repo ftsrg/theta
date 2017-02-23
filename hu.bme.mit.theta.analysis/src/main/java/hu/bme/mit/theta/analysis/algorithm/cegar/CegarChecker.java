@@ -41,29 +41,29 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 	}
 
 	@Override
-	public SafetyStatus<S, A> check(final P initPrecision) {
+	public SafetyStatus<S, A> check(final P initPrec) {
 		logger.writeln("Configuration: ", this, 1, 0);
 		final Stopwatch stopwatch = Stopwatch.createStarted();
 		RefinerResult<S, A, P> refinerResult = null;
 		AbstractorResult abstractorResult = null;
 		final ARG<S, A> arg = abstractor.createArg();
-		P precision = initPrecision;
+		P prec = initPrec;
 		int iteration = 0;
 		do {
 			++iteration;
 			logger.writeln("Iteration ", iteration, 2, 0);
 
 			logger.writeln("Checking abstraction...", 2, 1);
-			abstractorResult = abstractor.check(arg, precision);
+			abstractorResult = abstractor.check(arg, prec);
 			logger.writeln("Checking abstraction done, result: ", abstractorResult, 2, 1);
 
 			if (abstractorResult.isUnsafe()) {
 				logger.writeln("Refining abstraction...", 2, 1);
-				refinerResult = refiner.refine(arg, precision);
+				refinerResult = refiner.refine(arg, prec);
 				logger.writeln("Refining abstraction done, result: ", refinerResult, 2, 1);
 
 				if (refinerResult.isSpurious()) {
-					precision = refinerResult.asSpurious().getRefinedPrec();
+					prec = refinerResult.asSpurious().getRefinedPrec();
 				}
 			}
 

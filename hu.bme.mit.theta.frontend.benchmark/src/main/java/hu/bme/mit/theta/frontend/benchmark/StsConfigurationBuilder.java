@@ -73,8 +73,8 @@ public final class StsConfigurationBuilder extends ConfigurationBuilder {
 		return this;
 	}
 
-	public StsConfigurationBuilder initPrec(final InitPrec initPrecision) {
-		this.initPrec = initPrecision;
+	public StsConfigurationBuilder initPrec(final InitPrec initPrec) {
+		this.initPrec = initPrec;
 		return this;
 	}
 
@@ -117,19 +117,19 @@ public final class StsConfigurationBuilder extends ConfigurationBuilder {
 
 			final SafetyChecker<ExplState, StsAction, ExplPrec> checker = CegarChecker.create(abstractor, refiner,
 					getLogger());
-			ExplPrec precision = null;
+			ExplPrec prec = null;
 			switch (initPrec) {
 			case EMPTY:
-				precision = ExplPrec.create();
+				prec = ExplPrec.create();
 				break;
 			case PROP:
-				precision = ExplPrec.create(ExprUtils.getVars(negProp));
+				prec = ExplPrec.create(ExprUtils.getVars(negProp));
 				break;
 			default:
 				throw new UnsupportedOperationException();
 			}
 
-			return Configuration.create(checker, precision);
+			return Configuration.create(checker, prec);
 
 		} else if (getDomain() == Domain.PRED) {
 			final Analysis<PredState, ExprAction, PredPrec> analysis = PredAnalysis.create(solver, init);
@@ -154,19 +154,19 @@ public final class StsConfigurationBuilder extends ConfigurationBuilder {
 
 			final SafetyChecker<PredState, StsAction, SimplePredPrec> checker = CegarChecker.create(abstractor,
 					refiner, getLogger());
-			SimplePredPrec precision = null;
+			SimplePredPrec prec = null;
 			switch (initPrec) {
 			case EMPTY:
-				precision = SimplePredPrec.create(solver);
+				prec = SimplePredPrec.create(solver);
 				break;
 			case PROP:
-				precision = SimplePredPrec.create(ExprUtils.getAtoms(negProp), solver);
+				prec = SimplePredPrec.create(ExprUtils.getAtoms(negProp), solver);
 				break;
 			default:
 				throw new UnsupportedOperationException();
 			}
 
-			return Configuration.create(checker, precision);
+			return Configuration.create(checker, prec);
 		} else {
 			throw new UnsupportedOperationException();
 		}

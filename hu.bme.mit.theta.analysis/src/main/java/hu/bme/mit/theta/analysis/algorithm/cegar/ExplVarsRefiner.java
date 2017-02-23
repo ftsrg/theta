@@ -19,11 +19,11 @@ public class ExplVarsRefiner<S extends State, A extends Action>
 		PrecTraceRefiner<S, A, ExplPrec, IndexedVarsRefutation> {
 
 	@Override
-	public ExplPrec refine(final Trace<S, A> trace, final ExplPrec precision,
+	public ExplPrec refine(final Trace<S, A> trace, final ExplPrec prec,
 			final IndexedVarsRefutation refutation) {
 		final Collection<VarDecl<? extends Type>> vars = refutation.getVarSets().getAllVars();
-		final ExplPrec refinedPrecision = precision.join(ExplPrec.create(vars));
-		return refinedPrecision;
+		final ExplPrec refinedPrec = prec.join(ExplPrec.create(vars));
+		return refinedPrec;
 	}
 
 	@Override

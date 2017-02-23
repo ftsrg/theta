@@ -40,12 +40,12 @@ final class TcfaLawiAnalysis implements Analysis<TcfaLawiState, TcfaAction, Null
 		checkNotNull(tcfa);
 		checkNotNull(solver);
 
-		final ExplPrec explPrecision = ExplPrec.create(tcfa.getDataVars());
-		final ZonePrec zonePrecision = ZonePrec.create(tcfa.getClockVars());
-		final Prod2Prec<ExplPrec, ZonePrec> compositePrecision = ProdPrec.of(explPrecision,
-				zonePrecision);
-		final LocPrec<Prod2Prec<ExplPrec, ZonePrec>, TcfaLoc, TcfaEdge> locPrecision = ConstLocPrec
-				.create(compositePrecision);
+		final ExplPrec explPrec = ExplPrec.create(tcfa.getDataVars());
+		final ZonePrec zonePrec = ZonePrec.create(tcfa.getClockVars());
+		final Prod2Prec<ExplPrec, ZonePrec> compositePrec = ProdPrec.of(explPrec,
+				zonePrec);
+		final LocPrec<Prod2Prec<ExplPrec, ZonePrec>, TcfaLoc, TcfaEdge> locPrec = ConstLocPrec
+				.create(compositePrec);
 
 		final Analysis<ExplState, ExprAction, ExplPrec> explAnalysis = ExplAnalysis.create(solver, True());
 		final Analysis<ItpZoneState, TcfaAction, ZonePrec> itpZoneAnalysis = TcfaItpZoneAnalysis.getInstance();
@@ -55,7 +55,7 @@ final class TcfaLawiAnalysis implements Analysis<TcfaLawiState, TcfaAction, Null
 				.create(tcfa.getInitLoc(), compositeAnalysis);
 
 		final Analysis<LocState<Prod2State<ExplState, ItpZoneState>, TcfaLoc, TcfaEdge>, TcfaAction, NullPrec> analysis = FixedPrecAnalysis
-				.create(locAnalysis, locPrecision);
+				.create(locAnalysis, locPrec);
 
 		domain = TcfaLawiDomain.create(analysis.getDomain());
 		initFunction = TcfaLawiInitFunction.create(analysis.getInitFunction());

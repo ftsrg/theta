@@ -78,7 +78,7 @@ public class StsPredTest {
 		final Analysis<PredState, ExprAction, PredPrec> analysis = PredAnalysis.create(solver, And(sts.getInit()));
 		final Predicate<ExprState> target = new ExprStatePredicate(Not(sts.getProp()), solver);
 
-		final SimplePredPrec precision = SimplePredPrec.create(Collections.singleton(Lt(x, Int(mod))),
+		final SimplePredPrec prec = SimplePredPrec.create(Collections.singleton(Lt(x, Int(mod))),
 				solver);
 
 		final LTS<State, StsAction> lts = StsLts.create(sts);
@@ -98,7 +98,7 @@ public class StsPredTest {
 		final SafetyChecker<PredState, StsAction, SimplePredPrec> checker = CegarChecker.create(abstractor,
 				refiner, logger);
 
-		final SafetyStatus<PredState, StsAction> safetyStatus = checker.check(precision);
+		final SafetyStatus<PredState, StsAction> safetyStatus = checker.check(prec);
 		System.out.println(safetyStatus);
 
 		final ARG<PredState, StsAction> arg = safetyStatus.getArg();

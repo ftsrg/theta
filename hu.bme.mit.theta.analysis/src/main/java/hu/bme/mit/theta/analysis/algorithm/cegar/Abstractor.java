@@ -9,6 +9,6 @@ public interface Abstractor<S extends State, A extends Action, P extends Prec> {
 
 	ARG<S, A> createArg();
 
-	AbstractorResult check(ARG<S, A> arg, P precision);
+	AbstractorResult check(ARG<S, A> arg, P prec);
 
 }

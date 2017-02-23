@@ -24,9 +24,9 @@ public final class ExplInitFunction implements InitFunction<ExplState, ExplPrec>
 	}
 
 	@Override
-	public Collection<? extends ExplState> getInitStates(final ExplPrec precision) {
-		checkNotNull(precision);
-		return precision.createStates(solver, initExpr);
+	public Collection<? extends ExplState> getInitStates(final ExplPrec prec) {
+		checkNotNull(prec);
+		return prec.createStates(solver, initExpr);
 	}
 
 }

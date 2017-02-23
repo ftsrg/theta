@@ -27,13 +27,13 @@ public class ConstLocPrecRefiner<S extends State, A extends Action, P extends Pr
 	}
 
 	@Override
-	public LocPrec<P, L, E> refine(final Trace<LocState<S, L, E>, A> trace, final LocPrec<P, L, E> precision,
+	public LocPrec<P, L, E> refine(final Trace<LocState<S, L, E>, A> trace, final LocPrec<P, L, E> prec,
 			final R refutation) {
-		checkArgument(precision instanceof ConstLocPrec); // TODO: enforce this in a better way
-		final ConstLocPrec<P, L, E> constPrecision = (ConstLocPrec<P, L, E>) precision;
-		final P innerPrec = constPrecision.getPrec();
+		checkArgument(prec instanceof ConstLocPrec); // TODO: enforce this in a better way
+		final ConstLocPrec<P, L, E> constPrec = (ConstLocPrec<P, L, E>) prec;
+		final P innerPrec = constPrec.getPrec();
 		final P refinedInnerPrec = refiner.refine(trace, innerPrec, refutation);
-		return constPrecision.refine(refinedInnerPrec);
+		return constPrec.refine(refinedInnerPrec);
 	}
 
 }

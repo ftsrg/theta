@@ -23,9 +23,9 @@ final class TcfaZoneTransferFunction implements TransferFunction<ZoneState, Tcfa
 
 	@Override
 	public Collection<ZoneState> getSuccStates(final ZoneState state, final TcfaAction action,
-			final ZonePrec precision) {
+			final ZonePrec prec) {
 
-		final ZoneState succState = TcfaZoneUtils.post(state, action, precision);
+		final ZoneState succState = TcfaZoneUtils.post(state, action, prec);
 
 		if (succState.isBottom()) {
 			return ImmutableSet.of();

@@ -37,9 +37,9 @@ public class SingleExprTraceRefiner<S extends ExprState, A extends ExprAction, P
 	}
 
 	@Override
-	public RefinerResult<S, A, P> refine(final ARG<S, A> arg, final P precision) {
+	public RefinerResult<S, A, P> refine(final ARG<S, A> arg, final P prec) {
 		checkNotNull(arg);
-		checkNotNull(precision);
+		checkNotNull(prec);
 		checkArgument(!arg.isSafe());
 
 		final ArgTrace<S, A> cexToConcretize = arg.getCexs().findFirst().get();
@@ -56,13 +56,13 @@ public class SingleExprTraceRefiner<S extends ExprState, A extends ExprAction, P
 		} else if (cexStatus.isInfeasible()) {
 			final R refutation = cexStatus.asInfeasible().getRefutation();
 			logger.writeln(refutation, 4, 3);
-			final P refinedPrecision = traceRefiner.refine(traceToConcretize, precision, refutation);
+			final P refinedPrec = traceRefiner.refine(traceToConcretize, prec, refutation);
 			final int pruneIndex = refutation.getPruneIndex();
 			checkState(0 <= pruneIndex && pruneIndex <= cexToConcretize.length());
 			logger.writeln("Pruning from index ", pruneIndex, 3, 2);
 			final ArgNode<S, A> nodeToPrune = cexToConcretize.node(pruneIndex);
 			arg.prune(nodeToPrune);
-			return RefinerResult.spurious(refinedPrecision);
+			return RefinerResult.spurious(refinedPrec);
 		}
 		throw new IllegalStateException("Unknown status.");
 	}

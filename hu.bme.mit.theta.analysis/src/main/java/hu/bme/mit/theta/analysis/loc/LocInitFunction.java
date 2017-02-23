@@ -28,12 +28,12 @@ public final class LocInitFunction<S extends State, P extends Prec, L extends Lo
 	}
 
 	@Override
-	public Collection<LocState<S, L, E>> getInitStates(final LocPrec<P, L, E> precision) {
-		checkNotNull(precision);
+	public Collection<LocState<S, L, E>> getInitStates(final LocPrec<P, L, E> prec) {
+		checkNotNull(prec);
 
 		final Collection<LocState<S, L, E>> initStates = new ArrayList<>();
-		final P subPrecision = precision.getPrec(initLoc);
-		final Collection<? extends S> subInitStates = initFunction.getInitStates(subPrecision);
+		final P subPrec = prec.getPrec(initLoc);
+		final Collection<? extends S> subInitStates = initFunction.getInitStates(subPrec);
 		for (final S subInitState : subInitStates) {
 			final LocState<S, L, E> initState = LocState.of(initLoc, subInitState);
 			initStates.add(initState);

@@ -16,12 +16,12 @@ public final class TcfaInterpolator {
 
 	private final ZonePrec prec;
 
-	private TcfaInterpolator(final ZonePrec precision) {
-		this.prec = checkNotNull(precision);
+	private TcfaInterpolator(final ZonePrec prec) {
+		this.prec = checkNotNull(prec);
 	}
 
-	public static TcfaInterpolator create(final ZonePrec precision) {
-		return new TcfaInterpolator(precision);
+	public static TcfaInterpolator create(final ZonePrec prec) {
+		return new TcfaInterpolator(prec);
 	}
 
 	public List<ZoneState> getInterpolant(final ZoneState source, final List<? extends TcfaAction> actions,

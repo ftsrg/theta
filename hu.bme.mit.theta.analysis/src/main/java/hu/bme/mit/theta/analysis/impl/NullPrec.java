@@ -15,6 +15,6 @@ public final class NullPrec implements Prec {
 
 	@Override
 	public String toString() {
-		return "NullPrecision";
+		return getClass().getSimpleName();
 	}
 }

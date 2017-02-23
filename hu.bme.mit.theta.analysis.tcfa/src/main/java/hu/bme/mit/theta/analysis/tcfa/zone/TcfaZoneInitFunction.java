@@ -21,8 +21,8 @@ final class TcfaZoneInitFunction implements InitFunction<ZoneState, ZonePrec> {
 	}
 
 	@Override
-	public Collection<ZoneState> getInitStates(final ZonePrec precision) {
-		checkNotNull(precision);
+	public Collection<ZoneState> getInitStates(final ZonePrec prec) {
+		checkNotNull(prec);
 		return Collections.singleton(ZoneState.top());
 	}
 

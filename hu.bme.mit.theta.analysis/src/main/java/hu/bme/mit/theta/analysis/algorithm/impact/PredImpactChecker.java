@@ -40,14 +40,14 @@ public final class PredImpactChecker<L extends Loc<L, E>, E extends Edge<L, E>>
 
 		final Analysis<PredState, ExprAction, PredPrec> predAnalysis = PredAnalysis.create(solver, True());
 
-		final LocPrec<PredPrec, L, E> fixedPrecision = ConstLocPrec
+		final LocPrec<PredPrec, L, E> fixedPrec = ConstLocPrec
 				.create(SimplePredPrec.create(emptySet(), solver));
 
 		final Analysis<LocState<PredState, L, E>, LocAction<L, E>, LocPrec<PredPrec, L, E>> cfaAnalysis = LocAnalysis
 				.create(initLoc, predAnalysis);
 
 		final Analysis<LocState<PredState, L, E>, LocAction<L, E>, NullPrec> analysis = FixedPrecAnalysis
-				.create(cfaAnalysis, fixedPrecision);
+				.create(cfaAnalysis, fixedPrec);
 
 		final Predicate<LocState<?, L, ?>> target = s -> targetLocs.test(s.getLoc());
 
@@ -66,8 +66,8 @@ public final class PredImpactChecker<L extends Loc<L, E>, E extends Edge<L, E>>
 	}
 
 	@Override
-	public SafetyStatus<LocState<PredState, L, E>, LocAction<L, E>> check(final NullPrec precision) {
-		return checker.check(precision);
+	public SafetyStatus<LocState<PredState, L, E>, LocAction<L, E>> check(final NullPrec prec) {
+		return checker.check(prec);
 	}
 
 }
