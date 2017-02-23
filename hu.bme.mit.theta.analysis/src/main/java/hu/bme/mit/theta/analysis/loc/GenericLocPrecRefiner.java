@@ -33,7 +33,11 @@ public class GenericLocPrecRefiner<S extends State, A extends Action, P extends 
 	@Override
 	public LocPrec<P, L, E> refine(final Trace<LocState<S, L, E>, A> trace, final LocPrec<P, L, E> prec,
 			final R refutation) {
+		checkNotNull(trace);
+		checkNotNull(prec);
+		checkNotNull(refutation);
 		checkArgument(prec instanceof GenericLocPrec); // TODO: enforce this in a better way
+
 		final GenericLocPrec<P, L, E> genPrec = (GenericLocPrec<P, L, E>) prec;
 		final Map<L, P> runningPrecs = new HashMap<>();
 		for (final LocState<S, L, E> state : trace.getStates()) {

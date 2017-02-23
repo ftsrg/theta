@@ -30,7 +30,11 @@ public class ConstLocPrecRefiner<S extends State, A extends Action, P extends Pr
 	@Override
 	public LocPrec<P, L, E> refine(final Trace<LocState<S, L, E>, A> trace, final LocPrec<P, L, E> prec,
 			final R refutation) {
+		checkNotNull(trace);
+		checkNotNull(prec);
+		checkNotNull(refutation);
 		checkArgument(prec instanceof ConstLocPrec); // TODO: enforce this in a better way
+
 		final ConstLocPrec<P, L, E> constPrec = (ConstLocPrec<P, L, E>) prec;
 		P runningPrec = constPrec.getPrec();
 		for (int i = 0; i < trace.getStates().size(); ++i) {

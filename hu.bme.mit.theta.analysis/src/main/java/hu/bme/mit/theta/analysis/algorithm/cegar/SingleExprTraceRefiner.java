@@ -21,20 +21,20 @@ public class SingleExprTraceRefiner<S extends ExprState, A extends ExprAction, P
 		implements Refiner<S, A, P> {
 
 	private final ExprTraceChecker<R> exprTraceChecker;
-	private final PrecRefiner<S, A, P, R> traceRefiner;
+	private final PrecRefiner<S, A, P, R> precRefiner;
 	private final Logger logger;
 
 	private SingleExprTraceRefiner(final ExprTraceChecker<R> exprTraceChecker,
-			final PrecRefiner<S, A, P, R> traceRefiner, final Logger logger) {
-		this.exprTraceChecker = exprTraceChecker;
-		this.traceRefiner = traceRefiner;
-		this.logger = logger;
+			final PrecRefiner<S, A, P, R> precRefiner, final Logger logger) {
+		this.exprTraceChecker = checkNotNull(exprTraceChecker);
+		this.precRefiner = checkNotNull(precRefiner);
+		this.logger = checkNotNull(logger);
 	}
 
 	public static <S extends ExprState, A extends ExprAction, P extends Prec, R extends Refutation> SingleExprTraceRefiner<S, A, P, R> create(
-			final ExprTraceChecker<R> exprTraceChecker, final PrecRefiner<S, A, P, R> traceRefiner,
+			final ExprTraceChecker<R> exprTraceChecker, final PrecRefiner<S, A, P, R> precRefiner,
 			final Logger logger) {
-		return new SingleExprTraceRefiner<>(exprTraceChecker, traceRefiner, logger);
+		return new SingleExprTraceRefiner<>(exprTraceChecker, precRefiner, logger);
 	}
 
 	@Override
@@ -52,12 +52,14 @@ public class SingleExprTraceRefiner<S extends ExprState, A extends ExprAction, P
 		final ExprTraceStatus<R> cexStatus = exprTraceChecker.check(traceToConcretize);
 		logger.writeln("done: ", cexStatus, 3, 0);
 
+		checkState(cexStatus.isFeasible() || cexStatus.isInfeasible(), "Unknown status.");
+
 		if (cexStatus.isFeasible()) {
 			return RefinerResult.unsafe(traceToConcretize);
-		} else if (cexStatus.isInfeasible()) {
+		} else {
 			final R refutation = cexStatus.asInfeasible().getRefutation();
 			logger.writeln(refutation, 4, 3);
-			final P refinedPrec = traceRefiner.refine(traceToConcretize, prec, refutation);
+			final P refinedPrec = precRefiner.refine(traceToConcretize, prec, refutation);
 			final int pruneIndex = refutation.getPruneIndex();
 			checkState(0 <= pruneIndex && pruneIndex <= cexToConcretize.length());
 			logger.writeln("Pruning from index ", pruneIndex, 3, 2);
@@ -65,12 +67,11 @@ public class SingleExprTraceRefiner<S extends ExprState, A extends ExprAction, P
 			arg.prune(nodeToPrune);
 			return RefinerResult.spurious(refinedPrec);
 		}
-		throw new IllegalStateException("Unknown status.");
 	}
 
 	@Override
 	public String toString() {
-		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).add(exprTraceChecker).add(traceRefiner)
+		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).add(exprTraceChecker).add(precRefiner)
 				.toString();
 	}
 

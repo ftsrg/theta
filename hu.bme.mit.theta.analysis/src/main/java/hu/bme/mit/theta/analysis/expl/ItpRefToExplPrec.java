@@ -1,5 +1,7 @@
 package hu.bme.mit.theta.analysis.expl;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.util.Collection;
 
 import hu.bme.mit.theta.analysis.expr.ItpRefutation;
@@ -22,6 +24,8 @@ public class ItpRefToExplPrec implements RefutationToPrec<ExplPrec, ItpRefutatio
 
 	@Override
 	public ExplPrec join(final ExplPrec prec1, final ExplPrec prec2) {
+		checkNotNull(prec1);
+		checkNotNull(prec2);
 		return prec1.join(prec2);
 	}
 

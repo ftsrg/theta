@@ -1,5 +1,7 @@
 package hu.bme.mit.theta.analysis.pred;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import hu.bme.mit.theta.analysis.expr.ItpRefutation;
 import hu.bme.mit.theta.analysis.expr.RefutationToPrec;
 import hu.bme.mit.theta.core.expr.Expr;
@@ -11,7 +13,7 @@ public class ItpRefToSimplePredPrec implements RefutationToPrec<SimplePredPrec, 
 	private final Solver solver;
 
 	public ItpRefToSimplePredPrec(final Solver solver) {
-		this.solver = solver;
+		this.solver = checkNotNull(solver);
 	}
 
 	@Override
@@ -23,6 +25,8 @@ public class ItpRefToSimplePredPrec implements RefutationToPrec<SimplePredPrec, 
 
 	@Override
 	public SimplePredPrec join(final SimplePredPrec prec1, final SimplePredPrec prec2) {
+		checkNotNull(prec1);
+		checkNotNull(prec2);
 		return prec1.join(prec2);
 	}
 
