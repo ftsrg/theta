@@ -7,7 +7,7 @@ import org.junit.Test;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.ArgChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyStatus;
-import hu.bme.mit.theta.analysis.impl.NullPrecision;
+import hu.bme.mit.theta.analysis.impl.NullPrec;
 import hu.bme.mit.theta.analysis.tcfa.lawi.TcfaLawiChecker;
 import hu.bme.mit.theta.analysis.tcfa.lawi.TcfaLawiState;
 import hu.bme.mit.theta.formalism.tcfa.TCFA;
@@ -28,7 +28,7 @@ public final class TcfaLawiCheckerTest {
 		final TcfaLawiChecker checker = TcfaLawiChecker.create(fischer, l -> false, solver);
 
 		// Act
-		final SafetyStatus<TcfaLawiState, TcfaAction> status = checker.check(NullPrecision.getInstance());
+		final SafetyStatus<TcfaLawiState, TcfaAction> status = checker.check(NullPrec.getInstance());
 
 		// Assert
 		assertTrue(status.isSafe());

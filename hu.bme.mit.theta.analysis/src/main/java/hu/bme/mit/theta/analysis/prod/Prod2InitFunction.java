@@ -5,11 +5,11 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.util.Collection;
 
 import hu.bme.mit.theta.analysis.InitFunction;
-import hu.bme.mit.theta.analysis.Precision;
+import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 
-final class Prod2InitFunction<S1 extends State, S2 extends State, P1 extends Precision, P2 extends Precision>
-		implements InitFunction<Prod2State<S1, S2>, Prod2Precision<P1, P2>> {
+final class Prod2InitFunction<S1 extends State, S2 extends State, P1 extends Prec, P2 extends Prec>
+		implements InitFunction<Prod2State<S1, S2>, Prod2Prec<P1, P2>> {
 
 	private final InitFunction<S1, P1> initFunction1;
 	private final InitFunction<S2, P2> initFunction2;
@@ -22,19 +22,19 @@ final class Prod2InitFunction<S1 extends State, S2 extends State, P1 extends Pre
 		this.strenghteningOperator = checkNotNull(strenghteningOperator);
 	}
 
-	public static <S1 extends State, S2 extends State, P1 extends Precision, P2 extends Precision> Prod2InitFunction<S1, S2, P1, P2> create(
+	public static <S1 extends State, S2 extends State, P1 extends Prec, P2 extends Prec> Prod2InitFunction<S1, S2, P1, P2> create(
 			final InitFunction<S1, P1> initFunction1, final InitFunction<S2, P2> initFunction2,
 			final StrengtheningOperator<S1, S2, P1, P2> strenghteningOperator) {
 		return new Prod2InitFunction<>(initFunction1, initFunction2, strenghteningOperator);
 	}
 
-	public static <S1 extends State, S2 extends State, P1 extends Precision, P2 extends Precision> Prod2InitFunction<S1, S2, P1, P2> create(
+	public static <S1 extends State, S2 extends State, P1 extends Prec, P2 extends Prec> Prod2InitFunction<S1, S2, P1, P2> create(
 			final InitFunction<S1, P1> initFunction1, final InitFunction<S2, P2> initFunction2) {
 		return new Prod2InitFunction<>(initFunction1, initFunction2, (states, precision) -> states);
 	}
 
 	@Override
-	public Collection<? extends Prod2State<S1, S2>> getInitStates(final Prod2Precision<P1, P2> precision) {
+	public Collection<? extends Prod2State<S1, S2>> getInitStates(final Prod2Prec<P1, P2> precision) {
 		checkNotNull(precision);
 
 		final Collection<? extends S1> initStates1 = initFunction1.getInitStates(precision._1());

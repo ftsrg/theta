@@ -10,10 +10,10 @@ import java.util.function.Predicate;
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.LTS;
-import hu.bme.mit.theta.analysis.Precision;
+import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 
-public final class ArgBuilder<S extends State, A extends Action, P extends Precision> {
+public final class ArgBuilder<S extends State, A extends Action, P extends Prec> {
 
 	private final LTS<? super S, ? extends A> lts;
 	private final Analysis<S, ? super A, ? super P> analysis;
@@ -26,7 +26,7 @@ public final class ArgBuilder<S extends State, A extends Action, P extends Preci
 		this.target = checkNotNull(target);
 	}
 
-	public static <S extends State, A extends Action, P extends Precision> ArgBuilder<S, A, P> create(
+	public static <S extends State, A extends Action, P extends Prec> ArgBuilder<S, A, P> create(
 			final LTS<? super S, ? extends A> lts, final Analysis<S, ? super A, ? super P> analysis,
 			final Predicate<? super S> target) {
 		return new ArgBuilder<>(lts, analysis, target);

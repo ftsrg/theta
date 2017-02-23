@@ -6,16 +6,16 @@ import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.Domain;
 import hu.bme.mit.theta.analysis.InitFunction;
-import hu.bme.mit.theta.analysis.Precision;
+import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.TransferFunction;
 
-public final class Prod3Analysis<S1 extends State, S2 extends State, S3 extends State, A extends Action, P1 extends Precision, P2 extends Precision, P3 extends Precision>
-		implements Analysis<Prod3State<S1, S2, S3>, A, Prod3Precision<P1, P2, P3>> {
+public final class Prod3Analysis<S1 extends State, S2 extends State, S3 extends State, A extends Action, P1 extends Prec, P2 extends Prec, P3 extends Prec>
+		implements Analysis<Prod3State<S1, S2, S3>, A, Prod3Prec<P1, P2, P3>> {
 
 	private final Domain<Prod3State<S1, S2, S3>> domain;
-	private final InitFunction<Prod3State<S1, S2, S3>, Prod3Precision<P1, P2, P3>> initFunction;
-	private final TransferFunction<Prod3State<S1, S2, S3>, A, Prod3Precision<P1, P2, P3>> transferFunction;
+	private final InitFunction<Prod3State<S1, S2, S3>, Prod3Prec<P1, P2, P3>> initFunction;
+	private final TransferFunction<Prod3State<S1, S2, S3>, A, Prod3Prec<P1, P2, P3>> transferFunction;
 
 	private Prod3Analysis(final Analysis<S1, ? super A, P1> analysis1, final Analysis<S2, ? super A, P2> analysis2,
 			final Analysis<S3, ? super A, P3> analysis3) {
@@ -29,7 +29,7 @@ public final class Prod3Analysis<S1 extends State, S2 extends State, S3 extends 
 				analysis2.getTransferFunction(), analysis3.getTransferFunction());
 	}
 
-	public static <S1 extends State, S2 extends State, S3 extends State, A extends Action, P1 extends Precision, P2 extends Precision, P3 extends Precision> Prod3Analysis<S1, S2, S3, A, P1, P2, P3> create(
+	public static <S1 extends State, S2 extends State, S3 extends State, A extends Action, P1 extends Prec, P2 extends Prec, P3 extends Prec> Prod3Analysis<S1, S2, S3, A, P1, P2, P3> create(
 			final Analysis<S1, ? super A, P1> analysis1, final Analysis<S2, ? super A, P2> analysis2,
 			final Analysis<S3, ? super A, P3> analysis3) {
 		return new Prod3Analysis<>(analysis1, analysis2, analysis3);
@@ -41,12 +41,12 @@ public final class Prod3Analysis<S1 extends State, S2 extends State, S3 extends 
 	}
 
 	@Override
-	public InitFunction<Prod3State<S1, S2, S3>, Prod3Precision<P1, P2, P3>> getInitFunction() {
+	public InitFunction<Prod3State<S1, S2, S3>, Prod3Prec<P1, P2, P3>> getInitFunction() {
 		return initFunction;
 	}
 
 	@Override
-	public TransferFunction<Prod3State<S1, S2, S3>, A, Prod3Precision<P1, P2, P3>> getTransferFunction() {
+	public TransferFunction<Prod3State<S1, S2, S3>, A, Prod3Prec<P1, P2, P3>> getTransferFunction() {
 		return transferFunction;
 	}
 

@@ -9,7 +9,7 @@ import java.util.Set;
 
 import com.google.common.collect.ImmutableSet;
 
-import hu.bme.mit.theta.analysis.Precision;
+import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.expr.ExprStates;
 import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.decl.VarDecl;
@@ -24,29 +24,29 @@ import hu.bme.mit.theta.solver.Solver;
  * Represents an immutable, simple explicit precision that is a set of
  * variables.
  */
-public final class ExplPrecision implements Precision {
+public final class ExplPrec implements Prec {
 
 	private final Set<VarDecl<?>> vars;
-	private static ExplPrecision EMPTY = new ExplPrecision(Collections.emptySet());
+	private static ExplPrec EMPTY = new ExplPrec(Collections.emptySet());
 
-	private ExplPrecision(final Iterable<? extends VarDecl<?>> vars) {
+	private ExplPrec(final Iterable<? extends VarDecl<?>> vars) {
 		checkNotNull(vars);
 		this.vars = ImmutableSet.copyOf(vars);
 	}
 
-	public static ExplPrecision create() {
+	public static ExplPrec create() {
 		return create(Collections.emptySet());
 	}
 
-	public static ExplPrecision create(final Iterable<? extends VarDecl<?>> vars) {
+	public static ExplPrec create(final Iterable<? extends VarDecl<?>> vars) {
 		if (vars.iterator().hasNext()) {
-			return new ExplPrecision(vars);
+			return new ExplPrec(vars);
 		} else {
 			return EMPTY;
 		}
 	}
 
-	public ExplPrecision join(final ExplPrecision other) {
+	public ExplPrec join(final ExplPrec other) {
 		checkNotNull(other);
 		final Collection<VarDecl<?>> newVars = ImmutableSet.<VarDecl<?>>builder().addAll(vars).addAll(other.vars)
 				.build();

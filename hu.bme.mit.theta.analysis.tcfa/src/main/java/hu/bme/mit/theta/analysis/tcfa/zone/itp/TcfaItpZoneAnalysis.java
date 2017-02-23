@@ -5,9 +5,9 @@ import hu.bme.mit.theta.analysis.Domain;
 import hu.bme.mit.theta.analysis.InitFunction;
 import hu.bme.mit.theta.analysis.TransferFunction;
 import hu.bme.mit.theta.analysis.tcfa.TcfaAction;
-import hu.bme.mit.theta.analysis.zone.ZonePrecision;
+import hu.bme.mit.theta.analysis.zone.ZonePrec;
 
-public final class TcfaItpZoneAnalysis implements Analysis<ItpZoneState, TcfaAction, ZonePrecision> {
+public final class TcfaItpZoneAnalysis implements Analysis<ItpZoneState, TcfaAction, ZonePrec> {
 
 	private static final TcfaItpZoneAnalysis INSTANCE = new TcfaItpZoneAnalysis();
 
@@ -26,12 +26,12 @@ public final class TcfaItpZoneAnalysis implements Analysis<ItpZoneState, TcfaAct
 	}
 
 	@Override
-	public InitFunction<ItpZoneState, ZonePrecision> getInitFunction() {
+	public InitFunction<ItpZoneState, ZonePrec> getInitFunction() {
 		return TcfaItpZoneInitFunction.getInstance();
 	}
 
 	@Override
-	public TransferFunction<ItpZoneState, TcfaAction, ZonePrecision> getTransferFunction() {
+	public TransferFunction<ItpZoneState, TcfaAction, ZonePrec> getTransferFunction() {
 		return TcfaItpZoneTransferFunction.getInstance();
 	}
 

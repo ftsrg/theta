@@ -12,7 +12,7 @@ import java.util.Optional;
 
 import com.google.common.collect.ImmutableMap;
 
-import hu.bme.mit.theta.analysis.Precision;
+import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.common.ToStringBuilder;
 import hu.bme.mit.theta.formalism.common.Edge;
@@ -22,8 +22,8 @@ import hu.bme.mit.theta.formalism.common.Loc;
  * Represents an immutable generic precision that can assign a precision to each
  * location.
  */
-public final class GenericLocPrecision<P extends Precision, L extends Loc<L, E>, E extends Edge<L, E>>
-		implements LocPrecision<P, L, E> {
+public final class GenericLocPrecision<P extends Prec, L extends Loc<L, E>, E extends Edge<L, E>>
+		implements LocPrec<P, L, E> {
 	private final Map<L, P> mapping;
 	private final Optional<P> defaultPrecision;
 
@@ -32,17 +32,17 @@ public final class GenericLocPrecision<P extends Precision, L extends Loc<L, E>,
 		this.defaultPrecision = defaultPrecision;
 	}
 
-	public static <P extends Precision, L extends Loc<L, E>, E extends Edge<L, E>> GenericLocPrecision<P, L, E> create(
+	public static <P extends Prec, L extends Loc<L, E>, E extends Edge<L, E>> GenericLocPrecision<P, L, E> create(
 			final Map<L, P> mapping) {
 		return new GenericLocPrecision<>(ImmutableMap.copyOf(mapping), Optional.empty());
 	}
 
-	public static <P extends Precision, L extends Loc<L, E>, E extends Edge<L, E>> GenericLocPrecision<P, L, E> create(
+	public static <P extends Prec, L extends Loc<L, E>, E extends Edge<L, E>> GenericLocPrecision<P, L, E> create(
 			final P defaultPrecision) {
 		return new GenericLocPrecision<P, L, E>(Collections.emptyMap(), Optional.of(defaultPrecision));
 	}
 
-	public static <P extends Precision, L extends Loc<L, E>, E extends Edge<L, E>> GenericLocPrecision<P, L, E> create(
+	public static <P extends Prec, L extends Loc<L, E>, E extends Edge<L, E>> GenericLocPrecision<P, L, E> create(
 			final Map<L, P> mapping, final P defaultPrecision) {
 		return new GenericLocPrecision<>(ImmutableMap.copyOf(mapping), Optional.of(defaultPrecision));
 	}

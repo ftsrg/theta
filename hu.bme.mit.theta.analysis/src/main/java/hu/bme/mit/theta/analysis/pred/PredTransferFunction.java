@@ -13,7 +13,7 @@ import hu.bme.mit.theta.core.model.impl.Valuation;
 import hu.bme.mit.theta.core.utils.impl.PathUtils;
 import hu.bme.mit.theta.solver.Solver;
 
-public final class PredTransferFunction implements TransferFunction<PredState, ExprAction, PredPrecision> {
+public final class PredTransferFunction implements TransferFunction<PredState, ExprAction, PredPrec> {
 
 	private final Solver solver;
 
@@ -27,7 +27,7 @@ public final class PredTransferFunction implements TransferFunction<PredState, E
 
 	@Override
 	public Collection<? extends PredState> getSuccStates(final PredState state, final ExprAction action,
-			final PredPrecision precision) {
+			final PredPrec precision) {
 		checkNotNull(state);
 		checkNotNull(action);
 		checkNotNull(precision);

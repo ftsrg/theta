@@ -18,7 +18,7 @@ import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.IntType;
 import hu.bme.mit.theta.core.type.impl.Types;
 
-public class TreePredPrecisionTest {
+public class TreePredPrecTest {
 
 	@Test
 	public void test() {
@@ -33,7 +33,7 @@ public class TreePredPrecisionTest {
 		final Expr<BoolType> pb = Exprs.Eq(vb.getRef(), int1);
 		final Expr<BoolType> pc = Exprs.Eq(vc.getRef(), int1);
 
-		final TreePredPrecision prec = TreePredPrecision.create(Collections.singletonList(pa));
+		final TreePredPrec prec = TreePredPrec.create(Collections.singletonList(pa));
 
 		final Valuation v111 = Valuation.builder().put(va, int1).put(vb, int1).put(vc, int1).build();
 		final Valuation v011 = Valuation.builder().put(va, int0).put(vb, int1).put(vc, int1).build();
@@ -77,7 +77,7 @@ public class TreePredPrecisionTest {
 
 	@Test(expected = IllegalStateException.class)
 	public void testException() {
-		final TreePredPrecision prec = TreePredPrecision.create(ImmutableSet.of(Exprs.Eq(Exprs.Int(2), Exprs.Int(4))));
+		final TreePredPrec prec = TreePredPrec.create(ImmutableSet.of(Exprs.Eq(Exprs.Int(2), Exprs.Int(4))));
 
 		final PredState state = PredState.of(Exprs.Eq(Exprs.Int(0), Exprs.Int(1)));
 

@@ -5,12 +5,12 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.util.Collection;
 
 import hu.bme.mit.theta.analysis.Action;
-import hu.bme.mit.theta.analysis.Precision;
+import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.TransferFunction;
 
-final class Prod3TransferFunction<S1 extends State, S2 extends State, S3 extends State, A extends Action, P1 extends Precision, P2 extends Precision, P3 extends Precision>
-		implements TransferFunction<Prod3State<S1, S2, S3>, A, Prod3Precision<P1, P2, P3>> {
+final class Prod3TransferFunction<S1 extends State, S2 extends State, S3 extends State, A extends Action, P1 extends Prec, P2 extends Prec, P3 extends Prec>
+		implements TransferFunction<Prod3State<S1, S2, S3>, A, Prod3Prec<P1, P2, P3>> {
 
 	private final TransferFunction<S1, ? super A, P1> transferFunction1;
 	private final TransferFunction<S2, ? super A, P2> transferFunction2;
@@ -24,7 +24,7 @@ final class Prod3TransferFunction<S1 extends State, S2 extends State, S3 extends
 		this.transferFunction3 = checkNotNull(transferFunction3);
 	}
 
-	public static <S1 extends State, S2 extends State, S3 extends State, A extends Action, P1 extends Precision, P2 extends Precision, P3 extends Precision> Prod3TransferFunction<S1, S2, S3, A, P1, P2, P3> create(
+	public static <S1 extends State, S2 extends State, S3 extends State, A extends Action, P1 extends Prec, P2 extends Prec, P3 extends Prec> Prod3TransferFunction<S1, S2, S3, A, P1, P2, P3> create(
 			final TransferFunction<S1, ? super A, P1> transferFunction1,
 			final TransferFunction<S2, ? super A, P2> transferFunction2,
 			final TransferFunction<S3, ? super A, P3> transferFunction3) {
@@ -33,7 +33,7 @@ final class Prod3TransferFunction<S1 extends State, S2 extends State, S3 extends
 
 	@Override
 	public Collection<? extends Prod3State<S1, S2, S3>> getSuccStates(final Prod3State<S1, S2, S3> state,
-			final A action, final Prod3Precision<P1, P2, P3> precision) {
+			final A action, final Prod3Prec<P1, P2, P3> precision) {
 		checkNotNull(state);
 		checkNotNull(precision);
 

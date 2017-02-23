@@ -16,7 +16,7 @@ import hu.bme.mit.theta.core.type.impl.Types;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 
-public class SimplePredPrecisionTest {
+public class SimplePredPrecTest {
 
 	private final VarDecl<IntType> x = Decls.Var("x", Types.Int());
 	private final VarDecl<IntType> y = Decls.Var("y", Types.Int());
@@ -27,7 +27,7 @@ public class SimplePredPrecisionTest {
 
 	@Test
 	public void testMapping() {
-		final PredPrecision prec = SimplePredPrecision.create(Collections.singleton(pred), solver);
+		final PredPrec prec = SimplePredPrec.create(Collections.singleton(pred), solver);
 
 		final PredState s1 = prec.createState(Valuation.builder().put(x, Exprs.Int(0)).build());
 		final PredState s2 = prec.createState(Valuation.builder().put(x, Exprs.Int(10)).build());
@@ -40,14 +40,14 @@ public class SimplePredPrecisionTest {
 
 	@Test
 	public void testRefinement() {
-		final SimplePredPrecision p0 = SimplePredPrecision.create(solver);
-		final SimplePredPrecision p1 = SimplePredPrecision.create(Collections.singleton(pred), solver);
-		final SimplePredPrecision p2 = SimplePredPrecision
+		final SimplePredPrec p0 = SimplePredPrec.create(solver);
+		final SimplePredPrec p1 = SimplePredPrec.create(Collections.singleton(pred), solver);
+		final SimplePredPrec p2 = SimplePredPrec
 				.create(Collections.singleton(Exprs.Eq(x.getRef(), y.getRef())), solver);
 
-		final SimplePredPrecision r1 = p1.join(p0);
-		final SimplePredPrecision r2 = p1.join(p2);
-		final SimplePredPrecision r3 = p1.join(r2);
+		final SimplePredPrec r1 = p1.join(p0);
+		final SimplePredPrec r2 = p1.join(p2);
+		final SimplePredPrec r3 = p1.join(r2);
 
 		Assert.assertTrue(p1 == r1);
 		Assert.assertTrue(p1 != r2);

@@ -7,21 +7,21 @@ import java.util.Set;
 
 import com.google.common.collect.ImmutableSet;
 
-import hu.bme.mit.theta.analysis.Precision;
+import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.formalism.ta.decl.ClockDecl;
 
-public final class ZonePrecision implements Precision {
+public final class ZonePrec implements Prec {
 
 	private final Set<ClockDecl> clocks;
 
-	private ZonePrecision(final Collection<? extends ClockDecl> clocks) {
+	private ZonePrec(final Collection<? extends ClockDecl> clocks) {
 		checkNotNull(clocks);
 		this.clocks = ImmutableSet.copyOf(clocks);
 	}
 
-	public static ZonePrecision create(final Collection<? extends ClockDecl> clocks) {
-		return new ZonePrecision(clocks);
+	public static ZonePrec create(final Collection<? extends ClockDecl> clocks) {
+		return new ZonePrec(clocks);
 	}
 
 	public Set<ClockDecl> getClocks() {

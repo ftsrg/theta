@@ -1,5 +1,5 @@
 package hu.bme.mit.theta.analysis;
 
-public interface Precision {
+public interface Prec {
 
 }

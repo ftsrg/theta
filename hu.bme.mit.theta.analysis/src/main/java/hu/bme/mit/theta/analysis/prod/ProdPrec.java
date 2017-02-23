@@ -8,31 +8,31 @@ import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 
-import hu.bme.mit.theta.analysis.Precision;
+import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.common.Product;
 
-public abstract class ProdPrecision implements Precision, Product, Iterable<Precision> {
+public abstract class ProdPrec implements Prec, Product, Iterable<Prec> {
 
 	private static final int HASH_SEED = 2903;
 	private volatile int hashCode = 0;
 
-	private final List<Precision> precisions;
+	private final List<Prec> precisions;
 
-	ProdPrecision(final List<? extends Precision> precisions) {
+	ProdPrec(final List<? extends Prec> precisions) {
 		this.precisions = ImmutableList.copyOf(checkNotNull(precisions));
 	}
 
 	////
 
-	public static <P1 extends Precision, P2 extends Precision> Prod2Precision<P1, P2> of(final P1 precision1,
+	public static <P1 extends Prec, P2 extends Prec> Prod2Prec<P1, P2> of(final P1 precision1,
 			final P2 precision2) {
-		return new Prod2Precision<>(precision1, precision2);
+		return new Prod2Prec<>(precision1, precision2);
 	}
 
-	public static <P1 extends Precision, P2 extends Precision, P3 extends Precision> Prod3Precision<P1, P2, P3> of(
+	public static <P1 extends Prec, P2 extends Prec, P3 extends Prec> Prod3Prec<P1, P2, P3> of(
 			final P1 precision1, final P2 precision2, final P3 precision3) {
-		return new Prod3Precision<>(precision1, precision2, precision3);
+		return new Prod3Prec<>(precision1, precision2, precision3);
 	}
 
 	////
@@ -54,7 +54,7 @@ public abstract class ProdPrecision implements Precision, Product, Iterable<Prec
 	}
 
 	@Override
-	public final Iterator<Precision> iterator() {
+	public final Iterator<Prec> iterator() {
 		return precisions.iterator();
 	}
 
@@ -75,8 +75,8 @@ public abstract class ProdPrecision implements Precision, Product, Iterable<Prec
 	public final boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
-		} else if (obj instanceof ProdPrecision) {
-			final ProdPrecision that = (ProdPrecision) obj;
+		} else if (obj instanceof ProdPrec) {
+			final ProdPrec that = (ProdPrec) obj;
 			return this.precisions.equals(that.precisions);
 		} else {
 			return false;

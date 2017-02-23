@@ -10,7 +10,7 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyStatus;
 import hu.bme.mit.theta.analysis.algorithm.impact.PredImpactChecker;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
-import hu.bme.mit.theta.analysis.impl.NullPrecision;
+import hu.bme.mit.theta.analysis.impl.NullPrec;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.common.visualization.GraphvizWriter;
 import hu.bme.mit.theta.formalism.tcfa.TCFA;
@@ -37,7 +37,7 @@ public final class TcfaPredImpactCheckerTest {
 
 		// Act
 		final SafetyStatus<? extends ExprState, ? extends ExprAction> status = checker
-				.check(NullPrecision.getInstance());
+				.check(NullPrec.getInstance());
 
 		// Assert
 		assertTrue(status.isSafe());

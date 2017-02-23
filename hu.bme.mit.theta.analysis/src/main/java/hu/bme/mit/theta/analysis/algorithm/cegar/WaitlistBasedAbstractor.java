@@ -8,7 +8,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import hu.bme.mit.theta.analysis.Action;
-import hu.bme.mit.theta.analysis.Precision;
+import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.ArgBuilder;
@@ -19,7 +19,7 @@ import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.impl.NullLogger;
 
-public final class WaitlistBasedAbstractor<S extends State, A extends Action, P extends Precision>
+public final class WaitlistBasedAbstractor<S extends State, A extends Action, P extends Prec>
 		implements Abstractor<S, A, P> {
 
 	private final ArgBuilder<S, A, P> argBuilder;
@@ -35,19 +35,19 @@ public final class WaitlistBasedAbstractor<S extends State, A extends Action, P 
 		this.logger = checkNotNull(logger);
 	}
 
-	public static <S extends State, A extends Action, P extends Precision> WaitlistBasedAbstractor<S, A, P> create(
+	public static <S extends State, A extends Action, P extends Prec> WaitlistBasedAbstractor<S, A, P> create(
 			final ArgBuilder<S, A, P> argBuilder, final Function<? super S, ?> projection,
 			final Supplier<? extends Waitlist<ArgNode<S, A>>> waitlistSupplier, final Logger logger) {
 		return new WaitlistBasedAbstractor<>(argBuilder, projection, waitlistSupplier, logger);
 	}
 
-	public static <S extends State, A extends Action, P extends Precision> WaitlistBasedAbstractor<S, A, P> create(
+	public static <S extends State, A extends Action, P extends Prec> WaitlistBasedAbstractor<S, A, P> create(
 			final ArgBuilder<S, A, P> argBuilder, final Supplier<? extends Waitlist<ArgNode<S, A>>> waitlistSupplier,
 			final Logger logger) {
 		return new WaitlistBasedAbstractor<>(argBuilder, s -> 0, waitlistSupplier, logger);
 	}
 
-	public static <S extends State, A extends Action, P extends Precision> WaitlistBasedAbstractor<S, A, P> create(
+	public static <S extends State, A extends Action, P extends Prec> WaitlistBasedAbstractor<S, A, P> create(
 			final ArgBuilder<S, A, P> argBuilder, final Function<? super S, ?> projection,
 			final Supplier<? extends Waitlist<ArgNode<S, A>>> waitlistSupplier) {
 		return new WaitlistBasedAbstractor<>(argBuilder, projection, waitlistSupplier, NullLogger.getInstance());
