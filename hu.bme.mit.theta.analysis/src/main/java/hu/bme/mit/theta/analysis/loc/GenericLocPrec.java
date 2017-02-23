@@ -66,6 +66,10 @@ public final class GenericLocPrec<P extends Prec, L extends Loc<L, E>, E extends
 		final Map<L, P> refinedMapping = new HashMap<>(this.mapping);
 
 		for (int i = 0; i < locs.size(); ++i) {
+			// TODO: instead of == this should be 'equals' (it is correct this way as well, but it would be more efficient)
+			if (defaultPrec.isPresent() && !mapping.containsKey(locs.get(i))
+					&& defaultPrec.get() == refinedPrecs.get(i))
+				continue;
 			refinedMapping.put(locs.get(i), refinedPrecs.get(i));
 		}
 
