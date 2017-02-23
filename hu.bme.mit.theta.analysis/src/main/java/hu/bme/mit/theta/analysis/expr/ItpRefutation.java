@@ -89,11 +89,11 @@ public final class ItpRefutation implements Refutation, Iterable<Expr<? extends 
 		return pruneIndex;
 	}
 
-	public IndexedVarsRefutation toVarSetsRefutation() {
+	public VarsRefutation toVarSetsRefutation() {
 		final Builder builder = IndexedVars.builder();
 		for (int i = 0; i < itpSequence.size(); ++i) {
 			builder.add(i, ExprUtils.getVars(itpSequence.get(i)));
 		}
-		return IndexedVarsRefutation.create(builder.build());
+		return VarsRefutation.create(builder.build());
 	}
 }

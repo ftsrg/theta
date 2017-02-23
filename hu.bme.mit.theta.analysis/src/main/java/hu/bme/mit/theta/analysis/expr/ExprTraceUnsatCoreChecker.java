@@ -21,7 +21,7 @@ import hu.bme.mit.theta.core.utils.impl.PathUtils;
 import hu.bme.mit.theta.core.utils.impl.VarIndexing;
 import hu.bme.mit.theta.solver.Solver;
 
-public final class ExprTraceUnsatCoreChecker implements ExprTraceChecker<IndexedVarsRefutation> {
+public final class ExprTraceUnsatCoreChecker implements ExprTraceChecker<VarsRefutation> {
 
 	private final Solver solver;
 	private final Expr<? extends BoolType> init;
@@ -40,7 +40,7 @@ public final class ExprTraceUnsatCoreChecker implements ExprTraceChecker<Indexed
 	}
 
 	@Override
-	public ExprTraceStatus<IndexedVarsRefutation> check(final Trace<? extends ExprState, ? extends ExprAction> trace) {
+	public ExprTraceStatus<VarsRefutation> check(final Trace<? extends ExprState, ? extends ExprAction> trace) {
 		checkNotNull(trace);
 		final int stateCount = trace.getStates().size();
 		checkArgument(stateCount > 0);
@@ -72,7 +72,7 @@ public final class ExprTraceUnsatCoreChecker implements ExprTraceChecker<Indexed
 			concretizable = solver.check().isSat();
 		}
 
-		ExprTraceStatus<IndexedVarsRefutation> status = null;
+		ExprTraceStatus<VarsRefutation> status = null;
 
 		if (concretizable) {
 			final Model model = solver.getModel();
@@ -84,7 +84,7 @@ public final class ExprTraceUnsatCoreChecker implements ExprTraceChecker<Indexed
 		} else {
 			final Collection<Expr<? extends BoolType>> unsatCore = solver.getUnsatCore();
 			final IndexedVars indexedVars = ExprUtils.getVarsIndexed(unsatCore);
-			status = ExprTraceStatus.infeasible(IndexedVarsRefutation.create(indexedVars));
+			status = ExprTraceStatus.infeasible(VarsRefutation.create(indexedVars));
 		}
 
 		solver.pop();

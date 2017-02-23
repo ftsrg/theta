@@ -6,12 +6,12 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.utils.impl.IndexedVars;
 
-public final class IndexedVarsRefutation implements Refutation {
+public final class VarsRefutation implements Refutation {
 
 	private final IndexedVars indexedVars;
 	private final int pruneIndex;
 
-	private IndexedVarsRefutation(final IndexedVars indexedVars) {
+	private VarsRefutation(final IndexedVars indexedVars) {
 		checkNotNull(indexedVars);
 		checkArgument(!indexedVars.isEmpty());
 		this.indexedVars = indexedVars;
@@ -22,8 +22,8 @@ public final class IndexedVarsRefutation implements Refutation {
 		this.pruneIndex = i;
 	}
 
-	public static IndexedVarsRefutation create(final IndexedVars indexedVars) {
-		return new IndexedVarsRefutation(indexedVars);
+	public static VarsRefutation create(final IndexedVars indexedVars) {
+		return new VarsRefutation(indexedVars);
 	}
 
 	public IndexedVars getVarSets() {
