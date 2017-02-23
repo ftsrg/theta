@@ -49,7 +49,7 @@ public final class TcfaLawiChecker implements SafetyChecker<TcfaLawiState, TcfaA
 	}
 
 	@Override
-	public SafetyStatus<TcfaLawiState, TcfaAction> check(final NullPrec precision) {
+	public SafetyStatus<TcfaLawiState, TcfaAction> check(final NullPrec prec) {
 		return new CheckMethod().run();
 	}
 

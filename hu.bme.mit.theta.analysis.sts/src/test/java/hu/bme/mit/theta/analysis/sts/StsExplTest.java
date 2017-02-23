@@ -83,7 +83,7 @@ public class StsExplTest {
 		final Analysis<ExplState, ExprAction, ExplPrec> analysis = ExplAnalysis.create(solver, And(sts.getInit()));
 		final Predicate<ExprState> target = new ExprStatePredicate(Not(sts.getProp()), solver);
 
-		final ExplPrec precision = ExplPrec.create(Collections.singleton(vy));
+		final ExplPrec prec = ExplPrec.create(Collections.singleton(vy));
 
 		final LTS<State, StsAction> lts = StsLts.create(sts);
 
@@ -101,7 +101,7 @@ public class StsExplTest {
 		final SafetyChecker<ExplState, StsAction, ExplPrec> checker = CegarChecker.create(abstractor, refiner,
 				logger);
 
-		final SafetyStatus<ExplState, StsAction> safetyStatus = checker.check(precision);
+		final SafetyStatus<ExplState, StsAction> safetyStatus = checker.check(prec);
 
 		final ARG<ExplState, StsAction> arg = safetyStatus.getArg();
 		assertTrue(isWellLabeled(arg, solver));

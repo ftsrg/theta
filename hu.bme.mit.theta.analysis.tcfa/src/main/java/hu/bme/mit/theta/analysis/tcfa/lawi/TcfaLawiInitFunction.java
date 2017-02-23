@@ -29,8 +29,8 @@ final class TcfaLawiInitFunction implements InitFunction<TcfaLawiState, NullPrec
 	}
 
 	@Override
-	public Collection<? extends TcfaLawiState> getInitStates(final NullPrec precision) {
-		return initFunction.getInitStates(precision).stream().map(TcfaLawiState::create).collect(toList());
+	public Collection<? extends TcfaLawiState> getInitStates(final NullPrec prec) {
+		return initFunction.getInitStates(prec).stream().map(TcfaLawiState::create).collect(toList());
 	}
 
 }

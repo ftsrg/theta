@@ -8,8 +8,8 @@ import hu.bme.mit.theta.common.Product2;
 public final class Prod2Prec<P1 extends Prec, P2 extends Prec> extends ProdPrec
 		implements Product2<P1, P2> {
 
-	Prod2Prec(final P1 precision1, final P2 precision2) {
-		super(ImmutableList.of(precision1, precision2));
+	Prod2Prec(final P1 prec1, final P2 prec2) {
+		super(ImmutableList.of(prec1, prec2));
 	}
 
 	@Override

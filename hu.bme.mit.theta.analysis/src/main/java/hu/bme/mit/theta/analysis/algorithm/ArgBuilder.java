@@ -36,12 +36,12 @@ public final class ArgBuilder<S extends State, A extends Action, P extends Prec>
 		return ARG.create(analysis.getDomain());
 	}
 
-	public void init(final ARG<S, A> arg, final P precision) {
+	public void init(final ARG<S, A> arg, final P prec) {
 		checkNotNull(arg);
-		checkNotNull(precision);
+		checkNotNull(prec);
 
 		final Collection<S> oldInitStates = arg.getInitNodes().map(ArgNode::getState).collect(toList());
-		final Collection<? extends S> newInitStates = analysis.getInitFunction().getInitStates(precision);
+		final Collection<? extends S> newInitStates = analysis.getInitFunction().getInitStates(prec);
 		for (final S initState : newInitStates) {
 			if (oldInitStates.stream().noneMatch(s -> analysis.getDomain().isLeq(initState, s))) {
 				final boolean isTarget = target.test(initState);
@@ -51,16 +51,16 @@ public final class ArgBuilder<S extends State, A extends Action, P extends Prec>
 		arg.initialized = true;
 	}
 
-	public void expand(final ArgNode<S, A> node, final P precision) {
+	public void expand(final ArgNode<S, A> node, final P prec) {
 		checkNotNull(node);
-		checkNotNull(precision);
+		checkNotNull(prec);
 
 		final S state = node.getState();
 		final Collection<S> oldSuccStates = node.getSuccStates().collect(toList());
 		final Collection<? extends A> actions = lts.getEnabledActionsFor(state);
 		for (final A action : actions) {
 			final Collection<? extends S> newSuccStates = analysis.getTransferFunction().getSuccStates(state, action,
-					precision);
+					prec);
 			for (final S newSuccState : newSuccStates) {
 				if (oldSuccStates.stream().noneMatch(s -> analysis.getDomain().isLeq(newSuccState, s))) {
 					final boolean isTarget = target.test(newSuccState);

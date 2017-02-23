@@ -7,5 +7,5 @@ import hu.bme.mit.theta.analysis.algorithm.ARG;
 
 public interface Refiner<S extends State, A extends Action, P extends Prec> {
 
-	RefinerResult<S, A, P> refine(ARG<S, A> arg, P precision);
+	RefinerResult<S, A, P> refine(ARG<S, A> arg, P prec);
 }

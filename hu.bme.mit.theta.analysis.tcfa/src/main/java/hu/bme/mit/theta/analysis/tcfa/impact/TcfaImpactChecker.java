@@ -46,12 +46,12 @@ public final class TcfaImpactChecker implements
 
 		final TcfaLts lts = TcfaLts.create(tcfa);
 
-		final ExplPrec explPrecision = ExplPrec.create(tcfa.getDataVars());
-		final ZonePrec zonePrecision = ZonePrec.create(tcfa.getClockVars());
-		final Prod2Prec<ExplPrec, ZonePrec> prodPrecision = ProdPrec.of(explPrecision,
-				zonePrecision);
-		final LocPrec<Prod2Prec<ExplPrec, ZonePrec>, TcfaLoc, TcfaEdge> locPrecision = ConstLocPrec
-				.create(prodPrecision);
+		final ExplPrec explPrec = ExplPrec.create(tcfa.getDataVars());
+		final ZonePrec zonePrec = ZonePrec.create(tcfa.getClockVars());
+		final Prod2Prec<ExplPrec, ZonePrec> prodPrec = ProdPrec.of(explPrec,
+				zonePrec);
+		final LocPrec<Prod2Prec<ExplPrec, ZonePrec>, TcfaLoc, TcfaEdge> locPrec = ConstLocPrec
+				.create(prodPrec);
 
 		final Analysis<ExplState, ExprAction, ExplPrec> explAnalysis = ExplAnalysis.create(solver, True());
 		final Analysis<ZoneState, TcfaAction, ZonePrec> zoneAnalysis = TcfaZoneAnalysis.getInstance();
@@ -61,7 +61,7 @@ public final class TcfaImpactChecker implements
 				.create(tcfa.getInitLoc(), compositeAnalysis);
 
 		final Analysis<LocState<Prod2State<ExplState, ZoneState>, TcfaLoc, TcfaEdge>, TcfaAction, NullPrec> analysis = FixedPrecAnalysis
-				.create(locAnalysis, locPrecision);
+				.create(locAnalysis, locPrec);
 
 		final Predicate<LocState<?, TcfaLoc, ?>> target = s -> targetLocs.test(s.getLoc());
 
@@ -80,9 +80,9 @@ public final class TcfaImpactChecker implements
 
 	@Override
 	public SafetyStatus<LocState<Prod2State<ExplState, ZoneState>, TcfaLoc, TcfaEdge>, TcfaAction> check(
-			final NullPrec precision) {
-		checkNotNull(precision);
-		return checker.check(precision);
+			final NullPrec prec) {
+		checkNotNull(prec);
+		return checker.check(prec);
 	}
 
 }

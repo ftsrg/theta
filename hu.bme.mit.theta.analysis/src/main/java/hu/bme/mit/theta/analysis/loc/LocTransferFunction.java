@@ -28,10 +28,10 @@ public final class LocTransferFunction<S extends State, A extends LocAction<L, E
 
 	@Override
 	public Collection<LocState<S, L, E>> getSuccStates(final LocState<S, L, E> state, final A action,
-			final LocPrec<P, L, E> precision) {
+			final LocPrec<P, L, E> prec) {
 		checkNotNull(state);
 		checkNotNull(action);
-		checkNotNull(precision);
+		checkNotNull(prec);
 
 		final E edge = action.getEdge();
 		final L source = edge.getSource();
@@ -40,10 +40,10 @@ public final class LocTransferFunction<S extends State, A extends LocAction<L, E
 
 		final Collection<LocState<S, L, E>> succStates = new ArrayList<>();
 
-		final P subPrecision = precision.getPrec(target);
+		final P subPrec = prec.getPrec(target);
 		final S subState = state.getState();
 
-		final Collection<? extends S> subSuccStates = transferFunction.getSuccStates(subState, action, subPrecision);
+		final Collection<? extends S> subSuccStates = transferFunction.getSuccStates(subState, action, subPrec);
 		for (final S subSuccState : subSuccStates) {
 			final LocState<S, L, E> succState = LocState.of(target, subSuccState);
 			succStates.add(succState);

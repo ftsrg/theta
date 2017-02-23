@@ -19,11 +19,11 @@ public class SimplePredItpRefiner<S extends State, A extends Action>
 		PrecTraceRefiner<S, A, SimplePredPrec, ItpRefutation> {
 
 	@Override
-	public SimplePredPrec refine(final Trace<S, A> trace, final SimplePredPrec precision,
+	public SimplePredPrec refine(final Trace<S, A> trace, final SimplePredPrec prec,
 			final ItpRefutation refutation) {
-		final SimplePredPrec refinedPrecision = precision
-				.join(SimplePredPrec.create(refutation, precision.getSolver()));
-		return refinedPrecision;
+		final SimplePredPrec refinedPrec = prec
+				.join(SimplePredPrec.create(refutation, prec.getSolver()));
+		return refinedPrec;
 	}
 
 	@Override

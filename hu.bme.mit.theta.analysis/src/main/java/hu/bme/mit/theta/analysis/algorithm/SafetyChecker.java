@@ -6,6 +6,6 @@ import hu.bme.mit.theta.analysis.State;
 
 public interface SafetyChecker<S extends State, A extends Action, P extends Prec> {
 
-	SafetyStatus<S, A> check(final P precision);
+	SafetyStatus<S, A> check(final P prec);
 
 }

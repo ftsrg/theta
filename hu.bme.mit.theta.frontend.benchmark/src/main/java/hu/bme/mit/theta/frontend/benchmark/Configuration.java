@@ -10,14 +10,14 @@ public final class Configuration<S extends State, A extends Action, P extends Pr
 	private final SafetyChecker<S, A, P> checker;
 	private final P initPrec;
 
-	private Configuration(final SafetyChecker<S, A, P> checker, final P initPrecision) {
+	private Configuration(final SafetyChecker<S, A, P> checker, final P initPrec) {
 		this.checker = checker;
-		this.initPrec = initPrecision;
+		this.initPrec = initPrec;
 	}
 
 	public static <S extends State, A extends Action, P extends Prec> Configuration<S, A, P> create(
-			final SafetyChecker<S, A, P> checker, final P initPrecision) {
-		return new Configuration<>(checker, initPrecision);
+			final SafetyChecker<S, A, P> checker, final P initPrec) {
+		return new Configuration<>(checker, initPrec);
 	}
 
 	public SafetyStatus<S, A> check() {

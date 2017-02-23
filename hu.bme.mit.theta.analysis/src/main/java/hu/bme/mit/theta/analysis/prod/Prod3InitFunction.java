@@ -29,11 +29,11 @@ final class Prod3InitFunction<S1 extends State, S2 extends State, S3 extends Sta
 	}
 
 	@Override
-	public Collection<? extends Prod3State<S1, S2, S3>> getInitStates(final Prod3Prec<P1, P2, P3> precision) {
-		checkNotNull(precision);
-		final Collection<? extends S1> initStates1 = initFunction1.getInitStates(precision._1());
-		final Collection<? extends S2> initStates2 = initFunction2.getInitStates(precision._2());
-		final Collection<? extends S3> initStates3 = initFunction3.getInitStates(precision._3());
+	public Collection<? extends Prod3State<S1, S2, S3>> getInitStates(final Prod3Prec<P1, P2, P3> prec) {
+		checkNotNull(prec);
+		final Collection<? extends S1> initStates1 = initFunction1.getInitStates(prec._1());
+		final Collection<? extends S2> initStates2 = initFunction2.getInitStates(prec._2());
+		final Collection<? extends S3> initStates3 = initFunction3.getInitStates(prec._3());
 		return ProdState.product(initStates1, initStates2, initStates3);
 	}
 

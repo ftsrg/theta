@@ -18,15 +18,15 @@ public final class FixedPrecAnalysis<S extends State, A extends Action, P extend
 	private final InitFunction<S, NullPrec> initFunction;
 	private final TransferFunction<S, A, NullPrec> transferFunction;
 
-	private FixedPrecAnalysis(final Analysis<S, A, P> analysis, final P precision) {
+	private FixedPrecAnalysis(final Analysis<S, A, P> analysis, final P prec) {
 		this.analysis = checkNotNull(analysis);
-		initFunction = FixedPrecInitFunction.create(analysis.getInitFunction(), precision);
-		transferFunction = FixedPrecTransferFunction.create(analysis.getTransferFunction(), precision);
+		initFunction = FixedPrecInitFunction.create(analysis.getInitFunction(), prec);
+		transferFunction = FixedPrecTransferFunction.create(analysis.getTransferFunction(), prec);
 	}
 
 	public static <S extends State, A extends Action, P extends Prec> FixedPrecAnalysis<S, A, P> create(
-			final Analysis<S, A, P> analysis, final P precision) {
-		return new FixedPrecAnalysis<>(analysis, precision);
+			final Analysis<S, A, P> analysis, final P prec) {
+		return new FixedPrecAnalysis<>(analysis, prec);
 	}
 
 	@Override

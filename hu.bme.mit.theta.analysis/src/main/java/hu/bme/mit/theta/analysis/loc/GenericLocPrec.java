@@ -79,7 +79,7 @@ public final class GenericLocPrec<P extends Prec, L extends Loc<L, E>, E extends
 	@Override
 	public String toString() {
 		final ToStringBuilder builder = ObjectUtils.toStringBuilder(getClass().getSimpleName());
-		builder.add("Precisions: " + mapping.size());
+		builder.add("Precs: " + mapping.size());
 		if (defaultPrec.isPresent()) {
 			builder.add("Default: " + defaultPrec.get());
 		}

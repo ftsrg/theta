@@ -31,8 +31,8 @@ final class TcfaLawiTransferFunction implements TransferFunction<TcfaLawiState, 
 
 	@Override
 	public Collection<? extends TcfaLawiState> getSuccStates(final TcfaLawiState state, final TcfaAction action,
-			final NullPrec precision) {
-		return transferFunction.getSuccStates(state.getState(), action, precision).stream().map(TcfaLawiState::create)
+			final NullPrec prec) {
+		return transferFunction.getSuccStates(state.getState(), action, prec).stream().map(TcfaLawiState::create)
 				.collect(toList());
 	}
 

@@ -59,9 +59,9 @@ public class StsMain {
 		optRefinement.setArgName("REFINEMENT");
 		options.addOption(optRefinement);
 
-		final Option optInitPrecision = new Option("i", "initprec", true, "Initial precision");
-		optInitPrecision.setArgName("INITPRECISION");
-		options.addOption(optInitPrecision);
+		final Option optInitPrec = new Option("i", "initprec", true, "Initial precision");
+		optInitPrec.setArgName("INITPRECISION");
+		options.addOption(optInitPrec);
 
 		final Option optSearch = new Option("s", "search", true, "Search strategy");
 		optSearch.setArgName("SEARCH");
@@ -87,8 +87,7 @@ public class StsMain {
 		final String model = cmd.getOptionValue(optModel.getOpt());
 		final Domain domain = Domain.valueOf(cmd.getOptionValue(optDomain.getOpt()));
 		final Refinement refinement = Refinement.valueOf(cmd.getOptionValue(optRefinement.getOpt()));
-		final InitPrec initPrecision = InitPrec
-				.valueOf(cmd.getOptionValue(optInitPrecision.getOpt(), InitPrec.EMPTY.toString()));
+		final InitPrec initPrec = InitPrec.valueOf(cmd.getOptionValue(optInitPrec.getOpt(), InitPrec.EMPTY.toString()));
 		final Search search = Search.valueOf(cmd.getOptionValue(optSearch.getOpt(), Search.BFS.toString()));
 		final Optional<Boolean> expected = cmd.hasOption(optExpected.getOpt())
 				? Optional.of(Boolean.parseBoolean(cmd.getOptionValue(optExpected.getOpt()))) : Optional.empty();
@@ -112,13 +111,13 @@ public class StsMain {
 			tableWriter.cell(sts.getVars().size());
 			tableWriter.cell(ExprUtils.size(Exprs.And(Exprs.And(sts.getInit()), Exprs.And(sts.getTrans())),
 					ExprMetrics.absoluteSize()));
-			tableWriter.cell(domain.toString()).cell(refinement.toString()).cell(initPrecision.toString())
+			tableWriter.cell(domain.toString()).cell(refinement.toString()).cell(initPrec.toString())
 					.cell(search.toString());
 			System.out.flush();
 
 			// Build configuration
 			final Configuration<?, ?, ?> configuration = new StsConfigurationBuilder(domain, refinement)
-					.initPrec(initPrecision).search(search).build(sts);
+					.initPrec(initPrec).search(search).build(sts);
 			// Run algorithm
 			final SafetyStatus<?, ?> status = configuration.check();
 			final Statistics stats = status.getStats().get();

@@ -8,6 +8,6 @@ import hu.bme.mit.theta.analysis.expr.Refutation;
 
 public interface PrecRefiner<S extends State, A extends Action, P extends Prec, R extends Refutation> {
 
-	P refine(Trace<S, A> trace, P precision, R refutation);
+	P refine(Trace<S, A> trace, P prec, R refutation);
 
 }
