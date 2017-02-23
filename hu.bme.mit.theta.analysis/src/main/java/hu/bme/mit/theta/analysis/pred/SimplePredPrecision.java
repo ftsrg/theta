@@ -40,6 +40,10 @@ public final class SimplePredPrecision implements PredPrecision {
 		return new SimplePredPrecision(preds, solver);
 	}
 
+	public static SimplePredPrecision create(final Expr<? extends BoolType> pred, final Solver solver) {
+		return new SimplePredPrecision(Collections.singleton(pred), solver);
+	}
+
 	private SimplePredPrecision(final Iterable<Expr<? extends BoolType>> preds, final Solver solver) {
 		checkNotNull(preds);
 		this.solver = checkNotNull(solver);
