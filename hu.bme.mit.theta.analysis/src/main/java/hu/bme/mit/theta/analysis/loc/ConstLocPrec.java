@@ -13,38 +13,38 @@ import hu.bme.mit.theta.formalism.common.Loc;
 public final class ConstLocPrec<P extends Prec, L extends Loc<L, E>, E extends Edge<L, E>>
 		implements LocPrec<P, L, E> {
 
-	private final P precision;
+	private final P prec;
 
-	private ConstLocPrec(final P precision) {
-		this.precision = checkNotNull(precision);
+	private ConstLocPrec(final P prec) {
+		this.prec = checkNotNull(prec);
 	}
 
 	public static <P extends Prec, L extends Loc<L, E>, E extends Edge<L, E>> ConstLocPrec<P, L, E> create(
-			final P precision) {
-		return new ConstLocPrec<>(precision);
+			final P prec) {
+		return new ConstLocPrec<>(prec);
 	}
 
-	public ConstLocPrec<P, L, E> refine(final P refinedPrecision) {
-		if (this.precision == refinedPrecision) {
+	public ConstLocPrec<P, L, E> refine(final P refinedPrec) {
+		if (this.prec == refinedPrec) {
 			return this;
 		} else {
-			return create(refinedPrecision);
+			return create(refinedPrec);
 		}
 	}
 
 	@Override
-	public P getPrecision(final L loc) {
+	public P getPrec(final L loc) {
 		checkNotNull(loc);
-		return precision;
+		return prec;
 	}
 
-	public P getPrecision() {
-		return precision;
+	public P getPrec() {
+		return prec;
 	}
 
 	@Override
 	public String toString() {
-		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).add(precision).toString();
+		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).add(prec).toString();
 	}
 
 }

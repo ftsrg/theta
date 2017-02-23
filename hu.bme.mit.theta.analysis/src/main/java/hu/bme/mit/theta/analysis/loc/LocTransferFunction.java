@@ -40,7 +40,7 @@ public final class LocTransferFunction<S extends State, A extends LocAction<L, E
 
 		final Collection<LocState<S, L, E>> succStates = new ArrayList<>();
 
-		final P subPrecision = precision.getPrecision(target);
+		final P subPrecision = precision.getPrec(target);
 		final S subState = state.getState();
 
 		final Collection<? extends S> subSuccStates = transferFunction.getSuccStates(subState, action, subPrecision);

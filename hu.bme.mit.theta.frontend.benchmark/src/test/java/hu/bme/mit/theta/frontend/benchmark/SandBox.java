@@ -13,7 +13,7 @@ import hu.bme.mit.theta.frontend.aiger.impl.AigerParserSimple;
 import hu.bme.mit.theta.frontend.benchmark.ConfigurationBuilder.Domain;
 import hu.bme.mit.theta.frontend.benchmark.ConfigurationBuilder.Refinement;
 import hu.bme.mit.theta.frontend.benchmark.ConfigurationBuilder.Search;
-import hu.bme.mit.theta.frontend.benchmark.StsConfigurationBuilder.InitPrecision;
+import hu.bme.mit.theta.frontend.benchmark.StsConfigurationBuilder.InitPrec;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 
 public class SandBox {
@@ -34,7 +34,7 @@ public class SandBox {
 		final Logger logger = new ConsoleLogger(3);
 
 		final Configuration<? extends State, ? extends Action, ? extends Prec> configuration = new StsConfigurationBuilder(
-				Domain.PRED, Refinement.SEQ_ITP).initPrecision(InitPrecision.EMPTY).logger(logger).search(Search.BFS)
+				Domain.PRED, Refinement.SEQ_ITP).initPrec(InitPrec.EMPTY).logger(logger).search(Search.BFS)
 						.solverFactory(Z3SolverFactory.getInstace()).build(sts);
 
 		configuration.check();

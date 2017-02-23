@@ -63,7 +63,7 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 				logger.writeln("Refining abstraction done, result: ", refinerResult, 2, 1);
 
 				if (refinerResult.isSpurious()) {
-					precision = refinerResult.asSpurious().getRefinedPrecision();
+					precision = refinerResult.asSpurious().getRefinedPrec();
 				}
 			}
 

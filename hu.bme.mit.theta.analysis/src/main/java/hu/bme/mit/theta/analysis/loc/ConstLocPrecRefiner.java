@@ -31,7 +31,7 @@ public class ConstLocPrecRefiner<S extends State, A extends Action, P extends Pr
 			final R refutation) {
 		checkArgument(precision instanceof ConstLocPrec); // TODO: enforce this in a better way
 		final ConstLocPrec<P, L, E> constPrecision = (ConstLocPrec<P, L, E>) precision;
-		final P innerPrec = constPrecision.getPrecision();
+		final P innerPrec = constPrecision.getPrec();
 		final P refinedInnerPrec = refiner.refine(trace, innerPrec, refutation);
 		return constPrecision.refine(refinedInnerPrec);
 	}

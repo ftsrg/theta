@@ -14,8 +14,8 @@ public abstract class RefinerResult<S extends State, A extends Action, P extends
 	}
 
 	public static <S extends State, A extends Action, P extends Prec> Spurious<S, A, P> spurious(
-			final P refinedPrecision) {
-		return new Spurious<>(refinedPrecision);
+			final P refinedPrec) {
+		return new Spurious<>(refinedPrec);
 	}
 
 	public static <S extends State, A extends Action, P extends Prec> Unsafe<S, A, P> unsafe(
@@ -35,14 +35,14 @@ public abstract class RefinerResult<S extends State, A extends Action, P extends
 
 	public static final class Spurious<S extends State, A extends Action, P extends Prec>
 			extends RefinerResult<S, A, P> {
-		private final P refinedPrecision;
+		private final P refinedPrec;
 
-		private Spurious(final P refinedPrecision) {
-			this.refinedPrecision = checkNotNull(refinedPrecision);
+		private Spurious(final P refinedPrec) {
+			this.refinedPrec = checkNotNull(refinedPrec);
 		}
 
-		public P getRefinedPrecision() {
-			return refinedPrecision;
+		public P getRefinedPrec() {
+			return refinedPrec;
 		}
 
 		@Override

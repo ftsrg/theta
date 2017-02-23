@@ -14,10 +14,10 @@ import hu.bme.mit.theta.analysis.zone.ZoneState;
 
 public final class TcfaInterpolator {
 
-	private final ZonePrec precision;
+	private final ZonePrec prec;
 
 	private TcfaInterpolator(final ZonePrec precision) {
-		this.precision = checkNotNull(precision);
+		this.prec = checkNotNull(precision);
 	}
 
 	public static TcfaInterpolator create(final ZonePrec precision) {
@@ -37,7 +37,7 @@ public final class TcfaInterpolator {
 
 		for (int i = 0; i < actions.size(); i++) {
 			final TcfaAction action = actions.get(i);
-			A = TcfaZoneUtils.post(I, action, precision);
+			A = TcfaZoneUtils.post(I, action, prec);
 			B = backwardStates.get(i + 1);
 			I = ZoneState.interpolant(A, B);
 			interpolants.add(I);
@@ -57,7 +57,7 @@ public final class TcfaInterpolator {
 		backwardStates.add(lastState);
 
 		for (final TcfaAction action : Lists.reverse(actions)) {
-			lastState = TcfaZoneUtils.pre(lastState, action, precision);
+			lastState = TcfaZoneUtils.pre(lastState, action, prec);
 			backwardStates.add(0, lastState);
 		}
 

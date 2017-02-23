@@ -17,10 +17,10 @@ public abstract class ProdPrec implements Prec, Product, Iterable<Prec> {
 	private static final int HASH_SEED = 2903;
 	private volatile int hashCode = 0;
 
-	private final List<Prec> precisions;
+	private final List<Prec> precs;
 
 	ProdPrec(final List<? extends Prec> precisions) {
-		this.precisions = ImmutableList.copyOf(checkNotNull(precisions));
+		this.precs = ImmutableList.copyOf(checkNotNull(precisions));
 	}
 
 	////
@@ -39,23 +39,23 @@ public abstract class ProdPrec implements Prec, Product, Iterable<Prec> {
 
 	@Override
 	public final int arity() {
-		return precisions.size();
+		return precs.size();
 	}
 
 	@Override
 	public final Object elem(final int n) {
 		checkElementIndex(n, arity());
-		return precisions.get(n);
+		return precs.get(n);
 	}
 
 	@Override
 	public final List<? extends Object> toList() {
-		return precisions;
+		return precs;
 	}
 
 	@Override
 	public final Iterator<Prec> iterator() {
-		return precisions.iterator();
+		return precs.iterator();
 	}
 
 	////
@@ -65,7 +65,7 @@ public abstract class ProdPrec implements Prec, Product, Iterable<Prec> {
 		int result = hashCode;
 		if (result == 0) {
 			result = HASH_SEED;
-			result = 37 * result + precisions.hashCode();
+			result = 37 * result + precs.hashCode();
 			result = hashCode;
 		}
 		return result;
@@ -77,7 +77,7 @@ public abstract class ProdPrec implements Prec, Product, Iterable<Prec> {
 			return true;
 		} else if (obj instanceof ProdPrec) {
 			final ProdPrec that = (ProdPrec) obj;
-			return this.precisions.equals(that.precisions);
+			return this.precs.equals(that.precs);
 		} else {
 			return false;
 		}
@@ -85,7 +85,7 @@ public abstract class ProdPrec implements Prec, Product, Iterable<Prec> {
 
 	@Override
 	public final String toString() {
-		return ObjectUtils.toStringBuilder("ProdPrecision").addAll(precisions).toString();
+		return ObjectUtils.toStringBuilder("ProdPrecision").addAll(precs).toString();
 	}
 
 }

@@ -30,10 +30,10 @@ public class GenericLocPrecRefiner<S extends State, A extends Action, P extends 
 	@Override
 	public LocPrec<P, L, E> refine(final Trace<LocState<S, L, E>, A> trace, final LocPrec<P, L, E> precision,
 			final R refutation) {
-		checkArgument(precision instanceof GenericLocPrecision); // TODO: enforce this in a better way
-		final GenericLocPrecision<P, L, E> genPrecision = (GenericLocPrecision<P, L, E>) precision;
+		checkArgument(precision instanceof GenericLocPrec); // TODO: enforce this in a better way
+		final GenericLocPrec<P, L, E> genPrecision = (GenericLocPrec<P, L, E>) precision;
 		final List<L> locs = trace.getStates().stream().map(LocState::getLoc).collect(Collectors.toList());
-		final List<P> precs = locs.stream().map(l -> genPrecision.getPrecision(l)).collect(Collectors.toList());
+		final List<P> precs = locs.stream().map(l -> genPrecision.getPrec(l)).collect(Collectors.toList());
 		final List<S> states = trace.getStates().stream().map(LocState::getState).collect(Collectors.toList());
 		final List<A> acts = trace.getActions();
 

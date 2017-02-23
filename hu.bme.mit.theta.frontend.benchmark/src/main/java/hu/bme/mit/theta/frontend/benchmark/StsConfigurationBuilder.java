@@ -48,11 +48,11 @@ import hu.bme.mit.theta.solver.SolverFactory;
 
 public final class StsConfigurationBuilder extends ConfigurationBuilder {
 
-	public enum InitPrecision {
+	public enum InitPrec {
 		EMPTY, PROP
 	};
 
-	private InitPrecision initPrecision = InitPrecision.EMPTY;
+	private InitPrec initPrec = InitPrec.EMPTY;
 
 	public StsConfigurationBuilder(final Domain domain, final Refinement refinement) {
 		super(domain, refinement);
@@ -73,13 +73,13 @@ public final class StsConfigurationBuilder extends ConfigurationBuilder {
 		return this;
 	}
 
-	public StsConfigurationBuilder initPrecision(final InitPrecision initPrecision) {
-		this.initPrecision = initPrecision;
+	public StsConfigurationBuilder initPrec(final InitPrec initPrecision) {
+		this.initPrec = initPrecision;
 		return this;
 	}
 
-	public InitPrecision getInitPrecision() {
-		return initPrecision;
+	public InitPrec getInitPrec() {
+		return initPrec;
 	}
 
 	public Configuration<? extends State, ? extends Action, ? extends Prec> build(final STS sts) {
@@ -118,7 +118,7 @@ public final class StsConfigurationBuilder extends ConfigurationBuilder {
 			final SafetyChecker<ExplState, StsAction, ExplPrec> checker = CegarChecker.create(abstractor, refiner,
 					getLogger());
 			ExplPrec precision = null;
-			switch (initPrecision) {
+			switch (initPrec) {
 			case EMPTY:
 				precision = ExplPrec.create();
 				break;
@@ -155,7 +155,7 @@ public final class StsConfigurationBuilder extends ConfigurationBuilder {
 			final SafetyChecker<PredState, StsAction, SimplePredPrec> checker = CegarChecker.create(abstractor,
 					refiner, getLogger());
 			SimplePredPrec precision = null;
-			switch (initPrecision) {
+			switch (initPrec) {
 			case EMPTY:
 				precision = SimplePredPrec.create(solver);
 				break;
