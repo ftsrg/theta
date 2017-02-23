@@ -25,7 +25,7 @@ import hu.bme.mit.theta.analysis.expr.ExprTraceUnsatCoreChecker;
 import hu.bme.mit.theta.analysis.loc.ConstLocPrecRefiner;
 import hu.bme.mit.theta.analysis.loc.ConstLocPrec;
 import hu.bme.mit.theta.analysis.loc.GenericLocPrecRefiner;
-import hu.bme.mit.theta.analysis.loc.GenericLocPrecision;
+import hu.bme.mit.theta.analysis.loc.GenericLocPrec;
 import hu.bme.mit.theta.analysis.loc.LocAction;
 import hu.bme.mit.theta.analysis.loc.LocAnalysis;
 import hu.bme.mit.theta.analysis.loc.LocPrec;
@@ -136,7 +136,7 @@ public class CfaConfigurationBuilder extends ConfigurationBuilder {
 				prec = ConstLocPrec.create(ExplPrec.create());
 				break;
 			case GEN:
-				prec = GenericLocPrecision.create(ExplPrec.create());
+				prec = GenericLocPrec.create(ExplPrec.create());
 				break;
 			default:
 				throw new UnsupportedOperationException();
@@ -192,7 +192,7 @@ public class CfaConfigurationBuilder extends ConfigurationBuilder {
 				prec = ConstLocPrec.create(SimplePredPrec.create(solver));
 				break;
 			case GEN:
-				prec = GenericLocPrecision.create(SimplePredPrec.create(solver));
+				prec = GenericLocPrec.create(SimplePredPrec.create(solver));
 				break;
 			default:
 				throw new UnsupportedOperationException();

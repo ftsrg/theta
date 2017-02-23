@@ -8,11 +8,11 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyStatus;
 
 public final class Configuration<S extends State, A extends Action, P extends Prec> {
 	private final SafetyChecker<S, A, P> checker;
-	private final P initPrecision;
+	private final P initPrec;
 
 	private Configuration(final SafetyChecker<S, A, P> checker, final P initPrecision) {
 		this.checker = checker;
-		this.initPrecision = initPrecision;
+		this.initPrec = initPrecision;
 	}
 
 	public static <S extends State, A extends Action, P extends Prec> Configuration<S, A, P> create(
@@ -21,7 +21,7 @@ public final class Configuration<S extends State, A extends Action, P extends Pr
 	}
 
 	public SafetyStatus<S, A> check() {
-		return checker.check(initPrecision);
+		return checker.check(initPrec);
 	}
 
 }

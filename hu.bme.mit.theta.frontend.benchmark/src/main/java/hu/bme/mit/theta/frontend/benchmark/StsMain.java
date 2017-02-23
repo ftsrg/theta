@@ -27,7 +27,7 @@ import hu.bme.mit.theta.frontend.aiger.impl.AigerParserSimple;
 import hu.bme.mit.theta.frontend.benchmark.ConfigurationBuilder.Domain;
 import hu.bme.mit.theta.frontend.benchmark.ConfigurationBuilder.Refinement;
 import hu.bme.mit.theta.frontend.benchmark.ConfigurationBuilder.Search;
-import hu.bme.mit.theta.frontend.benchmark.StsConfigurationBuilder.InitPrecision;
+import hu.bme.mit.theta.frontend.benchmark.StsConfigurationBuilder.InitPrec;
 
 /**
  * A command line interface for running a CEGAR configuration on an STS. The
@@ -87,8 +87,8 @@ public class StsMain {
 		final String model = cmd.getOptionValue(optModel.getOpt());
 		final Domain domain = Domain.valueOf(cmd.getOptionValue(optDomain.getOpt()));
 		final Refinement refinement = Refinement.valueOf(cmd.getOptionValue(optRefinement.getOpt()));
-		final InitPrecision initPrecision = InitPrecision
-				.valueOf(cmd.getOptionValue(optInitPrecision.getOpt(), InitPrecision.EMPTY.toString()));
+		final InitPrec initPrecision = InitPrec
+				.valueOf(cmd.getOptionValue(optInitPrecision.getOpt(), InitPrec.EMPTY.toString()));
 		final Search search = Search.valueOf(cmd.getOptionValue(optSearch.getOpt(), Search.BFS.toString()));
 		final Optional<Boolean> expected = cmd.hasOption(optExpected.getOpt())
 				? Optional.of(Boolean.parseBoolean(cmd.getOptionValue(optExpected.getOpt()))) : Optional.empty();
@@ -118,7 +118,7 @@ public class StsMain {
 
 			// Build configuration
 			final Configuration<?, ?, ?> configuration = new StsConfigurationBuilder(domain, refinement)
-					.initPrecision(initPrecision).search(search).build(sts);
+					.initPrec(initPrecision).search(search).build(sts);
 			// Run algorithm
 			final SafetyStatus<?, ?> status = configuration.check();
 			final Statistics stats = status.getStats().get();

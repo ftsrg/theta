@@ -50,13 +50,13 @@ public final class ImpactChecker<S extends State, A extends Action, P extends Pr
 	////
 
 	private final class CheckMethod {
-		private final P precision;
+		private final P prec;
 
 		private final ARG<S, A> arg;
 		private final ReachedSet<S, A> reachedSet;
 
-		private CheckMethod(final P precision) {
-			this.precision = checkNotNull(precision);
+		private CheckMethod(final P prec) {
+			this.prec = checkNotNull(prec);
 			arg = argBuilder.createArg();
 			reachedSet = ImpactReachedSet.create(partitioning);
 		}
@@ -100,7 +100,7 @@ public final class ImpactChecker<S extends State, A extends Action, P extends Pr
 		}
 
 		private Optional<ArgNode<S, A>> unwind() {
-			argBuilder.init(arg, precision);
+			argBuilder.init(arg, prec);
 			reachedSet.addAll(arg.getInitNodes());
 
 			while (true) {
@@ -134,7 +134,7 @@ public final class ImpactChecker<S extends State, A extends Action, P extends Pr
 		}
 
 		private void expand(final ArgNode<S, A> v) {
-			argBuilder.expand(v, precision);
+			argBuilder.expand(v, prec);
 		}
 
 		private void refine(final ArgNode<S, A> v) {

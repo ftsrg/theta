@@ -32,7 +32,7 @@ public final class LocInitFunction<S extends State, P extends Prec, L extends Lo
 		checkNotNull(precision);
 
 		final Collection<LocState<S, L, E>> initStates = new ArrayList<>();
-		final P subPrecision = precision.getPrecision(initLoc);
+		final P subPrecision = precision.getPrec(initLoc);
 		final Collection<? extends S> subInitStates = initFunction.getInitStates(subPrecision);
 		for (final S subInitState : subInitStates) {
 			final LocState<S, L, E> initState = LocState.of(initLoc, subInitState);

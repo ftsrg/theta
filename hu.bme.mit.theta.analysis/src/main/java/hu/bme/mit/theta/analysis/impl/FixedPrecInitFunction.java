@@ -11,22 +11,22 @@ import hu.bme.mit.theta.analysis.State;
 final class FixedPrecInitFunction<S extends State, P extends Prec> implements InitFunction<S, NullPrec> {
 
 	private final InitFunction<S, P> initFunction;
-	private final P fixedPrecision;
+	private final P fixedPrec;
 
-	private FixedPrecInitFunction(final InitFunction<S, P> initFunction, final P precision) {
+	private FixedPrecInitFunction(final InitFunction<S, P> initFunction, final P prec) {
 		this.initFunction = checkNotNull(initFunction);
-		this.fixedPrecision = checkNotNull(precision);
+		this.fixedPrec = checkNotNull(prec);
 	}
 
 	public static <S extends State, P extends Prec> FixedPrecInitFunction<S, P> create(
-			final InitFunction<S, P> initFunction, final P precision) {
-		return new FixedPrecInitFunction<>(initFunction, precision);
+			final InitFunction<S, P> initFunction, final P prec) {
+		return new FixedPrecInitFunction<>(initFunction, prec);
 	}
 
 	@Override
-	public Collection<? extends S> getInitStates(final NullPrec precision) {
-		checkNotNull(precision);
-		return initFunction.getInitStates(fixedPrecision);
+	public Collection<? extends S> getInitStates(final NullPrec prec) {
+		checkNotNull(prec);
+		return initFunction.getInitStates(fixedPrec);
 	}
 
 }

@@ -13,24 +13,24 @@ final class FixedPrecTransferFunction<S extends State, A extends Action, P exten
 		implements TransferFunction<S, A, NullPrec> {
 
 	final TransferFunction<S, A, P> transferFunction;
-	final P fixedPrecision;
+	final P fixedPrec;
 
-	private FixedPrecTransferFunction(final TransferFunction<S, A, P> transferFunction, final P precision) {
+	private FixedPrecTransferFunction(final TransferFunction<S, A, P> transferFunction, final P prec) {
 		this.transferFunction = checkNotNull(transferFunction);
-		this.fixedPrecision = checkNotNull(precision);
+		this.fixedPrec = checkNotNull(prec);
 	}
 
 	public static <S extends State, A extends Action, P extends Prec> FixedPrecTransferFunction<S, A, P> create(
-			final TransferFunction<S, A, P> transferFunction, final P precision) {
-		return new FixedPrecTransferFunction<>(transferFunction, precision);
+			final TransferFunction<S, A, P> transferFunction, final P prec) {
+		return new FixedPrecTransferFunction<>(transferFunction, prec);
 	}
 
 	@Override
-	public Collection<? extends S> getSuccStates(final S state, final A action, final NullPrec precision) {
+	public Collection<? extends S> getSuccStates(final S state, final A action, final NullPrec prec) {
 		checkNotNull(state);
 		checkNotNull(action);
-		checkNotNull(precision);
-		return transferFunction.getSuccStates(state, action, fixedPrecision);
+		checkNotNull(prec);
+		return transferFunction.getSuccStates(state, action, fixedPrec);
 	}
 
 }

@@ -6,5 +6,5 @@ import hu.bme.mit.theta.formalism.common.Loc;
 
 public interface LocPrec<P extends Prec, L extends Loc<L, E>, E extends Edge<L, E>> extends Prec {
 
-	P getPrecision(final L loc);
+	P getPrec(final L loc);
 }
