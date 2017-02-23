@@ -103,7 +103,7 @@ public abstract class Tuple implements Product, Iterable<Object> {
 
 	@Override
 	public final String toString() {
-		return ObjectUtils.toStringBuilder("Tuple").addAll(elems).toString();
+		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).addAll(elems).toString();
 	}
 
 }

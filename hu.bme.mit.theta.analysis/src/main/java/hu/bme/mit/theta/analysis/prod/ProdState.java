@@ -121,7 +121,7 @@ public abstract class ProdState implements ExprState, Product, Iterable<State> {
 
 	@Override
 	public String toString() {
-		return ObjectUtils.toStringBuilder("ProdState").addAll(states).toString();
+		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).addAll(states).toString();
 	}
 
 }

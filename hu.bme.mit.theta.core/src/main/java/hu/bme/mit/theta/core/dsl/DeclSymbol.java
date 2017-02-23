@@ -56,7 +56,7 @@ public class DeclSymbol implements Symbol {
 
 	@Override
 	public String toString() {
-		return ObjectUtils.toStringBuilder("DeclSymbol").add(decl).toString();
+		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).add(decl).toString();
 	}
 
 }

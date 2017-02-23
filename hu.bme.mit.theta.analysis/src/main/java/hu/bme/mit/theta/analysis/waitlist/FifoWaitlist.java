@@ -58,7 +58,7 @@ public final class FifoWaitlist<T> implements Waitlist<T> {
 
 	@Override
 	public String toString() {
-		return ObjectUtils.toStringBuilder("FifoWaitlist").addAll(items).toString();
+		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).addAll(items).toString();
 	}
 
 	@Override

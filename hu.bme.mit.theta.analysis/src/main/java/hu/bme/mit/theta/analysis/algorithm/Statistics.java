@@ -21,7 +21,7 @@ public class Statistics {
 
 	@Override
 	public String toString() {
-		return ObjectUtils.toStringBuilder("Statistics").add("Iterations: " + iterations)
+		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).add("Iterations: " + iterations)
 				.add("Elapsed: " + elapsedMillis + " ms").toString();
 	}
 }
