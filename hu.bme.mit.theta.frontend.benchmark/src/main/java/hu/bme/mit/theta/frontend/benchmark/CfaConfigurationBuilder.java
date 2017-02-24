@@ -69,6 +69,11 @@ public class CfaConfigurationBuilder extends ConfigurationBuilder {
 		return this;
 	}
 
+	public CfaConfigurationBuilder predSplit(final PredSplit predSplit) {
+		setPredSplit(predSplit);
+		return this;
+	}
+
 	public CfaConfigurationBuilder precGranularity(final PrecGranularity precGranularity) {
 		this.precGranularity = precGranularity;
 		return this;
@@ -160,22 +165,26 @@ public class CfaConfigurationBuilder extends ConfigurationBuilder {
 				if (precGranularity == PrecGranularity.CONST) {
 					refiner = SingleExprTraceRefiner.create(
 							ExprTraceCraigItpChecker.create(Exprs.True(), Exprs.True(), solver),
-							ConstLocPrecRefiner.create(new ItpRefToSimplePredPrec(solver)), getLogger());
+							ConstLocPrecRefiner.create(new ItpRefToSimplePredPrec(solver, getPredSplit().splitter)),
+							getLogger());
 					break;
 				} else {
 					refiner = SingleExprTraceRefiner.create(
 							ExprTraceCraigItpChecker.create(Exprs.True(), Exprs.True(), solver),
-							GenericLocPrecRefiner.create(new ItpRefToSimplePredPrec(solver)), getLogger());
+							GenericLocPrecRefiner.create(new ItpRefToSimplePredPrec(solver, getPredSplit().splitter)),
+							getLogger());
 				}
 			case SEQ_ITP:
 				if (precGranularity == PrecGranularity.CONST) {
 					refiner = SingleExprTraceRefiner.create(
 							ExprTraceSeqItpChecker.create(Exprs.True(), Exprs.True(), solver),
-							ConstLocPrecRefiner.create(new ItpRefToSimplePredPrec(solver)), getLogger());
+							ConstLocPrecRefiner.create(new ItpRefToSimplePredPrec(solver, getPredSplit().splitter)),
+							getLogger());
 				} else {
 					refiner = SingleExprTraceRefiner.create(
 							ExprTraceSeqItpChecker.create(Exprs.True(), Exprs.True(), solver),
-							GenericLocPrecRefiner.create(new ItpRefToSimplePredPrec(solver)), getLogger());
+							GenericLocPrecRefiner.create(new ItpRefToSimplePredPrec(solver, getPredSplit().splitter)),
+							getLogger());
 				}
 				break;
 			default:

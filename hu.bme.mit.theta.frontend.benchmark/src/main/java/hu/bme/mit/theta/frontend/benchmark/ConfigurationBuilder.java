@@ -1,9 +1,15 @@
 package hu.bme.mit.theta.frontend.benchmark;
 
+import java.util.Collection;
+import java.util.function.Function;
+
 import hu.bme.mit.theta.analysis.algorithm.ArgNodeComparators;
 import hu.bme.mit.theta.analysis.algorithm.ArgNodeComparators.ArgNodeComparator;
+import hu.bme.mit.theta.analysis.pred.ItpRefToSimplePredPrec;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.impl.NullLogger;
+import hu.bme.mit.theta.core.expr.Expr;
+import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 
@@ -28,11 +34,23 @@ public abstract class ConfigurationBuilder {
 
 	};
 
+	public enum PredSplit {
+		WHOLE(ItpRefToSimplePredPrec.whole()), CONJUNCTS(ItpRefToSimplePredPrec.conjuncts()), ATOMS(
+				ItpRefToSimplePredPrec.atoms());
+
+		public final Function<Expr<? extends BoolType>, Collection<Expr<? extends BoolType>>> splitter;
+
+		private PredSplit(final Function<Expr<? extends BoolType>, Collection<Expr<? extends BoolType>>> splitter) {
+			this.splitter = splitter;
+		}
+	};
+
 	private Logger logger = NullLogger.getInstance();
 	private SolverFactory solverFactory = Z3SolverFactory.getInstace();
 	private Domain domain;
 	private Refinement refinement;
 	private Search search = Search.BFS;
+	private PredSplit predSplit = PredSplit.WHOLE;
 
 	protected ConfigurationBuilder(final Domain domain, final Refinement refinement) {
 		this.domain = domain;
@@ -77,6 +95,14 @@ public abstract class ConfigurationBuilder {
 
 	protected void setSearch(final Search search) {
 		this.search = search;
+	}
+
+	public PredSplit getPredSplit() {
+		return predSplit;
+	}
+
+	protected void setPredSplit(final PredSplit predSplit) {
+		this.predSplit = predSplit;
 	}
 
 }

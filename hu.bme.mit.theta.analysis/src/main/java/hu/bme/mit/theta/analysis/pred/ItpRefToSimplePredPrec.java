@@ -2,24 +2,33 @@ package hu.bme.mit.theta.analysis.pred;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.function.Function;
+
 import hu.bme.mit.theta.analysis.expr.ItpRefutation;
 import hu.bme.mit.theta.analysis.expr.RefutationToPrec;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.BoolType;
+import hu.bme.mit.theta.core.utils.impl.ExprUtils;
 import hu.bme.mit.theta.solver.Solver;
 
 public class ItpRefToSimplePredPrec implements RefutationToPrec<SimplePredPrec, ItpRefutation> {
 
 	private final Solver solver;
+	private final Function<Expr<? extends BoolType>, Collection<Expr<? extends BoolType>>> exprSplitter;
 
-	public ItpRefToSimplePredPrec(final Solver solver) {
+	public ItpRefToSimplePredPrec(final Solver solver,
+			final Function<Expr<? extends BoolType>, Collection<Expr<? extends BoolType>>> exprSplitter) {
 		this.solver = checkNotNull(solver);
+		this.exprSplitter = checkNotNull(exprSplitter);
 	}
 
 	@Override
 	public SimplePredPrec toPrec(final ItpRefutation refutation, final int index) {
 		final Expr<? extends BoolType> expr = refutation.get(index);
-		final SimplePredPrec prec = SimplePredPrec.create(expr, solver);
+		final Collection<Expr<? extends BoolType>> exprs = exprSplitter.apply(expr);
+		final SimplePredPrec prec = SimplePredPrec.create(exprs, solver);
 		return prec;
 	}
 
@@ -28,6 +37,18 @@ public class ItpRefToSimplePredPrec implements RefutationToPrec<SimplePredPrec, 
 		checkNotNull(prec1);
 		checkNotNull(prec2);
 		return prec1.join(prec2);
+	}
+
+	public static Function<Expr<? extends BoolType>, Collection<Expr<? extends BoolType>>> whole() {
+		return e -> Collections.singleton(e);
+	}
+
+	public static Function<Expr<? extends BoolType>, Collection<Expr<? extends BoolType>>> conjuncts() {
+		return e -> ExprUtils.getConjuncts(e);
+	}
+
+	public static Function<Expr<? extends BoolType>, Collection<Expr<? extends BoolType>>> atoms() {
+		return e -> ExprUtils.getAtoms(e);
 	}
 
 }

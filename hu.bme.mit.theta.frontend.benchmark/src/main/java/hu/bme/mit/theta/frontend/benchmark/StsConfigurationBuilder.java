@@ -74,6 +74,11 @@ public final class StsConfigurationBuilder extends ConfigurationBuilder {
 		return this;
 	}
 
+	public StsConfigurationBuilder predSplit(final PredSplit predSplit) {
+		setPredSplit(predSplit);
+		return this;
+	}
+
 	public StsConfigurationBuilder initPrec(final InitPrec initPrec) {
 		this.initPrec = initPrec;
 		return this;
@@ -150,8 +155,9 @@ public final class StsConfigurationBuilder extends ConfigurationBuilder {
 			default:
 				throw new UnsupportedOperationException();
 			}
-			final Refiner<PredState, StsAction, SimplePredPrec> refiner = SingleExprTraceRefiner
-					.create(exprTraceChecker, BasicPrecRefiner.create(new ItpRefToSimplePredPrec(solver)), getLogger());
+			final Refiner<PredState, StsAction, SimplePredPrec> refiner = SingleExprTraceRefiner.create(
+					exprTraceChecker,
+					BasicPrecRefiner.create(new ItpRefToSimplePredPrec(solver, getPredSplit().splitter)), getLogger());
 
 			final SafetyChecker<PredState, StsAction, SimplePredPrec> checker = CegarChecker.create(abstractor, refiner,
 					getLogger());

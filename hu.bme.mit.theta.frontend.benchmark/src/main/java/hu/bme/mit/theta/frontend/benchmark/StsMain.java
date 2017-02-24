@@ -25,6 +25,7 @@ import hu.bme.mit.theta.formalism.sts.dsl.StsSpec;
 import hu.bme.mit.theta.formalism.sts.utils.impl.StsIteTransformation;
 import hu.bme.mit.theta.frontend.aiger.impl.AigerParserSimple;
 import hu.bme.mit.theta.frontend.benchmark.ConfigurationBuilder.Domain;
+import hu.bme.mit.theta.frontend.benchmark.ConfigurationBuilder.PredSplit;
 import hu.bme.mit.theta.frontend.benchmark.ConfigurationBuilder.Refinement;
 import hu.bme.mit.theta.frontend.benchmark.ConfigurationBuilder.Search;
 import hu.bme.mit.theta.frontend.benchmark.StsConfigurationBuilder.InitPrec;
@@ -67,6 +68,10 @@ public class StsMain {
 		optSearch.setArgName("SEARCH");
 		options.addOption(optSearch);
 
+		final Option optPredSplit = new Option("ps", "predsplit", true, "Predicate split");
+		optPredSplit.setArgName("PREDSPLIT");
+		options.addOption(optPredSplit);
+
 		final Option optExpected = new Option("e", "expected", true, "Expected result (safe)");
 		optExpected.setArgName("true|false");
 		options.addOption(optExpected);
@@ -91,6 +96,8 @@ public class StsMain {
 		final Search search = Search.valueOf(cmd.getOptionValue(optSearch.getOpt(), Search.BFS.toString()));
 		final Optional<Boolean> expected = cmd.hasOption(optExpected.getOpt())
 				? Optional.of(Boolean.parseBoolean(cmd.getOptionValue(optExpected.getOpt()))) : Optional.empty();
+		final PredSplit predSplit = PredSplit
+				.valueOf(cmd.getOptionValue(optPredSplit.getOpt(), PredSplit.WHOLE.toString()));
 
 		// Run the algorithm
 		final TableWriter tableWriter = new SimpleTableWriter(System.out, ",", "", "");
@@ -112,12 +119,12 @@ public class StsMain {
 			tableWriter.cell(ExprUtils.size(Exprs.And(Exprs.And(sts.getInit()), Exprs.And(sts.getTrans())),
 					ExprMetrics.absoluteSize()));
 			tableWriter.cell(domain.toString()).cell(refinement.toString()).cell(initPrec.toString())
-					.cell(search.toString());
+					.cell(search.toString()).cell(domain == Domain.PRED ? predSplit.toString() : "");
 			System.out.flush();
 
 			// Build configuration
 			final Configuration<?, ?, ?> configuration = new StsConfigurationBuilder(domain, refinement)
-					.initPrec(initPrec).search(search).build(sts);
+					.initPrec(initPrec).search(search).predSplit(predSplit).build(sts);
 			// Run algorithm
 			final SafetyStatus<?, ?> status = configuration.check();
 			final Statistics stats = status.getStats().get();

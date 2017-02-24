@@ -63,7 +63,7 @@ public class StsPredTest {
 		final VarDecl<IntType> vx = Var("x", Int());
 		final Expr<IntType> x = vx.getRef();
 
-		final int mod = 10;
+		final int mod = 3;
 
 		final Builder builder = new StsImpl.Builder();
 
@@ -92,7 +92,9 @@ public class StsPredTest {
 				Not(sts.getProp()), solver);
 
 		final SingleExprTraceRefiner<PredState, StsAction, SimplePredPrec, ItpRefutation> refiner = SingleExprTraceRefiner
-				.create(exprTraceChecker, BasicPrecRefiner.create(new ItpRefToSimplePredPrec(solver)), logger);
+				.create(exprTraceChecker,
+						BasicPrecRefiner.create(new ItpRefToSimplePredPrec(solver, ItpRefToSimplePredPrec.atoms())),
+						logger);
 
 		final SafetyChecker<PredState, StsAction, SimplePredPrec> checker = CegarChecker.create(abstractor, refiner,
 				logger);
