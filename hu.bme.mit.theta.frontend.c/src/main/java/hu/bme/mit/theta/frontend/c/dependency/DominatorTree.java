@@ -28,7 +28,7 @@ public class DominatorTree {
 	 * @param function
 	 *            The function representing this tree
 	 */
-	private DominatorTree(Function function, BasicBlock root) {
+	private DominatorTree(final Function function, final BasicBlock root) {
 		this.function = function;
 		this.root = root;
 		this.edges = new HashMap<>();
@@ -44,7 +44,7 @@ public class DominatorTree {
 	 *
 	 * @return True if a immediately dominates b, false otherwise
 	 */
-	public boolean immediatelyDominates(BasicBlock a, BasicBlock b) {
+	public boolean immediatelyDominates(final BasicBlock a, final BasicBlock b) {
 		return this.edges.get(b) == a;
 	}
 
@@ -58,7 +58,7 @@ public class DominatorTree {
 	 *
 	 * @return True if a dominates b, false otherwise
 	 */
-	public boolean dominates(BasicBlock a, BasicBlock b) {
+	public boolean dominates(final BasicBlock a, final BasicBlock b) {
 		BasicBlock current = b;
 		while (current != null) {
 			if (current == a)
@@ -80,7 +80,7 @@ public class DominatorTree {
 	 *
 	 * @return True if a strictly dominates b, false otherwise
 	 */
-	public boolean strictlyDominates(BasicBlock a, BasicBlock b) {
+	public boolean strictlyDominates(final BasicBlock a, final BasicBlock b) {
 		if (a == b)
 			return false;
 
@@ -95,7 +95,7 @@ public class DominatorTree {
 	 * @param to
 	 *            The child
 	 */
-	public void createEdge(BasicBlock from, BasicBlock to) {
+	public void createEdge(final BasicBlock from, final BasicBlock to) {
 		this.edges.put(to, from);
 	}
 
@@ -107,7 +107,7 @@ public class DominatorTree {
 	 *
 	 * @return A dominator tree instance
 	 */
-	public static DominatorTree createDominatorTree(Function function) {
+	public static DominatorTree createDominatorTree(final Function function) {
 		return createTree(function, false);
 	}
 
@@ -119,7 +119,7 @@ public class DominatorTree {
 	 *
 	 * @return A dominator tree instance
 	 */
-	public static DominatorTree createPostDominatorTree(Function function) {
+	public static DominatorTree createPostDominatorTree(final Function function) {
 		return createTree(function, true);
 	}
 
@@ -149,7 +149,7 @@ public class DominatorTree {
 	 *
 	 * @return A block which immediately dominates the given block
 	 */
-	public BasicBlock getParent(BasicBlock block) {
+	public BasicBlock getParent(final BasicBlock block) {
 		return this.edges.get(block);
 	}
 
@@ -163,9 +163,9 @@ public class DominatorTree {
 	 *
 	 * @return A dominator tree instance
 	 */
-	private static DominatorTree createTree(Function function, boolean reverse) {
-		Map<BasicBlock, Set<BasicBlock>> dom = new HashMap<>();
-		BasicBlock entry = reverse ? function.getExitBlock() : function.getEntryBlock();
+	private static DominatorTree createTree(final Function function, final boolean reverse) {
+		final Map<BasicBlock, Set<BasicBlock>> dom = new HashMap<>();
+		final BasicBlock entry = reverse ? function.getExitBlock() : function.getEntryBlock();
 
 		/*
 		 * Calculate dominators using data-flow equations.
@@ -183,26 +183,27 @@ public class DominatorTree {
 		dom.get(entry).add(entry);
 
 		// for n in N \ {n0} do D[n] := N
-		List<BasicBlock> blocks = function.getBlocks().stream().filter(b -> b != entry).collect(Collectors.toList());
+		final List<BasicBlock> blocks = function.getBlocks().stream().filter(b -> b != entry)
+				.collect(Collectors.toList());
 		blocks.forEach(block -> dom.put(block, new LinkedHashSet<>(function.getBlocks())));
 
 		boolean change = true;
 		while (change) {
 			change = false;
-			for (BasicBlock block : blocks) {
-				Set<BasicBlock> blockDoms = new LinkedHashSet<>();
+			for (final BasicBlock block : blocks) {
+				final Set<BasicBlock> blockDoms = new LinkedHashSet<>();
 				blockDoms.add(block);
 
-				Iterator<BasicBlock> iter = reverse ? block.children().iterator() : block.parents().iterator();
+				final Iterator<BasicBlock> iter = reverse ? block.children().iterator() : block.parents().iterator();
 
 				if (!iter.hasNext())
 					throw new RuntimeException("Cannot find any " + (reverse ? "children" : "parents") + " of block '"
 							+ block.getName() + "'");
 
-				BasicBlock first = iter.next();
-				Set<BasicBlock> parentDoms = new LinkedHashSet<>(dom.get(first));
+				final BasicBlock first = iter.next();
+				final Set<BasicBlock> parentDoms = new LinkedHashSet<>(dom.get(first));
 				while (iter.hasNext()) {
-					BasicBlock next = iter.next();
+					final BasicBlock next = iter.next();
 					parentDoms.retainAll(dom.get(next));
 				}
 
@@ -215,23 +216,23 @@ public class DominatorTree {
 			}
 		}
 
-		DominatorTree dt = new DominatorTree(function, entry);
+		final DominatorTree dt = new DominatorTree(function, entry);
 
 		// Find immediate dominators
-		dom.forEach((BasicBlock block, Set<BasicBlock> dominators) -> {
+		dom.forEach((final BasicBlock block, final Set<BasicBlock> dominators) -> {
 			// block: The block being checked
 			// dominators: The dominators of this block
 			// idom: The block's immediate dominator
 			BasicBlock idom = null;
-			for (BasicBlock dominator : dominators) {
+			for (final BasicBlock dominator : dominators) {
 				boolean isIdom = true;
 
 				if (dominator == block)
 					continue;
 
-				List<BasicBlock> otherDoms = dominators.stream().filter(s -> s != block && s != dominator)
+				final List<BasicBlock> otherDoms = dominators.stream().filter(s -> s != block && s != dominator)
 						.collect(Collectors.toList());
-				for (BasicBlock od : otherDoms) {
+				for (final BasicBlock od : otherDoms) {
 					if (!dom.get(dominator).contains(od)) {
 						isIdom = false;
 						break;

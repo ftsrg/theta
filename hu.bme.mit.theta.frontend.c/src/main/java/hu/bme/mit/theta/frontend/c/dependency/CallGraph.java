@@ -24,11 +24,11 @@ public final class CallGraph {
 		private final Map<CallGraphNode, List<NonTerminatorIrNode>> targets = new HashMap<>();
 		private final Map<CallGraphNode, List<NonTerminatorIrNode>> calls = new HashMap<>();
 
-		public CallGraphNode(ProcDecl<?> proc) {
+		public CallGraphNode(final ProcDecl<?> proc) {
 			this.proc = proc;
 		}
 
-		public void addTarget(CallGraphNode target, NonTerminatorIrNode call) {
+		public void addTarget(final CallGraphNode target, final NonTerminatorIrNode call) {
 			List<NonTerminatorIrNode> callNodes = this.targets.get(target);
 			if (callNodes == null) {
 				callNodes = new ArrayList<>();
@@ -55,7 +55,7 @@ public final class CallGraph {
 			return this.targets.containsKey(this);
 		}
 
-		private void addCall(CallGraphNode caller, NonTerminatorIrNode call) {
+		private void addCall(final CallGraphNode caller, final NonTerminatorIrNode call) {
 			List<NonTerminatorIrNode> callNodes = this.calls.get(caller);
 			if (callNodes == null) {
 				callNodes = new ArrayList<>();
@@ -74,41 +74,41 @@ public final class CallGraph {
 	private final GlobalContext context;
 	private final Map<ProcDecl<?>, CallGraphNode> nodes;
 
-	private CallGraph(GlobalContext context, Map<ProcDecl<?>, CallGraphNode> nodes) {
+	private CallGraph(final GlobalContext context, final Map<ProcDecl<?>, CallGraphNode> nodes) {
 		this.context = context;
 		this.nodes = nodes;
 	}
 
-	public static CallGraph buildCallGraph(GlobalContext context) {
-		Map<ProcDecl<?>, CallGraphNode> nodes = new HashMap<>();
+	public static CallGraph buildCallGraph(final GlobalContext context) {
+		final Map<ProcDecl<?>, CallGraphNode> nodes = new HashMap<>();
 
-		for (Function func : context.functions()) {
-			CallGraphNode cg = new CallGraphNode(func.getProcDecl());
+		for (final Function func : context.functions()) {
+			final CallGraphNode cg = new CallGraphNode(func.getProcDecl());
 			nodes.put(func.getProcDecl(), cg);
 		}
-		
-		for (Function func : context.functions()) {
-			CallGraphNode cgNode = nodes.get(func.getProcDecl());
-			for (BasicBlock block : func.getBlocks()) {
-				for (NonTerminatorIrNode node : block.getNodes()) {
+
+		for (final Function func : context.functions()) {
+			final CallGraphNode cgNode = nodes.get(func.getProcDecl());
+			for (final BasicBlock block : func.getBlocks()) {
+				for (final NonTerminatorIrNode node : block.getNodes()) {
 					if (node instanceof AssignNode<?, ?>
 							&& ((AssignNode<?, ?>) node).getExpr() instanceof ProcCallExpr<?>) {
-						ProcCallExpr<?> procCall = (ProcCallExpr<?>) ((AssignNode<?, ?>) node).getExpr();
-						ProcDecl<?> proc = ((ProcRefExpr<?>) procCall.getProc()).getDecl();						
-						
+						final ProcCallExpr<?> procCall = (ProcCallExpr<?>) ((AssignNode<?, ?>) node).getExpr();
+						final ProcDecl<?> proc = ((ProcRefExpr<?>) procCall.getProc()).getDecl();
+
 						CallGraphNode cgTarget = nodes.get(proc);
 						if (cgTarget == null) {
 							cgTarget = new CallGraphNode(proc);
 							nodes.put(proc, cgTarget);
 						}
-						
+
 						cgNode.addTarget(cgTarget, node);
 					}
 				}
 			}
 		}
 
-		CallGraph cg = new CallGraph(context, nodes);
+		final CallGraph cg = new CallGraph(context, nodes);
 		return cg;
 	}
 
@@ -117,18 +117,18 @@ public final class CallGraph {
 	}
 
 	public List<CallGraphNode> getNodesDFS() {
-		ProcDecl<?> main = this.context.getEntryPoint().getProcDecl();
-		CallGraphNode mainNode = this.nodes.get(main);
+		final ProcDecl<?> main = this.context.getEntryPoint().getProcDecl();
+		final CallGraphNode mainNode = this.nodes.get(main);
 
-		List<CallGraphNode> visited = new ArrayList<>();
-		Stack<CallGraphNode> stack = new Stack<>();
+		final List<CallGraphNode> visited = new ArrayList<>();
+		final Stack<CallGraphNode> stack = new Stack<>();
 		stack.push(mainNode);
 
 		while (!stack.isEmpty()) {
-			CallGraphNode cg = stack.pop();
+			final CallGraphNode cg = stack.pop();
 			if (!visited.contains(cg)) {
 				visited.add(cg);
-				for (CallGraphNode child : cg.targets.keySet()) {
+				for (final CallGraphNode child : cg.targets.keySet()) {
 					stack.push(child);
 				}
 			}
@@ -137,10 +137,10 @@ public final class CallGraph {
 		return visited;
 	}
 
-	public boolean isRecursive(Function function) {
-		ProcDecl<?> proc = function.getProcDecl();
+	public boolean isRecursive(final Function function) {
+		final ProcDecl<?> proc = function.getProcDecl();
 
-		CallGraphNode cgNode = this.nodes.get(proc);
+		final CallGraphNode cgNode = this.nodes.get(proc);
 		if (cgNode == null)
 			throw new IllegalArgumentException(
 					String.format("Function '%s' is not present in this call graph", function));
@@ -148,7 +148,7 @@ public final class CallGraph {
 		return cgNode.targets.containsKey(cgNode);
 	}
 
-	public boolean hasDefinition(CallGraphNode node) {
+	public boolean hasDefinition(final CallGraphNode node) {
 		return this.context.hasFunctionDefinition(node.getProc().getName());
 	}
 

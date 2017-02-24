@@ -5,10 +5,11 @@ import static hu.bme.mit.theta.core.expr.impl.Exprs.And;
 import static hu.bme.mit.theta.core.utils.impl.VarIndexing.all;
 
 import hu.bme.mit.theta.analysis.loc.LocAction;
+import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.BoolType;
-import hu.bme.mit.theta.core.utils.impl.UnfoldResult;
 import hu.bme.mit.theta.core.utils.impl.StmtUtils;
+import hu.bme.mit.theta.core.utils.impl.UnfoldResult;
 import hu.bme.mit.theta.core.utils.impl.VarIndexing;
 import hu.bme.mit.theta.formalism.cfa.CfaEdge;
 import hu.bme.mit.theta.formalism.cfa.CfaLoc;
@@ -44,6 +45,11 @@ public final class CfaAction implements LocAction<CfaLoc, CfaEdge> {
 	@Override
 	public VarIndexing nextIndexing() {
 		return nextIndexing;
+	}
+
+	@Override
+	public String toString() {
+		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).addAll(edge.getStmts()).toString();
 	}
 
 }

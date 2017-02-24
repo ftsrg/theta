@@ -6,10 +6,10 @@ import java.util.Collection;
 import java.util.Collections;
 
 import hu.bme.mit.theta.analysis.InitFunction;
-import hu.bme.mit.theta.analysis.zone.ZonePrecision;
+import hu.bme.mit.theta.analysis.zone.ZonePrec;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
 
-final class TcfaZoneInitFunction implements InitFunction<ZoneState, ZonePrecision> {
+final class TcfaZoneInitFunction implements InitFunction<ZoneState, ZonePrec> {
 
 	private static final TcfaZoneInitFunction INSTANCE = new TcfaZoneInitFunction();
 
@@ -21,8 +21,8 @@ final class TcfaZoneInitFunction implements InitFunction<ZoneState, ZonePrecisio
 	}
 
 	@Override
-	public Collection<ZoneState> getInitStates(final ZonePrecision precision) {
-		checkNotNull(precision);
+	public Collection<ZoneState> getInitStates(final ZonePrec prec) {
+		checkNotNull(prec);
 		return Collections.singleton(ZoneState.top());
 	}
 

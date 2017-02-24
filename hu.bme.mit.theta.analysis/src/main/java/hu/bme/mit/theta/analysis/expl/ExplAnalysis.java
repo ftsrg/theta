@@ -11,11 +11,11 @@ import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.solver.Solver;
 
-public final class ExplAnalysis implements Analysis<ExplState, ExprAction, ExplPrecision> {
+public final class ExplAnalysis implements Analysis<ExplState, ExprAction, ExplPrec> {
 
 	private final Domain<ExplState> domain;
-	private final InitFunction<ExplState, ExplPrecision> initFunction;
-	private final TransferFunction<ExplState, ExprAction, ExplPrecision> transferFunction;
+	private final InitFunction<ExplState, ExplPrec> initFunction;
+	private final TransferFunction<ExplState, ExprAction, ExplPrec> transferFunction;
 
 	private ExplAnalysis(final Solver solver, final Expr<? extends BoolType> initExpr) {
 		checkNotNull(solver);
@@ -36,12 +36,12 @@ public final class ExplAnalysis implements Analysis<ExplState, ExprAction, ExplP
 	}
 
 	@Override
-	public InitFunction<ExplState, ExplPrecision> getInitFunction() {
+	public InitFunction<ExplState, ExplPrec> getInitFunction() {
 		return initFunction;
 	}
 
 	@Override
-	public TransferFunction<ExplState, ExprAction, ExplPrecision> getTransferFunction() {
+	public TransferFunction<ExplState, ExprAction, ExplPrec> getTransferFunction() {
 		return transferFunction;
 	}
 

@@ -6,7 +6,7 @@ import java.util.Optional;
 import java.util.function.Function;
 
 import hu.bme.mit.theta.analysis.Action;
-import hu.bme.mit.theta.analysis.Precision;
+import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
@@ -20,7 +20,7 @@ import hu.bme.mit.theta.analysis.reachedset.ReachedSet;
 import hu.bme.mit.theta.analysis.waitlist.FifoWaitlist;
 import hu.bme.mit.theta.analysis.waitlist.Waitlist;
 
-public final class ImpactChecker<S extends State, A extends Action, P extends Precision>
+public final class ImpactChecker<S extends State, A extends Action, P extends Prec>
 		implements SafetyChecker<S, A, P> {
 
 	private final ArgBuilder<S, A, P> argBuilder;
@@ -34,7 +34,7 @@ public final class ImpactChecker<S extends State, A extends Action, P extends Pr
 		this.partitioning = checkNotNull(partitioning);
 	}
 
-	public static <S extends State, A extends Action, P extends Precision> ImpactChecker<S, A, P> create(
+	public static <S extends State, A extends Action, P extends Prec> ImpactChecker<S, A, P> create(
 			final ArgBuilder<S, A, P> argBuilder, final ImpactRefiner<S, A> refiner,
 			final Function<? super S, ?> partitioning) {
 		return new ImpactChecker<>(argBuilder, refiner, partitioning);
@@ -43,20 +43,20 @@ public final class ImpactChecker<S extends State, A extends Action, P extends Pr
 	////
 
 	@Override
-	public SafetyStatus<S, A> check(final P precision) {
-		return new CheckMethod(precision).run();
+	public SafetyStatus<S, A> check(final P prec) {
+		return new CheckMethod(prec).run();
 	}
 
 	////
 
 	private final class CheckMethod {
-		private final P precision;
+		private final P prec;
 
 		private final ARG<S, A> arg;
 		private final ReachedSet<S, A> reachedSet;
 
-		private CheckMethod(final P precision) {
-			this.precision = checkNotNull(precision);
+		private CheckMethod(final P prec) {
+			this.prec = checkNotNull(prec);
 			arg = argBuilder.createArg();
 			reachedSet = ImpactReachedSet.create(partitioning);
 		}
@@ -100,7 +100,7 @@ public final class ImpactChecker<S extends State, A extends Action, P extends Pr
 		}
 
 		private Optional<ArgNode<S, A>> unwind() {
-			argBuilder.init(arg, precision);
+			argBuilder.init(arg, prec);
 			reachedSet.addAll(arg.getInitNodes());
 
 			while (true) {
@@ -134,7 +134,7 @@ public final class ImpactChecker<S extends State, A extends Action, P extends Pr
 		}
 
 		private void expand(final ArgNode<S, A> v) {
-			argBuilder.expand(v, precision);
+			argBuilder.expand(v, prec);
 		}
 
 		private void refine(final ArgNode<S, A> v) {

@@ -16,10 +16,10 @@ import hu.bme.mit.theta.formalism.sts.dsl.StsDslManager;
 import hu.bme.mit.theta.formalism.sts.dsl.StsSpec;
 import hu.bme.mit.theta.formalism.sts.utils.impl.StsIteTransformation;
 import hu.bme.mit.theta.frontend.aiger.impl.AigerParserSimple;
-import hu.bme.mit.theta.frontend.benchmark.StsConfigurationBuilder.Domain;
-import hu.bme.mit.theta.frontend.benchmark.StsConfigurationBuilder.InitPrecision;
-import hu.bme.mit.theta.frontend.benchmark.StsConfigurationBuilder.Refinement;
-import hu.bme.mit.theta.frontend.benchmark.StsConfigurationBuilder.Search;
+import hu.bme.mit.theta.frontend.benchmark.ConfigurationBuilder.Domain;
+import hu.bme.mit.theta.frontend.benchmark.ConfigurationBuilder.Refinement;
+import hu.bme.mit.theta.frontend.benchmark.ConfigurationBuilder.Search;
+import hu.bme.mit.theta.frontend.benchmark.StsConfigurationBuilder.InitPrec;
 
 public class StsBenchmark {
 
@@ -44,26 +44,26 @@ public class StsBenchmark {
 
 		final List<StsConfigurationBuilder> builders = new ArrayList<>();
 		//@formatter:off
-		builders.add(new StsConfigurationBuilder(Domain.PRED, Refinement.CRAIG_ITP).initPrecision(InitPrecision.EMPTY).search(Search.BFS));
-		builders.add(new StsConfigurationBuilder(Domain.PRED, Refinement.CRAIG_ITP).initPrecision(InitPrecision.EMPTY).search(Search.DFS));
-		builders.add(new StsConfigurationBuilder(Domain.PRED, Refinement.CRAIG_ITP).initPrecision(InitPrecision.PROP).search(Search.BFS));
-		builders.add(new StsConfigurationBuilder(Domain.PRED, Refinement.CRAIG_ITP).initPrecision(InitPrecision.PROP).search(Search.DFS));
-		builders.add(new StsConfigurationBuilder(Domain.PRED, Refinement.SEQ_ITP).initPrecision(InitPrecision.EMPTY).search(Search.BFS));
-		builders.add(new StsConfigurationBuilder(Domain.PRED, Refinement.SEQ_ITP).initPrecision(InitPrecision.EMPTY).search(Search.DFS));
-		builders.add(new StsConfigurationBuilder(Domain.PRED, Refinement.SEQ_ITP).initPrecision(InitPrecision.PROP).search(Search.BFS));
-		builders.add(new StsConfigurationBuilder(Domain.PRED, Refinement.SEQ_ITP).initPrecision(InitPrecision.PROP).search(Search.DFS));
-		builders.add(new StsConfigurationBuilder(Domain.EXPL, Refinement.CRAIG_ITP).initPrecision(InitPrecision.EMPTY).search(Search.BFS));
-		builders.add(new StsConfigurationBuilder(Domain.EXPL, Refinement.CRAIG_ITP).initPrecision(InitPrecision.EMPTY).search(Search.DFS));
-		builders.add(new StsConfigurationBuilder(Domain.EXPL, Refinement.CRAIG_ITP).initPrecision(InitPrecision.PROP).search(Search.BFS));
-		builders.add(new StsConfigurationBuilder(Domain.EXPL, Refinement.CRAIG_ITP).initPrecision(InitPrecision.PROP).search(Search.DFS));
-		builders.add(new StsConfigurationBuilder(Domain.EXPL, Refinement.SEQ_ITP).initPrecision(InitPrecision.EMPTY).search(Search.BFS));
-		builders.add(new StsConfigurationBuilder(Domain.EXPL, Refinement.SEQ_ITP).initPrecision(InitPrecision.EMPTY).search(Search.DFS));
-		builders.add(new StsConfigurationBuilder(Domain.EXPL, Refinement.SEQ_ITP).initPrecision(InitPrecision.PROP).search(Search.BFS));
-		builders.add(new StsConfigurationBuilder(Domain.EXPL, Refinement.SEQ_ITP).initPrecision(InitPrecision.PROP).search(Search.DFS));
-		builders.add(new StsConfigurationBuilder(Domain.EXPL, Refinement.UNSAT_CORE).initPrecision(InitPrecision.EMPTY).search(Search.BFS));
-		builders.add(new StsConfigurationBuilder(Domain.EXPL, Refinement.UNSAT_CORE).initPrecision(InitPrecision.EMPTY).search(Search.DFS));
-		builders.add(new StsConfigurationBuilder(Domain.EXPL, Refinement.UNSAT_CORE).initPrecision(InitPrecision.PROP).search(Search.BFS));
-		builders.add(new StsConfigurationBuilder(Domain.EXPL, Refinement.UNSAT_CORE).initPrecision(InitPrecision.PROP).search(Search.DFS));
+		builders.add(new StsConfigurationBuilder(Domain.PRED, Refinement.CRAIG_ITP).initPrec(InitPrec.EMPTY).search(Search.BFS));
+		builders.add(new StsConfigurationBuilder(Domain.PRED, Refinement.CRAIG_ITP).initPrec(InitPrec.EMPTY).search(Search.DFS));
+		builders.add(new StsConfigurationBuilder(Domain.PRED, Refinement.CRAIG_ITP).initPrec(InitPrec.PROP).search(Search.BFS));
+		builders.add(new StsConfigurationBuilder(Domain.PRED, Refinement.CRAIG_ITP).initPrec(InitPrec.PROP).search(Search.DFS));
+		builders.add(new StsConfigurationBuilder(Domain.PRED, Refinement.SEQ_ITP).initPrec(InitPrec.EMPTY).search(Search.BFS));
+		builders.add(new StsConfigurationBuilder(Domain.PRED, Refinement.SEQ_ITP).initPrec(InitPrec.EMPTY).search(Search.DFS));
+		builders.add(new StsConfigurationBuilder(Domain.PRED, Refinement.SEQ_ITP).initPrec(InitPrec.PROP).search(Search.BFS));
+		builders.add(new StsConfigurationBuilder(Domain.PRED, Refinement.SEQ_ITP).initPrec(InitPrec.PROP).search(Search.DFS));
+		builders.add(new StsConfigurationBuilder(Domain.EXPL, Refinement.CRAIG_ITP).initPrec(InitPrec.EMPTY).search(Search.BFS));
+		builders.add(new StsConfigurationBuilder(Domain.EXPL, Refinement.CRAIG_ITP).initPrec(InitPrec.EMPTY).search(Search.DFS));
+		builders.add(new StsConfigurationBuilder(Domain.EXPL, Refinement.CRAIG_ITP).initPrec(InitPrec.PROP).search(Search.BFS));
+		builders.add(new StsConfigurationBuilder(Domain.EXPL, Refinement.CRAIG_ITP).initPrec(InitPrec.PROP).search(Search.DFS));
+		builders.add(new StsConfigurationBuilder(Domain.EXPL, Refinement.SEQ_ITP).initPrec(InitPrec.EMPTY).search(Search.BFS));
+		builders.add(new StsConfigurationBuilder(Domain.EXPL, Refinement.SEQ_ITP).initPrec(InitPrec.EMPTY).search(Search.DFS));
+		builders.add(new StsConfigurationBuilder(Domain.EXPL, Refinement.SEQ_ITP).initPrec(InitPrec.PROP).search(Search.BFS));
+		builders.add(new StsConfigurationBuilder(Domain.EXPL, Refinement.SEQ_ITP).initPrec(InitPrec.PROP).search(Search.DFS));
+		builders.add(new StsConfigurationBuilder(Domain.EXPL, Refinement.UNSAT_CORE).initPrec(InitPrec.EMPTY).search(Search.BFS));
+		builders.add(new StsConfigurationBuilder(Domain.EXPL, Refinement.UNSAT_CORE).initPrec(InitPrec.EMPTY).search(Search.DFS));
+		builders.add(new StsConfigurationBuilder(Domain.EXPL, Refinement.UNSAT_CORE).initPrec(InitPrec.PROP).search(Search.BFS));
+		builders.add(new StsConfigurationBuilder(Domain.EXPL, Refinement.UNSAT_CORE).initPrec(InitPrec.PROP).search(Search.DFS));
 		//@formatter:on
 
 		run(inputs, builders, runs, formatter);
@@ -94,7 +94,7 @@ public class StsBenchmark {
 		formatter.cell(input.expected + "");
 		formatter.cell(configBuilder.getDomain() + "");
 		formatter.cell(configBuilder.getRefinement() + "");
-		formatter.cell(configBuilder.getInitPrecision() + "");
+		formatter.cell(configBuilder.getInitPrec() + "");
 		formatter.cell(configBuilder.getSearch() + "");
 		try {
 			final STS sts = input.load();

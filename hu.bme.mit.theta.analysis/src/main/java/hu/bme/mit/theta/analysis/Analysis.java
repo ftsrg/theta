@@ -1,6 +1,6 @@
 package hu.bme.mit.theta.analysis;
 
-public interface Analysis<S extends State, A extends Action, P extends Precision> {
+public interface Analysis<S extends State, A extends Action, P extends Prec> {
 
 	Domain<S> getDomain();
 

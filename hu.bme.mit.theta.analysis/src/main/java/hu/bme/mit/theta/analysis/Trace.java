@@ -5,17 +5,15 @@ import static com.google.common.base.Preconditions.checkElementIndex;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.List;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import com.google.common.collect.ImmutableList;
 
 /**
- * Represents a trace in the form of a (State, Action, State, ..., State,
- * Action, State) sequence. A trace always contains at least one state and the
- * number of actions is one less than the number of states.
+ * Represents an alternating trace in the form of a (State, Action, State, ...,
+ * State, Action, State) sequence. A trace always contains at least one state
+ * and the number of actions is one less than the number of states.
  */
-public final class Trace<S extends State, A extends Action> {
+public final class Trace<S, A> {
 
 	private final List<S> states;
 	private final List<A> actions;
@@ -33,8 +31,7 @@ public final class Trace<S extends State, A extends Action> {
 	 * Create a trace. The size of states must be at least one, and the size of
 	 * the actions must be one less than the number of states.
 	 */
-	public static <S extends State, A extends Action> Trace<S, A> of(final List<? extends S> states,
-			final List<? extends A> actions) {
+	public static <S, A> Trace<S, A> of(final List<? extends S> states, final List<? extends A> actions) {
 		return new Trace<>(states, actions);
 	}
 
@@ -77,9 +74,5 @@ public final class Trace<S extends State, A extends Action> {
 		}
 		sb.append(')');
 		return sb.toString();
-	}
-
-	public <S2 extends State> Trace<S2, A> mapStates(final Function<S, S2> f) {
-		return of(getStates().stream().map(f).collect(Collectors.toList()), getActions());
 	}
 }

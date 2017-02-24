@@ -8,10 +8,10 @@ import java.util.Collections;
 import hu.bme.mit.theta.analysis.TransferFunction;
 import hu.bme.mit.theta.analysis.tcfa.TcfaAction;
 import hu.bme.mit.theta.analysis.tcfa.TcfaZoneUtils;
-import hu.bme.mit.theta.analysis.zone.ZonePrecision;
+import hu.bme.mit.theta.analysis.zone.ZonePrec;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
 
-final class TcfaItpZoneTransferFunction implements TransferFunction<ItpZoneState, TcfaAction, ZonePrecision> {
+final class TcfaItpZoneTransferFunction implements TransferFunction<ItpZoneState, TcfaAction, ZonePrec> {
 
 	private static final TcfaItpZoneTransferFunction INSTANCE = new TcfaItpZoneTransferFunction();
 
@@ -26,16 +26,16 @@ final class TcfaItpZoneTransferFunction implements TransferFunction<ItpZoneState
 
 	@Override
 	public Collection<? extends ItpZoneState> getSuccStates(final ItpZoneState state, final TcfaAction action,
-			final ZonePrecision precision) {
+			final ZonePrec prec) {
 		checkNotNull(state);
 		checkNotNull(action);
-		checkNotNull(precision);
+		checkNotNull(prec);
 
 		final ZoneState subState = state.getState();
 		if (subState.isBottom()) {
 			return Collections.emptySet();
 		} else {
-			final ZoneState succSubState = TcfaZoneUtils.post(state.getState(), action, precision);
+			final ZoneState succSubState = TcfaZoneUtils.post(state.getState(), action, prec);
 			final ItpZoneState succState = ItpZoneState.of(succSubState, ZoneState.top());
 			return Collections.singleton(succState);
 		}

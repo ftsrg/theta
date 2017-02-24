@@ -12,7 +12,7 @@ import hu.bme.mit.theta.core.model.impl.Valuation;
 import hu.bme.mit.theta.core.utils.impl.PathUtils;
 import hu.bme.mit.theta.solver.Solver;
 
-public final class ExplTransferFunction implements TransferFunction<ExplState, ExprAction, ExplPrecision> {
+public final class ExplTransferFunction implements TransferFunction<ExplState, ExprAction, ExplPrec> {
 
 	private final Solver solver;
 
@@ -26,10 +26,10 @@ public final class ExplTransferFunction implements TransferFunction<ExplState, E
 
 	@Override
 	public Collection<? extends ExplState> getSuccStates(final ExplState state, final ExprAction action,
-			final ExplPrecision precision) {
+			final ExplPrec prec) {
 		checkNotNull(state);
 		checkNotNull(action);
-		checkNotNull(precision);
+		checkNotNull(prec);
 
 		final Collection<ExplState> succStates = new HashSet<>();
 
@@ -42,7 +42,7 @@ public final class ExplTransferFunction implements TransferFunction<ExplState, E
 			moreSuccStates = solver.check().isSat();
 			if (moreSuccStates) {
 				final Valuation nextSuccStateVal = PathUtils.extractValuation(solver.getModel(), action.nextIndexing());
-				final ExplState nextSuccState = precision.createState(nextSuccStateVal);
+				final ExplState nextSuccState = prec.createState(nextSuccStateVal);
 				succStates.add(nextSuccState);
 				solver.add(PathUtils.unfold(Exprs.Not(nextSuccState.toExpr()), action.nextIndexing()));
 			}

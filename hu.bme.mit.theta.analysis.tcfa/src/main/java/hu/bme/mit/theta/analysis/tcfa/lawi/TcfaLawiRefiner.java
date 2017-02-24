@@ -11,19 +11,19 @@ import hu.bme.mit.theta.analysis.algorithm.ArgEdge;
 import hu.bme.mit.theta.analysis.algorithm.ArgNode;
 import hu.bme.mit.theta.analysis.tcfa.TcfaAction;
 import hu.bme.mit.theta.analysis.waitlist.Waitlist;
-import hu.bme.mit.theta.analysis.zone.ZonePrecision;
+import hu.bme.mit.theta.analysis.zone.ZonePrec;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
 import hu.bme.mit.theta.formalism.tcfa.TCFA;
 
 public final class TcfaLawiRefiner {
 
-	private final ZonePrecision precision;
+	private final ZonePrec prec;
 	private final Waitlist<ArgNode<TcfaLawiState, TcfaAction>> waitlist;
 
 	private TcfaLawiRefiner(final TCFA tcfa, final Waitlist<ArgNode<TcfaLawiState, TcfaAction>> waitlist) {
 		checkNotNull(tcfa);
 		this.waitlist = checkNotNull(waitlist);
-		precision = ZonePrecision.create(tcfa.getClockVars());
+		prec = ZonePrec.create(tcfa.getClockVars());
 	}
 
 	public static TcfaLawiRefiner create(final TCFA tcfa, final Waitlist<ArgNode<TcfaLawiState, TcfaAction>> waitlist) {
@@ -46,11 +46,11 @@ public final class TcfaLawiRefiner {
 			final TcfaAction action = inEdge.getAction();
 			final ArgNode<TcfaLawiState, TcfaAction> parent = inEdge.getSource();
 
-			final ZoneState B_pre = pre(zone, action, precision);
+			final ZoneState B_pre = pre(zone, action, prec);
 			final ZoneState A_pre = blockZone(parent, B_pre);
 
 			final ZoneState B = zone;
-			final ZoneState A = post(A_pre, action, precision);
+			final ZoneState A = post(A_pre, action, prec);
 			final ZoneState interpolant = ZoneState.interpolant(A, B);
 
 			refine(node, interpolant);

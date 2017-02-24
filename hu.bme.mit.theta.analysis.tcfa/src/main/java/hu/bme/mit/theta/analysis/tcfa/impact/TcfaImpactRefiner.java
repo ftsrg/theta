@@ -12,7 +12,7 @@ import hu.bme.mit.theta.analysis.loc.LocState;
 import hu.bme.mit.theta.analysis.prod.Prod2State;
 import hu.bme.mit.theta.analysis.tcfa.TcfaAction;
 import hu.bme.mit.theta.analysis.tcfa.zone.TcfaInterpolator;
-import hu.bme.mit.theta.analysis.zone.ZonePrecision;
+import hu.bme.mit.theta.analysis.zone.ZonePrec;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
 import hu.bme.mit.theta.formalism.tcfa.TCFA;
 import hu.bme.mit.theta.formalism.tcfa.TcfaEdge;
@@ -25,7 +25,7 @@ public final class TcfaImpactRefiner
 
 	private TcfaImpactRefiner(final TCFA tcfa) {
 		checkNotNull(tcfa);
-		interpolator = TcfaInterpolator.create(ZonePrecision.create(tcfa.getClockVars()));
+		interpolator = TcfaInterpolator.create(ZonePrec.create(tcfa.getClockVars()));
 	}
 
 	public static TcfaImpactRefiner create(final TCFA tcfa) {

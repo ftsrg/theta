@@ -13,35 +13,35 @@ import hu.bme.mit.theta.frontend.c.ir.node.IrNode;
 import hu.bme.mit.theta.frontend.c.ir.node.NonTerminatorIrNode;
 
 public class ProgramDependenceGraph {
-	
+
 	public static class PDGNode {
-		private IrNode node;
-		
-		private PDGNode(IrNode node) {
+		private final IrNode node;
+
+		private PDGNode(final IrNode node) {
 			this.node = node;
 		}
-		
+
 		public IrNode getNode() {
 			return this.node;
 		}
 	}
-	
-	public static class PDGEdge {		
-		private PDGNode source;
-		private PDGNode target;
+
+	public static class PDGEdge {
+		private final PDGNode source;
+		private final PDGNode target;
 
 		PDGEdgeType type;
-		
-		private PDGEdge(PDGNode source, PDGNode target, PDGEdgeType type) {
+
+		private PDGEdge(final PDGNode source, final PDGNode target, final PDGEdgeType type) {
 			this.source = source;
 			this.target = target;
 			this.type = type;
 		}
-		
+
 		public PDGNode getSource() {
 			return this.source;
 		}
-		
+
 		public PDGNode getTarget() {
 			return this.target;
 		}
@@ -50,19 +50,19 @@ public class ProgramDependenceGraph {
 			return this.type;
 		}
 	}
-	
+
 	public enum PDGEdgeType {
 		CONTROL, DATA
 	}
-	
+
 	private final Map<IrNode, PDGNode> nodes;
 	private final Collection<PDGEdge> edges;
-	
-	public ProgramDependenceGraph(Map<IrNode, PDGNode> nodes, Collection<PDGEdge> edges) {
+
+	public ProgramDependenceGraph(final Map<IrNode, PDGNode> nodes, final Collection<PDGEdge> edges) {
 		this.nodes = nodes;
 		this.edges = edges;
 	}
-	
+
 	public Collection<PDGNode> getNodes() {
 		return this.nodes.values();
 	}
@@ -70,43 +70,42 @@ public class ProgramDependenceGraph {
 	public Collection<PDGEdge> getEdges() {
 		return this.edges;
 	}
-	
-	
-	public static ProgramDependenceGraph create(Function function) {
-		ControlDependencyGraph cdg = ControlDependencyGraph.buildGraph(function);
-		UseDefineChain ud = UseDefineChain.buildChain(function);	
-		
-		Map<IrNode, PDGNode> nodes = new HashMap<>();
-		List<PDGEdge> edges = new ArrayList<>();
-		
+
+	public static ProgramDependenceGraph create(final Function function) {
+		final ControlDependencyGraph cdg = ControlDependencyGraph.buildGraph(function);
+		final UseDefineChain ud = UseDefineChain.buildChain(function);
+
+		final Map<IrNode, PDGNode> nodes = new HashMap<>();
+		final List<PDGEdge> edges = new ArrayList<>();
+
 		// Construct the graph initially
-		for (BasicBlock block : function.getBlocks()) {
-			for (IrNode node : block.getAllNodes()) {
+		for (final BasicBlock block : function.getBlocks()) {
+			for (final IrNode node : block.getAllNodes()) {
 				nodes.put(node, new PDGNode(node));
 			}
 		}
-		
-		for (Entry<IrNode, PDGNode> entry : nodes.entrySet()) {
-			IrNode node = entry.getKey();
-			PDGNode pdg = entry.getValue();
-			
+
+		for (final Entry<IrNode, PDGNode> entry : nodes.entrySet()) {
+			final IrNode node = entry.getKey();
+			final PDGNode pdg = entry.getValue();
+
 			// Get all control dependencies of this edge
-			List<BasicBlock> controlDeps = cdg.getParentBlocks(node.getParentBlock());
-			List<NonTerminatorIrNode> flowDeps = ud.getDefinitions(node);
-			
-			for (BasicBlock block : controlDeps) {
-				PDGNode terminator = nodes.get(block.getTerminator());
+			final List<BasicBlock> controlDeps = cdg.getParentBlocks(node.getParentBlock());
+			final List<NonTerminatorIrNode> flowDeps = ud.getDefinitions(node);
+
+			for (final BasicBlock block : controlDeps) {
+				final PDGNode terminator = nodes.get(block.getTerminator());
 				edges.add(new PDGEdge(terminator, pdg, PDGEdgeType.CONTROL));
 			}
-			
-			for (IrNode flowDep : flowDeps) {
-				PDGNode def = nodes.get(flowDep);
+
+			for (final IrNode flowDep : flowDeps) {
+				final PDGNode def = nodes.get(flowDep);
 				edges.add(new PDGEdge(def, pdg, PDGEdgeType.DATA));
 			}
-			
+
 		}
-		
-		return new ProgramDependenceGraph(nodes, edges);		
+
+		return new ProgramDependenceGraph(nodes, edges);
 	}
 
 }

@@ -5,16 +5,19 @@ import java.util.HashSet;
 
 import com.google.common.collect.ImmutableSet;
 
+import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.formalism.cfa.CfaEdge;
 import hu.bme.mit.theta.formalism.cfa.CfaLoc;
 import hu.bme.mit.theta.formalism.cfa.impl.ImmutableCfaEdge.CFAEdgeBuilder;
 
 final class ImmutableCfaLoc implements CfaLoc {
+	private final String name;
 
 	final Collection<ImmutableCfaEdge> inEdges;
 	final Collection<ImmutableCfaEdge> outEdges;
 
-	ImmutableCfaLoc(final CFALocBuilder builder) {
+	ImmutableCfaLoc(final String name, final CFALocBuilder builder) {
+		this.name = name;
 		builder.loc = this;
 
 		final ImmutableSet.Builder<ImmutableCfaEdge> inEdgeSet = ImmutableSet.builder();
@@ -49,14 +52,17 @@ final class ImmutableCfaLoc implements CfaLoc {
 		private final Collection<CFAEdgeBuilder> inEdges;
 		private final Collection<CFAEdgeBuilder> outEdges;
 
-		CFALocBuilder() {
+		private final String name;
+
+		CFALocBuilder(final String name) {
+			this.name = name;
 			inEdges = new HashSet<>();
 			outEdges = new HashSet<>();
 		}
 
 		public ImmutableCfaLoc build() {
 			if (loc == null) {
-				new ImmutableCfaLoc(this);
+				new ImmutableCfaLoc(name, this);
 			}
 
 			return loc;
@@ -74,4 +80,13 @@ final class ImmutableCfaLoc implements CfaLoc {
 
 	}
 
+	@Override
+	public String getName() {
+		return name;
+	}
+
+	@Override
+	public String toString() {
+		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).add(name).toString();
+	}
 }

@@ -9,7 +9,7 @@ import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.solver.Solver;
 
-public final class PredInitFunction implements InitFunction<PredState, PredPrecision> {
+public final class PredInitFunction implements InitFunction<PredState, PredPrec> {
 
 	private final Solver solver;
 	private final Expr<? extends BoolType> initExpr;
@@ -24,9 +24,9 @@ public final class PredInitFunction implements InitFunction<PredState, PredPreci
 	}
 
 	@Override
-	public Collection<? extends PredState> getInitStates(final PredPrecision precision) {
-		checkNotNull(precision);
-		return precision.createStates(solver, initExpr);
+	public Collection<? extends PredState> getInitStates(final PredPrec prec) {
+		checkNotNull(prec);
+		return prec.createStates(solver, initExpr);
 	}
 
 }

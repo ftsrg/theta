@@ -36,22 +36,23 @@ import hu.bme.mit.theta.core.utils.impl.FailExprVisitor;
 
 public class VariableFinderVisitor extends FailExprVisitor<Set<VarDecl<? extends Type>>, Set<VarDecl<? extends Type>>> {
 
-	private Set<VarDecl<? extends Type>> processBinary(BinaryExpr<? extends Type, ? extends Type, ? extends Type> expr,
-			Set<VarDecl<? extends Type>> param) {
+	private Set<VarDecl<? extends Type>> processBinary(
+			final BinaryExpr<? extends Type, ? extends Type, ? extends Type> expr,
+			final Set<VarDecl<? extends Type>> param) {
 		expr.getLeftOp().accept(this, param);
 		expr.getRightOp().accept(this, param);
 
 		return param;
 	}
 
-	private Set<VarDecl<? extends Type>> processMultiary(MultiaryExpr<? extends Type, ? extends Type> expr,
-			Set<VarDecl<? extends Type>> param) {
+	private Set<VarDecl<? extends Type>> processMultiary(final MultiaryExpr<? extends Type, ? extends Type> expr,
+			final Set<VarDecl<? extends Type>> param) {
 		expr.getOps().forEach(o -> o.accept(this, param));
 		return param;
 	}
 
-	private Set<VarDecl<? extends Type>> processUnary(UnaryExpr<? extends Type, ? extends Type> expr,
-			Set<VarDecl<? extends Type>> param) {
+	private Set<VarDecl<? extends Type>> processUnary(final UnaryExpr<? extends Type, ? extends Type> expr,
+			final Set<VarDecl<? extends Type>> param) {
 		expr.getOp().accept(this, param);
 		return param;
 	}
@@ -59,8 +60,8 @@ public class VariableFinderVisitor extends FailExprVisitor<Set<VarDecl<? extends
 	/// Var references
 
 	@Override
-	public <DeclType extends Type> Set<VarDecl<? extends Type>> visit(VarRefExpr<DeclType> expr,
-			Set<VarDecl<? extends Type>> param) {
+	public <DeclType extends Type> Set<VarDecl<? extends Type>> visit(final VarRefExpr<DeclType> expr,
+			final Set<VarDecl<? extends Type>> param) {
 		param.add(expr.getDecl());
 		return param;
 	}
@@ -68,115 +69,115 @@ public class VariableFinderVisitor extends FailExprVisitor<Set<VarDecl<? extends
 	/// Multiary operators
 
 	@Override
-	public <ExprType extends ClosedUnderAdd> Set<VarDecl<? extends Type>> visit(AddExpr<ExprType> expr,
-			Set<VarDecl<? extends Type>> param) {
+	public <ExprType extends ClosedUnderAdd> Set<VarDecl<? extends Type>> visit(final AddExpr<ExprType> expr,
+			final Set<VarDecl<? extends Type>> param) {
 		return this.processMultiary(expr, param);
 	}
 
 	@Override
-	public Set<VarDecl<? extends Type>> visit(AndExpr expr, Set<VarDecl<? extends Type>> param) {
+	public Set<VarDecl<? extends Type>> visit(final AndExpr expr, final Set<VarDecl<? extends Type>> param) {
 		return this.processMultiary(expr, param);
 	}
 
 	@Override
-	public <ExprType extends ClosedUnderMul> Set<VarDecl<? extends Type>> visit(MulExpr<ExprType> expr,
-			Set<VarDecl<? extends Type>> param) {
+	public <ExprType extends ClosedUnderMul> Set<VarDecl<? extends Type>> visit(final MulExpr<ExprType> expr,
+			final Set<VarDecl<? extends Type>> param) {
 		return this.processMultiary(expr, param);
 	}
 
 	@Override
-	public Set<VarDecl<? extends Type>> visit(OrExpr expr, Set<VarDecl<? extends Type>> param) {
+	public Set<VarDecl<? extends Type>> visit(final OrExpr expr, final Set<VarDecl<? extends Type>> param) {
 		return this.processMultiary(expr, param);
 	}
 
 	/// Binary operators
 
 	@Override
-	public <ExprType extends ClosedUnderSub> Set<VarDecl<? extends Type>> visit(SubExpr<ExprType> expr,
-			Set<VarDecl<? extends Type>> param) {
+	public <ExprType extends ClosedUnderSub> Set<VarDecl<? extends Type>> visit(final SubExpr<ExprType> expr,
+			final Set<VarDecl<? extends Type>> param) {
 		return this.processBinary(expr, param);
 	}
 
 	@Override
-	public Set<VarDecl<? extends Type>> visit(EqExpr expr, Set<VarDecl<? extends Type>> param) {
+	public Set<VarDecl<? extends Type>> visit(final EqExpr expr, final Set<VarDecl<? extends Type>> param) {
 		return this.processBinary(expr, param);
 	}
 
 	@Override
-	public Set<VarDecl<? extends Type>> visit(NeqExpr expr, Set<VarDecl<? extends Type>> param) {
+	public Set<VarDecl<? extends Type>> visit(final NeqExpr expr, final Set<VarDecl<? extends Type>> param) {
 		return this.processBinary(expr, param);
 	}
 
 	@Override
-	public Set<VarDecl<? extends Type>> visit(GeqExpr expr, Set<VarDecl<? extends Type>> param) {
+	public Set<VarDecl<? extends Type>> visit(final GeqExpr expr, final Set<VarDecl<? extends Type>> param) {
 		return this.processBinary(expr, param);
 	}
 
 	@Override
-	public Set<VarDecl<? extends Type>> visit(LeqExpr expr, Set<VarDecl<? extends Type>> param) {
+	public Set<VarDecl<? extends Type>> visit(final LeqExpr expr, final Set<VarDecl<? extends Type>> param) {
 		return this.processBinary(expr, param);
 	}
 
 	@Override
-	public Set<VarDecl<? extends Type>> visit(GtExpr expr, Set<VarDecl<? extends Type>> param) {
+	public Set<VarDecl<? extends Type>> visit(final GtExpr expr, final Set<VarDecl<? extends Type>> param) {
 		return this.processBinary(expr, param);
 	}
 
 	@Override
-	public Set<VarDecl<? extends Type>> visit(LtExpr expr, Set<VarDecl<? extends Type>> param) {
+	public Set<VarDecl<? extends Type>> visit(final LtExpr expr, final Set<VarDecl<? extends Type>> param) {
 		return this.processBinary(expr, param);
 	}
 
 	@Override
-	public Set<VarDecl<? extends Type>> visit(ModExpr expr, Set<VarDecl<? extends Type>> param) {
+	public Set<VarDecl<? extends Type>> visit(final ModExpr expr, final Set<VarDecl<? extends Type>> param) {
 		return this.processBinary(expr, param);
 	}
 
 	@Override
-	public Set<VarDecl<? extends Type>> visit(IntDivExpr expr, Set<VarDecl<? extends Type>> param) {
+	public Set<VarDecl<? extends Type>> visit(final IntDivExpr expr, final Set<VarDecl<? extends Type>> param) {
 		return this.processBinary(expr, param);
 	}
 
 	@Override
-	public Set<VarDecl<? extends Type>> visit(RatDivExpr expr, Set<VarDecl<? extends Type>> param) {
+	public Set<VarDecl<? extends Type>> visit(final RatDivExpr expr, final Set<VarDecl<? extends Type>> param) {
 		return this.processBinary(expr, param);
 	}
 
 	/// Unary operators
 
 	@Override
-	public Set<VarDecl<? extends Type>> visit(NotExpr expr, Set<VarDecl<? extends Type>> param) {
+	public Set<VarDecl<? extends Type>> visit(final NotExpr expr, final Set<VarDecl<? extends Type>> param) {
 		return this.processUnary(expr, param);
 	}
 
 	@Override
-	public <ExprType extends ClosedUnderNeg> Set<VarDecl<? extends Type>> visit(NegExpr<ExprType> expr,
-			Set<VarDecl<? extends Type>> param) {
+	public <ExprType extends ClosedUnderNeg> Set<VarDecl<? extends Type>> visit(final NegExpr<ExprType> expr,
+			final Set<VarDecl<? extends Type>> param) {
 		return this.processUnary(expr, param);
 	}
 
 	/// Literals
 
 	@Override
-	public Set<VarDecl<? extends Type>> visit(IntLitExpr expr, Set<VarDecl<? extends Type>> param) {
+	public Set<VarDecl<? extends Type>> visit(final IntLitExpr expr, final Set<VarDecl<? extends Type>> param) {
 		return param;
 	}
 
 	@Override
-	public Set<VarDecl<? extends Type>> visit(FalseExpr expr, Set<VarDecl<? extends Type>> param) {
+	public Set<VarDecl<? extends Type>> visit(final FalseExpr expr, final Set<VarDecl<? extends Type>> param) {
 		return param;
 	}
 
 	@Override
-	public Set<VarDecl<? extends Type>> visit(TrueExpr expr, Set<VarDecl<? extends Type>> param) {
+	public Set<VarDecl<? extends Type>> visit(final TrueExpr expr, final Set<VarDecl<? extends Type>> param) {
 		return param;
 	}
 
 	@Override
-	public <ReturnType extends Type> Set<VarDecl<? extends Type>> visit(ProcCallExpr<ReturnType> expr,
-			Set<VarDecl<? extends Type>> param) {
+	public <ReturnType extends Type> Set<VarDecl<? extends Type>> visit(final ProcCallExpr<ReturnType> expr,
+			final Set<VarDecl<? extends Type>> param) {
 		expr.getParams().forEach(arg -> arg.accept(this, param));
-		
+
 		return param;
 	}
 

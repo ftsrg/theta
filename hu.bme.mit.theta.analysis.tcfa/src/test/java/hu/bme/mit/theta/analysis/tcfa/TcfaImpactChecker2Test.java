@@ -9,7 +9,7 @@ import hu.bme.mit.theta.analysis.algorithm.ArgChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyStatus;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
-import hu.bme.mit.theta.analysis.impl.NullPrecision;
+import hu.bme.mit.theta.analysis.impl.NullPrec;
 import hu.bme.mit.theta.analysis.tcfa.impact.TcfaImpactChecker2;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.common.visualization.GraphvizWriter;
@@ -32,7 +32,7 @@ public final class TcfaImpactChecker2Test {
 
 		// Act
 		final SafetyStatus<? extends ExprState, ? extends ExprAction> status = checker
-				.check(NullPrecision.getInstance());
+				.check(NullPrec.getInstance());
 
 		// Assert
 		assertTrue(status.isSafe());

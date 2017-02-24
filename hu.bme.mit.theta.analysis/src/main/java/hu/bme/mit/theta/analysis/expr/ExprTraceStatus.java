@@ -2,10 +2,8 @@ package hu.bme.mit.theta.analysis.expr;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.util.List;
-
-import com.google.common.collect.ImmutableList;
-
+import hu.bme.mit.theta.analysis.Action;
+import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.model.impl.Valuation;
 
@@ -18,7 +16,7 @@ public abstract class ExprTraceStatus<R extends Refutation> {
 		return new Infeasible<>(refutation);
 	}
 
-	public static <R extends Refutation> Feasible<R> feasible(final List<Valuation> valuations) {
+	public static <R extends Refutation> Feasible<R> feasible(final Trace<Valuation, ? extends Action> valuations) {
 		return new Feasible<>(valuations);
 	}
 
@@ -71,13 +69,13 @@ public abstract class ExprTraceStatus<R extends Refutation> {
 	}
 
 	public final static class Feasible<R extends Refutation> extends ExprTraceStatus<R> {
-		private final List<Valuation> valuations;
+		private final Trace<Valuation, ? extends Action> valuations;
 
-		private Feasible(final List<Valuation> valuations) {
-			this.valuations = ImmutableList.copyOf(valuations);
+		private Feasible(final Trace<Valuation, ? extends Action> valuations) {
+			this.valuations = valuations;
 		}
 
-		public List<Valuation> getValuations() {
+		public Trace<Valuation, ? extends Action> getValuations() {
 			return valuations;
 		}
 

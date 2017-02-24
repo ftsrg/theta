@@ -34,7 +34,7 @@ public class UseDefineChain {
 		public VarDecl<? extends Type> var;
 		public NonTerminatorIrNode node;
 
-		public Definition(VarDecl<? extends Type> var, NonTerminatorIrNode node) {
+		public Definition(final VarDecl<? extends Type> var, final NonTerminatorIrNode node) {
 			this.var = var;
 			this.node = node;
 		}
@@ -52,7 +52,7 @@ public class UseDefineChain {
 		public VarDecl<? extends Type> var;
 		public IrNode node;
 
-		public Use(IrNode node, VarDecl<? extends Type> var) {
+		public Use(final IrNode node, final VarDecl<? extends Type> var) {
 			this.node = node;
 			this.var = var;
 		}
@@ -82,17 +82,17 @@ public class UseDefineChain {
 		public Map<IrNode, List<Use>> uses = new HashMap<>();
 		public Map<IrNode, Definition> defs = new HashMap<>();
 
-		public BlockInfo(BasicBlock block) {
+		public BlockInfo(final BasicBlock block) {
 			this.block = block;
 		}
 	}
 
 	private final Map<BasicBlock, BlockInfo> blocks;
 
-	private UseDefineChain(Map<BasicBlock, BlockInfo> blocks) {
+	private UseDefineChain(final Map<BasicBlock, BlockInfo> blocks) {
 		this.blocks = blocks;
 	}
-	
+
 	/**
 	 * Returns all definitions generated inside a given block
 	 *
@@ -101,8 +101,8 @@ public class UseDefineChain {
 	 *
 	 * @return A set of definitions created in block
 	 */
-	public Set<Definition> getGeneratedDefinitions(BasicBlock block) {
-		BlockInfo info = this.blocks.get(block);
+	public Set<Definition> getGeneratedDefinitions(final BasicBlock block) {
+		final BlockInfo info = this.blocks.get(block);
 		if (info == null)
 			throw new RuntimeException("Cannot find block '" + block.getName() + "' in the use-define chain.");
 
@@ -117,19 +117,19 @@ public class UseDefineChain {
 	 *
 	 * @return A collection of assignment instructions whose values reach node
 	 */
-	public List<NonTerminatorIrNode> getDefinitions(IrNode node) {
-		BasicBlock block = node.getParentBlock();
-		BlockInfo info = this.blocks.get(block);
+	public List<NonTerminatorIrNode> getDefinitions(final IrNode node) {
+		final BasicBlock block = node.getParentBlock();
+		final BlockInfo info = this.blocks.get(block);
 
 		if (info == null)
 			throw new RuntimeException("Cannot find block '" + block.getName() + "' (containing instruction "
 					+ node.getLabel() + ") in the use-define chain.");
 
-		List<Use> uses = info.uses.get(node);
+		final List<Use> uses = info.uses.get(node);
 		if (uses == null)
 			return Collections.emptyList();
 
-		List<VarDecl<? extends Type>> usedVars = info.uses.get(node).stream().map(u -> u.var)
+		final List<VarDecl<? extends Type>> usedVars = info.uses.get(node).stream().map(u -> u.var)
 				.collect(Collectors.toList());
 
 		return this.getLocalReachingDefinitions(node).stream().filter(d -> usedVars.contains(d.var)).map(d -> d.node)
@@ -144,8 +144,8 @@ public class UseDefineChain {
 	 *
 	 * @return A set of definitions reaching block
 	 */
-	public Set<Definition> getReachingDefinitions(BasicBlock block) {
-		BlockInfo info = this.blocks.get(block);
+	public Set<Definition> getReachingDefinitions(final BasicBlock block) {
+		final BlockInfo info = this.blocks.get(block);
 		if (info == null)
 			throw new RuntimeException("Cannot find block '" + block.getName() + "' in the use-define chain.");
 
@@ -160,9 +160,9 @@ public class UseDefineChain {
 	 *
 	 * @return A set of definitions reaching an instruction
 	 */
-	public Set<Definition> getLocalReachingDefinitions(IrNode node) {
-		BasicBlock block = node.getParentBlock();
-		BlockInfo info = this.blocks.get(block);
+	public Set<Definition> getLocalReachingDefinitions(final IrNode node) {
+		final BasicBlock block = node.getParentBlock();
+		final BlockInfo info = this.blocks.get(block);
 
 		if (info == null)
 			throw new RuntimeException("Cannot find block '" + block.getName() + "' in the use-define chain.");
@@ -173,14 +173,14 @@ public class UseDefineChain {
 			return new HashSet<>(info.out);
 		}
 
-		Set<Definition> defs = new HashSet<>(info.in);
-		List<NonTerminatorIrNode> nodes = block.getNodes();
+		final Set<Definition> defs = new HashSet<>(info.in);
+		final List<NonTerminatorIrNode> nodes = block.getNodes();
 
-		int idx = nodes.indexOf(node);
+		final int idx = nodes.indexOf(node);
 		for (int i = 0; i < idx; i++) {
-			IrNode instr = nodes.get(i);
+			final IrNode instr = nodes.get(i);
 			if (instr instanceof AssignNode<?, ?>) {
-				AssignNode<?, ?> assign = (AssignNode<?, ?>) instr;
+				final AssignNode<?, ?> assign = (AssignNode<?, ?>) instr;
 				defs.removeIf(d -> d.var == assign.getVar());
 				defs.add(new Definition(assign.getVar(), assign));
 			}
@@ -197,14 +197,14 @@ public class UseDefineChain {
 	 *
 	 * @return A collection of instruction nodes
 	 */
-	public Collection<IrNode> getUses(AssignNode<?, ?> node) {
-		BasicBlock block = node.getParentBlock();
-		BlockInfo info = this.blocks.get(block);
+	public Collection<IrNode> getUses(final AssignNode<?, ?> node) {
+		final BasicBlock block = node.getParentBlock();
+		final BlockInfo info = this.blocks.get(block);
 
 		if (info == null)
 			throw new RuntimeException("Cannot find block '" + block.getName() + "' in the use-define chain.");
 
-		VarDecl<? extends Type> definedVar = info.defs.get(node).var;
+		final VarDecl<? extends Type> definedVar = info.defs.get(node).var;
 
 		return this.getLocalReachableUses(node).stream().filter(u -> u.var == definedVar).map(u -> u.node)
 				.collect(Collectors.toList());
@@ -218,8 +218,8 @@ public class UseDefineChain {
 	 *
 	 * @return A set of uses reaching block
 	 */
-	public Set<Use> getReachableUses(BasicBlock block) {
-		BlockInfo info = this.blocks.get(block);
+	public Set<Use> getReachableUses(final BasicBlock block) {
+		final BlockInfo info = this.blocks.get(block);
 		if (info == null)
 			throw new RuntimeException("Cannot find block '" + block.getName() + "' in the use-define chain.");
 
@@ -233,23 +233,23 @@ public class UseDefineChain {
 	 *
 	 * @return
 	 */
-	public Set<Use> getLocalReachableUses(NonTerminatorIrNode node) {
-		BasicBlock block = node.getParentBlock();
-		BlockInfo info = this.blocks.get(block);
+	public Set<Use> getLocalReachableUses(final NonTerminatorIrNode node) {
+		final BasicBlock block = node.getParentBlock();
+		final BlockInfo info = this.blocks.get(block);
 
 		if (info == null)
 			throw new RuntimeException("Cannot find block '" + block.getName() + "' in the use-define chain.");
 
-		Set<Use> uses = new HashSet<>(info.uOut);
-		List<IrNode> nodes = block.getAllNodes();
+		final Set<Use> uses = new HashSet<>(info.uOut);
+		final List<IrNode> nodes = block.getAllNodes();
 
-		int idx = nodes.indexOf(node);
+		final int idx = nodes.indexOf(node);
 		if (idx == -1)
 			throw new RuntimeException("Invalid instruction.");
 
 		for (int i = nodes.size() - 1; i > idx; i--) {
-			IrNode instr = nodes.get(i);
-			List<Use> localUses = info.uses.get(instr);
+			final IrNode instr = nodes.get(i);
+			final List<Use> localUses = info.uses.get(instr);
 			if (localUses != null)
 				uses.addAll(localUses);
 		}
@@ -265,7 +265,7 @@ public class UseDefineChain {
 	 *
 	 * @return
 	 */
-	public Collection<Definition> getBlockDefines(BasicBlock block) {
+	public Collection<Definition> getBlockDefines(final BasicBlock block) {
 		return Collections.unmodifiableCollection(this.blocks.get(block).defs.values());
 	}
 
@@ -277,25 +277,25 @@ public class UseDefineChain {
 	 *
 	 * @return A UseDefineChain instance
 	 */
-	public static UseDefineChain buildChain(Function function) {
-		VariableFinderVisitor varFinder = new VariableFinderVisitor();
-		Map<BasicBlock, BlockInfo> blocks = new HashMap<>();
-		List<Definition> allDefs = new ArrayList<>();
-		List<Use> allUses = new ArrayList<>();
+	public static UseDefineChain buildChain(final Function function) {
+		final VariableFinderVisitor varFinder = new VariableFinderVisitor();
+		final Map<BasicBlock, BlockInfo> blocks = new HashMap<>();
+		final List<Definition> allDefs = new ArrayList<>();
+		final List<Use> allUses = new ArrayList<>();
 
 		/* Find all uses and definitions for each block */
-		for (BasicBlock block : function.getBlocksDFS()) {
-			BlockInfo info = new BlockInfo(block);
+		for (final BasicBlock block : function.getBlocksDFS()) {
+			final BlockInfo info = new BlockInfo(block);
 
-			List<Definition> defs = new ArrayList<>();
+			final List<Definition> defs = new ArrayList<>();
 
-			for (IrNode node : block.getNodes()) {
-				Set<VarDecl<? extends Type>> usedVars = new HashSet<>();
+			for (final IrNode node : block.getNodes()) {
+				final Set<VarDecl<? extends Type>> usedVars = new HashSet<>();
 				if (node instanceof AssignNode<?, ?>) {
-					AssignNode<?, ?> assign = (AssignNode<?, ?>) node;
+					final AssignNode<?, ?> assign = (AssignNode<?, ?>) node;
 
 					// Add this assignment to definitions
-					Definition def = new Definition(assign.getVar(), assign);
+					final Definition def = new Definition(assign.getVar(), assign);
 
 					defs.add(def);
 					info.gen.add(def);
@@ -307,19 +307,19 @@ public class UseDefineChain {
 					if (!usedVars.isEmpty()) {
 						info.uses.put(assign, new ArrayList<Use>());
 						usedVars.forEach(v -> {
-							Use use = new Use(assign, v);
+							final Use use = new Use(assign, v);
 							info.uses.get(assign).add(use);
 							allUses.add(use);
 						});
 					}
 				} else if (node instanceof AssertNode) {
-					AssertNode assrt = (AssertNode) node;
+					final AssertNode assrt = (AssertNode) node;
 
 					assrt.getCond().accept(varFinder, usedVars);
 					if (!usedVars.isEmpty()) {
 						info.uses.put(assrt, new ArrayList<Use>());
 						usedVars.forEach(v -> {
-							Use use = new Use(assrt, v);
+							final Use use = new Use(assrt, v);
 							info.uses.get(assrt).add(use);
 							allUses.add(use);
 						});
@@ -328,15 +328,15 @@ public class UseDefineChain {
 			}
 
 			if (block.getTerminator() instanceof ConditionalTerminatorNode) {
-				Set<VarDecl<? extends Type>> usedVars = new HashSet<>();
-				ConditionalTerminatorNode term = (ConditionalTerminatorNode) block.getTerminator();
+				final Set<VarDecl<? extends Type>> usedVars = new HashSet<>();
+				final ConditionalTerminatorNode term = (ConditionalTerminatorNode) block.getTerminator();
 
 				term.getCondition().accept(varFinder, usedVars);
 
 				if (!usedVars.isEmpty()) {
 					info.uses.put(term, new ArrayList<Use>());
 					usedVars.forEach(v -> {
-						Use use = new Use(term, v);
+						final Use use = new Use(term, v);
 						info.uses.get(term).add(use);
 						allUses.add(use);
 					});
@@ -348,28 +348,46 @@ public class UseDefineChain {
 		}
 
 		/* Compute initial sets */
-		for (BlockInfo info : blocks.values()) {
-			List<VarDecl<? extends Type>> vars = info.gen.stream() // Get a list of all variables defined in this block
+		for (final BlockInfo info : blocks.values()) {
+			final List<VarDecl<? extends Type>> vars = info.gen.stream() // Get
+																			// a
+																			// list
+																			// of
+																			// all
+																			// variables
+																			// defined
+																			// in
+																			// this
+																			// block
 					.map(d -> d.var).collect(Collectors.toList());
-			List<Definition> defs = allDefs.stream() // Find all definitions which define the variables of this block
+			final List<Definition> defs = allDefs.stream() // Find all
+															// definitions which
+															// define the
+															// variables of this
+															// block
 					.filter(d -> vars.contains(d.var)).collect(Collectors.toList());
 
-			// A definition is killed in this block, if it's not defined here but defines a variable also defined here
+			// A definition is killed in this block, if it's not defined here
+			// but defines a variable also defined here
 			info.kill.addAll(defs);
 			info.kill.removeAll(info.gen);
 
 			// use[B] is a set of (s, x) pairs in B, such...
-			info.use.addAll(allUses.stream().filter(u -> info.block.getAllNodes().contains(u.node)) // ...s is in B...
+			info.use.addAll(allUses.stream().filter(u -> info.block.getAllNodes().contains(u.node)) // ...s
+																									// is
+																									// in
+																									// B...
 					.filter(u -> {
-						List<Definition> useDefs = defs.stream().filter(d -> d.var == u.var)
+						final List<Definition> useDefs = defs.stream().filter(d -> d.var == u.var)
 								.filter(d -> d.node.getParentBlock() == info.block).collect(Collectors.toList());
-						if (useDefs.isEmpty()) // ...and there is no definition of x in B...
+						if (useDefs.isEmpty()) // ...and there is no definition
+												// of x in B...
 							return true;
 
 						// ...or if there is, it is not prior X
-						List<IrNode> nodes = u.node.getParentBlock().getAllNodes();
-						int idx = nodes.indexOf(u.node);
-						for (Definition def : useDefs) {
+						final List<IrNode> nodes = u.node.getParentBlock().getAllNodes();
+						final int idx = nodes.indexOf(u.node);
+						for (final Definition def : useDefs) {
 							if (nodes.indexOf(def.node) < idx) {
 								return false;
 							}
@@ -379,31 +397,37 @@ public class UseDefineChain {
 					}).collect(Collectors.toSet()));
 
 			// def[B] is a set of (s, x) pairs, such...
-			info.def.addAll(allUses.stream().filter(u -> !info.block.getAllNodes().contains(u.node)) // ...s is not in B...
-					.filter(u -> vars.contains(u.var)) // ...and there is a definition of x in B
+			info.def.addAll(allUses.stream().filter(u -> !info.block.getAllNodes().contains(u.node)) // ...s
+																										// is
+																										// not
+																										// in
+																										// B...
+					.filter(u -> vars.contains(u.var)) // ...and there is a
+														// definition of x in B
 					.collect(Collectors.toSet()));
 		}
 
 		/*
-		 * Iterative solution for reaching definitions. (Compilers: Principles, Techniques and Tools, 1st edition, Algorithm 10.2)
+		 * Iterative solution for reaching definitions. (Compilers: Principles,
+		 * Techniques and Tools, 1st edition, Algorithm 10.2)
 		 */
-		for (BlockInfo blockInfo : blocks.values()) {
+		for (final BlockInfo blockInfo : blocks.values()) {
 			blockInfo.out.addAll(blockInfo.gen);
 		}
 
 		boolean change = true;
 		while (change) {
 			change = false;
-			for (BlockInfo blockInfo : blocks.values()) {
+			for (final BlockInfo blockInfo : blocks.values()) {
 				/* in[B] = for all p in parent(B) Union {out[p]} */
-				Set<Definition> newIn = new HashSet<>();
+				final Set<Definition> newIn = new HashSet<>();
 				blockInfo.block.parents().forEach(s -> {
 					newIn.addAll(blocks.get(s).out);
 				});
 				blockInfo.in = newIn;
 
 				/* out[B] = gen[B] union (in[B] sub kill[B]) */
-				Set<Definition> newOut = new HashSet<>(blockInfo.gen);
+				final Set<Definition> newOut = new HashSet<>(blockInfo.gen);
 				newOut.addAll(
 						blockInfo.in.stream().filter(s -> !blockInfo.kill.contains(s)).collect(Collectors.toSet()));
 
@@ -413,7 +437,7 @@ public class UseDefineChain {
 				}
 			}
 		}
-		
+
 		return new UseDefineChain(blocks);
 	}
 

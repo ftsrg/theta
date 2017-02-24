@@ -28,12 +28,14 @@ import hu.bme.mit.theta.analysis.algorithm.ArgNodeComparators;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyStatus;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
+import hu.bme.mit.theta.analysis.algorithm.cegar.BasicPrecRefiner;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker;
-import hu.bme.mit.theta.analysis.algorithm.cegar.ExplVarSetsRefiner;
+import hu.bme.mit.theta.analysis.algorithm.cegar.SingleExprTraceRefiner;
 import hu.bme.mit.theta.analysis.algorithm.cegar.WaitlistBasedAbstractor;
 import hu.bme.mit.theta.analysis.expl.ExplAnalysis;
-import hu.bme.mit.theta.analysis.expl.ExplPrecision;
+import hu.bme.mit.theta.analysis.expl.ExplPrec;
 import hu.bme.mit.theta.analysis.expl.ExplState;
+import hu.bme.mit.theta.analysis.expl.VarsRefToExplPrec;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.ExprStatePredicate;
@@ -79,26 +81,27 @@ public class StsExplTest {
 
 		final ItpSolver solver = Z3SolverFactory.getInstace().createItpSolver();
 
-		final Analysis<ExplState, ExprAction, ExplPrecision> analysis = ExplAnalysis.create(solver, And(sts.getInit()));
+		final Analysis<ExplState, ExprAction, ExplPrec> analysis = ExplAnalysis.create(solver, And(sts.getInit()));
 		final Predicate<ExprState> target = new ExprStatePredicate(Not(sts.getProp()), solver);
 
-		final ExplPrecision precision = ExplPrecision.create(Collections.singleton(vy));
+		final ExplPrec prec = ExplPrec.create(Collections.singleton(vy));
 
 		final LTS<State, StsAction> lts = StsLts.create(sts);
 
-		final ArgBuilder<ExplState, StsAction, ExplPrecision> argBuilder = ArgBuilder.create(lts, analysis, target);
+		final ArgBuilder<ExplState, StsAction, ExplPrec> argBuilder = ArgBuilder.create(lts, analysis, target);
 
-		final Abstractor<ExplState, StsAction, ExplPrecision> abstractor = WaitlistBasedAbstractor.create(argBuilder,
+		final Abstractor<ExplState, StsAction, ExplPrec> abstractor = WaitlistBasedAbstractor.create(argBuilder,
 				PriorityWaitlist.supplier(ArgNodeComparators.bfs()), logger);
 
 		final ExprTraceChecker<IndexedVarsRefutation> exprTraceChecker = ExprTraceUnsatCoreChecker
 				.create(And(sts.getInit()), Not(sts.getProp()), solver);
-		final ExplVarSetsRefiner<ExplState, StsAction> refiner = ExplVarSetsRefiner.create(exprTraceChecker, logger);
 
-		final SafetyChecker<ExplState, StsAction, ExplPrecision> checker = CegarChecker.create(abstractor, refiner,
-				logger);
+		final SingleExprTraceRefiner<ExplState, StsAction, ExplPrec, IndexedVarsRefutation> refiner = SingleExprTraceRefiner
+				.create(exprTraceChecker, BasicPrecRefiner.create(new VarsRefToExplPrec()), logger);
 
-		final SafetyStatus<ExplState, StsAction> safetyStatus = checker.check(precision);
+		final SafetyChecker<ExplState, StsAction, ExplPrec> checker = CegarChecker.create(abstractor, refiner, logger);
+
+		final SafetyStatus<ExplState, StsAction> safetyStatus = checker.check(prec);
 
 		final ARG<ExplState, StsAction> arg = safetyStatus.getArg();
 		assertTrue(isWellLabeled(arg, solver));

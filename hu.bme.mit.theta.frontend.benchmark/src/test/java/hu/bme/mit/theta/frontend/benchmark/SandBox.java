@@ -4,16 +4,16 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import hu.bme.mit.theta.analysis.Action;
-import hu.bme.mit.theta.analysis.Precision;
+import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.impl.ConsoleLogger;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.frontend.aiger.impl.AigerParserSimple;
-import hu.bme.mit.theta.frontend.benchmark.StsConfigurationBuilder.Domain;
-import hu.bme.mit.theta.frontend.benchmark.StsConfigurationBuilder.InitPrecision;
-import hu.bme.mit.theta.frontend.benchmark.StsConfigurationBuilder.Refinement;
-import hu.bme.mit.theta.frontend.benchmark.StsConfigurationBuilder.Search;
+import hu.bme.mit.theta.frontend.benchmark.ConfigurationBuilder.Domain;
+import hu.bme.mit.theta.frontend.benchmark.ConfigurationBuilder.Refinement;
+import hu.bme.mit.theta.frontend.benchmark.ConfigurationBuilder.Search;
+import hu.bme.mit.theta.frontend.benchmark.StsConfigurationBuilder.InitPrec;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 
 public class SandBox {
@@ -33,8 +33,8 @@ public class SandBox {
 
 		final Logger logger = new ConsoleLogger(3);
 
-		final Configuration<? extends State, ? extends Action, ? extends Precision> configuration = new StsConfigurationBuilder(
-				Domain.PRED, Refinement.SEQ_ITP).initPrecision(InitPrecision.EMPTY).logger(logger).search(Search.BFS)
+		final Configuration<? extends State, ? extends Action, ? extends Prec> configuration = new StsConfigurationBuilder(
+				Domain.PRED, Refinement.SEQ_ITP).initPrec(InitPrec.EMPTY).logger(logger).search(Search.BFS)
 						.solverFactory(Z3SolverFactory.getInstace()).build(sts);
 
 		configuration.check();

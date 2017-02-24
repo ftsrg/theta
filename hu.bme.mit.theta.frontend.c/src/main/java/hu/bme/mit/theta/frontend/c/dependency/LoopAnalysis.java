@@ -15,7 +15,7 @@ public class LoopAnalysis {
 		public final BasicBlock head;
 		public final Set<BasicBlock> body = new LinkedHashSet<>();
 
-		public LoopAnalysisInfo(BasicBlock head) {
+		public LoopAnalysisInfo(final BasicBlock head) {
 			this.head = head;
 		}
 	}
@@ -30,11 +30,11 @@ public class LoopAnalysis {
 	 *
 	 * @return
 	 */
-	public static boolean isLoopHeader(BasicBlock block, DominatorTree dt) {
+	public static boolean isLoopHeader(final BasicBlock block, final DominatorTree dt) {
 		// To determine whether a node is a loop header we need to find a back
 		// edge.
 		// The edge A -> B is a back edge, if B idom A.
-		for (BasicBlock parent : block.parents()) {
+		for (final BasicBlock parent : block.parents()) {
 			if (dt.immediatelyDominates(block, parent)) {
 				return true;
 			}
@@ -43,22 +43,22 @@ public class LoopAnalysis {
 		return false;
 	}
 
-	public static List<LoopAnalysisInfo> findLoops(Function function) {
-		DominatorTree dt = DominatorTree.createDominatorTree(function);
-		List<BasicBlock> blocks = function.getBlocksDFS();
-		List<LoopAnalysisInfo> result = new ArrayList<>();
+	public static List<LoopAnalysisInfo> findLoops(final Function function) {
+		final DominatorTree dt = DominatorTree.createDominatorTree(function);
+		final List<BasicBlock> blocks = function.getBlocksDFS();
+		final List<LoopAnalysisInfo> result = new ArrayList<>();
 
-		for (BasicBlock block : blocks) {
-			List<BasicBlock> backEdges = new ArrayList<>();
-			for (BasicBlock parent : block.parents()) {
+		for (final BasicBlock block : blocks) {
+			final List<BasicBlock> backEdges = new ArrayList<>();
+			for (final BasicBlock parent : block.parents()) {
 				if (dt.dominates(block, parent)) {
 					backEdges.add(parent);
 				}
 			}
 
 			if (!backEdges.isEmpty()) {
-				LoopAnalysisInfo info = new LoopAnalysisInfo(block);
-				for (BasicBlock tail : backEdges) {
+				final LoopAnalysisInfo info = new LoopAnalysisInfo(block);
+				for (final BasicBlock tail : backEdges) {
 					info.body.addAll(findLoopBody(tail, block));
 				}
 				result.add(info);
@@ -68,7 +68,7 @@ public class LoopAnalysis {
 		return result;
 	}
 
-	private static List<BasicBlock> findLoopBody(BasicBlock header, BasicBlock tail) {
+	private static List<BasicBlock> findLoopBody(final BasicBlock header, final BasicBlock tail) {
 		return BasicBlockUtils.reverseDFS(header, tail);
 	}
 

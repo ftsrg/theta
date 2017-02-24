@@ -6,7 +6,7 @@ import static hu.bme.mit.theta.formalism.ta.constr.impl.ClockConstrs.Eq;
 import com.google.common.collect.Lists;
 
 import hu.bme.mit.theta.analysis.tcfa.TcfaExpr.ClockExpr;
-import hu.bme.mit.theta.analysis.zone.ZonePrecision;
+import hu.bme.mit.theta.analysis.zone.ZonePrec;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
 import hu.bme.mit.theta.formalism.ta.constr.ClockConstr;
 import hu.bme.mit.theta.formalism.ta.decl.ClockDecl;
@@ -19,12 +19,12 @@ public final class TcfaZoneUtils {
 	private TcfaZoneUtils() {
 	}
 
-	public static ZoneState post(final ZoneState state, final TcfaAction action, final ZonePrecision precision) {
+	public static ZoneState post(final ZoneState state, final TcfaAction action, final ZonePrec prec) {
 		checkNotNull(state);
 		checkNotNull(action);
-		checkNotNull(precision);
+		checkNotNull(prec);
 
-		final ZoneState.ZoneOperations succStateBuilder = state.project(precision.getClocks());
+		final ZoneState.ZoneOperations succStateBuilder = state.project(prec.getClocks());
 
 		for (final TcfaExpr invar : action.getSourceInvars()) {
 			if (invar.isClockExpr()) {
@@ -65,12 +65,12 @@ public final class TcfaZoneUtils {
 		return succState;
 	}
 
-	public static ZoneState pre(final ZoneState state, final TcfaAction action, final ZonePrecision precision) {
+	public static ZoneState pre(final ZoneState state, final TcfaAction action, final ZonePrec prec) {
 		checkNotNull(state);
 		checkNotNull(action);
-		checkNotNull(precision);
+		checkNotNull(prec);
 
-		final ZoneState.ZoneOperations prevStateBuilder = state.project(precision.getClocks());
+		final ZoneState.ZoneOperations prevStateBuilder = state.project(prec.getClocks());
 
 		for (final TcfaExpr invar : action.getTargetInvars()) {
 			if (invar.isClockExpr()) {

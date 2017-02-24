@@ -8,7 +8,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import hu.bme.mit.theta.analysis.Action;
-import hu.bme.mit.theta.analysis.Precision;
+import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.ArgBuilder;
@@ -19,7 +19,7 @@ import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.impl.NullLogger;
 
-public final class WaitlistBasedAbstractor<S extends State, A extends Action, P extends Precision>
+public final class WaitlistBasedAbstractor<S extends State, A extends Action, P extends Prec>
 		implements Abstractor<S, A, P> {
 
 	private final ArgBuilder<S, A, P> argBuilder;
@@ -35,19 +35,19 @@ public final class WaitlistBasedAbstractor<S extends State, A extends Action, P 
 		this.logger = checkNotNull(logger);
 	}
 
-	public static <S extends State, A extends Action, P extends Precision> WaitlistBasedAbstractor<S, A, P> create(
+	public static <S extends State, A extends Action, P extends Prec> WaitlistBasedAbstractor<S, A, P> create(
 			final ArgBuilder<S, A, P> argBuilder, final Function<? super S, ?> projection,
 			final Supplier<? extends Waitlist<ArgNode<S, A>>> waitlistSupplier, final Logger logger) {
 		return new WaitlistBasedAbstractor<>(argBuilder, projection, waitlistSupplier, logger);
 	}
 
-	public static <S extends State, A extends Action, P extends Precision> WaitlistBasedAbstractor<S, A, P> create(
+	public static <S extends State, A extends Action, P extends Prec> WaitlistBasedAbstractor<S, A, P> create(
 			final ArgBuilder<S, A, P> argBuilder, final Supplier<? extends Waitlist<ArgNode<S, A>>> waitlistSupplier,
 			final Logger logger) {
 		return new WaitlistBasedAbstractor<>(argBuilder, s -> 0, waitlistSupplier, logger);
 	}
 
-	public static <S extends State, A extends Action, P extends Precision> WaitlistBasedAbstractor<S, A, P> create(
+	public static <S extends State, A extends Action, P extends Prec> WaitlistBasedAbstractor<S, A, P> create(
 			final ArgBuilder<S, A, P> argBuilder, final Function<? super S, ?> projection,
 			final Supplier<? extends Waitlist<ArgNode<S, A>>> waitlistSupplier) {
 		return new WaitlistBasedAbstractor<>(argBuilder, projection, waitlistSupplier, NullLogger.getInstance());
@@ -59,21 +59,22 @@ public final class WaitlistBasedAbstractor<S extends State, A extends Action, P 
 	}
 
 	@Override
-	public AbstractorResult check(final ARG<S, A> arg, final P precision) {
+	public AbstractorResult check(final ARG<S, A> arg, final P prec) {
 		checkNotNull(arg);
-		checkNotNull(precision);
-		logger.writeln("Precision: ", precision, 3, 2);
+		checkNotNull(prec);
+		logger.writeln("Precision: ", prec, 3, 2);
 
 		if (!arg.isInitialized()) {
 			logger.write("(Re)initializing ARG...", 3, 2);
-			argBuilder.init(arg, precision);
+			argBuilder.init(arg, prec);
 			logger.writeln("done.", 3);
 		}
 
 		logger.writeln(String.format("Starting ARG: %d nodes, %d incomplete, %d unsafe", arg.getNodes().count(),
 				arg.getIncompleteNodes().count(), arg.getUnsafeNodes().count()), 3, 2);
+		logger.write("Building ARG...", 3, 2);
 
-		final Optional<ArgNode<S, A>> unsafeNode = searchForUnsafeNode(arg, precision);
+		final Optional<ArgNode<S, A>> unsafeNode = searchForUnsafeNode(arg, prec);
 
 		logger.writeln(String.format("done: %d nodes, %d incomplete, %d unsafe", arg.getNodes().count(),
 				arg.getIncompleteNodes().count(), arg.getUnsafeNodes().count()), 3);
@@ -85,14 +86,12 @@ public final class WaitlistBasedAbstractor<S extends State, A extends Action, P 
 		}
 	}
 
-	private Optional<ArgNode<S, A>> searchForUnsafeNode(final ARG<S, A> arg, final P precision) {
+	private Optional<ArgNode<S, A>> searchForUnsafeNode(final ARG<S, A> arg, final P prec) {
 		final Partition<ArgNode<S, A>, ?> reachedSet = Partition.of(n -> projection.apply(n.getState()));
 		final Waitlist<ArgNode<S, A>> waitlist = waitlistSupplier.get();
 
 		reachedSet.addAll(arg.getIncompleteNodes());
 		waitlist.addAll(arg.getIncompleteNodes());
-
-		logger.write("Building ARG...", 3, 2);
 
 		while (!waitlist.isEmpty()) {
 			final ArgNode<S, A> node = waitlist.remove();
@@ -102,7 +101,7 @@ public final class WaitlistBasedAbstractor<S extends State, A extends Action, P 
 				if (node.isTarget()) {
 					return Optional.of(node);
 				} else {
-					argBuilder.expand(node, precision);
+					argBuilder.expand(node, prec);
 					reachedSet.addAll(node.getSuccNodes());
 					waitlist.addAll(node.getSuccNodes());
 				}
