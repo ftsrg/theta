@@ -3,6 +3,7 @@ package hu.bme.mit.theta.frontend.benchmark;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.Optional;
+import java.util.StringJoiner;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -52,24 +53,24 @@ public class StsMain {
 
 		final Option optDomain = new Option("d", "domain", true, "Abstract domain");
 		optDomain.setRequired(true);
-		optDomain.setArgName("DOMAIN");
+		optDomain.setArgName(options(Domain.values()));
 		options.addOption(optDomain);
 
 		final Option optRefinement = new Option("r", "refinement", true, "Refinement strategy");
 		optRefinement.setRequired(true);
-		optRefinement.setArgName("REFINEMENT");
+		optRefinement.setArgName(options(Refinement.values()));
 		options.addOption(optRefinement);
 
 		final Option optInitPrec = new Option("i", "initprec", true, "Initial precision");
-		optInitPrec.setArgName("INITPRECISION");
+		optInitPrec.setArgName(options(InitPrec.values()));
 		options.addOption(optInitPrec);
 
 		final Option optSearch = new Option("s", "search", true, "Search strategy");
-		optSearch.setArgName("SEARCH");
+		optSearch.setArgName(options(Search.values()));
 		options.addOption(optSearch);
 
 		final Option optPredSplit = new Option("ps", "predsplit", true, "Predicate split");
-		optPredSplit.setArgName("PREDSPLIT");
+		optPredSplit.setArgName(options(PredSplit.values()));
 		options.addOption(optPredSplit);
 
 		final Option optExpected = new Option("e", "expected", true, "Expected result (safe)");
@@ -149,4 +150,11 @@ public class StsMain {
 		tableWriter.newRow();
 	}
 
+	private static String options(final Object[] objs) {
+		final StringJoiner sj = new StringJoiner("|");
+		for (final Object o : objs) {
+			sj.add(o.toString());
+		}
+		return sj.toString();
+	}
 }
