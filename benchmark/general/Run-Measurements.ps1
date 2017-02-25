@@ -39,11 +39,11 @@ $tmpFile = [System.IO.Path]::GetTempFileName()
 #  in append mode. Therefore, the temp file is always overwritten, but the script always appends
 #  the contents of the temp file to the final log file.)
 $logFile = $outDir + "log_" + (Get-Date -format "yyyyMMdd_HHmmss") + ".csv"
-"Model,Vars,Size,Domain,Refinement,InitPrec,Search,Safe,TimeMs,Iterations,ARGsize,ARGdepth,CEXlen" | Out-File $logFile # Header
+"Model,Vars,Size,Domain,Refinement,InitPrec,Search,PredSplit,Safe,TimeMs,Iterations,ARGsize,ARGdepth,CEXlen" | Out-File $logFile # Header
 
 # Load models and configurations from external files
 $models = @(Import-CSV $modelsFile -Header Name, Prop, Expected)
-$configs = @(Import-CSV $configsFile -Header Domain, Refinement, InitPrec, Search)
+$configs = @(Import-CSV $configsFile -Header Domain, Refinement, InitPrec, Search, PredSplit)
 
 # Loop through models
 $m = 0
@@ -61,12 +61,15 @@ foreach($model in $models) {
             
             # Collect arguments for the jar file
             $args = @('-jar', $jarFile, '-m', $model.Name, '-d', $conf.Domain, '-r', $conf.Refinement, '-i', $conf.InitPrec, '-s', $conf.Search)
-            # If expected result is present in the CSV add it as a parameter
-            if ($model.Expected -ne $Null) {
+            # Optional arguments            
+            if ($conf.PredSplit) {
+                $args += '-ps'
+                $args += $conf.PredSplit
+            }
+            if ($model.Expected) {
                 $args += '-e'
                 $args += $model.Expected
             }
-            # If preperty is present in the CSV add it as a parameter
             if ($model.Prop) {
                 $args += '-p'
                 $args += $model.Prop
