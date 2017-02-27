@@ -62,18 +62,9 @@ foreach($model in $models) {
             # Collect arguments for the jar file
             $args = @('-jar', $jarFile, '-m', $model.Name, '-d', $conf.Domain, '-r', $conf.Refinement, '-i', $conf.InitPrec, '-s', $conf.Search)
             # Optional arguments            
-            if ($conf.PredSplit) {
-                $args += '-ps'
-                $args += $conf.PredSplit
-            }
-            if ($model.Expected) {
-                $args += '-e'
-                $args += $model.Expected
-            }
-            if ($model.Prop) {
-                $args += '-p'
-                $args += $model.Prop
-            }
+            if ($conf.PredSplit) { $args += @('-ps', $conf.PredSplit) }
+            if ($model.Expected) { $args += @('-e', $model.Expected) }
+            if ($model.Prop) { $args += @('-p', $model.Prop) }
             # Run the jar file with the given parameters, the output is redirected to a temp file
             $p = Start-Process java -ArgumentList $args -RedirectStandardOutput $tmpFile -PassThru -NoNewWindow
             $id = $p.id
