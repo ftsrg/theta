@@ -19,6 +19,9 @@ CSV file describing the models.
 .PARAMETER configsFile
 CSV file describing the configurations.
 
+.PARAMETER outDir
+Path where the output log file is written.
+
 .NOTES
 Author: Akos Hajdu
 #>
