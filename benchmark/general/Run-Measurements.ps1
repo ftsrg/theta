@@ -22,6 +22,9 @@ CSV file describing the configurations.
 .PARAMETER outDir
 Path where the output log file is written.
 
+.PARAMETER toNoRep
+Do not repeat a measurement if it causes a timeout on its first run.
+
 .NOTES
 Author: Akos Hajdu
 #>
@@ -32,7 +35,8 @@ param (
     [string]$jarFile = "theta.jar",
     [Parameter(Mandatory=$true)][string]$modelsFile,
     [Parameter(Mandatory=$true)][string]$configsFile,
-    [string]$outDir = "./"
+    [string]$outDir = "./",
+    [switch]$toNoRep
 )
 
 # Temp file for individual runs
@@ -75,6 +79,7 @@ foreach($model in $models) {
                 Stop-Process -Id $id
                 Wait-Process -Id $id
                 Start-Sleep -m 100 # Wait a bit so that the file is closed
+                if ($r -eq 0 -and $toNoRep) { $r = $runs } # Do not repeat if the first run is a timeout
             } 
             # Copy contents of the temp file to the log
             Get-Content $tmpFile | where {$_ -ne ""} | Out-File $logFile -Append
