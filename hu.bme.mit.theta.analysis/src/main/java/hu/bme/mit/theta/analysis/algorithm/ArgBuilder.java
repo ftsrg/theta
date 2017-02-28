@@ -1,8 +1,8 @@
 package hu.bme.mit.theta.analysis.algorithm;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.util.stream.Collectors.toList;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -12,6 +12,7 @@ import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.LTS;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
+import hu.bme.mit.theta.analysis.TransferFunction;
 
 public final class ArgBuilder<S extends State, A extends Action, P extends Prec> {
 
@@ -36,40 +37,46 @@ public final class ArgBuilder<S extends State, A extends Action, P extends Prec>
 		return ARG.create(analysis.getDomain());
 	}
 
-	public void init(final ARG<S, A> arg, final P prec) {
+	public Collection<ArgNode<S, A>> init(final ARG<S, A> arg, final P prec) {
 		checkNotNull(arg);
 		checkNotNull(prec);
 
-		final Collection<S> oldInitStates = arg.getInitNodes().map(ArgNode::getState).collect(toList());
-		final Collection<? extends S> newInitStates = analysis.getInitFunction().getInitStates(prec);
-		for (final S initState : newInitStates) {
-			if (oldInitStates.stream().noneMatch(s -> analysis.getDomain().isLeq(initState, s))) {
+		final Collection<ArgNode<S, A>> newInitNodes = new ArrayList<>();
+
+		final Collection<? extends S> initStates = analysis.getInitFunction().getInitStates(prec);
+		for (final S initState : initStates) {
+			if (arg.getInitStates().noneMatch(s -> analysis.getDomain().isLeq(initState, s))) {
 				final boolean isTarget = target.test(initState);
-				arg.createInitNode(initState, isTarget);
+				final ArgNode<S, A> newNode = arg.createInitNode(initState, isTarget);
+				newInitNodes.add(newNode);
 			}
 		}
 		arg.initialized = true;
+
+		return newInitNodes;
 	}
 
-	public void expand(final ArgNode<S, A> node, final P prec) {
+	public Collection<ArgNode<S, A>> expand(final ArgNode<S, A> node, final P prec) {
 		checkNotNull(node);
 		checkNotNull(prec);
 
+		final Collection<ArgNode<S, A>> newSuccNodes = new ArrayList<>();
 		final S state = node.getState();
-		final Collection<S> oldSuccStates = node.getSuccStates().collect(toList());
 		final Collection<? extends A> actions = lts.getEnabledActionsFor(state);
+		final TransferFunction<S, ? super A, ? super P> transferFunc = analysis.getTransferFunction();
 		for (final A action : actions) {
-			final Collection<? extends S> newSuccStates = analysis.getTransferFunction().getSuccStates(state, action,
-					prec);
-			for (final S newSuccState : newSuccStates) {
-				if (oldSuccStates.stream().noneMatch(s -> analysis.getDomain().isLeq(newSuccState, s))) {
-					final boolean isTarget = target.test(newSuccState);
-					node.arg.createSuccNode(node, action, newSuccState, isTarget);
+			final Collection<? extends S> succStates = transferFunc.getSuccStates(state, action, prec);
+			for (final S succState : succStates) {
+				if (node.getSuccStates().noneMatch(s -> analysis.getDomain().isLeq(succState, s))) {
+					final boolean isTarget = target.test(succState);
+					final ArgNode<S, A> newNode = node.arg.createSuccNode(node, action, succState, isTarget);
+					newSuccNodes.add(newNode);
 				}
-
 			}
 		}
 		node.expanded = true;
+
+		return newSuccNodes;
 	}
 
 	public void close(final ArgNode<S, A> node) {

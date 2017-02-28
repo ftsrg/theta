@@ -41,6 +41,10 @@ public final class ARG<S extends State, A extends Action> {
 		return initNodes.stream();
 	}
 
+	public Stream<S> getInitStates() {
+		return getInitNodes().map(ArgNode::getState);
+	}
+
 	public Stream<ArgNode<S, A>> getNodes() {
 		return getInitNodes().flatMap(ArgNode::descendants);
 	}

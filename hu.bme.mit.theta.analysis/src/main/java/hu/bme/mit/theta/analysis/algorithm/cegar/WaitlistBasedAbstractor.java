@@ -101,9 +101,9 @@ public final class WaitlistBasedAbstractor<S extends State, A extends Action, P 
 				if (node.isTarget()) {
 					return Optional.of(node);
 				} else {
-					argBuilder.expand(node, prec);
-					reachedSet.addAll(node.getSuccNodes());
-					waitlist.addAll(node.getSuccNodes());
+					final Collection<ArgNode<S, A>> newNodes = argBuilder.expand(node, prec);
+					reachedSet.addAll(newNodes);
+					waitlist.addAll(newNodes);
 				}
 			}
 		}
