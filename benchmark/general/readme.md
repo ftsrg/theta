@@ -9,3 +9,6 @@ Run measurements
   * Example: `.\Run-Measurements.ps1 -configsFile .\configs.csv -modelsFile .\models-simple.csv -runs 1 -timeOut 15`
 * Sit back and enjoy the nice progress bars
 * Observe the results in the generated csv file (which is named `log_XXX.csv` by default)
+
+Additional information
+* If you want to send the results by e-mail when the script is done, add the following line to the very end of the script (and fill the arguments): `Send-MailMessage -to "..." -from "..." -Subject "Measurements finished" -SmtpServer "..." -Attachments $logFile`
