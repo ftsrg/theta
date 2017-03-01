@@ -4,7 +4,7 @@ import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
-import hu.bme.mit.theta.analysis.algorithm.SafetyStatus;
+import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 
 public final class Configuration<S extends State, A extends Action, P extends Prec> {
 	private final SafetyChecker<S, A, P> checker;
@@ -20,7 +20,7 @@ public final class Configuration<S extends State, A extends Action, P extends Pr
 		return new Configuration<>(checker, initPrec);
 	}
 
-	public SafetyStatus<S, A> check() {
+	public SafetyResult<S, A> check() {
 		return checker.check(initPrec);
 	}
 

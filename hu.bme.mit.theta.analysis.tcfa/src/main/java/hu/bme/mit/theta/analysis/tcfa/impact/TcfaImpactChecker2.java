@@ -8,7 +8,7 @@ import java.util.function.Predicate;
 import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.algorithm.ArgBuilder;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
-import hu.bme.mit.theta.analysis.algorithm.SafetyStatus;
+import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.impact.ImpactChecker;
 import hu.bme.mit.theta.analysis.expl.ExplAnalysis;
 import hu.bme.mit.theta.analysis.expl.ExplPrec;
@@ -81,7 +81,7 @@ public final class TcfaImpactChecker2 implements
 	}
 
 	@Override
-	public SafetyStatus<LocState<Prod2State<ExplState, ItpZoneState>, TcfaLoc, TcfaEdge>, TcfaAction> check(
+	public SafetyResult<LocState<Prod2State<ExplState, ItpZoneState>, TcfaLoc, TcfaEdge>, TcfaAction> check(
 			final NullPrec prec) {
 		checkNotNull(prec);
 		return checker.check(prec);

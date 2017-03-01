@@ -10,11 +10,11 @@ import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.common.ObjectUtils;
 
-public abstract class SafetyStatus<S extends State, A extends Action> {
+public abstract class SafetyResult<S extends State, A extends Action> {
 	private final ARG<S, A> arg;
 	private final Optional<Statistics> stats;
 
-	private SafetyStatus(final ARG<S, A> arg, final Optional<Statistics> stats) {
+	private SafetyResult(final ARG<S, A> arg, final Optional<Statistics> stats) {
 		this.arg = checkNotNull(arg);
 		this.stats = checkNotNull(stats);
 	}
@@ -54,7 +54,7 @@ public abstract class SafetyStatus<S extends State, A extends Action> {
 
 	////
 
-	public static final class Safe<S extends State, A extends Action> extends SafetyStatus<S, A> {
+	public static final class Safe<S extends State, A extends Action> extends SafetyResult<S, A> {
 		private Safe(final ARG<S, A> arg, final Optional<Statistics> stats) {
 			super(arg, stats);
 			checkArgument(arg.isInitialized());
@@ -85,12 +85,12 @@ public abstract class SafetyStatus<S extends State, A extends Action> {
 
 		@Override
 		public String toString() {
-			return ObjectUtils.toStringBuilder(SafetyStatus.class.getSimpleName()).add(Safe.class.getSimpleName())
+			return ObjectUtils.toStringBuilder(SafetyResult.class.getSimpleName()).add(Safe.class.getSimpleName())
 					.toString();
 		}
 	}
 
-	public static final class Unsafe<S extends State, A extends Action> extends SafetyStatus<S, A> {
+	public static final class Unsafe<S extends State, A extends Action> extends SafetyResult<S, A> {
 		private final Trace<S, A> cex;
 
 		private Unsafe(final Trace<S, A> cex, final ARG<S, A> arg, final Optional<Statistics> stats) {
@@ -125,7 +125,7 @@ public abstract class SafetyStatus<S extends State, A extends Action> {
 
 		@Override
 		public String toString() {
-			return ObjectUtils.toStringBuilder(SafetyStatus.class.getSimpleName()).add(Unsafe.class.getSimpleName())
+			return ObjectUtils.toStringBuilder(SafetyResult.class.getSimpleName()).add(Unsafe.class.getSimpleName())
 					.toString();
 		}
 	}

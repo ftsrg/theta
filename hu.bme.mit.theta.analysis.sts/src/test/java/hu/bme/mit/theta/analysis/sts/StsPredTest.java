@@ -25,7 +25,7 @@ import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.ArgBuilder;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
-import hu.bme.mit.theta.analysis.algorithm.SafetyStatus;
+import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
 import hu.bme.mit.theta.analysis.algorithm.cegar.BasicPrecRefiner;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker;
@@ -99,7 +99,7 @@ public class StsPredTest {
 		final SafetyChecker<PredState, StsAction, SimplePredPrec> checker = CegarChecker.create(abstractor, refiner,
 				logger);
 
-		final SafetyStatus<PredState, StsAction> safetyStatus = checker.check(prec);
+		final SafetyResult<PredState, StsAction> safetyStatus = checker.check(prec);
 		System.out.println(safetyStatus);
 
 		final ARG<PredState, StsAction> arg = safetyStatus.getArg();

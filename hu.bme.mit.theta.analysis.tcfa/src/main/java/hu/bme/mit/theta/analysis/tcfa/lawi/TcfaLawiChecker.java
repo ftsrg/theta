@@ -15,7 +15,7 @@ import hu.bme.mit.theta.analysis.algorithm.ArgNode;
 import hu.bme.mit.theta.analysis.algorithm.ArgNodeComparators;
 import hu.bme.mit.theta.analysis.algorithm.ArgTrace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
-import hu.bme.mit.theta.analysis.algorithm.SafetyStatus;
+import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.impl.NullPrec;
 import hu.bme.mit.theta.analysis.reachedset.Partition;
 import hu.bme.mit.theta.analysis.tcfa.TcfaAction;
@@ -49,7 +49,7 @@ public final class TcfaLawiChecker implements SafetyChecker<TcfaLawiState, TcfaA
 	}
 
 	@Override
-	public SafetyStatus<TcfaLawiState, TcfaAction> check(final NullPrec prec) {
+	public SafetyResult<TcfaLawiState, TcfaAction> check(final NullPrec prec) {
 		return new CheckMethod().run();
 	}
 
@@ -70,14 +70,14 @@ public final class TcfaLawiChecker implements SafetyChecker<TcfaLawiState, TcfaA
 			reachedSet.addAll(arg.getInitNodes());
 		}
 
-		public SafetyStatus<TcfaLawiState, TcfaAction> run() {
+		public SafetyResult<TcfaLawiState, TcfaAction> run() {
 			final Optional<ArgNode<TcfaLawiState, TcfaAction>> unsafeNode = searchForUnsafeNode();
 			if (unsafeNode.isPresent()) {
 				final ArgTrace<TcfaLawiState, TcfaAction> argTrace = ArgTrace.to(unsafeNode.get());
 				final Trace<TcfaLawiState, TcfaAction> trace = argTrace.toTrace();
-				return SafetyStatus.unsafe(trace, arg);
+				return SafetyResult.unsafe(trace, arg);
 			} else {
-				return SafetyStatus.safe(arg);
+				return SafetyResult.safe(arg);
 			}
 		}
 

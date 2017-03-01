@@ -10,7 +10,7 @@ import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.LTS;
 import hu.bme.mit.theta.analysis.algorithm.ArgBuilder;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
-import hu.bme.mit.theta.analysis.algorithm.SafetyStatus;
+import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.impl.FixedPrecAnalysis;
 import hu.bme.mit.theta.analysis.impl.NullPrec;
@@ -66,7 +66,7 @@ public final class PredImpactChecker<L extends Loc<L, E>, E extends Edge<L, E>>
 	}
 
 	@Override
-	public SafetyStatus<LocState<PredState, L, E>, LocAction<L, E>> check(final NullPrec prec) {
+	public SafetyResult<LocState<PredState, L, E>, LocAction<L, E>> check(final NullPrec prec) {
 		return checker.check(prec);
 	}
 

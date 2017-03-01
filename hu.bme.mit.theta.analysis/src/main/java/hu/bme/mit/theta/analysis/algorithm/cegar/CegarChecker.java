@@ -11,7 +11,7 @@ import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
-import hu.bme.mit.theta.analysis.algorithm.SafetyStatus;
+import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.Statistics;
 import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.common.logging.Logger;
@@ -41,7 +41,7 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 	}
 
 	@Override
-	public SafetyStatus<S, A> check(final P initPrec) {
+	public SafetyResult<S, A> check(final P initPrec) {
 		logger.writeln("Configuration: ", this, 1, 0);
 		final Stopwatch stopwatch = Stopwatch.createStarted();
 		RefinerResult<S, A, P> refinerResult = null;
@@ -72,13 +72,13 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 		assert abstractorResult.isSafe() || refinerResult != null;
 
 		stopwatch.stop();
-		SafetyStatus<S, A> cegarResult = null;
+		SafetyResult<S, A> cegarResult = null;
 		final Statistics stats = new Statistics(stopwatch.elapsed(TimeUnit.MILLISECONDS), iteration);
 
 		if (abstractorResult.isSafe()) {
-			cegarResult = SafetyStatus.safe(arg, stats);
+			cegarResult = SafetyResult.safe(arg, stats);
 		} else if (refinerResult.isUnsafe()) {
-			cegarResult = SafetyStatus.unsafe(refinerResult.asUnsafe().getCex(), arg, stats);
+			cegarResult = SafetyResult.unsafe(refinerResult.asUnsafe().getCex(), arg, stats);
 		} else {
 			throw new IllegalStateException();
 		}

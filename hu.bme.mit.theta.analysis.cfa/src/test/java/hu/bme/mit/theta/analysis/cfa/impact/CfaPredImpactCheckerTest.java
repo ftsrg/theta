@@ -20,7 +20,7 @@ import org.junit.Test;
 
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.ArgChecker;
-import hu.bme.mit.theta.analysis.algorithm.SafetyStatus;
+import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.impact.PredImpactChecker;
 import hu.bme.mit.theta.analysis.cfa.CfaLts;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
@@ -65,7 +65,7 @@ public final class CfaPredImpactCheckerTest {
 				cfa.getInitLoc(), l -> l.equals(cfa.getErrorLoc()), solver);
 
 		// Act
-		final SafetyStatus<? extends ExprState, ? extends ExprAction> status = checker
+		final SafetyResult<? extends ExprState, ? extends ExprAction> status = checker
 				.check(NullPrec.getInstance());
 
 		// Assert

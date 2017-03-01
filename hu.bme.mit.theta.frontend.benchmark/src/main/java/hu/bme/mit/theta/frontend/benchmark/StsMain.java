@@ -13,7 +13,7 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
-import hu.bme.mit.theta.analysis.algorithm.SafetyStatus;
+import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.Statistics;
 import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.common.table.impl.SimpleTableWriter;
@@ -127,7 +127,7 @@ public class StsMain {
 			final Configuration<?, ?, ?> configuration = new StsConfigurationBuilder(domain, refinement)
 					.initPrec(initPrec).search(search).predSplit(predSplit).build(sts);
 			// Run algorithm
-			final SafetyStatus<?, ?> status = configuration.check();
+			final SafetyResult<?, ?> status = configuration.check();
 			final Statistics stats = status.getStats().get();
 
 			// Check result
