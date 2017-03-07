@@ -24,7 +24,7 @@ public final class TcfaImpactCheckerTest {
 	public void test() {
 		// Arrange
 		final int n = 2;
-		final TCFA fischer = TcfaModels.fischer(n, 1, 2);
+		final TCFA fischer = TcfaModels.fischer(n, 2);
 
 		final Solver solver = Z3SolverFactory.getInstace().createSolver();
 
@@ -32,8 +32,7 @@ public final class TcfaImpactCheckerTest {
 				l -> l.getName().startsWith("crit_crit"));
 
 		// Act
-		final SafetyResult<? extends ExprState, ? extends ExprAction> status = checker
-				.check(NullPrec.getInstance());
+		final SafetyResult<? extends ExprState, ? extends ExprAction> status = checker.check(NullPrec.getInstance());
 
 		// Assert
 		assertTrue(status.isSafe());

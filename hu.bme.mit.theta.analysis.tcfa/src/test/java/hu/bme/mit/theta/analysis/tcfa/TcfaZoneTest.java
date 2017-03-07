@@ -36,7 +36,7 @@ public class TcfaZoneTest {
 	@Test
 	public void test() {
 		final int n = 2;
-		final TCFA fischer = TcfaModels.fischer(n, 1, 2);
+		final TCFA fischer = TcfaModels.fischer(n, 2);
 
 		final TcfaLts lts = TcfaLts.create(fischer);
 

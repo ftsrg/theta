@@ -42,7 +42,7 @@ public class TcfaCompositeTest {
 	@Test
 	public void test() throws FileNotFoundException, IOException {
 		final int n = 2;
-		final TCFA fischer = TcfaModels.fischer(n, 1, 2);
+		final TCFA fischer = TcfaModels.fischer(n, 2);
 
 		final Solver solver = Z3SolverFactory.getInstace().createSolver();
 

@@ -1,11 +1,11 @@
-specification Fischer(a : int, b : int) {	
+specification Fischer(k : int) {	
 	var lock : int
 		
 	automaton fischer(ref x : clock, i : int) := {	
-		init loc sleep
-		loc wait { x <= a }
-		loc try
-		loc crit
+		init loc sleep { x >= 0 }
+		loc wait { x >= 0, x <= k }
+		loc try { x >= 0 }
+		loc crit { x >= 0 }
 		
 		sleep -> wait {
 			assume lock = 0;
@@ -17,13 +17,13 @@ specification Fischer(a : int, b : int) {
 			x := 0
 		}
 		
-		try -> sleep {
-			assume x >= b;
-			assume lock /= i
+		try -> wait {
+			assume lock = 0;
+			x := 0
 		}
 		
 		try -> crit {
-			assume x >= b;
+			assume x > k;
 			assume lock = i
 		}
 		

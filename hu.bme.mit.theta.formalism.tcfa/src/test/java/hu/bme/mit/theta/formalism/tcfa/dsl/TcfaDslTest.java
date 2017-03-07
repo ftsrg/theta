@@ -17,7 +17,7 @@ public class TcfaDslTest {
 
 	@Test
 	public void testFischer() {
-		final TCFA tcfa = TcfaModels.fischer(2, 1, 2);
+		final TCFA tcfa = TcfaModels.fischer(2, 1);
 		System.out.println(new GraphvizWriter().writeString(TcfaVisualizer.visualize(tcfa)));
 	}
 

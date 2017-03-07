@@ -35,7 +35,7 @@ public class TcfaExplTest {
 	@Test
 	public void test() {
 		final int n = 2;
-		final TCFA fischer = TcfaModels.fischer(n, 1, 2);
+		final TCFA fischer = TcfaModels.fischer(n, 2);
 
 		final Solver solver = Z3SolverFactory.getInstace().createSolver();
 

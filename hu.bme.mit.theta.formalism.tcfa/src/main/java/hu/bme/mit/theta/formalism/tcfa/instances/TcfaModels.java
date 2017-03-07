@@ -35,10 +35,10 @@ public final class TcfaModels {
 		}
 	}
 
-	public static TCFA fischer(final int n, final int a, final int b) {
+	public static TCFA fischer(final int n, final int k) {
 		try {
 			final InputStream inputStream = TcfaModels.class.getResourceAsStream("/fischer.tcfa");
-			final TcfaSpec spec = TcfaDslManager.createTcfaSpec(inputStream, Int(a), Int(b));
+			final TcfaSpec spec = TcfaDslManager.createTcfaSpec(inputStream, Int(k));
 			final List<TCFA> tcfas = new ArrayList<>(n);
 
 			for (int i = 1; i <= n; i++) {
