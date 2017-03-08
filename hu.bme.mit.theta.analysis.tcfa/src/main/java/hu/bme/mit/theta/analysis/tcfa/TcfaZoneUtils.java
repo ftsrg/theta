@@ -34,18 +34,6 @@ public final class TcfaZoneUtils {
 			}
 		}
 
-		if (!action.getEdge().getSource().isUrgent()) {
-			succStateBuilder.up();
-
-			for (final TcfaExpr invar : action.getSourceInvars()) {
-				if (invar.isClockExpr()) {
-					final ClockExpr clockExpr = invar.asClockExpr();
-					final ClockConstr constr = clockExpr.getClockConstr();
-					succStateBuilder.and(constr);
-				}
-			}
-		}
-
 		for (final TcfaStmt tcfaStmt : action.getTcfaStmts()) {
 			if (tcfaStmt.isClockStmt()) {
 				final ClockOp op = tcfaStmt.asClockStmt().getClockOp();
@@ -61,6 +49,10 @@ public final class TcfaZoneUtils {
 			}
 		}
 
+		if (!action.getEdge().getSource().isUrgent()) {
+			succStateBuilder.up();
+		}
+
 		final ZoneState succState = succStateBuilder.done();
 		return succState;
 	}
@@ -71,6 +63,10 @@ public final class TcfaZoneUtils {
 		checkNotNull(prec);
 
 		final ZoneState.ZoneOperations prevStateBuilder = state.project(prec.getClocks());
+
+		if (!action.getEdge().getSource().isUrgent()) {
+			prevStateBuilder.down();
+		}
 
 		for (final TcfaExpr invar : action.getTargetInvars()) {
 			if (invar.isClockExpr()) {
@@ -105,18 +101,6 @@ public final class TcfaZoneUtils {
 				final ClockExpr clockExpr = invar.asClockExpr();
 				final ClockConstr constr = clockExpr.getClockConstr();
 				prevStateBuilder.and(constr);
-			}
-		}
-
-		if (!action.getEdge().getSource().isUrgent()) {
-			prevStateBuilder.down();
-
-			for (final TcfaExpr invar : action.getSourceInvars()) {
-				if (invar.isClockExpr()) {
-					final ClockExpr clockExpr = invar.asClockExpr();
-					final ClockConstr constr = clockExpr.getClockConstr();
-					prevStateBuilder.and(constr);
-				}
 			}
 		}
 
