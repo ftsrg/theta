@@ -39,6 +39,28 @@ import hu.bme.mit.theta.frontend.benchmark.StsConfigurationBuilder.InitPrec;
 public class StsMain {
 
 	public static void main(final String[] args) {
+		final TableWriter tableWriter = new SimpleTableWriter(System.out, ",", "\"", "\"");
+
+		// If only called with a single --header argument, print header and exit
+		if (args.length == 1 && "--header".equals(args[0])) {
+			tableWriter.cell("Model");
+			tableWriter.cell("Vars");
+			tableWriter.cell("Size");
+			tableWriter.cell("Domain");
+			tableWriter.cell("Refinement");
+			tableWriter.cell("InitPrec");
+			tableWriter.cell("Search");
+			tableWriter.cell("PredSplit");
+			tableWriter.cell("Safe");
+			tableWriter.cell("TimeMs");
+			tableWriter.cell("Iterations");
+			tableWriter.cell("ArgSize");
+			tableWriter.cell("ArgDepth");
+			tableWriter.cell("CexLen");
+			tableWriter.newRow();
+			return;
+		}
+
 		// Setting up argument parser
 		final Options options = new Options();
 
@@ -101,7 +123,6 @@ public class StsMain {
 				.valueOf(cmd.getOptionValue(optPredSplit.getOpt(), PredSplit.WHOLE.toString()));
 
 		// Run the algorithm
-		final TableWriter tableWriter = new SimpleTableWriter(System.out, ",", "", "");
 		try {
 			tableWriter.cell(model);
 
@@ -119,8 +140,11 @@ public class StsMain {
 			tableWriter.cell(sts.getVars().size());
 			tableWriter.cell(ExprUtils.size(Exprs.And(Exprs.And(sts.getInit()), Exprs.And(sts.getTrans())),
 					ExprMetrics.absoluteSize()));
-			tableWriter.cell(domain.toString()).cell(refinement.toString()).cell(initPrec.toString())
-					.cell(search.toString()).cell(domain == Domain.PRED ? predSplit.toString() : "");
+			tableWriter.cell(domain.toString());
+			tableWriter.cell(refinement.toString());
+			tableWriter.cell(initPrec.toString());
+			tableWriter.cell(search.toString());
+			tableWriter.cell(domain == Domain.PRED ? predSplit.toString() : "");
 			System.out.flush();
 
 			// Build configuration
@@ -132,19 +156,23 @@ public class StsMain {
 
 			// Check result
 			if (expected.isPresent() && !expected.get().equals(status.isSafe())) {
-				tableWriter.cell("ERROR: expected safe = " + expected.get());
-			} else {
-
-				tableWriter.cell(status.isSafe() + "").cell(stats.getElapsedMillis() + "")
-						.cell(stats.getIterations() + "").cell(status.getArg().size() + "")
-						.cell(status.getArg().getDepth() + "");
-
-				if (status.isUnsafe()) {
-					tableWriter.cell(status.asUnsafe().getTrace().length() + "");
-				}
+				throw new Exception("Expected safe = " + expected.get() + " but was " + status.isSafe());
 			}
+
+			tableWriter.cell(status.isSafe() + "");
+			tableWriter.cell(stats.getElapsedMillis() + "");
+			tableWriter.cell(stats.getIterations() + "");
+			tableWriter.cell(status.getArg().size() + "");
+			tableWriter.cell(status.getArg().getDepth() + "");
+
+			if (status.isUnsafe()) {
+				tableWriter.cell(status.asUnsafe().getTrace().length() + "");
+			} else {
+				tableWriter.cell("");
+			}
+
 		} catch (final Exception ex) {
-			tableWriter.cell("EX: " + ex.getClass().getSimpleName());
+			tableWriter.cell("[EX] " + ex.getClass().getSimpleName() + ", " + ex.getMessage());
 		}
 
 		tableWriter.newRow();

@@ -46,7 +46,9 @@ $tmpFile = [System.IO.Path]::GetTempFileName()
 #  in append mode. Therefore, the temp file is always overwritten, but the script always appends
 #  the contents of the temp file to the final log file.)
 $logFile = $outDir + "log_" + (Get-Date -format "yyyyMMdd_HHmmss") + ".csv"
-"Model,Vars,Size,Domain,Refinement,InitPrec,Search,PredSplit,Safe,TimeMs,Iterations,ARGsize,ARGdepth,CEXlen" | Out-File $logFile # Header
+# Header
+(Start-Process java -ArgumentList @('-jar', $jarFile, '--header') -RedirectStandardOutput $tmpFile -PassThru -NoNewWindow).WaitForExit()
+Get-Content $tmpFile | where {$_ -ne ""} | Out-File $logFile
 
 # Load models and configurations from external files
 $models = @(Import-CSV $modelsFile -Header Name, Prop, Expected)
