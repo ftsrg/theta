@@ -24,7 +24,7 @@ public final class TcfaZoneUtils {
 		checkNotNull(action);
 		checkNotNull(prec);
 
-		final ZoneState.ZoneOperations succStateBuilder = state.project(prec.getClocks());
+		final ZoneState.Builder succStateBuilder = state.project(prec.getClocks());
 
 		for (final TcfaExpr invar : action.getSourceInvars()) {
 			if (invar.isClockExpr()) {
@@ -53,7 +53,7 @@ public final class TcfaZoneUtils {
 			succStateBuilder.up();
 		}
 
-		final ZoneState succState = succStateBuilder.done();
+		final ZoneState succState = succStateBuilder.build();
 		return succState;
 	}
 
@@ -62,7 +62,7 @@ public final class TcfaZoneUtils {
 		checkNotNull(action);
 		checkNotNull(prec);
 
-		final ZoneState.ZoneOperations prevStateBuilder = state.project(prec.getClocks());
+		final ZoneState.Builder prevStateBuilder = state.project(prec.getClocks());
 
 		if (!action.getEdge().getSource().isUrgent()) {
 			prevStateBuilder.down();
@@ -104,7 +104,7 @@ public final class TcfaZoneUtils {
 			}
 		}
 
-		final ZoneState prevState = prevStateBuilder.done();
+		final ZoneState prevState = prevStateBuilder.build();
 		return prevState;
 	}
 

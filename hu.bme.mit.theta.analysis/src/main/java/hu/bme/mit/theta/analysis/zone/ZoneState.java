@@ -39,7 +39,7 @@ public final class ZoneState implements ExprState {
 		this.dbm = dbm;
 	}
 
-	private ZoneState(final ZoneOperations ops) {
+	private ZoneState(final Builder ops) {
 		this.dbm = ops.dbm;
 	}
 
@@ -94,11 +94,6 @@ public final class ZoneState implements ExprState {
 		return new ZoneState(DBM.zero(clocks));
 	}
 
-	public static ZoneState nonnegative(final Collection<? extends ClockDecl> clocks) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
-	}
-
 	public static ZoneState intersection(final ZoneState zone1, final ZoneState zone2) {
 		checkNotNull(zone1);
 		checkNotNull(zone2);
@@ -124,13 +119,13 @@ public final class ZoneState implements ExprState {
 		return dbms.stream().map(ZoneState::new).collect(toList());
 	}
 
-	public ZoneOperations transform() {
-		return ZoneOperations.transform(this);
+	public Builder transform() {
+		return Builder.transform(this);
 	}
 
-	public ZoneOperations project(final Collection<? extends ClockDecl> clocks) {
+	public Builder project(final Collection<? extends ClockDecl> clocks) {
 		checkNotNull(clocks);
-		return ZoneOperations.project(this, clocks);
+		return Builder.project(this, clocks);
 	}
 
 	////
@@ -197,72 +192,72 @@ public final class ZoneState implements ExprState {
 
 	////////
 
-	public static class ZoneOperations {
+	public static class Builder {
 		private final DBM dbm;
 
-		private ZoneOperations(final DBM dbm) {
+		private Builder(final DBM dbm) {
 			this.dbm = dbm;
 		}
 
 		////
 
-		private static ZoneOperations transform(final ZoneState state) {
-			return new ZoneOperations(DBM.copyOf(state.dbm));
+		private static Builder transform(final ZoneState state) {
+			return new Builder(DBM.copyOf(state.dbm));
 		}
 
-		private static ZoneOperations project(final ZoneState state, final Collection<? extends ClockDecl> clocks) {
-			return new ZoneOperations(DBM.project(state.dbm, clocks));
+		private static Builder project(final ZoneState state, final Collection<? extends ClockDecl> clocks) {
+			return new Builder(DBM.project(state.dbm, clocks));
 		}
 
 		////
 
-		public ZoneState done() {
+		public ZoneState build() {
 			return new ZoneState(this);
 		}
 
 		////
 
-		public ZoneOperations up() {
+		public Builder up() {
 			dbm.up();
 			return this;
 		}
 
-		public ZoneOperations down() {
+		public Builder down() {
 			dbm.down();
 			return this;
 		}
 
-		public ZoneOperations execute(final ClockOp op) {
+		public Builder execute(final ClockOp op) {
 			dbm.execute(op);
 			return this;
 		}
 
-		public ZoneOperations and(final ClockConstr constr) {
+		public Builder and(final ClockConstr constr) {
 			dbm.and(constr);
 			return this;
 		}
 
-		public ZoneOperations free(final ClockDecl clock) {
+		public Builder free(final ClockDecl clock) {
 			dbm.free(clock);
 			return this;
 		}
 
-		public ZoneOperations reset(final ClockDecl clock, final int m) {
+		public Builder reset(final ClockDecl clock, final int m) {
 			dbm.reset(clock, m);
 			return this;
 		}
 
-		public ZoneOperations copy(final ClockDecl lhs, final ClockDecl rhs) {
+		public Builder copy(final ClockDecl lhs, final ClockDecl rhs) {
 			dbm.copy(lhs, rhs);
 			return this;
 		}
 
-		public ZoneOperations shift(final ClockDecl clock, final int m) {
+		public Builder shift(final ClockDecl clock, final int m) {
 			dbm.shift(clock, m);
 			return this;
 		}
 
-		public ZoneOperations norm(final Map<? extends ClockDecl, ? extends Integer> ceilings) {
+		public Builder norm(final Map<? extends ClockDecl, ? extends Integer> ceilings) {
 			dbm.norm(ceilings);
 			return this;
 		}
