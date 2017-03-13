@@ -23,9 +23,7 @@ public final class TcfaLawiCheckerTest {
 		final int n = 2;
 		final TCFA fischer = TcfaModels.fischer(n, 2);
 
-		final Solver solver = Z3SolverFactory.getInstace().createSolver();
-
-		final TcfaLawiChecker checker = TcfaLawiChecker.create(fischer, l -> false, solver);
+		final TcfaLawiChecker checker = TcfaLawiChecker.create(fischer, l -> false);
 
 		// Act
 		final SafetyResult<TcfaLawiState, TcfaAction> status = checker.check(NullPrec.getInstance());
@@ -33,8 +31,11 @@ public final class TcfaLawiCheckerTest {
 		// Assert
 		assertTrue(status.isSafe());
 		final ARG<TcfaLawiState, TcfaAction> arg = status.getArg();
+
+		final Solver solver = Z3SolverFactory.getInstace().createSolver();
 		final ArgChecker argChecker = ArgChecker.create(solver);
 		assertTrue(argChecker.isWellLabeled(arg));
+
 		System.out.println(arg.getNodes().count());
 	}
 

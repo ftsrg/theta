@@ -46,6 +46,10 @@ public final class ExplPrec implements Prec {
 		}
 	}
 
+	public Set<VarDecl<?>> getVars() {
+		return vars;
+	}
+
 	public ExplPrec join(final ExplPrec other) {
 		checkNotNull(other);
 		final Collection<VarDecl<?>> newVars = ImmutableSet.<VarDecl<?>>builder().addAll(vars).addAll(other.vars)
