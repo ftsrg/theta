@@ -11,7 +11,7 @@ import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.formalism.common.Edge;
 import hu.bme.mit.theta.formalism.common.Loc;
 
-public final class LocInitFunction<S extends State, P extends Prec, L extends Loc<L, E>, E extends Edge<L, E>>
+final class LocInitFunction<S extends State, P extends Prec, L extends Loc<L, E>, E extends Edge<L, E>>
 		implements InitFunction<LocState<S, L, E>, LocPrec<P, L, E>> {
 
 	private final L initLoc;

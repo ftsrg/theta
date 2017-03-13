@@ -15,8 +15,8 @@ import hu.bme.mit.theta.analysis.algorithm.cegar.WaitlistBasedAbstractor;
 import hu.bme.mit.theta.analysis.expl.ExplAnalysis;
 import hu.bme.mit.theta.analysis.expl.ExplPrec;
 import hu.bme.mit.theta.analysis.expl.ExplState;
-import hu.bme.mit.theta.analysis.impl.FixedPrecAnalysis;
 import hu.bme.mit.theta.analysis.impl.NullPrec;
+import hu.bme.mit.theta.analysis.impl.PrecMappingAnalysis;
 import hu.bme.mit.theta.analysis.loc.ConstLocPrec;
 import hu.bme.mit.theta.analysis.loc.LocAnalysis;
 import hu.bme.mit.theta.analysis.loc.LocState;
@@ -41,9 +41,9 @@ public class TcfaExplTest {
 
 		final TcfaLts lts = TcfaLts.create(fischer);
 
-		final Analysis<LocState<ExplState, TcfaLoc, TcfaEdge>, TcfaAction, NullPrec> analysis = FixedPrecAnalysis
+		final Analysis<LocState<ExplState, TcfaLoc, TcfaEdge>, TcfaAction, NullPrec> analysis = PrecMappingAnalysis
 				.create(LocAnalysis.create(fischer.getInitLoc(), ExplAnalysis.create(solver, True())),
-						ConstLocPrec.create(ExplPrec.create(fischer.getDataVars())));
+						np -> ConstLocPrec.create(ExplPrec.create(fischer.getDataVars())));
 
 		final Predicate<State> target = s -> false;
 

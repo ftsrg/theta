@@ -15,12 +15,14 @@ import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.ArgBuilder;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
 import hu.bme.mit.theta.analysis.algorithm.cegar.WaitlistBasedAbstractor;
-import hu.bme.mit.theta.analysis.impl.FixedPrecAnalysis;
 import hu.bme.mit.theta.analysis.impl.NullPrec;
+import hu.bme.mit.theta.analysis.impl.PrecMappingAnalysis;
 import hu.bme.mit.theta.analysis.loc.ConstLocPrec;
 import hu.bme.mit.theta.analysis.loc.LocAnalysis;
+import hu.bme.mit.theta.analysis.loc.LocPrec;
 import hu.bme.mit.theta.analysis.loc.LocState;
 import hu.bme.mit.theta.analysis.pred.PredAnalysis;
+import hu.bme.mit.theta.analysis.pred.PredPrec;
 import hu.bme.mit.theta.analysis.pred.PredState;
 import hu.bme.mit.theta.analysis.pred.SimplePredPrec;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
@@ -45,11 +47,11 @@ public class TcfaPredTest {
 
 		final TcfaLts lts = TcfaLts.create(fischer);
 
-		final Analysis<LocState<PredState, TcfaLoc, TcfaEdge>, TcfaAction, NullPrec> analysis = FixedPrecAnalysis
-				.create(LocAnalysis.create(fischer.getInitLoc(), PredAnalysis.create(solver, True())),
-						ConstLocPrec.create(SimplePredPrec.create(
-								Collections.singleton(Eq(Utils.anyElementOf(fischer.getDataVars()).getRef(), Int(0))),
-								solver)));
+		final LocPrec<PredPrec, TcfaLoc, TcfaEdge> fixedPrec = ConstLocPrec.create(SimplePredPrec
+				.create(Collections.singleton(Eq(Utils.anyElementOf(fischer.getDataVars()).getRef(), Int(0))), solver));
+
+		final Analysis<LocState<PredState, TcfaLoc, TcfaEdge>, TcfaAction, NullPrec> analysis = PrecMappingAnalysis
+				.create(LocAnalysis.create(fischer.getInitLoc(), PredAnalysis.create(solver, True())), np -> fixedPrec);
 
 		final Predicate<State> target = s -> false;
 

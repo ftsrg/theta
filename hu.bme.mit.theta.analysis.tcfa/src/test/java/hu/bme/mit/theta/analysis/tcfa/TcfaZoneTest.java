@@ -13,8 +13,8 @@ import hu.bme.mit.theta.analysis.algorithm.ArgBuilder;
 import hu.bme.mit.theta.analysis.algorithm.ArgChecker;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
 import hu.bme.mit.theta.analysis.algorithm.cegar.WaitlistBasedAbstractor;
-import hu.bme.mit.theta.analysis.impl.FixedPrecAnalysis;
 import hu.bme.mit.theta.analysis.impl.NullPrec;
+import hu.bme.mit.theta.analysis.impl.PrecMappingAnalysis;
 import hu.bme.mit.theta.analysis.loc.ConstLocPrec;
 import hu.bme.mit.theta.analysis.loc.LocAnalysis;
 import hu.bme.mit.theta.analysis.loc.LocState;
@@ -40,9 +40,9 @@ public class TcfaZoneTest {
 
 		final TcfaLts lts = TcfaLts.create(fischer);
 
-		final Analysis<LocState<ZoneState, TcfaLoc, TcfaEdge>, TcfaAction, NullPrec> analysis = FixedPrecAnalysis
+		final Analysis<LocState<ZoneState, TcfaLoc, TcfaEdge>, TcfaAction, NullPrec> analysis = PrecMappingAnalysis
 				.create(LocAnalysis.create(fischer.getInitLoc(), TcfaZoneAnalysis.getInstance()),
-						ConstLocPrec.create(ZonePrec.create(fischer.getClockVars())));
+						np -> ConstLocPrec.create(ZonePrec.create(fischer.getClockVars())));
 
 		final Predicate<State> target = s -> false;
 

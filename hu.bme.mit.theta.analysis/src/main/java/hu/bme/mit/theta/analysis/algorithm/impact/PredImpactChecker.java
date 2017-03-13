@@ -12,8 +12,8 @@ import hu.bme.mit.theta.analysis.algorithm.ArgBuilder;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
-import hu.bme.mit.theta.analysis.impl.FixedPrecAnalysis;
 import hu.bme.mit.theta.analysis.impl.NullPrec;
+import hu.bme.mit.theta.analysis.impl.PrecMappingAnalysis;
 import hu.bme.mit.theta.analysis.loc.ConstLocPrec;
 import hu.bme.mit.theta.analysis.loc.LocAction;
 import hu.bme.mit.theta.analysis.loc.LocAnalysis;
@@ -40,14 +40,13 @@ public final class PredImpactChecker<L extends Loc<L, E>, E extends Edge<L, E>>
 
 		final Analysis<PredState, ExprAction, PredPrec> predAnalysis = PredAnalysis.create(solver, True());
 
-		final LocPrec<PredPrec, L, E> fixedPrec = ConstLocPrec
-				.create(SimplePredPrec.create(emptySet(), solver));
+		final LocPrec<PredPrec, L, E> fixedPrec = ConstLocPrec.create(SimplePredPrec.create(emptySet(), solver));
 
 		final Analysis<LocState<PredState, L, E>, LocAction<L, E>, LocPrec<PredPrec, L, E>> cfaAnalysis = LocAnalysis
 				.create(initLoc, predAnalysis);
 
-		final Analysis<LocState<PredState, L, E>, LocAction<L, E>, NullPrec> analysis = FixedPrecAnalysis
-				.create(cfaAnalysis, fixedPrec);
+		final Analysis<LocState<PredState, L, E>, LocAction<L, E>, NullPrec> analysis = PrecMappingAnalysis
+				.create(cfaAnalysis, np -> fixedPrec);
 
 		final Predicate<LocState<?, L, ?>> target = s -> targetLocs.test(s.getLoc());
 
