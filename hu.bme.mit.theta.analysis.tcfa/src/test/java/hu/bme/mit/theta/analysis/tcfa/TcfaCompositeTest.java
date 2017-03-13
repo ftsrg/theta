@@ -16,8 +16,8 @@ import hu.bme.mit.theta.analysis.algorithm.cegar.WaitlistBasedAbstractor;
 import hu.bme.mit.theta.analysis.expl.ExplAnalysis;
 import hu.bme.mit.theta.analysis.expl.ExplPrec;
 import hu.bme.mit.theta.analysis.expl.ExplState;
-import hu.bme.mit.theta.analysis.impl.FixedPrecAnalysis;
 import hu.bme.mit.theta.analysis.impl.NullPrec;
+import hu.bme.mit.theta.analysis.impl.PrecMappingAnalysis;
 import hu.bme.mit.theta.analysis.loc.ConstLocPrec;
 import hu.bme.mit.theta.analysis.loc.LocAnalysis;
 import hu.bme.mit.theta.analysis.loc.LocState;
@@ -48,10 +48,10 @@ public class TcfaCompositeTest {
 
 		final TcfaLts lts = TcfaLts.create(fischer);
 
-		final Analysis<LocState<Prod2State<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction, NullPrec> analysis = FixedPrecAnalysis
+		final Analysis<LocState<Prod2State<ZoneState, ExplState>, TcfaLoc, TcfaEdge>, TcfaAction, NullPrec> analysis = PrecMappingAnalysis
 				.create(LocAnalysis.create(fischer.getInitLoc(),
 						Prod2Analysis.create(TcfaZoneAnalysis.getInstance(), ExplAnalysis.create(solver, True()))),
-						ConstLocPrec.create(ProdPrec.of(ZonePrec.create(fischer.getClockVars()),
+						np -> ConstLocPrec.create(ProdPrec.of(ZonePrec.create(fischer.getClockVars()),
 								ExplPrec.create(fischer.getDataVars()))));
 
 		final Predicate<LocState<?, TcfaLoc, TcfaEdge>> target = s -> s.getLoc().getName().startsWith("crit, crit");

@@ -11,8 +11,8 @@ import hu.bme.mit.theta.analysis.expl.ExplAnalysis;
 import hu.bme.mit.theta.analysis.expl.ExplPrec;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
-import hu.bme.mit.theta.analysis.impl.FixedPrecAnalysis;
 import hu.bme.mit.theta.analysis.impl.NullPrec;
+import hu.bme.mit.theta.analysis.impl.PrecMappingAnalysis;
 import hu.bme.mit.theta.analysis.loc.ConstLocPrec;
 import hu.bme.mit.theta.analysis.loc.LocAnalysis;
 import hu.bme.mit.theta.analysis.loc.LocPrec;
@@ -42,10 +42,8 @@ final class TcfaLawiAnalysis implements Analysis<TcfaLawiState, TcfaAction, Null
 
 		final ExplPrec explPrec = ExplPrec.create(tcfa.getDataVars());
 		final ZonePrec zonePrec = ZonePrec.create(tcfa.getClockVars());
-		final Prod2Prec<ExplPrec, ZonePrec> compositePrec = ProdPrec.of(explPrec,
-				zonePrec);
-		final LocPrec<Prod2Prec<ExplPrec, ZonePrec>, TcfaLoc, TcfaEdge> locPrec = ConstLocPrec
-				.create(compositePrec);
+		final Prod2Prec<ExplPrec, ZonePrec> compositePrec = ProdPrec.of(explPrec, zonePrec);
+		final LocPrec<Prod2Prec<ExplPrec, ZonePrec>, TcfaLoc, TcfaEdge> locPrec = ConstLocPrec.create(compositePrec);
 
 		final Analysis<ExplState, ExprAction, ExplPrec> explAnalysis = ExplAnalysis.create(solver, True());
 		final Analysis<ItpZoneState, TcfaAction, ZonePrec> itpZoneAnalysis = TcfaItpZoneAnalysis.getInstance();
@@ -54,8 +52,8 @@ final class TcfaLawiAnalysis implements Analysis<TcfaLawiState, TcfaAction, Null
 		final Analysis<LocState<Prod2State<ExplState, ItpZoneState>, TcfaLoc, TcfaEdge>, TcfaAction, LocPrec<Prod2Prec<ExplPrec, ZonePrec>, TcfaLoc, TcfaEdge>> locAnalysis = LocAnalysis
 				.create(tcfa.getInitLoc(), compositeAnalysis);
 
-		final Analysis<LocState<Prod2State<ExplState, ItpZoneState>, TcfaLoc, TcfaEdge>, TcfaAction, NullPrec> analysis = FixedPrecAnalysis
-				.create(locAnalysis, locPrec);
+		final Analysis<LocState<Prod2State<ExplState, ItpZoneState>, TcfaLoc, TcfaEdge>, TcfaAction, NullPrec> analysis = PrecMappingAnalysis
+				.create(locAnalysis, np -> locPrec);
 
 		domain = TcfaLawiDomain.create(analysis.getDomain());
 		initFunction = TcfaLawiInitFunction.create(analysis.getInitFunction());

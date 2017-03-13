@@ -12,7 +12,7 @@ import hu.bme.mit.theta.analysis.TransferFunction;
 import hu.bme.mit.theta.formalism.common.Edge;
 import hu.bme.mit.theta.formalism.common.Loc;
 
-public final class LocTransferFunction<S extends State, A extends LocAction<L, E>, P extends Prec, L extends Loc<L, E>, E extends Edge<L, E>>
+final class LocTransferFunction<S extends State, A extends LocAction<L, E>, P extends Prec, L extends Loc<L, E>, E extends Edge<L, E>>
 		implements TransferFunction<LocState<S, L, E>, A, LocPrec<P, L, E>> {
 
 	private final TransferFunction<S, ? super A, ? super P> transferFunction;

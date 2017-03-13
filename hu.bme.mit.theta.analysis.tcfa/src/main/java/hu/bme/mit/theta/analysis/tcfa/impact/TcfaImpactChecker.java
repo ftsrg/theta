@@ -14,8 +14,8 @@ import hu.bme.mit.theta.analysis.expl.ExplAnalysis;
 import hu.bme.mit.theta.analysis.expl.ExplPrec;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
-import hu.bme.mit.theta.analysis.impl.FixedPrecAnalysis;
 import hu.bme.mit.theta.analysis.impl.NullPrec;
+import hu.bme.mit.theta.analysis.impl.PrecMappingAnalysis;
 import hu.bme.mit.theta.analysis.loc.ConstLocPrec;
 import hu.bme.mit.theta.analysis.loc.LocAnalysis;
 import hu.bme.mit.theta.analysis.loc.LocPrec;
@@ -34,8 +34,8 @@ import hu.bme.mit.theta.formalism.tcfa.TcfaEdge;
 import hu.bme.mit.theta.formalism.tcfa.TcfaLoc;
 import hu.bme.mit.theta.solver.Solver;
 
-public final class TcfaImpactChecker implements
-		SafetyChecker<LocState<Prod2State<ExplState, ZoneState>, TcfaLoc, TcfaEdge>, TcfaAction, NullPrec> {
+public final class TcfaImpactChecker
+		implements SafetyChecker<LocState<Prod2State<ExplState, ZoneState>, TcfaLoc, TcfaEdge>, TcfaAction, NullPrec> {
 
 	private final ImpactChecker<LocState<Prod2State<ExplState, ZoneState>, TcfaLoc, TcfaEdge>, TcfaAction, NullPrec> checker;
 
@@ -48,10 +48,8 @@ public final class TcfaImpactChecker implements
 
 		final ExplPrec explPrec = ExplPrec.create(tcfa.getDataVars());
 		final ZonePrec zonePrec = ZonePrec.create(tcfa.getClockVars());
-		final Prod2Prec<ExplPrec, ZonePrec> prodPrec = ProdPrec.of(explPrec,
-				zonePrec);
-		final LocPrec<Prod2Prec<ExplPrec, ZonePrec>, TcfaLoc, TcfaEdge> locPrec = ConstLocPrec
-				.create(prodPrec);
+		final Prod2Prec<ExplPrec, ZonePrec> prodPrec = ProdPrec.of(explPrec, zonePrec);
+		final LocPrec<Prod2Prec<ExplPrec, ZonePrec>, TcfaLoc, TcfaEdge> locPrec = ConstLocPrec.create(prodPrec);
 
 		final Analysis<ExplState, ExprAction, ExplPrec> explAnalysis = ExplAnalysis.create(solver, True());
 		final Analysis<ZoneState, TcfaAction, ZonePrec> zoneAnalysis = TcfaZoneAnalysis.getInstance();
@@ -60,8 +58,8 @@ public final class TcfaImpactChecker implements
 		final Analysis<LocState<Prod2State<ExplState, ZoneState>, TcfaLoc, TcfaEdge>, TcfaAction, LocPrec<Prod2Prec<ExplPrec, ZonePrec>, TcfaLoc, TcfaEdge>> locAnalysis = LocAnalysis
 				.create(tcfa.getInitLoc(), compositeAnalysis);
 
-		final Analysis<LocState<Prod2State<ExplState, ZoneState>, TcfaLoc, TcfaEdge>, TcfaAction, NullPrec> analysis = FixedPrecAnalysis
-				.create(locAnalysis, locPrec);
+		final Analysis<LocState<Prod2State<ExplState, ZoneState>, TcfaLoc, TcfaEdge>, TcfaAction, NullPrec> analysis = PrecMappingAnalysis
+				.create(locAnalysis, np -> locPrec);
 
 		final Predicate<LocState<?, TcfaLoc, ?>> target = s -> targetLocs.test(s.getLoc());
 
