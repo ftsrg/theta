@@ -7,9 +7,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.AndExpr;
 import hu.bme.mit.theta.core.expr.Expr;
@@ -152,6 +154,10 @@ public final class ExprUtils {
 		} else {
 			return expr;
 		}
+	}
+
+	public static <T extends Type> Expr<T> close(final Expr<T> expr, final Map<VarDecl<?>, ParamDecl<?>> mapping) {
+		return ExprClosureHelper.close(expr, mapping);
 	}
 
 	public static <T extends Type> Expr<T> applyPrimes(final Expr<T> expr, final VarIndexing indexing) {
