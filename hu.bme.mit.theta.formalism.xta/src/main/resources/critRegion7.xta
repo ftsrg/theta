@@ -1,0 +1,166 @@
+clock x1, x2, x3, x4, x5, x6, x7;
+chan cell_1_enter, cell_1_exit, cell_2_enter, cell_2_exit, cell_3_enter, cell_3_exit, cell_4_enter, cell_4_exit, cell_5_enter, cell_5_exit, cell_6_enter, cell_6_exit, cell_7_enter, cell_7_exit;
+int[0, 7] id; 
+
+process counter (){ 
+state initilize, intCount; 
+init initilize; 
+trans 
+     intCount -> intCount{ guard id==1; assign id:=2; },
+     intCount -> intCount{ guard id==2; assign id:=3; },
+     intCount -> intCount{ guard id==3; assign id:=4; },
+     intCount -> intCount{ guard id==4; assign id:=5; },
+     intCount -> intCount{ guard id==5; assign id:=6; },
+     intCount -> intCount{ guard id==6; assign id:=7; },
+     initilize -> intCount{ guard id==0; assign id:=1;}, 
+     intCount -> intCount{ guard id==7; assign id:=1; }; 
+}
+
+process arbiter_1 (){ 
+state req, ack; 
+init req; 
+trans 
+    req -> ack{ guard id==1; sync cell_1_enter!; assign id:=0; },
+    ack -> req{ sync cell_1_exit!; assign id:=1; };}
+
+process arbiter_2 (){ 
+state req, ack; 
+init req; 
+trans 
+    req -> ack{ guard id==2; sync cell_2_enter!; assign id:=0; },
+    ack -> req{ sync cell_2_exit!; assign id:=2; };}
+
+process arbiter_3 (){ 
+state req, ack; 
+init req; 
+trans 
+    req -> ack{ guard id==3; sync cell_3_enter!; assign id:=0; },
+    ack -> req{ sync cell_3_exit!; assign id:=3; };}
+
+process arbiter_4 (){ 
+state req, ack; 
+init req; 
+trans 
+    req -> ack{ guard id==4; sync cell_4_enter!; assign id:=0; },
+    ack -> req{ sync cell_4_exit!; assign id:=4; };}
+
+process arbiter_5 (){ 
+state req, ack; 
+init req; 
+trans 
+    req -> ack{ guard id==5; sync cell_5_enter!; assign id:=0; },
+    ack -> req{ sync cell_5_exit!; assign id:=5; };}
+
+process arbiter_6 (){ 
+state req, ack; 
+init req; 
+trans 
+    req -> ack{ guard id==6; sync cell_6_enter!; assign id:=0; },
+    ack -> req{ sync cell_6_exit!; assign id:=6; };}
+
+process arbiter_7 (){ 
+state req, ack; 
+init req; 
+trans 
+    req -> ack{ guard id==7; sync cell_7_enter!; assign id:=0; },
+    ack -> req{ sync cell_7_exit!; assign id:=7; };}
+
+process prodCell_1 (){ 
+state not_ready, testing{ x1 <= 25}, requesting, critical{x1 <= 50}, testing2{ x1 <= 25}, safe, error; 
+init not_ready; 
+trans 
+    not_ready -> testing{ guard x1 <=50; assign x1:=0; }, 
+    testing -> not_ready{ guard x1 >=25; assign x1:=0; }, 
+    testing -> requesting{ guard x1<25; }, 
+    requesting -> critical{ sync cell_1_enter?; assign x1:=0; }, 
+    critical -> error{ guard x1>= 50; }, 
+    critical -> testing2{ guard x1<25; sync cell_1_exit?; assign x1:=0; }, 
+    testing2 -> error{ guard x1>=25; }, 
+    testing2 -> safe{ guard x1<25; }; 
+}
+
+process prodCell_2 (){ 
+state not_ready, testing{ x2 <= 25}, requesting, critical{x2 <= 50}, testing2{ x2 <= 25}, safe, error; 
+init not_ready; 
+trans 
+    not_ready -> testing{ guard x2 <=50; assign x2:=0; }, 
+    testing -> not_ready{ guard x2 >=25; assign x2:=0; }, 
+    testing -> requesting{ guard x2<25; }, 
+    requesting -> critical{ sync cell_2_enter?; assign x2:=0; }, 
+    critical -> error{ guard x2>= 50; }, 
+    critical -> testing2{ guard x2<25; sync cell_2_exit?; assign x2:=0; }, 
+    testing2 -> error{ guard x2>=25; }, 
+    testing2 -> safe{ guard x2<25; }; 
+}
+
+process prodCell_3 (){ 
+state not_ready, testing{ x3 <= 25}, requesting, critical{x3 <= 50}, testing2{ x3 <= 25}, safe, error; 
+init not_ready; 
+trans 
+    not_ready -> testing{ guard x3 <=50; assign x3:=0; }, 
+    testing -> not_ready{ guard x3 >=25; assign x3:=0; }, 
+    testing -> requesting{ guard x3<25; }, 
+    requesting -> critical{ sync cell_3_enter?; assign x3:=0; }, 
+    critical -> error{ guard x3>= 50; }, 
+    critical -> testing2{ guard x3<25; sync cell_3_exit?; assign x3:=0; }, 
+    testing2 -> error{ guard x3>=25; }, 
+    testing2 -> safe{ guard x3<25; }; 
+}
+
+process prodCell_4 (){ 
+state not_ready, testing{ x4 <= 25}, requesting, critical{x4 <= 50}, testing2{ x4 <= 25}, safe, error; 
+init not_ready; 
+trans 
+    not_ready -> testing{ guard x4 <=50; assign x4:=0; }, 
+    testing -> not_ready{ guard x4 >=25; assign x4:=0; }, 
+    testing -> requesting{ guard x4<25; }, 
+    requesting -> critical{ sync cell_4_enter?; assign x4:=0; }, 
+    critical -> error{ guard x4>= 50; }, 
+    critical -> testing2{ guard x4<25; sync cell_4_exit?; assign x4:=0; }, 
+    testing2 -> error{ guard x4>=25; }, 
+    testing2 -> safe{ guard x4<25; }; 
+}
+
+process prodCell_5 (){ 
+state not_ready, testing{ x5 <= 25}, requesting, critical{x5 <= 50}, testing2{ x5 <= 25}, safe, error; 
+init not_ready; 
+trans 
+    not_ready -> testing{ guard x5 <=50; assign x5:=0; }, 
+    testing -> not_ready{ guard x5 >=25; assign x5:=0; }, 
+    testing -> requesting{ guard x5<25; }, 
+    requesting -> critical{ sync cell_5_enter?; assign x5:=0; }, 
+    critical -> error{ guard x5>= 50; }, 
+    critical -> testing2{ guard x5<25; sync cell_5_exit?; assign x5:=0; }, 
+    testing2 -> error{ guard x5>=25; }, 
+    testing2 -> safe{ guard x5<25; }; 
+}
+
+process prodCell_6 (){ 
+state not_ready, testing{ x6 <= 25}, requesting, critical{x6 <= 50}, testing2{ x6 <= 25}, safe, error; 
+init not_ready; 
+trans 
+    not_ready -> testing{ guard x6 <=50; assign x6:=0; }, 
+    testing -> not_ready{ guard x6 >=25; assign x6:=0; }, 
+    testing -> requesting{ guard x6<25; }, 
+    requesting -> critical{ sync cell_6_enter?; assign x6:=0; }, 
+    critical -> error{ guard x6>= 50; }, 
+    critical -> testing2{ guard x6<25; sync cell_6_exit?; assign x6:=0; }, 
+    testing2 -> error{ guard x6>=25; }, 
+    testing2 -> safe{ guard x6<25; }; 
+}
+
+process prodCell_7 (){ 
+state not_ready, testing{ x7 <= 25}, requesting, critical{x7 <= 50}, testing2{ x7 <= 25}, safe, error; 
+init not_ready; 
+trans 
+    not_ready -> testing{ guard x7 <=50; assign x7:=0; }, 
+    testing -> not_ready{ guard x7 >=25; assign x7:=0; }, 
+    testing -> requesting{ guard x7<25; }, 
+    requesting -> critical{ sync cell_7_enter?; assign x7:=0; }, 
+    critical -> error{ guard x7>= 50; }, 
+    critical -> testing2{ guard x7<25; sync cell_7_exit?; assign x7:=0; }, 
+    testing2 -> error{ guard x7>=25; }, 
+    testing2 -> safe{ guard x7<25; }; 
+}
+
+system counter , arbiter_1, prodCell_1, arbiter_2, prodCell_2, arbiter_3, prodCell_3, arbiter_4, prodCell_4, arbiter_5, prodCell_5, arbiter_6, prodCell_6, arbiter_7, prodCell_7;
