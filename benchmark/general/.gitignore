@@ -2,3 +2,4 @@
 /*.jar
 /*.so
 /log*.csv
+*.Rhistory
