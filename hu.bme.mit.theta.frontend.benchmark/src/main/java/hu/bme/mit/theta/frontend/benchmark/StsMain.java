@@ -172,7 +172,8 @@ public class StsMain {
 			}
 
 		} catch (final Exception ex) {
-			tableWriter.cell("[EX] " + ex.getClass().getSimpleName() + ", " + ex.getMessage());
+			final String message = ex.getMessage() == null ? "" : ": " + ex.getMessage();
+			tableWriter.cell("[EX] " + ex.getClass().getSimpleName() + message);
 		}
 
 		tableWriter.newRow();
