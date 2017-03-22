@@ -13,12 +13,12 @@ import hu.bme.mit.theta.analysis.algorithm.ArgBuilder;
 import hu.bme.mit.theta.analysis.algorithm.ArgChecker;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
 import hu.bme.mit.theta.analysis.algorithm.cegar.WaitlistBasedAbstractor;
-import hu.bme.mit.theta.analysis.impl.NullPrec;
 import hu.bme.mit.theta.analysis.impl.PrecMappingAnalysis;
 import hu.bme.mit.theta.analysis.loc.ConstLocPrec;
 import hu.bme.mit.theta.analysis.loc.LocAnalysis;
 import hu.bme.mit.theta.analysis.loc.LocState;
 import hu.bme.mit.theta.analysis.tcfa.zone.TcfaZoneAnalysis;
+import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.analysis.waitlist.FifoWaitlist;
 import hu.bme.mit.theta.analysis.zone.ZonePrec;
@@ -40,20 +40,20 @@ public class TcfaZoneTest {
 
 		final TcfaLts lts = TcfaLts.create(fischer);
 
-		final Analysis<LocState<ZoneState, TcfaLoc, TcfaEdge>, TcfaAction, NullPrec> analysis = PrecMappingAnalysis
+		final Analysis<LocState<ZoneState, TcfaLoc, TcfaEdge>, TcfaAction, UnitPrec> analysis = PrecMappingAnalysis
 				.create(LocAnalysis.create(fischer.getInitLoc(), TcfaZoneAnalysis.getInstance()),
 						np -> ConstLocPrec.create(ZonePrec.create(fischer.getClockVars())));
 
 		final Predicate<State> target = s -> false;
 
-		final ArgBuilder<LocState<ZoneState, TcfaLoc, TcfaEdge>, TcfaAction, NullPrec> argBuilder = ArgBuilder
+		final ArgBuilder<LocState<ZoneState, TcfaLoc, TcfaEdge>, TcfaAction, UnitPrec> argBuilder = ArgBuilder
 				.create(lts, analysis, target);
 
-		final Abstractor<LocState<ZoneState, TcfaLoc, TcfaEdge>, TcfaAction, NullPrec> abstractor = WaitlistBasedAbstractor
+		final Abstractor<LocState<ZoneState, TcfaLoc, TcfaEdge>, TcfaAction, UnitPrec> abstractor = WaitlistBasedAbstractor
 				.create(argBuilder, LocState::getLoc, FifoWaitlist.supplier());
 
 		final ARG<LocState<ZoneState, TcfaLoc, TcfaEdge>, TcfaAction> arg = abstractor.createArg();
-		abstractor.check(arg, NullPrec.getInstance());
+		abstractor.check(arg, UnitPrec.getInstance());
 
 		System.out.println(new GraphvizWriter().writeString(ArgVisualizer.visualize(arg)));
 

@@ -8,7 +8,6 @@ import hu.bme.mit.theta.analysis.InitFunction;
 import hu.bme.mit.theta.analysis.TransferFunction;
 import hu.bme.mit.theta.analysis.expl.ExplPrec;
 import hu.bme.mit.theta.analysis.expl.ExplState;
-import hu.bme.mit.theta.analysis.impl.NullPrec;
 import hu.bme.mit.theta.analysis.impl.PrecMappingAnalysis;
 import hu.bme.mit.theta.analysis.loc.ConstLocPrec;
 import hu.bme.mit.theta.analysis.loc.LocAnalysis;
@@ -22,16 +21,17 @@ import hu.bme.mit.theta.analysis.tcfa.TcfaAction;
 import hu.bme.mit.theta.analysis.tcfa.expl.TcfaExplAnalysis;
 import hu.bme.mit.theta.analysis.tcfa.zone.itp.ItpZoneState;
 import hu.bme.mit.theta.analysis.tcfa.zone.itp.TcfaItpZoneAnalysis;
+import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.analysis.zone.ZonePrec;
 import hu.bme.mit.theta.formalism.tcfa.TCFA;
 import hu.bme.mit.theta.formalism.tcfa.TcfaEdge;
 import hu.bme.mit.theta.formalism.tcfa.TcfaLoc;
 
-final class TcfaLawiAnalysis implements Analysis<TcfaLawiState, TcfaAction, NullPrec> {
+final class TcfaLawiAnalysis implements Analysis<TcfaLawiState, TcfaAction, UnitPrec> {
 
 	private final Domain<TcfaLawiState> domain;
-	private final InitFunction<TcfaLawiState, NullPrec> initFunction;
-	private final TransferFunction<TcfaLawiState, TcfaAction, NullPrec> transferFunction;
+	private final InitFunction<TcfaLawiState, UnitPrec> initFunction;
+	private final TransferFunction<TcfaLawiState, TcfaAction, UnitPrec> transferFunction;
 
 	private TcfaLawiAnalysis(final TCFA tcfa) {
 		checkNotNull(tcfa);
@@ -48,7 +48,7 @@ final class TcfaLawiAnalysis implements Analysis<TcfaLawiState, TcfaAction, Null
 		final Analysis<LocState<Prod2State<ExplState, ItpZoneState>, TcfaLoc, TcfaEdge>, TcfaAction, LocPrec<Prod2Prec<ExplPrec, ZonePrec>, TcfaLoc, TcfaEdge>> locAnalysis = LocAnalysis
 				.create(tcfa.getInitLoc(), compositeAnalysis);
 
-		final Analysis<LocState<Prod2State<ExplState, ItpZoneState>, TcfaLoc, TcfaEdge>, TcfaAction, NullPrec> analysis = PrecMappingAnalysis
+		final Analysis<LocState<Prod2State<ExplState, ItpZoneState>, TcfaLoc, TcfaEdge>, TcfaAction, UnitPrec> analysis = PrecMappingAnalysis
 				.create(locAnalysis, np -> locPrec);
 
 		domain = TcfaLawiDomain.create(analysis.getDomain());
@@ -66,12 +66,12 @@ final class TcfaLawiAnalysis implements Analysis<TcfaLawiState, TcfaAction, Null
 	}
 
 	@Override
-	public InitFunction<TcfaLawiState, NullPrec> getInitFunction() {
+	public InitFunction<TcfaLawiState, UnitPrec> getInitFunction() {
 		return initFunction;
 	}
 
 	@Override
-	public TransferFunction<TcfaLawiState, TcfaAction, NullPrec> getTransferFunction() {
+	public TransferFunction<TcfaLawiState, TcfaAction, UnitPrec> getTransferFunction() {
 		return transferFunction;
 	}
 

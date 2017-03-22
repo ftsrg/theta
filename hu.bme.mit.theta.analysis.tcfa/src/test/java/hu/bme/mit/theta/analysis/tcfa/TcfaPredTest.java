@@ -15,7 +15,6 @@ import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.ArgBuilder;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
 import hu.bme.mit.theta.analysis.algorithm.cegar.WaitlistBasedAbstractor;
-import hu.bme.mit.theta.analysis.impl.NullPrec;
 import hu.bme.mit.theta.analysis.impl.PrecMappingAnalysis;
 import hu.bme.mit.theta.analysis.loc.ConstLocPrec;
 import hu.bme.mit.theta.analysis.loc.LocAnalysis;
@@ -25,6 +24,7 @@ import hu.bme.mit.theta.analysis.pred.PredAnalysis;
 import hu.bme.mit.theta.analysis.pred.PredPrec;
 import hu.bme.mit.theta.analysis.pred.PredState;
 import hu.bme.mit.theta.analysis.pred.SimplePredPrec;
+import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.analysis.waitlist.FifoWaitlist;
 import hu.bme.mit.theta.common.Utils;
@@ -50,20 +50,20 @@ public class TcfaPredTest {
 		final LocPrec<PredPrec, TcfaLoc, TcfaEdge> fixedPrec = ConstLocPrec.create(SimplePredPrec
 				.create(Collections.singleton(Eq(Utils.anyElementOf(fischer.getDataVars()).getRef(), Int(0))), solver));
 
-		final Analysis<LocState<PredState, TcfaLoc, TcfaEdge>, TcfaAction, NullPrec> analysis = PrecMappingAnalysis
+		final Analysis<LocState<PredState, TcfaLoc, TcfaEdge>, TcfaAction, UnitPrec> analysis = PrecMappingAnalysis
 				.create(LocAnalysis.create(fischer.getInitLoc(), PredAnalysis.create(solver, True())), np -> fixedPrec);
 
 		final Predicate<State> target = s -> false;
 
-		final ArgBuilder<LocState<PredState, TcfaLoc, TcfaEdge>, TcfaAction, NullPrec> argBuilder = ArgBuilder
+		final ArgBuilder<LocState<PredState, TcfaLoc, TcfaEdge>, TcfaAction, UnitPrec> argBuilder = ArgBuilder
 				.create(lts, analysis, target);
 
-		final Abstractor<LocState<PredState, TcfaLoc, TcfaEdge>, TcfaAction, NullPrec> abstractor = WaitlistBasedAbstractor
+		final Abstractor<LocState<PredState, TcfaLoc, TcfaEdge>, TcfaAction, UnitPrec> abstractor = WaitlistBasedAbstractor
 				.create(argBuilder, LocState::getLoc, FifoWaitlist.supplier());
 
 		final ARG<LocState<PredState, TcfaLoc, TcfaEdge>, TcfaAction> arg = abstractor.createArg();
 
-		abstractor.check(arg, NullPrec.getInstance());
+		abstractor.check(arg, UnitPrec.getInstance());
 
 		System.out.println(new GraphvizWriter().writeString(ArgVisualizer.visualize(arg)));
 	}
