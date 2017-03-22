@@ -59,6 +59,7 @@ import hu.bme.mit.theta.core.expr.SubExpr;
 import hu.bme.mit.theta.core.expr.TrueExpr;
 import hu.bme.mit.theta.core.expr.VarRefExpr;
 import hu.bme.mit.theta.core.model.Assignment;
+import hu.bme.mit.theta.core.type.ArrayType;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.IntType;
 import hu.bme.mit.theta.core.type.RatType;
@@ -630,11 +631,13 @@ public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? ext
 		return Mul(ops);
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public <IndexType extends Type, ElemType extends Type> Expr<? extends Type> visit(
 			final ArrayReadExpr<IndexType, ElemType> expr, final Assignment param) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO");
+		return expr.with(
+				(Expr<? extends ArrayType<? super IndexType, ? extends ElemType>>) expr.getArray().accept(this, param),
+				(Expr<? extends IndexType>) expr.getIndex().accept(this, param));
 	}
 
 	@Override

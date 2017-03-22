@@ -2,17 +2,11 @@ grammar XtaDsl;
 
 // S P E C I F I C A T I O N
 
-xta	:	fDeclarations+=declaration* fInstantiations=instantiation* fSystem=system
-	;
-
-declaration
-	:	functionDecl
-	|	variableDecl
-	|	typeDecl
-	|	procDecl
+xta	:	(fFunctionDecls+=functionDecl | fVariableDecls+=variableDecl | fTypeDecls+=typeDecl | fProcessDecls+=processDecl)* (fInstantiations+=instantiation)* fSystem=system
 	;
 	
-decl:	tId=ID COLON tType=type
+iteratorDecl
+	:	fId=ID COLON fType=type
 	;
 	
 instantiation
@@ -39,11 +33,11 @@ functionDecl
 	:	fType=type fId=ID fParameterList=parameterList fBlock=block
 	;
 	
-procDecl
-	:	PROCESS	fId=ID fParameterList=parameterList LBRAC fProcBody=procBody RBRAC
+processDecl
+	:	PROCESS	fId=ID fParameterList=parameterList LBRAC fProcessBody=processBody RBRAC
 	;
 	
-procBody
+processBody
 	:	(fFunctionDecls+=functionDecl | fVariableDecls+=variableDecl | fTypeDecls+=typeDecl)* fStates=states (fCommit=commit)? (fUrgent=urgent)? fInit=init (fTransitions=transitions)?
 	;
 	
@@ -88,18 +82,18 @@ transitionBody
 	;
 	
 select
-	:	SELECT fDecls+=decl (COMMA fDecls+=decl)* SEMICOLON
+	:	SELECT fIteratorDecls+=iteratorDecl (COMMA fIteratorDecls+=iteratorDecl)* SEMICOLON
 	;
 	
 guard
 	:	GUARD fExpression=expression SEMICOLON
 	;
 	
-sync:	SYNC fExpression=expression (fSend=EXCL | fReceive=QUEST) SEMICOLON
+sync:	SYNC fExpression=expression (fEmit=EXCL | fReceive=QUEST) SEMICOLON
 	;
 	
 assign
-	:	ASSIGN fExprList=exprList SEMICOLON
+	:	ASSIGN (fExpressions+=expression)(COMMA fExpressions+=expression)* SEMICOLON
 	;
 	
 SYSTEM
@@ -151,11 +145,20 @@ typeDecl
 	;
 	
 arrayId
-	:	fId=ID (fArrayDecls+=arrayDecl)*
+	:	fId=ID (LBRACK fArrayIndexes+=arrayIndex RBRACK)*
+	;
+
+arrayIndex
+	:	idIndex
+	|	expressionIndex
 	;
 	
-arrayDecl
-	:	LBRACK fExpression=expression RBRACK
+idIndex
+	:	fId=ID
+	;
+	
+expressionIndex
+	:	fExpression=expression
 	;
 	
 	
@@ -308,7 +311,7 @@ forStatement
 	;
 	
 foreachStatement
-	:	FOR LPAREN fDecl=decl RPAREN fStatement=statement
+	:	FOR LPAREN fIteratorDecl=iteratorDecl RPAREN fStatement=statement
 	;
 	
 whileStatement
@@ -351,10 +354,6 @@ RETURN
 
 ////////////////////////////////////////////////////////////////////////////
 
-exprList
-	:	(fExpressions+=expression)(COMMA fExpressions+=expression)*
-	;
-
 expression
 	:	quantifiedExpression
 	;
@@ -366,15 +365,15 @@ quantifiedExpression
 	;
 	
 forallExpression
-	:	FORALL LPAREN fDecl=decl RPAREN fOp+=quantifiedExpression
+	:	FORALL LPAREN fIteratorDecl=iteratorDecl RPAREN fOp=quantifiedExpression
 	;
 	
 existsExpression
-	:	EXISTS LPAREN fDecl=decl RPAREN fOp+=quantifiedExpression
+	:	EXISTS LPAREN fIteratorDecl=iteratorDecl RPAREN fOp=quantifiedExpression
 	;
 	
 textOrImplyExpression
-	:	fOps+=textAndExpression (fOper=textOrImplyOp fOps+=textAndExpression)*
+	:	fOps+=textAndExpression (fOpers+=textOrImplyOp fOps+=textAndExpression)*
 	;
 	
 textAndExpression
@@ -383,7 +382,7 @@ textAndExpression
 	
 textNotExpression
 	:	assignmentExpression
-	|	textNotOp fOp+=textNotExpression
+	|	textNotOp fOp=textNotExpression
 	;
 	
 assignmentExpression
@@ -395,49 +394,48 @@ conditionalExpression
 	;
 	
 logicalOrExpression
-	:	fOps+=logicalAndExpression (logicalOrOp fOps+=logicalAndExpression)*
+	:	fOps+=logicalAndExpression (logOrOp fOps+=logicalAndExpression)*
 	;
 	
 logicalAndExpression
-	:	fOps+=bitwiseOrExpression (logicalAndOp fOps+=bitwiseOrExpression)*
+	:	fOps+=bitwiseOrExpression (logAndOp fOps+=bitwiseOrExpression)*
 	;
 	
 bitwiseOrExpression
-	:	 fOps+=bitwiseXorExpression (bitwiseOrOp fOps+=bitwiseXorExpression)*
+	:	 fOps+=bitwiseXorExpression (bwOrOp fOps+=bitwiseXorExpression)*
 	;
 	
 bitwiseXorExpression
-	:	fOps+=bitwiseAndExpression (bitwiseXorOp fOps+=bitwiseAndExpression)*
+	:	fOps+=bitwiseAndExpression (bwXorOp fOps+=bitwiseAndExpression)*
 	;
 	
 bitwiseAndExpression
-	:	fOps+=equalityExpression (bitwiseAndOp fOps+=equalityExpression)*
+	:	fOps+=equalityExpression (bwAndOp fOps+=equalityExpression)*
 	;
 	
-	
 equalityExpression
-	:	fOps+=relationalExpression (fOper=equalityOp  fOps+=relationalExpression)*
+	:	fOps+=relationalExpression (fOpers+=equalityOp  fOps+=relationalExpression)*
 	;
 
 relationalExpression
-	:	fOps+=shiftExpression (fOper=relationalOp  fOps+=shiftExpression)*
+	:	fOps+=shiftExpression (fOpers+=relationalOp  fOps+=shiftExpression)*
 	;
 	
 shiftExpression
-	:	fOps+=additiveExpression (fOper=shiftOp  fOps+=additiveExpression)*
+	:	fOps+=additiveExpression (fOpers+=shiftOp  fOps+=additiveExpression)*
 	;
 	
 additiveExpression
-	:	fOps+=multiplicativeExpression (fOper=additiveOp  fOps+=multiplicativeExpression)*
+	:	fOps+=multiplicativeExpression (fOpers+=additiveOp  fOps+=multiplicativeExpression)*
 	;
 	
 multiplicativeExpression
-	:	fOps+=prefixExpression (fOper=multiplicativeOp fOps+=prefixExpression)*
+	:	fOps+=prefixExpression (fOpers+=multiplicativeOp fOps+=prefixExpression)*
 	;
 	
 prefixExpression
 	:	postfixExpression
-	|	fOper=prefixOp fOp+=prefixExpression
+	|	fOper=prefixOp fOp=prefixExpression
 	;
 	
 postfixExpression
@@ -469,7 +467,7 @@ idExpression
 	;
 	
 parenthesisExpression
-	:	LPAREN fOp+=expression RPAREN
+	:	LPAREN fOp=expression RPAREN
 	;
 
 argList
@@ -498,17 +496,17 @@ textNotOp
 	;
 	
 assignmentOp
-	:	assignOp
-	|	addAssignOp
-	|	subAssignOp
-	|	mulAssignOp
-	|	divAssignOp
-	|	remAssignOp
-	|	bwOrAssignOp
-	|	bwAndAssignOp
-	|	bwXorAssignOp
-	|	shlAssignOp
-	|	shrAssignOp
+	:	fAssignOp=assignOp
+	|	fAddAssignOp=addAssignOp
+	|	fSubAssignOp=subAssignOp
+	|	fMulAssignOp=mulAssignOp
+	|	fDivAssignOp=divAssignOp
+	|	fRemAssignOp=remAssignOp
+	|	fBwOrAssignOp=bwOrAssignOp
+	|	fBwAndAssignOp=bwAndAssignOp
+	|	fBwXorAssignOp=bwXorAssignOp
+	|	fShlAssignOp=shlAssignOp
+	|	fShrAssignOp=shrAssignOp
 	;
 
 assignOp
@@ -555,30 +553,30 @@ shrAssignOp
 	:	SHRASSIGNOP
 	;
 	
-logicalOrOp
-	:	LOROP
+logOrOp
+	:	LOGOROP
 	;
 	
-logicalAndOp
-	:	LANDOP
+logAndOp
+	:	LOGANDOP
 	;
 	
-bitwiseOrOp
+bwOrOp
 	:	BAR
 	;
 	
-bitwiseXorOp
+bwXorOp
 	:	HAT
 	;
 	
-bitwiseAndOp
+bwAndOp
 	:	AMP
 	;
 
 	
 equalityOp
-	:	eqOp
-	|	neqOp
+	:	fEqOp=eqOp
+	|	fNeqOp=neqOp
 	;
 	
 eqOp:	EQOP
@@ -589,10 +587,10 @@ neqOp
 	;
 	
 relationalOp
-	:	ltOp
-	|	leqOp
-	|	gtOp
-	|	geqOp
+	:	fLtOp=ltOp
+	|	fLeqOp=leqOp
+	|	fGtOp=gtOp
+	|	fGeqOp=geqOp
 	;
 	
 ltOp:	LTOP
@@ -623,8 +621,8 @@ shrOp
 	;
 	
 additiveOp
-	:	addOp
-	|	subOp
+	:	fAddOp=addOp
+	|	fSubOp=subOp
 	;
 	
 addOp
@@ -636,9 +634,9 @@ subOp
 	;
 	
 multiplicativeOp
-	:	mulOp
-	|	divOp
-	|	remOp
+	:	fMulOp=mulOp
+	|	fDivOp=divOp
+	|	fRemOp=remOp
 	;
 	
 mulOp
@@ -654,12 +652,12 @@ remOp
 	;
 	
 prefixOp
-	:	preIncOp
-	|	preDecOp
-	|	plusOp
-	|	minusOp
-	|	lNotOp
-	|	bwNotOp
+	:	fPreIncOp=preIncOp
+	|	fPreDecOp=preDecOp
+	|	fPlusOp=plusOp
+	|	fMinusOp=minusOp
+	|	fLogNotOp=logNotOp
+	|	fBwNotOp=bwNotOp
 	;
 
 preIncOp
@@ -678,7 +676,7 @@ minusOp
 	:	MINUS
 	;
 	
-lNotOp
+logNotOp
 	:	EXCL
 	;
 	
@@ -687,11 +685,11 @@ bwNotOp
 	;
 	
 postfixOp
-	:	postIncOp
-	|	postDecOp
-	|	functionCallOp
-	|	arrayAccessOp
-	|	structSelectOp
+	:	fPostIncOp=postIncOp
+	|	fPostDeclOp=postDecOp
+	|	fFuncCallOp=functionCallOp
+	|	fArrayAccessOp=arrayAccessOp
+	|	fStructSelectOp=structSelectOp
 	;
 	
 postIncOp
@@ -735,11 +733,11 @@ AND	:	'and'
 NOT	:	'not'
 	;
 	
-LOROP
+LOGOROP
 	:	'||'
 	;
 	
-LANDOP
+LOGANDOP
 	:	'&&'
 	;
 	
