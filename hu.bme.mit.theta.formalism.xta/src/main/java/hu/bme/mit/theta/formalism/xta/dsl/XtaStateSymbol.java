@@ -27,12 +27,8 @@ final class XtaStateSymbol implements Symbol {
 			final CommitContext commit) {
 		checkNotNull(context);
 		name = context.fId.getText();
-		kind = isCommited(name, commit) ? Kind.COMMITED : isUrgent(name, urgent) ? Kind.URGENT : Kind.NORMAL;
+		kind = isCommited(name, commit) ? Kind.COMMITTED : isUrgent(name, urgent) ? Kind.URGENT : Kind.NORMAL;
 		expression = context.fExpression != null ? new XtaExpression(scope, context.fExpression) : null;
-
-		if (kind == Kind.COMMITED) {
-			throw new UnsupportedOperationException("Commited locations are not supported");
-		}
 	}
 
 	private static boolean isUrgent(final String name, final UrgentContext urgent) {

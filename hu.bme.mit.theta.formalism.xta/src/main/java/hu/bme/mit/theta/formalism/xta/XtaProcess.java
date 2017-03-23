@@ -150,7 +150,7 @@ public final class XtaProcess {
 	public static final class Loc {
 
 		public static enum Kind {
-			NORMAL, URGENT, COMMITED;
+			NORMAL, URGENT, COMMITTED;
 		}
 
 		private final Collection<Edge> inEdges;
