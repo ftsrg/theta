@@ -7,7 +7,6 @@ import hu.bme.mit.theta.analysis.TransferFunction;
 import hu.bme.mit.theta.analysis.expl.ExplPrec;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.tcfa.TcfaAction;
-import hu.bme.mit.theta.analysis.tcfa.TcfaStmt;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.BoolLitExpr;
 import hu.bme.mit.theta.core.expr.Expr;
@@ -19,6 +18,7 @@ import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.utils.impl.ExprUtils;
+import hu.bme.mit.theta.formalism.ta.utils.impl.TaStmt;
 
 final class TcfaExplTransferFunction implements TransferFunction<ExplState, TcfaAction, ExplPrec> {
 
@@ -37,7 +37,7 @@ final class TcfaExplTransferFunction implements TransferFunction<ExplState, Tcfa
 
 		Valuation currentValuation = state.getValuation();
 
-		for (final TcfaStmt tcfaStmt : action.getTcfaStmts()) {
+		for (final TaStmt tcfaStmt : action.getTcfaStmts()) {
 
 			if (tcfaStmt.isDataStmt()) {
 				final Stmt stmt = tcfaStmt.getStmt();

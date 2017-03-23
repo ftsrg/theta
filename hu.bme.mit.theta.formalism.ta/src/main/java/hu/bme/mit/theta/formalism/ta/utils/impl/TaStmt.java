@@ -1,20 +1,19 @@
-package hu.bme.mit.theta.analysis.tcfa;
+package hu.bme.mit.theta.formalism.ta.utils.impl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.formalism.ta.op.ClockOp;
 import hu.bme.mit.theta.formalism.ta.op.impl.ClockOps;
-import hu.bme.mit.theta.formalism.ta.utils.impl.TaUtils;
 
-public abstract class TcfaStmt {
+public abstract class TaStmt {
 	private final Stmt stmt;
 
-	private TcfaStmt(final Stmt stmt) {
+	private TaStmt(final Stmt stmt) {
 		this.stmt = checkNotNull(stmt);
 	}
 
-	public static TcfaStmt of(final Stmt stmt) {
+	public static TaStmt of(final Stmt stmt) {
 		if (TaUtils.isClockStmt(stmt)) {
 			return new ClockStmt(stmt);
 		} else if (TaUtils.isDataStmt(stmt)) {
@@ -38,7 +37,7 @@ public abstract class TcfaStmt {
 
 	////
 
-	public static final class ClockStmt extends TcfaStmt {
+	public static final class ClockStmt extends TaStmt {
 		private final ClockOp clockOp;
 
 		private ClockStmt(final Stmt stmt) {
@@ -72,7 +71,7 @@ public abstract class TcfaStmt {
 
 	}
 
-	public static final class DataStmt extends TcfaStmt {
+	public static final class DataStmt extends TaStmt {
 
 		private DataStmt(final Stmt stmt) {
 			super(stmt);

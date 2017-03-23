@@ -30,6 +30,8 @@ import hu.bme.mit.theta.core.utils.impl.StmtUtils;
 import hu.bme.mit.theta.core.utils.impl.UnfoldResult;
 import hu.bme.mit.theta.core.utils.impl.VarIndexing;
 import hu.bme.mit.theta.formalism.ta.decl.ClockDecl;
+import hu.bme.mit.theta.formalism.ta.utils.impl.TaExpr;
+import hu.bme.mit.theta.formalism.ta.utils.impl.TaStmt;
 import hu.bme.mit.theta.formalism.tcfa.TCFA;
 import hu.bme.mit.theta.formalism.tcfa.TcfaEdge;
 import hu.bme.mit.theta.formalism.tcfa.TcfaLoc;
@@ -40,9 +42,9 @@ public final class TcfaAction implements LocAction<TcfaLoc, TcfaEdge> {
 
 	private final TcfaEdge edge;
 
-	private final Collection<TcfaExpr> sourceInvars;
-	private final Collection<TcfaExpr> targetInvars;
-	private final List<TcfaStmt> tcfaStmts;
+	private final Collection<TaExpr> sourceInvars;
+	private final Collection<TaExpr> targetInvars;
+	private final List<TaStmt> tcfaStmts;
 
 	private final Expr<? extends BoolType> expr;
 	private final VarIndexing nextIndexing;
@@ -56,7 +58,7 @@ public final class TcfaAction implements LocAction<TcfaLoc, TcfaEdge> {
 
 		sourceInvars = invarsOf(edge.getSource());
 		targetInvars = invarsOf(edge.getTarget());
-		tcfaStmts = ImmutableList.copyOf(edge.getStmts().stream().map(TcfaStmt::of).collect(toList()));
+		tcfaStmts = ImmutableList.copyOf(edge.getStmts().stream().map(TaStmt::of).collect(toList()));
 
 		final UnfoldResult unfoldResult = unfold(tcfa, edge);
 		expr = And(unfoldResult.getExprs());
@@ -76,15 +78,15 @@ public final class TcfaAction implements LocAction<TcfaLoc, TcfaEdge> {
 		return edge;
 	}
 
-	public Collection<TcfaExpr> getSourceInvars() {
+	public Collection<TaExpr> getSourceInvars() {
 		return sourceInvars;
 	}
 
-	public Collection<TcfaExpr> getTargetInvars() {
+	public Collection<TaExpr> getTargetInvars() {
 		return targetInvars;
 	}
 
-	public List<TcfaStmt> getTcfaStmts() {
+	public List<TaStmt> getTcfaStmts() {
 		return tcfaStmts;
 	}
 
@@ -105,15 +107,15 @@ public final class TcfaAction implements LocAction<TcfaLoc, TcfaEdge> {
 	@Override
 	public String toString() {
 		return ObjectUtils.toStringBuilder(getClass().getSimpleName())
-				.addAll(tcfaStmts.stream().map(TcfaStmt::getStmt).collect(toList())).toString();
+				.addAll(tcfaStmts.stream().map(TaStmt::getStmt).collect(toList())).toString();
 	}
 
 	////
 
-	private static Collection<TcfaExpr> invarsOf(final TcfaLoc loc) {
-		final ImmutableSet.Builder<TcfaExpr> builder = ImmutableSet.builder();
+	private static Collection<TaExpr> invarsOf(final TcfaLoc loc) {
+		final ImmutableSet.Builder<TaExpr> builder = ImmutableSet.builder();
 		for (final Expr<? extends BoolType> expr : loc.getInvars()) {
-			final TcfaExpr invar = TcfaExpr.of(expr);
+			final TaExpr invar = TaExpr.of(expr);
 			builder.add(invar);
 		}
 		return builder.build();

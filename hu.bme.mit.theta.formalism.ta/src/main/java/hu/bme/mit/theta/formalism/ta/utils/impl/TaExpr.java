@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.analysis.tcfa;
+package hu.bme.mit.theta.formalism.ta.utils.impl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -6,16 +6,15 @@ import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.formalism.ta.constr.ClockConstr;
 import hu.bme.mit.theta.formalism.ta.constr.impl.ClockConstrs;
-import hu.bme.mit.theta.formalism.ta.utils.impl.TaUtils;
 
-public abstract class TcfaExpr {
+public abstract class TaExpr {
 	private final Expr<? extends BoolType> expr;
 
-	private TcfaExpr(final Expr<? extends BoolType> expr) {
+	private TaExpr(final Expr<? extends BoolType> expr) {
 		this.expr = checkNotNull(expr);
 	}
 
-	public static TcfaExpr of(final Expr<? extends BoolType> expr) {
+	public static TaExpr of(final Expr<? extends BoolType> expr) {
 		checkNotNull(expr);
 		if (TaUtils.isClockExpr(expr)) {
 			return new ClockExpr(expr);
@@ -40,7 +39,7 @@ public abstract class TcfaExpr {
 
 	////
 
-	public static final class ClockExpr extends TcfaExpr {
+	public static final class ClockExpr extends TaExpr {
 		private final ClockConstr clockConstr;
 
 		private ClockExpr(final Expr<? extends BoolType> expr) {
@@ -73,7 +72,7 @@ public abstract class TcfaExpr {
 		}
 	}
 
-	public static final class DataExpr extends TcfaExpr {
+	public static final class DataExpr extends TaExpr {
 
 		private DataExpr(final Expr<? extends BoolType> expr) {
 			super(expr);
