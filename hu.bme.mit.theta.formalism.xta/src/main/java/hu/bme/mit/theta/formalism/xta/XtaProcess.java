@@ -16,7 +16,9 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
+import hu.bme.mit.theta.core.type.ArrayType;
 import hu.bme.mit.theta.core.type.BoolType;
+import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.utils.impl.ExprUtils;
 import hu.bme.mit.theta.core.utils.impl.StmtUtils;
 import hu.bme.mit.theta.formalism.xta.XtaProcess.Loc.Kind;
@@ -120,10 +122,27 @@ public final class XtaProcess {
 		final HashSet<VarDecl<?>> result = new HashSet<>();
 		result.addAll(extractVarsFromExprs(edge.guards));
 		if (edge.sync.isPresent()) {
-			result.addAll(extractVarsFromExpr(edge.sync.get().getExpr()));
+			final SyncLabel sync = edge.getSync().get();
+			final Collection<VarDecl<?>> varDecls = extractVarsFromExpr(sync.getExpr());
+			for (final VarDecl<?> varDecl : varDecls) {
+				if (!isArrayOfChans(varDecl.getType())) {
+					result.add(varDecl);
+				}
+			}
 		}
 		result.addAll(extractVarsFromStmts(edge.updates));
 		return result;
+	}
+
+	private static boolean isArrayOfChans(final Type type) {
+		if (type instanceof ChanType) {
+			return true;
+		} else if (type instanceof ArrayType) {
+			final ArrayType<?, ?> arrayType = (ArrayType<?, ?>) type;
+			return isArrayOfChans(arrayType.getElemType());
+		} else {
+			return false;
+		}
 	}
 
 	////

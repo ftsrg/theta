@@ -1,5 +1,6 @@
 package hu.bme.mit.theta.formalism.xta;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Collection;
@@ -15,7 +16,9 @@ public final class XtaSystem {
 	private final List<XtaProcess> processes;
 
 	private XtaSystem(final List<XtaProcess> processes) {
-		this.processes = ImmutableList.copyOf(checkNotNull(processes));
+		checkNotNull(processes);
+		checkArgument(processes.size() > 0);
+		this.processes = ImmutableList.copyOf(processes);
 		vars = new HashSet<>();
 		processes.forEach(p -> vars.addAll(p.getVars()));
 	}
