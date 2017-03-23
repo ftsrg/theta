@@ -125,7 +125,7 @@ public final class Valuation implements Assignment {
 		return sj.toString();
 	}
 
-	public static final class Builder {
+	public static final class Builder implements Assignment {
 		private final Map<VarDecl<? extends Type>, LitExpr<?>> declToExpr;
 		private boolean built;
 
@@ -156,6 +156,30 @@ public final class Valuation implements Assignment {
 			checkState(!built);
 			built = true;
 			return new Valuation(this);
+		}
+
+		@Override
+		public Collection<? extends Decl<?>> getDecls() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public <DeclType extends Type> Optional<? extends Expr<DeclType>> eval(final Decl<DeclType> decl) {
+			checkNotNull(decl);
+			assert (decl instanceof VarDecl<?>);
+
+			if (declToExpr.containsKey(decl)) {
+				@SuppressWarnings("unchecked")
+				final LitExpr<DeclType> val = (LitExpr<DeclType>) declToExpr.get(decl);
+				return Optional.of(val);
+			}
+
+			return Optional.empty();
+		}
+
+		@Override
+		public Expr<? extends BoolType> toExpr() {
+			throw new UnsupportedOperationException();
 		}
 
 	}
