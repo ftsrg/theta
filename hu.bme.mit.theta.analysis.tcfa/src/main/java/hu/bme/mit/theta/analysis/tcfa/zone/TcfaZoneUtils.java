@@ -1,10 +1,13 @@
-package hu.bme.mit.theta.analysis.tcfa;
+package hu.bme.mit.theta.analysis.tcfa.zone;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.formalism.ta.constr.impl.ClockConstrs.Eq;
 
 import com.google.common.collect.Lists;
 
+import hu.bme.mit.theta.analysis.tcfa.TcfaAction;
+import hu.bme.mit.theta.analysis.tcfa.TcfaExpr;
+import hu.bme.mit.theta.analysis.tcfa.TcfaStmt;
 import hu.bme.mit.theta.analysis.tcfa.TcfaExpr.ClockExpr;
 import hu.bme.mit.theta.analysis.zone.ZonePrec;
 import hu.bme.mit.theta.analysis.zone.ZoneState;

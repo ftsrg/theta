@@ -7,7 +7,7 @@ import java.util.Collections;
 
 import hu.bme.mit.theta.analysis.TransferFunction;
 import hu.bme.mit.theta.analysis.tcfa.TcfaAction;
-import hu.bme.mit.theta.analysis.tcfa.TcfaZoneUtils;
+import hu.bme.mit.theta.analysis.tcfa.zone.TcfaZoneUtils;
 import hu.bme.mit.theta.analysis.zone.ZonePrec;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
 

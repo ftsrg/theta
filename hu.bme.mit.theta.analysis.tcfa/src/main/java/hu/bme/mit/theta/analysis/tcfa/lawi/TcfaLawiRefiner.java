@@ -1,8 +1,8 @@
 package hu.bme.mit.theta.analysis.tcfa.lawi;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.analysis.tcfa.TcfaZoneUtils.post;
-import static hu.bme.mit.theta.analysis.tcfa.TcfaZoneUtils.pre;
+import static hu.bme.mit.theta.analysis.tcfa.zone.TcfaZoneUtils.post;
+import static hu.bme.mit.theta.analysis.tcfa.zone.TcfaZoneUtils.pre;
 import static java.util.stream.Collectors.toList;
 
 import java.util.Collection;
