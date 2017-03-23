@@ -6,6 +6,7 @@ import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.formalism.ta.constr.ClockConstr;
 import hu.bme.mit.theta.formalism.ta.constr.impl.ClockConstrs;
+import hu.bme.mit.theta.formalism.ta.utils.impl.TaUtils;
 
 public abstract class TcfaExpr {
 	private final Expr<? extends BoolType> expr;
@@ -16,9 +17,9 @@ public abstract class TcfaExpr {
 
 	public static TcfaExpr of(final Expr<? extends BoolType> expr) {
 		checkNotNull(expr);
-		if (TcfaUtils.isClockExpr(expr)) {
+		if (TaUtils.isClockExpr(expr)) {
 			return new ClockExpr(expr);
-		} else if (TcfaUtils.isDataExpr(expr)) {
+		} else if (TaUtils.isDataExpr(expr)) {
 			return new DataExpr(expr);
 		} else {
 			throw new AssertionError();

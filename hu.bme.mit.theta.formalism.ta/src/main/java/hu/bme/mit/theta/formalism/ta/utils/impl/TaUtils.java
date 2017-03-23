@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.analysis.tcfa;
+package hu.bme.mit.theta.formalism.ta.utils.impl;
 
 import static hu.bme.mit.theta.core.utils.impl.ExprUtils.getVars;
 
@@ -27,7 +27,7 @@ import hu.bme.mit.theta.core.utils.impl.FailStmtVisitor;
 import hu.bme.mit.theta.formalism.ta.decl.ClockDecl;
 import hu.bme.mit.theta.formalism.ta.expr.ClockRefExpr;
 
-public final class TcfaUtils {
+public final class TaUtils {
 
 	private static final ClockStmtVisitor CLOCK_STMT_VISITOR;
 	private static final ClockExprVisitor CLOCK_EXPR_VISITOR;
@@ -39,7 +39,7 @@ public final class TcfaUtils {
 		DATA_STMT_VISITOR = new DataStmtVisitor();
 	}
 
-	private TcfaUtils() {
+	private TaUtils() {
 	}
 
 	public static boolean isClockStmt(final Stmt stmt) {

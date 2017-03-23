@@ -5,6 +5,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.formalism.ta.op.ClockOp;
 import hu.bme.mit.theta.formalism.ta.op.impl.ClockOps;
+import hu.bme.mit.theta.formalism.ta.utils.impl.TaUtils;
 
 public abstract class TcfaStmt {
 	private final Stmt stmt;
@@ -14,9 +15,9 @@ public abstract class TcfaStmt {
 	}
 
 	public static TcfaStmt of(final Stmt stmt) {
-		if (TcfaUtils.isClockStmt(stmt)) {
+		if (TaUtils.isClockStmt(stmt)) {
 			return new ClockStmt(stmt);
-		} else if (TcfaUtils.isDataStmt(stmt)) {
+		} else if (TaUtils.isDataStmt(stmt)) {
 			return new DataStmt(stmt);
 		} else {
 			throw new AssertionError();
