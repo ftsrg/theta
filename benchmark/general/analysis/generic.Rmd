@@ -94,12 +94,16 @@ d <- d %>% separate(Model, into = c("Type", "Name"), sep = "/", remove = F)
 
 ## Quick summary
 
-
-## Consistency of results
 ```{r}
+n_meas_total <- nrow(d)
+n_meas_succ <- nrow(d %>% filter(!is.na(Safe)))
+n_models_total <- length(unique(d$Model))
+n_configs_total <- length(unique(d$Config))
+
 d_model_config <- d %>% group_by(Config, Model) %>%
   summarise(
     ResultCount = sum(!is.na(Safe)),
+    Succ = ResultCount > 0,
     SafeCount = sum(Safe, na.rm = T),
     Consistent = SafeCount == 0 || SafeCount == ResultCount,
     TimeAvg = mean(TimeMs),
@@ -107,21 +111,56 @@ d_model_config <- d %>% group_by(Config, Model) %>%
 d_model <- d_model_config %>% group_by(Model) %>%
   summarise(
     ResultCount = sum(ResultCount),
+    Succ = ResultCount > 0,
     SafeCount = sum(SafeCount),
     Consistent = SafeCount == 0 || SafeCount == ResultCount)
+
+n_models_succ <- length(unique((d_model %>% filter(Succ))$Model))
+n_configs_succ <- length(unique((d_model_config %>% filter(Succ))$Config))
 ```
 
-There are **`r sum(!d_model_config$Consistent)`** cases where different executions of a configuration yielded different results for a model.
+- There are **`r n_models_total` models** and **`r n_configs_total` configurations**, giving **`r n_models_total * n_configs_total` measurements**, with **`r nrow(d_model_config %>% filter(Succ))` being successful** (`r nrow(d_model_config %>% filter(Succ)) / (n_models_total * n_configs_total)` success rate).
+    - **`r n_models_succ` / `r n_models_total` models** were verified by at least one configuration.
+    - **`r n_configs_succ` / `r n_configs_total` configurations** verified at least one model.
+- With the repeated measurements included, there are a total number of **`r n_meas_total` measurement points** with **`r n_meas_succ` successful** executions.
+
+## Consistency of results
+
+There are **`r sum(!d_model_config$Consistent)`** cases where different executions of the same configuration yielded different results for the same model.
 ```{r}
 d_model_config %>% filter(Consistent == F) %>% select(Config, Model)
 ```
 
-There are **`r sum(!d_model$Consistent)`** cases where different executions of a configuration or different configurations yielded different results for a model.
+There are **`r sum(!d_model$Consistent)`** cases where different executions of the same configuration or different configurations yielded different results for the same model.
 ```{r}
 d_model %>% filter(Consistent == F) %>% select(Model)
 ```
 
-## Overview
+## Overview of models and configurations
+
+```{r}
+ggplot(d_model_config %>% filter(Succ)) +
+  geom_bar(aes(x = Model)) +
+  theme_rotate_x +
+  labs(title = "Number of configurations that could verify a given model")
+```
+
+```{r}
+ggplot(d_model_config %>% filter(Succ)) +
+  geom_bar(aes(x = Config)) +
+  theme_rotate_x +
+  labs(title = "Number of models verified by individual configurations")
+```
+
+```{r}
+ggplot(d_model_config, aes(Model, Config)) +
+  geom_tile(aes(fill = ResultCount), color = "black") +
+  scale_fill_gradient(low = "red", high = "green", na.value = "white") +
+  theme_noticks + theme_rotate_x +
+  labs(title = "Number of successful executions")
+```
+
+## Execution time
 
 ### Relative Standard Deviation
 
@@ -131,7 +170,7 @@ ggplot(d_model_config) +
   labs(title = "Overall distribution of the RSD")
 ```
 
-The maximum RSD is **`r max(d_model_config$TimeRSD, na.rm = T)`**, and 95% of the measurements has a lower RSD than `r quantile(d_model_config$TimeRSD, .95, na.rm = T)`.
+The maximum RSD is **`r max(d_model_config$TimeRSD, na.rm = T)`**, and 95% of the measurements have a lower RSD than `r quantile(d_model_config$TimeRSD, .95, na.rm = T)`.
 
 ```{r}
 ggplot(d_model_config, aes(Model, Config)) +
@@ -145,7 +184,7 @@ ggplot(d_model_config, aes(Model, Config)) +
 ### Average execution time
 ```{r}
 ggplot(d_model_config, aes(Model, Config)) +
-  geom_tile(aes(fill = log(TimeAvg)), color = "black") +
+  geom_tile(aes(fill = log10(TimeAvg)), color = "black") +
   scale_fill_gradient(low = "green", high = "red", na.value = "white") +
   theme_noticks + theme_rotate_x
 ```
