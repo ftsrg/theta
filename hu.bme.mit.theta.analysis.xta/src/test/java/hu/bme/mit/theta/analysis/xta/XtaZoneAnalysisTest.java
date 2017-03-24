@@ -18,11 +18,13 @@ import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.ArgBuilder;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
 import hu.bme.mit.theta.analysis.algorithm.cegar.WaitlistBasedAbstractor;
+import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.analysis.waitlist.FifoWaitlist;
 import hu.bme.mit.theta.analysis.xta.zone.XtaZoneAnalysis;
 import hu.bme.mit.theta.analysis.zone.ZonePrec;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
 import hu.bme.mit.theta.common.Tuple;
+import hu.bme.mit.theta.common.visualization.GraphvizWriter;
 import hu.bme.mit.theta.formalism.xta.XtaSystem;
 import hu.bme.mit.theta.formalism.xta.dsl.XtaDslManager;
 
@@ -35,13 +37,13 @@ public final class XtaZoneAnalysisTest {
 
 				// { "/critical-2-25-50.xta" },
 
-				// { "/csma-2.xta" },
+				{ "/csma-2.xta" },
 
 				// { "/fddi-2.xta" },
 
-				{ "/fischer-2-32-64.xta" },
+				// { "/fischer-2-32-64.xta" },
 
-				{ "/lynch-2-16.xta" }
+				// { "/lynch-2-16.xta" }
 
 		});
 	}
@@ -68,8 +70,7 @@ public final class XtaZoneAnalysisTest {
 		final ARG<XtaState<ZoneState>, XtaAction> arg = abstractor.createArg();
 		abstractor.check(arg, prec);
 
-		// System.out.println(new
-		// GraphvizWriter().writeString(ArgVisualizer.visualize(arg)));
+		System.out.println(new GraphvizWriter().writeString(ArgVisualizer.visualize(arg)));
 	}
 
 }

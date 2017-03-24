@@ -2,6 +2,7 @@ package hu.bme.mit.theta.analysis.xta.zone;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import java.util.Collection;
 import java.util.List;
 
 import hu.bme.mit.theta.analysis.xta.XtaAction;
@@ -42,42 +43,16 @@ public final class XtaZoneUtils {
 			final ZonePrec prec) {
 		final ZoneState.Builder succStateBuilder = state.project(prec.getClocks());
 
+		final List<Loc> sourceLocs = action.getSourceLocs();
 		final Edge edge = action.getEdge();
+		final List<Loc> targetLocs = action.getTargetLocs();
 
-		for (final Loc source : action.getSourceLocs()) {
-			for (final Expr<BoolType> invar : source.getInvars()) {
-				final TaExpr expr = TaExpr.of(invar);
-				if (expr.isClockExpr()) {
-					succStateBuilder.and(expr.asClockExpr().getClockConstr());
-				}
-			}
-		}
-
-		for (final Expr<BoolType> guard : edge.getGuards()) {
-			final TaExpr expr = TaExpr.of(guard);
-			if (expr.isClockExpr()) {
-				succStateBuilder.and(expr.asClockExpr().getClockConstr());
-			}
-		}
-
-		for (final AssignStmt<?, ?> update : edge.getUpdates()) {
-			final TaStmt stmt = TaStmt.of(update);
-			if (stmt.isClockStmt()) {
-				succStateBuilder.execute(stmt.asClockStmt().getClockOp());
-			}
-		}
-
-		for (final Loc target : action.getTargetLocs()) {
-			for (final Expr<BoolType> invar : target.getInvars()) {
-				final TaExpr expr = TaExpr.of(invar);
-				if (expr.isClockExpr()) {
-					succStateBuilder.and(expr.asClockExpr().getClockConstr());
-				}
-			}
-		}
-
+		applyInvariants(succStateBuilder, sourceLocs);
+		applyGuards(succStateBuilder, edge);
+		applyUpdates(succStateBuilder, edge);
+		applyInvariants(succStateBuilder, targetLocs);
 		if (shouldApplyDelay(action.getTargetLocs())) {
-			succStateBuilder.up();
+			applyDelay(succStateBuilder);
 		}
 
 		final ZoneState succState = succStateBuilder.build();
@@ -88,10 +63,61 @@ public final class XtaZoneUtils {
 		return locs.stream().allMatch(l -> l.getKind() == Kind.NORMAL);
 	}
 
-	private static ZoneState postForSyncedAction(final ZoneState state, final SyncedXtaAction asSynced,
+	private static ZoneState postForSyncedAction(final ZoneState state, final SyncedXtaAction action,
 			final ZonePrec prec) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		final ZoneState.Builder succStateBuilder = state.project(prec.getClocks());
+
+		final List<Loc> sourceLocs = action.getSourceLocs();
+		final Edge emittingEdge = action.getEmittingEdge();
+		final Edge receivingEdge = action.getReceivingEdge();
+		final List<Loc> targetLocs = action.getTargetLocs();
+
+		applyInvariants(succStateBuilder, sourceLocs);
+		applyGuards(succStateBuilder, emittingEdge);
+		applyGuards(succStateBuilder, receivingEdge);
+		applyUpdates(succStateBuilder, emittingEdge);
+		applyUpdates(succStateBuilder, receivingEdge);
+		applyInvariants(succStateBuilder, targetLocs);
+
+		if (shouldApplyDelay(targetLocs)) {
+			applyDelay(succStateBuilder);
+		}
+
+		final ZoneState succState = succStateBuilder.build();
+		return succState;
+	}
+
+	private static void applyDelay(final ZoneState.Builder succStateBuilder) {
+		succStateBuilder.up();
+	}
+
+	private static void applyInvariants(final ZoneState.Builder succStateBuilder, final Collection<Loc> locs) {
+		for (final Loc target : locs) {
+			for (final Expr<BoolType> invar : target.getInvars()) {
+				final TaExpr expr = TaExpr.of(invar);
+				if (expr.isClockExpr()) {
+					succStateBuilder.and(expr.asClockExpr().getClockConstr());
+				}
+			}
+		}
+	}
+
+	private static void applyUpdates(final ZoneState.Builder succStateBuilder, final Edge emittingEdge) {
+		for (final AssignStmt<?, ?> update : emittingEdge.getUpdates()) {
+			final TaStmt stmt = TaStmt.of(update);
+			if (stmt.isClockStmt()) {
+				succStateBuilder.execute(stmt.asClockStmt().getClockOp());
+			}
+		}
+	}
+
+	private static void applyGuards(final ZoneState.Builder succStateBuilder, final Edge emittingEdge) {
+		for (final Expr<BoolType> guard : emittingEdge.getGuards()) {
+			final TaExpr expr = TaExpr.of(guard);
+			if (expr.isClockExpr()) {
+				succStateBuilder.and(expr.asClockExpr().getClockConstr());
+			}
+		}
 	}
 
 	////

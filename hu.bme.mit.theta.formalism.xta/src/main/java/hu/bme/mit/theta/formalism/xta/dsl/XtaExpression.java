@@ -4,8 +4,8 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.Add;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.And;
+import static hu.bme.mit.theta.core.expr.impl.Exprs.Mod;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.Mul;
-import static hu.bme.mit.theta.core.expr.impl.Exprs.Rem;
 import static hu.bme.mit.theta.core.expr.impl.Exprs.Sub;
 import static hu.bme.mit.theta.core.utils.impl.ExprUtils.cast;
 import static java.util.stream.Collectors.toList;
@@ -21,9 +21,9 @@ import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.core.expr.AddExpr;
 import hu.bme.mit.theta.core.expr.Expr;
+import hu.bme.mit.theta.core.expr.ModExpr;
 import hu.bme.mit.theta.core.expr.MulExpr;
 import hu.bme.mit.theta.core.expr.RefExpr;
-import hu.bme.mit.theta.core.expr.RemExpr;
 import hu.bme.mit.theta.core.expr.SubExpr;
 import hu.bme.mit.theta.core.expr.impl.Exprs;
 import hu.bme.mit.theta.core.type.ArrayType;
@@ -244,7 +244,7 @@ final class XtaExpression {
 				// TODO Auto-generated method stub
 				throw new UnsupportedOperationException("TODO: auto-generated method stub");
 			} else if (oper.fRemOp != null) {
-				return createRemExpr(leftOp, rightOp);
+				return createModExpr(leftOp, rightOp);
 			} else {
 				throw new AssertionError();
 			}
@@ -265,10 +265,10 @@ final class XtaExpression {
 			}
 		}
 
-		private RemExpr createRemExpr(final Expr<?> uncastLeftOp, final Expr<?> uncastRightOp) {
+		private ModExpr createModExpr(final Expr<?> uncastLeftOp, final Expr<?> uncastRightOp) {
 			final Expr<? extends IntType> leftOp = cast(uncastLeftOp, IntType.class);
 			final Expr<? extends IntType> rightOp = cast(uncastRightOp, IntType.class);
-			return Rem(leftOp, rightOp);
+			return Mod(leftOp, rightOp);
 		}
 
 		////////

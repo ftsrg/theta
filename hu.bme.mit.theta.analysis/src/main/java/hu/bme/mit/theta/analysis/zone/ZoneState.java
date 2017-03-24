@@ -10,11 +10,11 @@ import static java.util.stream.Collectors.toList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
+import java.util.StringJoiner;
 
 import com.google.common.collect.Iterables;
 
 import hu.bme.mit.theta.analysis.expr.ExprState;
-import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.RatLitExpr;
 import hu.bme.mit.theta.core.model.impl.Valuation;
@@ -187,7 +187,9 @@ public final class ZoneState implements ExprState {
 
 	@Override
 	public String toString() {
-		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).addAll(dbm.getConstrs()).toString();
+		final StringJoiner sj = new StringJoiner("\n");
+		dbm.getConstrs().forEach(c -> sj.add(c.toString()));
+		return sj.toString();
 	}
 
 	////////

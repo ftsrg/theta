@@ -2,9 +2,9 @@ package hu.bme.mit.theta.analysis.xta;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Collections.emptySet;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 import hu.bme.mit.theta.analysis.Prec;
@@ -27,14 +27,14 @@ import hu.bme.mit.theta.formalism.xta.XtaProcess.Loc;
 final class XtaTransferFunction<S extends State, P extends Prec>
 		implements TransferFunction<XtaState<S>, XtaAction, P> {
 
-	private final TransferFunction<S, ? super SimpleXtaAction, ? super P> transferFunction;
+	private final TransferFunction<S, ? super XtaAction, ? super P> transferFunction;
 
-	private XtaTransferFunction(final TransferFunction<S, ? super SimpleXtaAction, ? super P> transferFunction) {
+	private XtaTransferFunction(final TransferFunction<S, ? super XtaAction, ? super P> transferFunction) {
 		this.transferFunction = checkNotNull(transferFunction);
 	}
 
 	public static <S extends State, P extends Prec> XtaTransferFunction<S, P> create(
-			final TransferFunction<S, ? super SimpleXtaAction, ? super P> transferFunction) {
+			final TransferFunction<S, ? super XtaAction, ? super P> transferFunction) {
 		return new XtaTransferFunction<>(transferFunction);
 	}
 
@@ -61,28 +61,67 @@ final class XtaTransferFunction<S extends State, P extends Prec>
 		final Valuation val = xtaState.getVal();
 		final S state = xtaState.getState();
 
-		final List<Loc> succLocs = action.getTargetLocs();
-		final Valuation succVal = createSuccValForSimpleAction(val, edge);
-		if (succVal == null) {
-			return Collections.emptySet();
+		if (!checkDataGuards(edge, val)) {
+			return emptySet();
 		}
+
+		final List<Loc> succLocs = action.getTargetLocs();
+		final Valuation succVal = createSuccValForSimpleAction(val, action);
 		final Collection<? extends S> succStates = transferFunction.getSuccStates(state, action, prec);
 
 		return XtaState.collectionOf(succLocs, succVal, succStates);
 	}
 
-	private static Valuation createSuccValForSimpleAction(final Valuation val, final Edge edge) {
+	private Collection<XtaState<S>> getSuccStatesForSyncedAction(final XtaState<S> xtaState,
+			final SyncedXtaAction action, final P prec) {
+		checkArgument(xtaState.getLocs() == action.getSourceLocs());
+
+		final Edge emittingEdge = action.getEmittingEdge();
+		final Edge receivingEdge = action.getReceivingEdge();
+		final Valuation val = xtaState.getVal();
+		final S state = xtaState.getState();
+
+		if (!checkDataGuards(emittingEdge, val)) {
+			return emptySet();
+		}
+
+		if (!checkDataGuards(receivingEdge, val)) {
+			return emptySet();
+		}
+
+		final List<Loc> succLocs = action.getTargetLocs();
+		final Valuation succVal = createSuccValForSyncedAction(val, action);
+		final Collection<? extends S> succStates = transferFunction.getSuccStates(state, action, prec);
+
+		return XtaState.collectionOf(succLocs, succVal, succStates);
+	}
+
+	private static Valuation createSuccValForSimpleAction(final Valuation val, final SimpleXtaAction action) {
+		final Valuation.Builder builder = val.transform();
+		applyDataUpdates(action.getEdge(), builder);
+		return builder.build();
+	}
+
+	private Valuation createSuccValForSyncedAction(final Valuation val, final SyncedXtaAction action) {
+		final Valuation.Builder builder = val.transform();
+		applyDataUpdates(action.getEmittingEdge(), builder);
+		applyDataUpdates(action.getReceivingEdge(), builder);
+		return builder.build();
+	}
+
+	private static boolean checkDataGuards(final Edge edge, final Valuation val) {
 		for (final Expr<BoolType> guard : edge.getGuards()) {
 			if (TaUtils.isDataExpr(guard)) {
 				final BoolLitExpr value = (BoolLitExpr) ExprUtils.evaluate(guard, val);
 				if (!value.getValue()) {
-					return null;
+					return false;
 				}
 			}
 		}
+		return true;
+	}
 
-		final Valuation.Builder builder = val.transform();
-
+	private static void applyDataUpdates(final Edge edge, final Valuation.Builder builder) {
 		final List<AssignStmt<?, ?>> updates = edge.getUpdates();
 		for (final AssignStmt<?, ?> update : updates) {
 			if (TaUtils.isDataStmt(update)) {
@@ -92,14 +131,6 @@ final class XtaTransferFunction<S extends State, P extends Prec>
 				builder.put(varDecl, value);
 			}
 		}
-
-		return builder.build();
-	}
-
-	private Collection<XtaState<S>> getSuccStatesForSyncedAction(final XtaState<S> state, final SyncedXtaAction action,
-			final P prec) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
 
 }

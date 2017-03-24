@@ -13,45 +13,45 @@ process Bus() {
 	clock x;
 	
 	state
-		bus_idle,
-		bus_active,
-		bus_collision { x < SIGMA },
-		bus_broadcast;
+		idle,
+		active,
+		collision { x < SIGMA },
+		transmit;
 	
 	urgent
-		bus_broadcast;
+		transmit;
     
-	init bus_idle;
+	init idle;
 	
 	trans
-		bus_broadcast -> bus_broadcast { guard j < N-1; sync cd[j]!; assign x = 0, j = j + 1; },
-		bus_broadcast -> bus_idle { guard j == N - 1; sync cd[j]!; assign j = 0, x = 0; },
-		bus_idle -> bus_active { sync begin?; assign x = 0; },
-		bus_active -> bus_idle { sync end?; assign x = 0; },
-		bus_active -> bus_active { guard x >= SIGMA; sync busy!; },
-		bus_active -> bus_collision { guard x < SIGMA; sync begin?; assign x = 0; },
-		bus_collision -> bus_broadcast { guard x < SIGMA; sync cd[j]!; assign x = 0, j = j + 1; };
+		transmit -> transmit { guard j < N-1; sync cd[j]!; assign x = 0, j = j + 1; },
+		transmit -> idle { guard j == N - 1; sync cd[j]!; assign j = 0, x = 0; },
+		idle -> active { sync begin?; assign x = 0; },
+		active -> idle { sync end?; assign x = 0; },
+		active -> active { guard x >= SIGMA; sync busy!; },
+		active -> collision { guard x < SIGMA; sync begin?; assign x = 0; },
+		collision -> transmit { guard x < SIGMA; sync cd[j]!; assign x = 0, j = j + 1; };
 }
 
 process Station(const id_t id) {
 	clock x;
 	
 	state
-		sender_wait,
-		sender_transm { x <= LAMDA },
-		sender_retry { x <= 2 * SIGMA };
+		wait,
+		transm { x <= LAMDA },
+		retry { x <= 2 * SIGMA };
 	
-	init sender_wait;
+	init wait;
 	
 	trans
-		sender_wait -> sender_transm { sync begin!; assign x = 0; },
-		sender_wait -> sender_wait { sync cd[id]?; assign x = 0; },
-		sender_wait -> sender_retry { sync cd[id]?; assign x = 0; },
-		sender_wait -> sender_retry { sync busy?; assign x = 0; },
-		sender_transm -> sender_wait { guard x == LAMDA; sync end!; assign x = 0; },
-		sender_transm -> sender_retry { guard x <= 2 * SIGMA; sync cd[id]?; assign x = 0; },
-		sender_retry -> sender_transm { guard x <= 2 * SIGMA; sync begin!; assign x = 0; },
-		sender_retry -> sender_retry { guard x <= 2 * SIGMA; sync cd[id]?; assign x = 0; };
+		wait -> transm { sync begin!; assign x = 0; },
+		wait -> wait { sync cd[id]?; assign x = 0; },
+		wait -> retry { sync cd[id]?; assign x = 0; },
+		wait -> retry { sync busy?; assign x = 0; },
+		transm -> wait { guard x >= LAMDA; sync end!; assign x = 0; },
+		transm -> retry { guard x <= 2 * SIGMA; sync cd[id]?; assign x = 0; },
+		retry -> transm { guard x <= 2 * SIGMA; sync begin!; assign x = 0; },
+		retry -> retry { guard x <= 2 * SIGMA; sync cd[id]?; assign x = 0; };
 }
 
 system Bus, Station;

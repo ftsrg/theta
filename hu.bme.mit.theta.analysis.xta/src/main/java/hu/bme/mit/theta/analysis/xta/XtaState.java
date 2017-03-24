@@ -5,11 +5,11 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.StringJoiner;
 
 import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.theta.analysis.State;
-import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.model.impl.Valuation;
 import hu.bme.mit.theta.formalism.xta.XtaProcess.Loc;
 
@@ -84,7 +84,11 @@ public final class XtaState<S extends State> implements State {
 
 	@Override
 	public String toString() {
-		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).addAll(locs, Loc::getName).add(val).add(state)
-				.toString();
+		final StringJoiner sj = new StringJoiner("\n");
+		locs.forEach(l -> sj.add(l.getName()));
+		val.getDecls().forEach(d -> sj.add(d.getName() + " = " + val.eval(d).get()));
+		locs.forEach(l -> l.getInvars().forEach(i -> sj.add("[" + i + "]")));
+		sj.add(state.toString());
+		return sj.toString();
 	}
 }
