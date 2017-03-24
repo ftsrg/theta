@@ -1,0 +1,152 @@
+---
+title: "Benchmark report"
+author: "Akos Hajdu"
+date: '2017'
+output:
+  html_document:
+    code_folding: hide
+    number_sections: yes
+    toc: no
+    toc_depth: 2
+  pdf_document:
+    highlight: zenburn
+    number_sections: yes
+    toc: no
+    toc_depth: 2
+classoption: a4paper
+---
+
+# Initialization
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(stringr)
+library(forcats)
+```
+
+```{r}
+# Common variables
+csv_path = "../log_20170310_101235.csv" # Path of the data
+timeout_ms = 10 * 60 * 1000 # Timeout used during the measurements
+
+# Themes
+theme_rotate_x <- theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
+theme_noticks <- theme(axis.ticks = element_blank())
+```
+
+## Load data
+
+```{r}
+d <- read_csv(
+  csv_path,
+  col_types = cols(
+    Model = col_character(),
+    Vars = col_integer(),
+    Size = col_integer(),
+    Domain = col_character(),
+    Refinement = col_character(),
+    InitPrec = col_character(),
+    Search = col_character(),
+    PredSplit = col_character(),
+    Safe = col_character(),
+    TimeMs = col_integer(),
+    Iterations = col_integer(),
+    ArgSize = col_integer(),
+    ArgDepth = col_integer(),
+    CexLen = col_integer()
+  )
+)
+```
+
+## Clean data
+
+```{r}
+# Create factors
+d$Domain <- factor(d$Domain)
+d$Refinement <- factor(d$Refinement)
+d$InitPrec <- factor(d$InitPrec)
+d$Search <- factor(d$Search)
+d$PredSplit <- factor(d$PredSplit)
+
+# Convert 'Safe' to logical (and remove exceptions).
+ex_rows <- str_detect(d$Safe, "\\[EX\\]")
+exs <- sum(ex_rows, na.rm = T)
+if (exs > 0) warning(paste(c(exs, " rows contain exceptions that are converted to NAs.")))
+d$Safe <- as.logical(d$Safe)
+
+# Create 'Config' column.
+d <- d %>% mutate(Config = paste(
+  substr(d$Domain, 1, 1),
+  substr(d$Refinement, 1, 1),
+  substr(d$InitPrec, 1, 1),
+  substr(d$Search, 1, 1),
+  ifelse(is.na(d$PredSplit), "", substr(d$PredSplit, 1, 1)),
+  sep = ""
+))
+
+# Trim name, separate 'Model' into 'Name' and 'Type'.
+d$Model <- as.factor(gsub("models/", "", d$Model))
+d <- d %>% separate(Model, into = c("Type", "Name"), sep = "/", remove = F)
+```
+
+# Analysis
+
+## Quick summary
+
+
+## Consistency of results
+```{r}
+d_model_config <- d %>% group_by(Config, Model) %>%
+  summarise(
+    ResultCount = sum(!is.na(Safe)),
+    SafeCount = sum(Safe, na.rm = T),
+    Consistent = SafeCount == 0 || SafeCount == ResultCount,
+    TimeAvg = mean(TimeMs),
+    TimeRSD = sd(TimeMs) / mean(TimeMs))
+d_model <- d_model_config %>% group_by(Model) %>%
+  summarise(
+    ResultCount = sum(ResultCount),
+    SafeCount = sum(SafeCount),
+    Consistent = SafeCount == 0 || SafeCount == ResultCount)
+```
+
+There are **`r sum(!d_model_config$Consistent)`** cases where different executions of a configuration yielded different results for a model.
+```{r}
+d_model_config %>% filter(Consistent == F) %>% select(Config, Model)
+```
+
+There are **`r sum(!d_model$Consistent)`** cases where different executions of a configuration or different configurations yielded different results for a model.
+```{r}
+d_model %>% filter(Consistent == F) %>% select(Model)
+```
+
+## Overview
+
+### Relative Standard Deviation
+
+```{r}
+ggplot(d_model_config) +
+  geom_histogram(aes(TimeRSD)) +
+  labs(title = "Overall distribution of the RSD")
+```
+
+The maximum RSD is **`r max(d_model_config$TimeRSD, na.rm = T)`**, and 95% of the measurements has a lower RSD than `r quantile(d_model_config$TimeRSD, .95, na.rm = T)`.
+
+```{r}
+ggplot(d_model_config, aes(Model, Config)) +
+  geom_tile(aes(fill = TimeRSD), color = "black") +
+  scale_fill_gradient(low = "green", high = "red", na.value = "white") +
+  theme_noticks + theme_rotate_x +
+  labs(title = "Individual RSD for each configuration and model")
+
+```
+
+### Average execution time
+```{r}
+ggplot(d_model_config, aes(Model, Config)) +
+  geom_tile(aes(fill = log(TimeAvg)), color = "black") +
+  scale_fill_gradient(low = "green", high = "red", na.value = "white") +
+  theme_noticks + theme_rotate_x
+```
+
