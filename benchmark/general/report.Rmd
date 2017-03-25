@@ -2,6 +2,8 @@
 title: "Benchmark report"
 author: "Akos Hajdu"
 date: '2017'
+params:
+  csv_path: "log_20170310_101235.csv"
 output:
   html_document:
     code_folding: hide
@@ -26,10 +28,6 @@ library(forcats)
 ```
 
 ```{r}
-# Common variables
-csv_path = "../log_20170310_101235.csv" # Path of the data
-timeout_ms = 10 * 60 * 1000 # Timeout used during the measurements
-
 # Themes
 theme_rotate_x <- theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
 theme_noticks <- theme(axis.ticks = element_blank())
@@ -39,7 +37,7 @@ theme_noticks <- theme(axis.ticks = element_blank())
 
 ```{r}
 d <- read_csv(
-  csv_path,
+  params$csv_path,
   col_types = cols(
     Model = col_character(),
     Vars = col_integer(),

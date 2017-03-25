@@ -19,11 +19,12 @@ CSV file describing the models.
 .PARAMETER configsFile
 CSV file describing the configurations.
 
-.PARAMETER outDir
-Path where the output log file is written.
-
 .PARAMETER toNoRep
 Do not repeat a measurement if it causes a timeout on its first run.
+
+.PARAMETER rBin
+Path to the binary folder of the R statistical framework. If this parameter
+is given, the script will also generate a html report.
 
 .NOTES
 Author: Akos Hajdu
@@ -35,8 +36,8 @@ param (
     [string]$jarFile = "theta.jar",
     [Parameter(Mandatory=$true)][string]$modelsFile,
     [Parameter(Mandatory=$true)][string]$configsFile,
-    [string]$outDir = "./",
-    [switch]$toNoRep
+    [switch]$toNoRep,
+    [string]$rBin
 )
 
 # Temp file for individual runs
@@ -45,7 +46,7 @@ $tmpFile = [System.IO.Path]::GetTempFileName()
 # (The temp file is needed because I could not redirect the output of the application to a file
 #  in append mode. Therefore, the temp file is always overwritten, but the script always appends
 #  the contents of the temp file to the final log file.)
-$logFile = $outDir + "log_" + (Get-Date -format "yyyyMMdd_HHmmss") + ".csv"
+$logFile = "log_" + (Get-Date -format "yyyyMMdd_HHmmss") + ".csv"
 # Header
 (Start-Process java -ArgumentList @('-jar', $jarFile, '--header') -RedirectStandardOutput $tmpFile -PassThru -NoNewWindow).WaitForExit()
 Get-Content $tmpFile | where {$_ -ne ""} | Out-File $logFile
@@ -97,4 +98,14 @@ foreach($model in $models) {
 
 Remove-Item $tmpFile
 
+$contents = Get-Content $logFile
+[System.IO.File]::WriteAllLines((Get-ChildItem $logFile).FullName, $contents)
+
 Write-Progress -Activity "Running measurements" -PercentComplete 100 -Completed -Status " "
+
+if ($rBin) {
+    $params = @("-e", "`"rmarkdown::render('report.Rmd', params = list(csv_path = '$logFile'))`"")
+    $p = Start-Process "$rBin\Rscript.exe" -ArgumentList $params -PassThru -NoNewWindow
+    $p.WaitForExit()
+    Rename-Item "report.html" ($logFile + ".html")
+}
