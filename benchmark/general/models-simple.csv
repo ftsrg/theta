@@ -1,3 +1,4 @@
+"-m", "-p", "-e"
 "models/simple/boolean1.system", "safe", "false"
 "models/simple/boolean2.system", "safe", "false"
 "models/simple/counter.system", "safe", "true"

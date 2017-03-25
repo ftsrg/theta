@@ -51,13 +51,13 @@ $logFile = $outDir + "log_" + (Get-Date -format "yyyyMMdd_HHmmss") + ".csv"
 Get-Content $tmpFile | where {$_ -ne ""} | Out-File $logFile
 
 # Load models and configurations from external files
-$models = @(Import-CSV $modelsFile -Header Name, Prop, Expected)
-$configs = @(Import-CSV $configsFile -Header Domain, Refinement, InitPrec, Search, PredSplit)
+$models = @(Import-CSV $modelsFile)
+$configs = @(Import-CSV $configsFile)
 
 # Loop through models
 $m = 0
 foreach($model in $models) {
-    Write-Progress -Activity "Running measurements" -PercentComplete ($m*100/$models.length) -Status "Model: $($model.Name) ($($m+1)/$($models.length))"
+    Write-Progress -Activity "Running measurements" -PercentComplete ($m*100/$models.length) -Status "Model: $($model) ($($m+1)/$($models.length))"
     
     # Loop through configurations
     $c = 0
@@ -69,11 +69,15 @@ foreach($model in $models) {
             Write-Progress -Activity " " -PercentComplete (($r)*100/$runs) -Status "Run: $($r+1)/$runs " -Id 2
             
             # Collect arguments for the jar file
-            $args = @('-jar', $jarFile, '-m', $model.Name, '-d', $conf.Domain, '-r', $conf.Refinement, '-i', $conf.InitPrec, '-s', $conf.Search)
-            # Optional arguments            
-            if ($conf.PredSplit) { $args += @('-ps', $conf.PredSplit) }
-            if ($model.Expected) { $args += @('-e', $model.Expected) }
-            if ($model.Prop) { $args += @('-p', $model.Prop) }
+            $args = @('-jar', $jarFile)
+            # Arguments from the configuration
+            foreach ($arg in $conf | Get-Member -MemberType 'NoteProperty' | Select-Object -ExpandProperty 'Name') {
+                if ($conf.$arg) { $args += @($arg, $conf.$arg) }
+            }
+            # Arguments from the model
+            foreach ($arg in $model | Get-Member -MemberType 'NoteProperty' | Select-Object -ExpandProperty 'Name') {
+                if ($model.$arg) { $args += @($arg, $model.$arg) }
+            }
             # Run the jar file with the given parameters, the output is redirected to a temp file
             $p = Start-Process java -ArgumentList $args -RedirectStandardOutput $tmpFile -PassThru -NoNewWindow
             $id = $p.id
