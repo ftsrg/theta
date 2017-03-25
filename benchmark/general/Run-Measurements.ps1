@@ -98,13 +98,15 @@ foreach($model in $models) {
 
 Remove-Item $tmpFile
 
+# Convert to UTF-8
 $contents = Get-Content $logFile
 [System.IO.File]::WriteAllLines((Get-ChildItem $logFile).FullName, $contents)
 
 Write-Progress -Activity "Running measurements" -PercentComplete 100 -Completed -Status " "
 
+# Generate report
 if ($rBin) {
-    $params = @("-e", "`"rmarkdown::render('report.Rmd', params = list(csv_path = '$logFile'))`"")
+    $params = @("-e", "`"rmarkdown::render('report.Rmd', params = list(csv_path = '$logFile', timeout_ms = $($timeOut * 1000)))`"")
     $p = Start-Process "$rBin\Rscript.exe" -ArgumentList $params -PassThru -NoNewWindow
     $p.WaitForExit()
     Rename-Item "report.html" ($logFile + ".html")

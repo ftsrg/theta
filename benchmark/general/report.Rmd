@@ -1,9 +1,8 @@
 ---
 title: "Benchmark report"
-author: "Akos Hajdu"
-date: '2017'
 params:
   csv_path: "log_20170310_101235.csv"
+  timeout_ms: 600000
 output:
   html_document:
     code_folding: hide
@@ -18,6 +17,8 @@ output:
 classoption: a4paper
 ---
 
+This is a benchmark report for the file `r params$csv_path`.
+
 # Initialization
 
 ```{r setup, include = FALSE}
@@ -25,6 +26,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(stringr)
 library(forcats)
+library(lubridate)
 ```
 
 ```{r}
@@ -97,6 +99,7 @@ n_meas_total <- nrow(d)
 n_meas_succ <- nrow(d %>% filter(!is.na(Safe)))
 n_models_total <- length(unique(d$Model))
 n_configs_total <- length(unique(d$Config))
+total_time <- seconds_to_period(sum(ifelse(is.na(d$TimeMs), params$timeout_ms, d$TimeMs)) / 1000)
 
 d_model_config <- d %>% group_by(Config, Model) %>%
   summarise(
@@ -117,10 +120,11 @@ n_models_succ <- length(unique((d_model %>% filter(Succ))$Model))
 n_configs_succ <- length(unique((d_model_config %>% filter(Succ))$Config))
 ```
 
-- There are **`r n_models_total` models** and **`r n_configs_total` configurations**, giving **`r n_models_total * n_configs_total` measurements**, with **`r nrow(d_model_config %>% filter(Succ))` being successful** (`r nrow(d_model_config %>% filter(Succ)) / (n_models_total * n_configs_total)` success rate).
+- There are **`r n_models_total` models** and **`r n_configs_total` configurations**, giving **`r n_models_total * n_configs_total` measurements**, with **`r nrow(d_model_config %>% filter(Succ))` being successful** with the timeout limit of `r params$timeout_ms/1000` s (`r nrow(d_model_config %>% filter(Succ)) / (n_models_total * n_configs_total)` success rate).
     - **`r n_models_succ` / `r n_models_total` models** were verified by at least one configuration.
     - **`r n_configs_succ` / `r n_configs_total` configurations** verified at least one model.
 - With the repeated measurements included, there are a total number of **`r n_meas_total` measurement points** with **`r n_meas_succ` successful** executions.
+- Total time of the measurements is **`r total_time$day` days, `r total_time$hour` hours and `r total_time$minute` minutes**, assuming that the missing values timed out.
 
 ## Consistency of results
 
@@ -136,14 +140,14 @@ d_model %>% filter(Consistent == F) %>% select(Model)
 
 ## Overview of models and configurations
 
-```{r}
+```{r, fig.height = 4}
 ggplot(d_model_config %>% filter(Succ)) +
   geom_bar(aes(x = Model)) +
   theme_rotate_x +
   labs(title = "Number of configurations that could verify a given model")
 ```
 
-```{r}
+```{r, fig.height = 4}
 ggplot(d_model_config %>% filter(Succ)) +
   geom_bar(aes(x = Config)) +
   theme_rotate_x +
@@ -151,7 +155,7 @@ ggplot(d_model_config %>% filter(Succ)) +
 ```
 
 ```{r}
-ggplot(d_model_config, aes(Model, Config)) +
+ggplot(d_model_config, aes(Config, Model)) +
   geom_tile(aes(fill = ResultCount), color = "black") +
   scale_fill_gradient(low = "red", high = "green", na.value = "white") +
   theme_noticks + theme_rotate_x +
@@ -162,7 +166,7 @@ ggplot(d_model_config, aes(Model, Config)) +
 
 ### Relative Standard Deviation
 
-```{r}
+```{r, fig.height = 2}
 ggplot(d_model_config) +
   geom_histogram(aes(TimeRSD)) +
   labs(title = "Overall distribution of the RSD")
@@ -171,19 +175,34 @@ ggplot(d_model_config) +
 The maximum RSD is **`r max(d_model_config$TimeRSD, na.rm = T)`**, and 95% of the measurements have a lower RSD than `r quantile(d_model_config$TimeRSD, .95, na.rm = T)`.
 
 ```{r}
-ggplot(d_model_config, aes(Model, Config)) +
+ggplot(d_model_config, aes(Config, Model)) +
   geom_tile(aes(fill = TimeRSD), color = "black") +
   scale_fill_gradient(low = "green", high = "red", na.value = "white") +
   theme_noticks + theme_rotate_x +
   labs(title = "Individual RSD for each configuration and model")
-
 ```
 
 ### Average execution time
+
+```{r, fig.height = 3}
+ggplot(d %>% filter(!is.na(TimeMs))) +
+  geom_histogram(aes(TimeMs)) +
+  labs(title = "Distribution of execution time")
+summary(d$TimeMs)
+```
+
+
 ```{r}
-ggplot(d_model_config, aes(Model, Config)) +
+ggplot(d_model_config) +
+  geom_boxplot(aes(Model, log10(TimeAvg))) + coord_flip() +
+  labs(title = "Distribution of execution time for each model")
+```
+
+```{r}
+ggplot(d_model_config, aes(Config, Model)) +
   geom_tile(aes(fill = log10(TimeAvg)), color = "black") +
   scale_fill_gradient(low = "green", high = "red", na.value = "white") +
-  theme_noticks + theme_rotate_x
+  theme_noticks + theme_rotate_x +
+  labs(title = "Heatmap of execution time for each model/configuration")
 ```
 
