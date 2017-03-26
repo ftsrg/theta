@@ -91,7 +91,7 @@ d$Model <- as.factor(gsub("models/", "", d$Model))
 d <- d %>% separate(Model, into = c("Type", "Name"), sep = "/", remove = F)
 ```
 
-# Analysis
+# Overview
 
 ## Summary
 
@@ -109,7 +109,7 @@ d_model_config <- d %>% group_by(Config, Model, Type) %>%
     SafeCount = sum(Safe, na.rm = T),
     Consistent = SafeCount == 0 || SafeCount == ResultCount,
     TimeAvg = mean(TimeMs),
-    TimeRSD = ifelse(is.na(sd(TimeMs)), 0, sd(TimeMs) / mean(TimeMs)))
+    TimeRSD = ifelse(ResultCount == 1, 0, sd(TimeMs) / mean(TimeMs)))
 d_model <- d_model_config %>% group_by(Model, Type) %>%
   summarise(
     ResultCount = sum(ResultCount),
@@ -149,7 +149,7 @@ ggplot(d_model_config %>% filter(Succ)) +
   geom_bar(aes(x = Model)) +
   scale_x_discrete(drop = F) +
   theme_rotate_x +
-  labs(title = "Number of configurations that could verify a given model")
+  labs(title = "Number of configurations that verified a model")
 ```
 
 ```{r, fig.height = 4}
@@ -157,7 +157,7 @@ ggplot(d_model_config %>% filter(Succ)) +
   geom_bar(aes(x = Config)) +
   scale_x_discrete(drop = F) +
   theme_rotate_x +
-  labs(title = "Number of models verified by individual configurations")
+  labs(title = "Number of models verified by a configuration")
 ```
 
 ```{r, fig.height = 4}
@@ -165,7 +165,7 @@ ggplot(d_model_config %>% filter(Succ)) +
   geom_bar(aes(x = Config, fill = Type), position = "dodge") +
   scale_x_discrete(drop = F) +
   theme_rotate_x +
-  labs(title = "Number of models verified by individual configurations")
+  labs(title = "Number of models verified by a configuration in each type")
 ```
 
 ```{r}
@@ -175,6 +175,8 @@ ggplot(d_model_config, aes(Config, Model)) +
   theme_noticks + theme_rotate_x +
   labs(title = "Number of successful executions")
 ```
+
+# Details
 
 ## Execution time
 
@@ -205,10 +207,18 @@ ggplot(d %>% filter(!is.na(TimeMs))) +
 summary(d$TimeMs)
 ```
 
+```{r}
+ggplot(d %>% filter(!is.na(TimeMs))) +
+  geom_boxplot(aes(Type, log10(TimeMs))) +
+  coord_flip() +
+  labs(title = "Distribution of execution time for each type")
+```
+
+
 
 ```{r}
-ggplot(d_model_config) +
-  geom_boxplot(aes(Model, log10(TimeAvg))) + coord_flip() +
+ggplot(d %>% filter(!is.na(TimeMs))) +
+  geom_boxplot(aes(Model, log10(TimeMs))) + coord_flip() +
   labs(title = "Distribution of execution time for each model")
 ```
 
@@ -227,7 +237,7 @@ ggplot(d_model %>% filter(!is.na(ConfigMin))) +
   labs(title = "Number of models where a configuration was the fastest")
 ```
 
-#### Pairwise comparisons
+### Pairwise comparisons
 ```{r}
 d_inputs_time <- d %>% select(Type, Model, Domain, Refinement, InitPrec, Search, TimeMs)
 

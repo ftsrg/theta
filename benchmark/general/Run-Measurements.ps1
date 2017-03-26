@@ -7,10 +7,10 @@ given number of repetitions and timeout.
 Path of the jar file containing the algorithm.
 
 .PARAMETER modelsFile
-Csv file describing the models.
+A list of csv files listing the models.
 
 .PARAMETER configsFile
-Csv file describing the configurations.
+Csv file listing the configurations.
 
 .PARAMETER timeOut
 Timeout in seconds. Note, that starting the JVM and the
@@ -32,7 +32,7 @@ Author: Akos Hajdu
 
 param (
     [string]$jarFile = "theta.jar",
-    [Parameter(Mandatory=$true)][string]$modelsFile,
+    [Parameter(Mandatory=$true)][string[]]$modelsFile,
     [Parameter(Mandatory=$true)][string]$configsFile,
     [int]$timeOut = 60,
     [int]$runs = 1,
