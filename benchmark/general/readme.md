@@ -26,4 +26,3 @@
 
 ### Send results in e-mail
 If you want to send the results by e-mail when the script is done, add the following line to the very end of the script (and fill the arguments): `Send-MailMessage -to "..." -from "..." -Subject "Benchmark finished" -SmtpServer "..." -Attachments $logFile`.
--
