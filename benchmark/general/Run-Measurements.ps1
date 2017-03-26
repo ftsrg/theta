@@ -3,21 +3,21 @@
 Run measurements on several models and configurations with a
 given number of repetitions and timeout.
 
+.PARAMETER jarFile
+Path of the jar file containing the algorithm.
+
+.PARAMETER modelsFile
+Csv file describing the models.
+
+.PARAMETER configsFile
+Csv file describing the configurations.
+
 .PARAMETER timeOut
 Timeout in seconds. Note, that starting the JVM and the
 application is also included in the time.
 
 .PARAMETER runs
 Number of repetitions for each measurement.
-
-.PARAMETER jarFile
-Path of the jar file containing the algorithm.
-
-.PARAMETER modelsFile
-CSV file describing the models.
-
-.PARAMETER configsFile
-CSV file describing the configurations.
 
 .PARAMETER toNoRep
 Do not repeat a measurement if it causes a timeout on its first run.
@@ -31,11 +31,11 @@ Author: Akos Hajdu
 #>
 
 param (
-    [int]$timeOut = 60,
-    [int]$runs = 1,
     [string]$jarFile = "theta.jar",
     [Parameter(Mandatory=$true)][string]$modelsFile,
     [Parameter(Mandatory=$true)][string]$configsFile,
+    [int]$timeOut = 60,
+    [int]$runs = 1,
     [switch]$toNoRep,
     [string]$rBin
 )

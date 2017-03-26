@@ -92,7 +92,7 @@ d <- d %>% separate(Model, into = c("Type", "Name"), sep = "/", remove = F)
 
 # Analysis
 
-## Quick summary
+## Summary
 
 ```{r}
 n_meas_total <- nrow(d)
@@ -101,7 +101,7 @@ n_models_total <- length(unique(d$Model))
 n_configs_total <- length(unique(d$Config))
 total_time <- seconds_to_period(sum(ifelse(is.na(d$TimeMs), params$timeout_ms, d$TimeMs)) / 1000)
 
-d_model_config <- d %>% group_by(Config, Model) %>%
+d_model_config <- d %>% group_by(Config, Model, Type) %>%
   summarise(
     ResultCount = sum(!is.na(Safe)),
     Succ = ResultCount > 0,
@@ -143,6 +143,7 @@ d_model %>% filter(Consistent == F) %>% select(Model)
 ```{r, fig.height = 4}
 ggplot(d_model_config %>% filter(Succ)) +
   geom_bar(aes(x = Model)) +
+  scale_x_discrete(drop = F) +
   theme_rotate_x +
   labs(title = "Number of configurations that could verify a given model")
 ```
@@ -150,6 +151,15 @@ ggplot(d_model_config %>% filter(Succ)) +
 ```{r, fig.height = 4}
 ggplot(d_model_config %>% filter(Succ)) +
   geom_bar(aes(x = Config)) +
+  scale_x_discrete(drop = F) +
+  theme_rotate_x +
+  labs(title = "Number of models verified by individual configurations")
+```
+
+```{r, fig.height = 4}
+ggplot(d_model_config %>% filter(Succ)) +
+  geom_bar(aes(x = Config, fill = Type), position = "dodge") +
+  scale_x_discrete(drop = F) +
   theme_rotate_x +
   labs(title = "Number of models verified by individual configurations")
 ```
