@@ -27,6 +27,7 @@ library(tidyverse)
 library(stringr)
 library(forcats)
 library(lubridate)
+library(corrgram)
 ```
 
 ```{r}
@@ -108,13 +109,16 @@ d_model_config <- d %>% group_by(Config, Model, Type) %>%
     SafeCount = sum(Safe, na.rm = T),
     Consistent = SafeCount == 0 || SafeCount == ResultCount,
     TimeAvg = mean(TimeMs),
-    TimeRSD = sd(TimeMs) / mean(TimeMs))
-d_model <- d_model_config %>% group_by(Model) %>%
+    TimeRSD = ifelse(is.na(sd(TimeMs)), 0, sd(TimeMs) / mean(TimeMs)))
+d_model <- d_model_config %>% group_by(Model, Type) %>%
   summarise(
     ResultCount = sum(ResultCount),
     Succ = ResultCount > 0,
     SafeCount = sum(SafeCount),
-    Consistent = SafeCount == 0 || SafeCount == ResultCount)
+    Consistent = SafeCount == 0 || SafeCount == ResultCount,
+    TimeMin = min(TimeAvg, na.rm = T),
+    ConfigMin = ifelse(is.na(TimeMin), "", Config[which.min(TimeAvg)]))
+d_model$ConfigMin[d_model$ConfigMin == ""] <- NA
 
 n_models_succ <- length(unique((d_model %>% filter(Succ))$Model))
 n_configs_succ <- length(unique((d_model_config %>% filter(Succ))$Config))
@@ -215,4 +219,37 @@ ggplot(d_model_config, aes(Config, Model)) +
   theme_noticks + theme_rotate_x +
   labs(title = "Heatmap of execution time for each model/configuration")
 ```
+
+```{r, fig.height = 4}
+ggplot(d_model %>% filter(!is.na(ConfigMin))) +
+  geom_bar(aes(x = ConfigMin, fill = Type)) +
+  theme_rotate_x +
+  labs(title = "Number of models where a configuration was the fastest")
+```
+
+#### Pairwise comparisons
+```{r}
+d_inputs_time <- d %>% select(Type, Model, Domain, Refinement, InitPrec, Search, TimeMs)
+
+d_inputs_time$TimeMs[is.na(d_inputs_time$TimeMs)] <- params$timeout_ms
+d_domain_vs_time <- inner_join(
+  d_inputs_time %>% filter(Domain == "PRED"),
+  d_inputs_time %>% filter(Domain == "EXPL"),
+  by = c("Type", "Model", "Refinement", "InitPrec", "Search")) %>%
+  filter(!near(TimeMs.x, params$timeout_ms) | !near(TimeMs.y, params$timeout_ms))
+ggplot(d_domain_vs_time, aes(TimeMs.x, TimeMs.y)) +
+  scale_y_log10() + scale_x_log10() +
+  geom_bin2d(binwidth = 0.25) +
+  scale_fill_gradient(low = "gray", high = "black") +
+  geom_point(aes(color = Type), position = "jitter", size = 2) +
+  geom_abline() +
+  labs(title = "Execution time of different domains", x = "PRED", y = "EXPL")
+```
+
+## Correlations
+```{r}
+d_corr <- d %>% select(TimeMs, Vars, Size, Iterations, ArgSize, ArgDepth, CexLen)
+corrgram(d_corr, order = T, lower.panel = panel.shade, upper.panel = panel.pie)
+```
+
 
