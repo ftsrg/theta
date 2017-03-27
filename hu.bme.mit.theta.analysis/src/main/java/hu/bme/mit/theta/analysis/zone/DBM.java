@@ -322,6 +322,20 @@ final class DBM {
 		return DbmRelation.create(leq, geq);
 	}
 
+	public boolean isLeq(final DBM that) {
+		final Set<ClockDecl> clocks = Sets.union(this.signature.toSet(), that.signature.toSet());
+
+		for (final ClockDecl x : clocks) {
+			for (final ClockDecl y : clocks) {
+				if (this.getOrDefault(x, y) > that.getOrDefault(x, y)) {
+					return false;
+				}
+
+			}
+		}
+		return true;
+	}
+
 	public Collection<ClockConstr> getConstrs() {
 		final Collection<ClockConstr> result = new HashSet<>();
 
