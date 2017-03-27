@@ -102,7 +102,8 @@ n_models_total <- length(unique(d$Model))
 n_configs_total <- length(unique(d$Config))
 total_time <- seconds_to_period(sum(ifelse(is.na(d$TimeMs), params$timeout_ms, d$TimeMs)) / 1000)
 
-d_model_config <- d %>% group_by(Config, Model, Type) %>%
+d_model_config <- d %>%
+  group_by(Domain, Refinement, InitPrec, Search, PredSplit, Config, Model, Type) %>%
   summarise(
     ResultCount = sum(!is.na(Safe)),
     Succ = ResultCount > 0,
@@ -145,16 +146,16 @@ d_model %>% filter(Consistent == F) %>% select(Model)
 ## Overview of models and configurations
 
 ```{r, fig.height = 4}
-ggplot(d_model_config %>% filter(Succ)) +
-  geom_bar(aes(x = Model)) +
+ggplot(d_model_config) +
+  geom_bar(aes(x = Model, fill = Succ)) +
   scale_x_discrete(drop = F) +
   theme_rotate_x +
   labs(title = "Number of configurations that verified a model")
 ```
 
 ```{r, fig.height = 4}
-ggplot(d_model_config %>% filter(Succ)) +
-  geom_bar(aes(x = Config)) +
+ggplot(d_model_config) +
+  geom_bar(aes(x = Config, fill = Succ)) +
   scale_x_discrete(drop = F) +
   theme_rotate_x +
   labs(title = "Number of models verified by a configuration")
@@ -177,6 +178,48 @@ ggplot(d_model_config, aes(Config, Model)) +
 ```
 
 # Details
+
+## Verification success
+
+```{r, fig.height = 2}
+ggplot(d_model_config) +
+  geom_bar(aes(x = Domain, fill = Succ), position = "fill") +
+  facet_wrap(~ Type) +
+  coord_flip() +
+  labs(title = "Success rate of domains")
+```
+
+```{r, fig.height = 2}
+ggplot(d_model_config) +
+  geom_bar(aes(x = Refinement, fill = Succ), position = "fill") +
+  facet_wrap(~ Type) +
+  coord_flip() +
+  labs(title = "Success rate of refinements")
+```
+
+```{r, fig.height = 2}
+ggplot(d_model_config) +
+  geom_bar(aes(x = InitPrec, fill = Succ), position = "fill") +
+  facet_wrap(~ Type) +
+  coord_flip() +
+  labs(title = "Success rate of initial precisions")
+```
+
+```{r, fig.height = 2}
+ggplot(d_model_config) +
+  geom_bar(aes(x = Search, fill = Succ), position = "fill") +
+  facet_wrap(~ Type) +
+  coord_flip() +
+  labs(title = "Success rate of searches")
+```
+
+```{r, fig.height = 2}
+ggplot(d_model_config) +
+  geom_bar(aes(x = PredSplit, fill = Succ), position = "fill") +
+  facet_wrap(~ Type) +
+  coord_flip() +
+  labs(title = "Success rate of predicate splits")
+```
 
 ## Execution time
 
