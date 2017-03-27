@@ -1,9 +1,12 @@
 package hu.bme.mit.theta.analysis.xta.zone;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.formalism.ta.constr.impl.ClockConstrs.Eq;
 
 import java.util.Collection;
 import java.util.List;
+
+import com.google.common.collect.Lists;
 
 import hu.bme.mit.theta.analysis.xta.XtaAction;
 import hu.bme.mit.theta.analysis.xta.XtaAction.SimpleXtaAction;
@@ -13,6 +16,8 @@ import hu.bme.mit.theta.analysis.zone.ZoneState;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.type.BoolType;
+import hu.bme.mit.theta.formalism.ta.decl.ClockDecl;
+import hu.bme.mit.theta.formalism.ta.op.ResetOp;
 import hu.bme.mit.theta.formalism.ta.utils.impl.TaExpr;
 import hu.bme.mit.theta.formalism.ta.utils.impl.TaStmt;
 import hu.bme.mit.theta.formalism.xta.XtaProcess.Edge;
@@ -59,10 +64,6 @@ public final class XtaZoneUtils {
 		return succState;
 	}
 
-	private static boolean shouldApplyDelay(final List<Loc> locs) {
-		return locs.stream().allMatch(l -> l.getKind() == Kind.NORMAL);
-	}
-
 	private static ZoneState postForSyncedAction(final ZoneState state, final SyncedXtaAction action,
 			final ZonePrec prec) {
 		final ZoneState.Builder succStateBuilder = state.project(prec.getClocks());
@@ -87,39 +88,6 @@ public final class XtaZoneUtils {
 		return succState;
 	}
 
-	private static void applyDelay(final ZoneState.Builder succStateBuilder) {
-		succStateBuilder.up();
-	}
-
-	private static void applyInvariants(final ZoneState.Builder succStateBuilder, final Collection<Loc> locs) {
-		for (final Loc target : locs) {
-			for (final Expr<BoolType> invar : target.getInvars()) {
-				final TaExpr expr = TaExpr.of(invar);
-				if (expr.isClockExpr()) {
-					succStateBuilder.and(expr.asClockExpr().getClockConstr());
-				}
-			}
-		}
-	}
-
-	private static void applyUpdates(final ZoneState.Builder succStateBuilder, final Edge emittingEdge) {
-		for (final AssignStmt<?, ?> update : emittingEdge.getUpdates()) {
-			final TaStmt stmt = TaStmt.of(update);
-			if (stmt.isClockStmt()) {
-				succStateBuilder.execute(stmt.asClockStmt().getClockOp());
-			}
-		}
-	}
-
-	private static void applyGuards(final ZoneState.Builder succStateBuilder, final Edge emittingEdge) {
-		for (final Expr<BoolType> guard : emittingEdge.getGuards()) {
-			final TaExpr expr = TaExpr.of(guard);
-			if (expr.isClockExpr()) {
-				succStateBuilder.and(expr.asClockExpr().getClockConstr());
-			}
-		}
-	}
-
 	////
 
 	public static ZoneState pre(final ZoneState state, final SimpleXtaAction action, final ZonePrec prec) {
@@ -137,16 +105,99 @@ public final class XtaZoneUtils {
 
 	}
 
-	private static ZoneState preForSimpleAction(final ZoneState state, final SimpleXtaAction asSimple,
+	private static ZoneState preForSimpleAction(final ZoneState state, final SimpleXtaAction action,
 			final ZonePrec prec) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		final ZoneState.Builder preStateBuilder = state.project(prec.getClocks());
+
+		final List<Loc> sourceLocs = action.getSourceLocs();
+		final Edge edge = action.getEdge();
+		final List<Loc> targetLocs = action.getTargetLocs();
+
+		if (shouldApplyDelay(action.getTargetLocs())) {
+			preStateBuilder.down();
+		}
+		applyInvariants(preStateBuilder, targetLocs);
+		applyInverseUpdates(preStateBuilder, edge);
+		applyGuards(preStateBuilder, edge);
+		applyInvariants(preStateBuilder, sourceLocs);
+
+		final ZoneState preState = preStateBuilder.build();
+		return preState;
 	}
 
-	private static ZoneState preForSyncedAction(final ZoneState state, final SyncedXtaAction asSynced,
+	private static ZoneState preForSyncedAction(final ZoneState state, final SyncedXtaAction action,
 			final ZonePrec prec) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		final ZoneState.Builder preStateBuilder = state.project(prec.getClocks());
+
+		final List<Loc> sourceLocs = action.getSourceLocs();
+		final Edge emittingEdge = action.getEmittingEdge();
+		final Edge receivingEdge = action.getReceivingEdge();
+		final List<Loc> targetLocs = action.getTargetLocs();
+
+		applyInvariants(preStateBuilder, targetLocs);
+		applyInverseUpdates(preStateBuilder, receivingEdge);
+		applyInverseUpdates(preStateBuilder, emittingEdge);
+		applyGuards(preStateBuilder, receivingEdge);
+		applyGuards(preStateBuilder, emittingEdge);
+		applyInvariants(preStateBuilder, sourceLocs);
+
+		final ZoneState succState = preStateBuilder.build();
+		return succState;
+	}
+
+	////
+
+	private static boolean shouldApplyDelay(final List<Loc> locs) {
+		return locs.stream().allMatch(l -> l.getKind() == Kind.NORMAL);
+	}
+
+	private static void applyDelay(final ZoneState.Builder builder) {
+		builder.up();
+	}
+
+	private static void applyInvariants(final ZoneState.Builder builder, final Collection<Loc> locs) {
+		for (final Loc target : locs) {
+			for (final Expr<BoolType> invar : target.getInvars()) {
+				final TaExpr expr = TaExpr.of(invar);
+				if (expr.isClockExpr()) {
+					builder.and(expr.asClockExpr().getClockConstr());
+				}
+			}
+		}
+	}
+
+	private static void applyUpdates(final ZoneState.Builder builder, final Edge edge) {
+		for (final AssignStmt<?, ?> update : edge.getUpdates()) {
+			final TaStmt stmt = TaStmt.of(update);
+			if (stmt.isClockStmt()) {
+				final ResetOp op = (ResetOp) stmt.asClockStmt().getClockOp();
+				final ClockDecl clock = op.getClock();
+				final int value = op.getValue();
+				builder.reset(clock, value);
+			}
+		}
+	}
+
+	private static void applyInverseUpdates(final ZoneState.Builder builder, final Edge edge) {
+		for (final AssignStmt<?, ?> update : Lists.reverse(edge.getUpdates())) {
+			final TaStmt stmt = TaStmt.of(update);
+			if (stmt.isClockStmt()) {
+				final ResetOp op = (ResetOp) stmt.asClockStmt().getClockOp();
+				final ClockDecl clock = op.getClock();
+				final int value = op.getValue();
+				builder.and(Eq(clock, value));
+				builder.free(clock);
+			}
+		}
+	}
+
+	private static void applyGuards(final ZoneState.Builder builder, final Edge edge) {
+		for (final Expr<BoolType> guard : edge.getGuards()) {
+			final TaExpr expr = TaExpr.of(guard);
+			if (expr.isClockExpr()) {
+				builder.and(expr.asClockExpr().getClockConstr());
+			}
+		}
 	}
 
 }
