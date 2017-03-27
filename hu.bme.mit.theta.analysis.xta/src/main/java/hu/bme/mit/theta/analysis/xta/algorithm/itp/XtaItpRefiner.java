@@ -3,7 +3,6 @@ package hu.bme.mit.theta.analysis.xta.algorithm.itp;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.analysis.xta.zone.XtaZoneUtils.post;
 import static hu.bme.mit.theta.analysis.xta.zone.XtaZoneUtils.pre;
-import static java.util.stream.Collectors.toList;
 
 import java.util.Collection;
 
@@ -62,6 +61,8 @@ public final class XtaItpRefiner {
 			} else {
 				final ZoneState concreteZone = node.getState().getState().getState();
 				final ZoneState interpolant = ZoneState.interpolant(concreteZone, zone);
+				refine(node, interpolant);
+				maintainCoverage(node, interpolant);
 				return interpolant;
 			}
 		} else {
@@ -77,26 +78,8 @@ public final class XtaItpRefiner {
 	}
 
 	private void maintainCoverage(final ArgNode<XtaState<ItpZoneState>, XtaAction> node, final ZoneState interpolant) {
-		final Collection<ArgNode<XtaState<ItpZoneState>, XtaAction>> coveredNodes = node.getCoveredNodes()
-				.collect(toList());
-
-		for (final ArgNode<XtaState<ItpZoneState>, XtaAction> coveredNode : coveredNodes) {
-			final ZoneState concreteZone = coveredNode.getState().getState().getState();
-
-			if (concreteZone.isLeq(interpolant)) {
-				enforceZone(coveredNode, interpolant);
-			} else {
-				clearCoverage(coveredNode);
-			}
-		}
-	}
-
-	private void clearCoverage(final ArgNode<XtaState<ItpZoneState>, XtaAction> node) {
-		assert node.isLeaf();
-		node.unsetCoveringNode();
-		final ItpZoneState newItpState = node.getState().getState().withInterpolant(ZoneState.top());
-		node.setState(node.getState().withState(newItpState));
-		waitlist.add(node);
+		waitlist.addAll(node.getCoveredNodes());
+		node.clearCoveredNodes();
 	}
 
 }
