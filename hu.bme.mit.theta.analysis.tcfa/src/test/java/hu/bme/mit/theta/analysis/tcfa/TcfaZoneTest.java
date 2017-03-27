@@ -42,7 +42,7 @@ public class TcfaZoneTest {
 
 		final Analysis<LocState<ZoneState, TcfaLoc, TcfaEdge>, TcfaAction, UnitPrec> analysis = PrecMappingAnalysis
 				.create(LocAnalysis.create(fischer.getInitLoc(), TcfaZoneAnalysis.getInstance()),
-						np -> ConstLocPrec.create(ZonePrec.create(fischer.getClockVars())));
+						np -> ConstLocPrec.create(ZonePrec.of(fischer.getClockVars())));
 
 		final Predicate<State> target = s -> false;
 

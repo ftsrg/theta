@@ -20,7 +20,7 @@ public final class ZonePrec implements Prec {
 		this.clocks = ImmutableSet.copyOf(clocks);
 	}
 
-	public static ZonePrec create(final Collection<? extends ClockDecl> clocks) {
+	public static ZonePrec of(final Collection<? extends ClockDecl> clocks) {
 		return new ZonePrec(clocks);
 	}
 

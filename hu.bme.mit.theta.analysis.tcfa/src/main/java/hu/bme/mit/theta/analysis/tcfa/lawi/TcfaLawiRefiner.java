@@ -23,7 +23,7 @@ public final class TcfaLawiRefiner {
 	private TcfaLawiRefiner(final TCFA tcfa, final Waitlist<ArgNode<TcfaLawiState, TcfaAction>> waitlist) {
 		checkNotNull(tcfa);
 		this.waitlist = checkNotNull(waitlist);
-		prec = ZonePrec.create(tcfa.getClockVars());
+		prec = ZonePrec.of(tcfa.getClockVars());
 	}
 
 	public static TcfaLawiRefiner create(final TCFA tcfa, final Waitlist<ArgNode<TcfaLawiState, TcfaAction>> waitlist) {

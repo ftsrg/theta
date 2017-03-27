@@ -38,7 +38,7 @@ final class TcfaLawiAnalysis implements Analysis<TcfaLawiState, TcfaAction, Unit
 		checkNotNull(tcfa);
 
 		final ExplPrec explPrec = ExplPrec.create(tcfa.getDataVars());
-		final ZonePrec zonePrec = ZonePrec.create(tcfa.getClockVars());
+		final ZonePrec zonePrec = ZonePrec.of(tcfa.getClockVars());
 		final Prod2Prec<ExplPrec, ZonePrec> compositePrec = ProdPrec.of(explPrec, zonePrec);
 		final LocPrec<Prod2Prec<ExplPrec, ZonePrec>, TcfaLoc, TcfaEdge> locPrec = ConstLocPrec.create(compositePrec);
 
