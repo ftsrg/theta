@@ -90,7 +90,7 @@ public final class XtaZoneUtils {
 
 	////
 
-	public static ZoneState pre(final ZoneState state, final SimpleXtaAction action, final ZonePrec prec) {
+	public static ZoneState pre(final ZoneState state, final XtaAction action, final ZonePrec prec) {
 		checkNotNull(state);
 		checkNotNull(action);
 		checkNotNull(prec);
@@ -134,6 +134,9 @@ public final class XtaZoneUtils {
 		final Edge receivingEdge = action.getReceivingEdge();
 		final List<Loc> targetLocs = action.getTargetLocs();
 
+		if (shouldApplyDelay(action.getTargetLocs())) {
+			preStateBuilder.down();
+		}
 		applyInvariants(preStateBuilder, targetLocs);
 		applyInverseUpdates(preStateBuilder, receivingEdge);
 		applyInverseUpdates(preStateBuilder, emittingEdge);

@@ -5,7 +5,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
-import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.BoolType;
 
@@ -84,7 +83,7 @@ public final class ItpZoneState implements ExprState {
 
 	@Override
 	public String toString() {
-		return ObjectUtils.toStringBuilder(this.getClass().getSimpleName()).add(state).add(interpolant).toString();
+		return interpolant.toString();
 	}
 
 }

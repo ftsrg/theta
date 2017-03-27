@@ -187,9 +187,15 @@ public final class ZoneState implements ExprState {
 
 	@Override
 	public String toString() {
-		final StringJoiner sj = new StringJoiner("\n");
-		dbm.getConstrs().forEach(c -> sj.add(c.toString()));
-		return sj.toString();
+		final Collection<ClockConstr> constrs = dbm.getConstrs();
+		if (constrs.isEmpty()) {
+			return "true";
+		} else {
+			final StringJoiner sj = new StringJoiner("\n");
+
+			dbm.getConstrs().forEach(c -> sj.add(c.toString()));
+			return sj.toString();
+		}
 	}
 
 	////////
