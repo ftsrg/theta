@@ -301,8 +301,13 @@ ggplot(d_domain_vs_time, aes(TimeMs.x, TimeMs.y)) +
 
 ## Correlations
 ```{r}
-d_corr <- d %>% select(TimeMs, Vars, Size, Iterations, ArgSize, ArgDepth, CexLen)
-corrgram(d_corr, order = T, lower.panel = panel.shade, upper.panel = panel.pie)
+
+for(t in unique(d$Type)){
+  print(paste("Correlations for type", t))
+  d_corr <- d %>% filter(Type == t) %>%
+    select(TimeMs, Vars, Size, Iterations, ArgSize, ArgDepth, CexLen)
+  corrgram(d_corr, order = T, lower.panel = panel.shade, upper.panel = panel.pie)
+}
 ```
 
 
