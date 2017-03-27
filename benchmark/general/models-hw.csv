@@ -1,3 +1,4 @@
+"-m", "-p", "-e"
 "models/hw/bob2.aag", "", "true"
 "models/hw/eijks208c.aag", "", "true"
 "models/hw/eijks208o.aag", "", "true"

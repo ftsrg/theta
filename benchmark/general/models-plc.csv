@@ -1,3 +1,4 @@
+"-m", "-p", "-e"
 "models/plc/plc01.system", "s", "false"
 "models/plc/plc02.system", "s", "false"
 "models/plc/plc03.system", "s", "true"

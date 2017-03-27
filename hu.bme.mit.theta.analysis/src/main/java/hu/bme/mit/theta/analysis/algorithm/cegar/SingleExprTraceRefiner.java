@@ -41,7 +41,7 @@ public class SingleExprTraceRefiner<S extends ExprState, A extends ExprAction, P
 	public RefinerResult<S, A, P> refine(final ARG<S, A> arg, final P prec) {
 		checkNotNull(arg);
 		checkNotNull(prec);
-		checkArgument(!arg.isSafe());
+		checkArgument(!arg.isSafe(), "ARG must be unsafe");
 
 		final ArgTrace<S, A> cexToConcretize = arg.getCexs().findFirst().get();
 		final Trace<S, A> traceToConcretize = cexToConcretize.toTrace();

@@ -1,3 +1,4 @@
+"-d",   "-r",         "-i",    "-s",    "-ps"
 "PRED", "CRAIG_ITP",  "EMPTY", "BFS",   "WHOLE"
 "PRED", "CRAIG_ITP",  "EMPTY", "BFS",   "CONJUNCTS"
 "PRED", "CRAIG_ITP",  "EMPTY", "BFS",   "ATOMS"
