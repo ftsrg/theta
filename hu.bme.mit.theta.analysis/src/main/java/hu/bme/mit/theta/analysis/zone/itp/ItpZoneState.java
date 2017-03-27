@@ -13,14 +13,14 @@ public final class ItpZoneState implements ExprState {
 	private static final int HASH_SEED = 3361;
 	private volatile int hashCode = 0;
 
-	private final ZoneState state;
+	private final ZoneState zone;
 	private final ZoneState interpolant;
 
-	private ItpZoneState(final ZoneState state, final ZoneState interpolant) {
-		checkNotNull(state);
+	private ItpZoneState(final ZoneState zone, final ZoneState interpolant) {
+		checkNotNull(zone);
 		checkNotNull(interpolant);
-		checkArgument(state.isLeq(interpolant));
-		this.state = state;
+		checkArgument(zone.isLeq(interpolant));
+		this.zone = zone;
 		this.interpolant = interpolant;
 	}
 
@@ -30,8 +30,8 @@ public final class ItpZoneState implements ExprState {
 
 	////
 
-	public ZoneState getState() {
-		return state;
+	public ZoneState getZone() {
+		return zone;
 	}
 
 	public ZoneState getInterpolant() {
@@ -45,7 +45,7 @@ public final class ItpZoneState implements ExprState {
 	}
 
 	public ItpZoneState withInterpolant(final ZoneState interpolant) {
-		return ItpZoneState.of(this.state, interpolant);
+		return ItpZoneState.of(this.zone, interpolant);
 	}
 
 	////
@@ -62,7 +62,7 @@ public final class ItpZoneState implements ExprState {
 		int result = hashCode;
 		if (result == 0) {
 			result = HASH_SEED;
-			result = 37 * result + state.hashCode();
+			result = 37 * result + zone.hashCode();
 			result = 37 * result + interpolant.hashCode();
 			result = hashCode;
 		}
@@ -75,7 +75,7 @@ public final class ItpZoneState implements ExprState {
 			return true;
 		} else if (obj instanceof ItpZoneState) {
 			final ItpZoneState that = (ItpZoneState) obj;
-			return this.state.equals(that.state) && this.interpolant.equals(that.interpolant);
+			return this.zone.equals(that.zone) && this.interpolant.equals(that.interpolant);
 		} else {
 			return false;
 		}

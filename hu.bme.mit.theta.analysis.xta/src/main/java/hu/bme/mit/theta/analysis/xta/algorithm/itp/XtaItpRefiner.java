@@ -41,7 +41,7 @@ public final class XtaItpRefiner {
 	private void blockZone(final ArgNode<XtaState<ItpZoneState>, XtaAction> node, final ZoneState zone) {
 		final ZoneState abstractZone = node.getState().getState().getInterpolant();
 		if (abstractZone.isConsistentWith(zone)) {
-			final ZoneState concreteZone = node.getState().getState().getState();
+			final ZoneState concreteZone = node.getState().getState().getZone();
 			final ZoneState interpolant = ZoneState.interpolant(concreteZone, zone);
 
 			refine(node, interpolant);

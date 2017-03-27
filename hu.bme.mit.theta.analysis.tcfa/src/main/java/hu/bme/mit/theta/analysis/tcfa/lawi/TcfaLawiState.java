@@ -50,7 +50,7 @@ public final class TcfaLawiState implements ExprState {
 	}
 
 	public ZoneState getConcreteZone() {
-		return state.getState()._2().getState();
+		return state.getState()._2().getZone();
 	}
 
 	public ZoneState getAbstractZone() {

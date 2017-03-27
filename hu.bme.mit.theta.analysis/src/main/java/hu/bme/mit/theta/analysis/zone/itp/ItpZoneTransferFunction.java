@@ -33,7 +33,7 @@ final class ItpZoneTransferFunction<A extends Action> implements TransferFunctio
 		checkNotNull(action);
 		checkNotNull(prec);
 
-		final ZoneState subState = state.getState();
+		final ZoneState subState = state.getZone();
 		final Collection<? extends ZoneState> subSuccStates = transferFunction.getSuccStates(subState, action, prec);
 
 		if (subSuccStates.isEmpty()) {

@@ -59,7 +59,7 @@ public final class XtaItpRefiner2 {
 
 				return interpolant;
 			} else {
-				final ZoneState concreteZone = node.getState().getState().getState();
+				final ZoneState concreteZone = node.getState().getState().getZone();
 				final ZoneState interpolant = ZoneState.interpolant(concreteZone, zone);
 				refine(node, interpolant);
 				maintainCoverage(node, interpolant);

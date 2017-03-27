@@ -96,7 +96,7 @@ public final class XtaItpChecker implements SafetyChecker<XtaState<ItpZoneState>
 				final ArgNode<XtaState<ItpZoneState>, XtaAction> v = waitlist.remove();
 				assert v.isLeaf();
 
-				final ZoneState concreteZone = v.getState().getState().getState();
+				final ZoneState concreteZone = v.getState().getState().getZone();
 
 				if (concreteZone.isBottom()) {
 					refiner.enforceZone(v, ZoneState.bottom());
@@ -152,12 +152,12 @@ public final class XtaItpChecker implements SafetyChecker<XtaState<ItpZoneState>
 
 		private boolean covers(final XtaState<ItpZoneState> state1, final XtaState<ItpZoneState> state2) {
 			return state2.getLocs().equals(state1.getLocs()) && state2.getVal().equals(state2.getVal())
-					&& state2.getState().getState().isLeq(state1.getState().getState());
+					&& state2.getState().getZone().isLeq(state1.getState().getZone());
 		}
 
 		private boolean couldCover(final XtaState<ItpZoneState> state1, final XtaState<ItpZoneState> state2) {
 			return state2.getLocs().equals(state1.getLocs()) && state2.getVal().equals(state2.getVal())
-					&& state2.getState().getState().isLeq(state1.getState().getInterpolant());
+					&& state2.getState().getZone().isLeq(state1.getState().getInterpolant());
 		}
 
 	}
