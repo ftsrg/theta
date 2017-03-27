@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.analysis.tcfa.zone.lu;
+package hu.bme.mit.theta.analysis.zone.lu;
 
 import hu.bme.mit.theta.analysis.Domain;
 import hu.bme.mit.theta.analysis.expr.ExprDomain;

@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.analysis.tcfa.zone.lu;
+package hu.bme.mit.theta.analysis.zone.lu;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
