@@ -19,10 +19,11 @@ import hu.bme.mit.theta.analysis.prod.Prod2State;
 import hu.bme.mit.theta.analysis.prod.ProdPrec;
 import hu.bme.mit.theta.analysis.tcfa.TcfaAction;
 import hu.bme.mit.theta.analysis.tcfa.expl.TcfaExplAnalysis;
-import hu.bme.mit.theta.analysis.tcfa.zone.itp.ItpZoneState;
-import hu.bme.mit.theta.analysis.tcfa.zone.itp.TcfaItpZoneAnalysis;
+import hu.bme.mit.theta.analysis.tcfa.zone.TcfaZoneAnalysis;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.analysis.zone.ZonePrec;
+import hu.bme.mit.theta.analysis.zone.itp.ItpZoneAnalysis;
+import hu.bme.mit.theta.analysis.zone.itp.ItpZoneState;
 import hu.bme.mit.theta.formalism.tcfa.TCFA;
 import hu.bme.mit.theta.formalism.tcfa.TcfaEdge;
 import hu.bme.mit.theta.formalism.tcfa.TcfaLoc;
@@ -42,7 +43,8 @@ final class TcfaLawiAnalysis implements Analysis<TcfaLawiState, TcfaAction, Unit
 		final LocPrec<Prod2Prec<ExplPrec, ZonePrec>, TcfaLoc, TcfaEdge> locPrec = ConstLocPrec.create(compositePrec);
 
 		final Analysis<ExplState, TcfaAction, ExplPrec> explAnalysis = TcfaExplAnalysis.getInstance();
-		final Analysis<ItpZoneState, TcfaAction, ZonePrec> itpZoneAnalysis = TcfaItpZoneAnalysis.getInstance();
+		final Analysis<ItpZoneState, TcfaAction, ZonePrec> itpZoneAnalysis = ItpZoneAnalysis
+				.create(TcfaZoneAnalysis.getInstance());
 		final Analysis<Prod2State<ExplState, ItpZoneState>, TcfaAction, Prod2Prec<ExplPrec, ZonePrec>> compositeAnalysis = Prod2Analysis
 				.create(explAnalysis, itpZoneAnalysis);
 		final Analysis<LocState<Prod2State<ExplState, ItpZoneState>, TcfaLoc, TcfaEdge>, TcfaAction, LocPrec<Prod2Prec<ExplPrec, ZonePrec>, TcfaLoc, TcfaEdge>> locAnalysis = LocAnalysis

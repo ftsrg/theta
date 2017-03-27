@@ -10,8 +10,8 @@ import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.loc.LocState;
 import hu.bme.mit.theta.analysis.prod.Prod2State;
 import hu.bme.mit.theta.analysis.tcfa.TcfaAction;
-import hu.bme.mit.theta.analysis.tcfa.zone.itp.ItpZoneState;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
+import hu.bme.mit.theta.analysis.zone.itp.ItpZoneState;
 import hu.bme.mit.theta.formalism.tcfa.TcfaEdge;
 import hu.bme.mit.theta.formalism.tcfa.TcfaLoc;
 

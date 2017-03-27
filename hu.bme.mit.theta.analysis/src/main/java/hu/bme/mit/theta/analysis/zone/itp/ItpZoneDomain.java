@@ -1,8 +1,8 @@
-package hu.bme.mit.theta.analysis.tcfa.zone.itp;
+package hu.bme.mit.theta.analysis.zone.itp;
 
 import hu.bme.mit.theta.analysis.Domain;
 
-final class ItpZoneDomain implements Domain<ItpZoneState> {
+public final class ItpZoneDomain implements Domain<ItpZoneState> {
 
 	private static final ItpZoneDomain INSTANCE = new ItpZoneDomain();
 
