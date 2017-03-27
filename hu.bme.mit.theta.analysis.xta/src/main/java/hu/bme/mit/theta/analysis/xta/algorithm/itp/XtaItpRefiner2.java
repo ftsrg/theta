@@ -1,6 +1,7 @@
 package hu.bme.mit.theta.analysis.xta.algorithm.itp;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.analysis.xta.zone.XtaZoneUtils.post;
 import static hu.bme.mit.theta.analysis.xta.zone.XtaZoneUtils.pre;
 
 import java.util.Collection;
@@ -15,20 +16,20 @@ import hu.bme.mit.theta.analysis.zone.ZoneState;
 import hu.bme.mit.theta.analysis.zone.itp.ItpZoneState;
 import hu.bme.mit.theta.formalism.xta.XtaSystem;
 
-public final class XtaItpRefiner {
+public final class XtaItpRefiner2 {
 
 	private final ZonePrec prec;
 	private final Waitlist<ArgNode<XtaState<ItpZoneState>, XtaAction>> waitlist;
 
-	private XtaItpRefiner(final XtaSystem system, final Waitlist<ArgNode<XtaState<ItpZoneState>, XtaAction>> waitlist) {
+	private XtaItpRefiner2(final XtaSystem system, final Waitlist<ArgNode<XtaState<ItpZoneState>, XtaAction>> waitlist) {
 		checkNotNull(system);
 		this.waitlist = checkNotNull(waitlist);
 		prec = ZonePrec.of(system.getClocks());
 	}
 
-	public static XtaItpRefiner create(final XtaSystem system,
+	public static XtaItpRefiner2 create(final XtaSystem system,
 			final Waitlist<ArgNode<XtaState<ItpZoneState>, XtaAction>> waitlist) {
-		return new XtaItpRefiner(system, waitlist);
+		return new XtaItpRefiner2(system, waitlist);
 	}
 
 	public void enforceZone(final ArgNode<XtaState<ItpZoneState>, XtaAction> node, final ZoneState zone) {
@@ -38,25 +39,34 @@ public final class XtaItpRefiner {
 		}
 	}
 
-	private void blockZone(final ArgNode<XtaState<ItpZoneState>, XtaAction> node, final ZoneState zone) {
+	private ZoneState blockZone(final ArgNode<XtaState<ItpZoneState>, XtaAction> node, final ZoneState zone) {
 		final ZoneState abstractZone = node.getState().getState().getInterpolant();
 		if (abstractZone.isConsistentWith(zone)) {
-			final ZoneState concreteZone = node.getState().getState().getState();
-			final ZoneState interpolant = ZoneState.interpolant(concreteZone, zone);
-
-			refine(node, interpolant);
-			maintainCoverage(node, interpolant);
-
 			if (node.getInEdge().isPresent()) {
 				final ArgEdge<XtaState<ItpZoneState>, XtaAction> inEdge = node.getInEdge().get();
 				final XtaAction action = inEdge.getAction();
 				final ArgNode<XtaState<ItpZoneState>, XtaAction> parent = inEdge.getSource();
-				final Collection<ZoneState> badZones = interpolant.complement();
-				for (final ZoneState badZone : badZones) {
-					final ZoneState preBadZone = pre(badZone, action, prec);
-					blockZone(parent, preBadZone);
-				}
+
+				final ZoneState B_pre = pre(zone, action, prec);
+				final ZoneState A_pre = blockZone(parent, B_pre);
+
+				final ZoneState B = zone;
+				final ZoneState A = post(A_pre, action, prec);
+				final ZoneState interpolant = ZoneState.interpolant(A, B);
+
+				refine(node, interpolant);
+				maintainCoverage(node, interpolant);
+
+				return interpolant;
+			} else {
+				final ZoneState concreteZone = node.getState().getState().getState();
+				final ZoneState interpolant = ZoneState.interpolant(concreteZone, zone);
+				refine(node, interpolant);
+				maintainCoverage(node, interpolant);
+				return interpolant;
 			}
+		} else {
+			return abstractZone;
 		}
 	}
 

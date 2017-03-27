@@ -17,10 +17,8 @@ import org.junit.runners.Parameterized.Parameters;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
-import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.analysis.xta.algorithm.itp.XtaItpChecker;
 import hu.bme.mit.theta.analysis.zone.itp.ItpZoneState;
-import hu.bme.mit.theta.common.visualization.GraphvizWriter;
 import hu.bme.mit.theta.formalism.xta.XtaSystem;
 import hu.bme.mit.theta.formalism.xta.dsl.XtaDslManager;
 
@@ -62,13 +60,7 @@ public final class XtaItpCheckerTest {
 		assertTrue(status.isSafe());
 		final ARG<XtaState<ItpZoneState>, XtaAction> arg = status.getArg();
 
-		// TODO XtaAction implements ExprAction
-		// final Solver solver = Z3SolverFactory.getInstace().createSolver();
-		// final ArgChecker argChecker = ArgChecker.create(solver);
-		// assertTrue(argChecker.isWellLabeled(arg));
-
 		System.out.println(arg.getNodes().count());
-		System.out.println(new GraphvizWriter().writeString(ArgVisualizer.visualize(arg)));
 	}
 
 }
