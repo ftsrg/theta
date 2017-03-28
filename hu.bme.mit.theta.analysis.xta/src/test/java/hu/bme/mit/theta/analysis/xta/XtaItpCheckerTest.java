@@ -61,6 +61,7 @@ public final class XtaItpCheckerTest {
 		final ARG<XtaState<ItpZoneState>, XtaAction> arg = status.getArg();
 
 		System.out.println(arg.getNodes().count());
+		System.out.println(status.getStats().get());
 	}
 
 }

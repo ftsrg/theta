@@ -5,7 +5,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
+
+import com.google.common.base.Stopwatch;
 
 import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.LTS;
@@ -17,6 +20,7 @@ import hu.bme.mit.theta.analysis.algorithm.ArgNodeComparators;
 import hu.bme.mit.theta.analysis.algorithm.ArgTrace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
+import hu.bme.mit.theta.analysis.algorithm.Statistics;
 import hu.bme.mit.theta.analysis.impl.PrecMappingAnalysis;
 import hu.bme.mit.theta.analysis.reachedset.Partition;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
@@ -69,6 +73,8 @@ public final class XtaItpChecker implements SafetyChecker<XtaState<ItpZoneState>
 		private final Partition<ArgNode<XtaState<ItpZoneState>, XtaAction>, Tuple2<List<Loc>, Valuation>> reachedSet;
 		private final XtaItpRefiner refiner;
 
+		private int refinements = 0;
+
 		private CheckMethod() {
 			waitlist = PriorityWaitlist.create(ArgNodeComparators.bfs());
 			reachedSet = Partition.of(n -> Tuple2.of(n.getState().getLocs(), n.getState().getVal()));
@@ -81,13 +87,16 @@ public final class XtaItpChecker implements SafetyChecker<XtaState<ItpZoneState>
 		}
 
 		public SafetyResult<XtaState<ItpZoneState>, XtaAction> run() {
+			final Stopwatch stopwatch = Stopwatch.createStarted();
 			final Optional<ArgNode<XtaState<ItpZoneState>, XtaAction>> unsafeNode = searchForUnsafeNode();
 			if (unsafeNode.isPresent()) {
 				final ArgTrace<XtaState<ItpZoneState>, XtaAction> argTrace = ArgTrace.to(unsafeNode.get());
 				final Trace<XtaState<ItpZoneState>, XtaAction> trace = argTrace.toTrace();
-				return SafetyResult.unsafe(trace, arg);
+				final Statistics stats = new Statistics(stopwatch.elapsed(TimeUnit.MILLISECONDS), refinements);
+				return SafetyResult.unsafe(trace, arg, stats);
 			} else {
-				return SafetyResult.safe(arg);
+				final Statistics stats = new Statistics(stopwatch.elapsed(TimeUnit.MILLISECONDS), refinements);
+				return SafetyResult.safe(arg, stats);
 			}
 		}
 
@@ -100,6 +109,7 @@ public final class XtaItpChecker implements SafetyChecker<XtaState<ItpZoneState>
 
 				if (concreteZone.isBottom()) {
 					refiner.enforceZone(v, ZoneState.bottom());
+					refinements++;
 				} else if (v.isTarget()) {
 					return Optional.of(v);
 				} else {
@@ -138,6 +148,7 @@ public final class XtaItpChecker implements SafetyChecker<XtaState<ItpZoneState>
 					if (!nodeToCoverWith.isCovered()) {
 						if (couldCover(nodeToCoverWith.getState(), node.getState())) {
 							refiner.enforceZone(node, nodeToCoverWith.getState().getState().getInterpolant());
+							refinements++;
 							node.setCoveringNode(nodeToCoverWith);
 							return;
 						}
