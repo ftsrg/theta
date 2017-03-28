@@ -88,7 +88,8 @@ d <- d %>% mutate(Config = paste(
 
 # Trim name, separate 'Model' into 'Name' and 'Type'.
 d$Model <- as.factor(gsub("models/", "", d$Model))
-d <- d %>% separate(Model, into = c("Type", "Name"), sep = "/", remove = F)
+d <- d %>% separate(Model, into = c("Type", "Subtype", "Name"), sep = "/", remove = F) %>%
+  unite(Type, Type, Subtype, sep = "/")
 ```
 
 # Overview
@@ -103,7 +104,7 @@ n_configs_total <- length(unique(d$Config))
 total_time <- seconds_to_period(sum(ifelse(is.na(d$TimeMs), params$timeout_ms, d$TimeMs)) / 1000)
 
 d_model_config <- d %>%
-  group_by(Domain, Refinement, InitPrec, Search, PredSplit, Config, Model, Type) %>%
+  group_by(Config, Model, Domain, Refinement, InitPrec, Search, PredSplit, Type) %>%
   summarise(
     ResultCount = sum(!is.na(Safe)),
     Succ = ResultCount > 0,
@@ -135,12 +136,12 @@ n_configs_succ <- length(unique((d_model_config %>% filter(Succ))$Config))
 
 There are **`r sum(!d_model_config$Consistent)`** cases where different executions of the same configuration yielded different results for the same model.
 ```{r}
-d_model_config %>% filter(Consistent == F) %>% select(Config, Model)
+d_model_config %>% filter(!Consistent) %>% ungroup() %>% select(Config, Model)
 ```
 
 There are **`r sum(!d_model$Consistent)`** cases where different executions of the same configuration or different configurations yielded different results for the same model.
 ```{r}
-d_model %>% filter(Consistent == F) %>% select(Model)
+d_model %>% filter(!Consistent) %>% select(Model)
 ```
 
 ## Overview of models and configurations

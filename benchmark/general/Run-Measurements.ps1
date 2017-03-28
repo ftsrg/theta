@@ -31,7 +31,7 @@ Author: Akos Hajdu
 #>
 
 param (
-    [string]$jarFile = "theta.jar",
+    [Parameter(Mandatory=$true)][string]$jarFile,
     [Parameter(Mandatory=$true)][string[]]$modelsFile,
     [Parameter(Mandatory=$true)][string]$configsFile,
     [int]$timeOut = 60,
