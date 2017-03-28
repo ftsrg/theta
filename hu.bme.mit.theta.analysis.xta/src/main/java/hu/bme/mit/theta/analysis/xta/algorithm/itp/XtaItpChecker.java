@@ -16,15 +16,14 @@ import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.ArgBuilder;
 import hu.bme.mit.theta.analysis.algorithm.ArgNode;
-import hu.bme.mit.theta.analysis.algorithm.ArgNodeComparators;
 import hu.bme.mit.theta.analysis.algorithm.ArgTrace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
+import hu.bme.mit.theta.analysis.algorithm.SearchStrategy;
 import hu.bme.mit.theta.analysis.algorithm.Statistics;
 import hu.bme.mit.theta.analysis.impl.PrecMappingAnalysis;
 import hu.bme.mit.theta.analysis.reachedset.Partition;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
-import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist;
 import hu.bme.mit.theta.analysis.waitlist.Waitlist;
 import hu.bme.mit.theta.analysis.xta.XtaAction;
 import hu.bme.mit.theta.analysis.xta.XtaAnalysis;
@@ -43,11 +42,14 @@ import hu.bme.mit.theta.formalism.xta.XtaSystem;
 public final class XtaItpChecker implements SafetyChecker<XtaState<ItpZoneState>, XtaAction, UnitPrec> {
 	private final XtaSystem system;
 	private final ArgBuilder<XtaState<ItpZoneState>, XtaAction, UnitPrec> argBuilder;
+	private final SearchStrategy strategy;
 
-	private XtaItpChecker(final XtaSystem system, final Predicate<? super List<? extends Loc>> errorLocs) {
+	private XtaItpChecker(final XtaSystem system, final Predicate<? super List<? extends Loc>> errorLocs,
+			final SearchStrategy strategy) {
 		checkNotNull(errorLocs);
 
 		this.system = checkNotNull(system);
+		this.strategy = checkNotNull(strategy);
 
 		final LTS<XtaState<?>, XtaAction> lts = XtaLts.create();
 		final ZonePrec prec = ZonePrec.of(system.getClocks());
@@ -58,8 +60,9 @@ public final class XtaItpChecker implements SafetyChecker<XtaState<ItpZoneState>
 		argBuilder = ArgBuilder.create(lts, analysis, target);
 	}
 
-	public static XtaItpChecker create(final XtaSystem system, final Predicate<? super List<? extends Loc>> errorLocs) {
-		return new XtaItpChecker(system, errorLocs);
+	public static XtaItpChecker create(final XtaSystem system, final Predicate<? super List<? extends Loc>> errorLocs,
+			final SearchStrategy strategy) {
+		return new XtaItpChecker(system, errorLocs, strategy);
 	}
 
 	@Override
@@ -76,7 +79,7 @@ public final class XtaItpChecker implements SafetyChecker<XtaState<ItpZoneState>
 		private int refinements = 0;
 
 		private CheckMethod() {
-			waitlist = PriorityWaitlist.create(ArgNodeComparators.bfs());
+			waitlist = strategy.createWaitlist();
 			reachedSet = Partition.of(n -> Tuple2.of(n.getState().getLocs(), n.getState().getVal()));
 			refiner = XtaItpRefiner.create(system, waitlist);
 			arg = argBuilder.createArg();

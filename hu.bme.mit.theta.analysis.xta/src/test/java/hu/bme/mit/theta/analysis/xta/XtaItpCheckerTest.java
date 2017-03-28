@@ -16,6 +16,7 @@ import org.junit.runners.Parameterized.Parameters;
 
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
+import hu.bme.mit.theta.analysis.algorithm.SearchStrategy;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.analysis.xta.algorithm.itp.XtaItpChecker;
 import hu.bme.mit.theta.analysis.zone.itp.ItpZoneState;
@@ -51,7 +52,7 @@ public final class XtaItpCheckerTest {
 		final InputStream inputStream = getClass().getResourceAsStream(filepath);
 		final XtaSystem system = XtaDslManager.createSystem(inputStream);
 
-		final XtaItpChecker checker = XtaItpChecker.create(system, l -> false);
+		final XtaItpChecker checker = XtaItpChecker.create(system, l -> false, SearchStrategy.BREADTH_FIRST);
 
 		// Act
 		final SafetyResult<XtaState<ItpZoneState>, XtaAction> status = checker.check(UnitPrec.getInstance());
