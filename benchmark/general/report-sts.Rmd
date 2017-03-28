@@ -1,7 +1,7 @@
 ---
 title: "Benchmark report"
 params:
-  csv_path: "log_20170310_101235.csv"
+  csv_path: "log_20170328_135207.csv"
   timeout_ms: 600000
 output:
   html_document:
@@ -302,12 +302,13 @@ ggplot(d_domain_vs_time, aes(TimeMs.x, TimeMs.y)) +
 
 ## Correlations
 ```{r}
-
 for(t in unique(d$Type)){
   print(paste("Correlations for type", t))
   d_corr <- d %>% filter(Type == t) %>%
     select(TimeMs, Vars, Size, Iterations, ArgSize, ArgDepth, CexLen)
-  corrgram(d_corr, order = T, lower.panel = panel.shade, upper.panel = panel.pie)
+  tryCatch(
+    corrgram(d_corr, order = T, lower.panel = panel.shade, upper.panel = panel.pie),
+    error = function(err) {})
 }
 ```
 

@@ -1,7 +1,8 @@
 <#
 .SYNOPSIS
-Run measurements on several models and configurations with a
-given number of repetitions and timeout.
+Run measurements on several models and configurations with a given number of
+repetitions and timeout. The script collects the output from the standard
+output to a csv file.
 
 .PARAMETER jarFile
 Path of the jar file containing the algorithm.
@@ -24,7 +25,11 @@ Do not repeat a measurement if it causes a timeout on its first run.
 
 .PARAMETER rBin
 Path to the binary folder of the R statistical framework. If this parameter
-is given, the script will also generate a html report.
+and rReport is given, the script will also generate a html report.
+
+.PARAMETER rReport
+Path to the R markdown file that is used for generating the report. If this
+parameter and rBin is given, the script will also generate a html report.
 
 .NOTES
 Author: Akos Hajdu
@@ -37,7 +42,8 @@ param (
     [int]$timeOut = 60,
     [int]$runs = 1,
     [switch]$toNoRep,
-    [string]$rBin
+    [string]$rBin,
+    [string]$rReport
 )
 
 # Temp file for individual runs
@@ -105,9 +111,9 @@ $contents = Get-Content $logFile
 Write-Progress -Activity "Running measurements" -PercentComplete 100 -Completed -Status " "
 
 # Generate report
-if ($rBin) {
-    $params = @("-e", "`"rmarkdown::render('report.Rmd', params = list(csv_path = '$logFile', timeout_ms = $($timeOut * 1000)))`"")
+if ($rBin -and $rReport) {
+    $params = @("-e", "`"rmarkdown::render('$rReport', params = list(csv_path = '$logFile', timeout_ms = $($timeOut * 1000)))`"")
     $p = Start-Process "$rBin\Rscript.exe" -ArgumentList $params -PassThru -NoNewWindow
     $p.WaitForExit()
-    Rename-Item "report.html" ($logFile + ".html")
+    Rename-Item $rReport.replace(".Rmd", ".html") ($logFile.replace(".csv", "") + ".html")
 }

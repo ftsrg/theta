@@ -18,11 +18,10 @@
 
 ### Generate html report
 1. Requirements
-    - **Currently only for theta-sts!**
     - [R](https://www.r-project.org/) with the [tidyverse](https://cran.r-project.org/web/packages/tidyverse/index.html) package installed
     - [RStudio Desktop](https://www.rstudio.com/products/RStudio/)
     - [Pandoc](http://pandoc.org/)
-1. When executing `Run-Measurements.ps1`, supply the _bin_ folder of R (e.g., _C:\Program Files\R\R-3.3.2\bin_) to the `-rBin` parameter.
+1. When executing `Run-Measurements.ps1`, supply the _bin_ folder of R (e.g., _C:\Program Files\R\R-3.3.2\bin_) to the `-rBin` parameter and the path of the R markdown file (e.g., `report-sts.Rmd`) to the `-rReport` parameter.
 1. A html report (with the same name as the log file) should appear.
 
 ### Send results in e-mail
