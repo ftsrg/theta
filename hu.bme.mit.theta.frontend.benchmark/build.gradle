@@ -33,4 +33,7 @@ task stsMain(type: ShadowJar) {
     //classifier = 'fat'
     //mergeServiceFiles()
     manifest { attributes 'Main-Class': 'hu.bme.mit.theta.frontend.benchmark.StsMain' }
+    baseName = 'theta-sts'
+    classifier = null
+    version = null
 }
