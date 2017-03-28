@@ -1,7 +1,7 @@
 ---
 title: "Benchmark report"
 params:
-  csv_path: "log_20170328_135207.csv"
+  csv_path: "log_20170328_170203.csv"
   timeout_ms: 600000
 output:
   html_document:
@@ -42,20 +42,22 @@ theme_noticks <- theme(axis.ticks = element_blank())
 d <- read_csv(
   params$csv_path,
   col_types = cols(
+    Expected = col_logical(),
     Model = col_character(),
-    Vars = col_integer(),
-    Size = col_integer(),
+    Prop = col_character(),
     Domain = col_character(),
-    Refinement = col_character(),
     InitPrec = col_character(),
-    Search = col_character(),
     PredSplit = col_character(),
+    Refinement = col_character(),
+    Search = col_character(),
     Safe = col_character(),
     TimeMs = col_integer(),
     Iterations = col_integer(),
     ArgSize = col_integer(),
     ArgDepth = col_integer(),
-    CexLen = col_integer()
+    CexLen = col_integer(),
+    Vars = col_integer(),
+    Size = col_integer()
   )
 )
 ```
@@ -63,6 +65,9 @@ d <- read_csv(
 ## Clean data
 
 ```{r}
+# Drop unneeded columns
+d <- d %>% select(-Expected, -Prop)
+
 # Create factors
 d$Domain <- factor(d$Domain)
 d$Refinement <- factor(d$Refinement)
@@ -71,6 +76,8 @@ d$Search <- factor(d$Search)
 d$PredSplit <- factor(d$PredSplit)
 
 # Convert 'Safe' to logical (and remove exceptions).
+empty_rows <- sum(is.na(d$Safe))
+if (empty_rows > 0) warning(paste(c(empty_rows, " rows contain missing values (no timeout, no exception)")))
 ex_rows <- str_detect(d$Safe, "\\[EX\\]")
 exs <- sum(ex_rows, na.rm = T)
 if (exs > 0) warning(paste(c(exs, " rows contain exceptions that are converted to NAs.")))

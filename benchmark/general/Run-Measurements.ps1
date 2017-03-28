@@ -46,6 +46,11 @@ param (
     [string]$rReport
 )
 
+function MemberNames
+{
+    $args[0] | Get-Member -MemberType 'NoteProperty' | Select-Object -ExpandProperty 'Name' | Sort-Object
+}
+
 # Temp file for individual runs
 $tmpFile = [System.IO.Path]::GetTempFileName()
 # Final log file collecting results from all runs
@@ -53,18 +58,23 @@ $tmpFile = [System.IO.Path]::GetTempFileName()
 #  in append mode. Therefore, the temp file is always overwritten, but the script always appends
 #  the contents of the temp file to the final log file.)
 $logFile = "log_" + (Get-Date -format "yyyyMMdd_HHmmss") + ".csv"
-# Header
-(Start-Process java -ArgumentList @('-jar', $jarFile, '--header') -RedirectStandardOutput $tmpFile -PassThru -NoNewWindow).WaitForExit()
-Get-Content $tmpFile | where {$_ -ne ""} | Out-File $logFile
 
-# Load models and configurations from external files
+# Load models 
 $models = @(Import-CSV $modelsFile)
-$modelsOpts = $models[0] # First line should be the name of the options
+$modelsOpts = $models[0] # First line should be the names of the options
 $models = $models | select -Skip 1 # Other lines are data
-
+# Load configurations
 $configs = @(Import-CSV $configsFile)
-$configsOpts = $configs[0] # First line should be the name of the options
+$configsOpts = $configs[0] # First line should be the names of the options
 $configs = $configs | select -Skip 1 # Other lines are data
+
+# Header
+$header = ""
+foreach ($arg in MemberNames $modelsOpts) { $header += "`"$arg`"," }
+foreach ($arg in MemberNames $configsOpts) { $header += "`"$arg`"," }
+(Start-Process java -ArgumentList @('-jar', $jarFile, '--header') -RedirectStandardOutput $tmpFile -PassThru -NoNewWindow).WaitForExit()
+$header += Get-Content $tmpFile | where {$_ -ne ""}
+$header | Out-File $logFile
 
 # Loop through models
 $m = 0
@@ -80,15 +90,18 @@ foreach($model in $models) {
         for($r = 0; $r -lt $runs; $r++) {
             Write-Progress -Activity " " -PercentComplete (($r)*100/$runs) -Status "Run: $($r+1)/$runs " -Id 2
             
+            $output = ""
             # Collect arguments for the jar file
             $args = @('-jar', $jarFile)
-            # Arguments from the configuration
-            foreach ($arg in $conf | Get-Member -MemberType 'NoteProperty' | Select-Object -ExpandProperty 'Name') {
-                if ($conf.$arg) { $args += @($configsOpts.$arg, $conf.$arg) }
-            }
             # Arguments from the model
-            foreach ($arg in $model | Get-Member -MemberType 'NoteProperty' | Select-Object -ExpandProperty 'Name') {
+            foreach ($arg in MemberNames $modelsOpts) {
                 if ($model.$arg) { $args += @($modelsOpts.$arg, $model.$arg) }
+                $output += "`"$($model.$arg)`","
+            }
+            # Arguments from the configuration
+            foreach ($arg in MemberNames $configsOpts) {
+                if ($conf.$arg) { $args += @($configsOpts.$arg, $conf.$arg) }
+                $output += "`"$($conf.$arg)`","
             }
             # Run the jar file with the given parameters, the output is redirected to a temp file
             $p = Start-Process java -ArgumentList $args -RedirectStandardOutput $tmpFile -PassThru -NoNewWindow
@@ -98,9 +111,12 @@ foreach($model in $models) {
                 Wait-Process -Id $id
                 Start-Sleep -m 100 # Wait a bit so that the file is closed
                 if ($r -eq 0 -and $toNoRep) { $r = $runs } # Do not repeat if the first run is a timeout
-            } 
+                $output += "`"[TO]`""
+            } else {
+                $output += Get-Content $tmpFile | where {$_ -ne ""}
+            }
             # Copy contents of the temp file to the log
-            Get-Content $tmpFile | where {$_ -ne ""} | Out-File $logFile -Append
+            $output | Out-File $logFile -Append
         }
         $c++
     }
