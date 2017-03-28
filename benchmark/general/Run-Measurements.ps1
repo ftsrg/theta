@@ -1,7 +1,17 @@
 <#
 .SYNOPSIS
-Run measurements on several models and configurations with a
-given number of repetitions and timeout.
+Run measurements on several models and configurations with a given number of
+repetitions and timeout. The script collects the output from the standard
+output to a csv file.
+
+.PARAMETER jarFile
+Path of the jar file containing the algorithm.
+
+.PARAMETER modelsFile
+A list of csv files listing the models.
+
+.PARAMETER configsFile
+Csv file listing the configurations.
 
 .PARAMETER timeOut
 Timeout in seconds. Note, that starting the JVM and the
@@ -10,33 +20,30 @@ application is also included in the time.
 .PARAMETER runs
 Number of repetitions for each measurement.
 
-.PARAMETER jarFile
-Path of the jar file containing the algorithm.
-
-.PARAMETER modelsFile
-CSV file describing the models.
-
-.PARAMETER configsFile
-CSV file describing the configurations.
-
-.PARAMETER outDir
-Path where the output log file is written.
-
 .PARAMETER toNoRep
 Do not repeat a measurement if it causes a timeout on its first run.
+
+.PARAMETER rBin
+Path to the binary folder of the R statistical framework. If this parameter
+and rReport is given, the script will also generate a html report.
+
+.PARAMETER rReport
+Path to the R markdown file that is used for generating the report. If this
+parameter and rBin is given, the script will also generate a html report.
 
 .NOTES
 Author: Akos Hajdu
 #>
 
 param (
+    [Parameter(Mandatory=$true)][string]$jarFile,
+    [Parameter(Mandatory=$true)][string[]]$modelsFile,
+    [Parameter(Mandatory=$true)][string]$configsFile,
     [int]$timeOut = 60,
     [int]$runs = 1,
-    [string]$jarFile = "theta.jar",
-    [Parameter(Mandatory=$true)][string]$modelsFile,
-    [Parameter(Mandatory=$true)][string]$configsFile,
-    [string]$outDir = "./",
-    [switch]$toNoRep
+    [switch]$toNoRep,
+    [string]$rBin,
+    [string]$rReport
 )
 
 # Temp file for individual runs
@@ -45,7 +52,7 @@ $tmpFile = [System.IO.Path]::GetTempFileName()
 # (The temp file is needed because I could not redirect the output of the application to a file
 #  in append mode. Therefore, the temp file is always overwritten, but the script always appends
 #  the contents of the temp file to the final log file.)
-$logFile = $outDir + "log_" + (Get-Date -format "yyyyMMdd_HHmmss") + ".csv"
+$logFile = "log_" + (Get-Date -format "yyyyMMdd_HHmmss") + ".csv"
 # Header
 (Start-Process java -ArgumentList @('-jar', $jarFile, '--header') -RedirectStandardOutput $tmpFile -PassThru -NoNewWindow).WaitForExit()
 Get-Content $tmpFile | where {$_ -ne ""} | Out-File $logFile
@@ -97,4 +104,16 @@ foreach($model in $models) {
 
 Remove-Item $tmpFile
 
+# Convert to UTF-8
+$contents = Get-Content $logFile
+[System.IO.File]::WriteAllLines((Get-ChildItem $logFile).FullName, $contents)
+
 Write-Progress -Activity "Running measurements" -PercentComplete 100 -Completed -Status " "
+
+# Generate report
+if ($rBin -and $rReport) {
+    $params = @("-e", "`"rmarkdown::render('$rReport', params = list(csv_path = '$logFile', timeout_ms = $($timeOut * 1000)))`"")
+    $p = Start-Process "$rBin\Rscript.exe" -ArgumentList $params -PassThru -NoNewWindow
+    $p.WaitForExit()
+    Rename-Item $rReport.replace(".Rmd", ".html") ($logFile.replace(".csv", "") + ".html")
+}

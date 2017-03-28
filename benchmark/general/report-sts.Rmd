@@ -1,0 +1,315 @@
+---
+title: "Benchmark report"
+params:
+  csv_path: "log_20170328_135207.csv"
+  timeout_ms: 600000
+output:
+  html_document:
+    code_folding: hide
+    number_sections: yes
+    toc: no
+    toc_depth: 2
+  pdf_document:
+    highlight: zenburn
+    number_sections: yes
+    toc: no
+    toc_depth: 2
+classoption: a4paper
+---
+
+This is a benchmark report for the file `r params$csv_path`.
+
+# Initialization
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(stringr)
+library(forcats)
+library(lubridate)
+library(corrgram)
+```
+
+```{r}
+# Themes
+theme_rotate_x <- theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
+theme_noticks <- theme(axis.ticks = element_blank())
+```
+
+## Load data
+
+```{r}
+d <- read_csv(
+  params$csv_path,
+  col_types = cols(
+    Model = col_character(),
+    Vars = col_integer(),
+    Size = col_integer(),
+    Domain = col_character(),
+    Refinement = col_character(),
+    InitPrec = col_character(),
+    Search = col_character(),
+    PredSplit = col_character(),
+    Safe = col_character(),
+    TimeMs = col_integer(),
+    Iterations = col_integer(),
+    ArgSize = col_integer(),
+    ArgDepth = col_integer(),
+    CexLen = col_integer()
+  )
+)
+```
+
+## Clean data
+
+```{r}
+# Create factors
+d$Domain <- factor(d$Domain)
+d$Refinement <- factor(d$Refinement)
+d$InitPrec <- factor(d$InitPrec)
+d$Search <- factor(d$Search)
+d$PredSplit <- factor(d$PredSplit)
+
+# Convert 'Safe' to logical (and remove exceptions).
+ex_rows <- str_detect(d$Safe, "\\[EX\\]")
+exs <- sum(ex_rows, na.rm = T)
+if (exs > 0) warning(paste(c(exs, " rows contain exceptions that are converted to NAs.")))
+d$Safe <- as.logical(d$Safe)
+
+# Create 'Config' column.
+d <- d %>% mutate(Config = paste(
+  substr(d$Domain, 1, 1),
+  substr(d$Refinement, 1, 1),
+  substr(d$InitPrec, 1, 1),
+  substr(d$Search, 1, 1),
+  ifelse(is.na(d$PredSplit), "", substr(d$PredSplit, 1, 1)),
+  sep = ""
+))
+
+# Trim name, separate 'Model' into 'Name' and 'Type'.
+d$Model <- as.factor(gsub("models/", "", d$Model))
+d <- d %>% separate(Model, into = c("Type", "Subtype", "Name"), sep = "/", remove = F) %>%
+  unite(Type, Type, Subtype, sep = "/")
+```
+
+# Overview
+
+## Summary
+
+```{r}
+n_meas_total <- nrow(d)
+n_meas_succ <- nrow(d %>% filter(!is.na(Safe)))
+n_models_total <- length(unique(d$Model))
+n_configs_total <- length(unique(d$Config))
+total_time <- seconds_to_period(sum(ifelse(is.na(d$TimeMs), params$timeout_ms, d$TimeMs)) / 1000)
+
+d_model_config <- d %>%
+  group_by(Config, Model, Domain, Refinement, InitPrec, Search, PredSplit, Type) %>%
+  summarise(
+    ResultCount = sum(!is.na(Safe)),
+    Succ = ResultCount > 0,
+    SafeCount = sum(Safe, na.rm = T),
+    Consistent = SafeCount == 0 || SafeCount == ResultCount,
+    TimeAvg = mean(TimeMs),
+    TimeRSD = ifelse(ResultCount == 1, 0, sd(TimeMs) / mean(TimeMs)))
+d_model <- d_model_config %>% group_by(Model, Type) %>%
+  summarise(
+    ResultCount = sum(ResultCount),
+    Succ = ResultCount > 0,
+    SafeCount = sum(SafeCount),
+    Consistent = SafeCount == 0 || SafeCount == ResultCount,
+    TimeMin = min(TimeAvg, na.rm = T),
+    ConfigMin = ifelse(is.na(TimeMin), "", Config[which.min(TimeAvg)]))
+d_model$ConfigMin[d_model$ConfigMin == ""] <- NA
+
+n_models_succ <- length(unique((d_model %>% filter(Succ))$Model))
+n_configs_succ <- length(unique((d_model_config %>% filter(Succ))$Config))
+```
+
+- There are **`r n_models_total` models** and **`r n_configs_total` configurations**, giving **`r n_models_total * n_configs_total` measurements**, with **`r nrow(d_model_config %>% filter(Succ))` being successful** with the timeout limit of `r params$timeout_ms/1000` s (`r nrow(d_model_config %>% filter(Succ)) / (n_models_total * n_configs_total)` success rate).
+    - **`r n_models_succ` / `r n_models_total` models** were verified by at least one configuration.
+    - **`r n_configs_succ` / `r n_configs_total` configurations** verified at least one model.
+- With the repeated measurements included, there are a total number of **`r n_meas_total` measurement points** with **`r n_meas_succ` successful** executions.
+- Total time of the measurements is **`r total_time$day` days, `r total_time$hour` hours and `r total_time$minute` minutes**, assuming that the missing values timed out.
+
+## Consistency of results
+
+There are **`r sum(!d_model_config$Consistent)`** cases where different executions of the same configuration yielded different results for the same model.
+```{r}
+d_model_config %>% filter(!Consistent) %>% ungroup() %>% select(Config, Model)
+```
+
+There are **`r sum(!d_model$Consistent)`** cases where different executions of the same configuration or different configurations yielded different results for the same model.
+```{r}
+d_model %>% filter(!Consistent) %>% select(Model)
+```
+
+## Overview of models and configurations
+
+```{r, fig.height = 4}
+ggplot(d_model_config) +
+  geom_bar(aes(x = Model, fill = Succ)) +
+  scale_x_discrete(drop = F) +
+  theme_rotate_x +
+  labs(title = "Number of configurations that verified a model")
+```
+
+```{r, fig.height = 4}
+ggplot(d_model_config) +
+  geom_bar(aes(x = Config, fill = Succ)) +
+  scale_x_discrete(drop = F) +
+  theme_rotate_x +
+  labs(title = "Number of models verified by a configuration")
+```
+
+```{r, fig.height = 4}
+ggplot(d_model_config %>% filter(Succ)) +
+  geom_bar(aes(x = Config, fill = Type), position = "dodge") +
+  scale_x_discrete(drop = F) +
+  theme_rotate_x +
+  labs(title = "Number of models verified by a configuration in each type")
+```
+
+```{r}
+ggplot(d_model_config, aes(Config, Model)) +
+  geom_tile(aes(fill = ResultCount), color = "black") +
+  scale_fill_gradient(low = "red", high = "green", na.value = "white") +
+  theme_noticks + theme_rotate_x +
+  labs(title = "Number of successful executions")
+```
+
+# Details
+
+## Verification success
+
+```{r, fig.height = 2}
+ggplot(d_model_config) +
+  geom_bar(aes(x = Domain, fill = Succ), position = "fill") +
+  facet_wrap(~ Type) +
+  coord_flip() +
+  labs(title = "Success rate of domains")
+```
+
+```{r, fig.height = 2}
+ggplot(d_model_config) +
+  geom_bar(aes(x = Refinement, fill = Succ), position = "fill") +
+  facet_wrap(~ Type) +
+  coord_flip() +
+  labs(title = "Success rate of refinements")
+```
+
+```{r, fig.height = 2}
+ggplot(d_model_config) +
+  geom_bar(aes(x = InitPrec, fill = Succ), position = "fill") +
+  facet_wrap(~ Type) +
+  coord_flip() +
+  labs(title = "Success rate of initial precisions")
+```
+
+```{r, fig.height = 2}
+ggplot(d_model_config) +
+  geom_bar(aes(x = Search, fill = Succ), position = "fill") +
+  facet_wrap(~ Type) +
+  coord_flip() +
+  labs(title = "Success rate of searches")
+```
+
+```{r, fig.height = 2}
+ggplot(d_model_config) +
+  geom_bar(aes(x = PredSplit, fill = Succ), position = "fill") +
+  facet_wrap(~ Type) +
+  coord_flip() +
+  labs(title = "Success rate of predicate splits")
+```
+
+## Execution time
+
+### Relative Standard Deviation
+
+```{r, fig.height = 2}
+ggplot(d_model_config) +
+  geom_histogram(aes(TimeRSD)) +
+  labs(title = "Overall distribution of the RSD")
+```
+
+The maximum RSD is **`r max(d_model_config$TimeRSD, na.rm = T)`**, and 95% of the measurements have a lower RSD than `r quantile(d_model_config$TimeRSD, .95, na.rm = T)`.
+
+```{r}
+ggplot(d_model_config, aes(Config, Model)) +
+  geom_tile(aes(fill = TimeRSD), color = "black") +
+  scale_fill_gradient(low = "green", high = "red", na.value = "white") +
+  theme_noticks + theme_rotate_x +
+  labs(title = "Individual RSD for each configuration and model")
+```
+
+### Average execution time
+
+```{r, fig.height = 3}
+ggplot(d %>% filter(!is.na(TimeMs))) +
+  geom_histogram(aes(TimeMs)) +
+  labs(title = "Distribution of execution time")
+summary(d$TimeMs)
+```
+
+```{r}
+ggplot(d %>% filter(!is.na(TimeMs))) +
+  geom_boxplot(aes(Type, log10(TimeMs))) +
+  coord_flip() +
+  labs(title = "Distribution of execution time for each type")
+```
+
+
+
+```{r}
+ggplot(d %>% filter(!is.na(TimeMs))) +
+  geom_boxplot(aes(Model, log10(TimeMs))) + coord_flip() +
+  labs(title = "Distribution of execution time for each model")
+```
+
+```{r}
+ggplot(d_model_config, aes(Config, Model)) +
+  geom_tile(aes(fill = log10(TimeAvg)), color = "black") +
+  scale_fill_gradient(low = "green", high = "red", na.value = "white") +
+  theme_noticks + theme_rotate_x +
+  labs(title = "Heatmap of execution time for each model/configuration")
+```
+
+```{r, fig.height = 4}
+ggplot(d_model %>% filter(!is.na(ConfigMin))) +
+  geom_bar(aes(x = ConfigMin, fill = Type)) +
+  theme_rotate_x +
+  labs(title = "Number of models where a configuration was the fastest")
+```
+
+### Pairwise comparisons
+```{r}
+d_inputs_time <- d %>% select(Type, Model, Domain, Refinement, InitPrec, Search, TimeMs)
+
+d_inputs_time$TimeMs[is.na(d_inputs_time$TimeMs)] <- params$timeout_ms
+d_domain_vs_time <- inner_join(
+  d_inputs_time %>% filter(Domain == "PRED"),
+  d_inputs_time %>% filter(Domain == "EXPL"),
+  by = c("Type", "Model", "Refinement", "InitPrec", "Search")) %>%
+  filter(!near(TimeMs.x, params$timeout_ms) | !near(TimeMs.y, params$timeout_ms))
+ggplot(d_domain_vs_time, aes(TimeMs.x, TimeMs.y)) +
+  scale_y_log10() + scale_x_log10() +
+  geom_bin2d(binwidth = 0.25) +
+  scale_fill_gradient(low = "gray", high = "black") +
+  geom_point(aes(color = Type), position = "jitter", size = 2) +
+  geom_abline() +
+  labs(title = "Execution time of different domains", x = "PRED", y = "EXPL")
+```
+
+## Correlations
+```{r}
+for(t in unique(d$Type)){
+  print(paste("Correlations for type", t))
+  d_corr <- d %>% filter(Type == t) %>%
+    select(TimeMs, Vars, Size, Iterations, ArgSize, ArgDepth, CexLen)
+  tryCatch(
+    corrgram(d_corr, order = T, lower.panel = panel.shade, upper.panel = panel.pie),
+    error = function(err) {})
+}
+```
+
+
