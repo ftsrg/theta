@@ -1,4 +1,5 @@
-"-m", "-p", "-e"
+"Model", "Prop", "Expected"
+"-m",    "-p",   "-e"
 "models/sts/hw/bob2.aag", "", "true"
 "models/sts/hw/eijks208c.aag", "", "true"
 "models/sts/hw/eijks208o.aag", "", "true"

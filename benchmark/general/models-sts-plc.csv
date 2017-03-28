@@ -1,4 +1,5 @@
-"-m", "-p", "-e"
+"Model", "Prop", "Expected"
+"-m",    "-p",   "-e"
 "models/sts/plc/plc01.system", "s", "false"
 "models/sts/plc/plc02.system", "s", "false"
 "models/sts/plc/plc03.system", "s", "true"

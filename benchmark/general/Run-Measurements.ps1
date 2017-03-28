@@ -59,7 +59,12 @@ Get-Content $tmpFile | where {$_ -ne ""} | Out-File $logFile
 
 # Load models and configurations from external files
 $models = @(Import-CSV $modelsFile)
+$modelsOpts = $models[0] # First line should be the name of the options
+$models = $models | select -Skip 1 # Other lines are data
+
 $configs = @(Import-CSV $configsFile)
+$configsOpts = $configs[0] # First line should be the name of the options
+$configs = $configs | select -Skip 1 # Other lines are data
 
 # Loop through models
 $m = 0
@@ -79,11 +84,11 @@ foreach($model in $models) {
             $args = @('-jar', $jarFile)
             # Arguments from the configuration
             foreach ($arg in $conf | Get-Member -MemberType 'NoteProperty' | Select-Object -ExpandProperty 'Name') {
-                if ($conf.$arg) { $args += @($arg, $conf.$arg) }
+                if ($conf.$arg) { $args += @($configsOpts.$arg, $conf.$arg) }
             }
             # Arguments from the model
             foreach ($arg in $model | Get-Member -MemberType 'NoteProperty' | Select-Object -ExpandProperty 'Name') {
-                if ($model.$arg) { $args += @($arg, $model.$arg) }
+                if ($model.$arg) { $args += @($modelsOpts.$arg, $model.$arg) }
             }
             # Run the jar file with the given parameters, the output is redirected to a temp file
             $p = Start-Process java -ArgumentList $args -RedirectStandardOutput $tmpFile -PassThru -NoNewWindow

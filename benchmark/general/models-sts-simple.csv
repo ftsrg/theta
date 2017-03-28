@@ -1,4 +1,5 @@
-"-m", "-p", "-e"
+"Model", "Prop", "Expected"
+"-m",    "-p",   "-e"
 "models/sts/simple/boolean1.system", "safe", "false"
 "models/sts/simple/boolean2.system", "safe", "false"
 "models/sts/simple/counter.system", "safe", "true"
