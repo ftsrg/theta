@@ -31,6 +31,9 @@ and rReport is given, the script will also generate a html report.
 Path to the R markdown file that is used for generating the report. If this
 parameter and rBin is given, the script will also generate a html report.
 
+.PARAMETER jvmArgs
+Arguments to pass for the JVM.
+
 .NOTES
 Author: Akos Hajdu
 #>
@@ -43,7 +46,8 @@ param (
     [int]$runs = 1,
     [switch]$toNoRep,
     [string]$rBin,
-    [string]$rReport
+    [string]$rReport,
+    [string[]]$jvmArgs
 )
 
 function MemberNames
@@ -95,7 +99,7 @@ foreach($model in $models) {
             
             $output = ""
             # Collect arguments for the jar file
-            $args = @('-jar', $jarFile)
+            $args = @($jvmArgs) + @('-jar', $jarFile)
             # Arguments from the model
             foreach ($arg in MemberNames $modelsOpts) {
                 if ($model.$arg) { $args += @($modelsOpts.$arg, $model.$arg) }
