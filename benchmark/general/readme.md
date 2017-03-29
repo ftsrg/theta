@@ -10,7 +10,7 @@
     - Type `Get-Help .\Run-Measurements.ps1 -detailed` to get help about the parameters of the script
     - Configurations are listed in the files `configs-XXX.csv`
     - Models are listed in the files `models-XXX.csv`
-    - Example: `.\Run-Measurements.ps1 -jarFile theta-sts.jar -configsFile .\configs-sts.csv -modelsFile .\models-sts-simple.csv -runs 1 -timeOut 15`
+    - Example: `.\Run-Measurements.ps1 -jarFile theta-sts.jar -configsFile .\configs-sts.csv -modelsFiles .\models-sts-simple.csv -runs 1 -timeOut 15`
 1. Sit back and enjoy the nice progress bars
 1. Observe the results in the generated csv file, which is named `log_<timestamp>.csv` by default
 
@@ -18,7 +18,7 @@
 
 ### Generate html report
 1. Requirements
-    - [R](https://www.r-project.org/) with the [tidyverse](https://cran.r-project.org/web/packages/tidyverse/index.html) package installed
+    - [R](https://www.r-project.org/) with the [tidyverse](https://cran.r-project.org/web/packages/tidyverse/index.html) and corrgram packages installed
     - [RStudio Desktop](https://www.rstudio.com/products/RStudio/)
     - [Pandoc](http://pandoc.org/)
 1. When executing `Run-Measurements.ps1`, supply the _bin_ folder of R (e.g., _C:\Program Files\R\R-3.3.2\bin_) to the `-rBin` parameter and the path of the R markdown file (e.g., `report-sts.Rmd`) to the `-rReport` parameter.

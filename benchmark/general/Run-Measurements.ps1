@@ -7,7 +7,7 @@ output to a csv file.
 .PARAMETER jarFile
 Path of the jar file containing the algorithm.
 
-.PARAMETER modelsFile
+.PARAMETER modelsFiles
 A list of csv files listing the models.
 
 .PARAMETER configsFile
@@ -37,7 +37,7 @@ Author: Akos Hajdu
 
 param (
     [Parameter(Mandatory=$true)][string]$jarFile,
-    [Parameter(Mandatory=$true)][string[]]$modelsFile,
+    [Parameter(Mandatory=$true)][string[]]$modelsFiles,
     [Parameter(Mandatory=$true)][string]$configsFile,
     [int]$timeOut = 60,
     [int]$runs = 1,
@@ -59,14 +59,17 @@ $tmpFile = [System.IO.Path]::GetTempFileName()
 #  the contents of the temp file to the final log file.)
 $logFile = "log_" + (Get-Date -format "yyyyMMdd_HHmmss") + ".csv"
 
-# Load models 
-$models = @(Import-CSV $modelsFile)
-$modelsOpts = $models[0] # First line should be the names of the options
-$models = $models | select -Skip 1 # Other lines are data
+# Load models
+$models = @()
+foreach ($file in $modelsFiles) {
+    $content = @(Import-CSV $file)
+    $modelsOpts = $content[0] # First line should be the names of the options
+    $models += @($content | select -Skip 1) # Other lines are data
+}
 # Load configurations
 $configs = @(Import-CSV $configsFile)
 $configsOpts = $configs[0] # First line should be the names of the options
-$configs = $configs | select -Skip 1 # Other lines are data
+$configs = @($configs | select -Skip 1) # Other lines are data
 
 # Header
 $header = ""
