@@ -1,0 +1,39 @@
+const int N = 10;
+
+typedef int[1, N] Pid;
+int v1;
+bool v2;
+const int T = 16;
+
+process P(const Pid i) {
+	clock c;
+	
+	state
+		L9 { c <= T },
+		L8 { c <= T },
+		CS7,
+		L6,
+		L5 { c <= T },
+		L4,
+		L3,
+		L2 { c <= T },
+		L1;
+	
+	init L1;
+	
+	trans
+		L9 -> L1 { assign v1 = 0; },
+		L8 -> L9 { assign v2 = false, c = 0; },
+		CS7 -> L8 { assign c = 0; },
+		L4 -> L1 { guard v2; },
+		L6 -> L1 { guard v1 != i; },
+		L3 -> L1 { guard v1 != i; },
+	    L6 -> CS7 { guard v1 == i; },
+		L5 -> L6 { assign v2 = true, c = 0; },
+		L4 -> L5 { guard !v2; assign c = 0; },
+		L3 -> L4 { guard v1 == i && c > T; },
+		L2 -> L3 { assign v1 = i, c = 0; },
+		L1 -> L2 { guard v1 == 0; assign c = 0; };
+}
+
+system P;

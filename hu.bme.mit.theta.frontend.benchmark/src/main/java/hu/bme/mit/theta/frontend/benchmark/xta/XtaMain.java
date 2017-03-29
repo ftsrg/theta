@@ -13,6 +13,7 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
 import hu.bme.mit.theta.analysis.algorithm.ARG;
+import hu.bme.mit.theta.analysis.algorithm.ArgNode;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.SearchStrategy;
@@ -63,7 +64,7 @@ public final class XtaMain {
 				writer.cell("Refinements");
 				writer.cell("ArgDepth");
 				writer.cell("ArgSize");
-				writer.cell("ArgSizeNotSubsumed");
+				writer.cell("ArgSizeExpanded");
 				writer.newRow();
 				return;
 			} else {
@@ -117,7 +118,7 @@ public final class XtaMain {
 			writer.cell(stats.getIterations());
 			writer.cell(arg.getDepth());
 			writer.cell(arg.getNodes().count());
-			writer.cell(arg.getNodes().filter(n -> !n.isSubsumed()).count());
+			writer.cell(arg.getNodes().filter(ArgNode::isExpanded).count());
 
 		} catch (final Exception e) {
 			final String message = e.getMessage() == null ? "" : ": " + e.getMessage();
