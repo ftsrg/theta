@@ -119,8 +119,6 @@ public final class XtaItpChecker implements SafetyChecker<XtaState<ItpZoneState>
 					close(v);
 					if (!v.isCovered()) {
 						expand(v);
-						reachedSet.addAll(v.getSuccNodes());
-						waitlist.addAll(v.getSuccNodes());
 					}
 				}
 			}
@@ -152,8 +150,10 @@ public final class XtaItpChecker implements SafetyChecker<XtaState<ItpZoneState>
 						if (couldCover(nodeToCoverWith.getState(), node.getState())) {
 							refiner.enforceZone(node, nodeToCoverWith.getState().getState().getInterpolant());
 							refinements++;
-							node.setCoveringNode(nodeToCoverWith);
-							return;
+							if (covers(nodeToCoverWith.getState(), node.getState())) {
+								node.setCoveringNode(nodeToCoverWith);
+								return;
+							}
 						}
 					}
 				}
@@ -162,6 +162,8 @@ public final class XtaItpChecker implements SafetyChecker<XtaState<ItpZoneState>
 
 		private void expand(final ArgNode<XtaState<ItpZoneState>, XtaAction> v) {
 			argBuilder.expand(v, UnitPrec.getInstance());
+			reachedSet.addAll(v.getSuccNodes());
+			waitlist.addAll(v.getSuccNodes());
 		}
 
 		private boolean covers(final XtaState<ItpZoneState> state1, final XtaState<ItpZoneState> state2) {
