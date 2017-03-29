@@ -166,7 +166,7 @@ public final class XtaItpChecker implements SafetyChecker<XtaState<ItpZoneState>
 
 		private boolean covers(final XtaState<ItpZoneState> state1, final XtaState<ItpZoneState> state2) {
 			return state2.getLocs().equals(state1.getLocs()) && state2.getVal().equals(state2.getVal())
-					&& state2.getState().getZone().isLeq(state1.getState().getZone());
+					&& state2.getState().getInterpolant().isLeq(state1.getState().getInterpolant());
 		}
 
 		private boolean couldCover(final XtaState<ItpZoneState> state1, final XtaState<ItpZoneState> state2) {
