@@ -148,9 +148,9 @@ public final class XtaZoneUtils {
 		return succState;
 	}
 
-	private static void applyInverseDelay(final ZoneState.Builder preStateBuilder) {
-		preStateBuilder.down();
-		preStateBuilder.nonnegative();
+	private static void applyInverseDelay(final ZoneState.Builder builder) {
+		builder.down();
+		builder.nonnegative();
 	}
 
 	////
@@ -160,6 +160,7 @@ public final class XtaZoneUtils {
 	}
 
 	private static void applyDelay(final ZoneState.Builder builder) {
+		builder.nonnegative();
 		builder.up();
 	}
 
