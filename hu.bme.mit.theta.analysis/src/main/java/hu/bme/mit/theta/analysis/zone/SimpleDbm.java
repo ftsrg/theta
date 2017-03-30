@@ -145,6 +145,36 @@ final class SimpleDbm {
 		assert !isConsistent() || isClosed();
 	}
 
+	public void nonnegative() {
+		if (!isConsistent()) {
+			return;
+		}
+
+		for (int k = 1; k <= nClocks; k++) {
+			if (!isSatisfied(0, k, Leq(0))) {
+				matrix.set(0, 0, Leq(-1));
+				return;
+			}
+
+			if (Leq(0) < matrix.get(0, k)) {
+				matrix.set(0, k, Leq(0));
+
+				for (int i = 0; i <= nClocks; i++) {
+					for (int j = 0; j <= nClocks; j++) {
+						if (add(matrix.get(i, 0), matrix.get(0, j)) < matrix.get(i, j)) {
+							matrix.set(i, j, add(matrix.get(i, 0), matrix.get(0, j)));
+						}
+						if (add(matrix.get(i, k), matrix.get(k, j)) < matrix.get(i, j)) {
+							matrix.set(i, j, add(matrix.get(i, k), matrix.get(k, j)));
+						}
+					}
+				}
+			}
+		}
+
+		assert !isConsistent() || isClosed();
+	}
+
 	public void free(final int x) {
 		checkArgument(isNonZeroClock(x));
 

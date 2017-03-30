@@ -235,6 +235,11 @@ public final class ZoneState implements ExprState {
 			return this;
 		}
 
+		public Builder nonnegative() {
+			dbm.nonnegative();
+			return this;
+		}
+
 		public Builder execute(final ClockOp op) {
 			dbm.execute(op);
 			return this;

@@ -372,6 +372,10 @@ final class DBM {
 		dbm.down();
 	}
 
+	public void nonnegative() {
+		dbm.nonnegative();
+	}
+
 	public void and(final ClockConstr constr) {
 		checkNotNull(constr);
 		constr.accept(AndOperationVisitor.INSTANCE, this);
