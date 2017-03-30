@@ -114,8 +114,7 @@ public final class XtaZoneUtils {
 		final List<Loc> targetLocs = action.getTargetLocs();
 
 		if (shouldApplyDelay(action.getTargetLocs())) {
-			preStateBuilder.down();
-			preStateBuilder.nonnegative();
+			applyInverseDelay(preStateBuilder);
 		}
 		applyInvariants(preStateBuilder, targetLocs);
 		applyInverseUpdates(preStateBuilder, edge);
@@ -136,8 +135,7 @@ public final class XtaZoneUtils {
 		final List<Loc> targetLocs = action.getTargetLocs();
 
 		if (shouldApplyDelay(action.getTargetLocs())) {
-			preStateBuilder.down();
-			preStateBuilder.nonnegative();
+			applyInverseDelay(preStateBuilder);
 		}
 		applyInvariants(preStateBuilder, targetLocs);
 		applyInverseUpdates(preStateBuilder, receivingEdge);
@@ -148,6 +146,11 @@ public final class XtaZoneUtils {
 
 		final ZoneState succState = preStateBuilder.build();
 		return succState;
+	}
+
+	private static void applyInverseDelay(final ZoneState.Builder preStateBuilder) {
+		preStateBuilder.down();
+		preStateBuilder.nonnegative();
 	}
 
 	////
