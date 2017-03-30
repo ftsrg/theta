@@ -1,21 +1,26 @@
 <#
 .SYNOPSIS
-Run measurements on several models and configurations with a given number of
-repetitions and timeout. The script collects the output from the standard
-output to a csv file.
+Run an algorithm (given in a jar file) on several models and configurations
+(listed in csv files), with a given number of repetitions and timeout. The
+script collects the input parameters and the output of the algorithm into
+a csv file. Optionally a html report can be generated using the R framework.
 
 .PARAMETER jarFile
-Path of the jar file containing the algorithm.
+Path of the jar file containing the algorithm. The jar file must print its
+output in csv format, and must print a header when called with a single
+'--header' flag.
 
 .PARAMETER modelsFiles
-A list of csv files listing the models.
+A list of csv files listing the models. The first row must contain the names
+of the parameters and the second row must contain the switches.
 
 .PARAMETER configsFile
-Csv file listing the configurations.
+Csv file listing the configurations. The first row must contain the names
+of the parameters and the second row must contain the switches.
 
 .PARAMETER timeOut
-Timeout in seconds. Note, that starting the JVM and the
-application is also included in the time.
+Timeout in seconds. Note, that starting the JVM and the application is also
+included in the time.
 
 .PARAMETER runs
 Number of repetitions for each measurement.
@@ -32,7 +37,7 @@ Path to the R markdown file that is used for generating the report. If this
 parameter and rBin is given, the script will also generate a html report.
 
 .PARAMETER jvmArgs
-Arguments to pass for the JVM.
+A list of additional arguments to pass to the JVM.
 
 .NOTES
 Author: Akos Hajdu
@@ -47,7 +52,7 @@ param (
     [switch]$toNoRep,
     [string]$rBin,
     [string]$rReport,
-    [string[]]$jvmArgs
+    [string[]]$jvmArgs = @()
 )
 
 function MemberNames
@@ -141,7 +146,6 @@ Write-Progress -Activity "Running measurements" -PercentComplete 100 -Completed 
 # Generate report
 if ($rBin -and $rReport) {
     $params = @("-e", "`"rmarkdown::render('$rReport', params = list(csv_path = '$logFile', timeout_ms = $($timeOut * 1000)))`"")
-    $p = Start-Process "$rBin\Rscript.exe" -ArgumentList $params -PassThru -NoNewWindow
-    $p.WaitForExit()
+    (Start-Process "$rBin\Rscript.exe" -ArgumentList $params -PassThru -NoNewWindow).WaitForExit()
     Rename-Item $rReport.replace(".Rmd", ".html") ($logFile.replace(".csv", "") + ".html")
 }
