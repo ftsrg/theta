@@ -86,7 +86,6 @@ public final class XtaItpChecker implements SafetyChecker<XtaState<ItpZoneState>
 
 			argBuilder.init(arg, UnitPrec.getInstance());
 			waitlist.addAll(arg.getInitNodes());
-			reachedSet.addAll(arg.getInitNodes());
 		}
 
 		public SafetyResult<XtaState<ItpZoneState>, XtaAction> run() {
@@ -133,36 +132,28 @@ public final class XtaItpChecker implements SafetyChecker<XtaState<ItpZoneState>
 			final Collection<ArgNode<XtaState<ItpZoneState>, XtaAction>> candidates = reachedSet.get(node);
 
 			for (final ArgNode<XtaState<ItpZoneState>, XtaAction> nodeToCoverWith : candidates) {
-				if (node != nodeToCoverWith) {
-					if (!nodeToCoverWith.isCovered()) {
-						if (covers(nodeToCoverWith.getState(), node.getState())) {
-							node.setCoveringNode(nodeToCoverWith);
-							return;
-						}
-					}
+				if (covers(nodeToCoverWith.getState(), node.getState())) {
+					node.setCoveringNode(nodeToCoverWith);
+					return;
 				}
-
 			}
 
 			for (final ArgNode<XtaState<ItpZoneState>, XtaAction> nodeToCoverWith : candidates) {
-				if (node != nodeToCoverWith) {
-					if (!nodeToCoverWith.isCovered()) {
-						if (couldCover(nodeToCoverWith.getState(), node.getState())) {
-							refiner.enforceZone(node, nodeToCoverWith.getState().getState().getInterpolant());
-							refinements++;
-							if (covers(nodeToCoverWith.getState(), node.getState())) {
-								node.setCoveringNode(nodeToCoverWith);
-								return;
-							}
-						}
+				if (couldCover(nodeToCoverWith.getState(), node.getState())) {
+					refiner.enforceZone(node, nodeToCoverWith.getState().getState().getInterpolant());
+					refinements++;
+					if (covers(nodeToCoverWith.getState(), node.getState())) {
+						node.setCoveringNode(nodeToCoverWith);
+						return;
 					}
 				}
 			}
+
 		}
 
 		private void expand(final ArgNode<XtaState<ItpZoneState>, XtaAction> v) {
 			argBuilder.expand(v, UnitPrec.getInstance());
-			reachedSet.addAll(v.getSuccNodes());
+			reachedSet.add(v);
 			waitlist.addAll(v.getSuccNodes());
 		}
 
