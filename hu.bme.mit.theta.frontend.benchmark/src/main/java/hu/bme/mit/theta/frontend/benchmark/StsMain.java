@@ -43,20 +43,14 @@ public class StsMain {
 
 		// If only called with a single --header argument, print header and exit
 		if (args.length == 1 && "--header".equals(args[0])) {
-			tableWriter.cell("Model");
-			tableWriter.cell("Vars");
-			tableWriter.cell("Size");
-			tableWriter.cell("Domain");
-			tableWriter.cell("Refinement");
-			tableWriter.cell("InitPrec");
-			tableWriter.cell("Search");
-			tableWriter.cell("PredSplit");
 			tableWriter.cell("Safe");
 			tableWriter.cell("TimeMs");
 			tableWriter.cell("Iterations");
 			tableWriter.cell("ArgSize");
 			tableWriter.cell("ArgDepth");
 			tableWriter.cell("CexLen");
+			tableWriter.cell("Vars");
+			tableWriter.cell("Size");
 			tableWriter.newRow();
 			return;
 		}
@@ -124,8 +118,6 @@ public class StsMain {
 
 		// Run the algorithm
 		try {
-			tableWriter.cell(model);
-
 			// Read input model
 			STS sts = null;
 			if (model.endsWith(".aag")) {
@@ -136,16 +128,6 @@ public class StsMain {
 				final StsSpec spec = StsDslManager.createStsSpec(inputStream);
 				sts = new StsIteTransformation().transform(spec.createProp(prop));
 			}
-
-			tableWriter.cell(sts.getVars().size());
-			tableWriter.cell(ExprUtils.size(Exprs.And(Exprs.And(sts.getInit()), Exprs.And(sts.getTrans())),
-					ExprMetrics.absoluteSize()));
-			tableWriter.cell(domain.toString());
-			tableWriter.cell(refinement.toString());
-			tableWriter.cell(initPrec.toString());
-			tableWriter.cell(search.toString());
-			tableWriter.cell(domain == Domain.PRED ? predSplit.toString() : "");
-			System.out.flush();
 
 			// Build configuration
 			final Configuration<?, ?, ?> configuration = new StsConfigurationBuilder(domain, refinement)
@@ -170,6 +152,10 @@ public class StsMain {
 			} else {
 				tableWriter.cell("");
 			}
+
+			tableWriter.cell(sts.getVars().size());
+			tableWriter.cell(ExprUtils.size(Exprs.And(Exprs.And(sts.getInit()), Exprs.And(sts.getTrans())),
+					ExprMetrics.absoluteSize()));
 
 		} catch (final Exception ex) {
 			final String message = ex.getMessage() == null ? "" : ": " + ex.getMessage();

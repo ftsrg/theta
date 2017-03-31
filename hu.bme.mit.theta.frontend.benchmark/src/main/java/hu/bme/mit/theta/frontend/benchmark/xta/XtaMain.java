@@ -57,9 +57,6 @@ public final class XtaMain {
 		} catch (final ParseException e) {
 			// If called with a single --header argument, print header and exit
 			if (args.length == 1 && "--header".equals(args[0])) {
-				writer.cell("Model");
-				writer.cell("Algorithm");
-				writer.cell("Strategy");
 				writer.cell("TimeInMs");
 				writer.cell("Refinements");
 				writer.cell("ArgDepth");
@@ -100,11 +97,6 @@ public final class XtaMain {
 			System.out.println("\"" + strategyOption + "\" is not a valid value for --strategy");
 			return;
 		}
-
-		writer.cell(modelOption);
-		writer.cell(algorithmOption);
-		writer.cell(strategyOption);
-		System.out.flush();
 
 		try {
 			final XtaConfiguration configuration = XtaConfiguration.create(system, l -> false, algorithm, strategy);

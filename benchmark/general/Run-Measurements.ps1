@@ -1,21 +1,26 @@
 <#
 .SYNOPSIS
-Run measurements on several models and configurations with a given number of
-repetitions and timeout. The script collects the output from the standard
-output to a csv file.
+Run an algorithm (given in a jar file) on several models and configurations
+(listed in csv files), with a given number of repetitions and timeout. The
+script collects the input parameters and the output of the algorithm into
+a csv file. Optionally a html report can be generated using the R framework.
 
 .PARAMETER jarFile
-Path of the jar file containing the algorithm.
+Path of the jar file containing the algorithm. The jar file must print its
+output in csv format, and must print a header when called with a single
+'--header' flag.
 
-.PARAMETER modelsFile
-A list of csv files listing the models.
+.PARAMETER modelsFiles
+A list of csv files listing the models. The first row must contain the names
+of the parameters and the second row must contain the switches.
 
 .PARAMETER configsFile
-Csv file listing the configurations.
+Csv file listing the configurations. The first row must contain the names
+of the parameters and the second row must contain the switches.
 
 .PARAMETER timeOut
-Timeout in seconds. Note, that starting the JVM and the
-application is also included in the time.
+Timeout in seconds. Note, that starting the JVM and the application is also
+included in the time.
 
 .PARAMETER runs
 Number of repetitions for each measurement.
@@ -31,20 +36,29 @@ and rReport is given, the script will also generate a html report.
 Path to the R markdown file that is used for generating the report. If this
 parameter and rBin is given, the script will also generate a html report.
 
+.PARAMETER jvmArgs
+A list of additional arguments to pass to the JVM.
+
 .NOTES
 Author: Akos Hajdu
 #>
 
 param (
     [Parameter(Mandatory=$true)][string]$jarFile,
-    [Parameter(Mandatory=$true)][string[]]$modelsFile,
+    [Parameter(Mandatory=$true)][string[]]$modelsFiles,
     [Parameter(Mandatory=$true)][string]$configsFile,
     [int]$timeOut = 60,
     [int]$runs = 1,
     [switch]$toNoRep,
     [string]$rBin,
-    [string]$rReport
+    [string]$rReport,
+    [string[]]$jvmArgs = @()
 )
+
+function MemberNames
+{
+    $args[0] | Get-Member -MemberType 'NoteProperty' | Select-Object -ExpandProperty 'Name' | Sort-Object
+}
 
 # Temp file for individual runs
 $tmpFile = [System.IO.Path]::GetTempFileName()
@@ -53,13 +67,26 @@ $tmpFile = [System.IO.Path]::GetTempFileName()
 #  in append mode. Therefore, the temp file is always overwritten, but the script always appends
 #  the contents of the temp file to the final log file.)
 $logFile = "log_" + (Get-Date -format "yyyyMMdd_HHmmss") + ".csv"
-# Header
-(Start-Process java -ArgumentList @('-jar', $jarFile, '--header') -RedirectStandardOutput $tmpFile -PassThru -NoNewWindow).WaitForExit()
-Get-Content $tmpFile | where {$_ -ne ""} | Out-File $logFile
 
-# Load models and configurations from external files
-$models = @(Import-CSV $modelsFile)
+# Load models
+$models = @()
+foreach ($file in $modelsFiles) {
+    $content = @(Import-CSV $file)
+    $modelsOpts = $content[0] # First line should be the names of the options
+    $models += @($content | select -Skip 1) # Other lines are data
+}
+# Load configurations
 $configs = @(Import-CSV $configsFile)
+$configsOpts = $configs[0] # First line should be the names of the options
+$configs = @($configs | select -Skip 1) # Other lines are data
+
+# Header
+$header = ""
+foreach ($arg in MemberNames $modelsOpts) { $header += "`"$arg`"," }
+foreach ($arg in MemberNames $configsOpts) { $header += "`"$arg`"," }
+(Start-Process java -ArgumentList @('-jar', $jarFile, '--header') -RedirectStandardOutput $tmpFile -PassThru -NoNewWindow).WaitForExit()
+$header += Get-Content $tmpFile | where {$_ -ne ""}
+$header | Out-File $logFile
 
 # Loop through models
 $m = 0
@@ -75,15 +102,18 @@ foreach($model in $models) {
         for($r = 0; $r -lt $runs; $r++) {
             Write-Progress -Activity " " -PercentComplete (($r)*100/$runs) -Status "Run: $($r+1)/$runs " -Id 2
             
+            $output = ""
             # Collect arguments for the jar file
-            $args = @('-jar', $jarFile)
-            # Arguments from the configuration
-            foreach ($arg in $conf | Get-Member -MemberType 'NoteProperty' | Select-Object -ExpandProperty 'Name') {
-                if ($conf.$arg) { $args += @($arg, $conf.$arg) }
-            }
+            $args = @($jvmArgs) + @('-jar', $jarFile)
             # Arguments from the model
-            foreach ($arg in $model | Get-Member -MemberType 'NoteProperty' | Select-Object -ExpandProperty 'Name') {
-                if ($model.$arg) { $args += @($arg, $model.$arg) }
+            foreach ($arg in MemberNames $modelsOpts) {
+                if ($model.$arg) { $args += @($modelsOpts.$arg, $model.$arg) }
+                $output += "`"$($model.$arg)`","
+            }
+            # Arguments from the configuration
+            foreach ($arg in MemberNames $configsOpts) {
+                if ($conf.$arg) { $args += @($configsOpts.$arg, $conf.$arg) }
+                $output += "`"$($conf.$arg)`","
             }
             # Run the jar file with the given parameters, the output is redirected to a temp file
             $p = Start-Process java -ArgumentList $args -RedirectStandardOutput $tmpFile -PassThru -NoNewWindow
@@ -93,9 +123,12 @@ foreach($model in $models) {
                 Wait-Process -Id $id
                 Start-Sleep -m 100 # Wait a bit so that the file is closed
                 if ($r -eq 0 -and $toNoRep) { $r = $runs } # Do not repeat if the first run is a timeout
-            } 
+                $output += "`"[TO]`""
+            } else {
+                $output += Get-Content $tmpFile | where {$_ -ne ""}
+            }
             # Copy contents of the temp file to the log
-            Get-Content $tmpFile | where {$_ -ne ""} | Out-File $logFile -Append
+            $output | Out-File $logFile -Append
         }
         $c++
     }
@@ -113,7 +146,6 @@ Write-Progress -Activity "Running measurements" -PercentComplete 100 -Completed 
 # Generate report
 if ($rBin -and $rReport) {
     $params = @("-e", "`"rmarkdown::render('$rReport', params = list(csv_path = '$logFile', timeout_ms = $($timeOut * 1000)))`"")
-    $p = Start-Process "$rBin\Rscript.exe" -ArgumentList $params -PassThru -NoNewWindow
-    $p.WaitForExit()
+    (Start-Process "$rBin\Rscript.exe" -ArgumentList $params -PassThru -NoNewWindow).WaitForExit()
     Rename-Item $rReport.replace(".Rmd", ".html") ($logFile.replace(".csv", "") + ".html")
 }
