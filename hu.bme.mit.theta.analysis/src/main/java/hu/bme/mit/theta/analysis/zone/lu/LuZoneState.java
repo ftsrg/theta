@@ -14,12 +14,12 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.StringJoiner;
 
 import com.google.common.collect.Lists;
 
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
-import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.Expr;
@@ -145,7 +145,17 @@ public final class LuZoneState implements ExprState {
 
 	@Override
 	public String toString() {
-		return ObjectUtils.toStringBuilder(this.getClass().getSimpleName()).add(zone).add(boundFunction).toString();
+		final StringJoiner sj = new StringJoiner("\n");
+		sj.add(zone.toString());
+		if (!boundFunction.getLowerClocks().isEmpty()) {
+			sj.add("L:");
+			boundFunction.getLowerClocks().forEach(c -> sj.add(c.getName() + " <- " + boundFunction.getLower(c).get()));
+		}
+		if (!boundFunction.getUpperClocks().isEmpty()) {
+			sj.add("U:");
+			boundFunction.getUpperClocks().forEach(c -> sj.add(c.getName() + " <- " + boundFunction.getUpper(c).get()));
+		}
+		return sj.toString();
 	}
 
 }

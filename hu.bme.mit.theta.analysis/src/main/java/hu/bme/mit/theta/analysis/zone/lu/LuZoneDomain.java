@@ -2,9 +2,10 @@ package hu.bme.mit.theta.analysis.zone.lu;
 
 import hu.bme.mit.theta.analysis.Domain;
 import hu.bme.mit.theta.analysis.expr.ExprDomain;
+import hu.bme.mit.theta.analysis.zone.ZoneState;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 
-final class LuZoneDomain implements Domain<LuZoneState> {
+public final class LuZoneDomain implements Domain<LuZoneState> {
 	private static final LuZoneDomain INSTANCE = new LuZoneDomain();
 
 	private final ExprDomain domain;
@@ -29,6 +30,10 @@ final class LuZoneDomain implements Domain<LuZoneState> {
 
 	@Override
 	public boolean isLeq(final LuZoneState state1, final LuZoneState state2) {
+		return state2.getBoundFunction().isLeq(state1.getBoundFunction()) && zoneIsLeq(state1.getZone(), state2);
+	}
+
+	public boolean zoneIsLeq(final ZoneState state1, final LuZoneState state2) {
 		return domain.isLeq(state1, state2);
 	}
 

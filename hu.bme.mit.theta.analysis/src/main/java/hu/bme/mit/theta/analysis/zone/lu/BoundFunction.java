@@ -2,9 +2,10 @@ package hu.bme.mit.theta.analysis.zone.lu;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
-import static java.lang.Math.max;
 import static java.util.stream.Collectors.toList;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -34,6 +35,23 @@ public final class BoundFunction {
 		clockToUpper = builder.clockToUpper;
 	}
 
+	private BoundFunction(final Map<ClockDecl, Integer> clockToLower, final Map<ClockDecl, Integer> clockToUpper) {
+		this.clockToLower = clockToLower;
+		this.clockToUpper = clockToUpper;
+	}
+
+	public static BoundFunction max(final BoundFunction boundFunction1, final BoundFunction boundFunction2) {
+		checkNotNull(boundFunction1);
+		checkNotNull(boundFunction2);
+		final Map<ClockDecl, Integer> clockToLower = new HashMap<>(boundFunction1.clockToLower);
+		final Map<ClockDecl, Integer> clockToUpper = new HashMap<>(boundFunction2.clockToUpper);
+
+		boundFunction2.clockToLower.forEach((c, b) -> clockToLower.merge(c, b, Integer::max));
+		boundFunction2.clockToUpper.forEach((c, b) -> clockToUpper.merge(c, b, Integer::max));
+
+		return new BoundFunction(clockToLower, clockToUpper);
+	}
+
 	public static BoundFunction top() {
 		return TOP;
 	}
@@ -54,6 +72,14 @@ public final class BoundFunction {
 	public Optional<Integer> getUpper(final ClockDecl clock) {
 		checkNotNull(clock);
 		return Optional.ofNullable(clockToUpper.get(clock));
+	}
+
+	public Collection<ClockDecl> getLowerClocks() {
+		return Collections.unmodifiableCollection(clockToLower.keySet());
+	}
+
+	public Collection<ClockDecl> getUpperClocks() {
+		return Collections.unmodifiableCollection(clockToUpper.keySet());
 	}
 
 	public boolean isLeq(final BoundFunction that) {
@@ -156,7 +182,7 @@ public final class BoundFunction {
 		public Void visit(final UnitLtConstr constr, final Builder builder) {
 			final ClockDecl clock = constr.getClock();
 			final int bound = constr.getBound();
-			builder.clockToUpper.merge(clock, bound, (oldBound, newBound) -> max(oldBound, newBound));
+			builder.clockToUpper.merge(clock, bound, Integer::max);
 			return null;
 		}
 
@@ -164,7 +190,7 @@ public final class BoundFunction {
 		public Void visit(final UnitLeqConstr constr, final Builder builder) {
 			final ClockDecl clock = constr.getClock();
 			final int bound = constr.getBound();
-			builder.clockToUpper.merge(clock, bound, (oldBound, newBound) -> max(oldBound, newBound));
+			builder.clockToUpper.merge(clock, bound, Integer::max);
 			return null;
 		}
 
@@ -172,7 +198,7 @@ public final class BoundFunction {
 		public Void visit(final UnitGtConstr constr, final Builder builder) {
 			final ClockDecl clock = constr.getClock();
 			final int bound = constr.getBound();
-			builder.clockToLower.merge(clock, bound, (oldBound, newBound) -> max(oldBound, newBound));
+			builder.clockToLower.merge(clock, bound, Integer::max);
 			return null;
 		}
 
@@ -180,7 +206,7 @@ public final class BoundFunction {
 		public Void visit(final UnitGeqConstr constr, final Builder builder) {
 			final ClockDecl clock = constr.getClock();
 			final int bound = constr.getBound();
-			builder.clockToLower.merge(clock, bound, (oldBound, newBound) -> max(oldBound, newBound));
+			builder.clockToLower.merge(clock, bound, Integer::max);
 			return null;
 		}
 
@@ -188,8 +214,8 @@ public final class BoundFunction {
 		public Void visit(final UnitEqConstr constr, final Builder builder) {
 			final ClockDecl clock = constr.getClock();
 			final int bound = constr.getBound();
-			builder.clockToLower.merge(clock, bound, (oldBound, newBound) -> max(oldBound, newBound));
-			builder.clockToUpper.merge(clock, bound, (oldBound, newBound) -> max(oldBound, newBound));
+			builder.clockToLower.merge(clock, bound, Integer::max);
+			builder.clockToUpper.merge(clock, bound, Integer::max);
 			return null;
 		}
 
