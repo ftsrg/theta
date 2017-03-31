@@ -20,7 +20,7 @@ import hu.bme.mit.theta.analysis.algorithm.ArgTrace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.SearchStrategy;
-import hu.bme.mit.theta.analysis.algorithm.Statistics;
+import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
 import hu.bme.mit.theta.analysis.impl.PrecMappingAnalysis;
 import hu.bme.mit.theta.analysis.reachedset.Partition;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
@@ -94,10 +94,10 @@ public final class XtaItpChecker implements SafetyChecker<XtaState<ItpZoneState>
 			if (unsafeNode.isPresent()) {
 				final ArgTrace<XtaState<ItpZoneState>, XtaAction> argTrace = ArgTrace.to(unsafeNode.get());
 				final Trace<XtaState<ItpZoneState>, XtaAction> trace = argTrace.toTrace();
-				final Statistics stats = new Statistics(stopwatch.elapsed(TimeUnit.MILLISECONDS), refinements);
+				final CegarStatistics stats = new CegarStatistics(stopwatch.elapsed(TimeUnit.MILLISECONDS), refinements);
 				return SafetyResult.unsafe(trace, arg, stats);
 			} else {
-				final Statistics stats = new Statistics(stopwatch.elapsed(TimeUnit.MILLISECONDS), refinements);
+				final CegarStatistics stats = new CegarStatistics(stopwatch.elapsed(TimeUnit.MILLISECONDS), refinements);
 				return SafetyResult.safe(arg, stats);
 			}
 		}

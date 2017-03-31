@@ -17,7 +17,7 @@ import hu.bme.mit.theta.analysis.algorithm.ArgNode;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.SearchStrategy;
-import hu.bme.mit.theta.analysis.algorithm.Statistics;
+import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.common.table.impl.SimpleTableWriter;
@@ -104,7 +104,7 @@ public final class XtaMain {
 			final SafetyChecker<?, ?, UnitPrec> checker = configuration.getChecker();
 			final SafetyResult<?, ?> result = checker.check(UnitPrec.getInstance());
 			final ARG<?, ?> arg = result.getArg();
-			final Statistics stats = result.getStats().get();
+			final CegarStatistics stats = (CegarStatistics) result.getStats().get();
 
 			writer.cell(stats.getElapsedMillis());
 			writer.cell(stats.getIterations());

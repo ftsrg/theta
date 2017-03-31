@@ -14,7 +14,7 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
-import hu.bme.mit.theta.analysis.algorithm.Statistics;
+import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
 import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.common.table.impl.SimpleTableWriter;
 import hu.bme.mit.theta.core.expr.impl.Exprs;
@@ -134,7 +134,7 @@ public class StsMain {
 					.initPrec(initPrec).search(search).predSplit(predSplit).build(sts);
 			// Run algorithm
 			final SafetyResult<?, ?> status = configuration.check();
-			final Statistics stats = status.getStats().get();
+			final CegarStatistics stats = (CegarStatistics) status.getStats().get();
 
 			// Check result
 			if (expected.isPresent() && !expected.get().equals(status.isSafe())) {
