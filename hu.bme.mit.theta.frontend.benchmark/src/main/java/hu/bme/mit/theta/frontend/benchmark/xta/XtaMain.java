@@ -12,8 +12,6 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
-import hu.bme.mit.theta.analysis.algorithm.ARG;
-import hu.bme.mit.theta.analysis.algorithm.ArgNode;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.SearchStrategy;
@@ -63,6 +61,7 @@ public final class XtaMain {
 				writer.cell("RefinementSteps");
 				writer.cell("ArgDepth");
 				writer.cell("ArgNodes");
+				writer.cell("ArgNodesFeasible");
 				writer.cell("ArgNodesExpanded");
 				writer.newRow();
 				return;
@@ -105,16 +104,16 @@ public final class XtaMain {
 
 			final SafetyChecker<?, ?, UnitPrec> checker = configuration.getChecker();
 			final SafetyResult<?, ?> result = checker.check(UnitPrec.getInstance());
-			final ARG<?, ?> arg = result.getArg();
 			final XtaItpStatistics stats = (XtaItpStatistics) result.getStats().get();
 
 			writer.cell(stats.getAlgorithmTimeInMs());
 			writer.cell(stats.getRefinementTimeInMs());
 			writer.cell(stats.getInterpolationTimeInMs());
 			writer.cell(stats.getRefinementSteps());
-			writer.cell(arg.getDepth());
-			writer.cell(arg.getNodes().count());
-			writer.cell(arg.getNodes().filter(ArgNode::isExpanded).count());
+			writer.cell(stats.getArgDepth());
+			writer.cell(stats.getArgNodes());
+			writer.cell(stats.getArgNodesFeasible());
+			writer.cell(stats.getArgNodesExpanded());
 
 		} catch (final Exception e) {
 			final String message = e.getMessage() == null ? "" : ": " + e.getMessage();

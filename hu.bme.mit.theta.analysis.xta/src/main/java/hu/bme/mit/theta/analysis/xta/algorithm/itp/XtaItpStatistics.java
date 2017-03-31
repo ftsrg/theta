@@ -19,6 +19,7 @@ public final class XtaItpStatistics implements Statistics {
 	private final long refinementSteps;
 	private final long argDepth;
 	private final long argNodes;
+	private final long argNodesFeasible;
 	private final long argNodesExpanded;
 
 	private XtaItpStatistics(final Builder builder) {
@@ -28,6 +29,7 @@ public final class XtaItpStatistics implements Statistics {
 		refinementSteps = builder.refinementSteps;
 		argDepth = builder.arg.getDepth();
 		argNodes = builder.arg.getNodes().count();
+		argNodesFeasible = builder.arg.getNodes().filter(ArgNode::isFeasible).count();
 		argNodesExpanded = builder.arg.getNodes().filter(ArgNode::isExpanded).count();
 	}
 
@@ -57,6 +59,10 @@ public final class XtaItpStatistics implements Statistics {
 
 	public long getArgNodes() {
 		return argNodes;
+	}
+
+	public long getArgNodesFeasible() {
+		return argNodesFeasible;
 	}
 
 	public long getArgNodesExpanded() {
