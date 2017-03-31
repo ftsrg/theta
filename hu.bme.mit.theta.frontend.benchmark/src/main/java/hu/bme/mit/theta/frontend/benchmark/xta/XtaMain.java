@@ -17,8 +17,8 @@ import hu.bme.mit.theta.analysis.algorithm.ArgNode;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.SearchStrategy;
-import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
+import hu.bme.mit.theta.analysis.xta.algorithm.itp.XtaItpStatistics;
 import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.common.table.impl.SimpleTableWriter;
 import hu.bme.mit.theta.formalism.xta.XtaSystem;
@@ -57,11 +57,13 @@ public final class XtaMain {
 		} catch (final ParseException e) {
 			// If called with a single --header argument, print header and exit
 			if (args.length == 1 && "--header".equals(args[0])) {
-				writer.cell("TimeInMs");
-				writer.cell("Refinements");
+				writer.cell("AlgorithmTimeInMs");
+				writer.cell("RefinementTimeInMs");
+				writer.cell("InterpolationTimeInMs");
+				writer.cell("RefinementSteps");
 				writer.cell("ArgDepth");
-				writer.cell("ArgSize");
-				writer.cell("ArgSizeExpanded");
+				writer.cell("ArgNodes");
+				writer.cell("ArgNodesExpanded");
 				writer.newRow();
 				return;
 			} else {
@@ -104,10 +106,12 @@ public final class XtaMain {
 			final SafetyChecker<?, ?, UnitPrec> checker = configuration.getChecker();
 			final SafetyResult<?, ?> result = checker.check(UnitPrec.getInstance());
 			final ARG<?, ?> arg = result.getArg();
-			final CegarStatistics stats = (CegarStatistics) result.getStats().get();
+			final XtaItpStatistics stats = (XtaItpStatistics) result.getStats().get();
 
-			writer.cell(stats.getElapsedMillis());
-			writer.cell(stats.getIterations());
+			writer.cell(stats.getAlgorithmTimeInMs());
+			writer.cell(stats.getRefinementTimeInMs());
+			writer.cell(stats.getInterpolationTimeInMs());
+			writer.cell(stats.getRefinementSteps());
 			writer.cell(arg.getDepth());
 			writer.cell(arg.getNodes().count());
 			writer.cell(arg.getNodes().filter(ArgNode::isExpanded).count());

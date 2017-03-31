@@ -19,30 +19,42 @@ public final class XtaItpRefiner {
 
 	private final ZonePrec prec;
 	private final Waitlist<ArgNode<XtaState<ItpZoneState>, XtaAction>> waitlist;
+	private final XtaItpStatistics.Builder statisticsBuilder;
 
-	private XtaItpRefiner(final XtaSystem system, final Waitlist<ArgNode<XtaState<ItpZoneState>, XtaAction>> waitlist) {
+	private XtaItpRefiner(final XtaSystem system, final Waitlist<ArgNode<XtaState<ItpZoneState>, XtaAction>> waitlist,
+			final XtaItpStatistics.Builder statisticsBuilder) {
 		checkNotNull(system);
 		this.waitlist = checkNotNull(waitlist);
+		this.statisticsBuilder = checkNotNull(statisticsBuilder);
 		prec = ZonePrec.of(system.getClocks());
 	}
 
 	public static XtaItpRefiner create(final XtaSystem system,
-			final Waitlist<ArgNode<XtaState<ItpZoneState>, XtaAction>> waitlist) {
-		return new XtaItpRefiner(system, waitlist);
+			final Waitlist<ArgNode<XtaState<ItpZoneState>, XtaAction>> waitlist,
+			final XtaItpStatistics.Builder statisticsBuilder) {
+		return new XtaItpRefiner(system, waitlist, statisticsBuilder);
 	}
 
 	public void enforceZone(final ArgNode<XtaState<ItpZoneState>, XtaAction> node, final ZoneState zone) {
+		statisticsBuilder.startRefinement();
 		final Collection<ZoneState> complementZones = zone.complement();
 		for (final ZoneState complementZone : complementZones) {
 			blockZone(node, complementZone);
 		}
+		statisticsBuilder.stopRefinement();
 	}
 
 	private void blockZone(final ArgNode<XtaState<ItpZoneState>, XtaAction> node, final ZoneState zone) {
 		final ZoneState abstractZone = node.getState().getState().getInterpolant();
 		if (abstractZone.isConsistentWith(zone)) {
+
+			statisticsBuilder.refine();
+
 			final ZoneState concreteZone = node.getState().getState().getZone();
+
+			statisticsBuilder.startInterpolation();
 			final ZoneState interpolant = ZoneState.interpolant(concreteZone, zone);
+			statisticsBuilder.stopInterpolation();
 
 			refine(node, interpolant);
 			maintainCoverage(node, interpolant);

@@ -5,10 +5,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
-
-import com.google.common.base.Stopwatch;
 
 import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.LTS;
@@ -20,7 +17,6 @@ import hu.bme.mit.theta.analysis.algorithm.ArgTrace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.SearchStrategy;
-import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
 import hu.bme.mit.theta.analysis.impl.PrecMappingAnalysis;
 import hu.bme.mit.theta.analysis.reachedset.Partition;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
@@ -74,35 +70,41 @@ public final class XtaItpChecker implements SafetyChecker<XtaState<ItpZoneState>
 		private final ARG<XtaState<ItpZoneState>, XtaAction> arg;
 		private final Waitlist<ArgNode<XtaState<ItpZoneState>, XtaAction>> waitlist;
 		private final Partition<ArgNode<XtaState<ItpZoneState>, XtaAction>, Tuple2<List<Loc>, Valuation>> reachedSet;
+
+		private final XtaItpStatistics.Builder statisticsBuilder;
+
 		private final XtaItpRefiner refiner;
 
-		private int refinements = 0;
-
 		private CheckMethod() {
+			arg = argBuilder.createArg();
 			waitlist = strategy.createWaitlist();
 			reachedSet = Partition.of(n -> Tuple2.of(n.getState().getLocs(), n.getState().getVal()));
-			refiner = XtaItpRefiner.create(system, waitlist);
-			arg = argBuilder.createArg();
+
+			statisticsBuilder = XtaItpStatistics.builder(arg);
+
+			refiner = XtaItpRefiner.create(system, waitlist, statisticsBuilder);
 
 			argBuilder.init(arg, UnitPrec.getInstance());
 			waitlist.addAll(arg.getInitNodes());
 		}
 
 		public SafetyResult<XtaState<ItpZoneState>, XtaAction> run() {
-			final Stopwatch stopwatch = Stopwatch.createStarted();
 			final Optional<ArgNode<XtaState<ItpZoneState>, XtaAction>> unsafeNode = searchForUnsafeNode();
 			if (unsafeNode.isPresent()) {
 				final ArgTrace<XtaState<ItpZoneState>, XtaAction> argTrace = ArgTrace.to(unsafeNode.get());
 				final Trace<XtaState<ItpZoneState>, XtaAction> trace = argTrace.toTrace();
-				final CegarStatistics stats = new CegarStatistics(stopwatch.elapsed(TimeUnit.MILLISECONDS), refinements);
+				final XtaItpStatistics stats = statisticsBuilder.build();
 				return SafetyResult.unsafe(trace, arg, stats);
 			} else {
-				final CegarStatistics stats = new CegarStatistics(stopwatch.elapsed(TimeUnit.MILLISECONDS), refinements);
+				final XtaItpStatistics stats = statisticsBuilder.build();
 				return SafetyResult.safe(arg, stats);
 			}
 		}
 
 		private Optional<ArgNode<XtaState<ItpZoneState>, XtaAction>> searchForUnsafeNode() {
+
+			statisticsBuilder.startAlgorithm();
+
 			while (!waitlist.isEmpty()) {
 				final ArgNode<XtaState<ItpZoneState>, XtaAction> v = waitlist.remove();
 				assert v.isLeaf();
@@ -111,8 +113,8 @@ public final class XtaItpChecker implements SafetyChecker<XtaState<ItpZoneState>
 
 				if (concreteZone.isBottom()) {
 					refiner.enforceZone(v, ZoneState.bottom());
-					refinements++;
 				} else if (v.isTarget()) {
+					statisticsBuilder.stopAlgorithm();
 					return Optional.of(v);
 				} else {
 					close(v);
@@ -121,6 +123,7 @@ public final class XtaItpChecker implements SafetyChecker<XtaState<ItpZoneState>
 					}
 				}
 			}
+			statisticsBuilder.stopAlgorithm();
 			return Optional.empty();
 		}
 
@@ -141,7 +144,6 @@ public final class XtaItpChecker implements SafetyChecker<XtaState<ItpZoneState>
 			for (final ArgNode<XtaState<ItpZoneState>, XtaAction> nodeToCoverWith : candidates) {
 				if (couldCover(nodeToCoverWith.getState(), node.getState())) {
 					refiner.enforceZone(node, nodeToCoverWith.getState().getState().getInterpolant());
-					refinements++;
 					if (covers(nodeToCoverWith.getState(), node.getState())) {
 						node.setCoveringNode(nodeToCoverWith);
 						return;
