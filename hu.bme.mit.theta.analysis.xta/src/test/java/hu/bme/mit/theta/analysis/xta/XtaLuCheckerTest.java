@@ -32,11 +32,11 @@ public final class XtaLuCheckerTest {
 	public static Collection<Object[]> data() {
 		return Arrays.asList(new Object[][] {
 
-				{ "/critical-2-25-50.xta" },
+				// { "/critical-2-25-50.xta" },
 
-				{ "/csma-2.xta" },
+				// { "/csma-2.xta" },
 
-				{ "/fddi-2.xta" },
+				// { "/fddi-2.xta" },
 
 				{ "/fischer-2-32-64.xta" },
 
