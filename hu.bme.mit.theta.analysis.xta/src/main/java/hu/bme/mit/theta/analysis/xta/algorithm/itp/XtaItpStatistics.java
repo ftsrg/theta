@@ -2,6 +2,7 @@ package hu.bme.mit.theta.analysis.xta.algorithm.itp;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static java.util.stream.Collectors.toSet;
 
 import java.util.concurrent.TimeUnit;
 
@@ -10,6 +11,8 @@ import com.google.common.base.Stopwatch;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.ArgNode;
 import hu.bme.mit.theta.analysis.algorithm.Statistics;
+import hu.bme.mit.theta.analysis.xta.XtaState;
+import hu.bme.mit.theta.common.Tuple;
 
 public final class XtaItpStatistics implements Statistics {
 
@@ -21,6 +24,7 @@ public final class XtaItpStatistics implements Statistics {
 	private final long argNodes;
 	private final long argNodesFeasible;
 	private final long argNodesExpanded;
+	private final long discreteStatesExpanded;
 
 	private XtaItpStatistics(final Builder builder) {
 		algorithmTimeInMs = builder.algorithmTimer.elapsed(TimeUnit.MILLISECONDS);
@@ -31,9 +35,11 @@ public final class XtaItpStatistics implements Statistics {
 		argNodes = builder.arg.getNodes().count();
 		argNodesFeasible = builder.arg.getNodes().filter(ArgNode::isFeasible).count();
 		argNodesExpanded = builder.arg.getNodes().filter(ArgNode::isExpanded).count();
+		discreteStatesExpanded = builder.arg.getNodes().filter(ArgNode::isExpanded)
+				.map(n -> Tuple.of(n.getState().getLocs(), n.getState().getVal())).collect(toSet()).size();
 	}
 
-	public static Builder builder(final ARG<?, ?> arg) {
+	public static Builder builder(final ARG<? extends XtaState<?>, ?> arg) {
 		return new Builder(arg);
 	}
 
@@ -69,6 +75,10 @@ public final class XtaItpStatistics implements Statistics {
 		return argNodesExpanded;
 	}
 
+	public long getDiscreteStatesExpanded() {
+		return discreteStatesExpanded;
+	}
+
 	public static final class Builder {
 
 		private static enum State {
@@ -77,14 +87,14 @@ public final class XtaItpStatistics implements Statistics {
 
 		private State state;
 
-		private final ARG<?, ?> arg;
+		private final ARG<? extends XtaState<?>, ?> arg;
 		private final Stopwatch algorithmTimer;
 		private final Stopwatch refinementTimer;
 		private final Stopwatch interpolationTimer;
 
 		private long refinementSteps;
 
-		private Builder(final ARG<?, ?> arg) {
+		private Builder(final ARG<? extends XtaState<?>, ?> arg) {
 			this.arg = checkNotNull(arg);
 			state = State.CREATED;
 			algorithmTimer = Stopwatch.createUnstarted();

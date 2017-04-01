@@ -63,6 +63,7 @@ public final class XtaMain {
 				writer.cell("ArgNodes");
 				writer.cell("ArgNodesFeasible");
 				writer.cell("ArgNodesExpanded");
+				writer.cell("DiscreteStatesExpanded");
 				writer.newRow();
 				return;
 			} else {
@@ -114,6 +115,7 @@ public final class XtaMain {
 			writer.cell(stats.getArgNodes());
 			writer.cell(stats.getArgNodesFeasible());
 			writer.cell(stats.getArgNodesExpanded());
+			writer.cell(stats.getDiscreteStatesExpanded());
 
 		} catch (final Exception e) {
 			final String message = e.getMessage() == null ? "" : ": " + e.getMessage();
