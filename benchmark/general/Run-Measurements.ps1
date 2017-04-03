@@ -97,7 +97,7 @@ $header | Out-File $logFile
 # Loop through models
 $m = 0
 foreach($model in $models) {
-    Write-Progress -Activity "Running measurements" -PercentComplete ($m*100/$models.length) -Status "Model: $($model) ($($m+1)/$($models.length))"
+    Write-Progress -Activity "Running measurements" -PercentComplete ($m*100/$models.length) -Status "Model: $($model) ($($m+1)/$($models.length))" -Id 0
     
     # Loop through configurations
     $c = 0
@@ -154,11 +154,14 @@ if($transform) {
 $contents = Get-Content $logFile_t
 [System.IO.File]::WriteAllLines((Get-ChildItem $logFile_t).FullName, $contents)
 
-Write-Progress -Activity "Running measurements" -PercentComplete 100 -Completed -Status " "
+Write-Progress -Activity "Running measurements" -PercentComplete 100 -Completed -Status " "  -Id 0
+Write-Progress -Activity " " -PercentComplete 100 -Completed -Status " "  -Id 1
+Write-Progress -Activity " " -PercentComplete 100 -Completed -Status " "  -Id 2
 
 # Generate report
 if ($rBin -and $rReport) {
-    $params = @("-e", "`"rmarkdown::render('$rReport', params = list(csv_path = '$logFile_t', timeout_ms = $($timeOut * 1000)))`"")
+    $logFileFullPath = (Get-ChildItem $logFile_t).FullName.Replace("`\", "/")
+    $params = @("-e", "`"rmarkdown::render('$rReport', params = list(csv_path = '$logFileFullPath', timeout_ms = $($timeOut * 1000)))`"")
     (Start-Process "$rBin\Rscript.exe" -ArgumentList $params -PassThru -NoNewWindow).WaitForExit()
-    Rename-Item $rReport.replace(".Rmd", ".html") ($logFile_t.replace(".csv", "") + ".html")
+    Move-Item -Path $rReport.replace(".Rmd", ".html") -Destination ($logFileFullPath.replace(".csv", "") + ".html")
 }
