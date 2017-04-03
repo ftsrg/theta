@@ -151,6 +151,8 @@ public final class XtaItpChecker implements SafetyChecker<XtaState<ItpZoneState>
 				}
 			}
 
+			final ItpZoneState newItpState = node.getState().getState().withInterpolant(ZoneState.top());
+			node.setState(node.getState().withState(newItpState));
 		}
 
 		private void expand(final ArgNode<XtaState<ItpZoneState>, XtaAction> v) {

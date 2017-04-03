@@ -14,7 +14,6 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
-import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.SearchStrategy;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
@@ -59,9 +58,6 @@ public final class XtaItpCheckerTest {
 
 		// Assert
 		assertTrue(status.isSafe());
-		final ARG<XtaState<ItpZoneState>, XtaAction> arg = status.getArg();
-
-		System.out.println(arg.getNodes().count());
 		System.out.println(status.getStats().get());
 	}
 

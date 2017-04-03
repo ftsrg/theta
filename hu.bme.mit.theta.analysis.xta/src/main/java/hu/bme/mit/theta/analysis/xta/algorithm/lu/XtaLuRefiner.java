@@ -66,8 +66,8 @@ public final class XtaLuRefiner {
 	private void refineNode(final ArgNode<XtaState<LuZoneState>, XtaAction> node, final BoundFunction boundFunction) {
 		final BoundFunction oldBoundFunction = node.getState().getState().getBoundFunction();
 		final BoundFunction newBoundFunction = oldBoundFunction.merge(boundFunction);
-		final LuZoneState newItpState = node.getState().getState().withBoundFunction(newBoundFunction);
-		node.setState(node.getState().withState(newItpState));
+		final LuZoneState newLuState = node.getState().getState().withBoundFunction(newBoundFunction);
+		node.setState(node.getState().withState(newLuState));
 	}
 
 	private void maintainCoverage(final ArgNode<XtaState<LuZoneState>, XtaAction> node) {

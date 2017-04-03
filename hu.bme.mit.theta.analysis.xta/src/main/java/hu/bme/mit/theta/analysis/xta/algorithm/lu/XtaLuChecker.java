@@ -27,6 +27,7 @@ import hu.bme.mit.theta.analysis.xta.XtaLts;
 import hu.bme.mit.theta.analysis.xta.XtaState;
 import hu.bme.mit.theta.analysis.xta.algorithm.itp.XtaItpStatistics;
 import hu.bme.mit.theta.analysis.xta.zone.XtaZoneAnalysis;
+import hu.bme.mit.theta.analysis.zone.BoundFunction;
 import hu.bme.mit.theta.analysis.zone.ZonePrec;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
 import hu.bme.mit.theta.analysis.zone.lu.LuZoneAnalysis;
@@ -152,6 +153,8 @@ public final class XtaLuChecker implements SafetyChecker<XtaState<LuZoneState>, 
 				}
 			}
 
+			final LuZoneState newLuState = node.getState().getState().withBoundFunction(BoundFunction.top());
+			node.setState(node.getState().withState(newLuState));
 		}
 
 		private void expand(final ArgNode<XtaState<LuZoneState>, XtaAction> v) {
