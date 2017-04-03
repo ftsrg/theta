@@ -29,9 +29,7 @@ import hu.bme.mit.theta.analysis.xta.algorithm.itp.XtaItpStatistics;
 import hu.bme.mit.theta.analysis.xta.zone.XtaZoneAnalysis;
 import hu.bme.mit.theta.analysis.zone.ZonePrec;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
-import hu.bme.mit.theta.analysis.zone.lu.BoundFunction;
 import hu.bme.mit.theta.analysis.zone.lu.LuZoneAnalysis;
-import hu.bme.mit.theta.analysis.zone.lu.LuZoneDomain;
 import hu.bme.mit.theta.analysis.zone.lu.LuZoneState;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.core.model.impl.Valuation;
@@ -115,7 +113,7 @@ public final class XtaLuChecker implements SafetyChecker<XtaState<LuZoneState>, 
 				final ZoneState concreteZone = v.getState().getState().getZone();
 
 				if (concreteZone.isBottom()) {
-					refiner.refine(v, BoundFunction.top());
+					refiner.refine(v);
 				} else if (v.isTarget()) {
 					statisticsBuilder.stopAlgorithm();
 					return Optional.of(v);
@@ -163,11 +161,11 @@ public final class XtaLuChecker implements SafetyChecker<XtaState<LuZoneState>, 
 		}
 
 		private boolean covers(final XtaState<LuZoneState> state1, final XtaState<LuZoneState> state2) {
-			return LuZoneDomain.getInstance().isLeq(state1.getState(), state2.getState());
+			return state2.getState().isLeq(state1.getState());
 		}
 
 		private boolean couldCover(final XtaState<LuZoneState> state1, final XtaState<LuZoneState> state2) {
-			return LuZoneDomain.getInstance().zoneIsLeq(state1.getState().getZone(), state2.getState());
+			return state2.getState().getZone().isLeq(state1.getState().getZone(), state1.getState().getBoundFunction());
 		}
 
 	}

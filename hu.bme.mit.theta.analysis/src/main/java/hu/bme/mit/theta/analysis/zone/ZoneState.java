@@ -142,6 +142,10 @@ public final class ZoneState implements ExprState {
 		return this.dbm.isLeq(that.dbm);
 	}
 
+	public boolean isLeq(final ZoneState that, final BoundFunction boundFunction) {
+		return this.dbm.isLeq(that.dbm, boundFunction);
+	}
+
 	public boolean isConsistentWith(final ZoneState that) {
 		return this.dbm.isConsistentWith(that.dbm);
 	}

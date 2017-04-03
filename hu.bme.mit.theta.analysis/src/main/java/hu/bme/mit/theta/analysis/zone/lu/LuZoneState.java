@@ -19,6 +19,7 @@ import java.util.StringJoiner;
 import com.google.common.collect.Lists;
 
 import hu.bme.mit.theta.analysis.expr.ExprState;
+import hu.bme.mit.theta.analysis.zone.BoundFunction;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.decl.VarDecl;
@@ -64,8 +65,8 @@ public final class LuZoneState implements ExprState {
 	}
 
 	public boolean isLeq(final LuZoneState that) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		return that.getBoundFunction().isLeq(this.getBoundFunction())
+				&& this.getZone().isLeq(that.getZone(), that.boundFunction);
 	}
 
 	@Override

@@ -8,6 +8,7 @@ import java.util.Collections;
 
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.TransferFunction;
+import hu.bme.mit.theta.analysis.zone.BoundFunction;
 import hu.bme.mit.theta.analysis.zone.ZonePrec;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
 

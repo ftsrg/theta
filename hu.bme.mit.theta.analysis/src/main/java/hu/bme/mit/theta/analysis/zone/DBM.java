@@ -313,6 +313,54 @@ final class DBM {
 		return true;
 	}
 
+	public boolean isLeq(final DBM that, final BoundFunction boundFunction) {
+		final Set<ClockDecl> clocks = Sets.union(this.signature.toSet(), that.signature.toSet());
+
+		if (!this.isConsistent()) {
+			return true;
+		}
+
+		if (!that.isConsistent()) {
+			return false;
+		}
+
+		for (final ClockDecl x : clocks) {
+			if (isZeroClock(x)) {
+				continue;
+			}
+
+			if (this.getOrDefault(x, ZeroClock.getInstance()) < LeqMinusUx(x, boundFunction)) {
+				continue;
+			}
+
+			for (final ClockDecl y : clocks) {
+				if (isZeroClock(y)) {
+					continue;
+				}
+
+				if (that.getOrDefault(x, y) >= this.getOrDefault(x, y)) {
+					continue;
+				}
+
+				if (DiffBounds.add(that.getOrDefault(x, y), LtMinusLy(y, boundFunction)) >= this.getOrDefault(x,
+						ZeroClock.getInstance())) {
+					continue;
+				}
+
+				return false;
+			}
+		}
+		return true;
+	}
+
+	private static final int LeqMinusUx(final ClockDecl x, final BoundFunction boundFunction) {
+		return boundFunction.getUpper(x).map(Ux -> Leq(-Ux)).orElse(Inf());
+	}
+
+	private static final int LtMinusLy(final ClockDecl y, final BoundFunction boundFunction) {
+		return boundFunction.getLower(y).map(Ly -> Lt(-Ly)).orElse(Inf());
+	}
+
 	public Collection<ClockConstr> getConstrs() {
 		final Collection<ClockConstr> result = new HashSet<>();
 

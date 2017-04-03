@@ -11,6 +11,7 @@ import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.analysis.xta.XtaAction;
 import hu.bme.mit.theta.analysis.xta.XtaState;
 import hu.bme.mit.theta.analysis.xta.algorithm.itp.XtaItpChecker;
+import hu.bme.mit.theta.analysis.xta.algorithm.lu.XtaLuChecker;
 import hu.bme.mit.theta.formalism.xta.XtaProcess.Loc;
 import hu.bme.mit.theta.formalism.xta.XtaSystem;
 
@@ -32,6 +33,9 @@ public final class XtaConfiguration {
 		switch (algorithm) {
 		case ITP:
 			checker = XtaItpChecker.create(system, errorLocs, strategy);
+			break;
+		case LU:
+			checker = XtaLuChecker.create(system, errorLocs, strategy);
 			break;
 		default:
 			throw new AssertionError();

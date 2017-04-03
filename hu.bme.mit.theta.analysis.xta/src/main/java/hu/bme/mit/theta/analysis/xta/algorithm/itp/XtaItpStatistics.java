@@ -79,6 +79,21 @@ public final class XtaItpStatistics implements Statistics {
 		return discreteStatesExpanded;
 	}
 
+	@Override
+	public String toString() {
+		final StringBuilder sb = new StringBuilder();
+		sb.append("algorithmTimeInMs = " + algorithmTimeInMs + "\n");
+		sb.append("refinementTimeInMs = " + refinementTimeInMs + "\n");
+		sb.append("interpolationTimeInMs = " + interpolationTimeInMs + "\n");
+		sb.append("refinementSteps = " + refinementSteps + "\n");
+		sb.append("argDepth = " + argDepth + "\n");
+		sb.append("argNodes = " + argNodes + "\n");
+		sb.append("argNodesFeasible = " + argNodesFeasible + "\n");
+		sb.append("argNodesExpanded = " + argNodesExpanded + "\n");
+		sb.append("discreteStatesExpanded = " + discreteStatesExpanded + "\n");
+		return sb.toString();
+	}
+
 	public static final class Builder {
 
 		private static enum State {

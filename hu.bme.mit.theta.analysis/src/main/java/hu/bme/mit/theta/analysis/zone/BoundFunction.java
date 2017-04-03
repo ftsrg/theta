@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.analysis.zone.lu;
+package hu.bme.mit.theta.analysis.zone;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -40,14 +40,13 @@ public final class BoundFunction {
 		this.clockToUpper = clockToUpper;
 	}
 
-	public static BoundFunction max(final BoundFunction boundFunction1, final BoundFunction boundFunction2) {
-		checkNotNull(boundFunction1);
-		checkNotNull(boundFunction2);
-		final Map<ClockDecl, Integer> clockToLower = new HashMap<>(boundFunction1.clockToLower);
-		final Map<ClockDecl, Integer> clockToUpper = new HashMap<>(boundFunction2.clockToUpper);
+	public BoundFunction merge(final BoundFunction that) {
+		checkNotNull(that);
+		final Map<ClockDecl, Integer> clockToLower = new HashMap<>(this.clockToLower);
+		final Map<ClockDecl, Integer> clockToUpper = new HashMap<>(this.clockToUpper);
 
-		boundFunction2.clockToLower.forEach((c, b) -> clockToLower.merge(c, b, Integer::max));
-		boundFunction2.clockToUpper.forEach((c, b) -> clockToUpper.merge(c, b, Integer::max));
+		that.clockToLower.forEach((c, b) -> clockToLower.merge(c, b, Integer::max));
+		that.clockToUpper.forEach((c, b) -> clockToUpper.merge(c, b, Integer::max));
 
 		return new BoundFunction(clockToLower, clockToUpper);
 	}
@@ -88,8 +87,8 @@ public final class BoundFunction {
 	}
 
 	private static boolean isLeq(final Map<ClockDecl, Integer> map1, final Map<ClockDecl, Integer> map2) {
-		return map2.entrySet().stream()
-				.allMatch(e2 -> map1.containsKey(e2.getKey()) && e2.getValue() <= map1.get(e2.getKey()));
+		return map1.entrySet().stream()
+				.allMatch(e1 -> map2.containsKey(e1.getKey()) && e1.getValue() <= map2.get(e1.getKey()));
 	}
 
 	@Override

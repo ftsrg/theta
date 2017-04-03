@@ -14,14 +14,11 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
-import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.SearchStrategy;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
-import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.analysis.xta.algorithm.lu.XtaLuChecker;
 import hu.bme.mit.theta.analysis.zone.lu.LuZoneState;
-import hu.bme.mit.theta.common.visualization.GraphvizWriter;
 import hu.bme.mit.theta.formalism.xta.XtaSystem;
 import hu.bme.mit.theta.formalism.xta.dsl.XtaDslManager;
 
@@ -32,11 +29,11 @@ public final class XtaLuCheckerTest {
 	public static Collection<Object[]> data() {
 		return Arrays.asList(new Object[][] {
 
-				// { "/critical-2-25-50.xta" },
+				{ "/critical-2-25-50.xta" },
 
-				// { "/csma-2.xta" },
+				{ "/csma-2.xta" },
 
-				// { "/fddi-2.xta" },
+				{ "/fddi-2.xta" },
 
 				{ "/fischer-2-32-64.xta" },
 
@@ -61,11 +58,7 @@ public final class XtaLuCheckerTest {
 
 		// Assert
 		assertTrue(status.isSafe());
-		final ARG<XtaState<LuZoneState>, XtaAction> arg = status.getArg();
-
-		System.out.println(arg.getNodes().count());
 		System.out.println(status.getStats().get());
-		System.out.println(new GraphvizWriter().writeString(ArgVisualizer.visualize(arg)));
 	}
 
 }
