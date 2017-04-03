@@ -5,14 +5,14 @@
     - Windows OS
     - JRE 8
     - PowerShell (usually part of Windows)
-1. Execute `build-XXX.bat` from the command line to build a certain version of the tool (for example, `build-sts.bat` for the STS formalism). A jar file and some dlls should appear.
-1. Execute `Run-Measurements.ps1` from PowerShell
-    - Type `Get-Help .\Run-Measurements.ps1 -detailed` to get help about the parameters of the script
-    - Configurations are listed in the files `configs-XXX.csv`
-    - Models are listed in the files `models-XXX.csv`
-    - Example: `.\Run-Measurements.ps1 -jarFile theta-sts.jar -configsFile .\configs-sts.csv -modelsFiles .\models-sts-simple.csv -runs 1 -timeOut 15`
-1. Sit back and enjoy the nice progress bars
-1. Observe the results in the generated csv file, which is named `log_<timestamp>.csv` by default
+1. Different versions of the tool are located in different subfolders. Go to the desired folder and execute `build-XXX.bat` from the command line to build the tool (for example, `build-sts.bat` for the STS formalism). A jar file and some dlls should appear.
+1. Execute `..\Run-Measurements.ps1` from PowerShell (from the subdirectory that contains the jar and the dlls).
+    - Type `Get-Help ..\Run-Measurements.ps1 -detailed` to get help about the parameters of the script.
+    - Configurations are listed in the files `configs-XXX.csv`.
+    - Models are listed in the files `models-XXX.csv`.
+    - Example: `..\Run-Measurements.ps1 -jarFile theta-sts.jar -configsFile .\configs-sts.csv -modelsFiles .\models-sts-simple.csv -runs 1 -timeOut 15`.
+1. Sit back and enjoy the nice progress bars.
+1. Observe the results in the generated csv file, which is named `log_<timestamp>.csv` by default.
 
 ## Extras
 
