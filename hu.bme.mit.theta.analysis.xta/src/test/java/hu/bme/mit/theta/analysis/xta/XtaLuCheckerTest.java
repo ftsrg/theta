@@ -51,7 +51,7 @@ public final class XtaLuCheckerTest {
 		final InputStream inputStream = getClass().getResourceAsStream(filepath);
 		final XtaSystem system = XtaDslManager.createSystem(inputStream);
 
-		final XtaLuChecker checker = XtaLuChecker.create(system, l -> false, SearchStrategy.BREADTH_FIRST);
+		final XtaLuChecker checker = XtaLuChecker.create(system, l -> false, SearchStrategy.breadthFirst());
 
 		// Act
 		final SafetyResult<XtaState<LuZoneState>, XtaAction> status = checker.check(UnitPrec.getInstance());

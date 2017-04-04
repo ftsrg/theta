@@ -32,8 +32,8 @@ public final class XtaMain {
 			.type(String.class).desc("Path of the input model").required().build();
 
 	private static final Option STRATEGY = Option.builder("s").longOpt("strategy").numberOfArgs(1)
-			.argName(optionsFor(SearchStrategy.values())).type(SearchStrategy.class).desc("Search strategy").required()
-			.build();
+			.argName(optionsFor(new String[] { "BFS", "DFS", "RANDOM" })).type(SearchStrategy.class)
+			.desc("Search strategy").required().build();
 
 	public static void main(final String[] args) {
 		final TableWriter writer = new SimpleTableWriter(System.out, ",", "\"", "\"");
@@ -93,9 +93,13 @@ public final class XtaMain {
 
 		final String strategyOption = cmd.getOptionValue(STRATEGY.getOpt());
 		final SearchStrategy strategy;
-		try {
-			strategy = Enum.valueOf(SearchStrategy.class, strategyOption);
-		} catch (final Exception e) {
+		if ("BFS".equals(strategyOption)) {
+			strategy = SearchStrategy.breadthFirst();
+		} else if ("DFS".equals(strategyOption)) {
+			strategy = SearchStrategy.depthFirst();
+		} else if ("RANDOM".equals(strategyOption)) {
+			strategy = SearchStrategy.random();
+		} else {
 			System.out.println("\"" + strategyOption + "\" is not a valid value for --strategy");
 			return;
 		}

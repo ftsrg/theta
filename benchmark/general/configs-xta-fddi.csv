@@ -1,4 +1,4 @@
 "Algorithm","Strategy"
 "-a","-s"
-"ITP","BREADTH_FIRST"
-"LU","BREADTH_FIRST"
+"ITP","BFS"
+"LU","BFS"
