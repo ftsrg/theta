@@ -36,6 +36,11 @@ and rReport is given, the script will also generate a html report.
 Path to the R markdown file that is used for generating the report. If this
 parameter and rBin is given, the script will also generate a html report.
 
+.PARAMETER transform
+Path to a script that transforms the csv. This transformation is executed
+before generating the report. The original file is also kept. The script
+must accept two parameters '-logFileIn' and '-logFileOut'.
+
 .PARAMETER jvmArgs
 A list of additional arguments to pass to the JVM.
 
@@ -52,6 +57,7 @@ param (
     [switch]$toNoRep,
     [string]$rBin,
     [string]$rReport,
+    [string[]]$transform,
     [string[]]$jvmArgs = @()
 )
 
@@ -91,7 +97,7 @@ $header | Out-File $logFile
 # Loop through models
 $m = 0
 foreach($model in $models) {
-    Write-Progress -Activity "Running measurements" -PercentComplete ($m*100/$models.length) -Status "Model: $($model) ($($m+1)/$($models.length))"
+    Write-Progress -Activity "Running measurements" -PercentComplete ($m*100/$models.length) -Status "Model: $($model) ($($m+1)/$($models.length))" -Id 0
     
     # Loop through configurations
     $c = 0
@@ -137,15 +143,25 @@ foreach($model in $models) {
 
 Remove-Item $tmpFile
 
-# Convert to UTF-8
-$contents = Get-Content $logFile
-[System.IO.File]::WriteAllLines((Get-ChildItem $logFile).FullName, $contents)
+$logFile_t = $logFile
+if($transform) {
+    $logFile_t = $logFile.Replace(".csv", "_transf.csv")
+    $params = @("-logFileIn", $logFile, "-logFileOut", $logFile_t)
+    Invoke-Expression "$transform $params"
+}
 
-Write-Progress -Activity "Running measurements" -PercentComplete 100 -Completed -Status " "
+# Convert to UTF-8
+$contents = Get-Content $logFile_t
+[System.IO.File]::WriteAllLines((Get-ChildItem $logFile_t).FullName, $contents)
+
+Write-Progress -Activity "Running measurements" -PercentComplete 100 -Completed -Status " "  -Id 0
+Write-Progress -Activity " " -PercentComplete 100 -Completed -Status " "  -Id 1
+Write-Progress -Activity " " -PercentComplete 100 -Completed -Status " "  -Id 2
 
 # Generate report
 if ($rBin -and $rReport) {
-    $params = @("-e", "`"rmarkdown::render('$rReport', params = list(csv_path = '$logFile', timeout_ms = $($timeOut * 1000)))`"")
+    $logFileFullPath = (Get-ChildItem $logFile_t).FullName.Replace("`\", "/")
+    $params = @("-e", "`"rmarkdown::render('$rReport', params = list(csv_path = '$logFileFullPath', timeout_ms = $($timeOut * 1000)))`"")
     (Start-Process "$rBin\Rscript.exe" -ArgumentList $params -PassThru -NoNewWindow).WaitForExit()
-    Rename-Item $rReport.replace(".Rmd", ".html") ($logFile.replace(".csv", "") + ".html")
+    Move-Item -Path $rReport.replace(".Rmd", ".html") -Destination ($logFileFullPath.replace(".csv", "") + ".html")
 }
