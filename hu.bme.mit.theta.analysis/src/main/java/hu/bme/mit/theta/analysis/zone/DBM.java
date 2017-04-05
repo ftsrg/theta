@@ -334,7 +334,7 @@ final class DBM {
 				// Zx0 >= (<=, inf)
 				// Zx0 is at most (<, inf)
 				continue;
-			} else if (this.getOrDefault(x, ZeroClock.getInstance()) < LeqMinusUx(x, boundFunction)) {
+			} else if (this.get(x, ZeroClock.getInstance()) < LeqMinusUx(x, boundFunction)) {
 				continue;
 			}
 
@@ -343,11 +343,11 @@ final class DBM {
 					continue;
 				}
 
-				if (that.getOrDefault(x, y) >= this.getOrDefault(x, y)) {
+				if (that.get(x, y) >= this.get(x, y)) {
 					continue;
 				}
 
-				if (DiffBounds.add(that.getOrDefault(x, y), LtMinusLy(y, boundFunction)) >= this.getOrDefault(x,
+				if (DiffBounds.add(that.get(x, y), LtMinusLy(y, boundFunction)) >= this.get(x,
 						ZeroClock.getInstance())) {
 					continue;
 				}
