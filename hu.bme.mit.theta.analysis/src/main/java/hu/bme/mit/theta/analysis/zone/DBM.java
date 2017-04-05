@@ -313,7 +313,7 @@ final class DBM {
 		return true;
 	}
 
-	public boolean isLeq(final DBM that, final BoundFunction boundFunction) {
+	public boolean isLeq(final DBM that, final BoundFunction boundFunction, final ClockDecl[] clockarray) {
 		final Set<ClockDecl> clocks = Sets.union(this.signature.toSet(), that.signature.toSet());
 
 		if (!this.isConsistent()) {
@@ -347,6 +347,8 @@ final class DBM {
 					continue;
 				}
 
+				clockarray[0] = x;
+				clockarray[1] = y;
 				return false;
 			}
 		}

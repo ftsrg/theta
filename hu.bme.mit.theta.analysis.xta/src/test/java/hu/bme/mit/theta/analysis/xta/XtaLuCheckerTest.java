@@ -33,7 +33,7 @@ public final class XtaLuCheckerTest {
 
 				{ "/csma-2.xta" },
 
-				{ "/fddi-2.xta" },
+				// { "/fddi-2.xta" },
 
 				{ "/fischer-2-32-64.xta" },
 

@@ -14,7 +14,9 @@ import java.util.StringJoiner;
 
 import com.google.common.collect.Iterables;
 
+import hu.bme.mit.theta.analysis.expr.ExprDomain;
 import hu.bme.mit.theta.analysis.expr.ExprState;
+import hu.bme.mit.theta.analysis.zone.lu.LuZoneState;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.RatLitExpr;
 import hu.bme.mit.theta.core.model.impl.Valuation;
@@ -22,6 +24,7 @@ import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.formalism.ta.constr.ClockConstr;
 import hu.bme.mit.theta.formalism.ta.decl.ClockDecl;
 import hu.bme.mit.theta.formalism.ta.op.ClockOp;
+import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 
 public final class ZoneState implements ExprState {
 
@@ -34,6 +37,8 @@ public final class ZoneState implements ExprState {
 	private volatile Expr<? extends BoolType> expr = null;
 
 	private final DBM dbm;
+
+	private static final ExprDomain DOMAIN = ExprDomain.create(Z3SolverFactory.getInstace().createSolver());
 
 	private ZoneState(final DBM dbm) {
 		this.dbm = dbm;
@@ -143,7 +148,34 @@ public final class ZoneState implements ExprState {
 	}
 
 	public boolean isLeq(final ZoneState that, final BoundFunction boundFunction) {
-		return this.dbm.isLeq(that.dbm, boundFunction);
+		final ClockDecl[] clocks = new ClockDecl[2];
+		final boolean result1 = this.dbm.isLeq(that.dbm, boundFunction, clocks);
+		final boolean result2 = DOMAIN.isLeq(this, LuZoneState.of(that, boundFunction));
+
+		if (!result1 && result2) {
+			System.out.println("too weak");
+			System.out.println("x = " + clocks[0].getName());
+			System.out.println("y = " + clocks[1].getName());
+			System.out.println("Z");
+			System.out.println(this);
+			System.out.println("Z'");
+			System.out.println(that);
+			System.out.println("LU");
+			System.out.println(boundFunction);
+			System.out.println();
+		} else if (result1 && !result2) {
+			System.out.println("too strong");
+			System.out.println(DOMAIN.valuation);
+			System.out.println("Z");
+			System.out.println(this);
+			System.out.println("Z'");
+			System.out.println(that);
+			System.out.println("LU");
+			System.out.println(boundFunction);
+			System.out.println();
+		}
+
+		return result1;
 	}
 
 	public boolean isConsistentWith(final ZoneState that) {
