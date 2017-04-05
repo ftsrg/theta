@@ -5,6 +5,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.analysis.zone.DiffBounds.Inf;
 import static hu.bme.mit.theta.analysis.zone.DiffBounds.Leq;
 import static hu.bme.mit.theta.analysis.zone.DiffBounds.Lt;
+import static hu.bme.mit.theta.analysis.zone.DiffBounds.add;
 import static hu.bme.mit.theta.analysis.zone.DiffBounds.asString;
 import static hu.bme.mit.theta.analysis.zone.DiffBounds.negate;
 import static java.lang.Math.max;
@@ -313,7 +314,7 @@ final class DBM {
 		return true;
 	}
 
-	public boolean isLeq(final DBM that, final BoundFunction boundFunction, final ClockDecl[] clockarray) {
+	public boolean isLeq(final DBM that, final BoundFunction bound, final ClockDecl[] clockarray) {
 		final Set<ClockDecl> clocks = Sets.union(this.signature.toSet(), that.signature.toSet());
 
 		if (!this.isConsistent()) {
@@ -325,38 +326,66 @@ final class DBM {
 		}
 
 		for (final ClockDecl x : clocks) {
-			if (isZeroClock(x)) {
-				continue;
-			}
+			// if (isZeroClock(x)) {
+			// continue;
+			// }
 
-			// Zx0 >= (<=, -Ux)
-			if (!boundFunction.getUpper(x).isPresent()) {
-				// Zx0 >= (<=, inf)
-				// Zx0 is at most (<, inf)
+			final ClockDecl zero = ZeroClock.getInstance();
+
+			final int Zx0 = this.get(zero, x);
+			final int leqMinusUx = LeqMinusUx(x, bound);
+
+			// Zx0 >= (-Ux, <=)
+			// System.out.println("1. Zx0 >= (-Ux, <=)");
+			// System.out.println(asString(Zx0) + " >= " +
+			// asString(leqMinusUx));
+			if (Zx0 < leqMinusUx) {
+				// System.out.println("fails");
 				continue;
-			} else if (this.get(x, ZeroClock.getInstance()) < LeqMinusUx(x, boundFunction)) {
-				continue;
+			} else {
+				// System.out.println("holds");
 			}
 
 			for (final ClockDecl y : clocks) {
-				if (isZeroClock(y)) {
+				// if (isZeroClock(y)) {
+				// continue;
+				// }
+
+				final int Zxy = this.get(y, x);
+				final int Zpxy = that.get(y, x);
+
+				// Z'xy < Zxy
+				// System.out.println("2. Z'xy < Zxy");
+				// System.out.println(asString(Zpxy) + " < " + asString(Zxy));
+
+				if (Zpxy >= Zxy) {
+					// System.out.println("fails");
 					continue;
+				} else {
+					// System.out.println("holds");
 				}
 
-				if (that.get(x, y) >= this.get(x, y)) {
-					continue;
-				}
+				final int ltMinusLy = LtMinusLy(y, bound);
 
-				if (DiffBounds.add(that.get(x, y), LtMinusLy(y, boundFunction)) >= this.get(x,
-						ZeroClock.getInstance())) {
+				// Z'xy + (-Ly, <) < Zx0
+				// System.out.println("3. Z'xy + (-Ly, <) < Zx0");
+				// System.out.println(asString(Zpxy) + " + " +
+				// asString(ltMinusLy) + " < " + asString(Zx0));
+
+				if (add(Zpxy, ltMinusLy) >= Zx0) {
+					// System.out.println("fails");
 					continue;
+				} else {
+					// System.out.println("holds");
 				}
 
 				clockarray[0] = x;
 				clockarray[1] = y;
+				// System.out.println("----");
 				return false;
 			}
 		}
+		// System.out.println("----");
 		return true;
 	}
 

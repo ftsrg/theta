@@ -65,12 +65,20 @@ public final class BoundFunction {
 
 	public Optional<Integer> getLower(final ClockDecl clock) {
 		checkNotNull(clock);
-		return Optional.ofNullable(clockToLower.get(clock));
+		if (clock.equals(ZeroClock.getInstance())) {
+			return Optional.of(0);
+		} else {
+			return Optional.ofNullable(clockToLower.get(clock));
+		}
 	}
 
 	public Optional<Integer> getUpper(final ClockDecl clock) {
 		checkNotNull(clock);
-		return Optional.ofNullable(clockToUpper.get(clock));
+		if (clock.equals(ZeroClock.getInstance())) {
+			return Optional.of(0);
+		} else {
+			return Optional.ofNullable(clockToUpper.get(clock));
+		}
 	}
 
 	public Collection<ClockDecl> getLowerClocks() {

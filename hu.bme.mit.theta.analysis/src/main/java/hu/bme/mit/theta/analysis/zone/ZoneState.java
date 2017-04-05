@@ -157,22 +157,24 @@ public final class ZoneState implements ExprState {
 			System.out.println("x = " + clocks[0].getName());
 			System.out.println("y = " + clocks[1].getName());
 			System.out.println("Z");
-			System.out.println(this);
+			System.out.println(this.dbm);
 			System.out.println("Z'");
-			System.out.println(that);
+			System.out.println(that.dbm);
 			System.out.println("LU");
 			System.out.println(boundFunction);
 			System.out.println();
+			throw new AssertionError();
 		} else if (result1 && !result2) {
 			System.out.println("too strong");
 			System.out.println(DOMAIN.valuation);
 			System.out.println("Z");
-			System.out.println(this);
+			System.out.println(this.dbm);
 			System.out.println("Z'");
-			System.out.println(that);
+			System.out.println(that.dbm);
 			System.out.println("LU");
 			System.out.println(boundFunction);
 			System.out.println();
+			throw new AssertionError();
 		}
 
 		return result1;
