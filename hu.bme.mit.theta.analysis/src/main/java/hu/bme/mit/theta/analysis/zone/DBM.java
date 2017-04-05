@@ -329,7 +329,12 @@ final class DBM {
 				continue;
 			}
 
-			if (this.getOrDefault(x, ZeroClock.getInstance()) < LeqMinusUx(x, boundFunction)) {
+			// Zx0 >= (<=, -Ux)
+			if (!boundFunction.getUpper(x).isPresent()) {
+				// Zx0 >= (<=, inf)
+				// Zx0 is at most (<, inf)
+				continue;
+			} else if (this.getOrDefault(x, ZeroClock.getInstance()) < LeqMinusUx(x, boundFunction)) {
 				continue;
 			}
 
