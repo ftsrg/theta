@@ -78,6 +78,10 @@ public final class ExplPrec implements Prec {
 		return ExprStates.createStates(solver, expr, this::createState);
 	}
 
+	public Set<VarDecl<?>> getVars() {
+		return vars;
+	}
+
 	@Override
 	public String toString() {
 		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).addAll(vars, VarDecl::getName).toString();
