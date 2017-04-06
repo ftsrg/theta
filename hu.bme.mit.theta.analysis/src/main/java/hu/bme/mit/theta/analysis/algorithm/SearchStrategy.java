@@ -2,7 +2,8 @@ package hu.bme.mit.theta.analysis.algorithm;
 
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.State;
-import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist;
+import hu.bme.mit.theta.analysis.waitlist.FifoWaitlist;
+import hu.bme.mit.theta.analysis.waitlist.LifoWaitlist;
 import hu.bme.mit.theta.analysis.waitlist.RandomWaitlist;
 import hu.bme.mit.theta.analysis.waitlist.Waitlist;
 
@@ -33,7 +34,7 @@ public abstract class SearchStrategy {
 
 		@Override
 		public <S extends State, A extends Action> Waitlist<ArgNode<S, A>> createWaitlist() {
-			return PriorityWaitlist.create(ArgNodeComparators.bfs());
+			return FifoWaitlist.create();
 		}
 	}
 
@@ -45,7 +46,7 @@ public abstract class SearchStrategy {
 
 		@Override
 		public <S extends State, A extends Action> Waitlist<ArgNode<S, A>> createWaitlist() {
-			return PriorityWaitlist.create(ArgNodeComparators.dfs());
+			return LifoWaitlist.create();
 		}
 	}
 
