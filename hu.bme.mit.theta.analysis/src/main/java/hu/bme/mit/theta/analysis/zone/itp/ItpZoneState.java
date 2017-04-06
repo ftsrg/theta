@@ -40,6 +40,12 @@ public final class ItpZoneState implements ExprState {
 
 	////
 
+	public boolean isLeq(final ItpZoneState that) {
+		return this.interpolant.isLeq(that.interpolant);
+	}
+
+	////
+
 	public ItpZoneState withState(final ZoneState state) {
 		return ItpZoneState.of(state, this.interpolant);
 	}

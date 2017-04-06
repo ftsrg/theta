@@ -16,14 +16,70 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.SearchStrategy;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
-import hu.bme.mit.theta.analysis.xta.algorithm.itp.XtaItpStatistics;
+import hu.bme.mit.theta.analysis.xta.algorithm.lazy.BinItpStrategy;
+import hu.bme.mit.theta.analysis.xta.algorithm.lazy.LazyXtaChecker;
+import hu.bme.mit.theta.analysis.xta.algorithm.lazy.LazyXtaChecker.AlgorithmStrategy;
+import hu.bme.mit.theta.analysis.xta.algorithm.lazy.LazyXtaStatistics;
+import hu.bme.mit.theta.analysis.xta.algorithm.lazy.LuStrategy;
+import hu.bme.mit.theta.analysis.xta.algorithm.lazy.SeqItpStrategy;
 import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.common.table.impl.SimpleTableWriter;
 import hu.bme.mit.theta.formalism.xta.XtaSystem;
 import hu.bme.mit.theta.formalism.xta.dsl.XtaDslManager;
-import hu.bme.mit.theta.frontend.benchmark.xta.XtaConfiguration.Algorithm;
 
 public final class XtaMain {
+
+	private static enum Algorithm {
+
+		SEQITP {
+			@Override
+			public AlgorithmStrategy<?> create(final XtaSystem system) {
+				return SeqItpStrategy.create(system);
+			}
+		},
+
+		BINITP {
+			@Override
+			public AlgorithmStrategy<?> create(final XtaSystem system) {
+				return BinItpStrategy.create(system);
+			}
+		},
+
+		LU {
+			@Override
+			public AlgorithmStrategy<?> create(final XtaSystem system) {
+				return LuStrategy.create(system);
+			}
+		};
+
+		public abstract LazyXtaChecker.AlgorithmStrategy<?> create(final XtaSystem system);
+	}
+
+	private static enum Search {
+
+		DFS {
+			@Override
+			public SearchStrategy create() {
+				return SearchStrategy.depthFirst();
+			}
+		},
+
+		BFS {
+			@Override
+			public SearchStrategy create() {
+				return SearchStrategy.breadthFirst();
+			}
+		},
+
+		RANDOM {
+			@Override
+			public SearchStrategy create() {
+				return SearchStrategy.random();
+			}
+		};
+
+		public abstract SearchStrategy create();
+	}
 
 	private static final Option ALGORITHM = Option.builder("a").longOpt("algorithm").numberOfArgs(1)
 			.argName(optionsFor(Algorithm.values())).type(Algorithm.class).desc("Algorithm").required().build();
@@ -31,9 +87,8 @@ public final class XtaMain {
 	private static final Option MODEL = Option.builder("m").longOpt("model").numberOfArgs(1).argName("MODEL")
 			.type(String.class).desc("Path of the input model").required().build();
 
-	private static final Option STRATEGY = Option.builder("s").longOpt("strategy").numberOfArgs(1)
-			.argName(optionsFor(new String[] { "BFS", "DFS", "RANDOM" })).type(SearchStrategy.class)
-			.desc("Search strategy").required().build();
+	private static final Option SEARCH = Option.builder("s").longOpt("search").numberOfArgs(1)
+			.argName(optionsFor(Search.values())).type(SearchStrategy.class).desc("Search strategy").required().build();
 
 	public static void main(final String[] args) {
 		final TableWriter writer = new SimpleTableWriter(System.out, ",", "\"", "\"");
@@ -43,7 +98,7 @@ public final class XtaMain {
 
 		options.addOption(MODEL);
 		options.addOption(ALGORITHM);
-		options.addOption(STRATEGY);
+		options.addOption(SEARCH);
 
 		final CommandLineParser parser = new DefaultParser();
 		final HelpFormatter helpFormatter = new HelpFormatter();
@@ -91,25 +146,25 @@ public final class XtaMain {
 			return;
 		}
 
-		final String strategyOption = cmd.getOptionValue(STRATEGY.getOpt());
-		final SearchStrategy strategy;
-		if ("BFS".equals(strategyOption)) {
-			strategy = SearchStrategy.breadthFirst();
-		} else if ("DFS".equals(strategyOption)) {
-			strategy = SearchStrategy.depthFirst();
-		} else if ("RANDOM".equals(strategyOption)) {
-			strategy = SearchStrategy.random();
-		} else {
-			System.out.println("\"" + strategyOption + "\" is not a valid value for --strategy");
+		final String searchOption = cmd.getOptionValue(SEARCH.getOpt());
+		final Search search;
+		try {
+			search = Enum.valueOf(Search.class, searchOption);
+		} catch (final Exception e) {
+			System.out.println("\"" + searchOption + "\" is not a valid value for --strategy");
 			return;
 		}
 
 		try {
-			final XtaConfiguration configuration = XtaConfiguration.create(system, l -> false, algorithm, strategy);
+			final LazyXtaChecker.AlgorithmStrategy<?> algorithmStrategy = algorithm.create(system);
+			final SearchStrategy searchStrategy = search.create();
 
-			final SafetyChecker<?, ?, UnitPrec> checker = configuration.getChecker();
+			final SafetyChecker<?, ?, UnitPrec> checker =
+
+					LazyXtaChecker.create(system, algorithmStrategy, searchStrategy, l -> false);
+
 			final SafetyResult<?, ?> result = checker.check(UnitPrec.getInstance());
-			final XtaItpStatistics stats = (XtaItpStatistics) result.getStats().get();
+			final LazyXtaStatistics stats = (LazyXtaStatistics) result.getStats().get();
 
 			writer.cell(stats.getAlgorithmTimeInMs());
 			writer.cell(stats.getRefinementTimeInMs());

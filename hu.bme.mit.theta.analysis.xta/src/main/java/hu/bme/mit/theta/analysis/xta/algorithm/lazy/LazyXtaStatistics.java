@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.analysis.xta.algorithm.itp;
+package hu.bme.mit.theta.analysis.xta.algorithm.lazy;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -14,7 +14,7 @@ import hu.bme.mit.theta.analysis.algorithm.Statistics;
 import hu.bme.mit.theta.analysis.xta.XtaState;
 import hu.bme.mit.theta.common.Tuple;
 
-public final class XtaItpStatistics implements Statistics {
+public final class LazyXtaStatistics implements Statistics {
 
 	private final long algorithmTimeInMs;
 	private final long refinementTimeInMs;
@@ -26,7 +26,7 @@ public final class XtaItpStatistics implements Statistics {
 	private final long argNodesExpanded;
 	private final long discreteStatesExpanded;
 
-	private XtaItpStatistics(final Builder builder) {
+	private LazyXtaStatistics(final Builder builder) {
 		algorithmTimeInMs = builder.algorithmTimer.elapsed(TimeUnit.MILLISECONDS);
 		refinementTimeInMs = builder.refinementTimer.elapsed(TimeUnit.MILLISECONDS);
 		interpolationTimeInMs = builder.interpolationTimer.elapsed(TimeUnit.MILLISECONDS);
@@ -159,10 +159,10 @@ public final class XtaItpStatistics implements Statistics {
 			refinementSteps++;
 		}
 
-		public XtaItpStatistics build() {
+		public LazyXtaStatistics build() {
 			checkState(state == State.STOPPED);
 			state = State.BUILT;
-			return new XtaItpStatistics(this);
+			return new LazyXtaStatistics(this);
 		}
 
 	}

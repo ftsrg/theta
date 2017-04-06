@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.analysis.xta.algorithm.lu;
+package hu.bme.mit.theta.analysis.xta.zone;
 
 import java.util.Collection;
 import java.util.List;

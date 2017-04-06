@@ -1,4 +1,5 @@
-"Algorithm","Strategy"
+"Algorithm","Search"
 "-a","-s"
-"ITP","BFS"
+"SEQITP","BFS"
+"BINITP","BFS"
 "LU","BFS"
