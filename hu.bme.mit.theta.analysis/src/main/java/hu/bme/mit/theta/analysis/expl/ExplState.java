@@ -59,6 +59,9 @@ public final class ExplState implements ExprState, Assignment {
 	////
 
 	public boolean isLeq(final ExplState that) {
+		if (that.getDecls().size() > this.getDecls().size()) {
+			return false;
+		}
 		for (final VarDecl<? extends Type> varDecl : that.getDecls()) {
 			if (!this.getDecls().contains(varDecl) || !that.getValue(varDecl).equals(this.getValue(varDecl))) {
 				return false;
