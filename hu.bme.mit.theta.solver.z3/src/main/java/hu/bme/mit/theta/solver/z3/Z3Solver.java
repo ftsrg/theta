@@ -237,6 +237,8 @@ final class Z3Solver implements Solver {
 				if (term != null) {
 					val = (LitExpr<?>) termTransformer.toExpr(term);
 					constToExpr.put(constDecl, val);
+				} else {
+					return Optional.empty();
 				}
 			}
 
