@@ -209,18 +209,23 @@ final class Z3Solver implements Solver {
 	private final class Z3Model extends AbstractModel {
 		final com.microsoft.z3.Model z3Model;
 
-		final Collection<ConstDecl<?>> constDecls;
+		Collection<ConstDecl<?>> constDecls;
 		final Map<ConstDecl<?>, LitExpr<?>> constToExpr;
 
 		public Z3Model(final com.microsoft.z3.Model z3Model) {
 			this.z3Model = z3Model;
-			constDecls = constDeclsOf(z3Model);
+			constDecls = null;
 			constToExpr = new HashMap<>();
 		}
 
 		@Override
 		public Collection<? extends ConstDecl<?>> getDecls() {
-			return constDecls;
+			Collection<ConstDecl<?>> result = constDecls;
+			if (result == null) {
+				result = constDeclsOf(z3Model);
+				constDecls = result;
+			}
+			return result;
 		}
 
 		@Override
