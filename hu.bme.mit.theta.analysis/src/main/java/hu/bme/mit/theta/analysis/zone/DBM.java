@@ -171,7 +171,7 @@ final class DBM {
 
 	////
 
-	public static DBM interpolant(final DBM dbmA, final DBM dbmB) {
+	public static DBM weakInterpolant(final DBM dbmA, final DBM dbmB) {
 		checkNotNull(dbmA);
 		checkNotNull(dbmB);
 
@@ -182,6 +182,11 @@ final class DBM {
 		if (!dbmB.isConsistent()) {
 			return top(Collections.emptySet());
 		}
+
+		// This implementation assumes that A and B are canonical
+		// This restriction can be lifted by summarizing maximal paths
+		assert dbmA.isClosed();
+		assert dbmB.isClosed();
 
 		final DbmSignature interpolantSignature = interpolantSignature(dbmA, dbmB);
 		final BiFunction<ClockDecl, ClockDecl, Integer> values = (x, y) -> {
@@ -196,6 +201,76 @@ final class DBM {
 		final DbmSignature signature = signatureFrom(interpolantSignature, cycle);
 		final DBM result = new DBM(signature, TOP_DBM_VALUES);
 
+		if (cycle.length == 3) {
+			final int x = cycle[0];
+			final int y = cycle[1];
+			final ClockDecl leftClock = interpolantSignature.getClock(x);
+			final ClockDecl rightClock = interpolantSignature.getClock(y);
+			final int boundA1 = dbmA.get(leftClock, rightClock);
+			final int boundB1 = dbmB.get(leftClock, rightClock);
+			if (boundA1 < boundB1) {
+				final int boundB = dbmB.get(rightClock, leftClock);
+				result.set(leftClock, rightClock, negate(boundB));
+			} else {
+				final int boundA2 = dbmA.get(rightClock, leftClock);
+				final int boundB2 = dbmB.get(rightClock, leftClock);
+				final int boundB = dbmB.get(leftClock, rightClock);
+				assert boundA2 < boundB2;
+				result.set(rightClock, leftClock, negate(boundB));
+			}
+		} else {
+			// Can this be the case for timed automata?
+			for (int i = 0; i + 1 < cycle.length; i++) {
+				final int x = cycle[i];
+				final int y = cycle[i + 1];
+				final ClockDecl leftClock = interpolantSignature.getClock(x);
+				final ClockDecl rightClock = interpolantSignature.getClock(y);
+				final int boundA = dbmA.get(leftClock, rightClock);
+				final int boundB = dbmB.get(leftClock, rightClock);
+				if (boundA < boundB) {
+					result.set(leftClock, rightClock, boundA);
+				}
+			}
+		}
+
+		assert result.isClosed();
+		assert dbmA.getRelation(result).isLeq();
+		assert !dbmB.isConsistentWith(result);
+
+		return result;
+	}
+
+	public static DBM interpolant(final DBM dbmA, final DBM dbmB) {
+		checkNotNull(dbmA);
+		checkNotNull(dbmB);
+
+		if (!dbmA.isConsistent()) {
+			return bottom(Collections.emptySet());
+		}
+
+		if (!dbmB.isConsistent()) {
+			return top(Collections.emptySet());
+		}
+
+		// This implementation assumes that A and B are canonical
+		// This restriction can be lifted by summarizing maximal paths
+		assert dbmA.isClosed();
+		assert dbmB.isClosed();
+
+		final DbmSignature interpolantSignature = interpolantSignature(dbmA, dbmB);
+		final BiFunction<ClockDecl, ClockDecl, Integer> values = (x, y) -> {
+			final int bound1 = dbmA.get(x, y);
+			final int bound2 = dbmB.get(x, y);
+			return min(bound1, bound2);
+		};
+
+		final DBM interpolant = new DBM(interpolantSignature, values);
+		final int[] cycle = interpolant.dbm.closeItp();
+
+		final DbmSignature signature = signatureFrom(interpolantSignature, cycle);
+		final DBM result = new DBM(signature, TOP_DBM_VALUES);
+
+		// Can this be the case for timed automata?
 		for (int i = 0; i + 1 < cycle.length; i++) {
 			final int x = cycle[i];
 			final int y = cycle[i + 1];
