@@ -2,4 +2,6 @@
 "-a","-s"
 "SEQITP","BFS"
 "BINITP","BFS"
+"WEAKSEQITP","BFS"
+"WEAKBINITP","BFS"
 "LU","BFS"

@@ -14,12 +14,12 @@ import hu.bme.mit.theta.formalism.xta.XtaSystem;
 
 public final class SeqItpStrategy extends ItpStrategy {
 
-	private SeqItpStrategy(final XtaSystem system) {
-		super(system);
+	private SeqItpStrategy(final XtaSystem system, final ItpOperator operator) {
+		super(system, operator);
 	}
 
-	public static SeqItpStrategy create(final XtaSystem system) {
-		return new SeqItpStrategy(system);
+	public static SeqItpStrategy create(final XtaSystem system, final ItpOperator operator) {
+		return new SeqItpStrategy(system, operator);
 	}
 
 	@Override
@@ -71,7 +71,7 @@ public final class SeqItpStrategy extends ItpStrategy {
 				final ZoneState A = post(A_pre, action);
 
 				statistics.startInterpolation();
-				final ZoneState interpolant = ZoneState.interpolant(A, B);
+				final ZoneState interpolant = interpolate(A, B);
 				statistics.stopInterpolation();
 
 				strengthen(node, interpolant);
@@ -82,7 +82,7 @@ public final class SeqItpStrategy extends ItpStrategy {
 				final ZoneState concreteZone = node.getState().getState().getZone();
 
 				statistics.startInterpolation();
-				final ZoneState interpolant = ZoneState.interpolant(concreteZone, zone);
+				final ZoneState interpolant = interpolate(concreteZone, zone);
 				statistics.stopInterpolation();
 
 				strengthen(node, interpolant);

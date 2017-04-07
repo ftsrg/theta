@@ -14,12 +14,12 @@ import hu.bme.mit.theta.formalism.xta.XtaSystem;
 
 public final class BinItpStrategy extends ItpStrategy {
 
-	private BinItpStrategy(final XtaSystem system) {
-		super(system);
+	private BinItpStrategy(final XtaSystem system, final ItpOperator operator) {
+		super(system, operator);
 	}
 
-	public static BinItpStrategy create(final XtaSystem system) {
-		return new BinItpStrategy(system);
+	public static BinItpStrategy create(final XtaSystem system, final ItpOperator operator) {
+		return new BinItpStrategy(system, operator);
 	}
 
 	@Override
@@ -62,7 +62,7 @@ public final class BinItpStrategy extends ItpStrategy {
 			final ZoneState concreteZone = node.getState().getState().getZone();
 
 			statistics.startInterpolation();
-			final ZoneState interpolant = ZoneState.interpolant(concreteZone, zone);
+			final ZoneState interpolant = interpolate(concreteZone, zone);
 			statistics.stopInterpolation();
 
 			strengthen(node, interpolant);

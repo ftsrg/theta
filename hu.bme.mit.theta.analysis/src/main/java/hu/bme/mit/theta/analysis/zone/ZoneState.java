@@ -112,6 +112,12 @@ public final class ZoneState implements ExprState {
 		return new ZoneState(DBM.interpolant(zoneA.dbm, zoneB.dbm));
 	}
 
+	public static ZoneState weakInterpolant(final ZoneState zoneA, final ZoneState zoneB) {
+		checkNotNull(zoneA);
+		checkNotNull(zoneB);
+		return new ZoneState(DBM.weakInterpolant(zoneA.dbm, zoneB.dbm));
+	}
+
 	////
 
 	public Collection<ZoneState> complement() {

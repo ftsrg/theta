@@ -17,6 +17,7 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.SearchStrategy;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.analysis.xta.algorithm.lazy.BinItpStrategy;
+import hu.bme.mit.theta.analysis.xta.algorithm.lazy.ItpStrategy.ItpOperator;
 import hu.bme.mit.theta.analysis.xta.algorithm.lazy.LazyXtaChecker;
 import hu.bme.mit.theta.analysis.xta.algorithm.lazy.LazyXtaChecker.AlgorithmStrategy;
 import hu.bme.mit.theta.analysis.xta.algorithm.lazy.LazyXtaStatistics;
@@ -34,14 +35,28 @@ public final class XtaMain {
 		SEQITP {
 			@Override
 			public AlgorithmStrategy<?> create(final XtaSystem system) {
-				return SeqItpStrategy.create(system);
+				return SeqItpStrategy.create(system, ItpOperator.DEFAULT);
 			}
 		},
 
 		BINITP {
 			@Override
 			public AlgorithmStrategy<?> create(final XtaSystem system) {
-				return BinItpStrategy.create(system);
+				return BinItpStrategy.create(system, ItpOperator.DEFAULT);
+			}
+		},
+
+		WEAKSEQITP {
+			@Override
+			public AlgorithmStrategy<?> create(final XtaSystem system) {
+				return SeqItpStrategy.create(system, ItpOperator.WEAK);
+			}
+		},
+
+		WEAKBINITP {
+			@Override
+			public AlgorithmStrategy<?> create(final XtaSystem system) {
+				return BinItpStrategy.create(system, ItpOperator.WEAK);
 			}
 		},
 

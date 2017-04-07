@@ -18,18 +18,44 @@ import hu.bme.mit.theta.analysis.zone.itp.ItpZoneAnalysis;
 import hu.bme.mit.theta.analysis.zone.itp.ItpZoneState;
 import hu.bme.mit.theta.formalism.xta.XtaSystem;
 
-abstract class ItpStrategy implements LazyXtaChecker.AlgorithmStrategy<ItpZoneState> {
+public abstract class ItpStrategy implements LazyXtaChecker.AlgorithmStrategy<ItpZoneState> {
+
+	public enum ItpOperator {
+
+		DEFAULT {
+			@Override
+			public ZoneState interpolate(final ZoneState zoneA, final ZoneState zoneB) {
+				return ZoneState.interpolant(zoneA, zoneB);
+			}
+		},
+
+		WEAK {
+			@Override
+			public ZoneState interpolate(final ZoneState zoneA, final ZoneState zoneB) {
+				return ZoneState.weakInterpolant(zoneA, zoneB);
+			}
+		};
+
+		public abstract ZoneState interpolate(final ZoneState zoneA, final ZoneState zoneB);
+
+	}
 
 	private final ZonePrec prec;
 	private final Analysis<ItpZoneState, XtaAction, UnitPrec> analysis;
+	private final ItpOperator operator;
 
-	protected ItpStrategy(final XtaSystem system) {
+	ItpStrategy(final XtaSystem system, final ItpOperator operator) {
 		checkNotNull(system);
+		this.operator = checkNotNull(operator);
 		prec = ZonePrec.of(system.getClocks());
 		analysis = PrecMappingAnalysis.create(ItpZoneAnalysis.create(XtaZoneAnalysis.getInstance()), u -> prec);
 	}
 
 	////
+
+	protected final ZoneState interpolate(final ZoneState zoneA, final ZoneState zoneB) {
+		return operator.interpolate(zoneA, zoneB);
+	}
 
 	protected final ZoneState pre(final ZoneState state, final XtaAction action) {
 		return XtaZoneUtils.pre(state, action, prec);
