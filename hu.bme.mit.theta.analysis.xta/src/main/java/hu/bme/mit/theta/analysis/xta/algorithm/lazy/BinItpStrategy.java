@@ -27,15 +27,12 @@ public final class BinItpStrategy extends ItpStrategy {
 			final ArgNode<XtaState<ItpZoneState>, XtaAction> nodeToCover,
 			final ArgNode<XtaState<ItpZoneState>, XtaAction> coveringNode, final Builder statistics) {
 
-		statistics.startRefinement();
-
 		final Collection<ArgNode<XtaState<ItpZoneState>, XtaAction>> uncoveredNodes = new ArrayList<>();
 		final Collection<ZoneState> complementZones = coveringNode.getState().getState().getInterpolant().complement();
 		for (final ZoneState complementZone : complementZones) {
 			blockZone(nodeToCover, complementZone, uncoveredNodes, statistics);
 		}
 
-		statistics.stopRefinement();
 		return uncoveredNodes;
 	}
 
@@ -43,12 +40,9 @@ public final class BinItpStrategy extends ItpStrategy {
 	public Collection<ArgNode<XtaState<ItpZoneState>, XtaAction>> refine(
 			final ArgNode<XtaState<ItpZoneState>, XtaAction> node, final Builder statistics) {
 
-		statistics.startRefinement();
-
 		final Collection<ArgNode<XtaState<ItpZoneState>, XtaAction>> uncoveredNodes = new ArrayList<>();
 		blockZone(node, ZoneState.top(), uncoveredNodes, statistics);
 
-		statistics.stopRefinement();
 		return uncoveredNodes;
 	}
 

@@ -121,7 +121,9 @@ public final class LazyXtaChecker<S extends State> implements SafetyChecker<XtaS
 				assert v.isLeaf();
 
 				if (algorithm.shouldRefine(v)) {
+					statistics.startRefinement();
 					final Collection<ArgNode<XtaState<S>, XtaAction>> uncoveredNodes = algorithm.refine(v, statistics);
+					statistics.stopRefinement();
 					waitlist.addAll(uncoveredNodes);
 				} else if (v.isTarget()) {
 					statistics.stopAlgorithm();
@@ -144,26 +146,30 @@ public final class LazyXtaChecker<S extends State> implements SafetyChecker<XtaS
 
 			final Collection<ArgNode<XtaState<S>, XtaAction>> candidates = reachedSet.get(nodeToCover);
 
-			for (final ArgNode<XtaState<S>, XtaAction> coveringNode : candidates) {
-				if (algorithm.covers(nodeToCover, coveringNode)) {
-					nodeToCover.setCoveringNode(coveringNode);
-					return;
-				}
-			}
-
-			for (final ArgNode<XtaState<S>, XtaAction> coveringNode : candidates) {
-				if (algorithm.mightCover(nodeToCover, coveringNode)) {
-					final Collection<ArgNode<XtaState<S>, XtaAction>> uncoveredNodes = algorithm.forceCover(nodeToCover,
-							coveringNode, statistics);
-					waitlist.addAll(uncoveredNodes);
+			if (!candidates.isEmpty()) {
+				for (final ArgNode<XtaState<S>, XtaAction> coveringNode : candidates) {
 					if (algorithm.covers(nodeToCover, coveringNode)) {
 						nodeToCover.setCoveringNode(coveringNode);
 						return;
 					}
 				}
-			}
 
-			algorithm.resetState(nodeToCover);
+				for (final ArgNode<XtaState<S>, XtaAction> coveringNode : candidates) {
+					if (algorithm.mightCover(nodeToCover, coveringNode)) {
+						statistics.startRefinement();
+						final Collection<ArgNode<XtaState<S>, XtaAction>> uncoveredNodes = algorithm
+								.forceCover(nodeToCover, coveringNode, statistics);
+						statistics.stopRefinement();
+						waitlist.addAll(uncoveredNodes);
+						if (algorithm.covers(nodeToCover, coveringNode)) {
+							nodeToCover.setCoveringNode(coveringNode);
+							return;
+						}
+					}
+				}
+
+				algorithm.resetState(nodeToCover);
+			}
 		}
 
 		private void expand(final ArgNode<XtaState<S>, XtaAction> v) {

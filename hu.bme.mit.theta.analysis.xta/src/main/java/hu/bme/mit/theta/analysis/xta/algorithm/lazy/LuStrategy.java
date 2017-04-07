@@ -64,22 +64,22 @@ public final class LuStrategy implements LazyXtaChecker.AlgorithmStrategy<LuZone
 	public Collection<ArgNode<XtaState<LuZoneState>, XtaAction>> forceCover(
 			final ArgNode<XtaState<LuZoneState>, XtaAction> nodeToCover,
 			final ArgNode<XtaState<LuZoneState>, XtaAction> coveringNode, final Builder statistics) {
-		statistics.startRefinement();
+
 		final Collection<ArgNode<XtaState<LuZoneState>, XtaAction>> uncoveredNodes = new ArrayList<>();
 		final BoundFunction boundFunction = coveringNode.getState().getState().getBoundFunction();
 		propagateBounds(nodeToCover, boundFunction, uncoveredNodes, statistics, false);
-		statistics.stopRefinement();
+
 		return uncoveredNodes;
 	}
 
 	@Override
 	public Collection<ArgNode<XtaState<LuZoneState>, XtaAction>> refine(
 			final ArgNode<XtaState<LuZoneState>, XtaAction> node, final Builder statistics) {
-		statistics.startRefinement();
+
 		final Collection<ArgNode<XtaState<LuZoneState>, XtaAction>> uncoveredNodes = new ArrayList<>();
 		final BoundFunction boundFunction = BoundFunction.top();
 		propagateBounds(node, boundFunction, uncoveredNodes, statistics, true);
-		statistics.stopRefinement();
+
 		return uncoveredNodes;
 	}
 
