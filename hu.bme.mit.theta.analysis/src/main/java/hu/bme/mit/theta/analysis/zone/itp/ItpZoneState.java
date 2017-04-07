@@ -1,6 +1,5 @@
 package hu.bme.mit.theta.analysis.zone.itp;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import hu.bme.mit.theta.analysis.expr.ExprState;
@@ -19,7 +18,9 @@ public final class ItpZoneState implements ExprState {
 	private ItpZoneState(final ZoneState zone, final ZoneState interpolant) {
 		checkNotNull(zone);
 		checkNotNull(interpolant);
-		checkArgument(zone.isLeq(interpolant));
+
+		assert zone.isLeq(interpolant);
+
 		this.zone = zone;
 		this.interpolant = interpolant;
 	}
