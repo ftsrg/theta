@@ -124,4 +124,16 @@ public final class SimplePredPrec implements PredPrec {
 	public String toString() {
 		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).addAll(predToNegMap.keySet()).toString();
 	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		} else if (obj instanceof SimplePredPrec) {
+			final SimplePredPrec that = (SimplePredPrec) obj;
+			return this.predToNegMap.keySet().equals(that.predToNegMap.keySet());
+		} else {
+			return false;
+		}
+	}
 }

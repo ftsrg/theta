@@ -30,7 +30,6 @@ public final class ExplPrec implements Prec {
 	private static ExplPrec EMPTY = new ExplPrec(Collections.emptySet());
 
 	private ExplPrec(final Iterable<? extends VarDecl<?>> vars) {
-		checkNotNull(vars);
 		this.vars = ImmutableSet.copyOf(vars);
 	}
 
@@ -39,6 +38,7 @@ public final class ExplPrec implements Prec {
 	}
 
 	public static ExplPrec create(final Iterable<? extends VarDecl<?>> vars) {
+		checkNotNull(vars);
 		if (vars.iterator().hasNext()) {
 			return new ExplPrec(vars);
 		} else {
@@ -85,5 +85,17 @@ public final class ExplPrec implements Prec {
 	@Override
 	public String toString() {
 		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).addAll(vars, VarDecl::getName).toString();
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		} else if (obj instanceof ExplPrec) {
+			final ExplPrec that = (ExplPrec) obj;
+			return this.getVars().equals(that.getVars());
+		} else {
+			return false;
+		}
 	}
 }

@@ -32,4 +32,16 @@ public final class ZonePrec implements Prec {
 	public String toString() {
 		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).addAll(clocks).toString();
 	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		} else if (obj instanceof ZonePrec) {
+			final ZonePrec that = (ZonePrec) obj;
+			return this.getClocks().equals(that.getClocks());
+		} else {
+			return false;
+		}
+	}
 }

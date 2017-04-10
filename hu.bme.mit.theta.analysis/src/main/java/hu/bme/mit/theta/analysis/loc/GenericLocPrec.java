@@ -90,4 +90,15 @@ public final class GenericLocPrec<P extends Prec, L extends Loc<L, E>, E extends
 		return builder.toString();
 	}
 
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		} else if (obj instanceof GenericLocPrec) {
+			final GenericLocPrec<?, ?, ?> that = (GenericLocPrec<?, ?, ?>) obj;
+			return this.defaultPrec.equals(that.defaultPrec) && this.mapping.equals(that.mapping);
+		} else {
+			return false;
+		}
+	}
 }

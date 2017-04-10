@@ -10,8 +10,7 @@ import hu.bme.mit.theta.formalism.common.Loc;
 /**
  * Represents an immutable constant precision.
  */
-public final class ConstLocPrec<P extends Prec, L extends Loc<L, E>, E extends Edge<L, E>>
-		implements LocPrec<P, L, E> {
+public final class ConstLocPrec<P extends Prec, L extends Loc<L, E>, E extends Edge<L, E>> implements LocPrec<P, L, E> {
 
 	private final P prec;
 
@@ -45,6 +44,18 @@ public final class ConstLocPrec<P extends Prec, L extends Loc<L, E>, E extends E
 	@Override
 	public String toString() {
 		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).add(prec).toString();
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		} else if (obj instanceof ConstLocPrec) {
+			final ConstLocPrec<?, ?, ?> that = (ConstLocPrec<?, ?, ?>) obj;
+			return this.prec.equals(that.prec);
+		} else {
+			return false;
+		}
 	}
 
 }

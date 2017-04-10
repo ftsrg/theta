@@ -42,8 +42,8 @@ public class SimplePredPrecTest {
 	public void testRefinement() {
 		final SimplePredPrec p0 = SimplePredPrec.create(solver);
 		final SimplePredPrec p1 = SimplePredPrec.create(Collections.singleton(pred), solver);
-		final SimplePredPrec p2 = SimplePredPrec
-				.create(Collections.singleton(Exprs.Eq(x.getRef(), y.getRef())), solver);
+		final SimplePredPrec p2 = SimplePredPrec.create(Collections.singleton(Exprs.Eq(x.getRef(), y.getRef())),
+				solver);
 
 		final SimplePredPrec r1 = p1.join(p0);
 		final SimplePredPrec r2 = p1.join(p2);
@@ -53,5 +53,16 @@ public class SimplePredPrecTest {
 		Assert.assertTrue(p1 != r2);
 		Assert.assertTrue(r2 == r3);
 
+	}
+
+	@Test
+	public void testEquals() {
+		final SimplePredPrec p0 = SimplePredPrec.create(solver);
+		final SimplePredPrec p1 = SimplePredPrec.create(Collections.singleton(pred), solver);
+		final SimplePredPrec p2 = SimplePredPrec.create(Collections.singleton(pred), solver);
+
+		Assert.assertNotEquals(p0, p1);
+		Assert.assertNotEquals(p0, p2);
+		Assert.assertEquals(p1, p2);
 	}
 }
