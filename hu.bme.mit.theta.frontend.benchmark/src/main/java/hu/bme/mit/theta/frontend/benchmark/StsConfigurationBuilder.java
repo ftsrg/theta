@@ -21,6 +21,7 @@ import hu.bme.mit.theta.analysis.algorithm.cegar.WaitlistBasedAbstractor;
 import hu.bme.mit.theta.analysis.expl.ExplAnalysis;
 import hu.bme.mit.theta.analysis.expl.ExplPrec;
 import hu.bme.mit.theta.analysis.expl.ExplState;
+import hu.bme.mit.theta.analysis.expl.ExplStatePredicate;
 import hu.bme.mit.theta.analysis.expl.ItpRefToExplPrec;
 import hu.bme.mit.theta.analysis.expl.VarsRefToExplPrec;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
@@ -93,10 +94,9 @@ public final class StsConfigurationBuilder extends ConfigurationBuilder {
 		final LTS<State, StsAction> lts = StsLts.create(sts);
 		final Expr<? extends BoolType> init = And(sts.getInit());
 		final Expr<? extends BoolType> negProp = Not(sts.getProp());
-		final Predicate<ExprState> target = new ExprStatePredicate(negProp, solver);
 
 		if (getDomain() == Domain.EXPL) {
-
+			final Predicate<ExplState> target = new ExplStatePredicate(negProp, solver);
 			final Analysis<ExplState, ExprAction, ExplPrec> analysis = ExplAnalysis.create(solver, init);
 			final ArgBuilder<ExplState, StsAction, ExplPrec> argBuilder = ArgBuilder.create(lts, analysis, target);
 			final Abstractor<ExplState, StsAction, ExplPrec> abstractor = WaitlistBasedAbstractor.create(argBuilder,
@@ -138,6 +138,7 @@ public final class StsConfigurationBuilder extends ConfigurationBuilder {
 			return Configuration.create(checker, prec);
 
 		} else if (getDomain() == Domain.PRED) {
+			final Predicate<ExprState> target = new ExprStatePredicate(negProp, solver);
 			final Analysis<PredState, ExprAction, PredPrec> analysis = PredAnalysis.create(solver, init);
 			final ArgBuilder<PredState, StsAction, SimplePredPrec> argBuilder = ArgBuilder.create(lts, analysis,
 					target);
