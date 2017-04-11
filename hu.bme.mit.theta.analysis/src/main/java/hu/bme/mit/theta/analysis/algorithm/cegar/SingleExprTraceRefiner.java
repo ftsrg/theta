@@ -60,7 +60,6 @@ public class SingleExprTraceRefiner<S extends ExprState, A extends ExprAction, P
 			final R refutation = cexStatus.asInfeasible().getRefutation();
 			logger.writeln(refutation, 4, 3);
 			final P refinedPrec = precRefiner.refine(traceToConcretize, prec, refutation);
-			checkState(!refinedPrec.equals(prec), "Precision is not refined");
 			final int pruneIndex = refutation.getPruneIndex();
 			checkState(0 <= pruneIndex && pruneIndex <= cexToConcretize.length(), "Pruning index out of range");
 			logger.writeln("Pruning from index ", pruneIndex, 3, 2);
