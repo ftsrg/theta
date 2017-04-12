@@ -82,10 +82,27 @@ public class VarIndexingTest {
 		assertEquals(0, sub.get(z));
 	}
 
+	@Test
+	public void testSub2() {
+		final VarIndexing indexes1 = VarIndexing.builder(5).build();
+		final VarIndexing indexes2 = VarIndexing.builder(2).build();
+		final VarIndexing sub = indexes1.sub(indexes2);
+		assertEquals(3, sub.get(x));
+		assertEquals(3, sub.get(y));
+		assertEquals(3, sub.get(z));
+	}
+
 	@Test(expected = IllegalArgumentException.class)
 	public void testSubException() {
 		final VarIndexing indexes1 = VarIndexing.builder(1).inc(x).build();
 		final VarIndexing indexes2 = VarIndexing.builder(0).inc(x).inc(x).inc(x).build();
+		indexes1.sub(indexes2);
+	}
+
+	@Test(expected = IllegalArgumentException.class)
+	public void testSubException2() {
+		final VarIndexing indexes1 = VarIndexing.builder(1).build();
+		final VarIndexing indexes2 = VarIndexing.builder(2).build();
 		indexes1.sub(indexes2);
 	}
 

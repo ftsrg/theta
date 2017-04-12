@@ -158,6 +158,7 @@ public class VarIndexing {
 			checkNotNull(that);
 
 			final int newDefaultIndex = this.defaultIndex - that.defaultIndex;
+			checkArgument(newDefaultIndex >= 0, "Negative default index");
 			final Map<VarDecl<?>, Integer> newVarToOffset = new HashMap<>();
 
 			final Set<VarDecl<?>> varDecls = Sets.union(this.varToOffset.keySet(), that.varToOffset.keySet());
