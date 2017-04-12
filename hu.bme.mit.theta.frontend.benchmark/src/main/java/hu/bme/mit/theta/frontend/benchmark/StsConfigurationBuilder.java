@@ -27,6 +27,7 @@ import hu.bme.mit.theta.analysis.expl.VarsRefToExplPrec;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.ExprStatePredicate;
+import hu.bme.mit.theta.analysis.expr.ExprTraceBackCraigItpChecker;
 import hu.bme.mit.theta.analysis.expr.ExprTraceChecker;
 import hu.bme.mit.theta.analysis.expr.ExprTraceCraigItpChecker;
 import hu.bme.mit.theta.analysis.expr.ExprTraceSeqItpChecker;
@@ -105,8 +106,12 @@ public final class StsConfigurationBuilder extends ConfigurationBuilder {
 			Refiner<ExplState, StsAction, ExplPrec> refiner = null;
 
 			switch (getRefinement()) {
-			case CRAIG_ITP:
+			case FW_CRAIG_ITP:
 				refiner = SingleExprTraceRefiner.create(ExprTraceCraigItpChecker.create(init, negProp, solver),
+						BasicPrecRefiner.create(new ItpRefToExplPrec()), getLogger());
+				break;
+			case BW_CRAIG_ITP:
+				refiner = SingleExprTraceRefiner.create(ExprTraceBackCraigItpChecker.create(init, negProp, solver),
 						BasicPrecRefiner.create(new ItpRefToExplPrec()), getLogger());
 				break;
 			case SEQ_ITP:
@@ -147,8 +152,11 @@ public final class StsConfigurationBuilder extends ConfigurationBuilder {
 
 			ExprTraceChecker<ItpRefutation> exprTraceChecker = null;
 			switch (getRefinement()) {
-			case CRAIG_ITP:
+			case FW_CRAIG_ITP:
 				exprTraceChecker = ExprTraceCraigItpChecker.create(init, negProp, solver);
+				break;
+			case BW_CRAIG_ITP:
+				exprTraceChecker = ExprTraceBackCraigItpChecker.create(init, negProp, solver);
 				break;
 			case SEQ_ITP:
 				exprTraceChecker = ExprTraceSeqItpChecker.create(init, negProp, solver);
