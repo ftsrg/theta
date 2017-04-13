@@ -1,7 +1,7 @@
 ---
 title: "Benchmark report"
 params:
-  csv_path: "log_20170328_170203.csv"
+  csv_path: "log_20170412_170912.csv"
   timeout_ms: 600000
 output:
   html_document:
@@ -34,6 +34,26 @@ library(corrgram)
 # Themes
 theme_rotate_x <- theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
 theme_noticks <- theme(axis.ticks = element_blank())
+
+# Function for pairwise plots
+pairwise_plot <- function(data, compare_col, group_col, val1, val2, other_cols, color_by,
+                          na_fill = NA, log_scale = F, bin_width = 1, pt_position = "identity") {
+  all_cols <- c(group_col, compare_col, other_cols)
+  data_selected <- data %>% select(one_of(all_cols))
+  data_selected[[compare_col]][is.na(data_selected[[compare_col]])] <- na_fill
+  data_joined <- inner_join(
+    data_selected %>% filter_(lazyeval::interp(quote(x == y), x=as.name(group_col), y=val1)),
+    data_selected %>% filter_(lazyeval::interp(quote(x == y), x=as.name(group_col), y=val2)),
+    by = other_cols)
+  plot <- ggplot(data_joined, aes_string(paste(compare_col, ".x", sep = ""), paste(compare_col, ".y", sep = "")))
+  if (log_scale) {plot <- plot + scale_x_log10() + scale_y_log10()}
+  plot <- plot + geom_bin2d(binwidth = bin_width)
+  plot <- plot + scale_fill_gradient(low = "gray", high = "black")
+  plot <- plot + geom_point(aes_string(color = color_by), position = pt_position, size = 2)
+  plot <- plot + geom_abline()
+  plot <- plot + labs(title = paste("Comparing", compare_col, "for", group_col), x = val1, y = val2)
+  plot
+}
 ```
 
 ## Load data
@@ -73,6 +93,7 @@ d$Domain <- factor(d$Domain)
 d$Refinement <- factor(d$Refinement)
 d$InitPrec <- factor(d$InitPrec)
 d$Search <- factor(d$Search)
+d$PredSplit[is.na(d$PredSplit)] <- "_"
 d$PredSplit <- factor(d$PredSplit)
 
 # Convert 'Safe' to logical (and remove exceptions).
@@ -94,9 +115,8 @@ d <- d %>% mutate(Config = paste(
 ))
 
 # Trim name, separate 'Model' into 'Name' and 'Type'.
-d$Model <- as.factor(gsub("../models/", "", d$Model))
-d <- d %>% separate(Model, into = c("Type", "Subtype", "Name"), sep = "/", remove = F) %>%
-  unite(Type, Type, Subtype, sep = "/")
+d$Model <- as.factor(gsub("../models/sts/", "", d$Model))
+d <- d %>% separate(Model, into = c("Type", "Name"), sep = "/", remove = F)
 ```
 
 # Overview
@@ -118,7 +138,8 @@ d_model_config <- d %>%
     SafeCount = sum(Safe, na.rm = T),
     Consistent = SafeCount == 0 || SafeCount == ResultCount,
     TimeAvg = mean(TimeMs),
-    TimeRSD = ifelse(ResultCount == 1, 0, sd(TimeMs) / mean(TimeMs)))
+    TimeRSD = ifelse(ResultCount == 1, 0, sd(TimeMs) / mean(TimeMs)),
+    IterAvg = mean(Iterations))
 d_model <- d_model_config %>% group_by(Model, Type) %>%
   summarise(
     ResultCount = sum(ResultCount),
@@ -290,21 +311,31 @@ ggplot(d_model %>% filter(!is.na(ConfigMin))) +
 
 ### Pairwise comparisons
 ```{r}
-d_inputs_time <- d %>% select(Type, Model, Domain, Refinement, InitPrec, Search, TimeMs)
+pairwise_plot(d, "TimeMs", "Domain", "PRED", "EXPL",
+              c("Type", "Model", "Refinement", "InitPrec", "Search"), "Type",
+              log_scale = T, bin_width = .25, na_fill = params$timeout_ms, pt_position = "jitter")
+```
 
-d_inputs_time$TimeMs[is.na(d_inputs_time$TimeMs)] <- params$timeout_ms
-d_domain_vs_time <- inner_join(
-  d_inputs_time %>% filter(Domain == "PRED"),
-  d_inputs_time %>% filter(Domain == "EXPL"),
-  by = c("Type", "Model", "Refinement", "InitPrec", "Search")) %>%
-  filter(!near(TimeMs.x, params$timeout_ms) | !near(TimeMs.y, params$timeout_ms))
-ggplot(d_domain_vs_time, aes(TimeMs.x, TimeMs.y)) +
-  scale_y_log10() + scale_x_log10() +
-  geom_bin2d(binwidth = 0.25) +
-  scale_fill_gradient(low = "gray", high = "black") +
-  geom_point(aes(color = Type), position = "jitter", size = 2) +
-  geom_abline() +
-  labs(title = "Execution time of different domains", x = "PRED", y = "EXPL")
+## Iterations
+
+```{r}
+ggplot(d_model_config, aes(Config, Model)) +
+  geom_tile(aes(fill = IterAvg), color = "black") +
+  scale_fill_gradient(low = "green", high = "red", na.value = "white") +
+  theme_noticks + theme_rotate_x +
+  labs(title = "Heatmap of iterations for each model/configuration")
+```
+
+```{r}
+pairwise_plot(d, "Iterations", "Refinement", "BW_CRAIG_ITP", "FW_CRAIG_ITP",
+              c("Type", "Model", "Domain", "InitPrec", "Search", "PredSplit"), "Type",
+              log_scale = F, bin_width = 2, pt_position = "jitter")
+pairwise_plot(d, "Iterations", "Refinement", "BW_CRAIG_ITP", "SEQ_ITP",
+              c("Type", "Model", "Domain", "InitPrec", "Search", "PredSplit"), "Type",
+              log_scale = F, bin_width = 2, pt_position = "jitter")
+pairwise_plot(d, "Iterations", "Refinement", "FW_CRAIG_ITP", "SEQ_ITP",
+              c("Type", "Model", "Domain", "InitPrec", "Search", "PredSplit"), "Type",
+              log_scale = F, bin_width = 2, pt_position = "jitter")
 ```
 
 ## Correlations
