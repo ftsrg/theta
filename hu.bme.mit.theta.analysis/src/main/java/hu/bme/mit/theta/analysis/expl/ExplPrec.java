@@ -98,4 +98,9 @@ public final class ExplPrec implements Prec {
 			return false;
 		}
 	}
+
+	@Override
+	public int hashCode() {
+		return 31 * vars.hashCode();
+	}
 }

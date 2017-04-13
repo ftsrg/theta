@@ -44,4 +44,9 @@ public final class ZonePrec implements Prec {
 			return false;
 		}
 	}
+
+	@Override
+	public int hashCode() {
+		return 31 * clocks.hashCode();
+	}
 }

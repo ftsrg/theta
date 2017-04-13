@@ -58,4 +58,9 @@ public final class ConstLocPrec<P extends Prec, L extends Loc<L, E>, E extends E
 		}
 	}
 
+	@Override
+	public int hashCode() {
+		return 31 * prec.hashCode();
+	}
+
 }

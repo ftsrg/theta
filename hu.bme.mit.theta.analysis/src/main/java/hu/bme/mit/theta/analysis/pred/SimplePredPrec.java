@@ -136,4 +136,9 @@ public final class SimplePredPrec implements PredPrec {
 			return false;
 		}
 	}
+
+	@Override
+	public int hashCode() {
+		return 31 * predToNegMap.keySet().hashCode();
+	}
 }

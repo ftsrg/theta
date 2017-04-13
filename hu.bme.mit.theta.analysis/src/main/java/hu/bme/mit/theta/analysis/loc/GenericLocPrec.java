@@ -101,4 +101,9 @@ public final class GenericLocPrec<P extends Prec, L extends Loc<L, E>, E extends
 			return false;
 		}
 	}
+
+	@Override
+	public int hashCode() {
+		return 31 * (defaultPrec.hashCode() + 13 * mapping.hashCode());
+	}
 }
