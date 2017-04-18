@@ -1,7 +1,7 @@
 ---
 title: "Benchmark report"
 params:
-  csv_path: "log_20170412_170912.csv"
+  csv_path: "log_20170412_174804.csv"
   timeout_ms: 600000
 output:
   html_document:
@@ -317,6 +317,18 @@ pairwise_plot(d, "TimeMs", "Domain", "PRED", "EXPL",
               log_scale = T, bin_width = .25, na_fill = params$timeout_ms, pt_position = "jitter")
 ```
 
+```{r}
+pairwise_plot(d, "TimeMs", "Refinement", "BW_CRAIG_ITP", "FW_CRAIG_ITP",
+              c("Type", "Model", "Domain", "InitPrec", "Search", "PredSplit"), "Type",
+              log_scale = T, bin_width = .25, na_fill = params$timeout_ms, pt_position = "jitter")
+pairwise_plot(d, "TimeMs", "Refinement", "BW_CRAIG_ITP", "SEQ_ITP",
+              c("Type", "Model", "Domain", "InitPrec", "Search", "PredSplit"), "Type",
+              log_scale = T, bin_width = .25, na_fill = params$timeout_ms, pt_position = "jitter")
+pairwise_plot(d, "TimeMs", "Refinement", "FW_CRAIG_ITP", "SEQ_ITP",
+              c("Type", "Model", "Domain", "InitPrec", "Search", "PredSplit"), "Type",
+              log_scale = T, bin_width = .25, na_fill = params$timeout_ms, pt_position = "jitter")
+```
+
 ## Iterations
 
 ```{r}
@@ -326,6 +338,8 @@ ggplot(d_model_config, aes(Config, Model)) +
   theme_noticks + theme_rotate_x +
   labs(title = "Heatmap of iterations for each model/configuration")
 ```
+
+### Pairwise comparisons
 
 ```{r}
 pairwise_plot(d, "Iterations", "Refinement", "BW_CRAIG_ITP", "FW_CRAIG_ITP",
