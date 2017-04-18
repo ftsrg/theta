@@ -159,6 +159,7 @@ n_configs_succ <- length(unique((d_model_config %>% filter(Succ))$Config))
     - **`r n_configs_succ` / `r n_configs_total` configurations** verified at least one model.
 - With the repeated measurements included, there are a total number of **`r n_meas_total` measurement points** with **`r n_meas_succ` successful** executions.
 - Total time of the measurements is **`r total_time$day` days, `r total_time$hour` hours and `r total_time$minute` minutes**, assuming that the missing values timed out.
+    - The maximum (non-timeout) execution time is **`r max(d$TimeMs, na.rm = T) / 1000` s**.
 
 ## Consistency of results
 
