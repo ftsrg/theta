@@ -20,7 +20,7 @@ library(flexdashboard)
 # Themes
 theme_rotate_x <- theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
 theme_noticks <- theme(axis.ticks = element_blank())
-gaugeSectorsPercent <- function(min, max, warn, succ) {
+gauge_sectors_percent <- function(min, max, warn, succ) {
   succ_absolute <- min + (max - min) * succ / 100
   warn_absolute <- min + (max - min) * warn / 100
   if (warn < succ) {
@@ -46,16 +46,16 @@ d <- read_csv(
   )
 )
 # Convert 'Safe' to logical (removing exceptions and timeouts).
-empty_rows <- sum(is.na(d$Safe))
+n_rows_empty <- sum(is.na(d$Safe))
 d_exceptions <- d %>% filter(str_detect(d$Safe, "\\[EX\\]"))
-ex_rows <- nrow(d_exceptions)
-to_rows <- sum(str_detect(d$Safe, "\\[TO\\]"), na.rm = T)
+n_rows_exception <- nrow(d_exceptions)
 d$Safe <- as.logical(d$Safe)
 # Calculate summary values
-n_meas_total <- nrow(d)
-n_meas_succ <- nrow(d %>% filter(!is.na(Safe)))
+n_meas_rep_total <- nrow(d)
+n_meas_rep_succ <- nrow(d %>% filter(!is.na(Safe)))
 n_models_total <- length(unique(d$Model))
 n_configs_total <- length(unique(d$Config))
+n_meas_total <- n_models_total * n_configs_total
 total_time <- seconds_to_period(sum(ifelse(is.na(d$TimeMs), params$timeout_ms, d$TimeMs)) / 1000)
 
 d_model_config <- d %>%
@@ -98,39 +98,38 @@ valueBox(n_configs_total, icon = "fa-cogs")
 
 ### Measurements
 ```{r}
-valueBox(n_models_total * n_configs_total, icon = "fa-tasks")
+valueBox(n_meas_total, icon = "fa-tasks")
 ```
 
 ### Success rate
 ```{r}
-gauge(nrow(d_model_config %>% filter(Succ)), min = 0, max = n_models_total * n_configs_total,
-      gaugeSectorsPercent(0, n_models_total * n_configs_total, 50, 75))
+gauge(nrow(d_model_config %>% filter(Succ)), min = 0, max = n_meas_total,
+      gauge_sectors_percent(0, n_meas_total, 50, 75))
 ```
 
 ### Models verified (at least one config)
 ```{r}
 gauge(n_models_succ, min = 0, max = n_models_total,
-      gaugeSectorsPercent(0, n_models_total, 50, 75))
+      gauge_sectors_percent(0, n_models_total, 50, 75))
 ```
 
 Row
 -------------------------------------
 ### Success rate (incl. repetitions)
 ```{r}
-gauge(n_meas_succ, min = 0, max = n_meas_total,
-      gaugeSectorsPercent(0, n_meas_total, 50, 75))
+gauge(n_meas_rep_succ, min = 0, max = n_meas_rep_total,
+      gauge_sectors_percent(0, n_meas_rep_total, 50, 75))
 ```
 
 ### Missing values & exceptions
 ```{r}
-gauge(empty_rows + ex_rows, min = 0, max = n_meas_total,
-      gaugeSectorsPercent(0, n_meas_total, 10, 1))
+gauge(n_rows_empty + n_rows_exception, min = 0, max = n_meas_rep_total,
+      gauge_sectors_percent(0, n_meas_rep_total, 10, 1))
 ```
 
 ### Total time
 ```{r}
-total_time_str <- paste(total_time$day, "d ", total_time$hour, "h ", total_time$minute, "m", sep = "")
-valueBox(total_time_str, icon = "fa-clock-o")
+valueBox(paste(total_time$day, "d ", total_time$hour, "h ", total_time$minute, "m", sep = ""), icon = "fa-clock-o")
 ```
 
 ### Timeout
@@ -141,7 +140,7 @@ valueBox(paste(params$timeout_ms / 1000, "s", sep = ""), icon = "fa-clock-o")
 ### Maximum execution time
 ```{r}
 gauge(max(d$TimeMs, na.rm = T) / 1000, min = 0, max = params$timeout_ms / 1000,
-      gaugeSectorsPercent(0, params$timeout_ms / 1000, 95, 90))
+      gauge_sectors_percent(0, params$timeout_ms / 1000, 95, 90))
 ```
 
 
@@ -173,10 +172,10 @@ Row
 
 ### Exceptions
 
-There are **`r ex_rows`** exceptions.
+There are **`r n_rows_exception`** exceptions.
 
 ```{r}
-if (ex_rows > 0) {
+if (n_rows_exception > 0) {
   knitr::kable(d_exceptions %>% group_by(Type = Safe) %>% summarise(Count = n()))
 }
 ```
@@ -186,12 +185,7 @@ Succes rates
 
 ```{r}
 config_stats <- d_model_config  %>% group_by(Config) %>% summarise(N = sum(Succ))
-config_max <- max(config_stats$N)
-config_min <- min(config_stats$N)
-
 model_stats <- d_model_config %>% group_by(Model) %>% summarise(N = sum(Succ))
-model_max <- max(model_stats$N)
-model_min <- min(model_stats$N)
 ```
 
 Row
@@ -199,26 +193,26 @@ Row
 
 ### Lowest success rate of a config
 ```{r}
-gauge(config_min, min = 0, max = n_models_total,
-      gaugeSectorsPercent(0, n_models_total, 50, 75))
+gauge(min(config_stats$N), min = 0, max = n_models_total,
+      gauge_sectors_percent(0, n_models_total, 50, 75))
 ```
 
 ### Highest success rate of a config
 ```{r}
-gauge(config_max, min = 0, max = n_models_total,
-      gaugeSectorsPercent(0, n_models_total, 50, 75))
+gauge(max(config_stats$N), min = 0, max = n_models_total,
+      gauge_sectors_percent(0, n_models_total, 50, 75))
 ```
 
 ### Lowest success rate of a model
 ```{r}
-gauge(model_min, min = 0, max = n_configs_total,
-      gaugeSectorsPercent(0, n_configs_total, 50, 75))
+gauge(min(model_stats$N), min = 0, max = n_configs_total,
+      gauge_sectors_percent(0, n_configs_total, 50, 75))
 ```
 
 ### Highest success rate of a model
 ```{r}
-gauge(model_max, min = 0, max = n_configs_total,
-      gaugeSectorsPercent(0, n_configs_total, 50, 75))
+gauge(max(model_stats$N), min = 0, max = n_configs_total,
+      gauge_sectors_percent(0, n_configs_total, 50, 75))
 ```
 
 Row
@@ -232,7 +226,7 @@ ggplot(d_model_config) +
   theme_rotate_x
 ```
 
-### Number of models verified by a configuration
+### Number of models verified by each configuration
 ```{r}
 ggplot(d_model_config) +
   geom_bar(aes(x = Config, fill = Succ)) +
@@ -251,8 +245,23 @@ ggplot(d_model_config, aes(Config, Model)) +
   theme_noticks + theme_rotate_x
 ```
 
-Execution time
+Deviation of execution time
 ===================================== 
+
+Row
+-------------------------------------
+
+### Maximum RSD
+```{r}
+gauge(round(max(d_model_config$TimeRSD, na.rm = T) * 100, 0), min = 0, max = 100,
+      symbol = "%", gauge_sectors_percent(0, 100, 20, 10))
+```
+
+### Mean RSD
+```{r}
+gauge(round(mean(d_model_config$TimeRSD, na.rm = T) * 100, 0), min = 0, max = 100,
+      symbol = "%", gauge_sectors_percent(0, 100, 10, 5))
+```
 
 Row
 -------------------------------------
@@ -264,8 +273,6 @@ ggplot(d_model_config) +
   geom_histogram(aes(TimeRSD))
 ```
 
-The maximum RSD is **`r max(d_model_config$TimeRSD, na.rm = T)`**, and 95% of the measurements have a lower RSD than `r quantile(d_model_config$TimeRSD, .95, na.rm = T)`.
-
 ### Individual RSD for each configuration and model
 
 ```{r}
@@ -275,6 +282,8 @@ ggplot(d_model_config, aes(Config, Model)) +
   theme_noticks + theme_rotate_x
 ```
 
+Execution time
+===================================== 
 
 Row
 -------------------------------------
