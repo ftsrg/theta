@@ -39,12 +39,14 @@ import hu.bme.mit.theta.analysis.pred.PredPrec;
 import hu.bme.mit.theta.analysis.pred.PredState;
 import hu.bme.mit.theta.analysis.pred.SimplePredPrec;
 import hu.bme.mit.theta.analysis.sts.StsAction;
+import hu.bme.mit.theta.analysis.sts.StsEmptyInitPrec;
+import hu.bme.mit.theta.analysis.sts.StsInitPrec;
 import hu.bme.mit.theta.analysis.sts.StsLts;
+import hu.bme.mit.theta.analysis.sts.StsPropInitPrec;
 import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.BoolType;
-import hu.bme.mit.theta.core.utils.impl.ExprUtils;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.solver.SolverFactory;
@@ -96,6 +98,18 @@ public final class StsConfigurationBuilder extends ConfigurationBuilder {
 		final Expr<? extends BoolType> init = And(sts.getInit());
 		final Expr<? extends BoolType> negProp = Not(sts.getProp());
 
+		StsInitPrec initPrecBuilder = null;
+		switch (initPrec) {
+		case EMPTY:
+			initPrecBuilder = new StsEmptyInitPrec();
+			break;
+		case PROP:
+			initPrecBuilder = new StsPropInitPrec();
+			break;
+		default:
+			throw new UnsupportedOperationException();
+		}
+
 		if (getDomain() == Domain.EXPL) {
 			final Predicate<ExplState> target = new ExplStatePredicate(negProp, solver);
 			final Analysis<ExplState, ExprAction, ExplPrec> analysis = ExplAnalysis.create(solver, init);
@@ -128,18 +142,7 @@ public final class StsConfigurationBuilder extends ConfigurationBuilder {
 
 			final SafetyChecker<ExplState, StsAction, ExplPrec> checker = CegarChecker.create(abstractor, refiner,
 					getLogger());
-			ExplPrec prec = null;
-			switch (initPrec) {
-			case EMPTY:
-				prec = ExplPrec.create();
-				break;
-			case PROP:
-				prec = ExplPrec.create(ExprUtils.getVars(negProp));
-				break;
-			default:
-				throw new UnsupportedOperationException();
-			}
-
+			final ExplPrec prec = initPrecBuilder.createExpl(sts);
 			return Configuration.create(checker, prec);
 
 		} else if (getDomain() == Domain.PRED) {
@@ -170,18 +173,8 @@ public final class StsConfigurationBuilder extends ConfigurationBuilder {
 
 			final SafetyChecker<PredState, StsAction, SimplePredPrec> checker = CegarChecker.create(abstractor, refiner,
 					getLogger());
-			SimplePredPrec prec = null;
-			switch (initPrec) {
-			case EMPTY:
-				prec = SimplePredPrec.create(solver);
-				break;
-			case PROP:
-				prec = SimplePredPrec.create(ExprUtils.getAtoms(negProp), solver);
-				break;
-			default:
-				throw new UnsupportedOperationException();
-			}
 
+			final SimplePredPrec prec = initPrecBuilder.createSimplePred(sts, solver);
 			return Configuration.create(checker, prec);
 		} else {
 			throw new UnsupportedOperationException();
