@@ -165,12 +165,16 @@ n_configs_succ <- length(unique((d_model_config %>% filter(Succ))$Config))
 
 There are **`r sum(!d_model_config$Consistent)`** cases where different executions of the same configuration yielded different results for the same model.
 ```{r}
-d_model_config %>% filter(!Consistent) %>% ungroup() %>% select(Config, Model)
+if (sum(!d_model_config$Consistent) > 0) {
+  knitr::kable(d_model_config %>% filter(!Consistent) %>% ungroup() %>% select(Config, Model))
+}
 ```
 
 There are **`r sum(!d_model$Consistent)`** cases where different executions of the same configuration or different configurations yielded different results for the same model.
 ```{r}
-d_model %>% filter(!Consistent) %>% select(Model)
+if (sum(!d_model$Consistent) > 0) {
+  knitr::kable(d_model %>% filter(!Consistent) %>% select(Model, Consistent))
+}
 ```
 
 ## Overview of models and configurations
@@ -185,18 +189,20 @@ ggplot(d_model_config) +
 
 ```{r, fig.height = 4}
 ggplot(d_model_config) +
-  geom_bar(aes(x = Config, fill = Succ)) +
+  geom_bar(aes(x = reorder(Config, Succ, FUN = sum), fill = Succ)) +
   scale_x_discrete(drop = F) +
   theme_rotate_x +
-  labs(title = "Number of models verified by a configuration")
+  labs(title = "Number of models verified by a configuration") +
+  labs(x = "Config")
 ```
 
 ```{r, fig.height = 4}
 ggplot(d_model_config %>% filter(Succ)) +
-  geom_bar(aes(x = Config, fill = Type), position = "dodge") +
+  geom_bar(aes(x = reorder(Config, Succ, FUN = sum), fill = Type), position = "dodge") +
   scale_x_discrete(drop = F) +
   theme_rotate_x +
-  labs(title = "Number of models verified by a configuration in each type")
+  labs(title = "Number of models verified by a configuration in each type") +
+  labs(x = "Config")
 ```
 
 ```{r}
@@ -286,8 +292,6 @@ ggplot(d %>% filter(!is.na(TimeMs))) +
   coord_flip() +
   labs(title = "Distribution of execution time for each type")
 ```
-
-
 
 ```{r}
 ggplot(d %>% filter(!is.na(TimeMs))) +
