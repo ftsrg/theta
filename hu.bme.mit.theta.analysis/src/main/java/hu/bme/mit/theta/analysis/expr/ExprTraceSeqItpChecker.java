@@ -43,7 +43,7 @@ public final class ExprTraceSeqItpChecker implements ExprTraceChecker<ItpRefutat
 	public ExprTraceStatus<ItpRefutation> check(final Trace<? extends ExprState, ? extends ExprAction> trace) {
 		checkNotNull(trace);
 		final int stateCount = trace.getStates().size();
-		checkArgument(stateCount > 0);
+		checkArgument(stateCount > 0, "Zero length trace");
 
 		solver.push();
 		final List<ItpMarker> markers = new ArrayList<>(stateCount + 1);

@@ -44,7 +44,7 @@ public class ExprTraceBackCraigItpChecker implements ExprTraceChecker<ItpRefutat
 		checkNotNull(trace);
 		final Trace<? extends ExprState, ? extends ExprAction> traceRev = trace.reverse();
 		final int stateCount = trace.getStates().size();
-		checkArgument(stateCount > 0);
+		checkArgument(stateCount > 0, "Zero length trace");
 
 		final List<VarIndexing> indexings = new ArrayList<>(stateCount);
 		indexings.add(VarIndexing.all(10 * stateCount));

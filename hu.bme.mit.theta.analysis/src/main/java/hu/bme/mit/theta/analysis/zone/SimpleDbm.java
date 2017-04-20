@@ -22,7 +22,7 @@ final class SimpleDbm {
 	////
 
 	SimpleDbm(final int size, final IntBinaryOperator values) {
-		checkArgument(size > 0);
+		checkArgument(size > 0, "Zero sized DBM");
 		checkNotNull(values);
 		this.nClocks = size - 1;
 		matrix = IntMatrix.create(size, size);

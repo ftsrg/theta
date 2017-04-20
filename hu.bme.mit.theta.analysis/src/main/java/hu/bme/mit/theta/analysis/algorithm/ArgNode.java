@@ -80,7 +80,7 @@ public final class ArgNode<S extends State, A extends Action> {
 
 	public void setCoveringNode(final ArgNode<S, A> node) {
 		checkNotNull(node);
-		checkArgument(node.arg == this.arg);
+		checkArgument(node.arg == this.arg, "Nodes belong to different ARGs");
 		unsetCoveringNode();
 		coveringNode = Optional.of(node);
 		node.coveredNodes.add(this);
@@ -99,7 +99,7 @@ public final class ArgNode<S extends State, A extends Action> {
 	}
 
 	public void cover(final ArgNode<S, A> node) {
-		checkArgument(!node.isExcluded());
+		checkArgument(!node.isExcluded(), "Node is not excluded");
 		final Collection<ArgNode<S, A>> oldCoveredNodes = new ArrayList<>(coveredNodes);
 		descendants().forEach(ArgNode::clearCoveredNodes);
 		setCoveringNode(node);

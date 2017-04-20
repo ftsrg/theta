@@ -85,7 +85,7 @@ final class DiffBounds {
 	}
 
 	public static int negate(final int b) {
-		checkArgument(b != INF);
+		checkArgument(b != INF, "Bound is INF");
 		return Bound(-getBound(b), !isStrict(b));
 	}
 

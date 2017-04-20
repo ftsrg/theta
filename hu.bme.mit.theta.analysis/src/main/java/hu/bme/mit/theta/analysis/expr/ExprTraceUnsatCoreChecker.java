@@ -43,7 +43,7 @@ public final class ExprTraceUnsatCoreChecker implements ExprTraceChecker<VarsRef
 	public ExprTraceStatus<VarsRefutation> check(final Trace<? extends ExprState, ? extends ExprAction> trace) {
 		checkNotNull(trace);
 		final int stateCount = trace.getStates().size();
-		checkArgument(stateCount > 0);
+		checkArgument(stateCount > 0, "Zero length trace");
 
 		final List<VarIndexing> indexings = new ArrayList<>(stateCount);
 		indexings.add(VarIndexing.all(0));

@@ -66,7 +66,7 @@ public final class SimplePredPrec implements PredPrec {
 
 	private Expr<? extends BoolType> negate(final Expr<? extends BoolType> pred) {
 		final Expr<? extends BoolType> negated = predToNegMap.get(pred);
-		checkArgument(negated != null);
+		checkArgument(negated != null, "Negated predicate not found");
 		return negated;
 	}
 
