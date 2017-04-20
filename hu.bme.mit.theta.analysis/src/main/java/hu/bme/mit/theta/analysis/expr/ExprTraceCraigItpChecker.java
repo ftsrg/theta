@@ -57,7 +57,7 @@ public final class ExprTraceCraigItpChecker implements ExprTraceChecker<ItpRefut
 		int nPush = 1;
 		solver.add(A, PathUtils.unfold(init, indexings.get(0)));
 		solver.add(A, PathUtils.unfold(trace.getState(0).toExpr(), indexings.get(0)));
-		checkState(solver.check().isSat());
+		checkState(solver.check().isSat(), "Initial state of the trace is not feasible");
 		int satPrefix = 0;
 
 		for (int i = 1; i < stateCount; ++i) {
@@ -84,7 +84,7 @@ public final class ExprTraceCraigItpChecker implements ExprTraceChecker<ItpRefut
 		} else {
 			solver.add(B, PathUtils.unfold(trace.getState(satPrefix + 1).toExpr(), indexings.get(satPrefix + 1)));
 			solver.add(B, PathUtils.unfold(trace.getAction(satPrefix).toExpr(), indexings.get(satPrefix)));
-			checkState(!solver.check().isSat());
+			checkState(!solver.check().isSat(), "Trying to interpolate a feasible trace");
 			concretizable = false;
 		}
 

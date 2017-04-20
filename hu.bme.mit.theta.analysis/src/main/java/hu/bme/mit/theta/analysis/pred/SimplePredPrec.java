@@ -94,7 +94,7 @@ public final class SimplePredPrec implements PredPrec {
 				final boolean negValid = solver.check().isUnsat();
 				solver.pop();
 
-				checkState(!(ponValid && negValid));
+				checkState(!(ponValid && negValid), "Ponated and negated predicates are both valid");
 				if (ponValid) {
 					statePreds.add(pred);
 				} else if (negValid) {

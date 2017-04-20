@@ -52,7 +52,7 @@ public final class ExprTraceUnsatCoreChecker implements ExprTraceChecker<VarsRef
 
 		solver.track(ExprUtils.getConjuncts(PathUtils.unfold(init, indexings.get(0))));
 		solver.track(ExprUtils.getConjuncts(PathUtils.unfold(trace.getState(0).toExpr(), indexings.get(0))));
-		checkState(solver.check().isSat());
+		checkState(solver.check().isSat(), "Initial state of the trace is not feasible");
 		boolean concretizable = true;
 
 		for (int i = 1; i < stateCount; ++i) {
