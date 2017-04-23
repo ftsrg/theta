@@ -177,4 +177,13 @@ public final class ARG<S extends State, A extends Action> {
 		return maxOpt.getAsInt();
 	}
 
+	/**
+	 * Gets the mean branching factor of the expanded nodes.
+	 */
+	public double getMeanBranchingFactor() {
+		final Stream<ArgNode<S, A>> nodesToCalculate = getNodes().filter(n -> n.isExpanded());
+		final double mean = nodesToCalculate.mapToDouble(n -> n.getOutEdges().count()).average().orElse(0);
+		return mean;
+	}
+
 }

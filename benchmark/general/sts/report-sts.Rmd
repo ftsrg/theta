@@ -1,7 +1,7 @@
 ---
 title: "Benchmark report"
 params:
-  csv_path: "log_20170412_174804.csv"
+  csv_path: "log_20170423_162636.csv"
   timeout_ms: 600000
 output:
   html_document:
@@ -75,6 +75,7 @@ d <- read_csv(
     Iterations = col_integer(),
     ArgSize = col_integer(),
     ArgDepth = col_integer(),
+    ArgMeanBranchFactor = col_double(),
     CexLen = col_integer(),
     Vars = col_integer(),
     Size = col_integer()
@@ -362,7 +363,7 @@ pairwise_plot(d, "Iterations", "Refinement", "FW_CRAIG_ITP", "SEQ_ITP",
 for(t in unique(d$Type)){
   print(paste("Correlations for type", t))
   d_corr <- d %>% filter(Type == t) %>%
-    select(TimeMs, Vars, Size, Iterations, ArgSize, ArgDepth, CexLen)
+    select(TimeMs, Vars, Size, Iterations, ArgSize, ArgDepth, ArgMeanBranchFactor, CexLen)
   tryCatch(
     corrgram(d_corr, order = T, lower.panel = panel.shade, upper.panel = panel.pie),
     error = function(err) {})

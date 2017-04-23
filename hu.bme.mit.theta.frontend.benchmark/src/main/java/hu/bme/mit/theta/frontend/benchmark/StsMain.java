@@ -48,6 +48,7 @@ public class StsMain {
 			tableWriter.cell("Iterations");
 			tableWriter.cell("ArgSize");
 			tableWriter.cell("ArgDepth");
+			tableWriter.cell("ArgMeanBranchFactor");
 			tableWriter.cell("CexLen");
 			tableWriter.cell("Vars");
 			tableWriter.cell("Size");
@@ -141,11 +142,12 @@ public class StsMain {
 				throw new Exception("Expected safe = " + expected.get() + " but was " + status.isSafe());
 			}
 
-			tableWriter.cell(status.isSafe() + "");
-			tableWriter.cell(stats.getElapsedMillis() + "");
-			tableWriter.cell(stats.getIterations() + "");
-			tableWriter.cell(status.getArg().size() + "");
-			tableWriter.cell(status.getArg().getDepth() + "");
+			tableWriter.cell(status.isSafe());
+			tableWriter.cell(stats.getElapsedMillis());
+			tableWriter.cell(stats.getIterations());
+			tableWriter.cell(status.getArg().size());
+			tableWriter.cell(status.getArg().getDepth());
+			tableWriter.cell(status.getArg().getMeanBranchingFactor());
 
 			if (status.isUnsafe()) {
 				tableWriter.cell(status.asUnsafe().getTrace().length() + "");
