@@ -1,6 +1,7 @@
 package hu.bme.mit.theta.analysis.zone;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkElementIndex;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.HashSet;
@@ -92,13 +93,12 @@ final class DbmSignature implements Iterable<ClockDecl> {
 	}
 
 	public int indexOf(final ClockDecl clock) {
-		checkArgument(contains(clock));
+		checkArgument(contains(clock), "Unknown clock");
 		return clockToIndex.get(clock);
 	}
 
 	public ClockDecl getClock(final int index) {
-		checkArgument(index >= 0);
-		checkArgument(index < clockToIndex.size());
+		checkElementIndex(index, clockToIndex.size());
 		return indexToClock.get(index);
 	}
 

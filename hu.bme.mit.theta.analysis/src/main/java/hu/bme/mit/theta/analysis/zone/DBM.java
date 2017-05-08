@@ -66,7 +66,7 @@ final class DBM {
 	private DBM(final DbmSignature signature, final SimpleDbm dbm) {
 		checkNotNull(signature);
 		checkNotNull(dbm);
-		checkArgument(signature.size() == dbm.size());
+		checkArgument(signature.size() == dbm.size(), "Signature and DBM has different size");
 		this.signature = signature;
 		this.dbm = dbm;
 	}
@@ -317,16 +317,16 @@ final class DBM {
 	}
 
 	private void set(final ClockDecl x, final ClockDecl y, final int b) {
-		checkArgument(tracks(x));
-		checkArgument(tracks(y));
+		checkArgument(tracks(x), "Clock not tracked");
+		checkArgument(tracks(y), "Clock not tracked");
 		final int i = signature.indexOf(x);
 		final int j = signature.indexOf(y);
 		dbm.set(i, j, b);
 	}
 
 	private int get(final ClockDecl x, final ClockDecl y) {
-		checkArgument(tracks(x));
-		checkArgument(tracks(y));
+		checkArgument(tracks(x), "Clock not tracked");
+		checkArgument(tracks(y), "Clock not tracked");
 		final int i = signature.indexOf(x);
 		final int j = signature.indexOf(y);
 		return dbm.get(i, j);
@@ -486,7 +486,7 @@ final class DBM {
 
 	public void free(final ClockDecl clock) {
 		checkNotNull(clock);
-		checkArgument(!isZeroClock(clock));
+		checkArgument(!isZeroClock(clock), "Clock is zero");
 		ifTracks(clock, dbm::free);
 	}
 
@@ -496,21 +496,21 @@ final class DBM {
 
 	public void reset(final ClockDecl clock, final int m) {
 		checkNotNull(clock);
-		checkArgument(!isZeroClock(clock));
+		checkArgument(!isZeroClock(clock), "Clock is zero");
 		ifTracks(clock, x -> dbm.reset(x, m));
 	}
 
 	public void copy(final ClockDecl lhs, final ClockDecl rhs) {
 		checkNotNull(lhs);
 		checkNotNull(rhs);
-		checkArgument(!isZeroClock(lhs));
-		checkArgument(!isZeroClock(rhs));
+		checkArgument(!isZeroClock(lhs), "Clock is zero");
+		checkArgument(!isZeroClock(rhs), "Clock is zero");
 		ifTracks(lhs, x -> ifTracksElse(rhs, y -> dbm.copy(x, y), () -> dbm.free(x)));
 	}
 
 	public void shift(final ClockDecl clock, final int m) {
 		checkNotNull(clock);
-		checkArgument(!isZeroClock(clock));
+		checkArgument(!isZeroClock(clock), "Clock is zero");
 		ifTracks(clock, x -> dbm.shift(x, m));
 	}
 

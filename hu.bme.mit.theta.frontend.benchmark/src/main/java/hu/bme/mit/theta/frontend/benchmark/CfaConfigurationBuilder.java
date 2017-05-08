@@ -95,7 +95,7 @@ public class CfaConfigurationBuilder extends ConfigurationBuilder {
 			Refiner<LocState<ExplState, CfaLoc, CfaEdge>, CfaAction, LocPrec<ExplPrec, CfaLoc, CfaEdge>> refiner = null;
 
 			switch (getRefinement()) {
-			case CRAIG_ITP:
+			case FW_CRAIG_ITP:
 				if (precGranularity == PrecGranularity.CONST) {
 					refiner = SingleExprTraceRefiner.create(
 							ExprTraceCraigItpChecker.create(Exprs.True(), Exprs.True(), solver),
@@ -161,7 +161,7 @@ public class CfaConfigurationBuilder extends ConfigurationBuilder {
 			Refiner<LocState<PredState, CfaLoc, CfaEdge>, CfaAction, LocPrec<SimplePredPrec, CfaLoc, CfaEdge>> refiner = null;
 
 			switch (getRefinement()) {
-			case CRAIG_ITP:
+			case FW_CRAIG_ITP:
 				if (precGranularity == PrecGranularity.CONST) {
 					refiner = SingleExprTraceRefiner.create(
 							ExprTraceCraigItpChecker.create(Exprs.True(), Exprs.True(), solver),

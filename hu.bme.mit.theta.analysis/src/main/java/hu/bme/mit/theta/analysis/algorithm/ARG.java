@@ -96,8 +96,8 @@ public final class ARG<S extends State, A extends Action> {
 		checkNotNull(node);
 		checkNotNull(action);
 		checkNotNull(succState);
-		checkArgument(node.arg == this);
-		checkArgument(!node.isTarget());
+		checkArgument(node.arg == this, "Node does not belong to this ARG");
+		checkArgument(!node.isTarget(), "Node is target");
 		final ArgNode<S, A> succNode = createNode(succState, node.getDepth() + 1, target);
 		createEdge(node, action, succNode);
 		return succNode;
@@ -121,7 +121,7 @@ public final class ARG<S extends State, A extends Action> {
 	 */
 	public void prune(final ArgNode<S, A> node) {
 		checkNotNull(node);
-		checkArgument(node.arg == this);
+		checkArgument(node.arg == this, "Node does not belong to this ARG");
 		if (node.getInEdge().isPresent()) {
 			final ArgEdge<S, A> edge = node.getInEdge().get();
 			final ArgNode<S, A> parent = edge.getSource();

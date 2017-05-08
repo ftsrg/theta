@@ -1,6 +1,7 @@
 package hu.bme.mit.theta.analysis.expr;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkElementIndex;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.ArrayList;
@@ -25,7 +26,7 @@ public final class ItpRefutation implements Refutation, Iterable<Expr<? extends 
 
 	private ItpRefutation(final List<Expr<? extends BoolType>> itpSequence) {
 		checkNotNull(itpSequence);
-		checkArgument(itpSequence.size() > 0);
+		checkArgument(itpSequence.size() > 0, "Zero length interpolant sequence size");
 		this.itpSequence = ImmutableList.copyOf(itpSequence);
 		int i = 0;
 		while (i < itpSequence.size() && itpSequence.get(i).equals(Exprs.True())) {
@@ -41,8 +42,8 @@ public final class ItpRefutation implements Refutation, Iterable<Expr<? extends 
 
 	public static ItpRefutation craig(final Expr<? extends BoolType> itp, final int i, final int n) {
 		checkNotNull(itp);
-		checkArgument(n > 0);
-		checkArgument(0 <= i && i < n);
+		checkArgument(n > 0, "Zero length interpolant");
+		checkArgument(0 <= i && i < n, "Formula index out of bounds");
 		final List<Expr<? extends BoolType>> itpSequence = new ArrayList<>(n);
 		for (int k = 0; k < n; ++k) {
 			if (k < i) {
@@ -65,8 +66,7 @@ public final class ItpRefutation implements Refutation, Iterable<Expr<? extends 
 	}
 
 	public Expr<? extends BoolType> get(final int i) {
-		checkArgument(0 <= i);
-		checkArgument(i < size());
+		checkElementIndex(i, size());
 		return itpSequence.get(i);
 	}
 

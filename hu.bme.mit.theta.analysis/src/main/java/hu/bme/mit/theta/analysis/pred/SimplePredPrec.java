@@ -66,7 +66,7 @@ public final class SimplePredPrec implements PredPrec {
 
 	private Expr<? extends BoolType> negate(final Expr<? extends BoolType> pred) {
 		final Expr<? extends BoolType> negated = predToNegMap.get(pred);
-		checkArgument(negated != null);
+		checkArgument(negated != null, "Negated predicate not found");
 		return negated;
 	}
 
@@ -94,7 +94,7 @@ public final class SimplePredPrec implements PredPrec {
 				final boolean negValid = solver.check().isUnsat();
 				solver.pop();
 
-				checkState(!(ponValid && negValid));
+				checkState(!(ponValid && negValid), "Ponated and negated predicates are both valid");
 				if (ponValid) {
 					statePreds.add(pred);
 				} else if (negValid) {
@@ -123,5 +123,22 @@ public final class SimplePredPrec implements PredPrec {
 	@Override
 	public String toString() {
 		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).addAll(predToNegMap.keySet()).toString();
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		} else if (obj instanceof SimplePredPrec) {
+			final SimplePredPrec that = (SimplePredPrec) obj;
+			return this.predToNegMap.keySet().equals(that.predToNegMap.keySet());
+		} else {
+			return false;
+		}
+	}
+
+	@Override
+	public int hashCode() {
+		return 31 * predToNegMap.keySet().hashCode();
 	}
 }

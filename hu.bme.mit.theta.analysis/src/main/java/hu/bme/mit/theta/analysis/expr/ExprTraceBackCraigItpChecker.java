@@ -21,32 +21,33 @@ import hu.bme.mit.theta.solver.ItpMarker;
 import hu.bme.mit.theta.solver.ItpPattern;
 import hu.bme.mit.theta.solver.ItpSolver;
 
-public final class ExprTraceCraigItpChecker implements ExprTraceChecker<ItpRefutation> {
+public class ExprTraceBackCraigItpChecker implements ExprTraceChecker<ItpRefutation> {
 
 	private final ItpSolver solver;
 	private final Expr<? extends BoolType> init;
 	private final Expr<? extends BoolType> target;
 
-	private ExprTraceCraigItpChecker(final Expr<? extends BoolType> init, final Expr<? extends BoolType> target,
+	private ExprTraceBackCraigItpChecker(final Expr<? extends BoolType> init, final Expr<? extends BoolType> target,
 			final ItpSolver solver) {
 		this.solver = checkNotNull(solver);
 		this.init = checkNotNull(init);
 		this.target = checkNotNull(target);
 	}
 
-	public static ExprTraceCraigItpChecker create(final Expr<? extends BoolType> init,
+	public static ExprTraceBackCraigItpChecker create(final Expr<? extends BoolType> init,
 			final Expr<? extends BoolType> target, final ItpSolver solver) {
-		return new ExprTraceCraigItpChecker(init, target, solver);
+		return new ExprTraceBackCraigItpChecker(init, target, solver);
 	}
 
 	@Override
 	public ExprTraceStatus<ItpRefutation> check(final Trace<? extends ExprState, ? extends ExprAction> trace) {
 		checkNotNull(trace);
+		final Trace<? extends ExprState, ? extends ExprAction> traceRev = trace.reverse();
 		final int stateCount = trace.getStates().size();
 		checkArgument(stateCount > 0, "Zero length trace");
 
 		final List<VarIndexing> indexings = new ArrayList<>(stateCount);
-		indexings.add(VarIndexing.all(0));
+		indexings.add(VarIndexing.all(10 * stateCount));
 
 		solver.push();
 
@@ -55,20 +56,20 @@ public final class ExprTraceCraigItpChecker implements ExprTraceChecker<ItpRefut
 		final ItpPattern pattern = solver.createBinPattern(A, B);
 
 		int nPush = 1;
-		solver.add(A, PathUtils.unfold(init, indexings.get(0)));
-		solver.add(A, PathUtils.unfold(trace.getState(0).toExpr(), indexings.get(0)));
+		solver.add(A, PathUtils.unfold(target, indexings.get(0)));
+		solver.add(A, PathUtils.unfold(traceRev.getState(0).toExpr(), indexings.get(0)));
 		checkState(solver.check().isSat(), "Initial state of the trace is not feasible");
-		int satPrefix = 0;
+		int satPostfix = 0;
 
 		for (int i = 1; i < stateCount; ++i) {
 			solver.push();
 			++nPush;
-			indexings.add(indexings.get(i - 1).add(trace.getAction(i - 1).nextIndexing()));
-			solver.add(A, PathUtils.unfold(trace.getState(i).toExpr(), indexings.get(i)));
-			solver.add(A, PathUtils.unfold(trace.getAction(i - 1).toExpr(), indexings.get(i - 1)));
+			indexings.add(indexings.get(i - 1).sub(traceRev.getAction(i - 1).nextIndexing()));
+			solver.add(A, PathUtils.unfold(traceRev.getState(i).toExpr(), indexings.get(i)));
+			solver.add(A, PathUtils.unfold(traceRev.getAction(i - 1).toExpr(), indexings.get(i)));
 
 			if (solver.check().isSat()) {
-				satPrefix = i;
+				satPostfix = i;
 			} else {
 				solver.pop();
 				--nPush;
@@ -78,12 +79,12 @@ public final class ExprTraceCraigItpChecker implements ExprTraceChecker<ItpRefut
 
 		final boolean concretizable;
 
-		if (satPrefix == stateCount - 1) {
-			solver.add(B, PathUtils.unfold(target, indexings.get(stateCount - 1)));
+		if (satPostfix == stateCount - 1) {
+			solver.add(B, PathUtils.unfold(init, indexings.get(stateCount - 1)));
 			concretizable = solver.check().isSat();
 		} else {
-			solver.add(B, PathUtils.unfold(trace.getState(satPrefix + 1).toExpr(), indexings.get(satPrefix + 1)));
-			solver.add(B, PathUtils.unfold(trace.getAction(satPrefix).toExpr(), indexings.get(satPrefix)));
+			solver.add(B, PathUtils.unfold(traceRev.getState(satPostfix + 1).toExpr(), indexings.get(satPostfix + 1)));
+			solver.add(B, PathUtils.unfold(traceRev.getAction(satPostfix).toExpr(), indexings.get(satPostfix + 1)));
 			checkState(!solver.check().isSat(), "Trying to interpolate a feasible trace");
 			concretizable = false;
 		}
@@ -95,22 +96,16 @@ public final class ExprTraceCraigItpChecker implements ExprTraceChecker<ItpRefut
 			for (final VarIndexing indexing : indexings) {
 				builder.add(PathUtils.extractValuation(model, indexing));
 			}
-			status = ExprTraceStatus.feasible(Trace.of(builder.build(), trace.getActions()));
+			status = ExprTraceStatus.feasible(Trace.of(builder.build().reverse(), trace.getActions()));
 		} else {
 			final Interpolant interpolant = solver.getInterpolant(pattern);
-			final Expr<BoolType> itpFolded = PathUtils.foldin(interpolant.eval(A), indexings.get(satPrefix));
-			status = ExprTraceStatus.infeasible(ItpRefutation.craig(itpFolded, satPrefix, stateCount));
+			final Expr<BoolType> itpFolded = PathUtils.foldin(interpolant.eval(A), indexings.get(satPostfix));
+			status = ExprTraceStatus
+					.infeasible(ItpRefutation.craig(itpFolded, stateCount - 1 - satPostfix, stateCount));
 		}
 
 		solver.pop(nPush);
 
-		assert status != null;
 		return status;
 	}
-
-	@Override
-	public String toString() {
-		return getClass().getSimpleName();
-	}
-
 }

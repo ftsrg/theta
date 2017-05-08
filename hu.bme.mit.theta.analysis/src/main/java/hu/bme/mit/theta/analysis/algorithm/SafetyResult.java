@@ -57,9 +57,9 @@ public abstract class SafetyResult<S extends State, A extends Action> {
 	public static final class Safe<S extends State, A extends Action> extends SafetyResult<S, A> {
 		private Safe(final ARG<S, A> arg, final Optional<Statistics> stats) {
 			super(arg, stats);
-			checkArgument(arg.isInitialized());
-			checkArgument(arg.isComplete());
-			checkArgument(arg.isSafe());
+			checkArgument(arg.isInitialized(), "ARG is not initialized");
+			checkArgument(arg.isComplete(), "ARG is not complete");
+			checkArgument(arg.isSafe(), "ARG is not safe");
 		}
 
 		@Override

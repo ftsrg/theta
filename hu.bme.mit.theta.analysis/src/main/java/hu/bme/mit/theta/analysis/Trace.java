@@ -15,8 +15,8 @@ import com.google.common.collect.ImmutableList;
  */
 public final class Trace<S, A> {
 
-	private final List<S> states;
-	private final List<A> actions;
+	private final ImmutableList<S> states;
+	private final ImmutableList<A> actions;
 
 	private Trace(final List<? extends S> states, final List<? extends A> actions) {
 		checkNotNull(states);
@@ -58,6 +58,10 @@ public final class Trace<S, A> {
 
 	public List<A> getActions() {
 		return actions;
+	}
+
+	public Trace<S, A> reverse() {
+		return Trace.of(states.reverse(), actions.reverse());
 	}
 
 	@Override

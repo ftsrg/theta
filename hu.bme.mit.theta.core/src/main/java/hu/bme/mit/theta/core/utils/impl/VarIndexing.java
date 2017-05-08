@@ -50,7 +50,6 @@ public class VarIndexing {
 
 	public VarIndexing inc(final VarDecl<?> varDecl, final int n) {
 		checkNotNull(varDecl);
-		checkArgument(n >= 0);
 		return transform().inc(varDecl, n).build();
 	}
 
@@ -61,6 +60,11 @@ public class VarIndexing {
 	public VarIndexing add(final VarIndexing indexing) {
 		checkNotNull(indexing);
 		return transform().add(indexing.transform()).build();
+	}
+
+	public VarIndexing sub(final VarIndexing indexing) {
+		checkNotNull(indexing);
+		return transform().sub(indexing.transform()).build();
 	}
 
 	public VarIndexing join(final VarIndexing indexing) {
@@ -95,7 +99,7 @@ public class VarIndexing {
 		private Map<VarDecl<?>, Integer> varToOffset;
 
 		private Builder(final int defaultIndex) {
-			checkArgument(defaultIndex >= 0);
+			checkArgument(defaultIndex >= 0, "Negative default index");
 			this.defaultIndex = defaultIndex;
 			varToOffset = new HashMap<>();
 		}
@@ -107,12 +111,14 @@ public class VarIndexing {
 
 		public Builder inc(final VarDecl<?> varDecl, final int n) {
 			checkNotNull(varDecl);
-			checkArgument(n >= 0);
 
-			if (n > 0) {
+			if (n != 0) {
 				final Integer offset = varToOffset.getOrDefault(varDecl, 0);
-				varToOffset.put(varDecl, offset + n);
+				final Integer newOffset = offset + n;
+				checkArgument(defaultIndex + newOffset >= 0, "Negative index for variable");
+				varToOffset.put(varDecl, newOffset);
 			}
+
 			return this;
 		}
 
@@ -136,8 +142,33 @@ public class VarIndexing {
 				final int index1 = this.get(varDecl);
 				final int index2 = that.get(varDecl);
 				final int newIndex = index1 + index2;
+				checkArgument(newIndex >= 0, "Negative index for variable");
 				final int newOffset = newIndex - newDefaultIndex;
-				if (newOffset > 0) {
+				if (newOffset != 0) {
+					newVarToOffset.put(varDecl, newOffset);
+				}
+			}
+
+			this.defaultIndex = newDefaultIndex;
+			this.varToOffset = newVarToOffset;
+			return this;
+		}
+
+		public Builder sub(final Builder that) {
+			checkNotNull(that);
+
+			final int newDefaultIndex = this.defaultIndex - that.defaultIndex;
+			checkArgument(newDefaultIndex >= 0, "Negative default index");
+			final Map<VarDecl<?>, Integer> newVarToOffset = new HashMap<>();
+
+			final Set<VarDecl<?>> varDecls = Sets.union(this.varToOffset.keySet(), that.varToOffset.keySet());
+			for (final VarDecl<?> varDecl : varDecls) {
+				final int index1 = this.get(varDecl);
+				final int index2 = that.get(varDecl);
+				final int newIndex = index1 - index2;
+				checkArgument(newIndex >= 0, "Negative index for variable");
+				final int newOffset = newIndex - newDefaultIndex;
+				if (newOffset != 0) {
 					newVarToOffset.put(varDecl, newOffset);
 				}
 			}
@@ -159,7 +190,7 @@ public class VarIndexing {
 				final int index2 = that.get(varDecl);
 				final int newIndex = max(index1, index2);
 				final int newOffset = newIndex - newDefaultIndex;
-				if (newOffset > 0) {
+				if (newOffset != 0) {
 					newVarToOffset.put(varDecl, newOffset);
 				}
 			}
