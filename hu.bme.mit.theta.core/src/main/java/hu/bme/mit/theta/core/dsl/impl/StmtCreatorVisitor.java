@@ -2,8 +2,8 @@ package hu.bme.mit.theta.core.dsl.impl;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.stmt.impl.Stmts.Assign;
-import static hu.bme.mit.theta.core.stmt.impl.Stmts.Assume;
+import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
+import static hu.bme.mit.theta.core.stmt.Stmts.Assume;
 
 import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.core.decl.Decl;

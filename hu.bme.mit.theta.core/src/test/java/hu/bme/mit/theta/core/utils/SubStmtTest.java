@@ -3,10 +3,10 @@ package hu.bme.mit.theta.core.utils;
 import static com.google.common.collect.ImmutableList.of;
 import static hu.bme.mit.theta.core.decl.impl.Decls.Var;
 import static hu.bme.mit.theta.core.expr.Exprs.True;
-import static hu.bme.mit.theta.core.stmt.impl.Stmts.Assign;
-import static hu.bme.mit.theta.core.stmt.impl.Stmts.Block;
-import static hu.bme.mit.theta.core.stmt.impl.Stmts.Havoc;
-import static hu.bme.mit.theta.core.stmt.impl.Stmts.Skip;
+import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
+import static hu.bme.mit.theta.core.stmt.Stmts.Block;
+import static hu.bme.mit.theta.core.stmt.Stmts.Havoc;
+import static hu.bme.mit.theta.core.stmt.Stmts.Skip;
 import static hu.bme.mit.theta.core.type.impl.Types.Bool;
 import static org.junit.Assert.assertEquals;
 

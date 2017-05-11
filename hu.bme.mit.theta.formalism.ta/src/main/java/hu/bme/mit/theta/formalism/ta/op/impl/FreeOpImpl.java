@@ -1,7 +1,7 @@
 package hu.bme.mit.theta.formalism.ta.op.impl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.stmt.impl.Stmts.Havoc;
+import static hu.bme.mit.theta.core.stmt.Stmts.Havoc;
 
 import java.util.Collection;
 

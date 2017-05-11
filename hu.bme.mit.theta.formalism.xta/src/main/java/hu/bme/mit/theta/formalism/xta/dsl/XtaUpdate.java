@@ -9,7 +9,7 @@ import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.Exprs;
 import hu.bme.mit.theta.core.expr.VarRefExpr;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
-import hu.bme.mit.theta.core.stmt.impl.Stmts;
+import hu.bme.mit.theta.core.stmt.Stmts;
 import hu.bme.mit.theta.core.type.IntType;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.formalism.xta.dsl.XtaExpression.ExpressionInstantiationVisitor;

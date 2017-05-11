@@ -1,18 +1,64 @@
 package hu.bme.mit.theta.core.stmt;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.utils.StmtVisitor;
 
-public interface DoStmt extends Stmt {
+public final class DoStmt implements Stmt {
 
-	Stmt getDo();
+	private static final int HASH_SEED = 599;
+	private volatile int hashCode = 0;
 
-	Expr<? extends BoolType> getCond();
+	private final Stmt doStmt;
+	private final Expr<? extends BoolType> cond;
+
+	DoStmt(final Stmt doStmt, final Expr<? extends BoolType> cond) {
+		this.doStmt = checkNotNull(doStmt);
+		this.cond = checkNotNull(cond);
+	}
+
+	public Stmt getDo() {
+		return doStmt;
+	}
+
+	public Expr<? extends BoolType> getCond() {
+		return cond;
+	}
 
 	@Override
-	default <P, R> R accept(final StmtVisitor<? super P, ? extends R> visitor, final P param) {
+	public <P, R> R accept(final StmtVisitor<? super P, ? extends R> visitor, final P param) {
 		return visitor.visit(this, param);
 	}
 
+	@Override
+	public int hashCode() {
+		int result = hashCode;
+		if (result == 0) {
+			result = HASH_SEED;
+			result = 31 * result + doStmt.hashCode();
+			result = 31 * result + cond.hashCode();
+			hashCode = result;
+		}
+		return result;
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		} else if (obj instanceof DoStmt) {
+			final DoStmt that = (DoStmt) obj;
+			return this.getDo().equals(that.getDo()) && this.getCond().equals(that.getCond());
+		} else {
+			return false;
+		}
+	}
+
+	@Override
+	public String toString() {
+		return ObjectUtils.toStringBuilder("Do").add(doStmt).add(cond).toString();
+	}
 }
