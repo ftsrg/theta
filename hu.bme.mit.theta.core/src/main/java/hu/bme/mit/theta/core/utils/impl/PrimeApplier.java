@@ -1,6 +1,6 @@
 package hu.bme.mit.theta.core.utils.impl;
 
-import static hu.bme.mit.theta.core.expr.impl.Exprs.Prime;
+import static hu.bme.mit.theta.core.expr.Exprs.Prime;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.Expr;

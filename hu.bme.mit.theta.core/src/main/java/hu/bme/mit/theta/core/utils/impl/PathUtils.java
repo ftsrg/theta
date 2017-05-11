@@ -2,7 +2,7 @@ package hu.bme.mit.theta.core.utils.impl;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.expr.impl.Exprs.Prime;
+import static hu.bme.mit.theta.core.expr.Exprs.Prime;
 
 import java.util.Collection;
 import java.util.Optional;

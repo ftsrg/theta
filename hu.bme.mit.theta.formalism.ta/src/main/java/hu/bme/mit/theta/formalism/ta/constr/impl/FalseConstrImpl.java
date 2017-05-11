@@ -1,6 +1,6 @@
 package hu.bme.mit.theta.formalism.ta.constr.impl;
 
-import static hu.bme.mit.theta.core.expr.impl.Exprs.False;
+import static hu.bme.mit.theta.core.expr.Exprs.False;
 
 import java.util.Collection;
 

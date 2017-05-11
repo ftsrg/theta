@@ -33,6 +33,7 @@ import hu.bme.mit.theta.core.expr.ParamRefExpr;
 import hu.bme.mit.theta.core.expr.PrimedExpr;
 import hu.bme.mit.theta.core.expr.ProcCallExpr;
 import hu.bme.mit.theta.core.expr.ProcRefExpr;
+import hu.bme.mit.theta.core.expr.QuantifiedExpr;
 import hu.bme.mit.theta.core.expr.RatDivExpr;
 import hu.bme.mit.theta.core.expr.RatLitExpr;
 import hu.bme.mit.theta.core.expr.RemExpr;
@@ -59,6 +60,8 @@ public abstract class ArityBasedExprVisitor<P, R> implements ExprVisitor<P, R> {
 
 	protected abstract <OpsType extends Type, ExprType extends Type> R visitMultiary(
 			MultiaryExpr<OpsType, ExprType> expr, P param);
+
+	protected abstract <OpsType extends Type, ExprType extends Type> R visitQuantified(QuantifiedExpr expr, P param);
 
 	@Override
 	public abstract <IndexType extends Type, ElemType extends Type> R visit(ArrayReadExpr<IndexType, ElemType> expr,
@@ -146,12 +149,12 @@ public abstract class ArityBasedExprVisitor<P, R> implements ExprVisitor<P, R> {
 
 	@Override
 	public R visit(final ExistsExpr expr, final P param) {
-		return visitUnary(expr, param);
+		return visitQuantified(expr, param);
 	}
 
 	@Override
 	public R visit(final ForallExpr expr, final P param) {
-		return visitUnary(expr, param);
+		return visitQuantified(expr, param);
 	}
 
 	@Override

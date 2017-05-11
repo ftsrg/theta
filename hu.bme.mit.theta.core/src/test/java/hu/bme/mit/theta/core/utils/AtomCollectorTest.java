@@ -2,15 +2,15 @@ package hu.bme.mit.theta.core.utils;
 
 import static com.google.common.collect.ImmutableSet.of;
 import static hu.bme.mit.theta.core.decl.impl.Decls.Const;
-import static hu.bme.mit.theta.core.expr.impl.Exprs.And;
-import static hu.bme.mit.theta.core.expr.impl.Exprs.Eq;
-import static hu.bme.mit.theta.core.expr.impl.Exprs.Iff;
-import static hu.bme.mit.theta.core.expr.impl.Exprs.Imply;
-import static hu.bme.mit.theta.core.expr.impl.Exprs.Int;
-import static hu.bme.mit.theta.core.expr.impl.Exprs.Ite;
-import static hu.bme.mit.theta.core.expr.impl.Exprs.Leq;
-import static hu.bme.mit.theta.core.expr.impl.Exprs.Not;
-import static hu.bme.mit.theta.core.expr.impl.Exprs.Or;
+import static hu.bme.mit.theta.core.expr.Exprs.And;
+import static hu.bme.mit.theta.core.expr.Exprs.Eq;
+import static hu.bme.mit.theta.core.expr.Exprs.Iff;
+import static hu.bme.mit.theta.core.expr.Exprs.Imply;
+import static hu.bme.mit.theta.core.expr.Exprs.Int;
+import static hu.bme.mit.theta.core.expr.Exprs.Ite;
+import static hu.bme.mit.theta.core.expr.Exprs.Leq;
+import static hu.bme.mit.theta.core.expr.Exprs.Not;
+import static hu.bme.mit.theta.core.expr.Exprs.Or;
 import static hu.bme.mit.theta.core.type.impl.Types.Bool;
 import static hu.bme.mit.theta.core.type.impl.Types.Int;
 

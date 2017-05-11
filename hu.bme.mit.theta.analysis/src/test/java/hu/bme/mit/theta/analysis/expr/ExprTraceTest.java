@@ -1,12 +1,12 @@
 package hu.bme.mit.theta.analysis.expr;
 
 import static hu.bme.mit.theta.core.decl.impl.Decls.Var;
-import static hu.bme.mit.theta.core.expr.impl.Exprs.Add;
-import static hu.bme.mit.theta.core.expr.impl.Exprs.Eq;
-import static hu.bme.mit.theta.core.expr.impl.Exprs.Geq;
-import static hu.bme.mit.theta.core.expr.impl.Exprs.Int;
-import static hu.bme.mit.theta.core.expr.impl.Exprs.Prime;
-import static hu.bme.mit.theta.core.expr.impl.Exprs.True;
+import static hu.bme.mit.theta.core.expr.Exprs.Add;
+import static hu.bme.mit.theta.core.expr.Exprs.Eq;
+import static hu.bme.mit.theta.core.expr.Exprs.Geq;
+import static hu.bme.mit.theta.core.expr.Exprs.Int;
+import static hu.bme.mit.theta.core.expr.Exprs.Prime;
+import static hu.bme.mit.theta.core.expr.Exprs.True;
 import static hu.bme.mit.theta.core.type.impl.Types.Int;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.doReturn;

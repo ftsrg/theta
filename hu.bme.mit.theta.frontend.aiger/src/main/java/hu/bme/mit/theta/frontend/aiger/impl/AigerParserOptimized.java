@@ -7,7 +7,7 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 
-import hu.bme.mit.theta.core.expr.impl.Exprs;
+import hu.bme.mit.theta.core.expr.Exprs;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.formalism.sts.impl.StsImpl;
 import hu.bme.mit.theta.frontend.aiger.AigerParser;

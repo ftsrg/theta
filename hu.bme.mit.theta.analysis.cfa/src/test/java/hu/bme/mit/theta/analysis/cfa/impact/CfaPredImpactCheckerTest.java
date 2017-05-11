@@ -1,12 +1,12 @@
 package hu.bme.mit.theta.analysis.cfa.impact;
 
 import static hu.bme.mit.theta.core.decl.impl.Decls.Var;
-import static hu.bme.mit.theta.core.expr.impl.Exprs.Add;
-import static hu.bme.mit.theta.core.expr.impl.Exprs.Eq;
-import static hu.bme.mit.theta.core.expr.impl.Exprs.False;
-import static hu.bme.mit.theta.core.expr.impl.Exprs.Int;
-import static hu.bme.mit.theta.core.expr.impl.Exprs.Neq;
-import static hu.bme.mit.theta.core.expr.impl.Exprs.True;
+import static hu.bme.mit.theta.core.expr.Exprs.Add;
+import static hu.bme.mit.theta.core.expr.Exprs.Eq;
+import static hu.bme.mit.theta.core.expr.Exprs.False;
+import static hu.bme.mit.theta.core.expr.Exprs.Int;
+import static hu.bme.mit.theta.core.expr.Exprs.Neq;
+import static hu.bme.mit.theta.core.expr.Exprs.True;
 import static hu.bme.mit.theta.core.stmt.impl.Stmts.Assert;
 import static hu.bme.mit.theta.core.stmt.impl.Stmts.Assign;
 import static hu.bme.mit.theta.core.stmt.impl.Stmts.Block;

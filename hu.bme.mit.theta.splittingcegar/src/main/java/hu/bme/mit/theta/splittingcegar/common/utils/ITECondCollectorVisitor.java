@@ -14,6 +14,7 @@ import hu.bme.mit.theta.core.expr.NullaryExpr;
 import hu.bme.mit.theta.core.expr.PrimedExpr;
 import hu.bme.mit.theta.core.expr.ProcCallExpr;
 import hu.bme.mit.theta.core.expr.ProcRefExpr;
+import hu.bme.mit.theta.core.expr.QuantifiedExpr;
 import hu.bme.mit.theta.core.expr.UnaryExpr;
 import hu.bme.mit.theta.core.expr.VarRefExpr;
 import hu.bme.mit.theta.core.type.BoolType;
@@ -82,6 +83,13 @@ public class ITECondCollectorVisitor extends ArityBasedExprVisitor<Collection<Ex
 	}
 
 	@Override
+	protected <OpsType extends Type, ExprType extends Type> Void visitQuantified(final QuantifiedExpr expr,
+			final Collection<Expr<? extends BoolType>> param) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+	}
+
+	@Override
 	public <IndexType extends Type, ElemType extends Type> Void visit(final ArrayReadExpr<IndexType, ElemType> expr,
 			final Collection<Expr<? extends BoolType>> param) {
 		return null;
@@ -115,5 +123,4 @@ public class ITECondCollectorVisitor extends ArityBasedExprVisitor<Collection<Ex
 		expr.getElse().accept(this, param);
 		return null;
 	}
-
 }

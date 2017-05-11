@@ -8,7 +8,7 @@ import hu.bme.mit.theta.core.type.ProcType;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.utils.ExprVisitor;
 
-class ProcRefExprImpl<ReturnType extends Type> implements ProcRefExpr<ReturnType> {
+class ProcRefExprImpl<ReturnType extends Type> extends ProcRefExpr<ReturnType> {
 
 	private final static int HASH_SEED = 1229;
 

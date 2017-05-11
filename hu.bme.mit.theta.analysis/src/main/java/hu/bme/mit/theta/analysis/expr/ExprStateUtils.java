@@ -1,6 +1,6 @@
 package hu.bme.mit.theta.analysis.expr;
 
-import static hu.bme.mit.theta.core.expr.impl.Exprs.Not;
+import static hu.bme.mit.theta.core.expr.Exprs.Not;
 import static hu.bme.mit.theta.core.utils.impl.PathUtils.extractValuation;
 import static hu.bme.mit.theta.core.utils.impl.PathUtils.unfold;
 import static hu.bme.mit.theta.solver.utils.SolverUtils.using;

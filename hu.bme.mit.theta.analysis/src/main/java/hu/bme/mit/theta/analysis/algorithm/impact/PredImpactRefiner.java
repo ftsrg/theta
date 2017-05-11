@@ -1,7 +1,7 @@
 package hu.bme.mit.theta.analysis.algorithm.impact;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.expr.impl.Exprs.True;
+import static hu.bme.mit.theta.core.expr.Exprs.True;
 
 import java.util.ArrayList;
 import java.util.List;

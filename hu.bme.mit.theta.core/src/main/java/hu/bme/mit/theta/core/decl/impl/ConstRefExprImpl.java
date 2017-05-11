@@ -7,7 +7,7 @@ import hu.bme.mit.theta.core.expr.ConstRefExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.utils.ExprVisitor;
 
-final class ConstRefExprImpl<DeclType extends Type> implements ConstRefExpr<DeclType> {
+final class ConstRefExprImpl<DeclType extends Type> extends ConstRefExpr<DeclType> {
 
 	private static final int HASH_SEED = 167;
 	private volatile int hashCode = 0;

@@ -8,7 +8,7 @@ import hu.bme.mit.theta.core.expr.IndexedConstRefExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.utils.ExprVisitor;
 
-final class IndexedConstRefExprImpl<DeclType extends Type> implements IndexedConstRefExpr<DeclType> {
+final class IndexedConstRefExprImpl<DeclType extends Type> extends IndexedConstRefExpr<DeclType> {
 
 	// same as for AbstractDecl
 	private static final int HASH_SEED = 167;

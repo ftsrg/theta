@@ -5,7 +5,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.expr.impl.Exprs;
+import hu.bme.mit.theta.core.expr.Exprs;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.splittingcegar.common.data.AbstractState;
 

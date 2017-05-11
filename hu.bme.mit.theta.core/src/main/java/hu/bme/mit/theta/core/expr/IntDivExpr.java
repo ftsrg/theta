@@ -1,15 +1,68 @@
 package hu.bme.mit.theta.core.expr;
 
 import hu.bme.mit.theta.core.type.IntType;
+import hu.bme.mit.theta.core.type.impl.Types;
+import hu.bme.mit.theta.core.utils.ExprVisitor;
 
-public interface IntDivExpr extends BinaryExpr<IntType, IntType, IntType> {
+public final class IntDivExpr extends BinaryExpr<IntType, IntType, IntType> {
+
+	private static final int HASH_SEED = 79;
+
+	private static final String OPERATOR_LABEL = "IDiv";
+
+	public IntDivExpr(final Expr<? extends IntType> leftOp, final Expr<? extends IntType> rightOp) {
+		super(leftOp, rightOp);
+	}
 
 	@Override
-	IntDivExpr withOps(final Expr<? extends IntType> leftOp, final Expr<? extends IntType> rightOp);
+	public IntType getType() {
+		return Types.Int();
+	}
 
 	@Override
-	IntDivExpr withLeftOp(final Expr<? extends IntType> leftOp);
+	public IntDivExpr withOps(final Expr<? extends IntType> leftOp, final Expr<? extends IntType> rightOp) {
+		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
+			return this;
+		} else {
+			return Exprs.IntDiv(leftOp, rightOp);
+		}
+	}
 
 	@Override
-	IntDivExpr withRightOp(final Expr<? extends IntType> rightOp);
+	public IntDivExpr withLeftOp(final Expr<? extends IntType> leftOp) {
+		return withOps(leftOp, getRightOp());
+	}
+
+	@Override
+	public IntDivExpr withRightOp(final Expr<? extends IntType> rightOp) {
+		return withOps(getLeftOp(), rightOp);
+	}
+
+	@Override
+	public <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
+		return visitor.visit(this, param);
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		} else if (obj instanceof IntDivExpr) {
+			final IntDivExpr that = (IntDivExpr) obj;
+			return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp().equals(that.getRightOp());
+		} else {
+			return false;
+		}
+	}
+
+	@Override
+	protected int getHashSeed() {
+		return HASH_SEED;
+	}
+
+	@Override
+	protected String getOperatorLabel() {
+		return OPERATOR_LABEL;
+	}
+
 }

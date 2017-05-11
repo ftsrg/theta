@@ -2,12 +2,12 @@ package hu.bme.mit.theta.analysis.tcfa;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.decl.impl.Decls.Var;
-import static hu.bme.mit.theta.core.expr.impl.Exprs.Add;
-import static hu.bme.mit.theta.core.expr.impl.Exprs.And;
-import static hu.bme.mit.theta.core.expr.impl.Exprs.Eq;
-import static hu.bme.mit.theta.core.expr.impl.Exprs.Geq;
-import static hu.bme.mit.theta.core.expr.impl.Exprs.Prime;
-import static hu.bme.mit.theta.core.expr.impl.Exprs.Rat;
+import static hu.bme.mit.theta.core.expr.Exprs.Add;
+import static hu.bme.mit.theta.core.expr.Exprs.And;
+import static hu.bme.mit.theta.core.expr.Exprs.Eq;
+import static hu.bme.mit.theta.core.expr.Exprs.Geq;
+import static hu.bme.mit.theta.core.expr.Exprs.Prime;
+import static hu.bme.mit.theta.core.expr.Exprs.Rat;
 import static hu.bme.mit.theta.core.type.impl.Types.Rat;
 import static hu.bme.mit.theta.core.utils.impl.VarIndexing.all;
 import static java.util.stream.Collectors.toList;

@@ -7,7 +7,7 @@ import hu.bme.mit.theta.core.expr.ParamRefExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.utils.ExprVisitor;
 
-final class ParamRefExprImpl<DeclType extends Type> implements ParamRefExpr<DeclType> {
+final class ParamRefExprImpl<DeclType extends Type> extends ParamRefExpr<DeclType> {
 
 	private static final int HASH_SEED = 919;
 

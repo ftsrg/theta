@@ -1,7 +1,7 @@
 package hu.bme.mit.theta.formalism.ta.constr.impl;
 
-import static hu.bme.mit.theta.core.expr.impl.Exprs.Int;
-import static hu.bme.mit.theta.core.expr.impl.Exprs.Leq;
+import static hu.bme.mit.theta.core.expr.Exprs.Int;
+import static hu.bme.mit.theta.core.expr.Exprs.Leq;
 
 import hu.bme.mit.theta.core.expr.LeqExpr;
 import hu.bme.mit.theta.formalism.ta.constr.UnitLeqConstr;

@@ -1,18 +1,18 @@
 package hu.bme.mit.theta.core.utils.impl;
 
-import static hu.bme.mit.theta.core.expr.impl.Exprs.Add;
-import static hu.bme.mit.theta.core.expr.impl.Exprs.Bool;
-import static hu.bme.mit.theta.core.expr.impl.Exprs.False;
-import static hu.bme.mit.theta.core.expr.impl.Exprs.Int;
-import static hu.bme.mit.theta.core.expr.impl.Exprs.Ite;
-import static hu.bme.mit.theta.core.expr.impl.Exprs.Mod;
-import static hu.bme.mit.theta.core.expr.impl.Exprs.Mul;
-import static hu.bme.mit.theta.core.expr.impl.Exprs.Neg;
-import static hu.bme.mit.theta.core.expr.impl.Exprs.Not;
-import static hu.bme.mit.theta.core.expr.impl.Exprs.Prime;
-import static hu.bme.mit.theta.core.expr.impl.Exprs.Rat;
-import static hu.bme.mit.theta.core.expr.impl.Exprs.Sub;
-import static hu.bme.mit.theta.core.expr.impl.Exprs.True;
+import static hu.bme.mit.theta.core.expr.Exprs.Add;
+import static hu.bme.mit.theta.core.expr.Exprs.Bool;
+import static hu.bme.mit.theta.core.expr.Exprs.False;
+import static hu.bme.mit.theta.core.expr.Exprs.Int;
+import static hu.bme.mit.theta.core.expr.Exprs.Ite;
+import static hu.bme.mit.theta.core.expr.Exprs.Mod;
+import static hu.bme.mit.theta.core.expr.Exprs.Mul;
+import static hu.bme.mit.theta.core.expr.Exprs.Neg;
+import static hu.bme.mit.theta.core.expr.Exprs.Not;
+import static hu.bme.mit.theta.core.expr.Exprs.Prime;
+import static hu.bme.mit.theta.core.expr.Exprs.Rat;
+import static hu.bme.mit.theta.core.expr.Exprs.Sub;
+import static hu.bme.mit.theta.core.expr.Exprs.True;
 
 import java.util.ArrayList;
 import java.util.List;

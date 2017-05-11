@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.core.expr.impl;
+package hu.bme.mit.theta.core.expr;
 
 import java.util.Collection;
 import java.util.Set;
@@ -7,8 +7,6 @@ import java.util.stream.Collectors;
 import com.google.common.collect.ImmutableSet;
 
 import hu.bme.mit.theta.common.Utils;
-import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.expr.NotExpr;
 import hu.bme.mit.theta.core.type.BoolType;
 
 public final class SmartExprs {

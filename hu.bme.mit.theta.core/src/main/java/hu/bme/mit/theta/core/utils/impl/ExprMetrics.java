@@ -9,6 +9,7 @@ import hu.bme.mit.theta.core.expr.IteExpr;
 import hu.bme.mit.theta.core.expr.MultiaryExpr;
 import hu.bme.mit.theta.core.expr.NullaryExpr;
 import hu.bme.mit.theta.core.expr.ProcCallExpr;
+import hu.bme.mit.theta.core.expr.QuantifiedExpr;
 import hu.bme.mit.theta.core.expr.UnaryExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.utils.ExprVisitor;
@@ -54,6 +55,13 @@ public final class ExprMetrics {
 			} else {
 				return expr.getOps().size() - 1 + expr.getOps().stream().mapToInt(e -> e.accept(this, null)).sum();
 			}
+		}
+
+		@Override
+		protected <OpsType extends Type, ExprType extends Type> Integer visitQuantified(final QuantifiedExpr expr,
+				final Void param) {
+			// TODO Auto-generated method stub
+			throw new UnsupportedOperationException("TODO: auto-generated method stub");
 		}
 
 		@Override

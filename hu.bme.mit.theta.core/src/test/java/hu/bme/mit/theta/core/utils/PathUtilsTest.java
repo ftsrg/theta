@@ -1,9 +1,9 @@
 package hu.bme.mit.theta.core.utils;
 
-import static hu.bme.mit.theta.core.expr.impl.Exprs.Add;
-import static hu.bme.mit.theta.core.expr.impl.Exprs.Eq;
-import static hu.bme.mit.theta.core.expr.impl.Exprs.Int;
-import static hu.bme.mit.theta.core.expr.impl.Exprs.Prime;
+import static hu.bme.mit.theta.core.expr.Exprs.Add;
+import static hu.bme.mit.theta.core.expr.Exprs.Eq;
+import static hu.bme.mit.theta.core.expr.Exprs.Int;
+import static hu.bme.mit.theta.core.expr.Exprs.Prime;
 
 import org.junit.Assert;
 import org.junit.Test;

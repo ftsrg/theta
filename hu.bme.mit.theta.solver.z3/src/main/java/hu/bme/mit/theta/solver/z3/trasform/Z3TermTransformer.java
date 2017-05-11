@@ -12,7 +12,7 @@ import com.microsoft.z3.RatNum;
 
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.expr.impl.Exprs;
+import hu.bme.mit.theta.core.expr.Exprs;
 import hu.bme.mit.theta.core.type.ArrayType;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.IntType;

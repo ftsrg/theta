@@ -1,11 +1,11 @@
 package hu.bme.mit.theta.core.utils;
 
 import static hu.bme.mit.theta.core.decl.impl.Decls.Const;
-import static hu.bme.mit.theta.core.expr.impl.Exprs.And;
-import static hu.bme.mit.theta.core.expr.impl.Exprs.Iff;
-import static hu.bme.mit.theta.core.expr.impl.Exprs.Imply;
-import static hu.bme.mit.theta.core.expr.impl.Exprs.Not;
-import static hu.bme.mit.theta.core.expr.impl.Exprs.Or;
+import static hu.bme.mit.theta.core.expr.Exprs.And;
+import static hu.bme.mit.theta.core.expr.Exprs.Iff;
+import static hu.bme.mit.theta.core.expr.Exprs.Imply;
+import static hu.bme.mit.theta.core.expr.Exprs.Not;
+import static hu.bme.mit.theta.core.expr.Exprs.Or;
 import static hu.bme.mit.theta.core.type.impl.Types.Bool;
 import static hu.bme.mit.theta.core.utils.impl.ExprUtils.isExprCNF;
 

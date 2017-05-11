@@ -14,6 +14,7 @@ import hu.bme.mit.theta.core.expr.IteExpr;
 import hu.bme.mit.theta.core.expr.MultiaryExpr;
 import hu.bme.mit.theta.core.expr.NullaryExpr;
 import hu.bme.mit.theta.core.expr.ProcCallExpr;
+import hu.bme.mit.theta.core.expr.QuantifiedExpr;
 import hu.bme.mit.theta.core.expr.UnaryExpr;
 import hu.bme.mit.theta.core.type.ArrayType;
 import hu.bme.mit.theta.core.type.BoolType;
@@ -133,6 +134,13 @@ public class ExprRewriterVisitor<P> extends ArityBasedExprVisitor<P, Expr<?>> {
 				op -> (Expr<? extends OpsType>) op.accept(this, param));
 
 		return expr.withOps(newOps);
+	}
+
+	@Override
+	protected <OpsType extends Type, ExprType extends Type> Expr<?> visitQuantified(final QuantifiedExpr expr,
+			final P param) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
 
 }

@@ -1,7 +1,7 @@
 package hu.bme.mit.theta.frontend.benchmark;
 
-import static hu.bme.mit.theta.core.expr.impl.Exprs.And;
-import static hu.bme.mit.theta.core.expr.impl.Exprs.Not;
+import static hu.bme.mit.theta.core.expr.Exprs.And;
+import static hu.bme.mit.theta.core.expr.Exprs.Not;
 
 import java.util.function.Predicate;
 

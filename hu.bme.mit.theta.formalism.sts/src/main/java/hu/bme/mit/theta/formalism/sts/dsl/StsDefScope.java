@@ -1,7 +1,7 @@
 package hu.bme.mit.theta.formalism.sts.dsl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.expr.impl.Exprs.True;
+import static hu.bme.mit.theta.core.expr.Exprs.True;
 import static hu.bme.mit.theta.formalism.sts.dsl.StsDslHelper.createBoolExpr;
 import static hu.bme.mit.theta.formalism.sts.dsl.StsDslHelper.createConstDecl;
 import static hu.bme.mit.theta.formalism.sts.dsl.StsDslHelper.createVarDecl;

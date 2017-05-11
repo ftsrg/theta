@@ -1,7 +1,7 @@
 package hu.bme.mit.theta.formalism.ta.constr.impl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.expr.impl.Exprs.And;
+import static hu.bme.mit.theta.core.expr.Exprs.And;
 import static java.util.stream.Collectors.toSet;
 
 import java.util.Collection;

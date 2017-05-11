@@ -14,8 +14,6 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
-import hu.bme.mit.theta.core.expr.impl.Exprs;
-import hu.bme.mit.theta.core.expr.impl.SmartExprs;
 import hu.bme.mit.theta.core.type.BoolType;
 
 @RunWith(Parameterized.class)

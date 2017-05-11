@@ -1,14 +1,14 @@
 package hu.bme.mit.theta.core.utils;
 
-import static hu.bme.mit.theta.core.expr.impl.Exprs.Not;
+import static hu.bme.mit.theta.core.expr.Exprs.Not;
 
 import org.junit.Assert;
 import org.junit.Test;
 
 import hu.bme.mit.theta.core.decl.impl.Decls;
 import hu.bme.mit.theta.core.expr.Expr;
+import hu.bme.mit.theta.core.expr.Exprs;
 import hu.bme.mit.theta.core.expr.RefExpr;
-import hu.bme.mit.theta.core.expr.impl.Exprs;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.IntType;
 import hu.bme.mit.theta.core.type.impl.Types;

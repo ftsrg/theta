@@ -2,7 +2,7 @@ package hu.bme.mit.theta.core.utils;
 
 import static com.google.common.collect.ImmutableList.of;
 import static hu.bme.mit.theta.core.decl.impl.Decls.Var;
-import static hu.bme.mit.theta.core.expr.impl.Exprs.True;
+import static hu.bme.mit.theta.core.expr.Exprs.True;
 import static hu.bme.mit.theta.core.stmt.impl.Stmts.Assign;
 import static hu.bme.mit.theta.core.stmt.impl.Stmts.Block;
 import static hu.bme.mit.theta.core.stmt.impl.Stmts.Havoc;

@@ -1,6 +1,6 @@
 package hu.bme.mit.theta.core.expr;
 
-import static hu.bme.mit.theta.core.expr.impl.Exprs.Rat;
+import static hu.bme.mit.theta.core.expr.Exprs.Rat;
 import static org.junit.Assert.assertEquals;
 
 import java.util.Arrays;

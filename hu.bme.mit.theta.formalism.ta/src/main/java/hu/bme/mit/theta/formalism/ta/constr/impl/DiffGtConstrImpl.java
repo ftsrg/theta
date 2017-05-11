@@ -1,8 +1,8 @@
 package hu.bme.mit.theta.formalism.ta.constr.impl;
 
-import static hu.bme.mit.theta.core.expr.impl.Exprs.Gt;
-import static hu.bme.mit.theta.core.expr.impl.Exprs.Int;
-import static hu.bme.mit.theta.core.expr.impl.Exprs.Sub;
+import static hu.bme.mit.theta.core.expr.Exprs.Gt;
+import static hu.bme.mit.theta.core.expr.Exprs.Int;
+import static hu.bme.mit.theta.core.expr.Exprs.Sub;
 
 import hu.bme.mit.theta.core.expr.GtExpr;
 import hu.bme.mit.theta.formalism.ta.constr.DiffGtConstr;

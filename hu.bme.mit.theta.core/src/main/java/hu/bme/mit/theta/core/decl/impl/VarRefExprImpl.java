@@ -7,7 +7,7 @@ import hu.bme.mit.theta.core.expr.VarRefExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.utils.ExprVisitor;
 
-final class VarRefExprImpl<DeclType extends Type> implements VarRefExpr<DeclType> {
+final class VarRefExprImpl<DeclType extends Type> extends VarRefExpr<DeclType> {
 
 	private static final int HASH_SEED = 313;
 

@@ -11,9 +11,11 @@ import hu.bme.mit.theta.core.expr.MultiaryExpr;
 import hu.bme.mit.theta.core.expr.NullaryExpr;
 import hu.bme.mit.theta.core.expr.PrimedExpr;
 import hu.bme.mit.theta.core.expr.ProcCallExpr;
+import hu.bme.mit.theta.core.expr.QuantifiedExpr;
 import hu.bme.mit.theta.core.expr.UnaryExpr;
 import hu.bme.mit.theta.core.expr.VarRefExpr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.utils.impl.VarIndexing.Builder;
 
 final class PrimeCounter {
 
@@ -71,6 +73,13 @@ final class PrimeCounter {
 				final MultiaryExpr<OpsType, ExprType> expr, final Integer nPrimes) {
 			return expr.getOps().stream().map(e -> e.accept(this, nPrimes)).reduce(VarIndexing.builder(0),
 					VarIndexing.Builder::join);
+		}
+
+		@Override
+		protected <OpsType extends Type, ExprType extends Type> Builder visitQuantified(final QuantifiedExpr expr,
+				final Integer param) {
+			// TODO Auto-generated method stub
+			throw new UnsupportedOperationException("TODO: auto-generated method stub");
 		}
 
 		@Override

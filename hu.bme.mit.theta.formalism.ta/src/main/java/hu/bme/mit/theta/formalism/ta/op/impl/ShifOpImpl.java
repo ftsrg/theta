@@ -1,8 +1,8 @@
 package hu.bme.mit.theta.formalism.ta.op.impl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.expr.impl.Exprs.Add;
-import static hu.bme.mit.theta.core.expr.impl.Exprs.Int;
+import static hu.bme.mit.theta.core.expr.Exprs.Add;
+import static hu.bme.mit.theta.core.expr.Exprs.Int;
 import static hu.bme.mit.theta.core.stmt.impl.Stmts.Assign;
 
 import java.util.Collection;

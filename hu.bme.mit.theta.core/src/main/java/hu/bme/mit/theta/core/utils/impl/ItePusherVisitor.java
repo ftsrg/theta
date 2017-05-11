@@ -8,14 +8,15 @@ import hu.bme.mit.theta.core.expr.ArrayReadExpr;
 import hu.bme.mit.theta.core.expr.ArrayWriteExpr;
 import hu.bme.mit.theta.core.expr.BinaryExpr;
 import hu.bme.mit.theta.core.expr.Expr;
+import hu.bme.mit.theta.core.expr.Exprs;
 import hu.bme.mit.theta.core.expr.FuncAppExpr;
 import hu.bme.mit.theta.core.expr.FuncLitExpr;
 import hu.bme.mit.theta.core.expr.IteExpr;
 import hu.bme.mit.theta.core.expr.MultiaryExpr;
 import hu.bme.mit.theta.core.expr.NullaryExpr;
 import hu.bme.mit.theta.core.expr.ProcCallExpr;
+import hu.bme.mit.theta.core.expr.QuantifiedExpr;
 import hu.bme.mit.theta.core.expr.UnaryExpr;
-import hu.bme.mit.theta.core.expr.impl.Exprs;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.Type;
 
@@ -94,6 +95,13 @@ public class ItePusherVisitor extends ArityBasedExprVisitor<Void, Expr<? extends
 			return Exprs.Ite(ite.getCond(), expr.withOps(thenOps).accept(this, param),
 					expr.withOps(elseOps).accept(this, param));
 		}
+	}
+
+	@Override
+	protected <OpsType extends Type, ExprType extends Type> Expr<? extends Type> visitQuantified(
+			final QuantifiedExpr expr, final Void param) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
 
 	@Override

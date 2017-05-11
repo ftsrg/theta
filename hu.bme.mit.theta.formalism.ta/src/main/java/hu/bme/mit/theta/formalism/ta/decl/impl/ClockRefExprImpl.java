@@ -8,7 +8,7 @@ import hu.bme.mit.theta.core.utils.ExprVisitor;
 import hu.bme.mit.theta.formalism.ta.decl.ClockDecl;
 import hu.bme.mit.theta.formalism.ta.expr.ClockRefExpr;
 
-final class ClockRefExprImpl implements ClockRefExpr {
+final class ClockRefExprImpl extends ClockRefExpr {
 
 	private static final int HASH_SEED = 1951;
 

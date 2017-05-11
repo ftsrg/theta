@@ -3,8 +3,8 @@ package hu.bme.mit.theta.splittingcegar.interpolating.steps;
 import java.util.List;
 
 import hu.bme.mit.theta.common.logging.Logger;
+import hu.bme.mit.theta.core.expr.Exprs;
 import hu.bme.mit.theta.core.expr.NotExpr;
-import hu.bme.mit.theta.core.expr.impl.Exprs;
 import hu.bme.mit.theta.splittingcegar.common.data.ConcreteTrace;
 import hu.bme.mit.theta.splittingcegar.common.data.SolverWrapper;
 import hu.bme.mit.theta.splittingcegar.common.data.StopHandler;

@@ -13,6 +13,7 @@ import hu.bme.mit.theta.core.expr.IteExpr;
 import hu.bme.mit.theta.core.expr.MultiaryExpr;
 import hu.bme.mit.theta.core.expr.NullaryExpr;
 import hu.bme.mit.theta.core.expr.ProcCallExpr;
+import hu.bme.mit.theta.core.expr.QuantifiedExpr;
 import hu.bme.mit.theta.core.expr.UnaryExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.utils.ExprVisitor;
@@ -59,6 +60,13 @@ public class ItePropagatorVisitor extends ArityBasedExprVisitor<Void, Expr<? ext
 		for (final Expr<? extends OpsType> op : expr.getOps())
 			ops.add((Expr<? extends OpsType>) op.accept(this, param));
 		return expr.withOps(ops).accept(exprITEPusherVisitor, param);
+	}
+
+	@Override
+	protected <OpsType extends Type, ExprType extends Type> Expr<? extends Type> visitQuantified(
+			final QuantifiedExpr expr, final Void param) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
 
 	@Override

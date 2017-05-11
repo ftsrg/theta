@@ -13,6 +13,7 @@ import hu.bme.mit.theta.core.expr.IteExpr;
 import hu.bme.mit.theta.core.expr.MultiaryExpr;
 import hu.bme.mit.theta.core.expr.NullaryExpr;
 import hu.bme.mit.theta.core.expr.ProcCallExpr;
+import hu.bme.mit.theta.core.expr.QuantifiedExpr;
 import hu.bme.mit.theta.core.expr.UnaryExpr;
 import hu.bme.mit.theta.core.expr.VarRefExpr;
 import hu.bme.mit.theta.core.type.Type;
@@ -66,6 +67,13 @@ final class VarCollectorExprVisitor extends ArityBasedExprVisitor<Collection<Var
 		for (final Expr<? extends OpsType> op : expr.getOps())
 			op.accept(this, param);
 		return null;
+	}
+
+	@Override
+	protected <OpsType extends Type, ExprType extends Type> Void visitQuantified(final QuantifiedExpr expr,
+			final Collection<VarDecl<? extends Type>> param) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
 
 	@Override

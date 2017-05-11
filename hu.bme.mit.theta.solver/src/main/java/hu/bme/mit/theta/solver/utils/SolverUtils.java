@@ -1,7 +1,7 @@
 package hu.bme.mit.theta.solver.utils;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.expr.impl.Exprs.Not;
+import static hu.bme.mit.theta.core.expr.Exprs.Not;
 
 import java.util.Iterator;
 import java.util.function.Function;

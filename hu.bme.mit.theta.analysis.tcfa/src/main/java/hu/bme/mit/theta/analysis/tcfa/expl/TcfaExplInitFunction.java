@@ -1,7 +1,7 @@
 package hu.bme.mit.theta.analysis.tcfa.expl;
 
-import static hu.bme.mit.theta.core.expr.impl.Exprs.False;
-import static hu.bme.mit.theta.core.expr.impl.Exprs.Int;
+import static hu.bme.mit.theta.core.expr.Exprs.False;
+import static hu.bme.mit.theta.core.expr.Exprs.Int;
 
 import java.util.Collection;
 import java.util.Collections;

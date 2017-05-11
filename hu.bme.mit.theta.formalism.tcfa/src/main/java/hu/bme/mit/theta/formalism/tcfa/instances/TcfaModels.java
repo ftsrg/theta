@@ -1,6 +1,6 @@
 package hu.bme.mit.theta.formalism.tcfa.instances;
 
-import static hu.bme.mit.theta.core.expr.impl.Exprs.Int;
+import static hu.bme.mit.theta.core.expr.Exprs.Int;
 import static hu.bme.mit.theta.formalism.ta.decl.impl.Decls2.Clock;
 
 import java.io.FileNotFoundException;

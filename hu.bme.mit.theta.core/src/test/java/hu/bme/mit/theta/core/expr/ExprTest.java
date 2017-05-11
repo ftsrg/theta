@@ -3,8 +3,6 @@ package hu.bme.mit.theta.core.expr;
 import org.junit.Assert;
 import org.junit.Test;
 
-import hu.bme.mit.theta.core.expr.impl.Exprs;
-
 public class ExprTest {
 
 	@Test

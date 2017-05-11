@@ -1,8 +1,8 @@
 package hu.bme.mit.theta.solver.z3;
 
 import static hu.bme.mit.theta.core.decl.impl.Decls.Const;
-import static hu.bme.mit.theta.core.expr.impl.Exprs.And;
-import static hu.bme.mit.theta.core.expr.impl.Exprs.True;
+import static hu.bme.mit.theta.core.expr.Exprs.And;
+import static hu.bme.mit.theta.core.expr.Exprs.True;
 import static hu.bme.mit.theta.core.type.impl.Types.Bool;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;

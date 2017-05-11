@@ -2,7 +2,7 @@ package hu.bme.mit.theta.analysis.expr;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.analysis.expr.ExprStateUtils.anyUncoveredSuccessor;
-import static hu.bme.mit.theta.core.expr.impl.Exprs.True;
+import static hu.bme.mit.theta.core.expr.Exprs.True;
 import static java.util.Collections.singleton;
 
 import java.util.ArrayList;

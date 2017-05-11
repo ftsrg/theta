@@ -1,13 +1,13 @@
 package hu.bme.mit.theta.analysis.zone.lu;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.expr.impl.Exprs.And;
-import static hu.bme.mit.theta.core.expr.impl.Exprs.Exists;
-import static hu.bme.mit.theta.core.expr.impl.Exprs.Gt;
-import static hu.bme.mit.theta.core.expr.impl.Exprs.Imply;
-import static hu.bme.mit.theta.core.expr.impl.Exprs.Int;
-import static hu.bme.mit.theta.core.expr.impl.Exprs.Lt;
-import static hu.bme.mit.theta.core.expr.impl.Exprs.True;
+import static hu.bme.mit.theta.core.expr.Exprs.And;
+import static hu.bme.mit.theta.core.expr.Exprs.Exists;
+import static hu.bme.mit.theta.core.expr.Exprs.Gt;
+import static hu.bme.mit.theta.core.expr.Exprs.Imply;
+import static hu.bme.mit.theta.core.expr.Exprs.Int;
+import static hu.bme.mit.theta.core.expr.Exprs.Lt;
+import static hu.bme.mit.theta.core.expr.Exprs.True;
 
 import java.util.ArrayList;
 import java.util.Collection;
