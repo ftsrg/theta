@@ -1,8 +1,8 @@
 package hu.bme.mit.theta.formalism.ta;
 
-import static hu.bme.mit.theta.formalism.ta.constr.impl.ClockConstrs.And;
-import static hu.bme.mit.theta.formalism.ta.constr.impl.ClockConstrs.Eq;
-import static hu.bme.mit.theta.formalism.ta.constr.impl.ClockConstrs.True;
+import static hu.bme.mit.theta.formalism.ta.constr.ClockConstrs.And;
+import static hu.bme.mit.theta.formalism.ta.constr.ClockConstrs.Eq;
+import static hu.bme.mit.theta.formalism.ta.constr.ClockConstrs.True;
 import static hu.bme.mit.theta.formalism.ta.decl.impl.Decls2.Clock;
 
 import org.junit.Test;

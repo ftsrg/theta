@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.formalism.ta.constr.impl;
+package hu.bme.mit.theta.formalism.ta.constr;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -20,25 +20,6 @@ import hu.bme.mit.theta.core.expr.SubExpr;
 import hu.bme.mit.theta.core.expr.TrueExpr;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.utils.impl.FailExprVisitor;
-import hu.bme.mit.theta.formalism.ta.constr.AndConstr;
-import hu.bme.mit.theta.formalism.ta.constr.ClockConstr;
-import hu.bme.mit.theta.formalism.ta.constr.DiffEqConstr;
-import hu.bme.mit.theta.formalism.ta.constr.DiffGeqConstr;
-import hu.bme.mit.theta.formalism.ta.constr.DiffGtConstr;
-import hu.bme.mit.theta.formalism.ta.constr.DiffLeqConstr;
-import hu.bme.mit.theta.formalism.ta.constr.DiffLtConstr;
-import hu.bme.mit.theta.formalism.ta.constr.EqConstr;
-import hu.bme.mit.theta.formalism.ta.constr.FalseConstr;
-import hu.bme.mit.theta.formalism.ta.constr.GeqConstr;
-import hu.bme.mit.theta.formalism.ta.constr.GtConstr;
-import hu.bme.mit.theta.formalism.ta.constr.LeqConstr;
-import hu.bme.mit.theta.formalism.ta.constr.LtConstr;
-import hu.bme.mit.theta.formalism.ta.constr.TrueConstr;
-import hu.bme.mit.theta.formalism.ta.constr.UnitEqConstr;
-import hu.bme.mit.theta.formalism.ta.constr.UnitGeqConstr;
-import hu.bme.mit.theta.formalism.ta.constr.UnitGtConstr;
-import hu.bme.mit.theta.formalism.ta.constr.UnitLeqConstr;
-import hu.bme.mit.theta.formalism.ta.constr.UnitLtConstr;
 import hu.bme.mit.theta.formalism.ta.decl.ClockDecl;
 import hu.bme.mit.theta.formalism.ta.expr.ClockRefExpr;
 
@@ -51,8 +32,8 @@ public final class ClockConstrs {
 
 	static {
 		VISITOR = new ExprToClockConstrVisitor();
-		TRUE_CONSTR = new TrueConstrImpl();
-		FALSE_CONSTR = new FalseConstrImpl();
+		TRUE_CONSTR = new TrueConstr();
+		FALSE_CONSTR = new FalseConstr();
 	}
 
 	private ClockConstrs() {
@@ -76,62 +57,62 @@ public final class ClockConstrs {
 
 	public static UnitLtConstr Lt(final ClockDecl clock, final int bound) {
 		checkNotNull(clock);
-		return new UnitLtConstrImpl(clock, bound);
+		return new UnitLtConstr(clock, bound);
 	}
 
 	public static UnitLeqConstr Leq(final ClockDecl clock, final int bound) {
 		checkNotNull(clock);
-		return new UnitLeqConstrImpl(clock, bound);
+		return new UnitLeqConstr(clock, bound);
 	}
 
 	public static UnitGtConstr Gt(final ClockDecl clock, final int bound) {
 		checkNotNull(clock);
-		return new UnitGtConstrImpl(clock, bound);
+		return new UnitGtConstr(clock, bound);
 	}
 
 	public static UnitGeqConstr Geq(final ClockDecl clock, final int bound) {
 		checkNotNull(clock);
-		return new UnitGeqConstrImpl(clock, bound);
+		return new UnitGeqConstr(clock, bound);
 	}
 
 	public static UnitEqConstr Eq(final ClockDecl clock, final int bound) {
 		checkNotNull(clock);
-		return new UnitEqConstrImpl(clock, bound);
+		return new UnitEqConstr(clock, bound);
 	}
 
 	public static DiffLtConstr Lt(final ClockDecl leftClock, final ClockDecl rightClock, final int bound) {
 		checkNotNull(leftClock);
 		checkNotNull(rightClock);
-		return new DiffLtConstrImpl(leftClock, rightClock, bound);
+		return new DiffLtConstr(leftClock, rightClock, bound);
 	}
 
 	public static DiffLeqConstr Leq(final ClockDecl leftClock, final ClockDecl rightClock, final int bound) {
 		checkNotNull(leftClock);
 		checkNotNull(rightClock);
-		return new DiffLeqConstrImpl(leftClock, rightClock, bound);
+		return new DiffLeqConstr(leftClock, rightClock, bound);
 	}
 
 	public static DiffGtConstr Gt(final ClockDecl leftClock, final ClockDecl rightClock, final int bound) {
 		checkNotNull(leftClock);
 		checkNotNull(rightClock);
-		return new DiffGtConstrImpl(leftClock, rightClock, bound);
+		return new DiffGtConstr(leftClock, rightClock, bound);
 	}
 
 	public static DiffGeqConstr Geq(final ClockDecl leftClock, final ClockDecl rightClock, final int bound) {
 		checkNotNull(leftClock);
 		checkNotNull(rightClock);
-		return new DiffGeqConstrImpl(leftClock, rightClock, bound);
+		return new DiffGeqConstr(leftClock, rightClock, bound);
 	}
 
 	public static DiffEqConstr Eq(final ClockDecl leftClock, final ClockDecl rightClock, final int bound) {
 		checkNotNull(leftClock);
 		checkNotNull(rightClock);
-		return new DiffEqConstrImpl(leftClock, rightClock, bound);
+		return new DiffEqConstr(leftClock, rightClock, bound);
 	}
 
 	public static AndConstr And(final Collection<? extends ClockConstr> constrs) {
 		checkNotNull(constrs);
-		return new AndConstrImpl(constrs);
+		return new AndConstr(constrs);
 	}
 
 	////
@@ -159,7 +140,7 @@ public final class ClockConstrs {
 		}
 
 		@Override
-		public LtConstr visit(final LtExpr expr, final Void param) {
+		public ClockConstr visit(final LtExpr expr, final Void param) {
 			final ClockDecl[] lhs = extractConstrLhs(expr);
 			final int rhs = extractConstrRhs(expr);
 			if (lhs.length == 1) {
@@ -170,7 +151,7 @@ public final class ClockConstrs {
 		}
 
 		@Override
-		public LeqConstr visit(final LeqExpr expr, final Void param) {
+		public ClockConstr visit(final LeqExpr expr, final Void param) {
 			final ClockDecl[] lhs = extractConstrLhs(expr);
 			final int rhs = extractConstrRhs(expr);
 			if (lhs.length == 1) {
@@ -181,7 +162,7 @@ public final class ClockConstrs {
 		}
 
 		@Override
-		public GtConstr visit(final GtExpr expr, final Void param) {
+		public ClockConstr visit(final GtExpr expr, final Void param) {
 			final ClockDecl[] lhs = extractConstrLhs(expr);
 			final int rhs = extractConstrRhs(expr);
 			if (lhs.length == 1) {
@@ -192,7 +173,7 @@ public final class ClockConstrs {
 		}
 
 		@Override
-		public GeqConstr visit(final GeqExpr expr, final Void param) {
+		public ClockConstr visit(final GeqExpr expr, final Void param) {
 			final ClockDecl[] lhs = extractConstrLhs(expr);
 			final int rhs = extractConstrRhs(expr);
 			if (lhs.length == 1) {
@@ -203,7 +184,7 @@ public final class ClockConstrs {
 		}
 
 		@Override
-		public EqConstr visit(final EqExpr expr, final Void param) {
+		public ClockConstr visit(final EqExpr expr, final Void param) {
 			final ClockDecl[] lhs = extractConstrLhs(expr);
 			final int rhs = extractConstrRhs(expr);
 			if (lhs.length == 1) {

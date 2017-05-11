@@ -1,8 +1,8 @@
 package hu.bme.mit.theta.analysis.zone;
 
 import static hu.bme.mit.theta.core.expr.Exprs.Rat;
-import static hu.bme.mit.theta.formalism.ta.constr.impl.ClockConstrs.Eq;
-import static hu.bme.mit.theta.formalism.ta.constr.impl.ClockConstrs.Leq;
+import static hu.bme.mit.theta.formalism.ta.constr.ClockConstrs.Eq;
+import static hu.bme.mit.theta.formalism.ta.constr.ClockConstrs.Leq;
 import static hu.bme.mit.theta.formalism.ta.decl.impl.Decls2.Clock;
 
 import java.util.Set;

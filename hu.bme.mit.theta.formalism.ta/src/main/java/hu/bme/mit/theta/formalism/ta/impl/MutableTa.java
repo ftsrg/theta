@@ -2,7 +2,7 @@ package hu.bme.mit.theta.formalism.ta.impl;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.formalism.ta.constr.impl.ClockConstrs.True;
+import static hu.bme.mit.theta.formalism.ta.constr.ClockConstrs.True;
 
 import java.util.Collection;
 import java.util.Collections;

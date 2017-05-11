@@ -5,7 +5,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.formalism.ta.constr.ClockConstr;
-import hu.bme.mit.theta.formalism.ta.constr.impl.ClockConstrs;
+import hu.bme.mit.theta.formalism.ta.constr.ClockConstrs;
 
 public abstract class TaExpr {
 	private final Expr<? extends BoolType> expr;

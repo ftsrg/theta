@@ -1,7 +1,7 @@
 package hu.bme.mit.theta.analysis.xta.zone;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.formalism.ta.constr.impl.ClockConstrs.Eq;
+import static hu.bme.mit.theta.formalism.ta.constr.ClockConstrs.Eq;
 
 import java.util.Collection;
 import java.util.List;
