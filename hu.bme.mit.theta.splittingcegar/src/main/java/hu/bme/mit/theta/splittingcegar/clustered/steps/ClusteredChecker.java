@@ -11,6 +11,7 @@ import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.NotExpr;
 import hu.bme.mit.theta.core.expr.impl.Exprs;
 import hu.bme.mit.theta.core.type.BoolType;
+import hu.bme.mit.theta.core.utils.impl.PathUtils;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.splittingcegar.clustered.data.ClusteredAbstractState;
@@ -126,7 +127,7 @@ public class ClusteredChecker extends AbstractCEGARStep
 						deletedArcs++;
 					}
 				} else { // If the actual state has no more successors, then
-							// backtrack
+								// backtrack
 					stateStack.pop();
 					successorStack.pop();
 				}
@@ -161,7 +162,7 @@ public class ClusteredChecker extends AbstractCEGARStep
 		solver.push();
 		for (final ComponentAbstractState as : state.getStates())
 			SolverHelper.unrollAndAssert(solver, as.getLabels(), sts, 0);
-		solver.add(sts.unfold(expr, 0));
+		solver.add(PathUtils.unfold(expr, 0));
 		final boolean ret = SolverHelper.checkSat(solver);
 		solver.pop();
 		return ret;
@@ -176,7 +177,7 @@ public class ClusteredChecker extends AbstractCEGARStep
 		for (final ComponentAbstractState as : s1.getStates())
 			SolverHelper.unrollAndAssert(solver, as.getLabels(), sts, 1);
 
-		solver.add(sts.unfoldTrans(0));
+		solver.add(PathUtils.unfold(sts.getTrans(), 0));
 
 		final boolean ret = SolverHelper.checkSat(solver);
 		solver.pop();
@@ -187,7 +188,7 @@ public class ClusteredChecker extends AbstractCEGARStep
 		solver.push();
 		for (final ComponentAbstractState as : s.getStates())
 			SolverHelper.unrollAndAssert(solver, as.getLabels(), sts, 0);
-		solver.add(sts.unfoldInit(0));
+		solver.add(PathUtils.unfold(sts.getInit(), 0));
 
 		final boolean ret = SolverHelper.checkSat(solver);
 		solver.pop();

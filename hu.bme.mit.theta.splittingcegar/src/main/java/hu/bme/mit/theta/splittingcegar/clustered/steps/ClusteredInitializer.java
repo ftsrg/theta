@@ -14,6 +14,7 @@ import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.impl.Exprs;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.utils.impl.PathUtils;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.splittingcegar.clustered.data.Cluster;
@@ -147,7 +148,7 @@ public class ClusteredInitializer extends AbstractCEGARStep implements Initializ
 		// Calculate initial states and transition relation
 		logger.writeln(", abstract states [" + ks.getStates().size() + "]", 2);
 		for (final ComponentAbstractState s0 : ks.getStates()) { // Loop through
-																	// the
+																		// the
 																	// states
 			s0.setInitial(isStateInit(s0, sts)); // Check whether it is
 													// initial
@@ -156,7 +157,7 @@ public class ClusteredInitializer extends AbstractCEGARStep implements Initializ
 				ks.addInitialState(s0);
 
 			for (final ComponentAbstractState s1 : ks.getStates()) // Calculate
-																	// successors
+																		// successors
 				if (isTransFeasible(s0, s1, sts))
 
 					s0.getSuccessors().add(s1);
@@ -179,7 +180,7 @@ public class ClusteredInitializer extends AbstractCEGARStep implements Initializ
 		final Solver solver = solvers.getSolver();
 		solver.push();
 		SolverHelper.unrollAndAssert(solver, s.getLabels(), sts, 0);
-		solver.add(sts.unfoldInit(0));
+		solver.add(PathUtils.unfold(sts.getInit(), 0));
 		final boolean ret = SolverHelper.checkSat(solver);
 		solver.pop();
 		return ret;
@@ -190,7 +191,7 @@ public class ClusteredInitializer extends AbstractCEGARStep implements Initializ
 		solver.push();
 		SolverHelper.unrollAndAssert(solver, s0.getLabels(), sts, 0);
 		SolverHelper.unrollAndAssert(solver, s1.getLabels(), sts, 1);
-		solver.add(sts.unfoldTrans(0));
+		solver.add(PathUtils.unfold(sts.getTrans(), 0));
 		final boolean ret = SolverHelper.checkSat(solver);
 		solver.pop();
 		return ret;

@@ -11,6 +11,7 @@ import java.util.Stack;
 
 import hu.bme.mit.theta.core.expr.impl.Exprs;
 import hu.bme.mit.theta.core.model.impl.Valuation;
+import hu.bme.mit.theta.core.utils.impl.PathUtils;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.splittingcegar.common.data.ConcreteTrace;
@@ -66,7 +67,7 @@ public class InterpolatingCEGARDebugger
 					final ConcreteState cs = new ConcreteState(csExpr);
 					stateSpace.get(as).add(cs);
 					allConcreteStates.add(cs);
-					solver.add(sts.unfold(Exprs.Not(csExpr.toExpr()), 0));
+					solver.add(PathUtils.unfold(Exprs.Not(csExpr.toExpr()), 0));
 				} else {
 					break;
 				}

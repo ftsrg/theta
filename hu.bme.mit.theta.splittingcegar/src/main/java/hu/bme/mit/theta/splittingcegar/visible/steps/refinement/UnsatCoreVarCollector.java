@@ -11,6 +11,7 @@ import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.utils.impl.ExprUtils;
+import hu.bme.mit.theta.core.utils.impl.PathUtils;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverStatus;
@@ -40,14 +41,14 @@ public class UnsatCoreVarCollector extends AbstractCEGARStep implements VarColle
 		final Solver solver = solvers.getSolver();
 
 		solver.push();
-		solver.track(sts.unfoldInit(0));
+		solver.track(PathUtils.unfold(sts.getInit(), 0));
 		for (int i = 0; i < traceLength + 1; ++i) {
 			// TODO: if the expression is an AND, are the operands added
 			// separately?
-			solver.track(sts.unfold(abstractCounterEx.get(i).getValuation().toExpr(), i));
+			solver.track(PathUtils.unfold(abstractCounterEx.get(i).getValuation().toExpr(), i));
 
 			if (i > 0)
-				solver.track(sts.unfoldTrans(i - 1));
+				solver.track(PathUtils.unfold(sts.getTrans(), i - 1));
 		}
 
 		solver.check();
@@ -57,7 +58,7 @@ public class UnsatCoreVarCollector extends AbstractCEGARStep implements VarColle
 		final Set<VarDecl<? extends Type>> vars = new HashSet<>();
 
 		for (final Expr<? extends BoolType> uc : solver.getUnsatCore())
-			ExprUtils.collectVars(sts.foldin(uc, 0), vars);
+			ExprUtils.collectVars(PathUtils.foldin(uc, 0), vars);
 
 		solver.pop();
 

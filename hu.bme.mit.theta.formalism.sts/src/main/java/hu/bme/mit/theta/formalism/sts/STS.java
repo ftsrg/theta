@@ -25,26 +25,17 @@ public interface STS {
 
 	Expr<? extends BoolType> getProp();
 
-	// Unfolding / folding methods
-	Expr<? extends BoolType> unfold(final Expr<? extends BoolType> expr, final int i);
-
-	Collection<? extends Expr<? extends BoolType>> unfold(final Collection<? extends Expr<? extends BoolType>> exprs,
-			final int i);
-
-	Collection<? extends Expr<? extends BoolType>> unfoldInit(final int i);
-
-	Collection<? extends Expr<? extends BoolType>> unfoldTrans(final int i);
-
-	Expr<? extends BoolType> unfoldProp(final int i);
-
+	// Deprecated methods for splittingcegar
+	@Deprecated
 	Valuation getConcreteState(final Model model, final int i);
 
+	@Deprecated
 	Valuation getConcreteState(final Model model, final int i, final Collection<VarDecl<? extends Type>> variables);
 
+	@Deprecated
 	List<Valuation> extractTrace(final Model model, final int length);
 
+	@Deprecated
 	List<Valuation> extractTrace(final Model model, final int length,
 			final Collection<VarDecl<? extends Type>> variables);
-
-	Expr<? extends BoolType> foldin(final Expr<? extends BoolType> expr, final int i);
 }
