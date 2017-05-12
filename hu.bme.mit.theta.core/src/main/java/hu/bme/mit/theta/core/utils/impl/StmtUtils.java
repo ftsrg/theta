@@ -32,6 +32,14 @@ public final class StmtUtils {
 		return vars;
 	}
 
+	public static Set<VarDecl<? extends Type>> getVars(final Iterable<? extends Stmt> stmts) {
+		final Set<VarDecl<? extends Type>> vars = new HashSet<>();
+		for (final Stmt stmt : stmts) {
+			vars.addAll(getVars(stmt));
+		}
+		return vars;
+	}
+
 	public static UnfoldResult toExpr(final List<? extends Stmt> stmts, final VarIndexing indexing) {
 		return StmtToExprTransformer.toExpr(stmts, indexing);
 	}

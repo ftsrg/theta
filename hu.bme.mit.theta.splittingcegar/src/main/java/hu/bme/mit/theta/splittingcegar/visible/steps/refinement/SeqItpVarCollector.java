@@ -13,6 +13,7 @@ import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.utils.impl.ExprUtils;
+import hu.bme.mit.theta.core.utils.impl.PathUtils;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.solver.ItpMarker;
 import hu.bme.mit.theta.solver.ItpPattern;
@@ -50,15 +51,15 @@ public class SeqItpVarCollector extends AbstractCEGARStep implements VarCollecto
 		itpSolver.push();
 
 		// Initial conditions for the first marker
-		itpSolver.add(markers[0], sts.unfoldInit(0));
+		itpSolver.add(markers[0], PathUtils.unfold(sts.getInit(), 0));
 		// Loop through each marker
 		for (int i = 0; i < abstractCounterEx.size(); ++i) {
 			// Assert labels
-			itpSolver.add(markers[i], sts.unfold(abstractCounterEx.get(i).getValuation().toExpr(), i));
+			itpSolver.add(markers[i], PathUtils.unfold(abstractCounterEx.get(i).getValuation().toExpr(), i));
 
 			if (i > 0) {
 				// Assert transition relation
-				itpSolver.add(markers[i], sts.unfoldTrans(i - 1));
+				itpSolver.add(markers[i], PathUtils.unfold(sts.getTrans(), i - 1));
 			}
 
 		}
@@ -73,7 +74,7 @@ public class SeqItpVarCollector extends AbstractCEGARStep implements VarCollecto
 		final List<Expr<? extends BoolType>> interpolants = new ArrayList<>();
 		// Fold in interpolants (except the last)
 		for (int i = 0; i < markers.length - 1; ++i)
-			interpolants.add(sts.foldin(itpSolver.getInterpolant(pattern).eval(markers[i]), i));
+			interpolants.add(PathUtils.foldin(itpSolver.getInterpolant(pattern).eval(markers[i]), i));
 
 		itpSolver.pop();
 

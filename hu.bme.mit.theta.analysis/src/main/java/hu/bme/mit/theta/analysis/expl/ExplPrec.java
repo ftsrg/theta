@@ -46,6 +46,10 @@ public final class ExplPrec implements Prec {
 		}
 	}
 
+	public Set<VarDecl<?>> getVars() {
+		return vars;
+	}
+
 	public ExplPrec join(final ExplPrec other) {
 		checkNotNull(other);
 		final Collection<VarDecl<?>> newVars = ImmutableSet.<VarDecl<?>>builder().addAll(vars).addAll(other.vars)
@@ -76,10 +80,6 @@ public final class ExplPrec implements Prec {
 		checkNotNull(solver);
 		checkNotNull(expr);
 		return ExprStates.createStates(solver, expr, this::createState);
-	}
-
-	public Set<VarDecl<?>> getVars() {
-		return vars;
 	}
 
 	@Override

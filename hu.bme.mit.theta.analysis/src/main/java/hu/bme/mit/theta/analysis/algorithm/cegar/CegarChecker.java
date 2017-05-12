@@ -12,7 +12,6 @@ import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
-import hu.bme.mit.theta.analysis.algorithm.Statistics;
 import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.impl.NullLogger;
@@ -73,7 +72,7 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 
 		stopwatch.stop();
 		SafetyResult<S, A> cegarResult = null;
-		final Statistics stats = new Statistics(stopwatch.elapsed(TimeUnit.MILLISECONDS), iteration);
+		final CegarStatistics stats = new CegarStatistics(stopwatch.elapsed(TimeUnit.MILLISECONDS), iteration);
 
 		if (abstractorResult.isSafe()) {
 			cegarResult = SafetyResult.safe(arg, stats);

@@ -16,40 +16,37 @@ import hu.bme.mit.theta.analysis.algorithm.ArgNodeComparators;
 import hu.bme.mit.theta.analysis.algorithm.ArgTrace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
-import hu.bme.mit.theta.analysis.impl.NullPrec;
 import hu.bme.mit.theta.analysis.reachedset.Partition;
 import hu.bme.mit.theta.analysis.tcfa.TcfaAction;
+import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist;
 import hu.bme.mit.theta.analysis.waitlist.Waitlist;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
 import hu.bme.mit.theta.formalism.tcfa.TCFA;
 import hu.bme.mit.theta.formalism.tcfa.TcfaLoc;
-import hu.bme.mit.theta.solver.Solver;
 
-public final class TcfaLawiChecker implements SafetyChecker<TcfaLawiState, TcfaAction, NullPrec> {
+public final class TcfaLawiChecker implements SafetyChecker<TcfaLawiState, TcfaAction, UnitPrec> {
 	private final TCFA tcfa;
-	private final ArgBuilder<TcfaLawiState, TcfaAction, NullPrec> argBuilder;
+	private final ArgBuilder<TcfaLawiState, TcfaAction, UnitPrec> argBuilder;
 
-	private TcfaLawiChecker(final TCFA tcfa, final Predicate<? super TcfaLoc> errorLocs, final Solver solver) {
+	private TcfaLawiChecker(final TCFA tcfa, final Predicate<? super TcfaLoc> errorLocs) {
 		checkNotNull(errorLocs);
-		checkNotNull(solver);
 
 		this.tcfa = checkNotNull(tcfa);
 
 		final LTS<TcfaLawiState, TcfaAction> lts = TcfaLawiLts.create(tcfa);
-		final Analysis<TcfaLawiState, TcfaAction, NullPrec> analysis = TcfaLawiAnalysis.create(tcfa, solver);
+		final Analysis<TcfaLawiState, TcfaAction, UnitPrec> analysis = TcfaLawiAnalysis.create(tcfa);
 		final Predicate<TcfaLawiState> target = s -> errorLocs.test(s.getLoc());
 
 		argBuilder = ArgBuilder.create(lts, analysis, target);
 	}
 
-	public static TcfaLawiChecker create(final TCFA tcfa, final Predicate<? super TcfaLoc> errorLocs,
-			final Solver solver) {
-		return new TcfaLawiChecker(tcfa, errorLocs, solver);
+	public static TcfaLawiChecker create(final TCFA tcfa, final Predicate<? super TcfaLoc> errorLocs) {
+		return new TcfaLawiChecker(tcfa, errorLocs);
 	}
 
 	@Override
-	public SafetyResult<TcfaLawiState, TcfaAction> check(final NullPrec prec) {
+	public SafetyResult<TcfaLawiState, TcfaAction> check(final UnitPrec prec) {
 		return new CheckMethod().run();
 	}
 
@@ -65,7 +62,7 @@ public final class TcfaLawiChecker implements SafetyChecker<TcfaLawiState, TcfaA
 			refiner = TcfaLawiRefiner.create(tcfa, waitlist);
 			arg = argBuilder.createArg();
 
-			argBuilder.init(arg, NullPrec.getInstance());
+			argBuilder.init(arg, UnitPrec.getInstance());
 			waitlist.addAll(arg.getInitNodes());
 			reachedSet.addAll(arg.getInitNodes());
 		}
@@ -137,7 +134,7 @@ public final class TcfaLawiChecker implements SafetyChecker<TcfaLawiState, TcfaA
 		}
 
 		private void expand(final ArgNode<TcfaLawiState, TcfaAction> v) {
-			argBuilder.expand(v, NullPrec.getInstance());
+			argBuilder.expand(v, UnitPrec.getInstance());
 		}
 
 		private boolean covers(final TcfaLawiState state1, final TcfaLawiState state2) {

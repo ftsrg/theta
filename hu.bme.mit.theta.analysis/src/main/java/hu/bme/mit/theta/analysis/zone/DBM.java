@@ -5,6 +5,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.analysis.zone.DiffBounds.Inf;
 import static hu.bme.mit.theta.analysis.zone.DiffBounds.Leq;
 import static hu.bme.mit.theta.analysis.zone.DiffBounds.Lt;
+import static hu.bme.mit.theta.analysis.zone.DiffBounds.add;
 import static hu.bme.mit.theta.analysis.zone.DiffBounds.asString;
 import static hu.bme.mit.theta.analysis.zone.DiffBounds.negate;
 import static java.lang.Math.max;
@@ -170,10 +171,9 @@ final class DBM {
 
 	////
 
-	public static DBM interpolant2(final DBM dbmA, final DBM dbmB) {
+	public static DBM weakInterpolant(final DBM dbmA, final DBM dbmB) {
 		checkNotNull(dbmA);
 		checkNotNull(dbmB);
-		checkArgument(!dbmA.isConsistentWith(dbmB), "Inconsistent DBMs");
 
 		if (!dbmA.isConsistent()) {
 			return bottom(Collections.emptySet());
@@ -183,20 +183,57 @@ final class DBM {
 			return top(Collections.emptySet());
 		}
 
-		final DbmSignature signature = interpolantSignature(dbmA, dbmB);
+		// This implementation assumes that A and B are canonical
+		// This restriction can be lifted by summarizing maximal paths
+		assert dbmA.isClosed();
+		assert dbmB.isClosed();
+
+		final DbmSignature interpolantSignature = interpolantSignature(dbmA, dbmB);
 		final BiFunction<ClockDecl, ClockDecl, Integer> values = (x, y) -> {
-			final int boundA = dbmA.get(x, y);
-			final int boundB = dbmB.get(x, y);
-			if (boundA < boundB) {
-				return boundA;
-			} else {
-				return defaultBound(x, y);
-			}
+			final int bound1 = dbmA.get(x, y);
+			final int bound2 = dbmB.get(x, y);
+			return min(bound1, bound2);
 		};
 
-		final DBM result = new DBM(signature, values);
-		result.close();
+		final DBM interpolant = new DBM(interpolantSignature, values);
+		final int[] cycle = interpolant.dbm.closeItp();
 
+		final DbmSignature signature = signatureFrom(interpolantSignature, cycle);
+		final DBM result = new DBM(signature, TOP_DBM_VALUES);
+
+		if (cycle.length == 3) {
+			final int x = cycle[0];
+			final int y = cycle[1];
+			final ClockDecl leftClock = interpolantSignature.getClock(x);
+			final ClockDecl rightClock = interpolantSignature.getClock(y);
+			final int boundA1 = dbmA.get(leftClock, rightClock);
+			final int boundB1 = dbmB.get(leftClock, rightClock);
+			if (boundA1 < boundB1) {
+				final int boundB = dbmB.get(rightClock, leftClock);
+				result.set(leftClock, rightClock, negate(boundB));
+			} else {
+				final int boundA2 = dbmA.get(rightClock, leftClock);
+				final int boundB2 = dbmB.get(rightClock, leftClock);
+				final int boundB = dbmB.get(leftClock, rightClock);
+				assert boundA2 < boundB2;
+				result.set(rightClock, leftClock, negate(boundB));
+			}
+		} else {
+			// Can this be the case for timed automata?
+			for (int i = 0; i + 1 < cycle.length; i++) {
+				final int x = cycle[i];
+				final int y = cycle[i + 1];
+				final ClockDecl leftClock = interpolantSignature.getClock(x);
+				final ClockDecl rightClock = interpolantSignature.getClock(y);
+				final int boundA = dbmA.get(leftClock, rightClock);
+				final int boundB = dbmB.get(leftClock, rightClock);
+				if (boundA < boundB) {
+					result.set(leftClock, rightClock, boundA);
+				}
+			}
+		}
+
+		assert result.isClosed();
 		assert dbmA.getRelation(result).isLeq();
 		assert !dbmB.isConsistentWith(result);
 
@@ -215,26 +252,34 @@ final class DBM {
 			return top(Collections.emptySet());
 		}
 
-		final DbmSignature signature = interpolantSignature(dbmA, dbmB);
+		// This implementation assumes that A and B are canonical
+		// This restriction can be lifted by summarizing maximal paths
+		assert dbmA.isClosed();
+		assert dbmB.isClosed();
+
+		final DbmSignature interpolantSignature = interpolantSignature(dbmA, dbmB);
 		final BiFunction<ClockDecl, ClockDecl, Integer> values = (x, y) -> {
 			final int bound1 = dbmA.get(x, y);
 			final int bound2 = dbmB.get(x, y);
 			return min(bound1, bound2);
 		};
 
-		final DBM result = new DBM(signature, values);
-		final int[] cycle = result.dbm.closeItp();
-		result.free();
+		final DBM interpolant = new DBM(interpolantSignature, values);
+		final int[] cycle = interpolant.dbm.closeItp();
 
+		final DbmSignature signature = signatureFrom(interpolantSignature, cycle);
+		final DBM result = new DBM(signature, TOP_DBM_VALUES);
+
+		// Can this be the case for timed automata?
 		for (int i = 0; i + 1 < cycle.length; i++) {
 			final int x = cycle[i];
 			final int y = cycle[i + 1];
-			final ClockDecl leftClock = result.signature.getClock(x);
-			final ClockDecl rightClock = result.signature.getClock(y);
+			final ClockDecl leftClock = interpolantSignature.getClock(x);
+			final ClockDecl rightClock = interpolantSignature.getClock(y);
 			final int boundA = dbmA.get(leftClock, rightClock);
 			final int boundB = dbmB.get(leftClock, rightClock);
 			if (boundA < boundB) {
-				result.dbm.set(x, y, boundA);
+				result.set(leftClock, rightClock, boundA);
 			}
 		}
 
@@ -243,6 +288,15 @@ final class DBM {
 		assert !dbmB.isConsistentWith(result);
 
 		return result;
+	}
+
+	private static DbmSignature signatureFrom(final DbmSignature interpolantSignature, final int[] cycle) {
+		final Collection<ClockDecl> clocks = new ArrayList<>();
+		for (int i = 0; i + 1 < cycle.length; i++) {
+			final ClockDecl clock = interpolantSignature.getClock(cycle[i]);
+			clocks.add(clock);
+		}
+		return DbmSignature.over(clocks);
 	}
 
 	private static DbmSignature interpolantSignature(final DBM dbmA, final DBM dbmB) {
@@ -262,7 +316,6 @@ final class DBM {
 		}
 	}
 
-	@SuppressWarnings("unused")
 	private void set(final ClockDecl x, final ClockDecl y, final int b) {
 		checkArgument(tracks(x), "Clock not tracked");
 		checkArgument(tracks(y), "Clock not tracked");
@@ -322,6 +375,70 @@ final class DBM {
 		return DbmRelation.create(leq, geq);
 	}
 
+	public boolean isLeq(final DBM that) {
+		final Set<ClockDecl> clocks = Sets.union(this.signature.toSet(), that.signature.toSet());
+
+		for (final ClockDecl x : clocks) {
+			for (final ClockDecl y : clocks) {
+				if (this.getOrDefault(x, y) > that.getOrDefault(x, y)) {
+					return false;
+				}
+
+			}
+		}
+		return true;
+	}
+
+	public boolean isLeq(final DBM that, final BoundFunction bound) {
+		final Set<ClockDecl> clocks = Sets.union(this.signature.toSet(), that.signature.toSet());
+
+		if (!this.isConsistent()) {
+			return true;
+		}
+
+		if (!that.isConsistent()) {
+			return false;
+		}
+
+		for (final ClockDecl x : clocks) {
+			final ClockDecl zero = ZeroClock.getInstance();
+
+			final int Zx0 = this.get(zero, x);
+			final int leqMinusUx = LeqMinusUx(x, bound);
+
+			// Zx0 >= (-Ux, <=)
+			if (Zx0 < leqMinusUx) {
+				continue;
+			}
+
+			for (final ClockDecl y : clocks) {
+				final int Zxy = this.get(y, x);
+				final int Zpxy = that.get(y, x);
+
+				if (Zpxy >= Zxy) {
+					continue;
+				}
+
+				final int ltMinusLy = LtMinusLy(y, bound);
+
+				if (add(Zpxy, ltMinusLy) >= Zx0) {
+					continue;
+				}
+
+				return false;
+			}
+		}
+		return true;
+	}
+
+	private static final int LeqMinusUx(final ClockDecl x, final BoundFunction boundFunction) {
+		return boundFunction.getUpper(x).map(Ux -> Leq(-Ux)).orElse(Inf());
+	}
+
+	private static final int LtMinusLy(final ClockDecl y, final BoundFunction boundFunction) {
+		return boundFunction.getLower(y).map(Ly -> Lt(-Ly)).orElse(Inf());
+	}
+
 	public Collection<ClockConstr> getConstrs() {
 		final Collection<ClockConstr> result = new HashSet<>();
 
@@ -356,6 +473,10 @@ final class DBM {
 
 	public void down() {
 		dbm.down();
+	}
+
+	public void nonnegative() {
+		dbm.nonnegative();
 	}
 
 	public void and(final ClockConstr constr) {

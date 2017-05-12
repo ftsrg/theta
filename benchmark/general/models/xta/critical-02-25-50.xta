@@ -1,0 +1,61 @@
+const int N = 2;
+
+const int A = 25;
+const int B = 50;
+
+typedef int[1, N] id_t;
+int id;
+
+chan cellenter[N + 1], cellexit[N + 1];
+
+process Counter() {
+	state
+		initCount,
+		initial;
+	
+	init initial;
+	
+	trans
+		initCount -> initCount { guard id >= N; assign id = 1; },
+		initCount -> initCount { guard id < N; assign id = id + 1; },
+		initial -> initCount { guard id == 0; assign id = 1; };
+}
+
+process Arbiter(const id_t i) {
+	state
+		S0,
+		S1;
+
+	init S1;
+	
+	trans
+		S0 -> S1 { sync cellexit[i]!; assign id = i; },
+		S1 -> S0 { guard id == i; sync cellenter[i]!; assign id = 0; };
+}
+
+process ProdCell(const id_t i) {
+	clock x;
+	
+	state
+		safe,
+		testing2 { x <= A },
+		error,
+		critical { x <= B },
+		requesting,
+		testing { x <= A },
+		notready;
+		
+	init notready;
+
+	trans
+		testing2 -> safe { guard x <= A - 1; },
+		testing2 -> error { guard x >= A; },
+		critical -> error { guard x >= B; },
+		critical -> testing2 { guard x <= A - 1; sync cellexit[i]?; assign x = 0; },
+		requesting -> critical { sync cellenter[i]?; assign x = 0; },
+		testing -> requesting { guard x <= A - 1; },
+		testing -> notready { guard x >= A; assign x = 0; },
+		notready -> testing { guard x <= B; assign x = 0; };
+}
+
+system Counter, Arbiter, ProdCell;

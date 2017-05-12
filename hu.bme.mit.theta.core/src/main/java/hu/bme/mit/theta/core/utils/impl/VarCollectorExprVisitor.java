@@ -71,8 +71,9 @@ final class VarCollectorExprVisitor extends ArityBasedExprVisitor<Collection<Var
 	@Override
 	public <IndexType extends Type, ElemType extends Type> Void visit(final ArrayReadExpr<IndexType, ElemType> expr,
 			final Collection<VarDecl<? extends Type>> param) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO");
+		expr.getArray().accept(this, param);
+		expr.getIndex().accept(this, param);
+		return null;
 	}
 
 	@Override

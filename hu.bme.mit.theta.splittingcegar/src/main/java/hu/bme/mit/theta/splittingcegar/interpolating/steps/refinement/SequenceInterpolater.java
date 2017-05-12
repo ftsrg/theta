@@ -9,6 +9,7 @@ import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.NotExpr;
 import hu.bme.mit.theta.core.expr.impl.Exprs;
 import hu.bme.mit.theta.core.type.BoolType;
+import hu.bme.mit.theta.core.utils.impl.PathUtils;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.solver.ItpMarker;
 import hu.bme.mit.theta.solver.ItpPattern;
@@ -53,26 +54,26 @@ public class SequenceInterpolater extends AbstractCEGARStep implements Interpola
 		itpSolver.push();
 
 		// Initial conditions for the first marker
-		itpSolver.add(markers[0], sts.unfoldInit(0));
+		itpSolver.add(markers[0], PathUtils.unfold(sts.getInit(), 0));
 
 		// Loop through each marker except the last one
 		for (int i = 0; i < abstractCounterEx.size(); ++i) {
 
 			for (final Expr<? extends BoolType> label : abstractCounterEx.get(i).getLabels()) {
 				// Assert labels
-				itpSolver.add(markers[i], sts.unfold(label, i));
+				itpSolver.add(markers[i], PathUtils.unfold(label, i));
 			}
 
 			if (i > 0) {
 				// Assert transition relation
-				itpSolver.add(markers[i], sts.unfoldTrans(i - 1));
+				itpSolver.add(markers[i], PathUtils.unfold(sts.getTrans(), i - 1));
 			}
 		}
 
 		// Set the last marker
 		final NotExpr negSpec = Exprs.Not(system.getSTS().getProp());
-		itpSolver.add(markers[abstractCounterEx.size()], sts.unfold(negSpec, abstractCounterEx.size() - 1)); // Property
-																												// violation
+		itpSolver.add(markers[abstractCounterEx.size()], PathUtils.unfold(negSpec, abstractCounterEx.size() - 1)); // Property
+																													// violation
 
 		// The conjunction of the markers is unsatisfiable (otherwise there
 		// would be a concrete counterexample),
@@ -83,7 +84,7 @@ public class SequenceInterpolater extends AbstractCEGARStep implements Interpola
 		final List<Expr<? extends BoolType>> interpolants = new ArrayList<>();
 		// Fold in interpolants (except the last)
 		for (int i = 0; i < markers.length - 1; ++i)
-			interpolants.add(sts.foldin(itpSolver.getInterpolant(pattern).eval(markers[i]), i));
+			interpolants.add(PathUtils.foldin(itpSolver.getInterpolant(pattern).eval(markers[i]), i));
 
 		// TODO: assert last interpolant to be 'false'
 

@@ -6,8 +6,8 @@ import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.loc.LocState;
 import hu.bme.mit.theta.analysis.prod.Prod2State;
-import hu.bme.mit.theta.analysis.tcfa.zone.itp.ItpZoneState;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
+import hu.bme.mit.theta.analysis.zone.itp.ItpZoneState;
 import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.BoolType;
@@ -50,7 +50,7 @@ public final class TcfaLawiState implements ExprState {
 	}
 
 	public ZoneState getConcreteZone() {
-		return state.getState()._2().getState();
+		return state.getState()._2().getZone();
 	}
 
 	public ZoneState getAbstractZone() {

@@ -12,7 +12,6 @@ import hu.bme.mit.theta.analysis.algorithm.ArgBuilder;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
-import hu.bme.mit.theta.analysis.impl.NullPrec;
 import hu.bme.mit.theta.analysis.impl.PrecMappingAnalysis;
 import hu.bme.mit.theta.analysis.loc.ConstLocPrec;
 import hu.bme.mit.theta.analysis.loc.LocAction;
@@ -23,14 +22,15 @@ import hu.bme.mit.theta.analysis.pred.PredAnalysis;
 import hu.bme.mit.theta.analysis.pred.PredPrec;
 import hu.bme.mit.theta.analysis.pred.PredState;
 import hu.bme.mit.theta.analysis.pred.SimplePredPrec;
+import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.formalism.common.Edge;
 import hu.bme.mit.theta.formalism.common.Loc;
 import hu.bme.mit.theta.solver.ItpSolver;
 
 public final class PredImpactChecker<L extends Loc<L, E>, E extends Edge<L, E>>
-		implements SafetyChecker<LocState<PredState, L, E>, LocAction<L, E>, NullPrec> {
+		implements SafetyChecker<LocState<PredState, L, E>, LocAction<L, E>, UnitPrec> {
 
-	private final ImpactChecker<LocState<PredState, L, E>, LocAction<L, E>, NullPrec> checker;
+	private final ImpactChecker<LocState<PredState, L, E>, LocAction<L, E>, UnitPrec> checker;
 
 	private PredImpactChecker(final LTS<? super LocState<PredState, L, E>, ? extends LocAction<L, E>> lts,
 			final L initLoc, final Predicate<? super L> targetLocs, final ItpSolver solver) {
@@ -45,12 +45,12 @@ public final class PredImpactChecker<L extends Loc<L, E>, E extends Edge<L, E>>
 		final Analysis<LocState<PredState, L, E>, LocAction<L, E>, LocPrec<PredPrec, L, E>> cfaAnalysis = LocAnalysis
 				.create(initLoc, predAnalysis);
 
-		final Analysis<LocState<PredState, L, E>, LocAction<L, E>, NullPrec> analysis = PrecMappingAnalysis
+		final Analysis<LocState<PredState, L, E>, LocAction<L, E>, UnitPrec> analysis = PrecMappingAnalysis
 				.create(cfaAnalysis, np -> fixedPrec);
 
 		final Predicate<LocState<?, L, ?>> target = s -> targetLocs.test(s.getLoc());
 
-		final ArgBuilder<LocState<PredState, L, E>, LocAction<L, E>, NullPrec> argBuilder = ArgBuilder.create(lts,
+		final ArgBuilder<LocState<PredState, L, E>, LocAction<L, E>, UnitPrec> argBuilder = ArgBuilder.create(lts,
 				analysis, target);
 
 		final ImpactRefiner<LocState<PredState, L, E>, LocAction<L, E>> refiner = PredImpactRefiner.create(solver);
@@ -65,7 +65,7 @@ public final class PredImpactChecker<L extends Loc<L, E>, E extends Edge<L, E>>
 	}
 
 	@Override
-	public SafetyResult<LocState<PredState, L, E>, LocAction<L, E>> check(final NullPrec prec) {
+	public SafetyResult<LocState<PredState, L, E>, LocAction<L, E>> check(final UnitPrec prec) {
 		return checker.check(prec);
 	}
 

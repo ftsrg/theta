@@ -7,6 +7,7 @@ import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.NotExpr;
 import hu.bme.mit.theta.core.expr.impl.Exprs;
 import hu.bme.mit.theta.core.type.BoolType;
+import hu.bme.mit.theta.core.utils.impl.PathUtils;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.solver.ItpMarker;
 import hu.bme.mit.theta.solver.ItpPattern;
@@ -46,17 +47,17 @@ public class CraigInterpolater extends AbstractCEGARStep implements Interpolater
 		// The first formula (A) describes the dead-end states
 
 		// Start from an initial state
-		itpSolver.add(A, sts.unfoldInit(0));
+		itpSolver.add(A, PathUtils.unfold(sts.getInit(), 0));
 
 		for (int i = 0; i < traceLength; ++i) {
 			for (final Expr<? extends BoolType> label : abstractCounterEx.get(i).getLabels()) {
 				// Labels of the abstract state
-				itpSolver.add(A, sts.unfold(label, i));
+				itpSolver.add(A, PathUtils.unfold(label, i));
 			}
 
 			if (i > 0) {
 				// Transition relation
-				itpSolver.add(A, sts.unfoldTrans(i - 1));
+				itpSolver.add(A, PathUtils.unfold(sts.getTrans(), i - 1));
 			}
 
 		}
@@ -66,17 +67,17 @@ public class CraigInterpolater extends AbstractCEGARStep implements Interpolater
 		// state is not the last)
 		// - States violating the property (if the failure state is the last)
 		if (traceLength < abstractCounterEx.size()) { // Failure state is not
-														// the last
+															// the last
 			for (final Expr<? extends BoolType> label : abstractCounterEx.get(traceLength).getLabels())
 				// Labels of the next abstract state
-				itpSolver.add(B, sts.unfold(label, traceLength));
+				itpSolver.add(B, PathUtils.unfold(label, traceLength));
 			// Transition to the next abstract state
-			itpSolver.add(B, sts.unfoldTrans(traceLength - 1));
+			itpSolver.add(B, PathUtils.unfold(sts.getTrans(), traceLength - 1));
 
 		} else { // Failure state is the last
 			final NotExpr negSpec = Exprs.Not(system.getSTS().getProp());
 			// Property violation
-			itpSolver.add(B, sts.unfold(negSpec, traceLength - 1));
+			itpSolver.add(B, PathUtils.unfold(negSpec, traceLength - 1));
 
 		}
 		// Since A and B is unsatisfiable (otherwise there would be a concrete
@@ -88,7 +89,7 @@ public class CraigInterpolater extends AbstractCEGARStep implements Interpolater
 		assert (itpSolver.getStatus() == SolverStatus.UNSAT);
 		final hu.bme.mit.theta.solver.Interpolant itp = itpSolver.getInterpolant(pattern);
 
-		final Expr<? extends BoolType> interpolant = sts.foldin(itp.eval(A), traceLength - 1);
+		final Expr<? extends BoolType> interpolant = PathUtils.foldin(itp.eval(A), traceLength - 1);
 		itpSolver.pop();
 		return new Interpolant(interpolant, traceLength - 1);
 

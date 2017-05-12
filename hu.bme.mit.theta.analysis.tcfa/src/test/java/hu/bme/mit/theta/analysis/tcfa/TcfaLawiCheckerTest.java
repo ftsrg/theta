@@ -7,9 +7,9 @@ import org.junit.Test;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.ArgChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
-import hu.bme.mit.theta.analysis.impl.NullPrec;
 import hu.bme.mit.theta.analysis.tcfa.lawi.TcfaLawiChecker;
 import hu.bme.mit.theta.analysis.tcfa.lawi.TcfaLawiState;
+import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.formalism.tcfa.TCFA;
 import hu.bme.mit.theta.formalism.tcfa.instances.TcfaModels;
 import hu.bme.mit.theta.solver.Solver;
@@ -23,18 +23,19 @@ public final class TcfaLawiCheckerTest {
 		final int n = 2;
 		final TCFA fischer = TcfaModels.fischer(n, 2);
 
-		final Solver solver = Z3SolverFactory.getInstace().createSolver();
-
-		final TcfaLawiChecker checker = TcfaLawiChecker.create(fischer, l -> false, solver);
+		final TcfaLawiChecker checker = TcfaLawiChecker.create(fischer, l -> false);
 
 		// Act
-		final SafetyResult<TcfaLawiState, TcfaAction> status = checker.check(NullPrec.getInstance());
+		final SafetyResult<TcfaLawiState, TcfaAction> status = checker.check(UnitPrec.getInstance());
 
 		// Assert
 		assertTrue(status.isSafe());
 		final ARG<TcfaLawiState, TcfaAction> arg = status.getArg();
+
+		final Solver solver = Z3SolverFactory.getInstace().createSolver();
 		final ArgChecker argChecker = ArgChecker.create(solver);
 		assertTrue(argChecker.isWellLabeled(arg));
+
 		System.out.println(arg.getNodes().count());
 	}
 

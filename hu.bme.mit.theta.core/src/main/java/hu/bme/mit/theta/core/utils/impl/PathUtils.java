@@ -6,6 +6,7 @@ import static hu.bme.mit.theta.core.expr.impl.Exprs.Prime;
 
 import java.util.Collection;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.IndexedConstDecl;
@@ -49,6 +50,11 @@ public class PathUtils {
 	public static <T extends Type> Expr<T> unfold(final Expr<T> expr, final int i) {
 		checkArgument(i >= 0);
 		return unfold(expr, VarIndexing.all(i));
+	}
+
+	public static <T extends Type> Collection<Expr<? extends T>> unfold(final Collection<Expr<? extends T>> exprs,
+			final int i) {
+		return exprs.stream().map(e -> PathUtils.unfold(e, i)).collect(Collectors.toSet());
 	}
 
 	public static <T extends Type> Expr<T> foldin(final Expr<T> expr, final VarIndexing indexing) {

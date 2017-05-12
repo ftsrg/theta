@@ -1,8 +1,8 @@
 package hu.bme.mit.theta.analysis.tcfa.lawi;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.analysis.tcfa.TcfaZoneUtils.post;
-import static hu.bme.mit.theta.analysis.tcfa.TcfaZoneUtils.pre;
+import static hu.bme.mit.theta.analysis.tcfa.zone.TcfaZoneUtils.post;
+import static hu.bme.mit.theta.analysis.tcfa.zone.TcfaZoneUtils.pre;
 import static java.util.stream.Collectors.toList;
 
 import java.util.Collection;
@@ -23,7 +23,7 @@ public final class TcfaLawiRefiner {
 	private TcfaLawiRefiner(final TCFA tcfa, final Waitlist<ArgNode<TcfaLawiState, TcfaAction>> waitlist) {
 		checkNotNull(tcfa);
 		this.waitlist = checkNotNull(waitlist);
-		prec = ZonePrec.create(tcfa.getClockVars());
+		prec = ZonePrec.of(tcfa.getClockVars());
 	}
 
 	public static TcfaLawiRefiner create(final TCFA tcfa, final Waitlist<ArgNode<TcfaLawiState, TcfaAction>> waitlist) {

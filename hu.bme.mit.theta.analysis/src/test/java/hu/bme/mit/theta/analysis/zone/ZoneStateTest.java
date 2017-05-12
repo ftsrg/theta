@@ -27,7 +27,7 @@ public class ZoneStateTest {
 		final ZoneState z0 = ZoneState.top();
 		System.out.println(z0);
 
-		final ZoneState z1 = z0.project(clockDecls).and(Leq(x, y, 0)).and(Eq(z, 4)).done();
+		final ZoneState z1 = z0.project(clockDecls).and(Leq(x, y, 0)).and(Eq(z, 4)).build();
 		System.out.println(z1);
 	}
 

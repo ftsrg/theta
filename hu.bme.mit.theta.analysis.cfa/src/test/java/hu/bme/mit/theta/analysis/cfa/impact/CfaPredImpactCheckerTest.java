@@ -25,7 +25,7 @@ import hu.bme.mit.theta.analysis.algorithm.impact.PredImpactChecker;
 import hu.bme.mit.theta.analysis.cfa.CfaLts;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
-import hu.bme.mit.theta.analysis.impl.NullPrec;
+import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.common.visualization.GraphvizWriter;
 import hu.bme.mit.theta.core.decl.VarDecl;
@@ -66,7 +66,7 @@ public final class CfaPredImpactCheckerTest {
 
 		// Act
 		final SafetyResult<? extends ExprState, ? extends ExprAction> status = checker
-				.check(NullPrec.getInstance());
+				.check(UnitPrec.getInstance());
 
 		// Assert
 		assertTrue(status.isSafe());
