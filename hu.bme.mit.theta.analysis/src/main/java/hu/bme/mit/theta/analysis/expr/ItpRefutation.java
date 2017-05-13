@@ -40,7 +40,7 @@ public final class ItpRefutation implements Refutation, Iterable<Expr<? extends 
 		return new ItpRefutation(itpSequence);
 	}
 
-	public static ItpRefutation craig(final Expr<? extends BoolType> itp, final int i, final int n) {
+	public static ItpRefutation binary(final Expr<? extends BoolType> itp, final int i, final int n) {
 		checkNotNull(itp);
 		checkArgument(n > 0, "Zero length interpolant");
 		checkArgument(0 <= i && i < n, "Formula index out of bounds");

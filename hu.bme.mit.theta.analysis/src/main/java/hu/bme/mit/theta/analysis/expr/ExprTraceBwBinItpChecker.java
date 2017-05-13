@@ -101,7 +101,7 @@ public class ExprTraceBwBinItpChecker implements ExprTraceChecker<ItpRefutation>
 			final Interpolant interpolant = solver.getInterpolant(pattern);
 			final Expr<BoolType> itpFolded = PathUtils.foldin(interpolant.eval(A), indexings.get(satPostfix));
 			status = ExprTraceStatus
-					.infeasible(ItpRefutation.craig(itpFolded, stateCount - 1 - satPostfix, stateCount));
+					.infeasible(ItpRefutation.binary(itpFolded, stateCount - 1 - satPostfix, stateCount));
 		}
 
 		solver.pop(nPush);

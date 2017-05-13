@@ -99,7 +99,7 @@ public final class ExprTraceFwBinItpChecker implements ExprTraceChecker<ItpRefut
 		} else {
 			final Interpolant interpolant = solver.getInterpolant(pattern);
 			final Expr<BoolType> itpFolded = PathUtils.foldin(interpolant.eval(A), indexings.get(satPrefix));
-			status = ExprTraceStatus.infeasible(ItpRefutation.craig(itpFolded, satPrefix, stateCount));
+			status = ExprTraceStatus.infeasible(ItpRefutation.binary(itpFolded, satPrefix, stateCount));
 		}
 
 		solver.pop(nPush);
