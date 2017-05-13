@@ -19,7 +19,7 @@ public abstract class ConfigurationBuilder {
 	};
 
 	public enum Refinement {
-		FW_CRAIG_ITP, BW_CRAIG_ITP, SEQ_ITP, UNSAT_CORE
+		FW_BIN_ITP, BW_BIN_ITP, SEQ_ITP, UNSAT_CORE
 	};
 
 	public enum Search {

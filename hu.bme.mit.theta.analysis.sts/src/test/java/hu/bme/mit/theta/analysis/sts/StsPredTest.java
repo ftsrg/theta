@@ -35,7 +35,7 @@ import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.ExprStatePredicate;
 import hu.bme.mit.theta.analysis.expr.ExprTraceChecker;
-import hu.bme.mit.theta.analysis.expr.ExprTraceCraigItpChecker;
+import hu.bme.mit.theta.analysis.expr.ExprTraceFwBinItpChecker;
 import hu.bme.mit.theta.analysis.expr.ItpRefutation;
 import hu.bme.mit.theta.analysis.pred.ItpRefToSimplePredPrec;
 import hu.bme.mit.theta.analysis.pred.PredAnalysis;
@@ -88,7 +88,7 @@ public class StsPredTest {
 		final Abstractor<PredState, StsAction, SimplePredPrec> abstractor = WaitlistBasedAbstractor.create(argBuilder,
 				FifoWaitlist.supplier(), logger);
 
-		final ExprTraceChecker<ItpRefutation> exprTraceChecker = ExprTraceCraigItpChecker.create(And(sts.getInit()),
+		final ExprTraceChecker<ItpRefutation> exprTraceChecker = ExprTraceFwBinItpChecker.create(And(sts.getInit()),
 				Not(sts.getProp()), solver);
 
 		final SingleExprTraceRefiner<PredState, StsAction, SimplePredPrec, ItpRefutation> refiner = SingleExprTraceRefiner

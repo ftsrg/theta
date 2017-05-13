@@ -27,9 +27,9 @@ import hu.bme.mit.theta.analysis.expl.VarsRefToExplPrec;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.ExprStatePredicate;
-import hu.bme.mit.theta.analysis.expr.ExprTraceBackCraigItpChecker;
+import hu.bme.mit.theta.analysis.expr.ExprTraceBwBinItpChecker;
 import hu.bme.mit.theta.analysis.expr.ExprTraceChecker;
-import hu.bme.mit.theta.analysis.expr.ExprTraceCraigItpChecker;
+import hu.bme.mit.theta.analysis.expr.ExprTraceFwBinItpChecker;
 import hu.bme.mit.theta.analysis.expr.ExprTraceSeqItpChecker;
 import hu.bme.mit.theta.analysis.expr.ExprTraceUnsatCoreChecker;
 import hu.bme.mit.theta.analysis.expr.ItpRefutation;
@@ -120,12 +120,12 @@ public final class StsConfigurationBuilder extends ConfigurationBuilder {
 			Refiner<ExplState, StsAction, ExplPrec> refiner = null;
 
 			switch (getRefinement()) {
-			case FW_CRAIG_ITP:
-				refiner = SingleExprTraceRefiner.create(ExprTraceCraigItpChecker.create(init, negProp, solver),
+			case FW_BIN_ITP:
+				refiner = SingleExprTraceRefiner.create(ExprTraceFwBinItpChecker.create(init, negProp, solver),
 						BasicPrecRefiner.create(new ItpRefToExplPrec()), getLogger());
 				break;
-			case BW_CRAIG_ITP:
-				refiner = SingleExprTraceRefiner.create(ExprTraceBackCraigItpChecker.create(init, negProp, solver),
+			case BW_BIN_ITP:
+				refiner = SingleExprTraceRefiner.create(ExprTraceBwBinItpChecker.create(init, negProp, solver),
 						BasicPrecRefiner.create(new ItpRefToExplPrec()), getLogger());
 				break;
 			case SEQ_ITP:
@@ -155,11 +155,11 @@ public final class StsConfigurationBuilder extends ConfigurationBuilder {
 
 			ExprTraceChecker<ItpRefutation> exprTraceChecker = null;
 			switch (getRefinement()) {
-			case FW_CRAIG_ITP:
-				exprTraceChecker = ExprTraceCraigItpChecker.create(init, negProp, solver);
+			case FW_BIN_ITP:
+				exprTraceChecker = ExprTraceFwBinItpChecker.create(init, negProp, solver);
 				break;
-			case BW_CRAIG_ITP:
-				exprTraceChecker = ExprTraceBackCraigItpChecker.create(init, negProp, solver);
+			case BW_BIN_ITP:
+				exprTraceChecker = ExprTraceBwBinItpChecker.create(init, negProp, solver);
 				break;
 			case SEQ_ITP:
 				exprTraceChecker = ExprTraceSeqItpChecker.create(init, negProp, solver);

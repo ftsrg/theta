@@ -21,22 +21,22 @@ import hu.bme.mit.theta.solver.ItpMarker;
 import hu.bme.mit.theta.solver.ItpPattern;
 import hu.bme.mit.theta.solver.ItpSolver;
 
-public class ExprTraceBackCraigItpChecker implements ExprTraceChecker<ItpRefutation> {
+public class ExprTraceBwBinItpChecker implements ExprTraceChecker<ItpRefutation> {
 
 	private final ItpSolver solver;
 	private final Expr<? extends BoolType> init;
 	private final Expr<? extends BoolType> target;
 
-	private ExprTraceBackCraigItpChecker(final Expr<? extends BoolType> init, final Expr<? extends BoolType> target,
+	private ExprTraceBwBinItpChecker(final Expr<? extends BoolType> init, final Expr<? extends BoolType> target,
 			final ItpSolver solver) {
 		this.solver = checkNotNull(solver);
 		this.init = checkNotNull(init);
 		this.target = checkNotNull(target);
 	}
 
-	public static ExprTraceBackCraigItpChecker create(final Expr<? extends BoolType> init,
+	public static ExprTraceBwBinItpChecker create(final Expr<? extends BoolType> init,
 			final Expr<? extends BoolType> target, final ItpSolver solver) {
-		return new ExprTraceBackCraigItpChecker(init, target, solver);
+		return new ExprTraceBwBinItpChecker(init, target, solver);
 	}
 
 	@Override

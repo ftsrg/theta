@@ -18,7 +18,7 @@ import hu.bme.mit.theta.analysis.expl.ExplPrec;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expl.ItpRefToExplPrec;
 import hu.bme.mit.theta.analysis.expl.VarsRefToExplPrec;
-import hu.bme.mit.theta.analysis.expr.ExprTraceCraigItpChecker;
+import hu.bme.mit.theta.analysis.expr.ExprTraceFwBinItpChecker;
 import hu.bme.mit.theta.analysis.expr.ExprTraceSeqItpChecker;
 import hu.bme.mit.theta.analysis.expr.ExprTraceUnsatCoreChecker;
 import hu.bme.mit.theta.analysis.loc.ConstLocPrec;
@@ -95,14 +95,14 @@ public class CfaConfigurationBuilder extends ConfigurationBuilder {
 			Refiner<LocState<ExplState, CfaLoc, CfaEdge>, CfaAction, LocPrec<ExplPrec, CfaLoc, CfaEdge>> refiner = null;
 
 			switch (getRefinement()) {
-			case FW_CRAIG_ITP:
+			case FW_BIN_ITP:
 				if (precGranularity == PrecGranularity.CONST) {
 					refiner = SingleExprTraceRefiner.create(
-							ExprTraceCraigItpChecker.create(Exprs.True(), Exprs.True(), solver),
+							ExprTraceFwBinItpChecker.create(Exprs.True(), Exprs.True(), solver),
 							ConstLocPrecRefiner.create(new ItpRefToExplPrec()), getLogger());
 				} else {
 					refiner = SingleExprTraceRefiner.create(
-							ExprTraceCraigItpChecker.create(Exprs.True(), Exprs.True(), solver),
+							ExprTraceFwBinItpChecker.create(Exprs.True(), Exprs.True(), solver),
 							GenericLocPrecRefiner.create(new ItpRefToExplPrec()), getLogger());
 				}
 				break;
@@ -161,16 +161,16 @@ public class CfaConfigurationBuilder extends ConfigurationBuilder {
 			Refiner<LocState<PredState, CfaLoc, CfaEdge>, CfaAction, LocPrec<SimplePredPrec, CfaLoc, CfaEdge>> refiner = null;
 
 			switch (getRefinement()) {
-			case FW_CRAIG_ITP:
+			case FW_BIN_ITP:
 				if (precGranularity == PrecGranularity.CONST) {
 					refiner = SingleExprTraceRefiner.create(
-							ExprTraceCraigItpChecker.create(Exprs.True(), Exprs.True(), solver),
+							ExprTraceFwBinItpChecker.create(Exprs.True(), Exprs.True(), solver),
 							ConstLocPrecRefiner.create(new ItpRefToSimplePredPrec(solver, getPredSplit().splitter)),
 							getLogger());
 					break;
 				} else {
 					refiner = SingleExprTraceRefiner.create(
-							ExprTraceCraigItpChecker.create(Exprs.True(), Exprs.True(), solver),
+							ExprTraceFwBinItpChecker.create(Exprs.True(), Exprs.True(), solver),
 							GenericLocPrecRefiner.create(new ItpRefToSimplePredPrec(solver, getPredSplit().splitter)),
 							getLogger());
 				}

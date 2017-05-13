@@ -323,13 +323,13 @@ pairwise_plot(d, "TimeMs", "Domain", "PRED", "EXPL",
 ```
 
 ```{r}
-pairwise_plot(d, "TimeMs", "Refinement", "BW_CRAIG_ITP", "FW_CRAIG_ITP",
+pairwise_plot(d, "TimeMs", "Refinement", "BW_BIN_ITP", "FW_BIN_ITP",
               c("Type", "Model", "Domain", "InitPrec", "Search", "PredSplit"), "Type",
               log_scale = T, bin_width = .25, na_fill = params$timeout_ms, pt_position = "jitter")
-pairwise_plot(d, "TimeMs", "Refinement", "BW_CRAIG_ITP", "SEQ_ITP",
+pairwise_plot(d, "TimeMs", "Refinement", "BW_BIN_ITP", "SEQ_ITP",
               c("Type", "Model", "Domain", "InitPrec", "Search", "PredSplit"), "Type",
               log_scale = T, bin_width = .25, na_fill = params$timeout_ms, pt_position = "jitter")
-pairwise_plot(d, "TimeMs", "Refinement", "FW_CRAIG_ITP", "SEQ_ITP",
+pairwise_plot(d, "TimeMs", "Refinement", "FW_BIN_ITP", "SEQ_ITP",
               c("Type", "Model", "Domain", "InitPrec", "Search", "PredSplit"), "Type",
               log_scale = T, bin_width = .25, na_fill = params$timeout_ms, pt_position = "jitter")
 ```
@@ -347,13 +347,13 @@ ggplot(d_model_config, aes(Config, Model)) +
 ### Pairwise comparisons
 
 ```{r}
-pairwise_plot(d, "Iterations", "Refinement", "BW_CRAIG_ITP", "FW_CRAIG_ITP",
+pairwise_plot(d, "Iterations", "Refinement", "BW_BIN_ITP", "FW_BIN_ITP",
               c("Type", "Model", "Domain", "InitPrec", "Search", "PredSplit"), "Type",
               log_scale = F, bin_width = 2, pt_position = "jitter")
-pairwise_plot(d, "Iterations", "Refinement", "BW_CRAIG_ITP", "SEQ_ITP",
+pairwise_plot(d, "Iterations", "Refinement", "BW_BIN_ITP", "SEQ_ITP",
               c("Type", "Model", "Domain", "InitPrec", "Search", "PredSplit"), "Type",
               log_scale = F, bin_width = 2, pt_position = "jitter")
-pairwise_plot(d, "Iterations", "Refinement", "FW_CRAIG_ITP", "SEQ_ITP",
+pairwise_plot(d, "Iterations", "Refinement", "FW_BIN_ITP", "SEQ_ITP",
               c("Type", "Model", "Domain", "InitPrec", "Search", "PredSplit"), "Type",
               log_scale = F, bin_width = 2, pt_position = "jitter")
 ```
