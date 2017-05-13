@@ -16,7 +16,8 @@ import hu.bme.mit.theta.analysis.Domain;
 import hu.bme.mit.theta.analysis.State;
 
 /**
- * Represents an abstract reachability graph (ARG).
+ * Represents an abstract reachability graph (ARG). See the related class
+ * ArgBuilder.
  */
 public final class ARG<S extends State, A extends Action> {
 

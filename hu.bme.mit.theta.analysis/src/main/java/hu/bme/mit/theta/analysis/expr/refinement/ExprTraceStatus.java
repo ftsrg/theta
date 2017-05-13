@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.analysis.expr;
+package hu.bme.mit.theta.analysis.expr.refinement;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 

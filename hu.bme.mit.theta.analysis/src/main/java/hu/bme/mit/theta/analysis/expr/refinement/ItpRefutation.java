@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.analysis.expr;
+package hu.bme.mit.theta.analysis.expr.refinement;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkElementIndex;
@@ -19,6 +19,9 @@ import hu.bme.mit.theta.core.utils.impl.ExprUtils;
 import hu.bme.mit.theta.core.utils.impl.IndexedVars;
 import hu.bme.mit.theta.core.utils.impl.IndexedVars.Builder;
 
+/**
+ * An interpolant-based refutation that is a sequence of formulas.
+ */
 public final class ItpRefutation implements Refutation, Iterable<Expr<? extends BoolType>> {
 
 	private final List<Expr<? extends BoolType>> itpSequence;
