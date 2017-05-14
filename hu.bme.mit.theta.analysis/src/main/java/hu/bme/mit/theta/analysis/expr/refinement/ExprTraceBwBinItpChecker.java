@@ -114,4 +114,9 @@ public class ExprTraceBwBinItpChecker implements ExprTraceChecker<ItpRefutation>
 
 		return status;
 	}
+
+	@Override
+	public String toString() {
+		return getClass().getSimpleName();
+	}
 }

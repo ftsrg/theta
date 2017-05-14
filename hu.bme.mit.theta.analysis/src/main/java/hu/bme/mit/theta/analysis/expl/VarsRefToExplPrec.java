@@ -25,4 +25,8 @@ public class VarsRefToExplPrec implements RefutationToPrec<ExplPrec, VarsRefutat
 		return prec1.join(prec2);
 	}
 
+	@Override
+	public String toString() {
+		return getClass().getSimpleName();
+	}
 }

@@ -29,4 +29,8 @@ public class ItpRefToExplPrec implements RefutationToPrec<ExplPrec, ItpRefutatio
 		return prec1.join(prec2);
 	}
 
+	@Override
+	public String toString() {
+		return getClass().getSimpleName();
+	}
 }

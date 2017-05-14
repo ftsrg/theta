@@ -39,6 +39,11 @@ public class ItpRefToSimplePredPrec implements RefutationToPrec<SimplePredPrec, 
 		return prec1.join(prec2);
 	}
 
+	@Override
+	public String toString() {
+		return getClass().getSimpleName(); // TODO: splitting strategy should be included
+	}
+
 	public static Function<Expr<? extends BoolType>, Collection<Expr<? extends BoolType>>> whole() {
 		return e -> Collections.singleton(e);
 	}
