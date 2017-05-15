@@ -159,7 +159,7 @@ public class StsMain {
 			tableWriter.cell(ExprUtils.size(Exprs.And(Exprs.And(sts.getInit()), Exprs.And(sts.getTrans())),
 					ExprMetrics.absoluteSize()));
 
-		} catch (final Exception ex) {
+		} catch (final Throwable ex) {
 			final String message = ex.getMessage() == null ? "" : ": " + ex.getMessage();
 			tableWriter.cell("[EX] " + ex.getClass().getSimpleName() + message);
 		}
