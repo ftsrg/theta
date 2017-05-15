@@ -83,8 +83,11 @@ public final class WaitlistBasedAbstractor<S extends State, A extends Action, P 
 				arg.getIncompleteNodes().count(), arg.getUnsafeNodes().count()), 3);
 
 		if (unsafeNode.isPresent()) {
+			assert !arg.isSafe() : "Returning safe ARG as unsafe";
 			return AbstractorResult.unsafe();
 		} else {
+			assert arg.isSafe() : "Returning unsafe ARG as safe";
+			assert arg.isComplete() : "Returning incomplete ARG as safe";
 			return AbstractorResult.safe();
 		}
 	}
@@ -102,6 +105,7 @@ public final class WaitlistBasedAbstractor<S extends State, A extends Action, P 
 			close(node, reachedSet.get(node));
 			if (!node.isCovered()) {
 				if (node.isTarget()) {
+					assert !node.isSafe() : "Safe node returned as unsafe";
 					return Optional.of(node);
 				} else {
 					final Collection<ArgNode<S, A>> newNodes = argBuilder.expand(node, prec);

@@ -1,8 +1,6 @@
 package hu.bme.mit.theta.analysis.expr.refinement;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
 
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.Trace;
@@ -44,7 +42,7 @@ public class SingleExprTraceRefiner<S extends ExprState, A extends ExprAction, P
 	public RefinerResult<S, A, P> refine(final ARG<S, A> arg, final P prec) {
 		checkNotNull(arg);
 		checkNotNull(prec);
-		checkArgument(!arg.isSafe(), "ARG must be unsafe");
+		assert !arg.isSafe() : "ARG must be unsafe";
 
 		final ArgTrace<S, A> cexToConcretize = arg.getCexs().findFirst().get();
 		final Trace<S, A> traceToConcretize = cexToConcretize.toTrace();
@@ -55,7 +53,7 @@ public class SingleExprTraceRefiner<S extends ExprState, A extends ExprAction, P
 		final ExprTraceStatus<R> cexStatus = exprTraceChecker.check(traceToConcretize);
 		logger.writeln("done: ", cexStatus, 3, 0);
 
-		checkState(cexStatus.isFeasible() || cexStatus.isInfeasible(), "Unknown status.");
+		assert cexStatus.isFeasible() || cexStatus.isInfeasible() : "Unknown CEX status";
 
 		if (cexStatus.isFeasible()) {
 			return RefinerResult.unsafe(traceToConcretize);
@@ -64,8 +62,10 @@ public class SingleExprTraceRefiner<S extends ExprState, A extends ExprAction, P
 			logger.writeln(refutation, 4, 3);
 			final P refinedPrec = precRefiner.refine(prec, traceToConcretize, refutation);
 			final int pruneIndex = refutation.getPruneIndex();
-			checkState(0 <= pruneIndex && pruneIndex <= cexToConcretize.length(), "Pruning index out of range");
+			assert 0 <= pruneIndex : "Pruning index must be non-negative";
+			assert pruneIndex <= cexToConcretize.length() : "Pruning index larger than cex length";
 			logger.writeln("Pruning from index ", pruneIndex, 3, 2);
+
 			final ArgNode<S, A> nodeToPrune = cexToConcretize.node(pruneIndex);
 			arg.prune(nodeToPrune);
 			return RefinerResult.spurious(refinedPrec);

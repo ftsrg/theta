@@ -16,8 +16,7 @@ import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.impl.NullLogger;
 
-public final class CegarChecker<S extends State, A extends Action, P extends Prec>
-		implements SafetyChecker<S, A, P> {
+public final class CegarChecker<S extends State, A extends Action, P extends Prec> implements SafetyChecker<S, A, P> {
 
 	private final Abstractor<S, A, P> abstractor;
 	private final Refiner<S, A, P> refiner;
@@ -68,7 +67,8 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 
 		} while (!abstractorResult.isSafe() && !refinerResult.isUnsafe());
 
-		assert abstractorResult.isSafe() || refinerResult != null;
+		assert abstractorResult != null : "No result from abstractor";
+		assert abstractorResult.isSafe() || (refinerResult != null && refinerResult.isUnsafe());
 
 		stopwatch.stop();
 		SafetyResult<S, A> cegarResult = null;

@@ -1,8 +1,6 @@
 package hu.bme.mit.theta.analysis.expr.refinement;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,7 +47,6 @@ public final class ExprTraceSeqItpChecker implements ExprTraceChecker<ItpRefutat
 	public ExprTraceStatus<ItpRefutation> check(final Trace<? extends ExprState, ? extends ExprAction> trace) {
 		checkNotNull(trace);
 		final int stateCount = trace.getStates().size();
-		checkArgument(stateCount > 0, "Zero length trace");
 
 		solver.push();
 		final List<ItpMarker> markers = new ArrayList<>(stateCount + 1);
@@ -63,7 +60,7 @@ public final class ExprTraceSeqItpChecker implements ExprTraceChecker<ItpRefutat
 
 		solver.add(markers.get(0), PathUtils.unfold(init, indexings.get(0)));
 		solver.add(markers.get(0), PathUtils.unfold(trace.getState(0).toExpr(), indexings.get(0)));
-		checkState(solver.check().isSat(), "Initial state of the trace is not feasible");
+		assert solver.check().isSat() : "Initial state of the trace is not feasible";
 
 		for (int i = 1; i < stateCount; ++i) {
 			indexings.add(indexings.get(i - 1).add(trace.getAction(i - 1).nextIndexing()));
@@ -91,10 +88,9 @@ public final class ExprTraceSeqItpChecker implements ExprTraceChecker<ItpRefutat
 			}
 			status = ExprTraceStatus.infeasible(ItpRefutation.sequence(interpolants));
 		}
-
+		assert status != null;
 		solver.pop();
 
-		assert status != null;
 		return status;
 	}
 
