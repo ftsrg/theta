@@ -110,7 +110,7 @@ foreach($model in $models) {
             
             $output = ""
             # Collect arguments for the jar file
-            $args = @($jvmArgs) + @('-jar', $jarFile)
+            $args = @($jvmArgs) + @('-jar', $jarFile, '--benchmark')
             # Arguments from the model
             foreach ($arg in MemberNames $modelsOpts) {
                 if ($model.$arg) { $args += @($modelsOpts.$arg, $model.$arg) }

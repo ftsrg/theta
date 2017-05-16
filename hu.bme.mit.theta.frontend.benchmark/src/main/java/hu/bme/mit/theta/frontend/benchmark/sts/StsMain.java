@@ -15,6 +15,9 @@ import org.apache.commons.cli.ParseException;
 
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
+import hu.bme.mit.theta.common.logging.Logger;
+import hu.bme.mit.theta.common.logging.impl.ConsoleLogger;
+import hu.bme.mit.theta.common.logging.impl.NullLogger;
 import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.common.table.impl.SimpleTableWriter;
 import hu.bme.mit.theta.core.expr.impl.Exprs;
@@ -95,6 +98,13 @@ public class StsMain {
 		optExpected.setArgName("true|false");
 		options.addOption(optExpected);
 
+		final Option optLogLevel = new Option("ll", "loglevel", true, "Level of logging (detailedness)");
+		optLogLevel.setArgName("INT");
+		options.addOption(optLogLevel);
+
+		final Option optBenchmark = new Option("bm", "benchmark", false, "Benchmark mode (only print output values)");
+		options.addOption(optBenchmark);
+
 		final CommandLineParser parser = new DefaultParser();
 		final HelpFormatter helpFormatter = new HelpFormatter();
 		final CommandLine cmd;
@@ -117,6 +127,10 @@ public class StsMain {
 				? Optional.of(Boolean.parseBoolean(cmd.getOptionValue(optExpected.getOpt()))) : Optional.empty();
 		final PredSplit predSplit = PredSplit
 				.valueOf(cmd.getOptionValue(optPredSplit.getOpt(), PredSplit.WHOLE.toString()));
+		final boolean benchmarkMode = cmd.hasOption(optBenchmark.getOpt());
+
+		final int logLevel = Integer.parseInt(cmd.getOptionValue(optLogLevel.getOpt(), "1"));
+		final Logger logger = benchmarkMode ? NullLogger.getInstance() : new ConsoleLogger(logLevel);
 
 		// Run the algorithm
 		try {
@@ -133,7 +147,7 @@ public class StsMain {
 
 			// Build configuration
 			final Configuration<?, ?, ?> configuration = new StsConfigurationBuilder(domain, refinement)
-					.initPrec(initPrec).search(search).predSplit(predSplit).build(sts);
+					.initPrec(initPrec).search(search).predSplit(predSplit).logger(logger).build(sts);
 			// Run algorithm
 			final SafetyResult<?, ?> status = configuration.check();
 			final CegarStatistics stats = (CegarStatistics) status.getStats().get();
@@ -143,28 +157,35 @@ public class StsMain {
 				throw new Exception("Expected safe = " + expected.get() + " but was " + status.isSafe());
 			}
 
-			tableWriter.cell(status.isSafe());
-			tableWriter.cell(stats.getElapsedMillis());
-			tableWriter.cell(stats.getIterations());
-			tableWriter.cell(status.getArg().size());
-			tableWriter.cell(status.getArg().getDepth());
-			tableWriter.cell(status.getArg().getMeanBranchingFactor());
-
-			if (status.isUnsafe()) {
-				tableWriter.cell(status.asUnsafe().getTrace().length() + "");
-			} else {
-				tableWriter.cell("");
+			if (benchmarkMode) {
+				tableWriter.cell(status.isSafe());
+				tableWriter.cell(stats.getElapsedMillis());
+				tableWriter.cell(stats.getIterations());
+				tableWriter.cell(status.getArg().size());
+				tableWriter.cell(status.getArg().getDepth());
+				tableWriter.cell(status.getArg().getMeanBranchingFactor());
+				if (status.isUnsafe()) {
+					tableWriter.cell(status.asUnsafe().getTrace().length() + "");
+				} else {
+					tableWriter.cell("");
+				}
+				tableWriter.cell(sts.getVars().size());
+				tableWriter.cell(ExprUtils.size(Exprs.And(sts.getInit(), sts.getTrans()), ExprMetrics.absoluteSize()));
 			}
-
-			tableWriter.cell(sts.getVars().size());
-			tableWriter.cell(ExprUtils.size(Exprs.And(sts.getInit(), sts.getTrans()), ExprMetrics.absoluteSize()));
 
 		} catch (final Throwable ex) {
 			final String message = ex.getMessage() == null ? "" : ": " + ex.getMessage();
-			tableWriter.cell("[EX] " + ex.getClass().getSimpleName() + message);
-		}
+			if (benchmarkMode) {
+				tableWriter.cell("[EX] " + ex.getClass().getSimpleName() + message);
+			} else {
+				logger.writeln("Exception occured: " + ex.getClass().getSimpleName(), 0);
+				logger.writeln("Message: " + ex.getMessage(), 0, 1);
+			}
 
-		tableWriter.newRow();
+		}
+		if (benchmarkMode) {
+			tableWriter.newRow();
+		}
 	}
 
 	private static String options(final Object[] objs) {

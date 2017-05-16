@@ -66,7 +66,7 @@ public final class StsSpec {
 
 	private PropDeclSymbol resolvePropDeclSymbol(final String name) {
 		final Optional<Symbol> optSymbol = stsSpecSymbol.resolve(name);
-		checkArgument(optSymbol.isPresent());
+		checkArgument(optSymbol.isPresent(), "Property not found");
 		final Symbol symbol = optSymbol.get();
 		checkArgument(symbol instanceof PropDeclSymbol);
 		final PropDeclSymbol propDeclSymbol = (PropDeclSymbol) symbol;
