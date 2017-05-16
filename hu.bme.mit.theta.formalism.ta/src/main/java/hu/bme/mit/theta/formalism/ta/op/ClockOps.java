@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.formalism.ta.op.impl;
+package hu.bme.mit.theta.formalism.ta.op;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.AddExpr;
@@ -15,12 +15,6 @@ import hu.bme.mit.theta.formalism.ta.constr.ClockConstr;
 import hu.bme.mit.theta.formalism.ta.constr.ClockConstrs;
 import hu.bme.mit.theta.formalism.ta.decl.ClockDecl;
 import hu.bme.mit.theta.formalism.ta.expr.ClockRefExpr;
-import hu.bme.mit.theta.formalism.ta.op.ClockOp;
-import hu.bme.mit.theta.formalism.ta.op.CopyOp;
-import hu.bme.mit.theta.formalism.ta.op.FreeOp;
-import hu.bme.mit.theta.formalism.ta.op.GuardOp;
-import hu.bme.mit.theta.formalism.ta.op.ResetOp;
-import hu.bme.mit.theta.formalism.ta.op.ShiftOp;
 
 public final class ClockOps {
 
@@ -42,23 +36,23 @@ public final class ClockOps {
 	////
 
 	public static CopyOp Copy(final ClockDecl clock, final ClockDecl value) {
-		return new CopyOpImpl(clock, value);
+		return new CopyOp(clock, value);
 	}
 
 	public static FreeOp Free(final ClockDecl clock) {
-		return new FreeOpImpl(clock);
+		return new FreeOp(clock);
 	}
 
 	public static GuardOp Guard(final ClockConstr constr) {
-		return new GuardOpImpl(constr);
+		return new GuardOp(constr);
 	}
 
 	public static ResetOp Reset(final ClockDecl clock, final int value) {
-		return new ResetOpImpl(clock, value);
+		return new ResetOp(clock, value);
 	}
 
 	public static ShiftOp Shift(final ClockDecl clock, final int offset) {
-		return new ShifOpImpl(clock, offset);
+		return new ShiftOp(clock, offset);
 	}
 
 	////

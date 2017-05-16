@@ -4,7 +4,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.formalism.ta.op.ClockOp;
-import hu.bme.mit.theta.formalism.ta.op.impl.ClockOps;
+import hu.bme.mit.theta.formalism.ta.op.ClockOps;
 
 public abstract class TaStmt {
 	private final Stmt stmt;
