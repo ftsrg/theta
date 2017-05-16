@@ -1,12 +1,11 @@
 package hu.bme.mit.theta.formalism.sts;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.stream.Collectors;
+import java.util.Set;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.AndExpr;
@@ -18,27 +17,38 @@ import hu.bme.mit.theta.core.utils.impl.ExprUtils;
 
 /**
  * An immutable Symbolic Transition System (STS) implementation. An STS consists
- * of variables, an initial formula, a transition relation and a property. Use
- * the inner builder class for creating an instance.
+ * of variables, an initial formula, a transition relation and a property. An
+ * inner builder class can also be used for creating an STS more conveniently.
  */
 public final class STS {
 
 	private final Collection<VarDecl<? extends Type>> vars;
-	private final Collection<Expr<? extends BoolType>> init;
-	private final Collection<Expr<? extends BoolType>> trans;
+	private final Expr<? extends BoolType> init;
+	private final Expr<? extends BoolType> trans;
 	private final Expr<? extends BoolType> prop;
 
-	// Private constructor --> use the builder
-	private STS(final Collection<VarDecl<? extends Type>> vars, final Collection<Expr<? extends BoolType>> init,
-			final Collection<Expr<? extends BoolType>> trans, final Expr<? extends BoolType> prop) {
-		this.vars = Collections.unmodifiableCollection(checkNotNull(vars));
-		this.init = Collections.unmodifiableCollection(checkNotNull(init));
-		this.trans = Collections.unmodifiableCollection(checkNotNull(trans));
+	/**
+	 * Create a new STS from an initial formula, a transition relation and a
+	 * property.
+	 *
+	 * @param init Initial formula
+	 * @param trans Transition relation
+	 * @param prop Property
+	 */
+	public STS(final Expr<? extends BoolType> init, final Expr<? extends BoolType> trans,
+			final Expr<? extends BoolType> prop) {
+		this.init = checkNotNull(init);
+		this.trans = checkNotNull(trans);
 		this.prop = checkNotNull(prop);
+		final Set<VarDecl<? extends Type>> tmpVars = new HashSet<>();
+		ExprUtils.collectVars(init, tmpVars);
+		ExprUtils.collectVars(trans, tmpVars);
+		ExprUtils.collectVars(prop, tmpVars);
+		this.vars = Collections.unmodifiableCollection(tmpVars);
 	}
 
 	/**
-	 * Gets the list of variables appearing in the formulas of the STS.
+	 * Gets the collection of variables appearing in the formulas of the STS.
 	 *
 	 * @return
 	 */
@@ -51,7 +61,7 @@ public final class STS {
 	 *
 	 * @return
 	 */
-	public Collection<Expr<? extends BoolType>> getInit() {
+	public Expr<? extends BoolType> getInit() {
 		return init;
 	}
 
@@ -60,7 +70,7 @@ public final class STS {
 	 *
 	 * @return
 	 */
-	public Collection<Expr<? extends BoolType>> getTrans() {
+	public Expr<? extends BoolType> getTrans() {
 		return trans;
 	}
 
@@ -85,48 +95,34 @@ public final class STS {
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder("STS [" + System.lineSeparator());
-		appendCollection(sb, "\tVars:  ", vars, System.lineSeparator());
-		appendCollection(sb, "\tInit:  ", init, System.lineSeparator());
-		appendCollection(sb, "\tTrans: ", trans, System.lineSeparator());
+		sb.append("\tVars:  ").append(vars).append(System.lineSeparator());
+		sb.append("\tInit:  ").append(init).append(System.lineSeparator());
+		sb.append("\tTrans: ").append(trans).append(System.lineSeparator());
 		sb.append("\tProp: ").append(prop).append(System.lineSeparator()).append("]");
 		return sb.toString();
 	}
 
-	private void appendCollection(final StringBuilder sb, final String prefix, final Collection<?> collection,
-			final String postfix) {
-		sb.append(prefix);
-		sb.append(String.join(", ", collection.stream().map(i -> i.toString()).collect(Collectors.toList())));
-		sb.append(postfix);
-	}
-
 	/**
-	 * Helper class for building the immutable STS. It splits AND expressions
-	 * into conjuncts, eliminates duplicate expressions and collects the
-	 * variables from the expressions automatically.
+	 * Helper class for building an STS, supporting multiple initial/transition
+	 * constraints and invariants.
 	 */
 	public static class Builder {
-		private final Collection<VarDecl<? extends Type>> vars;
 		private final Collection<Expr<? extends BoolType>> init;
 		private final Collection<Expr<? extends BoolType>> trans;
 		private Expr<? extends BoolType> prop;
-		private boolean built;
 
 		private Builder() {
-			vars = new HashSet<>();
 			init = new HashSet<>();
 			trans = new HashSet<>();
 			prop = null;
-			built = false;
 		}
 
 		/**
-		 * Add an initial constraint. If the constraint is an AND expression it
-		 * will be split into its conjuncts. Duplicate constraints are included
-		 * only once.
+		 * Add an initial constraint. Multiple initial constraints will be
+		 * joined into a conjunction.
 		 */
 		public Builder addInit(final Expr<? extends BoolType> expr) {
 			checkNotNull(expr);
-			checkState(!built);
 			if (expr instanceof AndExpr)
 				addInit(((AndExpr) expr).getOps());
 			else
@@ -135,26 +131,22 @@ public final class STS {
 		}
 
 		/**
-		 * Add initial constraints. If any constraint is an AND expression it
-		 * will be split into its conjuncts. Duplicate constraints are included
-		 * only once.
+		 * Add initial constraints. Multiple initial constraints will be joined
+		 * into a conjunction.
 		 */
 		public Builder addInit(final Iterable<? extends Expr<? extends BoolType>> exprs) {
 			checkNotNull(exprs);
-			checkState(!built);
 			for (final Expr<? extends BoolType> expr : exprs)
 				addInit(expr);
 			return this;
 		}
 
 		/**
-		 * Add an invariant constraint. If the constraint is an AND expression
-		 * it will be split into its conjuncts. Duplicate constraints are
-		 * included only once.
+		 * Add an invariant constraint. An invariant is added both to the
+		 * initial and transition constraints.
 		 */
 		public Builder addInvar(final Expr<? extends BoolType> expr) {
 			checkNotNull(expr);
-			checkState(!built);
 			if (expr instanceof AndExpr) {
 				addInvar(((AndExpr) expr).getOps());
 			} else {
@@ -167,26 +159,22 @@ public final class STS {
 		}
 
 		/**
-		 * Add invariant constraints. If any constraint is an AND expression it
-		 * will be split into its conjuncts. Duplicate constraints are included
-		 * only once.
+		 * Add invariant constraints. Invariants are added both to the initial
+		 * and transition constraints.
 		 */
 		public Builder addInvar(final Iterable<? extends Expr<? extends BoolType>> exprs) {
 			checkNotNull(exprs);
-			checkState(!built);
 			for (final Expr<? extends BoolType> expr : exprs)
 				addInvar(expr);
 			return this;
 		}
 
 		/**
-		 * Add a transition constraint. If the constraint is an AND expression
-		 * it will be split into its conjuncts. Duplicate constraints are
-		 * included only once.
+		 * Add a transition constraint. Multiple transition constraints will be
+		 * joined into a conjunction.
 		 */
 		public Builder addTrans(final Expr<? extends BoolType> expr) {
 			checkNotNull(expr);
-			checkState(!built);
 			if (expr instanceof AndExpr)
 				addTrans(((AndExpr) expr).getOps());
 			else
@@ -195,13 +183,11 @@ public final class STS {
 		}
 
 		/**
-		 * Add transition constraints. If any constraint is an AND expression it
-		 * will be split into its conjuncts. Duplicate constraints are included
-		 * only once.
+		 * Add transition constraints. Multiple transition constraints will be
+		 * joined into a conjunction.
 		 */
 		public Builder addTrans(final Iterable<? extends Expr<? extends BoolType>> exprs) {
 			checkNotNull(exprs);
-			checkState(!built);
 			for (final Expr<? extends BoolType> expr : exprs)
 				addTrans(expr);
 			return this;
@@ -212,24 +198,17 @@ public final class STS {
 		 */
 		public Builder setProp(final Expr<? extends BoolType> expr) {
 			checkNotNull(expr);
-			checkState(!built);
 			this.prop = expr;
 			return this;
 		}
 
 		/**
-		 * Build an STS. After building, this instance cannot be modified
-		 * anymore, but building more STSs is possible.
+		 * Build an STS. The builder can be modified after building to get new
+		 * STSs, the already built ones will not be affected.
 		 */
 		public STS build() {
 			checkNotNull(prop);
-			built = true;
-
-			ExprUtils.collectVars(init, vars);
-			ExprUtils.collectVars(trans, vars);
-			ExprUtils.collectVars(prop, vars);
-
-			return new STS(vars, init, trans, prop);
+			return new STS(Exprs.And(init), Exprs.And(trans), prop);
 		}
 	}
 }
