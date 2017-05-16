@@ -17,23 +17,23 @@ import hu.bme.mit.theta.core.utils.impl.ExprUtils;
 
 /**
  * An immutable Symbolic Transition System (STS) implementation. An STS consists
- * of variables, an initial formula, a transition relation and a property. An
- * inner builder class can also be used for creating an STS more conveniently.
+ * of an initial expression, a transition relation expression and a property
+ * expression over a set of variables. An inner builder class can also be used
+ * for creating an STS more conveniently.
  */
 public final class STS {
-
 	private final Collection<VarDecl<? extends Type>> vars;
 	private final Expr<? extends BoolType> init;
 	private final Expr<? extends BoolType> trans;
 	private final Expr<? extends BoolType> prop;
 
 	/**
-	 * Create a new STS from an initial formula, a transition relation and a
+	 * Create a new STS from an initial expression, a transition relation and a
 	 * property.
 	 *
-	 * @param init Initial formula
-	 * @param trans Transition relation
-	 * @param prop Property
+	 * @param init Initial expression
+	 * @param trans Transition relation expression
+	 * @param prop Property expression
 	 */
 	public STS(final Expr<? extends BoolType> init, final Expr<? extends BoolType> trans,
 			final Expr<? extends BoolType> prop) {
@@ -48,7 +48,7 @@ public final class STS {
 	}
 
 	/**
-	 * Gets the collection of variables appearing in the formulas of the STS.
+	 * Gets the collection of variables appearing in the expressions of the STS.
 	 *
 	 * @return
 	 */
@@ -57,7 +57,7 @@ public final class STS {
 	}
 
 	/**
-	 * Gets the initial formula.
+	 * Gets the initial expression.
 	 *
 	 * @return
 	 */
@@ -66,7 +66,7 @@ public final class STS {
 	}
 
 	/**
-	 * Gets the transition relation.
+	 * Gets the transition relation expression.
 	 *
 	 * @return
 	 */
@@ -75,7 +75,7 @@ public final class STS {
 	}
 
 	/**
-	 * Gets the property.
+	 * Gets the property expression.
 	 *
 	 * @return
 	 */
@@ -106,7 +106,7 @@ public final class STS {
 	 * Helper class for building an STS, supporting multiple initial/transition
 	 * constraints and invariants.
 	 */
-	public static class Builder {
+	public final static class Builder {
 		private final Collection<Expr<? extends BoolType>> init;
 		private final Collection<Expr<? extends BoolType>> trans;
 		private Expr<? extends BoolType> prop;
@@ -118,8 +118,10 @@ public final class STS {
 		}
 
 		/**
-		 * Add an initial constraint. Multiple initial constraints will be
+		 * Add an initial expression. Multiple initial expressions will be
 		 * joined into a conjunction.
+		 *
+		 * @param expr Expression to be added
 		 */
 		public Builder addInit(final Expr<? extends BoolType> expr) {
 			checkNotNull(expr);
@@ -131,8 +133,10 @@ public final class STS {
 		}
 
 		/**
-		 * Add initial constraints. Multiple initial constraints will be joined
+		 * Add initial expressions. Multiple initial expressions will be joined
 		 * into a conjunction.
+		 *
+		 * @param exprs Expressions to be added
 		 */
 		public Builder addInit(final Iterable<? extends Expr<? extends BoolType>> exprs) {
 			checkNotNull(exprs);
@@ -142,8 +146,10 @@ public final class STS {
 		}
 
 		/**
-		 * Add an invariant constraint. An invariant is added both to the
-		 * initial and transition constraints.
+		 * Add an invariant expression. An invariant is added both to the
+		 * initial and transition expressions.
+		 *
+		 * @param expr Expression to be added
 		 */
 		public Builder addInvar(final Expr<? extends BoolType> expr) {
 			checkNotNull(expr);
@@ -159,8 +165,10 @@ public final class STS {
 		}
 
 		/**
-		 * Add invariant constraints. Invariants are added both to the initial
-		 * and transition constraints.
+		 * Add invariant expressions. Invariants are added both to the initial
+		 * and transition expressions.
+		 *
+		 * @param exprs Expressions to be added
 		 */
 		public Builder addInvar(final Iterable<? extends Expr<? extends BoolType>> exprs) {
 			checkNotNull(exprs);
@@ -170,8 +178,10 @@ public final class STS {
 		}
 
 		/**
-		 * Add a transition constraint. Multiple transition constraints will be
+		 * Add a transition expression. Multiple transition expressions will be
 		 * joined into a conjunction.
+		 *
+		 * @param expr Expression to be added
 		 */
 		public Builder addTrans(final Expr<? extends BoolType> expr) {
 			checkNotNull(expr);
@@ -183,8 +193,10 @@ public final class STS {
 		}
 
 		/**
-		 * Add transition constraints. Multiple transition constraints will be
+		 * Add transition expressions. Multiple transition expressions will be
 		 * joined into a conjunction.
+		 *
+		 * @param exprs Expressions to be added
 		 */
 		public Builder addTrans(final Iterable<? extends Expr<? extends BoolType>> exprs) {
 			checkNotNull(exprs);
@@ -194,7 +206,10 @@ public final class STS {
 		}
 
 		/**
-		 * Set the property.
+		 * Set the property expression. Previously set property will be
+		 * overridden.
+		 *
+		 * @param expr Expression to be set as property
 		 */
 		public Builder setProp(final Expr<? extends BoolType> expr) {
 			checkNotNull(expr);
@@ -205,6 +220,8 @@ public final class STS {
 		/**
 		 * Build an STS. The builder can be modified after building to get new
 		 * STSs, the already built ones will not be affected.
+		 *
+		 * @return STS instance
 		 */
 		public STS build() {
 			checkNotNull(prop);

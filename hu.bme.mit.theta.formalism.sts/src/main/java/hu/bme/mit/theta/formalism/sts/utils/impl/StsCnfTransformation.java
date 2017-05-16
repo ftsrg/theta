@@ -8,7 +8,8 @@ import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.formalism.sts.utils.STSTransformation;
 
 /**
- * Apply Tseitin transformation to obtain a system where constraints are in CNF.
+ * Apply Tseitin transformation to obtain an STS where constraints are in CNF.
+ * The property is not converted to CNF because of possible negation.
  */
 public final class StsCnfTransformation implements STSTransformation {
 
