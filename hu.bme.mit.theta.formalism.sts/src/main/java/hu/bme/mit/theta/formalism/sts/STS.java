@@ -42,24 +42,44 @@ public final class STS {
 		this.prop = checkNotNull(prop);
 	}
 
+	/**
+	 * Gets the list of variables appearing in the formulas of the STS.
+	 *
+	 * @return
+	 */
 	public Collection<VarDecl<? extends Type>> getVars() {
 		return vars;
 	}
 
+	/**
+	 * Gets the initial formula.
+	 *
+	 * @return
+	 */
 	public Collection<Expr<? extends BoolType>> getInit() {
 		return init;
 	}
 
+	/**
+	 * Gets the transition relation.
+	 *
+	 * @return
+	 */
 	public Collection<Expr<? extends BoolType>> getTrans() {
 		return trans;
 	}
 
+	/**
+	 * Gets the property.
+	 *
+	 * @return
+	 */
 	public Expr<? extends BoolType> getProp() {
 		return prop;
 	}
 
 	/**
-	 * Get a new builder instance.
+	 * Creates a new builder instance.
 	 *
 	 * @return
 	 */
@@ -192,6 +212,9 @@ public final class STS {
 			return this;
 		}
 
+		/**
+		 * Set the property.
+		 */
 		public Builder setProp(final Expr<? extends BoolType> expr) {
 			checkNotNull(expr);
 			checkState(!built);
@@ -199,6 +222,10 @@ public final class STS {
 			return this;
 		}
 
+		/**
+		 * Build an STS. After building, this instance cannot be modified
+		 * anymore, but building more STSs is possible.
+		 */
 		public STS build() {
 			checkNotNull(prop);
 			built = true;
@@ -211,6 +238,7 @@ public final class STS {
 		}
 	}
 
+	// Deprecated functions for splitting CEGAR
 	@Deprecated
 	public Valuation getConcreteState(final Model model, final int i) {
 		return getConcreteState(model, i, getVars());

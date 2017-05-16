@@ -10,6 +10,9 @@ import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.utils.impl.VarIndexing;
 import hu.bme.mit.theta.formalism.sts.STS;
 
+/**
+ * Represents an action for an STS, which is simply the transition relation.
+ */
 public final class StsAction implements ExprAction {
 
 	private final Expr<? extends BoolType> trans;
@@ -17,10 +20,6 @@ public final class StsAction implements ExprAction {
 	StsAction(final STS sts) {
 		checkNotNull(sts);
 		this.trans = SmartExprs.And(sts.getTrans());
-	}
-
-	public Expr<? extends BoolType> getTrans() {
-		return trans;
 	}
 
 	@Override
