@@ -19,8 +19,8 @@ public final class ExprStates {
 	private ExprStates() {
 	}
 
-	public static <S extends ExprState> Collection<S> createStates(final Solver solver,
-			final Expr<? extends BoolType> expr, final Function<? super Valuation, ? extends S> factory) {
+	public static <S extends ExprState> Collection<S> createStatesForExpr(final Solver solver,
+			final Expr<? extends BoolType> expr, final Function<? super Valuation, ? extends S> valuationToState) {
 
 		return using(solver, s -> {
 			s.add(PathUtils.unfold(expr, 0));
@@ -29,7 +29,7 @@ public final class ExprStates {
 			while (s.check().isSat()) {
 				final Model model = s.getModel();
 				final Valuation valuation = PathUtils.extractValuation(model, 0);
-				final S state = factory.apply(valuation);
+				final S state = valuationToState.apply(valuation);
 				result.add(state);
 				s.add(Not(PathUtils.unfold(state.toExpr(), 0)));
 			}

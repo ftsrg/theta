@@ -9,9 +9,9 @@ import java.util.List;
 import com.google.common.collect.ImmutableList;
 
 /**
- * Represents an alternating trace in the form of a (State, Action, State, ...,
- * State, Action, State) sequence. A trace always contains at least one state
- * and the number of actions is one less than the number of states.
+ * Represents an immutable, alternating trace in the form of a (State, Action,
+ * State, ..., State, Action, State) sequence. A trace always contains at least
+ * one state and the number of actions is one less than the number of states.
  */
 public final class Trace<S, A> {
 
@@ -42,24 +42,52 @@ public final class Trace<S, A> {
 		return actions.size();
 	}
 
+	/**
+	 * Gets a state at a given index.
+	 *
+	 * @param i Index
+	 * @return State
+	 */
 	public S getState(final int i) {
 		checkElementIndex(0, states.size());
 		return states.get(i);
 	}
 
+	/**
+	 * Gets an action at a given index
+	 *
+	 * @param i Index
+	 * @return Action
+	 */
 	public A getAction(final int i) {
 		checkElementIndex(0, actions.size());
 		return actions.get(i);
 	}
 
+	/**
+	 * Gets all states.
+	 *
+	 * @return
+	 */
 	public List<S> getStates() {
 		return states;
 	}
 
+	/**
+	 * Gets all actions.
+	 *
+	 * @return
+	 */
 	public List<A> getActions() {
 		return actions;
 	}
 
+	/**
+	 * Creates a reversed trace by reversing both the states and the actions.
+	 * The original trace is not modified.
+	 *
+	 * @return Reversed trace
+	 */
 	public Trace<S, A> reverse() {
 		return Trace.of(states.reverse(), actions.reverse());
 	}
