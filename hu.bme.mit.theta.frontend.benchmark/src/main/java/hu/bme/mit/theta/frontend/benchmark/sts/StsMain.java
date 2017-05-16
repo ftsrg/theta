@@ -63,46 +63,45 @@ public class StsMain {
 		// Setting up argument parser
 		final Options options = new Options();
 
-		final Option optModel = new Option("m", "model", true, "Path of the input model");
-		optModel.setRequired(true);
-		optModel.setArgName("MODEL");
+		final Option optModel = Option.builder("m").longOpt("model").hasArg().argName("MODEL").type(String.class)
+				.desc("Path of the input model").required().build();
 		options.addOption(optModel);
 
-		final Option optProp = new Option("p", "property", true, "Property to be verified");
-		optProp.setArgName("PROPERTY");
+		final Option optProp = Option.builder("p").longOpt("property").hasArg().argName("PROPERTY").type(String.class)
+				.desc("Property to be verified").build();
 		options.addOption(optProp);
 
-		final Option optDomain = new Option("d", "domain", true, "Abstract domain");
-		optDomain.setRequired(true);
-		optDomain.setArgName(options(Domain.values()));
+		final Option optDomain = Option.builder("d").longOpt("domain").hasArg().argName(optionsFor(Domain.values()))
+				.type(Domain.class).desc("Abstract domain").required().build();
 		options.addOption(optDomain);
 
-		final Option optRefinement = new Option("r", "refinement", true, "Refinement strategy");
-		optRefinement.setRequired(true);
-		optRefinement.setArgName(options(Refinement.values()));
+		final Option optRefinement = Option.builder("r").longOpt("refinement").hasArg()
+				.argName(optionsFor(Refinement.values())).type(Refinement.class).desc("Refinement strategy").required()
+				.build();
 		options.addOption(optRefinement);
 
-		final Option optInitPrec = new Option("i", "initprec", true, "Initial precision");
-		optInitPrec.setArgName(options(InitPrec.values()));
+		final Option optInitPrec = Option.builder("i").longOpt("initprec").hasArg().argName(optionsFor(InitPrec.values()))
+				.type(InitPrec.class).desc("Initial precision").build();
 		options.addOption(optInitPrec);
 
-		final Option optSearch = new Option("s", "search", true, "Search strategy");
-		optSearch.setArgName(options(Search.values()));
+		final Option optSearch = Option.builder("s").longOpt("search").hasArg().argName(optionsFor(Search.values()))
+				.type(Search.class).desc("Search strategy").build();
 		options.addOption(optSearch);
 
-		final Option optPredSplit = new Option("ps", "predsplit", true, "Predicate split");
-		optPredSplit.setArgName(options(PredSplit.values()));
+		final Option optPredSplit = Option.builder("ps").longOpt("predsplit").hasArg()
+				.argName(optionsFor(PredSplit.values())).type(PredSplit.class).desc("Predicate splitting").build();
 		options.addOption(optPredSplit);
 
-		final Option optExpected = new Option("e", "expected", true, "Expected result (safe)");
-		optExpected.setArgName("true|false");
+		final Option optExpected = Option.builder("e").longOpt("expected").hasArg().argName("true|false")
+				.type(Boolean.class).desc("Expected result (safe)").build();
 		options.addOption(optExpected);
 
-		final Option optLogLevel = new Option("ll", "loglevel", true, "Level of logging (detailedness)");
-		optLogLevel.setArgName("INT");
+		final Option optLogLevel = Option.builder("ll").longOpt("loglevel").hasArg().argName("INT").type(Integer.class)
+				.desc("Level of logging (detailedness)").build();
 		options.addOption(optLogLevel);
 
-		final Option optBenchmark = new Option("bm", "benchmark", false, "Benchmark mode (only print output values)");
+		final Option optBenchmark = Option.builder("bm").longOpt("benchmark")
+				.desc("Benchmark mode (only print output values)").build();
 		options.addOption(optBenchmark);
 
 		final CommandLineParser parser = new DefaultParser();
@@ -188,7 +187,7 @@ public class StsMain {
 		}
 	}
 
-	private static String options(final Object[] objs) {
+	private static String optionsFor(final Object[] objs) {
 		final StringJoiner sj = new StringJoiner("|");
 		for (final Object o : objs) {
 			sj.add(o.toString());
