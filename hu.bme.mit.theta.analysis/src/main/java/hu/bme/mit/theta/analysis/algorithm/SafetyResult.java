@@ -126,7 +126,7 @@ public abstract class SafetyResult<S extends State, A extends Action> {
 		@Override
 		public String toString() {
 			return ObjectUtils.toStringBuilder(SafetyResult.class.getSimpleName()).add(Unsafe.class.getSimpleName())
-					.toString();
+					.add("Trace length: " + cex.length()).toString();
 		}
 	}
 

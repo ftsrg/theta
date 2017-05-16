@@ -65,7 +65,7 @@ public final class WaitlistBasedAbstractor<S extends State, A extends Action, P 
 	public AbstractorResult check(final ARG<S, A> arg, final P prec) {
 		checkNotNull(arg);
 		checkNotNull(prec);
-		logger.writeln("Precision: ", prec, 3, 2);
+		logger.writeln("Precision: ", prec, 4, 2);
 
 		if (!arg.isInitialized()) {
 			logger.write("(Re)initializing ARG...", 3, 2);
