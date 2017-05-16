@@ -167,13 +167,13 @@ public class CfaConfigurationBuilder extends ConfigurationBuilder {
 							ExprTraceFwBinItpChecker.create(Exprs.True(), Exprs.True(), solver),
 							ConstLocPrecRefiner.create(new ItpRefToSimplePredPrec(solver, getPredSplit().splitter)),
 							getLogger());
-					break;
 				} else {
 					refiner = SingleExprTraceRefiner.create(
 							ExprTraceFwBinItpChecker.create(Exprs.True(), Exprs.True(), solver),
 							GenericLocPrecRefiner.create(new ItpRefToSimplePredPrec(solver, getPredSplit().splitter)),
 							getLogger());
 				}
+				break;
 			case SEQ_ITP:
 				if (precGranularity == PrecGranularity.CONST) {
 					refiner = SingleExprTraceRefiner.create(

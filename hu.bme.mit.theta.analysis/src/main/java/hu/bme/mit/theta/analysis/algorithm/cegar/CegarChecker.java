@@ -67,7 +67,6 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 
 		} while (!abstractorResult.isSafe() && !refinerResult.isUnsafe());
 
-		assert abstractorResult != null : "No result from abstractor";
 		assert abstractorResult.isSafe() || (refinerResult != null && refinerResult.isUnsafe());
 
 		stopwatch.stop();
