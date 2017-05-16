@@ -20,7 +20,7 @@ import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.impl.NullLogger;
 
 /**
- * A waitlist-based implementation for the abstractor.
+ * A waitlist-based implementation for the abstractor, relying on an ArgBuilder.
  */
 public final class WaitlistBasedAbstractor<S extends State, A extends Action, P extends Prec>
 		implements Abstractor<S, A, P> {
@@ -72,6 +72,8 @@ public final class WaitlistBasedAbstractor<S extends State, A extends Action, P 
 			argBuilder.init(arg, prec);
 			logger.writeln("done.", 3);
 		}
+
+		assert arg.isInitialized();
 
 		logger.writeln(String.format("Starting ARG: %d nodes, %d incomplete, %d unsafe", arg.getNodes().count(),
 				arg.getIncompleteNodes().count(), arg.getUnsafeNodes().count()), 3, 2);

@@ -3,6 +3,9 @@ package hu.bme.mit.theta.analysis.algorithm.cegar;
 import hu.bme.mit.theta.analysis.algorithm.Statistics;
 import hu.bme.mit.theta.common.ObjectUtils;
 
+/**
+ * Represents statistics collected by the CegarChecker algorithm.
+ */
 public final class CegarStatistics implements Statistics {
 	private final long elapsedMillis;
 	private final int iterations;
