@@ -14,7 +14,6 @@ import hu.bme.mit.theta.core.expr.impl.Exprs;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.impl.Types;
 import hu.bme.mit.theta.formalism.sts.STS;
-import hu.bme.mit.theta.formalism.sts.impl.StsImpl;
 import hu.bme.mit.theta.frontend.aiger.AigerParser;
 
 /**
@@ -26,7 +25,7 @@ public class AigerParserSimple implements AigerParser {
 	@Override
 	public STS parse(final String fileName) throws IOException {
 
-		final StsImpl.Builder builder = new StsImpl.Builder();
+		final STS.Builder builder = STS.builder();
 		final BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(fileName)));
 
 		int maxVars, inputs, latches, outputs, andGates;

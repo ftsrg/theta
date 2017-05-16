@@ -5,19 +5,17 @@ import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.utils.impl.CnfTransformation;
 import hu.bme.mit.theta.core.utils.impl.ExprUtils;
 import hu.bme.mit.theta.formalism.sts.STS;
-import hu.bme.mit.theta.formalism.sts.impl.StsImpl;
 import hu.bme.mit.theta.formalism.sts.utils.STSTransformation;
 
+/**
+ * Apply Tseitin transformation to obtain a system where constraints are in CNF.
+ */
 public final class StsCnfTransformation implements STSTransformation {
 
-	/**
-	 * Apply Tseitin transformation to obtain a system where constraints are in
-	 * CNF.
-	 */
 	@Override
 	public STS transform(final STS system) {
 
-		final StsImpl.Builder builder = new StsImpl.Builder();
+		final STS.Builder builder = STS.builder();
 
 		// A new transformation is required for each formula group (init, trans,
 		// inv) because they may be added to the solver separately
