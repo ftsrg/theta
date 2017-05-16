@@ -8,6 +8,7 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.utils.impl.ExprUtils;
+import hu.bme.mit.theta.core.utils.impl.PathUtils;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.solver.ItpMarker;
 import hu.bme.mit.theta.solver.ItpPattern;
@@ -42,14 +43,14 @@ public class CraigItpVarCollector extends AbstractCEGARStep implements VarCollec
 
 		itpSolver.push();
 		// The first formula (A) describes the dead-end states
-		itpSolver.add(A, sts.unfoldInit(0));
+		itpSolver.add(A, PathUtils.unfold(sts.getInit(), 0));
 		for (int i = 0; i < traceLength; ++i) {
 			// Expression of the abstract state
-			itpSolver.add(A, sts.unfold(abstractCounterEx.get(i).getValuation().toExpr(), i));
+			itpSolver.add(A, PathUtils.unfold(abstractCounterEx.get(i).getValuation().toExpr(), i));
 
 			if (i > 0) {
 				// Transition relation
-				itpSolver.add(A, sts.unfoldTrans(i - 1));
+				itpSolver.add(A, PathUtils.unfold(sts.getTrans(), i - 1));
 			}
 
 		}
@@ -58,9 +59,9 @@ public class CraigItpVarCollector extends AbstractCEGARStep implements VarCollec
 		// transitions to the next abstract state
 
 		// Expression of the next abstract state
-		itpSolver.add(B, sts.unfold(abstractCounterEx.get(traceLength).getValuation().toExpr(), traceLength));
+		itpSolver.add(B, PathUtils.unfold(abstractCounterEx.get(traceLength).getValuation().toExpr(), traceLength));
 		// Transition to the next abstract state
-		itpSolver.add(B, sts.unfoldTrans(traceLength - 1));
+		itpSolver.add(B, PathUtils.unfold(sts.getTrans(), traceLength - 1));
 
 		// Since A and B is unsatisfiable (otherwise there would be a concrete
 		// counterexample),
@@ -68,7 +69,8 @@ public class CraigItpVarCollector extends AbstractCEGARStep implements VarCollec
 		// only variables with
 		// the index (traceLength-1), thus splitting the failure state
 		itpSolver.check();
-		final Expr<? extends Type> interpolant = sts.foldin(itpSolver.getInterpolant(pattern).eval(A), traceLength - 1);
+		final Expr<? extends Type> interpolant = PathUtils.foldin(itpSolver.getInterpolant(pattern).eval(A),
+				traceLength - 1);
 
 		logger.writeln("Interpolant: " + interpolant, 4, 0);
 		itpSolver.pop();

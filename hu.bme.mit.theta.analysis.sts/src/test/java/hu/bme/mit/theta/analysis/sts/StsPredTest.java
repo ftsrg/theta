@@ -27,16 +27,16 @@ import hu.bme.mit.theta.analysis.algorithm.ArgBuilder;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
-import hu.bme.mit.theta.analysis.algorithm.cegar.BasicPrecRefiner;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker;
-import hu.bme.mit.theta.analysis.algorithm.cegar.SingleExprTraceRefiner;
 import hu.bme.mit.theta.analysis.algorithm.cegar.WaitlistBasedAbstractor;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.ExprStatePredicate;
-import hu.bme.mit.theta.analysis.expr.ExprTraceChecker;
-import hu.bme.mit.theta.analysis.expr.ExprTraceCraigItpChecker;
-import hu.bme.mit.theta.analysis.expr.ItpRefutation;
+import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceChecker;
+import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceFwBinItpChecker;
+import hu.bme.mit.theta.analysis.expr.refinement.ItpRefutation;
+import hu.bme.mit.theta.analysis.expr.refinement.JoiningPrecRefiner;
+import hu.bme.mit.theta.analysis.expr.refinement.SingleExprTraceRefiner;
 import hu.bme.mit.theta.analysis.pred.ItpRefToSimplePredPrec;
 import hu.bme.mit.theta.analysis.pred.PredAnalysis;
 import hu.bme.mit.theta.analysis.pred.PredPrec;
@@ -88,12 +88,12 @@ public class StsPredTest {
 		final Abstractor<PredState, StsAction, SimplePredPrec> abstractor = WaitlistBasedAbstractor.create(argBuilder,
 				FifoWaitlist.supplier(), logger);
 
-		final ExprTraceChecker<ItpRefutation> exprTraceChecker = ExprTraceCraigItpChecker.create(And(sts.getInit()),
+		final ExprTraceChecker<ItpRefutation> exprTraceChecker = ExprTraceFwBinItpChecker.create(And(sts.getInit()),
 				Not(sts.getProp()), solver);
 
 		final SingleExprTraceRefiner<PredState, StsAction, SimplePredPrec, ItpRefutation> refiner = SingleExprTraceRefiner
 				.create(exprTraceChecker,
-						BasicPrecRefiner.create(new ItpRefToSimplePredPrec(solver, ItpRefToSimplePredPrec.atoms())),
+						JoiningPrecRefiner.create(new ItpRefToSimplePredPrec(solver, ItpRefToSimplePredPrec.atoms())),
 						logger);
 
 		final SafetyChecker<PredState, StsAction, SimplePredPrec> checker = CegarChecker.create(abstractor, refiner,

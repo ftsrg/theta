@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.analysis.algorithm.cegar;
+package hu.bme.mit.theta.analysis.expr.refinement;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -9,14 +9,17 @@ import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.ArgNode;
 import hu.bme.mit.theta.analysis.algorithm.ArgTrace;
+import hu.bme.mit.theta.analysis.algorithm.cegar.Refiner;
+import hu.bme.mit.theta.analysis.algorithm.cegar.RefinerResult;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
-import hu.bme.mit.theta.analysis.expr.ExprTraceChecker;
-import hu.bme.mit.theta.analysis.expr.ExprTraceStatus;
-import hu.bme.mit.theta.analysis.expr.Refutation;
 import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.common.logging.Logger;
 
+/**
+ * A Refiner implementation that can refine a single trace (of ExprStates and
+ * ExprActions) using an ExprTraceChecker and a PrecRefiner.
+ */
 public class SingleExprTraceRefiner<S extends ExprState, A extends ExprAction, P extends Prec, R extends Refutation>
 		implements Refiner<S, A, P> {
 
@@ -59,7 +62,7 @@ public class SingleExprTraceRefiner<S extends ExprState, A extends ExprAction, P
 		} else {
 			final R refutation = cexStatus.asInfeasible().getRefutation();
 			logger.writeln(refutation, 4, 3);
-			final P refinedPrec = precRefiner.refine(traceToConcretize, prec, refutation);
+			final P refinedPrec = precRefiner.refine(prec, traceToConcretize, refutation);
 			final int pruneIndex = refutation.getPruneIndex();
 			checkState(0 <= pruneIndex && pruneIndex <= cexToConcretize.length(), "Pruning index out of range");
 			logger.writeln("Pruning from index ", pruneIndex, 3, 2);

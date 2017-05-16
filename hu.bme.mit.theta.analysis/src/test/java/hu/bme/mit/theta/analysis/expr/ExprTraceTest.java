@@ -19,6 +19,10 @@ import java.util.List;
 import org.junit.Test;
 
 import hu.bme.mit.theta.analysis.Trace;
+import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceChecker;
+import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceSeqItpChecker;
+import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceStatus;
+import hu.bme.mit.theta.analysis.expr.refinement.ItpRefutation;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.IntType;

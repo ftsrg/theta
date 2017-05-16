@@ -13,6 +13,7 @@ import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.Exprs;
 import hu.bme.mit.theta.core.model.impl.Valuation;
 import hu.bme.mit.theta.core.type.BoolType;
+import hu.bme.mit.theta.core.utils.impl.PathUtils;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.splittingcegar.clustered.data.ClusteredAbstractState;
@@ -74,7 +75,7 @@ public class ClusteredCEGARDebugger extends AbstractDebugger<ClusteredAbstractSy
 			solver.push(); // 2
 			for (final ComponentAbstractState as : cas.getStates())
 				for (final Expr<? extends BoolType> label : as.getLabels())
-					solver.add(sts.unfold(label, 0));
+					solver.add(PathUtils.unfold(label, 0));
 			do {
 				if (SolverHelper.checkSat(solver)) {
 					final Valuation csExpr = sts.getConcreteState(solver.getModel(), 0, system.getVars());
@@ -82,7 +83,7 @@ public class ClusteredCEGARDebugger extends AbstractDebugger<ClusteredAbstractSy
 					final ConcreteState cs = new ConcreteState(csExpr);
 					stateSpace.get(cas).add(cs);
 					allConcreteStates.add(cs);
-					solver.add(sts.unfold(Exprs.Not(csExpr.toExpr()), 0));
+					solver.add(PathUtils.unfold(Exprs.Not(csExpr.toExpr()), 0));
 				} else {
 					break;
 				}
@@ -92,17 +93,17 @@ public class ClusteredCEGARDebugger extends AbstractDebugger<ClusteredAbstractSy
 
 		// Explore abstract transition relation
 		solver.push(); // 2
-		solver.add(sts.unfoldTrans(0));
+		solver.add(PathUtils.unfold(sts.getTrans(), 0));
 		for (final ClusteredAbstractState cas0 : stateSpace.keySet()) {
 			solver.push(); // 3
 			for (final ComponentAbstractState as : cas0.getStates())
 				for (final Expr<? extends BoolType> label : as.getLabels())
-					solver.add(sts.unfold(label, 0));
+					solver.add(PathUtils.unfold(label, 0));
 			for (final ClusteredAbstractState cas1 : stateSpace.keySet()) {
 				solver.push(); // 4
 				for (final ComponentAbstractState as : cas1.getStates())
 					for (final Expr<? extends BoolType> label : as.getLabels())
-						solver.add(sts.unfold(label, 1));
+						solver.add(PathUtils.unfold(label, 1));
 				if (SolverHelper.checkSat(solver))
 					cas0.getSuccessors().add(cas1);
 				solver.pop(); // 4
@@ -237,7 +238,7 @@ public class ClusteredCEGARDebugger extends AbstractDebugger<ClusteredAbstractSy
 			for (int i = 0; i < previous.length; ++i)
 				SolverHelper.unrollAndAssert(solver,
 						system.getAbstractKripkeStructure(i).getState(previous[i]).getLabels(), sts, 0);
-			solver.add(sts.unfoldInit(0));
+			solver.add(PathUtils.unfold(sts.getInit(), 0));
 
 			isInitial = SolverHelper.checkSat(solver);
 			solver.pop();

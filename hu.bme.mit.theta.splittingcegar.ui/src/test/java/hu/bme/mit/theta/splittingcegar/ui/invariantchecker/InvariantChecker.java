@@ -3,6 +3,7 @@ package hu.bme.mit.theta.splittingcegar.ui.invariantchecker;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.Exprs;
 import hu.bme.mit.theta.core.type.BoolType;
+import hu.bme.mit.theta.core.utils.impl.PathUtils;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverFactory;
@@ -15,8 +16,8 @@ public class InvariantChecker {
 
 		// init => invariant
 		solver.push();
-		solver.add(sts.unfoldInit(0));
-		solver.add(sts.unfold(Exprs.Not(invariant), 0));
+		solver.add(PathUtils.unfold(sts.getInit(), 0));
+		solver.add(PathUtils.unfold(Exprs.Not(invariant), 0));
 		solver.check();
 		if (solver.getStatus() != SolverStatus.UNSAT) {
 			solver.pop();
@@ -24,11 +25,11 @@ public class InvariantChecker {
 		}
 		solver.pop();
 
-		solver.add(sts.unfold(invariant, 0));
+		solver.add(PathUtils.unfold(invariant, 0));
 
 		// invariant => spec
 		solver.push();
-		solver.add(sts.unfold(Exprs.Not(sts.getProp()), 0));
+		solver.add(PathUtils.unfold(Exprs.Not(sts.getProp()), 0));
 		solver.check();
 		if (solver.getStatus() != SolverStatus.UNSAT) {
 			solver.pop();
@@ -38,8 +39,8 @@ public class InvariantChecker {
 
 		solver.push();
 		// invariant & trans => invariant'
-		solver.add(sts.unfoldTrans(0));
-		solver.add(sts.unfold(Exprs.Not(invariant), 1));
+		solver.add(PathUtils.unfold(sts.getTrans(), 0));
+		solver.add(PathUtils.unfold(Exprs.Not(invariant), 1));
 		solver.check();
 		if (solver.getStatus() != SolverStatus.UNSAT) {
 			solver.pop();

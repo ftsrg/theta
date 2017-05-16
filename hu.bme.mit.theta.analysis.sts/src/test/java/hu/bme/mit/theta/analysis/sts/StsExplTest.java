@@ -28,9 +28,7 @@ import hu.bme.mit.theta.analysis.algorithm.ArgNodeComparators;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
-import hu.bme.mit.theta.analysis.algorithm.cegar.BasicPrecRefiner;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker;
-import hu.bme.mit.theta.analysis.algorithm.cegar.SingleExprTraceRefiner;
 import hu.bme.mit.theta.analysis.algorithm.cegar.WaitlistBasedAbstractor;
 import hu.bme.mit.theta.analysis.expl.ExplAnalysis;
 import hu.bme.mit.theta.analysis.expl.ExplPrec;
@@ -39,9 +37,11 @@ import hu.bme.mit.theta.analysis.expl.VarsRefToExplPrec;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.ExprStatePredicate;
-import hu.bme.mit.theta.analysis.expr.ExprTraceChecker;
-import hu.bme.mit.theta.analysis.expr.ExprTraceUnsatCoreChecker;
-import hu.bme.mit.theta.analysis.expr.VarsRefutation;
+import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceChecker;
+import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceUnsatCoreChecker;
+import hu.bme.mit.theta.analysis.expr.refinement.JoiningPrecRefiner;
+import hu.bme.mit.theta.analysis.expr.refinement.SingleExprTraceRefiner;
+import hu.bme.mit.theta.analysis.expr.refinement.VarsRefutation;
 import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.impl.ConsoleLogger;
@@ -97,7 +97,7 @@ public class StsExplTest {
 				.create(And(sts.getInit()), Not(sts.getProp()), solver);
 
 		final SingleExprTraceRefiner<ExplState, StsAction, ExplPrec, VarsRefutation> refiner = SingleExprTraceRefiner
-				.create(exprTraceChecker, BasicPrecRefiner.create(new VarsRefToExplPrec()), logger);
+				.create(exprTraceChecker, JoiningPrecRefiner.create(new VarsRefToExplPrec()), logger);
 
 		final SafetyChecker<ExplState, StsAction, ExplPrec> checker = CegarChecker.create(abstractor, refiner, logger);
 

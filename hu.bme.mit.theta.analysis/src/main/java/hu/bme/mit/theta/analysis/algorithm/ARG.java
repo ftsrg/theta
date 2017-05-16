@@ -16,7 +16,8 @@ import hu.bme.mit.theta.analysis.Domain;
 import hu.bme.mit.theta.analysis.State;
 
 /**
- * Represents an abstract reachability graph (ARG).
+ * Represents an abstract reachability graph (ARG). See the related class
+ * ArgBuilder.
  */
 public final class ARG<S extends State, A extends Action> {
 
@@ -175,6 +176,15 @@ public final class ARG<S extends State, A extends Action> {
 		final OptionalInt maxOpt = getNodes().mapToInt(ArgNode::getDepth).max();
 		checkState(maxOpt.isPresent(), "Depth is undefined for an empty ARG.");
 		return maxOpt.getAsInt();
+	}
+
+	/**
+	 * Gets the mean branching factor of the expanded nodes.
+	 */
+	public double getMeanBranchingFactor() {
+		final Stream<ArgNode<S, A>> nodesToCalculate = getNodes().filter(n -> n.isExpanded());
+		final double mean = nodesToCalculate.mapToDouble(n -> n.getOutEdges().count()).average().orElse(0);
+		return mean;
 	}
 
 }

@@ -7,9 +7,9 @@ import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.Trace;
-import hu.bme.mit.theta.analysis.algorithm.cegar.PrecRefiner;
-import hu.bme.mit.theta.analysis.expr.Refutation;
-import hu.bme.mit.theta.analysis.expr.RefutationToPrec;
+import hu.bme.mit.theta.analysis.expr.refinement.PrecRefiner;
+import hu.bme.mit.theta.analysis.expr.refinement.Refutation;
+import hu.bme.mit.theta.analysis.expr.refinement.RefutationToPrec;
 import hu.bme.mit.theta.formalism.common.Edge;
 import hu.bme.mit.theta.formalism.common.Loc;
 
@@ -28,7 +28,7 @@ public class ConstLocPrecRefiner<S extends State, A extends Action, P extends Pr
 	}
 
 	@Override
-	public LocPrec<P, L, E> refine(final Trace<LocState<S, L, E>, A> trace, final LocPrec<P, L, E> prec,
+	public LocPrec<P, L, E> refine(final LocPrec<P, L, E> prec, final Trace<LocState<S, L, E>, A> trace,
 			final R refutation) {
 		checkNotNull(trace);
 		checkNotNull(prec);

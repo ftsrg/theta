@@ -8,6 +8,7 @@ import java.util.Stack;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.core.expr.Exprs;
 import hu.bme.mit.theta.core.expr.NotExpr;
+import hu.bme.mit.theta.core.utils.impl.PathUtils;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.splittingcegar.common.data.AbstractResult;
@@ -37,7 +38,7 @@ public class InterpolatingChecker extends AbstractCEGARStep
 		this.isIncremental = isIncremental;
 		exploredStates = new HashSet<>();
 		stateStack = new Stack<>();
-		successorStack = new Stack<Integer>();
+		successorStack = new Stack<>();
 		reset();
 	}
 
@@ -97,8 +98,8 @@ public class InterpolatingChecker extends AbstractCEGARStep
 		final Solver solver = solvers.getSolver();
 
 		solver.push();
-		solver.add(sts.unfold(negProp, 0)); // Assert the negate of the
-											// specification
+		solver.add(PathUtils.unfold(negProp, 0)); // Assert the negate of the
+		// specification
 
 		// Flag for storing whether the actual search is a continuation from a
 		// previous
@@ -198,10 +199,8 @@ public class InterpolatingChecker extends AbstractCEGARStep
 		// that the returned counterexample is a reference to the state stack
 
 		return counterExample == null
-				? new AbstractResult<InterpolatedAbstractState>(null, exploredStates,
-						exploredStates.size() - stateSpaceSizeAfterClear)
-				: new AbstractResult<InterpolatedAbstractState>(counterExample, null,
-						exploredStates.size() - stateSpaceSizeAfterClear);
+				? new AbstractResult<>(null, exploredStates, exploredStates.size() - stateSpaceSizeAfterClear)
+				: new AbstractResult<>(counterExample, null, exploredStates.size() - stateSpaceSizeAfterClear);
 	}
 
 	private boolean checkState(final InterpolatedAbstractState s, final Solver solver, final STS sts) {

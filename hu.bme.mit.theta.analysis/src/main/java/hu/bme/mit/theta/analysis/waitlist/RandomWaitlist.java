@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Random;
 import java.util.stream.Stream;
 
+import hu.bme.mit.theta.common.ObjectUtils;
+
 public final class RandomWaitlist<T> implements Waitlist<T> {
 
 	private final List<T> items;
@@ -59,6 +61,11 @@ public final class RandomWaitlist<T> implements Waitlist<T> {
 	@Override
 	public void clear() {
 		items.clear();
+	}
+
+	@Override
+	public String toString() {
+		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).addAll(items).toString();
 	}
 
 }

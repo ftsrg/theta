@@ -12,6 +12,10 @@ import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.Trace;
 
+/**
+ * Represents a trace in the ARG, which is an alternating list of ArgNodes and
+ * ArgEdges.
+ */
 public final class ArgTrace<S extends State, A extends Action> implements Iterable<ArgNode<S, A>> {
 
 	private final List<ArgNode<S, A>> nodes;
@@ -43,6 +47,9 @@ public final class ArgTrace<S extends State, A extends Action> implements Iterab
 
 	////
 
+	/**
+	 * Gets the length of the trace, i.e., the number of edges.
+	 */
 	public int length() {
 		return edges.size();
 	}
@@ -65,6 +72,10 @@ public final class ArgTrace<S extends State, A extends Action> implements Iterab
 
 	////
 
+	/**
+	 * Converts the ArgTrace to a Trace by extrancting states and actions from
+	 * nodes and edges respectively.
+	 */
 	public Trace<S, A> toTrace() {
 		final List<S> states = nodes.stream().map(ArgNode::getState).collect(toList());
 		final List<A> actions = edges.stream().map(ArgEdge::getAction).collect(toList());

@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.analysis.expr;
+package hu.bme.mit.theta.analysis.expr.refinement;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkElementIndex;
@@ -11,8 +11,6 @@ import java.util.stream.Stream;
 
 import com.google.common.collect.ImmutableList;
 
-import hu.bme.mit.theta.analysis.expr.refinement.Refutation;
-import hu.bme.mit.theta.analysis.expr.refinement.VarsRefutation;
 import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.Exprs;
@@ -21,6 +19,9 @@ import hu.bme.mit.theta.core.utils.impl.ExprUtils;
 import hu.bme.mit.theta.core.utils.impl.IndexedVars;
 import hu.bme.mit.theta.core.utils.impl.IndexedVars.Builder;
 
+/**
+ * An interpolant-based refutation that is a sequence of formulas.
+ */
 public final class ItpRefutation implements Refutation, Iterable<Expr<? extends BoolType>> {
 
 	private final List<Expr<? extends BoolType>> itpSequence;
@@ -42,7 +43,7 @@ public final class ItpRefutation implements Refutation, Iterable<Expr<? extends 
 		return new ItpRefutation(itpSequence);
 	}
 
-	public static ItpRefutation craig(final Expr<? extends BoolType> itp, final int i, final int n) {
+	public static ItpRefutation binary(final Expr<? extends BoolType> itp, final int i, final int n) {
 		checkNotNull(itp);
 		checkArgument(n > 0, "Zero length interpolant");
 		checkArgument(0 <= i && i < n, "Formula index out of bounds");

@@ -11,6 +11,7 @@ import java.util.Stack;
 
 import hu.bme.mit.theta.core.expr.Exprs;
 import hu.bme.mit.theta.core.model.impl.Valuation;
+import hu.bme.mit.theta.core.utils.impl.PathUtils;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.splittingcegar.common.data.ConcreteTrace;
@@ -49,7 +50,7 @@ public class VisibleCEGARDebugger extends AbstractDebugger<VisibleAbstractSystem
 				final VisibleAbstractState vas = new VisibleAbstractState(vasExpr, false);
 				stateSpace.put(vas, new ArrayList<>());
 				// Exclude
-				solver.add(sts.unfold(Exprs.Not(vasExpr.toExpr()), 0));
+				solver.add(PathUtils.unfold(Exprs.Not(vasExpr.toExpr()), 0));
 			} else {
 				break;
 			}
@@ -58,10 +59,10 @@ public class VisibleCEGARDebugger extends AbstractDebugger<VisibleAbstractSystem
 
 		// Check initial states
 		solver.push(); // 2
-		solver.add(sts.unfoldInit(0));
+		solver.add(PathUtils.unfold(sts.getInit(), 0));
 		for (final VisibleAbstractState vas : stateSpace.keySet()) {
 			solver.push(); // 3
-			solver.add(sts.unfold(vas.getValuation().toExpr(), 0));
+			solver.add(PathUtils.unfold(vas.getValuation().toExpr(), 0));
 			vas.setInitial(SolverHelper.checkSat(solver));
 			solver.pop(); // 3
 		}
@@ -73,7 +74,7 @@ public class VisibleCEGARDebugger extends AbstractDebugger<VisibleAbstractSystem
 
 		for (final VisibleAbstractState vas : stateSpace.keySet()) {
 			solver.push(); // 2
-			solver.add(sts.unfold(vas.getValuation().toExpr(), 0));
+			solver.add(PathUtils.unfold(vas.getValuation().toExpr(), 0));
 			do {
 				if (SolverHelper.checkSat(solver)) { // New concrete state found
 					final Valuation csExpr = sts.getConcreteState(solver.getModel(), 0, system.getVars());
@@ -81,7 +82,7 @@ public class VisibleCEGARDebugger extends AbstractDebugger<VisibleAbstractSystem
 					final ConcreteState cs = new ConcreteState(csExpr);
 					stateSpace.get(vas).add(cs);
 					allConcreteStates.add(cs);
-					solver.add(sts.unfold(Exprs.Not(csExpr.toExpr()), 0));
+					solver.add(PathUtils.unfold(Exprs.Not(csExpr.toExpr()), 0));
 				} else {
 					break;
 				}
@@ -91,13 +92,13 @@ public class VisibleCEGARDebugger extends AbstractDebugger<VisibleAbstractSystem
 
 		// Explore abstract transition relation
 		solver.push(); // 2
-		solver.add(sts.unfoldTrans(0));
+		solver.add(PathUtils.unfold(sts.getTrans(), 0));
 		for (final VisibleAbstractState vas0 : stateSpace.keySet()) {
 			solver.push(); // 3
-			solver.add(sts.unfold(vas0.getValuation().toExpr(), 0));
+			solver.add(PathUtils.unfold(vas0.getValuation().toExpr(), 0));
 			for (final VisibleAbstractState vas1 : stateSpace.keySet()) {
 				solver.push(); // 4
-				solver.add(sts.unfold(vas1.getValuation().toExpr(), 1));
+				solver.add(PathUtils.unfold(vas1.getValuation().toExpr(), 1));
 				if (SolverHelper.checkSat(solver))
 					vas0.addSuccessor(vas1);
 				solver.pop(); // 4

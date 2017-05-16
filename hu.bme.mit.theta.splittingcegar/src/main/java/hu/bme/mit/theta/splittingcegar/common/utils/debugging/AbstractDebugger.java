@@ -11,6 +11,7 @@ import hu.bme.mit.theta.core.expr.AndExpr;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.model.impl.Valuation;
 import hu.bme.mit.theta.core.type.BoolType;
+import hu.bme.mit.theta.core.utils.impl.PathUtils;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.splittingcegar.common.data.AbstractState;
@@ -42,17 +43,17 @@ public abstract class AbstractDebugger<AbstractSystemType extends AbstractSystem
 		for (final ConcreteState cs0 : concreteStates) {
 			// Assert its expression
 			solver.push();
-			solver.add(sts.unfold(cs0.model.toExpr(), 0));
+			solver.add(PathUtils.unfold(cs0.model.toExpr(), 0));
 			// Check if it is initial
 			solver.push();
-			solver.add(sts.unfoldInit(0));
+			solver.add(PathUtils.unfold(sts.getInit(), 0));
 			cs0.isInitial = SolverHelper.checkSat(solver);
 			solver.pop();
 			// Loop through other states to get successors
 			for (final ConcreteState cs1 : concreteStates) {
 				solver.push();
-				solver.add(sts.unfold(cs1.model.toExpr(), 1));
-				solver.add(sts.unfoldTrans(0));
+				solver.add(PathUtils.unfold(cs1.model.toExpr(), 1));
+				solver.add(PathUtils.unfold(sts.getTrans(), 0));
 				if (SolverHelper.checkSat(solver))
 					cs0.successors.add(cs1);
 				solver.pop();
@@ -84,10 +85,10 @@ public abstract class AbstractDebugger<AbstractSystemType extends AbstractSystem
 			final Expr<? extends BoolType> unsafeExpr, final STS sts) {
 		final Solver solver = solvers.getSolver();
 		solver.push();
-		solver.add(sts.unfold(unsafeExpr, 0));
+		solver.add(PathUtils.unfold(unsafeExpr, 0));
 		for (final ConcreteState cs0 : concreteStates) {
 			solver.push();
-			solver.add(sts.unfold(cs0.model.toExpr(), 0));
+			solver.add(PathUtils.unfold(cs0.model.toExpr(), 0));
 			if (SolverHelper.checkSat(solver))
 				cs0.isUnsafe = true;
 			solver.pop();

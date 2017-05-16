@@ -4,8 +4,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Collection;
 
-import hu.bme.mit.theta.analysis.expr.RefutationToPrec;
-import hu.bme.mit.theta.analysis.expr.VarsRefutation;
+import hu.bme.mit.theta.analysis.expr.refinement.RefutationToPrec;
+import hu.bme.mit.theta.analysis.expr.refinement.VarsRefutation;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Type;
 
@@ -25,4 +25,8 @@ public class VarsRefToExplPrec implements RefutationToPrec<ExplPrec, VarsRefutat
 		return prec1.join(prec2);
 	}
 
+	@Override
+	public String toString() {
+		return getClass().getSimpleName();
+	}
 }

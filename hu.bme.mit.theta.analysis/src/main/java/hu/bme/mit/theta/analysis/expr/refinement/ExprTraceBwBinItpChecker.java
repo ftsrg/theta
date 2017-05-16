@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.analysis.expr;
+package hu.bme.mit.theta.analysis.expr.refinement;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -10,6 +10,8 @@ import java.util.List;
 import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.theta.analysis.Trace;
+import hu.bme.mit.theta.analysis.expr.ExprAction;
+import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.model.Model;
 import hu.bme.mit.theta.core.model.impl.Valuation;
@@ -21,22 +23,26 @@ import hu.bme.mit.theta.solver.ItpMarker;
 import hu.bme.mit.theta.solver.ItpPattern;
 import hu.bme.mit.theta.solver.ItpSolver;
 
-public class ExprTraceBackCraigItpChecker implements ExprTraceChecker<ItpRefutation> {
+/**
+ * An ExprTraceChecker that generates a binary interpolant by incrementally
+ * checking the counterexample backward.
+ */
+public class ExprTraceBwBinItpChecker implements ExprTraceChecker<ItpRefutation> {
 
 	private final ItpSolver solver;
 	private final Expr<? extends BoolType> init;
 	private final Expr<? extends BoolType> target;
 
-	private ExprTraceBackCraigItpChecker(final Expr<? extends BoolType> init, final Expr<? extends BoolType> target,
+	private ExprTraceBwBinItpChecker(final Expr<? extends BoolType> init, final Expr<? extends BoolType> target,
 			final ItpSolver solver) {
 		this.solver = checkNotNull(solver);
 		this.init = checkNotNull(init);
 		this.target = checkNotNull(target);
 	}
 
-	public static ExprTraceBackCraigItpChecker create(final Expr<? extends BoolType> init,
+	public static ExprTraceBwBinItpChecker create(final Expr<? extends BoolType> init,
 			final Expr<? extends BoolType> target, final ItpSolver solver) {
-		return new ExprTraceBackCraigItpChecker(init, target, solver);
+		return new ExprTraceBwBinItpChecker(init, target, solver);
 	}
 
 	@Override
@@ -101,11 +107,16 @@ public class ExprTraceBackCraigItpChecker implements ExprTraceChecker<ItpRefutat
 			final Interpolant interpolant = solver.getInterpolant(pattern);
 			final Expr<BoolType> itpFolded = PathUtils.foldin(interpolant.eval(A), indexings.get(satPostfix));
 			status = ExprTraceStatus
-					.infeasible(ItpRefutation.craig(itpFolded, stateCount - 1 - satPostfix, stateCount));
+					.infeasible(ItpRefutation.binary(itpFolded, stateCount - 1 - satPostfix, stateCount));
 		}
 
 		solver.pop(nPush);
 
 		return status;
+	}
+
+	@Override
+	public String toString() {
+		return getClass().getSimpleName();
 	}
 }

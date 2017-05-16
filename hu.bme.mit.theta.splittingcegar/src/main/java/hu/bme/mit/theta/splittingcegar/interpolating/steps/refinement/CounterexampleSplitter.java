@@ -8,6 +8,7 @@ import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.Exprs;
 import hu.bme.mit.theta.core.expr.NotExpr;
 import hu.bme.mit.theta.core.type.BoolType;
+import hu.bme.mit.theta.core.utils.impl.PathUtils;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.splittingcegar.common.data.KripkeStructure;
@@ -95,7 +96,7 @@ public class CounterexampleSplitter extends AbstractCEGARStep implements Splitte
 		// assertion)
 		if (stateToSplit.isInitial()) {
 			solver.push();
-			solver.add(sts.unfoldInit(0));
+			solver.add(PathUtils.unfold(sts.getInit(), 0));
 			boolean isInitial = false;
 			for (final InterpolatedAbstractState refined : refinedStates) {
 				solver.push();
@@ -118,7 +119,7 @@ public class CounterexampleSplitter extends AbstractCEGARStep implements Splitte
 		// of the
 		// refined states --> assertion)
 		solver.push();
-		solver.add(sts.unfoldTrans(0));
+		solver.add(PathUtils.unfold(sts.getTrans(), 0));
 		for (final InterpolatedAbstractState succ : stateToSplit.getSuccessors()) {
 			if (stopHandler.isStopped())
 				return;

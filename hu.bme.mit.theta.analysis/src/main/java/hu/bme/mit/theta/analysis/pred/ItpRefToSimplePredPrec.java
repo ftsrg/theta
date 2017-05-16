@@ -6,8 +6,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.function.Function;
 
-import hu.bme.mit.theta.analysis.expr.ItpRefutation;
-import hu.bme.mit.theta.analysis.expr.RefutationToPrec;
+import hu.bme.mit.theta.analysis.expr.refinement.ItpRefutation;
+import hu.bme.mit.theta.analysis.expr.refinement.RefutationToPrec;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.utils.impl.ExprUtils;
@@ -37,6 +37,11 @@ public class ItpRefToSimplePredPrec implements RefutationToPrec<SimplePredPrec, 
 		checkNotNull(prec1);
 		checkNotNull(prec2);
 		return prec1.join(prec2);
+	}
+
+	@Override
+	public String toString() {
+		return getClass().getSimpleName(); // TODO: splitting strategy should be included
 	}
 
 	public static Function<Expr<? extends BoolType>, Collection<Expr<? extends BoolType>>> whole() {

@@ -37,7 +37,7 @@ public class SandBox {
 		final Logger logger = new ConsoleLogger(100);
 
 		final Configuration<? extends State, ? extends Action, ? extends Prec> configuration = new StsConfigurationBuilder(
-				Domain.PRED, Refinement.BW_CRAIG_ITP).initPrec(InitPrec.EMPTY).search(Search.BFS)
+				Domain.PRED, Refinement.BW_BIN_ITP).initPrec(InitPrec.EMPTY).search(Search.BFS)
 						.predSplit(PredSplit.WHOLE).logger(logger).solverFactory(Z3SolverFactory.getInstace())
 						.build(sts);
 

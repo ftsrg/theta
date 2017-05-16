@@ -20,7 +20,6 @@ import hu.bme.mit.theta.core.model.impl.Valuation;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.utils.impl.ExprUtils;
-import hu.bme.mit.theta.core.utils.impl.PathUtils;
 import hu.bme.mit.theta.formalism.sts.STS;
 
 /**
@@ -208,32 +207,6 @@ public final class StsImpl implements STS {
 	}
 
 	@Override
-	public Expr<? extends BoolType> unfold(final Expr<? extends BoolType> expr, final int i) {
-		return PathUtils.unfold(expr, i);
-	}
-
-	@Override
-	public Collection<? extends Expr<? extends BoolType>> unfold(
-			final Collection<? extends Expr<? extends BoolType>> exprs, final int i) {
-		return exprs.stream().map(e -> unfold(e, i)).collect(Collectors.toSet());
-	}
-
-	@Override
-	public Collection<? extends Expr<? extends BoolType>> unfoldInit(final int i) {
-		return unfold(getInit(), i);
-	}
-
-	@Override
-	public Collection<? extends Expr<? extends BoolType>> unfoldTrans(final int i) {
-		return unfold(getTrans(), i);
-	}
-
-	@Override
-	public Expr<? extends BoolType> unfoldProp(final int i) {
-		return unfold(getProp(), i);
-	}
-
-	@Override
 	public Valuation getConcreteState(final Model model, final int i) {
 		return getConcreteState(model, i, getVars());
 	}
@@ -268,11 +241,6 @@ public final class StsImpl implements STS {
 		for (int i = 0; i < length; ++i)
 			trace.add(getConcreteState(model, i, variables));
 		return trace;
-	}
-
-	@Override
-	public Expr<? extends BoolType> foldin(final Expr<? extends BoolType> expr, final int i) {
-		return PathUtils.foldin(expr, i);
 	}
 
 }

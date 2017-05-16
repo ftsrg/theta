@@ -14,6 +14,9 @@ import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.TransferFunction;
 
+/**
+ * Helper class for building the ARG with a given analysis and precision.
+ */
 public final class ArgBuilder<S extends State, A extends Action, P extends Prec> {
 
 	private final LTS<? super S, ? extends A> lts;

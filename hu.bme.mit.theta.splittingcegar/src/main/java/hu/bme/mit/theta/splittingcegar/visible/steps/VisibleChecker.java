@@ -11,6 +11,7 @@ import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.Exprs;
 import hu.bme.mit.theta.core.expr.NotExpr;
 import hu.bme.mit.theta.core.type.BoolType;
+import hu.bme.mit.theta.core.utils.impl.PathUtils;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.splittingcegar.common.data.AbstractResult;
@@ -50,7 +51,7 @@ public class VisibleChecker extends AbstractCEGARStep implements Checker<Visible
 		final List<Expr<? extends BoolType>> prevInits = new ArrayList<>();
 		// Get the first initial state
 		solver.push();
-		solver.add(sts.unfoldInit(0));
+		solver.add(PathUtils.unfold(sts.getInit(), 0));
 		if (SolverHelper.checkSat(solver))
 			actualInit = new VisibleAbstractState(sts.getConcreteState(solver.getModel(), 0, system.getVisibleVars()),
 					true);
@@ -88,7 +89,7 @@ public class VisibleChecker extends AbstractCEGARStep implements Checker<Visible
 				if (nextSucc >= 0) { // Get the next state (and also remove)
 					final VisibleAbstractState nextState = successorStack.peek().remove(nextSucc);
 					if (!exploredStates.containsKey(nextState)) { // If it is
-																	// not
+																		// not
 																	// explored
 																	// yet
 						logger.write("New state: ", 6, 1);
@@ -114,7 +115,7 @@ public class VisibleChecker extends AbstractCEGARStep implements Checker<Visible
 						stateStack.peek().addSuccessor(exploredStates.get(nextState));
 					}
 				} else { // If the actual state has no more successors, then
-							// backtrack
+								// backtrack
 					stateStack.pop();
 					successorStack.pop();
 				}
@@ -123,8 +124,8 @@ public class VisibleChecker extends AbstractCEGARStep implements Checker<Visible
 			// Get next initial state
 			prevInits.add(actualInit.getValuation().toExpr());
 			solver.push();
-			solver.add(sts.unfoldInit(0));
-			solver.add(sts.unfold(Exprs.Not(Exprs.Or(prevInits)), 0));
+			solver.add(PathUtils.unfold(sts.getInit(), 0));
+			solver.add(PathUtils.unfold(Exprs.Not(Exprs.Or(prevInits)), 0));
 
 			if (SolverHelper.checkSat(solver)) {
 				actualInit = new VisibleAbstractState(
@@ -168,8 +169,8 @@ public class VisibleChecker extends AbstractCEGARStep implements Checker<Visible
 																			// successors
 
 		solver.push();
-		solver.add(sts.unfoldTrans(0));
-		solver.add(sts.unfold(state.getValuation().toExpr(), 0));
+		solver.add(PathUtils.unfold(sts.getTrans(), 0));
+		solver.add(PathUtils.unfold(state.getValuation().toExpr(), 0));
 		// Loop until a new successor is found
 		do {
 			if (stopHandler.isStopped())
@@ -184,7 +185,7 @@ public class VisibleChecker extends AbstractCEGARStep implements Checker<Visible
 
 				successors.add(succ);
 				// Force new successors
-				solver.add(sts.unfold(Exprs.Not(succ.getValuation().toExpr()), 1));
+				solver.add(PathUtils.unfold(Exprs.Not(succ.getValuation().toExpr()), 1));
 			} else
 				break;
 		} while (true);
@@ -195,8 +196,8 @@ public class VisibleChecker extends AbstractCEGARStep implements Checker<Visible
 	private boolean checkState(final VisibleAbstractState state, final Expr<? extends BoolType> expr,
 			final Solver solver, final STS sts) {
 		solver.push();
-		solver.add(sts.unfold(state.getValuation().toExpr(), 0));
-		solver.add(sts.unfold(expr, 0));
+		solver.add(PathUtils.unfold(state.getValuation().toExpr(), 0));
+		solver.add(PathUtils.unfold(expr, 0));
 		final boolean ret = SolverHelper.checkSat(solver);
 		solver.pop();
 		return ret;

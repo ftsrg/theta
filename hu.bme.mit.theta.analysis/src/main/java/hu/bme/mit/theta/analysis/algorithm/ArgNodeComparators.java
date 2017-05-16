@@ -7,6 +7,9 @@ import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.common.ObjectUtils;
 
+/**
+ * A collection of comparators for ArgNodes.
+ */
 public class ArgNodeComparators {
 
 	private ArgNodeComparators() {

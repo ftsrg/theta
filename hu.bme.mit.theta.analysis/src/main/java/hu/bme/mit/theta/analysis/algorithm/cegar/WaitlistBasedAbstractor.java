@@ -19,6 +19,9 @@ import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.impl.NullLogger;
 
+/**
+ * A waitlist-based implementation for the abstractor.
+ */
 public final class WaitlistBasedAbstractor<S extends State, A extends Action, P extends Prec>
 		implements Abstractor<S, A, P> {
 
@@ -90,7 +93,7 @@ public final class WaitlistBasedAbstractor<S extends State, A extends Action, P 
 		final Partition<ArgNode<S, A>, ?> reachedSet = Partition.of(n -> projection.apply(n.getState()));
 		final Waitlist<ArgNode<S, A>> waitlist = waitlistSupplier.get();
 
-		reachedSet.addAll(arg.getIncompleteNodes());
+		reachedSet.addAll(arg.getNodes());
 		waitlist.addAll(arg.getIncompleteNodes());
 
 		while (!waitlist.isEmpty()) {
@@ -111,6 +114,8 @@ public final class WaitlistBasedAbstractor<S extends State, A extends Action, P 
 	}
 
 	private void close(final ArgNode<S, A> node, final Collection<ArgNode<S, A>> candidates) {
+		if (!node.isLeaf())
+			return;
 		for (final ArgNode<S, A> candidate : candidates) {
 			if (candidate.mayCover(node)) {
 				node.cover(candidate);
