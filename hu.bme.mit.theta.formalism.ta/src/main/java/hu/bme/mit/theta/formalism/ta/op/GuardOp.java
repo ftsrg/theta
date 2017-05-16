@@ -6,9 +6,10 @@ import static hu.bme.mit.theta.core.stmt.Stmts.Assume;
 import java.util.Collection;
 
 import hu.bme.mit.theta.common.ObjectUtils;
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
+import hu.bme.mit.theta.core.type.RatType;
 import hu.bme.mit.theta.formalism.ta.constr.ClockConstr;
-import hu.bme.mit.theta.formalism.ta.decl.ClockDecl;
 import hu.bme.mit.theta.formalism.ta.utils.ClockOpVisitor;
 
 public final class GuardOp implements ClockOp {
@@ -29,8 +30,8 @@ public final class GuardOp implements ClockOp {
 	}
 
 	@Override
-	public Collection<? extends ClockDecl> getClocks() {
-		return constr.getClocks();
+	public Collection<VarDecl<RatType>> getClocks() {
+		return constr.getVars();
 	}
 
 	@Override

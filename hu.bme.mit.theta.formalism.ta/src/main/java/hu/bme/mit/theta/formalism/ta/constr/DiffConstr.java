@@ -6,32 +6,33 @@ import java.util.Collection;
 
 import com.google.common.collect.ImmutableSet;
 
-import hu.bme.mit.theta.formalism.ta.decl.ClockDecl;
+import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.type.RatType;
 
 public abstract class DiffConstr extends AtomicConstr {
 
-	private final ClockDecl leftClock;
-	private final ClockDecl rightClock;
+	private final VarDecl<RatType> leftVar;
+	private final VarDecl<RatType> rightVar;
 
 	private volatile int hashCode = 0;
 
-	protected DiffConstr(final ClockDecl leftClock, final ClockDecl rightClock, final int bound) {
+	protected DiffConstr(final VarDecl<RatType> leftVar, final VarDecl<RatType> rightVar, final int bound) {
 		super(bound);
-		this.leftClock = checkNotNull(leftClock);
-		this.rightClock = checkNotNull(rightClock);
+		this.leftVar = checkNotNull(leftVar);
+		this.rightVar = checkNotNull(rightVar);
 	}
 
-	public final ClockDecl getLeftClock() {
-		return leftClock;
+	public final VarDecl<RatType> getLeftVar() {
+		return leftVar;
 	}
 
-	public final ClockDecl getRightClock() {
-		return rightClock;
+	public final VarDecl<RatType> getRightVar() {
+		return rightVar;
 	}
 
 	@Override
-	public Collection<? extends ClockDecl> getClocks() {
-		return ImmutableSet.of(leftClock, rightClock);
+	public Collection<VarDecl<RatType>> getVars() {
+		return ImmutableSet.of(leftVar, rightVar);
 	}
 
 	@Override
@@ -39,8 +40,8 @@ public abstract class DiffConstr extends AtomicConstr {
 		int result = hashCode;
 		if (result == 0) {
 			result = getHashSeed();
-			result = 31 * result + leftClock.hashCode();
-			result = 31 * result + rightClock.hashCode();
+			result = 31 * result + leftVar.hashCode();
+			result = 31 * result + rightVar.hashCode();
 			result = 31 * result + getBound();
 			hashCode = result;
 		}
@@ -50,9 +51,9 @@ public abstract class DiffConstr extends AtomicConstr {
 	@Override
 	public final String toString() {
 		final StringBuilder sb = new StringBuilder();
-		sb.append(leftClock.getName());
+		sb.append(leftVar.getName());
 		sb.append(" - ");
-		sb.append(rightClock.getName());
+		sb.append(rightVar.getName());
 		sb.append(' ');
 		sb.append(getOperatorLabel());
 		sb.append(' ');

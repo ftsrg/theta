@@ -3,9 +3,10 @@ package hu.bme.mit.theta.formalism.ta.constr;
 import static hu.bme.mit.theta.core.expr.Exprs.Geq;
 import static hu.bme.mit.theta.core.expr.Exprs.Int;
 
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.GeqExpr;
-import hu.bme.mit.theta.formalism.ta.decl.ClockDecl;
-import hu.bme.mit.theta.formalism.ta.expr.ClockRefExpr;
+import hu.bme.mit.theta.core.expr.VarRefExpr;
+import hu.bme.mit.theta.core.type.RatType;
 import hu.bme.mit.theta.formalism.ta.utils.ClockConstrVisitor;
 
 public final class UnitGeqConstr extends UnitConstr {
@@ -16,7 +17,7 @@ public final class UnitGeqConstr extends UnitConstr {
 
 	private volatile GeqExpr expr = null;
 
-	UnitGeqConstr(final ClockDecl clock, final int bound) {
+	UnitGeqConstr(final VarDecl<RatType> clock, final int bound) {
 		super(clock, bound);
 	}
 
@@ -24,7 +25,7 @@ public final class UnitGeqConstr extends UnitConstr {
 	public GeqExpr toExpr() {
 		GeqExpr result = expr;
 		if (result == null) {
-			final ClockRefExpr ref = getClock().getRef();
+			final VarRefExpr<RatType> ref = getVar().getRef();
 			result = Geq(ref, Int(getBound()));
 			expr = result;
 		}
@@ -42,7 +43,7 @@ public final class UnitGeqConstr extends UnitConstr {
 			return true;
 		} else if (obj instanceof UnitGeqConstr) {
 			final UnitGeqConstr that = (UnitGeqConstr) obj;
-			return this.getBound() == that.getBound() && this.getClock().equals(that.getClock());
+			return this.getBound() == that.getBound() && this.getVar().equals(that.getVar());
 		} else {
 			return false;
 		}

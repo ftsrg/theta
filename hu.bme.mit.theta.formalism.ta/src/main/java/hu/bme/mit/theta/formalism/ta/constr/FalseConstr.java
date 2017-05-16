@@ -6,8 +6,9 @@ import java.util.Collection;
 
 import com.google.common.collect.ImmutableSet;
 
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.FalseExpr;
-import hu.bme.mit.theta.formalism.ta.decl.ClockDecl;
+import hu.bme.mit.theta.core.type.RatType;
 import hu.bme.mit.theta.formalism.ta.utils.ClockConstrVisitor;
 
 public final class FalseConstr implements ClockConstr {
@@ -17,7 +18,7 @@ public final class FalseConstr implements ClockConstr {
 	private static final String CC_LABEL = "false";
 
 	@Override
-	public Collection<? extends ClockDecl> getClocks() {
+	public Collection<VarDecl<RatType>> getVars() {
 		return ImmutableSet.of();
 	}
 

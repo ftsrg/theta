@@ -25,6 +25,8 @@ import java.util.stream.Collectors;
 
 import com.google.common.collect.Sets;
 
+import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.type.RatType;
 import hu.bme.mit.theta.formalism.ta.constr.AndConstr;
 import hu.bme.mit.theta.formalism.ta.constr.ClockConstr;
 import hu.bme.mit.theta.formalism.ta.constr.DiffEqConstr;
@@ -39,7 +41,6 @@ import hu.bme.mit.theta.formalism.ta.constr.UnitGeqConstr;
 import hu.bme.mit.theta.formalism.ta.constr.UnitGtConstr;
 import hu.bme.mit.theta.formalism.ta.constr.UnitLeqConstr;
 import hu.bme.mit.theta.formalism.ta.constr.UnitLtConstr;
-import hu.bme.mit.theta.formalism.ta.decl.ClockDecl;
 import hu.bme.mit.theta.formalism.ta.op.ClockOp;
 import hu.bme.mit.theta.formalism.ta.op.CopyOp;
 import hu.bme.mit.theta.formalism.ta.op.FreeOp;
@@ -73,9 +74,9 @@ final class DBM {
 
 	// TODO replace BiFunction by IntBiFunction
 	private DBM(final DbmSignature signature,
-			final BiFunction<? super ClockDecl, ? super ClockDecl, ? extends Integer> values) {
+			final BiFunction<? super VarDecl<RatType>, ? super VarDecl<RatType>, ? extends Integer> values) {
 		this(signature, (final int x, final int y) -> {
-			return values.apply(signature.getClock(x), signature.getClock(y));
+			return values.apply(signature.getVar(x), signature.getVar(y));
 		});
 	}
 
@@ -91,14 +92,14 @@ final class DBM {
 		if (!dbm.isConsistent()) {
 			result.add(DBM.top(Collections.emptySet()));
 		} else {
-			for (final ClockDecl x : signature) {
-				for (final ClockDecl y : signature) {
+			for (final VarDecl<RatType> x : signature) {
+				for (final VarDecl<RatType> y : signature) {
 					final int bound = get(x, y);
 					if (bound != defaultBound(x, y)) {
 						final int newBound = negate(bound);
 						final DbmSignature newSignature = DbmSignature.over(Arrays.asList(x, y));
-						final BiFunction<ClockDecl, ClockDecl, Integer> newValues = (c1, c2) -> (c1 == y && c2 == x)
-								? newBound : defaultBound(c1, c2);
+						final BiFunction<VarDecl<RatType>, VarDecl<RatType>, Integer> newValues = (c1,
+								c2) -> (c1 == y && c2 == x) ? newBound : defaultBound(c1, c2);
 						final DBM newDBM = new DBM(newSignature, newValues);
 						result.add(newDBM);
 					}
@@ -115,24 +116,24 @@ final class DBM {
 		return new DBM(dbm);
 	}
 
-	public static DBM zero(final Iterable<? extends ClockDecl> clocks) {
-		checkNotNull(clocks);
-		return new DBM(DbmSignature.over(clocks), ZERO_DBM_VALUES);
+	public static DBM zero(final Iterable<? extends VarDecl<RatType>> vars) {
+		checkNotNull(vars);
+		return new DBM(DbmSignature.over(vars), ZERO_DBM_VALUES);
 	}
 
-	public static DBM top(final Iterable<? extends ClockDecl> clocks) {
-		checkNotNull(clocks);
-		return new DBM(DbmSignature.over(clocks), TOP_DBM_VALUES);
+	public static DBM top(final Iterable<? extends VarDecl<RatType>> vars) {
+		checkNotNull(vars);
+		return new DBM(DbmSignature.over(vars), TOP_DBM_VALUES);
 	}
 
-	public static DBM bottom(final Iterable<? extends ClockDecl> clocks) {
-		checkNotNull(clocks);
-		return new DBM(DbmSignature.over(clocks), BOTTOM_DBM_VALUES);
+	public static DBM bottom(final Iterable<? extends VarDecl<RatType>> vars) {
+		checkNotNull(vars);
+		return new DBM(DbmSignature.over(vars), BOTTOM_DBM_VALUES);
 	}
 
-	public static DBM project(final DBM dbm, final Iterable<? extends ClockDecl> clocks) {
-		checkNotNull(clocks);
-		return new DBM(DbmSignature.over(clocks), dbm::getOrDefault);
+	public static DBM project(final DBM dbm, final Iterable<? extends VarDecl<RatType>> vars) {
+		checkNotNull(vars);
+		return new DBM(DbmSignature.over(vars), dbm::getOrDefault);
 	}
 
 	////
@@ -142,7 +143,7 @@ final class DBM {
 		checkNotNull(dbm2);
 
 		final DbmSignature signature = DbmSignature.union(dbm1.signature, dbm2.signature);
-		final BiFunction<ClockDecl, ClockDecl, Integer> values = (x, y) -> {
+		final BiFunction<VarDecl<RatType>, VarDecl<RatType>, Integer> values = (x, y) -> {
 			final int bound1 = dbm1.getOrDefault(x, y);
 			final int bound2 = dbm2.getOrDefault(x, y);
 			return min(bound1, bound2);
@@ -159,7 +160,7 @@ final class DBM {
 		checkNotNull(dbm2);
 
 		final DbmSignature signature = DbmSignature.union(dbm1.signature, dbm2.signature);
-		final BiFunction<ClockDecl, ClockDecl, Integer> values = (x, y) -> {
+		final BiFunction<VarDecl<RatType>, VarDecl<RatType>, Integer> values = (x, y) -> {
 			final int bound1 = dbm1.getOrDefault(x, y);
 			final int bound2 = dbm2.getOrDefault(x, y);
 			return max(bound1, bound2);
@@ -189,7 +190,7 @@ final class DBM {
 		assert dbmB.isClosed();
 
 		final DbmSignature interpolantSignature = interpolantSignature(dbmA, dbmB);
-		final BiFunction<ClockDecl, ClockDecl, Integer> values = (x, y) -> {
+		final BiFunction<VarDecl<RatType>, VarDecl<RatType>, Integer> values = (x, y) -> {
 			final int bound1 = dbmA.get(x, y);
 			final int bound2 = dbmB.get(x, y);
 			return min(bound1, bound2);
@@ -204,31 +205,31 @@ final class DBM {
 		if (cycle.length == 3) {
 			final int x = cycle[0];
 			final int y = cycle[1];
-			final ClockDecl leftClock = interpolantSignature.getClock(x);
-			final ClockDecl rightClock = interpolantSignature.getClock(y);
-			final int boundA1 = dbmA.get(leftClock, rightClock);
-			final int boundB1 = dbmB.get(leftClock, rightClock);
+			final VarDecl<RatType> leftVar = interpolantSignature.getVar(x);
+			final VarDecl<RatType> rightVar = interpolantSignature.getVar(y);
+			final int boundA1 = dbmA.get(leftVar, rightVar);
+			final int boundB1 = dbmB.get(leftVar, rightVar);
 			if (boundA1 < boundB1) {
-				final int boundB = dbmB.get(rightClock, leftClock);
-				result.set(leftClock, rightClock, negate(boundB));
+				final int boundB = dbmB.get(rightVar, leftVar);
+				result.set(leftVar, rightVar, negate(boundB));
 			} else {
-				final int boundA2 = dbmA.get(rightClock, leftClock);
-				final int boundB2 = dbmB.get(rightClock, leftClock);
-				final int boundB = dbmB.get(leftClock, rightClock);
+				final int boundA2 = dbmA.get(rightVar, leftVar);
+				final int boundB2 = dbmB.get(rightVar, leftVar);
+				final int boundB = dbmB.get(leftVar, rightVar);
 				assert boundA2 < boundB2;
-				result.set(rightClock, leftClock, negate(boundB));
+				result.set(rightVar, leftVar, negate(boundB));
 			}
 		} else {
 			// Can this be the case for timed automata?
 			for (int i = 0; i + 1 < cycle.length; i++) {
 				final int x = cycle[i];
 				final int y = cycle[i + 1];
-				final ClockDecl leftClock = interpolantSignature.getClock(x);
-				final ClockDecl rightClock = interpolantSignature.getClock(y);
-				final int boundA = dbmA.get(leftClock, rightClock);
-				final int boundB = dbmB.get(leftClock, rightClock);
+				final VarDecl<RatType> leftVar = interpolantSignature.getVar(x);
+				final VarDecl<RatType> rightVar = interpolantSignature.getVar(y);
+				final int boundA = dbmA.get(leftVar, rightVar);
+				final int boundB = dbmB.get(leftVar, rightVar);
 				if (boundA < boundB) {
-					result.set(leftClock, rightClock, boundA);
+					result.set(leftVar, rightVar, boundA);
 				}
 			}
 		}
@@ -258,7 +259,7 @@ final class DBM {
 		assert dbmB.isClosed();
 
 		final DbmSignature interpolantSignature = interpolantSignature(dbmA, dbmB);
-		final BiFunction<ClockDecl, ClockDecl, Integer> values = (x, y) -> {
+		final BiFunction<VarDecl<RatType>, VarDecl<RatType>, Integer> values = (x, y) -> {
 			final int bound1 = dbmA.get(x, y);
 			final int bound2 = dbmB.get(x, y);
 			return min(bound1, bound2);
@@ -274,12 +275,12 @@ final class DBM {
 		for (int i = 0; i + 1 < cycle.length; i++) {
 			final int x = cycle[i];
 			final int y = cycle[i + 1];
-			final ClockDecl leftClock = interpolantSignature.getClock(x);
-			final ClockDecl rightClock = interpolantSignature.getClock(y);
-			final int boundA = dbmA.get(leftClock, rightClock);
-			final int boundB = dbmB.get(leftClock, rightClock);
+			final VarDecl<RatType> leftVar = interpolantSignature.getVar(x);
+			final VarDecl<RatType> rightVar = interpolantSignature.getVar(y);
+			final int boundA = dbmA.get(leftVar, rightVar);
+			final int boundB = dbmB.get(leftVar, rightVar);
 			if (boundA < boundB) {
-				result.set(leftClock, rightClock, boundA);
+				result.set(leftVar, rightVar, boundA);
 			}
 		}
 
@@ -291,24 +292,24 @@ final class DBM {
 	}
 
 	private static DbmSignature signatureFrom(final DbmSignature interpolantSignature, final int[] cycle) {
-		final Collection<ClockDecl> clocks = new ArrayList<>();
+		final Collection<VarDecl<RatType>> vars = new ArrayList<>();
 		for (int i = 0; i + 1 < cycle.length; i++) {
-			final ClockDecl clock = interpolantSignature.getClock(cycle[i]);
-			clocks.add(clock);
+			final VarDecl<RatType> var = interpolantSignature.getVar(cycle[i]);
+			vars.add(var);
 		}
-		return DbmSignature.over(clocks);
+		return DbmSignature.over(vars);
 	}
 
 	private static DbmSignature interpolantSignature(final DBM dbmA, final DBM dbmB) {
-		final Set<ClockDecl> clocksConstrainedByBothDBMS = Sets
+		final Set<VarDecl<RatType>> varsConstrainedByBothDBMS = Sets
 				.intersection(dbmA.signature.toSet(), dbmB.signature.toSet()).stream()
 				.filter(c -> dbmA.constrains(c) && dbmB.constrains(c)).collect(Collectors.toSet());
-		return DbmSignature.over(clocksConstrainedByBothDBMS);
+		return DbmSignature.over(varsConstrainedByBothDBMS);
 	}
 
 	////
 
-	private int getOrDefault(final ClockDecl x, final ClockDecl y) {
+	private int getOrDefault(final VarDecl<RatType> x, final VarDecl<RatType> y) {
 		if (!tracks(x) || !tracks(y)) {
 			return defaultBound(x, y);
 		} else {
@@ -316,23 +317,23 @@ final class DBM {
 		}
 	}
 
-	private void set(final ClockDecl x, final ClockDecl y, final int b) {
-		checkArgument(tracks(x), "Clock not tracked");
-		checkArgument(tracks(y), "Clock not tracked");
+	private void set(final VarDecl<RatType> x, final VarDecl<RatType> y, final int b) {
+		checkArgument(tracks(x), "Var not tracked");
+		checkArgument(tracks(y), "Var not tracked");
 		final int i = signature.indexOf(x);
 		final int j = signature.indexOf(y);
 		dbm.set(i, j, b);
 	}
 
-	private int get(final ClockDecl x, final ClockDecl y) {
-		checkArgument(tracks(x), "Clock not tracked");
-		checkArgument(tracks(y), "Clock not tracked");
+	private int get(final VarDecl<RatType> x, final VarDecl<RatType> y) {
+		checkArgument(tracks(x), "Var not tracked");
+		checkArgument(tracks(y), "Var not tracked");
 		final int i = signature.indexOf(x);
 		final int j = signature.indexOf(y);
 		return dbm.get(i, j);
 	}
 
-	private static int defaultBound(final ClockDecl x, final ClockDecl y) {
+	private static int defaultBound(final VarDecl<RatType> x, final VarDecl<RatType> y) {
 		if (x.equals(y)) {
 			return Leq(0);
 		} else {
@@ -361,13 +362,13 @@ final class DBM {
 	}
 
 	public DbmRelation getRelation(final DBM that) {
-		final Set<ClockDecl> clocks = Sets.union(this.signature.toSet(), that.signature.toSet());
+		final Set<VarDecl<RatType>> vars = Sets.union(this.signature.toSet(), that.signature.toSet());
 
 		boolean leq = true;
 		boolean geq = true;
 
-		for (final ClockDecl x : clocks) {
-			for (final ClockDecl y : clocks) {
+		for (final VarDecl<RatType> x : vars) {
+			for (final VarDecl<RatType> y : vars) {
 				leq = leq && this.getOrDefault(x, y) <= that.getOrDefault(x, y);
 				geq = geq && this.getOrDefault(x, y) >= that.getOrDefault(x, y);
 			}
@@ -376,10 +377,10 @@ final class DBM {
 	}
 
 	public boolean isLeq(final DBM that) {
-		final Set<ClockDecl> clocks = Sets.union(this.signature.toSet(), that.signature.toSet());
+		final Set<VarDecl<RatType>> vars = Sets.union(this.signature.toSet(), that.signature.toSet());
 
-		for (final ClockDecl x : clocks) {
-			for (final ClockDecl y : clocks) {
+		for (final VarDecl<RatType> x : vars) {
+			for (final VarDecl<RatType> y : vars) {
 				if (this.getOrDefault(x, y) > that.getOrDefault(x, y)) {
 					return false;
 				}
@@ -390,7 +391,7 @@ final class DBM {
 	}
 
 	public boolean isLeq(final DBM that, final BoundFunction bound) {
-		final Set<ClockDecl> clocks = Sets.union(this.signature.toSet(), that.signature.toSet());
+		final Set<VarDecl<RatType>> vars = Sets.union(this.signature.toSet(), that.signature.toSet());
 
 		if (!this.isConsistent()) {
 			return true;
@@ -400,8 +401,8 @@ final class DBM {
 			return false;
 		}
 
-		for (final ClockDecl x : clocks) {
-			final ClockDecl zero = ZeroClock.getInstance();
+		for (final VarDecl<RatType> x : vars) {
+			final VarDecl<RatType> zero = ZeroClock.getInstance();
 
 			final int Zx0 = this.get(zero, x);
 			final int leqMinusUx = LeqMinusUx(x, bound);
@@ -411,7 +412,7 @@ final class DBM {
 				continue;
 			}
 
-			for (final ClockDecl y : clocks) {
+			for (final VarDecl<RatType> y : vars) {
 				final int Zxy = this.get(y, x);
 				final int Zpxy = that.get(y, x);
 
@@ -431,21 +432,21 @@ final class DBM {
 		return true;
 	}
 
-	private static final int LeqMinusUx(final ClockDecl x, final BoundFunction boundFunction) {
+	private static final int LeqMinusUx(final VarDecl<RatType> x, final BoundFunction boundFunction) {
 		return boundFunction.getUpper(x).map(Ux -> Leq(-Ux)).orElse(Inf());
 	}
 
-	private static final int LtMinusLy(final ClockDecl y, final BoundFunction boundFunction) {
+	private static final int LtMinusLy(final VarDecl<RatType> y, final BoundFunction boundFunction) {
 		return boundFunction.getLower(y).map(Ly -> Lt(-Ly)).orElse(Inf());
 	}
 
 	public Collection<ClockConstr> getConstrs() {
 		final Collection<ClockConstr> result = new HashSet<>();
 
-		for (final ClockDecl leftClock : signature) {
-			for (final ClockDecl rightClock : signature) {
-				final int b = get(leftClock, rightClock);
-				final ClockConstr constr = DiffBounds.toConstr(leftClock, rightClock, b);
+		for (final VarDecl<RatType> leftVar : signature) {
+			for (final VarDecl<RatType> rightVar : signature) {
+				final int b = get(leftVar, rightVar);
+				final ClockConstr constr = DiffBounds.toConstr(leftVar, rightVar, b);
 
 				if (constr instanceof TrueConstr) {
 					continue;
@@ -484,41 +485,41 @@ final class DBM {
 		constr.accept(AndOperationVisitor.INSTANCE, this);
 	}
 
-	public void free(final ClockDecl clock) {
-		checkNotNull(clock);
-		checkArgument(!isZeroClock(clock), "Clock is zero");
-		ifTracks(clock, dbm::free);
+	public void free(final VarDecl<RatType> var) {
+		checkNotNull(var);
+		checkArgument(!isZeroClock(var), "Var is zero");
+		ifTracks(var, dbm::free);
 	}
 
 	public void free() {
 		dbm.free();
 	}
 
-	public void reset(final ClockDecl clock, final int m) {
-		checkNotNull(clock);
-		checkArgument(!isZeroClock(clock), "Clock is zero");
-		ifTracks(clock, x -> dbm.reset(x, m));
+	public void reset(final VarDecl<RatType> var, final int m) {
+		checkNotNull(var);
+		checkArgument(!isZeroClock(var), "Var is zero");
+		ifTracks(var, x -> dbm.reset(x, m));
 	}
 
-	public void copy(final ClockDecl lhs, final ClockDecl rhs) {
+	public void copy(final VarDecl<RatType> lhs, final VarDecl<RatType> rhs) {
 		checkNotNull(lhs);
 		checkNotNull(rhs);
-		checkArgument(!isZeroClock(lhs), "Clock is zero");
-		checkArgument(!isZeroClock(rhs), "Clock is zero");
+		checkArgument(!isZeroClock(lhs), "Var is zero");
+		checkArgument(!isZeroClock(rhs), "Var is zero");
 		ifTracks(lhs, x -> ifTracksElse(rhs, y -> dbm.copy(x, y), () -> dbm.free(x)));
 	}
 
-	public void shift(final ClockDecl clock, final int m) {
-		checkNotNull(clock);
-		checkArgument(!isZeroClock(clock), "Clock is zero");
-		ifTracks(clock, x -> dbm.shift(x, m));
+	public void shift(final VarDecl<RatType> var, final int m) {
+		checkNotNull(var);
+		checkArgument(!isZeroClock(var), "Var is zero");
+		ifTracks(var, x -> dbm.shift(x, m));
 	}
 
-	public void norm(final Map<? extends ClockDecl, ? extends Integer> bounds) {
+	public void norm(final Map<? extends VarDecl<RatType>, ? extends Integer> bounds) {
 		final int[] k = new int[signature.size()];
 		for (int i = 0; i < signature.size(); i++) {
-			final ClockDecl clock = signature.getClock(i);
-			final Integer bound = bounds.get(clock);
+			final VarDecl<RatType> var = signature.getVar(i);
+			final Integer bound = bounds.get(var);
 			if (bound != null) {
 				k[i] = bound;
 			} else {
@@ -551,14 +552,14 @@ final class DBM {
 		final StringBuilder sb = new StringBuilder();
 
 		sb.append(String.format("%-12s", ""));
-		for (final ClockDecl clock : signature) {
-			sb.append(String.format("%-12s", clock.getName()));
+		for (final VarDecl<RatType> var : signature) {
+			sb.append(String.format("%-12s", var.getName()));
 		}
 		sb.append(System.lineSeparator());
 
-		for (final ClockDecl x : signature) {
+		for (final VarDecl<RatType> x : signature) {
 			sb.append(String.format("%-12s", x.getName()));
-			for (final ClockDecl y : signature) {
+			for (final VarDecl<RatType> y : signature) {
 				sb.append(String.format("%-12s", asString(get(x, y))));
 			}
 			sb.append(System.lineSeparator());
@@ -568,34 +569,34 @@ final class DBM {
 
 	////
 
-	private boolean tracks(final ClockDecl clock) {
-		checkNotNull(clock);
-		return signature.contains(clock);
+	private boolean tracks(final VarDecl<RatType> var) {
+		checkNotNull(var);
+		return signature.contains(var);
 	}
 
-	private void ifTracks(final ClockDecl clock, final IntConsumer consumer) {
-		if (tracks(clock)) {
-			final int x = signature.indexOf(clock);
+	private void ifTracks(final VarDecl<RatType> var, final IntConsumer consumer) {
+		if (tracks(var)) {
+			final int x = signature.indexOf(var);
 			consumer.accept(x);
 		}
 	}
 
-	private void ifTracksElse(final ClockDecl clock, final IntConsumer consumer, final Procedure procedure) {
-		if (tracks(clock)) {
-			final int x = signature.indexOf(clock);
+	private void ifTracksElse(final VarDecl<RatType> var, final IntConsumer consumer, final Procedure procedure) {
+		if (tracks(var)) {
+			final int x = signature.indexOf(var);
 			consumer.accept(x);
 		} else {
 			procedure.execute();
 		}
 	}
 
-	private boolean constrains(final ClockDecl clock) {
-		checkNotNull(clock);
-		return this.tracks(clock) && dbm.constrains(signature.indexOf(clock));
+	private boolean constrains(final VarDecl<RatType> var) {
+		checkNotNull(var);
+		return this.tracks(var) && dbm.constrains(signature.indexOf(var));
 	}
 
-	private boolean isZeroClock(final ClockDecl clock) {
-		return clock.equals(ZeroClock.getInstance());
+	private boolean isZeroClock(final VarDecl<RatType> var) {
+		return var.equals(ZeroClock.getInstance());
 	}
 
 	////
@@ -661,9 +662,9 @@ final class DBM {
 
 		@Override
 		public Void visit(final UnitLtConstr constr, final DBM dbm) {
-			final ClockDecl clock = constr.getClock();
-			if (dbm.tracks(clock)) {
-				final int x = dbm.signature.indexOf(clock);
+			final VarDecl<RatType> var = constr.getVar();
+			if (dbm.tracks(var)) {
+				final int x = dbm.signature.indexOf(var);
 				final int m = constr.getBound();
 				dbm.dbm.and(x, 0, Lt(m));
 			}
@@ -672,9 +673,9 @@ final class DBM {
 
 		@Override
 		public Void visit(final UnitLeqConstr constr, final DBM dbm) {
-			final ClockDecl clock = constr.getClock();
-			if (dbm.tracks(clock)) {
-				final int x = dbm.signature.indexOf(clock);
+			final VarDecl<RatType> var = constr.getVar();
+			if (dbm.tracks(var)) {
+				final int x = dbm.signature.indexOf(var);
 				final int m = constr.getBound();
 				dbm.dbm.and(x, 0, Leq(m));
 			}
@@ -683,9 +684,9 @@ final class DBM {
 
 		@Override
 		public Void visit(final UnitGtConstr constr, final DBM dbm) {
-			final ClockDecl clock = constr.getClock();
-			if (dbm.tracks(clock)) {
-				final int x = dbm.signature.indexOf(clock);
+			final VarDecl<RatType> var = constr.getVar();
+			if (dbm.tracks(var)) {
+				final int x = dbm.signature.indexOf(var);
 				final int m = constr.getBound();
 				dbm.dbm.and(0, x, Lt(-m));
 			}
@@ -694,9 +695,9 @@ final class DBM {
 
 		@Override
 		public Void visit(final UnitGeqConstr constr, final DBM dbm) {
-			final ClockDecl clock = constr.getClock();
-			if (dbm.tracks(clock)) {
-				final int x = dbm.signature.indexOf(clock);
+			final VarDecl<RatType> var = constr.getVar();
+			if (dbm.tracks(var)) {
+				final int x = dbm.signature.indexOf(var);
 				final int m = constr.getBound();
 				dbm.dbm.and(0, x, Leq(-m));
 			}
@@ -705,9 +706,9 @@ final class DBM {
 
 		@Override
 		public Void visit(final UnitEqConstr constr, final DBM dbm) {
-			final ClockDecl clock = constr.getClock();
-			if (dbm.tracks(clock)) {
-				final int x = dbm.signature.indexOf(clock);
+			final VarDecl<RatType> var = constr.getVar();
+			if (dbm.tracks(var)) {
+				final int x = dbm.signature.indexOf(var);
 				final int m = constr.getBound();
 				dbm.dbm.and(x, 0, Leq(m));
 				dbm.dbm.and(0, x, Leq(-m));
@@ -717,11 +718,11 @@ final class DBM {
 
 		@Override
 		public Void visit(final DiffLtConstr constr, final DBM dbm) {
-			final ClockDecl leftClock = constr.getLeftClock();
-			final ClockDecl rightClock = constr.getRightClock();
-			if (dbm.tracks(leftClock) && dbm.tracks(rightClock)) {
-				final int x = dbm.signature.indexOf(leftClock);
-				final int y = dbm.signature.indexOf(rightClock);
+			final VarDecl<RatType> leftVar = constr.getLeftVar();
+			final VarDecl<RatType> rightVar = constr.getRightVar();
+			if (dbm.tracks(leftVar) && dbm.tracks(rightVar)) {
+				final int x = dbm.signature.indexOf(leftVar);
+				final int y = dbm.signature.indexOf(rightVar);
 				final int m = constr.getBound();
 				dbm.dbm.and(x, y, Lt(m));
 			}
@@ -730,11 +731,11 @@ final class DBM {
 
 		@Override
 		public Void visit(final DiffLeqConstr constr, final DBM dbm) {
-			final ClockDecl leftClock = constr.getLeftClock();
-			final ClockDecl rightClock = constr.getRightClock();
-			if (dbm.tracks(leftClock) && dbm.tracks(rightClock)) {
-				final int x = dbm.signature.indexOf(leftClock);
-				final int y = dbm.signature.indexOf(rightClock);
+			final VarDecl<RatType> leftVar = constr.getLeftVar();
+			final VarDecl<RatType> rightVar = constr.getRightVar();
+			if (dbm.tracks(leftVar) && dbm.tracks(rightVar)) {
+				final int x = dbm.signature.indexOf(leftVar);
+				final int y = dbm.signature.indexOf(rightVar);
 				final int m = constr.getBound();
 				dbm.dbm.and(x, y, Leq(m));
 			}
@@ -743,11 +744,11 @@ final class DBM {
 
 		@Override
 		public Void visit(final DiffGtConstr constr, final DBM dbm) {
-			final ClockDecl leftClock = constr.getLeftClock();
-			final ClockDecl rightClock = constr.getRightClock();
-			if (dbm.tracks(leftClock) && dbm.tracks(rightClock)) {
-				final int x = dbm.signature.indexOf(leftClock);
-				final int y = dbm.signature.indexOf(rightClock);
+			final VarDecl<RatType> leftVar = constr.getLeftVar();
+			final VarDecl<RatType> rightVar = constr.getRightVar();
+			if (dbm.tracks(leftVar) && dbm.tracks(rightVar)) {
+				final int x = dbm.signature.indexOf(leftVar);
+				final int y = dbm.signature.indexOf(rightVar);
 				final int m = constr.getBound();
 				dbm.dbm.and(y, x, Lt(-m));
 			}
@@ -756,11 +757,11 @@ final class DBM {
 
 		@Override
 		public Void visit(final DiffGeqConstr constr, final DBM dbm) {
-			final ClockDecl leftClock = constr.getLeftClock();
-			final ClockDecl rightClock = constr.getRightClock();
-			if (dbm.tracks(leftClock) && dbm.tracks(rightClock)) {
-				final int x = dbm.signature.indexOf(leftClock);
-				final int y = dbm.signature.indexOf(rightClock);
+			final VarDecl<RatType> leftVar = constr.getLeftVar();
+			final VarDecl<RatType> rightVar = constr.getRightVar();
+			if (dbm.tracks(leftVar) && dbm.tracks(rightVar)) {
+				final int x = dbm.signature.indexOf(leftVar);
+				final int y = dbm.signature.indexOf(rightVar);
 				final int m = constr.getBound();
 				dbm.dbm.and(y, x, Leq(-m));
 			}
@@ -769,11 +770,11 @@ final class DBM {
 
 		@Override
 		public Void visit(final DiffEqConstr constr, final DBM dbm) {
-			final ClockDecl leftClock = constr.getLeftClock();
-			final ClockDecl rightClock = constr.getRightClock();
-			if (dbm.tracks(leftClock) && dbm.tracks(rightClock)) {
-				final int x = dbm.signature.indexOf(leftClock);
-				final int y = dbm.signature.indexOf(rightClock);
+			final VarDecl<RatType> leftVar = constr.getLeftVar();
+			final VarDecl<RatType> rightVar = constr.getRightVar();
+			if (dbm.tracks(leftVar) && dbm.tracks(rightVar)) {
+				final int x = dbm.signature.indexOf(leftVar);
+				final int y = dbm.signature.indexOf(rightVar);
 				final int m = constr.getBound();
 				dbm.dbm.and(x, y, Leq(m));
 				dbm.dbm.and(y, x, Leq(-m));

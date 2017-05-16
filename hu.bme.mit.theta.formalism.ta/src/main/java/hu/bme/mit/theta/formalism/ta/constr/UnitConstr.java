@@ -6,26 +6,27 @@ import java.util.Collection;
 
 import com.google.common.collect.ImmutableSet;
 
-import hu.bme.mit.theta.formalism.ta.decl.ClockDecl;
+import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.type.RatType;
 
 public abstract class UnitConstr extends AtomicConstr {
 
-	private final ClockDecl clock;
+	private final VarDecl<RatType> var;
 
 	private volatile int hashCode = 0;
 
-	protected UnitConstr(final ClockDecl clock, final int bound) {
+	protected UnitConstr(final VarDecl<RatType> var, final int bound) {
 		super(bound);
-		this.clock = checkNotNull(clock);
+		this.var = checkNotNull(var);
 	}
 
-	public final ClockDecl getClock() {
-		return clock;
+	public final VarDecl<RatType> getVar() {
+		return var;
 	}
 
 	@Override
-	public Collection<? extends ClockDecl> getClocks() {
-		return ImmutableSet.of(clock);
+	public Collection<VarDecl<RatType>> getVars() {
+		return ImmutableSet.of(var);
 	}
 
 	@Override
@@ -33,7 +34,7 @@ public abstract class UnitConstr extends AtomicConstr {
 		int result = hashCode;
 		if (result == 0) {
 			result = getHashSeed();
-			result = 31 * result + clock.hashCode();
+			result = 31 * result + var.hashCode();
 			result = 31 * result + getBound();
 			hashCode = result;
 		}
@@ -43,7 +44,7 @@ public abstract class UnitConstr extends AtomicConstr {
 	@Override
 	public final String toString() {
 		final StringBuilder sb = new StringBuilder();
-		sb.append(clock.getName());
+		sb.append(var.getName());
 		sb.append(" ");
 		sb.append(getOperatorLabel());
 		sb.append(" ");

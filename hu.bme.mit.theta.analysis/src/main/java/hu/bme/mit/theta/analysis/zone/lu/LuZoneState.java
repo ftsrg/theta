@@ -148,13 +148,13 @@ public final class LuZoneState implements ExprState {
 	public String toString() {
 		final StringJoiner sj = new StringJoiner("\n");
 		sj.add(zone.toString());
-		if (!boundFunction.getLowerClocks().isEmpty()) {
+		if (!boundFunction.getLowerVars().isEmpty()) {
 			sj.add("L:");
-			boundFunction.getLowerClocks().forEach(c -> sj.add(c.getName() + " <- " + boundFunction.getLower(c).get()));
+			boundFunction.getLowerVars().forEach(c -> sj.add(c.getName() + " <- " + boundFunction.getLower(c).get()));
 		}
-		if (!boundFunction.getUpperClocks().isEmpty()) {
+		if (!boundFunction.getUpperVars().isEmpty()) {
 			sj.add("U:");
-			boundFunction.getUpperClocks().forEach(c -> sj.add(c.getName() + " <- " + boundFunction.getUpper(c).get()));
+			boundFunction.getUpperVars().forEach(c -> sj.add(c.getName() + " <- " + boundFunction.getUpper(c).get()));
 		}
 		return sj.toString();
 	}

@@ -7,6 +7,7 @@ import java.util.Collection;
 
 import com.google.common.collect.ImmutableSet;
 
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.type.RatType;
 import hu.bme.mit.theta.formalism.ta.decl.ClockDecl;
@@ -36,7 +37,7 @@ public final class CopyOp implements ClockOp {
 	}
 
 	@Override
-	public Collection<? extends ClockDecl> getClocks() {
+	public Collection<VarDecl<RatType>> getClocks() {
 		return ImmutableSet.of(clock, value);
 	}
 

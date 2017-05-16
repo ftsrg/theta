@@ -4,9 +4,10 @@ import static hu.bme.mit.theta.core.expr.Exprs.Int;
 import static hu.bme.mit.theta.core.expr.Exprs.Leq;
 import static hu.bme.mit.theta.core.expr.Exprs.Sub;
 
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.LeqExpr;
-import hu.bme.mit.theta.formalism.ta.decl.ClockDecl;
-import hu.bme.mit.theta.formalism.ta.expr.ClockRefExpr;
+import hu.bme.mit.theta.core.expr.VarRefExpr;
+import hu.bme.mit.theta.core.type.RatType;
 import hu.bme.mit.theta.formalism.ta.utils.ClockConstrVisitor;
 
 public final class DiffLeqConstr extends DiffConstr {
@@ -17,16 +18,16 @@ public final class DiffLeqConstr extends DiffConstr {
 
 	private volatile LeqExpr expr = null;
 
-	DiffLeqConstr(final ClockDecl leftClock, final ClockDecl rightClock, final int bound) {
-		super(leftClock, rightClock, bound);
+	DiffLeqConstr(final VarDecl<RatType> leftVar, final VarDecl<RatType> rightVar, final int bound) {
+		super(leftVar, rightVar, bound);
 	}
 
 	@Override
 	public LeqExpr toExpr() {
 		LeqExpr result = expr;
 		if (result == null) {
-			final ClockRefExpr leftRef = getLeftClock().getRef();
-			final ClockRefExpr rightRef = getRightClock().getRef();
+			final VarRefExpr<RatType> leftRef = getLeftVar().getRef();
+			final VarRefExpr<RatType> rightRef = getRightVar().getRef();
 			result = Leq(Sub(leftRef, rightRef), Int(getBound()));
 			expr = result;
 		}
@@ -44,8 +45,8 @@ public final class DiffLeqConstr extends DiffConstr {
 			return true;
 		} else if (obj instanceof DiffLeqConstr) {
 			final DiffLeqConstr that = (DiffLeqConstr) obj;
-			return this.getBound() == that.getBound() && this.getLeftClock().equals(that.getLeftClock())
-					&& this.getRightClock().equals(that.getRightClock());
+			return this.getBound() == that.getBound() && this.getLeftVar().equals(that.getLeftVar())
+					&& this.getRightVar().equals(that.getRightVar());
 		} else {
 			return false;
 		}

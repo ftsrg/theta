@@ -15,98 +15,99 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 
 import hu.bme.mit.theta.common.ObjectUtils;
-import hu.bme.mit.theta.formalism.ta.decl.ClockDecl;
+import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.type.RatType;
 
-final class DbmSignature implements Iterable<ClockDecl> {
+final class DbmSignature implements Iterable<VarDecl<RatType>> {
 
-	private final List<ClockDecl> indexToClock;
-	private final Map<ClockDecl, Integer> clockToIndex;
+	private final List<VarDecl<RatType>> indexToVar;
+	private final Map<VarDecl<RatType>, Integer> varToIndex;
 
-	private DbmSignature(final Iterable<? extends ClockDecl> clocks) {
-		checkNotNull(clocks);
+	private DbmSignature(final Iterable<? extends VarDecl<RatType>> vars) {
+		checkNotNull(vars);
 
-		final ImmutableList.Builder<ClockDecl> indexToClockBuilder = ImmutableList.builder();
-		final ImmutableMap.Builder<ClockDecl, Integer> clockToIndexBuilder = ImmutableMap.builder();
+		final ImmutableList.Builder<VarDecl<RatType>> indexToVarBuilder = ImmutableList.builder();
+		final ImmutableMap.Builder<VarDecl<RatType>, Integer> varToIndexBuilder = ImmutableMap.builder();
 
-		final Set<ClockDecl> addedClocks = new HashSet<>();
+		final Set<VarDecl<RatType>> addedVars = new HashSet<>();
 
-		indexToClockBuilder.add(ZeroClock.getInstance());
-		clockToIndexBuilder.put(ZeroClock.getInstance(), addedClocks.size());
-		addedClocks.add(ZeroClock.getInstance());
+		indexToVarBuilder.add(ZeroClock.getInstance());
+		varToIndexBuilder.put(ZeroClock.getInstance(), addedVars.size());
+		addedVars.add(ZeroClock.getInstance());
 
-		for (final ClockDecl clock : clocks) {
-			if (!addedClocks.contains(clock)) {
-				indexToClockBuilder.add(clock);
-				clockToIndexBuilder.put(clock, addedClocks.size());
-				addedClocks.add(clock);
+		for (final VarDecl<RatType> var : vars) {
+			if (!addedVars.contains(var)) {
+				indexToVarBuilder.add(var);
+				varToIndexBuilder.put(var, addedVars.size());
+				addedVars.add(var);
 			}
 		}
 
-		indexToClock = indexToClockBuilder.build();
-		clockToIndex = clockToIndexBuilder.build();
+		indexToVar = indexToVarBuilder.build();
+		varToIndex = varToIndexBuilder.build();
 	}
 
 	////
 
-	static DbmSignature over(final Iterable<? extends ClockDecl> clocks) {
-		return new DbmSignature(clocks);
+	static DbmSignature over(final Iterable<? extends VarDecl<RatType>> vars) {
+		return new DbmSignature(vars);
 	}
 
 	public static DbmSignature union(final DbmSignature signature1, final DbmSignature signature2) {
 		checkNotNull(signature1);
 		checkNotNull(signature2);
-		final Iterable<ClockDecl> clocks = Sets.union(signature1.toSet(), signature2.toSet());
-		return new DbmSignature(clocks);
+		final Iterable<VarDecl<RatType>> vars = Sets.union(signature1.toSet(), signature2.toSet());
+		return new DbmSignature(vars);
 	}
 
 	public static DbmSignature intersection(final DbmSignature signature1, final DbmSignature signature2) {
 		checkNotNull(signature1);
 		checkNotNull(signature2);
-		final Set<ClockDecl> clocks = Sets.intersection(signature1.toSet(), signature2.toSet());
-		return new DbmSignature(clocks);
+		final Set<VarDecl<RatType>> vars = Sets.intersection(signature1.toSet(), signature2.toSet());
+		return new DbmSignature(vars);
 	}
 
 	////
 
-	public List<ClockDecl> toList() {
-		return indexToClock;
+	public List<VarDecl<RatType>> toList() {
+		return indexToVar;
 	}
 
-	public Set<ClockDecl> toSet() {
-		return clockToIndex.keySet();
+	public Set<VarDecl<RatType>> toSet() {
+		return varToIndex.keySet();
 	}
 
 	@Override
-	public Iterator<ClockDecl> iterator() {
-		return indexToClock.iterator();
+	public Iterator<VarDecl<RatType>> iterator() {
+		return indexToVar.iterator();
 	}
 
 	////
 
 	public int size() {
-		return indexToClock.size();
+		return indexToVar.size();
 	}
 
-	public boolean contains(final ClockDecl clock) {
-		checkNotNull(clock);
-		return clockToIndex.containsKey(clock);
+	public boolean contains(final VarDecl<RatType> var) {
+		checkNotNull(var);
+		return varToIndex.containsKey(var);
 	}
 
-	public int indexOf(final ClockDecl clock) {
-		checkArgument(contains(clock), "Unknown clock");
-		return clockToIndex.get(clock);
+	public int indexOf(final VarDecl<RatType> var) {
+		checkArgument(contains(var), "Unknown variable");
+		return varToIndex.get(var);
 	}
 
-	public ClockDecl getClock(final int index) {
-		checkElementIndex(index, clockToIndex.size());
-		return indexToClock.get(index);
+	public VarDecl<RatType> getVar(final int index) {
+		checkElementIndex(index, varToIndex.size());
+		return indexToVar.get(index);
 	}
 
 	////
 
 	@Override
 	public String toString() {
-		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).addAll(indexToClock).toString();
+		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).addAll(indexToVar).toString();
 	}
 
 	////

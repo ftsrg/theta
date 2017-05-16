@@ -3,9 +3,10 @@ package hu.bme.mit.theta.analysis.zone;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.type.RatType;
 import hu.bme.mit.theta.formalism.ta.constr.ClockConstr;
 import hu.bme.mit.theta.formalism.ta.constr.ClockConstrs;
-import hu.bme.mit.theta.formalism.ta.decl.ClockDecl;
 
 final class DiffBounds {
 
@@ -31,15 +32,16 @@ final class DiffBounds {
 
 	////
 
-	public static ClockConstr toConstr(final ClockDecl leftClock, final ClockDecl rightClock, final int b) {
-		checkNotNull(leftClock);
-		checkNotNull(rightClock);
+	public static ClockConstr toConstr(final VarDecl<RatType> leftVar, final VarDecl<RatType> rightVar,
+			final int b) {
+		checkNotNull(leftVar);
+		checkNotNull(rightVar);
 
 		if (b == Inf()) {
 			return ClockConstrs.True();
 		}
 
-		if (leftClock.equals(rightClock)) {
+		if (leftVar.equals(rightVar)) {
 			if (b < Leq(0)) {
 				return ClockConstrs.False();
 			} else {
@@ -50,28 +52,28 @@ final class DiffBounds {
 		final int bound = getBound(b);
 		final boolean strict = isStrict(b);
 
-		if (leftClock.equals(ZeroClock.getInstance())) {
-			if (rightClock.equals(ZeroClock.getInstance())) {
+		if (leftVar.equals(ZeroClock.getInstance())) {
+			if (rightVar.equals(ZeroClock.getInstance())) {
 				throw new AssertionError();
 			} else {
 				if (strict) {
-					return ClockConstrs.Gt(rightClock, -bound);
+					return ClockConstrs.Gt(rightVar, -bound);
 				} else {
-					return ClockConstrs.Geq(rightClock, -bound);
+					return ClockConstrs.Geq(rightVar, -bound);
 				}
 			}
 		} else {
-			if (rightClock.equals(ZeroClock.getInstance())) {
+			if (rightVar.equals(ZeroClock.getInstance())) {
 				if (strict) {
-					return ClockConstrs.Lt(leftClock, bound);
+					return ClockConstrs.Lt(leftVar, bound);
 				} else {
-					return ClockConstrs.Leq(leftClock, bound);
+					return ClockConstrs.Leq(leftVar, bound);
 				}
 			} else {
 				if (strict) {
-					return ClockConstrs.Lt(leftClock, rightClock, bound);
+					return ClockConstrs.Lt(leftVar, rightVar, bound);
 				} else {
-					return ClockConstrs.Leq(leftClock, rightClock, bound);
+					return ClockConstrs.Leq(leftVar, rightVar, bound);
 				}
 			}
 		}
