@@ -17,12 +17,12 @@ public interface TypeVisitor<P, R> {
 
 	R visit(RatType type, P param);
 
+	R visit(UnitType type, P param);
+
 	<ParamType extends Type, ResultType extends Type> R visit(FuncType<ParamType, ResultType> type, P param);
 
 	<IndexType extends Type, ElemType extends Type> R visit(ArrayType<IndexType, ElemType> type, P param);
 
 	<ReturnType extends Type> R visit(ProcType<ReturnType> type, P param);
-
-	R visit(UnitType type, P param);
 
 }
