@@ -17,6 +17,7 @@ import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.splittingcegar.common.data.ConcreteTrace;
 import hu.bme.mit.theta.splittingcegar.common.data.SolverWrapper;
 import hu.bme.mit.theta.splittingcegar.common.utils.SolverHelper;
+import hu.bme.mit.theta.splittingcegar.common.utils.StsUtils;
 import hu.bme.mit.theta.splittingcegar.common.utils.debugging.AbstractDebugger;
 import hu.bme.mit.theta.splittingcegar.common.utils.debugging.Debugger;
 import hu.bme.mit.theta.splittingcegar.common.utils.visualization.Visualizer;
@@ -46,7 +47,7 @@ public class VisibleCEGARDebugger extends AbstractDebugger<VisibleAbstractSystem
 		solver.push(); // 2
 		do {
 			if (SolverHelper.checkSat(solver)) { // New state found
-				final Valuation vasExpr = sts.getConcreteState(solver.getModel(), 0, system.getVisibleVars());
+				final Valuation vasExpr = StsUtils.getConcreteState(solver.getModel(), 0, system.getVisibleVars());
 				final VisibleAbstractState vas = new VisibleAbstractState(vasExpr, false);
 				stateSpace.put(vas, new ArrayList<>());
 				// Exclude
@@ -77,7 +78,7 @@ public class VisibleCEGARDebugger extends AbstractDebugger<VisibleAbstractSystem
 			solver.add(PathUtils.unfold(vas.getValuation().toExpr(), 0));
 			do {
 				if (SolverHelper.checkSat(solver)) { // New concrete state found
-					final Valuation csExpr = sts.getConcreteState(solver.getModel(), 0, system.getVars());
+					final Valuation csExpr = StsUtils.getConcreteState(solver.getModel(), 0, system.getVars());
 
 					final ConcreteState cs = new ConcreteState(csExpr);
 					stateSpace.get(vas).add(cs);

@@ -25,6 +25,7 @@ import hu.bme.mit.theta.splittingcegar.common.data.StopHandler;
 import hu.bme.mit.theta.splittingcegar.common.steps.AbstractCEGARStep;
 import hu.bme.mit.theta.splittingcegar.common.steps.Refiner;
 import hu.bme.mit.theta.splittingcegar.common.utils.SolverHelper;
+import hu.bme.mit.theta.splittingcegar.common.utils.StsUtils;
 import hu.bme.mit.theta.splittingcegar.common.utils.visualization.Visualizer;
 
 public class ClusteredRefiner extends AbstractCEGARStep
@@ -279,7 +280,7 @@ public class ClusteredRefiner extends AbstractCEGARStep
 		do {
 			if (SolverHelper.checkSat(solver)) {
 				// Get dead-end state
-				final Valuation ds = sts.getConcreteState(solver.getModel(), traceLength - 1);
+				final Valuation ds = StsUtils.getConcreteState(solver.getModel(), traceLength - 1, sts.getVars());
 				logger.write("Dead end state: ", 6, 1);
 				logger.writeln(ds, 6, 0);
 				deadEndStates.add(ds);
@@ -314,7 +315,7 @@ public class ClusteredRefiner extends AbstractCEGARStep
 		do {
 			if (SolverHelper.checkSat(solver)) {
 				// Get bad state
-				final Valuation bs = sts.getConcreteState(solver.getModel(), 0);
+				final Valuation bs = StsUtils.getConcreteState(solver.getModel(), 0, sts.getVars());
 				logger.write("Bad state: ", 6, 1);
 				logger.writeln(bs, 6, 0);
 				badStates.add(bs);
@@ -340,7 +341,8 @@ public class ClusteredRefiner extends AbstractCEGARStep
 		do {
 			if (SolverHelper.checkSat(solver)) {
 				// Get the model and project
-				final Valuation cs = sts.getConcreteState(solver.getModel(), 0, abstractState.getCluster().getVars());
+				final Valuation cs = StsUtils.getConcreteState(solver.getModel(), 0,
+						abstractState.getCluster().getVars());
 
 				concreteStates.add(cs);
 				// Exclude this state to get new ones
@@ -394,7 +396,7 @@ public class ClusteredRefiner extends AbstractCEGARStep
 			solver.push();
 			solver.add(PathUtils.unfold(ds.toExpr(), 0));
 			if (SolverHelper.checkSat(solver))
-				ret.add(sts.getConcreteState(solver.getModel(), 0, otherVars));
+				ret.add(StsUtils.getConcreteState(solver.getModel(), 0, otherVars));
 			solver.pop();
 		}
 		solver.pop();

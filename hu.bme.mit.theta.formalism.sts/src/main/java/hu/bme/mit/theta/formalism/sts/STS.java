@@ -3,20 +3,15 @@ package hu.bme.mit.theta.formalism.sts;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.stream.Collectors;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.AndExpr;
 import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.expr.LitExpr;
 import hu.bme.mit.theta.core.expr.impl.Exprs;
-import hu.bme.mit.theta.core.model.Model;
-import hu.bme.mit.theta.core.model.impl.Valuation;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.utils.impl.ExprUtils;
@@ -237,43 +232,4 @@ public final class STS {
 			return new STS(vars, init, trans, prop);
 		}
 	}
-
-	// Deprecated functions for splitting CEGAR
-	@Deprecated
-	public Valuation getConcreteState(final Model model, final int i) {
-		return getConcreteState(model, i, getVars());
-	}
-
-	@Deprecated
-	public Valuation getConcreteState(final Model model, final int i,
-			final Collection<VarDecl<? extends Type>> variables) {
-		final Valuation.Builder builder = Valuation.builder();
-
-		for (final VarDecl<? extends Type> varDecl : variables) {
-			LitExpr<? extends Type> value = null;
-			try {
-				value = model.eval(varDecl.getConstDecl(i)).get();
-			} catch (final Exception ex) {
-				value = varDecl.getType().getAny();
-			}
-			builder.put(varDecl, value);
-		}
-
-		return builder.build();
-	}
-
-	@Deprecated
-	public List<Valuation> extractTrace(final Model model, final int length) {
-		return extractTrace(model, length, getVars());
-	}
-
-	@Deprecated
-	public List<Valuation> extractTrace(final Model model, final int length,
-			final Collection<VarDecl<? extends Type>> variables) {
-		final List<Valuation> trace = new ArrayList<>(length);
-		for (int i = 0; i < length; ++i)
-			trace.add(getConcreteState(model, i, variables));
-		return trace;
-	}
-
 }
