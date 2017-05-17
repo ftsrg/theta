@@ -90,7 +90,7 @@ public final class XtaProcess {
 	}
 
 	public Edge createEdge(final Loc source, final Loc target, final Collection<Expr<BoolType>> guards,
-			final Optional<SyncLabel> sync, final List<AssignStmt<?, ?>> updates) {
+			final Optional<Label> sync, final List<AssignStmt<?, ?>> updates) {
 		checkArgument(locs.contains(source));
 		checkArgument(locs.contains(target));
 		final Edge edge = new Edge(source, target, guards, sync, updates);
@@ -121,8 +121,8 @@ public final class XtaProcess {
 	private static Collection<VarDecl<?>> extractVarsFromEdge(final Edge edge) {
 		final HashSet<VarDecl<?>> result = new HashSet<>();
 		result.addAll(extractVarsFromExprs(edge.guards));
-		if (edge.sync.isPresent()) {
-			final SyncLabel sync = edge.getSync().get();
+		if (edge.label.isPresent()) {
+			final Label sync = edge.getLabel().get();
 			final Collection<VarDecl<?>> varDecls = extractVarsFromExpr(sync.getExpr());
 			for (final VarDecl<?> varDecl : varDecls) {
 				if (!isArrayOfChans(varDecl.getType())) {
@@ -200,15 +200,15 @@ public final class XtaProcess {
 		private final Loc source;
 		private final Loc target;
 		private final Collection<Expr<BoolType>> guards;
-		private final Optional<SyncLabel> sync;
+		private final Optional<Label> label;
 		private final List<AssignStmt<?, ?>> updates;
 
 		public Edge(final Loc source, final Loc target, final Collection<Expr<BoolType>> guards,
-				final Optional<SyncLabel> sync, final List<AssignStmt<?, ?>> updates) {
+				final Optional<Label> label, final List<AssignStmt<?, ?>> updates) {
 			this.source = checkNotNull(source);
 			this.target = checkNotNull(target);
 			this.guards = ImmutableList.copyOf(checkNotNull(guards));
-			this.sync = checkNotNull(sync);
+			this.label = checkNotNull(label);
 			this.updates = ImmutableList.copyOf(updates);
 		}
 
@@ -224,8 +224,8 @@ public final class XtaProcess {
 			return guards;
 		}
 
-		public Optional<SyncLabel> getSync() {
-			return sync;
+		public Optional<Label> getLabel() {
+			return label;
 		}
 
 		public List<AssignStmt<?, ?>> getUpdates() {

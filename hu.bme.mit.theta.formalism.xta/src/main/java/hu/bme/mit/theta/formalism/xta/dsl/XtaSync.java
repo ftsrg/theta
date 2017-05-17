@@ -5,7 +5,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.utils.impl.ExprUtils;
 import hu.bme.mit.theta.formalism.xta.ChanType;
-import hu.bme.mit.theta.formalism.xta.SyncLabel;
+import hu.bme.mit.theta.formalism.xta.Label;
 import hu.bme.mit.theta.formalism.xta.dsl.gen.XtaDslParser.SyncContext;
 
 final class XtaSync {
@@ -23,15 +23,15 @@ final class XtaSync {
 		EMIT, RECEIVE
 	}
 
-	public SyncLabel instantiate(final Environment env) {
+	public Label instantiate(final Environment env) {
 		final Expr<?> expr = expression.instantiate(env);
 		final Expr<? extends ChanType> castExpr = ExprUtils.cast(expr, ChanType.class);
 		@SuppressWarnings("unchecked")
 		final Expr<ChanType> chanExpr = (Expr<ChanType>) castExpr;
 		if (syncKind == SyncKind.EMIT) {
-			return SyncLabel.emit(chanExpr);
+			return Label.emit(chanExpr);
 		} else if (syncKind == SyncKind.RECEIVE) {
-			return SyncLabel.receive(chanExpr);
+			return Label.receive(chanExpr);
 		} else {
 			throw new AssertionError();
 		}

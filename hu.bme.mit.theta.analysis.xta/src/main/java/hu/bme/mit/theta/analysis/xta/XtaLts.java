@@ -7,8 +7,8 @@ import hu.bme.mit.theta.analysis.LTS;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.utils.impl.ExprUtils;
 import hu.bme.mit.theta.formalism.xta.ChanType;
-import hu.bme.mit.theta.formalism.xta.SyncLabel;
-import hu.bme.mit.theta.formalism.xta.SyncLabel.Kind;
+import hu.bme.mit.theta.formalism.xta.Label;
+import hu.bme.mit.theta.formalism.xta.Label.Kind;
 import hu.bme.mit.theta.formalism.xta.XtaProcess.Edge;
 import hu.bme.mit.theta.formalism.xta.XtaProcess.Loc;
 
@@ -34,7 +34,7 @@ public final class XtaLts implements LTS<XtaState<?>, XtaAction> {
 
 	private static void addActionsForEdge(final Collection<XtaAction> result, final XtaState<?> state,
 			final Edge edge) {
-		if (edge.getSync().isPresent()) {
+		if (edge.getLabel().isPresent()) {
 			addSyncActionsForEdge(result, state, edge);
 		} else {
 			addSimpleActionsForEdge(result, state, edge);
@@ -45,7 +45,7 @@ public final class XtaLts implements LTS<XtaState<?>, XtaAction> {
 			final Edge emitEdge) {
 
 		final Loc emitLoc = emitEdge.getSource();
-		final SyncLabel emitLabel = emitEdge.getSync().get();
+		final Label emitLabel = emitEdge.getLabel().get();
 		if (emitLabel.getKind() != Kind.EMIT) {
 			return;
 		}
@@ -59,11 +59,11 @@ public final class XtaLts implements LTS<XtaState<?>, XtaAction> {
 			}
 
 			for (final Edge recieveEdge : receiveLoc.getOutEdges()) {
-				if (!recieveEdge.getSync().isPresent()) {
+				if (!recieveEdge.getLabel().isPresent()) {
 					continue;
 				}
 
-				final SyncLabel receiveLabel = recieveEdge.getSync().get();
+				final Label receiveLabel = recieveEdge.getLabel().get();
 				if (receiveLabel.getKind() != Kind.RECEIVE) {
 					continue;
 				}

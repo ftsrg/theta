@@ -59,7 +59,7 @@ public class XtaVisualizer {
 
 	private static void addEdge(final Graph graph, final Map<Loc, String> ids, final Edge outEdge) {
 		final StringJoiner edgeLabel = new StringJoiner("\n");
-		outEdge.getSync().ifPresent(sync -> edgeLabel.add(sync.toString()));
+		outEdge.getLabel().ifPresent(sync -> edgeLabel.add(sync.toString()));
 		outEdge.getGuards().stream().forEach(expr -> edgeLabel.add("\\[" + expr.toString() + "\\]"));
 		outEdge.getUpdates().stream().forEach(stmt -> edgeLabel.add(stmt.toString()));
 		final EdgeAttributes attributes = EdgeAttributes.builder().label(edgeLabel.toString()).color(LINE_COLOR)

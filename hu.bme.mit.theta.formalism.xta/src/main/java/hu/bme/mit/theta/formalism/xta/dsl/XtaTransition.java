@@ -17,7 +17,7 @@ import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.utils.impl.ExprUtils;
-import hu.bme.mit.theta.formalism.xta.SyncLabel;
+import hu.bme.mit.theta.formalism.xta.Label;
 import hu.bme.mit.theta.formalism.xta.XtaProcess;
 import hu.bme.mit.theta.formalism.xta.XtaProcess.Loc;
 import hu.bme.mit.theta.formalism.xta.dsl.gen.XtaDslParser.IteratorDeclContext;
@@ -104,7 +104,7 @@ final class XtaTransition implements Scope {
 		}
 
 		final List<AssignStmt<?, ?>> assignments = updates.stream().map(u -> u.instantiate(env)).collect(toList());
-		final Optional<SyncLabel> label = sync.map(s -> s.instantiate(env));
+		final Optional<Label> label = sync.map(s -> s.instantiate(env));
 
 		process.createEdge(source, target, guards, label, assignments);
 	}
