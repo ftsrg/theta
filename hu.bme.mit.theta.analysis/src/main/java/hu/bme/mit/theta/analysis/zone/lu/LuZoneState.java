@@ -28,7 +28,6 @@ import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.IntType;
 import hu.bme.mit.theta.core.type.RatType;
 import hu.bme.mit.theta.core.utils.impl.ExprUtils;
-import hu.bme.mit.theta.formalism.ta.decl.ClockDecl;
 
 public final class LuZoneState implements ExprState {
 	private static final int HASH_SEED = 5261;
@@ -82,7 +81,8 @@ public final class LuZoneState implements ExprState {
 			final Collection<VarDecl<?>> vars = mapping.keySet();
 
 			for (final VarDecl<?> vx : vars) {
-				final ClockDecl dx = (ClockDecl) vx;
+				@SuppressWarnings("unchecked")
+				final VarDecl<RatType> dx = (VarDecl<RatType>) vx;
 
 				@SuppressWarnings("unchecked")
 				final ParamDecl<RatType> dxp = (ParamDecl<RatType>) mapping.get(dx);

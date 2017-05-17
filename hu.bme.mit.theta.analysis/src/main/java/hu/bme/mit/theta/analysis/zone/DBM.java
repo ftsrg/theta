@@ -402,7 +402,7 @@ final class DBM {
 		}
 
 		for (final VarDecl<RatType> x : vars) {
-			final VarDecl<RatType> zero = ZeroClock.getInstance();
+			final VarDecl<RatType> zero = ZeroVar.getInstance();
 
 			final int Zx0 = this.get(zero, x);
 			final int leqMinusUx = LeqMinusUx(x, bound);
@@ -596,7 +596,7 @@ final class DBM {
 	}
 
 	private boolean isZeroClock(final VarDecl<RatType> var) {
-		return var.equals(ZeroClock.getInstance());
+		return var.equals(ZeroVar.getInstance());
 	}
 
 	////

@@ -52,8 +52,8 @@ final class DiffBounds {
 		final int bound = getBound(b);
 		final boolean strict = isStrict(b);
 
-		if (leftVar.equals(ZeroClock.getInstance())) {
-			if (rightVar.equals(ZeroClock.getInstance())) {
+		if (leftVar.equals(ZeroVar.getInstance())) {
+			if (rightVar.equals(ZeroVar.getInstance())) {
 				throw new AssertionError();
 			} else {
 				if (strict) {
@@ -63,7 +63,7 @@ final class DiffBounds {
 				}
 			}
 		} else {
-			if (rightVar.equals(ZeroClock.getInstance())) {
+			if (rightVar.equals(ZeroVar.getInstance())) {
 				if (strict) {
 					return ClockConstrs.Lt(leftVar, bound);
 				} else {

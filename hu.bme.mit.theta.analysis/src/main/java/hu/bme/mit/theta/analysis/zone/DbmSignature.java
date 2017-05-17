@@ -31,9 +31,9 @@ final class DbmSignature implements Iterable<VarDecl<RatType>> {
 
 		final Set<VarDecl<RatType>> addedVars = new HashSet<>();
 
-		indexToVarBuilder.add(ZeroClock.getInstance());
-		varToIndexBuilder.put(ZeroClock.getInstance(), addedVars.size());
-		addedVars.add(ZeroClock.getInstance());
+		indexToVarBuilder.add(ZeroVar.getInstance());
+		varToIndexBuilder.put(ZeroVar.getInstance(), addedVars.size());
+		addedVars.add(ZeroVar.getInstance());
 
 		for (final VarDecl<RatType> var : vars) {
 			if (!addedVars.contains(var)) {

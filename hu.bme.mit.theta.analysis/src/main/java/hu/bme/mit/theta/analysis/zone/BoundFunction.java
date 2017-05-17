@@ -67,7 +67,7 @@ public final class BoundFunction {
 
 	public Optional<Integer> getLower(final VarDecl<RatType> var) {
 		checkNotNull(var);
-		if (var.equals(ZeroClock.getInstance())) {
+		if (var.equals(ZeroVar.getInstance())) {
 			return Optional.of(0);
 		} else {
 			return Optional.ofNullable(varToLower.get(var));
@@ -76,7 +76,7 @@ public final class BoundFunction {
 
 	public Optional<Integer> getUpper(final VarDecl<RatType> var) {
 		checkNotNull(var);
-		if (var.equals(ZeroClock.getInstance())) {
+		if (var.equals(ZeroVar.getInstance())) {
 			return Optional.of(0);
 		} else {
 			return Optional.ofNullable(varToUpper.get(var));
