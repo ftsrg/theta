@@ -28,6 +28,7 @@ import hu.bme.mit.theta.splittingcegar.common.steps.AbstractCEGARStep;
 import hu.bme.mit.theta.splittingcegar.common.steps.Initializer;
 import hu.bme.mit.theta.splittingcegar.common.utils.FormulaCollector;
 import hu.bme.mit.theta.splittingcegar.common.utils.SolverHelper;
+import hu.bme.mit.theta.splittingcegar.common.utils.StsUtils;
 import hu.bme.mit.theta.splittingcegar.common.utils.visualization.Visualizer;
 import hu.bme.mit.theta.splittingcegar.interpolating.data.InterpolatedAbstractState;
 import hu.bme.mit.theta.splittingcegar.interpolating.data.InterpolatedAbstractSystem;
@@ -208,7 +209,7 @@ public class InterpolatingInitializer extends AbstractCEGARStep implements Initi
 						return null;
 					if (SolverHelper.checkSat(solver)) {
 						// Keep only explicitly tracked variables
-						final Valuation model = sts.getConcreteState(solver.getModel(), 0,
+						final Valuation model = StsUtils.getConcreteState(solver.getModel(), 0,
 								system.getExplicitVariables());
 						ks.addState(as.cloneAndAddExplicit(model));
 

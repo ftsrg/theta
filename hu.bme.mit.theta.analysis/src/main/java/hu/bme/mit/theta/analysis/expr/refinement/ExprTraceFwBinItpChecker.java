@@ -1,8 +1,6 @@
 package hu.bme.mit.theta.analysis.expr.refinement;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,7 +47,6 @@ public final class ExprTraceFwBinItpChecker implements ExprTraceChecker<ItpRefut
 	public ExprTraceStatus<ItpRefutation> check(final Trace<? extends ExprState, ? extends ExprAction> trace) {
 		checkNotNull(trace);
 		final int stateCount = trace.getStates().size();
-		checkArgument(stateCount > 0, "Zero length trace");
 
 		final List<VarIndexing> indexings = new ArrayList<>(stateCount);
 		indexings.add(VarIndexing.all(0));
@@ -63,7 +60,7 @@ public final class ExprTraceFwBinItpChecker implements ExprTraceChecker<ItpRefut
 		int nPush = 1;
 		solver.add(A, PathUtils.unfold(init, indexings.get(0)));
 		solver.add(A, PathUtils.unfold(trace.getState(0).toExpr(), indexings.get(0)));
-		checkState(solver.check().isSat(), "Initial state of the trace is not feasible");
+		assert solver.check().isSat() : "Initial state of the trace is not feasible";
 		int satPrefix = 0;
 
 		for (int i = 1; i < stateCount; ++i) {
@@ -90,7 +87,8 @@ public final class ExprTraceFwBinItpChecker implements ExprTraceChecker<ItpRefut
 		} else {
 			solver.add(B, PathUtils.unfold(trace.getState(satPrefix + 1).toExpr(), indexings.get(satPrefix + 1)));
 			solver.add(B, PathUtils.unfold(trace.getAction(satPrefix).toExpr(), indexings.get(satPrefix)));
-			checkState(!solver.check().isSat(), "Trying to interpolate a feasible trace");
+			solver.check();
+			assert solver.getStatus().isUnsat() : "Trying to interpolate a feasible formula";
 			concretizable = false;
 		}
 
@@ -107,10 +105,9 @@ public final class ExprTraceFwBinItpChecker implements ExprTraceChecker<ItpRefut
 			final Expr<BoolType> itpFolded = PathUtils.foldin(interpolant.eval(A), indexings.get(satPrefix));
 			status = ExprTraceStatus.infeasible(ItpRefutation.binary(itpFolded, satPrefix, stateCount));
 		}
-
+		assert status != null;
 		solver.pop(nPush);
 
-		assert status != null;
 		return status;
 	}
 

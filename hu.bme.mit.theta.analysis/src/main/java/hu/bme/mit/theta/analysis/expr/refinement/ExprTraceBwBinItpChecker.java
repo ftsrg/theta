@@ -1,8 +1,6 @@
 package hu.bme.mit.theta.analysis.expr.refinement;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,7 +48,6 @@ public class ExprTraceBwBinItpChecker implements ExprTraceChecker<ItpRefutation>
 		checkNotNull(trace);
 		final Trace<? extends ExprState, ? extends ExprAction> traceRev = trace.reverse();
 		final int stateCount = trace.getStates().size();
-		checkArgument(stateCount > 0, "Zero length trace");
 
 		final List<VarIndexing> indexings = new ArrayList<>(stateCount);
 		indexings.add(VarIndexing.all(10 * stateCount));
@@ -64,7 +61,7 @@ public class ExprTraceBwBinItpChecker implements ExprTraceChecker<ItpRefutation>
 		int nPush = 1;
 		solver.add(A, PathUtils.unfold(target, indexings.get(0)));
 		solver.add(A, PathUtils.unfold(traceRev.getState(0).toExpr(), indexings.get(0)));
-		checkState(solver.check().isSat(), "Initial state of the trace is not feasible");
+		assert solver.check().isSat() : "Initial state of the trace is not feasible";
 		int satPostfix = 0;
 
 		for (int i = 1; i < stateCount; ++i) {
@@ -91,7 +88,8 @@ public class ExprTraceBwBinItpChecker implements ExprTraceChecker<ItpRefutation>
 		} else {
 			solver.add(B, PathUtils.unfold(traceRev.getState(satPostfix + 1).toExpr(), indexings.get(satPostfix + 1)));
 			solver.add(B, PathUtils.unfold(traceRev.getAction(satPostfix).toExpr(), indexings.get(satPostfix + 1)));
-			checkState(!solver.check().isSat(), "Trying to interpolate a feasible trace");
+			solver.check();
+			assert solver.getStatus().isUnsat() : "Trying to interpolate a feasible formula";
 			concretizable = false;
 		}
 
@@ -109,7 +107,7 @@ public class ExprTraceBwBinItpChecker implements ExprTraceChecker<ItpRefutation>
 			status = ExprTraceStatus
 					.infeasible(ItpRefutation.binary(itpFolded, stateCount - 1 - satPostfix, stateCount));
 		}
-
+		assert status != null;
 		solver.pop(nPush);
 
 		return status;

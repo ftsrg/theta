@@ -27,8 +27,9 @@ public class CEGARResult {
 	/**
 	 * Initialize result (specification does not hold)
 	 */
-	public CEGARResult(final STS system, final ConcreteTrace counterExample, final long elapsedMillis, final int refinementCount,
-			final Map<String, Long> detailedTime, final int stateSpaceSize, final AbstractSystem absSys) {
+	public CEGARResult(final STS system, final ConcreteTrace counterExample, final long elapsedMillis,
+			final int refinementCount, final Map<String, Long> detailedTime, final int stateSpaceSize,
+			final AbstractSystem absSys) {
 		checkArgument(counterExample != null);
 		this.counterExample = counterExample;
 		this.exploredStates = null;
@@ -43,8 +44,9 @@ public class CEGARResult {
 	/**
 	 * Initialize result (specification holds)
 	 */
-	public CEGARResult(final STS system, final Collection<? extends AbstractState> exploredStates, final long elapsedMillis, final int refinementCount,
-			final Map<String, Long> detailedTime, final int stateSpaceSize, final AbstractSystem absSys) {
+	public CEGARResult(final STS system, final Collection<? extends AbstractState> exploredStates,
+			final long elapsedMillis, final int refinementCount, final Map<String, Long> detailedTime,
+			final int stateSpaceSize, final AbstractSystem absSys) {
 		checkArgument(exploredStates != null);
 		this.counterExample = null;
 		this.exploredStates = exploredStates;

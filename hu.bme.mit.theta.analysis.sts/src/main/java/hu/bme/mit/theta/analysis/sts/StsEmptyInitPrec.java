@@ -5,6 +5,10 @@ import hu.bme.mit.theta.analysis.pred.SimplePredPrec;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.solver.Solver;
 
+/**
+ * An implementation for initial precision that returns empty initial
+ * precisions.
+ */
 public class StsEmptyInitPrec implements StsInitPrec {
 
 	@Override

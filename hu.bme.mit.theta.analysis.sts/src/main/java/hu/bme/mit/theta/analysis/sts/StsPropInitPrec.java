@@ -6,6 +6,10 @@ import hu.bme.mit.theta.core.utils.impl.ExprUtils;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.solver.Solver;
 
+/**
+ * An implementation for initial precision that returns initial precisions based
+ * on the property.
+ */
 public class StsPropInitPrec implements StsInitPrec {
 
 	@Override

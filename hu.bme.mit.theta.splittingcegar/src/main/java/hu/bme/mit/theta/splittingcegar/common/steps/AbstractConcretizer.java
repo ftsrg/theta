@@ -19,6 +19,7 @@ import hu.bme.mit.theta.splittingcegar.common.data.ConcreteTrace;
 import hu.bme.mit.theta.splittingcegar.common.data.SolverWrapper;
 import hu.bme.mit.theta.splittingcegar.common.data.StopHandler;
 import hu.bme.mit.theta.splittingcegar.common.utils.SolverHelper;
+import hu.bme.mit.theta.splittingcegar.common.utils.StsUtils;
 import hu.bme.mit.theta.splittingcegar.common.utils.visualization.Visualizer;
 
 /**
@@ -90,7 +91,7 @@ public abstract class AbstractConcretizer extends AbstractCEGARStep {
 		// since for i=0 it must be satisfiable)
 		assert model != null;
 
-		final List<Valuation> trace = sts.extractTrace(model, len, requiredVars);
+		final List<Valuation> trace = StsUtils.extractTrace(model, len, requiredVars);
 
 		final ConcreteTrace result = new ConcreteTrace(trace, solver.getStatus() == SolverStatus.SAT);
 		solver.pop();

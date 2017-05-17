@@ -25,7 +25,6 @@ import hu.bme.mit.theta.formalism.sts.dsl.gen.StsDslParser.InitConstrContext;
 import hu.bme.mit.theta.formalism.sts.dsl.gen.StsDslParser.InvarConstrContext;
 import hu.bme.mit.theta.formalism.sts.dsl.gen.StsDslParser.TransConstrContext;
 import hu.bme.mit.theta.formalism.sts.dsl.gen.StsDslParser.VarDeclContext;
-import hu.bme.mit.theta.formalism.sts.impl.StsImpl;
 
 final class StsDefScope implements Scope {
 
@@ -35,7 +34,7 @@ final class StsDefScope implements Scope {
 	private final Assignment assignment;
 	private final SymbolTable symbolTable;
 
-	private final StsImpl.Builder stsBuilder;
+	private final STS.Builder stsBuilder;
 	private final STS sts;
 
 	private StsDefScope(final Scope enclosingScope, final Assignment assignment, final DefStsContext defTcfaContext) {
@@ -51,7 +50,7 @@ final class StsDefScope implements Scope {
 		final Assignment constAssignment = StsDslHelper.createConstDefs(this, assignment, defTcfaContext.constDecls);
 		this.assignment = NestedAssignment.create(assignment, constAssignment);
 
-		stsBuilder = new StsImpl.Builder();
+		stsBuilder = STS.builder();
 
 		createInvarConstrs();
 		createInitConstrs();

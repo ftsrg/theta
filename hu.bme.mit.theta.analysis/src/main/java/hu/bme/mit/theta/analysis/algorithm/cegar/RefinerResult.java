@@ -8,18 +8,33 @@ import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.common.ObjectUtils;
 
+/**
+ * Represents the result of the Refiner class that can be either spurious or
+ * unsafe. In the former case it also contains the refined precision and in the
+ * latter case the feasible counterexample.
+ */
 public abstract class RefinerResult<S extends State, A extends Action, P extends Prec> {
 
 	private RefinerResult() {
 	}
 
-	public static <S extends State, A extends Action, P extends Prec> Spurious<S, A, P> spurious(
-			final P refinedPrec) {
+	/**
+	 * Create a new spurious result.
+	 *
+	 * @param refinedPrec Refined precision
+	 * @return
+	 */
+	public static <S extends State, A extends Action, P extends Prec> Spurious<S, A, P> spurious(final P refinedPrec) {
 		return new Spurious<>(refinedPrec);
 	}
 
-	public static <S extends State, A extends Action, P extends Prec> Unsafe<S, A, P> unsafe(
-			final Trace<S, A> cex) {
+	/**
+	 * Creates a new unsafe result.
+	 *
+	 * @param cex Feasible counterexample
+	 * @return
+	 */
+	public static <S extends State, A extends Action, P extends Prec> Unsafe<S, A, P> unsafe(final Trace<S, A> cex) {
 		return new Unsafe<>(cex);
 	}
 
@@ -31,8 +46,9 @@ public abstract class RefinerResult<S extends State, A extends Action, P extends
 
 	public abstract Unsafe<S, A, P> asUnsafe();
 
-	////
-
+	/**
+	 * Represents the spurious result with a refined precision.
+	 */
 	public static final class Spurious<S extends State, A extends Action, P extends Prec>
 			extends RefinerResult<S, A, P> {
 		private final P refinedPrec;
@@ -73,8 +89,10 @@ public abstract class RefinerResult<S extends State, A extends Action, P extends
 		}
 	}
 
-	public static final class Unsafe<S extends State, A extends Action, P extends Prec>
-			extends RefinerResult<S, A, P> {
+	/**
+	 * Represents the unsafe result with a feasible counterexample.
+	 */
+	public static final class Unsafe<S extends State, A extends Action, P extends Prec> extends RefinerResult<S, A, P> {
 		private final Trace<S, A> cex;
 
 		private Unsafe(final Trace<S, A> cex) {

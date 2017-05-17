@@ -20,6 +20,7 @@ import hu.bme.mit.theta.splittingcegar.common.data.StopHandler;
 import hu.bme.mit.theta.splittingcegar.common.steps.AbstractCEGARStep;
 import hu.bme.mit.theta.splittingcegar.common.steps.Checker;
 import hu.bme.mit.theta.splittingcegar.common.utils.SolverHelper;
+import hu.bme.mit.theta.splittingcegar.common.utils.StsUtils;
 import hu.bme.mit.theta.splittingcegar.common.utils.visualization.Visualizer;
 import hu.bme.mit.theta.splittingcegar.visible.data.VisibleAbstractState;
 import hu.bme.mit.theta.splittingcegar.visible.data.VisibleAbstractSystem;
@@ -53,8 +54,8 @@ public class VisibleChecker extends AbstractCEGARStep implements Checker<Visible
 		solver.push();
 		solver.add(PathUtils.unfold(sts.getInit(), 0));
 		if (SolverHelper.checkSat(solver))
-			actualInit = new VisibleAbstractState(sts.getConcreteState(solver.getModel(), 0, system.getVisibleVars()),
-					true);
+			actualInit = new VisibleAbstractState(
+					StsUtils.getConcreteState(solver.getModel(), 0, system.getVisibleVars()), true);
 
 		solver.pop();
 
@@ -129,7 +130,7 @@ public class VisibleChecker extends AbstractCEGARStep implements Checker<Visible
 
 			if (SolverHelper.checkSat(solver)) {
 				actualInit = new VisibleAbstractState(
-						sts.getConcreteState(solver.getModel(), 0, system.getVisibleVars()), true);
+						StsUtils.getConcreteState(solver.getModel(), 0, system.getVisibleVars()), true);
 			} else {
 				actualInit = null;
 			}
@@ -181,7 +182,7 @@ public class VisibleChecker extends AbstractCEGARStep implements Checker<Visible
 				// it may be found as a successor of some state first than as an
 				// initial state)
 				final VisibleAbstractState succ = new VisibleAbstractState(
-						sts.getConcreteState(solver.getModel(), 1, system.getVisibleVars()), false);
+						StsUtils.getConcreteState(solver.getModel(), 1, system.getVisibleVars()), false);
 
 				successors.add(succ);
 				// Force new successors

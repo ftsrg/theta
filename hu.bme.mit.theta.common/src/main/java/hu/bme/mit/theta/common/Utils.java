@@ -15,26 +15,26 @@ public final class Utils {
 
 	public static <T> T singleElementOf(final Iterable<? extends T> collection) {
 		final Iterator<? extends T> iterator = collection.iterator();
-		checkArgument(iterator.hasNext());
+		checkArgument(iterator.hasNext(), "No elements collection");
 		final T elem = iterator.next();
-		checkArgument(!iterator.hasNext());
+		checkArgument(!iterator.hasNext(), "More than one elements in collection");
 		return elem;
 	}
 
 	public static <T> T anyElementOf(final Collection<? extends T> collection) {
 		final Iterator<? extends T> iterator = collection.iterator();
-		checkArgument(iterator.hasNext());
+		checkArgument(iterator.hasNext(), "No elements collection");
 		final T elem = iterator.next();
 		return elem;
 	}
 
 	public static <T> T head(final List<? extends T> list) {
-		checkArgument(!list.isEmpty());
+		checkArgument(!list.isEmpty(), "Empty list");
 		return list.get(0);
 	}
 
 	public static <T> List<? extends T> tail(final List<? extends T> list) {
-		checkArgument(!list.isEmpty());
+		checkArgument(!list.isEmpty(), "Empty list");
 		return list.subList(1, list.size());
 	}
 

@@ -59,7 +59,10 @@ public final class GraphvizWriter extends AbstractGraphWriter {
 		final Process proc = Runtime.getRuntime()
 				.exec("dot.exe -" + format.getOption() + " \"" + dotFile + "\" -o \"" + fileName + "\"");
 		proc.waitFor();
-		new File(dotFile).delete();
+		final boolean deleteSuccessful = new File(dotFile).delete();
+		if (!deleteSuccessful) {
+			throw new IOException("Could not delete temporary dot file.");
+		}
 	}
 
 	private void printNode(final Node node, final StringBuilder sb) {

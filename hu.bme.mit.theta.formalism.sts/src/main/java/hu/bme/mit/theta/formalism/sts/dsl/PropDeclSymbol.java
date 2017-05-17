@@ -9,7 +9,6 @@ import hu.bme.mit.theta.core.model.Assignment;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.formalism.sts.dsl.gen.StsDslParser.PropDeclContext;
-import hu.bme.mit.theta.formalism.sts.impl.StsImpl;
 
 final class PropDeclSymbol implements Symbol {
 
@@ -44,7 +43,7 @@ final class PropDeclSymbol implements Symbol {
 
 		final STS sts = stsDefScope.getSts();
 
-		final StsImpl.Builder builder = new StsImpl.Builder();
+		final STS.Builder builder = STS.builder();
 		builder.addInit(sts.getInit());
 		builder.addTrans(sts.getTrans());
 		builder.setProp(prop);

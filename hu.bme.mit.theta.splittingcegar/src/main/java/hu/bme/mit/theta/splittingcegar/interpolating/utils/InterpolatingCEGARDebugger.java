@@ -17,6 +17,7 @@ import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.splittingcegar.common.data.ConcreteTrace;
 import hu.bme.mit.theta.splittingcegar.common.data.SolverWrapper;
 import hu.bme.mit.theta.splittingcegar.common.utils.SolverHelper;
+import hu.bme.mit.theta.splittingcegar.common.utils.StsUtils;
 import hu.bme.mit.theta.splittingcegar.common.utils.debugging.AbstractDebugger;
 import hu.bme.mit.theta.splittingcegar.common.utils.debugging.Debugger;
 import hu.bme.mit.theta.splittingcegar.common.utils.visualization.Visualizer;
@@ -62,7 +63,7 @@ public class InterpolatingCEGARDebugger
 			SolverHelper.unrollAndAssert(solver, as.getLabels(), sts, 0);
 			do {
 				if (SolverHelper.checkSat(solver)) {
-					final Valuation csExpr = sts.getConcreteState(solver.getModel(), 0, system.getVars());
+					final Valuation csExpr = StsUtils.getConcreteState(solver.getModel(), 0, system.getVars());
 
 					final ConcreteState cs = new ConcreteState(csExpr);
 					stateSpace.get(as).add(cs);

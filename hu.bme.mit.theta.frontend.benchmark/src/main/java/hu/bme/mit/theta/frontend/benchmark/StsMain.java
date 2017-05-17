@@ -156,8 +156,7 @@ public class StsMain {
 			}
 
 			tableWriter.cell(sts.getVars().size());
-			tableWriter.cell(ExprUtils.size(Exprs.And(Exprs.And(sts.getInit()), Exprs.And(sts.getTrans())),
-					ExprMetrics.absoluteSize()));
+			tableWriter.cell(ExprUtils.size(Exprs.And(sts.getInit(), sts.getTrans()), ExprMetrics.absoluteSize()));
 
 		} catch (final Throwable ex) {
 			final String message = ex.getMessage() == null ? "" : ": " + ex.getMessage();

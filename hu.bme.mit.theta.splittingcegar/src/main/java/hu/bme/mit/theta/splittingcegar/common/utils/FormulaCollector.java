@@ -17,8 +17,7 @@ public final class FormulaCollector {
 			final Collection<Expr<? extends BoolType>> collectTo) {
 		final Collection<Expr<? extends BoolType>> conditions = new ArrayList<>();
 		final ITECondCollectorVisitor collector = new ITECondCollectorVisitor();
-		for (final Expr<? extends BoolType> tran : sts.getTrans())
-			tran.accept(collector, conditions);
+		sts.getTrans().accept(collector, conditions);
 		for (final Expr<? extends BoolType> cond : conditions)
 			ExprUtils.collectAtoms(cond, collectTo);
 	}

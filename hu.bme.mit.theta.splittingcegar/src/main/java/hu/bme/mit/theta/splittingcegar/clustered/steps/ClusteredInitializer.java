@@ -186,7 +186,8 @@ public class ClusteredInitializer extends AbstractCEGARStep implements Initializ
 		return ret;
 	}
 
-	private boolean isTransFeasible(final ComponentAbstractState s0, final ComponentAbstractState s1, final STS sts) {
+	private boolean isTransFeasible(final ComponentAbstractState s0, final ComponentAbstractState s1,
+			final STS sts) {
 		final Solver solver = solvers.getSolver();
 		solver.push();
 		SolverHelper.unrollAndAssert(solver, s0.getLabels(), sts, 0);

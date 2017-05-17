@@ -2,7 +2,6 @@ package hu.bme.mit.theta.analysis.pred;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -94,7 +93,7 @@ public final class SimplePredPrec implements PredPrec {
 				final boolean negValid = solver.check().isUnsat();
 				solver.pop();
 
-				checkState(!(ponValid && negValid), "Ponated and negated predicates are both valid");
+				assert !(ponValid && negValid) : "Ponated and negated predicates are both valid";
 				if (ponValid) {
 					statePreds.add(pred);
 				} else if (negValid) {

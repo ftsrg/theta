@@ -16,8 +16,13 @@ import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.impl.NullLogger;
 
-public final class CegarChecker<S extends State, A extends Action, P extends Prec>
-		implements SafetyChecker<S, A, P> {
+/**
+ * Counterexample-Guided Abstraction Refinement (CEGAR) loop implementation,
+ * that uses an Abstractor to explore the abstract state space and a Refiner to
+ * check counterexamples and refine them if needed. It also provides certain
+ * statistics about its execution.
+ */
+public final class CegarChecker<S extends State, A extends Action, P extends Prec> implements SafetyChecker<S, A, P> {
 
 	private final Abstractor<S, A, P> abstractor;
 	private final Refiner<S, A, P> refiner;
@@ -68,18 +73,16 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 
 		} while (!abstractorResult.isSafe() && !refinerResult.isUnsafe());
 
-		assert abstractorResult.isSafe() || refinerResult != null;
-
 		stopwatch.stop();
 		SafetyResult<S, A> cegarResult = null;
 		final CegarStatistics stats = new CegarStatistics(stopwatch.elapsed(TimeUnit.MILLISECONDS), iteration);
+
+		assert abstractorResult.isSafe() || (refinerResult != null && refinerResult.isUnsafe());
 
 		if (abstractorResult.isSafe()) {
 			cegarResult = SafetyResult.safe(arg, stats);
 		} else if (refinerResult.isUnsafe()) {
 			cegarResult = SafetyResult.unsafe(refinerResult.asUnsafe().getCex(), arg, stats);
-		} else {
-			throw new IllegalStateException();
 		}
 
 		assert cegarResult != null;

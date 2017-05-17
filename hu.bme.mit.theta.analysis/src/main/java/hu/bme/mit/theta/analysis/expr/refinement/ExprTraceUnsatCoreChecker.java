@@ -1,8 +1,6 @@
 package hu.bme.mit.theta.analysis.expr.refinement;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -49,7 +47,6 @@ public final class ExprTraceUnsatCoreChecker implements ExprTraceChecker<VarsRef
 	public ExprTraceStatus<VarsRefutation> check(final Trace<? extends ExprState, ? extends ExprAction> trace) {
 		checkNotNull(trace);
 		final int stateCount = trace.getStates().size();
-		checkArgument(stateCount > 0, "Zero length trace");
 
 		final List<VarIndexing> indexings = new ArrayList<>(stateCount);
 		indexings.add(VarIndexing.all(0));
@@ -58,7 +55,7 @@ public final class ExprTraceUnsatCoreChecker implements ExprTraceChecker<VarsRef
 
 		solver.track(ExprUtils.getConjuncts(PathUtils.unfold(init, indexings.get(0))));
 		solver.track(ExprUtils.getConjuncts(PathUtils.unfold(trace.getState(0).toExpr(), indexings.get(0))));
-		checkState(solver.check().isSat(), "Initial state of the trace is not feasible");
+		assert solver.check().isSat() : "Initial state of the trace is not feasible";
 		boolean concretizable = true;
 
 		for (int i = 1; i < stateCount; ++i) {
@@ -92,10 +89,9 @@ public final class ExprTraceUnsatCoreChecker implements ExprTraceChecker<VarsRef
 			final IndexedVars indexedVars = ExprUtils.getVarsIndexed(unsatCore);
 			status = ExprTraceStatus.infeasible(VarsRefutation.create(indexedVars));
 		}
-
+		assert status != null;
 		solver.pop();
 
-		assert status != null;
 		return status;
 	}
 

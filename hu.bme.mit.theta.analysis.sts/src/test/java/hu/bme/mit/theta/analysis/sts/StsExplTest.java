@@ -49,8 +49,7 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.IntType;
 import hu.bme.mit.theta.formalism.sts.STS;
-import hu.bme.mit.theta.formalism.sts.impl.StsImpl;
-import hu.bme.mit.theta.formalism.sts.impl.StsImpl.Builder;
+import hu.bme.mit.theta.formalism.sts.STS.Builder;
 import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 
@@ -68,7 +67,7 @@ public class StsExplTest {
 
 		final int mod = 10;
 
-		final Builder builder = new StsImpl.Builder();
+		final Builder builder = STS.builder();
 
 		builder.addInit(Eq(x, Int(0)));
 		builder.addInit(Eq(y, Int(0)));
@@ -81,7 +80,7 @@ public class StsExplTest {
 
 		final ItpSolver solver = Z3SolverFactory.getInstace().createItpSolver();
 
-		final Analysis<ExplState, ExprAction, ExplPrec> analysis = ExplAnalysis.create(solver, And(sts.getInit()));
+		final Analysis<ExplState, ExprAction, ExplPrec> analysis = ExplAnalysis.create(solver, sts.getInit());
 		final Predicate<ExprState> target = new ExprStatePredicate(Not(sts.getProp()), solver);
 
 		final ExplPrec prec = ExplPrec.create(Collections.singleton(vy));
@@ -93,8 +92,8 @@ public class StsExplTest {
 		final Abstractor<ExplState, StsAction, ExplPrec> abstractor = WaitlistBasedAbstractor.create(argBuilder,
 				PriorityWaitlist.supplier(ArgNodeComparators.bfs()), logger);
 
-		final ExprTraceChecker<VarsRefutation> exprTraceChecker = ExprTraceUnsatCoreChecker
-				.create(And(sts.getInit()), Not(sts.getProp()), solver);
+		final ExprTraceChecker<VarsRefutation> exprTraceChecker = ExprTraceUnsatCoreChecker.create(sts.getInit(),
+				Not(sts.getProp()), solver);
 
 		final SingleExprTraceRefiner<ExplState, StsAction, ExplPrec, VarsRefutation> refiner = SingleExprTraceRefiner
 				.create(exprTraceChecker, JoiningPrecRefiner.create(new VarsRefToExplPrec()), logger);

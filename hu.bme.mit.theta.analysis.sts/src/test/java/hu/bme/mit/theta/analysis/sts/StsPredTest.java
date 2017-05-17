@@ -49,8 +49,7 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.IntType;
 import hu.bme.mit.theta.formalism.sts.STS;
-import hu.bme.mit.theta.formalism.sts.impl.StsImpl;
-import hu.bme.mit.theta.formalism.sts.impl.StsImpl.Builder;
+import hu.bme.mit.theta.formalism.sts.STS.Builder;
 import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 
@@ -65,7 +64,7 @@ public class StsPredTest {
 
 		final int mod = 3;
 
-		final Builder builder = new StsImpl.Builder();
+		final Builder builder = STS.builder();
 
 		builder.addInit(Eq(x, Int(0)));
 		builder.addTrans(And(Imply(Lt(x, Int(mod)), Eq(Prime(x), Add(x, Int(1)))),
@@ -76,7 +75,7 @@ public class StsPredTest {
 
 		final ItpSolver solver = Z3SolverFactory.getInstace().createItpSolver();
 
-		final Analysis<PredState, ExprAction, PredPrec> analysis = PredAnalysis.create(solver, And(sts.getInit()));
+		final Analysis<PredState, ExprAction, PredPrec> analysis = PredAnalysis.create(solver, sts.getInit());
 		final Predicate<ExprState> target = new ExprStatePredicate(Not(sts.getProp()), solver);
 
 		final SimplePredPrec prec = SimplePredPrec.create(Collections.singleton(Lt(x, Int(mod))), solver);
@@ -88,7 +87,7 @@ public class StsPredTest {
 		final Abstractor<PredState, StsAction, SimplePredPrec> abstractor = WaitlistBasedAbstractor.create(argBuilder,
 				FifoWaitlist.supplier(), logger);
 
-		final ExprTraceChecker<ItpRefutation> exprTraceChecker = ExprTraceFwBinItpChecker.create(And(sts.getInit()),
+		final ExprTraceChecker<ItpRefutation> exprTraceChecker = ExprTraceFwBinItpChecker.create(sts.getInit(),
 				Not(sts.getProp()), solver);
 
 		final SingleExprTraceRefiner<PredState, StsAction, SimplePredPrec, ItpRefutation> refiner = SingleExprTraceRefiner

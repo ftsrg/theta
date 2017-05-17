@@ -76,10 +76,10 @@ public final class ExplPrec implements Prec {
 		return ExplState.create(builder.build());
 	}
 
-	public Collection<ExplState> createStates(final Solver solver, final Expr<? extends BoolType> expr) {
+	public Collection<ExplState> createStatesForExpr(final Solver solver, final Expr<? extends BoolType> expr) {
 		checkNotNull(solver);
 		checkNotNull(expr);
-		return ExprStates.createStates(solver, expr, this::createState);
+		return ExprStates.createStatesForExpr(solver, expr, this::createState);
 	}
 
 	@Override

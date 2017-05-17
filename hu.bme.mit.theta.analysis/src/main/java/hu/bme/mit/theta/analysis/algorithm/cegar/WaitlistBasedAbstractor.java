@@ -20,7 +20,7 @@ import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.impl.NullLogger;
 
 /**
- * A waitlist-based implementation for the abstractor.
+ * A waitlist-based implementation for the abstractor, relying on an ArgBuilder.
  */
 public final class WaitlistBasedAbstractor<S extends State, A extends Action, P extends Prec>
 		implements Abstractor<S, A, P> {
@@ -73,6 +73,8 @@ public final class WaitlistBasedAbstractor<S extends State, A extends Action, P 
 			logger.writeln("done.", 3);
 		}
 
+		assert arg.isInitialized();
+
 		logger.writeln(String.format("Starting ARG: %d nodes, %d incomplete, %d unsafe", arg.getNodes().count(),
 				arg.getIncompleteNodes().count(), arg.getUnsafeNodes().count()), 3, 2);
 		logger.write("Building ARG...", 3, 2);
@@ -83,8 +85,11 @@ public final class WaitlistBasedAbstractor<S extends State, A extends Action, P 
 				arg.getIncompleteNodes().count(), arg.getUnsafeNodes().count()), 3);
 
 		if (unsafeNode.isPresent()) {
+			assert !arg.isSafe() : "Returning safe ARG as unsafe";
 			return AbstractorResult.unsafe();
 		} else {
+			assert arg.isSafe() : "Returning unsafe ARG as safe";
+			assert arg.isComplete() : "Returning incomplete ARG as safe";
 			return AbstractorResult.safe();
 		}
 	}
@@ -102,6 +107,7 @@ public final class WaitlistBasedAbstractor<S extends State, A extends Action, P 
 			close(node, reachedSet.get(node));
 			if (!node.isCovered()) {
 				if (node.isTarget()) {
+					assert !node.isSafe() : "Safe node returned as unsafe";
 					return Optional.of(node);
 				} else {
 					final Collection<ArgNode<S, A>> newNodes = argBuilder.expand(node, prec);

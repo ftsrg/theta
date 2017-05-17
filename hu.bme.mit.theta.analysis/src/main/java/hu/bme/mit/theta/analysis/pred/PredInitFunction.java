@@ -26,7 +26,7 @@ public final class PredInitFunction implements InitFunction<PredState, PredPrec>
 	@Override
 	public Collection<? extends PredState> getInitStates(final PredPrec prec) {
 		checkNotNull(prec);
-		return prec.createStates(solver, initExpr);
+		return prec.createStatesForExpr(solver, initExpr);
 	}
 
 }
