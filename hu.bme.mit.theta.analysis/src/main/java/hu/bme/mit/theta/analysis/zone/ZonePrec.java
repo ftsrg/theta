@@ -9,22 +9,23 @@ import com.google.common.collect.ImmutableSet;
 
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.common.ObjectUtils;
-import hu.bme.mit.theta.formalism.ta.decl.ClockDecl;
+import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.type.RatType;
 
 public final class ZonePrec implements Prec {
 
-	private final Set<ClockDecl> clocks;
+	private final Set<VarDecl<RatType>> clocks;
 
-	private ZonePrec(final Collection<? extends ClockDecl> clocks) {
+	private ZonePrec(final Collection<? extends VarDecl<RatType>> clocks) {
 		checkNotNull(clocks);
 		this.clocks = ImmutableSet.copyOf(clocks);
 	}
 
-	public static ZonePrec of(final Collection<? extends ClockDecl> clocks) {
+	public static ZonePrec of(final Collection<? extends VarDecl<RatType>> clocks) {
 		return new ZonePrec(clocks);
 	}
 
-	public Set<ClockDecl> getClocks() {
+	public Set<VarDecl<RatType>> getVars() {
 		return clocks;
 	}
 
@@ -39,7 +40,7 @@ public final class ZonePrec implements Prec {
 			return true;
 		} else if (obj instanceof ZonePrec) {
 			final ZonePrec that = (ZonePrec) obj;
-			return this.getClocks().equals(that.getClocks());
+			return this.getVars().equals(that.getVars());
 		} else {
 			return false;
 		}

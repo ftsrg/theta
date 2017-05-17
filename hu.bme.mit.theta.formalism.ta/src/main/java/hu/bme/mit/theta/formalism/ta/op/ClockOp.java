@@ -9,7 +9,7 @@ import hu.bme.mit.theta.formalism.ta.utils.ClockOpVisitor;
 
 public interface ClockOp {
 
-	Collection<VarDecl<RatType>> getClocks();
+	Collection<VarDecl<RatType>> getVars();
 
 	Stmt toStmt();
 

@@ -14,27 +14,26 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.type.IntType;
 import hu.bme.mit.theta.core.type.RatType;
-import hu.bme.mit.theta.formalism.ta.decl.ClockDecl;
 import hu.bme.mit.theta.formalism.ta.utils.ClockOpVisitor;
 
 public final class ResetOp implements ClockOp {
 
 	private static final int HASH_SEED = 4507;
 
-	private final ClockDecl clock;
+	private final VarDecl<RatType> var;
 	private final int value;
 
 	private volatile int hashCode = 0;
 	private volatile AssignStmt<RatType, IntType> stmt = null;
 
-	ResetOp(final ClockDecl clock, final int value) {
+	ResetOp(final VarDecl<RatType> clock, final int value) {
 		checkArgument(value >= 0);
-		this.clock = checkNotNull(clock);
+		this.var = checkNotNull(clock);
 		this.value = value;
 	}
 
-	public ClockDecl getClock() {
-		return clock;
+	public VarDecl<RatType> getVar() {
+		return var;
 	}
 
 	public int getValue() {
@@ -42,15 +41,15 @@ public final class ResetOp implements ClockOp {
 	}
 
 	@Override
-	public Collection<VarDecl<RatType>> getClocks() {
-		return ImmutableSet.of(clock);
+	public Collection<VarDecl<RatType>> getVars() {
+		return ImmutableSet.of(var);
 	}
 
 	@Override
 	public AssignStmt<RatType, IntType> toStmt() {
 		AssignStmt<RatType, IntType> result = stmt;
 		if (result == null) {
-			result = Assign(clock, Int(value));
+			result = Assign(var, Int(value));
 			stmt = result;
 		}
 		return result;
@@ -66,7 +65,7 @@ public final class ResetOp implements ClockOp {
 		int result = hashCode;
 		if (result == 0) {
 			result = HASH_SEED;
-			result = 31 * result + clock.hashCode();
+			result = 31 * result + var.hashCode();
 			result = 31 * result + value;
 			hashCode = result;
 		}
@@ -79,7 +78,7 @@ public final class ResetOp implements ClockOp {
 			return true;
 		} else if (obj instanceof ResetOp) {
 			final ResetOp that = (ResetOp) obj;
-			return this.getClock().equals(that.getClock()) && this.getValue() == that.getValue();
+			return this.getVar().equals(that.getVar()) && this.getValue() == that.getValue();
 		} else {
 			return false;
 		}
@@ -87,7 +86,7 @@ public final class ResetOp implements ClockOp {
 
 	@Override
 	public String toString() {
-		return ObjectUtils.toStringBuilder("Reset").add(clock.getName()).add(value).toString();
+		return ObjectUtils.toStringBuilder("Reset").add(var.getName()).add(value).toString();
 	}
 
 }

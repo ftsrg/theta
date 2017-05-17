@@ -23,7 +23,7 @@ final class XtaZoneInitFunction implements InitFunction<ZoneState, ZonePrec> {
 	@Override
 	public Collection<ZoneState> getInitStates(final ZonePrec prec) {
 		checkNotNull(prec);
-		return Collections.singleton(ZoneState.zero(prec.getClocks()).transform().up().build());
+		return Collections.singleton(ZoneState.zero(prec.getVars()).transform().up().build());
 	}
 
 }

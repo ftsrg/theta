@@ -29,7 +29,6 @@ import hu.bme.mit.theta.core.utils.impl.ExprUtils;
 import hu.bme.mit.theta.core.utils.impl.StmtUtils;
 import hu.bme.mit.theta.core.utils.impl.UnfoldResult;
 import hu.bme.mit.theta.core.utils.impl.VarIndexing;
-import hu.bme.mit.theta.formalism.ta.decl.ClockDecl;
 import hu.bme.mit.theta.formalism.ta.utils.impl.TaExpr;
 import hu.bme.mit.theta.formalism.ta.utils.impl.TaStmt;
 import hu.bme.mit.theta.formalism.tcfa.TCFA;
@@ -136,11 +135,11 @@ public final class TcfaAction implements LocAction<TcfaLoc, TcfaEdge> {
 			exprs.add(Geq(delay, Rat(0, 1)));
 			indexing = indexing.inc(DELAY_VAR);
 
-			for (final ClockDecl clockDecl : tcfa.getClockVars()) {
-				final Expr<RatType> clock = clockDecl.getRef();
+			for (final VarDecl<RatType> var : tcfa.getClockVars()) {
+				final Expr<RatType> clock = var.getRef();
 				final Expr<RatType> primedClock = Prime(clock);
 				exprs.add(Eq(primedClock, Add(clock, delay)));
-				indexing = indexing.inc(clockDecl);
+				indexing = indexing.inc(var);
 			}
 
 			for (final Expr<? extends BoolType> invar : edge.getSource().getInvars()) {

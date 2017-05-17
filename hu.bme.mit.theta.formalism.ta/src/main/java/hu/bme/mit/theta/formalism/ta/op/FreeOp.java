@@ -11,36 +11,35 @@ import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.type.RatType;
-import hu.bme.mit.theta.formalism.ta.decl.ClockDecl;
 import hu.bme.mit.theta.formalism.ta.utils.ClockOpVisitor;
 
 public final class FreeOp implements ClockOp {
 
 	private static final int HASH_SEED = 2281;
 
-	private final ClockDecl clock;
+	private final VarDecl<RatType> var;
 
 	private volatile int hashCode = 0;
 	private volatile HavocStmt<RatType> stmt = null;
 
-	FreeOp(final ClockDecl clock) {
-		this.clock = checkNotNull(clock);
+	FreeOp(final VarDecl<RatType> var) {
+		this.var = checkNotNull(var);
 	}
 
-	public ClockDecl getClock() {
-		return clock;
+	public VarDecl<RatType> getVar() {
+		return var;
 	}
 
 	@Override
-	public Collection<VarDecl<RatType>> getClocks() {
-		return ImmutableSet.of(clock);
+	public Collection<VarDecl<RatType>> getVars() {
+		return ImmutableSet.of(var);
 	}
 
 	@Override
 	public HavocStmt<RatType> toStmt() {
 		HavocStmt<RatType> result = stmt;
 		if (result == null) {
-			result = Havoc(clock);
+			result = Havoc(var);
 			stmt = result;
 		}
 		return result;
@@ -56,7 +55,7 @@ public final class FreeOp implements ClockOp {
 		int result = hashCode;
 		if (result == 0) {
 			result = HASH_SEED;
-			result = 31 * result + clock.hashCode();
+			result = 31 * result + var.hashCode();
 			hashCode = result;
 		}
 		return result;
@@ -68,7 +67,7 @@ public final class FreeOp implements ClockOp {
 			return true;
 		} else if (obj instanceof FreeOp) {
 			final FreeOp that = (FreeOp) obj;
-			return this.getClock().equals(that.getClock());
+			return this.getVar().equals(that.getVar());
 		} else {
 			return false;
 		}
@@ -76,7 +75,7 @@ public final class FreeOp implements ClockOp {
 
 	@Override
 	public String toString() {
-		return ObjectUtils.toStringBuilder("Free").add(clock.getName()).toString();
+		return ObjectUtils.toStringBuilder("Free").add(var.getName()).toString();
 	}
 
 }

@@ -17,8 +17,8 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.impl.Valuation;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.IntType;
+import hu.bme.mit.theta.core.type.RatType;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.formalism.ta.decl.ClockDecl;
 import hu.bme.mit.theta.formalism.xta.XtaProcess;
 import hu.bme.mit.theta.formalism.xta.XtaProcess.Loc;
 import hu.bme.mit.theta.formalism.xta.XtaSystem;
@@ -58,8 +58,8 @@ final class XtaInitFunction<S extends State, P extends Prec> implements InitFunc
 				builder.put(var, False());
 			} else if (type instanceof IntType) {
 				builder.put(var, Int(0));
-			} else if (var instanceof ClockDecl) {
-				// do nothing
+			} else if (type instanceof RatType) {
+				// var is a clock variable, do nothing
 			} else {
 				throw new UnsupportedOperationException();
 			}

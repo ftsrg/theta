@@ -13,26 +13,25 @@ import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.type.RatType;
-import hu.bme.mit.theta.formalism.ta.decl.ClockDecl;
 import hu.bme.mit.theta.formalism.ta.utils.ClockOpVisitor;
 
 public final class ShiftOp implements ClockOp {
 
 	private static final int HASH_SEED = 5521;
 
-	private final ClockDecl clock;
+	private final VarDecl<RatType> var;
 	private final int offset;
 
 	private volatile int hashCode = 0;
 	private volatile AssignStmt<RatType, RatType> stmt = null;
 
-	ShiftOp(final ClockDecl clock, final int offset) {
-		this.clock = checkNotNull(clock);
+	ShiftOp(final VarDecl<RatType> var, final int offset) {
+		this.var = checkNotNull(var);
 		this.offset = offset;
 	}
 
-	public ClockDecl getClock() {
-		return clock;
+	public VarDecl<RatType> getVar() {
+		return var;
 	}
 
 	public int getOffset() {
@@ -40,15 +39,15 @@ public final class ShiftOp implements ClockOp {
 	}
 
 	@Override
-	public Collection<VarDecl<RatType>> getClocks() {
-		return ImmutableSet.of(clock);
+	public Collection<VarDecl<RatType>> getVars() {
+		return ImmutableSet.of(var);
 	}
 
 	@Override
 	public AssignStmt<RatType, RatType> toStmt() {
 		AssignStmt<RatType, RatType> result = stmt;
 		if (result == null) {
-			result = Assign(clock, Add(clock.getRef(), Int(offset)));
+			result = Assign(var, Add(var.getRef(), Int(offset)));
 			stmt = result;
 		}
 		return result;
@@ -64,7 +63,7 @@ public final class ShiftOp implements ClockOp {
 		int result = hashCode;
 		if (result == 0) {
 			result = HASH_SEED;
-			result = 31 * result + clock.hashCode();
+			result = 31 * result + var.hashCode();
 			result = 31 * result + offset;
 			hashCode = result;
 		}
@@ -77,7 +76,7 @@ public final class ShiftOp implements ClockOp {
 			return true;
 		} else if (obj instanceof ShiftOp) {
 			final ShiftOp that = (ShiftOp) obj;
-			return this.getClock().equals(that.getClock()) && this.getOffset() == that.getOffset();
+			return this.getVar().equals(that.getVar()) && this.getOffset() == that.getOffset();
 		} else {
 			return false;
 		}
@@ -85,7 +84,7 @@ public final class ShiftOp implements ClockOp {
 
 	@Override
 	public String toString() {
-		return ObjectUtils.toStringBuilder("Shift").add(clock.getName()).add(offset).toString();
+		return ObjectUtils.toStringBuilder("Shift").add(var.getName()).add(offset).toString();
 	}
 
 }

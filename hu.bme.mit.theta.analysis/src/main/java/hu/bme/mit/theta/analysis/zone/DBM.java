@@ -610,13 +610,13 @@ final class DBM {
 
 		@Override
 		public Void visit(final CopyOp op, final DBM dbm) {
-			dbm.copy(op.getClock(), op.getValue());
+			dbm.copy(op.getVar(), op.getValue());
 			return null;
 		}
 
 		@Override
 		public Void visit(final FreeOp op, final DBM dbm) {
-			dbm.free(op.getClock());
+			dbm.free(op.getVar());
 			return null;
 		}
 
@@ -628,13 +628,13 @@ final class DBM {
 
 		@Override
 		public Void visit(final ResetOp op, final DBM dbm) {
-			dbm.reset(op.getClock(), op.getValue());
+			dbm.reset(op.getVar(), op.getValue());
 			return null;
 		}
 
 		@Override
 		public Void visit(final ShiftOp op, final DBM dbm) {
-			dbm.shift(op.getClock(), op.getOffset());
+			dbm.shift(op.getVar(), op.getOffset());
 			return null;
 		}
 

@@ -15,12 +15,13 @@ import java.util.StringJoiner;
 import com.google.common.collect.Iterables;
 
 import hu.bme.mit.theta.analysis.expr.ExprState;
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.RatLitExpr;
 import hu.bme.mit.theta.core.model.impl.Valuation;
 import hu.bme.mit.theta.core.type.BoolType;
+import hu.bme.mit.theta.core.type.RatType;
 import hu.bme.mit.theta.formalism.ta.constr.ClockConstr;
-import hu.bme.mit.theta.formalism.ta.decl.ClockDecl;
 import hu.bme.mit.theta.formalism.ta.op.ClockOp;
 
 public final class ZoneState implements ExprState {
@@ -45,36 +46,36 @@ public final class ZoneState implements ExprState {
 
 	////
 
-	public static ZoneState region(final Valuation valuation) {
+	public static ZoneState region(final Valuation valuation, final Collection<VarDecl<RatType>> vars) {
 		checkNotNull(valuation);
-		final Iterable<ClockDecl> clocks = Iterables.filter(valuation.getDecls(), ClockDecl.class);
+		final Iterable<VarDecl<RatType>> constrainedVars = Iterables.filter(vars, v -> valuation.eval(v).isPresent());
 
-		final DBM dbm = DBM.top(clocks);
+		final DBM dbm = DBM.top(constrainedVars);
 
-		for (final ClockDecl c : clocks) {
-			final RatLitExpr sc = (RatLitExpr) valuation.eval(c).get();
-			final RatLitExpr fc = sc.frac();
+		for (final VarDecl<RatType> x : constrainedVars) {
+			final RatLitExpr sx = (RatLitExpr) valuation.eval(x).get();
+			final RatLitExpr fx = sx.frac();
 
-			if (fc.getNum() == 0) {
-				dbm.and(Eq(c, sc.getNum()));
+			if (fx.getNum() == 0) {
+				dbm.and(Eq(x, sx.getNum()));
 			} else {
-				dbm.and(Lt(c, sc.ceil()));
-				dbm.and(Gt(c, sc.floor()));
+				dbm.and(Lt(x, sx.ceil()));
+				dbm.and(Gt(x, sx.floor()));
 			}
 
-			for (final ClockDecl d : clocks) {
-				if (c == d) {
+			for (final VarDecl<RatType> y : constrainedVars) {
+				if (x == y) {
 					continue;
 				}
 
-				final RatLitExpr sd = (RatLitExpr) valuation.eval(d).get();
-				final RatLitExpr fd = sd.frac();
+				final RatLitExpr sy = (RatLitExpr) valuation.eval(y).get();
+				final RatLitExpr fy = sy.frac();
 
-				final int compareResult = fc.compareTo(fd);
+				final int compareResult = fx.compareTo(fy);
 				if (compareResult == 0) {
-					dbm.and(Eq(c, d, sc.floor() - sd.floor()));
+					dbm.and(Eq(x, y, sx.floor() - sy.floor()));
 				} else if (compareResult < 0) {
-					dbm.and(Lt(c, d, sc.floor() - sd.floor()));
+					dbm.and(Lt(x, y, sx.floor() - sy.floor()));
 				}
 			}
 		}
@@ -90,7 +91,7 @@ public final class ZoneState implements ExprState {
 		return BOTTOM;
 	}
 
-	public static ZoneState zero(final Collection<? extends ClockDecl> clocks) {
+	public static ZoneState zero(final Collection<? extends VarDecl<RatType>> clocks) {
 		return new ZoneState(DBM.zero(clocks));
 	}
 
@@ -129,7 +130,7 @@ public final class ZoneState implements ExprState {
 		return Builder.transform(this);
 	}
 
-	public Builder project(final Collection<? extends ClockDecl> clocks) {
+	public Builder project(final Collection<? extends VarDecl<RatType>> clocks) {
 		checkNotNull(clocks);
 		return Builder.project(this, clocks);
 	}
@@ -223,7 +224,7 @@ public final class ZoneState implements ExprState {
 			return new Builder(DBM.copyOf(state.dbm));
 		}
 
-		private static Builder project(final ZoneState state, final Collection<? extends ClockDecl> clocks) {
+		private static Builder project(final ZoneState state, final Collection<? extends VarDecl<RatType>> clocks) {
 			return new Builder(DBM.project(state.dbm, clocks));
 		}
 
@@ -260,27 +261,27 @@ public final class ZoneState implements ExprState {
 			return this;
 		}
 
-		public Builder free(final ClockDecl clock) {
-			dbm.free(clock);
+		public Builder free(final VarDecl<RatType> var) {
+			dbm.free(var);
 			return this;
 		}
 
-		public Builder reset(final ClockDecl clock, final int m) {
-			dbm.reset(clock, m);
+		public Builder reset(final VarDecl<RatType> var, final int m) {
+			dbm.reset(var, m);
 			return this;
 		}
 
-		public Builder copy(final ClockDecl lhs, final ClockDecl rhs) {
+		public Builder copy(final VarDecl<RatType> lhs, final VarDecl<RatType> rhs) {
 			dbm.copy(lhs, rhs);
 			return this;
 		}
 
-		public Builder shift(final ClockDecl clock, final int m) {
-			dbm.shift(clock, m);
+		public Builder shift(final VarDecl<RatType> var, final int m) {
+			dbm.shift(var, m);
 			return this;
 		}
 
-		public Builder norm(final Map<? extends ClockDecl, ? extends Integer> ceilings) {
+		public Builder norm(final Map<? extends VarDecl<RatType>, ? extends Integer> ceilings) {
 			dbm.norm(ceilings);
 			return this;
 		}

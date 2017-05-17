@@ -10,42 +10,41 @@ import com.google.common.collect.ImmutableSet;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.type.RatType;
-import hu.bme.mit.theta.formalism.ta.decl.ClockDecl;
 import hu.bme.mit.theta.formalism.ta.utils.ClockOpVisitor;
 
 public final class CopyOp implements ClockOp {
 
 	private static final int HASH_SEED = 1289;
 
-	private final ClockDecl clock;
-	private final ClockDecl value;
+	private final VarDecl<RatType> var;
+	private final VarDecl<RatType> value;
 
 	private volatile int hashCode = 0;
 	private volatile AssignStmt<RatType, RatType> stmt = null;
 
-	CopyOp(final ClockDecl clock, final ClockDecl value) {
-		this.clock = checkNotNull(clock);
+	CopyOp(final VarDecl<RatType> var, final VarDecl<RatType> value) {
+		this.var = checkNotNull(var);
 		this.value = checkNotNull(value);
 	}
 
-	public ClockDecl getClock() {
-		return clock;
+	public VarDecl<RatType> getVar() {
+		return var;
 	}
 
-	public ClockDecl getValue() {
+	public VarDecl<RatType> getValue() {
 		return value;
 	}
 
 	@Override
-	public Collection<VarDecl<RatType>> getClocks() {
-		return ImmutableSet.of(clock, value);
+	public Collection<VarDecl<RatType>> getVars() {
+		return ImmutableSet.of(var, value);
 	}
 
 	@Override
 	public AssignStmt<RatType, RatType> toStmt() {
 		AssignStmt<RatType, RatType> result = stmt;
 		if (result == null) {
-			result = Assign(clock, value.getRef());
+			result = Assign(var, value.getRef());
 			stmt = result;
 		}
 		return stmt;
@@ -61,7 +60,7 @@ public final class CopyOp implements ClockOp {
 		int result = hashCode;
 		if (result == 0) {
 			result = HASH_SEED;
-			result = 31 * result + clock.hashCode();
+			result = 31 * result + var.hashCode();
 			result = 31 * result + value.hashCode();
 			hashCode = result;
 		}
@@ -74,7 +73,7 @@ public final class CopyOp implements ClockOp {
 			return true;
 		} else if (obj instanceof CopyOp) {
 			final CopyOp that = (CopyOp) obj;
-			return this.getClock().equals(that.getClock()) && this.getValue().equals(that.getValue());
+			return this.getVar().equals(that.getVar()) && this.getValue().equals(that.getValue());
 		} else {
 			return false;
 		}
@@ -84,7 +83,7 @@ public final class CopyOp implements ClockOp {
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("Copy(");
-		sb.append(clock.getName());
+		sb.append(var.getName());
 		sb.append(", ");
 		sb.append(value.getName());
 		return sb.toString();

@@ -13,10 +13,11 @@ import hu.bme.mit.theta.analysis.xta.XtaAction.SimpleXtaAction;
 import hu.bme.mit.theta.analysis.xta.XtaAction.SyncedXtaAction;
 import hu.bme.mit.theta.analysis.zone.ZonePrec;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.type.BoolType;
-import hu.bme.mit.theta.formalism.ta.decl.ClockDecl;
+import hu.bme.mit.theta.core.type.RatType;
 import hu.bme.mit.theta.formalism.ta.op.ResetOp;
 import hu.bme.mit.theta.formalism.ta.utils.impl.TaExpr;
 import hu.bme.mit.theta.formalism.ta.utils.impl.TaStmt;
@@ -46,7 +47,7 @@ public final class XtaZoneUtils {
 
 	private static ZoneState postForSimpleAction(final ZoneState state, final SimpleXtaAction action,
 			final ZonePrec prec) {
-		final ZoneState.Builder succStateBuilder = state.project(prec.getClocks());
+		final ZoneState.Builder succStateBuilder = state.project(prec.getVars());
 
 		final List<Loc> sourceLocs = action.getSourceLocs();
 		final Edge edge = action.getEdge();
@@ -66,7 +67,7 @@ public final class XtaZoneUtils {
 
 	private static ZoneState postForSyncedAction(final ZoneState state, final SyncedXtaAction action,
 			final ZonePrec prec) {
-		final ZoneState.Builder succStateBuilder = state.project(prec.getClocks());
+		final ZoneState.Builder succStateBuilder = state.project(prec.getVars());
 
 		final List<Loc> sourceLocs = action.getSourceLocs();
 		final Edge emittingEdge = action.getEmittingEdge();
@@ -107,7 +108,7 @@ public final class XtaZoneUtils {
 
 	private static ZoneState preForSimpleAction(final ZoneState state, final SimpleXtaAction action,
 			final ZonePrec prec) {
-		final ZoneState.Builder preStateBuilder = state.project(prec.getClocks());
+		final ZoneState.Builder preStateBuilder = state.project(prec.getVars());
 
 		final List<Loc> sourceLocs = action.getSourceLocs();
 		final Edge edge = action.getEdge();
@@ -127,7 +128,7 @@ public final class XtaZoneUtils {
 
 	private static ZoneState preForSyncedAction(final ZoneState state, final SyncedXtaAction action,
 			final ZonePrec prec) {
-		final ZoneState.Builder preStateBuilder = state.project(prec.getClocks());
+		final ZoneState.Builder preStateBuilder = state.project(prec.getVars());
 
 		final List<Loc> sourceLocs = action.getSourceLocs();
 		final Edge emittingEdge = action.getEmittingEdge();
@@ -180,9 +181,9 @@ public final class XtaZoneUtils {
 			final TaStmt stmt = TaStmt.of(update);
 			if (stmt.isClockStmt()) {
 				final ResetOp op = (ResetOp) stmt.asClockStmt().getClockOp();
-				final ClockDecl clock = op.getClock();
+				final VarDecl<RatType> var = op.getVar();
 				final int value = op.getValue();
-				builder.reset(clock, value);
+				builder.reset(var, value);
 			}
 		}
 	}
@@ -192,10 +193,10 @@ public final class XtaZoneUtils {
 			final TaStmt stmt = TaStmt.of(update);
 			if (stmt.isClockStmt()) {
 				final ResetOp op = (ResetOp) stmt.asClockStmt().getClockOp();
-				final ClockDecl clock = op.getClock();
+				final VarDecl<RatType> var = op.getVar();
 				final int value = op.getValue();
-				builder.and(Eq(clock, value));
-				builder.free(clock);
+				builder.and(Eq(var, value));
+				builder.free(var);
 			}
 		}
 	}

@@ -30,7 +30,7 @@ public final class GuardOp implements ClockOp {
 	}
 
 	@Override
-	public Collection<VarDecl<RatType>> getClocks() {
+	public Collection<VarDecl<RatType>> getVars() {
 		return constr.getVars();
 	}
 

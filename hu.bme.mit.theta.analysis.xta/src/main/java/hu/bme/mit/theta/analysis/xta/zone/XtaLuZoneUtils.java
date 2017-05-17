@@ -7,10 +7,11 @@ import hu.bme.mit.theta.analysis.xta.XtaAction;
 import hu.bme.mit.theta.analysis.xta.XtaAction.SimpleXtaAction;
 import hu.bme.mit.theta.analysis.xta.XtaAction.SyncedXtaAction;
 import hu.bme.mit.theta.analysis.zone.BoundFunction;
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.type.BoolType;
-import hu.bme.mit.theta.formalism.ta.decl.ClockDecl;
+import hu.bme.mit.theta.core.type.RatType;
 import hu.bme.mit.theta.formalism.ta.op.ResetOp;
 import hu.bme.mit.theta.formalism.ta.utils.impl.TaExpr;
 import hu.bme.mit.theta.formalism.ta.utils.impl.TaStmt;
@@ -47,8 +48,8 @@ public final class XtaLuZoneUtils {
 				final TaStmt stmt = TaStmt.of(update);
 				if (stmt.isClockStmt()) {
 					final ResetOp op = (ResetOp) stmt.asClockStmt().getClockOp();
-					final ClockDecl clock = op.getClock();
-					builder.remove(clock);
+					final VarDecl<RatType> var = op.getVar();
+					builder.remove(var);
 				}
 			}
 
@@ -88,8 +89,8 @@ public final class XtaLuZoneUtils {
 				final TaStmt stmt = TaStmt.of(update);
 				if (stmt.isClockStmt()) {
 					final ResetOp op = (ResetOp) stmt.asClockStmt().getClockOp();
-					final ClockDecl clock = op.getClock();
-					builder.remove(clock);
+					final VarDecl<RatType> var = op.getVar();
+					builder.remove(var);
 				}
 			}
 
@@ -97,8 +98,8 @@ public final class XtaLuZoneUtils {
 				final TaStmt stmt = TaStmt.of(update);
 				if (stmt.isClockStmt()) {
 					final ResetOp op = (ResetOp) stmt.asClockStmt().getClockOp();
-					final ClockDecl clock = op.getClock();
-					builder.remove(clock);
+					final VarDecl<RatType> var = op.getVar();
+					builder.remove(var);
 				}
 			}
 

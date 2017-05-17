@@ -8,14 +8,15 @@ import com.google.common.collect.Lists;
 import hu.bme.mit.theta.analysis.tcfa.TcfaAction;
 import hu.bme.mit.theta.analysis.zone.ZonePrec;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
+import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.type.RatType;
 import hu.bme.mit.theta.formalism.ta.constr.ClockConstr;
-import hu.bme.mit.theta.formalism.ta.decl.ClockDecl;
 import hu.bme.mit.theta.formalism.ta.op.ClockOp;
 import hu.bme.mit.theta.formalism.ta.op.GuardOp;
 import hu.bme.mit.theta.formalism.ta.op.ResetOp;
 import hu.bme.mit.theta.formalism.ta.utils.impl.TaExpr;
-import hu.bme.mit.theta.formalism.ta.utils.impl.TaStmt;
 import hu.bme.mit.theta.formalism.ta.utils.impl.TaExpr.ClockExpr;
+import hu.bme.mit.theta.formalism.ta.utils.impl.TaStmt;
 
 public final class TcfaZoneUtils {
 
@@ -27,7 +28,7 @@ public final class TcfaZoneUtils {
 		checkNotNull(action);
 		checkNotNull(prec);
 
-		final ZoneState.Builder succStateBuilder = state.project(prec.getClocks());
+		final ZoneState.Builder succStateBuilder = state.project(prec.getVars());
 
 		for (final TaExpr invar : action.getSourceInvars()) {
 			if (invar.isClockExpr()) {
@@ -65,7 +66,7 @@ public final class TcfaZoneUtils {
 		checkNotNull(action);
 		checkNotNull(prec);
 
-		final ZoneState.Builder prevStateBuilder = state.project(prec.getClocks());
+		final ZoneState.Builder prevStateBuilder = state.project(prec.getVars());
 
 		if (!action.getEdge().getSource().isUrgent()) {
 			prevStateBuilder.down();
@@ -84,10 +85,10 @@ public final class TcfaZoneUtils {
 				final ClockOp op = tcfaStmt.asClockStmt().getClockOp();
 				if (op instanceof ResetOp) {
 					final ResetOp resetOp = (ResetOp) op;
-					final ClockDecl clock = resetOp.getClock();
+					final VarDecl<RatType> var = resetOp.getVar();
 					final int value = resetOp.getValue();
-					prevStateBuilder.and(Eq(clock, value));
-					prevStateBuilder.free(clock);
+					prevStateBuilder.and(Eq(var, value));
+					prevStateBuilder.free(var);
 
 				} else if (op instanceof GuardOp) {
 					final GuardOp guardOp = (GuardOp) op;
