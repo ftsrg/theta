@@ -37,6 +37,7 @@ import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceFwBinItpChecker;
 import hu.bme.mit.theta.analysis.expr.refinement.ItpRefutation;
 import hu.bme.mit.theta.analysis.expr.refinement.JoiningPrecRefiner;
 import hu.bme.mit.theta.analysis.expr.refinement.SingleExprTraceRefiner;
+import hu.bme.mit.theta.analysis.pred.ExprSplitters;
 import hu.bme.mit.theta.analysis.pred.ItpRefToSimplePredPrec;
 import hu.bme.mit.theta.analysis.pred.PredAnalysis;
 import hu.bme.mit.theta.analysis.pred.PredPrec;
@@ -97,8 +98,7 @@ public class StsPredTest {
 
 		final SingleExprTraceRefiner<PredState, StsAction, SimplePredPrec, ItpRefutation> refiner = SingleExprTraceRefiner
 				.create(exprTraceChecker,
-						JoiningPrecRefiner.create(new ItpRefToSimplePredPrec(solver, ItpRefToSimplePredPrec.atoms())),
-						logger);
+						JoiningPrecRefiner.create(new ItpRefToSimplePredPrec(solver, ExprSplitters.atoms())), logger);
 
 		final SafetyChecker<PredState, StsAction, SimplePredPrec> checker = CegarChecker.create(abstractor, refiner,
 				logger);
