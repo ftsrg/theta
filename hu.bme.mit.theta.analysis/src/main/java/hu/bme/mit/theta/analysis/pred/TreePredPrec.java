@@ -21,6 +21,10 @@ public final class TreePredPrec implements PredPrec {
 
 	private final Node root;
 
+	public static TreePredPrec create() {
+		return create(Collections.emptySet());
+	}
+
 	public static TreePredPrec create(final Iterable<? extends Expr<? extends BoolType>> preds) {
 		return new TreePredPrec(preds);
 	}
