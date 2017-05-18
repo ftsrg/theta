@@ -108,9 +108,11 @@ public final class TreePredPrec implements PredPrec {
 			if (predHolds.equals(Exprs.True())) {
 				statePreds.add(node.getPonPred());
 				node = node.getPonRefined().isPresent() ? node.getPonRefined().get() : null;
-			} else {
+			} else if (predHolds.equals(Exprs.False())) {
 				statePreds.add(node.getNegPred());
 				node = node.getNegRefined().isPresent() ? node.getNegRefined().get() : null;
+			} else {
+				throw new UnsupportedOperationException("Predicate cannot be evaluated in TreePredPrec");
 			}
 		}
 
