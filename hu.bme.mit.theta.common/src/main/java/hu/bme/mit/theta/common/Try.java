@@ -2,9 +2,20 @@ package hu.bme.mit.theta.common;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import java.util.function.Supplier;
+
 public abstract class Try<T> {
 
 	private Try() {
+	}
+
+	public static <T> Try<T> attempt(final Supplier<? extends T> supplier) {
+		try {
+			final T value = supplier.get();
+			return success(value);
+		} catch (final Exception exception) {
+			return failure(exception);
+		}
 	}
 
 	public static <T> Success<T> success(final T value) {

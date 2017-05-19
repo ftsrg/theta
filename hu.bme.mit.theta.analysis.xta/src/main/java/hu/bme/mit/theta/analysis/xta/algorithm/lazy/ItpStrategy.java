@@ -47,7 +47,7 @@ public abstract class ItpStrategy implements LazyXtaChecker.AlgorithmStrategy<It
 	ItpStrategy(final XtaSystem system, final ItpOperator operator) {
 		checkNotNull(system);
 		this.operator = checkNotNull(operator);
-		prec = ZonePrec.of(system.getClocks());
+		prec = ZonePrec.of(system.getClockVars());
 		analysis = PrecMappingAnalysis.create(ItpZoneAnalysis.create(XtaZoneAnalysis.getInstance()), u -> prec);
 	}
 

@@ -7,7 +7,6 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.EqExpr;
 import hu.bme.mit.theta.core.expr.VarRefExpr;
 import hu.bme.mit.theta.core.type.RatType;
-import hu.bme.mit.theta.formalism.ta.utils.ClockConstrVisitor;
 
 public final class UnitEqConstr extends UnitConstr {
 

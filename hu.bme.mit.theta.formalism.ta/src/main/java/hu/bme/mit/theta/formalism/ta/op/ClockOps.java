@@ -1,20 +1,23 @@
 package hu.bme.mit.theta.formalism.ta.op;
 
+import static hu.bme.mit.theta.core.type.impl.Types.Rat;
+
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.AddExpr;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.IntLitExpr;
+import hu.bme.mit.theta.core.expr.VarRefExpr;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.BoolType;
+import hu.bme.mit.theta.core.type.RatType;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.utils.impl.FailStmtVisitor;
+import hu.bme.mit.theta.core.utils.impl.TypeUtils;
 import hu.bme.mit.theta.formalism.ta.constr.ClockConstr;
 import hu.bme.mit.theta.formalism.ta.constr.ClockConstrs;
-import hu.bme.mit.theta.formalism.ta.decl.ClockDecl;
-import hu.bme.mit.theta.formalism.ta.expr.ClockRefExpr;
 
 public final class ClockOps {
 
@@ -35,24 +38,24 @@ public final class ClockOps {
 
 	////
 
-	public static CopyOp Copy(final ClockDecl clock, final ClockDecl value) {
-		return new CopyOp(clock, value);
+	public static CopyOp Copy(final VarDecl<RatType> var, final VarDecl<RatType> value) {
+		return new CopyOp(var, value);
 	}
 
-	public static FreeOp Free(final ClockDecl clock) {
-		return new FreeOp(clock);
+	public static FreeOp Free(final VarDecl<RatType> var) {
+		return new FreeOp(var);
 	}
 
 	public static GuardOp Guard(final ClockConstr constr) {
 		return new GuardOp(constr);
 	}
 
-	public static ResetOp Reset(final ClockDecl clock, final int value) {
-		return new ResetOp(clock, value);
+	public static ResetOp Reset(final VarDecl<RatType> var, final int value) {
+		return new ResetOp(var, value);
 	}
 
-	public static ShiftOp Shift(final ClockDecl clock, final int offset) {
-		return new ShiftOp(clock, offset);
+	public static ShiftOp Shift(final VarDecl<RatType> var, final int offset) {
+		return new ShiftOp(var, offset);
 	}
 
 	////
@@ -64,53 +67,44 @@ public final class ClockOps {
 
 		@Override
 		public <LhsType extends Type> ClockOp visit(final HavocStmt<LhsType> stmt, final Void param) {
-			final VarDecl<?> varDecl = stmt.getVarDecl();
-			if (varDecl instanceof ClockDecl) {
-				final ClockDecl clock = (ClockDecl) varDecl;
-				return Free(clock);
-			}
-
-			throw new IllegalArgumentException();
+			final VarDecl<RatType> var = TypeUtils.cast(stmt.getVarDecl(), Rat());
+			return Free(var);
 		}
 
 		@Override
 		public <LhsType extends Type, RhsType extends LhsType> ClockOp visit(final AssignStmt<LhsType, RhsType> stmt,
 				final Void param) {
 
-			final VarDecl<?> varDecl = stmt.getVarDecl();
+			final VarDecl<RatType> var = TypeUtils.cast(stmt.getVarDecl(), Rat());
+			final Expr<?> expr = stmt.getExpr();
 
-			if (varDecl instanceof ClockDecl) {
-				final ClockDecl clock = (ClockDecl) varDecl;
-				final Expr<?> expr = stmt.getExpr();
+			if (expr instanceof IntLitExpr) {
+				final IntLitExpr intLit = (IntLitExpr) expr;
+				final int value = Math.toIntExact(intLit.getValue());
+				return Reset(var, value);
 
-				if (expr instanceof IntLitExpr) {
-					final IntLitExpr intLit = (IntLitExpr) expr;
-					final int value = Math.toIntExact(intLit.getValue());
-					return Reset(clock, value);
+			} else if (expr instanceof VarRefExpr) {
+				final VarRefExpr<?> varRef = (VarRefExpr<?>) expr;
+				final VarDecl<RatType> value = TypeUtils.cast(varRef.getDecl(), Rat());
+				return Copy(var, value);
 
-				} else if (expr instanceof ClockRefExpr) {
-					final ClockRefExpr clockRef = (ClockRefExpr) expr;
-					final ClockDecl value = clockRef.getDecl();
-					return Copy(clock, value);
+			} else if (expr instanceof AddExpr) {
+				final VarRefExpr<RatType> varRef = var.getRef();
+				final AddExpr<?> addExpr = (AddExpr<?>) expr;
+				final Expr<?>[] ops = addExpr.getOps().toArray(new Expr<?>[0]);
 
-				} else if (expr instanceof AddExpr) {
-					final ClockRefExpr clockRef = clock.getRef();
-					final AddExpr<?> addExpr = (AddExpr<?>) expr;
-					final Expr<?>[] ops = addExpr.getOps().toArray(new Expr<?>[0]);
-
-					if (ops.length == 2) {
-						if (ops[0].equals(clockRef)) {
-							if (ops[1] instanceof IntLitExpr) {
-								final IntLitExpr intLit = (IntLitExpr) ops[1];
-								final int offset = Math.toIntExact(intLit.getValue());
-								return Shift(clock, offset);
-							}
-						} else if (ops[1].equals(clockRef)) {
-							if (ops[0] instanceof IntLitExpr) {
-								final IntLitExpr intLit = (IntLitExpr) ops[0];
-								final int offset = Math.toIntExact(intLit.getValue());
-								return Shift(clock, offset);
-							}
+				if (ops.length == 2) {
+					if (ops[0].equals(varRef)) {
+						if (ops[1] instanceof IntLitExpr) {
+							final IntLitExpr intLit = (IntLitExpr) ops[1];
+							final int offset = Math.toIntExact(intLit.getValue());
+							return Shift(var, offset);
+						}
+					} else if (ops[1].equals(varRef)) {
+						if (ops[0] instanceof IntLitExpr) {
+							final IntLitExpr intLit = (IntLitExpr) ops[0];
+							final int offset = Math.toIntExact(intLit.getValue());
+							return Shift(var, offset);
 						}
 					}
 				}

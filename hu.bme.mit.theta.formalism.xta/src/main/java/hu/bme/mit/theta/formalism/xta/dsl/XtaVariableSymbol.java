@@ -2,6 +2,7 @@ package hu.bme.mit.theta.formalism.xta.dsl;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.type.impl.Types.Rat;
 
 import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.common.dsl.Symbol;
@@ -12,7 +13,6 @@ import hu.bme.mit.theta.core.type.ArrayType;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.IntType;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.formalism.ta.decl.impl.Decls2;
 import hu.bme.mit.theta.formalism.xta.ChanType;
 import hu.bme.mit.theta.formalism.xta.dsl.gen.XtaDslParser.TypeContext;
 import hu.bme.mit.theta.formalism.xta.dsl.gen.XtaDslParser.VariableIdContext;
@@ -62,7 +62,7 @@ final class XtaVariableSymbol implements Symbol {
 		} else {
 			final VarDecl<?> varDecl;
 			if (varType instanceof ClockType) {
-				varDecl = Decls2.Clock(prefix + name);
+				varDecl = Decls.Var(prefix + name, Rat());
 			} else {
 				varDecl = Decls.Var(prefix + name, varType);
 			}

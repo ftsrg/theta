@@ -4,6 +4,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.stream.Collectors.toList;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -53,6 +54,10 @@ public final class XtaSpecification implements Scope {
 
 	public static XtaSpecification fromContext(final XtaContext context) {
 		return new XtaSpecification(context);
+	}
+
+	public List<XtaVariableSymbol> getVariables() {
+		return Collections.unmodifiableList(variables);
 	}
 
 	////
@@ -181,7 +186,7 @@ public final class XtaSpecification implements Scope {
 	////
 
 	@Override
-	public Optional<? extends Scope> enclosingScope() {
+	public Optional<Scope> enclosingScope() {
 		return Optional.empty();
 	}
 

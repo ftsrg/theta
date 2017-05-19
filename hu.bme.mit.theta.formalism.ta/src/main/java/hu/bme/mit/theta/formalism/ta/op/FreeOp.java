@@ -11,7 +11,6 @@ import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.type.RatType;
-import hu.bme.mit.theta.formalism.ta.utils.ClockOpVisitor;
 
 public final class FreeOp implements ClockOp {
 

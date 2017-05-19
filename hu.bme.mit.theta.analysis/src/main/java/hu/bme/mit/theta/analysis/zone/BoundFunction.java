@@ -15,12 +15,12 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.RatType;
 import hu.bme.mit.theta.formalism.ta.constr.AndConstr;
 import hu.bme.mit.theta.formalism.ta.constr.ClockConstr;
+import hu.bme.mit.theta.formalism.ta.constr.FailClockConstrVisitor;
 import hu.bme.mit.theta.formalism.ta.constr.UnitEqConstr;
 import hu.bme.mit.theta.formalism.ta.constr.UnitGeqConstr;
 import hu.bme.mit.theta.formalism.ta.constr.UnitGtConstr;
 import hu.bme.mit.theta.formalism.ta.constr.UnitLeqConstr;
 import hu.bme.mit.theta.formalism.ta.constr.UnitLtConstr;
-import hu.bme.mit.theta.formalism.ta.utils.impl.FailClockConstrVisitor;
 
 public final class BoundFunction {
 	private static final int HASH_SEED = 2903;

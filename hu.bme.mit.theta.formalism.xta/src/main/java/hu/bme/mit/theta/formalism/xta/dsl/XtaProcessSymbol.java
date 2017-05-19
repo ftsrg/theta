@@ -2,6 +2,7 @@ package hu.bme.mit.theta.formalism.xta.dsl;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.type.impl.Types.Rat;
 import static java.util.stream.Collectors.toList;
 
 import java.util.ArrayList;
@@ -14,7 +15,14 @@ import com.google.common.collect.Sets;
 import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.common.dsl.SymbolTable;
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.Expr;
+import hu.bme.mit.theta.core.expr.VarRefExpr;
+import hu.bme.mit.theta.core.type.BoolType;
+import hu.bme.mit.theta.core.type.IntType;
+import hu.bme.mit.theta.core.type.RatType;
+import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.utils.impl.TypeUtils;
 import hu.bme.mit.theta.formalism.xta.XtaProcess;
 import hu.bme.mit.theta.formalism.xta.XtaProcess.Loc;
 import hu.bme.mit.theta.formalism.xta.dsl.gen.XtaDslParser.ArrayIdContext;
@@ -86,8 +94,9 @@ final class XtaProcessSymbol implements Symbol, Scope {
 		defineAllParameters(arguments, env);
 
 		final XtaProcess process = XtaProcess.create(name);
-		defineAllVariables(process, env);
-		defineAllStates(process, env);
+		createAllGlobalVariables(process, env);
+		createAllLocalVariables(process, env);
+		createAllStates(process, env);
 		createAllTransitions(process, env);
 
 		env.pop();
@@ -103,14 +112,44 @@ final class XtaProcessSymbol implements Symbol, Scope {
 		}
 	}
 
-	private void defineAllVariables(final XtaProcess process, final Environment env) {
+	private void createAllGlobalVariables(final XtaProcess process, final Environment env) {
+		for (final XtaVariableSymbol variable : scope.getVariables()) {
+			final Object value = env.eval(variable);
+			if (value instanceof VarRefExpr) {
+				final VarRefExpr<?> varRef = (VarRefExpr<?>) value;
+				final VarDecl<?> var = varRef.getDecl();
+				addVariable(process, var);
+			}
+		}
+	}
+
+	private void createAllLocalVariables(final XtaProcess process, final Environment env) {
 		for (final XtaVariableSymbol variable : variables) {
 			final Expr<?> value = variable.instantiate(process.getName() + "_", env);
+			if (value instanceof VarRefExpr) {
+				final VarRefExpr<?> varRef = (VarRefExpr<?>) value;
+				final VarDecl<?> var = varRef.getDecl();
+				addVariable(process, var);
+			}
 			env.define(variable, value);
 		}
 	}
 
-	private void defineAllStates(final XtaProcess process, final Environment env) {
+	private void addVariable(final XtaProcess process, final VarDecl<?> var) {
+		final Type type = var.getType();
+		if (type instanceof BoolType) {
+			process.addDataVar(var);
+		} else if (type instanceof IntType) {
+			process.addDataVar(var);
+		} else if (type instanceof RatType) {
+			final VarDecl<RatType> clock = TypeUtils.cast(var, Rat());
+			process.addClockVar(clock);
+		} else {
+			// do nothing
+		}
+	}
+
+	private void createAllStates(final XtaProcess process, final Environment env) {
 		for (final XtaStateSymbol state : states) {
 			final Loc loc = state.instantiate(process, env);
 			if (state.getName().equals(initState)) {
@@ -202,9 +241,8 @@ final class XtaProcessSymbol implements Symbol, Scope {
 	////
 
 	@Override
-	public Optional<? extends Scope> enclosingScope() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+	public Optional<XtaSpecification> enclosingScope() {
+		return Optional.of(scope);
 	}
 
 	@Override

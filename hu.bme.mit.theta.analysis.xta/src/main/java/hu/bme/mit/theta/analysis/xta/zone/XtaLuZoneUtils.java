@@ -8,13 +8,10 @@ import hu.bme.mit.theta.analysis.xta.XtaAction.SimpleXtaAction;
 import hu.bme.mit.theta.analysis.xta.XtaAction.SyncedXtaAction;
 import hu.bme.mit.theta.analysis.zone.BoundFunction;
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.stmt.AssignStmt;
-import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.RatType;
 import hu.bme.mit.theta.formalism.ta.op.ResetOp;
-import hu.bme.mit.theta.formalism.ta.utils.impl.TaExpr;
-import hu.bme.mit.theta.formalism.ta.utils.impl.TaStmt;
+import hu.bme.mit.theta.formalism.xta.Guard;
+import hu.bme.mit.theta.formalism.xta.Update;
 import hu.bme.mit.theta.formalism.xta.XtaProcess.Edge;
 import hu.bme.mit.theta.formalism.xta.XtaProcess.Loc;
 
@@ -32,39 +29,35 @@ public final class XtaLuZoneUtils {
 		if (action.isSimple()) {
 			final SimpleXtaAction simpleAction = action.asSimple();
 
-			final List<AssignStmt<?, ?>> updates = simpleAction.getEdge().getUpdates();
-			final Collection<Expr<BoolType>> guards = simpleAction.getEdge().getGuards();
+			final List<Update> updates = simpleAction.getEdge().getUpdates();
+			final Collection<Guard> guards = simpleAction.getEdge().getGuards();
 
 			for (final Loc loc : targetLocs) {
-				for (final Expr<BoolType> invar : loc.getInvars()) {
-					final TaExpr expr = TaExpr.of(invar);
-					if (expr.isClockExpr()) {
-						builder.add(expr.asClockExpr().getClockConstr());
+				for (final Guard invar : loc.getInvars()) {
+					if (invar.isClockGuard()) {
+						builder.add(invar.asClockGuard().getClockConstr());
 					}
 				}
 			}
 
-			for (final AssignStmt<?, ?> update : updates) {
-				final TaStmt stmt = TaStmt.of(update);
-				if (stmt.isClockStmt()) {
-					final ResetOp op = (ResetOp) stmt.asClockStmt().getClockOp();
+			for (final Update update : updates) {
+				if (update.isClockUpdate()) {
+					final ResetOp op = (ResetOp) update.asClockUpdate().getClockOp();
 					final VarDecl<RatType> var = op.getVar();
 					builder.remove(var);
 				}
 			}
 
-			for (final Expr<BoolType> guard : guards) {
-				final TaExpr expr = TaExpr.of(guard);
-				if (expr.isClockExpr()) {
-					builder.add(expr.asClockExpr().getClockConstr());
+			for (final Guard guard : guards) {
+				if (guard.isClockGuard()) {
+					builder.add(guard.asClockGuard().getClockConstr());
 				}
 			}
 
 			for (final Loc loc : sourceLocs) {
-				for (final Expr<BoolType> invar : loc.getInvars()) {
-					final TaExpr expr = TaExpr.of(invar);
-					if (expr.isClockExpr()) {
-						builder.add(expr.asClockExpr().getClockConstr());
+				for (final Guard invar : loc.getInvars()) {
+					if (invar.isClockGuard()) {
+						builder.add(invar.asClockGuard().getClockConstr());
 					}
 				}
 			}
@@ -77,51 +70,45 @@ public final class XtaLuZoneUtils {
 			final Edge receivingEdge = syncedAction.getReceivingEdge();
 
 			for (final Loc loc : targetLocs) {
-				for (final Expr<BoolType> invar : loc.getInvars()) {
-					final TaExpr expr = TaExpr.of(invar);
-					if (expr.isClockExpr()) {
-						builder.add(expr.asClockExpr().getClockConstr());
+				for (final Guard invar : loc.getInvars()) {
+					if (invar.isClockGuard()) {
+						builder.add(invar.asClockGuard().getClockConstr());
 					}
 				}
 			}
 
-			for (final AssignStmt<?, ?> update : receivingEdge.getUpdates()) {
-				final TaStmt stmt = TaStmt.of(update);
-				if (stmt.isClockStmt()) {
-					final ResetOp op = (ResetOp) stmt.asClockStmt().getClockOp();
+			for (final Update update : receivingEdge.getUpdates()) {
+				if (update.isClockUpdate()) {
+					final ResetOp op = (ResetOp) update.asClockUpdate().getClockOp();
 					final VarDecl<RatType> var = op.getVar();
 					builder.remove(var);
 				}
 			}
 
-			for (final AssignStmt<?, ?> update : emittingEdge.getUpdates()) {
-				final TaStmt stmt = TaStmt.of(update);
-				if (stmt.isClockStmt()) {
-					final ResetOp op = (ResetOp) stmt.asClockStmt().getClockOp();
+			for (final Update update : emittingEdge.getUpdates()) {
+				if (update.isClockUpdate()) {
+					final ResetOp op = (ResetOp) update.asClockUpdate().getClockOp();
 					final VarDecl<RatType> var = op.getVar();
 					builder.remove(var);
 				}
 			}
 
-			for (final Expr<BoolType> guard : receivingEdge.getGuards()) {
-				final TaExpr expr = TaExpr.of(guard);
-				if (expr.isClockExpr()) {
-					builder.add(expr.asClockExpr().getClockConstr());
+			for (final Guard guard : receivingEdge.getGuards()) {
+				if (guard.isClockGuard()) {
+					builder.add(guard.asClockGuard().getClockConstr());
 				}
 			}
 
-			for (final Expr<BoolType> guard : emittingEdge.getGuards()) {
-				final TaExpr expr = TaExpr.of(guard);
-				if (expr.isClockExpr()) {
-					builder.add(expr.asClockExpr().getClockConstr());
+			for (final Guard guard : emittingEdge.getGuards()) {
+				if (guard.isClockGuard()) {
+					builder.add(guard.asClockGuard().getClockConstr());
 				}
 			}
 
 			for (final Loc loc : sourceLocs) {
-				for (final Expr<BoolType> invar : loc.getInvars()) {
-					final TaExpr expr = TaExpr.of(invar);
-					if (expr.isClockExpr()) {
-						builder.add(expr.asClockExpr().getClockConstr());
+				for (final Guard invar : loc.getInvars()) {
+					if (invar.isClockGuard()) {
+						builder.add(invar.asClockGuard().getClockConstr());
 					}
 				}
 			}

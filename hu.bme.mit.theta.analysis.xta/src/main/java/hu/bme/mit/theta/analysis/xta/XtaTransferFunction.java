@@ -18,9 +18,9 @@ import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.LitExpr;
 import hu.bme.mit.theta.core.model.impl.Valuation;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
-import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.utils.impl.ExprUtils;
-import hu.bme.mit.theta.formalism.ta.utils.impl.TaUtils;
+import hu.bme.mit.theta.formalism.xta.Guard;
+import hu.bme.mit.theta.formalism.xta.Update;
 import hu.bme.mit.theta.formalism.xta.XtaProcess.Edge;
 import hu.bme.mit.theta.formalism.xta.XtaProcess.Loc;
 
@@ -110,9 +110,9 @@ final class XtaTransferFunction<S extends State, P extends Prec>
 	}
 
 	private static boolean checkDataGuards(final Edge edge, final Valuation val) {
-		for (final Expr<BoolType> guard : edge.getGuards()) {
-			if (TaUtils.isDataExpr(guard)) {
-				final BoolLitExpr value = (BoolLitExpr) ExprUtils.evaluate(guard, val);
+		for (final Guard guard : edge.getGuards()) {
+			if (guard.isDataGuard()) {
+				final BoolLitExpr value = (BoolLitExpr) ExprUtils.evaluate(guard.toExpr(), val);
 				if (!value.getValue()) {
 					return false;
 				}
@@ -122,11 +122,12 @@ final class XtaTransferFunction<S extends State, P extends Prec>
 	}
 
 	private static void applyDataUpdates(final Edge edge, final Valuation.Builder builder) {
-		final List<AssignStmt<?, ?>> updates = edge.getUpdates();
-		for (final AssignStmt<?, ?> update : updates) {
-			if (TaUtils.isDataStmt(update)) {
-				final VarDecl<?> varDecl = update.getVarDecl();
-				final Expr<?> expr = update.getExpr();
+		final List<Update> updates = edge.getUpdates();
+		for (final Update update : updates) {
+			if (update.isDataUpdate()) {
+				final AssignStmt<?, ?> stmt = (AssignStmt<?, ?>) update.toStmt();
+				final VarDecl<?> varDecl = stmt.getVarDecl();
+				final Expr<?> expr = stmt.getExpr();
 				final LitExpr<?> value = ExprUtils.evaluate(expr, builder);
 				builder.put(varDecl, value);
 			}

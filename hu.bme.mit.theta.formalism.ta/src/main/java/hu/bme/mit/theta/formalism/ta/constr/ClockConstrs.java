@@ -1,6 +1,7 @@
 package hu.bme.mit.theta.formalism.ta.constr;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.type.impl.Types.Rat;
 
 import java.util.Collection;
 import java.util.List;
@@ -21,11 +22,11 @@ import hu.bme.mit.theta.core.expr.LeqExpr;
 import hu.bme.mit.theta.core.expr.LtExpr;
 import hu.bme.mit.theta.core.expr.SubExpr;
 import hu.bme.mit.theta.core.expr.TrueExpr;
+import hu.bme.mit.theta.core.expr.VarRefExpr;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.RatType;
 import hu.bme.mit.theta.core.utils.impl.FailExprVisitor;
-import hu.bme.mit.theta.formalism.ta.decl.ClockDecl;
-import hu.bme.mit.theta.formalism.ta.expr.ClockRefExpr;
+import hu.bme.mit.theta.core.utils.impl.TypeUtils;
 
 public final class ClockConstrs {
 
@@ -215,19 +216,22 @@ public final class ClockConstrs {
 		private List<VarDecl<RatType>> extractConstrLhs(final BinaryExpr<?, ?, BoolType> expr) {
 			final Expr<?> leftOp = expr.getLeftOp();
 
-			if (leftOp instanceof ClockRefExpr) {
-				final ClockDecl clock = ((ClockRefExpr) leftOp).getDecl();
-				return ImmutableList.of(clock);
+			if (leftOp instanceof VarRefExpr) {
+				final VarRefExpr<?> leftVarRef = (VarRefExpr<?>) leftOp;
+				final VarDecl<RatType> var = TypeUtils.cast(leftVarRef.getDecl(), Rat());
+				return ImmutableList.of(var);
 			}
 
 			if (leftOp instanceof SubExpr) {
 				final SubExpr<?> subExpr = (SubExpr<?>) leftOp;
 				final Expr<?> subLeftOp = subExpr.getLeftOp();
 				final Expr<?> subRightOp = subExpr.getRightOp();
-				if (subLeftOp instanceof ClockRefExpr && subRightOp instanceof ClockRefExpr) {
-					final ClockDecl leftClock = ((ClockRefExpr) subLeftOp).getDecl();
-					final ClockDecl rightClock = ((ClockRefExpr) subRightOp).getDecl();
-					return ImmutableList.of(leftClock, rightClock);
+				if (subLeftOp instanceof VarRefExpr && subRightOp instanceof VarRefExpr) {
+					final VarRefExpr<?> subLeftVarRef = (VarRefExpr<?>) subLeftOp;
+					final VarRefExpr<?> subRightVarRef = (VarRefExpr<?>) subRightOp;
+					final VarDecl<RatType> subLeftVar = TypeUtils.cast(subLeftVarRef.getDecl(), Rat());
+					final VarDecl<RatType> subRightVar = TypeUtils.cast(subRightVarRef.getDecl(), Rat());
+					return ImmutableList.of(subLeftVar, subRightVar);
 				}
 			}
 

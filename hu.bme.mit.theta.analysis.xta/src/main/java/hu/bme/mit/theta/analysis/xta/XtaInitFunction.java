@@ -52,7 +52,7 @@ final class XtaInitFunction<S extends State, P extends Prec> implements InitFunc
 
 	private static Valuation createInitVal(final XtaSystem system) {
 		final Valuation.Builder builder = Valuation.builder();
-		for (final VarDecl<?> var : system.getVars()) {
+		for (final VarDecl<?> var : system.getDataVars()) {
 			final Type type = var.getType();
 			if (type instanceof BoolType) {
 				builder.put(var, False());

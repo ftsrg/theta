@@ -14,7 +14,6 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.type.IntType;
 import hu.bme.mit.theta.core.type.RatType;
-import hu.bme.mit.theta.formalism.ta.utils.ClockOpVisitor;
 
 public final class ResetOp implements ClockOp {
 

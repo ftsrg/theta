@@ -4,6 +4,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Optional;
 
+import hu.bme.mit.theta.core.decl.Decl;
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Type;
 
 public final class TypeUtils {
@@ -19,6 +21,32 @@ public final class TypeUtils {
 		@SuppressWarnings("unchecked")
 		final Optional<T> result = (Optional<T>) join;
 		return result;
+	}
+
+	public static <T extends Type> Decl<T> cast(final Decl<?> decl, final T type) {
+		checkNotNull(decl);
+		checkNotNull(type);
+
+		if (decl.getType().equals(type)) {
+			@SuppressWarnings("unchecked")
+			final Decl<T> result = (Decl<T>) type;
+			return result;
+		} else {
+			throw new ClassCastException("The type of declaration " + decl + " is not of type " + type);
+		}
+	}
+
+	public static <T extends Type> VarDecl<T> cast(final VarDecl<?> decl, final T type) {
+		checkNotNull(decl);
+		checkNotNull(type);
+
+		if (decl.getType().equals(type)) {
+			@SuppressWarnings("unchecked")
+			final VarDecl<T> result = (VarDecl<T>) decl;
+			return result;
+		} else {
+			throw new ClassCastException("The type of declaration " + decl + " is not of type " + type);
+		}
 	}
 
 }

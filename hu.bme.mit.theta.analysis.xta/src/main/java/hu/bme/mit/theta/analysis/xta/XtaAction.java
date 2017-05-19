@@ -101,7 +101,7 @@ public abstract class XtaAction implements Action {
 		public String toString() {
 			final StringJoiner sj = new StringJoiner("\n");
 			edge.getGuards().forEach(g -> sj.add("[" + g + "]"));
-			edge.getUpdates().forEach(u -> sj.add(u.getVarDecl().getName() + " := " + u.getExpr()));
+			edge.getUpdates().forEach(u -> u.toString());
 			return sj.toString();
 		}
 
@@ -178,8 +178,8 @@ public abstract class XtaAction implements Action {
 			sj.add(syncExpr + "!");
 			emittingEdge.getGuards().forEach(g -> sj.add("[" + g + "]"));
 			receivingEdge.getGuards().forEach(g -> sj.add("[" + g + "]"));
-			emittingEdge.getUpdates().forEach(u -> sj.add(u.getVarDecl().getName() + " := " + u.getExpr()));
-			receivingEdge.getUpdates().forEach(u -> sj.add(u.getVarDecl().getName() + " := " + u.getExpr()));
+			emittingEdge.getUpdates().forEach(u -> u.toString());
+			receivingEdge.getUpdates().forEach(u -> u.toString());
 			return sj.toString();
 		}
 

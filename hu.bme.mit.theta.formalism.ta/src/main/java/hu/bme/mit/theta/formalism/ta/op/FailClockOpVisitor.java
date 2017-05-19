@@ -1,11 +1,4 @@
-package hu.bme.mit.theta.formalism.ta.utils.impl;
-
-import hu.bme.mit.theta.formalism.ta.op.CopyOp;
-import hu.bme.mit.theta.formalism.ta.op.FreeOp;
-import hu.bme.mit.theta.formalism.ta.op.GuardOp;
-import hu.bme.mit.theta.formalism.ta.op.ResetOp;
-import hu.bme.mit.theta.formalism.ta.op.ShiftOp;
-import hu.bme.mit.theta.formalism.ta.utils.ClockOpVisitor;
+package hu.bme.mit.theta.formalism.ta.op;
 
 public class FailClockOpVisitor<P, R> implements ClockOpVisitor<P, R> {
 

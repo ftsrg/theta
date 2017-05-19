@@ -14,16 +14,13 @@ import hu.bme.mit.theta.analysis.xta.XtaAction.SyncedXtaAction;
 import hu.bme.mit.theta.analysis.zone.ZonePrec;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.stmt.AssignStmt;
-import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.RatType;
 import hu.bme.mit.theta.formalism.ta.op.ResetOp;
-import hu.bme.mit.theta.formalism.ta.utils.impl.TaExpr;
-import hu.bme.mit.theta.formalism.ta.utils.impl.TaStmt;
+import hu.bme.mit.theta.formalism.xta.Guard;
+import hu.bme.mit.theta.formalism.xta.Update;
 import hu.bme.mit.theta.formalism.xta.XtaProcess.Edge;
 import hu.bme.mit.theta.formalism.xta.XtaProcess.Loc;
-import hu.bme.mit.theta.formalism.xta.XtaProcess.Loc.Kind;
+import hu.bme.mit.theta.formalism.xta.XtaProcess.LocKind;
 
 public final class XtaZoneUtils {
 
@@ -157,7 +154,7 @@ public final class XtaZoneUtils {
 	////
 
 	private static boolean shouldApplyDelay(final List<Loc> locs) {
-		return locs.stream().allMatch(l -> l.getKind() == Kind.NORMAL);
+		return locs.stream().allMatch(l -> l.getKind() == LocKind.NORMAL);
 	}
 
 	private static void applyDelay(final ZoneState.Builder builder) {
@@ -167,20 +164,18 @@ public final class XtaZoneUtils {
 
 	private static void applyInvariants(final ZoneState.Builder builder, final Collection<Loc> locs) {
 		for (final Loc target : locs) {
-			for (final Expr<BoolType> invar : target.getInvars()) {
-				final TaExpr expr = TaExpr.of(invar);
-				if (expr.isClockExpr()) {
-					builder.and(expr.asClockExpr().getClockConstr());
+			for (final Guard invar : target.getInvars()) {
+				if (invar.isClockGuard()) {
+					builder.and(invar.asClockGuard().getClockConstr());
 				}
 			}
 		}
 	}
 
 	private static void applyUpdates(final ZoneState.Builder builder, final Edge edge) {
-		for (final AssignStmt<?, ?> update : edge.getUpdates()) {
-			final TaStmt stmt = TaStmt.of(update);
-			if (stmt.isClockStmt()) {
-				final ResetOp op = (ResetOp) stmt.asClockStmt().getClockOp();
+		for (final Update update : edge.getUpdates()) {
+			if (update.isClockUpdate()) {
+				final ResetOp op = (ResetOp) update.asClockUpdate().getClockOp();
 				final VarDecl<RatType> var = op.getVar();
 				final int value = op.getValue();
 				builder.reset(var, value);
@@ -189,10 +184,9 @@ public final class XtaZoneUtils {
 	}
 
 	private static void applyInverseUpdates(final ZoneState.Builder builder, final Edge edge) {
-		for (final AssignStmt<?, ?> update : Lists.reverse(edge.getUpdates())) {
-			final TaStmt stmt = TaStmt.of(update);
-			if (stmt.isClockStmt()) {
-				final ResetOp op = (ResetOp) stmt.asClockStmt().getClockOp();
+		for (final Update update : Lists.reverse(edge.getUpdates())) {
+			if (update.isClockUpdate()) {
+				final ResetOp op = (ResetOp) update.asClockUpdate().getClockOp();
 				final VarDecl<RatType> var = op.getVar();
 				final int value = op.getValue();
 				builder.and(Eq(var, value));
@@ -202,10 +196,9 @@ public final class XtaZoneUtils {
 	}
 
 	private static void applyGuards(final ZoneState.Builder builder, final Edge edge) {
-		for (final Expr<BoolType> guard : edge.getGuards()) {
-			final TaExpr expr = TaExpr.of(guard);
-			if (expr.isClockExpr()) {
-				builder.and(expr.asClockExpr().getClockConstr());
+		for (final Guard guard : edge.getGuards()) {
+			if (guard.isClockGuard()) {
+				builder.and(guard.asClockGuard().getClockConstr());
 			}
 		}
 	}

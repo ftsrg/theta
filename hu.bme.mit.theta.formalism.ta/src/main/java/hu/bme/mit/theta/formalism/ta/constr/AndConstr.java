@@ -12,7 +12,6 @@ import com.google.common.collect.ImmutableSet;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.AndExpr;
 import hu.bme.mit.theta.core.type.RatType;
-import hu.bme.mit.theta.formalism.ta.utils.ClockConstrVisitor;
 
 public final class AndConstr implements ClockConstr {
 

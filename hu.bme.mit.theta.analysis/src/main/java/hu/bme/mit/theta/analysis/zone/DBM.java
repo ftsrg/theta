@@ -29,6 +29,7 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.RatType;
 import hu.bme.mit.theta.formalism.ta.constr.AndConstr;
 import hu.bme.mit.theta.formalism.ta.constr.ClockConstr;
+import hu.bme.mit.theta.formalism.ta.constr.ClockConstrVisitor;
 import hu.bme.mit.theta.formalism.ta.constr.DiffEqConstr;
 import hu.bme.mit.theta.formalism.ta.constr.DiffGeqConstr;
 import hu.bme.mit.theta.formalism.ta.constr.DiffGtConstr;
@@ -42,13 +43,12 @@ import hu.bme.mit.theta.formalism.ta.constr.UnitGtConstr;
 import hu.bme.mit.theta.formalism.ta.constr.UnitLeqConstr;
 import hu.bme.mit.theta.formalism.ta.constr.UnitLtConstr;
 import hu.bme.mit.theta.formalism.ta.op.ClockOp;
+import hu.bme.mit.theta.formalism.ta.op.ClockOpVisitor;
 import hu.bme.mit.theta.formalism.ta.op.CopyOp;
 import hu.bme.mit.theta.formalism.ta.op.FreeOp;
 import hu.bme.mit.theta.formalism.ta.op.GuardOp;
 import hu.bme.mit.theta.formalism.ta.op.ResetOp;
 import hu.bme.mit.theta.formalism.ta.op.ShiftOp;
-import hu.bme.mit.theta.formalism.ta.utils.ClockConstrVisitor;
-import hu.bme.mit.theta.formalism.ta.utils.ClockOpVisitor;
 
 final class DBM {
 
