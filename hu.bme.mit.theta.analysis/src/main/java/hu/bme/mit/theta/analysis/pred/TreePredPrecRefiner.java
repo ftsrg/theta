@@ -8,6 +8,9 @@ import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.impl.Exprs;
 import hu.bme.mit.theta.core.type.BoolType;
 
+/**
+ * Refinement for TreePredPrec
+ */
 public class TreePredPrecRefiner<A extends Action> implements PrecRefiner<PredState, A, TreePredPrec, ItpRefutation> {
 
 	@Override
@@ -15,8 +18,9 @@ public class TreePredPrecRefiner<A extends Action> implements PrecRefiner<PredSt
 			final ItpRefutation refutation) {
 		for (int i = 0; i < trace.getStates().size(); ++i) {
 			final Expr<? extends BoolType> expr = refutation.get(i);
-			if (expr.equals(Exprs.True()) || expr.equals(Exprs.False()))
+			if (expr.equals(Exprs.True()) || expr.equals(Exprs.False())) {
 				continue;
+			}
 			prec.refine(trace.getState(i), expr);
 		}
 		return prec;

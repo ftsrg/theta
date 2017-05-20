@@ -17,14 +17,29 @@ import hu.bme.mit.theta.core.model.impl.Valuation;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.utils.impl.ExprUtils;
 
+/**
+ * Represents a mutable tree-shaped precision for predicates, capable of storing
+ * a different precision for every individual abstract state. Each node of the
+ * tree contains a predicate. Each node may have child nodes that refine the
+ * ponated or the negated version of the predicate in the node. A valuation of
+ * variables determines a path from the root to a leaf, thus determining an
+ * abstract state. Refinement is performed by adding new child nodes to leaf
+ * nodes.
+ */
 public final class TreePredPrec implements PredPrec {
 
 	private final Node root;
 
+	/**
+	 * Create a new instance with no predicates
+	 */
 	public static TreePredPrec create() {
 		return create(Collections.emptySet());
 	}
 
+	/**
+	 * Create a new instance with a list of predicates
+	 */
 	public static TreePredPrec create(final Iterable<? extends Expr<? extends BoolType>> preds) {
 		return new TreePredPrec(preds);
 	}
@@ -119,6 +134,9 @@ public final class TreePredPrec implements PredPrec {
 		return PredState.of(statePreds);
 	}
 
+	/**
+	 * Refine a state with a new predicate. The state must exist in the tree.
+	 */
 	public void refine(final PredState state, final Expr<? extends BoolType> pred) {
 		checkNotNull(state);
 		checkNotNull(pred);
