@@ -142,8 +142,7 @@ public final class TreePredPrec implements PredPrec {
 					node = null;
 				}
 			} else {
-				throw new IllegalStateException(
-						String.format("State %s contains neither %s nor its negation!", state, pred));
+				throw new IllegalStateException("State does not contain predicate or its negation of a Node");
 			}
 		}
 	}

@@ -139,7 +139,7 @@ public final class ExprUtils {
 		if (simplified instanceof LitExpr<?>) {
 			return (LitExpr<ExprType>) simplified;
 		} else {
-			throw new RuntimeException("Could not evaluate " + expr + " with assignment " + assignment);
+			throw new RuntimeException("Could not evaluate expression to a literal with the given assignment.");
 		}
 	}
 
