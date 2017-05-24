@@ -1,5 +1,7 @@
 package hu.bme.mit.theta.core.utils.impl;
 
+import hu.bme.mit.theta.core.decl.Decl;
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.ArrayReadExpr;
 import hu.bme.mit.theta.core.expr.ArrayWriteExpr;
 import hu.bme.mit.theta.core.expr.BinaryExpr;
@@ -12,8 +14,8 @@ import hu.bme.mit.theta.core.expr.NullaryExpr;
 import hu.bme.mit.theta.core.expr.PrimedExpr;
 import hu.bme.mit.theta.core.expr.ProcCallExpr;
 import hu.bme.mit.theta.core.expr.QuantifiedExpr;
+import hu.bme.mit.theta.core.expr.RefExpr;
 import hu.bme.mit.theta.core.expr.UnaryExpr;
-import hu.bme.mit.theta.core.expr.VarRefExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.utils.impl.VarIndexing.Builder;
 
@@ -34,10 +36,14 @@ final class PrimeCounter {
 		}
 
 		@Override
-		public <DeclType extends Type> VarIndexing.Builder visit(final VarRefExpr<DeclType> expr,
-				final Integer nPrimes) {
-			return VarIndexing.builder(0).inc(expr.getDecl(), nPrimes);
-
+		public <DeclType extends Type> VarIndexing.Builder visit(final RefExpr<DeclType> expr, final Integer nPrimes) {
+			final Decl<DeclType> decl = expr.getDecl();
+			if (decl instanceof VarDecl) {
+				final VarDecl<DeclType> var = (VarDecl<DeclType>) decl;
+				return VarIndexing.builder(0).inc(var, nPrimes);
+			} else {
+				return VarIndexing.builder(0);
+			}
 		}
 
 		@Override

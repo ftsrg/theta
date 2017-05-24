@@ -1,7 +1,8 @@
 package hu.bme.mit.theta.core.decl.impl;
 
 import hu.bme.mit.theta.core.decl.ConstDecl;
-import hu.bme.mit.theta.core.expr.ConstRefExpr;
+import hu.bme.mit.theta.core.expr.Exprs;
+import hu.bme.mit.theta.core.expr.RefExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.utils.DeclVisitor;
 
@@ -10,15 +11,15 @@ final class ConstDeclImpl<DeclType extends Type> extends AbstractDecl<DeclType> 
 	private static final int HASH_SEED = 5351;
 	private static final String DECL_LABEL = "Const";
 
-	private final ConstRefExpr<DeclType> ref;
+	private final RefExpr<DeclType> ref;
 
 	ConstDeclImpl(final String name, final DeclType type) {
 		super(name, type);
-		ref = new ConstRefExprImpl<>(this);
+		ref = Exprs.Ref(this);
 	}
 
 	@Override
-	public ConstRefExpr<DeclType> getRef() {
+	public RefExpr<DeclType> getRef() {
 		return ref;
 	}
 

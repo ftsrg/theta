@@ -4,7 +4,6 @@ import hu.bme.mit.theta.core.expr.AddExpr;
 import hu.bme.mit.theta.core.expr.AndExpr;
 import hu.bme.mit.theta.core.expr.ArrayReadExpr;
 import hu.bme.mit.theta.core.expr.ArrayWriteExpr;
-import hu.bme.mit.theta.core.expr.ConstRefExpr;
 import hu.bme.mit.theta.core.expr.EqExpr;
 import hu.bme.mit.theta.core.expr.ExistsExpr;
 import hu.bme.mit.theta.core.expr.FalseExpr;
@@ -26,16 +25,14 @@ import hu.bme.mit.theta.core.expr.NegExpr;
 import hu.bme.mit.theta.core.expr.NeqExpr;
 import hu.bme.mit.theta.core.expr.NotExpr;
 import hu.bme.mit.theta.core.expr.OrExpr;
-import hu.bme.mit.theta.core.expr.ParamRefExpr;
 import hu.bme.mit.theta.core.expr.PrimedExpr;
 import hu.bme.mit.theta.core.expr.ProcCallExpr;
-import hu.bme.mit.theta.core.expr.ProcRefExpr;
 import hu.bme.mit.theta.core.expr.RatDivExpr;
 import hu.bme.mit.theta.core.expr.RatLitExpr;
+import hu.bme.mit.theta.core.expr.RefExpr;
 import hu.bme.mit.theta.core.expr.RemExpr;
 import hu.bme.mit.theta.core.expr.SubExpr;
 import hu.bme.mit.theta.core.expr.TrueExpr;
-import hu.bme.mit.theta.core.expr.VarRefExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.closure.ClosedUnderAdd;
 import hu.bme.mit.theta.core.type.closure.ClosedUnderMul;
@@ -60,22 +57,7 @@ final class CnfCheckerVisitor implements ExprVisitor<CNFStatus, Boolean> {
 	}
 
 	@Override
-	public <DeclType extends Type> Boolean visit(final ConstRefExpr<DeclType> expr, final CNFStatus param) {
-		return true;
-	}
-
-	@Override
-	public <DeclType extends Type> Boolean visit(final ParamRefExpr<DeclType> expr, final CNFStatus param) {
-		return true;
-	}
-
-	@Override
-	public <DeclType extends Type> Boolean visit(final VarRefExpr<DeclType> expr, final CNFStatus param) {
-		return true;
-	}
-
-	@Override
-	public <ReturnType extends Type> Boolean visit(final ProcRefExpr<ReturnType> expr, final CNFStatus param) {
+	public <DeclType extends Type> Boolean visit(final RefExpr<DeclType> expr, final CNFStatus param) {
 		return true;
 	}
 

@@ -24,7 +24,6 @@ import hu.bme.mit.theta.core.expr.AndExpr;
 import hu.bme.mit.theta.core.expr.ArrayReadExpr;
 import hu.bme.mit.theta.core.expr.ArrayWriteExpr;
 import hu.bme.mit.theta.core.expr.BoolLitExpr;
-import hu.bme.mit.theta.core.expr.ConstRefExpr;
 import hu.bme.mit.theta.core.expr.EqExpr;
 import hu.bme.mit.theta.core.expr.ExistsExpr;
 import hu.bme.mit.theta.core.expr.Expr;
@@ -48,16 +47,14 @@ import hu.bme.mit.theta.core.expr.NegExpr;
 import hu.bme.mit.theta.core.expr.NeqExpr;
 import hu.bme.mit.theta.core.expr.NotExpr;
 import hu.bme.mit.theta.core.expr.OrExpr;
-import hu.bme.mit.theta.core.expr.ParamRefExpr;
 import hu.bme.mit.theta.core.expr.PrimedExpr;
 import hu.bme.mit.theta.core.expr.ProcCallExpr;
-import hu.bme.mit.theta.core.expr.ProcRefExpr;
 import hu.bme.mit.theta.core.expr.RatDivExpr;
 import hu.bme.mit.theta.core.expr.RatLitExpr;
+import hu.bme.mit.theta.core.expr.RefExpr;
 import hu.bme.mit.theta.core.expr.RemExpr;
 import hu.bme.mit.theta.core.expr.SubExpr;
 import hu.bme.mit.theta.core.expr.TrueExpr;
-import hu.bme.mit.theta.core.expr.VarRefExpr;
 import hu.bme.mit.theta.core.model.Assignment;
 import hu.bme.mit.theta.core.type.ArrayType;
 import hu.bme.mit.theta.core.type.BoolType;
@@ -73,7 +70,7 @@ import hu.bme.mit.theta.core.utils.ExprVisitor;
 public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? extends Type>> {
 
 	@Override
-	public <DeclType extends Type> Expr<? extends DeclType> visit(final ConstRefExpr<DeclType> expr,
+	public <DeclType extends Type> Expr<? extends DeclType> visit(final RefExpr<DeclType> expr,
 			final Assignment param) {
 		final Optional<? extends Expr<DeclType>> eval = param.eval(expr.getDecl());
 		if (eval.isPresent()) {
@@ -81,29 +78,6 @@ public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? ext
 		}
 
 		return expr;
-	}
-
-	@Override
-	public <DeclType extends Type> Expr<? extends Type> visit(final ParamRefExpr<DeclType> expr,
-			final Assignment param) {
-		return expr;
-	}
-
-	@Override
-	public <DeclType extends Type> Expr<? extends Type> visit(final VarRefExpr<DeclType> expr, final Assignment param) {
-		final Optional<? extends Expr<DeclType>> eval = param.eval(expr.getDecl());
-		if (eval.isPresent()) {
-			return eval.get();
-		}
-
-		return expr;
-	}
-
-	@Override
-	public <ReturnType extends Type> Expr<? extends Type> visit(final ProcRefExpr<ReturnType> expr,
-			final Assignment param) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
 
 	@Override
@@ -261,7 +235,7 @@ public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? ext
 
 		if (leftOp instanceof LitExpr && rightOp instanceof LitExpr) {
 			return Bool(leftOp.equals(rightOp));
-		} else if (leftOp instanceof ConstRefExpr && rightOp instanceof ConstRefExpr) {
+		} else if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
 			if (leftOp.equals(rightOp))
 				return True();
 		}
@@ -276,7 +250,7 @@ public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? ext
 
 		if (leftOp instanceof LitExpr && rightOp instanceof LitExpr) {
 			return Bool(!leftOp.equals(rightOp));
-		} else if (leftOp instanceof ConstRefExpr && rightOp instanceof ConstRefExpr) {
+		} else if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
 			if (leftOp.equals(rightOp))
 				return False();
 		}
@@ -289,7 +263,7 @@ public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? ext
 		final Expr<? extends RatType> leftOp = ExprUtils.cast(expr.getLeftOp().accept(this, param), RatType.class);
 		final Expr<? extends RatType> rightOp = ExprUtils.cast(expr.getRightOp().accept(this, param), RatType.class);
 
-		if (leftOp instanceof ConstRefExpr && rightOp instanceof ConstRefExpr) {
+		if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
 			if (leftOp.equals(rightOp))
 				return True();
 		}
@@ -315,7 +289,7 @@ public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? ext
 		final Expr<? extends RatType> leftOp = ExprUtils.cast(expr.getLeftOp().accept(this, param), RatType.class);
 		final Expr<? extends RatType> rightOp = ExprUtils.cast(expr.getRightOp().accept(this, param), RatType.class);
 
-		if (leftOp instanceof ConstRefExpr && rightOp instanceof ConstRefExpr) {
+		if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
 			if (leftOp.equals(rightOp))
 				return False();
 		}
@@ -341,7 +315,7 @@ public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? ext
 		final Expr<? extends RatType> leftOp = ExprUtils.cast(expr.getLeftOp().accept(this, param), RatType.class);
 		final Expr<? extends RatType> rightOp = ExprUtils.cast(expr.getRightOp().accept(this, param), RatType.class);
 
-		if (leftOp instanceof ConstRefExpr && rightOp instanceof ConstRefExpr) {
+		if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
 			if (leftOp.equals(rightOp))
 				return True();
 		}
@@ -367,7 +341,7 @@ public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? ext
 		final Expr<? extends RatType> leftOp = ExprUtils.cast(expr.getLeftOp().accept(this, param), RatType.class);
 		final Expr<? extends RatType> rightOp = ExprUtils.cast(expr.getRightOp().accept(this, param), RatType.class);
 
-		if (leftOp instanceof ConstRefExpr && rightOp instanceof ConstRefExpr) {
+		if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
 			if (leftOp.equals(rightOp))
 				return False();
 		}
@@ -527,7 +501,7 @@ public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? ext
 		final Expr<? extends ClosedUnderSub> rightOp = ExprUtils.cast(expr.getRightOp().accept(this, param),
 				ClosedUnderSub.class);
 
-		if (leftOp instanceof ConstRefExpr && rightOp instanceof ConstRefExpr) {
+		if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
 			if (leftOp.equals(rightOp))
 				return Int(0);
 		}

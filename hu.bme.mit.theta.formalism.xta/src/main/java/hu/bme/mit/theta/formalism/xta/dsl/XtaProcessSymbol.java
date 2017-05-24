@@ -17,7 +17,7 @@ import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.common.dsl.SymbolTable;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.expr.VarRefExpr;
+import hu.bme.mit.theta.core.expr.RefExpr;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.IntType;
 import hu.bme.mit.theta.core.type.RatType;
@@ -115,9 +115,9 @@ final class XtaProcessSymbol implements Symbol, Scope {
 	private void createAllGlobalVariables(final XtaProcess process, final Environment env) {
 		for (final XtaVariableSymbol variable : scope.getVariables()) {
 			final Object value = env.eval(variable);
-			if (value instanceof VarRefExpr) {
-				final VarRefExpr<?> varRef = (VarRefExpr<?>) value;
-				final VarDecl<?> var = varRef.getDecl();
+			if (value instanceof RefExpr) {
+				final RefExpr<?> ref = (RefExpr<?>) value;
+				final VarDecl<?> var = (VarDecl<?>) ref.getDecl();
 				addVariable(process, var);
 			}
 		}
@@ -126,9 +126,9 @@ final class XtaProcessSymbol implements Symbol, Scope {
 	private void createAllLocalVariables(final XtaProcess process, final Environment env) {
 		for (final XtaVariableSymbol variable : variables) {
 			final Expr<?> value = variable.instantiate(process.getName() + "_", env);
-			if (value instanceof VarRefExpr) {
-				final VarRefExpr<?> varRef = (VarRefExpr<?>) value;
-				final VarDecl<?> var = varRef.getDecl();
+			if (value instanceof RefExpr) {
+				final RefExpr<?> ref = (RefExpr<?>) value;
+				final VarDecl<?> var = (VarDecl<?>) ref.getDecl();
 				addVariable(process, var);
 			}
 			env.define(variable, value);

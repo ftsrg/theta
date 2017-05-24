@@ -9,15 +9,14 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import hu.bme.mit.theta.core.decl.ConstDecl;
+import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.IndexedConstDecl;
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.expr.ConstRefExpr;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.LitExpr;
 import hu.bme.mit.theta.core.expr.PrimedExpr;
 import hu.bme.mit.theta.core.expr.ProcCallExpr;
-import hu.bme.mit.theta.core.expr.ProcRefExpr;
-import hu.bme.mit.theta.core.expr.VarRefExpr;
+import hu.bme.mit.theta.core.expr.RefExpr;
 import hu.bme.mit.theta.core.model.Model;
 import hu.bme.mit.theta.core.model.impl.Valuation;
 import hu.bme.mit.theta.core.type.Type;
@@ -136,19 +135,18 @@ public class PathUtils {
 		}
 
 		@Override
-		public <DeclType extends Type> Expr<? extends DeclType> visit(final VarRefExpr<DeclType> expr,
+		public <DeclType extends Type> Expr<? extends DeclType> visit(final RefExpr<DeclType> expr,
 				final Integer offset) {
-			final VarDecl<DeclType> varDecl = expr.getDecl();
-			final int index = indexing.get(varDecl) + offset;
-			final ConstDecl<DeclType> constDecl = varDecl.getConstDecl(index);
-			final ConstRefExpr<DeclType> constRefExpr = constDecl.getRef();
-			return constRefExpr;
-		}
-
-		@Override
-		public <ReturnType extends Type> Expr<?> visit(final ProcRefExpr<ReturnType> expr, final Integer offset) {
-			// TODO Auto-generated method stub
-			throw new UnsupportedOperationException("TODO: auto-generated method stub");
+			final Decl<DeclType> decl = expr.getDecl();
+			if (decl instanceof VarDecl) {
+				final VarDecl<DeclType> varDecl = (VarDecl<DeclType>) decl;
+				final int index = indexing.get(varDecl) + offset;
+				final ConstDecl<DeclType> constDecl = varDecl.getConstDecl(index);
+				final RefExpr<DeclType> refExpr = constDecl.getRef();
+				return refExpr;
+			} else {
+				return expr;
+			}
 		}
 
 		@Override
@@ -169,11 +167,11 @@ public class PathUtils {
 		////
 
 		@Override
-		public <DeclType extends Type> Expr<DeclType> visit(final ConstRefExpr<DeclType> expr, final Void param) {
-			final ConstDecl<DeclType> constDecl = expr.getDecl();
+		public <DeclType extends Type> Expr<DeclType> visit(final RefExpr<DeclType> expr, final Void param) {
+			final Decl<DeclType> decl = expr.getDecl();
 
-			if (constDecl instanceof IndexedConstDecl<?>) {
-				final IndexedConstDecl<DeclType> indexedConstDecl = (IndexedConstDecl<DeclType>) constDecl;
+			if (decl instanceof IndexedConstDecl<?>) {
+				final IndexedConstDecl<DeclType> indexedConstDecl = (IndexedConstDecl<DeclType>) decl;
 				final VarDecl<DeclType> varDecl = indexedConstDecl.getVarDecl();
 
 				final int index = indexedConstDecl.getIndex();

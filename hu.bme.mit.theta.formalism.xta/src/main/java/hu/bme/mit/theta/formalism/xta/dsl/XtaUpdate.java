@@ -7,7 +7,7 @@ import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.Exprs;
-import hu.bme.mit.theta.core.expr.VarRefExpr;
+import hu.bme.mit.theta.core.expr.RefExpr;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.Stmts;
 import hu.bme.mit.theta.core.type.IntType;
@@ -48,14 +48,14 @@ final class XtaUpdate {
 				return visitChildren(ctx);
 			} else {
 				@SuppressWarnings("unchecked")
-				final VarRefExpr<Type> leftOp = (VarRefExpr<Type>) ctx.fLeftOp.accept(visitor);
-				final VarDecl<Type> varDecl = leftOp.getDecl();
+				final RefExpr<Type> leftOp = (RefExpr<Type>) ctx.fLeftOp.accept(visitor);
+				final VarDecl<Type> var = (VarDecl<Type>) leftOp.getDecl();
 				@SuppressWarnings("unchecked")
 				final Expr<Type> rightOp = (Expr<Type>) ctx.fRightOp.accept(visitor);
 
 				final AssignmentOpContext op = ctx.fOper;
 				if (op.fAssignOp != null) {
-					return Stmts.Assign(varDecl, rightOp);
+					return Stmts.Assign(var, rightOp);
 				} else {
 					// TODO Auto-generated method stub
 					throw new UnsupportedOperationException();
@@ -69,14 +69,14 @@ final class XtaUpdate {
 			if (ctx.fOpers == null || ctx.fOpers.isEmpty()) {
 				return visitChildren(ctx);
 			} else {
-				final VarRefExpr<? extends Type> leftOp = (VarRefExpr<Type>) ctx.fOp.accept(visitor);
-				final VarDecl<Type> varDecl = (VarDecl<Type>) leftOp.getDecl();
+				final RefExpr<? extends Type> leftOp = (RefExpr<Type>) ctx.fOp.accept(visitor);
+				final VarDecl<Type> var = (VarDecl<Type>) leftOp.getDecl();
 
 				final PostfixOpContext op = Utils.singleElementOf(ctx.fOpers);
 				if (op.fPostIncOp != null) {
-					return Stmts.Assign(varDecl, Exprs.Add((Expr<IntType>) leftOp, Exprs.Int(1)));
+					return Stmts.Assign(var, Exprs.Add((Expr<IntType>) leftOp, Exprs.Int(1)));
 				} else if (op.fPostDeclOp != null) {
-					return Stmts.Assign(varDecl, Exprs.Sub((Expr<IntType>) leftOp, Exprs.Int(1)));
+					return Stmts.Assign(var, Exprs.Sub((Expr<IntType>) leftOp, Exprs.Int(1)));
 				} else {
 					throw new UnsupportedOperationException();
 				}

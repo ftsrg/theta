@@ -5,7 +5,7 @@ import static hu.bme.mit.theta.core.expr.Exprs.Leq;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.LeqExpr;
-import hu.bme.mit.theta.core.expr.VarRefExpr;
+import hu.bme.mit.theta.core.expr.RefExpr;
 import hu.bme.mit.theta.core.type.RatType;
 
 public final class UnitLeqConstr extends UnitConstr {
@@ -24,7 +24,7 @@ public final class UnitLeqConstr extends UnitConstr {
 	public LeqExpr toExpr() {
 		LeqExpr result = expr;
 		if (result == null) {
-			final VarRefExpr<RatType> ref = getVar().getRef();
+			final RefExpr<RatType> ref = getVar().getRef();
 			result = Leq(ref, Int(getBound()));
 			expr = result;
 		}

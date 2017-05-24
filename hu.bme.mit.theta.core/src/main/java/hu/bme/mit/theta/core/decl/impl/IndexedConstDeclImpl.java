@@ -6,7 +6,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.decl.IndexedConstDecl;
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.expr.IndexedConstRefExpr;
+import hu.bme.mit.theta.core.expr.Exprs;
+import hu.bme.mit.theta.core.expr.RefExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.utils.DeclVisitor;
 
@@ -19,7 +20,7 @@ final class IndexedConstDeclImpl<DeclType extends Type> implements IndexedConstD
 	private final VarDecl<DeclType> varDecl;
 	private final int index;
 	private final String name;
-	private final IndexedConstRefExpr<DeclType> ref;
+	private final RefExpr<DeclType> ref;
 
 	private volatile int hashCode = 0;
 
@@ -30,7 +31,7 @@ final class IndexedConstDeclImpl<DeclType extends Type> implements IndexedConstD
 		this.varDecl = varDecl;
 		this.index = index;
 		name = String.format(NAME_FORMAT, varDecl.getName(), index);
-		ref = new IndexedConstRefExprImpl<>(this);
+		ref = Exprs.Ref(this);
 	}
 
 	@Override
@@ -54,7 +55,7 @@ final class IndexedConstDeclImpl<DeclType extends Type> implements IndexedConstD
 	}
 
 	@Override
-	public IndexedConstRefExpr<DeclType> getRef() {
+	public RefExpr<DeclType> getRef() {
 		return ref;
 	}
 

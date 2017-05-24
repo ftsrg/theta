@@ -19,16 +19,15 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
-import hu.bme.mit.theta.core.expr.ConstRefExpr;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.BoolType;
 
 @RunWith(Parameterized.class)
 public class CnfCheckerTest {
 	// Constants for testing
-	private static final ConstRefExpr<BoolType> A = Const("a", Bool()).getRef();
-	private static final ConstRefExpr<BoolType> B = Const("b", Bool()).getRef();
-	private static final ConstRefExpr<BoolType> C = Const("c", Bool()).getRef();
+	private static final Expr<BoolType> A = Const("a", Bool()).getRef();
+	private static final Expr<BoolType> B = Const("b", Bool()).getRef();
+	private static final Expr<BoolType> C = Const("c", Bool()).getRef();
 
 	@Parameter(value = 0)
 	public Expr<? extends BoolType> expr;

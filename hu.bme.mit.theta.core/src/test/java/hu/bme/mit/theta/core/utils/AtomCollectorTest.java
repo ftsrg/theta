@@ -26,7 +26,6 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
-import hu.bme.mit.theta.core.expr.ConstRefExpr;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.IntType;
@@ -35,10 +34,10 @@ import hu.bme.mit.theta.core.utils.impl.ExprUtils;
 @RunWith(Parameterized.class)
 public class AtomCollectorTest {
 
-	private static final ConstRefExpr<BoolType> CA = Const("a", Bool()).getRef();
-	private static final ConstRefExpr<BoolType> CB = Const("b", Bool()).getRef();
-	private static final ConstRefExpr<IntType> CX = Const("x", Int()).getRef();
-	private static final ConstRefExpr<IntType> CY = Const("y", Int()).getRef();
+	private static final Expr<BoolType> CA = Const("a", Bool()).getRef();
+	private static final Expr<BoolType> CB = Const("b", Bool()).getRef();
+	private static final Expr<IntType> CX = Const("x", Int()).getRef();
+	private static final Expr<IntType> CY = Const("y", Int()).getRef();
 
 	@Parameter(value = 0)
 	public Expr<? extends BoolType> expr;

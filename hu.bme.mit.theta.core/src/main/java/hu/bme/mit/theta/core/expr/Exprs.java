@@ -8,6 +8,7 @@ import java.util.List;
 import com.google.common.collect.ImmutableMultiset;
 import com.google.common.collect.ImmutableSet;
 
+import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.type.ArrayType;
 import hu.bme.mit.theta.core.type.BoolType;
@@ -32,6 +33,10 @@ public final class Exprs {
 	}
 
 	private Exprs() {
+	}
+
+	public static <DeclType extends Type> RefExpr<DeclType> Ref(final Decl<DeclType> decl) {
+		return new RefExpr<>(decl);
 	}
 
 	public static TrueExpr True() {

@@ -5,11 +5,11 @@ import static java.lang.String.format;
 
 import java.util.Map;
 
+import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.expr.ParamRefExpr;
-import hu.bme.mit.theta.core.expr.VarRefExpr;
+import hu.bme.mit.theta.core.expr.RefExpr;
 import hu.bme.mit.theta.core.type.Type;
 
 public final class ExprClosureHelper {
@@ -31,15 +31,20 @@ public final class ExprClosureHelper {
 		}
 
 		@Override
-		public <DeclType extends Type> ParamRefExpr<DeclType> visit(final VarRefExpr<DeclType> expr,
+		public <DeclType extends Type> RefExpr<DeclType> visit(final RefExpr<DeclType> expr,
 				final Map<VarDecl<?>, ParamDecl<?>> mapping) {
-			final VarDecl<DeclType> varDecl = expr.getDecl();
-			final ParamDecl<?> paramDecl = mapping.computeIfAbsent(varDecl,
-					v -> Param(format(PARAM_NAME_FORMAT, v.getName()), v.getType()));
-			@SuppressWarnings("unchecked")
-			final ParamDecl<DeclType> castParamDecl = (ParamDecl<DeclType>) paramDecl;
-			final ParamRefExpr<DeclType> result = castParamDecl.getRef();
-			return result;
+			final Decl<DeclType> decl = expr.getDecl();
+			if (decl instanceof VarDecl) {
+				final VarDecl<DeclType> varDecl = (VarDecl<DeclType>) decl;
+				final ParamDecl<?> paramDecl = mapping.computeIfAbsent(varDecl,
+						v -> Param(format(PARAM_NAME_FORMAT, v.getName()), v.getType()));
+				@SuppressWarnings("unchecked")
+				final ParamDecl<DeclType> castParamDecl = (ParamDecl<DeclType>) paramDecl;
+				final RefExpr<DeclType> result = castParamDecl.getRef();
+				return result;
+			} else {
+				return expr;
+			}
 		}
 
 	}

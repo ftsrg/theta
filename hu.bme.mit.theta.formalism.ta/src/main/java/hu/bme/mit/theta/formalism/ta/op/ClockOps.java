@@ -2,11 +2,12 @@ package hu.bme.mit.theta.formalism.ta.op;
 
 import static hu.bme.mit.theta.core.type.impl.Types.Rat;
 
+import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.AddExpr;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.IntLitExpr;
-import hu.bme.mit.theta.core.expr.VarRefExpr;
+import hu.bme.mit.theta.core.expr.RefExpr;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
@@ -83,13 +84,17 @@ public final class ClockOps {
 				final int value = Math.toIntExact(intLit.getValue());
 				return Reset(var, value);
 
-			} else if (expr instanceof VarRefExpr) {
-				final VarRefExpr<?> varRef = (VarRefExpr<?>) expr;
-				final VarDecl<RatType> value = TypeUtils.cast(varRef.getDecl(), Rat());
-				return Copy(var, value);
+			} else if (expr instanceof RefExpr) {
+				final RefExpr<?> rightRef = (RefExpr<?>) expr;
+				final Decl<?> rightDecl = rightRef.getDecl();
+				if (rightDecl instanceof VarDecl) {
+					final VarDecl<?> rightVar = (VarDecl<?>) rightDecl;
+					final VarDecl<RatType> rightRatVar = TypeUtils.cast(rightVar, Rat());
+					return Copy(var, rightRatVar);
+				}
 
 			} else if (expr instanceof AddExpr) {
-				final VarRefExpr<RatType> varRef = var.getRef();
+				final RefExpr<RatType> varRef = var.getRef();
 				final AddExpr<?> addExpr = (AddExpr<?>) expr;
 				final Expr<?>[] ops = addExpr.getOps().toArray(new Expr<?>[0]);
 

@@ -12,7 +12,8 @@ import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.decl.ProcDecl;
-import hu.bme.mit.theta.core.expr.ProcRefExpr;
+import hu.bme.mit.theta.core.expr.Exprs;
+import hu.bme.mit.theta.core.expr.RefExpr;
 import hu.bme.mit.theta.core.type.ProcType;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.utils.DeclVisitor;
@@ -25,7 +26,7 @@ final class ProcDeclImpl<ReturnType extends Type> implements ProcDecl<ReturnType
 	private final List<ParamDecl<? extends Type>> paramDecls;
 	private final ReturnType returnType;
 
-	private final ProcRefExpr<ReturnType> ref;
+	private final RefExpr<ProcType<ReturnType>> ref;
 	private final ProcType<ReturnType> type;
 
 	private volatile int hashCode;
@@ -40,7 +41,7 @@ final class ProcDeclImpl<ReturnType extends Type> implements ProcDecl<ReturnType
 		this.paramDecls = ImmutableList.copyOf(paramDecls);
 		this.returnType = returnType;
 
-		ref = new ProcRefExprImpl<>(this);
+		ref = Exprs.Ref(this);
 		type = createProcType(paramDecls, returnType);
 	}
 
@@ -67,7 +68,7 @@ final class ProcDeclImpl<ReturnType extends Type> implements ProcDecl<ReturnType
 	}
 
 	@Override
-	public ProcRefExpr<ReturnType> getRef() {
+	public RefExpr<ProcType<ReturnType>> getRef() {
 		return ref;
 	}
 

@@ -7,7 +7,8 @@ import java.util.Map;
 
 import hu.bme.mit.theta.core.decl.IndexedConstDecl;
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.expr.VarRefExpr;
+import hu.bme.mit.theta.core.expr.Exprs;
+import hu.bme.mit.theta.core.expr.RefExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.utils.DeclVisitor;
 
@@ -16,17 +17,17 @@ final class VarDeclImpl<DeclType extends Type> extends AbstractDecl<DeclType> im
 	private static final int HASH_SEED = 3761;
 	private static final String DECL_LABEL = "Var";
 
-	private final VarRefExpr<DeclType> ref;
+	private final RefExpr<DeclType> ref;
 	private final Map<Integer, IndexedConstDecl<DeclType>> indexToConst;
 
 	VarDeclImpl(final String name, final DeclType type) {
 		super(name, type);
-		ref = new VarRefExprImpl<>(this);
+		ref = Exprs.Ref(this);
 		indexToConst = new HashMap<>();
 	}
 
 	@Override
-	public VarRefExpr<DeclType> getRef() {
+	public RefExpr<DeclType> getRef() {
 		return ref;
 	}
 

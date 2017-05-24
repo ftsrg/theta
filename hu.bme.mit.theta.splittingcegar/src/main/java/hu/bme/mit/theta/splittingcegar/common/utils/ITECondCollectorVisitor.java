@@ -13,10 +13,9 @@ import hu.bme.mit.theta.core.expr.MultiaryExpr;
 import hu.bme.mit.theta.core.expr.NullaryExpr;
 import hu.bme.mit.theta.core.expr.PrimedExpr;
 import hu.bme.mit.theta.core.expr.ProcCallExpr;
-import hu.bme.mit.theta.core.expr.ProcRefExpr;
 import hu.bme.mit.theta.core.expr.QuantifiedExpr;
+import hu.bme.mit.theta.core.expr.RefExpr;
 import hu.bme.mit.theta.core.expr.UnaryExpr;
-import hu.bme.mit.theta.core.expr.VarRefExpr;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.utils.impl.ArityBasedExprVisitor;
@@ -40,14 +39,7 @@ public class ITECondCollectorVisitor extends ArityBasedExprVisitor<Collection<Ex
 	}
 
 	@Override
-	public <ReturnType extends Type> Void visit(final ProcRefExpr<ReturnType> expr,
-			final Collection<Expr<? extends BoolType>> param) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO");
-	}
-
-	@Override
-	public <DeclType extends Type> Void visit(final VarRefExpr<DeclType> expr,
+	public <DeclType extends Type> Void visit(final RefExpr<DeclType> expr,
 			final Collection<Expr<? extends BoolType>> param) {
 		return visitNullary(expr, param);
 	}

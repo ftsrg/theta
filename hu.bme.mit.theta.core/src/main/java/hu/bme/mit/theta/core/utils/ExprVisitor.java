@@ -4,7 +4,6 @@ import hu.bme.mit.theta.core.expr.AddExpr;
 import hu.bme.mit.theta.core.expr.AndExpr;
 import hu.bme.mit.theta.core.expr.ArrayReadExpr;
 import hu.bme.mit.theta.core.expr.ArrayWriteExpr;
-import hu.bme.mit.theta.core.expr.ConstRefExpr;
 import hu.bme.mit.theta.core.expr.EqExpr;
 import hu.bme.mit.theta.core.expr.ExistsExpr;
 import hu.bme.mit.theta.core.expr.FalseExpr;
@@ -26,16 +25,14 @@ import hu.bme.mit.theta.core.expr.NegExpr;
 import hu.bme.mit.theta.core.expr.NeqExpr;
 import hu.bme.mit.theta.core.expr.NotExpr;
 import hu.bme.mit.theta.core.expr.OrExpr;
-import hu.bme.mit.theta.core.expr.ParamRefExpr;
 import hu.bme.mit.theta.core.expr.PrimedExpr;
 import hu.bme.mit.theta.core.expr.ProcCallExpr;
-import hu.bme.mit.theta.core.expr.ProcRefExpr;
 import hu.bme.mit.theta.core.expr.RatDivExpr;
 import hu.bme.mit.theta.core.expr.RatLitExpr;
+import hu.bme.mit.theta.core.expr.RefExpr;
 import hu.bme.mit.theta.core.expr.RemExpr;
 import hu.bme.mit.theta.core.expr.SubExpr;
 import hu.bme.mit.theta.core.expr.TrueExpr;
-import hu.bme.mit.theta.core.expr.VarRefExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.closure.ClosedUnderAdd;
 import hu.bme.mit.theta.core.type.closure.ClosedUnderMul;
@@ -44,13 +41,7 @@ import hu.bme.mit.theta.core.type.closure.ClosedUnderSub;
 
 public interface ExprVisitor<P, R> {
 
-	<DeclType extends Type> R visit(ConstRefExpr<DeclType> expr, P param);
-
-	<DeclType extends Type> R visit(ParamRefExpr<DeclType> expr, P param);
-
-	<DeclType extends Type> R visit(VarRefExpr<DeclType> expr, P param);
-
-	<ReturnType extends Type> R visit(ProcRefExpr<ReturnType> expr, P param);
+	<DeclType extends Type> R visit(RefExpr<DeclType> expr, P param);
 
 	<ExprType extends Type> R visit(PrimedExpr<ExprType> expr, P param);
 

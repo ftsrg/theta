@@ -6,7 +6,7 @@ import static hu.bme.mit.theta.core.expr.Exprs.Sub;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.LeqExpr;
-import hu.bme.mit.theta.core.expr.VarRefExpr;
+import hu.bme.mit.theta.core.expr.RefExpr;
 import hu.bme.mit.theta.core.type.RatType;
 
 public final class DiffLeqConstr extends DiffConstr {
@@ -25,8 +25,8 @@ public final class DiffLeqConstr extends DiffConstr {
 	public LeqExpr toExpr() {
 		LeqExpr result = expr;
 		if (result == null) {
-			final VarRefExpr<RatType> leftRef = getLeftVar().getRef();
-			final VarRefExpr<RatType> rightRef = getRightVar().getRef();
+			final RefExpr<RatType> leftRef = getLeftVar().getRef();
+			final RefExpr<RatType> rightRef = getRightVar().getRef();
 			result = Leq(Sub(leftRef, rightRef), Int(getBound()));
 			expr = result;
 		}

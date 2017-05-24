@@ -2,9 +2,10 @@ package hu.bme.mit.theta.core.utils.impl;
 
 import static hu.bme.mit.theta.core.expr.Exprs.Prime;
 
+import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.expr.VarRefExpr;
+import hu.bme.mit.theta.core.expr.RefExpr;
 import hu.bme.mit.theta.core.type.Type;
 
 final class PrimeApplier {
@@ -27,14 +28,18 @@ final class PrimeApplier {
 		////////
 
 		@Override
-		public <DeclType extends Type> Expr<DeclType> visit(final VarRefExpr<DeclType> expr,
-				final VarIndexing indexing) {
-			final VarDecl<DeclType> varDecl = expr.getDecl();
-			final int index = indexing.get(varDecl);
-			if (index == 0) {
-				return expr;
+		public <DeclType extends Type> Expr<DeclType> visit(final RefExpr<DeclType> expr, final VarIndexing indexing) {
+			final Decl<DeclType> decl = expr.getDecl();
+			if (decl instanceof VarDecl) {
+				final VarDecl<DeclType> var = (VarDecl<DeclType>) decl;
+				final int index = indexing.get(var);
+				if (index == 0) {
+					return expr;
+				} else {
+					return Prime(expr, index);
+				}
 			} else {
-				return Prime(expr, index);
+				return expr;
 			}
 		}
 	}

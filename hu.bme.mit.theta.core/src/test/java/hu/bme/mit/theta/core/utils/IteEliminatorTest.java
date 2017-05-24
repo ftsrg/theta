@@ -24,18 +24,16 @@ import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 
-import hu.bme.mit.theta.core.expr.ConstRefExpr;
 import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.expr.IntLitExpr;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.IntType;
 
 public class IteEliminatorTest {
 
 	// Constants for testing
-	private ConstRefExpr<BoolType> a, b, c, d, e;
-	private ConstRefExpr<IntType> x, y, z, t;
-	private IntLitExpr i1, i2, i3, i4, i5;
+	private Expr<BoolType> a, b, c, d, e;
+	private Expr<IntType> x, y, z, t;
+	private Expr<IntType> i1, i2, i3, i4, i5;
 
 	@Before
 	public void before() {

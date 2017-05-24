@@ -5,7 +5,7 @@ import static hu.bme.mit.theta.core.expr.Exprs.Int;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.EqExpr;
-import hu.bme.mit.theta.core.expr.VarRefExpr;
+import hu.bme.mit.theta.core.expr.RefExpr;
 import hu.bme.mit.theta.core.type.RatType;
 
 public final class UnitEqConstr extends UnitConstr {
@@ -24,7 +24,7 @@ public final class UnitEqConstr extends UnitConstr {
 	public EqExpr toExpr() {
 		EqExpr result = expr;
 		if (result == null) {
-			final VarRefExpr<RatType> ref = getVar().getRef();
+			final RefExpr<RatType> ref = getVar().getRef();
 			result = Eq(ref, Int(getBound()));
 			expr = result;
 		}

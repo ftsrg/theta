@@ -1,17 +1,18 @@
 package hu.bme.mit.theta.core.utils.impl;
 
+import hu.bme.mit.theta.core.decl.Decl;
+import hu.bme.mit.theta.core.decl.IndexedConstDecl;
 import hu.bme.mit.theta.core.expr.ArrayReadExpr;
 import hu.bme.mit.theta.core.expr.ArrayWriteExpr;
 import hu.bme.mit.theta.core.expr.BinaryExpr;
-import hu.bme.mit.theta.core.expr.ConstRefExpr;
 import hu.bme.mit.theta.core.expr.FuncAppExpr;
 import hu.bme.mit.theta.core.expr.FuncLitExpr;
-import hu.bme.mit.theta.core.expr.IndexedConstRefExpr;
 import hu.bme.mit.theta.core.expr.IteExpr;
 import hu.bme.mit.theta.core.expr.MultiaryExpr;
 import hu.bme.mit.theta.core.expr.NullaryExpr;
 import hu.bme.mit.theta.core.expr.ProcCallExpr;
 import hu.bme.mit.theta.core.expr.QuantifiedExpr;
+import hu.bme.mit.theta.core.expr.RefExpr;
 import hu.bme.mit.theta.core.expr.UnaryExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.utils.impl.IndexedVars.Builder;
@@ -32,10 +33,11 @@ public final class IndexedVarCollectorVisitor extends ArityBasedExprVisitor<Inde
 	}
 
 	@Override
-	public <DeclType extends Type> Void visit(final ConstRefExpr<DeclType> expr, final IndexedVars.Builder param) {
-		if (expr instanceof IndexedConstRefExpr) {
-			final IndexedConstRefExpr<DeclType> iConstRef = (IndexedConstRefExpr<DeclType>) expr;
-			param.add(iConstRef.getDecl());
+	public <DeclType extends Type> Void visit(final RefExpr<DeclType> expr, final IndexedVars.Builder param) {
+		final Decl<DeclType> decl = expr.getDecl();
+		if (decl instanceof IndexedConstDecl) {
+			final IndexedConstDecl<DeclType> indexedConstDecl = (IndexedConstDecl<DeclType>) decl;
+			param.add(indexedConstDecl);
 		}
 		return null;
 	}

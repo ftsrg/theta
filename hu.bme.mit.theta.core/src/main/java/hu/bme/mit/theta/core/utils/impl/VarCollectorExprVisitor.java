@@ -2,6 +2,7 @@ package hu.bme.mit.theta.core.utils.impl;
 
 import java.util.Collection;
 
+import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.ArrayReadExpr;
 import hu.bme.mit.theta.core.expr.ArrayWriteExpr;
@@ -14,8 +15,8 @@ import hu.bme.mit.theta.core.expr.MultiaryExpr;
 import hu.bme.mit.theta.core.expr.NullaryExpr;
 import hu.bme.mit.theta.core.expr.ProcCallExpr;
 import hu.bme.mit.theta.core.expr.QuantifiedExpr;
+import hu.bme.mit.theta.core.expr.RefExpr;
 import hu.bme.mit.theta.core.expr.UnaryExpr;
-import hu.bme.mit.theta.core.expr.VarRefExpr;
 import hu.bme.mit.theta.core.type.Type;
 
 final class VarCollectorExprVisitor extends ArityBasedExprVisitor<Collection<VarDecl<? extends Type>>, Void> {
@@ -34,9 +35,13 @@ final class VarCollectorExprVisitor extends ArityBasedExprVisitor<Collection<Var
 	}
 
 	@Override
-	public <DeclType extends Type> Void visit(final VarRefExpr<DeclType> expr,
+	public <DeclType extends Type> Void visit(final RefExpr<DeclType> expr,
 			final Collection<VarDecl<? extends Type>> param) {
-		param.add(expr.getDecl());
+		final Decl<DeclType> decl = expr.getDecl();
+		if (decl instanceof VarDecl) {
+			final VarDecl<DeclType> var = (VarDecl<DeclType>) decl;
+			param.add(var);
+		}
 		return null;
 	}
 
