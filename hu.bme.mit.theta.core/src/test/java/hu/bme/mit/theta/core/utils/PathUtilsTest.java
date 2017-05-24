@@ -8,9 +8,9 @@ import static hu.bme.mit.theta.core.expr.Exprs.Prime;
 import org.junit.Assert;
 import org.junit.Test;
 
+import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.decl.IndexedConstDecl;
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.decl.impl.Decls;
 import hu.bme.mit.theta.core.type.IntType;
 import hu.bme.mit.theta.core.type.impl.Types;
 import hu.bme.mit.theta.core.utils.impl.PathUtils;

@@ -8,8 +8,8 @@ import org.junit.Test;
 
 import com.google.common.collect.ImmutableSet;
 
+import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.decl.impl.Decls;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.Exprs;
 import hu.bme.mit.theta.core.expr.IntLitExpr;

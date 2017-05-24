@@ -1,9 +1,9 @@
 package hu.bme.mit.theta.formalism.sts.dsl;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static hu.bme.mit.theta.core.decl.impl.Decls.Const;
-import static hu.bme.mit.theta.core.decl.impl.Decls.Param;
-import static hu.bme.mit.theta.core.decl.impl.Decls.Var;
+import static hu.bme.mit.theta.core.decl.Decls.Const;
+import static hu.bme.mit.theta.core.decl.Decls.Param;
+import static hu.bme.mit.theta.core.decl.Decls.Var;
 import static hu.bme.mit.theta.core.utils.impl.ExprUtils.cast;
 import static java.util.stream.Collectors.toList;
 

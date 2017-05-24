@@ -1,6 +1,6 @@
 package hu.bme.mit.theta.core.expr;
 
-import static hu.bme.mit.theta.core.decl.impl.Decls.Const;
+import static hu.bme.mit.theta.core.decl.Decls.Const;
 import static hu.bme.mit.theta.core.type.impl.Types.Bool;
 
 import java.util.Arrays;

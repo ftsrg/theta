@@ -4,7 +4,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.common.Utils.singleElementOf;
-import static hu.bme.mit.theta.core.decl.impl.Decls.Param;
+import static hu.bme.mit.theta.core.decl.Decls.Param;
 import static hu.bme.mit.theta.core.expr.Exprs.Add;
 import static hu.bme.mit.theta.core.expr.Exprs.And;
 import static hu.bme.mit.theta.core.expr.Exprs.App;

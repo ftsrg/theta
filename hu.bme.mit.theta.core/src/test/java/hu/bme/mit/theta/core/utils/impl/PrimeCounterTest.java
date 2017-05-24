@@ -1,7 +1,7 @@
 package hu.bme.mit.theta.core.utils.impl;
 
-import static hu.bme.mit.theta.core.decl.impl.Decls.Const;
-import static hu.bme.mit.theta.core.decl.impl.Decls.Var;
+import static hu.bme.mit.theta.core.decl.Decls.Const;
+import static hu.bme.mit.theta.core.decl.Decls.Var;
 import static hu.bme.mit.theta.core.type.impl.Types.Bool;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;

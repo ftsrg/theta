@@ -1,6 +1,6 @@
 package hu.bme.mit.theta.core.dsl;
 
-import static hu.bme.mit.theta.core.decl.impl.Decls.Const;
+import static hu.bme.mit.theta.core.decl.Decls.Const;
 import static hu.bme.mit.theta.core.type.impl.Types.Bool;
 
 import org.junit.Test;

@@ -1,6 +1,6 @@
 package hu.bme.mit.theta.core.utils;
 
-import static hu.bme.mit.theta.core.decl.impl.Decls.Var;
+import static hu.bme.mit.theta.core.decl.Decls.Var;
 import static hu.bme.mit.theta.core.expr.Exprs.Add;
 import static hu.bme.mit.theta.core.expr.Exprs.And;
 import static hu.bme.mit.theta.core.expr.Exprs.False;

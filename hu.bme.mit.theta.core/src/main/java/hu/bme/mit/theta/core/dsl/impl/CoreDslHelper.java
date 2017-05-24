@@ -1,7 +1,7 @@
 package hu.bme.mit.theta.core.dsl.impl;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static hu.bme.mit.theta.core.decl.impl.Decls.Param;
+import static hu.bme.mit.theta.core.decl.Decls.Param;
 import static hu.bme.mit.theta.core.utils.impl.ExprUtils.cast;
 import static java.util.stream.Collectors.toList;
 

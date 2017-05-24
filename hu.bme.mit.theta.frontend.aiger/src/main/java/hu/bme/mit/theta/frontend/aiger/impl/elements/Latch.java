@@ -1,6 +1,6 @@
 package hu.bme.mit.theta.frontend.aiger.impl.elements;
 
-import static hu.bme.mit.theta.core.decl.impl.Decls.Var;
+import static hu.bme.mit.theta.core.decl.Decls.Var;
 import static hu.bme.mit.theta.core.expr.Exprs.Iff;
 import static hu.bme.mit.theta.core.expr.Exprs.Not;
 import static hu.bme.mit.theta.core.expr.Exprs.Prime;

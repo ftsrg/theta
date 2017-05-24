@@ -34,7 +34,7 @@ import org.junit.Test;
 
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.Decl;
-import hu.bme.mit.theta.core.decl.impl.Decls;
+import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.LitExpr;
 import hu.bme.mit.theta.core.model.Assignment;

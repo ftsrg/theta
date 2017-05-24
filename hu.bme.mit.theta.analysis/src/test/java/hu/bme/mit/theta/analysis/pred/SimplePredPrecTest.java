@@ -5,8 +5,8 @@ import java.util.Collections;
 import org.junit.Assert;
 import org.junit.Test;
 
+import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.decl.impl.Decls;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.Exprs;
 import hu.bme.mit.theta.core.model.impl.Valuation;

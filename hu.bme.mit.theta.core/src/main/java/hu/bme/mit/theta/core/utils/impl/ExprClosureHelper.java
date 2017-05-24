@@ -1,6 +1,6 @@
 package hu.bme.mit.theta.core.utils.impl;
 
-import static hu.bme.mit.theta.core.decl.impl.Decls.Param;
+import static hu.bme.mit.theta.core.decl.Decls.Param;
 import static java.lang.String.format;
 
 import java.util.Map;
