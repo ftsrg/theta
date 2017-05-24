@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.frontend.benchmark;
+package hu.bme.mit.theta.frontend.benchmark.sts;
 
 import java.io.FileInputStream;
 import java.io.InputStream;
@@ -15,6 +15,9 @@ import org.apache.commons.cli.ParseException;
 
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
+import hu.bme.mit.theta.common.logging.Logger;
+import hu.bme.mit.theta.common.logging.impl.ConsoleLogger;
+import hu.bme.mit.theta.common.logging.impl.NullLogger;
 import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.common.table.impl.SimpleTableWriter;
 import hu.bme.mit.theta.core.expr.Exprs;
@@ -25,11 +28,12 @@ import hu.bme.mit.theta.formalism.sts.dsl.StsDslManager;
 import hu.bme.mit.theta.formalism.sts.dsl.StsSpec;
 import hu.bme.mit.theta.formalism.sts.utils.impl.StsIteTransformation;
 import hu.bme.mit.theta.frontend.aiger.impl.AigerParserSimple;
+import hu.bme.mit.theta.frontend.benchmark.Configuration;
 import hu.bme.mit.theta.frontend.benchmark.ConfigurationBuilder.Domain;
 import hu.bme.mit.theta.frontend.benchmark.ConfigurationBuilder.PredSplit;
 import hu.bme.mit.theta.frontend.benchmark.ConfigurationBuilder.Refinement;
 import hu.bme.mit.theta.frontend.benchmark.ConfigurationBuilder.Search;
-import hu.bme.mit.theta.frontend.benchmark.StsConfigurationBuilder.InitPrec;
+import hu.bme.mit.theta.frontend.benchmark.sts.StsConfigurationBuilder.InitPrec;
 
 /**
  * A command line interface for running a CEGAR configuration on an STS. The
@@ -59,40 +63,46 @@ public class StsMain {
 		// Setting up argument parser
 		final Options options = new Options();
 
-		final Option optModel = new Option("m", "model", true, "Path of the input model");
-		optModel.setRequired(true);
-		optModel.setArgName("MODEL");
+		final Option optModel = Option.builder("m").longOpt("model").hasArg().argName("MODEL").type(String.class)
+				.desc("Path of the input model").required().build();
 		options.addOption(optModel);
 
-		final Option optProp = new Option("p", "property", true, "Property to be verified");
-		optProp.setArgName("PROPERTY");
+		final Option optProp = Option.builder("p").longOpt("property").hasArg().argName("PROPERTY").type(String.class)
+				.desc("Property to be verified").build();
 		options.addOption(optProp);
 
-		final Option optDomain = new Option("d", "domain", true, "Abstract domain");
-		optDomain.setRequired(true);
-		optDomain.setArgName(options(Domain.values()));
+		final Option optDomain = Option.builder("d").longOpt("domain").hasArg().argName(optionsFor(Domain.values()))
+				.type(Domain.class).desc("Abstract domain").required().build();
 		options.addOption(optDomain);
 
-		final Option optRefinement = new Option("r", "refinement", true, "Refinement strategy");
-		optRefinement.setRequired(true);
-		optRefinement.setArgName(options(Refinement.values()));
+		final Option optRefinement = Option.builder("r").longOpt("refinement").hasArg()
+				.argName(optionsFor(Refinement.values())).type(Refinement.class).desc("Refinement strategy").required()
+				.build();
 		options.addOption(optRefinement);
 
-		final Option optInitPrec = new Option("i", "initprec", true, "Initial precision");
-		optInitPrec.setArgName(options(InitPrec.values()));
+		final Option optInitPrec = Option.builder("i").longOpt("initprec").hasArg()
+				.argName(optionsFor(InitPrec.values())).type(InitPrec.class).desc("Initial precision").build();
 		options.addOption(optInitPrec);
 
-		final Option optSearch = new Option("s", "search", true, "Search strategy");
-		optSearch.setArgName(options(Search.values()));
+		final Option optSearch = Option.builder("s").longOpt("search").hasArg().argName(optionsFor(Search.values()))
+				.type(Search.class).desc("Search strategy").build();
 		options.addOption(optSearch);
 
-		final Option optPredSplit = new Option("ps", "predsplit", true, "Predicate split");
-		optPredSplit.setArgName(options(PredSplit.values()));
+		final Option optPredSplit = Option.builder("ps").longOpt("predsplit").hasArg()
+				.argName(optionsFor(PredSplit.values())).type(PredSplit.class).desc("Predicate splitting").build();
 		options.addOption(optPredSplit);
 
-		final Option optExpected = new Option("e", "expected", true, "Expected result (safe)");
-		optExpected.setArgName("true|false");
+		final Option optExpected = Option.builder("e").longOpt("expected").hasArg().argName("true|false")
+				.type(Boolean.class).desc("Expected result (safe)").build();
 		options.addOption(optExpected);
+
+		final Option optLogLevel = Option.builder("ll").longOpt("loglevel").hasArg().argName("INT").type(Integer.class)
+				.desc("Level of logging (detailedness)").build();
+		options.addOption(optLogLevel);
+
+		final Option optBenchmark = Option.builder("bm").longOpt("benchmark")
+				.desc("Benchmark mode (only print output values)").build();
+		options.addOption(optBenchmark);
 
 		final CommandLineParser parser = new DefaultParser();
 		final HelpFormatter helpFormatter = new HelpFormatter();
@@ -116,6 +126,10 @@ public class StsMain {
 				? Optional.of(Boolean.parseBoolean(cmd.getOptionValue(optExpected.getOpt()))) : Optional.empty();
 		final PredSplit predSplit = PredSplit
 				.valueOf(cmd.getOptionValue(optPredSplit.getOpt(), PredSplit.WHOLE.toString()));
+		final boolean benchmarkMode = cmd.hasOption(optBenchmark.getOpt());
+
+		final int logLevel = Integer.parseInt(cmd.getOptionValue(optLogLevel.getOpt(), "1"));
+		final Logger logger = benchmarkMode ? NullLogger.getInstance() : new ConsoleLogger(logLevel);
 
 		// Run the algorithm
 		try {
@@ -132,7 +146,7 @@ public class StsMain {
 
 			// Build configuration
 			final Configuration<?, ?, ?> configuration = new StsConfigurationBuilder(domain, refinement)
-					.initPrec(initPrec).search(search).predSplit(predSplit).build(sts);
+					.initPrec(initPrec).search(search).predSplit(predSplit).logger(logger).build(sts);
 			// Run algorithm
 			final SafetyResult<?, ?> status = configuration.check();
 			final CegarStatistics stats = (CegarStatistics) status.getStats().get();
@@ -142,31 +156,38 @@ public class StsMain {
 				throw new Exception("Expected safe = " + expected.get() + " but was " + status.isSafe());
 			}
 
-			tableWriter.cell(status.isSafe());
-			tableWriter.cell(stats.getElapsedMillis());
-			tableWriter.cell(stats.getIterations());
-			tableWriter.cell(status.getArg().size());
-			tableWriter.cell(status.getArg().getDepth());
-			tableWriter.cell(status.getArg().getMeanBranchingFactor());
-
-			if (status.isUnsafe()) {
-				tableWriter.cell(status.asUnsafe().getTrace().length() + "");
-			} else {
-				tableWriter.cell("");
+			if (benchmarkMode) {
+				tableWriter.cell(status.isSafe());
+				tableWriter.cell(stats.getElapsedMillis());
+				tableWriter.cell(stats.getIterations());
+				tableWriter.cell(status.getArg().size());
+				tableWriter.cell(status.getArg().getDepth());
+				tableWriter.cell(status.getArg().getMeanBranchingFactor());
+				if (status.isUnsafe()) {
+					tableWriter.cell(status.asUnsafe().getTrace().length() + "");
+				} else {
+					tableWriter.cell("");
+				}
+				tableWriter.cell(sts.getVars().size());
+				tableWriter.cell(ExprUtils.size(Exprs.And(sts.getInit(), sts.getTrans()), ExprMetrics.absoluteSize()));
 			}
-
-			tableWriter.cell(sts.getVars().size());
-			tableWriter.cell(ExprUtils.size(Exprs.And(sts.getInit(), sts.getTrans()), ExprMetrics.absoluteSize()));
 
 		} catch (final Throwable ex) {
 			final String message = ex.getMessage() == null ? "" : ": " + ex.getMessage();
-			tableWriter.cell("[EX] " + ex.getClass().getSimpleName() + message);
-		}
+			if (benchmarkMode) {
+				tableWriter.cell("[EX] " + ex.getClass().getSimpleName() + message);
+			} else {
+				logger.writeln("Exception occured: " + ex.getClass().getSimpleName(), 0);
+				logger.writeln("Message: " + ex.getMessage(), 0, 1);
+			}
 
-		tableWriter.newRow();
+		}
+		if (benchmarkMode) {
+			tableWriter.newRow();
+		}
 	}
 
-	private static String options(final Object[] objs) {
+	private static String optionsFor(final Object[] objs) {
 		final StringJoiner sj = new StringJoiner("|");
 		for (final Object o : objs) {
 			sj.add(o.toString());

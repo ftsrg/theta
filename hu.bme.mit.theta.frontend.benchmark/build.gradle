@@ -34,7 +34,7 @@ task stsMain(type: ShadowJar) {
     //exclude('META-INF/INDEX.LIST', 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA')
     //classifier = 'fat'
     //mergeServiceFiles()
-    manifest { attributes 'Main-Class': 'hu.bme.mit.theta.frontend.benchmark.StsMain' }
+    manifest { attributes 'Main-Class': 'hu.bme.mit.theta.frontend.benchmark.sts.StsMain' }
     baseName = 'theta-sts'
     classifier = null
     version = null

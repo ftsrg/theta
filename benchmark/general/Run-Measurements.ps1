@@ -6,16 +6,19 @@ script collects the input parameters and the output of the algorithm into
 a csv file. Optionally a html report can be generated using the R framework.
 
 .PARAMETER jarFile
-Path of the jar file containing the algorithm. The jar file must print its
-output in csv format, and must print a header when called with a single
-'--header' flag.
+Path of the jar file containing the algorithm. The script first calls the jar
+file with a single '--header' flag and is expecting a header in csv format on
+the console. Then for each model and configuration the script calls the jar
+file with the options and values specified in the csv files and a
+'--benchmark' flag. It is expecting the output on the console in csv format
+(matching the header).
 
 .PARAMETER modelsFiles
 A list of csv files listing the models. The first row must contain the names
 of the parameters and the second row must contain the switches.
 
 .PARAMETER configsFile
-Csv file listing the configurations. The first row must contain the names
+A csv file listing the configurations. The first row must contain the names
 of the parameters and the second row must contain the switches.
 
 .PARAMETER timeOut
@@ -110,7 +113,7 @@ foreach($model in $models) {
             
             $output = ""
             # Collect arguments for the jar file
-            $args = @($jvmArgs) + @('-jar', $jarFile)
+            $args = @($jvmArgs) + @('-jar', $jarFile, '--benchmark')
             # Arguments from the model
             foreach ($arg in MemberNames $modelsOpts) {
                 if ($model.$arg) { $args += @($modelsOpts.$arg, $model.$arg) }

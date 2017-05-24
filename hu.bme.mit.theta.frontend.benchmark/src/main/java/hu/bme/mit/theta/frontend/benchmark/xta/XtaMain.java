@@ -105,6 +105,9 @@ public final class XtaMain {
 	private static final Option SEARCH = Option.builder("s").longOpt("search").numberOfArgs(1)
 			.argName(optionsFor(Search.values())).type(SearchStrategy.class).desc("Search strategy").required().build();
 
+	private static final Option BENCHMARK = Option.builder("bm").longOpt("benchmark")
+			.desc("Benchmark mode (only print output values)").build();
+
 	public static void main(final String[] args) {
 		final TableWriter writer = new SimpleTableWriter(System.out, ",", "\"", "\"");
 
@@ -114,6 +117,7 @@ public final class XtaMain {
 		options.addOption(MODEL);
 		options.addOption(ALGORITHM);
 		options.addOption(SEARCH);
+		options.addOption(BENCHMARK);
 
 		final CommandLineParser parser = new DefaultParser();
 		final HelpFormatter helpFormatter = new HelpFormatter();
@@ -170,6 +174,8 @@ public final class XtaMain {
 			return;
 		}
 
+		final boolean benchmarkMode = cmd.hasOption(BENCHMARK.getOpt());
+
 		try {
 			final LazyXtaChecker.AlgorithmStrategy<?> algorithmStrategy = algorithm.create(system);
 			final SearchStrategy searchStrategy = search.create();
@@ -181,22 +187,33 @@ public final class XtaMain {
 			final SafetyResult<?, ?> result = checker.check(UnitPrec.getInstance());
 			final LazyXtaStatistics stats = (LazyXtaStatistics) result.getStats().get();
 
-			writer.cell(stats.getAlgorithmTimeInMs());
-			writer.cell(stats.getRefinementTimeInMs());
-			writer.cell(stats.getInterpolationTimeInMs());
-			writer.cell(stats.getRefinementSteps());
-			writer.cell(stats.getArgDepth());
-			writer.cell(stats.getArgNodes());
-			writer.cell(stats.getArgNodesFeasible());
-			writer.cell(stats.getArgNodesExpanded());
-			writer.cell(stats.getDiscreteStatesExpanded());
+			if (benchmarkMode) {
+				writer.cell(stats.getAlgorithmTimeInMs());
+				writer.cell(stats.getRefinementTimeInMs());
+				writer.cell(stats.getInterpolationTimeInMs());
+				writer.cell(stats.getRefinementSteps());
+				writer.cell(stats.getArgDepth());
+				writer.cell(stats.getArgNodes());
+				writer.cell(stats.getArgNodesFeasible());
+				writer.cell(stats.getArgNodesExpanded());
+				writer.cell(stats.getDiscreteStatesExpanded());
+			} else {
+				System.out.println(stats.toString());
+			}
 
-		} catch (final Exception e) {
+		} catch (final Throwable e) {
 			final String message = e.getMessage() == null ? "" : ": " + e.getMessage();
-			writer.cell("[EX] " + e.getClass().getSimpleName() + message);
+			if (benchmarkMode) {
+				writer.cell("[EX] " + e.getClass().getSimpleName() + message);
+			} else {
+				System.out.println("Exception occured: " + e.getClass().getSimpleName());
+				System.out.println("Message: " + e.getMessage());
+			}
 		}
 
-		writer.newRow();
+		if (benchmarkMode) {
+			writer.newRow();
+		}
 	}
 
 	private static String optionsFor(final Object[] objs) {

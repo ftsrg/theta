@@ -1,7 +1,7 @@
 ---
 title: "Benchmark report"
 params:
-  csv_path: "log_20170423_162636.csv"
+  csv_path: "log_20170418_104447.csv"
   timeout_ms: 600000
 output:
   html_document:
@@ -98,11 +98,14 @@ d$PredSplit[is.na(d$PredSplit)] <- "_"
 d$PredSplit <- factor(d$PredSplit)
 
 # Convert 'Safe' to logical (and remove exceptions).
-empty_rows <- sum(is.na(d$Safe))
-if (empty_rows > 0) warning(paste(c(empty_rows, " rows contain missing values (no timeout, no exception)")))
-ex_rows <- str_detect(d$Safe, "\\[EX\\]")
-exs <- sum(ex_rows, na.rm = T)
-if (exs > 0) warning(paste(c(exs, " rows contain exceptions that are converted to NAs.")))
+n_rows_empty <- sum(is.na(d$Safe))
+if (n_rows_empty > 0) warning(paste(c(n_rows_empty, " rows contain missing values (no timeout, no exception)")))
+d_exceptions <- d %>% filter(str_detect(d$Safe, "\\[EX\\]"))
+n_rows_exception <- nrow(d_exceptions)
+if (n_rows_exception > 0) {
+  warning(paste(c(n_rows_exception, " rows contain exceptions that are converted to NAs.")))
+  knitr::kable(d_exceptions %>% group_by(Type = Safe) %>% summarise(Count = n()))
+}
 d$Safe <- as.logical(d$Safe)
 
 # Create 'Config' column.
@@ -125,10 +128,11 @@ d <- d %>% separate(Model, into = c("Type", "Name"), sep = "/", remove = F)
 ## Summary
 
 ```{r}
-n_meas_total <- nrow(d)
-n_meas_succ <- nrow(d %>% filter(!is.na(Safe)))
+n_meas_rep_total <- nrow(d)
+n_meas_rep_succ <- nrow(d %>% filter(!is.na(Safe)))
 n_models_total <- length(unique(d$Model))
 n_configs_total <- length(unique(d$Config))
+n_meas_total <- n_models_total * n_configs_total
 total_time <- seconds_to_period(sum(ifelse(is.na(d$TimeMs), params$timeout_ms, d$TimeMs)) / 1000)
 
 d_model_config <- d %>%
@@ -153,12 +157,13 @@ d_model$ConfigMin[d_model$ConfigMin == ""] <- NA
 
 n_models_succ <- length(unique((d_model %>% filter(Succ))$Model))
 n_configs_succ <- length(unique((d_model_config %>% filter(Succ))$Config))
+n_meas_succ <- nrow(d_model_config %>% filter(Succ))
 ```
 
-- There are **`r n_models_total` models** and **`r n_configs_total` configurations**, giving **`r n_models_total * n_configs_total` measurements**, with **`r nrow(d_model_config %>% filter(Succ))` being successful** with the timeout limit of `r params$timeout_ms/1000` s (`r nrow(d_model_config %>% filter(Succ)) / (n_models_total * n_configs_total)` success rate).
+- There are **`r n_models_total` models** and **`r n_configs_total` configurations**, giving **`r n_meas_total` measurements**, with **`r n_meas_succ` being successful** with the timeout limit of `r params$timeout_ms/1000` s (`r n_meas_succ / n_meas_total * 100`% success rate).
     - **`r n_models_succ` / `r n_models_total` models** were verified by at least one configuration.
     - **`r n_configs_succ` / `r n_configs_total` configurations** verified at least one model.
-- With the repeated measurements included, there are a total number of **`r n_meas_total` measurement points** with **`r n_meas_succ` successful** executions.
+- With the repeated measurements included, there are a total number of **`r n_meas_rep_total` measurement points** with **`r n_meas_rep_succ` successful** executions.
 - Total time of the measurements is **`r total_time$day` days, `r total_time$hour` hours and `r total_time$minute` minutes**, assuming that the missing values timed out.
     - The maximum (non-timeout) execution time is **`r max(d$TimeMs, na.rm = T) / 1000` s**.
 

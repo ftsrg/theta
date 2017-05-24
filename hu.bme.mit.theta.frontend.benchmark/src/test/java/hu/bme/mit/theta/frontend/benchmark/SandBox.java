@@ -17,7 +17,8 @@ import hu.bme.mit.theta.frontend.benchmark.ConfigurationBuilder.Domain;
 import hu.bme.mit.theta.frontend.benchmark.ConfigurationBuilder.PredSplit;
 import hu.bme.mit.theta.frontend.benchmark.ConfigurationBuilder.Refinement;
 import hu.bme.mit.theta.frontend.benchmark.ConfigurationBuilder.Search;
-import hu.bme.mit.theta.frontend.benchmark.StsConfigurationBuilder.InitPrec;
+import hu.bme.mit.theta.frontend.benchmark.sts.StsConfigurationBuilder;
+import hu.bme.mit.theta.frontend.benchmark.sts.StsConfigurationBuilder.InitPrec;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 
 public class SandBox {
