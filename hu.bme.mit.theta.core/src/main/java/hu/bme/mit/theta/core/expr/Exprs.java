@@ -61,6 +61,10 @@ public final class Exprs {
 		return new RatLitExpr(num, denom);
 	}
 
+	public static IntToRatExpr ToRat(final Expr<? extends IntType> op) {
+		return new IntToRatExpr(op);
+	}
+
 	public static <P extends Type, R extends Type> FuncLitExpr<? super P, ? extends R> Func(
 			final ParamDecl<? super P> paramDecl, final Expr<? extends R> result) {
 		return new FuncLitExpr<P, R>(paramDecl, result);
