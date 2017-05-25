@@ -3,7 +3,7 @@ package hu.bme.mit.theta.formalism.xta.dsl;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.utils.impl.ExprUtils;
+import hu.bme.mit.theta.core.utils.impl.TypeUtils;
 import hu.bme.mit.theta.formalism.xta.ChanType;
 import hu.bme.mit.theta.formalism.xta.Label;
 import hu.bme.mit.theta.formalism.xta.dsl.gen.XtaDslParser.SyncContext;
@@ -25,7 +25,7 @@ final class XtaSync {
 
 	public Label instantiate(final Environment env) {
 		final Expr<?> expr = expression.instantiate(env);
-		final Expr<? extends ChanType> castExpr = ExprUtils.cast(expr, ChanType.class);
+		final Expr<? extends ChanType> castExpr = TypeUtils.cast(expr, ChanType.class);
 		@SuppressWarnings("unchecked")
 		final Expr<ChanType> chanExpr = (Expr<ChanType>) castExpr;
 		if (syncKind == SyncKind.EMIT) {

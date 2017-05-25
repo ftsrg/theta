@@ -7,7 +7,6 @@ import static hu.bme.mit.theta.core.expr.Exprs.And;
 import static hu.bme.mit.theta.core.expr.Exprs.Mod;
 import static hu.bme.mit.theta.core.expr.Exprs.Mul;
 import static hu.bme.mit.theta.core.expr.Exprs.Sub;
-import static hu.bme.mit.theta.core.utils.impl.ExprUtils.cast;
 import static java.util.stream.Collectors.toList;
 
 import java.util.Collection;
@@ -35,6 +34,7 @@ import hu.bme.mit.theta.core.type.closure.ClosedUnderAdd;
 import hu.bme.mit.theta.core.type.closure.ClosedUnderMul;
 import hu.bme.mit.theta.core.type.closure.ClosedUnderSub;
 import hu.bme.mit.theta.core.utils.impl.ExprUtils;
+import hu.bme.mit.theta.core.utils.impl.TypeUtils;
 import hu.bme.mit.theta.formalism.xta.dsl.gen.XtaDslBaseVisitor;
 import hu.bme.mit.theta.formalism.xta.dsl.gen.XtaDslParser.AdditiveExpressionContext;
 import hu.bme.mit.theta.formalism.xta.dsl.gen.XtaDslParser.AdditiveOpContext;
@@ -180,8 +180,8 @@ final class XtaExpression {
 
 		private AddExpr<? extends ClosedUnderAdd> createAddExpr(final Expr<?> uncastLeftOp,
 				final Expr<?> uncastRightOp) {
-			final Expr<? extends ClosedUnderAdd> leftOp = cast(uncastLeftOp, ClosedUnderAdd.class);
-			final Expr<? extends ClosedUnderAdd> rightOp = cast(uncastRightOp, ClosedUnderAdd.class);
+			final Expr<? extends ClosedUnderAdd> leftOp = TypeUtils.cast(uncastLeftOp, ClosedUnderAdd.class);
+			final Expr<? extends ClosedUnderAdd> rightOp = TypeUtils.cast(uncastRightOp, ClosedUnderAdd.class);
 
 			if (leftOp instanceof AddExpr) {
 				final AddExpr<? extends ClosedUnderAdd> addLeftOp = (AddExpr<? extends ClosedUnderAdd>) leftOp;
@@ -195,8 +195,8 @@ final class XtaExpression {
 
 		private SubExpr<? extends ClosedUnderSub> createSubExpr(final Expr<?> uncastLeftOp,
 				final Expr<?> uncastRightOp) {
-			final Expr<? extends ClosedUnderSub> leftOp = cast(uncastLeftOp, ClosedUnderSub.class);
-			final Expr<? extends ClosedUnderSub> rightOp = cast(uncastRightOp, ClosedUnderSub.class);
+			final Expr<? extends ClosedUnderSub> leftOp = TypeUtils.cast(uncastLeftOp, ClosedUnderSub.class);
+			final Expr<? extends ClosedUnderSub> rightOp = TypeUtils.cast(uncastRightOp, ClosedUnderSub.class);
 			return Sub(leftOp, rightOp);
 		}
 
@@ -252,8 +252,8 @@ final class XtaExpression {
 
 		private MulExpr<? extends ClosedUnderMul> createMulExpr(final Expr<?> uncastLeftOp,
 				final Expr<?> uncastRightOp) {
-			final Expr<? extends ClosedUnderMul> leftOp = cast(uncastLeftOp, ClosedUnderMul.class);
-			final Expr<? extends ClosedUnderMul> rightOp = cast(uncastRightOp, ClosedUnderMul.class);
+			final Expr<? extends ClosedUnderMul> leftOp = TypeUtils.cast(uncastLeftOp, ClosedUnderMul.class);
+			final Expr<? extends ClosedUnderMul> rightOp = TypeUtils.cast(uncastRightOp, ClosedUnderMul.class);
 
 			if (leftOp instanceof MulExpr) {
 				final MulExpr<? extends ClosedUnderMul> addLeftOp = (MulExpr<? extends ClosedUnderMul>) leftOp;
@@ -266,8 +266,8 @@ final class XtaExpression {
 		}
 
 		private ModExpr createModExpr(final Expr<?> uncastLeftOp, final Expr<?> uncastRightOp) {
-			final Expr<? extends IntType> leftOp = cast(uncastLeftOp, IntType.class);
-			final Expr<? extends IntType> rightOp = cast(uncastRightOp, IntType.class);
+			final Expr<? extends IntType> leftOp = TypeUtils.cast(uncastLeftOp, IntType.class);
+			final Expr<? extends IntType> rightOp = TypeUtils.cast(uncastRightOp, IntType.class);
 			return Mod(leftOp, rightOp);
 		}
 
@@ -297,8 +297,8 @@ final class XtaExpression {
 			if (ctx.fOpers == null || ctx.fOpers.isEmpty()) {
 				return checkNotNull(visitChildren(ctx));
 			} else {
-				final Expr<? extends RatType> leftOp = cast(ctx.fOps.get(0).accept(this), RatType.class);
-				final Expr<? extends RatType> rightOp = cast(ctx.fOps.get(1).accept(this), RatType.class);
+				final Expr<? extends RatType> leftOp = TypeUtils.cast(ctx.fOps.get(0).accept(this), RatType.class);
+				final Expr<? extends RatType> rightOp = TypeUtils.cast(ctx.fOps.get(1).accept(this), RatType.class);
 
 				final RelationalOpContext op = Utils.singleElementOf(ctx.fOpers);
 				if (op.fLtOp != null) {
@@ -324,7 +324,7 @@ final class XtaExpression {
 
 				final PrefixOpContext oper = ctx.fOper;
 				if (oper.fLogNotOp != null) {
-					return Exprs.Not(ExprUtils.cast(op, BoolType.class));
+					return Exprs.Not(TypeUtils.cast(op, BoolType.class));
 				} else {
 					// TODO Auto-generated method stub
 					throw new UnsupportedOperationException("TODO: auto-generated method stub");
@@ -357,7 +357,7 @@ final class XtaExpression {
 				return checkNotNull(visitChildren(ctx));
 			} else {
 				final Stream<Expr<? extends BoolType>> opStream = ctx.fOps.stream()
-						.map(op -> cast(op.accept(this), BoolType.class));
+						.map(op -> TypeUtils.cast(op.accept(this), BoolType.class));
 				final Collection<Expr<? extends BoolType>> ops = opStream.collect(toList());
 				return And(ops);
 			}

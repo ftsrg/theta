@@ -17,6 +17,7 @@ import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.utils.impl.ExprUtils;
+import hu.bme.mit.theta.core.utils.impl.TypeUtils;
 import hu.bme.mit.theta.formalism.xta.Label;
 import hu.bme.mit.theta.formalism.xta.XtaProcess;
 import hu.bme.mit.theta.formalism.xta.XtaProcess.Loc;
@@ -96,7 +97,7 @@ final class XtaTransition implements Scope {
 		final Collection<Expr<BoolType>> guards;
 		if (guard.isPresent()) {
 			final Expr<?> expr = guard.get().instantiate(env);
-			final Expr<? extends BoolType> guardExpr = ExprUtils.cast(expr, BoolType.class);
+			final Expr<? extends BoolType> guardExpr = TypeUtils.cast(expr, BoolType.class);
 			final Collection<Expr<? extends BoolType>> conjuncts = ExprUtils.getConjuncts(guardExpr);
 			guards = conjuncts.stream().map(e -> (Expr<BoolType>) e).collect(toList());
 		} else {

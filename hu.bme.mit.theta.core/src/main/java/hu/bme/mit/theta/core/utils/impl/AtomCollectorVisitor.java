@@ -48,7 +48,7 @@ public class AtomCollectorVisitor implements ExprVisitor<Collection<Expr<? exten
 
 	protected Void visitNonBoolConnective(final Expr<? extends Type> expr,
 			final Collection<Expr<? extends BoolType>> param) {
-		param.add(ExprUtils.cast(expr, BoolType.class));
+		param.add(TypeUtils.cast(expr, BoolType.class));
 		return null;
 	}
 

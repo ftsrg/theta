@@ -100,7 +100,7 @@ public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? ext
 
 	@Override
 	public Expr<? extends BoolType> visit(final NotExpr expr, final Assignment param) {
-		final Expr<? extends BoolType> op = ExprUtils.cast(expr.getOp().accept(this, param), BoolType.class);
+		final Expr<? extends BoolType> op = TypeUtils.cast(expr.getOp().accept(this, param), BoolType.class);
 		if (op instanceof NotExpr) {
 			return ((NotExpr) op).getOp();
 		} else if (op instanceof TrueExpr) {
@@ -114,8 +114,8 @@ public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? ext
 
 	@Override
 	public Expr<? extends BoolType> visit(final ImplyExpr expr, final Assignment param) {
-		final Expr<? extends BoolType> leftOp = ExprUtils.cast(expr.getLeftOp().accept(this, param), BoolType.class);
-		final Expr<? extends BoolType> rightOp = ExprUtils.cast(expr.getRightOp().accept(this, param), BoolType.class);
+		final Expr<? extends BoolType> leftOp = TypeUtils.cast(expr.getLeftOp().accept(this, param), BoolType.class);
+		final Expr<? extends BoolType> rightOp = TypeUtils.cast(expr.getRightOp().accept(this, param), BoolType.class);
 
 		if (leftOp instanceof BoolLitExpr && rightOp instanceof BoolLitExpr) {
 			final boolean leftValue = ((BoolLitExpr) leftOp).getValue();
@@ -128,7 +128,7 @@ public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? ext
 		} else if (leftOp instanceof TrueExpr) {
 			return rightOp;
 		} else if (rightOp instanceof FalseExpr) {
-			return ExprUtils.cast(Not(leftOp).accept(this, param), BoolType.class);
+			return TypeUtils.cast(Not(leftOp).accept(this, param), BoolType.class);
 		}
 
 		return expr.withOps(leftOp, rightOp);
@@ -136,8 +136,8 @@ public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? ext
 
 	@Override
 	public Expr<? extends BoolType> visit(final IffExpr expr, final Assignment param) {
-		final Expr<? extends BoolType> leftOp = ExprUtils.cast(expr.getLeftOp().accept(this, param), BoolType.class);
-		final Expr<? extends BoolType> rightOp = ExprUtils.cast(expr.getRightOp().accept(this, param), BoolType.class);
+		final Expr<? extends BoolType> leftOp = TypeUtils.cast(expr.getLeftOp().accept(this, param), BoolType.class);
+		final Expr<? extends BoolType> rightOp = TypeUtils.cast(expr.getRightOp().accept(this, param), BoolType.class);
 
 		if (leftOp instanceof BoolLitExpr && rightOp instanceof BoolLitExpr) {
 			final boolean leftValue = ((BoolLitExpr) leftOp).getValue();
@@ -150,9 +150,9 @@ public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? ext
 		} else if (rightOp instanceof TrueExpr) {
 			return leftOp;
 		} else if (leftOp instanceof FalseExpr) {
-			return ExprUtils.cast(Not(rightOp).accept(this, param), BoolType.class);
+			return TypeUtils.cast(Not(rightOp).accept(this, param), BoolType.class);
 		} else if (rightOp instanceof FalseExpr) {
-			return ExprUtils.cast(Not(leftOp).accept(this, param), BoolType.class);
+			return TypeUtils.cast(Not(leftOp).accept(this, param), BoolType.class);
 		}
 
 		return expr.withOps(leftOp, rightOp);
@@ -166,7 +166,7 @@ public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? ext
 			return True();
 
 		for (final Expr<? extends BoolType> op : expr.getOps()) {
-			final Expr<? extends BoolType> opVisited = ExprUtils.cast(op.accept(this, param), BoolType.class);
+			final Expr<? extends BoolType> opVisited = TypeUtils.cast(op.accept(this, param), BoolType.class);
 			if (opVisited instanceof TrueExpr) {
 				continue;
 			} else if (opVisited instanceof FalseExpr) {
@@ -195,7 +195,7 @@ public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? ext
 			return True();
 
 		for (final Expr<? extends BoolType> op : expr.getOps()) {
-			final Expr<? extends BoolType> opVisited = ExprUtils.cast(op.accept(this, param), BoolType.class);
+			final Expr<? extends BoolType> opVisited = TypeUtils.cast(op.accept(this, param), BoolType.class);
 			if (opVisited instanceof FalseExpr) {
 				continue;
 			} else if (opVisited instanceof TrueExpr) {
@@ -260,8 +260,8 @@ public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? ext
 
 	@Override
 	public Expr<? extends BoolType> visit(final GeqExpr expr, final Assignment param) {
-		final Expr<? extends RatType> leftOp = ExprUtils.cast(expr.getLeftOp().accept(this, param), RatType.class);
-		final Expr<? extends RatType> rightOp = ExprUtils.cast(expr.getRightOp().accept(this, param), RatType.class);
+		final Expr<? extends RatType> leftOp = TypeUtils.cast(expr.getLeftOp().accept(this, param), RatType.class);
+		final Expr<? extends RatType> rightOp = TypeUtils.cast(expr.getRightOp().accept(this, param), RatType.class);
 
 		if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
 			if (leftOp.equals(rightOp))
@@ -286,8 +286,8 @@ public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? ext
 
 	@Override
 	public Expr<? extends BoolType> visit(final GtExpr expr, final Assignment param) {
-		final Expr<? extends RatType> leftOp = ExprUtils.cast(expr.getLeftOp().accept(this, param), RatType.class);
-		final Expr<? extends RatType> rightOp = ExprUtils.cast(expr.getRightOp().accept(this, param), RatType.class);
+		final Expr<? extends RatType> leftOp = TypeUtils.cast(expr.getLeftOp().accept(this, param), RatType.class);
+		final Expr<? extends RatType> rightOp = TypeUtils.cast(expr.getRightOp().accept(this, param), RatType.class);
 
 		if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
 			if (leftOp.equals(rightOp))
@@ -312,8 +312,8 @@ public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? ext
 
 	@Override
 	public Expr<? extends BoolType> visit(final LeqExpr expr, final Assignment param) {
-		final Expr<? extends RatType> leftOp = ExprUtils.cast(expr.getLeftOp().accept(this, param), RatType.class);
-		final Expr<? extends RatType> rightOp = ExprUtils.cast(expr.getRightOp().accept(this, param), RatType.class);
+		final Expr<? extends RatType> leftOp = TypeUtils.cast(expr.getLeftOp().accept(this, param), RatType.class);
+		final Expr<? extends RatType> rightOp = TypeUtils.cast(expr.getRightOp().accept(this, param), RatType.class);
 
 		if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
 			if (leftOp.equals(rightOp))
@@ -338,8 +338,8 @@ public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? ext
 
 	@Override
 	public Expr<? extends BoolType> visit(final LtExpr expr, final Assignment param) {
-		final Expr<? extends RatType> leftOp = ExprUtils.cast(expr.getLeftOp().accept(this, param), RatType.class);
-		final Expr<? extends RatType> rightOp = ExprUtils.cast(expr.getRightOp().accept(this, param), RatType.class);
+		final Expr<? extends RatType> leftOp = TypeUtils.cast(expr.getLeftOp().accept(this, param), RatType.class);
+		final Expr<? extends RatType> rightOp = TypeUtils.cast(expr.getRightOp().accept(this, param), RatType.class);
 
 		if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
 			if (leftOp.equals(rightOp))
@@ -369,8 +369,8 @@ public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? ext
 
 	@Override
 	public Expr<? extends IntType> visit(final IntDivExpr expr, final Assignment param) {
-		final Expr<? extends IntType> leftOp = ExprUtils.cast(expr.getLeftOp().accept(this, param), IntType.class);
-		final Expr<? extends IntType> rightOp = ExprUtils.cast(expr.getRightOp().accept(this, param), IntType.class);
+		final Expr<? extends IntType> leftOp = TypeUtils.cast(expr.getLeftOp().accept(this, param), IntType.class);
+		final Expr<? extends IntType> rightOp = TypeUtils.cast(expr.getRightOp().accept(this, param), IntType.class);
 
 		if (rightOp instanceof IntLitExpr && ((IntLitExpr) rightOp).getValue() == 0) {
 			throw new ArithmeticException("Division by zero");
@@ -406,8 +406,8 @@ public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? ext
 
 	@Override
 	public Expr<? extends IntType> visit(final ModExpr expr, final Assignment param) {
-		final Expr<? extends IntType> leftOp = ExprUtils.cast(expr.getLeftOp().accept(this, param), IntType.class);
-		final Expr<? extends IntType> rightOp = ExprUtils.cast(expr.getRightOp().accept(this, param), IntType.class);
+		final Expr<? extends IntType> leftOp = TypeUtils.cast(expr.getLeftOp().accept(this, param), IntType.class);
+		final Expr<? extends IntType> rightOp = TypeUtils.cast(expr.getRightOp().accept(this, param), IntType.class);
 
 		if (leftOp instanceof IntLitExpr && rightOp instanceof IntLitExpr) {
 			final int leftInt = ((IntLitExpr) leftOp).getValue();
@@ -451,8 +451,8 @@ public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? ext
 
 	@Override
 	public Expr<? extends RatType> visit(final RatDivExpr expr, final Assignment param) {
-		final Expr<? extends RatType> leftOp = ExprUtils.cast(expr.getLeftOp().accept(this, param), RatType.class);
-		final Expr<? extends RatType> rightOp = ExprUtils.cast(expr.getRightOp().accept(this, param), RatType.class);
+		final Expr<? extends RatType> leftOp = TypeUtils.cast(expr.getLeftOp().accept(this, param), RatType.class);
+		final Expr<? extends RatType> rightOp = TypeUtils.cast(expr.getRightOp().accept(this, param), RatType.class);
 
 		if (rightOp instanceof IntLitExpr && ((IntLitExpr) rightOp).getValue() == 0) {
 			throw new ArithmeticException("Division by zero");
@@ -465,7 +465,7 @@ public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? ext
 			final int rightNum = num(rightOp);
 			final int rightDenom = denom(rightOp);
 
-			return ExprUtils.cast(Rat(leftNum * rightDenom, leftDenom * rightNum).accept(this, param), RatType.class);
+			return TypeUtils.cast(Rat(leftNum * rightDenom, leftDenom * rightNum).accept(this, param), RatType.class);
 		}
 
 		return expr.withOps(leftOp, rightOp);
@@ -474,7 +474,7 @@ public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? ext
 	@Override
 	public <ExprType extends ClosedUnderNeg> Expr<? extends ClosedUnderNeg> visit(final NegExpr<ExprType> expr,
 			final Assignment param) {
-		final Expr<? extends ClosedUnderNeg> op = ExprUtils.cast(expr.getOp().accept(this, param),
+		final Expr<? extends ClosedUnderNeg> op = TypeUtils.cast(expr.getOp().accept(this, param),
 				ClosedUnderNeg.class);
 
 		if (op instanceof IntLitExpr) {
@@ -496,9 +496,9 @@ public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? ext
 	@Override
 	public <ExprType extends ClosedUnderSub> Expr<? extends ClosedUnderSub> visit(final SubExpr<ExprType> expr,
 			final Assignment param) {
-		final Expr<? extends ClosedUnderSub> leftOp = ExprUtils.cast(expr.getLeftOp().accept(this, param),
+		final Expr<? extends ClosedUnderSub> leftOp = TypeUtils.cast(expr.getLeftOp().accept(this, param),
 				ClosedUnderSub.class);
-		final Expr<? extends ClosedUnderSub> rightOp = ExprUtils.cast(expr.getRightOp().accept(this, param),
+		final Expr<? extends ClosedUnderSub> rightOp = TypeUtils.cast(expr.getRightOp().accept(this, param),
 				ClosedUnderSub.class);
 
 		if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
@@ -513,7 +513,7 @@ public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? ext
 			final int rightNum = num(rightOp);
 			final int rightDenom = denom(rightOp);
 
-			return ExprUtils.cast(
+			return TypeUtils.cast(
 					Rat(leftNum * rightDenom - rightNum * leftDenom, leftDenom * rightDenom).accept(this, param),
 					RatType.class);
 		}
@@ -533,7 +533,7 @@ public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? ext
 		int denom = 1;
 
 		for (final Expr<? extends ExprType> op : expr.getOps()) {
-			final Expr<? extends ClosedUnderAdd> opVisited = ExprUtils.cast(op.accept(this, param),
+			final Expr<? extends ClosedUnderAdd> opVisited = TypeUtils.cast(op.accept(this, param),
 					ClosedUnderAdd.class);
 			if (opVisited instanceof IntLitExpr) {
 				num += denom * ((IntLitExpr) opVisited).getValue();
@@ -548,7 +548,7 @@ public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? ext
 			}
 		}
 
-		final Expr<? extends ClosedUnderAdd> sum = ExprUtils.cast(Rat(num, denom).accept(this, param),
+		final Expr<? extends ClosedUnderAdd> sum = TypeUtils.cast(Rat(num, denom).accept(this, param),
 				ClosedUnderAdd.class);
 
 		if (!sum.equals(Int(0))) {
@@ -572,7 +572,7 @@ public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? ext
 		int denom = 1;
 
 		for (final Expr<? extends ExprType> op : expr.getOps()) {
-			final Expr<? extends ClosedUnderMul> opVisited = ExprUtils.cast(op.accept(this, param),
+			final Expr<? extends ClosedUnderMul> opVisited = TypeUtils.cast(op.accept(this, param),
 					ClosedUnderMul.class);
 			if (opVisited instanceof IntLitExpr) {
 				num *= ((IntLitExpr) opVisited).getValue();
@@ -589,7 +589,7 @@ public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? ext
 			}
 		}
 
-		final Expr<? extends ClosedUnderMul> prod = ExprUtils.cast(Rat(num, denom).accept(this, param),
+		final Expr<? extends ClosedUnderMul> prod = TypeUtils.cast(Rat(num, denom).accept(this, param),
 				ClosedUnderMul.class);
 
 		if (!prod.equals(Int(1))) {
@@ -638,7 +638,7 @@ public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? ext
 	@Override
 	public <ExprType extends Type> Expr<? extends ExprType> visit(final IteExpr<ExprType> expr,
 			final Assignment param) {
-		final Expr<? extends BoolType> cond = ExprUtils.cast(expr.getCond().accept(this, param), BoolType.class);
+		final Expr<? extends BoolType> cond = TypeUtils.cast(expr.getCond().accept(this, param), BoolType.class);
 		@SuppressWarnings("unchecked")
 		final Expr<? extends ExprType> then = (Expr<? extends ExprType>) expr.getThen().accept(this, param);
 		@SuppressWarnings("unchecked")

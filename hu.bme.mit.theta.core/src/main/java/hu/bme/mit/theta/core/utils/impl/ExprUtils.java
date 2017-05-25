@@ -45,19 +45,6 @@ public final class ExprUtils {
 		}
 	}
 
-	public static <T extends Type> Expr<T> cast(final Expr<?> expr, final Class<T> metaType) {
-		checkNotNull(expr);
-		checkNotNull(metaType);
-
-		if (metaType.isInstance(expr.getType())) {
-			@SuppressWarnings("unchecked")
-			final Expr<T> result = (Expr<T>) expr;
-			return result;
-		} else {
-			throw new ClassCastException("The type of expression " + expr + " is not of type " + metaType.getName());
-		}
-	}
-
 	public static void collectVars(final Expr<? extends Type> expr,
 			final Collection<VarDecl<? extends Type>> collectTo) {
 		expr.accept(VarCollectorExprVisitor.getInstance(), collectTo);

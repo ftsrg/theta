@@ -2,7 +2,6 @@ package hu.bme.mit.theta.core.dsl.impl;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static hu.bme.mit.theta.core.decl.Decls.Param;
-import static hu.bme.mit.theta.core.utils.impl.ExprUtils.cast;
 import static java.util.stream.Collectors.toList;
 
 import java.util.Collections;
@@ -24,6 +23,7 @@ import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.utils.impl.TypeUtils;
 
 public final class CoreDslHelper {
 
@@ -67,14 +67,14 @@ public final class CoreDslHelper {
 	}
 
 	public static Expr<? extends BoolType> createBoolExpr(final Scope scope, final ExprContext exprCtx) {
-		return cast(createExpr(scope, exprCtx), BoolType.class);
+		return TypeUtils.cast(createExpr(scope, exprCtx), BoolType.class);
 	}
 
 	public static List<Expr<? extends BoolType>> createBoolExprList(final Scope scope,
 			final ExprListContext exprListCtx) {
 		final List<Expr<?>> exprs = createExprList(scope, exprListCtx);
 		final List<Expr<? extends BoolType>> boolExprs = exprs.stream()
-				.map(e -> (Expr<? extends BoolType>) cast(e, BoolType.class)).collect(toList());
+				.map(e -> (Expr<? extends BoolType>) TypeUtils.cast(e, BoolType.class)).collect(toList());
 		return boolExprs;
 	}
 

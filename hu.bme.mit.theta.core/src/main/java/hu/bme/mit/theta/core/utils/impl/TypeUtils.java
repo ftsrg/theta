@@ -6,6 +6,7 @@ import java.util.Optional;
 
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.Type;
 
 public final class TypeUtils {
@@ -46,6 +47,19 @@ public final class TypeUtils {
 			return result;
 		} else {
 			throw new ClassCastException("The type of declaration " + decl + " is not of type " + type);
+		}
+	}
+
+	public static <T extends Type> Expr<T> cast(final Expr<?> expr, final Class<T> metaType) {
+		checkNotNull(expr);
+		checkNotNull(metaType);
+	
+		if (metaType.isInstance(expr.getType())) {
+			@SuppressWarnings("unchecked")
+			final Expr<T> result = (Expr<T>) expr;
+			return result;
+		} else {
+			throw new ClassCastException("The type of expression " + expr + " is not of type " + metaType.getName());
 		}
 	}
 
