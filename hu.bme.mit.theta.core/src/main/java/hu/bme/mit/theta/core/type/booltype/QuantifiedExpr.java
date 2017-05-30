@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.core.expr;
+package hu.bme.mit.theta.core.type.booltype;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -9,6 +9,7 @@ import java.util.StringJoiner;
 import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.theta.core.decl.ParamDecl;
+import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.Type;
 

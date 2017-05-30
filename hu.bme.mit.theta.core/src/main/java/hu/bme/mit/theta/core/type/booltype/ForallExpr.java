@@ -4,7 +4,6 @@ import java.util.Collection;
 
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.expr.QuantifiedExpr;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.impl.Types;
