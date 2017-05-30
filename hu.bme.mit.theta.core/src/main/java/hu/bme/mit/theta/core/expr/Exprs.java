@@ -2,11 +2,8 @@ package hu.bme.mit.theta.core.expr;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import java.util.List;
-
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.type.BoolType;
-import hu.bme.mit.theta.core.type.ProcType;
 import hu.bme.mit.theta.core.type.RatType;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.closure.ClosedUnderNeg;
@@ -18,11 +15,6 @@ public final class Exprs {
 
 	public static <DeclType extends Type> RefExpr<DeclType> Ref(final Decl<DeclType> decl) {
 		return new RefExpr<>(decl);
-	}
-
-	public static <ReturnType extends Type> ProcCallExpr<ReturnType> Call(
-			final Expr<? extends ProcType<? extends ReturnType>> proc, final List<? extends Expr<?>> params) {
-		return new ProcCallExpr<>(proc, params);
 	}
 
 	public static <T extends Type> PrimedExpr<T> Prime(final Expr<? extends T> op) {

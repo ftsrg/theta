@@ -9,7 +9,6 @@ import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.IteExpr;
 import hu.bme.mit.theta.core.expr.MultiaryExpr;
 import hu.bme.mit.theta.core.expr.NullaryExpr;
-import hu.bme.mit.theta.core.expr.ProcCallExpr;
 import hu.bme.mit.theta.core.expr.RefExpr;
 import hu.bme.mit.theta.core.expr.UnaryExpr;
 import hu.bme.mit.theta.core.type.Type;
@@ -18,6 +17,7 @@ import hu.bme.mit.theta.core.type.arraytype.ArrayWriteExpr;
 import hu.bme.mit.theta.core.type.booltype.QuantifiedExpr;
 import hu.bme.mit.theta.core.type.functype.FuncAppExpr;
 import hu.bme.mit.theta.core.type.functype.FuncLitExpr;
+import hu.bme.mit.theta.core.type.proctype.ProcCallExpr;
 
 final class VarCollectorExprVisitor extends ArityBasedExprVisitor<Collection<VarDecl<? extends Type>>, Void> {
 

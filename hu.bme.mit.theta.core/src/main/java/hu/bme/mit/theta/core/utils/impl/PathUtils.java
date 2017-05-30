@@ -15,11 +15,11 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.LitExpr;
 import hu.bme.mit.theta.core.expr.PrimedExpr;
-import hu.bme.mit.theta.core.expr.ProcCallExpr;
 import hu.bme.mit.theta.core.expr.RefExpr;
 import hu.bme.mit.theta.core.model.Model;
 import hu.bme.mit.theta.core.model.impl.Valuation;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.proctype.ProcCallExpr;
 
 public class PathUtils {
 

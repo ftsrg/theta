@@ -9,7 +9,6 @@ import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.IteExpr;
 import hu.bme.mit.theta.core.expr.MultiaryExpr;
 import hu.bme.mit.theta.core.expr.NullaryExpr;
-import hu.bme.mit.theta.core.expr.ProcCallExpr;
 import hu.bme.mit.theta.core.expr.UnaryExpr;
 import hu.bme.mit.theta.core.type.ArrayType;
 import hu.bme.mit.theta.core.type.BoolType;
@@ -19,6 +18,7 @@ import hu.bme.mit.theta.core.type.arraytype.ArrayWriteExpr;
 import hu.bme.mit.theta.core.type.booltype.QuantifiedExpr;
 import hu.bme.mit.theta.core.type.functype.FuncAppExpr;
 import hu.bme.mit.theta.core.type.functype.FuncLitExpr;
+import hu.bme.mit.theta.core.type.proctype.ProcCallExpr;
 
 public class ExprRewriterVisitor<P> extends ArityBasedExprVisitor<P, Expr<?>> {
 
