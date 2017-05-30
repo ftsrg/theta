@@ -35,6 +35,7 @@ import javax.swing.JTabbedPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
+import javax.swing.SwingConstants;
 import javax.swing.SwingWorker;
 import javax.swing.UIManager;
 
@@ -99,7 +100,7 @@ public class GUI extends JFrame {
 		btn_runCegar.addActionListener(new RunCegarListener());
 		final JLabel lbl_settings = new JLabel("Settings");
 		lbl_settings.setPreferredSize(new Dimension(0, 30));
-		lbl_settings.setVerticalAlignment(JLabel.BOTTOM);
+		lbl_settings.setVerticalAlignment(SwingConstants.BOTTOM);
 		lbl_settings.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Color.BLACK));
 		cb_algorithm = new JComboBox<>();
 		cb_algorithm.addItem(Algorithm.Clustered);

@@ -1,7 +1,12 @@
-package hu.bme.mit.theta.core.expr;
+package hu.bme.mit.theta.core.type.inttype;
 
+import static hu.bme.mit.theta.core.type.impl.Types.Int;
+
+import hu.bme.mit.theta.core.expr.Exprs;
+import hu.bme.mit.theta.core.expr.LitExpr;
+import hu.bme.mit.theta.core.expr.NullaryExpr;
+import hu.bme.mit.theta.core.expr.RatLitExpr;
 import hu.bme.mit.theta.core.type.IntType;
-import hu.bme.mit.theta.core.type.impl.Types;
 import hu.bme.mit.theta.core.utils.ExprVisitor;
 
 public final class IntLitExpr extends NullaryExpr<IntType> implements LitExpr<IntType>, Comparable<IntLitExpr> {
@@ -31,7 +36,7 @@ public final class IntLitExpr extends NullaryExpr<IntType> implements LitExpr<In
 
 	@Override
 	public IntType getType() {
-		return Types.Int();
+		return Int();
 	}
 
 	@Override

@@ -1,40 +1,43 @@
-package hu.bme.mit.theta.core.expr;
+package hu.bme.mit.theta.core.type.inttype;
 
+import static hu.bme.mit.theta.core.type.impl.Types.Int;
+
+import hu.bme.mit.theta.core.expr.BinaryExpr;
+import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.IntType;
-import hu.bme.mit.theta.core.type.impl.Types;
 import hu.bme.mit.theta.core.utils.ExprVisitor;
 
-public final class ModExpr extends BinaryExpr<IntType, IntType, IntType> {
+public final class RemExpr extends BinaryExpr<IntType, IntType, IntType> {
 
-	private static final int HASH_SEED = 109;
+	private static final int HASH_SEED = 199;
 
-	private static final String OPERATOR_LABEL = "Mod";
+	private static final String OPERATOR_LABEL = "Rem";
 
-	ModExpr(final Expr<? extends IntType> leftOp, final Expr<? extends IntType> rightOp) {
+	RemExpr(final Expr<? extends IntType> leftOp, final Expr<? extends IntType> rightOp) {
 		super(leftOp, rightOp);
 	}
 
 	@Override
 	public IntType getType() {
-		return Types.Int();
+		return Int();
 	}
 
 	@Override
-	public ModExpr withOps(final Expr<? extends IntType> leftOp, final Expr<? extends IntType> rightOp) {
+	public RemExpr withOps(final Expr<? extends IntType> leftOp, final Expr<? extends IntType> rightOp) {
 		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
 			return this;
 		} else {
-			return Exprs.Mod(leftOp, rightOp);
+			return new RemExpr(leftOp, rightOp);
 		}
 	}
 
 	@Override
-	public ModExpr withLeftOp(final Expr<? extends IntType> leftOp) {
+	public RemExpr withLeftOp(final Expr<? extends IntType> leftOp) {
 		return withOps(leftOp, getRightOp());
 	}
 
 	@Override
-	public ModExpr withRightOp(final Expr<? extends IntType> rightOp) {
+	public RemExpr withRightOp(final Expr<? extends IntType> rightOp) {
 		return withOps(getLeftOp(), rightOp);
 	}
 
@@ -47,8 +50,8 @@ public final class ModExpr extends BinaryExpr<IntType, IntType, IntType> {
 	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
-		} else if (obj instanceof ModExpr) {
-			final ModExpr that = (ModExpr) obj;
+		} else if (obj instanceof RemExpr) {
+			final RemExpr that = (RemExpr) obj;
 			return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp().equals(that.getRightOp());
 		} else {
 			return false;

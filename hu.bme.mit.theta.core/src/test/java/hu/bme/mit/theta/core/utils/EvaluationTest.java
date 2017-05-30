@@ -1,11 +1,10 @@
 package hu.bme.mit.theta.core.utils;
 
+import static hu.bme.mit.theta.core.decl.Decls.Const;
 import static hu.bme.mit.theta.core.expr.Exprs.Add;
 import static hu.bme.mit.theta.core.expr.Exprs.Eq;
 import static hu.bme.mit.theta.core.expr.Exprs.Geq;
 import static hu.bme.mit.theta.core.expr.Exprs.Gt;
-import static hu.bme.mit.theta.core.expr.Exprs.Int;
-import static hu.bme.mit.theta.core.expr.Exprs.IntDiv;
 import static hu.bme.mit.theta.core.expr.Exprs.Ite;
 import static hu.bme.mit.theta.core.expr.Exprs.Leq;
 import static hu.bme.mit.theta.core.expr.Exprs.Lt;
@@ -22,6 +21,8 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 import static hu.bme.mit.theta.core.type.impl.Types.Int;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Div;
 import static hu.bme.mit.theta.core.utils.impl.ExprUtils.evaluate;
 
 import java.util.Collections;
@@ -33,7 +34,6 @@ import org.junit.Test;
 
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.Decl;
-import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.LitExpr;
 import hu.bme.mit.theta.core.model.Assignment;
@@ -42,8 +42,8 @@ import hu.bme.mit.theta.core.type.IntType;
 
 public class EvaluationTest {
 
-	private final ConstDecl<IntType> ca = Decls.Const("a", Int());
-	private final ConstDecl<IntType> cb = Decls.Const("b", Int());
+	private final ConstDecl<IntType> ca = Const("a", Int());
+	private final ConstDecl<IntType> cb = Const("b", Int());
 
 	private final Expr<IntType> a = ca.getRef();
 	private final Expr<IntType> b = cb.getRef();
@@ -149,8 +149,8 @@ public class EvaluationTest {
 	@Test
 	public void testIntDiv() {
 		// @formatter:off
-		Assert.assertEquals(Int(0), evaluate(IntDiv(Int(1), Int(2))));
-		Assert.assertEquals(Int(1), evaluate(IntDiv(Int(3), Int(2))));
+		Assert.assertEquals(Int(0), evaluate(Div(Int(1), Int(2))));
+		Assert.assertEquals(Int(1), evaluate(Div(Int(3), Int(2))));
 		// @formatter:on
 	}
 
@@ -220,7 +220,7 @@ public class EvaluationTest {
 		// @formatter:off
 		Assert.assertEquals(Int(15), evaluate(Add(a, b), assignment));
 		Assert.assertEquals(Int(50), evaluate(Mul(a, b), assignment));
-		Assert.assertEquals(Int(0), evaluate(IntDiv(a, b), assignment));
+		Assert.assertEquals(Int(0), evaluate(Div(a, b), assignment));
 		Assert.assertEquals(Rat(1, 2), evaluate(RatDiv(a, b), assignment));
 		Assert.assertEquals(Rat(5, 10), evaluate(RatDiv(a, b), assignment));
 		// @formatter:on

@@ -7,10 +7,10 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import hu.bme.mit.theta.common.ObjectUtils;
-import hu.bme.mit.theta.core.expr.Exprs;
-import hu.bme.mit.theta.core.expr.IntLitExpr;
 import hu.bme.mit.theta.core.expr.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.inttype.IntExprs;
+import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.utils.TypeVisitor;
 
 public final class RangeType implements Type {
@@ -32,11 +32,11 @@ public final class RangeType implements Type {
 
 	public IntLitExpr Int(final int value) {
 		checkArgument(value >= lower && value <= upper);
-		return Exprs.Int(value);
+		return Int(value);
 	}
 
 	public Stream<IntLitExpr> values() {
-		return IntStream.rangeClosed(lower, upper).mapToObj(Exprs::Int);
+		return IntStream.rangeClosed(lower, upper).mapToObj(IntExprs::Int);
 	}
 
 	public int getLower() {

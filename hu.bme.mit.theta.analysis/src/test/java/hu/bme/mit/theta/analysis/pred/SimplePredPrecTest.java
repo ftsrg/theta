@@ -2,6 +2,8 @@ package hu.bme.mit.theta.analysis.pred;
 
 import static hu.bme.mit.theta.core.decl.Decls.Var;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
+import static hu.bme.mit.theta.core.type.impl.Types.Int;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 import java.util.Collections;
 
@@ -14,16 +16,15 @@ import hu.bme.mit.theta.core.expr.Exprs;
 import hu.bme.mit.theta.core.model.impl.Valuation;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.IntType;
-import hu.bme.mit.theta.core.type.impl.Types;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 
 public class SimplePredPrecTest {
 
-	private final VarDecl<IntType> x = Var("x", Types.Int());
-	private final VarDecl<IntType> y = Var("y", Types.Int());
+	private final VarDecl<IntType> x = Var("x", Int());
+	private final VarDecl<IntType> y = Var("y", Int());
 
-	private final Expr<BoolType> pred = Exprs.Lt(x.getRef(), Exprs.Int(5));
+	private final Expr<BoolType> pred = Exprs.Lt(x.getRef(), Int(5));
 
 	private final Solver solver = Z3SolverFactory.getInstace().createSolver();
 
@@ -31,9 +32,9 @@ public class SimplePredPrecTest {
 	public void testMapping() {
 		final PredPrec prec = SimplePredPrec.create(Collections.singleton(pred), solver);
 
-		final PredState s1 = prec.createState(Valuation.builder().put(x, Exprs.Int(0)).build());
-		final PredState s2 = prec.createState(Valuation.builder().put(x, Exprs.Int(10)).build());
-		final PredState s3 = prec.createState(Valuation.builder().put(y, Exprs.Int(0)).build());
+		final PredState s1 = prec.createState(Valuation.builder().put(x, Int(0)).build());
+		final PredState s2 = prec.createState(Valuation.builder().put(x, Int(10)).build());
+		final PredState s3 = prec.createState(Valuation.builder().put(y, Int(0)).build());
 
 		Assert.assertEquals(Collections.singleton(pred), s1.getPreds());
 		Assert.assertEquals(Collections.singleton(Not(pred)), s2.getPreds());

@@ -1,8 +1,9 @@
 package hu.bme.mit.theta.core.type.impl;
 
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+
 import java.util.Optional;
 
-import hu.bme.mit.theta.core.expr.Exprs;
 import hu.bme.mit.theta.core.expr.LitExpr;
 import hu.bme.mit.theta.core.type.IntType;
 import hu.bme.mit.theta.core.type.RatType;
@@ -20,7 +21,7 @@ final class IntTypeImpl implements IntType {
 
 	@Override
 	public LitExpr<IntType> getAny() {
-		return Exprs.Int(0);
+		return Int(0);
 	}
 
 	@Override

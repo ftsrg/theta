@@ -1,5 +1,8 @@
 package hu.bme.mit.theta.analysis.expl;
 
+import static hu.bme.mit.theta.core.decl.Decls.Var;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+
 import java.util.Collections;
 
 import org.junit.Assert;
@@ -7,16 +10,14 @@ import org.junit.Test;
 
 import com.google.common.collect.ImmutableSet;
 
-import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.expr.Exprs;
 import hu.bme.mit.theta.core.model.impl.Valuation;
 import hu.bme.mit.theta.core.type.IntType;
 import hu.bme.mit.theta.core.type.impl.Types;
 
 public class ExplPrecTest {
-	private final VarDecl<IntType> x = Decls.Var("x", Types.Int());
-	private final VarDecl<IntType> y = Decls.Var("y", Types.Int());
+	private final VarDecl<IntType> x = Var("x", Types.Int());
+	private final VarDecl<IntType> y = Var("y", Types.Int());
 
 	@Test
 	public void testInstances() {
@@ -36,10 +37,10 @@ public class ExplPrecTest {
 	@Test
 	public void testMapping() {
 		final ExplPrec prec = ExplPrec.create(Collections.singleton(x));
-		final ExplState s1 = prec.createState(Valuation.builder().put(x, Exprs.Int(1)).put(y, Exprs.Int(2)).build());
-		final ExplState s2 = prec.createState(Valuation.builder().put(y, Exprs.Int(2)).build());
+		final ExplState s1 = prec.createState(Valuation.builder().put(x, Int(1)).put(y, Int(2)).build());
+		final ExplState s2 = prec.createState(Valuation.builder().put(y, Int(2)).build());
 
-		Assert.assertEquals(Valuation.builder().put(x, Exprs.Int(1)).build(), s1.getValuation());
+		Assert.assertEquals(Valuation.builder().put(x, Int(1)).build(), s1.getValuation());
 		Assert.assertEquals(Valuation.builder().build(), s2.getValuation());
 	}
 

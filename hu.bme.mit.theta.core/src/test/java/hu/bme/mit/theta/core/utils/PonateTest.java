@@ -1,6 +1,7 @@
 package hu.bme.mit.theta.core.utils;
 
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -18,7 +19,7 @@ public class PonateTest {
 	@Test
 	public void test() {
 		final RefExpr<? extends IntType> ca = Decls.Const("a", Types.Int()).getRef();
-		final Expr<? extends BoolType> expr = Exprs.Eq(ca, Exprs.Int(2));
+		final Expr<? extends BoolType> expr = Exprs.Eq(ca, Int(2));
 
 		Assert.assertEquals(expr, ExprUtils.ponate(expr));
 		Assert.assertEquals(expr, ExprUtils.ponate(Not(expr)));

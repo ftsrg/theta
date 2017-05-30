@@ -12,7 +12,6 @@ import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.type.ArrayType;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.FuncType;
-import hu.bme.mit.theta.core.type.IntType;
 import hu.bme.mit.theta.core.type.ProcType;
 import hu.bme.mit.theta.core.type.RatType;
 import hu.bme.mit.theta.core.type.Type;
@@ -30,16 +29,8 @@ public final class Exprs {
 		return new RefExpr<>(decl);
 	}
 
-	public static IntLitExpr Int(final int value) {
-		return new IntLitExpr(value);
-	}
-
 	public static RatLitExpr Rat(final int num, final int denom) {
 		return new RatLitExpr(num, denom);
-	}
-
-	public static IntToRatExpr ToRat(final Expr<? extends IntType> op) {
-		return new IntToRatExpr(op);
 	}
 
 	public static <P extends Type, R extends Type> FuncLitExpr<? super P, ? extends R> Func(
@@ -111,18 +102,6 @@ public final class Exprs {
 
 	public static <T extends ClosedUnderMul> MulExpr<T> Mul(final Collection<? extends Expr<? extends T>> ops) {
 		return new MulExpr<>(ops);
-	}
-
-	public static ModExpr Mod(final Expr<? extends IntType> leftOp, final Expr<? extends IntType> rightOp) {
-		return new ModExpr(leftOp, rightOp);
-	}
-
-	public static RemExpr Rem(final Expr<? extends IntType> leftOp, final Expr<? extends IntType> rightOp) {
-		return new RemExpr(leftOp, rightOp);
-	}
-
-	public static IntDivExpr IntDiv(final Expr<? extends IntType> leftOp, final Expr<? extends IntType> rightOp) {
-		return new IntDivExpr(leftOp, rightOp);
 	}
 
 	public static RatDivExpr RatDiv(final Expr<? extends RatType> leftOp, final Expr<? extends RatType> rightOp) {

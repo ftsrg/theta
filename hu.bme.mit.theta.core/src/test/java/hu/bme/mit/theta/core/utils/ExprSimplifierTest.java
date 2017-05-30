@@ -1,11 +1,10 @@
 package hu.bme.mit.theta.core.utils;
 
+import static hu.bme.mit.theta.core.decl.Decls.Const;
 import static hu.bme.mit.theta.core.expr.Exprs.Add;
 import static hu.bme.mit.theta.core.expr.Exprs.Eq;
 import static hu.bme.mit.theta.core.expr.Exprs.Geq;
 import static hu.bme.mit.theta.core.expr.Exprs.Gt;
-import static hu.bme.mit.theta.core.expr.Exprs.Int;
-import static hu.bme.mit.theta.core.expr.Exprs.IntDiv;
 import static hu.bme.mit.theta.core.expr.Exprs.Ite;
 import static hu.bme.mit.theta.core.expr.Exprs.Leq;
 import static hu.bme.mit.theta.core.expr.Exprs.Lt;
@@ -23,6 +22,8 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 import static hu.bme.mit.theta.core.type.impl.Types.Bool;
 import static hu.bme.mit.theta.core.type.impl.Types.Int;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Div;
 import static hu.bme.mit.theta.core.utils.impl.ExprUtils.simplify;
 
 import java.util.Collections;
@@ -34,7 +35,6 @@ import org.junit.Test;
 
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.Decl;
-import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.LitExpr;
 import hu.bme.mit.theta.core.model.Assignment;
@@ -44,12 +44,12 @@ import hu.bme.mit.theta.core.type.IntType;
 
 public class ExprSimplifierTest {
 
-	private final ConstDecl<BoolType> cx = Decls.Const("x", Bool());
-	private final ConstDecl<BoolType> cy = Decls.Const("y", Bool());
-	private final ConstDecl<BoolType> cz = Decls.Const("z", Bool());
-	private final ConstDecl<IntType> ca = Decls.Const("a", Int());
-	private final ConstDecl<IntType> cb = Decls.Const("b", Int());
-	private final ConstDecl<IntType> cc = Decls.Const("c", Int());
+	private final ConstDecl<BoolType> cx = Const("x", Bool());
+	private final ConstDecl<BoolType> cy = Const("y", Bool());
+	private final ConstDecl<BoolType> cz = Const("z", Bool());
+	private final ConstDecl<IntType> ca = Const("a", Int());
+	private final ConstDecl<IntType> cb = Const("b", Int());
+	private final ConstDecl<IntType> cc = Const("c", Int());
 
 	private final Expr<BoolType> x = cx.getRef();
 	private final Expr<BoolType> y = cy.getRef();
@@ -166,9 +166,9 @@ public class ExprSimplifierTest {
 	@Test
 	public void testIntDiv() {
 		// @formatter:off
-		Assert.assertEquals(Int(0), simplify(IntDiv(Int(1), Int(2))));
-		Assert.assertEquals(Int(1), simplify(IntDiv(Int(3), Int(2))));
-		Assert.assertEquals(IntDiv(Int(0), a), simplify(IntDiv(Int(0), a)));
+		Assert.assertEquals(Int(0), simplify(Div(Int(1), Int(2))));
+		Assert.assertEquals(Int(1), simplify(Div(Int(3), Int(2))));
+		Assert.assertEquals(Div(Int(0), a), simplify(Div(Int(0), a)));
 		// @formatter:on
 	}
 

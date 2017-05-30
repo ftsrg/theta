@@ -4,8 +4,6 @@ import static hu.bme.mit.theta.core.expr.Exprs.Add;
 import static hu.bme.mit.theta.core.expr.Exprs.Eq;
 import static hu.bme.mit.theta.core.expr.Exprs.Geq;
 import static hu.bme.mit.theta.core.expr.Exprs.Gt;
-import static hu.bme.mit.theta.core.expr.Exprs.Int;
-import static hu.bme.mit.theta.core.expr.Exprs.IntDiv;
 import static hu.bme.mit.theta.core.expr.Exprs.Ite;
 import static hu.bme.mit.theta.core.expr.Exprs.Leq;
 import static hu.bme.mit.theta.core.expr.Exprs.Lt;
@@ -18,6 +16,8 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Imply;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Div;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -183,7 +183,7 @@ public class Z3TermTransformer {
 			final com.microsoft.z3.Expr rightOpTerm = term.getArgs()[1];
 			final Expr<? extends IntType> lExprstOp = TypeUtils.cast(toExpr(lExprstOpTerm), IntType.class);
 			final Expr<? extends IntType> rightOp = TypeUtils.cast(toExpr(rightOpTerm), IntType.class);
-			return IntDiv(lExprstOp, rightOp);
+			return Div(lExprstOp, rightOp);
 
 		} else if (term.isITE()) {
 			final com.microsoft.z3.Expr condTerm = term.getArgs()[0];

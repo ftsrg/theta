@@ -25,6 +25,7 @@ import hu.bme.mit.theta.analysis.xta.XtaAction;
 import hu.bme.mit.theta.analysis.xta.XtaAnalysis;
 import hu.bme.mit.theta.analysis.xta.XtaLts;
 import hu.bme.mit.theta.analysis.xta.XtaState;
+import hu.bme.mit.theta.common.Tuple;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.core.model.impl.Valuation;
 import hu.bme.mit.theta.formalism.xta.XtaProcess.Loc;
@@ -91,7 +92,7 @@ public final class LazyXtaChecker<S extends State> implements SafetyChecker<XtaS
 		private CheckMethod() {
 			arg = argBuilder.createArg();
 			waitlist = search.createWaitlist();
-			reachedSet = Partition.of(n -> Tuple2.of(n.getState().getLocs(), n.getState().getVal()));
+			reachedSet = Partition.of(n -> Tuple.of(n.getState().getLocs(), n.getState().getVal()));
 
 			statistics = LazyXtaStatistics.builder(arg);
 

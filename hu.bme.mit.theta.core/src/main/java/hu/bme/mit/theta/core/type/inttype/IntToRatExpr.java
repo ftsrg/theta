@@ -1,8 +1,11 @@
-package hu.bme.mit.theta.core.expr;
+package hu.bme.mit.theta.core.type.inttype;
 
+import static hu.bme.mit.theta.core.type.impl.Types.Rat;
+
+import hu.bme.mit.theta.core.expr.Expr;
+import hu.bme.mit.theta.core.expr.UnaryExpr;
 import hu.bme.mit.theta.core.type.IntType;
 import hu.bme.mit.theta.core.type.RatType;
-import hu.bme.mit.theta.core.type.impl.Types;
 import hu.bme.mit.theta.core.utils.ExprVisitor;
 
 public final class IntToRatExpr extends UnaryExpr<IntType, RatType> {
@@ -15,7 +18,7 @@ public final class IntToRatExpr extends UnaryExpr<IntType, RatType> {
 
 	@Override
 	public RatType getType() {
-		return Types.Rat();
+		return Rat();
 	}
 
 	@Override
@@ -29,7 +32,7 @@ public final class IntToRatExpr extends UnaryExpr<IntType, RatType> {
 		if (op == getOp()) {
 			return this;
 		} else {
-			return Exprs.ToRat(op);
+			return new IntToRatExpr(op);
 		}
 	}
 

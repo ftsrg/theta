@@ -2,8 +2,8 @@ package hu.bme.mit.theta.formalism.ta.op;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.expr.Exprs.Add;
-import static hu.bme.mit.theta.core.expr.Exprs.Int;
 import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 import java.util.Collection;
 
