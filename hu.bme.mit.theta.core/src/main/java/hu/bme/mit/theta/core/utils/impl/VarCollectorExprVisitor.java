@@ -4,8 +4,6 @@ import java.util.Collection;
 
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.expr.ArrayReadExpr;
-import hu.bme.mit.theta.core.expr.ArrayWriteExpr;
 import hu.bme.mit.theta.core.expr.BinaryExpr;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.FuncAppExpr;
@@ -18,6 +16,8 @@ import hu.bme.mit.theta.core.expr.QuantifiedExpr;
 import hu.bme.mit.theta.core.expr.RefExpr;
 import hu.bme.mit.theta.core.expr.UnaryExpr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr;
+import hu.bme.mit.theta.core.type.arraytype.ArrayWriteExpr;
 
 final class VarCollectorExprVisitor extends ArityBasedExprVisitor<Collection<VarDecl<? extends Type>>, Void> {
 

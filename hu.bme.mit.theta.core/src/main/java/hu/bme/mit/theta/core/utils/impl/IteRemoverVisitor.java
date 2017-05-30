@@ -7,8 +7,6 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
 import java.util.ArrayList;
 import java.util.List;
 
-import hu.bme.mit.theta.core.expr.ArrayReadExpr;
-import hu.bme.mit.theta.core.expr.ArrayWriteExpr;
 import hu.bme.mit.theta.core.expr.BinaryExpr;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.FuncAppExpr;
@@ -21,6 +19,8 @@ import hu.bme.mit.theta.core.expr.QuantifiedExpr;
 import hu.bme.mit.theta.core.expr.UnaryExpr;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr;
+import hu.bme.mit.theta.core.type.arraytype.ArrayWriteExpr;
 
 public class IteRemoverVisitor extends ArityBasedExprVisitor<Void, Expr<? extends Type>> {
 

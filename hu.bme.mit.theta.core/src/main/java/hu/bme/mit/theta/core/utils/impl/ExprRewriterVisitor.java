@@ -4,8 +4,6 @@ import java.util.Collection;
 
 import com.google.common.collect.Collections2;
 
-import hu.bme.mit.theta.core.expr.ArrayReadExpr;
-import hu.bme.mit.theta.core.expr.ArrayWriteExpr;
 import hu.bme.mit.theta.core.expr.BinaryExpr;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.FuncAppExpr;
@@ -19,6 +17,8 @@ import hu.bme.mit.theta.core.expr.UnaryExpr;
 import hu.bme.mit.theta.core.type.ArrayType;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr;
+import hu.bme.mit.theta.core.type.arraytype.ArrayWriteExpr;
 
 public class ExprRewriterVisitor<P> extends ArityBasedExprVisitor<P, Expr<?>> {
 

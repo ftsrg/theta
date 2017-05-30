@@ -10,7 +10,6 @@ import static hu.bme.mit.theta.core.expr.Exprs.Leq;
 import static hu.bme.mit.theta.core.expr.Exprs.Lt;
 import static hu.bme.mit.theta.core.expr.Exprs.Mul;
 import static hu.bme.mit.theta.core.expr.Exprs.Neq;
-import static hu.bme.mit.theta.core.expr.Exprs.Read;
 import static hu.bme.mit.theta.core.expr.Exprs.Sub;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
@@ -39,6 +38,7 @@ import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.IntType;
 import hu.bme.mit.theta.core.type.RatType;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.arraytype.ArrayExprs;
 import hu.bme.mit.theta.core.type.closure.ClosedUnderAdd;
 import hu.bme.mit.theta.core.type.closure.ClosedUnderMul;
 import hu.bme.mit.theta.core.type.closure.ClosedUnderSub;
@@ -354,7 +354,7 @@ final class XtaExpression {
 				final PostfixOpContext oper = Utils.singleElementOf(ctx.fOpers);
 				if (oper.fArrayAccessOp != null) {
 					final Expr<?> index = oper.fArrayAccessOp.fExpression.accept(this);
-					return Read((Expr<ArrayType<Type, Type>>) op, (Expr<Type>) index);
+					return ArrayExprs.Read((Expr<ArrayType<Type, Type>>) op, (Expr<Type>) index);
 				} else {
 					throw new AssertionError();
 				}

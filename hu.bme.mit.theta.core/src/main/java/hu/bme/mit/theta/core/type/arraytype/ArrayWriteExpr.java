@@ -1,7 +1,8 @@
-package hu.bme.mit.theta.core.expr;
+package hu.bme.mit.theta.core.type.arraytype;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.ArrayType;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.utils.ExprVisitor;
@@ -52,7 +53,7 @@ public final class ArrayWriteExpr<IndexType extends Type, ElemType extends Type>
 		if (this.array == array && this.index == index && elem == this.elem) {
 			return this;
 		} else {
-			return Exprs.Write(array, index, elem);
+			return new ArrayWriteExpr<>(array, index, elem);
 		}
 	}
 

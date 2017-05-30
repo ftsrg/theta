@@ -1,7 +1,8 @@
-package hu.bme.mit.theta.core.expr;
+package hu.bme.mit.theta.core.type.arraytype;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.ArrayType;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.utils.ExprVisitor;
@@ -17,7 +18,7 @@ public final class ArrayReadExpr<IndexType extends Type, ElemType extends Type> 
 	private final Expr<? extends ArrayType<? super IndexType, ? extends ElemType>> array;
 	private final Expr<? extends IndexType> index;
 
-	public ArrayReadExpr(final Expr<? extends ArrayType<? super IndexType, ? extends ElemType>> array,
+	ArrayReadExpr(final Expr<? extends ArrayType<? super IndexType, ? extends ElemType>> array,
 			final Expr<? extends IndexType> index) {
 
 		this.array = checkNotNull(array);
@@ -44,7 +45,7 @@ public final class ArrayReadExpr<IndexType extends Type, ElemType extends Type> 
 		if (this.array == array && this.index == index) {
 			return this;
 		} else {
-			return Exprs.Read(array, index);
+			return new ArrayReadExpr<>(array, index);
 		}
 	}
 

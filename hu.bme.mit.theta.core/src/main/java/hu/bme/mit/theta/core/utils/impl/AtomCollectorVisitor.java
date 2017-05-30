@@ -3,8 +3,6 @@ package hu.bme.mit.theta.core.utils.impl;
 import java.util.Collection;
 
 import hu.bme.mit.theta.core.expr.AddExpr;
-import hu.bme.mit.theta.core.expr.ArrayReadExpr;
-import hu.bme.mit.theta.core.expr.ArrayWriteExpr;
 import hu.bme.mit.theta.core.expr.EqExpr;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.FuncAppExpr;
@@ -23,6 +21,8 @@ import hu.bme.mit.theta.core.expr.RefExpr;
 import hu.bme.mit.theta.core.expr.SubExpr;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr;
+import hu.bme.mit.theta.core.type.arraytype.ArrayWriteExpr;
 import hu.bme.mit.theta.core.type.booltype.AndExpr;
 import hu.bme.mit.theta.core.type.booltype.ExistsExpr;
 import hu.bme.mit.theta.core.type.booltype.FalseExpr;

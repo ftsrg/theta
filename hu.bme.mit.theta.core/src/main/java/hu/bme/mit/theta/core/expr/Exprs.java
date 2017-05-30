@@ -9,7 +9,6 @@ import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.ParamDecl;
-import hu.bme.mit.theta.core.type.ArrayType;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.FuncType;
 import hu.bme.mit.theta.core.type.ProcType;
@@ -37,17 +36,6 @@ public final class Exprs {
 	public static <P extends Type, R extends Type> FuncAppExpr<P, R> App(
 			final Expr<? extends FuncType<? super P, ? extends R>> func, final Expr<? extends P> param) {
 		return new FuncAppExpr<>(func, param);
-	}
-
-	public static <I extends Type, E extends Type> ArrayReadExpr<I, E> Read(
-			final Expr<? extends ArrayType<? super I, ? extends E>> array, final Expr<? extends I> index) {
-		return new ArrayReadExpr<>(array, index);
-	}
-
-	public static <I extends Type, E extends Type> ArrayWriteExpr<I, E> Write(
-			final Expr<? extends ArrayType<? super I, ? extends E>> array, final Expr<? extends I> index,
-			final Expr<? extends E> elem) {
-		return new ArrayWriteExpr<>(array, index, elem);
 	}
 
 	public static <ReturnType extends Type> ProcCallExpr<ReturnType> Call(
