@@ -19,8 +19,6 @@ import hu.bme.mit.theta.core.expr.NegExpr;
 import hu.bme.mit.theta.core.expr.NeqExpr;
 import hu.bme.mit.theta.core.expr.PrimedExpr;
 import hu.bme.mit.theta.core.expr.ProcCallExpr;
-import hu.bme.mit.theta.core.expr.RatDivExpr;
-import hu.bme.mit.theta.core.expr.RatLitExpr;
 import hu.bme.mit.theta.core.expr.RefExpr;
 import hu.bme.mit.theta.core.expr.SubExpr;
 import hu.bme.mit.theta.core.type.BoolType;
@@ -42,6 +40,8 @@ import hu.bme.mit.theta.core.type.inttype.IntDivExpr;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.type.inttype.ModExpr;
 import hu.bme.mit.theta.core.type.inttype.RemExpr;
+import hu.bme.mit.theta.core.type.rattype.RatDivExpr;
+import hu.bme.mit.theta.core.type.rattype.RatLitExpr;
 import hu.bme.mit.theta.core.utils.ExprVisitor;
 
 public class AtomCollectorVisitor implements ExprVisitor<Collection<Expr<? extends BoolType>>, Void> {

@@ -1,7 +1,10 @@
-package hu.bme.mit.theta.core.expr;
+package hu.bme.mit.theta.core.type.rattype;
 
+import static hu.bme.mit.theta.core.type.impl.Types.Rat;
+
+import hu.bme.mit.theta.core.expr.BinaryExpr;
+import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.RatType;
-import hu.bme.mit.theta.core.type.impl.Types;
 import hu.bme.mit.theta.core.utils.ExprVisitor;
 
 public final class RatDivExpr extends BinaryExpr<RatType, RatType, RatType> {
@@ -16,7 +19,7 @@ public final class RatDivExpr extends BinaryExpr<RatType, RatType, RatType> {
 
 	@Override
 	public RatType getType() {
-		return Types.Rat();
+		return Rat();
 	}
 
 	@Override
@@ -24,7 +27,7 @@ public final class RatDivExpr extends BinaryExpr<RatType, RatType, RatType> {
 		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
 			return this;
 		} else {
-			return Exprs.RatDiv(leftOp, rightOp);
+			return new RatDivExpr(leftOp, rightOp);
 		}
 	}
 

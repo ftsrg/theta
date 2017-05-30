@@ -1,8 +1,9 @@
 package hu.bme.mit.theta.core.type.impl;
 
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
+
 import java.util.Optional;
 
-import hu.bme.mit.theta.core.expr.Exprs;
 import hu.bme.mit.theta.core.expr.LitExpr;
 import hu.bme.mit.theta.core.type.RatType;
 import hu.bme.mit.theta.core.type.Type;
@@ -19,7 +20,7 @@ final class RatTypeImpl implements RatType {
 
 	@Override
 	public LitExpr<RatType> getAny() {
-		return Exprs.Rat(0, 1);
+		return Rat(0, 1);
 	}
 
 	@Override

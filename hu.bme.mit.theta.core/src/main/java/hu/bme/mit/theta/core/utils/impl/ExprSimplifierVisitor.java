@@ -5,7 +5,6 @@ import static hu.bme.mit.theta.core.expr.Exprs.Ite;
 import static hu.bme.mit.theta.core.expr.Exprs.Mul;
 import static hu.bme.mit.theta.core.expr.Exprs.Neg;
 import static hu.bme.mit.theta.core.expr.Exprs.Prime;
-import static hu.bme.mit.theta.core.expr.Exprs.Rat;
 import static hu.bme.mit.theta.core.expr.Exprs.Sub;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
@@ -13,6 +12,7 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Mod;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,8 +37,6 @@ import hu.bme.mit.theta.core.expr.NegExpr;
 import hu.bme.mit.theta.core.expr.NeqExpr;
 import hu.bme.mit.theta.core.expr.PrimedExpr;
 import hu.bme.mit.theta.core.expr.ProcCallExpr;
-import hu.bme.mit.theta.core.expr.RatDivExpr;
-import hu.bme.mit.theta.core.expr.RatLitExpr;
 import hu.bme.mit.theta.core.expr.RefExpr;
 import hu.bme.mit.theta.core.expr.SubExpr;
 import hu.bme.mit.theta.core.model.Assignment;
@@ -65,6 +63,8 @@ import hu.bme.mit.theta.core.type.inttype.IntDivExpr;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.type.inttype.ModExpr;
 import hu.bme.mit.theta.core.type.inttype.RemExpr;
+import hu.bme.mit.theta.core.type.rattype.RatDivExpr;
+import hu.bme.mit.theta.core.type.rattype.RatLitExpr;
 import hu.bme.mit.theta.core.utils.ExprVisitor;
 
 public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? extends Type>> {

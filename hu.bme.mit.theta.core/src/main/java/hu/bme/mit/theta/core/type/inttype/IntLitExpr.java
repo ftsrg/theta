@@ -1,12 +1,12 @@
 package hu.bme.mit.theta.core.type.inttype;
 
 import static hu.bme.mit.theta.core.type.impl.Types.Int;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 
-import hu.bme.mit.theta.core.expr.Exprs;
 import hu.bme.mit.theta.core.expr.LitExpr;
 import hu.bme.mit.theta.core.expr.NullaryExpr;
-import hu.bme.mit.theta.core.expr.RatLitExpr;
 import hu.bme.mit.theta.core.type.IntType;
+import hu.bme.mit.theta.core.type.rattype.RatLitExpr;
 import hu.bme.mit.theta.core.utils.ExprVisitor;
 
 public final class IntLitExpr extends NullaryExpr<IntType> implements LitExpr<IntType>, Comparable<IntLitExpr> {
@@ -28,7 +28,7 @@ public final class IntLitExpr extends NullaryExpr<IntType> implements LitExpr<In
 	public RatLitExpr toRatLit() {
 		RatLitExpr result = ratLitExpr;
 		if (result == null) {
-			result = Exprs.Rat(value, 1);
+			result = Rat(value, 1);
 			ratLitExpr = result;
 		}
 		return result;

@@ -1,6 +1,6 @@
 package hu.bme.mit.theta.core.expr;
 
-import static hu.bme.mit.theta.core.expr.Exprs.Rat;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 import static org.junit.Assert.assertEquals;
 
 import java.util.Arrays;
@@ -12,6 +12,8 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
+
+import hu.bme.mit.theta.core.type.rattype.RatLitExpr;
 
 @RunWith(Parameterized.class)
 public final class RatLitExprTest {

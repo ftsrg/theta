@@ -29,10 +29,6 @@ public final class Exprs {
 		return new RefExpr<>(decl);
 	}
 
-	public static RatLitExpr Rat(final int num, final int denom) {
-		return new RatLitExpr(num, denom);
-	}
-
 	public static <P extends Type, R extends Type> FuncLitExpr<? super P, ? extends R> Func(
 			final ParamDecl<? super P> paramDecl, final Expr<? extends R> result) {
 		return new FuncLitExpr<P, R>(paramDecl, result);
@@ -102,10 +98,6 @@ public final class Exprs {
 
 	public static <T extends ClosedUnderMul> MulExpr<T> Mul(final Collection<? extends Expr<? extends T>> ops) {
 		return new MulExpr<>(ops);
-	}
-
-	public static RatDivExpr RatDiv(final Expr<? extends RatType> leftOp, final Expr<? extends RatType> rightOp) {
-		return new RatDivExpr(leftOp, rightOp);
 	}
 
 	public static <T extends Type> IteExpr<T> Ite(final Expr<? extends BoolType> cond, final Expr<? extends T> then,

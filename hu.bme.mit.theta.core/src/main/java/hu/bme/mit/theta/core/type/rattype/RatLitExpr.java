@@ -1,10 +1,11 @@
-package hu.bme.mit.theta.core.expr;
+package hu.bme.mit.theta.core.type.rattype;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static hu.bme.mit.theta.core.expr.Exprs.Rat;
 
 import com.google.common.math.IntMath;
 
+import hu.bme.mit.theta.core.expr.LitExpr;
+import hu.bme.mit.theta.core.expr.NullaryExpr;
 import hu.bme.mit.theta.core.type.RatType;
 import hu.bme.mit.theta.core.type.impl.Types;
 import hu.bme.mit.theta.core.utils.ExprVisitor;
@@ -29,6 +30,10 @@ public final class RatLitExpr extends NullaryExpr<RatType> implements LitExpr<Ra
 			this.num = -num / gcd;
 			this.denom = -denom / gcd;
 		}
+	}
+
+	private static RatLitExpr Rat(final int num, final int denom) {
+		return new RatLitExpr(num, denom);
 	}
 
 	public int getNum() {
