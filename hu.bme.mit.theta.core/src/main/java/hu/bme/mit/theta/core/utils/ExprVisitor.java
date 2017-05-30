@@ -2,8 +2,6 @@ package hu.bme.mit.theta.core.utils;
 
 import hu.bme.mit.theta.core.expr.AddExpr;
 import hu.bme.mit.theta.core.expr.EqExpr;
-import hu.bme.mit.theta.core.expr.FuncAppExpr;
-import hu.bme.mit.theta.core.expr.FuncLitExpr;
 import hu.bme.mit.theta.core.expr.GeqExpr;
 import hu.bme.mit.theta.core.expr.GtExpr;
 import hu.bme.mit.theta.core.expr.IteExpr;
@@ -32,6 +30,8 @@ import hu.bme.mit.theta.core.type.closure.ClosedUnderAdd;
 import hu.bme.mit.theta.core.type.closure.ClosedUnderMul;
 import hu.bme.mit.theta.core.type.closure.ClosedUnderNeg;
 import hu.bme.mit.theta.core.type.closure.ClosedUnderSub;
+import hu.bme.mit.theta.core.type.functype.FuncAppExpr;
+import hu.bme.mit.theta.core.type.functype.FuncLitExpr;
 import hu.bme.mit.theta.core.type.inttype.IntDivExpr;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.type.inttype.ModExpr;

@@ -1,8 +1,6 @@
 package hu.bme.mit.theta.core.utils.impl;
 
 import hu.bme.mit.theta.core.expr.BinaryExpr;
-import hu.bme.mit.theta.core.expr.FuncAppExpr;
-import hu.bme.mit.theta.core.expr.FuncLitExpr;
 import hu.bme.mit.theta.core.expr.IteExpr;
 import hu.bme.mit.theta.core.expr.MultiaryExpr;
 import hu.bme.mit.theta.core.expr.NullaryExpr;
@@ -12,6 +10,8 @@ import hu.bme.mit.theta.core.expr.UnaryExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayWriteExpr;
+import hu.bme.mit.theta.core.type.functype.FuncAppExpr;
+import hu.bme.mit.theta.core.type.functype.FuncLitExpr;
 import hu.bme.mit.theta.core.utils.ExprVisitor;
 
 public final class ExprMetrics {

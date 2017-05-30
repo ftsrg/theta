@@ -7,7 +7,6 @@ import static hu.bme.mit.theta.common.Utils.singleElementOf;
 import static hu.bme.mit.theta.core.decl.Decls.Param;
 import static hu.bme.mit.theta.core.expr.Exprs.Add;
 import static hu.bme.mit.theta.core.expr.Exprs.Eq;
-import static hu.bme.mit.theta.core.expr.Exprs.Func;
 import static hu.bme.mit.theta.core.expr.Exprs.Geq;
 import static hu.bme.mit.theta.core.expr.Exprs.Gt;
 import static hu.bme.mit.theta.core.expr.Exprs.Ite;
@@ -92,6 +91,7 @@ import hu.bme.mit.theta.core.type.closure.ClosedUnderAdd;
 import hu.bme.mit.theta.core.type.closure.ClosedUnderMul;
 import hu.bme.mit.theta.core.type.closure.ClosedUnderNeg;
 import hu.bme.mit.theta.core.type.closure.ClosedUnderSub;
+import hu.bme.mit.theta.core.type.functype.FuncExprs;
 import hu.bme.mit.theta.core.type.inttype.IntDivExpr;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.type.inttype.ModExpr;
@@ -139,7 +139,7 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
 
 			pop();
 
-			return Func(param, result);
+			return FuncExprs.Func(param, result);
 
 		} else {
 			return visitChildren(ctx);

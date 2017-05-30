@@ -8,9 +8,7 @@ import java.util.List;
 import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.theta.core.decl.Decl;
-import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.type.BoolType;
-import hu.bme.mit.theta.core.type.FuncType;
 import hu.bme.mit.theta.core.type.ProcType;
 import hu.bme.mit.theta.core.type.RatType;
 import hu.bme.mit.theta.core.type.Type;
@@ -26,16 +24,6 @@ public final class Exprs {
 
 	public static <DeclType extends Type> RefExpr<DeclType> Ref(final Decl<DeclType> decl) {
 		return new RefExpr<>(decl);
-	}
-
-	public static <P extends Type, R extends Type> FuncLitExpr<? super P, ? extends R> Func(
-			final ParamDecl<? super P> paramDecl, final Expr<? extends R> result) {
-		return new FuncLitExpr<P, R>(paramDecl, result);
-	}
-
-	public static <P extends Type, R extends Type> FuncAppExpr<P, R> App(
-			final Expr<? extends FuncType<? super P, ? extends R>> func, final Expr<? extends P> param) {
-		return new FuncAppExpr<>(func, param);
 	}
 
 	public static <ReturnType extends Type> ProcCallExpr<ReturnType> Call(
