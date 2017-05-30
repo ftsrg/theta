@@ -2,18 +2,17 @@ package hu.bme.mit.theta.core.type.inttype;
 
 import static hu.bme.mit.theta.core.type.impl.Types.Int;
 
-import hu.bme.mit.theta.core.expr.DivExpr;
 import hu.bme.mit.theta.core.expr.Expr;
+import hu.bme.mit.theta.core.expr.SubExpr;
 import hu.bme.mit.theta.core.type.IntType;
 import hu.bme.mit.theta.core.utils.ExprVisitor;
 
-public final class IntDivExpr extends DivExpr<IntType> {
+public final class IntSubExpr extends SubExpr<IntType> {
 
-	private static final int HASH_SEED = 79;
+	private static final int HASH_SEED = 4547;
+	private static final String OPERATOR = "Sub";
 
-	private static final String OPERATOR_LABEL = "IDiv";
-
-	IntDivExpr(final Expr<? extends IntType> leftOp, final Expr<? extends IntType> rightOp) {
+	IntSubExpr(final Expr<? extends IntType> leftOp, final Expr<? extends IntType> rightOp) {
 		super(leftOp, rightOp);
 	}
 
@@ -23,21 +22,21 @@ public final class IntDivExpr extends DivExpr<IntType> {
 	}
 
 	@Override
-	public IntDivExpr withOps(final Expr<? extends IntType> leftOp, final Expr<? extends IntType> rightOp) {
+	public SubExpr<IntType> withOps(final Expr<? extends IntType> leftOp, final Expr<? extends IntType> rightOp) {
 		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
 			return this;
 		} else {
-			return new IntDivExpr(leftOp, rightOp);
+			return new IntSubExpr(leftOp, rightOp);
 		}
 	}
 
 	@Override
-	public IntDivExpr withLeftOp(final Expr<? extends IntType> leftOp) {
+	public SubExpr<IntType> withLeftOp(final Expr<? extends IntType> leftOp) {
 		return withOps(leftOp, getRightOp());
 	}
 
 	@Override
-	public IntDivExpr withRightOp(final Expr<? extends IntType> rightOp) {
+	public SubExpr<IntType> withRightOp(final Expr<? extends IntType> rightOp) {
 		return withOps(getLeftOp(), rightOp);
 	}
 
@@ -50,8 +49,8 @@ public final class IntDivExpr extends DivExpr<IntType> {
 	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
-		} else if (obj instanceof IntDivExpr) {
-			final IntDivExpr that = (IntDivExpr) obj;
+		} else if (obj instanceof IntSubExpr) {
+			final IntSubExpr that = (IntSubExpr) obj;
 			return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp().equals(that.getRightOp());
 		} else {
 			return false;
@@ -65,7 +64,7 @@ public final class IntDivExpr extends DivExpr<IntType> {
 
 	@Override
 	protected String getOperatorLabel() {
-		return OPERATOR_LABEL;
+		return OPERATOR;
 	}
 
 }

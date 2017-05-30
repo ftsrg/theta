@@ -15,6 +15,7 @@ import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.RatType;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
+import hu.bme.mit.theta.core.type.rattype.RatLitExpr;
 import hu.bme.mit.theta.core.utils.impl.FailStmtVisitor;
 import hu.bme.mit.theta.core.utils.impl.TypeUtils;
 import hu.bme.mit.theta.formalism.ta.constr.ClockConstr;
@@ -100,10 +101,13 @@ public final class ClockOps {
 
 				if (ops.length == 2) {
 					if (ops[0].equals(varRef)) {
-						if (ops[1] instanceof IntLitExpr) {
-							final IntLitExpr intLit = (IntLitExpr) ops[1];
-							final int offset = Math.toIntExact(intLit.getValue());
-							return Shift(var, offset);
+						if (ops[1] instanceof RatLitExpr) {
+							final RatLitExpr ratLit = (RatLitExpr) ops[1];
+							final int num = ratLit.getNum();
+							final int denom = ratLit.getDenom();
+							if (denom == 1) {
+								return Shift(var, num);
+							}
 						}
 					} else if (ops[1].equals(varRef)) {
 						if (ops[0] instanceof IntLitExpr) {

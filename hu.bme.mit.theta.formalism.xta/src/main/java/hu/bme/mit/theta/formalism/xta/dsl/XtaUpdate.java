@@ -1,9 +1,9 @@
 package hu.bme.mit.theta.formalism.xta.dsl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.expr.Exprs.Add;
-import static hu.bme.mit.theta.core.expr.Exprs.Sub;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Add;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Sub;
 
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.dsl.Scope;

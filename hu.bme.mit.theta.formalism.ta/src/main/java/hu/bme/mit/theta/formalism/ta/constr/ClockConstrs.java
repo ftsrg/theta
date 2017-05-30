@@ -19,13 +19,13 @@ import hu.bme.mit.theta.core.expr.GtExpr;
 import hu.bme.mit.theta.core.expr.LeqExpr;
 import hu.bme.mit.theta.core.expr.LtExpr;
 import hu.bme.mit.theta.core.expr.RefExpr;
-import hu.bme.mit.theta.core.expr.SubExpr;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.RatType;
 import hu.bme.mit.theta.core.type.booltype.AndExpr;
 import hu.bme.mit.theta.core.type.booltype.FalseExpr;
 import hu.bme.mit.theta.core.type.booltype.TrueExpr;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
+import hu.bme.mit.theta.core.type.rattype.RatSubExpr;
 import hu.bme.mit.theta.core.utils.impl.FailExprVisitor;
 import hu.bme.mit.theta.core.utils.impl.TypeUtils;
 
@@ -227,8 +227,9 @@ public final class ClockConstrs {
 				}
 			}
 
-			if (leftOp instanceof SubExpr) {
-				final SubExpr<?> subExpr = (SubExpr<?>) leftOp;
+			if (leftOp instanceof RatSubExpr) {
+				final RatSubExpr subExpr = (RatSubExpr) leftOp;
+				// TODO
 				final Expr<?> subLeftOp = subExpr.getLeftOp();
 				final Expr<?> subRightOp = subExpr.getRightOp();
 				if (subLeftOp instanceof RefExpr && subRightOp instanceof RefExpr) {

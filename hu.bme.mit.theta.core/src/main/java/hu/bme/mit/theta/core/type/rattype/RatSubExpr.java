@@ -2,18 +2,17 @@ package hu.bme.mit.theta.core.type.rattype;
 
 import static hu.bme.mit.theta.core.type.impl.Types.Rat;
 
-import hu.bme.mit.theta.core.expr.DivExpr;
 import hu.bme.mit.theta.core.expr.Expr;
+import hu.bme.mit.theta.core.expr.SubExpr;
 import hu.bme.mit.theta.core.type.RatType;
 import hu.bme.mit.theta.core.utils.ExprVisitor;
 
-public final class RatDivExpr extends DivExpr<RatType> {
+public final class RatSubExpr extends SubExpr<RatType> {
 
-	private static final int HASH_SEED = 139;
+	private static final int HASH_SEED = 6287;
+	private static final String OPERATOR = "Sub";
 
-	private static final String OPERATOR_LABEL = "RDiv";
-
-	RatDivExpr(final Expr<? extends RatType> leftOp, final Expr<? extends RatType> rightOp) {
+	RatSubExpr(final Expr<? extends RatType> leftOp, final Expr<? extends RatType> rightOp) {
 		super(leftOp, rightOp);
 	}
 
@@ -23,21 +22,21 @@ public final class RatDivExpr extends DivExpr<RatType> {
 	}
 
 	@Override
-	public RatDivExpr withOps(final Expr<? extends RatType> leftOp, final Expr<? extends RatType> rightOp) {
+	public SubExpr<RatType> withOps(final Expr<? extends RatType> leftOp, final Expr<? extends RatType> rightOp) {
 		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
 			return this;
 		} else {
-			return new RatDivExpr(leftOp, rightOp);
+			return new RatSubExpr(leftOp, rightOp);
 		}
 	}
 
 	@Override
-	public RatDivExpr withLeftOp(final Expr<? extends RatType> leftOp) {
+	public SubExpr<RatType> withLeftOp(final Expr<? extends RatType> leftOp) {
 		return withOps(leftOp, getRightOp());
 	}
 
 	@Override
-	public RatDivExpr withRightOp(final Expr<? extends RatType> rightOp) {
+	public SubExpr<RatType> withRightOp(final Expr<? extends RatType> rightOp) {
 		return withOps(getLeftOp(), rightOp);
 	}
 
@@ -50,8 +49,8 @@ public final class RatDivExpr extends DivExpr<RatType> {
 	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
-		} else if (obj instanceof RatDivExpr) {
-			final RatDivExpr that = (RatDivExpr) obj;
+		} else if (obj instanceof RatSubExpr) {
+			final RatSubExpr that = (RatSubExpr) obj;
 			return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp().equals(that.getRightOp());
 		} else {
 			return false;
@@ -65,7 +64,7 @@ public final class RatDivExpr extends DivExpr<RatType> {
 
 	@Override
 	protected String getOperatorLabel() {
-		return OPERATOR_LABEL;
+		return OPERATOR;
 	}
 
 }

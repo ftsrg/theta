@@ -1,9 +1,9 @@
 package hu.bme.mit.theta.formalism.ta.op;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.expr.Exprs.Add;
 import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Add;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 
 import java.util.Collection;
 
@@ -46,7 +46,7 @@ public final class ShiftOp implements ClockOp {
 	public AssignStmt<RatType, RatType> toStmt() {
 		AssignStmt<RatType, RatType> result = stmt;
 		if (result == null) {
-			result = Assign(var, Add(var.getRef(), Int(offset)));
+			result = Assign(var, Add(var.getRef(), Rat(offset, 1)));
 			stmt = result;
 		}
 		return result;
