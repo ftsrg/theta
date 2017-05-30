@@ -5,8 +5,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import java.util.Collection;
 import java.util.List;
 
-import com.google.common.collect.ImmutableMultiset;
-import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.ParamDecl;
@@ -190,87 +189,87 @@ public final class Exprs {
 	 */
 
 	public static AndExpr And(final Expr<? extends BoolType> op1, final Expr<? extends BoolType> op2) {
-		return And(ImmutableSet.of(op1, op2));
+		return And(ImmutableList.of(op1, op2));
 	}
 
 	public static AndExpr And(final Expr<? extends BoolType> op1, final Expr<? extends BoolType> op2,
 			final Expr<? extends BoolType> op3) {
-		return And(ImmutableSet.of(op1, op2, op3));
+		return And(ImmutableList.of(op1, op2, op3));
 	}
 
 	public static AndExpr And(final Expr<? extends BoolType> op1, final Expr<? extends BoolType> op2,
 			final Expr<? extends BoolType> op3, final Expr<? extends BoolType> op4) {
-		return And(ImmutableSet.of(op1, op2, op3, op4));
+		return And(ImmutableList.of(op1, op2, op3, op4));
 	}
 
 	public static AndExpr And(final Expr<? extends BoolType> op1, final Expr<? extends BoolType> op2,
 			final Expr<? extends BoolType> op3, final Expr<? extends BoolType> op4,
 			final Expr<? extends BoolType> op5) {
-		return And(ImmutableSet.of(op1, op2, op3, op4, op5));
+		return And(ImmutableList.of(op1, op2, op3, op4, op5));
 	}
 
 	////
 
 	public static OrExpr Or(final Expr<? extends BoolType> op1, final Expr<? extends BoolType> op2) {
-		return Or(ImmutableSet.of(op1, op2));
+		return Or(ImmutableList.of(op1, op2));
 	}
 
 	public static OrExpr Or(final Expr<? extends BoolType> op1, final Expr<? extends BoolType> op2,
 			final Expr<? extends BoolType> op3) {
-		return Or(ImmutableSet.of(op1, op2, op3));
+		return Or(ImmutableList.of(op1, op2, op3));
 	}
 
 	public static OrExpr Or(final Expr<? extends BoolType> op1, final Expr<? extends BoolType> op2,
 			final Expr<? extends BoolType> op3, final Expr<? extends BoolType> op4) {
-		return Or(ImmutableSet.of(op1, op2, op3, op4));
+		return Or(ImmutableList.of(op1, op2, op3, op4));
 	}
 
 	public static OrExpr Or(final Expr<? extends BoolType> op1, final Expr<? extends BoolType> op2,
 			final Expr<? extends BoolType> op3, final Expr<? extends BoolType> op4,
 			final Expr<? extends BoolType> op5) {
-		return Or(ImmutableSet.of(op1, op2, op3, op4, op5));
+		return Or(ImmutableList.of(op1, op2, op3, op4, op5));
 	}
 
 	////
 
 	public static <T extends ClosedUnderAdd> AddExpr<T> Add(final Expr<? extends T> op1, final Expr<? extends T> op2) {
-		return Add(ImmutableMultiset.of(op1, op2));
+		return Add(ImmutableList.of(op1, op2));
 	}
 
 	public static <T extends ClosedUnderAdd> AddExpr<T> Add(final Expr<? extends T> op1, final Expr<? extends T> op2,
 			final Expr<? extends T> op3) {
-		return Add(ImmutableMultiset.of(op1, op2, op3));
+		return Add(ImmutableList.of(op1, op2, op3));
 	}
 
 	public static <T extends ClosedUnderAdd> AddExpr<T> Add(final Expr<? extends T> op1, final Expr<? extends T> op2,
 			final Expr<? extends T> op3, final Expr<? extends T> op4) {
-		return Add(ImmutableMultiset.of(op1, op2, op3, op4));
+		return Add(ImmutableList.of(op1, op2, op3, op4));
 	}
 
 	public static <T extends ClosedUnderAdd> AddExpr<T> Add(final Expr<? extends T> op1, final Expr<? extends T> op2,
 			final Expr<? extends T> op3, final Expr<? extends T> op4, final Expr<? extends T> op5) {
-		return Add(ImmutableMultiset.of(op1, op2, op3, op4, op5));
+		return Add(ImmutableList.of(op1, op2, op3, op4, op5));
 	}
 
 	////
 
 	public static <T extends ClosedUnderMul> MulExpr<T> Mul(final Expr<? extends T> op1, final Expr<? extends T> op2) {
-		return Mul(ImmutableMultiset.of(op1, op2));
+		return Mul(ImmutableList.of(op1, op2));
 	}
 
 	public static <T extends ClosedUnderMul> MulExpr<T> Mul(final Expr<? extends T> op1, final Expr<? extends T> op2,
 			final Expr<? extends T> op3) {
-		return Mul(ImmutableMultiset.of(op1, op2, op3));
+		return Mul(ImmutableList.of(op1, op2, op3));
 	}
 
 	public static <T extends ClosedUnderMul> MulExpr<T> Mul(final Expr<? extends T> op1, final Expr<? extends T> op2,
 			final Expr<? extends T> op3, final Expr<? extends T> op4) {
-		return Mul(ImmutableMultiset.of(op1, op2, op3, op4));
+		return Mul(ImmutableList.of(op1, op2, op3, op4));
 	}
 
 	public static <T extends ClosedUnderMul> MulExpr<T> Mul(final Expr<? extends T> op1, final Expr<? extends T> op2,
 			final Expr<? extends T> op3, final Expr<? extends T> op4, final Expr<? extends T> op5) {
-		return Mul(ImmutableMultiset.of(op1, op2, op3, op4, op5));
+		return Mul(ImmutableList.of(op1, op2, op3, op4, op5));
 	}
 
 	////

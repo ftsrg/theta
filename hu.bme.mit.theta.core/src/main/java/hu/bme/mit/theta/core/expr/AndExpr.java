@@ -1,10 +1,6 @@
 package hu.bme.mit.theta.core.expr;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import java.util.Collection;
-
-import com.google.common.collect.ImmutableSet;
 
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.impl.Types;
@@ -17,7 +13,7 @@ public final class AndExpr extends MultiaryExpr<BoolType, BoolType> {
 	private static final String OPERATOR_LABEL = "And";
 
 	AndExpr(final Collection<? extends Expr<? extends BoolType>> ops) {
-		super(ImmutableSet.copyOf(checkNotNull(ops)));
+		super(ops);
 	}
 
 	@Override

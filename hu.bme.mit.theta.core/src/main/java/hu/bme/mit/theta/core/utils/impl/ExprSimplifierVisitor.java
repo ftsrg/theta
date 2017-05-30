@@ -593,7 +593,7 @@ public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? ext
 				ClosedUnderMul.class);
 
 		if (!prod.equals(Int(1))) {
-			ops.add(prod);
+			ops.add(0, prod);
 		}
 
 		if (ops.size() == 0) {

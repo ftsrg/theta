@@ -4,6 +4,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Collection;
 
+import com.google.common.collect.ImmutableList;
+
 import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.type.Type;
 
@@ -13,8 +15,8 @@ public abstract class MultiaryExpr<OpsType extends Type, ExprType extends Type> 
 
 	private volatile int hashCode = 0;
 
-	protected MultiaryExpr(final Collection<Expr<? extends OpsType>> ops) {
-		this.ops = checkNotNull(ops);
+	protected MultiaryExpr(final Collection<? extends Expr<? extends OpsType>> ops) {
+		this.ops = ImmutableList.copyOf(checkNotNull(ops));
 	}
 
 	public final Collection<? extends Expr<? extends OpsType>> getOps() {

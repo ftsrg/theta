@@ -1,7 +1,7 @@
 package hu.bme.mit.theta.core.expr;
 
 import java.util.Collection;
-import java.util.Set;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.ImmutableSet;
@@ -33,8 +33,8 @@ public final class SmartExprs {
 			return Exprs.False();
 		}
 
-		final Set<? extends Expr<? extends BoolType>> filteredOps = ops.stream().filter(o -> !o.equals(Exprs.True()))
-				.collect(Collectors.toSet());
+		final List<Expr<? extends BoolType>> filteredOps = ops.stream().filter(o -> !o.equals(Exprs.True()))
+				.collect(Collectors.toList());
 
 		if (filteredOps.size() == 0) {
 			return Exprs.True();
@@ -52,8 +52,8 @@ public final class SmartExprs {
 			return Exprs.True();
 		}
 
-		final Set<? extends Expr<? extends BoolType>> filteredOps = ops.stream().filter(o -> !o.equals(Exprs.False()))
-				.collect(Collectors.toSet());
+		final List<Expr<? extends BoolType>> filteredOps = ops.stream().filter(o -> !o.equals(Exprs.False()))
+				.collect(Collectors.toList());
 
 		if (filteredOps.size() == 0) {
 			return Exprs.False();

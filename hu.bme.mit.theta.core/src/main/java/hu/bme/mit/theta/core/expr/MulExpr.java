@@ -1,12 +1,9 @@
 package hu.bme.mit.theta.core.expr;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 import java.util.Collection;
 import java.util.stream.Stream;
-
-import com.google.common.collect.ImmutableMultiset;
 
 import hu.bme.mit.theta.core.type.closure.ClosedUnderMul;
 import hu.bme.mit.theta.core.utils.ExprVisitor;
@@ -19,7 +16,7 @@ public final class MulExpr<ExprType extends ClosedUnderMul> extends MultiaryExpr
 	private static final String OPERATOR_LABEL = "Mul";
 
 	MulExpr(final Collection<? extends Expr<? extends ExprType>> ops) {
-		super(ImmutableMultiset.copyOf(checkNotNull(ops)));
+		super(ops);
 	}
 
 	@Override

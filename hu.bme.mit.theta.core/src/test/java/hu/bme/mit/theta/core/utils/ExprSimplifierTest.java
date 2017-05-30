@@ -253,7 +253,6 @@ public class ExprSimplifierTest {
 
 		// @formatter:off
 		Assert.assertEquals(Int(14), simplify(Add(a, b), assignment));
-		Assert.assertEquals(Add(Int(14), c), simplify(Add(a, b, c), assignment));
-		// @formatter:on
+		Assert.assertEquals(Add(c, Int(14)), simplify(Add(a, b, c), assignment)); // @formatter:on
 	}
 }
