@@ -11,11 +11,9 @@ import com.google.common.collect.ImmutableSet;
 
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.expr.AndExpr;
 import hu.bme.mit.theta.core.expr.BinaryExpr;
 import hu.bme.mit.theta.core.expr.EqExpr;
 import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.expr.FalseExpr;
 import hu.bme.mit.theta.core.expr.GeqExpr;
 import hu.bme.mit.theta.core.expr.GtExpr;
 import hu.bme.mit.theta.core.expr.IntLitExpr;
@@ -23,9 +21,11 @@ import hu.bme.mit.theta.core.expr.LeqExpr;
 import hu.bme.mit.theta.core.expr.LtExpr;
 import hu.bme.mit.theta.core.expr.RefExpr;
 import hu.bme.mit.theta.core.expr.SubExpr;
-import hu.bme.mit.theta.core.expr.TrueExpr;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.RatType;
+import hu.bme.mit.theta.core.type.booltype.AndExpr;
+import hu.bme.mit.theta.core.type.booltype.FalseExpr;
+import hu.bme.mit.theta.core.type.booltype.TrueExpr;
 import hu.bme.mit.theta.core.utils.impl.FailExprVisitor;
 import hu.bme.mit.theta.core.utils.impl.TypeUtils;
 

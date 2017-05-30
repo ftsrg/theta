@@ -8,6 +8,8 @@ import com.google.common.collect.ImmutableSet;
 
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.type.BoolType;
+import hu.bme.mit.theta.core.type.booltype.BoolExprs;
+import hu.bme.mit.theta.core.type.booltype.NotExpr;
 
 public final class SmartExprs {
 
@@ -15,52 +17,52 @@ public final class SmartExprs {
 	}
 
 	public static Expr<? extends BoolType> Not(final Expr<? extends BoolType> op) {
-		if (op.equals(Exprs.True())) {
-			return Exprs.False();
-		} else if (op.equals(Exprs.False())) {
-			return Exprs.True();
+		if (op.equals(BoolExprs.True())) {
+			return BoolExprs.False();
+		} else if (op.equals(BoolExprs.False())) {
+			return BoolExprs.True();
 		} else if (op instanceof NotExpr) {
 			return ((NotExpr) op).getOp();
 		} else {
-			return Exprs.Not(op);
+			return BoolExprs.Not(op);
 		}
 	}
 
 	public static Expr<? extends BoolType> And(final Collection<? extends Expr<? extends BoolType>> ops) {
 		if (ops.size() == 0) {
-			return Exprs.True();
-		} else if (ops.contains(Exprs.False())) {
-			return Exprs.False();
+			return BoolExprs.True();
+		} else if (ops.contains(BoolExprs.False())) {
+			return BoolExprs.False();
 		}
 
-		final List<Expr<? extends BoolType>> filteredOps = ops.stream().filter(o -> !o.equals(Exprs.True()))
+		final List<Expr<? extends BoolType>> filteredOps = ops.stream().filter(o -> !o.equals(BoolExprs.True()))
 				.collect(Collectors.toList());
 
 		if (filteredOps.size() == 0) {
-			return Exprs.True();
+			return BoolExprs.True();
 		} else if (filteredOps.size() == 1) {
 			return Utils.anyElementOf(filteredOps);
 		} else {
-			return Exprs.And(filteredOps);
+			return BoolExprs.And(filteredOps);
 		}
 	}
 
 	public static Expr<? extends BoolType> Or(final Collection<? extends Expr<? extends BoolType>> ops) {
 		if (ops.size() == 0) {
-			return Exprs.True();
-		} else if (ops.contains(Exprs.True())) {
-			return Exprs.True();
+			return BoolExprs.True();
+		} else if (ops.contains(BoolExprs.True())) {
+			return BoolExprs.True();
 		}
 
-		final List<Expr<? extends BoolType>> filteredOps = ops.stream().filter(o -> !o.equals(Exprs.False()))
+		final List<Expr<? extends BoolType>> filteredOps = ops.stream().filter(o -> !o.equals(BoolExprs.False()))
 				.collect(Collectors.toList());
 
 		if (filteredOps.size() == 0) {
-			return Exprs.False();
+			return BoolExprs.False();
 		} else if (filteredOps.size() == 1) {
 			return Utils.anyElementOf(filteredOps);
 		} else {
-			return Exprs.Or(filteredOps);
+			return BoolExprs.Or(filteredOps);
 		}
 	}
 

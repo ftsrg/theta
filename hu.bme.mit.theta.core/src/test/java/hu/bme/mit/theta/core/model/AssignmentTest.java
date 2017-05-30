@@ -1,9 +1,10 @@
 package hu.bme.mit.theta.core.model;
 
-import static hu.bme.mit.theta.core.expr.Exprs.And;
+import static hu.bme.mit.theta.core.decl.Decls.Const;
 import static hu.bme.mit.theta.core.expr.Exprs.Eq;
 import static hu.bme.mit.theta.core.expr.Exprs.Int;
-import static hu.bme.mit.theta.core.expr.Exprs.True;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 import static hu.bme.mit.theta.core.type.impl.Types.Int;
 
 import java.util.HashMap;
@@ -14,14 +15,13 @@ import org.junit.Test;
 
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.Decl;
-import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.expr.LitExpr;
 import hu.bme.mit.theta.core.model.impl.AssignmentImpl;
 import hu.bme.mit.theta.core.type.IntType;
 
 public class AssignmentTest {
-	private final ConstDecl<IntType> ca = Decls.Const("a", Int());
-	private final ConstDecl<IntType> cb = Decls.Const("b", Int());
+	private final ConstDecl<IntType> ca = Const("a", Int());
+	private final ConstDecl<IntType> cb = Const("b", Int());
 
 	@Test
 	public void testNullary() {

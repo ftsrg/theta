@@ -1,6 +1,8 @@
 package hu.bme.mit.theta.analysis.pred;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 
 import java.util.Set;
 
@@ -10,7 +12,6 @@ import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.expr.Exprs;
 import hu.bme.mit.theta.core.type.BoolType;
 
 public final class PredState implements ExprState {
@@ -73,11 +74,11 @@ public final class PredState implements ExprState {
 		Expr<? extends BoolType> result = expr;
 		if (result == null) {
 			if (preds.size() == 0) {
-				result = Exprs.True();
+				result = True();
 			} else if (preds.size() == 1) {
 				result = Utils.singleElementOf(preds);
 			} else {
-				result = Exprs.And(preds);
+				result = And(preds);
 			}
 			expr = result;
 		}

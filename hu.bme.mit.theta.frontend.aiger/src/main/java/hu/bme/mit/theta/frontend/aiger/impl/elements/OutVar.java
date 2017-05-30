@@ -1,9 +1,10 @@
 package hu.bme.mit.theta.frontend.aiger.impl.elements;
 
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
+
 import java.util.List;
 
 import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.expr.Exprs;
 import hu.bme.mit.theta.core.type.BoolType;
 
 public final class OutVar extends HwElement {
@@ -22,7 +23,7 @@ public final class OutVar extends HwElement {
 	public Expr<? extends BoolType> getExpr(final List<HwElement> elements) {
 		Expr<? extends BoolType> expr = elements.get(literal / 2).getExpr(elements);
 		if (literal % 2 != 0)
-			expr = Exprs.Not(expr);
+			expr = Not(expr);
 		return expr;
 	}
 

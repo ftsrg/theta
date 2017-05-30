@@ -2,6 +2,9 @@ package hu.bme.mit.theta.analysis.pred;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -13,11 +16,10 @@ import java.util.Set;
 import com.google.common.collect.ImmutableSet;
 
 import hu.bme.mit.theta.common.ObjectUtils;
-import hu.bme.mit.theta.core.expr.BoolLitExpr;
 import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.expr.Exprs;
 import hu.bme.mit.theta.core.model.impl.Valuation;
 import hu.bme.mit.theta.core.type.BoolType;
+import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 import hu.bme.mit.theta.core.utils.impl.ExprUtils;
 import hu.bme.mit.theta.core.utils.impl.PathUtils;
 import hu.bme.mit.theta.solver.Solver;
@@ -54,7 +56,7 @@ public final class SimplePredPrec implements PredPrec {
 			}
 			final Expr<? extends BoolType> ponatedPred = ExprUtils.ponate(pred);
 			if (!this.predToNegMap.containsKey(ponatedPred)) {
-				this.predToNegMap.put(ponatedPred, Exprs.Not(ponatedPred));
+				this.predToNegMap.put(ponatedPred, Not(ponatedPred));
 			}
 		}
 	}
@@ -76,15 +78,15 @@ public final class SimplePredPrec implements PredPrec {
 
 		for (final Expr<? extends BoolType> pred : predToNegMap.keySet()) {
 			final Expr<? extends BoolType> simplified = ExprUtils.simplify(pred, valuation);
-			if (simplified.equals(Exprs.True())) {
+			if (simplified.equals(True())) {
 				statePreds.add(pred);
-			} else if (simplified.equals(Exprs.False())) {
+			} else if (simplified.equals(False())) {
 				statePreds.add(negate(pred));
 			} else {
 				final Expr<? extends BoolType> simplified0 = PathUtils.unfold(simplified, 0);
 
 				solver.push();
-				solver.add(Exprs.Not(simplified0));
+				solver.add(Not(simplified0));
 				final boolean ponValid = solver.check().isUnsat();
 				solver.pop();
 

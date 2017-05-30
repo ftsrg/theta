@@ -1,9 +1,9 @@
 package hu.bme.mit.theta.frontend.aiger.impl.elements;
 
 import static hu.bme.mit.theta.core.decl.Decls.Var;
-import static hu.bme.mit.theta.core.expr.Exprs.Iff;
-import static hu.bme.mit.theta.core.expr.Exprs.Not;
 import static hu.bme.mit.theta.core.expr.Exprs.Prime;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Iff;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 import static hu.bme.mit.theta.core.type.impl.Types.Bool;
 
 import java.util.List;

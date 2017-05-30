@@ -1,14 +1,14 @@
 package hu.bme.mit.theta.formalism.ta.constr;
 
-import static hu.bme.mit.theta.core.expr.Exprs.True;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 
 import java.util.Collection;
 
 import com.google.common.collect.ImmutableSet;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.expr.TrueExpr;
 import hu.bme.mit.theta.core.type.RatType;
+import hu.bme.mit.theta.core.type.booltype.TrueExpr;
 
 public final class TrueConstr implements ClockConstr {
 

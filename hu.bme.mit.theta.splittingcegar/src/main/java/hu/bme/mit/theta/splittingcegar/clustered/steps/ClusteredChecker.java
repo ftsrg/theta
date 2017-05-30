@@ -1,6 +1,7 @@
 package hu.bme.mit.theta.splittingcegar.clustered.steps;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -8,9 +9,8 @@ import java.util.Stack;
 
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.expr.Exprs;
-import hu.bme.mit.theta.core.expr.NotExpr;
 import hu.bme.mit.theta.core.type.BoolType;
+import hu.bme.mit.theta.core.type.booltype.NotExpr;
 import hu.bme.mit.theta.core.utils.impl.PathUtils;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.solver.Solver;
@@ -37,7 +37,7 @@ public class ClusteredChecker extends AbstractCEGARStep
 	@Override
 	public AbstractResult<ClusteredAbstractState> check(final ClusteredAbstractSystem system) {
 		checkNotNull(system);
-		final NotExpr negProp = Exprs.Not(system.getSTS().getProp());
+		final NotExpr negProp = Not(system.getSTS().getProp());
 
 		final STS sts = system.getSTS();
 		// Store explored states in a map. The key and the value is the same
@@ -127,7 +127,7 @@ public class ClusteredChecker extends AbstractCEGARStep
 						deletedArcs++;
 					}
 				} else { // If the actual state has no more successors, then
-								// backtrack
+							// backtrack
 					stateStack.pop();
 					successorStack.pop();
 				}
@@ -153,8 +153,8 @@ public class ClusteredChecker extends AbstractCEGARStep
 		}
 
 		return counterExample == null
-				? new AbstractResult<ClusteredAbstractState>(null, exploredStates.keySet(), exploredStates.size())
-				: new AbstractResult<ClusteredAbstractState>(counterExample, null, exploredStates.size());
+				? new AbstractResult<>(null, exploredStates.keySet(), exploredStates.size())
+				: new AbstractResult<>(counterExample, null, exploredStates.size());
 	}
 
 	private boolean checkProp(final ClusteredAbstractState state, final Expr<? extends BoolType> expr,

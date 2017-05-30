@@ -1,14 +1,15 @@
 package hu.bme.mit.theta.splittingcegar.interpolating.steps.refinement;
 
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.expr.Exprs;
-import hu.bme.mit.theta.core.expr.NotExpr;
 import hu.bme.mit.theta.core.type.BoolType;
+import hu.bme.mit.theta.core.type.booltype.NotExpr;
 import hu.bme.mit.theta.core.utils.impl.PathUtils;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.solver.ItpMarker;
@@ -24,9 +25,9 @@ import hu.bme.mit.theta.splittingcegar.interpolating.data.InterpolatedAbstractSt
 import hu.bme.mit.theta.splittingcegar.interpolating.data.InterpolatedAbstractSystem;
 
 /**
- * Calculate sequence interpolant.
+ * Calculate a sequence interpolant.
  *
- * @author Akos
+ * @author Akos Hajdu
  */
 public class SequenceInterpolater extends AbstractCEGARStep implements Interpolater {
 
@@ -71,7 +72,7 @@ public class SequenceInterpolater extends AbstractCEGARStep implements Interpola
 		}
 
 		// Set the last marker
-		final NotExpr negSpec = Exprs.Not(system.getSTS().getProp());
+		final NotExpr negSpec = Not(system.getSTS().getProp());
 		itpSolver.add(markers[abstractCounterEx.size()], PathUtils.unfold(negSpec, abstractCounterEx.size() - 1)); // Property
 																													// violation
 

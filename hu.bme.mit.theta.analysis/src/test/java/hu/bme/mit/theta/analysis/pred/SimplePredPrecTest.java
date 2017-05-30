@@ -1,11 +1,13 @@
 package hu.bme.mit.theta.analysis.pred;
 
+import static hu.bme.mit.theta.core.decl.Decls.Var;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
+
 import java.util.Collections;
 
 import org.junit.Assert;
 import org.junit.Test;
 
-import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.Exprs;
@@ -18,8 +20,8 @@ import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 
 public class SimplePredPrecTest {
 
-	private final VarDecl<IntType> x = Decls.Var("x", Types.Int());
-	private final VarDecl<IntType> y = Decls.Var("y", Types.Int());
+	private final VarDecl<IntType> x = Var("x", Types.Int());
+	private final VarDecl<IntType> y = Var("y", Types.Int());
 
 	private final Expr<BoolType> pred = Exprs.Lt(x.getRef(), Exprs.Int(5));
 
@@ -34,7 +36,7 @@ public class SimplePredPrecTest {
 		final PredState s3 = prec.createState(Valuation.builder().put(y, Exprs.Int(0)).build());
 
 		Assert.assertEquals(Collections.singleton(pred), s1.getPreds());
-		Assert.assertEquals(Collections.singleton(Exprs.Not(pred)), s2.getPreds());
+		Assert.assertEquals(Collections.singleton(Not(pred)), s2.getPreds());
 		Assert.assertEquals(Collections.emptySet(), s3.getPreds());
 	}
 

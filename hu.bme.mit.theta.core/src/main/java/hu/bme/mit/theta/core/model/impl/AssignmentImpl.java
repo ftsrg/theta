@@ -2,6 +2,8 @@ package hu.bme.mit.theta.core.model.impl;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -112,11 +114,11 @@ public final class AssignmentImpl implements Assignment {
 			ops.add(Exprs.Eq(entry.getKey().getRef(), entry.getValue()));
 		}
 		if (ops.size() == 0) {
-			return Exprs.True();
+			return True();
 		} else if (ops.size() == 1) {
 			return ops.get(0);
 		} else {
-			return Exprs.And(ops);
+			return And(ops);
 		}
 	}
 

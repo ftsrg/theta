@@ -1,22 +1,24 @@
-package hu.bme.mit.theta.core.expr;
+package hu.bme.mit.theta.core.type.booltype;
 
-import hu.bme.mit.theta.core.expr.FalseExpr;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.impl.Types;
 import hu.bme.mit.theta.core.utils.ExprVisitor;
 
-public final class FalseExpr extends BoolLitExpr {
+public final class TrueExpr extends BoolLitExpr {
+	private static final TrueExpr INSTANCE = new TrueExpr();
+	private static final int HASH_SEED = 242181;
+	private static final String OPERATOR = "True";
 
-	private static final int HASH_SEED = 712514;
+	private TrueExpr() {
+	}
 
-	private static final String OPERATOR_LABEL = "False";
-
-	FalseExpr() {
+	static TrueExpr getInstance() {
+		return INSTANCE;
 	}
 
 	@Override
 	public boolean getValue() {
-		return false;
+		return true;
 	}
 
 	@Override
@@ -36,12 +38,11 @@ public final class FalseExpr extends BoolLitExpr {
 
 	@Override
 	public boolean equals(final Object obj) {
-		return (obj instanceof FalseExpr);
+		return (obj instanceof TrueExpr);
 	}
 
 	@Override
 	public String toString() {
-		return OPERATOR_LABEL;
+		return OPERATOR;
 	}
-
 }

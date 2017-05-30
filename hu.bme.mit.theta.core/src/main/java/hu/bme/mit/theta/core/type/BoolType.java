@@ -1,8 +1,9 @@
 package hu.bme.mit.theta.core.type;
 
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
+
 import java.util.Optional;
 
-import hu.bme.mit.theta.core.expr.Exprs;
 import hu.bme.mit.theta.core.expr.LitExpr;
 import hu.bme.mit.theta.core.utils.TypeVisitor;
 
@@ -20,7 +21,7 @@ public final class BoolType implements Type {
 
 	@Override
 	public LitExpr<BoolType> getAny() {
-		return Exprs.False();
+		return False();
 	}
 
 	@Override

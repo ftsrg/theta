@@ -1,7 +1,7 @@
 package hu.bme.mit.theta.analysis.cfa;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.expr.Exprs.And;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static hu.bme.mit.theta.core.utils.impl.VarIndexing.all;
 
 import hu.bme.mit.theta.analysis.loc.LocAction;

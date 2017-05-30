@@ -3,6 +3,8 @@ package hu.bme.mit.theta.analysis.expr.refinement;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkElementIndex;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -13,7 +15,6 @@ import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.expr.Exprs;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.utils.impl.ExprUtils;
 import hu.bme.mit.theta.core.utils.impl.IndexedVars;
@@ -32,7 +33,7 @@ public final class ItpRefutation implements Refutation, Iterable<Expr<? extends 
 		checkArgument(itpSequence.size() > 0, "Zero length interpolant sequence size");
 		this.itpSequence = ImmutableList.copyOf(itpSequence);
 		int i = 0;
-		while (i < itpSequence.size() && itpSequence.get(i).equals(Exprs.True())) {
+		while (i < itpSequence.size() && itpSequence.get(i).equals(True())) {
 			++i;
 		}
 		this.pruneIndex = i;
@@ -50,9 +51,9 @@ public final class ItpRefutation implements Refutation, Iterable<Expr<? extends 
 		final List<Expr<? extends BoolType>> itpSequence = new ArrayList<>(n);
 		for (int k = 0; k < n; ++k) {
 			if (k < i) {
-				itpSequence.add(Exprs.True());
+				itpSequence.add(True());
 			} else if (k > i) {
-				itpSequence.add(Exprs.False());
+				itpSequence.add(False());
 			} else {
 				itpSequence.add(itp);
 			}

@@ -1,6 +1,7 @@
 package hu.bme.mit.theta.frontend.aiger.impl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -9,7 +10,6 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 
-import hu.bme.mit.theta.core.expr.Exprs;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.frontend.aiger.AigerParser;
 import hu.bme.mit.theta.frontend.aiger.impl.elements.AndGate;
@@ -80,7 +80,7 @@ public class AigerParserOptimized implements AigerParser {
 
 			// Process output
 			if (outVarElements.size() == 1) {
-				builder.setProp(Exprs.Not(outVarElements.get(0).getExpr(elements)));
+				builder.setProp(Not(outVarElements.get(0).getExpr(elements)));
 			} else {
 				throw new UnsupportedOperationException(
 						"Currently only models with a single output variable are supported (this model has "

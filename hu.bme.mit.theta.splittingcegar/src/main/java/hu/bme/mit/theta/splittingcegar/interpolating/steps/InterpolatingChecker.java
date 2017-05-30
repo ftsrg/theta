@@ -1,13 +1,14 @@
 package hu.bme.mit.theta.splittingcegar.interpolating.steps;
 
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
+
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.Stack;
 
 import hu.bme.mit.theta.common.logging.Logger;
-import hu.bme.mit.theta.core.expr.Exprs;
-import hu.bme.mit.theta.core.expr.NotExpr;
+import hu.bme.mit.theta.core.type.booltype.NotExpr;
 import hu.bme.mit.theta.core.utils.impl.PathUtils;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.solver.Solver;
@@ -47,7 +48,7 @@ public class InterpolatingChecker extends AbstractCEGARStep
 		// Get the index of the previously splitted state, or -1 at first call
 		final int splitIndex = system.getPreviousSplitIndex();
 
-		final NotExpr negProp = Exprs.Not(system.getSTS().getProp());
+		final NotExpr negProp = Not(system.getSTS().getProp());
 
 		final STS sts = system.getSTS();
 		Stack<InterpolatedAbstractState> counterExample = null; // Store the

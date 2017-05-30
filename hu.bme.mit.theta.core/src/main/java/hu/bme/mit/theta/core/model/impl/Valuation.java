@@ -3,6 +3,8 @@ package hu.bme.mit.theta.core.model.impl;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -76,11 +78,11 @@ public final class Valuation implements Assignment {
 				ops.add(Exprs.Eq(entry.getKey().getRef(), entry.getValue()));
 			}
 			if (ops.size() == 0) {
-				result = Exprs.True();
+				result = True();
 			} else if (ops.size() == 1) {
 				result = ops.get(0);
 			} else {
-				result = Exprs.And(ops);
+				result = And(ops);
 			}
 			expr = result;
 		}

@@ -2,6 +2,7 @@ package hu.bme.mit.theta.splittingcegar.interpolating.data;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -9,7 +10,6 @@ import java.util.Iterator;
 import java.util.List;
 
 import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.expr.Exprs;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.Type;
 
@@ -27,7 +27,7 @@ public class Interpolant implements Iterable<Expr<? extends BoolType>> {
 		checkArgument(0 <= index);
 		interpolants = new ArrayList<>();
 		for (int i = 0; i < index; ++i)
-			interpolants.add(Exprs.True());
+			interpolants.add(True());
 		interpolants.add(binaryItp);
 		isBinary = true;
 	}

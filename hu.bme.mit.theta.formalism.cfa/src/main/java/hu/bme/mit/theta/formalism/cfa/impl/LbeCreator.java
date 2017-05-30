@@ -1,9 +1,9 @@
 package hu.bme.mit.theta.formalism.cfa.impl;
 
-import static hu.bme.mit.theta.core.expr.Exprs.Not;
 import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
 import static hu.bme.mit.theta.core.stmt.Stmts.Assume;
 import static hu.bme.mit.theta.core.stmt.Stmts.Havoc;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 
 import java.util.Collections;
 import java.util.LinkedList;

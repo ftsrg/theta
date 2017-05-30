@@ -1,16 +1,18 @@
-package hu.bme.mit.theta.core.expr;
+package hu.bme.mit.theta.core.type.booltype;
 
+import hu.bme.mit.theta.core.expr.BinaryExpr;
+import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.impl.Types;
 import hu.bme.mit.theta.core.utils.ExprVisitor;
 
-public final class ImplyExpr extends BinaryExpr<BoolType, BoolType, BoolType> {
+public final class IffExpr extends BinaryExpr<BoolType, BoolType, BoolType> {
 
-	private static final int HASH_SEED = 71;
+	private static final int HASH_SEED = 67;
 
-	private static final String OPERATOR_LABEL = "Imply";
+	private static final String OPERATOR_LABEL = "Iff";
 
-	ImplyExpr(final Expr<? extends BoolType> leftOp, final Expr<? extends BoolType> rightOp) {
+	IffExpr(final Expr<? extends BoolType> leftOp, final Expr<? extends BoolType> rightOp) {
 		super(leftOp, rightOp);
 	}
 
@@ -20,21 +22,21 @@ public final class ImplyExpr extends BinaryExpr<BoolType, BoolType, BoolType> {
 	}
 
 	@Override
-	public ImplyExpr withOps(final Expr<? extends BoolType> leftOp, final Expr<? extends BoolType> rightOp) {
+	public IffExpr withOps(final Expr<? extends BoolType> leftOp, final Expr<? extends BoolType> rightOp) {
 		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
 			return this;
 		} else {
-			return Exprs.Imply(leftOp, rightOp);
+			return new IffExpr(leftOp, rightOp);
 		}
 	}
 
 	@Override
-	public ImplyExpr withLeftOp(final Expr<? extends BoolType> leftOp) {
+	public IffExpr withLeftOp(final Expr<? extends BoolType> leftOp) {
 		return withOps(leftOp, getRightOp());
 	}
 
 	@Override
-	public ImplyExpr withRightOp(final Expr<? extends BoolType> rightOp) {
+	public IffExpr withRightOp(final Expr<? extends BoolType> rightOp) {
 		return withOps(getLeftOp(), rightOp);
 	}
 
@@ -47,8 +49,8 @@ public final class ImplyExpr extends BinaryExpr<BoolType, BoolType, BoolType> {
 	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
-		} else if (obj instanceof ImplyExpr) {
-			final ImplyExpr that = (ImplyExpr) obj;
+		} else if (obj instanceof IffExpr) {
+			final IffExpr that = (IffExpr) obj;
 			return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp().equals(that.getRightOp());
 		} else {
 			return false;

@@ -1,6 +1,7 @@
 package hu.bme.mit.theta.analysis.pred;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -8,7 +9,6 @@ import java.util.Set;
 
 import hu.bme.mit.theta.analysis.TransferFunction;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
-import hu.bme.mit.theta.core.expr.Exprs;
 import hu.bme.mit.theta.core.model.impl.Valuation;
 import hu.bme.mit.theta.core.utils.impl.PathUtils;
 import hu.bme.mit.theta.solver.Solver;
@@ -45,7 +45,7 @@ public final class PredTransferFunction implements TransferFunction<PredState, E
 
 				final PredState nextSuccState = prec.createState(nextSuccStateVal);
 				succStates.add(nextSuccState);
-				solver.add(PathUtils.unfold(Exprs.Not(nextSuccState.toExpr()), action.nextIndexing()));
+				solver.add(PathUtils.unfold(Not(nextSuccState.toExpr()), action.nextIndexing()));
 			}
 		} while (moreSuccStates);
 		solver.pop();

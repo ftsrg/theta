@@ -3,10 +3,21 @@ package hu.bme.mit.theta.formalism.xta.dsl;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.expr.Exprs.Add;
-import static hu.bme.mit.theta.core.expr.Exprs.And;
+import static hu.bme.mit.theta.core.expr.Exprs.Eq;
+import static hu.bme.mit.theta.core.expr.Exprs.Geq;
+import static hu.bme.mit.theta.core.expr.Exprs.Gt;
+import static hu.bme.mit.theta.core.expr.Exprs.Int;
+import static hu.bme.mit.theta.core.expr.Exprs.Leq;
+import static hu.bme.mit.theta.core.expr.Exprs.Lt;
 import static hu.bme.mit.theta.core.expr.Exprs.Mod;
 import static hu.bme.mit.theta.core.expr.Exprs.Mul;
+import static hu.bme.mit.theta.core.expr.Exprs.Neq;
+import static hu.bme.mit.theta.core.expr.Exprs.Read;
 import static hu.bme.mit.theta.core.expr.Exprs.Sub;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 import static java.util.stream.Collectors.toList;
 
 import java.util.Collection;
@@ -20,7 +31,6 @@ import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.core.expr.AddExpr;
 import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.expr.Exprs;
 import hu.bme.mit.theta.core.expr.ModExpr;
 import hu.bme.mit.theta.core.expr.MulExpr;
 import hu.bme.mit.theta.core.expr.RefExpr;
@@ -102,17 +112,17 @@ final class XtaExpression {
 		@Override
 		public Expr<?> visitNatExpression(final NatExpressionContext ctx) {
 			final int value = Integer.parseInt(ctx.fValue.getText());
-			return Exprs.Int(value);
+			return Int(value);
 		}
 
 		@Override
 		public Expr<?> visitTrueExpression(final TrueExpressionContext ctx) {
-			return Exprs.True();
+			return True();
 		}
 
 		@Override
 		public Expr<?> visitFalseExpression(final FalseExpressionContext ctx) {
-			return Exprs.False();
+			return False();
 		}
 
 		@Override
@@ -283,9 +293,9 @@ final class XtaExpression {
 
 				final EqualityOpContext op = Utils.singleElementOf(ctx.fOpers);
 				if (op.fEqOp != null) {
-					return Exprs.Eq(leftOp, rightOp);
+					return Eq(leftOp, rightOp);
 				} else if (op.fNeqOp != null) {
-					return Exprs.Neq(leftOp, rightOp);
+					return Neq(leftOp, rightOp);
 				} else {
 					throw new AssertionError();
 				}
@@ -302,13 +312,13 @@ final class XtaExpression {
 
 				final RelationalOpContext op = Utils.singleElementOf(ctx.fOpers);
 				if (op.fLtOp != null) {
-					return Exprs.Lt(leftOp, rightOp);
+					return Lt(leftOp, rightOp);
 				} else if (op.fLeqOp != null) {
-					return Exprs.Leq(leftOp, rightOp);
+					return Leq(leftOp, rightOp);
 				} else if (op.fGtOp != null) {
-					return Exprs.Gt(leftOp, rightOp);
+					return Gt(leftOp, rightOp);
 				} else if (op.fGeqOp != null) {
-					return Exprs.Geq(leftOp, rightOp);
+					return Geq(leftOp, rightOp);
 				} else {
 					throw new AssertionError();
 				}
@@ -324,7 +334,7 @@ final class XtaExpression {
 
 				final PrefixOpContext oper = ctx.fOper;
 				if (oper.fLogNotOp != null) {
-					return Exprs.Not(TypeUtils.cast(op, BoolType.class));
+					return Not(TypeUtils.cast(op, BoolType.class));
 				} else {
 					// TODO Auto-generated method stub
 					throw new UnsupportedOperationException("TODO: auto-generated method stub");
@@ -344,7 +354,7 @@ final class XtaExpression {
 				final PostfixOpContext oper = Utils.singleElementOf(ctx.fOpers);
 				if (oper.fArrayAccessOp != null) {
 					final Expr<?> index = oper.fArrayAccessOp.fExpression.accept(this);
-					return Exprs.Read((Expr<ArrayType<Type, Type>>) op, (Expr<Type>) index);
+					return Read((Expr<ArrayType<Type, Type>>) op, (Expr<Type>) index);
 				} else {
 					throw new AssertionError();
 				}

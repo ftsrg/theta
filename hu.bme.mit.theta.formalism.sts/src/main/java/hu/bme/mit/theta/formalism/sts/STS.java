@@ -1,6 +1,8 @@
 package hu.bme.mit.theta.formalism.sts;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.expr.Exprs.Prime;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -8,11 +10,10 @@ import java.util.HashSet;
 import java.util.Set;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.expr.AndExpr;
 import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.expr.Exprs;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.booltype.AndExpr;
 import hu.bme.mit.theta.core.utils.impl.ExprUtils;
 
 /**
@@ -109,7 +110,7 @@ public final class STS {
 	 * Helper class for building an STS, supporting multiple initial/transition
 	 * constraints and invariants.
 	 */
-	public final static class Builder {
+	public static final class Builder {
 		private final Collection<Expr<? extends BoolType>> init;
 		private final Collection<Expr<? extends BoolType>> trans;
 		private Expr<? extends BoolType> prop;
@@ -164,7 +165,7 @@ public final class STS {
 			} else {
 				addInit(expr);
 				addTrans(expr);
-				addTrans(Exprs.Prime(expr));
+				addTrans(Prime(expr));
 			}
 
 			return this;
@@ -235,7 +236,7 @@ public final class STS {
 		 */
 		public STS build() {
 			checkNotNull(prop);
-			return new STS(Exprs.And(init), Exprs.And(trans), prop);
+			return new STS(And(init), And(trans), prop);
 		}
 	}
 }

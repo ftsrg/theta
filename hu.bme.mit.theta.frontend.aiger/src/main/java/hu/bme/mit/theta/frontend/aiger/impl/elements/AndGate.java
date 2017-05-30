@@ -1,9 +1,11 @@
 package hu.bme.mit.theta.frontend.aiger.impl.elements;
 
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
+
 import java.util.List;
 
 import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.expr.Exprs;
 import hu.bme.mit.theta.core.type.BoolType;
 
 public final class AndGate extends HwElement {
@@ -23,13 +25,13 @@ public final class AndGate extends HwElement {
 	public Expr<? extends BoolType> getExpr(final List<HwElement> elements) {
 		Expr<? extends BoolType> expr1 = elements.get(rhs1 / 2).getExpr(elements);
 		if (rhs1 % 2 != 0)
-			expr1 = Exprs.Not(expr1);
+			expr1 = Not(expr1);
 
 		Expr<? extends BoolType> expr2 = elements.get(rhs2 / 2).getExpr(elements);
 		if (rhs2 % 2 != 0)
-			expr2 = Exprs.Not(expr2);
+			expr2 = Not(expr2);
 
-		return Exprs.And(expr1, expr2);
+		return And(expr1, expr2);
 	}
 
 }

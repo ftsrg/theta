@@ -3,14 +3,14 @@ package hu.bme.mit.theta.analysis.sts;
 import static hu.bme.mit.theta.analysis.algorithm.ArgUtils.isWellLabeled;
 import static hu.bme.mit.theta.core.decl.Decls.Var;
 import static hu.bme.mit.theta.core.expr.Exprs.Add;
-import static hu.bme.mit.theta.core.expr.Exprs.And;
 import static hu.bme.mit.theta.core.expr.Exprs.Eq;
 import static hu.bme.mit.theta.core.expr.Exprs.Geq;
-import static hu.bme.mit.theta.core.expr.Exprs.Imply;
 import static hu.bme.mit.theta.core.expr.Exprs.Int;
 import static hu.bme.mit.theta.core.expr.Exprs.Lt;
-import static hu.bme.mit.theta.core.expr.Exprs.Not;
 import static hu.bme.mit.theta.core.expr.Exprs.Prime;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Imply;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 import static hu.bme.mit.theta.core.type.impl.Types.Int;
 import static org.junit.Assert.assertTrue;
 

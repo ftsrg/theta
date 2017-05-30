@@ -1,6 +1,8 @@
 package hu.bme.mit.theta.analysis.pred;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -10,11 +12,10 @@ import java.util.Optional;
 import java.util.Set;
 
 import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.expr.Exprs;
 import hu.bme.mit.theta.core.expr.LitExpr;
-import hu.bme.mit.theta.core.expr.NotExpr;
 import hu.bme.mit.theta.core.model.impl.Valuation;
 import hu.bme.mit.theta.core.type.BoolType;
+import hu.bme.mit.theta.core.type.booltype.NotExpr;
 import hu.bme.mit.theta.core.utils.impl.ExprUtils;
 
 public final class TreePredPrec implements PredPrec {
@@ -34,7 +35,7 @@ public final class TreePredPrec implements PredPrec {
 		}
 
 		if (ponatedPreds.isEmpty()) {
-			ponatedPreds.add(Exprs.True());
+			ponatedPreds.add(True());
 		}
 
 		root = new Node(new ArrayList<>(ponatedPreds));
@@ -55,7 +56,7 @@ public final class TreePredPrec implements PredPrec {
 			assert !preds.isEmpty();
 			assert !(preds.get(0) instanceof NotExpr);
 			this.ponPred = preds.get(0);
-			this.negPred = Exprs.Not(this.ponPred);
+			this.negPred = Not(this.ponPred);
 			if (preds.size() == 1) {
 				this.ponRefined = Optional.empty();
 				this.negRefined = Optional.empty();
@@ -101,7 +102,7 @@ public final class TreePredPrec implements PredPrec {
 
 		while (node != null) {
 			final LitExpr<? extends BoolType> predHolds = ExprUtils.evaluate(node.getPonPred(), valuation);
-			if (predHolds.equals(Exprs.True())) {
+			if (predHolds.equals(True())) {
 				statePreds.add(node.getPonPred());
 				node = node.getPonRefined().isPresent() ? node.getPonRefined().get() : null;
 			} else {

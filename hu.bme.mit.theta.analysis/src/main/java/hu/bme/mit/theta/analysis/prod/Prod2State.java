@@ -1,6 +1,6 @@
 package hu.bme.mit.theta.analysis.prod;
 
-import static hu.bme.mit.theta.core.expr.Exprs.And;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 
 import com.google.common.collect.ImmutableList;
 

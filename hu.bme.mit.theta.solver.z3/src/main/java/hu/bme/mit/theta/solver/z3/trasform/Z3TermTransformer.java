@@ -1,5 +1,24 @@
 package hu.bme.mit.theta.solver.z3.trasform;
 
+import static hu.bme.mit.theta.core.expr.Exprs.Add;
+import static hu.bme.mit.theta.core.expr.Exprs.Eq;
+import static hu.bme.mit.theta.core.expr.Exprs.Geq;
+import static hu.bme.mit.theta.core.expr.Exprs.Gt;
+import static hu.bme.mit.theta.core.expr.Exprs.Int;
+import static hu.bme.mit.theta.core.expr.Exprs.IntDiv;
+import static hu.bme.mit.theta.core.expr.Exprs.Ite;
+import static hu.bme.mit.theta.core.expr.Exprs.Leq;
+import static hu.bme.mit.theta.core.expr.Exprs.Lt;
+import static hu.bme.mit.theta.core.expr.Exprs.Mul;
+import static hu.bme.mit.theta.core.expr.Exprs.Rat;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Iff;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Imply;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
+
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -12,7 +31,6 @@ import com.microsoft.z3.RatNum;
 
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.expr.Exprs;
 import hu.bme.mit.theta.core.type.ArrayType;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.IntType;
@@ -66,10 +84,10 @@ public class Z3TermTransformer {
 
 	private Expr<?> transformBool(final com.microsoft.z3.BoolExpr term) {
 		if (term.isTrue()) {
-			return Exprs.True();
+			return True();
 
 		} else if (term.isFalse()) {
-			return Exprs.False();
+			return False();
 
 		} else if (term.isConst()) {
 			return toConst(term);
@@ -77,66 +95,66 @@ public class Z3TermTransformer {
 		} else if (term.isNot()) {
 			final com.microsoft.z3.Expr opTerm = term.getArgs()[0];
 			final Expr<? extends BoolType> op = TypeUtils.cast(toExpr(opTerm), BoolType.class);
-			return Exprs.Not(op);
+			return Not(op);
 
 		} else if (term.isOr()) {
 			final com.microsoft.z3.Expr[] opTerms = term.getArgs();
 			final List<Expr<? extends BoolType>> ops = toExprListOfType(opTerms, BoolType.class);
-			return Exprs.Or(ops);
+			return Or(ops);
 
 		} else if (term.isAnd()) {
 			final com.microsoft.z3.Expr[] opTerms = term.getArgs();
 			final List<Expr<? extends BoolType>> ops = toExprListOfType(opTerms, BoolType.class);
-			return Exprs.And(ops);
+			return And(ops);
 
 		} else if (term.isImplies()) {
 			final com.microsoft.z3.Expr lExprstOpTerm = term.getArgs()[0];
 			final com.microsoft.z3.Expr rightOpTerm = term.getArgs()[1];
 			final Expr<? extends BoolType> lExprstOp = TypeUtils.cast(toExpr(lExprstOpTerm), BoolType.class);
 			final Expr<? extends BoolType> rightOp = TypeUtils.cast(toExpr(rightOpTerm), BoolType.class);
-			return Exprs.Imply(lExprstOp, rightOp);
+			return Imply(lExprstOp, rightOp);
 
 		} else if (term.isIff()) {
 			final com.microsoft.z3.Expr lExprstOpTerm = term.getArgs()[0];
 			final com.microsoft.z3.Expr rightOpTerm = term.getArgs()[1];
 			final Expr<? extends BoolType> lExprstOp = TypeUtils.cast(toExpr(lExprstOpTerm), BoolType.class);
 			final Expr<? extends BoolType> rightOp = TypeUtils.cast(toExpr(rightOpTerm), BoolType.class);
-			return Exprs.Iff(lExprstOp, rightOp);
+			return Iff(lExprstOp, rightOp);
 
 		} else if (term.isEq()) {
 			final com.microsoft.z3.Expr lExprstOpTerm = term.getArgs()[0];
 			final com.microsoft.z3.Expr rightOpTerm = term.getArgs()[1];
 			final Expr<?> lExprstOp = toExpr(lExprstOpTerm);
 			final Expr<?> rightOp = toExpr(rightOpTerm);
-			return Exprs.Eq(lExprstOp, rightOp);
+			return Eq(lExprstOp, rightOp);
 
 		} else if (term.isLE()) {
 			final com.microsoft.z3.Expr lExprstOpTerm = term.getArgs()[0];
 			final com.microsoft.z3.Expr rightOpTerm = term.getArgs()[1];
 			final Expr<? extends RatType> lExprstOp = TypeUtils.cast(toExpr(lExprstOpTerm), RatType.class);
 			final Expr<? extends RatType> rightOp = TypeUtils.cast(toExpr(rightOpTerm), RatType.class);
-			return Exprs.Leq(lExprstOp, rightOp);
+			return Leq(lExprstOp, rightOp);
 
 		} else if (term.isLT()) {
 			final com.microsoft.z3.Expr lExprstOpTerm = term.getArgs()[0];
 			final com.microsoft.z3.Expr rightOpTerm = term.getArgs()[1];
 			final Expr<? extends RatType> lExprstOp = TypeUtils.cast(toExpr(lExprstOpTerm), RatType.class);
 			final Expr<? extends RatType> rightOp = TypeUtils.cast(toExpr(rightOpTerm), RatType.class);
-			return Exprs.Lt(lExprstOp, rightOp);
+			return Lt(lExprstOp, rightOp);
 
 		} else if (term.isGE()) {
 			final com.microsoft.z3.Expr lExprstOpTerm = term.getArgs()[0];
 			final com.microsoft.z3.Expr rightOpTerm = term.getArgs()[1];
 			final Expr<? extends RatType> lExprstOp = TypeUtils.cast(toExpr(lExprstOpTerm), RatType.class);
 			final Expr<? extends RatType> rightOp = TypeUtils.cast(toExpr(rightOpTerm), RatType.class);
-			return Exprs.Geq(lExprstOp, rightOp);
+			return Geq(lExprstOp, rightOp);
 
 		} else if (term.isGT()) {
 			final com.microsoft.z3.Expr lExprstOpTerm = term.getArgs()[0];
 			final com.microsoft.z3.Expr rightOpTerm = term.getArgs()[1];
 			final Expr<? extends RatType> lExprstOp = TypeUtils.cast(toExpr(lExprstOpTerm), RatType.class);
 			final Expr<? extends RatType> rightOp = TypeUtils.cast(toExpr(rightOpTerm), RatType.class);
-			return Exprs.Gt(lExprstOp, rightOp);
+			return Gt(lExprstOp, rightOp);
 		}
 
 		throw new AssertionError("Unhandled case: " + term.toString());
@@ -145,7 +163,7 @@ public class Z3TermTransformer {
 	private Expr<?> transformInt(final com.microsoft.z3.IntExpr term) {
 		if (term.isIntNum()) {
 			final int value = ((IntNum) term).getInt();
-			return Exprs.Int(value);
+			return Int(value);
 
 		} else if (term.isConst()) {
 			return toConst(term);
@@ -153,19 +171,19 @@ public class Z3TermTransformer {
 		} else if (term.isAdd()) {
 			final com.microsoft.z3.Expr[] opTerms = term.getArgs();
 			final List<Expr<? extends IntType>> ops = toExprListOfType(opTerms, IntType.class);
-			return Exprs.Add(ops);
+			return Add(ops);
 
 		} else if (term.isMul()) {
 			final com.microsoft.z3.Expr[] opTerms = term.getArgs();
 			final List<Expr<? extends IntType>> ops = toExprListOfType(opTerms, IntType.class);
-			return Exprs.Mul(ops);
+			return Mul(ops);
 
 		} else if (term.isIDiv()) {
 			final com.microsoft.z3.Expr lExprstOpTerm = term.getArgs()[0];
 			final com.microsoft.z3.Expr rightOpTerm = term.getArgs()[1];
 			final Expr<? extends IntType> lExprstOp = TypeUtils.cast(toExpr(lExprstOpTerm), IntType.class);
 			final Expr<? extends IntType> rightOp = TypeUtils.cast(toExpr(rightOpTerm), IntType.class);
-			return Exprs.IntDiv(lExprstOp, rightOp);
+			return IntDiv(lExprstOp, rightOp);
 
 		} else if (term.isITE()) {
 			final com.microsoft.z3.Expr condTerm = term.getArgs()[0];
@@ -174,7 +192,7 @@ public class Z3TermTransformer {
 			final Expr<? extends BoolType> cond = TypeUtils.cast(toExpr(condTerm), BoolType.class);
 			final Expr<? extends IntType> then = TypeUtils.cast(toExpr(thenTerm), IntType.class);
 			final Expr<? extends IntType> elze = TypeUtils.cast(toExpr(elzeTerm), IntType.class);
-			return Exprs.Ite(cond, then, elze);
+			return Ite(cond, then, elze);
 		}
 
 		throw new AssertionError("Unhandled case: " + term.toString());
@@ -184,7 +202,7 @@ public class Z3TermTransformer {
 		if (term.isRatNum()) {
 			final int num = ((RatNum) term).getNumerator().getInt();
 			final int denom = ((RatNum) term).getDenominator().getInt();
-			return Exprs.Rat(num, denom);
+			return Rat(num, denom);
 
 		} else if (term.isConst()) {
 			return toConst(term);
@@ -192,12 +210,12 @@ public class Z3TermTransformer {
 		} else if (term.isAdd()) {
 			final com.microsoft.z3.Expr[] opTerms = term.getArgs();
 			final List<Expr<? extends RatType>> ops = toExprListOfType(opTerms, RatType.class);
-			return Exprs.Add(ops);
+			return Add(ops);
 
 		} else if (term.isMul()) {
 			final com.microsoft.z3.Expr[] opTerms = term.getArgs();
 			final List<Expr<? extends RatType>> ops = toExprListOfType(opTerms, RatType.class);
-			return Exprs.Mul(ops);
+			return Mul(ops);
 		}
 
 		throw new AssertionError("Unhandled case: " + term.toString());

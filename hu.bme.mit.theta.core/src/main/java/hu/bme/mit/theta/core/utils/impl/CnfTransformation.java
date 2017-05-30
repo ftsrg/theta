@@ -1,5 +1,9 @@
 package hu.bme.mit.theta.core.utils.impl;
 
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -8,21 +12,14 @@ import java.util.Map;
 import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.AddExpr;
-import hu.bme.mit.theta.core.expr.AndExpr;
 import hu.bme.mit.theta.core.expr.ArrayReadExpr;
 import hu.bme.mit.theta.core.expr.ArrayWriteExpr;
 import hu.bme.mit.theta.core.expr.EqExpr;
-import hu.bme.mit.theta.core.expr.ExistsExpr;
 import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.expr.Exprs;
-import hu.bme.mit.theta.core.expr.FalseExpr;
-import hu.bme.mit.theta.core.expr.ForallExpr;
 import hu.bme.mit.theta.core.expr.FuncAppExpr;
 import hu.bme.mit.theta.core.expr.FuncLitExpr;
 import hu.bme.mit.theta.core.expr.GeqExpr;
 import hu.bme.mit.theta.core.expr.GtExpr;
-import hu.bme.mit.theta.core.expr.IffExpr;
-import hu.bme.mit.theta.core.expr.ImplyExpr;
 import hu.bme.mit.theta.core.expr.IntDivExpr;
 import hu.bme.mit.theta.core.expr.IntLitExpr;
 import hu.bme.mit.theta.core.expr.IteExpr;
@@ -32,8 +29,6 @@ import hu.bme.mit.theta.core.expr.ModExpr;
 import hu.bme.mit.theta.core.expr.MulExpr;
 import hu.bme.mit.theta.core.expr.NegExpr;
 import hu.bme.mit.theta.core.expr.NeqExpr;
-import hu.bme.mit.theta.core.expr.NotExpr;
-import hu.bme.mit.theta.core.expr.OrExpr;
 import hu.bme.mit.theta.core.expr.PrimedExpr;
 import hu.bme.mit.theta.core.expr.ProcCallExpr;
 import hu.bme.mit.theta.core.expr.RatDivExpr;
@@ -41,9 +36,17 @@ import hu.bme.mit.theta.core.expr.RatLitExpr;
 import hu.bme.mit.theta.core.expr.RefExpr;
 import hu.bme.mit.theta.core.expr.RemExpr;
 import hu.bme.mit.theta.core.expr.SubExpr;
-import hu.bme.mit.theta.core.expr.TrueExpr;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.booltype.AndExpr;
+import hu.bme.mit.theta.core.type.booltype.ExistsExpr;
+import hu.bme.mit.theta.core.type.booltype.FalseExpr;
+import hu.bme.mit.theta.core.type.booltype.ForallExpr;
+import hu.bme.mit.theta.core.type.booltype.IffExpr;
+import hu.bme.mit.theta.core.type.booltype.ImplyExpr;
+import hu.bme.mit.theta.core.type.booltype.NotExpr;
+import hu.bme.mit.theta.core.type.booltype.OrExpr;
+import hu.bme.mit.theta.core.type.booltype.TrueExpr;
 import hu.bme.mit.theta.core.type.closure.ClosedUnderAdd;
 import hu.bme.mit.theta.core.type.closure.ClosedUnderMul;
 import hu.bme.mit.theta.core.type.closure.ClosedUnderNeg;
@@ -63,7 +66,7 @@ public class CnfTransformation {
 		final Collection<Expr<? extends BoolType>> encoding = new ArrayList<>();
 		final Expr<? extends BoolType> top = expr.accept(cnfTransfVisitor, encoding);
 		encoding.add(top);
-		return Exprs.And(encoding);
+		return And(encoding);
 	}
 
 	public Collection<VarDecl<? extends BoolType>> getRepresentatives() {
@@ -118,7 +121,7 @@ public class CnfTransformation {
 				return representatives.get(expr).getRef();
 			final Expr<? extends BoolType> rep = getRep(expr);
 			final Expr<? extends BoolType> op = expr.getOp().accept(this, param);
-			param.add(Exprs.And(Exprs.Or(Exprs.Not(rep), Exprs.Not(op)), Exprs.Or(rep, op)));
+			param.add(And(Or(Not(rep), Not(op)), Or(rep, op)));
 			return rep;
 		}
 
@@ -129,8 +132,7 @@ public class CnfTransformation {
 			final Expr<? extends BoolType> rep = getRep(expr);
 			final Expr<? extends BoolType> op1 = expr.getLeftOp().accept(this, param);
 			final Expr<? extends BoolType> op2 = expr.getRightOp().accept(this, param);
-			param.add(Exprs.And(Exprs.Or(Exprs.Not(rep), Exprs.Not(op1), op2), Exprs.Or(op1, rep),
-					Exprs.Or(Exprs.Not(op2), rep)));
+			param.add(And(Or(Not(rep), Not(op1), op2), Or(op1, rep), Or(Not(op2), rep)));
 			return rep;
 		}
 
@@ -141,9 +143,8 @@ public class CnfTransformation {
 			final Expr<? extends BoolType> rep = getRep(expr);
 			final Expr<? extends BoolType> op1 = expr.getLeftOp().accept(this, param);
 			final Expr<? extends BoolType> op2 = expr.getRightOp().accept(this, param);
-			param.add(Exprs.And(Exprs.Or(Exprs.Not(rep), Exprs.Not(op1), op2),
-					Exprs.Or(Exprs.Not(rep), op1, Exprs.Not(op2)), Exprs.Or(rep, Exprs.Not(op1), Exprs.Not(op2)),
-					Exprs.Or(rep, op1, op2)));
+			param.add(And(Or(Not(rep), Not(op1), op2), Or(Not(rep), op1, Not(op2)), Or(rep, Not(op1), Not(op2)),
+					Or(rep, op1, op2)));
 			return rep;
 		}
 
@@ -159,11 +160,11 @@ public class CnfTransformation {
 			lastClause.add(rep);
 			final Collection<Expr<? extends BoolType>> en = new ArrayList<>();
 			for (final Expr<? extends BoolType> op : ops) {
-				en.add(Exprs.Or(Exprs.Not(rep), op));
-				lastClause.add(Exprs.Not(op));
+				en.add(Or(Not(rep), op));
+				lastClause.add(Not(op));
 			}
-			en.add(Exprs.Or(lastClause));
-			param.add(Exprs.And(en));
+			en.add(Or(lastClause));
+			param.add(And(en));
 			return rep;
 		}
 
@@ -176,14 +177,14 @@ public class CnfTransformation {
 			for (final Expr<? extends BoolType> op : expr.getOps())
 				ops.add(op.accept(this, param));
 			final Collection<Expr<? extends BoolType>> lastClause = new ArrayList<>();
-			lastClause.add(Exprs.Not(rep));
+			lastClause.add(Not(rep));
 			final Collection<Expr<? extends BoolType>> en = new ArrayList<>();
 			for (final Expr<? extends BoolType> op : ops) {
-				en.add(Exprs.Or(Exprs.Not(op), rep));
+				en.add(Or(Not(op), rep));
 				lastClause.add(op);
 			}
-			en.add(Exprs.Or(lastClause));
-			param.add(Exprs.And(en));
+			en.add(Or(lastClause));
+			param.add(And(en));
 			return rep;
 		}
 

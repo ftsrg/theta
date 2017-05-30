@@ -2,8 +2,8 @@ package hu.bme.mit.theta.analysis.xta;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.ImmutableList.toImmutableList;
-import static hu.bme.mit.theta.core.expr.Exprs.False;
 import static hu.bme.mit.theta.core.expr.Exprs.Int;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 
 import java.util.Collection;
 import java.util.List;

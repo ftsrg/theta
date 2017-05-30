@@ -1,5 +1,9 @@
 package hu.bme.mit.theta.core.utils.impl;
 
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -7,7 +11,6 @@ import hu.bme.mit.theta.core.expr.ArrayReadExpr;
 import hu.bme.mit.theta.core.expr.ArrayWriteExpr;
 import hu.bme.mit.theta.core.expr.BinaryExpr;
 import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.expr.Exprs;
 import hu.bme.mit.theta.core.expr.FuncAppExpr;
 import hu.bme.mit.theta.core.expr.FuncLitExpr;
 import hu.bme.mit.theta.core.expr.IteExpr;
@@ -100,8 +103,7 @@ public class IteRemoverVisitor extends ArityBasedExprVisitor<Void, Expr<? extend
 		final Expr<? extends BoolType> cond = (Expr<? extends BoolType>) expr.getCond().accept(this, param);
 		final Expr<? extends Type> then = expr.getThen().accept(this, param);
 		final Expr<? extends Type> elze = expr.getElse().accept(this, param);
-		return Exprs.And(Exprs.Or(Exprs.Not(cond), (Expr<? extends BoolType>) then),
-				Exprs.Or(cond, (Expr<? extends BoolType>) elze));
+		return And(Or(Not(cond), (Expr<? extends BoolType>) then), Or(cond, (Expr<? extends BoolType>) elze));
 	}
 
 }

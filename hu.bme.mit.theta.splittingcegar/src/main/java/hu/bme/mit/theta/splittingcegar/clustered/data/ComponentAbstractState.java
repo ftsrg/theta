@@ -7,9 +7,9 @@ import java.util.BitSet;
 import java.util.List;
 
 import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.expr.NotExpr;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.booltype.NotExpr;
 
 public class ComponentAbstractState {
 	private final List<Expr<? extends BoolType>> labels;

@@ -1,5 +1,12 @@
 package hu.bme.mit.theta.frontend.benchmark.sts;
 
+/**
+ * A command line interface for running a CEGAR configuration on an STS. The
+ * output is a single row containing parameters of the configuration and the
+ * model, and output metrics.
+ */
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
+
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.Optional;
@@ -20,7 +27,6 @@ import hu.bme.mit.theta.common.logging.impl.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.impl.NullLogger;
 import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.common.table.impl.SimpleTableWriter;
-import hu.bme.mit.theta.core.expr.Exprs;
 import hu.bme.mit.theta.core.utils.impl.ExprMetrics;
 import hu.bme.mit.theta.core.utils.impl.ExprUtils;
 import hu.bme.mit.theta.formalism.sts.STS;
@@ -35,11 +41,6 @@ import hu.bme.mit.theta.frontend.benchmark.ConfigurationBuilder.Refinement;
 import hu.bme.mit.theta.frontend.benchmark.ConfigurationBuilder.Search;
 import hu.bme.mit.theta.frontend.benchmark.sts.StsConfigurationBuilder.InitPrec;
 
-/**
- * A command line interface for running a CEGAR configuration on an STS. The
- * output is a single row containing parameters of the configuration and the
- * model, and output metrics.
- */
 public class StsMain {
 
 	public static void main(final String[] args) {
@@ -169,7 +170,7 @@ public class StsMain {
 					tableWriter.cell("");
 				}
 				tableWriter.cell(sts.getVars().size());
-				tableWriter.cell(ExprUtils.size(Exprs.And(sts.getInit(), sts.getTrans()), ExprMetrics.absoluteSize()));
+				tableWriter.cell(ExprUtils.size(And(sts.getInit(), sts.getTrans()), ExprMetrics.absoluteSize()));
 			}
 
 		} catch (final Throwable ex) {

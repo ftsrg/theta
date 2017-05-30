@@ -1,7 +1,7 @@
 package hu.bme.mit.theta.core.model.impl;
 
-import static hu.bme.mit.theta.core.expr.Exprs.And;
 import static hu.bme.mit.theta.core.expr.Exprs.Eq;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 
 import java.util.ArrayList;
 import java.util.List;

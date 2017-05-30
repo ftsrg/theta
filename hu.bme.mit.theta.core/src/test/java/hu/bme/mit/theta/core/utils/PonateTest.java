@@ -1,6 +1,6 @@
 package hu.bme.mit.theta.core.utils;
 
-import static hu.bme.mit.theta.core.expr.Exprs.Not;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 
 import org.junit.Assert;
 import org.junit.Test;

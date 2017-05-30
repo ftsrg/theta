@@ -1,12 +1,13 @@
 package hu.bme.mit.theta.splittingcegar.interpolating.steps.refinement;
 
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
+
 import java.util.List;
 
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.expr.Exprs;
-import hu.bme.mit.theta.core.expr.NotExpr;
 import hu.bme.mit.theta.core.type.BoolType;
+import hu.bme.mit.theta.core.type.booltype.NotExpr;
 import hu.bme.mit.theta.core.utils.impl.PathUtils;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.solver.ItpMarker;
@@ -67,7 +68,7 @@ public class CraigInterpolater extends AbstractCEGARStep implements Interpolater
 		// state is not the last)
 		// - States violating the property (if the failure state is the last)
 		if (traceLength < abstractCounterEx.size()) { // Failure state is not
-															// the last
+														// the last
 			for (final Expr<? extends BoolType> label : abstractCounterEx.get(traceLength).getLabels())
 				// Labels of the next abstract state
 				itpSolver.add(B, PathUtils.unfold(label, traceLength));
@@ -75,7 +76,7 @@ public class CraigInterpolater extends AbstractCEGARStep implements Interpolater
 			itpSolver.add(B, PathUtils.unfold(sts.getTrans(), traceLength - 1));
 
 		} else { // Failure state is the last
-			final NotExpr negSpec = Exprs.Not(system.getSTS().getProp());
+			final NotExpr negSpec = Not(system.getSTS().getProp());
 			// Property violation
 			itpSolver.add(B, PathUtils.unfold(negSpec, traceLength - 1));
 

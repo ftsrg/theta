@@ -3,15 +3,15 @@ package hu.bme.mit.theta.analysis.cfa.impact;
 import static hu.bme.mit.theta.core.decl.Decls.Var;
 import static hu.bme.mit.theta.core.expr.Exprs.Add;
 import static hu.bme.mit.theta.core.expr.Exprs.Eq;
-import static hu.bme.mit.theta.core.expr.Exprs.False;
 import static hu.bme.mit.theta.core.expr.Exprs.Int;
 import static hu.bme.mit.theta.core.expr.Exprs.Neq;
-import static hu.bme.mit.theta.core.expr.Exprs.True;
 import static hu.bme.mit.theta.core.stmt.Stmts.Assert;
 import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
 import static hu.bme.mit.theta.core.stmt.Stmts.Block;
 import static hu.bme.mit.theta.core.stmt.Stmts.Do;
 import static hu.bme.mit.theta.core.stmt.Stmts.If;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 import static hu.bme.mit.theta.core.type.impl.Types.Bool;
 import static hu.bme.mit.theta.core.type.impl.Types.Int;
 import static org.junit.Assert.assertTrue;
@@ -65,8 +65,7 @@ public final class CfaPredImpactCheckerTest {
 				cfa.getInitLoc(), l -> l.equals(cfa.getErrorLoc()), solver);
 
 		// Act
-		final SafetyResult<? extends ExprState, ? extends ExprAction> status = checker
-				.check(UnitPrec.getInstance());
+		final SafetyResult<? extends ExprState, ? extends ExprAction> status = checker.check(UnitPrec.getInstance());
 
 		// Assert
 		assertTrue(status.isSafe());

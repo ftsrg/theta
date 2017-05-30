@@ -1,5 +1,8 @@
 package hu.bme.mit.theta.splittingcegar.clustered.steps;
 
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -8,7 +11,6 @@ import java.util.Set;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.expr.Exprs;
 import hu.bme.mit.theta.core.model.impl.Valuation;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.Type;
@@ -97,7 +99,7 @@ public class ClusteredRefiner extends AbstractCEGARStep
 															// compatible with
 															// itself
 				for (int j = i + 1; j < concreteStates.size(); ++j) // Check
-																		// other
+																	// other
 																	// states
 					if (checkPair(as, concreteStates.get(i), concreteStates.get(j), deadEndStates, otherVars, solver,
 							sts))
@@ -124,13 +126,13 @@ public class ClusteredRefiner extends AbstractCEGARStep
 					return null;
 				if (!includedStates.contains(concreteStates.get(i))) {
 					if (compatibility.get(i).size() == 1) // If it is a single
-																// state ->
+															// state ->
 															// expression of the
 															// state
 						eqclasses.add(compatibility.get(i).get(0));
 					else // If there are more states -> or expression of the
-								// expressions of the states
-						eqclasses.add(Exprs.Or(compatibility.get(i)));
+							// expressions of the states
+						eqclasses.add(Or(compatibility.get(i)));
 
 					for (final Expr<? extends BoolType> cs : compatibility.get(i))
 						includedStates.add(cs);
@@ -268,13 +270,15 @@ public class ClusteredRefiner extends AbstractCEGARStep
 
 		final List<Valuation> deadEndStates = new ArrayList<>();
 		solver.push();
-		solver.add(PathUtils.unfold(sts.getInit(), 0)); // Assert initial conditions
+		solver.add(PathUtils.unfold(sts.getInit(), 0)); // Assert initial
+														// conditions
 		for (int i = 0; i < traceLength; ++i) {
 			for (final ComponentAbstractState as : abstractCounterEx.get(i).getStates())
 				for (final Expr<? extends BoolType> label : as.getLabels())
 					solver.add(PathUtils.unfold(label, i)); // Labels
 			if (i > 0)
-				solver.add(PathUtils.unfold(sts.getTrans(), i - 1)); // Transition relation
+				solver.add(PathUtils.unfold(sts.getTrans(), i - 1)); // Transition
+																		// relation
 		}
 
 		do {
@@ -286,7 +290,7 @@ public class ClusteredRefiner extends AbstractCEGARStep
 				deadEndStates.add(ds);
 
 				// Exclude this state in order to get new dead end states
-				solver.add(PathUtils.unfold(Exprs.Not(ds.toExpr()), traceLength - 1));
+				solver.add(PathUtils.unfold(Not(ds.toExpr()), traceLength - 1));
 			} else
 				break;
 		} while (true);
@@ -321,7 +325,7 @@ public class ClusteredRefiner extends AbstractCEGARStep
 				badStates.add(bs);
 
 				// Exclude this state in order to get new dead end states
-				solver.add(PathUtils.unfold(Exprs.Not(bs.toExpr()), 0));
+				solver.add(PathUtils.unfold(Not(bs.toExpr()), 0));
 			} else
 				break;
 		} while (true);
@@ -346,7 +350,7 @@ public class ClusteredRefiner extends AbstractCEGARStep
 
 				concreteStates.add(cs);
 				// Exclude this state to get new ones
-				solver.add(PathUtils.unfold(Exprs.Not(cs.toExpr()), 0));
+				solver.add(PathUtils.unfold(Not(cs.toExpr()), 0));
 				logger.write("Concrete state: ", 7, 3);
 				logger.writeln(cs, 7, 0);
 			} else

@@ -1,8 +1,10 @@
-package hu.bme.mit.theta.core.expr;
+package hu.bme.mit.theta.core.type.booltype;
 
 import java.util.Collection;
 
 import hu.bme.mit.theta.core.decl.ParamDecl;
+import hu.bme.mit.theta.core.expr.Expr;
+import hu.bme.mit.theta.core.expr.QuantifiedExpr;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.impl.Types;
@@ -28,7 +30,7 @@ public final class ExistsExpr extends QuantifiedExpr {
 		if (op == getOp()) {
 			return this;
 		} else {
-			return Exprs.Exists(getParamDecls(), op);
+			return new ExistsExpr(getParamDecls(), op);
 		}
 	}
 

@@ -1,7 +1,7 @@
 package hu.bme.mit.theta.analysis.zone;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.expr.Exprs.And;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static hu.bme.mit.theta.formalism.ta.constr.ClockConstrs.Eq;
 import static hu.bme.mit.theta.formalism.ta.constr.ClockConstrs.Gt;
 import static hu.bme.mit.theta.formalism.ta.constr.ClockConstrs.Lt;

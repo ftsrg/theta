@@ -1,13 +1,15 @@
 package hu.bme.mit.theta.splittingcegar.interpolating.steps.refinement;
 
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
+
 import java.util.ArrayList;
 import java.util.List;
 
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.expr.Exprs;
-import hu.bme.mit.theta.core.expr.NotExpr;
 import hu.bme.mit.theta.core.type.BoolType;
+import hu.bme.mit.theta.core.type.booltype.NotExpr;
 import hu.bme.mit.theta.core.utils.impl.PathUtils;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.solver.Solver;
@@ -42,7 +44,7 @@ public class CounterexampleSplitter extends AbstractCEGARStep implements Splitte
 		for (int i = 0; i < interpolant.size(); ++i) {
 			if (stopHandler.isStopped())
 				return 0;
-			if (!interpolant.get(i).equals(Exprs.True())) {
+			if (!interpolant.get(i).equals(True())) {
 				splitSingleState(system, abstractCounterEx.get(i), interpolant.get(i));
 				if (firstSplit == -1)
 					firstSplit = i;
@@ -69,7 +71,7 @@ public class CounterexampleSplitter extends AbstractCEGARStep implements Splitte
 		// Create refined abstract states using the interpolant and its negation
 		final List<InterpolatedAbstractState> refinedStates = new ArrayList<>(2);
 		refinedStates.add(stateToSplit.refine(interpolant));
-		refinedStates.add(stateToSplit.refine(Exprs.Not(interpolant)));
+		refinedStates.add(stateToSplit.refine(Not(interpolant)));
 		// Check for contradicting labels
 		for (final InterpolatedAbstractState refined : refinedStates) {
 			solver.push();

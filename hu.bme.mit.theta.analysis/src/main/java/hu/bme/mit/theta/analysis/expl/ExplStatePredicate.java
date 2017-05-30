@@ -1,12 +1,13 @@
 package hu.bme.mit.theta.analysis.expl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 
 import java.util.function.Predicate;
 
 import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.expr.Exprs;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.utils.impl.ExprUtils;
 import hu.bme.mit.theta.core.utils.impl.PathUtils;
@@ -25,10 +26,10 @@ public class ExplStatePredicate implements Predicate<ExplState> {
 	@Override
 	public boolean test(final ExplState state) {
 		final Expr<? extends BoolType> simplified = ExprUtils.simplify(expr, state);
-		if (simplified.equals(Exprs.True())) {
+		if (simplified.equals(True())) {
 			return true;
 		}
-		if (simplified.equals(Exprs.False())) {
+		if (simplified.equals(False())) {
 			return false;
 		}
 		solver.push();

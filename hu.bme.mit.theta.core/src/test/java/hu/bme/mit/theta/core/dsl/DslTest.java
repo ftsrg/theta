@@ -1,12 +1,8 @@
 package hu.bme.mit.theta.core.dsl;
 
-import static hu.bme.mit.theta.core.expr.Exprs.And;
 import static hu.bme.mit.theta.core.expr.Exprs.Eq;
-import static hu.bme.mit.theta.core.expr.Exprs.False;
 import static hu.bme.mit.theta.core.expr.Exprs.Geq;
 import static hu.bme.mit.theta.core.expr.Exprs.Gt;
-import static hu.bme.mit.theta.core.expr.Exprs.Iff;
-import static hu.bme.mit.theta.core.expr.Exprs.Imply;
 import static hu.bme.mit.theta.core.expr.Exprs.Int;
 import static hu.bme.mit.theta.core.expr.Exprs.IntDiv;
 import static hu.bme.mit.theta.core.expr.Exprs.Ite;
@@ -16,13 +12,17 @@ import static hu.bme.mit.theta.core.expr.Exprs.Mod;
 import static hu.bme.mit.theta.core.expr.Exprs.Mul;
 import static hu.bme.mit.theta.core.expr.Exprs.Neg;
 import static hu.bme.mit.theta.core.expr.Exprs.Neq;
-import static hu.bme.mit.theta.core.expr.Exprs.Not;
-import static hu.bme.mit.theta.core.expr.Exprs.Or;
 import static hu.bme.mit.theta.core.expr.Exprs.Rat;
 import static hu.bme.mit.theta.core.expr.Exprs.RatDiv;
 import static hu.bme.mit.theta.core.expr.Exprs.Rem;
 import static hu.bme.mit.theta.core.expr.Exprs.Sub;
-import static hu.bme.mit.theta.core.expr.Exprs.True;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Iff;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Imply;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 
 import java.util.Arrays;
 import java.util.Collection;

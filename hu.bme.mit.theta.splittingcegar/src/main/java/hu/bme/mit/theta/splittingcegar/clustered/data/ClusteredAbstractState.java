@@ -1,11 +1,12 @@
 package hu.bme.mit.theta.splittingcegar.clustered.data;
 
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.expr.Exprs;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.splittingcegar.common.data.AbstractState;
 
@@ -64,7 +65,8 @@ public class ClusteredAbstractState implements AbstractState {
 		if (states.length != other.states.length)
 			return false;
 
-		// Two composite abstract states are equal if they contain the same states
+		// Two composite abstract states are equal if they contain the same
+		// states
 		for (int i = 0; i < states.length; ++i)
 			if (!states[i].equals(other.states[i]))
 				return false;
@@ -118,6 +120,6 @@ public class ClusteredAbstractState implements AbstractState {
 		for (final ComponentAbstractState cas : states)
 			for (final Expr<? extends BoolType> ex : cas.getLabels())
 				ops.add(ex);
-		return Exprs.And(ops);
+		return And(ops);
 	}
 }

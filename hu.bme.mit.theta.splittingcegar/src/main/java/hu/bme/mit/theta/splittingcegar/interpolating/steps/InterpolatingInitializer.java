@@ -1,5 +1,8 @@
 package hu.bme.mit.theta.splittingcegar.interpolating.steps;
 
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -12,7 +15,6 @@ import java.util.Stack;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.expr.Exprs;
 import hu.bme.mit.theta.core.model.impl.Valuation;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.Type;
@@ -91,7 +93,7 @@ public class InterpolatingInitializer extends AbstractCEGARStep implements Initi
 
 		// If no predicate could be collected start with 'true'
 		if (initialPredSet.size() == 0)
-			initialPredSet.add(Exprs.True());
+			initialPredSet.add(True());
 
 		// Move the collected predicates to a list for further use
 		final List<Expr<? extends BoolType>> initialPredList = new ArrayList<>(initialPredSet);
@@ -143,7 +145,7 @@ public class InterpolatingInitializer extends AbstractCEGARStep implements Initi
 		// Calculate negate for each formula
 		final List<Expr<? extends BoolType>> negates = new ArrayList<>();
 		for (final Expr<? extends BoolType> ex : system.getInitialPredicates())
-			negates.add(Exprs.Not(ex));
+			negates.add(Not(ex));
 
 		final STS sts = system.getSTS();
 
@@ -214,7 +216,7 @@ public class InterpolatingInitializer extends AbstractCEGARStep implements Initi
 						ks.addState(as.cloneAndAddExplicit(model));
 
 						// Exclude this state
-						solver.add(PathUtils.unfold(Exprs.Not(model.toExpr()), 0));
+						solver.add(PathUtils.unfold(Not(model.toExpr()), 0));
 					} else
 						break;
 				} while (true);

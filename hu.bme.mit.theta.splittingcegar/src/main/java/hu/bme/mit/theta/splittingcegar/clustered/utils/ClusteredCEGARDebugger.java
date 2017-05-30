@@ -1,5 +1,7 @@
 package hu.bme.mit.theta.splittingcegar.clustered.utils;
 
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -10,7 +12,6 @@ import java.util.Set;
 import java.util.Stack;
 
 import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.expr.Exprs;
 import hu.bme.mit.theta.core.model.impl.Valuation;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.utils.impl.PathUtils;
@@ -33,9 +34,8 @@ public class ClusteredCEGARDebugger extends AbstractDebugger<ClusteredAbstractSy
 																				// concrete
 																				// state
 																				// space
-	private final Set<ClusteredAbstractState> reachableStates; // Set of
-																// reachable
-																// states
+	// Set of reachable states
+	private final Set<ClusteredAbstractState> reachableStates;
 
 	public ClusteredCEGARDebugger(final SolverWrapper solvers, final Visualizer visualizer) {
 		super(solvers, visualizer);
@@ -84,7 +84,7 @@ public class ClusteredCEGARDebugger extends AbstractDebugger<ClusteredAbstractSy
 					final ConcreteState cs = new ConcreteState(csExpr);
 					stateSpace.get(cas).add(cs);
 					allConcreteStates.add(cs);
-					solver.add(PathUtils.unfold(Exprs.Not(csExpr.toExpr()), 0));
+					solver.add(PathUtils.unfold(Not(csExpr.toExpr()), 0));
 				} else {
 					break;
 				}
@@ -139,7 +139,7 @@ public class ClusteredCEGARDebugger extends AbstractDebugger<ClusteredAbstractSy
 		exploreReachableConcrStates(allConcreteStates);
 
 		// Mark unsafe states
-		markUnsafeStates(allConcreteStates, Exprs.Not(system.getSTS().getProp()), sts);
+		markUnsafeStates(allConcreteStates, Not(system.getSTS().getProp()), sts);
 
 		return this;
 	}

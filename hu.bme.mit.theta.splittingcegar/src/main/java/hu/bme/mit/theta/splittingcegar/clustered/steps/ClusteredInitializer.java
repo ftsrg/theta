@@ -1,6 +1,8 @@
 package hu.bme.mit.theta.splittingcegar.clustered.steps;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -11,7 +13,6 @@ import java.util.Stack;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.expr.Exprs;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.utils.impl.PathUtils;
@@ -98,11 +99,11 @@ public class ClusteredInitializer extends AbstractCEGARStep implements Initializ
 		final KripkeStructure<ComponentAbstractState> ks = new KripkeStructure<>();
 		// If there is no formula for the cluster, add a default one
 		if (cluster.getFormulas().size() == 0)
-			cluster.getFormulas().add(Exprs.True());
+			cluster.getFormulas().add(True());
 		// Calculate negate for each formula
 		final List<Expr<? extends BoolType>> negates = new ArrayList<>(cluster.getFormulas().size());
 		for (final Expr<? extends BoolType> ex : cluster.getFormulas())
-			negates.add(Exprs.Not(ex));
+			negates.add(Not(ex));
 
 		// Traverse the possible abstract states. Each formula is either
 		// unnegated or negated, so
@@ -148,7 +149,7 @@ public class ClusteredInitializer extends AbstractCEGARStep implements Initializ
 		// Calculate initial states and transition relation
 		logger.writeln(", abstract states [" + ks.getStates().size() + "]", 2);
 		for (final ComponentAbstractState s0 : ks.getStates()) { // Loop through
-																		// the
+																	// the
 																	// states
 			s0.setInitial(isStateInit(s0, sts)); // Check whether it is
 													// initial
@@ -157,7 +158,7 @@ public class ClusteredInitializer extends AbstractCEGARStep implements Initializ
 				ks.addInitialState(s0);
 
 			for (final ComponentAbstractState s1 : ks.getStates()) // Calculate
-																		// successors
+																	// successors
 				if (isTransFeasible(s0, s1, sts))
 
 					s0.getSuccessors().add(s1);
@@ -186,8 +187,7 @@ public class ClusteredInitializer extends AbstractCEGARStep implements Initializ
 		return ret;
 	}
 
-	private boolean isTransFeasible(final ComponentAbstractState s0, final ComponentAbstractState s1,
-			final STS sts) {
+	private boolean isTransFeasible(final ComponentAbstractState s0, final ComponentAbstractState s1, final STS sts) {
 		final Solver solver = solvers.getSolver();
 		solver.push();
 		SolverHelper.unrollAndAssert(solver, s0.getLabels(), sts, 0);

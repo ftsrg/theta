@@ -1,5 +1,7 @@
 package hu.bme.mit.theta.frontend.benchmark;
 
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
+
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.Prec;
@@ -35,7 +37,6 @@ import hu.bme.mit.theta.analysis.pred.PredState;
 import hu.bme.mit.theta.analysis.pred.SimplePredPrec;
 import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist;
 import hu.bme.mit.theta.common.logging.Logger;
-import hu.bme.mit.theta.core.expr.Exprs;
 import hu.bme.mit.theta.formalism.cfa.CFA;
 import hu.bme.mit.theta.formalism.cfa.CfaEdge;
 import hu.bme.mit.theta.formalism.cfa.CfaLoc;
@@ -85,7 +86,7 @@ public class CfaConfigurationBuilder extends ConfigurationBuilder {
 
 		if (getDomain() == Domain.EXPL) {
 			final Analysis<LocState<ExplState, CfaLoc, CfaEdge>, LocAction<CfaLoc, CfaEdge>, LocPrec<ExplPrec, CfaLoc, CfaEdge>> analysis = LocAnalysis
-					.create(cfa.getInitLoc(), ExplAnalysis.create(solver, Exprs.True()));
+					.create(cfa.getInitLoc(), ExplAnalysis.create(solver, True()));
 			final ArgBuilder<LocState<ExplState, CfaLoc, CfaEdge>, CfaAction, LocPrec<ExplPrec, CfaLoc, CfaEdge>> argBuilder = ArgBuilder
 					.create(lts, analysis, s -> s.getLoc().equals(cfa.getErrorLoc()));
 			final Abstractor<LocState<ExplState, CfaLoc, CfaEdge>, CfaAction, LocPrec<ExplPrec, CfaLoc, CfaEdge>> abstractor = WaitlistBasedAbstractor
@@ -97,34 +98,28 @@ public class CfaConfigurationBuilder extends ConfigurationBuilder {
 			switch (getRefinement()) {
 			case FW_BIN_ITP:
 				if (precGranularity == PrecGranularity.CONST) {
-					refiner = SingleExprTraceRefiner.create(
-							ExprTraceFwBinItpChecker.create(Exprs.True(), Exprs.True(), solver),
+					refiner = SingleExprTraceRefiner.create(ExprTraceFwBinItpChecker.create(True(), True(), solver),
 							ConstLocPrecRefiner.create(new ItpRefToExplPrec()), getLogger());
 				} else {
-					refiner = SingleExprTraceRefiner.create(
-							ExprTraceFwBinItpChecker.create(Exprs.True(), Exprs.True(), solver),
+					refiner = SingleExprTraceRefiner.create(ExprTraceFwBinItpChecker.create(True(), True(), solver),
 							GenericLocPrecRefiner.create(new ItpRefToExplPrec()), getLogger());
 				}
 				break;
 			case SEQ_ITP:
 				if (precGranularity == PrecGranularity.CONST) {
-					refiner = SingleExprTraceRefiner.create(
-							ExprTraceSeqItpChecker.create(Exprs.True(), Exprs.True(), solver),
+					refiner = SingleExprTraceRefiner.create(ExprTraceSeqItpChecker.create(True(), True(), solver),
 							ConstLocPrecRefiner.create(new ItpRefToExplPrec()), getLogger());
 				} else {
-					refiner = SingleExprTraceRefiner.create(
-							ExprTraceSeqItpChecker.create(Exprs.True(), Exprs.True(), solver),
+					refiner = SingleExprTraceRefiner.create(ExprTraceSeqItpChecker.create(True(), True(), solver),
 							GenericLocPrecRefiner.create(new ItpRefToExplPrec()), getLogger());
 				}
 				break;
 			case UNSAT_CORE:
 				if (precGranularity == PrecGranularity.CONST) {
-					refiner = SingleExprTraceRefiner.create(
-							ExprTraceUnsatCoreChecker.create(Exprs.True(), Exprs.True(), solver),
+					refiner = SingleExprTraceRefiner.create(ExprTraceUnsatCoreChecker.create(True(), True(), solver),
 							ConstLocPrecRefiner.create(new VarsRefToExplPrec()), getLogger());
 				} else {
-					refiner = SingleExprTraceRefiner.create(
-							ExprTraceUnsatCoreChecker.create(Exprs.True(), Exprs.True(), solver),
+					refiner = SingleExprTraceRefiner.create(ExprTraceUnsatCoreChecker.create(True(), True(), solver),
 							GenericLocPrecRefiner.create(new VarsRefToExplPrec()), getLogger());
 				}
 				break;
@@ -151,7 +146,7 @@ public class CfaConfigurationBuilder extends ConfigurationBuilder {
 
 		} else if (getDomain() == Domain.PRED) {
 			final Analysis<LocState<PredState, CfaLoc, CfaEdge>, CfaAction, LocPrec<SimplePredPrec, CfaLoc, CfaEdge>> analysis = LocAnalysis
-					.create(cfa.getInitLoc(), PredAnalysis.create(solver, Exprs.True()));
+					.create(cfa.getInitLoc(), PredAnalysis.create(solver, True()));
 			final ArgBuilder<LocState<PredState, CfaLoc, CfaEdge>, CfaAction, LocPrec<SimplePredPrec, CfaLoc, CfaEdge>> argBuilder = ArgBuilder
 					.create(lts, analysis, s -> s.getLoc().equals(cfa.getErrorLoc()));
 			final Abstractor<LocState<PredState, CfaLoc, CfaEdge>, CfaAction, LocPrec<SimplePredPrec, CfaLoc, CfaEdge>> abstractor = WaitlistBasedAbstractor
@@ -163,26 +158,22 @@ public class CfaConfigurationBuilder extends ConfigurationBuilder {
 			switch (getRefinement()) {
 			case FW_BIN_ITP:
 				if (precGranularity == PrecGranularity.CONST) {
-					refiner = SingleExprTraceRefiner.create(
-							ExprTraceFwBinItpChecker.create(Exprs.True(), Exprs.True(), solver),
+					refiner = SingleExprTraceRefiner.create(ExprTraceFwBinItpChecker.create(True(), True(), solver),
 							ConstLocPrecRefiner.create(new ItpRefToSimplePredPrec(solver, getPredSplit().splitter)),
 							getLogger());
 				} else {
-					refiner = SingleExprTraceRefiner.create(
-							ExprTraceFwBinItpChecker.create(Exprs.True(), Exprs.True(), solver),
+					refiner = SingleExprTraceRefiner.create(ExprTraceFwBinItpChecker.create(True(), True(), solver),
 							GenericLocPrecRefiner.create(new ItpRefToSimplePredPrec(solver, getPredSplit().splitter)),
 							getLogger());
 				}
 				break;
 			case SEQ_ITP:
 				if (precGranularity == PrecGranularity.CONST) {
-					refiner = SingleExprTraceRefiner.create(
-							ExprTraceSeqItpChecker.create(Exprs.True(), Exprs.True(), solver),
+					refiner = SingleExprTraceRefiner.create(ExprTraceSeqItpChecker.create(True(), True(), solver),
 							ConstLocPrecRefiner.create(new ItpRefToSimplePredPrec(solver, getPredSplit().splitter)),
 							getLogger());
 				} else {
-					refiner = SingleExprTraceRefiner.create(
-							ExprTraceSeqItpChecker.create(Exprs.True(), Exprs.True(), solver),
+					refiner = SingleExprTraceRefiner.create(ExprTraceSeqItpChecker.create(True(), True(), solver),
 							GenericLocPrecRefiner.create(new ItpRefToSimplePredPrec(solver, getPredSplit().splitter)),
 							getLogger());
 				}

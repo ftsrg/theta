@@ -1,5 +1,7 @@
 package hu.bme.mit.theta.splittingcegar.visible.utils;
 
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -9,7 +11,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 
-import hu.bme.mit.theta.core.expr.Exprs;
 import hu.bme.mit.theta.core.model.impl.Valuation;
 import hu.bme.mit.theta.core.utils.impl.PathUtils;
 import hu.bme.mit.theta.formalism.sts.STS;
@@ -51,7 +52,7 @@ public class VisibleCEGARDebugger extends AbstractDebugger<VisibleAbstractSystem
 				final VisibleAbstractState vas = new VisibleAbstractState(vasExpr, false);
 				stateSpace.put(vas, new ArrayList<>());
 				// Exclude
-				solver.add(PathUtils.unfold(Exprs.Not(vasExpr.toExpr()), 0));
+				solver.add(PathUtils.unfold(Not(vasExpr.toExpr()), 0));
 			} else {
 				break;
 			}
@@ -83,7 +84,7 @@ public class VisibleCEGARDebugger extends AbstractDebugger<VisibleAbstractSystem
 					final ConcreteState cs = new ConcreteState(csExpr);
 					stateSpace.get(vas).add(cs);
 					allConcreteStates.add(cs);
-					solver.add(PathUtils.unfold(Exprs.Not(csExpr.toExpr()), 0));
+					solver.add(PathUtils.unfold(Not(csExpr.toExpr()), 0));
 				} else {
 					break;
 				}
@@ -134,7 +135,7 @@ public class VisibleCEGARDebugger extends AbstractDebugger<VisibleAbstractSystem
 		exploreReachableConcrStates(allConcreteStates);
 
 		// Mark unsafe states
-		markUnsafeStates(allConcreteStates, Exprs.Not(system.getSTS().getProp()), sts);
+		markUnsafeStates(allConcreteStates, Not(system.getSTS().getProp()), sts);
 
 		return this;
 	}

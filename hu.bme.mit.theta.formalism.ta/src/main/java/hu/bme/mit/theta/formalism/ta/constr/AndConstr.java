@@ -1,7 +1,7 @@
 package hu.bme.mit.theta.formalism.ta.constr;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.expr.Exprs.And;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static java.util.stream.Collectors.toSet;
 
 import java.util.Collection;
@@ -10,8 +10,8 @@ import java.util.StringJoiner;
 import com.google.common.collect.ImmutableSet;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.expr.AndExpr;
 import hu.bme.mit.theta.core.type.RatType;
+import hu.bme.mit.theta.core.type.booltype.AndExpr;
 
 public final class AndConstr implements ClockConstr {
 
