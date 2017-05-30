@@ -452,20 +452,20 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
 	}
 
 	private IntDivExpr createIntDivExpr(final Expr<?> uncastLeftOp, final Expr<?> uncastRightOp) {
-		final Expr<? extends IntType> leftOp = TypeUtils.cast(uncastLeftOp, IntType.class);
-		final Expr<? extends IntType> rightOp = TypeUtils.cast(uncastRightOp, IntType.class);
+		final Expr<IntType> leftOp = TypeUtils.cast(uncastLeftOp, IntType.class);
+		final Expr<IntType> rightOp = TypeUtils.cast(uncastRightOp, IntType.class);
 		return Div(leftOp, rightOp);
 	}
 
 	private ModExpr createModExpr(final Expr<?> uncastLeftOp, final Expr<?> uncastRightOp) {
-		final Expr<? extends IntType> leftOp = TypeUtils.cast(uncastLeftOp, IntType.class);
-		final Expr<? extends IntType> rightOp = TypeUtils.cast(uncastRightOp, IntType.class);
+		final Expr<IntType> leftOp = TypeUtils.cast(uncastLeftOp, IntType.class);
+		final Expr<IntType> rightOp = TypeUtils.cast(uncastRightOp, IntType.class);
 		return Mod(leftOp, rightOp);
 	}
 
 	private RemExpr createRemExpr(final Expr<?> uncastLeftOp, final Expr<?> uncastRightOp) {
-		final Expr<? extends IntType> leftOp = TypeUtils.cast(uncastLeftOp, IntType.class);
-		final Expr<? extends IntType> rightOp = TypeUtils.cast(uncastRightOp, IntType.class);
+		final Expr<IntType> leftOp = TypeUtils.cast(uncastLeftOp, IntType.class);
+		final Expr<IntType> rightOp = TypeUtils.cast(uncastRightOp, IntType.class);
 		return Rem(leftOp, rightOp);
 	}
 

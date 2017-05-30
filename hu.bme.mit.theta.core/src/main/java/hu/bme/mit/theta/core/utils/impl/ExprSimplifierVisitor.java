@@ -406,8 +406,8 @@ public class ExprSimplifierVisitor implements ExprVisitor<Assignment, Expr<? ext
 
 	@Override
 	public Expr<? extends IntType> visit(final ModExpr expr, final Assignment param) {
-		final Expr<? extends IntType> leftOp = TypeUtils.cast(expr.getLeftOp().accept(this, param), IntType.class);
-		final Expr<? extends IntType> rightOp = TypeUtils.cast(expr.getRightOp().accept(this, param), IntType.class);
+		final Expr<IntType> leftOp = TypeUtils.cast(expr.getLeftOp().accept(this, param), IntType.class);
+		final Expr<IntType> rightOp = TypeUtils.cast(expr.getRightOp().accept(this, param), IntType.class);
 
 		if (leftOp instanceof IntLitExpr && rightOp instanceof IntLitExpr) {
 			final int leftInt = ((IntLitExpr) leftOp).getValue();

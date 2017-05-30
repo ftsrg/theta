@@ -13,10 +13,8 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Imply;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Add;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Div;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Mul;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Add;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Mul;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
@@ -183,17 +181,17 @@ public class Z3TermTransformer {
 		} else if (term.isIDiv()) {
 			final com.microsoft.z3.Expr lExprstOpTerm = term.getArgs()[0];
 			final com.microsoft.z3.Expr rightOpTerm = term.getArgs()[1];
-			final Expr<? extends IntType> lExprstOp = TypeUtils.cast(toExpr(lExprstOpTerm), IntType.class);
-			final Expr<? extends IntType> rightOp = TypeUtils.cast(toExpr(rightOpTerm), IntType.class);
+			final Expr<IntType> lExprstOp = TypeUtils.cast(toExpr(lExprstOpTerm), IntType.class);
+			final Expr<IntType> rightOp = TypeUtils.cast(toExpr(rightOpTerm), IntType.class);
 			return Div(lExprstOp, rightOp);
 
 		} else if (term.isITE()) {
 			final com.microsoft.z3.Expr condTerm = term.getArgs()[0];
 			final com.microsoft.z3.Expr thenTerm = term.getArgs()[1];
 			final com.microsoft.z3.Expr elzeTerm = term.getArgs()[2];
-			final Expr<? extends BoolType> cond = TypeUtils.cast(toExpr(condTerm), BoolType.class);
-			final Expr<? extends IntType> then = TypeUtils.cast(toExpr(thenTerm), IntType.class);
-			final Expr<? extends IntType> elze = TypeUtils.cast(toExpr(elzeTerm), IntType.class);
+			final Expr<BoolType> cond = TypeUtils.cast(toExpr(condTerm), BoolType.class);
+			final Expr<IntType> then = TypeUtils.cast(toExpr(thenTerm), IntType.class);
+			final Expr<IntType> elze = TypeUtils.cast(toExpr(elzeTerm), IntType.class);
 			return Ite(cond, then, elze);
 		}
 
