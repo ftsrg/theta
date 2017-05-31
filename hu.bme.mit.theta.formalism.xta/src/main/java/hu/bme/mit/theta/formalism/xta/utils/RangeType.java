@@ -2,7 +2,6 @@ package hu.bme.mit.theta.formalism.xta.utils;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import java.util.Optional;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -79,24 +78,6 @@ public final class RangeType implements Type {
 
 	@Override
 	public LitExpr<? extends Type> getAny() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
-	}
-
-	@Override
-	public boolean isLeq(final Type type) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
-	}
-
-	@Override
-	public Optional<? extends Type> meet(final Type type) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
-	}
-
-	@Override
-	public Optional<? extends Type> join(final Type type) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}

@@ -2,10 +2,7 @@ package hu.bme.mit.theta.core.type;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.util.Optional;
-
 import hu.bme.mit.theta.core.expr.LitExpr;
-import hu.bme.mit.theta.core.type.impl.Types;
 
 public final class FuncType<ParamType extends Type, ResultType extends Type> implements Type {
 
@@ -34,48 +31,6 @@ public final class FuncType<ParamType extends Type, ResultType extends Type> imp
 	public LitExpr<FuncType<ParamType, ResultType>> getAny() {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO: auto-generated method stub");
-	}
-
-	@Override
-	public boolean isLeq(final Type type) {
-		if (type instanceof FuncType<?, ?>) {
-			final FuncType<?, ?> that = (FuncType<?, ?>) type;
-			return that.getParamType().isLeq(this.getParamType()) && this.getResultType().isLeq(that.getResultType());
-		} else {
-			return false;
-		}
-	}
-
-	@Override
-	public Optional<FuncType<?, ?>> meet(final Type type) {
-		if (type instanceof FuncType<?, ?>) {
-			final FuncType<?, ?> that = (FuncType<?, ?>) type;
-			final Optional<? extends Type> joinOfParamTypes = this.getParamType().join(that.getParamType());
-			final Optional<? extends Type> meetOfResultTypes = this.getResultType().meet(that.getResultType());
-
-			if (joinOfParamTypes.isPresent() && meetOfResultTypes.isPresent()) {
-				final FuncType<?, ?> funcType = Types.Func(joinOfParamTypes.get(), meetOfResultTypes.get());
-				return Optional.of(funcType);
-			}
-		}
-
-		return Optional.empty();
-	}
-
-	@Override
-	public Optional<FuncType<?, ?>> join(final Type type) {
-		if (type instanceof FuncType<?, ?>) {
-			final FuncType<?, ?> that = (FuncType<?, ?>) type;
-			final Optional<? extends Type> meetOfParamTypes = this.getParamType().meet(that.getParamType());
-			final Optional<? extends Type> joinOfResultTypes = this.getResultType().join(that.getResultType());
-
-			if (meetOfParamTypes.isPresent() && joinOfResultTypes.isPresent()) {
-				final FuncType<?, ?> funcType = Types.Func(meetOfParamTypes.get(), joinOfResultTypes.get());
-				return Optional.of(funcType);
-			}
-		}
-
-		return Optional.empty();
 	}
 
 	@Override

@@ -34,7 +34,7 @@ public final class ParamBinding implements Assignment {
 		for (int i = 0; i < params.size(); i++) {
 			final ParamDecl<?> param = params.get(i);
 			final Expr<?> arg = args.get(i);
-			checkArgument(arg.getType().isLeq(param.getType()));
+			checkArgument(arg.getType().equals(param.getType()));
 			paramToArg.put(param, arg);
 		}
 	}

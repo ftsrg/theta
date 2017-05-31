@@ -141,7 +141,7 @@ public final class Valuation implements Assignment {
 		}
 
 		public Builder put(final VarDecl<?> decl, final LitExpr<?> value) {
-			checkArgument(value.getType().isLeq(decl.getType()));
+			checkArgument(value.getType().equals(decl.getType()));
 			checkState(!built);
 
 			declToExpr.put(decl, value);

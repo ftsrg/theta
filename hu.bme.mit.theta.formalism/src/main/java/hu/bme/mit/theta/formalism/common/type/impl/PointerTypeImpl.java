@@ -3,8 +3,6 @@ package hu.bme.mit.theta.formalism.common.type.impl;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.formalism.common.expr.Exprs2.Null;
 
-import java.util.Optional;
-
 import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.expr.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
@@ -31,28 +29,6 @@ final class PointerTypeImpl<PointedType extends Type> implements PointerType<Poi
 	@Override
 	public LitExpr<? extends Type> getAny() {
 		return Null();
-	}
-
-	@Override
-	public boolean isLeq(final Type other) {
-		if (other instanceof PointerType) {
-			final PointerType<?> that = (PointerType<?>) other;
-			return this.getPointedType().isLeq(that.getPointedType());
-		} else {
-			return false;
-		}
-	}
-
-	@Override
-	public Optional<? extends Type> meet(final Type type) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
-	}
-
-	@Override
-	public Optional<? extends Type> join(final Type type) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
 
 	@Override

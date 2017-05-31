@@ -2,11 +2,8 @@ package hu.bme.mit.theta.core.type.impl;
 
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 
-import java.util.Optional;
-
 import hu.bme.mit.theta.core.expr.LitExpr;
 import hu.bme.mit.theta.core.type.RatType;
-import hu.bme.mit.theta.core.type.Type;
 
 final class RatTypeImpl implements RatType {
 
@@ -20,33 +17,6 @@ final class RatTypeImpl implements RatType {
 	@Override
 	public LitExpr<RatType> getAny() {
 		return Rat(0, 1);
-	}
-
-	@Override
-	public boolean isLeq(final Type type) {
-		return this.equals(type);
-	}
-
-	@Override
-	public Optional<? extends RatType> meet(final Type type) {
-		if (type.isLeq(this)) {
-			assert type instanceof RatType;
-			final RatType that = (RatType) type;
-			return Optional.of(that);
-		} else {
-			assert !this.isLeq(type);
-			return Optional.empty();
-		}
-	}
-
-	@Override
-	public Optional<RatType> join(final Type type) {
-		if (type.isLeq(this)) {
-			return Optional.of(this);
-		} else {
-			assert !this.isLeq(type);
-			return Optional.empty();
-		}
 	}
 
 	@Override

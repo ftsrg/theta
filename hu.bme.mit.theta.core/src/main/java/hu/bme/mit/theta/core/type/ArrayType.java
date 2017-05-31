@@ -1,9 +1,6 @@
 package hu.bme.mit.theta.core.type;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.type.impl.Types.Array;
-
-import java.util.Optional;
 
 import hu.bme.mit.theta.core.expr.LitExpr;
 
@@ -34,48 +31,6 @@ public final class ArrayType<IndexType extends Type, ElemType extends Type> impl
 	public LitExpr<ArrayType<IndexType, ElemType>> getAny() {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO: auto-generated method stub");
-	}
-
-	@Override
-	public boolean isLeq(final Type type) {
-		if (type instanceof ArrayType<?, ?>) {
-			final ArrayType<?, ?> that = (ArrayType<?, ?>) type;
-			return that.getIndexType().isLeq(this.getIndexType()) && this.getElemType().isLeq(that.getElemType());
-		} else {
-			return false;
-		}
-	}
-
-	@Override
-	public Optional<ArrayType<?, ?>> meet(final Type type) {
-		if (type instanceof ArrayType<?, ?>) {
-			final ArrayType<?, ?> that = (ArrayType<?, ?>) type;
-			final Optional<? extends Type> joinOfIndexTypes = this.getIndexType().join(that.getIndexType());
-			final Optional<? extends Type> meetOfElemTypes = this.getElemType().meet(that.getElemType());
-
-			if (joinOfIndexTypes.isPresent() && meetOfElemTypes.isPresent()) {
-				final ArrayType<?, ?> arrayType = Array(joinOfIndexTypes.get(), meetOfElemTypes.get());
-				return Optional.of(arrayType);
-			}
-		}
-
-		return Optional.empty();
-	}
-
-	@Override
-	public Optional<ArrayType<?, ?>> join(final Type type) {
-		if (type instanceof ArrayType<?, ?>) {
-			final ArrayType<?, ?> that = (ArrayType<?, ?>) type;
-			final Optional<? extends Type> meetOfIndexTypes = this.getIndexType().meet(that.getIndexType());
-			final Optional<? extends Type> joinOfElemTypes = this.getElemType().join(that.getElemType());
-
-			if (meetOfIndexTypes.isPresent() && joinOfElemTypes.isPresent()) {
-				final ArrayType<?, ?> arrayType = Array(meetOfIndexTypes.get(), joinOfElemTypes.get());
-				return Optional.of(arrayType);
-			}
-		}
-
-		return Optional.empty();
 	}
 
 	@Override

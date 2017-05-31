@@ -2,13 +2,10 @@ package hu.bme.mit.theta.core.expr;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.util.Optional;
-
 import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.utils.ExprVisitor;
-import hu.bme.mit.theta.core.utils.impl.TypeUtils;
 
 public final class IteExpr<ExprType extends Type> implements Expr<ExprType> {
 
@@ -44,11 +41,7 @@ public final class IteExpr<ExprType extends Type> implements Expr<ExprType> {
 
 	@Override
 	public ExprType getType() {
-		final ExprType thenType = getThen().getType();
-		final ExprType elseType = getElse().getType();
-		final Optional<ExprType> joinResult = TypeUtils.join(thenType, elseType);
-		final ExprType result = joinResult.get();
-		return result;
+		return getThen().getType();
 	}
 
 	public IteExpr<ExprType> withOps(final Expr<? extends BoolType> cond, final Expr<? extends ExprType> then,

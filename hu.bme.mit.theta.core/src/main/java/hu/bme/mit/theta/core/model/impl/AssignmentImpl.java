@@ -69,7 +69,7 @@ public final class AssignmentImpl implements Assignment {
 		for (final Entry<? extends Decl<?>, ? extends Expr<?>> entry : declToExpr.entrySet()) {
 			final Decl<?> decl = entry.getKey();
 			final Expr<?> expr = entry.getValue();
-			checkArgument(expr.getType().isLeq(decl.getType()));
+			checkArgument(expr.getType().equals(decl.getType()));
 		}
 	}
 
