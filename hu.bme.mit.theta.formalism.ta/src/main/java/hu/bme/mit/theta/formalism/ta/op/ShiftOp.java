@@ -22,7 +22,7 @@ public final class ShiftOp implements ClockOp {
 	private final int offset;
 
 	private volatile int hashCode = 0;
-	private volatile AssignStmt<RatType, RatType> stmt = null;
+	private volatile AssignStmt<RatType> stmt = null;
 
 	ShiftOp(final VarDecl<RatType> var, final int offset) {
 		this.var = checkNotNull(var);
@@ -43,8 +43,8 @@ public final class ShiftOp implements ClockOp {
 	}
 
 	@Override
-	public AssignStmt<RatType, RatType> toStmt() {
-		AssignStmt<RatType, RatType> result = stmt;
+	public AssignStmt<RatType> toStmt() {
+		AssignStmt<RatType> result = stmt;
 		if (result == null) {
 			result = Assign(var, Add(var.getRef(), Rat(offset, 1)));
 			stmt = result;

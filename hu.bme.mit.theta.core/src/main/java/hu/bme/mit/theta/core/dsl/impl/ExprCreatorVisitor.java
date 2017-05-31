@@ -6,15 +6,15 @@ import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.common.Utils.singleElementOf;
 import static hu.bme.mit.theta.core.decl.Decls.Param;
 import static hu.bme.mit.theta.core.expr.AbstractExprs.Add;
+import static hu.bme.mit.theta.core.expr.AbstractExprs.Geq;
+import static hu.bme.mit.theta.core.expr.AbstractExprs.Gt;
+import static hu.bme.mit.theta.core.expr.AbstractExprs.Leq;
+import static hu.bme.mit.theta.core.expr.AbstractExprs.Lt;
 import static hu.bme.mit.theta.core.expr.AbstractExprs.Mul;
 import static hu.bme.mit.theta.core.expr.AbstractExprs.Neg;
 import static hu.bme.mit.theta.core.expr.AbstractExprs.Sub;
 import static hu.bme.mit.theta.core.expr.Exprs.Eq;
-import static hu.bme.mit.theta.core.expr.Exprs.Geq;
-import static hu.bme.mit.theta.core.expr.Exprs.Gt;
 import static hu.bme.mit.theta.core.expr.Exprs.Ite;
-import static hu.bme.mit.theta.core.expr.Exprs.Leq;
-import static hu.bme.mit.theta.core.expr.Exprs.Lt;
 import static hu.bme.mit.theta.core.expr.Exprs.Neq;
 import static hu.bme.mit.theta.core.expr.Exprs.Prime;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
@@ -30,8 +30,8 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Div;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Mod;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Rem;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Div;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.RatDiv;
 import static java.util.stream.Collectors.toList;
 
 import java.util.Collection;
@@ -280,8 +280,8 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
 	@Override
 	public Expr<?> visitRelationExpr(final RelationExprContext ctx) {
 		if (ctx.rightOp != null) {
-			final Expr<? extends RatType> leftOp = TypeUtils.cast(ctx.leftOp.accept(this), RatType.class);
-			final Expr<? extends RatType> rightOp = TypeUtils.cast(ctx.rightOp.accept(this), RatType.class);
+			final Expr<?> leftOp = ctx.leftOp.accept(this);
+			final Expr<?> rightOp = ctx.rightOp.accept(this);
 
 			switch (ctx.oper.getType()) {
 			case CoreDslParser.LT:
@@ -446,9 +446,9 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
 	}
 
 	private RatDivExpr createRatDivExpr(final Expr<?> uncastLeftOp, final Expr<?> uncastRightOp) {
-		final Expr<? extends IntType> leftOp = TypeUtils.cast(uncastLeftOp, IntType.class);
-		final Expr<? extends IntType> rightOp = TypeUtils.cast(uncastRightOp, IntType.class);
-		return RatDiv(leftOp, rightOp);
+		final Expr<RatType> leftOp = TypeUtils.cast(uncastLeftOp, RatType.class);
+		final Expr<RatType> rightOp = TypeUtils.cast(uncastRightOp, RatType.class);
+		return Div(leftOp, rightOp);
 	}
 
 	private IntDivExpr createIntDivExpr(final Expr<?> uncastLeftOp, final Expr<?> uncastRightOp) {

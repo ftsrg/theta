@@ -66,8 +66,7 @@ public class SbeCreator {
 		}
 
 		@Override
-		public <DeclType extends Type, ExprType extends DeclType> Void visit(final DeclStmt<DeclType, ExprType> stmt,
-				final Product2<CfaLoc, CfaLoc> param) {
+		public <DeclType extends Type> Void visit(final DeclStmt<DeclType> stmt, final Product2<CfaLoc, CfaLoc> param) {
 			final CfaLoc source = param._1();
 			final CfaLoc target = param._2();
 
@@ -101,7 +100,7 @@ public class SbeCreator {
 		}
 
 		@Override
-		public <DeclType extends Type, ExprType extends DeclType> Void visit(final AssignStmt<DeclType, ExprType> stmt,
+		public <DeclType extends Type> Void visit(final AssignStmt<DeclType> stmt,
 				final Product2<CfaLoc, CfaLoc> param) {
 			return visitSimple(stmt, param);
 		}

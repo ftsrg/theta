@@ -125,7 +125,7 @@ final class XtaTransferFunction<S extends State, P extends Prec>
 		final List<Update> updates = edge.getUpdates();
 		for (final Update update : updates) {
 			if (update.isDataUpdate()) {
-				final AssignStmt<?, ?> stmt = (AssignStmt<?, ?>) update.toStmt();
+				final AssignStmt<?> stmt = (AssignStmt<?>) update.toStmt();
 				final VarDecl<?> varDecl = stmt.getVarDecl();
 				final Expr<?> expr = stmt.getExpr();
 				final LitExpr<?> value = ExprUtils.evaluate(expr, builder);

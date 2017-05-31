@@ -11,7 +11,7 @@ import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.utils.StmtVisitor;
 
-public final class DeclStmt<DeclType extends Type, ExprType extends DeclType> implements Stmt {
+public final class DeclStmt<DeclType extends Type> implements Stmt {
 
 	private static final int HASH_SEED = 4201;
 
@@ -19,14 +19,14 @@ public final class DeclStmt<DeclType extends Type, ExprType extends DeclType> im
 
 	private final VarDecl<DeclType> varDecl;
 
-	private final Optional<Expr<ExprType>> initVal;
+	private final Optional<Expr<DeclType>> initVal;
 
 	DeclStmt(final VarDecl<DeclType> varDecl) {
 		this.varDecl = checkNotNull(varDecl);
 		initVal = Optional.empty();
 	}
 
-	public DeclStmt(final VarDecl<DeclType> varDecl, final Expr<ExprType> initVal) {
+	public DeclStmt(final VarDecl<DeclType> varDecl, final Expr<DeclType> initVal) {
 		this.varDecl = checkNotNull(varDecl);
 		this.initVal = Optional.of(checkNotNull(initVal));
 	}
@@ -35,7 +35,7 @@ public final class DeclStmt<DeclType extends Type, ExprType extends DeclType> im
 		return varDecl;
 	}
 
-	public Optional<Expr<ExprType>> getInitVal() {
+	public Optional<Expr<DeclType>> getInitVal() {
 		return initVal;
 	}
 
@@ -60,8 +60,8 @@ public final class DeclStmt<DeclType extends Type, ExprType extends DeclType> im
 	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
-		} else if (obj instanceof DeclStmt<?, ?>) {
-			final DeclStmt<?, ?> that = (DeclStmt<?, ?>) obj;
+		} else if (obj instanceof DeclStmt) {
+			final DeclStmt<?> that = (DeclStmt<?>) obj;
 			return this.getVarDecl().equals(that.getVarDecl()) && this.getInitVal().equals(that.getInitVal());
 		} else {
 			return false;

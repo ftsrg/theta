@@ -19,7 +19,7 @@ public final class CopyOp implements ClockOp {
 	private final VarDecl<RatType> value;
 
 	private volatile int hashCode = 0;
-	private volatile AssignStmt<RatType, RatType> stmt = null;
+	private volatile AssignStmt<RatType> stmt = null;
 
 	CopyOp(final VarDecl<RatType> var, final VarDecl<RatType> value) {
 		this.var = checkNotNull(var);
@@ -40,8 +40,8 @@ public final class CopyOp implements ClockOp {
 	}
 
 	@Override
-	public AssignStmt<RatType, RatType> toStmt() {
-		AssignStmt<RatType, RatType> result = stmt;
+	public AssignStmt<RatType> toStmt() {
+		AssignStmt<RatType> result = stmt;
 		if (result == null) {
 			result = Assign(var, value.getRef());
 			stmt = result;

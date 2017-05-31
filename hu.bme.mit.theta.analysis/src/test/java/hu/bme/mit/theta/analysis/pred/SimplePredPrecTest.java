@@ -4,6 +4,7 @@ import static hu.bme.mit.theta.core.decl.Decls.Var;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 import static hu.bme.mit.theta.core.type.impl.Types.Int;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Lt;
 
 import java.util.Collections;
 
@@ -24,7 +25,7 @@ public class SimplePredPrecTest {
 	private final VarDecl<IntType> x = Var("x", Int());
 	private final VarDecl<IntType> y = Var("y", Int());
 
-	private final Expr<BoolType> pred = Exprs.Lt(x.getRef(), Int(5));
+	private final Expr<BoolType> pred = Lt(x.getRef(), Int(5));
 
 	private final Solver solver = Z3SolverFactory.getInstace().createSolver();
 

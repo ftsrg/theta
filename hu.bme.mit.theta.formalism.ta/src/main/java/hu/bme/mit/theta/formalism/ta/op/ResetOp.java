@@ -3,7 +3,7 @@ package hu.bme.mit.theta.formalism.ta.op;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 
 import java.util.Collection;
 
@@ -12,7 +12,6 @@ import com.google.common.collect.ImmutableSet;
 import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
-import hu.bme.mit.theta.core.type.IntType;
 import hu.bme.mit.theta.core.type.RatType;
 
 public final class ResetOp implements ClockOp {
@@ -23,7 +22,7 @@ public final class ResetOp implements ClockOp {
 	private final int value;
 
 	private volatile int hashCode = 0;
-	private volatile AssignStmt<RatType, IntType> stmt = null;
+	private volatile AssignStmt<RatType> stmt = null;
 
 	ResetOp(final VarDecl<RatType> clock, final int value) {
 		checkArgument(value >= 0);
@@ -45,10 +44,10 @@ public final class ResetOp implements ClockOp {
 	}
 
 	@Override
-	public AssignStmt<RatType, IntType> toStmt() {
-		AssignStmt<RatType, IntType> result = stmt;
+	public AssignStmt<RatType> toStmt() {
+		AssignStmt<RatType> result = stmt;
 		if (result == null) {
-			result = Assign(var, Int(value));
+			result = Assign(var, Rat(value, 1));
 			stmt = result;
 		}
 		return result;

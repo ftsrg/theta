@@ -8,15 +8,15 @@ import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.utils.StmtVisitor;
 
-public final class AssignStmt<DeclType extends Type, ExprType extends DeclType> implements Stmt {
+public final class AssignStmt<DeclType extends Type> implements Stmt {
 
 	private static final int HASH_SEED = 409;
 	private volatile int hashCode = 0;
 
 	private final VarDecl<DeclType> varDecl;
-	private final Expr<ExprType> expr;
+	private final Expr<DeclType> expr;
 
-	AssignStmt(final VarDecl<DeclType> varDecl, final Expr<ExprType> expr) {
+	AssignStmt(final VarDecl<DeclType> varDecl, final Expr<DeclType> expr) {
 		this.varDecl = checkNotNull(varDecl);
 		this.expr = checkNotNull(expr);
 	}
@@ -25,7 +25,7 @@ public final class AssignStmt<DeclType extends Type, ExprType extends DeclType> 
 		return varDecl;
 	}
 
-	public Expr<ExprType> getExpr() {
+	public Expr<DeclType> getExpr() {
 		return expr;
 	}
 
@@ -51,7 +51,7 @@ public final class AssignStmt<DeclType extends Type, ExprType extends DeclType> 
 		if (this == obj) {
 			return true;
 		} else if (obj instanceof AssignStmt) {
-			final AssignStmt<?, ?> that = (AssignStmt<?, ?>) obj;
+			final AssignStmt<?> that = (AssignStmt<?>) obj;
 			return this.getVarDecl().equals(that.getVarDecl()) && this.getExpr().equals(that.getExpr());
 		} else {
 			return false;

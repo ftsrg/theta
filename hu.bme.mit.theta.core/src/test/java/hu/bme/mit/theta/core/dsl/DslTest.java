@@ -1,11 +1,7 @@
 package hu.bme.mit.theta.core.dsl;
 
 import static hu.bme.mit.theta.core.expr.Exprs.Eq;
-import static hu.bme.mit.theta.core.expr.Exprs.Geq;
-import static hu.bme.mit.theta.core.expr.Exprs.Gt;
 import static hu.bme.mit.theta.core.expr.Exprs.Ite;
-import static hu.bme.mit.theta.core.expr.Exprs.Leq;
-import static hu.bme.mit.theta.core.expr.Exprs.Lt;
 import static hu.bme.mit.theta.core.expr.Exprs.Neq;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
@@ -15,14 +11,17 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Div;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Geq;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Leq;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Lt;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Mod;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Mul;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Neg;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Rem;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Sub;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Gt;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.RatDiv;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -65,7 +64,7 @@ public class DslTest {
 
 				{ "1 * 2 * 3 /= 4 - 1", Neq(Mul(Int(1), Int(2), Int(3)), Sub(Int(4), Int(1))), null },
 
-				{ "(1 div 2) <= 4 / 5", Leq(Div(Int(1), Int(2)), RatDiv(Int(4), Int(5))), null },
+				{ "(1 div 2) <= 4 / 5", Leq(Div(Int(1), Int(2)), Div(Int(4), Int(5))), null },
 
 				{ "if 1 >= 2 then 1 rem 2 else 3 mod 5",
 						Ite(Geq(Int(1), Int(2)), Rem(Int(1), Int(2)), Mod(Int(3), Int(5))), null },

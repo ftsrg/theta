@@ -41,12 +41,14 @@ public class VarCollectorStmtVisitorTest {
 	private static final VarDecl<RatType> VC = Var("c", Rat());
 	private static final VarDecl<BoolType> VD = Var("d", Bool());
 	private static final VarDecl<IntType> VE = Var("e", Int());
+	private static final VarDecl<RatType> VF = Var("f", Rat());
 
 	private static final Expr<BoolType> A = VA.getRef();
 	private static final Expr<IntType> B = VB.getRef();
 	private static final Expr<RatType> C = VC.getRef();
 	private static final Expr<BoolType> D = VD.getRef();
 	private static final Expr<IntType> E = VE.getRef();
+	private static final Expr<RatType> F = VF.getRef();
 
 	@Parameter(value = 0)
 	public Stmt statement;
@@ -78,7 +80,7 @@ public class VarCollectorStmtVisitorTest {
 
 				{ Stmts.If(A, Stmts.Assign(VB, E)), of(VA, VB, VE) },
 
-				{ Stmts.If(A, Stmts.Assign(VB, E), Stmts.Assign(VC, E)), of(VA, VB, VC, VE) },
+				{ Stmts.If(A, Stmts.Assign(VB, E), Stmts.Assign(VC, F)), of(VA, VB, VC, VE, VF) },
 
 				{ Stmts.Return(A), of(VA) },
 

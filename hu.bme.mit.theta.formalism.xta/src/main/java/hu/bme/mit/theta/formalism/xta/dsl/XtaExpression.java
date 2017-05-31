@@ -3,13 +3,13 @@ package hu.bme.mit.theta.formalism.xta.dsl;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.expr.AbstractExprs.Add;
+import static hu.bme.mit.theta.core.expr.AbstractExprs.Geq;
+import static hu.bme.mit.theta.core.expr.AbstractExprs.Gt;
+import static hu.bme.mit.theta.core.expr.AbstractExprs.Leq;
+import static hu.bme.mit.theta.core.expr.AbstractExprs.Lt;
 import static hu.bme.mit.theta.core.expr.AbstractExprs.Mul;
 import static hu.bme.mit.theta.core.expr.AbstractExprs.Sub;
 import static hu.bme.mit.theta.core.expr.Exprs.Eq;
-import static hu.bme.mit.theta.core.expr.Exprs.Geq;
-import static hu.bme.mit.theta.core.expr.Exprs.Gt;
-import static hu.bme.mit.theta.core.expr.Exprs.Leq;
-import static hu.bme.mit.theta.core.expr.Exprs.Lt;
 import static hu.bme.mit.theta.core.expr.Exprs.Neq;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
@@ -36,7 +36,6 @@ import hu.bme.mit.theta.core.expr.SubExpr;
 import hu.bme.mit.theta.core.type.ArrayType;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.IntType;
-import hu.bme.mit.theta.core.type.RatType;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.arraytype.ArrayExprs;
 import hu.bme.mit.theta.core.type.closure.ClosedUnderAdd;
@@ -307,8 +306,8 @@ final class XtaExpression {
 			if (ctx.fOpers == null || ctx.fOpers.isEmpty()) {
 				return checkNotNull(visitChildren(ctx));
 			} else {
-				final Expr<? extends RatType> leftOp = TypeUtils.cast(ctx.fOps.get(0).accept(this), RatType.class);
-				final Expr<? extends RatType> rightOp = TypeUtils.cast(ctx.fOps.get(1).accept(this), RatType.class);
+				final Expr<?> leftOp = ctx.fOps.get(0).accept(this);
+				final Expr<?> rightOp = ctx.fOps.get(1).accept(this);
 
 				final RelationalOpContext op = Utils.singleElementOf(ctx.fOpers);
 				if (op.fLtOp != null) {

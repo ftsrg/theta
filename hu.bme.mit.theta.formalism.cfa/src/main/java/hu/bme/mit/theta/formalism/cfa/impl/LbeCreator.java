@@ -93,7 +93,7 @@ public class LbeCreator {
 		}
 
 		@Override
-		public <DeclType extends Type, ExprType extends DeclType> Void visit(final DeclStmt<DeclType, ExprType> stmt,
+		public <DeclType extends Type> Void visit(final DeclStmt<DeclType> stmt,
 				final Product4<CfaLoc, CfaLoc, List<Stmt>, List<Stmt>> param) {
 			final CfaLoc source = param._1();
 			final CfaLoc target = param._2();
@@ -107,8 +107,7 @@ public class LbeCreator {
 			return null;
 		}
 
-		private <DeclType extends Type, ExprType extends DeclType> Stmt initStmt(
-				final DeclStmt<DeclType, ExprType> stmt) {
+		private <DeclType extends Type> Stmt initStmt(final DeclStmt<DeclType> stmt) {
 			if (stmt.getInitVal().isPresent()) {
 				return Assign(stmt.getVarDecl(), stmt.getInitVal().get());
 			} else {
@@ -142,7 +141,7 @@ public class LbeCreator {
 		}
 
 		@Override
-		public <DeclType extends Type, ExprType extends DeclType> Void visit(final AssignStmt<DeclType, ExprType> stmt,
+		public <DeclType extends Type> Void visit(final AssignStmt<DeclType> stmt,
 				final Product4<CfaLoc, CfaLoc, List<Stmt>, List<Stmt>> param) {
 			return visitSimpleStatement(stmt, param);
 		}

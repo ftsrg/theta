@@ -53,13 +53,26 @@ public final class TypeUtils {
 	public static <T extends Type> Expr<T> cast(final Expr<?> expr, final Class<T> metaType) {
 		checkNotNull(expr);
 		checkNotNull(metaType);
-	
+
 		if (metaType.isInstance(expr.getType())) {
 			@SuppressWarnings("unchecked")
 			final Expr<T> result = (Expr<T>) expr;
 			return result;
 		} else {
 			throw new ClassCastException("The type of expression " + expr + " is not of type " + metaType.getName());
+		}
+	}
+
+	public static <T extends Type> Expr<T> cast(final Expr<?> expr, final T type) {
+		checkNotNull(expr);
+		checkNotNull(type);
+
+		if (expr.getType().equals(type)) {
+			@SuppressWarnings("unchecked")
+			final Expr<T> result = (Expr<T>) expr;
+			return result;
+		} else {
+			throw new ClassCastException("The type of expression " + expr + " is not of type " + type);
 		}
 	}
 

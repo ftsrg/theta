@@ -1,12 +1,12 @@
 package hu.bme.mit.theta.formalism.ta.constr;
 
-import static hu.bme.mit.theta.core.expr.Exprs.Gt;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Gt;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.expr.GtExpr;
 import hu.bme.mit.theta.core.expr.RefExpr;
 import hu.bme.mit.theta.core.type.RatType;
+import hu.bme.mit.theta.core.type.rattype.RatGtExpr;
 
 public final class UnitGtConstr extends UnitConstr {
 
@@ -14,18 +14,18 @@ public final class UnitGtConstr extends UnitConstr {
 
 	private static final String OPERATOR_LABEL = ">";
 
-	private volatile GtExpr expr = null;
+	private volatile RatGtExpr expr = null;
 
 	UnitGtConstr(final VarDecl<RatType> clock, final int bound) {
 		super(clock, bound);
 	}
 
 	@Override
-	public GtExpr toExpr() {
-		GtExpr result = expr;
+	public RatGtExpr toExpr() {
+		RatGtExpr result = expr;
 		if (result == null) {
 			final RefExpr<RatType> ref = getVar().getRef();
-			result = Gt(ref, Int(getBound()));
+			result = Gt(ref, Rat(getBound(), 1));
 			expr = result;
 		}
 		return result;

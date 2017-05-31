@@ -2,11 +2,7 @@ package hu.bme.mit.theta.core.utils;
 
 import static hu.bme.mit.theta.core.decl.Decls.Const;
 import static hu.bme.mit.theta.core.expr.Exprs.Eq;
-import static hu.bme.mit.theta.core.expr.Exprs.Geq;
-import static hu.bme.mit.theta.core.expr.Exprs.Gt;
 import static hu.bme.mit.theta.core.expr.Exprs.Ite;
-import static hu.bme.mit.theta.core.expr.Exprs.Leq;
-import static hu.bme.mit.theta.core.expr.Exprs.Lt;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Iff;
@@ -18,14 +14,23 @@ import static hu.bme.mit.theta.core.type.impl.Types.Bool;
 import static hu.bme.mit.theta.core.type.impl.Types.Int;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Add;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Div;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Geq;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Gt;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Leq;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Lt;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Mul;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Neg;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Sub;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Add;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Div;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Geq;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Gt;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Leq;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Lt;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Mul;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Neg;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.RatDiv;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Sub;
 import static hu.bme.mit.theta.core.utils.impl.ExprUtils.simplify;
 
@@ -125,10 +130,10 @@ public class ExprSimplifierTest {
 	@Test
 	public void testGeq() {
 		// @formatter:off
-		Assert.assertEquals(True(), simplify(Geq(Rat(8, 4), Int(2))));
+		Assert.assertEquals(True(), simplify(Geq(Rat(8, 4), Rat(2, 1))));
 		Assert.assertEquals(True(), simplify(Geq(Rat(3, 4), Rat(2, 3))));
-		Assert.assertEquals(True(), simplify(Geq(Rat(9, 4), Int(2))));
-		Assert.assertEquals(False(), simplify(Geq(Int(2), Rat(9, 4))));
+		Assert.assertEquals(True(), simplify(Geq(Rat(9, 4), Rat(2, 1))));
+		Assert.assertEquals(False(), simplify(Geq(Rat(2, 1), Rat(9, 4))));
 		Assert.assertEquals(True(), simplify(Geq(a, a)));
 		// @formatter:on
 	}
@@ -136,10 +141,10 @@ public class ExprSimplifierTest {
 	@Test
 	public void testGt() {
 		// @formatter:off
-		Assert.assertEquals(False(), simplify(Gt(Rat(8, 4), Int(2))));
+		Assert.assertEquals(False(), simplify(Gt(Rat(8, 4), Rat(2, 1))));
 		Assert.assertEquals(True(), simplify(Gt(Rat(3, 4), Rat(2, 3))));
-		Assert.assertEquals(True(), simplify(Gt(Rat(9, 4), Int(2))));
-		Assert.assertEquals(False(), simplify(Gt(Int(2), Rat(9, 4))));
+		Assert.assertEquals(True(), simplify(Gt(Rat(9, 4), Rat(2, 1))));
+		Assert.assertEquals(False(), simplify(Gt(Rat(2, 1), Rat(9, 4))));
 		Assert.assertEquals(False(), simplify(Gt(a, a)));
 		// @formatter:on
 	}
@@ -147,10 +152,10 @@ public class ExprSimplifierTest {
 	@Test
 	public void testLeq() {
 		// @formatter:off
-		Assert.assertEquals(True(), simplify(Leq(Rat(8, 4), Int(2))));
+		Assert.assertEquals(True(), simplify(Leq(Rat(8, 4), Rat(2, 1))));
 		Assert.assertEquals(True(), simplify(Leq(Rat(2, 3), Rat(3, 4))));
-		Assert.assertEquals(True(), simplify(Leq(Int(2), Rat(9, 4))));
-		Assert.assertEquals(False(), simplify(Leq(Rat(9, 4), Int(2))));
+		Assert.assertEquals(True(), simplify(Leq(Rat(2, 1), Rat(9, 4))));
+		Assert.assertEquals(False(), simplify(Leq(Rat(9, 4), Rat(2, 1))));
 		Assert.assertEquals(True(), simplify(Leq(a, a)));
 		// @formatter:on
 	}
@@ -158,10 +163,10 @@ public class ExprSimplifierTest {
 	@Test
 	public void testLt() {
 		// @formatter:off
-		Assert.assertEquals(False(), simplify(Lt(Int(2), Rat(8, 4))));
+		Assert.assertEquals(False(), simplify(Lt(Rat(2, 1), Rat(8, 4))));
 		Assert.assertEquals(True(), simplify(Lt(Rat(2, 3), Rat(3, 4))));
-		Assert.assertEquals(True(), simplify(Lt(Int(2), Rat(9, 4))));
-		Assert.assertEquals(False(), simplify(Lt(Rat(9, 4), Int(2))));
+		Assert.assertEquals(True(), simplify(Lt(Rat(2, 1), Rat(9, 4))));
+		Assert.assertEquals(False(), simplify(Lt(Rat(9, 4), Rat(2, 1))));
 		Assert.assertEquals(False(), simplify(Lt(a, a)));
 		// @formatter:on
 	}
@@ -178,11 +183,11 @@ public class ExprSimplifierTest {
 	@Test
 	public void testRatDiv() {
 		// @formatter:off
-		Assert.assertEquals(Rat(8, 9), simplify(RatDiv(Rat(2, 3), Rat(3, 4))));
-		Assert.assertEquals(Rat(1, 2), simplify(RatDiv(Rat(2, 3), Rat(4, 3))));
-		Assert.assertEquals(Rat(1, 3), simplify(RatDiv(Rat(2, 3), Int(2))));
-		Assert.assertEquals(Rat(1, 2), simplify(RatDiv(Int(2), Int(4))));
-		Assert.assertEquals(RatDiv(Int(0), a), simplify(RatDiv(Int(0), a)));
+		Assert.assertEquals(Rat(8, 9), simplify(Div(Rat(2, 3), Rat(3, 4))));
+		Assert.assertEquals(Rat(1, 2), simplify(Div(Rat(2, 3), Rat(4, 3))));
+		Assert.assertEquals(Rat(1, 3), simplify(Div(Rat(2, 3), Rat(2, 1))));
+		Assert.assertEquals(Rat(1, 2), simplify(Div(Rat(2, 1), Rat(4, 1))));
+		Assert.assertEquals(Div(Int(0), a), simplify(Div(Int(0), a)));
 		// @formatter:on
 	}
 
@@ -224,9 +229,8 @@ public class ExprSimplifierTest {
 		Assert.assertEquals(Int(30), simplify(Mul(Int(2), Int(3), Int(5))));
 		Assert.assertEquals(Mul(Int(10), a), simplify(Mul(Int(2), a, Int(5))));
 		Assert.assertEquals(Int(0), simplify(Mul(Int(0), a, b)));
-		Assert.assertEquals(Int(1), simplify(Mul(Int(2), Int(1), Rat(1, 2))));
-		Assert.assertEquals(a, simplify(Mul(Int(2), a, Rat(1, 2))));
-		Assert.assertEquals(Rat(3, 4), simplify(Mul(Rat(3, 2), Int(1), Rat(1, 2))));
+		Assert.assertEquals(Int(1), simplify(Mul(Rat(2, 1), Rat(1, 1), Rat(1, 2))));
+		Assert.assertEquals(Rat(3, 4), simplify(Mul(Rat(3, 2), Rat(1, 1), Rat(1, 2))));
 		Assert.assertEquals(Mul(a, b, a, b, c), simplify(Mul(a, Mul(b, Mul(a, Mul(b, c))))));
 		// @formatter:on
 	}

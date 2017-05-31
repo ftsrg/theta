@@ -1,13 +1,13 @@
 package hu.bme.mit.theta.analysis.zone.lu;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.expr.Exprs.Gt;
-import static hu.bme.mit.theta.core.expr.Exprs.Lt;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Exists;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Imply;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Gt;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Lt;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -25,7 +25,6 @@ import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.BoolType;
-import hu.bme.mit.theta.core.type.IntType;
 import hu.bme.mit.theta.core.type.RatType;
 import hu.bme.mit.theta.core.utils.impl.ExprUtils;
 
@@ -93,18 +92,18 @@ public final class LuZoneState implements ExprState {
 				final Optional<Integer> optLower = boundFunction.getLower(dx);
 				if (optLower.isPresent()) {
 					final int lower = optLower.get();
-					final Expr<IntType> lx = Int(lower);
+					final Expr<RatType> lx = Rat(lower, 1);
 					// x > xp imply xp > L(x)
-					final Expr<? extends BoolType> lowerExpr = Imply(Gt(x, xp), Gt(xp, lx));
+					final Expr<BoolType> lowerExpr = Imply(Gt(x, xp), Gt(xp, lx));
 					conjuncts.add(lowerExpr);
 				}
 
 				final Optional<Integer> optUpper = boundFunction.getUpper(dx);
 				if (optUpper.isPresent()) {
 					final int upper = optUpper.get();
-					final Expr<IntType> ux = Int(upper);
+					final Expr<RatType> ux = Rat(upper, 1);
 					// x < xp imply x > U(x)
-					final Expr<? extends BoolType> upperExpr = Imply(Lt(x, xp), Gt(x, ux));
+					final Expr<BoolType> upperExpr = Imply(Lt(x, xp), Gt(x, ux));
 					conjuncts.add(upperExpr);
 				}
 			}

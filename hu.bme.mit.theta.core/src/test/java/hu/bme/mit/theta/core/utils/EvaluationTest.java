@@ -2,11 +2,7 @@ package hu.bme.mit.theta.core.utils;
 
 import static hu.bme.mit.theta.core.decl.Decls.Const;
 import static hu.bme.mit.theta.core.expr.Exprs.Eq;
-import static hu.bme.mit.theta.core.expr.Exprs.Geq;
-import static hu.bme.mit.theta.core.expr.Exprs.Gt;
 import static hu.bme.mit.theta.core.expr.Exprs.Ite;
-import static hu.bme.mit.theta.core.expr.Exprs.Leq;
-import static hu.bme.mit.theta.core.expr.Exprs.Lt;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Iff;
@@ -22,10 +18,14 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Mul;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Neg;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Sub;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Add;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Div;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Geq;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Gt;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Leq;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Lt;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Mul;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Neg;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.RatDiv;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Sub;
 import static hu.bme.mit.theta.core.utils.impl.ExprUtils.evaluate;
 
@@ -113,40 +113,40 @@ public class EvaluationTest {
 	@Test
 	public void testGeq() {
 		// @formatter:off
-		Assert.assertEquals(True(), evaluate(Geq(Rat(8, 4), Int(2))));
+		Assert.assertEquals(True(), evaluate(Geq(Rat(8, 4), Rat(2, 1))));
 		Assert.assertEquals(True(), evaluate(Geq(Rat(3, 4), Rat(2, 3))));
-		Assert.assertEquals(True(), evaluate(Geq(Rat(9, 4), Int(2))));
-		Assert.assertEquals(False(), evaluate(Geq(Int(2), Rat(9, 4))));
+		Assert.assertEquals(True(), evaluate(Geq(Rat(9, 4), Rat(2, 1))));
+		Assert.assertEquals(False(), evaluate(Geq(Rat(2, 1), Rat(9, 4))));
 		// @formatter:on
 	}
 
 	@Test
 	public void testGt() {
 		// @formatter:off
-		Assert.assertEquals(False(), evaluate(Gt(Rat(8, 4), Int(2))));
+		Assert.assertEquals(False(), evaluate(Gt(Rat(8, 4), Rat(2, 1))));
 		Assert.assertEquals(True(), evaluate(Gt(Rat(3, 4), Rat(2, 3))));
-		Assert.assertEquals(True(), evaluate(Gt(Rat(9, 4), Int(2))));
-		Assert.assertEquals(False(), evaluate(Gt(Int(2), Rat(9, 4))));
+		Assert.assertEquals(True(), evaluate(Gt(Rat(9, 4), Rat(2, 1))));
+		Assert.assertEquals(False(), evaluate(Gt(Rat(2, 1), Rat(9, 4))));
 		// @formatter:on
 	}
 
 	@Test
 	public void testLeq() {
 		// @formatter:off
-		Assert.assertEquals(True(), evaluate(Leq(Rat(8, 4), Int(2))));
+		Assert.assertEquals(True(), evaluate(Leq(Rat(8, 4), Rat(2, 1))));
 		Assert.assertEquals(True(), evaluate(Leq(Rat(2, 3), Rat(3, 4))));
-		Assert.assertEquals(True(), evaluate(Leq(Int(2), Rat(9, 4))));
-		Assert.assertEquals(False(), evaluate(Leq(Rat(9, 4), Int(2))));
+		Assert.assertEquals(True(), evaluate(Leq(Rat(2, 1), Rat(9, 4))));
+		Assert.assertEquals(False(), evaluate(Leq(Rat(9, 4), Rat(2, 1))));
 		// @formatter:on
 	}
 
 	@Test
 	public void testLt() {
 		// @formatter:off
-		Assert.assertEquals(False(), evaluate(Lt(Int(2), Rat(8, 4))));
+		Assert.assertEquals(False(), evaluate(Lt(Rat(2, 1), Rat(8, 4))));
 		Assert.assertEquals(True(), evaluate(Lt(Rat(2, 3), Rat(3, 4))));
-		Assert.assertEquals(True(), evaluate(Lt(Int(2), Rat(9, 4))));
-		Assert.assertEquals(False(), evaluate(Lt(Rat(9, 4), Int(2))));
+		Assert.assertEquals(True(), evaluate(Lt(Rat(2, 1), Rat(9, 4))));
+		Assert.assertEquals(False(), evaluate(Lt(Rat(9, 4), Rat(2, 1))));
 		// @formatter:on
 	}
 
@@ -161,10 +161,10 @@ public class EvaluationTest {
 	@Test
 	public void testRatDiv() {
 		// @formatter:off
-		Assert.assertEquals(Rat(8, 9), evaluate(RatDiv(Rat(2, 3), Rat(3, 4))));
-		Assert.assertEquals(Rat(1, 2), evaluate(RatDiv(Rat(2, 3), Rat(4, 3))));
-		Assert.assertEquals(Rat(1, 3), evaluate(RatDiv(Rat(2, 3), Int(2))));
-		Assert.assertEquals(Rat(1, 2), evaluate(RatDiv(Int(2), Int(4))));
+		Assert.assertEquals(Rat(8, 9), evaluate(Div(Rat(2, 3), Rat(3, 4))));
+		Assert.assertEquals(Rat(1, 2), evaluate(Div(Rat(2, 3), Rat(4, 3))));
+		Assert.assertEquals(Rat(1, 3), evaluate(Div(Rat(2, 3), Rat(2, 1))));
+		Assert.assertEquals(Rat(1, 2), evaluate(Div(Rat(2, 1), Rat(4, 1))));
 		// @formatter:on
 	}
 
@@ -200,7 +200,7 @@ public class EvaluationTest {
 	public void testMul() {
 		// @formatter:off
 		Assert.assertEquals(Int(30), evaluate(Mul(Int(2), Int(3), Int(5))));
-		Assert.assertEquals(Int(1), evaluate(Mul(Int(2), Int(1), Rat(1, 2))));
+		Assert.assertEquals(Int(1), evaluate(Mul(Rat(2, 1), Rat(1, 1), Rat(1, 2))));
 		Assert.assertEquals(Rat(3, 4), evaluate(Mul(Rat(3, 2), Rat(1, 1), Rat(1, 2))));
 		// @formatter:on
 	}
@@ -225,8 +225,8 @@ public class EvaluationTest {
 		Assert.assertEquals(Int(15), evaluate(Add(a, b), assignment));
 		Assert.assertEquals(Int(50), evaluate(Mul(a, b), assignment));
 		Assert.assertEquals(Int(0), evaluate(Div(a, b), assignment));
-		Assert.assertEquals(Rat(1, 2), evaluate(RatDiv(a, b), assignment));
-		Assert.assertEquals(Rat(5, 10), evaluate(RatDiv(a, b), assignment));
+		Assert.assertEquals(Rat(1, 2), evaluate(Div(a, b), assignment));
+		Assert.assertEquals(Rat(5, 10), evaluate(Div(a, b), assignment));
 		// @formatter:on
 	}
 

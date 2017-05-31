@@ -18,13 +18,13 @@ public interface StmtVisitor<P, R> {
 
 	R visit(SkipStmt stmt, P param);
 
-	<DeclType extends Type, ExprType extends DeclType> R visit(DeclStmt<DeclType, ExprType> stmt, P param);
+	<DeclType extends Type> R visit(DeclStmt<DeclType> stmt, P param);
 
 	R visit(AssumeStmt stmt, P param);
 
 	R visit(AssertStmt stmt, P param);
 
-	<DeclType extends Type, ExprType extends DeclType> R visit(AssignStmt<DeclType, ExprType> stmt, P param);
+	<DeclType extends Type> R visit(AssignStmt<DeclType> stmt, P param);
 
 	<DeclType extends Type> R visit(HavocStmt<DeclType> stmt, P param);
 

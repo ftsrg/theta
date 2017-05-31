@@ -17,6 +17,7 @@ import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.utils.impl.TypeUtils;
 
 public final class StmtCreatorVisitor extends CoreDslBaseVisitor<Stmt> {
 
@@ -28,17 +29,18 @@ public final class StmtCreatorVisitor extends CoreDslBaseVisitor<Stmt> {
 
 	@Override
 	public Stmt visitAssignStmt(final AssignStmtContext ctx) {
-		final VarDecl<Type> lhs = resolveVar(scope, ctx.lhs.getText());
-		final Expr<? extends Type> value = CoreDslHelper.createExpr(scope, ctx.value);
+		@SuppressWarnings("unchecked")
+		final VarDecl<Type> lhs = (VarDecl<Type>) resolveVar(scope, ctx.lhs.getText());
+		final Expr<?> expr = CoreDslHelper.createExpr(scope, ctx.value);
+		final Expr<Type> value = TypeUtils.cast(expr, lhs.getType());
 		return Assign(lhs, value);
 	}
 
-	private VarDecl<Type> resolveVar(final Scope scope, final String name) {
+	private VarDecl<?> resolveVar(final Scope scope, final String name) {
 		final DeclSymbol declSymbol = CoreDslHelper.resolveDecl(scope, name);
 		final Decl<?> decl = declSymbol.getDecl();
 		checkArgument(decl instanceof VarDecl);
-		@SuppressWarnings("unchecked")
-		final VarDecl<Type> varDecl = (VarDecl<Type>) decl;
+		final VarDecl<?> varDecl = (VarDecl<?>) decl;
 		return varDecl;
 	}
 

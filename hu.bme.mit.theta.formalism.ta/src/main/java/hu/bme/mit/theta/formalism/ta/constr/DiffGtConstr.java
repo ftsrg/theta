@@ -1,13 +1,13 @@
 package hu.bme.mit.theta.formalism.ta.constr;
 
-import static hu.bme.mit.theta.core.expr.Exprs.Gt;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Gt;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Sub;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.expr.GtExpr;
 import hu.bme.mit.theta.core.expr.RefExpr;
 import hu.bme.mit.theta.core.type.RatType;
+import hu.bme.mit.theta.core.type.rattype.RatGtExpr;
 
 public final class DiffGtConstr extends DiffConstr {
 
@@ -15,19 +15,19 @@ public final class DiffGtConstr extends DiffConstr {
 
 	private static final String OPERATOR_LABEL = ">";
 
-	private volatile GtExpr expr = null;
+	private volatile RatGtExpr expr = null;
 
 	DiffGtConstr(final VarDecl<RatType> leftVar, final VarDecl<RatType> rightVar, final int bound) {
 		super(leftVar, rightVar, bound);
 	}
 
 	@Override
-	public GtExpr toExpr() {
-		GtExpr result = expr;
+	public RatGtExpr toExpr() {
+		RatGtExpr result = expr;
 		if (result == null) {
 			final RefExpr<RatType> leftRef = getLeftVar().getRef();
 			final RefExpr<RatType> rightRef = getRightVar().getRef();
-			result = Gt(Sub(leftRef, rightRef), Int(getBound()));
+			result = Gt(Sub(leftRef, rightRef), Rat(getBound(), 1));
 			expr = result;
 		}
 		return result;

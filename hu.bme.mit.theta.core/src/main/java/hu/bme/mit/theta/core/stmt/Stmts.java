@@ -21,13 +21,12 @@ public class Stmts {
 	protected Stmts() {
 	}
 
-	public static <T extends Type> DeclStmt<T, ?> Decl(final VarDecl<T> varDecl) {
+	public static <T extends Type> DeclStmt<T> Decl(final VarDecl<T> varDecl) {
 		checkNotNull(varDecl);
 		return new DeclStmt<>(varDecl);
 	}
 
-	public static <T1 extends Type, T2 extends T1> DeclStmt<T1, T2> Decl(final VarDecl<T1> varDecl,
-			final Expr<T2> initVal) {
+	public static <T extends Type> DeclStmt<T> Decl(final VarDecl<T> varDecl, final Expr<T> initVal) {
 		checkNotNull(varDecl);
 		checkNotNull(initVal);
 		return new DeclStmt<>(varDecl, initVal);
@@ -43,8 +42,7 @@ public class Stmts {
 		return new AssertStmt(cond);
 	}
 
-	public static <T1 extends Type, T2 extends T1> AssignStmt<T1, T2> Assign(final VarDecl<T1> lhs,
-			final Expr<T2> rhs) {
+	public static <T extends Type> AssignStmt<T> Assign(final VarDecl<T> lhs, final Expr<T> rhs) {
 		checkNotNull(lhs);
 		checkNotNull(rhs);
 		return new AssignStmt<>(lhs, rhs);

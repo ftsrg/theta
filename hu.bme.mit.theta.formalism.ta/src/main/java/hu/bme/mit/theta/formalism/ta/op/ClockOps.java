@@ -68,14 +68,13 @@ public final class ClockOps {
 		}
 
 		@Override
-		public <LhsType extends Type> ClockOp visit(final HavocStmt<LhsType> stmt, final Void param) {
+		public <DeclType extends Type> ClockOp visit(final HavocStmt<DeclType> stmt, final Void param) {
 			final VarDecl<RatType> var = TypeUtils.cast(stmt.getVarDecl(), Rat());
 			return Free(var);
 		}
 
 		@Override
-		public <LhsType extends Type, RhsType extends LhsType> ClockOp visit(final AssignStmt<LhsType, RhsType> stmt,
-				final Void param) {
+		public <DeclType extends Type> ClockOp visit(final AssignStmt<DeclType> stmt, final Void param) {
 
 			final VarDecl<RatType> var = TypeUtils.cast(stmt.getVarDecl(), Rat());
 			final Expr<?> expr = stmt.getExpr();

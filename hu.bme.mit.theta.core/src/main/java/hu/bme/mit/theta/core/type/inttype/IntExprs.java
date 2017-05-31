@@ -48,6 +48,22 @@ public final class IntExprs {
 		return new RemExpr(leftOp, rightOp);
 	}
 
+	public static IntLtExpr Lt(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
+		return new IntLtExpr(leftOp, rightOp);
+	}
+
+	public static IntLeqExpr Leq(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
+		return new IntLeqExpr(leftOp, rightOp);
+	}
+
+	public static IntGtExpr Gt(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
+		return new IntGtExpr(leftOp, rightOp);
+	}
+
+	public static IntGeqExpr Geq(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
+		return new IntGeqExpr(leftOp, rightOp);
+	}
+
 	/*
 	 * Convenience methods
 	 */

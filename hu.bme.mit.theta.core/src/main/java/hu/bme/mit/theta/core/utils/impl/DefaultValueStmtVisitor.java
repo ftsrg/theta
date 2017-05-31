@@ -25,8 +25,7 @@ public abstract class DefaultValueStmtVisitor<P, R> implements StmtVisitor<P, R>
 	}
 
 	@Override
-	public <DeclType extends Type, ExprType extends DeclType> R visit(final DeclStmt<DeclType, ExprType> stmt,
-			final P param) {
+	public <DeclType extends Type> R visit(final DeclStmt<DeclType> stmt, final P param) {
 		return defaultValue(param);
 	}
 
@@ -41,8 +40,7 @@ public abstract class DefaultValueStmtVisitor<P, R> implements StmtVisitor<P, R>
 	}
 
 	@Override
-	public <DeclType extends Type, ExprType extends DeclType> R visit(final AssignStmt<DeclType, ExprType> stmt,
-			final P param) {
+	public <DeclType extends Type> R visit(final AssignStmt<DeclType> stmt, final P param) {
 		return defaultValue(param);
 	}
 
