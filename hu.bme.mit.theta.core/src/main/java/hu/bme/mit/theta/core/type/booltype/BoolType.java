@@ -1,8 +1,9 @@
-package hu.bme.mit.theta.core.type;
+package hu.bme.mit.theta.core.type.booltype;
 
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 
 import hu.bme.mit.theta.core.expr.LitExpr;
+import hu.bme.mit.theta.core.type.Type;
 
 public final class BoolType implements Type {
 	private static final BoolType INSTANCE = new BoolType();
@@ -12,7 +13,7 @@ public final class BoolType implements Type {
 	private BoolType() {
 	}
 
-	public static BoolType getInstance() {
+	static BoolType getInstance() {
 		return INSTANCE;
 	}
 

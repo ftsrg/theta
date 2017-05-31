@@ -11,7 +11,7 @@ import java.util.StringJoiner;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.model.Model;
-import hu.bme.mit.theta.core.type.BoolType;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 public abstract class AbstractModel implements Model {
 

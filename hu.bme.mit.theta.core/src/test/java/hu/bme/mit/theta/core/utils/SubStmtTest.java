@@ -6,7 +6,7 @@ import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
 import static hu.bme.mit.theta.core.stmt.Stmts.Block;
 import static hu.bme.mit.theta.core.stmt.Stmts.Havoc;
 import static hu.bme.mit.theta.core.stmt.Stmts.Skip;
-import static hu.bme.mit.theta.core.type.Types.Bool;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 import static org.junit.Assert.assertEquals;
 
@@ -22,7 +22,7 @@ import org.junit.runners.Parameterized.Parameters;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
-import hu.bme.mit.theta.core.type.BoolType;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.impl.StmtUtils;
 
 @RunWith(Parameterized.class)

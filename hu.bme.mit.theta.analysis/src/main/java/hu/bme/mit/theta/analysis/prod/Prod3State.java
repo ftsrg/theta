@@ -8,7 +8,7 @@ import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.common.Product3;
 import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.type.BoolType;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 public final class Prod3State<S1 extends State, S2 extends State, S3 extends State> extends ProdState
 		implements Product3<S1, S2, S3> {

@@ -3,7 +3,7 @@ package hu.bme.mit.theta.splittingcegar.ui.invariantchecker;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 
 import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.type.BoolType;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.impl.PathUtils;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.solver.Solver;

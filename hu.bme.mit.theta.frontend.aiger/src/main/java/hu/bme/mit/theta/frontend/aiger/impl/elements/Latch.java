@@ -2,7 +2,7 @@ package hu.bme.mit.theta.frontend.aiger.impl.elements;
 
 import static hu.bme.mit.theta.core.decl.Decls.Var;
 import static hu.bme.mit.theta.core.expr.Exprs.Prime;
-import static hu.bme.mit.theta.core.type.Types.Bool;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Iff;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 
@@ -10,7 +10,7 @@ import java.util.List;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.type.BoolType;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 public final class Latch extends HwElement {
 	private final int nextState;
@@ -35,7 +35,7 @@ public final class Latch extends HwElement {
 		return Not(varDecl.getRef());
 	}
 
-	public Expr<? extends BoolType> getTransExpr(final List<HwElement> elements) {
+	public Expr<BoolType> getTransExpr(final List<HwElement> elements) {
 		Expr<? extends BoolType> expr = elements.get(nextState / 2).getExpr(elements);
 		if (nextState % 2 != 0)
 			expr = Not(expr);

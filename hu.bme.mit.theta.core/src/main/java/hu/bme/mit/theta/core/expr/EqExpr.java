@@ -1,7 +1,7 @@
 package hu.bme.mit.theta.core.expr;
 
-import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 public abstract class EqExpr<OpType extends Type> extends BinaryExpr<OpType, OpType, BoolType> {
 

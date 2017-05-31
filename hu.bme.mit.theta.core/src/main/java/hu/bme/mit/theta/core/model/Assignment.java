@@ -5,8 +5,8 @@ import java.util.Optional;
 
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 public interface Assignment {
 

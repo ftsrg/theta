@@ -1,6 +1,7 @@
 package hu.bme.mit.theta.core.utils.impl;
 
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
 
@@ -25,12 +26,11 @@ import hu.bme.mit.theta.core.expr.NeqExpr;
 import hu.bme.mit.theta.core.expr.PrimedExpr;
 import hu.bme.mit.theta.core.expr.RefExpr;
 import hu.bme.mit.theta.core.expr.SubExpr;
-import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.Types;
 import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayWriteExpr;
 import hu.bme.mit.theta.core.type.booltype.AndExpr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.ExistsExpr;
 import hu.bme.mit.theta.core.type.booltype.FalseExpr;
 import hu.bme.mit.theta.core.type.booltype.ForallExpr;
@@ -89,7 +89,7 @@ public class CnfTransformation {
 		}
 
 		private Expr<? extends BoolType> getRep(final Expr<?> expr) {
-			final VarDecl<BoolType> rep = Decls.Var(CNFPREFIX + (nextCNFVarId++), Types.Bool());
+			final VarDecl<BoolType> rep = Decls.Var(CNFPREFIX + (nextCNFVarId++), Bool());
 			representatives.put(expr, rep);
 			return rep.getRef();
 		}

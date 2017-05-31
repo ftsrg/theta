@@ -7,10 +7,6 @@ public final class Types {
 	private Types() {
 	}
 
-	public static BoolType Bool() {
-		return BoolType.getInstance();
-	}
-
 	public static IntType Int() {
 		return IntType.getInstance();
 	}

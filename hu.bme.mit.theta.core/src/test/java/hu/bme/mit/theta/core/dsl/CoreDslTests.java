@@ -1,7 +1,7 @@
 package hu.bme.mit.theta.core.dsl;
 
 import static hu.bme.mit.theta.core.decl.Decls.Const;
-import static hu.bme.mit.theta.core.type.Types.Bool;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 
 import org.junit.Test;
 

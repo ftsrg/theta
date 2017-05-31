@@ -17,7 +17,7 @@ import hu.bme.mit.theta.core.dsl.DeclSymbol;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.model.Assignment;
 import hu.bme.mit.theta.core.model.impl.NestedAssignment;
-import hu.bme.mit.theta.core.type.BoolType;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.formalism.sts.dsl.gen.StsDslParser.ConstDeclContext;
 import hu.bme.mit.theta.formalism.sts.dsl.gen.StsDslParser.DefStsContext;

@@ -3,8 +3,8 @@ package hu.bme.mit.theta.core.expr;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import hu.bme.mit.theta.core.decl.Decl;
-import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 public final class Exprs {
 

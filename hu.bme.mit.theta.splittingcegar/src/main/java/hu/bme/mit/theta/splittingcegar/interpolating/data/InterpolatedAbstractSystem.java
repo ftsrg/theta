@@ -7,8 +7,8 @@ import java.util.Set;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.splittingcegar.common.data.AbstractSystemBase;
 import hu.bme.mit.theta.splittingcegar.common.data.KripkeStructure;

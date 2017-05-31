@@ -5,7 +5,7 @@ import java.util.Collection;
 import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.type.BoolType;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 public final class UnfoldResult {
 	final Collection<Expr<? extends BoolType>> exprs;

@@ -7,8 +7,8 @@ import java.util.stream.Collectors;
 import com.google.common.collect.ImmutableSet;
 
 import hu.bme.mit.theta.common.Utils;
-import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.NotExpr;
 
 public final class SmartExprs {

@@ -1,11 +1,11 @@
 package hu.bme.mit.theta.core.type.rattype;
 
-import static hu.bme.mit.theta.core.type.Types.Bool;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.GtExpr;
-import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.RatType;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.ExprVisitor;
 
 public final class RatGtExpr extends GtExpr<RatType> {

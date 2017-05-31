@@ -21,8 +21,8 @@ import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.StmtListContext;
 import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.TypeContext;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.stmt.Stmt;
-import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.impl.TypeUtils;
 
 public final class CoreDslHelper {

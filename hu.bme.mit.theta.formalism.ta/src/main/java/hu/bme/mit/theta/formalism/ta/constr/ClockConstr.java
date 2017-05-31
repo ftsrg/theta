@@ -4,8 +4,8 @@ import java.util.Collection;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.RatType;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 public interface ClockConstr {
 

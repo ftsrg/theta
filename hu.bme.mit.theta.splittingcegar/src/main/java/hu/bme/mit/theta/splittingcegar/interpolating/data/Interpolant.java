@@ -10,8 +10,8 @@ import java.util.Iterator;
 import java.util.List;
 
 import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 /**
  * Class representing a sequence or binary interpolant. A binary interpolant is

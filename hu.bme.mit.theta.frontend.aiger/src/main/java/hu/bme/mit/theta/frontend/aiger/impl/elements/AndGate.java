@@ -6,7 +6,7 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 import java.util.List;
 
 import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.type.BoolType;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 public final class AndGate extends HwElement {
 	private final int rhs1, rhs2;

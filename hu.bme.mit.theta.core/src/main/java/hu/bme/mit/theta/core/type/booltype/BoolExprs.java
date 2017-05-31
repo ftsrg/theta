@@ -7,11 +7,14 @@ import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.type.BoolType;
 
 public final class BoolExprs {
 
 	private BoolExprs() {
+	}
+
+	public static BoolType Bool() {
+		return BoolType.getInstance();
 	}
 
 	public static BoolLitExpr Bool(final boolean value) {

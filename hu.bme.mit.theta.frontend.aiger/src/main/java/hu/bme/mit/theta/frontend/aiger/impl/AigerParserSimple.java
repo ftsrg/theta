@@ -3,6 +3,7 @@ package hu.bme.mit.theta.frontend.aiger.impl;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.expr.Exprs.Prime;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Iff;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 
@@ -16,8 +17,7 @@ import java.util.List;
 import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.type.BoolType;
-import hu.bme.mit.theta.core.type.Types;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.frontend.aiger.AigerParser;
 
@@ -46,7 +46,7 @@ public class AigerParserSimple implements AigerParser {
 			final List<VarDecl<BoolType>> vars = new ArrayList<>(maxVars + 1);
 			final List<Expr<? extends BoolType>> outVars = new ArrayList<>(1);
 			for (int i = 0; i <= maxVars; ++i)
-				vars.add(Decls.Var("v" + i, Types.Bool()));
+				vars.add(Decls.Var("v" + i, Bool()));
 			// v0 is the constant 'false'
 			builder.addInvar(Not(vars.get(0).getRef()));
 

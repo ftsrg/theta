@@ -6,7 +6,7 @@ import static hu.bme.mit.theta.formalism.sts.dsl.StsDslHelper.createBoolExpr;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.model.Assignment;
-import hu.bme.mit.theta.core.type.BoolType;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.formalism.sts.dsl.gen.StsDslParser.PropDeclContext;
 
