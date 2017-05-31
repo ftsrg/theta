@@ -2,7 +2,7 @@ package hu.bme.mit.theta.core.decl;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.type.Types.Proc;
+import static hu.bme.mit.theta.core.type.proctype.ProcExprs.Proc;
 import static java.util.stream.Collectors.toList;
 
 import java.util.List;
@@ -10,8 +10,8 @@ import java.util.stream.Stream;
 
 import com.google.common.collect.ImmutableList;
 
-import hu.bme.mit.theta.core.type.ProcType;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.proctype.ProcType;
 import hu.bme.mit.theta.core.utils.DeclVisitor;
 
 public final class ProcDecl<ReturnType extends Type> extends Decl<ProcType<ReturnType>> {

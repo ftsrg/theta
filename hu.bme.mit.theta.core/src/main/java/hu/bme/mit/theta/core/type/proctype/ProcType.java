@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.core.type;
+package hu.bme.mit.theta.core.type.proctype;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -8,6 +8,7 @@ import java.util.StringJoiner;
 import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.theta.core.expr.LitExpr;
+import hu.bme.mit.theta.core.type.Type;
 
 public final class ProcType<ReturnType extends Type> implements Type {
 
@@ -19,7 +20,7 @@ public final class ProcType<ReturnType extends Type> implements Type {
 
 	private volatile int hashCode = 0;
 
-	public ProcType(final List<? extends Type> paramTypes, final ReturnType returnType) {
+	ProcType(final List<? extends Type> paramTypes, final ReturnType returnType) {
 		this.paramTypes = ImmutableList.copyOf(checkNotNull(paramTypes));
 		this.returnType = checkNotNull(returnType);
 	}

@@ -1,7 +1,5 @@
 package hu.bme.mit.theta.core.type;
 
-import java.util.List;
-
 public final class Types {
 
 	private Types() {
@@ -21,10 +19,6 @@ public final class Types {
 
 	public static <I extends Type, E extends Type> ArrayType<I, E> Array(final I indexType, final E elemType) {
 		return new ArrayType<>(indexType, elemType);
-	}
-
-	public static <R extends Type> ProcType<R> Proc(final List<? extends Type> paramTypes, final R returnType) {
-		return new ProcType<>(paramTypes, returnType);
 	}
 
 }
