@@ -4,7 +4,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.type.FuncType;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.utils.ExprVisitor;
 

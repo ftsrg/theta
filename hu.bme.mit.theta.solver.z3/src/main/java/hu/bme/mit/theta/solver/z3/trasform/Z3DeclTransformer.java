@@ -12,8 +12,8 @@ import hu.bme.mit.theta.common.Tuple;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.ParamDecl;
-import hu.bme.mit.theta.core.type.FuncType;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.utils.DeclVisitor;
 
 class Z3DeclTransformer {

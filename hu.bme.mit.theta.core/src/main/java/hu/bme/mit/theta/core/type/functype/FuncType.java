@@ -1,8 +1,9 @@
-package hu.bme.mit.theta.core.type;
+package hu.bme.mit.theta.core.type.functype;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import hu.bme.mit.theta.core.expr.LitExpr;
+import hu.bme.mit.theta.core.type.Type;
 
 public final class FuncType<ParamType extends Type, ResultType extends Type> implements Type {
 
@@ -14,7 +15,7 @@ public final class FuncType<ParamType extends Type, ResultType extends Type> imp
 
 	private volatile int hashCode = 0;
 
-	public FuncType(final ParamType paramType, final ResultType resultType) {
+	FuncType(final ParamType paramType, final ResultType resultType) {
 		this.paramType = checkNotNull(paramType);
 		this.resultType = checkNotNull(resultType);
 	}

@@ -2,12 +2,15 @@ package hu.bme.mit.theta.core.type.functype;
 
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.type.FuncType;
 import hu.bme.mit.theta.core.type.Type;
 
 public final class FuncExprs {
 
 	private FuncExprs() {
+	}
+
+	public static <P extends Type, R extends Type> FuncType<P, R> Func(final P paramType, final R resultType) {
+		return new FuncType<>(paramType, resultType);
 	}
 
 	public static <P extends Type, R extends Type> FuncLitExpr<? super P, ? extends R> Func(

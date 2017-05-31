@@ -19,10 +19,6 @@ public final class Types {
 		return UnitType.getInstance();
 	}
 
-	public static <P extends Type, R extends Type> FuncType<P, R> Func(final P paramType, final R resultType) {
-		return new FuncType<>(paramType, resultType);
-	}
-
 	public static <I extends Type, E extends Type> ArrayType<I, E> Array(final I indexType, final E elemType) {
 		return new ArrayType<>(indexType, elemType);
 	}
