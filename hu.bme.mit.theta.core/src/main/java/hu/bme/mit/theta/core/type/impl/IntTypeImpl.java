@@ -8,7 +8,6 @@ import hu.bme.mit.theta.core.expr.LitExpr;
 import hu.bme.mit.theta.core.type.IntType;
 import hu.bme.mit.theta.core.type.RatType;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.utils.TypeVisitor;
 
 final class IntTypeImpl implements IntType {
 
@@ -53,11 +52,6 @@ final class IntTypeImpl implements IntType {
 		} else {
 			return Optional.empty();
 		}
-	}
-
-	@Override
-	public <P, R> R accept(final TypeVisitor<? super P, ? extends R> visitor, final P param) {
-		return visitor.visit(this, param);
 	}
 
 	@Override

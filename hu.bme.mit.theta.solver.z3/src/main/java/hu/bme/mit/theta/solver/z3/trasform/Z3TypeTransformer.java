@@ -1,88 +1,42 @@
 package hu.bme.mit.theta.solver.z3.trasform;
 
 import com.microsoft.z3.Context;
-import com.microsoft.z3.Sort;
 
-import hu.bme.mit.theta.core.type.ArrayType;
 import hu.bme.mit.theta.core.type.BoolType;
-import hu.bme.mit.theta.core.type.FuncType;
 import hu.bme.mit.theta.core.type.IntType;
-import hu.bme.mit.theta.core.type.ProcType;
 import hu.bme.mit.theta.core.type.RatType;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.UnitType;
-import hu.bme.mit.theta.core.utils.TypeVisitor;
 
 class Z3TypeTransformer {
 
 	@SuppressWarnings("unused")
 	private final Z3TransformationManager transformer;
+	@SuppressWarnings("unused")
 	private final Context context;
 
-	private final Z3TypeTransformerVisitor visitor;
+	private final com.microsoft.z3.BoolSort boolSort;
+	private final com.microsoft.z3.IntSort intSort;
+	private final com.microsoft.z3.RealSort realSort;
 
 	Z3TypeTransformer(final Z3TransformationManager transformer, final Context context) {
 		this.context = context;
 		this.transformer = transformer;
-		visitor = new Z3TypeTransformerVisitor();
+
+		boolSort = context.mkBoolSort();
+		intSort = context.mkIntSort();
+		realSort = context.mkRealSort();
 	}
 
 	public com.microsoft.z3.Sort toSort(final Type type) {
-		return type.accept(visitor, null);
-	}
-
-	private class Z3TypeTransformerVisitor implements TypeVisitor<Void, com.microsoft.z3.Sort> {
-		private final com.microsoft.z3.BoolSort boolSort;
-		private final com.microsoft.z3.IntSort intSort;
-		private final com.microsoft.z3.RealSort ratSort;
-
-		private Z3TypeTransformerVisitor() {
-
-			boolSort = context.mkBoolSort();
-			intSort = context.mkIntSort();
-			ratSort = context.mkRealSort();
-		}
-
-		@Override
-		public com.microsoft.z3.Sort visit(final BoolType type, final Void param) {
+		if (type instanceof BoolType) {
 			return boolSort;
-		}
-
-		@Override
-		public com.microsoft.z3.Sort visit(final IntType type, final Void param) {
+		} else if (type instanceof IntType) {
 			return intSort;
-		}
-
-		@Override
-		public com.microsoft.z3.Sort visit(final RatType type, final Void param) {
-			return ratSort;
-		}
-
-		@Override
-		public Sort visit(final UnitType type, final Void param) {
+		} else if (type instanceof RatType) {
+			return realSort;
+		} else {
 			throw new UnsupportedOperationException();
 		}
-
-		@Override
-		public <ParamType extends Type, ResultType extends Type> com.microsoft.z3.Sort visit(
-				final FuncType<ParamType, ResultType> type, final Void param) {
-			// TODO Auto-generated method stub
-			throw new UnsupportedOperationException("TODO: auto-generated method stub");
-		}
-
-		@Override
-		public <IndexType extends Type, ElemType extends Type> com.microsoft.z3.Sort visit(
-				final ArrayType<IndexType, ElemType> type, final Void param) {
-			final Sort indexSort = type.getIndexType().accept(this, param);
-			final Sort elemSort = type.getElemType().accept(this, param);
-			return context.mkArraySort(indexSort, elemSort);
-		}
-
-		@Override
-		public <ReturnType extends Type> Sort visit(final ProcType<ReturnType> type, final Void param) {
-			throw new UnsupportedOperationException();
-		}
-
 	}
 
 }

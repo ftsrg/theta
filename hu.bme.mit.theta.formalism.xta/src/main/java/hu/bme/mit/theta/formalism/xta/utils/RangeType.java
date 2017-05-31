@@ -11,7 +11,6 @@ import hu.bme.mit.theta.core.expr.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.inttype.IntExprs;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
-import hu.bme.mit.theta.core.utils.TypeVisitor;
 
 public final class RangeType implements Type {
 	private static final int HASH_SEED = 5441;
@@ -98,12 +97,6 @@ public final class RangeType implements Type {
 
 	@Override
 	public Optional<? extends Type> join(final Type type) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
-	}
-
-	@Override
-	public <P, R> R accept(final TypeVisitor<? super P, ? extends R> visitor, final P param) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}

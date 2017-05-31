@@ -5,7 +5,6 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 import java.util.Optional;
 
 import hu.bme.mit.theta.core.expr.LitExpr;
-import hu.bme.mit.theta.core.utils.TypeVisitor;
 
 public final class BoolType implements Type {
 	private static final BoolType INSTANCE = new BoolType();
@@ -49,11 +48,6 @@ public final class BoolType implements Type {
 			assert !this.isLeq(type);
 			return Optional.empty();
 		}
-	}
-
-	@Override
-	public <P, R> R accept(final TypeVisitor<? super P, ? extends R> visitor, final P param) {
-		return visitor.visit(this, param);
 	}
 
 	@Override

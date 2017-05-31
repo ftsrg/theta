@@ -9,7 +9,6 @@ import java.util.StringJoiner;
 import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.theta.core.expr.LitExpr;
-import hu.bme.mit.theta.core.utils.TypeVisitor;
 
 public final class ProcType<ReturnType extends Type> implements Type {
 
@@ -56,11 +55,6 @@ public final class ProcType<ReturnType extends Type> implements Type {
 	public Optional<? extends Type> join(final Type type) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO: auto-generated method stub");
-	}
-
-	@Override
-	public <P, R> R accept(final TypeVisitor<? super P, ? extends R> visitor, final P param) {
-		return visitor.visit(this, param);
 	}
 
 	@Override

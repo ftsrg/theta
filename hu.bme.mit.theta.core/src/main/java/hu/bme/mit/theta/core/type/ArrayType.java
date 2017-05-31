@@ -6,7 +6,6 @@ import static hu.bme.mit.theta.core.type.impl.Types.Array;
 import java.util.Optional;
 
 import hu.bme.mit.theta.core.expr.LitExpr;
-import hu.bme.mit.theta.core.utils.TypeVisitor;
 
 public final class ArrayType<IndexType extends Type, ElemType extends Type> implements Type {
 
@@ -77,11 +76,6 @@ public final class ArrayType<IndexType extends Type, ElemType extends Type> impl
 		}
 
 		return Optional.empty();
-	}
-
-	@Override
-	public <P, R> R accept(final TypeVisitor<? super P, ? extends R> visitor, final P param) {
-		return visitor.visit(this, param);
 	}
 
 	@Override
