@@ -6,8 +6,6 @@ import com.google.common.math.IntMath;
 
 import hu.bme.mit.theta.core.expr.LitExpr;
 import hu.bme.mit.theta.core.expr.NullaryExpr;
-import hu.bme.mit.theta.core.type.RatType;
-import hu.bme.mit.theta.core.type.Types;
 import hu.bme.mit.theta.core.utils.ExprVisitor;
 
 public final class RatLitExpr extends NullaryExpr<RatType> implements LitExpr<RatType>, Comparable<RatLitExpr> {
@@ -34,6 +32,10 @@ public final class RatLitExpr extends NullaryExpr<RatType> implements LitExpr<Ra
 
 	private static RatLitExpr Rat(final int num, final int denom) {
 		return new RatLitExpr(num, denom);
+	}
+
+	private static RatType Rat() {
+		return RatExprs.Rat();
 	}
 
 	public int getNum() {
@@ -92,7 +94,7 @@ public final class RatLitExpr extends NullaryExpr<RatType> implements LitExpr<Ra
 
 	@Override
 	public RatType getType() {
-		return Types.Rat();
+		return Rat();
 	}
 
 	@Override

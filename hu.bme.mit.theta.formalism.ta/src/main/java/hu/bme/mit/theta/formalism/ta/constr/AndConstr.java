@@ -10,8 +10,8 @@ import java.util.StringJoiner;
 import com.google.common.collect.ImmutableSet;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.type.RatType;
 import hu.bme.mit.theta.core.type.booltype.AndExpr;
+import hu.bme.mit.theta.core.type.rattype.RatType;
 
 public final class AndConstr implements ClockConstr {
 

@@ -4,7 +4,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.type.RatType;
+import hu.bme.mit.theta.core.type.rattype.RatType;
 import hu.bme.mit.theta.formalism.ta.constr.ClockConstr;
 import hu.bme.mit.theta.formalism.ta.constr.ClockConstrs;
 

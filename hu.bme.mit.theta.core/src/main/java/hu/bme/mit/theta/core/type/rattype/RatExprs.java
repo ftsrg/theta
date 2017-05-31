@@ -5,11 +5,14 @@ import java.util.Collection;
 import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.type.RatType;
 
 public final class RatExprs {
 
 	private RatExprs() {
+	}
+
+	public static RatType Rat() {
+		return RatType.getInstance();
 	}
 
 	public static RatLitExpr Rat(final int num, final int denom) {

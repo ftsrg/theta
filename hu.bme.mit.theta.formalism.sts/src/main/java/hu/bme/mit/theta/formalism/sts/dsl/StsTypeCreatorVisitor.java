@@ -2,10 +2,10 @@ package hu.bme.mit.theta.formalism.sts.dsl;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static hu.bme.mit.theta.core.type.Types.Int;
-import static hu.bme.mit.theta.core.type.Types.Rat;
 import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.functype.FuncExprs.Func;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 import static java.util.stream.Collectors.toList;
 
 import java.util.Collections;

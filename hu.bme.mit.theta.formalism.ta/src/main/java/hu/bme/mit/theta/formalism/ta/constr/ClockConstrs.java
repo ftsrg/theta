@@ -1,7 +1,7 @@
 package hu.bme.mit.theta.formalism.ta.constr;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.type.Types.Rat;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 
 import java.util.Collection;
 import java.util.List;
@@ -19,13 +19,13 @@ import hu.bme.mit.theta.core.expr.GtExpr;
 import hu.bme.mit.theta.core.expr.LeqExpr;
 import hu.bme.mit.theta.core.expr.LtExpr;
 import hu.bme.mit.theta.core.expr.RefExpr;
-import hu.bme.mit.theta.core.type.RatType;
 import hu.bme.mit.theta.core.type.booltype.AndExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.FalseExpr;
 import hu.bme.mit.theta.core.type.booltype.TrueExpr;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.type.rattype.RatSubExpr;
+import hu.bme.mit.theta.core.type.rattype.RatType;
 import hu.bme.mit.theta.core.utils.impl.FailExprVisitor;
 import hu.bme.mit.theta.core.utils.impl.TypeUtils;
 

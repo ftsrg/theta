@@ -2,7 +2,7 @@ package hu.bme.mit.theta.formalism.xta.dsl;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.type.Types.Rat;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 import static java.util.stream.Collectors.toList;
 
 import java.util.ArrayList;
@@ -19,9 +19,9 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.RefExpr;
 import hu.bme.mit.theta.core.type.IntType;
-import hu.bme.mit.theta.core.type.RatType;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.rattype.RatType;
 import hu.bme.mit.theta.core.utils.impl.TypeUtils;
 import hu.bme.mit.theta.formalism.xta.XtaProcess;
 import hu.bme.mit.theta.formalism.xta.XtaProcess.Loc;

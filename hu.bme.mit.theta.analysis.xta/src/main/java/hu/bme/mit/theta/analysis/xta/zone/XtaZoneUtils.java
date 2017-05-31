@@ -14,7 +14,7 @@ import hu.bme.mit.theta.analysis.xta.XtaAction.SyncedXtaAction;
 import hu.bme.mit.theta.analysis.zone.ZonePrec;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.type.RatType;
+import hu.bme.mit.theta.core.type.rattype.RatType;
 import hu.bme.mit.theta.formalism.ta.op.ResetOp;
 import hu.bme.mit.theta.formalism.xta.Guard;
 import hu.bme.mit.theta.formalism.xta.Update;

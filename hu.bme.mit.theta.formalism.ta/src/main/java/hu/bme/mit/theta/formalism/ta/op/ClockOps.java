@@ -1,6 +1,6 @@
 package hu.bme.mit.theta.formalism.ta.op;
 
-import static hu.bme.mit.theta.core.type.Types.Rat;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.VarDecl;
@@ -11,11 +11,11 @@ import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
-import hu.bme.mit.theta.core.type.RatType;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.type.rattype.RatLitExpr;
+import hu.bme.mit.theta.core.type.rattype.RatType;
 import hu.bme.mit.theta.core.utils.impl.FailStmtVisitor;
 import hu.bme.mit.theta.core.utils.impl.TypeUtils;
 import hu.bme.mit.theta.formalism.ta.constr.ClockConstr;

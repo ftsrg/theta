@@ -9,10 +9,6 @@ public final class Types {
 		return IntType.getInstance();
 	}
 
-	public static RatType Rat() {
-		return RatType.getInstance();
-	}
-
 	public static UnitType Unit() {
 		return UnitType.getInstance();
 	}

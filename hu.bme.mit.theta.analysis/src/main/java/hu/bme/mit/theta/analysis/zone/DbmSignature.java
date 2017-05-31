@@ -16,7 +16,7 @@ import com.google.common.collect.Sets;
 
 import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.type.RatType;
+import hu.bme.mit.theta.core.type.rattype.RatType;
 
 final class DbmSignature implements Iterable<VarDecl<RatType>> {
 

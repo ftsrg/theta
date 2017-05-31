@@ -1,11 +1,11 @@
 package hu.bme.mit.theta.core.type.inttype;
 
-import static hu.bme.mit.theta.core.type.Types.Rat;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.UnaryExpr;
 import hu.bme.mit.theta.core.type.IntType;
-import hu.bme.mit.theta.core.type.RatType;
+import hu.bme.mit.theta.core.type.rattype.RatType;
 import hu.bme.mit.theta.core.utils.ExprVisitor;
 
 public final class IntToRatExpr extends UnaryExpr<IntType, RatType> {

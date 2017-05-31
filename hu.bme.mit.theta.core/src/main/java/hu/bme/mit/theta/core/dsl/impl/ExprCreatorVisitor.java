@@ -82,7 +82,6 @@ import hu.bme.mit.theta.core.expr.MulExpr;
 import hu.bme.mit.theta.core.expr.RefExpr;
 import hu.bme.mit.theta.core.expr.SubExpr;
 import hu.bme.mit.theta.core.type.IntType;
-import hu.bme.mit.theta.core.type.RatType;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.FalseExpr;
@@ -98,6 +97,7 @@ import hu.bme.mit.theta.core.type.inttype.ModExpr;
 import hu.bme.mit.theta.core.type.inttype.RemExpr;
 import hu.bme.mit.theta.core.type.rattype.RatDivExpr;
 import hu.bme.mit.theta.core.type.rattype.RatLitExpr;
+import hu.bme.mit.theta.core.type.rattype.RatType;
 import hu.bme.mit.theta.core.utils.impl.TypeUtils;
 
 public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {

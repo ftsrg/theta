@@ -6,8 +6,8 @@ import static hu.bme.mit.theta.core.type.rattype.RatExprs.Sub;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.RefExpr;
-import hu.bme.mit.theta.core.type.RatType;
 import hu.bme.mit.theta.core.type.rattype.RatGeqExpr;
+import hu.bme.mit.theta.core.type.rattype.RatType;
 
 public final class DiffGeqConstr extends DiffConstr {
 

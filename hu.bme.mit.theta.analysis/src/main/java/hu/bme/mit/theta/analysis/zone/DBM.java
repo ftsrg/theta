@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 import com.google.common.collect.Sets;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.type.RatType;
+import hu.bme.mit.theta.core.type.rattype.RatType;
 import hu.bme.mit.theta.formalism.ta.constr.AndConstr;
 import hu.bme.mit.theta.formalism.ta.constr.ClockConstr;
 import hu.bme.mit.theta.formalism.ta.constr.ClockConstrVisitor;

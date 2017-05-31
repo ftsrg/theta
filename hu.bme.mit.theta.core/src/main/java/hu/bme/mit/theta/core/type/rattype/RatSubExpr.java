@@ -1,10 +1,9 @@
 package hu.bme.mit.theta.core.type.rattype;
 
-import static hu.bme.mit.theta.core.type.Types.Rat;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.SubExpr;
-import hu.bme.mit.theta.core.type.RatType;
 import hu.bme.mit.theta.core.utils.ExprVisitor;
 
 public final class RatSubExpr extends SubExpr<RatType> {
