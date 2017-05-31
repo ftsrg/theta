@@ -157,7 +157,7 @@ public class ClusteredChecker extends AbstractCEGARStep
 				: new AbstractResult<>(counterExample, null, exploredStates.size());
 	}
 
-	private boolean checkProp(final ClusteredAbstractState state, final Expr<? extends BoolType> expr,
+	private boolean checkProp(final ClusteredAbstractState state, final Expr<BoolType> expr,
 			final Solver solver, final STS sts) {
 		solver.push();
 		for (final ComponentAbstractState as : state.getStates())

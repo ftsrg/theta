@@ -15,7 +15,7 @@ public final class ProcExprs {
 	}
 
 	public static <ReturnType extends Type> ProcCallExpr<ReturnType> Call(
-			final Expr<? extends ProcType<? extends ReturnType>> proc, final List<? extends Expr<?>> params) {
+			final Expr<ProcType<? extends ReturnType>> proc, final List<? extends Expr<?>> params) {
 		return new ProcCallExpr<>(proc, params);
 	}
 

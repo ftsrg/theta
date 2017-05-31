@@ -97,7 +97,7 @@ final class StsDefScope implements Scope {
 	}
 
 	private void createInvarConstr(final InvarConstrContext invarConstrCtx) {
-		final Expr<? extends BoolType> cond = createBoolExpr(this, assignment, invarConstrCtx.cond);
+		final Expr<BoolType> cond = createBoolExpr(this, assignment, invarConstrCtx.cond);
 		stsBuilder.addInvar(cond);
 	}
 
@@ -106,7 +106,7 @@ final class StsDefScope implements Scope {
 	}
 
 	private void createInitConstr(final InitConstrContext initConstrCtx) {
-		final Expr<? extends BoolType> cond = createBoolExpr(this, assignment, initConstrCtx.cond);
+		final Expr<BoolType> cond = createBoolExpr(this, assignment, initConstrCtx.cond);
 		stsBuilder.addInit(cond);
 	}
 
@@ -115,7 +115,7 @@ final class StsDefScope implements Scope {
 	}
 
 	private void createTransConstr(final TransConstrContext transConstrCtx) {
-		final Expr<? extends BoolType> cond = createBoolExpr(this, assignment, transConstrCtx.cond);
+		final Expr<BoolType> cond = createBoolExpr(this, assignment, transConstrCtx.cond);
 		stsBuilder.addTrans(cond);
 	}
 

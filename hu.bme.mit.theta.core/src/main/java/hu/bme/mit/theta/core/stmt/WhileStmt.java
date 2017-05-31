@@ -12,15 +12,15 @@ public final class WhileStmt implements Stmt {
 	private final static int HASH_SEED = 631;
 	private volatile int hashCode = 0;
 
-	private final Expr<? extends BoolType> cond;
+	private final Expr<BoolType> cond;
 	private final Stmt doStmt;
 
-	WhileStmt(final Expr<? extends BoolType> cond, final Stmt doStmt) {
+	WhileStmt(final Expr<BoolType> cond, final Stmt doStmt) {
 		this.cond = checkNotNull(cond);
 		this.doStmt = checkNotNull(doStmt);
 	}
 
-	public Expr<? extends BoolType> getCond() {
+	public Expr<BoolType> getCond() {
 		return cond;
 	}
 

@@ -109,12 +109,12 @@ public class IteEliminatorTest {
 
 	@Test
 	public void testNothingHappening() {
-		final List<Expr<? extends BoolType>> expressions = new ArrayList<>();
+		final List<Expr<BoolType>> expressions = new ArrayList<>();
 		expressions.add(And(a, b, d));
 		expressions.add(Eq(x, Neg(y)));
 		expressions.add(Geq(Sub(x, y), Add(x, z, t)));
 
-		for (final Expr<? extends BoolType> expr : expressions)
+		for (final Expr<BoolType> expr : expressions)
 			assertEquals(expr, eliminateITE(expr));
 	}
 

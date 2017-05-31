@@ -46,7 +46,7 @@ public final class StmtCreatorVisitor extends CoreDslBaseVisitor<Stmt> {
 
 	@Override
 	public AssumeStmt visitAssumeStmt(final AssumeStmtContext ctx) {
-		final Expr<? extends BoolType> cond = CoreDslHelper.createBoolExpr(scope, ctx.cond);
+		final Expr<BoolType> cond = CoreDslHelper.createBoolExpr(scope, ctx.cond);
 		return Assume(cond);
 	}
 

@@ -14,21 +14,20 @@ public final class ArrayReadExpr<IndexType extends Type, ElemType extends Type> 
 
 	private volatile int hashCode = 0;
 
-	private final Expr<? extends ArrayType<? super IndexType, ? extends ElemType>> array;
-	private final Expr<? extends IndexType> index;
+	private final Expr<ArrayType<IndexType, ElemType>> array;
+	private final Expr<IndexType> index;
 
-	ArrayReadExpr(final Expr<? extends ArrayType<? super IndexType, ? extends ElemType>> array,
-			final Expr<? extends IndexType> index) {
+	ArrayReadExpr(final Expr<ArrayType<IndexType, ElemType>> array, final Expr<IndexType> index) {
 
 		this.array = checkNotNull(array);
 		this.index = checkNotNull(index);
 	}
 
-	public Expr<? extends ArrayType<? super IndexType, ? extends ElemType>> getArray() {
+	public Expr<ArrayType<IndexType, ElemType>> getArray() {
 		return array;
 	}
 
-	public Expr<? extends IndexType> getIndex() {
+	public Expr<IndexType> getIndex() {
 		return index;
 	}
 
@@ -37,9 +36,8 @@ public final class ArrayReadExpr<IndexType extends Type, ElemType extends Type> 
 		return array.getType().getElemType();
 	}
 
-	public ArrayReadExpr<IndexType, ElemType> with(
-			final Expr<? extends ArrayType<? super IndexType, ? extends ElemType>> array,
-			final Expr<? extends IndexType> index) {
+	public ArrayReadExpr<IndexType, ElemType> with(final Expr<ArrayType<IndexType, ElemType>> array,
+			final Expr<IndexType> index) {
 
 		if (this.array == array && this.index == index) {
 			return this;
@@ -48,12 +46,11 @@ public final class ArrayReadExpr<IndexType extends Type, ElemType extends Type> 
 		}
 	}
 
-	public ArrayReadExpr<IndexType, ElemType> withArray(
-			final Expr<? extends ArrayType<? super IndexType, ? extends ElemType>> array) {
+	public ArrayReadExpr<IndexType, ElemType> withArray(final Expr<ArrayType<IndexType, ElemType>> array) {
 		return with(array, getIndex());
 	}
 
-	public ArrayReadExpr<IndexType, ElemType> withIndex(final Expr<? extends IndexType> index) {
+	public ArrayReadExpr<IndexType, ElemType> withIndex(final Expr<IndexType> index) {
 		return with(getArray(), index);
 	}
 

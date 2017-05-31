@@ -32,7 +32,7 @@ public final class ZoneState implements ExprState {
 	private static final int HASH_SEED = 4349;
 
 	private volatile int hashCode = 0;
-	private volatile Expr<? extends BoolType> expr = null;
+	private volatile Expr<BoolType> expr = null;
 
 	private final DBM dbm;
 
@@ -160,10 +160,10 @@ public final class ZoneState implements ExprState {
 	////
 
 	@Override
-	public Expr<? extends BoolType> toExpr() {
-		Expr<? extends BoolType> result = expr;
+	public Expr<BoolType> toExpr() {
+		Expr<BoolType> result = expr;
 		if (result == null) {
-			final Collection<Expr<? extends BoolType>> exprs = dbm.getConstrs().stream().map(ClockConstr::toExpr)
+			final Collection<Expr<BoolType>> exprs = dbm.getConstrs().stream().map(ClockConstr::toExpr)
 					.collect(toList());
 			result = And(exprs);
 			expr = result;

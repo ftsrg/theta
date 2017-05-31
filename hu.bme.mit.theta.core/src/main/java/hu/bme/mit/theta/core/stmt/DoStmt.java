@@ -13,9 +13,9 @@ public final class DoStmt implements Stmt {
 	private volatile int hashCode = 0;
 
 	private final Stmt doStmt;
-	private final Expr<? extends BoolType> cond;
+	private final Expr<BoolType> cond;
 
-	DoStmt(final Stmt doStmt, final Expr<? extends BoolType> cond) {
+	DoStmt(final Stmt doStmt, final Expr<BoolType> cond) {
 		this.doStmt = checkNotNull(doStmt);
 		this.cond = checkNotNull(cond);
 	}
@@ -24,7 +24,7 @@ public final class DoStmt implements Stmt {
 		return doStmt;
 	}
 
-	public Expr<? extends BoolType> getCond() {
+	public Expr<BoolType> getCond() {
 		return cond;
 	}
 

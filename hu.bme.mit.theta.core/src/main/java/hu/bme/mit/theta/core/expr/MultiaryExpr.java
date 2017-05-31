@@ -2,7 +2,7 @@ package hu.bme.mit.theta.core.expr;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.util.Collection;
+import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 
@@ -11,15 +11,15 @@ import hu.bme.mit.theta.core.type.Type;
 
 public abstract class MultiaryExpr<OpsType extends Type, ExprType extends Type> implements Expr<ExprType> {
 
-	private final Collection<Expr<? extends OpsType>> ops;
+	private final List<Expr<OpsType>> ops;
 
 	private volatile int hashCode = 0;
 
-	protected MultiaryExpr(final Collection<? extends Expr<? extends OpsType>> ops) {
+	protected MultiaryExpr(final Iterable<? extends Expr<OpsType>> ops) {
 		this.ops = ImmutableList.copyOf(checkNotNull(ops));
 	}
 
-	public final Collection<? extends Expr<? extends OpsType>> getOps() {
+	public final List<Expr<OpsType>> getOps() {
 		return ops;
 	}
 
@@ -39,7 +39,7 @@ public abstract class MultiaryExpr<OpsType extends Type, ExprType extends Type> 
 		return ObjectUtils.toStringBuilder(getOperatorLabel()).addAll(ops).toString();
 	}
 
-	public abstract MultiaryExpr<OpsType, ExprType> withOps(final Collection<? extends Expr<? extends OpsType>> ops);
+	public abstract MultiaryExpr<OpsType, ExprType> withOps(final Iterable<? extends Expr<OpsType>> ops);
 
 	protected abstract int getHashSeed();
 

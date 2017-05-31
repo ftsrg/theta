@@ -79,7 +79,7 @@ public class VisibleAbstractState implements AbstractState {
 	}
 
 	@Override
-	public Expr<? extends BoolType> createExpression() {
+	public Expr<BoolType> createExpression() {
 		return valuation.toExpr();
 	}
 

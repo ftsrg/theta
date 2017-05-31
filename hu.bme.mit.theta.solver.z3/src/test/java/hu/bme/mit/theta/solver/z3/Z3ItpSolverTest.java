@@ -6,6 +6,7 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Forall;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Imply;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
+import static hu.bme.mit.theta.core.type.functype.FuncExprs.App;
 import static hu.bme.mit.theta.core.type.functype.FuncExprs.Func;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Add;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
@@ -23,7 +24,6 @@ import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.type.functype.FuncExprs;
 import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.solver.Interpolant;
@@ -133,10 +133,10 @@ public final class Z3ItpSolverTest {
 		final ItpMarker B = solver.createMarker();
 		final ItpPattern pattern = solver.createBinPattern(A, B);
 
-		solver.add(A, Eq(FuncExprs.App(f, a), c));
-		solver.add(A, Eq(FuncExprs.App(f, b), d));
+		solver.add(A, Eq(App(f, a), c));
+		solver.add(A, Eq(App(f, b), d));
 		solver.add(B, Eq(a, b));
-		solver.add(B, Neq(FuncExprs.App(g, c), FuncExprs.App(g, d)));
+		solver.add(B, Neq(App(g, c), App(g, d)));
 
 		solver.check();
 		final Interpolant itp = solver.getInterpolant(pattern);
@@ -180,9 +180,9 @@ public final class Z3ItpSolverTest {
 		final Expr<IntType> x1 = x1d.getRef();
 		final Expr<IntType> x2 = x2d.getRef();
 
-		solver.add(A, Forall(ImmutableList.of(x1d), Imply(FuncExprs.App(q, x1), FuncExprs.App(p, x1))));
-		solver.add(A, Forall(ImmutableList.of(x2d), Not(FuncExprs.App(p, x2))));
-		solver.add(B, FuncExprs.App(q, i));
+		solver.add(A, Forall(ImmutableList.of(x1d), Imply(App(q, x1), App(p, x1))));
+		solver.add(A, Forall(ImmutableList.of(x2d), Not(App(p, x2))));
+		solver.add(B, App(q, i));
 
 		solver.check();
 		final Interpolant itp = solver.getInterpolant(pattern);

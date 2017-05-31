@@ -2,8 +2,6 @@ package hu.bme.mit.theta.core.type.rattype;
 
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 
-import java.util.Collection;
-
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.MulExpr;
 import hu.bme.mit.theta.core.utils.ExprVisitor;
@@ -13,7 +11,7 @@ public final class RatMulExpr extends MulExpr<RatType> {
 	private static final int HASH_SEED = 9479;
 	private static final String OPERATOR_LABEL = "Mul";
 
-	RatMulExpr(final Collection<? extends Expr<? extends RatType>> ops) {
+	RatMulExpr(final Iterable<? extends Expr<RatType>> ops) {
 		super(ops);
 	}
 
@@ -23,7 +21,7 @@ public final class RatMulExpr extends MulExpr<RatType> {
 	}
 
 	@Override
-	public RatMulExpr withOps(final Collection<? extends Expr<? extends RatType>> ops) {
+	public RatMulExpr withOps(final Iterable<? extends Expr<RatType>> ops) {
 		if (ops == getOps()) {
 			return this;
 		} else {

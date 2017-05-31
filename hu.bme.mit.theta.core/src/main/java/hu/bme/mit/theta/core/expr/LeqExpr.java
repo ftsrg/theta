@@ -5,7 +5,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 public abstract class LeqExpr<OpType extends Type> extends BinaryExpr<OpType, OpType, BoolType> {
 
-	protected LeqExpr(final Expr<? extends OpType> leftOp, final Expr<? extends OpType> rightOp) {
+	protected LeqExpr(final Expr<OpType> leftOp, final Expr<OpType> rightOp) {
 		super(leftOp, rightOp);
 	}
 

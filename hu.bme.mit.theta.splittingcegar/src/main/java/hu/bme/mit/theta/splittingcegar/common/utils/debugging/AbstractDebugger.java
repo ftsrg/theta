@@ -82,7 +82,7 @@ public abstract class AbstractDebugger<AbstractSystemType extends AbstractSystem
 	}
 
 	protected void markUnsafeStates(final Collection<ConcreteState> concreteStates,
-			final Expr<? extends BoolType> unsafeExpr, final STS sts) {
+			final Expr<BoolType> unsafeExpr, final STS sts) {
 		final Solver solver = solvers.getSolver();
 		solver.push();
 		solver.add(PathUtils.unfold(unsafeExpr, 0));
@@ -111,7 +111,7 @@ public abstract class AbstractDebugger<AbstractSystemType extends AbstractSystem
 		final Graph g = new Graph("SYSTEM", "SYSTEM");
 		for (final AbstractState as : stateSpace.keySet()) {
 			final StringBuilder labelString = new StringBuilder("");
-			final Expr<? extends BoolType> labelExpr = as.createExpression();
+			final Expr<BoolType> labelExpr = as.createExpression();
 			if (labelExpr instanceof AndExpr) {
 				for (final Expr<?> label : ((AndExpr) labelExpr).getOps())
 					labelString.append(label).append(System.lineSeparator());

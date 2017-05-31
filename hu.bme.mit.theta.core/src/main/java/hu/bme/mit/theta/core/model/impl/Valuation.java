@@ -31,9 +31,9 @@ public final class Valuation implements Assignment {
 
 	private volatile int hashCode = 0;
 
-	private final Map<VarDecl<? extends Type>, LitExpr<?>> declToExpr;
+	private final Map<VarDecl<?>, LitExpr<?>> declToExpr;
 
-	private volatile Expr<? extends BoolType> expr = null;
+	private volatile Expr<BoolType> expr = null;
 
 	private Valuation(final Builder builder) {
 		this.declToExpr = builder.declToExpr;
@@ -48,7 +48,7 @@ public final class Valuation implements Assignment {
 	}
 
 	@Override
-	public Collection<? extends VarDecl<? extends Type>> getDecls() {
+	public Collection<VarDecl<?>> getDecls() {
 		return Collections.unmodifiableCollection(declToExpr.keySet());
 	}
 
@@ -67,14 +67,14 @@ public final class Valuation implements Assignment {
 	}
 
 	@Override
-	public Expr<? extends BoolType> toExpr() {
+	public Expr<BoolType> toExpr() {
 
-		Expr<? extends BoolType> result = expr;
+		Expr<BoolType> result = expr;
 
 		if (result == null) {
 
-			final List<Expr<? extends BoolType>> ops = new ArrayList<>(declToExpr.size());
-			for (final Entry<VarDecl<? extends Type>, LitExpr<?>> entry : declToExpr.entrySet()) {
+			final List<Expr<BoolType>> ops = new ArrayList<>(declToExpr.size());
+			for (final Entry<VarDecl<?>, LitExpr<?>> entry : declToExpr.entrySet()) {
 				ops.add(Eq(entry.getKey().getRef(), entry.getValue()));
 			}
 			if (ops.size() == 0) {
@@ -180,7 +180,7 @@ public final class Valuation implements Assignment {
 		}
 
 		@Override
-		public Expr<? extends BoolType> toExpr() {
+		public Expr<BoolType> toExpr() {
 			throw new UnsupportedOperationException();
 		}
 

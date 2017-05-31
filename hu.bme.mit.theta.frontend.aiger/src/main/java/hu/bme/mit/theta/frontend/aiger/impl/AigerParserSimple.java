@@ -44,7 +44,7 @@ public class AigerParserSimple implements AigerParser {
 			andGates = Integer.parseInt(header[5]);
 			// Create variables
 			final List<VarDecl<BoolType>> vars = new ArrayList<>(maxVars + 1);
-			final List<Expr<? extends BoolType>> outVars = new ArrayList<>(1);
+			final List<Expr<BoolType>> outVars = new ArrayList<>(1);
 			for (int i = 0; i <= maxVars; ++i)
 				vars.add(Decls.Var("v" + i, Bool()));
 			// v0 is the constant 'false'

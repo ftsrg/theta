@@ -11,6 +11,7 @@ import static hu.bme.mit.theta.core.expr.AbstractExprs.Lt;
 import static hu.bme.mit.theta.core.expr.AbstractExprs.Mul;
 import static hu.bme.mit.theta.core.expr.AbstractExprs.Neq;
 import static hu.bme.mit.theta.core.expr.AbstractExprs.Sub;
+import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Read;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
@@ -34,12 +35,8 @@ import hu.bme.mit.theta.core.expr.MulExpr;
 import hu.bme.mit.theta.core.expr.RefExpr;
 import hu.bme.mit.theta.core.expr.SubExpr;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.arraytype.ArrayExprs;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.type.closure.ClosedUnderAdd;
-import hu.bme.mit.theta.core.type.closure.ClosedUnderMul;
-import hu.bme.mit.theta.core.type.closure.ClosedUnderSub;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.type.inttype.ModExpr;
 import hu.bme.mit.theta.core.utils.impl.ExprUtils;
@@ -187,25 +184,18 @@ final class XtaExpression {
 			}
 		}
 
-		private AddExpr<? extends ClosedUnderAdd> createAddExpr(final Expr<?> uncastLeftOp,
-				final Expr<?> uncastRightOp) {
-			final Expr<? extends ClosedUnderAdd> leftOp = TypeUtils.cast(uncastLeftOp, ClosedUnderAdd.class);
-			final Expr<? extends ClosedUnderAdd> rightOp = TypeUtils.cast(uncastRightOp, ClosedUnderAdd.class);
-
+		private AddExpr<?> createAddExpr(final Expr<?> leftOp, final Expr<?> rightOp) {
 			if (leftOp instanceof AddExpr) {
-				final AddExpr<? extends ClosedUnderAdd> addLeftOp = (AddExpr<? extends ClosedUnderAdd>) leftOp;
-				final List<Expr<? extends ClosedUnderAdd>> ops = ImmutableList.<Expr<? extends ClosedUnderAdd>>builder()
-						.addAll(addLeftOp.getOps()).add(rightOp).build();
+				final AddExpr<?> addLeftOp = (AddExpr<?>) leftOp;
+				final List<Expr<?>> ops = ImmutableList.<Expr<?>>builder().addAll(addLeftOp.getOps()).add(rightOp)
+						.build();
 				return Add(ops);
 			} else {
 				return Add(leftOp, rightOp);
 			}
 		}
 
-		private SubExpr<? extends ClosedUnderSub> createSubExpr(final Expr<?> uncastLeftOp,
-				final Expr<?> uncastRightOp) {
-			final Expr<? extends ClosedUnderSub> leftOp = TypeUtils.cast(uncastLeftOp, ClosedUnderSub.class);
-			final Expr<? extends ClosedUnderSub> rightOp = TypeUtils.cast(uncastRightOp, ClosedUnderSub.class);
+		private SubExpr<?> createSubExpr(final Expr<?> leftOp, final Expr<?> rightOp) {
 			return Sub(leftOp, rightOp);
 		}
 
@@ -259,15 +249,11 @@ final class XtaExpression {
 			}
 		}
 
-		private MulExpr<? extends ClosedUnderMul> createMulExpr(final Expr<?> uncastLeftOp,
-				final Expr<?> uncastRightOp) {
-			final Expr<? extends ClosedUnderMul> leftOp = TypeUtils.cast(uncastLeftOp, ClosedUnderMul.class);
-			final Expr<? extends ClosedUnderMul> rightOp = TypeUtils.cast(uncastRightOp, ClosedUnderMul.class);
-
+		private MulExpr<?> createMulExpr(final Expr<?> leftOp, final Expr<?> rightOp) {
 			if (leftOp instanceof MulExpr) {
-				final MulExpr<? extends ClosedUnderMul> addLeftOp = (MulExpr<? extends ClosedUnderMul>) leftOp;
-				final List<Expr<? extends ClosedUnderMul>> ops = ImmutableList.<Expr<? extends ClosedUnderMul>>builder()
-						.addAll(addLeftOp.getOps()).add(rightOp).build();
+				final MulExpr<?> addLeftOp = (MulExpr<?>) leftOp;
+				final List<Expr<?>> ops = ImmutableList.<Expr<?>>builder().addAll(addLeftOp.getOps()).add(rightOp)
+						.build();
 				return Mul(ops);
 			} else {
 				return Mul(leftOp, rightOp);
@@ -353,7 +339,7 @@ final class XtaExpression {
 				final PostfixOpContext oper = Utils.singleElementOf(ctx.fOpers);
 				if (oper.fArrayAccessOp != null) {
 					final Expr<?> index = oper.fArrayAccessOp.fExpression.accept(this);
-					return ArrayExprs.Read((Expr<ArrayType<Type, Type>>) op, (Expr<Type>) index);
+					return Read((Expr<ArrayType<Type, Type>>) op, (Expr<Type>) index);
 				} else {
 					throw new AssertionError();
 				}
@@ -365,9 +351,9 @@ final class XtaExpression {
 			if (ctx.fOps.size() == 1) {
 				return checkNotNull(visitChildren(ctx));
 			} else {
-				final Stream<Expr<? extends BoolType>> opStream = ctx.fOps.stream()
+				final Stream<Expr<BoolType>> opStream = ctx.fOps.stream()
 						.map(op -> TypeUtils.cast(op.accept(this), BoolType.class));
-				final Collection<Expr<? extends BoolType>> ops = opStream.collect(toList());
+				final Collection<Expr<BoolType>> ops = opStream.collect(toList());
 				return And(ops);
 			}
 		}

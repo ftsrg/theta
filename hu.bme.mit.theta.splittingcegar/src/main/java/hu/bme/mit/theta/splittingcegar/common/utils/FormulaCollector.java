@@ -13,17 +13,16 @@ public final class FormulaCollector {
 	private FormulaCollector() {
 	}
 
-	public static void collectAtomsFromTransitionConditions(final STS sts,
-			final Collection<Expr<? extends BoolType>> collectTo) {
-		final Collection<Expr<? extends BoolType>> conditions = new ArrayList<>();
+	public static void collectAtomsFromTransitionConditions(final STS sts, final Collection<Expr<BoolType>> collectTo) {
+		final Collection<Expr<BoolType>> conditions = new ArrayList<>();
 		final ITECondCollectorVisitor collector = new ITECondCollectorVisitor();
 		sts.getTrans().accept(collector, conditions);
-		for (final Expr<? extends BoolType> cond : conditions)
+		for (final Expr<BoolType> cond : conditions)
 			ExprUtils.collectAtoms(cond, collectTo);
 	}
 
-	public static void collectAtomsFromExpression(final Expr<? extends BoolType> expr,
-			final Collection<Expr<? extends BoolType>> collectTo) {
+	public static void collectAtomsFromExpression(final Expr<BoolType> expr,
+			final Collection<Expr<BoolType>> collectTo) {
 		ExprUtils.collectAtoms(expr, collectTo);
 	}
 }

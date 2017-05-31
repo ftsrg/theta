@@ -29,10 +29,10 @@ public class SmartExprsTest {
 	private static final Expr<BoolType> C = Const("c", Bool()).getRef();
 
 	@Parameter(value = 0)
-	public Expr<? extends BoolType> expr;
+	public Expr<BoolType> expr;
 
 	@Parameter(value = 1)
-	public Expr<? extends BoolType> smartExpr;
+	public Expr<BoolType> smartExpr;
 
 	@Parameters
 	public static Collection<Object[]> data() {

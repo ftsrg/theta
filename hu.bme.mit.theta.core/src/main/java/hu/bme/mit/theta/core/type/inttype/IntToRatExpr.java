@@ -8,10 +8,11 @@ import hu.bme.mit.theta.core.type.rattype.RatType;
 import hu.bme.mit.theta.core.utils.ExprVisitor;
 
 public final class IntToRatExpr extends UnaryExpr<IntType, RatType> {
+
 	private static final int HASH_SEED = 1627;
 	private static final String OPERATOR_LABEL = "ToRat";
 
-	IntToRatExpr(final Expr<? extends IntType> op) {
+	IntToRatExpr(final Expr<IntType> op) {
 		super(op);
 	}
 
@@ -27,7 +28,7 @@ public final class IntToRatExpr extends UnaryExpr<IntType, RatType> {
 	}
 
 	@Override
-	public IntToRatExpr withOp(final Expr<? extends IntType> op) {
+	public IntToRatExpr withOp(final Expr<IntType> op) {
 		if (op == getOp()) {
 			return this;
 		} else {

@@ -27,7 +27,7 @@ final class StmtToExprTransformer {
 	}
 
 	public static UnfoldResult toExpr(final List<? extends Stmt> stmts, final VarIndexing indexing) {
-		final Collection<Expr<? extends BoolType>> resultExprs = new ArrayList<>();
+		final Collection<Expr<BoolType>> resultExprs = new ArrayList<>();
 		VarIndexing resultIndexing = indexing;
 
 		for (final Stmt stmt : stmts) {
@@ -51,8 +51,8 @@ final class StmtToExprTransformer {
 
 		@Override
 		public UnfoldResult visit(final AssumeStmt stmt, final VarIndexing indexing) {
-			final Expr<? extends BoolType> cond = stmt.getCond();
-			final Expr<? extends BoolType> expr = ExprUtils.applyPrimes(cond, indexing);
+			final Expr<BoolType> cond = stmt.getCond();
+			final Expr<BoolType> expr = ExprUtils.applyPrimes(cond, indexing);
 			return UnfoldResult.of(ImmutableList.of(expr), indexing);
 		}
 

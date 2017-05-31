@@ -12,7 +12,7 @@ public abstract class HwElement {
 		this.varId = varId;
 	}
 
-	public abstract Expr<? extends BoolType> getExpr(List<HwElement> elements);
+	public abstract Expr<BoolType> getExpr(List<HwElement> elements);
 
 	public int getVarId() {
 		return varId;

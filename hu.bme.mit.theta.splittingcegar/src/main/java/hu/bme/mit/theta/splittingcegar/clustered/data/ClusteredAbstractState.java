@@ -115,10 +115,10 @@ public class ClusteredAbstractState implements AbstractState {
 	}
 
 	@Override
-	public Expr<? extends BoolType> createExpression() {
-		final List<Expr<? extends BoolType>> ops = new ArrayList<>();
+	public Expr<BoolType> createExpression() {
+		final List<Expr<BoolType>> ops = new ArrayList<>();
 		for (final ComponentAbstractState cas : states)
-			for (final Expr<? extends BoolType> ex : cas.getLabels())
+			for (final Expr<BoolType> ex : cas.getLabels())
 				ops.add(ex);
 		return And(ops);
 	}

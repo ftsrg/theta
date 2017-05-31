@@ -37,7 +37,7 @@ public class ExprMetricsTest {
 	private static final Expr<IntType> B = VB.getRef();
 
 	@Parameter(value = 0)
-	public Expr<? extends Type> expr;
+	public Expr<Type> expr;
 
 	@Parameter(value = 1)
 	public ExprMetrics.ExprMetric metric;

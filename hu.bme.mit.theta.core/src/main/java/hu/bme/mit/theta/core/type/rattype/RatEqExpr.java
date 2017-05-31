@@ -12,7 +12,7 @@ public final class RatEqExpr extends EqExpr<RatType> {
 	private static final int HASH_SEED = 3709;
 	private static final String OPERATOR_LABEL = "Eq";
 
-	RatEqExpr(final Expr<? extends RatType> leftOp, final Expr<? extends RatType> rightOp) {
+	RatEqExpr(final Expr<RatType> leftOp, final Expr<RatType> rightOp) {
 		super(leftOp, rightOp);
 	}
 
@@ -22,7 +22,7 @@ public final class RatEqExpr extends EqExpr<RatType> {
 	}
 
 	@Override
-	public RatEqExpr withOps(final Expr<? extends RatType> leftOp, final Expr<? extends RatType> rightOp) {
+	public RatEqExpr withOps(final Expr<RatType> leftOp, final Expr<RatType> rightOp) {
 		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
 			return this;
 		} else {
@@ -31,12 +31,12 @@ public final class RatEqExpr extends EqExpr<RatType> {
 	}
 
 	@Override
-	public RatEqExpr withLeftOp(final Expr<? extends RatType> leftOp) {
+	public RatEqExpr withLeftOp(final Expr<RatType> leftOp) {
 		return withOps(leftOp, getRightOp());
 	}
 
 	@Override
-	public RatEqExpr withRightOp(final Expr<? extends RatType> rightOp) {
+	public RatEqExpr withRightOp(final Expr<RatType> rightOp) {
 		return withOps(getLeftOp(), rightOp);
 	}
 

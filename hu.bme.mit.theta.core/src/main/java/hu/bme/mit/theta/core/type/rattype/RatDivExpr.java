@@ -10,9 +10,9 @@ public final class RatDivExpr extends DivExpr<RatType> {
 
 	private static final int HASH_SEED = 139;
 
-	private static final String OPERATOR_LABEL = "RDiv";
+	private static final String OPERATOR_LABEL = "Div";
 
-	RatDivExpr(final Expr<? extends RatType> leftOp, final Expr<? extends RatType> rightOp) {
+	RatDivExpr(final Expr<RatType> leftOp, final Expr<RatType> rightOp) {
 		super(leftOp, rightOp);
 	}
 
@@ -22,7 +22,7 @@ public final class RatDivExpr extends DivExpr<RatType> {
 	}
 
 	@Override
-	public RatDivExpr withOps(final Expr<? extends RatType> leftOp, final Expr<? extends RatType> rightOp) {
+	public RatDivExpr withOps(final Expr<RatType> leftOp, final Expr<RatType> rightOp) {
 		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
 			return this;
 		} else {
@@ -31,12 +31,12 @@ public final class RatDivExpr extends DivExpr<RatType> {
 	}
 
 	@Override
-	public RatDivExpr withLeftOp(final Expr<? extends RatType> leftOp) {
+	public RatDivExpr withLeftOp(final Expr<RatType> leftOp) {
 		return withOps(leftOp, getRightOp());
 	}
 
 	@Override
-	public RatDivExpr withRightOp(final Expr<? extends RatType> rightOp) {
+	public RatDivExpr withRightOp(final Expr<RatType> rightOp) {
 		return withOps(getLeftOp(), rightOp);
 	}
 

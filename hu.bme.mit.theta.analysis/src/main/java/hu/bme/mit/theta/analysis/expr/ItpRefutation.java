@@ -22,12 +22,12 @@ import hu.bme.mit.theta.core.utils.impl.ExprUtils;
 import hu.bme.mit.theta.core.utils.impl.IndexedVars;
 import hu.bme.mit.theta.core.utils.impl.IndexedVars.Builder;
 
-public final class ItpRefutation implements Refutation, Iterable<Expr<? extends BoolType>> {
+public final class ItpRefutation implements Refutation, Iterable<Expr<BoolType>> {
 
-	private final List<Expr<? extends BoolType>> itpSequence;
+	private final List<Expr<BoolType>> itpSequence;
 	private final int pruneIndex;
 
-	private ItpRefutation(final List<Expr<? extends BoolType>> itpSequence) {
+	private ItpRefutation(final List<Expr<BoolType>> itpSequence) {
 		checkNotNull(itpSequence);
 		checkArgument(itpSequence.size() > 0, "Zero length interpolant sequence size");
 		this.itpSequence = ImmutableList.copyOf(itpSequence);
@@ -39,15 +39,15 @@ public final class ItpRefutation implements Refutation, Iterable<Expr<? extends 
 		assert 0 <= this.pruneIndex && this.pruneIndex < itpSequence.size();
 	}
 
-	public static ItpRefutation sequence(final List<Expr<? extends BoolType>> itpSequence) {
+	public static ItpRefutation sequence(final List<Expr<BoolType>> itpSequence) {
 		return new ItpRefutation(itpSequence);
 	}
 
-	public static ItpRefutation craig(final Expr<? extends BoolType> itp, final int i, final int n) {
+	public static ItpRefutation craig(final Expr<BoolType> itp, final int i, final int n) {
 		checkNotNull(itp);
 		checkArgument(n > 0, "Zero length interpolant");
 		checkArgument(0 <= i && i < n, "Formula index out of bounds");
-		final List<Expr<? extends BoolType>> itpSequence = new ArrayList<>(n);
+		final List<Expr<BoolType>> itpSequence = new ArrayList<>(n);
 		for (int k = 0; k < n; ++k) {
 			if (k < i) {
 				itpSequence.add(True());
@@ -64,17 +64,17 @@ public final class ItpRefutation implements Refutation, Iterable<Expr<? extends 
 		return itpSequence.size();
 	}
 
-	public List<Expr<? extends BoolType>> toList() {
+	public List<Expr<BoolType>> toList() {
 		return itpSequence;
 	}
 
-	public Expr<? extends BoolType> get(final int i) {
+	public Expr<BoolType> get(final int i) {
 		checkElementIndex(i, size());
 		return itpSequence.get(i);
 	}
 
 	@Override
-	public Iterator<Expr<? extends BoolType>> iterator() {
+	public Iterator<Expr<BoolType>> iterator() {
 		return itpSequence.iterator();
 	}
 
@@ -83,7 +83,7 @@ public final class ItpRefutation implements Refutation, Iterable<Expr<? extends 
 		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).addAll(itpSequence).toString();
 	}
 
-	public Stream<Expr<? extends BoolType>> stream() {
+	public Stream<Expr<BoolType>> stream() {
 		return itpSequence.stream();
 	}
 

@@ -7,7 +7,7 @@ import hu.bme.mit.theta.core.utils.impl.VarIndexing;
 
 public interface ExprAction extends Action {
 
-	Expr<? extends BoolType> toExpr();
+	Expr<BoolType> toExpr();
 
 	VarIndexing nextIndexing();
 

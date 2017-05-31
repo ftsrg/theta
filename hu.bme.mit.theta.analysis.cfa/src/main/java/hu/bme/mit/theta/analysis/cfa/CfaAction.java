@@ -17,7 +17,7 @@ import hu.bme.mit.theta.formalism.cfa.CfaLoc;
 public final class CfaAction implements LocAction<CfaLoc, CfaEdge> {
 
 	private final CfaEdge edge;
-	private final Expr<? extends BoolType> expr;
+	private final Expr<BoolType> expr;
 	private final VarIndexing nextIndexing;
 
 	private CfaAction(final CfaEdge edge) {
@@ -38,7 +38,7 @@ public final class CfaAction implements LocAction<CfaLoc, CfaEdge> {
 	}
 
 	@Override
-	public Expr<? extends BoolType> toExpr() {
+	public Expr<BoolType> toExpr() {
 		return expr;
 	}
 

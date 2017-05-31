@@ -14,8 +14,8 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
  * Represents a cluster of variables and formulas
  */
 public class Cluster {
-	private final Set<VarDecl<? extends Type>> vars;
-	private final List<Expr<? extends BoolType>> formulas;
+	private final Set<VarDecl<?>> vars;
+	private final List<Expr<BoolType>> formulas;
 	private int clusterId;
 
 	public Cluster() {
@@ -29,7 +29,7 @@ public class Cluster {
 		return vars;
 	}
 
-	public List<Expr<? extends BoolType>> getFormulas() {
+	public List<Expr<BoolType>> getFormulas() {
 		return formulas;
 	}
 
@@ -48,11 +48,11 @@ public class Cluster {
 	@Override
 	public String toString() {
 		final StringBuilder ret = new StringBuilder("Cluster " + clusterId + ": { Variables: {");
-		for (final VarDecl<? extends Type> var : vars) {
+		for (final VarDecl<?> var : vars) {
 			ret.append(var.getName()).append(" ");
 		}
 		ret.append("}, Formulas: {");
-		for (final Expr<? extends Type> ex : formulas) {
+		for (final Expr<?> ex : formulas) {
 			ret.append(ex.toString()).append(" ");
 		}
 		return ret.append("} }").toString();

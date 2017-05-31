@@ -44,7 +44,7 @@ public class DslTest {
 	public String actual;
 
 	@Parameter(value = 1)
-	public Expr<? extends Type> expected;
+	public Expr<Type> expected;
 
 	@Parameter(value = 2)
 	public Collection<Decl<?>> decls;

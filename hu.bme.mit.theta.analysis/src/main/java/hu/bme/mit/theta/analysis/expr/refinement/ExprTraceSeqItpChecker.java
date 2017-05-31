@@ -28,18 +28,18 @@ import hu.bme.mit.theta.solver.ItpSolver;
 public final class ExprTraceSeqItpChecker implements ExprTraceChecker<ItpRefutation> {
 
 	private final ItpSolver solver;
-	private final Expr<? extends BoolType> init;
-	private final Expr<? extends BoolType> target;
+	private final Expr<BoolType> init;
+	private final Expr<BoolType> target;
 
-	private ExprTraceSeqItpChecker(final Expr<? extends BoolType> init, final Expr<? extends BoolType> target,
+	private ExprTraceSeqItpChecker(final Expr<BoolType> init, final Expr<BoolType> target,
 			final ItpSolver solver) {
 		this.solver = checkNotNull(solver);
 		this.init = checkNotNull(init);
 		this.target = checkNotNull(target);
 	}
 
-	public static ExprTraceSeqItpChecker create(final Expr<? extends BoolType> init,
-			final Expr<? extends BoolType> target, final ItpSolver solver) {
+	public static ExprTraceSeqItpChecker create(final Expr<BoolType> init,
+			final Expr<BoolType> target, final ItpSolver solver) {
 		return new ExprTraceSeqItpChecker(init, target, solver);
 	}
 
@@ -81,7 +81,7 @@ public final class ExprTraceSeqItpChecker implements ExprTraceChecker<ItpRefutat
 			}
 			status = ExprTraceStatus.feasible(Trace.of(builder.build(), trace.getActions()));
 		} else {
-			final List<Expr<? extends BoolType>> interpolants = new ArrayList<>();
+			final List<Expr<BoolType>> interpolants = new ArrayList<>();
 			final Interpolant interpolant = solver.getInterpolant(pattern);
 			for (int i = 0; i < markers.size() - 1; ++i) {
 				interpolants.add(PathUtils.foldin(interpolant.eval(markers.get(i)), indexings.get(i)));

@@ -13,7 +13,7 @@ import hu.bme.mit.theta.splittingcegar.common.data.KripkeStructure;
 
 public class ClusteredAbstractSystem extends AbstractSystemBase {
 
-	private final List<Expr<? extends BoolType>> atomicFormulas;
+	private final List<Expr<BoolType>> atomicFormulas;
 	private final List<Cluster> clusters;
 	private final List<KripkeStructure<ComponentAbstractState>> abstractKripkeStructures;
 
@@ -24,7 +24,7 @@ public class ClusteredAbstractSystem extends AbstractSystemBase {
 		this.abstractKripkeStructures = new ArrayList<>();
 	}
 
-	public List<Expr<? extends BoolType>> getAtomicFormulas() {
+	public List<Expr<BoolType>> getAtomicFormulas() {
 		return atomicFormulas;
 	}
 

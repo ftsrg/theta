@@ -14,7 +14,7 @@ import hu.bme.mit.theta.formalism.sts.STS;
  */
 public final class StsAction implements ExprAction {
 
-	private final Expr<? extends BoolType> trans;
+	private final Expr<BoolType> trans;
 
 	StsAction(final STS sts) {
 		checkNotNull(sts);
@@ -22,7 +22,7 @@ public final class StsAction implements ExprAction {
 	}
 
 	@Override
-	public Expr<? extends BoolType> toExpr() {
+	public Expr<BoolType> toExpr() {
 		return trans;
 	}
 

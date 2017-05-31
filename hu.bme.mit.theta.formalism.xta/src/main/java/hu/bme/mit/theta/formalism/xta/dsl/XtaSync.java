@@ -25,7 +25,7 @@ final class XtaSync {
 
 	public Label instantiate(final Environment env) {
 		final Expr<?> expr = expression.instantiate(env);
-		final Expr<? extends ChanType> castExpr = TypeUtils.cast(expr, ChanType.class);
+		final Expr<ChanType> castExpr = TypeUtils.cast(expr, ChanType.class);
 		@SuppressWarnings("unchecked")
 		final Expr<ChanType> chanExpr = (Expr<ChanType>) castExpr;
 		if (syncKind == SyncKind.EMIT) {

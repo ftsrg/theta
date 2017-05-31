@@ -18,7 +18,7 @@ import hu.bme.mit.theta.splittingcegar.common.data.AbstractState;
  * Represents an abstract state of the interpolated CEGAR algorithm
  */
 public class InterpolatedAbstractState implements AbstractState {
-	private final List<Expr<? extends BoolType>> labels;
+	private final List<Expr<BoolType>> labels;
 	private final List<InterpolatedAbstractState> successors;
 	private final List<InterpolatedAbstractState> predecessors;
 	private boolean isInitial;
@@ -47,7 +47,7 @@ public class InterpolatedAbstractState implements AbstractState {
 		this.isInitial = isInitial;
 	}
 
-	public List<Expr<? extends BoolType>> getLabels() {
+	public List<Expr<BoolType>> getLabels() {
 		return labels;
 	}
 
@@ -68,7 +68,7 @@ public class InterpolatedAbstractState implements AbstractState {
 		predecessors.add(predecessor);
 	}
 
-	public InterpolatedAbstractState cloneAndAdd(final Expr<? extends BoolType> label) {
+	public InterpolatedAbstractState cloneAndAdd(final Expr<BoolType> label) {
 		final InterpolatedAbstractState ret = new InterpolatedAbstractState();
 		ret.labels.addAll(this.labels);
 		ret.labels.add(label);
@@ -93,7 +93,7 @@ public class InterpolatedAbstractState implements AbstractState {
 		return ret;
 	}
 
-	public InterpolatedAbstractState refine(final Expr<? extends BoolType> label) {
+	public InterpolatedAbstractState refine(final Expr<BoolType> label) {
 		// Currently refinement is the same as 'cloneAndAdd', but a different
 		// interface is kept, if in the future this changes
 		return cloneAndAdd(label);
@@ -102,7 +102,7 @@ public class InterpolatedAbstractState implements AbstractState {
 	@Override
 	public String toString() {
 		final StringBuilder ret = new StringBuilder("State: { Labels: {");
-		for (final Expr<? extends BoolType> label : labels)
+		for (final Expr<BoolType> label : labels)
 			ret.append(label.toString()).append(" ");
 		ret.append("}, Successors: " + successors.size() + (isInitial ? ", Initial" : "") + " }");
 		return ret.toString();
@@ -116,7 +116,7 @@ public class InterpolatedAbstractState implements AbstractState {
 	}
 
 	@Override
-	public Expr<? extends BoolType> createExpression() {
+	public Expr<BoolType> createExpression() {
 		return And(labels);
 	}
 

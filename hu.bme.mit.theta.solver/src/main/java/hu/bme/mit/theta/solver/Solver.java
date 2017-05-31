@@ -8,18 +8,18 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 public interface Solver {
 
-	void add(Expr<? extends BoolType> assertion);
+	void add(Expr<BoolType> assertion);
 
-	default void add(final Iterable<? extends Expr<? extends BoolType>> assertions) {
-		for (final Expr<? extends BoolType> assertion : assertions) {
+	default void add(final Iterable<? extends Expr<BoolType>> assertions) {
+		for (final Expr<BoolType> assertion : assertions) {
 			add(assertion);
 		}
 	}
 
-	void track(Expr<? extends BoolType> assertion);
+	void track(Expr<BoolType> assertion);
 
-	default void track(final Iterable<? extends Expr<? extends BoolType>> assertions) {
-		for (final Expr<? extends BoolType> assertion : assertions) {
+	default void track(final Iterable<? extends Expr<BoolType>> assertions) {
+		for (final Expr<BoolType> assertion : assertions) {
 			track(assertion);
 		}
 	}
@@ -40,7 +40,7 @@ public interface Solver {
 
 	Model getModel();
 
-	Collection<Expr<? extends BoolType>> getUnsatCore();
+	Collection<Expr<BoolType>> getUnsatCore();
 
-	Collection<Expr<? extends BoolType>> getAssertions();
+	Collection<Expr<BoolType>> getAssertions();
 }

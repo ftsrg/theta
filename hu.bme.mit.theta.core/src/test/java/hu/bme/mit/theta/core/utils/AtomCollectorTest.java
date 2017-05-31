@@ -39,10 +39,10 @@ public class AtomCollectorTest {
 	private static final Expr<IntType> CY = Const("y", Int()).getRef();
 
 	@Parameter(value = 0)
-	public Expr<? extends BoolType> expr;
+	public Expr<BoolType> expr;
 
 	@Parameter(value = 1)
-	public Set<Expr<? extends BoolType>> expectedAtoms;
+	public Set<Expr<BoolType>> expectedAtoms;
 
 	@Parameters
 	public static Collection<Object[]> data() {
@@ -61,7 +61,7 @@ public class AtomCollectorTest {
 
 	@Test
 	public void test() {
-		final Set<Expr<? extends BoolType>> atoms = new HashSet<>();
+		final Set<Expr<BoolType>> atoms = new HashSet<>();
 
 		ExprUtils.collectAtoms(expr, atoms);
 		Assert.assertEquals(expectedAtoms, atoms);

@@ -39,14 +39,14 @@ public class ExprRewriterVisitor<P> extends ArityBasedExprVisitor<P, Expr<?>> {
 	@Override
 	public <IndexType extends Type, ElemType extends Type> Expr<?> visit(final ArrayReadExpr<IndexType, ElemType> expr,
 			final P param) {
-		final Expr<? extends ArrayType<? super IndexType, ? extends ElemType>> array = expr.getArray();
-		final Expr<? extends IndexType> index = expr.getIndex();
+		final Expr<ArrayType<IndexType, ElemType>> array = expr.getArray();
+		final Expr<IndexType> index = expr.getIndex();
 
 		@SuppressWarnings("unchecked")
-		final Expr<? extends ArrayType<? super IndexType, ? extends ElemType>> newArray = (Expr<? extends ArrayType<? super IndexType, ? extends ElemType>>) array
-				.accept(this, param);
+		final Expr<ArrayType<IndexType, ElemType>> newArray = (Expr<ArrayType<IndexType, ElemType>>) array.accept(this,
+				param);
 		@SuppressWarnings("unchecked")
-		final Expr<? extends IndexType> newIndex = (Expr<? extends IndexType>) index.accept(this, param);
+		final Expr<IndexType> newIndex = (Expr<IndexType>) index.accept(this, param);
 
 		return expr.with(newArray, newIndex);
 	}
@@ -55,17 +55,17 @@ public class ExprRewriterVisitor<P> extends ArityBasedExprVisitor<P, Expr<?>> {
 	public <IndexType extends Type, ElemType extends Type> Expr<?> visit(final ArrayWriteExpr<IndexType, ElemType> expr,
 			final P param) {
 
-		final Expr<? extends ArrayType<? super IndexType, ? extends ElemType>> array = expr.getArray();
-		final Expr<? extends IndexType> index = expr.getIndex();
-		final Expr<? extends ElemType> elem = expr.getElem();
+		final Expr<ArrayType<IndexType, ElemType>> array = expr.getArray();
+		final Expr<IndexType> index = expr.getIndex();
+		final Expr<ElemType> elem = expr.getElem();
 
 		@SuppressWarnings("unchecked")
-		final Expr<? extends ArrayType<? super IndexType, ? extends ElemType>> newArray = (Expr<? extends ArrayType<? super IndexType, ? extends ElemType>>) array
-				.accept(this, param);
+		final Expr<ArrayType<IndexType, ElemType>> newArray = (Expr<ArrayType<IndexType, ElemType>>) array.accept(this,
+				param);
 		@SuppressWarnings("unchecked")
-		final Expr<? extends IndexType> newIndex = (Expr<? extends IndexType>) index.accept(this, param);
+		final Expr<IndexType> newIndex = (Expr<IndexType>) index.accept(this, param);
 		@SuppressWarnings("unchecked")
-		final Expr<? extends ElemType> newElem = (Expr<? extends ElemType>) elem.accept(this, param);
+		final Expr<ElemType> newElem = (Expr<ElemType>) elem.accept(this, param);
 
 		return expr.with(newArray, newIndex, newElem);
 	}
@@ -78,16 +78,16 @@ public class ExprRewriterVisitor<P> extends ArityBasedExprVisitor<P, Expr<?>> {
 
 	@Override
 	public <ExprType extends Type> Expr<ExprType> visit(final IteExpr<ExprType> expr, final P param) {
-		final Expr<? extends BoolType> cond = expr.getCond();
-		final Expr<? extends ExprType> then = expr.getThen();
-		final Expr<? extends ExprType> elze = expr.getElse();
+		final Expr<BoolType> cond = expr.getCond();
+		final Expr<ExprType> then = expr.getThen();
+		final Expr<ExprType> elze = expr.getElse();
 
 		@SuppressWarnings("unchecked")
-		final Expr<? extends BoolType> newCond = (Expr<? extends BoolType>) cond.accept(this, param);
+		final Expr<BoolType> newCond = (Expr<BoolType>) cond.accept(this, param);
 		@SuppressWarnings("unchecked")
-		final Expr<? extends ExprType> newThen = (Expr<? extends ExprType>) then.accept(this, param);
+		final Expr<ExprType> newThen = (Expr<ExprType>) then.accept(this, param);
 		@SuppressWarnings("unchecked")
-		final Expr<? extends ExprType> newElse = (Expr<? extends ExprType>) elze.accept(this, param);
+		final Expr<ExprType> newElse = (Expr<ExprType>) elze.accept(this, param);
 
 		return expr.withOps(newCond, newThen, newElse);
 	}
@@ -103,10 +103,10 @@ public class ExprRewriterVisitor<P> extends ArityBasedExprVisitor<P, Expr<?>> {
 	@Override
 	protected <OpType extends Type, ExprType extends Type> UnaryExpr<OpType, ExprType> visitUnary(
 			final UnaryExpr<OpType, ExprType> expr, final P param) {
-		final Expr<? extends OpType> op = expr.getOp();
+		final Expr<OpType> op = expr.getOp();
 
 		@SuppressWarnings("unchecked")
-		final Expr<? extends OpType> newOp = (Expr<? extends OpType>) op.accept(this, param);
+		final Expr<OpType> newOp = (Expr<OpType>) op.accept(this, param);
 
 		return expr.withOp(newOp);
 	}
@@ -115,12 +115,12 @@ public class ExprRewriterVisitor<P> extends ArityBasedExprVisitor<P, Expr<?>> {
 	protected <LeftOpType extends Type, RightOpType extends Type, ExprType extends Type> BinaryExpr<LeftOpType, RightOpType, ExprType> visitBinary(
 			final BinaryExpr<LeftOpType, RightOpType, ExprType> expr, final P param) {
 
-		final Expr<? extends LeftOpType> leftOp = expr.getLeftOp();
-		final Expr<? extends RightOpType> rightOp = expr.getRightOp();
+		final Expr<LeftOpType> leftOp = expr.getLeftOp();
+		final Expr<RightOpType> rightOp = expr.getRightOp();
 		@SuppressWarnings("unchecked")
-		final Expr<? extends LeftOpType> newLeftOp = (Expr<? extends LeftOpType>) leftOp.accept(this, param);
+		final Expr<LeftOpType> newLeftOp = (Expr<LeftOpType>) leftOp.accept(this, param);
 		@SuppressWarnings("unchecked")
-		final Expr<? extends RightOpType> newRightOp = (Expr<? extends RightOpType>) rightOp.accept(this, param);
+		final Expr<RightOpType> newRightOp = (Expr<RightOpType>) rightOp.accept(this, param);
 		return expr.withOps(newLeftOp, newRightOp);
 	}
 
@@ -128,10 +128,10 @@ public class ExprRewriterVisitor<P> extends ArityBasedExprVisitor<P, Expr<?>> {
 	protected <OpsType extends Type, ExprType extends Type> MultiaryExpr<OpsType, ExprType> visitMultiary(
 			final MultiaryExpr<OpsType, ExprType> expr, final P param) {
 
-		final Collection<? extends Expr<? extends OpsType>> ops = expr.getOps();
+		final Collection<? extends Expr<OpsType>> ops = expr.getOps();
 		@SuppressWarnings("unchecked")
-		final Collection<? extends Expr<? extends OpsType>> newOps = Collections2.transform(ops,
-				op -> (Expr<? extends OpsType>) op.accept(this, param));
+		final Collection<? extends Expr<OpsType>> newOps = Collections2.transform(ops,
+				op -> (Expr<OpsType>) op.accept(this, param));
 
 		return expr.withOps(newOps);
 	}

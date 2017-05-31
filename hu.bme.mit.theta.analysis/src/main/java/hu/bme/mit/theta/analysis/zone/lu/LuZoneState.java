@@ -35,7 +35,7 @@ public final class LuZoneState implements ExprState {
 	private final BoundFunction boundFunction;
 
 	private volatile int hashCode = 0;
-	private volatile Expr<? extends BoolType> expr = null;
+	private volatile Expr<BoolType> expr = null;
 
 	private LuZoneState(final ZoneState zone, final BoundFunction boundFunction) {
 		this.zone = checkNotNull(zone);
@@ -68,13 +68,13 @@ public final class LuZoneState implements ExprState {
 	}
 
 	@Override
-	public Expr<? extends BoolType> toExpr() {
-		Expr<? extends BoolType> result = expr;
+	public Expr<BoolType> toExpr() {
+		Expr<BoolType> result = expr;
 		if (result == null) {
 			// TODO create class for mapping
 			final Map<VarDecl<?>, ParamDecl<?>> mapping = new HashMap<>();
-			final Expr<? extends BoolType> zoneExpr = ExprUtils.close(zone.toExpr(), mapping);
-			final Collection<Expr<? extends BoolType>> conjuncts = new ArrayList<>();
+			final Expr<BoolType> zoneExpr = ExprUtils.close(zone.toExpr(), mapping);
+			final Collection<Expr<BoolType>> conjuncts = new ArrayList<>();
 
 			conjuncts.addAll(ExprUtils.getConjuncts(zoneExpr));
 			final Collection<VarDecl<?>> vars = mapping.keySet();

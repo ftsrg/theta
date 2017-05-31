@@ -12,7 +12,7 @@ public final class ImplyExpr extends BinaryExpr<BoolType, BoolType, BoolType> {
 
 	private static final String OPERATOR_LABEL = "Imply";
 
-	ImplyExpr(final Expr<? extends BoolType> leftOp, final Expr<? extends BoolType> rightOp) {
+	ImplyExpr(final Expr<BoolType> leftOp, final Expr<BoolType> rightOp) {
 		super(leftOp, rightOp);
 	}
 
@@ -22,7 +22,7 @@ public final class ImplyExpr extends BinaryExpr<BoolType, BoolType, BoolType> {
 	}
 
 	@Override
-	public ImplyExpr withOps(final Expr<? extends BoolType> leftOp, final Expr<? extends BoolType> rightOp) {
+	public ImplyExpr withOps(final Expr<BoolType> leftOp, final Expr<BoolType> rightOp) {
 		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
 			return this;
 		} else {
@@ -31,12 +31,12 @@ public final class ImplyExpr extends BinaryExpr<BoolType, BoolType, BoolType> {
 	}
 
 	@Override
-	public ImplyExpr withLeftOp(final Expr<? extends BoolType> leftOp) {
+	public ImplyExpr withLeftOp(final Expr<BoolType> leftOp) {
 		return withOps(leftOp, getRightOp());
 	}
 
 	@Override
-	public ImplyExpr withRightOp(final Expr<? extends BoolType> rightOp) {
+	public ImplyExpr withRightOp(final Expr<BoolType> rightOp) {
 		return withOps(getLeftOp(), rightOp);
 	}
 

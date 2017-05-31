@@ -47,7 +47,7 @@ public final class ClockConstrs {
 
 	////
 
-	public static ClockConstr formExpr(final Expr<? extends BoolType> expr) {
+	public static ClockConstr formExpr(final Expr<BoolType> expr) {
 		return expr.accept(VISITOR, null);
 	}
 
@@ -208,7 +208,7 @@ public final class ClockConstrs {
 		@Override
 		public AndConstr visit(final AndExpr expr, final Void param) {
 			final ImmutableSet.Builder<ClockConstr> builder = ImmutableSet.builder();
-			for (final Expr<? extends BoolType> op : expr.getOps()) {
+			for (final Expr<BoolType> op : expr.getOps()) {
 				builder.add(op.accept(this, param));
 			}
 			return And(builder.build());

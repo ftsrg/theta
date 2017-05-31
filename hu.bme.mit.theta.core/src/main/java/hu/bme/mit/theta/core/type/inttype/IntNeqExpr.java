@@ -12,7 +12,7 @@ public final class IntNeqExpr extends NeqExpr<IntType> {
 	private static final int HASH_SEED = 9397;
 	private static final String OPERATOR_LABEL = "Neq";
 
-	IntNeqExpr(final Expr<? extends IntType> leftOp, final Expr<? extends IntType> rightOp) {
+	IntNeqExpr(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
 		super(leftOp, rightOp);
 	}
 
@@ -22,7 +22,7 @@ public final class IntNeqExpr extends NeqExpr<IntType> {
 	}
 
 	@Override
-	public IntNeqExpr withOps(final Expr<? extends IntType> leftOp, final Expr<? extends IntType> rightOp) {
+	public IntNeqExpr withOps(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
 		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
 			return this;
 		} else {
@@ -31,12 +31,12 @@ public final class IntNeqExpr extends NeqExpr<IntType> {
 	}
 
 	@Override
-	public IntNeqExpr withLeftOp(final Expr<? extends IntType> leftOp) {
+	public IntNeqExpr withLeftOp(final Expr<IntType> leftOp) {
 		return withOps(leftOp, getRightOp());
 	}
 
 	@Override
-	public IntNeqExpr withRightOp(final Expr<? extends IntType> rightOp) {
+	public IntNeqExpr withRightOp(final Expr<IntType> rightOp) {
 		return withOps(getLeftOp(), rightOp);
 	}
 

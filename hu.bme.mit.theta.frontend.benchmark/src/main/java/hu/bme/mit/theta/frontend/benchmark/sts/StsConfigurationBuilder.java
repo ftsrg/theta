@@ -96,8 +96,8 @@ public final class StsConfigurationBuilder extends ConfigurationBuilder {
 	public Configuration<? extends State, ? extends Action, ? extends Prec> build(final STS sts) {
 		final ItpSolver solver = getSolverFactory().createItpSolver();
 		final LTS<State, StsAction> lts = StsLts.create(sts);
-		final Expr<? extends BoolType> init = sts.getInit();
-		final Expr<? extends BoolType> negProp = Not(sts.getProp());
+		final Expr<BoolType> init = sts.getInit();
+		final Expr<BoolType> negProp = Not(sts.getProp());
 
 		StsInitPrec initPrecBuilder = null;
 		switch (initPrec) {

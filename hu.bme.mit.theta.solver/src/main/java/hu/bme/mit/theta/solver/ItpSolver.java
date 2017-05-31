@@ -43,12 +43,12 @@ public interface ItpSolver extends Solver {
 
 	ItpMarker createMarker();
 
-	void add(final ItpMarker marker, final Expr<? extends BoolType> assertion);
+	void add(final ItpMarker marker, final Expr<BoolType> assertion);
 
-	default void add(final ItpMarker marker, final Iterable<? extends Expr<? extends BoolType>> assertions) {
+	default void add(final ItpMarker marker, final Iterable<? extends Expr<BoolType>> assertions) {
 		checkNotNull(marker);
 		checkNotNull(assertions);
-		for (final Expr<? extends BoolType> assertion : assertions) {
+		for (final Expr<BoolType> assertion : assertions) {
 			add(marker, assertion);
 		}
 	}

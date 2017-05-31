@@ -16,7 +16,6 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.LitExpr;
 import hu.bme.mit.theta.core.model.impl.Valuation;
-import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.solver.Solver;
 
@@ -68,7 +67,7 @@ public final class ExplPrec implements Prec {
 		checkNotNull(valuation);
 		final Valuation.Builder builder = Valuation.builder();
 		for (final VarDecl<?> var : vars) {
-			final Optional<? extends LitExpr<? extends Type>> eval = valuation.eval(var);
+			final Optional<? extends LitExpr<?>> eval = valuation.eval(var);
 			if (eval.isPresent()) {
 				builder.put(var, eval.get());
 			}
@@ -76,7 +75,7 @@ public final class ExplPrec implements Prec {
 		return ExplState.create(builder.build());
 	}
 
-	public Collection<ExplState> createStatesForExpr(final Solver solver, final Expr<? extends BoolType> expr) {
+	public Collection<ExplState> createStatesForExpr(final Solver solver, final Expr<BoolType> expr) {
 		checkNotNull(solver);
 		checkNotNull(expr);
 		return ExprStates.createStatesForExpr(solver, expr, this::createState);

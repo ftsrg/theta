@@ -11,7 +11,6 @@ import java.util.Set;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.AndExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.impl.ExprUtils;
@@ -23,10 +22,10 @@ import hu.bme.mit.theta.core.utils.impl.ExprUtils;
  * for creating an STS more conveniently.
  */
 public final class STS {
-	private final Collection<VarDecl<? extends Type>> vars;
-	private final Expr<? extends BoolType> init;
-	private final Expr<? extends BoolType> trans;
-	private final Expr<? extends BoolType> prop;
+	private final Collection<VarDecl<?>> vars;
+	private final Expr<BoolType> init;
+	private final Expr<BoolType> trans;
+	private final Expr<BoolType> prop;
 
 	/**
 	 * Create a new STS from an initial expression, a transition relation and a
@@ -39,12 +38,11 @@ public final class STS {
 	 * @param prop
 	 *            Property expression
 	 */
-	public STS(final Expr<? extends BoolType> init, final Expr<? extends BoolType> trans,
-			final Expr<? extends BoolType> prop) {
+	public STS(final Expr<BoolType> init, final Expr<BoolType> trans, final Expr<BoolType> prop) {
 		this.init = checkNotNull(init);
 		this.trans = checkNotNull(trans);
 		this.prop = checkNotNull(prop);
-		final Set<VarDecl<? extends Type>> tmpVars = new HashSet<>();
+		final Set<VarDecl<?>> tmpVars = new HashSet<>();
 		ExprUtils.collectVars(init, tmpVars);
 		ExprUtils.collectVars(trans, tmpVars);
 		ExprUtils.collectVars(prop, tmpVars);
@@ -56,7 +54,7 @@ public final class STS {
 	 *
 	 * @return
 	 */
-	public Collection<VarDecl<? extends Type>> getVars() {
+	public Collection<VarDecl<?>> getVars() {
 		return vars;
 	}
 
@@ -65,7 +63,7 @@ public final class STS {
 	 *
 	 * @return
 	 */
-	public Expr<? extends BoolType> getInit() {
+	public Expr<BoolType> getInit() {
 		return init;
 	}
 
@@ -74,7 +72,7 @@ public final class STS {
 	 *
 	 * @return
 	 */
-	public Expr<? extends BoolType> getTrans() {
+	public Expr<BoolType> getTrans() {
 		return trans;
 	}
 
@@ -83,7 +81,7 @@ public final class STS {
 	 *
 	 * @return
 	 */
-	public Expr<? extends BoolType> getProp() {
+	public Expr<BoolType> getProp() {
 		return prop;
 	}
 
@@ -111,9 +109,9 @@ public final class STS {
 	 * constraints and invariants.
 	 */
 	public static final class Builder {
-		private final Collection<Expr<? extends BoolType>> init;
-		private final Collection<Expr<? extends BoolType>> trans;
-		private Expr<? extends BoolType> prop;
+		private final Collection<Expr<BoolType>> init;
+		private final Collection<Expr<BoolType>> trans;
+		private Expr<BoolType> prop;
 
 		private Builder() {
 			init = new HashSet<>();
@@ -128,7 +126,7 @@ public final class STS {
 		 * @param expr
 		 *            Expression to be added
 		 */
-		public Builder addInit(final Expr<? extends BoolType> expr) {
+		public Builder addInit(final Expr<BoolType> expr) {
 			checkNotNull(expr);
 			if (expr instanceof AndExpr)
 				addInit(((AndExpr) expr).getOps());
@@ -144,9 +142,9 @@ public final class STS {
 		 * @param exprs
 		 *            Expressions to be added
 		 */
-		public Builder addInit(final Iterable<? extends Expr<? extends BoolType>> exprs) {
+		public Builder addInit(final Iterable<? extends Expr<BoolType>> exprs) {
 			checkNotNull(exprs);
-			for (final Expr<? extends BoolType> expr : exprs)
+			for (final Expr<BoolType> expr : exprs)
 				addInit(expr);
 			return this;
 		}
@@ -158,7 +156,7 @@ public final class STS {
 		 * @param expr
 		 *            Expression to be added
 		 */
-		public Builder addInvar(final Expr<? extends BoolType> expr) {
+		public Builder addInvar(final Expr<BoolType> expr) {
 			checkNotNull(expr);
 			if (expr instanceof AndExpr) {
 				addInvar(((AndExpr) expr).getOps());
@@ -178,9 +176,9 @@ public final class STS {
 		 * @param exprs
 		 *            Expressions to be added
 		 */
-		public Builder addInvar(final Iterable<? extends Expr<? extends BoolType>> exprs) {
+		public Builder addInvar(final Iterable<? extends Expr<BoolType>> exprs) {
 			checkNotNull(exprs);
-			for (final Expr<? extends BoolType> expr : exprs)
+			for (final Expr<BoolType> expr : exprs)
 				addInvar(expr);
 			return this;
 		}
@@ -192,7 +190,7 @@ public final class STS {
 		 * @param expr
 		 *            Expression to be added
 		 */
-		public Builder addTrans(final Expr<? extends BoolType> expr) {
+		public Builder addTrans(final Expr<BoolType> expr) {
 			checkNotNull(expr);
 			if (expr instanceof AndExpr)
 				addTrans(((AndExpr) expr).getOps());
@@ -208,9 +206,9 @@ public final class STS {
 		 * @param exprs
 		 *            Expressions to be added
 		 */
-		public Builder addTrans(final Iterable<? extends Expr<? extends BoolType>> exprs) {
+		public Builder addTrans(final Iterable<? extends Expr<BoolType>> exprs) {
 			checkNotNull(exprs);
-			for (final Expr<? extends BoolType> expr : exprs)
+			for (final Expr<BoolType> expr : exprs)
 				addTrans(expr);
 			return this;
 		}
@@ -222,7 +220,7 @@ public final class STS {
 		 * @param expr
 		 *            Expression to be set as property
 		 */
-		public Builder setProp(final Expr<? extends BoolType> expr) {
+		public Builder setProp(final Expr<BoolType> expr) {
 			checkNotNull(expr);
 			this.prop = expr;
 			return this;

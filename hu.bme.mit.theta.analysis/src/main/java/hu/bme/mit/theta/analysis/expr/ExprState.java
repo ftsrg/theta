@@ -6,5 +6,5 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 public interface ExprState extends State {
 
-	Expr<? extends BoolType> toExpr();
+	Expr<BoolType> toExpr();
 }

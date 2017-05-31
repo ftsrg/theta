@@ -12,7 +12,7 @@ public final class RatGeqExpr extends GeqExpr<RatType> {
 	private static final int HASH_SEED = 6101;
 	private static final String OPERATOR_LABEL = "Geq";
 
-	RatGeqExpr(final Expr<? extends RatType> leftOp, final Expr<? extends RatType> rightOp) {
+	RatGeqExpr(final Expr<RatType> leftOp, final Expr<RatType> rightOp) {
 		super(leftOp, rightOp);
 	}
 
@@ -22,7 +22,7 @@ public final class RatGeqExpr extends GeqExpr<RatType> {
 	}
 
 	@Override
-	public RatGeqExpr withOps(final Expr<? extends RatType> leftOp, final Expr<? extends RatType> rightOp) {
+	public RatGeqExpr withOps(final Expr<RatType> leftOp, final Expr<RatType> rightOp) {
 		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
 			return this;
 		} else {
@@ -31,12 +31,12 @@ public final class RatGeqExpr extends GeqExpr<RatType> {
 	}
 
 	@Override
-	public RatGeqExpr withLeftOp(final Expr<? extends RatType> leftOp) {
+	public RatGeqExpr withLeftOp(final Expr<RatType> leftOp) {
 		return withOps(leftOp, getRightOp());
 	}
 
 	@Override
-	public RatGeqExpr withRightOp(final Expr<? extends RatType> rightOp) {
+	public RatGeqExpr withRightOp(final Expr<RatType> rightOp) {
 		return withOps(getLeftOp(), rightOp);
 	}
 

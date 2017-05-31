@@ -50,7 +50,7 @@ public class ClusteredInitializer extends AbstractCEGARStep implements Initializ
 		logger.writeln("Specification expression: " + concrSys.getProp(), 2);
 
 		// Set ensures uniqueness
-		final Set<Expr<? extends BoolType>> atomicFormulas = new HashSet<>();
+		final Set<Expr<BoolType>> atomicFormulas = new HashSet<>();
 		FormulaCollector.collectAtomsFromTransitionConditions(concrSys, atomicFormulas);
 		FormulaCollector.collectAtomsFromExpression(concrSys.getProp(), atomicFormulas);
 
@@ -59,7 +59,7 @@ public class ClusteredInitializer extends AbstractCEGARStep implements Initializ
 		system.getAtomicFormulas().addAll(atomicFormulas);
 
 		logger.writeln("Atomic formulas [" + system.getAtomicFormulas().size() + "]", 2);
-		for (final Expr<? extends BoolType> ex : system.getAtomicFormulas())
+		for (final Expr<BoolType> ex : system.getAtomicFormulas())
 			logger.writeln(ex, 3, 1);
 
 		if (stopHandler.isStopped())
@@ -101,8 +101,8 @@ public class ClusteredInitializer extends AbstractCEGARStep implements Initializ
 		if (cluster.getFormulas().size() == 0)
 			cluster.getFormulas().add(True());
 		// Calculate negate for each formula
-		final List<Expr<? extends BoolType>> negates = new ArrayList<>(cluster.getFormulas().size());
-		for (final Expr<? extends BoolType> ex : cluster.getFormulas())
+		final List<Expr<BoolType>> negates = new ArrayList<>(cluster.getFormulas().size());
+		for (final Expr<BoolType> ex : cluster.getFormulas())
 			negates.add(Not(ex));
 
 		// Traverse the possible abstract states. Each formula is either

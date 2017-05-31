@@ -12,13 +12,13 @@ public final class AssertStmt implements Stmt {
 	private static final int HASH_SEED = 733;
 	private volatile int hashCode = 0;
 
-	private final Expr<? extends BoolType> cond;
+	private final Expr<BoolType> cond;
 
-	AssertStmt(final Expr<? extends BoolType> cond) {
+	AssertStmt(final Expr<BoolType> cond) {
 		this.cond = checkNotNull(cond);
 	}
 
-	public Expr<? extends BoolType> getCond() {
+	public Expr<BoolType> getCond() {
 		return cond;
 	}
 

@@ -15,27 +15,27 @@ public final class ArrayWriteExpr<IndexType extends Type, ElemType extends Type>
 
 	private volatile int hashCode = 0;
 
-	private final Expr<? extends ArrayType<? super IndexType, ? extends ElemType>> array;
-	private final Expr<? extends IndexType> index;
-	private final Expr<? extends ElemType> elem;
+	private final Expr<ArrayType<IndexType, ElemType>> array;
+	private final Expr<IndexType> index;
+	private final Expr<ElemType> elem;
 
-	ArrayWriteExpr(final Expr<? extends ArrayType<? super IndexType, ? extends ElemType>> array,
-			final Expr<? extends IndexType> index, final Expr<? extends ElemType> elem) {
+	ArrayWriteExpr(final Expr<ArrayType<IndexType, ElemType>> array, final Expr<IndexType> index,
+			final Expr<ElemType> elem) {
 
 		this.array = checkNotNull(array);
 		this.index = checkNotNull(index);
 		this.elem = checkNotNull(elem);
 	}
 
-	public Expr<? extends ArrayType<? super IndexType, ? extends ElemType>> getArray() {
+	public Expr<ArrayType<IndexType, ElemType>> getArray() {
 		return array;
 	}
 
-	public Expr<? extends IndexType> getIndex() {
+	public Expr<IndexType> getIndex() {
 		return index;
 	}
 
-	public Expr<? extends ElemType> getElem() {
+	public Expr<ElemType> getElem() {
 		return elem;
 	}
 
@@ -45,9 +45,8 @@ public final class ArrayWriteExpr<IndexType extends Type, ElemType extends Type>
 		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
 
-	public ArrayWriteExpr<IndexType, ElemType> with(
-			final Expr<? extends ArrayType<? super IndexType, ? extends ElemType>> array,
-			final Expr<? extends IndexType> index, final Expr<? extends ElemType> elem) {
+	public ArrayWriteExpr<IndexType, ElemType> with(final Expr<ArrayType<IndexType, ElemType>> array,
+			final Expr<IndexType> index, final Expr<ElemType> elem) {
 
 		if (this.array == array && this.index == index && elem == this.elem) {
 			return this;
@@ -56,11 +55,11 @@ public final class ArrayWriteExpr<IndexType extends Type, ElemType extends Type>
 		}
 	}
 
-	public ArrayWriteExpr<IndexType, ElemType> withIndex(final Expr<? extends IndexType> index) {
+	public ArrayWriteExpr<IndexType, ElemType> withIndex(final Expr<IndexType> index) {
 		return with(getArray(), index, getElem());
 	}
 
-	public ArrayWriteExpr<IndexType, ElemType> withElem(final Expr<? extends ElemType> elem) {
+	public ArrayWriteExpr<IndexType, ElemType> withElem(final Expr<ElemType> elem) {
 		return with(getArray(), getIndex(), elem);
 	}
 

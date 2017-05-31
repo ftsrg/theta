@@ -12,14 +12,14 @@ import hu.bme.mit.theta.solver.Solver;
 public final class PredInitFunction implements InitFunction<PredState, PredPrec> {
 
 	private final Solver solver;
-	private final Expr<? extends BoolType> initExpr;
+	private final Expr<BoolType> initExpr;
 
-	private PredInitFunction(final Solver solver, final Expr<? extends BoolType> initExpr) {
+	private PredInitFunction(final Solver solver, final Expr<BoolType> initExpr) {
 		this.solver = checkNotNull(solver);
 		this.initExpr = checkNotNull(initExpr);
 	}
 
-	public static PredInitFunction create(final Solver solver, final Expr<? extends BoolType> expr) {
+	public static PredInitFunction create(final Solver solver, final Expr<BoolType> expr) {
 		return new PredInitFunction(solver, expr);
 	}
 

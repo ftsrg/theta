@@ -23,36 +23,36 @@ import hu.bme.mit.theta.core.utils.impl.ArityBasedExprVisitor;
 /**
  * Collect condition formulas of ITE expressions.
  */
-public class ITECondCollectorVisitor extends ArityBasedExprVisitor<Collection<Expr<? extends BoolType>>, Void> {
+public class ITECondCollectorVisitor extends ArityBasedExprVisitor<Collection<Expr<BoolType>>, Void> {
 
 	@Override
 	public <ExprType extends Type> Void visit(final PrimedExpr<ExprType> expr,
-			final Collection<Expr<? extends BoolType>> param) {
+			final Collection<Expr<BoolType>> param) {
 		return visitUnary(expr, param);
 	}
 
 	@Override
 	public <ReturnType extends Type> Void visit(final ProcCallExpr<ReturnType> expr,
-			final Collection<Expr<? extends BoolType>> param) {
+			final Collection<Expr<BoolType>> param) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO");
 	}
 
 	@Override
 	public <DeclType extends Type> Void visit(final RefExpr<DeclType> expr,
-			final Collection<Expr<? extends BoolType>> param) {
+			final Collection<Expr<BoolType>> param) {
 		return visitNullary(expr, param);
 	}
 
 	@Override
 	protected <ExprType extends Type> Void visitNullary(final NullaryExpr<ExprType> expr,
-			final Collection<Expr<? extends BoolType>> param) {
+			final Collection<Expr<BoolType>> param) {
 		return null;
 	}
 
 	@Override
 	protected <OpType extends Type, ExprType extends Type> Void visitUnary(final UnaryExpr<OpType, ExprType> expr,
-			final Collection<Expr<? extends BoolType>> param) {
+			final Collection<Expr<BoolType>> param) {
 		expr.getOp().accept(this, param);
 		return null;
 	}
@@ -60,7 +60,7 @@ public class ITECondCollectorVisitor extends ArityBasedExprVisitor<Collection<Ex
 	@Override
 	protected <LeftOpType extends Type, RightOpType extends Type, ExprType extends Type> Void visitBinary(
 			final BinaryExpr<LeftOpType, RightOpType, ExprType> expr,
-			final Collection<Expr<? extends BoolType>> param) {
+			final Collection<Expr<BoolType>> param) {
 		expr.getLeftOp().accept(this, param);
 		expr.getRightOp().accept(this, param);
 		return null;
@@ -68,48 +68,48 @@ public class ITECondCollectorVisitor extends ArityBasedExprVisitor<Collection<Ex
 
 	@Override
 	protected <OpsType extends Type, ExprType extends Type> Void visitMultiary(
-			final MultiaryExpr<OpsType, ExprType> expr, final Collection<Expr<? extends BoolType>> param) {
-		for (final Expr<? extends OpsType> op : expr.getOps())
+			final MultiaryExpr<OpsType, ExprType> expr, final Collection<Expr<BoolType>> param) {
+		for (final Expr<OpsType> op : expr.getOps())
 			op.accept(this, param);
 		return null;
 	}
 
 	@Override
 	protected <OpsType extends Type, ExprType extends Type> Void visitQuantified(final QuantifiedExpr expr,
-			final Collection<Expr<? extends BoolType>> param) {
+			final Collection<Expr<BoolType>> param) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
 
 	@Override
 	public <IndexType extends Type, ElemType extends Type> Void visit(final ArrayReadExpr<IndexType, ElemType> expr,
-			final Collection<Expr<? extends BoolType>> param) {
+			final Collection<Expr<BoolType>> param) {
 		return null;
 	}
 
 	@Override
 	public <IndexType extends Type, ElemType extends Type> Void visit(final ArrayWriteExpr<IndexType, ElemType> expr,
-			final Collection<Expr<? extends BoolType>> param) {
+			final Collection<Expr<BoolType>> param) {
 		return null;
 	}
 
 	@Override
 	public <ParamType extends Type, ResultType extends Type> Void visit(final FuncLitExpr<ParamType, ResultType> expr,
-			final Collection<Expr<? extends BoolType>> param) {
+			final Collection<Expr<BoolType>> param) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO");
 	}
 
 	@Override
 	public <ParamType extends Type, ResultType extends Type> Void visit(final FuncAppExpr<ParamType, ResultType> expr,
-			final Collection<Expr<? extends BoolType>> param) {
+			final Collection<Expr<BoolType>> param) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO");
 	}
 
 	@Override
 	public <ExprType extends Type> Void visit(final IteExpr<ExprType> expr,
-			final Collection<Expr<? extends BoolType>> param) {
+			final Collection<Expr<BoolType>> param) {
 		param.add(expr.getCond());
 		expr.getThen().accept(this, param);
 		expr.getElse().accept(this, param);

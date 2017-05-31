@@ -28,18 +28,18 @@ import hu.bme.mit.theta.solver.ItpSolver;
 public final class ExprTraceFwBinItpChecker implements ExprTraceChecker<ItpRefutation> {
 
 	private final ItpSolver solver;
-	private final Expr<? extends BoolType> init;
-	private final Expr<? extends BoolType> target;
+	private final Expr<BoolType> init;
+	private final Expr<BoolType> target;
 
-	private ExprTraceFwBinItpChecker(final Expr<? extends BoolType> init, final Expr<? extends BoolType> target,
+	private ExprTraceFwBinItpChecker(final Expr<BoolType> init, final Expr<BoolType> target,
 			final ItpSolver solver) {
 		this.solver = checkNotNull(solver);
 		this.init = checkNotNull(init);
 		this.target = checkNotNull(target);
 	}
 
-	public static ExprTraceFwBinItpChecker create(final Expr<? extends BoolType> init,
-			final Expr<? extends BoolType> target, final ItpSolver solver) {
+	public static ExprTraceFwBinItpChecker create(final Expr<BoolType> init,
+			final Expr<BoolType> target, final ItpSolver solver) {
 		return new ExprTraceFwBinItpChecker(init, target, solver);
 	}
 

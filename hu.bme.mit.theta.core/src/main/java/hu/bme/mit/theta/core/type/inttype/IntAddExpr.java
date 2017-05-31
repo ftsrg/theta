@@ -2,8 +2,6 @@ package hu.bme.mit.theta.core.type.inttype;
 
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
-import java.util.Collection;
-
 import hu.bme.mit.theta.core.expr.AddExpr;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.utils.ExprVisitor;
@@ -13,7 +11,7 @@ public final class IntAddExpr extends AddExpr<IntType> {
 	private static final int HASH_SEED = 5653;
 	private static final String OPERATOR_LABEL = "Add";
 
-	IntAddExpr(final Collection<? extends Expr<? extends IntType>> ops) {
+	IntAddExpr(final Iterable<? extends Expr<IntType>> ops) {
 		super(ops);
 	}
 
@@ -23,7 +21,7 @@ public final class IntAddExpr extends AddExpr<IntType> {
 	}
 
 	@Override
-	public IntAddExpr withOps(final Collection<? extends Expr<? extends IntType>> ops) {
+	public IntAddExpr withOps(final Iterable<? extends Expr<IntType>> ops) {
 		if (ops == getOps()) {
 			return this;
 		} else {

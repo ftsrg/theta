@@ -45,7 +45,7 @@ public class IndexedVarCollectorVisitorTest {
 	private static final IndexedConstDecl<IntType> B1 = VB.getConstDecl(1);
 
 	@Parameter(value = 0)
-	public Expr<? extends Type> expr;
+	public Expr<Type> expr;
 
 	@Parameter(value = 1)
 	public Map<Integer, Set<VarDecl<? extends Type>>> expectedVars;

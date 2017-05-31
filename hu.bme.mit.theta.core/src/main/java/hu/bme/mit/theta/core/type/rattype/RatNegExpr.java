@@ -11,7 +11,7 @@ public final class RatNegExpr extends NegExpr<RatType> {
 	private static final int HASH_SEED = 4127;
 	private static final String OPERATOR_LABEL = "Neg";
 
-	RatNegExpr(final Expr<? extends RatType> op) {
+	RatNegExpr(final Expr<RatType> op) {
 		super(op);
 	}
 
@@ -21,7 +21,7 @@ public final class RatNegExpr extends NegExpr<RatType> {
 	}
 
 	@Override
-	public RatNegExpr withOp(final Expr<? extends RatType> op) {
+	public RatNegExpr withOp(final Expr<RatType> op) {
 		if (op == getOp()) {
 			return this;
 		} else {

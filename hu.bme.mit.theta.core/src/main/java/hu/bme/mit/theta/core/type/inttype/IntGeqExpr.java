@@ -12,7 +12,7 @@ public final class IntGeqExpr extends GeqExpr<IntType> {
 	private static final int HASH_SEED = 7649;
 	private static final String OPERATOR_LABEL = "Geq";
 
-	IntGeqExpr(final Expr<? extends IntType> leftOp, final Expr<? extends IntType> rightOp) {
+	IntGeqExpr(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
 		super(leftOp, rightOp);
 	}
 
@@ -22,7 +22,7 @@ public final class IntGeqExpr extends GeqExpr<IntType> {
 	}
 
 	@Override
-	public IntGeqExpr withOps(final Expr<? extends IntType> leftOp, final Expr<? extends IntType> rightOp) {
+	public IntGeqExpr withOps(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
 		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
 			return this;
 		} else {
@@ -31,12 +31,12 @@ public final class IntGeqExpr extends GeqExpr<IntType> {
 	}
 
 	@Override
-	public IntGeqExpr withLeftOp(final Expr<? extends IntType> leftOp) {
+	public IntGeqExpr withLeftOp(final Expr<IntType> leftOp) {
 		return withOps(leftOp, getRightOp());
 	}
 
 	@Override
-	public IntGeqExpr withRightOp(final Expr<? extends IntType> rightOp) {
+	public IntGeqExpr withRightOp(final Expr<IntType> rightOp) {
 		return withOps(getLeftOp(), rightOp);
 	}
 

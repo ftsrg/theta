@@ -69,8 +69,7 @@ public class CraigItpVarCollector extends AbstractCEGARStep implements VarCollec
 		// only variables with
 		// the index (traceLength-1), thus splitting the failure state
 		itpSolver.check();
-		final Expr<? extends Type> interpolant = PathUtils.foldin(itpSolver.getInterpolant(pattern).eval(A),
-				traceLength - 1);
+		final Expr<?> interpolant = PathUtils.foldin(itpSolver.getInterpolant(pattern).eval(A), traceLength - 1);
 
 		logger.writeln("Interpolant: " + interpolant, 4, 0);
 		itpSolver.pop();

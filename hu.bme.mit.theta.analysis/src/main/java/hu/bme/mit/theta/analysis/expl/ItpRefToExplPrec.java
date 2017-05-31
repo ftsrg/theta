@@ -16,7 +16,7 @@ public class ItpRefToExplPrec implements RefutationToPrec<ExplPrec, ItpRefutatio
 
 	@Override
 	public ExplPrec toPrec(final ItpRefutation refutation, final int index) {
-		final Expr<? extends BoolType> expr = refutation.get(index);
+		final Expr<BoolType> expr = refutation.get(index);
 		final Collection<VarDecl<? extends Type>> vars = ExprUtils.getVars(expr);
 		final ExplPrec prec = ExplPrec.create(vars);
 		return prec;

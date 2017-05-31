@@ -13,13 +13,13 @@ public final class FuncExprs {
 		return new FuncType<>(paramType, resultType);
 	}
 
-	public static <P extends Type, R extends Type> FuncLitExpr<? super P, ? extends R> Func(
-			final ParamDecl<? super P> paramDecl, final Expr<? extends R> result) {
-		return new FuncLitExpr<P, R>(paramDecl, result);
+	public static <P extends Type, R extends Type> FuncLitExpr<P, R> Func(final ParamDecl<? super P> paramDecl,
+			final Expr<R> result) {
+		return new FuncLitExpr<>(paramDecl, result);
 	}
 
-	public static <P extends Type, R extends Type> FuncAppExpr<P, R> App(
-			final Expr<? extends FuncType<? super P, ? extends R>> func, final Expr<? extends P> param) {
+	public static <P extends Type, R extends Type> FuncAppExpr<P, R> App(final Expr<FuncType<P, R>> func,
+			final Expr<P> param) {
 		return new FuncAppExpr<>(func, param);
 	}
 

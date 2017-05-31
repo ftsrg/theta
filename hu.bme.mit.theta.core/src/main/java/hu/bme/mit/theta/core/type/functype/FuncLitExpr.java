@@ -16,11 +16,11 @@ public final class FuncLitExpr<ParamType extends Type, ResultType extends Type>
 	private static final String OPERATOR_LABEL = "Func";
 
 	private final ParamDecl<? super ParamType> paramDecl;
-	private final Expr<? extends ResultType> result;
+	private final Expr<ResultType> result;
 
 	private volatile int hashCode = 0;
 
-	FuncLitExpr(final ParamDecl<? super ParamType> paramDecl, final Expr<? extends ResultType> result) {
+	FuncLitExpr(final ParamDecl<? super ParamType> paramDecl, final Expr<ResultType> result) {
 		this.paramDecl = checkNotNull(paramDecl);
 		this.result = checkNotNull(result);
 	}
@@ -29,7 +29,7 @@ public final class FuncLitExpr<ParamType extends Type, ResultType extends Type>
 		return paramDecl;
 	}
 
-	public Expr<? extends ResultType> getResult() {
+	public Expr<ResultType> getResult() {
 		return result;
 	}
 

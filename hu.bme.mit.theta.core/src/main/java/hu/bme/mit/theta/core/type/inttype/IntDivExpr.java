@@ -10,9 +10,9 @@ public final class IntDivExpr extends DivExpr<IntType> {
 
 	private static final int HASH_SEED = 79;
 
-	private static final String OPERATOR_LABEL = "IDiv";
+	private static final String OPERATOR_LABEL = "Div";
 
-	IntDivExpr(final Expr<? extends IntType> leftOp, final Expr<? extends IntType> rightOp) {
+	IntDivExpr(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
 		super(leftOp, rightOp);
 	}
 
@@ -22,7 +22,7 @@ public final class IntDivExpr extends DivExpr<IntType> {
 	}
 
 	@Override
-	public IntDivExpr withOps(final Expr<? extends IntType> leftOp, final Expr<? extends IntType> rightOp) {
+	public IntDivExpr withOps(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
 		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
 			return this;
 		} else {
@@ -31,12 +31,12 @@ public final class IntDivExpr extends DivExpr<IntType> {
 	}
 
 	@Override
-	public IntDivExpr withLeftOp(final Expr<? extends IntType> leftOp) {
+	public IntDivExpr withLeftOp(final Expr<IntType> leftOp) {
 		return withOps(leftOp, getRightOp());
 	}
 
 	@Override
-	public IntDivExpr withRightOp(final Expr<? extends IntType> rightOp) {
+	public IntDivExpr withRightOp(final Expr<IntType> rightOp) {
 		return withOps(getLeftOp(), rightOp);
 	}
 

@@ -33,7 +33,7 @@ public final class ExprUtils {
 		return new CnfTransformation();
 	}
 
-	public static Collection<Expr<? extends BoolType>> getConjuncts(final Expr<? extends BoolType> expr) {
+	public static Collection<Expr<BoolType>> getConjuncts(final Expr<BoolType> expr) {
 		checkNotNull(expr);
 
 		if (expr instanceof AndExpr) {
@@ -45,65 +45,66 @@ public final class ExprUtils {
 		}
 	}
 
-	public static void collectVars(final Expr<? extends Type> expr,
-			final Collection<VarDecl<? extends Type>> collectTo) {
+	public static void collectVars(final Expr<?> expr, final Collection<VarDecl<?>> collectTo) {
 		expr.accept(VarCollectorExprVisitor.getInstance(), collectTo);
 	}
 
-	public static void collectVars(final Iterable<? extends Expr<? extends Type>> exprs,
+	public static void collectVars(final Iterable<? extends Expr<?>> exprs,
 			final Collection<VarDecl<? extends Type>> collectTo) {
 		exprs.forEach(e -> collectVars(e, collectTo));
 	}
 
-	public static Set<VarDecl<? extends Type>> getVars(final Expr<? extends Type> expr) {
+	public static Set<VarDecl<?>> getVars(final Expr<?> expr) {
 		final Set<VarDecl<? extends Type>> vars = new HashSet<>();
 		collectVars(expr, vars);
 		return vars;
 	}
 
-	public static Set<VarDecl<? extends Type>> getVars(final Iterable<? extends Expr<? extends Type>> exprs) {
+	public static Set<VarDecl<? extends Type>> getVars(final Iterable<? extends Expr<?>> exprs) {
 		final Set<VarDecl<? extends Type>> vars = new HashSet<>();
 		collectVars(exprs, vars);
 		return vars;
 	}
 
-	public static IndexedVars getVarsIndexed(final Expr<? extends Type> expr) {
+	public static IndexedVars getVarsIndexed(final Expr<?> expr) {
 		final Builder builder = IndexedVars.builder();
 		expr.accept(IndexedVarCollectorVisitor.getInstance(), builder);
 		return builder.build();
 	}
 
-	public static IndexedVars getVarsIndexed(final Iterable<? extends Expr<? extends Type>> exprs) {
+	public static IndexedVars getVarsIndexed(final Iterable<? extends Expr<?>> exprs) {
 		final Builder builder = IndexedVars.builder();
 		exprs.forEach(e -> e.accept(IndexedVarCollectorVisitor.getInstance(), builder));
 		return builder.build();
 	}
 
-	public static boolean isExprCNF(final Expr<? extends BoolType> expr) {
+	public static boolean isExprCNF(final Expr<BoolType> expr) {
 		return expr.accept(new CnfCheckerVisitor(), CNFStatus.START);
 	}
 
 	@SuppressWarnings("unchecked")
-	public static Expr<? extends BoolType> eliminateITE(final Expr<? extends BoolType> expr) {
-		return (Expr<? extends BoolType>) expr.accept(new ItePropagatorVisitor(new ItePusherVisitor()), null)
+	public static Expr<BoolType> eliminateITE(final Expr<BoolType> expr) {
+		return (Expr<BoolType>) expr.accept(new ItePropagatorVisitor(new ItePusherVisitor()), null)
 				.accept(new IteRemoverVisitor(), null);
 	}
 
-	public static void collectAtoms(final Expr<? extends BoolType> expr,
-			final Collection<Expr<? extends BoolType>> collectTo) {
+	public static void collectAtoms(final Expr<BoolType> expr, final Collection<Expr<BoolType>> collectTo) {
 		expr.accept(new AtomCollectorVisitor(), collectTo);
 	}
 
-	public static Set<Expr<? extends BoolType>> getAtoms(final Expr<? extends BoolType> expr) {
-		final Set<Expr<? extends BoolType>> atoms = new HashSet<>();
+	public static Set<Expr<BoolType>> getAtoms(final Expr<BoolType> expr) {
+		final Set<Expr<BoolType>> atoms = new HashSet<>();
 		collectAtoms(expr, atoms);
 		return atoms;
 	}
 
 	@SuppressWarnings("unchecked")
-	public static <ExprType extends Type> Expr<? extends ExprType> simplify(final Expr<? extends ExprType> expr,
+	public static <ExprType extends Type> Expr<ExprType> simplify(final Expr<ExprType> expr,
 			final Assignment assignment) {
-		return (Expr<? extends ExprType>) expr.accept(new ExprSimplifierVisitor(), assignment);
+		// return (Expr<ExprType>) expr.accept(new ExprSimplifierVisitor(),
+		// assignment);
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
 
 	public static List<Expr<?>> simplifyAll(final List<? extends Expr<?>> exprs) {
@@ -115,14 +116,14 @@ public final class ExprUtils {
 		return simplifiedArgs;
 	}
 
-	public static <ExprType extends Type> Expr<? extends ExprType> simplify(final Expr<? extends ExprType> expr) {
+	public static <ExprType extends Type> Expr<ExprType> simplify(final Expr<ExprType> expr) {
 		return simplify(expr, AssignmentImpl.empty());
 	}
 
 	@SuppressWarnings("unchecked")
-	public static <ExprType extends Type> LitExpr<? extends ExprType> evaluate(final Expr<? extends ExprType> expr,
+	public static <ExprType extends Type> LitExpr<ExprType> evaluate(final Expr<ExprType> expr,
 			final Assignment assignment) {
-		final Expr<? extends ExprType> simplified = simplify(expr, assignment);
+		final Expr<ExprType> simplified = simplify(expr, assignment);
 		if (simplified instanceof LitExpr<?>) {
 			return (LitExpr<ExprType>) simplified;
 		} else {
@@ -130,11 +131,11 @@ public final class ExprUtils {
 		}
 	}
 
-	public static <ExprType extends Type> LitExpr<? extends ExprType> evaluate(final Expr<? extends ExprType> expr) {
+	public static <ExprType extends Type> LitExpr<ExprType> evaluate(final Expr<ExprType> expr) {
 		return evaluate(expr, AssignmentImpl.empty());
 	}
 
-	public static Expr<? extends BoolType> ponate(final Expr<? extends BoolType> expr) {
+	public static Expr<BoolType> ponate(final Expr<BoolType> expr) {
 		if (expr instanceof NotExpr) {
 			final NotExpr notExpr = (NotExpr) expr;
 			return ponate(notExpr.getOp());
@@ -151,7 +152,7 @@ public final class ExprUtils {
 		return PrimeApplier.applyPrimes(expr, indexing);
 	}
 
-	public static int size(final Expr<? extends Type> expr, final ExprMetrics.ExprMetric metric) {
+	public static int size(final Expr<?> expr, final ExprMetrics.ExprMetric metric) {
 		return expr.accept(metric, null);
 	}
 }

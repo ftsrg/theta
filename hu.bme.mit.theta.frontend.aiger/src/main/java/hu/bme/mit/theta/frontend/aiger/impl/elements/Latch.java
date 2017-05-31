@@ -27,16 +27,16 @@ public final class Latch extends HwElement {
 	}
 
 	@Override
-	public Expr<? extends BoolType> getExpr(final List<HwElement> elements) {
+	public Expr<BoolType> getExpr(final List<HwElement> elements) {
 		return varDecl.getRef();
 	}
 
-	public Expr<? extends BoolType> getInitExpr() {
+	public Expr<BoolType> getInitExpr() {
 		return Not(varDecl.getRef());
 	}
 
 	public Expr<BoolType> getTransExpr(final List<HwElement> elements) {
-		Expr<? extends BoolType> expr = elements.get(nextState / 2).getExpr(elements);
+		Expr<BoolType> expr = elements.get(nextState / 2).getExpr(elements);
 		if (nextState % 2 != 0)
 			expr = Not(expr);
 		return Iff(Prime(varDecl.getRef()), expr);

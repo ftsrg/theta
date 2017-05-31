@@ -10,32 +10,30 @@ import hu.bme.mit.theta.core.utils.ExprVisitor;
 public final class IteExpr<ExprType extends Type> implements Expr<ExprType> {
 
 	private static final int HASH_SEED = 181;
-
 	private static final String OPERATOR_LABEL = "Ite";
 
-	private final Expr<? extends BoolType> cond;
-	private final Expr<? extends ExprType> then;
-	private final Expr<? extends ExprType> elze;
+	private final Expr<BoolType> cond;
+	private final Expr<ExprType> then;
+	private final Expr<ExprType> elze;
 
 	private volatile int hashCode = 0;
 
-	IteExpr(final Expr<? extends BoolType> cond, final Expr<? extends ExprType> then,
-			final Expr<? extends ExprType> elze) {
+	IteExpr(final Expr<BoolType> cond, final Expr<ExprType> then, final Expr<ExprType> elze) {
 
 		this.cond = checkNotNull(cond);
 		this.then = checkNotNull(then);
 		this.elze = checkNotNull(elze);
 	}
 
-	public Expr<? extends BoolType> getCond() {
+	public Expr<BoolType> getCond() {
 		return cond;
 	}
 
-	public Expr<? extends ExprType> getThen() {
+	public Expr<ExprType> getThen() {
 		return then;
 	}
 
-	public Expr<? extends ExprType> getElse() {
+	public Expr<ExprType> getElse() {
 		return elze;
 	}
 
@@ -44,24 +42,23 @@ public final class IteExpr<ExprType extends Type> implements Expr<ExprType> {
 		return getThen().getType();
 	}
 
-	public IteExpr<ExprType> withOps(final Expr<? extends BoolType> cond, final Expr<? extends ExprType> then,
-			final Expr<? extends ExprType> elze) {
+	public IteExpr<ExprType> withOps(final Expr<BoolType> cond, final Expr<ExprType> then, final Expr<ExprType> elze) {
 		if (this.cond == cond && this.then == then && this.elze == elze) {
 			return this;
 		} else {
-			return Exprs.Ite(cond, then, elze);
+			return new IteExpr<>(cond, then, elze);
 		}
 	}
 
-	public IteExpr<ExprType> withCond(final Expr<? extends BoolType> cond) {
+	public IteExpr<ExprType> withCond(final Expr<BoolType> cond) {
 		return withOps(cond, getThen(), getElse());
 	}
 
-	public IteExpr<ExprType> withThen(final Expr<? extends ExprType> then) {
+	public IteExpr<ExprType> withThen(final Expr<ExprType> then) {
 		return withOps(getCond(), then, getElse());
 	}
 
-	public IteExpr<ExprType> withElse(final Expr<? extends ExprType> elze) {
+	public IteExpr<ExprType> withElse(final Expr<ExprType> elze) {
 		return withOps(getCond(), getThen(), elze);
 	}
 

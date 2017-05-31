@@ -11,7 +11,7 @@ public final class IntNegExpr extends NegExpr<IntType> {
 	private static final int HASH_SEED = 3359;
 	private static final String OPERATOR_LABEL = "Neg";
 
-	IntNegExpr(final Expr<? extends IntType> op) {
+	IntNegExpr(final Expr<IntType> op) {
 		super(op);
 	}
 
@@ -21,7 +21,7 @@ public final class IntNegExpr extends NegExpr<IntType> {
 	}
 
 	@Override
-	public IntNegExpr withOp(final Expr<? extends IntType> op) {
+	public IntNegExpr withOp(final Expr<IntType> op) {
 		if (op == getOp()) {
 			return this;
 		} else {

@@ -13,23 +13,22 @@ public final class FuncAppExpr<ParamType extends Type, ResultType extends Type> 
 
 	private static final String OPERATOR_LABEL = "App";
 
-	private final Expr<? extends FuncType<? super ParamType, ? extends ResultType>> func;
-	private final Expr<? extends ParamType> param;
+	private final Expr<FuncType<ParamType, ResultType>> func;
+	private final Expr<ParamType> param;
 
 	private volatile int hashCode = 0;
 
-	FuncAppExpr(final Expr<? extends FuncType<? super ParamType, ? extends ResultType>> func,
-			final Expr<? extends ParamType> param) {
+	FuncAppExpr(final Expr<FuncType<ParamType, ResultType>> func, final Expr<ParamType> param) {
 
 		this.func = checkNotNull(func);
 		this.param = checkNotNull(param);
 	}
 
-	public Expr<? extends FuncType<? super ParamType, ? extends ResultType>> getFunc() {
+	public Expr<FuncType<ParamType, ResultType>> getFunc() {
 		return func;
 	}
 
-	public Expr<? extends ParamType> getParam() {
+	public Expr<ParamType> getParam() {
 		return param;
 	}
 

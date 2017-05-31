@@ -83,7 +83,7 @@ public class ClusteredRefiner extends AbstractCEGARStep
 			// classes
 
 			// For each state, collect the compatible states
-			final List<List<Expr<? extends BoolType>>> compatibility = new ArrayList<>(concreteStates.size());
+			final List<List<Expr<BoolType>>> compatibility = new ArrayList<>(concreteStates.size());
 
 			// Get variables outside the cluster
 			final Set<VarDecl<? extends Type>> otherVars = new HashSet<>(system.getVars());
@@ -94,7 +94,7 @@ public class ClusteredRefiner extends AbstractCEGARStep
 			for (int i = 0; i < concreteStates.size(); ++i) {
 				if (stopHandler.isStopped())
 					return null;
-				final List<Expr<? extends BoolType>> comp = new ArrayList<>();
+				final List<Expr<BoolType>> comp = new ArrayList<>();
 				comp.add(concreteStates.get(i).toExpr()); // The state is
 															// compatible with
 															// itself
@@ -116,8 +116,8 @@ public class ClusteredRefiner extends AbstractCEGARStep
 				continue;
 
 			// Collect the new equivalence classes with their expressions
-			final List<Expr<? extends BoolType>> eqclasses = new ArrayList<>();
-			final Set<Expr<? extends BoolType>> includedStates = new HashSet<>();
+			final List<Expr<BoolType>> eqclasses = new ArrayList<>();
+			final Set<Expr<BoolType>> includedStates = new HashSet<>();
 			// Loop through each state and if it was not included in an
 			// equivalence class yet,
 			// then include it with its equivalence class
@@ -134,14 +134,14 @@ public class ClusteredRefiner extends AbstractCEGARStep
 							// expressions of the states
 						eqclasses.add(Or(compatibility.get(i)));
 
-					for (final Expr<? extends BoolType> cs : compatibility.get(i))
+					for (final Expr<BoolType> cs : compatibility.get(i))
 						includedStates.add(cs);
 				}
 			}
 
 			assert (eqclasses.size() > 1);
 			logger.writeln(eqclasses.size() + " new abstract states.", 5, 3);
-			for (final Expr<? extends BoolType> ex : eqclasses)
+			for (final Expr<BoolType> ex : eqclasses)
 				logger.writeln(ex, 7, 4);
 
 			// Refine the abstract Kripke structure
@@ -154,7 +154,7 @@ public class ClusteredRefiner extends AbstractCEGARStep
 			// Create refined abstract states from the equivalence classes
 			final List<ComponentAbstractState> refinedStates = new ArrayList<>(eqclasses.size());
 			int eqCounter = 0;
-			for (final Expr<? extends BoolType> eqclass : eqclasses)
+			for (final Expr<BoolType> eqclass : eqclasses)
 				refinedStates.add(as.refine(eqCounter++, eqclass));
 
 			// Check if the refined states are initial (only if the original
@@ -274,7 +274,7 @@ public class ClusteredRefiner extends AbstractCEGARStep
 														// conditions
 		for (int i = 0; i < traceLength; ++i) {
 			for (final ComponentAbstractState as : abstractCounterEx.get(i).getStates())
-				for (final Expr<? extends BoolType> label : as.getLabels())
+				for (final Expr<BoolType> label : as.getLabels())
 					solver.add(PathUtils.unfold(label, i)); // Labels
 			if (i > 0)
 				solver.add(PathUtils.unfold(sts.getTrans(), i - 1)); // Transition
@@ -308,11 +308,11 @@ public class ClusteredRefiner extends AbstractCEGARStep
 		solver.push();
 		// Failure state
 		for (final ComponentAbstractState as : abstractCounterEx.get(traceLength - 1).getStates())
-			for (final Expr<? extends BoolType> label : as.getLabels())
+			for (final Expr<BoolType> label : as.getLabels())
 				solver.add(PathUtils.unfold(label, 0)); // Labels
 		// Next state
 		for (final ComponentAbstractState as : abstractCounterEx.get(traceLength).getStates())
-			for (final Expr<? extends BoolType> label : as.getLabels())
+			for (final Expr<BoolType> label : as.getLabels())
 				solver.add(PathUtils.unfold(label, 1)); // Labels
 		solver.add(PathUtils.unfold(sts.getTrans(), 0)); // Transition relation
 
@@ -340,7 +340,7 @@ public class ClusteredRefiner extends AbstractCEGARStep
 		final List<Valuation> concreteStates = new ArrayList<>();
 		solver.push();
 		// Assert the labels of the state
-		for (final Expr<? extends BoolType> label : abstractState.getLabels())
+		for (final Expr<BoolType> label : abstractState.getLabels())
 			solver.add(PathUtils.unfold(label, 0));
 		do {
 			if (SolverHelper.checkSat(solver)) {

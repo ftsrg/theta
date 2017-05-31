@@ -14,7 +14,7 @@ public class FalseConst extends HwElement {
 	}
 
 	@Override
-	public Expr<? extends BoolType> getExpr(final List<HwElement> elements) {
+	public Expr<BoolType> getExpr(final List<HwElement> elements) {
 		return False();
 	}
 

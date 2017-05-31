@@ -4,7 +4,7 @@ import hu.bme.mit.theta.core.type.Type;
 
 public abstract class DivExpr<ExprType extends Type> extends BinaryExpr<ExprType, ExprType, ExprType> {
 
-	protected DivExpr(final Expr<? extends ExprType> leftOp, final Expr<? extends ExprType> rightOp) {
+	protected DivExpr(final Expr<ExprType> leftOp, final Expr<ExprType> rightOp) {
 		super(leftOp, rightOp);
 	}
 

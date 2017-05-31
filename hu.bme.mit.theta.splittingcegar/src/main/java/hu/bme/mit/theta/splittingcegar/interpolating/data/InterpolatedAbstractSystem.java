@@ -18,7 +18,7 @@ import hu.bme.mit.theta.splittingcegar.common.data.KripkeStructure;
  */
 public class InterpolatedAbstractSystem extends AbstractSystemBase {
 
-	private final List<Expr<? extends BoolType>> initialPredicates;
+	private final List<Expr<BoolType>> initialPredicates;
 	private KripkeStructure<InterpolatedAbstractState> abstractKripkeStructure;
 	private final Set<VarDecl<? extends Type>> explicitVars;
 	private final Set<VarDecl<? extends Type>> vars;
@@ -37,7 +37,7 @@ public class InterpolatedAbstractSystem extends AbstractSystemBase {
 		previousSplitIndex = -1;
 	}
 
-	public List<Expr<? extends BoolType>> getInitialPredicates() {
+	public List<Expr<BoolType>> getInitialPredicates() {
 		return initialPredicates;
 	}
 

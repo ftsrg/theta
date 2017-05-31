@@ -20,8 +20,8 @@ public final class OutVar extends HwElement {
 	}
 
 	@Override
-	public Expr<? extends BoolType> getExpr(final List<HwElement> elements) {
-		Expr<? extends BoolType> expr = elements.get(literal / 2).getExpr(elements);
+	public Expr<BoolType> getExpr(final List<HwElement> elements) {
+		Expr<BoolType> expr = elements.get(literal / 2).getExpr(elements);
 		if (literal % 2 != 0)
 			expr = Not(expr);
 		return expr;

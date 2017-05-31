@@ -13,7 +13,7 @@ public interface PredPrec extends Prec {
 
 	PredState createState(final Valuation valuation);
 
-	default Collection<? extends PredState> createStatesForExpr(final Solver solver, final Expr<? extends BoolType> expr) {
+	default Collection<? extends PredState> createStatesForExpr(final Solver solver, final Expr<BoolType> expr) {
 		return ExprStates.createStatesForExpr(solver, expr, this::createState);
 	}
 }

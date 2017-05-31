@@ -71,7 +71,7 @@ public class SeqItpVarCollector extends AbstractCEGARStep implements VarCollecto
 		// solver, but the last one is always 'false' and it is returned
 		itpSolver.check();
 		assert (itpSolver.getStatus() == SolverStatus.UNSAT);
-		final List<Expr<? extends BoolType>> interpolants = new ArrayList<>();
+		final List<Expr<BoolType>> interpolants = new ArrayList<>();
 		// Fold in interpolants (except the last)
 		for (int i = 0; i < markers.length - 1; ++i)
 			interpolants.add(PathUtils.foldin(itpSolver.getInterpolant(pattern).eval(markers[i]), i));
@@ -79,7 +79,7 @@ public class SeqItpVarCollector extends AbstractCEGARStep implements VarCollecto
 		itpSolver.pop();
 
 		final Set<VarDecl<? extends Type>> vars = new HashSet<>();
-		for (final Expr<? extends BoolType> interpolant : interpolants)
+		for (final Expr<BoolType> interpolant : interpolants)
 			ExprUtils.collectVars(interpolant, vars);
 
 		return vars;

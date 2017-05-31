@@ -55,7 +55,7 @@ public final class Prod3State<S1 extends State, S2 extends State, S3 extends Sta
 	////
 
 	@Override
-	public Expr<? extends BoolType> toExpr() {
+	public Expr<BoolType> toExpr() {
 		if (_1() instanceof ExprState && _2() instanceof ExprState && _3() instanceof ExprState) {
 			final ExprState exprState1 = (ExprState) _1();
 			final ExprState exprState2 = (ExprState) _2();

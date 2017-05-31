@@ -12,7 +12,7 @@ public final class IntLtExpr extends LtExpr<IntType> {
 	private static final int HASH_SEED = 9431;
 	private static final String OPERATOR_LABEL = "Lt";
 
-	IntLtExpr(final Expr<? extends IntType> leftOp, final Expr<? extends IntType> rightOp) {
+	IntLtExpr(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
 		super(leftOp, rightOp);
 	}
 
@@ -22,7 +22,7 @@ public final class IntLtExpr extends LtExpr<IntType> {
 	}
 
 	@Override
-	public IntLtExpr withOps(final Expr<? extends IntType> leftOp, final Expr<? extends IntType> rightOp) {
+	public IntLtExpr withOps(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
 		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
 			return this;
 		} else {
@@ -31,12 +31,12 @@ public final class IntLtExpr extends LtExpr<IntType> {
 	}
 
 	@Override
-	public IntLtExpr withLeftOp(final Expr<? extends IntType> leftOp) {
+	public IntLtExpr withLeftOp(final Expr<IntType> leftOp) {
 		return withOps(leftOp, getRightOp());
 	}
 
 	@Override
-	public IntLtExpr withRightOp(final Expr<? extends IntType> rightOp) {
+	public IntLtExpr withRightOp(final Expr<IntType> rightOp) {
 		return withOps(getLeftOp(), rightOp);
 	}
 

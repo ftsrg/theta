@@ -77,7 +77,7 @@ public final class RangeType implements Type {
 	////
 
 	@Override
-	public LitExpr<? extends Type> getAny() {
+	public LitExpr<Type> getAny() {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}

@@ -51,7 +51,7 @@ public class PathUtils {
 		return unfold(expr, VarIndexing.all(i));
 	}
 
-	public static <T extends Type> Collection<Expr<? extends T>> unfold(final Collection<Expr<? extends T>> exprs,
+	public static <T extends Type> Collection<Expr<T>> unfold(final Collection<Expr<T>> exprs,
 			final int i) {
 		return exprs.stream().map(e -> PathUtils.unfold(e, i)).collect(Collectors.toSet());
 	}
@@ -126,16 +126,16 @@ public class PathUtils {
 		////
 
 		@Override
-		public <ExprType extends Type> Expr<? extends ExprType> visit(final PrimedExpr<ExprType> expr,
+		public <ExprType extends Type> Expr<ExprType> visit(final PrimedExpr<ExprType> expr,
 				final Integer offset) {
-			final Expr<? extends ExprType> op = expr.getOp();
+			final Expr<ExprType> op = expr.getOp();
 			@SuppressWarnings("unchecked")
-			final Expr<? extends ExprType> res = (Expr<? extends ExprType>) op.accept(this, offset + 1);
+			final Expr<ExprType> res = (Expr<ExprType>) op.accept(this, offset + 1);
 			return res;
 		}
 
 		@Override
-		public <DeclType extends Type> Expr<? extends DeclType> visit(final RefExpr<DeclType> expr,
+		public <DeclType extends Type> Expr<DeclType> visit(final RefExpr<DeclType> expr,
 				final Integer offset) {
 			final Decl<DeclType> decl = expr.getDecl();
 			if (decl instanceof VarDecl) {

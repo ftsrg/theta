@@ -75,7 +75,7 @@ public class SandBox {
 		final CEGARResult result = cegar.check(problem);
 
 		if (result.propertyHolds()) {
-			final List<Expr<? extends BoolType>> ops = new ArrayList<>();
+			final List<Expr<BoolType>> ops = new ArrayList<>();
 			for (final AbstractState as : result.getExploredStates()) {
 				ops.add(as.createExpression());
 			}

@@ -46,7 +46,7 @@ public class VarCollectorExprVisitorTest {
 	private static final Expr<BoolType> D = VD.getRef();
 
 	@Parameter(value = 0)
-	public Expr<? extends Type> expr;
+	public Expr<Type> expr;
 
 	@Parameter(value = 1)
 	public Set<VarDecl<? extends Type>> expectedVars;

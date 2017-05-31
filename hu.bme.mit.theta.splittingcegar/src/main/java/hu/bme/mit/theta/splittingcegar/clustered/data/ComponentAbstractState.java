@@ -7,17 +7,17 @@ import java.util.BitSet;
 import java.util.List;
 
 import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.NotExpr;
 
 public class ComponentAbstractState {
-	private final List<Expr<? extends BoolType>> labels;
+	private final List<Expr<BoolType>> labels;
 	private final List<ComponentAbstractState> successors;
 	private boolean isInitial;
 	private BitSet bitset; // Bitset storing the formulas in a compact way
 	private final Cluster cluster;
-	private final List<Integer> refinementIndicies; // Indices for the abstraction refinement
+	private final List<Integer> refinementIndicies; // Indices for the
+													// abstraction refinement
 
 	public ComponentAbstractState(final Cluster cluster) {
 		this(cluster, false);
@@ -26,13 +26,13 @@ public class ComponentAbstractState {
 	public ComponentAbstractState(final Cluster cluster, final boolean isInitial) {
 		this.cluster = checkNotNull(cluster);
 		labels = new ArrayList<>(cluster.getFormulaCount());
-		successors = new ArrayList<ComponentAbstractState>();
+		successors = new ArrayList<>();
 		this.isInitial = isInitial;
 		this.bitset = new BitSet(cluster.getFormulaCount());
-		this.refinementIndicies = new ArrayList<Integer>();
+		this.refinementIndicies = new ArrayList<>();
 	}
 
-	public List<Expr<? extends BoolType>> getLabels() {
+	public List<Expr<BoolType>> getLabels() {
 		return labels;
 	}
 
@@ -52,23 +52,27 @@ public class ComponentAbstractState {
 		return cluster;
 	}
 
-	public ComponentAbstractState cloneAndAdd(final Expr<? extends BoolType> label) {
+	public ComponentAbstractState cloneAndAdd(final Expr<BoolType> label) {
 		checkNotNull(label);
 		final ComponentAbstractState ret = new ComponentAbstractState(cluster);
 		ret.labels.addAll(this.labels);
 		ret.labels.add(label);
 		ret.bitset = (BitSet) this.bitset.clone(); // Clone bitset
-		ret.bitset.set(ret.labels.size() - 1, !(label instanceof NotExpr)); // Set new bit
+		ret.bitset.set(ret.labels.size() - 1, !(label instanceof NotExpr)); // Set
+																			// new
+																			// bit
 		return ret;
 	}
 
-	public ComponentAbstractState refine(final int index, final Expr<? extends BoolType> label) {
+	public ComponentAbstractState refine(final int index, final Expr<BoolType> label) {
 		checkNotNull(label);
 		final ComponentAbstractState ret = new ComponentAbstractState(cluster);
 		ret.labels.addAll(this.labels);
 		ret.labels.add(label);
 		ret.bitset = (BitSet) this.bitset.clone(); // Clone bitset
-		ret.refinementIndicies.addAll(this.refinementIndicies); // Clone refinement indicies
+		ret.refinementIndicies.addAll(this.refinementIndicies); // Clone
+																// refinement
+																// indicies
 		ret.refinementIndicies.add(index);
 		return ret;
 	}
@@ -76,7 +80,7 @@ public class ComponentAbstractState {
 	@Override
 	public String toString() {
 		final StringBuilder ret = new StringBuilder("State: { Labels: {");
-		for (final Expr<? extends Type> label : labels)
+		for (final Expr<?> label : labels)
 			ret.append(label.toString()).append(" ");
 		ret.append("}, Successors: " + successors.size() + (isInitial ? ", Initial" : "") + " }");
 		return ret.toString();
@@ -96,8 +100,10 @@ public class ComponentAbstractState {
 
 		final ComponentAbstractState other = (ComponentAbstractState) obj;
 
-		// Two abstract states are the same if they belong to the same cluster, the
-		// formulas are the same and the abstraction refinement indices are the same
+		// Two abstract states are the same if they belong to the same cluster,
+		// the
+		// formulas are the same and the abstraction refinement indices are the
+		// same
 		if (other.cluster.getClusterId() != this.cluster.getClusterId())
 			return false;
 		if (!this.bitset.equals(other.bitset))

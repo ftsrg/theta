@@ -7,18 +7,18 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 final class SimpleExprState implements ExprState {
 
-	private final Expr<? extends BoolType> expr;
+	private final Expr<BoolType> expr;
 
-	private SimpleExprState(final Expr<? extends BoolType> expr) {
+	private SimpleExprState(final Expr<BoolType> expr) {
 		this.expr = checkNotNull(expr);
 	}
 
-	public static SimpleExprState of(final Expr<? extends BoolType> expr) {
+	public static SimpleExprState of(final Expr<BoolType> expr) {
 		return new SimpleExprState(expr);
 	}
 
 	@Override
-	public Expr<? extends BoolType> toExpr() {
+	public Expr<BoolType> toExpr() {
 		return expr;
 	}
 

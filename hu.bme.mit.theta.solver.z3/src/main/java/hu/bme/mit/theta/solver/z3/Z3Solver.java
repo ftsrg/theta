@@ -41,14 +41,14 @@ final class Z3Solver implements Solver {
 	private final com.microsoft.z3.Context z3Context;
 	private final com.microsoft.z3.Solver z3Solver;
 
-	private final Stack<Expr<? extends BoolType>> assertions;
-	private final Map<String, Expr<? extends BoolType>> assumptions;
+	private final Stack<Expr<BoolType>> assertions;
+	private final Map<String, Expr<BoolType>> assumptions;
 
 	private static final String ASSUMPTION_LABEL = "_LABEL_%d";
 	private int labelNum = 0;
 
 	private Model model;
-	private Collection<Expr<? extends BoolType>> unsatCore;
+	private Collection<Expr<BoolType>> unsatCore;
 	private SolverStatus status;
 
 	public Z3Solver(final Z3SymbolTable symbolTable, final Z3TransformationManager transformationManager,
@@ -67,20 +67,20 @@ final class Z3Solver implements Solver {
 	////
 
 	@Override
-	public void add(final Expr<? extends BoolType> assertion) {
+	public void add(final Expr<BoolType> assertion) {
 		checkNotNull(assertion);
 		final com.microsoft.z3.BoolExpr term = (com.microsoft.z3.BoolExpr) transformationManager.toTerm(assertion);
 		add(assertion, term);
 	}
 
-	void add(final Expr<? extends BoolType> assertion, final com.microsoft.z3.BoolExpr term) {
+	void add(final Expr<BoolType> assertion, final com.microsoft.z3.BoolExpr term) {
 		assertions.add(assertion);
 		z3Solver.add(term);
 		clearState();
 	}
 
 	@Override
-	public void track(final Expr<? extends BoolType> assertion) {
+	public void track(final Expr<BoolType> assertion) {
 		checkNotNull(assertion);
 
 		assertions.add(assertion);
@@ -159,7 +159,7 @@ final class Z3Solver implements Solver {
 	}
 
 	@Override
-	public Collection<Expr<? extends BoolType>> getUnsatCore() {
+	public Collection<Expr<BoolType>> getUnsatCore() {
 		checkState(status == SolverStatus.UNSAT);
 
 		if (unsatCore == null) {
@@ -170,11 +170,11 @@ final class Z3Solver implements Solver {
 		return Collections.unmodifiableCollection(unsatCore);
 	}
 
-	private Collection<Expr<? extends BoolType>> extractUnsatCore() {
+	private Collection<Expr<BoolType>> extractUnsatCore() {
 		assert status == SolverStatus.UNSAT;
 		assert unsatCore == null;
 
-		final Collection<Expr<? extends BoolType>> unsatCore = new LinkedList<>();
+		final Collection<Expr<BoolType>> unsatCore = new LinkedList<>();
 
 		final com.microsoft.z3.Expr[] z3UnsatCore = z3Solver.getUnsatCore();
 
@@ -184,7 +184,7 @@ final class Z3Solver implements Solver {
 			checkState(term.isConst());
 
 			final String label = term.toString();
-			final Expr<? extends BoolType> assumption = assumptions.get(label);
+			final Expr<BoolType> assumption = assumptions.get(label);
 
 			assert assumption != null;
 			unsatCore.add(assumption);
@@ -194,7 +194,7 @@ final class Z3Solver implements Solver {
 	}
 
 	@Override
-	public Collection<Expr<? extends BoolType>> getAssertions() {
+	public Collection<Expr<BoolType>> getAssertions() {
 		return assertions.toCollection();
 	}
 

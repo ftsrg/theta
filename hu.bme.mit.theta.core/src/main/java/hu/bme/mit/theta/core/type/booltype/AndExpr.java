@@ -2,8 +2,6 @@ package hu.bme.mit.theta.core.type.booltype;
 
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 
-import java.util.Collection;
-
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.MultiaryExpr;
 import hu.bme.mit.theta.core.utils.ExprVisitor;
@@ -14,7 +12,7 @@ public final class AndExpr extends MultiaryExpr<BoolType, BoolType> {
 
 	private static final String OPERATOR_LABEL = "And";
 
-	AndExpr(final Collection<? extends Expr<? extends BoolType>> ops) {
+	AndExpr(final Iterable<? extends Expr<BoolType>> ops) {
 		super(ops);
 	}
 
@@ -24,7 +22,7 @@ public final class AndExpr extends MultiaryExpr<BoolType, BoolType> {
 	}
 
 	@Override
-	public AndExpr withOps(final Collection<? extends Expr<? extends BoolType>> ops) {
+	public AndExpr withOps(final Iterable<? extends Expr<BoolType>> ops) {
 		if (ops == getOps()) {
 			return this;
 		} else {

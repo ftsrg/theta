@@ -110,16 +110,16 @@ final class StsDslHelper {
 		}
 	}
 
-	public static Expr<? extends BoolType> createBoolExpr(final Scope scope, final Assignment assignment,
+	public static Expr<BoolType> createBoolExpr(final Scope scope, final Assignment assignment,
 			final ExprContext exprCtx) {
 		return TypeUtils.cast(createExpr(scope, assignment, exprCtx), BoolType.class);
 	}
 
-	public static List<Expr<? extends BoolType>> createBoolExprList(final Scope scope, final Assignment assignment,
+	public static List<Expr<BoolType>> createBoolExprList(final Scope scope, final Assignment assignment,
 			final ExprListContext exprListCtx) {
 		final List<Expr<?>> exprs = createExprList(scope, assignment, exprListCtx);
-		final List<Expr<? extends BoolType>> boolExprs = exprs.stream()
-				.map(e -> (Expr<? extends BoolType>) TypeUtils.cast(e, BoolType.class)).collect(toList());
+		final List<Expr<BoolType>> boolExprs = exprs.stream()
+				.map(e -> (Expr<BoolType>) TypeUtils.cast(e, BoolType.class)).collect(toList());
 		return boolExprs;
 	}
 

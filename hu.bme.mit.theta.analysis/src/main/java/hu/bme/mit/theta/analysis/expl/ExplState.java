@@ -52,7 +52,7 @@ public final class ExplState implements ExprState, Assignment {
 	}
 
 	@Override
-	public Expr<? extends BoolType> toExpr() {
+	public Expr<BoolType> toExpr() {
 		return values.toExpr();
 	}
 

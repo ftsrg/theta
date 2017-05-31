@@ -16,12 +16,11 @@ public class StsUtils {
 	 * Gets a concrete state from the valuation. Missing variables are added
 	 * with some default value.
 	 */
-	public static Valuation getConcreteState(final Model model, final int i,
-			final Collection<VarDecl<? extends Type>> variables) {
+	public static Valuation getConcreteState(final Model model, final int i, final Collection<VarDecl<?>> variables) {
 		final Valuation.Builder builder = Valuation.builder();
 
-		for (final VarDecl<? extends Type> varDecl : variables) {
-			LitExpr<? extends Type> value = null;
+		for (final VarDecl<?> varDecl : variables) {
+			LitExpr<?> value = null;
 			try {
 				value = model.eval(varDecl.getConstDecl(i)).get();
 			} catch (final Exception ex) {

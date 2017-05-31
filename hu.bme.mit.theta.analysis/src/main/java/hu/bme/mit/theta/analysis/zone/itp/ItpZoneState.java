@@ -58,7 +58,7 @@ public final class ItpZoneState implements ExprState {
 	////
 
 	@Override
-	public Expr<? extends BoolType> toExpr() {
+	public Expr<BoolType> toExpr() {
 		return interpolant.toExpr();
 	}
 

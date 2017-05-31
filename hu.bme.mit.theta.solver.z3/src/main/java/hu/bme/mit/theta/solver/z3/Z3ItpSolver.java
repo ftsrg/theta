@@ -64,7 +64,7 @@ final class Z3ItpSolver implements ItpSolver {
 	}
 
 	@Override
-	public void add(final ItpMarker marker, final Expr<? extends BoolType> assertion) {
+	public void add(final ItpMarker marker, final Expr<BoolType> assertion) {
 		checkNotNull(marker);
 		checkNotNull(assertion);
 		checkArgument(markers.toCollection().contains(marker));
@@ -132,13 +132,13 @@ final class Z3ItpSolver implements ItpSolver {
 	// delegate
 
 	@Override
-	public void add(final Expr<? extends BoolType> assertion) {
+	public void add(final Expr<BoolType> assertion) {
 		checkNotNull(assertion);
 		solver.add(assertion);
 	}
 
 	@Override
-	public void track(final Expr<? extends BoolType> assertion) {
+	public void track(final Expr<BoolType> assertion) {
 		checkNotNull(assertion);
 		solver.track(assertion);
 	}
@@ -182,12 +182,12 @@ final class Z3ItpSolver implements ItpSolver {
 	}
 
 	@Override
-	public Collection<Expr<? extends BoolType>> getUnsatCore() {
+	public Collection<Expr<BoolType>> getUnsatCore() {
 		return solver.getUnsatCore();
 	}
 
 	@Override
-	public Collection<Expr<? extends BoolType>> getAssertions() {
+	public Collection<Expr<BoolType>> getAssertions() {
 		return solver.getAssertions();
 	}
 

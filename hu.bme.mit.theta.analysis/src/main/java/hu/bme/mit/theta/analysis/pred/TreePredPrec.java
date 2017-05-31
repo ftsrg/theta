@@ -22,15 +22,15 @@ public final class TreePredPrec implements PredPrec {
 
 	private final Node root;
 
-	public static TreePredPrec create(final Iterable<? extends Expr<? extends BoolType>> preds) {
+	public static TreePredPrec create(final Iterable<? extends Expr<BoolType>> preds) {
 		return new TreePredPrec(preds);
 	}
 
-	private TreePredPrec(final Iterable<? extends Expr<? extends BoolType>> preds) {
+	private TreePredPrec(final Iterable<? extends Expr<BoolType>> preds) {
 		checkNotNull(preds);
 
-		final Set<Expr<? extends BoolType>> ponatedPreds = new HashSet<>();
-		for (final Expr<? extends BoolType> pred : preds) {
+		final Set<Expr<BoolType>> ponatedPreds = new HashSet<>();
+		for (final Expr<BoolType> pred : preds) {
 			ponatedPreds.add(ExprUtils.ponate(pred));
 		}
 
@@ -42,17 +42,17 @@ public final class TreePredPrec implements PredPrec {
 	}
 
 	private final static class Node {
-		private final Expr<? extends BoolType> ponPred;
-		private final Expr<? extends BoolType> negPred;
+		private final Expr<BoolType> ponPred;
+		private final Expr<BoolType> negPred;
 
 		private Optional<Node> ponRefined;
 		private Optional<Node> negRefined;
 
-		public Node(final Expr<? extends BoolType> pred) {
+		public Node(final Expr<BoolType> pred) {
 			this(Collections.singletonList(pred));
 		}
 
-		public Node(final List<? extends Expr<? extends BoolType>> preds) {
+		public Node(final List<? extends Expr<BoolType>> preds) {
 			assert !preds.isEmpty();
 			assert !(preds.get(0) instanceof NotExpr);
 			this.ponPred = preds.get(0);
@@ -66,20 +66,20 @@ public final class TreePredPrec implements PredPrec {
 			}
 		}
 
-		public Expr<? extends BoolType> getPonPred() {
+		public Expr<BoolType> getPonPred() {
 			return ponPred;
 		}
 
-		public Expr<? extends BoolType> getNegPred() {
+		public Expr<BoolType> getNegPred() {
 			return negPred;
 		}
 
-		public void refinePon(final Expr<? extends BoolType> pred) {
+		public void refinePon(final Expr<BoolType> pred) {
 			assert !ponRefined.isPresent();
 			ponRefined = Optional.of(new Node(pred));
 		}
 
-		public void refineNeg(final Expr<? extends BoolType> pred) {
+		public void refineNeg(final Expr<BoolType> pred) {
 			assert !negRefined.isPresent();
 			negRefined = Optional.of(new Node(pred));
 		}
@@ -96,12 +96,12 @@ public final class TreePredPrec implements PredPrec {
 	@Override
 	public PredState createState(final Valuation valuation) {
 		checkNotNull(valuation);
-		final Set<Expr<? extends BoolType>> statePreds = new HashSet<>();
+		final Set<Expr<BoolType>> statePreds = new HashSet<>();
 
 		Node node = root;
 
 		while (node != null) {
-			final LitExpr<? extends BoolType> predHolds = ExprUtils.evaluate(node.getPonPred(), valuation);
+			final LitExpr<BoolType> predHolds = ExprUtils.evaluate(node.getPonPred(), valuation);
 			if (predHolds.equals(True())) {
 				statePreds.add(node.getPonPred());
 				node = node.getPonRefined().isPresent() ? node.getPonRefined().get() : null;
@@ -114,11 +114,11 @@ public final class TreePredPrec implements PredPrec {
 		return PredState.of(statePreds);
 	}
 
-	public void refine(final PredState state, final Expr<? extends BoolType> pred) {
+	public void refine(final PredState state, final Expr<BoolType> pred) {
 		checkNotNull(state);
 		checkNotNull(pred);
 
-		final Expr<? extends BoolType> refiningPred = ExprUtils.ponate(pred);
+		final Expr<BoolType> refiningPred = ExprUtils.ponate(pred);
 
 		Node node = root;
 		while (node != null) {

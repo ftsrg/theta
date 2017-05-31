@@ -31,7 +31,7 @@ public final class StsCnfTransformation implements STSTransformation {
 		return builder.build();
 	}
 
-	private Expr<? extends BoolType> transformIfNonCNF(final Expr<? extends BoolType> expr,
+	private Expr<BoolType> transformIfNonCNF(final Expr<BoolType> expr,
 			final CnfTransformation cnfTransf) {
 		if (ExprUtils.isExprCNF(expr))
 			return expr;

@@ -12,13 +12,13 @@ public final class ReturnStmt<ReturnType extends Type> implements Stmt {
 	private static final int HASH_SEED = 1009;
 	private volatile int hashCode = 0;
 
-	private final Expr<? extends ReturnType> expr;
+	private final Expr<ReturnType> expr;
 
-	ReturnStmt(final Expr<? extends ReturnType> expr) {
+	ReturnStmt(final Expr<ReturnType> expr) {
 		this.expr = checkNotNull(expr);
 	}
 
-	public Expr<? extends ReturnType> getExpr() {
+	public Expr<ReturnType> getExpr() {
 		return expr;
 	}
 

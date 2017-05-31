@@ -12,15 +12,15 @@ public final class IfStmt implements Stmt {
 	private static final int HASH_SEED = 829;
 	private volatile int hashCode = 0;
 
-	private final Expr<? extends BoolType> cond;
+	private final Expr<BoolType> cond;
 	private final Stmt then;
 
-	IfStmt(final Expr<? extends BoolType> cond, final Stmt then) {
+	IfStmt(final Expr<BoolType> cond, final Stmt then) {
 		this.cond = checkNotNull(cond);
 		this.then = checkNotNull(then);
 	}
 
-	public Expr<? extends BoolType> getCond() {
+	public Expr<BoolType> getCond() {
 		return cond;
 	}
 

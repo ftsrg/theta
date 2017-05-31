@@ -9,7 +9,7 @@ public final class PrimedExpr<ExprType extends Type> extends UnaryExpr<ExprType,
 
 	private static final String OPERATOR_LABEL = "Prime";
 
-	PrimedExpr(final Expr<? extends ExprType> op) {
+	PrimedExpr(final Expr<ExprType> op) {
 		super(op);
 	}
 
@@ -19,7 +19,7 @@ public final class PrimedExpr<ExprType extends Type> extends UnaryExpr<ExprType,
 	}
 
 	@Override
-	public final UnaryExpr<ExprType, ExprType> withOp(final Expr<? extends ExprType> op) {
+	public final UnaryExpr<ExprType, ExprType> withOp(final Expr<ExprType> op) {
 		if (op == getOp()) {
 			return this;
 		} else {

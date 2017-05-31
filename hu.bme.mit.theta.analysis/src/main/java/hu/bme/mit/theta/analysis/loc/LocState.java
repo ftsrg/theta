@@ -52,7 +52,7 @@ public final class LocState<S extends State, L extends Loc<L, E>, E extends Edge
 	////
 
 	@Override
-	public Expr<? extends BoolType> toExpr() {
+	public Expr<BoolType> toExpr() {
 		// TODO Should be loc = l and toExpr(state)
 		if (state instanceof ExprState) {
 			return ((ExprState) state).toExpr();

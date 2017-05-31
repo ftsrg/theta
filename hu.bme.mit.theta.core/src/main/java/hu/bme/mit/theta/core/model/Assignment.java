@@ -14,5 +14,5 @@ public interface Assignment {
 
 	<DeclType extends Type> Optional<? extends Expr<DeclType>> eval(final Decl<DeclType> decl);
 
-	Expr<? extends BoolType> toExpr();
+	Expr<BoolType> toExpr();
 }

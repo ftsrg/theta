@@ -49,14 +49,14 @@ public final class PredImpactRefiner<L extends Loc<L, E>, E extends Edge<L, E>>
 
 		} else if (traceStatus.isInfeasible()) {
 			final ItpRefutation refuation = traceStatus.asInfeasible().getRefutation();
-			final List<Expr<? extends BoolType>> exprs = refuation.toList();
+			final List<Expr<BoolType>> exprs = refuation.toList();
 
 			final List<LocState<PredState, L, E>> refinedStates = new ArrayList<>();
 			for (int i = 0; i < exprs.size(); i++) {
-				final List<Expr<? extends BoolType>> newPreds = new ArrayList<>();
+				final List<Expr<BoolType>> newPreds = new ArrayList<>();
 
 				final LocState<PredState, L, E> state = cex.getState(i);
-				final Expr<? extends BoolType> expr = exprs.get(i);
+				final Expr<BoolType> expr = exprs.get(i);
 
 				newPreds.addAll(state.getState().getPreds());
 				newPreds.add(expr);

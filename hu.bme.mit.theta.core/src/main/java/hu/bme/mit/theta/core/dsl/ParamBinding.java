@@ -58,7 +58,7 @@ public final class ParamBinding implements Assignment {
 	}
 
 	@Override
-	public Expr<? extends BoolType> toExpr() {
+	public Expr<BoolType> toExpr() {
 		throw new UnsupportedOperationException();
 	}
 

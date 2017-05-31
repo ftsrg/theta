@@ -38,9 +38,9 @@ public abstract class ConfigurationBuilder {
 		WHOLE(ItpRefToSimplePredPrec.whole()), CONJUNCTS(ItpRefToSimplePredPrec.conjuncts()), ATOMS(
 				ItpRefToSimplePredPrec.atoms());
 
-		public final Function<Expr<? extends BoolType>, Collection<Expr<? extends BoolType>>> splitter;
+		public final Function<Expr<BoolType>, Collection<Expr<BoolType>>> splitter;
 
-		private PredSplit(final Function<Expr<? extends BoolType>, Collection<Expr<? extends BoolType>>> splitter) {
+		private PredSplit(final Function<Expr<BoolType>, Collection<Expr<BoolType>>> splitter) {
 			this.splitter = splitter;
 		}
 	};

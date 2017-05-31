@@ -32,12 +32,12 @@ public class Stmts {
 		return new DeclStmt<>(varDecl, initVal);
 	}
 
-	public static AssumeStmt Assume(final Expr<? extends BoolType> cond) {
+	public static AssumeStmt Assume(final Expr<BoolType> cond) {
 		checkNotNull(cond);
 		return new AssumeStmt(cond);
 	}
 
-	public static AssertStmt Assert(final Expr<? extends BoolType> cond) {
+	public static AssertStmt Assert(final Expr<BoolType> cond) {
 		checkNotNull(cond);
 		return new AssertStmt(cond);
 	}
@@ -62,31 +62,31 @@ public class Stmts {
 		return Block(asList(stmts));
 	}
 
-	public static <T extends Type> ReturnStmt<T> Return(final Expr<? extends T> expr) {
+	public static <T extends Type> ReturnStmt<T> Return(final Expr<T> expr) {
 		checkNotNull(expr);
 		return new ReturnStmt<>(expr);
 	}
 
-	public static IfStmt If(final Expr<? extends BoolType> cond, final Stmt then) {
+	public static IfStmt If(final Expr<BoolType> cond, final Stmt then) {
 		checkNotNull(cond);
 		checkNotNull(then);
 		return new IfStmt(cond, then);
 	}
 
-	public static IfElseStmt If(final Expr<? extends BoolType> cond, final Stmt then, final Stmt elze) {
+	public static IfElseStmt If(final Expr<BoolType> cond, final Stmt then, final Stmt elze) {
 		checkNotNull(cond);
 		checkNotNull(then);
 		checkNotNull(elze);
 		return new IfElseStmt(cond, then, elze);
 	}
 
-	public static WhileStmt While(final Expr<? extends BoolType> cond, final Stmt stmt) {
+	public static WhileStmt While(final Expr<BoolType> cond, final Stmt stmt) {
 		checkNotNull(cond);
 		checkNotNull(stmt);
 		return new WhileStmt(cond, stmt);
 	}
 
-	public static DoStmt Do(final Stmt stmt, final Expr<? extends BoolType> cond) {
+	public static DoStmt Do(final Stmt stmt, final Expr<BoolType> cond) {
 		checkNotNull(stmt);
 		checkNotNull(cond);
 		return new DoStmt(stmt, cond);

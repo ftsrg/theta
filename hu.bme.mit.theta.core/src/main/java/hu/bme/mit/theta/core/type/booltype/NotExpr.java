@@ -12,7 +12,7 @@ public final class NotExpr extends UnaryExpr<BoolType, BoolType> {
 
 	private static final String OPERAND_LABEL = "Not";
 
-	NotExpr(final Expr<? extends BoolType> op) {
+	NotExpr(final Expr<BoolType> op) {
 		super(op);
 	}
 
@@ -22,7 +22,7 @@ public final class NotExpr extends UnaryExpr<BoolType, BoolType> {
 	}
 
 	@Override
-	public NotExpr withOp(final Expr<? extends BoolType> op) {
+	public NotExpr withOp(final Expr<BoolType> op) {
 		if (op == getOp()) {
 			return this;
 		} else {

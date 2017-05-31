@@ -124,7 +124,7 @@ public final class ClockOps {
 		@Override
 		public ClockOp visit(final AssumeStmt stmt, final Void param) {
 			try {
-				final Expr<? extends BoolType> cond = stmt.getCond();
+				final Expr<BoolType> cond = stmt.getCond();
 				final ClockConstr constr = ClockConstrs.formExpr(cond);
 				return Guard(constr);
 

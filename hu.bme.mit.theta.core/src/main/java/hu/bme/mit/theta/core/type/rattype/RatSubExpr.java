@@ -11,7 +11,7 @@ public final class RatSubExpr extends SubExpr<RatType> {
 	private static final int HASH_SEED = 6287;
 	private static final String OPERATOR = "Sub";
 
-	RatSubExpr(final Expr<? extends RatType> leftOp, final Expr<? extends RatType> rightOp) {
+	RatSubExpr(final Expr<RatType> leftOp, final Expr<RatType> rightOp) {
 		super(leftOp, rightOp);
 	}
 
@@ -21,7 +21,7 @@ public final class RatSubExpr extends SubExpr<RatType> {
 	}
 
 	@Override
-	public SubExpr<RatType> withOps(final Expr<? extends RatType> leftOp, final Expr<? extends RatType> rightOp) {
+	public SubExpr<RatType> withOps(final Expr<RatType> leftOp, final Expr<RatType> rightOp) {
 		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
 			return this;
 		} else {
@@ -30,12 +30,12 @@ public final class RatSubExpr extends SubExpr<RatType> {
 	}
 
 	@Override
-	public SubExpr<RatType> withLeftOp(final Expr<? extends RatType> leftOp) {
+	public SubExpr<RatType> withLeftOp(final Expr<RatType> leftOp) {
 		return withOps(leftOp, getRightOp());
 	}
 
 	@Override
-	public SubExpr<RatType> withRightOp(final Expr<? extends RatType> rightOp) {
+	public SubExpr<RatType> withRightOp(final Expr<RatType> rightOp) {
 		return withOps(getLeftOp(), rightOp);
 	}
 

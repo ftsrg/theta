@@ -16,18 +16,18 @@ import hu.bme.mit.theta.solver.Solver;
 public class ItpRefToSimplePredPrec implements RefutationToPrec<SimplePredPrec, ItpRefutation> {
 
 	private final Solver solver;
-	private final Function<Expr<? extends BoolType>, Collection<Expr<? extends BoolType>>> exprSplitter;
+	private final Function<Expr<BoolType>, Collection<Expr<BoolType>>> exprSplitter;
 
 	public ItpRefToSimplePredPrec(final Solver solver,
-			final Function<Expr<? extends BoolType>, Collection<Expr<? extends BoolType>>> exprSplitter) {
+			final Function<Expr<BoolType>, Collection<Expr<BoolType>>> exprSplitter) {
 		this.solver = checkNotNull(solver);
 		this.exprSplitter = checkNotNull(exprSplitter);
 	}
 
 	@Override
 	public SimplePredPrec toPrec(final ItpRefutation refutation, final int index) {
-		final Expr<? extends BoolType> expr = refutation.get(index);
-		final Collection<Expr<? extends BoolType>> exprs = exprSplitter.apply(expr);
+		final Expr<BoolType> expr = refutation.get(index);
+		final Collection<Expr<BoolType>> exprs = exprSplitter.apply(expr);
 		final SimplePredPrec prec = SimplePredPrec.create(exprs, solver);
 		return prec;
 	}
@@ -44,15 +44,15 @@ public class ItpRefToSimplePredPrec implements RefutationToPrec<SimplePredPrec, 
 		return getClass().getSimpleName(); // TODO: splitting strategy should be included
 	}
 
-	public static Function<Expr<? extends BoolType>, Collection<Expr<? extends BoolType>>> whole() {
+	public static Function<Expr<BoolType>, Collection<Expr<BoolType>>> whole() {
 		return e -> Collections.singleton(e);
 	}
 
-	public static Function<Expr<? extends BoolType>, Collection<Expr<? extends BoolType>>> conjuncts() {
+	public static Function<Expr<BoolType>, Collection<Expr<BoolType>>> conjuncts() {
 		return e -> ExprUtils.getConjuncts(e);
 	}
 
-	public static Function<Expr<? extends BoolType>, Collection<Expr<? extends BoolType>>> atoms() {
+	public static Function<Expr<BoolType>, Collection<Expr<BoolType>>> atoms() {
 		return e -> ExprUtils.getAtoms(e);
 	}
 

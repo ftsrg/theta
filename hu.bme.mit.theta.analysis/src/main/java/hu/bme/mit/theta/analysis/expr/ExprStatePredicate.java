@@ -12,11 +12,11 @@ import hu.bme.mit.theta.solver.Solver;
 
 public class ExprStatePredicate implements Predicate<ExprState> {
 
-	private final Expr<? extends BoolType> expr;
-	private Expr<? extends BoolType> expr0;
+	private final Expr<BoolType> expr;
+	private Expr<BoolType> expr0;
 	private final Solver solver;
 
-	public ExprStatePredicate(final Expr<? extends BoolType> expr, final Solver solver) {
+	public ExprStatePredicate(final Expr<BoolType> expr, final Solver solver) {
 		this.expr = checkNotNull(expr);
 		this.solver = checkNotNull(solver);
 		this.expr0 = null;
@@ -35,7 +35,7 @@ public class ExprStatePredicate implements Predicate<ExprState> {
 		return result;
 	}
 
-	public Expr<? extends BoolType> toExpr() {
+	public Expr<BoolType> toExpr() {
 		return expr;
 	}
 

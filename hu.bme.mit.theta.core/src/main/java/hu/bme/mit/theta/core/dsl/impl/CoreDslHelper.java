@@ -66,15 +66,15 @@ public final class CoreDslHelper {
 		}
 	}
 
-	public static Expr<? extends BoolType> createBoolExpr(final Scope scope, final ExprContext exprCtx) {
+	public static Expr<BoolType> createBoolExpr(final Scope scope, final ExprContext exprCtx) {
 		return TypeUtils.cast(createExpr(scope, exprCtx), BoolType.class);
 	}
 
-	public static List<Expr<? extends BoolType>> createBoolExprList(final Scope scope,
+	public static List<Expr<BoolType>> createBoolExprList(final Scope scope,
 			final ExprListContext exprListCtx) {
 		final List<Expr<?>> exprs = createExprList(scope, exprListCtx);
-		final List<Expr<? extends BoolType>> boolExprs = exprs.stream()
-				.map(e -> (Expr<? extends BoolType>) TypeUtils.cast(e, BoolType.class)).collect(toList());
+		final List<Expr<BoolType>> boolExprs = exprs.stream()
+				.map(e -> (Expr<BoolType>) TypeUtils.cast(e, BoolType.class)).collect(toList());
 		return boolExprs;
 	}
 

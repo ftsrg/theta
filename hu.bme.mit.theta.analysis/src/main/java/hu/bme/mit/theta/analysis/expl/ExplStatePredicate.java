@@ -15,17 +15,17 @@ import hu.bme.mit.theta.solver.Solver;
 
 public class ExplStatePredicate implements Predicate<ExplState> {
 
-	private final Expr<? extends BoolType> expr;
+	private final Expr<BoolType> expr;
 	private final Solver solver;
 
-	public ExplStatePredicate(final Expr<? extends BoolType> expr, final Solver solver) {
+	public ExplStatePredicate(final Expr<BoolType> expr, final Solver solver) {
 		this.expr = checkNotNull(expr);
 		this.solver = checkNotNull(solver);
 	}
 
 	@Override
 	public boolean test(final ExplState state) {
-		final Expr<? extends BoolType> simplified = ExprUtils.simplify(expr, state);
+		final Expr<BoolType> simplified = ExprUtils.simplify(expr, state);
 		if (simplified.equals(True())) {
 			return true;
 		}

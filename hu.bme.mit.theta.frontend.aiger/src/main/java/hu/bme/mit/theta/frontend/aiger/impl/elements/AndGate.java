@@ -22,12 +22,12 @@ public final class AndGate extends HwElement {
 	}
 
 	@Override
-	public Expr<? extends BoolType> getExpr(final List<HwElement> elements) {
-		Expr<? extends BoolType> expr1 = elements.get(rhs1 / 2).getExpr(elements);
+	public Expr<BoolType> getExpr(final List<HwElement> elements) {
+		Expr<BoolType> expr1 = elements.get(rhs1 / 2).getExpr(elements);
 		if (rhs1 % 2 != 0)
 			expr1 = Not(expr1);
 
-		Expr<? extends BoolType> expr2 = elements.get(rhs2 / 2).getExpr(elements);
+		Expr<BoolType> expr2 = elements.get(rhs2 / 2).getExpr(elements);
 		if (rhs2 % 2 != 0)
 			expr2 = Not(expr2);
 

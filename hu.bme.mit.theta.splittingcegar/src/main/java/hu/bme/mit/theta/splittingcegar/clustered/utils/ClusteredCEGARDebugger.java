@@ -75,7 +75,7 @@ public class ClusteredCEGARDebugger extends AbstractDebugger<ClusteredAbstractSy
 		for (final ClusteredAbstractState cas : stateSpace.keySet()) {
 			solver.push(); // 2
 			for (final ComponentAbstractState as : cas.getStates())
-				for (final Expr<? extends BoolType> label : as.getLabels())
+				for (final Expr<BoolType> label : as.getLabels())
 					solver.add(PathUtils.unfold(label, 0));
 			do {
 				if (SolverHelper.checkSat(solver)) {
@@ -98,12 +98,12 @@ public class ClusteredCEGARDebugger extends AbstractDebugger<ClusteredAbstractSy
 		for (final ClusteredAbstractState cas0 : stateSpace.keySet()) {
 			solver.push(); // 3
 			for (final ComponentAbstractState as : cas0.getStates())
-				for (final Expr<? extends BoolType> label : as.getLabels())
+				for (final Expr<BoolType> label : as.getLabels())
 					solver.add(PathUtils.unfold(label, 0));
 			for (final ClusteredAbstractState cas1 : stateSpace.keySet()) {
 				solver.push(); // 4
 				for (final ComponentAbstractState as : cas1.getStates())
-					for (final Expr<? extends BoolType> label : as.getLabels())
+					for (final Expr<BoolType> label : as.getLabels())
 						solver.add(PathUtils.unfold(label, 1));
 				if (SolverHelper.checkSat(solver))
 					cas0.getSuccessors().add(cas1);

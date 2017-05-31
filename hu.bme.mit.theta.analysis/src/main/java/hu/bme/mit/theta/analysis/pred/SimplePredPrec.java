@@ -30,31 +30,31 @@ import hu.bme.mit.theta.solver.Solver;
  */
 public final class SimplePredPrec implements PredPrec {
 
-	private final Map<Expr<? extends BoolType>, Expr<? extends BoolType>> predToNegMap;
+	private final Map<Expr<BoolType>, Expr<BoolType>> predToNegMap;
 	private final Solver solver;
 
 	public static SimplePredPrec create(final Solver solver) {
 		return new SimplePredPrec(Collections.emptySet(), solver);
 	}
 
-	public static SimplePredPrec create(final Iterable<Expr<? extends BoolType>> preds, final Solver solver) {
+	public static SimplePredPrec create(final Iterable<Expr<BoolType>> preds, final Solver solver) {
 		return new SimplePredPrec(preds, solver);
 	}
 
-	public static SimplePredPrec create(final Expr<? extends BoolType> pred, final Solver solver) {
+	public static SimplePredPrec create(final Expr<BoolType> pred, final Solver solver) {
 		return new SimplePredPrec(Collections.singleton(pred), solver);
 	}
 
-	private SimplePredPrec(final Iterable<Expr<? extends BoolType>> preds, final Solver solver) {
+	private SimplePredPrec(final Iterable<Expr<BoolType>> preds, final Solver solver) {
 		checkNotNull(preds);
 		this.solver = checkNotNull(solver);
 		this.predToNegMap = new HashMap<>();
 
-		for (final Expr<? extends BoolType> pred : preds) {
+		for (final Expr<BoolType> pred : preds) {
 			if (pred instanceof BoolLitExpr) {
 				continue;
 			}
-			final Expr<? extends BoolType> ponatedPred = ExprUtils.ponate(pred);
+			final Expr<BoolType> ponatedPred = ExprUtils.ponate(pred);
 			if (!this.predToNegMap.containsKey(ponatedPred)) {
 				this.predToNegMap.put(ponatedPred, Not(ponatedPred));
 			}
@@ -65,8 +65,8 @@ public final class SimplePredPrec implements PredPrec {
 		return solver;
 	}
 
-	private Expr<? extends BoolType> negate(final Expr<? extends BoolType> pred) {
-		final Expr<? extends BoolType> negated = predToNegMap.get(pred);
+	private Expr<BoolType> negate(final Expr<BoolType> pred) {
+		final Expr<BoolType> negated = predToNegMap.get(pred);
 		checkArgument(negated != null, "Negated predicate not found");
 		return negated;
 	}
@@ -74,16 +74,16 @@ public final class SimplePredPrec implements PredPrec {
 	@Override
 	public PredState createState(final Valuation valuation) {
 		checkNotNull(valuation);
-		final Set<Expr<? extends BoolType>> statePreds = new HashSet<>();
+		final Set<Expr<BoolType>> statePreds = new HashSet<>();
 
-		for (final Expr<? extends BoolType> pred : predToNegMap.keySet()) {
-			final Expr<? extends BoolType> simplified = ExprUtils.simplify(pred, valuation);
+		for (final Expr<BoolType> pred : predToNegMap.keySet()) {
+			final Expr<BoolType> simplified = ExprUtils.simplify(pred, valuation);
 			if (simplified.equals(True())) {
 				statePreds.add(pred);
 			} else if (simplified.equals(False())) {
 				statePreds.add(negate(pred));
 			} else {
-				final Expr<? extends BoolType> simplified0 = PathUtils.unfold(simplified, 0);
+				final Expr<BoolType> simplified0 = PathUtils.unfold(simplified, 0);
 
 				solver.push();
 				solver.add(Not(simplified0));
@@ -109,7 +109,7 @@ public final class SimplePredPrec implements PredPrec {
 
 	public SimplePredPrec join(final SimplePredPrec other) {
 		checkNotNull(other);
-		final Collection<Expr<? extends BoolType>> joinedPreds = ImmutableSet.<Expr<? extends BoolType>>builder()
+		final Collection<Expr<BoolType>> joinedPreds = ImmutableSet.<Expr<BoolType>>builder()
 				.addAll(this.predToNegMap.keySet()).addAll(other.predToNegMap.keySet()).build();
 		// If no new predicate was added, return same instance (immutable)
 		if (joinedPreds.size() == this.predToNegMap.size()) {

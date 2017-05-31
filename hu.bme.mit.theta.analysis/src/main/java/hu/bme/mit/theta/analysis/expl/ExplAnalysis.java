@@ -17,7 +17,7 @@ public final class ExplAnalysis implements Analysis<ExplState, ExprAction, ExplP
 	private final InitFunction<ExplState, ExplPrec> initFunction;
 	private final TransferFunction<ExplState, ExprAction, ExplPrec> transferFunction;
 
-	private ExplAnalysis(final Solver solver, final Expr<? extends BoolType> initExpr) {
+	private ExplAnalysis(final Solver solver, final Expr<BoolType> initExpr) {
 		checkNotNull(solver);
 		checkNotNull(initExpr);
 		this.domain = ExplDomain.getInstance();
@@ -26,7 +26,7 @@ public final class ExplAnalysis implements Analysis<ExplState, ExprAction, ExplP
 
 	}
 
-	public static ExplAnalysis create(final Solver solver, final Expr<? extends BoolType> initExpr) {
+	public static ExplAnalysis create(final Solver solver, final Expr<BoolType> initExpr) {
 		return new ExplAnalysis(solver, initExpr);
 	}
 

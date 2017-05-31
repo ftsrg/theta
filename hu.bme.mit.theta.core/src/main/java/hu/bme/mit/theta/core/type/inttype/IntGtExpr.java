@@ -12,7 +12,7 @@ public final class IntGtExpr extends GtExpr<IntType> {
 	private static final int HASH_SEED = 7349;
 	private static final String OPERATOR_LABEL = "Gt";
 
-	IntGtExpr(final Expr<? extends IntType> leftOp, final Expr<? extends IntType> rightOp) {
+	IntGtExpr(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
 		super(leftOp, rightOp);
 	}
 
@@ -22,7 +22,7 @@ public final class IntGtExpr extends GtExpr<IntType> {
 	}
 
 	@Override
-	public IntGtExpr withOps(final Expr<? extends IntType> leftOp, final Expr<? extends IntType> rightOp) {
+	public IntGtExpr withOps(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
 		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
 			return this;
 		} else {
@@ -31,12 +31,12 @@ public final class IntGtExpr extends GtExpr<IntType> {
 	}
 
 	@Override
-	public IntGtExpr withLeftOp(final Expr<? extends IntType> leftOp) {
+	public IntGtExpr withLeftOp(final Expr<IntType> leftOp) {
 		return withOps(leftOp, getRightOp());
 	}
 
 	@Override
-	public IntGtExpr withRightOp(final Expr<? extends IntType> rightOp) {
+	public IntGtExpr withRightOp(final Expr<IntType> rightOp) {
 		return withOps(getLeftOp(), rightOp);
 	}
 

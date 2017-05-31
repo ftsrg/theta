@@ -10,7 +10,6 @@ import java.util.Iterator;
 import java.util.List;
 
 import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 /**
@@ -18,11 +17,11 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
  * a special case of sequence interpolant, where each member of the sequence is
  * 'true' except for the last.
  */
-public class Interpolant implements Iterable<Expr<? extends BoolType>> {
-	private final List<Expr<? extends BoolType>> interpolants;
+public class Interpolant implements Iterable<Expr<BoolType>> {
+	private final List<Expr<BoolType>> interpolants;
 	private final boolean isBinary;
 
-	public Interpolant(final Expr<? extends BoolType> binaryItp, final int index) {
+	public Interpolant(final Expr<BoolType> binaryItp, final int index) {
 		checkNotNull(binaryItp);
 		checkArgument(0 <= index);
 		interpolants = new ArrayList<>();
@@ -32,17 +31,17 @@ public class Interpolant implements Iterable<Expr<? extends BoolType>> {
 		isBinary = true;
 	}
 
-	public Interpolant(final Collection<Expr<? extends BoolType>> seqenceItp) {
+	public Interpolant(final Collection<Expr<BoolType>> seqenceItp) {
 		this.interpolants = new ArrayList<>(seqenceItp);
 		isBinary = false;
 	}
 
 	@Override
-	public Iterator<Expr<? extends BoolType>> iterator() {
+	public Iterator<Expr<BoolType>> iterator() {
 		return interpolants.iterator();
 	}
 
-	public Expr<? extends BoolType> get(final int index) {
+	public Expr<BoolType> get(final int index) {
 		checkArgument(0 <= index && index < interpolants.size());
 		return interpolants.get(index);
 	}
@@ -57,7 +56,7 @@ public class Interpolant implements Iterable<Expr<? extends BoolType>> {
 			return "[binary] " + interpolants.get(interpolants.size() - 1);
 		} else {
 			final StringBuilder result = new StringBuilder("[sequence]");
-			for (final Expr<? extends Type> e : interpolants)
+			for (final Expr<?> e : interpolants)
 				result.append(" [").append(e.toString()).append("]");
 			return result.toString();
 		}

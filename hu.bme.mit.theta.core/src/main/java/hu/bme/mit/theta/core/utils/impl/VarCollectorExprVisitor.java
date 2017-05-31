@@ -69,7 +69,7 @@ final class VarCollectorExprVisitor extends ArityBasedExprVisitor<Collection<Var
 	@Override
 	protected <OpsType extends Type, ExprType extends Type> Void visitMultiary(
 			final MultiaryExpr<OpsType, ExprType> expr, final Collection<VarDecl<? extends Type>> param) {
-		for (final Expr<? extends OpsType> op : expr.getOps())
+		for (final Expr<OpsType> op : expr.getOps())
 			op.accept(this, param);
 		return null;
 	}

@@ -30,7 +30,7 @@ public class CnfCheckerTest {
 	private static final Expr<BoolType> C = Const("c", Bool()).getRef();
 
 	@Parameter(value = 0)
-	public Expr<? extends BoolType> expr;
+	public Expr<BoolType> expr;
 
 	@Parameter(value = 1)
 	public boolean expectedResult;

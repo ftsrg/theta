@@ -27,7 +27,7 @@ final class PointerTypeImpl<PointedType extends Type> implements PointerType<Poi
 	}
 
 	@Override
-	public LitExpr<? extends Type> getAny() {
+	public LitExpr<PointerType<PointedType>> getAny() {
 		return Null();
 	}
 

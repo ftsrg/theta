@@ -20,7 +20,7 @@ public final class ExprStates {
 	}
 
 	public static <S extends ExprState> Collection<S> createStatesForExpr(final Solver solver,
-			final Expr<? extends BoolType> expr, final Function<? super Valuation, ? extends S> valuationToState) {
+			final Expr<BoolType> expr, final Function<? super Valuation, ? extends S> valuationToState) {
 
 		return using(solver, s -> {
 			s.add(PathUtils.unfold(expr, 0));

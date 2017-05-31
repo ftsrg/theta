@@ -12,7 +12,7 @@ public final class IffExpr extends EqExpr<BoolType> {
 
 	private static final String OPERATOR_LABEL = "Iff";
 
-	IffExpr(final Expr<? extends BoolType> leftOp, final Expr<? extends BoolType> rightOp) {
+	IffExpr(final Expr<BoolType> leftOp, final Expr<BoolType> rightOp) {
 		super(leftOp, rightOp);
 	}
 
@@ -22,7 +22,7 @@ public final class IffExpr extends EqExpr<BoolType> {
 	}
 
 	@Override
-	public IffExpr withOps(final Expr<? extends BoolType> leftOp, final Expr<? extends BoolType> rightOp) {
+	public IffExpr withOps(final Expr<BoolType> leftOp, final Expr<BoolType> rightOp) {
 		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
 			return this;
 		} else {
@@ -31,12 +31,12 @@ public final class IffExpr extends EqExpr<BoolType> {
 	}
 
 	@Override
-	public IffExpr withLeftOp(final Expr<? extends BoolType> leftOp) {
+	public IffExpr withLeftOp(final Expr<BoolType> leftOp) {
 		return withOps(leftOp, getRightOp());
 	}
 
 	@Override
-	public IffExpr withRightOp(final Expr<? extends BoolType> rightOp) {
+	public IffExpr withRightOp(final Expr<BoolType> rightOp) {
 		return withOps(getLeftOp(), rightOp);
 	}
 

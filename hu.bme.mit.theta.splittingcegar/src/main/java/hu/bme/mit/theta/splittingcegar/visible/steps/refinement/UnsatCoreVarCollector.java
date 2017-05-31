@@ -57,7 +57,7 @@ public class UnsatCoreVarCollector extends AbstractCEGARStep implements VarColle
 
 		final Set<VarDecl<? extends Type>> vars = new HashSet<>();
 
-		for (final Expr<? extends BoolType> uc : solver.getUnsatCore())
+		for (final Expr<BoolType> uc : solver.getUnsatCore())
 			ExprUtils.collectVars(PathUtils.foldin(uc, 0), vars);
 
 		solver.pop();

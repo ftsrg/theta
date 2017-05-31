@@ -12,7 +12,7 @@ public final class RemExpr extends BinaryExpr<IntType, IntType, IntType> {
 
 	private static final String OPERATOR_LABEL = "Rem";
 
-	RemExpr(final Expr<? extends IntType> leftOp, final Expr<? extends IntType> rightOp) {
+	RemExpr(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
 		super(leftOp, rightOp);
 	}
 
@@ -22,7 +22,7 @@ public final class RemExpr extends BinaryExpr<IntType, IntType, IntType> {
 	}
 
 	@Override
-	public RemExpr withOps(final Expr<? extends IntType> leftOp, final Expr<? extends IntType> rightOp) {
+	public RemExpr withOps(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
 		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
 			return this;
 		} else {
@@ -31,12 +31,12 @@ public final class RemExpr extends BinaryExpr<IntType, IntType, IntType> {
 	}
 
 	@Override
-	public RemExpr withLeftOp(final Expr<? extends IntType> leftOp) {
+	public RemExpr withLeftOp(final Expr<IntType> leftOp) {
 		return withOps(leftOp, getRightOp());
 	}
 
 	@Override
-	public RemExpr withRightOp(final Expr<? extends IntType> rightOp) {
+	public RemExpr withRightOp(final Expr<IntType> rightOp) {
 		return withOps(getLeftOp(), rightOp);
 	}
 

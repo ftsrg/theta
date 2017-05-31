@@ -8,13 +8,13 @@ import static hu.bme.mit.theta.core.expr.AbstractExprs.Add;
 import static hu.bme.mit.theta.core.expr.AbstractExprs.Eq;
 import static hu.bme.mit.theta.core.expr.AbstractExprs.Geq;
 import static hu.bme.mit.theta.core.expr.AbstractExprs.Gt;
+import static hu.bme.mit.theta.core.expr.AbstractExprs.Ite;
 import static hu.bme.mit.theta.core.expr.AbstractExprs.Leq;
 import static hu.bme.mit.theta.core.expr.AbstractExprs.Lt;
 import static hu.bme.mit.theta.core.expr.AbstractExprs.Mul;
 import static hu.bme.mit.theta.core.expr.AbstractExprs.Neg;
 import static hu.bme.mit.theta.core.expr.AbstractExprs.Neq;
 import static hu.bme.mit.theta.core.expr.AbstractExprs.Sub;
-import static hu.bme.mit.theta.core.expr.Exprs.Ite;
 import static hu.bme.mit.theta.core.expr.Exprs.Prime;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Exists;
@@ -59,10 +59,7 @@ import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.FalseExpr;
 import hu.bme.mit.theta.core.type.booltype.TrueExpr;
-import hu.bme.mit.theta.core.type.closure.ClosedUnderAdd;
-import hu.bme.mit.theta.core.type.closure.ClosedUnderMul;
 import hu.bme.mit.theta.core.type.closure.ClosedUnderNeg;
-import hu.bme.mit.theta.core.type.closure.ClosedUnderSub;
 import hu.bme.mit.theta.core.type.inttype.IntDivExpr;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
@@ -151,7 +148,7 @@ final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
 	@Override
 	public Expr<?> visitIteExpr(final IteExprContext ctx) {
 		if (ctx.cond != null) {
-			final Expr<? extends BoolType> cond = TypeUtils.cast(ctx.cond.accept(this), BoolType.class);
+			final Expr<BoolType> cond = TypeUtils.cast(ctx.cond.accept(this), BoolType.class);
 			final Expr<?> then = ctx.then.accept(this);
 			final Expr<?> elze = ctx.elze.accept(this);
 			return Ite(cond, then, elze);
@@ -163,8 +160,8 @@ final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
 	@Override
 	public Expr<?> visitIffExpr(final IffExprContext ctx) {
 		if (ctx.rightOp != null) {
-			final Expr<? extends BoolType> leftOp = TypeUtils.cast(ctx.leftOp.accept(this), BoolType.class);
-			final Expr<? extends BoolType> rightOp = TypeUtils.cast(ctx.rightOp.accept(this), BoolType.class);
+			final Expr<BoolType> leftOp = TypeUtils.cast(ctx.leftOp.accept(this), BoolType.class);
+			final Expr<BoolType> rightOp = TypeUtils.cast(ctx.rightOp.accept(this), BoolType.class);
 			return Iff(leftOp, rightOp);
 		} else {
 			return visitChildren(ctx);
@@ -174,8 +171,8 @@ final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
 	@Override
 	public Expr<?> visitImplyExpr(final ImplyExprContext ctx) {
 		if (ctx.rightOp != null) {
-			final Expr<? extends BoolType> leftOp = TypeUtils.cast(ctx.leftOp.accept(this), BoolType.class);
-			final Expr<? extends BoolType> rightOp = TypeUtils.cast(ctx.rightOp.accept(this), BoolType.class);
+			final Expr<BoolType> leftOp = TypeUtils.cast(ctx.leftOp.accept(this), BoolType.class);
+			final Expr<BoolType> rightOp = TypeUtils.cast(ctx.rightOp.accept(this), BoolType.class);
 			return Imply(leftOp, rightOp);
 		} else {
 			return visitChildren(ctx);
@@ -188,7 +185,7 @@ final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
 			final List<ParamDecl<?>> paramDecls = createParamList(ctx.paramDecls);
 
 			push(paramDecls);
-			final Expr<? extends BoolType> op = TypeUtils.cast(ctx.op.accept(this), BoolType.class);
+			final Expr<BoolType> op = TypeUtils.cast(ctx.op.accept(this), BoolType.class);
 			pop();
 
 			return Forall(paramDecls, op);
@@ -203,7 +200,7 @@ final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
 			final List<ParamDecl<?>> paramDecls = createParamList(ctx.paramDecls);
 
 			push(paramDecls);
-			final Expr<? extends BoolType> op = TypeUtils.cast(ctx.op.accept(this), BoolType.class);
+			final Expr<BoolType> op = TypeUtils.cast(ctx.op.accept(this), BoolType.class);
 			pop();
 
 			return Exists(paramDecls, op);
@@ -215,9 +212,9 @@ final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
 	@Override
 	public Expr<?> visitOrExpr(final OrExprContext ctx) {
 		if (ctx.ops.size() > 1) {
-			final Stream<Expr<? extends BoolType>> opStream = ctx.ops.stream()
+			final Stream<Expr<BoolType>> opStream = ctx.ops.stream()
 					.map(op -> TypeUtils.cast(op.accept(this), BoolType.class));
-			final Collection<Expr<? extends BoolType>> ops = opStream.collect(toList());
+			final Collection<Expr<BoolType>> ops = opStream.collect(toList());
 			return Or(ops);
 		} else {
 			return visitChildren(ctx);
@@ -227,9 +224,9 @@ final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
 	@Override
 	public Expr<?> visitAndExpr(final AndExprContext ctx) {
 		if (ctx.ops.size() > 1) {
-			final Stream<Expr<? extends BoolType>> opStream = ctx.ops.stream()
+			final Stream<Expr<BoolType>> opStream = ctx.ops.stream()
 					.map(op -> TypeUtils.cast(op.accept(this), BoolType.class));
-			final Collection<Expr<? extends BoolType>> ops = opStream.collect(toList());
+			final Collection<Expr<BoolType>> ops = opStream.collect(toList());
 			return And(ops);
 		} else {
 			return visitChildren(ctx);
@@ -239,7 +236,7 @@ final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
 	@Override
 	public Expr<?> visitNotExpr(final NotExprContext ctx) {
 		if (ctx.op != null) {
-			final Expr<? extends BoolType> op = TypeUtils.cast(ctx.op.accept(this), BoolType.class);
+			final Expr<BoolType> op = TypeUtils.cast(ctx.op.accept(this), BoolType.class);
 			return Not(op);
 		} else {
 			return visitChildren(ctx);
@@ -269,8 +266,8 @@ final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
 	@Override
 	public Expr<?> visitRelationExpr(final RelationExprContext ctx) {
 		if (ctx.rightOp != null) {
-			final Expr<? extends RatType> leftOp = TypeUtils.cast(ctx.leftOp.accept(this), RatType.class);
-			final Expr<? extends RatType> rightOp = TypeUtils.cast(ctx.rightOp.accept(this), RatType.class);
+			final Expr<RatType> leftOp = TypeUtils.cast(ctx.leftOp.accept(this), RatType.class);
+			final Expr<RatType> rightOp = TypeUtils.cast(ctx.rightOp.accept(this), RatType.class);
 
 			switch (ctx.oper.getType()) {
 			case StsDslParser.LT:
@@ -340,23 +337,17 @@ final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
 		}
 	}
 
-	private AddExpr<? extends ClosedUnderAdd> createAddExpr(final Expr<?> uncastLeftOp, final Expr<?> uncastRightOp) {
-		final Expr<? extends ClosedUnderAdd> leftOp = TypeUtils.cast(uncastLeftOp, ClosedUnderAdd.class);
-		final Expr<? extends ClosedUnderAdd> rightOp = TypeUtils.cast(uncastRightOp, ClosedUnderAdd.class);
-
+	private AddExpr<?> createAddExpr(final Expr<?> leftOp, final Expr<?> rightOp) {
 		if (leftOp instanceof AddExpr) {
-			final AddExpr<? extends ClosedUnderAdd> addLeftOp = (AddExpr<? extends ClosedUnderAdd>) leftOp;
-			final List<Expr<? extends ClosedUnderAdd>> ops = ImmutableList.<Expr<? extends ClosedUnderAdd>>builder()
-					.addAll(addLeftOp.getOps()).add(rightOp).build();
+			final AddExpr<?> addLeftOp = (AddExpr<?>) leftOp;
+			final List<Expr<?>> ops = ImmutableList.<Expr<?>>builder().addAll(addLeftOp.getOps()).add(rightOp).build();
 			return Add(ops);
 		} else {
 			return Add(leftOp, rightOp);
 		}
 	}
 
-	private SubExpr<? extends ClosedUnderSub> createSubExpr(final Expr<?> uncastLeftOp, final Expr<?> uncastRightOp) {
-		final Expr<? extends ClosedUnderSub> leftOp = TypeUtils.cast(uncastLeftOp, ClosedUnderSub.class);
-		final Expr<? extends ClosedUnderSub> rightOp = TypeUtils.cast(uncastRightOp, ClosedUnderSub.class);
+	private SubExpr<?> createSubExpr(final Expr<?> leftOp, final Expr<?> rightOp) {
 		return Sub(leftOp, rightOp);
 	}
 
@@ -420,14 +411,10 @@ final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
 		}
 	}
 
-	private MulExpr<? extends ClosedUnderMul> createMulExpr(final Expr<?> uncastLeftOp, final Expr<?> uncastRightOp) {
-		final Expr<? extends ClosedUnderMul> leftOp = TypeUtils.cast(uncastLeftOp, ClosedUnderMul.class);
-		final Expr<? extends ClosedUnderMul> rightOp = TypeUtils.cast(uncastRightOp, ClosedUnderMul.class);
-
+	private MulExpr<?> createMulExpr(final Expr<?> leftOp, final Expr<?> rightOp) {
 		if (leftOp instanceof MulExpr) {
-			final MulExpr<? extends ClosedUnderMul> addLeftOp = (MulExpr<? extends ClosedUnderMul>) leftOp;
-			final List<Expr<? extends ClosedUnderMul>> ops = ImmutableList.<Expr<? extends ClosedUnderMul>>builder()
-					.addAll(addLeftOp.getOps()).add(rightOp).build();
+			final MulExpr<?> addLeftOp = (MulExpr<?>) leftOp;
+			final List<Expr<?>> ops = ImmutableList.<Expr<?>>builder().addAll(addLeftOp.getOps()).add(rightOp).build();
 			return Mul(ops);
 		} else {
 			return Mul(leftOp, rightOp);
@@ -463,7 +450,7 @@ final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
 	@Override
 	public Expr<?> visitNegExpr(final NegExprContext ctx) {
 		if (ctx.op != null) {
-			final Expr<? extends ClosedUnderNeg> op = TypeUtils.cast(ctx.op.accept(this), ClosedUnderNeg.class);
+			final Expr<ClosedUnderNeg> op = TypeUtils.cast(ctx.op.accept(this), ClosedUnderNeg.class);
 			return Neg(op);
 		} else {
 			return visitChildren(ctx);

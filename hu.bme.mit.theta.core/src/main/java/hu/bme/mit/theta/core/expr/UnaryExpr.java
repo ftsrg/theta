@@ -7,15 +7,15 @@ import hu.bme.mit.theta.core.type.Type;
 
 public abstract class UnaryExpr<OpType extends Type, ExprType extends Type> implements Expr<ExprType> {
 
-	private final Expr<? extends OpType> op;
+	private final Expr<OpType> op;
 
 	private volatile int hashCode = 0;
 
-	public UnaryExpr(final Expr<? extends OpType> op) {
+	public UnaryExpr(final Expr<OpType> op) {
 		this.op = checkNotNull(op);
 	}
 
-	public final Expr<? extends OpType> getOp() {
+	public final Expr<OpType> getOp() {
 		return op;
 	}
 
@@ -35,7 +35,7 @@ public abstract class UnaryExpr<OpType extends Type, ExprType extends Type> impl
 		return ObjectUtils.toStringBuilder(getOperatorLabel()).add(op).toString();
 	}
 
-	public abstract UnaryExpr<OpType, ExprType> withOp(final Expr<? extends OpType> op);
+	public abstract UnaryExpr<OpType, ExprType> withOp(final Expr<OpType> op);
 
 	protected abstract int getHashSeed();
 

@@ -60,7 +60,7 @@ public class SequenceInterpolater extends AbstractCEGARStep implements Interpola
 		// Loop through each marker except the last one
 		for (int i = 0; i < abstractCounterEx.size(); ++i) {
 
-			for (final Expr<? extends BoolType> label : abstractCounterEx.get(i).getLabels()) {
+			for (final Expr<BoolType> label : abstractCounterEx.get(i).getLabels()) {
 				// Assert labels
 				itpSolver.add(markers[i], PathUtils.unfold(label, i));
 			}
@@ -82,7 +82,7 @@ public class SequenceInterpolater extends AbstractCEGARStep implements Interpola
 		// 'true' and it is not returned by the
 		// solver, but the last one is always 'false' and it is returned
 		itpSolver.check();
-		final List<Expr<? extends BoolType>> interpolants = new ArrayList<>();
+		final List<Expr<BoolType>> interpolants = new ArrayList<>();
 		// Fold in interpolants (except the last)
 		for (int i = 0; i < markers.length - 1; ++i)
 			interpolants.add(PathUtils.foldin(itpSolver.getInterpolant(pattern).eval(markers[i]), i));

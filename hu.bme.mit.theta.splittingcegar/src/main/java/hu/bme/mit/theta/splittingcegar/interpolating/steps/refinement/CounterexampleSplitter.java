@@ -55,7 +55,7 @@ public class CounterexampleSplitter extends AbstractCEGARStep implements Splitte
 	}
 
 	private void splitSingleState(final InterpolatedAbstractSystem system, final InterpolatedAbstractState stateToSplit,
-			Expr<? extends BoolType> interpolant) {
+			Expr<BoolType> interpolant) {
 		final STS sts = system.getSTS();
 
 		final Solver solver = solvers.getSolver();

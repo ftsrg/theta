@@ -85,7 +85,7 @@ public class InterpolatingInitializer extends AbstractCEGARStep implements Initi
 		assert (explicitVarNames.size() == variablesNotFound + explicitVars.size());
 
 		// Set ensures uniqueness
-		final Set<Expr<? extends BoolType>> initialPredSet = new HashSet<>();
+		final Set<Expr<BoolType>> initialPredSet = new HashSet<>();
 		if (collectFromConditions)
 			FormulaCollector.collectAtomsFromTransitionConditions(concrSys, initialPredSet);
 		if (collectFromSpecification)
@@ -96,13 +96,13 @@ public class InterpolatingInitializer extends AbstractCEGARStep implements Initi
 			initialPredSet.add(True());
 
 		// Move the collected predicates to a list for further use
-		final List<Expr<? extends BoolType>> initialPredList = new ArrayList<>(initialPredSet);
+		final List<Expr<BoolType>> initialPredList = new ArrayList<>(initialPredSet);
 
 		// There must be at least one predicate
 		assert (initialPredList.size() > 0);
 
 		logger.writeln("Initial predicates [" + initialPredList.size() + "]", 2);
-		for (final Expr<? extends BoolType> ex : initialPredList)
+		for (final Expr<BoolType> ex : initialPredList)
 			logger.writeln(ex, 3, 1);
 
 		if (stopHandler.isStopped())
@@ -143,8 +143,8 @@ public class InterpolatingInitializer extends AbstractCEGARStep implements Initi
 		// predicates and explicit variables
 
 		// Calculate negate for each formula
-		final List<Expr<? extends BoolType>> negates = new ArrayList<>();
-		for (final Expr<? extends BoolType> ex : system.getInitialPredicates())
+		final List<Expr<BoolType>> negates = new ArrayList<>();
+		for (final Expr<BoolType> ex : system.getInitialPredicates())
 			negates.add(Not(ex));
 
 		final STS sts = system.getSTS();

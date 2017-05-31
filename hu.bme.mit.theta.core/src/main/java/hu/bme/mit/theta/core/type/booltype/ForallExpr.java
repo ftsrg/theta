@@ -2,11 +2,8 @@ package hu.bme.mit.theta.core.type.booltype;
 
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 
-import java.util.Collection;
-
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.utils.ExprVisitor;
 
 public final class ForallExpr extends QuantifiedExpr {
@@ -15,7 +12,7 @@ public final class ForallExpr extends QuantifiedExpr {
 
 	private static final String OPERATOR_LABEL = "Forall";
 
-	ForallExpr(final Collection<? extends ParamDecl<? extends Type>> paramDecls, final Expr<? extends BoolType> op) {
+	ForallExpr(final Iterable<? extends ParamDecl<?>> paramDecls, final Expr<BoolType> op) {
 		super(paramDecls, op);
 	}
 
@@ -25,7 +22,7 @@ public final class ForallExpr extends QuantifiedExpr {
 	}
 
 	@Override
-	public ForallExpr withOp(final Expr<? extends BoolType> op) {
+	public ForallExpr withOp(final Expr<BoolType> op) {
 		if (op == getOp()) {
 			return this;
 		} else {

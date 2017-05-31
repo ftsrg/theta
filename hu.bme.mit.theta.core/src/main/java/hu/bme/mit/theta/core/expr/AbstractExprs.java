@@ -2,9 +2,16 @@ package hu.bme.mit.theta.core.expr;
 
 import java.util.Collection;
 
+import hu.bme.mit.theta.core.type.booltype.BoolType;
+
 public final class AbstractExprs {
 
 	private AbstractExprs() {
+	}
+
+	public static IteExpr<?> Ite(final Expr<BoolType> cond, final Expr<?> then, final Expr<?> elze) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
 
 	public static AddExpr<?> Add(final Collection<? extends Expr<?>> ops) {

@@ -61,8 +61,8 @@ final class XtaStateSymbol implements Symbol {
 			invars = Collections.emptySet();
 		} else {
 			final Expr<?> expr = expression.instantiate(env);
-			final Expr<? extends BoolType> invar = TypeUtils.cast(expr, BoolType.class);
-			final Collection<Expr<? extends BoolType>> conjuncts = ExprUtils.getConjuncts(invar);
+			final Expr<BoolType> invar = TypeUtils.cast(expr, BoolType.class);
+			final Collection<Expr<BoolType>> conjuncts = ExprUtils.getConjuncts(invar);
 			invars = conjuncts.stream().map(e -> (Expr<BoolType>) e).collect(toList());
 		}
 

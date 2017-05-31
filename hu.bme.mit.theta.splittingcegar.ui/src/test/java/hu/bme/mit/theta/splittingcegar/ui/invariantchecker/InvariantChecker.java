@@ -11,7 +11,7 @@ import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.SolverStatus;
 
 public class InvariantChecker {
-	public static boolean check(final STS sts, final Expr<? extends BoolType> invariant, final SolverFactory factory) {
+	public static boolean check(final STS sts, final Expr<BoolType> invariant, final SolverFactory factory) {
 
 		final Solver solver = factory.createSolver();
 

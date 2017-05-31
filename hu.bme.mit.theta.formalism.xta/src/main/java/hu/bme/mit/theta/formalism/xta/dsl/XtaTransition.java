@@ -97,8 +97,8 @@ final class XtaTransition implements Scope {
 		final Collection<Expr<BoolType>> guards;
 		if (guard.isPresent()) {
 			final Expr<?> expr = guard.get().instantiate(env);
-			final Expr<? extends BoolType> guardExpr = TypeUtils.cast(expr, BoolType.class);
-			final Collection<Expr<? extends BoolType>> conjuncts = ExprUtils.getConjuncts(guardExpr);
+			final Expr<BoolType> guardExpr = TypeUtils.cast(expr, BoolType.class);
+			final Collection<Expr<BoolType>> conjuncts = ExprUtils.getConjuncts(guardExpr);
 			guards = conjuncts.stream().map(e -> (Expr<BoolType>) e).collect(toList());
 		} else {
 			guards = emptySet();

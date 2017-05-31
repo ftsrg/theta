@@ -11,7 +11,7 @@ public final class IntSubExpr extends SubExpr<IntType> {
 	private static final int HASH_SEED = 4547;
 	private static final String OPERATOR = "Sub";
 
-	IntSubExpr(final Expr<? extends IntType> leftOp, final Expr<? extends IntType> rightOp) {
+	IntSubExpr(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
 		super(leftOp, rightOp);
 	}
 
@@ -21,7 +21,7 @@ public final class IntSubExpr extends SubExpr<IntType> {
 	}
 
 	@Override
-	public SubExpr<IntType> withOps(final Expr<? extends IntType> leftOp, final Expr<? extends IntType> rightOp) {
+	public SubExpr<IntType> withOps(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
 		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
 			return this;
 		} else {
@@ -30,12 +30,12 @@ public final class IntSubExpr extends SubExpr<IntType> {
 	}
 
 	@Override
-	public SubExpr<IntType> withLeftOp(final Expr<? extends IntType> leftOp) {
+	public SubExpr<IntType> withLeftOp(final Expr<IntType> leftOp) {
 		return withOps(leftOp, getRightOp());
 	}
 
 	@Override
-	public SubExpr<IntType> withRightOp(final Expr<? extends IntType> rightOp) {
+	public SubExpr<IntType> withRightOp(final Expr<IntType> rightOp) {
 		return withOps(getLeftOp(), rightOp);
 	}
 

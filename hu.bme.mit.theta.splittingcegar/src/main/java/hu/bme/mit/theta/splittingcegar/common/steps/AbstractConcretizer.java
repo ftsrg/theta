@@ -38,7 +38,7 @@ public abstract class AbstractConcretizer extends AbstractCEGARStep {
 	 * prefix of the abstract counterexample.
 	 */
 	protected ConcreteTrace concretize(final AbstractSystem system, final List<? extends AbstractState> counterEx,
-			final Expr<? extends BoolType> lastState, final Collection<VarDecl<?>> requiredVars) {
+			final Expr<BoolType> lastState, final Collection<VarDecl<?>> requiredVars) {
 		// Do an iterative bounded model checking to find a concrete
 		// counterexample.
 		// Iterative method is required because if no counterexample exists, we

@@ -11,12 +11,12 @@ public class DerefExpr<PointedType extends Type> extends UnaryExpr<PointerType<?
 	private static final int HASH_SEED = 9833;
 	private static final String EXPR_LABEL = "Deref";
 
-	public DerefExpr(final Expr<? extends PointerType<? extends PointedType>> op) {
+	public DerefExpr(final Expr<PointerType<? extends PointedType>> op) {
 		super(op);
 	}
 
 	@Override
-	public DerefExpr<PointedType> withOp(final Expr<? extends PointerType<? extends PointedType>> op) {
+	public DerefExpr<PointedType> withOp(final Expr<PointerType<? extends PointedType>> op) {
 		if (op == getOp()) {
 			return this;
 		} else {

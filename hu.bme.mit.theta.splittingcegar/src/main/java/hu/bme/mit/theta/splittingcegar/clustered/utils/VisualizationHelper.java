@@ -3,7 +3,6 @@ package hu.bme.mit.theta.splittingcegar.clustered.utils;
 import java.util.Collection;
 
 import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.splittingcegar.clustered.data.ClusteredAbstractState;
 import hu.bme.mit.theta.splittingcegar.clustered.data.ClusteredAbstractSystem;
 import hu.bme.mit.theta.splittingcegar.clustered.data.ComponentAbstractState;
@@ -19,7 +18,8 @@ import hu.bme.mit.theta.splittingcegar.common.utils.visualization.graph.Node;
  */
 public class VisualizationHelper {
 
-	public static void visualizeAbstractKripkeStructures(final ClusteredAbstractSystem system, final Visualizer visualizer, final int level) {
+	public static void visualizeAbstractKripkeStructures(final ClusteredAbstractSystem system,
+			final Visualizer visualizer, final int level) {
 		if (level > visualizer.getMinLevel())
 			return;
 
@@ -29,13 +29,14 @@ public class VisualizationHelper {
 		int clusterCount = 0;
 		for (final KripkeStructure<ComponentAbstractState> ks : system.getAbstractKripkeStructures()) {
 			// Create a cluster
-			final ClusterNode cn = new ClusterNode("cluster_" + clusterCount, "Cluster " + clusterCount, "black", "", "", false);
+			final ClusterNode cn = new ClusterNode("cluster_" + clusterCount, "Cluster " + clusterCount, "black", "",
+					"", false);
 			g.addNode(cn);
 			++clusterCount;
 			// Loop through states in the cluster
 			for (final ComponentAbstractState s0 : ks.getStates()) {
 				final StringBuilder labelString = new StringBuilder("");
-				for (final Expr<? extends Type> label : s0.getLabels())
+				for (final Expr<?> label : s0.getLabels())
 					labelString.append(label).append(" ");
 				// Create node for state
 				final Node n = new Node("s_" + s0.createId(), labelString.toString(), "", "", "", s0.isInitial());
@@ -49,8 +50,8 @@ public class VisualizationHelper {
 		visualizer.visualize(g);
 	}
 
-	public static void visualizeCompositeAbstractKripkeStructure(final Collection<ClusteredAbstractState> abstractStates, final Visualizer visualizer,
-			final int level) {
+	public static void visualizeCompositeAbstractKripkeStructure(
+			final Collection<ClusteredAbstractState> abstractStates, final Visualizer visualizer, final int level) {
 		if (level > visualizer.getMinLevel())
 			return;
 
@@ -62,7 +63,8 @@ public class VisualizationHelper {
 			for (final ComponentAbstractState as : s0.getStates())
 				labelString.append(as.toShortString()).append(" ");
 			// Create node for state
-			final Node n = new Node("s_" + s0.createId(), labelString.toString(), "", s0.isPartOfCounterexample() ? "red" : "", "", s0.isInitial());
+			final Node n = new Node("s_" + s0.createId(), labelString.toString(), "",
+					s0.isPartOfCounterexample() ? "red" : "", "", s0.isInitial());
 			g.addNode(n);
 			// Add arcs for successor states
 			for (final ClusteredAbstractState s1 : s0.getSuccessors())

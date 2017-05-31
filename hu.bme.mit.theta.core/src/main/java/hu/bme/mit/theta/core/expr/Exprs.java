@@ -15,12 +15,11 @@ public final class Exprs {
 		return new RefExpr<>(decl);
 	}
 
-	public static <T extends Type> IteExpr<T> Ite(final Expr<? extends BoolType> cond, final Expr<? extends T> then,
-			final Expr<? extends T> elze) {
+	public static <ExprType extends Type> IteExpr<ExprType> Ite(final Expr<BoolType> cond, final Expr<ExprType> then, final Expr<ExprType> elze) {
 		return new IteExpr<>(cond, then, elze);
 	}
 
-	public static <T extends Type> PrimedExpr<T> Prime(final Expr<? extends T> op) {
+	public static <ExprType extends Type> PrimedExpr<ExprType> Prime(final Expr<ExprType> op) {
 		return new PrimedExpr<>(op);
 	}
 
@@ -28,12 +27,12 @@ public final class Exprs {
 	 * Convenience methods
 	 */
 
-	public static <T extends Type> PrimedExpr<T> Prime(final Expr<? extends T> op, final int i) {
+	public static <ExprType extends Type> PrimedExpr<ExprType> Prime(final Expr<ExprType> op, final int i) {
 		checkArgument(i > 0);
 		if (i == 1) {
-			return new PrimedExpr<>(op);
+			return Prime(op);
 		} else {
-			return new PrimedExpr<>(Prime(op, i - 1));
+			return Prime(Prime(op, i - 1));
 		}
 	}
 

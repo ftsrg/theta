@@ -29,17 +29,16 @@ public class ClusterCreator {
 	 *            Atomic formulas
 	 * @return Variable clusters
 	 */
-	public List<Cluster> getClusters(final Set<VarDecl<? extends Type>> variables,
-			final List<Expr<? extends BoolType>> formulas) {
+	public List<Cluster> getClusters(final Set<VarDecl<?>> variables, final List<Expr<BoolType>> formulas) {
 		// Create a separate cluster for each variable
-		final Map<VarDecl<? extends Type>, ClusterNode> clusters = new HashMap<>();
-		for (final VarDecl<? extends Type> entry : variables)
+		final Map<VarDecl<?>, ClusterNode> clusters = new HashMap<>();
+		for (final VarDecl<?> entry : variables)
 			clusters.put(entry, new ClusterNode(entry));
 
 		// Loop through formulas
-		for (final Expr<? extends BoolType> ex : formulas) {
+		for (final Expr<BoolType> ex : formulas) {
 			// Get variables and join clusters
-			final List<VarDecl<? extends Type>> vars = new ArrayList<>(ExprUtils.getVars(ex));
+			final List<VarDecl<?>> vars = new ArrayList<>(ExprUtils.getVars(ex));
 			if (vars.size() == 2)
 				joinClusters(clusters.get(vars.get(0)), clusters.get(vars.get(1)));
 			else if (vars.size() > 2)

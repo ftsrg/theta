@@ -10,7 +10,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
  */
 public interface AbstractState {
 
-	Expr<? extends BoolType> createExpression();
+	Expr<BoolType> createExpression();
 
 	boolean isInitial();
 

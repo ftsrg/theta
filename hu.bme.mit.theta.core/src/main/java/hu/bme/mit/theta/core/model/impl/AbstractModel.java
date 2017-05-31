@@ -16,8 +16,8 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 public abstract class AbstractModel implements Model {
 
 	@Override
-	public final Expr<? extends BoolType> toExpr() {
-		final List<Expr<? extends BoolType>> exprs = new ArrayList<>();
+	public final Expr<BoolType> toExpr() {
+		final List<Expr<BoolType>> exprs = new ArrayList<>();
 		for (final ConstDecl<?> constDecl : getDecls()) {
 			final Expr<BoolType> expr = Eq(constDecl.getRef(), eval(constDecl).get());
 			exprs.add(expr);

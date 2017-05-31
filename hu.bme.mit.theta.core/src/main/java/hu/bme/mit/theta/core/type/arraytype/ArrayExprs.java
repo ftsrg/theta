@@ -12,14 +12,13 @@ public final class ArrayExprs {
 		return new ArrayType<>(indexType, elemType);
 	}
 
-	public static <I extends Type, E extends Type> ArrayReadExpr<I, E> Read(
-			final Expr<? extends ArrayType<? super I, ? extends E>> array, final Expr<? extends I> index) {
+	public static <I extends Type, E extends Type> ArrayReadExpr<I, E> Read(final Expr<ArrayType<I, E>> array,
+			final Expr<I> index) {
 		return new ArrayReadExpr<>(array, index);
 	}
 
-	public static <I extends Type, E extends Type> ArrayWriteExpr<I, E> Write(
-			final Expr<? extends ArrayType<? super I, ? extends E>> array, final Expr<? extends I> index,
-			final Expr<? extends E> elem) {
+	public static <I extends Type, E extends Type> ArrayWriteExpr<I, E> Write(final Expr<ArrayType<I, E>> array,
+			final Expr<I> index, final Expr<E> elem) {
 		return new ArrayWriteExpr<>(array, index, elem);
 	}
 

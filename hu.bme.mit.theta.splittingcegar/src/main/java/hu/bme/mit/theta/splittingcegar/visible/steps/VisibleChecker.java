@@ -51,7 +51,7 @@ public class VisibleChecker extends AbstractCEGARStep implements Checker<Visible
 		final Map<VisibleAbstractState, VisibleAbstractState> exploredStates = new HashMap<>();
 
 		VisibleAbstractState actualInit = null;
-		final List<Expr<? extends BoolType>> prevInits = new ArrayList<>();
+		final List<Expr<BoolType>> prevInits = new ArrayList<>();
 		// Get the first initial state
 		solver.push();
 		solver.add(PathUtils.unfold(sts.getInit(), 0));
@@ -196,7 +196,7 @@ public class VisibleChecker extends AbstractCEGARStep implements Checker<Visible
 		return successors;
 	}
 
-	private boolean checkState(final VisibleAbstractState state, final Expr<? extends BoolType> expr,
+	private boolean checkState(final VisibleAbstractState state, final Expr<BoolType> expr,
 			final Solver solver, final STS sts) {
 		solver.push();
 		solver.add(PathUtils.unfold(state.getValuation().toExpr(), 0));

@@ -15,13 +15,13 @@ public final class PredAnalysis implements Analysis<PredState, ExprAction, PredP
 	private final InitFunction<PredState, PredPrec> initFunction;
 	private final TransferFunction<PredState, ExprAction, PredPrec> transferFunction;
 
-	private PredAnalysis(final Solver solver, final Expr<? extends BoolType> initExpr) {
+	private PredAnalysis(final Solver solver, final Expr<BoolType> initExpr) {
 		domain = PredDomain.create(solver);
 		initFunction = PredInitFunction.create(solver, initExpr);
 		transferFunction = PredTransferFunction.create(solver);
 	}
 
-	public static PredAnalysis create(final Solver solver, final Expr<? extends BoolType> initExpr) {
+	public static PredAnalysis create(final Solver solver, final Expr<BoolType> initExpr) {
 		return new PredAnalysis(solver, initExpr);
 	}
 

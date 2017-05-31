@@ -51,7 +51,7 @@ public class CraigInterpolater extends AbstractCEGARStep implements Interpolater
 		itpSolver.add(A, PathUtils.unfold(sts.getInit(), 0));
 
 		for (int i = 0; i < traceLength; ++i) {
-			for (final Expr<? extends BoolType> label : abstractCounterEx.get(i).getLabels()) {
+			for (final Expr<BoolType> label : abstractCounterEx.get(i).getLabels()) {
 				// Labels of the abstract state
 				itpSolver.add(A, PathUtils.unfold(label, i));
 			}
@@ -69,7 +69,7 @@ public class CraigInterpolater extends AbstractCEGARStep implements Interpolater
 		// - States violating the property (if the failure state is the last)
 		if (traceLength < abstractCounterEx.size()) { // Failure state is not
 														// the last
-			for (final Expr<? extends BoolType> label : abstractCounterEx.get(traceLength).getLabels())
+			for (final Expr<BoolType> label : abstractCounterEx.get(traceLength).getLabels())
 				// Labels of the next abstract state
 				itpSolver.add(B, PathUtils.unfold(label, traceLength));
 			// Transition to the next abstract state
@@ -90,7 +90,7 @@ public class CraigInterpolater extends AbstractCEGARStep implements Interpolater
 		assert (itpSolver.getStatus() == SolverStatus.UNSAT);
 		final hu.bme.mit.theta.solver.Interpolant itp = itpSolver.getInterpolant(pattern);
 
-		final Expr<? extends BoolType> interpolant = PathUtils.foldin(itp.eval(A), traceLength - 1);
+		final Expr<BoolType> interpolant = PathUtils.foldin(itp.eval(A), traceLength - 1);
 		itpSolver.pop();
 		return new Interpolant(interpolant, traceLength - 1);
 

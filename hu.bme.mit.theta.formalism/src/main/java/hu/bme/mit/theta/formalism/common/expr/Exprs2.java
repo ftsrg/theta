@@ -24,7 +24,7 @@ public final class Exprs2 {
 		return new NewExpr<>(pointedType);
 	}
 
-	public static <T extends Type> DerefExpr<T> Deref(final Expr<? extends PointerType<? extends T>> op) {
+	public static <T extends Type> DerefExpr<T> Deref(final Expr<PointerType<? extends T>> op) {
 		return new DerefExpr<>(op);
 	}
 
