@@ -2,7 +2,6 @@ package hu.bme.mit.theta.analysis.expr;
 
 import static hu.bme.mit.theta.core.decl.Decls.Var;
 import static hu.bme.mit.theta.core.expr.Exprs.Prime;
-import static hu.bme.mit.theta.core.type.Types.Int;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Add;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
@@ -24,8 +23,8 @@ import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceSeqItpChecker;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceStatus;
 import hu.bme.mit.theta.analysis.expr.refinement.ItpRefutation;
 import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.type.IntType;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.utils.impl.VarIndexing;
 import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;

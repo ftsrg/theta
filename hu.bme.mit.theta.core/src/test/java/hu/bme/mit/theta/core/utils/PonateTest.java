@@ -1,7 +1,6 @@
 package hu.bme.mit.theta.core.utils;
 
 import static hu.bme.mit.theta.core.decl.Decls.Const;
-import static hu.bme.mit.theta.core.type.Types.Int;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
@@ -10,8 +9,8 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.type.IntType;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.utils.impl.ExprUtils;
 
 public class PonateTest {

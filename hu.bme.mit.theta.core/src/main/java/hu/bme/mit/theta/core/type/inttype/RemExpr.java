@@ -1,10 +1,9 @@
 package hu.bme.mit.theta.core.type.inttype;
 
-import static hu.bme.mit.theta.core.type.Types.Int;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 import hu.bme.mit.theta.core.expr.BinaryExpr;
 import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.type.IntType;
 import hu.bme.mit.theta.core.utils.ExprVisitor;
 
 public final class RemExpr extends BinaryExpr<IntType, IntType, IntType> {

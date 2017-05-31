@@ -5,11 +5,14 @@ import java.util.Collection;
 import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.type.IntType;
 
 public final class IntExprs {
 
 	private IntExprs() {
+	}
+
+	public static IntType Int() {
+		return IntType.getInstance();
 	}
 
 	public static IntLitExpr Int(final int value) {

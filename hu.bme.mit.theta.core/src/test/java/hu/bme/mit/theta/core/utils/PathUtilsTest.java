@@ -1,7 +1,6 @@
 package hu.bme.mit.theta.core.utils;
 
 import static hu.bme.mit.theta.core.expr.Exprs.Prime;
-import static hu.bme.mit.theta.core.type.Types.Int;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Add;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
@@ -12,7 +11,7 @@ import org.junit.Test;
 import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.decl.IndexedConstDecl;
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.type.IntType;
+import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.utils.impl.PathUtils;
 
 public class PathUtilsTest {

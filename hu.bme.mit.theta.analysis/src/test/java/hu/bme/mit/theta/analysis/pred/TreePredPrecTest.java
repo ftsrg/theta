@@ -16,10 +16,9 @@ import com.google.common.collect.ImmutableSet;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.model.impl.Valuation;
-import hu.bme.mit.theta.core.type.IntType;
-import hu.bme.mit.theta.core.type.Types;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
+import hu.bme.mit.theta.core.type.inttype.IntType;
 
 public class TreePredPrecTest {
 
@@ -28,9 +27,9 @@ public class TreePredPrecTest {
 		final IntLitExpr int0 = Int(0);
 		final IntLitExpr int1 = Int(1);
 
-		final VarDecl<IntType> va = Var("A", Types.Int());
-		final VarDecl<IntType> vb = Var("B", Types.Int());
-		final VarDecl<IntType> vc = Var("C", Types.Int());
+		final VarDecl<IntType> va = Var("A", Int());
+		final VarDecl<IntType> vb = Var("B", Int());
+		final VarDecl<IntType> vc = Var("C", Int());
 
 		final Expr<BoolType> pa = Eq(va.getRef(), int1);
 		final Expr<BoolType> pb = Eq(vb.getRef(), int1);

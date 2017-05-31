@@ -1,7 +1,6 @@
 package hu.bme.mit.theta.formalism.xta.dsl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.type.Types.Int;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Add;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Sub;
@@ -13,8 +12,8 @@ import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.RefExpr;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.Stmts;
-import hu.bme.mit.theta.core.type.IntType;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.utils.impl.TypeUtils;
 import hu.bme.mit.theta.formalism.xta.dsl.XtaExpression.ExpressionInstantiationVisitor;
 import hu.bme.mit.theta.formalism.xta.dsl.gen.XtaDslBaseVisitor;

@@ -1,8 +1,9 @@
-package hu.bme.mit.theta.core.type;
+package hu.bme.mit.theta.core.type.inttype;
 
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 import hu.bme.mit.theta.core.expr.LitExpr;
+import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.closure.ClosedUnderAdd;
 import hu.bme.mit.theta.core.type.closure.ClosedUnderMul;
 import hu.bme.mit.theta.core.type.closure.ClosedUnderNeg;

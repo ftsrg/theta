@@ -1,7 +1,7 @@
 package hu.bme.mit.theta.core.utils;
 
 import static hu.bme.mit.theta.core.decl.Decls.Var;
-import static hu.bme.mit.theta.core.type.Types.Int;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;

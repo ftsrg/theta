@@ -1,16 +1,14 @@
 package hu.bme.mit.theta.core.type.inttype;
 
-import static hu.bme.mit.theta.core.type.Types.Int;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 import hu.bme.mit.theta.core.expr.BinaryExpr;
 import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.type.IntType;
 import hu.bme.mit.theta.core.utils.ExprVisitor;
 
 public final class ModExpr extends BinaryExpr<IntType, IntType, IntType> {
 
 	private static final int HASH_SEED = 109;
-
 	private static final String OPERATOR_LABEL = "Mod";
 
 	ModExpr(final Expr<? extends IntType> leftOp, final Expr<? extends IntType> rightOp) {

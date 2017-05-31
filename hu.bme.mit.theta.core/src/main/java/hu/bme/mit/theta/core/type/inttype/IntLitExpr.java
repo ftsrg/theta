@@ -1,11 +1,10 @@
 package hu.bme.mit.theta.core.type.inttype;
 
-import static hu.bme.mit.theta.core.type.Types.Int;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 
 import hu.bme.mit.theta.core.expr.LitExpr;
 import hu.bme.mit.theta.core.expr.NullaryExpr;
-import hu.bme.mit.theta.core.type.IntType;
 import hu.bme.mit.theta.core.type.rattype.RatLitExpr;
 import hu.bme.mit.theta.core.utils.ExprVisitor;
 

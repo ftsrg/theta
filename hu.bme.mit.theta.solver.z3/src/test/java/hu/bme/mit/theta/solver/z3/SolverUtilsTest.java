@@ -1,8 +1,8 @@
 package hu.bme.mit.theta.solver.z3;
 
 import static hu.bme.mit.theta.core.decl.Decls.Const;
-import static hu.bme.mit.theta.core.type.Types.Int;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Gt;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 import java.util.stream.Stream;
 
@@ -11,8 +11,8 @@ import org.junit.Test;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.model.Model;
-import hu.bme.mit.theta.core.type.IntType;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.utils.SolverUtils;
 

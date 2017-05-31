@@ -4,7 +4,6 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.NeqExpr;
-import hu.bme.mit.theta.core.type.IntType;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.ExprVisitor;
 

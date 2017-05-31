@@ -4,6 +4,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 import java.util.List;
 
@@ -11,7 +12,6 @@ import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.Types;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.utils.impl.ExprUtils;
 import hu.bme.mit.theta.formalism.xta.ChanType;
@@ -87,7 +87,7 @@ final class XtaType {
 
 		@Override
 		public Type visitIntType(final IntTypeContext ctx) {
-			return Types.Int();
+			return Int();
 		}
 
 		@Override

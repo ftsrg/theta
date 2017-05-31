@@ -12,12 +12,11 @@ import com.google.common.collect.ImmutableSet;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.impl.Valuation;
-import hu.bme.mit.theta.core.type.IntType;
-import hu.bme.mit.theta.core.type.Types;
+import hu.bme.mit.theta.core.type.inttype.IntType;
 
 public class ExplPrecTest {
-	private final VarDecl<IntType> x = Var("x", Types.Int());
-	private final VarDecl<IntType> y = Var("y", Types.Int());
+	private final VarDecl<IntType> x = Var("x", Int());
+	private final VarDecl<IntType> y = Var("y", Int());
 
 	@Test
 	public void testInstances() {

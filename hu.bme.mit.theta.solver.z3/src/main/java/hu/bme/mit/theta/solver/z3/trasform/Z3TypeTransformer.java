@@ -2,9 +2,9 @@ package hu.bme.mit.theta.solver.z3.trasform;
 
 import com.microsoft.z3.Context;
 
-import hu.bme.mit.theta.core.type.IntType;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.type.rattype.RatType;
 
 class Z3TypeTransformer {

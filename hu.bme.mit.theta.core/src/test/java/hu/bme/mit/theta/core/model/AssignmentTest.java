@@ -1,7 +1,6 @@
 package hu.bme.mit.theta.core.model;
 
 import static hu.bme.mit.theta.core.decl.Decls.Const;
-import static hu.bme.mit.theta.core.type.Types.Int;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
@@ -17,7 +16,7 @@ import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.expr.LitExpr;
 import hu.bme.mit.theta.core.model.impl.AssignmentImpl;
-import hu.bme.mit.theta.core.type.IntType;
+import hu.bme.mit.theta.core.type.inttype.IntType;
 
 public class AssignmentTest {
 	private final ConstDecl<IntType> ca = Const("a", Int());
