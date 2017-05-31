@@ -2,6 +2,7 @@ package hu.bme.mit.theta.formalism.xta.dsl;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 
 import java.util.List;
@@ -54,7 +55,7 @@ final class XtaType {
 
 		for (final ArrayIndexContext arrayIndexContext : arrayIndexContexts) {
 			final Type indexType = createIndexType(arrayIndexContext, env);
-			result = Types.Array(indexType, result);
+			result = Array(indexType, result);
 		}
 
 		return result;

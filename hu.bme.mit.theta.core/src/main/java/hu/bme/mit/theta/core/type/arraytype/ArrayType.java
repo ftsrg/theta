@@ -1,8 +1,9 @@
-package hu.bme.mit.theta.core.type;
+package hu.bme.mit.theta.core.type.arraytype;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import hu.bme.mit.theta.core.expr.LitExpr;
+import hu.bme.mit.theta.core.type.Type;
 
 public final class ArrayType<IndexType extends Type, ElemType extends Type> implements Type {
 
@@ -14,7 +15,7 @@ public final class ArrayType<IndexType extends Type, ElemType extends Type> impl
 
 	private volatile int hashCode = 0;
 
-	public ArrayType(final IndexType indexType, final ElemType elemType) {
+	ArrayType(final IndexType indexType, final ElemType elemType) {
 		this.indexType = checkNotNull(indexType);
 		this.elemType = checkNotNull(elemType);
 	}

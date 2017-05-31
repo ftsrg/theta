@@ -17,8 +17,4 @@ public final class Types {
 		return UnitType.getInstance();
 	}
 
-	public static <I extends Type, E extends Type> ArrayType<I, E> Array(final I indexType, final E elemType) {
-		return new ArrayType<>(indexType, elemType);
-	}
-
 }

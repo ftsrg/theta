@@ -1,12 +1,15 @@
 package hu.bme.mit.theta.core.type.arraytype;
 
 import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.type.ArrayType;
 import hu.bme.mit.theta.core.type.Type;
 
 public final class ArrayExprs {
 
 	private ArrayExprs() {
+	}
+
+	public static <I extends Type, E extends Type> ArrayType<I, E> Array(final I indexType, final E elemType) {
+		return new ArrayType<>(indexType, elemType);
 	}
 
 	public static <I extends Type, E extends Type> ArrayReadExpr<I, E> Read(
