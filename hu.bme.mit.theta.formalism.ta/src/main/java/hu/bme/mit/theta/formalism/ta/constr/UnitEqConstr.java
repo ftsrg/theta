@@ -1,12 +1,12 @@
 package hu.bme.mit.theta.formalism.ta.constr;
 
-import static hu.bme.mit.theta.core.expr.Exprs.Eq;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Eq;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.expr.EqExpr;
 import hu.bme.mit.theta.core.expr.RefExpr;
 import hu.bme.mit.theta.core.type.RatType;
+import hu.bme.mit.theta.core.type.rattype.RatEqExpr;
 
 public final class UnitEqConstr extends UnitConstr {
 
@@ -14,18 +14,18 @@ public final class UnitEqConstr extends UnitConstr {
 
 	private static final String OPERATOR_LABEL = "=";
 
-	private volatile EqExpr expr = null;
+	private volatile RatEqExpr expr = null;
 
 	UnitEqConstr(final VarDecl<RatType> clock, final int bound) {
 		super(clock, bound);
 	}
 
 	@Override
-	public EqExpr toExpr() {
-		EqExpr result = expr;
+	public RatEqExpr toExpr() {
+		RatEqExpr result = expr;
 		if (result == null) {
 			final RefExpr<RatType> ref = getVar().getRef();
-			result = Eq(ref, Int(getBound()));
+			result = Eq(ref, Rat(getBound(), 1));
 			expr = result;
 		}
 		return result;

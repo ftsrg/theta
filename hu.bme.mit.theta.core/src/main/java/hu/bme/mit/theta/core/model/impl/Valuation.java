@@ -3,6 +3,7 @@ package hu.bme.mit.theta.core.model.impl;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static hu.bme.mit.theta.core.expr.AbstractExprs.Eq;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 
@@ -19,7 +20,6 @@ import java.util.StringJoiner;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.expr.Exprs;
 import hu.bme.mit.theta.core.expr.LitExpr;
 import hu.bme.mit.theta.core.model.Assignment;
 import hu.bme.mit.theta.core.type.BoolType;
@@ -75,7 +75,7 @@ public final class Valuation implements Assignment {
 
 			final List<Expr<? extends BoolType>> ops = new ArrayList<>(declToExpr.size());
 			for (final Entry<VarDecl<? extends Type>, LitExpr<?>> entry : declToExpr.entrySet()) {
-				ops.add(Exprs.Eq(entry.getKey().getRef(), entry.getValue()));
+				ops.add(Eq(entry.getKey().getRef(), entry.getValue()));
 			}
 			if (ops.size() == 0) {
 				result = True();

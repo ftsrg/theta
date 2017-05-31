@@ -2,6 +2,7 @@ package hu.bme.mit.theta.core.model.impl;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.expr.AbstractExprs.Eq;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 
@@ -18,7 +19,6 @@ import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.expr.Exprs;
 import hu.bme.mit.theta.core.model.Assignment;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.Type;
@@ -108,10 +108,10 @@ public final class AssignmentImpl implements Assignment {
 	}
 
 	@Override
-	public Expr<? extends BoolType> toExpr() {
-		final List<Expr<? extends BoolType>> ops = new ArrayList<>(declToExpr.size());
+	public Expr<BoolType> toExpr() {
+		final List<Expr<BoolType>> ops = new ArrayList<>(declToExpr.size());
 		for (final Entry<Decl<?>, Expr<?>> entry : declToExpr.entrySet()) {
-			ops.add(Exprs.Eq(entry.getKey().getRef(), entry.getValue()));
+			ops.add(Eq(entry.getKey().getRef(), entry.getValue()));
 		}
 		if (ops.size() == 0) {
 			return True();

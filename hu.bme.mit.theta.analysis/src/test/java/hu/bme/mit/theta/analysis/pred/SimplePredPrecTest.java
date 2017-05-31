@@ -3,6 +3,7 @@ package hu.bme.mit.theta.analysis.pred;
 import static hu.bme.mit.theta.core.decl.Decls.Var;
 import static hu.bme.mit.theta.core.type.Types.Int;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Lt;
 
@@ -13,7 +14,6 @@ import org.junit.Test;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.expr.Exprs;
 import hu.bme.mit.theta.core.model.impl.Valuation;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.IntType;
@@ -46,8 +46,7 @@ public class SimplePredPrecTest {
 	public void testRefinement() {
 		final SimplePredPrec p0 = SimplePredPrec.create(solver);
 		final SimplePredPrec p1 = SimplePredPrec.create(Collections.singleton(pred), solver);
-		final SimplePredPrec p2 = SimplePredPrec.create(Collections.singleton(Exprs.Eq(x.getRef(), y.getRef())),
-				solver);
+		final SimplePredPrec p2 = SimplePredPrec.create(Collections.singleton(Eq(x.getRef(), y.getRef())), solver);
 
 		final SimplePredPrec r1 = p1.join(p0);
 		final SimplePredPrec r2 = p1.join(p2);

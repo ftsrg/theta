@@ -6,16 +6,16 @@ import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.common.Utils.singleElementOf;
 import static hu.bme.mit.theta.core.decl.Decls.Param;
 import static hu.bme.mit.theta.core.expr.AbstractExprs.Add;
+import static hu.bme.mit.theta.core.expr.AbstractExprs.Eq;
 import static hu.bme.mit.theta.core.expr.AbstractExprs.Geq;
 import static hu.bme.mit.theta.core.expr.AbstractExprs.Gt;
 import static hu.bme.mit.theta.core.expr.AbstractExprs.Leq;
 import static hu.bme.mit.theta.core.expr.AbstractExprs.Lt;
 import static hu.bme.mit.theta.core.expr.AbstractExprs.Mul;
 import static hu.bme.mit.theta.core.expr.AbstractExprs.Neg;
+import static hu.bme.mit.theta.core.expr.AbstractExprs.Neq;
 import static hu.bme.mit.theta.core.expr.AbstractExprs.Sub;
-import static hu.bme.mit.theta.core.expr.Exprs.Eq;
 import static hu.bme.mit.theta.core.expr.Exprs.Ite;
-import static hu.bme.mit.theta.core.expr.Exprs.Neq;
 import static hu.bme.mit.theta.core.expr.Exprs.Prime;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Exists;
@@ -260,8 +260,8 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
 	@Override
 	public Expr<?> visitEqualityExpr(final EqualityExprContext ctx) {
 		if (ctx.rightOp != null) {
-			final Expr<? extends Type> leftOp = ctx.leftOp.accept(this);
-			final Expr<? extends Type> rightOp = ctx.rightOp.accept(this);
+			final Expr<?> leftOp = ctx.leftOp.accept(this);
+			final Expr<?> rightOp = ctx.rightOp.accept(this);
 
 			switch (ctx.oper.getType()) {
 			case CoreDslParser.EQ:

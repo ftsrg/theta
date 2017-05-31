@@ -32,6 +32,16 @@ public final class AbstractExprs {
 		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
 
+	public static EqExpr<?> Eq(final Expr<?> leftOp, final Expr<?> rightOp) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+	}
+
+	public static NeqExpr<?> Neq(final Expr<?> leftOp, final Expr<?> rightOp) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+	}
+
 	public static LtExpr<?> Lt(final Expr<?> leftOp, final Expr<?> rightOp) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO: auto-generated method stub");
@@ -60,8 +70,6 @@ public final class AbstractExprs {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
-
-	////
 
 	public static MulExpr<?> Mul(final Expr<?> op1, final Expr<?> op2) {
 		// TODO Auto-generated method stub

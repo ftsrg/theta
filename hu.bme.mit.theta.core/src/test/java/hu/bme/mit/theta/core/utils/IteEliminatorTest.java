@@ -1,16 +1,17 @@
 package hu.bme.mit.theta.core.utils;
 
 import static hu.bme.mit.theta.core.decl.Decls.Const;
-import static hu.bme.mit.theta.core.expr.Exprs.Eq;
 import static hu.bme.mit.theta.core.expr.Exprs.Ite;
 import static hu.bme.mit.theta.core.expr.Exprs.Prime;
 import static hu.bme.mit.theta.core.type.Types.Bool;
 import static hu.bme.mit.theta.core.type.Types.Int;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Iff;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Imply;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Add;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Geq;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Neg;
@@ -77,7 +78,7 @@ public class IteEliminatorTest {
 		// (if B then C else D) -> A
 		assertEquals(eliminateITE(Imply(Ite(b, c, d), a)), Imply(And(Or(Not(b), c), Or(b, d)), a));
 		// A = (if B then C else D)
-		assertEquals(eliminateITE(Eq(a, Ite(b, c, d))), Eq(a, And(Or(Not(b), c), Or(b, d))));
+		assertEquals(eliminateITE(Iff(a, Ite(b, c, d))), Iff(a, And(Or(Not(b), c), Or(b, d))));
 		// X = (if A then Y else Z)
 		assertEquals(eliminateITE(Eq(x, Ite(a, y, z))), And(Or(Not(a), Eq(x, y)), Or(a, Eq(x, z))));
 		// (if A then Y else Z) = X

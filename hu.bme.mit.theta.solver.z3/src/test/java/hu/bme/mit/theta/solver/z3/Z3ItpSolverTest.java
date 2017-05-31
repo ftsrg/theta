@@ -2,8 +2,6 @@ package hu.bme.mit.theta.solver.z3;
 
 import static hu.bme.mit.theta.core.decl.Decls.Const;
 import static hu.bme.mit.theta.core.decl.Decls.Param;
-import static hu.bme.mit.theta.core.expr.Exprs.Eq;
-import static hu.bme.mit.theta.core.expr.Exprs.Neq;
 import static hu.bme.mit.theta.core.type.Types.Bool;
 import static hu.bme.mit.theta.core.type.Types.Func;
 import static hu.bme.mit.theta.core.type.Types.Int;
@@ -11,8 +9,10 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Forall;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Imply;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Add;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Mul;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Neq;
 
 import org.junit.Before;
 import org.junit.Ignore;

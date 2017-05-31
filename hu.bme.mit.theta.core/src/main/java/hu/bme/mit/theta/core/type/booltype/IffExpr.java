@@ -1,12 +1,13 @@
 package hu.bme.mit.theta.core.type.booltype;
 
-import hu.bme.mit.theta.core.expr.BinaryExpr;
+import static hu.bme.mit.theta.core.type.Types.Bool;
+
+import hu.bme.mit.theta.core.expr.EqExpr;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.BoolType;
-import hu.bme.mit.theta.core.type.Types;
 import hu.bme.mit.theta.core.utils.ExprVisitor;
 
-public final class IffExpr extends BinaryExpr<BoolType, BoolType, BoolType> {
+public final class IffExpr extends EqExpr<BoolType> {
 
 	private static final int HASH_SEED = 67;
 
@@ -18,7 +19,7 @@ public final class IffExpr extends BinaryExpr<BoolType, BoolType, BoolType> {
 
 	@Override
 	public BoolType getType() {
-		return Types.Bool();
+		return Bool();
 	}
 
 	@Override

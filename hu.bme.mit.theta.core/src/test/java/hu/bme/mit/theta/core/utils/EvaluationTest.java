@@ -1,7 +1,6 @@
 package hu.bme.mit.theta.core.utils;
 
 import static hu.bme.mit.theta.core.decl.Decls.Const;
-import static hu.bme.mit.theta.core.expr.Exprs.Eq;
 import static hu.bme.mit.theta.core.expr.Exprs.Ite;
 import static hu.bme.mit.theta.core.type.Types.Int;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
@@ -13,12 +12,14 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Add;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Div;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Mul;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Neg;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Sub;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Add;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Div;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Eq;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Geq;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Gt;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Leq;
@@ -101,8 +102,6 @@ public class EvaluationTest {
 	@Test
 	public void testEq() {
 		// @formatter:off
-		Assert.assertEquals(True(), evaluate(Eq(False(), False())));
-		Assert.assertEquals(False(), evaluate(Eq(False(), True())));
 		Assert.assertEquals(True(), evaluate(Eq(Int(2), Int(2))));
 		Assert.assertEquals(False(), evaluate(Eq(Int(2), Int(-2))));
 		Assert.assertEquals(True(), evaluate(Eq(Rat(1, 2), Rat(1, 2))));

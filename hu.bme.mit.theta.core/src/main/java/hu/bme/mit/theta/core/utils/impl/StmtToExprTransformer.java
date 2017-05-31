@@ -1,5 +1,7 @@
 package hu.bme.mit.theta.core.utils.impl;
 
+import static hu.bme.mit.theta.core.expr.AbstractExprs.Eq;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -8,7 +10,6 @@ import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.expr.Exprs;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
@@ -64,12 +65,12 @@ final class StmtToExprTransformer {
 
 		@Override
 		public <DeclType extends Type> UnfoldResult visit(final AssignStmt<DeclType> stmt, final VarIndexing indexing) {
-			final VarDecl<?> varDecl = stmt.getVarDecl();
+			final VarDecl<DeclType> varDecl = stmt.getVarDecl();
 			final VarIndexing newIndexing = indexing.inc(varDecl);
-			final Expr<?> rhs = ExprUtils.applyPrimes(stmt.getExpr(), indexing);
-			final Expr<?> lhs = ExprUtils.applyPrimes(varDecl.getRef(), newIndexing);
+			final Expr<DeclType> rhs = ExprUtils.applyPrimes(stmt.getExpr(), indexing);
+			final Expr<DeclType> lhs = ExprUtils.applyPrimes(varDecl.getRef(), newIndexing);
 
-			final Expr<? extends BoolType> expr = Exprs.Eq(lhs, rhs);
+			final Expr<BoolType> expr = Eq(lhs, rhs);
 			return UnfoldResult.of(ImmutableList.of(expr), newIndexing);
 		}
 	}

@@ -1,6 +1,6 @@
 package hu.bme.mit.theta.core.model.impl;
 
-import static hu.bme.mit.theta.core.expr.Exprs.Eq;
+import static hu.bme.mit.theta.core.expr.AbstractExprs.Eq;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 
 import java.util.ArrayList;
@@ -19,7 +19,7 @@ public abstract class AbstractModel implements Model {
 	public final Expr<? extends BoolType> toExpr() {
 		final List<Expr<? extends BoolType>> exprs = new ArrayList<>();
 		for (final ConstDecl<?> constDecl : getDecls()) {
-			final Expr<? extends BoolType> expr = Eq(constDecl.getRef(), eval(constDecl).get());
+			final Expr<BoolType> expr = Eq(constDecl.getRef(), eval(constDecl).get());
 			exprs.add(expr);
 		}
 		return And(exprs);

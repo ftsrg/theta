@@ -2,14 +2,14 @@ package hu.bme.mit.theta.core.utils;
 
 import static com.google.common.collect.ImmutableSet.of;
 import static hu.bme.mit.theta.core.decl.Decls.Var;
-import static hu.bme.mit.theta.core.expr.Exprs.Eq;
 import static hu.bme.mit.theta.core.type.Types.Bool;
 import static hu.bme.mit.theta.core.type.Types.Int;
 import static hu.bme.mit.theta.core.type.Types.Rat;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Imply;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Sub;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Eq;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 import static org.junit.Assert.assertEquals;
 
 import java.util.Arrays;
@@ -44,6 +44,7 @@ public class VarCollectorStmtVisitorTest {
 	private static final VarDecl<RatType> VF = Var("f", Rat());
 
 	private static final Expr<BoolType> A = VA.getRef();
+	@SuppressWarnings("unused")
 	private static final Expr<IntType> B = VB.getRef();
 	private static final Expr<RatType> C = VC.getRef();
 	private static final Expr<BoolType> D = VD.getRef();
@@ -66,7 +67,7 @@ public class VarCollectorStmtVisitorTest {
 
 				{ Stmts.Assign(VA, True()), of(VA) },
 
-				{ Stmts.Assert(And(Imply(A, D), Eq(C, Sub(B, E)))), of(VA, VB, VC, VD, VE) },
+				{ Stmts.Assert(And(Imply(A, D), Eq(C, Rat(2, 3)))), of(VA, VC, VD) },
 
 				{ Stmts.Assume(Imply(A, D)), of(VA, VD) },
 
@@ -74,7 +75,7 @@ public class VarCollectorStmtVisitorTest {
 
 				{ Stmts.Decl(VA, D), of(VA, VD) },
 
-				{ Stmts.Do(Stmts.Assign(VA, D), Eq(C, Sub(B, E))), of(VA, VB, VC, VD, VE) },
+				{ Stmts.Do(Stmts.Assign(VA, D), Eq(C, Rat(2, 3))), of(VA, VC, VD) },
 
 				{ Stmts.Havoc(VA), of(VA) },
 
@@ -84,7 +85,7 @@ public class VarCollectorStmtVisitorTest {
 
 				{ Stmts.Return(A), of(VA) },
 
-				{ Stmts.While(Eq(C, Sub(B, E)), Stmts.Assign(VA, D)), of(VA, VB, VC, VD, VE) },
+				{ Stmts.While(Eq(C, Rat(2, 3)), Stmts.Assign(VA, D)), of(VA, VC, VD) },
 
 				{ Stmts.Block(ImmutableList.of(Stmts.Assign(VA, D), Stmts.Assign(VB, E))), of(VA, VB, VD, VE) },
 

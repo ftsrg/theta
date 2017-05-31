@@ -15,14 +15,6 @@ public final class Exprs {
 		return new RefExpr<>(decl);
 	}
 
-	public static EqExpr Eq(final Expr<? extends Type> leftOp, final Expr<? extends Type> rightOp) {
-		return new EqExpr(leftOp, rightOp);
-	}
-
-	public static NeqExpr Neq(final Expr<? extends Type> leftOp, final Expr<? extends Type> rightOp) {
-		return new NeqExpr(leftOp, rightOp);
-	}
-
 	public static <T extends Type> IteExpr<T> Ite(final Expr<? extends BoolType> cond, final Expr<? extends T> then,
 			final Expr<? extends T> elze) {
 		return new IteExpr<>(cond, then, elze);

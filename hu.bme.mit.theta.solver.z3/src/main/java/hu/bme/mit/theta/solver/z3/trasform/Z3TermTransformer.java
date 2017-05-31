@@ -1,10 +1,10 @@
 package hu.bme.mit.theta.solver.z3.trasform;
 
+import static hu.bme.mit.theta.core.expr.AbstractExprs.Eq;
 import static hu.bme.mit.theta.core.expr.AbstractExprs.Geq;
 import static hu.bme.mit.theta.core.expr.AbstractExprs.Gt;
 import static hu.bme.mit.theta.core.expr.AbstractExprs.Leq;
 import static hu.bme.mit.theta.core.expr.AbstractExprs.Lt;
-import static hu.bme.mit.theta.core.expr.Exprs.Eq;
 import static hu.bme.mit.theta.core.expr.Exprs.Ite;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;

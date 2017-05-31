@@ -1,8 +1,6 @@
 package hu.bme.mit.theta.analysis.cfa.impact;
 
 import static hu.bme.mit.theta.core.decl.Decls.Var;
-import static hu.bme.mit.theta.core.expr.Exprs.Eq;
-import static hu.bme.mit.theta.core.expr.Exprs.Neq;
 import static hu.bme.mit.theta.core.stmt.Stmts.Assert;
 import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
 import static hu.bme.mit.theta.core.stmt.Stmts.Block;
@@ -11,9 +9,11 @@ import static hu.bme.mit.theta.core.stmt.Stmts.If;
 import static hu.bme.mit.theta.core.type.Types.Bool;
 import static hu.bme.mit.theta.core.type.Types.Int;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Add;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Neq;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
@@ -53,7 +53,7 @@ public final class CfaPredImpactCheckerTest {
 		final Stmt program = Block(
 				Assign(vlock,
 						False()),
-				Do(Block(Assert(Eq(vlock.getRef(), False())), Assign(vlock, True()), Assign(vold, vnew.getRef()),
+				Do(Block(Assert(Not(vlock.getRef())), Assign(vlock, True()), Assign(vold, vnew.getRef()),
 						If(vnondet.getRef(), Block(Assign(vlock, False()), Assign(vnew, Add(vnew.getRef(), Int(1)))))),
 						Neq(vnew.getRef(), vold.getRef())));
 

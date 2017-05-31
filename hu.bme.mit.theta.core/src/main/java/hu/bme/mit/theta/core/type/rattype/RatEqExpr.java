@@ -1,19 +1,19 @@
-package hu.bme.mit.theta.core.type.booltype;
+package hu.bme.mit.theta.core.type.rattype;
 
 import static hu.bme.mit.theta.core.type.Types.Bool;
 
-import hu.bme.mit.theta.core.expr.BinaryExpr;
+import hu.bme.mit.theta.core.expr.EqExpr;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.BoolType;
+import hu.bme.mit.theta.core.type.RatType;
 import hu.bme.mit.theta.core.utils.ExprVisitor;
 
-public final class ImplyExpr extends BinaryExpr<BoolType, BoolType, BoolType> {
+public final class RatEqExpr extends EqExpr<RatType> {
 
-	private static final int HASH_SEED = 71;
+	private static final int HASH_SEED = 3709;
+	private static final String OPERATOR_LABEL = "Eq";
 
-	private static final String OPERATOR_LABEL = "Imply";
-
-	ImplyExpr(final Expr<? extends BoolType> leftOp, final Expr<? extends BoolType> rightOp) {
+	RatEqExpr(final Expr<? extends RatType> leftOp, final Expr<? extends RatType> rightOp) {
 		super(leftOp, rightOp);
 	}
 
@@ -23,21 +23,21 @@ public final class ImplyExpr extends BinaryExpr<BoolType, BoolType, BoolType> {
 	}
 
 	@Override
-	public ImplyExpr withOps(final Expr<? extends BoolType> leftOp, final Expr<? extends BoolType> rightOp) {
+	public RatEqExpr withOps(final Expr<? extends RatType> leftOp, final Expr<? extends RatType> rightOp) {
 		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
 			return this;
 		} else {
-			return new ImplyExpr(leftOp, rightOp);
+			return new RatEqExpr(leftOp, rightOp);
 		}
 	}
 
 	@Override
-	public ImplyExpr withLeftOp(final Expr<? extends BoolType> leftOp) {
+	public RatEqExpr withLeftOp(final Expr<? extends RatType> leftOp) {
 		return withOps(leftOp, getRightOp());
 	}
 
 	@Override
-	public ImplyExpr withRightOp(final Expr<? extends BoolType> rightOp) {
+	public RatEqExpr withRightOp(final Expr<? extends RatType> rightOp) {
 		return withOps(getLeftOp(), rightOp);
 	}
 
@@ -50,8 +50,8 @@ public final class ImplyExpr extends BinaryExpr<BoolType, BoolType, BoolType> {
 	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
-		} else if (obj instanceof ImplyExpr) {
-			final ImplyExpr that = (ImplyExpr) obj;
+		} else if (obj instanceof RatEqExpr) {
+			final RatEqExpr that = (RatEqExpr) obj;
 			return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp().equals(that.getRightOp());
 		} else {
 			return false;

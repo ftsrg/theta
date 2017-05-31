@@ -36,6 +36,14 @@ public final class RatExprs {
 		return new RatDivExpr(leftOp, rightOp);
 	}
 
+	public static RatEqExpr Eq(final Expr<RatType> leftOp, final Expr<RatType> rightOp) {
+		return new RatEqExpr(leftOp, rightOp);
+	}
+
+	public static RatNeqExpr Neq(final Expr<RatType> leftOp, final Expr<RatType> rightOp) {
+		return new RatNeqExpr(leftOp, rightOp);
+	}
+
 	public static RatLtExpr Lt(final Expr<RatType> leftOp, final Expr<RatType> rightOp) {
 		return new RatLtExpr(leftOp, rightOp);
 	}

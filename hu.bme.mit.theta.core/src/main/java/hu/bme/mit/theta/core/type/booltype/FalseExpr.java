@@ -1,7 +1,8 @@
 package hu.bme.mit.theta.core.type.booltype;
 
+import static hu.bme.mit.theta.core.type.Types.Bool;
+
 import hu.bme.mit.theta.core.type.BoolType;
-import hu.bme.mit.theta.core.type.Types;
 import hu.bme.mit.theta.core.utils.ExprVisitor;
 
 public final class FalseExpr extends BoolLitExpr {
@@ -23,7 +24,7 @@ public final class FalseExpr extends BoolLitExpr {
 
 	@Override
 	public BoolType getType() {
-		return Types.Bool();
+		return Bool();
 	}
 
 	@Override

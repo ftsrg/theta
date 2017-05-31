@@ -1,13 +1,13 @@
 package hu.bme.mit.theta.formalism.ta.constr;
 
-import static hu.bme.mit.theta.core.expr.Exprs.Eq;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Eq;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Sub;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.expr.EqExpr;
 import hu.bme.mit.theta.core.expr.RefExpr;
 import hu.bme.mit.theta.core.type.RatType;
+import hu.bme.mit.theta.core.type.rattype.RatEqExpr;
 
 public final class DiffEqConstr extends DiffConstr {
 
@@ -15,19 +15,19 @@ public final class DiffEqConstr extends DiffConstr {
 
 	private static final String OPERATOR_LABEL = "=";
 
-	private volatile EqExpr expr = null;
+	private volatile RatEqExpr expr = null;
 
 	DiffEqConstr(final VarDecl<RatType> leftVar, final VarDecl<RatType> rightVar, final int bound) {
 		super(leftVar, rightVar, bound);
 	}
 
 	@Override
-	public EqExpr toExpr() {
-		EqExpr result = expr;
+	public RatEqExpr toExpr() {
+		RatEqExpr result = expr;
 		if (result == null) {
 			final RefExpr<RatType> leftRef = getLeftVar().getRef();
 			final RefExpr<RatType> rightRef = getRightVar().getRef();
-			result = Eq(Sub(leftRef, rightRef), Int(getBound()));
+			result = Eq(Sub(leftRef, rightRef), Rat(getBound(), 1));
 			expr = result;
 		}
 		return result;

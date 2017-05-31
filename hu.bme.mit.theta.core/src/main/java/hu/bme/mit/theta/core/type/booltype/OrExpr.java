@@ -1,11 +1,12 @@
 package hu.bme.mit.theta.core.type.booltype;
 
+import static hu.bme.mit.theta.core.type.Types.Bool;
+
 import java.util.Collection;
 
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.MultiaryExpr;
 import hu.bme.mit.theta.core.type.BoolType;
-import hu.bme.mit.theta.core.type.Types;
 import hu.bme.mit.theta.core.utils.ExprVisitor;
 
 public final class OrExpr extends MultiaryExpr<BoolType, BoolType> {
@@ -20,7 +21,7 @@ public final class OrExpr extends MultiaryExpr<BoolType, BoolType> {
 
 	@Override
 	public BoolType getType() {
-		return Types.Bool();
+		return Bool();
 	}
 
 	@Override
