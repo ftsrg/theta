@@ -1,11 +1,11 @@
 package hu.bme.mit.theta.core.dsl.impl;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static hu.bme.mit.theta.core.type.impl.Types.Array;
-import static hu.bme.mit.theta.core.type.impl.Types.Bool;
-import static hu.bme.mit.theta.core.type.impl.Types.Func;
-import static hu.bme.mit.theta.core.type.impl.Types.Int;
-import static hu.bme.mit.theta.core.type.impl.Types.Rat;
+import static hu.bme.mit.theta.core.type.Types.Array;
+import static hu.bme.mit.theta.core.type.Types.Bool;
+import static hu.bme.mit.theta.core.type.Types.Func;
+import static hu.bme.mit.theta.core.type.Types.Int;
+import static hu.bme.mit.theta.core.type.Types.Rat;
 import static java.util.stream.Collectors.toList;
 
 import java.util.Collections;

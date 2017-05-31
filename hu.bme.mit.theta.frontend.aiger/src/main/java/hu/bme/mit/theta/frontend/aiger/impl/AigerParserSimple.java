@@ -17,7 +17,7 @@ import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.BoolType;
-import hu.bme.mit.theta.core.type.impl.Types;
+import hu.bme.mit.theta.core.type.Types;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.frontend.aiger.AigerParser;
 

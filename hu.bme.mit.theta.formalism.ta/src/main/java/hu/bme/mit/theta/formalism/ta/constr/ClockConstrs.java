@@ -1,7 +1,7 @@
 package hu.bme.mit.theta.formalism.ta.constr;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.type.impl.Types.Rat;
+import static hu.bme.mit.theta.core.type.Types.Rat;
 
 import java.util.Collection;
 import java.util.List;

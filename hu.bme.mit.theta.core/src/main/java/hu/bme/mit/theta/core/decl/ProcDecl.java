@@ -2,7 +2,7 @@ package hu.bme.mit.theta.core.decl;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.type.impl.Types.Proc;
+import static hu.bme.mit.theta.core.type.Types.Proc;
 import static java.util.stream.Collectors.toList;
 
 import java.util.List;

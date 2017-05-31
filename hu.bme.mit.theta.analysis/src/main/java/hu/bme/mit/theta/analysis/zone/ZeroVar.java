@@ -1,7 +1,7 @@
 package hu.bme.mit.theta.analysis.zone;
 
 import static hu.bme.mit.theta.core.decl.Decls.Var;
-import static hu.bme.mit.theta.core.type.impl.Types.Rat;
+import static hu.bme.mit.theta.core.type.Types.Rat;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.RatType;

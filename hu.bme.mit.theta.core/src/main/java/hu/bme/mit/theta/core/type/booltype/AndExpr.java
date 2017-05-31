@@ -5,7 +5,7 @@ import java.util.Collection;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.MultiaryExpr;
 import hu.bme.mit.theta.core.type.BoolType;
-import hu.bme.mit.theta.core.type.impl.Types;
+import hu.bme.mit.theta.core.type.Types;
 import hu.bme.mit.theta.core.utils.ExprVisitor;
 
 public final class AndExpr extends MultiaryExpr<BoolType, BoolType> {

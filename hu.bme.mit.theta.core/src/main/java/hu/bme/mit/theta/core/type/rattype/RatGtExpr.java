@@ -1,6 +1,6 @@
 package hu.bme.mit.theta.core.type.rattype;
 
-import static hu.bme.mit.theta.core.type.impl.Types.Bool;
+import static hu.bme.mit.theta.core.type.Types.Bool;
 
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.GtExpr;

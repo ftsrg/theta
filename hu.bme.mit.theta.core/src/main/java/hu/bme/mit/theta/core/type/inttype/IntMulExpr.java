@@ -1,6 +1,6 @@
 package hu.bme.mit.theta.core.type.inttype;
 
-import static hu.bme.mit.theta.core.type.impl.Types.Int;
+import static hu.bme.mit.theta.core.type.Types.Int;
 
 import java.util.Collection;
 

@@ -1,6 +1,6 @@
 package hu.bme.mit.theta.core.type.rattype;
 
-import static hu.bme.mit.theta.core.type.impl.Types.Rat;
+import static hu.bme.mit.theta.core.type.Types.Rat;
 
 import java.util.Collection;
 

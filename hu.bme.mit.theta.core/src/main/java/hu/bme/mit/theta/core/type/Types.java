@@ -1,20 +1,8 @@
-package hu.bme.mit.theta.core.type.impl;
+package hu.bme.mit.theta.core.type;
 
 import java.util.List;
 
-import hu.bme.mit.theta.core.type.ArrayType;
-import hu.bme.mit.theta.core.type.BoolType;
-import hu.bme.mit.theta.core.type.FuncType;
-import hu.bme.mit.theta.core.type.IntType;
-import hu.bme.mit.theta.core.type.ProcType;
-import hu.bme.mit.theta.core.type.RatType;
-import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.UnitType;
-
 public final class Types {
-
-	private static final IntType INT_TYPE = new IntTypeImpl();
-	private static final RatType RAT_TYPE = new RatTypeImpl();
 
 	private Types() {
 	}
@@ -24,11 +12,11 @@ public final class Types {
 	}
 
 	public static IntType Int() {
-		return INT_TYPE;
+		return IntType.getInstance();
 	}
 
 	public static RatType Rat() {
-		return RAT_TYPE;
+		return RatType.getInstance();
 	}
 
 	public static UnitType Unit() {

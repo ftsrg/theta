@@ -1,7 +1,7 @@
 package hu.bme.mit.theta.solver.z3;
 
 import static hu.bme.mit.theta.core.decl.Decls.Const;
-import static hu.bme.mit.theta.core.type.impl.Types.Int;
+import static hu.bme.mit.theta.core.type.Types.Int;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Gt;
 
 import java.util.stream.Stream;

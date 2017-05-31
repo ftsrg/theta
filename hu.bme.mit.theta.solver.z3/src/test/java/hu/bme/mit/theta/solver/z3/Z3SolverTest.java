@@ -1,9 +1,9 @@
 package hu.bme.mit.theta.solver.z3;
 
 import static hu.bme.mit.theta.core.decl.Decls.Const;
+import static hu.bme.mit.theta.core.type.Types.Bool;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
-import static hu.bme.mit.theta.core.type.impl.Types.Bool;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 

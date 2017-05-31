@@ -3,7 +3,7 @@ package hu.bme.mit.theta.core.type.booltype;
 import hu.bme.mit.theta.core.expr.BinaryExpr;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.BoolType;
-import hu.bme.mit.theta.core.type.impl.Types;
+import hu.bme.mit.theta.core.type.Types;
 import hu.bme.mit.theta.core.utils.ExprVisitor;
 
 public final class ImplyExpr extends BinaryExpr<BoolType, BoolType, BoolType> {

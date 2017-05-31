@@ -12,7 +12,7 @@ import hu.bme.mit.theta.core.expr.Exprs;
 import hu.bme.mit.theta.core.expr.RefExpr;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.IntType;
-import hu.bme.mit.theta.core.type.impl.Types;
+import hu.bme.mit.theta.core.type.Types;
 import hu.bme.mit.theta.core.utils.impl.ExprUtils;
 
 public class PonateTest {
