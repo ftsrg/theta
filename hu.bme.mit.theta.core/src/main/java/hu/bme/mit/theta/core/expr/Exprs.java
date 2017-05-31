@@ -6,7 +6,6 @@ import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.type.BoolType;
 import hu.bme.mit.theta.core.type.RatType;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.closure.ClosedUnderNeg;
 
 public final class Exprs {
 
@@ -43,10 +42,6 @@ public final class Exprs {
 
 	public static GeqExpr Geq(final Expr<? extends RatType> leftOp, final Expr<? extends RatType> rightOp) {
 		return new GeqExpr(leftOp, rightOp);
-	}
-
-	public static <T extends ClosedUnderNeg> NegExpr<T> Neg(final Expr<? extends T> op) {
-		return new NegExpr<>(op);
 	}
 
 	public static <T extends Type> IteExpr<T> Ite(final Expr<? extends BoolType> cond, final Expr<? extends T> then,

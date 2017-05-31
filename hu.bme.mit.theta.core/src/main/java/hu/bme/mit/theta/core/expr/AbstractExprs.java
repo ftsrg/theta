@@ -17,6 +17,11 @@ public final class AbstractExprs {
 		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
 
+	public static NegExpr<?> Neg(final Expr<?> op) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+	}
+
 	public static MulExpr<?> Mul(final Collection<? extends Expr<?>> ops) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO: auto-generated method stub");

@@ -28,6 +28,10 @@ public final class IntExprs {
 		return new IntSubExpr(leftOp, rightOp);
 	}
 
+	public static IntNegExpr Neg(final Expr<IntType> op) {
+		return new IntNegExpr(op);
+	}
+
 	public static IntMulExpr Mul(final Collection<? extends Expr<IntType>> ops) {
 		return new IntMulExpr(ops);
 	}

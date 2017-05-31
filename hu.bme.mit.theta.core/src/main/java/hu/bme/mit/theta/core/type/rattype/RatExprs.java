@@ -24,6 +24,10 @@ public final class RatExprs {
 		return new RatSubExpr(leftOp, rightOp);
 	}
 
+	public static RatNegExpr Neg(final Expr<? extends RatType> op) {
+		return new RatNegExpr(op);
+	}
+
 	public static RatMulExpr Mul(final Collection<? extends Expr<? extends RatType>> ops) {
 		return new RatMulExpr(ops);
 	}
