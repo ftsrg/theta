@@ -7,7 +7,7 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Iff;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Imply;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
-import static hu.bme.mit.theta.core.utils.impl.ExprUtils.isExprCNF;
+import static hu.bme.mit.theta.core.utils.ExprUtils.isExprCnf;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -69,6 +69,6 @@ public class CnfCheckerTest {
 
 	@Test
 	public void test() {
-		Assert.assertEquals(expectedResult, isExprCNF(expr));
+		Assert.assertEquals(expectedResult, isExprCnf(expr));
 	}
 }

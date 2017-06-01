@@ -2,13 +2,13 @@ package hu.bme.mit.theta.core.expr;
 
 import hu.bme.mit.theta.core.type.Type;
 
-public final class PrimedExpr<ExprType extends Type> extends UnaryExpr<ExprType, ExprType> {
+public final class PrimeExpr<ExprType extends Type> extends UnaryExpr<ExprType, ExprType> {
 
 	private static final int HASH_SEED = 4561;
 
 	private static final String OPERATOR_LABEL = "Prime";
 
-	PrimedExpr(final Expr<ExprType> op) {
+	PrimeExpr(final Expr<ExprType> op) {
 		super(op);
 	}
 
@@ -22,7 +22,7 @@ public final class PrimedExpr<ExprType extends Type> extends UnaryExpr<ExprType,
 		if (op == getOp()) {
 			return this;
 		} else {
-			return new PrimedExpr<>(op);
+			return new PrimeExpr<>(op);
 		}
 	}
 
@@ -30,8 +30,8 @@ public final class PrimedExpr<ExprType extends Type> extends UnaryExpr<ExprType,
 	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
-		} else if (obj instanceof PrimedExpr) {
-			final PrimedExpr<?> that = (PrimedExpr<?>) obj;
+		} else if (obj instanceof PrimeExpr) {
+			final PrimeExpr<?> that = (PrimeExpr<?>) obj;
 			return this.getOp().equals(that.getOp());
 		} else {
 			return false;

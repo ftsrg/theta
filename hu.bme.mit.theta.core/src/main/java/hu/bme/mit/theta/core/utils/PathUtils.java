@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.core.utils.impl;
+package hu.bme.mit.theta.core.utils;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -14,12 +14,11 @@ import hu.bme.mit.theta.core.decl.IndexedConstDecl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.LitExpr;
-import hu.bme.mit.theta.core.expr.PrimedExpr;
+import hu.bme.mit.theta.core.expr.PrimeExpr;
 import hu.bme.mit.theta.core.expr.RefExpr;
 import hu.bme.mit.theta.core.model.Model;
 import hu.bme.mit.theta.core.model.impl.Valuation;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.proctype.ProcCallExpr;
 
 public class PathUtils {
 
@@ -37,12 +36,8 @@ public class PathUtils {
 	public static <T extends Type> Expr<T> unfold(final Expr<T> expr, final VarIndexing indexing) {
 		checkNotNull(expr);
 		checkNotNull(indexing);
-
-		final UnfoldVisitor visitor = new UnfoldVisitor(indexing);
-
-		@SuppressWarnings("unchecked")
-		final Expr<T> result = (Expr<T>) expr.accept(visitor, 0);
-
+		final UnfoldHelper helper = new UnfoldHelper(indexing);
+		final Expr<T> result = helper.unfold(expr, 0);
 		return result;
 	}
 
@@ -51,20 +46,15 @@ public class PathUtils {
 		return unfold(expr, VarIndexing.all(i));
 	}
 
-	public static <T extends Type> Collection<Expr<T>> unfold(final Collection<Expr<T>> exprs,
-			final int i) {
+	public static <T extends Type> Collection<Expr<T>> unfold(final Collection<Expr<T>> exprs, final int i) {
 		return exprs.stream().map(e -> PathUtils.unfold(e, i)).collect(Collectors.toSet());
 	}
 
 	public static <T extends Type> Expr<T> foldin(final Expr<T> expr, final VarIndexing indexing) {
 		checkNotNull(expr);
 		checkNotNull(indexing);
-
-		final FoldinVisitor visitor = new FoldinVisitor(indexing);
-
-		@SuppressWarnings("unchecked")
-		final Expr<T> result = (Expr<T>) expr.accept(visitor, null);
-
+		final FoldinHelper helper = new FoldinHelper(indexing);
+		final Expr<T> result = helper.foldin(expr);
 		return result;
 	}
 
@@ -115,83 +105,64 @@ public class PathUtils {
 
 	////
 
-	private static final class UnfoldVisitor extends ExprRewriterVisitor<Integer> {
+	private static final class UnfoldHelper {
 
 		private final VarIndexing indexing;
 
-		private UnfoldVisitor(final VarIndexing indexing) {
+		private UnfoldHelper(final VarIndexing indexing) {
 			this.indexing = indexing;
 		}
 
-		////
-
-		@Override
-		public <ExprType extends Type> Expr<ExprType> visit(final PrimedExpr<ExprType> expr,
-				final Integer offset) {
-			final Expr<ExprType> op = expr.getOp();
-			@SuppressWarnings("unchecked")
-			final Expr<ExprType> res = (Expr<ExprType>) op.accept(this, offset + 1);
-			return res;
-		}
-
-		@Override
-		public <DeclType extends Type> Expr<DeclType> visit(final RefExpr<DeclType> expr,
-				final Integer offset) {
-			final Decl<DeclType> decl = expr.getDecl();
-			if (decl instanceof VarDecl) {
-				final VarDecl<DeclType> varDecl = (VarDecl<DeclType>) decl;
-				final int index = indexing.get(varDecl) + offset;
-				final ConstDecl<DeclType> constDecl = varDecl.getConstDecl(index);
-				final RefExpr<DeclType> refExpr = constDecl.getRef();
-				return refExpr;
-			} else {
-				return expr;
-			}
-		}
-
-		@Override
-		public <ReturnType extends Type> Expr<?> visit(final ProcCallExpr<ReturnType> expr, final Integer offset) {
-			// TODO Auto-generated method stub
-			throw new UnsupportedOperationException("TODO: auto-generated method stub");
-		}
-	}
-
-	private static final class FoldinVisitor extends ExprRewriterVisitor<Void> {
-
-		private final VarIndexing indexing;
-
-		private FoldinVisitor(final VarIndexing indexing) {
-			this.indexing = indexing;
-		}
-
-		////
-
-		@Override
-		public <DeclType extends Type> Expr<DeclType> visit(final RefExpr<DeclType> expr, final Void param) {
-			final Decl<DeclType> decl = expr.getDecl();
-
-			if (decl instanceof IndexedConstDecl<?>) {
-				final IndexedConstDecl<DeclType> indexedConstDecl = (IndexedConstDecl<DeclType>) decl;
-				final VarDecl<DeclType> varDecl = indexedConstDecl.getVarDecl();
-
-				final int index = indexedConstDecl.getIndex();
-
-				int nPrimes = index - indexing.get(varDecl);
-				checkArgument(nPrimes >= 0);
-
-				Expr<DeclType> res = varDecl.getRef();
-				while (nPrimes > 0) {
-					res = Prime(res);
-					nPrimes--;
+		public <T extends Type> Expr<T> unfold(final Expr<T> expr, final int offset) {
+			if (expr instanceof RefExpr) {
+				final RefExpr<T> ref = (RefExpr<T>) expr;
+				final Decl<T> decl = ref.getDecl();
+				if (decl instanceof VarDecl) {
+					final VarDecl<T> varDecl = (VarDecl<T>) decl;
+					final int index = indexing.get(varDecl) + offset;
+					final ConstDecl<T> constDecl = varDecl.getConstDecl(index);
+					final RefExpr<T> refExpr = constDecl.getRef();
+					return refExpr;
 				}
-
-				return res;
-			} else {
-				return expr;
 			}
+
+			if (expr instanceof PrimeExpr) {
+				final PrimeExpr<T> prime = (PrimeExpr<T>) expr;
+				final Expr<T> op = prime.getOp();
+				return unfold(op, offset + 1);
+			}
+
+			return expr.rewrite(op -> unfold(op, offset));
 		}
 	}
 
 	////
+
+	private static final class FoldinHelper {
+
+		private final VarIndexing indexing;
+
+		private FoldinHelper(final VarIndexing indexing) {
+			this.indexing = indexing;
+		}
+
+		public <T extends Type> Expr<T> foldin(final Expr<T> expr) {
+			if (expr instanceof RefExpr) {
+				final RefExpr<T> ref = (RefExpr<T>) expr;
+				final Decl<T> decl = ref.getDecl();
+				if (decl instanceof IndexedConstDecl) {
+					final IndexedConstDecl<T> constDecl = (IndexedConstDecl<T>) decl;
+					final VarDecl<T> varDecl = constDecl.getVarDecl();
+					final int index = constDecl.getIndex();
+					final int nPrimes = index - indexing.get(varDecl);
+					checkArgument(nPrimes >= 0);
+					final Expr<T> varRef = varDecl.getRef();
+					return Prime(varRef, nPrimes);
+				}
+			}
+
+			return expr.rewrite(this::foldin);
+		}
+	}
 
 }

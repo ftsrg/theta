@@ -6,7 +6,6 @@ import static hu.bme.mit.theta.formalism.common.type.impl.Types2.Pointer;
 import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.expr.NullaryExpr;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.utils.ExprVisitor;
 import hu.bme.mit.theta.formalism.common.type.PointerType;
 
 public final class NewExpr<PointedType extends Type> extends NullaryExpr<PointerType<PointedType>> {
@@ -29,12 +28,6 @@ public final class NewExpr<PointedType extends Type> extends NullaryExpr<Pointer
 	@Override
 	public PointerType<PointedType> getType() {
 		return Pointer(pointedType);
-	}
-
-	@Override
-	public <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
 
 	@Override

@@ -1,6 +1,9 @@
 package hu.bme.mit.theta.core.expr;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
+
 import java.util.List;
+import java.util.function.Function;
 
 import hu.bme.mit.theta.core.type.Type;
 
@@ -13,5 +16,10 @@ public interface Expr<ExprType extends Type> {
 	List<? extends Expr<?>> getOps();
 
 	Expr<ExprType> withOps(List<? extends Expr<?>> ops);
+
+	public default <T extends Type> Expr<ExprType> rewrite(
+			final Function<? super Expr<T>, ? extends Expr<T>> function) {
+		return this.withOps(this.getOps().stream().map(op -> op.rewrite(function)).collect(toImmutableList()));
+	}
 
 }

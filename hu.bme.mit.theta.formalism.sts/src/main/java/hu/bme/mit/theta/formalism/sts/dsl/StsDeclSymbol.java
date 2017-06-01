@@ -14,7 +14,7 @@ import hu.bme.mit.theta.core.dsl.ParamBinding;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.model.Assignment;
 import hu.bme.mit.theta.core.model.impl.NestedAssignment;
-import hu.bme.mit.theta.core.utils.impl.ExprUtils;
+import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.formalism.sts.dsl.gen.StsDslParser.StsDeclContext;
 
 final class StsDeclSymbol implements ScopedSymbol {

@@ -9,8 +9,8 @@ import java.util.Collections;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.utils.impl.ExprUtils;
-import hu.bme.mit.theta.core.utils.impl.TypeUtils;
+import hu.bme.mit.theta.core.utils.ExprUtils;
+import hu.bme.mit.theta.core.utils.TypeUtils;
 import hu.bme.mit.theta.formalism.xta.XtaProcess;
 import hu.bme.mit.theta.formalism.xta.XtaProcess.Loc;
 import hu.bme.mit.theta.formalism.xta.XtaProcess.LocKind;
@@ -54,7 +54,6 @@ final class XtaStateSymbol implements Symbol {
 		return name;
 	}
 
-	@SuppressWarnings("unchecked")
 	public Loc instantiate(final XtaProcess process, final Environment env) {
 		final Collection<Expr<BoolType>> invars;
 		if (expression == null) {
@@ -63,7 +62,7 @@ final class XtaStateSymbol implements Symbol {
 			final Expr<?> expr = expression.instantiate(env);
 			final Expr<BoolType> invar = TypeUtils.cast(expr, BoolType.class);
 			final Collection<Expr<BoolType>> conjuncts = ExprUtils.getConjuncts(invar);
-			invars = conjuncts.stream().map(e -> (Expr<BoolType>) e).collect(toList());
+			invars = conjuncts.stream().map(e -> e).collect(toList());
 		}
 
 		final Loc loc = process.createLoc(process.getName() + "_" + name, kind, invars);

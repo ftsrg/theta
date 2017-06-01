@@ -7,7 +7,6 @@ import static org.junit.Assert.assertEquals;
 import org.junit.Test;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.utils.impl.VarIndexing;
 
 public class VarIndexingTest {
 

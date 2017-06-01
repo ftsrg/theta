@@ -16,8 +16,8 @@ import hu.bme.mit.theta.common.dsl.SymbolTable;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.utils.impl.ExprUtils;
-import hu.bme.mit.theta.core.utils.impl.TypeUtils;
+import hu.bme.mit.theta.core.utils.ExprUtils;
+import hu.bme.mit.theta.core.utils.TypeUtils;
 import hu.bme.mit.theta.formalism.xta.Label;
 import hu.bme.mit.theta.formalism.xta.XtaProcess;
 import hu.bme.mit.theta.formalism.xta.XtaProcess.Loc;
@@ -86,7 +86,6 @@ final class XtaTransition implements Scope {
 
 	////
 
-	@SuppressWarnings("unchecked")
 	public void instantiate(final XtaProcess process, final Environment env) {
 		final XtaStateSymbol sourceSymbol = (XtaStateSymbol) resolve(sourceState).get();
 		final XtaStateSymbol targetSymbol = (XtaStateSymbol) resolve(targetState).get();
@@ -99,7 +98,7 @@ final class XtaTransition implements Scope {
 			final Expr<?> expr = guard.get().instantiate(env);
 			final Expr<BoolType> guardExpr = TypeUtils.cast(expr, BoolType.class);
 			final Collection<Expr<BoolType>> conjuncts = ExprUtils.getConjuncts(guardExpr);
-			guards = conjuncts.stream().map(e -> (Expr<BoolType>) e).collect(toList());
+			guards = conjuncts.stream().map(e -> e).collect(toList());
 		} else {
 			guards = emptySet();
 		}

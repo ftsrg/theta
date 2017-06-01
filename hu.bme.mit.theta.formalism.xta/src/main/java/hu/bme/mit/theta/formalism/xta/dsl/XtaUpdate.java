@@ -14,7 +14,7 @@ import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.Stmts;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.inttype.IntType;
-import hu.bme.mit.theta.core.utils.impl.TypeUtils;
+import hu.bme.mit.theta.core.utils.TypeUtils;
 import hu.bme.mit.theta.formalism.xta.dsl.XtaExpression.ExpressionInstantiationVisitor;
 import hu.bme.mit.theta.formalism.xta.dsl.gen.XtaDslBaseVisitor;
 import hu.bme.mit.theta.formalism.xta.dsl.gen.XtaDslParser.AssignmentExpressionContext;

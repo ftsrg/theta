@@ -9,7 +9,7 @@ import java.util.HashSet;
 import hu.bme.mit.theta.analysis.TransferFunction;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.core.model.impl.Valuation;
-import hu.bme.mit.theta.core.utils.impl.PathUtils;
+import hu.bme.mit.theta.core.utils.PathUtils;
 import hu.bme.mit.theta.solver.Solver;
 
 public final class ExplTransferFunction implements TransferFunction<ExplState, ExprAction, ExplPrec> {

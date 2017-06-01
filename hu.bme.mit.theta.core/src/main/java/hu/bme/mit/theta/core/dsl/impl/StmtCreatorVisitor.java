@@ -17,7 +17,7 @@ import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.utils.impl.TypeUtils;
+import hu.bme.mit.theta.core.utils.TypeUtils;
 
 public final class StmtCreatorVisitor extends CoreDslBaseVisitor<Stmt> {
 

@@ -3,7 +3,6 @@ package hu.bme.mit.theta.formalism.common.expr;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.UnaryExpr;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.utils.ExprVisitor;
 import hu.bme.mit.theta.formalism.common.type.PointerType;
 
 public class DerefExpr<PointedType extends Type> extends UnaryExpr<PointerType<? extends PointedType>, PointedType> {
@@ -27,12 +26,6 @@ public class DerefExpr<PointedType extends Type> extends UnaryExpr<PointerType<?
 	@Override
 	public PointedType getType() {
 		return getOp().getType().getPointedType();
-	}
-
-	@Override
-	public <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
 
 	@Override

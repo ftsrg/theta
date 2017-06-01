@@ -1,8 +1,8 @@
 package hu.bme.mit.theta.analysis.expr;
 
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
-import static hu.bme.mit.theta.core.utils.impl.PathUtils.extractValuation;
-import static hu.bme.mit.theta.core.utils.impl.PathUtils.unfold;
+import static hu.bme.mit.theta.core.utils.PathUtils.extractValuation;
+import static hu.bme.mit.theta.core.utils.PathUtils.unfold;
 import static hu.bme.mit.theta.solver.utils.SolverUtils.using;
 
 import java.util.Collection;
@@ -10,7 +10,7 @@ import java.util.Optional;
 
 import hu.bme.mit.theta.core.model.Model;
 import hu.bme.mit.theta.core.model.impl.Valuation;
-import hu.bme.mit.theta.core.utils.impl.VarIndexing;
+import hu.bme.mit.theta.core.utils.VarIndexing;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverStatus;
 

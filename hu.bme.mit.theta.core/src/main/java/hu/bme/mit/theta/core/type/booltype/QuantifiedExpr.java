@@ -12,7 +12,7 @@ import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.utils.impl.TypeUtils;
+import hu.bme.mit.theta.core.utils.TypeUtils;
 
 public abstract class QuantifiedExpr implements Expr<BoolType> {
 

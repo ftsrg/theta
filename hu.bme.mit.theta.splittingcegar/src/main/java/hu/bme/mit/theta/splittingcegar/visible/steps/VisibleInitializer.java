@@ -6,7 +6,7 @@ import java.util.List;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.utils.impl.ExprUtils;
+import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.formalism.sts.utils.impl.StsCnfTransformation;
 import hu.bme.mit.theta.formalism.sts.utils.impl.StsIteTransformation;

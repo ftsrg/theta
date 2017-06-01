@@ -4,7 +4,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import hu.bme.mit.theta.common.ObjectUtils;
-import hu.bme.mit.theta.core.utils.impl.IndexedVars;
+import hu.bme.mit.theta.core.utils.IndexedVars;
 
 /**
  * A variable-based refutation that is a sequence of sets of variables.

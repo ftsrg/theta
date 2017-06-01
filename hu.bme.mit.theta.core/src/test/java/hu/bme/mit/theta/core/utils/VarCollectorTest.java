@@ -30,10 +30,9 @@ import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.type.rattype.RatType;
-import hu.bme.mit.theta.core.utils.impl.ExprUtils;
 
 @RunWith(Parameterized.class)
-public class VarCollectorExprVisitorTest {
+public class VarCollectorTest {
 
 	private static final VarDecl<BoolType> VA = Var("a", Bool());
 	private static final VarDecl<IntType> VB = Var("b", Int());
@@ -41,6 +40,7 @@ public class VarCollectorExprVisitorTest {
 	private static final VarDecl<BoolType> VD = Var("d", Bool());
 
 	private static final Expr<BoolType> A = VA.getRef();
+	@SuppressWarnings("unused")
 	private static final Expr<IntType> B = VB.getRef();
 	private static final Expr<RatType> C = VC.getRef();
 	private static final Expr<BoolType> D = VD.getRef();

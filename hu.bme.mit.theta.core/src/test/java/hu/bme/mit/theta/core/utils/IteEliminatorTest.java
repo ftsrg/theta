@@ -15,7 +15,7 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Geq;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Neg;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Sub;
-import static hu.bme.mit.theta.core.utils.impl.ExprUtils.eliminateITE;
+import static hu.bme.mit.theta.core.utils.ExprUtils.eliminateIte;
 import static org.junit.Assert.assertEquals;
 
 import java.util.ArrayList;
@@ -58,38 +58,38 @@ public class IteEliminatorTest {
 	@Test
 	public void testSimple() {
 		// if A then B else C
-		assertEquals(eliminateITE(Ite(a, b, c)), And(Or(Not(a), b), Or(a, c)));
+		assertEquals(eliminateIte(Ite(a, b, c)), And(Or(Not(a), b), Or(a, c)));
 
 		// if A then (if B then C else D) else E
-		assertEquals(eliminateITE(Ite(a, Ite(b, c, d), e)), And(Or(Not(a), And(Or(Not(b), c), Or(b, d))), Or(a, e)));
+		assertEquals(eliminateIte(Ite(a, Ite(b, c, d), e)), And(Or(Not(a), And(Or(Not(b), c), Or(b, d))), Or(a, e)));
 	}
 
 	@Test
 	public void testUnary() {
 		// !(if A then B else C)
-		assertEquals(eliminateITE(Not(Ite(a, b, c))), Not(And(Or(Not(a), b), Or(a, c))));
+		assertEquals(eliminateIte(Not(Ite(a, b, c))), Not(And(Or(Not(a), b), Or(a, c))));
 	}
 
 	@Test
 	public void testBinary() {
 		// A -> (if B then C else D)
-		assertEquals(eliminateITE(Imply(a, Ite(b, c, d))), Imply(a, And(Or(Not(b), c), Or(b, d))));
+		assertEquals(eliminateIte(Imply(a, Ite(b, c, d))), Imply(a, And(Or(Not(b), c), Or(b, d))));
 		// (if B then C else D) -> A
-		assertEquals(eliminateITE(Imply(Ite(b, c, d), a)), Imply(And(Or(Not(b), c), Or(b, d)), a));
+		assertEquals(eliminateIte(Imply(Ite(b, c, d), a)), Imply(And(Or(Not(b), c), Or(b, d)), a));
 		// A = (if B then C else D)
-		assertEquals(eliminateITE(Iff(a, Ite(b, c, d))), Iff(a, And(Or(Not(b), c), Or(b, d))));
+		assertEquals(eliminateIte(Iff(a, Ite(b, c, d))), Iff(a, And(Or(Not(b), c), Or(b, d))));
 		// X = (if A then Y else Z)
-		assertEquals(eliminateITE(Eq(x, Ite(a, y, z))), And(Or(Not(a), Eq(x, y)), Or(a, Eq(x, z))));
+		assertEquals(eliminateIte(Eq(x, Ite(a, y, z))), And(Or(Not(a), Eq(x, y)), Or(a, Eq(x, z))));
 		// (if A then Y else Z) = X
-		assertEquals(eliminateITE(Eq(Ite(a, y, z), x)), And(Or(Not(a), Eq(y, x)), Or(a, Eq(z, x))));
+		assertEquals(eliminateIte(Eq(Ite(a, y, z), x)), And(Or(Not(a), Eq(y, x)), Or(a, Eq(z, x))));
 		// X = (if A then (if B then Y else Z) else T)
-		assertEquals(eliminateITE(Eq(x, Ite(a, Ite(b, y, z), t))),
+		assertEquals(eliminateIte(Eq(x, Ite(a, Ite(b, y, z), t))),
 				And(Or(Not(a), And(Or(Not(b), Eq(x, y)), Or(b, Eq(x, z)))), Or(a, Eq(x, t))));
 		// (if A then (if B then Y else Z) else T) = X
-		assertEquals(eliminateITE(Eq(Ite(a, Ite(b, y, z), t), x)),
+		assertEquals(eliminateIte(Eq(Ite(a, Ite(b, y, z), t), x)),
 				And(Or(Not(a), And(Or(Not(b), Eq(y, x)), Or(b, Eq(z, x)))), Or(a, Eq(t, x))));
 		// (if A then X else Y) = (if B then Z else T)
-		assertEquals(eliminateITE(Eq(Ite(a, x, y), Ite(b, z, t))),
+		assertEquals(eliminateIte(Eq(Ite(a, x, y), Ite(b, z, t))),
 				And(Or(Not(a), And(Or(Not(b), Eq(x, z)), Or(b, Eq(x, t)))),
 						Or(a, And(Or(Not(b), Eq(y, z)), Or(b, Eq(y, t))))));
 	}
@@ -97,12 +97,12 @@ public class IteEliminatorTest {
 	@Test
 	public void testMultiary() {
 		// A or B or (if C then D else E)
-		assertEquals(eliminateITE(Or(a, b, Ite(c, d, e))), Or(a, b, And(Or(Not(c), d), Or(c, e))));
+		assertEquals(eliminateIte(Or(a, b, Ite(c, d, e))), Or(a, b, And(Or(Not(c), d), Or(c, e))));
 		// 1 = 2 + (if A then 3 else 4) + 5
-		assertEquals(eliminateITE(Eq(i1, Add(i2, Ite(a, i3, i4), i5))),
+		assertEquals(eliminateIte(Eq(i1, Add(i2, Ite(a, i3, i4), i5))),
 				And(Or(Not(a), Eq(i1, Add(i2, i3, i5))), Or(a, Eq(i1, Add(i2, i4, i5)))));
 		// 1 = 2 + (if A then 3 else 4) + (if B then X else Y)
-		assertEquals(eliminateITE(Eq(i1, Add(i2, Ite(a, i3, i4), Ite(b, x, y)))),
+		assertEquals(eliminateIte(Eq(i1, Add(i2, Ite(a, i3, i4), Ite(b, x, y)))),
 				And(Or(Not(a), And(Or(Not(b), Eq(i1, Add(i2, i3, x))), Or(b, Eq(i1, Add(i2, i3, y))))),
 						Or(a, And(Or(Not(b), Eq(i1, Add(i2, i4, x))), Or(b, Eq(i1, Add(i2, i4, y)))))));
 	}
@@ -115,13 +115,13 @@ public class IteEliminatorTest {
 		expressions.add(Geq(Sub(x, y), Add(x, z, t)));
 
 		for (final Expr<BoolType> expr : expressions)
-			assertEquals(expr, eliminateITE(expr));
+			assertEquals(expr, eliminateIte(expr));
 	}
 
 	@Test
 	public void testPrime() {
 		// D = (if A then X else Y)'
-		assertEquals(eliminateITE(Eq(z, Prime(Ite(a, x, y)))),
+		assertEquals(eliminateIte(Eq(z, Prime(Ite(a, x, y)))),
 				And(Or(Not(a), Eq(z, Prime(x))), Or(a, Eq(z, Prime(y)))));
 	}
 }

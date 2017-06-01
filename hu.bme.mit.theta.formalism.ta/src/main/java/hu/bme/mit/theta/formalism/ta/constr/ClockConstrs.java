@@ -9,35 +9,32 @@ import java.util.List;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
+import hu.bme.mit.theta.common.DispatchTable;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.BinaryExpr;
-import hu.bme.mit.theta.core.expr.EqExpr;
 import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.expr.GeqExpr;
-import hu.bme.mit.theta.core.expr.GtExpr;
-import hu.bme.mit.theta.core.expr.LeqExpr;
-import hu.bme.mit.theta.core.expr.LtExpr;
 import hu.bme.mit.theta.core.expr.RefExpr;
 import hu.bme.mit.theta.core.type.booltype.AndExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.FalseExpr;
 import hu.bme.mit.theta.core.type.booltype.TrueExpr;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
+import hu.bme.mit.theta.core.type.rattype.RatEqExpr;
+import hu.bme.mit.theta.core.type.rattype.RatGeqExpr;
+import hu.bme.mit.theta.core.type.rattype.RatGtExpr;
+import hu.bme.mit.theta.core.type.rattype.RatLeqExpr;
+import hu.bme.mit.theta.core.type.rattype.RatLtExpr;
 import hu.bme.mit.theta.core.type.rattype.RatSubExpr;
 import hu.bme.mit.theta.core.type.rattype.RatType;
-import hu.bme.mit.theta.core.utils.impl.FailExprVisitor;
-import hu.bme.mit.theta.core.utils.impl.TypeUtils;
+import hu.bme.mit.theta.core.utils.TypeUtils;
 
 public final class ClockConstrs {
-
-	private static final ExprToClockConstrVisitor VISITOR;
 
 	private static final TrueConstr TRUE_CONSTR;
 	private static final FalseConstr FALSE_CONSTR;
 
 	static {
-		VISITOR = new ExprToClockConstrVisitor();
 		TRUE_CONSTR = new TrueConstr();
 		FALSE_CONSTR = new FalseConstr();
 	}
@@ -48,7 +45,7 @@ public final class ClockConstrs {
 	////
 
 	public static ClockConstr formExpr(final Expr<BoolType> expr) {
-		return expr.accept(VISITOR, null);
+		return FromExprHelper.INSTANCE.transform(expr);
 	}
 
 	////
@@ -135,23 +132,51 @@ public final class ClockConstrs {
 
 	////
 
-	private static final class ExprToClockConstrVisitor extends FailExprVisitor<Void, ClockConstr> {
+	private static final class FromExprHelper {
 
-		private ExprToClockConstrVisitor() {
+		private static final FromExprHelper INSTANCE = new FromExprHelper();
+
+		private final DispatchTable<ClockConstr> table;
+
+		private FromExprHelper() {
+			table = DispatchTable.<ClockConstr>builder()
+
+					.addCase(TrueExpr.class, this::transformTrue)
+
+					.addCase(FalseExpr.class, this::transformFalse)
+
+					.addCase(RatLtExpr.class, this::transformLt)
+
+					.addCase(RatLeqExpr.class, this::transformLeq)
+
+					.addCase(RatGtExpr.class, this::transformGt)
+
+					.addCase(RatGeqExpr.class, this::transformGeq)
+
+					.addCase(RatEqExpr.class, this::transformEq)
+
+					.addCase(AndExpr.class, this::transformAnd)
+
+					.addDefault(o -> {
+						throw new IllegalArgumentException();
+					})
+
+					.build();
 		}
 
-		@Override
-		public TrueConstr visit(final TrueExpr expr, final Void param) {
+		public ClockConstr transform(final Expr<BoolType> expr) {
+			return table.dispatch(expr);
+		}
+
+		private TrueConstr transformTrue(final TrueExpr expr) {
 			return True();
 		}
 
-		@Override
-		public FalseConstr visit(final FalseExpr expr, final Void param) {
+		private FalseConstr transformFalse(final FalseExpr expr) {
 			return False();
 		}
 
-		@Override
-		public ClockConstr visit(final LtExpr expr, final Void param) {
+		private ClockConstr transformLt(final RatLtExpr expr) {
 			final List<VarDecl<RatType>> lhs = extractConstrLhs(expr);
 			final int rhs = extractConstrRhs(expr);
 			if (lhs.size() == 1) {
@@ -161,8 +186,7 @@ public final class ClockConstrs {
 			}
 		}
 
-		@Override
-		public ClockConstr visit(final LeqExpr expr, final Void param) {
+		private ClockConstr transformLeq(final RatLeqExpr expr) {
 			final List<VarDecl<RatType>> lhs = extractConstrLhs(expr);
 			final int rhs = extractConstrRhs(expr);
 			if (lhs.size() == 1) {
@@ -172,8 +196,7 @@ public final class ClockConstrs {
 			}
 		}
 
-		@Override
-		public ClockConstr visit(final GtExpr expr, final Void param) {
+		private ClockConstr transformGt(final RatGtExpr expr) {
 			final List<VarDecl<RatType>> lhs = extractConstrLhs(expr);
 			final int rhs = extractConstrRhs(expr);
 			if (lhs.size() == 1) {
@@ -183,8 +206,7 @@ public final class ClockConstrs {
 			}
 		}
 
-		@Override
-		public ClockConstr visit(final GeqExpr expr, final Void param) {
+		private ClockConstr transformGeq(final RatGeqExpr expr) {
 			final List<VarDecl<RatType>> lhs = extractConstrLhs(expr);
 			final int rhs = extractConstrRhs(expr);
 			if (lhs.size() == 1) {
@@ -194,8 +216,7 @@ public final class ClockConstrs {
 			}
 		}
 
-		@Override
-		public ClockConstr visit(final EqExpr expr, final Void param) {
+		private ClockConstr transformEq(final RatEqExpr expr) {
 			final List<VarDecl<RatType>> lhs = extractConstrLhs(expr);
 			final int rhs = extractConstrRhs(expr);
 			if (lhs.size() == 1) {
@@ -205,16 +226,15 @@ public final class ClockConstrs {
 			}
 		}
 
-		@Override
-		public AndConstr visit(final AndExpr expr, final Void param) {
+		private AndConstr transformAnd(final AndExpr expr) {
 			final ImmutableSet.Builder<ClockConstr> builder = ImmutableSet.builder();
 			for (final Expr<BoolType> op : expr.getOps()) {
-				builder.add(op.accept(this, param));
+				builder.add(transform(op));
 			}
 			return And(builder.build());
 		}
 
-		private List<VarDecl<RatType>> extractConstrLhs(final BinaryExpr<?, BoolType> expr) {
+		private static List<VarDecl<RatType>> extractConstrLhs(final BinaryExpr<RatType, BoolType> expr) {
 			final Expr<?> leftOp = expr.getLeftOp();
 
 			if (leftOp instanceof RefExpr) {
@@ -250,7 +270,7 @@ public final class ClockConstrs {
 			throw new IllegalArgumentException();
 		}
 
-		private int extractConstrRhs(final BinaryExpr<?, BoolType> expr) {
+		private static int extractConstrRhs(final BinaryExpr<?, BoolType> expr) {
 			final Expr<?> rightOp = expr.getRightOp();
 
 			if (rightOp instanceof IntLitExpr) {

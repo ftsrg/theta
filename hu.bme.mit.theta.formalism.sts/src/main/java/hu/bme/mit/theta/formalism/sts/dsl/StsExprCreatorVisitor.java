@@ -68,7 +68,7 @@ import hu.bme.mit.theta.core.type.inttype.RemExpr;
 import hu.bme.mit.theta.core.type.rattype.RatDivExpr;
 import hu.bme.mit.theta.core.type.rattype.RatLitExpr;
 import hu.bme.mit.theta.core.type.rattype.RatType;
-import hu.bme.mit.theta.core.utils.impl.TypeUtils;
+import hu.bme.mit.theta.core.utils.TypeUtils;
 import hu.bme.mit.theta.formalism.sts.dsl.gen.StsDslBaseVisitor;
 import hu.bme.mit.theta.formalism.sts.dsl.gen.StsDslParser;
 import hu.bme.mit.theta.formalism.sts.dsl.gen.StsDslParser.AccessContext;

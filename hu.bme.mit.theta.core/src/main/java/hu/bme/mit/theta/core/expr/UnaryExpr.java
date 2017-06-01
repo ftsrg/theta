@@ -9,7 +9,7 @@ import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.utils.impl.TypeUtils;
+import hu.bme.mit.theta.core.utils.TypeUtils;
 
 public abstract class UnaryExpr<OpType extends Type, ExprType extends Type> implements Expr<ExprType> {
 

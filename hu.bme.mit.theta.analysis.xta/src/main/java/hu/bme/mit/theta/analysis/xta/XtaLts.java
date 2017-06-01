@@ -5,7 +5,7 @@ import java.util.Collection;
 
 import hu.bme.mit.theta.analysis.LTS;
 import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.utils.impl.ExprUtils;
+import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.formalism.xta.ChanType;
 import hu.bme.mit.theta.formalism.xta.Label;
 import hu.bme.mit.theta.formalism.xta.Label.Kind;
@@ -50,8 +50,7 @@ public final class XtaLts implements LTS<XtaState<?>, XtaAction> {
 			return;
 		}
 
-		@SuppressWarnings("unchecked")
-		final Expr<ChanType> emitExpr = (Expr<ChanType>) ExprUtils.simplify(emitLabel.getExpr(), state.getVal());
+		final Expr<ChanType> emitExpr = ExprUtils.simplify(emitLabel.getExpr(), state.getVal());
 
 		for (final Loc receiveLoc : state.getLocs()) {
 			if (receiveLoc == emitLoc) {

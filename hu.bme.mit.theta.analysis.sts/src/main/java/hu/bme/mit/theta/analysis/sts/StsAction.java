@@ -1,12 +1,12 @@
 package hu.bme.mit.theta.analysis.sts;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.utils.impl.VarIndexing.all;
+import static hu.bme.mit.theta.core.utils.VarIndexing.all;
 
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.utils.impl.VarIndexing;
+import hu.bme.mit.theta.core.utils.VarIndexing;
 import hu.bme.mit.theta.formalism.sts.STS;
 
 /**

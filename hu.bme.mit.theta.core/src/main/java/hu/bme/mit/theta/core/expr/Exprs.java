@@ -19,15 +19,15 @@ public final class Exprs {
 		return new IteExpr<>(cond, then, elze);
 	}
 
-	public static <ExprType extends Type> PrimedExpr<ExprType> Prime(final Expr<ExprType> op) {
-		return new PrimedExpr<>(op);
+	public static <ExprType extends Type> PrimeExpr<ExprType> Prime(final Expr<ExprType> op) {
+		return new PrimeExpr<>(op);
 	}
 
 	/*
 	 * Convenience methods
 	 */
 
-	public static <ExprType extends Type> PrimedExpr<ExprType> Prime(final Expr<ExprType> op, final int i) {
+	public static <ExprType extends Type> PrimeExpr<ExprType> Prime(final Expr<ExprType> op, final int i) {
 		checkArgument(i > 0);
 		if (i == 1) {
 			return Prime(op);

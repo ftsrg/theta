@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.core.utils.impl;
+package hu.bme.mit.theta.core.utils;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -11,18 +11,19 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.LitExpr;
+import hu.bme.mit.theta.core.expr.RefExpr;
 import hu.bme.mit.theta.core.model.Assignment;
 import hu.bme.mit.theta.core.model.impl.AssignmentImpl;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.AndExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.NotExpr;
-import hu.bme.mit.theta.core.utils.impl.CnfCheckerVisitor.CNFStatus;
-import hu.bme.mit.theta.core.utils.impl.IndexedVars.Builder;
+import hu.bme.mit.theta.core.utils.IndexedVars.Builder;
 
 public final class ExprUtils {
 
@@ -46,7 +47,16 @@ public final class ExprUtils {
 	}
 
 	public static void collectVars(final Expr<?> expr, final Collection<VarDecl<?>> collectTo) {
-		expr.accept(VarCollectorExprVisitor.getInstance(), collectTo);
+		if (expr instanceof RefExpr) {
+			final RefExpr<?> refExpr = (RefExpr<?>) expr;
+			final Decl<?> decl = refExpr.getDecl();
+			if (decl instanceof VarDecl) {
+				final VarDecl<?> var = (VarDecl<?>) decl;
+				collectTo.add(var);
+				return;
+			}
+		}
+		expr.getOps().forEach(op -> collectVars(op, collectTo));
 	}
 
 	public static void collectVars(final Iterable<? extends Expr<?>> exprs,
@@ -68,28 +78,26 @@ public final class ExprUtils {
 
 	public static IndexedVars getVarsIndexed(final Expr<?> expr) {
 		final Builder builder = IndexedVars.builder();
-		expr.accept(IndexedVarCollectorVisitor.getInstance(), builder);
+		IndexedVarCollector.collectIndexedVars(expr, builder);
 		return builder.build();
 	}
 
 	public static IndexedVars getVarsIndexed(final Iterable<? extends Expr<?>> exprs) {
 		final Builder builder = IndexedVars.builder();
-		exprs.forEach(e -> e.accept(IndexedVarCollectorVisitor.getInstance(), builder));
+		exprs.forEach(e -> IndexedVarCollector.collectIndexedVars(e, builder));
 		return builder.build();
 	}
 
-	public static boolean isExprCNF(final Expr<BoolType> expr) {
-		return expr.accept(new CnfCheckerVisitor(), CNFStatus.START);
+	public static boolean isExprCnf(final Expr<BoolType> expr) {
+		return CnfChecker.isCnf(expr);
 	}
 
-	@SuppressWarnings("unchecked")
-	public static Expr<BoolType> eliminateITE(final Expr<BoolType> expr) {
-		return (Expr<BoolType>) expr.accept(new ItePropagatorVisitor(new ItePusherVisitor()), null)
-				.accept(new IteRemoverVisitor(), null);
+	public static Expr<BoolType> eliminateIte(final Expr<BoolType> expr) {
+		return IteRemover.removeIte(ItePropagator.propagateIte(expr));
 	}
 
 	public static void collectAtoms(final Expr<BoolType> expr, final Collection<Expr<BoolType>> collectTo) {
-		expr.accept(new AtomCollectorVisitor(), collectTo);
+		AtomCollector.collectAtoms(expr, collectTo);
 	}
 
 	public static Set<Expr<BoolType>> getAtoms(final Expr<BoolType> expr) {
@@ -98,7 +106,6 @@ public final class ExprUtils {
 		return atoms;
 	}
 
-	@SuppressWarnings("unchecked")
 	public static <ExprType extends Type> Expr<ExprType> simplify(final Expr<ExprType> expr,
 			final Assignment assignment) {
 		// return (Expr<ExprType>) expr.accept(new ExprSimplifierVisitor(),
@@ -120,11 +127,10 @@ public final class ExprUtils {
 		return simplify(expr, AssignmentImpl.empty());
 	}
 
-	@SuppressWarnings("unchecked")
 	public static <ExprType extends Type> LitExpr<ExprType> evaluate(final Expr<ExprType> expr,
 			final Assignment assignment) {
 		final Expr<ExprType> simplified = simplify(expr, assignment);
-		if (simplified instanceof LitExpr<?>) {
+		if (simplified instanceof LitExpr) {
 			return (LitExpr<ExprType>) simplified;
 		} else {
 			throw new RuntimeException("Could not evaluate " + expr + " with assignment " + assignment);
@@ -153,6 +159,6 @@ public final class ExprUtils {
 	}
 
 	public static int size(final Expr<?> expr, final ExprMetrics.ExprMetric metric) {
-		return expr.accept(metric, null);
+		return metric.calculate(expr);
 	}
 }

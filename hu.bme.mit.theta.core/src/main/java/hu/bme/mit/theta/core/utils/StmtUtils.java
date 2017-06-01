@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.core.utils.impl;
+package hu.bme.mit.theta.core.utils;
 
 import java.util.Collections;
 import java.util.HashSet;

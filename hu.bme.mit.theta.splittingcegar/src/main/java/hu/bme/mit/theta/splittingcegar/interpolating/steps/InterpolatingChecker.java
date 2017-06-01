@@ -9,7 +9,7 @@ import java.util.Stack;
 
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.core.type.booltype.NotExpr;
-import hu.bme.mit.theta.core.utils.impl.PathUtils;
+import hu.bme.mit.theta.core.utils.PathUtils;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.splittingcegar.common.data.AbstractResult;

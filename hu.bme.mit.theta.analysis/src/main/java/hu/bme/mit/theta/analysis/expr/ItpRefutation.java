@@ -18,9 +18,9 @@ import hu.bme.mit.theta.analysis.expr.refinement.VarsRefutation;
 import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.utils.impl.ExprUtils;
-import hu.bme.mit.theta.core.utils.impl.IndexedVars;
-import hu.bme.mit.theta.core.utils.impl.IndexedVars.Builder;
+import hu.bme.mit.theta.core.utils.ExprUtils;
+import hu.bme.mit.theta.core.utils.IndexedVars;
+import hu.bme.mit.theta.core.utils.IndexedVars.Builder;
 
 public final class ItpRefutation implements Refutation, Iterable<Expr<BoolType>> {
 

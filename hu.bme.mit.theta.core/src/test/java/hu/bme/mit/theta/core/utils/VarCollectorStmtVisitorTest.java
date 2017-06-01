@@ -31,7 +31,6 @@ import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.type.rattype.RatType;
-import hu.bme.mit.theta.core.utils.impl.StmtUtils;
 
 @RunWith(Parameterized.class)
 public class VarCollectorStmtVisitorTest {

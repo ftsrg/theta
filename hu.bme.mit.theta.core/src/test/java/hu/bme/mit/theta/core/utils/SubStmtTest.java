@@ -23,7 +23,6 @@ import org.junit.runners.Parameterized.Parameters;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.utils.impl.StmtUtils;
 
 @RunWith(Parameterized.class)
 public class SubStmtTest {

@@ -30,11 +30,9 @@ import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
-import hu.bme.mit.theta.core.utils.impl.ExprUtils;
-import hu.bme.mit.theta.core.utils.impl.IndexedVars;
 
 @RunWith(Parameterized.class)
-public class IndexedVarCollectorVisitorTest {
+public class IndexedVarCollectorTest {
 	private static final VarDecl<BoolType> VA = Var("a", Bool());
 	private static final VarDecl<IntType> VB = Var("b", Int());
 

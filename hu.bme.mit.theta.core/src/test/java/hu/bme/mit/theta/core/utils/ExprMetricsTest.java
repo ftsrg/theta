@@ -24,8 +24,6 @@ import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
-import hu.bme.mit.theta.core.utils.impl.ExprMetrics;
-import hu.bme.mit.theta.core.utils.impl.ExprUtils;
 
 @RunWith(Parameterized.class)
 public class ExprMetricsTest {

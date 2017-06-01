@@ -32,7 +32,7 @@ import static hu.bme.mit.theta.core.type.rattype.RatExprs.Mul;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Neg;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Sub;
-import static hu.bme.mit.theta.core.utils.impl.ExprUtils.simplify;
+import static hu.bme.mit.theta.core.utils.ExprUtils.simplify;
 
 import java.util.Collections;
 import java.util.HashMap;

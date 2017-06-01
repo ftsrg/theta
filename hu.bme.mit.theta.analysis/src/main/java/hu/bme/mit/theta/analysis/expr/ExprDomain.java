@@ -2,12 +2,12 @@ package hu.bme.mit.theta.analysis.expr;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
-import static hu.bme.mit.theta.core.utils.impl.PathUtils.unfold;
+import static hu.bme.mit.theta.core.utils.PathUtils.unfold;
 
 import hu.bme.mit.theta.analysis.Domain;
 import hu.bme.mit.theta.core.model.Model;
 import hu.bme.mit.theta.core.model.impl.Valuation;
-import hu.bme.mit.theta.core.utils.impl.PathUtils;
+import hu.bme.mit.theta.core.utils.PathUtils;
 import hu.bme.mit.theta.solver.Solver;
 
 public final class ExprDomain implements Domain<ExprState> {

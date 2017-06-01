@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.core.utils.impl;
+package hu.bme.mit.theta.core.utils;
 
 import java.util.Collection;
 
@@ -16,12 +16,10 @@ import hu.bme.mit.theta.core.stmt.ReturnStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.WhileStmt;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.utils.StmtVisitor;
 
 final class VarCollectorStmtVisitor implements StmtVisitor<Collection<VarDecl<?>>, Void> {
 
 	private final static VarCollectorStmtVisitor INSTANCE = new VarCollectorStmtVisitor();
-	private final static VarCollectorExprVisitor EXPR_VISITOR = VarCollectorExprVisitor.getInstance();
 
 	private VarCollectorStmtVisitor() {
 	}
@@ -39,27 +37,27 @@ final class VarCollectorStmtVisitor implements StmtVisitor<Collection<VarDecl<?>
 	public <DeclType extends Type> Void visit(final DeclStmt<DeclType> stmt, final Collection<VarDecl<?>> vars) {
 		vars.add(stmt.getVarDecl());
 		if (stmt.getInitVal().isPresent()) {
-			stmt.getInitVal().get().accept(EXPR_VISITOR, vars);
+			ExprUtils.collectVars(stmt.getInitVal().get(), vars);
 		}
 		return null;
 	}
 
 	@Override
 	public Void visit(final AssumeStmt stmt, final Collection<VarDecl<?>> vars) {
-		stmt.getCond().accept(EXPR_VISITOR, vars);
+		ExprUtils.collectVars(stmt.getCond(), vars);
 		return null;
 	}
 
 	@Override
 	public Void visit(final AssertStmt stmt, final Collection<VarDecl<?>> vars) {
-		stmt.getCond().accept(EXPR_VISITOR, vars);
+		ExprUtils.collectVars(stmt.getCond(), vars);
 		return null;
 	}
 
 	@Override
 	public <DeclType extends Type> Void visit(final AssignStmt<DeclType> stmt, final Collection<VarDecl<?>> vars) {
 		vars.add(stmt.getVarDecl());
-		stmt.getExpr().accept(EXPR_VISITOR, vars);
+		ExprUtils.collectVars(stmt.getExpr(), vars);
 		return null;
 	}
 
@@ -77,20 +75,20 @@ final class VarCollectorStmtVisitor implements StmtVisitor<Collection<VarDecl<?>
 
 	@Override
 	public <ReturnType extends Type> Void visit(final ReturnStmt<ReturnType> stmt, final Collection<VarDecl<?>> vars) {
-		stmt.getExpr().accept(EXPR_VISITOR, vars);
+		ExprUtils.collectVars(stmt.getExpr(), vars);
 		return null;
 	}
 
 	@Override
 	public Void visit(final IfStmt stmt, final Collection<VarDecl<?>> vars) {
-		stmt.getCond().accept(EXPR_VISITOR, vars);
+		ExprUtils.collectVars(stmt.getCond(), vars);
 		stmt.getThen().accept(this, vars);
 		return null;
 	}
 
 	@Override
 	public Void visit(final IfElseStmt stmt, final Collection<VarDecl<?>> vars) {
-		stmt.getCond().accept(EXPR_VISITOR, vars);
+		ExprUtils.collectVars(stmt.getCond(), vars);
 		stmt.getThen().accept(this, vars);
 		stmt.getElse().accept(this, vars);
 		return null;
@@ -98,14 +96,14 @@ final class VarCollectorStmtVisitor implements StmtVisitor<Collection<VarDecl<?>
 
 	@Override
 	public Void visit(final WhileStmt stmt, final Collection<VarDecl<?>> vars) {
-		stmt.getCond().accept(EXPR_VISITOR, vars);
+		ExprUtils.collectVars(stmt.getCond(), vars);
 		stmt.getDo().accept(this, vars);
 		return null;
 	}
 
 	@Override
 	public Void visit(final DoStmt stmt, final Collection<VarDecl<?>> vars) {
-		stmt.getCond().accept(EXPR_VISITOR, vars);
+		ExprUtils.collectVars(stmt.getCond(), vars);
 		stmt.getDo().accept(this, vars);
 		return null;
 	}
