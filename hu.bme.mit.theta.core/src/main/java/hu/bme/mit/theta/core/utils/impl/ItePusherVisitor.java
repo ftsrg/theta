@@ -37,8 +37,8 @@ public class ItePusherVisitor extends ArityBasedExprVisitor<Void, Expr<?>> {
 		} else {
 			// Push expression below ITE, e.g., -ite(C,T,E) => ite(C,-T,-E)
 			final IteExpr<OpType> op = (IteExpr<OpType>) expr.getOp();
-			return Ite(op.getCond(), expr.withOp(op.getThen()).accept(this, param),
-					expr.withOp(op.getElse()).accept(this, param));
+			return Ite(op.getCond(), expr.with(op.getThen()).accept(this, param),
+					expr.with(op.getElse()).accept(this, param));
 		}
 
 	}
@@ -92,8 +92,8 @@ public class ItePusherVisitor extends ArityBasedExprVisitor<Void, Expr<?>> {
 				}
 			}
 
-			return Ite(ite.getCond(), expr.withOps(thenOps).accept(this, param),
-					expr.withOps(elseOps).accept(this, param));
+			return Ite(ite.getCond(), expr.with(thenOps).accept(this, param),
+					expr.with(elseOps).accept(this, param));
 		}
 	}
 

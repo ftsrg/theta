@@ -22,7 +22,7 @@ public final class RatDivExpr extends DivExpr<RatType> {
 	}
 
 	@Override
-	public RatDivExpr withOps(final Expr<RatType> leftOp, final Expr<RatType> rightOp) {
+	public RatDivExpr with(final Expr<RatType> leftOp, final Expr<RatType> rightOp) {
 		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
 			return this;
 		} else {
@@ -32,12 +32,12 @@ public final class RatDivExpr extends DivExpr<RatType> {
 
 	@Override
 	public RatDivExpr withLeftOp(final Expr<RatType> leftOp) {
-		return withOps(leftOp, getRightOp());
+		return with(leftOp, getRightOp());
 	}
 
 	@Override
 	public RatDivExpr withRightOp(final Expr<RatType> rightOp) {
-		return withOps(getLeftOp(), rightOp);
+		return with(getLeftOp(), rightOp);
 	}
 
 	@Override

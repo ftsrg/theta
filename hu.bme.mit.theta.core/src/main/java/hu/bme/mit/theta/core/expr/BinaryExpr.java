@@ -1,5 +1,6 @@
 package hu.bme.mit.theta.core.expr;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.List;
@@ -8,6 +9,7 @@ import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.utils.impl.TypeUtils;
 
 public abstract class BinaryExpr<OpType extends Type, ExprType extends Type> implements Expr<ExprType> {
 
@@ -30,13 +32,23 @@ public abstract class BinaryExpr<OpType extends Type, ExprType extends Type> imp
 	}
 
 	@Override
+	public final int getArity() {
+		return 2;
+	}
+
+	@Override
 	public final List<Expr<OpType>> getOps() {
 		return ImmutableList.of(leftOp, rightOp);
 	}
 
 	@Override
-	public final int getArity() {
-		return 2;
+	public final BinaryExpr<OpType, ExprType> withOps(final List<? extends Expr<?>> ops) {
+		checkNotNull(ops);
+		checkArgument(ops.size() == 2);
+		final OpType opType = getLeftOp().getType();
+		final Expr<OpType> newLeftOp = TypeUtils.cast(ops.get(0), opType);
+		final Expr<OpType> newRightOp = TypeUtils.cast(ops.get(1), opType);
+		return with(newLeftOp, newRightOp);
 	}
 
 	@Override
@@ -56,7 +68,7 @@ public abstract class BinaryExpr<OpType extends Type, ExprType extends Type> imp
 		return ObjectUtils.toStringBuilder(getOperatorLabel()).add(leftOp).add(rightOp).toString();
 	}
 
-	public abstract BinaryExpr<OpType, ExprType> withOps(final Expr<OpType> leftOp, final Expr<OpType> rightOp);
+	public abstract BinaryExpr<OpType, ExprType> with(final Expr<OpType> leftOp, final Expr<OpType> rightOp);
 
 	public abstract BinaryExpr<OpType, ExprType> withLeftOp(final Expr<OpType> leftOp);
 

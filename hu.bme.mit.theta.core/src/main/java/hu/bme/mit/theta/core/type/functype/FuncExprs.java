@@ -9,17 +9,18 @@ public final class FuncExprs {
 	private FuncExprs() {
 	}
 
-	public static <P extends Type, R extends Type> FuncType<P, R> Func(final P paramType, final R resultType) {
+	public static <ParamType extends Type, ResultType extends Type> FuncType<ParamType, ResultType> Func(
+			final ParamType paramType, final ResultType resultType) {
 		return new FuncType<>(paramType, resultType);
 	}
 
-	public static <P extends Type, R extends Type> FuncLitExpr<P, R> Func(final ParamDecl<? super P> paramDecl,
-			final Expr<R> result) {
+	public static <ParamType extends Type, ResultType extends Type> FuncLitExpr<ParamType, ResultType> Func(
+			final ParamDecl<ParamType> paramDecl, final Expr<ResultType> result) {
 		return new FuncLitExpr<>(paramDecl, result);
 	}
 
-	public static <P extends Type, R extends Type> FuncAppExpr<P, R> App(final Expr<FuncType<P, R>> func,
-			final Expr<P> param) {
+	public static <ParamType extends Type, ResultType extends Type> FuncAppExpr<ParamType, ResultType> App(
+			final Expr<FuncType<ParamType, ResultType>> func, final Expr<ParamType> param) {
 		return new FuncAppExpr<>(func, param);
 	}
 

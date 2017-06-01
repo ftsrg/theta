@@ -8,17 +8,18 @@ public final class ArrayExprs {
 	private ArrayExprs() {
 	}
 
-	public static <I extends Type, E extends Type> ArrayType<I, E> Array(final I indexType, final E elemType) {
+	public static <IndexType extends Type, ElemType extends Type> ArrayType<IndexType, ElemType> Array(
+			final IndexType indexType, final ElemType elemType) {
 		return new ArrayType<>(indexType, elemType);
 	}
 
-	public static <I extends Type, E extends Type> ArrayReadExpr<I, E> Read(final Expr<ArrayType<I, E>> array,
-			final Expr<I> index) {
+	public static <IndexType extends Type, ElemType extends Type> ArrayReadExpr<IndexType, ElemType> Read(
+			final Expr<ArrayType<IndexType, ElemType>> array, final Expr<IndexType> index) {
 		return new ArrayReadExpr<>(array, index);
 	}
 
-	public static <I extends Type, E extends Type> ArrayWriteExpr<I, E> Write(final Expr<ArrayType<I, E>> array,
-			final Expr<I> index, final Expr<E> elem) {
+	public static <IndexType extends Type, ElemType extends Type> ArrayWriteExpr<IndexType, ElemType> Write(
+			final Expr<ArrayType<IndexType, ElemType>> array, final Expr<IndexType> index, final Expr<ElemType> elem) {
 		return new ArrayWriteExpr<>(array, index, elem);
 	}
 

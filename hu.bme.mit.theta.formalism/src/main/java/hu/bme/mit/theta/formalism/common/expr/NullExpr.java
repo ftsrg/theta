@@ -1,11 +1,13 @@
 package hu.bme.mit.theta.formalism.common.expr;
 
 import hu.bme.mit.theta.core.expr.LitExpr;
+import hu.bme.mit.theta.core.expr.NullaryExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.utils.ExprVisitor;
 import hu.bme.mit.theta.formalism.common.type.PointerType;
 
-public final class NullExpr<PointedType extends Type> implements LitExpr<PointerType<PointedType>> {
+public final class NullExpr<PointedType extends Type> extends NullaryExpr<PointerType<PointedType>>
+		implements LitExpr<PointerType<PointedType>> {
 
 	private static final String EXPR_LABEL = "Null";
 	private static final int HASH_SEED = 1632143;

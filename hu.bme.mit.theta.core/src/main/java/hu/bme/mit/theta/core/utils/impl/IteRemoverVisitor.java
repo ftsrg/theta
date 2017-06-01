@@ -33,14 +33,14 @@ public class IteRemoverVisitor extends ArityBasedExprVisitor<Void, Expr<?>> {
 	@Override
 	protected <OpType extends Type, ExprType extends Type> Expr<?> visitUnary(final UnaryExpr<OpType, ExprType> expr,
 			final Void param) {
-		return expr.withOp((Expr<OpType>) expr.getOp().accept(this, param));
+		return expr.with((Expr<OpType>) expr.getOp().accept(this, param));
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	protected <LeftOpType extends Type, RightOpType extends Type, ExprType extends Type> Expr<?> visitBinary(
 			final BinaryExpr<LeftOpType, RightOpType, ExprType> expr, final Void param) {
-		return expr.withOps((Expr<LeftOpType>) expr.getLeftOp().accept(this, param),
+		return expr.with((Expr<LeftOpType>) expr.getLeftOp().accept(this, param),
 				(Expr<RightOpType>) expr.getRightOp().accept(this, param));
 	}
 
@@ -51,7 +51,7 @@ public class IteRemoverVisitor extends ArityBasedExprVisitor<Void, Expr<?>> {
 		final List<Expr<OpsType>> ops = new ArrayList<>(expr.getOps().size());
 		for (final Expr<OpsType> op : expr.getOps())
 			ops.add((Expr<OpsType>) op.accept(this, param));
-		return expr.withOps(ops);
+		return expr.with(ops);
 	}
 
 	@Override

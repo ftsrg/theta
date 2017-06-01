@@ -1,6 +1,8 @@
 package hu.bme.mit.theta.core.type.booltype;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 
 import java.util.List;
 import java.util.StringJoiner;
@@ -10,6 +12,7 @@ import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.utils.impl.TypeUtils;
 
 public abstract class QuantifiedExpr implements Expr<BoolType> {
 
@@ -33,13 +36,26 @@ public abstract class QuantifiedExpr implements Expr<BoolType> {
 	}
 
 	@Override
-	public int getArity() {
-		return 1;
+	public final BoolType getType() {
+		return Bool();
 	}
 
 	@Override
 	public List<Expr<BoolType>> getOps() {
 		return ImmutableList.of(op);
+	}
+
+	@Override
+	public Expr<BoolType> withOps(final List<? extends Expr<?>> ops) {
+		checkNotNull(ops);
+		checkArgument(ops.size() == 1);
+		final Expr<BoolType> newOp = TypeUtils.cast(ops.get(0), Bool());
+		return with(newOp);
+	}
+
+	@Override
+	public int getArity() {
+		return 1;
 	}
 
 	@Override
@@ -72,7 +88,7 @@ public abstract class QuantifiedExpr implements Expr<BoolType> {
 		return sb.toString();
 	}
 
-	public abstract QuantifiedExpr withOp(final Expr<BoolType> op);
+	public abstract QuantifiedExpr with(final Expr<BoolType> op);
 
 	protected abstract int getHashSeed();
 

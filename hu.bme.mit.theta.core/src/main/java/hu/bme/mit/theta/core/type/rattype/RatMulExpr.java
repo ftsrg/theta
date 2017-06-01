@@ -21,7 +21,7 @@ public final class RatMulExpr extends MulExpr<RatType> {
 	}
 
 	@Override
-	public RatMulExpr withOps(final Iterable<? extends Expr<RatType>> ops) {
+	public RatMulExpr with(final Iterable<? extends Expr<RatType>> ops) {
 		if (ops == getOps()) {
 			return this;
 		} else {

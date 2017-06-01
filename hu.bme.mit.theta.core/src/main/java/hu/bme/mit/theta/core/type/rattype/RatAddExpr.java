@@ -21,7 +21,7 @@ public final class RatAddExpr extends AddExpr<RatType> {
 	}
 
 	@Override
-	public RatAddExpr withOps(final Iterable<? extends Expr<RatType>> ops) {
+	public RatAddExpr with(final Iterable<? extends Expr<RatType>> ops) {
 		if (ops == getOps()) {
 			return this;
 		} else {

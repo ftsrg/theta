@@ -22,7 +22,7 @@ public final class ImplyExpr extends BinaryExpr<BoolType, BoolType> {
 	}
 
 	@Override
-	public ImplyExpr withOps(final Expr<BoolType> leftOp, final Expr<BoolType> rightOp) {
+	public ImplyExpr with(final Expr<BoolType> leftOp, final Expr<BoolType> rightOp) {
 		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
 			return this;
 		} else {
@@ -32,12 +32,12 @@ public final class ImplyExpr extends BinaryExpr<BoolType, BoolType> {
 
 	@Override
 	public ImplyExpr withLeftOp(final Expr<BoolType> leftOp) {
-		return withOps(leftOp, getRightOp());
+		return with(leftOp, getRightOp());
 	}
 
 	@Override
 	public ImplyExpr withRightOp(final Expr<BoolType> rightOp) {
-		return withOps(getLeftOp(), rightOp);
+		return with(getLeftOp(), rightOp);
 	}
 
 	@Override

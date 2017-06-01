@@ -1,6 +1,8 @@
 package hu.bme.mit.theta.core.expr;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.stream.Collectors.toList;
 
 import java.util.List;
 
@@ -8,6 +10,7 @@ import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.utils.impl.TypeUtils;
 
 public abstract class MultiaryExpr<OpType extends Type, ExprType extends Type> implements Expr<ExprType> {
 
@@ -16,7 +19,14 @@ public abstract class MultiaryExpr<OpType extends Type, ExprType extends Type> i
 	private volatile int hashCode = 0;
 
 	protected MultiaryExpr(final Iterable<? extends Expr<OpType>> ops) {
-		this.ops = ImmutableList.copyOf(checkNotNull(ops));
+		checkNotNull(ops);
+		this.ops = ImmutableList.copyOf(ops);
+		checkArgument(this.ops.size() > 1);
+	}
+
+	@Override
+	public final int getArity() {
+		return ops.size();
 	}
 
 	@Override
@@ -25,8 +35,11 @@ public abstract class MultiaryExpr<OpType extends Type, ExprType extends Type> i
 	}
 
 	@Override
-	public int getArity() {
-		return ops.size();
+	public final MultiaryExpr<OpType, ExprType> withOps(final List<? extends Expr<?>> ops) {
+		checkNotNull(ops);
+		final OpType opType = getOps().get(0).getType();
+		final List<Expr<OpType>> newOps = ops.stream().map(op -> TypeUtils.cast(op, opType)).collect(toList());
+		return with(newOps);
 	}
 
 	@Override
@@ -45,7 +58,7 @@ public abstract class MultiaryExpr<OpType extends Type, ExprType extends Type> i
 		return ObjectUtils.toStringBuilder(getOperatorLabel()).addAll(ops).toString();
 	}
 
-	public abstract MultiaryExpr<OpType, ExprType> withOps(final Iterable<? extends Expr<OpType>> ops);
+	public abstract MultiaryExpr<OpType, ExprType> with(final Iterable<? extends Expr<OpType>> ops);
 
 	protected abstract int getHashSeed();
 

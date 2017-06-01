@@ -21,7 +21,7 @@ public final class IntAddExpr extends AddExpr<IntType> {
 	}
 
 	@Override
-	public IntAddExpr withOps(final Iterable<? extends Expr<IntType>> ops) {
+	public IntAddExpr with(final Iterable<? extends Expr<IntType>> ops) {
 		if (ops == getOps()) {
 			return this;
 		} else {

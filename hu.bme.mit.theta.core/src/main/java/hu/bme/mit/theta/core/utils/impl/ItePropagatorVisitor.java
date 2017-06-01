@@ -35,7 +35,7 @@ public class ItePropagatorVisitor extends ArityBasedExprVisitor<Void, Expr<?>> {
 	protected <OpType extends Type, ExprType extends Type> Expr<?> visitUnary(final UnaryExpr<OpType, ExprType> expr,
 			final Void param) {
 		// Apply propagation to operand(s) first, then apply pushdown
-		return expr.withOp((Expr<OpType>) expr.getOp().accept(this, param)).accept(exprITEPusherVisitor, param);
+		return expr.with((Expr<OpType>) expr.getOp().accept(this, param)).accept(exprITEPusherVisitor, param);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -43,7 +43,7 @@ public class ItePropagatorVisitor extends ArityBasedExprVisitor<Void, Expr<?>> {
 	protected <LeftOpType extends Type, RightOpType extends Type, ExprType extends Type> Expr<?> visitBinary(
 			final BinaryExpr<LeftOpType, RightOpType, ExprType> expr, final Void param) {
 		// Apply propagation to operand(s) first, then apply pushdown
-		return expr.withOps((Expr<LeftOpType>) expr.getLeftOp().accept(this, param),
+		return expr.with((Expr<LeftOpType>) expr.getLeftOp().accept(this, param),
 				(Expr<RightOpType>) expr.getRightOp().accept(this, param)).accept(exprITEPusherVisitor, param);
 	}
 
@@ -55,7 +55,7 @@ public class ItePropagatorVisitor extends ArityBasedExprVisitor<Void, Expr<?>> {
 		final List<Expr<OpsType>> ops = new ArrayList<>(expr.getOps().size());
 		for (final Expr<OpsType> op : expr.getOps())
 			ops.add((Expr<OpsType>) op.accept(this, param));
-		return expr.withOps(ops).accept(exprITEPusherVisitor, param);
+		return expr.with(ops).accept(exprITEPusherVisitor, param);
 	}
 
 	@Override

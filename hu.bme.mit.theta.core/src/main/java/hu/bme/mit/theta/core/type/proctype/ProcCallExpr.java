@@ -20,6 +20,7 @@ public final class ProcCallExpr<ReturnType extends Type> implements Expr<ReturnT
 	private final List<Expr<?>> params;
 
 	ProcCallExpr(final Expr<ProcType<ReturnType>> proc, final Iterable<? extends Expr<?>> params) {
+		// TODO Type checking!
 		this.proc = checkNotNull(proc);
 		this.params = ImmutableList.copyOf(checkNotNull(params));
 	}
@@ -40,6 +41,12 @@ public final class ProcCallExpr<ReturnType extends Type> implements Expr<ReturnT
 	@Override
 	public List<Expr<?>> getOps() {
 		return params;
+	}
+
+	@Override
+	public Expr<ReturnType> withOps(final List<? extends Expr<?>> ops) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
 
 	@Override

@@ -21,7 +21,7 @@ public final class IntMulExpr extends MulExpr<IntType> {
 	}
 
 	@Override
-	public IntMulExpr withOps(final Iterable<? extends Expr<IntType>> ops) {
+	public IntMulExpr with(final Iterable<? extends Expr<IntType>> ops) {
 		if (ops == getOps()) {
 			return this;
 		} else {

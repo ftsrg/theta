@@ -16,7 +16,7 @@ public class DerefExpr<PointedType extends Type> extends UnaryExpr<PointerType<?
 	}
 
 	@Override
-	public DerefExpr<PointedType> withOp(final Expr<PointerType<? extends PointedType>> op) {
+	public DerefExpr<PointedType> with(final Expr<PointerType<? extends PointedType>> op) {
 		if (op == getOp()) {
 			return this;
 		} else {

@@ -214,7 +214,7 @@ public final class ClockConstrs {
 			return And(builder.build());
 		}
 
-		private List<VarDecl<RatType>> extractConstrLhs(final BinaryExpr<?, ?, BoolType> expr) {
+		private List<VarDecl<RatType>> extractConstrLhs(final BinaryExpr<?, BoolType> expr) {
 			final Expr<?> leftOp = expr.getLeftOp();
 
 			if (leftOp instanceof RefExpr) {
@@ -250,7 +250,7 @@ public final class ClockConstrs {
 			throw new IllegalArgumentException();
 		}
 
-		private int extractConstrRhs(final BinaryExpr<?, ?, BoolType> expr) {
+		private int extractConstrRhs(final BinaryExpr<?, BoolType> expr) {
 			final Expr<?> rightOp = expr.getRightOp();
 
 			if (rightOp instanceof IntLitExpr) {

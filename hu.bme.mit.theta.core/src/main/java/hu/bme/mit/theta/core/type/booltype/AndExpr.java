@@ -22,7 +22,7 @@ public final class AndExpr extends MultiaryExpr<BoolType, BoolType> {
 	}
 
 	@Override
-	public AndExpr withOps(final Iterable<? extends Expr<BoolType>> ops) {
+	public AndExpr with(final Iterable<? extends Expr<BoolType>> ops) {
 		if (ops == getOps()) {
 			return this;
 		} else {

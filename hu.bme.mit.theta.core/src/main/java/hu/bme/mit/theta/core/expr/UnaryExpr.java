@@ -1,5 +1,6 @@
 package hu.bme.mit.theta.core.expr;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.List;
@@ -8,6 +9,7 @@ import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.utils.impl.TypeUtils;
 
 public abstract class UnaryExpr<OpType extends Type, ExprType extends Type> implements Expr<ExprType> {
 
@@ -24,8 +26,17 @@ public abstract class UnaryExpr<OpType extends Type, ExprType extends Type> impl
 	}
 
 	@Override
-	public List<Expr<OpType>> getOps() {
+	public final List<Expr<OpType>> getOps() {
 		return ImmutableList.of(op);
+	}
+
+	@Override
+	public final UnaryExpr<OpType, ExprType> withOps(final List<? extends Expr<?>> ops) {
+		checkNotNull(ops);
+		checkArgument(ops.size() == 1);
+		final OpType opType = op.getType();
+		final Expr<OpType> newOp = TypeUtils.cast(ops.get(0), opType);
+		return with(newOp);
 	}
 
 	@Override
@@ -49,7 +60,7 @@ public abstract class UnaryExpr<OpType extends Type, ExprType extends Type> impl
 		return ObjectUtils.toStringBuilder(getOperatorLabel()).add(op).toString();
 	}
 
-	public abstract UnaryExpr<OpType, ExprType> withOp(final Expr<OpType> op);
+	public abstract UnaryExpr<OpType, ExprType> with(final Expr<OpType> op);
 
 	protected abstract int getHashSeed();
 

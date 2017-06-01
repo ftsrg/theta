@@ -22,7 +22,7 @@ public final class IntDivExpr extends DivExpr<IntType> {
 	}
 
 	@Override
-	public IntDivExpr withOps(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
+	public IntDivExpr with(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
 		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
 			return this;
 		} else {
@@ -32,12 +32,12 @@ public final class IntDivExpr extends DivExpr<IntType> {
 
 	@Override
 	public IntDivExpr withLeftOp(final Expr<IntType> leftOp) {
-		return withOps(leftOp, getRightOp());
+		return with(leftOp, getRightOp());
 	}
 
 	@Override
 	public IntDivExpr withRightOp(final Expr<IntType> rightOp) {
-		return withOps(getLeftOp(), rightOp);
+		return with(getLeftOp(), rightOp);
 	}
 
 	@Override

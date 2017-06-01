@@ -108,7 +108,7 @@ public class ExprRewriterVisitor<P> extends ArityBasedExprVisitor<P, Expr<?>> {
 		@SuppressWarnings("unchecked")
 		final Expr<OpType> newOp = (Expr<OpType>) op.accept(this, param);
 
-		return expr.withOp(newOp);
+		return expr.with(newOp);
 	}
 
 	@Override
@@ -121,7 +121,7 @@ public class ExprRewriterVisitor<P> extends ArityBasedExprVisitor<P, Expr<?>> {
 		final Expr<LeftOpType> newLeftOp = (Expr<LeftOpType>) leftOp.accept(this, param);
 		@SuppressWarnings("unchecked")
 		final Expr<RightOpType> newRightOp = (Expr<RightOpType>) rightOp.accept(this, param);
-		return expr.withOps(newLeftOp, newRightOp);
+		return expr.with(newLeftOp, newRightOp);
 	}
 
 	@Override
@@ -133,7 +133,7 @@ public class ExprRewriterVisitor<P> extends ArityBasedExprVisitor<P, Expr<?>> {
 		final Collection<? extends Expr<OpsType>> newOps = Collections2.transform(ops,
 				op -> (Expr<OpsType>) op.accept(this, param));
 
-		return expr.withOps(newOps);
+		return expr.with(newOps);
 	}
 
 	@Override

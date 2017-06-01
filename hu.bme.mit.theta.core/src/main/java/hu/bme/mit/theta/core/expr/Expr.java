@@ -9,9 +9,12 @@ public interface Expr<ExprType extends Type> {
 
 	ExprType getType();
 
-	List<? extends Expr<?>> getOps();
-
 	int getArity();
 
+	List<? extends Expr<?>> getOps();
+
+	Expr<ExprType> withOps(List<? extends Expr<?>> ops);
+
 	<P, R> R accept(ExprVisitor<? super P, ? extends R> visitor, P param);
+
 }

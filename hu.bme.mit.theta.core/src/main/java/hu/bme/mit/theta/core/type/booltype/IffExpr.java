@@ -22,7 +22,7 @@ public final class IffExpr extends EqExpr<BoolType> {
 	}
 
 	@Override
-	public IffExpr withOps(final Expr<BoolType> leftOp, final Expr<BoolType> rightOp) {
+	public IffExpr with(final Expr<BoolType> leftOp, final Expr<BoolType> rightOp) {
 		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
 			return this;
 		} else {
@@ -32,12 +32,12 @@ public final class IffExpr extends EqExpr<BoolType> {
 
 	@Override
 	public IffExpr withLeftOp(final Expr<BoolType> leftOp) {
-		return withOps(leftOp, getRightOp());
+		return with(leftOp, getRightOp());
 	}
 
 	@Override
 	public IffExpr withRightOp(final Expr<BoolType> rightOp) {
-		return withOps(getLeftOp(), rightOp);
+		return with(getLeftOp(), rightOp);
 	}
 
 	@Override

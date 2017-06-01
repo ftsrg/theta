@@ -1,10 +1,16 @@
 package hu.bme.mit.theta.core.type.arraytype;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+
+import java.util.List;
+
+import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.utils.ExprVisitor;
+import hu.bme.mit.theta.core.utils.impl.TypeUtils;
 
 public final class ArrayReadExpr<IndexType extends Type, ElemType extends Type> implements Expr<ElemType> {
 
@@ -18,7 +24,6 @@ public final class ArrayReadExpr<IndexType extends Type, ElemType extends Type> 
 	private final Expr<IndexType> index;
 
 	ArrayReadExpr(final Expr<ArrayType<IndexType, ElemType>> array, final Expr<IndexType> index) {
-
 		this.array = checkNotNull(array);
 		this.index = checkNotNull(index);
 	}
@@ -36,9 +41,27 @@ public final class ArrayReadExpr<IndexType extends Type, ElemType extends Type> 
 		return array.getType().getElemType();
 	}
 
+	@Override
+	public int getArity() {
+		return 2;
+	}
+
+	@Override
+	public List<Expr<?>> getOps() {
+		return ImmutableList.of(array, index);
+	}
+
+	@Override
+	public Expr<ElemType> withOps(final List<? extends Expr<?>> ops) {
+		checkNotNull(ops);
+		checkArgument(ops.size() == 2);
+		final Expr<ArrayType<IndexType, ElemType>> newArray = TypeUtils.cast(ops.get(0), array.getType());
+		final Expr<IndexType> newIndex = TypeUtils.cast(ops.get(1), index.getType());
+		return with(newArray, newIndex);
+	}
+
 	public ArrayReadExpr<IndexType, ElemType> with(final Expr<ArrayType<IndexType, ElemType>> array,
 			final Expr<IndexType> index) {
-
 		if (this.array == array && this.index == index) {
 			return this;
 		} else {

@@ -6,7 +6,7 @@ import hu.bme.mit.theta.core.expr.BinaryExpr;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.utils.ExprVisitor;
 
-public final class RemExpr extends BinaryExpr<IntType, IntType, IntType> {
+public final class RemExpr extends BinaryExpr<IntType, IntType> {
 
 	private static final int HASH_SEED = 199;
 
@@ -22,7 +22,7 @@ public final class RemExpr extends BinaryExpr<IntType, IntType, IntType> {
 	}
 
 	@Override
-	public RemExpr withOps(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
+	public RemExpr with(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
 		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
 			return this;
 		} else {
@@ -32,12 +32,12 @@ public final class RemExpr extends BinaryExpr<IntType, IntType, IntType> {
 
 	@Override
 	public RemExpr withLeftOp(final Expr<IntType> leftOp) {
-		return withOps(leftOp, getRightOp());
+		return with(leftOp, getRightOp());
 	}
 
 	@Override
 	public RemExpr withRightOp(final Expr<IntType> rightOp) {
-		return withOps(getLeftOp(), rightOp);
+		return with(getLeftOp(), rightOp);
 	}
 
 	@Override

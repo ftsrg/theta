@@ -22,7 +22,7 @@ public final class RatLtExpr extends LtExpr<RatType> {
 	}
 
 	@Override
-	public RatLtExpr withOps(final Expr<RatType> leftOp, final Expr<RatType> rightOp) {
+	public RatLtExpr with(final Expr<RatType> leftOp, final Expr<RatType> rightOp) {
 		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
 			return this;
 		} else {
@@ -32,12 +32,12 @@ public final class RatLtExpr extends LtExpr<RatType> {
 
 	@Override
 	public RatLtExpr withLeftOp(final Expr<RatType> leftOp) {
-		return withOps(leftOp, getRightOp());
+		return with(leftOp, getRightOp());
 	}
 
 	@Override
 	public RatLtExpr withRightOp(final Expr<RatType> rightOp) {
-		return withOps(getLeftOp(), rightOp);
+		return with(getLeftOp(), rightOp);
 	}
 
 	@Override

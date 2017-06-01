@@ -22,7 +22,7 @@ public final class NotExpr extends UnaryExpr<BoolType, BoolType> {
 	}
 
 	@Override
-	public NotExpr withOp(final Expr<BoolType> op) {
+	public NotExpr with(final Expr<BoolType> op) {
 		if (op == getOp()) {
 			return this;
 		} else {

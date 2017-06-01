@@ -21,7 +21,7 @@ public final class IntNegExpr extends NegExpr<IntType> {
 	}
 
 	@Override
-	public IntNegExpr withOp(final Expr<IntType> op) {
+	public IntNegExpr with(final Expr<IntType> op) {
 		if (op == getOp()) {
 			return this;
 		} else {

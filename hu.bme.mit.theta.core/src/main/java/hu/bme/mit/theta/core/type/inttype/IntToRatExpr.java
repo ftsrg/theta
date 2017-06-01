@@ -28,7 +28,7 @@ public final class IntToRatExpr extends UnaryExpr<IntType, RatType> {
 	}
 
 	@Override
-	public IntToRatExpr withOp(final Expr<IntType> op) {
+	public IntToRatExpr with(final Expr<IntType> op) {
 		if (op == getOp()) {
 			return this;
 		} else {

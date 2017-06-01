@@ -19,7 +19,7 @@ public final class PrimedExpr<ExprType extends Type> extends UnaryExpr<ExprType,
 	}
 
 	@Override
-	public final UnaryExpr<ExprType, ExprType> withOp(final Expr<ExprType> op) {
+	public final UnaryExpr<ExprType, ExprType> with(final Expr<ExprType> op) {
 		if (op == getOp()) {
 			return this;
 		} else {

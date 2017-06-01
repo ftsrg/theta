@@ -22,7 +22,7 @@ public final class IntEqExpr extends EqExpr<IntType> {
 	}
 
 	@Override
-	public IntEqExpr withOps(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
+	public IntEqExpr with(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
 		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
 			return this;
 		} else {
@@ -32,12 +32,12 @@ public final class IntEqExpr extends EqExpr<IntType> {
 
 	@Override
 	public IntEqExpr withLeftOp(final Expr<IntType> leftOp) {
-		return withOps(leftOp, getRightOp());
+		return with(leftOp, getRightOp());
 	}
 
 	@Override
 	public IntEqExpr withRightOp(final Expr<IntType> rightOp) {
-		return withOps(getLeftOp(), rightOp);
+		return with(getLeftOp(), rightOp);
 	}
 
 	@Override

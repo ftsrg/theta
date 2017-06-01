@@ -21,7 +21,7 @@ public final class RatNegExpr extends NegExpr<RatType> {
 	}
 
 	@Override
-	public RatNegExpr withOp(final Expr<RatType> op) {
+	public RatNegExpr with(final Expr<RatType> op) {
 		if (op == getOp()) {
 			return this;
 		} else {

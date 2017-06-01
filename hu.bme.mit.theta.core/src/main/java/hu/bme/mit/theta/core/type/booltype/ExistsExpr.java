@@ -1,7 +1,5 @@
 package hu.bme.mit.theta.core.type.booltype;
 
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
-
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.utils.ExprVisitor;
@@ -17,12 +15,7 @@ public final class ExistsExpr extends QuantifiedExpr {
 	}
 
 	@Override
-	public BoolType getType() {
-		return Bool();
-	}
-
-	@Override
-	public ExistsExpr withOp(final Expr<BoolType> op) {
+	public ExistsExpr with(final Expr<BoolType> op) {
 		if (op == getOp()) {
 			return this;
 		} else {

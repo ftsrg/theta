@@ -21,7 +21,7 @@ public final class IntSubExpr extends SubExpr<IntType> {
 	}
 
 	@Override
-	public SubExpr<IntType> withOps(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
+	public SubExpr<IntType> with(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
 		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
 			return this;
 		} else {
@@ -31,12 +31,12 @@ public final class IntSubExpr extends SubExpr<IntType> {
 
 	@Override
 	public SubExpr<IntType> withLeftOp(final Expr<IntType> leftOp) {
-		return withOps(leftOp, getRightOp());
+		return with(leftOp, getRightOp());
 	}
 
 	@Override
 	public SubExpr<IntType> withRightOp(final Expr<IntType> rightOp) {
-		return withOps(getLeftOp(), rightOp);
+		return with(getLeftOp(), rightOp);
 	}
 
 	@Override
