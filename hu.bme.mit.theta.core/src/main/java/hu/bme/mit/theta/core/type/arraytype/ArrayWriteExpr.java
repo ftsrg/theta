@@ -9,7 +9,6 @@ import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.utils.ExprVisitor;
 import hu.bme.mit.theta.core.utils.impl.TypeUtils;
 
 public final class ArrayWriteExpr<IndexType extends Type, ElemType extends Type>
@@ -85,11 +84,6 @@ public final class ArrayWriteExpr<IndexType extends Type, ElemType extends Type>
 
 	public ArrayWriteExpr<IndexType, ElemType> withElem(final Expr<ElemType> elem) {
 		return with(getArray(), getIndex(), elem);
-	}
-
-	@Override
-	public <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
-		return visitor.visit(this, param);
 	}
 
 	@Override

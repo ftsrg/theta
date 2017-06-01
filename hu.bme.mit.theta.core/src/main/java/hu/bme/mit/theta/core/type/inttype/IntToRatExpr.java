@@ -5,7 +5,6 @@ import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.UnaryExpr;
 import hu.bme.mit.theta.core.type.rattype.RatType;
-import hu.bme.mit.theta.core.utils.ExprVisitor;
 
 public final class IntToRatExpr extends UnaryExpr<IntType, RatType> {
 
@@ -19,12 +18,6 @@ public final class IntToRatExpr extends UnaryExpr<IntType, RatType> {
 	@Override
 	public RatType getType() {
 		return Rat();
-	}
-
-	@Override
-	public <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
 
 	@Override

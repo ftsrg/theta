@@ -4,7 +4,6 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 
 import hu.bme.mit.theta.core.expr.BinaryExpr;
 import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.utils.ExprVisitor;
 
 public final class ImplyExpr extends BinaryExpr<BoolType, BoolType> {
 
@@ -38,11 +37,6 @@ public final class ImplyExpr extends BinaryExpr<BoolType, BoolType> {
 	@Override
 	public ImplyExpr withRightOp(final Expr<BoolType> rightOp) {
 		return with(getLeftOp(), rightOp);
-	}
-
-	@Override
-	public <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
-		return visitor.visit(this, param);
 	}
 
 	@Override

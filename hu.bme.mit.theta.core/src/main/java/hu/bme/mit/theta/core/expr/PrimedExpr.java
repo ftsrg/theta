@@ -1,7 +1,6 @@
 package hu.bme.mit.theta.core.expr;
 
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.utils.ExprVisitor;
 
 public final class PrimedExpr<ExprType extends Type> extends UnaryExpr<ExprType, ExprType> {
 
@@ -25,11 +24,6 @@ public final class PrimedExpr<ExprType extends Type> extends UnaryExpr<ExprType,
 		} else {
 			return new PrimedExpr<>(op);
 		}
-	}
-
-	@Override
-	public final <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
-		return visitor.visit(this, param);
 	}
 
 	@Override

@@ -9,7 +9,6 @@ import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.utils.ExprVisitor;
 
 public final class FuncAppExpr<ParamType extends Type, ResultType extends Type> implements Expr<ResultType> {
 
@@ -71,11 +70,6 @@ public final class FuncAppExpr<ParamType extends Type, ResultType extends Type> 
 
 	public FuncAppExpr<ParamType, ResultType> withParam(final Expr<ParamType> param) {
 		return with(getFunc(), param);
-	}
-
-	@Override
-	public <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
-		return visitor.visit(this, param);
 	}
 
 	@Override

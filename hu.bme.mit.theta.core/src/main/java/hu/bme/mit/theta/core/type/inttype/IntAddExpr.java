@@ -4,7 +4,6 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 import hu.bme.mit.theta.core.expr.AddExpr;
 import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.utils.ExprVisitor;
 
 public final class IntAddExpr extends AddExpr<IntType> {
 
@@ -27,11 +26,6 @@ public final class IntAddExpr extends AddExpr<IntType> {
 		} else {
 			return new IntAddExpr(ops);
 		}
-	}
-
-	@Override
-	public <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
-		return visitor.visit(this, param);
 	}
 
 	@Override

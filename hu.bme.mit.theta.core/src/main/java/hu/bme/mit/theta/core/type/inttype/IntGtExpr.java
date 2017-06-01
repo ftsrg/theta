@@ -5,7 +5,6 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.GtExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.utils.ExprVisitor;
 
 public final class IntGtExpr extends GtExpr<IntType> {
 
@@ -38,11 +37,6 @@ public final class IntGtExpr extends GtExpr<IntType> {
 	@Override
 	public IntGtExpr withRightOp(final Expr<IntType> rightOp) {
 		return with(getLeftOp(), rightOp);
-	}
-
-	@Override
-	public <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
-		return visitor.visit(this, param);
 	}
 
 	@Override

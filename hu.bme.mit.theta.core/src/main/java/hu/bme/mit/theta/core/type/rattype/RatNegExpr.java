@@ -4,7 +4,6 @@ import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.NegExpr;
-import hu.bme.mit.theta.core.utils.ExprVisitor;
 
 public final class RatNegExpr extends NegExpr<RatType> {
 
@@ -27,11 +26,6 @@ public final class RatNegExpr extends NegExpr<RatType> {
 		} else {
 			return new RatNegExpr(op);
 		}
-	}
-
-	@Override
-	public <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
-		return visitor.visit(this, param);
 	}
 
 	@Override

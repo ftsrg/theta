@@ -2,8 +2,6 @@ package hu.bme.mit.theta.core.type.booltype;
 
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 
-import hu.bme.mit.theta.core.utils.ExprVisitor;
-
 public final class TrueExpr extends BoolLitExpr {
 	private static final TrueExpr INSTANCE = new TrueExpr();
 	private static final int HASH_SEED = 242181;
@@ -24,11 +22,6 @@ public final class TrueExpr extends BoolLitExpr {
 	@Override
 	public BoolType getType() {
 		return Bool();
-	}
-
-	@Override
-	public <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
-		return visitor.visit(this, param);
 	}
 
 	@Override

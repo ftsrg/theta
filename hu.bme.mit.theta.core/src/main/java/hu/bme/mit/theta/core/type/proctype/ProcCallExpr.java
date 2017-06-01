@@ -9,7 +9,6 @@ import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.utils.ExprVisitor;
 
 public final class ProcCallExpr<ReturnType extends Type> implements Expr<ReturnType> {
 
@@ -52,11 +51,6 @@ public final class ProcCallExpr<ReturnType extends Type> implements Expr<ReturnT
 	@Override
 	public final ReturnType getType() {
 		return getProc().getType().getReturnType();
-	}
-
-	@Override
-	public final <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
-		return visitor.visit(this, param);
 	}
 
 	@Override

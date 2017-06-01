@@ -2,7 +2,6 @@ package hu.bme.mit.theta.core.type.booltype;
 
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.utils.ExprVisitor;
 
 public final class ForallExpr extends QuantifiedExpr {
 
@@ -21,11 +20,6 @@ public final class ForallExpr extends QuantifiedExpr {
 		} else {
 			return new ForallExpr(getParamDecls(), op);
 		}
-	}
-
-	@Override
-	public <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
-		return visitor.visit(this, param);
 	}
 
 	@Override

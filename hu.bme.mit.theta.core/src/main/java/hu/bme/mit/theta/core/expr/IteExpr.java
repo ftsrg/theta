@@ -11,7 +11,6 @@ import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.utils.ExprVisitor;
 import hu.bme.mit.theta.core.utils.impl.TypeUtils;
 
 public final class IteExpr<ExprType extends Type> implements Expr<ExprType> {
@@ -88,11 +87,6 @@ public final class IteExpr<ExprType extends Type> implements Expr<ExprType> {
 
 	public IteExpr<ExprType> withElse(final Expr<ExprType> elze) {
 		return withOps(getCond(), getThen(), elze);
-	}
-
-	@Override
-	public <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
-		return visitor.visit(this, param);
 	}
 
 	@Override

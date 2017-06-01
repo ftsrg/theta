@@ -4,7 +4,6 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.MultiaryExpr;
-import hu.bme.mit.theta.core.utils.ExprVisitor;
 
 public final class OrExpr extends MultiaryExpr<BoolType, BoolType> {
 
@@ -28,11 +27,6 @@ public final class OrExpr extends MultiaryExpr<BoolType, BoolType> {
 		} else {
 			return new OrExpr(ops);
 		}
-	}
-
-	@Override
-	public <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
-		return visitor.visit(this, param);
 	}
 
 	@Override

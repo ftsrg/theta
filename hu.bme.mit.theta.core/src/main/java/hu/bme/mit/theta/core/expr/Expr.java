@@ -3,7 +3,6 @@ package hu.bme.mit.theta.core.expr;
 import java.util.List;
 
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.utils.ExprVisitor;
 
 public interface Expr<ExprType extends Type> {
 
@@ -14,7 +13,5 @@ public interface Expr<ExprType extends Type> {
 	List<? extends Expr<?>> getOps();
 
 	Expr<ExprType> withOps(List<? extends Expr<?>> ops);
-
-	<P, R> R accept(ExprVisitor<? super P, ? extends R> visitor, P param);
 
 }

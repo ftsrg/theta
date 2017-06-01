@@ -4,7 +4,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.utils.ExprVisitor;
 
 public final class RefExpr<DeclType extends Type> extends NullaryExpr<DeclType> {
 
@@ -24,11 +23,6 @@ public final class RefExpr<DeclType extends Type> extends NullaryExpr<DeclType> 
 	@Override
 	public DeclType getType() {
 		return decl.getType();
-	}
-
-	@Override
-	public <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
-		return visitor.visit(this, param);
 	}
 
 	@Override

@@ -6,7 +6,6 @@ import com.google.common.math.IntMath;
 
 import hu.bme.mit.theta.core.expr.LitExpr;
 import hu.bme.mit.theta.core.expr.NullaryExpr;
-import hu.bme.mit.theta.core.utils.ExprVisitor;
 
 public final class RatLitExpr extends NullaryExpr<RatType> implements LitExpr<RatType>, Comparable<RatLitExpr> {
 
@@ -95,11 +94,6 @@ public final class RatLitExpr extends NullaryExpr<RatType> implements LitExpr<Ra
 	@Override
 	public RatType getType() {
 		return Rat();
-	}
-
-	@Override
-	public <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
-		return visitor.visit(this, param);
 	}
 
 	@Override

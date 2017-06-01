@@ -11,7 +11,6 @@ import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.utils.ExprVisitor;
 import hu.bme.mit.theta.core.utils.impl.TypeUtils;
 
 public final class FuncLitExpr<ParamType extends Type, ResultType extends Type>
@@ -68,11 +67,6 @@ public final class FuncLitExpr<ParamType extends Type, ResultType extends Type>
 		} else {
 			return new FuncLitExpr<>(param, result);
 		}
-	}
-
-	@Override
-	public <P, R> R accept(final ExprVisitor<? super P, ? extends R> visitor, final P param) {
-		return visitor.visit(this, param);
 	}
 
 	@Override
