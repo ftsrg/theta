@@ -6,7 +6,7 @@ import hu.bme.mit.theta.core.expr.BinaryExpr;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.utils.ExprVisitor;
 
-public final class ImplyExpr extends BinaryExpr<BoolType, BoolType, BoolType> {
+public final class ImplyExpr extends BinaryExpr<BoolType, BoolType> {
 
 	private static final int HASH_SEED = 71;
 

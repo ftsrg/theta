@@ -2,28 +2,41 @@ package hu.bme.mit.theta.core.expr;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import java.util.List;
+
+import com.google.common.collect.ImmutableList;
+
 import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.type.Type;
 
-public abstract class BinaryExpr<LeftOpType extends Type, RightOpType extends Type, ExprType extends Type>
-		implements Expr<ExprType> {
+public abstract class BinaryExpr<OpType extends Type, ExprType extends Type> implements Expr<ExprType> {
 
-	private final Expr<LeftOpType> leftOp;
-	private final Expr<RightOpType> rightOp;
+	private final Expr<OpType> leftOp;
+	private final Expr<OpType> rightOp;
 
 	private volatile int hashCode = 0;
 
-	protected BinaryExpr(final Expr<LeftOpType> leftOp, final Expr<RightOpType> rightOp) {
+	protected BinaryExpr(final Expr<OpType> leftOp, final Expr<OpType> rightOp) {
 		this.leftOp = checkNotNull(leftOp);
 		this.rightOp = checkNotNull(rightOp);
 	}
 
-	public final Expr<LeftOpType> getLeftOp() {
+	public final Expr<OpType> getLeftOp() {
 		return leftOp;
 	}
 
-	public final Expr<RightOpType> getRightOp() {
+	public final Expr<OpType> getRightOp() {
 		return rightOp;
+	}
+
+	@Override
+	public final List<Expr<OpType>> getOps() {
+		return ImmutableList.of(leftOp, rightOp);
+	}
+
+	@Override
+	public final int getArity() {
+		return 2;
 	}
 
 	@Override
@@ -43,12 +56,11 @@ public abstract class BinaryExpr<LeftOpType extends Type, RightOpType extends Ty
 		return ObjectUtils.toStringBuilder(getOperatorLabel()).add(leftOp).add(rightOp).toString();
 	}
 
-	public abstract BinaryExpr<LeftOpType, RightOpType, ExprType> withOps(final Expr<LeftOpType> leftOp,
-			final Expr<RightOpType> rightOp);
+	public abstract BinaryExpr<OpType, ExprType> withOps(final Expr<OpType> leftOp, final Expr<OpType> rightOp);
 
-	public abstract BinaryExpr<LeftOpType, RightOpType, ExprType> withLeftOp(final Expr<LeftOpType> leftOp);
+	public abstract BinaryExpr<OpType, ExprType> withLeftOp(final Expr<OpType> leftOp);
 
-	public abstract BinaryExpr<LeftOpType, RightOpType, ExprType> withRightOp(final Expr<RightOpType> rightOp);
+	public abstract BinaryExpr<OpType, ExprType> withRightOp(final Expr<OpType> rightOp);
 
 	protected abstract int getHashSeed();
 

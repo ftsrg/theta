@@ -33,6 +33,16 @@ public abstract class QuantifiedExpr implements Expr<BoolType> {
 	}
 
 	@Override
+	public int getArity() {
+		return 1;
+	}
+
+	@Override
+	public List<Expr<BoolType>> getOps() {
+		return ImmutableList.of(op);
+	}
+
+	@Override
 	public final int hashCode() {
 		int result = hashCode;
 		if (result == 0) {

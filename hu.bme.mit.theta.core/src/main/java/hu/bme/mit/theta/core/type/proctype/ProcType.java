@@ -15,17 +15,17 @@ public final class ProcType<ReturnType extends Type> implements Type {
 	private static final int HASH_SEED = 2069;
 	private static final String TYPE_LABEL = "Proc";
 
-	private final ImmutableList<? extends Type> paramTypes;
+	private final List<Type> paramTypes;
 	private final ReturnType returnType;
 
 	private volatile int hashCode = 0;
 
-	ProcType(final List<? extends Type> paramTypes, final ReturnType returnType) {
+	ProcType(final Iterable<? extends Type> paramTypes, final ReturnType returnType) {
 		this.paramTypes = ImmutableList.copyOf(checkNotNull(paramTypes));
 		this.returnType = checkNotNull(returnType);
 	}
 
-	public List<? extends Type> getParamTypes() {
+	public List<Type> getParamTypes() {
 		return paramTypes;
 	}
 

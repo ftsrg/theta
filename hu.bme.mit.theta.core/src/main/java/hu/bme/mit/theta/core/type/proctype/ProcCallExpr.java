@@ -16,19 +16,29 @@ public final class ProcCallExpr<ReturnType extends Type> implements Expr<ReturnT
 	private final static int HASH_SEED = 1471;
 	private volatile int hashCode = 0;
 
-	private final Expr<ProcType<? extends ReturnType>> proc;
+	private final Expr<ProcType<ReturnType>> proc;
 	private final List<Expr<?>> params;
 
-	ProcCallExpr(final Expr<ProcType<? extends ReturnType>> proc, final List<? extends Expr<?>> params) {
+	ProcCallExpr(final Expr<ProcType<ReturnType>> proc, final Iterable<? extends Expr<?>> params) {
 		this.proc = checkNotNull(proc);
 		this.params = ImmutableList.copyOf(checkNotNull(params));
 	}
 
-	public final Expr<ProcType<? extends ReturnType>> getProc() {
+	public final Expr<ProcType<ReturnType>> getProc() {
 		return proc;
 	}
 
 	public final List<Expr<?>> getParams() {
+		return params;
+	}
+
+	@Override
+	public int getArity() {
+		return params.size();
+	}
+
+	@Override
+	public List<Expr<?>> getOps() {
 		return params;
 	}
 

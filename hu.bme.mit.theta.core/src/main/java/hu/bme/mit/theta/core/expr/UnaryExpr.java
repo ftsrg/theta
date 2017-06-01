@@ -2,6 +2,10 @@ package hu.bme.mit.theta.core.expr;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import java.util.List;
+
+import com.google.common.collect.ImmutableList;
+
 import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.type.Type;
 
@@ -17,6 +21,16 @@ public abstract class UnaryExpr<OpType extends Type, ExprType extends Type> impl
 
 	public final Expr<OpType> getOp() {
 		return op;
+	}
+
+	@Override
+	public List<Expr<OpType>> getOps() {
+		return ImmutableList.of(op);
+	}
+
+	@Override
+	public int getArity() {
+		return 1;
 	}
 
 	@Override

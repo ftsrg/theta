@@ -9,18 +9,24 @@ import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.type.Type;
 
-public abstract class MultiaryExpr<OpsType extends Type, ExprType extends Type> implements Expr<ExprType> {
+public abstract class MultiaryExpr<OpType extends Type, ExprType extends Type> implements Expr<ExprType> {
 
-	private final List<Expr<OpsType>> ops;
+	private final List<Expr<OpType>> ops;
 
 	private volatile int hashCode = 0;
 
-	protected MultiaryExpr(final Iterable<? extends Expr<OpsType>> ops) {
+	protected MultiaryExpr(final Iterable<? extends Expr<OpType>> ops) {
 		this.ops = ImmutableList.copyOf(checkNotNull(ops));
 	}
 
-	public final List<Expr<OpsType>> getOps() {
+	@Override
+	public final List<Expr<OpType>> getOps() {
 		return ops;
+	}
+
+	@Override
+	public int getArity() {
+		return ops.size();
 	}
 
 	@Override
@@ -39,7 +45,7 @@ public abstract class MultiaryExpr<OpsType extends Type, ExprType extends Type> 
 		return ObjectUtils.toStringBuilder(getOperatorLabel()).addAll(ops).toString();
 	}
 
-	public abstract MultiaryExpr<OpsType, ExprType> withOps(final Iterable<? extends Expr<OpsType>> ops);
+	public abstract MultiaryExpr<OpType, ExprType> withOps(final Iterable<? extends Expr<OpType>> ops);
 
 	protected abstract int getHashSeed();
 

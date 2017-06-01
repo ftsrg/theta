@@ -2,6 +2,10 @@ package hu.bme.mit.theta.core.expr;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import java.util.List;
+
+import com.google.common.collect.ImmutableList;
+
 import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
@@ -35,6 +39,16 @@ public final class IteExpr<ExprType extends Type> implements Expr<ExprType> {
 
 	public Expr<ExprType> getElse() {
 		return elze;
+	}
+
+	@Override
+	public List<Expr<?>> getOps() {
+		return ImmutableList.of(cond, then, elze);
+	}
+
+	@Override
+	public int getArity() {
+		return 3;
 	}
 
 	@Override
