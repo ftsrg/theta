@@ -1,7 +1,5 @@
 package hu.bme.mit.theta.core.decl;
 
-import java.util.List;
-
 import hu.bme.mit.theta.core.type.Type;
 
 public final class Decls {
@@ -19,11 +17,6 @@ public final class Decls {
 
 	public static <T extends Type> VarDecl<T> Var(final String name, final T type) {
 		return new VarDecl<>(name, type);
-	}
-
-	public static <R extends Type> ProcDecl<R> Proc(final String name,
-			final List<? extends ParamDecl<? extends Type>> paramDecls, final R returnType) {
-		return new ProcDecl<>(name, paramDecls, returnType);
 	}
 
 }

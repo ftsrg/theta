@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.core.decl;
+package hu.bme.mit.theta.core.type.proctype;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -10,8 +10,9 @@ import java.util.stream.Stream;
 
 import com.google.common.collect.ImmutableList;
 
+import hu.bme.mit.theta.core.decl.Decl;
+import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.proctype.ProcType;
 
 public final class ProcDecl<ReturnType extends Type> extends Decl<ProcType<ReturnType>> {
 
