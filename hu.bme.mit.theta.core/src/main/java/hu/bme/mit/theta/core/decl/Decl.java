@@ -4,7 +4,6 @@ import static hu.bme.mit.theta.core.expr.Exprs.Ref;
 
 import hu.bme.mit.theta.core.expr.RefExpr;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.utils.DeclVisitor;
 
 public abstract class Decl<DeclType extends Type> {
 	private static final int HASH_SEED = 5351;
@@ -41,5 +40,4 @@ public abstract class Decl<DeclType extends Type> {
 
 	public abstract DeclType getType();
 
-	public abstract <P, R> R accept(final DeclVisitor<? super P, ? extends R> visitor, final P param);
 }

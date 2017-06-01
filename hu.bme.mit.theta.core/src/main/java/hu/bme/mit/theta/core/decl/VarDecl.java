@@ -8,7 +8,6 @@ import java.util.Map;
 
 import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.utils.DeclVisitor;
 
 public final class VarDecl<DeclType extends Type> extends Decl<DeclType> {
 	private static final String DECL_LABEL = "Var";
@@ -41,12 +40,6 @@ public final class VarDecl<DeclType extends Type> extends Decl<DeclType> {
 			indexToConst.put(index, constDecl);
 		}
 		return constDecl;
-	}
-
-	@Override
-	public <P, R> R accept(final DeclVisitor<? super P, ? extends R> visitor, final P param) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
 
 	@Override

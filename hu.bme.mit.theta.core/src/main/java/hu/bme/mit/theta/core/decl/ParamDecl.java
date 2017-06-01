@@ -4,7 +4,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.utils.DeclVisitor;
 
 public final class ParamDecl<DeclType extends Type> extends Decl<DeclType> {
 
@@ -26,11 +25,6 @@ public final class ParamDecl<DeclType extends Type> extends Decl<DeclType> {
 	@Override
 	public DeclType getType() {
 		return type;
-	}
-
-	@Override
-	public <P, R> R accept(final DeclVisitor<? super P, ? extends R> visitor, final P param) {
-		return visitor.visit(this, param);
 	}
 
 	@Override

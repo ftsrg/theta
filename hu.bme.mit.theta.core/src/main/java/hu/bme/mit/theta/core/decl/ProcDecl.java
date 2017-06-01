@@ -12,7 +12,6 @@ import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.proctype.ProcType;
-import hu.bme.mit.theta.core.utils.DeclVisitor;
 
 public final class ProcDecl<ReturnType extends Type> extends Decl<ProcType<ReturnType>> {
 
@@ -57,12 +56,6 @@ public final class ProcDecl<ReturnType extends Type> extends Decl<ProcType<Retur
 	@Override
 	public ProcType<ReturnType> getType() {
 		return type;
-	}
-
-	@Override
-	public <P, R> R accept(final DeclVisitor<? super P, ? extends R> visitor, final P param) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
 
 	@Override
