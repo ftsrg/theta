@@ -1,17 +1,22 @@
-package hu.bme.mit.theta.formalism.common.expr;
+package hu.bme.mit.theta.core.type.pointertype;
 
 import hu.bme.mit.theta.core.LitExpr;
 import hu.bme.mit.theta.core.NullaryExpr;
 import hu.bme.mit.theta.core.Type;
-import hu.bme.mit.theta.formalism.common.type.PointerType;
 
 public final class NullExpr<PointedType extends Type> extends NullaryExpr<PointerType<PointedType>>
 		implements LitExpr<PointerType<PointedType>> {
 
+	private static final NullExpr<?> INSTANCE = new NullExpr<>();
 	private static final String EXPR_LABEL = "Null";
 	private static final int HASH_SEED = 1632143;
 
-	NullExpr() {
+	private NullExpr() {
+	}
+
+	@SuppressWarnings("unchecked")
+	static <PointedType extends Type> NullExpr<PointedType> getInstance() {
+		return (NullExpr<PointedType>) INSTANCE;
 	}
 
 	@Override

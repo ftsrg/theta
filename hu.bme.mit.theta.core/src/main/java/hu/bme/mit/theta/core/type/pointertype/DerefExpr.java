@@ -1,21 +1,20 @@
-package hu.bme.mit.theta.formalism.common.expr;
+package hu.bme.mit.theta.core.type.pointertype;
 
 import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.UnaryExpr;
-import hu.bme.mit.theta.formalism.common.type.PointerType;
 
-public class DerefExpr<PointedType extends Type> extends UnaryExpr<PointerType<? extends PointedType>, PointedType> {
+public class DerefExpr<PointedType extends Type> extends UnaryExpr<PointerType<PointedType>, PointedType> {
 
 	private static final int HASH_SEED = 9833;
 	private static final String EXPR_LABEL = "Deref";
 
-	public DerefExpr(final Expr<PointerType<? extends PointedType>> op) {
+	public DerefExpr(final Expr<PointerType<PointedType>> op) {
 		super(op);
 	}
 
 	@Override
-	public DerefExpr<PointedType> with(final Expr<PointerType<? extends PointedType>> op) {
+	public DerefExpr<PointedType> with(final Expr<PointerType<PointedType>> op) {
 		if (op == getOp()) {
 			return this;
 		} else {

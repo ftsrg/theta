@@ -1,12 +1,11 @@
-package hu.bme.mit.theta.formalism.common.type.impl;
+package hu.bme.mit.theta.core.type.pointertype;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.Type;
-import hu.bme.mit.theta.formalism.common.type.PointerType;
 
-final class PointerTypeImpl<PointedType extends Type> implements PointerType<PointedType> {
+public final class PointerType<PointedType extends Type> implements Type {
 
 	private static final String TYPE_LABEL = "Pointer";
 
@@ -15,11 +14,10 @@ final class PointerTypeImpl<PointedType extends Type> implements PointerType<Poi
 
 	private final PointedType type;
 
-	PointerTypeImpl(final PointedType type) {
+	PointerType(final PointedType type) {
 		this.type = checkNotNull(type);
 	}
 
-	@Override
 	public PointedType getPointedType() {
 		return type;
 	}
