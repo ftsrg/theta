@@ -9,7 +9,7 @@ import java.util.Map;
 import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.Type;
 
-public final class VarDecl<DeclType extends Type> extends Decl<DeclType> {
+public final class VarDecl<DeclType extends Type> extends AbstractDecl<DeclType> {
 	private static final String DECL_LABEL = "Var";
 
 	private final String name;

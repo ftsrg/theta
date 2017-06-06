@@ -37,6 +37,26 @@ public final class IntLitExpr extends NullaryExpr<IntType> implements LitExpr<In
 		return Int();
 	}
 
+	public IntLitExpr add(final IntLitExpr that) {
+		return new IntLitExpr(this.value + that.value);
+	}
+
+	public IntLitExpr sub(final IntLitExpr that) {
+		return new IntLitExpr(this.value - that.value);
+	}
+
+	public IntLitExpr neg() {
+		return new IntLitExpr(-this.value);
+	}
+
+	public IntLitExpr div(final IntLitExpr that) {
+		return new IntLitExpr(this.value / that.value);
+	}
+
+	public IntLitExpr mod(final IntLitExpr that) {
+		return new IntLitExpr(this.value % that.value);
+	}
+
 	@Override
 	public int hashCode() {
 		int result = hashCode;

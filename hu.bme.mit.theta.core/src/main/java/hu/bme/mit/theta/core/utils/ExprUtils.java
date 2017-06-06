@@ -11,10 +11,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import hu.bme.mit.theta.core.Decl;
 import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.LitExpr;
 import hu.bme.mit.theta.core.Type;
-import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.Assignment;
@@ -108,10 +108,7 @@ public final class ExprUtils {
 
 	public static <ExprType extends Type> Expr<ExprType> simplify(final Expr<ExprType> expr,
 			final Assignment assignment) {
-		// return (Expr<ExprType>) expr.accept(new ExprSimplifierVisitor(),
-		// assignment);
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		return new ExprSimplifier(assignment).simplify(expr);
 	}
 
 	public static List<Expr<?>> simplifyAll(final List<? extends Expr<?>> exprs) {

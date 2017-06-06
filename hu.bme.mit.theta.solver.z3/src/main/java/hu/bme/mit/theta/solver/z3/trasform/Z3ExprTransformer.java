@@ -7,8 +7,8 @@ import com.google.common.cache.CacheBuilder;
 import com.microsoft.z3.Context;
 
 import hu.bme.mit.theta.common.DispatchTable;
+import hu.bme.mit.theta.core.Decl;
 import hu.bme.mit.theta.core.Expr;
-import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;

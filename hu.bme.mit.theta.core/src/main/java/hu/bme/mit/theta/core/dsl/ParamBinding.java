@@ -11,9 +11,9 @@ import java.util.Optional;
 
 import com.google.common.collect.ImmutableList;
 
+import hu.bme.mit.theta.core.Decl;
 import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.Type;
-import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.model.Assignment;
 import hu.bme.mit.theta.core.type.booltype.BoolType;

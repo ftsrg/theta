@@ -67,10 +67,10 @@ public final class IteExpr<ExprType extends Type> implements Expr<ExprType> {
 		final Expr<BoolType> newCond = TypeUtils.cast(ops.get(0), Bool());
 		final Expr<ExprType> newThen = TypeUtils.cast(ops.get(1), exprType);
 		final Expr<ExprType> newElze = TypeUtils.cast(ops.get(2), exprType);
-		return withOps(newCond, newThen, newElze);
+		return with(newCond, newThen, newElze);
 	}
 
-	public IteExpr<ExprType> withOps(final Expr<BoolType> cond, final Expr<ExprType> then, final Expr<ExprType> elze) {
+	public IteExpr<ExprType> with(final Expr<BoolType> cond, final Expr<ExprType> then, final Expr<ExprType> elze) {
 		if (this.cond == cond && this.then == then && this.elze == elze) {
 			return this;
 		} else {
@@ -79,15 +79,15 @@ public final class IteExpr<ExprType extends Type> implements Expr<ExprType> {
 	}
 
 	public IteExpr<ExprType> withCond(final Expr<BoolType> cond) {
-		return withOps(cond, getThen(), getElse());
+		return with(cond, getThen(), getElse());
 	}
 
 	public IteExpr<ExprType> withThen(final Expr<ExprType> then) {
-		return withOps(getCond(), then, getElse());
+		return with(getCond(), then, getElse());
 	}
 
 	public IteExpr<ExprType> withElse(final Expr<ExprType> elze) {
-		return withOps(getCond(), getThen(), elze);
+		return with(getCond(), getThen(), elze);
 	}
 
 	@Override

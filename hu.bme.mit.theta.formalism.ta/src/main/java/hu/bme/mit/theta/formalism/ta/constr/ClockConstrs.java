@@ -11,8 +11,8 @@ import com.google.common.collect.ImmutableSet;
 
 import hu.bme.mit.theta.common.DispatchTable;
 import hu.bme.mit.theta.core.BinaryExpr;
+import hu.bme.mit.theta.core.Decl;
 import hu.bme.mit.theta.core.Expr;
-import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.booltype.AndExpr;

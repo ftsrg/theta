@@ -2,9 +2,9 @@ package hu.bme.mit.theta.solver.z3.trasform;
 
 import com.microsoft.z3.Context;
 
+import hu.bme.mit.theta.core.Decl;
 import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.Type;
-import hu.bme.mit.theta.core.decl.Decl;
 
 public class Z3TransformationManager {
 

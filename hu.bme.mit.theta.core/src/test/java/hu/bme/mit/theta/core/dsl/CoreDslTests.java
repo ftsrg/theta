@@ -5,8 +5,8 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 
 import org.junit.Test;
 
+import hu.bme.mit.theta.core.Decl;
 import hu.bme.mit.theta.core.Expr;
-import hu.bme.mit.theta.core.decl.Decl;
 
 public class CoreDslTests {
 

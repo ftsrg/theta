@@ -2,16 +2,17 @@ package hu.bme.mit.theta.core.decl;
 
 import static hu.bme.mit.theta.core.type.anytype.Exprs.Ref;
 
+import hu.bme.mit.theta.core.Decl;
 import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 
-public abstract class Decl<DeclType extends Type> {
+public abstract class AbstractDecl<DeclType extends Type> implements Decl<DeclType> {
 	private static final int HASH_SEED = 5351;
 	private volatile int hashCode = 0;
 
 	private final RefExpr<DeclType> ref;
 
-	public Decl() {
+	public AbstractDecl() {
 		this.ref = Ref(this);
 	}
 
@@ -35,9 +36,5 @@ public abstract class Decl<DeclType extends Type> {
 	public final boolean equals(final Object obj) {
 		return this == obj;
 	}
-
-	public abstract String getName();
-
-	public abstract DeclType getType();
 
 }
