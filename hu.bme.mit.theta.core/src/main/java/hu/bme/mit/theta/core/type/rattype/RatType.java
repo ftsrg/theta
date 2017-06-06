@@ -1,8 +1,5 @@
 package hu.bme.mit.theta.core.type.rattype;
 
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
-
-import hu.bme.mit.theta.core.expr.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 
 public final class RatType implements Type {
@@ -15,11 +12,6 @@ public final class RatType implements Type {
 
 	static RatType getInstance() {
 		return INSTANCE;
-	}
-
-	@Override
-	public LitExpr<RatType> getAny() {
-		return Rat(0, 1);
 	}
 
 	@Override

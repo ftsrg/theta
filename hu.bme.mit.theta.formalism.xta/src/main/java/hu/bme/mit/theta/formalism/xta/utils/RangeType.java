@@ -6,7 +6,6 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import hu.bme.mit.theta.common.ObjectUtils;
-import hu.bme.mit.theta.core.expr.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.inttype.IntExprs;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
@@ -72,14 +71,6 @@ public final class RangeType implements Type {
 	@Override
 	public String toString() {
 		return ObjectUtils.toStringBuilder("Range").add(lower).add(upper).toString();
-	}
-
-	////
-
-	@Override
-	public LitExpr<Type> getAny() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
 
 }

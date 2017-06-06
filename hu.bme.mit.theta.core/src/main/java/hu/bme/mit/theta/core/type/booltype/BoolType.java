@@ -1,8 +1,5 @@
 package hu.bme.mit.theta.core.type.booltype;
 
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
-
-import hu.bme.mit.theta.core.expr.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 
 public final class BoolType implements Type {
@@ -15,11 +12,6 @@ public final class BoolType implements Type {
 
 	static BoolType getInstance() {
 		return INSTANCE;
-	}
-
-	@Override
-	public LitExpr<BoolType> getAny() {
-		return False();
 	}
 
 	@Override

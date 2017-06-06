@@ -1,10 +1,8 @@
 package hu.bme.mit.theta.formalism.common.type.impl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.formalism.common.expr.Exprs2.Null;
 
 import hu.bme.mit.theta.common.ObjectUtils;
-import hu.bme.mit.theta.core.expr.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.formalism.common.type.PointerType;
 
@@ -24,11 +22,6 @@ final class PointerTypeImpl<PointedType extends Type> implements PointerType<Poi
 	@Override
 	public PointedType getPointedType() {
 		return type;
-	}
-
-	@Override
-	public LitExpr<PointerType<PointedType>> getAny() {
-		return Null();
 	}
 
 	@Override

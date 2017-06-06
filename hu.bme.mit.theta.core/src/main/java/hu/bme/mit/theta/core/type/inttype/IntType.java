@@ -1,8 +1,5 @@
 package hu.bme.mit.theta.core.type.inttype;
 
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-
-import hu.bme.mit.theta.core.expr.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 
 public final class IntType implements Type {
@@ -15,11 +12,6 @@ public final class IntType implements Type {
 
 	static IntType getInstance() {
 		return INSTANCE;
-	}
-
-	@Override
-	public LitExpr<IntType> getAny() {
-		return Int(0);
 	}
 
 	@Override

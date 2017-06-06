@@ -7,7 +7,6 @@ import java.util.StringJoiner;
 
 import com.google.common.collect.ImmutableList;
 
-import hu.bme.mit.theta.core.expr.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 
 public final class ProcType<ReturnType extends Type> implements Type {
@@ -31,12 +30,6 @@ public final class ProcType<ReturnType extends Type> implements Type {
 
 	public ReturnType getReturnType() {
 		return returnType;
-	}
-
-	@Override
-	public LitExpr<ProcType<ReturnType>> getAny() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
 
 	@Override

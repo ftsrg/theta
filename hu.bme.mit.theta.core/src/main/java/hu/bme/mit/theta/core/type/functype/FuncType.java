@@ -2,7 +2,6 @@ package hu.bme.mit.theta.core.type.functype;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import hu.bme.mit.theta.core.expr.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 
 public final class FuncType<ParamType extends Type, ResultType extends Type> implements Type {
@@ -26,12 +25,6 @@ public final class FuncType<ParamType extends Type, ResultType extends Type> imp
 
 	public ResultType getResultType() {
 		return resultType;
-	}
-
-	@Override
-	public LitExpr<FuncType<ParamType, ResultType>> getAny() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
 
 	@Override

@@ -1,6 +1,5 @@
 package hu.bme.mit.theta.formalism.xta;
 
-import hu.bme.mit.theta.core.expr.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 
 public final class ChanType implements Type {
@@ -17,14 +16,6 @@ public final class ChanType implements Type {
 	@Override
 	public String toString() {
 		return "Chan";
-	}
-
-	////
-
-	@Override
-	public LitExpr<Type> getAny() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
 
 }
