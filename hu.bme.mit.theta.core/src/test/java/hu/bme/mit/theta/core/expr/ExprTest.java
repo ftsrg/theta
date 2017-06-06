@@ -1,6 +1,6 @@
 package hu.bme.mit.theta.core.expr;
 
-import static hu.bme.mit.theta.core.expr.Exprs.Prime;
+import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 import org.junit.Assert;

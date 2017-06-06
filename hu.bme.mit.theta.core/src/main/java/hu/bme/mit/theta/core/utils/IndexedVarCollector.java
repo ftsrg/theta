@@ -3,7 +3,7 @@ package hu.bme.mit.theta.core.utils;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.IndexedConstDecl;
 import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.expr.RefExpr;
+import hu.bme.mit.theta.core.type.anytype.RefExpr;
 
 public final class IndexedVarCollector {
 

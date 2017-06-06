@@ -2,6 +2,7 @@ package hu.bme.mit.theta.core.expr;
 
 import java.util.Collection;
 
+import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 public final class AbstractExprs {

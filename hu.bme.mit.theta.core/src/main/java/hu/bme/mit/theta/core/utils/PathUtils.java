@@ -2,7 +2,7 @@ package hu.bme.mit.theta.core.utils;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.expr.Exprs.Prime;
+import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;
 
 import java.util.Collection;
 import java.util.Optional;
@@ -14,11 +14,11 @@ import hu.bme.mit.theta.core.decl.IndexedConstDecl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.expr.LitExpr;
-import hu.bme.mit.theta.core.expr.PrimeExpr;
-import hu.bme.mit.theta.core.expr.RefExpr;
 import hu.bme.mit.theta.core.model.Model;
 import hu.bme.mit.theta.core.model.impl.Valuation;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.anytype.PrimeExpr;
+import hu.bme.mit.theta.core.type.anytype.RefExpr;
 
 public class PathUtils {
 

@@ -1,7 +1,7 @@
 package hu.bme.mit.theta.formalism.sts;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.expr.Exprs.Prime;
+import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 
 import java.util.Collection;

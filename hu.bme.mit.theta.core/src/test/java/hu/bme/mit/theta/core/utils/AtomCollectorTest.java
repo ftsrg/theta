@@ -2,7 +2,7 @@ package hu.bme.mit.theta.core.utils;
 
 import static com.google.common.collect.ImmutableSet.of;
 import static hu.bme.mit.theta.core.decl.Decls.Const;
-import static hu.bme.mit.theta.core.expr.Exprs.Ite;
+import static hu.bme.mit.theta.core.type.anytype.Exprs.Ite;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Iff;

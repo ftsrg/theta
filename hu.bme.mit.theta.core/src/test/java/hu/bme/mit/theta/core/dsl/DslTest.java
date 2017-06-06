@@ -1,6 +1,6 @@
 package hu.bme.mit.theta.core.dsl;
 
-import static hu.bme.mit.theta.core.expr.Exprs.Ite;
+import static hu.bme.mit.theta.core.type.anytype.Exprs.Ite;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Iff;

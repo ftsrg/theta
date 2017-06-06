@@ -5,7 +5,7 @@ import static hu.bme.mit.theta.core.expr.AbstractExprs.Geq;
 import static hu.bme.mit.theta.core.expr.AbstractExprs.Gt;
 import static hu.bme.mit.theta.core.expr.AbstractExprs.Leq;
 import static hu.bme.mit.theta.core.expr.AbstractExprs.Lt;
-import static hu.bme.mit.theta.core.expr.Exprs.Ite;
+import static hu.bme.mit.theta.core.type.anytype.Exprs.Ite;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;

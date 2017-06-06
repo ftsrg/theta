@@ -4,7 +4,7 @@ import static hu.bme.mit.theta.core.type.rattype.RatExprs.Eq;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.expr.RefExpr;
+import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.rattype.RatEqExpr;
 import hu.bme.mit.theta.core.type.rattype.RatType;
 

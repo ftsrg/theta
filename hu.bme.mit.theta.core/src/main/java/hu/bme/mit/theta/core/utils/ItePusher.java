@@ -1,14 +1,14 @@
 package hu.bme.mit.theta.core.utils;
 
-import static hu.bme.mit.theta.core.expr.Exprs.Ite;
+import static hu.bme.mit.theta.core.type.anytype.Exprs.Ite;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.expr.IteExpr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 public final class ItePusher {

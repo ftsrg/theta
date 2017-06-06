@@ -15,7 +15,7 @@ import static hu.bme.mit.theta.core.expr.AbstractExprs.Mul;
 import static hu.bme.mit.theta.core.expr.AbstractExprs.Neg;
 import static hu.bme.mit.theta.core.expr.AbstractExprs.Neq;
 import static hu.bme.mit.theta.core.expr.AbstractExprs.Sub;
-import static hu.bme.mit.theta.core.expr.Exprs.Prime;
+import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Exists;

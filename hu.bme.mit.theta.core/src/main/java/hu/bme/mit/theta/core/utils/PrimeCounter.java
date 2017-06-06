@@ -5,8 +5,8 @@ import java.util.List;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.expr.PrimeExpr;
-import hu.bme.mit.theta.core.expr.RefExpr;
+import hu.bme.mit.theta.core.type.anytype.PrimeExpr;
+import hu.bme.mit.theta.core.type.anytype.RefExpr;
 
 final class PrimeCounter {
 

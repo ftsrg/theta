@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.core.expr;
+package hu.bme.mit.theta.core.type.anytype;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -9,6 +9,7 @@ import java.util.List;
 import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.theta.common.ObjectUtils;
+import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.TypeUtils;

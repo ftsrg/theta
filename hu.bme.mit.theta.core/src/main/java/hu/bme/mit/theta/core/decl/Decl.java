@@ -1,9 +1,9 @@
 package hu.bme.mit.theta.core.decl;
 
-import static hu.bme.mit.theta.core.expr.Exprs.Ref;
+import static hu.bme.mit.theta.core.type.anytype.Exprs.Ref;
 
-import hu.bme.mit.theta.core.expr.RefExpr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.anytype.RefExpr;
 
 public abstract class Decl<DeclType extends Type> {
 	private static final int HASH_SEED = 5351;
