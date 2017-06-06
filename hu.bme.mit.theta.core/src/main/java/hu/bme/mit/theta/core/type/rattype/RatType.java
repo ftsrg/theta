@@ -4,12 +4,8 @@ import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 
 import hu.bme.mit.theta.core.expr.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.closure.ClosedUnderAdd;
-import hu.bme.mit.theta.core.type.closure.ClosedUnderMul;
-import hu.bme.mit.theta.core.type.closure.ClosedUnderNeg;
-import hu.bme.mit.theta.core.type.closure.ClosedUnderSub;
 
-public final class RatType implements Type, ClosedUnderAdd, ClosedUnderSub, ClosedUnderNeg, ClosedUnderMul {
+public final class RatType implements Type {
 	private static final RatType INSTANCE = new RatType();
 	private static final int HASH_SEED = 385863;
 	private static final String TYPE_LABEL = "Rat";

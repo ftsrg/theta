@@ -59,7 +59,6 @@ import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.FalseExpr;
 import hu.bme.mit.theta.core.type.booltype.TrueExpr;
-import hu.bme.mit.theta.core.type.closure.ClosedUnderNeg;
 import hu.bme.mit.theta.core.type.inttype.IntDivExpr;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
@@ -450,7 +449,7 @@ final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
 	@Override
 	public Expr<?> visitNegExpr(final NegExprContext ctx) {
 		if (ctx.op != null) {
-			final Expr<ClosedUnderNeg> op = TypeUtils.cast(ctx.op.accept(this), ClosedUnderNeg.class);
+			final Expr<?> op = ctx.op.accept(this);
 			return Neg(op);
 		} else {
 			return visitChildren(ctx);
