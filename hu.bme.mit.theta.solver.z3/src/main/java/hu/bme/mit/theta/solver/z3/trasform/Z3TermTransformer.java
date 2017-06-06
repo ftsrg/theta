@@ -1,10 +1,10 @@
 package hu.bme.mit.theta.solver.z3.trasform;
 
-import static hu.bme.mit.theta.core.expr.AbstractExprs.Eq;
-import static hu.bme.mit.theta.core.expr.AbstractExprs.Geq;
-import static hu.bme.mit.theta.core.expr.AbstractExprs.Gt;
-import static hu.bme.mit.theta.core.expr.AbstractExprs.Leq;
-import static hu.bme.mit.theta.core.expr.AbstractExprs.Lt;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Geq;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Gt;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Leq;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Lt;
 import static hu.bme.mit.theta.core.type.anytype.Exprs.Ite;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
@@ -32,9 +32,9 @@ import com.microsoft.z3.FuncDecl;
 import com.microsoft.z3.IntNum;
 import com.microsoft.z3.RatNum;
 
+import hu.bme.mit.theta.core.Expr;
+import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.decl.ConstDecl;
-import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntType;

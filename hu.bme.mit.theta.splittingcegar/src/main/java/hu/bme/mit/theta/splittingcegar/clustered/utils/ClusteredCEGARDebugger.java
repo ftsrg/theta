@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 
-import hu.bme.mit.theta.core.expr.Expr;
+import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.model.impl.Valuation;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.PathUtils;

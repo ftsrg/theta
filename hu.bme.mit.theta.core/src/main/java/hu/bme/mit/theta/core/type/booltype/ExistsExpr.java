@@ -1,7 +1,7 @@
 package hu.bme.mit.theta.core.type.booltype;
 
+import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.decl.ParamDecl;
-import hu.bme.mit.theta.core.expr.Expr;
 
 public final class ExistsExpr extends QuantifiedExpr {
 

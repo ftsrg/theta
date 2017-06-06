@@ -10,8 +10,8 @@ import java.util.List;
 
 import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.common.dsl.Symbol;
-import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.Expr;
+import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.formalism.xta.ChanType;

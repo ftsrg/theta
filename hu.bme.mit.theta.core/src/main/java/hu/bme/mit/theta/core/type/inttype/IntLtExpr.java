@@ -2,8 +2,8 @@ package hu.bme.mit.theta.core.type.inttype;
 
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 
-import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.expr.LtExpr;
+import hu.bme.mit.theta.core.Expr;
+import hu.bme.mit.theta.core.type.abstracttype.LtExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 public final class IntLtExpr extends LtExpr<IntType> {

@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.Stack;
 
 import hu.bme.mit.theta.common.logging.Logger;
-import hu.bme.mit.theta.core.expr.Expr;
+import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.NotExpr;
 import hu.bme.mit.theta.core.utils.PathUtils;

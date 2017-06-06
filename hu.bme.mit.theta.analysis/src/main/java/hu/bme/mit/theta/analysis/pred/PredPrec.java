@@ -4,7 +4,7 @@ import java.util.Collection;
 
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.expr.ExprStates;
-import hu.bme.mit.theta.core.expr.Expr;
+import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.model.impl.Valuation;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.solver.Solver;

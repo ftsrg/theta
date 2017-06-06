@@ -6,8 +6,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.Expr;
+import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 

@@ -2,8 +2,8 @@ package hu.bme.mit.theta.core.type.rattype;
 
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 
-import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.expr.NegExpr;
+import hu.bme.mit.theta.core.Expr;
+import hu.bme.mit.theta.core.type.abstracttype.NegExpr;
 
 public final class RatNegExpr extends NegExpr<RatType> {
 

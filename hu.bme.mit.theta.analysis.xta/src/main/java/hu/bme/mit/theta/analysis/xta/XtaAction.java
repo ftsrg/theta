@@ -9,7 +9,7 @@ import java.util.StringJoiner;
 import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.theta.analysis.Action;
-import hu.bme.mit.theta.core.expr.Expr;
+import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.formalism.xta.ChanType;
 import hu.bme.mit.theta.formalism.xta.XtaProcess.Edge;
 import hu.bme.mit.theta.formalism.xta.XtaProcess.Loc;

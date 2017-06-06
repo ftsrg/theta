@@ -6,10 +6,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.BlockStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
-import hu.bme.mit.theta.core.type.Type;
 
 public final class StmtUtils {
 

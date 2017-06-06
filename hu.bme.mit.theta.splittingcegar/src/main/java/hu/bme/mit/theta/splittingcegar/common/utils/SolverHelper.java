@@ -1,6 +1,6 @@
 package hu.bme.mit.theta.splittingcegar.common.utils;
 
-import hu.bme.mit.theta.core.expr.Expr;
+import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.PathUtils;
 import hu.bme.mit.theta.formalism.sts.STS;

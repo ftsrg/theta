@@ -1,6 +1,8 @@
-package hu.bme.mit.theta.core.expr;
+package hu.bme.mit.theta.core.type.abstracttype;
 
-import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.BinaryExpr;
+import hu.bme.mit.theta.core.Expr;
+import hu.bme.mit.theta.core.Type;
 
 public abstract class DivExpr<ExprType extends Type> extends BinaryExpr<ExprType, ExprType> {
 

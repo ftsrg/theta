@@ -7,7 +7,7 @@ import static hu.bme.mit.theta.formalism.sts.dsl.StsDslHelper.resolveSts;
 import java.util.List;
 
 import hu.bme.mit.theta.common.dsl.Scope;
-import hu.bme.mit.theta.core.expr.Expr;
+import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.model.Assignment;
 import hu.bme.mit.theta.formalism.sts.dsl.gen.StsDslBaseVisitor;
 import hu.bme.mit.theta.formalism.sts.dsl.gen.StsDslParser.DefStsContext;

@@ -15,13 +15,13 @@ import com.google.common.collect.ImmutableList;
 import com.microsoft.z3.FuncDecl;
 import com.microsoft.z3.Status;
 
+import hu.bme.mit.theta.core.Expr;
+import hu.bme.mit.theta.core.LitExpr;
+import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.Decl;
-import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.expr.LitExpr;
 import hu.bme.mit.theta.core.model.Model;
 import hu.bme.mit.theta.core.model.impl.AbstractModel;
-import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverStatus;

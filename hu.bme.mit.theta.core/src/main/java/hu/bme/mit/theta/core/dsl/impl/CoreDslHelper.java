@@ -11,6 +11,8 @@ import java.util.Optional;
 
 import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.common.dsl.Symbol;
+import hu.bme.mit.theta.core.Expr;
+import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.dsl.DeclSymbol;
 import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.DeclContext;
@@ -20,9 +22,7 @@ import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.ExprListContext;
 import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.StmtContext;
 import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.StmtListContext;
 import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.TypeContext;
-import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.stmt.Stmt;
-import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.TypeUtils;
 

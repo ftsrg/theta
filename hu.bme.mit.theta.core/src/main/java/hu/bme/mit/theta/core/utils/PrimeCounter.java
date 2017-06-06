@@ -2,9 +2,9 @@ package hu.bme.mit.theta.core.utils;
 
 import java.util.List;
 
+import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.anytype.PrimeExpr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 

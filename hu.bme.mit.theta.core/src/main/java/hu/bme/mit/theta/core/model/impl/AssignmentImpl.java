@@ -2,7 +2,7 @@ package hu.bme.mit.theta.core.model.impl;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.expr.AbstractExprs.Eq;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 
@@ -17,10 +17,10 @@ import java.util.StringJoiner;
 
 import com.google.common.collect.ImmutableList;
 
+import hu.bme.mit.theta.core.Expr;
+import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.decl.Decl;
-import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.model.Assignment;
-import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 public final class AssignmentImpl implements Assignment {

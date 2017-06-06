@@ -1,11 +1,9 @@
-package hu.bme.mit.theta.core.expr;
+package hu.bme.mit.theta.core;
 
 import static com.google.common.collect.ImmutableList.toImmutableList;
 
 import java.util.List;
 import java.util.function.Function;
-
-import hu.bme.mit.theta.core.type.Type;
 
 public interface Expr<ExprType extends Type> {
 

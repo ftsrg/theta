@@ -4,7 +4,7 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 
 import java.util.List;
 
-import hu.bme.mit.theta.core.expr.Expr;
+import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 public final class OutVar extends HwElement {

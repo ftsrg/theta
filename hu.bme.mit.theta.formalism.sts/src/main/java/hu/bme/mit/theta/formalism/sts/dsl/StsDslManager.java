@@ -9,7 +9,7 @@ import java.util.List;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 
-import hu.bme.mit.theta.core.expr.Expr;
+import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.formalism.sts.dsl.gen.StsDslLexer;
 import hu.bme.mit.theta.formalism.sts.dsl.gen.StsDslParser;
 import hu.bme.mit.theta.formalism.sts.dsl.gen.StsDslParser.StsSpecContext;

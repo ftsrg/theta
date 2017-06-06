@@ -7,15 +7,15 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 
 import hu.bme.mit.theta.common.dsl.BasicScope;
+import hu.bme.mit.theta.core.Expr;
+import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.dsl.gen.CoreDslLexer;
 import hu.bme.mit.theta.core.dsl.gen.CoreDslParser;
 import hu.bme.mit.theta.core.dsl.impl.ExprCreatorVisitor;
 import hu.bme.mit.theta.core.dsl.impl.StmtCreatorVisitor;
 import hu.bme.mit.theta.core.dsl.impl.TypeCreatorVisitor;
-import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.stmt.Stmt;
-import hu.bme.mit.theta.core.type.Type;
 
 public final class CoreDslManager {
 

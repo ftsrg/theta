@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import hu.bme.mit.theta.analysis.LTS;
-import hu.bme.mit.theta.core.expr.Expr;
+import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.formalism.xta.ChanType;
 import hu.bme.mit.theta.formalism.xta.Label;

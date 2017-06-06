@@ -6,8 +6,8 @@ import java.util.Collection;
 import java.util.List;
 
 import hu.bme.mit.theta.common.logging.Logger;
+import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.splittingcegar.common.data.ConcreteTrace;
 import hu.bme.mit.theta.splittingcegar.common.data.SolverWrapper;
 import hu.bme.mit.theta.splittingcegar.common.data.StopHandler;

@@ -1,8 +1,8 @@
 package hu.bme.mit.theta.formalism.common.expr;
 
-import hu.bme.mit.theta.core.expr.LitExpr;
-import hu.bme.mit.theta.core.expr.NullaryExpr;
-import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.LitExpr;
+import hu.bme.mit.theta.core.NullaryExpr;
+import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.formalism.common.type.PointerType;
 
 public final class NullExpr<PointedType extends Type> extends NullaryExpr<PointerType<PointedType>>

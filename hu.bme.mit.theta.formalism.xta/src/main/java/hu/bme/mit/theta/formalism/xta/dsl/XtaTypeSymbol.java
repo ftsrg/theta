@@ -4,7 +4,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.common.dsl.Symbol;
-import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.formalism.xta.dsl.gen.XtaDslParser.ArrayIdContext;
 import hu.bme.mit.theta.formalism.xta.dsl.gen.XtaDslParser.TypeContext;
 

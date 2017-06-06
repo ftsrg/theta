@@ -7,8 +7,8 @@ import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 
-import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.Expr;
+import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.utils.TypeUtils;
 
 public final class ArrayReadExpr<IndexType extends Type, ElemType extends Type> implements Expr<ElemType> {

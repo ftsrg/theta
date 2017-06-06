@@ -2,7 +2,7 @@ package hu.bme.mit.theta.core.type.arraytype;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.Type;
 
 public final class ArrayType<IndexType extends Type, ElemType extends Type> implements Type {
 

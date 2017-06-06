@@ -7,7 +7,7 @@ import java.util.StringJoiner;
 
 import com.google.common.collect.ImmutableList;
 
-import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.Type;
 
 public final class ProcType<ReturnType extends Type> implements Type {
 

@@ -2,7 +2,7 @@ package hu.bme.mit.theta.formalism.xta.dsl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import hu.bme.mit.theta.core.expr.Expr;
+import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.utils.TypeUtils;
 import hu.bme.mit.theta.formalism.xta.ChanType;
 import hu.bme.mit.theta.formalism.xta.Label;

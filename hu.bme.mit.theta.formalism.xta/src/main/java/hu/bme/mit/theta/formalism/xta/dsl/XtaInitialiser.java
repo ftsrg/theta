@@ -3,8 +3,8 @@ package hu.bme.mit.theta.formalism.xta.dsl;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import hu.bme.mit.theta.common.dsl.Scope;
-import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.Expr;
+import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.formalism.xta.dsl.gen.XtaDslBaseVisitor;
 import hu.bme.mit.theta.formalism.xta.dsl.gen.XtaDslParser.CompoundInitialiserContext;
 import hu.bme.mit.theta.formalism.xta.dsl.gen.XtaDslParser.InitialiserContext;

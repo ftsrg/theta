@@ -44,7 +44,7 @@ import hu.bme.mit.theta.analysis.sts.StsLts;
 import hu.bme.mit.theta.analysis.sts.StsPropInitPrec;
 import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist;
 import hu.bme.mit.theta.common.logging.Logger;
-import hu.bme.mit.theta.core.expr.Expr;
+import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.frontend.benchmark.Configuration;

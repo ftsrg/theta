@@ -2,8 +2,8 @@ package hu.bme.mit.theta.core.type.rattype;
 
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 
-import hu.bme.mit.theta.core.expr.DivExpr;
-import hu.bme.mit.theta.core.expr.Expr;
+import hu.bme.mit.theta.core.Expr;
+import hu.bme.mit.theta.core.type.abstracttype.DivExpr;
 
 public final class RatDivExpr extends DivExpr<RatType> {
 

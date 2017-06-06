@@ -1,7 +1,8 @@
-package hu.bme.mit.theta.core.expr;
+package hu.bme.mit.theta.core.type.abstracttype;
 
 import java.util.Collection;
 
+import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 

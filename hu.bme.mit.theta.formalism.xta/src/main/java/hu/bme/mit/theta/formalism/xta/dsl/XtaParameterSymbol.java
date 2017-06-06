@@ -10,8 +10,8 @@ import java.util.Set;
 
 import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.common.dsl.Symbol;
-import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.Expr;
+import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.formalism.xta.dsl.gen.XtaDslParser.ParameterIdContext;
 import hu.bme.mit.theta.formalism.xta.dsl.gen.XtaDslParser.TypeContext;
 import hu.bme.mit.theta.formalism.xta.utils.RangeType;

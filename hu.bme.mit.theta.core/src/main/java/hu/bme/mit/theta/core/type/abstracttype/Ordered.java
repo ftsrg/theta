@@ -1,10 +1,7 @@
-package hu.bme.mit.theta.core.type;
+package hu.bme.mit.theta.core.type.abstracttype;
 
-import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.expr.GeqExpr;
-import hu.bme.mit.theta.core.expr.GtExpr;
-import hu.bme.mit.theta.core.expr.LeqExpr;
-import hu.bme.mit.theta.core.expr.LtExpr;
+import hu.bme.mit.theta.core.Expr;
+import hu.bme.mit.theta.core.Type;
 
 public interface Ordered<OpType extends Ordered<OpType>> extends Type {
 

@@ -1,8 +1,7 @@
-package hu.bme.mit.theta.core.type;
+package hu.bme.mit.theta.core.type.abstracttype;
 
-import hu.bme.mit.theta.core.expr.EqExpr;
-import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.expr.NeqExpr;
+import hu.bme.mit.theta.core.Expr;
+import hu.bme.mit.theta.core.Type;
 
 public interface Extensional<OpType extends Extensional<OpType>> extends Type {
 

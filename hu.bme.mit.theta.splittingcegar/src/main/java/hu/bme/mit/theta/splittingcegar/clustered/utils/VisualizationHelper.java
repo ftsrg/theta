@@ -2,7 +2,7 @@ package hu.bme.mit.theta.splittingcegar.clustered.utils;
 
 import java.util.Collection;
 
-import hu.bme.mit.theta.core.expr.Expr;
+import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.splittingcegar.clustered.data.ClusteredAbstractState;
 import hu.bme.mit.theta.splittingcegar.clustered.data.ClusteredAbstractSystem;
 import hu.bme.mit.theta.splittingcegar.clustered.data.ComponentAbstractState;

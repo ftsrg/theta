@@ -3,8 +3,8 @@ package hu.bme.mit.theta.core.stmt;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import hu.bme.mit.theta.common.ObjectUtils;
+import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.utils.StmtVisitor;
 
 public final class HavocStmt<DeclType extends Type> implements Stmt {

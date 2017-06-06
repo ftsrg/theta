@@ -1,6 +1,6 @@
 package hu.bme.mit.theta.core.model.impl;
 
-import static hu.bme.mit.theta.core.expr.AbstractExprs.Eq;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 
 import java.util.ArrayList;
@@ -8,8 +8,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.StringJoiner;
 
+import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.decl.ConstDecl;
-import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.model.Model;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 

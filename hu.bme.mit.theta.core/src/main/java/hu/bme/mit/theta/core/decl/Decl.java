@@ -2,7 +2,7 @@ package hu.bme.mit.theta.core.decl;
 
 import static hu.bme.mit.theta.core.type.anytype.Exprs.Ref;
 
-import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 
 public abstract class Decl<DeclType extends Type> {

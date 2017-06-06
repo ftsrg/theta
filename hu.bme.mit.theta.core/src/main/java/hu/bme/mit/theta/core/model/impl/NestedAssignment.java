@@ -5,10 +5,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.util.Collection;
 import java.util.Optional;
 
+import hu.bme.mit.theta.core.Expr;
+import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.decl.Decl;
-import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.model.Assignment;
-import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 public class NestedAssignment implements Assignment {

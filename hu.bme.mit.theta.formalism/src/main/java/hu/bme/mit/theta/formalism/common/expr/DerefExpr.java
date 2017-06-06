@@ -1,8 +1,8 @@
 package hu.bme.mit.theta.formalism.common.expr;
 
-import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.expr.UnaryExpr;
-import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.Expr;
+import hu.bme.mit.theta.core.Type;
+import hu.bme.mit.theta.core.UnaryExpr;
 import hu.bme.mit.theta.formalism.common.type.PointerType;
 
 public class DerefExpr<PointedType extends Type> extends UnaryExpr<PointerType<? extends PointedType>, PointedType> {

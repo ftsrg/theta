@@ -4,8 +4,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.formalism.common.type.impl.Types2.Pointer;
 
 import hu.bme.mit.theta.common.ObjectUtils;
-import hu.bme.mit.theta.core.expr.NullaryExpr;
-import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.NullaryExpr;
+import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.formalism.common.type.PointerType;
 
 public final class NewExpr<PointedType extends Type> extends NullaryExpr<PointerType<PointedType>> {

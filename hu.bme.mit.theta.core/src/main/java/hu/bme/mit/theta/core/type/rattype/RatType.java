@@ -1,6 +1,6 @@
 package hu.bme.mit.theta.core.type.rattype;
 
-import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.Type;
 
 public final class RatType implements Type {
 	private static final RatType INSTANCE = new RatType();

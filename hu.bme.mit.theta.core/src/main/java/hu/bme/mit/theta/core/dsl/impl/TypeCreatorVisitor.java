@@ -11,6 +11,7 @@ import static java.util.stream.Collectors.toList;
 import java.util.Collections;
 import java.util.List;
 
+import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.dsl.gen.CoreDslBaseVisitor;
 import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.ArrayTypeContext;
 import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.BoolTypeContext;
@@ -18,7 +19,6 @@ import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.FuncTypeContext;
 import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.IntTypeContext;
 import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.RatTypeContext;
 import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.TypeListContext;
-import hu.bme.mit.theta.core.type.Type;
 
 public final class TypeCreatorVisitor extends CoreDslBaseVisitor<Type> {
 

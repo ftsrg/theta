@@ -4,8 +4,8 @@ import java.util.Collection;
 import java.util.List;
 
 import hu.bme.mit.theta.common.logging.Logger;
+import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.model.Model;
 import hu.bme.mit.theta.core.model.impl.Valuation;
 import hu.bme.mit.theta.core.type.booltype.BoolType;

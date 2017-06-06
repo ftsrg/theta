@@ -9,7 +9,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
-import hu.bme.mit.theta.core.expr.Expr;
+import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 /**

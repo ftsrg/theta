@@ -2,9 +2,9 @@ package hu.bme.mit.theta.core.type.anytype;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import hu.bme.mit.theta.core.NullaryExpr;
+import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.decl.Decl;
-import hu.bme.mit.theta.core.expr.NullaryExpr;
-import hu.bme.mit.theta.core.type.Type;
 
 public final class RefExpr<DeclType extends Type> extends NullaryExpr<DeclType> {
 

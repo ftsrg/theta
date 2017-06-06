@@ -1,8 +1,7 @@
-package hu.bme.mit.theta.core.type;
+package hu.bme.mit.theta.core.type.abstracttype;
 
-import hu.bme.mit.theta.core.expr.DivExpr;
-import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.expr.MulExpr;
+import hu.bme.mit.theta.core.Expr;
+import hu.bme.mit.theta.core.Type;
 
 public interface Multiplicative<ExprType extends Multiplicative<ExprType>> extends Type {
 

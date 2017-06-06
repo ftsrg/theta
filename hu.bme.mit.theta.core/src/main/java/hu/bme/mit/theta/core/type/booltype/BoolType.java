@@ -1,6 +1,6 @@
 package hu.bme.mit.theta.core.type.booltype;
 
-import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.Type;
 
 public final class BoolType implements Type {
 	private static final BoolType INSTANCE = new BoolType();

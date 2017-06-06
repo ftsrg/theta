@@ -1,6 +1,4 @@
-package hu.bme.mit.theta.core.expr;
-
-import hu.bme.mit.theta.core.type.Type;
+package hu.bme.mit.theta.core;
 
 public interface LitExpr<ExprType extends Type> extends Expr<ExprType> {
 

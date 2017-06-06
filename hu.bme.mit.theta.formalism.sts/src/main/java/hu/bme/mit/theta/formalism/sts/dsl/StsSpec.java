@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Optional;
 
 import hu.bme.mit.theta.common.dsl.Symbol;
-import hu.bme.mit.theta.core.expr.Expr;
+import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.model.Assignment;
 import hu.bme.mit.theta.formalism.sts.STS;
 

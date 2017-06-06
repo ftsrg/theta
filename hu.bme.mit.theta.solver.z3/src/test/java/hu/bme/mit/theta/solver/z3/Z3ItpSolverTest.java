@@ -20,9 +20,9 @@ import org.junit.Test;
 
 import com.google.common.collect.ImmutableList;
 
+import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.ParamDecl;
-import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.type.inttype.IntType;

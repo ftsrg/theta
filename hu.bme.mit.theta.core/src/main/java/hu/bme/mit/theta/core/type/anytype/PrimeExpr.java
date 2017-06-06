@@ -1,8 +1,8 @@
 package hu.bme.mit.theta.core.type.anytype;
 
-import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.expr.UnaryExpr;
-import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.Expr;
+import hu.bme.mit.theta.core.Type;
+import hu.bme.mit.theta.core.UnaryExpr;
 
 public final class PrimeExpr<ExprType extends Type> extends UnaryExpr<ExprType, ExprType> {
 

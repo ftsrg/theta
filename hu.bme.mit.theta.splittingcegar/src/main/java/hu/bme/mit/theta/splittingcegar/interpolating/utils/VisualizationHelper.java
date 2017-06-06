@@ -2,7 +2,7 @@ package hu.bme.mit.theta.splittingcegar.interpolating.utils;
 
 import java.util.Set;
 
-import hu.bme.mit.theta.core.expr.Expr;
+import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.splittingcegar.common.utils.visualization.Visualizer;
 import hu.bme.mit.theta.splittingcegar.common.utils.visualization.graph.Graph;
 import hu.bme.mit.theta.splittingcegar.common.utils.visualization.graph.Node;

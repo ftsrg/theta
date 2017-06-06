@@ -2,7 +2,7 @@ package hu.bme.mit.theta.frontend.aiger.impl.elements;
 
 import java.util.List;
 
-import hu.bme.mit.theta.core.expr.Expr;
+import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 public abstract class HwElement {

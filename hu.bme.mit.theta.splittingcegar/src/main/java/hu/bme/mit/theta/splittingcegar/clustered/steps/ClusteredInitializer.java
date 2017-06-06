@@ -11,9 +11,9 @@ import java.util.Set;
 import java.util.Stack;
 
 import hu.bme.mit.theta.common.logging.Logger;
+import hu.bme.mit.theta.core.Expr;
+import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.PathUtils;
 import hu.bme.mit.theta.formalism.sts.STS;

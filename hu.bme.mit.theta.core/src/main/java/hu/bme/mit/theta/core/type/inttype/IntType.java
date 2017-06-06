@@ -1,6 +1,6 @@
 package hu.bme.mit.theta.core.type.inttype;
 
-import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.Type;
 
 public final class IntType implements Type {
 	private static final IntType INSTANCE = new IntType();

@@ -6,7 +6,7 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import hu.bme.mit.theta.common.ObjectUtils;
-import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.type.inttype.IntExprs;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 

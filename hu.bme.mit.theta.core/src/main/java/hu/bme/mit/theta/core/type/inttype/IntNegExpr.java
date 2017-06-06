@@ -2,8 +2,8 @@ package hu.bme.mit.theta.core.type.inttype;
 
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
-import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.expr.NegExpr;
+import hu.bme.mit.theta.core.Expr;
+import hu.bme.mit.theta.core.type.abstracttype.NegExpr;
 
 public final class IntNegExpr extends NegExpr<IntType> {
 

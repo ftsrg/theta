@@ -3,7 +3,7 @@ package hu.bme.mit.theta.core.decl;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.Type;
 
 public final class IndexedConstDecl<DeclType extends Type> extends ConstDecl<DeclType> {
 	private static final String NAME_FORMAT = "_%s:%d";

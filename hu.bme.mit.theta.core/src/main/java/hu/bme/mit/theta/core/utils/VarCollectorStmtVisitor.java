@@ -2,6 +2,7 @@ package hu.bme.mit.theta.core.utils;
 
 import java.util.Collection;
 
+import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssertStmt;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
@@ -15,7 +16,6 @@ import hu.bme.mit.theta.core.stmt.IfStmt;
 import hu.bme.mit.theta.core.stmt.ReturnStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.WhileStmt;
-import hu.bme.mit.theta.core.type.Type;
 
 final class VarCollectorStmtVisitor implements StmtVisitor<Collection<VarDecl<?>>, Void> {
 

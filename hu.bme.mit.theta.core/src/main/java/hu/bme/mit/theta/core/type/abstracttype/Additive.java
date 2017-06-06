@@ -1,9 +1,7 @@
-package hu.bme.mit.theta.core.type;
+package hu.bme.mit.theta.core.type.abstracttype;
 
-import hu.bme.mit.theta.core.expr.AddExpr;
-import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.expr.NegExpr;
-import hu.bme.mit.theta.core.expr.SubExpr;
+import hu.bme.mit.theta.core.Expr;
+import hu.bme.mit.theta.core.Type;
 
 public interface Additive<ExprType extends Additive<ExprType>> extends Type {
 

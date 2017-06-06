@@ -1,6 +1,6 @@
 package hu.bme.mit.theta.core.utils;
 
-import hu.bme.mit.theta.core.expr.Expr;
+import hu.bme.mit.theta.core.Expr;
 
 public final class ExprMetrics {
 

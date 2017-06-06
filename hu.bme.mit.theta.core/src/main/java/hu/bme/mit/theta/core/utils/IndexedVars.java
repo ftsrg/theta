@@ -14,9 +14,9 @@ import java.util.stream.Collectors;
 
 import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.common.ToStringBuilder;
+import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.decl.IndexedConstDecl;
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.type.Type;
 
 public final class IndexedVars {
 

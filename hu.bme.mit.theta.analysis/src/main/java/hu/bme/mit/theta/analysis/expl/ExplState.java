@@ -8,13 +8,13 @@ import java.util.Optional;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.common.ToStringBuilder;
+import hu.bme.mit.theta.core.Expr;
+import hu.bme.mit.theta.core.LitExpr;
+import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.expr.LitExpr;
 import hu.bme.mit.theta.core.model.Assignment;
 import hu.bme.mit.theta.core.model.impl.Valuation;
-import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 public final class ExplState implements ExprState, Assignment {

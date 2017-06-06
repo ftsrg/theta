@@ -1,6 +1,8 @@
-package hu.bme.mit.theta.core.expr;
+package hu.bme.mit.theta.core.type.abstracttype;
 
-import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.BinaryExpr;
+import hu.bme.mit.theta.core.Expr;
+import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 public abstract class LtExpr<OpType extends Type> extends BinaryExpr<OpType, BoolType> {

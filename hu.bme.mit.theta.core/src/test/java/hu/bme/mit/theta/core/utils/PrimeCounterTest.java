@@ -14,10 +14,10 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
+import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.dsl.CoreDslManager;
-import hu.bme.mit.theta.core.expr.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 @RunWith(Parameterized.class)

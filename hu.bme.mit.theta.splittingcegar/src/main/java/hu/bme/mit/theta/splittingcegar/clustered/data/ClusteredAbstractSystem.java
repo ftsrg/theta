@@ -5,7 +5,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import java.util.ArrayList;
 import java.util.List;
 
-import hu.bme.mit.theta.core.expr.Expr;
+import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.splittingcegar.common.data.AbstractSystemBase;

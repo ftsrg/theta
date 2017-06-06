@@ -4,7 +4,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.utils.VarIndexing.all;
 
 import hu.bme.mit.theta.analysis.expr.ExprAction;
-import hu.bme.mit.theta.core.expr.Expr;
+import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.VarIndexing;
 import hu.bme.mit.theta.formalism.sts.STS;

@@ -11,14 +11,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import hu.bme.mit.theta.core.Expr;
+import hu.bme.mit.theta.core.LitExpr;
+import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.expr.LitExpr;
 import hu.bme.mit.theta.core.model.Assignment;
 import hu.bme.mit.theta.core.model.impl.AssignmentImpl;
-import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.booltype.AndExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;

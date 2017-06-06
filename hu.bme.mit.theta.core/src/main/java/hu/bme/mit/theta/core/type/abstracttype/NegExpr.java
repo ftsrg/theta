@@ -1,6 +1,8 @@
-package hu.bme.mit.theta.core.expr;
+package hu.bme.mit.theta.core.type.abstracttype;
 
-import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.Expr;
+import hu.bme.mit.theta.core.Type;
+import hu.bme.mit.theta.core.UnaryExpr;
 
 public abstract class NegExpr<ExprType extends Type> extends UnaryExpr<ExprType, ExprType> {
 

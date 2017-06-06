@@ -7,7 +7,7 @@ import java.util.stream.Collectors;
 import com.google.common.collect.ImmutableSet;
 
 import hu.bme.mit.theta.common.Utils;
-import hu.bme.mit.theta.core.expr.Expr;
+import hu.bme.mit.theta.core.Expr;
 
 public final class SmartBoolExprs {
 

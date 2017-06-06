@@ -4,8 +4,8 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import com.google.common.math.IntMath;
 
-import hu.bme.mit.theta.core.expr.LitExpr;
-import hu.bme.mit.theta.core.expr.NullaryExpr;
+import hu.bme.mit.theta.core.LitExpr;
+import hu.bme.mit.theta.core.NullaryExpr;
 
 public final class RatLitExpr extends NullaryExpr<RatType> implements LitExpr<RatType>, Comparable<RatLitExpr> {
 

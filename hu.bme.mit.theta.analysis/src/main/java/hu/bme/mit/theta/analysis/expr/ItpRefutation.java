@@ -16,7 +16,7 @@ import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.analysis.expr.refinement.Refutation;
 import hu.bme.mit.theta.analysis.expr.refinement.VarsRefutation;
 import hu.bme.mit.theta.common.ObjectUtils;
-import hu.bme.mit.theta.core.expr.Expr;
+import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.core.utils.IndexedVars;

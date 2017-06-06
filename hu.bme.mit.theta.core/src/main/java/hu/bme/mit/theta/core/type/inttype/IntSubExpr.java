@@ -2,8 +2,8 @@ package hu.bme.mit.theta.core.type.inttype;
 
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
-import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.expr.SubExpr;
+import hu.bme.mit.theta.core.Expr;
+import hu.bme.mit.theta.core.type.abstracttype.SubExpr;
 
 public final class IntSubExpr extends SubExpr<IntType> {
 

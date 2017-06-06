@@ -8,7 +8,7 @@ import hu.bme.mit.theta.analysis.algorithm.ArgNodeComparators.ArgNodeComparator;
 import hu.bme.mit.theta.analysis.pred.ItpRefToSimplePredPrec;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.impl.NullLogger;
-import hu.bme.mit.theta.core.expr.Expr;
+import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;

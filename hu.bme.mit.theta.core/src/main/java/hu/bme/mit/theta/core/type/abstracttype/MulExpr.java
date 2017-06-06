@@ -1,6 +1,8 @@
-package hu.bme.mit.theta.core.expr;
+package hu.bme.mit.theta.core.type.abstracttype;
 
-import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.Expr;
+import hu.bme.mit.theta.core.MultiaryExpr;
+import hu.bme.mit.theta.core.Type;
 
 public abstract class MulExpr<ExprType extends Type> extends MultiaryExpr<ExprType, ExprType> {
 

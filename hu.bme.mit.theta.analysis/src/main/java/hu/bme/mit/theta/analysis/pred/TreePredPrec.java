@@ -11,8 +11,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.expr.LitExpr;
+import hu.bme.mit.theta.core.Expr;
+import hu.bme.mit.theta.core.LitExpr;
 import hu.bme.mit.theta.core.model.impl.Valuation;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.NotExpr;

@@ -2,8 +2,8 @@ package hu.bme.mit.theta.core.type.booltype;
 
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 
-import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.expr.MultiaryExpr;
+import hu.bme.mit.theta.core.Expr;
+import hu.bme.mit.theta.core.MultiaryExpr;
 
 public final class OrExpr extends MultiaryExpr<BoolType, BoolType> {
 

@@ -2,10 +2,10 @@ package hu.bme.mit.theta.core.utils;
 
 import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;
 
+import hu.bme.mit.theta.core.Expr;
+import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.expr.Expr;
-import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 
 final class PrimeApplier {

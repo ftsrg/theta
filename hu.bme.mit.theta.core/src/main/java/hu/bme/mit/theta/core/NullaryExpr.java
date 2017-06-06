@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.core.expr;
+package hu.bme.mit.theta.core;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -6,8 +6,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.util.List;
 
 import com.google.common.collect.ImmutableList;
-
-import hu.bme.mit.theta.core.type.Type;
 
 public abstract class NullaryExpr<ExprType extends Type> implements Expr<ExprType> {
 
