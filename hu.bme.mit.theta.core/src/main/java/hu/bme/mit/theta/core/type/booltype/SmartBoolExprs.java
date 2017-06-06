@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.core.expr;
+package hu.bme.mit.theta.core.type.booltype;
 
 import java.util.Collection;
 import java.util.List;
@@ -7,13 +7,11 @@ import java.util.stream.Collectors;
 import com.google.common.collect.ImmutableSet;
 
 import hu.bme.mit.theta.common.Utils;
-import hu.bme.mit.theta.core.type.booltype.BoolExprs;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.type.booltype.NotExpr;
+import hu.bme.mit.theta.core.expr.Expr;
 
-public final class SmartExprs {
+public final class SmartBoolExprs {
 
-	private SmartExprs() {
+	private SmartBoolExprs() {
 	}
 
 	public static Expr<BoolType> Not(final Expr<BoolType> op) {

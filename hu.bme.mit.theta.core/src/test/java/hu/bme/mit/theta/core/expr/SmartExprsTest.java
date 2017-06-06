@@ -20,6 +20,7 @@ import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs;
 
 @RunWith(Parameterized.class)
 public class SmartExprsTest {
@@ -38,41 +39,41 @@ public class SmartExprsTest {
 	public static Collection<Object[]> data() {
 		return Arrays.asList(new Object[][] {
 
-				{ True(), SmartExprs.Not(False()) },
+				{ True(), SmartBoolExprs.Not(False()) },
 
-				{ False(), SmartExprs.Not(True()) },
+				{ False(), SmartBoolExprs.Not(True()) },
 
-				{ A, SmartExprs.Not(SmartExprs.Not(A)) },
+				{ A, SmartBoolExprs.Not(SmartBoolExprs.Not(A)) },
 
-				{ Not(A), SmartExprs.Not(SmartExprs.Not(SmartExprs.Not(A))) },
+				{ Not(A), SmartBoolExprs.Not(SmartBoolExprs.Not(SmartBoolExprs.Not(A))) },
 
-				{ True(), SmartExprs.And(Collections.emptySet()) },
+				{ True(), SmartBoolExprs.And(Collections.emptySet()) },
 
-				{ A, SmartExprs.And(Collections.singleton(A)) },
+				{ A, SmartBoolExprs.And(Collections.singleton(A)) },
 
-				{ A, SmartExprs.And(A, True()) },
+				{ A, SmartBoolExprs.And(A, True()) },
 
-				{ A, SmartExprs.And(A, True(), True()) },
+				{ A, SmartBoolExprs.And(A, True(), True()) },
 
-				{ False(), SmartExprs.And(A, False(), True()) },
+				{ False(), SmartBoolExprs.And(A, False(), True()) },
 
-				{ True(), SmartExprs.And(True(), True()) },
+				{ True(), SmartBoolExprs.And(True(), True()) },
 
-				{ And(A, B, C), SmartExprs.And(A, B, C, True()) },
+				{ And(A, B, C), SmartBoolExprs.And(A, B, C, True()) },
 
-				{ True(), SmartExprs.Or(Collections.emptySet()) },
+				{ True(), SmartBoolExprs.Or(Collections.emptySet()) },
 
-				{ A, SmartExprs.Or(Collections.singleton(A)) },
+				{ A, SmartBoolExprs.Or(Collections.singleton(A)) },
 
-				{ A, SmartExprs.Or(A, False()) },
+				{ A, SmartBoolExprs.Or(A, False()) },
 
-				{ A, SmartExprs.Or(A, False(), False()) },
+				{ A, SmartBoolExprs.Or(A, False(), False()) },
 
-				{ True(), SmartExprs.Or(A, False(), True()) },
+				{ True(), SmartBoolExprs.Or(A, False(), True()) },
 
-				{ False(), SmartExprs.Or(False(), False()) },
+				{ False(), SmartBoolExprs.Or(False(), False()) },
 
-				{ Or(A, B, C), SmartExprs.Or(A, B, C, False()) },
+				{ Or(A, B, C), SmartBoolExprs.Or(A, B, C, False()) },
 
 		});
 
