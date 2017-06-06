@@ -1,6 +1,7 @@
 package hu.bme.mit.theta.formalism.xta.dsl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static java.util.stream.Collectors.toList;
 
 import java.util.Collection;
@@ -60,7 +61,7 @@ final class XtaStateSymbol implements Symbol {
 			invars = Collections.emptySet();
 		} else {
 			final Expr<?> expr = expression.instantiate(env);
-			final Expr<BoolType> invar = TypeUtils.cast(expr, BoolType.class);
+			final Expr<BoolType> invar = TypeUtils.cast(expr, Bool());
 			final Collection<Expr<BoolType>> conjuncts = ExprUtils.getConjuncts(invar);
 			invars = conjuncts.stream().map(e -> e).collect(toList());
 		}

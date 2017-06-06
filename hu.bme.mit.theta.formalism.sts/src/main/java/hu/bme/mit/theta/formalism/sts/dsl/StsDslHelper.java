@@ -4,6 +4,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static hu.bme.mit.theta.core.decl.Decls.Const;
 import static hu.bme.mit.theta.core.decl.Decls.Param;
 import static hu.bme.mit.theta.core.decl.Decls.Var;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static java.util.stream.Collectors.toList;
 
 import java.util.Collections;
@@ -112,14 +113,13 @@ final class StsDslHelper {
 
 	public static Expr<BoolType> createBoolExpr(final Scope scope, final Assignment assignment,
 			final ExprContext exprCtx) {
-		return TypeUtils.cast(createExpr(scope, assignment, exprCtx), BoolType.class);
+		return TypeUtils.cast(createExpr(scope, assignment, exprCtx), Bool());
 	}
 
 	public static List<Expr<BoolType>> createBoolExprList(final Scope scope, final Assignment assignment,
 			final ExprListContext exprListCtx) {
 		final List<Expr<?>> exprs = createExprList(scope, assignment, exprListCtx);
-		final List<Expr<BoolType>> boolExprs = exprs.stream()
-				.map(e -> (Expr<BoolType>) TypeUtils.cast(e, BoolType.class)).collect(toList());
+		final List<Expr<BoolType>> boolExprs = exprs.stream().map(e -> TypeUtils.cast(e, Bool())).collect(toList());
 		return boolExprs;
 	}
 

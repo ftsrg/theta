@@ -17,6 +17,7 @@ import static hu.bme.mit.theta.core.expr.AbstractExprs.Neq;
 import static hu.bme.mit.theta.core.expr.AbstractExprs.Sub;
 import static hu.bme.mit.theta.core.expr.Exprs.Prime;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Exists;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Forall;
@@ -147,7 +148,7 @@ final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
 	@Override
 	public Expr<?> visitIteExpr(final IteExprContext ctx) {
 		if (ctx.cond != null) {
-			final Expr<BoolType> cond = TypeUtils.cast(ctx.cond.accept(this), BoolType.class);
+			final Expr<BoolType> cond = TypeUtils.cast(ctx.cond.accept(this), Bool());
 			final Expr<?> then = ctx.then.accept(this);
 			final Expr<?> elze = ctx.elze.accept(this);
 			return Ite(cond, then, elze);
@@ -159,8 +160,8 @@ final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
 	@Override
 	public Expr<?> visitIffExpr(final IffExprContext ctx) {
 		if (ctx.rightOp != null) {
-			final Expr<BoolType> leftOp = TypeUtils.cast(ctx.leftOp.accept(this), BoolType.class);
-			final Expr<BoolType> rightOp = TypeUtils.cast(ctx.rightOp.accept(this), BoolType.class);
+			final Expr<BoolType> leftOp = TypeUtils.cast(ctx.leftOp.accept(this), Bool());
+			final Expr<BoolType> rightOp = TypeUtils.cast(ctx.rightOp.accept(this), Bool());
 			return Iff(leftOp, rightOp);
 		} else {
 			return visitChildren(ctx);
@@ -170,8 +171,8 @@ final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
 	@Override
 	public Expr<?> visitImplyExpr(final ImplyExprContext ctx) {
 		if (ctx.rightOp != null) {
-			final Expr<BoolType> leftOp = TypeUtils.cast(ctx.leftOp.accept(this), BoolType.class);
-			final Expr<BoolType> rightOp = TypeUtils.cast(ctx.rightOp.accept(this), BoolType.class);
+			final Expr<BoolType> leftOp = TypeUtils.cast(ctx.leftOp.accept(this), Bool());
+			final Expr<BoolType> rightOp = TypeUtils.cast(ctx.rightOp.accept(this), Bool());
 			return Imply(leftOp, rightOp);
 		} else {
 			return visitChildren(ctx);
@@ -184,7 +185,7 @@ final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
 			final List<ParamDecl<?>> paramDecls = createParamList(ctx.paramDecls);
 
 			push(paramDecls);
-			final Expr<BoolType> op = TypeUtils.cast(ctx.op.accept(this), BoolType.class);
+			final Expr<BoolType> op = TypeUtils.cast(ctx.op.accept(this), Bool());
 			pop();
 
 			return Forall(paramDecls, op);
@@ -199,7 +200,7 @@ final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
 			final List<ParamDecl<?>> paramDecls = createParamList(ctx.paramDecls);
 
 			push(paramDecls);
-			final Expr<BoolType> op = TypeUtils.cast(ctx.op.accept(this), BoolType.class);
+			final Expr<BoolType> op = TypeUtils.cast(ctx.op.accept(this), Bool());
 			pop();
 
 			return Exists(paramDecls, op);
@@ -211,8 +212,7 @@ final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
 	@Override
 	public Expr<?> visitOrExpr(final OrExprContext ctx) {
 		if (ctx.ops.size() > 1) {
-			final Stream<Expr<BoolType>> opStream = ctx.ops.stream()
-					.map(op -> TypeUtils.cast(op.accept(this), BoolType.class));
+			final Stream<Expr<BoolType>> opStream = ctx.ops.stream().map(op -> TypeUtils.cast(op.accept(this), Bool()));
 			final Collection<Expr<BoolType>> ops = opStream.collect(toList());
 			return Or(ops);
 		} else {
@@ -223,8 +223,7 @@ final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
 	@Override
 	public Expr<?> visitAndExpr(final AndExprContext ctx) {
 		if (ctx.ops.size() > 1) {
-			final Stream<Expr<BoolType>> opStream = ctx.ops.stream()
-					.map(op -> TypeUtils.cast(op.accept(this), BoolType.class));
+			final Stream<Expr<BoolType>> opStream = ctx.ops.stream().map(op -> TypeUtils.cast(op.accept(this), Bool()));
 			final Collection<Expr<BoolType>> ops = opStream.collect(toList());
 			return And(ops);
 		} else {
@@ -235,7 +234,7 @@ final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
 	@Override
 	public Expr<?> visitNotExpr(final NotExprContext ctx) {
 		if (ctx.op != null) {
-			final Expr<BoolType> op = TypeUtils.cast(ctx.op.accept(this), BoolType.class);
+			final Expr<BoolType> op = TypeUtils.cast(ctx.op.accept(this), Bool());
 			return Not(op);
 		} else {
 			return visitChildren(ctx);
@@ -265,8 +264,8 @@ final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
 	@Override
 	public Expr<?> visitRelationExpr(final RelationExprContext ctx) {
 		if (ctx.rightOp != null) {
-			final Expr<RatType> leftOp = TypeUtils.cast(ctx.leftOp.accept(this), RatType.class);
-			final Expr<RatType> rightOp = TypeUtils.cast(ctx.rightOp.accept(this), RatType.class);
+			final Expr<RatType> leftOp = TypeUtils.cast(ctx.leftOp.accept(this), Rat());
+			final Expr<RatType> rightOp = TypeUtils.cast(ctx.rightOp.accept(this), Rat());
 
 			switch (ctx.oper.getType()) {
 			case StsDslParser.LT:
@@ -421,26 +420,26 @@ final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
 	}
 
 	private RatDivExpr createRatDivExpr(final Expr<?> uncastLeftOp, final Expr<?> uncastRightOp) {
-		final Expr<RatType> leftOp = TypeUtils.cast(uncastLeftOp, RatType.class);
-		final Expr<RatType> rightOp = TypeUtils.cast(uncastRightOp, RatType.class);
+		final Expr<RatType> leftOp = TypeUtils.cast(uncastLeftOp, Rat());
+		final Expr<RatType> rightOp = TypeUtils.cast(uncastRightOp, Rat());
 		return Div(leftOp, rightOp);
 	}
 
 	private IntDivExpr createIntDivExpr(final Expr<?> uncastLeftOp, final Expr<?> uncastRightOp) {
-		final Expr<IntType> leftOp = TypeUtils.cast(uncastLeftOp, IntType.class);
-		final Expr<IntType> rightOp = TypeUtils.cast(uncastRightOp, IntType.class);
+		final Expr<IntType> leftOp = TypeUtils.cast(uncastLeftOp, Int());
+		final Expr<IntType> rightOp = TypeUtils.cast(uncastRightOp, Int());
 		return Div(leftOp, rightOp);
 	}
 
 	private ModExpr createModExpr(final Expr<?> uncastLeftOp, final Expr<?> uncastRightOp) {
-		final Expr<IntType> leftOp = TypeUtils.cast(uncastLeftOp, IntType.class);
-		final Expr<IntType> rightOp = TypeUtils.cast(uncastRightOp, IntType.class);
+		final Expr<IntType> leftOp = TypeUtils.cast(uncastLeftOp, Int());
+		final Expr<IntType> rightOp = TypeUtils.cast(uncastRightOp, Int());
 		return Mod(leftOp, rightOp);
 	}
 
 	private RemExpr createRemExpr(final Expr<?> uncastLeftOp, final Expr<?> uncastRightOp) {
-		final Expr<IntType> leftOp = TypeUtils.cast(uncastLeftOp, IntType.class);
-		final Expr<IntType> rightOp = TypeUtils.cast(uncastRightOp, IntType.class);
+		final Expr<IntType> leftOp = TypeUtils.cast(uncastLeftOp, Int());
+		final Expr<IntType> rightOp = TypeUtils.cast(uncastRightOp, Int());
 		return Rem(leftOp, rightOp);
 	}
 

@@ -13,6 +13,7 @@ import static hu.bme.mit.theta.core.expr.AbstractExprs.Neq;
 import static hu.bme.mit.theta.core.expr.AbstractExprs.Sub;
 import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Read;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
@@ -261,8 +262,8 @@ final class XtaExpression {
 		}
 
 		private ModExpr createModExpr(final Expr<?> uncastLeftOp, final Expr<?> uncastRightOp) {
-			final Expr<IntType> leftOp = TypeUtils.cast(uncastLeftOp, IntType.class);
-			final Expr<IntType> rightOp = TypeUtils.cast(uncastRightOp, IntType.class);
+			final Expr<IntType> leftOp = TypeUtils.cast(uncastLeftOp, Int());
+			final Expr<IntType> rightOp = TypeUtils.cast(uncastRightOp, Int());
 			return Mod(leftOp, rightOp);
 		}
 
@@ -319,7 +320,7 @@ final class XtaExpression {
 
 				final PrefixOpContext oper = ctx.fOper;
 				if (oper.fLogNotOp != null) {
-					return Not(TypeUtils.cast(op, BoolType.class));
+					return Not(TypeUtils.cast(op, Bool()));
 				} else {
 					// TODO Auto-generated method stub
 					throw new UnsupportedOperationException("TODO: auto-generated method stub");
@@ -352,7 +353,7 @@ final class XtaExpression {
 				return checkNotNull(visitChildren(ctx));
 			} else {
 				final Stream<Expr<BoolType>> opStream = ctx.fOps.stream()
-						.map(op -> TypeUtils.cast(op.accept(this), BoolType.class));
+						.map(op -> TypeUtils.cast(op.accept(this), Bool()));
 				final Collection<Expr<BoolType>> ops = opStream.collect(toList());
 				return And(ops);
 			}

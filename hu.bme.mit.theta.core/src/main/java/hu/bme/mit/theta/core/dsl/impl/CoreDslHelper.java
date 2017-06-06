@@ -2,6 +2,7 @@ package hu.bme.mit.theta.core.dsl.impl;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static hu.bme.mit.theta.core.decl.Decls.Param;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static java.util.stream.Collectors.toList;
 
 import java.util.Collections;
@@ -67,14 +68,12 @@ public final class CoreDslHelper {
 	}
 
 	public static Expr<BoolType> createBoolExpr(final Scope scope, final ExprContext exprCtx) {
-		return TypeUtils.cast(createExpr(scope, exprCtx), BoolType.class);
+		return TypeUtils.cast(createExpr(scope, exprCtx), Bool());
 	}
 
-	public static List<Expr<BoolType>> createBoolExprList(final Scope scope,
-			final ExprListContext exprListCtx) {
+	public static List<Expr<BoolType>> createBoolExprList(final Scope scope, final ExprListContext exprListCtx) {
 		final List<Expr<?>> exprs = createExprList(scope, exprListCtx);
-		final List<Expr<BoolType>> boolExprs = exprs.stream()
-				.map(e -> (Expr<BoolType>) TypeUtils.cast(e, BoolType.class)).collect(toList());
+		final List<Expr<BoolType>> boolExprs = exprs.stream().map(e -> TypeUtils.cast(e, Bool())).collect(toList());
 		return boolExprs;
 	}
 

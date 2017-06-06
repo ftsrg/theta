@@ -25,7 +25,7 @@ final class XtaSync {
 
 	public Label instantiate(final Environment env) {
 		final Expr<?> expr = expression.instantiate(env);
-		final Expr<ChanType> chanExpr = TypeUtils.cast(expr, ChanType.class);
+		final Expr<ChanType> chanExpr = TypeUtils.cast(expr, ChanType.getInstance());
 		if (syncKind == SyncKind.EMIT) {
 			return Label.emit(chanExpr);
 		} else if (syncKind == SyncKind.RECEIVE) {

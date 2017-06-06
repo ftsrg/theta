@@ -1,6 +1,7 @@
 package hu.bme.mit.theta.formalism.xta.dsl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptySet;
 import static java.util.stream.Collectors.toList;
@@ -96,7 +97,7 @@ final class XtaTransition implements Scope {
 		final Collection<Expr<BoolType>> guards;
 		if (guard.isPresent()) {
 			final Expr<?> expr = guard.get().instantiate(env);
-			final Expr<BoolType> guardExpr = TypeUtils.cast(expr, BoolType.class);
+			final Expr<BoolType> guardExpr = TypeUtils.cast(expr, Bool());
 			final Collection<Expr<BoolType>> conjuncts = ExprUtils.getConjuncts(guardExpr);
 			guards = conjuncts.stream().map(e -> e).collect(toList());
 		} else {

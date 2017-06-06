@@ -7,6 +7,7 @@ import static hu.bme.mit.theta.core.expr.AbstractExprs.Leq;
 import static hu.bme.mit.theta.core.expr.AbstractExprs.Lt;
 import static hu.bme.mit.theta.core.expr.Exprs.Ite;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Iff;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Imply;
@@ -96,31 +97,31 @@ public class Z3TermTransformer {
 
 		} else if (term.isNot()) {
 			final com.microsoft.z3.Expr opTerm = term.getArgs()[0];
-			final Expr<BoolType> op = TypeUtils.cast(toExpr(opTerm), BoolType.class);
+			final Expr<BoolType> op = TypeUtils.cast(toExpr(opTerm), Bool());
 			return Not(op);
 
 		} else if (term.isOr()) {
 			final com.microsoft.z3.Expr[] opTerms = term.getArgs();
-			final List<Expr<BoolType>> ops = toExprListOfType(opTerms, BoolType.class);
+			final List<Expr<BoolType>> ops = toExprListOfType(opTerms, Bool());
 			return Or(ops);
 
 		} else if (term.isAnd()) {
 			final com.microsoft.z3.Expr[] opTerms = term.getArgs();
-			final List<Expr<BoolType>> ops = toExprListOfType(opTerms, BoolType.class);
+			final List<Expr<BoolType>> ops = toExprListOfType(opTerms, Bool());
 			return And(ops);
 
 		} else if (term.isImplies()) {
 			final com.microsoft.z3.Expr leftOpTerm = term.getArgs()[0];
 			final com.microsoft.z3.Expr rightOpTerm = term.getArgs()[1];
-			final Expr<BoolType> leftOp = TypeUtils.cast(toExpr(leftOpTerm), BoolType.class);
-			final Expr<BoolType> rightOp = TypeUtils.cast(toExpr(rightOpTerm), BoolType.class);
+			final Expr<BoolType> leftOp = TypeUtils.cast(toExpr(leftOpTerm), Bool());
+			final Expr<BoolType> rightOp = TypeUtils.cast(toExpr(rightOpTerm), Bool());
 			return Imply(leftOp, rightOp);
 
 		} else if (term.isIff()) {
 			final com.microsoft.z3.Expr leftOpTerm = term.getArgs()[0];
 			final com.microsoft.z3.Expr rightOpTerm = term.getArgs()[1];
-			final Expr<BoolType> leftOp = TypeUtils.cast(toExpr(leftOpTerm), BoolType.class);
-			final Expr<BoolType> rightOp = TypeUtils.cast(toExpr(rightOpTerm), BoolType.class);
+			final Expr<BoolType> leftOp = TypeUtils.cast(toExpr(leftOpTerm), Bool());
+			final Expr<BoolType> rightOp = TypeUtils.cast(toExpr(rightOpTerm), Bool());
 			return Iff(leftOp, rightOp);
 
 		} else if (term.isEq()) {
@@ -172,28 +173,28 @@ public class Z3TermTransformer {
 
 		} else if (term.isAdd()) {
 			final com.microsoft.z3.Expr[] opTerms = term.getArgs();
-			final List<Expr<IntType>> ops = toExprListOfType(opTerms, IntType.class);
+			final List<Expr<IntType>> ops = toExprListOfType(opTerms, Int());
 			return Add(ops);
 
 		} else if (term.isMul()) {
 			final com.microsoft.z3.Expr[] opTerms = term.getArgs();
-			final List<Expr<IntType>> ops = toExprListOfType(opTerms, IntType.class);
+			final List<Expr<IntType>> ops = toExprListOfType(opTerms, Int());
 			return Mul(ops);
 
 		} else if (term.isIDiv()) {
 			final com.microsoft.z3.Expr leftOpTerm = term.getArgs()[0];
 			final com.microsoft.z3.Expr rightOpTerm = term.getArgs()[1];
-			final Expr<IntType> leftOp = TypeUtils.cast(toExpr(leftOpTerm), IntType.class);
-			final Expr<IntType> rightOp = TypeUtils.cast(toExpr(rightOpTerm), IntType.class);
+			final Expr<IntType> leftOp = TypeUtils.cast(toExpr(leftOpTerm), Int());
+			final Expr<IntType> rightOp = TypeUtils.cast(toExpr(rightOpTerm), Int());
 			return Div(leftOp, rightOp);
 
 		} else if (term.isITE()) {
 			final com.microsoft.z3.Expr condTerm = term.getArgs()[0];
 			final com.microsoft.z3.Expr thenTerm = term.getArgs()[1];
 			final com.microsoft.z3.Expr elzeTerm = term.getArgs()[2];
-			final Expr<BoolType> cond = TypeUtils.cast(toExpr(condTerm), BoolType.class);
-			final Expr<IntType> then = TypeUtils.cast(toExpr(thenTerm), IntType.class);
-			final Expr<IntType> elze = TypeUtils.cast(toExpr(elzeTerm), IntType.class);
+			final Expr<BoolType> cond = TypeUtils.cast(toExpr(condTerm), Bool());
+			final Expr<IntType> then = TypeUtils.cast(toExpr(thenTerm), Int());
+			final Expr<IntType> elze = TypeUtils.cast(toExpr(elzeTerm), Int());
 			return Ite(cond, then, elze);
 		}
 
@@ -211,12 +212,12 @@ public class Z3TermTransformer {
 
 		} else if (term.isAdd()) {
 			final com.microsoft.z3.Expr[] opTerms = term.getArgs();
-			final List<Expr<RatType>> ops = toExprListOfType(opTerms, RatType.class);
+			final List<Expr<RatType>> ops = toExprListOfType(opTerms, Rat());
 			return Add(ops);
 
 		} else if (term.isMul()) {
 			final com.microsoft.z3.Expr[] opTerms = term.getArgs();
-			final List<Expr<RatType>> ops = toExprListOfType(opTerms, RatType.class);
+			final List<Expr<RatType>> ops = toExprListOfType(opTerms, Rat());
 			return Mul(ops);
 		}
 
@@ -235,11 +236,10 @@ public class Z3TermTransformer {
 		return constDecl.getRef();
 	}
 
-	private <T extends Type> List<Expr<T>> toExprListOfType(final com.microsoft.z3.Expr[] terms,
-			final Class<T> metaType) {
+	private <T extends Type> List<Expr<T>> toExprListOfType(final com.microsoft.z3.Expr[] terms, final T type) {
 		final List<Expr<T>> result = new LinkedList<>();
 		for (final com.microsoft.z3.Expr term : terms) {
-			result.add(TypeUtils.cast(toExpr(term), metaType));
+			result.add(TypeUtils.cast(toExpr(term), type));
 		}
 		return result;
 	}
