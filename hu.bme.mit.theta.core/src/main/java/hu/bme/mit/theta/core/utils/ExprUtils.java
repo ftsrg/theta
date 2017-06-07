@@ -93,7 +93,7 @@ public final class ExprUtils {
 	}
 
 	public static Expr<BoolType> eliminateIte(final Expr<BoolType> expr) {
-		return IteRemover.removeIte(ItePropagator.propagateIte(expr));
+		return IteEliminator.eliminateIte(expr);
 	}
 
 	public static void collectAtoms(final Expr<BoolType> expr, final Collection<Expr<BoolType>> collectTo) {
