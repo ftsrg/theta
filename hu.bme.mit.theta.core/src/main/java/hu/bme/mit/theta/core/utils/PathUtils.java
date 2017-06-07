@@ -132,7 +132,7 @@ public class PathUtils {
 				return unfold(op, offset + 1);
 			}
 
-			return expr.rewrite(op -> unfold(op, offset));
+			return expr.map(op -> unfold(op, offset));
 		}
 	}
 
@@ -161,7 +161,7 @@ public class PathUtils {
 				}
 			}
 
-			return expr.rewrite(this::foldin);
+			return expr.map(this::foldin);
 		}
 	}
 

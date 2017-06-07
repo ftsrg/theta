@@ -28,7 +28,7 @@ final class PrimeApplier {
 			}
 		}
 
-		return expr.rewrite(op -> applyPrimes(op, indexing));
+		return expr.map(op -> applyPrimes(op, indexing));
 	}
 
 }

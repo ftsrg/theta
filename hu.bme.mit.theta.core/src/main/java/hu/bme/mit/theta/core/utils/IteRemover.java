@@ -29,7 +29,7 @@ public final class IteRemover {
 				return expr;
 			}
 		} else {
-			return expr.rewrite(IteRemover::removeIte);
+			return expr.map(IteRemover::removeIte);
 		}
 	}
 

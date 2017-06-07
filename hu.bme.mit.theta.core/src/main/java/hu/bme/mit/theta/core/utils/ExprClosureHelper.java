@@ -32,7 +32,7 @@ public final class ExprClosureHelper {
 			}
 		}
 
-		return expr.rewrite(op -> close(op, mapping));
+		return expr.map(op -> close(op, mapping));
 	}
 
 }

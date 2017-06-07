@@ -138,7 +138,7 @@ public final class ExprSimplifier {
 
 				.addDefault(o -> {
 					final Expr<?> expr = (Expr<?>) o;
-					return expr.rewrite(this::simplify);
+					return expr.map(this::simplify);
 				})
 
 				.build();
