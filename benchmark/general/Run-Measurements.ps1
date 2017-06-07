@@ -166,5 +166,5 @@ if ($rBin -and $rReport) {
     $logFileFullPath = (Get-ChildItem $logFile_t).FullName.Replace("`\", "/")
     $params = @("-e", "`"rmarkdown::render('$rReport', params = list(csv_path = '$logFileFullPath', timeout_ms = $($timeOut * 1000)))`"")
     (Start-Process "$rBin\Rscript.exe" -ArgumentList $params -PassThru -NoNewWindow).WaitForExit()
-    Move-Item -Path $rReport.replace(".Rmd", ".html") -Destination ($logFileFullPath.replace(".csv", "") + ".html")
+    Move-Item -Path $rReport.replace(".Rmd", ".html") -Destination $logFileFullPath.replace(".csv", ".html")
 }
