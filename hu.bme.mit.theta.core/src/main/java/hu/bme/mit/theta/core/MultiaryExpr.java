@@ -2,7 +2,7 @@ package hu.bme.mit.theta.core;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.util.stream.Collectors.toList;
+import static com.google.common.collect.ImmutableList.toImmutableList;
 
 import java.util.List;
 
@@ -37,7 +37,7 @@ public abstract class MultiaryExpr<OpType extends Type, ExprType extends Type> i
 	public final MultiaryExpr<OpType, ExprType> withOps(final List<? extends Expr<?>> ops) {
 		checkNotNull(ops);
 		final OpType opType = getOps().get(0).getType();
-		final List<Expr<OpType>> newOps = ops.stream().map(op -> TypeUtils.cast(op, opType)).collect(toList());
+		final List<Expr<OpType>> newOps = ops.stream().map(op -> TypeUtils.cast(op, opType)).collect(toImmutableList());
 		return with(newOps);
 	}
 

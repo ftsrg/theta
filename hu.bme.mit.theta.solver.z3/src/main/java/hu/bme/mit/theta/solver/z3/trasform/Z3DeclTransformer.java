@@ -35,7 +35,7 @@ final class Z3DeclTransformer {
 		} else if (decl instanceof ParamDecl) {
 			return transformParam((ParamDecl<?>) decl);
 		} else {
-			throw new UnsupportedOperationException();
+			throw new UnsupportedOperationException("Cannot transform declaration: " + decl);
 		}
 	}
 

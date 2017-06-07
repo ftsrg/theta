@@ -15,8 +15,8 @@ public interface Expr<ExprType extends Type> {
 
 	Expr<ExprType> withOps(List<? extends Expr<?>> ops);
 
-	public default <T extends Type> Expr<ExprType> map(final Function<? super Expr<T>, ? extends Expr<T>> function) {
-		return this.withOps(this.getOps().stream().map(op -> op.map(function)).collect(toImmutableList()));
+	public default Expr<ExprType> map(final Function<? super Expr<?>, ? extends Expr<?>> function) {
+		return withOps(getOps().stream().map(op -> function.apply(op)).collect(toImmutableList()));
 	}
 
 }
