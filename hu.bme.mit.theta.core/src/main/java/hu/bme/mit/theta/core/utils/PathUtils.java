@@ -157,7 +157,11 @@ public class PathUtils {
 					final int nPrimes = index - indexing.get(varDecl);
 					checkArgument(nPrimes >= 0);
 					final Expr<T> varRef = varDecl.getRef();
-					return Prime(varRef, nPrimes);
+					if (nPrimes == 0) {
+						return varRef;
+					} else {
+						return Prime(varRef, nPrimes);
+					}
 				}
 			}
 
