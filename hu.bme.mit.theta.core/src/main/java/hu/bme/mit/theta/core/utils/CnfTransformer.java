@@ -20,12 +20,12 @@ import hu.bme.mit.theta.core.type.booltype.ImplyExpr;
 import hu.bme.mit.theta.core.type.booltype.NotExpr;
 import hu.bme.mit.theta.core.type.booltype.OrExpr;
 
-public final class CnfTransformation {
+public final class CnfTransformer {
 
 	private static final String CNFPREFIX = "__CNF";
 	private final CnfTransformationHelper helper;
 
-	public CnfTransformation() {
+	public CnfTransformer() {
 		helper = new CnfTransformationHelper();
 	}
 

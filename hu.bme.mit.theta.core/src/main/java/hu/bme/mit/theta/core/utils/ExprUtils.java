@@ -30,8 +30,8 @@ public final class ExprUtils {
 	private ExprUtils() {
 	}
 
-	public static CnfTransformation createCNFTransformation() {
-		return new CnfTransformation();
+	public static CnfTransformer createCNFTransformation() {
+		return new CnfTransformer();
 	}
 
 	public static Collection<Expr<BoolType>> getConjuncts(final Expr<BoolType> expr) {
