@@ -1,7 +1,5 @@
 package hu.bme.mit.theta.core.type.inttype;
 
-import java.util.Collection;
-
 import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.theta.core.Expr;
@@ -23,7 +21,7 @@ public final class IntExprs {
 		return new IntToRatExpr(op);
 	}
 
-	public static IntAddExpr Add(final Collection<? extends Expr<IntType>> ops) {
+	public static IntAddExpr Add(final Iterable<? extends Expr<IntType>> ops) {
 		return new IntAddExpr(ops);
 	}
 
@@ -35,7 +33,7 @@ public final class IntExprs {
 		return new IntNegExpr(op);
 	}
 
-	public static IntMulExpr Mul(final Collection<? extends Expr<IntType>> ops) {
+	public static IntMulExpr Mul(final Iterable<? extends Expr<IntType>> ops) {
 		return new IntMulExpr(ops);
 	}
 

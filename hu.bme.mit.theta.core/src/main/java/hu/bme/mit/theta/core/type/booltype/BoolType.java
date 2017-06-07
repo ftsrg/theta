@@ -1,8 +1,11 @@
 package hu.bme.mit.theta.core.type.booltype;
 
-import hu.bme.mit.theta.core.Type;
+import hu.bme.mit.theta.core.Expr;
+import hu.bme.mit.theta.core.type.abstracttype.Equational;
+import hu.bme.mit.theta.core.type.abstracttype.NeqExpr;
 
-public final class BoolType implements Type {
+public final class BoolType implements Equational<BoolType> {
+
 	private static final BoolType INSTANCE = new BoolType();
 	private static final int HASH_SEED = 754364;
 	private static final String TYPE_LABEL = "Bool";
@@ -27,6 +30,18 @@ public final class BoolType implements Type {
 	@Override
 	public String toString() {
 		return TYPE_LABEL;
+	}
+
+	////
+
+	@Override
+	public IffExpr Eq(final Expr<BoolType> leftOp, final Expr<BoolType> rightOp) {
+		return BoolExprs.Iff(leftOp, rightOp);
+	}
+
+	@Override
+	public NeqExpr<BoolType> Neq(final Expr<BoolType> leftOp, final Expr<BoolType> rightOp) {
+		throw new UnsupportedOperationException();
 	}
 
 }

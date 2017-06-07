@@ -1,7 +1,5 @@
 package hu.bme.mit.theta.core.type.rattype;
 
-import java.util.Collection;
-
 import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.theta.core.Expr;
@@ -19,7 +17,7 @@ public final class RatExprs {
 		return new RatLitExpr(num, denom);
 	}
 
-	public static RatAddExpr Add(final Collection<? extends Expr<RatType>> ops) {
+	public static RatAddExpr Add(final Iterable<? extends Expr<RatType>> ops) {
 		return new RatAddExpr(ops);
 	}
 
@@ -31,7 +29,7 @@ public final class RatExprs {
 		return new RatNegExpr(op);
 	}
 
-	public static RatMulExpr Mul(final Collection<? extends Expr<RatType>> ops) {
+	public static RatMulExpr Mul(final Iterable<? extends Expr<RatType>> ops) {
 		return new RatMulExpr(ops);
 	}
 

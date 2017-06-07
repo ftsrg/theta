@@ -4,7 +4,7 @@ import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.UnaryExpr;
 
-public abstract class CastExpr<SourceType extends Type, TargetType extends Type>
+public abstract class CastExpr<SourceType extends Castable<SourceType>, TargetType extends Type>
 		extends UnaryExpr<SourceType, TargetType> {
 
 	public CastExpr(final Expr<SourceType> op) {
