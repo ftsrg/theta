@@ -7,16 +7,15 @@ import java.util.function.Function;
 
 public interface Expr<ExprType extends Type> {
 
-	ExprType getType();
-
 	int getArity();
+
+	ExprType getType();
 
 	List<? extends Expr<?>> getOps();
 
 	Expr<ExprType> withOps(List<? extends Expr<?>> ops);
 
-	public default <T extends Type> Expr<ExprType> map(
-			final Function<? super Expr<T>, ? extends Expr<T>> function) {
+	public default <T extends Type> Expr<ExprType> map(final Function<? super Expr<T>, ? extends Expr<T>> function) {
 		return this.withOps(this.getOps().stream().map(op -> op.map(function)).collect(toImmutableList()));
 	}
 

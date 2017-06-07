@@ -66,12 +66,6 @@ public final class ExprSimplifier {
 
 		table = DispatchTable.<Expr<?>>builder()
 
-				// General
-
-				.addCase(RefExpr.class, this::simplifyRef)
-
-				.addCase(IteExpr.class, this::simplifyIte)
-
 				// Boolean
 
 				.addCase(NotExpr.class, this::simplifyNot)
@@ -134,6 +128,12 @@ public final class ExprSimplifier {
 
 				.addCase(IntLtExpr.class, this::simplifyIntLt)
 
+				// General
+
+				.addCase(RefExpr.class, this::simplifyRef)
+
+				.addCase(IteExpr.class, this::simplifyIte)
+
 				// Default
 
 				.addDefault(o -> {
@@ -153,7 +153,13 @@ public final class ExprSimplifier {
 	 * General
 	 */
 
-	private <DeclType extends Type> Expr<DeclType> simplifyRef(final RefExpr<DeclType> expr) {
+	private Expr<?> simplifyRef(final RefExpr<?> expr) {
+		return simplifyGenericRef(expr);
+	}
+
+	// TODO Eliminate helper method once the Java compiler is able to handle
+	// this kind of type inference
+	private <DeclType extends Type> Expr<DeclType> simplifyGenericRef(final RefExpr<DeclType> expr) {
 		final Optional<? extends Expr<DeclType>> eval = assignment.eval(expr.getDecl());
 		if (eval.isPresent()) {
 			return eval.get();
@@ -162,7 +168,13 @@ public final class ExprSimplifier {
 		return expr;
 	}
 
-	private <ExprType extends Type> Expr<ExprType> simplifyIte(final IteExpr<ExprType> expr) {
+	private Expr<?> simplifyIte(final IteExpr<?> expr) {
+		return simplifyGenericIte(expr);
+	}
+
+	// TODO Eliminate helper method once the Java compiler is able to handle
+	// this kind of type inference
+	private <ExprType extends Type> Expr<ExprType> simplifyGenericIte(final IteExpr<ExprType> expr) {
 		final Expr<BoolType> cond = simplify(expr.getCond());
 
 		if (cond instanceof TrueExpr) {

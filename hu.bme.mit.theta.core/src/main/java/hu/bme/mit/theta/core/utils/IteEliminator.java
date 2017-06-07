@@ -57,38 +57,33 @@ final class IteEliminator {
 		}
 	}
 
+	// Push expression below ITE, e.g.: X + ite(C,T,E) + Y => ite(C,X+T+Y,X+E+Y)
 	private static <T extends Type> Expr<T> pushIte(final Expr<T> expr) {
 		if (expr instanceof IteExpr) {
 			return expr;
-		} else {
-			return rewrite(expr, expr.getOps());
 		}
-	}
 
-	// Push expression below ITE, e.g.:
-	// X + ite(C,T,E) + Y => ite(C,X+T+Y,X+E+Y)
-	private static <ExprType extends Type, OpType extends Type> Expr<ExprType> rewrite(final Expr<ExprType> expr,
-			final List<? extends Expr<OpType>> ops) {
+		final List<? extends Expr<?>> ops = expr.getOps();
 
-		// Get the first operand which is an ITE
-		final Optional<? extends Expr<OpType>> optIte = ops.stream().filter(op -> op instanceof IteExpr).findFirst();
+		// Get the first operand that is an ITE
+		final Optional<? extends Expr<?>> optIte = ops.stream().filter(op -> op instanceof IteExpr).findFirst();
 
-		// Nothing to do if the none of the operands are ITE
+		// Nothing to do if none of the operands are ITE
 		if (!optIte.isPresent()) {
 			return expr;
 		}
 
-		final IteExpr<OpType> ite = (IteExpr<OpType>) optIte.get();
+		final IteExpr<?> ite = (IteExpr<?>) optIte.get();
 
 		// Nothing to do if the operand is of bool type
 		if (ite.getType() instanceof BoolType) {
 			return expr;
 		}
 
-		final List<Expr<OpType>> thenOps = new ArrayList<>(ops.size());
-		final List<Expr<OpType>> elseOps = new ArrayList<>(ops.size());
+		final List<Expr<?>> thenOps = new ArrayList<>(ops.size());
+		final List<Expr<?>> elseOps = new ArrayList<>(ops.size());
 
-		for (final Expr<OpType> op : ops) {
+		for (final Expr<?> op : ops) {
 			if (op == ite) {
 				thenOps.add(ite.getThen());
 				elseOps.add(ite.getElse());

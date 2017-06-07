@@ -7,7 +7,6 @@ import java.util.Collection;
 import hu.bme.mit.theta.analysis.expr.refinement.ItpRefutation;
 import hu.bme.mit.theta.analysis.expr.refinement.RefutationToPrec;
 import hu.bme.mit.theta.core.Expr;
-import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
@@ -17,7 +16,7 @@ public class ItpRefToExplPrec implements RefutationToPrec<ExplPrec, ItpRefutatio
 	@Override
 	public ExplPrec toPrec(final ItpRefutation refutation, final int index) {
 		final Expr<BoolType> expr = refutation.get(index);
-		final Collection<VarDecl<? extends Type>> vars = ExprUtils.getVars(expr);
+		final Collection<VarDecl<?>> vars = ExprUtils.getVars(expr);
 		final ExplPrec prec = ExplPrec.create(vars);
 		return prec;
 	}

@@ -62,7 +62,7 @@ public final class IndexedVars {
 			built = false;
 		}
 
-		public void add(final int i, final VarDecl<? extends Type> varDecl) {
+		public void add(final int i, final VarDecl<?> varDecl) {
 			checkState(!built);
 			if (!varSets.containsKey(i)) {
 				varSets.put(i, new HashSet<>());
@@ -70,7 +70,7 @@ public final class IndexedVars {
 			varSets.get(i).add(varDecl);
 		}
 
-		public void add(final int i, final Collection<? extends VarDecl<? extends Type>> varDecls) {
+		public void add(final int i, final Collection<? extends VarDecl<?>> varDecls) {
 			checkState(!built);
 			if (!varSets.containsKey(i)) {
 				varSets.put(i, new HashSet<>());
@@ -78,7 +78,7 @@ public final class IndexedVars {
 			varSets.get(i).addAll(varDecls);
 		}
 
-		public void add(final IndexedConstDecl<? extends Type> indexedConstDecl) {
+		public void add(final IndexedConstDecl<?> indexedConstDecl) {
 			checkState(!built);
 			add(indexedConstDecl.getIndex(), indexedConstDecl.getVarDecl());
 		}
