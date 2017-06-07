@@ -20,7 +20,7 @@ public abstract class MultiaryExpr<OpType extends Type, ExprType extends Type> i
 	protected MultiaryExpr(final Iterable<? extends Expr<OpType>> ops) {
 		checkNotNull(ops);
 		this.ops = ImmutableList.copyOf(ops);
-		checkArgument(this.ops.size() > 1);
+		checkArgument(this.ops.size() > 0);
 	}
 
 	@Override
