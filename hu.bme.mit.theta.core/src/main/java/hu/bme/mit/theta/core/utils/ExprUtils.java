@@ -148,7 +148,7 @@ public final class ExprUtils {
 	}
 
 	public static <T extends Type> Expr<T> close(final Expr<T> expr, final Map<VarDecl<?>, ParamDecl<?>> mapping) {
-		return ExprClosureHelper.close(expr, mapping);
+		return ExprCloser.close(expr, mapping);
 	}
 
 	public static <T extends Type> Expr<T> applyPrimes(final Expr<T> expr, final VarIndexing indexing) {
