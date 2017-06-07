@@ -3,10 +3,10 @@ package hu.bme.mit.theta.core.type.inttype;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 
 import hu.bme.mit.theta.core.Expr;
-import hu.bme.mit.theta.core.UnaryExpr;
+import hu.bme.mit.theta.core.type.abstracttype.CastExpr;
 import hu.bme.mit.theta.core.type.rattype.RatType;
 
-public final class IntToRatExpr extends UnaryExpr<IntType, RatType> {
+public final class IntToRatExpr extends CastExpr<IntType, RatType> {
 
 	private static final int HASH_SEED = 1627;
 	private static final String OPERATOR_LABEL = "ToRat";
