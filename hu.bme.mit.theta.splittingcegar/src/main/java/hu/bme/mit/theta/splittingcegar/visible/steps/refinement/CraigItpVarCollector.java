@@ -5,7 +5,6 @@ import java.util.List;
 
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.core.Expr;
-import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.core.utils.PathUtils;
@@ -29,7 +28,7 @@ public class CraigItpVarCollector extends AbstractCEGARStep implements VarCollec
 	}
 
 	@Override
-	public Collection<VarDecl<? extends Type>> collectVars(final VisibleAbstractSystem system,
+	public Collection<VarDecl<?>> collectVars(final VisibleAbstractSystem system,
 			final List<VisibleAbstractState> abstractCounterEx, final ConcreteTrace concreteTrace) {
 		final int traceLength = concreteTrace.size();
 		assert (traceLength < abstractCounterEx.size());

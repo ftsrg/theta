@@ -9,7 +9,6 @@ import java.util.Set;
 
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.core.Expr;
-import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
@@ -35,7 +34,7 @@ public class SeqItpVarCollector extends AbstractCEGARStep implements VarCollecto
 	}
 
 	@Override
-	public Collection<VarDecl<? extends Type>> collectVars(final VisibleAbstractSystem system,
+	public Collection<VarDecl<?>> collectVars(final VisibleAbstractSystem system,
 			final List<VisibleAbstractState> abstractCounterEx, final ConcreteTrace concreteCounterEx) {
 
 		final ItpSolver itpSolver = solvers.getItpSolver();
@@ -78,7 +77,7 @@ public class SeqItpVarCollector extends AbstractCEGARStep implements VarCollecto
 
 		itpSolver.pop();
 
-		final Set<VarDecl<? extends Type>> vars = new HashSet<>();
+		final Set<VarDecl<?>> vars = new HashSet<>();
 		for (final Expr<BoolType> interpolant : interpolants)
 			ExprUtils.collectVars(interpolant, vars);
 

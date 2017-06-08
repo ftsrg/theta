@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Set;
 
 import hu.bme.mit.theta.core.Expr;
-import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
@@ -25,7 +24,7 @@ public class Cluster {
 						// using setId()
 	}
 
-	public Set<VarDecl<? extends Type>> getVars() {
+	public Set<VarDecl<?>> getVars() {
 		return vars;
 	}
 

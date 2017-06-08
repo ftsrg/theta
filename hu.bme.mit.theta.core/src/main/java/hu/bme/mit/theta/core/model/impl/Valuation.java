@@ -128,7 +128,7 @@ public final class Valuation implements Assignment {
 	}
 
 	public static final class Builder implements Assignment {
-		private final Map<VarDecl<? extends Type>, LitExpr<?>> declToExpr;
+		private final Map<VarDecl<?>, LitExpr<?>> declToExpr;
 		private boolean built;
 
 		private Builder() {
@@ -136,7 +136,7 @@ public final class Valuation implements Assignment {
 			this.built = false;
 		}
 
-		private Builder(final Map<VarDecl<? extends Type>, LitExpr<?>> declToExpr) {
+		private Builder(final Map<VarDecl<?>, LitExpr<?>> declToExpr) {
 			this.declToExpr = new HashMap<>(declToExpr);
 		}
 

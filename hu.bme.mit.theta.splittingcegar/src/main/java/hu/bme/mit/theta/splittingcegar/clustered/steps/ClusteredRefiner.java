@@ -10,7 +10,6 @@ import java.util.Set;
 
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.core.Expr;
-import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.impl.Valuation;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
@@ -86,7 +85,7 @@ public class ClusteredRefiner extends AbstractCEGARStep
 			final List<List<Expr<BoolType>>> compatibility = new ArrayList<>(concreteStates.size());
 
 			// Get variables outside the cluster
-			final Set<VarDecl<? extends Type>> otherVars = new HashSet<>(system.getVars());
+			final Set<VarDecl<?>> otherVars = new HashSet<>(system.getVars());
 			otherVars.removeAll(as.getCluster().getVars());
 
 			// Loop through pairs of states and check if they should be
@@ -361,8 +360,7 @@ public class ClusteredRefiner extends AbstractCEGARStep
 	}
 
 	private boolean checkPair(final ComponentAbstractState as, final Valuation cs0, final Valuation cs1,
-			final List<Valuation> deadEndStates, final Set<VarDecl<? extends Type>> otherVars, final Solver solver,
-			final STS sts) {
+			final List<Valuation> deadEndStates, final Set<VarDecl<?>> otherVars, final Solver solver, final STS sts) {
 
 		// Project the dead-end states and check if they are equal
 		final List<Valuation> proj0 = projectDeadEndStates(as, cs0, deadEndStates, otherVars, solver, sts);
@@ -386,8 +384,7 @@ public class ClusteredRefiner extends AbstractCEGARStep
 	}
 
 	private List<Valuation> projectDeadEndStates(final ComponentAbstractState as, final Valuation cs,
-			final List<Valuation> deadEndStates, final Set<VarDecl<? extends Type>> otherVars, final Solver solver,
-			final STS sts) {
+			final List<Valuation> deadEndStates, final Set<VarDecl<?>> otherVars, final Solver solver, final STS sts) {
 
 		// Example: concrete state: (x=1,y=2)
 		// The dead-end states are: (x=1,y=2,z=3), (x=1,y=3,z=2), (x=1,y=2,z=5)

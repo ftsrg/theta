@@ -5,7 +5,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.util.HashSet;
 import java.util.Set;
 
-import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.formalism.sts.STS;
 
@@ -14,7 +13,7 @@ import hu.bme.mit.theta.formalism.sts.STS;
  */
 public abstract class AbstractSystemBase implements AbstractSystem {
 	protected STS sts;
-	protected Set<VarDecl<? extends Type>> vars;
+	protected Set<VarDecl<?>> vars;
 
 	public AbstractSystemBase(final STS sts) {
 		this.sts = checkNotNull(sts);
@@ -27,7 +26,7 @@ public abstract class AbstractSystemBase implements AbstractSystem {
 	}
 
 	@Override
-	public Set<VarDecl<? extends Type>> getVars() {
+	public Set<VarDecl<?>> getVars() {
 		return vars;
 	}
 }

@@ -49,7 +49,7 @@ public class VarCollectorTest {
 	public Expr<Type> expr;
 
 	@Parameter(value = 1)
-	public Set<VarDecl<? extends Type>> expectedVars;
+	public Set<VarDecl<?>> expectedVars;
 
 	@Parameters
 	public static Collection<Object[]> data() {

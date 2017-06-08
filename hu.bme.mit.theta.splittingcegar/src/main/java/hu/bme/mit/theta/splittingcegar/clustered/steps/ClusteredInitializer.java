@@ -12,7 +12,6 @@ import java.util.Stack;
 
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.core.Expr;
-import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.PathUtils;
@@ -43,7 +42,7 @@ public class ClusteredInitializer extends AbstractCEGARStep implements Initializ
 	public ClusteredAbstractSystem create(final STS concrSys) {
 		checkNotNull(concrSys);
 		logger.write("Variables [" + concrSys.getVars().size() + "]:", 2);
-		for (final VarDecl<? extends Type> varDecl : concrSys.getVars())
+		for (final VarDecl<?> varDecl : concrSys.getVars())
 			logger.write(" " + varDecl.getName(), 3);
 		logger.writeln(2);
 

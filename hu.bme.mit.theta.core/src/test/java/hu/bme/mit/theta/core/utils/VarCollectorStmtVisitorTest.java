@@ -24,7 +24,6 @@ import org.junit.runners.Parameterized.Parameters;
 import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.theta.core.Expr;
-import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.stmt.Stmts;
@@ -53,7 +52,7 @@ public class VarCollectorStmtVisitorTest {
 	public Stmt statement;
 
 	@Parameter(value = 1)
-	public Set<VarDecl<? extends Type>> expectedVars;
+	public Set<VarDecl<?>> expectedVars;
 
 	@Parameters
 	public static Collection<Object[]> data() {
@@ -92,7 +91,7 @@ public class VarCollectorStmtVisitorTest {
 
 	@Test
 	public void test() {
-		final Set<VarDecl<? extends Type>> vars = StmtUtils.getVars(statement);
+		final Set<VarDecl<?>> vars = StmtUtils.getVars(statement);
 		assertEquals(expectedVars, vars);
 	}
 }

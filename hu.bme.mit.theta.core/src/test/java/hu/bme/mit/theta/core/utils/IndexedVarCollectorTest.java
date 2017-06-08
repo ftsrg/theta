@@ -46,7 +46,7 @@ public class IndexedVarCollectorTest {
 	public Expr<Type> expr;
 
 	@Parameter(value = 1)
-	public Map<Integer, Set<VarDecl<? extends Type>>> expectedVars;
+	public Map<Integer, Set<VarDecl<?>>> expectedVars;
 
 	@Parameters
 	public static Collection<Object[]> data() {
@@ -69,7 +69,7 @@ public class IndexedVarCollectorTest {
 
 		Assert.assertEquals(expectedVars.keySet(), actualVars.getNonEmptyIndexes());
 
-		for (final Entry<Integer, Set<VarDecl<? extends Type>>> entry : expectedVars.entrySet()) {
+		for (final Entry<Integer, Set<VarDecl<?>>> entry : expectedVars.entrySet()) {
 			Assert.assertEquals(entry.getValue(), actualVars.getVars(entry.getKey()));
 		}
 

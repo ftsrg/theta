@@ -14,20 +14,19 @@ import java.util.stream.Collectors;
 
 import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.common.ToStringBuilder;
-import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.decl.IndexedConstDecl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 
 public final class IndexedVars {
 
-	Map<Integer, Set<VarDecl<? extends Type>>> varSets;
+	Map<Integer, Set<VarDecl<?>>> varSets;
 
-	private IndexedVars(final Map<Integer, Set<VarDecl<? extends Type>>> varSets) {
+	private IndexedVars(final Map<Integer, Set<VarDecl<?>>> varSets) {
 		this.varSets = varSets;
 	}
 
-	public Set<VarDecl<? extends Type>> getVars(final int index) {
-		Set<VarDecl<? extends Type>> vars = varSets.get(index);
+	public Set<VarDecl<?>> getVars(final int index) {
+		Set<VarDecl<?>> vars = varSets.get(index);
 		if (vars == null) {
 			vars = Collections.emptySet();
 		}
@@ -42,9 +41,8 @@ public final class IndexedVars {
 		return varSets.isEmpty();
 	}
 
-	public Set<VarDecl<? extends Type>> getAllVars() {
-		final Set<VarDecl<? extends Type>> allVars = varSets.values().stream().flatMap(s -> s.stream())
-				.collect(Collectors.toSet());
+	public Set<VarDecl<?>> getAllVars() {
+		final Set<VarDecl<?>> allVars = varSets.values().stream().flatMap(s -> s.stream()).collect(Collectors.toSet());
 		return Collections.unmodifiableSet(allVars);
 	}
 
@@ -54,7 +52,7 @@ public final class IndexedVars {
 
 	public static final class Builder {
 
-		private final Map<Integer, Set<VarDecl<? extends Type>>> varSets;
+		private final Map<Integer, Set<VarDecl<?>>> varSets;
 		private boolean built;
 
 		private Builder() {
@@ -94,7 +92,7 @@ public final class IndexedVars {
 	public String toString() {
 		final ToStringBuilder builder = ObjectUtils.toStringBuilder(getClass().getSimpleName());
 
-		for (final Entry<Integer, Set<VarDecl<? extends Type>>> entry : varSets.entrySet()) {
+		for (final Entry<Integer, Set<VarDecl<?>>> entry : varSets.entrySet()) {
 			final StringJoiner sj = new StringJoiner(", ", entry.getKey() + ": ", "");
 			entry.getValue().forEach(v -> sj.add(v.getName()));
 			builder.add(sj.toString());

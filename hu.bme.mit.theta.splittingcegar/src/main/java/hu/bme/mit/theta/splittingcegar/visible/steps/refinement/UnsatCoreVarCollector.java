@@ -7,7 +7,6 @@ import java.util.Set;
 
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.core.Expr;
-import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
@@ -31,7 +30,7 @@ public class UnsatCoreVarCollector extends AbstractCEGARStep implements VarColle
 	}
 
 	@Override
-	public Collection<VarDecl<? extends Type>> collectVars(final VisibleAbstractSystem system,
+	public Collection<VarDecl<?>> collectVars(final VisibleAbstractSystem system,
 			final List<VisibleAbstractState> abstractCounterEx, final ConcreteTrace concreteCounterEx) {
 
 		final int traceLength = concreteCounterEx.size();
@@ -55,7 +54,7 @@ public class UnsatCoreVarCollector extends AbstractCEGARStep implements VarColle
 
 		assert (solver.getStatus() == SolverStatus.UNSAT);
 
-		final Set<VarDecl<? extends Type>> vars = new HashSet<>();
+		final Set<VarDecl<?>> vars = new HashSet<>();
 
 		for (final Expr<BoolType> uc : solver.getUnsatCore())
 			ExprUtils.collectVars(PathUtils.foldin(uc, 0), vars);

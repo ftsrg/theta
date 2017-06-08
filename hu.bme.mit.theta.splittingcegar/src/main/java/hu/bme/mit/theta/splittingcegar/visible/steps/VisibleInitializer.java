@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import hu.bme.mit.theta.common.logging.Logger;
-import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.formalism.sts.STS;
@@ -30,7 +29,7 @@ public class VisibleInitializer extends AbstractCEGARStep implements Initializer
 	@Override
 	public VisibleAbstractSystem create(STS concrSys) {
 		logger.write("Variables [" + concrSys.getVars().size() + "]:", 2);
-		for (final VarDecl<? extends Type> varDecl : concrSys.getVars())
+		for (final VarDecl<?> varDecl : concrSys.getVars())
 			logger.write(" " + varDecl.getName(), 3);
 		logger.writeln(2);
 
@@ -40,19 +39,19 @@ public class VisibleInitializer extends AbstractCEGARStep implements Initializer
 		concrSys = new StsIteTransformation().transform(concrSys);
 		logger.writeln("done.", 3);
 
-		final List<VarDecl<? extends Type>> visibleVars = new ArrayList<>();
-		final List<VarDecl<? extends Type>> invisibleVars = new ArrayList<>(concrSys.getVars()); // First
-																									// assume
-																									// that
-																									// each
-																									// variable
-																									// is
-																									// invisible
-		final List<VarDecl<? extends Type>> cnfVars = new ArrayList<>();
-		final List<VarDecl<? extends Type>> nonCnfVars = new ArrayList<>(concrSys.getVars());
+		final List<VarDecl<?>> visibleVars = new ArrayList<>();
+		final List<VarDecl<?>> invisibleVars = new ArrayList<>(concrSys.getVars()); // First
+																					// assume
+																					// that
+																					// each
+																					// variable
+																					// is
+																					// invisible
+		final List<VarDecl<?>> cnfVars = new ArrayList<>();
+		final List<VarDecl<?>> nonCnfVars = new ArrayList<>(concrSys.getVars());
 
 		// Then make variables appearing in the specification visible
-		for (final VarDecl<? extends Type> varDec : ExprUtils.getVars(concrSys.getProp()))
+		for (final VarDecl<?> varDec : ExprUtils.getVars(concrSys.getProp()))
 			if (!visibleVars.contains(varDec)) {
 				invisibleVars.remove(varDec);
 				visibleVars.add(varDec);
@@ -61,7 +60,7 @@ public class VisibleInitializer extends AbstractCEGARStep implements Initializer
 		assert (visibleVars.size() + invisibleVars.size() == concrSys.getVars().size());
 		// Print visible variables
 		logger.write("Visible variables [" + visibleVars.size() + "]:", 2);
-		for (final VarDecl<? extends Type> varDec : visibleVars)
+		for (final VarDecl<?> varDec : visibleVars)
 			logger.write(" " + varDec.getName(), 2);
 		logger.writeln(2);
 
@@ -70,7 +69,7 @@ public class VisibleInitializer extends AbstractCEGARStep implements Initializer
 			logger.write("Transforming constraints to CNF...", 3);
 			concrSys = new StsCnfTransformation().transform(concrSys);
 			// Collect the new helper variables
-			for (final VarDecl<? extends Type> varDecl : concrSys.getVars()) {
+			for (final VarDecl<?> varDecl : concrSys.getVars()) {
 				if (!nonCnfVars.contains(varDecl))
 					cnfVars.add(varDecl);
 			}

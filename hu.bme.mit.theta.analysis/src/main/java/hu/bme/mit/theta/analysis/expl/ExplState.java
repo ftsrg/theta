@@ -62,7 +62,7 @@ public final class ExplState implements ExprState, Assignment {
 		if (that.getDecls().size() > this.getDecls().size()) {
 			return false;
 		}
-		for (final VarDecl<? extends Type> varDecl : that.getDecls()) {
+		for (final VarDecl<?> varDecl : that.getDecls()) {
 			if (!this.getDecls().contains(varDecl) || !that.getValue(varDecl).equals(this.getValue(varDecl))) {
 				return false;
 			}
@@ -98,7 +98,7 @@ public final class ExplState implements ExprState, Assignment {
 	@Override
 	public String toString() {
 		final ToStringBuilder builder = ObjectUtils.toStringBuilder(getClass().getSimpleName());
-		for (final VarDecl<? extends Type> varDecl : values.getDecls()) {
+		for (final VarDecl<?> varDecl : values.getDecls()) {
 			builder.add(varDecl.getName() + " = " + getValue(varDecl));
 		}
 		return builder.toString();

@@ -1,6 +1,5 @@
 package hu.bme.mit.theta.splittingcegar.clustered.steps.clustering;
 
-import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.splittingcegar.clustered.data.Cluster;
 
@@ -19,7 +18,7 @@ public class ClusterNode {
 	 * @param vd
 	 *            Variable declaration
 	 */
-	public ClusterNode(final VarDecl<? extends Type> vd) {
+	public ClusterNode(final VarDecl<?> vd) {
 		this.cluster = new Cluster();
 		this.cluster.getVars().add(vd);
 		this.parent = null;

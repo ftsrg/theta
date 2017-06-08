@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.BlockStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
@@ -26,14 +25,14 @@ public final class StmtUtils {
 		}
 	}
 
-	public static Set<VarDecl<? extends Type>> getVars(final Stmt stmt) {
-		final Set<VarDecl<? extends Type>> vars = new HashSet<>();
+	public static Set<VarDecl<?>> getVars(final Stmt stmt) {
+		final Set<VarDecl<?>> vars = new HashSet<>();
 		stmt.accept(VarCollectorStmtVisitor.getInstance(), vars);
 		return vars;
 	}
 
-	public static Set<VarDecl<? extends Type>> getVars(final Iterable<? extends Stmt> stmts) {
-		final Set<VarDecl<? extends Type>> vars = new HashSet<>();
+	public static Set<VarDecl<?>> getVars(final Iterable<? extends Stmt> stmts) {
+		final Set<VarDecl<?>> vars = new HashSet<>();
 		for (final Stmt stmt : stmts) {
 			vars.addAll(getVars(stmt));
 		}

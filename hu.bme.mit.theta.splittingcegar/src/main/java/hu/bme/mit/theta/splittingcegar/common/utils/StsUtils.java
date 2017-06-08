@@ -61,7 +61,7 @@ public class StsUtils {
 	 * some default value.
 	 */
 	public static List<Valuation> extractTrace(final Model model, final int length,
-			final Collection<VarDecl<? extends Type>> variables) {
+			final Collection<VarDecl<?>> variables) {
 		final List<Valuation> trace = new ArrayList<>(length);
 		for (int i = 0; i < length; ++i)
 			trace.add(getConcreteState(model, i, variables));

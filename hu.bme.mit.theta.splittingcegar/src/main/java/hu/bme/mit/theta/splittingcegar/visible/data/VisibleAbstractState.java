@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import hu.bme.mit.theta.core.Expr;
-import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.impl.Valuation;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
@@ -85,7 +84,7 @@ public class VisibleAbstractState implements AbstractState {
 
 	public String createId() {
 		final StringBuilder ret = new StringBuilder("");
-		for (final VarDecl<? extends Type> varDecl : valuation.getDecls())
+		for (final VarDecl<?> varDecl : valuation.getDecls())
 			ret.append(valuation.eval(varDecl).get()).append(" ");
 		return ret.toString();
 	}

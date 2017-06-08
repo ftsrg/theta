@@ -6,14 +6,13 @@ import java.util.Collection;
 
 import hu.bme.mit.theta.analysis.expr.refinement.RefutationToPrec;
 import hu.bme.mit.theta.analysis.expr.refinement.VarsRefutation;
-import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.decl.VarDecl;
 
 public class VarsRefToExplPrec implements RefutationToPrec<ExplPrec, VarsRefutation> {
 
 	@Override
 	public ExplPrec toPrec(final VarsRefutation refutation, final int index) {
-		final Collection<VarDecl<? extends Type>> vars = refutation.getVarSets().getVars(index);
+		final Collection<VarDecl<?>> vars = refutation.getVarSets().getVars(index);
 		final ExplPrec prec = ExplPrec.create(vars);
 		return prec;
 	}

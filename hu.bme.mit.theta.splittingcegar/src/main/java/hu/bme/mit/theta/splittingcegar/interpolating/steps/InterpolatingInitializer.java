@@ -14,7 +14,6 @@ import java.util.Stack;
 
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.core.Expr;
-import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.impl.Valuation;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
@@ -54,11 +53,11 @@ public class InterpolatingInitializer extends AbstractCEGARStep implements Initi
 	@Override
 	public InterpolatedAbstractSystem create(STS concrSys) {
 
-		final Map<String, VarDecl<? extends Type>> varMap = new HashMap<>();
-		final Set<VarDecl<? extends Type>> explicitVars = new HashSet<>();
+		final Map<String, VarDecl<?>> varMap = new HashMap<>();
+		final Set<VarDecl<?>> explicitVars = new HashSet<>();
 
 		logger.write("Variables [" + concrSys.getVars().size() + "]:", 2);
-		for (final VarDecl<? extends Type> varDecl : concrSys.getVars()) {
+		for (final VarDecl<?> varDecl : concrSys.getVars()) {
 			logger.write(" " + varDecl.getName(), 3);
 			varMap.put(varDecl.getName(), varDecl);
 		}
@@ -115,12 +114,12 @@ public class InterpolatingInitializer extends AbstractCEGARStep implements Initi
 		logger.writeln("done.", 3);
 
 		// Apply CNF transformation if needed
-		final List<VarDecl<? extends Type>> cnfVariables = new ArrayList<>();
-		final List<VarDecl<? extends Type>> nonCnfVariables = new ArrayList<>(concrSys.getVars());
+		final List<VarDecl<?>> cnfVariables = new ArrayList<>();
+		final List<VarDecl<?>> nonCnfVariables = new ArrayList<>(concrSys.getVars());
 		if (useCNFTransformation) {
 			logger.write("Transforming constraints to CNF...", 3);
 			concrSys = new StsCnfTransformation().transform(concrSys);
-			for (final VarDecl<? extends Type> varDecl : concrSys.getVars()) {
+			for (final VarDecl<?> varDecl : concrSys.getVars()) {
 				if (!nonCnfVariables.contains(varDecl))
 					cnfVariables.add(varDecl);
 			}

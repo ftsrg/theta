@@ -59,19 +59,18 @@ public final class ExprUtils {
 		expr.getOps().forEach(op -> collectVars(op, collectTo));
 	}
 
-	public static void collectVars(final Iterable<? extends Expr<?>> exprs,
-			final Collection<VarDecl<? extends Type>> collectTo) {
+	public static void collectVars(final Iterable<? extends Expr<?>> exprs, final Collection<VarDecl<?>> collectTo) {
 		exprs.forEach(e -> collectVars(e, collectTo));
 	}
 
 	public static Set<VarDecl<?>> getVars(final Expr<?> expr) {
-		final Set<VarDecl<? extends Type>> vars = new HashSet<>();
+		final Set<VarDecl<?>> vars = new HashSet<>();
 		collectVars(expr, vars);
 		return vars;
 	}
 
-	public static Set<VarDecl<? extends Type>> getVars(final Iterable<? extends Expr<?>> exprs) {
-		final Set<VarDecl<? extends Type>> vars = new HashSet<>();
+	public static Set<VarDecl<?>> getVars(final Iterable<? extends Expr<?>> exprs) {
+		final Set<VarDecl<?>> vars = new HashSet<>();
 		collectVars(exprs, vars);
 		return vars;
 	}

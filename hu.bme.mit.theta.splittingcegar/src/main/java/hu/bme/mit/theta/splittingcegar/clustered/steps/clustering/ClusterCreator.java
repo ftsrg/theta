@@ -7,7 +7,6 @@ import java.util.Map;
 import java.util.Set;
 
 import hu.bme.mit.theta.core.Expr;
-import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
@@ -51,7 +50,7 @@ public class ClusterCreator {
 		// Return only the top-level clusters
 		final List<Cluster> ret = new ArrayList<>();
 		int nextId = 0;
-		for (final VarDecl<? extends Type> var : variables) {
+		for (final VarDecl<?> var : variables) {
 			final ClusterNode cn = clusters.get(var);
 			if (cn.getParent() == null) {
 				cn.getCluster().setId(nextId++);

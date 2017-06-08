@@ -84,9 +84,9 @@ public class PathUtils {
 	}
 
 	public static Valuation extractValuation(final Model model, final VarIndexing indexing,
-			final Collection<? extends VarDecl<? extends Type>> varDecls) {
+			final Collection<? extends VarDecl<?>> varDecls) {
 		final Valuation.Builder builder = Valuation.builder();
-		for (final VarDecl<? extends Type> varDecl : varDecls) {
+		for (final VarDecl<?> varDecl : varDecls) {
 			final int index = indexing.get(varDecl);
 			final IndexedConstDecl<?> constDecl = varDecl.getConstDecl(index);
 			final Optional<? extends LitExpr<?>> eval = model.eval(constDecl);
@@ -98,7 +98,7 @@ public class PathUtils {
 	}
 
 	public static Valuation extractValuation(final Model model, final int i,
-			final Collection<? extends VarDecl<? extends Type>> varDecls) {
+			final Collection<? extends VarDecl<?>> varDecls) {
 		checkArgument(i >= 0);
 		return extractValuation(model, VarIndexing.all(i), varDecls);
 	}
