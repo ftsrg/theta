@@ -64,7 +64,7 @@ public class VarCollectorTest {
 
 	@Test
 	public void test() {
-		final Set<VarDecl<? extends Type>> vars = ExprUtils.getVars(expr);
+		final Set<VarDecl<?>> vars = ExprUtils.getVars(expr);
 		assertEquals(expectedVars, vars);
 	}
 
