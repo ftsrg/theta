@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.frontend.benchmark.xta;
+package hu.bme.mit.theta.tools.xta;
 
 import java.io.FileInputStream;
 import java.io.InputStream;

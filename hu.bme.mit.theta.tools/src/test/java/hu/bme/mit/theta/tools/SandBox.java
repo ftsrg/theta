@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.frontend.benchmark;
+package hu.bme.mit.theta.tools;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -13,13 +13,14 @@ import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.formalism.sts.dsl.StsDslManager;
 import hu.bme.mit.theta.formalism.sts.dsl.StsSpec;
 import hu.bme.mit.theta.formalism.sts.utils.impl.StsIteTransformation;
-import hu.bme.mit.theta.frontend.benchmark.ConfigurationBuilder.Domain;
-import hu.bme.mit.theta.frontend.benchmark.ConfigurationBuilder.PredSplit;
-import hu.bme.mit.theta.frontend.benchmark.ConfigurationBuilder.Refinement;
-import hu.bme.mit.theta.frontend.benchmark.ConfigurationBuilder.Search;
-import hu.bme.mit.theta.frontend.benchmark.sts.StsConfigurationBuilder;
-import hu.bme.mit.theta.frontend.benchmark.sts.StsConfigurationBuilder.InitPrec;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
+import hu.bme.mit.theta.tools.Configuration;
+import hu.bme.mit.theta.tools.ConfigurationBuilder.Domain;
+import hu.bme.mit.theta.tools.ConfigurationBuilder.PredSplit;
+import hu.bme.mit.theta.tools.ConfigurationBuilder.Refinement;
+import hu.bme.mit.theta.tools.ConfigurationBuilder.Search;
+import hu.bme.mit.theta.tools.sts.StsConfigurationBuilder;
+import hu.bme.mit.theta.tools.sts.StsConfigurationBuilder.InitPrec;
 
 public class SandBox {
 	public static void main(final String[] args) throws FileNotFoundException, IOException {

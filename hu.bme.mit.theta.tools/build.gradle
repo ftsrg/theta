@@ -34,7 +34,7 @@ task stsMain(type: ShadowJar) {
     //exclude('META-INF/INDEX.LIST', 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA')
     //classifier = 'fat'
     //mergeServiceFiles()
-    manifest { attributes 'Main-Class': 'hu.bme.mit.theta.frontend.benchmark.sts.StsMain' }
+    manifest { attributes 'Main-Class': 'hu.bme.mit.theta.tools.sts.StsMain' }
     baseName = 'theta-sts'
     classifier = null
     version = null
@@ -56,7 +56,7 @@ task xtaMain(type: ShadowJar) {
     //exclude('META-INF/INDEX.LIST', 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA')
     //classifier = 'fat'
     //mergeServiceFiles()
-    manifest { attributes 'Main-Class': 'hu.bme.mit.theta.frontend.benchmark.xta.XtaMain' }
+    manifest { attributes 'Main-Class': 'hu.bme.mit.theta.tools.xta.XtaMain' }
     baseName = 'theta-xta'
     classifier = null
     version = null

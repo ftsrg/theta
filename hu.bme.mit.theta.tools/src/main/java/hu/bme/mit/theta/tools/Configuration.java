@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.frontend.benchmark;
+package hu.bme.mit.theta.tools;
 
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Prec;

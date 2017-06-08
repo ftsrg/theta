@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.frontend.benchmark.sts;
+package hu.bme.mit.theta.tools.sts;
 
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 
@@ -47,10 +47,10 @@ import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.formalism.sts.STS;
-import hu.bme.mit.theta.frontend.benchmark.Configuration;
-import hu.bme.mit.theta.frontend.benchmark.ConfigurationBuilder;
 import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.solver.SolverFactory;
+import hu.bme.mit.theta.tools.Configuration;
+import hu.bme.mit.theta.tools.ConfigurationBuilder;
 
 public final class StsConfigurationBuilder extends ConfigurationBuilder {
 

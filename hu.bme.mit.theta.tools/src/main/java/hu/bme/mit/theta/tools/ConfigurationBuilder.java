@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.frontend.benchmark;
+package hu.bme.mit.theta.tools;
 
 import hu.bme.mit.theta.analysis.algorithm.ArgNodeComparators;
 import hu.bme.mit.theta.analysis.algorithm.ArgNodeComparators.ArgNodeComparator;

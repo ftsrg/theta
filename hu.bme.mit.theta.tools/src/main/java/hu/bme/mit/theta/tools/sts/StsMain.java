@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.frontend.benchmark.sts;
+package hu.bme.mit.theta.tools.sts;
 
 /**
  * A command line interface for running a CEGAR configuration on an STS. The
@@ -34,12 +34,12 @@ import hu.bme.mit.theta.formalism.sts.dsl.StsDslManager;
 import hu.bme.mit.theta.formalism.sts.dsl.StsSpec;
 import hu.bme.mit.theta.formalism.sts.utils.impl.StsIteTransformation;
 import hu.bme.mit.theta.frontend.aiger.impl.AigerParserSimple;
-import hu.bme.mit.theta.frontend.benchmark.Configuration;
-import hu.bme.mit.theta.frontend.benchmark.ConfigurationBuilder.Domain;
-import hu.bme.mit.theta.frontend.benchmark.ConfigurationBuilder.PredSplit;
-import hu.bme.mit.theta.frontend.benchmark.ConfigurationBuilder.Refinement;
-import hu.bme.mit.theta.frontend.benchmark.ConfigurationBuilder.Search;
-import hu.bme.mit.theta.frontend.benchmark.sts.StsConfigurationBuilder.InitPrec;
+import hu.bme.mit.theta.tools.Configuration;
+import hu.bme.mit.theta.tools.ConfigurationBuilder.Domain;
+import hu.bme.mit.theta.tools.ConfigurationBuilder.PredSplit;
+import hu.bme.mit.theta.tools.ConfigurationBuilder.Refinement;
+import hu.bme.mit.theta.tools.ConfigurationBuilder.Search;
+import hu.bme.mit.theta.tools.sts.StsConfigurationBuilder.InitPrec;
 
 public class StsMain {
 
