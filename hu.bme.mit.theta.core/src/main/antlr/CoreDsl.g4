@@ -122,7 +122,7 @@ additiveExpr
 	;
 	
 multiplicativeExpr
-	:	ops+=negExpr (opers+=(MUL | RDIV | IDIV | MOD | REM) ops+=negExpr)*
+	:	ops+=negExpr (opers+=(MUL | DIV | MOD | REM) ops+=negExpr)*
 	;
 	
 negExpr
@@ -248,10 +248,7 @@ MINUS
 MUL	:	'*'
 	;
 	
-RDIV:	'/'
-	;
-	
-IDIV:	'div'
+DIV	:	'/'
 	;
 	
 MOD	:	'mod'

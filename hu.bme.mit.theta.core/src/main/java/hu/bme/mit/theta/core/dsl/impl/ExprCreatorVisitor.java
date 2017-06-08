@@ -6,6 +6,7 @@ import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.common.Utils.singleElementOf;
 import static hu.bme.mit.theta.core.decl.Decls.Param;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Div;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Geq;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Gt;
@@ -27,11 +28,9 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Imply;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Div;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Mod;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Rem;
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Div;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 import static java.util.stream.Collectors.toList;
 
@@ -80,6 +79,7 @@ import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.RatLitExprContext;
 import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.RelationExprContext;
 import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.TrueExprContext;
 import hu.bme.mit.theta.core.type.abstracttype.AddExpr;
+import hu.bme.mit.theta.core.type.abstracttype.DivExpr;
 import hu.bme.mit.theta.core.type.abstracttype.MulExpr;
 import hu.bme.mit.theta.core.type.abstracttype.SubExpr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
@@ -87,14 +87,11 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.FalseExpr;
 import hu.bme.mit.theta.core.type.booltype.TrueExpr;
 import hu.bme.mit.theta.core.type.functype.FuncExprs;
-import hu.bme.mit.theta.core.type.inttype.IntDivExpr;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.type.inttype.ModExpr;
 import hu.bme.mit.theta.core.type.inttype.RemExpr;
-import hu.bme.mit.theta.core.type.rattype.RatDivExpr;
 import hu.bme.mit.theta.core.type.rattype.RatLitExpr;
-import hu.bme.mit.theta.core.type.rattype.RatType;
 import hu.bme.mit.theta.core.utils.TypeUtils;
 
 public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
@@ -403,11 +400,8 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
 		case CoreDslParser.MUL:
 			return createMulExpr(leftOp, rightOp);
 
-		case CoreDslParser.RDIV:
-			return createRatDivExpr(leftOp, rightOp);
-
-		case CoreDslParser.IDIV:
-			return createIntDivExpr(leftOp, rightOp);
+		case CoreDslParser.DIV:
+			return createDivExpr(leftOp, rightOp);
 
 		case CoreDslParser.MOD:
 			return createModExpr(leftOp, rightOp);
@@ -430,15 +424,7 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
 		}
 	}
 
-	private RatDivExpr createRatDivExpr(final Expr<?> uncastLeftOp, final Expr<?> uncastRightOp) {
-		final Expr<RatType> leftOp = TypeUtils.cast(uncastLeftOp, Rat());
-		final Expr<RatType> rightOp = TypeUtils.cast(uncastRightOp, Rat());
-		return Div(leftOp, rightOp);
-	}
-
-	private IntDivExpr createIntDivExpr(final Expr<?> uncastLeftOp, final Expr<?> uncastRightOp) {
-		final Expr<IntType> leftOp = TypeUtils.cast(uncastLeftOp, Int());
-		final Expr<IntType> rightOp = TypeUtils.cast(uncastRightOp, Int());
+	private DivExpr<?> createDivExpr(final Expr<?> leftOp, final Expr<?> rightOp) {
 		return Div(leftOp, rightOp);
 	}
 

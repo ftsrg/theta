@@ -64,7 +64,7 @@ public class DslTest {
 
 				{ "1 * 2 * 3 /= 4 - 1", Neq(Mul(Int(1), Int(2), Int(3)), Sub(Int(4), Int(1))), null },
 
-				{ "(1 div 2) <= 4 / 5", Leq(Div(Int(1), Int(2)), Div(Int(4), Int(5))), null },
+				{ "(1 mod 2) <= 4 / 5", Leq(Mod(Int(1), Int(2)), Div(Int(4), Int(5))), null },
 
 				{ "if 1 >= 2 then 1 rem 2 else 3 mod 5",
 						Ite(Geq(Int(1), Int(2)), Rem(Int(1), Int(2)), Mod(Int(3), Int(5))), null },
