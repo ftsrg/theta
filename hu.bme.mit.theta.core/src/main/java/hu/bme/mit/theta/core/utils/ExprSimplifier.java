@@ -40,6 +40,7 @@ import hu.bme.mit.theta.core.type.inttype.IntMulExpr;
 import hu.bme.mit.theta.core.type.inttype.IntNegExpr;
 import hu.bme.mit.theta.core.type.inttype.IntNeqExpr;
 import hu.bme.mit.theta.core.type.inttype.IntSubExpr;
+import hu.bme.mit.theta.core.type.inttype.IntToRatExpr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.type.inttype.ModExpr;
 import hu.bme.mit.theta.core.type.rattype.RatAddExpr;
@@ -103,6 +104,8 @@ public final class ExprSimplifier {
 				.addCase(RatLtExpr.class, this::simplifyRatLt)
 
 				// Integer
+
+				.addCase(IntToRatExpr.class, this::simplifyIntToRat)
 
 				.addCase(IntAddExpr.class, this::simplifyIntAdd)
 
@@ -545,6 +548,17 @@ public final class ExprSimplifier {
 	/*
 	 * Integers
 	 */
+
+	private Expr<RatType> simplifyIntToRat(final IntToRatExpr expr) {
+		final Expr<IntType> op = simplify(expr.getOp());
+
+		if (op instanceof IntLitExpr) {
+			final IntLitExpr litOp = (IntLitExpr) op;
+			return litOp.toRat();
+		}
+
+		return expr.with(op);
+	}
 
 	private Expr<IntType> simplifyIntAdd(final IntAddExpr expr) {
 		final List<Expr<IntType>> ops = new ArrayList<>();

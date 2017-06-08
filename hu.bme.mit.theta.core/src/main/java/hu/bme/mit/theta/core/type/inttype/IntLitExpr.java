@@ -13,7 +13,6 @@ public final class IntLitExpr extends NullaryExpr<IntType> implements LitExpr<In
 	private volatile int hashCode = 0;
 
 	private final int value;
-	private volatile RatLitExpr ratLitExpr = null;
 
 	IntLitExpr(final int value) {
 		this.value = value;
@@ -23,18 +22,13 @@ public final class IntLitExpr extends NullaryExpr<IntType> implements LitExpr<In
 		return value;
 	}
 
-	public RatLitExpr toRatLit() {
-		RatLitExpr result = ratLitExpr;
-		if (result == null) {
-			result = Rat(value, 1);
-			ratLitExpr = result;
-		}
-		return result;
-	}
-
 	@Override
 	public IntType getType() {
 		return Int();
+	}
+
+	public RatLitExpr toRat() {
+		return Rat(this.value, 1);
 	}
 
 	public IntLitExpr add(final IntLitExpr that) {

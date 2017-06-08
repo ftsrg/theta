@@ -19,14 +19,15 @@ import hu.bme.mit.theta.core.type.booltype.AndExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.FalseExpr;
 import hu.bme.mit.theta.core.type.booltype.TrueExpr;
-import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.type.rattype.RatEqExpr;
 import hu.bme.mit.theta.core.type.rattype.RatGeqExpr;
 import hu.bme.mit.theta.core.type.rattype.RatGtExpr;
 import hu.bme.mit.theta.core.type.rattype.RatLeqExpr;
+import hu.bme.mit.theta.core.type.rattype.RatLitExpr;
 import hu.bme.mit.theta.core.type.rattype.RatLtExpr;
 import hu.bme.mit.theta.core.type.rattype.RatSubExpr;
 import hu.bme.mit.theta.core.type.rattype.RatType;
+import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.core.utils.TypeUtils;
 
 public final class ClockConstrs {
@@ -271,12 +272,14 @@ public final class ClockConstrs {
 		}
 
 		private static int extractConstrRhs(final BinaryExpr<?, BoolType> expr) {
-			final Expr<?> rightOp = expr.getRightOp();
+			final Expr<?> rightOp = ExprUtils.simplify(expr.getRightOp());
 
-			if (rightOp instanceof IntLitExpr) {
-				final IntLitExpr intLitExpr = (IntLitExpr) rightOp;
-				final long value = intLitExpr.getValue();
-				return Math.toIntExact(value);
+			if (rightOp instanceof RatLitExpr) {
+				final RatLitExpr ratLit = (RatLitExpr) rightOp;
+				if (ratLit.getDenom() == 1) {
+					final int num = ratLit.getNum();
+					return num;
+				}
 			}
 
 			throw new IllegalArgumentException();
