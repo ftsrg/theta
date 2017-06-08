@@ -176,7 +176,9 @@ There are **`r n_rows_exception`** exceptions.
 
 ```{r}
 if (n_rows_exception > 0) {
-  knitr::kable(d_exceptions %>% group_by(Type = Safe) %>% summarise(Count = n()))
+  knitr::kable(d_exceptions %>%
+                 group_by(Type = Safe) %>%
+                 summarise(Configs = toString(unique(Config)), Count = n()))
 }
 ```
 

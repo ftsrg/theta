@@ -8,6 +8,7 @@ import java.util.function.Function;
 
 import hu.bme.mit.theta.analysis.expr.refinement.ItpRefutation;
 import hu.bme.mit.theta.analysis.expr.refinement.RefutationToPrec;
+import hu.bme.mit.theta.analysis.pred.ExprSplitters.ExprSplitter;
 import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
@@ -16,10 +17,9 @@ import hu.bme.mit.theta.solver.Solver;
 public class ItpRefToSimplePredPrec implements RefutationToPrec<SimplePredPrec, ItpRefutation> {
 
 	private final Solver solver;
-	private final Function<Expr<BoolType>, Collection<Expr<BoolType>>> exprSplitter;
+	private final ExprSplitter exprSplitter;
 
-	public ItpRefToSimplePredPrec(final Solver solver,
-			final Function<Expr<BoolType>, Collection<Expr<BoolType>>> exprSplitter) {
+	public ItpRefToSimplePredPrec(final Solver solver, final ExprSplitter exprSplitter) {
 		this.solver = checkNotNull(solver);
 		this.exprSplitter = checkNotNull(exprSplitter);
 	}
@@ -41,7 +41,8 @@ public class ItpRefToSimplePredPrec implements RefutationToPrec<SimplePredPrec, 
 
 	@Override
 	public String toString() {
-		return getClass().getSimpleName(); // TODO: splitting strategy should be included
+		return getClass().getSimpleName(); // TODO: splitting strategy should be
+											// included
 	}
 
 	public static Function<Expr<BoolType>, Collection<Expr<BoolType>>> whole() {

@@ -97,17 +97,6 @@ d$Search <- factor(d$Search)
 d$PredSplit[is.na(d$PredSplit)] <- "_"
 d$PredSplit <- factor(d$PredSplit)
 
-# Convert 'Safe' to logical (and remove exceptions).
-n_rows_empty <- sum(is.na(d$Safe))
-if (n_rows_empty > 0) warning(paste(c(n_rows_empty, " rows contain missing values (no timeout, no exception)")))
-d_exceptions <- d %>% filter(str_detect(d$Safe, "\\[EX\\]"))
-n_rows_exception <- nrow(d_exceptions)
-if (n_rows_exception > 0) {
-  warning(paste(c(n_rows_exception, " rows contain exceptions that are converted to NAs.")))
-  knitr::kable(d_exceptions %>% group_by(Type = Safe) %>% summarise(Count = n()))
-}
-d$Safe <- as.logical(d$Safe)
-
 # Create 'Config' column.
 d <- d %>% mutate(Config = paste(
   substr(d$Domain, 1, 1),
@@ -117,6 +106,19 @@ d <- d %>% mutate(Config = paste(
   ifelse(is.na(d$PredSplit), "", substr(d$PredSplit, 1, 1)),
   sep = ""
 ))
+
+# Convert 'Safe' to logical (and remove exceptions).
+n_rows_empty <- sum(is.na(d$Safe))
+if (n_rows_empty > 0) warning(paste(c(n_rows_empty, " rows contain missing values (no timeout, no exception)")))
+d_exceptions <- d %>% filter(str_detect(d$Safe, "\\[EX\\]"))
+n_rows_exception <- nrow(d_exceptions)
+if (n_rows_exception > 0) {
+  warning(paste(c(n_rows_exception, " rows contain exceptions that are converted to NAs.")))
+  knitr::kable(d_exceptions %>%
+                 group_by(Type = Safe) %>%
+                 summarise(Configs = toString(unique(Config)), Count = n()))
+}
+d$Safe <- as.logical(d$Safe)
 
 # Trim name, separate 'Model' into 'Name' and 'Type'.
 d$Model <- as.factor(gsub("../models/sts/", "", d$Model))

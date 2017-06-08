@@ -1,15 +1,11 @@
 package hu.bme.mit.theta.frontend.benchmark;
 
-import java.util.Collection;
-import java.util.function.Function;
-
 import hu.bme.mit.theta.analysis.algorithm.ArgNodeComparators;
 import hu.bme.mit.theta.analysis.algorithm.ArgNodeComparators.ArgNodeComparator;
-import hu.bme.mit.theta.analysis.pred.ItpRefToSimplePredPrec;
+import hu.bme.mit.theta.analysis.pred.ExprSplitters;
+import hu.bme.mit.theta.analysis.pred.ExprSplitters.ExprSplitter;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.impl.NullLogger;
-import hu.bme.mit.theta.core.Expr;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 
@@ -35,12 +31,11 @@ public abstract class ConfigurationBuilder {
 	};
 
 	public enum PredSplit {
-		WHOLE(ItpRefToSimplePredPrec.whole()), CONJUNCTS(ItpRefToSimplePredPrec.conjuncts()), ATOMS(
-				ItpRefToSimplePredPrec.atoms());
+		WHOLE(ExprSplitters.whole()), CONJUNCTS(ExprSplitters.conjuncts()), ATOMS(ExprSplitters.atoms());
 
-		public final Function<Expr<BoolType>, Collection<Expr<BoolType>>> splitter;
+		public final ExprSplitter splitter;
 
-		private PredSplit(final Function<Expr<BoolType>, Collection<Expr<BoolType>>> splitter) {
+		private PredSplit(final ExprSplitter splitter) {
 			this.splitter = splitter;
 		}
 	};
