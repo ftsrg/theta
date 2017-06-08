@@ -53,11 +53,11 @@ public class ExprMetricsTest {
 
 				{ And(A, True()), ExprMetrics.absoluteSize(), 3 },
 
-				{ And(A, True(), False()), ExprMetrics.absoluteSize(), 5 },
+				{ And(A, True(), False()), ExprMetrics.absoluteSize(), 4 },
 
 				{ And(A, And(True(), False())), ExprMetrics.absoluteSize(), 5 },
 
-				{ Add(B, Sub(Int(1), Int(2)), Int(3)), ExprMetrics.absoluteSize(), 7 },
+				{ Add(B, Sub(Int(1), Int(2)), Int(3)), ExprMetrics.absoluteSize(), 6 },
 
 		});
 	}
