@@ -41,8 +41,8 @@ public final class IntType implements Additive<IntType>, Multiplicative<IntType>
 	////
 
 	@Override
-	public IntAddExpr Add(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
-		return IntExprs.Add(leftOp, rightOp);
+	public IntAddExpr Add(final Iterable<? extends Expr<IntType>> ops) {
+		return IntExprs.Add(ops);
 	}
 
 	@Override
@@ -56,8 +56,8 @@ public final class IntType implements Additive<IntType>, Multiplicative<IntType>
 	}
 
 	@Override
-	public IntMulExpr Mul(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
-		return IntExprs.Mul(leftOp, rightOp);
+	public IntMulExpr Mul(final Iterable<? extends Expr<IntType>> ops) {
+		return IntExprs.Mul(ops);
 	}
 
 	@Override

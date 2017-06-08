@@ -33,7 +33,7 @@ public final class Utils {
 		return list.get(0);
 	}
 
-	public static <T> List<? extends T> tail(final List<? extends T> list) {
+	public static <T> List<T> tail(final List<T> list) {
 		checkArgument(!list.isEmpty(), "Empty list");
 		return list.subList(1, list.size());
 	}

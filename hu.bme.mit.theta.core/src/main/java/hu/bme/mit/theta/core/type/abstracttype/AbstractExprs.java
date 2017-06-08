@@ -1,8 +1,15 @@
 package hu.bme.mit.theta.core.type.abstracttype;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
+import java.util.List;
+
+import com.google.common.collect.ImmutableList;
+
 import hu.bme.mit.theta.common.Try;
 import hu.bme.mit.theta.common.Tuple;
 import hu.bme.mit.theta.common.Tuple2;
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.type.anytype.Exprs;
@@ -30,16 +37,43 @@ public final class AbstractExprs {
 	 */
 
 	public static <T extends Additive<T>> AddExpr<?> Add(final Iterable<? extends Expr<?>> ops) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		final List<Expr<?>> opList = ImmutableList.copyOf(ops);
+		checkArgument(!opList.isEmpty());
+		final Expr<?> head = Utils.head(opList);
+		final List<Expr<?>> tail = Utils.tail(opList);
+		return combineAdd(head, tail);
 	}
 
-	public static <T extends Additive<T>> AddExpr<?> Add(final Expr<?> leftOp, final Expr<?> rightOp) {
-		final Tuple2<Expr<T>, Expr<T>> newOps = unify(leftOp, rightOp);
-		final Expr<T> newLeftOp = newOps._1();
-		final Expr<T> newRightOp = newOps._2();
-		final T type = newLeftOp.getType();
-		return type.Add(newLeftOp, newRightOp);
+	private static <T extends Additive<T>> AddExpr<?> combineAdd(final Expr<?> head, final List<Expr<?>> tail) {
+		if (tail.isEmpty()) {
+			final Expr<T> newOp = bind(head);
+			final List<Expr<T>> newOps = getAddOps(newOp);
+			final T type = newOp.getType();
+			return type.Add(newOps);
+
+		} else {
+			final Expr<?> newHead = Utils.head(tail);
+			final List<Expr<?>> newTail = Utils.tail(tail);
+
+			final Tuple2<Expr<T>, Expr<T>> unifiedOps = unify(head, newHead);
+			final Expr<T> newLeftOp = unifiedOps._1();
+			final Expr<T> newRightOp = unifiedOps._2();
+			final T type = newLeftOp.getType();
+
+			final List<Expr<T>> newLeftOps = getAddOps(newLeftOp);
+			final List<Expr<T>> newOps = ImmutableList.<Expr<T>>builder().addAll(newLeftOps).add(newRightOp).build();
+			final AddExpr<T> newAddExpr = type.Add(newOps);
+			return combineAdd(newAddExpr, newTail);
+		}
+	}
+
+	private static <T extends Additive<T>> List<Expr<T>> getAddOps(final Expr<T> expr) {
+		if (expr instanceof AddExpr) {
+			final AddExpr<T> addExpr = (AddExpr<T>) expr;
+			return addExpr.getOps();
+		} else {
+			return ImmutableList.of(expr);
+		}
 	}
 
 	public static <T extends Additive<T>> SubExpr<?> Sub(final Expr<?> leftOp, final Expr<?> rightOp) {
@@ -51,12 +85,9 @@ public final class AbstractExprs {
 	}
 
 	public static <T extends Additive<T>> NegExpr<?> Neg(final Expr<?> op) {
-		final Type type = op.getType();
-		@SuppressWarnings("unchecked")
-		final T tType = (T) type;
-		@SuppressWarnings("unchecked")
-		final Expr<T> tOp = (Expr<T>) op;
-		return tType.Neg(tOp);
+		final Expr<T> tOp = bind(op);
+		final T type = tOp.getType();
+		return type.Neg(tOp);
 	}
 
 	/*
@@ -64,16 +95,43 @@ public final class AbstractExprs {
 	 */
 
 	public static <T extends Multiplicative<T>> MulExpr<?> Mul(final Iterable<? extends Expr<?>> ops) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		final List<Expr<?>> opList = ImmutableList.copyOf(ops);
+		checkArgument(!opList.isEmpty());
+		final Expr<?> head = Utils.head(opList);
+		final List<Expr<?>> tail = Utils.tail(opList);
+		return combineMul(head, tail);
 	}
 
-	public static <T extends Multiplicative<T>> MulExpr<?> Mul(final Expr<?> leftOp, final Expr<?> rightOp) {
-		final Tuple2<Expr<T>, Expr<T>> newOps = unify(leftOp, rightOp);
-		final Expr<T> newLeftOp = newOps._1();
-		final Expr<T> newRightOp = newOps._2();
-		final T type = newLeftOp.getType();
-		return type.Mul(newLeftOp, newRightOp);
+	private static <T extends Multiplicative<T>> MulExpr<?> combineMul(final Expr<?> head, final List<Expr<?>> tail) {
+		if (tail.isEmpty()) {
+			final Expr<T> newOp = bind(head);
+			final List<Expr<T>> newOps = getMulOps(newOp);
+			final T type = newOp.getType();
+			return type.Mul(newOps);
+
+		} else {
+			final Expr<?> newHead = Utils.head(tail);
+			final List<Expr<?>> newTail = Utils.tail(tail);
+
+			final Tuple2<Expr<T>, Expr<T>> unifiedOps = unify(head, newHead);
+			final Expr<T> newLeftOp = unifiedOps._1();
+			final Expr<T> newRightOp = unifiedOps._2();
+			final T type = newLeftOp.getType();
+
+			final List<Expr<T>> newLeftOps = getMulOps(newLeftOp);
+			final List<Expr<T>> newOps = ImmutableList.<Expr<T>>builder().addAll(newLeftOps).add(newRightOp).build();
+			final MulExpr<T> newMulExpr = type.Mul(newOps);
+			return combineMul(newMulExpr, newTail);
+		}
+	}
+
+	private static <T extends Multiplicative<T>> List<Expr<T>> getMulOps(final Expr<T> expr) {
+		if (expr instanceof MulExpr) {
+			final MulExpr<T> mulExpr = (MulExpr<T>) expr;
+			return mulExpr.getOps();
+		} else {
+			return ImmutableList.of(expr);
+		}
 	}
 
 	public static <T extends Multiplicative<T>> DivExpr<?> Div(final Expr<?> leftOp, final Expr<?> rightOp) {
@@ -141,6 +199,18 @@ public final class AbstractExprs {
 	}
 
 	/*
+	 * Convenience methods
+	 */
+
+	public static <T extends Additive<T>> AddExpr<?> Add(final Expr<?> leftOp, final Expr<?> rightOp) {
+		return Add(ImmutableList.of(leftOp, rightOp));
+	}
+
+	public static <T extends Multiplicative<T>> MulExpr<?> Mul(final Expr<?> leftOp, final Expr<?> rightOp) {
+		return Mul(ImmutableList.of(leftOp, rightOp));
+	}
+
+	/*
 	 * Helper methods
 	 */
 
@@ -180,6 +250,12 @@ public final class AbstractExprs {
 		}
 
 		throw new ClassCastException("Types " + expr1.getType() + " and " + expr2.getType() + " can not be unified");
+	}
+
+	private static <TR extends Type, TP extends Type> Expr<TR> bind(final Expr<TP> expr) {
+		@SuppressWarnings("unchecked")
+		final Expr<TR> trExpr = (Expr<TR>) expr;
+		return trExpr;
 	}
 
 	private static <TR extends Type, TP extends Type> Tuple2<Expr<TR>, Expr<TR>> bind(final Expr<TP> expr1,

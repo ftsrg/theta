@@ -38,8 +38,8 @@ public final class RatType
 	////
 
 	@Override
-	public RatAddExpr Add(final Expr<RatType> leftOp, final Expr<RatType> rightOp) {
-		return RatExprs.Add(leftOp, rightOp);
+	public RatAddExpr Add(final Iterable<? extends Expr<RatType>> ops) {
+		return RatExprs.Add(ops);
 	}
 
 	@Override
@@ -53,8 +53,8 @@ public final class RatType
 	}
 
 	@Override
-	public RatMulExpr Mul(final Expr<RatType> leftOp, final Expr<RatType> rightOp) {
-		return RatExprs.Mul(leftOp, rightOp);
+	public RatMulExpr Mul(final Iterable<? extends Expr<RatType>> ops) {
+		return RatExprs.Mul(ops);
 	}
 
 	@Override
