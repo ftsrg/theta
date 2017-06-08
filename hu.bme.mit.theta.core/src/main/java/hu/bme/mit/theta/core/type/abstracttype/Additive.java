@@ -5,7 +5,7 @@ import hu.bme.mit.theta.core.Type;
 
 public interface Additive<ExprType extends Additive<ExprType>> extends Type {
 
-	AddExpr<ExprType> Add(Iterable<? extends Expr<ExprType>> ops);
+	AddExpr<ExprType> Add(Expr<ExprType> leftOp, Expr<ExprType> rightOp);
 
 	SubExpr<ExprType> Sub(Expr<ExprType> leftOp, Expr<ExprType> rightOp);
 
