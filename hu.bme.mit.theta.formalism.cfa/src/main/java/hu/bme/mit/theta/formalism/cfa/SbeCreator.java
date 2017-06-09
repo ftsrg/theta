@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.formalism.cfa.impl;
+package hu.bme.mit.theta.formalism.cfa;
 
 import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
 import static hu.bme.mit.theta.core.stmt.Stmts.Assume;
@@ -24,11 +24,10 @@ import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.stmt.WhileStmt;
 import hu.bme.mit.theta.core.utils.StmtVisitor;
-import hu.bme.mit.theta.formalism.cfa.CFA;
-import hu.bme.mit.theta.formalism.cfa.CfaEdge;
-import hu.bme.mit.theta.formalism.cfa.CfaLoc;
+import hu.bme.mit.theta.formalism.cfa.impl.ImmutableCfa;
+import hu.bme.mit.theta.formalism.cfa.impl.MutableCfa;
 
-public class SbeCreator {
+final class SbeCreator {
 
 	public static CFA create(final Stmt stmt) {
 		final MutableCfa cfa = new MutableCfa();
