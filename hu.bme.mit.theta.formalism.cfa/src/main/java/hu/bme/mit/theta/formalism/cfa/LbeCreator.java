@@ -28,7 +28,6 @@ import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.stmt.WhileStmt;
 import hu.bme.mit.theta.core.utils.StmtVisitor;
-import hu.bme.mit.theta.formalism.cfa.impl.ImmutableCfa;
 import hu.bme.mit.theta.formalism.cfa.impl.MutableCfa;
 
 final class LbeCreator {
@@ -37,7 +36,7 @@ final class LbeCreator {
 		final MutableCfa cfa = new MutableCfa();
 		final LBECreatorVisitor visitor = new LBECreatorVisitor(cfa);
 		stmt.accept(visitor, Tuple.of(cfa.getInitLoc(), cfa.getFinalLoc(), new LinkedList<>(), new LinkedList<>()));
-		return ImmutableCfa.copyOf(cfa);
+		return cfa;
 	}
 
 	private static class LBECreatorVisitor

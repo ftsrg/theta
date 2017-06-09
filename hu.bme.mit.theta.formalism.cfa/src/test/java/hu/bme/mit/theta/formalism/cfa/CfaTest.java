@@ -3,7 +3,6 @@ package hu.bme.mit.theta.formalism.cfa;
 import org.junit.Test;
 
 import hu.bme.mit.theta.common.visualization.GraphvizWriter;
-import hu.bme.mit.theta.formalism.cfa.impl.ImmutableCfa;
 import hu.bme.mit.theta.formalism.cfa.impl.MutableCfa;
 import hu.bme.mit.theta.formalism.cfa.utils.CfaVisualizer;
 
@@ -25,9 +24,7 @@ public class CfaTest {
 		cfa.createEdge(l2, l2);
 		cfa.createEdge(l2, errorLoc);
 
-		final CFA cfa2 = ImmutableCfa.copyOf(cfa);
-
-		System.out.println(new GraphvizWriter().writeString(CfaVisualizer.visualize(cfa2)));
+		System.out.println(new GraphvizWriter().writeString(CfaVisualizer.visualize(cfa)));
 	}
 
 }
