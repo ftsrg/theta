@@ -11,8 +11,8 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.StmtUtils;
 import hu.bme.mit.theta.core.utils.UnfoldResult;
 import hu.bme.mit.theta.core.utils.VarIndexing;
-import hu.bme.mit.theta.formalism.cfa.CfaEdge;
-import hu.bme.mit.theta.formalism.cfa.CfaLoc;
+import hu.bme.mit.theta.formalism.cfa.CFA.CfaEdge;
+import hu.bme.mit.theta.formalism.cfa.CFA.CfaLoc;
 
 public final class CfaAction implements LocAction<CfaLoc, CfaEdge> {
 

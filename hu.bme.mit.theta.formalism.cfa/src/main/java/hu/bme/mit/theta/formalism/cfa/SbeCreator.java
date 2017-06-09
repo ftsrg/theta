@@ -24,6 +24,8 @@ import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.stmt.WhileStmt;
 import hu.bme.mit.theta.core.utils.StmtVisitor;
+import hu.bme.mit.theta.formalism.cfa.CFA.CfaEdge;
+import hu.bme.mit.theta.formalism.cfa.CFA.CfaLoc;
 
 final class SbeCreator {
 
@@ -126,8 +128,8 @@ final class SbeCreator {
 			return null;
 		}
 
-		private void processNonEmptyBlock(final CFA cfa, final CfaLoc source, final CfaLoc target,
-				final Stmt head, final List<? extends Stmt> tail) {
+		private void processNonEmptyBlock(final CFA cfa, final CfaLoc source, final CfaLoc target, final Stmt head,
+				final List<? extends Stmt> tail) {
 
 			if (head instanceof ReturnStmt<?> || tail.isEmpty()) {
 				head.accept(this, Tuple.of(source, target));

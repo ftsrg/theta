@@ -10,8 +10,8 @@ import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.LineStyle;
 import hu.bme.mit.theta.common.visualization.NodeAttributes;
 import hu.bme.mit.theta.formalism.cfa.CFA;
-import hu.bme.mit.theta.formalism.cfa.CfaEdge;
-import hu.bme.mit.theta.formalism.cfa.CfaLoc;
+import hu.bme.mit.theta.formalism.cfa.CFA.CfaEdge;
+import hu.bme.mit.theta.formalism.cfa.CFA.CfaLoc;
 
 public class CfaVisualizer {
 

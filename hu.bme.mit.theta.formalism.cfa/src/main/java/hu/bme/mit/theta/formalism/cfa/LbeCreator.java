@@ -28,6 +28,8 @@ import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.stmt.WhileStmt;
 import hu.bme.mit.theta.core.utils.StmtVisitor;
+import hu.bme.mit.theta.formalism.cfa.CFA.CfaEdge;
+import hu.bme.mit.theta.formalism.cfa.CFA.CfaLoc;
 
 final class LbeCreator {
 

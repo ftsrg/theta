@@ -38,8 +38,8 @@ import hu.bme.mit.theta.analysis.pred.SimplePredPrec;
 import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.formalism.cfa.CFA;
-import hu.bme.mit.theta.formalism.cfa.CfaEdge;
-import hu.bme.mit.theta.formalism.cfa.CfaLoc;
+import hu.bme.mit.theta.formalism.cfa.CFA.CfaEdge;
+import hu.bme.mit.theta.formalism.cfa.CFA.CfaLoc;
 import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.solver.SolverFactory;
 

@@ -5,8 +5,8 @@ import java.util.Collection;
 import hu.bme.mit.theta.analysis.LTS;
 import hu.bme.mit.theta.analysis.loc.LocLts;
 import hu.bme.mit.theta.analysis.loc.LocState;
-import hu.bme.mit.theta.formalism.cfa.CfaEdge;
-import hu.bme.mit.theta.formalism.cfa.CfaLoc;
+import hu.bme.mit.theta.formalism.cfa.CFA.CfaEdge;
+import hu.bme.mit.theta.formalism.cfa.CFA.CfaLoc;
 
 public final class CfaLts implements LTS<LocState<?, CfaLoc, CfaEdge>, CfaAction> {
 

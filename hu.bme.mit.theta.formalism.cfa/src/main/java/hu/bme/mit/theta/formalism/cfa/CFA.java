@@ -3,11 +3,19 @@ package hu.bme.mit.theta.formalism.cfa;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 
+import hu.bme.mit.theta.common.ObjectUtils;
+import hu.bme.mit.theta.core.stmt.Stmt;
+import hu.bme.mit.theta.formalism.cfa.CFA.CfaEdge;
+import hu.bme.mit.theta.formalism.cfa.CFA.CfaLoc;
 import hu.bme.mit.theta.formalism.common.Automaton;
+import hu.bme.mit.theta.formalism.common.Edge;
+import hu.bme.mit.theta.formalism.common.Loc;
 
 public final class CFA implements Automaton<CfaLoc, CfaEdge> {
 	private int nextId;
@@ -129,6 +137,91 @@ public final class CFA implements Automaton<CfaLoc, CfaEdge> {
 		mutableSource.removeOutEdge(edge);
 		mutableTarget.removeInEdge(edge);
 		edges.remove(edge);
+	}
+
+	/*
+	 * Location
+	 */
+
+	public static final class CfaLoc implements Loc<CfaLoc, CfaEdge> {
+		private final String name;
+		private final Collection<CfaEdge> inEdges;
+		private final Collection<CfaEdge> outEdges;
+
+		private CfaLoc(final String name) {
+			this.name = name;
+			inEdges = new HashSet<>();
+			outEdges = new HashSet<>();
+		}
+
+		////
+
+		@Override
+		public Collection<CfaEdge> getInEdges() {
+			return Collections.unmodifiableCollection(inEdges);
+		}
+
+		void addInEdge(final CfaEdge edge) {
+			inEdges.add(edge);
+		}
+
+		void removeInEdge(final CfaEdge edge) {
+			inEdges.remove(edge);
+		}
+
+		////
+
+		@Override
+		public Collection<CfaEdge> getOutEdges() {
+			return Collections.unmodifiableCollection(outEdges);
+		}
+
+		void addOutEdge(final CfaEdge edge) {
+			outEdges.add(edge);
+		}
+
+		void removeOutEdge(final CfaEdge edge) {
+			outEdges.remove(edge);
+		}
+
+		public String getName() {
+			return name;
+		}
+
+		@Override
+		public String toString() {
+			return ObjectUtils.toStringBuilder(getClass().getSimpleName()).add(name).toString();
+		}
+	}
+
+	/*
+	 * Edge
+	 */
+
+	public static final class CfaEdge implements Edge<CfaLoc, CfaEdge> {
+		private final CfaLoc source;
+		private final CfaLoc target;
+		private final List<Stmt> stmts;
+
+		private CfaEdge(final CfaLoc source, final CfaLoc target) {
+			this.source = source;
+			this.target = target;
+			stmts = new ArrayList<>();
+		}
+
+		@Override
+		public CfaLoc getSource() {
+			return source;
+		}
+
+		@Override
+		public CfaLoc getTarget() {
+			return target;
+		}
+
+		public List<Stmt> getStmts() {
+			return stmts;
+		}
 	}
 
 }
