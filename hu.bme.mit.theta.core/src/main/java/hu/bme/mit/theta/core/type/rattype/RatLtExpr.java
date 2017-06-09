@@ -3,7 +3,9 @@ package hu.bme.mit.theta.core.type.rattype;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 
 import hu.bme.mit.theta.core.Expr;
+import hu.bme.mit.theta.core.model.Assignment;
 import hu.bme.mit.theta.core.type.abstracttype.LtExpr;
+import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 public final class RatLtExpr extends LtExpr<RatType> {
@@ -18,6 +20,13 @@ public final class RatLtExpr extends LtExpr<RatType> {
 	@Override
 	public BoolType getType() {
 		return Bool();
+	}
+
+	@Override
+	public BoolLitExpr eval(final Assignment assignment) {
+		final RatLitExpr leftOpVal = (RatLitExpr) getLeftOp().eval(assignment);
+		final RatLitExpr rightOpVal = (RatLitExpr) getRightOp().eval(assignment);
+		return leftOpVal.lt(rightOpVal);
 	}
 
 	@Override

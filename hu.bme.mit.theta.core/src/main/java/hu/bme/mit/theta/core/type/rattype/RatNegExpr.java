@@ -3,6 +3,7 @@ package hu.bme.mit.theta.core.type.rattype;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 
 import hu.bme.mit.theta.core.Expr;
+import hu.bme.mit.theta.core.model.Assignment;
 import hu.bme.mit.theta.core.type.abstracttype.NegExpr;
 
 public final class RatNegExpr extends NegExpr<RatType> {
@@ -17,6 +18,12 @@ public final class RatNegExpr extends NegExpr<RatType> {
 	@Override
 	public RatType getType() {
 		return Rat();
+	}
+
+	@Override
+	public RatLitExpr eval(final Assignment assignment) {
+		final RatLitExpr opVal = (RatLitExpr) getOp().eval(assignment);
+		return opVal.neg();
 	}
 
 	@Override

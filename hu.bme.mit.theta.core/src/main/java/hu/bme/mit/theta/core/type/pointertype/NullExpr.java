@@ -3,6 +3,7 @@ package hu.bme.mit.theta.core.type.pointertype;
 import hu.bme.mit.theta.core.LitExpr;
 import hu.bme.mit.theta.core.NullaryExpr;
 import hu.bme.mit.theta.core.Type;
+import hu.bme.mit.theta.core.model.Assignment;
 
 public final class NullExpr<PointedType extends Type> extends NullaryExpr<PointerType<PointedType>>
 		implements LitExpr<PointerType<PointedType>> {
@@ -23,6 +24,11 @@ public final class NullExpr<PointedType extends Type> extends NullaryExpr<Pointe
 	public PointerType<PointedType> getType() {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+	}
+
+	@Override
+	public LitExpr<PointerType<PointedType>> eval(final Assignment assignment) {
+		return this;
 	}
 
 	@Override

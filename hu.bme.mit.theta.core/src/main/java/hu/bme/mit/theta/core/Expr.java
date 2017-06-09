@@ -5,11 +5,15 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 import java.util.List;
 import java.util.function.Function;
 
+import hu.bme.mit.theta.core.model.Assignment;
+
 public interface Expr<ExprType extends Type> {
 
 	int getArity();
 
 	ExprType getType();
+
+	LitExpr<ExprType> eval(Assignment assignment);
 
 	List<? extends Expr<?>> getOps();
 

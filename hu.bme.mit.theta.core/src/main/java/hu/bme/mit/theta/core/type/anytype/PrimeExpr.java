@@ -1,8 +1,10 @@
 package hu.bme.mit.theta.core.type.anytype;
 
 import hu.bme.mit.theta.core.Expr;
+import hu.bme.mit.theta.core.LitExpr;
 import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.UnaryExpr;
+import hu.bme.mit.theta.core.model.Assignment;
 
 public final class PrimeExpr<ExprType extends Type> extends UnaryExpr<ExprType, ExprType> {
 
@@ -17,6 +19,11 @@ public final class PrimeExpr<ExprType extends Type> extends UnaryExpr<ExprType, 
 	@Override
 	public final ExprType getType() {
 		return getOp().getType();
+	}
+
+	@Override
+	public LitExpr<ExprType> eval(final Assignment assignment) {
+		throw new UnsupportedOperationException();
 	}
 
 	@Override

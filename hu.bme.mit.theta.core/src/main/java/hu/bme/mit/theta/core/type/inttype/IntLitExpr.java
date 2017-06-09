@@ -1,10 +1,13 @@
 package hu.bme.mit.theta.core.type.inttype;
 
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 
 import hu.bme.mit.theta.core.LitExpr;
 import hu.bme.mit.theta.core.NullaryExpr;
+import hu.bme.mit.theta.core.model.Assignment;
+import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 import hu.bme.mit.theta.core.type.rattype.RatLitExpr;
 
 public final class IntLitExpr extends NullaryExpr<IntType> implements LitExpr<IntType>, Comparable<IntLitExpr> {
@@ -25,6 +28,11 @@ public final class IntLitExpr extends NullaryExpr<IntType> implements LitExpr<In
 	@Override
 	public IntType getType() {
 		return Int();
+	}
+
+	@Override
+	public IntLitExpr eval(final Assignment assignment) {
+		return this;
 	}
 
 	public RatLitExpr toRat() {
@@ -49,6 +57,30 @@ public final class IntLitExpr extends NullaryExpr<IntType> implements LitExpr<In
 
 	public IntLitExpr mod(final IntLitExpr that) {
 		return new IntLitExpr(this.value % that.value);
+	}
+
+	public BoolLitExpr eq(final IntLitExpr that) {
+		return Bool(this.value == that.value);
+	}
+
+	public BoolLitExpr neq(final IntLitExpr that) {
+		return Bool(this.value != that.value);
+	}
+
+	public BoolLitExpr lt(final IntLitExpr that) {
+		return Bool(this.value < that.value);
+	}
+
+	public BoolLitExpr leq(final IntLitExpr that) {
+		return Bool(this.value <= that.value);
+	}
+
+	public BoolLitExpr gt(final IntLitExpr that) {
+		return Bool(this.value > that.value);
+	}
+
+	public BoolLitExpr geq(final IntLitExpr that) {
+		return Bool(this.value >= that.value);
 	}
 
 	@Override

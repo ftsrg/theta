@@ -2,13 +2,16 @@ package hu.bme.mit.theta.core.type.arraytype;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
 
 import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.theta.core.Expr;
+import hu.bme.mit.theta.core.LitExpr;
 import hu.bme.mit.theta.core.Type;
+import hu.bme.mit.theta.core.model.Assignment;
 import hu.bme.mit.theta.core.utils.TypeUtils;
 
 public final class ArrayWriteExpr<IndexType extends Type, ElemType extends Type>
@@ -45,6 +48,11 @@ public final class ArrayWriteExpr<IndexType extends Type, ElemType extends Type>
 
 	@Override
 	public ArrayType<IndexType, ElemType> getType() {
+		return Array(index.getType(), elem.getType());
+	}
+
+	@Override
+	public LitExpr<ArrayType<IndexType, ElemType>> eval(final Assignment assignment) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}

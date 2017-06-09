@@ -1,8 +1,10 @@
 package hu.bme.mit.theta.core.type.pointertype;
 
 import hu.bme.mit.theta.core.Expr;
+import hu.bme.mit.theta.core.LitExpr;
 import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.UnaryExpr;
+import hu.bme.mit.theta.core.model.Assignment;
 
 public class DerefExpr<PointedType extends Type> extends UnaryExpr<PointerType<PointedType>, PointedType> {
 
@@ -14,17 +16,23 @@ public class DerefExpr<PointedType extends Type> extends UnaryExpr<PointerType<P
 	}
 
 	@Override
+	public PointedType getType() {
+		return getOp().getType().getPointedType();
+	}
+
+	@Override
+	public LitExpr<PointedType> eval(final Assignment assignment) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+	}
+
+	@Override
 	public DerefExpr<PointedType> with(final Expr<PointerType<PointedType>> op) {
 		if (op == getOp()) {
 			return this;
 		} else {
 			return new DerefExpr<>(op);
 		}
-	}
-
-	@Override
-	public PointedType getType() {
-		return getOp().getType().getPointedType();
 	}
 
 	@Override

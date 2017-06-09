@@ -3,6 +3,7 @@ package hu.bme.mit.theta.core.type.rattype;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 
 import hu.bme.mit.theta.core.Expr;
+import hu.bme.mit.theta.core.model.Assignment;
 import hu.bme.mit.theta.core.type.abstracttype.DivExpr;
 
 public final class RatDivExpr extends DivExpr<RatType> {
@@ -18,6 +19,13 @@ public final class RatDivExpr extends DivExpr<RatType> {
 	@Override
 	public RatType getType() {
 		return Rat();
+	}
+
+	@Override
+	public RatLitExpr eval(final Assignment assignment) {
+		final RatLitExpr leftOpVal = (RatLitExpr) getLeftOp().eval(assignment);
+		final RatLitExpr rightOpVal = (RatLitExpr) getRightOp().eval(assignment);
+		return leftOpVal.div(rightOpVal);
 	}
 
 	@Override

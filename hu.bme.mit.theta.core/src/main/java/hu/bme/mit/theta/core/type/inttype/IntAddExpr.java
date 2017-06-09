@@ -3,6 +3,7 @@ package hu.bme.mit.theta.core.type.inttype;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 import hu.bme.mit.theta.core.Expr;
+import hu.bme.mit.theta.core.model.Assignment;
 import hu.bme.mit.theta.core.type.abstracttype.AddExpr;
 
 public final class IntAddExpr extends AddExpr<IntType> {
@@ -17,6 +18,16 @@ public final class IntAddExpr extends AddExpr<IntType> {
 	@Override
 	public IntType getType() {
 		return Int();
+	}
+
+	@Override
+	public IntLitExpr eval(final Assignment assignment) {
+		int sum = 0;
+		for (final Expr<IntType> op : getOps()) {
+			final IntLitExpr opVal = (IntLitExpr) op.eval(assignment);
+			sum += opVal.getValue();
+		}
+		return Int(sum);
 	}
 
 	@Override

@@ -2,6 +2,7 @@ package hu.bme.mit.theta.core.type.functype;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.type.functype.FuncExprs.Func;
 
 import java.util.List;
 
@@ -11,6 +12,7 @@ import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.LitExpr;
 import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.decl.ParamDecl;
+import hu.bme.mit.theta.core.model.Assignment;
 import hu.bme.mit.theta.core.utils.TypeUtils;
 
 public final class FuncLitExpr<ParamType extends Type, ResultType extends Type>
@@ -39,8 +41,12 @@ public final class FuncLitExpr<ParamType extends Type, ResultType extends Type>
 
 	@Override
 	public FuncType<ParamType, ResultType> getType() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		return Func(param.getType(), result.getType());
+	}
+
+	@Override
+	public LitExpr<FuncType<ParamType, ResultType>> eval(final Assignment assignment) {
+		return this;
 	}
 
 	@Override

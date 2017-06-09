@@ -3,8 +3,10 @@ package hu.bme.mit.theta.core.type.anytype;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import hu.bme.mit.theta.core.Decl;
+import hu.bme.mit.theta.core.LitExpr;
 import hu.bme.mit.theta.core.NullaryExpr;
 import hu.bme.mit.theta.core.Type;
+import hu.bme.mit.theta.core.model.Assignment;
 
 public final class RefExpr<DeclType extends Type> extends NullaryExpr<DeclType> {
 
@@ -24,6 +26,11 @@ public final class RefExpr<DeclType extends Type> extends NullaryExpr<DeclType> 
 	@Override
 	public DeclType getType() {
 		return decl.getType();
+	}
+
+	@Override
+	public LitExpr<DeclType> eval(final Assignment assignment) {
+		return (LitExpr<DeclType>) assignment.eval(decl).get();
 	}
 
 	@Override

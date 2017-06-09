@@ -1,11 +1,14 @@
 package hu.bme.mit.theta.core.type.rattype;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 
 import com.google.common.math.IntMath;
 
 import hu.bme.mit.theta.core.LitExpr;
 import hu.bme.mit.theta.core.NullaryExpr;
+import hu.bme.mit.theta.core.model.Assignment;
+import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 
 public final class RatLitExpr extends NullaryExpr<RatType> implements LitExpr<RatType>, Comparable<RatLitExpr> {
 
@@ -35,6 +38,16 @@ public final class RatLitExpr extends NullaryExpr<RatType> implements LitExpr<Ra
 
 	private static RatType Rat() {
 		return RatExprs.Rat();
+	}
+
+	@Override
+	public RatType getType() {
+		return Rat();
+	}
+
+	@Override
+	public LitExpr<RatType> eval(final Assignment assignment) {
+		return this;
 	}
 
 	public int getNum() {
@@ -87,17 +100,36 @@ public final class RatLitExpr extends NullaryExpr<RatType> implements LitExpr<Ra
 		return Rat(this.getNum() * that.getDenom(), this.getDenom() * that.getNum());
 	}
 
+	public BoolLitExpr eq(final RatLitExpr that) {
+		return Bool(this.getNum() == that.getNum() && this.getDenom() == that.getDenom());
+	}
+
+	public BoolLitExpr neq(final RatLitExpr that) {
+		return Bool(this.getNum() != that.getNum() || this.getDenom() != that.getDenom());
+	}
+
+	public BoolLitExpr lt(final RatLitExpr that) {
+		return Bool(this.getNum() * that.getDenom() < this.getDenom() * that.getNum());
+	}
+
+	public BoolLitExpr leq(final RatLitExpr that) {
+		return Bool(this.getNum() * that.getDenom() <= this.getDenom() * that.getNum());
+	}
+
+	public BoolLitExpr gt(final RatLitExpr that) {
+		return Bool(this.getNum() * that.getDenom() > this.getDenom() * that.getNum());
+	}
+
+	public BoolLitExpr geq(final RatLitExpr that) {
+		return Bool(this.getNum() * that.getDenom() >= this.getDenom() * that.getNum());
+	}
+
 	public RatLitExpr abs() {
 		return Rat(Math.abs(num), denom);
 	}
 
 	public RatLitExpr frac() {
 		return sub(Rat(floor(), 1));
-	}
-
-	@Override
-	public RatType getType() {
-		return Rat();
 	}
 
 	@Override

@@ -3,6 +3,7 @@ package hu.bme.mit.theta.core.type.rattype;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 
 import hu.bme.mit.theta.core.Expr;
+import hu.bme.mit.theta.core.model.Assignment;
 import hu.bme.mit.theta.core.type.abstracttype.MulExpr;
 
 public final class RatMulExpr extends MulExpr<RatType> {
@@ -17,6 +18,18 @@ public final class RatMulExpr extends MulExpr<RatType> {
 	@Override
 	public RatType getType() {
 		return Rat();
+	}
+
+	@Override
+	public RatLitExpr eval(final Assignment assignment) {
+		int prodNum = 1;
+		int prodDenom = 1;
+		for (final Expr<RatType> op : getOps()) {
+			final RatLitExpr opLit = (RatLitExpr) op.eval(assignment);
+			prodNum *= opLit.getNum();
+			prodDenom *= opLit.getDenom();
+		}
+		return Rat(prodNum, prodDenom);
 	}
 
 	@Override

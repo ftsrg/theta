@@ -2,6 +2,8 @@ package hu.bme.mit.theta.core.type.booltype;
 
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 
+import hu.bme.mit.theta.core.model.Assignment;
+
 public final class TrueExpr extends BoolLitExpr {
 	private static final TrueExpr INSTANCE = new TrueExpr();
 	private static final int HASH_SEED = 242181;
@@ -25,6 +27,11 @@ public final class TrueExpr extends BoolLitExpr {
 	}
 
 	@Override
+	public BoolLitExpr eval(final Assignment assignment) {
+		return this;
+	}
+
+	@Override
 	public int hashCode() {
 		return HASH_SEED;
 	}
@@ -38,4 +45,5 @@ public final class TrueExpr extends BoolLitExpr {
 	public String toString() {
 		return OPERATOR;
 	}
+
 }

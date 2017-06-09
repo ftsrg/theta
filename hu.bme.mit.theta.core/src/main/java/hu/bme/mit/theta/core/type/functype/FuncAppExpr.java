@@ -8,7 +8,9 @@ import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.Expr;
+import hu.bme.mit.theta.core.LitExpr;
 import hu.bme.mit.theta.core.Type;
+import hu.bme.mit.theta.core.model.Assignment;
 
 public final class FuncAppExpr<ParamType extends Type, ResultType extends Type> implements Expr<ResultType> {
 
@@ -37,6 +39,12 @@ public final class FuncAppExpr<ParamType extends Type, ResultType extends Type> 
 	@Override
 	public ResultType getType() {
 		return getFunc().getType().getResultType();
+	}
+
+	@Override
+	public LitExpr<ResultType> eval(final Assignment assignment) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
 
 	@Override

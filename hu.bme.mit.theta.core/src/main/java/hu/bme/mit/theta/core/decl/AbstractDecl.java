@@ -16,6 +16,7 @@ public abstract class AbstractDecl<DeclType extends Type> implements Decl<DeclTy
 		this.ref = Ref(this);
 	}
 
+	@Override
 	public RefExpr<DeclType> getRef() {
 		return ref;
 	}

@@ -3,7 +3,9 @@ package hu.bme.mit.theta.core.type.inttype;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 
 import hu.bme.mit.theta.core.Expr;
+import hu.bme.mit.theta.core.model.Assignment;
 import hu.bme.mit.theta.core.type.abstracttype.CastExpr;
+import hu.bme.mit.theta.core.type.rattype.RatLitExpr;
 import hu.bme.mit.theta.core.type.rattype.RatType;
 
 public final class IntToRatExpr extends CastExpr<IntType, RatType> {
@@ -18,6 +20,12 @@ public final class IntToRatExpr extends CastExpr<IntType, RatType> {
 	@Override
 	public RatType getType() {
 		return Rat();
+	}
+
+	@Override
+	public RatLitExpr eval(final Assignment assignment) {
+		final IntLitExpr opVal = (IntLitExpr) getOp().eval(assignment);
+		return opVal.toRat();
 	}
 
 	@Override

@@ -125,12 +125,7 @@ public final class ExprUtils {
 
 	public static <ExprType extends Type> LitExpr<ExprType> evaluate(final Expr<ExprType> expr,
 			final Assignment assignment) {
-		final Expr<ExprType> simplified = simplify(expr, assignment);
-		if (simplified instanceof LitExpr) {
-			return (LitExpr<ExprType>) simplified;
-		} else {
-			throw new RuntimeException("Could not evaluate " + expr + " with assignment " + assignment);
-		}
+		return expr.eval(assignment);
 	}
 
 	public static <ExprType extends Type> LitExpr<ExprType> evaluate(final Expr<ExprType> expr) {

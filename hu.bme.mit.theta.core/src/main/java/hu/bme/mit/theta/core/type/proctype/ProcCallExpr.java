@@ -8,7 +8,9 @@ import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.Expr;
+import hu.bme.mit.theta.core.LitExpr;
 import hu.bme.mit.theta.core.Type;
+import hu.bme.mit.theta.core.model.Assignment;
 
 public final class ProcCallExpr<ReturnType extends Type> implements Expr<ReturnType> {
 
@@ -33,6 +35,17 @@ public final class ProcCallExpr<ReturnType extends Type> implements Expr<ReturnT
 	}
 
 	@Override
+	public final ReturnType getType() {
+		return getProc().getType().getReturnType();
+	}
+
+	@Override
+	public LitExpr<ReturnType> eval(final Assignment assignment) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+	}
+
+	@Override
 	public int getArity() {
 		return params.size();
 	}
@@ -46,11 +59,6 @@ public final class ProcCallExpr<ReturnType extends Type> implements Expr<ReturnT
 	public Expr<ReturnType> withOps(final List<? extends Expr<?>> ops) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO: auto-generated method stub");
-	}
-
-	@Override
-	public final ReturnType getType() {
-		return getProc().getType().getReturnType();
 	}
 
 	@Override

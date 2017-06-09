@@ -1,7 +1,9 @@
 package hu.bme.mit.theta.core.type.booltype;
 
 import hu.bme.mit.theta.core.Expr;
+import hu.bme.mit.theta.core.LitExpr;
 import hu.bme.mit.theta.core.decl.ParamDecl;
+import hu.bme.mit.theta.core.model.Assignment;
 
 public final class ForallExpr extends QuantifiedExpr {
 
@@ -11,6 +13,11 @@ public final class ForallExpr extends QuantifiedExpr {
 
 	ForallExpr(final Iterable<? extends ParamDecl<?>> paramDecls, final Expr<BoolType> op) {
 		super(paramDecls, op);
+	}
+
+	@Override
+	public LitExpr<BoolType> eval(final Assignment assignment) {
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
@@ -43,5 +50,4 @@ public final class ForallExpr extends QuantifiedExpr {
 	protected String getOperatorLabel() {
 		return OPERATOR_LABEL;
 	}
-
 }

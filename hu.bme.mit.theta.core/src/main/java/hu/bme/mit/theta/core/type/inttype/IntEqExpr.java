@@ -3,7 +3,9 @@ package hu.bme.mit.theta.core.type.inttype;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 
 import hu.bme.mit.theta.core.Expr;
+import hu.bme.mit.theta.core.model.Assignment;
 import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
+import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 public final class IntEqExpr extends EqExpr<IntType> {
@@ -18,6 +20,13 @@ public final class IntEqExpr extends EqExpr<IntType> {
 	@Override
 	public BoolType getType() {
 		return Bool();
+	}
+
+	@Override
+	public BoolLitExpr eval(final Assignment assignment) {
+		final IntLitExpr leftOpVal = (IntLitExpr) getLeftOp().eval(assignment);
+		final IntLitExpr rightOpVal = (IntLitExpr) getRightOp().eval(assignment);
+		return leftOpVal.eq(rightOpVal);
 	}
 
 	@Override
