@@ -3,14 +3,13 @@ package hu.bme.mit.theta.formalism.cfa;
 import org.junit.Test;
 
 import hu.bme.mit.theta.common.visualization.GraphvizWriter;
-import hu.bme.mit.theta.formalism.cfa.impl.MutableCfa;
 import hu.bme.mit.theta.formalism.cfa.utils.CfaVisualizer;
 
 public class CfaTest {
 
 	@Test
 	public void testCreation() {
-		final MutableCfa cfa = new MutableCfa();
+		final CFA cfa = new CFA();
 		final CfaLoc initLoc = cfa.getInitLoc();
 		final CfaLoc finalLoc = cfa.getFinalLoc();
 		final CfaLoc errorLoc = cfa.getErrorLoc();

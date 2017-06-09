@@ -24,12 +24,11 @@ import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.stmt.WhileStmt;
 import hu.bme.mit.theta.core.utils.StmtVisitor;
-import hu.bme.mit.theta.formalism.cfa.impl.MutableCfa;
 
 final class SbeCreator {
 
 	public static CFA create(final Stmt stmt) {
-		final MutableCfa cfa = new MutableCfa();
+		final CFA cfa = new CFA();
 		final SBECreatorVisitor visitor = new SBECreatorVisitor(cfa);
 		stmt.accept(visitor, Tuple.of(cfa.getInitLoc(), cfa.getFinalLoc()));
 		return cfa;
@@ -37,9 +36,9 @@ final class SbeCreator {
 
 	private static class SBECreatorVisitor implements StmtVisitor<Product2<CfaLoc, CfaLoc>, Void> {
 
-		private final MutableCfa cfa;
+		private final CFA cfa;
 
-		private SBECreatorVisitor(final MutableCfa cfa) {
+		private SBECreatorVisitor(final CFA cfa) {
 			this.cfa = cfa;
 		}
 
@@ -127,7 +126,7 @@ final class SbeCreator {
 			return null;
 		}
 
-		private void processNonEmptyBlock(final MutableCfa cfa, final CfaLoc source, final CfaLoc target,
+		private void processNonEmptyBlock(final CFA cfa, final CfaLoc source, final CfaLoc target,
 				final Stmt head, final List<? extends Stmt> tail) {
 
 			if (head instanceof ReturnStmt<?> || tail.isEmpty()) {
