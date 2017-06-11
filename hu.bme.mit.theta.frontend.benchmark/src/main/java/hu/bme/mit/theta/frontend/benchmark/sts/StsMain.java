@@ -47,7 +47,7 @@ public class StsMain {
 
 		// If only called with a single --header argument, print header and exit
 		if (args.length == 1 && "--header".equals(args[0])) {
-			tableWriter.cell("Safe");
+			tableWriter.cell("Result");
 			tableWriter.cell("TimeMs");
 			tableWriter.cell("Iterations");
 			tableWriter.cell("ArgSize");
@@ -80,8 +80,8 @@ public class StsMain {
 				.build();
 		options.addOption(optRefinement);
 
-		final Option optInitPrec = Option.builder("i").longOpt("initprec").hasArg().argName(optionsFor(InitPrec.values()))
-				.type(InitPrec.class).desc("Initial precision").build();
+		final Option optInitPrec = Option.builder("i").longOpt("initprec").hasArg()
+				.argName(optionsFor(InitPrec.values())).type(InitPrec.class).desc("Initial precision").build();
 		options.addOption(optInitPrec);
 
 		final Option optSearch = Option.builder("s").longOpt("search").hasArg().argName(optionsFor(Search.values()))
