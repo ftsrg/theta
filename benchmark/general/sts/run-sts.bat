@@ -1,1 +1,0 @@
-powershell ..\Run-Measurements.ps1 -jarFile theta-sts.jar -modelsFiles models-sts-simple.csv -configsFile configs-sts.csv -timeOut 600 -runs 1 -toNoRep -rBin \"C:/Program Files/R/R-3.3.2/bin/\" -rReport report-sts.Rmd -jvmArgs \"-ea\"
