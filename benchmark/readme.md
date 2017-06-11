@@ -1,1 +1,0 @@
-This directory contains build and execution scripts for running measurements. Subdirectories contain measurement campaigns. Note, that as the framework is under development, a new build may not run with the scripts of an older campaign. The "general" campaign is however, developed in parallel with the framework and therefore, it should always work.
