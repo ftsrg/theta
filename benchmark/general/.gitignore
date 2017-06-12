@@ -1,6 +1,0 @@
-/**/*.dll
-/**/*.jar
-/**/*.so
-/**/log*.csv
-*.Rhistory
-*.html

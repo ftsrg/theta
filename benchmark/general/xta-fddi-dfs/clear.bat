@@ -1,1 +1,0 @@
-@del  *.dll *.jar

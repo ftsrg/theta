@@ -129,6 +129,7 @@ public final class XtaMain {
 		} catch (final ParseException e) {
 			// If called with a single --header argument, print header and exit
 			if (args.length == 1 && "--header".equals(args[0])) {
+				writer.cell("Result");
 				writer.cell("AlgorithmTimeInMs");
 				writer.cell("RefinementTimeInMs");
 				writer.cell("InterpolationTimeInMs");
@@ -188,6 +189,7 @@ public final class XtaMain {
 			final LazyXtaStatistics stats = (LazyXtaStatistics) result.getStats().get();
 
 			if (benchmarkMode) {
+				writer.cell(result.isSafe());
 				writer.cell(stats.getAlgorithmTimeInMs());
 				writer.cell(stats.getRefinementTimeInMs());
 				writer.cell(stats.getInterpolationTimeInMs());

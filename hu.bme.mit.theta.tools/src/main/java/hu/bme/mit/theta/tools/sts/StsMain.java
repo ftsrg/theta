@@ -1,10 +1,5 @@
 package hu.bme.mit.theta.tools.sts;
 
-/**
- * A command line interface for running a CEGAR configuration on an STS. The
- * output is a single row containing parameters of the configuration and the
- * model, and output metrics.
- */
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 
 import java.io.FileInputStream;
@@ -41,6 +36,11 @@ import hu.bme.mit.theta.tools.ConfigurationBuilder.Refinement;
 import hu.bme.mit.theta.tools.ConfigurationBuilder.Search;
 import hu.bme.mit.theta.tools.sts.StsConfigurationBuilder.InitPrec;
 
+/**
+ * A command line interface for running a CEGAR configuration on an STS. The
+ * output is a single row containing parameters of the configuration and the
+ * model, and output metrics.
+ */
 public class StsMain {
 
 	public static void main(final String[] args) {
@@ -48,7 +48,7 @@ public class StsMain {
 
 		// If only called with a single --header argument, print header and exit
 		if (args.length == 1 && "--header".equals(args[0])) {
-			tableWriter.cell("Safe");
+			tableWriter.cell("Result");
 			tableWriter.cell("TimeMs");
 			tableWriter.cell("Iterations");
 			tableWriter.cell("ArgSize");
