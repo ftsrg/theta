@@ -19,13 +19,19 @@ dependencies {
 }
 
 def getCommitId() {
-    def output = new ByteArrayOutputStream()
+    def commit = new ByteArrayOutputStream()
+    def branch = new ByteArrayOutputStream()
     exec {
         commandLine 'git', 'rev-parse', '--short', 'HEAD'
-        standardOutput = output
+        standardOutput = commit
     }
+    exec {
+        commandLine 'git', 'rev-parse', '--abbrev-ref', 'HEAD'
+        standardOutput = branch
+    }
+    def id = branch.toString() + "-" + commit.toString()
 
-    return output.toString().replace("\n", "")
+    return id.replace("\n", "")
 }
 
 task stsMain(type: ShadowJar) {
