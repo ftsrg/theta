@@ -18,6 +18,22 @@ dependencies {
   compile group: 'commons-cli', name: 'commons-cli', version: '1.3.1'
 }
 
+def getCommitId() {
+    def commit = new ByteArrayOutputStream()
+    def branch = new ByteArrayOutputStream()
+    exec {
+        commandLine 'git', 'rev-parse', '--short', 'HEAD'
+        standardOutput = commit
+    }
+    exec {
+        commandLine 'git', 'rev-parse', '--abbrev-ref', 'HEAD'
+        standardOutput = branch
+    }
+    def id = branch.toString() + "-" + commit.toString()
+
+    return id.replace("\n", "")
+}
+
 task stsMain(type: ShadowJar) {
     group = ShadowJavaPlugin.SHADOW_GROUP
     manifest.inheritFrom project.tasks.jar.manifest
@@ -34,7 +50,7 @@ task stsMain(type: ShadowJar) {
     //exclude('META-INF/INDEX.LIST', 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA')
     //classifier = 'fat'
     //mergeServiceFiles()
-    manifest { attributes 'Main-Class': 'hu.bme.mit.theta.tools.sts.StsMain' }
+    manifest { attributes('Main-Class': 'hu.bme.mit.theta.tools.sts.StsMain', 'Implementation-Version': getCommitId()) }
     baseName = 'theta-sts'
     classifier = null
     version = null
@@ -56,7 +72,7 @@ task xtaMain(type: ShadowJar) {
     //exclude('META-INF/INDEX.LIST', 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA')
     //classifier = 'fat'
     //mergeServiceFiles()
-    manifest { attributes 'Main-Class': 'hu.bme.mit.theta.tools.xta.XtaMain' }
+    manifest { attributes('Main-Class': 'hu.bme.mit.theta.tools.xta.XtaMain', 'Implementation-Version': getCommitId()) }
     baseName = 'theta-xta'
     classifier = null
     version = null
