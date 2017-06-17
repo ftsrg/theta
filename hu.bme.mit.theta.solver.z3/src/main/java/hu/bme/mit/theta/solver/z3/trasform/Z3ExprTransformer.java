@@ -21,6 +21,7 @@ import hu.bme.mit.theta.core.type.booltype.ImplyExpr;
 import hu.bme.mit.theta.core.type.booltype.NotExpr;
 import hu.bme.mit.theta.core.type.booltype.OrExpr;
 import hu.bme.mit.theta.core.type.booltype.TrueExpr;
+import hu.bme.mit.theta.core.type.booltype.XorExpr;
 import hu.bme.mit.theta.core.type.inttype.IntAddExpr;
 import hu.bme.mit.theta.core.type.inttype.IntDivExpr;
 import hu.bme.mit.theta.core.type.inttype.IntEqExpr;
@@ -83,6 +84,8 @@ class Z3ExprTransformer {
 				.addCase(ImplyExpr.class, this::transformImply)
 
 				.addCase(IffExpr.class, this::transformIff)
+
+				.addCase(XorExpr.class, this::transformXor)
 
 				.addCase(AndExpr.class, this::transformAnd)
 
@@ -206,6 +209,12 @@ class Z3ExprTransformer {
 		final com.microsoft.z3.BoolExpr leftOpTerm = (com.microsoft.z3.BoolExpr) toTerm(expr.getLeftOp());
 		final com.microsoft.z3.BoolExpr rightOpTerm = (com.microsoft.z3.BoolExpr) toTerm(expr.getRightOp());
 		return context.mkIff(leftOpTerm, rightOpTerm);
+	}
+
+	private com.microsoft.z3.Expr transformXor(final XorExpr expr) {
+		final com.microsoft.z3.BoolExpr leftOpTerm = (com.microsoft.z3.BoolExpr) toTerm(expr.getLeftOp());
+		final com.microsoft.z3.BoolExpr rightOpTerm = (com.microsoft.z3.BoolExpr) toTerm(expr.getRightOp());
+		return context.mkXor(leftOpTerm, rightOpTerm);
 	}
 
 	private com.microsoft.z3.Expr transformAnd(final AndExpr expr) {

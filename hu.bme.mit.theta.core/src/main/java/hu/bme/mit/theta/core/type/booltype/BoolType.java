@@ -41,7 +41,7 @@ public final class BoolType implements Equational<BoolType> {
 
 	@Override
 	public NeqExpr<BoolType> Neq(final Expr<BoolType> leftOp, final Expr<BoolType> rightOp) {
-		throw new UnsupportedOperationException();
+		return BoolExprs.Xor(leftOp, rightOp);
 	}
 
 }

@@ -42,6 +42,10 @@ public final class BoolExprs {
 		return new IffExpr(leftOp, rightOp);
 	}
 
+	public static XorExpr Xor(final Expr<BoolType> leftOp, final Expr<BoolType> rightOp) {
+		return new XorExpr(leftOp, rightOp);
+	}
+
 	public static AndExpr And(final Iterable<? extends Expr<BoolType>> ops) {
 		return new AndExpr(ops);
 	}
