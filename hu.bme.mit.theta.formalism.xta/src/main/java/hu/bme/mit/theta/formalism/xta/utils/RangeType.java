@@ -29,7 +29,7 @@ public final class RangeType implements Type {
 
 	public IntLitExpr Int(final int value) {
 		checkArgument(value >= lower && value <= upper);
-		return Int(value);
+		return IntExprs.Int(value);
 	}
 
 	public Stream<IntLitExpr> values() {
