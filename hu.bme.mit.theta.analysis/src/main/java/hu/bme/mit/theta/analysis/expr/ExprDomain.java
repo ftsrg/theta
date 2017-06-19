@@ -5,16 +5,11 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 import static hu.bme.mit.theta.core.utils.PathUtils.unfold;
 
 import hu.bme.mit.theta.analysis.Domain;
-import hu.bme.mit.theta.core.model.Model;
-import hu.bme.mit.theta.core.model.impl.Valuation;
-import hu.bme.mit.theta.core.utils.PathUtils;
 import hu.bme.mit.theta.solver.Solver;
 
 public final class ExprDomain implements Domain<ExprState> {
 
 	private final Solver solver;
-
-	public Valuation valuation;
 
 	private ExprDomain(final Solver solver) {
 		this.solver = checkNotNull(solver);
@@ -54,10 +49,6 @@ public final class ExprDomain implements Domain<ExprState> {
 		solver.add(unfold(state1.toExpr(), 0));
 		solver.add(Not(unfold(state2.toExpr(), 0)));
 		final boolean result = solver.check().isUnsat();
-		if (!result) {
-			final Model model = solver.getModel();
-			valuation = PathUtils.extractValuation(model, 0);
-		}
 		solver.pop();
 		return result;
 	}
