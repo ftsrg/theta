@@ -7,7 +7,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
-final class CompositeNode extends Node {
+/**
+ * Represents a compisite node of the visualizable graph.
+ */
+public final class CompositeNode extends Node {
 
 	private final Collection<Node> children;
 

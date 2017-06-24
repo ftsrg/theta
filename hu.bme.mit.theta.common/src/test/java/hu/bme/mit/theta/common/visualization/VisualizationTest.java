@@ -2,6 +2,8 @@ package hu.bme.mit.theta.common.visualization;
 
 import java.awt.Color;
 
+import hu.bme.mit.theta.common.visualization.writer.YedWriter;
+
 public class VisualizationTest {
 
 	public static void main(final String[] args) {

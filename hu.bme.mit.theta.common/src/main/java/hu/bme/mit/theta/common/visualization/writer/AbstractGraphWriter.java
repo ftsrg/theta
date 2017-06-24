@@ -1,8 +1,10 @@
-package hu.bme.mit.theta.common.visualization;
+package hu.bme.mit.theta.common.visualization.writer;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
+
+import hu.bme.mit.theta.common.visualization.Graph;
 
 /**
  * Base class for writing graphs.

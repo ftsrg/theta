@@ -2,7 +2,7 @@ package hu.bme.mit.theta.formalism.cfa;
 
 import org.junit.Test;
 
-import hu.bme.mit.theta.common.visualization.GraphvizWriter;
+import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 import hu.bme.mit.theta.formalism.cfa.CFA.CfaLoc;
 import hu.bme.mit.theta.formalism.cfa.utils.CfaVisualizer;
 

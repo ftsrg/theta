@@ -1,6 +1,15 @@
-package hu.bme.mit.theta.common.visualization;
+package hu.bme.mit.theta.common.visualization.writer;
 
 import java.awt.Color;
+
+import hu.bme.mit.theta.common.visualization.CompositeNode;
+import hu.bme.mit.theta.common.visualization.Edge;
+import hu.bme.mit.theta.common.visualization.EdgeAttributes;
+import hu.bme.mit.theta.common.visualization.Graph;
+import hu.bme.mit.theta.common.visualization.LineStyle;
+import hu.bme.mit.theta.common.visualization.Node;
+import hu.bme.mit.theta.common.visualization.NodeAttributes;
+import hu.bme.mit.theta.common.visualization.Shape;
 
 /**
  * Class for writing graphs in yED (GraphML) format.
