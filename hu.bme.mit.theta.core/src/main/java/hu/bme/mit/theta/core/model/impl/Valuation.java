@@ -15,8 +15,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
-import java.util.StringJoiner;
 
+import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.Decl;
 import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.LitExpr;
@@ -25,6 +25,10 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.Assignment;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
+/**
+ * Implementation of a valuation, which is a special type of assignment, mapping
+ * variable declarations to literal expressions.
+ */
 public final class Valuation implements Assignment {
 
 	private static final int HASH_SEED = 5743;
@@ -114,17 +118,8 @@ public final class Valuation implements Assignment {
 
 	@Override
 	public String toString() {
-		final StringJoiner sj = new StringJoiner(", ", "Assignment(", ")");
-		for (final VarDecl<?> decl : getDecls()) {
-			final StringBuilder sb = new StringBuilder();
-			sb.append(decl.getName());
-			sb.append(" <- ");
-			final Optional<?> val = eval(decl);
-			assert val.isPresent();
-			sb.append(val.get());
-			sj.add(sb);
-		}
-		return sj.toString();
+		return ObjectUtils.toStringBuilder("Valuation")
+				.addAll(declToExpr.entrySet(), e -> e.getKey().getName() + " <- " + e.getValue()).toString();
 	}
 
 	public static final class Builder implements Assignment {

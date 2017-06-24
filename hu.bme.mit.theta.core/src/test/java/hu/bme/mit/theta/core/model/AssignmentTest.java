@@ -46,5 +46,7 @@ public class AssignmentTest {
 		final Assignment assignment = new AssignmentImpl(declToExpr);
 
 		Assert.assertEquals(assignment.toExpr(), And(Eq(ca.getRef(), Int(5)), Eq(cb.getRef(), Int(9))));
+
+		System.out.println(assignment);
 	}
 }

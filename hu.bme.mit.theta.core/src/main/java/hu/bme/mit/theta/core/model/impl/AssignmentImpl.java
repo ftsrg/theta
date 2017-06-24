@@ -13,16 +13,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
-import java.util.StringJoiner;
 
 import com.google.common.collect.ImmutableList;
 
+import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.Decl;
 import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.model.Assignment;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
+/**
+ * Basic implementation of an assignment.
+ */
 public final class AssignmentImpl implements Assignment {
 
 	private final Collection<Decl<?>> decls;
@@ -94,17 +97,8 @@ public final class AssignmentImpl implements Assignment {
 
 	@Override
 	public String toString() {
-		final StringJoiner sj = new StringJoiner(", ", "Assignment(", ")");
-		for (final Decl<?> decl : decls) {
-			final StringBuilder sb = new StringBuilder();
-			sb.append(decl.getName());
-			sb.append(" <- ");
-			final Optional<?> val = eval(decl);
-			assert val.isPresent();
-			sb.append(val.get());
-			sj.add(sb);
-		}
-		return sj.toString();
+		return ObjectUtils.toStringBuilder("Assignment")
+				.addAll(declToExpr.entrySet(), e -> e.getKey().getName() + " <- " + e.getValue()).toString();
 	}
 
 	@Override

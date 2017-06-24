@@ -9,6 +9,10 @@ import hu.bme.mit.theta.core.LitExpr;
 import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 
+/**
+ * Interface for a model, which is a special type of assignment, mapping
+ * constant declarations to literal expressions.
+ */
 public interface Model extends Assignment {
 
 	@Override
