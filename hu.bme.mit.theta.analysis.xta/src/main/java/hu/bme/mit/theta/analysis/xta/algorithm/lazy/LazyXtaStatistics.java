@@ -14,7 +14,7 @@ import hu.bme.mit.theta.analysis.algorithm.Statistics;
 import hu.bme.mit.theta.analysis.xta.XtaState;
 import hu.bme.mit.theta.common.Tuple;
 
-public final class LazyXtaStatistics implements Statistics {
+public final class LazyXtaStatistics extends Statistics {
 
 	private final long algorithmTimeInMs;
 	private final long refinementTimeInMs;
@@ -37,6 +37,16 @@ public final class LazyXtaStatistics implements Statistics {
 		argNodesExpanded = builder.arg.getNodes().filter(ArgNode::isExpanded).count();
 		discreteStatesExpanded = builder.arg.getNodes().filter(ArgNode::isExpanded)
 				.map(n -> Tuple.of(n.getState().getLocs(), n.getState().getVal())).collect(toSet()).size();
+
+		addStat("AlgorithmTimeInMs", this::getAlgorithmTimeInMs);
+		addStat("RefinementTimeInMs", this::getRefinementTimeInMs);
+		addStat("InterpolationTimeInMs", this::getInterpolationTimeInMs);
+		addStat("RefinementSteps", this::getRefinementSteps);
+		addStat("ArgDepth", this::getArgDepth);
+		addStat("ArgNodes", this::getArgNodes);
+		addStat("ArgNodesFeasible", this::getArgNodesFeasible);
+		addStat("ArgNodesExpanded", this::getArgNodesExpanded);
+		addStat("DiscreteStatesExpanded", this::getDiscreteStatesExpanded);
 	}
 
 	public static Builder builder(final ARG<? extends XtaState<?>, ?> arg) {
@@ -77,21 +87,6 @@ public final class LazyXtaStatistics implements Statistics {
 
 	public long getDiscreteStatesExpanded() {
 		return discreteStatesExpanded;
-	}
-
-	@Override
-	public String toString() {
-		final StringBuilder sb = new StringBuilder();
-		sb.append("algorithmTimeInMs = " + algorithmTimeInMs + "\n");
-		sb.append("refinementTimeInMs = " + refinementTimeInMs + "\n");
-		sb.append("interpolationTimeInMs = " + interpolationTimeInMs + "\n");
-		sb.append("refinementSteps = " + refinementSteps + "\n");
-		sb.append("argDepth = " + argDepth + "\n");
-		sb.append("argNodes = " + argNodes + "\n");
-		sb.append("argNodesFeasible = " + argNodesFeasible + "\n");
-		sb.append("argNodesExpanded = " + argNodesExpanded + "\n");
-		sb.append("discreteStatesExpanded = " + discreteStatesExpanded + "\n");
-		return sb.toString();
 	}
 
 	public static final class Builder {
@@ -166,5 +161,4 @@ public final class LazyXtaStatistics implements Statistics {
 		}
 
 	}
-
 }
