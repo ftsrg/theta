@@ -14,6 +14,10 @@ import com.google.common.collect.Sets;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
 
+/**
+ * Represents an immutable mapping, where each variable is associated with an
+ * index. The inner builder class can also be used to create a new instance.
+ */
 public class VarIndexing {
 
 	private static final VarIndexing ALL_ZERO = new Builder(0).build();
@@ -27,6 +31,12 @@ public class VarIndexing {
 		varToOffset = ImmutableMap.copyOf(builder.varToOffset);
 	}
 
+	/**
+	 * Create a new instance with a default index.
+	 *
+	 * @param defaultIndex Default index
+	 * @return New instance
+	 */
 	public static VarIndexing all(final int defaultIndex) {
 		checkArgument(defaultIndex >= 0);
 		switch (defaultIndex) {
@@ -39,39 +49,87 @@ public class VarIndexing {
 		}
 	}
 
+	/**
+	 * Create a builder with a default index.
+	 *
+	 * @param defaultIndex Default index
+	 * @return New builder
+	 */
 	public static Builder builder(final int defaultIndex) {
 		checkArgument(defaultIndex >= 0);
 		return new Builder(defaultIndex);
 	}
 
+	/**
+	 * Create a new builder from the current instance.
+	 *
+	 * @return New builder
+	 */
 	public Builder transform() {
 		return new Builder(this);
 	}
 
+	/**
+	 * Increment the index of a given variable with a given amount
+	 *
+	 * @param varDecl Variable to increment
+	 * @param n Amount to increment
+	 * @return Transformed indexing
+	 */
 	public VarIndexing inc(final VarDecl<?> varDecl, final int n) {
 		checkNotNull(varDecl);
 		return transform().inc(varDecl, n).build();
 	}
 
+	/**
+	 * Increment the index of a given variable by one
+	 *
+	 * @param varDecl Variable to increment
+	 * @return Transformed indexing
+	 */
 	public VarIndexing inc(final VarDecl<?> varDecl) {
 		return inc(varDecl, 1);
 	}
 
+	/**
+	 * Add another indexing to the current instance
+	 *
+	 * @param indexing Other indexing
+	 * @return Sum of the two indexings
+	 */
 	public VarIndexing add(final VarIndexing indexing) {
 		checkNotNull(indexing);
 		return transform().add(indexing.transform()).build();
 	}
 
+	/**
+	 * Subtract another indexing from the current instance
+	 *
+	 * @param indexing Other indexing
+	 * @return Difference of the two indexings
+	 */
 	public VarIndexing sub(final VarIndexing indexing) {
 		checkNotNull(indexing);
 		return transform().sub(indexing.transform()).build();
 	}
 
+	/**
+	 * Join another indexing to the current instance
+	 *
+	 * @param indexing Other indexing
+	 * @return Joined indexing
+	 */
 	public VarIndexing join(final VarIndexing indexing) {
 		checkNotNull(indexing);
 		return transform().join(indexing.transform()).build();
 	}
 
+	/**
+	 * Get the index of a variable
+	 * 
+	 * @param varDecl Variable
+	 * @return Index
+	 */
 	public int get(final VarDecl<?> varDecl) {
 		checkNotNull(varDecl);
 		final Integer offset = varToOffset.getOrDefault(varDecl, 0);

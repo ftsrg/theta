@@ -17,14 +17,26 @@ import hu.bme.mit.theta.common.ToStringBuilder;
 import hu.bme.mit.theta.core.decl.IndexedConstDecl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 
+/**
+ * Represents an immutable mapping, where each integer index can be associated
+ * with a set of variables. Use the inner builder class to create a new
+ * instance.
+ */
 public final class IndexedVars {
 
-	Map<Integer, Set<VarDecl<?>>> varSets;
+	private final Map<Integer, Set<VarDecl<?>>> varSets;
 
 	private IndexedVars(final Map<Integer, Set<VarDecl<?>>> varSets) {
 		this.varSets = varSets;
 	}
 
+	/**
+	 * Get variables for a given index. If the index is not present, an empty
+	 * set is returned.
+	 *
+	 * @param index Index
+	 * @return Set of variables
+	 */
 	public Set<VarDecl<?>> getVars(final int index) {
 		Set<VarDecl<?>> vars = varSets.get(index);
 		if (vars == null) {
@@ -33,23 +45,44 @@ public final class IndexedVars {
 		return Collections.unmodifiableSet(vars);
 	}
 
+	/**
+	 * Get the non-empty indexes.
+	 *
+	 * @return Set of indexes
+	 */
 	public Set<Integer> getNonEmptyIndexes() {
 		return varSets.keySet();
 	}
 
+	/**
+	 * Check if the mapping is empty.
+	 *
+	 * @return True, if the mapping is empty
+	 */
 	public boolean isEmpty() {
 		return varSets.isEmpty();
 	}
 
+	/**
+	 * Get all variables that appear for any index.
+	 *
+	 * @return Set of variables
+	 */
 	public Set<VarDecl<?>> getAllVars() {
 		final Set<VarDecl<?>> allVars = varSets.values().stream().flatMap(s -> s.stream()).collect(Collectors.toSet());
 		return Collections.unmodifiableSet(allVars);
 	}
 
+	/**
+	 * Create a new builder instance.
+	 */
 	public static Builder builder() {
 		return new Builder();
 	}
 
+	/**
+	 * Helper class for building a new instance.
+	 */
 	public static final class Builder {
 
 		private final Map<Integer, Set<VarDecl<?>>> varSets;
@@ -70,6 +103,8 @@ public final class IndexedVars {
 
 		public void add(final int i, final Collection<? extends VarDecl<?>> varDecls) {
 			checkState(!built);
+			if (varDecls.isEmpty()) return;
+
 			if (!varSets.containsKey(i)) {
 				varSets.put(i, new HashSet<>());
 			}
