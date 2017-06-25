@@ -20,24 +20,20 @@ import hu.bme.mit.theta.core.type.booltype.ImplyExpr;
 import hu.bme.mit.theta.core.type.booltype.NotExpr;
 import hu.bme.mit.theta.core.type.booltype.OrExpr;
 
-public final class CnfTransformer {
+final class ExprCnfTransformer {
 
 	private static final String CNFPREFIX = "__CNF";
 	private final CnfTransformationHelper helper;
 
-	public CnfTransformer() {
+	ExprCnfTransformer() {
 		helper = new CnfTransformationHelper();
 	}
 
-	public Expr<BoolType> transform(final Expr<BoolType> expr) {
+	Expr<BoolType> transformEquiSat(final Expr<BoolType> expr) {
 		final Collection<Expr<BoolType>> encoding = new ArrayList<>();
 		final Expr<BoolType> top = helper.transform(expr, encoding);
 		encoding.add(top);
 		return And(encoding);
-	}
-
-	public Collection<VarDecl<BoolType>> getRepresentatives() {
-		return helper.getReps();
 	}
 
 	private static final class CnfTransformationHelper {
@@ -47,10 +43,6 @@ public final class CnfTransformer {
 		private CnfTransformationHelper() {
 			nextCnfVarId = 0;
 			representatives = new HashMap<>();
-		}
-
-		public Collection<VarDecl<BoolType>> getReps() {
-			return representatives.values();
 		}
 
 		public Expr<BoolType> transform(final Expr<BoolType> expr, final Collection<Expr<BoolType>> encoding) {
@@ -80,8 +72,7 @@ public final class CnfTransformer {
 		////
 
 		private Expr<BoolType> encodeNot(final NotExpr expr, final Collection<Expr<BoolType>> encoding) {
-			if (representatives.containsKey(expr))
-				return representatives.get(expr).getRef();
+			if (representatives.containsKey(expr)) return representatives.get(expr).getRef();
 			final Expr<BoolType> rep = getRep(expr);
 			final Expr<BoolType> op = transform(expr.getOp(), encoding);
 			encoding.add(And(Or(Not(rep), Not(op)), Or(rep, op)));
@@ -89,8 +80,7 @@ public final class CnfTransformer {
 		}
 
 		private Expr<BoolType> encodeImply(final ImplyExpr expr, final Collection<Expr<BoolType>> encoding) {
-			if (representatives.containsKey(expr))
-				return representatives.get(expr).getRef();
+			if (representatives.containsKey(expr)) return representatives.get(expr).getRef();
 			final Expr<BoolType> rep = getRep(expr);
 			final Expr<BoolType> op1 = transform(expr.getLeftOp(), encoding);
 			final Expr<BoolType> op2 = transform(expr.getRightOp(), encoding);
@@ -99,8 +89,7 @@ public final class CnfTransformer {
 		}
 
 		private Expr<BoolType> encodeIff(final IffExpr expr, final Collection<Expr<BoolType>> encoding) {
-			if (representatives.containsKey(expr))
-				return representatives.get(expr).getRef();
+			if (representatives.containsKey(expr)) return representatives.get(expr).getRef();
 			final Expr<BoolType> rep = getRep(expr);
 			final Expr<BoolType> op1 = transform(expr.getLeftOp(), encoding);
 			final Expr<BoolType> op2 = transform(expr.getRightOp(), encoding);
@@ -110,8 +99,7 @@ public final class CnfTransformer {
 		}
 
 		private Expr<BoolType> encodeAnd(final AndExpr expr, final Collection<Expr<BoolType>> encoding) {
-			if (representatives.containsKey(expr))
-				return representatives.get(expr).getRef();
+			if (representatives.containsKey(expr)) return representatives.get(expr).getRef();
 			final Expr<BoolType> rep = getRep(expr);
 			final Collection<Expr<BoolType>> ops = new ArrayList<>(expr.getOps().size());
 			for (final Expr<BoolType> op : expr.getOps()) {
@@ -130,8 +118,7 @@ public final class CnfTransformer {
 		}
 
 		private Expr<BoolType> encodeOr(final OrExpr expr, final Collection<Expr<BoolType>> encoding) {
-			if (representatives.containsKey(expr))
-				return representatives.get(expr).getRef();
+			if (representatives.containsKey(expr)) return representatives.get(expr).getRef();
 			final Expr<BoolType> rep = getRep(expr);
 			final Collection<Expr<BoolType>> ops = new ArrayList<>(expr.getOps().size());
 			for (final Expr<BoolType> op : expr.getOps()) {

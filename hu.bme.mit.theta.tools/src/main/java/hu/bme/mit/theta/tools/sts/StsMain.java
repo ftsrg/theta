@@ -22,7 +22,6 @@ import hu.bme.mit.theta.common.logging.impl.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.impl.NullLogger;
 import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.common.table.impl.SimpleTableWriter;
-import hu.bme.mit.theta.core.utils.ExprMetrics;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.formalism.sts.dsl.StsDslManager;
@@ -170,7 +169,7 @@ public class StsMain {
 					tableWriter.cell("");
 				}
 				tableWriter.cell(sts.getVars().size());
-				tableWriter.cell(ExprUtils.size(And(sts.getInit(), sts.getTrans()), ExprMetrics.absoluteSize()));
+				tableWriter.cell(ExprUtils.absoluteSize(And(sts.getInit(), sts.getTrans())));
 			}
 
 		} catch (final Throwable ex) {

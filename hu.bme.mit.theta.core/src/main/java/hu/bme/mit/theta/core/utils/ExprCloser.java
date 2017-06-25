@@ -12,14 +12,14 @@ import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 
-public final class ExprCloser {
+final class ExprCloser {
 
 	private static final String PARAM_NAME_FORMAT = "_%s_p";
 
 	private ExprCloser() {
 	}
 
-	public static <T extends Type> Expr<T> close(final Expr<T> expr, final Map<VarDecl<?>, ParamDecl<?>> mapping) {
+	static <T extends Type> Expr<T> close(final Expr<T> expr, final Map<VarDecl<?>, ParamDecl<?>> mapping) {
 		if (expr instanceof RefExpr) {
 			final RefExpr<T> ref = (RefExpr<T>) expr;
 			final Decl<T> decl = ref.getDecl();

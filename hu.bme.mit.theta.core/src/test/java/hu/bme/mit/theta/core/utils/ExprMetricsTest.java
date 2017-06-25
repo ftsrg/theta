@@ -38,33 +38,30 @@ public class ExprMetricsTest {
 	public Expr<Type> expr;
 
 	@Parameter(value = 1)
-	public ExprMetrics.ExprMetric metric;
-
-	@Parameter(value = 2)
 	public int expectedSize;
 
 	@Parameters
 	public static Collection<Object[]> data() {
 		return Arrays.asList(new Object[][] {
 
-				{ True(), ExprMetrics.absoluteSize(), 1 },
+				{ True(), 1 },
 
-				{ A, ExprMetrics.absoluteSize(), 1 },
+				{ A, 1 },
 
-				{ And(A, True()), ExprMetrics.absoluteSize(), 3 },
+				{ And(A, True()), 3 },
 
-				{ And(A, True(), False()), ExprMetrics.absoluteSize(), 4 },
+				{ And(A, True(), False()), 4 },
 
-				{ And(A, And(True(), False())), ExprMetrics.absoluteSize(), 5 },
+				{ And(A, And(True(), False())), 5 },
 
-				{ Add(B, Sub(Int(1), Int(2)), Int(3)), ExprMetrics.absoluteSize(), 6 },
+				{ Add(B, Sub(Int(1), Int(2)), Int(3)), 6 },
 
 		});
 	}
 
 	@Test
 	public void test() {
-		final int actualSize = ExprUtils.size(expr, metric);
+		final int actualSize = ExprUtils.absoluteSize(expr);
 		assertEquals(expectedSize, actualSize);
 	}
 }

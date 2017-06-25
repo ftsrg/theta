@@ -8,9 +8,9 @@ import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 
-final class PrimeApplier {
+final class ExprPrimeApplier {
 
-	private PrimeApplier() {
+	private ExprPrimeApplier() {
 	}
 
 	static <T extends Type> Expr<T> applyPrimes(final Expr<T> expr, final VarIndexing indexing) {

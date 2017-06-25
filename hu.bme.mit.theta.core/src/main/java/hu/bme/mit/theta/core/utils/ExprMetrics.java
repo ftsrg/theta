@@ -2,18 +2,16 @@ package hu.bme.mit.theta.core.utils;
 
 import hu.bme.mit.theta.core.Expr;
 
-public final class ExprMetrics {
+final class ExprMetrics {
 
 	private ExprMetrics() {
 	}
 
-	public interface ExprMetric {
-
+	interface ExprMetric {
 		int calculate(final Expr<?> expr);
-
 	}
 
-	public static ExprMetric absoluteSize() {
+	static ExprMetric absoluteSize() {
 		return new AbsoluteSize();
 	}
 

@@ -12,54 +12,50 @@ import hu.bme.mit.theta.core.type.booltype.ImplyExpr;
 import hu.bme.mit.theta.core.type.booltype.NotExpr;
 import hu.bme.mit.theta.core.type.booltype.OrExpr;
 
-final class CnfChecker {
+final class ExprCnfChecker {
 
 	private static enum CnfStatus {
 		START(0), INSIDE_AND(1), INSIDE_OR(2), INSIDE_NOT(3);
-		private final int value;
+		final int value;
 
 		private CnfStatus(final int value) {
 			this.value = value;
 		}
-
-		public int getValue() {
-			return value;
-		}
 	}
 
-	public static boolean isCnf(final Expr<BoolType> expr) {
-		return isCnf(expr, CnfStatus.START);
+	static boolean isExprCnf(final Expr<BoolType> expr) {
+		return isExprCnf(expr, CnfStatus.START);
 	}
 
-	private static boolean isCnf(final Expr<BoolType> expr, final CnfStatus status) {
+	private static boolean isExprCnf(final Expr<BoolType> expr, final CnfStatus status) {
 		if (expr instanceof BoolLitExpr) {
 			return true;
 
 		} else if (expr instanceof NotExpr) {
 			final NotExpr notExpr = (NotExpr) expr;
 			// NOT is not allowed inside NOT
-			if (status.getValue() >= CnfStatus.INSIDE_NOT.getValue()) {
+			if (status.value >= CnfStatus.INSIDE_NOT.value) {
 				return false;
 			} else {
-				return isCnf(notExpr.getOp(), CnfStatus.INSIDE_NOT);
+				return isExprCnf(notExpr.getOp(), CnfStatus.INSIDE_NOT);
 			}
 
 		} else if (expr instanceof AndExpr) {
 			final AndExpr andExpr = (AndExpr) expr;
 			// AND is allowed inside AND
-			if (status.getValue() > CnfStatus.INSIDE_AND.getValue()) {
+			if (status.value > CnfStatus.INSIDE_AND.value) {
 				return false;
 			} else {
-				return andExpr.getOps().stream().allMatch(op -> isCnf(op, CnfStatus.INSIDE_AND));
+				return andExpr.getOps().stream().allMatch(op -> isExprCnf(op, CnfStatus.INSIDE_AND));
 			}
 
 		} else if (expr instanceof OrExpr) {
 			final OrExpr orExpr = (OrExpr) expr;
 			// OR is allowed inside OR
-			if (status.getValue() > CnfStatus.INSIDE_OR.getValue()) {
+			if (status.value > CnfStatus.INSIDE_OR.value) {
 				return false;
 			} else {
-				return orExpr.getOps().stream().allMatch(op -> isCnf(op, CnfStatus.INSIDE_OR));
+				return orExpr.getOps().stream().allMatch(op -> isExprCnf(op, CnfStatus.INSIDE_OR));
 			}
 
 		} else if (expr instanceof ImplyExpr) {
@@ -73,7 +69,7 @@ final class CnfChecker {
 
 		} else if (expr instanceof PrimeExpr) {
 			final PrimeExpr<BoolType> primeExpr = (PrimeExpr<BoolType>) expr;
-			return isCnf(primeExpr.getOp(), CnfStatus.INSIDE_NOT);
+			return isExprCnf(primeExpr.getOp(), CnfStatus.INSIDE_NOT);
 
 		} else if (expr instanceof IteExpr) {
 			return false;

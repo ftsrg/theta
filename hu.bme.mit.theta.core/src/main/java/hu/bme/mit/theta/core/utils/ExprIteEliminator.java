@@ -15,12 +15,12 @@ import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
-final class IteEliminator {
+final class ExprIteEliminator {
 
-	private IteEliminator() {
+	private ExprIteEliminator() {
 	}
 
-	public static <T extends Type> Expr<T> eliminateIte(final Expr<T> expr) {
+	static <T extends Type> Expr<T> eliminateIte(final Expr<T> expr) {
 		return removeIte(propagateIte(expr));
 	}
 
@@ -42,7 +42,7 @@ final class IteEliminator {
 				return expr;
 			}
 		} else {
-			return expr.map(IteEliminator::removeIte);
+			return expr.map(ExprIteEliminator::removeIte);
 		}
 	}
 
@@ -53,7 +53,7 @@ final class IteEliminator {
 			return iteExpr.withThen(propagateIte(iteExpr.getThen())).withElse(propagateIte(iteExpr.getElse()));
 		} else {
 			// Apply propagation to operand(s) first, then apply pushdown
-			return pushIte(expr.map(IteEliminator::propagateIte));
+			return pushIte(expr.map(ExprIteEliminator::propagateIte));
 		}
 	}
 

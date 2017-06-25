@@ -5,12 +5,12 @@ import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.decl.IndexedConstDecl;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 
-public final class IndexedVarCollector {
+final class ExprIndexedVarCollector {
 
-	private IndexedVarCollector() {
+	private ExprIndexedVarCollector() {
 	}
 
-	public static void collectIndexedVars(final Expr<?> expr, final IndexedVars.Builder builder) {
+	static void collectIndexedVars(final Expr<?> expr, final IndexedVars.Builder builder) {
 		if (expr instanceof RefExpr) {
 			final RefExpr<?> ref = (RefExpr<?>) expr;
 			final Decl<?> decl = ref.getDecl();
