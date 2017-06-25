@@ -6,7 +6,6 @@ import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;
 
 import java.util.Collection;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import hu.bme.mit.theta.core.Decl;
 import hu.bme.mit.theta.core.Expr;
@@ -20,6 +19,9 @@ import hu.bme.mit.theta.core.model.impl.Valuation;
 import hu.bme.mit.theta.core.type.anytype.PrimeExpr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 
+/**
+ * Utility functions related to paths.
+ */
 public class PathUtils {
 
 	private PathUtils() {
@@ -33,36 +35,67 @@ public class PathUtils {
 
 	////
 
+	/**
+	 * Transform an expression by substituting variables with indexed constants.
+	 *
+	 * @param expr Original expression
+	 * @param indexing Indexing for the variables
+	 * @return Transformed expression
+	 */
 	public static <T extends Type> Expr<T> unfold(final Expr<T> expr, final VarIndexing indexing) {
 		checkNotNull(expr);
 		checkNotNull(indexing);
 		final UnfoldHelper helper = new UnfoldHelper(indexing);
-		final Expr<T> result = helper.unfold(expr, 0);
-		return result;
+		return helper.unfold(expr, 0);
 	}
 
+	/**
+	 * Transform an expression by substituting variables with indexed constants.
+	 *
+	 * @param expr Original expression
+	 * @param i Index
+	 * @return Transformed expression
+	 */
 	public static <T extends Type> Expr<T> unfold(final Expr<T> expr, final int i) {
 		checkArgument(i >= 0);
 		return unfold(expr, VarIndexing.all(i));
 	}
 
-	public static <T extends Type> Collection<Expr<T>> unfold(final Collection<Expr<T>> exprs, final int i) {
-		return exprs.stream().map(e -> PathUtils.unfold(e, i)).collect(Collectors.toSet());
-	}
-
+	/**
+	 * Transform an expression by substituting indexed constants with variables.
+	 *
+	 * @param expr Original expression
+	 * @param indexing Indexing for the variables
+	 * @return Transformed expression
+	 */
 	public static <T extends Type> Expr<T> foldin(final Expr<T> expr, final VarIndexing indexing) {
 		checkNotNull(expr);
 		checkNotNull(indexing);
 		final FoldinHelper helper = new FoldinHelper(indexing);
-		final Expr<T> result = helper.foldin(expr);
-		return result;
+		return helper.foldin(expr);
 	}
 
+	/**
+	 * Transform an expression by substituting indexed constants with variables.
+	 *
+	 * @param expr Original expression
+	 * @param i Index
+	 * @return Transformed expression
+	 */
 	public static <T extends Type> Expr<T> foldin(final Expr<T> expr, final int i) {
 		checkArgument(i >= 0);
 		return foldin(expr, VarIndexing.all(i));
 	}
 
+	/**
+	 * Extract values from a model for a given indexing. If you know the set of
+	 * variables to be extracted, use that overload because it is more
+	 * efficient.
+	 *
+	 * @param model Model
+	 * @param indexing Indexing
+	 * @return Values
+	 */
 	public static Valuation extractValuation(final Model model, final VarIndexing indexing) {
 		final Valuation.Builder builder = Valuation.builder();
 		for (final ConstDecl<?> constDecl : model.getDecls()) {
@@ -78,11 +111,29 @@ public class PathUtils {
 		return builder.build();
 	}
 
+	/**
+	 * Extract values from a model for a given index. If you know the set of
+	 * variables to be extracted, use that overload because it is more
+	 * efficient.
+	 *
+	 * @param model Model
+	 * @param i Index
+	 * @return Values
+	 */
 	public static Valuation extractValuation(final Model model, final int i) {
 		checkArgument(i >= 0);
 		return extractValuation(model, VarIndexing.all(i));
 	}
 
+	/**
+	 * Extract values from a model for a given indexing and given variables. If
+	 * a variable has no value in the model, it will not be included in the
+	 * return value.
+	 *
+	 * @param model Model
+	 * @param indexing Indexing
+	 * @return Values
+	 */
 	public static Valuation extractValuation(final Model model, final VarIndexing indexing,
 			final Collection<? extends VarDecl<?>> varDecls) {
 		final Valuation.Builder builder = Valuation.builder();
@@ -97,6 +148,15 @@ public class PathUtils {
 		return builder.build();
 	}
 
+	/**
+	 * Extract values from a model for a given index and given variables. If a
+	 * variable has no value in the model, it will not be included in the return
+	 * value.
+	 *
+	 * @param model Model
+	 * @param i Index
+	 * @return Values
+	 */
 	public static Valuation extractValuation(final Model model, final int i,
 			final Collection<? extends VarDecl<?>> varDecls) {
 		checkArgument(i >= 0);
