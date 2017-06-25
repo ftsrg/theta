@@ -22,26 +22,26 @@ final class StmtToExprTransformer {
 	private StmtToExprTransformer() {
 	}
 
-	public static UnfoldResult toExpr(final Stmt stmt, final VarIndexing indexing) {
+	static StmtUnfoldResult toExpr(final Stmt stmt, final VarIndexing indexing) {
 		return stmt.accept(StmtToExprVisitor.INSTANCE, indexing);
 	}
 
-	public static UnfoldResult toExpr(final List<? extends Stmt> stmts, final VarIndexing indexing) {
+	static StmtUnfoldResult toExpr(final List<? extends Stmt> stmts, final VarIndexing indexing) {
 		final Collection<Expr<BoolType>> resultExprs = new ArrayList<>();
 		VarIndexing resultIndexing = indexing;
 
 		for (final Stmt stmt : stmts) {
-			final UnfoldResult subResult = toExpr(stmt, resultIndexing);
+			final StmtUnfoldResult subResult = toExpr(stmt, resultIndexing);
 			resultExprs.addAll(subResult.exprs);
 			resultIndexing = subResult.indexing;
 		}
 
-		return UnfoldResult.of(resultExprs, resultIndexing);
+		return StmtUnfoldResult.of(resultExprs, resultIndexing);
 	}
 
 	////////
 
-	private static class StmtToExprVisitor extends FailStmtVisitor<VarIndexing, UnfoldResult> {
+	private static class StmtToExprVisitor extends FailStmtVisitor<VarIndexing, StmtUnfoldResult> {
 		private static final StmtToExprVisitor INSTANCE = new StmtToExprVisitor();
 
 		private StmtToExprVisitor() {
@@ -50,28 +50,30 @@ final class StmtToExprTransformer {
 		////////
 
 		@Override
-		public UnfoldResult visit(final AssumeStmt stmt, final VarIndexing indexing) {
+		public StmtUnfoldResult visit(final AssumeStmt stmt, final VarIndexing indexing) {
 			final Expr<BoolType> cond = stmt.getCond();
 			final Expr<BoolType> expr = ExprUtils.applyPrimes(cond, indexing);
-			return UnfoldResult.of(ImmutableList.of(expr), indexing);
+			return StmtUnfoldResult.of(ImmutableList.of(expr), indexing);
 		}
 
 		@Override
-		public <DeclType extends Type> UnfoldResult visit(final HavocStmt<DeclType> stmt, final VarIndexing indexing) {
+		public <DeclType extends Type> StmtUnfoldResult visit(final HavocStmt<DeclType> stmt,
+				final VarIndexing indexing) {
 			final VarDecl<?> varDecl = stmt.getVarDecl();
 			final VarIndexing newIndexing = indexing.inc(varDecl);
-			return UnfoldResult.of(ImmutableList.of(), newIndexing);
+			return StmtUnfoldResult.of(ImmutableList.of(), newIndexing);
 		}
 
 		@Override
-		public <DeclType extends Type> UnfoldResult visit(final AssignStmt<DeclType> stmt, final VarIndexing indexing) {
+		public <DeclType extends Type> StmtUnfoldResult visit(final AssignStmt<DeclType> stmt,
+				final VarIndexing indexing) {
 			final VarDecl<DeclType> varDecl = stmt.getVarDecl();
 			final VarIndexing newIndexing = indexing.inc(varDecl);
 			final Expr<DeclType> rhs = ExprUtils.applyPrimes(stmt.getExpr(), indexing);
 			final Expr<DeclType> lhs = ExprUtils.applyPrimes(varDecl.getRef(), newIndexing);
 
 			final Expr<BoolType> expr = Eq(lhs, rhs);
-			return UnfoldResult.of(ImmutableList.of(expr), newIndexing);
+			return StmtUnfoldResult.of(ImmutableList.of(expr), newIndexing);
 		}
 	}
 

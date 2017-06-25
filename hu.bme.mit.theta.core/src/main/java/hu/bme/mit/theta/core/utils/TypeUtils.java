@@ -7,11 +7,21 @@ import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.decl.VarDecl;
 
+/**
+ * Utility functions related to types.
+ */
 public final class TypeUtils {
 
 	private TypeUtils() {
 	}
 
+	/**
+	 * Cast a declaration to a given type.
+	 *
+	 * @param decl Original declaration
+	 * @param type Type
+	 * @return Casted declaration
+	 */
 	public static <T extends Type> Decl<T> cast(final Decl<?> decl, final T type) {
 		checkNotNull(decl);
 		checkNotNull(type);
@@ -25,6 +35,13 @@ public final class TypeUtils {
 		}
 	}
 
+	/**
+	 * Cast a variable declaration to a given type.
+	 *
+	 * @param decl Original declaration
+	 * @param type Type
+	 * @return Casted declaration
+	 */
 	public static <T extends Type> VarDecl<T> cast(final VarDecl<?> decl, final T type) {
 		checkNotNull(decl);
 		checkNotNull(type);
@@ -38,6 +55,13 @@ public final class TypeUtils {
 		}
 	}
 
+	/**
+	 * Cast an expression to a given type.
+	 * 
+	 * @param expr Original expression
+	 * @param type Type
+	 * @return Casted expression
+	 */
 	public static <T extends Type> Expr<T> cast(final Expr<?> expr, final T type) {
 		checkNotNull(expr);
 		checkNotNull(type);

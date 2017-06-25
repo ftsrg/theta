@@ -9,7 +9,7 @@ import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.StmtUtils;
-import hu.bme.mit.theta.core.utils.UnfoldResult;
+import hu.bme.mit.theta.core.utils.StmtUnfoldResult;
 import hu.bme.mit.theta.core.utils.VarIndexing;
 import hu.bme.mit.theta.formalism.cfa.CFA.CfaEdge;
 import hu.bme.mit.theta.formalism.cfa.CFA.CfaLoc;
@@ -23,7 +23,7 @@ public final class CfaAction implements LocAction<CfaLoc, CfaEdge> {
 	private CfaAction(final CfaEdge edge) {
 		this.edge = checkNotNull(edge);
 
-		final UnfoldResult toExprResult = StmtUtils.toExpr(edge.getStmts(), all(0));
+		final StmtUnfoldResult toExprResult = StmtUtils.toExpr(edge.getStmts(), all(0));
 		expr = And(toExprResult.getExprs());
 		nextIndexing = toExprResult.getIndexing();
 	}

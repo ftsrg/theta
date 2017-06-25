@@ -7,17 +7,17 @@ import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
-public final class UnfoldResult {
+public final class StmtUnfoldResult {
 	final Collection<Expr<BoolType>> exprs;
 	final VarIndexing indexing;
 
-	private UnfoldResult(final Iterable<? extends Expr<BoolType>> exprs, final VarIndexing indexing) {
+	private StmtUnfoldResult(final Iterable<? extends Expr<BoolType>> exprs, final VarIndexing indexing) {
 		this.exprs = ImmutableList.copyOf(exprs);
 		this.indexing = indexing;
 	}
 
-	public static UnfoldResult of(final Iterable<? extends Expr<BoolType>> exprs, final VarIndexing indexing) {
-		return new UnfoldResult(exprs, indexing);
+	public static StmtUnfoldResult of(final Iterable<? extends Expr<BoolType>> exprs, final VarIndexing indexing) {
+		return new StmtUnfoldResult(exprs, indexing);
 	}
 
 	public Collection<? extends Expr<BoolType>> getExprs() {
