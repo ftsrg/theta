@@ -121,7 +121,7 @@ public final class TreePredPrec implements PredPrec {
 		Node node = root;
 
 		while (node != null) {
-			final LitExpr<BoolType> predHolds = ExprUtils.evaluate(node.getPonPred(), valuation);
+			final LitExpr<BoolType> predHolds = node.getPonPred().eval(valuation);
 			if (predHolds.equals(True())) {
 				statePreds.add(node.getPonPred());
 				node = node.getPonRefined().isPresent() ? node.getPonRefined().get() : null;

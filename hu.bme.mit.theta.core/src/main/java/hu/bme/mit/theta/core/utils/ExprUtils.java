@@ -13,7 +13,6 @@ import java.util.stream.Collectors;
 
 import hu.bme.mit.theta.core.Decl;
 import hu.bme.mit.theta.core.Expr;
-import hu.bme.mit.theta.core.LitExpr;
 import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.decl.VarDecl;
@@ -214,28 +213,6 @@ public final class ExprUtils {
 			simplifiedArgs.add(simplifiedArg);
 		}
 		return simplifiedArgs;
-	}
-
-	/**
-	 * Evaluate an expression using an assignment.
-	 *
-	 * @param expr Expression
-	 * @param assignment Assignment
-	 * @return Value of the expression with the given assignment
-	 */
-	public static <ExprType extends Type> LitExpr<ExprType> evaluate(final Expr<ExprType> expr,
-			final Assignment assignment) {
-		return expr.eval(assignment);
-	}
-
-	/**
-	 * Evaluate an expression.
-	 *
-	 * @param expr Expression
-	 * @return Value of the expression
-	 */
-	public static <ExprType extends Type> LitExpr<ExprType> evaluate(final Expr<ExprType> expr) {
-		return evaluate(expr, AssignmentImpl.empty());
 	}
 
 	/**

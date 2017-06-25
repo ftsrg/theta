@@ -18,7 +18,6 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.impl.Valuation;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
-import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.formalism.xta.Guard;
 import hu.bme.mit.theta.formalism.xta.Update;
 import hu.bme.mit.theta.formalism.xta.XtaProcess.Edge;
@@ -112,7 +111,7 @@ final class XtaTransferFunction<S extends State, P extends Prec>
 	private static boolean checkDataGuards(final Edge edge, final Valuation val) {
 		for (final Guard guard : edge.getGuards()) {
 			if (guard.isDataGuard()) {
-				final BoolLitExpr value = (BoolLitExpr) ExprUtils.evaluate(guard.toExpr(), val);
+				final BoolLitExpr value = (BoolLitExpr) guard.toExpr().eval(val);
 				if (!value.getValue()) {
 					return false;
 				}
@@ -128,7 +127,7 @@ final class XtaTransferFunction<S extends State, P extends Prec>
 				final AssignStmt<?> stmt = (AssignStmt<?>) update.toStmt();
 				final VarDecl<?> varDecl = stmt.getVarDecl();
 				final Expr<?> expr = stmt.getExpr();
-				final LitExpr<?> value = ExprUtils.evaluate(expr, builder);
+				final LitExpr<?> value = expr.eval(builder);
 				builder.put(varDecl, value);
 			}
 		}

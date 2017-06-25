@@ -27,7 +27,6 @@ import static hu.bme.mit.theta.core.type.rattype.RatExprs.Mul;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Neg;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Sub;
-import static hu.bme.mit.theta.core.utils.ExprUtils.evaluate;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -38,6 +37,7 @@ import org.junit.Test;
 import hu.bme.mit.theta.core.Decl;
 import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.LitExpr;
+import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.model.Assignment;
 import hu.bme.mit.theta.core.model.impl.AssignmentImpl;
@@ -50,6 +50,15 @@ public class EvaluationTest {
 
 	private final Expr<IntType> a = ca.getRef();
 	private final Expr<IntType> b = cb.getRef();
+
+	private static <ExprType extends Type> LitExpr<ExprType> evaluate(final Expr<ExprType> expr) {
+		return expr.eval(AssignmentImpl.empty());
+	}
+
+	private static <ExprType extends Type> LitExpr<ExprType> evaluate(final Expr<ExprType> expr,
+			final Assignment assignment) {
+		return expr.eval(assignment);
+	}
 
 	@Test
 	public void testNot() {
