@@ -24,9 +24,9 @@ import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.common.table.impl.SimpleTableWriter;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.formalism.sts.STS;
+import hu.bme.mit.theta.formalism.sts.StsUtils;
 import hu.bme.mit.theta.formalism.sts.dsl.StsDslManager;
 import hu.bme.mit.theta.formalism.sts.dsl.StsSpec;
-import hu.bme.mit.theta.formalism.sts.utils.impl.StsIteTransformation;
 import hu.bme.mit.theta.frontend.aiger.impl.AigerParserSimple;
 import hu.bme.mit.theta.tools.Configuration;
 import hu.bme.mit.theta.tools.ConfigurationBuilder.Domain;
@@ -141,7 +141,7 @@ public class StsMain {
 				final String prop = cmd.getOptionValue(optProp.getOpt());
 				final InputStream inputStream = new FileInputStream(model);
 				final StsSpec spec = StsDslManager.createStsSpec(inputStream);
-				sts = new StsIteTransformation().transform(spec.createProp(prop));
+				sts = StsUtils.eliminateIte(spec.createProp(prop));
 			}
 
 			// Build configuration
