@@ -230,6 +230,13 @@ public final class ExprUtils {
 		}
 	}
 
+	/**
+	 * Transform an expression by universally quantifying certain variables.
+	 * 
+	 * @param expr Original expression
+	 * @param mapping Quantifying
+	 * @return Transformed expression
+	 */
 	public static <T extends Type> Expr<T> close(final Expr<T> expr, final Map<VarDecl<?>, ParamDecl<?>> mapping) {
 		return ExprCloser.close(expr, mapping);
 	}
