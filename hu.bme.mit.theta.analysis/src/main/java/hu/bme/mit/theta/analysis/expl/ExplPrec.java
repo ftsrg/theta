@@ -10,14 +10,10 @@ import java.util.Set;
 import com.google.common.collect.ImmutableSet;
 
 import hu.bme.mit.theta.analysis.Prec;
-import hu.bme.mit.theta.analysis.expr.ExprStates;
 import hu.bme.mit.theta.common.ObjectUtils;
-import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.LitExpr;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.impl.Valuation;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.solver.Solver;
 
 /**
  * Represents an immutable, simple explicit precision that is a set of
@@ -51,8 +47,8 @@ public final class ExplPrec implements Prec {
 
 	public ExplPrec join(final ExplPrec other) {
 		checkNotNull(other);
-		final Collection<VarDecl<?>> newVars = ImmutableSet.<VarDecl<?>>builder().addAll(vars).addAll(other.vars)
-				.build();
+		final Collection<VarDecl<?>> newVars = ImmutableSet
+				.<VarDecl<?>>builder().addAll(vars).addAll(other.vars).build();
 		// If no new variable was added, return same instance (immutable)
 		if (newVars.size() == this.vars.size()) {
 			return this;
@@ -75,15 +71,10 @@ public final class ExplPrec implements Prec {
 		return ExplState.create(builder.build());
 	}
 
-	public Collection<ExplState> createStatesForExpr(final Solver solver, final Expr<BoolType> expr) {
-		checkNotNull(solver);
-		checkNotNull(expr);
-		return ExprStates.createStatesForExpr(solver, expr, this::createState);
-	}
-
 	@Override
 	public String toString() {
-		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).addAll(vars, VarDecl::getName).toString();
+		return ObjectUtils.toStringBuilder(getClass().getSimpleName())
+				.addAll(vars, VarDecl::getName).toString();
 	}
 
 	@Override
