@@ -26,7 +26,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 
 @RunWith(Parameterized.class)
-public class ExprMetricsTest {
+public class ExprSizeTest {
 
 	private static final VarDecl<BoolType> VA = Var("a", Bool());
 	private static final VarDecl<IntType> VB = Var("b", Int());
@@ -61,7 +61,7 @@ public class ExprMetricsTest {
 
 	@Test
 	public void test() {
-		final int actualSize = ExprUtils.absoluteSize(expr);
+		final int actualSize = ExprUtils.nodeCountSize(expr);
 		assertEquals(expectedSize, actualSize);
 	}
 }

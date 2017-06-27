@@ -43,7 +43,8 @@ import hu.bme.mit.theta.tools.sts.StsConfigurationBuilder.InitPrec;
 public class StsMain {
 
 	public static void main(final String[] args) {
-		final TableWriter tableWriter = new SimpleTableWriter(System.out, ",", "\"", "\"");
+		final TableWriter tableWriter = new SimpleTableWriter(System.out, ",",
+				"\"", "\"");
 
 		// If only called with a single --header argument, print header and exit
 		if (args.length == 1 && "--header".equals(args[0])) {
@@ -63,40 +64,49 @@ public class StsMain {
 		// Setting up argument parser
 		final Options options = new Options();
 
-		final Option optModel = Option.builder("m").longOpt("model").hasArg().argName("MODEL").type(String.class)
+		final Option optModel = Option.builder("m").longOpt("model").hasArg()
+				.argName("MODEL").type(String.class)
 				.desc("Path of the input model").required().build();
 		options.addOption(optModel);
 
-		final Option optProp = Option.builder("p").longOpt("property").hasArg().argName("PROPERTY").type(String.class)
+		final Option optProp = Option.builder("p").longOpt("property").hasArg()
+				.argName("PROPERTY").type(String.class)
 				.desc("Property to be verified").build();
 		options.addOption(optProp);
 
-		final Option optDomain = Option.builder("d").longOpt("domain").hasArg().argName(optionsFor(Domain.values()))
-				.type(Domain.class).desc("Abstract domain").required().build();
+		final Option optDomain = Option.builder("d").longOpt("domain").hasArg()
+				.argName(optionsFor(Domain.values())).type(Domain.class)
+				.desc("Abstract domain").required().build();
 		options.addOption(optDomain);
 
-		final Option optRefinement = Option.builder("r").longOpt("refinement").hasArg()
-				.argName(optionsFor(Refinement.values())).type(Refinement.class).desc("Refinement strategy").required()
+		final Option optRefinement = Option.builder("r").longOpt("refinement")
+				.hasArg().argName(optionsFor(Refinement.values()))
+				.type(Refinement.class).desc("Refinement strategy").required()
 				.build();
 		options.addOption(optRefinement);
 
-		final Option optInitPrec = Option.builder("i").longOpt("initprec").hasArg()
-				.argName(optionsFor(InitPrec.values())).type(InitPrec.class).desc("Initial precision").build();
+		final Option optInitPrec = Option.builder("i").longOpt("initprec")
+				.hasArg().argName(optionsFor(InitPrec.values()))
+				.type(InitPrec.class).desc("Initial precision").build();
 		options.addOption(optInitPrec);
 
-		final Option optSearch = Option.builder("s").longOpt("search").hasArg().argName(optionsFor(Search.values()))
-				.type(Search.class).desc("Search strategy").build();
+		final Option optSearch = Option.builder("s").longOpt("search").hasArg()
+				.argName(optionsFor(Search.values())).type(Search.class)
+				.desc("Search strategy").build();
 		options.addOption(optSearch);
 
-		final Option optPredSplit = Option.builder("ps").longOpt("predsplit").hasArg()
-				.argName(optionsFor(PredSplit.values())).type(PredSplit.class).desc("Predicate splitting").build();
+		final Option optPredSplit = Option.builder("ps").longOpt("predsplit")
+				.hasArg().argName(optionsFor(PredSplit.values()))
+				.type(PredSplit.class).desc("Predicate splitting").build();
 		options.addOption(optPredSplit);
 
-		final Option optExpected = Option.builder("e").longOpt("expected").hasArg().argName("true|false")
-				.type(Boolean.class).desc("Expected result (safe)").build();
+		final Option optExpected = Option.builder("e").longOpt("expected")
+				.hasArg().argName("true|false").type(Boolean.class)
+				.desc("Expected result (safe)").build();
 		options.addOption(optExpected);
 
-		final Option optLogLevel = Option.builder("ll").longOpt("loglevel").hasArg().argName("INT").type(Integer.class)
+		final Option optLogLevel = Option.builder("ll").longOpt("loglevel")
+				.hasArg().argName("INT").type(Integer.class)
 				.desc("Level of logging (detailedness)").build();
 		options.addOption(optLogLevel);
 
@@ -118,18 +128,26 @@ public class StsMain {
 
 		// Convert string arguments to the proper values
 		final String model = cmd.getOptionValue(optModel.getOpt());
-		final Domain domain = Domain.valueOf(cmd.getOptionValue(optDomain.getOpt()));
-		final Refinement refinement = Refinement.valueOf(cmd.getOptionValue(optRefinement.getOpt()));
-		final InitPrec initPrec = InitPrec.valueOf(cmd.getOptionValue(optInitPrec.getOpt(), InitPrec.EMPTY.toString()));
-		final Search search = Search.valueOf(cmd.getOptionValue(optSearch.getOpt(), Search.BFS.toString()));
+		final Domain domain = Domain
+				.valueOf(cmd.getOptionValue(optDomain.getOpt()));
+		final Refinement refinement = Refinement
+				.valueOf(cmd.getOptionValue(optRefinement.getOpt()));
+		final InitPrec initPrec = InitPrec.valueOf(cmd.getOptionValue(
+				optInitPrec.getOpt(), InitPrec.EMPTY.toString()));
+		final Search search = Search.valueOf(
+				cmd.getOptionValue(optSearch.getOpt(), Search.BFS.toString()));
 		final Optional<Boolean> expected = cmd.hasOption(optExpected.getOpt())
-				? Optional.of(Boolean.parseBoolean(cmd.getOptionValue(optExpected.getOpt()))) : Optional.empty();
-		final PredSplit predSplit = PredSplit
-				.valueOf(cmd.getOptionValue(optPredSplit.getOpt(), PredSplit.WHOLE.toString()));
+				? Optional.of(Boolean
+						.parseBoolean(cmd.getOptionValue(optExpected.getOpt())))
+				: Optional.empty();
+		final PredSplit predSplit = PredSplit.valueOf(cmd.getOptionValue(
+				optPredSplit.getOpt(), PredSplit.WHOLE.toString()));
 		final boolean benchmarkMode = cmd.hasOption(optBenchmark.getOpt());
 
-		final int logLevel = Integer.parseInt(cmd.getOptionValue(optLogLevel.getOpt(), "1"));
-		final Logger logger = benchmarkMode ? NullLogger.getInstance() : new ConsoleLogger(logLevel);
+		final int logLevel = Integer
+				.parseInt(cmd.getOptionValue(optLogLevel.getOpt(), "1"));
+		final Logger logger = benchmarkMode ? NullLogger.getInstance()
+				: new ConsoleLogger(logLevel);
 
 		// Run the algorithm
 		try {
@@ -145,15 +163,19 @@ public class StsMain {
 			}
 
 			// Build configuration
-			final Configuration<?, ?, ?> configuration = new StsConfigurationBuilder(domain, refinement)
-					.initPrec(initPrec).search(search).predSplit(predSplit).logger(logger).build(sts);
+			final Configuration<?, ?, ?> configuration = new StsConfigurationBuilder(
+					domain, refinement).initPrec(initPrec).search(search)
+							.predSplit(predSplit).logger(logger).build(sts);
 			// Run algorithm
 			final SafetyResult<?, ?> status = configuration.check();
-			final CegarStatistics stats = (CegarStatistics) status.getStats().get();
+			final CegarStatistics stats = (CegarStatistics) status.getStats()
+					.get();
 
 			// Check result
-			if (expected.isPresent() && !expected.get().equals(status.isSafe())) {
-				throw new Exception("Expected safe = " + expected.get() + " but was " + status.isSafe());
+			if (expected.isPresent()
+					&& !expected.get().equals(status.isSafe())) {
+				throw new Exception("Expected safe = " + expected.get()
+						+ " but was " + status.isSafe());
 			}
 
 			if (benchmarkMode) {
@@ -164,20 +186,26 @@ public class StsMain {
 				tableWriter.cell(status.getArg().getDepth());
 				tableWriter.cell(status.getArg().getMeanBranchingFactor());
 				if (status.isUnsafe()) {
-					tableWriter.cell(status.asUnsafe().getTrace().length() + "");
+					tableWriter
+							.cell(status.asUnsafe().getTrace().length() + "");
 				} else {
 					tableWriter.cell("");
 				}
 				tableWriter.cell(sts.getVars().size());
-				tableWriter.cell(ExprUtils.absoluteSize(And(sts.getInit(), sts.getTrans())));
+				tableWriter.cell(ExprUtils
+						.nodeCountSize(And(sts.getInit(), sts.getTrans())));
 			}
 
 		} catch (final Throwable ex) {
-			final String message = ex.getMessage() == null ? "" : ": " + ex.getMessage();
+			final String message = ex.getMessage() == null ? ""
+					: ": " + ex.getMessage();
 			if (benchmarkMode) {
-				tableWriter.cell("[EX] " + ex.getClass().getSimpleName() + message);
+				tableWriter.cell(
+						"[EX] " + ex.getClass().getSimpleName() + message);
 			} else {
-				logger.writeln("Exception occured: " + ex.getClass().getSimpleName(), 0);
+				logger.writeln(
+						"Exception occured: " + ex.getClass().getSimpleName(),
+						0);
 				logger.writeln("Message: " + ex.getMessage(), 0, 1);
 			}
 

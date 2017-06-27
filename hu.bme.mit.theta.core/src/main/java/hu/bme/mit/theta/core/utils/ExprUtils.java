@@ -38,7 +38,8 @@ public final class ExprUtils {
 	 * @param expr Expression
 	 * @param collectTo Collection where the atoms should be put
 	 */
-	public static void collectAtoms(final Expr<BoolType> expr, final Collection<Expr<BoolType>> collectTo) {
+	public static void collectAtoms(final Expr<BoolType> expr,
+			final Collection<Expr<BoolType>> collectTo) {
 		ExprAtomCollector.collectAtoms(expr, collectTo);
 	}
 
@@ -68,7 +69,8 @@ public final class ExprUtils {
 	 * @param expr Original expression
 	 * @return Transformed expression
 	 */
-	public static Expr<BoolType> transformEquiSatCnf(final Expr<BoolType> expr) {
+	public static Expr<BoolType> transformEquiSatCnf(
+			final Expr<BoolType> expr) {
 		return new ExprCnfTransformer().transformEquiSat(expr);
 	}
 
@@ -78,13 +80,14 @@ public final class ExprUtils {
 	 * @param expr Expression
 	 * @return Collection of conjuncts
 	 */
-	public static Collection<Expr<BoolType>> getConjuncts(final Expr<BoolType> expr) {
+	public static Collection<Expr<BoolType>> getConjuncts(
+			final Expr<BoolType> expr) {
 		checkNotNull(expr);
 
 		if (expr instanceof AndExpr) {
 			final AndExpr andExpr = (AndExpr) expr;
-			return andExpr.getOps().stream().map(e -> getConjuncts(e)).flatMap(c -> c.stream())
-					.collect(Collectors.toSet());
+			return andExpr.getOps().stream().map(e -> getConjuncts(e))
+					.flatMap(c -> c.stream()).collect(Collectors.toSet());
 		} else {
 			return Collections.singleton(expr);
 		}
@@ -96,7 +99,8 @@ public final class ExprUtils {
 	 * @param expr Expression
 	 * @param collectTo Collection where the variables should be put
 	 */
-	public static void collectVars(final Expr<?> expr, final Collection<VarDecl<?>> collectTo) {
+	public static void collectVars(final Expr<?> expr,
+			final Collection<VarDecl<?>> collectTo) {
 		if (expr instanceof RefExpr) {
 			final RefExpr<?> refExpr = (RefExpr<?>) expr;
 			final Decl<?> decl = refExpr.getDecl();
@@ -115,7 +119,8 @@ public final class ExprUtils {
 	 * @param exprs Expressions
 	 * @param collectTo Collection where the variables should be put
 	 */
-	public static void collectVars(final Iterable<? extends Expr<?>> exprs, final Collection<VarDecl<?>> collectTo) {
+	public static void collectVars(final Iterable<? extends Expr<?>> exprs,
+			final Collection<VarDecl<?>> collectTo) {
 		exprs.forEach(e -> collectVars(e, collectTo));
 	}
 
@@ -137,7 +142,8 @@ public final class ExprUtils {
 	 * @param exprs Expressions
 	 * @return Set of variables appearing in the expressions
 	 */
-	public static Set<VarDecl<?>> getVars(final Iterable<? extends Expr<?>> exprs) {
+	public static Set<VarDecl<?>> getVars(
+			final Iterable<? extends Expr<?>> exprs) {
 		final Set<VarDecl<?>> vars = new HashSet<>();
 		collectVars(exprs, vars);
 		return vars;
@@ -161,9 +167,11 @@ public final class ExprUtils {
 	 * @param exprs Expressions
 	 * @return Indexed variables appearing in the expressions
 	 */
-	public static IndexedVars getVarsIndexed(final Iterable<? extends Expr<?>> exprs) {
+	public static IndexedVars getVarsIndexed(
+			final Iterable<? extends Expr<?>> exprs) {
 		final Builder builder = IndexedVars.builder();
-		exprs.forEach(e -> ExprIndexedVarCollector.collectIndexedVars(e, builder));
+		exprs.forEach(
+				e -> ExprIndexedVarCollector.collectIndexedVars(e, builder));
 		return builder.build();
 	}
 
@@ -185,8 +193,8 @@ public final class ExprUtils {
 	 * @param assignment Assignment
 	 * @return Simplified expression
 	 */
-	public static <ExprType extends Type> Expr<ExprType> simplify(final Expr<ExprType> expr,
-			final Assignment assignment) {
+	public static <ExprType extends Type> Expr<ExprType> simplify(
+			final Expr<ExprType> expr, final Assignment assignment) {
 		return new ExprSimplifier(assignment).simplify(expr);
 	}
 
@@ -196,7 +204,8 @@ public final class ExprUtils {
 	 * @param expr Original expression
 	 * @return Simplified expression
 	 */
-	public static <ExprType extends Type> Expr<ExprType> simplify(final Expr<ExprType> expr) {
+	public static <ExprType extends Type> Expr<ExprType> simplify(
+			final Expr<ExprType> expr) {
 		return simplify(expr, AssignmentImpl.empty());
 	}
 
@@ -206,7 +215,8 @@ public final class ExprUtils {
 	 * @param exprs Original expressions
 	 * @return Simplified expressions
 	 */
-	public static List<Expr<?>> simplifyAll(final List<? extends Expr<?>> exprs) {
+	public static List<Expr<?>> simplifyAll(
+			final List<? extends Expr<?>> exprs) {
 		final List<Expr<?>> simplifiedArgs = new ArrayList<>();
 		for (final Expr<?> expr : exprs) {
 			final Expr<?> simplifiedArg = simplify(expr);
@@ -232,12 +242,13 @@ public final class ExprUtils {
 
 	/**
 	 * Transform an expression by universally quantifying certain variables.
-	 * 
+	 *
 	 * @param expr Original expression
 	 * @param mapping Quantifying
 	 * @return Transformed expression
 	 */
-	public static <T extends Type> Expr<T> close(final Expr<T> expr, final Map<VarDecl<?>, ParamDecl<?>> mapping) {
+	public static <T extends Type> Expr<T> close(final Expr<T> expr,
+			final Map<VarDecl<?>, ParamDecl<?>> mapping) {
 		return ExprCloser.close(expr, mapping);
 	}
 
@@ -249,17 +260,20 @@ public final class ExprUtils {
 	 * @param indexing Indexing
 	 * @return Transformed expression
 	 */
-	public static <T extends Type> Expr<T> applyPrimes(final Expr<T> expr, final VarIndexing indexing) {
+	public static <T extends Type> Expr<T> applyPrimes(final Expr<T> expr,
+			final VarIndexing indexing) {
 		return ExprPrimeApplier.applyPrimes(expr, indexing);
 	}
 
 	/**
-	 * Calculate the absolute size of an expression.
+	 * Get the size of an expression by counting the nodes in its tree
+	 * representation.
 	 *
 	 * @param expr Expression
-	 * @return Size
+	 * @return Node count
 	 */
-	public static int absoluteSize(final Expr<?> expr) {
-		return ExprMetrics.absoluteSize().calculate(expr);
+	public static int nodeCountSize(final Expr<?> expr) {
+		return 1 + expr.getOps().stream().map(op -> nodeCountSize(op)).reduce(0,
+				(x, y) -> x + y);
 	}
 }
