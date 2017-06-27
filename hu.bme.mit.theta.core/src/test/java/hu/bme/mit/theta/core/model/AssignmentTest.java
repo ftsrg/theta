@@ -15,7 +15,7 @@ import org.junit.Test;
 import hu.bme.mit.theta.core.Decl;
 import hu.bme.mit.theta.core.LitExpr;
 import hu.bme.mit.theta.core.decl.ConstDecl;
-import hu.bme.mit.theta.core.model.impl.AssignmentImpl;
+import hu.bme.mit.theta.core.model.impl.BasicAssignment;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 
 public class AssignmentTest {
@@ -24,7 +24,7 @@ public class AssignmentTest {
 
 	@Test
 	public void testNullary() {
-		final Assignment assignment = AssignmentImpl.empty();
+		final Assignment assignment = BasicAssignment.empty();
 
 		Assert.assertEquals(assignment.toExpr(), True());
 	}
@@ -33,7 +33,7 @@ public class AssignmentTest {
 	public void testUnary() {
 		final Map<Decl<?>, LitExpr<?>> declToExpr = new HashMap<>();
 		declToExpr.put(ca, Int(5));
-		final Assignment assignment = new AssignmentImpl(declToExpr);
+		final Assignment assignment = new BasicAssignment(declToExpr);
 
 		Assert.assertEquals(assignment.toExpr(), Eq(ca.getRef(), Int(5)));
 	}
@@ -43,7 +43,7 @@ public class AssignmentTest {
 		final Map<Decl<?>, LitExpr<?>> declToExpr = new HashMap<>();
 		declToExpr.put(ca, Int(5));
 		declToExpr.put(cb, Int(9));
-		final Assignment assignment = new AssignmentImpl(declToExpr);
+		final Assignment assignment = new BasicAssignment(declToExpr);
 
 		Assert.assertEquals(assignment.toExpr(), And(Eq(ca.getRef(), Int(5)), Eq(cb.getRef(), Int(9))));
 

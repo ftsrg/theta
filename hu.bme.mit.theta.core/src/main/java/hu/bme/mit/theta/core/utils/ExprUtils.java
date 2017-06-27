@@ -17,7 +17,7 @@ import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.Assignment;
-import hu.bme.mit.theta.core.model.impl.AssignmentImpl;
+import hu.bme.mit.theta.core.model.impl.BasicAssignment;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.booltype.AndExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
@@ -206,7 +206,7 @@ public final class ExprUtils {
 	 */
 	public static <ExprType extends Type> Expr<ExprType> simplify(
 			final Expr<ExprType> expr) {
-		return simplify(expr, AssignmentImpl.empty());
+		return simplify(expr, BasicAssignment.empty());
 	}
 
 	/**

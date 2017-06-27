@@ -26,7 +26,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 /**
  * Basic implementation of an assignment.
  */
-public final class AssignmentImpl implements Assignment {
+public final class BasicAssignment implements Assignment {
 
 	private final Collection<Decl<?>> decls;
 	private final Map<Decl<?>, Expr<?>> declToExpr;
@@ -34,42 +34,29 @@ public final class AssignmentImpl implements Assignment {
 	private static final Assignment EMPTY;
 
 	static {
-		EMPTY = new AssignmentImpl();
+		EMPTY = new BasicAssignment();
 	}
 
 	public static Assignment empty() {
 		return EMPTY;
 	}
 
-	public AssignmentImpl() {
+	public BasicAssignment() {
 		this(new HashMap<>());
 	}
 
-	public AssignmentImpl(final List<? extends Decl<?>> decls, final List<? extends Expr<?>> exprs) {
-		this(zip(decls, exprs));
-	}
-
-	private static <K, V> Map<K, V> zip(final List<? extends K> keys, final List<? extends V> values) {
-		checkArgument(keys.size() == values.size());
-		final HashMap<K, V> result = new HashMap<>();
-		for (int i = 0; i < keys.size(); i++) {
-			final K key = keys.get(i);
-			final V value = values.get(i);
-			checkArgument(!result.keySet().contains(key));
-			result.put(key, value);
-		}
-		return result;
-	}
-
-	public AssignmentImpl(final Map<? extends Decl<?>, ? extends Expr<?>> map) {
+	public BasicAssignment(
+			final Map<? extends Decl<?>, ? extends Expr<?>> map) {
 		checkAssignmentMap(map);
 		this.declToExpr = new HashMap<>(map);
 		this.decls = ImmutableList.copyOf(map.keySet());
 	}
 
-	private static void checkAssignmentMap(final Map<? extends Decl<?>, ? extends Expr<?>> declToExpr) {
+	private static void checkAssignmentMap(
+			final Map<? extends Decl<?>, ? extends Expr<?>> declToExpr) {
 
-		for (final Entry<? extends Decl<?>, ? extends Expr<?>> entry : declToExpr.entrySet()) {
+		for (final Entry<? extends Decl<?>, ? extends Expr<?>> entry : declToExpr
+				.entrySet()) {
 			final Decl<?> decl = entry.getKey();
 			final Expr<?> expr = entry.getValue();
 			checkArgument(expr.getType().equals(decl.getType()));
@@ -77,7 +64,8 @@ public final class AssignmentImpl implements Assignment {
 	}
 
 	@Override
-	public <DeclType extends Type> Optional<Expr<DeclType>> eval(final Decl<DeclType> decl) {
+	public <DeclType extends Type> Optional<Expr<DeclType>> eval(
+			final Decl<DeclType> decl) {
 		checkNotNull(decl);
 
 		if (declToExpr.containsKey(decl)) {
@@ -98,7 +86,9 @@ public final class AssignmentImpl implements Assignment {
 	@Override
 	public String toString() {
 		return ObjectUtils.toStringBuilder("Assignment")
-				.addAll(declToExpr.entrySet(), e -> e.getKey().getName() + " <- " + e.getValue()).toString();
+				.addAll(declToExpr.entrySet(),
+						e -> e.getKey().getName() + " <- " + e.getValue())
+				.toString();
 	}
 
 	@Override
@@ -120,8 +110,8 @@ public final class AssignmentImpl implements Assignment {
 	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
-		} else if (obj instanceof AssignmentImpl) {
-			final AssignmentImpl that = (AssignmentImpl) obj;
+		} else if (obj instanceof BasicAssignment) {
+			final BasicAssignment that = (BasicAssignment) obj;
 			return this.declToExpr.equals(that.declToExpr);
 		} else {
 			return false;

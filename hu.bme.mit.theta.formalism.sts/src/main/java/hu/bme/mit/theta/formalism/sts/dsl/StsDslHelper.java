@@ -23,7 +23,7 @@ import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.dsl.DeclSymbol;
 import hu.bme.mit.theta.core.model.Assignment;
-import hu.bme.mit.theta.core.model.impl.AssignmentImpl;
+import hu.bme.mit.theta.core.model.impl.BasicAssignment;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.TypeUtils;
 import hu.bme.mit.theta.formalism.sts.dsl.gen.StsDslParser.ConstDeclContext;
@@ -76,7 +76,7 @@ final class StsDslHelper {
 		for (final ConstDeclContext constDeclCtx : constDeclCtxs) {
 			addDef(scope, assignment, declToExpr, constDeclCtx);
 		}
-		return new AssignmentImpl(declToExpr);
+		return new BasicAssignment(declToExpr);
 	}
 
 	private static void addDef(final Scope scope, final Assignment assignment, final Map<Decl<?>, Expr<?>> declToExpr,
