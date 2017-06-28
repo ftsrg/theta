@@ -31,12 +31,9 @@ public final class STS {
 	 * Create a new STS from an initial expression, a transition relation and a
 	 * property.
 	 *
-	 * @param init
-	 *            Initial expression
-	 * @param trans
-	 *            Transition relation expression
-	 * @param prop
-	 *            Property expression
+	 * @param init Initial expression
+	 * @param trans Transition relation expression
+	 * @param prop Property expression
 	 */
 	public STS(final Expr<BoolType> init, final Expr<BoolType> trans, final Expr<BoolType> prop) {
 		this.init = checkNotNull(init);
@@ -123,15 +120,12 @@ public final class STS {
 		 * Add an initial expression. Multiple initial expressions will be
 		 * joined into a conjunction.
 		 *
-		 * @param expr
-		 *            Expression to be added
+		 * @param expr Expression to be added
 		 */
 		public Builder addInit(final Expr<BoolType> expr) {
 			checkNotNull(expr);
-			if (expr instanceof AndExpr)
-				addInit(((AndExpr) expr).getOps());
-			else
-				init.add(checkNotNull(expr));
+			if (expr instanceof AndExpr) addInit(((AndExpr) expr).getOps());
+			else init.add(checkNotNull(expr));
 			return this;
 		}
 
@@ -139,8 +133,7 @@ public final class STS {
 		 * Add initial expressions. Multiple initial expressions will be joined
 		 * into a conjunction.
 		 *
-		 * @param exprs
-		 *            Expressions to be added
+		 * @param exprs Expressions to be added
 		 */
 		public Builder addInit(final Iterable<? extends Expr<BoolType>> exprs) {
 			checkNotNull(exprs);
@@ -153,8 +146,7 @@ public final class STS {
 		 * Add an invariant expression. An invariant is added both to the
 		 * initial and transition expressions.
 		 *
-		 * @param expr
-		 *            Expression to be added
+		 * @param expr Expression to be added
 		 */
 		public Builder addInvar(final Expr<BoolType> expr) {
 			checkNotNull(expr);
@@ -173,8 +165,7 @@ public final class STS {
 		 * Add invariant expressions. Invariants are added both to the initial
 		 * and transition expressions.
 		 *
-		 * @param exprs
-		 *            Expressions to be added
+		 * @param exprs Expressions to be added
 		 */
 		public Builder addInvar(final Iterable<? extends Expr<BoolType>> exprs) {
 			checkNotNull(exprs);
@@ -187,15 +178,12 @@ public final class STS {
 		 * Add a transition expression. Multiple transition expressions will be
 		 * joined into a conjunction.
 		 *
-		 * @param expr
-		 *            Expression to be added
+		 * @param expr Expression to be added
 		 */
 		public Builder addTrans(final Expr<BoolType> expr) {
 			checkNotNull(expr);
-			if (expr instanceof AndExpr)
-				addTrans(((AndExpr) expr).getOps());
-			else
-				trans.add(expr);
+			if (expr instanceof AndExpr) addTrans(((AndExpr) expr).getOps());
+			else trans.add(expr);
 			return this;
 		}
 
@@ -203,8 +191,7 @@ public final class STS {
 		 * Add transition expressions. Multiple transition expressions will be
 		 * joined into a conjunction.
 		 *
-		 * @param exprs
-		 *            Expressions to be added
+		 * @param exprs Expressions to be added
 		 */
 		public Builder addTrans(final Iterable<? extends Expr<BoolType>> exprs) {
 			checkNotNull(exprs);
@@ -217,8 +204,7 @@ public final class STS {
 		 * Set the property expression. Previously set property will be
 		 * overridden.
 		 *
-		 * @param expr
-		 *            Expression to be set as property
+		 * @param expr Expression to be set as property
 		 */
 		public Builder setProp(final Expr<BoolType> expr) {
 			checkNotNull(expr);

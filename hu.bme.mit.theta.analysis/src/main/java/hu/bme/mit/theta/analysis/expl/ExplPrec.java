@@ -47,8 +47,8 @@ public final class ExplPrec implements Prec {
 
 	public ExplPrec join(final ExplPrec other) {
 		checkNotNull(other);
-		final Collection<VarDecl<?>> newVars = ImmutableSet
-				.<VarDecl<?>>builder().addAll(vars).addAll(other.vars).build();
+		final Collection<VarDecl<?>> newVars = ImmutableSet.<VarDecl<?>>builder().addAll(vars).addAll(other.vars)
+				.build();
 		// If no new variable was added, return same instance (immutable)
 		if (newVars.size() == this.vars.size()) {
 			return this;
@@ -73,8 +73,7 @@ public final class ExplPrec implements Prec {
 
 	@Override
 	public String toString() {
-		return ObjectUtils.toStringBuilder(getClass().getSimpleName())
-				.addAll(vars, VarDecl::getName).toString();
+		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).addAll(vars, VarDecl::getName).toString();
 	}
 
 	@Override

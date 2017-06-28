@@ -5,8 +5,8 @@ import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.common.Product3;
 
-public final class Prod3Prec<P1 extends Prec, P2 extends Prec, P3 extends Prec>
-		extends ProdPrec implements Product3<P1, P2, P3> {
+public final class Prod3Prec<P1 extends Prec, P2 extends Prec, P3 extends Prec> extends ProdPrec
+		implements Product3<P1, P2, P3> {
 
 	Prod3Prec(final P1 prec1, final P2 prec2, final P3 prec3) {
 		super(ImmutableList.of(prec1, prec2, prec3));

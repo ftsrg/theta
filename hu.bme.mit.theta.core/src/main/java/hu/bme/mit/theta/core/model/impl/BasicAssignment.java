@@ -45,18 +45,15 @@ public final class BasicAssignment implements Assignment {
 		this(new HashMap<>());
 	}
 
-	public BasicAssignment(
-			final Map<? extends Decl<?>, ? extends Expr<?>> map) {
+	public BasicAssignment(final Map<? extends Decl<?>, ? extends Expr<?>> map) {
 		checkAssignmentMap(map);
 		this.declToExpr = new HashMap<>(map);
 		this.decls = ImmutableList.copyOf(map.keySet());
 	}
 
-	private static void checkAssignmentMap(
-			final Map<? extends Decl<?>, ? extends Expr<?>> declToExpr) {
+	private static void checkAssignmentMap(final Map<? extends Decl<?>, ? extends Expr<?>> declToExpr) {
 
-		for (final Entry<? extends Decl<?>, ? extends Expr<?>> entry : declToExpr
-				.entrySet()) {
+		for (final Entry<? extends Decl<?>, ? extends Expr<?>> entry : declToExpr.entrySet()) {
 			final Decl<?> decl = entry.getKey();
 			final Expr<?> expr = entry.getValue();
 			checkArgument(expr.getType().equals(decl.getType()));
@@ -64,8 +61,7 @@ public final class BasicAssignment implements Assignment {
 	}
 
 	@Override
-	public <DeclType extends Type> Optional<Expr<DeclType>> eval(
-			final Decl<DeclType> decl) {
+	public <DeclType extends Type> Optional<Expr<DeclType>> eval(final Decl<DeclType> decl) {
 		checkNotNull(decl);
 
 		if (declToExpr.containsKey(decl)) {
@@ -86,9 +82,7 @@ public final class BasicAssignment implements Assignment {
 	@Override
 	public String toString() {
 		return ObjectUtils.toStringBuilder("Assignment")
-				.addAll(declToExpr.entrySet(),
-						e -> e.getKey().getName() + " <- " + e.getValue())
-				.toString();
+				.addAll(declToExpr.entrySet(), e -> e.getKey().getName() + " <- " + e.getValue()).toString();
 	}
 
 	@Override

@@ -103,7 +103,8 @@ public final class IndexedVars {
 
 		public void add(final int i, final Collection<? extends VarDecl<?>> varDecls) {
 			checkState(!built);
-			if (varDecls.isEmpty()) return;
+			if (varDecls.isEmpty())
+				return;
 
 			if (!varSets.containsKey(i)) {
 				varSets.put(i, new HashSet<>());

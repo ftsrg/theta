@@ -32,8 +32,7 @@ final class DiffBounds {
 
 	////
 
-	public static ClockConstr toConstr(final VarDecl<RatType> leftVar, final VarDecl<RatType> rightVar,
-			final int b) {
+	public static ClockConstr toConstr(final VarDecl<RatType> leftVar, final VarDecl<RatType> rightVar, final int b) {
 		checkNotNull(leftVar);
 		checkNotNull(rightVar);
 

@@ -31,15 +31,14 @@ public final class ExprTraceFwBinItpChecker implements ExprTraceChecker<ItpRefut
 	private final Expr<BoolType> init;
 	private final Expr<BoolType> target;
 
-	private ExprTraceFwBinItpChecker(final Expr<BoolType> init, final Expr<BoolType> target,
-			final ItpSolver solver) {
+	private ExprTraceFwBinItpChecker(final Expr<BoolType> init, final Expr<BoolType> target, final ItpSolver solver) {
 		this.solver = checkNotNull(solver);
 		this.init = checkNotNull(init);
 		this.target = checkNotNull(target);
 	}
 
-	public static ExprTraceFwBinItpChecker create(final Expr<BoolType> init,
-			final Expr<BoolType> target, final ItpSolver solver) {
+	public static ExprTraceFwBinItpChecker create(final Expr<BoolType> init, final Expr<BoolType> target,
+			final ItpSolver solver) {
 		return new ExprTraceFwBinItpChecker(init, target, solver);
 	}
 

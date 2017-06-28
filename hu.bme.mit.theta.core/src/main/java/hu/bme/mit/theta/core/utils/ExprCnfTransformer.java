@@ -72,7 +72,8 @@ final class ExprCnfTransformer {
 		////
 
 		private Expr<BoolType> encodeNot(final NotExpr expr, final Collection<Expr<BoolType>> encoding) {
-			if (representatives.containsKey(expr)) return representatives.get(expr).getRef();
+			if (representatives.containsKey(expr))
+				return representatives.get(expr).getRef();
 			final Expr<BoolType> rep = getRep(expr);
 			final Expr<BoolType> op = transform(expr.getOp(), encoding);
 			encoding.add(And(Or(Not(rep), Not(op)), Or(rep, op)));
@@ -80,7 +81,8 @@ final class ExprCnfTransformer {
 		}
 
 		private Expr<BoolType> encodeImply(final ImplyExpr expr, final Collection<Expr<BoolType>> encoding) {
-			if (representatives.containsKey(expr)) return representatives.get(expr).getRef();
+			if (representatives.containsKey(expr))
+				return representatives.get(expr).getRef();
 			final Expr<BoolType> rep = getRep(expr);
 			final Expr<BoolType> op1 = transform(expr.getLeftOp(), encoding);
 			final Expr<BoolType> op2 = transform(expr.getRightOp(), encoding);
@@ -89,7 +91,8 @@ final class ExprCnfTransformer {
 		}
 
 		private Expr<BoolType> encodeIff(final IffExpr expr, final Collection<Expr<BoolType>> encoding) {
-			if (representatives.containsKey(expr)) return representatives.get(expr).getRef();
+			if (representatives.containsKey(expr))
+				return representatives.get(expr).getRef();
 			final Expr<BoolType> rep = getRep(expr);
 			final Expr<BoolType> op1 = transform(expr.getLeftOp(), encoding);
 			final Expr<BoolType> op2 = transform(expr.getRightOp(), encoding);
@@ -99,7 +102,8 @@ final class ExprCnfTransformer {
 		}
 
 		private Expr<BoolType> encodeAnd(final AndExpr expr, final Collection<Expr<BoolType>> encoding) {
-			if (representatives.containsKey(expr)) return representatives.get(expr).getRef();
+			if (representatives.containsKey(expr))
+				return representatives.get(expr).getRef();
 			final Expr<BoolType> rep = getRep(expr);
 			final Collection<Expr<BoolType>> ops = new ArrayList<>(expr.getOps().size());
 			for (final Expr<BoolType> op : expr.getOps()) {
@@ -118,7 +122,8 @@ final class ExprCnfTransformer {
 		}
 
 		private Expr<BoolType> encodeOr(final OrExpr expr, final Collection<Expr<BoolType>> encoding) {
-			if (representatives.containsKey(expr)) return representatives.get(expr).getRef();
+			if (representatives.containsKey(expr))
+				return representatives.get(expr).getRef();
 			final Expr<BoolType> rep = getRep(expr);
 			final Collection<Expr<BoolType>> ops = new ArrayList<>(expr.getOps().size());
 			for (final Expr<BoolType> op : expr.getOps()) {

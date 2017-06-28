@@ -43,10 +43,8 @@ final class Prod2TransferFunction<S1 extends State, S2 extends State, A extends 
 		checkNotNull(action);
 		checkNotNull(prec);
 
-		final Collection<? extends S1> succStates1 = transferFunction1.getSuccStates(state._1(), action,
-				prec._1());
-		final Collection<? extends S2> succStates2 = transferFunction2.getSuccStates(state._2(), action,
-				prec._2());
+		final Collection<? extends S1> succStates1 = transferFunction1.getSuccStates(state._1(), action, prec._1());
+		final Collection<? extends S2> succStates2 = transferFunction2.getSuccStates(state._2(), action, prec._2());
 		final Collection<Prod2State<S1, S2>> compositeIniStates = ProdState.product(succStates1, succStates2);
 		return strenghteningOperator.strengthen(compositeIniStates, prec);
 	}

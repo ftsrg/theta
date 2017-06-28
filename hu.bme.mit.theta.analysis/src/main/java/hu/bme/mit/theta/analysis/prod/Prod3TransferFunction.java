@@ -37,12 +37,9 @@ final class Prod3TransferFunction<S1 extends State, S2 extends State, S3 extends
 		checkNotNull(state);
 		checkNotNull(prec);
 
-		final Collection<? extends S1> succStates1 = transferFunction1.getSuccStates(state._1(), action,
-				prec._1());
-		final Collection<? extends S2> succStates2 = transferFunction2.getSuccStates(state._2(), action,
-				prec._2());
-		final Collection<? extends S3> succStates3 = transferFunction3.getSuccStates(state._3(), action,
-				prec._3());
+		final Collection<? extends S1> succStates1 = transferFunction1.getSuccStates(state._1(), action, prec._1());
+		final Collection<? extends S2> succStates2 = transferFunction2.getSuccStates(state._2(), action, prec._2());
+		final Collection<? extends S3> succStates3 = transferFunction3.getSuccStates(state._3(), action, prec._3());
 		return ProdState.product(succStates1, succStates2, succStates3);
 	}
 

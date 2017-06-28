@@ -32,10 +32,9 @@ public final class ExprStates {
 	 * @param stateIndex Index for extracting the state
 	 * @return States satisfying the expression
 	 */
-	public static <S extends ExprState> Collection<S> createStatesForExpr(
-			final Solver solver, final Expr<BoolType> expr, final int exprIndex,
-			final Function<? super Valuation, ? extends S> valuationToState,
-			final int stateIndex) {
+	public static <S extends ExprState> Collection<S> createStatesForExpr(final Solver solver,
+			final Expr<BoolType> expr, final int exprIndex,
+			final Function<? super Valuation, ? extends S> valuationToState, final int stateIndex) {
 
 		return using(solver, s -> {
 			s.add(PathUtils.unfold(expr, exprIndex));
@@ -43,8 +42,7 @@ public final class ExprStates {
 			final Collection<S> result = new ArrayList<>();
 			while (s.check().isSat()) {
 				final Model model = s.getModel();
-				final Valuation valuation = PathUtils.extractValuation(model,
-						stateIndex);
+				final Valuation valuation = PathUtils.extractValuation(model, stateIndex);
 				final S state = valuationToState.apply(valuation);
 				result.add(state);
 				s.add(Not(PathUtils.unfold(state.toExpr(), stateIndex)));

@@ -47,19 +47,17 @@ public final class PredState implements ExprState {
 		return new PredState(ImmutableSet.of(pred1, pred2));
 	}
 
-	public static PredState of(final Expr<BoolType> pred1, final Expr<BoolType> pred2,
-			final Expr<BoolType> pred3) {
+	public static PredState of(final Expr<BoolType> pred1, final Expr<BoolType> pred2, final Expr<BoolType> pred3) {
 		return new PredState(ImmutableSet.of(pred1, pred2, pred3));
 	}
 
-	public static PredState of(final Expr<BoolType> pred1, final Expr<BoolType> pred2,
-			final Expr<BoolType> pred3, final Expr<BoolType> pred4) {
+	public static PredState of(final Expr<BoolType> pred1, final Expr<BoolType> pred2, final Expr<BoolType> pred3,
+			final Expr<BoolType> pred4) {
 		return new PredState(ImmutableSet.of(pred1, pred2, pred3, pred4));
 	}
 
-	public static PredState of(final Expr<BoolType> pred1, final Expr<BoolType> pred2,
-			final Expr<BoolType> pred3, final Expr<BoolType> pred4,
-			final Expr<BoolType> pred5) {
+	public static PredState of(final Expr<BoolType> pred1, final Expr<BoolType> pred2, final Expr<BoolType> pred3,
+			final Expr<BoolType> pred4, final Expr<BoolType> pred5) {
 		return new PredState(ImmutableSet.of(pred1, pred2, pred3, pred4, pred5));
 	}
 

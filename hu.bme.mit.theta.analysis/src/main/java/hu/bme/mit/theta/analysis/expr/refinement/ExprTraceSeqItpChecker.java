@@ -31,15 +31,14 @@ public final class ExprTraceSeqItpChecker implements ExprTraceChecker<ItpRefutat
 	private final Expr<BoolType> init;
 	private final Expr<BoolType> target;
 
-	private ExprTraceSeqItpChecker(final Expr<BoolType> init, final Expr<BoolType> target,
-			final ItpSolver solver) {
+	private ExprTraceSeqItpChecker(final Expr<BoolType> init, final Expr<BoolType> target, final ItpSolver solver) {
 		this.solver = checkNotNull(solver);
 		this.init = checkNotNull(init);
 		this.target = checkNotNull(target);
 	}
 
-	public static ExprTraceSeqItpChecker create(final Expr<BoolType> init,
-			final Expr<BoolType> target, final ItpSolver solver) {
+	public static ExprTraceSeqItpChecker create(final Expr<BoolType> init, final Expr<BoolType> target,
+			final ItpSolver solver) {
 		return new ExprTraceSeqItpChecker(init, target, solver);
 	}
 

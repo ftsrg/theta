@@ -10,8 +10,7 @@ import hu.bme.mit.theta.analysis.expr.ExprStates;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.solver.Solver;
 
-public final class PredTransferFunction
-		implements TransferFunction<PredState, ExprAction, PredPrec> {
+public final class PredTransferFunction implements TransferFunction<PredState, ExprAction, PredPrec> {
 
 	private final Solver solver;
 
@@ -24,14 +23,13 @@ public final class PredTransferFunction
 	}
 
 	@Override
-	public Collection<? extends PredState> getSuccStates(final PredState state,
-			final ExprAction action, final PredPrec prec) {
+	public Collection<? extends PredState> getSuccStates(final PredState state, final ExprAction action,
+			final PredPrec prec) {
 		checkNotNull(state);
 		checkNotNull(action);
 		checkNotNull(prec);
 
-		return ExprStates.createStatesForExpr(solver,
-				BoolExprs.And(state.toExpr(), action.toExpr()), 0,
+		return ExprStates.createStatesForExpr(solver, BoolExprs.And(state.toExpr(), action.toExpr()), 0,
 				prec::createState, 1);
 	}
 

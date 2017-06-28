@@ -16,7 +16,8 @@ public final class Exprs {
 		return new RefExpr<>(decl);
 	}
 
-	public static <ExprType extends Type> IteExpr<ExprType> Ite(final Expr<BoolType> cond, final Expr<ExprType> then, final Expr<ExprType> elze) {
+	public static <ExprType extends Type> IteExpr<ExprType> Ite(final Expr<BoolType> cond, final Expr<ExprType> then,
+			final Expr<ExprType> elze) {
 		return new IteExpr<>(cond, then, elze);
 	}
 

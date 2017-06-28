@@ -31,15 +31,14 @@ public final class ExprTraceUnsatCoreChecker implements ExprTraceChecker<VarsRef
 	private final Expr<BoolType> init;
 	private final Expr<BoolType> target;
 
-	private ExprTraceUnsatCoreChecker(final Expr<BoolType> init, final Expr<BoolType> target,
-			final Solver solver) {
+	private ExprTraceUnsatCoreChecker(final Expr<BoolType> init, final Expr<BoolType> target, final Solver solver) {
 		this.solver = checkNotNull(solver);
 		this.init = checkNotNull(init);
 		this.target = checkNotNull(target);
 	}
 
-	public static ExprTraceUnsatCoreChecker create(final Expr<BoolType> init,
-			final Expr<BoolType> target, final Solver solver) {
+	public static ExprTraceUnsatCoreChecker create(final Expr<BoolType> init, final Expr<BoolType> target,
+			final Solver solver) {
 		return new ExprTraceUnsatCoreChecker(init, target, solver);
 	}
 

@@ -20,8 +20,7 @@ import hu.bme.mit.theta.analysis.reachedset.ReachedSet;
 import hu.bme.mit.theta.analysis.waitlist.FifoWaitlist;
 import hu.bme.mit.theta.analysis.waitlist.Waitlist;
 
-public final class ImpactChecker<S extends State, A extends Action, P extends Prec>
-		implements SafetyChecker<S, A, P> {
+public final class ImpactChecker<S extends State, A extends Action, P extends Prec> implements SafetyChecker<S, A, P> {
 
 	private final ArgBuilder<S, A, P> argBuilder;
 	private final ImpactRefiner<S, A> refiner;
