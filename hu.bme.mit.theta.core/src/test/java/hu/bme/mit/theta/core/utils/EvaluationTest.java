@@ -28,13 +28,9 @@ import static hu.bme.mit.theta.core.type.rattype.RatExprs.Neg;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Sub;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.junit.Assert;
 import org.junit.Test;
 
-import hu.bme.mit.theta.core.Decl;
 import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.LitExpr;
 import hu.bme.mit.theta.core.Type;
@@ -186,11 +182,7 @@ public class EvaluationTest {
 
 	@Test
 	public void testModel() {
-		final Map<Decl<?>, LitExpr<?>> declToExpr = new HashMap<>();
-		declToExpr.put(ca, Int(5));
-		declToExpr.put(cb, Int(10));
-		final Substitution assignment = new BasicSubstitution(declToExpr);
-
+		final Substitution assignment = BasicSubstitution.builder().put(ca, Int(5)).put(cb, Int(10)).build();
 		Assert.assertEquals(Int(15), evaluate(Add(a, b), assignment));
 		Assert.assertEquals(Int(50), evaluate(Mul(a, b), assignment));
 		Assert.assertEquals(Int(0), evaluate(Div(a, b), assignment));

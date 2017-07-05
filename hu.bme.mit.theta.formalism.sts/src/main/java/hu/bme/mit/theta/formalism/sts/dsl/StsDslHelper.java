@@ -76,7 +76,7 @@ final class StsDslHelper {
 		for (final ConstDeclContext constDeclCtx : constDeclCtxs) {
 			addDef(scope, assignment, declToExpr, constDeclCtx);
 		}
-		return new BasicSubstitution(declToExpr);
+		return BasicSubstitution.builder().putAll(declToExpr).build();
 	}
 
 	private static void addDef(final Scope scope, final Substitution assignment, final Map<Decl<?>, Expr<?>> declToExpr,

@@ -9,7 +9,7 @@ import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 /**
- * Interface for an assignment, which is a mapping from declarations to
+ * Interface for a substitution, which is a mapping from declarations to
  * expressions.
  */
 public interface Substitution {

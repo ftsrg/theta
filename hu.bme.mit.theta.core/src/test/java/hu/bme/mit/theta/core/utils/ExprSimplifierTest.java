@@ -34,15 +34,10 @@ import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Sub;
 import static hu.bme.mit.theta.core.utils.ExprUtils.simplify;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.junit.Assert;
 import org.junit.Test;
 
-import hu.bme.mit.theta.core.Decl;
 import hu.bme.mit.theta.core.Expr;
-import hu.bme.mit.theta.core.LitExpr;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.model.BasicSubstitution;
 import hu.bme.mit.theta.core.model.Substitution;
@@ -213,10 +208,7 @@ public class ExprSimplifierTest {
 
 	@Test
 	public void testModel() {
-		final Map<Decl<?>, LitExpr<?>> declToExpr = new HashMap<>();
-		declToExpr.put(ca, Int(5));
-		declToExpr.put(cb, Int(9));
-		final Substitution assignment = new BasicSubstitution(declToExpr);
+		final Substitution assignment = BasicSubstitution.builder().put(ca, Int(5)).put(cb, Int(9)).build();
 
 		Assert.assertEquals(Int(14), simplify(Add(a, b), assignment));
 		Assert.assertEquals(Add(c, Int(14)), simplify(Add(a, b, c), assignment)); // @formatter:on

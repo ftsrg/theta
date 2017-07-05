@@ -8,23 +8,27 @@ import java.util.Optional;
 import hu.bme.mit.theta.core.Decl;
 import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.Type;
+import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
-public class NestedSubstitution implements Substitution {
+/**
+ * Class representing a nested substitution. If a declaration is not present in
+ * the actual substitution it is searched in the enclosing substitutions
+ * recursively.
+ */
+public final class NestedSubstitution implements Substitution {
 
-	private final Substitution enclosingAssignment;
-	private final Substitution assignment;
+	private final Substitution enclosingSubst;
+	private final Substitution subst;
 
-	private NestedSubstitution(final Substitution enclosingAssignment, final Substitution assignment) {
-		this.enclosingAssignment = checkNotNull(enclosingAssignment);
-		this.assignment = checkNotNull(assignment);
+	private NestedSubstitution(final Substitution enclosingSubst, final Substitution subst) {
+		this.enclosingSubst = checkNotNull(enclosingSubst);
+		this.subst = checkNotNull(subst);
 	}
 
-	public static NestedSubstitution create(final Substitution enclosingAssignment, final Substitution assignment) {
-		return new NestedSubstitution(enclosingAssignment, assignment);
+	public static NestedSubstitution create(final Substitution enclosingSubst, final Substitution subst) {
+		return new NestedSubstitution(enclosingSubst, subst);
 	}
-
-	////
 
 	@Override
 	public Collection<? extends Decl<?>> getDecls() {
@@ -34,18 +38,17 @@ public class NestedSubstitution implements Substitution {
 
 	@Override
 	public <DeclType extends Type> Optional<? extends Expr<DeclType>> eval(final Decl<DeclType> decl) {
-		final Optional<? extends Expr<DeclType>> optExpr = assignment.eval(decl);
+		final Optional<? extends Expr<DeclType>> optExpr = subst.eval(decl);
 		if (optExpr.isPresent()) {
 			return optExpr;
 		} else {
-			return enclosingAssignment.eval(decl);
+			return enclosingSubst.eval(decl);
 		}
 	}
 
 	@Override
 	public Expr<BoolType> toExpr() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		return BoolExprs.And(enclosingSubst.toExpr(), subst.toExpr());
 	}
 
 }
