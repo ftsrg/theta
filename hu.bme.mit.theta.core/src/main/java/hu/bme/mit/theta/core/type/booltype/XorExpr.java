@@ -5,7 +5,7 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import hu.bme.mit.theta.core.BinaryExpr;
 import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.LitExpr;
-import hu.bme.mit.theta.core.model.Assignment;
+import hu.bme.mit.theta.core.model.Substitution;
 import hu.bme.mit.theta.core.type.abstracttype.NeqExpr;
 
 public class XorExpr extends NeqExpr<BoolType> {
@@ -24,7 +24,7 @@ public class XorExpr extends NeqExpr<BoolType> {
 	}
 
 	@Override
-	public LitExpr<BoolType> eval(final Assignment assignment) {
+	public LitExpr<BoolType> eval(final Substitution assignment) {
 		final BoolLitExpr leftOpVal = (BoolLitExpr) getLeftOp().eval(assignment);
 		final BoolLitExpr rightOpVal = (BoolLitExpr) getRightOp().eval(assignment);
 		return Bool(leftOpVal.getValue() != rightOpVal.getValue());

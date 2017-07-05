@@ -12,8 +12,8 @@ import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.dsl.DeclSymbol;
 import hu.bme.mit.theta.core.dsl.ParamBinding;
-import hu.bme.mit.theta.core.model.Assignment;
-import hu.bme.mit.theta.core.model.impl.NestedAssignment;
+import hu.bme.mit.theta.core.model.NestedSubstitution;
+import hu.bme.mit.theta.core.model.Substitution;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.formalism.sts.dsl.gen.StsDslParser.StsDeclContext;
 
@@ -65,10 +65,10 @@ final class StsDeclSymbol implements ScopedSymbol {
 
 	////
 
-	public StsDefScope instantiate(final Assignment assignment, final List<? extends Expr<?>> args) {
+	public StsDefScope instantiate(final Substitution assignment, final List<? extends Expr<?>> args) {
 		final List<Expr<?>> simplifiedArgs = ExprUtils.simplifyAll(args);
 		final ParamBinding binding = ParamBinding.create(params, simplifiedArgs);
-		final Assignment newAssignment = NestedAssignment.create(assignment, binding);
+		final Substitution newAssignment = NestedSubstitution.create(assignment, binding);
 		final StsDefScope stsDefScope = StsCreator.createSts(this, newAssignment, stsDeclContext.def);
 		return stsDefScope;
 	}

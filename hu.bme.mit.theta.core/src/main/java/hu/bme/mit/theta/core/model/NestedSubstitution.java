@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.core.model.impl;
+package hu.bme.mit.theta.core.model;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -8,21 +8,20 @@ import java.util.Optional;
 import hu.bme.mit.theta.core.Decl;
 import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.Type;
-import hu.bme.mit.theta.core.model.Assignment;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
-public class NestedAssignment implements Assignment {
+public class NestedSubstitution implements Substitution {
 
-	private final Assignment enclosingAssignment;
-	private final Assignment assignment;
+	private final Substitution enclosingAssignment;
+	private final Substitution assignment;
 
-	private NestedAssignment(final Assignment enclosingAssignment, final Assignment assignment) {
+	private NestedSubstitution(final Substitution enclosingAssignment, final Substitution assignment) {
 		this.enclosingAssignment = checkNotNull(enclosingAssignment);
 		this.assignment = checkNotNull(assignment);
 	}
 
-	public static NestedAssignment create(final Assignment enclosingAssignment, final Assignment assignment) {
-		return new NestedAssignment(enclosingAssignment, assignment);
+	public static NestedSubstitution create(final Substitution enclosingAssignment, final Substitution assignment) {
+		return new NestedSubstitution(enclosingAssignment, assignment);
 	}
 
 	////

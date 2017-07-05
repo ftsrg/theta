@@ -12,7 +12,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
  * Interface for an assignment, which is a mapping from declarations to
  * expressions.
  */
-public interface Assignment {
+public interface Substitution {
 
 	Collection<? extends Decl<?>> getDecls();
 

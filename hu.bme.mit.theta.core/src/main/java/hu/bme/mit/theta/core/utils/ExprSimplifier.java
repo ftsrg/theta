@@ -16,7 +16,7 @@ import hu.bme.mit.theta.common.DispatchTable;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.Type;
-import hu.bme.mit.theta.core.model.Assignment;
+import hu.bme.mit.theta.core.model.Substitution;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.booltype.AndExpr;
@@ -60,9 +60,9 @@ import hu.bme.mit.theta.core.type.rattype.RatType;
 public final class ExprSimplifier {
 
 	private final DispatchTable<Expr<?>> table;
-	private final Assignment assignment;
+	private final Substitution assignment;
 
-	ExprSimplifier(final Assignment assignment) {
+	ExprSimplifier(final Substitution assignment) {
 		this.assignment = checkNotNull(assignment);
 
 		table = DispatchTable.<Expr<?>>builder()

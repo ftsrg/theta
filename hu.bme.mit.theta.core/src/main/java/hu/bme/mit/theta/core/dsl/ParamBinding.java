@@ -15,10 +15,10 @@ import hu.bme.mit.theta.core.Decl;
 import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.decl.ParamDecl;
-import hu.bme.mit.theta.core.model.Assignment;
+import hu.bme.mit.theta.core.model.Substitution;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
-public final class ParamBinding implements Assignment {
+public final class ParamBinding implements Substitution {
 
 	private final List<ParamDecl<?>> params;
 	private final Map<Decl<?>, Expr<?>> paramToArg;

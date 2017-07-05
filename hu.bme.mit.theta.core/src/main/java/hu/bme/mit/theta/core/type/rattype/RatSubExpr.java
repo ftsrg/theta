@@ -3,7 +3,7 @@ package hu.bme.mit.theta.core.type.rattype;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 
 import hu.bme.mit.theta.core.Expr;
-import hu.bme.mit.theta.core.model.Assignment;
+import hu.bme.mit.theta.core.model.Substitution;
 import hu.bme.mit.theta.core.type.abstracttype.SubExpr;
 
 public final class RatSubExpr extends SubExpr<RatType> {
@@ -21,7 +21,7 @@ public final class RatSubExpr extends SubExpr<RatType> {
 	}
 
 	@Override
-	public RatLitExpr eval(final Assignment assignment) {
+	public RatLitExpr eval(final Substitution assignment) {
 		final RatLitExpr leftOpVal = (RatLitExpr) getLeftOp().eval(assignment);
 		final RatLitExpr rightOpVal = (RatLitExpr) getRightOp().eval(assignment);
 		return leftOpVal.sub(rightOpVal);

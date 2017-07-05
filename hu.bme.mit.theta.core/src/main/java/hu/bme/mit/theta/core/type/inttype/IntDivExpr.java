@@ -3,7 +3,7 @@ package hu.bme.mit.theta.core.type.inttype;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 import hu.bme.mit.theta.core.Expr;
-import hu.bme.mit.theta.core.model.Assignment;
+import hu.bme.mit.theta.core.model.Substitution;
 import hu.bme.mit.theta.core.type.abstracttype.DivExpr;
 
 public final class IntDivExpr extends DivExpr<IntType> {
@@ -22,7 +22,7 @@ public final class IntDivExpr extends DivExpr<IntType> {
 	}
 
 	@Override
-	public IntLitExpr eval(final Assignment assignment) {
+	public IntLitExpr eval(final Substitution assignment) {
 		final IntLitExpr leftOpVal = (IntLitExpr) getLeftOp().eval(assignment);
 		final IntLitExpr rightOpVal = (IntLitExpr) getRightOp().eval(assignment);
 		return leftOpVal.div(rightOpVal);

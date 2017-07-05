@@ -4,7 +4,7 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 
 import hu.bme.mit.theta.core.BinaryExpr;
 import hu.bme.mit.theta.core.Expr;
-import hu.bme.mit.theta.core.model.Assignment;
+import hu.bme.mit.theta.core.model.Substitution;
 
 public final class ImplyExpr extends BinaryExpr<BoolType, BoolType> {
 
@@ -22,7 +22,7 @@ public final class ImplyExpr extends BinaryExpr<BoolType, BoolType> {
 	}
 
 	@Override
-	public BoolLitExpr eval(final Assignment assignment) {
+	public BoolLitExpr eval(final Substitution assignment) {
 		final BoolLitExpr leftOpVal = (BoolLitExpr) getLeftOp().eval(assignment);
 		final BoolLitExpr rightOpVal = (BoolLitExpr) getRightOp().eval(assignment);
 		return Bool(!leftOpVal.getValue() || rightOpVal.getValue());

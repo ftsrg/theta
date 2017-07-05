@@ -4,7 +4,7 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 import hu.bme.mit.theta.core.BinaryExpr;
 import hu.bme.mit.theta.core.Expr;
-import hu.bme.mit.theta.core.model.Assignment;
+import hu.bme.mit.theta.core.model.Substitution;
 
 public final class RemExpr extends BinaryExpr<IntType, IntType> {
 
@@ -22,7 +22,7 @@ public final class RemExpr extends BinaryExpr<IntType, IntType> {
 	}
 
 	@Override
-	public IntLitExpr eval(final Assignment assignment) {
+	public IntLitExpr eval(final Substitution assignment) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}

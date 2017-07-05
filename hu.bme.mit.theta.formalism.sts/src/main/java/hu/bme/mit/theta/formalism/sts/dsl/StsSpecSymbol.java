@@ -20,8 +20,8 @@ import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.dsl.DeclSymbol;
 import hu.bme.mit.theta.core.dsl.ParamBinding;
-import hu.bme.mit.theta.core.model.Assignment;
-import hu.bme.mit.theta.core.model.impl.NestedAssignment;
+import hu.bme.mit.theta.core.model.NestedSubstitution;
+import hu.bme.mit.theta.core.model.Substitution;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.formalism.sts.dsl.gen.StsDslParser.ConstDeclContext;
 import hu.bme.mit.theta.formalism.sts.dsl.gen.StsDslParser.PropDeclContext;
@@ -88,8 +88,8 @@ final class StsSpecSymbol implements ScopedSymbol {
 		final List<Expr<?>> simplifiedArgs = ExprUtils.simplifyAll(args);
 		final ParamBinding binding = ParamBinding.create(params, simplifiedArgs);
 		// TODO Handle recursive constant definitions
-		final Assignment constAssignment = StsDslHelper.createConstDefs(this, binding, stsSpecContext.constDecls);
-		final Assignment assignment = NestedAssignment.create(binding, constAssignment);
+		final Substitution constAssignment = StsDslHelper.createConstDefs(this, binding, stsSpecContext.constDecls);
+		final Substitution assignment = NestedSubstitution.create(binding, constAssignment);
 		final StsSpec stsSpec = StsSpec.create(this, assignment);
 		return stsSpec;
 	}

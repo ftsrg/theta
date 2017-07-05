@@ -5,7 +5,7 @@ import static hu.bme.mit.theta.formalism.sts.dsl.StsDslHelper.createBoolExpr;
 
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.core.Expr;
-import hu.bme.mit.theta.core.model.Assignment;
+import hu.bme.mit.theta.core.model.Substitution;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.formalism.sts.dsl.gen.StsDslParser.PropDeclContext;
@@ -37,7 +37,7 @@ final class PropDeclSymbol implements Symbol {
 
 	////
 
-	public STS instantiate(final Assignment assignment) {
+	public STS instantiate(final Substitution assignment) {
 		final StsDefScope stsDefScope = StsCreator.createSts(scope, assignment, propDeclContext.system);
 		final Expr<BoolType> prop = createBoolExpr(stsDefScope, assignment, propDeclContext.cond);
 

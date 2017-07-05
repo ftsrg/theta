@@ -8,7 +8,7 @@ import java.util.List;
 
 import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.core.Expr;
-import hu.bme.mit.theta.core.model.Assignment;
+import hu.bme.mit.theta.core.model.Substitution;
 import hu.bme.mit.theta.formalism.sts.dsl.gen.StsDslBaseVisitor;
 import hu.bme.mit.theta.formalism.sts.dsl.gen.StsDslParser.DefStsContext;
 import hu.bme.mit.theta.formalism.sts.dsl.gen.StsDslParser.RefStsContext;
@@ -19,15 +19,15 @@ final class StsCreator {
 	private StsCreator() {
 	}
 
-	public static StsDefScope createSts(final Scope scope, final Assignment assignment, final StsContext stsContext) {
+	public static StsDefScope createSts(final Scope scope, final Substitution assignment, final StsContext stsContext) {
 		return stsContext.accept(new StsCreatorVisitor(scope, assignment));
 	}
 
 	private static final class StsCreatorVisitor extends StsDslBaseVisitor<StsDefScope> {
 		private final Scope scope;
-		private final Assignment assignment;
+		private final Substitution assignment;
 
-		private StsCreatorVisitor(final Scope scope, final Assignment assignment) {
+		private StsCreatorVisitor(final Scope scope, final Substitution assignment) {
 			this.scope = checkNotNull(scope);
 			this.assignment = checkNotNull(assignment);
 		}

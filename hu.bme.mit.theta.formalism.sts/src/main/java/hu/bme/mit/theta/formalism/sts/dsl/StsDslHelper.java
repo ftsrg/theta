@@ -22,8 +22,8 @@ import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.dsl.DeclSymbol;
-import hu.bme.mit.theta.core.model.Assignment;
-import hu.bme.mit.theta.core.model.impl.BasicAssignment;
+import hu.bme.mit.theta.core.model.BasicSubstitution;
+import hu.bme.mit.theta.core.model.Substitution;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.TypeUtils;
 import hu.bme.mit.theta.formalism.sts.dsl.gen.StsDslParser.ConstDeclContext;
@@ -70,16 +70,16 @@ final class StsDslHelper {
 		return varDecl;
 	}
 
-	public static Assignment createConstDefs(final Scope scope, final Assignment assignment,
+	public static Substitution createConstDefs(final Scope scope, final Substitution assignment,
 			final List<? extends ConstDeclContext> constDeclCtxs) {
 		final Map<Decl<?>, Expr<?>> declToExpr = new HashMap<>();
 		for (final ConstDeclContext constDeclCtx : constDeclCtxs) {
 			addDef(scope, assignment, declToExpr, constDeclCtx);
 		}
-		return new BasicAssignment(declToExpr);
+		return new BasicSubstitution(declToExpr);
 	}
 
-	private static void addDef(final Scope scope, final Assignment assignment, final Map<Decl<?>, Expr<?>> declToExpr,
+	private static void addDef(final Scope scope, final Substitution assignment, final Map<Decl<?>, Expr<?>> declToExpr,
 			final ConstDeclContext constDeclCtx) {
 		final String name = constDeclCtx.ddecl.name.getText();
 		final DeclSymbol declSymbol = resolveDecl(scope, name);
@@ -94,13 +94,13 @@ final class StsDslHelper {
 		return type;
 	}
 
-	public static Expr<?> createExpr(final Scope scope, final Assignment assignment, final ExprContext exprCtx) {
+	public static Expr<?> createExpr(final Scope scope, final Substitution assignment, final ExprContext exprCtx) {
 		final Expr<?> expr = exprCtx.accept(new StsExprCreatorVisitor(scope, assignment));
 		assert expr != null;
 		return expr;
 	}
 
-	public static List<Expr<?>> createExprList(final Scope scope, final Assignment assignment,
+	public static List<Expr<?>> createExprList(final Scope scope, final Substitution assignment,
 			final ExprListContext exprListCtx) {
 		if (exprListCtx == null || exprListCtx.exprs == null) {
 			return Collections.emptyList();
@@ -111,12 +111,12 @@ final class StsDslHelper {
 		}
 	}
 
-	public static Expr<BoolType> createBoolExpr(final Scope scope, final Assignment assignment,
+	public static Expr<BoolType> createBoolExpr(final Scope scope, final Substitution assignment,
 			final ExprContext exprCtx) {
 		return TypeUtils.cast(createExpr(scope, assignment, exprCtx), Bool());
 	}
 
-	public static List<Expr<BoolType>> createBoolExprList(final Scope scope, final Assignment assignment,
+	public static List<Expr<BoolType>> createBoolExprList(final Scope scope, final Substitution assignment,
 			final ExprListContext exprListCtx) {
 		final List<Expr<?>> exprs = createExprList(scope, assignment, exprListCtx);
 		final List<Expr<BoolType>> boolExprs = exprs.stream().map(e -> TypeUtils.cast(e, Bool())).collect(toList());

@@ -3,7 +3,7 @@ package hu.bme.mit.theta.core.type.pointertype;
 import hu.bme.mit.theta.core.LitExpr;
 import hu.bme.mit.theta.core.NullaryExpr;
 import hu.bme.mit.theta.core.Type;
-import hu.bme.mit.theta.core.model.Assignment;
+import hu.bme.mit.theta.core.model.Substitution;
 
 public final class NullExpr<PointedType extends Type> extends NullaryExpr<PointerType<PointedType>>
 		implements LitExpr<PointerType<PointedType>> {
@@ -27,7 +27,7 @@ public final class NullExpr<PointedType extends Type> extends NullaryExpr<Pointe
 	}
 
 	@Override
-	public LitExpr<PointerType<PointedType>> eval(final Assignment assignment) {
+	public LitExpr<PointerType<PointedType>> eval(final Substitution assignment) {
 		return this;
 	}
 

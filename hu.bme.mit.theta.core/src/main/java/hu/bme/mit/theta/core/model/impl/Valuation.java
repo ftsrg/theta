@@ -22,14 +22,14 @@ import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.LitExpr;
 import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.model.Assignment;
+import hu.bme.mit.theta.core.model.Substitution;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 /**
  * Implementation of a valuation, which is a special type of assignment, mapping
  * variable declarations to literal expressions.
  */
-public final class Valuation implements Assignment {
+public final class Valuation implements Substitution {
 
 	private static final int HASH_SEED = 5743;
 
@@ -122,7 +122,7 @@ public final class Valuation implements Assignment {
 				.addAll(declToExpr.entrySet(), e -> e.getKey().getName() + " <- " + e.getValue()).toString();
 	}
 
-	public static final class Builder implements Assignment {
+	public static final class Builder implements Substitution {
 		private final Map<VarDecl<?>, LitExpr<?>> declToExpr;
 		private boolean built;
 

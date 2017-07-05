@@ -44,8 +44,8 @@ import hu.bme.mit.theta.core.Decl;
 import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.LitExpr;
 import hu.bme.mit.theta.core.decl.ConstDecl;
-import hu.bme.mit.theta.core.model.Assignment;
-import hu.bme.mit.theta.core.model.impl.BasicAssignment;
+import hu.bme.mit.theta.core.model.BasicSubstitution;
+import hu.bme.mit.theta.core.model.Substitution;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 
@@ -216,7 +216,7 @@ public class ExprSimplifierTest {
 		final Map<Decl<?>, LitExpr<?>> declToExpr = new HashMap<>();
 		declToExpr.put(ca, Int(5));
 		declToExpr.put(cb, Int(9));
-		final Assignment assignment = new BasicAssignment(declToExpr);
+		final Substitution assignment = new BasicSubstitution(declToExpr);
 
 		Assert.assertEquals(Int(14), simplify(Add(a, b), assignment));
 		Assert.assertEquals(Add(c, Int(14)), simplify(Add(a, b, c), assignment)); // @formatter:on

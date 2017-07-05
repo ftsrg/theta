@@ -4,7 +4,7 @@ import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.LitExpr;
 import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.UnaryExpr;
-import hu.bme.mit.theta.core.model.Assignment;
+import hu.bme.mit.theta.core.model.Substitution;
 
 public final class PrimeExpr<ExprType extends Type> extends UnaryExpr<ExprType, ExprType> {
 
@@ -22,7 +22,7 @@ public final class PrimeExpr<ExprType extends Type> extends UnaryExpr<ExprType, 
 	}
 
 	@Override
-	public LitExpr<ExprType> eval(final Assignment assignment) {
+	public LitExpr<ExprType> eval(final Substitution assignment) {
 		throw new UnsupportedOperationException();
 	}
 

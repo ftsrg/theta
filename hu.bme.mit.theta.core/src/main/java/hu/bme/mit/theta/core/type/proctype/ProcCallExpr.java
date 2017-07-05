@@ -10,7 +10,7 @@ import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.LitExpr;
 import hu.bme.mit.theta.core.Type;
-import hu.bme.mit.theta.core.model.Assignment;
+import hu.bme.mit.theta.core.model.Substitution;
 
 public final class ProcCallExpr<ReturnType extends Type> implements Expr<ReturnType> {
 
@@ -40,7 +40,7 @@ public final class ProcCallExpr<ReturnType extends Type> implements Expr<ReturnT
 	}
 
 	@Override
-	public LitExpr<ReturnType> eval(final Assignment assignment) {
+	public LitExpr<ReturnType> eval(final Substitution assignment) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}

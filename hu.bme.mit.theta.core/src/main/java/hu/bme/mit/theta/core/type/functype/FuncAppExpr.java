@@ -10,7 +10,7 @@ import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.LitExpr;
 import hu.bme.mit.theta.core.Type;
-import hu.bme.mit.theta.core.model.Assignment;
+import hu.bme.mit.theta.core.model.Substitution;
 
 public final class FuncAppExpr<ParamType extends Type, ResultType extends Type> implements Expr<ResultType> {
 
@@ -42,7 +42,7 @@ public final class FuncAppExpr<ParamType extends Type, ResultType extends Type> 
 	}
 
 	@Override
-	public LitExpr<ResultType> eval(final Assignment assignment) {
+	public LitExpr<ResultType> eval(final Substitution assignment) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}

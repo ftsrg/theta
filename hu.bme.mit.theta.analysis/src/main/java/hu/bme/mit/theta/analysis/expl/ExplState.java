@@ -13,11 +13,11 @@ import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.LitExpr;
 import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.model.Assignment;
+import hu.bme.mit.theta.core.model.Substitution;
 import hu.bme.mit.theta.core.model.impl.Valuation;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
-public final class ExplState implements ExprState, Assignment {
+public final class ExplState implements ExprState, Substitution {
 
 	private static final int HASH_SEED = 6659;
 

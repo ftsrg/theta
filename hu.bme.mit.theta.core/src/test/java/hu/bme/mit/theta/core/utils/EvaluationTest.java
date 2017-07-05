@@ -39,8 +39,8 @@ import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.LitExpr;
 import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.decl.ConstDecl;
-import hu.bme.mit.theta.core.model.Assignment;
-import hu.bme.mit.theta.core.model.impl.BasicAssignment;
+import hu.bme.mit.theta.core.model.BasicSubstitution;
+import hu.bme.mit.theta.core.model.Substitution;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 
 public class EvaluationTest {
@@ -52,11 +52,11 @@ public class EvaluationTest {
 	private final Expr<IntType> b = cb.getRef();
 
 	private static <ExprType extends Type> LitExpr<ExprType> evaluate(final Expr<ExprType> expr) {
-		return expr.eval(BasicAssignment.empty());
+		return expr.eval(BasicSubstitution.empty());
 	}
 
 	private static <ExprType extends Type> LitExpr<ExprType> evaluate(final Expr<ExprType> expr,
-			final Assignment assignment) {
+			final Substitution assignment) {
 		return expr.eval(assignment);
 	}
 
@@ -189,7 +189,7 @@ public class EvaluationTest {
 		final Map<Decl<?>, LitExpr<?>> declToExpr = new HashMap<>();
 		declToExpr.put(ca, Int(5));
 		declToExpr.put(cb, Int(10));
-		final Assignment assignment = new BasicAssignment(declToExpr);
+		final Substitution assignment = new BasicSubstitution(declToExpr);
 
 		Assert.assertEquals(Int(15), evaluate(Add(a, b), assignment));
 		Assert.assertEquals(Int(50), evaluate(Mul(a, b), assignment));

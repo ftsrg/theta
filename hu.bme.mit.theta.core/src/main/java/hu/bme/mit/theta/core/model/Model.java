@@ -13,7 +13,7 @@ import hu.bme.mit.theta.core.decl.ConstDecl;
  * Interface for a model, which is a special type of assignment, mapping
  * constant declarations to literal expressions.
  */
-public interface Model extends Assignment {
+public interface Model extends Substitution {
 
 	@Override
 	Collection<? extends ConstDecl<?>> getDecls();

@@ -5,7 +5,7 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 import java.util.List;
 import java.util.function.Function;
 
-import hu.bme.mit.theta.core.model.Assignment;
+import hu.bme.mit.theta.core.model.Substitution;
 
 public interface Expr<ExprType extends Type> {
 
@@ -13,7 +13,7 @@ public interface Expr<ExprType extends Type> {
 
 	ExprType getType();
 
-	LitExpr<ExprType> eval(Assignment assignment);
+	LitExpr<ExprType> eval(Substitution assignment);
 
 	List<? extends Expr<?>> getOps();
 

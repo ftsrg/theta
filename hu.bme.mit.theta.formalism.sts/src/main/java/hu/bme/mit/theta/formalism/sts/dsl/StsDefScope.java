@@ -15,8 +15,8 @@ import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.dsl.DeclSymbol;
-import hu.bme.mit.theta.core.model.Assignment;
-import hu.bme.mit.theta.core.model.impl.NestedAssignment;
+import hu.bme.mit.theta.core.model.NestedSubstitution;
+import hu.bme.mit.theta.core.model.Substitution;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.formalism.sts.dsl.gen.StsDslParser.ConstDeclContext;
@@ -31,13 +31,13 @@ final class StsDefScope implements Scope {
 	private final DefStsContext defStsContext;
 
 	private final Scope enclosingScope;
-	private final Assignment assignment;
+	private final Substitution assignment;
 	private final SymbolTable symbolTable;
 
 	private final STS.Builder stsBuilder;
 	private final STS sts;
 
-	private StsDefScope(final Scope enclosingScope, final Assignment assignment, final DefStsContext defTcfaContext) {
+	private StsDefScope(final Scope enclosingScope, final Substitution assignment, final DefStsContext defTcfaContext) {
 		checkNotNull(assignment);
 		this.enclosingScope = checkNotNull(enclosingScope);
 		this.defStsContext = checkNotNull(defTcfaContext);
@@ -47,8 +47,8 @@ final class StsDefScope implements Scope {
 		declareVars();
 
 		// TODO Handle recursive constant definitions
-		final Assignment constAssignment = StsDslHelper.createConstDefs(this, assignment, defTcfaContext.constDecls);
-		this.assignment = NestedAssignment.create(assignment, constAssignment);
+		final Substitution constAssignment = StsDslHelper.createConstDefs(this, assignment, defTcfaContext.constDecls);
+		this.assignment = NestedSubstitution.create(assignment, constAssignment);
 
 		stsBuilder = STS.builder();
 
@@ -62,7 +62,7 @@ final class StsDefScope implements Scope {
 		sts = stsBuilder.build();
 	}
 
-	public static StsDefScope create(final Scope enclosingScope, final Assignment assignment,
+	public static StsDefScope create(final Scope enclosingScope, final Substitution assignment,
 			final DefStsContext defTcfaContext) {
 		return new StsDefScope(enclosingScope, assignment, defTcfaContext);
 	}

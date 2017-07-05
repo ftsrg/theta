@@ -52,7 +52,7 @@ import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.dsl.DeclSymbol;
-import hu.bme.mit.theta.core.model.Assignment;
+import hu.bme.mit.theta.core.model.Substitution;
 import hu.bme.mit.theta.core.type.abstracttype.AddExpr;
 import hu.bme.mit.theta.core.type.abstracttype.DivExpr;
 import hu.bme.mit.theta.core.type.abstracttype.MulExpr;
@@ -96,9 +96,9 @@ import hu.bme.mit.theta.formalism.sts.dsl.gen.StsDslParser.TrueExprContext;
 final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
 
 	private Scope currentScope;
-	private final Assignment assignment;
+	private final Substitution assignment;
 
-	StsExprCreatorVisitor(final Scope scope, final Assignment assignment) {
+	StsExprCreatorVisitor(final Scope scope, final Substitution assignment) {
 		currentScope = checkNotNull(scope);
 		this.assignment = checkNotNull(assignment);
 	}

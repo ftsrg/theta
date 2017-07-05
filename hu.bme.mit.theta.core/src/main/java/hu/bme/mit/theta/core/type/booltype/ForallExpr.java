@@ -3,7 +3,7 @@ package hu.bme.mit.theta.core.type.booltype;
 import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.LitExpr;
 import hu.bme.mit.theta.core.decl.ParamDecl;
-import hu.bme.mit.theta.core.model.Assignment;
+import hu.bme.mit.theta.core.model.Substitution;
 
 public final class ForallExpr extends QuantifiedExpr {
 
@@ -16,7 +16,7 @@ public final class ForallExpr extends QuantifiedExpr {
 	}
 
 	@Override
-	public LitExpr<BoolType> eval(final Assignment assignment) {
+	public LitExpr<BoolType> eval(final Substitution assignment) {
 		throw new UnsupportedOperationException();
 	}
 

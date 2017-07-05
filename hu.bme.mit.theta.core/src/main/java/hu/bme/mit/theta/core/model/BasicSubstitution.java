@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.core.model.impl;
+package hu.bme.mit.theta.core.model;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -20,32 +20,31 @@ import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.Decl;
 import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.Type;
-import hu.bme.mit.theta.core.model.Assignment;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 /**
  * Basic implementation of an assignment.
  */
-public final class BasicAssignment implements Assignment {
+public final class BasicSubstitution implements Substitution {
 
 	private final Collection<Decl<?>> decls;
 	private final Map<Decl<?>, Expr<?>> declToExpr;
 
-	private static final Assignment EMPTY;
+	private static final Substitution EMPTY;
 
 	static {
-		EMPTY = new BasicAssignment();
+		EMPTY = new BasicSubstitution();
 	}
 
-	public static Assignment empty() {
+	public static Substitution empty() {
 		return EMPTY;
 	}
 
-	public BasicAssignment() {
+	public BasicSubstitution() {
 		this(new HashMap<>());
 	}
 
-	public BasicAssignment(final Map<? extends Decl<?>, ? extends Expr<?>> map) {
+	public BasicSubstitution(final Map<? extends Decl<?>, ? extends Expr<?>> map) {
 		checkAssignmentMap(map);
 		this.declToExpr = new HashMap<>(map);
 		this.decls = ImmutableList.copyOf(map.keySet());
@@ -104,8 +103,8 @@ public final class BasicAssignment implements Assignment {
 	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
-		} else if (obj instanceof BasicAssignment) {
-			final BasicAssignment that = (BasicAssignment) obj;
+		} else if (obj instanceof BasicSubstitution) {
+			final BasicSubstitution that = (BasicSubstitution) obj;
 			return this.declToExpr.equals(that.declToExpr);
 		} else {
 			return false;
