@@ -15,7 +15,8 @@ import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.model.impl.Valuation;
+import hu.bme.mit.theta.core.model.BasicValuation;
+import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.type.rattype.RatType;
@@ -51,7 +52,7 @@ final class XtaInitFunction<S extends State, P extends Prec> implements InitFunc
 	}
 
 	private static Valuation createInitVal(final XtaSystem system) {
-		final Valuation.Builder builder = Valuation.builder();
+		final BasicValuation.Builder builder = BasicValuation.builder();
 		for (final VarDecl<?> var : system.getDataVars()) {
 			final Type type = var.getType();
 			if (type instanceof BoolType) {

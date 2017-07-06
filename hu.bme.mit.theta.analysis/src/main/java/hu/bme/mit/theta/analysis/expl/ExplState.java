@@ -12,9 +12,8 @@ import hu.bme.mit.theta.core.Decl;
 import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.LitExpr;
 import hu.bme.mit.theta.core.Type;
-import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.Substitution;
-import hu.bme.mit.theta.core.model.impl.Valuation;
+import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 public final class ExplState implements ExprState, Substitution {
@@ -33,12 +32,12 @@ public final class ExplState implements ExprState, Substitution {
 		return new ExplState(values);
 	}
 
-	public <ExprType extends Type> LitExpr<ExprType> getValue(final VarDecl<ExprType> varDecl) {
+	public <ExprType extends Type> LitExpr<ExprType> getValue(final Decl<ExprType> varDecl) {
 		return values.eval(varDecl).get();
 	}
 
 	@Override
-	public Collection<? extends VarDecl<?>> getDecls() {
+	public Collection<? extends Decl<?>> getDecls() {
 		return values.getDecls();
 	}
 
@@ -62,7 +61,7 @@ public final class ExplState implements ExprState, Substitution {
 		if (that.getDecls().size() > this.getDecls().size()) {
 			return false;
 		}
-		for (final VarDecl<?> varDecl : that.getDecls()) {
+		for (final Decl<?> varDecl : that.getDecls()) {
 			if (!this.getDecls().contains(varDecl) || !that.getValue(varDecl).equals(this.getValue(varDecl))) {
 				return false;
 			}
@@ -98,7 +97,7 @@ public final class ExplState implements ExprState, Substitution {
 	@Override
 	public String toString() {
 		final ToStringBuilder builder = ObjectUtils.toStringBuilder(getClass().getSimpleName());
-		for (final VarDecl<?> varDecl : values.getDecls()) {
+		for (final Decl<?> varDecl : values.getDecls()) {
 			builder.add(varDecl.getName() + " = " + getValue(varDecl));
 		}
 		return builder.toString();

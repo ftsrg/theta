@@ -13,7 +13,8 @@ import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.LitExpr;
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.model.impl.Valuation;
+import hu.bme.mit.theta.core.model.BasicValuation;
+import hu.bme.mit.theta.core.model.Valuation;
 
 /**
  * Represents an immutable, simple explicit precision that is a set of
@@ -61,7 +62,7 @@ public final class ExplPrec implements Prec {
 
 	public ExplState createState(final Valuation valuation) {
 		checkNotNull(valuation);
-		final Valuation.Builder builder = Valuation.builder();
+		final BasicValuation.Builder builder = BasicValuation.builder();
 		for (final VarDecl<?> var : vars) {
 			final Optional<? extends LitExpr<?>> eval = valuation.eval(var);
 			if (eval.isPresent()) {

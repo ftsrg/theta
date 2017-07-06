@@ -15,7 +15,9 @@ import hu.bme.mit.theta.analysis.xta.XtaAction.SyncedXtaAction;
 import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.LitExpr;
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.model.impl.Valuation;
+import hu.bme.mit.theta.core.model.BasicValuation;
+import hu.bme.mit.theta.core.model.MutableValuation;
+import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 import hu.bme.mit.theta.formalism.xta.Guard;
@@ -96,16 +98,16 @@ final class XtaTransferFunction<S extends State, P extends Prec>
 	}
 
 	private static Valuation createSuccValForSimpleAction(final Valuation val, final SimpleXtaAction action) {
-		final Valuation.Builder builder = val.transform();
+		final MutableValuation builder = MutableValuation.copyOf(val);
 		applyDataUpdates(action.getEdge(), builder);
-		return builder.build();
+		return BasicValuation.copyOf(builder);
 	}
 
 	private Valuation createSuccValForSyncedAction(final Valuation val, final SyncedXtaAction action) {
-		final Valuation.Builder builder = val.transform();
+		final MutableValuation builder = MutableValuation.copyOf(val);
 		applyDataUpdates(action.getEmittingEdge(), builder);
 		applyDataUpdates(action.getReceivingEdge(), builder);
-		return builder.build();
+		return BasicValuation.copyOf(builder);
 	}
 
 	private static boolean checkDataGuards(final Edge edge, final Valuation val) {
@@ -120,7 +122,7 @@ final class XtaTransferFunction<S extends State, P extends Prec>
 		return true;
 	}
 
-	private static void applyDataUpdates(final Edge edge, final Valuation.Builder builder) {
+	private static void applyDataUpdates(final Edge edge, final MutableValuation builder) {
 		final List<Update> updates = edge.getUpdates();
 		for (final Update update : updates) {
 			if (update.isDataUpdate()) {

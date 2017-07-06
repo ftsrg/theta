@@ -27,7 +27,7 @@ import hu.bme.mit.theta.analysis.xta.XtaLts;
 import hu.bme.mit.theta.analysis.xta.XtaState;
 import hu.bme.mit.theta.common.Tuple;
 import hu.bme.mit.theta.common.Tuple2;
-import hu.bme.mit.theta.core.model.impl.Valuation;
+import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.formalism.xta.XtaProcess.Loc;
 import hu.bme.mit.theta.formalism.xta.XtaSystem;
 

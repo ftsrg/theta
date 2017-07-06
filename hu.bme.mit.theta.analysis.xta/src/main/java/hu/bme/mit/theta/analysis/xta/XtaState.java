@@ -10,7 +10,7 @@ import java.util.StringJoiner;
 import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.theta.analysis.State;
-import hu.bme.mit.theta.core.model.impl.Valuation;
+import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.formalism.xta.XtaProcess.Loc;
 
 public final class XtaState<S extends State> implements State {

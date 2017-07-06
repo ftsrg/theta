@@ -11,7 +11,7 @@ import org.junit.Test;
 import com.google.common.collect.ImmutableSet;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.model.impl.Valuation;
+import hu.bme.mit.theta.core.model.BasicValuation;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 
 public class ExplPrecTest {
@@ -36,11 +36,11 @@ public class ExplPrecTest {
 	@Test
 	public void testMapping() {
 		final ExplPrec prec = ExplPrec.create(Collections.singleton(x));
-		final ExplState s1 = prec.createState(Valuation.builder().put(x, Int(1)).put(y, Int(2)).build());
-		final ExplState s2 = prec.createState(Valuation.builder().put(y, Int(2)).build());
+		final ExplState s1 = prec.createState(BasicValuation.builder().put(x, Int(1)).put(y, Int(2)).build());
+		final ExplState s2 = prec.createState(BasicValuation.builder().put(y, Int(2)).build());
 
-		Assert.assertEquals(Valuation.builder().put(x, Int(1)).build(), s1.getValuation());
-		Assert.assertEquals(Valuation.builder().build(), s2.getValuation());
+		Assert.assertEquals(BasicValuation.builder().put(x, Int(1)).build(), s1.getValuation());
+		Assert.assertEquals(BasicValuation.builder().build(), s2.getValuation());
 	}
 
 	@Test

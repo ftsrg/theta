@@ -15,7 +15,8 @@ import com.google.common.collect.ImmutableSet;
 
 import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.model.impl.Valuation;
+import hu.bme.mit.theta.core.model.BasicValuation;
+import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
@@ -37,9 +38,9 @@ public class TreePredPrecTest {
 
 		final TreePredPrec prec = TreePredPrec.create(Collections.singletonList(pa));
 
-		final Valuation v111 = Valuation.builder().put(va, int1).put(vb, int1).put(vc, int1).build();
-		final Valuation v011 = Valuation.builder().put(va, int0).put(vb, int1).put(vc, int1).build();
-		final Valuation v101 = Valuation.builder().put(va, int1).put(vb, int0).put(vc, int1).build();
+		final Valuation v111 = BasicValuation.builder().put(va, int1).put(vb, int1).put(vc, int1).build();
+		final Valuation v011 = BasicValuation.builder().put(va, int0).put(vb, int1).put(vc, int1).build();
+		final Valuation v101 = BasicValuation.builder().put(va, int1).put(vb, int0).put(vc, int1).build();
 
 		final PredState ps0 = prec.createState(v011);
 		final PredState ps1 = prec.createState(v111);

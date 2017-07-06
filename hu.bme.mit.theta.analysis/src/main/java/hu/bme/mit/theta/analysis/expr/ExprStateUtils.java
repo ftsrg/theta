@@ -9,7 +9,7 @@ import java.util.Collection;
 import java.util.Optional;
 
 import hu.bme.mit.theta.core.model.Model;
-import hu.bme.mit.theta.core.model.impl.Valuation;
+import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.utils.VarIndexing;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverStatus;

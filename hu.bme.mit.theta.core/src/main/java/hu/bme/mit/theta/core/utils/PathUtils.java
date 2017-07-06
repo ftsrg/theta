@@ -14,8 +14,9 @@ import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.IndexedConstDecl;
 import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.model.BasicValuation;
 import hu.bme.mit.theta.core.model.Model;
-import hu.bme.mit.theta.core.model.impl.Valuation;
+import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.anytype.PrimeExpr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 
@@ -97,7 +98,7 @@ public class PathUtils {
 	 * @return Values
 	 */
 	public static Valuation extractValuation(final Model model, final VarIndexing indexing) {
-		final Valuation.Builder builder = Valuation.builder();
+		final BasicValuation.Builder builder = BasicValuation.builder();
 		for (final ConstDecl<?> constDecl : model.getDecls()) {
 			if (constDecl instanceof IndexedConstDecl) {
 				final IndexedConstDecl<?> indexedConstDecl = (IndexedConstDecl<?>) constDecl;
@@ -136,7 +137,7 @@ public class PathUtils {
 	 */
 	public static Valuation extractValuation(final Model model, final VarIndexing indexing,
 			final Collection<? extends VarDecl<?>> varDecls) {
-		final Valuation.Builder builder = Valuation.builder();
+		final BasicValuation.Builder builder = BasicValuation.builder();
 		for (final VarDecl<?> varDecl : varDecls) {
 			final int index = indexing.get(varDecl);
 			final IndexedConstDecl<?> constDecl = varDecl.getConstDecl(index);

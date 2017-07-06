@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Optional;
 
 import hu.bme.mit.theta.analysis.Trace;
-import hu.bme.mit.theta.core.model.impl.Valuation;
+import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.solver.Solver;
 
 public final class ExprTraceUtils {
