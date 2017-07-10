@@ -15,8 +15,9 @@ import java.util.Optional;
 import hu.bme.mit.theta.common.DispatchTable;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.Expr;
+import hu.bme.mit.theta.core.LitExpr;
 import hu.bme.mit.theta.core.Type;
-import hu.bme.mit.theta.core.model.Substitution;
+import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.booltype.AndExpr;
@@ -60,10 +61,10 @@ import hu.bme.mit.theta.core.type.rattype.RatType;
 public final class ExprSimplifier {
 
 	private final DispatchTable<Expr<?>> table;
-	private final Substitution assignment;
+	private final Valuation val;
 
-	ExprSimplifier(final Substitution assignment) {
-		this.assignment = checkNotNull(assignment);
+	ExprSimplifier(final Valuation val) {
+		this.val = checkNotNull(val);
 
 		table = DispatchTable.<Expr<?>>builder()
 
@@ -163,7 +164,7 @@ public final class ExprSimplifier {
 	// TODO Eliminate helper method once the Java compiler is able to handle
 	// this kind of type inference
 	private <DeclType extends Type> Expr<DeclType> simplifyGenericRef(final RefExpr<DeclType> expr) {
-		final Optional<? extends Expr<DeclType>> eval = assignment.eval(expr.getDecl());
+		final Optional<LitExpr<DeclType>> eval = val.eval(expr.getDecl());
 		if (eval.isPresent()) {
 			return eval.get();
 		}

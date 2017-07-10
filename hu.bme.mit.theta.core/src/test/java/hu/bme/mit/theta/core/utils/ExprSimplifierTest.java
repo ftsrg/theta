@@ -39,8 +39,8 @@ import org.junit.Test;
 
 import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.decl.ConstDecl;
-import hu.bme.mit.theta.core.model.BasicSubstitution;
-import hu.bme.mit.theta.core.model.Substitution;
+import hu.bme.mit.theta.core.model.BasicValuation;
+import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 
@@ -208,9 +208,9 @@ public class ExprSimplifierTest {
 
 	@Test
 	public void testModel() {
-		final Substitution assignment = BasicSubstitution.builder().put(ca, Int(5)).put(cb, Int(9)).build();
+		final Valuation val = BasicValuation.builder().put(ca, Int(5)).put(cb, Int(9)).build();
 
-		Assert.assertEquals(Int(14), simplify(Add(a, b), assignment));
-		Assert.assertEquals(Add(c, Int(14)), simplify(Add(a, b, c), assignment)); // @formatter:on
+		Assert.assertEquals(Int(14), simplify(Add(a, b), val));
+		Assert.assertEquals(Add(c, Int(14)), simplify(Add(a, b, c), val));
 	}
 }
