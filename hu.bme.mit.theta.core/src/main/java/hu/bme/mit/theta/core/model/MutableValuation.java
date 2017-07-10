@@ -22,11 +22,15 @@ import hu.bme.mit.theta.core.LitExpr;
 import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
+/**
+ * Mutable implementation of a valuation.
+ */
 public final class MutableValuation implements Valuation {
 	private static final int HASH_SEED = 2141;
 	private final Map<Decl<?>, Expr<?>> declToExpr;
 
 	public MutableValuation() {
+		// LinkedHashMap is used for deterministic order
 		this.declToExpr = new LinkedHashMap<>();
 	}
 
@@ -39,7 +43,7 @@ public final class MutableValuation implements Valuation {
 	}
 
 	public MutableValuation put(final Decl<?> decl, final LitExpr<?> value) {
-		checkArgument(value.getType().equals(decl.getType()));
+		checkArgument(value.getType().equals(decl.getType()), "Type mismatch.");
 		declToExpr.put(decl, value);
 		return this;
 	}

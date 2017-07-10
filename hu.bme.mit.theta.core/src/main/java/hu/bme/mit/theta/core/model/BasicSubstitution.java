@@ -15,30 +15,16 @@ import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.Decl;
 import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.Type;
-import hu.bme.mit.theta.core.decl.VarDecl;
 
 /**
- * Basic implementation of a substitution.
+ * Basic, immutable implementation of a substitution.
  */
 public final class BasicSubstitution implements Substitution {
 	private static final int HASH_SEED = 2521;
+	private volatile int hashCode = 0;
 
 	private final Collection<Decl<?>> decls;
 	private final Map<Decl<?>, Expr<?>> declToExpr;
-
-	private static final Substitution EMPTY;
-
-	static {
-		EMPTY = new BasicSubstitution();
-	}
-
-	public static Substitution empty() {
-		return EMPTY;
-	}
-
-	private BasicSubstitution() {
-		this(builder());
-	}
 
 	private BasicSubstitution(final Builder builder) {
 		this.declToExpr = builder.declToExpr;
@@ -79,8 +65,6 @@ public final class BasicSubstitution implements Substitution {
 		}
 	}
 
-	private volatile int hashCode = 0;
-
 	@Override
 	public int hashCode() {
 		int result = hashCode;
@@ -105,26 +89,21 @@ public final class BasicSubstitution implements Substitution {
 		}
 
 		private Builder(final Map<Decl<?>, Expr<?>> declToExpr) {
+			// LinkedHashMap is used for deterministic order
 			this.declToExpr = new LinkedHashMap<>(declToExpr);
 			this.built = false;
 		}
 
 		public Builder put(final Decl<?> decl, final Expr<?> value) {
-			checkState(!built);
-			checkArgument(value.getType().equals(decl.getType()));
+			checkState(!built, "Builder was already built.");
+			checkArgument(value.getType().equals(decl.getType()), "Type mismatch.");
 			declToExpr.put(decl, value);
 			return this;
 		}
 
 		public Builder putAll(final Map<Decl<?>, Expr<?>> declToExpr) {
-			checkState(!built);
+			checkState(!built, "Builder was already built.");
 			declToExpr.entrySet().forEach(e -> put(e.getKey(), e.getValue()));
-			return this;
-		}
-
-		public Builder remove(final VarDecl<?> decl) {
-			checkState(!built);
-			declToExpr.remove(decl);
 			return this;
 		}
 

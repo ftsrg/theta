@@ -12,8 +12,13 @@ import hu.bme.mit.theta.core.LitExpr;
 import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
+/**
+ * Basic, immutable implementation of a valuation. The inner builder class can
+ * be used to create a new instance.
+ */
 public final class BasicValuation implements Valuation {
 	private static final int HASH_SEED = 4019;
+	private volatile int hashCode = 0;
 	private final MutableValuation val;
 	private final Collection<? extends Decl<?>> decls;
 	private volatile Expr<BoolType> expr = null;
@@ -63,8 +68,6 @@ public final class BasicValuation implements Valuation {
 		}
 	}
 
-	private volatile int hashCode = 0;
-
 	@Override
 	public int hashCode() {
 		int result = hashCode;
@@ -95,7 +98,7 @@ public final class BasicValuation implements Valuation {
 		}
 
 		public Builder put(final Decl<?> decl, final LitExpr<?> value) {
-			checkState(!built);
+			checkState(!built, "Builder was already built.");
 			val.put(decl, value);
 			return this;
 		}

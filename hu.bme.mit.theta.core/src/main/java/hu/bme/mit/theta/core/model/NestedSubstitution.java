@@ -3,7 +3,9 @@ package hu.bme.mit.theta.core.model;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 
 import hu.bme.mit.theta.core.Decl;
 import hu.bme.mit.theta.core.Expr;
@@ -30,8 +32,10 @@ public final class NestedSubstitution implements Substitution {
 
 	@Override
 	public Collection<? extends Decl<?>> getDecls() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		final Set<Decl<?>> decls = new HashSet<>();
+		decls.addAll(subst.getDecls());
+		decls.addAll(enclosingSubst.getDecls());
+		return decls;
 	}
 
 	@Override

@@ -197,7 +197,7 @@ public final class ExprUtils {
 	 * @return Simplified expression
 	 */
 	public static <ExprType extends Type> Expr<ExprType> simplify(final Expr<ExprType> expr) {
-		return simplify(expr, BasicSubstitution.empty());
+		return simplify(expr, BasicSubstitution.builder().build());
 	}
 
 	/**
