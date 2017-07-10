@@ -179,7 +179,7 @@ public final class ExprUtils {
 	}
 
 	/**
-	 * Simplify expression and substitute the assignment.
+	 * Simplify expression and substitute the valuation.
 	 *
 	 * @param expr Original expression
 	 * @param val Valuation

@@ -33,8 +33,8 @@ import static hu.bme.mit.theta.core.type.rattype.RatExprs.Neg;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Sub;
 import static hu.bme.mit.theta.core.utils.ExprUtils.simplify;
+import static org.junit.Assert.assertEquals;
 
-import org.junit.Assert;
 import org.junit.Test;
 
 import hu.bme.mit.theta.core.Expr;
@@ -62,155 +62,155 @@ public class ExprSimplifierTest {
 
 	@Test
 	public void testNot() {
-		Assert.assertEquals(False(), simplify(Not(And(True(), True()))));
-		Assert.assertEquals(True(), simplify(Not(And(False(), True()))));
+		assertEquals(False(), simplify(Not(And(True(), True()))));
+		assertEquals(True(), simplify(Not(And(False(), True()))));
 	}
 
 	@Test
 	public void testAnd() {
-		Assert.assertEquals(x, simplify(And(True(), x, True())));
-		Assert.assertEquals(False(), simplify(And(True(), x, False())));
-		Assert.assertEquals(And(x, y, z), simplify(And(x, And(y, z))));
-		Assert.assertEquals(True(), simplify(And(True(), True())));
+		assertEquals(x, simplify(And(True(), x, True())));
+		assertEquals(False(), simplify(And(True(), x, False())));
+		assertEquals(And(x, y, z), simplify(And(x, And(y, z))));
+		assertEquals(True(), simplify(And(True(), True())));
 	}
 
 	@Test
 	public void testOr() {
-		Assert.assertEquals(x, simplify(Or(False(), x, False())));
-		Assert.assertEquals(True(), simplify(Or(False(), x, True())));
+		assertEquals(x, simplify(Or(False(), x, False())));
+		assertEquals(True(), simplify(Or(False(), x, True())));
 	}
 
 	@Test
 	public void testImply() {
-		Assert.assertEquals(True(), simplify(Imply(False(), x)));
-		Assert.assertEquals(True(), simplify(Imply(x, True())));
-		Assert.assertEquals(x, simplify(Imply(True(), x)));
-		Assert.assertEquals(Not(x), simplify(Imply(x, False())));
+		assertEquals(True(), simplify(Imply(False(), x)));
+		assertEquals(True(), simplify(Imply(x, True())));
+		assertEquals(x, simplify(Imply(True(), x)));
+		assertEquals(Not(x), simplify(Imply(x, False())));
 	}
 
 	@Test
 	public void testIff() {
-		Assert.assertEquals(Not(x), simplify(Iff(False(), x)));
-		Assert.assertEquals(x, simplify(Iff(x, True())));
-		Assert.assertEquals(x, simplify(Iff(True(), x)));
-		Assert.assertEquals(Not(x), simplify(Iff(x, False())));
+		assertEquals(Not(x), simplify(Iff(False(), x)));
+		assertEquals(x, simplify(Iff(x, True())));
+		assertEquals(x, simplify(Iff(True(), x)));
+		assertEquals(Not(x), simplify(Iff(x, False())));
 	}
 
 	@Test
 	public void testEq() {
-		Assert.assertEquals(True(), simplify(Eq(Int(2), Int(2))));
-		Assert.assertEquals(False(), simplify(Eq(Int(2), Int(-2))));
-		Assert.assertEquals(True(), simplify(Eq(Rat(1, 2), Rat(1, 2))));
-		Assert.assertEquals(False(), simplify(Eq(Rat(1, 2), Rat(-1, 2))));
-		Assert.assertEquals(True(), simplify(Eq(a, a)));
-		Assert.assertEquals(Eq(a, b), simplify(Eq(a, b)));
+		assertEquals(True(), simplify(Eq(Int(2), Int(2))));
+		assertEquals(False(), simplify(Eq(Int(2), Int(-2))));
+		assertEquals(True(), simplify(Eq(Rat(1, 2), Rat(1, 2))));
+		assertEquals(False(), simplify(Eq(Rat(1, 2), Rat(-1, 2))));
+		assertEquals(True(), simplify(Eq(a, a)));
+		assertEquals(Eq(a, b), simplify(Eq(a, b)));
 	}
 
 	@Test
 	public void testGeq() {
-		Assert.assertEquals(True(), simplify(Geq(Rat(8, 4), Rat(2, 1))));
-		Assert.assertEquals(True(), simplify(Geq(Rat(3, 4), Rat(2, 3))));
-		Assert.assertEquals(True(), simplify(Geq(Rat(9, 4), Rat(2, 1))));
-		Assert.assertEquals(False(), simplify(Geq(Rat(2, 1), Rat(9, 4))));
-		Assert.assertEquals(True(), simplify(Geq(a, a)));
+		assertEquals(True(), simplify(Geq(Rat(8, 4), Rat(2, 1))));
+		assertEquals(True(), simplify(Geq(Rat(3, 4), Rat(2, 3))));
+		assertEquals(True(), simplify(Geq(Rat(9, 4), Rat(2, 1))));
+		assertEquals(False(), simplify(Geq(Rat(2, 1), Rat(9, 4))));
+		assertEquals(True(), simplify(Geq(a, a)));
 	}
 
 	@Test
 	public void testGt() {
-		Assert.assertEquals(False(), simplify(Gt(Rat(8, 4), Rat(2, 1))));
-		Assert.assertEquals(True(), simplify(Gt(Rat(3, 4), Rat(2, 3))));
-		Assert.assertEquals(True(), simplify(Gt(Rat(9, 4), Rat(2, 1))));
-		Assert.assertEquals(False(), simplify(Gt(Rat(2, 1), Rat(9, 4))));
-		Assert.assertEquals(False(), simplify(Gt(a, a)));
+		assertEquals(False(), simplify(Gt(Rat(8, 4), Rat(2, 1))));
+		assertEquals(True(), simplify(Gt(Rat(3, 4), Rat(2, 3))));
+		assertEquals(True(), simplify(Gt(Rat(9, 4), Rat(2, 1))));
+		assertEquals(False(), simplify(Gt(Rat(2, 1), Rat(9, 4))));
+		assertEquals(False(), simplify(Gt(a, a)));
 	}
 
 	@Test
 	public void testLeq() {
-		Assert.assertEquals(True(), simplify(Leq(Rat(8, 4), Rat(2, 1))));
-		Assert.assertEquals(True(), simplify(Leq(Rat(2, 3), Rat(3, 4))));
-		Assert.assertEquals(True(), simplify(Leq(Rat(2, 1), Rat(9, 4))));
-		Assert.assertEquals(False(), simplify(Leq(Rat(9, 4), Rat(2, 1))));
-		Assert.assertEquals(True(), simplify(Leq(a, a)));
+		assertEquals(True(), simplify(Leq(Rat(8, 4), Rat(2, 1))));
+		assertEquals(True(), simplify(Leq(Rat(2, 3), Rat(3, 4))));
+		assertEquals(True(), simplify(Leq(Rat(2, 1), Rat(9, 4))));
+		assertEquals(False(), simplify(Leq(Rat(9, 4), Rat(2, 1))));
+		assertEquals(True(), simplify(Leq(a, a)));
 	}
 
 	@Test
 	public void testLt() {
-		Assert.assertEquals(False(), simplify(Lt(Rat(2, 1), Rat(8, 4))));
-		Assert.assertEquals(True(), simplify(Lt(Rat(2, 3), Rat(3, 4))));
-		Assert.assertEquals(True(), simplify(Lt(Rat(2, 1), Rat(9, 4))));
-		Assert.assertEquals(False(), simplify(Lt(Rat(9, 4), Rat(2, 1))));
-		Assert.assertEquals(False(), simplify(Lt(a, a)));
+		assertEquals(False(), simplify(Lt(Rat(2, 1), Rat(8, 4))));
+		assertEquals(True(), simplify(Lt(Rat(2, 3), Rat(3, 4))));
+		assertEquals(True(), simplify(Lt(Rat(2, 1), Rat(9, 4))));
+		assertEquals(False(), simplify(Lt(Rat(9, 4), Rat(2, 1))));
+		assertEquals(False(), simplify(Lt(a, a)));
 	}
 
 	@Test
 	public void testIntDiv() {
-		Assert.assertEquals(Int(0), simplify(Div(Int(1), Int(2))));
-		Assert.assertEquals(Int(1), simplify(Div(Int(3), Int(2))));
-		Assert.assertEquals(Div(Int(0), a), simplify(Div(Int(0), a)));
+		assertEquals(Int(0), simplify(Div(Int(1), Int(2))));
+		assertEquals(Int(1), simplify(Div(Int(3), Int(2))));
+		assertEquals(Div(Int(0), a), simplify(Div(Int(0), a)));
 	}
 
 	@Test
 	public void testRatDiv() {
-		Assert.assertEquals(Rat(8, 9), simplify(Div(Rat(2, 3), Rat(3, 4))));
-		Assert.assertEquals(Rat(1, 2), simplify(Div(Rat(2, 3), Rat(4, 3))));
-		Assert.assertEquals(Rat(1, 3), simplify(Div(Rat(2, 3), Rat(2, 1))));
-		Assert.assertEquals(Rat(1, 2), simplify(Div(Rat(2, 1), Rat(4, 1))));
-		Assert.assertEquals(Div(Int(0), a), simplify(Div(Int(0), a)));
+		assertEquals(Rat(8, 9), simplify(Div(Rat(2, 3), Rat(3, 4))));
+		assertEquals(Rat(1, 2), simplify(Div(Rat(2, 3), Rat(4, 3))));
+		assertEquals(Rat(1, 3), simplify(Div(Rat(2, 3), Rat(2, 1))));
+		assertEquals(Rat(1, 2), simplify(Div(Rat(2, 1), Rat(4, 1))));
+		assertEquals(Div(Int(0), a), simplify(Div(Int(0), a)));
 	}
 
 	@Test
 	public void testNeg() {
-		Assert.assertEquals(Rat(1, 2), simplify(Neg(Neg(Neg(Neg(Rat(1, 2)))))));
-		Assert.assertEquals(Rat(-1, 2), simplify(Neg(Neg(Neg(Neg(Neg(Rat(1, 2))))))));
-		Assert.assertEquals(Int(182), simplify(Neg(Neg(Neg(Neg(Int(182)))))));
-		Assert.assertEquals(Int(-182), simplify(Neg(Neg(Neg(Neg(Neg(Int(182))))))));
+		assertEquals(Rat(1, 2), simplify(Neg(Neg(Neg(Neg(Rat(1, 2)))))));
+		assertEquals(Rat(-1, 2), simplify(Neg(Neg(Neg(Neg(Neg(Rat(1, 2))))))));
+		assertEquals(Int(182), simplify(Neg(Neg(Neg(Neg(Int(182)))))));
+		assertEquals(Int(-182), simplify(Neg(Neg(Neg(Neg(Neg(Int(182))))))));
 	}
 
 	@Test
 	public void testSub() {
-		Assert.assertEquals(Int(-1), simplify(Sub(Int(7), Int(8))));
-		Assert.assertEquals(Rat(1, 4), simplify(Sub(Rat(3, 4), Rat(1, 2))));
-		Assert.assertEquals(Rat(-1, 4), simplify(Sub(Rat(3, 4), Rat(1, 1))));
-		Assert.assertEquals(Int(0), simplify(Sub(a, a)));
+		assertEquals(Int(-1), simplify(Sub(Int(7), Int(8))));
+		assertEquals(Rat(1, 4), simplify(Sub(Rat(3, 4), Rat(1, 2))));
+		assertEquals(Rat(-1, 4), simplify(Sub(Rat(3, 4), Rat(1, 1))));
+		assertEquals(Int(0), simplify(Sub(a, a)));
 	}
 
 	@Test
 	public void testAdd() {
-		Assert.assertEquals(Int(6), simplify(Add(Int(1), Int(2), Int(3))));
-		Assert.assertEquals(Int(0), simplify(Add(Int(1), Int(2), Int(-3))));
-		Assert.assertEquals(Rat(7, 12), simplify(Add(Rat(1, 3), Rat(1, 4))));
-		Assert.assertEquals(Add(a, Int(4)), simplify(Add(Int(1), a, Int(3))));
-		Assert.assertEquals(a, simplify(Add(Int(-3), a, Int(3))));
-		Assert.assertEquals(Add(a, b, a, b, c), simplify(Add(a, Add(b, Add(a, Add(b, c))))));
+		assertEquals(Int(6), simplify(Add(Int(1), Int(2), Int(3))));
+		assertEquals(Int(0), simplify(Add(Int(1), Int(2), Int(-3))));
+		assertEquals(Rat(7, 12), simplify(Add(Rat(1, 3), Rat(1, 4))));
+		assertEquals(Add(a, Int(4)), simplify(Add(Int(1), a, Int(3))));
+		assertEquals(a, simplify(Add(Int(-3), a, Int(3))));
+		assertEquals(Add(a, b, a, b, c), simplify(Add(a, Add(b, Add(a, Add(b, c))))));
 	}
 
 	@Test
 	public void testMul() {
-		Assert.assertEquals(Int(30), simplify(Mul(Int(2), Int(3), Int(5))));
-		Assert.assertEquals(Mul(Int(10), a), simplify(Mul(Int(2), a, Int(5))));
-		Assert.assertEquals(Int(0), simplify(Mul(Int(0), a, b)));
-		Assert.assertEquals(Rat(1, 1), simplify(Mul(Rat(2, 1), Rat(1, 1), Rat(1, 2))));
-		Assert.assertEquals(Rat(3, 4), simplify(Mul(Rat(3, 2), Rat(1, 1), Rat(1, 2))));
-		Assert.assertEquals(Mul(a, b, a, b, c), simplify(Mul(a, Mul(b, Mul(a, Mul(b, c))))));
+		assertEquals(Int(30), simplify(Mul(Int(2), Int(3), Int(5))));
+		assertEquals(Mul(Int(10), a), simplify(Mul(Int(2), a, Int(5))));
+		assertEquals(Int(0), simplify(Mul(Int(0), a, b)));
+		assertEquals(Rat(1, 1), simplify(Mul(Rat(2, 1), Rat(1, 1), Rat(1, 2))));
+		assertEquals(Rat(3, 4), simplify(Mul(Rat(3, 2), Rat(1, 1), Rat(1, 2))));
+		assertEquals(Mul(a, b, a, b, c), simplify(Mul(a, Mul(b, Mul(a, Mul(b, c))))));
 	}
 
 	@Test
 	public void testIte() {
-		Assert.assertEquals(a, simplify(Ite(True(), a, b)));
-		Assert.assertEquals(b, simplify(Ite(False(), a, b)));
-		Assert.assertEquals(a, simplify(Ite(True(), Ite(True(), Ite(True(), a, b), b), b)));
+		assertEquals(a, simplify(Ite(True(), a, b)));
+		assertEquals(b, simplify(Ite(False(), a, b)));
+		assertEquals(a, simplify(Ite(True(), Ite(True(), Ite(True(), a, b), b), b)));
 	}
 
 	@Test
 	public void testComplex() {
-		Assert.assertEquals(True(), simplify(Iff(And(x, True()), Or(x, False()))));
+		assertEquals(True(), simplify(Iff(And(x, True()), Or(x, False()))));
 	}
 
 	@Test
-	public void testModel() {
+	public void testValuation() {
 		final Valuation val = BasicValuation.builder().put(ca, Int(5)).put(cb, Int(9)).build();
 
-		Assert.assertEquals(Int(14), simplify(Add(a, b), val));
-		Assert.assertEquals(Add(c, Int(14)), simplify(Add(a, b, c), val));
+		assertEquals(Int(14), simplify(Add(a, b), val));
+		assertEquals(Add(c, Int(14)), simplify(Add(a, b, c), val));
 	}
 }

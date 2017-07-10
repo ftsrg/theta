@@ -27,8 +27,8 @@ import static hu.bme.mit.theta.core.type.rattype.RatExprs.Mul;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Neg;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Sub;
+import static org.junit.Assert.assertEquals;
 
-import org.junit.Assert;
 import org.junit.Test;
 
 import hu.bme.mit.theta.core.Expr;
@@ -57,134 +57,134 @@ public class EvaluationTest {
 
 	@Test
 	public void testNot() {
-		Assert.assertEquals(False(), evaluate(Not(And(True(), True()))));
-		Assert.assertEquals(True(), evaluate(Not(And(False(), True()))));
+		assertEquals(False(), evaluate(Not(And(True(), True()))));
+		assertEquals(True(), evaluate(Not(And(False(), True()))));
 	}
 
 	@Test
 	public void testAnd() {
-		Assert.assertEquals(False(), evaluate(And(True(), False(), True())));
-		Assert.assertEquals(True(), evaluate(And(True(), True(), True())));
+		assertEquals(False(), evaluate(And(True(), False(), True())));
+		assertEquals(True(), evaluate(And(True(), True(), True())));
 	}
 
 	@Test
 	public void testOr() {
-		Assert.assertEquals(False(), evaluate(Or(False(), False(), False())));
-		Assert.assertEquals(True(), evaluate(Or(False(), True(), False())));
+		assertEquals(False(), evaluate(Or(False(), False(), False())));
+		assertEquals(True(), evaluate(Or(False(), True(), False())));
 	}
 
 	@Test
 	public void testImply() {
-		Assert.assertEquals(True(), evaluate(Imply(False(), True())));
-		Assert.assertEquals(True(), evaluate(Imply(True(), True())));
-		Assert.assertEquals(False(), evaluate(Imply(True(), False())));
-		Assert.assertEquals(True(), evaluate(Imply(False(), False())));
+		assertEquals(True(), evaluate(Imply(False(), True())));
+		assertEquals(True(), evaluate(Imply(True(), True())));
+		assertEquals(False(), evaluate(Imply(True(), False())));
+		assertEquals(True(), evaluate(Imply(False(), False())));
 	}
 
 	@Test
 	public void testIff() {
-		Assert.assertEquals(False(), evaluate(Iff(False(), True())));
-		Assert.assertEquals(True(), evaluate(Iff(True(), True())));
-		Assert.assertEquals(False(), evaluate(Iff(True(), False())));
-		Assert.assertEquals(True(), evaluate(Iff(False(), False())));
+		assertEquals(False(), evaluate(Iff(False(), True())));
+		assertEquals(True(), evaluate(Iff(True(), True())));
+		assertEquals(False(), evaluate(Iff(True(), False())));
+		assertEquals(True(), evaluate(Iff(False(), False())));
 	}
 
 	@Test
 	public void testEq() {
-		Assert.assertEquals(True(), evaluate(Eq(Int(2), Int(2))));
-		Assert.assertEquals(False(), evaluate(Eq(Int(2), Int(-2))));
-		Assert.assertEquals(True(), evaluate(Eq(Rat(1, 2), Rat(1, 2))));
-		Assert.assertEquals(False(), evaluate(Eq(Rat(1, 2), Rat(-1, 2))));
+		assertEquals(True(), evaluate(Eq(Int(2), Int(2))));
+		assertEquals(False(), evaluate(Eq(Int(2), Int(-2))));
+		assertEquals(True(), evaluate(Eq(Rat(1, 2), Rat(1, 2))));
+		assertEquals(False(), evaluate(Eq(Rat(1, 2), Rat(-1, 2))));
 	}
 
 	@Test
 	public void testGeq() {
-		Assert.assertEquals(True(), evaluate(Geq(Rat(8, 4), Rat(2, 1))));
-		Assert.assertEquals(True(), evaluate(Geq(Rat(3, 4), Rat(2, 3))));
-		Assert.assertEquals(True(), evaluate(Geq(Rat(9, 4), Rat(2, 1))));
-		Assert.assertEquals(False(), evaluate(Geq(Rat(2, 1), Rat(9, 4))));
+		assertEquals(True(), evaluate(Geq(Rat(8, 4), Rat(2, 1))));
+		assertEquals(True(), evaluate(Geq(Rat(3, 4), Rat(2, 3))));
+		assertEquals(True(), evaluate(Geq(Rat(9, 4), Rat(2, 1))));
+		assertEquals(False(), evaluate(Geq(Rat(2, 1), Rat(9, 4))));
 	}
 
 	@Test
 	public void testGt() {
-		Assert.assertEquals(False(), evaluate(Gt(Rat(8, 4), Rat(2, 1))));
-		Assert.assertEquals(True(), evaluate(Gt(Rat(3, 4), Rat(2, 3))));
-		Assert.assertEquals(True(), evaluate(Gt(Rat(9, 4), Rat(2, 1))));
-		Assert.assertEquals(False(), evaluate(Gt(Rat(2, 1), Rat(9, 4))));
+		assertEquals(False(), evaluate(Gt(Rat(8, 4), Rat(2, 1))));
+		assertEquals(True(), evaluate(Gt(Rat(3, 4), Rat(2, 3))));
+		assertEquals(True(), evaluate(Gt(Rat(9, 4), Rat(2, 1))));
+		assertEquals(False(), evaluate(Gt(Rat(2, 1), Rat(9, 4))));
 	}
 
 	@Test
 	public void testLeq() {
-		Assert.assertEquals(True(), evaluate(Leq(Rat(8, 4), Rat(2, 1))));
-		Assert.assertEquals(True(), evaluate(Leq(Rat(2, 3), Rat(3, 4))));
-		Assert.assertEquals(True(), evaluate(Leq(Rat(2, 1), Rat(9, 4))));
-		Assert.assertEquals(False(), evaluate(Leq(Rat(9, 4), Rat(2, 1))));
+		assertEquals(True(), evaluate(Leq(Rat(8, 4), Rat(2, 1))));
+		assertEquals(True(), evaluate(Leq(Rat(2, 3), Rat(3, 4))));
+		assertEquals(True(), evaluate(Leq(Rat(2, 1), Rat(9, 4))));
+		assertEquals(False(), evaluate(Leq(Rat(9, 4), Rat(2, 1))));
 	}
 
 	@Test
 	public void testLt() {
-		Assert.assertEquals(False(), evaluate(Lt(Rat(2, 1), Rat(8, 4))));
-		Assert.assertEquals(True(), evaluate(Lt(Rat(2, 3), Rat(3, 4))));
-		Assert.assertEquals(True(), evaluate(Lt(Rat(2, 1), Rat(9, 4))));
-		Assert.assertEquals(False(), evaluate(Lt(Rat(9, 4), Rat(2, 1))));
+		assertEquals(False(), evaluate(Lt(Rat(2, 1), Rat(8, 4))));
+		assertEquals(True(), evaluate(Lt(Rat(2, 3), Rat(3, 4))));
+		assertEquals(True(), evaluate(Lt(Rat(2, 1), Rat(9, 4))));
+		assertEquals(False(), evaluate(Lt(Rat(9, 4), Rat(2, 1))));
 	}
 
 	@Test
 	public void testIntDiv() {
-		Assert.assertEquals(Int(0), evaluate(Div(Int(1), Int(2))));
-		Assert.assertEquals(Int(1), evaluate(Div(Int(3), Int(2))));
+		assertEquals(Int(0), evaluate(Div(Int(1), Int(2))));
+		assertEquals(Int(1), evaluate(Div(Int(3), Int(2))));
 	}
 
 	@Test
 	public void testRatDiv() {
-		Assert.assertEquals(Rat(8, 9), evaluate(Div(Rat(2, 3), Rat(3, 4))));
-		Assert.assertEquals(Rat(1, 2), evaluate(Div(Rat(2, 3), Rat(4, 3))));
-		Assert.assertEquals(Rat(1, 3), evaluate(Div(Rat(2, 3), Rat(2, 1))));
-		Assert.assertEquals(Rat(1, 2), evaluate(Div(Rat(2, 1), Rat(4, 1))));
+		assertEquals(Rat(8, 9), evaluate(Div(Rat(2, 3), Rat(3, 4))));
+		assertEquals(Rat(1, 2), evaluate(Div(Rat(2, 3), Rat(4, 3))));
+		assertEquals(Rat(1, 3), evaluate(Div(Rat(2, 3), Rat(2, 1))));
+		assertEquals(Rat(1, 2), evaluate(Div(Rat(2, 1), Rat(4, 1))));
 	}
 
 	@Test
 	public void testNeg() {
-		Assert.assertEquals(Rat(1, 2), evaluate(Neg(Neg(Neg(Neg(Rat(1, 2)))))));
-		Assert.assertEquals(Rat(-1, 2), evaluate(Neg(Neg(Neg(Neg(Neg(Rat(1, 2))))))));
-		Assert.assertEquals(Int(182), evaluate(Neg(Neg(Neg(Neg(Int(182)))))));
-		Assert.assertEquals(Int(-182), evaluate(Neg(Neg(Neg(Neg(Neg(Int(182))))))));
+		assertEquals(Rat(1, 2), evaluate(Neg(Neg(Neg(Neg(Rat(1, 2)))))));
+		assertEquals(Rat(-1, 2), evaluate(Neg(Neg(Neg(Neg(Neg(Rat(1, 2))))))));
+		assertEquals(Int(182), evaluate(Neg(Neg(Neg(Neg(Int(182)))))));
+		assertEquals(Int(-182), evaluate(Neg(Neg(Neg(Neg(Neg(Int(182))))))));
 	}
 
 	@Test
 	public void testSub() {
-		Assert.assertEquals(Int(-1), evaluate(Sub(Int(7), Int(8))));
-		Assert.assertEquals(Rat(1, 4), evaluate(Sub(Rat(3, 4), Rat(1, 2))));
-		Assert.assertEquals(Rat(-1, 4), evaluate(Sub(Rat(3, 4), Rat(1, 1))));
+		assertEquals(Int(-1), evaluate(Sub(Int(7), Int(8))));
+		assertEquals(Rat(1, 4), evaluate(Sub(Rat(3, 4), Rat(1, 2))));
+		assertEquals(Rat(-1, 4), evaluate(Sub(Rat(3, 4), Rat(1, 1))));
 	}
 
 	@Test
 	public void testAdd() {
-		Assert.assertEquals(Int(6), evaluate(Add(Int(1), Int(2), Int(3))));
-		Assert.assertEquals(Int(0), evaluate(Add(Int(1), Int(2), Int(-3))));
-		Assert.assertEquals(Rat(7, 12), evaluate(Add(Rat(1, 3), Rat(1, 4))));
+		assertEquals(Int(6), evaluate(Add(Int(1), Int(2), Int(3))));
+		assertEquals(Int(0), evaluate(Add(Int(1), Int(2), Int(-3))));
+		assertEquals(Rat(7, 12), evaluate(Add(Rat(1, 3), Rat(1, 4))));
 	}
 
 	@Test
 	public void testMul() {
-		Assert.assertEquals(Int(30), evaluate(Mul(Int(2), Int(3), Int(5))));
-		Assert.assertEquals(Rat(1, 1), evaluate(Mul(Rat(2, 1), Rat(1, 1), Rat(1, 2))));
-		Assert.assertEquals(Rat(3, 4), evaluate(Mul(Rat(3, 2), Rat(1, 1), Rat(1, 2))));
+		assertEquals(Int(30), evaluate(Mul(Int(2), Int(3), Int(5))));
+		assertEquals(Rat(1, 1), evaluate(Mul(Rat(2, 1), Rat(1, 1), Rat(1, 2))));
+		assertEquals(Rat(3, 4), evaluate(Mul(Rat(3, 2), Rat(1, 1), Rat(1, 2))));
 	}
 
 	@Test
 	public void testIte() {
-		Assert.assertEquals(Int(1), evaluate(Ite(True(), Int(1), Int(2))));
-		Assert.assertEquals(Int(2), evaluate(Ite(False(), Int(1), Int(2))));
-		Assert.assertEquals(Int(1), evaluate(Ite(True(), Ite(True(), Ite(True(), Int(1), Int(2)), Int(3)), Int(4))));
+		assertEquals(Int(1), evaluate(Ite(True(), Int(1), Int(2))));
+		assertEquals(Int(2), evaluate(Ite(False(), Int(1), Int(2))));
+		assertEquals(Int(1), evaluate(Ite(True(), Ite(True(), Ite(True(), Int(1), Int(2)), Int(3)), Int(4))));
 	}
 
 	@Test
-	public void testModel() {
+	public void testValuation() {
 		final Valuation val = BasicValuation.builder().put(ca, Int(5)).put(cb, Int(10)).build();
-		Assert.assertEquals(Int(15), evaluate(Add(a, b), val));
-		Assert.assertEquals(Int(50), evaluate(Mul(a, b), val));
-		Assert.assertEquals(Int(0), evaluate(Div(a, b), val));
+		assertEquals(Int(15), evaluate(Add(a, b), val));
+		assertEquals(Int(50), evaluate(Mul(a, b), val));
+		assertEquals(Int(0), evaluate(Div(a, b), val));
 	}
 
 	@Test(expected = RuntimeException.class)
