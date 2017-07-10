@@ -22,6 +22,7 @@ public final class BasicValuation implements Valuation {
 	private final MutableValuation val;
 	private final Collection<? extends Decl<?>> decls;
 	private volatile Expr<BoolType> expr = null;
+	private static final BasicValuation EMPTY = new Builder().build();
 
 	private BasicValuation(final Builder builder) {
 		this.val = builder.val;
@@ -34,6 +35,10 @@ public final class BasicValuation implements Valuation {
 			builder.put(decl, val.eval(decl).get());
 		}
 		return builder.build();
+	}
+
+	public static BasicValuation empty() {
+		return EMPTY;
 	}
 
 	@Override
