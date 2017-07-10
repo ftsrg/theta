@@ -99,9 +99,9 @@ public class PathUtils {
 	 */
 	public static Valuation extractValuation(final Model model, final VarIndexing indexing) {
 		final BasicValuation.Builder builder = BasicValuation.builder();
-		for (final ConstDecl<?> constDecl : model.getDecls()) {
-			if (constDecl instanceof IndexedConstDecl) {
-				final IndexedConstDecl<?> indexedConstDecl = (IndexedConstDecl<?>) constDecl;
+		for (final Decl<?> decl : model.getDecls()) {
+			if (decl instanceof IndexedConstDecl) {
+				final IndexedConstDecl<?> indexedConstDecl = (IndexedConstDecl<?>) decl;
 				final VarDecl<?> varDecl = indexedConstDecl.getVarDecl();
 				if (indexedConstDecl.getIndex() == indexing.get(varDecl)) {
 					final LitExpr<?> value = model.eval(indexedConstDecl).get();
