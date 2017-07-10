@@ -3,18 +3,12 @@ package hu.bme.mit.theta.core.model;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Optional;
 
 import hu.bme.mit.theta.common.ObjectUtils;
@@ -22,7 +16,6 @@ import hu.bme.mit.theta.core.Decl;
 import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 /**
  * Basic implementation of a substitution.
@@ -32,7 +25,6 @@ public final class BasicSubstitution implements Substitution {
 
 	private final Collection<Decl<?>> decls;
 	private final Map<Decl<?>, Expr<?>> declToExpr;
-	private volatile Expr<BoolType> expr = null;
 
 	private static final Substitution EMPTY;
 
@@ -73,26 +65,6 @@ public final class BasicSubstitution implements Substitution {
 	public String toString() {
 		return ObjectUtils.toStringBuilder("Substitution")
 				.addAll(declToExpr.entrySet(), e -> e.getKey().getName() + " <- " + e.getValue()).toString();
-	}
-
-	@Override
-	public Expr<BoolType> toExpr() {
-		Expr<BoolType> result = expr;
-		if (result == null) {
-			final List<Expr<BoolType>> ops = new ArrayList<>(declToExpr.size());
-			for (final Entry<Decl<?>, Expr<?>> entry : declToExpr.entrySet()) {
-				ops.add(Eq(entry.getKey().getRef(), entry.getValue()));
-			}
-			if (ops.size() == 0) {
-				result = True();
-			} else if (ops.size() == 1) {
-				result = ops.get(0);
-			} else {
-				result = And(ops);
-			}
-			expr = result;
-		}
-		return result;
 	}
 
 	@Override

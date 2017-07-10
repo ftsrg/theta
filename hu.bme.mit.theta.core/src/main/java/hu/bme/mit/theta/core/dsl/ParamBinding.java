@@ -16,7 +16,6 @@ import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.model.Substitution;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 public final class ParamBinding implements Substitution {
 
@@ -56,10 +55,4 @@ public final class ParamBinding implements Substitution {
 		final Expr<DeclType> value = (Expr<DeclType>) paramToArg.get(decl);
 		return Optional.ofNullable(value);
 	}
-
-	@Override
-	public Expr<BoolType> toExpr() {
-		throw new UnsupportedOperationException();
-	}
-
 }

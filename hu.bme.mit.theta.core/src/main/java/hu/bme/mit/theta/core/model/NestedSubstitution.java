@@ -8,8 +8,6 @@ import java.util.Optional;
 import hu.bme.mit.theta.core.Decl;
 import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.Type;
-import hu.bme.mit.theta.core.type.booltype.BoolExprs;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 /**
  * Class representing a nested substitution. If a declaration is not present in
@@ -45,10 +43,4 @@ public final class NestedSubstitution implements Substitution {
 			return enclosingSubst.eval(decl);
 		}
 	}
-
-	@Override
-	public Expr<BoolType> toExpr() {
-		return BoolExprs.And(enclosingSubst.toExpr(), subst.toExpr());
-	}
-
 }

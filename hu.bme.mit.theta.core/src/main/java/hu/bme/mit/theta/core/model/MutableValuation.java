@@ -9,7 +9,7 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -27,7 +27,7 @@ public final class MutableValuation implements Valuation {
 	private final Map<Decl<?>, Expr<?>> declToExpr;
 
 	public MutableValuation() {
-		this.declToExpr = new HashMap<>();
+		this.declToExpr = new LinkedHashMap<>();
 	}
 
 	public static MutableValuation copyOf(final Valuation val) {

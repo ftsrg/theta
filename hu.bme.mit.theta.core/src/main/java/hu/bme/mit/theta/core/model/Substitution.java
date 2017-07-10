@@ -6,7 +6,6 @@ import java.util.Optional;
 import hu.bme.mit.theta.core.Decl;
 import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.Type;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 /**
  * Interface for a substitution, which is a mapping from declarations to
@@ -17,6 +16,4 @@ public interface Substitution {
 	Collection<? extends Decl<?>> getDecls();
 
 	<DeclType extends Type> Optional<? extends Expr<DeclType>> eval(final Decl<DeclType> decl);
-
-	Expr<BoolType> toExpr();
 }
