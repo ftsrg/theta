@@ -11,7 +11,7 @@ import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.LitExpr;
 import hu.bme.mit.theta.core.Type;
-import hu.bme.mit.theta.core.model.Substitution;
+import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.utils.TypeUtils;
 
 public final class ArrayReadExpr<IndexType extends Type, ElemType extends Type> implements Expr<ElemType> {
@@ -44,7 +44,7 @@ public final class ArrayReadExpr<IndexType extends Type, ElemType extends Type> 
 	}
 
 	@Override
-	public LitExpr<ElemType> eval(final Substitution assignment) {
+	public LitExpr<ElemType> eval(final Valuation val) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}

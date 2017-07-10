@@ -4,7 +4,7 @@ import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.LitExpr;
 import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.UnaryExpr;
-import hu.bme.mit.theta.core.model.Substitution;
+import hu.bme.mit.theta.core.model.Valuation;
 
 public class DerefExpr<PointedType extends Type> extends UnaryExpr<PointerType<PointedType>, PointedType> {
 
@@ -21,7 +21,7 @@ public class DerefExpr<PointedType extends Type> extends UnaryExpr<PointerType<P
 	}
 
 	@Override
-	public LitExpr<PointedType> eval(final Substitution assignment) {
+	public LitExpr<PointedType> eval(final Valuation val) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}

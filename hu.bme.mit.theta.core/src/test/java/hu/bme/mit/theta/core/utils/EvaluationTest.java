@@ -35,8 +35,8 @@ import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.LitExpr;
 import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.decl.ConstDecl;
-import hu.bme.mit.theta.core.model.BasicSubstitution;
-import hu.bme.mit.theta.core.model.Substitution;
+import hu.bme.mit.theta.core.model.BasicValuation;
+import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 
 public class EvaluationTest {
@@ -48,12 +48,11 @@ public class EvaluationTest {
 	private final Expr<IntType> b = cb.getRef();
 
 	private static <ExprType extends Type> LitExpr<ExprType> evaluate(final Expr<ExprType> expr) {
-		return expr.eval(BasicSubstitution.empty());
+		return expr.eval(BasicValuation.builder().build());
 	}
 
-	private static <ExprType extends Type> LitExpr<ExprType> evaluate(final Expr<ExprType> expr,
-			final Substitution assignment) {
-		return expr.eval(assignment);
+	private static <ExprType extends Type> LitExpr<ExprType> evaluate(final Expr<ExprType> expr, final Valuation val) {
+		return expr.eval(val);
 	}
 
 	@Test
@@ -182,10 +181,10 @@ public class EvaluationTest {
 
 	@Test
 	public void testModel() {
-		final Substitution assignment = BasicSubstitution.builder().put(ca, Int(5)).put(cb, Int(10)).build();
-		Assert.assertEquals(Int(15), evaluate(Add(a, b), assignment));
-		Assert.assertEquals(Int(50), evaluate(Mul(a, b), assignment));
-		Assert.assertEquals(Int(0), evaluate(Div(a, b), assignment));
+		final Valuation val = BasicValuation.builder().put(ca, Int(5)).put(cb, Int(10)).build();
+		Assert.assertEquals(Int(15), evaluate(Add(a, b), val));
+		Assert.assertEquals(Int(50), evaluate(Mul(a, b), val));
+		Assert.assertEquals(Int(0), evaluate(Div(a, b), val));
 	}
 
 	@Test(expected = RuntimeException.class)

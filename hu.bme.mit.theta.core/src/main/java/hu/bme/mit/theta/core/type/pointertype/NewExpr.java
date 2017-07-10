@@ -7,7 +7,7 @@ import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.LitExpr;
 import hu.bme.mit.theta.core.NullaryExpr;
 import hu.bme.mit.theta.core.Type;
-import hu.bme.mit.theta.core.model.Substitution;
+import hu.bme.mit.theta.core.model.Valuation;
 
 public final class NewExpr<PointedType extends Type> extends NullaryExpr<PointerType<PointedType>> {
 
@@ -32,7 +32,7 @@ public final class NewExpr<PointedType extends Type> extends NullaryExpr<Pointer
 	}
 
 	@Override
-	public LitExpr<PointerType<PointedType>> eval(final Substitution assignment) {
+	public LitExpr<PointerType<PointedType>> eval(final Valuation val) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}

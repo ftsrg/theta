@@ -6,7 +6,7 @@ import hu.bme.mit.theta.core.Decl;
 import hu.bme.mit.theta.core.LitExpr;
 import hu.bme.mit.theta.core.NullaryExpr;
 import hu.bme.mit.theta.core.Type;
-import hu.bme.mit.theta.core.model.Substitution;
+import hu.bme.mit.theta.core.model.Valuation;
 
 public final class RefExpr<DeclType extends Type> extends NullaryExpr<DeclType> {
 
@@ -29,8 +29,8 @@ public final class RefExpr<DeclType extends Type> extends NullaryExpr<DeclType> 
 	}
 
 	@Override
-	public LitExpr<DeclType> eval(final Substitution assignment) {
-		return (LitExpr<DeclType>) assignment.eval(decl).get();
+	public LitExpr<DeclType> eval(final Valuation val) {
+		return (LitExpr<DeclType>) val.eval(decl).get();
 	}
 
 	@Override

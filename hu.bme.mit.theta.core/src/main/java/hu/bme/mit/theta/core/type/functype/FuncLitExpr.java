@@ -12,7 +12,7 @@ import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.LitExpr;
 import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.decl.ParamDecl;
-import hu.bme.mit.theta.core.model.Substitution;
+import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.utils.TypeUtils;
 
 public final class FuncLitExpr<ParamType extends Type, ResultType extends Type>
@@ -45,7 +45,7 @@ public final class FuncLitExpr<ParamType extends Type, ResultType extends Type>
 	}
 
 	@Override
-	public LitExpr<FuncType<ParamType, ResultType>> eval(final Substitution assignment) {
+	public LitExpr<FuncType<ParamType, ResultType>> eval(final Valuation val) {
 		return this;
 	}
 

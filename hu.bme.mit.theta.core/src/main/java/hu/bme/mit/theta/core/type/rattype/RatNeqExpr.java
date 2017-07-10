@@ -3,7 +3,7 @@ package hu.bme.mit.theta.core.type.rattype;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 
 import hu.bme.mit.theta.core.Expr;
-import hu.bme.mit.theta.core.model.Substitution;
+import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.abstracttype.NeqExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
@@ -23,9 +23,9 @@ public final class RatNeqExpr extends NeqExpr<RatType> {
 	}
 
 	@Override
-	public BoolLitExpr eval(final Substitution assignment) {
-		final RatLitExpr leftOpVal = (RatLitExpr) getLeftOp().eval(assignment);
-		final RatLitExpr rightOpVal = (RatLitExpr) getRightOp().eval(assignment);
+	public BoolLitExpr eval(final Valuation val) {
+		final RatLitExpr leftOpVal = (RatLitExpr) getLeftOp().eval(val);
+		final RatLitExpr rightOpVal = (RatLitExpr) getRightOp().eval(val);
 		return leftOpVal.neq(rightOpVal);
 	}
 

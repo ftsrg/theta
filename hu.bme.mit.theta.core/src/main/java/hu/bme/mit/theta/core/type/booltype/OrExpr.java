@@ -6,7 +6,7 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 
 import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.MultiaryExpr;
-import hu.bme.mit.theta.core.model.Substitution;
+import hu.bme.mit.theta.core.model.Valuation;
 
 public final class OrExpr extends MultiaryExpr<BoolType, BoolType> {
 
@@ -24,9 +24,9 @@ public final class OrExpr extends MultiaryExpr<BoolType, BoolType> {
 	}
 
 	@Override
-	public BoolLitExpr eval(final Substitution assignment) {
+	public BoolLitExpr eval(final Valuation val) {
 		for (final Expr<BoolType> op : getOps()) {
-			final BoolLitExpr opVal = (BoolLitExpr) op.eval(assignment);
+			final BoolLitExpr opVal = (BoolLitExpr) op.eval(val);
 			if (opVal.getValue()) {
 				return True();
 			}

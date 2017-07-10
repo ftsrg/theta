@@ -3,7 +3,7 @@ package hu.bme.mit.theta.core.type.inttype;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 import hu.bme.mit.theta.core.Expr;
-import hu.bme.mit.theta.core.model.Substitution;
+import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.abstracttype.NegExpr;
 
 public final class IntNegExpr extends NegExpr<IntType> {
@@ -21,8 +21,8 @@ public final class IntNegExpr extends NegExpr<IntType> {
 	}
 
 	@Override
-	public IntLitExpr eval(final Substitution assignment) {
-		final IntLitExpr opVal = (IntLitExpr) getOp().eval(assignment);
+	public IntLitExpr eval(final Valuation val) {
+		final IntLitExpr opVal = (IntLitExpr) getOp().eval(val);
 		return opVal.neg();
 	}
 

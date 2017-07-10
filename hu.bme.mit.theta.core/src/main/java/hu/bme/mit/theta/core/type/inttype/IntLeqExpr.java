@@ -3,7 +3,7 @@ package hu.bme.mit.theta.core.type.inttype;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 
 import hu.bme.mit.theta.core.Expr;
-import hu.bme.mit.theta.core.model.Substitution;
+import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.abstracttype.LeqExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
@@ -23,9 +23,9 @@ public final class IntLeqExpr extends LeqExpr<IntType> {
 	}
 
 	@Override
-	public BoolLitExpr eval(final Substitution assignment) {
-		final IntLitExpr leftOpVal = (IntLitExpr) getLeftOp().eval(assignment);
-		final IntLitExpr rightOpVal = (IntLitExpr) getRightOp().eval(assignment);
+	public BoolLitExpr eval(final Valuation val) {
+		final IntLitExpr leftOpVal = (IntLitExpr) getLeftOp().eval(val);
+		final IntLitExpr rightOpVal = (IntLitExpr) getRightOp().eval(val);
 		return leftOpVal.leq(rightOpVal);
 	}
 

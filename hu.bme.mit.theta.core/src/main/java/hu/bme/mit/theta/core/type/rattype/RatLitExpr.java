@@ -7,7 +7,7 @@ import com.google.common.math.IntMath;
 
 import hu.bme.mit.theta.core.LitExpr;
 import hu.bme.mit.theta.core.NullaryExpr;
-import hu.bme.mit.theta.core.model.Substitution;
+import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 
 public final class RatLitExpr extends NullaryExpr<RatType> implements LitExpr<RatType>, Comparable<RatLitExpr> {
@@ -46,7 +46,7 @@ public final class RatLitExpr extends NullaryExpr<RatType> implements LitExpr<Ra
 	}
 
 	@Override
-	public LitExpr<RatType> eval(final Substitution assignment) {
+	public LitExpr<RatType> eval(final Valuation val) {
 		return this;
 	}
 

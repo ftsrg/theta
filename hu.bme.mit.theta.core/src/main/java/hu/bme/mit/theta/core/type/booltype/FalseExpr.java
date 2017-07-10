@@ -3,7 +3,7 @@ package hu.bme.mit.theta.core.type.booltype;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 
 import hu.bme.mit.theta.core.LitExpr;
-import hu.bme.mit.theta.core.model.Substitution;
+import hu.bme.mit.theta.core.model.Valuation;
 
 public final class FalseExpr extends BoolLitExpr {
 	private static final FalseExpr INSTANCE = new FalseExpr();
@@ -28,7 +28,7 @@ public final class FalseExpr extends BoolLitExpr {
 	}
 
 	@Override
-	public LitExpr<BoolType> eval(final Substitution assignment) {
+	public LitExpr<BoolType> eval(final Valuation val) {
 		return this;
 	}
 

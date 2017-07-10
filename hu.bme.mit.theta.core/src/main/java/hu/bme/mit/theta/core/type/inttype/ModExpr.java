@@ -4,7 +4,7 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 import hu.bme.mit.theta.core.BinaryExpr;
 import hu.bme.mit.theta.core.Expr;
-import hu.bme.mit.theta.core.model.Substitution;
+import hu.bme.mit.theta.core.model.Valuation;
 
 public final class ModExpr extends BinaryExpr<IntType, IntType> {
 
@@ -21,9 +21,9 @@ public final class ModExpr extends BinaryExpr<IntType, IntType> {
 	}
 
 	@Override
-	public IntLitExpr eval(final Substitution assignment) {
-		final IntLitExpr leftOpVal = (IntLitExpr) getLeftOp().eval(assignment);
-		final IntLitExpr rightOpVal = (IntLitExpr) getRightOp().eval(assignment);
+	public IntLitExpr eval(final Valuation val) {
+		final IntLitExpr leftOpVal = (IntLitExpr) getLeftOp().eval(val);
+		final IntLitExpr rightOpVal = (IntLitExpr) getRightOp().eval(val);
 		return leftOpVal.mod(rightOpVal);
 	}
 

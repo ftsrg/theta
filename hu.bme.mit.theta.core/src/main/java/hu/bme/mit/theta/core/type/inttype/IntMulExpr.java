@@ -3,7 +3,7 @@ package hu.bme.mit.theta.core.type.inttype;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 import hu.bme.mit.theta.core.Expr;
-import hu.bme.mit.theta.core.model.Substitution;
+import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.abstracttype.MulExpr;
 
 public final class IntMulExpr extends MulExpr<IntType> {
@@ -21,10 +21,10 @@ public final class IntMulExpr extends MulExpr<IntType> {
 	}
 
 	@Override
-	public IntLitExpr eval(final Substitution assignment) {
+	public IntLitExpr eval(final Valuation val) {
 		int prod = 1;
 		for (final Expr<IntType> op : getOps()) {
-			final IntLitExpr opVal = (IntLitExpr) op.eval(assignment);
+			final IntLitExpr opVal = (IntLitExpr) op.eval(val);
 			prod *= opVal.getValue();
 		}
 		return Int(prod);
