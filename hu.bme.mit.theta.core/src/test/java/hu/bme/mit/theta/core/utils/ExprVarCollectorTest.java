@@ -32,7 +32,7 @@ import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.type.rattype.RatType;
 
 @RunWith(Parameterized.class)
-public class VarCollectorTest {
+public class ExprVarCollectorTest {
 
 	private static final VarDecl<BoolType> VA = Var("a", Bool());
 	private static final VarDecl<IntType> VB = Var("b", Int());
@@ -40,7 +40,6 @@ public class VarCollectorTest {
 	private static final VarDecl<BoolType> VD = Var("d", Bool());
 
 	private static final Expr<BoolType> A = VA.getRef();
-	@SuppressWarnings("unused")
 	private static final Expr<IntType> B = VB.getRef();
 	private static final Expr<RatType> C = VC.getRef();
 	private static final Expr<BoolType> D = VD.getRef();
@@ -58,6 +57,8 @@ public class VarCollectorTest {
 				{ And(True(), False(), Eq(Int(1), Int(2))), of() },
 
 				{ And(A, Not(D)), of(VA, VD) },
+
+				{ And(A, Eq(Int(1), B)), of(VA, VB) },
 
 				{ And(Imply(A, D), Eq(C, Rat(2, 3))), of(VA, VC, VD) }, });
 	}

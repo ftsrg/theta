@@ -23,8 +23,7 @@ import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 @RunWith(Parameterized.class)
-public class CnfCheckerTest {
-	// Constants for testing
+public class ExprCnfCheckerTest {
 	private static final Expr<BoolType> A = Const("a", Bool()).getRef();
 	private static final Expr<BoolType> B = Const("b", Bool()).getRef();
 	private static final Expr<BoolType> C = Const("c", Bool()).getRef();

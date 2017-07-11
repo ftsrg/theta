@@ -28,7 +28,7 @@ import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 
-public class IteEliminatorTest {
+public class ExprIteEliminatorTest {
 
 	// Constants for testing
 	private Expr<BoolType> a, b, c, d, e;

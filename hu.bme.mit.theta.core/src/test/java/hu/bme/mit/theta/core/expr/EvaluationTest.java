@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.core.utils;
+package hu.bme.mit.theta.core.expr;
 
 import static hu.bme.mit.theta.core.decl.Decls.Const;
 import static hu.bme.mit.theta.core.type.anytype.Exprs.Ite;

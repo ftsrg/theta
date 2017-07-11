@@ -30,7 +30,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 
 @RunWith(Parameterized.class)
-public class AtomCollectorTest {
+public class ExprAtomCollectorTest {
 
 	private static final Expr<BoolType> CA = Const("a", Bool()).getRef();
 	private static final Expr<BoolType> CB = Const("b", Bool()).getRef();
