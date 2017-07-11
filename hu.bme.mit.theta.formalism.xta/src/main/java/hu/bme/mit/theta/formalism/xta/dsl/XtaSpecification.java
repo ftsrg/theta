@@ -27,7 +27,7 @@ import hu.bme.mit.theta.formalism.xta.dsl.gen.XtaDslParser.VariableDeclContext;
 import hu.bme.mit.theta.formalism.xta.dsl.gen.XtaDslParser.VariableIdContext;
 import hu.bme.mit.theta.formalism.xta.dsl.gen.XtaDslParser.XtaContext;
 
-public final class XtaSpecification implements Scope {
+final class XtaSpecification implements Scope {
 	private final SymbolTable symbolTable;
 
 	private final List<XtaVariableSymbol> variables;
