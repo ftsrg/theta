@@ -30,10 +30,10 @@ public final class CFA implements Automaton<CfaLoc, CfaEdge> {
 	public CFA() {
 		locs = new HashSet<>();
 		edges = new HashSet<>();
+		nextId = 0;
 		initLoc = createLoc();
 		finalLoc = createLoc();
 		errorLoc = createLoc();
-		nextId = 0;
 	}
 
 	////
