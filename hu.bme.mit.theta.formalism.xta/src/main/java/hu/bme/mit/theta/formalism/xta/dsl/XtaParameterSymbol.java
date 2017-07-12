@@ -8,6 +8,7 @@ import static java.util.stream.Collectors.toCollection;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+import hu.bme.mit.theta.common.dsl.Environment;
 import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.core.Expr;

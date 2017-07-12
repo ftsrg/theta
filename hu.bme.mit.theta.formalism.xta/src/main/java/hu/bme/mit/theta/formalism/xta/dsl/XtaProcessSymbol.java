@@ -12,6 +12,7 @@ import java.util.Set;
 
 import com.google.common.collect.Sets;
 
+import hu.bme.mit.theta.common.dsl.Environment;
 import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.common.dsl.SymbolTable;

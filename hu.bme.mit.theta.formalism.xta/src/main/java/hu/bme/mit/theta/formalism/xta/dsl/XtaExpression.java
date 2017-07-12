@@ -28,6 +28,7 @@ import java.util.stream.Stream;
 import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.theta.common.Utils;
+import hu.bme.mit.theta.common.dsl.Environment;
 import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.core.Expr;

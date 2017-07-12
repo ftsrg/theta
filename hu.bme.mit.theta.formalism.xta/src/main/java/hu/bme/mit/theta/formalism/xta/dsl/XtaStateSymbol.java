@@ -7,6 +7,7 @@ import static java.util.stream.Collectors.toList;
 import java.util.Collection;
 import java.util.Collections;
 
+import hu.bme.mit.theta.common.dsl.Environment;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;

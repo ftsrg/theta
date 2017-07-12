@@ -6,6 +6,7 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Sub;
 
 import hu.bme.mit.theta.common.Utils;
+import hu.bme.mit.theta.common.dsl.Environment;
 import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.Type;

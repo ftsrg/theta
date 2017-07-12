@@ -8,6 +8,7 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 import java.util.List;
 
+import hu.bme.mit.theta.common.dsl.Environment;
 import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.core.Expr;
