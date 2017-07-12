@@ -30,10 +30,10 @@ public final class CFA implements Automaton<CfaLoc, CfaEdge> {
 	public CFA() {
 		locs = new HashSet<>();
 		edges = new HashSet<>();
+		nextId = 0;
 		initLoc = createLoc();
 		finalLoc = createLoc();
 		errorLoc = createLoc();
-		nextId = 0;
 	}
 
 	////
@@ -144,7 +144,8 @@ public final class CFA implements Automaton<CfaLoc, CfaEdge> {
 	 */
 
 	public static final class CfaLoc implements Loc<CfaLoc, CfaEdge> {
-		private final String name;
+		private String name;
+
 		private final Collection<CfaEdge> inEdges;
 		private final Collection<CfaEdge> outEdges;
 
@@ -184,8 +185,14 @@ public final class CFA implements Automaton<CfaLoc, CfaEdge> {
 			outEdges.remove(edge);
 		}
 
+		////
+
 		public String getName() {
 			return name;
+		}
+
+		public void setName(final String name) {
+			this.name = checkNotNull(name);
 		}
 
 		@Override
@@ -222,6 +229,7 @@ public final class CFA implements Automaton<CfaLoc, CfaEdge> {
 		public List<Stmt> getStmts() {
 			return stmts;
 		}
+
 	}
 
 }
