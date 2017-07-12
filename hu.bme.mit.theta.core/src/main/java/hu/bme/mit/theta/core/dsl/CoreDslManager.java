@@ -13,6 +13,7 @@ import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.dsl.gen.CoreDslLexer;
 import hu.bme.mit.theta.core.dsl.gen.CoreDslParser;
 import hu.bme.mit.theta.core.dsl.impl.ExprCreatorVisitor;
+import hu.bme.mit.theta.core.dsl.impl.ExprWriter;
 import hu.bme.mit.theta.core.dsl.impl.StmtCreatorVisitor;
 import hu.bme.mit.theta.core.dsl.impl.TypeCreatorVisitor;
 import hu.bme.mit.theta.core.stmt.Stmt;
@@ -49,6 +50,13 @@ public final class CoreDslManager {
 		final CoreDslParser parser = createParserForString(string);
 		final ParseTree tree = parser.expr();
 		return tree.accept(new StmtCreatorVisitor(scope));
+	}
+
+	////
+
+	public String writeExpr(final Expr<?> expr) {
+		checkNotNull(expr);
+		return ExprWriter.instance().write(expr);
 	}
 
 	////
