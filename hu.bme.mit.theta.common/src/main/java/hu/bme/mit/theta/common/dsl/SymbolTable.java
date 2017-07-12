@@ -3,7 +3,6 @@ package hu.bme.mit.theta.common.dsl;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Optional;
 import java.util.StringJoiner;
@@ -24,7 +23,7 @@ public final class SymbolTable {
 		stringToSymbol.put(symbol.getName(), symbol);
 	}
 
-	public void addAll(final Collection<? extends Symbol> symbols) {
+	public void addAll(final Iterable<? extends Symbol> symbols) {
 		checkNotNull(symbols);
 		for (final Symbol symbol : symbols) {
 			add(symbol);
