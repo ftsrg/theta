@@ -38,7 +38,7 @@ import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.Type;
 
 @RunWith(Parameterized.class)
-public class DslTest {
+public class ExprDslTest {
 
 	@Parameter(value = 0)
 	public String actual;

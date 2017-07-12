@@ -15,6 +15,7 @@ import hu.bme.mit.theta.core.dsl.gen.CoreDslParser;
 import hu.bme.mit.theta.core.dsl.impl.ExprCreatorVisitor;
 import hu.bme.mit.theta.core.dsl.impl.ExprWriter;
 import hu.bme.mit.theta.core.dsl.impl.StmtCreatorVisitor;
+import hu.bme.mit.theta.core.dsl.impl.StmtWriter;
 import hu.bme.mit.theta.core.dsl.impl.TypeCreatorVisitor;
 import hu.bme.mit.theta.core.stmt.Stmt;
 
@@ -57,6 +58,11 @@ public final class CoreDslManager {
 	public String writeExpr(final Expr<?> expr) {
 		checkNotNull(expr);
 		return ExprWriter.instance().write(expr);
+	}
+
+	public String writeStmt(final Stmt stmt) {
+		checkNotNull(stmt);
+		return stmt.accept(new StmtWriter(), null);
 	}
 
 	////

@@ -55,7 +55,7 @@ import hu.bme.mit.theta.core.type.inttype.IntExprs;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 
 @RunWith(Parameterized.class)
-public class WriteTest {
+public class ExprWriteTest {
 
 	private static final VarDecl<BoolType> VX = Decls.Var("x", BoolExprs.Bool());
 	private static final VarDecl<IntType> VY = Decls.Var("y", IntExprs.Int());
