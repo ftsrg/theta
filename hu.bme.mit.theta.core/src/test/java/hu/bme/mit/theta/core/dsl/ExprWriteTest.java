@@ -1,6 +1,7 @@
 package hu.bme.mit.theta.core.dsl;
 
 import static hu.bme.mit.theta.core.type.anytype.Exprs.Ite;
+import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Iff;
@@ -98,7 +99,9 @@ public class ExprWriteTest {
 
 				{ And(VX.getRef(), Eq(VY.getRef(), Int(1))), "x and (y = 1)" },
 
-				{ Ite(True(), Int(1), Ite(False(), Int(2), Int(3))), "if true then 1 else (if false then 2 else 3)" }
+				{ Ite(True(), Int(1), Ite(False(), Int(2), Int(3))), "if true then 1 else (if false then 2 else 3)" },
+
+				{ Eq(Prime(Prime(VY.getRef())), Prime(VY.getRef())), "((y')') = (y')" }
 
 		});
 	}

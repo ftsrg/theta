@@ -6,6 +6,7 @@ import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.MultiaryExpr;
 import hu.bme.mit.theta.core.UnaryExpr;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
+import hu.bme.mit.theta.core.type.anytype.PrimeExpr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.booltype.AndExpr;
 import hu.bme.mit.theta.core.type.booltype.FalseExpr;
@@ -134,6 +135,8 @@ public final class ExprWriter {
 
 				.addCase(IteExpr.class, e -> ite(e))
 
+				.addCase(PrimeExpr.class, e -> postfixUnary(e, "'"))
+
 				.addDefault(e -> {
 					throw new UnsupportedOperationException("Expression not supported: " + e.toString());
 				})
@@ -152,6 +155,10 @@ public final class ExprWriter {
 
 	private String prefixUnary(final UnaryExpr<?, ?> expr, final String operator) {
 		return operator + writeWithBrackets(expr.getOp());
+	}
+
+	private String postfixUnary(final UnaryExpr<?, ?> expr, final String operator) {
+		return writeWithBrackets(expr.getOp()) + operator;
 	}
 
 	private String infixBinary(final BinaryExpr<?, ?> expr, final String operator) {
