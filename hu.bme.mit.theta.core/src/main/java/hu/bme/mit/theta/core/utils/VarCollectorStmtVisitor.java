@@ -19,13 +19,15 @@ import hu.bme.mit.theta.core.stmt.WhileStmt;
 
 final class VarCollectorStmtVisitor implements StmtVisitor<Collection<VarDecl<?>>, Void> {
 
-	private final static VarCollectorStmtVisitor INSTANCE = new VarCollectorStmtVisitor();
+	private static final class LazyHolder {
+		private final static VarCollectorStmtVisitor INSTANCE = new VarCollectorStmtVisitor();
+	}
 
 	private VarCollectorStmtVisitor() {
 	}
 
 	static VarCollectorStmtVisitor getInstance() {
-		return INSTANCE;
+		return LazyHolder.INSTANCE;
 	}
 
 	@Override
