@@ -29,7 +29,7 @@ public final class ExplTransferFunction implements TransferFunction<ExplState, E
 		checkNotNull(action);
 		checkNotNull(prec);
 		return ExprStates.createStatesForExpr(solver, BoolExprs.And(state.toExpr(), action.toExpr()), 0,
-				prec::createState, 1);
+				prec::createState, action.nextIndexing());
 	}
 
 }

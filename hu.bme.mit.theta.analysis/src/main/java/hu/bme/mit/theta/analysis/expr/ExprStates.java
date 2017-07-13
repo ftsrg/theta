@@ -12,6 +12,7 @@ import hu.bme.mit.theta.core.model.Model;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.PathUtils;
+import hu.bme.mit.theta.core.utils.VarIndexing;
 import hu.bme.mit.theta.solver.Solver;
 
 /**
@@ -24,17 +25,17 @@ public final class ExprStates {
 
 	/**
 	 * Generate all states that satisfy a given expression.
-	 * 
+	 *
 	 * @param solver Solver
 	 * @param expr Expression to be satisfied
 	 * @param exprIndex Index for unfolding the expression
 	 * @param valuationToState Mapping from a valuation to a state
-	 * @param stateIndex Index for extracting the state
+	 * @param stateIndexing Index for extracting the state
 	 * @return States satisfying the expression
 	 */
 	public static <S extends ExprState> Collection<S> createStatesForExpr(final Solver solver,
 			final Expr<BoolType> expr, final int exprIndex,
-			final Function<? super Valuation, ? extends S> valuationToState, final int stateIndex) {
+			final Function<? super Valuation, ? extends S> valuationToState, final VarIndexing stateIndexing) {
 
 		return using(solver, s -> {
 			s.add(PathUtils.unfold(expr, exprIndex));
@@ -42,10 +43,10 @@ public final class ExprStates {
 			final Collection<S> result = new ArrayList<>();
 			while (s.check().isSat()) {
 				final Model model = s.getModel();
-				final Valuation valuation = PathUtils.extractValuation(model, stateIndex);
+				final Valuation valuation = PathUtils.extractValuation(model, stateIndexing);
 				final S state = valuationToState.apply(valuation);
 				result.add(state);
-				s.add(Not(PathUtils.unfold(state.toExpr(), stateIndex)));
+				s.add(Not(PathUtils.unfold(state.toExpr(), stateIndexing)));
 			}
 
 			return result;

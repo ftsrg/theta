@@ -8,6 +8,7 @@ import hu.bme.mit.theta.analysis.InitFunction;
 import hu.bme.mit.theta.analysis.expr.ExprStates;
 import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.utils.VarIndexing;
 import hu.bme.mit.theta.solver.Solver;
 
 public final class ExplInitFunction implements InitFunction<ExplState, ExplPrec> {
@@ -27,7 +28,7 @@ public final class ExplInitFunction implements InitFunction<ExplState, ExplPrec>
 	@Override
 	public Collection<? extends ExplState> getInitStates(final ExplPrec prec) {
 		checkNotNull(prec);
-		return ExprStates.createStatesForExpr(solver, initExpr, 0, prec::createState, 0);
+		return ExprStates.createStatesForExpr(solver, initExpr, 0, prec::createState, VarIndexing.all(0));
 	}
 
 }
