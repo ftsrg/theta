@@ -23,6 +23,10 @@ public final class BasicValuation implements Valuation {
 	private final Collection<? extends Decl<?>> decls;
 	private volatile Expr<BoolType> expr = null;
 
+	private static final class LazyHolder {
+		private static final BasicValuation EMPTY = new Builder().build();
+	}
+
 	private BasicValuation(final Builder builder) {
 		this.val = builder.val;
 		this.decls = Collections.unmodifiableCollection(this.val.getDecls());
@@ -34,6 +38,10 @@ public final class BasicValuation implements Valuation {
 			builder.put(decl, val.eval(decl).get());
 		}
 		return builder.build();
+	}
+
+	public static BasicValuation empty() {
+		return LazyHolder.EMPTY;
 	}
 
 	@Override

@@ -4,17 +4,15 @@ import hu.bme.mit.theta.common.logging.Logger;
 
 public final class NullLogger implements Logger {
 
-	private static final NullLogger INSTANCE;
-
-	static {
-		INSTANCE = new NullLogger();
+	private static final class LazyHolder {
+		private static final NullLogger INSTANCE = new NullLogger();
 	}
 
 	private NullLogger() {
 	}
 
 	public static NullLogger getInstance() {
-		return INSTANCE;
+		return LazyHolder.INSTANCE;
 	}
 
 	@Override

@@ -4,17 +4,15 @@ import hu.bme.mit.theta.analysis.Domain;
 
 public final class ExplDomain implements Domain<ExplState> {
 
-	private static final ExplDomain INSTANCE;
-
-	static {
-		INSTANCE = new ExplDomain();
+	private static final class LazyHolder {
+		private static final ExplDomain INSTANCE = new ExplDomain();
 	}
 
 	private ExplDomain() {
 	}
 
 	public static ExplDomain getInstance() {
-		return INSTANCE;
+		return LazyHolder.INSTANCE;
 	}
 
 	@Override

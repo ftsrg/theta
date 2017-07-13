@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.core.utils;
+package hu.bme.mit.theta.core.expr;
 
 import static hu.bme.mit.theta.core.decl.Decls.Const;
 import static hu.bme.mit.theta.core.type.anytype.Exprs.Ite;
@@ -48,7 +48,7 @@ public class EvaluationTest {
 	private final Expr<IntType> b = cb.getRef();
 
 	private static <ExprType extends Type> LitExpr<ExprType> evaluate(final Expr<ExprType> expr) {
-		return expr.eval(BasicValuation.builder().build());
+		return expr.eval(BasicValuation.empty());
 	}
 
 	private static <ExprType extends Type> LitExpr<ExprType> evaluate(final Expr<ExprType> expr, final Valuation val) {

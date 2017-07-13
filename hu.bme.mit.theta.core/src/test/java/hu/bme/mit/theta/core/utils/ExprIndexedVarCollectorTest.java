@@ -24,6 +24,8 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
+import com.google.common.collect.ImmutableMap;
+
 import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.decl.IndexedConstDecl;
@@ -32,7 +34,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 
 @RunWith(Parameterized.class)
-public class IndexedVarCollectorTest {
+public class ExprIndexedVarCollectorTest {
 	private static final VarDecl<BoolType> VA = Var("a", Bool());
 	private static final VarDecl<IntType> VB = Var("b", Int());
 
@@ -52,12 +54,12 @@ public class IndexedVarCollectorTest {
 	public static Collection<Object[]> data() {
 		return Arrays.asList(new Object[][] {
 
-				{ And(True(), False(), Eq(Int(1), Int(2))), com.google.common.collect.ImmutableMap.of() },
+				{ And(True(), False(), Eq(Int(1), Int(2))), ImmutableMap.of() },
 
-				{ And(A0.getRef(), Not(A1.getRef())), com.google.common.collect.ImmutableMap.of(0, of(VA), 1, of(VA)) },
+				{ And(A0.getRef(), Not(A1.getRef())), ImmutableMap.of(0, of(VA), 1, of(VA)) },
 
 				{ And(A2.getRef(), A0.getRef(), Eq(B0.getRef(), B1.getRef())),
-						com.google.common.collect.ImmutableMap.of(0, of(VA, VB), 1, of(VB), 2, of(VA)) },
+						ImmutableMap.of(0, of(VA, VB), 1, of(VB), 2, of(VA)) },
 
 		});
 
@@ -75,6 +77,5 @@ public class IndexedVarCollectorTest {
 
 		Assert.assertEquals(expectedVars.values().stream().flatMap(s -> s.stream()).collect(Collectors.toSet()),
 				actualVars.getAllVars());
-
 	}
 }

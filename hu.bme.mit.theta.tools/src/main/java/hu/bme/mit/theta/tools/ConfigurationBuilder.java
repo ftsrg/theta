@@ -19,8 +19,9 @@ public abstract class ConfigurationBuilder {
 	};
 
 	public enum Search {
-		BFS(ArgNodeComparators.combine(ArgNodeComparators.targetFirst(), ArgNodeComparators.bfs())), DFS(
-				ArgNodeComparators.combine(ArgNodeComparators.targetFirst(), ArgNodeComparators.dfs()));
+		BFS(ArgNodeComparators.combine(ArgNodeComparators.targetFirst(), ArgNodeComparators.bfs())),
+
+		DFS(ArgNodeComparators.combine(ArgNodeComparators.targetFirst(), ArgNodeComparators.dfs()));
 
 		public final ArgNodeComparator comparator;
 
@@ -31,7 +32,11 @@ public abstract class ConfigurationBuilder {
 	};
 
 	public enum PredSplit {
-		WHOLE(ExprSplitters.whole()), CONJUNCTS(ExprSplitters.conjuncts()), ATOMS(ExprSplitters.atoms());
+		WHOLE(ExprSplitters.whole()),
+
+		CONJUNCTS(ExprSplitters.conjuncts()),
+
+		ATOMS(ExprSplitters.atoms());
 
 		public final ExprSplitter splitter;
 

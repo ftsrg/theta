@@ -18,7 +18,7 @@ public class ValuationTest {
 
 	@Test
 	public void testNullary() {
-		final Valuation val = BasicValuation.builder().build();
+		final Valuation val = BasicValuation.empty();
 		Assert.assertEquals(val.toExpr(), True());
 	}
 
