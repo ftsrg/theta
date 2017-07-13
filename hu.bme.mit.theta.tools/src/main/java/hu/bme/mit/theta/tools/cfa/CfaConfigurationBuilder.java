@@ -20,9 +20,11 @@ import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expl.ItpRefToExplPrec;
 import hu.bme.mit.theta.analysis.expl.VarsRefToExplPrec;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceBwBinItpChecker;
+import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceChecker;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceFwBinItpChecker;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceSeqItpChecker;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceUnsatCoreChecker;
+import hu.bme.mit.theta.analysis.expr.refinement.ItpRefutation;
 import hu.bme.mit.theta.analysis.expr.refinement.PrecRefiner;
 import hu.bme.mit.theta.analysis.expr.refinement.Refutation;
 import hu.bme.mit.theta.analysis.expr.refinement.RefutationToPrec;
@@ -167,24 +169,23 @@ public class CfaConfigurationBuilder extends ConfigurationBuilder {
 					.create(argBuilder, LocState::getLoc, PriorityWaitlist.supplier(getSearch().comparator),
 							getLogger());
 
-			Refiner<LocState<PredState, CfaLoc, CfaEdge>, CfaAction, LocPrec<SimplePredPrec, CfaLoc, CfaEdge>> refiner = null;
-			final ItpRefToSimplePredPrec refToPrec = new ItpRefToSimplePredPrec(solver, getPredSplit().splitter);
+			ExprTraceChecker<ItpRefutation> exprTraceChecker = null;
 			switch (getRefinement()) {
 			case FW_BIN_ITP:
-				refiner = SingleExprTraceRefiner.create(ExprTraceFwBinItpChecker.create(True(), True(), solver),
-						precGranularity.createRefiner(refToPrec), getLogger());
+				exprTraceChecker = ExprTraceFwBinItpChecker.create(True(), True(), solver);
 				break;
 			case BW_BIN_ITP:
-				refiner = SingleExprTraceRefiner.create(ExprTraceBwBinItpChecker.create(True(), True(), solver),
-						precGranularity.createRefiner(refToPrec), getLogger());
+				exprTraceChecker = ExprTraceBwBinItpChecker.create(True(), True(), solver);
 				break;
 			case SEQ_ITP:
-				refiner = SingleExprTraceRefiner.create(ExprTraceSeqItpChecker.create(True(), True(), solver),
-						precGranularity.createRefiner(refToPrec), getLogger());
+				exprTraceChecker = ExprTraceSeqItpChecker.create(True(), True(), solver);
 				break;
 			default:
 				throw new UnsupportedOperationException();
 			}
+			final ItpRefToSimplePredPrec refToPrec = new ItpRefToSimplePredPrec(solver, getPredSplit().splitter);
+			final Refiner<LocState<PredState, CfaLoc, CfaEdge>, CfaAction, LocPrec<SimplePredPrec, CfaLoc, CfaEdge>> refiner = SingleExprTraceRefiner
+					.create(exprTraceChecker, precGranularity.createRefiner(refToPrec), getLogger());
 
 			final SafetyChecker<LocState<PredState, CfaLoc, CfaEdge>, CfaAction, LocPrec<SimplePredPrec, CfaLoc, CfaEdge>> checker = CegarChecker
 					.create(abstractor, refiner, getLogger());
