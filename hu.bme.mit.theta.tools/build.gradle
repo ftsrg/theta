@@ -31,7 +31,29 @@ def getCommitId() {
     }
     def id = branch.toString() + "-" + commit.toString()
 
-    return id.replace("\n", "")
+    return id.replace("\n", "").replace("/", "-").replace("\\", "-")
+}
+
+task cfaMain(type: ShadowJar) {
+    group = ShadowJavaPlugin.SHADOW_GROUP
+    manifest.inheritFrom project.tasks.jar.manifest
+    doFirst {
+            def files = project.configurations.findByName(ShadowBasePlugin.CONFIGURATION_NAME).files
+            if (files) {
+                def libs = [tasks.jar.manifest.attributes.get('Class-Path')]
+                libs.addAll files.collect { "${it.name}" }
+                manifest.attributes 'Class-Path': libs.findAll { it }.join(' ')
+            }
+    }
+    from(sourceSets.main.output)
+    configurations = [ project.configurations.runtime ]
+    //exclude('META-INF/INDEX.LIST', 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA')
+    //classifier = 'fat'
+    //mergeServiceFiles()
+    manifest { attributes('Main-Class': 'hu.bme.mit.theta.tools.cfa.CfaMain', 'Implementation-Version': getCommitId()) }
+    baseName = 'theta-cfa'
+    classifier = null
+    version = null
 }
 
 task stsMain(type: ShadowJar) {

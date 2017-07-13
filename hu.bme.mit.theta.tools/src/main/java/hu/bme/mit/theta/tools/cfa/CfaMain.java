@@ -1,10 +1,9 @@
-package hu.bme.mit.theta.tools.sts;
-
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
+package hu.bme.mit.theta.tools.cfa;
 
 import java.io.FileInputStream;
 import java.io.InputStream;
-import java.util.Optional;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.StringJoiner;
 
 import org.apache.commons.cli.CommandLine;
@@ -22,23 +21,22 @@ import hu.bme.mit.theta.common.logging.impl.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.impl.NullLogger;
 import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.common.table.impl.SimpleTableWriter;
-import hu.bme.mit.theta.core.utils.ExprUtils;
-import hu.bme.mit.theta.formalism.sts.STS;
-import hu.bme.mit.theta.formalism.sts.StsUtils;
-import hu.bme.mit.theta.formalism.sts.dsl.StsDslManager;
-import hu.bme.mit.theta.formalism.sts.dsl.StsSpec;
-import hu.bme.mit.theta.frontend.aiger.impl.AigerParserSimple;
+import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.utils.StmtUtils;
+import hu.bme.mit.theta.formalism.cfa.CFA;
+import hu.bme.mit.theta.formalism.cfa.CFA.CfaEdge;
+import hu.bme.mit.theta.formalism.cfa.dsl.CfaDslManager;
 import hu.bme.mit.theta.tools.Configuration;
 import hu.bme.mit.theta.tools.ConfigurationBuilder.Domain;
 import hu.bme.mit.theta.tools.ConfigurationBuilder.PredSplit;
 import hu.bme.mit.theta.tools.ConfigurationBuilder.Refinement;
 import hu.bme.mit.theta.tools.ConfigurationBuilder.Search;
-import hu.bme.mit.theta.tools.sts.StsConfigurationBuilder.InitPrec;
+import hu.bme.mit.theta.tools.cfa.CfaConfigurationBuilder.PrecGranularity;
 
 /**
- * A command line interface for running a CEGAR configuration on an STS.
+ * A command line interface for running a CEGAR configuration on a CFA.
  */
-public class StsMain {
+public class CfaMain {
 
 	public static void main(final String[] args) {
 		final TableWriter tableWriter = new SimpleTableWriter(System.out, ",", "\"", "\"");
@@ -65,10 +63,6 @@ public class StsMain {
 				.desc("Path of the input model").required().build();
 		options.addOption(optModel);
 
-		final Option optProp = Option.builder("p").longOpt("property").hasArg().argName("PROPERTY").type(String.class)
-				.desc("Property to be verified").build();
-		options.addOption(optProp);
-
 		final Option optDomain = Option.builder("d").longOpt("domain").hasArg().argName(optionsFor(Domain.values()))
 				.type(Domain.class).desc("Abstract domain").required().build();
 		options.addOption(optDomain);
@@ -78,9 +72,10 @@ public class StsMain {
 				.build();
 		options.addOption(optRefinement);
 
-		final Option optInitPrec = Option.builder("i").longOpt("initprec").hasArg()
-				.argName(optionsFor(InitPrec.values())).type(InitPrec.class).desc("Initial precision").build();
-		options.addOption(optInitPrec);
+		final Option optPrecGran = Option.builder("g").longOpt("precision-granularity").hasArg()
+				.argName(optionsFor(PrecGranularity.values())).type(PrecGranularity.class).desc("Precision granularity")
+				.build();
+		options.addOption(optPrecGran);
 
 		final Option optSearch = Option.builder("s").longOpt("search").hasArg().argName(optionsFor(Search.values()))
 				.type(Search.class).desc("Search strategy").build();
@@ -89,10 +84,6 @@ public class StsMain {
 		final Option optPredSplit = Option.builder("ps").longOpt("predsplit").hasArg()
 				.argName(optionsFor(PredSplit.values())).type(PredSplit.class).desc("Predicate splitting").build();
 		options.addOption(optPredSplit);
-
-		final Option optExpected = Option.builder("e").longOpt("expected").hasArg().argName("true|false")
-				.type(Boolean.class).desc("Expected result (safe)").build();
-		options.addOption(optExpected);
 
 		final Option optLogLevel = Option.builder("ll").longOpt("loglevel").hasArg().argName("INT").type(Integer.class)
 				.desc("Level of logging (detailedness)").build();
@@ -110,7 +101,7 @@ public class StsMain {
 		try {
 			cmd = parser.parse(options, args);
 		} catch (final ParseException e) {
-			helpFormatter.printHelp("theta-sts.jar", options, true);
+			helpFormatter.printHelp("theta-cfa.jar", options, true);
 			return;
 		}
 
@@ -118,10 +109,9 @@ public class StsMain {
 		final String model = cmd.getOptionValue(optModel.getOpt());
 		final Domain domain = Domain.valueOf(cmd.getOptionValue(optDomain.getOpt()));
 		final Refinement refinement = Refinement.valueOf(cmd.getOptionValue(optRefinement.getOpt()));
-		final InitPrec initPrec = InitPrec.valueOf(cmd.getOptionValue(optInitPrec.getOpt(), InitPrec.EMPTY.toString()));
+		final PrecGranularity precGranularity = PrecGranularity
+				.valueOf(cmd.getOptionValue(optPrecGran.getOpt(), PrecGranularity.CONST.toString()));
 		final Search search = Search.valueOf(cmd.getOptionValue(optSearch.getOpt(), Search.BFS.toString()));
-		final Optional<Boolean> expected = cmd.hasOption(optExpected.getOpt())
-				? Optional.of(Boolean.parseBoolean(cmd.getOptionValue(optExpected.getOpt()))) : Optional.empty();
 		final PredSplit predSplit = PredSplit
 				.valueOf(cmd.getOptionValue(optPredSplit.getOpt(), PredSplit.WHOLE.toString()));
 		final boolean benchmarkMode = cmd.hasOption(optBenchmark.getOpt());
@@ -132,27 +122,15 @@ public class StsMain {
 		// Run the algorithm
 		try {
 			// Read input model
-			STS sts = null;
-			if (model.endsWith(".aag")) {
-				sts = new AigerParserSimple().parse(model);
-			} else {
-				final String prop = cmd.getOptionValue(optProp.getOpt());
-				final InputStream inputStream = new FileInputStream(model);
-				final StsSpec spec = StsDslManager.createStsSpec(inputStream);
-				sts = StsUtils.eliminateIte(spec.createProp(prop));
-			}
+			final InputStream inputStream = new FileInputStream(model);
+			final CFA cfa = CfaDslManager.createCfa(inputStream);
 
 			// Build configuration
-			final Configuration<?, ?, ?> configuration = new StsConfigurationBuilder(domain, refinement)
-					.initPrec(initPrec).search(search).predSplit(predSplit).logger(logger).build(sts);
+			final Configuration<?, ?, ?> configuration = new CfaConfigurationBuilder(domain, refinement)
+					.precGranularity(precGranularity).search(search).predSplit(predSplit).logger(logger).build(cfa);
 			// Run algorithm
 			final SafetyResult<?, ?> status = configuration.check();
 			final CegarStatistics stats = (CegarStatistics) status.getStats().get();
-
-			// Check result
-			if (expected.isPresent() && !expected.get().equals(status.isSafe())) {
-				throw new Exception("Expected safe = " + expected.get() + " but was " + status.isSafe());
-			}
 
 			if (benchmarkMode) {
 				tableWriter.cell(status.isSafe());
@@ -166,10 +144,9 @@ public class StsMain {
 				} else {
 					tableWriter.cell("");
 				}
-				tableWriter.cell(sts.getVars().size());
-				tableWriter.cell(ExprUtils.nodeCountSize(And(sts.getInit(), sts.getTrans())));
+				tableWriter.cell(getCfaVars(cfa).size());
+				tableWriter.cell(cfa.getLocs().size());
 			}
-
 		} catch (final Throwable ex) {
 			final String message = ex.getMessage() == null ? "" : ": " + ex.getMessage();
 			if (benchmarkMode) {
@@ -183,6 +160,7 @@ public class StsMain {
 		if (benchmarkMode) {
 			tableWriter.newRow();
 		}
+
 	}
 
 	private static String optionsFor(final Object[] objs) {
@@ -191,5 +169,13 @@ public class StsMain {
 			sj.add(o.toString());
 		}
 		return sj.toString();
+	}
+
+	private static Set<VarDecl<?>> getCfaVars(final CFA cfa) {
+		final Set<VarDecl<?>> vars = new HashSet<>();
+		for (final CfaEdge edge : cfa.getEdges()) {
+			vars.addAll(StmtUtils.getVars(edge.getStmts()));
+		}
+		return vars;
 	}
 }
