@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.tools;
+package hu.bme.mit.theta.tools.cfa;
 
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 
@@ -19,9 +19,13 @@ import hu.bme.mit.theta.analysis.expl.ExplPrec;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expl.ItpRefToExplPrec;
 import hu.bme.mit.theta.analysis.expl.VarsRefToExplPrec;
+import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceBwBinItpChecker;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceFwBinItpChecker;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceSeqItpChecker;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceUnsatCoreChecker;
+import hu.bme.mit.theta.analysis.expr.refinement.PrecRefiner;
+import hu.bme.mit.theta.analysis.expr.refinement.Refutation;
+import hu.bme.mit.theta.analysis.expr.refinement.RefutationToPrec;
 import hu.bme.mit.theta.analysis.expr.refinement.SingleExprTraceRefiner;
 import hu.bme.mit.theta.analysis.loc.ConstLocPrec;
 import hu.bme.mit.theta.analysis.loc.ConstLocPrecRefiner;
@@ -42,11 +46,42 @@ import hu.bme.mit.theta.formalism.cfa.CFA.CfaEdge;
 import hu.bme.mit.theta.formalism.cfa.CFA.CfaLoc;
 import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.solver.SolverFactory;
+import hu.bme.mit.theta.tools.Configuration;
+import hu.bme.mit.theta.tools.ConfigurationBuilder;
 
 public class CfaConfigurationBuilder extends ConfigurationBuilder {
 
 	public enum PrecGranularity {
-		CONST, GEN
+		CONST {
+			@Override
+			public <P extends Prec> LocPrec<P, CfaLoc, CfaEdge> createPrec(final P innerPrec) {
+				return ConstLocPrec.create(innerPrec);
+			}
+
+			@Override
+			public <S extends State, A extends Action, P extends Prec, R extends Refutation> PrecRefiner<LocState<S, CfaLoc, CfaEdge>, A, LocPrec<P, CfaLoc, CfaEdge>, R> createRefiner(
+					final RefutationToPrec<P, R> refToPrec) {
+				return ConstLocPrecRefiner.create(refToPrec);
+			}
+		},
+
+		GEN {
+			@Override
+			public <P extends Prec> LocPrec<P, CfaLoc, CfaEdge> createPrec(final P innerPrec) {
+				return GenericLocPrec.create(innerPrec);
+			}
+
+			@Override
+			public <S extends State, A extends Action, P extends Prec, R extends Refutation> PrecRefiner<LocState<S, CfaLoc, CfaEdge>, A, LocPrec<P, CfaLoc, CfaEdge>, R> createRefiner(
+					final RefutationToPrec<P, R> refToPrec) {
+				return GenericLocPrecRefiner.create(refToPrec);
+			}
+		};
+
+		public abstract <P extends Prec> LocPrec<P, CfaLoc, CfaEdge> createPrec(P innerPrec);
+
+		public abstract <S extends State, A extends Action, P extends Prec, R extends Refutation> PrecRefiner<LocState<S, CfaLoc, CfaEdge>, A, LocPrec<P, CfaLoc, CfaEdge>, R> createRefiner(
+				RefutationToPrec<P, R> refToPrec);
 	};
 
 	private PrecGranularity precGranularity = PrecGranularity.CONST;
@@ -97,31 +132,20 @@ public class CfaConfigurationBuilder extends ConfigurationBuilder {
 
 			switch (getRefinement()) {
 			case FW_BIN_ITP:
-				if (precGranularity == PrecGranularity.CONST) {
-					refiner = SingleExprTraceRefiner.create(ExprTraceFwBinItpChecker.create(True(), True(), solver),
-							ConstLocPrecRefiner.create(new ItpRefToExplPrec()), getLogger());
-				} else {
-					refiner = SingleExprTraceRefiner.create(ExprTraceFwBinItpChecker.create(True(), True(), solver),
-							GenericLocPrecRefiner.create(new ItpRefToExplPrec()), getLogger());
-				}
+				refiner = SingleExprTraceRefiner.create(ExprTraceFwBinItpChecker.create(True(), True(), solver),
+						precGranularity.createRefiner(new ItpRefToExplPrec()), getLogger());
+				break;
+			case BW_BIN_ITP:
+				refiner = SingleExprTraceRefiner.create(ExprTraceBwBinItpChecker.create(True(), True(), solver),
+						precGranularity.createRefiner(new ItpRefToExplPrec()), getLogger());
 				break;
 			case SEQ_ITP:
-				if (precGranularity == PrecGranularity.CONST) {
-					refiner = SingleExprTraceRefiner.create(ExprTraceSeqItpChecker.create(True(), True(), solver),
-							ConstLocPrecRefiner.create(new ItpRefToExplPrec()), getLogger());
-				} else {
-					refiner = SingleExprTraceRefiner.create(ExprTraceSeqItpChecker.create(True(), True(), solver),
-							GenericLocPrecRefiner.create(new ItpRefToExplPrec()), getLogger());
-				}
+				refiner = SingleExprTraceRefiner.create(ExprTraceSeqItpChecker.create(True(), True(), solver),
+						precGranularity.createRefiner(new ItpRefToExplPrec()), getLogger());
 				break;
 			case UNSAT_CORE:
-				if (precGranularity == PrecGranularity.CONST) {
-					refiner = SingleExprTraceRefiner.create(ExprTraceUnsatCoreChecker.create(True(), True(), solver),
-							ConstLocPrecRefiner.create(new VarsRefToExplPrec()), getLogger());
-				} else {
-					refiner = SingleExprTraceRefiner.create(ExprTraceUnsatCoreChecker.create(True(), True(), solver),
-							GenericLocPrecRefiner.create(new VarsRefToExplPrec()), getLogger());
-				}
+				refiner = SingleExprTraceRefiner.create(ExprTraceUnsatCoreChecker.create(True(), True(), solver),
+						precGranularity.createRefiner(new VarsRefToExplPrec()), getLogger());
 				break;
 			default:
 				throw new UnsupportedOperationException();
@@ -130,17 +154,7 @@ public class CfaConfigurationBuilder extends ConfigurationBuilder {
 			final SafetyChecker<LocState<ExplState, CfaLoc, CfaEdge>, CfaAction, LocPrec<ExplPrec, CfaLoc, CfaEdge>> checker = CegarChecker
 					.create(abstractor, refiner, getLogger());
 
-			LocPrec<ExplPrec, CfaLoc, CfaEdge> prec = null;
-			switch (precGranularity) {
-			case CONST:
-				prec = ConstLocPrec.create(ExplPrec.create());
-				break;
-			case GEN:
-				prec = GenericLocPrec.create(ExplPrec.create());
-				break;
-			default:
-				throw new UnsupportedOperationException();
-			}
+			final LocPrec<ExplPrec, CfaLoc, CfaEdge> prec = precGranularity.createPrec(ExplPrec.create());
 
 			return Configuration.create(checker, prec);
 
@@ -154,29 +168,19 @@ public class CfaConfigurationBuilder extends ConfigurationBuilder {
 							getLogger());
 
 			Refiner<LocState<PredState, CfaLoc, CfaEdge>, CfaAction, LocPrec<SimplePredPrec, CfaLoc, CfaEdge>> refiner = null;
-
+			final ItpRefToSimplePredPrec refToPrec = new ItpRefToSimplePredPrec(solver, getPredSplit().splitter);
 			switch (getRefinement()) {
 			case FW_BIN_ITP:
-				if (precGranularity == PrecGranularity.CONST) {
-					refiner = SingleExprTraceRefiner.create(ExprTraceFwBinItpChecker.create(True(), True(), solver),
-							ConstLocPrecRefiner.create(new ItpRefToSimplePredPrec(solver, getPredSplit().splitter)),
-							getLogger());
-				} else {
-					refiner = SingleExprTraceRefiner.create(ExprTraceFwBinItpChecker.create(True(), True(), solver),
-							GenericLocPrecRefiner.create(new ItpRefToSimplePredPrec(solver, getPredSplit().splitter)),
-							getLogger());
-				}
+				refiner = SingleExprTraceRefiner.create(ExprTraceFwBinItpChecker.create(True(), True(), solver),
+						precGranularity.createRefiner(refToPrec), getLogger());
+				break;
+			case BW_BIN_ITP:
+				refiner = SingleExprTraceRefiner.create(ExprTraceBwBinItpChecker.create(True(), True(), solver),
+						precGranularity.createRefiner(refToPrec), getLogger());
 				break;
 			case SEQ_ITP:
-				if (precGranularity == PrecGranularity.CONST) {
-					refiner = SingleExprTraceRefiner.create(ExprTraceSeqItpChecker.create(True(), True(), solver),
-							ConstLocPrecRefiner.create(new ItpRefToSimplePredPrec(solver, getPredSplit().splitter)),
-							getLogger());
-				} else {
-					refiner = SingleExprTraceRefiner.create(ExprTraceSeqItpChecker.create(True(), True(), solver),
-							GenericLocPrecRefiner.create(new ItpRefToSimplePredPrec(solver, getPredSplit().splitter)),
-							getLogger());
-				}
+				refiner = SingleExprTraceRefiner.create(ExprTraceSeqItpChecker.create(True(), True(), solver),
+						precGranularity.createRefiner(refToPrec), getLogger());
 				break;
 			default:
 				throw new UnsupportedOperationException();
@@ -185,18 +189,8 @@ public class CfaConfigurationBuilder extends ConfigurationBuilder {
 			final SafetyChecker<LocState<PredState, CfaLoc, CfaEdge>, CfaAction, LocPrec<SimplePredPrec, CfaLoc, CfaEdge>> checker = CegarChecker
 					.create(abstractor, refiner, getLogger());
 
-			LocPrec<SimplePredPrec, CfaLoc, CfaEdge> prec = null;
-
-			switch (precGranularity) {
-			case CONST:
-				prec = ConstLocPrec.create(SimplePredPrec.create(solver));
-				break;
-			case GEN:
-				prec = GenericLocPrec.create(SimplePredPrec.create(solver));
-				break;
-			default:
-				throw new UnsupportedOperationException();
-			}
+			final LocPrec<SimplePredPrec, CfaLoc, CfaEdge> prec = precGranularity
+					.createPrec(SimplePredPrec.create(solver));
 
 			return Configuration.create(checker, prec);
 
