@@ -74,7 +74,7 @@ public class CfaMain {
 
 	private void printHeader() {
 		final String[] header = new String[] { "Result", "TimeMs", "Iterations", "ArgSize", "ArgDepth",
-				"ArgMeanBranchFactor", "CexLen", "Vars", "Size" };
+				"ArgMeanBranchFactor", "CexLen", "Vars", "Locs", "Edges" };
 		for (final String str : header) {
 			tableWriter.cell(str);
 		}
@@ -173,6 +173,7 @@ public class CfaMain {
 			}
 			tableWriter.cell(cfa.getVars().size());
 			tableWriter.cell(cfa.getLocs().size());
+			tableWriter.cell(cfa.getEdges().size());
 		}
 	}
 
