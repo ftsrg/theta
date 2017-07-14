@@ -6,6 +6,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 
 import com.google.common.collect.ImmutableList;
@@ -29,7 +30,7 @@ public final class CFA implements Automaton<CfaLoc, CfaEdge> {
 
 	public CFA() {
 		locs = new HashSet<>();
-		edges = new HashSet<>();
+		edges = new LinkedList<>();
 	}
 
 	////
@@ -114,8 +115,8 @@ public final class CFA implements Automaton<CfaLoc, CfaEdge> {
 
 		private CfaLoc(final String name) {
 			this.name = name;
-			inEdges = new HashSet<>();
-			outEdges = new HashSet<>();
+			inEdges = new LinkedList<>();
+			outEdges = new LinkedList<>();
 		}
 
 		////
