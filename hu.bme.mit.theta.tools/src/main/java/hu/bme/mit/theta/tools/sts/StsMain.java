@@ -1,8 +1,7 @@
 package hu.bme.mit.theta.tools.sts;
 
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
-
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.Optional;
 import java.util.StringJoiner;
@@ -22,6 +21,7 @@ import hu.bme.mit.theta.common.logging.impl.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.impl.NullLogger;
 import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.common.table.impl.SimpleTableWriter;
+import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.formalism.sts.StsUtils;
@@ -39,28 +39,57 @@ import hu.bme.mit.theta.tools.sts.StsConfigurationBuilder.InitPrec;
  * A command line interface for running a CEGAR configuration on an STS.
  */
 public class StsMain {
+	private static final String JAR_NAME = "theta-sts.jar";
+
+	private final String[] args;
+	private final TableWriter tableWriter;
+	private final Options options;
+
+	private String model;
+	private String prop;
+	private Domain domain;
+	private Refinement refinement;
+	private InitPrec initPrec;
+	private Search search;
+	private Optional<Boolean> expected;
+	private PredSplit predSplit;
+	private boolean benchmarkMode;
+	private Logger logger;
+
+	public StsMain(final String[] args) {
+		this.args = args;
+		tableWriter = new SimpleTableWriter(System.out, ",", "\"", "\"");
+		options = new Options();
+	}
 
 	public static void main(final String[] args) {
-		final TableWriter tableWriter = new SimpleTableWriter(System.out, ",", "\"", "\"");
-
-		// If only called with a single --header argument, print header and exit
-		if (args.length == 1 && "--header".equals(args[0])) {
-			tableWriter.cell("Result");
-			tableWriter.cell("TimeMs");
-			tableWriter.cell("Iterations");
-			tableWriter.cell("ArgSize");
-			tableWriter.cell("ArgDepth");
-			tableWriter.cell("ArgMeanBranchFactor");
-			tableWriter.cell("CexLen");
-			tableWriter.cell("Vars");
-			tableWriter.cell("Size");
-			tableWriter.newRow();
+		final StsMain mainApp = new StsMain(args);
+		if (mainApp.calledWithHeaderArg()) {
+			mainApp.printHeader();
 			return;
 		}
+		try {
+			mainApp.parseArgs();
+		} catch (final ParseException e) {
+			new HelpFormatter().printHelp(JAR_NAME, mainApp.options, true);
+		}
+		mainApp.runAlgorithm();
+	}
 
-		// Setting up argument parser
-		final Options options = new Options();
+	private boolean calledWithHeaderArg() {
+		return args.length == 1 && "--header".equals(args[0]);
+	}
 
+	private void printHeader() {
+		final String[] header = new String[] { "Result", "TimeMs", "Iterations", "ArgSize", "ArgDepth",
+				"ArgMeanBranchFactor", "CexLen", "Vars", "Size" };
+		for (final String str : header) {
+			tableWriter.cell(str);
+		}
+		tableWriter.newRow();
+	}
+
+	private void parseArgs() throws ParseException {
 		final Option optModel = Option.builder("m").longOpt("model").hasArg().argName("MODEL").type(String.class)
 				.desc("Path of the input model").required().build();
 		options.addOption(optModel);
@@ -103,85 +132,87 @@ public class StsMain {
 		options.addOption(optBenchmark);
 
 		final CommandLineParser parser = new DefaultParser();
-		final HelpFormatter helpFormatter = new HelpFormatter();
-		final CommandLine cmd;
-
-		// Parse arguments
-		try {
-			cmd = parser.parse(options, args);
-		} catch (final ParseException e) {
-			helpFormatter.printHelp("theta-sts.jar", options, true);
-			return;
-		}
+		final CommandLine cmd = parser.parse(options, args);
 
 		// Convert string arguments to the proper values
-		final String model = cmd.getOptionValue(optModel.getOpt());
-		final Domain domain = Domain.valueOf(cmd.getOptionValue(optDomain.getOpt()));
-		final Refinement refinement = Refinement.valueOf(cmd.getOptionValue(optRefinement.getOpt()));
-		final InitPrec initPrec = InitPrec.valueOf(cmd.getOptionValue(optInitPrec.getOpt(), InitPrec.EMPTY.toString()));
-		final Search search = Search.valueOf(cmd.getOptionValue(optSearch.getOpt(), Search.BFS.toString()));
-		final Optional<Boolean> expected = cmd.hasOption(optExpected.getOpt())
+		model = cmd.getOptionValue(optModel.getOpt());
+		prop = cmd.getOptionValue(optProp.getOpt(), "");
+		domain = Domain.valueOf(cmd.getOptionValue(optDomain.getOpt()));
+		refinement = Refinement.valueOf(cmd.getOptionValue(optRefinement.getOpt()));
+		initPrec = InitPrec.valueOf(cmd.getOptionValue(optInitPrec.getOpt(), InitPrec.EMPTY.toString()));
+		search = Search.valueOf(cmd.getOptionValue(optSearch.getOpt(), Search.BFS.toString()));
+		expected = cmd.hasOption(optExpected.getOpt())
 				? Optional.of(Boolean.parseBoolean(cmd.getOptionValue(optExpected.getOpt()))) : Optional.empty();
-		final PredSplit predSplit = PredSplit
-				.valueOf(cmd.getOptionValue(optPredSplit.getOpt(), PredSplit.WHOLE.toString()));
-		final boolean benchmarkMode = cmd.hasOption(optBenchmark.getOpt());
-
+		predSplit = PredSplit.valueOf(cmd.getOptionValue(optPredSplit.getOpt(), PredSplit.WHOLE.toString()));
+		benchmarkMode = cmd.hasOption(optBenchmark.getOpt());
 		final int logLevel = Integer.parseInt(cmd.getOptionValue(optLogLevel.getOpt(), "1"));
-		final Logger logger = benchmarkMode ? NullLogger.getInstance() : new ConsoleLogger(logLevel);
+		logger = benchmarkMode ? NullLogger.getInstance() : new ConsoleLogger(logLevel);
+	}
 
-		// Run the algorithm
+	private void runAlgorithm() {
 		try {
-			// Read input model
-			STS sts = null;
-			if (model.endsWith(".aag")) {
-				sts = new AigerParserSimple().parse(model);
-			} else {
-				final String prop = cmd.getOptionValue(optProp.getOpt());
-				final InputStream inputStream = new FileInputStream(model);
-				final StsSpec spec = StsDslManager.createStsSpec(inputStream);
-				sts = StsUtils.eliminateIte(spec.createProp(prop));
-			}
-
-			// Build configuration
-			final Configuration<?, ?, ?> configuration = new StsConfigurationBuilder(domain, refinement)
-					.initPrec(initPrec).search(search).predSplit(predSplit).logger(logger).build(sts);
-			// Run algorithm
+			final STS sts = loadModel();
+			final Configuration<?, ?, ?> configuration = buildConfiguration(sts);
 			final SafetyResult<?, ?> status = configuration.check();
-			final CegarStatistics stats = (CegarStatistics) status.getStats().get();
-
-			// Check result
-			if (expected.isPresent() && !expected.get().equals(status.isSafe())) {
-				throw new Exception("Expected safe = " + expected.get() + " but was " + status.isSafe());
-			}
-
-			if (benchmarkMode) {
-				tableWriter.cell(status.isSafe());
-				tableWriter.cell(stats.getElapsedMillis());
-				tableWriter.cell(stats.getIterations());
-				tableWriter.cell(status.getArg().size());
-				tableWriter.cell(status.getArg().getDepth());
-				tableWriter.cell(status.getArg().getMeanBranchingFactor());
-				if (status.isUnsafe()) {
-					tableWriter.cell(status.asUnsafe().getTrace().length() + "");
-				} else {
-					tableWriter.cell("");
-				}
-				tableWriter.cell(sts.getVars().size());
-				tableWriter.cell(ExprUtils.nodeCountSize(And(sts.getInit(), sts.getTrans())));
-			}
-
+			checkResult(status);
+			printResult(status, sts);
 		} catch (final Throwable ex) {
-			final String message = ex.getMessage() == null ? "" : ": " + ex.getMessage();
-			if (benchmarkMode) {
-				tableWriter.cell("[EX] " + ex.getClass().getSimpleName() + message);
-			} else {
-				logger.writeln("Exception occured: " + ex.getClass().getSimpleName(), 0);
-				logger.writeln("Message: " + ex.getMessage(), 0, 1);
-			}
-
+			printError(ex);
 		}
 		if (benchmarkMode) {
 			tableWriter.newRow();
+		}
+	}
+
+	private STS loadModel() throws IOException {
+		if (model.endsWith(".aag")) {
+			return new AigerParserSimple().parse(model);
+		} else if (model.endsWith(".system")) {
+			final InputStream inputStream = new FileInputStream(model);
+			final StsSpec spec = StsDslManager.createStsSpec(inputStream);
+			return StsUtils.eliminateIte(spec.createProp(prop));
+		} else {
+			throw new IOException("Unknown format");
+		}
+	}
+
+	private Configuration<?, ?, ?> buildConfiguration(final STS sts) {
+		return new StsConfigurationBuilder(domain, refinement).initPrec(initPrec).search(search).predSplit(predSplit)
+				.logger(logger).build(sts);
+	}
+
+	private void checkResult(final SafetyResult<?, ?> status) throws Exception {
+		if (expected.isPresent() && !expected.get().equals(status.isSafe())) {
+			throw new Exception("Expected safe = " + expected.get() + " but was " + status.isSafe());
+		}
+	}
+
+	private void printResult(final SafetyResult<?, ?> status, final STS sts) {
+		final CegarStatistics stats = (CegarStatistics) status.getStats().get();
+		if (benchmarkMode) {
+			tableWriter.cell(status.isSafe());
+			tableWriter.cell(stats.getElapsedMillis());
+			tableWriter.cell(stats.getIterations());
+			tableWriter.cell(status.getArg().size());
+			tableWriter.cell(status.getArg().getDepth());
+			tableWriter.cell(status.getArg().getMeanBranchingFactor());
+			if (status.isUnsafe()) {
+				tableWriter.cell(status.asUnsafe().getTrace().length() + "");
+			} else {
+				tableWriter.cell("");
+			}
+			tableWriter.cell(sts.getVars().size());
+			tableWriter.cell(ExprUtils.nodeCountSize(BoolExprs.And(sts.getInit(), sts.getTrans())));
+		}
+	}
+
+	private void printError(final Throwable ex) {
+		final String message = ex.getMessage() == null ? "" : ": " + ex.getMessage();
+		if (benchmarkMode) {
+			tableWriter.cell("[EX] " + ex.getClass().getSimpleName() + message);
+		} else {
+			logger.writeln("Exception occured: " + ex.getClass().getSimpleName(), 0);
+			logger.writeln("Message: " + ex.getMessage(), 0, 1);
 		}
 	}
 

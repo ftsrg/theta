@@ -1,6 +1,7 @@
 package hu.bme.mit.theta.tools.cfa;
 
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashSet;
 import java.util.Set;
@@ -37,28 +38,55 @@ import hu.bme.mit.theta.tools.cfa.CfaConfigurationBuilder.PrecGranularity;
  * A command line interface for running a CEGAR configuration on a CFA.
  */
 public class CfaMain {
+	private static final String JAR_NAME = "theta-cfa.jar";
+
+	private final String[] args;
+	private final TableWriter tableWriter;
+	private final Options options;
+
+	private String model;
+	private Domain domain;
+	private Refinement refinement;
+	private PrecGranularity precGranularity;
+	private Search search;
+	private PredSplit predSplit;
+	private boolean benchmarkMode;
+	private Logger logger;
+
+	public CfaMain(final String[] args) {
+		this.args = args;
+		tableWriter = new SimpleTableWriter(System.out, ",", "\"", "\"");
+		options = new Options();
+	}
 
 	public static void main(final String[] args) {
-		final TableWriter tableWriter = new SimpleTableWriter(System.out, ",", "\"", "\"");
-
-		// If only called with a single --header argument, print header and exit
-		if (args.length == 1 && "--header".equals(args[0])) {
-			tableWriter.cell("Result");
-			tableWriter.cell("TimeMs");
-			tableWriter.cell("Iterations");
-			tableWriter.cell("ArgSize");
-			tableWriter.cell("ArgDepth");
-			tableWriter.cell("ArgMeanBranchFactor");
-			tableWriter.cell("CexLen");
-			tableWriter.cell("Vars");
-			tableWriter.cell("Size");
-			tableWriter.newRow();
+		final CfaMain mainApp = new CfaMain(args);
+		if (mainApp.calledWithHeaderArg()) {
+			mainApp.printHeader();
 			return;
 		}
+		try {
+			mainApp.parseArgs();
+		} catch (final ParseException e) {
+			new HelpFormatter().printHelp(JAR_NAME, mainApp.options, true);
+		}
+		mainApp.runAlgorithm();
+	}
 
-		// Setting up argument parser
-		final Options options = new Options();
+	private boolean calledWithHeaderArg() {
+		return args.length == 1 && "--header".equals(args[0]);
+	}
 
+	private void printHeader() {
+		final String[] header = new String[] { "Result", "TimeMs", "Iterations", "ArgSize", "ArgDepth",
+				"ArgMeanBranchFactor", "CexLen", "Vars", "Size" };
+		for (final String str : header) {
+			tableWriter.cell(str);
+		}
+		tableWriter.newRow();
+	}
+
+	private void parseArgs() throws ParseException {
 		final Option optModel = Option.builder("m").longOpt("model").hasArg().argName("MODEL").type(String.class)
 				.desc("Path of the input model").required().build();
 		options.addOption(optModel);
@@ -94,73 +122,73 @@ public class CfaMain {
 		options.addOption(optBenchmark);
 
 		final CommandLineParser parser = new DefaultParser();
-		final HelpFormatter helpFormatter = new HelpFormatter();
-		final CommandLine cmd;
-
-		// Parse arguments
-		try {
-			cmd = parser.parse(options, args);
-		} catch (final ParseException e) {
-			helpFormatter.printHelp("theta-cfa.jar", options, true);
-			return;
-		}
+		final CommandLine cmd = parser.parse(options, args);
 
 		// Convert string arguments to the proper values
-		final String model = cmd.getOptionValue(optModel.getOpt());
-		final Domain domain = Domain.valueOf(cmd.getOptionValue(optDomain.getOpt()));
-		final Refinement refinement = Refinement.valueOf(cmd.getOptionValue(optRefinement.getOpt()));
-		final PrecGranularity precGranularity = PrecGranularity
+		model = cmd.getOptionValue(optModel.getOpt());
+		domain = Domain.valueOf(cmd.getOptionValue(optDomain.getOpt()));
+		refinement = Refinement.valueOf(cmd.getOptionValue(optRefinement.getOpt()));
+		precGranularity = PrecGranularity
 				.valueOf(cmd.getOptionValue(optPrecGran.getOpt(), PrecGranularity.CONST.toString()));
-		final Search search = Search.valueOf(cmd.getOptionValue(optSearch.getOpt(), Search.BFS.toString()));
-		final PredSplit predSplit = PredSplit
-				.valueOf(cmd.getOptionValue(optPredSplit.getOpt(), PredSplit.WHOLE.toString()));
-		final boolean benchmarkMode = cmd.hasOption(optBenchmark.getOpt());
-
+		search = Search.valueOf(cmd.getOptionValue(optSearch.getOpt(), Search.BFS.toString()));
+		predSplit = PredSplit.valueOf(cmd.getOptionValue(optPredSplit.getOpt(), PredSplit.WHOLE.toString()));
+		benchmarkMode = cmd.hasOption(optBenchmark.getOpt());
 		final int logLevel = Integer.parseInt(cmd.getOptionValue(optLogLevel.getOpt(), "1"));
-		final Logger logger = benchmarkMode ? NullLogger.getInstance() : new ConsoleLogger(logLevel);
+		logger = benchmarkMode ? NullLogger.getInstance() : new ConsoleLogger(logLevel);
+	}
 
-		// Run the algorithm
+	private void runAlgorithm() {
 		try {
-			// Read input model
-			final InputStream inputStream = new FileInputStream(model);
-			final CFA cfa = CfaDslManager.createCfa(inputStream);
-
-			// Build configuration
-			final Configuration<?, ?, ?> configuration = new CfaConfigurationBuilder(domain, refinement)
-					.precGranularity(precGranularity).search(search).predSplit(predSplit).logger(logger).build(cfa);
-			// Run algorithm
+			final CFA cfa = loadModel();
+			final Configuration<?, ?, ?> configuration = buildConfiguration(cfa);
 			final SafetyResult<?, ?> status = configuration.check();
-			final CegarStatistics stats = (CegarStatistics) status.getStats().get();
-
-			if (benchmarkMode) {
-				tableWriter.cell(status.isSafe());
-				tableWriter.cell(stats.getElapsedMillis());
-				tableWriter.cell(stats.getIterations());
-				tableWriter.cell(status.getArg().size());
-				tableWriter.cell(status.getArg().getDepth());
-				tableWriter.cell(status.getArg().getMeanBranchingFactor());
-				if (status.isUnsafe()) {
-					tableWriter.cell(status.asUnsafe().getTrace().length() + "");
-				} else {
-					tableWriter.cell("");
-				}
-				tableWriter.cell(getCfaVars(cfa).size());
-				tableWriter.cell(cfa.getLocs().size());
-			}
+			printResult(status, cfa);
 		} catch (final Throwable ex) {
-			final String message = ex.getMessage() == null ? "" : ": " + ex.getMessage();
-			if (benchmarkMode) {
-				tableWriter.cell("[EX] " + ex.getClass().getSimpleName() + message);
-			} else {
-				logger.writeln("Exception occured: " + ex.getClass().getSimpleName(), 0);
-				logger.writeln("Message: " + ex.getMessage(), 0, 1);
-			}
-
+			printError(ex);
 		}
 		if (benchmarkMode) {
 			tableWriter.newRow();
 		}
+	}
 
+	private CFA loadModel() throws IOException {
+		final InputStream inputStream = new FileInputStream(model);
+		final CFA cfa = CfaDslManager.createCfa(inputStream);
+		return cfa;
+	}
+
+	private Configuration<?, ?, ?> buildConfiguration(final CFA cfa) {
+		return new CfaConfigurationBuilder(domain, refinement).precGranularity(precGranularity).search(search)
+				.predSplit(predSplit).logger(logger).build(cfa);
+	}
+
+	private void printResult(final SafetyResult<?, ?> status, final CFA cfa) {
+		final CegarStatistics stats = (CegarStatistics) status.getStats().get();
+		if (benchmarkMode) {
+			tableWriter.cell(status.isSafe());
+			tableWriter.cell(stats.getElapsedMillis());
+			tableWriter.cell(stats.getIterations());
+			tableWriter.cell(status.getArg().size());
+			tableWriter.cell(status.getArg().getDepth());
+			tableWriter.cell(status.getArg().getMeanBranchingFactor());
+			if (status.isUnsafe()) {
+				tableWriter.cell(status.asUnsafe().getTrace().length() + "");
+			} else {
+				tableWriter.cell("");
+			}
+			tableWriter.cell(getCfaVars(cfa).size());
+			tableWriter.cell(cfa.getLocs().size());
+		}
+	}
+
+	private void printError(final Throwable ex) {
+		final String message = ex.getMessage() == null ? "" : ": " + ex.getMessage();
+		if (benchmarkMode) {
+			tableWriter.cell("[EX] " + ex.getClass().getSimpleName() + message);
+		} else {
+			logger.writeln("Exception occured: " + ex.getClass().getSimpleName(), 0);
+			logger.writeln("Message: " + ex.getMessage(), 0, 1);
+		}
 	}
 
 	private static String optionsFor(final Object[] objs) {
