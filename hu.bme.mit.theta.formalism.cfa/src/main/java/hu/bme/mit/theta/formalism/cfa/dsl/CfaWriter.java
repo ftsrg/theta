@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.formalism.cfa.utils;
+package hu.bme.mit.theta.formalism.cfa.dsl;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
