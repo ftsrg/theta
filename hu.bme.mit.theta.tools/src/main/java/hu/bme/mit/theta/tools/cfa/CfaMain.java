@@ -3,8 +3,6 @@ package hu.bme.mit.theta.tools.cfa;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.StringJoiner;
 
 import org.apache.commons.cli.CommandLine;
@@ -22,10 +20,7 @@ import hu.bme.mit.theta.common.logging.impl.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.impl.NullLogger;
 import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.common.table.impl.SimpleTableWriter;
-import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.utils.StmtUtils;
 import hu.bme.mit.theta.formalism.cfa.CFA;
-import hu.bme.mit.theta.formalism.cfa.CFA.CfaEdge;
 import hu.bme.mit.theta.formalism.cfa.dsl.CfaDslManager;
 import hu.bme.mit.theta.tools.Configuration;
 import hu.bme.mit.theta.tools.ConfigurationBuilder.Domain;
@@ -176,7 +171,7 @@ public class CfaMain {
 			} else {
 				tableWriter.cell("");
 			}
-			tableWriter.cell(getCfaVars(cfa).size());
+			tableWriter.cell(cfa.getVars().size());
 			tableWriter.cell(cfa.getLocs().size());
 		}
 	}
@@ -197,13 +192,5 @@ public class CfaMain {
 			sj.add(o.toString());
 		}
 		return sj.toString();
-	}
-
-	private static Set<VarDecl<?>> getCfaVars(final CFA cfa) {
-		final Set<VarDecl<?>> vars = new HashSet<>();
-		for (final CfaEdge edge : cfa.getEdges()) {
-			vars.addAll(StmtUtils.getVars(edge.getStmts()));
-		}
-		return vars;
 	}
 }

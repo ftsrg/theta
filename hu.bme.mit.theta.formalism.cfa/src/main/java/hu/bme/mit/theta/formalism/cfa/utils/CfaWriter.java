@@ -4,13 +4,10 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.util.HashSet;
-import java.util.Set;
 
 import hu.bme.mit.theta.core.Decl;
 import hu.bme.mit.theta.core.dsl.CoreDslManager;
 import hu.bme.mit.theta.core.stmt.Stmt;
-import hu.bme.mit.theta.core.utils.StmtUtils;
 import hu.bme.mit.theta.formalism.cfa.CFA;
 import hu.bme.mit.theta.formalism.cfa.CFA.CfaEdge;
 import hu.bme.mit.theta.formalism.cfa.CFA.CfaLoc;
@@ -22,7 +19,7 @@ public class CfaWriter {
 		bw.write("main process cfa {");
 		bw.newLine();
 
-		for (final Decl<?> var : getCfaVars(cfa)) {
+		for (final Decl<?> var : cfa.getVars()) {
 			final String varName = var.getName();
 			final String varType = var.getType().toString().toLowerCase();
 			bw.write(String.format("\tvar %s : %s", varName, varType));
@@ -61,14 +58,6 @@ public class CfaWriter {
 
 		bw.write("}");
 		bw.close();
-	}
-
-	private static Set<Decl<?>> getCfaVars(final CFA cfa) {
-		final Set<Decl<?>> vars = new HashSet<>();
-		for (final CfaEdge edge : cfa.getEdges()) {
-			vars.addAll(StmtUtils.getVars(edge.getStmts()));
-		}
-		return vars;
 	}
 
 	private static String writeStmt(final Stmt stmt) {
