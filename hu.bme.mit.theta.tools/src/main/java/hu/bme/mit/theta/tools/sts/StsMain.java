@@ -54,7 +54,6 @@ public class StsMain {
 	private Optional<Boolean> expected;
 	private PredSplit predSplit;
 	private boolean benchmarkMode;
-	private int logLevel;
 	private Logger logger;
 
 	public StsMain(final String[] args) {
@@ -82,20 +81,15 @@ public class StsMain {
 	}
 
 	private void printHeader() {
-		tableWriter.cell("Result");
-		tableWriter.cell("TimeMs");
-		tableWriter.cell("Iterations");
-		tableWriter.cell("ArgSize");
-		tableWriter.cell("ArgDepth");
-		tableWriter.cell("ArgMeanBranchFactor");
-		tableWriter.cell("CexLen");
-		tableWriter.cell("Vars");
-		tableWriter.cell("Size");
+		final String[] header = new String[] { "Result", "TimeMs", "Iterations", "ArgSize", "ArgDepth",
+				"ArgMeanBranchFactor", "CexLen", "Vars", "Size" };
+		for (final String str : header) {
+			tableWriter.cell(str);
+		}
 		tableWriter.newRow();
 	}
 
 	private void parseArgs() throws ParseException {
-		// Setting up argument parser
 		final Option optModel = Option.builder("m").longOpt("model").hasArg().argName("MODEL").type(String.class)
 				.desc("Path of the input model").required().build();
 		options.addOption(optModel);
@@ -138,10 +132,7 @@ public class StsMain {
 		options.addOption(optBenchmark);
 
 		final CommandLineParser parser = new DefaultParser();
-		final CommandLine cmd;
-
-		// Parse arguments
-		cmd = parser.parse(options, args);
+		final CommandLine cmd = parser.parse(options, args);
 
 		// Convert string arguments to the proper values
 		model = cmd.getOptionValue(optModel.getOpt());
@@ -154,8 +145,7 @@ public class StsMain {
 				? Optional.of(Boolean.parseBoolean(cmd.getOptionValue(optExpected.getOpt()))) : Optional.empty();
 		predSplit = PredSplit.valueOf(cmd.getOptionValue(optPredSplit.getOpt(), PredSplit.WHOLE.toString()));
 		benchmarkMode = cmd.hasOption(optBenchmark.getOpt());
-
-		logLevel = Integer.parseInt(cmd.getOptionValue(optLogLevel.getOpt(), "1"));
+		final int logLevel = Integer.parseInt(cmd.getOptionValue(optLogLevel.getOpt(), "1"));
 		logger = benchmarkMode ? NullLogger.getInstance() : new ConsoleLogger(logLevel);
 	}
 
@@ -177,10 +167,12 @@ public class StsMain {
 	private STS loadModel() throws IOException {
 		if (model.endsWith(".aag")) {
 			return new AigerParserSimple().parse(model);
-		} else {
+		} else if (model.endsWith(".system")) {
 			final InputStream inputStream = new FileInputStream(model);
 			final StsSpec spec = StsDslManager.createStsSpec(inputStream);
 			return StsUtils.eliminateIte(spec.createProp(prop));
+		} else {
+			throw new IOException("Unknown format");
 		}
 	}
 
