@@ -1,7 +1,7 @@
 package hu.bme.mit.theta.formalism.cfa.dsl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.util.stream.Collectors.toList;
+import static com.google.common.collect.ImmutableList.toImmutableList;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,12 +39,8 @@ final class CfaEdgeDefinition {
 
 		final CfaLoc sourceLoc = (CfaLoc) env.eval(sourceSymbol);
 		final CfaLoc targetLoc = (CfaLoc) env.eval(targetSymbol);
-
-		final CfaEdge edge = cfa.createEdge(sourceLoc, targetLoc);
-
-		final List<Stmt> stmts = statements.stream().map(s -> s.instantiate(env)).collect(toList());
-		edge.getStmts().addAll(stmts);
-
+		final List<Stmt> stmts = statements.stream().map(s -> s.instantiate(env)).collect(toImmutableList());
+		final CfaEdge edge = cfa.createEdge(sourceLoc, targetLoc, stmts);
 		return edge;
 	}
 

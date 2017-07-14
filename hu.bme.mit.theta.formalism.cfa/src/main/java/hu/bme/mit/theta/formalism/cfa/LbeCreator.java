@@ -28,13 +28,15 @@ import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.stmt.WhileStmt;
 import hu.bme.mit.theta.core.utils.StmtVisitor;
-import hu.bme.mit.theta.formalism.cfa.CFA.CfaEdge;
 import hu.bme.mit.theta.formalism.cfa.CFA.CfaLoc;
 
 final class LbeCreator {
 
 	public static CFA create(final Stmt stmt) {
 		final CFA cfa = new CFA();
+		cfa.setInitLoc(cfa.createLoc("init"));
+		cfa.setFinalLoc(cfa.createLoc("end"));
+		cfa.setErrorLoc(cfa.createLoc("error"));
 		final LBECreatorVisitor visitor = new LBECreatorVisitor(cfa);
 		stmt.accept(visitor, Tuple.of(cfa.getInitLoc(), cfa.getFinalLoc(), new LinkedList<>(), new LinkedList<>()));
 		return cfa;
@@ -44,9 +46,11 @@ final class LbeCreator {
 			implements StmtVisitor<Product4<CfaLoc, CfaLoc, List<Stmt>, List<Stmt>>, Void> {
 
 		private final CFA cfa;
+		private int nextIndex;
 
 		private LBECreatorVisitor(final CFA cfa) {
 			this.cfa = cfa;
+			nextIndex = 0;
 		}
 
 		////
@@ -55,8 +59,7 @@ final class LbeCreator {
 				final List<Stmt> postfix) {
 
 			if (postfix.isEmpty()) {
-				final CfaEdge edge = cfa.createEdge(source, target);
-				edge.getStmts().addAll(prefix);
+				cfa.createEdge(source, target, prefix);
 			} else {
 				final Stmt head = postfix.get(0);
 				final List<Stmt> tail = postfix.subList(1, postfix.size());
@@ -229,7 +232,7 @@ final class LbeCreator {
 			if (prefix.isEmpty()) {
 				doLoc = source;
 			} else {
-				doLoc = cfa.createLoc();
+				doLoc = cfa.createLoc("L" + nextIndex++);
 				final List<Stmt> entryPrefix = prefix;
 				final List<Stmt> entryPostfix = Collections.emptyList();
 				createEdges(source, doLoc, entryPrefix, entryPostfix);
@@ -253,7 +256,7 @@ final class LbeCreator {
 			final List<Stmt> prefix = param._3();
 			final List<Stmt> postfix = param._4();
 
-			final CfaLoc doLoc = cfa.createLoc();
+			final CfaLoc doLoc = cfa.createLoc("L" + nextIndex++);
 
 			final List<Stmt> entryPrefix = prefix;
 			final List<Stmt> entryPostfix = ImmutableList.of(stmt.getDo());

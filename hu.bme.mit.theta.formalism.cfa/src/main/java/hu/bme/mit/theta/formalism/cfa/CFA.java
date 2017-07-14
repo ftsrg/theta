@@ -3,11 +3,12 @@ package hu.bme.mit.theta.formalism.cfa;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+
+import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.stmt.Stmt;
@@ -18,7 +19,6 @@ import hu.bme.mit.theta.formalism.common.Edge;
 import hu.bme.mit.theta.formalism.common.Loc;
 
 public final class CFA implements Automaton<CfaLoc, CfaEdge> {
-	private int nextId;
 
 	private CfaLoc initLoc;
 	private CfaLoc finalLoc;
@@ -30,10 +30,6 @@ public final class CFA implements Automaton<CfaLoc, CfaEdge> {
 	public CFA() {
 		locs = new HashSet<>();
 		edges = new HashSet<>();
-		nextId = 0;
-		initLoc = createLoc();
-		finalLoc = createLoc();
-		errorLoc = createLoc();
 	}
 
 	////
@@ -80,22 +76,10 @@ public final class CFA implements Automaton<CfaLoc, CfaEdge> {
 		return Collections.unmodifiableCollection(locs);
 	}
 
-	public CfaLoc createLoc() {
-		final CfaLoc loc = new CfaLoc(nextId + "");
-		++nextId;
+	public CfaLoc createLoc(final String name) {
+		final CfaLoc loc = new CfaLoc(name);
 		locs.add(loc);
 		return loc;
-	}
-
-	public void removeLoc(final CfaLoc loc) {
-		checkNotNull(loc);
-		checkArgument(locs.contains(loc));
-		checkArgument(loc != initLoc);
-		checkArgument(loc != finalLoc);
-		checkArgument(loc != errorLoc);
-		checkArgument(loc.getInEdges().isEmpty());
-		checkArgument(loc.getOutEdges().isEmpty());
-		locs.remove(loc);
 	}
 
 	////
@@ -105,38 +89,18 @@ public final class CFA implements Automaton<CfaLoc, CfaEdge> {
 		return Collections.unmodifiableCollection(edges);
 	}
 
-	public CfaEdge createEdge(final CfaLoc source, final CfaLoc target) {
+	public CfaEdge createEdge(final CfaLoc source, final CfaLoc target, final List<? extends Stmt> stmts) {
 		checkNotNull(source);
 		checkNotNull(target);
+		checkNotNull(stmts);
 		checkArgument(locs.contains(source));
 		checkArgument(locs.contains(target));
 
-		final CfaLoc mutableSource = source;
-		final CfaLoc mutableTarget = target;
-
-		final CfaEdge edge = new CfaEdge(mutableSource, mutableTarget);
-		mutableSource.addOutEdge(edge);
-		mutableTarget.addInEdge(edge);
+		final CfaEdge edge = new CfaEdge(source, target, stmts);
+		source.outEdges.add(edge);
+		target.inEdges.add(edge);
 		edges.add(edge);
 		return edge;
-	}
-
-	public void removeEdge(final CfaEdge edge) {
-		checkNotNull(edge);
-		checkArgument(edges.contains(edge));
-
-		final CfaLoc source = edge.getSource();
-		final CfaLoc target = edge.getTarget();
-
-		checkNotNull(source);
-		checkNotNull(target);
-
-		final CfaLoc mutableSource = source;
-		final CfaLoc mutableTarget = target;
-
-		mutableSource.removeOutEdge(edge);
-		mutableTarget.removeInEdge(edge);
-		edges.remove(edge);
 	}
 
 	/*
@@ -144,8 +108,7 @@ public final class CFA implements Automaton<CfaLoc, CfaEdge> {
 	 */
 
 	public static final class CfaLoc implements Loc<CfaLoc, CfaEdge> {
-		private String name;
-
+		private final String name;
 		private final Collection<CfaEdge> inEdges;
 		private final Collection<CfaEdge> outEdges;
 
@@ -157,43 +120,21 @@ public final class CFA implements Automaton<CfaLoc, CfaEdge> {
 
 		////
 
+		public String getName() {
+			return name;
+		}
+
 		@Override
 		public Collection<CfaEdge> getInEdges() {
 			return Collections.unmodifiableCollection(inEdges);
 		}
-
-		void addInEdge(final CfaEdge edge) {
-			inEdges.add(edge);
-		}
-
-		void removeInEdge(final CfaEdge edge) {
-			inEdges.remove(edge);
-		}
-
-		////
 
 		@Override
 		public Collection<CfaEdge> getOutEdges() {
 			return Collections.unmodifiableCollection(outEdges);
 		}
 
-		void addOutEdge(final CfaEdge edge) {
-			outEdges.add(edge);
-		}
-
-		void removeOutEdge(final CfaEdge edge) {
-			outEdges.remove(edge);
-		}
-
 		////
-
-		public String getName() {
-			return name;
-		}
-
-		public void setName(final String name) {
-			this.name = checkNotNull(name);
-		}
 
 		@Override
 		public String toString() {
@@ -210,10 +151,10 @@ public final class CFA implements Automaton<CfaLoc, CfaEdge> {
 		private final CfaLoc target;
 		private final List<Stmt> stmts;
 
-		private CfaEdge(final CfaLoc source, final CfaLoc target) {
+		private CfaEdge(final CfaLoc source, final CfaLoc target, final List<? extends Stmt> stmts) {
 			this.source = source;
 			this.target = target;
-			stmts = new ArrayList<>();
+			this.stmts = ImmutableList.copyOf(stmts);
 		}
 
 		@Override
@@ -229,7 +170,6 @@ public final class CFA implements Automaton<CfaLoc, CfaEdge> {
 		public List<Stmt> getStmts() {
 			return stmts;
 		}
-
 	}
 
 }
