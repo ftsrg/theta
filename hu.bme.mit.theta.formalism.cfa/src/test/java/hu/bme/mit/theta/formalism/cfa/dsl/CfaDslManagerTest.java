@@ -35,6 +35,7 @@ public final class CfaDslManagerTest {
 	public void test() throws FileNotFoundException, IOException {
 		final InputStream inputStream = getClass().getResourceAsStream(filepath);
 		final CFA cfa = CfaDslManager.createCfa(inputStream);
+		System.out.println(cfa.getVars());
 		System.out.println(new GraphvizWriter().writeString(CfaVisualizer.visualize(cfa)));
 	}
 

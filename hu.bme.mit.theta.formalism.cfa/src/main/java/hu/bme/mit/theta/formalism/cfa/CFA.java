@@ -12,7 +12,9 @@ import java.util.List;
 import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.theta.common.ObjectUtils;
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
+import hu.bme.mit.theta.core.utils.StmtUtils;
 import hu.bme.mit.theta.formalism.cfa.CFA.CfaEdge;
 import hu.bme.mit.theta.formalism.cfa.CFA.CfaLoc;
 import hu.bme.mit.theta.formalism.common.Automaton;
@@ -25,10 +27,12 @@ public final class CFA implements Automaton<CfaLoc, CfaEdge> {
 	private CfaLoc finalLoc;
 	private CfaLoc errorLoc;
 
+	private final Collection<VarDecl<?>> vars;
 	private final Collection<CfaLoc> locs;
 	private final Collection<CfaEdge> edges;
 
 	public CFA() {
+		vars = new HashSet<>();
 		locs = new HashSet<>();
 		edges = new LinkedList<>();
 	}
@@ -72,6 +76,12 @@ public final class CFA implements Automaton<CfaLoc, CfaEdge> {
 
 	////
 
+	public Collection<VarDecl<?>> getVars() {
+		return Collections.unmodifiableCollection(vars);
+	}
+
+	////
+
 	@Override
 	public Collection<CfaLoc> getLocs() {
 		return Collections.unmodifiableCollection(locs);
@@ -101,6 +111,7 @@ public final class CFA implements Automaton<CfaLoc, CfaEdge> {
 		source.outEdges.add(edge);
 		target.inEdges.add(edge);
 		edges.add(edge);
+		vars.addAll(StmtUtils.getVars(stmts));
 		return edge;
 	}
 
