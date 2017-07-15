@@ -1,4 +1,5 @@
 apply plugin: 'antlr'
+apply plugin: 'jacoco'
 
 dependencies {
   antlr group: 'org.antlr', name: 'antlr4', version: antlrVersion

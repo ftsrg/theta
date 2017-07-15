@@ -59,6 +59,17 @@ public final class StmtUtils {
 	}
 
 	/**
+	 * Unfold a statement into expressions with a given indexing
+	 *
+	 * @param stmt Statement
+	 * @param indexing Indexing
+	 * @return Expressions and new indexing
+	 */
+	public static StmtUnfoldResult toExpr(final Stmt stmt, final VarIndexing indexing) {
+		return StmtToExprTransformer.toExpr(stmt, indexing);
+	}
+
+	/**
 	 * Unfold statements into expressions with a given indexing
 	 *
 	 * @param stmts Statements

@@ -9,6 +9,7 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Imply;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Xor;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Add;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Div;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
@@ -87,6 +88,14 @@ public class EvaluationTest {
 		assertEquals(True(), evaluate(Iff(True(), True())));
 		assertEquals(False(), evaluate(Iff(True(), False())));
 		assertEquals(True(), evaluate(Iff(False(), False())));
+	}
+
+	@Test
+	public void testXor() {
+		assertEquals(True(), evaluate(Xor(False(), True())));
+		assertEquals(False(), evaluate(Xor(True(), True())));
+		assertEquals(True(), evaluate(Xor(True(), False())));
+		assertEquals(False(), evaluate(Xor(False(), False())));
 	}
 
 	@Test
