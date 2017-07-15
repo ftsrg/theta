@@ -64,16 +64,34 @@ public class StsMain {
 
 	public static void main(final String[] args) {
 		final StsMain mainApp = new StsMain(args);
-		if (mainApp.calledWithHeaderArg()) {
-			mainApp.printHeader();
+		mainApp.run();
+	}
+
+	private void run() {
+		if (calledWithHeaderArg()) {
+			printHeader();
 			return;
 		}
+
 		try {
-			mainApp.parseArgs();
+			parseArgs();
 		} catch (final ParseException e) {
-			new HelpFormatter().printHelp(JAR_NAME, mainApp.options, true);
+			new HelpFormatter().printHelp(JAR_NAME, options, true);
+			return;
 		}
-		mainApp.runAlgorithm();
+
+		try {
+			final STS sts = loadModel();
+			final Configuration<?, ?, ?> configuration = buildConfiguration(sts);
+			final SafetyResult<?, ?> status = configuration.check();
+			checkResult(status);
+			printResult(status, sts);
+		} catch (final Throwable ex) {
+			printError(ex);
+		}
+		if (benchmarkMode) {
+			tableWriter.newRow();
+		}
 	}
 
 	private boolean calledWithHeaderArg() {
@@ -147,21 +165,6 @@ public class StsMain {
 		benchmarkMode = cmd.hasOption(optBenchmark.getOpt());
 		final int logLevel = Integer.parseInt(cmd.getOptionValue(optLogLevel.getOpt(), "1"));
 		logger = benchmarkMode ? NullLogger.getInstance() : new ConsoleLogger(logLevel);
-	}
-
-	private void runAlgorithm() {
-		try {
-			final STS sts = loadModel();
-			final Configuration<?, ?, ?> configuration = buildConfiguration(sts);
-			final SafetyResult<?, ?> status = configuration.check();
-			checkResult(status);
-			printResult(status, sts);
-		} catch (final Throwable ex) {
-			printError(ex);
-		}
-		if (benchmarkMode) {
-			tableWriter.newRow();
-		}
 	}
 
 	private STS loadModel() throws IOException {

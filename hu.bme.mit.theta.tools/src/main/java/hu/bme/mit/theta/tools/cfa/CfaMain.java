@@ -56,16 +56,33 @@ public class CfaMain {
 
 	public static void main(final String[] args) {
 		final CfaMain mainApp = new CfaMain(args);
-		if (mainApp.calledWithHeaderArg()) {
-			mainApp.printHeader();
+		mainApp.run();
+	}
+
+	private void run() {
+		if (calledWithHeaderArg()) {
+			printHeader();
 			return;
 		}
+
 		try {
-			mainApp.parseArgs();
+			parseArgs();
 		} catch (final ParseException e) {
-			new HelpFormatter().printHelp(JAR_NAME, mainApp.options, true);
+			new HelpFormatter().printHelp(JAR_NAME, options, true);
+			return;
 		}
-		mainApp.runAlgorithm();
+
+		try {
+			final CFA cfa = loadModel();
+			final Configuration<?, ?, ?> configuration = buildConfiguration(cfa);
+			final SafetyResult<?, ?> status = configuration.check();
+			printResult(status, cfa);
+		} catch (final Throwable ex) {
+			printError(ex);
+		}
+		if (benchmarkMode) {
+			tableWriter.newRow();
+		}
 	}
 
 	private boolean calledWithHeaderArg() {
@@ -130,20 +147,6 @@ public class CfaMain {
 		benchmarkMode = cmd.hasOption(optBenchmark.getOpt());
 		final int logLevel = Integer.parseInt(cmd.getOptionValue(optLogLevel.getOpt(), "1"));
 		logger = benchmarkMode ? NullLogger.getInstance() : new ConsoleLogger(logLevel);
-	}
-
-	private void runAlgorithm() {
-		try {
-			final CFA cfa = loadModel();
-			final Configuration<?, ?, ?> configuration = buildConfiguration(cfa);
-			final SafetyResult<?, ?> status = configuration.check();
-			printResult(status, cfa);
-		} catch (final Throwable ex) {
-			printError(ex);
-		}
-		if (benchmarkMode) {
-			tableWriter.newRow();
-		}
 	}
 
 	private CFA loadModel() throws IOException {
