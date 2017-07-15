@@ -36,16 +36,17 @@ public final class StsUtils {
 	 */
 	public static STS transformToCnf(final STS sts) {
 		final STS.Builder builder = STS.builder();
-
 		builder.addInit(transformIfNonCNF(sts.getInit()));
 		builder.addTrans(transformIfNonCNF(sts.getTrans()));
 		builder.setProp(sts.getProp());
-
 		return builder.build();
 	}
 
 	private static Expr<BoolType> transformIfNonCNF(final Expr<BoolType> expr) {
-		if (ExprUtils.isExprCnf(expr)) return expr;
-		else return ExprUtils.transformEquiSatCnf(expr);
+		if (ExprUtils.isExprCnf(expr)) {
+			return expr;
+		} else {
+			return ExprUtils.transformEquiSatCnf(expr);
+		}
 	}
 }
