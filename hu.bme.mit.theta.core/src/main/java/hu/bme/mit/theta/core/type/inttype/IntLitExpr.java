@@ -56,7 +56,44 @@ public final class IntLitExpr extends NullaryExpr<IntType> implements LitExpr<In
 	}
 
 	public IntLitExpr mod(final IntLitExpr that) {
-		return new IntLitExpr(this.value % that.value);
+		// Always positive semantics:
+		//  5 mod  3 = 2
+		//  5 mod -3 = 2
+		// -5 mod  3 = 1
+		// -5 mod -3 = 1
+		int result = this.value % that.value;
+		if (result < 0) {
+			result += Math.abs(that.value);
+		}
+		assert result >= 0;
+		return new IntLitExpr(result);
+	}
+
+	public IntLitExpr rem(final IntLitExpr that) {
+		// Semantics:
+		//  5 rem  3 =  2
+		//  5 rem -3 = -2
+		// -5 rem  3 =  1
+		// -5 rem -3 = -1
+		final int thisAbs = Math.abs(this.value);
+		final int thatAbs = Math.abs(that.value);
+		if (this.value < 0 && that.value < 0) {
+			int result = thisAbs % thatAbs;
+			if (result != 0) {
+				result -= thatAbs;
+			}
+			return new IntLitExpr(result);
+		} else if (this.value >= 0 && that.value < 0) {
+			return new IntLitExpr(-(thisAbs % thatAbs));
+		} else if (this.value < 0 && that.value >= 0) {
+			int result = thisAbs % thatAbs;
+			if (result != 0) {
+				result = thatAbs - result;
+			}
+			return new IntLitExpr(result);
+		} else {
+			return new IntLitExpr(this.value % that.value);
+		}
 	}
 
 	public BoolLitExpr eq(final IntLitExpr that) {

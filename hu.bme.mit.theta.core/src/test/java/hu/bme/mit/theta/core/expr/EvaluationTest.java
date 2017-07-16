@@ -22,6 +22,7 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Mod;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Mul;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Neg;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Neq;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Rem;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Sub;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.ToRat;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Add;
@@ -207,9 +208,32 @@ public class EvaluationTest {
 
 	@Test
 	public void testMod() {
-		assertEquals(Int(2), evaluate(Mod(Int(5), Int(3))));
 		assertEquals(Int(2), evaluate(Mod(Int(2), Int(3))));
-		assertEquals(Int(-2), evaluate(Mod(Int(-5), Int(3))));
+
+		assertEquals(Int(2), evaluate(Mod(Int(5), Int(3))));
+		assertEquals(Int(1), evaluate(Mod(Int(-5), Int(3))));
+		assertEquals(Int(2), evaluate(Mod(Int(5), Int(-3))));
+		assertEquals(Int(1), evaluate(Mod(Int(-5), Int(-3))));
+
+		assertEquals(Int(0), evaluate(Mod(Int(3), Int(-3))));
+		assertEquals(Int(0), evaluate(Mod(Int(-3), Int(-3))));
+		assertEquals(Int(0), evaluate(Mod(Int(-3), Int(3))));
+		assertEquals(Int(0), evaluate(Mod(Int(3), Int(3))));
+	}
+
+	@Test
+	public void testRem() {
+		assertEquals(Int(2), evaluate(Rem(Int(2), Int(3))));
+
+		assertEquals(Int(2), evaluate(Rem(Int(5), Int(3))));
+		assertEquals(Int(1), evaluate(Rem(Int(-5), Int(3))));
+		assertEquals(Int(-2), evaluate(Rem(Int(5), Int(-3))));
+		assertEquals(Int(-1), evaluate(Rem(Int(-5), Int(-3))));
+
+		assertEquals(Int(0), evaluate(Rem(Int(3), Int(-3))));
+		assertEquals(Int(0), evaluate(Rem(Int(-3), Int(-3))));
+		assertEquals(Int(0), evaluate(Rem(Int(-3), Int(3))));
+		assertEquals(Int(0), evaluate(Rem(Int(3), Int(3))));
 	}
 
 	// rattype

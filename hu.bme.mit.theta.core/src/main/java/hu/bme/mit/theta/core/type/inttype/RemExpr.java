@@ -23,8 +23,9 @@ public final class RemExpr extends BinaryExpr<IntType, IntType> {
 
 	@Override
 	public IntLitExpr eval(final Valuation val) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		final IntLitExpr leftOpVal = (IntLitExpr) getLeftOp().eval(val);
+		final IntLitExpr rightOpVal = (IntLitExpr) getRightOp().eval(val);
+		return leftOpVal.rem(rightOpVal);
 	}
 
 	@Override
