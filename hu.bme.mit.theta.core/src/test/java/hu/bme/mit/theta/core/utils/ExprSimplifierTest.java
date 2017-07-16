@@ -21,6 +21,7 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Leq;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Lt;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Mul;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Neg;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Neq;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Sub;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Add;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Div;
@@ -31,6 +32,7 @@ import static hu.bme.mit.theta.core.type.rattype.RatExprs.Leq;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Lt;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Mul;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Neg;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Neq;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Sub;
 import static hu.bme.mit.theta.core.utils.ExprUtils.simplify;
@@ -118,6 +120,16 @@ public class ExprSimplifierTest {
 	}
 
 	@Test
+	public void testNeq() {
+		assertEquals(False(), simplify(Neq(Int(2), Int(2))));
+		assertEquals(True(), simplify(Neq(Int(2), Int(-2))));
+		assertEquals(False(), simplify(Neq(Rat(1, 2), Rat(1, 2))));
+		assertEquals(True(), simplify(Neq(Rat(1, 2), Rat(-1, 2))));
+		assertEquals(False(), simplify(Neq(a, a)));
+		assertEquals(Neq(a, b), simplify(Neq(a, b)));
+	}
+
+	@Test
 	public void testGeq() {
 		assertEquals(True(), simplify(Geq(Rat(8, 4), Rat(2, 1))));
 		assertEquals(True(), simplify(Geq(Rat(3, 4), Rat(2, 3))));
@@ -175,6 +187,8 @@ public class ExprSimplifierTest {
 		assertEquals(Rat(-1, 2), simplify(Neg(Neg(Neg(Neg(Neg(Rat(1, 2))))))));
 		assertEquals(Int(182), simplify(Neg(Neg(Neg(Neg(Int(182)))))));
 		assertEquals(Int(-182), simplify(Neg(Neg(Neg(Neg(Neg(Int(182))))))));
+		assertEquals(a, simplify(Neg(Neg(Neg(Neg(a))))));
+		assertEquals(Neg(a), simplify(Neg(Neg(Neg(Neg(Neg(a)))))));
 	}
 
 	@Test
