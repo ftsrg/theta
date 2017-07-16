@@ -29,6 +29,7 @@ import hu.bme.mit.theta.core.type.booltype.ImplyExpr;
 import hu.bme.mit.theta.core.type.booltype.NotExpr;
 import hu.bme.mit.theta.core.type.booltype.OrExpr;
 import hu.bme.mit.theta.core.type.booltype.TrueExpr;
+import hu.bme.mit.theta.core.type.booltype.XorExpr;
 import hu.bme.mit.theta.core.type.inttype.IntAddExpr;
 import hu.bme.mit.theta.core.type.inttype.IntDivExpr;
 import hu.bme.mit.theta.core.type.inttype.IntEqExpr;
@@ -75,6 +76,8 @@ public final class ExprSimplifier {
 				.addCase(ImplyExpr.class, this::simplifyImply)
 
 				.addCase(IffExpr.class, this::simplifyIff)
+
+				.addCase(XorExpr.class, this::simplifyXor)
 
 				.addCase(AndExpr.class, this::simplifyAnd)
 
@@ -260,6 +263,33 @@ public final class ExprSimplifier {
 			return simplify(Not(rightOp));
 		} else if (rightOp instanceof FalseExpr) {
 			return simplify(Not(leftOp));
+		}
+
+		return expr.with(leftOp, rightOp);
+	}
+
+	private Expr<BoolType> simplifyXor(final XorExpr expr) {
+		final Expr<BoolType> leftOp = simplify(expr.getLeftOp());
+		final Expr<BoolType> rightOp = simplify(expr.getRightOp());
+
+		if (leftOp instanceof BoolLitExpr && rightOp instanceof BoolLitExpr) {
+			final boolean leftValue = ((BoolLitExpr) leftOp).getValue();
+			final boolean rightValue = ((BoolLitExpr) rightOp).getValue();
+			return Bool(leftValue != rightValue);
+		} else if (leftOp instanceof RefExpr && rightOp instanceof RefExpr) {
+			if (leftOp.equals(rightOp)) {
+				return False();
+			}
+		}
+
+		if (leftOp instanceof TrueExpr) {
+			return simplify(Not(rightOp));
+		} else if (rightOp instanceof TrueExpr) {
+			return simplify(Not(leftOp));
+		} else if (leftOp instanceof FalseExpr) {
+			return rightOp;
+		} else if (rightOp instanceof FalseExpr) {
+			return leftOp;
 		}
 
 		return expr.with(leftOp, rightOp);

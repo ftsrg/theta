@@ -10,6 +10,7 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Imply;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Xor;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Add;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Div;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
@@ -94,6 +95,16 @@ public class ExprSimplifierTest {
 		assertEquals(x, simplify(Iff(x, True())));
 		assertEquals(x, simplify(Iff(True(), x)));
 		assertEquals(Not(x), simplify(Iff(x, False())));
+		assertEquals(True(), simplify(Iff(x, x)));
+	}
+
+	@Test
+	public void testXor() {
+		assertEquals(x, simplify(Xor(False(), x)));
+		assertEquals(Not(x), simplify(Xor(x, True())));
+		assertEquals(Not(x), simplify(Xor(True(), x)));
+		assertEquals(x, simplify(Xor(x, False())));
+		assertEquals(False(), simplify(Xor(x, x)));
 	}
 
 	@Test
