@@ -19,23 +19,16 @@ public final class SolverUtils {
 	private SolverUtils() {
 	}
 
-	public static <S extends Solver, R> R using(final S solver, final Function<? super S, ? extends R> function) {
-		solver.push();
-		final R result = function.apply(solver);
-		solver.pop();
-		return result;
-	}
-
 	public static boolean entails(final Solver solver, final Iterable<? extends Expr<BoolType>> antecedents,
 			final Iterable<? extends Expr<BoolType>> consequents) {
 		checkNotNull(solver);
 		checkNotNull(antecedents);
 		checkNotNull(consequents);
-		return using(solver, s -> {
-			antecedents.forEach(antecedent -> s.add(antecedent));
-			consequents.forEach(consequent -> s.add(Not(consequent)));
-			return s.check().isUnsat();
-		});
+		try (WithPushPop wpp = new WithPushPop(solver)) {
+			antecedents.forEach(antecedent -> solver.add(antecedent));
+			consequents.forEach(consequent -> solver.add(Not(consequent)));
+			return solver.check().isUnsat();
+		}
 	}
 
 	public static Stream<Model> models(final SolverFactory factory, final Expr<BoolType> expr) {

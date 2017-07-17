@@ -12,6 +12,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.core.utils.PathUtils;
 import hu.bme.mit.theta.solver.Solver;
+import hu.bme.mit.theta.solver.utils.WithPushPop;
 
 public class ExplStatePredicate implements Predicate<ExplState> {
 
@@ -32,11 +33,10 @@ public class ExplStatePredicate implements Predicate<ExplState> {
 		if (simplified.equals(False())) {
 			return false;
 		}
-		solver.push();
-		solver.add(PathUtils.unfold(simplified, 0));
-		final boolean result = solver.check().isSat();
-		solver.pop();
-		return result;
+		try (WithPushPop wpp = new WithPushPop(solver)) {
+			solver.add(PathUtils.unfold(simplified, 0));
+			return solver.check().isSat();
+		}
 	}
 
 	@Override
