@@ -33,8 +33,9 @@ import hu.bme.mit.theta.tools.sts.StsConfigurationBuilder.InitPrec;
  * A command line interface for running a CEGAR configuration on an STS.
  */
 public class StsMain {
-	String[] args;
-	TableWriter tableWriter;
+	private static final String JAR_NAME = "theta-sts.jar";
+	private final String[] args;
+	private final TableWriter tableWriter;
 
 	@Parameter(names = { "-m", "--model" }, description = "Path of the input model", required = true)
 	String model;
@@ -66,7 +67,7 @@ public class StsMain {
 	@Parameter(names = { "-bm", "--benchmark" }, description = "Benchmark mode (only print metrics)")
 	Boolean benchmarkMode = false;
 
-	Logger logger;
+	private Logger logger;
 
 	public StsMain(final String[] args) {
 		this.args = args;
@@ -85,7 +86,7 @@ public class StsMain {
 		}
 		try {
 			final JCommander cmd = JCommander.newBuilder().addObject(this).build();
-			cmd.setProgramName("theta-sts.jar");
+			cmd.setProgramName(JAR_NAME);
 			cmd.parse(args);
 			logger = benchmarkMode ? NullLogger.getInstance() : new ConsoleLogger(logLevel);
 		} catch (final ParameterException ex) {
