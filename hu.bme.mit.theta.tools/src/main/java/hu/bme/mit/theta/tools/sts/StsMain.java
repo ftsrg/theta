@@ -7,6 +7,7 @@ import java.io.InputStream;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
+import com.beust.jcommander.ParametersDelegate;
 
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
@@ -22,11 +23,8 @@ import hu.bme.mit.theta.formalism.sts.StsUtils;
 import hu.bme.mit.theta.formalism.sts.dsl.StsDslManager;
 import hu.bme.mit.theta.formalism.sts.dsl.StsSpec;
 import hu.bme.mit.theta.frontend.aiger.impl.AigerParserSimple;
+import hu.bme.mit.theta.tools.CegarParams;
 import hu.bme.mit.theta.tools.Configuration;
-import hu.bme.mit.theta.tools.ConfigurationBuilder.Domain;
-import hu.bme.mit.theta.tools.ConfigurationBuilder.PredSplit;
-import hu.bme.mit.theta.tools.ConfigurationBuilder.Refinement;
-import hu.bme.mit.theta.tools.ConfigurationBuilder.Search;
 import hu.bme.mit.theta.tools.sts.StsConfigurationBuilder.InitPrec;
 
 /**
@@ -37,26 +35,17 @@ public class StsMain {
 	private final String[] args;
 	private final TableWriter writer;
 
+	@ParametersDelegate
+	CegarParams cegarParams = new CegarParams();
+
 	@Parameter(names = { "-m", "--model" }, description = "Path of the input model", required = true)
 	String model;
 
 	@Parameter(names = { "-p", "--property" }, description = "Property to be verified", required = true)
 	String property;
 
-	@Parameter(names = { "-d", "--domain" }, description = "Abstract domain", required = true)
-	Domain domain;
-
-	@Parameter(names = { "-r", "--refinement" }, description = "Refinement strategy", required = true)
-	Refinement refinement;
-
 	@Parameter(names = { "-i", "--initprec" }, description = "Initial precision")
 	InitPrec initPrec = InitPrec.EMPTY;
-
-	@Parameter(names = { "-s", "--search" }, description = "Search strategy")
-	Search search = Search.BFS;
-
-	@Parameter(names = { "-ps", "--predsplit" }, description = "Predicate splitting")
-	PredSplit predSplit = PredSplit.WHOLE;
 
 	@Parameter(names = { "-e", "--expected" }, description = "Expected result", arity = 1)
 	Boolean expected;
@@ -133,8 +122,8 @@ public class StsMain {
 	}
 
 	private Configuration<?, ?, ?> buildConfiguration(final STS sts) {
-		return new StsConfigurationBuilder(domain, refinement).initPrec(initPrec).search(search).predSplit(predSplit)
-				.logger(logger).build(sts);
+		return new StsConfigurationBuilder(cegarParams.getDomain(), cegarParams.getRefinement()).initPrec(initPrec)
+				.search(cegarParams.getSearch()).predSplit(cegarParams.getPredSplit()).logger(logger).build(sts);
 	}
 
 	private void checkResult(final SafetyResult<?, ?> status) throws Exception {
