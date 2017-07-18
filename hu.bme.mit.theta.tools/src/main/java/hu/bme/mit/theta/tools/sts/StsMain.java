@@ -35,7 +35,7 @@ import hu.bme.mit.theta.tools.sts.StsConfigurationBuilder.InitPrec;
 public class StsMain {
 	private static final String JAR_NAME = "theta-sts.jar";
 	private final String[] args;
-	private final TableWriter tableWriter;
+	private final TableWriter writer;
 
 	@Parameter(names = { "-m", "--model" }, description = "Path of the input model", required = true)
 	String model;
@@ -67,11 +67,14 @@ public class StsMain {
 	@Parameter(names = { "-bm", "--benchmark" }, description = "Benchmark mode (only print metrics)")
 	Boolean benchmarkMode = false;
 
+	@Parameter(names = { "--header" }, description = "Print only a header (for benchmarks)", help = true)
+	boolean headerOnly = false;
+
 	private Logger logger;
 
 	public StsMain(final String[] args) {
 		this.args = args;
-		tableWriter = new SimpleTableWriter(System.out, ",", "\"", "\"");
+		writer = new SimpleTableWriter(System.out, ",", "\"", "\"");
 	}
 
 	public static void main(final String[] args) {
@@ -80,20 +83,20 @@ public class StsMain {
 	}
 
 	private void run() {
-		if (calledWithHeaderArg()) {
-			printHeader();
-			return;
-		}
 		try {
-			final JCommander cmd = JCommander.newBuilder().addObject(this).build();
-			cmd.setProgramName(JAR_NAME);
-			cmd.parse(args);
+			JCommander.newBuilder().addObject(this).programName(JAR_NAME).build().parse(args);
 			logger = benchmarkMode ? NullLogger.getInstance() : new ConsoleLogger(logLevel);
 		} catch (final ParameterException ex) {
 			System.out.println(ex.getMessage());
 			ex.usage();
 			return;
 		}
+
+		if (headerOnly) {
+			printHeader();
+			return;
+		}
+
 		try {
 			final STS sts = loadModel();
 			final Configuration<?, ?, ?> configuration = buildConfiguration(sts);
@@ -104,21 +107,17 @@ public class StsMain {
 			printError(ex);
 		}
 		if (benchmarkMode) {
-			tableWriter.newRow();
+			writer.newRow();
 		}
-	}
-
-	private boolean calledWithHeaderArg() {
-		return args.length == 1 && "--header".equals(args[0]);
 	}
 
 	private void printHeader() {
 		final String[] header = new String[] { "Result", "TimeMs", "Iterations", "ArgSize", "ArgDepth",
 				"ArgMeanBranchFactor", "CexLen", "Vars", "Size" };
 		for (final String str : header) {
-			tableWriter.cell(str);
+			writer.cell(str);
 		}
-		tableWriter.newRow();
+		writer.newRow();
 	}
 
 	private STS loadModel() throws IOException {
@@ -147,26 +146,26 @@ public class StsMain {
 	private void printResult(final SafetyResult<?, ?> status, final STS sts) {
 		final CegarStatistics stats = (CegarStatistics) status.getStats().get();
 		if (benchmarkMode) {
-			tableWriter.cell(status.isSafe());
-			tableWriter.cell(stats.getElapsedMillis());
-			tableWriter.cell(stats.getIterations());
-			tableWriter.cell(status.getArg().size());
-			tableWriter.cell(status.getArg().getDepth());
-			tableWriter.cell(status.getArg().getMeanBranchingFactor());
+			writer.cell(status.isSafe());
+			writer.cell(stats.getElapsedMillis());
+			writer.cell(stats.getIterations());
+			writer.cell(status.getArg().size());
+			writer.cell(status.getArg().getDepth());
+			writer.cell(status.getArg().getMeanBranchingFactor());
 			if (status.isUnsafe()) {
-				tableWriter.cell(status.asUnsafe().getTrace().length() + "");
+				writer.cell(status.asUnsafe().getTrace().length() + "");
 			} else {
-				tableWriter.cell("");
+				writer.cell("");
 			}
-			tableWriter.cell(sts.getVars().size());
-			tableWriter.cell(ExprUtils.nodeCountSize(BoolExprs.And(sts.getInit(), sts.getTrans())));
+			writer.cell(sts.getVars().size());
+			writer.cell(ExprUtils.nodeCountSize(BoolExprs.And(sts.getInit(), sts.getTrans())));
 		}
 	}
 
 	private void printError(final Throwable ex) {
 		final String message = ex.getMessage() == null ? "" : ": " + ex.getMessage();
 		if (benchmarkMode) {
-			tableWriter.cell("[EX] " + ex.getClass().getSimpleName() + message);
+			writer.cell("[EX] " + ex.getClass().getSimpleName() + message);
 		} else {
 			logger.writeln("Exception occured: " + ex.getClass().getSimpleName(), 0);
 			logger.writeln("Message: " + ex.getMessage(), 0, 1);

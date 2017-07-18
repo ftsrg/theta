@@ -41,6 +41,9 @@ public final class XtaMain {
 	@Parameter(names = { "-bm", "--benchmark" }, description = "Benchmark mode (only print metrics)")
 	Boolean benchmarkMode = false;
 
+	@Parameter(names = { "--header" }, description = "Print only a header (for benchmarks)", help = true)
+	boolean headerOnly = false;
+
 	private static enum Algorithm {
 
 		SEQITP {
@@ -118,17 +121,16 @@ public final class XtaMain {
 	}
 
 	private void run() {
-		if (calledWithHeaderArg()) {
-			printHeader();
-			return;
-		}
 		try {
-			final JCommander cmd = JCommander.newBuilder().addObject(this).build();
-			cmd.setProgramName(JAR_NAME);
-			cmd.parse(args);
+			JCommander.newBuilder().addObject(this).programName(JAR_NAME).build().parse(args);
 		} catch (final ParameterException ex) {
 			System.out.println(ex.getMessage());
 			ex.usage();
+			return;
+		}
+
+		if (headerOnly) {
+			printHeader();
 			return;
 		}
 
@@ -143,10 +145,6 @@ public final class XtaMain {
 		if (benchmarkMode) {
 			writer.newRow();
 		}
-	}
-
-	private boolean calledWithHeaderArg() {
-		return args.length == 1 && "--header".equals(args[0]);
 	}
 
 	private void printHeader() {
