@@ -20,6 +20,7 @@ import hu.bme.mit.theta.solver.Interpolant;
 import hu.bme.mit.theta.solver.ItpMarker;
 import hu.bme.mit.theta.solver.ItpPattern;
 import hu.bme.mit.theta.solver.ItpSolver;
+import hu.bme.mit.theta.solver.utils.WithPushPop;
 
 /**
  * An ExprTraceChecker that generates a sequence interpolant by checking the
@@ -47,50 +48,45 @@ public final class ExprTraceSeqItpChecker implements ExprTraceChecker<ItpRefutat
 		checkNotNull(trace);
 		final int stateCount = trace.getStates().size();
 
-		solver.push();
-		final List<ItpMarker> markers = new ArrayList<>(stateCount + 1);
-		for (int i = 0; i < stateCount + 1; ++i) {
-			markers.add(solver.createMarker());
-		}
-		final ItpPattern pattern = solver.createSeqPattern(markers);
-
-		final List<VarIndexing> indexings = new ArrayList<>(stateCount);
-		indexings.add(VarIndexing.all(0));
-
-		solver.add(markers.get(0), PathUtils.unfold(init, indexings.get(0)));
-		solver.add(markers.get(0), PathUtils.unfold(trace.getState(0).toExpr(), indexings.get(0)));
-		assert solver.check().isSat() : "Initial state of the trace is not feasible";
-
-		for (int i = 1; i < stateCount; ++i) {
-			indexings.add(indexings.get(i - 1).add(trace.getAction(i - 1).nextIndexing()));
-			solver.add(markers.get(i), PathUtils.unfold(trace.getState(i).toExpr(), indexings.get(i)));
-			solver.add(markers.get(i), PathUtils.unfold(trace.getAction(i - 1).toExpr(), indexings.get(i - 1)));
-		}
-
-		solver.add(markers.get(trace.getStates().size()), PathUtils.unfold(target, indexings.get(stateCount - 1)));
-		final boolean concretizable = solver.check().isSat();
-
-		ExprTraceStatus<ItpRefutation> status = null;
-
-		if (concretizable) {
-			final Model model = solver.getModel();
-			final ImmutableList.Builder<Valuation> builder = ImmutableList.builder();
-			for (final VarIndexing indexing : indexings) {
-				builder.add(PathUtils.extractValuation(model, indexing));
+		try (WithPushPop wpp = new WithPushPop(solver)) {
+			final List<ItpMarker> markers = new ArrayList<>(stateCount + 1);
+			for (int i = 0; i < stateCount + 1; ++i) {
+				markers.add(solver.createMarker());
 			}
-			status = ExprTraceStatus.feasible(Trace.of(builder.build(), trace.getActions()));
-		} else {
-			final List<Expr<BoolType>> interpolants = new ArrayList<>();
-			final Interpolant interpolant = solver.getInterpolant(pattern);
-			for (int i = 0; i < markers.size() - 1; ++i) {
-				interpolants.add(PathUtils.foldin(interpolant.eval(markers.get(i)), indexings.get(i)));
-			}
-			status = ExprTraceStatus.infeasible(ItpRefutation.sequence(interpolants));
-		}
-		assert status != null;
-		solver.pop();
+			final ItpPattern pattern = solver.createSeqPattern(markers);
 
-		return status;
+			final List<VarIndexing> indexings = new ArrayList<>(stateCount);
+			indexings.add(VarIndexing.all(0));
+
+			solver.add(markers.get(0), PathUtils.unfold(init, indexings.get(0)));
+			solver.add(markers.get(0), PathUtils.unfold(trace.getState(0).toExpr(), indexings.get(0)));
+			assert solver.check().isSat() : "Initial state of the trace is not feasible";
+
+			for (int i = 1; i < stateCount; ++i) {
+				indexings.add(indexings.get(i - 1).add(trace.getAction(i - 1).nextIndexing()));
+				solver.add(markers.get(i), PathUtils.unfold(trace.getState(i).toExpr(), indexings.get(i)));
+				solver.add(markers.get(i), PathUtils.unfold(trace.getAction(i - 1).toExpr(), indexings.get(i - 1)));
+			}
+
+			solver.add(markers.get(trace.getStates().size()), PathUtils.unfold(target, indexings.get(stateCount - 1)));
+			final boolean concretizable = solver.check().isSat();
+
+			if (concretizable) {
+				final Model model = solver.getModel();
+				final ImmutableList.Builder<Valuation> builder = ImmutableList.builder();
+				for (final VarIndexing indexing : indexings) {
+					builder.add(PathUtils.extractValuation(model, indexing));
+				}
+				return ExprTraceStatus.feasible(Trace.of(builder.build(), trace.getActions()));
+			} else {
+				final List<Expr<BoolType>> interpolants = new ArrayList<>();
+				final Interpolant interpolant = solver.getInterpolant(pattern);
+				for (int i = 0; i < markers.size() - 1; ++i) {
+					interpolants.add(PathUtils.foldin(interpolant.eval(markers.get(i)), indexings.get(i)));
+				}
+				return ExprTraceStatus.infeasible(ItpRefutation.sequence(interpolants));
+			}
+		}
 	}
 
 	@Override

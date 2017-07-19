@@ -23,6 +23,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.core.utils.PathUtils;
 import hu.bme.mit.theta.solver.Solver;
+import hu.bme.mit.theta.solver.utils.WithPushPop;
 
 /**
  * Represents an immutable, simple predicate precision that is a set of
@@ -85,15 +86,15 @@ public final class SimplePredPrec implements PredPrec {
 			} else {
 				final Expr<BoolType> simplified0 = PathUtils.unfold(simplified, 0);
 
-				solver.push();
-				solver.add(Not(simplified0));
-				final boolean ponValid = solver.check().isUnsat();
-				solver.pop();
-
-				solver.push();
-				solver.add(simplified0);
-				final boolean negValid = solver.check().isUnsat();
-				solver.pop();
+				boolean ponValid, negValid;
+				try (WithPushPop wpp = new WithPushPop(solver)) {
+					solver.add(Not(simplified0));
+					ponValid = solver.check().isUnsat();
+				}
+				try (WithPushPop wpp = new WithPushPop(solver)) {
+					solver.add(simplified0);
+					negValid = solver.check().isUnsat();
+				}
 
 				assert !(ponValid && negValid) : "Ponated and negated predicates are both valid";
 				if (ponValid) {

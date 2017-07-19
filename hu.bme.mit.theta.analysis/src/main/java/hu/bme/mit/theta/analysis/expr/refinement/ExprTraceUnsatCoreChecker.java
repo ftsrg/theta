@@ -20,6 +20,7 @@ import hu.bme.mit.theta.core.utils.IndexedVars;
 import hu.bme.mit.theta.core.utils.PathUtils;
 import hu.bme.mit.theta.core.utils.VarIndexing;
 import hu.bme.mit.theta.solver.Solver;
+import hu.bme.mit.theta.solver.utils.WithPushPop;
 
 /**
  * An ExprTraceChecker that generates an unsat core by checking the trace at
@@ -50,48 +51,42 @@ public final class ExprTraceUnsatCoreChecker implements ExprTraceChecker<VarsRef
 		final List<VarIndexing> indexings = new ArrayList<>(stateCount);
 		indexings.add(VarIndexing.all(0));
 
-		solver.push();
+		try (WithPushPop wpp = new WithPushPop(solver)) {
+			solver.track(ExprUtils.getConjuncts(PathUtils.unfold(init, indexings.get(0))));
+			solver.track(ExprUtils.getConjuncts(PathUtils.unfold(trace.getState(0).toExpr(), indexings.get(0))));
+			assert solver.check().isSat() : "Initial state of the trace is not feasible";
+			boolean concretizable = true;
 
-		solver.track(ExprUtils.getConjuncts(PathUtils.unfold(init, indexings.get(0))));
-		solver.track(ExprUtils.getConjuncts(PathUtils.unfold(trace.getState(0).toExpr(), indexings.get(0))));
-		assert solver.check().isSat() : "Initial state of the trace is not feasible";
-		boolean concretizable = true;
+			for (int i = 1; i < stateCount; ++i) {
+				indexings.add(indexings.get(i - 1).add(trace.getAction(i - 1).nextIndexing()));
+				solver.track(ExprUtils.getConjuncts(PathUtils.unfold(trace.getState(i).toExpr(), indexings.get(i))));
+				solver.track(ExprUtils
+						.getConjuncts(PathUtils.unfold(trace.getAction(i - 1).toExpr(), indexings.get(i - 1))));
 
-		for (int i = 1; i < stateCount; ++i) {
-			indexings.add(indexings.get(i - 1).add(trace.getAction(i - 1).nextIndexing()));
-			solver.track(ExprUtils.getConjuncts(PathUtils.unfold(trace.getState(i).toExpr(), indexings.get(i))));
-			solver.track(
-					ExprUtils.getConjuncts(PathUtils.unfold(trace.getAction(i - 1).toExpr(), indexings.get(i - 1))));
+				if (!solver.check().isSat()) {
+					concretizable = false;
+					break;
+				}
+			}
 
-			if (!solver.check().isSat()) {
-				concretizable = false;
-				break;
+			if (concretizable) {
+				solver.track(ExprUtils.getConjuncts(PathUtils.unfold(target, indexings.get(stateCount - 1))));
+				concretizable = solver.check().isSat();
+			}
+
+			if (concretizable) {
+				final Model model = solver.getModel();
+				final ImmutableList.Builder<Valuation> builder = ImmutableList.builder();
+				for (final VarIndexing indexing : indexings) {
+					builder.add(PathUtils.extractValuation(model, indexing));
+				}
+				return ExprTraceStatus.feasible(Trace.of(builder.build(), trace.getActions()));
+			} else {
+				final Collection<Expr<BoolType>> unsatCore = solver.getUnsatCore();
+				final IndexedVars indexedVars = ExprUtils.getVarsIndexed(unsatCore);
+				return ExprTraceStatus.infeasible(VarsRefutation.create(indexedVars));
 			}
 		}
-
-		if (concretizable) {
-			solver.track(ExprUtils.getConjuncts(PathUtils.unfold(target, indexings.get(stateCount - 1))));
-			concretizable = solver.check().isSat();
-		}
-
-		ExprTraceStatus<VarsRefutation> status = null;
-
-		if (concretizable) {
-			final Model model = solver.getModel();
-			final ImmutableList.Builder<Valuation> builder = ImmutableList.builder();
-			for (final VarIndexing indexing : indexings) {
-				builder.add(PathUtils.extractValuation(model, indexing));
-			}
-			status = ExprTraceStatus.feasible(Trace.of(builder.build(), trace.getActions()));
-		} else {
-			final Collection<Expr<BoolType>> unsatCore = solver.getUnsatCore();
-			final IndexedVars indexedVars = ExprUtils.getVarsIndexed(unsatCore);
-			status = ExprTraceStatus.infeasible(VarsRefutation.create(indexedVars));
-		}
-		assert status != null;
-		solver.pop();
-
-		return status;
 	}
 
 	@Override

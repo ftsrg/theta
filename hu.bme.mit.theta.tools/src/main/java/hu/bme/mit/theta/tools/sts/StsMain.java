@@ -3,16 +3,11 @@ package hu.bme.mit.theta.tools.sts;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Optional;
-import java.util.StringJoiner;
 
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.DefaultParser;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Option;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
+import com.beust.jcommander.JCommander;
+import com.beust.jcommander.Parameter;
+import com.beust.jcommander.ParameterException;
+import com.beust.jcommander.ParametersDelegate;
 
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
@@ -28,11 +23,8 @@ import hu.bme.mit.theta.formalism.sts.StsUtils;
 import hu.bme.mit.theta.formalism.sts.dsl.StsDslManager;
 import hu.bme.mit.theta.formalism.sts.dsl.StsSpec;
 import hu.bme.mit.theta.frontend.aiger.impl.AigerParserSimple;
+import hu.bme.mit.theta.tools.CegarParams;
 import hu.bme.mit.theta.tools.Configuration;
-import hu.bme.mit.theta.tools.ConfigurationBuilder.Domain;
-import hu.bme.mit.theta.tools.ConfigurationBuilder.PredSplit;
-import hu.bme.mit.theta.tools.ConfigurationBuilder.Refinement;
-import hu.bme.mit.theta.tools.ConfigurationBuilder.Search;
 import hu.bme.mit.theta.tools.sts.StsConfigurationBuilder.InitPrec;
 
 /**
@@ -40,26 +32,38 @@ import hu.bme.mit.theta.tools.sts.StsConfigurationBuilder.InitPrec;
  */
 public class StsMain {
 	private static final String JAR_NAME = "theta-sts.jar";
-
 	private final String[] args;
-	private final TableWriter tableWriter;
-	private final Options options;
+	private final TableWriter writer;
 
-	private String model;
-	private String prop;
-	private Domain domain;
-	private Refinement refinement;
-	private InitPrec initPrec;
-	private Search search;
-	private Optional<Boolean> expected;
-	private PredSplit predSplit;
-	private boolean benchmarkMode;
+	@ParametersDelegate
+	CegarParams cegarParams = new CegarParams();
+
+	@Parameter(names = { "-m", "--model" }, description = "Path of the input model", required = true)
+	String model;
+
+	@Parameter(names = { "-p", "--property" }, description = "Property to be verified", required = true)
+	String property;
+
+	@Parameter(names = { "-i", "--initprec" }, description = "Initial precision")
+	InitPrec initPrec = InitPrec.EMPTY;
+
+	@Parameter(names = { "-e", "--expected" }, description = "Expected result", arity = 1)
+	Boolean expected;
+
+	@Parameter(names = { "-ll", "--loglevel" }, description = "Detailedness of logging")
+	Integer logLevel = 1;
+
+	@Parameter(names = { "-bm", "--benchmark" }, description = "Benchmark mode (only print metrics)")
+	Boolean benchmarkMode = false;
+
+	@Parameter(names = { "--header" }, description = "Print only a header (for benchmarks)", help = true)
+	boolean headerOnly = false;
+
 	private Logger logger;
 
 	public StsMain(final String[] args) {
 		this.args = args;
-		tableWriter = new SimpleTableWriter(System.out, ",", "\"", "\"");
-		options = new Options();
+		writer = new SimpleTableWriter(System.out, ",", "\"", "\"");
 	}
 
 	public static void main(final String[] args) {
@@ -68,15 +72,17 @@ public class StsMain {
 	}
 
 	private void run() {
-		if (calledWithHeaderArg()) {
-			printHeader();
+		try {
+			JCommander.newBuilder().addObject(this).programName(JAR_NAME).build().parse(args);
+			logger = benchmarkMode ? NullLogger.getInstance() : new ConsoleLogger(logLevel);
+		} catch (final ParameterException ex) {
+			System.out.println(ex.getMessage());
+			ex.usage();
 			return;
 		}
 
-		try {
-			parseArgs();
-		} catch (final ParseException e) {
-			new HelpFormatter().printHelp(JAR_NAME, options, true);
+		if (headerOnly) {
+			printHeader();
 			return;
 		}
 
@@ -90,81 +96,17 @@ public class StsMain {
 			printError(ex);
 		}
 		if (benchmarkMode) {
-			tableWriter.newRow();
+			writer.newRow();
 		}
-	}
-
-	private boolean calledWithHeaderArg() {
-		return args.length == 1 && "--header".equals(args[0]);
 	}
 
 	private void printHeader() {
 		final String[] header = new String[] { "Result", "TimeMs", "Iterations", "ArgSize", "ArgDepth",
 				"ArgMeanBranchFactor", "CexLen", "Vars", "Size" };
 		for (final String str : header) {
-			tableWriter.cell(str);
+			writer.cell(str);
 		}
-		tableWriter.newRow();
-	}
-
-	private void parseArgs() throws ParseException {
-		final Option optModel = Option.builder("m").longOpt("model").hasArg().argName("MODEL").type(String.class)
-				.desc("Path of the input model").required().build();
-		options.addOption(optModel);
-
-		final Option optProp = Option.builder("p").longOpt("property").hasArg().argName("PROPERTY").type(String.class)
-				.desc("Property to be verified").build();
-		options.addOption(optProp);
-
-		final Option optDomain = Option.builder("d").longOpt("domain").hasArg().argName(optionsFor(Domain.values()))
-				.type(Domain.class).desc("Abstract domain").required().build();
-		options.addOption(optDomain);
-
-		final Option optRefinement = Option.builder("r").longOpt("refinement").hasArg()
-				.argName(optionsFor(Refinement.values())).type(Refinement.class).desc("Refinement strategy").required()
-				.build();
-		options.addOption(optRefinement);
-
-		final Option optInitPrec = Option.builder("i").longOpt("initprec").hasArg()
-				.argName(optionsFor(InitPrec.values())).type(InitPrec.class).desc("Initial precision").build();
-		options.addOption(optInitPrec);
-
-		final Option optSearch = Option.builder("s").longOpt("search").hasArg().argName(optionsFor(Search.values()))
-				.type(Search.class).desc("Search strategy").build();
-		options.addOption(optSearch);
-
-		final Option optPredSplit = Option.builder("ps").longOpt("predsplit").hasArg()
-				.argName(optionsFor(PredSplit.values())).type(PredSplit.class).desc("Predicate splitting").build();
-		options.addOption(optPredSplit);
-
-		final Option optExpected = Option.builder("e").longOpt("expected").hasArg().argName("true|false")
-				.type(Boolean.class).desc("Expected result (safe)").build();
-		options.addOption(optExpected);
-
-		final Option optLogLevel = Option.builder("ll").longOpt("loglevel").hasArg().argName("INT").type(Integer.class)
-				.desc("Level of logging (detailedness)").build();
-		options.addOption(optLogLevel);
-
-		final Option optBenchmark = Option.builder("bm").longOpt("benchmark")
-				.desc("Benchmark mode (only print output values)").build();
-		options.addOption(optBenchmark);
-
-		final CommandLineParser parser = new DefaultParser();
-		final CommandLine cmd = parser.parse(options, args);
-
-		// Convert string arguments to the proper values
-		model = cmd.getOptionValue(optModel.getOpt());
-		prop = cmd.getOptionValue(optProp.getOpt(), "");
-		domain = Domain.valueOf(cmd.getOptionValue(optDomain.getOpt()));
-		refinement = Refinement.valueOf(cmd.getOptionValue(optRefinement.getOpt()));
-		initPrec = InitPrec.valueOf(cmd.getOptionValue(optInitPrec.getOpt(), InitPrec.EMPTY.toString()));
-		search = Search.valueOf(cmd.getOptionValue(optSearch.getOpt(), Search.BFS.toString()));
-		expected = cmd.hasOption(optExpected.getOpt())
-				? Optional.of(Boolean.parseBoolean(cmd.getOptionValue(optExpected.getOpt()))) : Optional.empty();
-		predSplit = PredSplit.valueOf(cmd.getOptionValue(optPredSplit.getOpt(), PredSplit.WHOLE.toString()));
-		benchmarkMode = cmd.hasOption(optBenchmark.getOpt());
-		final int logLevel = Integer.parseInt(cmd.getOptionValue(optLogLevel.getOpt(), "1"));
-		logger = benchmarkMode ? NullLogger.getInstance() : new ConsoleLogger(logLevel);
+		writer.newRow();
 	}
 
 	private STS loadModel() throws IOException {
@@ -173,57 +115,49 @@ public class StsMain {
 		} else if (model.endsWith(".system")) {
 			final InputStream inputStream = new FileInputStream(model);
 			final StsSpec spec = StsDslManager.createStsSpec(inputStream);
-			return StsUtils.eliminateIte(spec.createProp(prop));
+			return StsUtils.eliminateIte(spec.createProp(property));
 		} else {
 			throw new IOException("Unknown format");
 		}
 	}
 
 	private Configuration<?, ?, ?> buildConfiguration(final STS sts) {
-		return new StsConfigurationBuilder(domain, refinement).initPrec(initPrec).search(search).predSplit(predSplit)
-				.logger(logger).build(sts);
+		return new StsConfigurationBuilder(cegarParams.getDomain(), cegarParams.getRefinement()).initPrec(initPrec)
+				.search(cegarParams.getSearch()).predSplit(cegarParams.getPredSplit()).logger(logger).build(sts);
 	}
 
 	private void checkResult(final SafetyResult<?, ?> status) throws Exception {
-		if (expected.isPresent() && !expected.get().equals(status.isSafe())) {
-			throw new Exception("Expected safe = " + expected.get() + " but was " + status.isSafe());
+		if (expected != null && !expected.equals(status.isSafe())) {
+			throw new Exception("Expected safe = " + expected + " but was " + status.isSafe());
 		}
 	}
 
 	private void printResult(final SafetyResult<?, ?> status, final STS sts) {
 		final CegarStatistics stats = (CegarStatistics) status.getStats().get();
 		if (benchmarkMode) {
-			tableWriter.cell(status.isSafe());
-			tableWriter.cell(stats.getElapsedMillis());
-			tableWriter.cell(stats.getIterations());
-			tableWriter.cell(status.getArg().size());
-			tableWriter.cell(status.getArg().getDepth());
-			tableWriter.cell(status.getArg().getMeanBranchingFactor());
+			writer.cell(status.isSafe());
+			writer.cell(stats.getElapsedMillis());
+			writer.cell(stats.getIterations());
+			writer.cell(status.getArg().size());
+			writer.cell(status.getArg().getDepth());
+			writer.cell(status.getArg().getMeanBranchingFactor());
 			if (status.isUnsafe()) {
-				tableWriter.cell(status.asUnsafe().getTrace().length() + "");
+				writer.cell(status.asUnsafe().getTrace().length() + "");
 			} else {
-				tableWriter.cell("");
+				writer.cell("");
 			}
-			tableWriter.cell(sts.getVars().size());
-			tableWriter.cell(ExprUtils.nodeCountSize(BoolExprs.And(sts.getInit(), sts.getTrans())));
+			writer.cell(sts.getVars().size());
+			writer.cell(ExprUtils.nodeCountSize(BoolExprs.And(sts.getInit(), sts.getTrans())));
 		}
 	}
 
 	private void printError(final Throwable ex) {
 		final String message = ex.getMessage() == null ? "" : ": " + ex.getMessage();
 		if (benchmarkMode) {
-			tableWriter.cell("[EX] " + ex.getClass().getSimpleName() + message);
+			writer.cell("[EX] " + ex.getClass().getSimpleName() + message);
 		} else {
 			logger.writeln("Exception occured: " + ex.getClass().getSimpleName(), 0);
 			logger.writeln("Message: " + ex.getMessage(), 0, 1);
 		}
-	}
-
-	private static String optionsFor(final Object[] objs) {
-		final StringJoiner sj = new StringJoiner("|");
-		for (final Object o : objs) {
-			sj.add(o.toString());
-		}
-		return sj.toString();
 	}
 }

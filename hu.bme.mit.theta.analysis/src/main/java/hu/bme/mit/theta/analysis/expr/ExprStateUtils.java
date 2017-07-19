@@ -3,7 +3,6 @@ package hu.bme.mit.theta.analysis.expr;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 import static hu.bme.mit.theta.core.utils.PathUtils.extractValuation;
 import static hu.bme.mit.theta.core.utils.PathUtils.unfold;
-import static hu.bme.mit.theta.solver.utils.SolverUtils.using;
 
 import java.util.Collection;
 import java.util.Optional;
@@ -13,6 +12,7 @@ import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.utils.VarIndexing;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverStatus;
+import hu.bme.mit.theta.solver.utils.WithPushPop;
 
 public final class ExprStateUtils {
 
@@ -21,14 +21,14 @@ public final class ExprStateUtils {
 
 	public static Optional<Valuation> anyUncoveredSuccessor(final ExprState state, final ExprAction action,
 			final Collection<? extends ExprState> succStates, final Solver solver) {
-		return using(solver, s -> {
+		try (WithPushPop wpp = new WithPushPop(solver)) {
 			final VarIndexing indexing = action.nextIndexing();
-			s.add(unfold(state.toExpr(), 0));
-			s.add(unfold(action.toExpr(), 0));
+			solver.add(unfold(state.toExpr(), 0));
+			solver.add(unfold(action.toExpr(), 0));
 			for (final ExprState succState : succStates) {
-				s.add(Not(unfold(succState.toExpr(), indexing)));
+				solver.add(Not(unfold(succState.toExpr(), indexing)));
 			}
-			final SolverStatus status = s.check();
+			final SolverStatus status = solver.check();
 
 			if (status.isUnsat()) {
 				return Optional.empty();
@@ -39,19 +39,19 @@ public final class ExprStateUtils {
 			} else {
 				throw new AssertionError();
 			}
-		});
+		}
 	}
 
 	public static Optional<Valuation> anyUncoveredPredecessor(final Collection<? extends ExprState> predStates,
 			final ExprAction action, final ExprState state, final Solver solver) {
-		return using(solver, s -> {
+		try (WithPushPop wpp = new WithPushPop(solver)) {
 			final VarIndexing indexing = action.nextIndexing();
 			for (final ExprState predState : predStates) {
-				s.add(Not(unfold(predState.toExpr(), 0)));
+				solver.add(Not(unfold(predState.toExpr(), 0)));
 			}
-			s.add(unfold(action.toExpr(), 0));
-			s.add(unfold(state.toExpr(), indexing));
-			final SolverStatus status = s.check();
+			solver.add(unfold(action.toExpr(), 0));
+			solver.add(unfold(state.toExpr(), indexing));
+			final SolverStatus status = solver.check();
 
 			if (status.isUnsat()) {
 				return Optional.empty();
@@ -62,6 +62,6 @@ public final class ExprStateUtils {
 			} else {
 				throw new AssertionError();
 			}
-		});
+		}
 	}
 }
