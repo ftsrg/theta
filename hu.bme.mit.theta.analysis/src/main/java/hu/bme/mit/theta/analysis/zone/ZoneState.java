@@ -149,6 +149,10 @@ public final class ZoneState implements ExprState {
 		return this.dbm.isLeq(that.dbm);
 	}
 
+	public boolean isLeq(final ZoneState that, final Collection<? extends VarDecl<RatType>> activeVars) {
+		return this.dbm.isLeq(that.dbm, activeVars);
+	}
+
 	public boolean isLeq(final ZoneState that, final BoundFunction boundFunction) {
 		return this.dbm.isLeq(that.dbm, boundFunction);
 	}
