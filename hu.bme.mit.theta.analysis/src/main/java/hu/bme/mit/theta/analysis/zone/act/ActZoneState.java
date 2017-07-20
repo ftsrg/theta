@@ -2,7 +2,7 @@ package hu.bme.mit.theta.analysis.zone.act;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.util.Collection;
+import java.util.Set;
 import java.util.StringJoiner;
 
 import com.google.common.collect.ImmutableSet;
@@ -18,7 +18,7 @@ public final class ActZoneState implements ExprState {
 	private static final int HASH_SEED = 7253;
 
 	private final ZoneState zone;
-	private final Collection<VarDecl<RatType>> activeVars;
+	private final Set<VarDecl<RatType>> activeVars;
 
 	private volatile int hashCode = 0;
 	@SuppressWarnings("unused")
@@ -37,7 +37,7 @@ public final class ActZoneState implements ExprState {
 		return zone;
 	}
 
-	public Collection<VarDecl<RatType>> getActiveVars() {
+	public Set<VarDecl<RatType>> getActiveVars() {
 		return activeVars;
 	}
 

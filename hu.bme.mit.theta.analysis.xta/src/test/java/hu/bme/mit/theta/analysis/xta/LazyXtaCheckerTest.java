@@ -18,6 +18,7 @@ import org.junit.runners.Parameterized.Parameters;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.SearchStrategy;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
+import hu.bme.mit.theta.analysis.xta.algorithm.lazy.ActStrategy;
 import hu.bme.mit.theta.analysis.xta.algorithm.lazy.BinItpStrategy;
 import hu.bme.mit.theta.analysis.xta.algorithm.lazy.ItpStrategy.ItpOperator;
 import hu.bme.mit.theta.analysis.xta.algorithm.lazy.LazyXtaChecker;
@@ -34,7 +35,7 @@ public final class LazyXtaCheckerTest {
 	public static Collection<Object[]> data() {
 		return Arrays.asList(new Object[][] {
 
-				{ "/critical-2-25-50.xta" },
+				// { "/critical-2-25-50.xta" },
 
 				{ "/csma-2.xta" },
 
@@ -90,6 +91,20 @@ public final class LazyXtaCheckerTest {
 	public void testLuStrategy() {
 		// Arrange
 		final LazyXtaChecker<?> checker = LazyXtaChecker.create(system, LuStrategy.create(system),
+				SearchStrategy.breadthFirst(), l -> false);
+
+		// Act
+		final SafetyResult<?, XtaAction> status = checker.check(UnitPrec.getInstance());
+
+		// Assert
+		assertTrue(status.isSafe());
+		System.out.println(status.getStats().get());
+	}
+
+	@Test
+	public void testActStrategy() {
+		// Arrange
+		final LazyXtaChecker<?> checker = LazyXtaChecker.create(system, ActStrategy.create(system),
 				SearchStrategy.breadthFirst(), l -> false);
 
 		// Act

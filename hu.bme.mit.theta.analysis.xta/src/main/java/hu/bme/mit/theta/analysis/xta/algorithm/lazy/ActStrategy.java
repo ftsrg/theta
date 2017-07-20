@@ -2,22 +2,38 @@ package hu.bme.mit.theta.analysis.xta.algorithm.lazy;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Set;
+
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 
 import hu.bme.mit.theta.analysis.Analysis;
+import hu.bme.mit.theta.analysis.algorithm.ArgEdge;
 import hu.bme.mit.theta.analysis.algorithm.ArgNode;
+import hu.bme.mit.theta.analysis.impl.PrecMappingAnalysis;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.analysis.xta.XtaAction;
 import hu.bme.mit.theta.analysis.xta.XtaState;
 import hu.bme.mit.theta.analysis.xta.algorithm.lazy.LazyXtaStatistics.Builder;
+import hu.bme.mit.theta.analysis.xta.zone.XtaActZoneUtils;
+import hu.bme.mit.theta.analysis.xta.zone.XtaZoneAnalysis;
+import hu.bme.mit.theta.analysis.zone.ZonePrec;
+import hu.bme.mit.theta.analysis.zone.act.ActZoneAnalysis;
 import hu.bme.mit.theta.analysis.zone.act.ActZoneState;
+import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.type.rattype.RatType;
 import hu.bme.mit.theta.formalism.xta.XtaSystem;
 
 public final class ActStrategy implements LazyXtaChecker.AlgorithmStrategy<ActZoneState> {
 
+	private final Analysis<ActZoneState, XtaAction, UnitPrec> analysis;
+
 	private ActStrategy(final XtaSystem system) {
 		checkNotNull(system);
-		// TODO Auto-generated constructor stub
+		final ZonePrec prec = ZonePrec.of(system.getClockVars());
+		analysis = PrecMappingAnalysis.create(ActZoneAnalysis.create(XtaZoneAnalysis.getInstance()), u -> prec);
 	}
 
 	public static ActStrategy create(final XtaSystem system) {
@@ -26,49 +42,93 @@ public final class ActStrategy implements LazyXtaChecker.AlgorithmStrategy<ActZo
 
 	@Override
 	public Analysis<ActZoneState, XtaAction, UnitPrec> getAnalysis() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		return analysis;
 	}
 
 	@Override
 	public boolean covers(final ArgNode<XtaState<ActZoneState>, XtaAction> nodeToCover,
 			final ArgNode<XtaState<ActZoneState>, XtaAction> coveringNode) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		return nodeToCover.getState().getState().isLeq(coveringNode.getState().getState());
 	}
 
 	@Override
 	public boolean mightCover(final ArgNode<XtaState<ActZoneState>, XtaAction> nodeToCover,
 			final ArgNode<XtaState<ActZoneState>, XtaAction> coveringNode) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		return nodeToCover.getState().getState().getZone().isLeq(coveringNode.getState().getState().getZone(),
+				coveringNode.getState().getState().getActiveVars());
 	}
 
 	@Override
 	public boolean shouldRefine(final ArgNode<XtaState<ActZoneState>, XtaAction> node) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		return node.getState().getState().getZone().isBottom();
 	}
 
 	@Override
 	public Collection<ArgNode<XtaState<ActZoneState>, XtaAction>> forceCover(
 			final ArgNode<XtaState<ActZoneState>, XtaAction> nodeToCover,
 			final ArgNode<XtaState<ActZoneState>, XtaAction> coveringNode, final Builder statistics) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+
+		final Collection<ArgNode<XtaState<ActZoneState>, XtaAction>> uncoveredNodes = new ArrayList<>();
+		final Set<VarDecl<RatType>> activeVars = coveringNode.getState().getState().getActiveVars();
+		propagateBounds(nodeToCover, activeVars, uncoveredNodes, statistics, false);
+
+		return uncoveredNodes;
 	}
 
 	@Override
 	public Collection<ArgNode<XtaState<ActZoneState>, XtaAction>> refine(
 			final ArgNode<XtaState<ActZoneState>, XtaAction> node, final Builder statistics) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+
+		final Collection<ArgNode<XtaState<ActZoneState>, XtaAction>> uncoveredNodes = new ArrayList<>();
+		final Set<VarDecl<RatType>> activeVars = ImmutableSet.of();
+		propagateBounds(node, activeVars, uncoveredNodes, statistics, true);
+
+		return uncoveredNodes;
 	}
 
 	@Override
 	public void resetState(final ArgNode<XtaState<ActZoneState>, XtaAction> node) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		final ActZoneState newLuState = node.getState().getState().withActiveVars(ImmutableSet.of());
+		node.setState(node.getState().withState(newLuState));
+	}
+
+	////
+
+	private void propagateBounds(final ArgNode<XtaState<ActZoneState>, XtaAction> node,
+			final Set<VarDecl<RatType>> activeVars,
+			final Collection<ArgNode<XtaState<ActZoneState>, XtaAction>> uncoveredNodes, final Builder statistics,
+			final boolean forcePropagate) {
+
+		final Set<VarDecl<RatType>> oldActiveVars = node.getState().getState().getActiveVars();
+
+		if (forcePropagate || !oldActiveVars.contains(activeVars)) {
+			statistics.refine();
+
+			strengthen(node, activeVars);
+			maintainCoverage(node, uncoveredNodes);
+
+			if (node.getInEdge().isPresent()) {
+				final ArgEdge<XtaState<ActZoneState>, XtaAction> inEdge = node.getInEdge().get();
+				final XtaAction action = inEdge.getAction();
+				final ArgNode<XtaState<ActZoneState>, XtaAction> parent = inEdge.getSource();
+				final Set<VarDecl<RatType>> preActiveVars = XtaActZoneUtils.pre(activeVars, action);
+				propagateBounds(parent, preActiveVars, uncoveredNodes, statistics, false);
+			}
+		}
+	}
+
+	private void strengthen(final ArgNode<XtaState<ActZoneState>, XtaAction> node,
+			final Set<VarDecl<RatType>> activeVars) {
+		final Set<VarDecl<RatType>> oldActiveVars = node.getState().getState().getActiveVars();
+		final Set<VarDecl<RatType>> newActiveVars = Sets.union(oldActiveVars, activeVars);
+		final ActZoneState newActState = node.getState().getState().withActiveVars(newActiveVars);
+		node.setState(node.getState().withState(newActState));
+	}
+
+	private void maintainCoverage(final ArgNode<XtaState<ActZoneState>, XtaAction> node,
+			final Collection<ArgNode<XtaState<ActZoneState>, XtaAction>> uncoveredNodes) {
+		node.getCoveredNodes().forEach(n -> uncoveredNodes.add(n));
+		node.clearCoveredNodes();
 	}
 
 }
