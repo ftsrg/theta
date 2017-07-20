@@ -70,7 +70,7 @@ public final class ActStrategy implements LazyXtaChecker.AlgorithmStrategy<ActZo
 
 		final Collection<ArgNode<XtaState<ActZoneState>, XtaAction>> uncoveredNodes = new ArrayList<>();
 		final Set<VarDecl<RatType>> activeVars = coveringNode.getState().getState().getActiveVars();
-		propagateBounds(nodeToCover, activeVars, uncoveredNodes, statistics, false);
+		propagateVars(nodeToCover, activeVars, uncoveredNodes, statistics, false);
 
 		return uncoveredNodes;
 	}
@@ -81,7 +81,7 @@ public final class ActStrategy implements LazyXtaChecker.AlgorithmStrategy<ActZo
 
 		final Collection<ArgNode<XtaState<ActZoneState>, XtaAction>> uncoveredNodes = new ArrayList<>();
 		final Set<VarDecl<RatType>> activeVars = ImmutableSet.of();
-		propagateBounds(node, activeVars, uncoveredNodes, statistics, true);
+		propagateVars(node, activeVars, uncoveredNodes, statistics, true);
 
 		return uncoveredNodes;
 	}
@@ -94,14 +94,14 @@ public final class ActStrategy implements LazyXtaChecker.AlgorithmStrategy<ActZo
 
 	////
 
-	private void propagateBounds(final ArgNode<XtaState<ActZoneState>, XtaAction> node,
+	private void propagateVars(final ArgNode<XtaState<ActZoneState>, XtaAction> node,
 			final Set<VarDecl<RatType>> activeVars,
 			final Collection<ArgNode<XtaState<ActZoneState>, XtaAction>> uncoveredNodes, final Builder statistics,
 			final boolean forcePropagate) {
 
 		final Set<VarDecl<RatType>> oldActiveVars = node.getState().getState().getActiveVars();
 
-		if (forcePropagate || !oldActiveVars.contains(activeVars)) {
+		if (forcePropagate || !oldActiveVars.containsAll(activeVars)) {
 			statistics.refine();
 
 			strengthen(node, activeVars);
@@ -112,7 +112,7 @@ public final class ActStrategy implements LazyXtaChecker.AlgorithmStrategy<ActZo
 				final XtaAction action = inEdge.getAction();
 				final ArgNode<XtaState<ActZoneState>, XtaAction> parent = inEdge.getSource();
 				final Set<VarDecl<RatType>> preActiveVars = XtaActZoneUtils.pre(activeVars, action);
-				propagateBounds(parent, preActiveVars, uncoveredNodes, statistics, false);
+				propagateVars(parent, preActiveVars, uncoveredNodes, statistics, false);
 			}
 		}
 	}
