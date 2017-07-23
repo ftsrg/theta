@@ -107,4 +107,21 @@ public final class Trace<S, A> {
 		sb.append(')');
 		return sb.toString();
 	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		} else if (obj instanceof Trace) {
+			final Trace<?, ?> that = (Trace<?, ?>) obj;
+			return this.states.equals(that.states) && this.actions.equals(that.actions);
+		} else {
+			return false;
+		}
+	}
+
+	@Override
+	public int hashCode() {
+		return 31 * states.hashCode() + actions.hashCode();
+	}
 }
