@@ -147,7 +147,9 @@ public final class XtaMain {
 			final SafetyChecker<?, ?, UnitPrec> checker = buildChecker(xta);
 			final SafetyResult<?, ?> result = checker.check(UnitPrec.getInstance());
 			printResult(result);
-			writeVisualStatus(result, dotfile);
+			if (dotfile != null) {
+				writeVisualStatus(result, dotfile);
+			}
 		} catch (final Throwable ex) {
 			printError(ex);
 		}
