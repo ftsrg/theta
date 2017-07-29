@@ -72,4 +72,8 @@ public class Node {
 		this.parent = parent;
 	}
 
+	public boolean isRoot() {
+		return getParent() == null;
+	}
+
 }

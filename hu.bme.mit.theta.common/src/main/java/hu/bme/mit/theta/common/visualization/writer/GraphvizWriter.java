@@ -59,11 +59,7 @@ public final class GraphvizWriter extends AbstractGraphWriter {
 		sb.append("digraph ").append(graph.getId()).append(" {").append(System.lineSeparator());
 		sb.append("\tlabel=\"").append(graph.getLabel()).append("\";").append(System.lineSeparator());
 
-		for (final Node node : graph.getNodes()) {
-			if (node.getParent() == null) {
-				printNode(node, sb);
-			}
-		}
+		graph.getRootNodes().forEach(n -> printNode(n, sb));
 
 		for (final Node node : graph.getNodes()) {
 			printEdges(node, sb);

@@ -42,11 +42,7 @@ public final class YedWriter extends AbstractGraphWriter {
 		sb.append("<key for=\"edge\" id=\"d9\" yfiles.type=\"edgegraphics\"/>").append(System.lineSeparator());
 		sb.append("<graph edgedefault=\"directed\" id=\"" + graph.getId() + "\">").append(System.lineSeparator());
 
-		for (final Node node : graph.getNodes()) {
-			if (node.getParent() == null) {
-				printNode(node, sb);
-			}
-		}
+		graph.getRootNodes().forEach(n -> printNode(n, sb));
 
 		for (final Node node : graph.getNodes()) {
 			printEdges(node, sb);
