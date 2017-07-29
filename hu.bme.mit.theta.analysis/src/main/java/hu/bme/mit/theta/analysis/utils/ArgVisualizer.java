@@ -3,8 +3,11 @@ package hu.bme.mit.theta.analysis.utils;
 import java.awt.Color;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import hu.bme.mit.theta.analysis.Action;
+import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.ArgEdge;
 import hu.bme.mit.theta.analysis.algorithm.ArgNode;
@@ -13,7 +16,7 @@ import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.LineStyle;
 import hu.bme.mit.theta.common.visualization.NodeAttributes;
 
-public final class ArgVisualizer {
+public final class ArgVisualizer<S extends State, A extends Action> {
 
 	private static final LineStyle COVER_EDGE_STYLE = LineStyle.DASHED;
 	private static final LineStyle SUCC_EDGE_STYLE = LineStyle.NORMAL;
@@ -24,15 +27,28 @@ public final class ArgVisualizer {
 	private static final Color LINE_COLOR = Color.BLACK;
 	private static final String PHANTOM_INIT_ID = "phantom_init";
 
-	private ArgVisualizer() {
+	private final Function<S, String> stateToString;
+	private final Function<A, String> actionToString;
+
+	private static class LazyHolder {
+		static final ArgVisualizer<State, Action> DEFAULT = new ArgVisualizer<>(s -> s.toString(), a -> a.toString());
 	}
 
-	public static Graph visualize(final ARG<?, ?> arg) {
+	public ArgVisualizer(final Function<S, String> stateToString, final Function<A, String> actionToString) {
+		this.stateToString = stateToString;
+		this.actionToString = actionToString;
+	}
+
+	public static ArgVisualizer<State, Action> getDefault() {
+		return LazyHolder.DEFAULT;
+	}
+
+	public Graph visualize(final ARG<? extends S, ? extends A> arg) {
 		final Graph graph = new Graph(ARG_ID, ARG_LABEL);
 
-		final Set<ArgNode<?, ?>> traversed = new HashSet<>();
+		final Set<ArgNode<? extends S, ? extends A>> traversed = new HashSet<>();
 
-		for (final ArgNode<?, ?> initNode : arg.getInitNodes().collect(Collectors.toSet())) {
+		for (final ArgNode<? extends S, ? extends A> initNode : arg.getInitNodes().collect(Collectors.toSet())) {
 			traverse(graph, initNode, traversed);
 			final NodeAttributes nAttributes = NodeAttributes.builder().label("").fillColor(FILL_COLOR)
 					.lineColor(FILL_COLOR).lineStyle(SUCC_EDGE_STYLE).peripheries(1).build();
@@ -45,7 +61,8 @@ public final class ArgVisualizer {
 		return graph;
 	}
 
-	private static void traverse(final Graph graph, final ArgNode<?, ?> node, final Set<ArgNode<?, ?>> traversed) {
+	private void traverse(final Graph graph, final ArgNode<? extends S, ? extends A> node,
+			final Set<ArgNode<? extends S, ? extends A>> traversed) {
 		if (traversed.contains(node)) {
 			return;
 		} else {
@@ -55,16 +72,16 @@ public final class ArgVisualizer {
 		final LineStyle lineStyle = SUCC_EDGE_STYLE;
 		final int peripheries = node.isTarget() ? 2 : 1;
 
-		final NodeAttributes nAttributes = NodeAttributes.builder().label(node.getState().toString())
+		final NodeAttributes nAttributes = NodeAttributes.builder().label(stateToString.apply(node.getState()))
 				.fillColor(FILL_COLOR).lineColor(LINE_COLOR).lineStyle(lineStyle).peripheries(peripheries).build();
 
 		graph.addNode(nodeId, nAttributes);
 
-		for (final ArgEdge<?, ?> edge : node.getOutEdges().collect(Collectors.toSet())) {
+		for (final ArgEdge<? extends S, ? extends A> edge : node.getOutEdges().collect(Collectors.toSet())) {
 			traverse(graph, edge.getTarget(), traversed);
 			final String sourceId = NODE_ID_PREFIX + edge.getSource().getId();
 			final String targetId = NODE_ID_PREFIX + edge.getTarget().getId();
-			final EdgeAttributes eAttributes = EdgeAttributes.builder().label(edge.getAction().toString())
+			final EdgeAttributes eAttributes = EdgeAttributes.builder().label(actionToString.apply(edge.getAction()))
 					.color(LINE_COLOR).lineStyle(SUCC_EDGE_STYLE).build();
 			graph.addEdge(sourceId, targetId, eAttributes);
 		}

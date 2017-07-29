@@ -75,6 +75,6 @@ public final class CfaPredImpactCheckerTest {
 		final ArgChecker argChecker = ArgChecker.create(solver);
 		assertTrue(argChecker.isWellLabeled(arg));
 
-		System.out.println(GraphvizWriter.getInstance().writeString(ArgVisualizer.visualize(arg)));
+		System.out.println(GraphvizWriter.getInstance().writeString(ArgVisualizer.getDefault().visualize(arg)));
 	}
 }

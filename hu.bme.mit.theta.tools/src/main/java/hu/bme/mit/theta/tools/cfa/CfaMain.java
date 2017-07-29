@@ -152,8 +152,8 @@ public class CfaMain {
 
 	private void writeVisualStatus(final SafetyResult<?, ?> status, final String filename)
 			throws FileNotFoundException {
-		final Graph graph = status.isSafe() ? ArgVisualizer.visualize(status.asSafe().getArg())
-				: TraceVisualizer.visualize(status.asUnsafe().getTrace());
+		final Graph graph = status.isSafe() ? ArgVisualizer.getDefault().visualize(status.asSafe().getArg())
+				: TraceVisualizer.getDefault().visualize(status.asUnsafe().getTrace());
 		GraphvizWriter.getInstance().writeFile(graph, filename);
 	}
 }
