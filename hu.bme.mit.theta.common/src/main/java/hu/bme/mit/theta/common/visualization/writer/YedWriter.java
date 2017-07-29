@@ -14,7 +14,18 @@ import hu.bme.mit.theta.common.visualization.Shape;
 /**
  * Class for writing graphs in yED (GraphML) format.
  */
-public class YedWriter extends AbstractGraphWriter {
+public final class YedWriter extends AbstractGraphWriter {
+
+	private YedWriter() {
+	}
+
+	private static class LazyHolder {
+		static final YedWriter INSTANCE = new YedWriter();
+	}
+
+	public static YedWriter getInstance() {
+		return LazyHolder.INSTANCE;
+	}
 
 	@Override
 	public String writeString(final Graph graph) {

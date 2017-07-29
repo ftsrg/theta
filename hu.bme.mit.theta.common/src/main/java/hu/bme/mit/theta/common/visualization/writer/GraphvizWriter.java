@@ -37,9 +37,20 @@ public final class GraphvizWriter extends AbstractGraphWriter {
 			this.option = option;
 		}
 
-		public String getOption() {
+		private String getOption() {
 			return option;
 		}
+	}
+
+	private GraphvizWriter() {
+	}
+
+	private static class LazyHolder {
+		static final GraphvizWriter INSTANCE = new GraphvizWriter();
+	}
+
+	public static GraphvizWriter getInstance() {
+		return LazyHolder.INSTANCE;
 	}
 
 	@Override

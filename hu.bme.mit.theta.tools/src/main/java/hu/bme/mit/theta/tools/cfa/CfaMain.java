@@ -154,9 +154,10 @@ public class CfaMain {
 			throws FileNotFoundException {
 		try (PrintWriter out = new PrintWriter(filename)) {
 			if (status.isSafe()) {
-				out.write(new GraphvizWriter().writeString(ArgVisualizer.visualize(status.asSafe().getArg())));
+				out.write(GraphvizWriter.getInstance().writeString(ArgVisualizer.visualize(status.asSafe().getArg())));
 			} else {
-				out.write(new GraphvizWriter().writeString(TraceVisualizer.visualize(status.asUnsafe().getTrace())));
+				out.write(GraphvizWriter.getInstance()
+						.writeString(TraceVisualizer.visualize(status.asUnsafe().getTrace())));
 			}
 		}
 	}

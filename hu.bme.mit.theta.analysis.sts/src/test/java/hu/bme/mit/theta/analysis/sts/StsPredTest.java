@@ -141,7 +141,7 @@ public class StsPredTest {
 		final ARG<PredState, StsAction> arg = safetyStatus.getArg();
 		assertTrue(isWellLabeled(arg, solver));
 
-		System.out.println(new GraphvizWriter().writeString(ArgVisualizer.visualize(arg)));
+		System.out.println(GraphvizWriter.getInstance().writeString(ArgVisualizer.visualize(arg)));
 	}
 
 }
