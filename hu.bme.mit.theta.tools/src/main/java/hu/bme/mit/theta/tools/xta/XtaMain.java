@@ -4,7 +4,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintWriter;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
@@ -25,6 +24,7 @@ import hu.bme.mit.theta.analysis.xta.algorithm.lazy.LuStrategy;
 import hu.bme.mit.theta.analysis.xta.algorithm.lazy.SeqItpStrategy;
 import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.common.table.impl.SimpleTableWriter;
+import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 import hu.bme.mit.theta.formalism.xta.XtaSystem;
 import hu.bme.mit.theta.formalism.xta.dsl.XtaDslManager;
@@ -217,14 +217,9 @@ public final class XtaMain {
 
 	private void writeVisualStatus(final SafetyResult<?, ?> status, final String filename)
 			throws FileNotFoundException {
-		try (PrintWriter out = new PrintWriter(filename)) {
-			if (status.isSafe()) {
-				out.write(GraphvizWriter.getInstance().writeString(ArgVisualizer.visualize(status.asSafe().getArg())));
-			} else {
-				out.write(GraphvizWriter.getInstance()
-						.writeString(TraceVisualizer.visualize(status.asUnsafe().getTrace())));
-			}
-		}
+		final Graph graph = status.isSafe() ? ArgVisualizer.visualize(status.asSafe().getArg())
+				: TraceVisualizer.visualize(status.asUnsafe().getTrace());
+		GraphvizWriter.getInstance().writeFile(graph, filename);
 	}
 
 }
