@@ -15,6 +15,7 @@ import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
+import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 final class StmtToExprTransformer {
@@ -61,7 +62,7 @@ final class StmtToExprTransformer {
 				final VarIndexing indexing) {
 			final VarDecl<?> varDecl = stmt.getVarDecl();
 			final VarIndexing newIndexing = indexing.inc(varDecl);
-			return StmtUnfoldResult.of(ImmutableList.of(), newIndexing);
+			return StmtUnfoldResult.of(ImmutableList.of(BoolExprs.True()), newIndexing);
 		}
 
 		@Override
