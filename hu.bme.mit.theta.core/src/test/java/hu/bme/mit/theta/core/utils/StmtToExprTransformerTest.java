@@ -9,7 +9,6 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -45,7 +44,7 @@ public class StmtToExprTransformerTest {
 
 				{ Stmts.Assume(And(True(), False())), ImmutableList.of(And(True(), False())) },
 
-				{ Stmts.Havoc(VX), Collections.emptyList() },
+				{ Stmts.Havoc(VX), ImmutableList.of(True()) },
 
 				{ Stmts.Assign(VX, Int(2)), ImmutableList.of(Eq(Prime(VX.getRef()), Int(2))) }
 
