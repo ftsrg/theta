@@ -14,6 +14,7 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.analysis.utils.TraceVisualizer;
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.impl.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.impl.NullLogger;
@@ -45,9 +46,6 @@ public class StsMain {
 
 	@Parameter(names = { "-m", "--model" }, description = "Path of the input model", required = true)
 	String model;
-
-	@Parameter(names = { "-p", "--property" }, description = "Property to be verified", required = true)
-	String property;
 
 	@Parameter(names = { "-i", "--initprec" }, description = "Initial precision")
 	InitPrec initPrec = InitPrec.EMPTY;
@@ -126,7 +124,10 @@ public class StsMain {
 		} else if (model.endsWith(".system")) {
 			final InputStream inputStream = new FileInputStream(model);
 			final StsSpec spec = StsDslManager.createStsSpec(inputStream);
-			return StsUtils.eliminateIte(spec.createProp(property));
+			if (spec.getAllSts().size() != 1) {
+				throw new UnsupportedOperationException("STS contains multiple properties.");
+			}
+			return StsUtils.eliminateIte(Utils.singleElementOf(spec.getAllSts()));
 		} else {
 			throw new IOException("Unknown format");
 		}
