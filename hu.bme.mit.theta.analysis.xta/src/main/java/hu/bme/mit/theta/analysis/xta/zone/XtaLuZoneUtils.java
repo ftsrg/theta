@@ -1,6 +1,5 @@
 package hu.bme.mit.theta.analysis.xta.zone;
 
-import java.util.Collection;
 import java.util.List;
 
 import hu.bme.mit.theta.analysis.xta.XtaAction;
@@ -21,102 +20,76 @@ public final class XtaLuZoneUtils {
 	}
 
 	public static BoundFunction pre(final BoundFunction boundFunction, final XtaAction action) {
-		final BoundFunction.Builder builder = boundFunction.transform();
-
-		final List<Loc> sourceLocs = action.getSourceLocs();
-		final List<Loc> targetLocs = action.getTargetLocs();
-
 		if (action.isSimple()) {
-			final SimpleXtaAction simpleAction = action.asSimple();
-
-			final List<Update> updates = simpleAction.getEdge().getUpdates();
-			final Collection<Guard> guards = simpleAction.getEdge().getGuards();
-
-			for (final Loc loc : targetLocs) {
-				for (final Guard invar : loc.getInvars()) {
-					if (invar.isClockGuard()) {
-						builder.add(invar.asClockGuard().getClockConstr());
-					}
-				}
-			}
-
-			for (final Update update : updates) {
-				if (update.isClockUpdate()) {
-					final ResetOp op = (ResetOp) update.asClockUpdate().getClockOp();
-					final VarDecl<RatType> var = op.getVar();
-					builder.remove(var);
-				}
-			}
-
-			for (final Guard guard : guards) {
-				if (guard.isClockGuard()) {
-					builder.add(guard.asClockGuard().getClockConstr());
-				}
-			}
-
-			for (final Loc loc : sourceLocs) {
-				for (final Guard invar : loc.getInvars()) {
-					if (invar.isClockGuard()) {
-						builder.add(invar.asClockGuard().getClockConstr());
-					}
-				}
-			}
-
+			return preForSimpleAction(boundFunction, action.asSimple());
 		} else if (action.isSynced()) {
-
-			final SyncedXtaAction syncedAction = action.asSynced();
-
-			final Edge emittingEdge = syncedAction.getEmittingEdge();
-			final Edge receivingEdge = syncedAction.getReceivingEdge();
-
-			for (final Loc loc : targetLocs) {
-				for (final Guard invar : loc.getInvars()) {
-					if (invar.isClockGuard()) {
-						builder.add(invar.asClockGuard().getClockConstr());
-					}
-				}
-			}
-
-			for (final Update update : receivingEdge.getUpdates()) {
-				if (update.isClockUpdate()) {
-					final ResetOp op = (ResetOp) update.asClockUpdate().getClockOp();
-					final VarDecl<RatType> var = op.getVar();
-					builder.remove(var);
-				}
-			}
-
-			for (final Update update : emittingEdge.getUpdates()) {
-				if (update.isClockUpdate()) {
-					final ResetOp op = (ResetOp) update.asClockUpdate().getClockOp();
-					final VarDecl<RatType> var = op.getVar();
-					builder.remove(var);
-				}
-			}
-
-			for (final Guard guard : receivingEdge.getGuards()) {
-				if (guard.isClockGuard()) {
-					builder.add(guard.asClockGuard().getClockConstr());
-				}
-			}
-
-			for (final Guard guard : emittingEdge.getGuards()) {
-				if (guard.isClockGuard()) {
-					builder.add(guard.asClockGuard().getClockConstr());
-				}
-			}
-
-			for (final Loc loc : sourceLocs) {
-				for (final Guard invar : loc.getInvars()) {
-					if (invar.isClockGuard()) {
-						builder.add(invar.asClockGuard().getClockConstr());
-					}
-				}
-			}
+			return preForSyncedAction(boundFunction, action.asSynced());
 		} else {
 			throw new AssertionError();
 		}
+	}
 
-		return builder.build();
+	////
+
+	private static BoundFunction preForSimpleAction(final BoundFunction boundFunction, final SimpleXtaAction action) {
+		final BoundFunction.Builder succStateBuilder = boundFunction.transform();
+
+		final List<Loc> sourceLocs = action.getSourceLocs();
+		final List<Loc> targetLocs = action.getTargetLocs();
+		final Edge edge = action.getEdge();
+
+		applyInvariants(succStateBuilder, targetLocs);
+		applyInverseUpdates(succStateBuilder, edge);
+		applyGuards(succStateBuilder, edge);
+		applyInvariants(succStateBuilder, sourceLocs);
+		return succStateBuilder.build();
+	}
+
+	private static BoundFunction preForSyncedAction(final BoundFunction boundFunction, final SyncedXtaAction action) {
+		final BoundFunction.Builder succStateBuilder = boundFunction.transform();
+
+		final List<Loc> sourceLocs = action.getSourceLocs();
+		final List<Loc> targetLocs = action.getTargetLocs();
+		final Edge emittingEdge = action.getEmittingEdge();
+		final Edge receivingEdge = action.getReceivingEdge();
+
+		applyInvariants(succStateBuilder, targetLocs);
+		applyInverseUpdates(succStateBuilder, receivingEdge);
+		applyInverseUpdates(succStateBuilder, emittingEdge);
+		applyGuards(succStateBuilder, receivingEdge);
+		applyGuards(succStateBuilder, emittingEdge);
+		applyInvariants(succStateBuilder, sourceLocs);
+		return succStateBuilder.build();
+	}
+
+	////
+
+	private static void applyInverseUpdates(final BoundFunction.Builder succStateBuilder, final Edge edge) {
+		for (final Update update : edge.getUpdates()) {
+			if (update.isClockUpdate()) {
+				final ResetOp op = (ResetOp) update.asClockUpdate().getClockOp();
+				final VarDecl<RatType> var = op.getVar();
+				succStateBuilder.remove(var);
+			}
+		}
+	}
+
+	private static void applyGuards(final BoundFunction.Builder succStateBuilder, final Edge edge) {
+		for (final Guard guard : edge.getGuards()) {
+			if (guard.isClockGuard()) {
+				succStateBuilder.add(guard.asClockGuard().getClockConstr());
+			}
+		}
+	}
+
+	private static void applyInvariants(final BoundFunction.Builder succStateBuilder, final List<Loc> targetLocs) {
+		for (final Loc loc : targetLocs) {
+			for (final Guard invar : loc.getInvars()) {
+				if (invar.isClockGuard()) {
+					succStateBuilder.add(invar.asClockGuard().getClockConstr());
+				}
+			}
+		}
 	}
 
 }
