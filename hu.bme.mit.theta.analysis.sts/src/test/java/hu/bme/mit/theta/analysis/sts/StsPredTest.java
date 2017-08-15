@@ -27,7 +27,7 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker;
-import hu.bme.mit.theta.analysis.algorithm.cegar.WaitlistBasedAbstractor;
+import hu.bme.mit.theta.analysis.algorithm.cegar.BasicAbstractor;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.ExprStatePredicate;
@@ -89,7 +89,7 @@ public class StsPredTest {
 
 		final ArgBuilder<PredState, StsAction, SimplePredPrec> argBuilder = ArgBuilder.create(lts, analysis, target);
 
-		final Abstractor<PredState, StsAction, SimplePredPrec> abstractor = WaitlistBasedAbstractor.create(argBuilder,
+		final Abstractor<PredState, StsAction, SimplePredPrec> abstractor = BasicAbstractor.create(argBuilder,
 				FifoWaitlist.supplier(), logger);
 
 		final ExprTraceChecker<ItpRefutation> exprTraceChecker = ExprTraceFwBinItpChecker.create(sts.getInit(),
@@ -123,7 +123,7 @@ public class StsPredTest {
 
 		final ArgBuilder<PredState, StsAction, TreePredPrec> argBuilder = ArgBuilder.create(lts, analysis, target);
 
-		final Abstractor<PredState, StsAction, TreePredPrec> abstractor = WaitlistBasedAbstractor.create(argBuilder,
+		final Abstractor<PredState, StsAction, TreePredPrec> abstractor = BasicAbstractor.create(argBuilder,
 				FifoWaitlist.supplier(), logger);
 
 		final ExprTraceChecker<ItpRefutation> exprTraceChecker = ExprTraceFwBinItpChecker.create(sts.getInit(),

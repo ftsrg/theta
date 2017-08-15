@@ -17,7 +17,7 @@ import hu.bme.mit.theta.analysis.LTS;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.ArgBuilder;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
-import hu.bme.mit.theta.analysis.algorithm.cegar.WaitlistBasedAbstractor;
+import hu.bme.mit.theta.analysis.algorithm.cegar.BasicAbstractor;
 import hu.bme.mit.theta.analysis.waitlist.FifoWaitlist;
 import hu.bme.mit.theta.analysis.xta.zone.XtaZoneAnalysis;
 import hu.bme.mit.theta.analysis.zone.ZonePrec;
@@ -62,7 +62,7 @@ public final class XtaZoneAnalysisTest {
 		final ArgBuilder<XtaState<ZoneState>, XtaAction, ZonePrec> argBuilder = ArgBuilder.create(lts, analysis,
 				s -> false);
 
-		final Abstractor<XtaState<ZoneState>, XtaAction, ZonePrec> abstractor = WaitlistBasedAbstractor
+		final Abstractor<XtaState<ZoneState>, XtaAction, ZonePrec> abstractor = BasicAbstractor
 				.create(argBuilder, s -> Tuple.of(s.getLocs(), s.getVal()), FifoWaitlist.supplier());
 
 		final ARG<XtaState<ZoneState>, XtaAction> arg = abstractor.createArg();
