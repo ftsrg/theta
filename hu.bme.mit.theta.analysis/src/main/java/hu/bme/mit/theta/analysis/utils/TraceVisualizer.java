@@ -1,6 +1,9 @@
 package hu.bme.mit.theta.analysis.utils;
 
 import java.awt.Color;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Function;
 
 import hu.bme.mit.theta.analysis.Action;
@@ -50,6 +53,40 @@ public final class TraceVisualizer<S extends State, A extends Action> {
 			final EdgeAttributes eAttributes = EdgeAttributes.builder().label(actionToString.apply(trace.getAction(i)))
 					.color(LINE_COLOR).lineStyle(LINE_STYLE).build();
 			graph.addEdge(STATE_ID_PREFIX + i, STATE_ID_PREFIX + (i + 1), eAttributes);
+		}
+
+		return graph;
+	}
+
+	public Graph visualizeMerged(final Collection<? extends Trace<? extends S, ? extends A>> traces) {
+		final Graph graph = new Graph(TRACE_ID, TRACE_LABEL);
+
+		final Map<S, String> stateIds = new HashMap<>();
+
+		for (final Trace<? extends S, ? extends A> trace : traces) {
+			for (final S state : trace.getStates()) {
+				if (!stateIds.containsKey(state)) {
+					stateIds.put(state, STATE_ID_PREFIX + stateIds.size());
+					final NodeAttributes nAttributes = NodeAttributes.builder().label(stateToString.apply(state))
+							.fillColor(FILL_COLOR).lineColor(LINE_COLOR).lineStyle(LINE_STYLE).build();
+					graph.addNode(stateIds.get(state), nAttributes);
+				}
+			}
+		}
+
+		int traceNo = 0;
+
+		for (final Trace<? extends S, ? extends A> trace : traces) {
+			for (int i = 0; i < trace.getActions().size(); ++i) {
+				final A action = trace.getAction(i);
+				final S source = trace.getState(i);
+				final S target = trace.getState(i + 1);
+				final Color color = Color.getHSBColor(traceNo / (float) traces.size(), 1, 1);
+				final EdgeAttributes eAttributes = EdgeAttributes.builder().label(actionToString.apply(action))
+						.color(color).lineStyle(LINE_STYLE).build();
+				graph.addEdge(stateIds.get(source), stateIds.get(target), eAttributes);
+			}
+			++traceNo;
 		}
 
 		return graph;
