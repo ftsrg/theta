@@ -1,9 +1,9 @@
 package hu.bme.mit.theta.analysis.algorithm.cegar;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 import java.util.Collection;
-import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -13,6 +13,8 @@ import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.ArgBuilder;
 import hu.bme.mit.theta.analysis.algorithm.ArgNode;
+import hu.bme.mit.theta.analysis.algorithm.cegar.abstractor.StopCriterion;
+import hu.bme.mit.theta.analysis.algorithm.cegar.abstractor.StopCriterions;
 import hu.bme.mit.theta.analysis.reachedset.Partition;
 import hu.bme.mit.theta.analysis.waitlist.FifoWaitlist;
 import hu.bme.mit.theta.analysis.waitlist.Waitlist;
@@ -28,13 +30,16 @@ public final class BasicAbstractor<S extends State, A extends Action, P extends 
 	private final ArgBuilder<S, A, P> argBuilder;
 	private final Function<? super S, ?> projection;
 	private final Supplier<? extends Waitlist<ArgNode<S, A>>> waitlistSupplier;
+	private final StopCriterion<S, A> stopCriterion;
 	private final Logger logger;
 
 	private BasicAbstractor(final ArgBuilder<S, A, P> argBuilder, final Function<? super S, ?> projection,
-			final Supplier<? extends Waitlist<ArgNode<S, A>>> waitlistSupplier, final Logger logger) {
+			final Supplier<? extends Waitlist<ArgNode<S, A>>> waitlistSupplier, final StopCriterion<S, A> stopCriterion,
+			final Logger logger) {
 		this.argBuilder = checkNotNull(argBuilder);
 		this.projection = checkNotNull(projection);
 		this.waitlistSupplier = checkNotNull(waitlistSupplier);
+		this.stopCriterion = checkNotNull(stopCriterion);
 		this.logger = checkNotNull(logger);
 	}
 
@@ -66,44 +71,32 @@ public final class BasicAbstractor<S extends State, A extends Action, P extends 
 				arg.getIncompleteNodes().count(), arg.getUnsafeNodes().count()), 3, 2);
 		logger.write("Building ARG...", 3, 2);
 
-		final Optional<ArgNode<S, A>> unsafeNode = searchForUnsafeNode(arg, prec);
-
-		logger.writeln(String.format("done: %d nodes, %d incomplete, %d unsafe", arg.getNodes().count(),
-				arg.getIncompleteNodes().count(), arg.getUnsafeNodes().count()), 3);
-
-		if (unsafeNode.isPresent()) {
-			assert !arg.isSafe() : "Returning safe ARG as unsafe";
-			return AbstractorResult.unsafe();
-		} else {
-			assert arg.isSafe() : "Returning unsafe ARG as safe";
-			assert arg.isComplete() : "Returning incomplete ARG as safe";
-			return AbstractorResult.safe();
-		}
-	}
-
-	private Optional<ArgNode<S, A>> searchForUnsafeNode(final ARG<S, A> arg, final P prec) {
 		final Partition<ArgNode<S, A>, ?> reachedSet = Partition.of(n -> projection.apply(n.getState()));
 		final Waitlist<ArgNode<S, A>> waitlist = waitlistSupplier.get();
 
 		reachedSet.addAll(arg.getNodes());
 		waitlist.addAll(arg.getIncompleteNodes());
 
-		while (!waitlist.isEmpty()) {
+		while (!waitlist.isEmpty() && !stopCriterion.canStop(arg)) {
 			final ArgNode<S, A> node = waitlist.remove();
 
 			close(node, reachedSet.get(node));
-			if (!node.isCovered()) {
-				if (node.isTarget()) {
-					assert !node.isSafe() : "Safe node returned as unsafe";
-					return Optional.of(node);
-				} else {
-					final Collection<ArgNode<S, A>> newNodes = argBuilder.expand(node, prec);
-					reachedSet.addAll(newNodes);
-					waitlist.addAll(newNodes);
-				}
+			if (!node.isCovered() && !node.isTarget()) {
+				final Collection<ArgNode<S, A>> newNodes = argBuilder.expand(node, prec);
+				reachedSet.addAll(newNodes);
+				waitlist.addAll(newNodes);
 			}
 		}
-		return Optional.empty();
+
+		logger.writeln(String.format("done: %d nodes, %d incomplete, %d unsafe", arg.getNodes().count(),
+				arg.getIncompleteNodes().count(), arg.getUnsafeNodes().count()), 3);
+
+		if (arg.isSafe()) {
+			checkState(arg.isComplete(), "Returning incomplete ARG as safe");
+			return AbstractorResult.safe();
+		} else {
+			return AbstractorResult.unsafe();
+		}
 	}
 
 	private void close(final ArgNode<S, A> node, final Collection<ArgNode<S, A>> candidates) {
@@ -126,12 +119,14 @@ public final class BasicAbstractor<S extends State, A extends Action, P extends 
 		private final ArgBuilder<S, A, P> argBuilder;
 		private Function<? super S, ?> projection;
 		private Supplier<? extends Waitlist<ArgNode<S, A>>> waitlistSupplier;
+		private StopCriterion<S, A> stopCriterion;
 		private Logger logger;
 
 		private Builder(final ArgBuilder<S, A, P> argBuilder) {
 			this.argBuilder = argBuilder;
 			this.projection = s -> 0;
 			this.waitlistSupplier = FifoWaitlist.supplier();
+			this.stopCriterion = StopCriterions.firstCex();
 			this.logger = NullLogger.getInstance();
 		}
 
@@ -145,13 +140,18 @@ public final class BasicAbstractor<S extends State, A extends Action, P extends 
 			return this;
 		}
 
+		public Builder<S, A, P> stopCriterion(final StopCriterion<S, A> stopCriterion) {
+			this.stopCriterion = stopCriterion;
+			return this;
+		}
+
 		public Builder<S, A, P> logger(final Logger logger) {
 			this.logger = logger;
 			return this;
 		}
 
 		public BasicAbstractor<S, A, P> build() {
-			return new BasicAbstractor<>(argBuilder, projection, waitlistSupplier, logger);
+			return new BasicAbstractor<>(argBuilder, projection, waitlistSupplier, stopCriterion, logger);
 		}
 	}
 
