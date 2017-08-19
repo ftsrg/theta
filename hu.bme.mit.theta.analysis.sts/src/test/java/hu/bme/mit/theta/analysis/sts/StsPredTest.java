@@ -26,8 +26,8 @@ import hu.bme.mit.theta.analysis.algorithm.ArgBuilder;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
-import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker;
 import hu.bme.mit.theta.analysis.algorithm.cegar.BasicAbstractor;
+import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.ExprStatePredicate;
@@ -45,7 +45,6 @@ import hu.bme.mit.theta.analysis.pred.SimplePredPrec;
 import hu.bme.mit.theta.analysis.pred.TreePredPrec;
 import hu.bme.mit.theta.analysis.pred.TreePredPrecRefiner;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
-import hu.bme.mit.theta.analysis.waitlist.FifoWaitlist;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.impl.ConsoleLogger;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
@@ -89,8 +88,8 @@ public class StsPredTest {
 
 		final ArgBuilder<PredState, StsAction, SimplePredPrec> argBuilder = ArgBuilder.create(lts, analysis, target);
 
-		final Abstractor<PredState, StsAction, SimplePredPrec> abstractor = BasicAbstractor.create(argBuilder,
-				FifoWaitlist.supplier(), logger);
+		final Abstractor<PredState, StsAction, SimplePredPrec> abstractor = BasicAbstractor.builder(argBuilder)
+				.logger(logger).build();
 
 		final ExprTraceChecker<ItpRefutation> exprTraceChecker = ExprTraceFwBinItpChecker.create(sts.getInit(),
 				Not(sts.getProp()), solver);
@@ -123,8 +122,8 @@ public class StsPredTest {
 
 		final ArgBuilder<PredState, StsAction, TreePredPrec> argBuilder = ArgBuilder.create(lts, analysis, target);
 
-		final Abstractor<PredState, StsAction, TreePredPrec> abstractor = BasicAbstractor.create(argBuilder,
-				FifoWaitlist.supplier(), logger);
+		final Abstractor<PredState, StsAction, TreePredPrec> abstractor = BasicAbstractor.builder(argBuilder)
+				.logger(logger).build();
 
 		final ExprTraceChecker<ItpRefutation> exprTraceChecker = ExprTraceFwBinItpChecker.create(sts.getInit(),
 				Not(sts.getProp()), solver);

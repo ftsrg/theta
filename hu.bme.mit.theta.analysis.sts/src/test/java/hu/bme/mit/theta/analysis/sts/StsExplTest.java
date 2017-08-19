@@ -27,8 +27,8 @@ import hu.bme.mit.theta.analysis.algorithm.ArgNodeComparators;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
-import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker;
 import hu.bme.mit.theta.analysis.algorithm.cegar.BasicAbstractor;
+import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker;
 import hu.bme.mit.theta.analysis.expl.ExplAnalysis;
 import hu.bme.mit.theta.analysis.expl.ExplPrec;
 import hu.bme.mit.theta.analysis.expl.ExplState;
@@ -88,8 +88,8 @@ public class StsExplTest {
 
 		final ArgBuilder<ExplState, StsAction, ExplPrec> argBuilder = ArgBuilder.create(lts, analysis, target);
 
-		final Abstractor<ExplState, StsAction, ExplPrec> abstractor = BasicAbstractor.create(argBuilder,
-				PriorityWaitlist.supplier(ArgNodeComparators.bfs()), logger);
+		final Abstractor<ExplState, StsAction, ExplPrec> abstractor = BasicAbstractor.builder(argBuilder)
+				.waitlistSupplier(PriorityWaitlist.supplier(ArgNodeComparators.bfs())).logger(logger).build();
 
 		final ExprTraceChecker<VarsRefutation> exprTraceChecker = ExprTraceUnsatCoreChecker.create(sts.getInit(),
 				Not(sts.getProp()), solver);

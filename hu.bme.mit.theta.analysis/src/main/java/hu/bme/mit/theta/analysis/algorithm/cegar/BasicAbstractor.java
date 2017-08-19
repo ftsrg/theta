@@ -14,6 +14,7 @@ import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.ArgBuilder;
 import hu.bme.mit.theta.analysis.algorithm.ArgNode;
 import hu.bme.mit.theta.analysis.reachedset.Partition;
+import hu.bme.mit.theta.analysis.waitlist.FifoWaitlist;
 import hu.bme.mit.theta.analysis.waitlist.Waitlist;
 import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.common.logging.Logger;
@@ -37,22 +38,9 @@ public final class BasicAbstractor<S extends State, A extends Action, P extends 
 		this.logger = checkNotNull(logger);
 	}
 
-	public static <S extends State, A extends Action, P extends Prec> BasicAbstractor<S, A, P> create(
-			final ArgBuilder<S, A, P> argBuilder, final Function<? super S, ?> projection,
-			final Supplier<? extends Waitlist<ArgNode<S, A>>> waitlistSupplier, final Logger logger) {
-		return new BasicAbstractor<>(argBuilder, projection, waitlistSupplier, logger);
-	}
-
-	public static <S extends State, A extends Action, P extends Prec> BasicAbstractor<S, A, P> create(
-			final ArgBuilder<S, A, P> argBuilder, final Supplier<? extends Waitlist<ArgNode<S, A>>> waitlistSupplier,
-			final Logger logger) {
-		return new BasicAbstractor<>(argBuilder, s -> 0, waitlistSupplier, logger);
-	}
-
-	public static <S extends State, A extends Action, P extends Prec> BasicAbstractor<S, A, P> create(
-			final ArgBuilder<S, A, P> argBuilder, final Function<? super S, ?> projection,
-			final Supplier<? extends Waitlist<ArgNode<S, A>>> waitlistSupplier) {
-		return new BasicAbstractor<>(argBuilder, projection, waitlistSupplier, NullLogger.getInstance());
+	public static <S extends State, A extends Action, P extends Prec> Builder<S, A, P> builder(
+			final ArgBuilder<S, A, P> argBuilder) {
+		return new Builder<>(argBuilder);
 	}
 
 	@Override
@@ -132,6 +120,39 @@ public final class BasicAbstractor<S extends State, A extends Action, P extends 
 	@Override
 	public String toString() {
 		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).add(waitlistSupplier.get()).toString();
+	}
+
+	public static final class Builder<S extends State, A extends Action, P extends Prec> {
+		private final ArgBuilder<S, A, P> argBuilder;
+		private Function<? super S, ?> projection;
+		private Supplier<? extends Waitlist<ArgNode<S, A>>> waitlistSupplier;
+		private Logger logger;
+
+		private Builder(final ArgBuilder<S, A, P> argBuilder) {
+			this.argBuilder = argBuilder;
+			this.projection = s -> 0;
+			this.waitlistSupplier = FifoWaitlist.supplier();
+			this.logger = NullLogger.getInstance();
+		}
+
+		public Builder<S, A, P> projection(final Function<? super S, ?> projection) {
+			this.projection = projection;
+			return this;
+		}
+
+		public Builder<S, A, P> waitlistSupplier(final Supplier<? extends Waitlist<ArgNode<S, A>>> waitlistSupplier) {
+			this.waitlistSupplier = waitlistSupplier;
+			return this;
+		}
+
+		public Builder<S, A, P> logger(final Logger logger) {
+			this.logger = logger;
+			return this;
+		}
+
+		public BasicAbstractor<S, A, P> build() {
+			return new BasicAbstractor<>(argBuilder, projection, waitlistSupplier, logger);
+		}
 	}
 
 }

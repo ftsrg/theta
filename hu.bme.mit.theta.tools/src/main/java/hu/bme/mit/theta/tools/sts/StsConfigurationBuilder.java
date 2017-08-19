@@ -12,9 +12,9 @@ import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.ArgBuilder;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
+import hu.bme.mit.theta.analysis.algorithm.cegar.BasicAbstractor;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Refiner;
-import hu.bme.mit.theta.analysis.algorithm.cegar.BasicAbstractor;
 import hu.bme.mit.theta.analysis.expl.ExplAnalysis;
 import hu.bme.mit.theta.analysis.expl.ExplPrec;
 import hu.bme.mit.theta.analysis.expl.ExplState;
@@ -110,8 +110,8 @@ public final class StsConfigurationBuilder extends ConfigurationBuilder {
 			final Predicate<ExplState> target = new ExplStatePredicate(negProp, solver);
 			final Analysis<ExplState, ExprAction, ExplPrec> analysis = ExplAnalysis.create(solver, init);
 			final ArgBuilder<ExplState, StsAction, ExplPrec> argBuilder = ArgBuilder.create(lts, analysis, target);
-			final Abstractor<ExplState, StsAction, ExplPrec> abstractor = BasicAbstractor.create(argBuilder,
-					PriorityWaitlist.supplier(getSearch().comparator), getLogger());
+			final Abstractor<ExplState, StsAction, ExplPrec> abstractor = BasicAbstractor.builder(argBuilder)
+					.waitlistSupplier(PriorityWaitlist.supplier(getSearch().comparator)).logger(getLogger()).build();
 
 			Refiner<ExplState, StsAction, ExplPrec> refiner = null;
 
@@ -146,8 +146,8 @@ public final class StsConfigurationBuilder extends ConfigurationBuilder {
 			final Analysis<PredState, ExprAction, PredPrec> analysis = PredAnalysis.create(solver, init);
 			final ArgBuilder<PredState, StsAction, SimplePredPrec> argBuilder = ArgBuilder.create(lts, analysis,
 					target);
-			final Abstractor<PredState, StsAction, SimplePredPrec> abstractor = BasicAbstractor
-					.create(argBuilder, PriorityWaitlist.supplier(getSearch().comparator), getLogger());
+			final Abstractor<PredState, StsAction, SimplePredPrec> abstractor = BasicAbstractor.builder(argBuilder)
+					.waitlistSupplier(PriorityWaitlist.supplier(getSearch().comparator)).logger(getLogger()).build();
 
 			ExprTraceChecker<ItpRefutation> exprTraceChecker = null;
 			switch (getRefinement()) {

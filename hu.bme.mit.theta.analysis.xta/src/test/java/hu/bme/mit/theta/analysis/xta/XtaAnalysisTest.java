@@ -22,7 +22,6 @@ import hu.bme.mit.theta.analysis.unit.UnitAnalysis;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.analysis.unit.UnitState;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
-import hu.bme.mit.theta.analysis.waitlist.FifoWaitlist;
 import hu.bme.mit.theta.common.Tuple;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 import hu.bme.mit.theta.formalism.xta.XtaSystem;
@@ -62,8 +61,8 @@ public final class XtaAnalysisTest {
 		final ArgBuilder<XtaState<UnitState>, XtaAction, UnitPrec> argBuilder = ArgBuilder.create(lts, analysis,
 				s -> false);
 
-		final Abstractor<XtaState<UnitState>, XtaAction, UnitPrec> abstractor = BasicAbstractor
-				.create(argBuilder, s -> Tuple.of(s.getLocs(), s.getVal()), FifoWaitlist.supplier());
+		final Abstractor<XtaState<UnitState>, XtaAction, UnitPrec> abstractor = BasicAbstractor.builder(argBuilder)
+				.projection(s -> Tuple.of(s.getLocs(), s.getVal())).build();
 
 		final ARG<XtaState<UnitState>, XtaAction> arg = abstractor.createArg();
 		abstractor.check(arg, UnitPrec.getInstance());
