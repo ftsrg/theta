@@ -1,8 +1,8 @@
 package hu.bme.mit.theta.analysis.expr.refinement;
 
-import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.base.Preconditions.checkArgument;
 
-import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceCombinedChecker.ExprTraceStatusMerger;
+import java.util.Collection;
 
 public final class ExprTraceStatusMergers {
 
@@ -19,42 +19,34 @@ public final class ExprTraceStatusMergers {
 
 	private static class MinPruneIndex<R extends Refutation> implements ExprTraceStatusMerger<R> {
 		@Override
-		public ExprTraceStatus<R> apply(final ExprTraceStatus<R> status1, final ExprTraceStatus<R> status2) {
-			checkState(status1.isFeasible() == status2.isFeasible(), "Checkers disagree on trace status");
+		public ExprTraceStatus<R> merge(final Collection<ExprTraceStatus<R>> statuses) {
+			checkArgument(statuses.size() > 0, "No statuses to merge.");
 
-			if (status1.isFeasible()) {
-				return status1;
-			}
-
-			assert status1.isInfeasible() && status2.isInfeasible();
-			final int pruneIndex1 = status1.asInfeasible().getRefutation().getPruneIndex();
-			final int pruneIndex2 = status2.asInfeasible().getRefutation().getPruneIndex();
-
-			if (pruneIndex1 < pruneIndex2) {
-				return status1;
+			final ExprTraceStatus<R> firstStatus = statuses.iterator().next();
+			if (firstStatus.isFeasible()) {
+				assert statuses.stream().allMatch(ExprTraceStatus::isFeasible);
+				return firstStatus;
 			} else {
-				return status2;
+				assert statuses.stream().allMatch(ExprTraceStatus::isInfeasible);
+				return statuses.stream().map(ExprTraceStatus::asInfeasible).min((s1, s2) -> Integer
+						.compare(s1.getRefutation().getPruneIndex(), s2.getRefutation().getPruneIndex())).get();
 			}
 		}
 	}
 
 	private static class MaxPruneIndex<R extends Refutation> implements ExprTraceStatusMerger<R> {
 		@Override
-		public ExprTraceStatus<R> apply(final ExprTraceStatus<R> status1, final ExprTraceStatus<R> status2) {
-			checkState(status1.isFeasible() == status2.isFeasible(), "Checkers disagree on trace status");
+		public ExprTraceStatus<R> merge(final Collection<ExprTraceStatus<R>> statuses) {
+			checkArgument(statuses.size() > 0, "No statuses to merge.");
 
-			if (status1.isFeasible()) {
-				return status1;
-			}
-
-			assert status1.isInfeasible() && status2.isInfeasible();
-			final int pruneIndex1 = status1.asInfeasible().getRefutation().getPruneIndex();
-			final int pruneIndex2 = status2.asInfeasible().getRefutation().getPruneIndex();
-
-			if (pruneIndex1 > pruneIndex2) {
-				return status1;
+			final ExprTraceStatus<R> firstStatus = statuses.iterator().next();
+			if (firstStatus.isFeasible()) {
+				assert statuses.stream().allMatch(ExprTraceStatus::isFeasible);
+				return firstStatus;
 			} else {
-				return status2;
+				assert statuses.stream().allMatch(ExprTraceStatus::isInfeasible);
+				return statuses.stream().map(ExprTraceStatus::asInfeasible).max((s1, s2) -> Integer
+						.compare(s1.getRefutation().getPruneIndex(), s2.getRefutation().getPruneIndex())).get();
 			}
 		}
 	}

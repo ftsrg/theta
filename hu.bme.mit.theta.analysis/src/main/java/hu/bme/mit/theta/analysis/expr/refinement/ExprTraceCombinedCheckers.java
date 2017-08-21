@@ -1,6 +1,5 @@
 package hu.bme.mit.theta.analysis.expr.refinement;
 
-import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceCombinedChecker.ExprTraceStatusMerger;
 import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.solver.ItpSolver;
