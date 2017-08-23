@@ -19,6 +19,7 @@ main process locking {
 	}
 	
 	L1 -> L2 {
+		assume not lock
 		lock := true
 		old := new
 	}

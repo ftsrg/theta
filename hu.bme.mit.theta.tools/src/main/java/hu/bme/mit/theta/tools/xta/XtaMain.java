@@ -1,6 +1,7 @@
 package hu.bme.mit.theta.tools.xta;
 
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -12,6 +13,8 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.SearchStrategy;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
+import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
+import hu.bme.mit.theta.analysis.utils.TraceVisualizer;
 import hu.bme.mit.theta.analysis.xta.algorithm.lazy.ActStrategy;
 import hu.bme.mit.theta.analysis.xta.algorithm.lazy.BinItpStrategy;
 import hu.bme.mit.theta.analysis.xta.algorithm.lazy.ItpStrategy.ItpOperator;
@@ -22,6 +25,8 @@ import hu.bme.mit.theta.analysis.xta.algorithm.lazy.LuStrategy;
 import hu.bme.mit.theta.analysis.xta.algorithm.lazy.SeqItpStrategy;
 import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.common.table.impl.SimpleTableWriter;
+import hu.bme.mit.theta.common.visualization.Graph;
+import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 import hu.bme.mit.theta.formalism.xta.XtaSystem;
 import hu.bme.mit.theta.formalism.xta.dsl.XtaDslManager;
 
@@ -41,6 +46,9 @@ public final class XtaMain {
 
 	@Parameter(names = { "-bm", "--benchmark" }, description = "Benchmark mode (only print metrics)")
 	Boolean benchmarkMode = false;
+
+	@Parameter(names = { "-v", "--visualize" }, description = "Write proof or counterexample to file in dot format")
+	String dotfile = null;
 
 	@Parameter(names = { "--header" }, description = "Print only a header (for benchmarks)", help = true)
 	boolean headerOnly = false;
@@ -147,6 +155,9 @@ public final class XtaMain {
 			final SafetyChecker<?, ?, UnitPrec> checker = buildChecker(xta);
 			final SafetyResult<?, ?> result = checker.check(UnitPrec.getInstance());
 			printResult(result);
+			if (dotfile != null) {
+				writeVisualStatus(result, dotfile);
+			}
 		} catch (final Throwable ex) {
 			printError(ex);
 		}
@@ -210,6 +221,13 @@ public final class XtaMain {
 			System.out.println("Exception occured: " + ex.getClass().getSimpleName());
 			System.out.println("Message: " + ex.getMessage());
 		}
+	}
+
+	private void writeVisualStatus(final SafetyResult<?, ?> status, final String filename)
+			throws FileNotFoundException {
+		final Graph graph = status.isSafe() ? ArgVisualizer.getDefault().visualize(status.asSafe().getArg())
+				: TraceVisualizer.getDefault().visualize(status.asUnsafe().getTrace());
+		GraphvizWriter.getInstance().writeFile(graph, filename);
 	}
 
 }

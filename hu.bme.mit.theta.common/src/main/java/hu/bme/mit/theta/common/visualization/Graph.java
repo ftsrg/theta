@@ -8,6 +8,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Stream;
 
 /**
  * Represents a graph for visualization purposes. It has nodes, composite nodes
@@ -95,6 +96,10 @@ public final class Graph {
 
 	public Collection<Node> getNodes() {
 		return Collections.unmodifiableCollection(nodes.values());
+	}
+
+	public Stream<Node> getRootNodes() {
+		return getNodes().stream().filter(Node::isRoot);
 	}
 
 	public Collection<Edge> getEdges() {

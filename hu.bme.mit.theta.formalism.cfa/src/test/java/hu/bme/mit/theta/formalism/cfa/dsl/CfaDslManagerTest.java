@@ -22,7 +22,7 @@ public final class CfaDslManagerTest {
 	public static Collection<Object[]> data() {
 		return Arrays.asList(new Object[][] {
 
-				{ "/locking.cfa", 3, 6, 7, 8 },
+				{ "/locking.cfa", 3, 6, 7, 9 },
 
 				{ "/counter5_true.cfa", 1, 6, 6, 6 }
 

@@ -26,6 +26,6 @@ public class VisualizationTest {
 		g.addEdge("n2", "n3", EdgeAttributes.builder().lineStyle(LineStyle.DASHED).build());
 		g.addEdge("n4", "n3", EdgeAttributes.builder().lineStyle(LineStyle.DOTTED).build());
 
-		System.out.println(new YedWriter().writeString(g));
+		System.out.println(YedWriter.getInstance().writeString(g));
 	}
 }

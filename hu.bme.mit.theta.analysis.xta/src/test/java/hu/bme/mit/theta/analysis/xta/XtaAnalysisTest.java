@@ -68,7 +68,7 @@ public final class XtaAnalysisTest {
 		final ARG<XtaState<UnitState>, XtaAction> arg = abstractor.createArg();
 		abstractor.check(arg, UnitPrec.getInstance());
 
-		System.out.println(new GraphvizWriter().writeString(ArgVisualizer.visualize(arg)));
+		System.out.println(GraphvizWriter.getInstance().writeString(ArgVisualizer.getDefault().visualize(arg)));
 	}
 
 }

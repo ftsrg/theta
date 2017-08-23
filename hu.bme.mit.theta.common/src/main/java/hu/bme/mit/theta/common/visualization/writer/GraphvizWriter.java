@@ -3,8 +3,6 @@ package hu.bme.mit.theta.common.visualization.writer;
 import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
 import hu.bme.mit.theta.common.visualization.CompositeNode;
 import hu.bme.mit.theta.common.visualization.Edge;
@@ -37,9 +35,20 @@ public final class GraphvizWriter extends AbstractGraphWriter {
 			this.option = option;
 		}
 
-		public String getOption() {
+		private String getOption() {
 			return option;
 		}
+	}
+
+	private GraphvizWriter() {
+	}
+
+	private static class LazyHolder {
+		static final GraphvizWriter INSTANCE = new GraphvizWriter();
+	}
+
+	public static GraphvizWriter getInstance() {
+		return LazyHolder.INSTANCE;
 	}
 
 	@Override
@@ -48,11 +57,7 @@ public final class GraphvizWriter extends AbstractGraphWriter {
 		sb.append("digraph ").append(graph.getId()).append(" {").append(System.lineSeparator());
 		sb.append("\tlabel=\"").append(graph.getLabel()).append("\";").append(System.lineSeparator());
 
-		for (final Node node : graph.getNodes()) {
-			if (node.getParent() == null) {
-				printNode(node, sb);
-			}
-		}
+		graph.getRootNodes().forEach(n -> printNode(n, sb));
 
 		for (final Node node : graph.getNodes()) {
 			printEdges(node, sb);
@@ -148,24 +153,8 @@ public final class GraphvizWriter extends AbstractGraphWriter {
 		}
 	}
 
-	@SuppressWarnings("serial")
-	private static final Map<Color, String> COLORS = new HashMap<Color, String>() {
-		{
-			put(Color.BLACK, "black");
-			put(Color.WHITE, "white");
-			put(Color.RED, "red");
-			put(Color.BLUE, "blue");
-			put(Color.GREEN, "green");
-			put(Color.YELLOW, "yellow");
-		}
-	};
-
 	private String mapColorToString(final Color color) {
-		if (COLORS.containsKey(color)) {
-			return COLORS.get(color);
-		} else {
-			throw new UnsupportedOperationException("Unknown color: " + color + ".");
-		}
+		return String.format("\"#%02X%02X%02X\"", color.getRed(), color.getGreen(), color.getBlue());
 	}
 
 	private String mapLineStyleToString(final LineStyle lineStyle) {

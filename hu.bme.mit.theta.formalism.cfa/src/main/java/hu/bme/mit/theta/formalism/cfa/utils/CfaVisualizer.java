@@ -27,19 +27,14 @@ public class CfaVisualizer {
 	public static Graph visualize(final CFA cfa) {
 		final Graph graph = new Graph(CFA_ID, CFA_LABEL);
 		final Map<CfaLoc, String> ids = new HashMap<>();
-		traverse(graph, cfa, cfa.getInitLoc(), ids);
-		return graph;
-	}
 
-	private static void traverse(final Graph graph, final CFA cfa, final CfaLoc loc, final Map<CfaLoc, String> ids) {
-		if (!ids.containsKey(loc)) {
+		for (final CfaLoc loc : cfa.getLocs()) {
 			addLocation(graph, cfa, loc, ids);
-			for (final CfaEdge outEdge : loc.getOutEdges()) {
-				final CfaLoc target = outEdge.getTarget();
-				traverse(graph, cfa, target, ids);
-				addEdge(graph, cfa, outEdge, ids);
-			}
 		}
+		for (final CfaEdge edge : cfa.getEdges()) {
+			addEdge(graph, cfa, edge, ids);
+		}
+		return graph;
 	}
 
 	private static void addLocation(final Graph graph, final CFA cfa, final CfaLoc loc, final Map<CfaLoc, String> ids) {
@@ -59,12 +54,12 @@ public class CfaVisualizer {
 		graph.addNode(id, nAttributes);
 	}
 
-	private static void addEdge(final Graph graph, final CFA cfa, final CfaEdge outEdge,
+	private static void addEdge(final Graph graph, final CFA cfa, final CfaEdge edge,
 			final Map<CfaLoc, String> ids) {
 		final StringJoiner edgeLabel = new StringJoiner("\n");
-		outEdge.getStmts().stream().forEach(stmt -> edgeLabel.add(stmt.toString()));
+		edge.getStmts().stream().forEach(stmt -> edgeLabel.add(stmt.toString()));
 		final EdgeAttributes eAttributes = EdgeAttributes.builder().label(edgeLabel.toString()).color(LINE_COLOR)
 				.lineStyle(EDGE_LINE_STYLE).font(EDGE_FONT).build();
-		graph.addEdge(ids.get(outEdge.getSource()), ids.get(outEdge.getTarget()), eAttributes);
+		graph.addEdge(ids.get(edge.getSource()), ids.get(edge.getTarget()), eAttributes);
 	}
 }

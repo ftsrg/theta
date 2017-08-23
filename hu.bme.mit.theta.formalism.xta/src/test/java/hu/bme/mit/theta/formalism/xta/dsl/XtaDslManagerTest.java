@@ -45,7 +45,7 @@ public final class XtaDslManagerTest {
 		final InputStream inputStream = getClass().getResourceAsStream(filepath);
 		final XtaSystem system = XtaDslManager.createSystem(inputStream);
 		final XtaProcess process = system.getProcesses().get(0);
-		System.out.println(new GraphvizWriter().writeString(XtaVisualizer.visualize(process)));
+		System.out.println(GraphvizWriter.getInstance().writeString(XtaVisualizer.visualize(process)));
 	}
 
 }

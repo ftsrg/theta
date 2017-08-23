@@ -1,6 +1,7 @@
 package hu.bme.mit.theta.tools.sts;
 
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -11,11 +12,16 @@ import com.beust.jcommander.ParametersDelegate;
 
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
+import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
+import hu.bme.mit.theta.analysis.utils.TraceVisualizer;
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.impl.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.impl.NullLogger;
 import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.common.table.impl.SimpleTableWriter;
+import hu.bme.mit.theta.common.visualization.Graph;
+import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.formalism.sts.STS;
@@ -41,9 +47,6 @@ public class StsMain {
 	@Parameter(names = { "-m", "--model" }, description = "Path of the input model", required = true)
 	String model;
 
-	@Parameter(names = { "-p", "--property" }, description = "Property to be verified", required = true)
-	String property;
-
 	@Parameter(names = { "-i", "--initprec" }, description = "Initial precision")
 	InitPrec initPrec = InitPrec.EMPTY;
 
@@ -55,6 +58,9 @@ public class StsMain {
 
 	@Parameter(names = { "-bm", "--benchmark" }, description = "Benchmark mode (only print metrics)")
 	Boolean benchmarkMode = false;
+
+	@Parameter(names = { "-v", "--visualize" }, description = "Write proof or counterexample to file in dot format")
+	String dotfile = null;
 
 	@Parameter(names = { "--header" }, description = "Print only a header (for benchmarks)", help = true)
 	boolean headerOnly = false;
@@ -92,6 +98,9 @@ public class StsMain {
 			final SafetyResult<?, ?> status = configuration.check();
 			checkResult(status);
 			printResult(status, sts);
+			if (dotfile != null) {
+				writeVisualStatus(status, dotfile);
+			}
 		} catch (final Throwable ex) {
 			printError(ex);
 		}
@@ -115,7 +124,10 @@ public class StsMain {
 		} else if (model.endsWith(".system")) {
 			final InputStream inputStream = new FileInputStream(model);
 			final StsSpec spec = StsDslManager.createStsSpec(inputStream);
-			return StsUtils.eliminateIte(spec.createProp(property));
+			if (spec.getAllSts().size() != 1) {
+				throw new UnsupportedOperationException("STS contains multiple properties.");
+			}
+			return StsUtils.eliminateIte(Utils.singleElementOf(spec.getAllSts()));
 		} else {
 			throw new IOException("Unknown format");
 		}
@@ -159,5 +171,13 @@ public class StsMain {
 			logger.writeln("Exception occured: " + ex.getClass().getSimpleName(), 0);
 			logger.writeln("Message: " + ex.getMessage(), 0, 1);
 		}
+	}
+
+	private void writeVisualStatus(final SafetyResult<?, ?> status, final String filename)
+			throws FileNotFoundException {
+		final Graph graph = status.isSafe()
+				? new ArgVisualizer<>(s -> s.toString(), a -> "").visualize(status.asSafe().getArg())
+				: new TraceVisualizer<>(s -> s.toString(), a -> "").visualize(status.asUnsafe().getTrace());
+		GraphvizWriter.getInstance().writeFile(graph, filename);
 	}
 }

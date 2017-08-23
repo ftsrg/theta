@@ -1,6 +1,7 @@
 package hu.bme.mit.theta.tools.cfa;
 
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -11,11 +12,15 @@ import com.beust.jcommander.ParametersDelegate;
 
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
+import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
+import hu.bme.mit.theta.analysis.utils.TraceVisualizer;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.impl.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.impl.NullLogger;
 import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.common.table.impl.SimpleTableWriter;
+import hu.bme.mit.theta.common.visualization.Graph;
+import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 import hu.bme.mit.theta.formalism.cfa.CFA;
 import hu.bme.mit.theta.formalism.cfa.dsl.CfaDslManager;
 import hu.bme.mit.theta.tools.CegarParams;
@@ -44,6 +49,9 @@ public class CfaMain {
 
 	@Parameter(names = { "-bm", "--benchmark" }, description = "Benchmark mode (only print metrics)")
 	Boolean benchmarkMode = false;
+
+	@Parameter(names = { "-v", "--visualize" }, description = "Write proof or counterexample to file in dot format")
+	String dotfile = null;
 
 	@Parameter(names = { "--header" }, description = "Print only a header (for benchmarks)", help = true)
 	boolean headerOnly = false;
@@ -80,6 +88,9 @@ public class CfaMain {
 			final Configuration<?, ?, ?> configuration = buildConfiguration(cfa);
 			final SafetyResult<?, ?> status = configuration.check();
 			printResult(status, cfa);
+			if (dotfile != null) {
+				writeVisualStatus(status, dotfile);
+			}
 		} catch (final Throwable ex) {
 			printError(ex);
 		}
@@ -137,5 +148,12 @@ public class CfaMain {
 			logger.writeln("Exception occured: " + ex.getClass().getSimpleName(), 0);
 			logger.writeln("Message: " + ex.getMessage(), 0, 1);
 		}
+	}
+
+	private void writeVisualStatus(final SafetyResult<?, ?> status, final String filename)
+			throws FileNotFoundException {
+		final Graph graph = status.isSafe() ? ArgVisualizer.getDefault().visualize(status.asSafe().getArg())
+				: TraceVisualizer.getDefault().visualize(status.asUnsafe().getTrace());
+		GraphvizWriter.getInstance().writeFile(graph, filename);
 	}
 }
