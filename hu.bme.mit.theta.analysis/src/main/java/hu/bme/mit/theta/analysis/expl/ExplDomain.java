@@ -17,12 +17,12 @@ public final class ExplDomain implements Domain<ExplState> {
 
 	@Override
 	public boolean isTop(final ExplState state) {
-		return state.getDecls().isEmpty();
+		return !state.isBottom() && state.getDecls().isEmpty();
 	}
 
 	@Override
 	public boolean isBottom(final ExplState state) {
-		return false;
+		return state.isBottom();
 	}
 
 	@Override

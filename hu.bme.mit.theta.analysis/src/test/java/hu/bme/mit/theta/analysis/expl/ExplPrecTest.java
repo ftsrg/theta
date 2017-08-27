@@ -39,8 +39,9 @@ public class ExplPrecTest {
 		final ExplState s1 = prec.createState(BasicValuation.builder().put(x, Int(1)).put(y, Int(2)).build());
 		final ExplState s2 = prec.createState(BasicValuation.builder().put(y, Int(2)).build());
 
-		Assert.assertEquals(BasicValuation.builder().put(x, Int(1)).build(), s1.getValuation());
-		Assert.assertEquals(BasicValuation.empty(), s2.getValuation());
+		Assert.assertEquals(1, s1.getDecls().size());
+		Assert.assertEquals(Int(1), s1.getValue(x));
+		Assert.assertEquals(0, s2.getDecls().size());
 	}
 
 	@Test
