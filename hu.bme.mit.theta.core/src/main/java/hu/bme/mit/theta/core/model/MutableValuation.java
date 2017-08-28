@@ -48,6 +48,11 @@ public final class MutableValuation implements Valuation {
 		return this;
 	}
 
+	public MutableValuation remove(final Decl<?> decl) {
+		declToExpr.remove(decl);
+		return this;
+	}
+
 	@Override
 	public Collection<? extends Decl<?>> getDecls() {
 		return Collections.unmodifiableSet(declToExpr.keySet());
