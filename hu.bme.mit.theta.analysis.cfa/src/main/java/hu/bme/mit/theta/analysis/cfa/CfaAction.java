@@ -4,17 +4,21 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static hu.bme.mit.theta.core.utils.VarIndexing.all;
 
+import java.util.List;
+
+import hu.bme.mit.theta.analysis.expl.StmtAction;
 import hu.bme.mit.theta.analysis.loc.LocAction;
 import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.Expr;
+import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.utils.StmtUtils;
 import hu.bme.mit.theta.core.utils.StmtUnfoldResult;
+import hu.bme.mit.theta.core.utils.StmtUtils;
 import hu.bme.mit.theta.core.utils.VarIndexing;
 import hu.bme.mit.theta.formalism.cfa.CFA.CfaEdge;
 import hu.bme.mit.theta.formalism.cfa.CFA.CfaLoc;
 
-public final class CfaAction implements LocAction<CfaLoc, CfaEdge> {
+public final class CfaAction implements LocAction<CfaLoc, CfaEdge>, StmtAction {
 
 	private final CfaEdge edge;
 	private final Expr<BoolType> expr;
@@ -50,6 +54,11 @@ public final class CfaAction implements LocAction<CfaLoc, CfaEdge> {
 	@Override
 	public String toString() {
 		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).addAll(edge.getStmts()).toString();
+	}
+
+	@Override
+	public List<Stmt> getStmts() {
+		return edge.getStmts();
 	}
 
 }
