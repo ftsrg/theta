@@ -36,11 +36,30 @@ public final class ExprStates {
 	public static <S extends ExprState> Collection<S> createStatesForExpr(final Solver solver,
 			final Expr<BoolType> expr, final int exprIndex,
 			final Function<? super Valuation, ? extends S> valuationToState, final VarIndexing stateIndexing) {
+		return createStatesForExpr(solver, expr, exprIndex, valuationToState, stateIndexing, 0);
+	}
+
+	/**
+	 * Generate all or a limited number of states that satisfy a given
+	 * expression.
+	 *
+	 * @param solver Solver
+	 * @param expr Expression to be satisfied
+	 * @param exprIndex Index for unfolding the expression
+	 * @param valuationToState Mapping from a valuation to a state
+	 * @param stateIndexing Index for extracting the state
+	 * @param limit Limit the number of states to generate (0 is unlimited)
+	 * @return States satisfying the expression
+	 */
+	public static <S extends ExprState> Collection<S> createStatesForExpr(final Solver solver,
+			final Expr<BoolType> expr, final int exprIndex,
+			final Function<? super Valuation, ? extends S> valuationToState, final VarIndexing stateIndexing,
+			final int limit) {
 		try (WithPushPop wpp = new WithPushPop(solver)) {
 			solver.add(PathUtils.unfold(expr, exprIndex));
 
 			final Collection<S> result = new ArrayList<>();
-			while (solver.check().isSat()) {
+			while (solver.check().isSat() && (limit == 0 || result.size() < limit)) {
 				final Model model = solver.getModel();
 				final Valuation valuation = PathUtils.extractValuation(model, stateIndexing);
 				final S state = valuationToState.apply(valuation);
