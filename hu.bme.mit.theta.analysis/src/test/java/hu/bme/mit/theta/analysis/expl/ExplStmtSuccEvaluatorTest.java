@@ -23,7 +23,7 @@ public class ExplStmtSuccEvaluatorTest {
 	ExplState sx = ExplState.create(BasicValuation.builder().put(X, Int(1)).build());
 	ExplState sy = ExplState.create(BasicValuation.builder().put(Y, Int(2)).build());
 	ExplState sxy = ExplState.create(BasicValuation.builder().put(X, Int(1)).put(Y, Int(2)).build());
-	ExplState st = ExplState.create(BasicValuation.empty());
+	ExplState st = ExplState.createTop();
 
 	@Test
 	public void testVisitorHavoc() {

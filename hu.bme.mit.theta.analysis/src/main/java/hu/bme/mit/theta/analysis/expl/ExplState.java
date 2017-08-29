@@ -4,7 +4,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import hu.bme.mit.theta.analysis.expr.ExprState;
@@ -14,6 +13,7 @@ import hu.bme.mit.theta.core.Decl;
 import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.LitExpr;
 import hu.bme.mit.theta.core.Type;
+import hu.bme.mit.theta.core.model.BasicValuation;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
@@ -21,6 +21,9 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 public abstract class ExplState implements ExprState, Valuation {
 
 	public static ExplState create(final Valuation values) {
+		if (values.getDecls().isEmpty()) {
+			return createTop();
+		}
 		return new NonBottom(values);
 	}
 
@@ -28,7 +31,9 @@ public abstract class ExplState implements ExprState, Valuation {
 		return BottomLazyHolder.INSTANCE;
 	}
 
-	public abstract <ExprType extends Type> LitExpr<ExprType> getValue(final Decl<ExprType> varDecl);
+	public static ExplState createTop() {
+		return TopLazyHolder.INSTANCE;
+	}
 
 	public abstract boolean isLeq(final ExplState that);
 
@@ -44,11 +49,6 @@ public abstract class ExplState implements ExprState, Valuation {
 
 		private NonBottom(final Valuation values) {
 			this.values = checkNotNull(values);
-		}
-
-		@Override
-		public <ExprType extends Type> LitExpr<ExprType> getValue(final Decl<ExprType> varDecl) {
-			return values.eval(varDecl).get();
 		}
 
 		@Override
@@ -77,7 +77,7 @@ public abstract class ExplState implements ExprState, Valuation {
 				return false;
 			}
 			for (final Decl<?> varDecl : that.getDecls()) {
-				if (!this.getDecls().contains(varDecl) || !that.getValue(varDecl).equals(this.getValue(varDecl))) {
+				if (!this.getDecls().contains(varDecl) || !that.eval(varDecl).get().equals(this.eval(varDecl).get())) {
 					return false;
 				}
 			}
@@ -118,19 +118,13 @@ public abstract class ExplState implements ExprState, Valuation {
 		public String toString() {
 			final ToStringBuilder builder = ObjectUtils.toStringBuilder(ExplState.class.getSimpleName());
 			for (final Decl<?> varDecl : values.getDecls()) {
-				builder.add(varDecl.getName() + " = " + getValue(varDecl));
+				builder.add(varDecl.getName() + " = " + eval(varDecl).get());
 			}
 			return builder.toString();
 		}
 	}
 
 	private static final class Bottom extends ExplState {
-
-		@Override
-		public <ExprType extends Type> LitExpr<ExprType> getValue(final Decl<ExprType> varDecl) {
-			throw new NoSuchElementException("Bottom state contains no values.");
-		}
-
 		@Override
 		public Collection<? extends Decl<?>> getDecls() {
 			return Collections.emptySet();
@@ -177,6 +171,10 @@ public abstract class ExplState implements ExprState, Valuation {
 	}
 
 	private static class BottomLazyHolder {
-		static final Bottom INSTANCE = new Bottom();
+		static final ExplState INSTANCE = new Bottom();
+	}
+
+	private static class TopLazyHolder {
+		static final ExplState INSTANCE = new NonBottom(BasicValuation.empty());
 	}
 }

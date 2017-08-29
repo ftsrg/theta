@@ -17,7 +17,7 @@ public class ExplDomainTest {
 
 	final ExplDomain domain = ExplDomain.getInstance();
 
-	final ExplState st = ExplState.create(BasicValuation.empty());
+	final ExplState st = ExplState.createTop();
 	final ExplState s1 = ExplState.create(BasicValuation.builder().put(X, Int(1)).build());
 	final ExplState s2 = ExplState.create(BasicValuation.builder().put(X, Int(2)).build());
 	final ExplState s3 = ExplState.create(BasicValuation.builder().put(Y, Int(1)).build());

@@ -39,7 +39,7 @@ public class ExplStmtTransferFunctionTest {
 	@Test
 	public void testSimple() {
 		final ExplStmtTransferFunction transFunc = ExplStmtTransferFunction.create(solver, 0);
-		final ExplState sourceState = ExplState.create(BasicValuation.empty());
+		final ExplState sourceState = ExplState.createTop();
 		final ExplPrec prec = ExplPrec.create(Collections.singleton(x));
 		final List<Stmt> stmts = new ArrayList<>();
 		stmts.add(Havoc(x));
@@ -58,7 +58,7 @@ public class ExplStmtTransferFunctionTest {
 	@Test
 	public void testComplex1() {
 		final ExplStmtTransferFunction transFunc = ExplStmtTransferFunction.create(solver, 0);
-		final ExplState sourceState = ExplState.create(BasicValuation.empty());
+		final ExplState sourceState = ExplState.createTop();
 		final ExplPrec prec = ExplPrec.create(ImmutableSet.of(x, y));
 		final List<Stmt> stmts = new ArrayList<>();
 		stmts.add(Assign(x, Int(5)));
@@ -74,7 +74,7 @@ public class ExplStmtTransferFunctionTest {
 	@Test
 	public void testComplex2() {
 		final ExplStmtTransferFunction transFunc = ExplStmtTransferFunction.create(solver, 1);
-		final ExplState sourceState = ExplState.create(BasicValuation.empty());
+		final ExplState sourceState = ExplState.createTop();
 		final ExplPrec prec = ExplPrec.create(ImmutableSet.of(x, y));
 		final List<Stmt> stmts = new ArrayList<>();
 		stmts.add(Assign(x, Int(5)));
@@ -90,7 +90,7 @@ public class ExplStmtTransferFunctionTest {
 
 	@Test
 	public void testComplex3() {
-		final ExplState sourceState = ExplState.create(BasicValuation.empty());
+		final ExplState sourceState = ExplState.createTop();
 		final ExplPrec prec = ExplPrec.create(Collections.singleton(x));
 		final List<Stmt> stmts = new ArrayList<>();
 		stmts.add(Assume(BoolExprs.And(Leq(Int(0), x.getRef()), Leq(x.getRef(), Int(2)))));
