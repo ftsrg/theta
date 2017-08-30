@@ -1,5 +1,7 @@
 # For developers
 
+Theta is written in Java 8 using [Gradle](https://gradle.org/) as a build system. We are developing both on Windows and Linux.
+
 ## Preferred development workflow
 
 As the main repository is read-only, we suggest you to create your own _fork_. Within your fork, we also recommend to create new _branches_ for your development. This enables us later on to easily integrate your work into the main repository by using _pull requests_.

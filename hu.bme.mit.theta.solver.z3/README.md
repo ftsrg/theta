@@ -1,0 +1,1 @@
+This project wraps the [Z3 solver](https://github.com/Z3Prover/z3) into our common interface for solvers.

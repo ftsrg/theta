@@ -1,0 +1,1 @@
+This project contains the Symbolic Transition System (STS) formalism. It is a generic, low-level formalism that can describe any kind of system using variables and initial/transition expressions. A domain specific language (DSL) is available to parse STSs from a textual representation.
