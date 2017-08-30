@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.solver.z3.trasform;
+package hu.bme.mit.theta.solver.z3.transform;
 
 import com.microsoft.z3.Context;
 
