@@ -10,14 +10,14 @@ import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.TransferFunction;
 import hu.bme.mit.theta.formalism.cfa.CFA.Loc;
 
-public final class LocAnalysis<S extends State, A extends LocAction, P extends Prec>
-		implements Analysis<LocState<S>, A, LocPrec<P>> {
+public final class LocAnalysis<S extends State, P extends Prec>
+		implements Analysis<LocState<S>, CfaAction, LocPrec<P>> {
 
 	private final Domain<LocState<S>> domain;
 	private final InitFunction<LocState<S>, LocPrec<P>> initFunction;
-	private final TransferFunction<LocState<S>, A, LocPrec<P>> transferFunction;
+	private final TransferFunction<LocState<S>, CfaAction, LocPrec<P>> transferFunction;
 
-	private LocAnalysis(final Loc initLoc, final Analysis<S, ? super A, ? super P> analysis) {
+	private LocAnalysis(final Loc initLoc, final Analysis<S, ? super CfaAction, ? super P> analysis) {
 		checkNotNull(initLoc);
 		checkNotNull(analysis);
 		domain = LocDomain.create(analysis.getDomain());
@@ -25,8 +25,8 @@ public final class LocAnalysis<S extends State, A extends LocAction, P extends P
 		transferFunction = LocTransferFunction.create(analysis.getTransferFunction());
 	}
 
-	public static <S extends State, A extends LocAction, P extends Prec> LocAnalysis<S, A, P> create(
-			final Loc initLoc, final Analysis<S, ? super A, ? super P> analysis) {
+	public static <S extends State, P extends Prec> LocAnalysis<S, P> create(final Loc initLoc,
+			final Analysis<S, ? super CfaAction, ? super P> analysis) {
 		return new LocAnalysis<>(initLoc, analysis);
 	}
 
@@ -41,7 +41,7 @@ public final class LocAnalysis<S extends State, A extends LocAction, P extends P
 	}
 
 	@Override
-	public TransferFunction<LocState<S>, A, LocPrec<P>> getTransferFunction() {
+	public TransferFunction<LocState<S>, CfaAction, LocPrec<P>> getTransferFunction() {
 		return transferFunction;
 	}
 

@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import hu.bme.mit.theta.analysis.Trace;
-import hu.bme.mit.theta.analysis.cfa.LocAction;
+import hu.bme.mit.theta.analysis.cfa.CfaAction;
 import hu.bme.mit.theta.analysis.cfa.LocState;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
@@ -20,7 +20,7 @@ import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.solver.ItpSolver;
 
-public final class PredImpactRefiner implements ImpactRefiner<LocState<PredState>, LocAction> {
+public final class PredImpactRefiner implements ImpactRefiner<LocState<PredState>, CfaAction> {
 
 	private final ExprTraceSeqItpChecker traceChecker;
 
@@ -34,8 +34,8 @@ public final class PredImpactRefiner implements ImpactRefiner<LocState<PredState
 	}
 
 	@Override
-	public RefinementResult<LocState<PredState>, LocAction> refine(final Trace<LocState<PredState>, LocAction> cex) {
-		final List<LocAction> actions = cex.getActions();
+	public RefinementResult<LocState<PredState>, CfaAction> refine(final Trace<LocState<PredState>, CfaAction> cex) {
+		final List<CfaAction> actions = cex.getActions();
 
 		final Trace<ExprState, ExprAction> exprTrace = ExprTraceUtils.traceFrom(actions);
 		final ExprTraceStatus<ItpRefutation> traceStatus = traceChecker.check(exprTrace);
@@ -62,7 +62,7 @@ public final class PredImpactRefiner implements ImpactRefiner<LocState<PredState
 				refinedStates.add(refinedState);
 			}
 
-			final Trace<LocState<PredState>, LocAction> trace = Trace.of(refinedStates, actions);
+			final Trace<LocState<PredState>, CfaAction> trace = Trace.of(refinedStates, actions);
 			return RefinementResult.succesful(trace);
 		} else {
 			throw new AssertionError();

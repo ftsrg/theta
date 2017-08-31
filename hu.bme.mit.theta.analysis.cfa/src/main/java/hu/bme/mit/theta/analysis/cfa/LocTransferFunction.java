@@ -12,22 +12,23 @@ import hu.bme.mit.theta.analysis.TransferFunction;
 import hu.bme.mit.theta.formalism.cfa.CFA.Edge;
 import hu.bme.mit.theta.formalism.cfa.CFA.Loc;
 
-final class LocTransferFunction<S extends State, A extends LocAction, P extends Prec>
-		implements TransferFunction<LocState<S>, A, LocPrec<P>> {
+final class LocTransferFunction<S extends State, P extends Prec>
+		implements TransferFunction<LocState<S>, CfaAction, LocPrec<P>> {
 
-	private final TransferFunction<S, ? super A, ? super P> transferFunction;
+	private final TransferFunction<S, ? super CfaAction, ? super P> transferFunction;
 
-	private LocTransferFunction(final TransferFunction<S, ? super A, ? super P> transferFunction) {
+	private LocTransferFunction(final TransferFunction<S, ? super CfaAction, ? super P> transferFunction) {
 		this.transferFunction = checkNotNull(transferFunction);
 	}
 
-	public static <S extends State, A extends LocAction, P extends Prec> LocTransferFunction<S, A, P> create(
-			final TransferFunction<S, ? super A, ? super P> transferFunction) {
+	public static <S extends State, P extends Prec> LocTransferFunction<S, P> create(
+			final TransferFunction<S, ? super CfaAction, ? super P> transferFunction) {
 		return new LocTransferFunction<>(transferFunction);
 	}
 
 	@Override
-	public Collection<LocState<S>> getSuccStates(final LocState<S> state, final A action, final LocPrec<P> prec) {
+	public Collection<LocState<S>> getSuccStates(final LocState<S> state, final CfaAction action,
+			final LocPrec<P> prec) {
 		checkNotNull(state);
 		checkNotNull(action);
 		checkNotNull(prec);

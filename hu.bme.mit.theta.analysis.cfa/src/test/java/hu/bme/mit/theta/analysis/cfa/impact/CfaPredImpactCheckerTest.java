@@ -57,7 +57,7 @@ public final class CfaPredImpactCheckerTest {
 
 		final ItpSolver solver = Z3SolverFactory.getInstace().createItpSolver();
 
-		final PredImpactChecker checker = PredImpactChecker.create(CfaLts.getInstance(), cfa.getInitLoc(),
+		final PredImpactChecker checker = PredImpactChecker.create(new CfaLts(), cfa.getInitLoc(),
 				l -> l.equals(cfa.getErrorLoc()), solver);
 
 		// Act

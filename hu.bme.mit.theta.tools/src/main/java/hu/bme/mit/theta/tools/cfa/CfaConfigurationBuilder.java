@@ -18,7 +18,6 @@ import hu.bme.mit.theta.analysis.cfa.ConstLocPrec;
 import hu.bme.mit.theta.analysis.cfa.ConstLocPrecRefiner;
 import hu.bme.mit.theta.analysis.cfa.GenericLocPrec;
 import hu.bme.mit.theta.analysis.cfa.GenericLocPrecRefiner;
-import hu.bme.mit.theta.analysis.cfa.LocAction;
 import hu.bme.mit.theta.analysis.cfa.LocAnalysis;
 import hu.bme.mit.theta.analysis.cfa.LocPrec;
 import hu.bme.mit.theta.analysis.cfa.LocState;
@@ -117,10 +116,10 @@ public class CfaConfigurationBuilder extends ConfigurationBuilder {
 
 	public Configuration<? extends State, ? extends Action, ? extends Prec> build(final CFA cfa) {
 		final ItpSolver solver = getSolverFactory().createItpSolver();
-		final CfaLts lts = CfaLts.getInstance();
+		final CfaLts lts = new CfaLts();
 
 		if (getDomain() == Domain.EXPL) {
-			final Analysis<LocState<ExplState>, LocAction, LocPrec<ExplPrec>> analysis = LocAnalysis
+			final Analysis<LocState<ExplState>, CfaAction, LocPrec<ExplPrec>> analysis = LocAnalysis
 					.create(cfa.getInitLoc(), ExplAnalysis.create(solver, True()));
 			final ArgBuilder<LocState<ExplState>, CfaAction, LocPrec<ExplPrec>> argBuilder = ArgBuilder.create(lts,
 					analysis, s -> s.getLoc().equals(cfa.getErrorLoc()));

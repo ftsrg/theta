@@ -16,7 +16,7 @@ import hu.bme.mit.theta.core.utils.StmtUtils;
 import hu.bme.mit.theta.core.utils.VarIndexing;
 import hu.bme.mit.theta.formalism.cfa.CFA.Edge;
 
-public final class CfaAction implements LocAction, StmtAction {
+public final class CfaAction implements StmtAction {
 
 	private final Edge edge;
 	private final Expr<BoolType> expr;
