@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.analysis.loc;
+package hu.bme.mit.theta.analysis.cfa;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;

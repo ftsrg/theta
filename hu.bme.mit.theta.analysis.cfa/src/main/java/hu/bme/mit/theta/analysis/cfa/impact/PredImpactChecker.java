@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.analysis.algorithm.impact;
+package hu.bme.mit.theta.analysis.cfa.impact;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
@@ -11,13 +11,13 @@ import hu.bme.mit.theta.analysis.LTS;
 import hu.bme.mit.theta.analysis.algorithm.ArgBuilder;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
+import hu.bme.mit.theta.analysis.cfa.ConstLocPrec;
+import hu.bme.mit.theta.analysis.cfa.LocAction;
+import hu.bme.mit.theta.analysis.cfa.LocAnalysis;
+import hu.bme.mit.theta.analysis.cfa.LocPrec;
+import hu.bme.mit.theta.analysis.cfa.LocState;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.impl.PrecMappingAnalysis;
-import hu.bme.mit.theta.analysis.loc.ConstLocPrec;
-import hu.bme.mit.theta.analysis.loc.LocAction;
-import hu.bme.mit.theta.analysis.loc.LocAnalysis;
-import hu.bme.mit.theta.analysis.loc.LocPrec;
-import hu.bme.mit.theta.analysis.loc.LocState;
 import hu.bme.mit.theta.analysis.pred.PredAnalysis;
 import hu.bme.mit.theta.analysis.pred.PredPrec;
 import hu.bme.mit.theta.analysis.pred.PredState;

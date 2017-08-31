@@ -4,8 +4,6 @@ import java.util.Collection;
 import java.util.stream.Collectors;
 
 import hu.bme.mit.theta.analysis.LTS;
-import hu.bme.mit.theta.analysis.loc.LocLts;
-import hu.bme.mit.theta.analysis.loc.LocState;
 
 public final class CfaLts implements LTS<LocState<?>, CfaAction> {
 

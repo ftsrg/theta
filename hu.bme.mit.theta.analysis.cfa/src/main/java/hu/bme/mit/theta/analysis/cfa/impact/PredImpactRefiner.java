@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.analysis.algorithm.impact;
+package hu.bme.mit.theta.analysis.cfa.impact;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
@@ -7,14 +7,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 import hu.bme.mit.theta.analysis.Trace;
+import hu.bme.mit.theta.analysis.cfa.LocAction;
+import hu.bme.mit.theta.analysis.cfa.LocState;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.ExprTraceUtils;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceSeqItpChecker;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceStatus;
 import hu.bme.mit.theta.analysis.expr.refinement.ItpRefutation;
-import hu.bme.mit.theta.analysis.loc.LocAction;
-import hu.bme.mit.theta.analysis.loc.LocState;
 import hu.bme.mit.theta.analysis.pred.PredState;
 import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;

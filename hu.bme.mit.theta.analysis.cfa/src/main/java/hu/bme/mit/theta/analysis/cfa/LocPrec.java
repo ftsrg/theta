@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.analysis.loc;
+package hu.bme.mit.theta.analysis.cfa;
 
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.formalism.cfa.CFA.CfaLoc;

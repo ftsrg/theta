@@ -1,13 +1,18 @@
-package hu.bme.mit.theta.analysis.loc;
+package hu.bme.mit.theta.analysis.cfa;
 
 import org.junit.Assert;
 import org.junit.Test;
 
-import hu.bme.mit.theta.analysis.stubs.PrecStub;
+import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.formalism.cfa.CFA;
 import hu.bme.mit.theta.formalism.cfa.CFA.CfaLoc;
 
 public class LocPrecTest {
+
+	public static class PrecStub implements Prec {
+
+	}
+
 	private final PrecStub p0 = new PrecStub();
 	private final PrecStub p1 = new PrecStub();
 	private final PrecStub p2 = new PrecStub();

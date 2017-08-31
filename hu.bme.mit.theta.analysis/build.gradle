@@ -4,5 +4,4 @@ dependencies {
   compile project(':hu.bme.mit.theta.formalism.ta')
   compile project(':hu.bme.mit.theta.solver')
   compile project(':hu.bme.mit.theta.solver.z3')
-  compile project(':hu.bme.mit.theta.formalism.cfa')
 }
