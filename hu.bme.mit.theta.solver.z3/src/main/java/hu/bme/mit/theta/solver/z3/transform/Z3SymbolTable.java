@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.solver.z3.trasform;
+package hu.bme.mit.theta.solver.z3.transform;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;

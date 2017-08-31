@@ -1,0 +1,1 @@
+This project contains tools. Tools are command line (or GUI) applications that can be built into a runnable jar file. Tools usually read some input and then instantiate and run the algorithms. For more information on using the tools, see the [doc](../doc) folder.

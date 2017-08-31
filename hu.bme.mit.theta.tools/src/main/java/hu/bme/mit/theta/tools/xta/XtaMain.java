@@ -15,6 +15,7 @@ import hu.bme.mit.theta.analysis.algorithm.SearchStrategy;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.analysis.utils.TraceVisualizer;
+import hu.bme.mit.theta.analysis.xta.algorithm.lazy.ActStrategy;
 import hu.bme.mit.theta.analysis.xta.algorithm.lazy.BinItpStrategy;
 import hu.bme.mit.theta.analysis.xta.algorithm.lazy.ItpStrategy.ItpOperator;
 import hu.bme.mit.theta.analysis.xta.algorithm.lazy.LazyXtaChecker;
@@ -86,6 +87,13 @@ public final class XtaMain {
 			@Override
 			public AlgorithmStrategy<?> create(final XtaSystem system) {
 				return LuStrategy.create(system);
+			}
+		},
+
+		ACT {
+			@Override
+			public AlgorithmStrategy<?> create(final XtaSystem system) {
+				return ActStrategy.create(system);
 			}
 		};
 

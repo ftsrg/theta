@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.solver.z3.trasform;
+package hu.bme.mit.theta.solver.z3.transform;
 
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Geq;

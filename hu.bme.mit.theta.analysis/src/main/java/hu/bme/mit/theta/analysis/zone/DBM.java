@@ -390,6 +390,28 @@ final class DBM {
 		return true;
 	}
 
+	public boolean isLeq(final DBM that, final Collection<? extends VarDecl<RatType>> activeVars) {
+		final Set<VarDecl<RatType>> vars = Sets.union(this.signature.toSet(), that.signature.toSet());
+
+		for (final VarDecl<RatType> x : vars) {
+			if (!activeVars.contains(x)) {
+				continue;
+			}
+
+			for (final VarDecl<RatType> y : vars) {
+				if (!activeVars.contains(y)) {
+					continue;
+				}
+
+				if (this.getOrDefault(x, y) > that.getOrDefault(x, y)) {
+					return false;
+				}
+
+			}
+		}
+		return true;
+	}
+
 	public boolean isLeq(final DBM that, final BoundFunction bound) {
 		final Set<VarDecl<RatType>> vars = Sets.union(this.signature.toSet(), that.signature.toSet());
 
@@ -798,4 +820,5 @@ final class DBM {
 	private interface Procedure {
 		void execute();
 	}
+
 }

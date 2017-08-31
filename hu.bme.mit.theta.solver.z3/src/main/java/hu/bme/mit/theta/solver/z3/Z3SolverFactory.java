@@ -6,9 +6,9 @@ import hu.bme.mit.theta.common.OsHelper;
 import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverFactory;
-import hu.bme.mit.theta.solver.z3.trasform.Z3SymbolTable;
-import hu.bme.mit.theta.solver.z3.trasform.Z3TermTransformer;
-import hu.bme.mit.theta.solver.z3.trasform.Z3TransformationManager;
+import hu.bme.mit.theta.solver.z3.transform.Z3SymbolTable;
+import hu.bme.mit.theta.solver.z3.transform.Z3TermTransformer;
+import hu.bme.mit.theta.solver.z3.transform.Z3TransformationManager;
 
 public final class Z3SolverFactory implements SolverFactory {
 
