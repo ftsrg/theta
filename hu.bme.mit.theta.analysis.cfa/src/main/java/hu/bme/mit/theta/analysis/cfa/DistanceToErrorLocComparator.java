@@ -15,7 +15,7 @@ import hu.bme.mit.theta.formalism.cfa.CFA.Edge;
 import hu.bme.mit.theta.formalism.cfa.CFA.Loc;
 
 public class DistanceToErrorLocComparator
-		implements Comparator<ArgNode<? extends LocState<? extends State>, ? extends Action>>, Serializable {
+		implements Comparator<ArgNode<? extends CfaState<? extends State>, ? extends Action>>, Serializable {
 	private static final long serialVersionUID = -6915823336852930450L;
 
 	private final Map<Loc, Integer> distancesToError;
@@ -25,8 +25,8 @@ public class DistanceToErrorLocComparator
 	}
 
 	@Override
-	public int compare(final ArgNode<? extends LocState<? extends State>, ? extends Action> n1,
-			final ArgNode<? extends LocState<? extends State>, ? extends Action> n2) {
+	public int compare(final ArgNode<? extends CfaState<? extends State>, ? extends Action> n1,
+			final ArgNode<? extends CfaState<? extends State>, ? extends Action> n2) {
 		final int dist1 = distancesToError.getOrDefault(n1.getState().getLoc(), Integer.MAX_VALUE);
 		final int dist2 = distancesToError.getOrDefault(n2.getState().getLoc(), Integer.MAX_VALUE);
 

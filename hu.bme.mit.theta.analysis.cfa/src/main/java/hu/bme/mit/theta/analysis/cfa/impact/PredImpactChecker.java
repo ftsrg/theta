@@ -12,10 +12,10 @@ import hu.bme.mit.theta.analysis.algorithm.ArgBuilder;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.cfa.CfaAction;
-import hu.bme.mit.theta.analysis.cfa.ConstLocPrec;
-import hu.bme.mit.theta.analysis.cfa.LocAnalysis;
-import hu.bme.mit.theta.analysis.cfa.LocPrec;
-import hu.bme.mit.theta.analysis.cfa.LocState;
+import hu.bme.mit.theta.analysis.cfa.CfaAnalysis;
+import hu.bme.mit.theta.analysis.cfa.CfaPrec;
+import hu.bme.mit.theta.analysis.cfa.CfaState;
+import hu.bme.mit.theta.analysis.cfa.prec.ConstCfaPrec;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.impl.PrecMappingAnalysis;
 import hu.bme.mit.theta.analysis.pred.PredAnalysis;
@@ -26,11 +26,11 @@ import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.formalism.cfa.CFA.Loc;
 import hu.bme.mit.theta.solver.ItpSolver;
 
-public final class PredImpactChecker implements SafetyChecker<LocState<PredState>, CfaAction, UnitPrec> {
+public final class PredImpactChecker implements SafetyChecker<CfaState<PredState>, CfaAction, UnitPrec> {
 
-	private final ImpactChecker<LocState<PredState>, CfaAction, UnitPrec> checker;
+	private final ImpactChecker<CfaState<PredState>, CfaAction, UnitPrec> checker;
 
-	private PredImpactChecker(final LTS<? super LocState<PredState>, ? extends CfaAction> lts, final Loc initLoc,
+	private PredImpactChecker(final LTS<? super CfaState<PredState>, ? extends CfaAction> lts, final Loc initLoc,
 			final Predicate<? super Loc> targetLocs, final ItpSolver solver) {
 		checkNotNull(lts);
 		checkNotNull(initLoc);
@@ -38,31 +38,31 @@ public final class PredImpactChecker implements SafetyChecker<LocState<PredState
 
 		final Analysis<PredState, ExprAction, PredPrec> predAnalysis = PredAnalysis.create(solver, True());
 
-		final LocPrec<PredPrec> fixedPrec = ConstLocPrec.create(SimplePredPrec.create(emptySet(), solver));
+		final CfaPrec<PredPrec> fixedPrec = ConstCfaPrec.create(SimplePredPrec.create(emptySet(), solver));
 
-		final Analysis<LocState<PredState>, CfaAction, LocPrec<PredPrec>> cfaAnalysis = LocAnalysis.create(initLoc,
+		final Analysis<CfaState<PredState>, CfaAction, CfaPrec<PredPrec>> cfaAnalysis = CfaAnalysis.create(initLoc,
 				predAnalysis);
 
-		final Analysis<LocState<PredState>, CfaAction, UnitPrec> analysis = PrecMappingAnalysis.create(cfaAnalysis,
+		final Analysis<CfaState<PredState>, CfaAction, UnitPrec> analysis = PrecMappingAnalysis.create(cfaAnalysis,
 				np -> fixedPrec);
 
-		final Predicate<LocState<?>> target = s -> targetLocs.test(s.getLoc());
+		final Predicate<CfaState<?>> target = s -> targetLocs.test(s.getLoc());
 
-		final ArgBuilder<LocState<PredState>, CfaAction, UnitPrec> argBuilder = ArgBuilder.create(lts, analysis,
+		final ArgBuilder<CfaState<PredState>, CfaAction, UnitPrec> argBuilder = ArgBuilder.create(lts, analysis,
 				target);
 
-		final ImpactRefiner<LocState<PredState>, CfaAction> refiner = PredImpactRefiner.create(solver);
+		final ImpactRefiner<CfaState<PredState>, CfaAction> refiner = PredImpactRefiner.create(solver);
 
 		checker = ImpactChecker.create(argBuilder, refiner, s -> s.getLoc());
 	}
 
-	public static PredImpactChecker create(final LTS<? super LocState<PredState>, ? extends CfaAction> lts,
+	public static PredImpactChecker create(final LTS<? super CfaState<PredState>, ? extends CfaAction> lts,
 			final Loc initLoc, final Predicate<? super Loc> targetLocs, final ItpSolver solver) {
 		return new PredImpactChecker(lts, initLoc, targetLocs, solver);
 	}
 
 	@Override
-	public SafetyResult<LocState<PredState>, CfaAction> check(final UnitPrec prec) {
+	public SafetyResult<CfaState<PredState>, CfaAction> check(final UnitPrec prec) {
 		return checker.check(prec);
 	}
 

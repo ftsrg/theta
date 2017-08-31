@@ -9,7 +9,7 @@ import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.formalism.cfa.CFA.Loc;
 
-public final class LocState<S extends State> implements ExprState {
+public final class CfaState<S extends State> implements ExprState {
 
 	private static final int HASH_SEED = 3613;
 
@@ -18,13 +18,13 @@ public final class LocState<S extends State> implements ExprState {
 	private final Loc loc;
 	private final S state;
 
-	private LocState(final Loc loc, final S state) {
+	private CfaState(final Loc loc, final S state) {
 		this.loc = checkNotNull(loc);
 		this.state = checkNotNull(state);
 	}
 
-	public static <S extends State> LocState<S> of(final Loc loc, final S state) {
-		return new LocState<>(loc, state);
+	public static <S extends State> CfaState<S> of(final Loc loc, final S state) {
+		return new CfaState<>(loc, state);
 	}
 
 	////
@@ -39,12 +39,12 @@ public final class LocState<S extends State> implements ExprState {
 
 	////
 
-	public LocState<S> withLoc(final Loc loc) {
-		return LocState.of(loc, this.state);
+	public CfaState<S> withLoc(final Loc loc) {
+		return CfaState.of(loc, this.state);
 	}
 
-	public <S2 extends State> LocState<S2> withState(final S2 state) {
-		return LocState.of(this.loc, state);
+	public <S2 extends State> CfaState<S2> withState(final S2 state) {
+		return CfaState.of(this.loc, state);
 	}
 
 	////
@@ -77,8 +77,8 @@ public final class LocState<S extends State> implements ExprState {
 	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
-		} else if (obj instanceof LocState) {
-			final LocState<?> that = (LocState<?>) obj;
+		} else if (obj instanceof CfaState) {
+			final CfaState<?> that = (CfaState<?>) obj;
 			return this.loc.equals(that.loc) && this.state.equals(that.state);
 		} else {
 			return false;

@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.analysis.cfa;
+package hu.bme.mit.theta.analysis.cfa.refinement;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -7,32 +7,35 @@ import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.Trace;
+import hu.bme.mit.theta.analysis.cfa.CfaPrec;
+import hu.bme.mit.theta.analysis.cfa.CfaState;
+import hu.bme.mit.theta.analysis.cfa.prec.ConstCfaPrec;
 import hu.bme.mit.theta.analysis.expr.refinement.PrecRefiner;
 import hu.bme.mit.theta.analysis.expr.refinement.Refutation;
 import hu.bme.mit.theta.analysis.expr.refinement.RefutationToPrec;
 
-public class ConstLocPrecRefiner<S extends State, A extends Action, P extends Prec, R extends Refutation>
-		implements PrecRefiner<LocState<S>, A, LocPrec<P>, R> {
+public class ConstCfaPrecRefiner<S extends State, A extends Action, P extends Prec, R extends Refutation>
+		implements PrecRefiner<CfaState<S>, A, CfaPrec<P>, R> {
 
 	private final RefutationToPrec<P, R> refToPrec;
 
-	private ConstLocPrecRefiner(final RefutationToPrec<P, R> refToPrec) {
+	private ConstCfaPrecRefiner(final RefutationToPrec<P, R> refToPrec) {
 		this.refToPrec = checkNotNull(refToPrec);
 	}
 
-	public static <S extends State, A extends Action, P extends Prec, R extends Refutation> ConstLocPrecRefiner<S, A, P, R> create(
+	public static <S extends State, A extends Action, P extends Prec, R extends Refutation> ConstCfaPrecRefiner<S, A, P, R> create(
 			final RefutationToPrec<P, R> refToPrec) {
-		return new ConstLocPrecRefiner<>(refToPrec);
+		return new ConstCfaPrecRefiner<>(refToPrec);
 	}
 
 	@Override
-	public LocPrec<P> refine(final LocPrec<P> prec, final Trace<LocState<S>, A> trace, final R refutation) {
+	public CfaPrec<P> refine(final CfaPrec<P> prec, final Trace<CfaState<S>, A> trace, final R refutation) {
 		checkNotNull(trace);
 		checkNotNull(prec);
 		checkNotNull(refutation);
-		checkArgument(prec instanceof ConstLocPrec); // TODO: enforce this in a better way
+		checkArgument(prec instanceof ConstCfaPrec); // TODO: enforce this in a better way
 
-		final ConstLocPrec<P> constPrec = (ConstLocPrec<P>) prec;
+		final ConstCfaPrec<P> constPrec = (ConstCfaPrec<P>) prec;
 		P runningPrec = constPrec.getPrec();
 		for (int i = 0; i < trace.getStates().size(); ++i) {
 			final P precFromRef = refToPrec.toPrec(refutation, i);

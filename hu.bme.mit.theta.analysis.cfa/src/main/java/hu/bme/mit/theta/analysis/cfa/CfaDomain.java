@@ -5,31 +5,31 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import hu.bme.mit.theta.analysis.Domain;
 import hu.bme.mit.theta.analysis.State;
 
-public final class LocDomain<S extends State> implements Domain<LocState<S>> {
+public final class CfaDomain<S extends State> implements Domain<CfaState<S>> {
 
 	private final Domain<S> domain;
 
-	private LocDomain(final Domain<S> domain) {
+	private CfaDomain(final Domain<S> domain) {
 		this.domain = checkNotNull(domain);
 	}
 
-	public static <S extends State> LocDomain<S> create(final Domain<S> domain) {
-		return new LocDomain<>(domain);
+	public static <S extends State> CfaDomain<S> create(final Domain<S> domain) {
+		return new CfaDomain<>(domain);
 	}
 
 	@Override
-	public boolean isTop(final LocState<S> state) {
+	public boolean isTop(final CfaState<S> state) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
 
 	@Override
-	public boolean isBottom(final LocState<S> state) {
+	public boolean isBottom(final CfaState<S> state) {
 		return domain.isBottom(state.getState());
 	}
 
 	@Override
-	public boolean isLeq(final LocState<S> state1, final LocState<S> state2) {
+	public boolean isLeq(final CfaState<S> state1, final CfaState<S> state2) {
 		return state1.getLoc().equals(state2.getLoc()) && domain.isLeq(state1.getState(), state2.getState());
 	}
 

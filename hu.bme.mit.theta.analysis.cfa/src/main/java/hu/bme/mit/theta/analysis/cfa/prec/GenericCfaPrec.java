@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.analysis.cfa;
+package hu.bme.mit.theta.analysis.cfa.prec;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -12,6 +12,7 @@ import java.util.Optional;
 import com.google.common.collect.ImmutableMap;
 
 import hu.bme.mit.theta.analysis.Prec;
+import hu.bme.mit.theta.analysis.cfa.CfaPrec;
 import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.common.ToStringBuilder;
 import hu.bme.mit.theta.formalism.cfa.CFA.Loc;
@@ -20,25 +21,25 @@ import hu.bme.mit.theta.formalism.cfa.CFA.Loc;
  * Represents an immutable generic precision that can assign a precision to each
  * location.
  */
-public final class GenericLocPrec<P extends Prec> implements LocPrec<P> {
+public final class GenericCfaPrec<P extends Prec> implements CfaPrec<P> {
 	private final Map<Loc, P> mapping;
 	private final Optional<P> defaultPrec;
 
-	private GenericLocPrec(final Map<Loc, P> mapping, final Optional<P> defaultPrec) {
+	private GenericCfaPrec(final Map<Loc, P> mapping, final Optional<P> defaultPrec) {
 		this.mapping = mapping;
 		this.defaultPrec = defaultPrec;
 	}
 
-	public static <P extends Prec> GenericLocPrec<P> create(final Map<Loc, P> mapping) {
-		return new GenericLocPrec<>(ImmutableMap.copyOf(mapping), Optional.empty());
+	public static <P extends Prec> GenericCfaPrec<P> create(final Map<Loc, P> mapping) {
+		return new GenericCfaPrec<>(ImmutableMap.copyOf(mapping), Optional.empty());
 	}
 
-	public static <P extends Prec> GenericLocPrec<P> create(final P defaultPrec) {
-		return new GenericLocPrec<>(Collections.emptyMap(), Optional.of(defaultPrec));
+	public static <P extends Prec> GenericCfaPrec<P> create(final P defaultPrec) {
+		return new GenericCfaPrec<>(Collections.emptyMap(), Optional.of(defaultPrec));
 	}
 
-	public static <P extends Prec> GenericLocPrec<P> create(final Map<Loc, P> mapping, final P defaultPrec) {
-		return new GenericLocPrec<>(ImmutableMap.copyOf(mapping), Optional.of(defaultPrec));
+	public static <P extends Prec> GenericCfaPrec<P> create(final Map<Loc, P> mapping, final P defaultPrec) {
+		return new GenericCfaPrec<>(ImmutableMap.copyOf(mapping), Optional.of(defaultPrec));
 	}
 
 	@Override
@@ -52,7 +53,7 @@ public final class GenericLocPrec<P extends Prec> implements LocPrec<P> {
 		throw new NoSuchElementException("Location not found.");
 	}
 
-	public GenericLocPrec<P> refine(final Map<Loc, P> refinedPrecs) {
+	public GenericCfaPrec<P> refine(final Map<Loc, P> refinedPrecs) {
 		checkNotNull(refinedPrecs);
 
 		final Map<Loc, P> refinedMapping = new HashMap<>(this.mapping);
@@ -68,10 +69,10 @@ public final class GenericLocPrec<P extends Prec> implements LocPrec<P> {
 			refinedMapping.put(loc, prec);
 		}
 
-		return new GenericLocPrec<>(refinedMapping, this.defaultPrec);
+		return new GenericCfaPrec<>(refinedMapping, this.defaultPrec);
 	}
 
-	public GenericLocPrec<P> refine(final Loc loc, final P refinedPrec) {
+	public GenericCfaPrec<P> refine(final Loc loc, final P refinedPrec) {
 		return refine(Collections.singletonMap(loc, refinedPrec));
 	}
 
@@ -89,8 +90,8 @@ public final class GenericLocPrec<P extends Prec> implements LocPrec<P> {
 	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
-		} else if (obj instanceof GenericLocPrec) {
-			final GenericLocPrec<?> that = (GenericLocPrec<?>) obj;
+		} else if (obj instanceof GenericCfaPrec) {
+			final GenericCfaPrec<?> that = (GenericCfaPrec<?>) obj;
 			return this.defaultPrec.equals(that.defaultPrec) && this.mapping.equals(that.mapping);
 		} else {
 			return false;
