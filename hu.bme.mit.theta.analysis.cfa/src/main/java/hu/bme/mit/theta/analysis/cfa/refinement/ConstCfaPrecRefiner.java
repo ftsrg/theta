@@ -5,16 +5,16 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Prec;
-import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.cfa.CfaPrec;
 import hu.bme.mit.theta.analysis.cfa.CfaState;
 import hu.bme.mit.theta.analysis.cfa.prec.ConstCfaPrec;
+import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.refinement.PrecRefiner;
 import hu.bme.mit.theta.analysis.expr.refinement.Refutation;
 import hu.bme.mit.theta.analysis.expr.refinement.RefutationToPrec;
 
-public class ConstCfaPrecRefiner<S extends State, A extends Action, P extends Prec, R extends Refutation>
+public class ConstCfaPrecRefiner<S extends ExprState, A extends Action, P extends Prec, R extends Refutation>
 		implements PrecRefiner<CfaState<S>, A, CfaPrec<P>, R> {
 
 	private final RefutationToPrec<P, R> refToPrec;
@@ -23,7 +23,7 @@ public class ConstCfaPrecRefiner<S extends State, A extends Action, P extends Pr
 		this.refToPrec = checkNotNull(refToPrec);
 	}
 
-	public static <S extends State, A extends Action, P extends Prec, R extends Refutation> ConstCfaPrecRefiner<S, A, P, R> create(
+	public static <S extends ExprState, A extends Action, P extends Prec, R extends Refutation> ConstCfaPrecRefiner<S, A, P, R> create(
 			final RefutationToPrec<P, R> refToPrec) {
 		return new ConstCfaPrecRefiner<>(refToPrec);
 	}

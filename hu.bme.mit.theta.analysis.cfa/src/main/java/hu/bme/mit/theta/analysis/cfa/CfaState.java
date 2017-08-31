@@ -2,14 +2,13 @@ package hu.bme.mit.theta.analysis.cfa;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.formalism.cfa.CFA.Loc;
 
-public final class CfaState<S extends State> implements ExprState {
+public final class CfaState<S extends ExprState> implements ExprState {
 
 	private static final int HASH_SEED = 3613;
 
@@ -23,7 +22,7 @@ public final class CfaState<S extends State> implements ExprState {
 		this.state = checkNotNull(state);
 	}
 
-	public static <S extends State> CfaState<S> of(final Loc loc, final S state) {
+	public static <S extends ExprState> CfaState<S> of(final Loc loc, final S state) {
 		return new CfaState<>(loc, state);
 	}
 
@@ -43,7 +42,7 @@ public final class CfaState<S extends State> implements ExprState {
 		return CfaState.of(loc, this.state);
 	}
 
-	public <S2 extends State> CfaState<S2> withState(final S2 state) {
+	public <S2 extends ExprState> CfaState<S2> withState(final S2 state) {
 		return CfaState.of(this.loc, state);
 	}
 
@@ -51,12 +50,8 @@ public final class CfaState<S extends State> implements ExprState {
 
 	@Override
 	public Expr<BoolType> toExpr() {
-		// TODO Should be loc = l and toExpr(state)
-		if (state instanceof ExprState) {
-			return ((ExprState) state).toExpr();
-		} else {
-			throw new UnsupportedOperationException();
-		}
+		// TODO Should be loc = l and toExpr(state) ???
+		return state.toExpr();
 	}
 
 	////

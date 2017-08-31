@@ -6,11 +6,11 @@ import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.Domain;
 import hu.bme.mit.theta.analysis.InitFunction;
 import hu.bme.mit.theta.analysis.Prec;
-import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.TransferFunction;
+import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.formalism.cfa.CFA.Loc;
 
-public final class CfaAnalysis<S extends State, P extends Prec>
+public final class CfaAnalysis<S extends ExprState, P extends Prec>
 		implements Analysis<CfaState<S>, CfaAction, CfaPrec<P>> {
 
 	private final Domain<CfaState<S>> domain;
@@ -25,7 +25,7 @@ public final class CfaAnalysis<S extends State, P extends Prec>
 		transferFunction = CfaTransferFunction.create(analysis.getTransferFunction());
 	}
 
-	public static <S extends State, P extends Prec> CfaAnalysis<S, P> create(final Loc initLoc,
+	public static <S extends ExprState, P extends Prec> CfaAnalysis<S, P> create(final Loc initLoc,
 			final Analysis<S, ? super CfaAction, ? super P> analysis) {
 		return new CfaAnalysis<>(initLoc, analysis);
 	}

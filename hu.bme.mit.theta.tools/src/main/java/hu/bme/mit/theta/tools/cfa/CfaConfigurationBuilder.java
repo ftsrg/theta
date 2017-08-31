@@ -13,19 +13,20 @@ import hu.bme.mit.theta.analysis.algorithm.cegar.BasicAbstractor;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Refiner;
 import hu.bme.mit.theta.analysis.cfa.CfaAction;
+import hu.bme.mit.theta.analysis.cfa.CfaAnalysis;
 import hu.bme.mit.theta.analysis.cfa.CfaLts;
+import hu.bme.mit.theta.analysis.cfa.CfaPrec;
+import hu.bme.mit.theta.analysis.cfa.CfaState;
 import hu.bme.mit.theta.analysis.cfa.prec.ConstCfaPrec;
 import hu.bme.mit.theta.analysis.cfa.prec.GenericCfaPrec;
 import hu.bme.mit.theta.analysis.cfa.refinement.ConstCfaPrecRefiner;
 import hu.bme.mit.theta.analysis.cfa.refinement.GenericCfaPrecRefiner;
-import hu.bme.mit.theta.analysis.cfa.CfaAnalysis;
-import hu.bme.mit.theta.analysis.cfa.CfaPrec;
-import hu.bme.mit.theta.analysis.cfa.CfaState;
 import hu.bme.mit.theta.analysis.expl.ExplAnalysis;
 import hu.bme.mit.theta.analysis.expl.ExplPrec;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expl.ItpRefToExplPrec;
 import hu.bme.mit.theta.analysis.expl.VarsRefToExplPrec;
+import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceBwBinItpChecker;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceChecker;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceFwBinItpChecker;
@@ -58,7 +59,7 @@ public class CfaConfigurationBuilder extends ConfigurationBuilder {
 			}
 
 			@Override
-			public <S extends State, A extends Action, P extends Prec, R extends Refutation> PrecRefiner<CfaState<S>, A, CfaPrec<P>, R> createRefiner(
+			public <S extends ExprState, A extends Action, P extends Prec, R extends Refutation> PrecRefiner<CfaState<S>, A, CfaPrec<P>, R> createRefiner(
 					final RefutationToPrec<P, R> refToPrec) {
 				return ConstCfaPrecRefiner.create(refToPrec);
 			}
@@ -71,7 +72,7 @@ public class CfaConfigurationBuilder extends ConfigurationBuilder {
 			}
 
 			@Override
-			public <S extends State, A extends Action, P extends Prec, R extends Refutation> PrecRefiner<CfaState<S>, A, CfaPrec<P>, R> createRefiner(
+			public <S extends ExprState, A extends Action, P extends Prec, R extends Refutation> PrecRefiner<CfaState<S>, A, CfaPrec<P>, R> createRefiner(
 					final RefutationToPrec<P, R> refToPrec) {
 				return GenericCfaPrecRefiner.create(refToPrec);
 			}
@@ -79,7 +80,7 @@ public class CfaConfigurationBuilder extends ConfigurationBuilder {
 
 		public abstract <P extends Prec> CfaPrec<P> createPrec(P innerPrec);
 
-		public abstract <S extends State, A extends Action, P extends Prec, R extends Refutation> PrecRefiner<CfaState<S>, A, CfaPrec<P>, R> createRefiner(
+		public abstract <S extends ExprState, A extends Action, P extends Prec, R extends Refutation> PrecRefiner<CfaState<S>, A, CfaPrec<P>, R> createRefiner(
 				RefutationToPrec<P, R> refToPrec);
 	};
 

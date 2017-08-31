@@ -8,17 +8,17 @@ import java.util.Map;
 
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Prec;
-import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.cfa.CfaPrec;
 import hu.bme.mit.theta.analysis.cfa.CfaState;
 import hu.bme.mit.theta.analysis.cfa.prec.GenericCfaPrec;
+import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.refinement.PrecRefiner;
 import hu.bme.mit.theta.analysis.expr.refinement.Refutation;
 import hu.bme.mit.theta.analysis.expr.refinement.RefutationToPrec;
 import hu.bme.mit.theta.formalism.cfa.CFA.Loc;
 
-public class GenericCfaPrecRefiner<S extends State, A extends Action, P extends Prec, R extends Refutation>
+public class GenericCfaPrecRefiner<S extends ExprState, A extends Action, P extends Prec, R extends Refutation>
 		implements PrecRefiner<CfaState<S>, A, CfaPrec<P>, R> {
 
 	private final RefutationToPrec<P, R> refToPrec;
@@ -27,7 +27,7 @@ public class GenericCfaPrecRefiner<S extends State, A extends Action, P extends 
 		this.refToPrec = checkNotNull(refToPrec);
 	}
 
-	public static <S extends State, A extends Action, P extends Prec, R extends Refutation> GenericCfaPrecRefiner<S, A, P, R> create(
+	public static <S extends ExprState, A extends Action, P extends Prec, R extends Refutation> GenericCfaPrecRefiner<S, A, P, R> create(
 			final RefutationToPrec<P, R> refToPrec) {
 		return new GenericCfaPrecRefiner<>(refToPrec);
 	}

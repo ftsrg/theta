@@ -7,12 +7,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import hu.bme.mit.theta.analysis.Prec;
-import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.TransferFunction;
+import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.formalism.cfa.CFA.Edge;
 import hu.bme.mit.theta.formalism.cfa.CFA.Loc;
 
-final class CfaTransferFunction<S extends State, P extends Prec>
+final class CfaTransferFunction<S extends ExprState, P extends Prec>
 		implements TransferFunction<CfaState<S>, CfaAction, CfaPrec<P>> {
 
 	private final TransferFunction<S, ? super CfaAction, ? super P> transferFunction;
@@ -21,7 +21,7 @@ final class CfaTransferFunction<S extends State, P extends Prec>
 		this.transferFunction = checkNotNull(transferFunction);
 	}
 
-	public static <S extends State, P extends Prec> CfaTransferFunction<S, P> create(
+	public static <S extends ExprState, P extends Prec> CfaTransferFunction<S, P> create(
 			final TransferFunction<S, ? super CfaAction, ? super P> transferFunction) {
 		return new CfaTransferFunction<>(transferFunction);
 	}

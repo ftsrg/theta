@@ -3,9 +3,9 @@ package hu.bme.mit.theta.analysis.cfa;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import hu.bme.mit.theta.analysis.Domain;
-import hu.bme.mit.theta.analysis.State;
+import hu.bme.mit.theta.analysis.expr.ExprState;
 
-public final class CfaDomain<S extends State> implements Domain<CfaState<S>> {
+public final class CfaDomain<S extends ExprState> implements Domain<CfaState<S>> {
 
 	private final Domain<S> domain;
 
@@ -13,7 +13,7 @@ public final class CfaDomain<S extends State> implements Domain<CfaState<S>> {
 		this.domain = checkNotNull(domain);
 	}
 
-	public static <S extends State> CfaDomain<S> create(final Domain<S> domain) {
+	public static <S extends ExprState> CfaDomain<S> create(final Domain<S> domain) {
 		return new CfaDomain<>(domain);
 	}
 

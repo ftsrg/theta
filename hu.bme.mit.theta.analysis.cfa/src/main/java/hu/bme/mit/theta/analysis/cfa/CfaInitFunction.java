@@ -7,10 +7,10 @@ import java.util.Collection;
 
 import hu.bme.mit.theta.analysis.InitFunction;
 import hu.bme.mit.theta.analysis.Prec;
-import hu.bme.mit.theta.analysis.State;
+import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.formalism.cfa.CFA.Loc;
 
-final class CfaInitFunction<S extends State, P extends Prec> implements InitFunction<CfaState<S>, CfaPrec<P>> {
+final class CfaInitFunction<S extends ExprState, P extends Prec> implements InitFunction<CfaState<S>, CfaPrec<P>> {
 
 	private final Loc initLoc;
 	private final InitFunction<S, ? super P> initFunction;
@@ -20,7 +20,7 @@ final class CfaInitFunction<S extends State, P extends Prec> implements InitFunc
 		this.initFunction = checkNotNull(initFunction);
 	}
 
-	public static <S extends State, P extends Prec> CfaInitFunction<S, P> create(final Loc initLoc,
+	public static <S extends ExprState, P extends Prec> CfaInitFunction<S, P> create(final Loc initLoc,
 			final InitFunction<S, ? super P> initFunction) {
 		return new CfaInitFunction<>(initLoc, initFunction);
 	}
