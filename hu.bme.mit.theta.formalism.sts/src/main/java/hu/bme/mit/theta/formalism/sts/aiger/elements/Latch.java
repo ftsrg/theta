@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.frontend.aiger.impl.elements;
+package hu.bme.mit.theta.formalism.sts.aiger.elements;
 
 import static hu.bme.mit.theta.core.decl.Decls.Var;
 import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;

@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.frontend.aiger.impl.elements;
+package hu.bme.mit.theta.formalism.sts.aiger.elements;
 
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 

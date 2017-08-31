@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.frontend.aiger.impl;
+package hu.bme.mit.theta.formalism.sts.aiger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;
@@ -19,7 +19,6 @@ import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.formalism.sts.STS;
-import hu.bme.mit.theta.frontend.aiger.AigerParser;
 
 /**
  * A simple AIGER parser that encodes each variable of the circuit with a STS

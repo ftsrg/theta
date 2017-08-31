@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.frontend.aiger.impl.elements;
+package hu.bme.mit.theta.formalism.sts.aiger.elements;
 
 import java.util.List;
 

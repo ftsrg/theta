@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.frontend.aiger.utils;
+package hu.bme.mit.theta.formalism.sts.aiger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 

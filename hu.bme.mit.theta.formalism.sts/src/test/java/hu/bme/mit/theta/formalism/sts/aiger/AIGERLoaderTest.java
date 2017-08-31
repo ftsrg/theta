@@ -1,12 +1,13 @@
-package hu.bme.mit.theta.frontend.aiger;
+package hu.bme.mit.theta.formalism.sts.aiger;
 
 import java.io.IOException;
 
 import org.junit.Test;
 
 import hu.bme.mit.theta.formalism.sts.STS;
-import hu.bme.mit.theta.frontend.aiger.impl.AigerParserOptimized;
-import hu.bme.mit.theta.frontend.aiger.utils.AigerVisualizer;
+import hu.bme.mit.theta.formalism.sts.aiger.AigerParser;
+import hu.bme.mit.theta.formalism.sts.aiger.AigerParserOptimized;
+import hu.bme.mit.theta.formalism.sts.aiger.AigerVisualizer;
 
 public class AIGERLoaderTest {
 

@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.frontend.aiger;
+package hu.bme.mit.theta.formalism.sts.aiger;
 
 import java.io.IOException;
 

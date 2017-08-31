@@ -14,7 +14,6 @@ dependencies {
   compile project(':hu.bme.mit.theta.analysis.sts')
   compile project(':hu.bme.mit.theta.analysis.cfa')
   compile project(':hu.bme.mit.theta.analysis.xta')
-  compile project(':hu.bme.mit.theta.frontend.aiger')
   compile group: 'com.beust', name: 'jcommander', version: '1.72'
 }
 

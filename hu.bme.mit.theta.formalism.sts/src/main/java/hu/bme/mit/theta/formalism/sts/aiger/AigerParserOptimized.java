@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.frontend.aiger.impl;
+package hu.bme.mit.theta.formalism.sts.aiger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
@@ -11,13 +11,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import hu.bme.mit.theta.formalism.sts.STS;
-import hu.bme.mit.theta.frontend.aiger.AigerParser;
-import hu.bme.mit.theta.frontend.aiger.impl.elements.AndGate;
-import hu.bme.mit.theta.frontend.aiger.impl.elements.FalseConst;
-import hu.bme.mit.theta.frontend.aiger.impl.elements.HwElement;
-import hu.bme.mit.theta.frontend.aiger.impl.elements.InVar;
-import hu.bme.mit.theta.frontend.aiger.impl.elements.Latch;
-import hu.bme.mit.theta.frontend.aiger.impl.elements.OutVar;
+import hu.bme.mit.theta.formalism.sts.aiger.elements.AndGate;
+import hu.bme.mit.theta.formalism.sts.aiger.elements.FalseConst;
+import hu.bme.mit.theta.formalism.sts.aiger.elements.HwElement;
+import hu.bme.mit.theta.formalism.sts.aiger.elements.InVar;
+import hu.bme.mit.theta.formalism.sts.aiger.elements.Latch;
+import hu.bme.mit.theta.formalism.sts.aiger.elements.OutVar;
 
 /**
  * An optimized AIGER parser that minimizes the number of STS variables used. It
