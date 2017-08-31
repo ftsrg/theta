@@ -7,31 +7,29 @@ import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.formalism.common.Edge;
-import hu.bme.mit.theta.formalism.common.Loc;
+import hu.bme.mit.theta.formalism.cfa.CFA.CfaLoc;
 
-public final class LocState<S extends State, L extends Loc<L, E>, E extends Edge<L, E>> implements ExprState {
+public final class LocState<S extends State> implements ExprState {
 
 	private static final int HASH_SEED = 3613;
 
 	private volatile int hashCode = 0;
 
-	private final L loc;
+	private final CfaLoc loc;
 	private final S state;
 
-	private LocState(final L loc, final S state) {
+	private LocState(final CfaLoc loc, final S state) {
 		this.loc = checkNotNull(loc);
 		this.state = checkNotNull(state);
 	}
 
-	public static <S extends State, L extends Loc<L, E>, E extends Edge<L, E>> LocState<S, L, E> of(final L loc,
-			final S state) {
+	public static <S extends State> LocState<S> of(final CfaLoc loc, final S state) {
 		return new LocState<>(loc, state);
 	}
 
 	////
 
-	public L getLoc() {
+	public CfaLoc getLoc() {
 		return loc;
 	}
 
@@ -41,11 +39,11 @@ public final class LocState<S extends State, L extends Loc<L, E>, E extends Edge
 
 	////
 
-	public <L2 extends Loc<L2, E2>, E2 extends Edge<L2, E2>> LocState<S, L2, E2> withLoc(final L2 loc) {
+	public LocState<S> withLoc(final CfaLoc loc) {
 		return LocState.of(loc, this.state);
 	}
 
-	public <S2 extends State> LocState<S2, L, E> withState(final S2 state) {
+	public <S2 extends State> LocState<S2> withState(final S2 state) {
 		return LocState.of(this.loc, state);
 	}
 
@@ -80,7 +78,7 @@ public final class LocState<S extends State, L extends Loc<L, E>, E extends Edge
 		if (this == obj) {
 			return true;
 		} else if (obj instanceof LocState) {
-			final LocState<?, ?, ?> that = (LocState<?, ?, ?>) obj;
+			final LocState<?> that = (LocState<?>) obj;
 			return this.loc.equals(that.loc) && this.state.equals(that.state);
 		} else {
 			return false;

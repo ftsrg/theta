@@ -4,13 +4,12 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.common.ObjectUtils;
-import hu.bme.mit.theta.formalism.common.Edge;
-import hu.bme.mit.theta.formalism.common.Loc;
+import hu.bme.mit.theta.formalism.cfa.CFA.CfaLoc;
 
 /**
  * Represents an immutable constant precision.
  */
-public final class ConstLocPrec<P extends Prec, L extends Loc<L, E>, E extends Edge<L, E>> implements LocPrec<P, L, E> {
+public final class ConstLocPrec<P extends Prec> implements LocPrec<P> {
 
 	private final P prec;
 
@@ -18,12 +17,11 @@ public final class ConstLocPrec<P extends Prec, L extends Loc<L, E>, E extends E
 		this.prec = checkNotNull(prec);
 	}
 
-	public static <P extends Prec, L extends Loc<L, E>, E extends Edge<L, E>> ConstLocPrec<P, L, E> create(
-			final P prec) {
+	public static <P extends Prec> ConstLocPrec<P> create(final P prec) {
 		return new ConstLocPrec<>(prec);
 	}
 
-	public ConstLocPrec<P, L, E> refine(final P refinedPrec) {
+	public ConstLocPrec<P> refine(final P refinedPrec) {
 		if (this.prec == refinedPrec) {
 			return this;
 		} else {
@@ -32,7 +30,7 @@ public final class ConstLocPrec<P extends Prec, L extends Loc<L, E>, E extends E
 	}
 
 	@Override
-	public P getPrec(final L loc) {
+	public P getPrec(final CfaLoc loc) {
 		checkNotNull(loc);
 		return prec;
 	}
@@ -51,7 +49,7 @@ public final class ConstLocPrec<P extends Prec, L extends Loc<L, E>, E extends E
 		if (this == obj) {
 			return true;
 		} else if (obj instanceof ConstLocPrec) {
-			final ConstLocPrec<?, ?, ?> that = (ConstLocPrec<?, ?, ?>) obj;
+			final ConstLocPrec<?> that = (ConstLocPrec<?>) obj;
 			return this.prec.equals(that.prec);
 		} else {
 			return false;

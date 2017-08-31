@@ -10,11 +10,9 @@ import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.expr.refinement.PrecRefiner;
 import hu.bme.mit.theta.analysis.expr.refinement.Refutation;
 import hu.bme.mit.theta.analysis.expr.refinement.RefutationToPrec;
-import hu.bme.mit.theta.formalism.common.Edge;
-import hu.bme.mit.theta.formalism.common.Loc;
 
-public class ConstLocPrecRefiner<S extends State, A extends Action, P extends Prec, R extends Refutation, L extends Loc<L, E>, E extends Edge<L, E>>
-		implements PrecRefiner<LocState<S, L, E>, A, LocPrec<P, L, E>, R> {
+public class ConstLocPrecRefiner<S extends State, A extends Action, P extends Prec, R extends Refutation>
+		implements PrecRefiner<LocState<S>, A, LocPrec<P>, R> {
 
 	private final RefutationToPrec<P, R> refToPrec;
 
@@ -22,20 +20,19 @@ public class ConstLocPrecRefiner<S extends State, A extends Action, P extends Pr
 		this.refToPrec = checkNotNull(refToPrec);
 	}
 
-	public static <S extends State, A extends Action, P extends Prec, R extends Refutation, L extends Loc<L, E>, E extends Edge<L, E>> ConstLocPrecRefiner<S, A, P, R, L, E> create(
+	public static <S extends State, A extends Action, P extends Prec, R extends Refutation> ConstLocPrecRefiner<S, A, P, R> create(
 			final RefutationToPrec<P, R> refToPrec) {
 		return new ConstLocPrecRefiner<>(refToPrec);
 	}
 
 	@Override
-	public LocPrec<P, L, E> refine(final LocPrec<P, L, E> prec, final Trace<LocState<S, L, E>, A> trace,
-			final R refutation) {
+	public LocPrec<P> refine(final LocPrec<P> prec, final Trace<LocState<S>, A> trace, final R refutation) {
 		checkNotNull(trace);
 		checkNotNull(prec);
 		checkNotNull(refutation);
 		checkArgument(prec instanceof ConstLocPrec); // TODO: enforce this in a better way
 
-		final ConstLocPrec<P, L, E> constPrec = (ConstLocPrec<P, L, E>) prec;
+		final ConstLocPrec<P> constPrec = (ConstLocPrec<P>) prec;
 		P runningPrec = constPrec.getPrec();
 		for (int i = 0; i < trace.getStates().size(); ++i) {
 			final P precFromRef = refToPrec.toPrec(refutation, i);

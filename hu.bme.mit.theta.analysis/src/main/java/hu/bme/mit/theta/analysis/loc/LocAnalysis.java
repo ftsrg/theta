@@ -8,17 +8,16 @@ import hu.bme.mit.theta.analysis.InitFunction;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.TransferFunction;
-import hu.bme.mit.theta.formalism.common.Edge;
-import hu.bme.mit.theta.formalism.common.Loc;
+import hu.bme.mit.theta.formalism.cfa.CFA.CfaLoc;
 
-public final class LocAnalysis<S extends State, A extends LocAction<L, E>, P extends Prec, L extends Loc<L, E>, E extends Edge<L, E>>
-		implements Analysis<LocState<S, L, E>, A, LocPrec<P, L, E>> {
+public final class LocAnalysis<S extends State, A extends LocAction, P extends Prec>
+		implements Analysis<LocState<S>, A, LocPrec<P>> {
 
-	private final Domain<LocState<S, L, E>> domain;
-	private final InitFunction<LocState<S, L, E>, LocPrec<P, L, E>> initFunction;
-	private final TransferFunction<LocState<S, L, E>, A, LocPrec<P, L, E>> transferFunction;
+	private final Domain<LocState<S>> domain;
+	private final InitFunction<LocState<S>, LocPrec<P>> initFunction;
+	private final TransferFunction<LocState<S>, A, LocPrec<P>> transferFunction;
 
-	private LocAnalysis(final L initLoc, final Analysis<S, ? super A, ? super P> analysis) {
+	private LocAnalysis(final CfaLoc initLoc, final Analysis<S, ? super A, ? super P> analysis) {
 		checkNotNull(initLoc);
 		checkNotNull(analysis);
 		domain = LocDomain.create(analysis.getDomain());
@@ -26,23 +25,23 @@ public final class LocAnalysis<S extends State, A extends LocAction<L, E>, P ext
 		transferFunction = LocTransferFunction.create(analysis.getTransferFunction());
 	}
 
-	public static <S extends State, A extends LocAction<L, E>, P extends Prec, L extends Loc<L, E>, E extends Edge<L, E>> LocAnalysis<S, A, P, L, E> create(
-			final L initLoc, final Analysis<S, ? super A, ? super P> analysis) {
+	public static <S extends State, A extends LocAction, P extends Prec> LocAnalysis<S, A, P> create(
+			final CfaLoc initLoc, final Analysis<S, ? super A, ? super P> analysis) {
 		return new LocAnalysis<>(initLoc, analysis);
 	}
 
 	@Override
-	public Domain<LocState<S, L, E>> getDomain() {
+	public Domain<LocState<S>> getDomain() {
 		return domain;
 	}
 
 	@Override
-	public InitFunction<LocState<S, L, E>, LocPrec<P, L, E>> getInitFunction() {
+	public InitFunction<LocState<S>, LocPrec<P>> getInitFunction() {
 		return initFunction;
 	}
 
 	@Override
-	public TransferFunction<LocState<S, L, E>, A, LocPrec<P, L, E>> getTransferFunction() {
+	public TransferFunction<LocState<S>, A, LocPrec<P>> getTransferFunction() {
 		return transferFunction;
 	}
 

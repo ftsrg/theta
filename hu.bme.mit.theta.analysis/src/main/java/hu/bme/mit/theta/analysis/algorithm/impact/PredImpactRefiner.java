@@ -18,12 +18,9 @@ import hu.bme.mit.theta.analysis.loc.LocState;
 import hu.bme.mit.theta.analysis.pred.PredState;
 import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.formalism.common.Edge;
-import hu.bme.mit.theta.formalism.common.Loc;
 import hu.bme.mit.theta.solver.ItpSolver;
 
-public final class PredImpactRefiner<L extends Loc<L, E>, E extends Edge<L, E>>
-		implements ImpactRefiner<LocState<PredState, L, E>, LocAction<L, E>> {
+public final class PredImpactRefiner implements ImpactRefiner<LocState<PredState>, LocAction> {
 
 	private final ExprTraceSeqItpChecker traceChecker;
 
@@ -32,14 +29,13 @@ public final class PredImpactRefiner<L extends Loc<L, E>, E extends Edge<L, E>>
 		traceChecker = ExprTraceSeqItpChecker.create(True(), True(), solver);
 	}
 
-	public static <L extends Loc<L, E>, E extends Edge<L, E>> PredImpactRefiner<L, E> create(final ItpSolver solver) {
-		return new PredImpactRefiner<>(solver);
+	public static PredImpactRefiner create(final ItpSolver solver) {
+		return new PredImpactRefiner(solver);
 	}
 
 	@Override
-	public RefinementResult<LocState<PredState, L, E>, LocAction<L, E>> refine(
-			final Trace<LocState<PredState, L, E>, LocAction<L, E>> cex) {
-		final List<LocAction<L, E>> actions = cex.getActions();
+	public RefinementResult<LocState<PredState>, LocAction> refine(final Trace<LocState<PredState>, LocAction> cex) {
+		final List<LocAction> actions = cex.getActions();
 
 		final Trace<ExprState, ExprAction> exprTrace = ExprTraceUtils.traceFrom(actions);
 		final ExprTraceStatus<ItpRefutation> traceStatus = traceChecker.check(exprTrace);
@@ -51,22 +47,22 @@ public final class PredImpactRefiner<L extends Loc<L, E>, E extends Edge<L, E>>
 			final ItpRefutation refuation = traceStatus.asInfeasible().getRefutation();
 			final List<Expr<BoolType>> exprs = refuation.toList();
 
-			final List<LocState<PredState, L, E>> refinedStates = new ArrayList<>();
+			final List<LocState<PredState>> refinedStates = new ArrayList<>();
 			for (int i = 0; i < exprs.size(); i++) {
 				final List<Expr<BoolType>> newPreds = new ArrayList<>();
 
-				final LocState<PredState, L, E> state = cex.getState(i);
+				final LocState<PredState> state = cex.getState(i);
 				final Expr<BoolType> expr = exprs.get(i);
 
 				newPreds.addAll(state.getState().getPreds());
 				newPreds.add(expr);
 
-				final LocState<PredState, L, E> refinedState = state.withState(PredState.of(newPreds));
+				final LocState<PredState> refinedState = state.withState(PredState.of(newPreds));
 
 				refinedStates.add(refinedState);
 			}
 
-			final Trace<LocState<PredState, L, E>, LocAction<L, E>> trace = Trace.of(refinedStates, actions);
+			final Trace<LocState<PredState>, LocAction> trace = Trace.of(refinedStates, actions);
 			return RefinementResult.succesful(trace);
 		} else {
 			throw new AssertionError();

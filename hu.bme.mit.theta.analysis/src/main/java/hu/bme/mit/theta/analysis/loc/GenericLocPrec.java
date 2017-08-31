@@ -14,40 +14,35 @@ import com.google.common.collect.ImmutableMap;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.common.ToStringBuilder;
-import hu.bme.mit.theta.formalism.common.Edge;
-import hu.bme.mit.theta.formalism.common.Loc;
+import hu.bme.mit.theta.formalism.cfa.CFA.CfaLoc;
 
 /**
  * Represents an immutable generic precision that can assign a precision to each
  * location.
  */
-public final class GenericLocPrec<P extends Prec, L extends Loc<L, E>, E extends Edge<L, E>>
-		implements LocPrec<P, L, E> {
-	private final Map<L, P> mapping;
+public final class GenericLocPrec<P extends Prec> implements LocPrec<P> {
+	private final Map<CfaLoc, P> mapping;
 	private final Optional<P> defaultPrec;
 
-	private GenericLocPrec(final Map<L, P> mapping, final Optional<P> defaultPrec) {
+	private GenericLocPrec(final Map<CfaLoc, P> mapping, final Optional<P> defaultPrec) {
 		this.mapping = mapping;
 		this.defaultPrec = defaultPrec;
 	}
 
-	public static <P extends Prec, L extends Loc<L, E>, E extends Edge<L, E>> GenericLocPrec<P, L, E> create(
-			final Map<L, P> mapping) {
+	public static <P extends Prec> GenericLocPrec<P> create(final Map<CfaLoc, P> mapping) {
 		return new GenericLocPrec<>(ImmutableMap.copyOf(mapping), Optional.empty());
 	}
 
-	public static <P extends Prec, L extends Loc<L, E>, E extends Edge<L, E>> GenericLocPrec<P, L, E> create(
-			final P defaultPrec) {
-		return new GenericLocPrec<P, L, E>(Collections.emptyMap(), Optional.of(defaultPrec));
+	public static <P extends Prec> GenericLocPrec<P> create(final P defaultPrec) {
+		return new GenericLocPrec<>(Collections.emptyMap(), Optional.of(defaultPrec));
 	}
 
-	public static <P extends Prec, L extends Loc<L, E>, E extends Edge<L, E>> GenericLocPrec<P, L, E> create(
-			final Map<L, P> mapping, final P defaultPrec) {
+	public static <P extends Prec> GenericLocPrec<P> create(final Map<CfaLoc, P> mapping, final P defaultPrec) {
 		return new GenericLocPrec<>(ImmutableMap.copyOf(mapping), Optional.of(defaultPrec));
 	}
 
 	@Override
-	public P getPrec(final L loc) {
+	public P getPrec(final CfaLoc loc) {
 		if (mapping.containsKey(loc)) {
 			return mapping.get(loc);
 		}
@@ -57,13 +52,13 @@ public final class GenericLocPrec<P extends Prec, L extends Loc<L, E>, E extends
 		throw new NoSuchElementException("Location not found.");
 	}
 
-	public GenericLocPrec<P, L, E> refine(final Map<L, P> refinedPrecs) {
+	public GenericLocPrec<P> refine(final Map<CfaLoc, P> refinedPrecs) {
 		checkNotNull(refinedPrecs);
 
-		final Map<L, P> refinedMapping = new HashMap<>(this.mapping);
+		final Map<CfaLoc, P> refinedMapping = new HashMap<>(this.mapping);
 
-		for (final Entry<L, P> entry : refinedPrecs.entrySet()) {
-			final L loc = entry.getKey();
+		for (final Entry<CfaLoc, P> entry : refinedPrecs.entrySet()) {
+			final CfaLoc loc = entry.getKey();
 			final P prec = entry.getValue();
 
 			// TODO: instead of == this should be 'equals' (it is correct this way as well, but it would be more efficient)
@@ -76,7 +71,7 @@ public final class GenericLocPrec<P extends Prec, L extends Loc<L, E>, E extends
 		return new GenericLocPrec<>(refinedMapping, this.defaultPrec);
 	}
 
-	public GenericLocPrec<P, L, E> refine(final L loc, final P refinedPrec) {
+	public GenericLocPrec<P> refine(final CfaLoc loc, final P refinedPrec) {
 		return refine(Collections.singletonMap(loc, refinedPrec));
 	}
 
@@ -95,7 +90,7 @@ public final class GenericLocPrec<P extends Prec, L extends Loc<L, E>, E extends
 		if (this == obj) {
 			return true;
 		} else if (obj instanceof GenericLocPrec) {
-			final GenericLocPrec<?, ?, ?> that = (GenericLocPrec<?, ?, ?>) obj;
+			final GenericLocPrec<?> that = (GenericLocPrec<?>) obj;
 			return this.defaultPrec.equals(that.defaultPrec) && this.mapping.equals(that.mapping);
 		} else {
 			return false;

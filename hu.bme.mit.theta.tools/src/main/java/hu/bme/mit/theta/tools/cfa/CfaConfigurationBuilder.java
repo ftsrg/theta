@@ -44,8 +44,6 @@ import hu.bme.mit.theta.analysis.pred.SimplePredPrec;
 import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.formalism.cfa.CFA;
-import hu.bme.mit.theta.formalism.cfa.CFA.CfaEdge;
-import hu.bme.mit.theta.formalism.cfa.CFA.CfaLoc;
 import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.tools.Configuration;
@@ -56,12 +54,12 @@ public class CfaConfigurationBuilder extends ConfigurationBuilder {
 	public enum PrecGranularity {
 		CONST {
 			@Override
-			public <P extends Prec> LocPrec<P, CfaLoc, CfaEdge> createPrec(final P innerPrec) {
+			public <P extends Prec> LocPrec<P> createPrec(final P innerPrec) {
 				return ConstLocPrec.create(innerPrec);
 			}
 
 			@Override
-			public <S extends State, A extends Action, P extends Prec, R extends Refutation> PrecRefiner<LocState<S, CfaLoc, CfaEdge>, A, LocPrec<P, CfaLoc, CfaEdge>, R> createRefiner(
+			public <S extends State, A extends Action, P extends Prec, R extends Refutation> PrecRefiner<LocState<S>, A, LocPrec<P>, R> createRefiner(
 					final RefutationToPrec<P, R> refToPrec) {
 				return ConstLocPrecRefiner.create(refToPrec);
 			}
@@ -69,20 +67,20 @@ public class CfaConfigurationBuilder extends ConfigurationBuilder {
 
 		GEN {
 			@Override
-			public <P extends Prec> LocPrec<P, CfaLoc, CfaEdge> createPrec(final P innerPrec) {
+			public <P extends Prec> LocPrec<P> createPrec(final P innerPrec) {
 				return GenericLocPrec.create(innerPrec);
 			}
 
 			@Override
-			public <S extends State, A extends Action, P extends Prec, R extends Refutation> PrecRefiner<LocState<S, CfaLoc, CfaEdge>, A, LocPrec<P, CfaLoc, CfaEdge>, R> createRefiner(
+			public <S extends State, A extends Action, P extends Prec, R extends Refutation> PrecRefiner<LocState<S>, A, LocPrec<P>, R> createRefiner(
 					final RefutationToPrec<P, R> refToPrec) {
 				return GenericLocPrecRefiner.create(refToPrec);
 			}
 		};
 
-		public abstract <P extends Prec> LocPrec<P, CfaLoc, CfaEdge> createPrec(P innerPrec);
+		public abstract <P extends Prec> LocPrec<P> createPrec(P innerPrec);
 
-		public abstract <S extends State, A extends Action, P extends Prec, R extends Refutation> PrecRefiner<LocState<S, CfaLoc, CfaEdge>, A, LocPrec<P, CfaLoc, CfaEdge>, R> createRefiner(
+		public abstract <S extends State, A extends Action, P extends Prec, R extends Refutation> PrecRefiner<LocState<S>, A, LocPrec<P>, R> createRefiner(
 				RefutationToPrec<P, R> refToPrec);
 	};
 
@@ -122,15 +120,15 @@ public class CfaConfigurationBuilder extends ConfigurationBuilder {
 		final CfaLts lts = CfaLts.getInstance();
 
 		if (getDomain() == Domain.EXPL) {
-			final Analysis<LocState<ExplState, CfaLoc, CfaEdge>, LocAction<CfaLoc, CfaEdge>, LocPrec<ExplPrec, CfaLoc, CfaEdge>> analysis = LocAnalysis
+			final Analysis<LocState<ExplState>, LocAction, LocPrec<ExplPrec>> analysis = LocAnalysis
 					.create(cfa.getInitLoc(), ExplAnalysis.create(solver, True()));
-			final ArgBuilder<LocState<ExplState, CfaLoc, CfaEdge>, CfaAction, LocPrec<ExplPrec, CfaLoc, CfaEdge>> argBuilder = ArgBuilder
-					.create(lts, analysis, s -> s.getLoc().equals(cfa.getErrorLoc()));
-			final Abstractor<LocState<ExplState, CfaLoc, CfaEdge>, CfaAction, LocPrec<ExplPrec, CfaLoc, CfaEdge>> abstractor = BasicAbstractor
+			final ArgBuilder<LocState<ExplState>, CfaAction, LocPrec<ExplPrec>> argBuilder = ArgBuilder.create(lts,
+					analysis, s -> s.getLoc().equals(cfa.getErrorLoc()));
+			final Abstractor<LocState<ExplState>, CfaAction, LocPrec<ExplPrec>> abstractor = BasicAbstractor
 					.builder(argBuilder).projection(LocState::getLoc)
 					.waitlistSupplier(PriorityWaitlist.supplier(getSearch().comparator)).logger(getLogger()).build();
 
-			Refiner<LocState<ExplState, CfaLoc, CfaEdge>, CfaAction, LocPrec<ExplPrec, CfaLoc, CfaEdge>> refiner = null;
+			Refiner<LocState<ExplState>, CfaAction, LocPrec<ExplPrec>> refiner = null;
 
 			switch (getRefinement()) {
 			case FW_BIN_ITP:
@@ -153,19 +151,19 @@ public class CfaConfigurationBuilder extends ConfigurationBuilder {
 				throw new UnsupportedOperationException();
 			}
 
-			final SafetyChecker<LocState<ExplState, CfaLoc, CfaEdge>, CfaAction, LocPrec<ExplPrec, CfaLoc, CfaEdge>> checker = CegarChecker
+			final SafetyChecker<LocState<ExplState>, CfaAction, LocPrec<ExplPrec>> checker = CegarChecker
 					.create(abstractor, refiner, getLogger());
 
-			final LocPrec<ExplPrec, CfaLoc, CfaEdge> prec = precGranularity.createPrec(ExplPrec.create());
+			final LocPrec<ExplPrec> prec = precGranularity.createPrec(ExplPrec.create());
 
 			return Configuration.create(checker, prec);
 
 		} else if (getDomain() == Domain.PRED) {
-			final Analysis<LocState<PredState, CfaLoc, CfaEdge>, CfaAction, LocPrec<SimplePredPrec, CfaLoc, CfaEdge>> analysis = LocAnalysis
+			final Analysis<LocState<PredState>, CfaAction, LocPrec<SimplePredPrec>> analysis = LocAnalysis
 					.create(cfa.getInitLoc(), PredAnalysis.create(solver, True()));
-			final ArgBuilder<LocState<PredState, CfaLoc, CfaEdge>, CfaAction, LocPrec<SimplePredPrec, CfaLoc, CfaEdge>> argBuilder = ArgBuilder
+			final ArgBuilder<LocState<PredState>, CfaAction, LocPrec<SimplePredPrec>> argBuilder = ArgBuilder
 					.create(lts, analysis, s -> s.getLoc().equals(cfa.getErrorLoc()));
-			final Abstractor<LocState<PredState, CfaLoc, CfaEdge>, CfaAction, LocPrec<SimplePredPrec, CfaLoc, CfaEdge>> abstractor = BasicAbstractor
+			final Abstractor<LocState<PredState>, CfaAction, LocPrec<SimplePredPrec>> abstractor = BasicAbstractor
 					.builder(argBuilder).projection(LocState::getLoc)
 					.waitlistSupplier(PriorityWaitlist.supplier(getSearch().comparator)).logger(getLogger()).build();
 
@@ -184,14 +182,13 @@ public class CfaConfigurationBuilder extends ConfigurationBuilder {
 				throw new UnsupportedOperationException();
 			}
 			final ItpRefToSimplePredPrec refToPrec = new ItpRefToSimplePredPrec(solver, getPredSplit().splitter);
-			final Refiner<LocState<PredState, CfaLoc, CfaEdge>, CfaAction, LocPrec<SimplePredPrec, CfaLoc, CfaEdge>> refiner = SingleExprTraceRefiner
+			final Refiner<LocState<PredState>, CfaAction, LocPrec<SimplePredPrec>> refiner = SingleExprTraceRefiner
 					.create(exprTraceChecker, precGranularity.createRefiner(refToPrec), getLogger());
 
-			final SafetyChecker<LocState<PredState, CfaLoc, CfaEdge>, CfaAction, LocPrec<SimplePredPrec, CfaLoc, CfaEdge>> checker = CegarChecker
+			final SafetyChecker<LocState<PredState>, CfaAction, LocPrec<SimplePredPrec>> checker = CegarChecker
 					.create(abstractor, refiner, getLogger());
 
-			final LocPrec<SimplePredPrec, CfaLoc, CfaEdge> prec = precGranularity
-					.createPrec(SimplePredPrec.create(solver));
+			final LocPrec<SimplePredPrec> prec = precGranularity.createPrec(SimplePredPrec.create(solver));
 
 			return Configuration.create(checker, prec);
 

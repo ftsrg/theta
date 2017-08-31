@@ -16,9 +16,8 @@ import hu.bme.mit.theta.core.utils.StmtUnfoldResult;
 import hu.bme.mit.theta.core.utils.StmtUtils;
 import hu.bme.mit.theta.core.utils.VarIndexing;
 import hu.bme.mit.theta.formalism.cfa.CFA.CfaEdge;
-import hu.bme.mit.theta.formalism.cfa.CFA.CfaLoc;
 
-public final class CfaAction implements LocAction<CfaLoc, CfaEdge>, StmtAction {
+public final class CfaAction implements LocAction, StmtAction {
 
 	private final CfaEdge edge;
 	private final Expr<BoolType> expr;
@@ -36,7 +35,6 @@ public final class CfaAction implements LocAction<CfaLoc, CfaEdge>, StmtAction {
 		return new CfaAction(edge);
 	}
 
-	@Override
 	public CfaEdge getEdge() {
 		return edge;
 	}

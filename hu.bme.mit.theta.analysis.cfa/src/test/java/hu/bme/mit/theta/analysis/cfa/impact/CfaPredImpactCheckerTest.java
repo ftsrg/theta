@@ -32,8 +32,6 @@ import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.formalism.cfa.CFA;
-import hu.bme.mit.theta.formalism.cfa.CFA.CfaEdge;
-import hu.bme.mit.theta.formalism.cfa.CFA.CfaLoc;
 import hu.bme.mit.theta.formalism.cfa.CfaCreator;
 import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
@@ -60,8 +58,8 @@ public final class CfaPredImpactCheckerTest {
 
 		final ItpSolver solver = Z3SolverFactory.getInstace().createItpSolver();
 
-		final PredImpactChecker<CfaLoc, CfaEdge> checker = PredImpactChecker.create(CfaLts.getInstance(),
-				cfa.getInitLoc(), l -> l.equals(cfa.getErrorLoc()), solver);
+		final PredImpactChecker checker = PredImpactChecker.create(CfaLts.getInstance(), cfa.getInitLoc(),
+				l -> l.equals(cfa.getErrorLoc()), solver);
 
 		// Act
 		final SafetyResult<? extends ExprState, ? extends ExprAction> status = checker.check(UnitPrec.getInstance());

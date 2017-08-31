@@ -15,13 +15,8 @@ import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.utils.StmtUtils;
-import hu.bme.mit.theta.formalism.cfa.CFA.CfaEdge;
-import hu.bme.mit.theta.formalism.cfa.CFA.CfaLoc;
-import hu.bme.mit.theta.formalism.common.Automaton;
-import hu.bme.mit.theta.formalism.common.Edge;
-import hu.bme.mit.theta.formalism.common.Loc;
 
-public final class CFA implements Automaton<CfaLoc, CfaEdge> {
+public final class CFA {
 
 	private CfaLoc initLoc;
 	private CfaLoc finalLoc;
@@ -39,7 +34,6 @@ public final class CFA implements Automaton<CfaLoc, CfaEdge> {
 
 	////
 
-	@Override
 	public CfaLoc getInitLoc() {
 		return initLoc;
 	}
@@ -82,7 +76,6 @@ public final class CFA implements Automaton<CfaLoc, CfaEdge> {
 
 	////
 
-	@Override
 	public Collection<CfaLoc> getLocs() {
 		return Collections.unmodifiableCollection(locs);
 	}
@@ -95,7 +88,6 @@ public final class CFA implements Automaton<CfaLoc, CfaEdge> {
 
 	////
 
-	@Override
 	public Collection<CfaEdge> getEdges() {
 		return Collections.unmodifiableCollection(edges);
 	}
@@ -119,7 +111,7 @@ public final class CFA implements Automaton<CfaLoc, CfaEdge> {
 	 * Location
 	 */
 
-	public static final class CfaLoc implements Loc<CfaLoc, CfaEdge> {
+	public static final class CfaLoc {
 		private final String name;
 		private final Collection<CfaEdge> inEdges;
 		private final Collection<CfaEdge> outEdges;
@@ -136,12 +128,10 @@ public final class CFA implements Automaton<CfaLoc, CfaEdge> {
 			return name;
 		}
 
-		@Override
 		public Collection<CfaEdge> getInEdges() {
 			return Collections.unmodifiableCollection(inEdges);
 		}
 
-		@Override
 		public Collection<CfaEdge> getOutEdges() {
 			return Collections.unmodifiableCollection(outEdges);
 		}
@@ -158,7 +148,7 @@ public final class CFA implements Automaton<CfaLoc, CfaEdge> {
 	 * Edge
 	 */
 
-	public static final class CfaEdge implements Edge<CfaLoc, CfaEdge> {
+	public static final class CfaEdge {
 		private final CfaLoc source;
 		private final CfaLoc target;
 		private final List<Stmt> stmts;
@@ -169,12 +159,10 @@ public final class CFA implements Automaton<CfaLoc, CfaEdge> {
 			this.stmts = ImmutableList.copyOf(stmts);
 		}
 
-		@Override
 		public CfaLoc getSource() {
 			return source;
 		}
 
-		@Override
 		public CfaLoc getTarget() {
 			return target;
 		}

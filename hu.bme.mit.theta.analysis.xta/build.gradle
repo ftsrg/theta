@@ -1,7 +1,6 @@
 dependencies {
   compile project(':hu.bme.mit.theta.common')
   compile project(':hu.bme.mit.theta.core')
-  compile project(':hu.bme.mit.theta.formalism')
   compile project(':hu.bme.mit.theta.formalism.ta')
   compile project(':hu.bme.mit.theta.formalism.xta')
   compile project(':hu.bme.mit.theta.analysis')

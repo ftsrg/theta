@@ -1,1 +1,0 @@
-This project provides constructs and utilities that are common in the different formalisms. There is a separate project for each formalism (e.g., `sts`, `cfa`, `xta`, ...) that defines the classes and utilities related to the formalism.

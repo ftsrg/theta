@@ -1,11 +1,10 @@
 package hu.bme.mit.theta.analysis.loc;
 
 import hu.bme.mit.theta.analysis.expl.StmtAction;
-import hu.bme.mit.theta.formalism.common.Edge;
-import hu.bme.mit.theta.formalism.common.Loc;
+import hu.bme.mit.theta.formalism.cfa.CFA.CfaEdge;
 
-public interface LocAction<L extends Loc<L, E>, E extends Edge<L, E>> extends StmtAction {
+public interface LocAction extends StmtAction {
 
-	E getEdge();
+	CfaEdge getEdge();
 
 }

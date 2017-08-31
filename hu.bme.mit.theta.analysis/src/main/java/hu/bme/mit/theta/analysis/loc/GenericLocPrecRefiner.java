@@ -13,11 +13,10 @@ import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.expr.refinement.PrecRefiner;
 import hu.bme.mit.theta.analysis.expr.refinement.Refutation;
 import hu.bme.mit.theta.analysis.expr.refinement.RefutationToPrec;
-import hu.bme.mit.theta.formalism.common.Edge;
-import hu.bme.mit.theta.formalism.common.Loc;
+import hu.bme.mit.theta.formalism.cfa.CFA.CfaLoc;
 
-public class GenericLocPrecRefiner<S extends State, A extends Action, P extends Prec, R extends Refutation, L extends Loc<L, E>, E extends Edge<L, E>>
-		implements PrecRefiner<LocState<S, L, E>, A, LocPrec<P, L, E>, R> {
+public class GenericLocPrecRefiner<S extends State, A extends Action, P extends Prec, R extends Refutation>
+		implements PrecRefiner<LocState<S>, A, LocPrec<P>, R> {
 
 	private final RefutationToPrec<P, R> refToPrec;
 
@@ -25,27 +24,26 @@ public class GenericLocPrecRefiner<S extends State, A extends Action, P extends 
 		this.refToPrec = checkNotNull(refToPrec);
 	}
 
-	public static <S extends State, A extends Action, P extends Prec, R extends Refutation, L extends Loc<L, E>, E extends Edge<L, E>> GenericLocPrecRefiner<S, A, P, R, L, E> create(
+	public static <S extends State, A extends Action, P extends Prec, R extends Refutation> GenericLocPrecRefiner<S, A, P, R> create(
 			final RefutationToPrec<P, R> refToPrec) {
 		return new GenericLocPrecRefiner<>(refToPrec);
 	}
 
 	@Override
-	public LocPrec<P, L, E> refine(final LocPrec<P, L, E> prec, final Trace<LocState<S, L, E>, A> trace,
-			final R refutation) {
+	public LocPrec<P> refine(final LocPrec<P> prec, final Trace<LocState<S>, A> trace, final R refutation) {
 		checkNotNull(trace);
 		checkNotNull(prec);
 		checkNotNull(refutation);
 		checkArgument(prec instanceof GenericLocPrec); // TODO: enforce this in a better way
 
-		final GenericLocPrec<P, L, E> genPrec = (GenericLocPrec<P, L, E>) prec;
-		final Map<L, P> runningPrecs = new HashMap<>();
-		for (final LocState<S, L, E> state : trace.getStates()) {
+		final GenericLocPrec<P> genPrec = (GenericLocPrec<P>) prec;
+		final Map<CfaLoc, P> runningPrecs = new HashMap<>();
+		for (final LocState<S> state : trace.getStates()) {
 			runningPrecs.put(state.getLoc(), genPrec.getPrec(state.getLoc()));
 		}
 
 		for (int i = 0; i < trace.getStates().size(); ++i) {
-			final L loc = trace.getState(i).getLoc();
+			final CfaLoc loc = trace.getState(i).getLoc();
 			final P precForLoc = runningPrecs.get(loc);
 			final P newPrecForLoc = refToPrec.toPrec(refutation, i);
 			runningPrecs.put(loc, refToPrec.join(precForLoc, newPrecForLoc));

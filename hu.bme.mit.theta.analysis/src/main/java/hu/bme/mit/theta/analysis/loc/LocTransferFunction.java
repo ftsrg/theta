@@ -9,11 +9,11 @@ import java.util.Collection;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.TransferFunction;
-import hu.bme.mit.theta.formalism.common.Edge;
-import hu.bme.mit.theta.formalism.common.Loc;
+import hu.bme.mit.theta.formalism.cfa.CFA.CfaEdge;
+import hu.bme.mit.theta.formalism.cfa.CFA.CfaLoc;
 
-final class LocTransferFunction<S extends State, A extends LocAction<L, E>, P extends Prec, L extends Loc<L, E>, E extends Edge<L, E>>
-		implements TransferFunction<LocState<S, L, E>, A, LocPrec<P, L, E>> {
+final class LocTransferFunction<S extends State, A extends LocAction, P extends Prec>
+		implements TransferFunction<LocState<S>, A, LocPrec<P>> {
 
 	private final TransferFunction<S, ? super A, ? super P> transferFunction;
 
@@ -21,31 +21,30 @@ final class LocTransferFunction<S extends State, A extends LocAction<L, E>, P ex
 		this.transferFunction = checkNotNull(transferFunction);
 	}
 
-	public static <S extends State, A extends LocAction<L, E>, P extends Prec, L extends Loc<L, E>, E extends Edge<L, E>> LocTransferFunction<S, A, P, L, E> create(
+	public static <S extends State, A extends LocAction, P extends Prec> LocTransferFunction<S, A, P> create(
 			final TransferFunction<S, ? super A, ? super P> transferFunction) {
 		return new LocTransferFunction<>(transferFunction);
 	}
 
 	@Override
-	public Collection<LocState<S, L, E>> getSuccStates(final LocState<S, L, E> state, final A action,
-			final LocPrec<P, L, E> prec) {
+	public Collection<LocState<S>> getSuccStates(final LocState<S> state, final A action, final LocPrec<P> prec) {
 		checkNotNull(state);
 		checkNotNull(action);
 		checkNotNull(prec);
 
-		final E edge = action.getEdge();
-		final L source = edge.getSource();
-		final L target = edge.getTarget();
+		final CfaEdge edge = action.getEdge();
+		final CfaLoc source = edge.getSource();
+		final CfaLoc target = edge.getTarget();
 		checkArgument(state.getLoc().equals(source), "Location mismatch");
 
-		final Collection<LocState<S, L, E>> succStates = new ArrayList<>();
+		final Collection<LocState<S>> succStates = new ArrayList<>();
 
 		final P subPrec = prec.getPrec(target);
 		final S subState = state.getState();
 
 		final Collection<? extends S> subSuccStates = transferFunction.getSuccStates(subState, action, subPrec);
 		for (final S subSuccState : subSuccStates) {
-			final LocState<S, L, E> succState = LocState.of(target, subSuccState);
+			final LocState<S> succState = LocState.of(target, subSuccState);
 			succStates.add(succState);
 		}
 
