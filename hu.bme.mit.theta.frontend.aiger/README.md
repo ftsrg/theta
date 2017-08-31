@@ -1,1 +1,0 @@
-This project contains a frontend that can parse systems described in the [AIGER](http://fmv.jku.at/aiger/) (And-Inverter Graph) format and represent them using our STS formalism.
