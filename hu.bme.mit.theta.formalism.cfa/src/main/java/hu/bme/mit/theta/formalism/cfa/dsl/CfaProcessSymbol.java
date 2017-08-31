@@ -13,7 +13,7 @@ import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.common.dsl.SymbolTable;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.formalism.cfa.CFA;
-import hu.bme.mit.theta.formalism.cfa.CFA.CfaLoc;
+import hu.bme.mit.theta.formalism.cfa.CFA.Loc;
 import hu.bme.mit.theta.formalism.cfa.dsl.gen.CfaDslParser.EdgeContext;
 import hu.bme.mit.theta.formalism.cfa.dsl.gen.CfaDslParser.LocContext;
 import hu.bme.mit.theta.formalism.cfa.dsl.gen.CfaDslParser.ProcDeclContext;
@@ -66,7 +66,7 @@ final class CfaProcessSymbol implements Symbol, Scope {
 		}
 
 		for (final CfaLocationSymbol location : locations) {
-			final CfaLoc loc = location.intantiate(cfa);
+			final Loc loc = location.intantiate(cfa);
 			env.define(location, loc);
 		}
 

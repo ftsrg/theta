@@ -26,7 +26,7 @@ import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.stmt.WhileStmt;
 import hu.bme.mit.theta.core.utils.StmtVisitor;
-import hu.bme.mit.theta.formalism.cfa.CFA.CfaLoc;
+import hu.bme.mit.theta.formalism.cfa.CFA.Loc;
 
 final class SbeCreator {
 
@@ -40,7 +40,7 @@ final class SbeCreator {
 		return cfa;
 	}
 
-	private static class SBECreatorVisitor implements StmtVisitor<Product2<CfaLoc, CfaLoc>, Void> {
+	private static class SBECreatorVisitor implements StmtVisitor<Product2<Loc, Loc>, Void> {
 
 		private final CFA cfa;
 		private int nextIndex;
@@ -50,25 +50,25 @@ final class SbeCreator {
 			nextIndex = 0;
 		}
 
-		private Void visitSimple(final Stmt stmt, final Product2<CfaLoc, CfaLoc> param) {
-			final CfaLoc source = param._1();
-			final CfaLoc target = param._2();
+		private Void visitSimple(final Stmt stmt, final Product2<Loc, Loc> param) {
+			final Loc source = param._1();
+			final Loc target = param._2();
 			cfa.createEdge(source, target, ImmutableList.of(stmt));
 			return null;
 		}
 
 		@Override
-		public Void visit(final SkipStmt stmt, final Product2<CfaLoc, CfaLoc> param) {
-			final CfaLoc source = param._1();
-			final CfaLoc target = param._2();
+		public Void visit(final SkipStmt stmt, final Product2<Loc, Loc> param) {
+			final Loc source = param._1();
+			final Loc target = param._2();
 			cfa.createEdge(source, target, ImmutableList.of());
 			return null;
 		}
 
 		@Override
-		public <DeclType extends Type> Void visit(final DeclStmt<DeclType> stmt, final Product2<CfaLoc, CfaLoc> param) {
-			final CfaLoc source = param._1();
-			final CfaLoc target = param._2();
+		public <DeclType extends Type> Void visit(final DeclStmt<DeclType> stmt, final Product2<Loc, Loc> param) {
+			final Loc source = param._1();
+			final Loc target = param._2();
 
 			final List<Stmt> stmts;
 			if (stmt.getInitVal().isPresent()) {
@@ -83,14 +83,14 @@ final class SbeCreator {
 		}
 
 		@Override
-		public Void visit(final AssumeStmt stmt, final Product2<CfaLoc, CfaLoc> param) {
+		public Void visit(final AssumeStmt stmt, final Product2<Loc, Loc> param) {
 			return visitSimple(stmt, param);
 		}
 
 		@Override
-		public Void visit(final AssertStmt stmt, final Product2<CfaLoc, CfaLoc> param) {
-			final CfaLoc source = param._1();
-			final CfaLoc target = param._2();
+		public Void visit(final AssertStmt stmt, final Product2<Loc, Loc> param) {
+			final Loc source = param._1();
+			final Loc target = param._2();
 			cfa.createEdge(source, target, ImmutableList.of(Assume(stmt.getCond())));
 			cfa.createEdge(source, cfa.getErrorLoc(), ImmutableList.of(Assume(Not(stmt.getCond()))));
 			return null;
@@ -98,20 +98,20 @@ final class SbeCreator {
 
 		@Override
 		public <DeclType extends Type> Void visit(final AssignStmt<DeclType> stmt,
-				final Product2<CfaLoc, CfaLoc> param) {
+				final Product2<Loc, Loc> param) {
 			return visitSimple(stmt, param);
 		}
 
 		@Override
 		public <DeclType extends Type> Void visit(final HavocStmt<DeclType> stmt,
-				final Product2<CfaLoc, CfaLoc> param) {
+				final Product2<Loc, Loc> param) {
 			return visitSimple(stmt, param);
 		}
 
 		@Override
-		public Void visit(final BlockStmt stmt, final Product2<CfaLoc, CfaLoc> param) {
-			final CfaLoc source = param._1();
-			final CfaLoc target = param._2();
+		public Void visit(final BlockStmt stmt, final Product2<Loc, Loc> param) {
+			final Loc source = param._1();
+			final Loc target = param._2();
 
 			final List<? extends Stmt> stmts = stmt.getStmts();
 
@@ -126,13 +126,13 @@ final class SbeCreator {
 			return null;
 		}
 
-		private void processNonEmptyBlock(final CFA cfa, final CfaLoc source, final CfaLoc target, final Stmt head,
+		private void processNonEmptyBlock(final CFA cfa, final Loc source, final Loc target, final Stmt head,
 				final List<? extends Stmt> tail) {
 
 			if (head instanceof ReturnStmt<?> || tail.isEmpty()) {
 				head.accept(this, Tuple.of(source, target));
 			} else {
-				final CfaLoc middle = cfa.createLoc("L" + nextIndex++);
+				final Loc middle = cfa.createLoc("L" + nextIndex++);
 				head.accept(this, Tuple.of(source, middle));
 
 				final Stmt newHead = tail.get(0);
@@ -144,18 +144,18 @@ final class SbeCreator {
 
 		@Override
 		public <ReturnType extends Type> Void visit(final ReturnStmt<ReturnType> stmt,
-				final Product2<CfaLoc, CfaLoc> param) {
-			final CfaLoc source = param._1();
+				final Product2<Loc, Loc> param) {
+			final Loc source = param._1();
 			cfa.createEdge(source, cfa.getFinalLoc(), ImmutableList.of(stmt));
 			return null;
 		}
 
 		@Override
-		public Void visit(final IfStmt stmt, final Product2<CfaLoc, CfaLoc> param) {
-			final CfaLoc source = param._1();
-			final CfaLoc target = param._2();
+		public Void visit(final IfStmt stmt, final Product2<Loc, Loc> param) {
+			final Loc source = param._1();
+			final Loc target = param._2();
 
-			final CfaLoc thenLoc = cfa.createLoc("L" + nextIndex++);
+			final Loc thenLoc = cfa.createLoc("L" + nextIndex++);
 			cfa.createEdge(source, thenLoc, ImmutableList.of(Assume(stmt.getCond())));
 			stmt.getThen().accept(this, Tuple.of(thenLoc, target));
 
@@ -165,15 +165,15 @@ final class SbeCreator {
 		}
 
 		@Override
-		public Void visit(final IfElseStmt stmt, final Product2<CfaLoc, CfaLoc> param) {
-			final CfaLoc source = param._1();
-			final CfaLoc target = param._2();
+		public Void visit(final IfElseStmt stmt, final Product2<Loc, Loc> param) {
+			final Loc source = param._1();
+			final Loc target = param._2();
 
-			final CfaLoc thenLoc = cfa.createLoc("L" + nextIndex++);
+			final Loc thenLoc = cfa.createLoc("L" + nextIndex++);
 			cfa.createEdge(source, thenLoc, ImmutableList.of(Assume(stmt.getCond())));
 			stmt.getThen().accept(this, Tuple.of(thenLoc, target));
 
-			final CfaLoc elseLoc = cfa.createLoc("L" + nextIndex++);
+			final Loc elseLoc = cfa.createLoc("L" + nextIndex++);
 			cfa.createEdge(source, elseLoc, ImmutableList.of(Assume(Not(stmt.getCond()))));
 			stmt.getElse().accept(this, Tuple.of(elseLoc, target));
 
@@ -181,11 +181,11 @@ final class SbeCreator {
 		}
 
 		@Override
-		public Void visit(final WhileStmt stmt, final Product2<CfaLoc, CfaLoc> param) {
-			final CfaLoc source = param._1();
-			final CfaLoc target = param._2();
+		public Void visit(final WhileStmt stmt, final Product2<Loc, Loc> param) {
+			final Loc source = param._1();
+			final Loc target = param._2();
 
-			final CfaLoc doLoc = cfa.createLoc("L" + nextIndex++);
+			final Loc doLoc = cfa.createLoc("L" + nextIndex++);
 			cfa.createEdge(source, doLoc, ImmutableList.of(Assume(stmt.getCond())));
 			stmt.getDo().accept(this, Tuple.of(doLoc, source));
 			cfa.createEdge(source, target, ImmutableList.of(Assume(Not(stmt.getCond()))));
@@ -193,11 +193,11 @@ final class SbeCreator {
 		}
 
 		@Override
-		public Void visit(final DoStmt stmt, final Product2<CfaLoc, CfaLoc> param) {
-			final CfaLoc source = param._1();
-			final CfaLoc target = param._2();
+		public Void visit(final DoStmt stmt, final Product2<Loc, Loc> param) {
+			final Loc source = param._1();
+			final Loc target = param._2();
 
-			final CfaLoc doLoc = cfa.createLoc("L" + nextIndex++);
+			final Loc doLoc = cfa.createLoc("L" + nextIndex++);
 			stmt.getDo().accept(this, Tuple.of(source, doLoc));
 			cfa.createEdge(doLoc, source, ImmutableList.of(Assume(stmt.getCond())));
 			cfa.createEdge(doLoc, target, ImmutableList.of(Assume(Not(stmt.getCond()))));

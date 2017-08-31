@@ -14,15 +14,15 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.StmtUnfoldResult;
 import hu.bme.mit.theta.core.utils.StmtUtils;
 import hu.bme.mit.theta.core.utils.VarIndexing;
-import hu.bme.mit.theta.formalism.cfa.CFA.CfaEdge;
+import hu.bme.mit.theta.formalism.cfa.CFA.Edge;
 
 public final class CfaAction implements LocAction, StmtAction {
 
-	private final CfaEdge edge;
+	private final Edge edge;
 	private final Expr<BoolType> expr;
 	private final VarIndexing nextIndexing;
 
-	private CfaAction(final CfaEdge edge) {
+	private CfaAction(final Edge edge) {
 		this.edge = checkNotNull(edge);
 
 		final StmtUnfoldResult toExprResult = StmtUtils.toExpr(edge.getStmts(), all(0));
@@ -30,11 +30,11 @@ public final class CfaAction implements LocAction, StmtAction {
 		nextIndexing = toExprResult.getIndexing();
 	}
 
-	public static CfaAction create(final CfaEdge edge) {
+	public static CfaAction create(final Edge edge) {
 		return new CfaAction(edge);
 	}
 
-	public CfaEdge getEdge() {
+	public Edge getEdge() {
 		return edge;
 	}
 

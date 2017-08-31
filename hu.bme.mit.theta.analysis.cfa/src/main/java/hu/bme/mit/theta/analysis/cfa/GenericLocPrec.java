@@ -14,22 +14,22 @@ import com.google.common.collect.ImmutableMap;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.common.ToStringBuilder;
-import hu.bme.mit.theta.formalism.cfa.CFA.CfaLoc;
+import hu.bme.mit.theta.formalism.cfa.CFA.Loc;
 
 /**
  * Represents an immutable generic precision that can assign a precision to each
  * location.
  */
 public final class GenericLocPrec<P extends Prec> implements LocPrec<P> {
-	private final Map<CfaLoc, P> mapping;
+	private final Map<Loc, P> mapping;
 	private final Optional<P> defaultPrec;
 
-	private GenericLocPrec(final Map<CfaLoc, P> mapping, final Optional<P> defaultPrec) {
+	private GenericLocPrec(final Map<Loc, P> mapping, final Optional<P> defaultPrec) {
 		this.mapping = mapping;
 		this.defaultPrec = defaultPrec;
 	}
 
-	public static <P extends Prec> GenericLocPrec<P> create(final Map<CfaLoc, P> mapping) {
+	public static <P extends Prec> GenericLocPrec<P> create(final Map<Loc, P> mapping) {
 		return new GenericLocPrec<>(ImmutableMap.copyOf(mapping), Optional.empty());
 	}
 
@@ -37,12 +37,12 @@ public final class GenericLocPrec<P extends Prec> implements LocPrec<P> {
 		return new GenericLocPrec<>(Collections.emptyMap(), Optional.of(defaultPrec));
 	}
 
-	public static <P extends Prec> GenericLocPrec<P> create(final Map<CfaLoc, P> mapping, final P defaultPrec) {
+	public static <P extends Prec> GenericLocPrec<P> create(final Map<Loc, P> mapping, final P defaultPrec) {
 		return new GenericLocPrec<>(ImmutableMap.copyOf(mapping), Optional.of(defaultPrec));
 	}
 
 	@Override
-	public P getPrec(final CfaLoc loc) {
+	public P getPrec(final Loc loc) {
 		if (mapping.containsKey(loc)) {
 			return mapping.get(loc);
 		}
@@ -52,13 +52,13 @@ public final class GenericLocPrec<P extends Prec> implements LocPrec<P> {
 		throw new NoSuchElementException("Location not found.");
 	}
 
-	public GenericLocPrec<P> refine(final Map<CfaLoc, P> refinedPrecs) {
+	public GenericLocPrec<P> refine(final Map<Loc, P> refinedPrecs) {
 		checkNotNull(refinedPrecs);
 
-		final Map<CfaLoc, P> refinedMapping = new HashMap<>(this.mapping);
+		final Map<Loc, P> refinedMapping = new HashMap<>(this.mapping);
 
-		for (final Entry<CfaLoc, P> entry : refinedPrecs.entrySet()) {
-			final CfaLoc loc = entry.getKey();
+		for (final Entry<Loc, P> entry : refinedPrecs.entrySet()) {
+			final Loc loc = entry.getKey();
 			final P prec = entry.getValue();
 
 			// TODO: instead of == this should be 'equals' (it is correct this way as well, but it would be more efficient)
@@ -71,7 +71,7 @@ public final class GenericLocPrec<P extends Prec> implements LocPrec<P> {
 		return new GenericLocPrec<>(refinedMapping, this.defaultPrec);
 	}
 
-	public GenericLocPrec<P> refine(final CfaLoc loc, final P refinedPrec) {
+	public GenericLocPrec<P> refine(final Loc loc, final P refinedPrec) {
 		return refine(Collections.singletonMap(loc, refinedPrec));
 	}
 

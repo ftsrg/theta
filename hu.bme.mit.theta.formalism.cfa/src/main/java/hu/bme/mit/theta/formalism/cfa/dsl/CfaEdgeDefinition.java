@@ -9,8 +9,8 @@ import java.util.List;
 import hu.bme.mit.theta.common.dsl.Environment;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.formalism.cfa.CFA;
-import hu.bme.mit.theta.formalism.cfa.CFA.CfaEdge;
-import hu.bme.mit.theta.formalism.cfa.CFA.CfaLoc;
+import hu.bme.mit.theta.formalism.cfa.CFA.Edge;
+import hu.bme.mit.theta.formalism.cfa.CFA.Loc;
 import hu.bme.mit.theta.formalism.cfa.dsl.gen.CfaDslParser.EdgeContext;
 import hu.bme.mit.theta.formalism.cfa.dsl.gen.CfaDslParser.StmtContext;
 
@@ -33,14 +33,14 @@ final class CfaEdgeDefinition {
 
 	////
 
-	public CfaEdge instantiate(final CFA cfa, final Environment env) {
+	public Edge instantiate(final CFA cfa, final Environment env) {
 		final CfaLocationSymbol sourceSymbol = (CfaLocationSymbol) scope.resolve(source).get();
 		final CfaLocationSymbol targetSymbol = (CfaLocationSymbol) scope.resolve(target).get();
 
-		final CfaLoc sourceLoc = (CfaLoc) env.eval(sourceSymbol);
-		final CfaLoc targetLoc = (CfaLoc) env.eval(targetSymbol);
+		final Loc sourceLoc = (Loc) env.eval(sourceSymbol);
+		final Loc targetLoc = (Loc) env.eval(targetSymbol);
 		final List<Stmt> stmts = statements.stream().map(s -> s.instantiate(env)).collect(toImmutableList());
-		final CfaEdge edge = cfa.createEdge(sourceLoc, targetLoc, stmts);
+		final Edge edge = cfa.createEdge(sourceLoc, targetLoc, stmts);
 		return edge;
 	}
 

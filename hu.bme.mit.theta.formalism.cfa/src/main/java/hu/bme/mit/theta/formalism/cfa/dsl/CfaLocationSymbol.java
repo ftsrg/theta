@@ -4,7 +4,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.formalism.cfa.CFA;
-import hu.bme.mit.theta.formalism.cfa.CFA.CfaLoc;
+import hu.bme.mit.theta.formalism.cfa.CFA.Loc;
 import hu.bme.mit.theta.formalism.cfa.dsl.gen.CfaDslParser.LocContext;
 
 final class CfaLocationSymbol implements Symbol {
@@ -39,8 +39,8 @@ final class CfaLocationSymbol implements Symbol {
 		return error;
 	}
 
-	public CfaLoc intantiate(final CFA cfa) {
-		final CfaLoc loc = cfa.createLoc(name);
+	public Loc intantiate(final CFA cfa) {
+		final Loc loc = cfa.createLoc(name);
 
 		if (init) {
 			cfa.setInitLoc(loc);

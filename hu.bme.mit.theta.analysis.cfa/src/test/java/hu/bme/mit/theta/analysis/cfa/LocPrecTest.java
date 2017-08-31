@@ -5,7 +5,7 @@ import org.junit.Test;
 
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.formalism.cfa.CFA;
-import hu.bme.mit.theta.formalism.cfa.CFA.CfaLoc;
+import hu.bme.mit.theta.formalism.cfa.CFA.Loc;
 
 public class LocPrecTest {
 
@@ -44,8 +44,8 @@ public class LocPrecTest {
 	public void testGenericLocPrec() {
 		final GenericLocPrec<PrecStub> gp = GenericLocPrec.create(p0);
 		final CFA cfa = new CFA();
-		final CfaLoc l1 = cfa.createLoc("L1");
-		final CfaLoc l2 = cfa.createLoc("L2");
+		final Loc l1 = cfa.createLoc("L1");
+		final Loc l2 = cfa.createLoc("L2");
 
 		Assert.assertEquals(p0, gp.getPrec(l1));
 		Assert.assertEquals(p0, gp.getPrec(l2));
@@ -72,8 +72,8 @@ public class LocPrecTest {
 		Assert.assertNotEquals(gp1, gp2);
 
 		final CFA cfa = new CFA();
-		final CfaLoc l1 = cfa.createLoc("L1");
-		final CfaLoc l2 = cfa.createLoc("L2");
+		final Loc l1 = cfa.createLoc("L1");
+		final Loc l2 = cfa.createLoc("L2");
 
 		final GenericLocPrec<PrecStub> gp0r0 = gp0.refine(l1, p1);
 		final GenericLocPrec<PrecStub> gp1r0 = gp1.refine(l1, p1);

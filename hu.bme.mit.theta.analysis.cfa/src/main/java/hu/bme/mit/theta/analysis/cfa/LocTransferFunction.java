@@ -9,8 +9,8 @@ import java.util.Collection;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.TransferFunction;
-import hu.bme.mit.theta.formalism.cfa.CFA.CfaEdge;
-import hu.bme.mit.theta.formalism.cfa.CFA.CfaLoc;
+import hu.bme.mit.theta.formalism.cfa.CFA.Edge;
+import hu.bme.mit.theta.formalism.cfa.CFA.Loc;
 
 final class LocTransferFunction<S extends State, A extends LocAction, P extends Prec>
 		implements TransferFunction<LocState<S>, A, LocPrec<P>> {
@@ -32,9 +32,9 @@ final class LocTransferFunction<S extends State, A extends LocAction, P extends 
 		checkNotNull(action);
 		checkNotNull(prec);
 
-		final CfaEdge edge = action.getEdge();
-		final CfaLoc source = edge.getSource();
-		final CfaLoc target = edge.getTarget();
+		final Edge edge = action.getEdge();
+		final Loc source = edge.getSource();
+		final Loc target = edge.getTarget();
 		checkArgument(state.getLoc().equals(source), "Location mismatch");
 
 		final Collection<LocState<S>> succStates = new ArrayList<>();

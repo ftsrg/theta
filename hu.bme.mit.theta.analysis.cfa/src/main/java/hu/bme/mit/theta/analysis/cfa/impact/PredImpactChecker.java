@@ -23,15 +23,15 @@ import hu.bme.mit.theta.analysis.pred.PredPrec;
 import hu.bme.mit.theta.analysis.pred.PredState;
 import hu.bme.mit.theta.analysis.pred.SimplePredPrec;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
-import hu.bme.mit.theta.formalism.cfa.CFA.CfaLoc;
+import hu.bme.mit.theta.formalism.cfa.CFA.Loc;
 import hu.bme.mit.theta.solver.ItpSolver;
 
 public final class PredImpactChecker implements SafetyChecker<LocState<PredState>, LocAction, UnitPrec> {
 
 	private final ImpactChecker<LocState<PredState>, LocAction, UnitPrec> checker;
 
-	private PredImpactChecker(final LTS<? super LocState<PredState>, ? extends LocAction> lts, final CfaLoc initLoc,
-			final Predicate<? super CfaLoc> targetLocs, final ItpSolver solver) {
+	private PredImpactChecker(final LTS<? super LocState<PredState>, ? extends LocAction> lts, final Loc initLoc,
+			final Predicate<? super Loc> targetLocs, final ItpSolver solver) {
 		checkNotNull(lts);
 		checkNotNull(initLoc);
 		checkNotNull(solver);
@@ -57,7 +57,7 @@ public final class PredImpactChecker implements SafetyChecker<LocState<PredState
 	}
 
 	public static PredImpactChecker create(final LTS<? super LocState<PredState>, ? extends LocAction> lts,
-			final CfaLoc initLoc, final Predicate<? super CfaLoc> targetLocs, final ItpSolver solver) {
+			final Loc initLoc, final Predicate<? super Loc> targetLocs, final ItpSolver solver) {
 		return new PredImpactChecker(lts, initLoc, targetLocs, solver);
 	}
 

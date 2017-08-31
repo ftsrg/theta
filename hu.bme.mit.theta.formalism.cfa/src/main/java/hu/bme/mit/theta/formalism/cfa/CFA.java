@@ -18,13 +18,13 @@ import hu.bme.mit.theta.core.utils.StmtUtils;
 
 public final class CFA {
 
-	private CfaLoc initLoc;
-	private CfaLoc finalLoc;
-	private CfaLoc errorLoc;
+	private Loc initLoc;
+	private Loc finalLoc;
+	private Loc errorLoc;
 
 	private final Collection<VarDecl<?>> vars;
-	private final Collection<CfaLoc> locs;
-	private final Collection<CfaEdge> edges;
+	private final Collection<Loc> locs;
+	private final Collection<Edge> edges;
 
 	public CFA() {
 		vars = new HashSet<>();
@@ -34,11 +34,11 @@ public final class CFA {
 
 	////
 
-	public CfaLoc getInitLoc() {
+	public Loc getInitLoc() {
 		return initLoc;
 	}
 
-	public void setInitLoc(final CfaLoc initLoc) {
+	public void setInitLoc(final Loc initLoc) {
 		checkNotNull(initLoc);
 		checkArgument(locs.contains(initLoc));
 		this.initLoc = initLoc;
@@ -46,11 +46,11 @@ public final class CFA {
 
 	////
 
-	public CfaLoc getFinalLoc() {
+	public Loc getFinalLoc() {
 		return finalLoc;
 	}
 
-	public void setFinalLoc(final CfaLoc finalLoc) {
+	public void setFinalLoc(final Loc finalLoc) {
 		checkNotNull(finalLoc);
 		checkArgument(locs.contains(finalLoc));
 		this.finalLoc = finalLoc;
@@ -58,11 +58,11 @@ public final class CFA {
 
 	////
 
-	public CfaLoc getErrorLoc() {
+	public Loc getErrorLoc() {
 		return errorLoc;
 	}
 
-	public void setErrorLoc(final CfaLoc errorLoc) {
+	public void setErrorLoc(final Loc errorLoc) {
 		checkNotNull(errorLoc);
 		checkArgument(locs.contains(errorLoc));
 		this.errorLoc = errorLoc;
@@ -76,30 +76,30 @@ public final class CFA {
 
 	////
 
-	public Collection<CfaLoc> getLocs() {
+	public Collection<Loc> getLocs() {
 		return Collections.unmodifiableCollection(locs);
 	}
 
-	public CfaLoc createLoc(final String name) {
-		final CfaLoc loc = new CfaLoc(name);
+	public Loc createLoc(final String name) {
+		final Loc loc = new Loc(name);
 		locs.add(loc);
 		return loc;
 	}
 
 	////
 
-	public Collection<CfaEdge> getEdges() {
+	public Collection<Edge> getEdges() {
 		return Collections.unmodifiableCollection(edges);
 	}
 
-	public CfaEdge createEdge(final CfaLoc source, final CfaLoc target, final List<? extends Stmt> stmts) {
+	public Edge createEdge(final Loc source, final Loc target, final List<? extends Stmt> stmts) {
 		checkNotNull(source);
 		checkNotNull(target);
 		checkNotNull(stmts);
 		checkArgument(locs.contains(source));
 		checkArgument(locs.contains(target));
 
-		final CfaEdge edge = new CfaEdge(source, target, stmts);
+		final Edge edge = new Edge(source, target, stmts);
 		source.outEdges.add(edge);
 		target.inEdges.add(edge);
 		edges.add(edge);
@@ -111,12 +111,12 @@ public final class CFA {
 	 * Location
 	 */
 
-	public static final class CfaLoc {
+	public static final class Loc {
 		private final String name;
-		private final Collection<CfaEdge> inEdges;
-		private final Collection<CfaEdge> outEdges;
+		private final Collection<Edge> inEdges;
+		private final Collection<Edge> outEdges;
 
-		private CfaLoc(final String name) {
+		private Loc(final String name) {
 			this.name = name;
 			inEdges = new LinkedList<>();
 			outEdges = new LinkedList<>();
@@ -128,11 +128,11 @@ public final class CFA {
 			return name;
 		}
 
-		public Collection<CfaEdge> getInEdges() {
+		public Collection<Edge> getInEdges() {
 			return Collections.unmodifiableCollection(inEdges);
 		}
 
-		public Collection<CfaEdge> getOutEdges() {
+		public Collection<Edge> getOutEdges() {
 			return Collections.unmodifiableCollection(outEdges);
 		}
 
@@ -148,22 +148,22 @@ public final class CFA {
 	 * Edge
 	 */
 
-	public static final class CfaEdge {
-		private final CfaLoc source;
-		private final CfaLoc target;
+	public static final class Edge {
+		private final Loc source;
+		private final Loc target;
 		private final List<Stmt> stmts;
 
-		private CfaEdge(final CfaLoc source, final CfaLoc target, final List<? extends Stmt> stmts) {
+		private Edge(final Loc source, final Loc target, final List<? extends Stmt> stmts) {
 			this.source = source;
 			this.target = target;
 			this.stmts = ImmutableList.copyOf(stmts);
 		}
 
-		public CfaLoc getSource() {
+		public Loc getSource() {
 			return source;
 		}
 
-		public CfaLoc getTarget() {
+		public Loc getTarget() {
 			return target;
 		}
 

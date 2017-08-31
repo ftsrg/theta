@@ -9,20 +9,20 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import hu.bme.mit.theta.analysis.LTS;
-import hu.bme.mit.theta.formalism.cfa.CFA.CfaEdge;
-import hu.bme.mit.theta.formalism.cfa.CFA.CfaLoc;
+import hu.bme.mit.theta.formalism.cfa.CFA.Edge;
+import hu.bme.mit.theta.formalism.cfa.CFA.Loc;
 
 public final class LocLts implements LTS<LocState<?>, LocAction> {
 
-	private final Function<CfaEdge, LocAction> actionFactory;
-	private final Map<CfaLoc, Collection<LocAction>> actions;
+	private final Function<Edge, LocAction> actionFactory;
+	private final Map<Loc, Collection<LocAction>> actions;
 
-	private LocLts(final Function<CfaEdge, LocAction> actionFactory) {
+	private LocLts(final Function<Edge, LocAction> actionFactory) {
 		this.actionFactory = checkNotNull(actionFactory);
 		actions = new HashMap<>();
 	}
 
-	public static LocLts create(final Function<CfaEdge, LocAction> actionCreator) {
+	public static LocLts create(final Function<Edge, LocAction> actionCreator) {
 		return new LocLts(actionCreator);
 	}
 

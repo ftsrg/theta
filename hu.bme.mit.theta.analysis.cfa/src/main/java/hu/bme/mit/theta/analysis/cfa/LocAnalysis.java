@@ -8,7 +8,7 @@ import hu.bme.mit.theta.analysis.InitFunction;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.TransferFunction;
-import hu.bme.mit.theta.formalism.cfa.CFA.CfaLoc;
+import hu.bme.mit.theta.formalism.cfa.CFA.Loc;
 
 public final class LocAnalysis<S extends State, A extends LocAction, P extends Prec>
 		implements Analysis<LocState<S>, A, LocPrec<P>> {
@@ -17,7 +17,7 @@ public final class LocAnalysis<S extends State, A extends LocAction, P extends P
 	private final InitFunction<LocState<S>, LocPrec<P>> initFunction;
 	private final TransferFunction<LocState<S>, A, LocPrec<P>> transferFunction;
 
-	private LocAnalysis(final CfaLoc initLoc, final Analysis<S, ? super A, ? super P> analysis) {
+	private LocAnalysis(final Loc initLoc, final Analysis<S, ? super A, ? super P> analysis) {
 		checkNotNull(initLoc);
 		checkNotNull(analysis);
 		domain = LocDomain.create(analysis.getDomain());
@@ -26,7 +26,7 @@ public final class LocAnalysis<S extends State, A extends LocAction, P extends P
 	}
 
 	public static <S extends State, A extends LocAction, P extends Prec> LocAnalysis<S, A, P> create(
-			final CfaLoc initLoc, final Analysis<S, ? super A, ? super P> analysis) {
+			final Loc initLoc, final Analysis<S, ? super A, ? super P> analysis) {
 		return new LocAnalysis<>(initLoc, analysis);
 	}
 

@@ -4,7 +4,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.common.ObjectUtils;
-import hu.bme.mit.theta.formalism.cfa.CFA.CfaLoc;
+import hu.bme.mit.theta.formalism.cfa.CFA.Loc;
 
 /**
  * Represents an immutable constant precision.
@@ -30,7 +30,7 @@ public final class ConstLocPrec<P extends Prec> implements LocPrec<P> {
 	}
 
 	@Override
-	public P getPrec(final CfaLoc loc) {
+	public P getPrec(final Loc loc) {
 		checkNotNull(loc);
 		return prec;
 	}

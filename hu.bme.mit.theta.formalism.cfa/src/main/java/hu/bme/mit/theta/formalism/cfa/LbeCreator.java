@@ -28,7 +28,7 @@ import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.stmt.WhileStmt;
 import hu.bme.mit.theta.core.utils.StmtVisitor;
-import hu.bme.mit.theta.formalism.cfa.CFA.CfaLoc;
+import hu.bme.mit.theta.formalism.cfa.CFA.Loc;
 
 final class LbeCreator {
 
@@ -43,7 +43,7 @@ final class LbeCreator {
 	}
 
 	private static class LBECreatorVisitor
-			implements StmtVisitor<Product4<CfaLoc, CfaLoc, List<Stmt>, List<Stmt>>, Void> {
+			implements StmtVisitor<Product4<Loc, Loc, List<Stmt>, List<Stmt>>, Void> {
 
 		private final CFA cfa;
 		private int nextIndex;
@@ -55,7 +55,7 @@ final class LbeCreator {
 
 		////
 
-		private void createEdges(final CfaLoc source, final CfaLoc target, final List<Stmt> prefix,
+		private void createEdges(final Loc source, final Loc target, final List<Stmt> prefix,
 				final List<Stmt> postfix) {
 
 			if (postfix.isEmpty()) {
@@ -68,9 +68,9 @@ final class LbeCreator {
 		}
 
 		private Void visitSimpleStatement(final Stmt stmt,
-				final Product4<CfaLoc, CfaLoc, List<Stmt>, List<Stmt>> param) {
-			final CfaLoc source = param._1();
-			final CfaLoc target = param._2();
+				final Product4<Loc, Loc, List<Stmt>, List<Stmt>> param) {
+			final Loc source = param._1();
+			final Loc target = param._2();
 			final List<Stmt> prefix = param._3();
 			final List<Stmt> postfix = param._4();
 
@@ -84,9 +84,9 @@ final class LbeCreator {
 		////
 
 		@Override
-		public Void visit(final SkipStmt stmt, final Product4<CfaLoc, CfaLoc, List<Stmt>, List<Stmt>> param) {
-			final CfaLoc source = param._1();
-			final CfaLoc target = param._2();
+		public Void visit(final SkipStmt stmt, final Product4<Loc, Loc, List<Stmt>, List<Stmt>> param) {
+			final Loc source = param._1();
+			final Loc target = param._2();
 			final List<Stmt> prefix = param._3();
 			final List<Stmt> postfix = param._4();
 
@@ -96,9 +96,9 @@ final class LbeCreator {
 
 		@Override
 		public <DeclType extends Type> Void visit(final DeclStmt<DeclType> stmt,
-				final Product4<CfaLoc, CfaLoc, List<Stmt>, List<Stmt>> param) {
-			final CfaLoc source = param._1();
-			final CfaLoc target = param._2();
+				final Product4<Loc, Loc, List<Stmt>, List<Stmt>> param) {
+			final Loc source = param._1();
+			final Loc target = param._2();
 			final List<Stmt> prefix = param._3();
 			final List<Stmt> postfix = param._4();
 
@@ -118,14 +118,14 @@ final class LbeCreator {
 		}
 
 		@Override
-		public Void visit(final AssumeStmt stmt, final Product4<CfaLoc, CfaLoc, List<Stmt>, List<Stmt>> param) {
+		public Void visit(final AssumeStmt stmt, final Product4<Loc, Loc, List<Stmt>, List<Stmt>> param) {
 			return visitSimpleStatement(stmt, param);
 		}
 
 		@Override
-		public Void visit(final AssertStmt stmt, final Product4<CfaLoc, CfaLoc, List<Stmt>, List<Stmt>> param) {
-			final CfaLoc source = param._1();
-			final CfaLoc target = param._2();
+		public Void visit(final AssertStmt stmt, final Product4<Loc, Loc, List<Stmt>, List<Stmt>> param) {
+			final Loc source = param._1();
+			final Loc target = param._2();
 			final List<Stmt> prefix = param._3();
 			final List<Stmt> postfix = param._4();
 
@@ -144,20 +144,20 @@ final class LbeCreator {
 
 		@Override
 		public <DeclType extends Type> Void visit(final AssignStmt<DeclType> stmt,
-				final Product4<CfaLoc, CfaLoc, List<Stmt>, List<Stmt>> param) {
+				final Product4<Loc, Loc, List<Stmt>, List<Stmt>> param) {
 			return visitSimpleStatement(stmt, param);
 		}
 
 		@Override
 		public <DeclType extends Type> Void visit(final HavocStmt<DeclType> stmt,
-				final Product4<CfaLoc, CfaLoc, List<Stmt>, List<Stmt>> param) {
+				final Product4<Loc, Loc, List<Stmt>, List<Stmt>> param) {
 			return visitSimpleStatement(stmt, param);
 		}
 
 		@Override
-		public Void visit(final BlockStmt stmt, final Product4<CfaLoc, CfaLoc, List<Stmt>, List<Stmt>> param) {
-			final CfaLoc source = param._1();
-			final CfaLoc target = param._2();
+		public Void visit(final BlockStmt stmt, final Product4<Loc, Loc, List<Stmt>, List<Stmt>> param) {
+			final Loc source = param._1();
+			final Loc target = param._2();
 			final List<Stmt> prefix = param._3();
 			final List<Stmt> postfix = param._4();
 
@@ -170,8 +170,8 @@ final class LbeCreator {
 
 		@Override
 		public <ReturnType extends Type> Void visit(final ReturnStmt<ReturnType> stmt,
-				final Product4<CfaLoc, CfaLoc, List<Stmt>, List<Stmt>> param) {
-			final CfaLoc source = param._1();
+				final Product4<Loc, Loc, List<Stmt>, List<Stmt>> param) {
+			final Loc source = param._1();
 			final List<Stmt> prefix = param._3();
 
 			final List<Stmt> newPrefix = ImmutableList.<Stmt>builder().addAll(prefix).add(stmt).build();
@@ -182,9 +182,9 @@ final class LbeCreator {
 		}
 
 		@Override
-		public Void visit(final IfStmt stmt, final Product4<CfaLoc, CfaLoc, List<Stmt>, List<Stmt>> param) {
-			final CfaLoc source = param._1();
-			final CfaLoc target = param._2();
+		public Void visit(final IfStmt stmt, final Product4<Loc, Loc, List<Stmt>, List<Stmt>> param) {
+			final Loc source = param._1();
+			final Loc target = param._2();
 			final List<Stmt> prefix = param._3();
 			final List<Stmt> postfix = param._4();
 
@@ -202,9 +202,9 @@ final class LbeCreator {
 		}
 
 		@Override
-		public Void visit(final IfElseStmt stmt, final Product4<CfaLoc, CfaLoc, List<Stmt>, List<Stmt>> param) {
-			final CfaLoc source = param._1();
-			final CfaLoc target = param._2();
+		public Void visit(final IfElseStmt stmt, final Product4<Loc, Loc, List<Stmt>, List<Stmt>> param) {
+			final Loc source = param._1();
+			final Loc target = param._2();
 			final List<Stmt> prefix = param._3();
 			final List<Stmt> postfix = param._4();
 
@@ -222,13 +222,13 @@ final class LbeCreator {
 		}
 
 		@Override
-		public Void visit(final WhileStmt stmt, final Product4<CfaLoc, CfaLoc, List<Stmt>, List<Stmt>> param) {
-			final CfaLoc source = param._1();
-			final CfaLoc target = param._2();
+		public Void visit(final WhileStmt stmt, final Product4<Loc, Loc, List<Stmt>, List<Stmt>> param) {
+			final Loc source = param._1();
+			final Loc target = param._2();
 			final List<Stmt> prefix = param._3();
 			final List<Stmt> postfix = param._4();
 
-			CfaLoc doLoc;
+			Loc doLoc;
 			if (prefix.isEmpty()) {
 				doLoc = source;
 			} else {
@@ -250,13 +250,13 @@ final class LbeCreator {
 		}
 
 		@Override
-		public Void visit(final DoStmt stmt, final Product4<CfaLoc, CfaLoc, List<Stmt>, List<Stmt>> param) {
-			final CfaLoc source = param._1();
-			final CfaLoc target = param._2();
+		public Void visit(final DoStmt stmt, final Product4<Loc, Loc, List<Stmt>, List<Stmt>> param) {
+			final Loc source = param._1();
+			final Loc target = param._2();
 			final List<Stmt> prefix = param._3();
 			final List<Stmt> postfix = param._4();
 
-			final CfaLoc doLoc = cfa.createLoc("L" + nextIndex++);
+			final Loc doLoc = cfa.createLoc("L" + nextIndex++);
 
 			final List<Stmt> entryPrefix = prefix;
 			final List<Stmt> entryPostfix = ImmutableList.of(stmt.getDo());

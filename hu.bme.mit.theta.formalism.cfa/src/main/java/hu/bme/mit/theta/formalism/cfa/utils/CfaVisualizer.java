@@ -10,8 +10,8 @@ import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.LineStyle;
 import hu.bme.mit.theta.common.visualization.NodeAttributes;
 import hu.bme.mit.theta.formalism.cfa.CFA;
-import hu.bme.mit.theta.formalism.cfa.CFA.CfaEdge;
-import hu.bme.mit.theta.formalism.cfa.CFA.CfaLoc;
+import hu.bme.mit.theta.formalism.cfa.CFA.Edge;
+import hu.bme.mit.theta.formalism.cfa.CFA.Loc;
 
 public class CfaVisualizer {
 
@@ -26,18 +26,18 @@ public class CfaVisualizer {
 
 	public static Graph visualize(final CFA cfa) {
 		final Graph graph = new Graph(CFA_ID, CFA_LABEL);
-		final Map<CfaLoc, String> ids = new HashMap<>();
+		final Map<Loc, String> ids = new HashMap<>();
 
-		for (final CfaLoc loc : cfa.getLocs()) {
+		for (final Loc loc : cfa.getLocs()) {
 			addLocation(graph, cfa, loc, ids);
 		}
-		for (final CfaEdge edge : cfa.getEdges()) {
+		for (final Edge edge : cfa.getEdges()) {
 			addEdge(graph, cfa, edge, ids);
 		}
 		return graph;
 	}
 
-	private static void addLocation(final Graph graph, final CFA cfa, final CfaLoc loc, final Map<CfaLoc, String> ids) {
+	private static void addLocation(final Graph graph, final CFA cfa, final Loc loc, final Map<Loc, String> ids) {
 		final String id = LOC_ID_PREFIX + ids.size();
 		ids.put(loc, id);
 		String label = loc.getName();
@@ -54,8 +54,8 @@ public class CfaVisualizer {
 		graph.addNode(id, nAttributes);
 	}
 
-	private static void addEdge(final Graph graph, final CFA cfa, final CfaEdge edge,
-			final Map<CfaLoc, String> ids) {
+	private static void addEdge(final Graph graph, final CFA cfa, final Edge edge,
+			final Map<Loc, String> ids) {
 		final StringJoiner edgeLabel = new StringJoiner("\n");
 		edge.getStmts().stream().forEach(stmt -> edgeLabel.add(stmt.toString()));
 		final EdgeAttributes eAttributes = EdgeAttributes.builder().label(edgeLabel.toString()).color(LINE_COLOR)

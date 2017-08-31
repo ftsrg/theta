@@ -9,8 +9,8 @@ import hu.bme.mit.theta.core.Decl;
 import hu.bme.mit.theta.core.dsl.CoreDslManager;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.formalism.cfa.CFA;
-import hu.bme.mit.theta.formalism.cfa.CFA.CfaEdge;
-import hu.bme.mit.theta.formalism.cfa.CFA.CfaLoc;
+import hu.bme.mit.theta.formalism.cfa.CFA.Edge;
+import hu.bme.mit.theta.formalism.cfa.CFA.Loc;
 
 public class CfaWriter {
 	public static void write(final CFA cfa, final OutputStream outStream) throws IOException {
@@ -28,7 +28,7 @@ public class CfaWriter {
 
 		bw.newLine();
 
-		for (final CfaLoc loc : cfa.getLocs()) {
+		for (final Loc loc : cfa.getLocs()) {
 			final String locName = "L" + loc.getName();
 			String locPrefix = "";
 			if (loc == cfa.getErrorLoc())
@@ -43,7 +43,7 @@ public class CfaWriter {
 
 		bw.newLine();
 
-		for (final CfaEdge edge : cfa.getEdges()) {
+		for (final Edge edge : cfa.getEdges()) {
 			final String sourceLoc = "L" + edge.getSource().getName();
 			final String targetLoc = "L" + edge.getTarget().getName();
 			bw.write(String.format("\t%s -> %s {", sourceLoc, targetLoc));

@@ -7,7 +7,7 @@ import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.formalism.cfa.CFA.CfaLoc;
+import hu.bme.mit.theta.formalism.cfa.CFA.Loc;
 
 public final class LocState<S extends State> implements ExprState {
 
@@ -15,21 +15,21 @@ public final class LocState<S extends State> implements ExprState {
 
 	private volatile int hashCode = 0;
 
-	private final CfaLoc loc;
+	private final Loc loc;
 	private final S state;
 
-	private LocState(final CfaLoc loc, final S state) {
+	private LocState(final Loc loc, final S state) {
 		this.loc = checkNotNull(loc);
 		this.state = checkNotNull(state);
 	}
 
-	public static <S extends State> LocState<S> of(final CfaLoc loc, final S state) {
+	public static <S extends State> LocState<S> of(final Loc loc, final S state) {
 		return new LocState<>(loc, state);
 	}
 
 	////
 
-	public CfaLoc getLoc() {
+	public Loc getLoc() {
 		return loc;
 	}
 
@@ -39,7 +39,7 @@ public final class LocState<S extends State> implements ExprState {
 
 	////
 
-	public LocState<S> withLoc(final CfaLoc loc) {
+	public LocState<S> withLoc(final Loc loc) {
 		return LocState.of(loc, this.state);
 	}
 

@@ -13,7 +13,7 @@ import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.expr.refinement.PrecRefiner;
 import hu.bme.mit.theta.analysis.expr.refinement.Refutation;
 import hu.bme.mit.theta.analysis.expr.refinement.RefutationToPrec;
-import hu.bme.mit.theta.formalism.cfa.CFA.CfaLoc;
+import hu.bme.mit.theta.formalism.cfa.CFA.Loc;
 
 public class GenericLocPrecRefiner<S extends State, A extends Action, P extends Prec, R extends Refutation>
 		implements PrecRefiner<LocState<S>, A, LocPrec<P>, R> {
@@ -37,13 +37,13 @@ public class GenericLocPrecRefiner<S extends State, A extends Action, P extends 
 		checkArgument(prec instanceof GenericLocPrec); // TODO: enforce this in a better way
 
 		final GenericLocPrec<P> genPrec = (GenericLocPrec<P>) prec;
-		final Map<CfaLoc, P> runningPrecs = new HashMap<>();
+		final Map<Loc, P> runningPrecs = new HashMap<>();
 		for (final LocState<S> state : trace.getStates()) {
 			runningPrecs.put(state.getLoc(), genPrec.getPrec(state.getLoc()));
 		}
 
 		for (int i = 0; i < trace.getStates().size(); ++i) {
-			final CfaLoc loc = trace.getState(i).getLoc();
+			final Loc loc = trace.getState(i).getLoc();
 			final P precForLoc = runningPrecs.get(loc);
 			final P newPrecForLoc = refToPrec.toPrec(refutation, i);
 			runningPrecs.put(loc, refToPrec.join(precForLoc, newPrecForLoc));
