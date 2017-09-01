@@ -1,1 +1,0 @@
-This project contains the CFA specific classes related to the analysis algorithms.
