@@ -4,6 +4,7 @@ dependencies {
   antlr group: 'org.antlr', name: 'antlr4', version: antlrVersion
   compile project(':hu.bme.mit.theta.common')
   compile project(':hu.bme.mit.theta.core')
+  compile project(':hu.bme.mit.theta.analysis')
 }
 
 generateGrammarSource {

@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.analysis.sts;
+package hu.bme.mit.theta.formalism.sts.analysis;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 

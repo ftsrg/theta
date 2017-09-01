@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.analysis.sts;
+package hu.bme.mit.theta.formalism.sts.analysis;
 
 import static hu.bme.mit.theta.analysis.algorithm.ArgUtils.isWellLabeled;
 import static hu.bme.mit.theta.core.decl.Decls.Var;
@@ -53,6 +53,8 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.formalism.sts.STS.Builder;
+import hu.bme.mit.theta.formalism.sts.analysis.StsAction;
+import hu.bme.mit.theta.formalism.sts.analysis.StsLts;
 import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 

@@ -2,7 +2,6 @@ rootProject.name = 'theta'
 
 include ':hu.bme.mit.theta.analysis'
 include ':hu.bme.mit.theta.analysis.cfa'
-include ':hu.bme.mit.theta.analysis.sts'
 include ':hu.bme.mit.theta.analysis.xta'
 include ':hu.bme.mit.theta.common'
 include ':hu.bme.mit.theta.core'

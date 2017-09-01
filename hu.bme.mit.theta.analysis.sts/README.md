@@ -1,1 +1,0 @@
-This project contains the STS specific classes related to the analysis algorithms.

@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.analysis.sts;
+package hu.bme.mit.theta.formalism.sts.analysis;
 
 import hu.bme.mit.theta.analysis.expl.ExplPrec;
 import hu.bme.mit.theta.analysis.pred.SimplePredPrec;
