@@ -39,6 +39,10 @@ public class GenericCfaPrecRefiner<S extends ExprState, A extends Action, P exte
 		checkNotNull(refutation);
 		checkArgument(prec instanceof GenericCfaPrec); // TODO: enforce this in a better way
 
+		// Important: the same location may appear multiple times in the trace
+		// and in this case the corresponding precisions should be joined before
+		// joining them to the old precision of the location
+
 		final GenericCfaPrec<P> genPrec = (GenericCfaPrec<P>) prec;
 		final Map<Loc, P> runningPrecs = new HashMap<>();
 		for (final CfaState<S> state : trace.getStates()) {

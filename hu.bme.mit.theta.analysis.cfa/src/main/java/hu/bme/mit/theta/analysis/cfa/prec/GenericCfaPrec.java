@@ -10,6 +10,7 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap.Builder;
 
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.cfa.CfaPrec;
@@ -26,12 +27,18 @@ public final class GenericCfaPrec<P extends Prec> implements CfaPrec<P> {
 	private final Optional<P> defaultPrec;
 
 	private GenericCfaPrec(final Map<Loc, P> mapping, final Optional<P> defaultPrec) {
-		this.mapping = mapping;
 		this.defaultPrec = defaultPrec;
+		final Builder<Loc, P> builder = ImmutableMap.builder();
+		for (final Entry<Loc, P> entry : mapping.entrySet()) {
+			if (!defaultPrec.isPresent() || !defaultPrec.get().equals(entry.getValue())) {
+				builder.put(entry);
+			}
+		}
+		this.mapping = builder.build();
 	}
 
 	public static <P extends Prec> GenericCfaPrec<P> create(final Map<Loc, P> mapping) {
-		return new GenericCfaPrec<>(ImmutableMap.copyOf(mapping), Optional.empty());
+		return new GenericCfaPrec<>(mapping, Optional.empty());
 	}
 
 	public static <P extends Prec> GenericCfaPrec<P> create(final P defaultPrec) {
@@ -39,18 +46,18 @@ public final class GenericCfaPrec<P extends Prec> implements CfaPrec<P> {
 	}
 
 	public static <P extends Prec> GenericCfaPrec<P> create(final Map<Loc, P> mapping, final P defaultPrec) {
-		return new GenericCfaPrec<>(ImmutableMap.copyOf(mapping), Optional.of(defaultPrec));
+		return new GenericCfaPrec<>(mapping, Optional.of(defaultPrec));
 	}
 
 	@Override
 	public P getPrec(final Loc loc) {
 		if (mapping.containsKey(loc)) {
 			return mapping.get(loc);
-		}
-		if (defaultPrec.isPresent()) {
+		} else if (defaultPrec.isPresent()) {
 			return defaultPrec.get();
+		} else {
+			throw new NoSuchElementException("Location not found.");
 		}
-		throw new NoSuchElementException("Location not found.");
 	}
 
 	public GenericCfaPrec<P> refine(final Map<Loc, P> refinedPrecs) {

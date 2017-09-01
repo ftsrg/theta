@@ -25,6 +25,7 @@ public final class CfaAction implements StmtAction {
 	private CfaAction(final Edge edge) {
 		this.edge = checkNotNull(edge);
 
+		// TODO: do the following stuff lazily
 		final StmtUnfoldResult toExprResult = StmtUtils.toExpr(edge.getStmts(), all(0));
 		expr = And(toExprResult.getExprs());
 		nextIndexing = toExprResult.getIndexing();
@@ -49,13 +50,12 @@ public final class CfaAction implements StmtAction {
 	}
 
 	@Override
-	public String toString() {
-		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).addAll(edge.getStmts()).toString();
-	}
-
-	@Override
 	public List<Stmt> getStmts() {
 		return edge.getStmts();
 	}
 
+	@Override
+	public String toString() {
+		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).addAll(edge.getStmts()).toString();
+	}
 }

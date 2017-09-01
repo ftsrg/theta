@@ -18,9 +18,11 @@ public final class CfaLts implements LTS<CfaState<?>, CfaAction> {
 
 	@Override
 	public Collection<CfaAction> getEnabledActionsFor(final CfaState<?> state) {
-		return actions.computeIfAbsent(state.getLoc(), loc -> {
-			return loc.getOutEdges().stream().map(CfaAction::create).collect(Collectors.toList());
-		});
+		return actions.computeIfAbsent(state.getLoc(), loc -> getEnabledActionsFor(loc));
+	}
+
+	private Collection<CfaAction> getEnabledActionsFor(final Loc loc) {
+		return loc.getOutEdges().stream().map(CfaAction::create).collect(Collectors.toList());
 	}
 
 }

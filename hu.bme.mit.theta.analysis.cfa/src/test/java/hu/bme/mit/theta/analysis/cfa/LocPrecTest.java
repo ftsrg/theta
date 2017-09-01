@@ -86,6 +86,18 @@ public class LocPrecTest {
 		final GenericCfaPrec<PrecStub> gp1r1 = gp1r0.refine(l2, p2);
 
 		Assert.assertNotEquals(gp0r1, gp1r1);
+	}
+
+	@Test
+	public void testGenericLocPrecEquals2() {
+		final CFA cfa = new CFA();
+		final Loc l1 = cfa.createLoc("L1");
+
+		final GenericCfaPrec<PrecStub> original = GenericCfaPrec.create(p0);
+		final GenericCfaPrec<PrecStub> refined = original.refine(l1, p1);
+		final GenericCfaPrec<PrecStub> refinedBack = refined.refine(l1, p0);
+
+		Assert.assertEquals(original, refinedBack);
 
 	}
 }

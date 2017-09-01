@@ -48,7 +48,6 @@ final class CfaTransferFunction<S extends ExprState, P extends Prec>
 			final CfaState<S> succState = CfaState.of(target, subSuccState);
 			succStates.add(succState);
 		}
-
 		return succStates;
 	}
 

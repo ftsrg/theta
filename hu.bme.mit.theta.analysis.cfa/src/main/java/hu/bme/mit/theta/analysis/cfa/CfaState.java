@@ -11,7 +11,6 @@ import hu.bme.mit.theta.formalism.cfa.CFA.Loc;
 public final class CfaState<S extends ExprState> implements ExprState {
 
 	private static final int HASH_SEED = 3613;
-
 	private volatile int hashCode = 0;
 
 	private final Loc loc;
