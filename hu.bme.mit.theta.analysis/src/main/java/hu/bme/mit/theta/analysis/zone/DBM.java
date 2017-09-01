@@ -25,30 +25,30 @@ import java.util.stream.Collectors;
 
 import com.google.common.collect.Sets;
 
+import hu.bme.mit.theta.core.clock.constr.AndConstr;
+import hu.bme.mit.theta.core.clock.constr.ClockConstr;
+import hu.bme.mit.theta.core.clock.constr.ClockConstrVisitor;
+import hu.bme.mit.theta.core.clock.constr.DiffEqConstr;
+import hu.bme.mit.theta.core.clock.constr.DiffGeqConstr;
+import hu.bme.mit.theta.core.clock.constr.DiffGtConstr;
+import hu.bme.mit.theta.core.clock.constr.DiffLeqConstr;
+import hu.bme.mit.theta.core.clock.constr.DiffLtConstr;
+import hu.bme.mit.theta.core.clock.constr.FalseConstr;
+import hu.bme.mit.theta.core.clock.constr.TrueConstr;
+import hu.bme.mit.theta.core.clock.constr.UnitEqConstr;
+import hu.bme.mit.theta.core.clock.constr.UnitGeqConstr;
+import hu.bme.mit.theta.core.clock.constr.UnitGtConstr;
+import hu.bme.mit.theta.core.clock.constr.UnitLeqConstr;
+import hu.bme.mit.theta.core.clock.constr.UnitLtConstr;
+import hu.bme.mit.theta.core.clock.op.ClockOp;
+import hu.bme.mit.theta.core.clock.op.ClockOpVisitor;
+import hu.bme.mit.theta.core.clock.op.CopyOp;
+import hu.bme.mit.theta.core.clock.op.FreeOp;
+import hu.bme.mit.theta.core.clock.op.GuardOp;
+import hu.bme.mit.theta.core.clock.op.ResetOp;
+import hu.bme.mit.theta.core.clock.op.ShiftOp;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.rattype.RatType;
-import hu.bme.mit.theta.formalism.ta.constr.AndConstr;
-import hu.bme.mit.theta.formalism.ta.constr.ClockConstr;
-import hu.bme.mit.theta.formalism.ta.constr.ClockConstrVisitor;
-import hu.bme.mit.theta.formalism.ta.constr.DiffEqConstr;
-import hu.bme.mit.theta.formalism.ta.constr.DiffGeqConstr;
-import hu.bme.mit.theta.formalism.ta.constr.DiffGtConstr;
-import hu.bme.mit.theta.formalism.ta.constr.DiffLeqConstr;
-import hu.bme.mit.theta.formalism.ta.constr.DiffLtConstr;
-import hu.bme.mit.theta.formalism.ta.constr.FalseConstr;
-import hu.bme.mit.theta.formalism.ta.constr.TrueConstr;
-import hu.bme.mit.theta.formalism.ta.constr.UnitEqConstr;
-import hu.bme.mit.theta.formalism.ta.constr.UnitGeqConstr;
-import hu.bme.mit.theta.formalism.ta.constr.UnitGtConstr;
-import hu.bme.mit.theta.formalism.ta.constr.UnitLeqConstr;
-import hu.bme.mit.theta.formalism.ta.constr.UnitLtConstr;
-import hu.bme.mit.theta.formalism.ta.op.ClockOp;
-import hu.bme.mit.theta.formalism.ta.op.ClockOpVisitor;
-import hu.bme.mit.theta.formalism.ta.op.CopyOp;
-import hu.bme.mit.theta.formalism.ta.op.FreeOp;
-import hu.bme.mit.theta.formalism.ta.op.GuardOp;
-import hu.bme.mit.theta.formalism.ta.op.ResetOp;
-import hu.bme.mit.theta.formalism.ta.op.ShiftOp;
 
 final class DBM {
 

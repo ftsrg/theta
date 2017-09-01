@@ -1,0 +1,89 @@
+package hu.bme.mit.theta.core.clock.op;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Add;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
+
+import java.util.Collection;
+
+import com.google.common.collect.ImmutableSet;
+
+import hu.bme.mit.theta.common.ObjectUtils;
+import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.stmt.AssignStmt;
+import hu.bme.mit.theta.core.type.rattype.RatType;
+
+public final class ShiftOp implements ClockOp {
+
+	private static final int HASH_SEED = 5521;
+
+	private final VarDecl<RatType> var;
+	private final int offset;
+
+	private volatile int hashCode = 0;
+	private volatile AssignStmt<RatType> stmt = null;
+
+	ShiftOp(final VarDecl<RatType> var, final int offset) {
+		this.var = checkNotNull(var);
+		this.offset = offset;
+	}
+
+	public VarDecl<RatType> getVar() {
+		return var;
+	}
+
+	public int getOffset() {
+		return offset;
+	}
+
+	@Override
+	public Collection<VarDecl<RatType>> getVars() {
+		return ImmutableSet.of(var);
+	}
+
+	@Override
+	public AssignStmt<RatType> toStmt() {
+		AssignStmt<RatType> result = stmt;
+		if (result == null) {
+			result = Assign(var, Add(var.getRef(), Rat(offset, 1)));
+			stmt = result;
+		}
+		return result;
+	}
+
+	@Override
+	public <P, R> R accept(final ClockOpVisitor<? super P, ? extends R> visitor, final P param) {
+		return visitor.visit(this, param);
+	}
+
+	@Override
+	public int hashCode() {
+		int result = hashCode;
+		if (result == 0) {
+			result = HASH_SEED;
+			result = 31 * result + var.hashCode();
+			result = 31 * result + offset;
+			hashCode = result;
+		}
+		return result;
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		} else if (obj instanceof ShiftOp) {
+			final ShiftOp that = (ShiftOp) obj;
+			return this.getVar().equals(that.getVar()) && this.getOffset() == that.getOffset();
+		} else {
+			return false;
+		}
+	}
+
+	@Override
+	public String toString() {
+		return ObjectUtils.toStringBuilder("Shift").add(var.getName()).add(offset).toString();
+	}
+
+}

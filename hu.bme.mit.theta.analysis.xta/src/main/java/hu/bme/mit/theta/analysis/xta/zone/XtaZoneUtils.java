@@ -1,7 +1,7 @@
 package hu.bme.mit.theta.analysis.xta.zone;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.formalism.ta.constr.ClockConstrs.Eq;
+import static hu.bme.mit.theta.core.clock.constr.ClockConstrs.Eq;
 
 import java.util.Collection;
 import java.util.List;
@@ -13,9 +13,9 @@ import hu.bme.mit.theta.analysis.xta.XtaAction.SimpleXtaAction;
 import hu.bme.mit.theta.analysis.xta.XtaAction.SyncedXtaAction;
 import hu.bme.mit.theta.analysis.zone.ZonePrec;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
+import hu.bme.mit.theta.core.clock.op.ResetOp;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.rattype.RatType;
-import hu.bme.mit.theta.formalism.ta.op.ResetOp;
 import hu.bme.mit.theta.formalism.xta.Guard;
 import hu.bme.mit.theta.formalism.xta.Update;
 import hu.bme.mit.theta.formalism.xta.XtaProcess.Edge;

@@ -3,10 +3,10 @@ package hu.bme.mit.theta.analysis.zone;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import hu.bme.mit.theta.core.clock.constr.ClockConstr;
+import hu.bme.mit.theta.core.clock.constr.ClockConstrs;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.rattype.RatType;
-import hu.bme.mit.theta.formalism.ta.constr.ClockConstr;
-import hu.bme.mit.theta.formalism.ta.constr.ClockConstrs;
 
 final class DiffBounds {
 

@@ -1,10 +1,10 @@
 package hu.bme.mit.theta.analysis.zone;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.clock.constr.ClockConstrs.Eq;
+import static hu.bme.mit.theta.core.clock.constr.ClockConstrs.Gt;
+import static hu.bme.mit.theta.core.clock.constr.ClockConstrs.Lt;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
-import static hu.bme.mit.theta.formalism.ta.constr.ClockConstrs.Eq;
-import static hu.bme.mit.theta.formalism.ta.constr.ClockConstrs.Gt;
-import static hu.bme.mit.theta.formalism.ta.constr.ClockConstrs.Lt;
 import static java.util.stream.Collectors.toList;
 
 import java.util.Collection;
@@ -16,13 +16,13 @@ import com.google.common.collect.Iterables;
 
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.core.Expr;
+import hu.bme.mit.theta.core.clock.constr.ClockConstr;
+import hu.bme.mit.theta.core.clock.op.ClockOp;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.rattype.RatLitExpr;
 import hu.bme.mit.theta.core.type.rattype.RatType;
-import hu.bme.mit.theta.formalism.ta.constr.ClockConstr;
-import hu.bme.mit.theta.formalism.ta.op.ClockOp;
 
 public final class ZoneState implements ExprState {
 

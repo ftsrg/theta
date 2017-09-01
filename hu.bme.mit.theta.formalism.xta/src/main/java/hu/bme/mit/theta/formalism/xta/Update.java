@@ -2,9 +2,9 @@ package hu.bme.mit.theta.formalism.xta;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import hu.bme.mit.theta.core.clock.op.ClockOp;
+import hu.bme.mit.theta.core.clock.op.ClockOps;
 import hu.bme.mit.theta.core.stmt.Stmt;
-import hu.bme.mit.theta.formalism.ta.op.ClockOp;
-import hu.bme.mit.theta.formalism.ta.op.ClockOps;
 
 public abstract class Update {
 

@@ -11,16 +11,16 @@ import java.util.Map;
 import java.util.Optional;
 
 import hu.bme.mit.theta.common.ObjectUtils;
+import hu.bme.mit.theta.core.clock.constr.AndConstr;
+import hu.bme.mit.theta.core.clock.constr.ClockConstr;
+import hu.bme.mit.theta.core.clock.constr.FailClockConstrVisitor;
+import hu.bme.mit.theta.core.clock.constr.UnitEqConstr;
+import hu.bme.mit.theta.core.clock.constr.UnitGeqConstr;
+import hu.bme.mit.theta.core.clock.constr.UnitGtConstr;
+import hu.bme.mit.theta.core.clock.constr.UnitLeqConstr;
+import hu.bme.mit.theta.core.clock.constr.UnitLtConstr;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.rattype.RatType;
-import hu.bme.mit.theta.formalism.ta.constr.AndConstr;
-import hu.bme.mit.theta.formalism.ta.constr.ClockConstr;
-import hu.bme.mit.theta.formalism.ta.constr.FailClockConstrVisitor;
-import hu.bme.mit.theta.formalism.ta.constr.UnitEqConstr;
-import hu.bme.mit.theta.formalism.ta.constr.UnitGeqConstr;
-import hu.bme.mit.theta.formalism.ta.constr.UnitGtConstr;
-import hu.bme.mit.theta.formalism.ta.constr.UnitLeqConstr;
-import hu.bme.mit.theta.formalism.ta.constr.UnitLtConstr;
 
 public final class BoundFunction {
 	private static final int HASH_SEED = 2903;
