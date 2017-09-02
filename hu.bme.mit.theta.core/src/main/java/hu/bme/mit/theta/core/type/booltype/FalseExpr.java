@@ -2,8 +2,8 @@ package hu.bme.mit.theta.core.type.booltype;
 
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 
-import hu.bme.mit.theta.core.LitExpr;
 import hu.bme.mit.theta.core.model.Valuation;
+import hu.bme.mit.theta.core.type.LitExpr;
 
 public final class FalseExpr extends BoolLitExpr {
 	private static final FalseExpr INSTANCE = new FalseExpr();

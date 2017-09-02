@@ -3,7 +3,7 @@ package hu.bme.mit.theta.core.type.pointertype;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import hu.bme.mit.theta.common.ObjectUtils;
-import hu.bme.mit.theta.core.Type;
+import hu.bme.mit.theta.core.type.Type;
 
 public final class PointerType<PointedType extends Type> implements Type {
 

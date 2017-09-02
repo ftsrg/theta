@@ -1,7 +1,7 @@
 package hu.bme.mit.theta.core.type.abstracttype;
 
-import hu.bme.mit.theta.core.Expr;
-import hu.bme.mit.theta.core.Type;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.Type;
 
 public interface Equational<OpType extends Equational<OpType>> extends Type {
 

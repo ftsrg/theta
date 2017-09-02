@@ -4,7 +4,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.function.Function;
 
-import hu.bme.mit.theta.core.Expr;
+import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 

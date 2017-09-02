@@ -14,10 +14,10 @@ import java.util.Optional;
 
 import hu.bme.mit.theta.common.DispatchTable;
 import hu.bme.mit.theta.common.Utils;
-import hu.bme.mit.theta.core.Expr;
-import hu.bme.mit.theta.core.LitExpr;
-import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.model.Valuation;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.LitExpr;
+import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.booltype.AndExpr;

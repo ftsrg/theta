@@ -10,8 +10,8 @@ import java.util.List;
 import java.util.Optional;
 
 import hu.bme.mit.theta.common.dsl.Symbol;
-import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.model.Substitution;
+import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.formalism.sts.STS;
 
 public final class StsSpec {

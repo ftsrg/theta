@@ -4,9 +4,9 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 
 import java.util.List;
 
-import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 public final class InVar extends HwElement {

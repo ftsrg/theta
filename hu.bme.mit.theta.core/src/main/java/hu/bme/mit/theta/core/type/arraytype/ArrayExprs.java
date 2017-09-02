@@ -1,7 +1,7 @@
 package hu.bme.mit.theta.core.type.arraytype;
 
-import hu.bme.mit.theta.core.Expr;
-import hu.bme.mit.theta.core.Type;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.Type;
 
 public final class ArrayExprs {
 

@@ -12,9 +12,9 @@ import java.util.Map;
 import java.util.Optional;
 
 import hu.bme.mit.theta.common.ObjectUtils;
-import hu.bme.mit.theta.core.Decl;
-import hu.bme.mit.theta.core.Expr;
-import hu.bme.mit.theta.core.Type;
+import hu.bme.mit.theta.core.decl.Decl;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.Type;
 
 /**
  * Basic, immutable implementation of a substitution.

@@ -6,9 +6,7 @@ import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
 import static hu.bme.mit.theta.core.stmt.Stmts.Assume;
 
 import hu.bme.mit.theta.common.dsl.Scope;
-import hu.bme.mit.theta.core.Decl;
-import hu.bme.mit.theta.core.Expr;
-import hu.bme.mit.theta.core.Type;
+import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.dsl.DeclSymbol;
 import hu.bme.mit.theta.core.dsl.gen.CoreDslBaseVisitor;
@@ -16,6 +14,8 @@ import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.AssignStmtContext;
 import hu.bme.mit.theta.core.dsl.gen.CoreDslParser.AssumeStmtContext;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.TypeUtils;
 

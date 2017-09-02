@@ -9,8 +9,8 @@ import com.google.common.collect.ImmutableSet;
 
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
-import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.rattype.RatType;
 

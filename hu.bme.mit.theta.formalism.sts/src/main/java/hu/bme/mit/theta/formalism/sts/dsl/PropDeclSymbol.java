@@ -4,8 +4,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.formalism.sts.dsl.StsDslHelper.createBoolExpr;
 
 import hu.bme.mit.theta.common.dsl.Symbol;
-import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.model.Substitution;
+import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.formalism.sts.dsl.gen.StsDslParser.PropDeclContext;

@@ -1,6 +1,6 @@
 package hu.bme.mit.theta.core.type.rattype;
 
-import hu.bme.mit.theta.core.Expr;
+import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.abstracttype.Additive;
 import hu.bme.mit.theta.core.type.abstracttype.Equational;
 import hu.bme.mit.theta.core.type.abstracttype.Multiplicative;

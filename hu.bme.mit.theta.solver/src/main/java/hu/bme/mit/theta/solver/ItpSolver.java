@@ -9,7 +9,7 @@ import java.util.List;
 
 import com.google.common.collect.Lists;
 
-import hu.bme.mit.theta.core.Expr;
+import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 public interface ItpSolver extends Solver {

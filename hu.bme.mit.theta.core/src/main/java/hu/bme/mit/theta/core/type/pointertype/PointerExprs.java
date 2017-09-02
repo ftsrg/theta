@@ -2,8 +2,8 @@ package hu.bme.mit.theta.core.type.pointertype;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import hu.bme.mit.theta.core.Expr;
-import hu.bme.mit.theta.core.Type;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.Type;
 
 public final class PointerExprs {
 

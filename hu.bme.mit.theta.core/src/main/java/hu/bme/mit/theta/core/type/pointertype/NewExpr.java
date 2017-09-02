@@ -4,10 +4,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.type.pointertype.PointerExprs.Pointer;
 
 import hu.bme.mit.theta.common.ObjectUtils;
-import hu.bme.mit.theta.core.LitExpr;
-import hu.bme.mit.theta.core.NullaryExpr;
-import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.model.Valuation;
+import hu.bme.mit.theta.core.type.LitExpr;
+import hu.bme.mit.theta.core.type.NullaryExpr;
+import hu.bme.mit.theta.core.type.Type;
 
 public final class NewExpr<PointedType extends Type> extends NullaryExpr<PointerType<PointedType>> {
 

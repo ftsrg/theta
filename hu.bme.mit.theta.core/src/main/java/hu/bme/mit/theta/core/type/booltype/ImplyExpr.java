@@ -2,9 +2,9 @@ package hu.bme.mit.theta.core.type.booltype;
 
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 
-import hu.bme.mit.theta.core.BinaryExpr;
-import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.model.Valuation;
+import hu.bme.mit.theta.core.type.BinaryExpr;
+import hu.bme.mit.theta.core.type.Expr;
 
 public final class ImplyExpr extends BinaryExpr<BoolType, BoolType> {
 

@@ -8,8 +8,8 @@ import java.util.List;
 
 import hu.bme.mit.theta.analysis.expl.StmtAction;
 import hu.bme.mit.theta.common.ObjectUtils;
-import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.stmt.Stmt;
+import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.StmtUnfoldResult;
 import hu.bme.mit.theta.core.utils.StmtUtils;

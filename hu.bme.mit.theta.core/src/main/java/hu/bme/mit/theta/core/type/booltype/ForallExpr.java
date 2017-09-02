@@ -1,9 +1,9 @@
 package hu.bme.mit.theta.core.type.booltype;
 
-import hu.bme.mit.theta.core.Expr;
-import hu.bme.mit.theta.core.LitExpr;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.model.Valuation;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.LitExpr;
 
 public final class ForallExpr extends QuantifiedExpr {
 

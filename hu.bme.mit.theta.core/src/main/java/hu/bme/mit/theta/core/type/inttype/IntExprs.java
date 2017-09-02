@@ -2,7 +2,7 @@ package hu.bme.mit.theta.core.type.inttype;
 
 import com.google.common.collect.ImmutableList;
 
-import hu.bme.mit.theta.core.Expr;
+import hu.bme.mit.theta.core.type.Expr;
 
 public final class IntExprs {
 

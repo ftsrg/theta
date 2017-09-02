@@ -7,7 +7,7 @@ import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.common.Product3;
-import hu.bme.mit.theta.core.Expr;
+import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 public final class Prod3State<S1 extends State, S2 extends State, S3 extends State> extends ProdState

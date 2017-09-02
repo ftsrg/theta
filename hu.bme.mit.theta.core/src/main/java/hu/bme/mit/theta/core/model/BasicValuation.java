@@ -6,10 +6,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Optional;
 
-import hu.bme.mit.theta.core.Decl;
-import hu.bme.mit.theta.core.Expr;
-import hu.bme.mit.theta.core.LitExpr;
-import hu.bme.mit.theta.core.Type;
+import hu.bme.mit.theta.core.decl.Decl;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.LitExpr;
+import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 /**

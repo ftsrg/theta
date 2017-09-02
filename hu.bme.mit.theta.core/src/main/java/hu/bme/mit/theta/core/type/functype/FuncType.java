@@ -2,7 +2,7 @@ package hu.bme.mit.theta.core.type.functype;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import hu.bme.mit.theta.core.Type;
+import hu.bme.mit.theta.core.type.Type;
 
 public final class FuncType<ParamType extends Type, ResultType extends Type> implements Type {
 

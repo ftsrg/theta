@@ -1,10 +1,10 @@
 package hu.bme.mit.theta.core.dsl.impl;
 
 import hu.bme.mit.theta.common.DispatchTable;
-import hu.bme.mit.theta.core.BinaryExpr;
-import hu.bme.mit.theta.core.Expr;
-import hu.bme.mit.theta.core.MultiaryExpr;
-import hu.bme.mit.theta.core.UnaryExpr;
+import hu.bme.mit.theta.core.type.BinaryExpr;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.MultiaryExpr;
+import hu.bme.mit.theta.core.type.UnaryExpr;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.anytype.PrimeExpr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;

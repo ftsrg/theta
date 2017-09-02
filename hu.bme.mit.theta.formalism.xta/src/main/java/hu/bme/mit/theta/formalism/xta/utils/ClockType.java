@@ -1,6 +1,6 @@
 package hu.bme.mit.theta.formalism.xta.utils;
 
-import hu.bme.mit.theta.core.Type;
+import hu.bme.mit.theta.core.type.Type;
 
 public final class ClockType implements Type {
 

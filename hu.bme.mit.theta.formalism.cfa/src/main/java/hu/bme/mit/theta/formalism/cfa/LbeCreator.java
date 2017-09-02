@@ -13,7 +13,6 @@ import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.theta.common.Product4;
 import hu.bme.mit.theta.common.Tuple;
-import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.stmt.AssertStmt;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
@@ -27,6 +26,7 @@ import hu.bme.mit.theta.core.stmt.ReturnStmt;
 import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.stmt.WhileStmt;
+import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.utils.StmtVisitor;
 import hu.bme.mit.theta.formalism.cfa.CFA.Loc;
 

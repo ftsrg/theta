@@ -2,7 +2,7 @@ package hu.bme.mit.theta.core.type.rattype;
 
 import com.google.common.collect.ImmutableList;
 
-import hu.bme.mit.theta.core.Expr;
+import hu.bme.mit.theta.core.type.Expr;
 
 public final class RatExprs {
 

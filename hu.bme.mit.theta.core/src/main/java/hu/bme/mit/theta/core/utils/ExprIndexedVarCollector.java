@@ -1,8 +1,8 @@
 package hu.bme.mit.theta.core.utils;
 
-import hu.bme.mit.theta.core.Decl;
-import hu.bme.mit.theta.core.Expr;
+import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.IndexedConstDecl;
+import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 
 final class ExprIndexedVarCollector {

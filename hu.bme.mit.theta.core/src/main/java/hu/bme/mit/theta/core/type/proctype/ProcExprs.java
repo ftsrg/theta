@@ -2,9 +2,9 @@ package hu.bme.mit.theta.core.type.proctype;
 
 import java.util.List;
 
-import hu.bme.mit.theta.core.Expr;
-import hu.bme.mit.theta.core.Type;
 import hu.bme.mit.theta.core.decl.ParamDecl;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.Type;
 
 public final class ProcExprs {
 

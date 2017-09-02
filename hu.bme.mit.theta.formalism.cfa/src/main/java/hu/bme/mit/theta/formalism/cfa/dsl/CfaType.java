@@ -4,7 +4,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
-import hu.bme.mit.theta.core.Type;
+import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.formalism.cfa.dsl.gen.CfaDslBaseVisitor;
 import hu.bme.mit.theta.formalism.cfa.dsl.gen.CfaDslParser.BoolTypeContext;
 import hu.bme.mit.theta.formalism.cfa.dsl.gen.CfaDslParser.IntTypeContext;

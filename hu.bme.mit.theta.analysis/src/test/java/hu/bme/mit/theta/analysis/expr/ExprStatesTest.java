@@ -10,8 +10,8 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import hu.bme.mit.theta.analysis.expl.ExplPrec;
-import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntType;

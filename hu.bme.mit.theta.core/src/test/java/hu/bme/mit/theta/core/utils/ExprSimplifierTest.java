@@ -40,10 +40,10 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
-import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.model.BasicValuation;
 import hu.bme.mit.theta.core.model.Valuation;
+import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 

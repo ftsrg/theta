@@ -7,9 +7,9 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
-import hu.bme.mit.theta.core.Decl;
-import hu.bme.mit.theta.core.Expr;
-import hu.bme.mit.theta.core.Type;
+import hu.bme.mit.theta.core.decl.Decl;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.Type;
 
 /**
  * Class representing a nested substitution. If a declaration is not present in

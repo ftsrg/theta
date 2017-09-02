@@ -4,9 +4,9 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 
-import hu.bme.mit.theta.core.Expr;
-import hu.bme.mit.theta.core.MultiaryExpr;
 import hu.bme.mit.theta.core.model.Valuation;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.MultiaryExpr;
 
 public final class OrExpr extends MultiaryExpr<BoolType, BoolType> {
 

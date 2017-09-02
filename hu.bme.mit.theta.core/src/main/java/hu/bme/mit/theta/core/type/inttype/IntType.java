@@ -1,7 +1,7 @@
 package hu.bme.mit.theta.core.type.inttype;
 
-import hu.bme.mit.theta.core.Expr;
-import hu.bme.mit.theta.core.Type;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.abstracttype.Additive;
 import hu.bme.mit.theta.core.type.abstracttype.Castable;
 import hu.bme.mit.theta.core.type.abstracttype.Equational;

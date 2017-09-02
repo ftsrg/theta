@@ -2,9 +2,9 @@ package hu.bme.mit.theta.core.type.inttype;
 
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
-import hu.bme.mit.theta.core.BinaryExpr;
-import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.model.Valuation;
+import hu.bme.mit.theta.core.type.BinaryExpr;
+import hu.bme.mit.theta.core.type.Expr;
 
 public final class ModExpr extends BinaryExpr<IntType, IntType> {
 

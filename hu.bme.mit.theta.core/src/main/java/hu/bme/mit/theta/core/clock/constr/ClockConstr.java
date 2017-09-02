@@ -2,8 +2,8 @@ package hu.bme.mit.theta.core.clock.constr;
 
 import java.util.Collection;
 
-import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.rattype.RatType;
 

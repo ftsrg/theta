@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.core;
+package hu.bme.mit.theta.core.type;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;

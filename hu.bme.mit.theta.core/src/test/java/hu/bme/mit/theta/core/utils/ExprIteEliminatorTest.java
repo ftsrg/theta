@@ -24,7 +24,7 @@ import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 
-import hu.bme.mit.theta.core.Expr;
+import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 

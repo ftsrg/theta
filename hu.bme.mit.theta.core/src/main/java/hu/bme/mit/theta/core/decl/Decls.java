@@ -1,6 +1,6 @@
 package hu.bme.mit.theta.core.decl;
 
-import hu.bme.mit.theta.core.Type;
+import hu.bme.mit.theta.core.type.Type;
 
 public final class Decls {
 

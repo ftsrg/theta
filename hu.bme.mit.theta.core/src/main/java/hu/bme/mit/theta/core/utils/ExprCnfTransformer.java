@@ -10,9 +10,9 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.AndExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.IffExpr;

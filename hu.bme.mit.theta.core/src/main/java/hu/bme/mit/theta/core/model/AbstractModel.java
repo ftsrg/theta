@@ -7,8 +7,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import hu.bme.mit.theta.common.ObjectUtils;
-import hu.bme.mit.theta.core.Decl;
-import hu.bme.mit.theta.core.Expr;
+import hu.bme.mit.theta.core.decl.Decl;
+import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 public abstract class AbstractModel implements Model {

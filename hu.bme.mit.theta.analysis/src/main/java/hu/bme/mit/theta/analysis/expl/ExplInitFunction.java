@@ -6,7 +6,7 @@ import java.util.Collection;
 
 import hu.bme.mit.theta.analysis.InitFunction;
 import hu.bme.mit.theta.analysis.expr.ExprStates;
-import hu.bme.mit.theta.core.Expr;
+import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.VarIndexing;
 import hu.bme.mit.theta.solver.Solver;

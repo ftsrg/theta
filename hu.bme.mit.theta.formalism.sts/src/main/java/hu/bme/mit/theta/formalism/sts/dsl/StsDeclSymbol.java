@@ -8,12 +8,12 @@ import java.util.Optional;
 import hu.bme.mit.theta.common.dsl.ScopedSymbol;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.common.dsl.SymbolTable;
-import hu.bme.mit.theta.core.Expr;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.dsl.DeclSymbol;
 import hu.bme.mit.theta.core.dsl.ParamBinding;
 import hu.bme.mit.theta.core.model.NestedSubstitution;
 import hu.bme.mit.theta.core.model.Substitution;
+import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.formalism.sts.dsl.gen.StsDslParser.StsDeclContext;
 

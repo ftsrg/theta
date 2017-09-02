@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 
-import hu.bme.mit.theta.core.Decl;
+import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.dsl.CoreDslManager;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.formalism.cfa.CFA;
