@@ -1,4 +1,4 @@
-This project provides classes and utilities to build and manipulate first order logic (FOL) expressions.
+This project provides classes and utilities to build and manipulate first order logic (FOL) expressions and related concepts, which serve as a basis for the formalisms and analyses.
 
 Classes include
 * types (e.g., int, bool),
