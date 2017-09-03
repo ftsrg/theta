@@ -7,26 +7,28 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import hu.bme.mit.theta.formalism.cfa.CFA;
+import hu.bme.mit.theta.formalism.cfa.CFA.Builder;
 import hu.bme.mit.theta.formalism.cfa.CFA.Loc;
-import hu.bme.mit.theta.formalism.cfa.analysis.DistanceToErrorLocComparator;
 
 public class DistanceToErrorLocComparatorTest {
 
 	@Test
 	public void test() {
-		final CFA cfa = new CFA();
-		final Loc loc0 = cfa.createLoc("L0");
-		cfa.setInitLoc(loc0);
-		final Loc locErr = cfa.createLoc("LE");
-		cfa.setErrorLoc(locErr);
-		final Loc loc1 = cfa.createLoc("L1");
-		final Loc loc2 = cfa.createLoc("L2");
-		cfa.createEdge(loc0, loc1, Collections.emptyList());
-		cfa.createEdge(loc0, loc2, Collections.emptyList());
-		cfa.createEdge(loc1, loc2, Collections.emptyList());
-		cfa.createEdge(loc1, locErr, Collections.emptyList());
-		cfa.createEdge(loc2, locErr, Collections.emptyList());
+		final Builder builder = CFA.builder();
+		final Loc loc0 = builder.createLoc("L0");
+		builder.setInitLoc(loc0);
+		final Loc locErr = builder.createLoc("LE");
+		builder.setErrorLoc(locErr);
+		final Loc loc1 = builder.createLoc("L1");
+		final Loc loc2 = builder.createLoc("L2");
+		builder.setFinalLoc(loc2);
+		builder.createEdge(loc0, loc1, Collections.emptyList());
+		builder.createEdge(loc0, loc2, Collections.emptyList());
+		builder.createEdge(loc1, loc2, Collections.emptyList());
+		builder.createEdge(loc1, locErr, Collections.emptyList());
+		builder.createEdge(loc2, locErr, Collections.emptyList());
 
+		final CFA cfa = builder.build();
 		final Map<Loc, Integer> distancesToError = DistanceToErrorLocComparator.getDistancesToError(cfa);
 
 		Assert.assertEquals(0, (int) distancesToError.get(locErr));

@@ -29,27 +29,29 @@ import hu.bme.mit.theta.core.stmt.WhileStmt;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.utils.StmtVisitor;
 import hu.bme.mit.theta.formalism.cfa.CFA;
+import hu.bme.mit.theta.formalism.cfa.CFA.Builder;
 import hu.bme.mit.theta.formalism.cfa.CFA.Loc;
 
 final class LbeCreator {
 
 	static CFA create(final Stmt stmt) {
-		final CFA cfa = new CFA();
-		cfa.setInitLoc(cfa.createLoc("init"));
-		cfa.setFinalLoc(cfa.createLoc("end"));
-		cfa.setErrorLoc(cfa.createLoc("error"));
-		final LBECreatorVisitor visitor = new LBECreatorVisitor(cfa);
-		stmt.accept(visitor, Tuple.of(cfa.getInitLoc(), cfa.getFinalLoc(), new LinkedList<>(), new LinkedList<>()));
-		return cfa;
+		final Builder cfaBuilder = CFA.builder();
+		cfaBuilder.setInitLoc(cfaBuilder.createLoc("init"));
+		cfaBuilder.setFinalLoc(cfaBuilder.createLoc("end"));
+		cfaBuilder.setErrorLoc(cfaBuilder.createLoc("error"));
+		final LBECreatorVisitor visitor = new LBECreatorVisitor(cfaBuilder);
+		stmt.accept(visitor,
+				Tuple.of(cfaBuilder.getInitLoc(), cfaBuilder.getFinalLoc(), new LinkedList<>(), new LinkedList<>()));
+		return cfaBuilder.build();
 	}
 
 	private static class LBECreatorVisitor implements StmtVisitor<Product4<Loc, Loc, List<Stmt>, List<Stmt>>, Void> {
 
-		private final CFA cfa;
+		private final CFA.Builder cfaBuilder;
 		private int nextIndex;
 
-		private LBECreatorVisitor(final CFA cfa) {
-			this.cfa = cfa;
+		private LBECreatorVisitor(final CFA.Builder cfaBuilder) {
+			this.cfaBuilder = cfaBuilder;
 			nextIndex = 0;
 		}
 
@@ -59,7 +61,7 @@ final class LbeCreator {
 				final List<Stmt> postfix) {
 
 			if (postfix.isEmpty()) {
-				cfa.createEdge(source, target, prefix);
+				cfaBuilder.createEdge(source, target, prefix);
 			} else {
 				final Stmt head = postfix.get(0);
 				final List<Stmt> tail = postfix.subList(1, postfix.size());
@@ -136,7 +138,7 @@ final class LbeCreator {
 			final Stmt assumeError = Assume(Not(stmt.getCond()));
 			final List<Stmt> errorPrefix = ImmutableList.<Stmt>builder().addAll(prefix).add(assumeError).build();
 			final List<Stmt> errorPostfix = ImmutableList.of();
-			createEdges(source, cfa.getErrorLoc(), errorPrefix, errorPostfix);
+			createEdges(source, cfaBuilder.getErrorLoc(), errorPrefix, errorPostfix);
 
 			return null;
 		}
@@ -175,7 +177,7 @@ final class LbeCreator {
 
 			final List<Stmt> newPrefix = ImmutableList.<Stmt>builder().addAll(prefix).add(stmt).build();
 			final List<Stmt> newPostfix = ImmutableList.of();
-			createEdges(source, cfa.getFinalLoc(), newPrefix, newPostfix);
+			createEdges(source, cfaBuilder.getFinalLoc(), newPrefix, newPostfix);
 
 			return null;
 		}
@@ -231,7 +233,7 @@ final class LbeCreator {
 			if (prefix.isEmpty()) {
 				doLoc = source;
 			} else {
-				doLoc = cfa.createLoc("L" + nextIndex++);
+				doLoc = cfaBuilder.createLoc("L" + nextIndex++);
 				final List<Stmt> entryPrefix = prefix;
 				final List<Stmt> entryPostfix = Collections.emptyList();
 				createEdges(source, doLoc, entryPrefix, entryPostfix);
@@ -255,7 +257,7 @@ final class LbeCreator {
 			final List<Stmt> prefix = param._3();
 			final List<Stmt> postfix = param._4();
 
-			final Loc doLoc = cfa.createLoc("L" + nextIndex++);
+			final Loc doLoc = cfaBuilder.createLoc("L" + nextIndex++);
 
 			final List<Stmt> entryPrefix = prefix;
 			final List<Stmt> entryPostfix = ImmutableList.of(stmt.getDo());

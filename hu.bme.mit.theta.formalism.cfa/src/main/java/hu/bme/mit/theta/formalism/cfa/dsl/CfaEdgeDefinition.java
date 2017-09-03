@@ -33,7 +33,7 @@ final class CfaEdgeDefinition {
 
 	////
 
-	public Edge instantiate(final CFA cfa, final Environment env) {
+	public Edge instantiate(final CFA.Builder cfa, final Environment env) {
 		final CfaLocationSymbol sourceSymbol = (CfaLocationSymbol) scope.resolve(source).get();
 		final CfaLocationSymbol targetSymbol = (CfaLocationSymbol) scope.resolve(target).get();
 

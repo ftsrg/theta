@@ -8,8 +8,10 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
@@ -17,102 +19,56 @@ import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.utils.StmtUtils;
 
 /**
- * Represents a mutable Control Flow Automata (CFA).
+ * Represents an immutable Control Flow Automata (CFA). Use the builder class to
+ * create a new instance.
  */
 public final class CFA {
 
-	private Loc initLoc;
-	private Loc finalLoc;
-	private Loc errorLoc;
+	private final Loc initLoc;
+	private final Loc finalLoc;
+	private final Loc errorLoc;
 
 	private final Collection<VarDecl<?>> vars;
 	private final Collection<Loc> locs;
 	private final Collection<Edge> edges;
 
-	public CFA() {
-		vars = new HashSet<>();
-		locs = new HashSet<>();
-		edges = new LinkedList<>();
+	private CFA(final Builder builder) {
+		this.initLoc = checkNotNull(builder.initLoc, "Initial location must be set.");
+		this.finalLoc = checkNotNull(builder.finalLoc, "Final location must be set.");
+		this.errorLoc = checkNotNull(builder.errorLoc, "Error location must be set.");
+		this.locs = ImmutableSet.copyOf(builder.locs);
+		this.edges = ImmutableList.copyOf(builder.edges);
+		this.vars = Collections.unmodifiableCollection(
+				this.edges.stream().flatMap(e -> StmtUtils.getVars(e.getStmts()).stream()).collect(Collectors.toSet()));
 	}
-
-	////
 
 	public Loc getInitLoc() {
 		return initLoc;
 	}
 
-	public void setInitLoc(final Loc initLoc) {
-		checkNotNull(initLoc);
-		checkArgument(locs.contains(initLoc));
-		this.initLoc = initLoc;
-	}
-
-	////
-
 	public Loc getFinalLoc() {
 		return finalLoc;
 	}
-
-	public void setFinalLoc(final Loc finalLoc) {
-		checkNotNull(finalLoc);
-		checkArgument(locs.contains(finalLoc));
-		this.finalLoc = finalLoc;
-	}
-
-	////
 
 	public Loc getErrorLoc() {
 		return errorLoc;
 	}
 
-	public void setErrorLoc(final Loc errorLoc) {
-		checkNotNull(errorLoc);
-		checkArgument(locs.contains(errorLoc));
-		this.errorLoc = errorLoc;
-	}
-
-	////
-
 	public Collection<VarDecl<?>> getVars() {
-		return Collections.unmodifiableCollection(vars);
+		return vars;
 	}
-
-	////
 
 	public Collection<Loc> getLocs() {
-		return Collections.unmodifiableCollection(locs);
+		return locs;
 	}
-
-	public Loc createLoc(final String name) {
-		final Loc loc = new Loc(name);
-		locs.add(loc);
-		return loc;
-	}
-
-	////
 
 	public Collection<Edge> getEdges() {
-		return Collections.unmodifiableCollection(edges);
+		return edges;
 	}
 
-	public Edge createEdge(final Loc source, final Loc target, final List<? extends Stmt> stmts) {
-		checkNotNull(source);
-		checkNotNull(target);
-		checkNotNull(stmts);
-		checkArgument(locs.contains(source));
-		checkArgument(locs.contains(target));
-
-		final Edge edge = new Edge(source, target, stmts);
-		source.outEdges.add(edge);
-		target.inEdges.add(edge);
-		edges.add(edge);
-		vars.addAll(StmtUtils.getVars(stmts));
-		return edge;
+	public static Builder builder() {
+		return new Builder();
 	}
-
-	/*
-	 * Location
-	 */
 
 	public static final class Loc {
 		private final String name;
@@ -147,10 +103,6 @@ public final class CFA {
 		}
 	}
 
-	/*
-	 * Edge
-	 */
-
 	public static final class Edge {
 		private final Loc source;
 		private final Loc target;
@@ -172,6 +124,74 @@ public final class CFA {
 
 		public List<Stmt> getStmts() {
 			return stmts;
+		}
+	}
+
+	public static final class Builder {
+		private Loc initLoc;
+		private Loc finalLoc;
+		private Loc errorLoc;
+
+		private final Collection<Loc> locs;
+		private final Collection<Edge> edges;
+
+		private Builder() {
+			locs = new HashSet<>();
+			edges = new LinkedList<>();
+		}
+
+		public Loc getInitLoc() {
+			return initLoc;
+		}
+
+		public Loc getFinalLoc() {
+			return finalLoc;
+		}
+
+		public Loc getErrorLoc() {
+			return errorLoc;
+		}
+
+		public void setInitLoc(final Loc initLoc) {
+			checkNotNull(initLoc);
+			checkArgument(locs.contains(initLoc));
+			this.initLoc = initLoc;
+		}
+
+		public void setFinalLoc(final Loc finalLoc) {
+			checkNotNull(finalLoc);
+			checkArgument(locs.contains(finalLoc));
+			this.finalLoc = finalLoc;
+		}
+
+		public void setErrorLoc(final Loc errorLoc) {
+			checkNotNull(errorLoc);
+			checkArgument(locs.contains(errorLoc));
+			this.errorLoc = errorLoc;
+		}
+
+		public Loc createLoc(final String name) {
+			final Loc loc = new Loc(name);
+			locs.add(loc);
+			return loc;
+		}
+
+		public Edge createEdge(final Loc source, final Loc target, final List<? extends Stmt> stmts) {
+			checkNotNull(source);
+			checkNotNull(target);
+			checkNotNull(stmts);
+			checkArgument(locs.contains(source));
+			checkArgument(locs.contains(target));
+
+			final Edge edge = new Edge(source, target, stmts);
+			source.outEdges.add(edge);
+			target.inEdges.add(edge);
+			edges.add(edge);
+			return edge;
+		}
+
+		public CFA build() {
+			return new CFA(this);
 		}
 	}
 

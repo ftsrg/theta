@@ -27,34 +27,35 @@ import hu.bme.mit.theta.core.stmt.WhileStmt;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.utils.StmtVisitor;
 import hu.bme.mit.theta.formalism.cfa.CFA;
+import hu.bme.mit.theta.formalism.cfa.CFA.Builder;
 import hu.bme.mit.theta.formalism.cfa.CFA.Loc;
 
 final class SbeCreator {
 
 	static CFA create(final Stmt stmt) {
-		final CFA cfa = new CFA();
+		final Builder cfa = CFA.builder();
 		cfa.setInitLoc(cfa.createLoc("init"));
 		cfa.setFinalLoc(cfa.createLoc("end"));
 		cfa.setErrorLoc(cfa.createLoc("error"));
 		final SBECreatorVisitor visitor = new SBECreatorVisitor(cfa);
 		stmt.accept(visitor, Tuple.of(cfa.getInitLoc(), cfa.getFinalLoc()));
-		return cfa;
+		return cfa.build();
 	}
 
 	private static class SBECreatorVisitor implements StmtVisitor<Product2<Loc, Loc>, Void> {
 
-		private final CFA cfa;
+		private final CFA.Builder cfaBuilder;
 		private int nextIndex;
 
-		private SBECreatorVisitor(final CFA cfa) {
-			this.cfa = cfa;
+		private SBECreatorVisitor(final CFA.Builder cfaBuilder) {
+			this.cfaBuilder = cfaBuilder;
 			nextIndex = 0;
 		}
 
 		private Void visitSimple(final Stmt stmt, final Product2<Loc, Loc> param) {
 			final Loc source = param._1();
 			final Loc target = param._2();
-			cfa.createEdge(source, target, ImmutableList.of(stmt));
+			cfaBuilder.createEdge(source, target, ImmutableList.of(stmt));
 			return null;
 		}
 
@@ -62,7 +63,7 @@ final class SbeCreator {
 		public Void visit(final SkipStmt stmt, final Product2<Loc, Loc> param) {
 			final Loc source = param._1();
 			final Loc target = param._2();
-			cfa.createEdge(source, target, ImmutableList.of());
+			cfaBuilder.createEdge(source, target, ImmutableList.of());
 			return null;
 		}
 
@@ -78,7 +79,7 @@ final class SbeCreator {
 				stmts = ImmutableList.of(Havoc(stmt.getVarDecl()));
 			}
 
-			cfa.createEdge(source, target, stmts);
+			cfaBuilder.createEdge(source, target, stmts);
 
 			return null;
 		}
@@ -92,8 +93,8 @@ final class SbeCreator {
 		public Void visit(final AssertStmt stmt, final Product2<Loc, Loc> param) {
 			final Loc source = param._1();
 			final Loc target = param._2();
-			cfa.createEdge(source, target, ImmutableList.of(Assume(stmt.getCond())));
-			cfa.createEdge(source, cfa.getErrorLoc(), ImmutableList.of(Assume(Not(stmt.getCond()))));
+			cfaBuilder.createEdge(source, target, ImmutableList.of(Assume(stmt.getCond())));
+			cfaBuilder.createEdge(source, cfaBuilder.getErrorLoc(), ImmutableList.of(Assume(Not(stmt.getCond()))));
 			return null;
 		}
 
@@ -115,36 +116,36 @@ final class SbeCreator {
 			final List<? extends Stmt> stmts = stmt.getStmts();
 
 			if (stmts.isEmpty()) {
-				cfa.createEdge(source, target, ImmutableList.of());
+				cfaBuilder.createEdge(source, target, ImmutableList.of());
 			} else {
 				final Stmt head = stmts.get(0);
 				final List<? extends Stmt> tail = stmts.subList(1, stmts.size());
-				processNonEmptyBlock(cfa, source, target, head, tail);
+				processNonEmptyBlock(cfaBuilder, source, target, head, tail);
 			}
 
 			return null;
 		}
 
-		private void processNonEmptyBlock(final CFA cfa, final Loc source, final Loc target, final Stmt head,
-				final List<? extends Stmt> tail) {
+		private void processNonEmptyBlock(final CFA.Builder cfaBuilder, final Loc source, final Loc target,
+				final Stmt head, final List<? extends Stmt> tail) {
 
 			if (head instanceof ReturnStmt<?> || tail.isEmpty()) {
 				head.accept(this, Tuple.of(source, target));
 			} else {
-				final Loc middle = cfa.createLoc("L" + nextIndex++);
+				final Loc middle = cfaBuilder.createLoc("L" + nextIndex++);
 				head.accept(this, Tuple.of(source, middle));
 
 				final Stmt newHead = tail.get(0);
 				final List<? extends Stmt> newTail = tail.subList(1, tail.size());
 
-				processNonEmptyBlock(cfa, middle, target, newHead, newTail);
+				processNonEmptyBlock(cfaBuilder, middle, target, newHead, newTail);
 			}
 		}
 
 		@Override
 		public <ReturnType extends Type> Void visit(final ReturnStmt<ReturnType> stmt, final Product2<Loc, Loc> param) {
 			final Loc source = param._1();
-			cfa.createEdge(source, cfa.getFinalLoc(), ImmutableList.of(stmt));
+			cfaBuilder.createEdge(source, cfaBuilder.getFinalLoc(), ImmutableList.of(stmt));
 			return null;
 		}
 
@@ -153,11 +154,11 @@ final class SbeCreator {
 			final Loc source = param._1();
 			final Loc target = param._2();
 
-			final Loc thenLoc = cfa.createLoc("L" + nextIndex++);
-			cfa.createEdge(source, thenLoc, ImmutableList.of(Assume(stmt.getCond())));
+			final Loc thenLoc = cfaBuilder.createLoc("L" + nextIndex++);
+			cfaBuilder.createEdge(source, thenLoc, ImmutableList.of(Assume(stmt.getCond())));
 			stmt.getThen().accept(this, Tuple.of(thenLoc, target));
 
-			cfa.createEdge(source, target, ImmutableList.of(Assume(Not(stmt.getCond()))));
+			cfaBuilder.createEdge(source, target, ImmutableList.of(Assume(Not(stmt.getCond()))));
 
 			return null;
 		}
@@ -167,12 +168,12 @@ final class SbeCreator {
 			final Loc source = param._1();
 			final Loc target = param._2();
 
-			final Loc thenLoc = cfa.createLoc("L" + nextIndex++);
-			cfa.createEdge(source, thenLoc, ImmutableList.of(Assume(stmt.getCond())));
+			final Loc thenLoc = cfaBuilder.createLoc("L" + nextIndex++);
+			cfaBuilder.createEdge(source, thenLoc, ImmutableList.of(Assume(stmt.getCond())));
 			stmt.getThen().accept(this, Tuple.of(thenLoc, target));
 
-			final Loc elseLoc = cfa.createLoc("L" + nextIndex++);
-			cfa.createEdge(source, elseLoc, ImmutableList.of(Assume(Not(stmt.getCond()))));
+			final Loc elseLoc = cfaBuilder.createLoc("L" + nextIndex++);
+			cfaBuilder.createEdge(source, elseLoc, ImmutableList.of(Assume(Not(stmt.getCond()))));
 			stmt.getElse().accept(this, Tuple.of(elseLoc, target));
 
 			return null;
@@ -183,10 +184,10 @@ final class SbeCreator {
 			final Loc source = param._1();
 			final Loc target = param._2();
 
-			final Loc doLoc = cfa.createLoc("L" + nextIndex++);
-			cfa.createEdge(source, doLoc, ImmutableList.of(Assume(stmt.getCond())));
+			final Loc doLoc = cfaBuilder.createLoc("L" + nextIndex++);
+			cfaBuilder.createEdge(source, doLoc, ImmutableList.of(Assume(stmt.getCond())));
 			stmt.getDo().accept(this, Tuple.of(doLoc, source));
-			cfa.createEdge(source, target, ImmutableList.of(Assume(Not(stmt.getCond()))));
+			cfaBuilder.createEdge(source, target, ImmutableList.of(Assume(Not(stmt.getCond()))));
 			return null;
 		}
 
@@ -195,10 +196,10 @@ final class SbeCreator {
 			final Loc source = param._1();
 			final Loc target = param._2();
 
-			final Loc doLoc = cfa.createLoc("L" + nextIndex++);
+			final Loc doLoc = cfaBuilder.createLoc("L" + nextIndex++);
 			stmt.getDo().accept(this, Tuple.of(source, doLoc));
-			cfa.createEdge(doLoc, source, ImmutableList.of(Assume(stmt.getCond())));
-			cfa.createEdge(doLoc, target, ImmutableList.of(Assume(Not(stmt.getCond()))));
+			cfaBuilder.createEdge(doLoc, source, ImmutableList.of(Assume(stmt.getCond())));
+			cfaBuilder.createEdge(doLoc, target, ImmutableList.of(Assume(Not(stmt.getCond()))));
 			return null;
 		}
 

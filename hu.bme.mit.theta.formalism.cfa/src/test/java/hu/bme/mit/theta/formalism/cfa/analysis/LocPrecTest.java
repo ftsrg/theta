@@ -5,6 +5,7 @@ import org.junit.Test;
 
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.formalism.cfa.CFA;
+import hu.bme.mit.theta.formalism.cfa.CFA.Builder;
 import hu.bme.mit.theta.formalism.cfa.CFA.Loc;
 import hu.bme.mit.theta.formalism.cfa.analysis.prec.ConstCfaPrec;
 import hu.bme.mit.theta.formalism.cfa.analysis.prec.GenericCfaPrec;
@@ -45,9 +46,9 @@ public class LocPrecTest {
 	@Test
 	public void testGenericLocPrec() {
 		final GenericCfaPrec<PrecStub> gp = GenericCfaPrec.create(p0);
-		final CFA cfa = new CFA();
-		final Loc l1 = cfa.createLoc("L1");
-		final Loc l2 = cfa.createLoc("L2");
+		final Builder builder = CFA.builder();
+		final Loc l1 = builder.createLoc("L1");
+		final Loc l2 = builder.createLoc("L2");
 
 		Assert.assertEquals(p0, gp.getPrec(l1));
 		Assert.assertEquals(p0, gp.getPrec(l2));
@@ -73,9 +74,9 @@ public class LocPrecTest {
 		Assert.assertNotEquals(gp0, gp2);
 		Assert.assertNotEquals(gp1, gp2);
 
-		final CFA cfa = new CFA();
-		final Loc l1 = cfa.createLoc("L1");
-		final Loc l2 = cfa.createLoc("L2");
+		final Builder builder = CFA.builder();
+		final Loc l1 = builder.createLoc("L1");
+		final Loc l2 = builder.createLoc("L2");
 
 		final GenericCfaPrec<PrecStub> gp0r0 = gp0.refine(l1, p1);
 		final GenericCfaPrec<PrecStub> gp1r0 = gp1.refine(l1, p1);
@@ -90,8 +91,8 @@ public class LocPrecTest {
 
 	@Test
 	public void testGenericLocPrecEquals2() {
-		final CFA cfa = new CFA();
-		final Loc l1 = cfa.createLoc("L1");
+		final Builder builder = CFA.builder();
+		final Loc l1 = builder.createLoc("L1");
 
 		final GenericCfaPrec<PrecStub> original = GenericCfaPrec.create(p0);
 		final GenericCfaPrec<PrecStub> refined = original.refine(l1, p1);

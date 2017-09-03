@@ -39,15 +39,15 @@ final class CfaLocationSymbol implements Symbol {
 		return error;
 	}
 
-	public Loc intantiate(final CFA cfa) {
-		final Loc loc = cfa.createLoc(name);
+	public Loc intantiate(final CFA.Builder cfaBuilder) {
+		final Loc loc = cfaBuilder.createLoc(name);
 
 		if (init) {
-			cfa.setInitLoc(loc);
+			cfaBuilder.setInitLoc(loc);
 		} else if (finall) {
-			cfa.setFinalLoc(loc);
+			cfaBuilder.setFinalLoc(loc);
 		} else if (error) {
-			cfa.setErrorLoc(loc);
+			cfaBuilder.setErrorLoc(loc);
 		}
 
 		return loc;
