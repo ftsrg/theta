@@ -8,7 +8,7 @@ import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 
-import hu.bme.mit.theta.common.ObjectUtils;
+import hu.bme.mit.theta.common.Utils;
 
 public abstract class Tuple implements Product, Iterable<Object> {
 
@@ -105,7 +105,7 @@ public abstract class Tuple implements Product, Iterable<Object> {
 
 	@Override
 	public final String toString() {
-		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).addAll(elems).toString();
+		return Utils.toStringBuilder(getClass().getSimpleName()).addAll(elems).toString();
 	}
 
 }

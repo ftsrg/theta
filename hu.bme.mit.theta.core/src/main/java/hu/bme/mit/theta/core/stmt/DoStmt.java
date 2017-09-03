@@ -2,7 +2,7 @@ package hu.bme.mit.theta.core.stmt;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import hu.bme.mit.theta.common.ObjectUtils;
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.StmtVisitor;
@@ -59,6 +59,6 @@ public final class DoStmt implements Stmt {
 
 	@Override
 	public String toString() {
-		return ObjectUtils.toStringBuilder("Do").add(doStmt).add(cond).toString();
+		return Utils.toStringBuilder("Do").add(doStmt).add(cond).toString();
 	}
 }

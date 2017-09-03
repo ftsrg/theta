@@ -10,7 +10,7 @@ import java.util.Set;
 import com.google.common.collect.ImmutableSet;
 
 import hu.bme.mit.theta.analysis.Prec;
-import hu.bme.mit.theta.common.ObjectUtils;
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.BasicValuation;
 import hu.bme.mit.theta.core.model.Valuation;
@@ -74,7 +74,7 @@ public final class ExplPrec implements Prec {
 
 	@Override
 	public String toString() {
-		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).addAll(vars, VarDecl::getName).toString();
+		return Utils.toStringBuilder(getClass().getSimpleName()).addAll(vars, VarDecl::getName).toString();
 	}
 
 	@Override

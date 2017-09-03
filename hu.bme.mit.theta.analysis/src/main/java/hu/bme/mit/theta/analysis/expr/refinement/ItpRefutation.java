@@ -13,7 +13,7 @@ import java.util.stream.Stream;
 
 import com.google.common.collect.ImmutableList;
 
-import hu.bme.mit.theta.common.ObjectUtils;
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
@@ -81,7 +81,7 @@ public final class ItpRefutation implements Refutation, Iterable<Expr<BoolType>>
 
 	@Override
 	public String toString() {
-		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).addAll(itpSequence).toString();
+		return Utils.toStringBuilder(getClass().getSimpleName()).addAll(itpSequence).toString();
 	}
 
 	public Stream<Expr<BoolType>> stream() {

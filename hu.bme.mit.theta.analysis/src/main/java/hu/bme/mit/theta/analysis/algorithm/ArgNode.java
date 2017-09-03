@@ -2,7 +2,6 @@ package hu.bme.mit.theta.analysis.algorithm;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.common.ObjectUtils.toStringBuilder;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -12,6 +11,7 @@ import java.util.stream.Stream;
 
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.State;
+import hu.bme.mit.theta.common.Utils;
 
 public final class ArgNode<S extends State, A extends Action> {
 
@@ -265,7 +265,7 @@ public final class ArgNode<S extends State, A extends Action> {
 
 	@Override
 	public String toString() {
-		return toStringBuilder("ArgNode").add(id).add(state).toString();
+		return Utils.toStringBuilder("ArgNode").add(id).add(state).toString();
 	}
 
 }

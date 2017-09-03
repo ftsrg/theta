@@ -8,7 +8,7 @@ import java.util.PriorityQueue;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-import hu.bme.mit.theta.common.ObjectUtils;
+import hu.bme.mit.theta.common.Utils;
 
 /**
  * Priority waitlist. The least item is always removed based on a comaprator or
@@ -81,6 +81,6 @@ public final class PriorityWaitlist<T> implements Waitlist<T> {
 
 	@Override
 	public String toString() {
-		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).add(items.comparator()).addAll(items).toString();
+		return Utils.toStringBuilder(getClass().getSimpleName()).add(items.comparator()).addAll(items).toString();
 	}
 }

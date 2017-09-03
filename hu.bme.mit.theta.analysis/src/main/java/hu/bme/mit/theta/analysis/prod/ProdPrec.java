@@ -9,7 +9,7 @@ import java.util.List;
 import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.theta.analysis.Prec;
-import hu.bme.mit.theta.common.ObjectUtils;
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.product.Product;
 
 public abstract class ProdPrec implements Prec, Product, Iterable<Prec> {
@@ -84,7 +84,7 @@ public abstract class ProdPrec implements Prec, Product, Iterable<Prec> {
 
 	@Override
 	public final String toString() {
-		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).addAll(precs).toString();
+		return Utils.toStringBuilder(getClass().getSimpleName()).addAll(precs).toString();
 	}
 
 }

@@ -8,7 +8,7 @@ import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 
-import hu.bme.mit.theta.common.ObjectUtils;
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
@@ -131,7 +131,7 @@ public final class IteExpr<ExprType extends Type> implements Expr<ExprType> {
 
 	@Override
 	public String toString() {
-		return ObjectUtils.toStringBuilder(OPERATOR_LABEL).add(getCond()).add(getThen()).add(getElse()).toString();
+		return Utils.toStringBuilder(OPERATOR_LABEL).add(getCond()).add(getThen()).add(getElse()).toString();
 	}
 
 }

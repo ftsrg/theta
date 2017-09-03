@@ -6,7 +6,7 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import java.util.ArrayList;
 import java.util.List;
 
-import hu.bme.mit.theta.common.ObjectUtils;
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
@@ -25,7 +25,7 @@ public abstract class AbstractModel implements Model {
 
 	@Override
 	public final String toString() {
-		return ObjectUtils.toStringBuilder("Model").addAll(getDecls(), d -> d.getName() + " <- " + eval(d)).toString();
+		return Utils.toStringBuilder("Model").addAll(getDecls(), d -> d.getName() + " <- " + eval(d)).toString();
 	}
 
 }

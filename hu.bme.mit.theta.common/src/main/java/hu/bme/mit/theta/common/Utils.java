@@ -56,4 +56,8 @@ public final class Utils {
 		}
 	}
 
+	public static ToStringBuilder toStringBuilder(final String prefix) {
+		return new ToStringBuilder(prefix);
+	}
+
 }

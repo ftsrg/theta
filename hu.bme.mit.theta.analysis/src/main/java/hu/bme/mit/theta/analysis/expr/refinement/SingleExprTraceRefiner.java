@@ -11,7 +11,7 @@ import hu.bme.mit.theta.analysis.algorithm.cegar.Refiner;
 import hu.bme.mit.theta.analysis.algorithm.cegar.RefinerResult;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
-import hu.bme.mit.theta.common.ObjectUtils;
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.logging.Logger;
 
 /**
@@ -74,7 +74,7 @@ public class SingleExprTraceRefiner<S extends ExprState, A extends ExprAction, P
 
 	@Override
 	public String toString() {
-		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).add(exprTraceChecker).add(precRefiner)
+		return Utils.toStringBuilder(getClass().getSimpleName()).add(exprTraceChecker).add(precRefiner)
 				.toString();
 	}
 

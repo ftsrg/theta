@@ -2,7 +2,7 @@ package hu.bme.mit.theta.core.stmt;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import hu.bme.mit.theta.common.ObjectUtils;
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.StmtVisitor;
@@ -59,7 +59,7 @@ public final class IfStmt implements Stmt {
 
 	@Override
 	public String toString() {
-		return ObjectUtils.toStringBuilder("If").add(cond).add(then).toString();
+		return Utils.toStringBuilder("If").add(cond).add(then).toString();
 	}
 
 }

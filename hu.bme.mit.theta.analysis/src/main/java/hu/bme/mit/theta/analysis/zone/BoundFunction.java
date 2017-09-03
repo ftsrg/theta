@@ -10,7 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-import hu.bme.mit.theta.common.ObjectUtils;
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.clock.constr.AndConstr;
 import hu.bme.mit.theta.core.clock.constr.ClockConstr;
 import hu.bme.mit.theta.core.clock.constr.FailClockConstrVisitor;
@@ -127,15 +127,15 @@ public final class BoundFunction {
 
 	@Override
 	public String toString() {
-		final String lowerToString = ObjectUtils.toStringBuilder("L").addAll(
+		final String lowerToString = Utils.toStringBuilder("L").addAll(
 				varToLower.entrySet().stream().map(e -> e.getKey().getName() + " <- " + e.getValue()).collect(toList()))
 				.toString();
 
-		final String UpperToString = ObjectUtils.toStringBuilder("U").addAll(
+		final String UpperToString = Utils.toStringBuilder("U").addAll(
 				varToUpper.entrySet().stream().map(e -> e.getKey().getName() + " <- " + e.getValue()).collect(toList()))
 				.toString();
 
-		return ObjectUtils.toStringBuilder(this.getClass().getSimpleName()).add(lowerToString).add(UpperToString)
+		return Utils.toStringBuilder(this.getClass().getSimpleName()).add(lowerToString).add(UpperToString)
 				.toString();
 	}
 

@@ -18,7 +18,7 @@ import hu.bme.mit.theta.analysis.algorithm.cegar.abstractor.StopCriterions;
 import hu.bme.mit.theta.analysis.reachedset.Partition;
 import hu.bme.mit.theta.analysis.waitlist.FifoWaitlist;
 import hu.bme.mit.theta.analysis.waitlist.Waitlist;
-import hu.bme.mit.theta.common.ObjectUtils;
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.impl.NullLogger;
 
@@ -112,7 +112,7 @@ public final class BasicAbstractor<S extends State, A extends Action, P extends 
 
 	@Override
 	public String toString() {
-		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).add(waitlistSupplier.get()).toString();
+		return Utils.toStringBuilder(getClass().getSimpleName()).add(waitlistSupplier.get()).toString();
 	}
 
 	public static final class Builder<S extends State, A extends Action, P extends Prec> {

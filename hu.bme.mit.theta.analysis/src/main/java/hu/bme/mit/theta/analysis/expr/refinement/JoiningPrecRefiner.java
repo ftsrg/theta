@@ -6,7 +6,7 @@ import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.Trace;
-import hu.bme.mit.theta.common.ObjectUtils;
+import hu.bme.mit.theta.common.Utils;
 
 /**
  * A basic implementation of PrecRefiner that simply converts each element of
@@ -42,6 +42,6 @@ public class JoiningPrecRefiner<S extends State, A extends Action, P extends Pre
 
 	@Override
 	public String toString() {
-		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).add(refToPrec).toString();
+		return Utils.toStringBuilder(getClass().getSimpleName()).add(refToPrec).toString();
 	}
 }

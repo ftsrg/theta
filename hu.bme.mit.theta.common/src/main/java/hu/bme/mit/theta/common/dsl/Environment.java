@@ -9,7 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
-import hu.bme.mit.theta.common.ObjectUtils;
+import hu.bme.mit.theta.common.Utils;
 
 public final class Environment {
 
@@ -86,7 +86,7 @@ public final class Environment {
 
 		@Override
 		public String toString() {
-			return ObjectUtils.toStringBuilder(getClass().getSimpleName()).addAll(symbolToValue.entrySet().stream()
+			return Utils.toStringBuilder(getClass().getSimpleName()).addAll(symbolToValue.entrySet().stream()
 					.map(e -> e.getKey().getName() + " <- " + e.getValue()).collect(toList())).toString();
 		}
 	}

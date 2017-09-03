@@ -3,7 +3,7 @@ package hu.bme.mit.theta.analysis.expr.refinement;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import hu.bme.mit.theta.common.ObjectUtils;
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.utils.IndexedVars;
 
 /**
@@ -35,7 +35,7 @@ public final class VarsRefutation implements Refutation {
 
 	@Override
 	public String toString() {
-		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).add(indexedVars).toString();
+		return Utils.toStringBuilder(getClass().getSimpleName()).add(indexedVars).toString();
 	}
 
 	@Override

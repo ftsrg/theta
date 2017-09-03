@@ -7,8 +7,8 @@ import java.util.Collections;
 import java.util.Optional;
 
 import hu.bme.mit.theta.analysis.expr.ExprState;
-import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.common.ToStringBuilder;
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.model.BasicValuation;
 import hu.bme.mit.theta.core.model.Valuation;
@@ -116,7 +116,7 @@ public abstract class ExplState implements ExprState, Valuation {
 
 		@Override
 		public String toString() {
-			final ToStringBuilder builder = ObjectUtils.toStringBuilder(ExplState.class.getSimpleName());
+			final ToStringBuilder builder = Utils.toStringBuilder(ExplState.class.getSimpleName());
 			for (final Decl<?> varDecl : values.getDecls()) {
 				builder.add(varDecl.getName() + " = " + eval(varDecl).get());
 			}
@@ -166,7 +166,7 @@ public abstract class ExplState implements ExprState, Valuation {
 
 		@Override
 		public String toString() {
-			return ObjectUtils.toStringBuilder(ExplState.class.getSimpleName()).add("Bottom").toString();
+			return Utils.toStringBuilder(ExplState.class.getSimpleName()).add("Bottom").toString();
 		}
 	}
 

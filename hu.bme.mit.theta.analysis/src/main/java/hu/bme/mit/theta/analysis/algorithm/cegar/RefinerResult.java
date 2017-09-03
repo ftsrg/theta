@@ -6,7 +6,7 @@ import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.Trace;
-import hu.bme.mit.theta.common.ObjectUtils;
+import hu.bme.mit.theta.common.Utils;
 
 /**
  * Represents the result of the Refiner class that can be either spurious or
@@ -84,7 +84,7 @@ public abstract class RefinerResult<S extends State, A extends Action, P extends
 
 		@Override
 		public String toString() {
-			return ObjectUtils.toStringBuilder(RefinerResult.class.getSimpleName()).add(getClass().getSimpleName())
+			return Utils.toStringBuilder(RefinerResult.class.getSimpleName()).add(getClass().getSimpleName())
 					.toString();
 		}
 	}
@@ -126,7 +126,7 @@ public abstract class RefinerResult<S extends State, A extends Action, P extends
 
 		@Override
 		public String toString() {
-			return ObjectUtils.toStringBuilder(RefinerResult.class.getSimpleName()).add(getClass().getSimpleName())
+			return Utils.toStringBuilder(RefinerResult.class.getSimpleName()).add(getClass().getSimpleName())
 					.toString();
 		}
 	}

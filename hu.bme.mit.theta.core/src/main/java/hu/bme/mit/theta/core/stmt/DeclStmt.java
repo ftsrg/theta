@@ -4,8 +4,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Optional;
 
-import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.common.ToStringBuilder;
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
@@ -70,7 +70,7 @@ public final class DeclStmt<DeclType extends Type> implements Stmt {
 
 	@Override
 	public String toString() {
-		final ToStringBuilder builder = ObjectUtils.toStringBuilder("Decl").add(varDecl);
+		final ToStringBuilder builder = Utils.toStringBuilder("Decl").add(varDecl);
 		if (initVal.isPresent()) {
 			builder.add(initVal.get());
 		}

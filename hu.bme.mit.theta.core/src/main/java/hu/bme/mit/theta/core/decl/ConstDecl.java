@@ -1,6 +1,6 @@
 package hu.bme.mit.theta.core.decl;
 
-import hu.bme.mit.theta.common.ObjectUtils;
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.type.Type;
 
 public abstract class ConstDecl<DeclType extends Type> extends AbstractDecl<DeclType> {
@@ -11,7 +11,7 @@ public abstract class ConstDecl<DeclType extends Type> extends AbstractDecl<Decl
 
 	@Override
 	public final String toString() {
-		return ObjectUtils.toStringBuilder(DECL_LABEL).add(getName()).add(getType()).toString();
+		return Utils.toStringBuilder(DECL_LABEL).add(getName()).add(getType()).toString();
 	}
 
 }

@@ -5,7 +5,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import hu.bme.mit.theta.common.ObjectUtils;
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.inttype.IntExprs;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
@@ -70,7 +70,7 @@ public final class RangeType implements Type {
 
 	@Override
 	public String toString() {
-		return ObjectUtils.toStringBuilder("Range").add(lower).add(upper).toString();
+		return Utils.toStringBuilder("Range").add(lower).add(upper).toString();
 	}
 
 }

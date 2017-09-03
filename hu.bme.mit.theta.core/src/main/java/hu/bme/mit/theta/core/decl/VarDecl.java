@@ -6,7 +6,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.util.HashMap;
 import java.util.Map;
 
-import hu.bme.mit.theta.common.ObjectUtils;
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.type.Type;
 
 public final class VarDecl<DeclType extends Type> extends AbstractDecl<DeclType> {
@@ -44,7 +44,7 @@ public final class VarDecl<DeclType extends Type> extends AbstractDecl<DeclType>
 
 	@Override
 	public String toString() {
-		return ObjectUtils.toStringBuilder(DECL_LABEL).add(name).add(type).toString();
+		return Utils.toStringBuilder(DECL_LABEL).add(name).add(type).toString();
 	}
 
 }

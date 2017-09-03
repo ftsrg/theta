@@ -9,7 +9,7 @@ import java.util.Deque;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-import hu.bme.mit.theta.common.ObjectUtils;
+import hu.bme.mit.theta.common.Utils;
 
 /**
  * LIFO (Last In First Out) waitlist. Items are removed in the reverse order as
@@ -58,7 +58,7 @@ public final class LifoWaitlist<T> implements Waitlist<T> {
 
 	@Override
 	public String toString() {
-		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).addAll(items).toString();
+		return Utils.toStringBuilder(getClass().getSimpleName()).addAll(items).toString();
 	}
 
 	@Override

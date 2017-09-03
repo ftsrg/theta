@@ -6,7 +6,7 @@ import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 
-import hu.bme.mit.theta.common.ObjectUtils;
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
@@ -87,7 +87,7 @@ public final class ProcCallExpr<ReturnType extends Type> implements Expr<ReturnT
 
 	@Override
 	public final String toString() {
-		return ObjectUtils.toStringBuilder("Call").add(proc).addAll(params).toString();
+		return Utils.toStringBuilder("Call").add(proc).addAll(params).toString();
 	}
 
 }

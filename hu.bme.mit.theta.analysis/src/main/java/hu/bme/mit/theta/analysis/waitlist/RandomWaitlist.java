@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.stream.Stream;
 
-import hu.bme.mit.theta.common.ObjectUtils;
+import hu.bme.mit.theta.common.Utils;
 
 public final class RandomWaitlist<T> implements Waitlist<T> {
 
@@ -65,7 +65,7 @@ public final class RandomWaitlist<T> implements Waitlist<T> {
 
 	@Override
 	public String toString() {
-		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).addAll(items).toString();
+		return Utils.toStringBuilder(getClass().getSimpleName()).addAll(items).toString();
 	}
 
 }

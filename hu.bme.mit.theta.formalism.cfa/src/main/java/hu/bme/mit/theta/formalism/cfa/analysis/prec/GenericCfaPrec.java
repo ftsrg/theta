@@ -13,8 +13,8 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
 
 import hu.bme.mit.theta.analysis.Prec;
-import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.common.ToStringBuilder;
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.formalism.cfa.CFA.Loc;
 import hu.bme.mit.theta.formalism.cfa.analysis.CfaPrec;
 
@@ -85,7 +85,7 @@ public final class GenericCfaPrec<P extends Prec> implements CfaPrec<P> {
 
 	@Override
 	public String toString() {
-		final ToStringBuilder builder = ObjectUtils.toStringBuilder(getClass().getSimpleName());
+		final ToStringBuilder builder = Utils.toStringBuilder(getClass().getSimpleName());
 		builder.add("Precs: " + mapping.size());
 		if (defaultPrec.isPresent()) {
 			builder.add("Default: " + defaultPrec.get());

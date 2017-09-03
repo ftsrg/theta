@@ -11,7 +11,7 @@ import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 
-import hu.bme.mit.theta.common.ObjectUtils;
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.utils.StmtUtils;
@@ -140,7 +140,7 @@ public final class CFA {
 
 		@Override
 		public String toString() {
-			return ObjectUtils.toStringBuilder(getClass().getSimpleName()).add(name).toString();
+			return Utils.toStringBuilder(getClass().getSimpleName()).add(name).toString();
 		}
 	}
 

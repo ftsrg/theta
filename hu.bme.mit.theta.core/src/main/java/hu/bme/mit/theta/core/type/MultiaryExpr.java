@@ -8,7 +8,7 @@ import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 
-import hu.bme.mit.theta.common.ObjectUtils;
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.utils.TypeUtils;
 
 public abstract class MultiaryExpr<OpType extends Type, ExprType extends Type> implements Expr<ExprType> {
@@ -54,7 +54,7 @@ public abstract class MultiaryExpr<OpType extends Type, ExprType extends Type> i
 
 	@Override
 	public final String toString() {
-		return ObjectUtils.toStringBuilder(getOperatorLabel()).addAll(ops).toString();
+		return Utils.toStringBuilder(getOperatorLabel()).addAll(ops).toString();
 	}
 
 	public abstract MultiaryExpr<OpType, ExprType> with(final Iterable<? extends Expr<OpType>> ops);

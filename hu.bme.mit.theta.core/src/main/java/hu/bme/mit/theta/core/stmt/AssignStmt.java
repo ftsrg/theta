@@ -2,7 +2,7 @@ package hu.bme.mit.theta.core.stmt;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import hu.bme.mit.theta.common.ObjectUtils;
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
@@ -60,6 +60,6 @@ public final class AssignStmt<DeclType extends Type> implements Stmt {
 
 	@Override
 	public String toString() {
-		return ObjectUtils.toStringBuilder("Assign").add(varDecl.getName()).add(expr).toString();
+		return Utils.toStringBuilder("Assign").add(varDecl.getName()).add(expr).toString();
 	}
 }

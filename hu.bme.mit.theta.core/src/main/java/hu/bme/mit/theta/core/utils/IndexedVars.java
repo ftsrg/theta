@@ -12,8 +12,8 @@ import java.util.Set;
 import java.util.StringJoiner;
 import java.util.stream.Collectors;
 
-import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.common.ToStringBuilder;
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.IndexedConstDecl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 
@@ -126,7 +126,7 @@ public final class IndexedVars {
 
 	@Override
 	public String toString() {
-		final ToStringBuilder builder = ObjectUtils.toStringBuilder(getClass().getSimpleName());
+		final ToStringBuilder builder = Utils.toStringBuilder(getClass().getSimpleName());
 
 		for (final Entry<Integer, Set<VarDecl<?>>> entry : varSets.entrySet()) {
 			final StringJoiner sj = new StringJoiner(", ", entry.getKey() + ": ", "");

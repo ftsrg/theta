@@ -7,7 +7,7 @@ import java.util.Collection;
 
 import com.google.common.collect.ImmutableSet;
 
-import hu.bme.mit.theta.common.ObjectUtils;
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.type.rattype.RatType;
@@ -74,7 +74,7 @@ public final class FreeOp implements ClockOp {
 
 	@Override
 	public String toString() {
-		return ObjectUtils.toStringBuilder("Free").add(var.getName()).toString();
+		return Utils.toStringBuilder("Free").add(var.getName()).toString();
 	}
 
 }

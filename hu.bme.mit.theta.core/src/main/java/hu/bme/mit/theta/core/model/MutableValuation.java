@@ -15,7 +15,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 
-import hu.bme.mit.theta.common.ObjectUtils;
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
@@ -86,7 +86,7 @@ public final class MutableValuation implements Valuation {
 
 	@Override
 	public String toString() {
-		return ObjectUtils.toStringBuilder("Valuation")
+		return Utils.toStringBuilder("Valuation")
 				.addAll(declToExpr.entrySet(), e -> e.getKey().getName() + " <- " + e.getValue()).toString();
 	}
 

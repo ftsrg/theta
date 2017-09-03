@@ -14,7 +14,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 
-import hu.bme.mit.theta.common.ObjectUtils;
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.rattype.RatType;
 
@@ -107,7 +107,7 @@ final class DbmSignature implements Iterable<VarDecl<RatType>> {
 
 	@Override
 	public String toString() {
-		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).addAll(indexToVar).toString();
+		return Utils.toStringBuilder(getClass().getSimpleName()).addAll(indexToVar).toString();
 	}
 
 	////

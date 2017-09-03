@@ -7,7 +7,7 @@ import static hu.bme.mit.theta.core.utils.VarIndexing.all;
 import java.util.List;
 
 import hu.bme.mit.theta.analysis.expl.StmtAction;
-import hu.bme.mit.theta.common.ObjectUtils;
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
@@ -56,6 +56,6 @@ public final class CfaAction implements StmtAction {
 
 	@Override
 	public String toString() {
-		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).addAll(edge.getStmts()).toString();
+		return Utils.toStringBuilder(getClass().getSimpleName()).addAll(edge.getStmts()).toString();
 	}
 }

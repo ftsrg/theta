@@ -8,7 +8,7 @@ import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 
-import hu.bme.mit.theta.common.ObjectUtils;
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
@@ -123,7 +123,7 @@ public final class ArrayWriteExpr<IndexType extends Type, ElemType extends Type>
 
 	@Override
 	public String toString() {
-		return ObjectUtils.toStringBuilder(OPERATOR_LABEL).add(array).add(index).add(elem).toString();
+		return Utils.toStringBuilder(OPERATOR_LABEL).add(array).add(index).add(elem).toString();
 	}
 
 }

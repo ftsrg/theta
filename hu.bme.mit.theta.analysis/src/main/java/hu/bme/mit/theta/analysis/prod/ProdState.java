@@ -13,7 +13,7 @@ import com.google.common.collect.ImmutableSet;
 
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.expr.ExprState;
-import hu.bme.mit.theta.common.ObjectUtils;
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.product.Product;
 
 public abstract class ProdState implements ExprState, Product, Iterable<State> {
@@ -121,7 +121,7 @@ public abstract class ProdState implements ExprState, Product, Iterable<State> {
 
 	@Override
 	public String toString() {
-		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).addAll(states).toString();
+		return Utils.toStringBuilder(getClass().getSimpleName()).addAll(states).toString();
 	}
 
 }

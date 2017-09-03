@@ -3,7 +3,7 @@ package hu.bme.mit.theta.formalism.cfa.analysis.prec;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import hu.bme.mit.theta.analysis.Prec;
-import hu.bme.mit.theta.common.ObjectUtils;
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.formalism.cfa.CFA.Loc;
 import hu.bme.mit.theta.formalism.cfa.analysis.CfaPrec;
 
@@ -42,7 +42,7 @@ public final class ConstCfaPrec<P extends Prec> implements CfaPrec<P> {
 
 	@Override
 	public String toString() {
-		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).add(prec).toString();
+		return Utils.toStringBuilder(getClass().getSimpleName()).add(prec).toString();
 	}
 
 	@Override

@@ -5,7 +5,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
-import hu.bme.mit.theta.common.ObjectUtils;
+import hu.bme.mit.theta.common.Utils;
 
 public final class StopCriterions {
 
@@ -29,7 +29,7 @@ public final class StopCriterions {
 
 		@Override
 		public String toString() {
-			return ObjectUtils.toStringBuilder(StopCriterion.class.getSimpleName()).add(getClass().getSimpleName())
+			return Utils.toStringBuilder(StopCriterion.class.getSimpleName()).add(getClass().getSimpleName())
 					.toString();
 		}
 	}
@@ -42,7 +42,7 @@ public final class StopCriterions {
 
 		@Override
 		public String toString() {
-			return ObjectUtils.toStringBuilder(StopCriterion.class.getSimpleName()).add(getClass().getSimpleName())
+			return Utils.toStringBuilder(StopCriterion.class.getSimpleName()).add(getClass().getSimpleName())
 					.toString();
 		}
 	}
@@ -64,7 +64,7 @@ public final class StopCriterions {
 
 		@Override
 		public String toString() {
-			return ObjectUtils.toStringBuilder(StopCriterion.class.getSimpleName()).add(getClass().getSimpleName())
+			return Utils.toStringBuilder(StopCriterion.class.getSimpleName()).add(getClass().getSimpleName())
 					.add("N = " + n).toString();
 		}
 	}

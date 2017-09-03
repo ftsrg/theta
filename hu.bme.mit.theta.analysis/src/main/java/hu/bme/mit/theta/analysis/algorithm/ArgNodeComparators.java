@@ -5,7 +5,7 @@ import java.util.Comparator;
 
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.State;
-import hu.bme.mit.theta.common.ObjectUtils;
+import hu.bme.mit.theta.common.Utils;
 
 /**
  * A collection of comparators for ArgNodes.
@@ -111,7 +111,7 @@ public class ArgNodeComparators {
 
 		@Override
 		public String toString() {
-			return ObjectUtils.toStringBuilder(getClass().getSimpleName()).add(comparator).toString();
+			return Utils.toStringBuilder(getClass().getSimpleName()).add(comparator).toString();
 		}
 	}
 
@@ -137,7 +137,7 @@ public class ArgNodeComparators {
 
 		@Override
 		public String toString() {
-			return ObjectUtils.toStringBuilder(getClass().getSimpleName()).add(first).add(then).toString();
+			return Utils.toStringBuilder(getClass().getSimpleName()).add(first).add(then).toString();
 		}
 	}
 }

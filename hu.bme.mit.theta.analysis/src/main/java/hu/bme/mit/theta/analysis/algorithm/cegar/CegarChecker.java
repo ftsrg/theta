@@ -12,7 +12,7 @@ import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
-import hu.bme.mit.theta.common.ObjectUtils;
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.impl.NullLogger;
 
@@ -93,6 +93,6 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 
 	@Override
 	public String toString() {
-		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).add(abstractor).add(refiner).toString();
+		return Utils.toStringBuilder(getClass().getSimpleName()).add(abstractor).add(refiner).toString();
 	}
 }

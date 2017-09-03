@@ -9,7 +9,6 @@ import java.util.Set;
 import com.google.common.collect.ImmutableSet;
 
 import hu.bme.mit.theta.analysis.expr.ExprState;
-import hu.bme.mit.theta.common.ObjectUtils;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
@@ -108,6 +107,6 @@ public final class PredState implements ExprState {
 
 	@Override
 	public String toString() {
-		return ObjectUtils.toStringBuilder(getClass().getSimpleName()).addAll(preds).toString();
+		return Utils.toStringBuilder(getClass().getSimpleName()).addAll(preds).toString();
 	}
 }

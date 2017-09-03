@@ -7,7 +7,7 @@ import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 
-import hu.bme.mit.theta.common.ObjectUtils;
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.utils.TypeUtils;
 
 public abstract class BinaryExpr<OpType extends Type, ExprType extends Type> implements Expr<ExprType> {
@@ -64,7 +64,7 @@ public abstract class BinaryExpr<OpType extends Type, ExprType extends Type> imp
 
 	@Override
 	public final String toString() {
-		return ObjectUtils.toStringBuilder(getOperatorLabel()).add(leftOp).add(rightOp).toString();
+		return Utils.toStringBuilder(getOperatorLabel()).add(leftOp).add(rightOp).toString();
 	}
 
 	public abstract BinaryExpr<OpType, ExprType> with(final Expr<OpType> leftOp, final Expr<OpType> rightOp);

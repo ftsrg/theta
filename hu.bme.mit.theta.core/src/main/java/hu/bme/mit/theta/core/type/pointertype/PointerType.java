@@ -2,7 +2,7 @@ package hu.bme.mit.theta.core.type.pointertype;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import hu.bme.mit.theta.common.ObjectUtils;
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.type.Type;
 
 public final class PointerType<PointedType extends Type> implements Type {
@@ -47,7 +47,7 @@ public final class PointerType<PointedType extends Type> implements Type {
 
 	@Override
 	public String toString() {
-		return ObjectUtils.toStringBuilder(TYPE_LABEL).add(type).toString();
+		return Utils.toStringBuilder(TYPE_LABEL).add(type).toString();
 	}
 
 }

@@ -8,7 +8,7 @@ import java.util.Optional;
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.Trace;
-import hu.bme.mit.theta.common.ObjectUtils;
+import hu.bme.mit.theta.common.Utils;
 
 public abstract class SafetyResult<S extends State, A extends Action> {
 	private final ARG<S, A> arg;
@@ -85,7 +85,7 @@ public abstract class SafetyResult<S extends State, A extends Action> {
 
 		@Override
 		public String toString() {
-			return ObjectUtils.toStringBuilder(SafetyResult.class.getSimpleName()).add(Safe.class.getSimpleName())
+			return Utils.toStringBuilder(SafetyResult.class.getSimpleName()).add(Safe.class.getSimpleName())
 					.toString();
 		}
 	}
@@ -125,7 +125,7 @@ public abstract class SafetyResult<S extends State, A extends Action> {
 
 		@Override
 		public String toString() {
-			return ObjectUtils.toStringBuilder(SafetyResult.class.getSimpleName()).add(Unsafe.class.getSimpleName())
+			return Utils.toStringBuilder(SafetyResult.class.getSimpleName()).add(Unsafe.class.getSimpleName())
 					.add("Trace length: " + cex.length()).toString();
 		}
 	}

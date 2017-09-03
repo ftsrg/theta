@@ -2,7 +2,7 @@ package hu.bme.mit.theta.core.decl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import hu.bme.mit.theta.common.ObjectUtils;
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.type.Type;
 
 public final class ParamDecl<DeclType extends Type> extends AbstractDecl<DeclType> {
@@ -29,6 +29,6 @@ public final class ParamDecl<DeclType extends Type> extends AbstractDecl<DeclTyp
 
 	@Override
 	public String toString() {
-		return ObjectUtils.toStringBuilder(DECL_LABEL).add(name).add(type).toString();
+		return Utils.toStringBuilder(DECL_LABEL).add(name).add(type).toString();
 	}
 }

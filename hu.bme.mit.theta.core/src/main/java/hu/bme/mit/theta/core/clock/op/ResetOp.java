@@ -9,7 +9,7 @@ import java.util.Collection;
 
 import com.google.common.collect.ImmutableSet;
 
-import hu.bme.mit.theta.common.ObjectUtils;
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.type.rattype.RatType;
@@ -84,7 +84,7 @@ public final class ResetOp implements ClockOp {
 
 	@Override
 	public String toString() {
-		return ObjectUtils.toStringBuilder("Reset").add(var.getName()).add(value).toString();
+		return Utils.toStringBuilder("Reset").add(var.getName()).add(value).toString();
 	}
 
 }
