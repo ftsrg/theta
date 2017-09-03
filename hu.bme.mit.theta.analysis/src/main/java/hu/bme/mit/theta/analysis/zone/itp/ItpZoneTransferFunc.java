@@ -7,21 +7,21 @@ import java.util.Collection;
 import java.util.Collections;
 
 import hu.bme.mit.theta.analysis.Action;
-import hu.bme.mit.theta.analysis.TransferFunction;
+import hu.bme.mit.theta.analysis.TransferFunc;
 import hu.bme.mit.theta.analysis.zone.ZonePrec;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
 
-final class ItpZoneTransferFunction<A extends Action> implements TransferFunction<ItpZoneState, A, ZonePrec> {
+final class ItpZoneTransferFunc<A extends Action> implements TransferFunc<ItpZoneState, A, ZonePrec> {
 
-	private final TransferFunction<ZoneState, ? super A, ZonePrec> transferFunction;
+	private final TransferFunc<ZoneState, ? super A, ZonePrec> transferFunc;
 
-	private ItpZoneTransferFunction(final TransferFunction<ZoneState, ? super A, ZonePrec> transferFunction) {
-		this.transferFunction = checkNotNull(transferFunction);
+	private ItpZoneTransferFunc(final TransferFunc<ZoneState, ? super A, ZonePrec> transferFunc) {
+		this.transferFunc = checkNotNull(transferFunc);
 	}
 
-	public static <A extends Action> ItpZoneTransferFunction<A> create(
-			final TransferFunction<ZoneState, ? super A, ZonePrec> transferFunction) {
-		return new ItpZoneTransferFunction<>(transferFunction);
+	public static <A extends Action> ItpZoneTransferFunc<A> create(
+			final TransferFunc<ZoneState, ? super A, ZonePrec> transferFunc) {
+		return new ItpZoneTransferFunc<>(transferFunc);
 	}
 
 	////
@@ -34,7 +34,7 @@ final class ItpZoneTransferFunction<A extends Action> implements TransferFunctio
 		checkNotNull(prec);
 
 		final ZoneState subState = state.getZone();
-		final Collection<? extends ZoneState> subSuccStates = transferFunction.getSuccStates(subState, action, prec);
+		final Collection<? extends ZoneState> subSuccStates = transferFunc.getSuccStates(subState, action, prec);
 
 		if (subSuccStates.isEmpty()) {
 			final ItpZoneState succState = ItpZoneState.of(ZoneState.bottom(), ZoneState.top());

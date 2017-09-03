@@ -3,8 +3,8 @@ package hu.bme.mit.theta.analysis.unit;
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.Domain;
-import hu.bme.mit.theta.analysis.InitFunction;
-import hu.bme.mit.theta.analysis.TransferFunction;
+import hu.bme.mit.theta.analysis.InitFunc;
+import hu.bme.mit.theta.analysis.TransferFunc;
 
 public final class UnitAnalysis implements Analysis<UnitState, Action, UnitPrec> {
 
@@ -23,13 +23,13 @@ public final class UnitAnalysis implements Analysis<UnitState, Action, UnitPrec>
 	}
 
 	@Override
-	public InitFunction<UnitState, UnitPrec> getInitFunction() {
-		return UnitInitFunction.getInstance();
+	public InitFunc<UnitState, UnitPrec> getInitFunc() {
+		return UnitInitFunc.getInstance();
 	}
 
 	@Override
-	public TransferFunction<UnitState, Action, UnitPrec> getTransferFunction() {
-		return UnitTransferFunction.getInstance();
+	public TransferFunc<UnitState, Action, UnitPrec> getTransferFunc() {
+		return UnitTransferFunc.getInstance();
 	}
 
 }

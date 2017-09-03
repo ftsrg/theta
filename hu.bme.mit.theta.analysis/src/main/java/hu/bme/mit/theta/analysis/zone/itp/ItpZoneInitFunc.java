@@ -5,20 +5,20 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import hu.bme.mit.theta.analysis.InitFunction;
+import hu.bme.mit.theta.analysis.InitFunc;
 import hu.bme.mit.theta.analysis.zone.ZonePrec;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
 
-final class ItpZoneInitFunction implements InitFunction<ItpZoneState, ZonePrec> {
+final class ItpZoneInitFunc implements InitFunc<ItpZoneState, ZonePrec> {
 
-	private final InitFunction<ZoneState, ZonePrec> initFunction;
+	private final InitFunc<ZoneState, ZonePrec> initFunc;
 
-	private ItpZoneInitFunction(final InitFunction<ZoneState, ZonePrec> initFunction) {
-		this.initFunction = checkNotNull(initFunction);
+	private ItpZoneInitFunc(final InitFunc<ZoneState, ZonePrec> initFunc) {
+		this.initFunc = checkNotNull(initFunc);
 	}
 
-	public static ItpZoneInitFunction create(final InitFunction<ZoneState, ZonePrec> initFunction) {
-		return new ItpZoneInitFunction(initFunction);
+	public static ItpZoneInitFunc create(final InitFunc<ZoneState, ZonePrec> initFunc) {
+		return new ItpZoneInitFunc(initFunc);
 	}
 
 	////
@@ -27,7 +27,7 @@ final class ItpZoneInitFunction implements InitFunction<ItpZoneState, ZonePrec> 
 	public Collection<ItpZoneState> getInitStates(final ZonePrec prec) {
 		checkNotNull(prec);
 		final Collection<ItpZoneState> result = new ArrayList<>();
-		final Collection<? extends ZoneState> subInitStates = initFunction.getInitStates(prec);
+		final Collection<? extends ZoneState> subInitStates = initFunc.getInitStates(prec);
 		for (final ZoneState subInitState : subInitStates) {
 			final ItpZoneState initState = ItpZoneState.of(subInitState, ZoneState.top());
 			result.add(initState);

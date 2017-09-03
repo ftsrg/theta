@@ -412,7 +412,7 @@ final class DBM {
 		return true;
 	}
 
-	public boolean isLeq(final DBM that, final BoundFunction bound) {
+	public boolean isLeq(final DBM that, final BoundFunc bound) {
 		final Set<VarDecl<RatType>> vars = Sets.union(this.signature.toSet(), that.signature.toSet());
 
 		if (!this.isConsistent()) {
@@ -454,11 +454,11 @@ final class DBM {
 		return true;
 	}
 
-	private static final int LeqMinusUx(final VarDecl<RatType> x, final BoundFunction boundFunction) {
+	private static final int LeqMinusUx(final VarDecl<RatType> x, final BoundFunc boundFunction) {
 		return boundFunction.getUpper(x).map(Ux -> Leq(-Ux)).orElse(Inf());
 	}
 
-	private static final int LtMinusLy(final VarDecl<RatType> y, final BoundFunction boundFunction) {
+	private static final int LtMinusLy(final VarDecl<RatType> y, final BoundFunc boundFunction) {
 		return boundFunction.getLower(y).map(Ly -> Lt(-Ly)).orElse(Inf());
 	}
 

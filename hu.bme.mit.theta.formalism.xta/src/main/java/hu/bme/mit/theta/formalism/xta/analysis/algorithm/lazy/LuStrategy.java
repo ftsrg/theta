@@ -10,7 +10,7 @@ import hu.bme.mit.theta.analysis.algorithm.ArgEdge;
 import hu.bme.mit.theta.analysis.algorithm.ArgNode;
 import hu.bme.mit.theta.analysis.impl.PrecMappingAnalysis;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
-import hu.bme.mit.theta.analysis.zone.BoundFunction;
+import hu.bme.mit.theta.analysis.zone.BoundFunc;
 import hu.bme.mit.theta.analysis.zone.ZonePrec;
 import hu.bme.mit.theta.analysis.zone.lu.LuZoneAnalysis;
 import hu.bme.mit.theta.analysis.zone.lu.LuZoneState;
@@ -66,7 +66,7 @@ public final class LuStrategy implements LazyXtaChecker.AlgorithmStrategy<LuZone
 			final ArgNode<XtaState<LuZoneState>, XtaAction> coveringNode, final Builder statistics) {
 
 		final Collection<ArgNode<XtaState<LuZoneState>, XtaAction>> uncoveredNodes = new ArrayList<>();
-		final BoundFunction boundFunction = coveringNode.getState().getState().getBoundFunction();
+		final BoundFunc boundFunction = coveringNode.getState().getState().getBoundFunction();
 		propagateBounds(nodeToCover, boundFunction, uncoveredNodes, statistics, false);
 
 		return uncoveredNodes;
@@ -77,7 +77,7 @@ public final class LuStrategy implements LazyXtaChecker.AlgorithmStrategy<LuZone
 			final ArgNode<XtaState<LuZoneState>, XtaAction> node, final Builder statistics) {
 
 		final Collection<ArgNode<XtaState<LuZoneState>, XtaAction>> uncoveredNodes = new ArrayList<>();
-		final BoundFunction boundFunction = BoundFunction.top();
+		final BoundFunc boundFunction = BoundFunc.top();
 		propagateBounds(node, boundFunction, uncoveredNodes, statistics, true);
 
 		return uncoveredNodes;
@@ -85,18 +85,18 @@ public final class LuStrategy implements LazyXtaChecker.AlgorithmStrategy<LuZone
 
 	@Override
 	public void resetState(final ArgNode<XtaState<LuZoneState>, XtaAction> node) {
-		final LuZoneState newLuState = node.getState().getState().withBoundFunction(BoundFunction.top());
+		final LuZoneState newLuState = node.getState().getState().withBoundFunction(BoundFunc.top());
 		node.setState(node.getState().withState(newLuState));
 	}
 
 	////
 
 	private void propagateBounds(final ArgNode<XtaState<LuZoneState>, XtaAction> node,
-			final BoundFunction boundFunction,
+			final BoundFunc boundFunction,
 			final Collection<ArgNode<XtaState<LuZoneState>, XtaAction>> uncoveredNodes, final Builder statistics,
 			final boolean forcePropagate) {
 
-		final BoundFunction oldBoundFunction = node.getState().getState().getBoundFunction();
+		final BoundFunc oldBoundFunction = node.getState().getState().getBoundFunction();
 
 		if (forcePropagate || !boundFunction.isLeq(oldBoundFunction)) {
 			statistics.refine();
@@ -108,15 +108,15 @@ public final class LuStrategy implements LazyXtaChecker.AlgorithmStrategy<LuZone
 				final ArgEdge<XtaState<LuZoneState>, XtaAction> inEdge = node.getInEdge().get();
 				final XtaAction action = inEdge.getAction();
 				final ArgNode<XtaState<LuZoneState>, XtaAction> parent = inEdge.getSource();
-				final BoundFunction preBound = XtaLuZoneUtils.pre(boundFunction, action);
+				final BoundFunc preBound = XtaLuZoneUtils.pre(boundFunction, action);
 				propagateBounds(parent, preBound, uncoveredNodes, statistics, false);
 			}
 		}
 	}
 
-	private void strengthen(final ArgNode<XtaState<LuZoneState>, XtaAction> node, final BoundFunction boundFunction) {
-		final BoundFunction oldBoundFunction = node.getState().getState().getBoundFunction();
-		final BoundFunction newBoundFunction = oldBoundFunction.merge(boundFunction);
+	private void strengthen(final ArgNode<XtaState<LuZoneState>, XtaAction> node, final BoundFunc boundFunction) {
+		final BoundFunc oldBoundFunction = node.getState().getState().getBoundFunction();
+		final BoundFunc newBoundFunction = oldBoundFunction.merge(boundFunction);
 		final LuZoneState newLuState = node.getState().getState().withBoundFunction(newBoundFunction);
 		node.setState(node.getState().withState(newLuState));
 	}

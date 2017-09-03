@@ -19,7 +19,7 @@ import java.util.StringJoiner;
 import com.google.common.collect.Lists;
 
 import hu.bme.mit.theta.analysis.expr.ExprState;
-import hu.bme.mit.theta.analysis.zone.BoundFunction;
+import hu.bme.mit.theta.analysis.zone.BoundFunc;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.decl.VarDecl;
@@ -32,17 +32,17 @@ public final class LuZoneState implements ExprState {
 	private static final int HASH_SEED = 5261;
 
 	private final ZoneState zone;
-	private final BoundFunction boundFunction;
+	private final BoundFunc boundFunction;
 
 	private volatile int hashCode = 0;
 	private volatile Expr<BoolType> expr = null;
 
-	private LuZoneState(final ZoneState zone, final BoundFunction boundFunction) {
+	private LuZoneState(final ZoneState zone, final BoundFunc boundFunction) {
 		this.zone = checkNotNull(zone);
 		this.boundFunction = checkNotNull(boundFunction);
 	}
 
-	public static LuZoneState of(final ZoneState zone, final BoundFunction boundFunction) {
+	public static LuZoneState of(final ZoneState zone, final BoundFunc boundFunction) {
 		return new LuZoneState(zone, boundFunction);
 	}
 
@@ -50,11 +50,11 @@ public final class LuZoneState implements ExprState {
 		return zone;
 	}
 
-	public BoundFunction getBoundFunction() {
+	public BoundFunc getBoundFunction() {
 		return boundFunction;
 	}
 
-	public LuZoneState withBoundFunction(final BoundFunction boundFunction) {
+	public LuZoneState withBoundFunction(final BoundFunc boundFunction) {
 		return LuZoneState.of(zone, boundFunction);
 	}
 

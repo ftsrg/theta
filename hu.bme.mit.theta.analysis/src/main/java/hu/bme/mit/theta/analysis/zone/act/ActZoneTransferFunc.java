@@ -9,21 +9,21 @@ import java.util.Collections;
 import com.google.common.collect.ImmutableSet;
 
 import hu.bme.mit.theta.analysis.Action;
-import hu.bme.mit.theta.analysis.TransferFunction;
+import hu.bme.mit.theta.analysis.TransferFunc;
 import hu.bme.mit.theta.analysis.zone.ZonePrec;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
 
-final class ActZoneTransferFunction<A extends Action> implements TransferFunction<ActZoneState, A, ZonePrec> {
+final class ActZoneTransferFunc<A extends Action> implements TransferFunc<ActZoneState, A, ZonePrec> {
 
-	private final TransferFunction<ZoneState, ? super A, ZonePrec> transferFunction;
+	private final TransferFunc<ZoneState, ? super A, ZonePrec> transferFunc;
 
-	private ActZoneTransferFunction(final TransferFunction<ZoneState, ? super A, ZonePrec> transferFunction) {
-		this.transferFunction = checkNotNull(transferFunction);
+	private ActZoneTransferFunc(final TransferFunc<ZoneState, ? super A, ZonePrec> transferFunc) {
+		this.transferFunc = checkNotNull(transferFunc);
 	}
 
-	public static <A extends Action> ActZoneTransferFunction<A> create(
-			final TransferFunction<ZoneState, ? super A, ZonePrec> transferFunction) {
-		return new ActZoneTransferFunction<>(transferFunction);
+	public static <A extends Action> ActZoneTransferFunc<A> create(
+			final TransferFunc<ZoneState, ? super A, ZonePrec> transferFunc) {
+		return new ActZoneTransferFunc<>(transferFunc);
 	}
 
 	@Override
@@ -33,7 +33,7 @@ final class ActZoneTransferFunction<A extends Action> implements TransferFunctio
 		checkNotNull(prec);
 
 		final ZoneState subState = state.getZone();
-		final Collection<? extends ZoneState> subSuccStates = transferFunction.getSuccStates(subState, action, prec);
+		final Collection<? extends ZoneState> subSuccStates = transferFunc.getSuccStates(subState, action, prec);
 
 		if (subSuccStates.isEmpty()) {
 			final ActZoneState succState = ActZoneState.of(ZoneState.bottom(), ImmutableSet.of());

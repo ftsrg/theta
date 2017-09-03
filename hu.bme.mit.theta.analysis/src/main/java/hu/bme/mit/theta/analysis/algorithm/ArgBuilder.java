@@ -12,7 +12,7 @@ import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.LTS;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
-import hu.bme.mit.theta.analysis.TransferFunction;
+import hu.bme.mit.theta.analysis.TransferFunc;
 
 /**
  * Helper class for building the ARG with a given analysis and precision.
@@ -46,7 +46,7 @@ public final class ArgBuilder<S extends State, A extends Action, P extends Prec>
 
 		final Collection<ArgNode<S, A>> newInitNodes = new ArrayList<>();
 
-		final Collection<? extends S> initStates = analysis.getInitFunction().getInitStates(prec);
+		final Collection<? extends S> initStates = analysis.getInitFunc().getInitStates(prec);
 		for (final S initState : initStates) {
 			if (arg.getInitStates().noneMatch(s -> analysis.getDomain().isLeq(initState, s))) {
 				final boolean isTarget = target.test(initState);
@@ -66,7 +66,7 @@ public final class ArgBuilder<S extends State, A extends Action, P extends Prec>
 		final Collection<ArgNode<S, A>> newSuccNodes = new ArrayList<>();
 		final S state = node.getState();
 		final Collection<? extends A> actions = lts.getEnabledActionsFor(state);
-		final TransferFunction<S, ? super A, ? super P> transferFunc = analysis.getTransferFunction();
+		final TransferFunc<S, ? super A, ? super P> transferFunc = analysis.getTransferFunc();
 		for (final A action : actions) {
 			final Collection<? extends S> succStates = transferFunc.getSuccStates(state, action, prec);
 			for (final S succState : succStates) {

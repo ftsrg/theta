@@ -2,8 +2,8 @@ package hu.bme.mit.theta.formalism.xta.analysis.zone;
 
 import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.Domain;
-import hu.bme.mit.theta.analysis.InitFunction;
-import hu.bme.mit.theta.analysis.TransferFunction;
+import hu.bme.mit.theta.analysis.InitFunc;
+import hu.bme.mit.theta.analysis.TransferFunc;
 import hu.bme.mit.theta.analysis.zone.ZoneDomain;
 import hu.bme.mit.theta.analysis.zone.ZonePrec;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
@@ -26,13 +26,13 @@ public final class XtaZoneAnalysis implements Analysis<ZoneState, XtaAction, Zon
 	}
 
 	@Override
-	public InitFunction<ZoneState, ZonePrec> getInitFunction() {
-		return XtaZoneInitFunction.getInstance();
+	public InitFunc<ZoneState, ZonePrec> getInitFunc() {
+		return XtaZoneInitFunc.getInstance();
 	}
 
 	@Override
-	public TransferFunction<ZoneState, XtaAction, ZonePrec> getTransferFunction() {
-		return XtaZoneTransferFunction.getInstance();
+	public TransferFunc<ZoneState, XtaAction, ZonePrec> getTransferFunc() {
+		return XtaZoneTransferFunc.getInstance();
 	}
 
 }

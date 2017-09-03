@@ -6,7 +6,7 @@ import java.util.Collection;
  * Common interface for initial functions.
  */
 @FunctionalInterface
-public interface InitFunction<S extends State, P extends Prec> {
+public interface InitFunc<S extends State, P extends Prec> {
 
 	/**
 	 * Gets the initial states with a given precision.

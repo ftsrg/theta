@@ -10,7 +10,7 @@ import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 
-import hu.bme.mit.theta.analysis.InitFunction;
+import hu.bme.mit.theta.analysis.InitFunc;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.core.decl.VarDecl;
@@ -24,18 +24,18 @@ import hu.bme.mit.theta.formalism.xta.XtaProcess;
 import hu.bme.mit.theta.formalism.xta.XtaProcess.Loc;
 import hu.bme.mit.theta.formalism.xta.XtaSystem;
 
-final class XtaInitFunction<S extends State, P extends Prec> implements InitFunction<XtaState<S>, P> {
+final class XtaInitFunc<S extends State, P extends Prec> implements InitFunc<XtaState<S>, P> {
 	private final XtaSystem system;
-	private final InitFunction<S, ? super P> initFunction;
+	private final InitFunc<S, ? super P> initFunc;
 
-	private XtaInitFunction(final XtaSystem system, final InitFunction<S, ? super P> initFunction) {
+	private XtaInitFunc(final XtaSystem system, final InitFunc<S, ? super P> initFunc) {
 		this.system = checkNotNull(system);
-		this.initFunction = checkNotNull(initFunction);
+		this.initFunc = checkNotNull(initFunc);
 	}
 
-	public static <S extends State, P extends Prec> XtaInitFunction<S, P> create(final XtaSystem system,
-			final InitFunction<S, ? super P> initFunction) {
-		return new XtaInitFunction<>(system, initFunction);
+	public static <S extends State, P extends Prec> XtaInitFunc<S, P> create(final XtaSystem system,
+			final InitFunc<S, ? super P> initFunc) {
+		return new XtaInitFunc<>(system, initFunc);
 	}
 
 	@Override
@@ -43,7 +43,7 @@ final class XtaInitFunction<S extends State, P extends Prec> implements InitFunc
 		checkNotNull(prec);
 		final List<Loc> initLocs = creatInitLocs(system);
 		final Valuation initVal = createInitVal(system);
-		final Collection<? extends S> initStates = initFunction.getInitStates(prec);
+		final Collection<? extends S> initStates = initFunc.getInitStates(prec);
 		return XtaState.collectionOf(initLocs, initVal, initStates);
 	}
 

@@ -7,17 +7,17 @@ import java.util.Collection;
 import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.theta.analysis.Action;
-import hu.bme.mit.theta.analysis.TransferFunction;
+import hu.bme.mit.theta.analysis.TransferFunc;
 
-final class UnitTransferFunction implements TransferFunction<UnitState, Action, UnitPrec> {
+final class UnitTransferFunc implements TransferFunc<UnitState, Action, UnitPrec> {
 
-	private static final UnitTransferFunction INSTANCE = new UnitTransferFunction();
+	private static final UnitTransferFunc INSTANCE = new UnitTransferFunc();
 	private static final Collection<UnitState> RESULT = ImmutableList.of(UnitState.getInstance());
 
-	private UnitTransferFunction() {
+	private UnitTransferFunc() {
 	}
 
-	public static UnitTransferFunction getInstance() {
+	public static UnitTransferFunc getInstance() {
 		return INSTANCE;
 	}
 

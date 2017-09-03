@@ -6,17 +6,17 @@ import java.util.Collection;
 
 import com.google.common.collect.ImmutableList;
 
-import hu.bme.mit.theta.analysis.InitFunction;
+import hu.bme.mit.theta.analysis.InitFunc;
 
-final class UnitInitFunction implements InitFunction<UnitState, UnitPrec> {
+final class UnitInitFunc implements InitFunc<UnitState, UnitPrec> {
 
-	private static final UnitInitFunction INSTANCE = new UnitInitFunction();
+	private static final UnitInitFunc INSTANCE = new UnitInitFunc();
 	private static final Collection<UnitState> RESULT = ImmutableList.of(UnitState.getInstance());
 
-	private UnitInitFunction() {
+	private UnitInitFunc() {
 	}
 
-	public static UnitInitFunction getInstance() {
+	public static UnitInitFunc getInstance() {
 		return INSTANCE;
 	}
 

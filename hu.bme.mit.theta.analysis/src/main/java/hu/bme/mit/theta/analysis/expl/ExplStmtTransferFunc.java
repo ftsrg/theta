@@ -8,7 +8,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import hu.bme.mit.theta.analysis.TransferFunction;
+import hu.bme.mit.theta.analysis.TransferFunc;
 import hu.bme.mit.theta.analysis.expl.ExplStmtSuccEvaluator.EvalResult;
 import hu.bme.mit.theta.analysis.expr.ExprStates;
 import hu.bme.mit.theta.core.stmt.Stmt;
@@ -19,19 +19,19 @@ import hu.bme.mit.theta.core.utils.StmtUtils;
 import hu.bme.mit.theta.core.utils.VarIndexing;
 import hu.bme.mit.theta.solver.Solver;
 
-public final class ExplStmtTransferFunction implements TransferFunction<ExplState, StmtAction, ExplPrec> {
+public final class ExplStmtTransferFunc implements TransferFunc<ExplState, StmtAction, ExplPrec> {
 
 	private final Solver solver;
 	private final int maxStatesFromSolver;
 
-	private ExplStmtTransferFunction(final Solver solver, final int maxStatesFromSolver) {
+	private ExplStmtTransferFunc(final Solver solver, final int maxStatesFromSolver) {
 		checkArgument(maxStatesFromSolver >= 0, "Max. states from solver must be non-negative.");
 		this.solver = checkNotNull(solver);
 		this.maxStatesFromSolver = maxStatesFromSolver;
 	}
 
-	public static ExplStmtTransferFunction create(final Solver solver, final int maxStatesFromSolver) {
-		return new ExplStmtTransferFunction(solver, maxStatesFromSolver);
+	public static ExplStmtTransferFunc create(final Solver solver, final int maxStatesFromSolver) {
+		return new ExplStmtTransferFunc(solver, maxStatesFromSolver);
 	}
 
 	@Override

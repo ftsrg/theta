@@ -4,9 +4,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.Domain;
-import hu.bme.mit.theta.analysis.InitFunction;
+import hu.bme.mit.theta.analysis.InitFunc;
 import hu.bme.mit.theta.analysis.Prec;
-import hu.bme.mit.theta.analysis.TransferFunction;
+import hu.bme.mit.theta.analysis.TransferFunc;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.formalism.cfa.CFA.Loc;
 
@@ -14,15 +14,15 @@ public final class CfaAnalysis<S extends ExprState, P extends Prec>
 		implements Analysis<CfaState<S>, CfaAction, CfaPrec<P>> {
 
 	private final Domain<CfaState<S>> domain;
-	private final InitFunction<CfaState<S>, CfaPrec<P>> initFunction;
-	private final TransferFunction<CfaState<S>, CfaAction, CfaPrec<P>> transferFunction;
+	private final InitFunc<CfaState<S>, CfaPrec<P>> initFunc;
+	private final TransferFunc<CfaState<S>, CfaAction, CfaPrec<P>> transferFunc;
 
 	private CfaAnalysis(final Loc initLoc, final Analysis<S, ? super CfaAction, ? super P> analysis) {
 		checkNotNull(initLoc);
 		checkNotNull(analysis);
 		domain = CfaDomain.create(analysis.getDomain());
-		initFunction = CfaInitFunction.create(initLoc, analysis.getInitFunction());
-		transferFunction = CfaTransferFunction.create(analysis.getTransferFunction());
+		initFunc = CfaInitFunc.create(initLoc, analysis.getInitFunc());
+		transferFunc = CfaTransferFunc.create(analysis.getTransferFunc());
 	}
 
 	public static <S extends ExprState, P extends Prec> CfaAnalysis<S, P> create(final Loc initLoc,
@@ -36,13 +36,13 @@ public final class CfaAnalysis<S extends ExprState, P extends Prec>
 	}
 
 	@Override
-	public InitFunction<CfaState<S>, CfaPrec<P>> getInitFunction() {
-		return initFunction;
+	public InitFunc<CfaState<S>, CfaPrec<P>> getInitFunc() {
+		return initFunc;
 	}
 
 	@Override
-	public TransferFunction<CfaState<S>, CfaAction, CfaPrec<P>> getTransferFunction() {
-		return transferFunction;
+	public TransferFunc<CfaState<S>, CfaAction, CfaPrec<P>> getTransferFunc() {
+		return transferFunc;
 	}
 
 }

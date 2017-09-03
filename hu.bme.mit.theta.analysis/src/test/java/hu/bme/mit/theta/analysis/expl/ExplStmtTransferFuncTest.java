@@ -31,14 +31,14 @@ import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 
-public class ExplStmtTransferFunctionTest {
+public class ExplStmtTransferFuncTest {
 	private final Solver solver = Z3SolverFactory.getInstace().createSolver();
 	private final VarDecl<IntType> x = Var("x", Int());
 	private final VarDecl<IntType> y = Var("y", Int());
 
 	@Test
 	public void testSimple() {
-		final ExplStmtTransferFunction transFunc = ExplStmtTransferFunction.create(solver, 0);
+		final ExplStmtTransferFunc transFunc = ExplStmtTransferFunc.create(solver, 0);
 		final ExplState sourceState = ExplState.createTop();
 		final ExplPrec prec = ExplPrec.create(Collections.singleton(x));
 		final List<Stmt> stmts = new ArrayList<>();
@@ -57,7 +57,7 @@ public class ExplStmtTransferFunctionTest {
 
 	@Test
 	public void testComplex1() {
-		final ExplStmtTransferFunction transFunc = ExplStmtTransferFunction.create(solver, 0);
+		final ExplStmtTransferFunc transFunc = ExplStmtTransferFunc.create(solver, 0);
 		final ExplState sourceState = ExplState.createTop();
 		final ExplPrec prec = ExplPrec.create(ImmutableSet.of(x, y));
 		final List<Stmt> stmts = new ArrayList<>();
@@ -73,7 +73,7 @@ public class ExplStmtTransferFunctionTest {
 
 	@Test
 	public void testComplex2() {
-		final ExplStmtTransferFunction transFunc = ExplStmtTransferFunction.create(solver, 1);
+		final ExplStmtTransferFunc transFunc = ExplStmtTransferFunc.create(solver, 1);
 		final ExplState sourceState = ExplState.createTop();
 		final ExplPrec prec = ExplPrec.create(ImmutableSet.of(x, y));
 		final List<Stmt> stmts = new ArrayList<>();
@@ -103,7 +103,7 @@ public class ExplStmtTransferFunctionTest {
 		solverCallsToExpectedStates.put(4, 3);
 
 		for (final Entry<Integer, Integer> entry : solverCallsToExpectedStates.entrySet()) {
-			final ExplStmtTransferFunction transFunc = ExplStmtTransferFunction.create(solver, entry.getKey());
+			final ExplStmtTransferFunc transFunc = ExplStmtTransferFunc.create(solver, entry.getKey());
 			final Collection<? extends ExplState> succStates = transFunc.getSuccStates(sourceState, stmts, prec);
 
 			Assert.assertEquals(entry.getValue().intValue(), succStates.size());

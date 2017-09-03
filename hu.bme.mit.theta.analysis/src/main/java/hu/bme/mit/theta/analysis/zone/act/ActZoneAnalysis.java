@@ -5,20 +5,20 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.Domain;
-import hu.bme.mit.theta.analysis.InitFunction;
-import hu.bme.mit.theta.analysis.TransferFunction;
+import hu.bme.mit.theta.analysis.InitFunc;
+import hu.bme.mit.theta.analysis.TransferFunc;
 import hu.bme.mit.theta.analysis.zone.ZonePrec;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
 
 public final class ActZoneAnalysis<A extends Action> implements Analysis<ActZoneState, A, ZonePrec> {
 
-	private final InitFunction<ActZoneState, ZonePrec> initFunction;
-	private final TransferFunction<ActZoneState, A, ZonePrec> transferFunction;
+	private final InitFunc<ActZoneState, ZonePrec> initFunc;
+	private final TransferFunc<ActZoneState, A, ZonePrec> transferFunc;
 
 	private ActZoneAnalysis(final Analysis<ZoneState, ? super A, ZonePrec> analysis) {
 		checkNotNull(analysis);
-		initFunction = ActZoneInitFunction.create(analysis.getInitFunction());
-		transferFunction = ActZoneTransferFunction.create(analysis.getTransferFunction());
+		initFunc = ActZoneInitFunc.create(analysis.getInitFunc());
+		transferFunc = ActZoneTransferFunc.create(analysis.getTransferFunc());
 	}
 
 	public static <A extends Action> ActZoneAnalysis<A> create(
@@ -32,13 +32,13 @@ public final class ActZoneAnalysis<A extends Action> implements Analysis<ActZone
 	}
 
 	@Override
-	public InitFunction<ActZoneState, ZonePrec> getInitFunction() {
-		return initFunction;
+	public InitFunc<ActZoneState, ZonePrec> getInitFunc() {
+		return initFunc;
 	}
 
 	@Override
-	public TransferFunction<ActZoneState, A, ZonePrec> getTransferFunction() {
-		return transferFunction;
+	public TransferFunc<ActZoneState, A, ZonePrec> getTransferFunc() {
+		return transferFunc;
 	}
 
 }

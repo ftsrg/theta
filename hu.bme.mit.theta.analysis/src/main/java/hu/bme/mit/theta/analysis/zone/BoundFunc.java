@@ -22,27 +22,27 @@ import hu.bme.mit.theta.core.clock.constr.UnitLtConstr;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.rattype.RatType;
 
-public final class BoundFunction {
+public final class BoundFunc {
 	private static final int HASH_SEED = 2903;
-	private static final BoundFunction TOP = BoundFunction.builder().build();
+	private static final BoundFunc TOP = BoundFunc.builder().build();
 
 	private final Map<VarDecl<RatType>, Integer> varToLower;
 	private final Map<VarDecl<RatType>, Integer> varToUpper;
 
 	private volatile int hashCode = 0;
 
-	private BoundFunction(final Builder builder) {
+	private BoundFunc(final Builder builder) {
 		varToLower = builder.varToLower;
 		varToUpper = builder.varToUpper;
 	}
 
-	private BoundFunction(final Map<VarDecl<RatType>, Integer> varToLower,
+	private BoundFunc(final Map<VarDecl<RatType>, Integer> varToLower,
 			final Map<VarDecl<RatType>, Integer> varToUpper) {
 		this.varToLower = varToLower;
 		this.varToUpper = varToUpper;
 	}
 
-	public BoundFunction merge(final BoundFunction that) {
+	public BoundFunc merge(final BoundFunc that) {
 		checkNotNull(that);
 		final Map<VarDecl<RatType>, Integer> varToLower = new HashMap<>(this.varToLower);
 		final Map<VarDecl<RatType>, Integer> varToUpper = new HashMap<>(this.varToUpper);
@@ -50,10 +50,10 @@ public final class BoundFunction {
 		that.varToLower.forEach((c, b) -> varToLower.merge(c, b, Integer::max));
 		that.varToUpper.forEach((c, b) -> varToUpper.merge(c, b, Integer::max));
 
-		return new BoundFunction(varToLower, varToUpper);
+		return new BoundFunc(varToLower, varToUpper);
 	}
 
-	public static BoundFunction top() {
+	public static BoundFunc top() {
 		return TOP;
 	}
 
@@ -91,7 +91,7 @@ public final class BoundFunction {
 		return Collections.unmodifiableCollection(varToUpper.keySet());
 	}
 
-	public boolean isLeq(final BoundFunction that) {
+	public boolean isLeq(final BoundFunc that) {
 		checkNotNull(that);
 		return isLeq(this.varToLower, that.varToLower) && isLeq(this.varToUpper, that.varToUpper);
 	}
@@ -117,8 +117,8 @@ public final class BoundFunction {
 	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
-		} else if (obj instanceof BoundFunction) {
-			final BoundFunction that = (BoundFunction) obj;
+		} else if (obj instanceof BoundFunc) {
+			final BoundFunc that = (BoundFunc) obj;
 			return this.varToLower.equals(that.varToLower) && this.varToUpper.equals(that.varToUpper);
 		} else {
 			return false;
@@ -140,7 +140,7 @@ public final class BoundFunction {
 	}
 
 	public static final class Builder {
-		private volatile BoundFunction boundFunction;
+		private volatile BoundFunc boundFunction;
 		private final Map<VarDecl<RatType>, Integer> varToLower;
 		private final Map<VarDecl<RatType>, Integer> varToUpper;
 
@@ -150,7 +150,7 @@ public final class BoundFunction {
 			this.varToUpper = new HashMap<>();
 		}
 
-		private Builder(final BoundFunction boundFunction) {
+		private Builder(final BoundFunc boundFunction) {
 			this.boundFunction = null;
 			this.varToLower = new HashMap<>(boundFunction.varToLower);
 			this.varToUpper = new HashMap<>(boundFunction.varToUpper);
@@ -169,10 +169,10 @@ public final class BoundFunction {
 			return this;
 		}
 
-		public BoundFunction build() {
-			BoundFunction result = boundFunction;
+		public BoundFunc build() {
+			BoundFunc result = boundFunction;
 			if (result == null) {
-				result = new BoundFunction(this);
+				result = new BoundFunc(this);
 				boundFunction = result;
 			}
 			return result;

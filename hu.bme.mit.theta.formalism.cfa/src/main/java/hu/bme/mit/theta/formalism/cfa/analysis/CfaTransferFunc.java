@@ -7,23 +7,23 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import hu.bme.mit.theta.analysis.Prec;
-import hu.bme.mit.theta.analysis.TransferFunction;
+import hu.bme.mit.theta.analysis.TransferFunc;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.formalism.cfa.CFA.Edge;
 import hu.bme.mit.theta.formalism.cfa.CFA.Loc;
 
-final class CfaTransferFunction<S extends ExprState, P extends Prec>
-		implements TransferFunction<CfaState<S>, CfaAction, CfaPrec<P>> {
+final class CfaTransferFunc<S extends ExprState, P extends Prec>
+		implements TransferFunc<CfaState<S>, CfaAction, CfaPrec<P>> {
 
-	private final TransferFunction<S, ? super CfaAction, ? super P> transferFunction;
+	private final TransferFunc<S, ? super CfaAction, ? super P> transferFunc;
 
-	private CfaTransferFunction(final TransferFunction<S, ? super CfaAction, ? super P> transferFunction) {
-		this.transferFunction = checkNotNull(transferFunction);
+	private CfaTransferFunc(final TransferFunc<S, ? super CfaAction, ? super P> transferFunc) {
+		this.transferFunc = checkNotNull(transferFunc);
 	}
 
-	public static <S extends ExprState, P extends Prec> CfaTransferFunction<S, P> create(
-			final TransferFunction<S, ? super CfaAction, ? super P> transferFunction) {
-		return new CfaTransferFunction<>(transferFunction);
+	public static <S extends ExprState, P extends Prec> CfaTransferFunc<S, P> create(
+			final TransferFunc<S, ? super CfaAction, ? super P> transferFunc) {
+		return new CfaTransferFunc<>(transferFunc);
 	}
 
 	@Override
@@ -43,7 +43,7 @@ final class CfaTransferFunction<S extends ExprState, P extends Prec>
 		final P subPrec = prec.getPrec(target);
 		final S subState = state.getState();
 
-		final Collection<? extends S> subSuccStates = transferFunction.getSuccStates(subState, action, subPrec);
+		final Collection<? extends S> subSuccStates = transferFunc.getSuccStates(subState, action, subPrec);
 		for (final S subSuccState : subSuccStates) {
 			final CfaState<S> succState = CfaState.of(target, subSuccState);
 			succStates.add(succState);

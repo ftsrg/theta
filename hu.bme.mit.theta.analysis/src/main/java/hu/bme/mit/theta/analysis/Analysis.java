@@ -18,13 +18,13 @@ public interface Analysis<S extends State, A extends Action, P extends Prec> {
 	 *
 	 * @return
 	 */
-	InitFunction<S, P> getInitFunction();
+	InitFunc<S, P> getInitFunc();
 
 	/**
 	 * Gets the transfer function.
 	 *
 	 * @return
 	 */
-	TransferFunction<S, A, P> getTransferFunction();
+	TransferFunc<S, A, P> getTransferFunc();
 
 }

@@ -5,24 +5,24 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import hu.bme.mit.theta.analysis.InitFunction;
+import hu.bme.mit.theta.analysis.InitFunc;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.formalism.cfa.CFA.Loc;
 
-final class CfaInitFunction<S extends ExprState, P extends Prec> implements InitFunction<CfaState<S>, CfaPrec<P>> {
+final class CfaInitFunc<S extends ExprState, P extends Prec> implements InitFunc<CfaState<S>, CfaPrec<P>> {
 
 	private final Loc initLoc;
-	private final InitFunction<S, ? super P> initFunction;
+	private final InitFunc<S, ? super P> initFunc;
 
-	private CfaInitFunction(final Loc initLoc, final InitFunction<S, ? super P> initFunction) {
+	private CfaInitFunc(final Loc initLoc, final InitFunc<S, ? super P> initFunc) {
 		this.initLoc = checkNotNull(initLoc);
-		this.initFunction = checkNotNull(initFunction);
+		this.initFunc = checkNotNull(initFunc);
 	}
 
-	public static <S extends ExprState, P extends Prec> CfaInitFunction<S, P> create(final Loc initLoc,
-			final InitFunction<S, ? super P> initFunction) {
-		return new CfaInitFunction<>(initLoc, initFunction);
+	public static <S extends ExprState, P extends Prec> CfaInitFunc<S, P> create(final Loc initLoc,
+			final InitFunc<S, ? super P> initFunc) {
+		return new CfaInitFunc<>(initLoc, initFunc);
 	}
 
 	@Override
@@ -31,7 +31,7 @@ final class CfaInitFunction<S extends ExprState, P extends Prec> implements Init
 
 		final Collection<CfaState<S>> initStates = new ArrayList<>();
 		final P subPrec = prec.getPrec(initLoc);
-		final Collection<? extends S> subInitStates = initFunction.getInitStates(subPrec);
+		final Collection<? extends S> subInitStates = initFunc.getInitStates(subPrec);
 		for (final S subInitState : subInitStates) {
 			final CfaState<S> initState = CfaState.of(initLoc, subInitState);
 			initStates.add(initState);

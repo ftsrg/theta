@@ -9,7 +9,7 @@ import java.util.List;
 
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
-import hu.bme.mit.theta.analysis.TransferFunction;
+import hu.bme.mit.theta.analysis.TransferFunc;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.BasicValuation;
 import hu.bme.mit.theta.core.model.MutableValuation;
@@ -25,18 +25,17 @@ import hu.bme.mit.theta.formalism.xta.XtaProcess.Loc;
 import hu.bme.mit.theta.formalism.xta.analysis.XtaAction.SimpleXtaAction;
 import hu.bme.mit.theta.formalism.xta.analysis.XtaAction.SyncedXtaAction;
 
-final class XtaTransferFunction<S extends State, P extends Prec>
-		implements TransferFunction<XtaState<S>, XtaAction, P> {
+final class XtaTransferFunc<S extends State, P extends Prec> implements TransferFunc<XtaState<S>, XtaAction, P> {
 
-	private final TransferFunction<S, ? super XtaAction, ? super P> transferFunction;
+	private final TransferFunc<S, ? super XtaAction, ? super P> transferFunc;
 
-	private XtaTransferFunction(final TransferFunction<S, ? super XtaAction, ? super P> transferFunction) {
-		this.transferFunction = checkNotNull(transferFunction);
+	private XtaTransferFunc(final TransferFunc<S, ? super XtaAction, ? super P> transferFunc) {
+		this.transferFunc = checkNotNull(transferFunc);
 	}
 
-	public static <S extends State, P extends Prec> XtaTransferFunction<S, P> create(
-			final TransferFunction<S, ? super XtaAction, ? super P> transferFunction) {
-		return new XtaTransferFunction<>(transferFunction);
+	public static <S extends State, P extends Prec> XtaTransferFunc<S, P> create(
+			final TransferFunc<S, ? super XtaAction, ? super P> transferFunc) {
+		return new XtaTransferFunc<>(transferFunc);
 	}
 
 	@Override
@@ -68,7 +67,7 @@ final class XtaTransferFunction<S extends State, P extends Prec>
 
 		final List<Loc> succLocs = action.getTargetLocs();
 		final Valuation succVal = createSuccValForSimpleAction(val, action);
-		final Collection<? extends S> succStates = transferFunction.getSuccStates(state, action, prec);
+		final Collection<? extends S> succStates = transferFunc.getSuccStates(state, action, prec);
 
 		return XtaState.collectionOf(succLocs, succVal, succStates);
 	}
@@ -92,7 +91,7 @@ final class XtaTransferFunction<S extends State, P extends Prec>
 
 		final List<Loc> succLocs = action.getTargetLocs();
 		final Valuation succVal = createSuccValForSyncedAction(val, action);
-		final Collection<? extends S> succStates = transferFunction.getSuccStates(state, action, prec);
+		final Collection<? extends S> succStates = transferFunc.getSuccStates(state, action, prec);
 
 		return XtaState.collectionOf(succLocs, succVal, succStates);
 	}

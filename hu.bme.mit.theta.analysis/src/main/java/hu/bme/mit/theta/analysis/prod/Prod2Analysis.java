@@ -5,25 +5,24 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.Domain;
-import hu.bme.mit.theta.analysis.InitFunction;
+import hu.bme.mit.theta.analysis.InitFunc;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
-import hu.bme.mit.theta.analysis.TransferFunction;
+import hu.bme.mit.theta.analysis.TransferFunc;
 
 public final class Prod2Analysis<S1 extends State, S2 extends State, A extends Action, P1 extends Prec, P2 extends Prec>
 		implements Analysis<Prod2State<S1, S2>, A, Prod2Prec<P1, P2>> {
 
 	private final Domain<Prod2State<S1, S2>> domain;
-	private final InitFunction<Prod2State<S1, S2>, Prod2Prec<P1, P2>> initFunction;
-	private final TransferFunction<Prod2State<S1, S2>, A, Prod2Prec<P1, P2>> transferFunction;
+	private final InitFunc<Prod2State<S1, S2>, Prod2Prec<P1, P2>> initFunc;
+	private final TransferFunc<Prod2State<S1, S2>, A, Prod2Prec<P1, P2>> transferFunc;
 
 	private Prod2Analysis(final Analysis<S1, ? super A, P1> analysis1, final Analysis<S2, ? super A, P2> analysis2) {
 		checkNotNull(analysis1);
 		checkNotNull(analysis2);
 		domain = Prod2Domain.create(analysis1.getDomain(), analysis2.getDomain());
-		initFunction = Prod2InitFunction.create(analysis1.getInitFunction(), analysis2.getInitFunction());
-		transferFunction = Prod2TransferFunction.create(analysis1.getTransferFunction(),
-				analysis2.getTransferFunction());
+		initFunc = Prod2InitFunc.create(analysis1.getInitFunc(), analysis2.getInitFunc());
+		transferFunc = Prod2TransferFunc.create(analysis1.getTransferFunc(), analysis2.getTransferFunc());
 	}
 
 	public static <S1 extends State, S2 extends State, A extends Action, P1 extends Prec, P2 extends Prec> Prod2Analysis<S1, S2, A, P1, P2> create(
@@ -37,13 +36,13 @@ public final class Prod2Analysis<S1 extends State, S2 extends State, A extends A
 	}
 
 	@Override
-	public InitFunction<Prod2State<S1, S2>, Prod2Prec<P1, P2>> getInitFunction() {
-		return initFunction;
+	public InitFunc<Prod2State<S1, S2>, Prod2Prec<P1, P2>> getInitFunc() {
+		return initFunc;
 	}
 
 	@Override
-	public TransferFunction<Prod2State<S1, S2>, A, Prod2Prec<P1, P2>> getTransferFunction() {
-		return transferFunction;
+	public TransferFunc<Prod2State<S1, S2>, A, Prod2Prec<P1, P2>> getTransferFunc() {
+		return transferFunc;
 	}
 
 }
