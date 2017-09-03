@@ -15,90 +15,31 @@ dependencies {
   compile group: 'com.beust', name: 'jcommander', version: '1.72'
 }
 
-task cfaMain(type: ShadowJar) {
-    group = ShadowJavaPlugin.SHADOW_GROUP
-    manifest.inheritFrom project.tasks.jar.manifest
-    doFirst {
-            def files = project.configurations.findByName(ShadowBasePlugin.CONFIGURATION_NAME).files
-            if (files) {
-                def libs = [tasks.jar.manifest.attributes.get('Class-Path')]
-                libs.addAll files.collect { "${it.name}" }
-                manifest.attributes 'Class-Path': libs.findAll { it }.join(' ')
-            }
+def createJarTask(def taskName, def mainClass, def jarBaseName) {
+    return tasks.create(taskName, ShadowJar) {
+	    group = ShadowJavaPlugin.SHADOW_GROUP
+	    manifest.inheritFrom project.tasks.jar.manifest
+	    doFirst {
+	            def files = project.configurations.findByName(ShadowBasePlugin.CONFIGURATION_NAME).files
+	            if (files) {
+	                def libs = [tasks.jar.manifest.attributes.get('Class-Path')]
+	                libs.addAll files.collect { "${it.name}" }
+	                manifest.attributes 'Class-Path': libs.findAll { it }.join(' ')
+	            }
+	    }
+	    from(sourceSets.main.output)
+	    configurations = [ project.configurations.runtime ]
+	    //exclude('META-INF/INDEX.LIST', 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA')
+	    //classifier = 'fat'
+	    //mergeServiceFiles()
+	    manifest { attributes('Main-Class': mainClass, 'Implementation-Version': getCommitId()) }
+	    baseName = jarBaseName
+	    classifier = null
+	    version = null
     }
-    from(sourceSets.main.output)
-    configurations = [ project.configurations.runtime ]
-    //exclude('META-INF/INDEX.LIST', 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA')
-    //classifier = 'fat'
-    //mergeServiceFiles()
-    manifest { attributes('Main-Class': 'hu.bme.mit.theta.tools.cfa.CfaMain', 'Implementation-Version': getCommitId()) }
-    baseName = 'theta-cfa'
-    classifier = null
-    version = null
 }
 
-task stsMain(type: ShadowJar) {
-    group = ShadowJavaPlugin.SHADOW_GROUP
-    manifest.inheritFrom project.tasks.jar.manifest
-    doFirst {
-            def files = project.configurations.findByName(ShadowBasePlugin.CONFIGURATION_NAME).files
-            if (files) {
-                def libs = [tasks.jar.manifest.attributes.get('Class-Path')]
-                libs.addAll files.collect { "${it.name}" }
-                manifest.attributes 'Class-Path': libs.findAll { it }.join(' ')
-            }
-    }
-    from(sourceSets.main.output)
-    configurations = [ project.configurations.runtime ]
-    //exclude('META-INF/INDEX.LIST', 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA')
-    //classifier = 'fat'
-    //mergeServiceFiles()
-    manifest { attributes('Main-Class': 'hu.bme.mit.theta.tools.sts.StsMain', 'Implementation-Version': getCommitId()) }
-    baseName = 'theta-sts'
-    classifier = null
-    version = null
-}
-
-task xtaMain(type: ShadowJar) {
-    group = ShadowJavaPlugin.SHADOW_GROUP
-    manifest.inheritFrom project.tasks.jar.manifest
-    doFirst {
-            def files = project.configurations.findByName(ShadowBasePlugin.CONFIGURATION_NAME).files
-            if (files) {
-                def libs = [tasks.jar.manifest.attributes.get('Class-Path')]
-                libs.addAll files.collect { "${it.name}" }
-                manifest.attributes 'Class-Path': libs.findAll { it }.join(' ')
-            }
-    }
-    from(sourceSets.main.output)
-    configurations = [ project.configurations.runtime ]
-    //exclude('META-INF/INDEX.LIST', 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA')
-    //classifier = 'fat'
-    //mergeServiceFiles()
-    manifest { attributes('Main-Class': 'hu.bme.mit.theta.tools.xta.XtaMain', 'Implementation-Version': getCommitId()) }
-    baseName = 'theta-xta'
-    classifier = null
-    version = null
-}
-
-task cfa2dot(type: ShadowJar) {
-	group = ShadowJavaPlugin.SHADOW_GROUP
-    manifest.inheritFrom project.tasks.jar.manifest
-    doFirst {
-            def files = project.configurations.findByName(ShadowBasePlugin.CONFIGURATION_NAME).files
-            if (files) {
-                def libs = [tasks.jar.manifest.attributes.get('Class-Path')]
-                libs.addAll files.collect { "${it.name}" }
-                manifest.attributes 'Class-Path': libs.findAll { it }.join(' ')
-            }
-    }
-    from(sourceSets.main.output)
-    configurations = [ project.configurations.runtime ]
-    //exclude('META-INF/INDEX.LIST', 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA')
-    //classifier = 'fat'
-    //mergeServiceFiles()
-    manifest { attributes('Main-Class': 'hu.bme.mit.theta.tools.cfa.CfaToDotMain', 'Implementation-Version': getCommitId()) }
-    baseName = 'cfa2dot'
-    classifier = null
-    version = null
-}
+createJarTask("cfaMain", 'hu.bme.mit.theta.tools.cfa.CfaMain', 'theta-cfa')
+createJarTask("stsMain", 'hu.bme.mit.theta.tools.sts.StsMain', 'theta-sts')
+createJarTask("xtaMain", 'hu.bme.mit.theta.tools.xta.XtaMain', 'theta-xta')
+createJarTask("cfa2dot", 'hu.bme.mit.theta.tools.cfa.CfaToDotMain', 'cfa2dot')
