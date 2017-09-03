@@ -19,11 +19,11 @@ import hu.bme.mit.theta.formalism.sts.aiger.elements.Latch;
 import hu.bme.mit.theta.formalism.sts.aiger.elements.OutVar;
 
 /**
- * An optimized AIGER parser that minimizes the number of STS variables used. It
+ * A compacting AIGER parser that minimizes the number of STS variables used. It
  * only associates a STS variable to inputs and latches. Note, that the reduced
  * number of variables may not be suitable for each algorithm.
  */
-public class AigerParserOptimized implements AigerParser {
+public class CompactingAigerParser implements AigerParser {
 
 	@Override
 	public STS parse(final String fileName) throws IOException {

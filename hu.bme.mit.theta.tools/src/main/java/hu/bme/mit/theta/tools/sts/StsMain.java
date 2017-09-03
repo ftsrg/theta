@@ -26,7 +26,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.formalism.sts.StsUtils;
-import hu.bme.mit.theta.formalism.sts.aiger.AigerParserSimple;
+import hu.bme.mit.theta.formalism.sts.aiger.BasicAigerParser;
 import hu.bme.mit.theta.formalism.sts.dsl.StsDslManager;
 import hu.bme.mit.theta.formalism.sts.dsl.StsSpec;
 import hu.bme.mit.theta.tools.CegarParams;
@@ -120,7 +120,7 @@ public class StsMain {
 
 	private STS loadModel() throws IOException {
 		if (model.endsWith(".aag")) {
-			return new AigerParserSimple().parse(model);
+			return new BasicAigerParser().parse(model);
 		} else if (model.endsWith(".system")) {
 			final InputStream inputStream = new FileInputStream(model);
 			final StsSpec spec = StsDslManager.createStsSpec(inputStream);
