@@ -1,6 +1,6 @@
 # Coding conventions
 
-We mainly follow the standard Java coding conventions and most of the conventions from the books "Effective Java" [1] and "Clean Code" [4]. Some exceptions and additional rules are listed below. Each rule starts with "DO", "CONSIDER", "AVOID" or "DO NOT", according to [2].
+We mainly follow the standard Java coding conventions and most of the conventions from the books _Effective Java_ [1] and _Clean Code_ [4]. Some exceptions and additional rules are listed below. Each rule starts with _DO_, _CONSIDER_, _AVOID_ or _DO NOT_, according to [2].
 
 ## Source files
 * **DO** encode files in UTF-8. **DO NOT** use any other format.
@@ -39,12 +39,8 @@ We mainly follow the standard Java coding conventions and most of the convention
 
 # References
 
-[1] Joshua Bloch: Effective Java (2nd edition)
-
-[2] Krzysztof Cwalina, Brad Abrams: Framework Design Guidelines (2nd edition)
-
-[3] https://en.wikipedia.org/wiki/Initialization-on-demand_holder_idiom
-
-[4] Robert C. Martin: Clean Code: A Handbook of Agile Software Craftsmanship
-
-[5] Robert Liguori, Patricia Liguori: Java 8 Pocket Guide
+1. Joshua Bloch: Effective Java (2nd edition)
+1. Krzysztof Cwalina, Brad Abrams: Framework Design Guidelines (2nd edition)
+1. https://en.wikipedia.org/wiki/Initialization-on-demand_holder_idiom
+1. Robert C. Martin: Clean Code: A Handbook of Agile Software Craftsmanship
+1. Robert Liguori, Patricia Liguori: Java 8 Pocket Guide
