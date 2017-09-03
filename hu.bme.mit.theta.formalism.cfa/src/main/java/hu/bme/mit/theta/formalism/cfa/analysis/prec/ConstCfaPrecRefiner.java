@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.formalism.cfa.analysis.refinement;
+package hu.bme.mit.theta.formalism.cfa.analysis.prec;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -12,7 +12,6 @@ import hu.bme.mit.theta.analysis.expr.refinement.Refutation;
 import hu.bme.mit.theta.analysis.expr.refinement.RefutationToPrec;
 import hu.bme.mit.theta.formalism.cfa.analysis.CfaPrec;
 import hu.bme.mit.theta.formalism.cfa.analysis.CfaState;
-import hu.bme.mit.theta.formalism.cfa.analysis.prec.ConstCfaPrec;
 
 public class ConstCfaPrecRefiner<S extends ExprState, A extends Action, P extends Prec, R extends Refutation>
 		implements PrecRefiner<CfaState<S>, A, CfaPrec<P>, R> {

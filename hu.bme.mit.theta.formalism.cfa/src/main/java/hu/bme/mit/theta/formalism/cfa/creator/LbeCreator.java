@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.formalism.cfa;
+package hu.bme.mit.theta.formalism.cfa.creator;
 
 import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
 import static hu.bme.mit.theta.core.stmt.Stmts.Assume;
@@ -28,11 +28,12 @@ import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.stmt.WhileStmt;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.utils.StmtVisitor;
+import hu.bme.mit.theta.formalism.cfa.CFA;
 import hu.bme.mit.theta.formalism.cfa.CFA.Loc;
 
 final class LbeCreator {
 
-	public static CFA create(final Stmt stmt) {
+	static CFA create(final Stmt stmt) {
 		final CFA cfa = new CFA();
 		cfa.setInitLoc(cfa.createLoc("init"));
 		cfa.setFinalLoc(cfa.createLoc("end"));
@@ -42,8 +43,7 @@ final class LbeCreator {
 		return cfa;
 	}
 
-	private static class LBECreatorVisitor
-			implements StmtVisitor<Product4<Loc, Loc, List<Stmt>, List<Stmt>>, Void> {
+	private static class LBECreatorVisitor implements StmtVisitor<Product4<Loc, Loc, List<Stmt>, List<Stmt>>, Void> {
 
 		private final CFA cfa;
 		private int nextIndex;
@@ -67,8 +67,7 @@ final class LbeCreator {
 			}
 		}
 
-		private Void visitSimpleStatement(final Stmt stmt,
-				final Product4<Loc, Loc, List<Stmt>, List<Stmt>> param) {
+		private Void visitSimpleStatement(final Stmt stmt, final Product4<Loc, Loc, List<Stmt>, List<Stmt>> param) {
 			final Loc source = param._1();
 			final Loc target = param._2();
 			final List<Stmt> prefix = param._3();

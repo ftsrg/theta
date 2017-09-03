@@ -1,6 +1,7 @@
-package hu.bme.mit.theta.formalism.cfa;
+package hu.bme.mit.theta.formalism.cfa.creator;
 
 import hu.bme.mit.theta.core.stmt.Stmt;
+import hu.bme.mit.theta.formalism.cfa.CFA;
 
 public class CfaCreator {
 

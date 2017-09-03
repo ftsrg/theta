@@ -30,9 +30,9 @@ import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.formalism.cfa.CFA;
-import hu.bme.mit.theta.formalism.cfa.CfaCreator;
 import hu.bme.mit.theta.formalism.cfa.analysis.CfaLts;
 import hu.bme.mit.theta.formalism.cfa.analysis.impact.PredImpactChecker;
+import hu.bme.mit.theta.formalism.cfa.creator.CfaCreator;
 import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 

@@ -1,9 +1,7 @@
 /**
  * This package contains the STS specific analysis modules that can be plugged
  * into the analysis algorithms. There are also different implementations for
- * obtaining an initial precision.
- *
- * @see hu.bme.mit.theta.formalism.sts.analysis.initprec.StsInitPrec
+ * obtaining an initial precision (see @link StsInitPrec).
  */
 
 package hu.bme.mit.theta.formalism.sts.analysis;

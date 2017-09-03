@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.formalism.cfa;
+package hu.bme.mit.theta.formalism.cfa.creator;
 
 import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
 import static hu.bme.mit.theta.core.stmt.Stmts.Assume;
@@ -26,11 +26,12 @@ import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.stmt.WhileStmt;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.utils.StmtVisitor;
+import hu.bme.mit.theta.formalism.cfa.CFA;
 import hu.bme.mit.theta.formalism.cfa.CFA.Loc;
 
 final class SbeCreator {
 
-	public static CFA create(final Stmt stmt) {
+	static CFA create(final Stmt stmt) {
 		final CFA cfa = new CFA();
 		cfa.setInitLoc(cfa.createLoc("init"));
 		cfa.setFinalLoc(cfa.createLoc("end"));
@@ -97,14 +98,12 @@ final class SbeCreator {
 		}
 
 		@Override
-		public <DeclType extends Type> Void visit(final AssignStmt<DeclType> stmt,
-				final Product2<Loc, Loc> param) {
+		public <DeclType extends Type> Void visit(final AssignStmt<DeclType> stmt, final Product2<Loc, Loc> param) {
 			return visitSimple(stmt, param);
 		}
 
 		@Override
-		public <DeclType extends Type> Void visit(final HavocStmt<DeclType> stmt,
-				final Product2<Loc, Loc> param) {
+		public <DeclType extends Type> Void visit(final HavocStmt<DeclType> stmt, final Product2<Loc, Loc> param) {
 			return visitSimple(stmt, param);
 		}
 
@@ -143,8 +142,7 @@ final class SbeCreator {
 		}
 
 		@Override
-		public <ReturnType extends Type> Void visit(final ReturnStmt<ReturnType> stmt,
-				final Product2<Loc, Loc> param) {
+		public <ReturnType extends Type> Void visit(final ReturnStmt<ReturnType> stmt, final Product2<Loc, Loc> param) {
 			final Loc source = param._1();
 			cfa.createEdge(source, cfa.getFinalLoc(), ImmutableList.of(stmt));
 			return null;
