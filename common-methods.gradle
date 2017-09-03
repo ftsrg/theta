@@ -1,0 +1,19 @@
+def getCommitId() {
+    def commit = new ByteArrayOutputStream()
+    def branch = new ByteArrayOutputStream()
+    exec {
+        commandLine 'git', 'rev-parse', '--short', 'HEAD'
+        standardOutput = commit
+    }
+    exec {
+        commandLine 'git', 'rev-parse', '--abbrev-ref', 'HEAD'
+        standardOutput = branch
+    }
+    def id = branch.toString() + "-" + commit.toString()
+
+    return id.replace("\n", "").replaceAll("[^a-zA-Z0-9.-_]", "-")
+}
+
+ext {
+	getCommitId = this.&getCommitId
+}

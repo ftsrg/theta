@@ -3,6 +3,8 @@ import com.github.jengelman.gradle.plugins.shadow.*
 
 plugins { id "com.github.johnrengelman.shadow" version "1.2.4" }
 
+apply from: "$rootDir/common-methods.gradle"
+
 dependencies {
   compile project(':hu.bme.mit.theta.common')
   compile project(':hu.bme.mit.theta.core')
@@ -11,22 +13,6 @@ dependencies {
   compile project(':hu.bme.mit.theta.formalism.xta')
   compile project(':hu.bme.mit.theta.analysis')
   compile group: 'com.beust', name: 'jcommander', version: '1.72'
-}
-
-def getCommitId() {
-    def commit = new ByteArrayOutputStream()
-    def branch = new ByteArrayOutputStream()
-    exec {
-        commandLine 'git', 'rev-parse', '--short', 'HEAD'
-        standardOutput = commit
-    }
-    exec {
-        commandLine 'git', 'rev-parse', '--abbrev-ref', 'HEAD'
-        standardOutput = branch
-    }
-    def id = branch.toString() + "-" + commit.toString()
-
-    return id.replace("\n", "").replace("/", "-").replace("\\", "-")
 }
 
 task cfaMain(type: ShadowJar) {
