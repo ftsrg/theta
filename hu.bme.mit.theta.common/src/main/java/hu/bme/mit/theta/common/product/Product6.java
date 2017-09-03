@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.common;
+package hu.bme.mit.theta.common.product;
 
 public interface Product6<T1, T2, T3, T4, T5, T6> extends Product {
 

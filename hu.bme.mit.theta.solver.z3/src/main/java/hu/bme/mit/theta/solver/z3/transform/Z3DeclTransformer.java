@@ -7,9 +7,9 @@ import java.util.List;
 import com.google.common.collect.ImmutableList;
 import com.microsoft.z3.Context;
 
-import hu.bme.mit.theta.common.Product2;
-import hu.bme.mit.theta.common.Tuple;
-import hu.bme.mit.theta.common.Tuple2;
+import hu.bme.mit.theta.common.product.Product2;
+import hu.bme.mit.theta.common.product.Tuple;
+import hu.bme.mit.theta.common.product.Tuple2;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.ParamDecl;

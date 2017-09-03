@@ -3,7 +3,7 @@ package hu.bme.mit.theta.analysis.prod;
 import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.theta.analysis.Prec;
-import hu.bme.mit.theta.common.Product3;
+import hu.bme.mit.theta.common.product.Product3;
 
 public final class Prod3Prec<P1 extends Prec, P2 extends Prec, P3 extends Prec> extends ProdPrec
 		implements Product3<P1, P2, P3> {

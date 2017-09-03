@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.common;
+package hu.bme.mit.theta.common.product;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkPositionIndex;
@@ -7,6 +7,8 @@ import java.util.Iterator;
 import java.util.List;
 
 import com.google.common.collect.ImmutableList;
+
+import hu.bme.mit.theta.common.ObjectUtils;
 
 public abstract class Tuple implements Product, Iterable<Object> {
 

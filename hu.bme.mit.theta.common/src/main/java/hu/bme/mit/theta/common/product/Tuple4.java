@@ -1,11 +1,11 @@
-package hu.bme.mit.theta.common;
+package hu.bme.mit.theta.common.product;
 
 import com.google.common.collect.ImmutableList;
 
-public final class Tuple5<T1, T2, T3, T4, T5> extends Tuple implements Product5<T1, T2, T3, T4, T5> {
+public final class Tuple4<T1, T2, T3, T4> extends Tuple implements Product4<T1, T2, T3, T4> {
 
-	Tuple5(final T1 e1, final T2 e2, final T3 e3, final T4 e4, final T5 e5) {
-		super(ImmutableList.of(e1, e2, e3, e4, e5));
+	Tuple4(final T1 e1, final T2 e2, final T3 e3, final T4 e4) {
+		super(ImmutableList.of(e1, e2, e3, e4));
 	}
 
 	@Override
@@ -33,13 +33,6 @@ public final class Tuple5<T1, T2, T3, T4, T5> extends Tuple implements Product5<
 	public T4 _4() {
 		@SuppressWarnings("unchecked")
 		final T4 result = (T4) elem(3);
-		return result;
-	}
-
-	@Override
-	public T5 _5() {
-		@SuppressWarnings("unchecked")
-		final T5 result = (T5) elem(4);
 		return result;
 	}
 

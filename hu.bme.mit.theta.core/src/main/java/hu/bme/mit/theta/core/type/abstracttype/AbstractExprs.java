@@ -7,9 +7,9 @@ import java.util.List;
 import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.theta.common.Try;
-import hu.bme.mit.theta.common.Tuple;
-import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.Utils;
+import hu.bme.mit.theta.common.product.Tuple;
+import hu.bme.mit.theta.common.product.Tuple2;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.anytype.Exprs;

@@ -1,4 +1,4 @@
-package hu.bme.mit.theta.common;
+package hu.bme.mit.theta.common.product;
 
 import java.util.List;
 

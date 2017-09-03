@@ -11,7 +11,7 @@ import com.google.common.base.Stopwatch;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.ArgNode;
 import hu.bme.mit.theta.analysis.algorithm.Statistics;
-import hu.bme.mit.theta.common.Tuple;
+import hu.bme.mit.theta.common.product.Tuple;
 import hu.bme.mit.theta.formalism.xta.analysis.XtaState;
 
 public final class LazyXtaStatistics extends Statistics {

@@ -11,8 +11,8 @@ import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 
-import hu.bme.mit.theta.common.Product4;
-import hu.bme.mit.theta.common.Tuple;
+import hu.bme.mit.theta.common.product.Product4;
+import hu.bme.mit.theta.common.product.Tuple;
 import hu.bme.mit.theta.core.stmt.AssertStmt;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;

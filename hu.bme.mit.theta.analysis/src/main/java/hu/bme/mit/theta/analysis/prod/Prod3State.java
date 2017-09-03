@@ -6,7 +6,7 @@ import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.expr.ExprState;
-import hu.bme.mit.theta.common.Product3;
+import hu.bme.mit.theta.common.product.Product3;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 

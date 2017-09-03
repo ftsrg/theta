@@ -14,7 +14,7 @@ import com.google.common.collect.ImmutableSet;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.common.ObjectUtils;
-import hu.bme.mit.theta.common.Product;
+import hu.bme.mit.theta.common.product.Product;
 
 public abstract class ProdState implements ExprState, Product, Iterable<State> {
 

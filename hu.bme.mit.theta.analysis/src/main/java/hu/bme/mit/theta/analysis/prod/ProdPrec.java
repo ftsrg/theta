@@ -10,7 +10,7 @@ import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.common.ObjectUtils;
-import hu.bme.mit.theta.common.Product;
+import hu.bme.mit.theta.common.product.Product;
 
 public abstract class ProdPrec implements Prec, Product, Iterable<Prec> {
 
