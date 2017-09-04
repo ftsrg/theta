@@ -2,6 +2,7 @@ package hu.bme.mit.theta.formalism.cfa;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -135,9 +136,12 @@ public final class CFA {
 		private final Collection<Loc> locs;
 		private final Collection<Edge> edges;
 
+		private boolean built;
+
 		private Builder() {
 			locs = new HashSet<>();
 			edges = new LinkedList<>();
+			built = false;
 		}
 
 		public Loc getInitLoc() {
@@ -153,30 +157,35 @@ public final class CFA {
 		}
 
 		public void setInitLoc(final Loc initLoc) {
+			checkState(!built, "A CFA was already built.");
 			checkNotNull(initLoc);
 			checkArgument(locs.contains(initLoc));
 			this.initLoc = initLoc;
 		}
 
 		public void setFinalLoc(final Loc finalLoc) {
+			checkState(!built, "A CFA was already built.");
 			checkNotNull(finalLoc);
 			checkArgument(locs.contains(finalLoc));
 			this.finalLoc = finalLoc;
 		}
 
 		public void setErrorLoc(final Loc errorLoc) {
+			checkState(!built, "A CFA was already built.");
 			checkNotNull(errorLoc);
 			checkArgument(locs.contains(errorLoc));
 			this.errorLoc = errorLoc;
 		}
 
 		public Loc createLoc(final String name) {
+			checkState(!built, "A CFA was already built.");
 			final Loc loc = new Loc(name);
 			locs.add(loc);
 			return loc;
 		}
 
 		public Edge createEdge(final Loc source, final Loc target, final List<? extends Stmt> stmts) {
+			checkState(!built, "A CFA was already built.");
 			checkNotNull(source);
 			checkNotNull(target);
 			checkNotNull(stmts);
@@ -191,6 +200,7 @@ public final class CFA {
 		}
 
 		public CFA build() {
+			built = true;
 			return new CFA(this);
 		}
 	}
