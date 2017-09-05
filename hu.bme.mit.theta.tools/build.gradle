@@ -39,7 +39,7 @@ def createJarTask(def taskName, def mainClass, def jarBaseName) {
     }
 }
 
-createJarTask("cfaMain", 'hu.bme.mit.theta.tools.cfa.CfaMain', 'theta-cfa')
-createJarTask("stsMain", 'hu.bme.mit.theta.tools.sts.StsMain', 'theta-sts')
-createJarTask("xtaMain", 'hu.bme.mit.theta.tools.xta.XtaMain', 'theta-xta')
+createJarTask("theta-cfa", 'hu.bme.mit.theta.tools.cfa.CfaMain', 'theta-cfa')
+createJarTask("theta-sts", 'hu.bme.mit.theta.tools.sts.StsMain', 'theta-sts')
+createJarTask("theta-xta", 'hu.bme.mit.theta.tools.xta.XtaMain', 'theta-xta')
 createJarTask("cfa2dot", 'hu.bme.mit.theta.tools.cfa.CfaToDotMain', 'cfa2dot')
