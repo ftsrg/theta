@@ -8,21 +8,22 @@ import hu.bme.mit.theta.formalism.cfa.CFA.Loc;
 import hu.bme.mit.theta.formalism.cfa.analysis.CfaPrec;
 
 /**
- * Represents an immutable constant precision.
+ * Represents an immutable global precision that maps the same precision to each
+ * location.
  */
-public final class ConstCfaPrec<P extends Prec> implements CfaPrec<P> {
+public final class GlobalCfaPrec<P extends Prec> implements CfaPrec<P> {
 
 	private final P prec;
 
-	private ConstCfaPrec(final P prec) {
+	private GlobalCfaPrec(final P prec) {
 		this.prec = checkNotNull(prec);
 	}
 
-	public static <P extends Prec> ConstCfaPrec<P> create(final P prec) {
-		return new ConstCfaPrec<>(prec);
+	public static <P extends Prec> GlobalCfaPrec<P> create(final P prec) {
+		return new GlobalCfaPrec<>(prec);
 	}
 
-	public ConstCfaPrec<P> refine(final P refinedPrec) {
+	public GlobalCfaPrec<P> refine(final P refinedPrec) {
 		if (this.prec.equals(refinedPrec)) {
 			return this;
 		} else {
@@ -49,8 +50,8 @@ public final class ConstCfaPrec<P extends Prec> implements CfaPrec<P> {
 	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
-		} else if (obj instanceof ConstCfaPrec) {
-			final ConstCfaPrec<?> that = (ConstCfaPrec<?>) obj;
+		} else if (obj instanceof GlobalCfaPrec) {
+			final GlobalCfaPrec<?> that = (GlobalCfaPrec<?>) obj;
 			return this.prec.equals(that.prec);
 		} else {
 			return false;

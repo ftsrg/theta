@@ -42,7 +42,7 @@ public class CfaMain {
 	String model;
 
 	@Parameter(names = { "-g", "--precision-granularity" }, description = "Precision granularity")
-	PrecGranularity precGranularity = PrecGranularity.CONST;
+	PrecGranularity precGranularity = PrecGranularity.GLOBAL;
 
 	@Parameter(names = { "-ll", "--loglevel" }, description = "Detailedness of logging")
 	Integer logLevel = 1;

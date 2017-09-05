@@ -13,18 +13,18 @@ import hu.bme.mit.theta.analysis.expr.refinement.RefutationToPrec;
 import hu.bme.mit.theta.formalism.cfa.analysis.CfaPrec;
 import hu.bme.mit.theta.formalism.cfa.analysis.CfaState;
 
-public class ConstCfaPrecRefiner<S extends ExprState, A extends Action, P extends Prec, R extends Refutation>
+public class GlobalCfaPrecRefiner<S extends ExprState, A extends Action, P extends Prec, R extends Refutation>
 		implements PrecRefiner<CfaState<S>, A, CfaPrec<P>, R> {
 
 	private final RefutationToPrec<P, R> refToPrec;
 
-	private ConstCfaPrecRefiner(final RefutationToPrec<P, R> refToPrec) {
+	private GlobalCfaPrecRefiner(final RefutationToPrec<P, R> refToPrec) {
 		this.refToPrec = checkNotNull(refToPrec);
 	}
 
-	public static <S extends ExprState, A extends Action, P extends Prec, R extends Refutation> ConstCfaPrecRefiner<S, A, P, R> create(
+	public static <S extends ExprState, A extends Action, P extends Prec, R extends Refutation> GlobalCfaPrecRefiner<S, A, P, R> create(
 			final RefutationToPrec<P, R> refToPrec) {
-		return new ConstCfaPrecRefiner<>(refToPrec);
+		return new GlobalCfaPrecRefiner<>(refToPrec);
 	}
 
 	@Override
@@ -32,9 +32,9 @@ public class ConstCfaPrecRefiner<S extends ExprState, A extends Action, P extend
 		checkNotNull(trace);
 		checkNotNull(prec);
 		checkNotNull(refutation);
-		checkArgument(prec instanceof ConstCfaPrec); // TODO: enforce this in a better way
+		checkArgument(prec instanceof GlobalCfaPrec); // TODO: enforce this in a better way
 
-		final ConstCfaPrec<P> constPrec = (ConstCfaPrec<P>) prec;
+		final GlobalCfaPrec<P> constPrec = (GlobalCfaPrec<P>) prec;
 		P runningPrec = constPrec.getPrec();
 		for (int i = 0; i < trace.getStates().size(); ++i) {
 			final P precFromRef = refToPrec.toPrec(refutation, i);

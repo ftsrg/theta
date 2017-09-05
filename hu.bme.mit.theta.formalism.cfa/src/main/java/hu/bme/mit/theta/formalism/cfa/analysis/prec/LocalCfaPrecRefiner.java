@@ -17,18 +17,18 @@ import hu.bme.mit.theta.formalism.cfa.CFA.Loc;
 import hu.bme.mit.theta.formalism.cfa.analysis.CfaPrec;
 import hu.bme.mit.theta.formalism.cfa.analysis.CfaState;
 
-public class GenericCfaPrecRefiner<S extends ExprState, A extends Action, P extends Prec, R extends Refutation>
+public class LocalCfaPrecRefiner<S extends ExprState, A extends Action, P extends Prec, R extends Refutation>
 		implements PrecRefiner<CfaState<S>, A, CfaPrec<P>, R> {
 
 	private final RefutationToPrec<P, R> refToPrec;
 
-	private GenericCfaPrecRefiner(final RefutationToPrec<P, R> refToPrec) {
+	private LocalCfaPrecRefiner(final RefutationToPrec<P, R> refToPrec) {
 		this.refToPrec = checkNotNull(refToPrec);
 	}
 
-	public static <S extends ExprState, A extends Action, P extends Prec, R extends Refutation> GenericCfaPrecRefiner<S, A, P, R> create(
+	public static <S extends ExprState, A extends Action, P extends Prec, R extends Refutation> LocalCfaPrecRefiner<S, A, P, R> create(
 			final RefutationToPrec<P, R> refToPrec) {
-		return new GenericCfaPrecRefiner<>(refToPrec);
+		return new LocalCfaPrecRefiner<>(refToPrec);
 	}
 
 	@Override
@@ -36,13 +36,13 @@ public class GenericCfaPrecRefiner<S extends ExprState, A extends Action, P exte
 		checkNotNull(trace);
 		checkNotNull(prec);
 		checkNotNull(refutation);
-		checkArgument(prec instanceof GenericCfaPrec); // TODO: enforce this in a better way
+		checkArgument(prec instanceof LocalCfaPrec); // TODO: enforce this in a better way
 
 		// Important: the same location may appear multiple times in the trace
 		// and in this case the corresponding precisions should be joined before
 		// joining them to the old precision of the location
 
-		final GenericCfaPrec<P> genPrec = (GenericCfaPrec<P>) prec;
+		final LocalCfaPrec<P> genPrec = (LocalCfaPrec<P>) prec;
 		final Map<Loc, P> runningPrecs = new HashMap<>();
 		for (final CfaState<S> state : trace.getStates()) {
 			runningPrecs.put(state.getLoc(), genPrec.getPrec(state.getLoc()));

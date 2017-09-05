@@ -23,7 +23,7 @@ import hu.bme.mit.theta.formalism.cfa.analysis.CfaAction;
 import hu.bme.mit.theta.formalism.cfa.analysis.CfaAnalysis;
 import hu.bme.mit.theta.formalism.cfa.analysis.CfaPrec;
 import hu.bme.mit.theta.formalism.cfa.analysis.CfaState;
-import hu.bme.mit.theta.formalism.cfa.analysis.prec.ConstCfaPrec;
+import hu.bme.mit.theta.formalism.cfa.analysis.prec.GlobalCfaPrec;
 import hu.bme.mit.theta.solver.ItpSolver;
 
 public final class PredImpactChecker implements SafetyChecker<CfaState<PredState>, CfaAction, UnitPrec> {
@@ -38,7 +38,7 @@ public final class PredImpactChecker implements SafetyChecker<CfaState<PredState
 
 		final Analysis<PredState, ExprAction, PredPrec> predAnalysis = PredAnalysis.create(solver, True());
 
-		final CfaPrec<PredPrec> fixedPrec = ConstCfaPrec.create(SimplePredPrec.create(emptySet(), solver));
+		final CfaPrec<PredPrec> fixedPrec = GlobalCfaPrec.create(SimplePredPrec.create(emptySet(), solver));
 
 		final Analysis<CfaState<PredState>, CfaAction, CfaPrec<PredPrec>> cfaAnalysis = CfaAnalysis.create(initLoc,
 				predAnalysis);

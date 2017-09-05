@@ -40,10 +40,10 @@ import hu.bme.mit.theta.formalism.cfa.analysis.CfaAnalysis;
 import hu.bme.mit.theta.formalism.cfa.analysis.CfaLts;
 import hu.bme.mit.theta.formalism.cfa.analysis.CfaPrec;
 import hu.bme.mit.theta.formalism.cfa.analysis.CfaState;
-import hu.bme.mit.theta.formalism.cfa.analysis.prec.ConstCfaPrec;
-import hu.bme.mit.theta.formalism.cfa.analysis.prec.ConstCfaPrecRefiner;
-import hu.bme.mit.theta.formalism.cfa.analysis.prec.GenericCfaPrec;
-import hu.bme.mit.theta.formalism.cfa.analysis.prec.GenericCfaPrecRefiner;
+import hu.bme.mit.theta.formalism.cfa.analysis.prec.GlobalCfaPrec;
+import hu.bme.mit.theta.formalism.cfa.analysis.prec.GlobalCfaPrecRefiner;
+import hu.bme.mit.theta.formalism.cfa.analysis.prec.LocalCfaPrec;
+import hu.bme.mit.theta.formalism.cfa.analysis.prec.LocalCfaPrecRefiner;
 import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.tools.Configuration;
@@ -52,29 +52,29 @@ import hu.bme.mit.theta.tools.ConfigurationBuilder;
 public class CfaConfigurationBuilder extends ConfigurationBuilder {
 
 	public enum PrecGranularity {
-		CONST {
+		GLOBAL {
 			@Override
 			public <P extends Prec> CfaPrec<P> createPrec(final P innerPrec) {
-				return ConstCfaPrec.create(innerPrec);
+				return GlobalCfaPrec.create(innerPrec);
 			}
 
 			@Override
 			public <S extends ExprState, A extends Action, P extends Prec, R extends Refutation> PrecRefiner<CfaState<S>, A, CfaPrec<P>, R> createRefiner(
 					final RefutationToPrec<P, R> refToPrec) {
-				return ConstCfaPrecRefiner.create(refToPrec);
+				return GlobalCfaPrecRefiner.create(refToPrec);
 			}
 		},
 
-		GEN {
+		LOCAL {
 			@Override
 			public <P extends Prec> CfaPrec<P> createPrec(final P innerPrec) {
-				return GenericCfaPrec.create(innerPrec);
+				return LocalCfaPrec.create(innerPrec);
 			}
 
 			@Override
 			public <S extends ExprState, A extends Action, P extends Prec, R extends Refutation> PrecRefiner<CfaState<S>, A, CfaPrec<P>, R> createRefiner(
 					final RefutationToPrec<P, R> refToPrec) {
-				return GenericCfaPrecRefiner.create(refToPrec);
+				return LocalCfaPrecRefiner.create(refToPrec);
 			}
 		};
 
@@ -84,7 +84,7 @@ public class CfaConfigurationBuilder extends ConfigurationBuilder {
 				RefutationToPrec<P, R> refToPrec);
 	};
 
-	private PrecGranularity precGranularity = PrecGranularity.CONST;
+	private PrecGranularity precGranularity = PrecGranularity.GLOBAL;
 
 	public CfaConfigurationBuilder(final Domain domain, final Refinement refinement) {
 		super(domain, refinement);
