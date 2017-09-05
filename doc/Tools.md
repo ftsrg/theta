@@ -8,7 +8,7 @@ Tools are concrete instantiations of the framework to solve a certain problem. C
 
 ## Building the tools
 
-Thanks to the Gradle Wrapper, no installation is required. The projects can be simply built from the command line using `gradlew.bat [param]` (Windows) or `gradlew [param]` (Linux), where `[param]` should be `cfaMain`, `stsMain` or `xtaMain`. The jar files will appear in the directory _hu.bme.mit.theta.tools/build/libs_. The tools may require some dll or so files. These can be found in the _lib_ directory.
+Thanks to the Gradle Wrapper, no installation is required. The projects can be simply built from the command line using `gradlew.bat [param]` (Windows) or `gradlew [param]` (Linux), where `[param]` should be `theta-cfa`, `theta-sts` or `theta-xta`. The jar files will appear in the directory _hu.bme.mit.theta.tools/build/libs_. The tools may require some dll or so files. These can be found in the _lib_ directory.
 
 ## Running the tools
 
