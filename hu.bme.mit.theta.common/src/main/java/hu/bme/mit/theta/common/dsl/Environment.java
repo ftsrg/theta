@@ -24,7 +24,7 @@ public final class Environment {
 	}
 
 	public void pop() {
-		checkState(currentFrame.parent != null);
+		checkState(currentFrame.parent != null, "No parent.");
 		currentFrame = currentFrame.parent;
 	}
 

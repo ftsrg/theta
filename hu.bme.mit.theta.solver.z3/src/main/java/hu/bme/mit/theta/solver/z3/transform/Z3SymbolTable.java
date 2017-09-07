@@ -39,7 +39,7 @@ public class Z3SymbolTable {
 	public void put(final ConstDecl<?> constDecl, final com.microsoft.z3.FuncDecl symbol) {
 		checkNotNull(constDecl);
 		checkNotNull(symbol);
-		checkState(!constToSymbol.containsKey(constDecl));
+		checkState(!constToSymbol.containsKey(constDecl), "Constant not found.");
 		constToSymbol.put(constDecl, symbol);
 	}
 

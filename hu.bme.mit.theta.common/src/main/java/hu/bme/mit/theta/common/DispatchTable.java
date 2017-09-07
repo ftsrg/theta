@@ -46,24 +46,24 @@ public final class DispatchTable<R> {
 		}
 
 		public <T> Builder<R> addCase(final Class<T> clazz, final Function<? super T, ? extends R> function) {
-			checkState(!built);
+			checkState(!built, "Already built.");
 			checkNotNull(clazz);
 			checkNotNull(function);
-			checkState(!cases.containsKey(clazz));
+			checkState(!cases.containsKey(clazz), "Class already present in the cases.");
 			cases.put(clazz, function);
 			return this;
 		}
 
 		public Builder<R> addDefault(final Function<Object, ? extends R> function) {
-			checkState(!built);
+			checkState(!built, "Already built.");
 			checkNotNull(function);
-			checkState(defaultCase == null);
+			checkState(defaultCase == null, "Default case already present.");
 			defaultCase = function;
 			return this;
 		}
 
 		public DispatchTable<R> build() {
-			checkState(!built);
+			checkState(!built, "Already built.");
 			built = true;
 			if (defaultCase == null) {
 				defaultCase = o -> {

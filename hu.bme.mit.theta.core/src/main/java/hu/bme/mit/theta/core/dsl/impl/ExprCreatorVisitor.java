@@ -111,7 +111,7 @@ public final class ExprCreatorVisitor extends CoreDslBaseVisitor<Expr<?>> {
 	}
 
 	private void pop() {
-		checkState(currentScope.enclosingScope().isPresent());
+		checkState(currentScope.enclosingScope().isPresent(), "No enclosing scope is present.");
 		currentScope = currentScope.enclosingScope().get();
 	}
 

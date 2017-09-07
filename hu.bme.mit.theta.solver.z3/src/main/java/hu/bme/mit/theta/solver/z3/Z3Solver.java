@@ -138,7 +138,7 @@ final class Z3Solver implements Solver {
 
 	@Override
 	public Model getModel() {
-		checkState(status == SolverStatus.SAT);
+		checkState(status == SolverStatus.SAT, "Cannot get model if status is not SAT.");
 
 		if (model == null) {
 			model = extractModel();
@@ -160,7 +160,7 @@ final class Z3Solver implements Solver {
 
 	@Override
 	public Collection<Expr<BoolType>> getUnsatCore() {
-		checkState(status == SolverStatus.UNSAT);
+		checkState(status == SolverStatus.UNSAT, "Cannot get unsat core if status is not UNSAT");
 
 		if (unsatCore == null) {
 			unsatCore = extractUnsatCore();
@@ -181,7 +181,7 @@ final class Z3Solver implements Solver {
 		for (int i = 0; i < z3UnsatCore.length; i = i + 1) {
 			final com.microsoft.z3.Expr term = z3UnsatCore[i];
 
-			checkState(term.isConst());
+			checkState(term.isConst(), "Term is not constant.");
 
 			final String label = term.toString();
 			final Expr<BoolType> assumption = assumptions.get(label);

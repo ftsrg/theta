@@ -112,7 +112,7 @@ final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
 	}
 
 	private void pop() {
-		checkState(currentScope.enclosingScope().isPresent());
+		checkState(currentScope.enclosingScope().isPresent(), "Enclosing scope is not present.");
 		currentScope = currentScope.enclosingScope().get();
 	}
 

@@ -94,7 +94,7 @@ public final class IndexedVars {
 		}
 
 		public void add(final int i, final VarDecl<?> varDecl) {
-			checkState(!built);
+			checkState(!built, "Already built.");
 			if (!varSets.containsKey(i)) {
 				varSets.put(i, new HashSet<>());
 			}
@@ -102,7 +102,7 @@ public final class IndexedVars {
 		}
 
 		public void add(final int i, final Collection<? extends VarDecl<?>> varDecls) {
-			checkState(!built);
+			checkState(!built, "Already built.");
 			if (varDecls.isEmpty())
 				return;
 
@@ -113,12 +113,12 @@ public final class IndexedVars {
 		}
 
 		public void add(final IndexedConstDecl<?> indexedConstDecl) {
-			checkState(!built);
+			checkState(!built, "Already built.");
 			add(indexedConstDecl.getIndex(), indexedConstDecl.getVarDecl());
 		}
 
 		public IndexedVars build() {
-			checkState(!built);
+			checkState(!built, "Already built.");
 			built = true;
 			return new IndexedVars(varSets);
 		}

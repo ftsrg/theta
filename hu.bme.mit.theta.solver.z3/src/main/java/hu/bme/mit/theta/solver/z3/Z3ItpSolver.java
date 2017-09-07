@@ -76,7 +76,7 @@ final class Z3ItpSolver implements ItpSolver {
 
 	@Override
 	public Interpolant getInterpolant(final ItpPattern pattern) {
-		checkState(solver.getStatus() == SolverStatus.UNSAT);
+		checkState(solver.getStatus() == SolverStatus.UNSAT, "Cannot get interpolant if status is not UNSAT.");
 
 		final com.microsoft.z3.Expr proof = z3Solver.getProof();
 		final com.microsoft.z3.Expr term = patternToTerm(pattern);

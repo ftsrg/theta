@@ -135,8 +135,7 @@ public final class BoundFunc {
 				varToUpper.entrySet().stream().map(e -> e.getKey().getName() + " <- " + e.getValue()).collect(toList()))
 				.toString();
 
-		return Utils.toStringBuilder(this.getClass().getSimpleName()).add(lowerToString).add(UpperToString)
-				.toString();
+		return Utils.toStringBuilder(this.getClass().getSimpleName()).add(lowerToString).add(UpperToString).toString();
 	}
 
 	public static final class Builder {
@@ -157,14 +156,14 @@ public final class BoundFunc {
 		}
 
 		public Builder remove(final VarDecl<RatType> var) {
-			checkState(!isBuilt());
+			checkState(!isBuilt(), "Already built.");
 			varToLower.remove(var);
 			varToUpper.remove(var);
 			return this;
 		}
 
 		public Builder add(final ClockConstr constr) {
-			checkState(!isBuilt());
+			checkState(!isBuilt(), "Already built.");
 			constr.accept(BoundFunctionVarConstrVisitor.INSTANCE, this);
 			return this;
 		}
