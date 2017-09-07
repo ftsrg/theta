@@ -17,7 +17,7 @@ public final class ExplDomain implements Domain<ExplState> {
 
 	@Override
 	public boolean isTop(final ExplState state) {
-		return !state.isBottom() && state.getDecls().isEmpty();
+		return state.isTop();
 	}
 
 	@Override

@@ -1,8 +1,11 @@
 package hu.bme.mit.theta.analysis;
 
 /**
- * Common interface for analyses, containing a domain, an initial and a transfer
- * function.
+ * Common interface for analyses.
+ *
+ * @see Domain
+ * @see InitFunc
+ * @see TransferFunc
  */
 public interface Analysis<S extends State, A extends Action, P extends Prec> {
 

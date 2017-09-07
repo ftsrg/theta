@@ -10,6 +10,9 @@ import java.util.stream.Stream;
 
 import hu.bme.mit.theta.common.Utils;
 
+/**
+ * A waitlist where items are removed in a random order.
+ */
 public final class RandomWaitlist<T> implements Waitlist<T> {
 
 	private final List<T> items;
@@ -26,14 +29,13 @@ public final class RandomWaitlist<T> implements Waitlist<T> {
 
 	@Override
 	public void add(final T item) {
-		checkNotNull(item);
-		items.add(item);
+		items.add(checkNotNull(item));
 	}
 
 	@Override
 	public void addAll(final Collection<? extends T> items) {
-		checkNotNull(items);
-		items.forEach(i -> this.items.add(i));
+
+		this.items.addAll(checkNotNull(items));
 	}
 
 	@Override

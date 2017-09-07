@@ -39,6 +39,8 @@ public abstract class ExplState implements ExprState, Valuation {
 
 	public abstract boolean isBottom();
 
+	public abstract boolean isTop();
+
 	////
 
 	private static final class NonBottom extends ExplState {
@@ -87,6 +89,11 @@ public abstract class ExplState implements ExprState, Valuation {
 		@Override
 		public boolean isBottom() {
 			return false;
+		}
+
+		@Override
+		public boolean isTop() {
+			return values.getDecls().isEmpty();
 		}
 
 		////
@@ -150,6 +157,11 @@ public abstract class ExplState implements ExprState, Valuation {
 		@Override
 		public boolean isBottom() {
 			return true;
+		}
+
+		@Override
+		public boolean isTop() {
+			return false;
 		}
 
 		////

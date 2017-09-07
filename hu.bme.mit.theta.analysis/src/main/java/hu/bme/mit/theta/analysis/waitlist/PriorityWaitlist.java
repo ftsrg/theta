@@ -8,11 +8,14 @@ import java.util.PriorityQueue;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
+import hu.bme.mit.theta.analysis.algorithm.ArgNodeComparators;
 import hu.bme.mit.theta.common.Utils;
 
 /**
- * Priority waitlist. The least item is always removed based on a comaprator or
+ * Priority waitlist. The least item is always removed based on a comparator or
  * on the natural ordering (if no comparator is given).
+ *
+ * @see ArgNodeComparators
  */
 public final class PriorityWaitlist<T> implements Waitlist<T> {
 
