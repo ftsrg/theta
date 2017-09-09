@@ -8,7 +8,6 @@ import java.io.InputStream;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
-import com.beust.jcommander.ParametersDelegate;
 
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
@@ -23,9 +22,12 @@ import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 import hu.bme.mit.theta.formalism.cfa.CFA;
 import hu.bme.mit.theta.formalism.cfa.dsl.CfaDslManager;
-import hu.bme.mit.theta.tools.CegarParams;
 import hu.bme.mit.theta.tools.Config;
-import hu.bme.mit.theta.tools.cfa.CfaConfigurationBuilder.PrecGranularity;
+import hu.bme.mit.theta.tools.cfa.CfaConfigBuilder.Domain;
+import hu.bme.mit.theta.tools.cfa.CfaConfigBuilder.PrecGranularity;
+import hu.bme.mit.theta.tools.cfa.CfaConfigBuilder.PredSplit;
+import hu.bme.mit.theta.tools.cfa.CfaConfigBuilder.Refinement;
+import hu.bme.mit.theta.tools.cfa.CfaConfigBuilder.Search;
 
 /**
  * A command line interface for running a CEGAR configuration on a CFA.
@@ -35,8 +37,17 @@ public class CfaMain {
 	private final String[] args;
 	private final TableWriter writer;
 
-	@ParametersDelegate
-	CegarParams cegarParams = new CegarParams();
+	@Parameter(names = { "-d", "--domain" }, description = "Abstract domain", required = true)
+	Domain domain;
+
+	@Parameter(names = { "-r", "--refinement" }, description = "Refinement strategy", required = true)
+	Refinement refinement;
+
+	@Parameter(names = { "-s", "--search" }, description = "Search strategy")
+	Search search = Search.BFS;
+
+	@Parameter(names = { "-ps", "--predsplit" }, description = "Predicate splitting")
+	PredSplit predSplit = PredSplit.WHOLE;
 
 	@Parameter(names = { "-m", "--model" }, description = "Path of the input model", required = true)
 	String model;
@@ -115,9 +126,8 @@ public class CfaMain {
 	}
 
 	private Config<?, ?, ?> buildConfiguration(final CFA cfa) {
-		return new CfaConfigurationBuilder(cegarParams.getDomain(), cegarParams.getRefinement())
-				.precGranularity(precGranularity).search(cegarParams.getSearch()).predSplit(cegarParams.getPredSplit())
-				.logger(logger).build(cfa);
+		return new CfaConfigBuilder(domain, refinement).precGranularity(precGranularity).search(search)
+				.predSplit(predSplit).logger(logger).build(cfa);
 	}
 
 	private void printResult(final SafetyResult<?, ?> status, final CFA cfa) {
