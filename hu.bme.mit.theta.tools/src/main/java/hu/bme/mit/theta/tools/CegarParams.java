@@ -2,10 +2,10 @@ package hu.bme.mit.theta.tools;
 
 import com.beust.jcommander.Parameter;
 
-import hu.bme.mit.theta.tools.ConfigurationBuilder.Domain;
-import hu.bme.mit.theta.tools.ConfigurationBuilder.PredSplit;
-import hu.bme.mit.theta.tools.ConfigurationBuilder.Refinement;
-import hu.bme.mit.theta.tools.ConfigurationBuilder.Search;
+import hu.bme.mit.theta.tools.ConfigBuilder.Domain;
+import hu.bme.mit.theta.tools.ConfigBuilder.PredSplit;
+import hu.bme.mit.theta.tools.ConfigBuilder.Refinement;
+import hu.bme.mit.theta.tools.ConfigBuilder.Search;
 
 public class CegarParams {
 	@Parameter(names = { "-d", "--domain" }, description = "Abstract domain", required = true)

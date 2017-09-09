@@ -10,6 +10,8 @@ import hu.bme.mit.theta.analysis.LTS;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.ArgBuilder;
+import hu.bme.mit.theta.analysis.algorithm.ArgNodeComparators;
+import hu.bme.mit.theta.analysis.algorithm.ArgNodeComparators.ArgNodeComparator;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
 import hu.bme.mit.theta.analysis.algorithm.cegar.BasicAbstractor;
@@ -32,6 +34,8 @@ import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceUnsatCoreChecker;
 import hu.bme.mit.theta.analysis.expr.refinement.ItpRefutation;
 import hu.bme.mit.theta.analysis.expr.refinement.JoiningPrecRefiner;
 import hu.bme.mit.theta.analysis.expr.refinement.SingleExprTraceRefiner;
+import hu.bme.mit.theta.analysis.pred.ExprSplitters;
+import hu.bme.mit.theta.analysis.pred.ExprSplitters.ExprSplitter;
 import hu.bme.mit.theta.analysis.pred.ItpRefToSimplePredPrec;
 import hu.bme.mit.theta.analysis.pred.PredAnalysis;
 import hu.bme.mit.theta.analysis.pred.PredPrec;
@@ -39,6 +43,7 @@ import hu.bme.mit.theta.analysis.pred.PredState;
 import hu.bme.mit.theta.analysis.pred.SimplePredPrec;
 import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist;
 import hu.bme.mit.theta.common.logging.Logger;
+import hu.bme.mit.theta.common.logging.impl.NullLogger;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.formalism.sts.STS;
@@ -49,10 +54,45 @@ import hu.bme.mit.theta.formalism.sts.analysis.initprec.StsInitPrec;
 import hu.bme.mit.theta.formalism.sts.analysis.initprec.StsPropInitPrec;
 import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.solver.SolverFactory;
-import hu.bme.mit.theta.tools.Configuration;
-import hu.bme.mit.theta.tools.ConfigurationBuilder;
+import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
+import hu.bme.mit.theta.tools.Config;
 
-public final class StsConfigurationBuilder extends ConfigurationBuilder {
+public final class StsConfigBuilder {
+
+	public enum Domain {
+		EXPL, PRED
+	};
+
+	public enum Refinement {
+		FW_BIN_ITP, BW_BIN_ITP, SEQ_ITP, UNSAT_CORE
+	};
+
+	public enum Search {
+		BFS(ArgNodeComparators.combine(ArgNodeComparators.targetFirst(), ArgNodeComparators.bfs())),
+
+		DFS(ArgNodeComparators.combine(ArgNodeComparators.targetFirst(), ArgNodeComparators.dfs()));
+
+		public final ArgNodeComparator comparator;
+
+		private Search(final ArgNodeComparator comparator) {
+			this.comparator = comparator;
+		}
+
+	};
+
+	public enum PredSplit {
+		WHOLE(ExprSplitters.whole()),
+
+		CONJUNCTS(ExprSplitters.conjuncts()),
+
+		ATOMS(ExprSplitters.atoms());
+
+		public final ExprSplitter splitter;
+
+		private PredSplit(final ExprSplitter splitter) {
+			this.splitter = splitter;
+		}
+	};
 
 	public enum InitPrec {
 		EMPTY(new StsEmptyInitPrec()), PROP(new StsPropInitPrec());
@@ -65,33 +105,40 @@ public final class StsConfigurationBuilder extends ConfigurationBuilder {
 
 	};
 
+	private Logger logger = NullLogger.getInstance();
+	private SolverFactory solverFactory = Z3SolverFactory.getInstace();
+	private final Domain domain;
+	private final Refinement refinement;
+	private Search search = Search.BFS;
+	private PredSplit predSplit = PredSplit.WHOLE;
 	private InitPrec initPrec = InitPrec.EMPTY;
 
-	public StsConfigurationBuilder(final Domain domain, final Refinement refinement) {
-		super(domain, refinement);
+	public StsConfigBuilder(final Domain domain, final Refinement refinement) {
+		this.domain = domain;
+		this.refinement = refinement;
 	}
 
-	public StsConfigurationBuilder logger(final Logger logger) {
-		setLogger(logger);
+	public StsConfigBuilder logger(final Logger logger) {
+		this.logger = logger;
 		return this;
 	}
 
-	public StsConfigurationBuilder solverFactory(final SolverFactory solverFactory) {
-		setSolverFactory(solverFactory);
+	public StsConfigBuilder solverFactory(final SolverFactory solverFactory) {
+		this.solverFactory = solverFactory;
 		return this;
 	}
 
-	public StsConfigurationBuilder search(final Search search) {
-		setSearch(search);
+	public StsConfigBuilder search(final Search search) {
+		this.search = search;
 		return this;
 	}
 
-	public StsConfigurationBuilder predSplit(final PredSplit predSplit) {
-		setPredSplit(predSplit);
+	public StsConfigBuilder predSplit(final PredSplit predSplit) {
+		this.predSplit = predSplit;
 		return this;
 	}
 
-	public StsConfigurationBuilder initPrec(final InitPrec initPrec) {
+	public StsConfigBuilder initPrec(final InitPrec initPrec) {
 		this.initPrec = initPrec;
 		return this;
 	}
@@ -100,57 +147,57 @@ public final class StsConfigurationBuilder extends ConfigurationBuilder {
 		return initPrec;
 	}
 
-	public Configuration<? extends State, ? extends Action, ? extends Prec> build(final STS sts) {
-		final ItpSolver solver = getSolverFactory().createItpSolver();
+	public Config<? extends State, ? extends Action, ? extends Prec> build(final STS sts) {
+		final ItpSolver solver = solverFactory.createItpSolver();
 		final LTS<State, StsAction> lts = StsLts.create(sts);
 		final Expr<BoolType> init = sts.getInit();
 		final Expr<BoolType> negProp = Not(sts.getProp());
 
-		if (getDomain() == Domain.EXPL) {
+		if (domain == Domain.EXPL) {
 			final Predicate<ExplState> target = new ExplStatePredicate(negProp, solver);
 			final Analysis<ExplState, ExprAction, ExplPrec> analysis = ExplAnalysis.create(solver, init);
 			final ArgBuilder<ExplState, StsAction, ExplPrec> argBuilder = ArgBuilder.create(lts, analysis, target);
 			final Abstractor<ExplState, StsAction, ExplPrec> abstractor = BasicAbstractor.builder(argBuilder)
-					.waitlistSupplier(PriorityWaitlist.supplier(getSearch().comparator)).logger(getLogger()).build();
+					.waitlistSupplier(PriorityWaitlist.supplier(search.comparator)).logger(logger).build();
 
 			Refiner<ExplState, StsAction, ExplPrec> refiner = null;
 
-			switch (getRefinement()) {
+			switch (refinement) {
 			case FW_BIN_ITP:
 				refiner = SingleExprTraceRefiner.create(ExprTraceFwBinItpChecker.create(init, negProp, solver),
-						JoiningPrecRefiner.create(new ItpRefToExplPrec()), getLogger());
+						JoiningPrecRefiner.create(new ItpRefToExplPrec()), logger);
 				break;
 			case BW_BIN_ITP:
 				refiner = SingleExprTraceRefiner.create(ExprTraceBwBinItpChecker.create(init, negProp, solver),
-						JoiningPrecRefiner.create(new ItpRefToExplPrec()), getLogger());
+						JoiningPrecRefiner.create(new ItpRefToExplPrec()), logger);
 				break;
 			case SEQ_ITP:
 				refiner = SingleExprTraceRefiner.create(ExprTraceSeqItpChecker.create(init, negProp, solver),
-						JoiningPrecRefiner.create(new ItpRefToExplPrec()), getLogger());
+						JoiningPrecRefiner.create(new ItpRefToExplPrec()), logger);
 				break;
 			case UNSAT_CORE:
 				refiner = SingleExprTraceRefiner.create(ExprTraceUnsatCoreChecker.create(init, negProp, solver),
-						JoiningPrecRefiner.create(new VarsRefToExplPrec()), getLogger());
+						JoiningPrecRefiner.create(new VarsRefToExplPrec()), logger);
 				break;
 			default:
 				throw new UnsupportedOperationException();
 			}
 
 			final SafetyChecker<ExplState, StsAction, ExplPrec> checker = CegarChecker.create(abstractor, refiner,
-					getLogger());
+					logger);
 			final ExplPrec prec = initPrec.builder.createExpl(sts);
-			return Configuration.create(checker, prec);
+			return Config.create(checker, prec);
 
-		} else if (getDomain() == Domain.PRED) {
+		} else if (domain == Domain.PRED) {
 			final Predicate<ExprState> target = new ExprStatePredicate(negProp, solver);
 			final Analysis<PredState, ExprAction, PredPrec> analysis = PredAnalysis.create(solver, init);
 			final ArgBuilder<PredState, StsAction, SimplePredPrec> argBuilder = ArgBuilder.create(lts, analysis,
 					target);
 			final Abstractor<PredState, StsAction, SimplePredPrec> abstractor = BasicAbstractor.builder(argBuilder)
-					.waitlistSupplier(PriorityWaitlist.supplier(getSearch().comparator)).logger(getLogger()).build();
+					.waitlistSupplier(PriorityWaitlist.supplier(search.comparator)).logger(logger).build();
 
 			ExprTraceChecker<ItpRefutation> exprTraceChecker = null;
-			switch (getRefinement()) {
+			switch (refinement) {
 			case FW_BIN_ITP:
 				exprTraceChecker = ExprTraceFwBinItpChecker.create(init, negProp, solver);
 				break;
@@ -164,15 +211,14 @@ public final class StsConfigurationBuilder extends ConfigurationBuilder {
 				throw new UnsupportedOperationException();
 			}
 			final Refiner<PredState, StsAction, SimplePredPrec> refiner = SingleExprTraceRefiner.create(
-					exprTraceChecker,
-					JoiningPrecRefiner.create(new ItpRefToSimplePredPrec(solver, getPredSplit().splitter)),
-					getLogger());
+					exprTraceChecker, JoiningPrecRefiner.create(new ItpRefToSimplePredPrec(solver, predSplit.splitter)),
+					logger);
 
 			final SafetyChecker<PredState, StsAction, SimplePredPrec> checker = CegarChecker.create(abstractor, refiner,
-					getLogger());
+					logger);
 
 			final SimplePredPrec prec = initPrec.builder.createSimplePred(sts, solver);
-			return Configuration.create(checker, prec);
+			return Config.create(checker, prec);
 		} else {
 			throw new UnsupportedOperationException();
 		}

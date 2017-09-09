@@ -24,7 +24,7 @@ import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 import hu.bme.mit.theta.formalism.cfa.CFA;
 import hu.bme.mit.theta.formalism.cfa.dsl.CfaDslManager;
 import hu.bme.mit.theta.tools.CegarParams;
-import hu.bme.mit.theta.tools.Configuration;
+import hu.bme.mit.theta.tools.Config;
 import hu.bme.mit.theta.tools.cfa.CfaConfigurationBuilder.PrecGranularity;
 
 /**
@@ -85,7 +85,7 @@ public class CfaMain {
 
 		try {
 			final CFA cfa = loadModel();
-			final Configuration<?, ?, ?> configuration = buildConfiguration(cfa);
+			final Config<?, ?, ?> configuration = buildConfiguration(cfa);
 			final SafetyResult<?, ?> status = configuration.check();
 			printResult(status, cfa);
 			if (dotfile != null) {
@@ -114,7 +114,7 @@ public class CfaMain {
 		return cfa;
 	}
 
-	private Configuration<?, ?, ?> buildConfiguration(final CFA cfa) {
+	private Config<?, ?, ?> buildConfiguration(final CFA cfa) {
 		return new CfaConfigurationBuilder(cegarParams.getDomain(), cegarParams.getRefinement())
 				.precGranularity(precGranularity).search(cegarParams.getSearch()).predSplit(cegarParams.getPredSplit())
 				.logger(logger).build(cfa);

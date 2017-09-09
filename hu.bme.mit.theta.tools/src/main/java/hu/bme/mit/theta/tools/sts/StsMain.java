@@ -8,7 +8,6 @@ import java.io.InputStream;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
-import com.beust.jcommander.ParametersDelegate;
 
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
@@ -29,9 +28,12 @@ import hu.bme.mit.theta.formalism.sts.StsUtils;
 import hu.bme.mit.theta.formalism.sts.aiger.BasicAigerParser;
 import hu.bme.mit.theta.formalism.sts.dsl.StsDslManager;
 import hu.bme.mit.theta.formalism.sts.dsl.StsSpec;
-import hu.bme.mit.theta.tools.CegarParams;
-import hu.bme.mit.theta.tools.Configuration;
-import hu.bme.mit.theta.tools.sts.StsConfigurationBuilder.InitPrec;
+import hu.bme.mit.theta.tools.Config;
+import hu.bme.mit.theta.tools.sts.StsConfigBuilder.Domain;
+import hu.bme.mit.theta.tools.sts.StsConfigBuilder.InitPrec;
+import hu.bme.mit.theta.tools.sts.StsConfigBuilder.PredSplit;
+import hu.bme.mit.theta.tools.sts.StsConfigBuilder.Refinement;
+import hu.bme.mit.theta.tools.sts.StsConfigBuilder.Search;
 
 /**
  * A command line interface for running a CEGAR configuration on an STS.
@@ -41,8 +43,17 @@ public class StsMain {
 	private final String[] args;
 	private final TableWriter writer;
 
-	@ParametersDelegate
-	CegarParams cegarParams = new CegarParams();
+	@Parameter(names = { "-d", "--domain" }, description = "Abstract domain", required = true)
+	Domain domain;
+
+	@Parameter(names = { "-r", "--refinement" }, description = "Refinement strategy", required = true)
+	Refinement refinement;
+
+	@Parameter(names = { "-s", "--search" }, description = "Search strategy")
+	Search search = Search.BFS;
+
+	@Parameter(names = { "-ps", "--predsplit" }, description = "Predicate splitting")
+	PredSplit predSplit = PredSplit.WHOLE;
 
 	@Parameter(names = { "-m", "--model" }, description = "Path of the input model", required = true)
 	String model;
@@ -94,7 +105,7 @@ public class StsMain {
 
 		try {
 			final STS sts = loadModel();
-			final Configuration<?, ?, ?> configuration = buildConfiguration(sts);
+			final Config<?, ?, ?> configuration = buildConfiguration(sts);
 			final SafetyResult<?, ?> status = configuration.check();
 			checkResult(status);
 			printResult(status, sts);
@@ -133,9 +144,9 @@ public class StsMain {
 		}
 	}
 
-	private Configuration<?, ?, ?> buildConfiguration(final STS sts) {
-		return new StsConfigurationBuilder(cegarParams.getDomain(), cegarParams.getRefinement()).initPrec(initPrec)
-				.search(cegarParams.getSearch()).predSplit(cegarParams.getPredSplit()).logger(logger).build(sts);
+	private Config<?, ?, ?> buildConfiguration(final STS sts) {
+		return new StsConfigBuilder(domain, refinement).initPrec(initPrec).search(search).predSplit(predSplit)
+				.logger(logger).build(sts);
 	}
 
 	private void checkResult(final SafetyResult<?, ?> status) throws Exception {

@@ -14,12 +14,12 @@ import hu.bme.mit.theta.formalism.sts.StsUtils;
 import hu.bme.mit.theta.formalism.sts.dsl.StsDslManager;
 import hu.bme.mit.theta.formalism.sts.dsl.StsSpec;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
-import hu.bme.mit.theta.tools.ConfigurationBuilder.Domain;
-import hu.bme.mit.theta.tools.ConfigurationBuilder.PredSplit;
-import hu.bme.mit.theta.tools.ConfigurationBuilder.Refinement;
-import hu.bme.mit.theta.tools.ConfigurationBuilder.Search;
-import hu.bme.mit.theta.tools.sts.StsConfigurationBuilder;
-import hu.bme.mit.theta.tools.sts.StsConfigurationBuilder.InitPrec;
+import hu.bme.mit.theta.tools.sts.StsConfigBuilder;
+import hu.bme.mit.theta.tools.sts.StsConfigBuilder.Domain;
+import hu.bme.mit.theta.tools.sts.StsConfigBuilder.InitPrec;
+import hu.bme.mit.theta.tools.sts.StsConfigBuilder.PredSplit;
+import hu.bme.mit.theta.tools.sts.StsConfigBuilder.Refinement;
+import hu.bme.mit.theta.tools.sts.StsConfigBuilder.Search;
 
 public class SandBox {
 	public static void main(final String[] args) throws FileNotFoundException, IOException {
@@ -37,7 +37,7 @@ public class SandBox {
 
 		final Logger logger = new ConsoleLogger(100);
 
-		final Configuration<? extends State, ? extends Action, ? extends Prec> configuration = new StsConfigurationBuilder(
+		final Config<? extends State, ? extends Action, ? extends Prec> configuration = new StsConfigBuilder(
 				Domain.PRED, Refinement.BW_BIN_ITP).initPrec(InitPrec.EMPTY).search(Search.BFS)
 						.predSplit(PredSplit.WHOLE).logger(logger).solverFactory(Z3SolverFactory.getInstace())
 						.build(sts);

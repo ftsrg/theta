@@ -46,10 +46,10 @@ import hu.bme.mit.theta.formalism.cfa.analysis.prec.LocalCfaPrec;
 import hu.bme.mit.theta.formalism.cfa.analysis.prec.LocalCfaPrecRefiner;
 import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.solver.SolverFactory;
-import hu.bme.mit.theta.tools.Configuration;
-import hu.bme.mit.theta.tools.ConfigurationBuilder;
+import hu.bme.mit.theta.tools.Config;
+import hu.bme.mit.theta.tools.ConfigBuilder;
 
-public class CfaConfigurationBuilder extends ConfigurationBuilder {
+public class CfaConfigurationBuilder extends ConfigBuilder {
 
 	public enum PrecGranularity {
 		GLOBAL {
@@ -115,7 +115,7 @@ public class CfaConfigurationBuilder extends ConfigurationBuilder {
 		return this;
 	}
 
-	public Configuration<? extends State, ? extends Action, ? extends Prec> build(final CFA cfa) {
+	public Config<? extends State, ? extends Action, ? extends Prec> build(final CFA cfa) {
 		final ItpSolver solver = getSolverFactory().createItpSolver();
 		final CfaLts lts = new CfaLts();
 
@@ -156,7 +156,7 @@ public class CfaConfigurationBuilder extends ConfigurationBuilder {
 
 			final CfaPrec<ExplPrec> prec = precGranularity.createPrec(ExplPrec.create());
 
-			return Configuration.create(checker, prec);
+			return Config.create(checker, prec);
 
 		} else if (getDomain() == Domain.PRED) {
 			final Analysis<CfaState<PredState>, CfaAction, CfaPrec<SimplePredPrec>> analysis = CfaAnalysis
@@ -190,7 +190,7 @@ public class CfaConfigurationBuilder extends ConfigurationBuilder {
 
 			final CfaPrec<SimplePredPrec> prec = precGranularity.createPrec(SimplePredPrec.create(solver));
 
-			return Configuration.create(checker, prec);
+			return Config.create(checker, prec);
 
 		} else {
 			throw new UnsupportedOperationException();

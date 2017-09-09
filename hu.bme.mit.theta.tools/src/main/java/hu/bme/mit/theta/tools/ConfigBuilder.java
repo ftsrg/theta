@@ -9,7 +9,7 @@ import hu.bme.mit.theta.common.logging.impl.NullLogger;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 
-public abstract class ConfigurationBuilder {
+public abstract class ConfigBuilder {
 	public enum Domain {
 		EXPL, PRED
 	};
@@ -52,7 +52,7 @@ public abstract class ConfigurationBuilder {
 	private Search search = Search.BFS;
 	private PredSplit predSplit = PredSplit.WHOLE;
 
-	protected ConfigurationBuilder(final Domain domain, final Refinement refinement) {
+	protected ConfigBuilder(final Domain domain, final Refinement refinement) {
 		this.domain = domain;
 		this.refinement = refinement;
 	}
