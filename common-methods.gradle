@@ -11,7 +11,7 @@ def getCommitId() {
     }
     def id = branch.toString() + "-" + commit.toString()
 
-    return id.replace("\n", "").replaceAll("[^a-zA-Z0-9.-_]", "-")
+    return id.replace("\n", "").replaceAll("[^a-zA-Z0-9._]", "-")
 }
 
 ext {
