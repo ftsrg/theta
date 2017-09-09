@@ -1,7 +1,7 @@
 package hu.bme.mit.theta.formalism.cfa.analysis;
 
-import java.io.Serializable;
-import java.util.Comparator;
+import static com.google.common.base.Preconditions.checkArgument;
+
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -10,27 +10,32 @@ import java.util.Map;
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.ArgNode;
+import hu.bme.mit.theta.analysis.algorithm.ArgNodeComparators.ArgNodeComparator;
 import hu.bme.mit.theta.formalism.cfa.CFA;
 import hu.bme.mit.theta.formalism.cfa.CFA.Edge;
 import hu.bme.mit.theta.formalism.cfa.CFA.Loc;
 
-public class DistanceToErrorLocComparator
-		implements Comparator<ArgNode<? extends CfaState<? extends State>, ? extends Action>>, Serializable {
+public class DistToErrComparator implements ArgNodeComparator {
 	private static final long serialVersionUID = -6915823336852930450L;
 
 	private final Map<Loc, Integer> distancesToError;
 
-	public DistanceToErrorLocComparator(final CFA cfa) {
+	public DistToErrComparator(final CFA cfa) {
 		distancesToError = getDistancesToError(cfa);
 	}
 
 	@Override
-	public int compare(final ArgNode<? extends CfaState<? extends State>, ? extends Action> n1,
-			final ArgNode<? extends CfaState<? extends State>, ? extends Action> n2) {
-		final int dist1 = distancesToError.getOrDefault(n1.getState().getLoc(), Integer.MAX_VALUE);
-		final int dist2 = distancesToError.getOrDefault(n2.getState().getLoc(), Integer.MAX_VALUE);
+	public int compare(final ArgNode<? extends State, ? extends Action> n1,
+			final ArgNode<? extends State, ? extends Action> n2) {
+		checkArgument(n1.getState() instanceof CfaState, "CfaState expected.");
+		checkArgument(n2.getState() instanceof CfaState, "CfaState expected.");
+		final CfaState<?> s1 = (CfaState<?>) n1.getState();
+		final CfaState<?> s2 = (CfaState<?>) n2.getState();
 
-		return Integer.compare(dist1, dist2) * -1;
+		final int dist1 = distancesToError.getOrDefault(s1.getLoc(), Integer.MAX_VALUE);
+		final int dist2 = distancesToError.getOrDefault(s2.getLoc(), Integer.MAX_VALUE);
+
+		return Integer.compare(dist1, dist2);
 	}
 
 	static Map<Loc, Integer> getDistancesToError(final CFA cfa) {
