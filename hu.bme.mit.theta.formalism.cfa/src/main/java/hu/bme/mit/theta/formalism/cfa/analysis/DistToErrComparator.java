@@ -18,10 +18,12 @@ import hu.bme.mit.theta.formalism.cfa.CFA.Loc;
 public class DistToErrComparator implements ArgNodeComparator {
 	private static final long serialVersionUID = -6915823336852930450L;
 
-	private final Map<Loc, Integer> distancesToError;
+	private Map<Loc, Integer> distancesToError;
+	private final CFA cfa;
 
 	public DistToErrComparator(final CFA cfa) {
-		distancesToError = getDistancesToError(cfa);
+		this.cfa = cfa;
+		distancesToError = null;
 	}
 
 	@Override
@@ -29,6 +31,11 @@ public class DistToErrComparator implements ArgNodeComparator {
 			final ArgNode<? extends State, ? extends Action> n2) {
 		checkArgument(n1.getState() instanceof CfaState, "CfaState expected.");
 		checkArgument(n2.getState() instanceof CfaState, "CfaState expected.");
+
+		if (distancesToError == null) {
+			distancesToError = getDistancesToError(cfa);
+		}
+
 		final CfaState<?> s1 = (CfaState<?>) n1.getState();
 		final CfaState<?> s2 = (CfaState<?>) n2.getState();
 
