@@ -63,4 +63,8 @@ public class DistToErrComparator implements ArgNodeComparator {
 		return distancesToError;
 	}
 
+	@Override
+	public String toString() {
+		return getClass().getSimpleName();
+	}
 }

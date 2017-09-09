@@ -45,6 +45,7 @@ import hu.bme.mit.theta.formalism.cfa.analysis.CfaAnalysis;
 import hu.bme.mit.theta.formalism.cfa.analysis.CfaLts;
 import hu.bme.mit.theta.formalism.cfa.analysis.CfaPrec;
 import hu.bme.mit.theta.formalism.cfa.analysis.CfaState;
+import hu.bme.mit.theta.formalism.cfa.analysis.DistToErrComparator;
 import hu.bme.mit.theta.formalism.cfa.analysis.prec.GlobalCfaPrec;
 import hu.bme.mit.theta.formalism.cfa.analysis.prec.GlobalCfaPrecRefiner;
 import hu.bme.mit.theta.formalism.cfa.analysis.prec.LocalCfaPrec;
@@ -64,15 +65,28 @@ public class CfaConfigBuilder {
 	};
 
 	public enum Search {
-		BFS(ArgNodeComparators.combine(ArgNodeComparators.targetFirst(), ArgNodeComparators.bfs())),
+		BFS {
+			@Override
+			public ArgNodeComparator getComp(final CFA cfa) {
+				return ArgNodeComparators.combine(ArgNodeComparators.targetFirst(), ArgNodeComparators.bfs());
+			}
+		},
 
-		DFS(ArgNodeComparators.combine(ArgNodeComparators.targetFirst(), ArgNodeComparators.dfs()));
+		DFS {
+			@Override
+			public ArgNodeComparator getComp(final CFA cfa) {
+				return ArgNodeComparators.combine(ArgNodeComparators.targetFirst(), ArgNodeComparators.dfs());
+			}
+		},
 
-		public final ArgNodeComparator comparator;
+		ERR {
+			@Override
+			public ArgNodeComparator getComp(final CFA cfa) {
+				return new DistToErrComparator(cfa);
+			}
+		};
 
-		private Search(final ArgNodeComparator comparator) {
-			this.comparator = comparator;
-		}
+		public abstract ArgNodeComparator getComp(CFA cfa);
 
 	};
 
@@ -172,7 +186,7 @@ public class CfaConfigBuilder {
 					analysis, s -> s.getLoc().equals(cfa.getErrorLoc()));
 			final Abstractor<CfaState<ExplState>, CfaAction, CfaPrec<ExplPrec>> abstractor = BasicAbstractor
 					.builder(argBuilder).projection(CfaState::getLoc)
-					.waitlistSupplier(PriorityWaitlist.supplier(search.comparator)).logger(logger).build();
+					.waitlistSupplier(PriorityWaitlist.supplier(search.getComp(cfa))).logger(logger).build();
 
 			Refiner<CfaState<ExplState>, CfaAction, CfaPrec<ExplPrec>> refiner = null;
 
@@ -211,7 +225,7 @@ public class CfaConfigBuilder {
 					.create(lts, analysis, s -> s.getLoc().equals(cfa.getErrorLoc()));
 			final Abstractor<CfaState<PredState>, CfaAction, CfaPrec<SimplePredPrec>> abstractor = BasicAbstractor
 					.builder(argBuilder).projection(CfaState::getLoc)
-					.waitlistSupplier(PriorityWaitlist.supplier(search.comparator)).logger(logger).build();
+					.waitlistSupplier(PriorityWaitlist.supplier(search.getComp(cfa))).logger(logger).build();
 
 			ExprTraceChecker<ItpRefutation> exprTraceChecker = null;
 			switch (refinement) {
