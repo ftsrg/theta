@@ -55,6 +55,9 @@ public class CfaMain {
 	@Parameter(names = { "-g", "--precision-granularity" }, description = "Precision granularity")
 	PrecGranularity precGranularity = PrecGranularity.GLOBAL;
 
+	@Parameter(names = { "-e", "--expected" }, description = "Expected result", arity = 1)
+	Boolean expected;
+
 	@Parameter(names = { "-ll", "--loglevel" }, description = "Detailedness of logging")
 	Integer logLevel = 1;
 
@@ -98,6 +101,7 @@ public class CfaMain {
 			final CFA cfa = loadModel();
 			final Config<?, ?, ?> configuration = buildConfiguration(cfa);
 			final SafetyResult<?, ?> status = configuration.check();
+			checkResult(status);
 			printResult(status, cfa);
 			if (dotfile != null) {
 				writeVisualStatus(status, dotfile);
@@ -128,6 +132,12 @@ public class CfaMain {
 	private Config<?, ?, ?> buildConfiguration(final CFA cfa) {
 		return new CfaConfigBuilder(domain, refinement).precGranularity(precGranularity).search(search)
 				.predSplit(predSplit).logger(logger).build(cfa);
+	}
+
+	private void checkResult(final SafetyResult<?, ?> status) throws Exception {
+		if (expected != null && !expected.equals(status.isSafe())) {
+			throw new Exception("Expected safe = " + expected + " but was " + status.isSafe());
+		}
 	}
 
 	private void printResult(final SafetyResult<?, ?> status, final CFA cfa) {
