@@ -9,7 +9,9 @@ import hu.bme.mit.theta.formalism.cfa.analysis.CfaPrec;
 
 /**
  * Represents an immutable global precision that maps the same precision to each
- * location.
+ * location. A refiner is also implemented.
+ *
+ * @see GlobalCfaPrecRefiner
  */
 public final class GlobalCfaPrec<P extends Prec> implements CfaPrec<P> {
 

@@ -21,7 +21,8 @@ import hu.bme.mit.theta.formalism.sts.aiger.elements.OutVar;
 /**
  * A compacting AIGER parser that minimizes the number of STS variables used. It
  * only associates a STS variable to inputs and latches. Note, that the reduced
- * number of variables may not be suitable for each algorithm.
+ * number of variables may not be suitable for each algorithm. It supports AIGER
+ * format 1.7.
  */
 public class CompactingAigerParser implements AigerParser {
 

@@ -19,8 +19,10 @@ import hu.bme.mit.theta.formalism.cfa.CFA.Loc;
 import hu.bme.mit.theta.formalism.cfa.analysis.CfaPrec;
 
 /**
- * Represents an immutable generic precision that can assign a precision to each
- * location.
+ * Represents an immutable local precision that can assign a precision to each
+ * location. A refiner is also implemented.
+ *
+ * @see LocalCfaPrecRefiner
  */
 public final class LocalCfaPrec<P extends Prec> implements CfaPrec<P> {
 	private final Map<Loc, P> mapping;

@@ -21,7 +21,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.formalism.sts.STS;
 
 /**
- * A simple AIGER parser that encodes each variable of the circuit with a STS
+ * A basic AIGER parser that encodes each variable of the circuit with a STS
  * variable. It supports AIGER format 1.7.
  */
 public class BasicAigerParser implements AigerParser {

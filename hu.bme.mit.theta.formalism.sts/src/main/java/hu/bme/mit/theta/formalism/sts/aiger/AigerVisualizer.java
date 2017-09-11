@@ -8,6 +8,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 
+/**
+ * Utility class for visualizing AIGER files.
+ */
 public class AigerVisualizer {
 
 	private AigerVisualizer() {
@@ -19,9 +22,16 @@ public class AigerVisualizer {
 	private static final String ANDSHAPE = "ellipse";
 	private static final String INVHEAD = "odot";
 
-	public static void visualize(final String fileName, final String output) throws IOException {
-		final BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(fileName)));
-		final PrintWriter pw = new PrintWriter(output);
+	/**
+	 * Parse and visualize an AIGER file into dot format.
+	 *
+	 * @param aigerFilePath Path of the input AIGER file
+	 * @param outFilePath Path of the output dot file
+	 * @throws IOException
+	 */
+	public static void visualize(final String aigerFilePath, final String outFilePath) throws IOException {
+		final BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(aigerFilePath)));
+		final PrintWriter pw = new PrintWriter(outFilePath);
 
 		try {
 			int inputs, latches, outputs, andGates;

@@ -15,6 +15,10 @@ import hu.bme.mit.theta.formalism.cfa.CFA;
 import hu.bme.mit.theta.formalism.cfa.CFA.Edge;
 import hu.bme.mit.theta.formalism.cfa.CFA.Loc;
 
+/**
+ * A comparator for ArgNodes that is based on the distance from the error
+ * location.
+ */
 public class DistToErrComparator implements ArgNodeComparator {
 	private static final long serialVersionUID = -6915823336852930450L;
 
@@ -32,17 +36,20 @@ public class DistToErrComparator implements ArgNodeComparator {
 		checkArgument(n1.getState() instanceof CfaState, "CfaState expected.");
 		checkArgument(n2.getState() instanceof CfaState, "CfaState expected.");
 
-		if (distancesToError == null) {
-			distancesToError = getDistancesToError(cfa);
-		}
-
 		final CfaState<?> s1 = (CfaState<?>) n1.getState();
 		final CfaState<?> s2 = (CfaState<?>) n2.getState();
 
-		final int dist1 = distancesToError.getOrDefault(s1.getLoc(), Integer.MAX_VALUE);
-		final int dist2 = distancesToError.getOrDefault(s2.getLoc(), Integer.MAX_VALUE);
+		final int dist1 = getDistance(s1.getLoc());
+		final int dist2 = getDistance(s2.getLoc());
 
 		return Integer.compare(dist1, dist2);
+	}
+
+	private int getDistance(final Loc loc) {
+		if (distancesToError == null) {
+			distancesToError = getDistancesToError(cfa);
+		}
+		return distancesToError.getOrDefault(loc, Integer.MAX_VALUE);
 	}
 
 	static Map<Loc, Integer> getDistancesToError(final CFA cfa) {

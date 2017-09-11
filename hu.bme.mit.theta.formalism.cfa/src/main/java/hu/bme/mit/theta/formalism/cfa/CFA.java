@@ -55,6 +55,9 @@ public final class CFA {
 		return errorLoc;
 	}
 
+	/**
+	 * Get the variables appearing on the edges of the CFA.
+	 */
 	public Collection<VarDecl<?>> getVars() {
 		return vars;
 	}
@@ -189,8 +192,8 @@ public final class CFA {
 			checkNotNull(source);
 			checkNotNull(target);
 			checkNotNull(stmts);
-			checkArgument(locs.contains(source));
-			checkArgument(locs.contains(target));
+			checkArgument(locs.contains(source), "Invalid source.");
+			checkArgument(locs.contains(target), "Invalid target.");
 
 			final Edge edge = new Edge(source, target, stmts);
 			source.outEdges.add(edge);
