@@ -8,9 +8,6 @@ As the main repository is read-only, we suggest you to create your own [fork](ht
 
 As the framework is under development, we suggest you to [sync your fork](https://help.github.com/articles/syncing-a-fork/) often and merge the master branch into your development branch(es).
 
-## Building from the command line
-Thanks to the Gradle Wrapper, no installation is required. The projects can be simply built from the command line by executing `gradlew.bat build` (Windows) or `./gradlew build` (Linux) from the root directory.
-
 ## Importing and developing in Eclipse
 
 The projects are currently developed and tested with [Oxygen](https://www.eclipse.org/oxygen/).
