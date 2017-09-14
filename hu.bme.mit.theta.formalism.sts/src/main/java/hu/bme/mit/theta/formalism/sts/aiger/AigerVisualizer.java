@@ -1,12 +1,12 @@
 /*
  *  Copyright 2017 Budapest University of Technology and Economics
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -49,7 +49,10 @@ public class AigerVisualizer {
 		final PrintWriter pw = new PrintWriter(outFilePath);
 
 		try {
-			int inputs, latches, outputs, andGates;
+			int inputs;
+			int latches;
+			int outputs;
+			int andGates;
 			// Parse header
 			final String[] header = checkNotNull(br.readLine(), "Header expected").split(" ");
 			inputs = Integer.parseInt(header[2]);
@@ -74,8 +77,9 @@ public class AigerVisualizer {
 				pw.write("v" + v1 / 2 + "[label=\"L" + (i + 1) + "\", shape=\"" + LATCHSHAPE
 						+ "\", margin=\"0.05\", width=\"0\", height=\"0\"];\n");
 				pw.write("v" + v2 / 2 + ":s -> v" + v1 / 2 + ":n");
-				if (v2 % 2 != 0)
+				if (v2 % 2 != 0) {
 					pw.write(" [arrowhead=\"" + INVHEAD + "\"]");
+				}
 				pw.write(";\n");
 			}
 
@@ -85,8 +89,9 @@ public class AigerVisualizer {
 				pw.write("o" + i + "[label=\"O" + (i + 1) + "\", shape=\"" + OUTPUTSHAPE
 						+ "\", margin=\"0\", width=\"0\", height=\"0\"];\n");
 				pw.write("v" + v / 2 + ":s -> o" + i + ":n");
-				if (v % 2 != 0)
+				if (v % 2 != 0) {
 					pw.write(" [arrowhead=\"" + INVHEAD + "\"]");
+				}
 				pw.write(";\n");
 			}
 
@@ -99,12 +104,14 @@ public class AigerVisualizer {
 				pw.write("v" + vo / 2 + "[label=\"A" + (i + 1) + "\", shape=\"" + ANDSHAPE
 						+ "\", margin=\"0.02\", width=\"0\", height=\"0\"];\n");
 				pw.write("v" + vi1 / 2 + ":s -> v" + vo / 2 + ":nw");
-				if (vi1 % 2 != 0)
+				if (vi1 % 2 != 0) {
 					pw.write(" [arrowhead=\"" + INVHEAD + "\"]");
+				}
 				pw.write("\n");
 				pw.write("v" + vi2 / 2 + ":s -> v" + vo / 2 + ":ne");
-				if (vi2 % 2 != 0)
+				if (vi2 % 2 != 0) {
 					pw.write(" [arrowhead=\"" + INVHEAD + "\"]");
+				}
 				pw.write(";\n");
 			}
 

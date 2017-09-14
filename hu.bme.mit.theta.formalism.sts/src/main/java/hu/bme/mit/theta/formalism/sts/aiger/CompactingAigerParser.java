@@ -1,12 +1,12 @@
 /*
  *  Copyright 2017 Budapest University of Technology and Economics
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -47,7 +47,10 @@ public class CompactingAigerParser implements AigerParser {
 		final BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(fileName)));
 
 		try {
-			final int inputs, latches, outputs, andGates;
+			final int inputs;
+			int latches;
+			int outputs;
+			int andGates;
 			// Parse header
 			final String[] header = checkNotNull(br.readLine(), "Header expected").split(" ");
 			inputs = Integer.parseInt(header[2]);
@@ -56,8 +59,9 @@ public class CompactingAigerParser implements AigerParser {
 			andGates = Integer.parseInt(header[5]);
 
 			final List<HwElement> elements = new ArrayList<>(inputs + latches + andGates + 1);
-			for (int i = 0; i < inputs + latches + andGates + 1; ++i)
+			for (int i = 0; i < inputs + latches + andGates + 1; ++i) {
 				elements.add(null);
+			}
 			elements.set(0, new FalseConst());
 			final List<OutVar> outVarElements = new ArrayList<>(outputs);
 			final List<Latch> latchElements = new ArrayList<>(latches);

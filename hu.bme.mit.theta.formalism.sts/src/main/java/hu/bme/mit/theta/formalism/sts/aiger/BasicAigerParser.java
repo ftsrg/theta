@@ -1,12 +1,12 @@
 /*
  *  Copyright 2017 Budapest University of Technology and Economics
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -48,7 +48,11 @@ public class BasicAigerParser implements AigerParser {
 		final BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(fileName)));
 
 		try {
-			int maxVars, inputs, latches, outputs, andGates;
+			int maxVars;
+			int inputs;
+			int latches;
+			int outputs;
+			int andGates;
 			// Parse header
 			final String[] header = checkNotNull(br.readLine(), "Header expected").split(" ");
 			maxVars = Integer.parseInt(header[1]);
@@ -59,14 +63,16 @@ public class BasicAigerParser implements AigerParser {
 			// Create variables
 			final List<VarDecl<BoolType>> vars = new ArrayList<>(maxVars + 1);
 			final List<Expr<BoolType>> outVars = new ArrayList<>(1);
-			for (int i = 0; i <= maxVars; ++i)
+			for (int i = 0; i <= maxVars; ++i) {
 				vars.add(Decls.Var("v" + i, Bool()));
+			}
 			// v0 is the constant 'false'
 			builder.addInvar(Not(vars.get(0).getRef()));
 
 			// Inputs
-			for (int i = 0; i < inputs; ++i)
+			for (int i = 0; i < inputs; ++i) {
 				br.readLine();
+			}
 
 			// Latches
 			for (int i = 0; i < latches; ++i) {
