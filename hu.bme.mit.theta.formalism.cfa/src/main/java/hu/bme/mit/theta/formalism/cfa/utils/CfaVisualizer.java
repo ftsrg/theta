@@ -1,17 +1,17 @@
 /*
- *  Copyright 2017 Budapest University of Technology and Economics
- *  
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *  
- *      http://www.apache.org/licenses/LICENSE-2.0
- *  
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ * Copyright 2017 Budapest University of Technology and Economics
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
  */
 package hu.bme.mit.theta.formalism.cfa.utils;
 
@@ -47,7 +47,7 @@ public class CfaVisualizer {
 			addLocation(graph, cfa, loc, ids);
 		}
 		for (final Edge edge : cfa.getEdges()) {
-			addEdge(graph, cfa, edge, ids);
+			addEdge(graph, edge, ids);
 		}
 		return graph;
 	}
@@ -69,8 +69,7 @@ public class CfaVisualizer {
 		graph.addNode(id, nAttributes);
 	}
 
-	private static void addEdge(final Graph graph, final CFA cfa, final Edge edge,
-			final Map<Loc, String> ids) {
+	private static void addEdge(final Graph graph, final Edge edge, final Map<Loc, String> ids) {
 		final StringJoiner edgeLabel = new StringJoiner("\n");
 		edge.getStmts().stream().forEach(stmt -> edgeLabel.add(stmt.toString()));
 		final EdgeAttributes eAttributes = EdgeAttributes.builder().label(edgeLabel.toString()).color(LINE_COLOR)
