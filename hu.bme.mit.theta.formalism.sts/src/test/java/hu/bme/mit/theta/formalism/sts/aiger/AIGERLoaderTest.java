@@ -5,9 +5,6 @@ import java.io.IOException;
 import org.junit.Test;
 
 import hu.bme.mit.theta.formalism.sts.STS;
-import hu.bme.mit.theta.formalism.sts.aiger.AigerParser;
-import hu.bme.mit.theta.formalism.sts.aiger.CompactingAigerParser;
-import hu.bme.mit.theta.formalism.sts.aiger.AigerVisualizer;
 
 public class AIGERLoaderTest {
 
@@ -17,9 +14,6 @@ public class AIGERLoaderTest {
 		// loader = new AIGERLoaderSimple();
 		loader = new CompactingAigerParser();
 		final STS sts = loader.parse("src/test/resources/simple3.aag");
-
-		AigerVisualizer.visualize("src/test/resources/simple3.aag", "src/test/resources/simple3.dot");
-
 		System.out.println(sts);
 	}
 
