@@ -1,6 +1,7 @@
 # Theta
 
 [![Build Status](https://travis-ci.com/FTSRG/theta-dev.svg?token=85GYo3nhkE5uMJYayyw8&branch=master)](https://travis-ci.com/FTSRG/theta-dev)
+[![Apache 2.0 License](https://img.shields.io/badge/license-Apache--2-brightgreen.svg?style=flat)](https://www.apache.org/licenses/LICENSE-2.0)
 
 ## About
 
@@ -11,7 +12,7 @@ The main distinguishing characteristic of Theta is its architecture that allows 
 
 * Clone the repository.
 * Build the projects from the command line by executing `gradlew.bat build` (Windows) or `./gradlew build` (Linux) from the root directory.
-* On Windows, some libraries are required from the [Microsoft Visual C++ Redistributable package](https://www.microsoft.com/en-us/download/details.aspx?id=48145). Install it, or just go into the `lib` folder and execute `Download-VCredist.ps1`, which will download the required libraries. 
+* On Windows, some libraries are required from the [Microsoft Visual C++ Redistributable package](https://www.microsoft.com/en-us/download/details.aspx?id=48145). Install it, or just go into the `lib` folder and execute `Download-VCredist.ps1`, which will download the required libraries.
 
 ## Use Theta
 
