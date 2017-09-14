@@ -1,12 +1,12 @@
 /*
  *  Copyright 2017 Budapest University of Technology and Economics
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,9 +42,9 @@ public class LocPrecTest {
 		final GlobalCfaPrec<PrecStub> r2 = cp.refine(p2);
 		final GlobalCfaPrec<PrecStub> r3 = r2.refine(p2);
 
-		Assert.assertTrue(cp == r1);
-		Assert.assertTrue(r1 != r2);
-		Assert.assertTrue(r2 == r3);
+		Assert.assertSame(cp, r1);
+		Assert.assertNotSame(r1, r2);
+		Assert.assertSame(r2, r3);
 	}
 
 	@Test

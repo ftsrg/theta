@@ -1,12 +1,12 @@
 /*
  *  Copyright 2017 Budapest University of Technology and Economics
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -66,9 +66,9 @@ public class SimplePredPrecTest {
 		final SimplePredPrec r2 = p1.join(p2);
 		final SimplePredPrec r3 = p1.join(r2);
 
-		Assert.assertTrue(p1 == r1);
-		Assert.assertTrue(p1 != r2);
-		Assert.assertTrue(r2 == r3);
+		Assert.assertSame(p1, r1);
+		Assert.assertNotSame(p1, r2);
+		Assert.assertSame(r2, r3);
 
 	}
 

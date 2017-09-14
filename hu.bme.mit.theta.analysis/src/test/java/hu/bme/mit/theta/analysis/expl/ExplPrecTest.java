@@ -1,12 +1,12 @@
 /*
  *  Copyright 2017 Budapest University of Technology and Economics
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,12 +40,12 @@ public class ExplPrecTest {
 		final ExplPrec p3 = ExplPrec.create(Collections.emptySet());
 		final ExplPrec p4 = ExplPrec.create(Collections.singleton(x));
 
-		Assert.assertTrue(p1 == p2);
-		Assert.assertTrue(p1 == p3);
-		Assert.assertTrue(p1 != p4);
-		Assert.assertTrue(p2 == p3);
-		Assert.assertTrue(p2 != p4);
-		Assert.assertTrue(p3 != p4);
+		Assert.assertSame(p1, p2);
+		Assert.assertSame(p1, p3);
+		Assert.assertNotSame(p1, p4);
+		Assert.assertSame(p2, p3);
+		Assert.assertNotSame(p2, p4);
+		Assert.assertNotSame(p3, p4);
 	}
 
 	@Test
@@ -69,9 +69,9 @@ public class ExplPrecTest {
 		final ExplPrec r2 = px.join(py);
 		final ExplPrec r3 = px.join(pxy);
 
-		Assert.assertTrue(r1 == px);
-		Assert.assertTrue(r2 != px);
-		Assert.assertTrue(r3 == pxy);
+		Assert.assertSame(r1, px);
+		Assert.assertNotSame(r2, px);
+		Assert.assertSame(r3, pxy);
 	}
 
 	@Test
