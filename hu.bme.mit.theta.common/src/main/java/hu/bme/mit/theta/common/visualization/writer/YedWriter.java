@@ -1,12 +1,12 @@
 /*
  *  Copyright 2017 Budapest University of Technology and Economics
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -87,7 +87,7 @@ public final class YedWriter extends AbstractGraphWriter {
 		sb.append("<y:BorderStyle");
 		sb.append(" color=\"").append(mapColorToString(attributes.getLineColor())).append("\"");
 		final String style = mapLineStyleToString(attributes.getLineStyle());
-		if (!style.equals("")) {
+		if (!"".equals(style)) {
 			sb.append(" type=\"").append(style).append("\"");
 		}
 		// TODO: peripheries
