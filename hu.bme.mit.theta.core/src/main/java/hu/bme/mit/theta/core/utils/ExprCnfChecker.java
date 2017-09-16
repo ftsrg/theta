@@ -38,6 +38,9 @@ final class ExprCnfChecker {
 		}
 	}
 
+	private ExprCnfChecker() {
+	}
+
 	static boolean isExprCnf(final Expr<BoolType> expr) {
 		return isExprCnf(expr, CnfStatus.START);
 	}

@@ -27,7 +27,11 @@ import hu.bme.mit.theta.formalism.cfa.CFA;
 import hu.bme.mit.theta.formalism.cfa.CFA.Edge;
 import hu.bme.mit.theta.formalism.cfa.CFA.Loc;
 
-public class CfaWriter {
+public final class CfaWriter {
+
+	private CfaWriter() {
+	}
+
 	public static void write(final CFA cfa, final OutputStream outStream) throws IOException {
 		final BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(outStream));
 

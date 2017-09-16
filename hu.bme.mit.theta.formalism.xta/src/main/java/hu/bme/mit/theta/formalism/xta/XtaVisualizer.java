@@ -1,12 +1,12 @@
 /*
  *  Copyright 2017 Budapest University of Technology and Economics
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,7 +27,7 @@ import hu.bme.mit.theta.common.visualization.NodeAttributes;
 import hu.bme.mit.theta.formalism.xta.XtaProcess.Edge;
 import hu.bme.mit.theta.formalism.xta.XtaProcess.Loc;
 
-public class XtaVisualizer {
+public final class XtaVisualizer {
 
 	private static final String XTA_LABEL = "";
 	private static final String LOC_ID_PREFIX = "loc_";
@@ -37,6 +37,9 @@ public class XtaVisualizer {
 	private static final LineStyle EDGE_LINE_STYLE = LineStyle.NORMAL;
 	private static final int LOC_PERIPHERIES = 1;
 	private static final String PHANTOM_INIT_ID = "phantom_init";
+
+	private XtaVisualizer() {
+	}
 
 	public static Graph visualize(final XtaProcess process) {
 		final Graph graph = new Graph(process.getName(), XTA_LABEL);

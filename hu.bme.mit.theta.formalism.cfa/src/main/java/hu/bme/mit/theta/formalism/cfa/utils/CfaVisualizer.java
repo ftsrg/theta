@@ -28,7 +28,7 @@ import hu.bme.mit.theta.formalism.cfa.CFA;
 import hu.bme.mit.theta.formalism.cfa.CFA.Edge;
 import hu.bme.mit.theta.formalism.cfa.CFA.Loc;
 
-public class CfaVisualizer {
+public final class CfaVisualizer {
 
 	private static final String CFA_LABEL = "";
 	private static final String CFA_ID = "cfa";
@@ -38,6 +38,9 @@ public class CfaVisualizer {
 	private static final LineStyle LOC_LINE_STYLE = LineStyle.NORMAL;
 	private static final LineStyle EDGE_LINE_STYLE = LineStyle.NORMAL;
 	private static final String EDGE_FONT = "courier";
+
+	private CfaVisualizer() {
+	}
 
 	public static Graph visualize(final CFA cfa) {
 		final Graph graph = new Graph(CFA_ID, CFA_LABEL);
