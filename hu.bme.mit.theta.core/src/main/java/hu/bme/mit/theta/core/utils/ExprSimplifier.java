@@ -313,7 +313,7 @@ public final class ExprSimplifier {
 	private Expr<BoolType> simplifyAnd(final AndExpr expr) {
 		final List<Expr<BoolType>> ops = new ArrayList<>();
 
-		if (expr.getOps().size() == 0) {
+		if (expr.getOps().isEmpty()) {
 			return True();
 		}
 
@@ -331,7 +331,7 @@ public final class ExprSimplifier {
 			}
 		}
 
-		if (ops.size() == 0) {
+		if (ops.isEmpty()) {
 			return True();
 		} else if (ops.size() == 1) {
 			return Utils.singleElementOf(ops);
@@ -343,7 +343,7 @@ public final class ExprSimplifier {
 	private Expr<BoolType> simplifyOr(final OrExpr expr) {
 		final List<Expr<BoolType>> ops = new ArrayList<>();
 
-		if (expr.getOps().size() == 0) {
+		if (expr.getOps().isEmpty()) {
 			return True();
 		}
 
@@ -361,7 +361,7 @@ public final class ExprSimplifier {
 			}
 		}
 
-		if (ops.size() == 0) {
+		if (ops.isEmpty()) {
 			return False();
 		} else if (ops.size() == 1) {
 			return Utils.singleElementOf(ops);
@@ -399,7 +399,7 @@ public final class ExprSimplifier {
 			ops.add(sum);
 		}
 
-		if (ops.size() == 0) {
+		if (ops.isEmpty()) {
 			return Rat(0, 1);
 		} else if (ops.size() == 1) {
 			return Utils.singleElementOf(ops);
@@ -471,7 +471,7 @@ public final class ExprSimplifier {
 			ops.add(0, prod);
 		}
 
-		if (ops.size() == 0) {
+		if (ops.isEmpty()) {
 			return Rat(1, 1);
 		} else if (ops.size() == 1) {
 			return Utils.singleElementOf(ops);
@@ -636,7 +636,7 @@ public final class ExprSimplifier {
 			ops.add(sum);
 		}
 
-		if (ops.size() == 0) {
+		if (ops.isEmpty()) {
 			return Int(0);
 		} else if (ops.size() == 1) {
 			return Utils.singleElementOf(ops);
@@ -705,7 +705,7 @@ public final class ExprSimplifier {
 			ops.add(0, prod);
 		}
 
-		if (ops.size() == 0) {
+		if (ops.isEmpty()) {
 			return Int(1);
 		} else if (ops.size() == 1) {
 			return Utils.singleElementOf(ops);
