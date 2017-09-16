@@ -108,7 +108,7 @@ public final class YedWriter extends AbstractGraphWriter {
 		sb.append("<y:BorderStyle");
 		sb.append(" color=\"").append(mapColorToString(attributes.getLineColor())).append("\"");
 		final String style = mapLineStyleToString(attributes.getLineStyle());
-		if (!style.equals("")) {
+		if (!"".equals(style)) {
 			sb.append(" type=\"").append(style).append("\"");
 		}
 

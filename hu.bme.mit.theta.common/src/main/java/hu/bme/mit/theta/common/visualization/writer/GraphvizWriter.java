@@ -41,7 +41,7 @@ import hu.bme.mit.theta.common.visualization.Shape;
  */
 public final class GraphvizWriter extends AbstractGraphWriter {
 
-	public static enum Format {
+	public enum Format {
 		PDF("Tpdf"), PNG("Tpng"), SVG("Tsvg"), GIF("Tgif"), EPS("Teps"), JPG("Tjpg");
 
 		private final String option;
@@ -131,7 +131,7 @@ public final class GraphvizWriter extends AbstractGraphWriter {
 		sb.append("\tsubgraph cluster_").append(node.getId()).append(" {").append(System.lineSeparator());
 		sb.append("\t\tcolor=").append(mapColorToString(attributes.getLineColor())).append(";")
 				.append(System.lineSeparator());
-		if (!style.equals("")) {
+		if (!"".equals(style)) {
 			sb.append("\t\tstyle=").append(style).append(";").append(System.lineSeparator());
 		}
 		sb.append("\t\tlabel=\"").append(attributes.getLabel().replace("\n", "\\n")).append("\";")
