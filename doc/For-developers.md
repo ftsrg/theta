@@ -1,6 +1,12 @@
 # For developers
 
-Theta is written in Java 8 using [Gradle](https://gradle.org/) as a build system and [Git](https://git-scm.com/) for version control. We are developing both on Windows and Linux. Theta can be built from command line, but you can most likely also import it into your favorite IDE.
+Theta is written in Java 8 using
+* [Gradle](https://gradle.org/) as a build system,
+* [Git](https://git-scm.com/) and [GitHub](https://github.com/FTSRG/theta) for version control,
+* [Travis](https://travis-ci.org/FTSRG/theta) for continuous integration,
+* [Codacy](https://www.codacy.com/app/FTSRG/theta/dashboard) for static code analysis.
+
+We are developing both on Windows and Linux. Theta can be built from command line, but you can most likely also import it into your favorite IDE.
 
 ## Recommended development workflow
 
@@ -10,7 +16,7 @@ As the framework is under development, we suggest you to [sync your fork](https:
 
 ## Importing and developing in Eclipse
 
-The projects are currently developed and tested with [Oxygen](https://www.eclipse.org/oxygen/).
+The projects are currently developed and tested with [Eclipse Oxygen](https://www.eclipse.org/oxygen/).
 * We recommend downloading the [_Eclipse IDE for Java Developers_ package](https://www.eclipse.org/downloads/eclipse-packages/), as it contains a Git client and Gradle integration.
 * If Gradle integration is not part of your installed Eclipse, install it from the _Eclipse Marketplace_, e.g. the _Buildship: Eclipse Plug-ins for Gradle_ (search for _Buildship Gradle Integration_).
   * _Optional: Also install the Eclipse Groovy tooling from <https://github.com/groovy/groovy-eclipse/wiki>._
