@@ -29,7 +29,7 @@ import hu.bme.mit.theta.core.type.booltype.OrExpr;
 
 final class ExprCnfChecker {
 
-	private static enum CnfStatus {
+	private enum CnfStatus {
 		START(0), INSIDE_AND(1), INSIDE_OR(2), INSIDE_NOT(3);
 		final int value;
 

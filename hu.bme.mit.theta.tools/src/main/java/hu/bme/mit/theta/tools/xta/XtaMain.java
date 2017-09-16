@@ -1,12 +1,12 @@
 /*
  *  Copyright 2017 Budapest University of Technology and Economics
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,12 +37,12 @@ import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 import hu.bme.mit.theta.formalism.xta.XtaSystem;
 import hu.bme.mit.theta.formalism.xta.analysis.algorithm.lazy.ActStrategy;
 import hu.bme.mit.theta.formalism.xta.analysis.algorithm.lazy.BinItpStrategy;
+import hu.bme.mit.theta.formalism.xta.analysis.algorithm.lazy.ItpStrategy.ItpOperator;
 import hu.bme.mit.theta.formalism.xta.analysis.algorithm.lazy.LazyXtaChecker;
+import hu.bme.mit.theta.formalism.xta.analysis.algorithm.lazy.LazyXtaChecker.AlgorithmStrategy;
 import hu.bme.mit.theta.formalism.xta.analysis.algorithm.lazy.LazyXtaStatistics;
 import hu.bme.mit.theta.formalism.xta.analysis.algorithm.lazy.LuStrategy;
 import hu.bme.mit.theta.formalism.xta.analysis.algorithm.lazy.SeqItpStrategy;
-import hu.bme.mit.theta.formalism.xta.analysis.algorithm.lazy.ItpStrategy.ItpOperator;
-import hu.bme.mit.theta.formalism.xta.analysis.algorithm.lazy.LazyXtaChecker.AlgorithmStrategy;
 import hu.bme.mit.theta.formalism.xta.dsl.XtaDslManager;
 
 public final class XtaMain {
@@ -68,7 +68,7 @@ public final class XtaMain {
 	@Parameter(names = { "--header" }, description = "Print only a header (for benchmarks)", help = true)
 	boolean headerOnly = false;
 
-	private static enum Algorithm {
+	private enum Algorithm {
 
 		SEQITP {
 			@Override
@@ -115,7 +115,7 @@ public final class XtaMain {
 		public abstract LazyXtaChecker.AlgorithmStrategy<?> create(final XtaSystem system);
 	}
 
-	private static enum Search {
+	private enum Search {
 
 		DFS {
 			@Override
