@@ -1,12 +1,12 @@
 /*
  *  Copyright 2017 Budapest University of Technology and Economics
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,7 +33,7 @@ import hu.bme.mit.theta.common.logging.Logger;
  * A Refiner implementation that can refine a single trace (of ExprStates and
  * ExprActions) using an ExprTraceChecker and a PrecRefiner.
  */
-public class SingleExprTraceRefiner<S extends ExprState, A extends ExprAction, P extends Prec, R extends Refutation>
+public final class SingleExprTraceRefiner<S extends ExprState, A extends ExprAction, P extends Prec, R extends Refutation>
 		implements Refiner<S, A, P> {
 
 	private final ExprTraceChecker<R> exprTraceChecker;
@@ -89,8 +89,7 @@ public class SingleExprTraceRefiner<S extends ExprState, A extends ExprAction, P
 
 	@Override
 	public String toString() {
-		return Utils.toStringBuilder(getClass().getSimpleName()).add(exprTraceChecker).add(precRefiner)
-				.toString();
+		return Utils.toStringBuilder(getClass().getSimpleName()).add(exprTraceChecker).add(precRefiner).toString();
 	}
 
 }

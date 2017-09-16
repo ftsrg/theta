@@ -26,7 +26,7 @@ import java.io.PrintWriter;
 /**
  * Utility class for visualizing AIGER files.
  */
-public class AigerVisualizer {
+public final class AigerVisualizer {
 
 	private AigerVisualizer() {
 	}
