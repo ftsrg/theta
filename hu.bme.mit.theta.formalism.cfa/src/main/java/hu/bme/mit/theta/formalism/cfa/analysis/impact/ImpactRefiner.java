@@ -1,12 +1,12 @@
 /*
  *  Copyright 2017 Budapest University of Technology and Economics
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,7 @@ public interface ImpactRefiner<S extends State, A extends Action> {
 
 	RefinementResult<S, A> refine(final Trace<S, A> cex);
 
-	static abstract class RefinementResult<S extends State, A extends Action> {
+	abstract class RefinementResult<S extends State, A extends Action> {
 
 		private RefinementResult() {
 		}
@@ -47,7 +47,7 @@ public interface ImpactRefiner<S extends State, A extends Action> {
 		public abstract Unsuccesful<S, A> asUnsuccesful();
 	}
 
-	static final class Succesful<S extends State, A extends Action> extends RefinementResult<S, A> {
+	final class Succesful<S extends State, A extends Action> extends RefinementResult<S, A> {
 		private final Trace<S, A> trace;
 
 		private Succesful(final Trace<S, A> trace) {
@@ -79,7 +79,7 @@ public interface ImpactRefiner<S extends State, A extends Action> {
 		}
 	}
 
-	static final class Unsuccesful<S extends State, A extends Action> extends RefinementResult<S, A> {
+	final class Unsuccesful<S extends State, A extends Action> extends RefinementResult<S, A> {
 
 		private Unsuccesful() {
 		}

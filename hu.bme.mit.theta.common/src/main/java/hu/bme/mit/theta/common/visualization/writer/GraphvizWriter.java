@@ -154,7 +154,7 @@ public final class GraphvizWriter extends AbstractGraphWriter {
 				sb.append(" [label=\"").append(attributes.getLabel().replace("\n", "\\n")).append("\"");
 				sb.append(",color=").append(mapColorToString(attributes.getColor()));
 				final String style = mapLineStyleToString(attributes.getLineStyle());
-				if (!style.equals("")) {
+				if (!"".equals(style)) {
 					sb.append(",style=").append(style);
 				}
 				if (!attributes.getFont().equals("")) {

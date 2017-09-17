@@ -133,7 +133,7 @@ public final class YedWriter extends AbstractGraphWriter {
 			sb.append("<data key=\"d9\"><y:PolyLineEdge><y:LineStyle color=\"")
 					.append(mapColorToString(attributes.getColor())).append("\"");
 			final String style = mapLineStyleToString(attributes.getLineStyle());
-			if (!style.equals("")) {
+			if (!"".equals(style)) {
 				sb.append(" type=\"").append(style).append("\"");
 			}
 			sb.append("/>");
