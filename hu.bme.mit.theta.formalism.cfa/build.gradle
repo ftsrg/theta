@@ -1,10 +1,12 @@
 apply plugin: 'antlr'
+apply from: "$rootDir/common-methods.gradle"
 
 dependencies {
   antlr group: 'org.antlr', name: 'antlr4', version: antlrVersion
   compile project(':hu.bme.mit.theta.common')
   compile project(':hu.bme.mit.theta.core')
   compile project(':hu.bme.mit.theta.analysis')
+  compile group: 'com.beust', name: 'jcommander', version: '1.72'
 }
 
 generateGrammarSource {
@@ -20,3 +22,6 @@ sourceSets {
         }
     } 
 }
+
+createJarTask("theta-cfa", 'hu.bme.mit.theta.formalism.cfa.tool.CfaMain', 'theta-cfa')
+createJarTask("cfa2dot", 'hu.bme.mit.theta.formalism.cfa.tool.CfaToDotMain', 'cfa2dot')

@@ -1,19 +1,19 @@
 /*
  *  Copyright 2017 Budapest University of Technology and Economics
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.tools.cfa;
+package hu.bme.mit.theta.formalism.cfa.tool;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -37,12 +37,11 @@ import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 import hu.bme.mit.theta.formalism.cfa.CFA;
 import hu.bme.mit.theta.formalism.cfa.dsl.CfaDslManager;
-import hu.bme.mit.theta.tools.Config;
-import hu.bme.mit.theta.tools.cfa.CfaConfigBuilder.Domain;
-import hu.bme.mit.theta.tools.cfa.CfaConfigBuilder.PrecGranularity;
-import hu.bme.mit.theta.tools.cfa.CfaConfigBuilder.PredSplit;
-import hu.bme.mit.theta.tools.cfa.CfaConfigBuilder.Refinement;
-import hu.bme.mit.theta.tools.cfa.CfaConfigBuilder.Search;
+import hu.bme.mit.theta.formalism.cfa.tool.CfaConfigBuilder.Domain;
+import hu.bme.mit.theta.formalism.cfa.tool.CfaConfigBuilder.PrecGranularity;
+import hu.bme.mit.theta.formalism.cfa.tool.CfaConfigBuilder.PredSplit;
+import hu.bme.mit.theta.formalism.cfa.tool.CfaConfigBuilder.Refinement;
+import hu.bme.mit.theta.formalism.cfa.tool.CfaConfigBuilder.Search;
 
 /**
  * A command line interface for running a CEGAR configuration on a CFA.
