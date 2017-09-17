@@ -12,12 +12,14 @@ This project contains the Symbolic Transition System (STS) formalism. It is a ge
 
 STSs consist of
 
-* A set of variables,
-* an initial expression (over the variables) describing the initial states,
+* Variables,
+* an initial expression describing the initial states,
 * a transition expression (over the variables and their primed version) describing the transition relation, where the plain variables correspond to the actual state, while the primed variables correspond to the next state, and
-* a property expression (over the variables) that must hold in every state (safety property).
+* a property expression.
 
-### Textual Representation
+Algorithms are usually interested in proving that the property holds for every reachable state (safety property).
+
+### Textual Representation (DSL)
 
 An example STS realizing a counter:
 
@@ -30,6 +32,8 @@ specification Counter {
     } models G(x <= 10)
 }
 ```
+
+See _src/test/resources_ for more examples.
 
 ### AIGER Frontend
 

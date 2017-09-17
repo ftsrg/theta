@@ -3,7 +3,7 @@
 This project contains the Control Flow Automata (CFA) formalism. Its main purpose is to describe programs as a graphs, where edges are annotated with program statements. The project contains:
 
 * Classes to represent CFAs.
-* A domain specific language (DSL) is available to parse CFAs from a textual representation.
+* A domain specific language (DSL) to parse CFAs from a textual representation.
 * CFA specific analysis modules enabling the algorithms to operate on them.
 * An executable tool for running analyses on CFAs.
 
@@ -17,7 +17,7 @@ A CFA is a directed graph with
 
 Algorithms are usually interested in proving that the error location is not reachable.
 
-### Textual representation
+### Textual representation (DSL)
 
 An example CFA realizing a counter:
 
@@ -40,6 +40,8 @@ main process counter {
     L3 -> ERR { assume not (x <= 5) }
 }
 ```
+
+See _src/test/resources_ for more examples.
 
 ## Tool
 
