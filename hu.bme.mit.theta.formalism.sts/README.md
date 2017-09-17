@@ -37,6 +37,6 @@ The AIGER frontend can parse _aag_ (version 1.7) files into STSs. For more infor
 
 ## Tool
 
-The tool can be built using the command `./gradlew theta-sts` (Linux) or `gradle.bat theta-sts` (Windows). The runnable file will appear under _build/libs_. The tool also requires the libraries in the _../lib_ folder.
+The tool can be built using the command `./gradlew theta-sts` (Linux) or `gradle.bat theta-sts` (Windows). The runnable file will appear under _build/libs_. The tool also requires the libraries in the _../lib_ folder (if you work on Windows, also read the README there).
 
 The tool can be run with `java -jar theta-sts.jar [arguments]`. If no arguments are given, a help screen is displayed about the arguments and their possible values. For example, put the example above in a file called `counter.system` and call `java -jar theta-sts.jar -m counter.system -d EXPL -r SEQ_ITP -ll 3`.
