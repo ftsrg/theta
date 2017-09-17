@@ -1,19 +1,19 @@
 /*
  *  Copyright 2017 Budapest University of Technology and Economics
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.tools.sts;
+package hu.bme.mit.theta.formalism.sts.tool;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -43,12 +43,11 @@ import hu.bme.mit.theta.formalism.sts.StsUtils;
 import hu.bme.mit.theta.formalism.sts.aiger.BasicAigerParser;
 import hu.bme.mit.theta.formalism.sts.dsl.StsDslManager;
 import hu.bme.mit.theta.formalism.sts.dsl.StsSpec;
-import hu.bme.mit.theta.tools.Config;
-import hu.bme.mit.theta.tools.sts.StsConfigBuilder.Domain;
-import hu.bme.mit.theta.tools.sts.StsConfigBuilder.InitPrec;
-import hu.bme.mit.theta.tools.sts.StsConfigBuilder.PredSplit;
-import hu.bme.mit.theta.tools.sts.StsConfigBuilder.Refinement;
-import hu.bme.mit.theta.tools.sts.StsConfigBuilder.Search;
+import hu.bme.mit.theta.formalism.sts.tool.StsConfigBuilder.Domain;
+import hu.bme.mit.theta.formalism.sts.tool.StsConfigBuilder.InitPrec;
+import hu.bme.mit.theta.formalism.sts.tool.StsConfigBuilder.PredSplit;
+import hu.bme.mit.theta.formalism.sts.tool.StsConfigBuilder.Refinement;
+import hu.bme.mit.theta.formalism.sts.tool.StsConfigBuilder.Search;
 
 /**
  * A command line interface for running a CEGAR configuration on an STS.
