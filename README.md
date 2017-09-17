@@ -7,7 +7,7 @@
 ## About
 
 _Theta_ is a generic, modular and configurable model checking framework developed at the [Fault Tolerant Systems Research Group](http://inf.mit.bme.hu/en) of [Budapest University of Technology and Economics](http://www.bme.hu/?language=en), aiming to support the design and evaluation of abstraction refinement-based algorithms for the reachability analysis of various formalisms.
-The main distinguishing characteristic of Theta is its architecture that allows the definition of input formalisms with higher level language front-ends, and the combination of various abstract domains, interpreters, and strategies for abstraction and refinement. If you want to read more, take a look at the [list of publications](http://home.mit.bme.hu/~hajdua/theta/). A good starting point is our [tool paper](http://home.mit.bme.hu/~hajdua/theta/fmcad2017.pdf) presented at FMCAD 2017.
+The main distinguishing characteristic of Theta is its architecture that allows the definition of input formalisms with higher level language front-ends, and the combination of various abstract domains, interpreters, and strategies for abstraction and refinement.
 
 ## Get Theta
 
@@ -22,3 +22,21 @@ If you want to use the existing algorithms and tools defined in Theta, then take
 ## Extend Theta
 
 If you want to extend Theta and build your own algorithms and tools, then take look at [doc/For-developers.md](doc/For-developers.md), [doc/Architecture.md](doc/Architecture.md) and [Coding-conventions.md](doc/Coding-conventions.md).
+
+## Read more
+
+If you want to read more, take a look at the [list of publications](http://home.mit.bme.hu/~hajdua/theta/). A good starting point is our [tool paper](http://home.mit.bme.hu/~hajdua/theta/fmcad2017.pdf) presented at FMCAD 2017.
+
+To cite Theta, please cite the following paper.
+
+```
+@inproceedings{theta-fmcad2017,
+    author     = {T\'oth, Tam\'as and Hajdu, \'{A}kos and V\"or\"os, Andr\'as and Micskei, Zolt\'an and Majzik, Istv\'an},
+    year       = {2017},
+    title      = {Theta: a Framework for Abstraction Refinement-Based Model Checking},
+    booktitle  = {Proceedings of the 17th Conference on Formal Methods in Computer-Aided Design},
+    isbn       = {978-0-9835678-7-5},
+    editor     = {Stewart, Daryl and Weissenbacher, Georg},
+    pages      = {176--179},
+}
+```
