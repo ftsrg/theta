@@ -14,6 +14,21 @@ def getCommitId() {
     return id.replace("\n", "").replaceAll("[^a-zA-Z0-9._]", "-")
 }
 
+def createJarTask(def taskName, def mainClass, def jarBaseName) {
+    return tasks.create(taskName, Jar) {
+    	manifest {
+        attributes 'Implementation-Version': getCommitId(),
+        	'Main-Class': mainClass
+	    }
+	    baseName = jarBaseName
+	    classifier = null
+	    version = null
+	    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+	    with jar	    
+    }
+}
+
 ext {
 	getCommitId = this.&getCommitId
+	createJarTask = this.&createJarTask
 }

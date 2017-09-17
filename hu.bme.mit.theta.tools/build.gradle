@@ -1,8 +1,3 @@
-import com.github.jengelman.gradle.plugins.shadow.tasks.*
-import com.github.jengelman.gradle.plugins.shadow.*
-
-plugins { id "com.github.johnrengelman.shadow" version "1.2.4" }
-
 apply from: "$rootDir/common-methods.gradle"
 
 dependencies {
@@ -13,30 +8,6 @@ dependencies {
   compile project(':hu.bme.mit.theta.formalism.xta')
   compile project(':hu.bme.mit.theta.analysis')
   compile group: 'com.beust', name: 'jcommander', version: '1.72'
-}
-
-def createJarTask(def taskName, def mainClass, def jarBaseName) {
-    return tasks.create(taskName, ShadowJar) {
-	    group = ShadowJavaPlugin.SHADOW_GROUP
-	    manifest.inheritFrom project.tasks.jar.manifest
-	    doFirst {
-	            def files = project.configurations.findByName(ShadowBasePlugin.CONFIGURATION_NAME).files
-	            if (files) {
-	                def libs = [tasks.jar.manifest.attributes.get('Class-Path')]
-	                libs.addAll files.collect { "${it.name}" }
-	                manifest.attributes 'Class-Path': libs.findAll { it }.join(' ')
-	            }
-	    }
-	    from(sourceSets.main.output)
-	    configurations = [ project.configurations.runtime ]
-	    //exclude('META-INF/INDEX.LIST', 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA')
-	    //classifier = 'fat'
-	    //mergeServiceFiles()
-	    manifest { attributes('Main-Class': mainClass, 'Implementation-Version': getCommitId()) }
-	    baseName = jarBaseName
-	    classifier = null
-	    version = null
-    }
 }
 
 createJarTask("theta-cfa", 'hu.bme.mit.theta.tools.cfa.CfaMain', 'theta-cfa')
