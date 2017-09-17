@@ -17,7 +17,11 @@ The main distinguishing characteristic of Theta is its architecture that allows 
 
 ## Use Theta
 
-If you want to use the existing algorithms and tools defined in Theta, then take look at [doc/Tools.md](doc/Tools.md).
+Tools are concrete instantiations of the framework to solve a certain problem using the built in algorithms. Currently, the following 3 tools are available. Follow the links for more information about each tool.
+
+* [`theta-cfa`](hu.bme.mit.theta.formalism.cfa/README.md): Reachability checking of error locations in Control Flow Automata (CFA) using CEGAR-based algorithms.
+* [`theta-sts`](hu.bme.mit.theta.formalism.sts/README.md): Verification of safety properties in Symbolic Transition Systems (STS) using CEGAR-based algorithms.
+* [`theta-xta`](hu.bme.mit.theta.formalism.xta/README.md): Verification of Uppaal timed automata (XTA).
 
 ## Extend Theta
 
