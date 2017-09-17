@@ -1,12 +1,12 @@
 /*
  *  Copyright 2017 Budapest University of Technology and Economics
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,7 +35,6 @@ import org.junit.runners.Parameterized.Parameters;
 
 import hu.bme.mit.theta.analysis.Domain;
 import hu.bme.mit.theta.analysis.pred.PredState;
-import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.solver.Solver;
@@ -44,12 +43,13 @@ import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 @RunWith(Parameterized.class)
 public final class ExprDomainBottomTest {
 
-	private static final Expr<IntType> X;
+	private static final Expr<IntType> X = Var("x", Int()).getRef();
 
-	static {
-		final VarDecl<IntType> vx = Var("x", Int());
-		X = vx.getRef();
-	}
+	@Parameter(value = 0)
+	public ExprState state;
+
+	@Parameter(value = 1)
+	public boolean bottom;
 
 	@Parameters
 	public static Collection<Object[]> data() {
@@ -67,12 +67,6 @@ public final class ExprDomainBottomTest {
 
 		});
 	}
-
-	@Parameter(value = 0)
-	public ExprState state;
-
-	@Parameter(value = 1)
-	public boolean bottom;
 
 	@Test
 	public void testIsBottom() {

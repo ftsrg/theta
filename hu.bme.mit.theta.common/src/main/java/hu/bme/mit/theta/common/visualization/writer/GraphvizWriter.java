@@ -77,7 +77,7 @@ public final class GraphvizWriter extends AbstractGraphWriter {
 		for (final Node node : graph.getNodes()) {
 			printEdges(node, sb);
 		}
-		sb.append("}");
+		sb.append('}');
 		return sb.toString();
 	}
 
@@ -129,10 +129,10 @@ public final class GraphvizWriter extends AbstractGraphWriter {
 		final String style = mapLineStyleToString(attributes.getLineStyle());
 
 		sb.append("\tsubgraph cluster_").append(node.getId()).append(" {").append(System.lineSeparator());
-		sb.append("\t\tcolor=").append(mapColorToString(attributes.getLineColor())).append(";")
+		sb.append("\t\tcolor=").append(mapColorToString(attributes.getLineColor())).append(';')
 				.append(System.lineSeparator());
 		if (!"".equals(style)) {
-			sb.append("\t\tstyle=").append(style).append(";").append(System.lineSeparator());
+			sb.append("\t\tstyle=").append(style).append(';').append(System.lineSeparator());
 		}
 		sb.append("\t\tlabel=\"").append(attributes.getLabel().replace("\n", "\\n")).append("\";")
 				.append(System.lineSeparator());

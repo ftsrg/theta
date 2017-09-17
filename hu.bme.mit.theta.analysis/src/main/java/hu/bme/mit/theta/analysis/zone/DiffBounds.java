@@ -130,15 +130,15 @@ final class DiffBounds {
 		assert b != INF;
 
 		final StringBuilder sb = new StringBuilder();
-		sb.append("(");
+		sb.append('(');
 		sb.append(getBound(b));
 		sb.append(", ");
 		if (isStrict(b)) {
-			sb.append("<");
+			sb.append('<');
 		} else {
 			sb.append("<=");
 		}
-		sb.append(")");
+		sb.append(')');
 		return sb.toString();
 	}
 

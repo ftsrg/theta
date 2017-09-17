@@ -28,14 +28,14 @@ import java.io.PrintWriter;
  */
 public final class AigerVisualizer {
 
-	private AigerVisualizer() {
-	}
-
 	private static final String INPUTSHAPE = "invhouse";
 	private static final String LATCHSHAPE = "rectangle";
 	private static final String OUTPUTSHAPE = "invhouse";
 	private static final String ANDSHAPE = "ellipse";
 	private static final String INVHEAD = "odot";
+
+	private AigerVisualizer() {
+	}
 
 	/**
 	 * Parse and visualize an AIGER file into dot format.

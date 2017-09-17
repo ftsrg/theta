@@ -26,14 +26,12 @@ import hu.bme.mit.theta.formalism.cfa.analysis.prec.GlobalCfaPrec;
 import hu.bme.mit.theta.formalism.cfa.analysis.prec.LocalCfaPrec;
 
 public class LocPrecTest {
-
-	public static class PrecStub implements Prec {
-
-	}
-
 	private final PrecStub p0 = new PrecStub();
 	private final PrecStub p1 = new PrecStub();
 	private final PrecStub p2 = new PrecStub();
+
+	public static class PrecStub implements Prec {
+	}
 
 	@Test
 	public void testConstLocPrec() {
