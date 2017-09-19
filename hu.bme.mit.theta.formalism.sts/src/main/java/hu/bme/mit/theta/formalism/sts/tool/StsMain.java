@@ -24,6 +24,7 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 
+import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
@@ -201,8 +202,8 @@ public class StsMain {
 	private void writeVisualStatus(final SafetyResult<?, ?> status, final String filename)
 			throws FileNotFoundException {
 		final Graph graph = status.isSafe()
-				? new ArgVisualizer<>(s -> s.toString(), a -> "").visualize(status.asSafe().getArg())
-				: new TraceVisualizer<>(s -> s.toString(), a -> "").visualize(status.asUnsafe().getTrace());
+				? new ArgVisualizer<>(State::toString, a -> "").visualize(status.asSafe().getArg())
+				: new TraceVisualizer<>(State::toString, a -> "").visualize(status.asUnsafe().getTrace());
 		GraphvizWriter.getInstance().writeFile(graph, filename);
 	}
 }

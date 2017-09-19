@@ -35,7 +35,7 @@ public interface Expr<ExprType extends Type> {
 	Expr<ExprType> withOps(List<? extends Expr<?>> ops);
 
 	default Expr<ExprType> map(final Function<? super Expr<?>, ? extends Expr<?>> function) {
-		return withOps(getOps().stream().map(op -> function.apply(op)).collect(toImmutableList()));
+		return withOps(getOps().stream().map(function::apply).collect(toImmutableList()));
 	}
 
 }

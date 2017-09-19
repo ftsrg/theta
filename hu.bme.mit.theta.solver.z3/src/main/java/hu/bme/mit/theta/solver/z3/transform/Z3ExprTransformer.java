@@ -1,12 +1,12 @@
 /*
  *  Copyright 2017 Budapest University of Technology and Economics
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -233,13 +233,13 @@ class Z3ExprTransformer {
 	}
 
 	private com.microsoft.z3.Expr transformAnd(final AndExpr expr) {
-		final com.microsoft.z3.BoolExpr[] opTerms = expr.getOps().stream().map(e -> toTerm(e))
+		final com.microsoft.z3.BoolExpr[] opTerms = expr.getOps().stream().map(this::toTerm)
 				.toArray(size -> new com.microsoft.z3.BoolExpr[size]);
 		return context.mkAnd(opTerms);
 	}
 
 	private com.microsoft.z3.Expr transformOr(final OrExpr expr) {
-		final com.microsoft.z3.BoolExpr[] opTerms = expr.getOps().stream().map(e -> toTerm(e))
+		final com.microsoft.z3.BoolExpr[] opTerms = expr.getOps().stream().map(this::toTerm)
 				.toArray(size -> new com.microsoft.z3.BoolExpr[size]);
 		return context.mkOr(opTerms);
 	}
@@ -281,7 +281,7 @@ class Z3ExprTransformer {
 	}
 
 	private com.microsoft.z3.Expr transformRatAdd(final RatAddExpr expr) {
-		final com.microsoft.z3.ArithExpr[] opTerms = expr.getOps().stream().map(e -> toTerm(e))
+		final com.microsoft.z3.ArithExpr[] opTerms = expr.getOps().stream().map(this::toTerm)
 				.toArray(size -> new com.microsoft.z3.ArithExpr[size]);
 		return context.mkAdd(opTerms);
 	}
@@ -298,7 +298,7 @@ class Z3ExprTransformer {
 	}
 
 	private com.microsoft.z3.Expr transformRatMul(final RatMulExpr expr) {
-		final com.microsoft.z3.ArithExpr[] opTerms = expr.getOps().stream().map(e -> toTerm(e))
+		final com.microsoft.z3.ArithExpr[] opTerms = expr.getOps().stream().map(this::toTerm)
 				.toArray(size -> new com.microsoft.z3.ArithExpr[size]);
 		return context.mkMul(opTerms);
 	}
@@ -354,7 +354,7 @@ class Z3ExprTransformer {
 	}
 
 	private com.microsoft.z3.Expr transformIntAdd(final IntAddExpr expr) {
-		final com.microsoft.z3.ArithExpr[] opTerms = expr.getOps().stream().map(e -> toTerm(e))
+		final com.microsoft.z3.ArithExpr[] opTerms = expr.getOps().stream().map(this::toTerm)
 				.toArray(size -> new com.microsoft.z3.ArithExpr[size]);
 		return context.mkAdd(opTerms);
 	}
@@ -371,7 +371,7 @@ class Z3ExprTransformer {
 	}
 
 	private com.microsoft.z3.Expr transformIntMul(final IntMulExpr expr) {
-		final com.microsoft.z3.ArithExpr[] opTerms = expr.getOps().stream().map(e -> toTerm(e))
+		final com.microsoft.z3.ArithExpr[] opTerms = expr.getOps().stream().map(this::toTerm)
 				.toArray(size -> new com.microsoft.z3.ArithExpr[size]);
 		return context.mkMul(opTerms);
 	}

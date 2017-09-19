@@ -1,12 +1,12 @@
 /*
  *  Copyright 2017 Budapest University of Technology and Economics
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,6 +26,7 @@ import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.formalism.xta.ChanType;
+import hu.bme.mit.theta.formalism.xta.Update;
 import hu.bme.mit.theta.formalism.xta.XtaProcess.Edge;
 import hu.bme.mit.theta.formalism.xta.XtaProcess.Loc;
 
@@ -116,7 +117,7 @@ public abstract class XtaAction implements Action {
 		public String toString() {
 			final StringJoiner sj = new StringJoiner("\n");
 			edge.getGuards().forEach(g -> sj.add("[" + g + "]"));
-			edge.getUpdates().forEach(u -> u.toString());
+			edge.getUpdates().forEach(Update::toString);
 			return sj.toString();
 		}
 
@@ -193,8 +194,8 @@ public abstract class XtaAction implements Action {
 			sj.add(syncExpr + "!");
 			emittingEdge.getGuards().forEach(g -> sj.add("[" + g + "]"));
 			receivingEdge.getGuards().forEach(g -> sj.add("[" + g + "]"));
-			emittingEdge.getUpdates().forEach(u -> u.toString());
-			receivingEdge.getUpdates().forEach(u -> u.toString());
+			emittingEdge.getUpdates().forEach(Update::toString);
+			receivingEdge.getUpdates().forEach(Update::toString);
 			return sj.toString();
 		}
 

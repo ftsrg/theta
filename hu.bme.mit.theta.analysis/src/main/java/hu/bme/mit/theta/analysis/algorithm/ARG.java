@@ -1,12 +1,12 @@
 /*
  *  Copyright 2017 Budapest University of Technology and Economics
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -66,7 +66,7 @@ public final class ARG<S extends State, A extends Action> {
 	}
 
 	public Stream<ArgNode<S, A>> getUnsafeNodes() {
-		return getInitNodes().flatMap(ArgNode::unexcludedDescendants).filter(n -> n.isTarget());
+		return getInitNodes().flatMap(ArgNode::unexcludedDescendants).filter(ArgNode::isTarget);
 	}
 
 	public Stream<ArgNode<S, A>> getIncompleteNodes() {
@@ -87,7 +87,7 @@ public final class ARG<S extends State, A extends Action> {
 	 * Checks if the ARG is safe, i.e., whether all of its nodes are safe.
 	 */
 	public boolean isSafe() {
-		return getNodes().allMatch(n -> n.isSafe());
+		return getNodes().allMatch(ArgNode::isSafe);
 	}
 
 	/**
@@ -172,7 +172,7 @@ public final class ARG<S extends State, A extends Action> {
 	 * Gets all counterexamples, i.e., traces leading to target nodes.
 	 */
 	public Stream<ArgTrace<S, A>> getCexs() {
-		return getUnsafeNodes().map(n -> ArgTrace.to(n));
+		return getUnsafeNodes().map(ArgTrace::to);
 	}
 
 	/**
@@ -197,7 +197,7 @@ public final class ARG<S extends State, A extends Action> {
 	 * Gets the mean branching factor of the expanded nodes.
 	 */
 	public double getMeanBranchingFactor() {
-		final Stream<ArgNode<S, A>> nodesToCalculate = getNodes().filter(n -> n.isExpanded());
+		final Stream<ArgNode<S, A>> nodesToCalculate = getNodes().filter(ArgNode::isExpanded);
 		final double mean = nodesToCalculate.mapToDouble(n -> n.getOutEdges().count()).average().orElse(0);
 		return mean;
 	}

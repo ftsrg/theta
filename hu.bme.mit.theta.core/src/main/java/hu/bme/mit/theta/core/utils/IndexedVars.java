@@ -84,7 +84,8 @@ public final class IndexedVars {
 	 * @return Set of variables
 	 */
 	public Set<VarDecl<?>> getAllVars() {
-		final Set<VarDecl<?>> allVars = varSets.values().stream().flatMap(s -> s.stream()).collect(Collectors.toSet());
+		final Set<VarDecl<?>> allVars = varSets.values().stream().flatMap(Collection::stream)
+				.collect(Collectors.toSet());
 		return Collections.unmodifiableSet(allVars);
 	}
 
