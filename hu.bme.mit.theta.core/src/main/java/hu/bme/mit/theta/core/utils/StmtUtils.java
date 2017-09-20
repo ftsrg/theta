@@ -15,15 +15,11 @@
  */
 package hu.bme.mit.theta.core.utils;
 
-import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.stmt.BlockStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 
 /**
@@ -32,22 +28,6 @@ import hu.bme.mit.theta.core.stmt.Stmt;
 public final class StmtUtils {
 
 	private StmtUtils() {
-	}
-
-	/**
-	 * Get sub statements of a statement
-	 *
-	 * @param stmt Statement
-	 * @return List of sub statements
-	 */
-	public static List<? extends Stmt> getSubStmts(final Stmt stmt) {
-		if (stmt instanceof BlockStmt) {
-			final BlockStmt blockStmt = (BlockStmt) stmt;
-			return blockStmt.getStmts().stream().map(StmtUtils::getSubStmts).flatMap(Collection::stream)
-					.collect(Collectors.toList());
-		} else {
-			return Collections.singletonList(stmt);
-		}
 	}
 
 	/**
