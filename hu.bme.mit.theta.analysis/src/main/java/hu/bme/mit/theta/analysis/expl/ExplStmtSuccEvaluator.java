@@ -29,7 +29,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
-import hu.bme.mit.theta.core.utils.FailStmtVisitor;
+import hu.bme.mit.theta.core.utils.StmtVisitor;
 
 public final class ExplStmtSuccEvaluator {
 
@@ -82,7 +82,7 @@ public final class ExplStmtSuccEvaluator {
 		}
 	}
 
-	private static final class EvaluatorVisitor extends FailStmtVisitor<ExplState, EvalResult> {
+	private static final class EvaluatorVisitor implements StmtVisitor<ExplState, EvalResult> {
 
 		@Override
 		public <DeclType extends Type> EvalResult visit(final AssignStmt<DeclType> stmt, final ExplState param) {
