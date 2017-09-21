@@ -31,28 +31,29 @@ import hu.bme.mit.theta.core.utils.StmtUnfoldResult;
 import hu.bme.mit.theta.core.utils.StmtUtils;
 import hu.bme.mit.theta.core.utils.VarIndexing;
 import hu.bme.mit.theta.formalism.cfa.CFA.Edge;
+import hu.bme.mit.theta.formalism.cfa.CFA.Loc;
 
 public final class CfaAction implements StmtAction {
 
-	private final Edge edge;
+	private final List<Stmt> stmts;
+	private final Loc source;
+	private final Loc target;
 	private final Expr<BoolType> expr;
 	private final VarIndexing nextIndexing;
 
-	private CfaAction(final Edge edge) {
-		this.edge = checkNotNull(edge);
+	private CfaAction(final Loc source, final Loc target, final List<Stmt> stmts) {
+		this.source = checkNotNull(source);
+		this.target = checkNotNull(target);
+		this.stmts = checkNotNull(stmts);
 
 		// TODO: do the following stuff lazily
-		final StmtUnfoldResult toExprResult = StmtUtils.toExpr(edge.getStmt(), all(0));
+		final StmtUnfoldResult toExprResult = StmtUtils.toExpr(stmts, all(0));
 		expr = And(toExprResult.getExprs());
 		nextIndexing = toExprResult.getIndexing();
 	}
 
 	public static CfaAction create(final Edge edge) {
-		return new CfaAction(edge);
-	}
-
-	public Edge getEdge() {
-		return edge;
+		return new CfaAction(edge.getSource(), edge.getTarget(), Collections.singletonList(edge.getStmt()));
 	}
 
 	@Override
@@ -65,13 +66,21 @@ public final class CfaAction implements StmtAction {
 		return nextIndexing;
 	}
 
+	public Loc getSource() {
+		return source;
+	}
+
+	public Loc getTarget() {
+		return target;
+	}
+
 	@Override
 	public List<Stmt> getStmts() {
-		return Collections.singletonList(edge.getStmt());
+		return stmts;
 	}
 
 	@Override
 	public String toString() {
-		return Utils.toStringBuilder(getClass().getSimpleName()).add(edge.getStmt()).toString();
+		return Utils.toStringBuilder(getClass().getSimpleName()).addAll(stmts).toString();
 	}
 }

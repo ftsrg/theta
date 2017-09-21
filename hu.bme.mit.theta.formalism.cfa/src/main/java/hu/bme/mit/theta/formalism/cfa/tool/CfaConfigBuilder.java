@@ -57,7 +57,7 @@ import hu.bme.mit.theta.common.logging.impl.NullLogger;
 import hu.bme.mit.theta.formalism.cfa.CFA;
 import hu.bme.mit.theta.formalism.cfa.analysis.CfaAction;
 import hu.bme.mit.theta.formalism.cfa.analysis.CfaAnalysis;
-import hu.bme.mit.theta.formalism.cfa.analysis.CfaLts;
+import hu.bme.mit.theta.formalism.cfa.analysis.CfaSbeLts;
 import hu.bme.mit.theta.formalism.cfa.analysis.CfaPrec;
 import hu.bme.mit.theta.formalism.cfa.analysis.CfaState;
 import hu.bme.mit.theta.formalism.cfa.analysis.DistToErrComparator;
@@ -191,7 +191,7 @@ public class CfaConfigBuilder {
 
 	public Config<? extends State, ? extends Action, ? extends Prec> build(final CFA cfa) {
 		final ItpSolver solver = solverFactory.createItpSolver();
-		final CfaLts lts = new CfaLts();
+		final CfaSbeLts lts = new CfaSbeLts();
 
 		if (domain == Domain.EXPL) {
 			final Analysis<CfaState<ExplState>, CfaAction, CfaPrec<ExplPrec>> analysis = CfaAnalysis

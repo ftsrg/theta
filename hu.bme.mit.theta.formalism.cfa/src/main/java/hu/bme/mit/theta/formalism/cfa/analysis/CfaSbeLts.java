@@ -23,11 +23,11 @@ import java.util.stream.Collectors;
 import hu.bme.mit.theta.analysis.LTS;
 import hu.bme.mit.theta.formalism.cfa.CFA.Loc;
 
-public final class CfaLts implements LTS<CfaState<?>, CfaAction> {
+public final class CfaSbeLts implements LTS<CfaState<?>, CfaAction> {
 
 	private final Map<Loc, Collection<CfaAction>> actions;
 
-	public CfaLts() {
+	public CfaSbeLts() {
 		actions = new HashMap<>();
 	}
 
