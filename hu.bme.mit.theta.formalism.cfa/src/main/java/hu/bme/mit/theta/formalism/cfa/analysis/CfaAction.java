@@ -22,6 +22,8 @@ import static hu.bme.mit.theta.core.utils.VarIndexing.all;
 import java.util.Collections;
 import java.util.List;
 
+import com.google.common.collect.ImmutableList;
+
 import hu.bme.mit.theta.analysis.expl.StmtAction;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.stmt.Stmt;
@@ -54,6 +56,10 @@ public final class CfaAction implements StmtAction {
 
 	public static CfaAction create(final Edge edge) {
 		return new CfaAction(edge.getSource(), edge.getTarget(), Collections.singletonList(edge.getStmt()));
+	}
+
+	public static CfaAction create(final Loc source, final Loc target, final List<Stmt> stmts) {
+		return new CfaAction(source, target, ImmutableList.copyOf(stmts));
 	}
 
 	@Override
