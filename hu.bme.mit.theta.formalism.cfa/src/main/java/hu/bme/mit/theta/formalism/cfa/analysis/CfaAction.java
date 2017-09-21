@@ -1,12 +1,12 @@
 /*
  *  Copyright 2017 Budapest University of Technology and Economics
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,6 +19,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static hu.bme.mit.theta.core.utils.VarIndexing.all;
 
+import java.util.Collections;
 import java.util.List;
 
 import hu.bme.mit.theta.analysis.expl.StmtAction;
@@ -41,7 +42,7 @@ public final class CfaAction implements StmtAction {
 		this.edge = checkNotNull(edge);
 
 		// TODO: do the following stuff lazily
-		final StmtUnfoldResult toExprResult = StmtUtils.toExpr(edge.getStmts(), all(0));
+		final StmtUnfoldResult toExprResult = StmtUtils.toExpr(edge.getStmt(), all(0));
 		expr = And(toExprResult.getExprs());
 		nextIndexing = toExprResult.getIndexing();
 	}
@@ -66,11 +67,11 @@ public final class CfaAction implements StmtAction {
 
 	@Override
 	public List<Stmt> getStmts() {
-		return edge.getStmts();
+		return Collections.singletonList(edge.getStmt());
 	}
 
 	@Override
 	public String toString() {
-		return Utils.toStringBuilder(getClass().getSimpleName()).addAll(edge.getStmts()).toString();
+		return Utils.toStringBuilder(getClass().getSimpleName()).add(edge.getStmt()).toString();
 	}
 }
