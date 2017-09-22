@@ -1,39 +1,55 @@
 allprojects  {
 	apply plugin: 'maven'
-
-	group = 'hu.bme.mit.theta'
-	version = '1.0.0-SNAPSHOT'
-}
-
-subprojects {
 	apply plugin: 'java'
 	apply plugin: 'jacoco'
 
 	sourceCompatibility = 1.8
 	targetCompatibility = 1.8
 
+	group = 'hu.bme.mit.theta'
+	version = '1.0.0-SNAPSHOT'
+
+	repositories {
+		mavenCentral()
+	}
+}
+
+subprojects {
 	task packageSources(type: Jar) {
 		classifier = 'sources'
 		from sourceSets.main.allSource
 	}
 
 	artifacts.archives packageSources
-	repositories {
-		mavenCentral()
-	}
 
 	test {
 		String libPath = ".." + File.separator + "lib"
 		environment.put('PATH', libPath)
 		environment.put('LD_LIBRARY_PATH', libPath)
-		finalizedBy jacocoTestReport
 	}
 
 	jacocoTestReport {
+		dependsOn tasks.test
     reports {
-        xml.enabled true
+			xml.enabled false
+			csv.enabled false
+			html.enabled true
     }
 	}
+}
+
+// aggregates jacoco results from all subprojects and core project and generate a report
+task jacocoRootReport(type: org.gradle.testing.jacoco.tasks.JacocoReport) {
+    dependsOn = subprojects.test
+    additionalSourceDirs = files(subprojects.sourceSets.main.allSource.srcDirs)
+    sourceDirectories = files(subprojects.sourceSets.main.allSource.srcDirs)
+    classDirectories =  files(subprojects.sourceSets.main.output)
+    executionData = files(subprojects.jacocoTestReport.executionData)
+    reports {
+        html.enabled = false
+        xml.enabled = true
+        csv.enabled = false
+    }
 }
 
 ext {
