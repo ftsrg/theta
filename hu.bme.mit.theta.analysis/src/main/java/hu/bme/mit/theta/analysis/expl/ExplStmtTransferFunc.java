@@ -26,6 +26,7 @@ import java.util.List;
 import hu.bme.mit.theta.analysis.TransferFunc;
 import hu.bme.mit.theta.analysis.expl.ExplStmtSuccEvaluator.EvalResult;
 import hu.bme.mit.theta.analysis.expr.ExprStates;
+import hu.bme.mit.theta.analysis.expr.StmtAction;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
