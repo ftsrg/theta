@@ -17,38 +17,56 @@ package hu.bme.mit.theta.formalism.xta.analysis;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.decl.Decls.Var;
+import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
+import static hu.bme.mit.theta.core.stmt.Stmts.Assume;
+import static hu.bme.mit.theta.core.stmt.Stmts.Havoc;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Add;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Geq;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.StringJoiner;
 
 import com.google.common.collect.ImmutableList;
 
-import hu.bme.mit.theta.analysis.Action;
+import hu.bme.mit.theta.analysis.expr.StmtAction;
+import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.rattype.RatType;
 import hu.bme.mit.theta.formalism.xta.ChanType;
 import hu.bme.mit.theta.formalism.xta.Update;
 import hu.bme.mit.theta.formalism.xta.XtaProcess.Edge;
 import hu.bme.mit.theta.formalism.xta.XtaProcess.Loc;
+import hu.bme.mit.theta.formalism.xta.XtaProcess.LocKind;
 import hu.bme.mit.theta.formalism.xta.XtaSystem;
 
-public abstract class XtaAction implements Action {
+public abstract class XtaAction extends StmtAction {
 
-	@SuppressWarnings("unused")
-	private final XtaSystem system;
+	private static final VarDecl<RatType> DELAY = Var("_delay", Rat());
+
+	private final Collection<VarDecl<RatType>> clockVars;
 	private final List<Loc> sourceLocs;
 
 	private XtaAction(final XtaSystem system, final List<Loc> source) {
-		this.system = checkNotNull(system);
+		checkNotNull(system);
+		this.clockVars = system.getClockVars();
 		this.sourceLocs = ImmutableList.copyOf(checkNotNull(source));
 	}
 
-	static SimpleXtaAction simple(final XtaSystem system, final List<Loc> sourceLocs, final Edge edge) {
+	public static SimpleXtaAction simple(final XtaSystem system, final List<Loc> sourceLocs, final Edge edge) {
 		return new SimpleXtaAction(system, sourceLocs, edge);
 	}
 
-	static SyncedXtaAction synced(final XtaSystem system, final List<Loc> sourceLocs, final Expr<ChanType> syncExpr,
-			final Edge emittingEdge, final Edge receivingEdge) {
+	public static SyncedXtaAction synced(final XtaSystem system, final List<Loc> sourceLocs,
+			final Expr<ChanType> syncExpr, final Edge emittingEdge, final Edge receivingEdge) {
 		return new SyncedXtaAction(system, sourceLocs, syncExpr, emittingEdge, receivingEdge);
+	}
+
+	public Collection<VarDecl<RatType>> getClockVars() {
+		return clockVars;
 	}
 
 	public List<Loc> getSourceLocs() {
@@ -76,6 +94,8 @@ public abstract class XtaAction implements Action {
 	public static final class SimpleXtaAction extends XtaAction {
 		private final Edge edge;
 		private final List<Loc> targetLocs;
+
+		private volatile List<Stmt> stmts = null;
 
 		private SimpleXtaAction(final XtaSystem system, final List<Loc> sourceLocs, final Edge edge) {
 			super(system, sourceLocs);
@@ -118,6 +138,24 @@ public abstract class XtaAction implements Action {
 		}
 
 		@Override
+		public List<Stmt> getStmts() {
+			List<Stmt> result = stmts;
+			if (stmts == null) {
+				final ImmutableList.Builder<Stmt> builder = ImmutableList.builder();
+				addInvariants(builder, getSourceLocs());
+				addGuards(builder, edge);
+				addUpdates(builder, edge);
+				addInvariants(builder, targetLocs);
+				if (shouldApplyDelay(getTargetLocs())) {
+					addDelay(builder, getClockVars());
+				}
+				result = builder.build();
+				stmts = result;
+			}
+			return result;
+		}
+
+		@Override
 		public String toString() {
 			final StringJoiner sj = new StringJoiner("\n");
 			edge.getGuards().forEach(g -> sj.add("[" + g + "]"));
@@ -132,6 +170,8 @@ public abstract class XtaAction implements Action {
 		private final Edge receivingEdge;
 		private final Expr<ChanType> syncExpr;
 		private final List<Loc> targetLocs;
+
+		private volatile List<Stmt> stmts = null;
 
 		private SyncedXtaAction(final XtaSystem system, final List<Loc> sourceLocs, final Expr<ChanType> syncExpr,
 				final Edge emittingEdge, final Edge receivingEdge) {
@@ -193,6 +233,26 @@ public abstract class XtaAction implements Action {
 		}
 
 		@Override
+		public List<Stmt> getStmts() {
+			List<Stmt> result = stmts;
+			if (stmts == null) {
+				final ImmutableList.Builder<Stmt> builder = ImmutableList.builder();
+				addInvariants(builder, getSourceLocs());
+				addGuards(builder, emittingEdge);
+				addGuards(builder, receivingEdge);
+				addUpdates(builder, emittingEdge);
+				addUpdates(builder, receivingEdge);
+				addInvariants(builder, targetLocs);
+				if (shouldApplyDelay(getTargetLocs())) {
+					addDelay(builder, getClockVars());
+				}
+				result = builder.build();
+				stmts = result;
+			}
+			return result;
+		}
+
+		@Override
 		public String toString() {
 			final StringJoiner sj = new StringJoiner("\n");
 			sj.add(syncExpr + "!");
@@ -203,6 +263,28 @@ public abstract class XtaAction implements Action {
 			return sj.toString();
 		}
 
+	}
+
+	private static void addInvariants(final ImmutableList.Builder<Stmt> builder, final List<Loc> locs) {
+		locs.forEach(l -> l.getInvars().forEach(i -> builder.add(Assume(i.toExpr()))));
+	}
+
+	private static void addUpdates(final ImmutableList.Builder<Stmt> builder, final Edge edge) {
+		edge.getUpdates().forEach(u -> builder.add(u.toStmt()));
+	}
+
+	private static void addGuards(final ImmutableList.Builder<Stmt> builder, final Edge edge) {
+		edge.getGuards().forEach(g -> builder.add(Assume(g.toExpr())));
+	}
+
+	private static void addDelay(final ImmutableList.Builder<Stmt> builder, final Collection<VarDecl<RatType>> clocks) {
+		builder.add(Havoc(DELAY));
+		builder.add(Assume(Geq(DELAY.getRef(), Rat(0, 1))));
+		clocks.forEach(c -> builder.add(Assign(c, Add(c.getRef(), DELAY.getRef()))));
+	}
+
+	private static boolean shouldApplyDelay(final List<Loc> locs) {
+		return locs.stream().allMatch(l -> l.getKind() == LocKind.NORMAL);
 	}
 
 }
