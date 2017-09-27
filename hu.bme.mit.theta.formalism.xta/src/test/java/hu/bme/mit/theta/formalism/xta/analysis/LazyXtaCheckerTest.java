@@ -36,12 +36,12 @@ import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.analysis.zone.itp.ItpZoneState;
 import hu.bme.mit.theta.formalism.xta.XtaSystem;
 import hu.bme.mit.theta.formalism.xta.analysis.XtaAction;
-import hu.bme.mit.theta.formalism.xta.analysis.algorithm.lazy.ActStrategy;
-import hu.bme.mit.theta.formalism.xta.analysis.algorithm.lazy.BinItpStrategy;
-import hu.bme.mit.theta.formalism.xta.analysis.algorithm.lazy.LazyXtaChecker;
-import hu.bme.mit.theta.formalism.xta.analysis.algorithm.lazy.LuStrategy;
-import hu.bme.mit.theta.formalism.xta.analysis.algorithm.lazy.SeqItpStrategy;
-import hu.bme.mit.theta.formalism.xta.analysis.algorithm.lazy.ItpStrategy.ItpOperator;
+import hu.bme.mit.theta.formalism.xta.analysis.lazy.ActStrategy;
+import hu.bme.mit.theta.formalism.xta.analysis.lazy.BinItpStrategy;
+import hu.bme.mit.theta.formalism.xta.analysis.lazy.LazyXtaChecker;
+import hu.bme.mit.theta.formalism.xta.analysis.lazy.LuStrategy;
+import hu.bme.mit.theta.formalism.xta.analysis.lazy.SeqItpStrategy;
+import hu.bme.mit.theta.formalism.xta.analysis.lazy.ItpStrategy.ItpOperator;
 import hu.bme.mit.theta.formalism.xta.dsl.XtaDslManager;
 
 @RunWith(Parameterized.class)

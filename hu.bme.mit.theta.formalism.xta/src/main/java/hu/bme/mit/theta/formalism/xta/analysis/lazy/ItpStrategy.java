@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.formalism.xta.analysis.algorithm.lazy;
+package hu.bme.mit.theta.formalism.xta.analysis.lazy;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 

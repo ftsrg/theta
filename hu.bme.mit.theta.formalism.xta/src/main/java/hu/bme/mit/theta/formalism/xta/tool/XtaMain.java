@@ -35,14 +35,14 @@ import hu.bme.mit.theta.common.table.impl.SimpleTableWriter;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 import hu.bme.mit.theta.formalism.xta.XtaSystem;
-import hu.bme.mit.theta.formalism.xta.analysis.algorithm.lazy.ActStrategy;
-import hu.bme.mit.theta.formalism.xta.analysis.algorithm.lazy.BinItpStrategy;
-import hu.bme.mit.theta.formalism.xta.analysis.algorithm.lazy.ItpStrategy.ItpOperator;
-import hu.bme.mit.theta.formalism.xta.analysis.algorithm.lazy.LazyXtaChecker;
-import hu.bme.mit.theta.formalism.xta.analysis.algorithm.lazy.LazyXtaChecker.AlgorithmStrategy;
-import hu.bme.mit.theta.formalism.xta.analysis.algorithm.lazy.LazyXtaStatistics;
-import hu.bme.mit.theta.formalism.xta.analysis.algorithm.lazy.LuStrategy;
-import hu.bme.mit.theta.formalism.xta.analysis.algorithm.lazy.SeqItpStrategy;
+import hu.bme.mit.theta.formalism.xta.analysis.lazy.ActStrategy;
+import hu.bme.mit.theta.formalism.xta.analysis.lazy.BinItpStrategy;
+import hu.bme.mit.theta.formalism.xta.analysis.lazy.LazyXtaChecker;
+import hu.bme.mit.theta.formalism.xta.analysis.lazy.LazyXtaStatistics;
+import hu.bme.mit.theta.formalism.xta.analysis.lazy.LuStrategy;
+import hu.bme.mit.theta.formalism.xta.analysis.lazy.SeqItpStrategy;
+import hu.bme.mit.theta.formalism.xta.analysis.lazy.ItpStrategy.ItpOperator;
+import hu.bme.mit.theta.formalism.xta.analysis.lazy.LazyXtaChecker.AlgorithmStrategy;
 import hu.bme.mit.theta.formalism.xta.dsl.XtaDslManager;
 
 public final class XtaMain {
