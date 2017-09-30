@@ -16,42 +16,28 @@
 package hu.bme.mit.theta.formalism.cfa.analysis;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
-import static hu.bme.mit.theta.core.utils.VarIndexing.all;
 
 import java.util.Collections;
 import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 
-import hu.bme.mit.theta.analysis.expl.StmtAction;
+import hu.bme.mit.theta.analysis.expr.StmtAction;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.stmt.Stmt;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.utils.StmtUnfoldResult;
-import hu.bme.mit.theta.core.utils.StmtUtils;
-import hu.bme.mit.theta.core.utils.VarIndexing;
 import hu.bme.mit.theta.formalism.cfa.CFA.Edge;
 import hu.bme.mit.theta.formalism.cfa.CFA.Loc;
 
-public final class CfaAction implements StmtAction {
+public final class CfaAction extends StmtAction {
 
 	private final List<Stmt> stmts;
 	private final Loc source;
 	private final Loc target;
-	private final Expr<BoolType> expr;
-	private final VarIndexing nextIndexing;
 
 	private CfaAction(final Loc source, final Loc target, final List<Stmt> stmts) {
 		this.source = checkNotNull(source);
 		this.target = checkNotNull(target);
 		this.stmts = checkNotNull(stmts);
-
-		// TODO: do the following stuff lazily
-		final StmtUnfoldResult toExprResult = StmtUtils.toExpr(stmts, all(0));
-		expr = And(toExprResult.getExprs());
-		nextIndexing = toExprResult.getIndexing();
 	}
 
 	public static CfaAction create(final Edge edge) {
@@ -60,16 +46,6 @@ public final class CfaAction implements StmtAction {
 
 	public static CfaAction create(final Loc source, final Loc target, final List<Stmt> stmts) {
 		return new CfaAction(source, target, ImmutableList.copyOf(stmts));
-	}
-
-	@Override
-	public Expr<BoolType> toExpr() {
-		return expr;
-	}
-
-	@Override
-	public VarIndexing nextIndexing() {
-		return nextIndexing;
 	}
 
 	public Loc getSource() {

@@ -109,7 +109,7 @@ public final class YedWriter extends AbstractGraphWriter {
 		sb.append(" color=\"").append(mapColorToString(attributes.getLineColor())).append("\"");
 		final String style = mapLineStyleToString(attributes.getLineStyle());
 		if (!"".equals(style)) {
-			sb.append(" type=\"").append(style).append("\"");
+			sb.append(" type=\"").append(style).append('\"');
 		}
 
 		// TODO: peripheries

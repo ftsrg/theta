@@ -29,22 +29,26 @@ import hu.bme.mit.theta.formalism.xta.ChanType;
 import hu.bme.mit.theta.formalism.xta.Update;
 import hu.bme.mit.theta.formalism.xta.XtaProcess.Edge;
 import hu.bme.mit.theta.formalism.xta.XtaProcess.Loc;
+import hu.bme.mit.theta.formalism.xta.XtaSystem;
 
 public abstract class XtaAction implements Action {
 
+	@SuppressWarnings("unused")
+	private final XtaSystem system;
 	private final List<Loc> sourceLocs;
 
-	private XtaAction(final List<Loc> source) {
+	private XtaAction(final XtaSystem system, final List<Loc> source) {
+		this.system = checkNotNull(system);
 		this.sourceLocs = ImmutableList.copyOf(checkNotNull(source));
 	}
 
-	public static SimpleXtaAction simple(final List<Loc> sourceLocs, final Edge edge) {
-		return new SimpleXtaAction(sourceLocs, edge);
+	static SimpleXtaAction simple(final XtaSystem system, final List<Loc> sourceLocs, final Edge edge) {
+		return new SimpleXtaAction(system, sourceLocs, edge);
 	}
 
-	public static SyncedXtaAction synced(final List<Loc> sourceLocs, final Expr<ChanType> syncExpr,
+	static SyncedXtaAction synced(final XtaSystem system, final List<Loc> sourceLocs, final Expr<ChanType> syncExpr,
 			final Edge emittingEdge, final Edge receivingEdge) {
-		return new SyncedXtaAction(sourceLocs, syncExpr, emittingEdge, receivingEdge);
+		return new SyncedXtaAction(system, sourceLocs, syncExpr, emittingEdge, receivingEdge);
 	}
 
 	public List<Loc> getSourceLocs() {
@@ -73,8 +77,8 @@ public abstract class XtaAction implements Action {
 		private final Edge edge;
 		private final List<Loc> targetLocs;
 
-		private SimpleXtaAction(final List<Loc> sourceLocs, final Edge edge) {
-			super(sourceLocs);
+		private SimpleXtaAction(final XtaSystem system, final List<Loc> sourceLocs, final Edge edge) {
+			super(system, sourceLocs);
 			this.edge = checkNotNull(edge);
 
 			final ImmutableList.Builder<Loc> builder = ImmutableList.builder();
@@ -129,9 +133,9 @@ public abstract class XtaAction implements Action {
 		private final Expr<ChanType> syncExpr;
 		private final List<Loc> targetLocs;
 
-		private SyncedXtaAction(final List<Loc> sourceLocs, final Expr<ChanType> syncExpr, final Edge emittingEdge,
-				final Edge receivingEdge) {
-			super(sourceLocs);
+		private SyncedXtaAction(final XtaSystem system, final List<Loc> sourceLocs, final Expr<ChanType> syncExpr,
+				final Edge emittingEdge, final Edge receivingEdge) {
+			super(system, sourceLocs);
 			this.syncExpr = checkNotNull(syncExpr);
 			this.emittingEdge = checkNotNull(emittingEdge);
 			this.receivingEdge = checkNotNull(receivingEdge);
