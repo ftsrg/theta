@@ -18,15 +18,12 @@ package hu.bme.mit.theta.formalism.cfa.analysis;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableList.Builder;
-
 import hu.bme.mit.theta.analysis.LTS;
 import hu.bme.mit.theta.common.Utils;
-import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.formalism.cfa.CFA.Edge;
 import hu.bme.mit.theta.formalism.cfa.CFA.Loc;
 
@@ -47,15 +44,15 @@ public class CfaLbeLts implements LTS<CfaState<?>, CfaAction> {
 		final List<CfaAction> actions = new ArrayList<>(loc.getOutEdges().size());
 
 		for (final Edge edge : loc.getOutEdges()) {
-			final Builder<Stmt> stmts = ImmutableList.builder();
-			stmts.add(edge.getStmt());
+			final List<Edge> edges = new LinkedList<>();
+			edges.add(edge);
 			Loc running = edge.getTarget();
 			while (running.getInEdges().size() == 1 && running.getOutEdges().size() == 1) {
 				final Edge next = Utils.singleElementOf(running.getOutEdges());
-				stmts.add(next.getStmt());
+				edges.add(next);
 				running = next.getTarget();
 			}
-			actions.add(CfaAction.create(loc, running, stmts.build()));
+			actions.add(CfaAction.create(edges));
 		}
 
 		return actions;
