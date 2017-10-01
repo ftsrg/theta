@@ -43,6 +43,10 @@ main process counter {
 
 See _src/test/resources_ for more examples.
 
+### C source to CFA
+
+An unstable, prototype tool is available that can parse simple C programs into CFAs using Eclipse CDT. The tool can be downloaded [here](home.mit.bme.hu/~hajdua/theta/c-to-cfa.jar). This tool is no longer maintained as we are currently developing an LLVM frontend for CFAs.
+
 ## Tool
 
 The tool can be built using the command `./gradlew theta-cfa` (Linux) or `gradle.bat theta-cfa` (Windows). The runnable file will appear under _build/libs_. The tool also requires the libraries in the _../lib_ folder (if you work on Windows, also read the README there).
