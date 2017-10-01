@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.formalism.cfa.analysis;
+package hu.bme.mit.theta.formalism.cfa.analysis.lts;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -22,12 +22,13 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import hu.bme.mit.theta.analysis.LTS;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.formalism.cfa.CFA.Edge;
 import hu.bme.mit.theta.formalism.cfa.CFA.Loc;
+import hu.bme.mit.theta.formalism.cfa.analysis.CfaAction;
+import hu.bme.mit.theta.formalism.cfa.analysis.CfaState;
 
-public class CfaLbeLts implements LTS<CfaState<?>, CfaAction> {
+public class CfaLbeLts implements CfaLts {
 
 	private final Map<Loc, Collection<CfaAction>> actions;
 
