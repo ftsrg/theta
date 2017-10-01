@@ -17,10 +17,8 @@ package hu.bme.mit.theta.formalism.cfa.analysis.lts;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.formalism.cfa.CFA.Edge;
@@ -28,20 +26,26 @@ import hu.bme.mit.theta.formalism.cfa.CFA.Loc;
 import hu.bme.mit.theta.formalism.cfa.analysis.CfaAction;
 import hu.bme.mit.theta.formalism.cfa.analysis.CfaState;
 
-public class CfaLbeLts implements CfaLts {
+/**
+ * Large block encoding (LBE) implementation for CFA LTS. It maps each path
+ * (with no branching) into a single action.
+ */
+public final class CfaLbeLts implements CfaLts {
 
-	private final Map<Loc, Collection<CfaAction>> actions;
+	private static final class LazyHolder {
+		private static final CfaLbeLts INSTANCE = new CfaLbeLts();
+	}
 
-	public CfaLbeLts() {
-		actions = new HashMap<>();
+	private CfaLbeLts() {
+	}
+
+	public static CfaLbeLts getInstance() {
+		return LazyHolder.INSTANCE;
 	}
 
 	@Override
 	public Collection<CfaAction> getEnabledActionsFor(final CfaState<?> state) {
-		return actions.computeIfAbsent(state.getLoc(), this::getEnabledActionsFor);
-	}
-
-	private Collection<CfaAction> getEnabledActionsFor(final Loc loc) {
+		final Loc loc = state.getLoc();
 		final List<CfaAction> actions = new ArrayList<>(loc.getOutEdges().size());
 
 		for (final Edge edge : loc.getOutEdges()) {

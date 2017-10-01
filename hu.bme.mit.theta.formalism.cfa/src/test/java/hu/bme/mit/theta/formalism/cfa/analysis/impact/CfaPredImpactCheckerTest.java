@@ -32,7 +32,7 @@ import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 import hu.bme.mit.theta.formalism.cfa.CFA;
-import hu.bme.mit.theta.formalism.cfa.analysis.lts.CfaSbeLts;
+import hu.bme.mit.theta.formalism.cfa.analysis.lts.CfaLbeLts;
 import hu.bme.mit.theta.formalism.cfa.dsl.CfaDslManager;
 import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
@@ -47,7 +47,7 @@ public final class CfaPredImpactCheckerTest {
 
 		final ItpSolver solver = Z3SolverFactory.getInstace().createItpSolver();
 
-		final PredImpactChecker checker = PredImpactChecker.create(new CfaSbeLts(), cfa.getInitLoc(),
+		final PredImpactChecker checker = PredImpactChecker.create(CfaLbeLts.getInstance(), cfa.getInitLoc(),
 				l -> l.equals(cfa.getErrorLoc()), solver);
 
 		// Act
