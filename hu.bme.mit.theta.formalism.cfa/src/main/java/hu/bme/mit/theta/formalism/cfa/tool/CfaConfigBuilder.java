@@ -63,6 +63,7 @@ import hu.bme.mit.theta.formalism.cfa.analysis.DistToErrComparator;
 import hu.bme.mit.theta.formalism.cfa.analysis.lts.CfaCachedLts;
 import hu.bme.mit.theta.formalism.cfa.analysis.lts.CfaLbeLts;
 import hu.bme.mit.theta.formalism.cfa.analysis.lts.CfaLts;
+import hu.bme.mit.theta.formalism.cfa.analysis.lts.CfaSbeLts;
 import hu.bme.mit.theta.formalism.cfa.analysis.prec.GlobalCfaPrec;
 import hu.bme.mit.theta.formalism.cfa.analysis.prec.GlobalCfaPrecRefiner;
 import hu.bme.mit.theta.formalism.cfa.analysis.prec.LocalCfaPrec;
@@ -153,6 +154,24 @@ public class CfaConfigBuilder {
 				RefutationToPrec<P, R> refToPrec);
 	};
 
+	public enum Encoding {
+		SBE {
+			@Override
+			public CfaLts getLts() {
+				return new CfaCachedLts(CfaSbeLts.getInstance());
+			}
+		},
+
+		LBE {
+			@Override
+			public CfaLts getLts() {
+				return new CfaCachedLts(CfaLbeLts.getInstance());
+			}
+		};
+
+		public abstract CfaLts getLts();
+	};
+
 	private Logger logger = NullLogger.getInstance();
 	private SolverFactory solverFactory = Z3SolverFactory.getInstace();
 	private final Domain domain;
@@ -160,6 +179,7 @@ public class CfaConfigBuilder {
 	private Search search = Search.BFS;
 	private PredSplit predSplit = PredSplit.WHOLE;
 	private PrecGranularity precGranularity = PrecGranularity.GLOBAL;
+	private Encoding encoding = Encoding.LBE;
 
 	public CfaConfigBuilder(final Domain domain, final Refinement refinement) {
 		this.domain = domain;
@@ -191,9 +211,14 @@ public class CfaConfigBuilder {
 		return this;
 	}
 
+	public CfaConfigBuilder encoding(final Encoding encoding) {
+		this.encoding = encoding;
+		return this;
+	}
+
 	public Config<? extends State, ? extends Action, ? extends Prec> build(final CFA cfa) {
 		final ItpSolver solver = solverFactory.createItpSolver();
-		final CfaLts lts = new CfaCachedLts(CfaLbeLts.getInstance());
+		final CfaLts lts = encoding.getLts();
 
 		if (domain == Domain.EXPL) {
 			final Analysis<CfaState<ExplState>, CfaAction, CfaPrec<ExplPrec>> analysis = CfaAnalysis
