@@ -38,6 +38,7 @@ import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 import hu.bme.mit.theta.formalism.cfa.CFA;
 import hu.bme.mit.theta.formalism.cfa.dsl.CfaDslManager;
 import hu.bme.mit.theta.formalism.cfa.tool.CfaConfigBuilder.Domain;
+import hu.bme.mit.theta.formalism.cfa.tool.CfaConfigBuilder.Encoding;
 import hu.bme.mit.theta.formalism.cfa.tool.CfaConfigBuilder.PrecGranularity;
 import hu.bme.mit.theta.formalism.cfa.tool.CfaConfigBuilder.PredSplit;
 import hu.bme.mit.theta.formalism.cfa.tool.CfaConfigBuilder.Refinement;
@@ -68,6 +69,9 @@ public class CfaMain {
 
 	@Parameter(names = { "-g", "--precision-granularity" }, description = "Precision granularity")
 	PrecGranularity precGranularity = PrecGranularity.GLOBAL;
+
+	@Parameter(names = { "-en", "--encoding" }, description = "Encoding")
+	Encoding encoding = Encoding.LBE;
 
 	@Parameter(names = { "-e", "--expected" }, description = "Expected result", arity = 1)
 	Boolean expected;
@@ -145,7 +149,7 @@ public class CfaMain {
 
 	private Config<?, ?, ?> buildConfiguration(final CFA cfa) {
 		return new CfaConfigBuilder(domain, refinement).precGranularity(precGranularity).search(search)
-				.predSplit(predSplit).logger(logger).build(cfa);
+				.predSplit(predSplit).encoding(encoding).logger(logger).build(cfa);
 	}
 
 	private void checkResult(final SafetyResult<?, ?> status) throws Exception {

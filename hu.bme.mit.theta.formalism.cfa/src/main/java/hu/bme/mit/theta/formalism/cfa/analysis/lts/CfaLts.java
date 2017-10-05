@@ -13,22 +13,11 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.formalism.cfa.creator;
+package hu.bme.mit.theta.formalism.cfa.analysis.lts;
 
-import hu.bme.mit.theta.core.stmt.Stmt;
-import hu.bme.mit.theta.formalism.cfa.CFA;
+import hu.bme.mit.theta.analysis.LTS;
+import hu.bme.mit.theta.formalism.cfa.analysis.CfaAction;
+import hu.bme.mit.theta.formalism.cfa.analysis.CfaState;
 
-public final class CfaCreator {
-
-	private CfaCreator() {
-	}
-
-	public static CFA createSBE(final Stmt stmt) {
-		return SbeCreator.create(stmt);
-	}
-
-	public static CFA createLBE(final Stmt stmt) {
-		return LbeCreator.create(stmt);
-	}
-
+public interface CfaLts extends LTS<CfaState<?>, CfaAction> {
 }
