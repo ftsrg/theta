@@ -58,34 +58,34 @@ public class StsMain {
 	private final String[] args;
 	private final TableWriter writer;
 
-	@Parameter(names = { "-d", "--domain" }, description = "Abstract domain", required = true)
+	@Parameter(names = { "--domain" }, description = "Abstract domain", required = true)
 	Domain domain;
 
-	@Parameter(names = { "-r", "--refinement" }, description = "Refinement strategy", required = true)
+	@Parameter(names = { "--refinement" }, description = "Refinement strategy", required = true)
 	Refinement refinement;
 
-	@Parameter(names = { "-s", "--search" }, description = "Search strategy")
+	@Parameter(names = { "--search" }, description = "Search strategy")
 	Search search = Search.BFS;
 
-	@Parameter(names = { "-ps", "--predsplit" }, description = "Predicate splitting")
+	@Parameter(names = { "--predsplit" }, description = "Predicate splitting")
 	PredSplit predSplit = PredSplit.WHOLE;
 
-	@Parameter(names = { "-m", "--model" }, description = "Path of the input model", required = true)
+	@Parameter(names = { "--model" }, description = "Path of the input model", required = true)
 	String model;
 
-	@Parameter(names = { "-i", "--initprec" }, description = "Initial precision")
+	@Parameter(names = { "--initprec" }, description = "Initial precision")
 	InitPrec initPrec = InitPrec.EMPTY;
 
-	@Parameter(names = { "-e", "--expected" }, description = "Expected result", arity = 1)
+	@Parameter(names = { "--expected" }, description = "Expected result", arity = 1)
 	Boolean expected;
 
-	@Parameter(names = { "-ll", "--loglevel" }, description = "Detailedness of logging")
+	@Parameter(names = { "--loglevel" }, description = "Detailedness of logging")
 	Integer logLevel = 1;
 
-	@Parameter(names = { "-bm", "--benchmark" }, description = "Benchmark mode (only print metrics)")
+	@Parameter(names = { "--benchmark" }, description = "Benchmark mode (only print metrics)")
 	Boolean benchmarkMode = false;
 
-	@Parameter(names = { "-v", "--visualize" }, description = "Write proof or counterexample to file in dot format")
+	@Parameter(names = { "--visualize" }, description = "Write proof or counterexample to file in dot format")
 	String dotfile = null;
 
 	@Parameter(names = { "--header" }, description = "Print only a header (for benchmarks)", help = true)

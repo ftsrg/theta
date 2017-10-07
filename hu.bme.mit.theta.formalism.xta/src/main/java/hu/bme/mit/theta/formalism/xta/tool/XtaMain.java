@@ -50,19 +50,19 @@ public final class XtaMain {
 	private final String[] args;
 	private final TableWriter writer;
 
-	@Parameter(names = { "-a", "--algorithm" }, description = "Algorithm", required = true)
+	@Parameter(names = { "--algorithm" }, description = "Algorithm", required = true)
 	Algorithm algorithm;
 
-	@Parameter(names = { "-m", "--model" }, description = "Path of the input model", required = true)
+	@Parameter(names = { "--model" }, description = "Path of the input model", required = true)
 	String model;
 
-	@Parameter(names = { "-s", "--search" }, description = "Search strategy", required = true)
+	@Parameter(names = { "--search" }, description = "Search strategy", required = true)
 	Search search;
 
-	@Parameter(names = { "-bm", "--benchmark" }, description = "Benchmark mode (only print metrics)")
+	@Parameter(names = { "--benchmark" }, description = "Benchmark mode (only print metrics)")
 	Boolean benchmarkMode = false;
 
-	@Parameter(names = { "-v", "--visualize" }, description = "Write proof or counterexample to file in dot format")
+	@Parameter(names = { "--visualize" }, description = "Write proof or counterexample to file in dot format")
 	String dotfile = null;
 
 	@Parameter(names = { "--header" }, description = "Print only a header (for benchmarks)", help = true)
