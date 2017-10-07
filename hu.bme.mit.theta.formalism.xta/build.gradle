@@ -6,7 +6,7 @@ dependencies {
   compile project(':hu.bme.mit.theta.common')
   compile project(':hu.bme.mit.theta.core')
   compile project(':hu.bme.mit.theta.analysis')
-  compile group: 'com.beust', name: 'jcommander', version: '1.72'
+  compile group: 'com.beust', name: 'jcommander', version: jcommanderVersion
 }
 
 generateGrammarSource {
