@@ -76,9 +76,6 @@ public class StsMain {
 	@Parameter(names = { "--initprec" }, description = "Initial precision")
 	InitPrec initPrec = InitPrec.EMPTY;
 
-	@Parameter(names = { "--expected" }, description = "Expected result", arity = 1)
-	Boolean expected;
-
 	@Parameter(names = { "--loglevel" }, description = "Detailedness of logging")
 	Integer logLevel = 1;
 
@@ -122,7 +119,6 @@ public class StsMain {
 			final STS sts = loadModel();
 			final Config<?, ?, ?> configuration = buildConfiguration(sts);
 			final SafetyResult<?, ?> status = configuration.check();
-			checkResult(status);
 			printResult(status, sts);
 			if (dotfile != null) {
 				writeVisualStatus(status, dotfile);
@@ -162,12 +158,6 @@ public class StsMain {
 	private Config<?, ?, ?> buildConfiguration(final STS sts) {
 		return new StsConfigBuilder(domain, refinement).initPrec(initPrec).search(search).predSplit(predSplit)
 				.logger(logger).build(sts);
-	}
-
-	private void checkResult(final SafetyResult<?, ?> status) throws Exception {
-		if (expected != null && !expected.equals(status.isSafe())) {
-			throw new Exception("Expected safe = " + expected + " but was " + status.isSafe());
-		}
 	}
 
 	private void printResult(final SafetyResult<?, ?> status, final STS sts) {
