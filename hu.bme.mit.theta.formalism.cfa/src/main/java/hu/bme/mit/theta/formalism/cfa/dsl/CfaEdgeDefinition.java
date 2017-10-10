@@ -1,12 +1,12 @@
 /*
  *  Copyright 2017 Budapest University of Technology and Economics
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -48,15 +48,26 @@ final class CfaEdgeDefinition {
 
 	////
 
-	public Edge instantiate(final CFA.Builder cfa, final Environment env) {
+	public List<Edge> instantiate(final CFA.Builder cfa, final Environment env) {
 		final CfaLocationSymbol sourceSymbol = (CfaLocationSymbol) scope.resolve(source).get();
 		final CfaLocationSymbol targetSymbol = (CfaLocationSymbol) scope.resolve(target).get();
 
 		final Loc sourceLoc = (Loc) env.eval(sourceSymbol);
 		final Loc targetLoc = (Loc) env.eval(targetSymbol);
 		final List<Stmt> stmts = statements.stream().map(s -> s.instantiate(env)).collect(toImmutableList());
-		final Edge edge = cfa.createEdge(sourceLoc, targetLoc, stmts);
-		return edge;
+		final List<Edge> edges = new ArrayList<>(stmts.size());
+		final List<Loc> locs = new ArrayList<>(stmts.size() + 1);
+		locs.add(sourceLoc);
+		for (int i = 0; i < stmts.size() - 1; ++i) {
+			locs.add(cfa.createLoc(""));
+		}
+		locs.add(targetLoc);
+
+		for (int i = 0; i < stmts.size(); ++i) {
+			edges.add(cfa.createEdge(locs.get(i), locs.get(i + 1), stmts.get(i)));
+		}
+
+		return edges;
 	}
 
 	////

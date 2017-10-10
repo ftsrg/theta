@@ -1,12 +1,12 @@
 /*
  *  Copyright 2017 Budapest University of Technology and Economics
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,7 +24,6 @@ import java.util.Collection;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.TransferFunc;
 import hu.bme.mit.theta.analysis.expr.ExprState;
-import hu.bme.mit.theta.formalism.cfa.CFA.Edge;
 import hu.bme.mit.theta.formalism.cfa.CFA.Loc;
 
 final class CfaTransferFunc<S extends ExprState, P extends Prec>
@@ -48,9 +47,8 @@ final class CfaTransferFunc<S extends ExprState, P extends Prec>
 		checkNotNull(action);
 		checkNotNull(prec);
 
-		final Edge edge = action.getEdge();
-		final Loc source = edge.getSource();
-		final Loc target = edge.getTarget();
+		final Loc source = action.getSource();
+		final Loc target = action.getTarget();
 		checkArgument(state.getLoc().equals(source), "Location mismatch");
 
 		final Collection<CfaState<S>> succStates = new ArrayList<>();

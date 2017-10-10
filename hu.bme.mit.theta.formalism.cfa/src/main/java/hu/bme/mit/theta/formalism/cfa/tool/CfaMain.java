@@ -38,6 +38,7 @@ import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 import hu.bme.mit.theta.formalism.cfa.CFA;
 import hu.bme.mit.theta.formalism.cfa.dsl.CfaDslManager;
 import hu.bme.mit.theta.formalism.cfa.tool.CfaConfigBuilder.Domain;
+import hu.bme.mit.theta.formalism.cfa.tool.CfaConfigBuilder.Encoding;
 import hu.bme.mit.theta.formalism.cfa.tool.CfaConfigBuilder.PrecGranularity;
 import hu.bme.mit.theta.formalism.cfa.tool.CfaConfigBuilder.PredSplit;
 import hu.bme.mit.theta.formalism.cfa.tool.CfaConfigBuilder.Refinement;
@@ -51,34 +52,37 @@ public class CfaMain {
 	private final String[] args;
 	private final TableWriter writer;
 
-	@Parameter(names = { "-d", "--domain" }, description = "Abstract domain", required = true)
+	@Parameter(names = { "--domain" }, description = "Abstract domain", required = true)
 	Domain domain;
 
-	@Parameter(names = { "-r", "--refinement" }, description = "Refinement strategy", required = true)
+	@Parameter(names = { "--refinement" }, description = "Refinement strategy", required = true)
 	Refinement refinement;
 
-	@Parameter(names = { "-s", "--search" }, description = "Search strategy")
+	@Parameter(names = { "--search" }, description = "Search strategy")
 	Search search = Search.BFS;
 
-	@Parameter(names = { "-ps", "--predsplit" }, description = "Predicate splitting")
+	@Parameter(names = { "--predsplit" }, description = "Predicate splitting")
 	PredSplit predSplit = PredSplit.WHOLE;
 
-	@Parameter(names = { "-m", "--model" }, description = "Path of the input model", required = true)
+	@Parameter(names = { "--model" }, description = "Path of the input model", required = true)
 	String model;
 
-	@Parameter(names = { "-g", "--precision-granularity" }, description = "Precision granularity")
+	@Parameter(names = { "--precgranularity" }, description = "Precision granularity")
 	PrecGranularity precGranularity = PrecGranularity.GLOBAL;
 
-	@Parameter(names = { "-e", "--expected" }, description = "Expected result", arity = 1)
+	@Parameter(names = { "--encoding" }, description = "Encoding")
+	Encoding encoding = Encoding.LBE;
+
+	@Parameter(names = { "--expected" }, description = "Expected result", arity = 1)
 	Boolean expected;
 
-	@Parameter(names = { "-ll", "--loglevel" }, description = "Detailedness of logging")
+	@Parameter(names = { "--loglevel" }, description = "Detailedness of logging")
 	Integer logLevel = 1;
 
-	@Parameter(names = { "-bm", "--benchmark" }, description = "Benchmark mode (only print metrics)")
+	@Parameter(names = { "--benchmark" }, description = "Benchmark mode (only print metrics)")
 	Boolean benchmarkMode = false;
 
-	@Parameter(names = { "-v", "--visualize" }, description = "Write proof or counterexample to file in dot format")
+	@Parameter(names = { "--visualize" }, description = "Write proof or counterexample to file in dot format")
 	String dotfile = null;
 
 	@Parameter(names = { "--header" }, description = "Print only a header (for benchmarks)", help = true)
@@ -145,7 +149,7 @@ public class CfaMain {
 
 	private Config<?, ?, ?> buildConfiguration(final CFA cfa) {
 		return new CfaConfigBuilder(domain, refinement).precGranularity(precGranularity).search(search)
-				.predSplit(predSplit).logger(logger).build(cfa);
+				.predSplit(predSplit).encoding(encoding).logger(logger).build(cfa);
 	}
 
 	private void checkResult(final SafetyResult<?, ?> status) throws Exception {

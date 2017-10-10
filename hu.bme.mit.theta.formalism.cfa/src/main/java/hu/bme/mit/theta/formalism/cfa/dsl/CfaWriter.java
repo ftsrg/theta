@@ -70,10 +70,8 @@ public final class CfaWriter {
 			final String targetLoc = "L" + edge.getTarget().getName();
 			bw.write(String.format("\t%s -> %s {", sourceLoc, targetLoc));
 			bw.newLine();
-			for (final Stmt stmt : edge.getStmts()) {
-				bw.write(String.format("\t\t%s", writeStmt(stmt)));
-				bw.newLine();
-			}
+			bw.write(String.format("\t\t%s", writeStmt(edge.getStmt())));
+			bw.newLine();
 			bw.write("\t}");
 			bw.newLine();
 		}

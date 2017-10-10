@@ -13,31 +13,33 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.formalism.cfa.analysis;
+package hu.bme.mit.theta.formalism.cfa.analysis.lts;
 
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.stream.Collectors;
 
-import hu.bme.mit.theta.analysis.LTS;
-import hu.bme.mit.theta.formalism.cfa.CFA.Loc;
+import hu.bme.mit.theta.formalism.cfa.analysis.CfaAction;
+import hu.bme.mit.theta.formalism.cfa.analysis.CfaState;
 
-public final class CfaLts implements LTS<CfaState<?>, CfaAction> {
+/**
+ * Single block encoding (SBE) implementation for CFA LTS. It returns a single
+ * CFA edges as actions.
+ */
+public final class CfaSbeLts implements CfaLts {
 
-	private final Map<Loc, Collection<CfaAction>> actions;
+	private static final class LazyHolder {
+		private static final CfaSbeLts INSTANCE = new CfaSbeLts();
+	}
 
-	public CfaLts() {
-		actions = new HashMap<>();
+	private CfaSbeLts() {
+	}
+
+	public static CfaSbeLts getInstance() {
+		return LazyHolder.INSTANCE;
 	}
 
 	@Override
 	public Collection<CfaAction> getEnabledActionsFor(final CfaState<?> state) {
-		return actions.computeIfAbsent(state.getLoc(), this::getEnabledActionsFor);
+		return state.getLoc().getOutEdges().stream().map(CfaAction::create).collect(Collectors.toList());
 	}
-
-	private Collection<CfaAction> getEnabledActionsFor(final Loc loc) {
-		return loc.getOutEdges().stream().map(CfaAction::create).collect(Collectors.toList());
-	}
-
 }

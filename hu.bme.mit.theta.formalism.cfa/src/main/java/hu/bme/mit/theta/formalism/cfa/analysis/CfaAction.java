@@ -15,38 +15,61 @@
  */
 package hu.bme.mit.theta.formalism.cfa.analysis;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import hu.bme.mit.theta.analysis.expr.StmtAction;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.formalism.cfa.CFA.Edge;
+import hu.bme.mit.theta.formalism.cfa.CFA.Loc;
 
 public final class CfaAction extends StmtAction {
 
-	private final Edge edge;
+	private final List<Stmt> stmts;
+	private final Loc source;
+	private final Loc target;
 
-	private CfaAction(final Edge edge) {
-		this.edge = checkNotNull(edge);
+	private CfaAction(final Loc source, final Loc target, final List<Stmt> stmts) {
+		this.source = checkNotNull(source);
+		this.target = checkNotNull(target);
+		this.stmts = Collections.unmodifiableList(checkNotNull(stmts));
 	}
 
 	public static CfaAction create(final Edge edge) {
-		return new CfaAction(edge);
+		return new CfaAction(edge.getSource(), edge.getTarget(), Collections.singletonList(edge.getStmt()));
 	}
 
-	public Edge getEdge() {
-		return edge;
+	public static CfaAction create(final List<Edge> edges) {
+		checkArgument(!edges.isEmpty(), "Empty list of edges");
+		for (int i = 0; i < edges.size() - 1; ++i) {
+			checkArgument(edges.get(i).getTarget().equals(edges.get(i + 1).getSource()));
+		}
+		final Loc source = edges.get(0).getSource();
+		final Loc target = edges.get(edges.size() - 1).getTarget();
+		final List<Stmt> stmts = edges.stream().map(Edge::getStmt).collect(Collectors.toList());
+		return new CfaAction(source, target, stmts);
+	}
+
+	public Loc getSource() {
+		return source;
+	}
+
+	public Loc getTarget() {
+		return target;
 	}
 
 	@Override
 	public List<Stmt> getStmts() {
-		return edge.getStmts();
+		return stmts;
 	}
 
 	@Override
 	public String toString() {
-		return Utils.toStringBuilder(getClass().getSimpleName()).addAll(edge.getStmts()).toString();
+		return Utils.toStringBuilder(getClass().getSimpleName()).addAll(stmts).toString();
 	}
 }

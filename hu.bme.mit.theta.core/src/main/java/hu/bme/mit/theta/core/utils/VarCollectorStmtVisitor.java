@@ -1,12 +1,12 @@
 /*
  *  Copyright 2017 Budapest University of Technology and Economics
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,18 +18,9 @@ package hu.bme.mit.theta.core.utils;
 import java.util.Collection;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.stmt.AssertStmt;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
-import hu.bme.mit.theta.core.stmt.BlockStmt;
-import hu.bme.mit.theta.core.stmt.DeclStmt;
-import hu.bme.mit.theta.core.stmt.DoStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
-import hu.bme.mit.theta.core.stmt.IfElseStmt;
-import hu.bme.mit.theta.core.stmt.IfStmt;
-import hu.bme.mit.theta.core.stmt.ReturnStmt;
-import hu.bme.mit.theta.core.stmt.SkipStmt;
-import hu.bme.mit.theta.core.stmt.WhileStmt;
 import hu.bme.mit.theta.core.type.Type;
 
 final class VarCollectorStmtVisitor implements StmtVisitor<Collection<VarDecl<?>>, Void> {
@@ -46,27 +37,7 @@ final class VarCollectorStmtVisitor implements StmtVisitor<Collection<VarDecl<?>
 	}
 
 	@Override
-	public Void visit(final SkipStmt stmt, final Collection<VarDecl<?>> vars) {
-		return null;
-	}
-
-	@Override
-	public <DeclType extends Type> Void visit(final DeclStmt<DeclType> stmt, final Collection<VarDecl<?>> vars) {
-		vars.add(stmt.getVarDecl());
-		if (stmt.getInitVal().isPresent()) {
-			ExprUtils.collectVars(stmt.getInitVal().get(), vars);
-		}
-		return null;
-	}
-
-	@Override
 	public Void visit(final AssumeStmt stmt, final Collection<VarDecl<?>> vars) {
-		ExprUtils.collectVars(stmt.getCond(), vars);
-		return null;
-	}
-
-	@Override
-	public Void visit(final AssertStmt stmt, final Collection<VarDecl<?>> vars) {
 		ExprUtils.collectVars(stmt.getCond(), vars);
 		return null;
 	}
@@ -81,47 +52,6 @@ final class VarCollectorStmtVisitor implements StmtVisitor<Collection<VarDecl<?>
 	@Override
 	public <DeclType extends Type> Void visit(final HavocStmt<DeclType> stmt, final Collection<VarDecl<?>> vars) {
 		vars.add(stmt.getVarDecl());
-		return null;
-	}
-
-	@Override
-	public Void visit(final BlockStmt stmt, final Collection<VarDecl<?>> vars) {
-		stmt.getStmts().forEach(s -> s.accept(this, vars));
-		return null;
-	}
-
-	@Override
-	public <ReturnType extends Type> Void visit(final ReturnStmt<ReturnType> stmt, final Collection<VarDecl<?>> vars) {
-		ExprUtils.collectVars(stmt.getExpr(), vars);
-		return null;
-	}
-
-	@Override
-	public Void visit(final IfStmt stmt, final Collection<VarDecl<?>> vars) {
-		ExprUtils.collectVars(stmt.getCond(), vars);
-		stmt.getThen().accept(this, vars);
-		return null;
-	}
-
-	@Override
-	public Void visit(final IfElseStmt stmt, final Collection<VarDecl<?>> vars) {
-		ExprUtils.collectVars(stmt.getCond(), vars);
-		stmt.getThen().accept(this, vars);
-		stmt.getElse().accept(this, vars);
-		return null;
-	}
-
-	@Override
-	public Void visit(final WhileStmt stmt, final Collection<VarDecl<?>> vars) {
-		ExprUtils.collectVars(stmt.getCond(), vars);
-		stmt.getDo().accept(this, vars);
-		return null;
-	}
-
-	@Override
-	public Void visit(final DoStmt stmt, final Collection<VarDecl<?>> vars) {
-		ExprUtils.collectVars(stmt.getCond(), vars);
-		stmt.getDo().accept(this, vars);
 		return null;
 	}
 

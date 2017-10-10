@@ -18,7 +18,6 @@ package hu.bme.mit.theta.formalism.cfa.utils;
 import java.awt.Color;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.StringJoiner;
 
 import hu.bme.mit.theta.common.visualization.EdgeAttributes;
 import hu.bme.mit.theta.common.visualization.Graph;
@@ -73,9 +72,7 @@ public final class CfaVisualizer {
 	}
 
 	private static void addEdge(final Graph graph, final Edge edge, final Map<Loc, String> ids) {
-		final StringJoiner edgeLabel = new StringJoiner("\n");
-		edge.getStmts().stream().forEach(stmt -> edgeLabel.add(stmt.toString()));
-		final EdgeAttributes eAttributes = EdgeAttributes.builder().label(edgeLabel.toString()).color(LINE_COLOR)
+		final EdgeAttributes eAttributes = EdgeAttributes.builder().label(edge.getStmt().toString()).color(LINE_COLOR)
 				.lineStyle(EDGE_LINE_STYLE).font(EDGE_FONT).build();
 		graph.addEdge(ids.get(edge.getSource()), ids.get(edge.getTarget()), eAttributes);
 	}

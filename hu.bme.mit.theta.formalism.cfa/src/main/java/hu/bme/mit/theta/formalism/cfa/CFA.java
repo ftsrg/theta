@@ -1,12 +1,12 @@
 /*
  *  Copyright 2017 Budapest University of Technology and Economics
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,7 +23,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.ImmutableList;
@@ -55,7 +54,7 @@ public final class CFA {
 		this.locs = ImmutableSet.copyOf(builder.locs);
 		this.edges = ImmutableList.copyOf(builder.edges);
 		this.vars = Collections.unmodifiableCollection(
-				this.edges.stream().flatMap(e -> StmtUtils.getVars(e.getStmts()).stream()).collect(Collectors.toSet()));
+				this.edges.stream().flatMap(e -> StmtUtils.getVars(e.getStmt()).stream()).collect(Collectors.toSet()));
 	}
 
 	public Loc getInitLoc() {
@@ -125,12 +124,12 @@ public final class CFA {
 	public static final class Edge {
 		private final Loc source;
 		private final Loc target;
-		private final List<Stmt> stmts;
+		private final Stmt stmt;
 
-		private Edge(final Loc source, final Loc target, final List<? extends Stmt> stmts) {
+		private Edge(final Loc source, final Loc target, final Stmt stmt) {
 			this.source = source;
 			this.target = target;
-			this.stmts = ImmutableList.copyOf(stmts);
+			this.stmt = stmt;
 		}
 
 		public Loc getSource() {
@@ -141,8 +140,8 @@ public final class CFA {
 			return target;
 		}
 
-		public List<Stmt> getStmts() {
-			return stmts;
+		public Stmt getStmt() {
+			return stmt;
 		}
 	}
 
@@ -202,7 +201,7 @@ public final class CFA {
 			return loc;
 		}
 
-		public Edge createEdge(final Loc source, final Loc target, final List<? extends Stmt> stmts) {
+		public Edge createEdge(final Loc source, final Loc target, final Stmt stmts) {
 			checkState(!built, "A CFA was already built.");
 			checkNotNull(source);
 			checkNotNull(target);
