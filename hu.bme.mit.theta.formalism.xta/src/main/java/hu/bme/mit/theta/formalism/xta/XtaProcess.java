@@ -121,7 +121,7 @@ public final class XtaProcess {
 	}
 
 	public Edge createEdge(final Loc source, final Loc target, final Collection<Expr<BoolType>> guards,
-			final Optional<Label> sync, final List<Stmt> updates) {
+			final Optional<Sync> sync, final List<Stmt> updates) {
 		checkArgument(locs.contains(source));
 		checkArgument(locs.contains(target));
 		final Edge edge = new Edge(source, target, guards, sync, updates);
@@ -249,15 +249,15 @@ public final class XtaProcess {
 		private final Loc source;
 		private final Loc target;
 		private final Collection<Guard> guards;
-		private final Optional<Label> label;
+		private final Optional<Sync> sync;
 		private final List<Update> updates;
 
 		private Edge(final Loc source, final Loc target, final Collection<Expr<BoolType>> guards,
-				final Optional<Label> label, final List<Stmt> updates) {
+				final Optional<Sync> sync, final List<Stmt> updates) {
 			this.source = checkNotNull(source);
 			this.target = checkNotNull(target);
 			this.guards = createGuards(guards);
-			this.label = checkNotNull(label);
+			this.sync = checkNotNull(sync);
 			this.updates = createUpdates(updates);
 		}
 
@@ -273,8 +273,8 @@ public final class XtaProcess {
 			return guards;
 		}
 
-		public Optional<Label> getLabel() {
-			return label;
+		public Optional<Sync> getSync() {
+			return sync;
 		}
 
 		public List<Update> getUpdates() {

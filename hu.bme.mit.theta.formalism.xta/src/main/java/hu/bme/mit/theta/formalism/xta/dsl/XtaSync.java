@@ -21,7 +21,7 @@ import hu.bme.mit.theta.common.dsl.Environment;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.utils.TypeUtils;
 import hu.bme.mit.theta.formalism.xta.ChanType;
-import hu.bme.mit.theta.formalism.xta.Label;
+import hu.bme.mit.theta.formalism.xta.Sync;
 import hu.bme.mit.theta.formalism.xta.dsl.gen.XtaDslParser.SyncContext;
 
 final class XtaSync {
@@ -39,13 +39,13 @@ final class XtaSync {
 		EMIT, RECEIVE
 	}
 
-	public Label instantiate(final Environment env) {
+	public Sync instantiate(final Environment env) {
 		final Expr<?> expr = expression.instantiate(env);
 		final Expr<ChanType> chanExpr = TypeUtils.cast(expr, ChanType.getInstance());
 		if (syncKind == SyncKind.EMIT) {
-			return Label.emit(chanExpr);
+			return Sync.emit(chanExpr);
 		} else if (syncKind == SyncKind.RECEIVE) {
-			return Label.receive(chanExpr);
+			return Sync.recv(chanExpr);
 		} else {
 			throw new AssertionError();
 		}
