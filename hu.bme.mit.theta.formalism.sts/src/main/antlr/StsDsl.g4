@@ -158,15 +158,15 @@ arrayType
 	;
 	
 BOOLTYPE
-	:	'boolean'
+	:	'bool'
 	;
 	
 INTTYPE
-	:	'integer'
+	:	'int'
 	;
 	
 RATTYPE
-	:	'real'
+	:	'rat'
 	;
 	
 // E X P R E S S I O N S
