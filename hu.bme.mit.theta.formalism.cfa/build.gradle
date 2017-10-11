@@ -24,4 +24,5 @@ sourceSets {
 }
 
 createJarTask("theta-cfa", 'hu.bme.mit.theta.formalism.cfa.tool.CfaMain', 'theta-cfa')
+createJarTask("theta-cfa-gui", 'hu.bme.mit.theta.formalism.cfa.tool.CfaGui', 'theta-cfa-gui')
 createJarTask("cfa2dot", 'hu.bme.mit.theta.formalism.cfa.tool.CfaToDotMain', 'cfa2dot')
