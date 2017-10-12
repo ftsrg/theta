@@ -249,7 +249,8 @@ public class CfaConfigBuilder {
 						precGranularity.createRefiner(new VarsRefToExplPrec()), logger);
 				break;
 			default:
-				throw new UnsupportedOperationException();
+				throw new UnsupportedOperationException(
+						domain + " domain does not support " + refinement + " refinement.");
 			}
 
 			final SafetyChecker<CfaState<ExplState>, CfaAction, CfaPrec<ExplPrec>> checker = CegarChecker
@@ -280,7 +281,8 @@ public class CfaConfigBuilder {
 				exprTraceChecker = ExprTraceSeqItpChecker.create(True(), True(), solver);
 				break;
 			default:
-				throw new UnsupportedOperationException();
+				throw new UnsupportedOperationException(
+						domain + " domain does not support " + refinement + " refinement.");
 			}
 			final ItpRefToSimplePredPrec refToPrec = new ItpRefToSimplePredPrec(solver, predSplit.splitter);
 			final Refiner<CfaState<PredState>, CfaAction, CfaPrec<SimplePredPrec>> refiner = SingleExprTraceRefiner
@@ -294,7 +296,7 @@ public class CfaConfigBuilder {
 			return Config.create(checker, prec);
 
 		} else {
-			throw new UnsupportedOperationException();
+			throw new UnsupportedOperationException(domain + " domain is not supported.");
 		}
 	}
 }
