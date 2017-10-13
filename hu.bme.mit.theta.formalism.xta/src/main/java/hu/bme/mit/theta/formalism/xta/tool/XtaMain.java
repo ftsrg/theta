@@ -26,7 +26,6 @@ import com.beust.jcommander.ParameterException;
 
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
-import hu.bme.mit.theta.analysis.algorithm.SearchStrategy;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.analysis.utils.TraceVisualizer;
@@ -35,15 +34,10 @@ import hu.bme.mit.theta.common.table.impl.SimpleTableWriter;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 import hu.bme.mit.theta.formalism.xta.XtaSystem;
-import hu.bme.mit.theta.formalism.xta.analysis.algorithm.lazy.ActStrategy;
-import hu.bme.mit.theta.formalism.xta.analysis.algorithm.lazy.BinItpStrategy;
-import hu.bme.mit.theta.formalism.xta.analysis.algorithm.lazy.ItpStrategy.ItpOperator;
-import hu.bme.mit.theta.formalism.xta.analysis.algorithm.lazy.LazyXtaChecker;
-import hu.bme.mit.theta.formalism.xta.analysis.algorithm.lazy.LazyXtaChecker.AlgorithmStrategy;
 import hu.bme.mit.theta.formalism.xta.analysis.algorithm.lazy.LazyXtaStatistics;
-import hu.bme.mit.theta.formalism.xta.analysis.algorithm.lazy.LuStrategy;
-import hu.bme.mit.theta.formalism.xta.analysis.algorithm.lazy.SeqItpStrategy;
 import hu.bme.mit.theta.formalism.xta.dsl.XtaDslManager;
+import hu.bme.mit.theta.formalism.xta.tool.XtaCheckerBuilder.Algorithm;
+import hu.bme.mit.theta.formalism.xta.tool.XtaCheckerBuilder.Search;
 
 public final class XtaMain {
 	private static final String JAR_NAME = "theta-xta.jar";
@@ -67,79 +61,6 @@ public final class XtaMain {
 
 	@Parameter(names = { "--header" }, description = "Print only a header (for benchmarks)", help = true)
 	boolean headerOnly = false;
-
-	private enum Algorithm {
-
-		SEQITP {
-			@Override
-			public AlgorithmStrategy<?> create(final XtaSystem system) {
-				return SeqItpStrategy.create(system, ItpOperator.DEFAULT);
-			}
-		},
-
-		BINITP {
-			@Override
-			public AlgorithmStrategy<?> create(final XtaSystem system) {
-				return BinItpStrategy.create(system, ItpOperator.DEFAULT);
-			}
-		},
-
-		WEAKSEQITP {
-			@Override
-			public AlgorithmStrategy<?> create(final XtaSystem system) {
-				return SeqItpStrategy.create(system, ItpOperator.WEAK);
-			}
-		},
-
-		WEAKBINITP {
-			@Override
-			public AlgorithmStrategy<?> create(final XtaSystem system) {
-				return BinItpStrategy.create(system, ItpOperator.WEAK);
-			}
-		},
-
-		LU {
-			@Override
-			public AlgorithmStrategy<?> create(final XtaSystem system) {
-				return LuStrategy.create(system);
-			}
-		},
-
-		ACT {
-			@Override
-			public AlgorithmStrategy<?> create(final XtaSystem system) {
-				return ActStrategy.create(system);
-			}
-		};
-
-		public abstract LazyXtaChecker.AlgorithmStrategy<?> create(final XtaSystem system);
-	}
-
-	private enum Search {
-
-		DFS {
-			@Override
-			public SearchStrategy create() {
-				return SearchStrategy.depthFirst();
-			}
-		},
-
-		BFS {
-			@Override
-			public SearchStrategy create() {
-				return SearchStrategy.breadthFirst();
-			}
-		},
-
-		RANDOM {
-			@Override
-			public SearchStrategy create() {
-				return SearchStrategy.random();
-			}
-		};
-
-		public abstract SearchStrategy create();
-	}
 
 	public XtaMain(final String[] args) {
 		this.args = args;
@@ -167,7 +88,7 @@ public final class XtaMain {
 
 		try {
 			final XtaSystem xta = loadModel();
-			final SafetyChecker<?, ?, UnitPrec> checker = buildChecker(xta);
+			final SafetyChecker<?, ?, UnitPrec> checker = XtaCheckerBuilder.build(algorithm, search, xta);
 			final SafetyResult<?, ?> result = checker.check(UnitPrec.getInstance());
 			printResult(result);
 			if (dotfile != null) {
@@ -198,15 +119,6 @@ public final class XtaMain {
 	private XtaSystem loadModel() throws IOException {
 		final InputStream inputStream = new FileInputStream(model);
 		return XtaDslManager.createSystem(inputStream);
-	}
-
-	private SafetyChecker<?, ?, UnitPrec> buildChecker(final XtaSystem xta) {
-		final LazyXtaChecker.AlgorithmStrategy<?> algorithmStrategy = algorithm.create(xta);
-		final SearchStrategy searchStrategy = search.create();
-
-		final SafetyChecker<?, ?, UnitPrec> checker = LazyXtaChecker.create(xta, algorithmStrategy, searchStrategy,
-				l -> false);
-		return checker;
 	}
 
 	private void printResult(final SafetyResult<?, ?> result) {
