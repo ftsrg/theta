@@ -1,12 +1,12 @@
 /*
  *  Copyright 2017 Budapest University of Technology and Economics
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -45,8 +45,12 @@ public final class ArgVisualizer<S extends State, A extends Action> {
 	private final Function<S, String> stateToString;
 	private final Function<A, String> actionToString;
 
-	private static class LazyHolder {
-		static final ArgVisualizer<State, Action> DEFAULT = new ArgVisualizer<>(s -> s.toString(), a -> a.toString());
+	private static class LazyHolderDefault {
+		static final ArgVisualizer<State, Action> INSTANCE = new ArgVisualizer<>(s -> s.toString(), a -> a.toString());
+	}
+
+	private static class LazyHolderStructureOnly {
+		static final ArgVisualizer<State, Action> INSTANCE = new ArgVisualizer<>(s -> "", a -> "");
 	}
 
 	public ArgVisualizer(final Function<S, String> stateToString, final Function<A, String> actionToString) {
@@ -54,8 +58,17 @@ public final class ArgVisualizer<S extends State, A extends Action> {
 		this.actionToString = actionToString;
 	}
 
+	public static <S extends State, A extends Action> ArgVisualizer<S, A> create(
+			final Function<S, String> stateToString, final Function<A, String> actionToString) {
+		return new ArgVisualizer<>(stateToString, actionToString);
+	}
+
 	public static ArgVisualizer<State, Action> getDefault() {
-		return LazyHolder.DEFAULT;
+		return LazyHolderDefault.INSTANCE;
+	}
+
+	public static ArgVisualizer<State, Action> getStructureOnly() {
+		return LazyHolderStructureOnly.INSTANCE;
 	}
 
 	public Graph visualize(final ARG<? extends S, ? extends A> arg) {
