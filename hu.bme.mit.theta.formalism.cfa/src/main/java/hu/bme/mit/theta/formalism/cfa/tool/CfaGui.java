@@ -20,6 +20,7 @@ import java.io.File;
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
 
+import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.analysis.utils.TraceVisualizer;
@@ -29,6 +30,9 @@ import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter.Format;
 import hu.bme.mit.theta.formalism.cfa.CFA;
+import hu.bme.mit.theta.formalism.cfa.analysis.CfaAction;
+import hu.bme.mit.theta.formalism.cfa.analysis.CfaState;
+import hu.bme.mit.theta.formalism.cfa.analysis.CfaTraceConcretizer;
 import hu.bme.mit.theta.formalism.cfa.dsl.CfaDslManager;
 import hu.bme.mit.theta.formalism.cfa.tool.CfaConfigBuilder.Domain;
 import hu.bme.mit.theta.formalism.cfa.tool.CfaConfigBuilder.Encoding;
@@ -202,7 +206,10 @@ public class CfaGui extends BaseGui {
 						graph = ArgVisualizer.getDefault().visualize(safetyResult.asSafe().getArg());
 					}
 				} else {
-					graph = TraceVisualizer.getDefault().visualize(safetyResult.asUnsafe().getTrace());
+					@SuppressWarnings("unchecked")
+					final Trace<CfaState<?>, CfaAction> trace = (Trace<CfaState<?>, CfaAction>) safetyResult.asUnsafe()
+							.getTrace();
+					graph = TraceVisualizer.getDefault().visualize(CfaTraceConcretizer.concretize(trace));
 				}
 				final File tmpFile = File.createTempFile("theta", ".tmp");
 				GraphvizWriter.getInstance().writeFile(graph, tmpFile.getAbsolutePath(), Format.SVG);
