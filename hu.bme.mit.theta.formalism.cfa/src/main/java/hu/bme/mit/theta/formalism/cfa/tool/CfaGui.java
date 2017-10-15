@@ -54,6 +54,9 @@ import javafx.scene.web.WebView;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
+/**
+ * A graphical user interface for running a CEGAR configuration on a CFA.
+ */
 public class CfaGui extends BaseGui {
 	private ChoiceBox<Domain> cbDomain;
 	private ChoiceBox<Refinement> cbRefinement;
@@ -228,7 +231,7 @@ public class CfaGui extends BaseGui {
 
 	@Override
 	protected String getTitle() {
-		return "theta-cfa";
+		return "theta-cfa-gui";
 	}
 
 	public static void main(final String args[]) {

@@ -46,6 +46,9 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
+/**
+ * Base class for tool GUIs.
+ */
 public abstract class BaseGui extends Application {
 	private GridPane controls;
 	private int nRows = 0;

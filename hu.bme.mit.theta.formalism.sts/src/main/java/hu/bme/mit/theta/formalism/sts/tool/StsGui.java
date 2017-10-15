@@ -51,6 +51,9 @@ import javafx.scene.web.WebView;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
+/**
+ * A graphical user interface for running a CEGAR configuration on an STS.
+ */
 public class StsGui extends BaseGui {
 	private ChoiceBox<Domain> cbDomain;
 	private ChoiceBox<Refinement> cbRefinement;
