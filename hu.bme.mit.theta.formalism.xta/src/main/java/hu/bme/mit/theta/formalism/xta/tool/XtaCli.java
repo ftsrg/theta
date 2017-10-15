@@ -39,7 +39,7 @@ import hu.bme.mit.theta.formalism.xta.dsl.XtaDslManager;
 import hu.bme.mit.theta.formalism.xta.tool.XtaCheckerBuilder.Algorithm;
 import hu.bme.mit.theta.formalism.xta.tool.XtaCheckerBuilder.Search;
 
-public final class XtaMain {
+public final class XtaCli {
 	private static final String JAR_NAME = "theta-xta.jar";
 	private final String[] args;
 	private final TableWriter writer;
@@ -62,13 +62,13 @@ public final class XtaMain {
 	@Parameter(names = { "--header" }, description = "Print only a header (for benchmarks)", help = true)
 	boolean headerOnly = false;
 
-	public XtaMain(final String[] args) {
+	public XtaCli(final String[] args) {
 		this.args = args;
 		this.writer = new SimpleTableWriter(System.out, ",", "\"", "\"");
 	}
 
 	public static void main(final String[] args) {
-		final XtaMain mainApp = new XtaMain(args);
+		final XtaCli mainApp = new XtaCli(args);
 		mainApp.run();
 	}
 

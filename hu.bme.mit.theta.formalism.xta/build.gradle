@@ -23,4 +23,5 @@ sourceSets {
     } 
 }
 
-createJarTask("theta-xta", 'hu.bme.mit.theta.formalism.xta.tool.XtaMain', 'theta-xta')
+createJarTask("theta-xta-cli", 'hu.bme.mit.theta.formalism.xta.tool.XtaCli', 'theta-xta-cli')
+createJarTask("theta-xta-gui", 'hu.bme.mit.theta.formalism.xta.tool.XtaGui', 'theta-xta-gui')
