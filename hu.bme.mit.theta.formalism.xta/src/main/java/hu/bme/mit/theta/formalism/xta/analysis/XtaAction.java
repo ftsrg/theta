@@ -254,8 +254,8 @@ public abstract class XtaAction extends StmtAction {
 		@Override
 		public String toString() {
 			final StringJoiner sj = new StringJoiner("\n");
-			sj.add(emitEdge.getSync().toString());
-			sj.add(recvEdge.getSync().toString());
+			sj.add(emitEdge.getSync().get().toString());
+			sj.add(recvEdge.getSync().get().toString());
 			emitEdge.getGuards().forEach(g -> sj.add("[" + g + "]"));
 			recvEdge.getGuards().forEach(g -> sj.add("[" + g + "]"));
 			emitEdge.getUpdates().forEach(u -> sj.add(u.toString()));
