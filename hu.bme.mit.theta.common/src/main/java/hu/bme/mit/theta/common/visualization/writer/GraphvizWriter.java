@@ -42,7 +42,7 @@ import hu.bme.mit.theta.common.visualization.Shape;
 public final class GraphvizWriter extends AbstractGraphWriter {
 
 	public enum Format {
-		PDF("Tpdf"), PNG("Tpng"), SVG("Tsvg"), GIF("Tgif"), EPS("Teps"), JPG("Tjpg");
+		PDF("-Tpdf"), PNG("-Tpng"), SVG("-Tsvg"), GIF("-Tgif"), EPS("-Teps"), JPG("-Tjpg");
 
 		private final String option;
 
@@ -85,8 +85,8 @@ public final class GraphvizWriter extends AbstractGraphWriter {
 			throws IOException, InterruptedException {
 		final String dotFile = fileName + ".dot";
 		super.writeFile(graph, dotFile);
-		final Process proc = Runtime.getRuntime()
-				.exec("dot.exe -" + format.getOption() + " \"" + dotFile + "\" -o \"" + fileName + "\"");
+		final String[] cmd = { "dot", format.getOption(), dotFile, "-o", fileName };
+		final Process proc = Runtime.getRuntime().exec(cmd);
 		proc.waitFor();
 		final boolean deleteSuccessful = new File(dotFile).delete();
 		if (!deleteSuccessful) {
