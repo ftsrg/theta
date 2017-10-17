@@ -1,12 +1,12 @@
 /*
  *  Copyright 2017 Budapest University of Technology and Economics
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,6 +17,7 @@ package hu.bme.mit.theta.formalism.xta.analysis;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.collect.Streams.zip;
 import static java.util.Collections.emptySet;
 
 import java.util.Collection;
@@ -91,16 +92,20 @@ final class XtaTransferFunc<S extends State, P extends Prec> implements Transfer
 			final SyncedXtaAction action, final P prec) {
 		checkArgument(xtaState.getLocs() == action.getSourceLocs());
 
-		final Edge emittingEdge = action.getEmittingEdge();
-		final Edge receivingEdge = action.getReceivingEdge();
+		final Edge emitEdge = action.getEmitEdge();
+		final Edge recvEdge = action.getRecvEdge();
 		final Valuation val = xtaState.getVal();
 		final S state = xtaState.getState();
 
-		if (!checkDataGuards(emittingEdge, val)) {
+		if (!checkSync(emitEdge, recvEdge, val)) {
 			return emptySet();
 		}
 
-		if (!checkDataGuards(receivingEdge, val)) {
+		if (!checkDataGuards(emitEdge, val)) {
+			return emptySet();
+		}
+
+		if (!checkDataGuards(recvEdge, val)) {
 			return emptySet();
 		}
 
@@ -111,6 +116,12 @@ final class XtaTransferFunc<S extends State, P extends Prec> implements Transfer
 		return XtaState.collectionOf(succLocs, succVal, succStates);
 	}
 
+	private boolean checkSync(final Edge emitEdge, final Edge recvEdge, final Valuation val) {
+		final List<Expr<?>> emitArgs = emitEdge.getSync().get().getArgs();
+		final List<Expr<?>> recvArgs = recvEdge.getSync().get().getArgs();
+		return zip(emitArgs.stream(), recvArgs.stream(), (e, r) -> e.eval(val).equals(r.eval(val))).allMatch(x -> x);
+	}
+
 	private static Valuation createSuccValForSimpleAction(final Valuation val, final SimpleXtaAction action) {
 		final MutableValuation builder = MutableValuation.copyOf(val);
 		applyDataUpdates(action.getEdge(), builder);
@@ -119,8 +130,8 @@ final class XtaTransferFunc<S extends State, P extends Prec> implements Transfer
 
 	private Valuation createSuccValForSyncedAction(final Valuation val, final SyncedXtaAction action) {
 		final MutableValuation builder = MutableValuation.copyOf(val);
-		applyDataUpdates(action.getEmittingEdge(), builder);
-		applyDataUpdates(action.getReceivingEdge(), builder);
+		applyDataUpdates(action.getEmitEdge(), builder);
+		applyDataUpdates(action.getRecvEdge(), builder);
 		return BasicValuation.copyOf(builder);
 	}
 

@@ -104,7 +104,7 @@ guard
 	:	GUARD fExpression=expression SEMICOLON
 	;
 	
-sync:	SYNC fExpression=expression (fEmit=EXCL | fReceive=QUEST) SEMICOLON
+sync:	SYNC fExpression=expression (fEmit=EXCL | fRecv=QUEST) SEMICOLON
 	;
 	
 assign

@@ -34,9 +34,8 @@ import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.analysis.expr.StmtAction;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
-import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.rattype.RatType;
-import hu.bme.mit.theta.formalism.xta.ChanType;
+import hu.bme.mit.theta.formalism.xta.Label;
 import hu.bme.mit.theta.formalism.xta.Update;
 import hu.bme.mit.theta.formalism.xta.XtaProcess.Edge;
 import hu.bme.mit.theta.formalism.xta.XtaProcess.Loc;
@@ -60,9 +59,9 @@ public abstract class XtaAction extends StmtAction {
 		return new SimpleXtaAction(system, sourceLocs, edge);
 	}
 
-	public static SyncedXtaAction synced(final XtaSystem system, final List<Loc> sourceLocs,
-			final Expr<ChanType> syncExpr, final Edge emittingEdge, final Edge receivingEdge) {
-		return new SyncedXtaAction(system, sourceLocs, syncExpr, emittingEdge, receivingEdge);
+	public static SyncedXtaAction synced(final XtaSystem system, final List<Loc> sourceLocs, final Edge emitEdge,
+			final Edge recvEdge) {
+		return new SyncedXtaAction(system, sourceLocs, emitEdge, recvEdge);
 	}
 
 	public Collection<VarDecl<RatType>> getClockVars() {
@@ -166,55 +165,55 @@ public abstract class XtaAction extends StmtAction {
 	}
 
 	public static final class SyncedXtaAction extends XtaAction {
-		private final Edge emittingEdge;
-		private final Edge receivingEdge;
-		private final Expr<ChanType> syncExpr;
+		private final Edge emitEdge;
+		private final Edge recvEdge;
 		private final List<Loc> targetLocs;
 
 		private volatile List<Stmt> stmts = null;
 
-		private SyncedXtaAction(final XtaSystem system, final List<Loc> sourceLocs, final Expr<ChanType> syncExpr,
-				final Edge emittingEdge, final Edge receivingEdge) {
+		private SyncedXtaAction(final XtaSystem system, final List<Loc> sourceLocs, final Edge emitEdge,
+				final Edge recvEdge) {
 			super(system, sourceLocs);
-			this.syncExpr = checkNotNull(syncExpr);
-			this.emittingEdge = checkNotNull(emittingEdge);
-			this.receivingEdge = checkNotNull(receivingEdge);
+			this.emitEdge = checkNotNull(emitEdge);
+			this.recvEdge = checkNotNull(recvEdge);
+
+			checkArgument(emitEdge.getSync().isPresent());
+			checkArgument(recvEdge.getSync().isPresent());
+			final Label emitLabel = emitEdge.getSync().get().getLabel();
+			final Label recvLabel = recvEdge.getSync().get().getLabel();
+			checkArgument(emitLabel.equals(recvLabel));
 
 			final ImmutableList.Builder<Loc> builder = ImmutableList.builder();
-			final Loc emittingSource = emittingEdge.getSource();
-			final Loc emittingTarget = emittingEdge.getTarget();
-			final Loc receivingSource = receivingEdge.getSource();
-			final Loc receivingTarget = receivingEdge.getTarget();
-			boolean emittingMatched = false;
-			boolean receivingMatched = false;
+			final Loc emitSource = emitEdge.getSource();
+			final Loc emitarget = emitEdge.getTarget();
+			final Loc recvSource = recvEdge.getSource();
+			final Loc recvTarget = recvEdge.getTarget();
+			boolean emitMatched = false;
+			boolean recvMatched = false;
 			for (final Loc loc : sourceLocs) {
-				if (loc.equals(emittingSource)) {
-					checkArgument(!emittingMatched);
-					builder.add(emittingTarget);
-					emittingMatched = true;
-				} else if (loc.equals(receivingSource)) {
-					checkArgument(!receivingMatched);
-					builder.add(receivingTarget);
-					receivingMatched = true;
+				if (loc.equals(emitSource)) {
+					checkArgument(!emitMatched);
+					builder.add(emitarget);
+					emitMatched = true;
+				} else if (loc.equals(recvSource)) {
+					checkArgument(!recvMatched);
+					builder.add(recvTarget);
+					recvMatched = true;
 				} else {
 					builder.add(loc);
 				}
 			}
-			checkArgument(emittingMatched);
-			checkArgument(receivingMatched);
+			checkArgument(emitMatched);
+			checkArgument(recvMatched);
 			targetLocs = builder.build();
 		}
 
-		public Expr<ChanType> getSyncExpr() {
-			return syncExpr;
+		public Edge getEmitEdge() {
+			return emitEdge;
 		}
 
-		public Edge getEmittingEdge() {
-			return emittingEdge;
-		}
-
-		public Edge getReceivingEdge() {
-			return receivingEdge;
+		public Edge getRecvEdge() {
+			return recvEdge;
 		}
 
 		@Override
@@ -238,10 +237,10 @@ public abstract class XtaAction extends StmtAction {
 			if (stmts == null) {
 				final ImmutableList.Builder<Stmt> builder = ImmutableList.builder();
 				addInvariants(builder, getSourceLocs());
-				addGuards(builder, emittingEdge);
-				addGuards(builder, receivingEdge);
-				addUpdates(builder, emittingEdge);
-				addUpdates(builder, receivingEdge);
+				addGuards(builder, emitEdge);
+				addGuards(builder, recvEdge);
+				addUpdates(builder, emitEdge);
+				addUpdates(builder, recvEdge);
 				addInvariants(builder, targetLocs);
 				if (shouldApplyDelay(getTargetLocs())) {
 					addDelay(builder, getClockVars());
@@ -255,11 +254,12 @@ public abstract class XtaAction extends StmtAction {
 		@Override
 		public String toString() {
 			final StringJoiner sj = new StringJoiner("\n");
-			sj.add(syncExpr + "!");
-			emittingEdge.getGuards().forEach(g -> sj.add("[" + g + "]"));
-			receivingEdge.getGuards().forEach(g -> sj.add("[" + g + "]"));
-			emittingEdge.getUpdates().forEach(Update::toString);
-			receivingEdge.getUpdates().forEach(Update::toString);
+			sj.add(emitEdge.getSync().toString());
+			sj.add(recvEdge.getSync().toString());
+			emitEdge.getGuards().forEach(g -> sj.add("[" + g + "]"));
+			recvEdge.getGuards().forEach(g -> sj.add("[" + g + "]"));
+			emitEdge.getUpdates().forEach(u -> sj.add(u.toString()));
+			recvEdge.getUpdates().forEach(u -> sj.add(u.toString()));
 			return sj.toString();
 		}
 

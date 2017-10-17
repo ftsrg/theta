@@ -82,8 +82,8 @@ public final class XtaZoneUtils {
 		final ZoneState.Builder succStateBuilder = state.project(prec.getVars());
 
 		final List<Loc> sourceLocs = action.getSourceLocs();
-		final Edge emittingEdge = action.getEmittingEdge();
-		final Edge receivingEdge = action.getReceivingEdge();
+		final Edge emittingEdge = action.getEmitEdge();
+		final Edge receivingEdge = action.getRecvEdge();
 		final List<Loc> targetLocs = action.getTargetLocs();
 
 		applyInvariants(succStateBuilder, sourceLocs);
@@ -143,8 +143,8 @@ public final class XtaZoneUtils {
 		final ZoneState.Builder preStateBuilder = state.project(prec.getVars());
 
 		final List<Loc> sourceLocs = action.getSourceLocs();
-		final Edge emittingEdge = action.getEmittingEdge();
-		final Edge receivingEdge = action.getReceivingEdge();
+		final Edge emittingEdge = action.getEmitEdge();
+		final Edge receivingEdge = action.getRecvEdge();
 		final List<Loc> targetLocs = action.getTargetLocs();
 
 		if (shouldApplyDelay(action.getTargetLocs())) {

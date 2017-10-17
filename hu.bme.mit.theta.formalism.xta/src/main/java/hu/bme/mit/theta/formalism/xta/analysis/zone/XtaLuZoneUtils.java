@@ -65,8 +65,8 @@ public final class XtaLuZoneUtils {
 
 		final List<Loc> sourceLocs = action.getSourceLocs();
 		final List<Loc> targetLocs = action.getTargetLocs();
-		final Edge emittingEdge = action.getEmittingEdge();
-		final Edge receivingEdge = action.getReceivingEdge();
+		final Edge emittingEdge = action.getEmitEdge();
+		final Edge receivingEdge = action.getRecvEdge();
 
 		applyInvariants(succStateBuilder, targetLocs);
 		applyInverseUpdates(succStateBuilder, receivingEdge);

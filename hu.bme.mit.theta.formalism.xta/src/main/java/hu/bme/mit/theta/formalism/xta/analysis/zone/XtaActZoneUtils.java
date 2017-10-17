@@ -82,8 +82,8 @@ public final class XtaActZoneUtils {
 
 			final SyncedXtaAction syncedAction = action.asSynced();
 
-			final Edge emittingEdge = syncedAction.getEmittingEdge();
-			final Edge receivingEdge = syncedAction.getReceivingEdge();
+			final Edge emittingEdge = syncedAction.getEmitEdge();
+			final Edge receivingEdge = syncedAction.getRecvEdge();
 
 			for (final Loc loc : targetLocs) {
 				for (final Guard invar : loc.getInvars()) {

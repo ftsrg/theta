@@ -21,9 +21,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import hu.bme.mit.theta.analysis.LTS;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.utils.ExprUtils;
-import hu.bme.mit.theta.formalism.xta.ChanType;
+import hu.bme.mit.theta.formalism.xta.Label;
 import hu.bme.mit.theta.formalism.xta.Sync;
 import hu.bme.mit.theta.formalism.xta.Sync.Kind;
 import hu.bme.mit.theta.formalism.xta.XtaProcess.Edge;
@@ -71,7 +69,7 @@ public final class XtaLts implements LTS<XtaState<?>, XtaAction> {
 			return;
 		}
 
-		final Expr<ChanType> emitExpr = ExprUtils.simplify(emitSync.getExpr(), state.getVal());
+		final Label emitLabel = emitSync.getLabel();
 
 		for (final Loc recvLoc : state.getLocs()) {
 			if (recvLoc == emitLoc) {
@@ -88,9 +86,10 @@ public final class XtaLts implements LTS<XtaState<?>, XtaAction> {
 					continue;
 				}
 
-				final Expr<?> recvExpr = ExprUtils.simplify(recvSync.getExpr(), state.getVal());
-				if (emitExpr.equals(recvExpr)) {
-					final XtaAction action = XtaAction.synced(system, state.getLocs(), emitExpr, emitEdge, recvEdge);
+				final Label recvLabel = recvSync.getLabel();
+
+				if (emitLabel.equals(recvLabel)) {
+					final XtaAction action = XtaAction.synced(system, state.getLocs(), emitEdge, recvEdge);
 					result.add(action);
 				}
 			}

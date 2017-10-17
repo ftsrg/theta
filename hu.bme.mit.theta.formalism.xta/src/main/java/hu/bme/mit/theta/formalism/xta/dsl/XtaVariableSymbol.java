@@ -1,12 +1,12 @@
 /*
  *  Copyright 2017 Budapest University of Technology and Economics
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,22 +17,28 @@ package hu.bme.mit.theta.formalism.xta.dsl;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
+
+import java.util.List;
+
+import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.theta.common.dsl.Environment;
 import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.core.decl.Decls;
-import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
-import hu.bme.mit.theta.formalism.xta.ChanType;
+import hu.bme.mit.theta.formalism.xta.Label;
 import hu.bme.mit.theta.formalism.xta.dsl.gen.XtaDslParser.TypeContext;
 import hu.bme.mit.theta.formalism.xta.dsl.gen.XtaDslParser.VariableIdContext;
+import hu.bme.mit.theta.formalism.xta.utils.ChanType;
 import hu.bme.mit.theta.formalism.xta.utils.ClockType;
+import hu.bme.mit.theta.formalism.xta.utils.LabelExpr;
 import hu.bme.mit.theta.formalism.xta.utils.RangeType;
 
 final class XtaVariableSymbol implements Symbol {
@@ -76,14 +82,15 @@ final class XtaVariableSymbol implements Symbol {
 			final Expr<?> expr = initialiser.instantiate(varType, env);
 			return expr;
 		} else {
-			final VarDecl<?> varDecl;
 			if (varType instanceof ClockType) {
-				varDecl = Decls.Var(prefix + name, Rat());
+				return Decls.Var(prefix + name, Rat()).getRef();
+			} else if (isChanArrayType(varType)) {
+				final List<Type> args = extractArgs(varType);
+				final Label label = Label.of(prefix + name, args);
+				return LabelExpr.of(label);
 			} else {
-				varDecl = Decls.Var(prefix + name, varType);
+				return Decls.Var(prefix + name, varType).getRef();
 			}
-			final Expr<?> varRef = varDecl.getRef();
-			return varRef;
 		}
 	}
 
@@ -94,27 +101,50 @@ final class XtaVariableSymbol implements Symbol {
 			return true;
 		} else if (type instanceof ClockType) {
 			return true;
-		} else if (type instanceof ChanType) {
+		} else if (isChanArrayType(type)) {
 			return true;
-		} else if (type instanceof ArrayType) {
-			return isSupportedArrayType((ArrayType<?, ?>) type);
 		} else {
 			return false;
 		}
 	}
 
-	private static boolean isSupportedArrayType(final ArrayType<?, ?> type) {
-		final Type indexType = type.getIndexType();
-		final Type elemType = type.getElemType();
-
-		if (!(indexType instanceof RangeType)) {
-			return false;
-		} else if (elemType instanceof ChanType) {
+	private static boolean isChanArrayType(final Type type) {
+		if (type instanceof ChanType) {
 			return true;
-		} else if (elemType instanceof ArrayType) {
-			return isSupportedArrayType((ArrayType<?, ?>) elemType);
+		} else if (type instanceof ArrayType) {
+			final ArrayType<?, ?> arrayType = (ArrayType<?, ?>) type;
+			final Type indexType = arrayType.getIndexType();
+			final Type elemType = arrayType.getElemType();
+
+			if (!(indexType instanceof BoolType || indexType instanceof RangeType)) {
+				return false;
+			} else if (elemType instanceof ChanType) {
+				return true;
+			} else if (elemType instanceof ArrayType) {
+				return isChanArrayType(elemType);
+			} else {
+				return false;
+			}
 		} else {
 			return false;
+		}
+	}
+
+	private static List<Type> extractArgs(final Type type) {
+		if (type instanceof ChanType) {
+			return ImmutableList.of();
+		} else if (type instanceof ArrayType) {
+			final ArrayType<?, ?> arrayType = (ArrayType<?, ?>) type;
+			final Type indexType = arrayType.getIndexType();
+			final Type elemType = arrayType.getElemType();
+
+			final Type newIndexType = (indexType instanceof RangeType) ? Int() : indexType;
+
+			final List<Type> result = ImmutableList.<Type>builder().add(newIndexType).addAll(extractArgs(elemType))
+					.build();
+			return result;
+		} else {
+			throw new AssertionError();
 		}
 	}
 

@@ -30,7 +30,6 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.inttype.IntLitExpr;
 import hu.bme.mit.theta.core.utils.ExprUtils;
-import hu.bme.mit.theta.formalism.xta.ChanType;
 import hu.bme.mit.theta.formalism.xta.dsl.gen.XtaDslBaseVisitor;
 import hu.bme.mit.theta.formalism.xta.dsl.gen.XtaDslParser.ArrayIndexContext;
 import hu.bme.mit.theta.formalism.xta.dsl.gen.XtaDslParser.BasicTypeContext;
@@ -43,6 +42,7 @@ import hu.bme.mit.theta.formalism.xta.dsl.gen.XtaDslParser.IntTypeContext;
 import hu.bme.mit.theta.formalism.xta.dsl.gen.XtaDslParser.RangeTypeContext;
 import hu.bme.mit.theta.formalism.xta.dsl.gen.XtaDslParser.RefTypeContext;
 import hu.bme.mit.theta.formalism.xta.dsl.gen.XtaDslParser.TypeContext;
+import hu.bme.mit.theta.formalism.xta.utils.ChanType;
 import hu.bme.mit.theta.formalism.xta.utils.ClockType;
 import hu.bme.mit.theta.formalism.xta.utils.RangeType;
 

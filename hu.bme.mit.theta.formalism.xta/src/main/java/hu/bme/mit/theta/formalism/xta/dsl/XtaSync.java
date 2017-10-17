@@ -17,12 +17,18 @@ package hu.bme.mit.theta.formalism.xta.dsl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import hu.bme.mit.theta.common.dsl.Environment;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr;
 import hu.bme.mit.theta.core.utils.TypeUtils;
-import hu.bme.mit.theta.formalism.xta.ChanType;
+import hu.bme.mit.theta.formalism.xta.Label;
 import hu.bme.mit.theta.formalism.xta.Sync;
 import hu.bme.mit.theta.formalism.xta.dsl.gen.XtaDslParser.SyncContext;
+import hu.bme.mit.theta.formalism.xta.utils.ChanType;
+import hu.bme.mit.theta.formalism.xta.utils.LabelExpr;
 
 final class XtaSync {
 
@@ -30,22 +36,42 @@ final class XtaSync {
 	private final SyncKind syncKind;
 
 	public XtaSync(final XtaTransition scope, final SyncContext context) {
+		checkNotNull(scope);
 		checkNotNull(context);
 		expression = new XtaExpression(scope, context.fExpression);
-		syncKind = context.fReceive != null ? SyncKind.RECEIVE : SyncKind.EMIT;
+		syncKind = context.fRecv != null ? SyncKind.RECV : SyncKind.EMIT;
 	}
 
 	public enum SyncKind {
-		EMIT, RECEIVE
+		EMIT, RECV
 	}
 
 	public Sync instantiate(final Environment env) {
 		final Expr<?> expr = expression.instantiate(env);
-		final Expr<ChanType> chanExpr = TypeUtils.cast(expr, ChanType.getInstance());
+		TypeUtils.cast(expr, ChanType.getInstance());
+
+		final List<Expr<?>> args = new ArrayList<>();
+		final Label label = extractLabel(expr, args);
+
 		if (syncKind == SyncKind.EMIT) {
-			return Sync.emit(chanExpr);
-		} else if (syncKind == SyncKind.RECEIVE) {
-			return Sync.recv(chanExpr);
+			return Sync.emit(label, args);
+		} else if (syncKind == SyncKind.RECV) {
+			return Sync.recv(label, args);
+		} else {
+			throw new AssertionError();
+		}
+	}
+
+	private Label extractLabel(final Expr<?> expr, final List<Expr<?>> args) {
+		if (expr instanceof LabelExpr) {
+			final LabelExpr labelExpr = (LabelExpr) expr;
+			return labelExpr.getLabel();
+		} else if (expr instanceof ArrayReadExpr) {
+			final ArrayReadExpr<?, ?> arrayReadExpr = (ArrayReadExpr<?, ?>) expr;
+			final Expr<?> arrayExpr = arrayReadExpr.getArray();
+			final Expr<?> indexExpr = arrayReadExpr.getIndex();
+			args.add(indexExpr);
+			return extractLabel(arrayExpr, args);
 		} else {
 			throw new AssertionError();
 		}

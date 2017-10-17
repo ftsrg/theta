@@ -36,6 +36,10 @@ public final class Label {
 		this.paramTypes = ImmutableList.copyOf(checkNotNull(paramTypes));
 	}
 
+	public static Label of(final String name, final List<? extends Type> paramTypes) {
+		return new Label(name, paramTypes);
+	}
+
 	public String getName() {
 		return name;
 	}
