@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.formalism.sts.tool;
+package hu.bme.mit.theta.formalism.cfa.tool;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -24,12 +24,10 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 
-import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.analysis.utils.TraceVisualizer;
-import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.impl.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.impl.NullLogger;
@@ -37,24 +35,20 @@ import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.common.table.impl.SimpleTableWriter;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
-import hu.bme.mit.theta.core.type.booltype.BoolExprs;
-import hu.bme.mit.theta.core.utils.ExprUtils;
-import hu.bme.mit.theta.formalism.sts.STS;
-import hu.bme.mit.theta.formalism.sts.StsUtils;
-import hu.bme.mit.theta.formalism.sts.aiger.BasicAigerParser;
-import hu.bme.mit.theta.formalism.sts.dsl.StsDslManager;
-import hu.bme.mit.theta.formalism.sts.dsl.StsSpec;
-import hu.bme.mit.theta.formalism.sts.tool.StsConfigBuilder.Domain;
-import hu.bme.mit.theta.formalism.sts.tool.StsConfigBuilder.InitPrec;
-import hu.bme.mit.theta.formalism.sts.tool.StsConfigBuilder.PredSplit;
-import hu.bme.mit.theta.formalism.sts.tool.StsConfigBuilder.Refinement;
-import hu.bme.mit.theta.formalism.sts.tool.StsConfigBuilder.Search;
+import hu.bme.mit.theta.formalism.cfa.CFA;
+import hu.bme.mit.theta.formalism.cfa.dsl.CfaDslManager;
+import hu.bme.mit.theta.formalism.cfa.tool.CfaConfigBuilder.Domain;
+import hu.bme.mit.theta.formalism.cfa.tool.CfaConfigBuilder.Encoding;
+import hu.bme.mit.theta.formalism.cfa.tool.CfaConfigBuilder.PrecGranularity;
+import hu.bme.mit.theta.formalism.cfa.tool.CfaConfigBuilder.PredSplit;
+import hu.bme.mit.theta.formalism.cfa.tool.CfaConfigBuilder.Refinement;
+import hu.bme.mit.theta.formalism.cfa.tool.CfaConfigBuilder.Search;
 
 /**
- * A command line interface for running a CEGAR configuration on an STS.
+ * A command line interface for running a CEGAR configuration on a CFA.
  */
-public class StsMain {
-	private static final String JAR_NAME = "theta-sts.jar";
+public class CfaCli {
+	private static final String JAR_NAME = "theta-cfa.jar";
 	private final String[] args;
 	private final TableWriter writer;
 
@@ -73,11 +67,11 @@ public class StsMain {
 	@Parameter(names = { "--model" }, description = "Path of the input model", required = true)
 	String model;
 
-	@Parameter(names = { "--initprec" }, description = "Initial precision")
-	InitPrec initPrec = InitPrec.EMPTY;
+	@Parameter(names = { "--precgranularity" }, description = "Precision granularity")
+	PrecGranularity precGranularity = PrecGranularity.GLOBAL;
 
-	@Parameter(names = { "--expected" }, description = "Expected result", arity = 1)
-	Boolean expected;
+	@Parameter(names = { "--encoding" }, description = "Encoding")
+	Encoding encoding = Encoding.LBE;
 
 	@Parameter(names = { "--loglevel" }, description = "Detailedness of logging")
 	Integer logLevel = 1;
@@ -93,13 +87,13 @@ public class StsMain {
 
 	private Logger logger;
 
-	public StsMain(final String[] args) {
+	public CfaCli(final String[] args) {
 		this.args = args;
 		writer = new SimpleTableWriter(System.out, ",", "\"", "\"");
 	}
 
 	public static void main(final String[] args) {
-		final StsMain mainApp = new StsMain(args);
+		final CfaCli mainApp = new CfaCli(args);
 		mainApp.run();
 	}
 
@@ -119,11 +113,10 @@ public class StsMain {
 		}
 
 		try {
-			final STS sts = loadModel();
-			final Config<?, ?, ?> configuration = buildConfiguration(sts);
+			final CFA cfa = loadModel();
+			final Config<?, ?, ?> configuration = buildConfiguration(cfa);
 			final SafetyResult<?, ?> status = configuration.check();
-			checkResult(status);
-			printResult(status, sts);
+			printResult(status, cfa);
 			if (dotfile != null) {
 				writeVisualStatus(status, dotfile);
 			}
@@ -137,40 +130,25 @@ public class StsMain {
 
 	private void printHeader() {
 		final String[] header = new String[] { "Result", "TimeMs", "Iterations", "ArgSize", "ArgDepth",
-				"ArgMeanBranchFactor", "CexLen", "Vars", "Size" };
+				"ArgMeanBranchFactor", "CexLen", "Vars", "Locs", "Edges" };
 		for (final String str : header) {
 			writer.cell(str);
 		}
 		writer.newRow();
 	}
 
-	private STS loadModel() throws IOException {
-		if (model.endsWith(".aag")) {
-			return new BasicAigerParser().parse(model);
-		} else if (model.endsWith(".system")) {
-			final InputStream inputStream = new FileInputStream(model);
-			final StsSpec spec = StsDslManager.createStsSpec(inputStream);
-			if (spec.getAllSts().size() != 1) {
-				throw new UnsupportedOperationException("STS contains multiple properties.");
-			}
-			return StsUtils.eliminateIte(Utils.singleElementOf(spec.getAllSts()));
-		} else {
-			throw new IOException("Unknown format");
-		}
+	private CFA loadModel() throws IOException {
+		final InputStream inputStream = new FileInputStream(model);
+		final CFA cfa = CfaDslManager.createCfa(inputStream);
+		return cfa;
 	}
 
-	private Config<?, ?, ?> buildConfiguration(final STS sts) {
-		return new StsConfigBuilder(domain, refinement).initPrec(initPrec).search(search).predSplit(predSplit)
-				.logger(logger).build(sts);
+	private Config<?, ?, ?> buildConfiguration(final CFA cfa) {
+		return new CfaConfigBuilder(domain, refinement).precGranularity(precGranularity).search(search)
+				.predSplit(predSplit).encoding(encoding).logger(logger).build(cfa);
 	}
 
-	private void checkResult(final SafetyResult<?, ?> status) throws Exception {
-		if (expected != null && !expected.equals(status.isSafe())) {
-			throw new Exception("Expected safe = " + expected + " but was " + status.isSafe());
-		}
-	}
-
-	private void printResult(final SafetyResult<?, ?> status, final STS sts) {
+	private void printResult(final SafetyResult<?, ?> status, final CFA cfa) {
 		final CegarStatistics stats = (CegarStatistics) status.getStats().get();
 		if (benchmarkMode) {
 			writer.cell(status.isSafe());
@@ -184,8 +162,9 @@ public class StsMain {
 			} else {
 				writer.cell("");
 			}
-			writer.cell(sts.getVars().size());
-			writer.cell(ExprUtils.nodeCountSize(BoolExprs.And(sts.getInit(), sts.getTrans())));
+			writer.cell(cfa.getVars().size());
+			writer.cell(cfa.getLocs().size());
+			writer.cell(cfa.getEdges().size());
 		}
 	}
 
@@ -201,9 +180,8 @@ public class StsMain {
 
 	private void writeVisualStatus(final SafetyResult<?, ?> status, final String filename)
 			throws FileNotFoundException {
-		final Graph graph = status.isSafe()
-				? new ArgVisualizer<>(State::toString, a -> "").visualize(status.asSafe().getArg())
-				: new TraceVisualizer<>(State::toString, a -> "").visualize(status.asUnsafe().getTrace());
+		final Graph graph = status.isSafe() ? ArgVisualizer.getDefault().visualize(status.asSafe().getArg())
+				: TraceVisualizer.getDefault().visualize(status.asUnsafe().getTrace());
 		GraphvizWriter.getInstance().writeFile(graph, filename);
 	}
 }

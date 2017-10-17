@@ -41,20 +41,34 @@ public final class XtaVisualizer {
 	private XtaVisualizer() {
 	}
 
-	public static Graph visualize(final XtaProcess process) {
-		final Graph graph = new Graph(process.getName(), XTA_LABEL);
-		final Map<Loc, String> ids = new HashMap<>();
-		traverse(graph, process.getInitLoc(), ids);
-		final NodeAttributes nAttributes = NodeAttributes.builder().label("").fillColor(FILL_COLOR)
-				.lineColor(FILL_COLOR).lineStyle(LOC_LINE_STYLE).peripheries(LOC_PERIPHERIES).build();
-		graph.addNode(PHANTOM_INIT_ID, nAttributes);
-		final EdgeAttributes eAttributes = EdgeAttributes.builder().label("").color(LINE_COLOR)
-				.lineStyle(EDGE_LINE_STYLE).build();
-		graph.addEdge(PHANTOM_INIT_ID, ids.get(process.getInitLoc()), eAttributes);
+	public static Graph visualize(final XtaSystem system) {
+		final Graph graph = new Graph("System", XTA_LABEL);
+		final Map<Object, String> ids = new HashMap<>();
+		for (final XtaProcess process : system.getProcesses()) {
+			traverseProcess(process, graph, ids);
+		}
 		return graph;
 	}
 
-	private static void traverse(final Graph graph, final Loc loc, final Map<Loc, String> ids) {
+	public static Graph visualize(final XtaProcess process) {
+		final Graph graph = new Graph(process.getName(), XTA_LABEL);
+		final Map<Object, String> ids = new HashMap<>();
+		traverseProcess(process, graph, ids);
+		return graph;
+	}
+
+	private static void traverseProcess(final XtaProcess process, final Graph graph, final Map<Object, String> ids) {
+		traverse(graph, process.getInitLoc(), ids);
+		final String phantomId = PHANTOM_INIT_ID + ids.get(process.getInitLoc());
+		final NodeAttributes nAttributes = NodeAttributes.builder().label("").fillColor(FILL_COLOR)
+				.lineColor(FILL_COLOR).lineStyle(LOC_LINE_STYLE).peripheries(LOC_PERIPHERIES).build();
+		graph.addNode(phantomId, nAttributes);
+		final EdgeAttributes eAttributes = EdgeAttributes.builder().label("").color(LINE_COLOR)
+				.lineStyle(EDGE_LINE_STYLE).build();
+		graph.addEdge(phantomId, ids.get(process.getInitLoc()), eAttributes);
+	}
+
+	private static void traverse(final Graph graph, final Loc loc, final Map<Object, String> ids) {
 		if (!ids.containsKey(loc)) {
 			addLocation(graph, loc, ids);
 			for (final Edge outEdge : loc.getOutEdges()) {
@@ -65,7 +79,7 @@ public final class XtaVisualizer {
 		}
 	}
 
-	private static void addLocation(final Graph graph, final Loc loc, final Map<Loc, String> ids) {
+	private static void addLocation(final Graph graph, final Loc loc, final Map<Object, String> ids) {
 		final String id = LOC_ID_PREFIX + ids.size();
 		ids.put(loc, id);
 		final StringJoiner locLabel = new StringJoiner("\n", loc.getName() + "\n", "");
@@ -75,7 +89,7 @@ public final class XtaVisualizer {
 		graph.addNode(id, nAttributes);
 	}
 
-	private static void addEdge(final Graph graph, final Map<Loc, String> ids, final Edge outEdge) {
+	private static void addEdge(final Graph graph, final Map<Object, String> ids, final Edge outEdge) {
 		final StringJoiner edgeLabel = new StringJoiner("\n");
 		outEdge.getSync().ifPresent(sync -> edgeLabel.add(sync.toString()));
 		outEdge.getGuards().stream().forEach(expr -> edgeLabel.add("\\[" + expr.toString() + "\\]"));

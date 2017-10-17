@@ -1,9 +1,9 @@
 specification PetriNet {
 	
 	system readerswriters := {
-		var reading : integer
-		var writing : integer
-		var idle : integer
+		var reading : int
+		var writing : int
+		var idle : int
 		
 		initial reading = 0
 		initial writing = 0

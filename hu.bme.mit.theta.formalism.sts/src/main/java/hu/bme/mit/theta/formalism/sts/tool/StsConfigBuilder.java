@@ -194,7 +194,8 @@ public final class StsConfigBuilder {
 						JoiningPrecRefiner.create(new VarsRefToExplPrec()), logger);
 				break;
 			default:
-				throw new UnsupportedOperationException();
+				throw new UnsupportedOperationException(
+						domain + " domain does not support " + refinement + " refinement.");
 			}
 
 			final SafetyChecker<ExplState, StsAction, ExplPrec> checker = CegarChecker.create(abstractor, refiner,
@@ -222,7 +223,8 @@ public final class StsConfigBuilder {
 				exprTraceChecker = ExprTraceSeqItpChecker.create(init, negProp, solver);
 				break;
 			default:
-				throw new UnsupportedOperationException();
+				throw new UnsupportedOperationException(
+						domain + " domain does not support " + refinement + " refinement.");
 			}
 			final Refiner<PredState, StsAction, SimplePredPrec> refiner = SingleExprTraceRefiner.create(
 					exprTraceChecker, JoiningPrecRefiner.create(new ItpRefToSimplePredPrec(solver, predSplit.splitter)),
@@ -234,7 +236,7 @@ public final class StsConfigBuilder {
 			final SimplePredPrec prec = initPrec.builder.createSimplePred(sts, solver);
 			return Config.create(checker, prec);
 		} else {
-			throw new UnsupportedOperationException();
+			throw new UnsupportedOperationException(domain + " domain is not supported.");
 		}
 	}
 }

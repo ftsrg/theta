@@ -1,8 +1,8 @@
 specification System {
 
 	system simple := {
-		var x : integer
-		var r : boolean
+		var x : int
+		var r : bool
 		
 		invariant x >= 1 and x <= 4
 		
