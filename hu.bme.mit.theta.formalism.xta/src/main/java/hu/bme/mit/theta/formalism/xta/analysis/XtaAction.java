@@ -17,10 +17,12 @@ package hu.bme.mit.theta.formalism.xta.analysis;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.collect.Streams.zip;
 import static hu.bme.mit.theta.core.decl.Decls.Var;
 import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
 import static hu.bme.mit.theta.core.stmt.Stmts.Assume;
 import static hu.bme.mit.theta.core.stmt.Stmts.Havoc;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Add;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Geq;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
@@ -28,12 +30,15 @@ import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 import java.util.Collection;
 import java.util.List;
 import java.util.StringJoiner;
+import java.util.stream.Stream;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableList.Builder;
 
 import hu.bme.mit.theta.analysis.expr.StmtAction;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
+import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.rattype.RatType;
 import hu.bme.mit.theta.formalism.xta.Label;
 import hu.bme.mit.theta.formalism.xta.Update;
@@ -237,6 +242,7 @@ public abstract class XtaAction extends StmtAction {
 			if (stmts == null) {
 				final ImmutableList.Builder<Stmt> builder = ImmutableList.builder();
 				addInvariants(builder, getSourceLocs());
+				addSync(builder, emitEdge, recvEdge);
 				addGuards(builder, emitEdge);
 				addGuards(builder, recvEdge);
 				addUpdates(builder, emitEdge);
@@ -269,12 +275,18 @@ public abstract class XtaAction extends StmtAction {
 		locs.forEach(l -> l.getInvars().forEach(i -> builder.add(Assume(i.toExpr()))));
 	}
 
-	private static void addUpdates(final ImmutableList.Builder<Stmt> builder, final Edge edge) {
-		edge.getUpdates().forEach(u -> builder.add(u.toStmt()));
+	private static void addSync(final Builder<Stmt> builder, final Edge emitEdge, final Edge recvEdge) {
+		final Stream<Expr<?>> emitArgs = emitEdge.getSync().get().getArgs().stream();
+		final Stream<Expr<?>> recvArgs = emitEdge.getSync().get().getArgs().stream();
+		zip(emitArgs, recvArgs, (e, r) -> Assume(Eq(e, r))).forEach(builder::add);
 	}
 
 	private static void addGuards(final ImmutableList.Builder<Stmt> builder, final Edge edge) {
 		edge.getGuards().forEach(g -> builder.add(Assume(g.toExpr())));
+	}
+
+	private static void addUpdates(final ImmutableList.Builder<Stmt> builder, final Edge edge) {
+		edge.getUpdates().forEach(u -> builder.add(u.toStmt()));
 	}
 
 	private static void addDelay(final ImmutableList.Builder<Stmt> builder, final Collection<VarDecl<RatType>> clocks) {
