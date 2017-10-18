@@ -113,16 +113,27 @@ public class StsGui extends BaseGui {
 		btnVisualizeResult.setOnMouseClicked(e -> btnVisualizeResultClicked());
 	}
 
+	private void clearModel() {
+		taModel.clear();
+	}
+
+	private void clearResult() {
+		taOutput.clear();
+		wvVisualResult.getEngine().loadContent("");
+	}
+
 	private void btnLoadClicked(final Stage stage) {
-		final File result = new FileChooser().showOpenDialog(stage);
-		if (result != null) {
+		final File fileToOpen = new FileChooser().showOpenDialog(stage);
+		if (fileToOpen != null) {
+			clearModel();
+			clearResult();
 			selectTab(tabModel);
-			runBackgroundTask(new LoadFileTextTask(result.getAbsolutePath(), taModel::setText));
+			runBackgroundTask(new LoadFileTextTask(fileToOpen.getAbsolutePath(), taModel::setText));
 		}
 	}
 
 	private void btnRunAlgoClicked() {
-		taOutput.clear();
+		clearResult();
 		selectTab(tabOutput);
 		runBackgroundTask(new RunAlgorithmTask());
 	}

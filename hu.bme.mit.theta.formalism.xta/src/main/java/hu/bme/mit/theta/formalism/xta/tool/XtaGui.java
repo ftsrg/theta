@@ -108,11 +108,23 @@ public class XtaGui extends BaseGui {
 		btnVisualizeResult.setOnMouseClicked(e -> btnVisualizeResultClicked());
 	}
 
+	private void clearModel() {
+		taModel.clear();
+		wvVisualModel.getEngine().loadContent("");
+	}
+
+	private void clearResult() {
+		taOutput.clear();
+		wvVisualResult.getEngine().loadContent("");
+	}
+
 	private void btnLoadClicked(final Stage stage) {
-		final File result = new FileChooser().showOpenDialog(stage);
-		if (result != null) {
+		final File fileToOpen = new FileChooser().showOpenDialog(stage);
+		if (fileToOpen != null) {
+			clearModel();
+			clearResult();
 			selectTab(tabModel);
-			runBackgroundTask(new LoadFileTextTask(result.getAbsolutePath(), taModel::setText));
+			runBackgroundTask(new LoadFileTextTask(fileToOpen.getAbsolutePath(), taModel::setText));
 		}
 	}
 
@@ -122,7 +134,7 @@ public class XtaGui extends BaseGui {
 	}
 
 	private void btnRunAlgoClicked() {
-		taOutput.clear();
+		clearResult();
 		selectTab(tabOutput);
 		runBackgroundTask(new RunAlgorithmTask());
 	}
@@ -157,7 +169,7 @@ public class XtaGui extends BaseGui {
 		protected Void call() throws Exception {
 			try {
 				final XtaSystem xta = XtaDslManager.createSystem(taModel.getText());
-				final Graph graph = XtaVisualizer.visualize(xta); // TODO
+				final Graph graph = XtaVisualizer.visualize(xta);
 				final File tmpFile = File.createTempFile("theta", ".tmp");
 				GraphvizWriter.getInstance().writeFile(graph, tmpFile.getAbsolutePath(), Format.SVG);
 				final String image = Files.toString(tmpFile, Charsets.UTF_8);

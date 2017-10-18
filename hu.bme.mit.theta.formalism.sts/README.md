@@ -48,7 +48,7 @@ Use one of the following commands to build the tool.
 - Windows, command line: `gradlew.bat theta-sts-cli`
 - Windows, GUI: `gradlew.bat theta-sts-gui`
 
-The runnable file will appear under _build/libs_. The tool also requires the libraries in the _../lib_ folder (if you work on Windows, also read the README there).
+The runnable file will appear under _build/libs_. The tool also requires [Z3 and GraphViz](../doc/Dependencies.md).
 
 The command line tool can be run with `java -jar theta-sts-cli.jar [arguments]`. If no arguments are given, a help screen is displayed about the arguments and their possible values. For example, put the example above in a file called `counter.system` and call `java -jar theta-sts-cli.jar --model counter.system --domain EXPL --refinement SEQ_ITP --loglevel 3`.
 
