@@ -277,7 +277,7 @@ public abstract class XtaAction extends StmtAction {
 
 	private static void addSync(final Builder<Stmt> builder, final Edge emitEdge, final Edge recvEdge) {
 		final Stream<Expr<?>> emitArgs = emitEdge.getSync().get().getArgs().stream();
-		final Stream<Expr<?>> recvArgs = emitEdge.getSync().get().getArgs().stream();
+		final Stream<Expr<?>> recvArgs = recvEdge.getSync().get().getArgs().stream();
 		zip(emitArgs, recvArgs, (e, r) -> Assume(Eq(e, r))).forEach(builder::add);
 	}
 
