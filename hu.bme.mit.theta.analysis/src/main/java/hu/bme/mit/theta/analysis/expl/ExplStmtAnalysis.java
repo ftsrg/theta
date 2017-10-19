@@ -20,7 +20,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.Domain;
 import hu.bme.mit.theta.analysis.InitFunc;
-import hu.bme.mit.theta.analysis.TransferFunc;
+import hu.bme.mit.theta.analysis.TransFunc;
 import hu.bme.mit.theta.analysis.expr.StmtAction;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
@@ -30,14 +30,14 @@ public final class ExplStmtAnalysis implements Analysis<ExplState, StmtAction, E
 
 	private final Domain<ExplState> domain;
 	private final InitFunc<ExplState, ExplPrec> initFunc;
-	private final TransferFunc<ExplState, StmtAction, ExplPrec> transferFunc;
+	private final TransFunc<ExplState, StmtAction, ExplPrec> transFunc;
 
 	private ExplStmtAnalysis(final Solver solver, final Expr<BoolType> initExpr, final int maxStatesFromSolver) {
 		checkNotNull(solver);
 		checkNotNull(initExpr);
 		this.domain = ExplDomain.getInstance();
 		this.initFunc = ExplInitFunc.create(solver, initExpr);
-		this.transferFunc = ExplStmtTransferFunc.create(solver, maxStatesFromSolver);
+		this.transFunc = ExplStmtTransFunc.create(solver, maxStatesFromSolver);
 	}
 
 	public static ExplStmtAnalysis create(final Solver solver, final Expr<BoolType> initExpr,
@@ -56,8 +56,8 @@ public final class ExplStmtAnalysis implements Analysis<ExplState, StmtAction, E
 	}
 
 	@Override
-	public TransferFunc<ExplState, StmtAction, ExplPrec> getTransferFunc() {
-		return transferFunc;
+	public TransFunc<ExplState, StmtAction, ExplPrec> getTransFunc() {
+		return transFunc;
 	}
 
 }

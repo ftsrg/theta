@@ -1,12 +1,12 @@
 /*
  *  Copyright 2017 Budapest University of Technology and Economics
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,21 +24,21 @@ import java.util.Collections;
 import com.google.common.collect.ImmutableSet;
 
 import hu.bme.mit.theta.analysis.Action;
-import hu.bme.mit.theta.analysis.TransferFunc;
+import hu.bme.mit.theta.analysis.TransFunc;
 import hu.bme.mit.theta.analysis.zone.ZonePrec;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
 
-final class ActZoneTransferFunc<A extends Action> implements TransferFunc<ActZoneState, A, ZonePrec> {
+final class ActZoneTransFunc<A extends Action> implements TransFunc<ActZoneState, A, ZonePrec> {
 
-	private final TransferFunc<ZoneState, ? super A, ZonePrec> transferFunc;
+	private final TransFunc<ZoneState, ? super A, ZonePrec> transFunc;
 
-	private ActZoneTransferFunc(final TransferFunc<ZoneState, ? super A, ZonePrec> transferFunc) {
-		this.transferFunc = checkNotNull(transferFunc);
+	private ActZoneTransFunc(final TransFunc<ZoneState, ? super A, ZonePrec> transFunc) {
+		this.transFunc = checkNotNull(transFunc);
 	}
 
-	public static <A extends Action> ActZoneTransferFunc<A> create(
-			final TransferFunc<ZoneState, ? super A, ZonePrec> transferFunc) {
-		return new ActZoneTransferFunc<>(transferFunc);
+	public static <A extends Action> ActZoneTransFunc<A> create(
+			final TransFunc<ZoneState, ? super A, ZonePrec> transFunc) {
+		return new ActZoneTransFunc<>(transFunc);
 	}
 
 	@Override
@@ -48,7 +48,7 @@ final class ActZoneTransferFunc<A extends Action> implements TransferFunc<ActZon
 		checkNotNull(prec);
 
 		final ZoneState subState = state.getZone();
-		final Collection<? extends ZoneState> subSuccStates = transferFunc.getSuccStates(subState, action, prec);
+		final Collection<? extends ZoneState> subSuccStates = transFunc.getSuccStates(subState, action, prec);
 
 		if (subSuccStates.isEmpty()) {
 			final ActZoneState succState = ActZoneState.of(ZoneState.bottom(), ImmutableSet.of());

@@ -20,7 +20,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.Domain;
 import hu.bme.mit.theta.analysis.InitFunc;
-import hu.bme.mit.theta.analysis.TransferFunc;
+import hu.bme.mit.theta.analysis.TransFunc;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
@@ -30,14 +30,14 @@ public final class ExplAnalysis implements Analysis<ExplState, ExprAction, ExplP
 
 	private final Domain<ExplState> domain;
 	private final InitFunc<ExplState, ExplPrec> initFunc;
-	private final TransferFunc<ExplState, ExprAction, ExplPrec> transferFunc;
+	private final TransFunc<ExplState, ExprAction, ExplPrec> transFunc;
 
 	private ExplAnalysis(final Solver solver, final Expr<BoolType> initExpr) {
 		checkNotNull(solver);
 		checkNotNull(initExpr);
 		this.domain = ExplDomain.getInstance();
 		this.initFunc = ExplInitFunc.create(solver, initExpr);
-		this.transferFunc = ExplTransferFunc.create(solver);
+		this.transFunc = ExplTransFunc.create(solver);
 
 	}
 
@@ -56,8 +56,8 @@ public final class ExplAnalysis implements Analysis<ExplState, ExprAction, ExplP
 	}
 
 	@Override
-	public TransferFunc<ExplState, ExprAction, ExplPrec> getTransferFunc() {
-		return transferFunc;
+	public TransFunc<ExplState, ExprAction, ExplPrec> getTransFunc() {
+		return transFunc;
 	}
 
 }

@@ -21,7 +21,7 @@ import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.Domain;
 import hu.bme.mit.theta.analysis.InitFunc;
 import hu.bme.mit.theta.analysis.Prec;
-import hu.bme.mit.theta.analysis.TransferFunc;
+import hu.bme.mit.theta.analysis.TransFunc;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.formalism.cfa.CFA.Loc;
 
@@ -30,14 +30,14 @@ public final class CfaAnalysis<S extends ExprState, P extends Prec>
 
 	private final Domain<CfaState<S>> domain;
 	private final InitFunc<CfaState<S>, CfaPrec<P>> initFunc;
-	private final TransferFunc<CfaState<S>, CfaAction, CfaPrec<P>> transferFunc;
+	private final TransFunc<CfaState<S>, CfaAction, CfaPrec<P>> transFunc;
 
 	private CfaAnalysis(final Loc initLoc, final Analysis<S, ? super CfaAction, ? super P> analysis) {
 		checkNotNull(initLoc);
 		checkNotNull(analysis);
 		domain = CfaDomain.create(analysis.getDomain());
 		initFunc = CfaInitFunc.create(initLoc, analysis.getInitFunc());
-		transferFunc = CfaTransferFunc.create(analysis.getTransferFunc());
+		transFunc = CfaTransFunc.create(analysis.getTransFunc());
 	}
 
 	public static <S extends ExprState, P extends Prec> CfaAnalysis<S, P> create(final Loc initLoc,
@@ -56,8 +56,8 @@ public final class CfaAnalysis<S extends ExprState, P extends Prec>
 	}
 
 	@Override
-	public TransferFunc<CfaState<S>, CfaAction, CfaPrec<P>> getTransferFunc() {
-		return transferFunc;
+	public TransFunc<CfaState<S>, CfaAction, CfaPrec<P>> getTransFunc() {
+		return transFunc;
 	}
 
 }

@@ -15,39 +15,36 @@
  */
 package hu.bme.mit.theta.formalism.xta.analysis.zone;
 
-import hu.bme.mit.theta.analysis.Analysis;
-import hu.bme.mit.theta.analysis.Domain;
-import hu.bme.mit.theta.analysis.InitFunc;
+import java.util.Collection;
+
+import com.google.common.collect.ImmutableList;
+
 import hu.bme.mit.theta.analysis.TransFunc;
-import hu.bme.mit.theta.analysis.zone.ZoneDomain;
 import hu.bme.mit.theta.analysis.zone.ZonePrec;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
 import hu.bme.mit.theta.formalism.xta.analysis.XtaAction;
 
-public final class XtaZoneAnalysis implements Analysis<ZoneState, XtaAction, ZonePrec> {
+final class XtaZoneTransFunc implements TransFunc<ZoneState, XtaAction, ZonePrec> {
 
-	private static final XtaZoneAnalysis INSTANCE = new XtaZoneAnalysis();
+	private final static XtaZoneTransFunc INSTANCE = new XtaZoneTransFunc();
 
-	private XtaZoneAnalysis() {
+	private XtaZoneTransFunc() {
 	}
 
-	public static XtaZoneAnalysis getInstance() {
+	static XtaZoneTransFunc getInstance() {
 		return INSTANCE;
 	}
 
 	@Override
-	public Domain<ZoneState> getDomain() {
-		return ZoneDomain.getInstance();
-	}
+	public Collection<ZoneState> getSuccStates(final ZoneState state, final XtaAction action, final ZonePrec prec) {
 
-	@Override
-	public InitFunc<ZoneState, ZonePrec> getInitFunc() {
-		return XtaZoneInitFunc.getInstance();
-	}
+		final ZoneState succState = XtaZoneUtils.post(state, action, prec);
 
-	@Override
-	public TransFunc<ZoneState, XtaAction, ZonePrec> getTransFunc() {
-		return XtaZoneTransFunc.getInstance();
+		if (succState.isBottom()) {
+			return ImmutableList.of();
+		} else {
+			return ImmutableList.of(succState);
+		}
 	}
 
 }

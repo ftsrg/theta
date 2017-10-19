@@ -15,36 +15,33 @@
  */
 package hu.bme.mit.theta.analysis.unit;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import java.util.Collection;
+
+import com.google.common.collect.ImmutableList;
+
 import hu.bme.mit.theta.analysis.Action;
-import hu.bme.mit.theta.analysis.Analysis;
-import hu.bme.mit.theta.analysis.Domain;
-import hu.bme.mit.theta.analysis.InitFunc;
 import hu.bme.mit.theta.analysis.TransFunc;
 
-public final class UnitAnalysis implements Analysis<UnitState, Action, UnitPrec> {
+final class UnitTransFunc implements TransFunc<UnitState, Action, UnitPrec> {
 
-	private static final UnitAnalysis INSTANCE = new UnitAnalysis();
+	private static final UnitTransFunc INSTANCE = new UnitTransFunc();
+	private static final Collection<UnitState> RESULT = ImmutableList.of(UnitState.getInstance());
 
-	private UnitAnalysis() {
+	private UnitTransFunc() {
 	}
 
-	public static UnitAnalysis getInstance() {
+	public static UnitTransFunc getInstance() {
 		return INSTANCE;
 	}
 
 	@Override
-	public Domain<UnitState> getDomain() {
-		return UnitDomain.getInstance();
-	}
-
-	@Override
-	public InitFunc<UnitState, UnitPrec> getInitFunc() {
-		return UnitInitFunc.getInstance();
-	}
-
-	@Override
-	public TransFunc<UnitState, Action, UnitPrec> getTransFunc() {
-		return UnitTransFunc.getInstance();
+	public Collection<UnitState> getSuccStates(final UnitState state, final Action action, final UnitPrec prec) {
+		checkNotNull(state);
+		checkNotNull(action);
+		checkNotNull(prec);
+		return RESULT;
 	}
 
 }

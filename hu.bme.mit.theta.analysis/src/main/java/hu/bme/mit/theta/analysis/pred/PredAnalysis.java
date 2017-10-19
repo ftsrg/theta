@@ -18,7 +18,7 @@ package hu.bme.mit.theta.analysis.pred;
 import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.Domain;
 import hu.bme.mit.theta.analysis.InitFunc;
-import hu.bme.mit.theta.analysis.TransferFunc;
+import hu.bme.mit.theta.analysis.TransFunc;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
@@ -28,12 +28,12 @@ public final class PredAnalysis implements Analysis<PredState, ExprAction, PredP
 
 	private final Domain<PredState> domain;
 	private final InitFunc<PredState, PredPrec> initFunc;
-	private final TransferFunc<PredState, ExprAction, PredPrec> transferFunc;
+	private final TransFunc<PredState, ExprAction, PredPrec> transFunc;
 
 	private PredAnalysis(final Solver solver, final Expr<BoolType> initExpr) {
 		domain = PredDomain.create(solver);
 		initFunc = PredInitFunc.create(solver, initExpr);
-		transferFunc = PredTransferFunc.create(solver);
+		transFunc = PredTransFunc.create(solver);
 	}
 
 	public static PredAnalysis create(final Solver solver, final Expr<BoolType> initExpr) {
@@ -53,8 +53,8 @@ public final class PredAnalysis implements Analysis<PredState, ExprAction, PredP
 	}
 
 	@Override
-	public TransferFunc<PredState, ExprAction, PredPrec> getTransferFunc() {
-		return transferFunc;
+	public TransFunc<PredState, ExprAction, PredPrec> getTransFunc() {
+		return transFunc;
 	}
 
 }

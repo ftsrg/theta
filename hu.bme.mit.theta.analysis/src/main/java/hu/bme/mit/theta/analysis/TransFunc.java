@@ -15,34 +15,21 @@
  */
 package hu.bme.mit.theta.analysis;
 
+import java.util.Collection;
+
 /**
- * Common interface for analyses.
- *
- * @see Domain
- * @see InitFunc
- * @see TransFunc
+ * Common interface for transfer functions.
  */
-public interface Analysis<S extends State, A extends Action, P extends Prec> {
-
+@FunctionalInterface
+public interface TransFunc<S extends State, A extends Action, P extends Prec> {
 	/**
-	 * Gets the domain.
-	 *
-	 * @return
+	 * Gets successor states of a state with a given action and precision.
+	 * 
+	 * @param state
+	 * @param action
+	 * @param prec
+	 * @return Collection of successor states
 	 */
-	Domain<S> getDomain();
-
-	/**
-	 * Gets the initial function.
-	 *
-	 * @return
-	 */
-	InitFunc<S, P> getInitFunc();
-
-	/**
-	 * Gets the transfer function.
-	 *
-	 * @return
-	 */
-	TransFunc<S, A, P> getTransFunc();
+	Collection<? extends S> getSuccStates(S state, A action, P prec);
 
 }
