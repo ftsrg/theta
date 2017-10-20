@@ -99,7 +99,7 @@ public class StsExplTest {
 		final Analysis<ExplState, ExprAction, ExplPrec> analysis = ExplAnalysis.create(solver, sts.getInit());
 		final Predicate<ExprState> target = new ExprStatePredicate(Not(sts.getProp()), solver);
 
-		final ExplPrec prec = ExplPrec.create(Collections.singleton(vy));
+		final ExplPrec prec = ExplPrec.of(Collections.singleton(vy));
 
 		final LTS<State, StsAction> lts = StsLts.create(sts);
 

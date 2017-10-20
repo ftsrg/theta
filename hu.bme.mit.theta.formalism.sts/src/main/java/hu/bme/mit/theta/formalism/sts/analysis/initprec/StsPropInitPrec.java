@@ -29,7 +29,7 @@ public class StsPropInitPrec implements StsInitPrec {
 
 	@Override
 	public ExplPrec createExpl(final STS sts) {
-		return ExplPrec.create(ExprUtils.getVars(sts.getProp()));
+		return ExplPrec.of(ExprUtils.getVars(sts.getProp()));
 	}
 
 	@Override

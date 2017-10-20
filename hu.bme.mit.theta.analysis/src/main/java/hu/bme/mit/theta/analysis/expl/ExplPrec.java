@@ -44,11 +44,11 @@ public final class ExplPrec implements Prec {
 		this.vars = ImmutableSet.copyOf(vars);
 	}
 
-	public static ExplPrec create() {
-		return create(Collections.emptySet());
+	public static ExplPrec empty() {
+		return of(Collections.emptySet());
 	}
 
-	public static ExplPrec create(final Iterable<? extends VarDecl<?>> vars) {
+	public static ExplPrec of(final Iterable<? extends VarDecl<?>> vars) {
 		checkNotNull(vars);
 		if (vars.iterator().hasNext()) {
 			return new ExplPrec(vars);
@@ -71,7 +71,7 @@ public final class ExplPrec implements Prec {
 		} else if (newVars.size() == other.vars.size()) {
 			return other;
 		} else {
-			return create(newVars);
+			return of(newVars);
 		}
 	}
 

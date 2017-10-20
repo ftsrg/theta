@@ -37,7 +37,7 @@ import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 public class ExprStatesTest {
 
 	private final VarDecl<IntType> vx = Var("x", Int());
-	private final ExplPrec prec = ExplPrec.create(Collections.singleton(vx));
+	private final ExplPrec prec = ExplPrec.of(Collections.singleton(vx));
 	private final Solver solver = Z3SolverFactory.getInstace().createSolver();
 
 	@Test

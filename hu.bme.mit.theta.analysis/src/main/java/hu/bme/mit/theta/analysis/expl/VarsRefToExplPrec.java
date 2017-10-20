@@ -28,7 +28,7 @@ public class VarsRefToExplPrec implements RefutationToPrec<ExplPrec, VarsRefutat
 	@Override
 	public ExplPrec toPrec(final VarsRefutation refutation, final int index) {
 		final Collection<VarDecl<?>> vars = refutation.getVarSets().getVars(index);
-		final ExplPrec prec = ExplPrec.create(vars);
+		final ExplPrec prec = ExplPrec.of(vars);
 		return prec;
 	}
 

@@ -256,7 +256,7 @@ public class CfaConfigBuilder {
 			final SafetyChecker<CfaState<ExplState>, CfaAction, CfaPrec<ExplPrec>> checker = CegarChecker
 					.create(abstractor, refiner, logger);
 
-			final CfaPrec<ExplPrec> prec = precGranularity.createPrec(ExplPrec.create());
+			final CfaPrec<ExplPrec> prec = precGranularity.createPrec(ExplPrec.empty());
 
 			return Config.create(checker, prec);
 

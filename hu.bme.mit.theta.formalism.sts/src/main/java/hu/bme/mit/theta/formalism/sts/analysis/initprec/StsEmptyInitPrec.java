@@ -28,7 +28,7 @@ public class StsEmptyInitPrec implements StsInitPrec {
 
 	@Override
 	public ExplPrec createExpl(final STS sts) {
-		return ExplPrec.create();
+		return ExplPrec.empty();
 	}
 
 	@Override

@@ -32,7 +32,7 @@ public class ItpRefToExplPrec implements RefutationToPrec<ExplPrec, ItpRefutatio
 	public ExplPrec toPrec(final ItpRefutation refutation, final int index) {
 		final Expr<BoolType> expr = refutation.get(index);
 		final Collection<VarDecl<?>> vars = ExprUtils.getVars(expr);
-		final ExplPrec prec = ExplPrec.create(vars);
+		final ExplPrec prec = ExplPrec.of(vars);
 		return prec;
 	}
 
