@@ -38,11 +38,11 @@ public abstract class ExplState implements ExprState, Valuation {
 	private ExplState() {
 	}
 
-	public static ExplState create(final Valuation values) {
-		if (values.getDecls().isEmpty()) {
+	public static ExplState create(final Valuation val) {
+		if (val.getDecls().isEmpty()) {
 			return createTop();
 		}
-		return new NonBottom(values);
+		return new NonBottom(val);
 	}
 
 	public static ExplState createBottom() {
@@ -64,26 +64,26 @@ public abstract class ExplState implements ExprState, Valuation {
 	private static final class NonBottom extends ExplState {
 
 		private static final int HASH_SEED = 6659;
-		private final Valuation values;
+		private final Valuation val;
 		private volatile int hashCode;
 
-		private NonBottom(final Valuation values) {
-			this.values = checkNotNull(values);
+		private NonBottom(final Valuation val) {
+			this.val = checkNotNull(val);
 		}
 
 		@Override
 		public Collection<? extends Decl<?>> getDecls() {
-			return values.getDecls();
+			return val.getDecls();
 		}
 
 		@Override
 		public <DeclType extends Type> Optional<LitExpr<DeclType>> eval(final Decl<DeclType> decl) {
-			return values.eval(decl);
+			return val.eval(decl);
 		}
 
 		@Override
 		public Expr<BoolType> toExpr() {
-			return values.toExpr();
+			return val.toExpr();
 		}
 
 		////
@@ -111,7 +111,7 @@ public abstract class ExplState implements ExprState, Valuation {
 
 		@Override
 		public boolean isTop() {
-			return values.getDecls().isEmpty();
+			return val.getDecls().isEmpty();
 		}
 
 		////
@@ -121,7 +121,7 @@ public abstract class ExplState implements ExprState, Valuation {
 			int result = hashCode;
 			if (result == 0) {
 				result = HASH_SEED;
-				result = 31 * result + values.hashCode();
+				result = 31 * result + val.hashCode();
 				hashCode = result;
 			}
 			return result;
@@ -133,7 +133,7 @@ public abstract class ExplState implements ExprState, Valuation {
 				return true;
 			} else if (obj instanceof NonBottom) {
 				final NonBottom that = (NonBottom) obj;
-				return this.values.equals(that.values);
+				return this.val.equals(that.val);
 			} else {
 				return false;
 			}
@@ -142,7 +142,7 @@ public abstract class ExplState implements ExprState, Valuation {
 		@Override
 		public String toString() {
 			final ToStringBuilder builder = Utils.toStringBuilder(ExplState.class.getSimpleName());
-			for (final Decl<?> varDecl : values.getDecls()) {
+			for (final Decl<?> varDecl : val.getDecls()) {
 				builder.add(varDecl.getName() + " = " + eval(varDecl).get());
 			}
 			return builder.toString();
