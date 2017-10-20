@@ -41,7 +41,6 @@ import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.rattype.RatType;
 import hu.bme.mit.theta.formalism.xta.Label;
-import hu.bme.mit.theta.formalism.xta.Update;
 import hu.bme.mit.theta.formalism.xta.XtaProcess.Edge;
 import hu.bme.mit.theta.formalism.xta.XtaProcess.Loc;
 import hu.bme.mit.theta.formalism.xta.XtaProcess.LocKind;
@@ -163,7 +162,7 @@ public abstract class XtaAction extends StmtAction {
 		public String toString() {
 			final StringJoiner sj = new StringJoiner("\n");
 			edge.getGuards().forEach(g -> sj.add("[" + g + "]"));
-			edge.getUpdates().forEach(Update::toString);
+			edge.getUpdates().forEach(u -> sj.add(u.toString()));
 			return sj.toString();
 		}
 
