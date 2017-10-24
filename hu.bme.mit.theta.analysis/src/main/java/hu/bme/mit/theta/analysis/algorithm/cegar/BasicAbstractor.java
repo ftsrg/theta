@@ -96,7 +96,7 @@ public final class BasicAbstractor<S extends State, A extends Action, P extends 
 			final ArgNode<S, A> node = waitlist.remove();
 
 			close(node, reachedSet.get(node));
-			if (!node.isCovered() && !node.isTarget()) {
+			if (!node.isSubsumed() && !node.isTarget()) {
 				final Collection<ArgNode<S, A>> newNodes = argBuilder.expand(node, prec);
 				reachedSet.addAll(newNodes);
 				waitlist.addAll(newNodes);
