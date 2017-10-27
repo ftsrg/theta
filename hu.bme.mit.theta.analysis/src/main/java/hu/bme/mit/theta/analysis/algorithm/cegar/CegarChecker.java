@@ -1,12 +1,12 @@
 /*
  *  Copyright 2017 Budapest University of Technology and Economics
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -63,6 +63,8 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 	public SafetyResult<S, A> check(final P initPrec) {
 		logger.writeln("Configuration: ", this, 1, 0);
 		final Stopwatch stopwatch = Stopwatch.createStarted();
+		long abstractorTime = 0;
+		long refinerTime = 0;
 		RefinerResult<S, A, P> refinerResult = null;
 		AbstractorResult abstractorResult = null;
 		final ARG<S, A> arg = abstractor.createArg();
@@ -73,12 +75,16 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 			logger.writeln("Iteration ", iteration, 2, 0);
 
 			logger.writeln("Checking abstraction...", 2, 1);
+			final long abstractorStartTime = stopwatch.elapsed(TimeUnit.MILLISECONDS);
 			abstractorResult = abstractor.check(arg, prec);
+			abstractorTime += stopwatch.elapsed(TimeUnit.MILLISECONDS) - abstractorStartTime;
 			logger.writeln("Checking abstraction done, result: ", abstractorResult, 2, 1);
 
 			if (abstractorResult.isUnsafe()) {
 				logger.writeln("Refining abstraction...", 2, 1);
+				final long refinerStartTime = stopwatch.elapsed(TimeUnit.MILLISECONDS);
 				refinerResult = refiner.refine(arg, prec);
+				refinerTime += stopwatch.elapsed(TimeUnit.MILLISECONDS) - refinerStartTime;
 				logger.writeln("Refining abstraction done, result: ", refinerResult, 2, 1);
 
 				if (refinerResult.isSpurious()) {
@@ -90,7 +96,8 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 
 		stopwatch.stop();
 		SafetyResult<S, A> cegarResult = null;
-		final CegarStatistics stats = new CegarStatistics(stopwatch.elapsed(TimeUnit.MILLISECONDS), iteration);
+		final CegarStatistics stats = new CegarStatistics(stopwatch.elapsed(TimeUnit.MILLISECONDS), abstractorTime,
+				refinerTime, iteration);
 
 		assert abstractorResult.isSafe() || (refinerResult != null && refinerResult.isUnsafe());
 
