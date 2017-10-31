@@ -17,15 +17,24 @@ package hu.bme.mit.theta.formalism.cfa.utils;
 
 import java.awt.Color;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
+import hu.bme.mit.theta.analysis.Trace;
+import hu.bme.mit.theta.analysis.expl.ExplState;
+import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.common.visualization.EdgeAttributes;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.LineStyle;
 import hu.bme.mit.theta.common.visualization.NodeAttributes;
+import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.formalism.cfa.CFA;
 import hu.bme.mit.theta.formalism.cfa.CFA.Edge;
 import hu.bme.mit.theta.formalism.cfa.CFA.Loc;
+import hu.bme.mit.theta.formalism.cfa.analysis.CfaAction;
+import hu.bme.mit.theta.formalism.cfa.analysis.CfaState;
 
 public final class CfaVisualizer {
 
@@ -75,5 +84,35 @@ public final class CfaVisualizer {
 		final EdgeAttributes eAttributes = EdgeAttributes.builder().label(edge.getStmt().toString()).color(LINE_COLOR)
 				.lineStyle(EDGE_LINE_STYLE).font(EDGE_FONT).build();
 		graph.addEdge(ids.get(edge.getSource()), ids.get(edge.getTarget()), eAttributes);
+	}
+
+	public static void printTraceTable(final Trace<CfaState<ExplState>, CfaAction> trace, final TableWriter writer) {
+		final Set<Decl<?>> allVars = new LinkedHashSet<>();
+		for (final CfaState<ExplState> state : trace.getStates()) {
+			allVars.addAll(state.getState().getDecls());
+		}
+		final int nCols = 1 + allVars.size();
+		writer.startTable();
+		writer.cell("LOC");
+		allVars.forEach(v -> writer.cell(v.getName()));
+		writer.newRow();
+
+		for (int i = 0; i < trace.getStates().size(); i++) {
+			final CfaState<ExplState> state = trace.getState(i);
+			writer.cell(state.getLoc().getName());
+			for (final Decl<?> decl : allVars) {
+				final Optional<?> eval = state.getState().eval(decl);
+				final String evalStr = eval.isPresent() ? eval.get().toString() : "";
+				writer.cell(evalStr);
+			}
+			writer.newRow();
+			if (i < trace.getActions().size()) {
+				final StringBuilder sb = new StringBuilder();
+				trace.getAction(i).getStmts().forEach(s -> sb.append(s.toString()).append(System.lineSeparator()));
+				writer.cell(sb.toString(), nCols);
+				writer.newRow();
+			}
+		}
+		writer.endTable();
 	}
 }
