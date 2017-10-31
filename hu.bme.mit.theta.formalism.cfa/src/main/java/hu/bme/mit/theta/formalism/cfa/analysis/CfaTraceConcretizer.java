@@ -33,6 +33,9 @@ import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 
 public final class CfaTraceConcretizer {
 
+	private CfaTraceConcretizer() {
+	}
+
 	public static Trace<CfaState<ExplState>, CfaAction> concretize(final Trace<CfaState<?>, CfaAction> trace) {
 		final ExprTraceChecker<ItpRefutation> checker = ExprTraceFwBinItpChecker.create(BoolExprs.True(),
 				BoolExprs.True(), Z3SolverFactory.getInstace().createItpSolver());

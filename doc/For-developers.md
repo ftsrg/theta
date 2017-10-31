@@ -8,6 +8,10 @@ Theta is written in Java 8 using
 
 We are mainly developing on Windows, but we also test Theta on Linux. Theta can be built from command line, but you can most likely also import it into your favorite IDE. Theta has some external [dependencies](Dependencies.md) that may need to be obtained/installed depending on what parts of the framework you are working with.
 
+## Building from the command line
+
+Theta can be built from the command line by simply executing `gradlew.bat build` (Windows) or `./gradlew build` (Linux), where `build` is the name of the task that will compile all projects and run the tests.
+
 ## Recommended development workflow
 
 As the main repository is read-only, we suggest you to create your own [fork](https://help.github.com/articles/fork-a-repo/). Within your fork, we also recommend to create new _branches_ for your development. This enables us later on to easily integrate your work into the main repository by using [pull requests](https://help.github.com/articles/about-pull-requests/).
@@ -22,8 +26,14 @@ The projects are currently developed and tested with [Eclipse Oxygen](https://ww
   * _Optional: Also install the Eclipse Groovy tooling from <https://github.com/groovy/groovy-eclipse/wiki>._
 * Add your fork (or the main repository) to Eclipse in the _Git Repositories_ window.
 * To import the projects, choose _File / Import..._ / _Gradle_ / _Existing Gradle Project_, specify the root directory and use the default settings.
-* At this point the projects may contain errors (due to some files not being generated). Open a console at the repository root directory and type `./gradlew build` on Linux or `gradlew.bat build` on Windows. After the `BUILD SUCCESSFUL` message, refresh the projects in Eclipse.
+* At this point the projects may contain errors (due to some files not being generated). Build the projects from command line, and refresh the projects in Eclipse.
 * If you use the Z3 solver, open the project `hu.bme.mit.theta.solver.z3` and right click on `com.microsoft.z3.jar` under _Project and External Dependencies_. Select _Build path_ / _Configure Build Path..._ and on the _Libraries_ tab select the _Native library location_ entry under _Project and External Dependencies_. Click on _Edit_ and browse the _lib_ folder that is in the root directory of the repository.
-  * If you work on Windows, read the README in the _lib_ directory.
 * If there are access restriction errors in Eclipse due to JavaFX then either install the [e(fx)clipse plugin](http://www.eclipse.org/efxclipse) or go to the _Java Build Path_ in the properties of the project and under the _Libraries_ tab delete the JRE System Library and re-add it.
 * There is a code formatting profile (ThetaFormatterProfile.xml) in this directory. In Eclipse, go to _Window_ / _Preferences_ / _Java_ / _Code Style_ / _Formatter_ and import the profile. You can enable automatic formatting on save under _Java_ / _Editor_ / _Save Actions_.
+
+### Errors after updating your fork
+
+It is possible that there will be strange errors after updating your fork. You should perform the following steps to resolve them.
+
+* Rebuild from the command line and refresh all projects in Eclipse (by simply selecting them and pressing F5). This should solve errors when some generated files are missing.
+* In the context menu of the root project (`theta`) select _Gradle_ / _Refresh Gradle Project_. This should solve issues when the dependencies of the projects changed or projects have been added/deleted.

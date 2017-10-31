@@ -61,9 +61,6 @@ public class StsGui extends BaseGui {
 	private ChoiceBox<PredSplit> cbPredSplit;
 	private ChoiceBox<InitPrec> cbInitPrec;
 	private Spinner<Integer> spLogLevel;
-	private Button btnRunAlgo;
-	private Button btnLoadModel;
-	private Button btnVisualizeResult;
 	private CheckBox cbStructureOnly;
 
 	private TextArea taModel;
@@ -93,7 +90,7 @@ public class StsGui extends BaseGui {
 		tabVisualResult = createTab("Result Visualized", wvVisualResult);
 
 		createTitle("Input model");
-		btnLoadModel = createButton("Load STS");
+		final Button btnLoadModel = createButton("Load STS");
 		btnLoadModel.setOnMouseClicked(e -> btnLoadClicked(primaryStage));
 
 		createTitle("Algorithm");
@@ -104,12 +101,12 @@ public class StsGui extends BaseGui {
 		cbInitPrec = createChoice("Initial precision", InitPrec.values());
 		spLogLevel = createSpinner("Log level", 0, 100, 2);
 
-		btnRunAlgo = createButton("Run algorithm");
+		final Button btnRunAlgo = createButton("Run algorithm");
 		btnRunAlgo.setOnMouseClicked(e -> btnRunAlgoClicked());
 
 		createTitle("Result");
 		cbStructureOnly = createCheckBox("Structure only");
-		btnVisualizeResult = createButton("Visualize result");
+		final Button btnVisualizeResult = createButton("Visualize result");
 		btnVisualizeResult.setOnMouseClicked(e -> btnVisualizeResultClicked());
 	}
 

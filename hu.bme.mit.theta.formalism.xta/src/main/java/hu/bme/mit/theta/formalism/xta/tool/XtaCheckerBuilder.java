@@ -101,6 +101,9 @@ public final class XtaCheckerBuilder {
 		public abstract SearchStrategy create();
 	}
 
+	private XtaCheckerBuilder() {
+	}
+
 	public static SafetyChecker<?, ?, UnitPrec> build(final Algorithm algorithm, final Search search,
 			final XtaSystem xta) {
 		final LazyXtaChecker.AlgorithmStrategy<?> algorithmStrategy = algorithm.create(xta);

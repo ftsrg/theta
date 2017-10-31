@@ -50,10 +50,6 @@ import javafx.stage.Stage;
 public class XtaGui extends BaseGui {
 	private ChoiceBox<Algorithm> cbAlgorithm;
 	private ChoiceBox<Search> cbSearch;
-	private Button btnRunAlgo;
-	private Button btnLoadModel;
-	private Button btnVisualizeModel;
-	private Button btnVisualizeResult;
 	private CheckBox cbStructureOnly;
 
 	private TextArea taModel;
@@ -90,21 +86,21 @@ public class XtaGui extends BaseGui {
 		tabVisualResult = createTab("Result Visualized", wvVisualResult);
 
 		createTitle("Input model");
-		btnLoadModel = createButton("Load XTA");
+		final Button btnLoadModel = createButton("Load XTA");
 		btnLoadModel.setOnMouseClicked(e -> btnLoadClicked(primaryStage));
-		btnVisualizeModel = createButton("Visualize XTA");
+		final Button btnVisualizeModel = createButton("Visualize XTA");
 		btnVisualizeModel.setOnMouseClicked(e -> btnVisualizeModelClicked());
 
 		createTitle("Algorithm");
 		cbAlgorithm = createChoice("Algorithm", Algorithm.values());
 		cbSearch = createChoice("Search", Search.values());
 
-		btnRunAlgo = createButton("Run algorithm");
+		final Button btnRunAlgo = createButton("Run algorithm");
 		btnRunAlgo.setOnMouseClicked(e -> btnRunAlgoClicked());
 
 		createTitle("Result");
 		cbStructureOnly = createCheckBox("Structure only");
-		btnVisualizeResult = createButton("Visualize result");
+		final Button btnVisualizeResult = createButton("Visualize result");
 		btnVisualizeResult.setOnMouseClicked(e -> btnVisualizeResultClicked());
 	}
 

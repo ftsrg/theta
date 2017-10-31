@@ -65,10 +65,6 @@ public class CfaGui extends BaseGui {
 	private ChoiceBox<PrecGranularity> cbPrecGranularity;
 	private ChoiceBox<Encoding> cbEncoding;
 	private Spinner<Integer> spLogLevel;
-	private Button btnRunAlgo;
-	private Button btnLoadModel;
-	private Button btnVisualizeModel;
-	private Button btnVisualizeResult;
 	private CheckBox cbStructureOnly;
 
 	private TextArea taModel;
@@ -105,9 +101,9 @@ public class CfaGui extends BaseGui {
 		tabVisualResult = createTab("Result Visualized", wvVisualResult);
 
 		createTitle("Input model");
-		btnLoadModel = createButton("Load CFA");
+		final Button btnLoadModel = createButton("Load CFA");
 		btnLoadModel.setOnMouseClicked(e -> btnLoadClicked(primaryStage));
-		btnVisualizeModel = createButton("Visualize CFA");
+		final Button btnVisualizeModel = createButton("Visualize CFA");
 		btnVisualizeModel.setOnMouseClicked(e -> btnVisualizeModelClicked());
 
 		createTitle("Algorithm");
@@ -119,12 +115,12 @@ public class CfaGui extends BaseGui {
 		cbEncoding = createChoice("Encoding", Encoding.values());
 		spLogLevel = createSpinner("Log level", 0, 100, 2);
 
-		btnRunAlgo = createButton("Run algorithm");
+		final Button btnRunAlgo = createButton("Run algorithm");
 		btnRunAlgo.setOnMouseClicked(e -> btnRunAlgoClicked());
 
 		createTitle("Result");
 		cbStructureOnly = createCheckBox("Structure only");
-		btnVisualizeResult = createButton("Visualize result");
+		final Button btnVisualizeResult = createButton("Visualize result");
 		btnVisualizeResult.setOnMouseClicked(e -> btnVisualizeResultClicked());
 	}
 

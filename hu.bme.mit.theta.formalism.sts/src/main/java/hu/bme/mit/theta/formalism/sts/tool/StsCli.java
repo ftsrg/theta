@@ -132,8 +132,8 @@ public class StsCli {
 	}
 
 	private void printHeader() {
-		final String[] header = new String[] { "Result", "TimeMs", "Iterations", "ArgSize", "ArgDepth",
-				"ArgMeanBranchFactor", "CexLen", "Vars", "Size" };
+		final String[] header = new String[] { "Result", "TimeMs", "AbsTimeMs", "RefTimeMs", "Iterations", "ArgSize",
+				"ArgDepth", "ArgMeanBranchFactor", "CexLen", "Vars", "Size" };
 		for (final String str : header) {
 			writer.cell(str);
 		}
@@ -164,7 +164,9 @@ public class StsCli {
 		final CegarStatistics stats = (CegarStatistics) status.getStats().get();
 		if (benchmarkMode) {
 			writer.cell(status.isSafe());
-			writer.cell(stats.getElapsedMillis());
+			writer.cell(stats.getTotalTimeMs());
+			writer.cell(stats.getAbstractorTimeMs());
+			writer.cell(stats.getRefinerTimeMs());
 			writer.cell(stats.getIterations());
 			writer.cell(status.getArg().size());
 			writer.cell(status.getArg().getDepth());

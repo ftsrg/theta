@@ -33,17 +33,6 @@ import hu.bme.mit.theta.formalism.cfa.CFA;
 @RunWith(Parameterized.class)
 public final class CfaDslManagerTest {
 
-	@Parameters()
-	public static Collection<Object[]> data() {
-		return Arrays.asList(new Object[][] {
-
-				{ "/locking.cfa", 3, 9, 9, 9 },
-
-				{ "/counter5_true.cfa", 1, 6, 6, 6 }
-
-		});
-	}
-
 	@Parameter(0)
 	public String filepath;
 
@@ -58,6 +47,17 @@ public final class CfaDslManagerTest {
 
 	@Parameter(4)
 	public int stmtCount;
+
+	@Parameters()
+	public static Collection<Object[]> data() {
+		return Arrays.asList(new Object[][] {
+
+				{ "/locking.cfa", 3, 9, 9, 9 },
+
+				{ "/counter5_true.cfa", 1, 6, 6, 6 }
+
+		});
+	}
 
 	@Test
 	public void test() throws FileNotFoundException, IOException, InterruptedException {
