@@ -18,6 +18,7 @@ package hu.bme.mit.theta.analysis;
 /**
  * Common interface for abstract domains with a partial order.
  */
+@FunctionalInterface
 public interface Domain<S extends State> {
 
 	/**
