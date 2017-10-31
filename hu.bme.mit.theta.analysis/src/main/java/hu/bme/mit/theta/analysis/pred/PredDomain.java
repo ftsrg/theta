@@ -36,14 +36,6 @@ public final class PredDomain implements Domain<PredState> {
 	}
 
 	@Override
-	public boolean isBottom(final PredState state) {
-		try (WithPushPop wpp = new WithPushPop(solver)) {
-			solver.add(PathUtils.unfold(state.toExpr(), 0));
-			return solver.check().isUnsat();
-		}
-	}
-
-	@Override
 	public boolean isLeq(final PredState state1, final PredState state2) {
 		try (WithPushPop wpp = new WithPushPop(solver)) {
 			solver.add(PathUtils.unfold(state1.toExpr(), 0));

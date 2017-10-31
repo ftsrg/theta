@@ -66,6 +66,11 @@ public final class XtaState<S extends State> implements State {
 	}
 
 	@Override
+	public boolean isBottom() {
+		return state.isBottom();
+	}
+
+	@Override
 	public int hashCode() {
 		int result = hashCode;
 		if (result == 0) {
@@ -97,4 +102,5 @@ public final class XtaState<S extends State> implements State {
 		sj.add(state.toString());
 		return sj.toString();
 	}
+
 }

@@ -1,12 +1,12 @@
 /*
  *  Copyright 2017 Budapest University of Technology and Economics
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,15 +15,10 @@
  */
 package hu.bme.mit.theta.analysis.prod;
 
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
-
 import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.theta.analysis.State;
-import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.common.product.Product3;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 public final class Prod3State<S1 extends State, S2 extends State, S3 extends State> extends ProdState
 		implements Product3<S1, S2, S3> {
@@ -53,8 +48,6 @@ public final class Prod3State<S1 extends State, S2 extends State, S3 extends Sta
 		return result;
 	}
 
-	////
-
 	public <S extends State> Prod3State<S, S2, S3> with1(final S state) {
 		return ProdState.of(state, _2(), _3());
 	}
@@ -65,20 +58,6 @@ public final class Prod3State<S1 extends State, S2 extends State, S3 extends Sta
 
 	public <S extends State> Prod3State<S1, S2, S> with3(final S state) {
 		return ProdState.of(_1(), _2(), state);
-	}
-
-	////
-
-	@Override
-	public Expr<BoolType> toExpr() {
-		if (_1() instanceof ExprState && _2() instanceof ExprState && _3() instanceof ExprState) {
-			final ExprState exprState1 = (ExprState) _1();
-			final ExprState exprState2 = (ExprState) _2();
-			final ExprState exprState3 = (ExprState) _3();
-			return And(exprState1.toExpr(), exprState2.toExpr(), exprState3.toExpr());
-		} else {
-			throw new UnsupportedOperationException();
-		}
 	}
 
 }

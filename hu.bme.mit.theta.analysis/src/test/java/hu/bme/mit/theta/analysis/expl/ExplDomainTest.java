@@ -41,12 +41,12 @@ public class ExplDomainTest {
 
 	@Test
 	public void testBottom() {
-		Assert.assertFalse(domain.isBottom(st));
-		Assert.assertFalse(domain.isBottom(s1));
-		Assert.assertFalse(domain.isBottom(s2));
-		Assert.assertFalse(domain.isBottom(s3));
-		Assert.assertFalse(domain.isBottom(s4));
-		Assert.assertTrue(domain.isBottom(sb));
+		Assert.assertFalse(st.isBottom());
+		Assert.assertFalse(s1.isBottom());
+		Assert.assertFalse(s2.isBottom());
+		Assert.assertFalse(s3.isBottom());
+		Assert.assertFalse(s4.isBottom());
+		Assert.assertTrue(sb.isBottom());
 	}
 
 	@Test

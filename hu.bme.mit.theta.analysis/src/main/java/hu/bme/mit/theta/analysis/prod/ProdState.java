@@ -17,6 +17,8 @@ package hu.bme.mit.theta.analysis.prod;
 
 import static com.google.common.base.Preconditions.checkElementIndex;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.collect.ImmutableList.toImmutableList;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static java.util.stream.Collectors.joining;
 
 import java.util.Collection;
@@ -30,6 +32,8 @@ import com.google.common.collect.ImmutableSet;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.common.product.Product;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 public abstract class ProdState implements ExprState, Product, Iterable<State> {
 
@@ -112,7 +116,26 @@ public abstract class ProdState implements ExprState, Product, Iterable<State> {
 	////
 
 	@Override
-	public int hashCode() {
+	public final Expr<BoolType> toExpr() {
+		return And(states.stream().map(state -> {
+			if (state instanceof ExprState) {
+				final ExprState exprState = (ExprState) state;
+				return exprState.toExpr();
+			} else {
+				throw new UnsupportedOperationException();
+			}
+		}).collect(toImmutableList()));
+	}
+
+	@Override
+	public final boolean isBottom() {
+		return states.stream().anyMatch(State::isBottom);
+	}
+
+	////
+
+	@Override
+	public final int hashCode() {
 		int result = hashCode;
 		if (result == 0) {
 			result = HASH_SEED;
@@ -123,7 +146,7 @@ public abstract class ProdState implements ExprState, Product, Iterable<State> {
 	}
 
 	@Override
-	public boolean equals(final Object obj) {
+	public final boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		} else if (obj instanceof ProdState) {
@@ -135,7 +158,7 @@ public abstract class ProdState implements ExprState, Product, Iterable<State> {
 	}
 
 	@Override
-	public String toString() {
+	public final String toString() {
 		return states.stream().map(Object::toString).collect(joining("\n"));
 	}
 

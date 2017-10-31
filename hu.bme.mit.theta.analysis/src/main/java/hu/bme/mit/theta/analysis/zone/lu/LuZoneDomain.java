@@ -28,11 +28,6 @@ public final class LuZoneDomain implements Domain<LuZoneState> {
 	}
 
 	@Override
-	public boolean isBottom(final LuZoneState state) {
-		return state.isBottom();
-	}
-
-	@Override
 	public boolean isLeq(final LuZoneState state1, final LuZoneState state2) {
 		return state1.isLeq(state2);
 	}

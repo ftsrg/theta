@@ -36,11 +36,6 @@ final class Prod2Domain<S1 extends State, S2 extends State> implements Domain<Pr
 	}
 
 	@Override
-	public boolean isBottom(final Prod2State<S1, S2> state) {
-		return domain1.isBottom(state._1()) || domain2.isBottom(state._2());
-	}
-
-	@Override
 	public boolean isLeq(final Prod2State<S1, S2> state1, final Prod2State<S1, S2> state2) {
 		return domain1.isLeq(state1._1(), state2._1()) && domain2.isLeq(state1._2(), state2._2());
 	}

@@ -31,11 +31,6 @@ public final class ItpZoneDomain implements Domain<ItpZoneState> {
 	////
 
 	@Override
-	public boolean isBottom(final ItpZoneState state) {
-		return state.getInterpolant().isBottom();
-	}
-
-	@Override
 	public boolean isLeq(final ItpZoneState state1, final ItpZoneState state2) {
 		return state1.isLeq(state2);
 	}

@@ -33,11 +33,6 @@ public final class CfaDomain<S extends ExprState> implements Domain<CfaState<S>>
 	}
 
 	@Override
-	public boolean isBottom(final CfaState<S> state) {
-		return domain.isBottom(state.getState());
-	}
-
-	@Override
 	public boolean isLeq(final CfaState<S> state1, final CfaState<S> state2) {
 		return state1.getLoc().equals(state2.getLoc()) && domain.isLeq(state1.getState(), state2.getState());
 	}

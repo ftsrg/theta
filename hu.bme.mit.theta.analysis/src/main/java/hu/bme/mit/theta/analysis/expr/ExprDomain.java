@@ -36,15 +36,6 @@ public final class ExprDomain implements Domain<ExprState> {
 	}
 
 	@Override
-	public boolean isBottom(final ExprState state) {
-		checkNotNull(state);
-		try (WithPushPop wpp = new WithPushPop(solver)) {
-			solver.add(unfold(state.toExpr(), 0));
-			return solver.check().isUnsat();
-		}
-	}
-
-	@Override
 	public boolean isLeq(final ExprState state1, final ExprState state2) {
 		checkNotNull(state1);
 		checkNotNull(state2);

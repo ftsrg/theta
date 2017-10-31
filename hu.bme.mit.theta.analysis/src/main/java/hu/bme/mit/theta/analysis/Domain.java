@@ -16,18 +16,9 @@
 package hu.bme.mit.theta.analysis;
 
 /**
- * Common interface for abstract domain with top and bottom elements and a
- * partial order.
+ * Common interface for abstract domains with a partial order.
  */
 public interface Domain<S extends State> {
-
-	/**
-	 * Checks if the given state is a bottom element in the domain.
-	 *
-	 * @param state
-	 * @return
-	 */
-	boolean isBottom(S state);
 
 	/**
 	 * Checks if state1 is less or equal to state2.

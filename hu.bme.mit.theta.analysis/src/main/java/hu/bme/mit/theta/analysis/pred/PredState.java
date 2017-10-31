@@ -16,7 +16,9 @@
 package hu.bme.mit.theta.analysis.pred;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.common.Utils.singleElementOf;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 
 import java.util.Set;
@@ -82,6 +84,11 @@ public final class PredState implements ExprState {
 	}
 
 	@Override
+	public boolean isBottom() {
+		return preds.size() == 1 && singleElementOf(preds).equals(False());
+	}
+
+	@Override
 	public Expr<BoolType> toExpr() {
 		Expr<BoolType> result = expr;
 		if (result == null) {
@@ -124,4 +131,5 @@ public final class PredState implements ExprState {
 	public String toString() {
 		return Utils.toStringBuilder(getClass().getSimpleName()).addAll(preds).toString();
 	}
+
 }

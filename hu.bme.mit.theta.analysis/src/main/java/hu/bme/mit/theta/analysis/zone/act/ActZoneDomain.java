@@ -31,11 +31,6 @@ public final class ActZoneDomain implements Domain<ActZoneState> {
 	}
 
 	@Override
-	public boolean isBottom(final ActZoneState state) {
-		return state.isBottom();
-	}
-
-	@Override
 	public boolean isLeq(final ActZoneState state1, final ActZoneState state2) {
 		return state1.isLeq(state2);
 	}

@@ -31,11 +31,6 @@ public final class ExplDomain implements Domain<ExplState> {
 	}
 
 	@Override
-	public boolean isBottom(final ExplState state) {
-		return state.isBottom();
-	}
-
-	@Override
 	public boolean isLeq(final ExplState state1, final ExplState state2) {
 		return state1.isLeq(state2);
 	}

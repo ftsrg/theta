@@ -31,12 +31,6 @@ final class UnitDomain implements Domain<UnitState> {
 	}
 
 	@Override
-	public boolean isBottom(final UnitState state) {
-		checkNotNull(state);
-		return false;
-	}
-
-	@Override
 	public boolean isLeq(final UnitState state1, final UnitState state2) {
 		checkNotNull(state1);
 		checkNotNull(state2);

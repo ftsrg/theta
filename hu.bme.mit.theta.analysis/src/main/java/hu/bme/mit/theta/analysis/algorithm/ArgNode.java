@@ -167,7 +167,7 @@ public final class ArgNode<S extends State, A extends Action> {
 	 * Checks if the node is not a bottom state.
 	 */
 	public boolean isFeasible() {
-		return !arg.domain.isBottom(state);
+		return !state.isBottom();
 	}
 
 	/**

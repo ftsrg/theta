@@ -29,11 +29,6 @@ public final class ZoneDomain implements Domain<ZoneState> {
 	}
 
 	@Override
-	public boolean isBottom(final ZoneState state) {
-		return state.isBottom();
-	}
-
-	@Override
 	public boolean isLeq(final ZoneState state1, final ZoneState state2) {
 		return state1.isLeq(state2);
 	}

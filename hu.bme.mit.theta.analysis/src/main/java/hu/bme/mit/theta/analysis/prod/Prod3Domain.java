@@ -39,11 +39,6 @@ final class Prod3Domain<S1 extends State, S2 extends State, S3 extends State>
 	}
 
 	@Override
-	public boolean isBottom(final Prod3State<S1, S2, S3> state) {
-		return domain1.isBottom(state._1()) || domain2.isBottom(state._2()) || domain3.isBottom(state._3());
-	}
-
-	@Override
 	public boolean isLeq(final Prod3State<S1, S2, S3> state1, final Prod3State<S1, S2, S3> state2) {
 		return domain1.isLeq(state1._1(), state2._1()) && domain2.isLeq(state1._2(), state2._2())
 				&& domain3.isLeq(state1._3(), state2._3());
