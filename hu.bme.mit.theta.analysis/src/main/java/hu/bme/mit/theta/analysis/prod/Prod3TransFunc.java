@@ -48,6 +48,7 @@ final class Prod3TransFunc<S1 extends State, S2 extends State, S3 extends State,
 	public Collection<? extends Prod3State<S1, S2, S3>> getSuccStates(final Prod3State<S1, S2, S3> state,
 			final A action, final Prod3Prec<P1, P2, P3> prec) {
 		checkNotNull(state);
+		checkNotNull(action);
 		checkNotNull(prec);
 
 		final Collection<? extends S1> succStates1 = transFunc1.getSuccStates(state._1(), action, prec._1());
