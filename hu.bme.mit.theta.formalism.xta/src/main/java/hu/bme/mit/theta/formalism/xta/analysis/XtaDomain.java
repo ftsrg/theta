@@ -33,12 +33,6 @@ final class XtaDomain<S extends State> implements Domain<XtaState<S>> {
 	}
 
 	@Override
-	public boolean isTop(final XtaState<S> state) {
-		checkNotNull(state);
-		return false;
-	}
-
-	@Override
 	public boolean isBottom(final XtaState<S> state) {
 		checkNotNull(state);
 		return domain.isBottom(state.getState());
