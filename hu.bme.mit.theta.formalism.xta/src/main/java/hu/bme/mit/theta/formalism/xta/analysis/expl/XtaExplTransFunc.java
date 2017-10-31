@@ -17,44 +17,38 @@ package hu.bme.mit.theta.formalism.xta.analysis.expl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import hu.bme.mit.theta.analysis.Analysis;
-import hu.bme.mit.theta.analysis.Domain;
-import hu.bme.mit.theta.analysis.InitFunc;
+import java.util.Collection;
+
 import hu.bme.mit.theta.analysis.TransFunc;
-import hu.bme.mit.theta.analysis.expl.ExplDomain;
+import hu.bme.mit.theta.analysis.expl.ExplPrec;
 import hu.bme.mit.theta.analysis.expl.ExplState;
+import hu.bme.mit.theta.analysis.expl.ExplStmtTransFunc;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.formalism.xta.XtaSystem;
 import hu.bme.mit.theta.formalism.xta.analysis.XtaAction;
+import hu.bme.mit.theta.solver.impl.NullSolver;
 
-public final class XtaExplAnalysis implements Analysis<ExplState, XtaAction, UnitPrec> {
+final class XtaExplTransFunc implements TransFunc<ExplState, XtaAction, UnitPrec> {
 
-	private final XtaExplInitFunc initFunc;
-	private final XtaExplTransFunc transFunc;
+	private final ExplPrec explPrec;
+	private final ExplStmtTransFunc transFunc;
 
-	private XtaExplAnalysis(final XtaSystem system) {
+	private XtaExplTransFunc(final XtaSystem system) {
 		checkNotNull(system);
-		initFunc = XtaExplInitFunc.create(system);
-		transFunc = XtaExplTransFunc.create(system);
+		explPrec = ExplPrec.of(system.getDataVars());
+		transFunc = ExplStmtTransFunc.create(NullSolver.getInstance(), 0);
 	}
 
-	public static XtaExplAnalysis create(final XtaSystem system) {
-		return new XtaExplAnalysis(system);
-	}
-
-	@Override
-	public Domain<ExplState> getDomain() {
-		return ExplDomain.getInstance();
+	public static XtaExplTransFunc create(final XtaSystem system) {
+		return new XtaExplTransFunc(system);
 	}
 
 	@Override
-	public InitFunc<ExplState, UnitPrec> getInitFunc() {
-		return initFunc;
-	}
-
-	@Override
-	public TransFunc<ExplState, XtaAction, UnitPrec> getTransFunc() {
-		return transFunc;
+	public Collection<ExplState> getSuccStates(final ExplState state, final XtaAction action, final UnitPrec prec) {
+		checkNotNull(state);
+		checkNotNull(action);
+		checkNotNull(prec);
+		return transFunc.getSuccStates(state, action, explPrec);
 	}
 
 }

@@ -21,7 +21,9 @@ import java.util.Collection;
 
 import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.algorithm.ArgNode;
+import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.impl.PrecMappingAnalysis;
+import hu.bme.mit.theta.analysis.prod.Prod2State;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.analysis.zone.ZonePrec;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
@@ -80,16 +82,23 @@ public abstract class ItpStrategy implements LazyXtaChecker.AlgorithmStrategy<It
 		return XtaZoneUtils.post(state, action, prec);
 	}
 
-	protected final void strengthen(final ArgNode<XtaState<ItpZoneState>, XtaAction> node,
+	protected final void strengthen(final ArgNode<XtaState<Prod2State<ExplState, ItpZoneState>>, XtaAction> node,
 			final ZoneState interpolant) {
-		final ZoneState oldAbstractZone = node.getState().getState().getInterpolant();
-		final ZoneState newAbstractZone = ZoneState.intersection(oldAbstractZone, interpolant);
-		final ItpZoneState newItpState = node.getState().getState().withInterpolant(newAbstractZone);
-		node.setState(node.getState().withState(newItpState));
+		final XtaState<Prod2State<ExplState, ItpZoneState>> state = node.getState();
+		final Prod2State<ExplState, ItpZoneState> prodState = state.getState();
+		final ItpZoneState itpZoneState = prodState._2();
+		final ZoneState abstractZone = itpZoneState.getInterpolant();
+
+		final ZoneState newAbstractZone = ZoneState.intersection(abstractZone, interpolant);
+
+		final ItpZoneState newItpZoneState = itpZoneState.withInterpolant(newAbstractZone);
+		final Prod2State<ExplState, ItpZoneState> newProdState = prodState.with2(newItpZoneState);
+		final XtaState<Prod2State<ExplState, ItpZoneState>> newState = state.withState(newProdState);
+		node.setState(newState);
 	}
 
-	protected final void maintainCoverage(final ArgNode<XtaState<ItpZoneState>, XtaAction> node,
-			final Collection<ArgNode<XtaState<ItpZoneState>, XtaAction>> uncoveredNodes) {
+	protected final void maintainCoverage(final ArgNode<XtaState<Prod2State<ExplState, ItpZoneState>>, XtaAction> node,
+			final Collection<ArgNode<XtaState<Prod2State<ExplState, ItpZoneState>>, XtaAction>> uncoveredNodes) {
 		node.getCoveredNodes().forEach(uncoveredNodes::add);
 		node.clearCoveredNodes();
 	}
@@ -102,26 +111,21 @@ public abstract class ItpStrategy implements LazyXtaChecker.AlgorithmStrategy<It
 	}
 
 	@Override
-	public final boolean covers(final ArgNode<XtaState<ItpZoneState>, XtaAction> nodeToCover,
-			final ArgNode<XtaState<ItpZoneState>, XtaAction> coveringNode) {
-		return nodeToCover.getState().getState().isLeq(coveringNode.getState().getState());
+	public final boolean covers(final ArgNode<XtaState<Prod2State<ExplState, ItpZoneState>>, XtaAction> nodeToCover,
+			final ArgNode<XtaState<Prod2State<ExplState, ItpZoneState>>, XtaAction> coveringNode) {
+		return nodeToCover.getState().getState()._2().isLeq(coveringNode.getState().getState()._2());
 	}
 
 	@Override
-	public final boolean mightCover(final ArgNode<XtaState<ItpZoneState>, XtaAction> nodeToCover,
-			final ArgNode<XtaState<ItpZoneState>, XtaAction> coveringNode) {
-		return nodeToCover.getState().getState().getZone().isLeq(coveringNode.getState().getState().getInterpolant());
+	public final boolean mightCover(final ArgNode<XtaState<Prod2State<ExplState, ItpZoneState>>, XtaAction> nodeToCover,
+			final ArgNode<XtaState<Prod2State<ExplState, ItpZoneState>>, XtaAction> coveringNode) {
+		return nodeToCover.getState().getState()._2().getZone()
+				.isLeq(coveringNode.getState().getState()._2().getInterpolant());
 	}
 
 	@Override
-	public final boolean shouldRefine(final ArgNode<XtaState<ItpZoneState>, XtaAction> node) {
-		return node.getState().getState().getZone().isBottom();
-	}
-
-	@Override
-	public final void resetState(final ArgNode<XtaState<ItpZoneState>, XtaAction> node) {
-		final ItpZoneState newItpState = node.getState().getState().withInterpolant(ZoneState.top());
-		node.setState(node.getState().withState(newItpState));
+	public final boolean shouldRefine(final ArgNode<XtaState<Prod2State<ExplState, ItpZoneState>>, XtaAction> node) {
+		return node.getState().getState()._2().getZone().isBottom();
 	}
 
 }

@@ -26,6 +26,8 @@ import com.google.common.base.Stopwatch;
 import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.ArgNode;
 import hu.bme.mit.theta.analysis.algorithm.Statistics;
+import hu.bme.mit.theta.analysis.expl.ExplState;
+import hu.bme.mit.theta.analysis.prod.Prod2State;
 import hu.bme.mit.theta.common.product.Tuple;
 import hu.bme.mit.theta.formalism.xta.analysis.XtaState;
 
@@ -51,7 +53,7 @@ public final class LazyXtaStatistics extends Statistics {
 		argNodesFeasible = builder.arg.getNodes().filter(ArgNode::isFeasible).count();
 		argNodesExpanded = builder.arg.getNodes().filter(ArgNode::isExpanded).count();
 		discreteStatesExpanded = builder.arg.getNodes().filter(ArgNode::isExpanded)
-				.map(n -> Tuple.of(n.getState().getLocs(), n.getState().getVal())).collect(toSet()).size();
+				.map(n -> Tuple.of(n.getState().getLocs(), n.getState().getState()._1())).collect(toSet()).size();
 
 		addStat("AlgorithmTimeInMs", this::getAlgorithmTimeInMs);
 		addStat("RefinementTimeInMs", this::getRefinementTimeInMs);
@@ -64,7 +66,7 @@ public final class LazyXtaStatistics extends Statistics {
 		addStat("DiscreteStatesExpanded", this::getDiscreteStatesExpanded);
 	}
 
-	public static Builder builder(final ARG<? extends XtaState<?>, ?> arg) {
+	public static Builder builder(final ARG<? extends XtaState<? extends Prod2State<ExplState, ?>>, ?> arg) {
 		return new Builder(arg);
 	}
 
@@ -112,14 +114,14 @@ public final class LazyXtaStatistics extends Statistics {
 
 		private State state;
 
-		private final ARG<? extends XtaState<?>, ?> arg;
+		private final ARG<? extends XtaState<? extends Prod2State<ExplState, ?>>, ?> arg;
 		private final Stopwatch algorithmTimer;
 		private final Stopwatch refinementTimer;
 		private final Stopwatch interpolationTimer;
 
 		private long refinementSteps;
 
-		private Builder(final ARG<? extends XtaState<?>, ?> arg) {
+		private Builder(final ARG<? extends XtaState<? extends Prod2State<ExplState, ?>>, ?> arg) {
 			this.arg = checkNotNull(arg);
 			state = State.CREATED;
 			algorithmTimer = Stopwatch.createUnstarted();

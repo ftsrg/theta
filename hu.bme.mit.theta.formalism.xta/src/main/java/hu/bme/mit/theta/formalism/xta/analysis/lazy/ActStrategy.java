@@ -27,7 +27,9 @@ import com.google.common.collect.Sets;
 import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.algorithm.ArgEdge;
 import hu.bme.mit.theta.analysis.algorithm.ArgNode;
+import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.impl.PrecMappingAnalysis;
+import hu.bme.mit.theta.analysis.prod.Prod2State;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.analysis.zone.ZonePrec;
 import hu.bme.mit.theta.analysis.zone.act.ActZoneAnalysis;
@@ -61,60 +63,55 @@ public final class ActStrategy implements LazyXtaChecker.AlgorithmStrategy<ActZo
 	}
 
 	@Override
-	public boolean covers(final ArgNode<XtaState<ActZoneState>, XtaAction> nodeToCover,
-			final ArgNode<XtaState<ActZoneState>, XtaAction> coveringNode) {
-		return nodeToCover.getState().getState().isLeq(coveringNode.getState().getState());
+	public boolean covers(final ArgNode<XtaState<Prod2State<ExplState, ActZoneState>>, XtaAction> nodeToCover,
+			final ArgNode<XtaState<Prod2State<ExplState, ActZoneState>>, XtaAction> coveringNode) {
+		return nodeToCover.getState().getState()._2().isLeq(coveringNode.getState().getState()._2());
 	}
 
 	@Override
-	public boolean mightCover(final ArgNode<XtaState<ActZoneState>, XtaAction> nodeToCover,
-			final ArgNode<XtaState<ActZoneState>, XtaAction> coveringNode) {
-		return nodeToCover.getState().getState().getZone().isLeq(coveringNode.getState().getState().getZone(),
-				coveringNode.getState().getState().getActiveVars());
+	public boolean mightCover(final ArgNode<XtaState<Prod2State<ExplState, ActZoneState>>, XtaAction> nodeToCover,
+			final ArgNode<XtaState<Prod2State<ExplState, ActZoneState>>, XtaAction> coveringNode) {
+		return nodeToCover.getState().getState()._2().getZone().isLeq(coveringNode.getState().getState()._2().getZone(),
+				coveringNode.getState().getState()._2().getActiveVars());
 	}
 
 	@Override
-	public boolean shouldRefine(final ArgNode<XtaState<ActZoneState>, XtaAction> node) {
-		return node.getState().getState().getZone().isBottom();
+	public boolean shouldRefine(final ArgNode<XtaState<Prod2State<ExplState, ActZoneState>>, XtaAction> node) {
+		return node.getState().getState()._2().getZone().isBottom();
 	}
 
 	@Override
-	public Collection<ArgNode<XtaState<ActZoneState>, XtaAction>> forceCover(
-			final ArgNode<XtaState<ActZoneState>, XtaAction> nodeToCover,
-			final ArgNode<XtaState<ActZoneState>, XtaAction> coveringNode, final Builder statistics) {
+	public Collection<ArgNode<XtaState<Prod2State<ExplState, ActZoneState>>, XtaAction>> forceCover(
+			final ArgNode<XtaState<Prod2State<ExplState, ActZoneState>>, XtaAction> nodeToCover,
+			final ArgNode<XtaState<Prod2State<ExplState, ActZoneState>>, XtaAction> coveringNode,
+			final Builder statistics) {
 
-		final Collection<ArgNode<XtaState<ActZoneState>, XtaAction>> uncoveredNodes = new ArrayList<>();
-		final Set<VarDecl<RatType>> activeVars = coveringNode.getState().getState().getActiveVars();
+		final Collection<ArgNode<XtaState<Prod2State<ExplState, ActZoneState>>, XtaAction>> uncoveredNodes = new ArrayList<>();
+		final Set<VarDecl<RatType>> activeVars = coveringNode.getState().getState()._2().getActiveVars();
 		propagateVars(nodeToCover, activeVars, uncoveredNodes, statistics, false);
 
 		return uncoveredNodes;
 	}
 
 	@Override
-	public Collection<ArgNode<XtaState<ActZoneState>, XtaAction>> refine(
-			final ArgNode<XtaState<ActZoneState>, XtaAction> node, final Builder statistics) {
+	public Collection<ArgNode<XtaState<Prod2State<ExplState, ActZoneState>>, XtaAction>> refine(
+			final ArgNode<XtaState<Prod2State<ExplState, ActZoneState>>, XtaAction> node, final Builder statistics) {
 
-		final Collection<ArgNode<XtaState<ActZoneState>, XtaAction>> uncoveredNodes = new ArrayList<>();
+		final Collection<ArgNode<XtaState<Prod2State<ExplState, ActZoneState>>, XtaAction>> uncoveredNodes = new ArrayList<>();
 		final Set<VarDecl<RatType>> activeVars = ImmutableSet.of();
 		propagateVars(node, activeVars, uncoveredNodes, statistics, true);
 
 		return uncoveredNodes;
 	}
 
-	@Override
-	public void resetState(final ArgNode<XtaState<ActZoneState>, XtaAction> node) {
-		final ActZoneState newLuState = node.getState().getState().withActiveVars(ImmutableSet.of());
-		node.setState(node.getState().withState(newLuState));
-	}
-
 	////
 
-	private void propagateVars(final ArgNode<XtaState<ActZoneState>, XtaAction> node,
+	private void propagateVars(final ArgNode<XtaState<Prod2State<ExplState, ActZoneState>>, XtaAction> node,
 			final Set<VarDecl<RatType>> activeVars,
-			final Collection<ArgNode<XtaState<ActZoneState>, XtaAction>> uncoveredNodes, final Builder statistics,
-			final boolean forcePropagate) {
+			final Collection<ArgNode<XtaState<Prod2State<ExplState, ActZoneState>>, XtaAction>> uncoveredNodes,
+			final Builder statistics, final boolean forcePropagate) {
 
-		final Set<VarDecl<RatType>> oldActiveVars = node.getState().getState().getActiveVars();
+		final Set<VarDecl<RatType>> oldActiveVars = node.getState().getState()._2().getActiveVars();
 
 		if (forcePropagate || !oldActiveVars.containsAll(activeVars)) {
 			statistics.refine();
@@ -123,25 +120,32 @@ public final class ActStrategy implements LazyXtaChecker.AlgorithmStrategy<ActZo
 			maintainCoverage(node, uncoveredNodes);
 
 			if (node.getInEdge().isPresent()) {
-				final ArgEdge<XtaState<ActZoneState>, XtaAction> inEdge = node.getInEdge().get();
+				final ArgEdge<XtaState<Prod2State<ExplState, ActZoneState>>, XtaAction> inEdge = node.getInEdge().get();
 				final XtaAction action = inEdge.getAction();
-				final ArgNode<XtaState<ActZoneState>, XtaAction> parent = inEdge.getSource();
+				final ArgNode<XtaState<Prod2State<ExplState, ActZoneState>>, XtaAction> parent = inEdge.getSource();
 				final Set<VarDecl<RatType>> preActiveVars = XtaActZoneUtils.pre(activeVars, action);
 				propagateVars(parent, preActiveVars, uncoveredNodes, statistics, false);
 			}
 		}
 	}
 
-	private void strengthen(final ArgNode<XtaState<ActZoneState>, XtaAction> node,
+	private void strengthen(final ArgNode<XtaState<Prod2State<ExplState, ActZoneState>>, XtaAction> node,
 			final Set<VarDecl<RatType>> activeVars) {
-		final Set<VarDecl<RatType>> oldActiveVars = node.getState().getState().getActiveVars();
+		final XtaState<Prod2State<ExplState, ActZoneState>> state = node.getState();
+		final Prod2State<ExplState, ActZoneState> prodState = state.getState();
+		final ActZoneState actZoneState = prodState._2();
+		final Set<VarDecl<RatType>> oldActiveVars = actZoneState.getActiveVars();
+
 		final Set<VarDecl<RatType>> newActiveVars = Sets.union(oldActiveVars, activeVars);
-		final ActZoneState newActState = node.getState().getState().withActiveVars(newActiveVars);
-		node.setState(node.getState().withState(newActState));
+
+		final ActZoneState newActZoneState = actZoneState.withActiveVars(newActiveVars);
+		final Prod2State<ExplState, ActZoneState> newProdState = prodState.with2(newActZoneState);
+		final XtaState<Prod2State<ExplState, ActZoneState>> newState = state.withState(newProdState);
+		node.setState(newState);
 	}
 
-	private void maintainCoverage(final ArgNode<XtaState<ActZoneState>, XtaAction> node,
-			final Collection<ArgNode<XtaState<ActZoneState>, XtaAction>> uncoveredNodes) {
+	private void maintainCoverage(final ArgNode<XtaState<Prod2State<ExplState, ActZoneState>>, XtaAction> node,
+			final Collection<ArgNode<XtaState<Prod2State<ExplState, ActZoneState>>, XtaAction>> uncoveredNodes) {
 		node.getCoveredNodes().forEach(uncoveredNodes::add);
 		node.clearCoveredNodes();
 	}

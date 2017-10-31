@@ -51,12 +51,11 @@ public final class ExplStmtTransFunc implements TransFunc<ExplState, StmtAction,
 	}
 
 	@Override
-	public Collection<? extends ExplState> getSuccStates(final ExplState state, final StmtAction action,
-			final ExplPrec prec) {
+	public Collection<ExplState> getSuccStates(final ExplState state, final StmtAction action, final ExplPrec prec) {
 		return getSuccStates(state, action.getStmts(), prec);
 	}
 
-	Collection<? extends ExplState> getSuccStates(final ExplState state, final List<Stmt> stmts, final ExplPrec prec) {
+	Collection<ExplState> getSuccStates(final ExplState state, final List<Stmt> stmts, final ExplPrec prec) {
 		boolean triedSolver = false;
 		ExplState running = state;
 

@@ -37,7 +37,6 @@ import hu.bme.mit.theta.analysis.unit.UnitAnalysis;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.analysis.unit.UnitState;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
-import hu.bme.mit.theta.common.product.Tuple;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 import hu.bme.mit.theta.formalism.xta.XtaSystem;
 import hu.bme.mit.theta.formalism.xta.dsl.XtaDslManager;
@@ -77,7 +76,7 @@ public final class XtaAnalysisTest {
 				s -> false);
 
 		final Abstractor<XtaState<UnitState>, XtaAction, UnitPrec> abstractor = BasicAbstractor.builder(argBuilder)
-				.projection(s -> Tuple.of(s.getLocs(), s.getVal())).build();
+				.projection(s -> s.getLocs()).build();
 
 		final ARG<XtaState<UnitState>, XtaAction> arg = abstractor.createArg();
 		abstractor.check(arg, UnitPrec.getInstance());

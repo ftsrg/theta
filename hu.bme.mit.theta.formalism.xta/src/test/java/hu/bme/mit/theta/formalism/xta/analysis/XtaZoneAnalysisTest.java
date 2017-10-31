@@ -33,10 +33,17 @@ import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.ArgBuilder;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
 import hu.bme.mit.theta.analysis.algorithm.cegar.BasicAbstractor;
+import hu.bme.mit.theta.analysis.expl.ExplState;
+import hu.bme.mit.theta.analysis.impl.PrecMappingAnalysis;
+import hu.bme.mit.theta.analysis.prod.Prod2Analysis;
+import hu.bme.mit.theta.analysis.prod.Prod2Prec;
+import hu.bme.mit.theta.analysis.prod.Prod2State;
+import hu.bme.mit.theta.analysis.prod.ProdPrec;
+import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.analysis.zone.ZonePrec;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
-import hu.bme.mit.theta.common.product.Tuple;
 import hu.bme.mit.theta.formalism.xta.XtaSystem;
+import hu.bme.mit.theta.formalism.xta.analysis.expl.XtaExplAnalysis;
 import hu.bme.mit.theta.formalism.xta.analysis.zone.XtaZoneAnalysis;
 import hu.bme.mit.theta.formalism.xta.dsl.XtaDslManager;
 
@@ -46,8 +53,6 @@ public final class XtaZoneAnalysisTest {
 	@Parameters(name = "{0}")
 	public static Collection<Object[]> data() {
 		return Arrays.asList(new Object[][] {
-
-				// { "/critical-2-25-50.xta" },
 
 				{ "/csma-2.xta" },
 
@@ -69,17 +74,24 @@ public final class XtaZoneAnalysisTest {
 		final XtaSystem system = XtaDslManager.createSystem(inputStream);
 
 		final LTS<XtaState<?>, XtaAction> lts = XtaLts.create(system);
-		final Analysis<XtaState<ZoneState>, XtaAction, ZonePrec> analysis = XtaAnalysis.create(system,
-				XtaZoneAnalysis.getInstance());
+		final Analysis<ExplState, XtaAction, UnitPrec> explAnalysis = XtaExplAnalysis.create(system);
+		final Analysis<ZoneState, XtaAction, ZonePrec> zoneAnalysis = XtaZoneAnalysis.getInstance();
+		final Analysis<Prod2State<ExplState, ZoneState>, XtaAction, Prod2Prec<UnitPrec, ZonePrec>> prodAnalysis = Prod2Analysis
+				.create(explAnalysis, zoneAnalysis);
+		final Analysis<Prod2State<ExplState, ZoneState>, XtaAction, ZonePrec> mappedAnalysis = PrecMappingAnalysis
+				.create(prodAnalysis, z -> ProdPrec.of(UnitPrec.getInstance(), z));
+		final Analysis<XtaState<Prod2State<ExplState, ZoneState>>, XtaAction, ZonePrec> analysis = XtaAnalysis
+				.create(system, mappedAnalysis);
+
 		final ZonePrec prec = ZonePrec.of(system.getClockVars());
 
-		final ArgBuilder<XtaState<ZoneState>, XtaAction, ZonePrec> argBuilder = ArgBuilder.create(lts, analysis,
-				s -> false);
+		final ArgBuilder<XtaState<Prod2State<ExplState, ZoneState>>, XtaAction, ZonePrec> argBuilder = ArgBuilder
+				.create(lts, analysis, s -> false);
 
-		final Abstractor<XtaState<ZoneState>, XtaAction, ZonePrec> abstractor = BasicAbstractor.builder(argBuilder)
-				.projection(s -> Tuple.of(s.getLocs(), s.getVal())).build();
+		final Abstractor<XtaState<Prod2State<ExplState, ZoneState>>, XtaAction, ZonePrec> abstractor = BasicAbstractor
+				.builder(argBuilder).projection(s -> s.getLocs()).build();
 
-		final ARG<XtaState<ZoneState>, XtaAction> arg = abstractor.createArg();
+		final ARG<XtaState<Prod2State<ExplState, ZoneState>>, XtaAction> arg = abstractor.createArg();
 		abstractor.check(arg, prec);
 
 		System.out.println(arg.getNodes().count());

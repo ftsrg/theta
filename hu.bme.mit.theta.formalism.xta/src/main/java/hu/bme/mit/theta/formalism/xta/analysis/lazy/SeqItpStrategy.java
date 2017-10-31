@@ -1,12 +1,12 @@
 /*
  *  Copyright 2017 Budapest University of Technology and Economics
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,6 +20,8 @@ import java.util.Collection;
 
 import hu.bme.mit.theta.analysis.algorithm.ArgEdge;
 import hu.bme.mit.theta.analysis.algorithm.ArgNode;
+import hu.bme.mit.theta.analysis.expl.ExplState;
+import hu.bme.mit.theta.analysis.prod.Prod2State;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
 import hu.bme.mit.theta.analysis.zone.itp.ItpZoneState;
 import hu.bme.mit.theta.formalism.xta.XtaSystem;
@@ -38,12 +40,14 @@ public final class SeqItpStrategy extends ItpStrategy {
 	}
 
 	@Override
-	public Collection<ArgNode<XtaState<ItpZoneState>, XtaAction>> forceCover(
-			final ArgNode<XtaState<ItpZoneState>, XtaAction> nodeToCover,
-			final ArgNode<XtaState<ItpZoneState>, XtaAction> coveringNode, final Builder statistics) {
+	public Collection<ArgNode<XtaState<Prod2State<ExplState, ItpZoneState>>, XtaAction>> forceCover(
+			final ArgNode<XtaState<Prod2State<ExplState, ItpZoneState>>, XtaAction> nodeToCover,
+			final ArgNode<XtaState<Prod2State<ExplState, ItpZoneState>>, XtaAction> coveringNode,
+			final Builder statistics) {
 
-		final Collection<ArgNode<XtaState<ItpZoneState>, XtaAction>> uncoveredNodes = new ArrayList<>();
-		final Collection<ZoneState> complementZones = coveringNode.getState().getState().getInterpolant().complement();
+		final Collection<ArgNode<XtaState<Prod2State<ExplState, ItpZoneState>>, XtaAction>> uncoveredNodes = new ArrayList<>();
+		final Collection<ZoneState> complementZones = coveringNode.getState().getState()._2().getInterpolant()
+				.complement();
 		for (final ZoneState complementZone : complementZones) {
 			blockZone(nodeToCover, complementZone, uncoveredNodes, statistics);
 		}
@@ -52,26 +56,28 @@ public final class SeqItpStrategy extends ItpStrategy {
 	}
 
 	@Override
-	public Collection<ArgNode<XtaState<ItpZoneState>, XtaAction>> refine(
-			final ArgNode<XtaState<ItpZoneState>, XtaAction> node, final Builder statistics) {
+	public Collection<ArgNode<XtaState<Prod2State<ExplState, ItpZoneState>>, XtaAction>> refine(
+			final ArgNode<XtaState<Prod2State<ExplState, ItpZoneState>>, XtaAction> node, final Builder statistics) {
 
-		final Collection<ArgNode<XtaState<ItpZoneState>, XtaAction>> uncoveredNodes = new ArrayList<>();
+		final Collection<ArgNode<XtaState<Prod2State<ExplState, ItpZoneState>>, XtaAction>> uncoveredNodes = new ArrayList<>();
 		blockZone(node, ZoneState.top(), uncoveredNodes, statistics);
 
 		return uncoveredNodes;
 	}
 
-	private ZoneState blockZone(final ArgNode<XtaState<ItpZoneState>, XtaAction> node, final ZoneState zone,
-			final Collection<ArgNode<XtaState<ItpZoneState>, XtaAction>> uncoveredNodes, final Builder statistics) {
-		final ZoneState abstractZone = node.getState().getState().getInterpolant();
+	private ZoneState blockZone(final ArgNode<XtaState<Prod2State<ExplState, ItpZoneState>>, XtaAction> node,
+			final ZoneState zone,
+			final Collection<ArgNode<XtaState<Prod2State<ExplState, ItpZoneState>>, XtaAction>> uncoveredNodes,
+			final Builder statistics) {
+		final ZoneState abstractZone = node.getState().getState()._2().getInterpolant();
 		if (abstractZone.isConsistentWith(zone)) {
 
 			statistics.refine();
 
 			if (node.getInEdge().isPresent()) {
-				final ArgEdge<XtaState<ItpZoneState>, XtaAction> inEdge = node.getInEdge().get();
+				final ArgEdge<XtaState<Prod2State<ExplState, ItpZoneState>>, XtaAction> inEdge = node.getInEdge().get();
 				final XtaAction action = inEdge.getAction();
-				final ArgNode<XtaState<ItpZoneState>, XtaAction> parent = inEdge.getSource();
+				final ArgNode<XtaState<Prod2State<ExplState, ItpZoneState>>, XtaAction> parent = inEdge.getSource();
 
 				final ZoneState B_pre = pre(zone, action);
 				final ZoneState A_pre = blockZone(parent, B_pre, uncoveredNodes, statistics);
@@ -88,7 +94,7 @@ public final class SeqItpStrategy extends ItpStrategy {
 
 				return interpolant;
 			} else {
-				final ZoneState concreteZone = node.getState().getState().getZone();
+				final ZoneState concreteZone = node.getState().getState()._2().getZone();
 
 				statistics.startInterpolation();
 				final ZoneState interpolant = interpolate(concreteZone, zone);
