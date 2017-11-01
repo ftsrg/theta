@@ -15,29 +15,37 @@
  */
 package hu.bme.mit.theta.formalism.sts.tool;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
 
+import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
+import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
-import hu.bme.mit.theta.analysis.utils.TraceVisualizer;
 import hu.bme.mit.theta.common.BaseGui;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.logging.impl.TextAreaLogger;
+import hu.bme.mit.theta.common.table.impl.HtmlTableWriter;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter.Format;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.formalism.sts.StsUtils;
+import hu.bme.mit.theta.formalism.sts.analysis.StsAction;
+import hu.bme.mit.theta.formalism.sts.analysis.StsTraceConcretizer;
 import hu.bme.mit.theta.formalism.sts.dsl.StsDslManager;
 import hu.bme.mit.theta.formalism.sts.tool.StsConfigBuilder.Domain;
 import hu.bme.mit.theta.formalism.sts.tool.StsConfigBuilder.InitPrec;
 import hu.bme.mit.theta.formalism.sts.tool.StsConfigBuilder.PredSplit;
 import hu.bme.mit.theta.formalism.sts.tool.StsConfigBuilder.Refinement;
 import hu.bme.mit.theta.formalism.sts.tool.StsConfigBuilder.Search;
+import hu.bme.mit.theta.formalism.sts.utils.StsTraceVisualizer;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.scene.control.Button;
@@ -72,6 +80,7 @@ public class StsGui extends BaseGui {
 	private Tab tabVisualResult;
 
 	private SafetyResult<?, ?> safetyResult;
+	private STS sts;
 
 	@Override
 	protected void initializeControls(final Stage primaryStage) {
@@ -148,7 +157,7 @@ public class StsGui extends BaseGui {
 				if (stss.size() != 1) {
 					throw new UnsupportedOperationException("STS contains multiple properties.");
 				}
-				final STS sts = StsUtils.eliminateIte(Utils.singleElementOf(stss));
+				sts = StsUtils.eliminateIte(Utils.singleElementOf(stss));
 				final Config<?, ?, ?> config = new StsConfigBuilder(cbDomain.getValue(), cbRefinement.getValue())
 						.search(cbSearch.getValue()).predSplit(cbPredSplit.getValue()).initPrec(cbInitPrec.getValue())
 						.logger(new TextAreaLogger(spLogLevel.getValue(), taOutput)).build(sts);
@@ -170,21 +179,35 @@ public class StsGui extends BaseGui {
 				if (safetyResult == null) {
 					throw new IllegalStateException("No result is present.");
 				}
-				Graph graph = null;
+				String content = "";
 				if (safetyResult.isSafe()) {
+					Graph graph = null;
 					if (cbStructureOnly.isSelected()) {
 						graph = ArgVisualizer.getStructureOnly().visualize(safetyResult.asSafe().getArg());
 					} else {
 						graph = ArgVisualizer.getDefault().visualize(safetyResult.asSafe().getArg());
 					}
+					final File tmpFile = File.createTempFile("theta", ".tmp");
+					GraphvizWriter.getInstance().writeFile(graph, tmpFile.getAbsolutePath(), Format.SVG);
+					content = Files.toString(tmpFile, Charsets.UTF_8);
+					tmpFile.delete();
 				} else {
-					graph = TraceVisualizer.getDefault().visualize(safetyResult.asUnsafe().getTrace());
+					// graph =
+					// TraceVisualizer.getDefault().visualize();
+
+					@SuppressWarnings("unchecked")
+					final Trace<ExprState, StsAction> trace = (Trace<ExprState, StsAction>) safetyResult.asUnsafe()
+							.getTrace();
+					final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+					final PrintStream ps = new PrintStream(baos, true, "utf-8");
+					StsTraceVisualizer.printTraceTable(StsTraceConcretizer.concretize(sts, trace),
+							new HtmlTableWriter(ps));
+					content = new String(baos.toByteArray(), StandardCharsets.UTF_8);
+					ps.close();
+
 				}
-				final File tmpFile = File.createTempFile("theta", ".tmp");
-				GraphvizWriter.getInstance().writeFile(graph, tmpFile.getAbsolutePath(), Format.SVG);
-				final String image = Files.toString(tmpFile, Charsets.UTF_8);
-				tmpFile.delete();
-				Platform.runLater(() -> wvVisualResult.getEngine().loadContent(image));
+				final String finalContent = content;
+				Platform.runLater(() -> wvVisualResult.getEngine().loadContent(finalContent));
 			} catch (final Exception ex) {
 				Platform.runLater(() -> displayException(ex));
 			} finally {
