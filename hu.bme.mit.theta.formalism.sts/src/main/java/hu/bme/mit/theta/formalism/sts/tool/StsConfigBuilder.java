@@ -51,11 +51,10 @@ import hu.bme.mit.theta.analysis.expr.refinement.JoiningPrecRefiner;
 import hu.bme.mit.theta.analysis.expr.refinement.SingleExprTraceRefiner;
 import hu.bme.mit.theta.analysis.pred.ExprSplitters;
 import hu.bme.mit.theta.analysis.pred.ExprSplitters.ExprSplitter;
-import hu.bme.mit.theta.analysis.pred.ItpRefToSimplePredPrec;
+import hu.bme.mit.theta.analysis.pred.ItpRefToPredPrec;
 import hu.bme.mit.theta.analysis.pred.PredAnalysis;
-import hu.bme.mit.theta.analysis.pred.PredPrec;
 import hu.bme.mit.theta.analysis.pred.PredState;
-import hu.bme.mit.theta.analysis.pred.SimplePredPrec;
+import hu.bme.mit.theta.analysis.pred.PredPrec;
 import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.impl.NullLogger;
@@ -206,9 +205,9 @@ public final class StsConfigBuilder {
 		} else if (domain == Domain.PRED) {
 			final Predicate<ExprState> target = new ExprStatePredicate(negProp, solver);
 			final Analysis<PredState, ExprAction, PredPrec> analysis = PredAnalysis.create(solver, init);
-			final ArgBuilder<PredState, StsAction, SimplePredPrec> argBuilder = ArgBuilder.create(lts, analysis,
+			final ArgBuilder<PredState, StsAction, PredPrec> argBuilder = ArgBuilder.create(lts, analysis,
 					target);
-			final Abstractor<PredState, StsAction, SimplePredPrec> abstractor = BasicAbstractor.builder(argBuilder)
+			final Abstractor<PredState, StsAction, PredPrec> abstractor = BasicAbstractor.builder(argBuilder)
 					.waitlistSupplier(PriorityWaitlist.supplier(search.comparator)).logger(logger).build();
 
 			ExprTraceChecker<ItpRefutation> exprTraceChecker = null;
@@ -226,14 +225,14 @@ public final class StsConfigBuilder {
 				throw new UnsupportedOperationException(
 						domain + " domain does not support " + refinement + " refinement.");
 			}
-			final Refiner<PredState, StsAction, SimplePredPrec> refiner = SingleExprTraceRefiner.create(
-					exprTraceChecker, JoiningPrecRefiner.create(new ItpRefToSimplePredPrec(solver, predSplit.splitter)),
+			final Refiner<PredState, StsAction, PredPrec> refiner = SingleExprTraceRefiner.create(
+					exprTraceChecker, JoiningPrecRefiner.create(new ItpRefToPredPrec(solver, predSplit.splitter)),
 					logger);
 
-			final SafetyChecker<PredState, StsAction, SimplePredPrec> checker = CegarChecker.create(abstractor, refiner,
+			final SafetyChecker<PredState, StsAction, PredPrec> checker = CegarChecker.create(abstractor, refiner,
 					logger);
 
-			final SimplePredPrec prec = initPrec.builder.createSimplePred(sts, solver);
+			final PredPrec prec = initPrec.builder.createPred(sts, solver);
 			return Config.create(checker, prec);
 		} else {
 			throw new UnsupportedOperationException(domain + " domain is not supported.");

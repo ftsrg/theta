@@ -1,12 +1,12 @@
 /*
  *  Copyright 2017 Budapest University of Technology and Economics
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -52,24 +52,17 @@ import hu.bme.mit.theta.analysis.expr.refinement.ItpRefutation;
 import hu.bme.mit.theta.analysis.expr.refinement.JoiningPrecRefiner;
 import hu.bme.mit.theta.analysis.expr.refinement.SingleExprTraceRefiner;
 import hu.bme.mit.theta.analysis.pred.ExprSplitters;
-import hu.bme.mit.theta.analysis.pred.ItpRefToSimplePredPrec;
+import hu.bme.mit.theta.analysis.pred.ItpRefToPredPrec;
 import hu.bme.mit.theta.analysis.pred.PredAnalysis;
-import hu.bme.mit.theta.analysis.pred.PredPrec;
 import hu.bme.mit.theta.analysis.pred.PredState;
-import hu.bme.mit.theta.analysis.pred.SimplePredPrec;
-import hu.bme.mit.theta.analysis.pred.TreePredPrec;
-import hu.bme.mit.theta.analysis.pred.TreePredPrecRefiner;
-import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
+import hu.bme.mit.theta.analysis.pred.PredPrec;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.impl.ConsoleLogger;
-import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.formalism.sts.STS.Builder;
-import hu.bme.mit.theta.formalism.sts.analysis.StsAction;
-import hu.bme.mit.theta.formalism.sts.analysis.StsLts;
 import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 
@@ -94,28 +87,28 @@ public class StsPredTest {
 	}
 
 	@Test
-	public void testSimplePredPred() {
+	public void testPredPrec() {
 
 		final Analysis<PredState, ExprAction, PredPrec> analysis = PredAnalysis.create(solver, sts.getInit());
 		final Predicate<ExprState> target = new ExprStatePredicate(Not(sts.getProp()), solver);
 
-		final SimplePredPrec prec = SimplePredPrec.create(solver);
+		final PredPrec prec = PredPrec.create(solver);
 
 		final LTS<State, StsAction> lts = StsLts.create(sts);
 
-		final ArgBuilder<PredState, StsAction, SimplePredPrec> argBuilder = ArgBuilder.create(lts, analysis, target);
+		final ArgBuilder<PredState, StsAction, PredPrec> argBuilder = ArgBuilder.create(lts, analysis, target);
 
-		final Abstractor<PredState, StsAction, SimplePredPrec> abstractor = BasicAbstractor.builder(argBuilder)
+		final Abstractor<PredState, StsAction, PredPrec> abstractor = BasicAbstractor.builder(argBuilder)
 				.logger(logger).build();
 
 		final ExprTraceChecker<ItpRefutation> exprTraceChecker = ExprTraceFwBinItpChecker.create(sts.getInit(),
 				Not(sts.getProp()), solver);
 
-		final SingleExprTraceRefiner<PredState, StsAction, SimplePredPrec, ItpRefutation> refiner = SingleExprTraceRefiner
+		final SingleExprTraceRefiner<PredState, StsAction, PredPrec, ItpRefutation> refiner = SingleExprTraceRefiner
 				.create(exprTraceChecker,
-						JoiningPrecRefiner.create(new ItpRefToSimplePredPrec(solver, ExprSplitters.atoms())), logger);
+						JoiningPrecRefiner.create(new ItpRefToPredPrec(solver, ExprSplitters.atoms())), logger);
 
-		final SafetyChecker<PredState, StsAction, SimplePredPrec> checker = CegarChecker.create(abstractor, refiner,
+		final SafetyChecker<PredState, StsAction, PredPrec> checker = CegarChecker.create(abstractor, refiner,
 				logger);
 
 		final SafetyResult<PredState, StsAction> safetyStatus = checker.check(prec);
@@ -127,38 +120,4 @@ public class StsPredTest {
 		// System.out.println(new
 		// GraphvizWriter().writeString(ArgVisualizer.visualize(arg)));
 	}
-
-	@Test
-	public void testTreePredPrec() {
-		final Analysis<PredState, ExprAction, PredPrec> analysis = PredAnalysis.create(solver, sts.getInit());
-		final Predicate<ExprState> target = new ExprStatePredicate(Not(sts.getProp()), solver);
-
-		final TreePredPrec prec = TreePredPrec.create();
-
-		final LTS<State, StsAction> lts = StsLts.create(sts);
-
-		final ArgBuilder<PredState, StsAction, TreePredPrec> argBuilder = ArgBuilder.create(lts, analysis, target);
-
-		final Abstractor<PredState, StsAction, TreePredPrec> abstractor = BasicAbstractor.builder(argBuilder)
-				.logger(logger).build();
-
-		final ExprTraceChecker<ItpRefutation> exprTraceChecker = ExprTraceFwBinItpChecker.create(sts.getInit(),
-				Not(sts.getProp()), solver);
-
-		final SingleExprTraceRefiner<PredState, StsAction, TreePredPrec, ItpRefutation> refiner = SingleExprTraceRefiner
-				.create(exprTraceChecker, new TreePredPrecRefiner<>(), logger);
-
-		final SafetyChecker<PredState, StsAction, TreePredPrec> checker = CegarChecker.create(abstractor, refiner,
-				logger);
-
-		final SafetyResult<PredState, StsAction> safetyStatus = checker.check(prec);
-		System.out.println(safetyStatus);
-
-		final ARG<PredState, StsAction> arg = safetyStatus.getArg();
-		assertTrue(isWellLabeled(arg, solver));
-
-		System.out.println(GraphvizWriter.getInstance()
-				.writeString(new ArgVisualizer<>(s -> s.toString(), a -> "").visualize(arg)));
-	}
-
 }
