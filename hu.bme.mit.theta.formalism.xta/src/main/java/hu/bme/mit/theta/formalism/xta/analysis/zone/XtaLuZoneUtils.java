@@ -26,7 +26,7 @@ import hu.bme.mit.theta.formalism.xta.Update;
 import hu.bme.mit.theta.formalism.xta.XtaProcess.Edge;
 import hu.bme.mit.theta.formalism.xta.XtaProcess.Loc;
 import hu.bme.mit.theta.formalism.xta.analysis.XtaAction;
-import hu.bme.mit.theta.formalism.xta.analysis.XtaAction.SimpleXtaAction;
+import hu.bme.mit.theta.formalism.xta.analysis.XtaAction.BasicXtaAction;
 import hu.bme.mit.theta.formalism.xta.analysis.XtaAction.SyncedXtaAction;
 
 public final class XtaLuZoneUtils {
@@ -35,8 +35,8 @@ public final class XtaLuZoneUtils {
 	}
 
 	public static BoundFunc pre(final BoundFunc boundFunction, final XtaAction action) {
-		if (action.isSimple()) {
-			return preForSimpleAction(boundFunction, action.asSimple());
+		if (action.isBasic()) {
+			return preForSimpleAction(boundFunction, action.asBasic());
 		} else if (action.isSynced()) {
 			return preForSyncedAction(boundFunction, action.asSynced());
 		} else {
@@ -46,7 +46,7 @@ public final class XtaLuZoneUtils {
 
 	////
 
-	private static BoundFunc preForSimpleAction(final BoundFunc boundFunction, final SimpleXtaAction action) {
+	private static BoundFunc preForSimpleAction(final BoundFunc boundFunction, final BasicXtaAction action) {
 		final BoundFunc.Builder succStateBuilder = boundFunction.transform();
 
 		final List<Loc> sourceLocs = action.getSourceLocs();

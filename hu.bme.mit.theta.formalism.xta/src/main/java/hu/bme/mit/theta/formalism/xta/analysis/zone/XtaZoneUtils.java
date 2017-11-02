@@ -34,7 +34,7 @@ import hu.bme.mit.theta.formalism.xta.XtaProcess.Edge;
 import hu.bme.mit.theta.formalism.xta.XtaProcess.Loc;
 import hu.bme.mit.theta.formalism.xta.XtaProcess.LocKind;
 import hu.bme.mit.theta.formalism.xta.analysis.XtaAction;
-import hu.bme.mit.theta.formalism.xta.analysis.XtaAction.SimpleXtaAction;
+import hu.bme.mit.theta.formalism.xta.analysis.XtaAction.BasicXtaAction;
 import hu.bme.mit.theta.formalism.xta.analysis.XtaAction.SyncedXtaAction;
 
 public final class XtaZoneUtils {
@@ -47,8 +47,8 @@ public final class XtaZoneUtils {
 		checkNotNull(action);
 		checkNotNull(prec);
 
-		if (action.isSimple()) {
-			return postForSimpleAction(state, action.asSimple(), prec);
+		if (action.isBasic()) {
+			return postForSimpleAction(state, action.asBasic(), prec);
 		} else if (action.isSynced()) {
 			return postForSyncedAction(state, action.asSynced(), prec);
 		} else {
@@ -57,7 +57,7 @@ public final class XtaZoneUtils {
 
 	}
 
-	private static ZoneState postForSimpleAction(final ZoneState state, final SimpleXtaAction action,
+	private static ZoneState postForSimpleAction(final ZoneState state, final BasicXtaAction action,
 			final ZonePrec prec) {
 		final ZoneState.Builder succStateBuilder = state.project(prec.getVars());
 
@@ -108,8 +108,8 @@ public final class XtaZoneUtils {
 		checkNotNull(action);
 		checkNotNull(prec);
 
-		if (action.isSimple()) {
-			return preForSimpleAction(state, action.asSimple(), prec);
+		if (action.isBasic()) {
+			return preForSimpleAction(state, action.asBasic(), prec);
 		} else if (action.isSynced()) {
 			return preForSyncedAction(state, action.asSynced(), prec);
 		} else {
@@ -118,7 +118,7 @@ public final class XtaZoneUtils {
 
 	}
 
-	private static ZoneState preForSimpleAction(final ZoneState state, final SimpleXtaAction action,
+	private static ZoneState preForSimpleAction(final ZoneState state, final BasicXtaAction action,
 			final ZonePrec prec) {
 		final ZoneState.Builder preStateBuilder = state.project(prec.getVars());
 

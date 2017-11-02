@@ -24,14 +24,14 @@ import org.junit.Test;
 
 import com.google.common.collect.ImmutableList;
 
-import hu.bme.mit.theta.common.table.impl.SimpleTableWriter;
+import hu.bme.mit.theta.common.table.impl.BasicTableWriter;
 
 public class TableWriterTest {
 	@Test
 	public void test() {
 		final ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		final PrintStream ps = new PrintStream(baos);
-		final TableWriter tw = new SimpleTableWriter(ps, ",", "X", "Y");
+		final TableWriter tw = new BasicTableWriter(ps, ",", "X", "Y");
 
 		tw.cell(11).cell(12).newRow();
 		tw.cell(2, 2).newRow();

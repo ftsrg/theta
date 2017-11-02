@@ -37,7 +37,7 @@ public final class ExprTraceUtils {
 		checkNotNull(actions);
 		final List<ExprState> states = new ArrayList<>(actions.size() + 1);
 		for (int i = 0; i < actions.size() + 1; i++) {
-			states.add(SimpleExprState.of(True()));
+			states.add(BasicExprState.of(True()));
 		}
 		return Trace.of(states, actions);
 	}

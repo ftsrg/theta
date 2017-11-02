@@ -68,18 +68,18 @@ import hu.bme.mit.theta.core.type.rattype.RatType;
 final class DBM {
 
 	private static final IntBinaryOperator ZERO_DBM_VALUES = (x, y) -> Leq(0);
-	private static final IntBinaryOperator TOP_DBM_VALUES = SimpleDbm::defaultBound;
+	private static final IntBinaryOperator TOP_DBM_VALUES = BasicDbm::defaultBound;
 	private static final IntBinaryOperator BOTTOM_DBM_VALUES = (x, y) -> Leq(-1);
 
 	private final DbmSignature signature;
-	private final SimpleDbm dbm;
+	private final BasicDbm dbm;
 
 	private DBM(final DbmSignature signature, final IntBinaryOperator values) {
 		this.signature = signature;
-		this.dbm = new SimpleDbm(signature.size(), values);
+		this.dbm = new BasicDbm(signature.size(), values);
 	}
 
-	private DBM(final DbmSignature signature, final SimpleDbm dbm) {
+	private DBM(final DbmSignature signature, final BasicDbm dbm) {
 		checkNotNull(signature);
 		checkNotNull(dbm);
 		checkArgument(signature.size() == dbm.size(), "Signature and DBM has different size");
@@ -97,7 +97,7 @@ final class DBM {
 
 	private DBM(final DBM dbm) {
 		this.signature = dbm.signature;
-		this.dbm = new SimpleDbm(dbm.dbm);
+		this.dbm = new BasicDbm(dbm.dbm);
 	}
 
 	////

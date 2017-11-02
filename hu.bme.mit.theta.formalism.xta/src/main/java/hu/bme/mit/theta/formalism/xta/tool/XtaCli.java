@@ -30,7 +30,7 @@ import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.analysis.utils.TraceVisualizer;
 import hu.bme.mit.theta.common.table.TableWriter;
-import hu.bme.mit.theta.common.table.impl.SimpleTableWriter;
+import hu.bme.mit.theta.common.table.impl.BasicTableWriter;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 import hu.bme.mit.theta.formalism.xta.XtaSystem;
@@ -64,7 +64,7 @@ public final class XtaCli {
 
 	public XtaCli(final String[] args) {
 		this.args = args;
-		this.writer = new SimpleTableWriter(System.out, ",", "\"", "\"");
+		this.writer = new BasicTableWriter(System.out, ",", "\"", "\"");
 	}
 
 	public static void main(final String[] args) {

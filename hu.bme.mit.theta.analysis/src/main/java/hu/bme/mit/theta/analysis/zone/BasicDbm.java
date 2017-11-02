@@ -29,14 +29,14 @@ import java.util.function.IntBinaryOperator;
 
 import hu.bme.mit.theta.common.IntMatrix;
 
-final class SimpleDbm {
+final class BasicDbm {
 
 	private final int nClocks;
 	private final IntMatrix matrix;
 
 	////
 
-	SimpleDbm(final int size, final IntBinaryOperator values) {
+	BasicDbm(final int size, final IntBinaryOperator values) {
 		checkArgument(size > 0, "Zero sized DBM");
 		checkNotNull(values);
 		this.nClocks = size - 1;
@@ -44,7 +44,7 @@ final class SimpleDbm {
 		fill(values);
 	}
 
-	SimpleDbm(final SimpleDbm dbm) {
+	BasicDbm(final BasicDbm dbm) {
 		this.nClocks = dbm.nClocks;
 		this.matrix = IntMatrix.copyOf(dbm.matrix);
 	}
@@ -205,7 +205,7 @@ final class SimpleDbm {
 	}
 
 	public void free() {
-		fill(SimpleDbm::defaultBound);
+		fill(BasicDbm::defaultBound);
 	}
 
 	public void reset(final int x, final int m) {
