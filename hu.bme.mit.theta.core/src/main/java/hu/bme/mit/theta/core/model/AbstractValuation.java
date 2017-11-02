@@ -26,7 +26,7 @@ import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
-public abstract class AbstractModel implements Model {
+public abstract class AbstractValuation implements Valuation {
 
 	@Override
 	public final Expr<BoolType> toExpr() {
@@ -40,7 +40,7 @@ public abstract class AbstractModel implements Model {
 
 	@Override
 	public final String toString() {
-		return Utils.toStringBuilder("Model").addAll(getDecls(), d -> d.getName() + " <- " + eval(d).get()).toString();
+		return Utils.toStringBuilder("").addAll(getDecls(), d -> d.getName() + " <- " + eval(d).get()).toString();
 	}
 
 }

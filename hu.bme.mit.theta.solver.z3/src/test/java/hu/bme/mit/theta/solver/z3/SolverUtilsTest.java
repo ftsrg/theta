@@ -1,12 +1,12 @@
 /*
  *  Copyright 2017 Budapest University of Technology and Economics
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,7 +24,7 @@ import java.util.stream.Stream;
 import org.junit.Test;
 
 import hu.bme.mit.theta.core.decl.ConstDecl;
-import hu.bme.mit.theta.core.model.Model;
+import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
@@ -43,7 +43,7 @@ public class SolverUtilsTest {
 		final Expr<IntType> x = cx.getRef();
 		final Expr<IntType> y = cy.getRef();
 		final Expr<BoolType> expr = Gt(x, y);
-		final Stream<Model> models = SolverUtils.models(factory, expr);
+		final Stream<Valuation> models = SolverUtils.models(factory, expr);
 
 		// Act
 		models.limit(5).forEach(System.out::println);

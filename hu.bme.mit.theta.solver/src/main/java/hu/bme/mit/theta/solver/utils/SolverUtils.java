@@ -1,12 +1,12 @@
 /*
  *  Copyright 2017 Budapest University of Technology and Economics
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,7 +23,7 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import hu.bme.mit.theta.core.model.Model;
+import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.solver.Solver;
@@ -46,22 +46,22 @@ public final class SolverUtils {
 		}
 	}
 
-	public static Stream<Model> models(final SolverFactory factory, final Expr<BoolType> expr) {
+	public static Stream<Valuation> models(final SolverFactory factory, final Expr<BoolType> expr) {
 		return models(factory, expr, m -> Not(m.toExpr()));
 	}
 
-	public static Stream<Model> models(final SolverFactory factory, final Expr<BoolType> expr,
-			final Function<? super Model, ? extends Expr<BoolType>> feedback) {
-		final Iterable<Model> iterable = () -> new ModelIterator(factory, expr, feedback);
+	public static Stream<Valuation> models(final SolverFactory factory, final Expr<BoolType> expr,
+			final Function<? super Valuation, ? extends Expr<BoolType>> feedback) {
+		final Iterable<Valuation> iterable = () -> new ModelIterator(factory, expr, feedback);
 		return StreamSupport.stream(iterable.spliterator(), false);
 	}
 
-	private static final class ModelIterator implements Iterator<Model> {
+	private static final class ModelIterator implements Iterator<Valuation> {
 		private final Solver solver;
-		private final Function<? super Model, ? extends Expr<BoolType>> feedback;
+		private final Function<? super Valuation, ? extends Expr<BoolType>> feedback;
 
 		private ModelIterator(final SolverFactory factory, final Expr<BoolType> expr,
-				final Function<? super Model, ? extends Expr<BoolType>> feedback) {
+				final Function<? super Valuation, ? extends Expr<BoolType>> feedback) {
 			checkNotNull(expr);
 			checkNotNull(factory);
 			this.feedback = checkNotNull(feedback);
@@ -76,8 +76,8 @@ public final class SolverUtils {
 		}
 
 		@Override
-		public Model next() {
-			final Model model = solver.getModel();
+		public Valuation next() {
+			final Valuation model = solver.getModel();
 			solver.add(feedback.apply(model));
 			return model;
 		}
