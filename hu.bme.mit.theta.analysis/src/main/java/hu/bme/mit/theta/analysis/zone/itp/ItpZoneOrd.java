@@ -13,22 +13,25 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.analysis.zone.lu;
+package hu.bme.mit.theta.analysis.zone.itp;
 
-import hu.bme.mit.theta.analysis.Domain;
+import hu.bme.mit.theta.analysis.PartialOrd;
 
-public final class LuZoneDomain implements Domain<LuZoneState> {
-	private static final LuZoneDomain INSTANCE = new LuZoneDomain();
+public final class ItpZoneOrd implements PartialOrd<ItpZoneState> {
 
-	private LuZoneDomain() {
+	private static final ItpZoneOrd INSTANCE = new ItpZoneOrd();
+
+	private ItpZoneOrd() {
 	}
 
-	public static LuZoneDomain getInstance() {
+	public static ItpZoneOrd getInstance() {
 		return INSTANCE;
 	}
 
+	////
+
 	@Override
-	public boolean isLeq(final LuZoneState state1, final LuZoneState state2) {
+	public boolean isLeq(final ItpZoneState state1, final ItpZoneState state2) {
 		return state1.isLeq(state2);
 	}
 

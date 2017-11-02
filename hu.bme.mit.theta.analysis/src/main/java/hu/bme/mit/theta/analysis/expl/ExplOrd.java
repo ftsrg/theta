@@ -15,18 +15,18 @@
  */
 package hu.bme.mit.theta.analysis.expl;
 
-import hu.bme.mit.theta.analysis.Domain;
+import hu.bme.mit.theta.analysis.PartialOrd;
 
-public final class ExplDomain implements Domain<ExplState> {
+public final class ExplOrd implements PartialOrd<ExplState> {
 
 	private static final class LazyHolder {
-		private static final ExplDomain INSTANCE = new ExplDomain();
+		private static final ExplOrd INSTANCE = new ExplOrd();
 	}
 
-	private ExplDomain() {
+	private ExplOrd() {
 	}
 
-	public static ExplDomain getInstance() {
+	public static ExplOrd getInstance() {
 		return LazyHolder.INSTANCE;
 	}
 

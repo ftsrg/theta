@@ -24,10 +24,10 @@ import java.util.Optional;
 import java.util.Set;
 
 import hu.bme.mit.theta.analysis.Action;
-import hu.bme.mit.theta.analysis.Domain;
+import hu.bme.mit.theta.analysis.PartialOrd;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
-import hu.bme.mit.theta.analysis.expr.ExprDomain;
+import hu.bme.mit.theta.analysis.expr.ExprOrd;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.ExprStateUtils;
 import hu.bme.mit.theta.solver.Solver;
@@ -35,11 +35,11 @@ import hu.bme.mit.theta.solver.Solver;
 public final class ArgChecker {
 
 	private final Solver solver;
-	private final Domain<ExprState> domain;
+	private final PartialOrd<ExprState> partialOrd;
 
 	private ArgChecker(final Solver solver) {
 		this.solver = checkNotNull(solver);
-		domain = ExprDomain.create(solver);
+		partialOrd = ExprOrd.create(solver);
 	}
 
 	public static ArgChecker create(final Solver solver) {
@@ -86,7 +86,7 @@ public final class ArgChecker {
 
 	private boolean isCoveredBy(final ArgNode<? extends ExprState, ?> node,
 			final ArgNode<? extends ExprState, ?> coveringNode) {
-		return domain.isLeq(node.getState(), coveringNode.getState());
+		return partialOrd.isLeq(node.getState(), coveringNode.getState());
 	}
 
 	////

@@ -17,7 +17,7 @@ package hu.bme.mit.theta.analysis.unit;
 
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Analysis;
-import hu.bme.mit.theta.analysis.Domain;
+import hu.bme.mit.theta.analysis.PartialOrd;
 import hu.bme.mit.theta.analysis.InitFunc;
 import hu.bme.mit.theta.analysis.TransFunc;
 
@@ -33,8 +33,8 @@ public final class UnitAnalysis implements Analysis<UnitState, Action, UnitPrec>
 	}
 
 	@Override
-	public Domain<UnitState> getDomain() {
-		return UnitDomain.getInstance();
+	public PartialOrd<UnitState> getPartialOrd() {
+		return UnitOrd.getInstance();
 	}
 
 	@Override

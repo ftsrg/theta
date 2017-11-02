@@ -25,12 +25,12 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.BasicValuation;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 
-public class ExplDomainTest {
+public class ExplOrdTest {
 
 	final VarDecl<IntType> X = Decls.Var("x", Int());
 	final VarDecl<IntType> Y = Decls.Var("y", Int());
 
-	final ExplDomain domain = ExplDomain.getInstance();
+	final ExplOrd ord = ExplOrd.getInstance();
 
 	final ExplState st = ExplState.createTop();
 	final ExplState s1 = ExplState.create(BasicValuation.builder().put(X, Int(1)).build());
@@ -51,46 +51,46 @@ public class ExplDomainTest {
 
 	@Test
 	public void testLeq() {
-		Assert.assertTrue(domain.isLeq(st, st));
-		Assert.assertTrue(domain.isLeq(s1, st));
-		Assert.assertTrue(domain.isLeq(s2, st));
-		Assert.assertTrue(domain.isLeq(s3, st));
-		Assert.assertTrue(domain.isLeq(s4, st));
-		Assert.assertTrue(domain.isLeq(sb, st));
+		Assert.assertTrue(ord.isLeq(st, st));
+		Assert.assertTrue(ord.isLeq(s1, st));
+		Assert.assertTrue(ord.isLeq(s2, st));
+		Assert.assertTrue(ord.isLeq(s3, st));
+		Assert.assertTrue(ord.isLeq(s4, st));
+		Assert.assertTrue(ord.isLeq(sb, st));
 
-		Assert.assertFalse(domain.isLeq(st, s1));
-		Assert.assertTrue(domain.isLeq(s1, s1));
-		Assert.assertFalse(domain.isLeq(s2, s1));
-		Assert.assertFalse(domain.isLeq(s3, s1));
-		Assert.assertTrue(domain.isLeq(s4, s1));
-		Assert.assertTrue(domain.isLeq(sb, s1));
+		Assert.assertFalse(ord.isLeq(st, s1));
+		Assert.assertTrue(ord.isLeq(s1, s1));
+		Assert.assertFalse(ord.isLeq(s2, s1));
+		Assert.assertFalse(ord.isLeq(s3, s1));
+		Assert.assertTrue(ord.isLeq(s4, s1));
+		Assert.assertTrue(ord.isLeq(sb, s1));
 
-		Assert.assertFalse(domain.isLeq(st, s2));
-		Assert.assertFalse(domain.isLeq(s1, s2));
-		Assert.assertTrue(domain.isLeq(s2, s2));
-		Assert.assertFalse(domain.isLeq(s3, s2));
-		Assert.assertFalse(domain.isLeq(s4, s2));
-		Assert.assertTrue(domain.isLeq(sb, s2));
+		Assert.assertFalse(ord.isLeq(st, s2));
+		Assert.assertFalse(ord.isLeq(s1, s2));
+		Assert.assertTrue(ord.isLeq(s2, s2));
+		Assert.assertFalse(ord.isLeq(s3, s2));
+		Assert.assertFalse(ord.isLeq(s4, s2));
+		Assert.assertTrue(ord.isLeq(sb, s2));
 
-		Assert.assertFalse(domain.isLeq(st, s3));
-		Assert.assertFalse(domain.isLeq(s1, s3));
-		Assert.assertFalse(domain.isLeq(s2, s3));
-		Assert.assertTrue(domain.isLeq(s3, s3));
-		Assert.assertTrue(domain.isLeq(s4, s3));
-		Assert.assertTrue(domain.isLeq(sb, s3));
+		Assert.assertFalse(ord.isLeq(st, s3));
+		Assert.assertFalse(ord.isLeq(s1, s3));
+		Assert.assertFalse(ord.isLeq(s2, s3));
+		Assert.assertTrue(ord.isLeq(s3, s3));
+		Assert.assertTrue(ord.isLeq(s4, s3));
+		Assert.assertTrue(ord.isLeq(sb, s3));
 
-		Assert.assertFalse(domain.isLeq(st, s4));
-		Assert.assertFalse(domain.isLeq(s1, s4));
-		Assert.assertFalse(domain.isLeq(s2, s4));
-		Assert.assertFalse(domain.isLeq(s3, s4));
-		Assert.assertTrue(domain.isLeq(s4, s4));
-		Assert.assertTrue(domain.isLeq(sb, s4));
+		Assert.assertFalse(ord.isLeq(st, s4));
+		Assert.assertFalse(ord.isLeq(s1, s4));
+		Assert.assertFalse(ord.isLeq(s2, s4));
+		Assert.assertFalse(ord.isLeq(s3, s4));
+		Assert.assertTrue(ord.isLeq(s4, s4));
+		Assert.assertTrue(ord.isLeq(sb, s4));
 
-		Assert.assertFalse(domain.isLeq(st, sb));
-		Assert.assertFalse(domain.isLeq(s1, sb));
-		Assert.assertFalse(domain.isLeq(s2, sb));
-		Assert.assertFalse(domain.isLeq(s3, sb));
-		Assert.assertFalse(domain.isLeq(s4, sb));
-		Assert.assertTrue(domain.isLeq(sb, sb));
+		Assert.assertFalse(ord.isLeq(st, sb));
+		Assert.assertFalse(ord.isLeq(s1, sb));
+		Assert.assertFalse(ord.isLeq(s2, sb));
+		Assert.assertFalse(ord.isLeq(s3, sb));
+		Assert.assertFalse(ord.isLeq(s4, sb));
+		Assert.assertTrue(ord.isLeq(sb, sb));
 	}
 }

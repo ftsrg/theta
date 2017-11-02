@@ -13,28 +13,28 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.formalism.cfa.analysis;
+package hu.bme.mit.theta.analysis.unit;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import hu.bme.mit.theta.analysis.Domain;
-import hu.bme.mit.theta.analysis.expr.ExprState;
+import hu.bme.mit.theta.analysis.PartialOrd;
 
-public final class CfaDomain<S extends ExprState> implements Domain<CfaState<S>> {
+final class UnitOrd implements PartialOrd<UnitState> {
 
-	private final Domain<S> domain;
+	private static final UnitOrd INSTANCE = new UnitOrd();
 
-	private CfaDomain(final Domain<S> domain) {
-		this.domain = checkNotNull(domain);
+	private UnitOrd() {
 	}
 
-	public static <S extends ExprState> CfaDomain<S> create(final Domain<S> domain) {
-		return new CfaDomain<>(domain);
+	public static UnitOrd getInstance() {
+		return INSTANCE;
 	}
 
 	@Override
-	public boolean isLeq(final CfaState<S> state1, final CfaState<S> state2) {
-		return state1.getLoc().equals(state2.getLoc()) && domain.isLeq(state1.getState(), state2.getState());
+	public boolean isLeq(final UnitState state1, final UnitState state2) {
+		checkNotNull(state1);
+		checkNotNull(state2);
+		return true;
 	}
 
 }

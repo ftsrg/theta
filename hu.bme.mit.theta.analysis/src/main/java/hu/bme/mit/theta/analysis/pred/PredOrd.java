@@ -18,20 +18,20 @@ package hu.bme.mit.theta.analysis.pred;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 
-import hu.bme.mit.theta.analysis.Domain;
+import hu.bme.mit.theta.analysis.PartialOrd;
 import hu.bme.mit.theta.core.utils.PathUtils;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.utils.WithPushPop;
 
-public final class PredDomain implements Domain<PredState> {
+public final class PredOrd implements PartialOrd<PredState> {
 
 	private final Solver solver;
 
-	public static PredDomain create(final Solver solver) {
-		return new PredDomain(solver);
+	public static PredOrd create(final Solver solver) {
+		return new PredOrd(solver);
 	}
 
-	private PredDomain(final Solver solver) {
+	private PredOrd(final Solver solver) {
 		this.solver = checkNotNull(solver);
 	}
 

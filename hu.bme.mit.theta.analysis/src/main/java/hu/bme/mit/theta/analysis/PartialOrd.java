@@ -16,10 +16,10 @@
 package hu.bme.mit.theta.analysis;
 
 /**
- * Common interface for abstract domains with a partial order.
+ * Common interface for partial orders.
  */
 @FunctionalInterface
-public interface Domain<S extends State> {
+public interface PartialOrd<S extends State> {
 
 	/**
 	 * Checks if state1 is less or equal to state2.

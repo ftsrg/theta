@@ -16,10 +16,10 @@
 package hu.bme.mit.theta.formalism.xta.analysis.zone;
 
 import hu.bme.mit.theta.analysis.Analysis;
-import hu.bme.mit.theta.analysis.Domain;
+import hu.bme.mit.theta.analysis.PartialOrd;
 import hu.bme.mit.theta.analysis.InitFunc;
 import hu.bme.mit.theta.analysis.TransFunc;
-import hu.bme.mit.theta.analysis.zone.ZoneDomain;
+import hu.bme.mit.theta.analysis.zone.ZoneOrd;
 import hu.bme.mit.theta.analysis.zone.ZonePrec;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
 import hu.bme.mit.theta.formalism.xta.analysis.XtaAction;
@@ -36,8 +36,8 @@ public final class XtaZoneAnalysis implements Analysis<ZoneState, XtaAction, Zon
 	}
 
 	@Override
-	public Domain<ZoneState> getDomain() {
-		return ZoneDomain.getInstance();
+	public PartialOrd<ZoneState> getPartialOrd() {
+		return ZoneOrd.getInstance();
 	}
 
 	@Override

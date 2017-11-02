@@ -18,10 +18,10 @@ package hu.bme.mit.theta.formalism.xta.analysis.expl;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import hu.bme.mit.theta.analysis.Analysis;
-import hu.bme.mit.theta.analysis.Domain;
+import hu.bme.mit.theta.analysis.PartialOrd;
 import hu.bme.mit.theta.analysis.InitFunc;
 import hu.bme.mit.theta.analysis.TransFunc;
-import hu.bme.mit.theta.analysis.expl.ExplDomain;
+import hu.bme.mit.theta.analysis.expl.ExplOrd;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.formalism.xta.XtaSystem;
@@ -43,8 +43,8 @@ public final class XtaExplAnalysis implements Analysis<ExplState, XtaAction, Uni
 	}
 
 	@Override
-	public Domain<ExplState> getDomain() {
-		return ExplDomain.getInstance();
+	public PartialOrd<ExplState> getPartialOrd() {
+		return ExplOrd.getInstance();
 	}
 
 	@Override

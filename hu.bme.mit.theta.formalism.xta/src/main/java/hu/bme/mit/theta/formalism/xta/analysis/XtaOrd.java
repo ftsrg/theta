@@ -13,28 +13,30 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.analysis.unit;
+package hu.bme.mit.theta.formalism.xta.analysis;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import hu.bme.mit.theta.analysis.Domain;
+import hu.bme.mit.theta.analysis.PartialOrd;
+import hu.bme.mit.theta.analysis.State;
 
-final class UnitDomain implements Domain<UnitState> {
+final class XtaOrd<S extends State> implements PartialOrd<XtaState<S>> {
 
-	private static final UnitDomain INSTANCE = new UnitDomain();
+	private final PartialOrd<S> partialOrd;
 
-	private UnitDomain() {
+	private XtaOrd(final PartialOrd<S> partialOrd) {
+		this.partialOrd = checkNotNull(partialOrd);
 	}
 
-	public static UnitDomain getInstance() {
-		return INSTANCE;
+	public static <S extends State> XtaOrd<S> create(final PartialOrd<S> partialOrd) {
+		return new XtaOrd<>(partialOrd);
 	}
 
 	@Override
-	public boolean isLeq(final UnitState state1, final UnitState state2) {
+	public boolean isLeq(final XtaState<S> state1, final XtaState<S> state2) {
 		checkNotNull(state1);
 		checkNotNull(state2);
-		return true;
+		return state1.getLocs().equals(state2.getLocs()) && partialOrd.isLeq(state1.getState(), state2.getState());
 	}
 
 }

@@ -23,7 +23,7 @@ import org.junit.Test;
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.stubs.ActionStub;
-import hu.bme.mit.theta.analysis.stubs.DomainStub;
+import hu.bme.mit.theta.analysis.stubs.PartialOrdStub;
 import hu.bme.mit.theta.analysis.stubs.StateStub;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
@@ -32,7 +32,7 @@ public class ArgPruningTest {
 
 	@Test
 	public void test() {
-		final ARG<State, Action> arg = ARG.create(new DomainStub());
+		final ARG<State, Action> arg = ARG.create(new PartialOrdStub());
 
 		final State s0 = new StateStub("0");
 		final State s00 = new StateStub("00");

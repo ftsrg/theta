@@ -86,7 +86,7 @@ public final class ArgNode<S extends State, A extends Action> {
 	}
 
 	public boolean mayCover(final ArgNode<S, A> node) {
-		if (arg.domain.isLeq(node.getState(), this.getState())) {
+		if (arg.partialOrd.isLeq(node.getState(), this.getState())) {
 			return ancestors().noneMatch(n -> n.equals(node) || n.isSubsumed());
 		} else {
 			return false;

@@ -21,7 +21,7 @@ import java.util.function.Function;
 
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Analysis;
-import hu.bme.mit.theta.analysis.Domain;
+import hu.bme.mit.theta.analysis.PartialOrd;
 import hu.bme.mit.theta.analysis.InitFunc;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
@@ -30,7 +30,7 @@ import hu.bme.mit.theta.analysis.TransFunc;
 public final class PrecMappingAnalysis<S extends State, A extends Action, PP extends Prec, PR extends Prec>
 		implements Analysis<S, A, PP> {
 
-	private final Domain<S> domain;
+	private final PartialOrd<S> partialOrd;
 	private final InitFunc<S, PP> initFunc;
 	private final TransFunc<S, A, PP> transFunc;
 
@@ -38,7 +38,7 @@ public final class PrecMappingAnalysis<S extends State, A extends Action, PP ext
 			final Function<? super PP, ? extends PR> mapping) {
 		checkNotNull(analysis);
 		checkNotNull(mapping);
-		this.domain = analysis.getDomain();
+		this.partialOrd = analysis.getPartialOrd();
 		this.initFunc = PrecMappingInitFunc.create(analysis.getInitFunc(), mapping);
 		this.transFunc = PrecMappingTransFunc.create(analysis.getTransFunc(), mapping);
 	}
@@ -49,8 +49,8 @@ public final class PrecMappingAnalysis<S extends State, A extends Action, PP ext
 	}
 
 	@Override
-	public Domain<S> getDomain() {
-		return domain;
+	public PartialOrd<S> getPartialOrd() {
+		return partialOrd;
 	}
 
 	@Override
