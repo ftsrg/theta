@@ -49,8 +49,8 @@ import hu.bme.mit.theta.analysis.pred.ExprSplitters;
 import hu.bme.mit.theta.analysis.pred.ExprSplitters.ExprSplitter;
 import hu.bme.mit.theta.analysis.pred.ItpRefToPredPrec;
 import hu.bme.mit.theta.analysis.pred.PredAnalysis;
-import hu.bme.mit.theta.analysis.pred.PredState;
 import hu.bme.mit.theta.analysis.pred.PredPrec;
+import hu.bme.mit.theta.analysis.pred.PredState;
 import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.impl.NullLogger;
@@ -227,7 +227,7 @@ public class CfaConfigBuilder {
 					analysis, s -> s.getLoc().equals(cfa.getErrorLoc()));
 			final Abstractor<CfaState<ExplState>, CfaAction, CfaPrec<ExplPrec>> abstractor = BasicAbstractor
 					.builder(argBuilder).projection(CfaState::getLoc)
-					.waitlistSupplier(PriorityWaitlist.supplier(search.getComp(cfa))).logger(logger).build();
+					.waitlist(PriorityWaitlist.create(search.getComp(cfa))).logger(logger).build();
 
 			Refiner<CfaState<ExplState>, CfaAction, CfaPrec<ExplPrec>> refiner = null;
 
@@ -263,11 +263,11 @@ public class CfaConfigBuilder {
 		} else if (domain == Domain.PRED) {
 			final Analysis<CfaState<PredState>, CfaAction, CfaPrec<PredPrec>> analysis = CfaAnalysis
 					.create(cfa.getInitLoc(), PredAnalysis.create(solver, True()));
-			final ArgBuilder<CfaState<PredState>, CfaAction, CfaPrec<PredPrec>> argBuilder = ArgBuilder
-					.create(lts, analysis, s -> s.getLoc().equals(cfa.getErrorLoc()));
+			final ArgBuilder<CfaState<PredState>, CfaAction, CfaPrec<PredPrec>> argBuilder = ArgBuilder.create(lts,
+					analysis, s -> s.getLoc().equals(cfa.getErrorLoc()));
 			final Abstractor<CfaState<PredState>, CfaAction, CfaPrec<PredPrec>> abstractor = BasicAbstractor
 					.builder(argBuilder).projection(CfaState::getLoc)
-					.waitlistSupplier(PriorityWaitlist.supplier(search.getComp(cfa))).logger(logger).build();
+					.waitlist(PriorityWaitlist.create(search.getComp(cfa))).logger(logger).build();
 
 			ExprTraceChecker<ItpRefutation> exprTraceChecker = null;
 			switch (refinement) {
