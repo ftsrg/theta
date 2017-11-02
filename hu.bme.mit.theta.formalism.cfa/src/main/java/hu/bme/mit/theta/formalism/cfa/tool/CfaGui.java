@@ -15,7 +15,10 @@
  */
 package hu.bme.mit.theta.formalism.cfa.tool;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
@@ -23,9 +26,9 @@ import com.google.common.io.Files;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
-import hu.bme.mit.theta.analysis.utils.TraceVisualizer;
 import hu.bme.mit.theta.common.BaseGui;
 import hu.bme.mit.theta.common.logging.impl.TextAreaLogger;
+import hu.bme.mit.theta.common.table.impl.HtmlTableWriter;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter.Format;
@@ -209,24 +212,31 @@ public class CfaGui extends BaseGui {
 				if (safetyResult == null) {
 					throw new IllegalStateException("No result is present.");
 				}
-				Graph graph = null;
+				String content = "";
 				if (safetyResult.isSafe()) {
+					Graph graph = null;
 					if (cbStructureOnly.isSelected()) {
 						graph = ArgVisualizer.getStructureOnly().visualize(safetyResult.asSafe().getArg());
 					} else {
 						graph = ArgVisualizer.getDefault().visualize(safetyResult.asSafe().getArg());
 					}
+					final File tmpFile = File.createTempFile("theta", ".tmp");
+					GraphvizWriter.getInstance().writeFile(graph, tmpFile.getAbsolutePath(), Format.SVG);
+					content = Files.toString(tmpFile, Charsets.UTF_8);
+					tmpFile.delete();
 				} else {
 					@SuppressWarnings("unchecked")
 					final Trace<CfaState<?>, CfaAction> trace = (Trace<CfaState<?>, CfaAction>) safetyResult.asUnsafe()
 							.getTrace();
-					graph = TraceVisualizer.getDefault().visualize(CfaTraceConcretizer.concretize(trace));
+					final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+					final PrintStream ps = new PrintStream(baos, true, "utf-8");
+					CfaVisualizer.printTraceTable(CfaTraceConcretizer.concretize(trace), new HtmlTableWriter(ps));
+					content = new String(baos.toByteArray(), StandardCharsets.UTF_8);
+					ps.close();
 				}
-				final File tmpFile = File.createTempFile("theta", ".tmp");
-				GraphvizWriter.getInstance().writeFile(graph, tmpFile.getAbsolutePath(), Format.SVG);
-				final String image = Files.toString(tmpFile, Charsets.UTF_8);
-				tmpFile.delete();
-				Platform.runLater(() -> wvVisualResult.getEngine().loadContent(image));
+
+				final String finalContent = content;
+				Platform.runLater(() -> wvVisualResult.getEngine().loadContent(finalContent));
 			} catch (final Exception ex) {
 				Platform.runLater(() -> displayException(ex));
 			} finally {

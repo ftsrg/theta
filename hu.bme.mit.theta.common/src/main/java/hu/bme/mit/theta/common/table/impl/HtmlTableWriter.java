@@ -13,6 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+
 package hu.bme.mit.theta.common.table.impl;
 
 import java.io.PrintStream;
@@ -20,41 +21,48 @@ import java.io.PrintStream;
 import hu.bme.mit.theta.common.table.TableWriter;
 
 /**
- * Table writer that prints tables to a PrintStream in LaTeX format.
+ * A table writer that prints tables to a PrintStream in HTML format.
  */
-public final class LatexTableWriter implements TableWriter {
-
+public class HtmlTableWriter implements TableWriter {
 	private final PrintStream stream;
 	private boolean isFirstCell = true;
 
-	public LatexTableWriter(final PrintStream stream) {
+	public HtmlTableWriter(final PrintStream stream) {
 		this.stream = stream;
-	}
-
-	public LatexTableWriter() {
-		this(System.out);
 	}
 
 	@Override
 	public TableWriter cell(final Object obj, final int colspan) {
-		final String text = obj.toString().replace("_", "\\_").replace("#", "\\#").replace("%", "\\%");
-		if (!isFirstCell) {
-			stream.print(" & ");
+		if (isFirstCell) {
+			stream.print("<tr>");
 		}
-		if (colspan != 1) {
-			stream.print("\\multicolumn{" + colspan + "}{c}{" + text + "}");
+		if (colspan > 1) {
+			stream.print("<td colspan=\"" + colspan + "\">");
 		} else {
-			stream.print(text);
+			stream.print("<td>");
 		}
+		stream.print(obj.toString().replace("\n", "<br />"));
+		stream.print("</td>");
 		isFirstCell = false;
 		return this;
 	}
 
 	@Override
 	public TableWriter newRow() {
-		stream.println("\\\\\\hline");
+		stream.println("</tr>");
 		isFirstCell = true;
 		return this;
 	}
 
+	@Override
+	public TableWriter startTable() {
+		stream.println("<table border=\"1\" cellspacing=\"0\">");
+		return this;
+	}
+
+	@Override
+	public TableWriter endTable() {
+		stream.println("</table>");
+		return this;
+	}
 }
