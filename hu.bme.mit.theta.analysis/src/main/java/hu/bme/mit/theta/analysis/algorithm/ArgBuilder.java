@@ -1,12 +1,12 @@
 /*
  *  Copyright 2017 Budapest University of Technology and Economics
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,18 +37,26 @@ public final class ArgBuilder<S extends State, A extends Action, P extends Prec>
 	private final LTS<? super S, ? extends A> lts;
 	private final Analysis<S, ? super A, ? super P> analysis;
 	private final Predicate<? super S> target;
+	private final boolean excludeBottom;
 
 	private ArgBuilder(final LTS<? super S, ? extends A> lts, final Analysis<S, ? super A, ? super P> analysis,
-			final Predicate<? super S> target) {
+			final Predicate<? super S> target, final boolean excludeBottom) {
 		this.lts = checkNotNull(lts);
 		this.analysis = checkNotNull(analysis);
 		this.target = checkNotNull(target);
+		this.excludeBottom = excludeBottom;
+	}
+
+	public static <S extends State, A extends Action, P extends Prec> ArgBuilder<S, A, P> create(
+			final LTS<? super S, ? extends A> lts, final Analysis<S, ? super A, ? super P> analysis,
+			final Predicate<? super S> target, final boolean excludeBottom) {
+		return new ArgBuilder<>(lts, analysis, target, excludeBottom);
 	}
 
 	public static <S extends State, A extends Action, P extends Prec> ArgBuilder<S, A, P> create(
 			final LTS<? super S, ? extends A> lts, final Analysis<S, ? super A, ? super P> analysis,
 			final Predicate<? super S> target) {
-		return new ArgBuilder<>(lts, analysis, target);
+		return create(lts, analysis, target, false);
 	}
 
 	public ARG<S, A> createArg() {
@@ -63,6 +71,9 @@ public final class ArgBuilder<S extends State, A extends Action, P extends Prec>
 
 		final Collection<? extends S> initStates = analysis.getInitFunc().getInitStates(prec);
 		for (final S initState : initStates) {
+			if (excludeBottom && initState.isBottom()) {
+				continue;
+			}
 			if (arg.getInitStates().noneMatch(s -> analysis.getPartialOrd().isLeq(initState, s))) {
 				final boolean isTarget = target.test(initState);
 				final ArgNode<S, A> newNode = arg.createInitNode(initState, isTarget);
@@ -85,6 +96,9 @@ public final class ArgBuilder<S extends State, A extends Action, P extends Prec>
 		for (final A action : actions) {
 			final Collection<? extends S> succStates = transFunc.getSuccStates(state, action, prec);
 			for (final S succState : succStates) {
+				if (excludeBottom && succState.isBottom()) {
+					continue;
+				}
 				if (node.getSuccStates().noneMatch(s -> analysis.getPartialOrd().isLeq(succState, s))) {
 					final boolean isTarget = target.test(succState);
 					final ArgNode<S, A> newNode = node.arg.createSuccNode(node, action, succState, isTarget);
