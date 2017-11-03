@@ -22,6 +22,7 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import hu.bme.mit.theta.analysis.TransFunc;
 import hu.bme.mit.theta.analysis.expl.ExplStmtSuccEvaluator.EvalResult;
@@ -38,16 +39,21 @@ import hu.bme.mit.theta.solver.Solver;
 public final class ExplStmtTransFunc implements TransFunc<ExplState, StmtAction, ExplPrec> {
 
 	private final Solver solver;
-	private final int maxStatesFromSolver;
+	private final Optional<Integer> maxSuccToEnumerate;
 
-	private ExplStmtTransFunc(final Solver solver, final int maxStatesFromSolver) {
-		checkArgument(maxStatesFromSolver >= 0, "Max. states from solver must be non-negative.");
+	private ExplStmtTransFunc(final Solver solver, final Optional<Integer> maxSuccToEnumerate) {
 		this.solver = checkNotNull(solver);
-		this.maxStatesFromSolver = maxStatesFromSolver;
+		this.maxSuccToEnumerate = maxSuccToEnumerate;
 	}
 
-	public static ExplStmtTransFunc create(final Solver solver, final int maxStatesFromSolver) {
-		return new ExplStmtTransFunc(solver, maxStatesFromSolver);
+	public static ExplStmtTransFunc create(final Solver solver, final int maxSuccToEnumerate) {
+		return create(solver, Optional.of(maxSuccToEnumerate));
+	}
+
+	public static ExplStmtTransFunc create(final Solver solver, final Optional<Integer> maxSuccToEnumerate) {
+		checkArgument(!maxSuccToEnumerate.isPresent() || maxSuccToEnumerate.get() >= 0,
+				"Max. states from solver must be non-negative.");
+		return new ExplStmtTransFunc(solver, maxSuccToEnumerate);
 	}
 
 	@Override
@@ -62,7 +68,8 @@ public final class ExplStmtTransFunc implements TransFunc<ExplState, StmtAction,
 		for (int i = 0; i < stmts.size(); i++) {
 			final Stmt stmt = stmts.get(i);
 			final EvalResult evalResult = ExplStmtSuccEvaluator.evalSucc(running, stmt);
-			if (!evalResult.isPrecise() && !triedSolver && maxStatesFromSolver > 0) {
+			if (!evalResult.isPrecise() && !triedSolver
+					&& (!maxSuccToEnumerate.isPresent() || maxSuccToEnumerate.get() > 0)) {
 				triedSolver = true;
 				final List<Stmt> remainingStmts = stmts.subList(i, stmts.size());
 				final StmtUnfoldResult toExprResult = StmtUtils.toExpr(remainingStmts, VarIndexing.all(0));
@@ -70,9 +77,10 @@ public final class ExplStmtTransFunc implements TransFunc<ExplState, StmtAction,
 				final VarIndexing nextIdx = toExprResult.getIndexing();
 				// We query (max + 1) states from the solver to see if there
 				// would be more than max
+				final int maxToQuery = maxSuccToEnumerate.isPresent() ? maxSuccToEnumerate.get() + 1 : 0;
 				final Collection<ExplState> succStates = ExprStates.createStatesForExpr(solver, expr, 0,
-						prec::createState, nextIdx, maxStatesFromSolver + 1);
-				if (succStates.size() <= maxStatesFromSolver) {
+						prec::createState, nextIdx, maxToQuery);
+				if (!maxSuccToEnumerate.isPresent() || succStates.size() <= maxSuccToEnumerate.get()) {
 					return succStates;
 				}
 			}

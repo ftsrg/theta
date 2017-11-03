@@ -17,9 +17,11 @@ package hu.bme.mit.theta.analysis.expl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import java.util.Optional;
+
 import hu.bme.mit.theta.analysis.Analysis;
-import hu.bme.mit.theta.analysis.PartialOrd;
 import hu.bme.mit.theta.analysis.InitFunc;
+import hu.bme.mit.theta.analysis.PartialOrd;
 import hu.bme.mit.theta.analysis.TransFunc;
 import hu.bme.mit.theta.analysis.expr.StmtAction;
 import hu.bme.mit.theta.core.type.Expr;
@@ -32,17 +34,22 @@ public final class ExplStmtAnalysis implements Analysis<ExplState, StmtAction, E
 	private final InitFunc<ExplState, ExplPrec> initFunc;
 	private final TransFunc<ExplState, StmtAction, ExplPrec> transFunc;
 
-	private ExplStmtAnalysis(final Solver solver, final Expr<BoolType> initExpr, final int maxStatesFromSolver) {
+	private ExplStmtAnalysis(final Solver solver, final Expr<BoolType> initExpr,
+			final Optional<Integer> maxSuccToEnumerate) {
 		checkNotNull(solver);
 		checkNotNull(initExpr);
 		this.partialOrd = ExplOrd.getInstance();
 		this.initFunc = ExplInitFunc.create(solver, initExpr);
-		this.transFunc = ExplStmtTransFunc.create(solver, maxStatesFromSolver);
+		this.transFunc = ExplStmtTransFunc.create(solver, maxSuccToEnumerate);
 	}
 
 	public static ExplStmtAnalysis create(final Solver solver, final Expr<BoolType> initExpr,
-			final int maxStatesFromSolver) {
-		return new ExplStmtAnalysis(solver, initExpr, maxStatesFromSolver);
+			final int maxSuccToEnumerate) {
+		return new ExplStmtAnalysis(solver, initExpr, Optional.of(maxSuccToEnumerate));
+	}
+
+	public static ExplStmtAnalysis create(final Solver solver, final Expr<BoolType> initExpr) {
+		return new ExplStmtAnalysis(solver, initExpr, Optional.empty());
 	}
 
 	@Override
