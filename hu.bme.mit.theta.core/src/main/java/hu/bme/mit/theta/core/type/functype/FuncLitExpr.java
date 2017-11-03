@@ -34,7 +34,7 @@ public final class FuncLitExpr<ParamType extends Type, ResultType extends Type>
 		implements LitExpr<FuncType<ParamType, ResultType>> {
 
 	private static final int HASH_SEED = 53;
-	private static final String OPERATOR_LABEL = "Func";
+	private static final String OPERATOR_LABEL = "func";
 
 	private final ParamDecl<ParamType> param;
 	private final Expr<ResultType> result;

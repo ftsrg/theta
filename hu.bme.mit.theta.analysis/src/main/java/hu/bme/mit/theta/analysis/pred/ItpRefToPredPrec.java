@@ -29,26 +29,26 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.solver.Solver;
 
-public class ItpRefToSimplePredPrec implements RefutationToPrec<SimplePredPrec, ItpRefutation> {
+public class ItpRefToPredPrec implements RefutationToPrec<PredPrec, ItpRefutation> {
 
 	private final Solver solver;
 	private final ExprSplitter exprSplitter;
 
-	public ItpRefToSimplePredPrec(final Solver solver, final ExprSplitter exprSplitter) {
+	public ItpRefToPredPrec(final Solver solver, final ExprSplitter exprSplitter) {
 		this.solver = checkNotNull(solver);
 		this.exprSplitter = checkNotNull(exprSplitter);
 	}
 
 	@Override
-	public SimplePredPrec toPrec(final ItpRefutation refutation, final int index) {
+	public PredPrec toPrec(final ItpRefutation refutation, final int index) {
 		final Expr<BoolType> expr = refutation.get(index);
 		final Collection<Expr<BoolType>> exprs = exprSplitter.apply(expr);
-		final SimplePredPrec prec = SimplePredPrec.create(exprs, solver);
+		final PredPrec prec = PredPrec.create(exprs, solver);
 		return prec;
 	}
 
 	@Override
-	public SimplePredPrec join(final SimplePredPrec prec1, final SimplePredPrec prec2) {
+	public PredPrec join(final PredPrec prec1, final PredPrec prec2) {
 		checkNotNull(prec1);
 		checkNotNull(prec2);
 		return prec1.join(prec2);

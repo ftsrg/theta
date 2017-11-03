@@ -88,7 +88,7 @@ public final class GuardOp implements ClockOp {
 
 	@Override
 	public String toString() {
-		return Utils.toStringBuilder("Guard").add(constr).toString();
+		return Utils.lispStringBuilder("Guard").add(constr).toString();
 	}
 
 }

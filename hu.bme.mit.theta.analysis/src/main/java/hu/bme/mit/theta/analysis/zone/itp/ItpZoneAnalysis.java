@@ -19,7 +19,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Analysis;
-import hu.bme.mit.theta.analysis.Domain;
+import hu.bme.mit.theta.analysis.PartialOrd;
 import hu.bme.mit.theta.analysis.InitFunc;
 import hu.bme.mit.theta.analysis.TransFunc;
 import hu.bme.mit.theta.analysis.zone.ZonePrec;
@@ -44,8 +44,8 @@ public final class ItpZoneAnalysis<A extends Action> implements Analysis<ItpZone
 	////
 
 	@Override
-	public Domain<ItpZoneState> getDomain() {
-		return ItpZoneDomain.getInstance();
+	public PartialOrd<ItpZoneState> getPartialOrd() {
+		return ItpZoneOrd.getInstance();
 	}
 
 	@Override

@@ -77,7 +77,7 @@ public abstract class ExprTraceStatus<R extends Refutation> {
 
 		@Override
 		public String toString() {
-			return Utils.toStringBuilder(ExprTraceStatus.class.getSimpleName()).add(getClass().getSimpleName())
+			return Utils.lispStringBuilder(ExprTraceStatus.class.getSimpleName()).add(getClass().getSimpleName())
 					.toString();
 		}
 
@@ -117,7 +117,7 @@ public abstract class ExprTraceStatus<R extends Refutation> {
 
 		@Override
 		public String toString() {
-			return Utils.toStringBuilder(ExprTraceStatus.class.getSimpleName()).add(getClass().getSimpleName())
+			return Utils.lispStringBuilder(ExprTraceStatus.class.getSimpleName()).add(getClass().getSimpleName())
 					.toString();
 		}
 

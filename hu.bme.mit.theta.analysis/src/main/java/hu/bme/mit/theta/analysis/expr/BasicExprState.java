@@ -13,28 +13,34 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.formalism.cfa.analysis;
+package hu.bme.mit.theta.analysis.expr;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 
-import hu.bme.mit.theta.analysis.Domain;
-import hu.bme.mit.theta.analysis.expr.ExprState;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
 
-public final class CfaDomain<S extends ExprState> implements Domain<CfaState<S>> {
+final class BasicExprState implements ExprState {
 
-	private final Domain<S> domain;
+	private final Expr<BoolType> expr;
 
-	private CfaDomain(final Domain<S> domain) {
-		this.domain = checkNotNull(domain);
+	private BasicExprState(final Expr<BoolType> expr) {
+		this.expr = checkNotNull(expr);
 	}
 
-	public static <S extends ExprState> CfaDomain<S> create(final Domain<S> domain) {
-		return new CfaDomain<>(domain);
+	public static BasicExprState of(final Expr<BoolType> expr) {
+		return new BasicExprState(expr);
 	}
 
 	@Override
-	public boolean isLeq(final CfaState<S> state1, final CfaState<S> state2) {
-		return state1.getLoc().equals(state2.getLoc()) && domain.isLeq(state1.getState(), state2.getState());
+	public Expr<BoolType> toExpr() {
+		return expr;
+	}
+
+	@Override
+	public boolean isBottom() {
+		return expr.equals(False());
 	}
 
 }

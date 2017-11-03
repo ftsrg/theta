@@ -57,6 +57,6 @@ public final class JoiningPrecRefiner<S extends State, A extends Action, P exten
 
 	@Override
 	public String toString() {
-		return Utils.toStringBuilder(getClass().getSimpleName()).add(refToPrec).toString();
+		return Utils.lispStringBuilder(getClass().getSimpleName()).add(refToPrec).toString();
 	}
 }

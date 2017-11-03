@@ -25,7 +25,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import hu.bme.mit.theta.core.model.Model;
+import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.solver.Interpolant;
@@ -193,7 +193,7 @@ final class Z3ItpSolver implements ItpSolver {
 	}
 
 	@Override
-	public Model getModel() {
+	public Valuation getModel() {
 		return solver.getModel();
 	}
 

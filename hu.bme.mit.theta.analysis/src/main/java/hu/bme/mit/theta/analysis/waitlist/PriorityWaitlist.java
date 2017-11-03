@@ -1,12 +1,12 @@
 /*
  *  Copyright 2017 Budapest University of Technology and Economics
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,7 +20,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.PriorityQueue;
-import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import hu.bme.mit.theta.analysis.algorithm.ArgNodeComparators;
@@ -89,16 +88,8 @@ public final class PriorityWaitlist<T> implements Waitlist<T> {
 		items.clear();
 	}
 
-	public static <T> Supplier<PriorityWaitlist<T>> supplier(final Comparator<? super T> comparator) {
-		return () -> PriorityWaitlist.create(comparator);
-	}
-
-	public static <T> Supplier<PriorityWaitlist<T>> supplier() {
-		return PriorityWaitlist::create;
-	}
-
 	@Override
 	public String toString() {
-		return Utils.toStringBuilder(getClass().getSimpleName()).add(items.comparator()).addAll(items).toString();
+		return Utils.lispStringBuilder(getClass().getSimpleName()).add(items.comparator()).addAll(items).toString();
 	}
 }

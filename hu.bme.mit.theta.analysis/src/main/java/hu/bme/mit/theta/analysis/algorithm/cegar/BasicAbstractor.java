@@ -20,7 +20,6 @@ import static com.google.common.base.Preconditions.checkState;
 
 import java.util.Collection;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Prec;
@@ -44,16 +43,15 @@ public final class BasicAbstractor<S extends State, A extends Action, P extends 
 
 	private final ArgBuilder<S, A, P> argBuilder;
 	private final Function<? super S, ?> projection;
-	private final Supplier<? extends Waitlist<ArgNode<S, A>>> waitlistSupplier;
+	private final Waitlist<ArgNode<S, A>> waitlist;
 	private final StopCriterion<S, A> stopCriterion;
 	private final Logger logger;
 
 	private BasicAbstractor(final ArgBuilder<S, A, P> argBuilder, final Function<? super S, ?> projection,
-			final Supplier<? extends Waitlist<ArgNode<S, A>>> waitlistSupplier, final StopCriterion<S, A> stopCriterion,
-			final Logger logger) {
+			final Waitlist<ArgNode<S, A>> waitlist, final StopCriterion<S, A> stopCriterion, final Logger logger) {
 		this.argBuilder = checkNotNull(argBuilder);
 		this.projection = checkNotNull(projection);
-		this.waitlistSupplier = checkNotNull(waitlistSupplier);
+		this.waitlist = checkNotNull(waitlist);
 		this.stopCriterion = checkNotNull(stopCriterion);
 		this.logger = checkNotNull(logger);
 	}
@@ -87,7 +85,7 @@ public final class BasicAbstractor<S extends State, A extends Action, P extends 
 		logger.write("Building ARG...", 3, 2);
 
 		final Partition<ArgNode<S, A>, ?> reachedSet = Partition.of(n -> projection.apply(n.getState()));
-		final Waitlist<ArgNode<S, A>> waitlist = waitlistSupplier.get();
+		waitlist.clear();
 
 		reachedSet.addAll(arg.getNodes());
 		waitlist.addAll(arg.getIncompleteNodes());
@@ -105,6 +103,8 @@ public final class BasicAbstractor<S extends State, A extends Action, P extends 
 
 		logger.writeln(String.format("done: %d nodes, %d incomplete, %d unsafe", arg.getNodes().count(),
 				arg.getIncompleteNodes().count(), arg.getUnsafeNodes().count()), 3);
+
+		waitlist.clear(); // Optimization
 
 		if (arg.isSafe()) {
 			checkState(arg.isComplete(), "Returning incomplete ARG as safe");
@@ -128,20 +128,20 @@ public final class BasicAbstractor<S extends State, A extends Action, P extends 
 
 	@Override
 	public String toString() {
-		return Utils.toStringBuilder(getClass().getSimpleName()).add(waitlistSupplier.get()).toString();
+		return Utils.lispStringBuilder(getClass().getSimpleName()).add(waitlist).toString();
 	}
 
 	public static final class Builder<S extends State, A extends Action, P extends Prec> {
 		private final ArgBuilder<S, A, P> argBuilder;
 		private Function<? super S, ?> projection;
-		private Supplier<? extends Waitlist<ArgNode<S, A>>> waitlistSupplier;
+		private Waitlist<ArgNode<S, A>> waitlist;
 		private StopCriterion<S, A> stopCriterion;
 		private Logger logger;
 
 		private Builder(final ArgBuilder<S, A, P> argBuilder) {
 			this.argBuilder = argBuilder;
 			this.projection = s -> 0;
-			this.waitlistSupplier = FifoWaitlist.supplier();
+			this.waitlist = FifoWaitlist.create();
 			this.stopCriterion = StopCriterions.firstCex();
 			this.logger = NullLogger.getInstance();
 		}
@@ -151,8 +151,8 @@ public final class BasicAbstractor<S extends State, A extends Action, P extends 
 			return this;
 		}
 
-		public Builder<S, A, P> waitlistSupplier(final Supplier<? extends Waitlist<ArgNode<S, A>>> waitlistSupplier) {
-			this.waitlistSupplier = waitlistSupplier;
+		public Builder<S, A, P> waitlist(final Waitlist<ArgNode<S, A>> waitlist) {
+			this.waitlist = waitlist;
 			return this;
 		}
 
@@ -167,7 +167,7 @@ public final class BasicAbstractor<S extends State, A extends Action, P extends 
 		}
 
 		public BasicAbstractor<S, A, P> build() {
-			return new BasicAbstractor<>(argBuilder, projection, waitlistSupplier, stopCriterion, logger);
+			return new BasicAbstractor<>(argBuilder, projection, waitlist, stopCriterion, logger);
 		}
 	}
 

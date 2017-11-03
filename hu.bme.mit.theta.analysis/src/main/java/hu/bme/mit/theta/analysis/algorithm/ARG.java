@@ -27,7 +27,7 @@ import java.util.OptionalInt;
 import java.util.stream.Stream;
 
 import hu.bme.mit.theta.analysis.Action;
-import hu.bme.mit.theta.analysis.Domain;
+import hu.bme.mit.theta.analysis.PartialOrd;
 import hu.bme.mit.theta.analysis.State;
 
 /**
@@ -39,16 +39,16 @@ public final class ARG<S extends State, A extends Action> {
 	private final Collection<ArgNode<S, A>> initNodes;
 	boolean initialized; // Set by ArgBuilder
 	private int nextId = 0;
-	final Domain<S> domain;
+	final PartialOrd<S> partialOrd;
 
-	private ARG(final Domain<S> domain) {
+	private ARG(final PartialOrd<S> partialOrd) {
 		initNodes = new HashSet<>();
-		this.domain = domain;
+		this.partialOrd = partialOrd;
 		this.initialized = false;
 	}
 
-	public static <S extends State, A extends Action> ARG<S, A> create(final Domain<S> domain) {
-		return new ARG<>(domain);
+	public static <S extends State, A extends Action> ARG<S, A> create(final PartialOrd<S> partialOrd) {
+		return new ARG<>(partialOrd);
 	}
 
 	////

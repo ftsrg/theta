@@ -120,7 +120,7 @@ public abstract class Tuple implements Product, Iterable<Object> {
 
 	@Override
 	public final String toString() {
-		return Utils.toStringBuilder(getClass().getSimpleName()).addAll(elems).toString();
+		return Utils.lispStringBuilder(getClass().getSimpleName()).addAll(elems).toString();
 	}
 
 }

@@ -13,30 +13,28 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.formalism.xta.analysis;
+package hu.bme.mit.theta.formalism.cfa.analysis;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import hu.bme.mit.theta.analysis.Domain;
-import hu.bme.mit.theta.analysis.State;
+import hu.bme.mit.theta.analysis.PartialOrd;
+import hu.bme.mit.theta.analysis.expr.ExprState;
 
-final class XtaDomain<S extends State> implements Domain<XtaState<S>> {
+public final class CfaOrd<S extends ExprState> implements PartialOrd<CfaState<S>> {
 
-	private final Domain<S> domain;
+	private final PartialOrd<S> partialOrd;
 
-	private XtaDomain(final Domain<S> domain) {
-		this.domain = checkNotNull(domain);
+	private CfaOrd(final PartialOrd<S> partialOrd) {
+		this.partialOrd = checkNotNull(partialOrd);
 	}
 
-	public static <S extends State> XtaDomain<S> create(final Domain<S> domain) {
-		return new XtaDomain<>(domain);
+	public static <S extends ExprState> CfaOrd<S> create(final PartialOrd<S> partialOrd) {
+		return new CfaOrd<>(partialOrd);
 	}
 
 	@Override
-	public boolean isLeq(final XtaState<S> state1, final XtaState<S> state2) {
-		checkNotNull(state1);
-		checkNotNull(state2);
-		return state1.getLocs().equals(state2.getLocs()) && domain.isLeq(state1.getState(), state2.getState());
+	public boolean isLeq(final CfaState<S> state1, final CfaState<S> state2) {
+		return state1.getLoc().equals(state2.getLoc()) && partialOrd.isLeq(state1.getState(), state2.getState());
 	}
 
 }

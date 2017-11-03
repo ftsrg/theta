@@ -99,7 +99,7 @@ public abstract class ProdPrec implements Prec, Product, Iterable<Prec> {
 
 	@Override
 	public final String toString() {
-		return Utils.toStringBuilder(getClass().getSimpleName()).addAll(precs).toString();
+		return Utils.lispStringBuilder(getClass().getSimpleName()).addAll(precs).toString();
 	}
 
 }

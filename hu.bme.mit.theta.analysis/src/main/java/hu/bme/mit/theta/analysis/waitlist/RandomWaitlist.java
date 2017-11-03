@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Random;
 import java.util.stream.Stream;
 
@@ -33,13 +34,17 @@ public final class RandomWaitlist<T> implements Waitlist<T> {
 	private final List<T> items;
 	private final Random random;
 
-	private RandomWaitlist() {
+	private RandomWaitlist(final Optional<Long> seed) {
 		items = new LinkedList<>();
-		random = new Random();
+		random = seed.isPresent() ? new Random(seed.get()) : new Random();
 	}
 
 	public static <T> RandomWaitlist<T> create() {
-		return new RandomWaitlist<>();
+		return new RandomWaitlist<>(Optional.empty());
+	}
+
+	public static <T> RandomWaitlist<T> create(final long seed) {
+		return new RandomWaitlist<>(Optional.of(seed));
 	}
 
 	@Override
@@ -82,7 +87,7 @@ public final class RandomWaitlist<T> implements Waitlist<T> {
 
 	@Override
 	public String toString() {
-		return Utils.toStringBuilder(getClass().getSimpleName()).addAll(items).toString();
+		return Utils.lispStringBuilder(getClass().getSimpleName()).addAll(items).toString();
 	}
 
 }

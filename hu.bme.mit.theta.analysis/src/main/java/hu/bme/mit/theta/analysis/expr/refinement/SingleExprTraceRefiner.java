@@ -89,7 +89,7 @@ public final class SingleExprTraceRefiner<S extends ExprState, A extends ExprAct
 
 	@Override
 	public String toString() {
-		return Utils.toStringBuilder(getClass().getSimpleName()).add(exprTraceChecker).add(precRefiner).toString();
+		return Utils.lispStringBuilder(getClass().getSimpleName()).add(exprTraceChecker).add(precRefiner).toString();
 	}
 
 }

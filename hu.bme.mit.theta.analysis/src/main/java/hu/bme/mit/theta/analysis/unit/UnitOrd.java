@@ -13,26 +13,28 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.analysis.expl;
+package hu.bme.mit.theta.analysis.unit;
 
-import hu.bme.mit.theta.analysis.Domain;
+import static com.google.common.base.Preconditions.checkNotNull;
 
-public final class ExplDomain implements Domain<ExplState> {
+import hu.bme.mit.theta.analysis.PartialOrd;
 
-	private static final class LazyHolder {
-		private static final ExplDomain INSTANCE = new ExplDomain();
+final class UnitOrd implements PartialOrd<UnitState> {
+
+	private static final UnitOrd INSTANCE = new UnitOrd();
+
+	private UnitOrd() {
 	}
 
-	private ExplDomain() {
-	}
-
-	public static ExplDomain getInstance() {
-		return LazyHolder.INSTANCE;
+	public static UnitOrd getInstance() {
+		return INSTANCE;
 	}
 
 	@Override
-	public boolean isLeq(final ExplState state1, final ExplState state2) {
-		return state1.isLeq(state2);
+	public boolean isLeq(final UnitState state1, final UnitState state2) {
+		checkNotNull(state1);
+		checkNotNull(state2);
+		return true;
 	}
 
 }

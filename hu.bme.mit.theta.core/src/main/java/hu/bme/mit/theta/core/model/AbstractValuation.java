@@ -13,34 +13,34 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.analysis.expr;
+package hu.bme.mit.theta.core.model;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import hu.bme.mit.theta.common.Utils;
+import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
-final class SimpleExprState implements ExprState {
+public abstract class AbstractValuation implements Valuation {
 
-	private final Expr<BoolType> expr;
-
-	private SimpleExprState(final Expr<BoolType> expr) {
-		this.expr = checkNotNull(expr);
-	}
-
-	public static SimpleExprState of(final Expr<BoolType> expr) {
-		return new SimpleExprState(expr);
+	@Override
+	public final Expr<BoolType> toExpr() {
+		final List<Expr<BoolType>> exprs = new ArrayList<>();
+		for (final Decl<?> decl : getDecls()) {
+			final Expr<BoolType> expr = Eq(decl.getRef(), eval(decl).get());
+			exprs.add(expr);
+		}
+		return And(exprs);
 	}
 
 	@Override
-	public Expr<BoolType> toExpr() {
-		return expr;
-	}
-
-	@Override
-	public boolean isBottom() {
-		return expr.equals(False());
+	public final String toString() {
+		return Utils.lispStringBuilder("").addAll(getDecls(), d -> d.getName() + " <- " + eval(d).get()).toString();
 	}
 
 }

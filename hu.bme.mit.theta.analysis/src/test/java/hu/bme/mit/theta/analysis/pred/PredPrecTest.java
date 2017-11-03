@@ -34,7 +34,7 @@ import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 
-public class SimplePredPrecTest {
+public class PredPrecTest {
 
 	private final VarDecl<IntType> x = Var("x", Int());
 	private final VarDecl<IntType> y = Var("y", Int());
@@ -45,7 +45,7 @@ public class SimplePredPrecTest {
 
 	@Test
 	public void testMapping() {
-		final PredPrec prec = SimplePredPrec.create(Collections.singleton(pred), solver);
+		final PredPrec prec = PredPrec.create(Collections.singleton(pred), solver);
 
 		final PredState s1 = prec.createState(BasicValuation.builder().put(x, Int(0)).build());
 		final PredState s2 = prec.createState(BasicValuation.builder().put(x, Int(10)).build());
@@ -58,13 +58,13 @@ public class SimplePredPrecTest {
 
 	@Test
 	public void testRefinement() {
-		final SimplePredPrec p0 = SimplePredPrec.create(solver);
-		final SimplePredPrec p1 = SimplePredPrec.create(Collections.singleton(pred), solver);
-		final SimplePredPrec p2 = SimplePredPrec.create(Collections.singleton(Eq(x.getRef(), y.getRef())), solver);
+		final PredPrec p0 = PredPrec.create(solver);
+		final PredPrec p1 = PredPrec.create(Collections.singleton(pred), solver);
+		final PredPrec p2 = PredPrec.create(Collections.singleton(Eq(x.getRef(), y.getRef())), solver);
 
-		final SimplePredPrec r1 = p1.join(p0);
-		final SimplePredPrec r2 = p1.join(p2);
-		final SimplePredPrec r3 = p1.join(r2);
+		final PredPrec r1 = p1.join(p0);
+		final PredPrec r2 = p1.join(p2);
+		final PredPrec r3 = p1.join(r2);
 
 		Assert.assertSame(p1, r1);
 		Assert.assertNotSame(p1, r2);
@@ -74,9 +74,9 @@ public class SimplePredPrecTest {
 
 	@Test
 	public void testEquals() {
-		final SimplePredPrec p0 = SimplePredPrec.create(solver);
-		final SimplePredPrec p1 = SimplePredPrec.create(Collections.singleton(pred), solver);
-		final SimplePredPrec p2 = SimplePredPrec.create(Collections.singleton(pred), solver);
+		final PredPrec p0 = PredPrec.create(solver);
+		final PredPrec p1 = PredPrec.create(Collections.singleton(pred), solver);
+		final PredPrec p2 = PredPrec.create(Collections.singleton(pred), solver);
 
 		Assert.assertNotEquals(p0, p1);
 		Assert.assertNotEquals(p0, p2);

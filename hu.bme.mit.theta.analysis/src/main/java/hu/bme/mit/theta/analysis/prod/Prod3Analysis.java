@@ -19,7 +19,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Analysis;
-import hu.bme.mit.theta.analysis.Domain;
+import hu.bme.mit.theta.analysis.PartialOrd;
 import hu.bme.mit.theta.analysis.InitFunc;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
@@ -28,7 +28,7 @@ import hu.bme.mit.theta.analysis.TransFunc;
 public final class Prod3Analysis<S1 extends State, S2 extends State, S3 extends State, A extends Action, P1 extends Prec, P2 extends Prec, P3 extends Prec>
 		implements Analysis<Prod3State<S1, S2, S3>, A, Prod3Prec<P1, P2, P3>> {
 
-	private final Domain<Prod3State<S1, S2, S3>> domain;
+	private final PartialOrd<Prod3State<S1, S2, S3>> partialOrd;
 	private final InitFunc<Prod3State<S1, S2, S3>, Prod3Prec<P1, P2, P3>> initFunc;
 	private final TransFunc<Prod3State<S1, S2, S3>, A, Prod3Prec<P1, P2, P3>> transFunc;
 
@@ -37,7 +37,7 @@ public final class Prod3Analysis<S1 extends State, S2 extends State, S3 extends 
 		checkNotNull(analysis1);
 		checkNotNull(analysis2);
 		checkNotNull(analysis3);
-		domain = Prod3Domain.create(analysis1.getDomain(), analysis2.getDomain(), analysis3.getDomain());
+		partialOrd = Prod3Ord.create(analysis1.getPartialOrd(), analysis2.getPartialOrd(), analysis3.getPartialOrd());
 		initFunc = Prod3InitFunc.create(analysis1.getInitFunc(), analysis2.getInitFunc(), analysis3.getInitFunc());
 		transFunc = Prod3TransFunc.create(analysis1.getTransFunc(), analysis2.getTransFunc(),
 				analysis3.getTransFunc());
@@ -50,8 +50,8 @@ public final class Prod3Analysis<S1 extends State, S2 extends State, S3 extends 
 	}
 
 	@Override
-	public Domain<Prod3State<S1, S2, S3>> getDomain() {
-		return domain;
+	public PartialOrd<Prod3State<S1, S2, S3>> getPartialOrd() {
+		return partialOrd;
 	}
 
 	@Override

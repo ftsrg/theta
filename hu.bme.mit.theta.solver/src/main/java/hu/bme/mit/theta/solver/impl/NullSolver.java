@@ -17,7 +17,7 @@ package hu.bme.mit.theta.solver.impl;
 
 import java.util.Collection;
 
-import hu.bme.mit.theta.core.model.Model;
+import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.solver.Solver;
@@ -72,7 +72,7 @@ public final class NullSolver implements Solver {
 	}
 
 	@Override
-	public Model getModel() {
+	public Valuation getModel() {
 		throw new UnsupportedOperationException();
 	}
 

@@ -1,12 +1,12 @@
 /*
  *  Copyright 2017 Budapest University of Technology and Economics
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,7 +28,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
 
 import hu.bme.mit.theta.analysis.Prec;
-import hu.bme.mit.theta.common.ToStringBuilder;
+import hu.bme.mit.theta.common.LispStringBuilder;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.formalism.cfa.CFA.Loc;
 import hu.bme.mit.theta.formalism.cfa.analysis.CfaPrec;
@@ -86,7 +86,8 @@ public final class LocalCfaPrec<P extends Prec> implements CfaPrec<P> {
 			final Loc loc = entry.getKey();
 			final P prec = entry.getValue();
 
-			// TODO: instead of == this should be 'equals' (it is correct this way as well, but it would be more efficient)
+			// TODO: instead of == this should be 'equals' (it is correct this
+			// way as well, but it would be more efficient)
 			if (defaultPrec.isPresent() && !mapping.containsKey(loc) && defaultPrec.get() == prec) {
 				continue;
 			}
@@ -102,11 +103,11 @@ public final class LocalCfaPrec<P extends Prec> implements CfaPrec<P> {
 
 	@Override
 	public String toString() {
-		final ToStringBuilder builder = Utils.toStringBuilder(getClass().getSimpleName());
-		builder.add("Precs: " + mapping.size());
+		final LispStringBuilder builder = Utils.lispStringBuilder(getClass().getSimpleName());
 		if (defaultPrec.isPresent()) {
-			builder.add("Default: " + defaultPrec.get());
+			builder.add(Utils.lispStringBuilder("default").add(defaultPrec.get()).toString());
 		}
+		mapping.entrySet().forEach(e -> builder.add(Utils.lispStringBuilder(e.getKey() + "").add(e.getValue())));
 		return builder.toString();
 	}
 

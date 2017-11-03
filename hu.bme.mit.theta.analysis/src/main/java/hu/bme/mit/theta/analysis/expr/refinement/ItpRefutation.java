@@ -96,7 +96,7 @@ public final class ItpRefutation implements Refutation, Iterable<Expr<BoolType>>
 
 	@Override
 	public String toString() {
-		return Utils.toStringBuilder(getClass().getSimpleName()).addAll(itpSequence).toString();
+		return Utils.lispStringBuilder(getClass().getSimpleName()).addAll(itpSequence).toString();
 	}
 
 	public Stream<Expr<BoolType>> stream() {

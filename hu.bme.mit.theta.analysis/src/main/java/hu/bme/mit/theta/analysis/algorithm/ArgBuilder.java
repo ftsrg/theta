@@ -52,7 +52,7 @@ public final class ArgBuilder<S extends State, A extends Action, P extends Prec>
 	}
 
 	public ARG<S, A> createArg() {
-		return ARG.create(analysis.getDomain());
+		return ARG.create(analysis.getPartialOrd());
 	}
 
 	public Collection<ArgNode<S, A>> init(final ARG<S, A> arg, final P prec) {
@@ -63,7 +63,7 @@ public final class ArgBuilder<S extends State, A extends Action, P extends Prec>
 
 		final Collection<? extends S> initStates = analysis.getInitFunc().getInitStates(prec);
 		for (final S initState : initStates) {
-			if (arg.getInitStates().noneMatch(s -> analysis.getDomain().isLeq(initState, s))) {
+			if (arg.getInitStates().noneMatch(s -> analysis.getPartialOrd().isLeq(initState, s))) {
 				final boolean isTarget = target.test(initState);
 				final ArgNode<S, A> newNode = arg.createInitNode(initState, isTarget);
 				newInitNodes.add(newNode);
@@ -85,7 +85,7 @@ public final class ArgBuilder<S extends State, A extends Action, P extends Prec>
 		for (final A action : actions) {
 			final Collection<? extends S> succStates = transFunc.getSuccStates(state, action, prec);
 			for (final S succState : succStates) {
-				if (node.getSuccStates().noneMatch(s -> analysis.getDomain().isLeq(succState, s))) {
+				if (node.getSuccStates().noneMatch(s -> analysis.getPartialOrd().isLeq(succState, s))) {
 					final boolean isTarget = target.test(succState);
 					final ArgNode<S, A> newNode = node.arg.createSuccNode(node, action, succState, isTarget);
 					newSuccNodes.add(newNode);

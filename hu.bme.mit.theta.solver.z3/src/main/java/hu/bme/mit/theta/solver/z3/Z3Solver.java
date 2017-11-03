@@ -32,8 +32,8 @@ import com.microsoft.z3.Status;
 
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.Decl;
-import hu.bme.mit.theta.core.model.AbstractModel;
-import hu.bme.mit.theta.core.model.Model;
+import hu.bme.mit.theta.core.model.AbstractValuation;
+import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
@@ -62,7 +62,7 @@ final class Z3Solver implements Solver {
 	private static final String ASSUMPTION_LABEL = "_LABEL_%d";
 	private int labelNum = 0;
 
-	private Model model;
+	private Valuation model;
 	private Collection<Expr<BoolType>> unsatCore;
 	private SolverStatus status;
 
@@ -153,7 +153,7 @@ final class Z3Solver implements Solver {
 	}
 
 	@Override
-	public Model getModel() {
+	public Valuation getModel() {
 		checkState(status == SolverStatus.SAT, "Cannot get model if status is not SAT.");
 
 		if (model == null) {
@@ -164,7 +164,7 @@ final class Z3Solver implements Solver {
 		return model;
 	}
 
-	private Model extractModel() {
+	private Valuation extractModel() {
 		assert status == SolverStatus.SAT;
 		assert model == null;
 
@@ -222,7 +222,7 @@ final class Z3Solver implements Solver {
 
 	////
 
-	private final class Z3Model extends AbstractModel {
+	private final class Z3Model extends AbstractValuation {
 		final com.microsoft.z3.Model z3Model;
 
 		Collection<ConstDecl<?>> constDecls;

@@ -55,6 +55,7 @@ public abstract class ExplState implements ExprState, Valuation {
 
 	public abstract boolean isLeq(final ExplState that);
 
+	@Override
 	public abstract boolean isBottom();
 
 	public abstract boolean isTop();
@@ -141,8 +142,10 @@ public abstract class ExplState implements ExprState, Valuation {
 
 		@Override
 		public String toString() {
-			return val.getDecls().stream().map((final Decl<?> v) -> v.getName() + " = " + eval(v).get())
-					.collect(joining("\n"));
+			return val.getDecls().stream()
+					.map((final Decl<?> v) -> String.format("(<- %s %s)", v.getName(), eval(v).get()))
+					.collect(joining(" "));
+
 		}
 	}
 
@@ -193,7 +196,7 @@ public abstract class ExplState implements ExprState, Valuation {
 
 		@Override
 		public String toString() {
-			return Utils.toStringBuilder(ExplState.class.getSimpleName()).add("Bottom").toString();
+			return Utils.lispStringBuilder(ExplState.class.getSimpleName()).add("Bottom").toString();
 		}
 	}
 

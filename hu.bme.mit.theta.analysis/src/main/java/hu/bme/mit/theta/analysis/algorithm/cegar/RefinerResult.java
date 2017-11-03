@@ -99,7 +99,7 @@ public abstract class RefinerResult<S extends State, A extends Action, P extends
 
 		@Override
 		public String toString() {
-			return Utils.toStringBuilder(RefinerResult.class.getSimpleName()).add(getClass().getSimpleName())
+			return Utils.lispStringBuilder(RefinerResult.class.getSimpleName()).add(getClass().getSimpleName())
 					.toString();
 		}
 	}
@@ -141,7 +141,7 @@ public abstract class RefinerResult<S extends State, A extends Action, P extends
 
 		@Override
 		public String toString() {
-			return Utils.toStringBuilder(RefinerResult.class.getSimpleName()).add(getClass().getSimpleName())
+			return Utils.lispStringBuilder(RefinerResult.class.getSimpleName()).add(getClass().getSimpleName())
 					.toString();
 		}
 	}

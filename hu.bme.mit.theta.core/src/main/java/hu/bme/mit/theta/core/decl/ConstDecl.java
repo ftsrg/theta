@@ -26,7 +26,7 @@ public abstract class ConstDecl<DeclType extends Type> extends AbstractDecl<Decl
 
 	@Override
 	public final String toString() {
-		return Utils.toStringBuilder(DECL_LABEL).add(getName()).add(getType()).toString();
+		return Utils.lispStringBuilder(DECL_LABEL).add(getName()).add(getType()).toString();
 	}
 
 }

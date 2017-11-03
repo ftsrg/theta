@@ -23,7 +23,7 @@ public final class Decls {
 	}
 
 	public static <T extends Type> ConstDecl<T> Const(final String name, final T type) {
-		return new SimpleConstDecl<>(name, type);
+		return new BasicConstDecl<>(name, type);
 	}
 
 	public static <T extends Type> ParamDecl<T> Param(final String name, final T type) {

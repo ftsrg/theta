@@ -60,7 +60,7 @@ public final class GlobalCfaPrec<P extends Prec> implements CfaPrec<P> {
 
 	@Override
 	public String toString() {
-		return Utils.toStringBuilder(getClass().getSimpleName()).add(prec).toString();
+		return Utils.lispStringBuilder(getClass().getSimpleName()).add(prec).toString();
 	}
 
 	@Override

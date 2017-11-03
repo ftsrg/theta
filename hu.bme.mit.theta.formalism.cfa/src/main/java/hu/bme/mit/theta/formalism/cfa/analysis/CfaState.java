@@ -18,7 +18,6 @@ package hu.bme.mit.theta.formalism.cfa.analysis;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import hu.bme.mit.theta.analysis.expr.ExprState;
-import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.formalism.cfa.CFA.Loc;
@@ -101,7 +100,7 @@ public final class CfaState<S extends ExprState> implements ExprState {
 
 	@Override
 	public String toString() {
-		return Utils.toStringBuilder(getClass().getSimpleName()).add(loc).add(state).toString();
+		return String.format("%s %s", loc, state);
 	}
 
 }

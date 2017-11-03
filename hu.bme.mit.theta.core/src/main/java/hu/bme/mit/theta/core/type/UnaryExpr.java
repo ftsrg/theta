@@ -71,7 +71,7 @@ public abstract class UnaryExpr<OpType extends Type, ExprType extends Type> impl
 
 	@Override
 	public final String toString() {
-		return Utils.toStringBuilder(getOperatorLabel()).add(op).toString();
+		return Utils.lispStringBuilder(getOperatorLabel()).add(op).toString();
 	}
 
 	public abstract UnaryExpr<OpType, ExprType> with(final Expr<OpType> op);

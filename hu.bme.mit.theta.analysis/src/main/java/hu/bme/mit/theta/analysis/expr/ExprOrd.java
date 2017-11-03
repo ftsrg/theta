@@ -19,20 +19,20 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 import static hu.bme.mit.theta.core.utils.PathUtils.unfold;
 
-import hu.bme.mit.theta.analysis.Domain;
+import hu.bme.mit.theta.analysis.PartialOrd;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.utils.WithPushPop;
 
-public final class ExprDomain implements Domain<ExprState> {
+public final class ExprOrd implements PartialOrd<ExprState> {
 
 	private final Solver solver;
 
-	private ExprDomain(final Solver solver) {
+	private ExprOrd(final Solver solver) {
 		this.solver = checkNotNull(solver);
 	}
 
-	public static ExprDomain create(final Solver solver) {
-		return new ExprDomain(solver);
+	public static ExprOrd create(final Solver solver) {
+		return new ExprOrd(solver);
 	}
 
 	@Override

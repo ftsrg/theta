@@ -71,7 +71,7 @@ public final class DeclSymbol implements Symbol {
 
 	@Override
 	public String toString() {
-		return Utils.toStringBuilder(getClass().getSimpleName()).add(decl).toString();
+		return Utils.lispStringBuilder(getClass().getSimpleName()).add(decl).toString();
 	}
 
 }

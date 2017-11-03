@@ -1,12 +1,12 @@
 /*
  *  Copyright 2017 Budapest University of Technology and Economics
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,11 +21,6 @@ import java.util.NoSuchElementException;
 
 import org.junit.Assert;
 import org.junit.Test;
-
-import hu.bme.mit.theta.analysis.waitlist.FifoWaitlist;
-import hu.bme.mit.theta.analysis.waitlist.LifoWaitlist;
-import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist;
-import hu.bme.mit.theta.analysis.waitlist.Waitlist;
 
 public class WaitlistTest {
 
@@ -183,5 +178,25 @@ public class WaitlistTest {
 	public void testPriorityException() {
 		final Waitlist<String> waitlist = PriorityWaitlist.create();
 		waitlist.remove();
+	}
+
+	@Test
+	public void testRandomSeed() {
+		final long seed = 1234;
+		final Waitlist<String> wl1 = RandomWaitlist.create(seed);
+		final Waitlist<String> wl2 = RandomWaitlist.create(seed);
+
+		for (int i = 1; i <= 10; ++i) {
+			final String item = "item" + i;
+			wl1.add(item);
+			wl2.add(item);
+		}
+
+		while (!wl1.isEmpty() && !wl2.isEmpty()) {
+			Assert.assertEquals(wl1.remove(), wl2.remove());
+		}
+
+		Assert.assertTrue(wl1.isEmpty());
+		Assert.assertTrue(wl2.isEmpty());
 	}
 }

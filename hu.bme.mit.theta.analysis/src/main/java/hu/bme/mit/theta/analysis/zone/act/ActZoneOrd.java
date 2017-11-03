@@ -15,18 +15,18 @@
  */
 package hu.bme.mit.theta.analysis.zone.act;
 
-import hu.bme.mit.theta.analysis.Domain;
+import hu.bme.mit.theta.analysis.PartialOrd;
 
-public final class ActZoneDomain implements Domain<ActZoneState> {
+public final class ActZoneOrd implements PartialOrd<ActZoneState> {
 
-	private ActZoneDomain() {
+	private ActZoneOrd() {
 	}
 
 	private static class LazyHolder {
-		static final ActZoneDomain INSTANCE = new ActZoneDomain();
+		static final ActZoneOrd INSTANCE = new ActZoneOrd();
 	}
 
-	public static ActZoneDomain getInstance() {
+	public static ActZoneOrd getInstance() {
 		return LazyHolder.INSTANCE;
 	}
 

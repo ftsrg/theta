@@ -110,7 +110,7 @@ public abstract class ProdState implements ExprState, Product, Iterable<State> {
 
 	@Override
 	public final String toString() {
-		return states.stream().map(Object::toString).collect(joining("\n"));
+		return states.stream().map(Object::toString).collect(joining(" "));
 	}
 
 }

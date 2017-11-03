@@ -18,7 +18,7 @@ package hu.bme.mit.theta.analysis.expl;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import hu.bme.mit.theta.analysis.Analysis;
-import hu.bme.mit.theta.analysis.Domain;
+import hu.bme.mit.theta.analysis.PartialOrd;
 import hu.bme.mit.theta.analysis.InitFunc;
 import hu.bme.mit.theta.analysis.TransFunc;
 import hu.bme.mit.theta.analysis.expr.StmtAction;
@@ -28,14 +28,14 @@ import hu.bme.mit.theta.solver.Solver;
 
 public final class ExplStmtAnalysis implements Analysis<ExplState, StmtAction, ExplPrec> {
 
-	private final Domain<ExplState> domain;
+	private final PartialOrd<ExplState> partialOrd;
 	private final InitFunc<ExplState, ExplPrec> initFunc;
 	private final TransFunc<ExplState, StmtAction, ExplPrec> transFunc;
 
 	private ExplStmtAnalysis(final Solver solver, final Expr<BoolType> initExpr, final int maxStatesFromSolver) {
 		checkNotNull(solver);
 		checkNotNull(initExpr);
-		this.domain = ExplDomain.getInstance();
+		this.partialOrd = ExplOrd.getInstance();
 		this.initFunc = ExplInitFunc.create(solver, initExpr);
 		this.transFunc = ExplStmtTransFunc.create(solver, maxStatesFromSolver);
 	}
@@ -46,8 +46,8 @@ public final class ExplStmtAnalysis implements Analysis<ExplState, StmtAction, E
 	}
 
 	@Override
-	public Domain<ExplState> getDomain() {
-		return domain;
+	public PartialOrd<ExplState> getPartialOrd() {
+		return partialOrd;
 	}
 
 	@Override

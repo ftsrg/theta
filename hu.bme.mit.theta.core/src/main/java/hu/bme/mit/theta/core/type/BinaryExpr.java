@@ -79,7 +79,7 @@ public abstract class BinaryExpr<OpType extends Type, ExprType extends Type> imp
 
 	@Override
 	public final String toString() {
-		return Utils.toStringBuilder(getOperatorLabel()).add(leftOp).add(rightOp).toString();
+		return Utils.lispStringBuilder(getOperatorLabel()).add(leftOp).add(rightOp).toString();
 	}
 
 	public abstract BinaryExpr<OpType, ExprType> with(final Expr<OpType> leftOp, final Expr<OpType> rightOp);

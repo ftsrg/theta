@@ -27,13 +27,13 @@ import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.stubs.ActionStub;
-import hu.bme.mit.theta.analysis.stubs.DomainStub;
+import hu.bme.mit.theta.analysis.stubs.PartialOrdStub;
 import hu.bme.mit.theta.analysis.stubs.StateStub;
 
 public class ArgCexTest {
 	@Test
 	public void test() {
-		final ARG<State, Action> arg = ARG.create(new DomainStub());
+		final ARG<State, Action> arg = ARG.create(new PartialOrdStub());
 
 		final State s1 = new StateStub("S1");
 		final State s2 = new StateStub("S2");

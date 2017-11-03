@@ -30,6 +30,7 @@ import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.LineStyle;
 import hu.bme.mit.theta.common.visualization.NodeAttributes;
 import hu.bme.mit.theta.core.decl.Decl;
+import hu.bme.mit.theta.core.dsl.CoreDslManager;
 import hu.bme.mit.theta.formalism.cfa.CFA;
 import hu.bme.mit.theta.formalism.cfa.CFA.Edge;
 import hu.bme.mit.theta.formalism.cfa.CFA.Loc;
@@ -81,8 +82,9 @@ public final class CfaVisualizer {
 	}
 
 	private static void addEdge(final Graph graph, final Edge edge, final Map<Loc, String> ids) {
-		final EdgeAttributes eAttributes = EdgeAttributes.builder().label(edge.getStmt().toString()).color(LINE_COLOR)
-				.lineStyle(EDGE_LINE_STYLE).font(EDGE_FONT).build();
+		final EdgeAttributes eAttributes = EdgeAttributes.builder()
+				.label(new CoreDslManager().writeStmt(edge.getStmt())).color(LINE_COLOR).lineStyle(EDGE_LINE_STYLE)
+				.font(EDGE_FONT).build();
 		graph.addEdge(ids.get(edge.getSource()), ids.get(edge.getTarget()), eAttributes);
 	}
 

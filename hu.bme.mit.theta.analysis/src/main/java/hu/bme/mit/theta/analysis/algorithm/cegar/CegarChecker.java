@@ -115,6 +115,6 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 
 	@Override
 	public String toString() {
-		return Utils.toStringBuilder(getClass().getSimpleName()).add(abstractor).add(refiner).toString();
+		return Utils.lispStringBuilder(getClass().getSimpleName()).add(abstractor).add(refiner).toString();
 	}
 }

@@ -98,7 +98,7 @@ public final class ShiftOp implements ClockOp {
 
 	@Override
 	public String toString() {
-		return Utils.toStringBuilder("Shift").add(var.getName()).add(offset).toString();
+		return Utils.lispStringBuilder("Shift").add(var.getName()).add(offset).toString();
 	}
 
 }

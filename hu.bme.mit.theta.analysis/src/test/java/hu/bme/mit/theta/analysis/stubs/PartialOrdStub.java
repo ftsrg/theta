@@ -1,24 +1,28 @@
 /*
  *  Copyright 2017 Budapest University of Technology and Economics
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.core.model;
+package hu.bme.mit.theta.analysis.stubs;
 
-/*
- * This interface adds nothing to Valuation, it is just nice to have the name
- * 'Model' for the solvers. Currently under consideration for deleting it.
- */
-public interface Model extends Valuation {
+import hu.bme.mit.theta.analysis.PartialOrd;
+import hu.bme.mit.theta.analysis.State;
+
+public class PartialOrdStub implements PartialOrd<State> {
+
+	@Override
+	public boolean isLeq(final State state1, final State state2) {
+		return state1.equals(state2);
+	}
 
 }

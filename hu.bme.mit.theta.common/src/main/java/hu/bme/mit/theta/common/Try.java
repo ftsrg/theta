@@ -110,7 +110,7 @@ public abstract class Try<T> {
 
 		@Override
 		public String toString() {
-			return Utils.toStringBuilder("Success").add(value).toString();
+			return Utils.lispStringBuilder("Success").add(value).toString();
 		}
 	}
 
@@ -179,7 +179,7 @@ public abstract class Try<T> {
 
 		@Override
 		public String toString() {
-			return Utils.toStringBuilder("Faliure").add(exception).toString();
+			return Utils.lispStringBuilder("Faliure").add(exception).toString();
 		}
 	}
 

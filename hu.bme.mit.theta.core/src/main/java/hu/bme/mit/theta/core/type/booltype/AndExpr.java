@@ -1,12 +1,12 @@
 /*
  *  Copyright 2017 Budapest University of Technology and Economics
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,7 +27,7 @@ public final class AndExpr extends MultiaryExpr<BoolType, BoolType> {
 
 	private static final int HASH_SEED = 41;
 
-	private static final String OPERATOR_LABEL = "And";
+	private static final String OPERATOR_LABEL = "and";
 
 	AndExpr(final Iterable<? extends Expr<BoolType>> ops) {
 		super(ops);

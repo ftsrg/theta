@@ -1,12 +1,12 @@
 /*
  *  Copyright 2017 Budapest University of Technology and Economics
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,7 +35,7 @@ public final class ArrayWriteExpr<IndexType extends Type, ElemType extends Type>
 
 	private static final int HASH_SEED = 1699;
 
-	private static final String OPERATOR_LABEL = "Write";
+	private static final String OPERATOR_LABEL = "write";
 
 	private volatile int hashCode = 0;
 
@@ -138,7 +138,7 @@ public final class ArrayWriteExpr<IndexType extends Type, ElemType extends Type>
 
 	@Override
 	public String toString() {
-		return Utils.toStringBuilder(OPERATOR_LABEL).add(array).add(index).add(elem).toString();
+		return Utils.lispStringBuilder(OPERATOR_LABEL).add(array).add(index).add(elem).toString();
 	}
 
 }

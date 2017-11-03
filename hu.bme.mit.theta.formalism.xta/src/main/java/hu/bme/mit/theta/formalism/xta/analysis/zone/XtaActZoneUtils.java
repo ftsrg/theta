@@ -28,7 +28,7 @@ import hu.bme.mit.theta.formalism.xta.Update;
 import hu.bme.mit.theta.formalism.xta.XtaProcess.Edge;
 import hu.bme.mit.theta.formalism.xta.XtaProcess.Loc;
 import hu.bme.mit.theta.formalism.xta.analysis.XtaAction;
-import hu.bme.mit.theta.formalism.xta.analysis.XtaAction.SimpleXtaAction;
+import hu.bme.mit.theta.formalism.xta.analysis.XtaAction.BasicXtaAction;
 import hu.bme.mit.theta.formalism.xta.analysis.XtaAction.SyncedXtaAction;
 
 public final class XtaActZoneUtils {
@@ -42,8 +42,8 @@ public final class XtaActZoneUtils {
 		final List<Loc> sourceLocs = action.getSourceLocs();
 		final List<Loc> targetLocs = action.getTargetLocs();
 
-		if (action.isSimple()) {
-			final SimpleXtaAction simpleAction = action.asSimple();
+		if (action.isBasic()) {
+			final BasicXtaAction simpleAction = action.asBasic();
 
 			final List<Update> updates = simpleAction.getEdge().getUpdates();
 			final Collection<Guard> guards = simpleAction.getEdge().getGuards();

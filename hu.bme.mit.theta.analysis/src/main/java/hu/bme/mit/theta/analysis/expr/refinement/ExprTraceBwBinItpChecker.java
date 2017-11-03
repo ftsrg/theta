@@ -25,7 +25,6 @@ import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
-import hu.bme.mit.theta.core.model.Model;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
@@ -109,7 +108,7 @@ public final class ExprTraceBwBinItpChecker implements ExprTraceChecker<ItpRefut
 
 		ExprTraceStatus<ItpRefutation> status = null;
 		if (concretizable) {
-			final Model model = solver.getModel();
+			final Valuation model = solver.getModel();
 			final ImmutableList.Builder<Valuation> builder = ImmutableList.builder();
 			for (final VarIndexing indexing : indexings) {
 				builder.add(PathUtils.extractValuation(model, indexing));

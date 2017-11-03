@@ -26,7 +26,7 @@ import hu.bme.mit.theta.common.table.TableWriter;
  * For exemple in ordinary CSV files, the delimeter is ',' and the pre/postfix
  * is '"'.
  */
-public final class SimpleTableWriter implements TableWriter {
+public final class BasicTableWriter implements TableWriter {
 
 	private final PrintStream stream;
 	private final String delimeter;
@@ -34,7 +34,7 @@ public final class SimpleTableWriter implements TableWriter {
 	private final String postfix;
 	private boolean isFirstCell = true;
 
-	public SimpleTableWriter(final PrintStream stream, final String delimeter, final String prefix,
+	public BasicTableWriter(final PrintStream stream, final String delimeter, final String prefix,
 			final String postfix) {
 		this.stream = stream;
 		this.delimeter = delimeter;
@@ -42,15 +42,15 @@ public final class SimpleTableWriter implements TableWriter {
 		this.postfix = postfix;
 	}
 
-	public SimpleTableWriter(final PrintStream stream, final String delimeter) {
+	public BasicTableWriter(final PrintStream stream, final String delimeter) {
 		this(stream, delimeter, "", "");
 	}
 
-	public SimpleTableWriter(final PrintStream stream) {
+	public BasicTableWriter(final PrintStream stream) {
 		this(stream, ",");
 	}
 
-	public SimpleTableWriter() {
+	public BasicTableWriter() {
 		this(System.out);
 	}
 

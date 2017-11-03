@@ -89,7 +89,7 @@ public final class FreeOp implements ClockOp {
 
 	@Override
 	public String toString() {
-		return Utils.toStringBuilder("Free").add(var.getName()).toString();
+		return Utils.lispStringBuilder("Free").add(var.getName()).toString();
 	}
 
 }

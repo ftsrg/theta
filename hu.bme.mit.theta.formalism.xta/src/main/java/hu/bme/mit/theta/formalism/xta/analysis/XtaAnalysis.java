@@ -18,7 +18,7 @@ package hu.bme.mit.theta.formalism.xta.analysis;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import hu.bme.mit.theta.analysis.Analysis;
-import hu.bme.mit.theta.analysis.Domain;
+import hu.bme.mit.theta.analysis.PartialOrd;
 import hu.bme.mit.theta.analysis.InitFunc;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.analysis.State;
@@ -26,14 +26,14 @@ import hu.bme.mit.theta.analysis.TransFunc;
 import hu.bme.mit.theta.formalism.xta.XtaSystem;
 
 public final class XtaAnalysis<S extends State, P extends Prec> implements Analysis<XtaState<S>, XtaAction, P> {
-	private final Domain<XtaState<S>> domain;
+	private final PartialOrd<XtaState<S>> partialOrd;
 	private final InitFunc<XtaState<S>, P> initFunc;
 	private final TransFunc<XtaState<S>, XtaAction, P> transFunc;
 
 	private XtaAnalysis(final XtaSystem system, final Analysis<S, ? super XtaAction, ? super P> analysis) {
 		checkNotNull(system);
 		checkNotNull(analysis);
-		domain = XtaDomain.create(analysis.getDomain());
+		partialOrd = XtaOrd.create(analysis.getPartialOrd());
 		initFunc = XtaInitFunc.create(system, analysis.getInitFunc());
 		transFunc = XtaTransFunc.create(analysis.getTransFunc());
 	}
@@ -44,8 +44,8 @@ public final class XtaAnalysis<S extends State, P extends Prec> implements Analy
 	}
 
 	@Override
-	public Domain<XtaState<S>> getDomain() {
-		return domain;
+	public PartialOrd<XtaState<S>> getPartialOrd() {
+		return partialOrd;
 	}
 
 	@Override

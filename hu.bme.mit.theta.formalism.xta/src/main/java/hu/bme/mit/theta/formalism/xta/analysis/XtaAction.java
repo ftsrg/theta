@@ -59,8 +59,8 @@ public abstract class XtaAction extends StmtAction {
 		this.sourceLocs = ImmutableList.copyOf(checkNotNull(source));
 	}
 
-	public static SimpleXtaAction simple(final XtaSystem system, final List<Loc> sourceLocs, final Edge edge) {
-		return new SimpleXtaAction(system, sourceLocs, edge);
+	public static BasicXtaAction simple(final XtaSystem system, final List<Loc> sourceLocs, final Edge edge) {
+		return new BasicXtaAction(system, sourceLocs, edge);
 	}
 
 	public static SyncedXtaAction synced(final XtaSystem system, final List<Loc> sourceLocs, final Edge emitEdge,
@@ -78,7 +78,7 @@ public abstract class XtaAction extends StmtAction {
 
 	public abstract List<Loc> getTargetLocs();
 
-	public boolean isSimple() {
+	public boolean isBasic() {
 		return false;
 	}
 
@@ -86,7 +86,7 @@ public abstract class XtaAction extends StmtAction {
 		return false;
 	}
 
-	public SimpleXtaAction asSimple() {
+	public BasicXtaAction asBasic() {
 		throw new ClassCastException();
 	}
 
@@ -94,13 +94,13 @@ public abstract class XtaAction extends StmtAction {
 		throw new ClassCastException();
 	}
 
-	public static final class SimpleXtaAction extends XtaAction {
+	public static final class BasicXtaAction extends XtaAction {
 		private final Edge edge;
 		private final List<Loc> targetLocs;
 
 		private volatile List<Stmt> stmts = null;
 
-		private SimpleXtaAction(final XtaSystem system, final List<Loc> sourceLocs, final Edge edge) {
+		private BasicXtaAction(final XtaSystem system, final List<Loc> sourceLocs, final Edge edge) {
 			super(system, sourceLocs);
 			this.edge = checkNotNull(edge);
 
@@ -131,12 +131,12 @@ public abstract class XtaAction extends StmtAction {
 		}
 
 		@Override
-		public boolean isSimple() {
+		public boolean isBasic() {
 			return true;
 		}
 
 		@Override
-		public SimpleXtaAction asSimple() {
+		public BasicXtaAction asBasic() {
 			return this;
 		}
 

@@ -17,27 +17,27 @@ package hu.bme.mit.theta.analysis.prod;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import hu.bme.mit.theta.analysis.Domain;
+import hu.bme.mit.theta.analysis.PartialOrd;
 import hu.bme.mit.theta.analysis.State;
 
-final class Prod2Domain<S1 extends State, S2 extends State> implements Domain<Prod2State<S1, S2>> {
+final class Prod2Ord<S1 extends State, S2 extends State> implements PartialOrd<Prod2State<S1, S2>> {
 
-	private final Domain<S1> domain1;
-	private final Domain<S2> domain2;
+	private final PartialOrd<S1> partialOrd1;
+	private final PartialOrd<S2> partialOrd2;
 
-	private Prod2Domain(final Domain<S1> domain1, final Domain<S2> domain2) {
-		this.domain1 = checkNotNull(domain1);
-		this.domain2 = checkNotNull(domain2);
+	private Prod2Ord(final PartialOrd<S1> partialOrd1, final PartialOrd<S2> partialOrd2) {
+		this.partialOrd1 = checkNotNull(partialOrd1);
+		this.partialOrd2 = checkNotNull(partialOrd2);
 	}
 
-	public static <S1 extends State, S2 extends State> Prod2Domain<S1, S2> create(final Domain<S1> domain1,
-			final Domain<S2> domain2) {
-		return new Prod2Domain<>(domain1, domain2);
+	public static <S1 extends State, S2 extends State> Prod2Ord<S1, S2> create(final PartialOrd<S1> partialOrd1,
+			final PartialOrd<S2> partialOrd2) {
+		return new Prod2Ord<>(partialOrd1, partialOrd2);
 	}
 
 	@Override
 	public boolean isLeq(final Prod2State<S1, S2> state1, final Prod2State<S1, S2> state2) {
-		return domain1.isLeq(state1._1(), state2._1()) && domain2.isLeq(state1._2(), state2._2());
+		return partialOrd1.isLeq(state1._1(), state2._1()) && partialOrd2.isLeq(state1._2(), state2._2());
 	}
 
 }
