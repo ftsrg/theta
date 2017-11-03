@@ -40,7 +40,7 @@ public abstract class AbstractValuation implements Valuation {
 
 	@Override
 	public final String toString() {
-		return Utils.toStringBuilder("").addAll(getDecls(), d -> d.getName() + " <- " + eval(d).get()).toString();
+		return Utils.lispStringBuilder("").addAll(getDecls(), d -> d.getName() + " <- " + eval(d).get()).toString();
 	}
 
 }

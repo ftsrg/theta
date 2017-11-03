@@ -101,7 +101,7 @@ public final class Environment {
 
 		@Override
 		public String toString() {
-			return Utils.toStringBuilder(getClass().getSimpleName()).addAll(symbolToValue.entrySet().stream()
+			return Utils.lispStringBuilder(getClass().getSimpleName()).addAll(symbolToValue.entrySet().stream()
 					.map(e -> e.getKey().getName() + " <- " + e.getValue()).collect(toList())).toString();
 		}
 	}

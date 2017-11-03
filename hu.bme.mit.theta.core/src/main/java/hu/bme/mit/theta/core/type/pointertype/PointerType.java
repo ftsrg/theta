@@ -62,7 +62,7 @@ public final class PointerType<PointedType extends Type> implements Type {
 
 	@Override
 	public String toString() {
-		return Utils.toStringBuilder(TYPE_LABEL).add(type).toString();
+		return Utils.lispStringBuilder(TYPE_LABEL).add(type).toString();
 	}
 
 }

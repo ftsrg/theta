@@ -44,6 +44,6 @@ public final class ParamDecl<DeclType extends Type> extends AbstractDecl<DeclTyp
 
 	@Override
 	public String toString() {
-		return Utils.toStringBuilder(DECL_LABEL).add(name).add(type).toString();
+		return Utils.lispStringBuilder(DECL_LABEL).add(name).add(type).toString();
 	}
 }

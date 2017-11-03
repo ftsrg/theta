@@ -142,15 +142,15 @@ public final class BoundFunc {
 
 	@Override
 	public String toString() {
-		final String lowerToString = Utils.toStringBuilder("L").addAll(
+		final String lowerToString = Utils.lispStringBuilder("L").addAll(
 				varToLower.entrySet().stream().map(e -> e.getKey().getName() + " <- " + e.getValue()).collect(toList()))
 				.toString();
 
-		final String UpperToString = Utils.toStringBuilder("U").addAll(
+		final String UpperToString = Utils.lispStringBuilder("U").addAll(
 				varToUpper.entrySet().stream().map(e -> e.getKey().getName() + " <- " + e.getValue()).collect(toList()))
 				.toString();
 
-		return Utils.toStringBuilder(this.getClass().getSimpleName()).add(lowerToString).add(UpperToString).toString();
+		return Utils.lispStringBuilder(this.getClass().getSimpleName()).add(lowerToString).add(UpperToString).toString();
 	}
 
 	public static final class Builder {

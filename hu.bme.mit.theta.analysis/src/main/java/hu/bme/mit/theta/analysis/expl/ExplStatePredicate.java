@@ -56,6 +56,6 @@ public class ExplStatePredicate implements Predicate<ExplState> {
 
 	@Override
 	public String toString() {
-		return Utils.toStringBuilder(getClass().getSimpleName()).add(expr).toString();
+		return Utils.lispStringBuilder(getClass().getSimpleName()).add(expr).toString();
 	}
 }

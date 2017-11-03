@@ -46,7 +46,7 @@ public final class ZonePrec implements Prec {
 
 	@Override
 	public String toString() {
-		return Utils.toStringBuilder(getClass().getSimpleName()).addAll(clocks).toString();
+		return Utils.lispStringBuilder(getClass().getSimpleName()).addAll(clocks).toString();
 	}
 
 	@Override

@@ -99,7 +99,7 @@ public final class ResetOp implements ClockOp {
 
 	@Override
 	public String toString() {
-		return Utils.toStringBuilder("Reset").add(var.getName()).add(value).toString();
+		return Utils.lispStringBuilder("Reset").add(var.getName()).add(value).toString();
 	}
 
 }

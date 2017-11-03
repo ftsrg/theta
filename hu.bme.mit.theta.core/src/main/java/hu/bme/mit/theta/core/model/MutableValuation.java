@@ -101,7 +101,7 @@ public final class MutableValuation implements Valuation {
 
 	@Override
 	public String toString() {
-		return Utils.toStringBuilder("Valuation")
+		return Utils.lispStringBuilder("Valuation")
 				.addAll(declToExpr.entrySet(), e -> e.getKey().getName() + " <- " + e.getValue()).toString();
 	}
 

@@ -122,7 +122,7 @@ final class DbmSignature implements Iterable<VarDecl<RatType>> {
 
 	@Override
 	public String toString() {
-		return Utils.toStringBuilder(getClass().getSimpleName()).addAll(indexToVar).toString();
+		return Utils.lispStringBuilder(getClass().getSimpleName()).addAll(indexToVar).toString();
 	}
 
 	////

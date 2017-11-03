@@ -85,7 +85,7 @@ public final class RangeType implements Type {
 
 	@Override
 	public String toString() {
-		return Utils.toStringBuilder("Range").add(lower).add(upper).toString();
+		return Utils.lispStringBuilder("Range").add(lower).add(upper).toString();
 	}
 
 }

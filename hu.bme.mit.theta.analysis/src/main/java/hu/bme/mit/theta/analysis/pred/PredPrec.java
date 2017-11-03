@@ -140,7 +140,7 @@ public final class PredPrec implements Prec {
 
 	@Override
 	public String toString() {
-		return Utils.toStringBuilder(getClass().getSimpleName()).addAll(predToNegMap.keySet()).toString();
+		return Utils.lispStringBuilder(getClass().getSimpleName()).addAll(predToNegMap.keySet()).toString();
 	}
 
 	@Override

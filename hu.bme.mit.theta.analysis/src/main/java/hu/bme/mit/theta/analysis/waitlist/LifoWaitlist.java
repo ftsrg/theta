@@ -72,7 +72,7 @@ public final class LifoWaitlist<T> implements Waitlist<T> {
 
 	@Override
 	public String toString() {
-		return Utils.toStringBuilder(getClass().getSimpleName()).addAll(items).toString();
+		return Utils.lispStringBuilder(getClass().getSimpleName()).addAll(items).toString();
 	}
 
 	@Override

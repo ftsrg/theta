@@ -50,7 +50,7 @@ public final class VarsRefutation implements Refutation {
 
 	@Override
 	public String toString() {
-		return Utils.toStringBuilder(getClass().getSimpleName()).add(indexedVars).toString();
+		return Utils.lispStringBuilder(getClass().getSimpleName()).add(indexedVars).toString();
 	}
 
 	@Override

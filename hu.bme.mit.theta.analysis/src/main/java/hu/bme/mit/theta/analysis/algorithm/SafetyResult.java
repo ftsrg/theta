@@ -100,7 +100,7 @@ public abstract class SafetyResult<S extends State, A extends Action> {
 
 		@Override
 		public String toString() {
-			return Utils.toStringBuilder(SafetyResult.class.getSimpleName()).add(Safe.class.getSimpleName())
+			return Utils.lispStringBuilder(SafetyResult.class.getSimpleName()).add(Safe.class.getSimpleName())
 					.toString();
 		}
 	}
@@ -140,7 +140,7 @@ public abstract class SafetyResult<S extends State, A extends Action> {
 
 		@Override
 		public String toString() {
-			return Utils.toStringBuilder(SafetyResult.class.getSimpleName()).add(Unsafe.class.getSimpleName())
+			return Utils.lispStringBuilder(SafetyResult.class.getSimpleName()).add(Unsafe.class.getSimpleName())
 					.add("Trace length: " + cex.length()).toString();
 		}
 	}

@@ -64,7 +64,7 @@ public final class BasicSubstitution implements Substitution {
 
 	@Override
 	public String toString() {
-		return Utils.toStringBuilder("Substitution")
+		return Utils.lispStringBuilder("Substitution")
 				.addAll(declToExpr.entrySet(), e -> e.getKey().getName() + " <- " + e.getValue()).toString();
 	}
 

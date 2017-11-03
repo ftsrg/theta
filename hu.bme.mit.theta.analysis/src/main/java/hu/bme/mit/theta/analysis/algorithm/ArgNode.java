@@ -280,7 +280,7 @@ public final class ArgNode<S extends State, A extends Action> {
 
 	@Override
 	public String toString() {
-		return Utils.toStringBuilder("ArgNode").add(id).add(state).toString();
+		return Utils.lispStringBuilder("ArgNode").add(id).add(state).toString();
 	}
 
 }

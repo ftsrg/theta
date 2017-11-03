@@ -59,7 +59,7 @@ public final class VarDecl<DeclType extends Type> extends AbstractDecl<DeclType>
 
 	@Override
 	public String toString() {
-		return Utils.toStringBuilder(DECL_LABEL).add(name).add(type).toString();
+		return Utils.lispStringBuilder(DECL_LABEL).add(name).add(type).toString();
 	}
 
 }

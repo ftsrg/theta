@@ -126,7 +126,7 @@ public class ArgNodeComparators {
 
 		@Override
 		public String toString() {
-			return Utils.toStringBuilder(getClass().getSimpleName()).add(comparator).toString();
+			return Utils.lispStringBuilder(getClass().getSimpleName()).add(comparator).toString();
 		}
 	}
 
@@ -152,7 +152,7 @@ public class ArgNodeComparators {
 
 		@Override
 		public String toString() {
-			return Utils.toStringBuilder(getClass().getSimpleName()).add(first).add(then).toString();
+			return Utils.lispStringBuilder(getClass().getSimpleName()).add(first).add(then).toString();
 		}
 	}
 }

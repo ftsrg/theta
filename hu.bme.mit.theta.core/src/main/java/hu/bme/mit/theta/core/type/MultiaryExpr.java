@@ -69,7 +69,7 @@ public abstract class MultiaryExpr<OpType extends Type, ExprType extends Type> i
 
 	@Override
 	public final String toString() {
-		return Utils.toStringBuilder(getOperatorLabel()).addAll(ops).toString();
+		return Utils.lispStringBuilder(getOperatorLabel()).addAll(ops).toString();
 	}
 
 	public abstract MultiaryExpr<OpType, ExprType> with(final Iterable<? extends Expr<OpType>> ops);

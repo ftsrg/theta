@@ -90,6 +90,6 @@ public final class PriorityWaitlist<T> implements Waitlist<T> {
 
 	@Override
 	public String toString() {
-		return Utils.toStringBuilder(getClass().getSimpleName()).add(items.comparator()).addAll(items).toString();
+		return Utils.lispStringBuilder(getClass().getSimpleName()).add(items.comparator()).addAll(items).toString();
 	}
 }

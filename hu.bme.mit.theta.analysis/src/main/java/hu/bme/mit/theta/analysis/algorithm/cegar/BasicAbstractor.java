@@ -128,7 +128,7 @@ public final class BasicAbstractor<S extends State, A extends Action, P extends 
 
 	@Override
 	public String toString() {
-		return Utils.toStringBuilder(getClass().getSimpleName()).add(waitlist).toString();
+		return Utils.lispStringBuilder(getClass().getSimpleName()).add(waitlist).toString();
 	}
 
 	public static final class Builder<S extends State, A extends Action, P extends Prec> {

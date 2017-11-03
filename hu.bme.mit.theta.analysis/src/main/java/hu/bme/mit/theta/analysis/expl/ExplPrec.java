@@ -89,7 +89,7 @@ public final class ExplPrec implements Prec {
 
 	@Override
 	public String toString() {
-		return Utils.toStringBuilder(getClass().getSimpleName()).addAll(vars, VarDecl::getName).toString();
+		return Utils.lispStringBuilder(getClass().getSimpleName()).addAll(vars, VarDecl::getName).toString();
 	}
 
 	@Override

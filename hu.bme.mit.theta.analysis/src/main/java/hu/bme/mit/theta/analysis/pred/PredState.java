@@ -22,6 +22,7 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.google.common.collect.ImmutableSet;
 
@@ -129,7 +130,7 @@ public final class PredState implements ExprState {
 
 	@Override
 	public String toString() {
-		return Utils.toStringBuilder(getClass().getSimpleName()).addAll(preds).toString();
+		return preds.stream().map(Expr::toString).collect(Collectors.joining(" "));
 	}
 
 }
