@@ -47,11 +47,9 @@ final class Prod2TransFunc<S1 extends State, S2 extends State, A extends Action,
 		checkNotNull(state);
 		checkNotNull(action);
 		checkNotNull(prec);
-
 		final Collection<? extends S1> succStates1 = transFunc1.getSuccStates(state._1(), action, prec._1());
 		final Collection<? extends S2> succStates2 = transFunc2.getSuccStates(state._2(), action, prec._2());
-		final Collection<Prod2State<S1, S2>> compositeSuccStates = ProdState.product(succStates1, succStates2);
-		return compositeSuccStates;
+		return Prod2State.product(succStates1, succStates2);
 	}
 
 }

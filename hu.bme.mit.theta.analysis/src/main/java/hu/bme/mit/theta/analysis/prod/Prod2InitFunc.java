@@ -42,10 +42,9 @@ final class Prod2InitFunc<S1 extends State, S2 extends State, P1 extends Prec, P
 	@Override
 	public Collection<? extends Prod2State<S1, S2>> getInitStates(final Prod2Prec<P1, P2> prec) {
 		checkNotNull(prec);
-
 		final Collection<? extends S1> initStates1 = initFunc1.getInitStates(prec._1());
 		final Collection<? extends S2> initStates2 = initFunc2.getInitStates(prec._2());
-		return ProdState.product(initStates1, initStates2);
+		return Prod2State.product(initStates1, initStates2);
 	}
 
 }
