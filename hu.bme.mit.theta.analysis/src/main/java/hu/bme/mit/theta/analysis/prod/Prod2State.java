@@ -22,8 +22,12 @@ import hu.bme.mit.theta.common.product.Product2;
 
 public final class Prod2State<S1 extends State, S2 extends State> extends ProdState implements Product2<S1, S2> {
 
-	Prod2State(final S1 state1, final S2 state2) {
+	private Prod2State(final S1 state1, final S2 state2) {
 		super(ImmutableList.of(state1, state2));
+	}
+
+	public static <S1 extends State, S2 extends State> Prod2State<S1, S2> of(final S1 state1, final S2 state2) {
+		return new Prod2State<>(state1, state2);
 	}
 
 	@Override
@@ -41,11 +45,11 @@ public final class Prod2State<S1 extends State, S2 extends State> extends ProdSt
 	}
 
 	public <S extends State> Prod2State<S, S2> with1(final S state) {
-		return ProdState.of(state, _2());
+		return Prod2State.of(state, _2());
 	}
 
 	public <S extends State> Prod2State<S1, S> with2(final S state) {
-		return ProdState.of(_1(), state);
+		return Prod2State.of(_1(), state);
 	}
 
 }

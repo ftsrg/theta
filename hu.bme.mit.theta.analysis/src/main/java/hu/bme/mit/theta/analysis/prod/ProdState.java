@@ -48,10 +48,6 @@ public abstract class ProdState implements ExprState, Product, Iterable<State> {
 
 	////
 
-	public static <S1 extends State, S2 extends State> Prod2State<S1, S2> of(final S1 state1, final S2 state2) {
-		return new Prod2State<>(state1, state2);
-	}
-
 	public static <S1 extends State, S2 extends State, S3 extends State> Prod3State<S1, S2, S3> of(final S1 state1,
 			final S2 state2, final S3 state3) {
 		return new Prod3State<>(state1, state2, state3);
@@ -67,7 +63,7 @@ public abstract class ProdState implements ExprState, Product, Iterable<State> {
 		final ImmutableCollection.Builder<Prod2State<S1, S2>> builder = ImmutableSet.builder();
 		for (final S1 state1 : states1) {
 			for (final S2 state2 : states2) {
-				builder.add(ProdState.of(state1, state2));
+				builder.add(Prod2State.of(state1, state2));
 			}
 		}
 		return builder.build();
