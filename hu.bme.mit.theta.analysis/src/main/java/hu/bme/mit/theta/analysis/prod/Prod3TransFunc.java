@@ -50,11 +50,10 @@ final class Prod3TransFunc<S1 extends State, S2 extends State, S3 extends State,
 		checkNotNull(state);
 		checkNotNull(action);
 		checkNotNull(prec);
-
 		final Collection<? extends S1> succStates1 = transFunc1.getSuccStates(state._1(), action, prec._1());
 		final Collection<? extends S2> succStates2 = transFunc2.getSuccStates(state._2(), action, prec._2());
 		final Collection<? extends S3> succStates3 = transFunc3.getSuccStates(state._3(), action, prec._3());
-		return ProdState.product(succStates1, succStates2, succStates3);
+		return Prod3State.product(succStates1, succStates2, succStates3);
 	}
 
 }

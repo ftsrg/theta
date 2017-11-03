@@ -21,13 +21,10 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static java.util.stream.Collectors.joining;
 
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
-import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.expr.ExprState;
@@ -45,27 +42,6 @@ public abstract class ProdState implements ExprState, Product, Iterable<State> {
 	ProdState(final List<? extends State> states) {
 		this.states = ImmutableList.copyOf(checkNotNull(states));
 	}
-
-	////
-
-	public static <S1 extends State, S2 extends State, S3 extends State> Collection<Prod3State<S1, S2, S3>> product(
-			final Collection<? extends S1> states1, final Collection<? extends S2> states2,
-			final Collection<? extends S3> states3) {
-		checkNotNull(states1);
-		checkNotNull(states2);
-
-		final ImmutableCollection.Builder<Prod3State<S1, S2, S3>> builder = ImmutableSet.builder();
-		for (final S1 state1 : states1) {
-			for (final S2 state2 : states2) {
-				for (final S3 state3 : states3) {
-					builder.add(Prod3State.of(state1, state2, state3));
-				}
-			}
-		}
-		return builder.build();
-	}
-
-	////
 
 	@Override
 	public final int arity() {

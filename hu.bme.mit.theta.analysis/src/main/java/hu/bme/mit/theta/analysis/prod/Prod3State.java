@@ -15,7 +15,13 @@
  */
 package hu.bme.mit.theta.analysis.prod;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import java.util.Collection;
+
+import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.common.product.Product3;
@@ -30,6 +36,23 @@ public final class Prod3State<S1 extends State, S2 extends State, S3 extends Sta
 	public static <S1 extends State, S2 extends State, S3 extends State> Prod3State<S1, S2, S3> of(final S1 state1,
 			final S2 state2, final S3 state3) {
 		return new Prod3State<>(state1, state2, state3);
+	}
+
+	public static <S1 extends State, S2 extends State, S3 extends State> Collection<Prod3State<S1, S2, S3>> product(
+			final Collection<? extends S1> states1, final Collection<? extends S2> states2,
+			final Collection<? extends S3> states3) {
+		checkNotNull(states1);
+		checkNotNull(states2);
+
+		final ImmutableCollection.Builder<Prod3State<S1, S2, S3>> builder = ImmutableSet.builder();
+		for (final S1 state1 : states1) {
+			for (final S2 state2 : states2) {
+				for (final S3 state3 : states3) {
+					builder.add(Prod3State.of(state1, state2, state3));
+				}
+			}
+		}
+		return builder.build();
 	}
 
 	@Override

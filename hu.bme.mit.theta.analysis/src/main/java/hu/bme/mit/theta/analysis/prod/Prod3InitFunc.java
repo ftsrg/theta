@@ -48,7 +48,7 @@ final class Prod3InitFunc<S1 extends State, S2 extends State, S3 extends State, 
 		final Collection<? extends S1> initStates1 = initFunc1.getInitStates(prec._1());
 		final Collection<? extends S2> initStates2 = initFunc2.getInitStates(prec._2());
 		final Collection<? extends S3> initStates3 = initFunc3.getInitStates(prec._3());
-		return ProdState.product(initStates1, initStates2, initStates3);
+		return Prod3State.product(initStates1, initStates2, initStates3);
 	}
 
 }
