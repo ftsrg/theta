@@ -23,8 +23,13 @@ import hu.bme.mit.theta.common.product.Product3;
 public final class Prod3State<S1 extends State, S2 extends State, S3 extends State> extends ProdState
 		implements Product3<S1, S2, S3> {
 
-	Prod3State(final S1 state1, final S2 state2, final S3 state3) {
+	private Prod3State(final S1 state1, final S2 state2, final S3 state3) {
 		super(ImmutableList.of(state1, state2, state3));
+	}
+
+	public static <S1 extends State, S2 extends State, S3 extends State> Prod3State<S1, S2, S3> of(final S1 state1,
+			final S2 state2, final S3 state3) {
+		return new Prod3State<>(state1, state2, state3);
 	}
 
 	@Override
@@ -49,15 +54,15 @@ public final class Prod3State<S1 extends State, S2 extends State, S3 extends Sta
 	}
 
 	public <S extends State> Prod3State<S, S2, S3> with1(final S state) {
-		return ProdState.of(state, _2(), _3());
+		return Prod3State.of(state, _2(), _3());
 	}
 
 	public <S extends State> Prod3State<S1, S, S3> with2(final S state) {
-		return ProdState.of(_1(), state, _3());
+		return Prod3State.of(_1(), state, _3());
 	}
 
 	public <S extends State> Prod3State<S1, S2, S> with3(final S state) {
-		return ProdState.of(_1(), _2(), state);
+		return Prod3State.of(_1(), _2(), state);
 	}
 
 }
