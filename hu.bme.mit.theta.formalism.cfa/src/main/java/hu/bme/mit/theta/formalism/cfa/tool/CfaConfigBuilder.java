@@ -17,6 +17,8 @@ package hu.bme.mit.theta.formalism.cfa.tool;
 
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 
+import java.util.Optional;
+
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.Prec;
@@ -29,9 +31,9 @@ import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
 import hu.bme.mit.theta.analysis.algorithm.cegar.BasicAbstractor;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Refiner;
-import hu.bme.mit.theta.analysis.expl.ExplAnalysis;
 import hu.bme.mit.theta.analysis.expl.ExplPrec;
 import hu.bme.mit.theta.analysis.expl.ExplState;
+import hu.bme.mit.theta.analysis.expl.ExplStmtAnalysis;
 import hu.bme.mit.theta.analysis.expl.ItpRefToExplPrec;
 import hu.bme.mit.theta.analysis.expl.VarsRefToExplPrec;
 import hu.bme.mit.theta.analysis.expr.ExprState;
@@ -180,6 +182,7 @@ public class CfaConfigBuilder {
 	private PredSplit predSplit = PredSplit.WHOLE;
 	private PrecGranularity precGranularity = PrecGranularity.GLOBAL;
 	private Encoding encoding = Encoding.LBE;
+	private Optional<Integer> maxEnum = Optional.empty();
 
 	public CfaConfigBuilder(final Domain domain, final Refinement refinement) {
 		this.domain = domain;
@@ -216,13 +219,22 @@ public class CfaConfigBuilder {
 		return this;
 	}
 
+	public CfaConfigBuilder maxEnum(final Integer maxEnum) {
+		if (maxEnum == null) {
+			this.maxEnum = Optional.empty();
+		} else {
+			this.maxEnum = Optional.of(maxEnum);
+		}
+		return this;
+	}
+
 	public Config<? extends State, ? extends Action, ? extends Prec> build(final CFA cfa) {
 		final ItpSolver solver = solverFactory.createItpSolver();
 		final CfaLts lts = encoding.getLts();
 
 		if (domain == Domain.EXPL) {
 			final Analysis<CfaState<ExplState>, CfaAction, CfaPrec<ExplPrec>> analysis = CfaAnalysis
-					.create(cfa.getInitLoc(), ExplAnalysis.create(solver, True()));
+					.create(cfa.getInitLoc(), ExplStmtAnalysis.create(solver, True(), maxEnum));
 			final ArgBuilder<CfaState<ExplState>, CfaAction, CfaPrec<ExplPrec>> argBuilder = ArgBuilder.create(lts,
 					analysis, s -> s.getLoc().equals(cfa.getErrorLoc()));
 			final Abstractor<CfaState<ExplState>, CfaAction, CfaPrec<ExplPrec>> abstractor = BasicAbstractor

@@ -73,6 +73,9 @@ public class CfaCli {
 	@Parameter(names = { "--encoding" }, description = "Encoding")
 	Encoding encoding = Encoding.LBE;
 
+	@Parameter(names = { "--maxenum", }, description = "Maximal number of explicitly enumerated successors")
+	Integer maxEnum = null;
+
 	@Parameter(names = { "--loglevel" }, description = "Detailedness of logging")
 	Integer logLevel = 1;
 
@@ -145,7 +148,7 @@ public class CfaCli {
 
 	private Config<?, ?, ?> buildConfiguration(final CFA cfa) {
 		return new CfaConfigBuilder(domain, refinement).precGranularity(precGranularity).search(search)
-				.predSplit(predSplit).encoding(encoding).logger(logger).build(cfa);
+				.predSplit(predSplit).encoding(encoding).maxEnum(maxEnum).logger(logger).build(cfa);
 	}
 
 	private void printResult(final SafetyResult<?, ?> status, final CFA cfa) {

@@ -44,12 +44,17 @@ public final class ExplStmtAnalysis implements Analysis<ExplState, StmtAction, E
 	}
 
 	public static ExplStmtAnalysis create(final Solver solver, final Expr<BoolType> initExpr,
+			final Optional<Integer> maxSuccToEnumerate) {
+		return new ExplStmtAnalysis(solver, initExpr, maxSuccToEnumerate);
+	}
+
+	public static ExplStmtAnalysis create(final Solver solver, final Expr<BoolType> initExpr,
 			final int maxSuccToEnumerate) {
-		return new ExplStmtAnalysis(solver, initExpr, Optional.of(maxSuccToEnumerate));
+		return create(solver, initExpr, Optional.of(maxSuccToEnumerate));
 	}
 
 	public static ExplStmtAnalysis create(final Solver solver, final Expr<BoolType> initExpr) {
-		return new ExplStmtAnalysis(solver, initExpr, Optional.empty());
+		return create(solver, initExpr, Optional.empty());
 	}
 
 	@Override
