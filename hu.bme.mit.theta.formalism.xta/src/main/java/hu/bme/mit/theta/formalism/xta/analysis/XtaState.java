@@ -16,11 +16,13 @@
 package hu.bme.mit.theta.formalism.xta.analysis;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.stream.Collectors.joining;
+import static java.util.stream.Stream.concat;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.StringJoiner;
+import java.util.stream.Stream;
 
 import com.google.common.collect.ImmutableList;
 
@@ -96,11 +98,7 @@ public final class XtaState<S extends State> implements State {
 
 	@Override
 	public String toString() {
-		final StringJoiner sj = new StringJoiner("\n");
-		locs.forEach(l -> sj.add(l.getName()));
-		locs.forEach(l -> l.getInvars().forEach(i -> sj.add("[" + i + "]")));
-		sj.add(state.toString());
-		return sj.toString();
+		return concat(locs.stream().map(Loc::getName), Stream.of(state).map(Object::toString)).collect(joining(" "));
 	}
 
 }

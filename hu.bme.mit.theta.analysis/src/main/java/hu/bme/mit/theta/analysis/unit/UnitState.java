@@ -35,7 +35,7 @@ public final class UnitState implements State {
 
 	@Override
 	public String toString() {
-		return getClass().getSimpleName();
+		return "unit";
 	}
 
 }

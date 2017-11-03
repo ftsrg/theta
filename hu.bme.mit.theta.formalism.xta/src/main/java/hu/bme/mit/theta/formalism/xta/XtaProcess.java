@@ -27,6 +27,7 @@ import java.util.Optional;
 
 import com.google.common.collect.ImmutableList;
 
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Expr;
@@ -240,6 +241,11 @@ public final class XtaProcess {
 
 		public Collection<Guard> getInvars() {
 			return invars;
+		}
+
+		@Override
+		public String toString() {
+			return Utils.lispStringBuilder("loc").add(name).toString();
 		}
 	}
 

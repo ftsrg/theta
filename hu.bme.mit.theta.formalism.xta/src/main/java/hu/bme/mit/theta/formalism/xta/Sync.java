@@ -18,12 +18,12 @@ package hu.bme.mit.theta.formalism.xta;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Streams.zip;
-import static java.util.stream.Collectors.joining;
 
 import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 
@@ -83,20 +83,7 @@ public final class Sync {
 
 	@Override
 	public String toString() {
-		final StringBuilder sb = new StringBuilder();
-		sb.append(label.getName());
-		if (!args.isEmpty()) {
-			sb.append('(');
-			sb.append(args.stream().map(Object::toString).collect(joining(", ")));
-			sb.append(')');
-		}
-		if (kind == Kind.EMIT) {
-			sb.append('!');
-		} else {
-			sb.append('?');
-		}
-		return sb.toString();
-
+		return Utils.lispStringBuilder("sync").add(label).add(kind == Kind.EMIT ? "!" : "?").addAll(args).toString();
 	}
 
 }
