@@ -18,25 +18,24 @@ package hu.bme.mit.theta.formalism.xta.analysis.expl;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Collection;
+import java.util.Collections;
 
 import hu.bme.mit.theta.analysis.TransFunc;
 import hu.bme.mit.theta.analysis.expl.ExplPrec;
 import hu.bme.mit.theta.analysis.expl.ExplState;
-import hu.bme.mit.theta.analysis.expl.ExplStmtTransFunc;
+import hu.bme.mit.theta.analysis.expl.ExplStmtSuccEvaluator;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
+import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.formalism.xta.XtaSystem;
 import hu.bme.mit.theta.formalism.xta.analysis.XtaAction;
-import hu.bme.mit.theta.solver.impl.NullSolver;
 
 final class XtaExplTransFunc implements TransFunc<ExplState, XtaAction, UnitPrec> {
 
 	private final ExplPrec explPrec;
-	private final ExplStmtTransFunc transFunc;
 
 	private XtaExplTransFunc(final XtaSystem system) {
 		checkNotNull(system);
 		explPrec = ExplPrec.of(system.getDataVars());
-		transFunc = ExplStmtTransFunc.create(NullSolver.getInstance(), 0);
 	}
 
 	public static XtaExplTransFunc create(final XtaSystem system) {
@@ -48,7 +47,18 @@ final class XtaExplTransFunc implements TransFunc<ExplState, XtaAction, UnitPrec
 		checkNotNull(state);
 		checkNotNull(action);
 		checkNotNull(prec);
-		return transFunc.getSuccStates(state, action, explPrec);
+		ExplState running = state;
+
+		for (final Stmt stmt : action.getStmts()) {
+			running = ExplStmtSuccEvaluator.evalSucc(running, stmt).getState();
+			if (running.isBottom()) {
+				return Collections.singleton(running);
+			}
+		}
+
+		final ExplState abstracted = explPrec.createState(running);
+		return Collections.singleton(abstracted);
+
 	}
 
 }
