@@ -67,7 +67,6 @@ public class CfaGui extends BaseGui {
 	private ChoiceBox<PredSplit> cbPredSplit;
 	private ChoiceBox<PrecGranularity> cbPrecGranularity;
 	private ChoiceBox<Encoding> cbEncoding;
-	private CheckBox cbMaxEnum;
 	private Spinner<Integer> spMaxEnum;
 	private Spinner<Integer> spLogLevel;
 	private CheckBox cbStructureOnly;
@@ -118,8 +117,7 @@ public class CfaGui extends BaseGui {
 		cbPredSplit = createChoice("Predicate split", PredSplit.values());
 		cbPrecGranularity = createChoice("Precision granularity", PrecGranularity.values());
 		cbEncoding = createChoice("Encoding", Encoding.values());
-		cbMaxEnum = createCheckBox("Limit successor enumeration");
-		spMaxEnum = createSpinner("Limit", 0, Integer.MAX_VALUE, 0);
+		spMaxEnum = createSpinner("Max. succ. to enumerate", 0, Integer.MAX_VALUE, 0);
 		spLogLevel = createSpinner("Log level", 0, 100, 2);
 
 		final Button btnRunAlgo = createButton("Run algorithm");
@@ -172,14 +170,11 @@ public class CfaGui extends BaseGui {
 		protected Void call() throws Exception {
 			try {
 				final CFA cfa = CfaDslManager.createCfa(taModel.getText());
-				Integer maxEnum = null;
-				if (cbMaxEnum.isSelected()) {
-					maxEnum = spMaxEnum.getValue();
-				}
 				final Config<?, ?, ?> config = new CfaConfigBuilder(cbDomain.getValue(), cbRefinement.getValue())
 						.search(cbSearch.getValue()).predSplit(cbPredSplit.getValue())
-						.precGranularity(cbPrecGranularity.getValue()).encoding(cbEncoding.getValue()).maxEnum(maxEnum)
-						.logger(new TextAreaLogger(spLogLevel.getValue(), taOutput)).build(cfa);
+						.precGranularity(cbPrecGranularity.getValue()).encoding(cbEncoding.getValue())
+						.maxEnum(spMaxEnum.getValue()).logger(new TextAreaLogger(spLogLevel.getValue(), taOutput))
+						.build(cfa);
 				safetyResult = config.check();
 			} catch (final Exception ex) {
 				Platform.runLater(() -> displayException(ex));

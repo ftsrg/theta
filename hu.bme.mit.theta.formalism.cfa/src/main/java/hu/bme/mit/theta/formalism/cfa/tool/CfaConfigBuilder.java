@@ -17,8 +17,6 @@ package hu.bme.mit.theta.formalism.cfa.tool;
 
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 
-import java.util.Optional;
-
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.Prec;
@@ -182,7 +180,7 @@ public class CfaConfigBuilder {
 	private PredSplit predSplit = PredSplit.WHOLE;
 	private PrecGranularity precGranularity = PrecGranularity.GLOBAL;
 	private Encoding encoding = Encoding.LBE;
-	private Optional<Integer> maxEnum = Optional.empty();
+	private int maxEnum = 0;
 
 	public CfaConfigBuilder(final Domain domain, final Refinement refinement) {
 		this.domain = domain;
@@ -219,12 +217,8 @@ public class CfaConfigBuilder {
 		return this;
 	}
 
-	public CfaConfigBuilder maxEnum(final Integer maxEnum) {
-		if (maxEnum == null) {
-			this.maxEnum = Optional.empty();
-		} else {
-			this.maxEnum = Optional.of(maxEnum);
-		}
+	public CfaConfigBuilder maxEnum(final int maxEnum) {
+		this.maxEnum = maxEnum;
 		return this;
 	}
 

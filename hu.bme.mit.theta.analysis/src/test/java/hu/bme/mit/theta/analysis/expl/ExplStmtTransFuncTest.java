@@ -1,12 +1,12 @@
 /*
  *  Copyright 2017 Budapest University of Technology and Economics
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -82,7 +82,8 @@ public class ExplStmtTransFuncTest {
 		final Collection<? extends ExplState> succStates = transFunc.getSuccStates(sourceState, stmts, prec);
 
 		Assert.assertEquals(1, succStates.size());
-		final ExplState expectedState = ExplState.create(BasicValuation.builder().put(x, Int(5)).build());
+		final ExplState expectedState = ExplState
+				.create(BasicValuation.builder().put(x, Int(5)).put(y, Int(5)).build());
 		Assert.assertEquals(expectedState, Utils.singleElementOf(succStates));
 	}
 
@@ -111,11 +112,11 @@ public class ExplStmtTransFuncTest {
 		stmts.add(Assume(BoolExprs.And(Leq(Int(0), x.getRef()), Leq(x.getRef(), Int(2)))));
 
 		final Map<Integer, Integer> solverCallsToExpectedStates = new HashMap<>();
-		solverCallsToExpectedStates.put(0, 1);
 		solverCallsToExpectedStates.put(1, 1);
 		solverCallsToExpectedStates.put(2, 1);
 		solverCallsToExpectedStates.put(3, 3);
 		solverCallsToExpectedStates.put(4, 3);
+		solverCallsToExpectedStates.put(0, 3);
 
 		for (final Entry<Integer, Integer> entry : solverCallsToExpectedStates.entrySet()) {
 			final ExplStmtTransFunc transFunc = ExplStmtTransFunc.create(solver, entry.getKey());
