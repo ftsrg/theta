@@ -40,10 +40,6 @@ public abstract class ProdPrec implements Prec, Product, Iterable<Prec> {
 
 	////
 
-	public static <P1 extends Prec, P2 extends Prec> Prod2Prec<P1, P2> of(final P1 prec1, final P2 prec2) {
-		return new Prod2Prec<>(prec1, prec2);
-	}
-
 	public static <P1 extends Prec, P2 extends Prec, P3 extends Prec> Prod3Prec<P1, P2, P3> of(final P1 prec1,
 			final P2 prec2, final P3 prec3) {
 		return new Prod3Prec<>(prec1, prec2, prec3);

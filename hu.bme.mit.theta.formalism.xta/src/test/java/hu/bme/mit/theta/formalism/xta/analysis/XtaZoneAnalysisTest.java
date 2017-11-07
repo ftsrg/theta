@@ -38,7 +38,6 @@ import hu.bme.mit.theta.analysis.impl.PrecMappingAnalysis;
 import hu.bme.mit.theta.analysis.prod.Prod2Analysis;
 import hu.bme.mit.theta.analysis.prod.Prod2Prec;
 import hu.bme.mit.theta.analysis.prod.Prod2State;
-import hu.bme.mit.theta.analysis.prod.ProdPrec;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.analysis.zone.ZonePrec;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
@@ -79,7 +78,7 @@ public final class XtaZoneAnalysisTest {
 		final Analysis<Prod2State<ExplState, ZoneState>, XtaAction, Prod2Prec<UnitPrec, ZonePrec>> prodAnalysis = Prod2Analysis
 				.create(explAnalysis, zoneAnalysis);
 		final Analysis<Prod2State<ExplState, ZoneState>, XtaAction, ZonePrec> mappedAnalysis = PrecMappingAnalysis
-				.create(prodAnalysis, z -> ProdPrec.of(UnitPrec.getInstance(), z));
+				.create(prodAnalysis, z -> Prod2Prec.of(UnitPrec.getInstance(), z));
 		final Analysis<XtaState<Prod2State<ExplState, ZoneState>>, XtaAction, ZonePrec> analysis = XtaAnalysis
 				.create(system, mappedAnalysis);
 
