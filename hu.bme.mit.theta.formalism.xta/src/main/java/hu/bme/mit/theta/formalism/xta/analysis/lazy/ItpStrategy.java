@@ -125,7 +125,7 @@ public abstract class ItpStrategy implements LazyXtaChecker.AlgorithmStrategy<It
 
 	@Override
 	public final boolean shouldRefine(final ArgNode<XtaState<Prod2State<ExplState, ItpZoneState>>, XtaAction> node) {
-		return node.getState().getState().isBottom2();
+		return node.getState().getState()._2().getZone().isBottom();
 	}
 
 }
