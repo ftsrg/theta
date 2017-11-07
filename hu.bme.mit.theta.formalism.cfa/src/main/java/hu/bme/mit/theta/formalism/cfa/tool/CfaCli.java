@@ -39,6 +39,7 @@ import hu.bme.mit.theta.formalism.cfa.CFA;
 import hu.bme.mit.theta.formalism.cfa.dsl.CfaDslManager;
 import hu.bme.mit.theta.formalism.cfa.tool.CfaConfigBuilder.Domain;
 import hu.bme.mit.theta.formalism.cfa.tool.CfaConfigBuilder.Encoding;
+import hu.bme.mit.theta.formalism.cfa.tool.CfaConfigBuilder.InitPrec;
 import hu.bme.mit.theta.formalism.cfa.tool.CfaConfigBuilder.PrecGranularity;
 import hu.bme.mit.theta.formalism.cfa.tool.CfaConfigBuilder.PredSplit;
 import hu.bme.mit.theta.formalism.cfa.tool.CfaConfigBuilder.Refinement;
@@ -75,6 +76,9 @@ public class CfaCli {
 
 	@Parameter(names = "--maxenum", description = "Maximal number of explicitly enumerated successors (0: unlimited)")
 	Integer maxEnum = 0;
+
+	@Parameter(names = "--initprec", description = "Initial precision")
+	InitPrec initPrec = InitPrec.EMPTY;
 
 	@Parameter(names = "--loglevel", description = "Detailedness of logging")
 	Integer logLevel = 1;
@@ -148,7 +152,7 @@ public class CfaCli {
 
 	private Config<?, ?, ?> buildConfiguration(final CFA cfa) {
 		return new CfaConfigBuilder(domain, refinement).precGranularity(precGranularity).search(search)
-				.predSplit(predSplit).encoding(encoding).maxEnum(maxEnum).logger(logger).build(cfa);
+				.predSplit(predSplit).encoding(encoding).maxEnum(maxEnum).initPrec(initPrec).logger(logger).build(cfa);
 	}
 
 	private void printResult(final SafetyResult<?, ?> status, final CFA cfa) {

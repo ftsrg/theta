@@ -60,6 +60,9 @@ import hu.bme.mit.theta.formalism.cfa.analysis.CfaAnalysis;
 import hu.bme.mit.theta.formalism.cfa.analysis.CfaPrec;
 import hu.bme.mit.theta.formalism.cfa.analysis.CfaState;
 import hu.bme.mit.theta.formalism.cfa.analysis.DistToErrComparator;
+import hu.bme.mit.theta.formalism.cfa.analysis.initprec.CfaAllVarsInitPrec;
+import hu.bme.mit.theta.formalism.cfa.analysis.initprec.CfaEmptyInitPrec;
+import hu.bme.mit.theta.formalism.cfa.analysis.initprec.CfaInitPrec;
 import hu.bme.mit.theta.formalism.cfa.analysis.lts.CfaCachedLts;
 import hu.bme.mit.theta.formalism.cfa.analysis.lts.CfaLbeLts;
 import hu.bme.mit.theta.formalism.cfa.analysis.lts.CfaLts;
@@ -172,6 +175,16 @@ public class CfaConfigBuilder {
 		public abstract CfaLts getLts();
 	};
 
+	public enum InitPrec {
+		EMPTY(new CfaEmptyInitPrec()), ALLVARS(new CfaAllVarsInitPrec());
+
+		public final CfaInitPrec builder;
+
+		private InitPrec(final CfaInitPrec builder) {
+			this.builder = builder;
+		}
+	}
+
 	private Logger logger = NullLogger.getInstance();
 	private SolverFactory solverFactory = Z3SolverFactory.getInstace();
 	private final Domain domain;
@@ -181,6 +194,7 @@ public class CfaConfigBuilder {
 	private PrecGranularity precGranularity = PrecGranularity.GLOBAL;
 	private Encoding encoding = Encoding.LBE;
 	private int maxEnum = 0;
+	private InitPrec initPrec = InitPrec.EMPTY;
 
 	public CfaConfigBuilder(final Domain domain, final Refinement refinement) {
 		this.domain = domain;
@@ -219,6 +233,11 @@ public class CfaConfigBuilder {
 
 	public CfaConfigBuilder maxEnum(final int maxEnum) {
 		this.maxEnum = maxEnum;
+		return this;
+	}
+
+	public CfaConfigBuilder initPrec(final InitPrec initPrec) {
+		this.initPrec = initPrec;
 		return this;
 	}
 
@@ -262,7 +281,7 @@ public class CfaConfigBuilder {
 			final SafetyChecker<CfaState<ExplState>, CfaAction, CfaPrec<ExplPrec>> checker = CegarChecker
 					.create(abstractor, refiner, logger);
 
-			final CfaPrec<ExplPrec> prec = precGranularity.createPrec(ExplPrec.empty());
+			final CfaPrec<ExplPrec> prec = precGranularity.createPrec(initPrec.builder.createExpl(cfa));
 
 			return Config.create(checker, prec);
 
@@ -297,7 +316,7 @@ public class CfaConfigBuilder {
 			final SafetyChecker<CfaState<PredState>, CfaAction, CfaPrec<PredPrec>> checker = CegarChecker
 					.create(abstractor, refiner, logger);
 
-			final CfaPrec<PredPrec> prec = precGranularity.createPrec(PredPrec.create(solver));
+			final CfaPrec<PredPrec> prec = precGranularity.createPrec(initPrec.builder.createPred(cfa, solver));
 
 			return Config.create(checker, prec);
 

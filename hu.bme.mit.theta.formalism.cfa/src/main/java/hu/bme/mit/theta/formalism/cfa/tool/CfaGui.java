@@ -39,6 +39,7 @@ import hu.bme.mit.theta.formalism.cfa.analysis.CfaTraceConcretizer;
 import hu.bme.mit.theta.formalism.cfa.dsl.CfaDslManager;
 import hu.bme.mit.theta.formalism.cfa.tool.CfaConfigBuilder.Domain;
 import hu.bme.mit.theta.formalism.cfa.tool.CfaConfigBuilder.Encoding;
+import hu.bme.mit.theta.formalism.cfa.tool.CfaConfigBuilder.InitPrec;
 import hu.bme.mit.theta.formalism.cfa.tool.CfaConfigBuilder.PrecGranularity;
 import hu.bme.mit.theta.formalism.cfa.tool.CfaConfigBuilder.PredSplit;
 import hu.bme.mit.theta.formalism.cfa.tool.CfaConfigBuilder.Refinement;
@@ -68,6 +69,7 @@ public class CfaGui extends BaseGui {
 	private ChoiceBox<PrecGranularity> cbPrecGranularity;
 	private ChoiceBox<Encoding> cbEncoding;
 	private Spinner<Integer> spMaxEnum;
+	private ChoiceBox<InitPrec> cbInitPrec;
 	private Spinner<Integer> spLogLevel;
 	private CheckBox cbStructureOnly;
 
@@ -118,6 +120,7 @@ public class CfaGui extends BaseGui {
 		cbPrecGranularity = createChoice("Precision granularity", PrecGranularity.values());
 		cbEncoding = createChoice("Encoding", Encoding.values());
 		spMaxEnum = createSpinner("Max. succ. to enumerate", 0, Integer.MAX_VALUE, 0);
+		cbInitPrec = createChoice("Initial precision", InitPrec.values());
 		spLogLevel = createSpinner("Log level", 0, 100, 2);
 
 		final Button btnRunAlgo = createButton("Run algorithm");
@@ -173,8 +176,8 @@ public class CfaGui extends BaseGui {
 				final Config<?, ?, ?> config = new CfaConfigBuilder(cbDomain.getValue(), cbRefinement.getValue())
 						.search(cbSearch.getValue()).predSplit(cbPredSplit.getValue())
 						.precGranularity(cbPrecGranularity.getValue()).encoding(cbEncoding.getValue())
-						.maxEnum(spMaxEnum.getValue()).logger(new TextAreaLogger(spLogLevel.getValue(), taOutput))
-						.build(cfa);
+						.maxEnum(spMaxEnum.getValue()).initPrec(cbInitPrec.getValue())
+						.logger(new TextAreaLogger(spLogLevel.getValue(), taOutput)).build(cfa);
 				safetyResult = config.check();
 			} catch (final Exception ex) {
 				Platform.runLater(() -> displayException(ex));
