@@ -16,8 +16,10 @@
 package hu.bme.mit.theta.analysis.prod;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Collections.singleton;
 
 import java.util.Collection;
+import java.util.Optional;
 
 import hu.bme.mit.theta.analysis.InitFunc;
 import hu.bme.mit.theta.analysis.Prec;
@@ -43,8 +45,22 @@ final class Prod2InitFunc<S1 extends State, S2 extends State, P1 extends Prec, P
 	public Collection<? extends Prod2State<S1, S2>> getInitStates(final Prod2Prec<P1, P2> prec) {
 		checkNotNull(prec);
 		final Collection<? extends S1> initStates1 = initFunc1.getInitStates(prec._1());
+		final Optional<? extends S1> optBottom1 = initStates1.stream().filter(State::isBottom).findAny();
+
+		if (optBottom1.isPresent()) {
+			final S1 bottom1 = optBottom1.get();
+			return singleton(Prod2State.bottom1(bottom1));
+		}
+
 		final Collection<? extends S2> initStates2 = initFunc2.getInitStates(prec._2());
-		return Prod2State.product(initStates1, initStates2);
+		final Optional<? extends S2> optBottom2 = initStates2.stream().filter(State::isBottom).findAny();
+
+		if (optBottom2.isPresent()) {
+			final S2 bottom2 = optBottom2.get();
+			return singleton(Prod2State.bottom2(bottom2));
+		}
+
+		return Prod2State.cartesian(initStates1, initStates2);
 	}
 
 }

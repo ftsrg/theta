@@ -37,7 +37,13 @@ final class Prod2Ord<S1 extends State, S2 extends State> implements PartialOrd<P
 
 	@Override
 	public boolean isLeq(final Prod2State<S1, S2> state1, final Prod2State<S1, S2> state2) {
-		return partialOrd1.isLeq(state1._1(), state2._1()) && partialOrd2.isLeq(state1._2(), state2._2());
+		if (state1.isBottom()) {
+			return true;
+		} else if (state2.isBottom()) {
+			return false;
+		} else {
+			return partialOrd1.isLeq(state1._1(), state2._1()) && partialOrd2.isLeq(state1._2(), state2._2());
+		}
 	}
 
 }

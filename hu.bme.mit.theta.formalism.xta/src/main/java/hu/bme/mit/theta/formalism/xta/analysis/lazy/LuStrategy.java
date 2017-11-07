@@ -74,7 +74,7 @@ public final class LuStrategy implements LazyXtaChecker.AlgorithmStrategy<LuZone
 
 	@Override
 	public boolean shouldRefine(final ArgNode<XtaState<Prod2State<ExplState, LuZoneState>>, XtaAction> node) {
-		return node.getState().getState()._2().getZone().isBottom();
+		return node.getState().getState().isBottom2();
 	}
 
 	@Override

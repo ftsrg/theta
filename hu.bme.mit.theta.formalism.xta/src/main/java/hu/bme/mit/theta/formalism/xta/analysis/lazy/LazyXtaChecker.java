@@ -150,7 +150,7 @@ public final class LazyXtaChecker<S extends State>
 				final ArgNode<XtaState<Prod2State<ExplState, S>>, XtaAction> v = waitlist.remove();
 				assert v.isLeaf();
 
-				if (v.getState().getState()._1().isBottom()) {
+				if (v.getState().getState().isBottom1()) {
 					continue;
 				} else if (algorithm.shouldRefine(v)) {
 					statistics.startRefinement();
