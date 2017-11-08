@@ -38,16 +38,16 @@ import hu.bme.mit.theta.solver.Solver;
 public final class ExplStmtTransFunc implements TransFunc<ExplState, StmtAction, ExplPrec> {
 
 	private final Solver solver;
-	private final int maxStatesFromSolver;
+	private final int maxSuccToEnumerate;
 
-	private ExplStmtTransFunc(final Solver solver, final int maxStatesFromSolver) {
-		checkArgument(maxStatesFromSolver >= 0, "Max. states from solver must be non-negative.");
+	private ExplStmtTransFunc(final Solver solver, final int maxSuccToEnumerate) {
 		this.solver = checkNotNull(solver);
-		this.maxStatesFromSolver = maxStatesFromSolver;
+		this.maxSuccToEnumerate = maxSuccToEnumerate;
 	}
 
-	public static ExplStmtTransFunc create(final Solver solver, final int maxStatesFromSolver) {
-		return new ExplStmtTransFunc(solver, maxStatesFromSolver);
+	public static ExplStmtTransFunc create(final Solver solver, final int maxSuccToEnumerate) {
+		checkArgument(maxSuccToEnumerate >= 0, "Max. succ. to enumerate must be non-negative.");
+		return new ExplStmtTransFunc(solver, maxSuccToEnumerate);
 	}
 
 	@Override
@@ -62,7 +62,7 @@ public final class ExplStmtTransFunc implements TransFunc<ExplState, StmtAction,
 		for (int i = 0; i < stmts.size(); i++) {
 			final Stmt stmt = stmts.get(i);
 			final EvalResult evalResult = ExplStmtSuccEvaluator.evalSucc(running, stmt);
-			if (!evalResult.isPrecise() && !triedSolver && maxStatesFromSolver > 0) {
+			if (!evalResult.isPrecise() && !triedSolver) {
 				triedSolver = true;
 				final List<Stmt> remainingStmts = stmts.subList(i, stmts.size());
 				final StmtUnfoldResult toExprResult = StmtUtils.toExpr(remainingStmts, VarIndexing.all(0));
@@ -70,9 +70,10 @@ public final class ExplStmtTransFunc implements TransFunc<ExplState, StmtAction,
 				final VarIndexing nextIdx = toExprResult.getIndexing();
 				// We query (max + 1) states from the solver to see if there
 				// would be more than max
+				final int maxToQuery = maxSuccToEnumerate == 0 ? 0 : maxSuccToEnumerate + 1;
 				final Collection<ExplState> succStates = ExprStates.createStatesForExpr(solver, expr, 0,
-						prec::createState, nextIdx, maxStatesFromSolver + 1);
-				if (succStates.size() <= maxStatesFromSolver) {
+						prec::createState, nextIdx, maxToQuery);
+				if (maxSuccToEnumerate == 0 || succStates.size() <= maxSuccToEnumerate) {
 					return succStates;
 				}
 			}

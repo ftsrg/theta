@@ -39,6 +39,7 @@ import hu.bme.mit.theta.formalism.cfa.CFA;
 import hu.bme.mit.theta.formalism.cfa.dsl.CfaDslManager;
 import hu.bme.mit.theta.formalism.cfa.tool.CfaConfigBuilder.Domain;
 import hu.bme.mit.theta.formalism.cfa.tool.CfaConfigBuilder.Encoding;
+import hu.bme.mit.theta.formalism.cfa.tool.CfaConfigBuilder.InitPrec;
 import hu.bme.mit.theta.formalism.cfa.tool.CfaConfigBuilder.PrecGranularity;
 import hu.bme.mit.theta.formalism.cfa.tool.CfaConfigBuilder.PredSplit;
 import hu.bme.mit.theta.formalism.cfa.tool.CfaConfigBuilder.Refinement;
@@ -52,37 +53,43 @@ public class CfaCli {
 	private final String[] args;
 	private final TableWriter writer;
 
-	@Parameter(names = { "--domain" }, description = "Abstract domain", required = true)
+	@Parameter(names = "--domain", description = "Abstract domain", required = true)
 	Domain domain;
 
-	@Parameter(names = { "--refinement" }, description = "Refinement strategy", required = true)
+	@Parameter(names = "--refinement", description = "Refinement strategy", required = true)
 	Refinement refinement;
 
-	@Parameter(names = { "--search" }, description = "Search strategy")
+	@Parameter(names = "--search", description = "Search strategy")
 	Search search = Search.BFS;
 
-	@Parameter(names = { "--predsplit" }, description = "Predicate splitting")
+	@Parameter(names = "--predsplit", description = "Predicate splitting")
 	PredSplit predSplit = PredSplit.WHOLE;
 
-	@Parameter(names = { "--model" }, description = "Path of the input model", required = true)
+	@Parameter(names = "--model", description = "Path of the input model", required = true)
 	String model;
 
-	@Parameter(names = { "--precgranularity" }, description = "Precision granularity")
+	@Parameter(names = "--precgranularity", description = "Precision granularity")
 	PrecGranularity precGranularity = PrecGranularity.GLOBAL;
 
-	@Parameter(names = { "--encoding" }, description = "Encoding")
+	@Parameter(names = "--encoding", description = "Encoding")
 	Encoding encoding = Encoding.LBE;
 
-	@Parameter(names = { "--loglevel" }, description = "Detailedness of logging")
+	@Parameter(names = "--maxenum", description = "Maximal number of explicitly enumerated successors (0: unlimited)")
+	Integer maxEnum = 0;
+
+	@Parameter(names = "--initprec", description = "Initial precision")
+	InitPrec initPrec = InitPrec.EMPTY;
+
+	@Parameter(names = "--loglevel", description = "Detailedness of logging")
 	Integer logLevel = 1;
 
-	@Parameter(names = { "--benchmark" }, description = "Benchmark mode (only print metrics)")
+	@Parameter(names = "--benchmark", description = "Benchmark mode (only print metrics)")
 	Boolean benchmarkMode = false;
 
-	@Parameter(names = { "--visualize" }, description = "Write proof or counterexample to file in dot format")
+	@Parameter(names = "--visualize", description = "Write proof or counterexample to file in dot format")
 	String dotfile = null;
 
-	@Parameter(names = { "--header" }, description = "Print only a header (for benchmarks)", help = true)
+	@Parameter(names = "--header", description = "Print only a header (for benchmarks)", help = true)
 	boolean headerOnly = false;
 
 	private Logger logger;
@@ -145,7 +152,7 @@ public class CfaCli {
 
 	private Config<?, ?, ?> buildConfiguration(final CFA cfa) {
 		return new CfaConfigBuilder(domain, refinement).precGranularity(precGranularity).search(search)
-				.predSplit(predSplit).encoding(encoding).logger(logger).build(cfa);
+				.predSplit(predSplit).encoding(encoding).maxEnum(maxEnum).initPrec(initPrec).logger(logger).build(cfa);
 	}
 
 	private void printResult(final SafetyResult<?, ?> status, final CFA cfa) {
