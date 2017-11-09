@@ -57,7 +57,7 @@ import static org.junit.Assert.assertEquals;
 import org.junit.Test;
 
 import hu.bme.mit.theta.core.decl.ConstDecl;
-import hu.bme.mit.theta.core.model.BasicValuation;
+import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
@@ -72,7 +72,7 @@ public class EvaluationTest {
 	private final Expr<IntType> b = cb.getRef();
 
 	private static <ExprType extends Type> LitExpr<ExprType> evaluate(final Expr<ExprType> expr) {
-		return expr.eval(BasicValuation.empty());
+		return expr.eval(ImmutableValuation.empty());
 	}
 
 	private static <ExprType extends Type> LitExpr<ExprType> evaluate(final Expr<ExprType> expr, final Valuation val) {
@@ -344,7 +344,7 @@ public class EvaluationTest {
 
 	@Test
 	public void testValuation() {
-		final Valuation val = BasicValuation.builder().put(ca, Int(5)).put(cb, Int(10)).build();
+		final Valuation val = ImmutableValuation.builder().put(ca, Int(5)).put(cb, Int(10)).build();
 		assertEquals(Int(15), evaluate(Add(a, b), val));
 		assertEquals(Int(50), evaluate(Mul(a, b), val));
 		assertEquals(Int(0), evaluate(Div(a, b), val));

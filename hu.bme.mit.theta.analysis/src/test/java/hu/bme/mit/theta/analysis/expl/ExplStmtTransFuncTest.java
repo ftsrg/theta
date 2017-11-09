@@ -39,7 +39,7 @@ import com.google.common.collect.ImmutableSet;
 
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.model.BasicValuation;
+import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.type.inttype.IntType;
@@ -66,7 +66,7 @@ public class ExplStmtTransFuncTest {
 		final Collection<? extends ExplState> succStates = transFunc.getSuccStates(sourceState, stmts, prec);
 
 		Assert.assertEquals(1, succStates.size());
-		final ExplState expectedState = ExplState.create(BasicValuation.builder().put(x, Int(2)).build());
+		final ExplState expectedState = ExplState.create(ImmutableValuation.builder().put(x, Int(2)).build());
 		Assert.assertEquals(expectedState, Utils.singleElementOf(succStates));
 	}
 
@@ -83,7 +83,7 @@ public class ExplStmtTransFuncTest {
 
 		Assert.assertEquals(1, succStates.size());
 		final ExplState expectedState = ExplState
-				.create(BasicValuation.builder().put(x, Int(5)).put(y, Int(5)).build());
+				.create(ImmutableValuation.builder().put(x, Int(5)).put(y, Int(5)).build());
 		Assert.assertEquals(expectedState, Utils.singleElementOf(succStates));
 	}
 
@@ -100,7 +100,7 @@ public class ExplStmtTransFuncTest {
 
 		Assert.assertEquals(1, succStates.size());
 		final ExplState expectedState = ExplState
-				.create(BasicValuation.builder().put(x, Int(5)).put(y, Int(5)).build());
+				.create(ImmutableValuation.builder().put(x, Int(5)).put(y, Int(5)).build());
 		Assert.assertEquals(expectedState, Utils.singleElementOf(succStates));
 	}
 

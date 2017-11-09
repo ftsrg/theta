@@ -16,7 +16,7 @@
 package hu.bme.mit.theta.analysis.expl;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.model.BasicValuation;
+import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.model.MutableValuation;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
@@ -95,11 +95,11 @@ public final class ExplStmtSuccEvaluator {
 			if (exprSimplified instanceof LitExpr<?>) {
 				final LitExpr<DeclType> lit = (LitExpr<DeclType>) exprSimplified;
 				final MutableValuation mutableVal = MutableValuation.copyOf(param).remove(varDecl).put(varDecl, lit);
-				final BasicValuation basicVal = BasicValuation.copyOf(mutableVal);
+				final ImmutableValuation basicVal = ImmutableValuation.copyOf(mutableVal);
 				return EvalResult.precise(ExplState.create(basicVal));
 			} else {
 				final MutableValuation mutableVal = MutableValuation.copyOf(param).remove(varDecl);
-				final BasicValuation basicVal = BasicValuation.copyOf(mutableVal);
+				final ImmutableValuation basicVal = ImmutableValuation.copyOf(mutableVal);
 				return EvalResult.imprecise(ExplState.create(basicVal));
 			}
 		}
@@ -127,7 +127,7 @@ public final class ExplStmtSuccEvaluator {
 			final VarDecl<LhsType> varToHavoc = stmt.getVarDecl();
 			if (param.getDecls().contains(varToHavoc)) {
 				final MutableValuation mutableVal = MutableValuation.copyOf(param).remove(varToHavoc);
-				final BasicValuation basicVal = BasicValuation.copyOf(mutableVal);
+				final ImmutableValuation basicVal = ImmutableValuation.copyOf(mutableVal);
 				return EvalResult.precise(ExplState.create(basicVal));
 			} else {
 				return EvalResult.precise(param);

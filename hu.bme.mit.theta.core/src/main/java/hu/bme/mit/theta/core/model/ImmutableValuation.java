@@ -31,7 +31,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
  * Basic, immutable implementation of a valuation. The inner builder class can
  * be used to create a new instance.
  */
-public final class BasicValuation implements Valuation {
+public final class ImmutableValuation implements Valuation {
 	private static final int HASH_SEED = 4019;
 	private volatile int hashCode = 0;
 	private final MutableValuation val;
@@ -39,15 +39,15 @@ public final class BasicValuation implements Valuation {
 	private volatile Expr<BoolType> expr = null;
 
 	private static final class LazyHolder {
-		private static final BasicValuation EMPTY = new Builder().build();
+		private static final ImmutableValuation EMPTY = new Builder().build();
 	}
 
-	private BasicValuation(final Builder builder) {
+	private ImmutableValuation(final Builder builder) {
 		this.val = builder.val;
 		this.decls = Collections.unmodifiableCollection(this.val.getDecls());
 	}
 
-	public static BasicValuation copyOf(final Valuation val) {
+	public static ImmutableValuation copyOf(final Valuation val) {
 		final Builder builder = builder();
 		for (final Decl<?> decl : val.getDecls()) {
 			builder.put(decl, val.eval(decl).get());
@@ -55,7 +55,7 @@ public final class BasicValuation implements Valuation {
 		return builder.build();
 	}
 
-	public static BasicValuation empty() {
+	public static ImmutableValuation empty() {
 		return LazyHolder.EMPTY;
 	}
 
@@ -83,8 +83,8 @@ public final class BasicValuation implements Valuation {
 	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
-		} else if (obj instanceof BasicValuation) {
-			final BasicValuation that = (BasicValuation) obj;
+		} else if (obj instanceof ImmutableValuation) {
+			final ImmutableValuation that = (ImmutableValuation) obj;
 			return this.val.equals(that.val);
 		} else {
 			return false;
@@ -126,9 +126,9 @@ public final class BasicValuation implements Valuation {
 			return this;
 		}
 
-		public BasicValuation build() {
+		public ImmutableValuation build() {
 			this.built = true;
-			return new BasicValuation(this);
+			return new ImmutableValuation(this);
 		}
 
 	}

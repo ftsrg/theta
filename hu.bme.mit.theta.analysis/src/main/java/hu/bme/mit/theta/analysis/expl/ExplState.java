@@ -25,7 +25,7 @@ import java.util.Optional;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.Decl;
-import hu.bme.mit.theta.core.model.BasicValuation;
+import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
@@ -205,6 +205,6 @@ public abstract class ExplState implements ExprState, Valuation {
 	}
 
 	private static class TopLazyHolder {
-		static final ExplState INSTANCE = new NonBottom(BasicValuation.empty());
+		static final ExplState INSTANCE = new NonBottom(ImmutableValuation.empty());
 	}
 }

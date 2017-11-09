@@ -24,7 +24,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.model.BasicValuation;
+import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 
 public class ExplStateTest {
@@ -36,9 +36,9 @@ public class ExplStateTest {
 	public void testInstances() {
 		final ExplState t1 = ExplState.createTop();
 		final ExplState t2 = ExplState.createTop();
-		final ExplState t3 = ExplState.create(BasicValuation.empty());
-		final ExplState s1 = ExplState.create(BasicValuation.builder().put(x, Int(1)).build());
-		final ExplState s2 = ExplState.create(BasicValuation.builder().put(x, Int(1)).build());
+		final ExplState t3 = ExplState.create(ImmutableValuation.empty());
+		final ExplState s1 = ExplState.create(ImmutableValuation.builder().put(x, Int(1)).build());
+		final ExplState s2 = ExplState.create(ImmutableValuation.builder().put(x, Int(1)).build());
 
 		Assert.assertSame(t1, t2);
 		Assert.assertSame(t1, t3);
@@ -50,7 +50,7 @@ public class ExplStateTest {
 
 	@Test
 	public void testEval() {
-		final ExplState s1 = ExplState.create(BasicValuation.builder().put(x, Int(1)).build());
+		final ExplState s1 = ExplState.create(ImmutableValuation.builder().put(x, Int(1)).build());
 
 		Assert.assertEquals(Optional.of(Int(1)), s1.eval(x));
 		Assert.assertEquals(Optional.empty(), s1.eval(y));

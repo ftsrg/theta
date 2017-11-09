@@ -27,7 +27,7 @@ import com.google.common.collect.ImmutableSet;
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.model.BasicValuation;
+import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.LitExpr;
 
@@ -77,7 +77,7 @@ public final class ExplPrec implements Prec {
 
 	public ExplState createState(final Valuation valuation) {
 		checkNotNull(valuation);
-		final BasicValuation.Builder builder = BasicValuation.builder();
+		final ImmutableValuation.Builder builder = ImmutableValuation.builder();
 		for (final VarDecl<?> var : vars) {
 			final Optional<? extends LitExpr<?>> eval = valuation.eval(var);
 			if (eval.isPresent()) {

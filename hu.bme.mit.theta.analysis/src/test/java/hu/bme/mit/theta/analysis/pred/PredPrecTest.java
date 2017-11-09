@@ -27,7 +27,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.model.BasicValuation;
+import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
@@ -47,9 +47,9 @@ public class PredPrecTest {
 	public void testMapping() {
 		final PredPrec prec = PredPrec.create(Collections.singleton(pred), solver);
 
-		final PredState s1 = prec.createState(BasicValuation.builder().put(x, Int(0)).build());
-		final PredState s2 = prec.createState(BasicValuation.builder().put(x, Int(10)).build());
-		final PredState s3 = prec.createState(BasicValuation.builder().put(y, Int(0)).build());
+		final PredState s1 = prec.createState(ImmutableValuation.builder().put(x, Int(0)).build());
+		final PredState s2 = prec.createState(ImmutableValuation.builder().put(x, Int(10)).build());
+		final PredState s3 = prec.createState(ImmutableValuation.builder().put(y, Int(0)).build());
 
 		Assert.assertEquals(Collections.singleton(pred), s1.getPreds());
 		Assert.assertEquals(Collections.singleton(Not(pred)), s2.getPreds());

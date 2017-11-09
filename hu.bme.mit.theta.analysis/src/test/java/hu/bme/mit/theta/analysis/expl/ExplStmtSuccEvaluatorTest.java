@@ -23,7 +23,7 @@ import org.junit.Test;
 import hu.bme.mit.theta.analysis.expl.ExplStmtSuccEvaluator.EvalResult;
 import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.model.BasicValuation;
+import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.stmt.Stmts;
 import hu.bme.mit.theta.core.type.inttype.IntExprs;
@@ -35,9 +35,9 @@ public class ExplStmtSuccEvaluatorTest {
 	VarDecl<IntType> Y = Decls.Var("y", Int());
 
 	ExplState sb = ExplState.createBottom();
-	ExplState sx = ExplState.create(BasicValuation.builder().put(X, Int(1)).build());
-	ExplState sy = ExplState.create(BasicValuation.builder().put(Y, Int(2)).build());
-	ExplState sxy = ExplState.create(BasicValuation.builder().put(X, Int(1)).put(Y, Int(2)).build());
+	ExplState sx = ExplState.create(ImmutableValuation.builder().put(X, Int(1)).build());
+	ExplState sy = ExplState.create(ImmutableValuation.builder().put(Y, Int(2)).build());
+	ExplState sxy = ExplState.create(ImmutableValuation.builder().put(X, Int(1)).put(Y, Int(2)).build());
 	ExplState st = ExplState.createTop();
 
 	@Test
@@ -81,8 +81,8 @@ public class ExplStmtSuccEvaluatorTest {
 		final Stmt assign1 = Stmts.Assign(X, Int(1));
 		final Stmt assign2 = Stmts.Assign(X, Int(2));
 		final Stmt assign3 = Stmts.Assign(X, Y.getRef());
-		final ExplState sx2 = ExplState.create(BasicValuation.builder().put(X, Int(2)).build());
-		final ExplState sxy2 = ExplState.create(BasicValuation.builder().put(X, Int(2)).put(Y, Int(2)).build());
+		final ExplState sx2 = ExplState.create(ImmutableValuation.builder().put(X, Int(2)).build());
+		final ExplState sxy2 = ExplState.create(ImmutableValuation.builder().put(X, Int(2)).put(Y, Int(2)).build());
 
 		Assert.assertEquals(EvalResult.precise(sb), ExplStmtSuccEvaluator.evalSucc(sb, assign1));
 		Assert.assertEquals(EvalResult.precise(sx), ExplStmtSuccEvaluator.evalSucc(st, assign1));

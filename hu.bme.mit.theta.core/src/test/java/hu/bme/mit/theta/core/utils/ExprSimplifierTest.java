@@ -56,7 +56,7 @@ import static org.junit.Assert.assertEquals;
 import org.junit.Test;
 
 import hu.bme.mit.theta.core.decl.ConstDecl;
-import hu.bme.mit.theta.core.model.BasicValuation;
+import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
@@ -248,7 +248,7 @@ public class ExprSimplifierTest {
 
 	@Test
 	public void testValuation() {
-		final Valuation val = BasicValuation.builder().put(ca, Int(5)).put(cb, Int(9)).build();
+		final Valuation val = ImmutableValuation.builder().put(ca, Int(5)).put(cb, Int(9)).build();
 
 		assertEquals(Int(14), simplify(Add(a, b), val));
 		assertEquals(Add(c, Int(14)), simplify(Add(a, b, c), val));

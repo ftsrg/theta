@@ -22,7 +22,7 @@ import org.junit.Test;
 
 import hu.bme.mit.theta.core.decl.Decls;
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.model.BasicValuation;
+import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 
 public class ExplOrdTest {
@@ -33,10 +33,10 @@ public class ExplOrdTest {
 	final ExplOrd ord = ExplOrd.getInstance();
 
 	final ExplState st = ExplState.createTop();
-	final ExplState s1 = ExplState.create(BasicValuation.builder().put(X, Int(1)).build());
-	final ExplState s2 = ExplState.create(BasicValuation.builder().put(X, Int(2)).build());
-	final ExplState s3 = ExplState.create(BasicValuation.builder().put(Y, Int(1)).build());
-	final ExplState s4 = ExplState.create(BasicValuation.builder().put(X, Int(1)).put(Y, Int(1)).build());
+	final ExplState s1 = ExplState.create(ImmutableValuation.builder().put(X, Int(1)).build());
+	final ExplState s2 = ExplState.create(ImmutableValuation.builder().put(X, Int(2)).build());
+	final ExplState s3 = ExplState.create(ImmutableValuation.builder().put(Y, Int(1)).build());
+	final ExplState s4 = ExplState.create(ImmutableValuation.builder().put(X, Int(1)).put(Y, Int(1)).build());
 	final ExplState sb = ExplState.createBottom();
 
 	@Test
