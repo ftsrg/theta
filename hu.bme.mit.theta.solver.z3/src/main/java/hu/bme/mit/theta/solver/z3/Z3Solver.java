@@ -32,7 +32,6 @@ import com.microsoft.z3.Status;
 
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.Decl;
-import hu.bme.mit.theta.core.model.AbstractValuation;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
@@ -222,7 +221,7 @@ final class Z3Solver implements Solver {
 
 	////
 
-	private final class Z3Model extends AbstractValuation {
+	private final class Z3Model extends Valuation {
 		final com.microsoft.z3.Model z3Model;
 
 		Collection<ConstDecl<?>> constDecls;

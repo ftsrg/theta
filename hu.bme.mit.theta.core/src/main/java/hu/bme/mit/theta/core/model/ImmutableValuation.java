@@ -102,11 +102,6 @@ public final class ImmutableValuation extends Valuation {
 		return result;
 	}
 
-	@Override
-	public String toString() {
-		return val.toString();
-	}
-
 	public static Builder builder() {
 		return new Builder();
 	}

@@ -15,8 +15,14 @@
  */
 package hu.bme.mit.theta.core.model;
 
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
+
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
@@ -29,9 +35,22 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
  */
 public abstract class Valuation implements Substitution {
 
+	public Expr<BoolType> toExpr() {
+		final List<Expr<BoolType>> exprs = new ArrayList<>();
+		for (final Decl<?> decl : getDecls()) {
+			final Expr<BoolType> expr = Eq(decl.getRef(), eval(decl).get());
+			exprs.add(expr);
+		}
+		return And(exprs);
+	}
+
 	@Override
 	public abstract <DeclType extends Type> Optional<LitExpr<DeclType>> eval(final Decl<DeclType> decl);
 
-	public abstract Expr<BoolType> toExpr();
+	@Override
+	public String toString() {
+		return Utils.lispStringBuilder("valuation")
+				.addAll(getDecls(), d -> String.format("(<- %s %s)", d.getName(), eval(d).get())).toString();
+	}
 
 }
