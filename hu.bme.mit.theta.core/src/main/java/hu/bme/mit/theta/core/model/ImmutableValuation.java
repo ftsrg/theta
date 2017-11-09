@@ -1,12 +1,12 @@
 /*
  *  Copyright 2017 Budapest University of Technology and Economics
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,7 +31,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
  * Basic, immutable implementation of a valuation. The inner builder class can
  * be used to create a new instance.
  */
-public final class ImmutableValuation implements Valuation {
+public final class ImmutableValuation extends Valuation {
 	private static final int HASH_SEED = 4019;
 	private volatile int hashCode = 0;
 	private final MutableValuation val;

@@ -40,7 +40,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 /**
  * Mutable implementation of a valuation.
  */
-public final class MutableValuation implements Valuation {
+public final class MutableValuation extends Valuation {
 	private static final int HASH_SEED = 2141;
 	private final Map<Decl<?>, Expr<?>> declToExpr;
 

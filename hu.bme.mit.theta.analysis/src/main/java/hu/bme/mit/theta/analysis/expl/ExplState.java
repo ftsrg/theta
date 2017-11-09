@@ -33,7 +33,7 @@ import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
-public abstract class ExplState implements ExprState, Valuation {
+public abstract class ExplState extends Valuation implements ExprState {
 
 	private ExplState() {
 	}

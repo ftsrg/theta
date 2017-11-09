@@ -26,7 +26,7 @@ import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
-public abstract class AbstractValuation implements Valuation {
+public abstract class AbstractValuation extends Valuation {
 
 	@Override
 	public final Expr<BoolType> toExpr() {
