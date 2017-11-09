@@ -26,7 +26,7 @@ import hu.bme.mit.theta.analysis.InitFunc;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.model.BasicValuation;
+import hu.bme.mit.theta.core.model.MutableValuation;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
@@ -48,18 +48,17 @@ final class XtaExplInitFunc implements InitFunc<ExplState, UnitPrec> {
 	@Override
 	public Collection<ExplState> getInitStates(final UnitPrec prec) {
 		checkNotNull(prec);
-		final BasicValuation.Builder builder = BasicValuation.builder();
+		final MutableValuation val = new MutableValuation();
 		for (final VarDecl<?> var : vars) {
 			final Type type = var.getType();
 			if (type instanceof BoolType) {
-				builder.put(var, False());
+				val.put(var, False());
 			} else if (type instanceof IntType) {
-				builder.put(var, Int(0));
+				val.put(var, Int(0));
 			} else {
 				throw new UnsupportedOperationException();
 			}
 		}
-		final BasicValuation val = builder.build();
 		final ExplState initState = ExplState.create(val);
 		return singleton(initState);
 	}

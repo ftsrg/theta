@@ -150,9 +150,7 @@ public final class LazyXtaChecker<S extends State>
 				final ArgNode<XtaState<Prod2State<ExplState, S>>, XtaAction> v = waitlist.remove();
 				assert v.isLeaf();
 
-				if (v.getState().getState().isBottom1()) {
-					continue;
-				} else if (algorithm.shouldRefine(v)) {
+				if (algorithm.shouldRefine(v)) {
 					statistics.startRefinement();
 					final Collection<ArgNode<XtaState<Prod2State<ExplState, S>>, XtaAction>> uncoveredNodes = algorithm
 							.refine(v, statistics);
@@ -207,7 +205,7 @@ public final class LazyXtaChecker<S extends State>
 		private void expand(final ArgNode<XtaState<Prod2State<ExplState, S>>, XtaAction> v) {
 			argBuilder.expand(v, UnitPrec.getInstance());
 			reachedSet.add(v);
-			waitlist.addAll(v.getSuccNodes());
+			waitlist.addAll(v.getSuccNodes().filter(n -> !n.getState().getState().isBottom1()));
 		}
 	}
 
