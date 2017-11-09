@@ -85,52 +85,52 @@ public final class ExplStmtSuccEvaluator {
 	private static final class EvaluatorVisitor implements StmtVisitor<ExplState, EvalResult> {
 
 		@Override
-		public <DeclType extends Type> EvalResult visit(final AssignStmt<DeclType> stmt, final ExplState param) {
-			if (param.isBottom()) {
-				return EvalResult.precise(param);
+		public <DeclType extends Type> EvalResult visit(final AssignStmt<DeclType> stmt, final ExplState state) {
+			if (state.isBottom()) {
+				return EvalResult.precise(state);
 			}
 
 			final VarDecl<DeclType> varDecl = stmt.getVarDecl();
-			final Expr<DeclType> exprSimplified = ExprUtils.simplify(stmt.getExpr(), param);
+			final Expr<DeclType> exprSimplified = ExprUtils.simplify(stmt.getExpr(), state);
 			if (exprSimplified instanceof LitExpr<?>) {
 				final LitExpr<DeclType> lit = (LitExpr<DeclType>) exprSimplified;
-				final MutableValuation mutableVal = MutableValuation.copyOf(param).remove(varDecl).put(varDecl, lit);
+				final MutableValuation mutableVal = MutableValuation.copyOf(state).remove(varDecl).put(varDecl, lit);
 				final ImmutableValuation basicVal = ImmutableValuation.copyOf(mutableVal);
 				return EvalResult.precise(ExplState.create(basicVal));
 			} else {
-				final MutableValuation mutableVal = MutableValuation.copyOf(param).remove(varDecl);
+				final MutableValuation mutableVal = MutableValuation.copyOf(state).remove(varDecl);
 				final ImmutableValuation basicVal = ImmutableValuation.copyOf(mutableVal);
 				return EvalResult.imprecise(ExplState.create(basicVal));
 			}
 		}
 
 		@Override
-		public EvalResult visit(final AssumeStmt stmt, final ExplState param) {
-			if (param.isBottom()) {
-				return EvalResult.precise(param);
+		public EvalResult visit(final AssumeStmt stmt, final ExplState state) {
+			if (state.isBottom()) {
+				return EvalResult.precise(state);
 			}
 
-			final Expr<BoolType> condSimplified = ExprUtils.simplify(stmt.getCond(), param);
+			final Expr<BoolType> condSimplified = ExprUtils.simplify(stmt.getCond(), state);
 			if (condSimplified instanceof BoolLitExpr) {
 				if (condSimplified.equals(BoolExprs.True())) {
-					return EvalResult.precise(param);
+					return EvalResult.precise(state);
 				} else {
 					return EvalResult.precise(ExplState.createBottom());
 				}
 			} else {
-				return EvalResult.imprecise(param);
+				return EvalResult.imprecise(state);
 			}
 		}
 
 		@Override
-		public <LhsType extends Type> EvalResult visit(final HavocStmt<LhsType> stmt, final ExplState param) {
+		public <LhsType extends Type> EvalResult visit(final HavocStmt<LhsType> stmt, final ExplState state) {
 			final VarDecl<LhsType> varToHavoc = stmt.getVarDecl();
-			if (param.getDecls().contains(varToHavoc)) {
-				final MutableValuation mutableVal = MutableValuation.copyOf(param).remove(varToHavoc);
+			if (state.getDecls().contains(varToHavoc)) {
+				final MutableValuation mutableVal = MutableValuation.copyOf(state).remove(varToHavoc);
 				final ImmutableValuation basicVal = ImmutableValuation.copyOf(mutableVal);
 				return EvalResult.precise(ExplState.create(basicVal));
 			} else {
-				return EvalResult.precise(param);
+				return EvalResult.precise(state);
 			}
 		}
 	}
