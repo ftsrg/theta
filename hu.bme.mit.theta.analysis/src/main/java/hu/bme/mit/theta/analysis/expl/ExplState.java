@@ -53,10 +53,9 @@ public abstract class ExplState extends Valuation implements ExprState {
 		return TopLazyHolder.INSTANCE;
 	}
 
-	public abstract boolean isLeq(final ExplState that);
+	public abstract Valuation getVal();
 
-	@Override
-	public abstract boolean isBottom();
+	public abstract boolean isLeq(final ExplState that);
 
 	////
 
@@ -86,6 +85,11 @@ public abstract class ExplState extends Valuation implements ExprState {
 		}
 
 		////
+
+		@Override
+		public Valuation getVal() {
+			return val;
+		}
 
 		@Override
 		public boolean isLeq(final ExplState that) {
@@ -159,6 +163,11 @@ public abstract class ExplState extends Valuation implements ExprState {
 		}
 
 		////
+
+		@Override
+		public Valuation getVal() {
+			throw new UnsupportedOperationException();
+		}
 
 		@Override
 		public boolean isLeq(final ExplState that) {
