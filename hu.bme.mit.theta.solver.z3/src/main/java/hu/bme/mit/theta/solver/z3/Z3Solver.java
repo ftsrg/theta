@@ -15,7 +15,6 @@
  */
 package hu.bme.mit.theta.solver.z3;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
@@ -222,19 +221,17 @@ final class Z3Solver implements Solver {
 	////
 
 	private final class Z3Model extends Valuation {
-		final com.microsoft.z3.Model z3Model;
-
-		Collection<ConstDecl<?>> constDecls;
-		final Map<Decl<?>, LitExpr<?>> constToExpr;
+		private final com.microsoft.z3.Model z3Model;
+		private final Map<Decl<?>, LitExpr<?>> constToExpr;
+		private volatile Collection<ConstDecl<?>> constDecls = null;
 
 		public Z3Model(final com.microsoft.z3.Model z3Model) {
 			this.z3Model = z3Model;
-			constDecls = null;
 			constToExpr = new HashMap<>();
 		}
 
 		@Override
-		public Collection<? extends ConstDecl<?>> getDecls() {
+		public Collection<ConstDecl<?>> getDecls() {
 			Collection<ConstDecl<?>> result = constDecls;
 			if (result == null) {
 				result = constDeclsOf(z3Model);
@@ -246,7 +243,10 @@ final class Z3Solver implements Solver {
 		@Override
 		public <DeclType extends Type> Optional<LitExpr<DeclType>> eval(final Decl<DeclType> decl) {
 			checkNotNull(decl);
-			checkArgument(decl instanceof ConstDecl<?>);
+
+			if (!(decl instanceof ConstDecl)) {
+				return Optional.empty();
+			}
 
 			final ConstDecl<DeclType> constDecl = (ConstDecl<DeclType>) decl;
 
