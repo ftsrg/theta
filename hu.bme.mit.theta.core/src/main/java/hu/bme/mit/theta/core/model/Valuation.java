@@ -35,6 +35,9 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
  */
 public abstract class Valuation implements Substitution {
 
+	@Override
+	public abstract <DeclType extends Type> Optional<LitExpr<DeclType>> eval(final Decl<DeclType> decl);
+
 	public Expr<BoolType> toExpr() {
 		final List<Expr<BoolType>> exprs = new ArrayList<>();
 		for (final Decl<?> decl : getDecls()) {
@@ -44,8 +47,17 @@ public abstract class Valuation implements Substitution {
 		return And(exprs);
 	}
 
-	@Override
-	public abstract <DeclType extends Type> Optional<LitExpr<DeclType>> eval(final Decl<DeclType> decl);
+	public boolean isLeq(final Valuation that) {
+		if (that.getDecls().size() > this.getDecls().size()) {
+			return false;
+		}
+		for (final Decl<?> varDecl : that.getDecls()) {
+			if (!this.getDecls().contains(varDecl) || !that.eval(varDecl).get().equals(this.eval(varDecl).get())) {
+				return false;
+			}
+		}
+		return true;
+	}
 
 	@Override
 	public String toString() {

@@ -95,16 +95,9 @@ public abstract class ExplState extends Valuation implements ExprState {
 		public boolean isLeq(final ExplState that) {
 			if (that.isBottom()) {
 				return false;
+			} else {
+				return this.getVal().isLeq(that.getVal());
 			}
-			if (that.getDecls().size() > this.getDecls().size()) {
-				return false;
-			}
-			for (final Decl<?> varDecl : that.getDecls()) {
-				if (!this.getDecls().contains(varDecl) || !that.eval(varDecl).get().equals(this.eval(varDecl).get())) {
-					return false;
-				}
-			}
-			return true;
 		}
 
 		@Override
