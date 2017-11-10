@@ -19,6 +19,7 @@ import static com.google.common.base.Preconditions.checkState;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Map;
 import java.util.Optional;
 
 import hu.bme.mit.theta.core.decl.Decl;
@@ -65,6 +66,11 @@ public final class ImmutableValuation extends Valuation {
 	}
 
 	@Override
+	public <DeclType extends Type> Optional<LitExpr<DeclType>> eval(final Decl<DeclType> decl) {
+		return val.eval(decl);
+	}
+
+	@Override
 	public Expr<BoolType> toExpr() {
 		Expr<BoolType> result = expr;
 		if (result == null) {
@@ -75,8 +81,8 @@ public final class ImmutableValuation extends Valuation {
 	}
 
 	@Override
-	public <DeclType extends Type> Optional<LitExpr<DeclType>> eval(final Decl<DeclType> decl) {
-		return val.eval(decl);
+	public Map<Decl<?>, LitExpr<?>> toMap() {
+		return val.toMap();
 	}
 
 	@Override
@@ -127,4 +133,5 @@ public final class ImmutableValuation extends Valuation {
 		}
 
 	}
+
 }

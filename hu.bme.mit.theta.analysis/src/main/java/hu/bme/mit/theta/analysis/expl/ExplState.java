@@ -20,6 +20,7 @@ import static java.util.stream.Collectors.joining;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Map;
 import java.util.Optional;
 
 import hu.bme.mit.theta.analysis.expr.ExprState;
@@ -84,6 +85,11 @@ public abstract class ExplState extends Valuation implements ExprState {
 			return val.toExpr();
 		}
 
+		@Override
+		public Map<Decl<?>, LitExpr<?>> toMap() {
+			return val.toMap();
+		}
+
 		////
 
 		@Override
@@ -140,6 +146,7 @@ public abstract class ExplState extends Valuation implements ExprState {
 	}
 
 	private static final class Bottom extends ExplState {
+
 		@Override
 		public Collection<? extends Decl<?>> getDecls() {
 			return Collections.emptySet();
@@ -153,6 +160,11 @@ public abstract class ExplState extends Valuation implements ExprState {
 		@Override
 		public Expr<BoolType> toExpr() {
 			return BoolExprs.False();
+		}
+
+		@Override
+		public Map<Decl<?>, LitExpr<?>> toMap() {
+			return Collections.emptyMap();
 		}
 
 		////

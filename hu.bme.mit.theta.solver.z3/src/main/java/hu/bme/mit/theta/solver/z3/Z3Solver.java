@@ -225,7 +225,7 @@ final class Z3Solver implements Solver {
 		final com.microsoft.z3.Model z3Model;
 
 		Collection<ConstDecl<?>> constDecls;
-		final Map<ConstDecl<?>, LitExpr<?>> constToExpr;
+		final Map<Decl<?>, LitExpr<?>> constToExpr;
 
 		public Z3Model(final com.microsoft.z3.Model z3Model) {
 			this.z3Model = z3Model;
@@ -265,6 +265,12 @@ final class Z3Solver implements Solver {
 			@SuppressWarnings("unchecked")
 			final LitExpr<DeclType> tVal = (LitExpr<DeclType>) val;
 			return Optional.of(tVal);
+		}
+
+		@Override
+		public Map<Decl<?>, LitExpr<?>> toMap() {
+			getDecls().forEach(this::eval);
+			return Collections.unmodifiableMap(constToExpr);
 		}
 
 		////

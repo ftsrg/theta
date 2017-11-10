@@ -20,6 +20,7 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import hu.bme.mit.theta.common.Utils;
@@ -37,6 +38,8 @@ public abstract class Valuation implements Substitution {
 
 	@Override
 	public abstract <DeclType extends Type> Optional<LitExpr<DeclType>> eval(final Decl<DeclType> decl);
+
+	public abstract Map<Decl<?>, LitExpr<?>> toMap();
 
 	public Expr<BoolType> toExpr() {
 		final List<Expr<BoolType>> exprs = new ArrayList<>();

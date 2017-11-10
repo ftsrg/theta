@@ -41,7 +41,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
  */
 public final class MutableValuation extends Valuation {
 	private static final int HASH_SEED = 2141;
-	private final Map<Decl<?>, Expr<?>> declToExpr;
+	private final Map<Decl<?>, LitExpr<?>> declToExpr;
 
 	public MutableValuation() {
 		// LinkedHashMap is used for deterministic order
@@ -73,9 +73,20 @@ public final class MutableValuation extends Valuation {
 	}
 
 	@Override
+	public <DeclType extends Type> Optional<LitExpr<DeclType>> eval(final Decl<DeclType> decl) {
+		checkNotNull(decl);
+		if (declToExpr.containsKey(decl)) {
+			@SuppressWarnings("unchecked")
+			final LitExpr<DeclType> val = (LitExpr<DeclType>) declToExpr.get(decl);
+			return Optional.of(val);
+		}
+		return Optional.empty();
+	}
+
+	@Override
 	public Expr<BoolType> toExpr() {
 		final List<Expr<BoolType>> ops = new ArrayList<>(declToExpr.size());
-		for (final Entry<Decl<?>, Expr<?>> entry : declToExpr.entrySet()) {
+		for (final Entry<Decl<?>, LitExpr<?>> entry : declToExpr.entrySet()) {
 			ops.add(Eq(entry.getKey().getRef(), entry.getValue()));
 		}
 		if (ops.isEmpty()) {
@@ -88,14 +99,8 @@ public final class MutableValuation extends Valuation {
 	}
 
 	@Override
-	public <DeclType extends Type> Optional<LitExpr<DeclType>> eval(final Decl<DeclType> decl) {
-		checkNotNull(decl);
-		if (declToExpr.containsKey(decl)) {
-			@SuppressWarnings("unchecked")
-			final LitExpr<DeclType> val = (LitExpr<DeclType>) declToExpr.get(decl);
-			return Optional.of(val);
-		}
-		return Optional.empty();
+	public Map<Decl<?>, LitExpr<?>> toMap() {
+		return Collections.unmodifiableMap(declToExpr);
 	}
 
 	@Override
@@ -114,4 +119,5 @@ public final class MutableValuation extends Valuation {
 	public int hashCode() {
 		return HASH_SEED * 31 + declToExpr.hashCode();
 	}
+
 }
