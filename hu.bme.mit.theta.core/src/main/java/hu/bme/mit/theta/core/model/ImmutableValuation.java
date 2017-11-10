@@ -15,26 +15,30 @@
  */
 package hu.bme.mit.theta.core.model;
 
-import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.collect.ImmutableList.toImmutableList;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
+
+import com.google.common.collect.ImmutableMap;
 
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs;
 
 /**
  * Basic, immutable implementation of a valuation. The inner builder class can
  * be used to create a new instance.
  */
 public final class ImmutableValuation extends Valuation {
-	private final MutableValuation val;
-	private final Collection<? extends Decl<?>> decls;
+	private final Map<Decl<?>, LitExpr<?>> declToExpr;
 	private volatile Expr<BoolType> expr = null;
 
 	private static final class LazyHolder {
@@ -42,16 +46,19 @@ public final class ImmutableValuation extends Valuation {
 	}
 
 	private ImmutableValuation(final Builder builder) {
-		this.val = builder.val;
-		this.decls = Collections.unmodifiableCollection(this.val.getDecls());
+		declToExpr = builder.builder.build();
 	}
 
 	public static ImmutableValuation copyOf(final Valuation val) {
-		final Builder builder = builder();
-		for (final Decl<?> decl : val.getDecls()) {
-			builder.put(decl, val.eval(decl).get());
+		if (val instanceof ImmutableValuation) {
+			return (ImmutableValuation) val;
+		} else {
+			final Builder builder = builder();
+			for (final Decl<?> decl : val.getDecls()) {
+				builder.put(decl, val.eval(decl).get());
+			}
+			return builder.build();
 		}
-		return builder.build();
 	}
 
 	public static ImmutableValuation empty() {
@@ -59,20 +66,24 @@ public final class ImmutableValuation extends Valuation {
 	}
 
 	@Override
-	public Collection<? extends Decl<?>> getDecls() {
-		return decls;
+	public Collection<Decl<?>> getDecls() {
+		return declToExpr.keySet();
 	}
 
 	@Override
 	public <DeclType extends Type> Optional<LitExpr<DeclType>> eval(final Decl<DeclType> decl) {
-		return val.eval(decl);
+		checkNotNull(decl);
+		@SuppressWarnings("unchecked")
+		final LitExpr<DeclType> val = (LitExpr<DeclType>) declToExpr.get(decl);
+		return Optional.ofNullable(val);
 	}
 
 	@Override
 	public Expr<BoolType> toExpr() {
 		Expr<BoolType> result = expr;
 		if (result == null) {
-			result = val.toExpr();
+			result = SmartBoolExprs.And(declToExpr.entrySet().stream().map(e -> Eq(e.getKey().getRef(), e.getValue()))
+					.collect(toImmutableList()));
 			expr = result;
 		}
 		return result;
@@ -80,7 +91,7 @@ public final class ImmutableValuation extends Valuation {
 
 	@Override
 	public Map<Decl<?>, LitExpr<?>> toMap() {
-		return val.toMap();
+		return declToExpr;
 	}
 
 	public static Builder builder() {
@@ -88,22 +99,19 @@ public final class ImmutableValuation extends Valuation {
 	}
 
 	public final static class Builder {
-		private final MutableValuation val;
-		private boolean built;
+		private final ImmutableMap.Builder<Decl<?>, LitExpr<?>> builder;
 
 		private Builder() {
-			this.val = new MutableValuation();
-			this.built = false;
+			builder = ImmutableMap.builder();
 		}
 
 		public Builder put(final Decl<?> decl, final LitExpr<?> value) {
-			checkState(!built, "Builder was already built.");
-			val.put(decl, value);
+			checkArgument(value.getType().equals(decl.getType()), "Type mismatch.");
+			builder.put(decl, value);
 			return this;
 		}
 
 		public ImmutableValuation build() {
-			this.built = true;
 			return new ImmutableValuation(this);
 		}
 
