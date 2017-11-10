@@ -62,9 +62,9 @@ public abstract class ExplState extends Valuation implements ExprState {
 
 	private static final class NonBottom extends ExplState {
 
+		@SuppressWarnings("unused")
 		private static final int HASH_SEED = 6659;
 		private final Valuation val;
-		private volatile int hashCode;
 
 		private NonBottom(final Valuation val) {
 			this.val = checkNotNull(val);
@@ -111,31 +111,6 @@ public abstract class ExplState extends Valuation implements ExprState {
 			return false;
 		}
 
-		////
-
-		@Override
-		public int hashCode() {
-			int result = hashCode;
-			if (result == 0) {
-				result = HASH_SEED;
-				result = 31 * result + val.hashCode();
-				hashCode = result;
-			}
-			return result;
-		}
-
-		@Override
-		public boolean equals(final Object obj) {
-			if (this == obj) {
-				return true;
-			} else if (obj instanceof NonBottom) {
-				final NonBottom that = (NonBottom) obj;
-				return this.val.equals(that.val);
-			} else {
-				return false;
-			}
-		}
-
 		@Override
 		public String toString() {
 			return val.getDecls().stream()
@@ -146,6 +121,9 @@ public abstract class ExplState extends Valuation implements ExprState {
 	}
 
 	private static final class Bottom extends ExplState {
+
+		@SuppressWarnings("unused")
+		private static final int HASH_SEED = 3931;
 
 		@Override
 		public Collection<? extends Decl<?>> getDecls() {
@@ -182,18 +160,6 @@ public abstract class ExplState extends Valuation implements ExprState {
 		@Override
 		public boolean isBottom() {
 			return true;
-		}
-
-		////
-
-		@Override
-		public int hashCode() {
-			return 3931;
-		}
-
-		@Override
-		public boolean equals(final Object obj) {
-			return obj instanceof Bottom;
 		}
 
 		@Override

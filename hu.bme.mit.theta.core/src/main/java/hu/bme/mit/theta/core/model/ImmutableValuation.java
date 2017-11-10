@@ -33,8 +33,6 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
  * be used to create a new instance.
  */
 public final class ImmutableValuation extends Valuation {
-	private static final int HASH_SEED = 4019;
-	private volatile int hashCode = 0;
 	private final MutableValuation val;
 	private final Collection<? extends Decl<?>> decls;
 	private volatile Expr<BoolType> expr = null;
@@ -83,29 +81,6 @@ public final class ImmutableValuation extends Valuation {
 	@Override
 	public Map<Decl<?>, LitExpr<?>> toMap() {
 		return val.toMap();
-	}
-
-	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		} else if (obj instanceof ImmutableValuation) {
-			final ImmutableValuation that = (ImmutableValuation) obj;
-			return this.val.equals(that.val);
-		} else {
-			return false;
-		}
-	}
-
-	@Override
-	public int hashCode() {
-		int result = hashCode;
-		if (result == 0) {
-			result = HASH_SEED;
-			result = 31 * result + val.hashCode();
-			hashCode = result;
-		}
-		return result;
 	}
 
 	public static Builder builder() {

@@ -40,7 +40,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
  * Mutable implementation of a valuation.
  */
 public final class MutableValuation extends Valuation {
-	private static final int HASH_SEED = 2141;
+
 	private final Map<Decl<?>, LitExpr<?>> declToExpr;
 
 	public MutableValuation() {
@@ -101,23 +101,6 @@ public final class MutableValuation extends Valuation {
 	@Override
 	public Map<Decl<?>, LitExpr<?>> toMap() {
 		return Collections.unmodifiableMap(declToExpr);
-	}
-
-	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		} else if (obj instanceof MutableValuation) {
-			final MutableValuation that = (MutableValuation) obj;
-			return this.declToExpr.equals(that.declToExpr);
-		} else {
-			return false;
-		}
-	}
-
-	@Override
-	public int hashCode() {
-		return HASH_SEED * 31 + declToExpr.hashCode();
 	}
 
 }

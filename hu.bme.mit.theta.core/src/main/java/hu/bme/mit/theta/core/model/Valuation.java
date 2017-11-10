@@ -35,6 +35,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
  * expressions.
  */
 public abstract class Valuation implements Substitution {
+	private static final int HASH_SEED = 2141;
 
 	@Override
 	public abstract <DeclType extends Type> Optional<LitExpr<DeclType>> eval(final Decl<DeclType> decl);
@@ -60,6 +61,23 @@ public abstract class Valuation implements Substitution {
 			}
 		}
 		return true;
+	}
+
+	@Override
+	public final int hashCode() {
+		return HASH_SEED * 31 + toMap().hashCode();
+	}
+
+	@Override
+	public final boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		} else if (obj instanceof Valuation) {
+			final Valuation that = (Valuation) obj;
+			return this.toMap().equals(that.toMap());
+		} else {
+			return false;
+		}
 	}
 
 	@Override
