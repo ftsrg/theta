@@ -59,7 +59,7 @@ final class XtaExplInitFunc implements InitFunc<ExplState, UnitPrec> {
 				throw new UnsupportedOperationException();
 			}
 		}
-		final ExplState initState = ExplState.create(val);
+		final ExplState initState = ExplState.of(val);
 		return singleton(initState);
 	}
 

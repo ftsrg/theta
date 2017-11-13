@@ -32,12 +32,12 @@ public class ExplOrdTest {
 
 	final ExplOrd ord = ExplOrd.getInstance();
 
-	final ExplState st = ExplState.createTop();
-	final ExplState s1 = ExplState.create(ImmutableValuation.builder().put(X, Int(1)).build());
-	final ExplState s2 = ExplState.create(ImmutableValuation.builder().put(X, Int(2)).build());
-	final ExplState s3 = ExplState.create(ImmutableValuation.builder().put(Y, Int(1)).build());
-	final ExplState s4 = ExplState.create(ImmutableValuation.builder().put(X, Int(1)).put(Y, Int(1)).build());
-	final ExplState sb = ExplState.createBottom();
+	final ExplState st = ExplState.top();
+	final ExplState s1 = ExplState.of(ImmutableValuation.builder().put(X, Int(1)).build());
+	final ExplState s2 = ExplState.of(ImmutableValuation.builder().put(X, Int(2)).build());
+	final ExplState s3 = ExplState.of(ImmutableValuation.builder().put(Y, Int(1)).build());
+	final ExplState s4 = ExplState.of(ImmutableValuation.builder().put(X, Int(1)).put(Y, Int(1)).build());
+	final ExplState sb = ExplState.bottom();
 
 	@Test
 	public void testBottom() {

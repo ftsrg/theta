@@ -54,7 +54,7 @@ public class ExplStmtTransFuncTest {
 	@Test
 	public void testSimple() {
 		final ExplStmtTransFunc transFunc = ExplStmtTransFunc.create(solver, 0);
-		final ExplState sourceState = ExplState.createTop();
+		final ExplState sourceState = ExplState.top();
 		final ExplPrec prec = ExplPrec.of(Collections.singleton(x));
 		final List<Stmt> stmts = new ArrayList<>();
 		stmts.add(Havoc(x));
@@ -66,14 +66,14 @@ public class ExplStmtTransFuncTest {
 		final Collection<? extends ExplState> succStates = transFunc.getSuccStates(sourceState, stmts, prec);
 
 		Assert.assertEquals(1, succStates.size());
-		final ExplState expectedState = ExplState.create(ImmutableValuation.builder().put(x, Int(2)).build());
+		final ExplState expectedState = ExplState.of(ImmutableValuation.builder().put(x, Int(2)).build());
 		Assert.assertEquals(expectedState, Utils.singleElementOf(succStates));
 	}
 
 	@Test
 	public void testComplex1() {
 		final ExplStmtTransFunc transFunc = ExplStmtTransFunc.create(solver, 0);
-		final ExplState sourceState = ExplState.createTop();
+		final ExplState sourceState = ExplState.top();
 		final ExplPrec prec = ExplPrec.of(ImmutableSet.of(x, y));
 		final List<Stmt> stmts = new ArrayList<>();
 		stmts.add(Assign(x, Int(5)));
@@ -83,14 +83,14 @@ public class ExplStmtTransFuncTest {
 
 		Assert.assertEquals(1, succStates.size());
 		final ExplState expectedState = ExplState
-				.create(ImmutableValuation.builder().put(x, Int(5)).put(y, Int(5)).build());
+				.of(ImmutableValuation.builder().put(x, Int(5)).put(y, Int(5)).build());
 		Assert.assertEquals(expectedState, Utils.singleElementOf(succStates));
 	}
 
 	@Test
 	public void testComplex2() {
 		final ExplStmtTransFunc transFunc = ExplStmtTransFunc.create(solver, 1);
-		final ExplState sourceState = ExplState.createTop();
+		final ExplState sourceState = ExplState.top();
 		final ExplPrec prec = ExplPrec.of(ImmutableSet.of(x, y));
 		final List<Stmt> stmts = new ArrayList<>();
 		stmts.add(Assign(x, Int(5)));
@@ -100,13 +100,13 @@ public class ExplStmtTransFuncTest {
 
 		Assert.assertEquals(1, succStates.size());
 		final ExplState expectedState = ExplState
-				.create(ImmutableValuation.builder().put(x, Int(5)).put(y, Int(5)).build());
+				.of(ImmutableValuation.builder().put(x, Int(5)).put(y, Int(5)).build());
 		Assert.assertEquals(expectedState, Utils.singleElementOf(succStates));
 	}
 
 	@Test
 	public void testComplex3() {
-		final ExplState sourceState = ExplState.createTop();
+		final ExplState sourceState = ExplState.top();
 		final ExplPrec prec = ExplPrec.of(Collections.singleton(x));
 		final List<Stmt> stmts = new ArrayList<>();
 		stmts.add(Assume(BoolExprs.And(Leq(Int(0), x.getRef()), Leq(x.getRef(), Int(2)))));

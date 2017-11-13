@@ -72,13 +72,13 @@ final class XtaExplTransFunc implements TransFunc<ExplState, XtaAction, UnitPrec
 		final List<Loc> targetLocs = action.getTargetLocs();
 
 		if (!checkDataGuards(edge, state)) {
-			return singleton(ExplState.createBottom());
+			return singleton(ExplState.bottom());
 		}
 
 		final ExplState succState = createSuccStateForSimpleAction(state, action);
 
 		if (!checkDataInvariants(targetLocs, succState)) {
-			return singleton(ExplState.createBottom());
+			return singleton(ExplState.bottom());
 		}
 
 		return singleton(succState);
@@ -90,21 +90,21 @@ final class XtaExplTransFunc implements TransFunc<ExplState, XtaAction, UnitPrec
 		final List<Loc> targetLocs = action.getTargetLocs();
 
 		if (!checkSync(emitEdge, recvEdge, state)) {
-			return singleton(ExplState.createBottom());
+			return singleton(ExplState.bottom());
 		}
 
 		if (!checkDataGuards(emitEdge, state)) {
-			return singleton(ExplState.createBottom());
+			return singleton(ExplState.bottom());
 		}
 
 		if (!checkDataGuards(recvEdge, state)) {
-			return singleton(ExplState.createBottom());
+			return singleton(ExplState.bottom());
 		}
 
 		final ExplState succState = createSuccStateForSyncedAction(state, action);
 
 		if (!checkDataInvariants(targetLocs, succState)) {
-			return singleton(ExplState.createBottom());
+			return singleton(ExplState.bottom());
 		}
 
 		return singleton(succState);
@@ -144,16 +144,16 @@ final class XtaExplTransFunc implements TransFunc<ExplState, XtaAction, UnitPrec
 	}
 
 	private static ExplState createSuccStateForSimpleAction(final Valuation val, final BasicXtaAction action) {
-		final MutableValuation builder = MutableValuation.copyOf(val);
-		applyDataUpdates(action.getEdge(), builder);
-		return ExplState.create(builder);
+		final MutableValuation succVal = MutableValuation.copyOf(val);
+		applyDataUpdates(action.getEdge(), succVal);
+		return ExplState.of(succVal);
 	}
 
 	private ExplState createSuccStateForSyncedAction(final Valuation val, final SyncedXtaAction action) {
-		final MutableValuation builder = MutableValuation.copyOf(val);
-		applyDataUpdates(action.getEmitEdge(), builder);
-		applyDataUpdates(action.getRecvEdge(), builder);
-		return ExplState.create(builder);
+		final MutableValuation succVal = MutableValuation.copyOf(val);
+		applyDataUpdates(action.getEmitEdge(), succVal);
+		applyDataUpdates(action.getRecvEdge(), succVal);
+		return ExplState.of(succVal);
 	}
 
 	private static void applyDataUpdates(final Edge edge, final MutableValuation builder) {

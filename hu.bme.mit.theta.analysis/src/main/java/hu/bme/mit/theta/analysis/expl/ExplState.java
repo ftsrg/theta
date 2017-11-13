@@ -39,18 +39,18 @@ public abstract class ExplState extends Valuation implements ExprState {
 	private ExplState() {
 	}
 
-	public static ExplState create(final Valuation val) {
+	public static ExplState of(final Valuation val) {
 		if (val.getDecls().isEmpty()) {
-			return createTop();
+			return top();
 		}
 		return new NonBottom(val);
 	}
 
-	public static ExplState createBottom() {
+	public static ExplState bottom() {
 		return BottomLazyHolder.INSTANCE;
 	}
 
-	public static ExplState createTop() {
+	public static ExplState top() {
 		return TopLazyHolder.INSTANCE;
 	}
 

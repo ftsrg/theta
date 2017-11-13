@@ -34,11 +34,11 @@ public class ExplStmtSuccEvaluatorTest {
 	VarDecl<IntType> X = Decls.Var("x", Int());
 	VarDecl<IntType> Y = Decls.Var("y", Int());
 
-	ExplState sb = ExplState.createBottom();
-	ExplState sx = ExplState.create(ImmutableValuation.builder().put(X, Int(1)).build());
-	ExplState sy = ExplState.create(ImmutableValuation.builder().put(Y, Int(2)).build());
-	ExplState sxy = ExplState.create(ImmutableValuation.builder().put(X, Int(1)).put(Y, Int(2)).build());
-	ExplState st = ExplState.createTop();
+	ExplState sb = ExplState.bottom();
+	ExplState sx = ExplState.of(ImmutableValuation.builder().put(X, Int(1)).build());
+	ExplState sy = ExplState.of(ImmutableValuation.builder().put(Y, Int(2)).build());
+	ExplState sxy = ExplState.of(ImmutableValuation.builder().put(X, Int(1)).put(Y, Int(2)).build());
+	ExplState st = ExplState.top();
 
 	@Test
 	public void testVisitorHavoc() {
@@ -81,8 +81,8 @@ public class ExplStmtSuccEvaluatorTest {
 		final Stmt assign1 = Stmts.Assign(X, Int(1));
 		final Stmt assign2 = Stmts.Assign(X, Int(2));
 		final Stmt assign3 = Stmts.Assign(X, Y.getRef());
-		final ExplState sx2 = ExplState.create(ImmutableValuation.builder().put(X, Int(2)).build());
-		final ExplState sxy2 = ExplState.create(ImmutableValuation.builder().put(X, Int(2)).put(Y, Int(2)).build());
+		final ExplState sx2 = ExplState.of(ImmutableValuation.builder().put(X, Int(2)).build());
+		final ExplState sxy2 = ExplState.of(ImmutableValuation.builder().put(X, Int(2)).put(Y, Int(2)).build());
 
 		Assert.assertEquals(EvalResult.precise(sb), ExplStmtSuccEvaluator.evalSucc(sb, assign1));
 		Assert.assertEquals(EvalResult.precise(sx), ExplStmtSuccEvaluator.evalSucc(st, assign1));

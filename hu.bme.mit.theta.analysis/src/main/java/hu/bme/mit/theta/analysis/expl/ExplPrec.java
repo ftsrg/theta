@@ -84,7 +84,7 @@ public final class ExplPrec implements Prec {
 				builder.put(var, eval.get());
 			}
 		}
-		return ExplState.create(builder.build());
+		return ExplState.of(builder.build());
 	}
 
 	@Override

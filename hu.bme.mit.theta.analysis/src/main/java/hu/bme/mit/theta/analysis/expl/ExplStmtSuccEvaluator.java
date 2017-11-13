@@ -96,11 +96,11 @@ public final class ExplStmtSuccEvaluator {
 				final LitExpr<DeclType> lit = (LitExpr<DeclType>) exprSimplified;
 				final MutableValuation mutableVal = MutableValuation.copyOf(state).remove(varDecl).put(varDecl, lit);
 				final ImmutableValuation basicVal = ImmutableValuation.copyOf(mutableVal);
-				return EvalResult.precise(ExplState.create(basicVal));
+				return EvalResult.precise(ExplState.of(basicVal));
 			} else {
 				final MutableValuation mutableVal = MutableValuation.copyOf(state).remove(varDecl);
 				final ImmutableValuation basicVal = ImmutableValuation.copyOf(mutableVal);
-				return EvalResult.imprecise(ExplState.create(basicVal));
+				return EvalResult.imprecise(ExplState.of(basicVal));
 			}
 		}
 
@@ -115,7 +115,7 @@ public final class ExplStmtSuccEvaluator {
 				if (condSimplified.equals(BoolExprs.True())) {
 					return EvalResult.precise(state);
 				} else {
-					return EvalResult.precise(ExplState.createBottom());
+					return EvalResult.precise(ExplState.bottom());
 				}
 			} else {
 				return EvalResult.imprecise(state);
@@ -128,7 +128,7 @@ public final class ExplStmtSuccEvaluator {
 			if (state.getDecls().contains(varToHavoc)) {
 				final MutableValuation mutableVal = MutableValuation.copyOf(state).remove(varToHavoc);
 				final ImmutableValuation basicVal = ImmutableValuation.copyOf(mutableVal);
-				return EvalResult.precise(ExplState.create(basicVal));
+				return EvalResult.precise(ExplState.of(basicVal));
 			} else {
 				return EvalResult.precise(state);
 			}

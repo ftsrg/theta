@@ -47,7 +47,7 @@ public final class CfaTraceConcretizer {
 
 		final List<CfaState<ExplState>> cfaStates = new ArrayList<>();
 		for (int i = 0; i < trace.getStates().size(); ++i) {
-			cfaStates.add(CfaState.of(trace.getState(i).getLoc(), ExplState.create(valuations.getState(i))));
+			cfaStates.add(CfaState.of(trace.getState(i).getLoc(), ExplState.of(valuations.getState(i))));
 		}
 
 		return Trace.of(cfaStates, trace.getActions());
