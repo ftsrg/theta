@@ -67,7 +67,7 @@ public abstract class ExplState extends Valuation implements ExprState {
 		private final Valuation val;
 
 		private NonBottom(final Valuation val) {
-			this.val = checkNotNull(val);
+			this.val = ImmutableValuation.copyOf(checkNotNull(val));
 		}
 
 		@Override
