@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.analysis.prod;
+package hu.bme.mit.theta.analysis.prod2;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
