@@ -28,7 +28,7 @@ import hu.bme.mit.theta.analysis.algorithm.ArgNode;
 import hu.bme.mit.theta.analysis.algorithm.Statistics;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.prod2.Prod2State;
-import hu.bme.mit.theta.common.product.Tuple2;
+import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.formalism.xta.analysis.XtaState;
 
 public final class LazyXtaStatistics extends Statistics {

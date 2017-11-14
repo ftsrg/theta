@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.common.product;
+package hu.bme.mit.theta.common;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkPositionIndex;
@@ -22,8 +22,6 @@ import java.util.Iterator;
 import java.util.List;
 
 import com.google.common.collect.ImmutableList;
-
-import hu.bme.mit.theta.common.Utils;
 
 public abstract class Tuple implements Iterable<Object> {
 

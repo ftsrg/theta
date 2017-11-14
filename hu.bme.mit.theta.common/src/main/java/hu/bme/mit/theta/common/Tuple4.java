@@ -13,18 +13,18 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.common.product;
+package hu.bme.mit.theta.common;
 
 import com.google.common.collect.ImmutableList;
 
-public final class Tuple2<T1, T2> extends Tuple {
+public final class Tuple4<T1, T2, T3, T4> extends Tuple {
 
-	private Tuple2(final T1 e1, final T2 e2) {
-		super(ImmutableList.of(e1, e2));
+	private Tuple4(final T1 e1, final T2 e2, final T3 e3, final T4 e4) {
+		super(ImmutableList.of(e1, e2, e3, e4));
 	}
 
-	public static <T1, T2> Tuple2<T1, T2> of(final T1 e1, final T2 e2) {
-		return new Tuple2<>(e1, e2);
+	public static <T1, T2, T3, T4> Tuple4<T1, T2, T3, T4> of(final T1 e1, final T2 e2, final T3 e3, final T4 e4) {
+		return new Tuple4<>(e1, e2, e3, e4);
 	}
 
 	public T1 _1() {
@@ -36,6 +36,18 @@ public final class Tuple2<T1, T2> extends Tuple {
 	public T2 _2() {
 		@SuppressWarnings("unchecked")
 		final T2 result = (T2) elem(1);
+		return result;
+	}
+
+	public T3 _3() {
+		@SuppressWarnings("unchecked")
+		final T3 result = (T3) elem(2);
+		return result;
+	}
+
+	public T4 _4() {
+		@SuppressWarnings("unchecked")
+		final T4 result = (T4) elem(3);
 		return result;
 	}
 

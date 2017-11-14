@@ -13,19 +13,18 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.common.product;
+package hu.bme.mit.theta.common;
 
 import com.google.common.collect.ImmutableList;
 
-public final class Tuple6<T1, T2, T3, T4, T5, T6> extends Tuple {
+public final class Tuple3<T1, T2, T3> extends Tuple {
 
-	private Tuple6(final T1 e1, final T2 e2, final T3 e3, final T4 e4, final T5 e5, final T6 e6) {
-		super(ImmutableList.of(e1, e2, e3, e4, e5, e6));
+	private Tuple3(final T1 e1, final T2 e2, final T3 e3) {
+		super(ImmutableList.of(e1, e2, e3));
 	}
 
-	public static <T1, T2, T3, T4, T5, T6> Tuple6<T1, T2, T3, T4, T5, T6> of(final T1 e1, final T2 e2, final T3 e3,
-			final T4 e4, final T5 e5, final T6 e6) {
-		return new Tuple6<>(e1, e2, e3, e4, e5, e6);
+	public static <T1, T2, T3> Tuple3<T1, T2, T3> of(final T1 e1, final T2 e2, final T3 e3) {
+		return new Tuple3<>(e1, e2, e3);
 	}
 
 	public T1 _1() {
@@ -43,24 +42,6 @@ public final class Tuple6<T1, T2, T3, T4, T5, T6> extends Tuple {
 	public T3 _3() {
 		@SuppressWarnings("unchecked")
 		final T3 result = (T3) elem(2);
-		return result;
-	}
-
-	public T4 _4() {
-		@SuppressWarnings("unchecked")
-		final T4 result = (T4) elem(3);
-		return result;
-	}
-
-	public T5 _5() {
-		@SuppressWarnings("unchecked")
-		final T5 result = (T5) elem(4);
-		return result;
-	}
-
-	public T6 _6() {
-		@SuppressWarnings("unchecked")
-		final T6 result = (T6) elem(5);
 		return result;
 	}
 
