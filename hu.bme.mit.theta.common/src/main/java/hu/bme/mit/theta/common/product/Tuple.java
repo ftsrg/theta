@@ -25,7 +25,7 @@ import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.theta.common.Utils;
 
-public abstract class Tuple implements Product, Iterable<Object> {
+public abstract class Tuple implements Iterable<Object> {
 
 	private volatile int hashCode = 0;
 
@@ -35,18 +35,15 @@ public abstract class Tuple implements Product, Iterable<Object> {
 		this.elems = ImmutableList.copyOf(checkNotNull(elems));
 	}
 
-	@Override
 	public final int arity() {
 		return elems.size();
 	}
 
-	@Override
 	public final Object elem(final int n) {
 		checkPositionIndex(n, arity());
 		return elems.get(n);
 	}
 
-	@Override
 	public final List<Object> toList() {
 		return elems;
 	}
