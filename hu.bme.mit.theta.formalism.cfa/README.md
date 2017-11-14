@@ -45,7 +45,7 @@ See _src/test/resources_ for more examples.
 
 ### C source to CFA
 
-An unstable, prototype tool is available that can parse simple C programs into CFAs using Eclipse CDT. The tool can be downloaded [here](home.mit.bme.hu/~hajdua/theta/c-to-cfa.jar). This tool is no longer maintained as we are currently developing an LLVM frontend for CFAs.
+An unstable, prototype tool is available that can parse simple C programs into CFAs using Eclipse CDT. The tool can be downloaded [here](http://home.mit.bme.hu/~hajdua/theta/c-to-cfa.jar). This tool is no longer maintained as we are currently developing an LLVM frontend for CFAs.
 
 ## Tool
 
