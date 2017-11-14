@@ -37,10 +37,6 @@ public abstract class Tuple implements Product, Iterable<Object> {
 
 	////
 
-	public static <T1, T2> Tuple2<T1, T2> of(final T1 e1, final T2 e2) {
-		return new Tuple2<>(e1, e2);
-	}
-
 	public static <T1, T2, T3> Tuple3<T1, T2, T3> of(final T1 e1, final T2 e2, final T3 e3) {
 		return new Tuple3<>(e1, e2, e3);
 	}

@@ -28,7 +28,7 @@ import hu.bme.mit.theta.analysis.algorithm.ArgNode;
 import hu.bme.mit.theta.analysis.algorithm.Statistics;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.prod2.Prod2State;
-import hu.bme.mit.theta.common.product.Tuple;
+import hu.bme.mit.theta.common.product.Tuple2;
 import hu.bme.mit.theta.formalism.xta.analysis.XtaState;
 
 public final class LazyXtaStatistics extends Statistics {
@@ -53,7 +53,7 @@ public final class LazyXtaStatistics extends Statistics {
 		argNodesFeasible = builder.arg.getNodes().filter(ArgNode::isFeasible).count();
 		argNodesExpanded = builder.arg.getNodes().filter(ArgNode::isExpanded).count();
 		discreteStatesExpanded = builder.arg.getNodes().filter(ArgNode::isExpanded)
-				.map(n -> Tuple.of(n.getState().getLocs(), n.getState().getState()._1())).collect(toSet()).size();
+				.map(n -> Tuple2.of(n.getState().getLocs(), n.getState().getState()._1())).collect(toSet()).size();
 
 		addStat("AlgorithmTimeInMs", this::getAlgorithmTimeInMs);
 		addStat("RefinementTimeInMs", this::getRefinementTimeInMs);

@@ -41,7 +41,6 @@ import hu.bme.mit.theta.analysis.prod2.Prod2State;
 import hu.bme.mit.theta.analysis.reachedset.Partition;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.analysis.waitlist.Waitlist;
-import hu.bme.mit.theta.common.product.Tuple;
 import hu.bme.mit.theta.common.product.Tuple2;
 import hu.bme.mit.theta.formalism.xta.XtaProcess.Loc;
 import hu.bme.mit.theta.formalism.xta.XtaSystem;
@@ -121,7 +120,7 @@ public final class LazyXtaChecker<S extends State>
 		private CheckMethod() {
 			arg = argBuilder.createArg();
 			waitlist = search.createWaitlist();
-			reachedSet = Partition.of(n -> Tuple.of(n.getState().getLocs(), n.getState().getState()._1()));
+			reachedSet = Partition.of(n -> Tuple2.of(n.getState().getLocs(), n.getState().getState()._1()));
 
 			statistics = LazyXtaStatistics.builder(arg);
 

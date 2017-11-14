@@ -23,7 +23,6 @@ import com.google.common.collect.ImmutableList;
 import com.microsoft.z3.Context;
 
 import hu.bme.mit.theta.common.product.Product2;
-import hu.bme.mit.theta.common.product.Tuple;
 import hu.bme.mit.theta.common.product.Tuple2;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.Decl;
@@ -100,11 +99,11 @@ final class Z3DeclTransformer {
 			final List<Type> paramTypes = subResult._1();
 			final Type newResultType = subResult._2();
 			final List<Type> newParamTypes = ImmutableList.<Type>builder().add(paramType).addAll(paramTypes).build();
-			final Tuple2<List<Type>, Type> result = Tuple.of(newParamTypes, newResultType);
+			final Tuple2<List<Type>, Type> result = Tuple2.of(newParamTypes, newResultType);
 
 			return result;
 		} else {
-			return Tuple.of(ImmutableList.of(), type);
+			return Tuple2.of(ImmutableList.of(), type);
 		}
 	}
 

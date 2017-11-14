@@ -23,7 +23,6 @@ import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.theta.common.Try;
 import hu.bme.mit.theta.common.Utils;
-import hu.bme.mit.theta.common.product.Tuple;
 import hu.bme.mit.theta.common.product.Tuple2;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
@@ -279,7 +278,7 @@ public final class AbstractExprs {
 		final Expr<TR> trExpr1 = (Expr<TR>) expr1;
 		@SuppressWarnings("unchecked")
 		final Expr<TR> trExpr2 = (Expr<TR>) expr2;
-		return Tuple.of(trExpr1, trExpr2);
+		return Tuple2.of(trExpr1, trExpr2);
 	}
 
 }
