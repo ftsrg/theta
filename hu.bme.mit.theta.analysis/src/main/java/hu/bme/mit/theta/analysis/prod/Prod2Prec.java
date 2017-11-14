@@ -15,33 +15,62 @@
  */
 package hu.bme.mit.theta.analysis.prod;
 
-import com.google.common.collect.ImmutableList;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 import hu.bme.mit.theta.analysis.Prec;
-import hu.bme.mit.theta.common.product.Product2;
+import hu.bme.mit.theta.common.Utils;
 
-public final class Prod2Prec<P1 extends Prec, P2 extends Prec> extends ProdPrec implements Product2<P1, P2> {
+public final class Prod2Prec<P1 extends Prec, P2 extends Prec> implements Prec {
+	private static final int HASH_SEED = 2267;
+	private volatile int hashCode = 0;
+
+	private final P1 prec1;
+	private final P2 prec2;
 
 	private Prod2Prec(final P1 prec1, final P2 prec2) {
-		super(ImmutableList.of(prec1, prec2));
+		this.prec1 = checkNotNull(prec1);
+		this.prec2 = checkNotNull(prec2);
 	}
 
 	public static <P1 extends Prec, P2 extends Prec> Prod2Prec<P1, P2> of(final P1 prec1, final P2 prec2) {
 		return new Prod2Prec<>(prec1, prec2);
 	}
 
-	@Override
 	public P1 _1() {
-		@SuppressWarnings("unchecked")
-		final P1 result = (P1) elem(0);
+		return prec1;
+	}
+
+	public P2 _2() {
+		return prec2;
+	}
+
+	@Override
+	public int hashCode() {
+		int result = hashCode;
+		if (result == 0) {
+			result = HASH_SEED;
+			result = 37 * result + prec1.hashCode();
+			result = 37 * result + prec2.hashCode();
+			result = hashCode;
+		}
 		return result;
 	}
 
 	@Override
-	public P2 _2() {
-		@SuppressWarnings("unchecked")
-		final P2 result = (P2) elem(1);
-		return result;
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		} else if (obj instanceof Prod2Prec) {
+			final Prod2Prec<?, ?> that = (Prod2Prec<?, ?>) obj;
+			return this.prec1.equals(that.prec1) && this.prec2.equals(that.prec2);
+		} else {
+			return false;
+		}
+	}
+
+	@Override
+	public String toString() {
+		return Utils.lispStringBuilder("Prod2Prec").add(prec1).add(prec2).toString();
 	}
 
 }
