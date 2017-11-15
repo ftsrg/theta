@@ -120,7 +120,7 @@ public final class LazyXtaChecker<S extends State>
 		private CheckMethod() {
 			arg = argBuilder.createArg();
 			waitlist = search.createWaitlist();
-			reachedSet = Partition.of(n -> Tuple2.of(n.getState().getLocs(), n.getState().getState()._1()));
+			reachedSet = Partition.of(n -> Tuple2.of(n.getState().getLocs(), n.getState().getState().getState1()));
 
 			statistics = LazyXtaStatistics.builder(arg);
 

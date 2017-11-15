@@ -86,7 +86,7 @@ public abstract class ItpStrategy implements LazyXtaChecker.AlgorithmStrategy<It
 			final ZoneState interpolant) {
 		final XtaState<Prod2State<ExplState, ItpZoneState>> state = node.getState();
 		final Prod2State<ExplState, ItpZoneState> prodState = state.getState();
-		final ItpZoneState itpZoneState = prodState._2();
+		final ItpZoneState itpZoneState = prodState.getState2();
 		final ZoneState abstractZone = itpZoneState.getInterpolant();
 
 		final ZoneState newAbstractZone = ZoneState.intersection(abstractZone, interpolant);
@@ -113,19 +113,19 @@ public abstract class ItpStrategy implements LazyXtaChecker.AlgorithmStrategy<It
 	@Override
 	public final boolean covers(final ArgNode<XtaState<Prod2State<ExplState, ItpZoneState>>, XtaAction> nodeToCover,
 			final ArgNode<XtaState<Prod2State<ExplState, ItpZoneState>>, XtaAction> coveringNode) {
-		return nodeToCover.getState().getState()._2().isLeq(coveringNode.getState().getState()._2());
+		return nodeToCover.getState().getState().getState2().isLeq(coveringNode.getState().getState().getState2());
 	}
 
 	@Override
 	public final boolean mightCover(final ArgNode<XtaState<Prod2State<ExplState, ItpZoneState>>, XtaAction> nodeToCover,
 			final ArgNode<XtaState<Prod2State<ExplState, ItpZoneState>>, XtaAction> coveringNode) {
-		return nodeToCover.getState().getState()._2().getZone()
-				.isLeq(coveringNode.getState().getState()._2().getInterpolant());
+		return nodeToCover.getState().getState().getState2().getZone()
+				.isLeq(coveringNode.getState().getState().getState2().getInterpolant());
 	}
 
 	@Override
 	public final boolean shouldRefine(final ArgNode<XtaState<Prod2State<ExplState, ItpZoneState>>, XtaAction> node) {
-		return node.getState().getState()._2().getZone().isBottom();
+		return node.getState().getState().getState2().getZone().isBottom();
 	}
 
 }

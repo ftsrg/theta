@@ -62,19 +62,19 @@ public final class LuStrategy implements LazyXtaChecker.AlgorithmStrategy<LuZone
 	@Override
 	public boolean covers(final ArgNode<XtaState<Prod2State<ExplState, LuZoneState>>, XtaAction> nodeToCover,
 			final ArgNode<XtaState<Prod2State<ExplState, LuZoneState>>, XtaAction> coveringNode) {
-		return nodeToCover.getState().getState()._2().isLeq(coveringNode.getState().getState()._2());
+		return nodeToCover.getState().getState().getState2().isLeq(coveringNode.getState().getState().getState2());
 	}
 
 	@Override
 	public boolean mightCover(final ArgNode<XtaState<Prod2State<ExplState, LuZoneState>>, XtaAction> nodeToCover,
 			final ArgNode<XtaState<Prod2State<ExplState, LuZoneState>>, XtaAction> coveringNode) {
-		return nodeToCover.getState().getState()._2().getZone().isLeq(coveringNode.getState().getState()._2().getZone(),
-				coveringNode.getState().getState()._2().getBoundFunction());
+		return nodeToCover.getState().getState().getState2().getZone().isLeq(coveringNode.getState().getState().getState2().getZone(),
+				coveringNode.getState().getState().getState2().getBoundFunction());
 	}
 
 	@Override
 	public boolean shouldRefine(final ArgNode<XtaState<Prod2State<ExplState, LuZoneState>>, XtaAction> node) {
-		return node.getState().getState()._2().getZone().isBottom();
+		return node.getState().getState().getState2().getZone().isBottom();
 	}
 
 	@Override
@@ -84,7 +84,7 @@ public final class LuStrategy implements LazyXtaChecker.AlgorithmStrategy<LuZone
 			final Builder statistics) {
 
 		final Collection<ArgNode<XtaState<Prod2State<ExplState, LuZoneState>>, XtaAction>> uncoveredNodes = new ArrayList<>();
-		final BoundFunc boundFunction = coveringNode.getState().getState()._2().getBoundFunction();
+		final BoundFunc boundFunction = coveringNode.getState().getState().getState2().getBoundFunction();
 		propagateBounds(nodeToCover, boundFunction, uncoveredNodes, statistics, false);
 
 		return uncoveredNodes;
@@ -108,7 +108,7 @@ public final class LuStrategy implements LazyXtaChecker.AlgorithmStrategy<LuZone
 			final Collection<ArgNode<XtaState<Prod2State<ExplState, LuZoneState>>, XtaAction>> uncoveredNodes,
 			final Builder statistics, final boolean forcePropagate) {
 
-		final BoundFunc oldBoundFunction = node.getState().getState()._2().getBoundFunction();
+		final BoundFunc oldBoundFunction = node.getState().getState().getState2().getBoundFunction();
 
 		if (forcePropagate || !boundFunction.isLeq(oldBoundFunction)) {
 			statistics.refine();
@@ -130,7 +130,7 @@ public final class LuStrategy implements LazyXtaChecker.AlgorithmStrategy<LuZone
 			final BoundFunc boundFunction) {
 		final XtaState<Prod2State<ExplState, LuZoneState>> state = node.getState();
 		final Prod2State<ExplState, LuZoneState> prodState = state.getState();
-		final LuZoneState luZoneState = prodState._2();
+		final LuZoneState luZoneState = prodState.getState2();
 		final BoundFunc oldBoundFunction = luZoneState.getBoundFunction();
 
 		final BoundFunc newBoundFunction = oldBoundFunction.merge(boundFunction);

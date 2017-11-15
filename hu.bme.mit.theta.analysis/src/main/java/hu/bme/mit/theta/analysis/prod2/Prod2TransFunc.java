@@ -54,7 +54,7 @@ final class Prod2TransFunc<S1 extends State, S2 extends State, A extends Action,
 			return singleton(state);
 		}
 
-		final Collection<? extends S1> succStates1 = transFunc1.getSuccStates(state._1(), action, prec._1());
+		final Collection<? extends S1> succStates1 = transFunc1.getSuccStates(state.getState1(), action, prec._1());
 		final Optional<? extends S1> optBottom1 = succStates1.stream().filter(State::isBottom).findAny();
 
 		if (optBottom1.isPresent()) {
@@ -62,7 +62,7 @@ final class Prod2TransFunc<S1 extends State, S2 extends State, A extends Action,
 			return singleton(Prod2State.bottom1(bottom1));
 		}
 
-		final Collection<? extends S2> succStates2 = transFunc2.getSuccStates(state._2(), action, prec._2());
+		final Collection<? extends S2> succStates2 = transFunc2.getSuccStates(state.getState2(), action, prec._2());
 		final Optional<? extends S2> optBottom2 = succStates2.stream().filter(State::isBottom).findAny();
 
 		if (optBottom2.isPresent()) {
