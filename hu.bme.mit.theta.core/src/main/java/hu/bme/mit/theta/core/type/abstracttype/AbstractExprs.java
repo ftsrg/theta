@@ -41,8 +41,8 @@ public final class AbstractExprs {
 
 	public static <T extends Type> IteExpr<?> Ite(final Expr<BoolType> cond, final Expr<?> then, final Expr<?> elze) {
 		final Tuple2<Expr<T>, Expr<T>> newOps = unify(then, elze);
-		final Expr<T> newThen = newOps._1();
-		final Expr<T> newElse = newOps._2();
+		final Expr<T> newThen = newOps.get1();
+		final Expr<T> newElse = newOps.get2();
 		return Exprs.Ite(cond, newThen, newElse);
 	}
 
@@ -70,8 +70,8 @@ public final class AbstractExprs {
 			final List<Expr<?>> newTail = Utils.tail(tail);
 
 			final Tuple2<Expr<T>, Expr<T>> unifiedOps = unify(head, newHead);
-			final Expr<T> newLeftOp = unifiedOps._1();
-			final Expr<T> newRightOp = unifiedOps._2();
+			final Expr<T> newLeftOp = unifiedOps.get1();
+			final Expr<T> newRightOp = unifiedOps.get2();
 			final T type = newLeftOp.getType();
 
 			final List<Expr<T>> newLeftOps = getAddOps(newLeftOp);
@@ -92,8 +92,8 @@ public final class AbstractExprs {
 
 	public static <T extends Additive<T>> SubExpr<?> Sub(final Expr<?> leftOp, final Expr<?> rightOp) {
 		final Tuple2<Expr<T>, Expr<T>> newOps = unify(leftOp, rightOp);
-		final Expr<T> newLeftOp = newOps._1();
-		final Expr<T> newRightOp = newOps._2();
+		final Expr<T> newLeftOp = newOps.get1();
+		final Expr<T> newRightOp = newOps.get2();
 		final T type = newLeftOp.getType();
 		return type.Sub(newLeftOp, newRightOp);
 	}
@@ -128,8 +128,8 @@ public final class AbstractExprs {
 			final List<Expr<?>> newTail = Utils.tail(tail);
 
 			final Tuple2<Expr<T>, Expr<T>> unifiedOps = unify(head, newHead);
-			final Expr<T> newLeftOp = unifiedOps._1();
-			final Expr<T> newRightOp = unifiedOps._2();
+			final Expr<T> newLeftOp = unifiedOps.get1();
+			final Expr<T> newRightOp = unifiedOps.get2();
 			final T type = newLeftOp.getType();
 
 			final List<Expr<T>> newLeftOps = getMulOps(newLeftOp);
@@ -150,8 +150,8 @@ public final class AbstractExprs {
 
 	public static <T extends Multiplicative<T>> DivExpr<?> Div(final Expr<?> leftOp, final Expr<?> rightOp) {
 		final Tuple2<Expr<T>, Expr<T>> newOps = unify(leftOp, rightOp);
-		final Expr<T> newLeftOp = newOps._1();
-		final Expr<T> newRightOp = newOps._2();
+		final Expr<T> newLeftOp = newOps.get1();
+		final Expr<T> newRightOp = newOps.get2();
 		final T type = newLeftOp.getType();
 		return type.Div(newLeftOp, newRightOp);
 	}
@@ -162,16 +162,16 @@ public final class AbstractExprs {
 
 	public static <T extends Equational<T>> EqExpr<?> Eq(final Expr<?> leftOp, final Expr<?> rightOp) {
 		final Tuple2<Expr<T>, Expr<T>> newOps = unify(leftOp, rightOp);
-		final Expr<T> newLeftOp = newOps._1();
-		final Expr<T> newRightOp = newOps._2();
+		final Expr<T> newLeftOp = newOps.get1();
+		final Expr<T> newRightOp = newOps.get2();
 		final T type = newLeftOp.getType();
 		return type.Eq(newLeftOp, newRightOp);
 	}
 
 	public static <T extends Equational<T>> NeqExpr<?> Neq(final Expr<?> leftOp, final Expr<?> rightOp) {
 		final Tuple2<Expr<T>, Expr<T>> newOps = unify(leftOp, rightOp);
-		final Expr<T> newLeftOp = newOps._1();
-		final Expr<T> newRightOp = newOps._2();
+		final Expr<T> newLeftOp = newOps.get1();
+		final Expr<T> newRightOp = newOps.get2();
 		final T type = newLeftOp.getType();
 		return type.Neq(newLeftOp, newRightOp);
 	}
@@ -182,32 +182,32 @@ public final class AbstractExprs {
 
 	public static <T extends Ordered<T>> LtExpr<?> Lt(final Expr<?> leftOp, final Expr<?> rightOp) {
 		final Tuple2<Expr<T>, Expr<T>> newOps = unify(leftOp, rightOp);
-		final Expr<T> newLeftOp = newOps._1();
-		final Expr<T> newRightOp = newOps._2();
+		final Expr<T> newLeftOp = newOps.get1();
+		final Expr<T> newRightOp = newOps.get2();
 		final T type = newLeftOp.getType();
 		return type.Lt(newLeftOp, newRightOp);
 	}
 
 	public static <T extends Ordered<T>> LeqExpr<?> Leq(final Expr<?> leftOp, final Expr<?> rightOp) {
 		final Tuple2<Expr<T>, Expr<T>> newOps = unify(leftOp, rightOp);
-		final Expr<T> newLeftOp = newOps._1();
-		final Expr<T> newRightOp = newOps._2();
+		final Expr<T> newLeftOp = newOps.get1();
+		final Expr<T> newRightOp = newOps.get2();
 		final T type = newLeftOp.getType();
 		return type.Leq(newLeftOp, newRightOp);
 	}
 
 	public static <T extends Ordered<T>> GtExpr<?> Gt(final Expr<?> leftOp, final Expr<?> rightOp) {
 		final Tuple2<Expr<T>, Expr<T>> newOps = unify(leftOp, rightOp);
-		final Expr<T> newLeftOp = newOps._1();
-		final Expr<T> newRightOp = newOps._2();
+		final Expr<T> newLeftOp = newOps.get1();
+		final Expr<T> newRightOp = newOps.get2();
 		final T type = newLeftOp.getType();
 		return type.Gt(newLeftOp, newRightOp);
 	}
 
 	public static <T extends Ordered<T>> GeqExpr<?> Geq(final Expr<?> leftOp, final Expr<?> rightOp) {
 		final Tuple2<Expr<T>, Expr<T>> newOps = unify(leftOp, rightOp);
-		final Expr<T> newLeftOp = newOps._1();
-		final Expr<T> newRightOp = newOps._2();
+		final Expr<T> newLeftOp = newOps.get1();
+		final Expr<T> newRightOp = newOps.get2();
 		final T type = newLeftOp.getType();
 		return type.Geq(newLeftOp, newRightOp);
 	}
