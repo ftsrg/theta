@@ -36,11 +36,11 @@ public final class Prod2Prec<P1 extends Prec, P2 extends Prec> implements Prec {
 		return new Prod2Prec<>(prec1, prec2);
 	}
 
-	public P1 _1() {
+	public P1 getPrec1() {
 		return prec1;
 	}
 
-	public P2 _2() {
+	public P2 getPrec2() {
 		return prec2;
 	}
 

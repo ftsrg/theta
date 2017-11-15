@@ -44,7 +44,7 @@ final class Prod2InitFunc<S1 extends State, S2 extends State, P1 extends Prec, P
 	@Override
 	public Collection<? extends Prod2State<S1, S2>> getInitStates(final Prod2Prec<P1, P2> prec) {
 		checkNotNull(prec);
-		final Collection<? extends S1> initStates1 = initFunc1.getInitStates(prec._1());
+		final Collection<? extends S1> initStates1 = initFunc1.getInitStates(prec.getPrec1());
 		final Optional<? extends S1> optBottom1 = initStates1.stream().filter(State::isBottom).findAny();
 
 		if (optBottom1.isPresent()) {
@@ -52,7 +52,7 @@ final class Prod2InitFunc<S1 extends State, S2 extends State, P1 extends Prec, P
 			return singleton(Prod2State.bottom1(bottom1));
 		}
 
-		final Collection<? extends S2> initStates2 = initFunc2.getInitStates(prec._2());
+		final Collection<? extends S2> initStates2 = initFunc2.getInitStates(prec.getPrec2());
 		final Optional<? extends S2> optBottom2 = initStates2.stream().filter(State::isBottom).findAny();
 
 		if (optBottom2.isPresent()) {
