@@ -22,12 +22,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public final class FalseConst extends AigerNode {
-
+public final class InputVar extends AigerNode {
 	private final List<AigerWire> outWires;
 
-	public FalseConst() {
-		super("F_v0");
+	public InputVar(final int nr, final int varId) {
+		super(String.format("IN%d_v%d", nr, varId));
 		this.outWires = new ArrayList<>();
 	}
 
@@ -51,4 +50,5 @@ public final class FalseConst extends AigerNode {
 	public void removeOutWire(final AigerWire outWire) {
 		checkArgument(outWires.remove(outWire));
 	}
+
 }

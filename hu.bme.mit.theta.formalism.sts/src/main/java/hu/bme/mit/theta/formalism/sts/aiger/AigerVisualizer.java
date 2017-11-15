@@ -15,17 +15,19 @@
  */
 package hu.bme.mit.theta.formalism.sts.aiger;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static java.lang.System.lineSeparator;
 
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.util.HashSet;
+import java.util.Set;
 
-/**
- * Utility class for visualizing AIGER files.
- */
+import hu.bme.mit.theta.formalism.sts.aiger.elements.AigerNode;
+import hu.bme.mit.theta.formalism.sts.aiger.elements.AigerSystem;
+import hu.bme.mit.theta.formalism.sts.aiger.elements.AigerWire;
+import hu.bme.mit.theta.formalism.sts.aiger.elements.AndGate;
+import hu.bme.mit.theta.formalism.sts.aiger.elements.FalseConst;
+import hu.bme.mit.theta.formalism.sts.aiger.elements.InputVar;
+import hu.bme.mit.theta.formalism.sts.aiger.elements.Latch;
+
 public final class AigerVisualizer {
 
 	private static final String INPUTSHAPE = "invhouse";
@@ -37,88 +39,46 @@ public final class AigerVisualizer {
 	private AigerVisualizer() {
 	}
 
-	/**
-	 * Parse and visualize an AIGER file into dot format.
-	 *
-	 * @param aigerFilePath Path of the input AIGER file
-	 * @param outFilePath Path of the output dot file
-	 * @throws IOException
-	 */
-	public static void visualize(final String aigerFilePath, final String outFilePath) throws IOException {
-		final BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(aigerFilePath)));
-		final PrintWriter pw = new PrintWriter(outFilePath);
+	public static String visualize(final AigerSystem system) {
+		final StringBuilder sb = new StringBuilder();
+		sb.append("digraph \"aiger\" {" + lineSeparator());
 
-		try {
-			int inputs;
-			int latches;
-			int outputs;
-			int andGates;
-			// Parse header
-			final String[] header = checkNotNull(br.readLine(), "Header expected").split(" ");
-			inputs = Integer.parseInt(header[2]);
-			latches = Integer.parseInt(header[3]);
-			outputs = Integer.parseInt(header[4]);
-			andGates = Integer.parseInt(header[5]);
+		final Set<AigerWire> wires = new HashSet<>();
 
-			pw.write("digraph \"circuit\" {\n");
-
-			// Inputs
-			for (int i = 0; i < inputs; ++i) {
-				final int v = Integer.parseInt(br.readLine());
-				pw.write("v" + v / 2 + "[label=\"I" + (i + 1) + "\", shape=\"" + INPUTSHAPE
-						+ "\", margin=\"0\", width=\"0\", height=\"0\"];\n");
+		for (final AigerNode node : system.getNodes()) {
+			if (node instanceof InputVar || node instanceof FalseConst) {
+				sb.append(
+						String.format("\t%s [shape=\"%s\", margin=\"0\", width=\"0\", height=\"0\"];" + lineSeparator(),
+								node.getName(), INPUTSHAPE));
+			} else if (node instanceof Latch) {
+				sb.append(String.format(
+						"\t%s [shape=\"%s\", margin=\"0.05\", width=\"0\", height=\"0\"];" + lineSeparator(),
+						node.getName(), LATCHSHAPE));
+			} else if (node instanceof AndGate) {
+				sb.append(String.format(
+						"\t%s [shape=\"%s\", margin=\"0.02\", width=\"0\", height=\"0\"];" + lineSeparator(),
+						node.getName(), ANDSHAPE));
+			} else {
+				throw new UnsupportedOperationException("Unknown node: " + node.getClass().getName());
 			}
 
-			// Latches
-			for (int i = 0; i < latches; ++i) {
-				final String v[] = checkNotNull(br.readLine(), "Latch expected").split(" ");
-				final int v1 = Integer.parseInt(v[0]);
-				final int v2 = Integer.parseInt(v[1]);
-				pw.write("v" + v1 / 2 + "[label=\"L" + (i + 1) + "\", shape=\"" + LATCHSHAPE
-						+ "\", margin=\"0.05\", width=\"0\", height=\"0\"];\n");
-				pw.write("v" + v2 / 2 + ":s -> v" + v1 / 2 + ":n");
-				if (v2 % 2 != 0) {
-					pw.write(" [arrowhead=\"" + INVHEAD + "\"]");
-				}
-				pw.write(";\n");
-			}
-
-			// Outputs
-			for (int i = 0; i < outputs; ++i) {
-				final int v = Integer.parseInt(br.readLine());
-				pw.write("o" + i + "[label=\"O" + (i + 1) + "\", shape=\"" + OUTPUTSHAPE
-						+ "\", margin=\"0\", width=\"0\", height=\"0\"];\n");
-				pw.write("v" + v / 2 + ":s -> o" + i + ":n");
-				if (v % 2 != 0) {
-					pw.write(" [arrowhead=\"" + INVHEAD + "\"]");
-				}
-				pw.write(";\n");
-			}
-
-			// And gates
-			for (int i = 0; i < andGates; ++i) {
-				final String[] v = checkNotNull(br.readLine(), "And gate expected").split(" ");
-				final int vo = Integer.parseInt(v[0]);
-				final int vi1 = Integer.parseInt(v[1]);
-				final int vi2 = Integer.parseInt(v[2]);
-				pw.write("v" + vo / 2 + "[label=\"A" + (i + 1) + "\", shape=\"" + ANDSHAPE
-						+ "\", margin=\"0.02\", width=\"0\", height=\"0\"];\n");
-				pw.write("v" + vi1 / 2 + ":s -> v" + vo / 2 + ":nw");
-				if (vi1 % 2 != 0) {
-					pw.write(" [arrowhead=\"" + INVHEAD + "\"]");
-				}
-				pw.write("\n");
-				pw.write("v" + vi2 / 2 + ":s -> v" + vo / 2 + ":ne");
-				if (vi2 % 2 != 0) {
-					pw.write(" [arrowhead=\"" + INVHEAD + "\"]");
-				}
-				pw.write(";\n");
-			}
-
-			pw.print("}");
-		} finally {
-			pw.close();
-			br.close();
+			wires.addAll(node.getInWires());
+			wires.addAll(node.getOutWires());
 		}
+
+		sb.append(String.format("\t%s [shape=\"%s\", margin=\"0\", width=\"0\", height=\"0\"];" + lineSeparator(),
+				system.getOutput().getName(), OUTPUTSHAPE));
+		wires.addAll(system.getOutput().getInWires());
+
+		for (final AigerWire wire : wires) {
+			sb.append(String.format("\t%s -> %s", wire.getSource().getName(), wire.getTarget().getName()));
+			if (!wire.isPonated()) {
+				sb.append(" [arrowhead=\"" + INVHEAD + "\"]");
+			}
+			sb.append(lineSeparator());
+		}
+
+		sb.append("}");
+		return sb.toString();
 	}
 }

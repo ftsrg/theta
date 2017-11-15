@@ -1,12 +1,12 @@
 /*
  *  Copyright 2017 Budapest University of Technology and Economics
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,30 +15,24 @@
  */
 package hu.bme.mit.theta.formalism.sts.aiger.elements;
 
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+import java.util.Collection;
 
-import java.util.List;
+public abstract class AigerNode {
+	private final String name;
 
-import hu.bme.mit.theta.core.decl.Decls;
-import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
-
-public final class InVar extends HwElement {
-	private final VarDecl<BoolType> varDecl;
-
-	public InVar(final int nr, final String token) {
-		this(nr, Integer.parseInt(token));
+	public AigerNode(final String name) {
+		this.name = name;
 	}
 
-	public InVar(final int nr, final int literal) {
-		super(literal / 2);
-		varDecl = Decls.Var("I" + nr + "_l" + varId, Bool());
+	public String getName() {
+		return name;
 	}
 
-	@Override
-	public Expr<BoolType> getExpr(final List<HwElement> elements) {
-		return varDecl.getRef();
-	}
+	public abstract Collection<AigerWire> getInWires();
 
+	public abstract Collection<AigerWire> getOutWires();
+
+	public abstract void addOutWire(AigerWire outWire);
+
+	public abstract void removeOutWire(AigerWire outWire);
 }
