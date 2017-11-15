@@ -42,7 +42,7 @@ final class Prod2Ord<S1 extends State, S2 extends State> implements PartialOrd<P
 		} else if (state2.isBottom()) {
 			return false;
 		} else {
-			return partialOrd1.isLeq(state1._1(), state2._1()) && partialOrd2.isLeq(state1._2(), state2._2());
+			return partialOrd1.isLeq(state1.getState1(), state2.getState1()) && partialOrd2.isLeq(state1.getState2(), state2.getState2());
 		}
 	}
 

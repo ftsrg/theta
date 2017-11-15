@@ -65,19 +65,19 @@ public final class ActStrategy implements LazyXtaChecker.AlgorithmStrategy<ActZo
 	@Override
 	public boolean covers(final ArgNode<XtaState<Prod2State<ExplState, ActZoneState>>, XtaAction> nodeToCover,
 			final ArgNode<XtaState<Prod2State<ExplState, ActZoneState>>, XtaAction> coveringNode) {
-		return nodeToCover.getState().getState()._2().isLeq(coveringNode.getState().getState()._2());
+		return nodeToCover.getState().getState().getState2().isLeq(coveringNode.getState().getState().getState2());
 	}
 
 	@Override
 	public boolean mightCover(final ArgNode<XtaState<Prod2State<ExplState, ActZoneState>>, XtaAction> nodeToCover,
 			final ArgNode<XtaState<Prod2State<ExplState, ActZoneState>>, XtaAction> coveringNode) {
-		return nodeToCover.getState().getState()._2().getZone().isLeq(coveringNode.getState().getState()._2().getZone(),
-				coveringNode.getState().getState()._2().getActiveVars());
+		return nodeToCover.getState().getState().getState2().getZone().isLeq(coveringNode.getState().getState().getState2().getZone(),
+				coveringNode.getState().getState().getState2().getActiveVars());
 	}
 
 	@Override
 	public boolean shouldRefine(final ArgNode<XtaState<Prod2State<ExplState, ActZoneState>>, XtaAction> node) {
-		return node.getState().getState()._2().getZone().isBottom();
+		return node.getState().getState().getState2().getZone().isBottom();
 	}
 
 	@Override
@@ -87,7 +87,7 @@ public final class ActStrategy implements LazyXtaChecker.AlgorithmStrategy<ActZo
 			final Builder statistics) {
 
 		final Collection<ArgNode<XtaState<Prod2State<ExplState, ActZoneState>>, XtaAction>> uncoveredNodes = new ArrayList<>();
-		final Set<VarDecl<RatType>> activeVars = coveringNode.getState().getState()._2().getActiveVars();
+		final Set<VarDecl<RatType>> activeVars = coveringNode.getState().getState().getState2().getActiveVars();
 		propagateVars(nodeToCover, activeVars, uncoveredNodes, statistics, false);
 
 		return uncoveredNodes;
@@ -111,7 +111,7 @@ public final class ActStrategy implements LazyXtaChecker.AlgorithmStrategy<ActZo
 			final Collection<ArgNode<XtaState<Prod2State<ExplState, ActZoneState>>, XtaAction>> uncoveredNodes,
 			final Builder statistics, final boolean forcePropagate) {
 
-		final Set<VarDecl<RatType>> oldActiveVars = node.getState().getState()._2().getActiveVars();
+		final Set<VarDecl<RatType>> oldActiveVars = node.getState().getState().getState2().getActiveVars();
 
 		if (forcePropagate || !oldActiveVars.containsAll(activeVars)) {
 			statistics.refine();
@@ -133,7 +133,7 @@ public final class ActStrategy implements LazyXtaChecker.AlgorithmStrategy<ActZo
 			final Set<VarDecl<RatType>> activeVars) {
 		final XtaState<Prod2State<ExplState, ActZoneState>> state = node.getState();
 		final Prod2State<ExplState, ActZoneState> prodState = state.getState();
-		final ActZoneState actZoneState = prodState._2();
+		final ActZoneState actZoneState = prodState.getState2();
 		final Set<VarDecl<RatType>> oldActiveVars = actZoneState.getActiveVars();
 
 		final Set<VarDecl<RatType>> newActiveVars = Sets.union(oldActiveVars, activeVars);

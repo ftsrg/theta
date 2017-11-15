@@ -46,7 +46,7 @@ public final class SeqItpStrategy extends ItpStrategy {
 			final Builder statistics) {
 
 		final Collection<ArgNode<XtaState<Prod2State<ExplState, ItpZoneState>>, XtaAction>> uncoveredNodes = new ArrayList<>();
-		final Collection<ZoneState> complementZones = coveringNode.getState().getState()._2().getInterpolant()
+		final Collection<ZoneState> complementZones = coveringNode.getState().getState().getState2().getInterpolant()
 				.complement();
 		for (final ZoneState complementZone : complementZones) {
 			blockZone(nodeToCover, complementZone, uncoveredNodes, statistics);
@@ -69,7 +69,7 @@ public final class SeqItpStrategy extends ItpStrategy {
 			final ZoneState zone,
 			final Collection<ArgNode<XtaState<Prod2State<ExplState, ItpZoneState>>, XtaAction>> uncoveredNodes,
 			final Builder statistics) {
-		final ZoneState abstractZone = node.getState().getState()._2().getInterpolant();
+		final ZoneState abstractZone = node.getState().getState().getState2().getInterpolant();
 		if (abstractZone.isConsistentWith(zone)) {
 
 			statistics.refine();
@@ -94,7 +94,7 @@ public final class SeqItpStrategy extends ItpStrategy {
 
 				return interpolant;
 			} else {
-				final ZoneState concreteZone = node.getState().getState()._2().getZone();
+				final ZoneState concreteZone = node.getState().getState().getState2().getZone();
 
 				statistics.startInterpolation();
 				final ZoneState interpolant = interpolate(concreteZone, zone);

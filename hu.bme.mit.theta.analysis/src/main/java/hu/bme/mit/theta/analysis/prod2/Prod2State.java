@@ -67,9 +67,9 @@ public abstract class Prod2State<S1 extends State, S2 extends State> implements 
 		return result;
 	}
 
-	public abstract S1 _1();
+	public abstract S1 getState1();
 
-	public abstract S2 _2();
+	public abstract S2 getState2();
 
 	public abstract boolean isBottom1();
 
@@ -96,12 +96,12 @@ public abstract class Prod2State<S1 extends State, S2 extends State> implements 
 		}
 
 		@Override
-		public S1 _1() {
+		public S1 getState1() {
 			return state1;
 		}
 
 		@Override
-		public S2 _2() {
+		public S2 getState2() {
 			return state2;
 		}
 
@@ -256,12 +256,12 @@ public abstract class Prod2State<S1 extends State, S2 extends State> implements 
 		}
 
 		@Override
-		public S1 _1() {
+		public S1 getState1() {
 			return state;
 		}
 
 		@Override
-		public S2 _2() {
+		public S2 getState2() {
 			throw new UnsupportedOperationException();
 		}
 
@@ -309,12 +309,12 @@ public abstract class Prod2State<S1 extends State, S2 extends State> implements 
 		}
 
 		@Override
-		public S1 _1() {
+		public S1 getState1() {
 			throw new UnsupportedOperationException();
 		}
 
 		@Override
-		public S2 _2() {
+		public S2 getState2() {
 			return state;
 		}
 

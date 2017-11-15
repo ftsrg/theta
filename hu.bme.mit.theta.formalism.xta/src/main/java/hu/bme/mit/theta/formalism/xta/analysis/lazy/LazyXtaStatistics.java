@@ -53,7 +53,7 @@ public final class LazyXtaStatistics extends Statistics {
 		argNodesFeasible = builder.arg.getNodes().filter(ArgNode::isFeasible).count();
 		argNodesExpanded = builder.arg.getNodes().filter(ArgNode::isExpanded).count();
 		discreteStatesExpanded = builder.arg.getNodes().filter(ArgNode::isExpanded)
-				.map(n -> Tuple2.of(n.getState().getLocs(), n.getState().getState()._1())).collect(toSet()).size();
+				.map(n -> Tuple2.of(n.getState().getLocs(), n.getState().getState().getState1())).collect(toSet()).size();
 
 		addStat("AlgorithmTimeInMs", this::getAlgorithmTimeInMs);
 		addStat("RefinementTimeInMs", this::getRefinementTimeInMs);
