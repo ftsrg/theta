@@ -15,47 +15,51 @@
  */
 package hu.bme.mit.theta.formalism.sts.aiger.elements;
 
-import static hu.bme.mit.theta.core.decl.Decls.Var;
-import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Iff;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
+import static com.google.common.base.Preconditions.checkArgument;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
-import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
+public class Latch extends AigerNode {
 
-public final class Latch extends HwElement {
-	private final int nextState;
-	private final VarDecl<BoolType> varDecl;
+	private final List<AigerWire> outWires;
+	private AigerWire inWire;
 
-	public Latch(final int nr, final String[] tokens) {
-		this(nr, Integer.parseInt(tokens[0]), Integer.parseInt(tokens[1]));
-	}
-
-	public Latch(final int nr, final int actualState, final int nextState) {
-		super(actualState / 2);
-		this.nextState = nextState;
-		varDecl = Var("L" + nr + "_l" + varId, Bool());
+	public Latch(final int nr, final int varId) {
+		super(String.format("LATCH%d_v%d", nr, varId));
+		this.outWires = new ArrayList<>();
 	}
 
 	@Override
-	public Expr<BoolType> getExpr(final List<HwElement> elements) {
-		return varDecl.getRef();
+	public Collection<AigerWire> getInWires() {
+		return Collections.singleton(inWire);
 	}
 
-	public Expr<BoolType> getInitExpr() {
-		return Not(varDecl.getRef());
+	public void setInWire(final AigerWire wire) {
+		checkArgument(wire.getTarget().equals(this));
+		this.inWire = wire;
 	}
 
-	public Expr<BoolType> getTransExpr(final List<HwElement> elements) {
-		Expr<BoolType> expr = elements.get(nextState / 2).getExpr(elements);
-		if (nextState % 2 != 0) {
-			expr = Not(expr);
-		}
-		return Iff(Prime(varDecl.getRef()), expr);
+	public AigerWire getInWire() {
+		return inWire;
+	}
+
+	@Override
+	public Collection<AigerWire> getOutWires() {
+		return outWires;
+	}
+
+	@Override
+	public void addOutWire(final AigerWire outWire) {
+		checkArgument(outWire.getSource().equals(this));
+		outWires.add(outWire);
+	}
+
+	@Override
+	public void removeOutWire(final AigerWire outWire) {
+		checkArgument(outWires.remove(outWire));
 	}
 
 }

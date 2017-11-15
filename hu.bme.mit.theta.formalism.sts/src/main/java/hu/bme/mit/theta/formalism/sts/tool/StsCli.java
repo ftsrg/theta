@@ -41,7 +41,10 @@ import hu.bme.mit.theta.core.type.booltype.BoolExprs;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.formalism.sts.STS;
 import hu.bme.mit.theta.formalism.sts.StsUtils;
-import hu.bme.mit.theta.formalism.sts.aiger.BasicAigerParser;
+import hu.bme.mit.theta.formalism.sts.aiger.AigerCoi;
+import hu.bme.mit.theta.formalism.sts.aiger.AigerParser;
+import hu.bme.mit.theta.formalism.sts.aiger.AigerToSts;
+import hu.bme.mit.theta.formalism.sts.aiger.elements.AigerSystem;
 import hu.bme.mit.theta.formalism.sts.dsl.StsDslManager;
 import hu.bme.mit.theta.formalism.sts.dsl.StsSpec;
 import hu.bme.mit.theta.formalism.sts.tool.StsConfigBuilder.Domain;
@@ -142,7 +145,9 @@ public class StsCli {
 
 	private STS loadModel() throws IOException {
 		if (model.endsWith(".aag")) {
-			return new BasicAigerParser().parse(model);
+			final AigerSystem aigerSystem = AigerParser.parse(model);
+			AigerCoi.apply(aigerSystem);
+			return AigerToSts.createSts(aigerSystem);
 		} else if (model.endsWith(".system")) {
 			final InputStream inputStream = new FileInputStream(model);
 			final StsSpec spec = StsDslManager.createStsSpec(inputStream);

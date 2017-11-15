@@ -17,38 +17,44 @@ package hu.bme.mit.theta.formalism.sts.aiger.elements;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 
-public final class FalseConst extends AigerNode {
+public class OutputVar extends AigerNode {
 
-	private final List<AigerWire> outWires;
+	private AigerWire inWire;
 
-	public FalseConst() {
-		super("F_v0");
-		this.outWires = new ArrayList<>();
+	public OutputVar(final int nr) {
+		super(String.format("OUT%d", nr));
 	}
 
 	@Override
 	public Collection<AigerWire> getInWires() {
-		return Collections.emptyList();
+		return Collections.singleton(inWire);
+	}
+
+	public AigerWire getInWire() {
+		return inWire;
+	}
+
+	public void setInWire(final AigerWire wire) {
+		checkArgument(wire.getTarget().equals(this));
+		this.inWire = wire;
 	}
 
 	@Override
 	public Collection<AigerWire> getOutWires() {
-		return outWires;
+		return Collections.emptyList();
 	}
 
 	@Override
 	public void addOutWire(final AigerWire outWire) {
-		checkArgument(outWire.getSource().equals(this));
-		outWires.add(outWire);
+		throw new UnsupportedOperationException("Output variables cannot have outgoing wires.");
 	}
 
 	@Override
 	public void removeOutWire(final AigerWire outWire) {
-		checkArgument(outWires.remove(outWire));
+		throw new UnsupportedOperationException("Output variables cannot have outgoing wires.");
 	}
+
 }
