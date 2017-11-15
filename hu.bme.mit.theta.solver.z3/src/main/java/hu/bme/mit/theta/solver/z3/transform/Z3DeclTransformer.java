@@ -61,8 +61,8 @@ final class Z3DeclTransformer {
 			final Type type = decl.getType();
 
 			final Tuple2<List<Type>, Type> extractedTypes = extractTypes(type);
-			final List<Type> paramTypes = extractedTypes._1();
-			final Type returnType = extractedTypes._2();
+			final List<Type> paramTypes = extractedTypes.get1();
+			final Type returnType = extractedTypes.get2();
 
 			final com.microsoft.z3.Sort returnSort = transformer.toSort(returnType);
 			final com.microsoft.z3.Sort[] paramSorts = paramTypes.stream().map(t -> transformer.toSort(t))
@@ -95,8 +95,8 @@ final class Z3DeclTransformer {
 			checkArgument(!(paramType instanceof FuncType));
 
 			final Tuple2<List<Type>, Type> subResult = extractTypes(resultType);
-			final List<Type> paramTypes = subResult._1();
-			final Type newResultType = subResult._2();
+			final List<Type> paramTypes = subResult.get1();
+			final Type newResultType = subResult.get2();
 			final List<Type> newParamTypes = ImmutableList.<Type>builder().add(paramType).addAll(paramTypes).build();
 			final Tuple2<List<Type>, Type> result = Tuple2.of(newParamTypes, newResultType);
 
