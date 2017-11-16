@@ -57,7 +57,7 @@ public abstract class Prod2State<S1 extends State, S2 extends State> implements 
 	}
 
 	public static <S1 extends State, S2 extends State> Collection<Prod2State<S1, S2>> cartesian(
-			final Collection<? extends S1> states1, final Collection<? extends S2> states2) {
+			final Iterable<? extends S1> states1, final Iterable<? extends S2> states2) {
 		final Collection<Prod2State<S1, S2>> result = new ArrayList<>();
 		for (final S1 state1 : states1) {
 			for (final S2 state2 : states2) {
