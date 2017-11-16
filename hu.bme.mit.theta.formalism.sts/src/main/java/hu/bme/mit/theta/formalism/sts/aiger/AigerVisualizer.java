@@ -30,10 +30,10 @@ import hu.bme.mit.theta.formalism.sts.aiger.elements.Latch;
 
 public final class AigerVisualizer {
 
-	private static final String INPUTSHAPE = "invhouse";
-	private static final String LATCHSHAPE = "rectangle";
-	private static final String OUTPUTSHAPE = "invhouse";
-	private static final String ANDSHAPE = "ellipse";
+	private static final String INPUTNODE = "\t%s [shape=invhouse,margin=0,width=0,height=0];" + lineSeparator();
+	private static final String LATCHNODE = "\t%s [shape=rectangle,margin=0.05,width=0,height=0];" + lineSeparator();
+	private static final String OUTPUTNODE = INPUTNODE;
+	private static final String ANDNODE = "\t%s [shape=ellipse,margin=0.02,width=0,height=0];" + lineSeparator();
 	private static final String INVHEAD = "odot";
 
 	private AigerVisualizer() {
@@ -41,44 +41,39 @@ public final class AigerVisualizer {
 
 	public static String visualize(final AigerSystem system) {
 		final StringBuilder sb = new StringBuilder();
-		sb.append("digraph \"aiger\" {" + lineSeparator());
+		sb.append("digraph aiger {" + lineSeparator());
+		appendNodes(system, sb);
+		appendWires(system, sb);
+		sb.append("}");
+		return sb.toString();
+	}
 
-		final Set<AigerWire> wires = new HashSet<>();
-
+	private static void appendNodes(final AigerSystem system, final StringBuilder sb) {
 		for (final AigerNode node : system.getNodes()) {
 			if (node instanceof InputVar || node instanceof FalseConst) {
-				sb.append(
-						String.format("\t%s [shape=\"%s\", margin=\"0\", width=\"0\", height=\"0\"];" + lineSeparator(),
-								node.getName(), INPUTSHAPE));
+				sb.append(String.format(INPUTNODE, node.getName()));
 			} else if (node instanceof Latch) {
-				sb.append(String.format(
-						"\t%s [shape=\"%s\", margin=\"0.05\", width=\"0\", height=\"0\"];" + lineSeparator(),
-						node.getName(), LATCHSHAPE));
+				sb.append(String.format(LATCHNODE, node.getName()));
 			} else if (node instanceof AndGate) {
-				sb.append(String.format(
-						"\t%s [shape=\"%s\", margin=\"0.02\", width=\"0\", height=\"0\"];" + lineSeparator(),
-						node.getName(), ANDSHAPE));
+				sb.append(String.format(ANDNODE, node.getName()));
 			} else {
 				throw new UnsupportedOperationException("Unknown node: " + node.getClass().getName());
 			}
-
-			wires.addAll(node.getInWires());
-			wires.addAll(node.getOutWires());
 		}
+		sb.append(String.format(OUTPUTNODE, system.getOutput().getName()));
+	}
 
-		sb.append(String.format("\t%s [shape=\"%s\", margin=\"0\", width=\"0\", height=\"0\"];" + lineSeparator(),
-				system.getOutput().getName(), OUTPUTSHAPE));
+	private static void appendWires(final AigerSystem system, final StringBuilder sb) {
+		final Set<AigerWire> wires = new HashSet<>();
+		system.getNodes().forEach(n -> wires.addAll(n.getInWires()));
+		system.getNodes().forEach(n -> wires.addAll(n.getOutWires()));
 		wires.addAll(system.getOutput().getInWires());
-
 		for (final AigerWire wire : wires) {
 			sb.append(String.format("\t%s -> %s", wire.getSource().getName(), wire.getTarget().getName()));
 			if (!wire.isPonated()) {
-				sb.append(" [arrowhead=\"" + INVHEAD + "\"]");
+				sb.append(" [arrowhead=" + INVHEAD + "]");
 			}
-			sb.append(lineSeparator());
+			sb.append(";" + lineSeparator());
 		}
-
-		sb.append("}");
-		return sb.toString();
 	}
 }
