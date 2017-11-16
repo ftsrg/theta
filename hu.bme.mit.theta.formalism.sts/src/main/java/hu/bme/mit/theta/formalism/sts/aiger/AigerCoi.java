@@ -15,15 +15,14 @@
  */
 package hu.bme.mit.theta.formalism.sts.aiger;
 
-import java.util.ArrayList;
+import java.util.ArrayDeque;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
+import java.util.Queue;
 import java.util.Set;
 
 import hu.bme.mit.theta.formalism.sts.aiger.elements.AigerNode;
 import hu.bme.mit.theta.formalism.sts.aiger.elements.AigerSystem;
-import hu.bme.mit.theta.formalism.sts.aiger.elements.AigerWire;
 
 public final class AigerCoi {
 
@@ -31,37 +30,34 @@ public final class AigerCoi {
 	}
 
 	public static void apply(final AigerSystem system) {
+		final Set<AigerNode> reachable = getReachableNodes(system);
+		pruneUnreachableNodes(system, reachable);
+	}
 
-		final Set<AigerNode> reachableNodes = new HashSet<>();
-		final List<AigerNode> queue = new ArrayList<>();
+	private static Set<AigerNode> getReachableNodes(final AigerSystem system) {
+		final Set<AigerNode> reached = new HashSet<>();
+		final Queue<AigerNode> queue = new ArrayDeque<>();
 		queue.add(system.getOutput());
 
 		while (!queue.isEmpty()) {
-			final AigerNode node = queue.remove(queue.size() - 1);
-			if (!reachableNodes.contains(node)) {
-				reachableNodes.add(node);
-				for (final AigerWire wire : node.getInWires()) {
-					final AigerNode source = wire.getSource();
-					queue.add(source);
-				}
+			final AigerNode node = queue.remove();
+			if (!reached.contains(node)) {
+				reached.add(node);
+				node.getInWires().forEach(w -> queue.add(w.getSource()));
 			}
 		}
-		reachableNodes.remove(system.getOutput());
+		reached.remove(system.getOutput());
+		return reached;
+	}
 
+	private static void pruneUnreachableNodes(final AigerSystem system, final Set<AigerNode> reachable) {
 		for (final Iterator<AigerNode> iterator = system.getNodes().iterator(); iterator.hasNext();) {
 			final AigerNode node = iterator.next();
-			if (!reachableNodes.contains(node)) {
+			if (!reachable.contains(node)) {
 				iterator.remove();
-				for (final AigerWire wire : node.getInWires()) {
-					wire.getSource().removeOutWire(wire);
-				}
+				node.getInWires().forEach(w -> w.getSource().removeOutWire(w));
 			}
-
 		}
-
-		system.getNodes().clear();
-		system.getNodes().addAll(reachableNodes);
-
 	}
 
 }
