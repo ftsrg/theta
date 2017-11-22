@@ -17,9 +17,9 @@ package hu.bme.mit.theta.formalism.sts.aiger.elements;
 
 public final class AigerWire {
 
-	private final AigerNode source;
+	private AigerNode source;
 	private final AigerNode target;
-	private final boolean isPonated;
+	private boolean isPonated;
 
 	public AigerWire(final AigerNode source, final AigerNode target, final boolean isPonated) {
 		this.source = source;
@@ -37,6 +37,16 @@ public final class AigerWire {
 
 	public boolean isPonated() {
 		return isPonated;
+	}
+
+	public void modifySource(final AigerNode node) {
+		this.source.removeOutWire(this);
+		this.source = node;
+		node.getOutWires().add(this);
+	}
+
+	public void invert() {
+		isPonated = !isPonated;
 	}
 
 }
