@@ -44,7 +44,7 @@ public final class AigerVisualizer {
 
 	/**
 	 * Visualize an AIGER system in dot format.
-	 * 
+	 *
 	 * @param system
 	 * @return
 	 */
@@ -53,7 +53,7 @@ public final class AigerVisualizer {
 		sb.append("digraph aiger {" + lineSeparator());
 		appendNodes(system, sb);
 		appendWires(system, sb);
-		sb.append("}");
+		sb.append('}');
 		return sb.toString();
 	}
 
