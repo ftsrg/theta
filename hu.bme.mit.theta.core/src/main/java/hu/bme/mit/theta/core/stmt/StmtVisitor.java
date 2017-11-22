@@ -19,6 +19,8 @@ import hu.bme.mit.theta.core.type.Type;
 
 public interface StmtVisitor<P, R> {
 
+	R visit(SkipStmt stmt, P param);
+
 	R visit(AssumeStmt stmt, P param);
 
 	<DeclType extends Type> R visit(AssignStmt<DeclType> stmt, P param);

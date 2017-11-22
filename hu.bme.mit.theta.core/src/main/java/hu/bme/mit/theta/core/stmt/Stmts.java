@@ -25,6 +25,10 @@ public final class Stmts {
 	private Stmts() {
 	}
 
+	public static SkipStmt Skip() {
+		return SkipStmt.getInstance();
+	}
+
 	public static AssumeStmt Assume(final Expr<BoolType> cond) {
 		return new AssumeStmt(cond);
 	}
