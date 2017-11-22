@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.formalism.sts.aiger;
+package hu.bme.mit.theta.formalism.sts.aiger.utils;
 
 import static java.lang.System.lineSeparator;
 
@@ -28,6 +28,9 @@ import hu.bme.mit.theta.formalism.sts.aiger.elements.FalseConst;
 import hu.bme.mit.theta.formalism.sts.aiger.elements.InputVar;
 import hu.bme.mit.theta.formalism.sts.aiger.elements.Latch;
 
+/**
+ * Visualizer for AIGER systems.
+ */
 public final class AigerVisualizer {
 
 	private static final String INPUTNODE = "\t%s [shape=invhouse,margin=0,width=0,height=0];" + lineSeparator();
@@ -39,6 +42,12 @@ public final class AigerVisualizer {
 	private AigerVisualizer() {
 	}
 
+	/**
+	 * Visualize an AIGER system in dot format.
+	 * 
+	 * @param system
+	 * @return
+	 */
 	public static String visualize(final AigerSystem system) {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("digraph aiger {" + lineSeparator());

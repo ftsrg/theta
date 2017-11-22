@@ -38,43 +38,35 @@ import hu.bme.mit.theta.formalism.sts.aiger.elements.FalseConst;
 import hu.bme.mit.theta.formalism.sts.aiger.elements.InputVar;
 import hu.bme.mit.theta.formalism.sts.aiger.elements.Latch;
 
+/**
+ * A converter from out internal AIGER representation to STSs.
+ */
 public final class AigerToSts {
 
+	private AigerToSts() {
+	}
+
+	/**
+	 * Convert an AIGER system to an STS
+	 *
+	 * @param aigerSys AIGER system
+	 * @return STS
+	 */
 	public static STS createSts(final AigerSystem aigerSys) {
 		final Builder builder = STS.builder();
 
 		final Map<AigerNode, VarDecl<BoolType>> vars = new HashMap<>();
-
-		for (final AigerNode node : aigerSys.getNodes()) {
-			vars.put(node, Decls.Var(node.getName(), Bool()));
-		}
+		aigerSys.getNodes().forEach(n -> vars.put(n, Decls.Var(n.getName(), Bool())));
 
 		for (final AigerNode node : aigerSys.getNodes()) {
 			if (node instanceof InputVar) {
 				// Do nothing
 			} else if (node instanceof FalseConst) {
-				builder.addInvar(Not(vars.get(node).getRef()));
+				transformFalseConst(builder, vars, (FalseConst) node);
 			} else if (node instanceof Latch) {
-				final Latch latch = (Latch) node;
-				builder.addInit(Not(vars.get(latch).getRef()));
-				final AigerWire inWire = latch.getInWire();
-				final AigerNode source = inWire.getSource();
-				final Expr<BoolType> lhs = Exprs.Prime(vars.get(latch).getRef());
-				final Expr<BoolType> rhs = inWire.isPonated() ? vars.get(source).getRef()
-						: Not(vars.get(source).getRef());
-				builder.addTrans(Iff(lhs, rhs));
+				transformLatch(builder, vars, (Latch) node);
 			} else if (node instanceof AndGate) {
-				final AndGate andGate = (AndGate) node;
-				final AigerWire inWire1 = andGate.getInWire1();
-				final AigerWire inWire2 = andGate.getInWire2();
-				final AigerNode source1 = inWire1.getSource();
-				final AigerNode source2 = inWire2.getSource();
-				final Expr<BoolType> lhs = vars.get(andGate).getRef();
-				final Expr<BoolType> rhs1 = inWire1.isPonated() ? vars.get(source1).getRef()
-						: Not(vars.get(source1).getRef());
-				final Expr<BoolType> rhs2 = inWire2.isPonated() ? vars.get(source2).getRef()
-						: Not(vars.get(source2).getRef());
-				builder.addInvar(Iff(lhs, And(rhs1, rhs2)));
+				transformAndGate(builder, vars, (AndGate) node);
 			} else {
 				throw new UnsupportedOperationException("Unknown node: " + node.getClass().getName());
 			}
@@ -86,9 +78,34 @@ public final class AigerToSts {
 		} else {
 			builder.setProp(vars.get(outputWire.getSource()).getRef());
 		}
-
 		return builder.build();
+	}
 
+	private static void transformFalseConst(final Builder builder, final Map<AigerNode, VarDecl<BoolType>> vars,
+			final FalseConst falseConst) {
+		builder.addInvar(Not(vars.get(falseConst).getRef()));
+	}
+
+	private static void transformLatch(final Builder builder, final Map<AigerNode, VarDecl<BoolType>> vars,
+			final Latch latch) {
+		builder.addInit(Not(vars.get(latch).getRef()));
+		final AigerWire inWire = latch.getInWire();
+		final AigerNode source = inWire.getSource();
+		final Expr<BoolType> lhs = Exprs.Prime(vars.get(latch).getRef());
+		final Expr<BoolType> rhs = inWire.isPonated() ? vars.get(source).getRef() : Not(vars.get(source).getRef());
+		builder.addTrans(Iff(lhs, rhs));
+	}
+
+	private static void transformAndGate(final Builder builder, final Map<AigerNode, VarDecl<BoolType>> vars,
+			final AndGate andGate) {
+		final AigerWire inWire1 = andGate.getInWire1();
+		final AigerWire inWire2 = andGate.getInWire2();
+		final AigerNode source1 = inWire1.getSource();
+		final AigerNode source2 = inWire2.getSource();
+		final Expr<BoolType> lhs = vars.get(andGate).getRef();
+		final Expr<BoolType> rhs1 = inWire1.isPonated() ? vars.get(source1).getRef() : Not(vars.get(source1).getRef());
+		final Expr<BoolType> rhs2 = inWire2.isPonated() ? vars.get(source2).getRef() : Not(vars.get(source2).getRef());
+		builder.addInvar(Iff(lhs, And(rhs1, rhs2)));
 	}
 
 }

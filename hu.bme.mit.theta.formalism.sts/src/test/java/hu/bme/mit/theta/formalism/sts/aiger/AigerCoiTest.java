@@ -11,9 +11,9 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
-import hu.bme.mit.theta.formalism.sts.aiger.AigerCoi;
 import hu.bme.mit.theta.formalism.sts.aiger.AigerParser;
 import hu.bme.mit.theta.formalism.sts.aiger.elements.AigerSystem;
+import hu.bme.mit.theta.formalism.sts.aiger.utils.AigerCoi;
 
 @RunWith(Parameterized.class)
 public class AigerCoiTest {

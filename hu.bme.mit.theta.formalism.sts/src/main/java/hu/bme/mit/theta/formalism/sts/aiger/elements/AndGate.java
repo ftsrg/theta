@@ -23,6 +23,9 @@ import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 
+/**
+ * Represents an and gate with exactly two inputs.
+ */
 public class AndGate extends AigerNode {
 
 	private final List<AigerWire> outWires;

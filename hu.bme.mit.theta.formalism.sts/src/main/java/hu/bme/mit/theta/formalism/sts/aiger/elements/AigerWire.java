@@ -15,6 +15,9 @@
  */
 package hu.bme.mit.theta.formalism.sts.aiger.elements;
 
+/**
+ * Represents a wire between {@link AigerNode}s.
+ */
 public final class AigerWire {
 
 	private AigerNode source;

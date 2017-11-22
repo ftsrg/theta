@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package hu.bme.mit.theta.formalism.sts.aiger;
+package hu.bme.mit.theta.formalism.sts.aiger.utils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,26 +27,37 @@ import hu.bme.mit.theta.formalism.sts.aiger.elements.AndGate;
 import hu.bme.mit.theta.formalism.sts.aiger.elements.FalseConst;
 import hu.bme.mit.theta.formalism.sts.aiger.elements.Latch;
 
+/**
+ * Constant propagation for AIGER systems.
+ */
 public class AigerConstProp {
 
 	private AigerConstProp() {
 	}
 
+	/**
+	 * Propagate constants in an AIGER system. The parameter is modified. It is
+	 * assumed that the system contains a single constant.
+	 *
+	 * @param system
+	 */
 	public static void apply(final AigerSystem system) {
-
 		final Optional<AigerNode> falseOpt = system.getNodes().stream().filter(n -> n instanceof FalseConst)
 				.findFirst();
 		if (!falseOpt.isPresent()) {
 			return;
 		}
-
 		final FalseConst falseConst = (FalseConst) falseOpt.get();
-
 		while (propagateAnd(system, falseConst) || propagateLatch(system, falseConst)) {
-
 		}
 	}
 
+	/**
+	 * Propagate a constant through an AND gate using (true AND x == x), (false
+	 * AND x == false).
+	 *
+	 * @return True, if any propagation occurred
+	 */
 	private static boolean propagateAnd(final AigerSystem system, final FalseConst falseConst) {
 		final Optional<AigerWire> wireOpt = falseConst.getOutWires().stream()
 				.filter(w -> w.getTarget() instanceof AndGate).findFirst();
@@ -74,6 +85,13 @@ public class AigerConstProp {
 		}
 	}
 
+	/**
+	 * Propagate a false constant through a latch. Note, that true constants
+	 * cannot be propagated this way, as the initial state of the latch is
+	 * false.
+	 *
+	 * @return True, if any propagation occurred
+	 */
 	private static boolean propagateLatch(final AigerSystem system, final FalseConst falseConst) {
 		final Optional<AigerWire> wireOpt = falseConst.getOutWires().stream()
 				.filter(w -> w.getTarget() instanceof Latch && w.isPonated()).findFirst();

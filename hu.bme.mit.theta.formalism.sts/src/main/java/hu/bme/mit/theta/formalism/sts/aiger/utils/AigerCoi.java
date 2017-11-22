@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.formalism.sts.aiger;
+package hu.bme.mit.theta.formalism.sts.aiger.utils;
 
 import java.util.ArrayDeque;
 import java.util.Collection;
@@ -26,11 +26,20 @@ import hu.bme.mit.theta.formalism.sts.aiger.elements.AigerNode;
 import hu.bme.mit.theta.formalism.sts.aiger.elements.AigerSystem;
 import hu.bme.mit.theta.formalism.sts.aiger.elements.AigerWire;
 
+/**
+ * Cone-of-influence (COI) reduction for AIGER systems.
+ */
 public final class AigerCoi {
 
 	private AigerCoi() {
 	}
 
+	/**
+	 * Apply COI reduction to the system by removing nodes that are not backward
+	 * reachable from the output. The parameter is modified.
+	 *
+	 * @param system
+	 */
 	public static void apply(final AigerSystem system) {
 		final Set<AigerNode> reachable = getReachableNodes(system);
 		pruneUnreachableNodes(system, reachable);
