@@ -60,11 +60,11 @@ public final class AigerParser {
 			int nAndGates;
 			// Parse header
 			final String[] header = checkNotNull(br.readLine(), "Header expected").split(" ");
-			nNodes = Integer.parseInt(header[1]);
-			nInputs = Integer.parseInt(header[2]);
-			nLatches = Integer.parseInt(header[3]);
-			nOutputs = Integer.parseInt(header[4]);
-			nAndGates = Integer.parseInt(header[5]);
+			nNodes = parseInt(header[1]);
+			nInputs = parseInt(header[2]);
+			nLatches = parseInt(header[3]);
+			nOutputs = parseInt(header[4]);
+			nAndGates = parseInt(header[5]);
 
 			if (nOutputs != 1) {
 				throw new UnsupportedOperationException("Only a single output variable is supported.");
@@ -94,7 +94,7 @@ public final class AigerParser {
 
 			// Read output
 			final OutputVar outputVar = new OutputVar(1);
-			final int outputVarInput = Integer.parseInt(br.readLine());
+			final int outputVarInput = parseInt(br.readLine());
 
 			// Read and gates
 			final List<AndGate> andGates = new ArrayList<>(nAndGates);
