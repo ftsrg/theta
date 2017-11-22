@@ -34,8 +34,21 @@ import hu.bme.mit.theta.formalism.sts.aiger.elements.InputVar;
 import hu.bme.mit.theta.formalism.sts.aiger.elements.Latch;
 import hu.bme.mit.theta.formalism.sts.aiger.elements.OutputVar;
 
+/**
+ * Parser for textual (.aag) AIGER files.
+ */
 public final class AigerParser {
 
+	private AigerParser() {
+	}
+
+	/**
+	 * Parse a textual AIGER file (*.aag) to our internal representation.
+	 *
+	 * @param fileName Path of the AIGER file
+	 * @return AIGER system internal representation
+	 * @throws IOException
+	 */
 	public static AigerSystem parse(final String fileName) throws IOException {
 		final BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(fileName)));
 
@@ -101,7 +114,7 @@ public final class AigerParser {
 				checkNotNull(node, "Missing node");
 			}
 
-			// Create connections
+			// Create connections for latches
 			for (int i = 0; i < latches.size(); i++) {
 				final Latch latch = latches.get(i);
 				final AigerNode source = nodes[latchInputs.get(i) / 2];
@@ -110,6 +123,7 @@ public final class AigerParser {
 				source.addOutWire(wire);
 			}
 
+			// Create connections for output
 			{
 				final AigerNode source = nodes[outputVarInput / 2];
 				final AigerWire wire = new AigerWire(source, outputVar, outputVarInput % 2 == 0);
@@ -117,6 +131,7 @@ public final class AigerParser {
 				source.addOutWire(wire);
 			}
 
+			// Create connections for and gates
 			for (int i = 0; i < andGates.size(); i++) {
 				final AndGate andGate = andGates.get(i);
 				final AigerNode source1 = nodes[andGateInputs1.get(i) / 2];
@@ -134,7 +149,6 @@ public final class AigerParser {
 				nodeList.add(node);
 			}
 			return new AigerSystem(nodeList, outputVar);
-
 		} finally {
 			br.close();
 		}

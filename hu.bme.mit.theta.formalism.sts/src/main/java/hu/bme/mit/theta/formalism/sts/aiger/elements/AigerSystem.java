@@ -17,6 +17,10 @@ package hu.bme.mit.theta.formalism.sts.aiger.elements;
 
 import java.util.List;
 
+/**
+ * Represents an AIGER system, which is a collection of @link {@link AigerNode}s
+ * (connected with @link {@link AigerWire}s) and an {@link OutputVar}.
+ */
 public class AigerSystem {
 	private final List<AigerNode> nodes;
 	private final OutputVar output;

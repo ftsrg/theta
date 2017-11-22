@@ -37,7 +37,7 @@ See _src/test/resources_ for more examples.
 
 ### AIGER Frontend
 
-The AIGER frontend can parse _aag_ (version 1.7) files into STSs. For more information, see the [webpage of AIGER](http://fmv.jku.at/aiger/).
+The AIGER frontend can parse _aag_ (version 1.7) files into STSs. Some utilities are also available, such as visualization and reductions. For more information on the format, see the [webpage of AIGER](http://fmv.jku.at/aiger/).
 
 ## Tool
 

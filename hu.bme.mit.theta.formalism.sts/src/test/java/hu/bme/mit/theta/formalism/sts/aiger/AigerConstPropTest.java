@@ -12,6 +12,8 @@ import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
 import hu.bme.mit.theta.formalism.sts.aiger.elements.AigerSystem;
+import hu.bme.mit.theta.formalism.sts.aiger.utils.AigerCoi;
+import hu.bme.mit.theta.formalism.sts.aiger.utils.AigerConstProp;
 
 @RunWith(Parameterized.class)
 public class AigerConstPropTest {
