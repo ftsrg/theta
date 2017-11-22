@@ -15,8 +15,6 @@
  */
 package hu.bme.mit.theta.core.stmt;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
@@ -28,18 +26,14 @@ public final class Stmts {
 	}
 
 	public static AssumeStmt Assume(final Expr<BoolType> cond) {
-		checkNotNull(cond);
 		return new AssumeStmt(cond);
 	}
 
 	public static <T extends Type> AssignStmt<T> Assign(final VarDecl<T> lhs, final Expr<T> rhs) {
-		checkNotNull(lhs);
-		checkNotNull(rhs);
 		return new AssignStmt<>(lhs, rhs);
 	}
 
 	public static <T extends Type> HavocStmt<T> Havoc(final VarDecl<T> varDecl) {
-		checkNotNull(varDecl);
 		return new HavocStmt<>(varDecl);
 	}
 
