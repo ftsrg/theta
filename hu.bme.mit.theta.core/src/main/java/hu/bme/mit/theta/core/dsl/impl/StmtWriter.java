@@ -18,9 +18,9 @@ package hu.bme.mit.theta.core.dsl.impl;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
+import hu.bme.mit.theta.core.stmt.StmtVisitor;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.utils.StmtVisitor;
 
 public class StmtWriter implements StmtVisitor<Void, String> {
 

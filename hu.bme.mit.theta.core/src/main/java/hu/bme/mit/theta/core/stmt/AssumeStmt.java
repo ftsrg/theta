@@ -20,7 +20,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.utils.StmtVisitor;
 
 public final class AssumeStmt implements Stmt {
 

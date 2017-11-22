@@ -21,7 +21,6 @@ import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.utils.StmtVisitor;
 
 public final class AssignStmt<DeclType extends Type> implements Stmt {
 
