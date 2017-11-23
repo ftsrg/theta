@@ -20,13 +20,12 @@ import static com.google.common.base.Preconditions.checkArgument;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 
 /**
  * Represents an input variable.
  */
 public final class InputVar extends AigerNode {
-	private final List<AigerWire> outWires;
+	private final Collection<AigerWire> outWires;
 
 	public InputVar(final int nr, final int varId) {
 		super(String.format("IN%d_v%d", nr, varId));
@@ -48,10 +47,4 @@ public final class InputVar extends AigerNode {
 		checkArgument(outWire.getSource().equals(this));
 		outWires.add(outWire);
 	}
-
-	@Override
-	public void removeOutWire(final AigerWire outWire) {
-		checkArgument(outWires.remove(outWire));
-	}
-
 }

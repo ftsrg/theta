@@ -19,7 +19,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 
@@ -28,7 +27,7 @@ import com.google.common.collect.ImmutableList;
  */
 public class AndGate extends AigerNode {
 
-	private final List<AigerWire> outWires;
+	private final Collection<AigerWire> outWires;
 	private AigerWire inWire1;
 	private AigerWire inWire2;
 
@@ -69,11 +68,6 @@ public class AndGate extends AigerNode {
 	public void addOutWire(final AigerWire outWire) {
 		checkArgument(outWire.getSource().equals(this));
 		outWires.add(outWire);
-	}
-
-	@Override
-	public void removeOutWire(final AigerWire outWire) {
-		checkArgument(outWires.remove(outWire));
 	}
 
 }

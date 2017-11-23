@@ -43,7 +43,7 @@ public final class AigerWire {
 	}
 
 	public void modifySource(final AigerNode node) {
-		this.source.removeOutWire(this);
+		this.source.getOutWires().remove(this);
 		this.source = node;
 		node.getOutWires().add(this);
 	}

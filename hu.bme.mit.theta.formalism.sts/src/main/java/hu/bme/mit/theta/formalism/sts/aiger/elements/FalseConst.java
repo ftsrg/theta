@@ -20,14 +20,13 @@ import static com.google.common.base.Preconditions.checkArgument;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 
 /**
  * Represents a constant false signal.
  */
 public final class FalseConst extends AigerNode {
 
-	private final List<AigerWire> outWires;
+	private final Collection<AigerWire> outWires;
 
 	public FalseConst() {
 		super("F_v0");
@@ -48,10 +47,5 @@ public final class FalseConst extends AigerNode {
 	public void addOutWire(final AigerWire outWire) {
 		checkArgument(outWire.getSource().equals(this));
 		outWires.add(outWire);
-	}
-
-	@Override
-	public void removeOutWire(final AigerWire outWire) {
-		checkArgument(outWires.remove(outWire));
 	}
 }
