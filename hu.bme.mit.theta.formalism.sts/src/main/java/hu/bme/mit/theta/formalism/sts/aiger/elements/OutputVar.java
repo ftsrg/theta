@@ -54,10 +54,4 @@ public class OutputVar extends AigerNode {
 	public void addOutWire(final AigerWire outWire) {
 		throw new UnsupportedOperationException("Output variables cannot have outgoing wires.");
 	}
-
-	@Override
-	public void removeOutWire(final AigerWire outWire) {
-		throw new UnsupportedOperationException("Output variables cannot have outgoing wires.");
-	}
-
 }

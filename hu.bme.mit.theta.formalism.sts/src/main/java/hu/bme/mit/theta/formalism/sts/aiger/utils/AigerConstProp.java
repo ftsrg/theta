@@ -66,7 +66,7 @@ public class AigerConstProp {
 			final AndGate andGate = (AndGate) wire.getTarget();
 			final AigerWire otherWire = andGate.getInWire1().equals(wire) ? andGate.getInWire2() : andGate.getInWire1();
 			final AigerNode otherSource = otherWire.getSource();
-			otherSource.removeOutWire(otherWire);
+			otherSource.getOutWires().remove(otherWire);
 			final List<AigerWire> redirectedWires = new ArrayList<>();
 			redirectedWires.addAll(andGate.getOutWires());
 			if (wire.isPonated()) {
@@ -78,7 +78,7 @@ public class AigerConstProp {
 				}
 			}
 			system.getNodes().remove(andGate);
-			falseConst.removeOutWire(wire);
+			falseConst.getOutWires().remove(wire);
 			return true;
 		} else {
 			return false;
@@ -102,7 +102,7 @@ public class AigerConstProp {
 			redirectedWires.addAll(latch.getOutWires());
 			redirectedWires.forEach(w -> w.modifySource(falseConst));
 			system.getNodes().remove(latch);
-			falseConst.removeOutWire(wire);
+			falseConst.getOutWires().remove(wire);
 			return true;
 		} else {
 			return false;

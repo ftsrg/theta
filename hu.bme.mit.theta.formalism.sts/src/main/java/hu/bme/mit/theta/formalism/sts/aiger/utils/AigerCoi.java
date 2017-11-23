@@ -16,9 +16,8 @@
 package hu.bme.mit.theta.formalism.sts.aiger.utils;
 
 import java.util.ArrayDeque;
-import java.util.Collection;
 import java.util.HashSet;
-import java.util.LinkedList;
+import java.util.Iterator;
 import java.util.Queue;
 import java.util.Set;
 
@@ -64,14 +63,13 @@ public final class AigerCoi {
 	private static void pruneUnreachableNodes(final AigerSystem system, final Set<AigerNode> reachable) {
 		system.getNodes().clear();
 		system.getNodes().addAll(reachable);
-		final Collection<AigerWire> wiresToRemove = new LinkedList<>();
 		for (final AigerNode node : system.getNodes()) {
-			for (final AigerWire wire : node.getOutWires()) {
+			for (final Iterator<AigerWire> iterator = node.getOutWires().iterator(); iterator.hasNext();) {
+				final AigerWire wire = iterator.next();
 				if (!reachable.contains(wire.getTarget())) {
-					wiresToRemove.add(wire);
+					iterator.remove();
 				}
 			}
 		}
-		wiresToRemove.forEach(w -> w.getSource().removeOutWire(w));
 	}
 }

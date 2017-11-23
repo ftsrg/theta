@@ -37,5 +37,5 @@ public abstract class AigerNode {
 
 	public abstract void addOutWire(AigerWire outWire);
 
-	public abstract void removeOutWire(AigerWire outWire);
+	// public abstract void removeOutWire(AigerWire outWire);
 }
