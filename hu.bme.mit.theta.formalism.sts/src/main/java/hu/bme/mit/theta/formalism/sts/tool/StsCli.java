@@ -19,10 +19,12 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.concurrent.TimeUnit;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
+import com.google.common.base.Stopwatch;
 
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
@@ -119,10 +121,12 @@ public class StsCli {
 		}
 
 		try {
+			final Stopwatch sw = Stopwatch.createStarted();
 			final STS sts = loadModel();
 			final Config<?, ?, ?> configuration = buildConfiguration(sts);
 			final SafetyResult<?, ?> status = configuration.check();
-			printResult(status, sts);
+			sw.stop();
+			printResult(status, sts, sw.elapsed(TimeUnit.MILLISECONDS));
 			if (dotfile != null) {
 				writeVisualStatus(status, dotfile);
 			}
@@ -135,8 +139,8 @@ public class StsCli {
 	}
 
 	private void printHeader() {
-		final String[] header = new String[] { "Result", "TimeMs", "AbsTimeMs", "RefTimeMs", "Iterations", "ArgSize",
-				"ArgDepth", "ArgMeanBranchFactor", "CexLen", "Vars", "Size" };
+		final String[] header = new String[] { "Result", "TimeMs", "AlgoTimeMs", "AbsTimeMs", "RefTimeMs", "Iterations",
+				"ArgSize", "ArgDepth", "ArgMeanBranchFactor", "CexLen", "Vars", "Size" };
 		for (final String str : header) {
 			writer.cell(str);
 		}
@@ -165,11 +169,12 @@ public class StsCli {
 				.logger(logger).build(sts);
 	}
 
-	private void printResult(final SafetyResult<?, ?> status, final STS sts) {
+	private void printResult(final SafetyResult<?, ?> status, final STS sts, final long totalTimeMs) {
 		final CegarStatistics stats = (CegarStatistics) status.getStats().get();
 		if (benchmarkMode) {
 			writer.cell(status.isSafe());
-			writer.cell(stats.getTotalTimeMs());
+			writer.cell(totalTimeMs);
+			writer.cell(stats.getAlgorithmTimeMs());
 			writer.cell(stats.getAbstractorTimeMs());
 			writer.cell(stats.getRefinerTimeMs());
 			writer.cell(stats.getIterations());

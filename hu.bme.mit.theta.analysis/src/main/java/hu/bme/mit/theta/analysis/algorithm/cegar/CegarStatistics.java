@@ -21,24 +21,24 @@ import hu.bme.mit.theta.analysis.algorithm.Statistics;
  * Represents statistics collected by the CegarChecker algorithm.
  */
 public final class CegarStatistics extends Statistics {
-	private final long totalTimeMs;
+	private final long algorithmTimeMs;
 	private final long abstractorTimeMs;
 	private final long refinerTimeMs;
 	private final int iterations;
 
-	public CegarStatistics(final long totalTimeMs, final long abstractorTimeMs, final long refinerTimeMs,
+	public CegarStatistics(final long algorithmTimeMs, final long abstractorTimeMs, final long refinerTimeMs,
 			final int iterations) {
-		this.totalTimeMs = totalTimeMs;
+		this.algorithmTimeMs = algorithmTimeMs;
 		this.abstractorTimeMs = abstractorTimeMs;
 		this.refinerTimeMs = refinerTimeMs;
 		this.iterations = iterations;
 
-		addStat("TotalTimeMs", this::getTotalTimeMs);
+		addStat("AlgorithmTimeMs", this::getAlgorithmTimeMs);
 		addStat("Iterations", this::getIterations);
 	}
 
-	public long getTotalTimeMs() {
-		return totalTimeMs;
+	public long getAlgorithmTimeMs() {
+		return algorithmTimeMs;
 	}
 
 	public long getAbstractorTimeMs() {
