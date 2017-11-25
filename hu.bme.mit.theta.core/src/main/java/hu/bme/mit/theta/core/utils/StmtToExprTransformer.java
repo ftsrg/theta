@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.core.utils;
 
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -27,7 +28,9 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
+import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
+import hu.bme.mit.theta.core.stmt.StmtVisitor;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolExprs;
@@ -63,7 +66,10 @@ final class StmtToExprTransformer {
 		private StmtToExprVisitor() {
 		}
 
-		////////
+		@Override
+		public StmtUnfoldResult visit(final SkipStmt stmt, final VarIndexing indexing) {
+			return StmtUnfoldResult.of(ImmutableList.of(True()), indexing);
+		}
 
 		@Override
 		public StmtUnfoldResult visit(final AssumeStmt stmt, final VarIndexing indexing) {
@@ -91,6 +97,7 @@ final class StmtToExprTransformer {
 			final Expr<BoolType> expr = Eq(lhs, rhs);
 			return StmtUnfoldResult.of(ImmutableList.of(expr), newIndexing);
 		}
+
 	}
 
 }
