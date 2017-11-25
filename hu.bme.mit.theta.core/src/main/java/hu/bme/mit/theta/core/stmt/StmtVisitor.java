@@ -13,14 +13,13 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.core.utils;
+package hu.bme.mit.theta.core.stmt;
 
-import hu.bme.mit.theta.core.stmt.AssignStmt;
-import hu.bme.mit.theta.core.stmt.AssumeStmt;
-import hu.bme.mit.theta.core.stmt.HavocStmt;
 import hu.bme.mit.theta.core.type.Type;
 
 public interface StmtVisitor<P, R> {
+
+	R visit(SkipStmt stmt, P param);
 
 	R visit(AssumeStmt stmt, P param);
 
