@@ -16,13 +16,14 @@
 package hu.bme.mit.theta.formalism.cfa.dsl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.collect.ImmutableList.toImmutableList;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import hu.bme.mit.theta.common.dsl.Environment;
 import hu.bme.mit.theta.core.stmt.Stmt;
+import hu.bme.mit.theta.core.stmt.Stmts;
 import hu.bme.mit.theta.formalism.cfa.CFA;
 import hu.bme.mit.theta.formalism.cfa.CFA.Edge;
 import hu.bme.mit.theta.formalism.cfa.CFA.Loc;
@@ -54,7 +55,10 @@ final class CfaEdgeDefinition {
 
 		final Loc sourceLoc = (Loc) env.eval(sourceSymbol);
 		final Loc targetLoc = (Loc) env.eval(targetSymbol);
-		final List<Stmt> stmts = statements.stream().map(s -> s.instantiate(env)).collect(toImmutableList());
+		final List<Stmt> stmts = statements.stream().map(s -> s.instantiate(env)).collect(Collectors.toList());
+		if (stmts.isEmpty()) {
+			stmts.add(Stmts.Skip());
+		}
 		final List<Edge> edges = new ArrayList<>(stmts.size());
 		final List<Loc> locs = new ArrayList<>(stmts.size() + 1);
 		locs.add(sourceLoc);
