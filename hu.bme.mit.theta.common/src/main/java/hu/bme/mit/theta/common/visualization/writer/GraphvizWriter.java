@@ -19,6 +19,7 @@ import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
 
+import hu.bme.mit.theta.common.visualization.Alignment;
 import hu.bme.mit.theta.common.visualization.CompositeNode;
 import hu.bme.mit.theta.common.visualization.Edge;
 import hu.bme.mit.theta.common.visualization.EdgeAttributes;
@@ -113,7 +114,7 @@ public final class GraphvizWriter extends AbstractGraphWriter {
 		style += "filled";
 
 		sb.append("\t\t").append(node.getId());
-		sb.append(" [label=\"").append(attributes.getLabel().replace("\n", "\\n")).append("\"");
+		sb.append(" [label=\"").append(convertLabel(attributes.getLabel(), attributes)).append("\"");
 		if (attributes.getPeripheries() > 1) {
 			sb.append(",peripheries=").append(attributes.getPeripheries());
 		}
@@ -134,7 +135,7 @@ public final class GraphvizWriter extends AbstractGraphWriter {
 		if (!"".equals(style)) {
 			sb.append("\t\tstyle=").append(style).append(';').append(System.lineSeparator());
 		}
-		sb.append("\t\tlabel=\"").append(attributes.getLabel().replace("\n", "\\n")).append("\";")
+		sb.append("\t\tlabel=\"").append(convertLabel(attributes.getLabel(), attributes)).append("\";")
 				.append(System.lineSeparator());
 		for (final Node child : node.getChildren()) {
 			printNode(child, sb);
@@ -165,6 +166,27 @@ public final class GraphvizWriter extends AbstractGraphWriter {
 				}
 				sb.append("];").append(System.lineSeparator());
 			}
+		}
+	}
+
+	private String convertLabel(final String label, final NodeAttributes attrs) {
+		String converted = label;
+		if (!converted.endsWith("\n")) {
+			converted = converted + "\n";
+		}
+		return converted.replace("\n", getLineSeparator(attrs.getAlignment()));
+	}
+
+	private String getLineSeparator(final Alignment alignment) {
+		switch (alignment) {
+		case CENTER:
+			return "\\n";
+		case LEFT:
+			return "\\l";
+		case RIGHT:
+			return "\\r";
+		default:
+			throw new UnsupportedOperationException("Unknown alignment: " + alignment);
 		}
 	}
 
