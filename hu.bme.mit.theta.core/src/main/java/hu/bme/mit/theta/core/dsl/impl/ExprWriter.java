@@ -30,6 +30,7 @@ import hu.bme.mit.theta.core.type.booltype.ImplyExpr;
 import hu.bme.mit.theta.core.type.booltype.NotExpr;
 import hu.bme.mit.theta.core.type.booltype.OrExpr;
 import hu.bme.mit.theta.core.type.booltype.TrueExpr;
+import hu.bme.mit.theta.core.type.booltype.XorExpr;
 import hu.bme.mit.theta.core.type.inttype.IntAddExpr;
 import hu.bme.mit.theta.core.type.inttype.IntDivExpr;
 import hu.bme.mit.theta.core.type.inttype.IntEqExpr;
@@ -83,6 +84,8 @@ public final class ExprWriter {
 				.addCase(AndExpr.class, e -> infixMultiary(e, " and "))
 
 				.addCase(OrExpr.class, e -> infixMultiary(e, " or "))
+
+				.addCase(XorExpr.class, e -> infixBinary(e, " xor "))
 
 				.addCase(TrueExpr.class, e -> "true")
 
