@@ -1,12 +1,12 @@
 /*
  *  Copyright 2017 Budapest University of Technology and Economics
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,15 +26,17 @@ public final class NodeAttributes {
 	private final LineStyle lineStyle;
 	private final int peripheries;
 	private final Shape shape;
+	private final Alignment alignment;
 
 	private NodeAttributes(final String label, final Color lineColor, final Color fillColor, final LineStyle lineStyle,
-			final int peripheries, final Shape shape) {
+			final int peripheries, final Shape shape, final Alignment alignment) {
 		this.label = checkNotNull(label);
 		this.lineColor = checkNotNull(lineColor);
 		this.fillColor = checkNotNull(fillColor);
 		this.lineStyle = checkNotNull(lineStyle);
 		this.peripheries = peripheries;
 		this.shape = checkNotNull(shape);
+		this.alignment = checkNotNull(alignment);
 	}
 
 	public String getLabel() {
@@ -61,6 +63,10 @@ public final class NodeAttributes {
 		return shape;
 	}
 
+	public Alignment getAlignment() {
+		return alignment;
+	}
+
 	public static Builder builder() {
 		return new Builder();
 	}
@@ -72,6 +78,7 @@ public final class NodeAttributes {
 		private LineStyle lineStyle = LineStyle.NORMAL;
 		private int peripheries = 1;
 		private Shape shape = Shape.ELLIPSE;
+		private Alignment alignment = Alignment.CENTER;
 
 		public Builder label(final String label) {
 			this.label = label;
@@ -103,8 +110,13 @@ public final class NodeAttributes {
 			return this;
 		}
 
+		public Builder alignment(final Alignment alignment) {
+			this.alignment = alignment;
+			return this;
+		}
+
 		public NodeAttributes build() {
-			return new NodeAttributes(label, lineColor, fillColor, lineStyle, peripheries, shape);
+			return new NodeAttributes(label, lineColor, fillColor, lineStyle, peripheries, shape, alignment);
 		}
 	}
 }
