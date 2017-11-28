@@ -27,6 +27,7 @@ import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.common.BaseGui;
+import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.impl.TextAreaLogger;
 import hu.bme.mit.theta.common.table.impl.HtmlTableWriter;
 import hu.bme.mit.theta.common.visualization.Graph;
@@ -70,7 +71,7 @@ public class CfaGui extends BaseGui {
 	private ChoiceBox<Encoding> cbEncoding;
 	private Spinner<Integer> spMaxEnum;
 	private ChoiceBox<InitPrec> cbInitPrec;
-	private Spinner<Integer> spLogLevel;
+	private ChoiceBox<Logger.Level> cbLogLevel;
 	private CheckBox cbStructureOnly;
 
 	private TextArea taModel;
@@ -121,7 +122,7 @@ public class CfaGui extends BaseGui {
 		cbEncoding = createChoice("Encoding", Encoding.values());
 		spMaxEnum = createSpinner("Max. succ. to enumerate", 0, Integer.MAX_VALUE, 0);
 		cbInitPrec = createChoice("Initial precision", InitPrec.values());
-		spLogLevel = createSpinner("Log level", 0, 100, 2);
+		cbLogLevel = createChoice("Logging level", Logger.Level.values());
 
 		final Button btnRunAlgo = createButton("Run algorithm");
 		btnRunAlgo.setOnMouseClicked(e -> btnRunAlgoClicked());
@@ -177,7 +178,7 @@ public class CfaGui extends BaseGui {
 						.search(cbSearch.getValue()).predSplit(cbPredSplit.getValue())
 						.precGranularity(cbPrecGranularity.getValue()).encoding(cbEncoding.getValue())
 						.maxEnum(spMaxEnum.getValue()).initPrec(cbInitPrec.getValue())
-						.logger(new TextAreaLogger(spLogLevel.getValue(), taOutput)).build(cfa);
+						.logger(new TextAreaLogger(cbLogLevel.getValue(), taOutput)).build(cfa);
 				safetyResult = config.check();
 			} catch (final Exception ex) {
 				Platform.runLater(() -> displayException(ex));

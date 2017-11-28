@@ -54,9 +54,10 @@ import hu.bme.mit.theta.analysis.expr.refinement.SingleExprTraceRefiner;
 import hu.bme.mit.theta.analysis.pred.ExprSplitters;
 import hu.bme.mit.theta.analysis.pred.ItpRefToPredPrec;
 import hu.bme.mit.theta.analysis.pred.PredAnalysis;
-import hu.bme.mit.theta.analysis.pred.PredState;
 import hu.bme.mit.theta.analysis.pred.PredPrec;
+import hu.bme.mit.theta.analysis.pred.PredState;
 import hu.bme.mit.theta.common.logging.Logger;
+import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.common.logging.impl.ConsoleLogger;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
@@ -67,7 +68,7 @@ import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 
 public class StsPredTest {
-	final Logger logger = new ConsoleLogger(100);
+	final Logger logger = new ConsoleLogger(Level.VERBOSE);
 	final ItpSolver solver = Z3SolverFactory.getInstace().createItpSolver();
 	STS sts = null;
 
@@ -98,8 +99,8 @@ public class StsPredTest {
 
 		final ArgBuilder<PredState, StsAction, PredPrec> argBuilder = ArgBuilder.create(lts, analysis, target);
 
-		final Abstractor<PredState, StsAction, PredPrec> abstractor = BasicAbstractor.builder(argBuilder)
-				.logger(logger).build();
+		final Abstractor<PredState, StsAction, PredPrec> abstractor = BasicAbstractor.builder(argBuilder).logger(logger)
+				.build();
 
 		final ExprTraceChecker<ItpRefutation> exprTraceChecker = ExprTraceFwBinItpChecker.create(sts.getInit(),
 				Not(sts.getProp()), solver);
@@ -108,8 +109,7 @@ public class StsPredTest {
 				.create(exprTraceChecker,
 						JoiningPrecRefiner.create(new ItpRefToPredPrec(solver, ExprSplitters.atoms())), logger);
 
-		final SafetyChecker<PredState, StsAction, PredPrec> checker = CegarChecker.create(abstractor, refiner,
-				logger);
+		final SafetyChecker<PredState, StsAction, PredPrec> checker = CegarChecker.create(abstractor, refiner, logger);
 
 		final SafetyResult<PredState, StsAction> safetyStatus = checker.check(prec);
 		System.out.println(safetyStatus);

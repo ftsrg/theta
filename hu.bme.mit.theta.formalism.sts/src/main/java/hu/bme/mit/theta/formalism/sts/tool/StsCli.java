@@ -33,6 +33,7 @@ import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.analysis.utils.TraceVisualizer;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.logging.Logger;
+import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.common.logging.impl.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.impl.NullLogger;
 import hu.bme.mit.theta.common.table.TableWriter;
@@ -82,7 +83,7 @@ public class StsCli {
 	InitPrec initPrec = InitPrec.EMPTY;
 
 	@Parameter(names = { "--loglevel" }, description = "Detailedness of logging")
-	Integer logLevel = 1;
+	Logger.Level logLevel = Level.SUBSTEP;
 
 	@Parameter(names = { "--benchmark" }, description = "Benchmark mode (only print metrics)")
 	Boolean benchmarkMode = false;
@@ -196,8 +197,8 @@ public class StsCli {
 		if (benchmarkMode) {
 			writer.cell("[EX] " + ex.getClass().getSimpleName() + message);
 		} else {
-			logger.writeln("Exception occured: " + ex.getClass().getSimpleName(), 0);
-			logger.writeln("Message: " + ex.getMessage(), 0, 1);
+			logger.write(Level.RESULT, "Exception of type %s occurred%n", ex.getClass().getSimpleName());
+			logger.write(Level.INFO, "Message:%n%s%n", ex.getMessage());
 		}
 	}
 
