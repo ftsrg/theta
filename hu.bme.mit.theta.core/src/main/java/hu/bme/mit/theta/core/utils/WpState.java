@@ -17,9 +17,21 @@ package hu.bme.mit.theta.core.utils;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.decl.Decls.Const;
+import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Imply;
 
 import hu.bme.mit.theta.common.Utils;
+import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.model.BasicSubstitution;
+import hu.bme.mit.theta.core.model.Substitution;
+import hu.bme.mit.theta.core.stmt.AssignStmt;
+import hu.bme.mit.theta.core.stmt.AssumeStmt;
+import hu.bme.mit.theta.core.stmt.HavocStmt;
+import hu.bme.mit.theta.core.stmt.SkipStmt;
+import hu.bme.mit.theta.core.stmt.Stmt;
+import hu.bme.mit.theta.core.stmt.StmtVisitor;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 public final class WpState {
@@ -36,16 +48,16 @@ public final class WpState {
 		this.constCount = constCount;
 	}
 
-	public static WpState of(final Expr<BoolType> expr, final int constCount) {
-		return new WpState(expr, constCount);
+	public static WpState of(final Expr<BoolType> expr) {
+		return new WpState(expr, 0);
 	}
 
 	public Expr<BoolType> getExpr() {
 		return expr;
 	}
 
-	public int getConstCount() {
-		return constCount;
+	public WpState wp(final Stmt stmt) {
+		return stmt.accept(WpVisitor.getInstance(), this);
 	}
 
 	@Override
@@ -76,5 +88,51 @@ public final class WpState {
 	public String toString() {
 		return Utils.lispStringBuilder(getClass().getSimpleName()).add(expr).add(Integer.valueOf(constCount))
 				.toString();
+	}
+
+	private static final class WpVisitor implements StmtVisitor<WpState, WpState> {
+
+		private WpVisitor() {
+		}
+
+		private static class LazyHolder {
+			private static final WpVisitor INSTANCE = new WpVisitor();
+		}
+
+		public static WpVisitor getInstance() {
+			return LazyHolder.INSTANCE;
+		}
+
+		@Override
+		public WpState visit(final SkipStmt stmt, final WpState state) {
+			return state;
+		}
+
+		@Override
+		public WpState visit(final AssumeStmt stmt, final WpState state) {
+			final Expr<BoolType> expr = Imply(stmt.getCond(), state.getExpr());
+			final int constCount = state.constCount;
+			return new WpState(expr, constCount);
+		}
+
+		@Override
+		public <DeclType extends Type> WpState visit(final AssignStmt<DeclType> stmt, final WpState state) {
+			final VarDecl<DeclType> var = stmt.getVarDecl();
+			final Substitution sub = BasicSubstitution.builder().put(var, stmt.getExpr()).build();
+			final Expr<BoolType> expr = sub.apply(state.getExpr());
+			final int constCount = state.constCount;
+			return new WpState(expr, constCount);
+		}
+
+		@Override
+		public <DeclType extends Type> WpState visit(final HavocStmt<DeclType> stmt, final WpState state) {
+			final VarDecl<DeclType> var = stmt.getVarDecl();
+			final int constCount = state.constCount + 1;
+			final String valName = String.format("_val_%d", constCount);
+			final Expr<DeclType> val = Const(valName, var.getType()).getRef();
+			final Substitution sub = BasicSubstitution.builder().put(var, val).build();
+			final Expr<BoolType> expr = sub.apply(state.getExpr());
+			return new WpState(expr, constCount);
+		}
 	}
 }

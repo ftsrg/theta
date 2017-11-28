@@ -23,7 +23,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 
 @RunWith(Parameterized.class)
-public final class WpHelperTest {
+public final class WpStateTest {
 
 	private static final VarDecl<IntType> VX = Var("x", Int());
 	private static final VarDecl<IntType> VY = Var("y", Int());
@@ -79,10 +79,10 @@ public final class WpHelperTest {
 	@Test
 	public void test() {
 		// Arrange
-		final WpState state = WpState.of(expr, 0);
+		final WpState state = WpState.of(expr);
 
 		// Act
-		final WpState actualState = WpHelper.wp(stmt, state);
+		final WpState actualState = state.wp(stmt);
 		final Expr<BoolType> actualWp = ExprUtils.simplify(actualState.getExpr());
 
 		// Assert
