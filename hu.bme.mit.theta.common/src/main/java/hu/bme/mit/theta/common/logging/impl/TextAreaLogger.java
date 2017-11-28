@@ -15,50 +15,20 @@
  */
 package hu.bme.mit.theta.common.logging.impl;
 
-import hu.bme.mit.theta.common.logging.Logger;
 import javafx.application.Platform;
 import javafx.scene.control.TextArea;
 
-public final class TextAreaLogger extends MinLevelBasedLogger {
+public final class TextAreaLogger extends BaseLogger {
 	private final TextArea textArea;
 
-	public TextAreaLogger(final int minLevel, final TextArea textArea) {
+	public TextAreaLogger(final Level minLevel, final TextArea textArea) {
 		super(minLevel);
 		this.textArea = textArea;
 	}
 
 	@Override
-	public Logger write(final Object obj, final int level, final int padding) {
-		if (level <= minLevel) {
-			for (int i = 0; i < padding; ++i) {
-				appendText("|   ");
-			}
-			appendText(obj.toString());
-
-		}
-		return this;
-	}
-
-	@Override
-	public Logger writeln(final int level) {
-		if (level <= minLevel) {
-			appendText(System.lineSeparator());
-		}
-		return this;
-	}
-
-	@Override
-	public Logger writeHeader(final Object obj, final int level) {
-		if (level <= minLevel) {
-			appendText(System.lineSeparator());
-			appendText("----------" + obj + "----------");
-			appendText(System.lineSeparator());
-		}
-		return this;
-	}
-
-	private void appendText(final String text) {
-		Platform.runLater(() -> textArea.appendText(text));
+	protected void writeStr(final String str) {
+		Platform.runLater(() -> textArea.appendText(str));
 	}
 
 }

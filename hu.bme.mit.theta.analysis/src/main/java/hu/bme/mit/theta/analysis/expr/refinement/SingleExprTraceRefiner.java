@@ -28,6 +28,7 @@ import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.logging.Logger;
+import hu.bme.mit.theta.common.logging.Logger.Level;
 
 /**
  * A Refiner implementation that can refine a single trace (of ExprStates and
@@ -61,12 +62,12 @@ public final class SingleExprTraceRefiner<S extends ExprState, A extends ExprAct
 
 		final ArgTrace<S, A> cexToConcretize = arg.getCexs().findFirst().get();
 		final Trace<S, A> traceToConcretize = cexToConcretize.toTrace();
-		logger.writeln("Trace length: ", traceToConcretize.length(), 3, 2);
-		logger.writeln("Trace: ", traceToConcretize, 4, 3);
+		logger.write(Level.INFO, "|  |  Trace length: %d%n", traceToConcretize.length());
+		logger.write(Level.DETAIL, "|  |  Trace: %s%n", traceToConcretize);
 
-		logger.write("Checking...", 3, 2);
+		logger.write(Level.SUBSTEP, "|  |  Checking trace...");
 		final ExprTraceStatus<R> cexStatus = exprTraceChecker.check(traceToConcretize);
-		logger.writeln("done: ", cexStatus, 3, 0);
+		logger.write(Level.SUBSTEP, "done, result: %s%n", cexStatus);
 
 		assert cexStatus.isFeasible() || cexStatus.isInfeasible() : "Unknown CEX status";
 
@@ -74,15 +75,17 @@ public final class SingleExprTraceRefiner<S extends ExprState, A extends ExprAct
 			return RefinerResult.unsafe(traceToConcretize);
 		} else {
 			final R refutation = cexStatus.asInfeasible().getRefutation();
-			logger.writeln(refutation, 4, 3);
+			logger.write(Level.DETAIL, "|  |  |  Refutation: %s%n", refutation);
 			final P refinedPrec = precRefiner.refine(prec, traceToConcretize, refutation);
 			final int pruneIndex = refutation.getPruneIndex();
 			assert 0 <= pruneIndex : "Pruning index must be non-negative";
 			assert pruneIndex <= cexToConcretize.length() : "Pruning index larger than cex length";
-			logger.writeln("Pruning from index ", pruneIndex, 3, 2);
 
+			logger.write(Level.SUBSTEP, "|  |  Pruning from index %d...", pruneIndex);
 			final ArgNode<S, A> nodeToPrune = cexToConcretize.node(pruneIndex);
 			arg.prune(nodeToPrune);
+			logger.write(Level.SUBSTEP, "done%n");
+
 			return RefinerResult.spurious(refinedPrec);
 		}
 	}

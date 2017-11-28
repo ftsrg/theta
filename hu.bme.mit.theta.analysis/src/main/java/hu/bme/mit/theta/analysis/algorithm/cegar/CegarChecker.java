@@ -29,6 +29,7 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.logging.Logger;
+import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.common.logging.impl.NullLogger;
 
 /**
@@ -61,7 +62,7 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 
 	@Override
 	public SafetyResult<S, A> check(final P initPrec) {
-		logger.writeln("Configuration: ", this, 1, 0);
+		logger.write(Level.INFO, "Configuration: %s%n", this);
 		final Stopwatch stopwatch = Stopwatch.createStarted();
 		long abstractorTime = 0;
 		long refinerTime = 0;
@@ -72,20 +73,20 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 		int iteration = 0;
 		do {
 			++iteration;
-			logger.writeln("Iteration ", iteration, 2, 0);
 
-			logger.writeln("Checking abstraction...", 2, 1);
+			logger.write(Level.MAINSTEP, "Iteration %d%n", iteration);
+			logger.write(Level.MAINSTEP, "| Checking abstraction...%n");
 			final long abstractorStartTime = stopwatch.elapsed(TimeUnit.MILLISECONDS);
 			abstractorResult = abstractor.check(arg, prec);
 			abstractorTime += stopwatch.elapsed(TimeUnit.MILLISECONDS) - abstractorStartTime;
-			logger.writeln("Checking abstraction done, result: ", abstractorResult, 2, 1);
+			logger.write(Level.MAINSTEP, "| Checking abstraction done, result: %s%n", abstractorResult);
 
 			if (abstractorResult.isUnsafe()) {
-				logger.writeln("Refining abstraction...", 2, 1);
+				logger.write(Level.MAINSTEP, "| Refining abstraction...%n");
 				final long refinerStartTime = stopwatch.elapsed(TimeUnit.MILLISECONDS);
 				refinerResult = refiner.refine(arg, prec);
 				refinerTime += stopwatch.elapsed(TimeUnit.MILLISECONDS) - refinerStartTime;
-				logger.writeln("Refining abstraction done, result: ", refinerResult, 2, 1);
+				logger.write(Level.MAINSTEP, "Refining abstraction done, result: %s%n", refinerResult);
 
 				if (refinerResult.isSpurious()) {
 					prec = refinerResult.asSpurious().getRefinedPrec();
@@ -108,8 +109,8 @@ public final class CegarChecker<S extends State, A extends Action, P extends Pre
 		}
 
 		assert cegarResult != null;
-		logger.writeln("Done, result: ", cegarResult, 1, 0);
-		logger.writeln(stats, 1);
+		logger.write(Level.RESULT, "%s%n", cegarResult);
+		logger.write(Level.INFO, "%s%n", stats);
 		return cegarResult;
 	}
 

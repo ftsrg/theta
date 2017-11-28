@@ -1,12 +1,12 @@
 /*
  *  Copyright 2017 Budapest University of Technology and Economics
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,17 +31,7 @@ public final class NullLogger implements Logger {
 	}
 
 	@Override
-	public Logger write(final Object obj, final int level, final int padding) {
-		return this;
-	}
-
-	@Override
-	public Logger writeln(final int level) {
-		return this;
-	}
-
-	@Override
-	public Logger writeHeader(final Object obj, final int level) {
+	public Logger write(final Level level, final String pattern, final Object... objects) {
 		return this;
 	}
 

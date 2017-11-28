@@ -34,6 +34,7 @@ import hu.bme.mit.theta.analysis.waitlist.FifoWaitlist;
 import hu.bme.mit.theta.analysis.waitlist.Waitlist;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.logging.Logger;
+import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.common.logging.impl.NullLogger;
 
 /**
@@ -70,19 +71,19 @@ public final class BasicAbstractor<S extends State, A extends Action, P extends 
 	public AbstractorResult check(final ARG<S, A> arg, final P prec) {
 		checkNotNull(arg);
 		checkNotNull(prec);
-		logger.writeln("Precision: ", prec, 4, 2);
+		logger.write(Level.DETAIL, "|  |  Precision: %s%n", prec);
 
 		if (!arg.isInitialized()) {
-			logger.write("(Re)initializing ARG...", 3, 2);
+			logger.write(Level.SUBSTEP, "|  |  (Re)initializing ARG...");
 			argBuilder.init(arg, prec);
-			logger.writeln("done.", 3);
+			logger.write(Level.SUBSTEP, "done%n");
 		}
 
 		assert arg.isInitialized();
 
-		logger.writeln(String.format("Starting ARG: %d nodes, %d incomplete, %d unsafe", arg.getNodes().count(),
-				arg.getIncompleteNodes().count(), arg.getUnsafeNodes().count()), 3, 2);
-		logger.write("Building ARG...", 3, 2);
+		logger.write(Level.INFO, "|  |  Starting ARG: %d nodes, %d incomplete, %d unsafe%n", arg.getNodes().count(),
+				arg.getIncompleteNodes().count(), arg.getUnsafeNodes().count());
+		logger.write(Level.SUBSTEP, "|  |  Building ARG...");
 
 		final Partition<ArgNode<S, A>, ?> reachedSet = Partition.of(n -> projection.apply(n.getState()));
 		waitlist.clear();
@@ -101,8 +102,9 @@ public final class BasicAbstractor<S extends State, A extends Action, P extends 
 			}
 		}
 
-		logger.writeln(String.format("done: %d nodes, %d incomplete, %d unsafe", arg.getNodes().count(),
-				arg.getIncompleteNodes().count(), arg.getUnsafeNodes().count()), 3);
+		logger.write(Level.SUBSTEP, "done%n");
+		logger.write(Level.INFO, "|  |  Finished ARG: %d nodes, %d incomplete, %d unsafe%n", arg.getNodes().count(),
+				arg.getIncompleteNodes().count(), arg.getUnsafeNodes().count());
 
 		waitlist.clear(); // Optimization
 

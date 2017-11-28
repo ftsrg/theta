@@ -19,58 +19,27 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.PrintWriter;
 
-import hu.bme.mit.theta.common.logging.Logger;
-
-public final class FileLogger extends MinLevelBasedLogger {
+public final class FileLogger extends BaseLogger {
 	private final PrintWriter pw;
 	private final boolean instantFlush;
 
-	public FileLogger(final int minLevel, final String fileName, final boolean instantFlush, final boolean append)
+	public FileLogger(final Level minLevel, final String fileName, final boolean instantFlush, final boolean append)
 			throws FileNotFoundException {
 		super(minLevel);
 		pw = new PrintWriter(new FileOutputStream(fileName, append));
 		this.instantFlush = instantFlush;
 	}
 
-	@Override
-	public Logger write(final Object obj, final int level, final int padding) {
-		if (level <= minLevel) {
-			for (int i = 0; i < padding; ++i) {
-				pw.print("   ");
-			}
-			pw.print(obj);
-			if (instantFlush) {
-				pw.flush();
-			}
-		}
-		return this;
-	}
-
-	@Override
-	public Logger writeln(final int level) {
-		if (level <= minLevel) {
-			pw.println();
-			if (instantFlush) {
-				pw.flush();
-			}
-		}
-		return this;
-	}
-
-	@Override
-	public Logger writeHeader(final Object obj, final int level) {
-		if (level <= minLevel) {
-			pw.println();
-			pw.println("----------" + obj + "----------");
-			if (instantFlush) {
-				pw.flush();
-			}
-		}
-		return this;
-	}
-
 	public void close() {
 		pw.close();
+	}
+
+	@Override
+	protected void writeStr(final String str) {
+		pw.print(str);
+		if (instantFlush) {
+			pw.flush();
+		}
 	}
 
 }

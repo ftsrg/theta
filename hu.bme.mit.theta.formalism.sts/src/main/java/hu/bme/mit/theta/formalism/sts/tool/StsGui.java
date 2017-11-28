@@ -30,6 +30,7 @@ import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.common.BaseGui;
 import hu.bme.mit.theta.common.Utils;
+import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.impl.TextAreaLogger;
 import hu.bme.mit.theta.common.table.impl.HtmlTableWriter;
 import hu.bme.mit.theta.common.visualization.Graph;
@@ -51,7 +52,6 @@ import javafx.concurrent.Task;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ChoiceBox;
-import javafx.scene.control.Spinner;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TextArea;
 import javafx.scene.text.Font;
@@ -68,7 +68,7 @@ public class StsGui extends BaseGui {
 	private ChoiceBox<Search> cbSearch;
 	private ChoiceBox<PredSplit> cbPredSplit;
 	private ChoiceBox<InitPrec> cbInitPrec;
-	private Spinner<Integer> spLogLevel;
+	private ChoiceBox<Logger.Level> cbLogLevel;
 	private CheckBox cbStructureOnly;
 
 	private TextArea taModel;
@@ -108,7 +108,7 @@ public class StsGui extends BaseGui {
 		cbSearch = createChoice("Search", Search.values());
 		cbPredSplit = createChoice("Predicate split", PredSplit.values());
 		cbInitPrec = createChoice("Initial precision", InitPrec.values());
-		spLogLevel = createSpinner("Log level", 0, 100, 2);
+		cbLogLevel = createChoice("Logging level", Logger.Level.values());
 
 		final Button btnRunAlgo = createButton("Run algorithm");
 		btnRunAlgo.setOnMouseClicked(e -> btnRunAlgoClicked());
@@ -160,7 +160,7 @@ public class StsGui extends BaseGui {
 				sts = StsUtils.eliminateIte(Utils.singleElementOf(stss));
 				final Config<?, ?, ?> config = new StsConfigBuilder(cbDomain.getValue(), cbRefinement.getValue())
 						.search(cbSearch.getValue()).predSplit(cbPredSplit.getValue()).initPrec(cbInitPrec.getValue())
-						.logger(new TextAreaLogger(spLogLevel.getValue(), taOutput)).build(sts);
+						.logger(new TextAreaLogger(cbLogLevel.getValue(), taOutput)).build(sts);
 				safetyResult = config.check();
 			} catch (final Exception ex) {
 				Platform.runLater(() -> displayException(ex));
