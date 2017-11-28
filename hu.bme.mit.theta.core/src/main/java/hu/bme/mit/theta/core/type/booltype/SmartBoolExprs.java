@@ -15,6 +15,9 @@
  */
 package hu.bme.mit.theta.core.type.booltype;
 
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
+
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -30,10 +33,10 @@ public final class SmartBoolExprs {
 	}
 
 	public static Expr<BoolType> Not(final Expr<BoolType> op) {
-		if (op.equals(BoolExprs.True())) {
-			return BoolExprs.False();
-		} else if (op.equals(BoolExprs.False())) {
-			return BoolExprs.True();
+		if (op.equals(True())) {
+			return False();
+		} else if (op.equals(False())) {
+			return True();
 		} else if (op instanceof NotExpr) {
 			return ((NotExpr) op).getOp();
 		} else {
@@ -43,16 +46,16 @@ public final class SmartBoolExprs {
 
 	public static Expr<BoolType> And(final Collection<? extends Expr<BoolType>> ops) {
 		if (ops.isEmpty()) {
-			return BoolExprs.True();
-		} else if (ops.contains(BoolExprs.False())) {
-			return BoolExprs.False();
+			return True();
+		} else if (ops.contains(False())) {
+			return False();
 		}
 
-		final List<Expr<BoolType>> filteredOps = ops.stream().filter(o -> !o.equals(BoolExprs.True()))
+		final List<Expr<BoolType>> filteredOps = ops.stream().filter(o -> !o.equals(True()))
 				.collect(Collectors.toList());
 
 		if (filteredOps.isEmpty()) {
-			return BoolExprs.True();
+			return True();
 		} else if (filteredOps.size() == 1) {
 			return Utils.anyElementOf(filteredOps);
 		} else {
@@ -62,16 +65,16 @@ public final class SmartBoolExprs {
 
 	public static Expr<BoolType> Or(final Collection<? extends Expr<BoolType>> ops) {
 		if (ops.isEmpty()) {
-			return BoolExprs.True();
-		} else if (ops.contains(BoolExprs.True())) {
-			return BoolExprs.True();
+			return True();
+		} else if (ops.contains(True())) {
+			return True();
 		}
 
-		final List<Expr<BoolType>> filteredOps = ops.stream().filter(o -> !o.equals(BoolExprs.False()))
+		final List<Expr<BoolType>> filteredOps = ops.stream().filter(o -> !o.equals(False()))
 				.collect(Collectors.toList());
 
 		if (filteredOps.isEmpty()) {
-			return BoolExprs.False();
+			return False();
 		} else if (filteredOps.size() == 1) {
 			return Utils.anyElementOf(filteredOps);
 		} else {
