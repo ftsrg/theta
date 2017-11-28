@@ -44,6 +44,20 @@ public final class SmartBoolExprs {
 		}
 	}
 
+	public static Expr<BoolType> Imply(final Expr<BoolType> leftOp, final Expr<BoolType> rightOp) {
+		if (leftOp.equals(False())) {
+			return True();
+		} else if (leftOp.equals(True())) {
+			return rightOp;
+		} else if (rightOp.equals(False())) {
+			return Not(leftOp);
+		} else if (rightOp.equals(True())) {
+			return True();
+		} else {
+			return BoolExprs.Imply(leftOp, rightOp);
+		}
+	}
+
 	public static Expr<BoolType> And(final Collection<? extends Expr<BoolType>> ops) {
 		if (ops.isEmpty()) {
 			return True();
