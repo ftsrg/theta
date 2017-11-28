@@ -176,8 +176,8 @@ public final class CFA {
 			checkState(!built, "A CFA was already built.");
 			checkNotNull(initLoc);
 			checkArgument(locs.contains(initLoc), "Initial location not present in CFA.");
-			checkArgument(initLoc != finalLoc, "Initial location cannot be same as final.");
-			checkArgument(initLoc != errorLoc, "Initial location cannot be same as error.");
+			checkArgument(!initLoc.equals(finalLoc), "Initial location cannot be same as final.");
+			checkArgument(!initLoc.equals(errorLoc), "Initial location cannot be same as error.");
 			this.initLoc = initLoc;
 		}
 
@@ -185,8 +185,8 @@ public final class CFA {
 			checkState(!built, "A CFA was already built.");
 			checkNotNull(finalLoc);
 			checkArgument(locs.contains(finalLoc), "Final location not present in CFA.");
-			checkArgument(finalLoc != initLoc, "Final location cannot be same as init.");
-			checkArgument(finalLoc != errorLoc, "Final location cannot be same as error.");
+			checkArgument(!finalLoc.equals(initLoc), "Final location cannot be same as init.");
+			checkArgument(!finalLoc.equals(errorLoc), "Final location cannot be same as error.");
 			this.finalLoc = finalLoc;
 		}
 
@@ -194,8 +194,8 @@ public final class CFA {
 			checkState(!built, "A CFA was already built.");
 			checkNotNull(errorLoc);
 			checkArgument(locs.contains(errorLoc), "Error location not present in CFA.");
-			checkArgument(errorLoc != initLoc, "Error location cannot be same as init.");
-			checkArgument(errorLoc != finalLoc, "Error location cannot be same as final.");
+			checkArgument(!errorLoc.equals(initLoc), "Error location cannot be same as init.");
+			checkArgument(!errorLoc.equals(finalLoc), "Error location cannot be same as final.");
 			this.errorLoc = errorLoc;
 		}
 
