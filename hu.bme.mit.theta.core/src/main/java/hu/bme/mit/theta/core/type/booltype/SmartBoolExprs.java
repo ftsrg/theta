@@ -19,7 +19,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.type.Expr;
@@ -84,40 +84,40 @@ public final class SmartBoolExprs {
 	 */
 
 	public static Expr<BoolType> And(final Expr<BoolType> op1, final Expr<BoolType> op2) {
-		return And(ImmutableSet.of(op1, op2));
+		return And(ImmutableList.of(op1, op2));
 	}
 
 	public static Expr<BoolType> And(final Expr<BoolType> op1, final Expr<BoolType> op2, final Expr<BoolType> op3) {
-		return And(ImmutableSet.of(op1, op2, op3));
+		return And(ImmutableList.of(op1, op2, op3));
 	}
 
 	public static Expr<BoolType> And(final Expr<BoolType> op1, final Expr<BoolType> op2, final Expr<BoolType> op3,
 			final Expr<BoolType> op4) {
-		return And(ImmutableSet.of(op1, op2, op3, op4));
+		return And(ImmutableList.of(op1, op2, op3, op4));
 	}
 
 	public static Expr<BoolType> And(final Expr<BoolType> op1, final Expr<BoolType> op2, final Expr<BoolType> op3,
 			final Expr<BoolType> op4, final Expr<BoolType> op5) {
-		return And(ImmutableSet.of(op1, op2, op3, op4, op5));
+		return And(ImmutableList.of(op1, op2, op3, op4, op5));
 	}
 
 	////
 
 	public static Expr<BoolType> Or(final Expr<BoolType> op1, final Expr<BoolType> op2) {
-		return Or(ImmutableSet.of(op1, op2));
+		return Or(ImmutableList.of(op1, op2));
 	}
 
 	public static Expr<BoolType> Or(final Expr<BoolType> op1, final Expr<BoolType> op2, final Expr<BoolType> op3) {
-		return Or(ImmutableSet.of(op1, op2, op3));
+		return Or(ImmutableList.of(op1, op2, op3));
 	}
 
 	public static Expr<BoolType> Or(final Expr<BoolType> op1, final Expr<BoolType> op2, final Expr<BoolType> op3,
 			final Expr<BoolType> op4) {
-		return Or(ImmutableSet.of(op1, op2, op3, op4));
+		return Or(ImmutableList.of(op1, op2, op3, op4));
 	}
 
 	public static Expr<BoolType> Or(final Expr<BoolType> op1, final Expr<BoolType> op2, final Expr<BoolType> op3,
 			final Expr<BoolType> op4, final Expr<BoolType> op5) {
-		return Or(ImmutableSet.of(op1, op2, op3, op4, op5));
+		return Or(ImmutableList.of(op1, op2, op3, op4, op5));
 	}
 }
