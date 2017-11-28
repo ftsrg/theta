@@ -15,13 +15,13 @@
  */
 package hu.bme.mit.theta.core.type.booltype;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
 import static hu.bme.mit.theta.common.Utils.singleElementOf;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import com.google.common.collect.ImmutableList;
 
@@ -51,8 +51,7 @@ public final class SmartBoolExprs {
 			return False();
 		}
 
-		final List<Expr<BoolType>> filteredOps = ops.stream().filter(o -> !o.equals(True()))
-				.collect(Collectors.toList());
+		final List<Expr<BoolType>> filteredOps = ops.stream().filter(o -> !o.equals(True())).collect(toImmutableList());
 
 		if (filteredOps.isEmpty()) {
 			return True();
@@ -71,7 +70,7 @@ public final class SmartBoolExprs {
 		}
 
 		final List<Expr<BoolType>> filteredOps = ops.stream().filter(o -> !o.equals(False()))
-				.collect(Collectors.toList());
+				.collect(toImmutableList());
 
 		if (filteredOps.isEmpty()) {
 			return False();
