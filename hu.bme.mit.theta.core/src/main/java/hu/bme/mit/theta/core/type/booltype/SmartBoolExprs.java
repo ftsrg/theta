@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.core.type.booltype;
 
+import static hu.bme.mit.theta.common.Utils.singleElementOf;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 
@@ -24,7 +25,6 @@ import java.util.stream.Collectors;
 
 import com.google.common.collect.ImmutableList;
 
-import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.type.Expr;
 
 public final class SmartBoolExprs {
@@ -57,7 +57,7 @@ public final class SmartBoolExprs {
 		if (filteredOps.isEmpty()) {
 			return True();
 		} else if (filteredOps.size() == 1) {
-			return Utils.anyElementOf(filteredOps);
+			return singleElementOf(filteredOps);
 		} else {
 			return BoolExprs.And(filteredOps);
 		}
@@ -76,7 +76,7 @@ public final class SmartBoolExprs {
 		if (filteredOps.isEmpty()) {
 			return False();
 		} else if (filteredOps.size() == 1) {
-			return Utils.anyElementOf(filteredOps);
+			return singleElementOf(filteredOps);
 		} else {
 			return BoolExprs.Or(filteredOps);
 		}
