@@ -49,7 +49,7 @@ final class WpHelper {
 		}
 
 		private static class LazyHolder {
-			static final WpVisitor INSTANCE = new WpVisitor();
+			private static final WpVisitor INSTANCE = new WpVisitor();
 		}
 
 		public static WpVisitor getInstance() {

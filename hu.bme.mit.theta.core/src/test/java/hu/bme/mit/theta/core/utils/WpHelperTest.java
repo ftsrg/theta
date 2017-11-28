@@ -40,6 +40,15 @@ public final class WpHelperTest {
 	private static final Stmt ASSIGN_X_1 = Assign(VX, Int(1));
 	private static final Stmt ASSIGN_Y_X = Assign(VY, X);
 
+	@Parameter(0)
+	public Expr<BoolType> expr;
+
+	@Parameter(1)
+	public Stmt stmt;
+
+	@Parameter(2)
+	public Expr<BoolType> expectedWp;
+
 	@Parameters
 	public static Collection<Object[]> data() {
 		return Arrays.asList(new Object[][] {
@@ -66,15 +75,6 @@ public final class WpHelperTest {
 
 		});
 	}
-
-	@Parameter(0)
-	public Expr<BoolType> expr;
-
-	@Parameter(1)
-	public Stmt stmt;
-
-	@Parameter(2)
-	public Expr<BoolType> expectedWp;
 
 	@Test
 	public void test() {
