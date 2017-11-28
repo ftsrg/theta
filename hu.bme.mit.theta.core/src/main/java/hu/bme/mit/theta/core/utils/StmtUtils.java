@@ -76,15 +76,4 @@ public final class StmtUtils {
 		return StmtToExprTransformer.toExpr(stmts, indexing);
 	}
 
-	/**
-	 * Compute the weakest precondition of a formula w.r.t. a given statement
-	 *
-	 * @param stmts Statement
-	 * @param state A state of the transformation
-	 * @return The weakest precondition w.r.t. the statement
-	 */
-	public static WpState wp(final Stmt stmt, final WpState state) {
-		return WpHelper.wp(stmt, state);
-	}
-
 }
