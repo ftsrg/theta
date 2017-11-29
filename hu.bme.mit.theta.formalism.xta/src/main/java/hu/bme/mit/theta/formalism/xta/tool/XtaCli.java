@@ -26,6 +26,7 @@ import com.beust.jcommander.ParameterException;
 
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
+import hu.bme.mit.theta.analysis.algorithm.SearchStrategy;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.analysis.utils.TraceVisualizer;
@@ -37,7 +38,6 @@ import hu.bme.mit.theta.formalism.xta.XtaSystem;
 import hu.bme.mit.theta.formalism.xta.analysis.lazy.LazyXtaStatistics;
 import hu.bme.mit.theta.formalism.xta.dsl.XtaDslManager;
 import hu.bme.mit.theta.formalism.xta.tool.XtaCheckerBuilder.Algorithm;
-import hu.bme.mit.theta.formalism.xta.tool.XtaCheckerBuilder.Search;
 
 public final class XtaCli {
 	private static final String JAR_NAME = "theta-xta.jar";
@@ -51,7 +51,7 @@ public final class XtaCli {
 	String model;
 
 	@Parameter(names = { "--search" }, description = "Search strategy", required = true)
-	Search search;
+	SearchStrategy searchStrategy;
 
 	@Parameter(names = { "--benchmark" }, description = "Benchmark mode (only print metrics)")
 	Boolean benchmarkMode = false;
@@ -88,7 +88,7 @@ public final class XtaCli {
 
 		try {
 			final XtaSystem xta = loadModel();
-			final SafetyChecker<?, ?, UnitPrec> checker = XtaCheckerBuilder.build(algorithm, search, xta);
+			final SafetyChecker<?, ?, UnitPrec> checker = XtaCheckerBuilder.build(algorithm, searchStrategy, xta);
 			final SafetyResult<?, ?> result = checker.check(UnitPrec.getInstance());
 			printResult(result);
 			if (dotfile != null) {

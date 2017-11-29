@@ -75,39 +75,12 @@ public final class XtaCheckerBuilder {
 		public abstract LazyXtaChecker.AlgorithmStrategy<?> create(final XtaSystem system);
 	}
 
-	public enum Search {
-
-		DFS {
-			@Override
-			public SearchStrategy create() {
-				return SearchStrategy.depthFirst();
-			}
-		},
-
-		BFS {
-			@Override
-			public SearchStrategy create() {
-				return SearchStrategy.breadthFirst();
-			}
-		},
-
-		RANDOM {
-			@Override
-			public SearchStrategy create() {
-				return SearchStrategy.random();
-			}
-		};
-
-		public abstract SearchStrategy create();
-	}
-
 	private XtaCheckerBuilder() {
 	}
 
-	public static SafetyChecker<?, ?, UnitPrec> build(final Algorithm algorithm, final Search search,
+	public static SafetyChecker<?, ?, UnitPrec> build(final Algorithm algorithm, final SearchStrategy searchStrategy,
 			final XtaSystem xta) {
 		final LazyXtaChecker.AlgorithmStrategy<?> algorithmStrategy = algorithm.create(xta);
-		final SearchStrategy searchStrategy = search.create();
 
 		final SafetyChecker<?, ?, UnitPrec> checker = LazyXtaChecker.create(xta, algorithmStrategy, searchStrategy,
 				l -> false);
