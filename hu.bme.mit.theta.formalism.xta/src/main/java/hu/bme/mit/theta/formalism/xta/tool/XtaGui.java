@@ -22,6 +22,7 @@ import com.google.common.io.Files;
 
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
+import hu.bme.mit.theta.analysis.algorithm.SearchStrategy;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.analysis.utils.TraceVisualizer;
@@ -34,7 +35,6 @@ import hu.bme.mit.theta.formalism.xta.XtaVisualizer;
 import hu.bme.mit.theta.formalism.xta.analysis.lazy.LazyXtaStatistics;
 import hu.bme.mit.theta.formalism.xta.dsl.XtaDslManager;
 import hu.bme.mit.theta.formalism.xta.tool.XtaCheckerBuilder.Algorithm;
-import hu.bme.mit.theta.formalism.xta.tool.XtaCheckerBuilder.Search;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.scene.control.Button;
@@ -49,7 +49,7 @@ import javafx.stage.Stage;
 
 public class XtaGui extends BaseGui {
 	private ChoiceBox<Algorithm> cbAlgorithm;
-	private ChoiceBox<Search> cbSearch;
+	private ChoiceBox<SearchStrategy> cbSearchStrategy;
 	private CheckBox cbStructureOnly;
 
 	private TextArea taModel;
@@ -93,7 +93,7 @@ public class XtaGui extends BaseGui {
 
 		createTitle("Algorithm");
 		cbAlgorithm = createChoice("Algorithm", Algorithm.values());
-		cbSearch = createChoice("Search", Search.values());
+		cbSearchStrategy = createChoice("Search", SearchStrategy.values());
 
 		final Button btnRunAlgo = createButton("Run algorithm");
 		btnRunAlgo.setOnMouseClicked(e -> btnRunAlgoClicked());
@@ -146,7 +146,7 @@ public class XtaGui extends BaseGui {
 			try {
 				final XtaSystem xta = XtaDslManager.createSystem(taModel.getText());
 				final SafetyChecker<?, ?, UnitPrec> checker = XtaCheckerBuilder.build(cbAlgorithm.getValue(),
-						cbSearch.getValue(), xta);
+						cbSearchStrategy.getValue(), xta);
 				safetyResult = checker.check(UnitPrec.getInstance());
 				final LazyXtaStatistics stats = (LazyXtaStatistics) safetyResult.getStats().get();
 				Platform.runLater(() -> taOutput.setText(stats.toString()));
