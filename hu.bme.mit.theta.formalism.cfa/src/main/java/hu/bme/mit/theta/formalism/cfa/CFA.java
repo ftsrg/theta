@@ -92,7 +92,7 @@ public final class CFA {
 		private final Collection<Edge> outEdges;
 
 		private Loc(final String name) {
-			this.name = name;
+			this.name = checkNotNull(name);
 			inEdges = new LinkedList<>();
 			outEdges = new LinkedList<>();
 		}
