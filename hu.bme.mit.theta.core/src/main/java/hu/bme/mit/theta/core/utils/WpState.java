@@ -18,6 +18,7 @@ package hu.bme.mit.theta.core.utils;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.decl.Decls.Const;
+import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
 import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Imply;
 
 import hu.bme.mit.theta.common.Utils;
@@ -56,8 +57,24 @@ public final class WpState {
 		return expr;
 	}
 
+	/**
+	 * Compute the weakest precondition w.r.t. a statement
+	 *
+	 * @param stmt Statement
+	 * @return
+	 */
 	public WpState wp(final Stmt stmt) {
 		return stmt.accept(WpVisitor.getInstance(), this);
+	}
+
+	/**
+	 * Compute the weakest existential precondition w.r.t. a statement
+	 *
+	 * @param stmt Statement
+	 * @return
+	 */
+	public WpState wep(final Stmt stmt) {
+		return stmt.accept(WepVisitor.getInstance(), this);
 	}
 
 	@Override
@@ -109,13 +126,6 @@ public final class WpState {
 		}
 
 		@Override
-		public WpState visit(final AssumeStmt stmt, final WpState state) {
-			final Expr<BoolType> expr = Imply(stmt.getCond(), state.getExpr());
-			final int constCount = state.constCount;
-			return new WpState(expr, constCount);
-		}
-
-		@Override
 		public <DeclType extends Type> WpState visit(final AssignStmt<DeclType> stmt, final WpState state) {
 			final VarDecl<DeclType> var = stmt.getVarDecl();
 			final Substitution sub = BasicSubstitution.builder().put(var, stmt.getExpr()).build();
@@ -132,6 +142,49 @@ public final class WpState {
 			final Expr<DeclType> val = Const(valName, var.getType()).getRef();
 			final Substitution sub = BasicSubstitution.builder().put(var, val).build();
 			final Expr<BoolType> expr = sub.apply(state.getExpr());
+			return new WpState(expr, constCount);
+		}
+
+		@Override
+		public WpState visit(final AssumeStmt stmt, final WpState state) {
+			final Expr<BoolType> expr = Imply(stmt.getCond(), state.getExpr());
+			final int constCount = state.constCount;
+			return new WpState(expr, constCount);
+		}
+	}
+
+	private static final class WepVisitor implements StmtVisitor<WpState, WpState> {
+
+		private WepVisitor() {
+		}
+
+		private static class LazyHolder {
+			private static final WepVisitor INSTANCE = new WepVisitor();
+		}
+
+		public static WepVisitor getInstance() {
+			return LazyHolder.INSTANCE;
+		}
+
+		@Override
+		public WpState visit(final SkipStmt stmt, final WpState state) {
+			return WpVisitor.getInstance().visit(stmt, state);
+		}
+
+		@Override
+		public <DeclType extends Type> WpState visit(final AssignStmt<DeclType> stmt, final WpState state) {
+			return WpVisitor.getInstance().visit(stmt, state);
+		}
+
+		@Override
+		public <DeclType extends Type> WpState visit(final HavocStmt<DeclType> stmt, final WpState state) {
+			return WpVisitor.getInstance().visit(stmt, state);
+		}
+
+		@Override
+		public WpState visit(final AssumeStmt stmt, final WpState state) {
+			final Expr<BoolType> expr = And(stmt.getCond(), state.getExpr());
+			final int constCount = state.constCount;
 			return new WpState(expr, constCount);
 		}
 	}
