@@ -18,12 +18,12 @@ package hu.bme.mit.theta.formalism.cfa;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.collect.ImmutableSet.toImmutableSet;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
-import java.util.stream.Collectors;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -52,8 +52,7 @@ public final class CFA {
 		errorLoc = builder.errorLoc;
 		locs = ImmutableSet.copyOf(builder.locs);
 		edges = ImmutableList.copyOf(builder.edges);
-		vars = Collections.unmodifiableCollection(
-				edges.stream().flatMap(e -> StmtUtils.getVars(e.getStmt()).stream()).collect(Collectors.toSet()));
+		vars = edges.stream().flatMap(e -> StmtUtils.getVars(e.getStmt()).stream()).collect(toImmutableSet());
 	}
 
 	public Loc getInitLoc() {
