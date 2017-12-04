@@ -172,7 +172,7 @@ public final class CFA {
 		}
 
 		public void setInitLoc(final Loc initLoc) {
-			checkState(!built, "A CFA was already built.");
+			checkNotBuilt();
 			checkNotNull(initLoc);
 			checkArgument(locs.contains(initLoc), "Initial location not present in CFA.");
 			checkArgument(!initLoc.equals(finalLoc), "Initial location cannot be same as final.");
@@ -181,7 +181,7 @@ public final class CFA {
 		}
 
 		public void setFinalLoc(final Loc finalLoc) {
-			checkState(!built, "A CFA was already built.");
+			checkNotBuilt();
 			checkNotNull(finalLoc);
 			checkArgument(locs.contains(finalLoc), "Final location not present in CFA.");
 			checkArgument(!finalLoc.equals(initLoc), "Final location cannot be same as init.");
@@ -190,7 +190,7 @@ public final class CFA {
 		}
 
 		public void setErrorLoc(final Loc errorLoc) {
-			checkState(!built, "A CFA was already built.");
+			checkNotBuilt();
 			checkNotNull(errorLoc);
 			checkArgument(locs.contains(errorLoc), "Error location not present in CFA.");
 			checkArgument(!errorLoc.equals(initLoc), "Error location cannot be same as init.");
@@ -199,14 +199,14 @@ public final class CFA {
 		}
 
 		public Loc createLoc(final String name) {
-			checkState(!built, "A CFA was already built.");
+			checkNotBuilt();
 			final Loc loc = new Loc(name);
 			locs.add(loc);
 			return loc;
 		}
 
 		public Edge createEdge(final Loc source, final Loc target, final Stmt stmt) {
-			checkState(!built, "A CFA was already built.");
+			checkNotBuilt();
 			checkArgument(locs.contains(source), "Invalid source.");
 			checkArgument(locs.contains(target), "Invalid target.");
 
@@ -223,6 +223,10 @@ public final class CFA {
 			checkState(errorLoc != null, "Error location must be set.");
 			built = true;
 			return new CFA(this);
+		}
+
+		private void checkNotBuilt() {
+			checkState(!built, "A CFA was already built.");
 		}
 	}
 
