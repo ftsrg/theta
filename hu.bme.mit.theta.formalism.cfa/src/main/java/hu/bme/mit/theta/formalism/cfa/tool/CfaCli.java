@@ -19,6 +19,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
 import java.util.concurrent.TimeUnit;
 
 import com.beust.jcommander.JCommander;
@@ -26,19 +27,21 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.google.common.base.Stopwatch;
 
+import hu.bme.mit.theta.analysis.Trace;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
+import hu.bme.mit.theta.analysis.algorithm.SafetyResult.Unsafe;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarStatistics;
-import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
-import hu.bme.mit.theta.analysis.utils.TraceVisualizer;
+import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.common.logging.impl.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.impl.NullLogger;
 import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.common.table.impl.BasicTableWriter;
-import hu.bme.mit.theta.common.visualization.Graph;
-import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 import hu.bme.mit.theta.formalism.cfa.CFA;
+import hu.bme.mit.theta.formalism.cfa.analysis.CfaAction;
+import hu.bme.mit.theta.formalism.cfa.analysis.CfaState;
+import hu.bme.mit.theta.formalism.cfa.analysis.CfaTraceConcretizer;
 import hu.bme.mit.theta.formalism.cfa.dsl.CfaDslManager;
 import hu.bme.mit.theta.formalism.cfa.tool.CfaConfigBuilder.Domain;
 import hu.bme.mit.theta.formalism.cfa.tool.CfaConfigBuilder.Encoding;
@@ -89,8 +92,8 @@ public class CfaCli {
 	@Parameter(names = "--benchmark", description = "Benchmark mode (only print metrics)")
 	Boolean benchmarkMode = false;
 
-	@Parameter(names = "--visualize", description = "Write proof or counterexample to file in dot format")
-	String dotfile = null;
+	@Parameter(names = "--cexfile", description = "Write counterexample (trace) to file")
+	String cexfile = null;
 
 	@Parameter(names = "--header", description = "Print only a header (for benchmarks)", help = true)
 	boolean headerOnly = false;
@@ -129,8 +132,8 @@ public class CfaCli {
 			final SafetyResult<?, ?> status = configuration.check();
 			sw.stop();
 			printResult(status, cfa, sw.elapsed(TimeUnit.MILLISECONDS));
-			if (dotfile != null) {
-				writeVisualStatus(status, dotfile);
+			if (status.isUnsafe() && cexfile != null) {
+				writeCexFile(status.asUnsafe(), cexfile);
 			}
 		} catch (final Throwable ex) {
 			printError(ex);
@@ -193,10 +196,24 @@ public class CfaCli {
 		}
 	}
 
-	private void writeVisualStatus(final SafetyResult<?, ?> status, final String filename)
-			throws FileNotFoundException {
-		final Graph graph = status.isSafe() ? ArgVisualizer.getDefault().visualize(status.asSafe().getArg())
-				: TraceVisualizer.getDefault().visualize(status.asUnsafe().getTrace());
-		GraphvizWriter.getInstance().writeFile(graph, filename);
+	private void writeCexFile(final Unsafe<?, ?> status, final String filename) throws FileNotFoundException {
+		@SuppressWarnings("unchecked")
+		final Trace<CfaState<?>, CfaAction> trace = (Trace<CfaState<?>, CfaAction>) status.getTrace();
+		final Trace<CfaState<ExplState>, CfaAction> concrTrace = CfaTraceConcretizer.concretize(trace);
+		PrintWriter pw = null;
+		try {
+			pw = new PrintWriter(filename);
+			for (int i = 0; i < concrTrace.getStates().size(); i++) {
+				pw.println(concrTrace.getStates().get(i).toString());
+				if (i < trace.getActions().size()) {
+					pw.println(trace.getAction(i).toString());
+				}
+			}
+		} finally {
+			if (pw != null) {
+				pw.close();
+			}
+		}
+
 	}
 }
