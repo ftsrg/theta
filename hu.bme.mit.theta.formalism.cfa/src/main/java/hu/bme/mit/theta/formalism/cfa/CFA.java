@@ -219,9 +219,9 @@ public final class CFA {
 		}
 
 		public CFA build() {
-			checkNotNull(initLoc, "Initial location must be set.");
-			checkNotNull(finalLoc, "Final location must be set.");
-			checkNotNull(errorLoc, "Error location must be set.");
+			checkState(initLoc != null, "Initial location must be set.");
+			checkState(finalLoc != null, "Final location must be set.");
+			checkState(errorLoc != null, "Error location must be set.");
 			built = true;
 			return new CFA(this);
 		}
