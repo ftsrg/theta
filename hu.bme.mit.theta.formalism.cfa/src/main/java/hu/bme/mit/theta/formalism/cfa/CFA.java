@@ -47,9 +47,9 @@ public final class CFA {
 	private final Collection<Edge> edges;
 
 	private CFA(final Builder builder) {
-		this.initLoc = checkNotNull(builder.initLoc, "Initial location must be set.");
-		this.finalLoc = checkNotNull(builder.finalLoc, "Final location must be set.");
-		this.errorLoc = checkNotNull(builder.errorLoc, "Error location must be set.");
+		this.initLoc = builder.initLoc;
+		this.finalLoc = builder.finalLoc;
+		this.errorLoc = builder.errorLoc;
 		this.locs = ImmutableSet.copyOf(builder.locs);
 		this.edges = ImmutableList.copyOf(builder.edges);
 		this.vars = Collections.unmodifiableCollection(
@@ -219,6 +219,9 @@ public final class CFA {
 		}
 
 		public CFA build() {
+			checkNotNull(initLoc, "Initial location must be set.");
+			checkNotNull(finalLoc, "Final location must be set.");
+			checkNotNull(errorLoc, "Error location must be set.");
 			built = true;
 			return new CFA(this);
 		}
