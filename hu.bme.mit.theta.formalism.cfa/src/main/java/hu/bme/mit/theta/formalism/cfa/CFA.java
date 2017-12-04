@@ -126,9 +126,9 @@ public final class CFA {
 		private final Stmt stmt;
 
 		private Edge(final Loc source, final Loc target, final Stmt stmt) {
-			this.source = source;
-			this.target = target;
-			this.stmt = stmt;
+			this.source = checkNotNull(source);
+			this.target = checkNotNull(target);
+			this.stmt = checkNotNull(stmt);
 		}
 
 		public Loc getSource() {
@@ -208,9 +208,6 @@ public final class CFA {
 
 		public Edge createEdge(final Loc source, final Loc target, final Stmt stmt) {
 			checkState(!built, "A CFA was already built.");
-			checkNotNull(source);
-			checkNotNull(target);
-			checkNotNull(stmt);
 			checkArgument(locs.contains(source), "Invalid source.");
 			checkArgument(locs.contains(target), "Invalid target.");
 
