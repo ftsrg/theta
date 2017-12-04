@@ -47,13 +47,13 @@ public final class CFA {
 	private final Collection<Edge> edges;
 
 	private CFA(final Builder builder) {
-		this.initLoc = builder.initLoc;
-		this.finalLoc = builder.finalLoc;
-		this.errorLoc = builder.errorLoc;
-		this.locs = ImmutableSet.copyOf(builder.locs);
-		this.edges = ImmutableList.copyOf(builder.edges);
-		this.vars = Collections.unmodifiableCollection(
-				this.edges.stream().flatMap(e -> StmtUtils.getVars(e.getStmt()).stream()).collect(Collectors.toSet()));
+		initLoc = builder.initLoc;
+		finalLoc = builder.finalLoc;
+		errorLoc = builder.errorLoc;
+		locs = ImmutableSet.copyOf(builder.locs);
+		edges = ImmutableList.copyOf(builder.edges);
+		vars = Collections.unmodifiableCollection(
+				edges.stream().flatMap(e -> StmtUtils.getVars(e.getStmt()).stream()).collect(Collectors.toSet()));
 	}
 
 	public Loc getInitLoc() {
