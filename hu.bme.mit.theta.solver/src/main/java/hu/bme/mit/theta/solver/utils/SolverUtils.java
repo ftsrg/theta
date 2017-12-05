@@ -34,6 +34,18 @@ public final class SolverUtils {
 	private SolverUtils() {
 	}
 
+	public static boolean entails(final Solver solver, final Expr<BoolType> antecedent,
+			final Expr<BoolType> consequent) {
+		checkNotNull(solver);
+		checkNotNull(antecedent);
+		checkNotNull(consequent);
+		try (WithPushPop wpp = new WithPushPop(solver)) {
+			solver.add(antecedent);
+			solver.add(Not(consequent));
+			return solver.check().isUnsat();
+		}
+	}
+
 	public static boolean entails(final Solver solver, final Iterable<? extends Expr<BoolType>> antecedents,
 			final Iterable<? extends Expr<BoolType>> consequents) {
 		checkNotNull(solver);
