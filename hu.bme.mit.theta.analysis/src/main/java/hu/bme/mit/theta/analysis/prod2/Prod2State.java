@@ -24,6 +24,7 @@ import java.util.Collection;
 
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.expr.ExprState;
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
@@ -175,7 +176,7 @@ public abstract class Prod2State<S1 extends State, S2 extends State> implements 
 
 		@Override
 		public String toString() {
-			return state1.toString() + " " + state2.toString();
+			return Utils.lispStringBuilder(Prod2State.class.getSimpleName()).body().add(state1).add(state2).toString();
 		}
 	}
 
@@ -232,7 +233,7 @@ public abstract class Prod2State<S1 extends State, S2 extends State> implements 
 
 		@Override
 		public final String toString() {
-			return getState().toString();
+			return Utils.lispStringBuilder(Prod2State.class.getSimpleName()).add(getIndex()).add(getState()).toString();
 		}
 	}
 

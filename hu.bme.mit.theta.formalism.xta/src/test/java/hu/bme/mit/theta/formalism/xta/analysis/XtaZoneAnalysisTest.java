@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.stream.Collectors;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -92,6 +93,8 @@ public final class XtaZoneAnalysisTest {
 
 		final ARG<XtaState<Prod2State<ExplState, ZoneState>>, XtaAction> arg = abstractor.createArg();
 		abstractor.check(arg, prec);
+
+		System.out.println(arg.getNodes().collect(Collectors.toSet()));
 
 		System.out.println(arg.getNodes().count());
 	}

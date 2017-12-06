@@ -1,12 +1,12 @@
 /*
  *  Copyright 2017 Budapest University of Technology and Economics
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,11 +25,11 @@ import static java.util.stream.Collectors.toList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
-import java.util.StringJoiner;
 
 import com.google.common.collect.Iterables;
 
 import hu.bme.mit.theta.analysis.expr.ExprState;
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.clock.constr.ClockConstr;
 import hu.bme.mit.theta.core.clock.op.ClockOp;
 import hu.bme.mit.theta.core.decl.VarDecl;
@@ -156,6 +156,7 @@ public final class ZoneState implements ExprState {
 		return DBM.top(Collections.emptySet()).getRelation(dbm) == DbmRelation.EQUAL;
 	}
 
+	@Override
 	public boolean isBottom() {
 		return !dbm.isConsistent();
 	}
@@ -218,14 +219,7 @@ public final class ZoneState implements ExprState {
 	@Override
 	public String toString() {
 		final Collection<ClockConstr> constrs = dbm.getConstrs();
-		if (constrs.isEmpty()) {
-			return "true";
-		} else {
-			final StringJoiner sj = new StringJoiner("\n");
-
-			dbm.getConstrs().forEach(c -> sj.add(c.toString()));
-			return sj.toString();
-		}
+		return Utils.lispStringBuilder(getClass().getSimpleName()).aligned().addAll(constrs).toString();
 	}
 
 	////////
