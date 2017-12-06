@@ -47,7 +47,7 @@ final class StmtApplier {
 			final HavocStmt<?> havocStmt = (HavocStmt<?>) stmt;
 			return applyHavoc(havocStmt, val, approximate);
 		} else {
-			throw new AssertionError();
+			throw new UnsupportedOperationException();
 		}
 	}
 
