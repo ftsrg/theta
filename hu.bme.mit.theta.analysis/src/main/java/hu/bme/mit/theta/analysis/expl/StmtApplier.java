@@ -20,6 +20,7 @@ import hu.bme.mit.theta.core.model.MutableValuation;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.stmt.AssumeStmt;
 import hu.bme.mit.theta.core.stmt.HavocStmt;
+import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
@@ -46,6 +47,9 @@ final class StmtApplier {
 		} else if (stmt instanceof HavocStmt) {
 			final HavocStmt<?> havocStmt = (HavocStmt<?>) stmt;
 			return applyHavoc(havocStmt, val, approximate);
+		} else if (stmt instanceof SkipStmt) {
+			final SkipStmt skipStmt = (SkipStmt) stmt;
+			return applySkip(skipStmt);
 		} else {
 			throw new UnsupportedOperationException("Unhandled statement: " + stmt);
 		}
@@ -90,6 +94,10 @@ final class StmtApplier {
 			final boolean approximate) {
 		final VarDecl<?> var = stmt.getVarDecl();
 		val.remove(var);
+		return ApplyResult.SUCCESS;
+	}
+
+	private static ApplyResult applySkip(final SkipStmt skipStmt) {
 		return ApplyResult.SUCCESS;
 	}
 
