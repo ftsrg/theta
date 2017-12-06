@@ -112,7 +112,7 @@ public abstract class ExplState extends Valuation implements ExprState {
 
 		@Override
 		public String toString() {
-			return Utils.lispStringBuilder(ExplState.class.getSimpleName())
+			return Utils.lispStringBuilder(ExplState.class.getSimpleName()).aligned()
 					.addAll(val.getDecls().stream().map(d -> String.format("(%s %s)", d.getName(), eval(d).get())))
 					.toString();
 		}

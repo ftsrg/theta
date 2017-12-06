@@ -96,8 +96,9 @@ public final class XtaState<S extends State> implements State {
 
 	@Override
 	public String toString() {
-		return Utils.lispStringBuilder(getClass().getSimpleName()).addAll(locs.stream().map(Loc::getName)).add(state)
-				.toString();
+		final String prefix = getClass().getSimpleName();
+		final String locString = Utils.lispStringBuilder().addAll(locs.stream().map(Loc::getName)).toString();
+		return Utils.lispStringBuilder(prefix).add(locString).body().add(state).toString();
 	}
 
 }
