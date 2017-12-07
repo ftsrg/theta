@@ -16,7 +16,6 @@
 package hu.bme.mit.theta.analysis.expl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.util.stream.Collectors.joining;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -113,10 +112,9 @@ public abstract class ExplState extends Valuation implements ExprState {
 
 		@Override
 		public String toString() {
-			return val.getDecls().stream()
-					.map((final Decl<?> v) -> String.format("(<- %s %s)", v.getName(), eval(v).get()))
-					.collect(joining(" "));
-
+			return Utils.lispStringBuilder(ExplState.class.getSimpleName())
+					.addAll(val.getDecls().stream().map(d -> String.format("(%s %s)", d.getName(), eval(d).get())))
+					.toString();
 		}
 	}
 

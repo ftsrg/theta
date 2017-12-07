@@ -16,17 +16,15 @@
 package hu.bme.mit.theta.formalism.xta.analysis;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.util.stream.Collectors.joining;
-import static java.util.stream.Stream.concat;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Stream;
 
 import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.theta.analysis.State;
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.formalism.xta.XtaProcess.Loc;
 
 public final class XtaState<S extends State> implements State {
@@ -98,7 +96,8 @@ public final class XtaState<S extends State> implements State {
 
 	@Override
 	public String toString() {
-		return concat(locs.stream().map(Loc::getName), Stream.of(state).map(Object::toString)).collect(joining(" "));
+		return Utils.lispStringBuilder(getClass().getSimpleName()).addAll(locs.stream().map(Loc::getName)).add(state)
+				.toString();
 	}
 
 }
