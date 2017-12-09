@@ -28,6 +28,7 @@ The projects are currently developed and tested with [Eclipse Oxygen](https://ww
 * To import the projects, choose _File / Import..._ / _Gradle_ / _Existing Gradle Project_, specify the root directory and use the default settings.
 * At this point the projects may contain errors (due to some files not being generated). Build the projects from command line, and refresh the projects in Eclipse.
 * If you use the Z3 solver, open the project `hu.bme.mit.theta.solver.z3` and right click on `com.microsoft.z3.jar` under _Project and External Dependencies_. Select _Build path_ / _Configure Build Path..._ and on the _Libraries_ tab select the _Native library location_ entry under _Project and External Dependencies_. Click on _Edit_ and browse the _lib_ folder that is in the root directory of the repository.
+  * On Windows, Z3 requires some additional libraries. See the [dependencies page](Dependencies.md) for more information. These libraries should be added to the PATH.
 * If there are access restriction errors in Eclipse due to JavaFX then either install the [e(fx)clipse plugin](http://www.eclipse.org/efxclipse) or go to the _Java Build Path_ in the properties of the project and under the _Libraries_ tab delete the JRE System Library and re-add it.
 * There is a code formatting profile (ThetaFormatterProfile.xml) in this directory. In Eclipse, go to _Window_ / _Preferences_ / _Java_ / _Code Style_ / _Formatter_ and import the profile. You can enable automatic formatting on save under _Java_ / _Editor_ / _Save Actions_.
 
