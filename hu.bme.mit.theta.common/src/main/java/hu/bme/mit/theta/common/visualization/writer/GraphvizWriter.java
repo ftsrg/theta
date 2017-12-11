@@ -174,7 +174,7 @@ public final class GraphvizWriter extends AbstractGraphWriter {
 		if (!converted.endsWith("\n")) {
 			converted = converted + "\n";
 		}
-		return converted.replace("\n", getLineSeparator(attrs.getAlignment()));
+		return converted.replace("\r", "").replace("\n", getLineSeparator(attrs.getAlignment()));
 	}
 
 	private String getLineSeparator(final Alignment alignment) {
