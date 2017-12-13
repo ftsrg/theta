@@ -23,6 +23,9 @@ import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 
+import hu.bme.mit.theta.common.LispStringBuilder;
+import hu.bme.mit.theta.common.Utils;
+
 /**
  * Represents an immutable, alternating trace in the form of a (State, Action,
  * State, ..., State, Action, State) sequence. A trace always contains at least
@@ -126,17 +129,12 @@ public final class Trace<S, A> {
 
 	@Override
 	public String toString() {
-		final StringBuilder sb = new StringBuilder();
-		sb.append("Trace(");
-		for (int i = 0; i < states.size(); ++i) {
-			sb.append(getState(i));
-			if (i < actions.size()) {
-				sb.append(" ---[");
-				sb.append(getAction(i));
-				sb.append("]--> ");
-			}
+		final LispStringBuilder sb = Utils.lispStringBuilder(getClass().getSimpleName()).body();
+		for (int i = 0; i < length(); i++) {
+			sb.add(states.get(i));
+			sb.add(actions.get(i));
 		}
-		sb.append(')');
+		sb.add(states.get(length()));
 		return sb.toString();
 	}
 

@@ -29,13 +29,13 @@ import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.StringJoiner;
 import java.util.stream.Stream;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
 
 import hu.bme.mit.theta.analysis.expr.StmtAction;
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Expr;
@@ -160,10 +160,8 @@ public abstract class XtaAction extends StmtAction {
 
 		@Override
 		public String toString() {
-			final StringJoiner sj = new StringJoiner("\n");
-			edge.getGuards().forEach(g -> sj.add("[" + g + "]"));
-			edge.getUpdates().forEach(u -> sj.add(u.toString()));
-			return sj.toString();
+			return Utils.lispStringBuilder(getClass().getSimpleName()).body().addAll(edge.getGuards())
+					.addAll(edge.getUpdates()).toString();
 		}
 
 	}
@@ -258,14 +256,9 @@ public abstract class XtaAction extends StmtAction {
 
 		@Override
 		public String toString() {
-			final StringJoiner sj = new StringJoiner("\n");
-			sj.add(emitEdge.getSync().get().toString());
-			sj.add(recvEdge.getSync().get().toString());
-			emitEdge.getGuards().forEach(g -> sj.add("[" + g + "]"));
-			recvEdge.getGuards().forEach(g -> sj.add("[" + g + "]"));
-			emitEdge.getUpdates().forEach(u -> sj.add(u.toString()));
-			recvEdge.getUpdates().forEach(u -> sj.add(u.toString()));
-			return sj.toString();
+			return Utils.lispStringBuilder(getClass().getSimpleName()).add(emitEdge.getSync().get())
+					.add(recvEdge.getSync().get()).body().addAll(emitEdge.getGuards()).addAll(recvEdge.getGuards())
+					.addAll(emitEdge.getUpdates()).addAll(recvEdge.getUpdates()).toString();
 		}
 
 	}
