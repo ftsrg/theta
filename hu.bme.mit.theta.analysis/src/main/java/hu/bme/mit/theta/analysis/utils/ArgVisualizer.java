@@ -15,6 +15,9 @@
  */
 package hu.bme.mit.theta.analysis.utils;
 
+import static hu.bme.mit.theta.common.visualization.Alignment.LEFT;
+import static hu.bme.mit.theta.common.visualization.Shape.RECTANGLE;
+
 import java.awt.Color;
 import java.util.HashSet;
 import java.util.Set;
@@ -37,6 +40,7 @@ public final class ArgVisualizer<S extends State, A extends Action> {
 	private static final LineStyle SUCC_EDGE_STYLE = LineStyle.NORMAL;
 	private static final String ARG_LABEL = "";
 	private static final String ARG_ID = "arg";
+	private static final String FONT = "courier";
 	private static final String NODE_ID_PREFIX = "node_";
 	private static final Color FILL_COLOR = Color.WHITE;
 	private static final Color LINE_COLOR = Color.BLACK;
@@ -101,7 +105,8 @@ public final class ArgVisualizer<S extends State, A extends Action> {
 		final int peripheries = node.isTarget() ? 2 : 1;
 
 		final NodeAttributes nAttributes = NodeAttributes.builder().label(stateToString.apply(node.getState()))
-				.fillColor(FILL_COLOR).lineColor(LINE_COLOR).lineStyle(lineStyle).peripheries(peripheries).build();
+				.alignment(LEFT).shape(RECTANGLE).font(FONT).fillColor(FILL_COLOR).lineColor(LINE_COLOR)
+				.lineStyle(lineStyle).peripheries(peripheries).build();
 
 		graph.addNode(nodeId, nAttributes);
 
@@ -110,7 +115,7 @@ public final class ArgVisualizer<S extends State, A extends Action> {
 			final String sourceId = NODE_ID_PREFIX + edge.getSource().getId();
 			final String targetId = NODE_ID_PREFIX + edge.getTarget().getId();
 			final EdgeAttributes eAttributes = EdgeAttributes.builder().label(actionToString.apply(edge.getAction()))
-					.color(LINE_COLOR).lineStyle(SUCC_EDGE_STYLE).build();
+					.alignment(LEFT).font(FONT).color(LINE_COLOR).lineStyle(SUCC_EDGE_STYLE).build();
 			graph.addEdge(sourceId, targetId, eAttributes);
 		}
 
