@@ -108,19 +108,8 @@ public final class Trace<S, A> {
 	}
 
 	@Override
-	public String toString() {
-		final StringBuilder sb = new StringBuilder();
-		sb.append("Trace(");
-		for (int i = 0; i < states.size(); ++i) {
-			sb.append(getState(i));
-			if (i < actions.size()) {
-				sb.append(" ---[");
-				sb.append(getAction(i));
-				sb.append("]--> ");
-			}
-		}
-		sb.append(')');
-		return sb.toString();
+	public int hashCode() {
+		return 31 * states.hashCode() + actions.hashCode();
 	}
 
 	@Override
@@ -136,7 +125,19 @@ public final class Trace<S, A> {
 	}
 
 	@Override
-	public int hashCode() {
-		return 31 * states.hashCode() + actions.hashCode();
+	public String toString() {
+		final StringBuilder sb = new StringBuilder();
+		sb.append("Trace(");
+		for (int i = 0; i < states.size(); ++i) {
+			sb.append(getState(i));
+			if (i < actions.size()) {
+				sb.append(" ---[");
+				sb.append(getAction(i));
+				sb.append("]--> ");
+			}
+		}
+		sb.append(')');
+		return sb.toString();
 	}
+
 }
