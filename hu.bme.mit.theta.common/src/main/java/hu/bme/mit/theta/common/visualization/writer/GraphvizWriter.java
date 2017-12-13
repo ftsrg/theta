@@ -152,7 +152,8 @@ public final class GraphvizWriter extends AbstractGraphWriter {
 			for (final Edge edge : node.getOutEdges()) {
 				final EdgeAttributes attributes = edge.getAttributes();
 				sb.append("\t").append(edge.getSource().getId()).append(" -> ").append(edge.getTarget().getId());
-				sb.append(" [label=\"").append(attributes.getLabel().replace("\n", "\\n")).append("\"");
+				sb.append(" [label=\"").append(attributes.getLabel().replace("\r", "").replace("\n", "\\n"))
+						.append("\"");
 				sb.append(",color=").append(mapColorToString(attributes.getColor()));
 				final String style = mapLineStyleToString(attributes.getLineStyle());
 				if (!"".equals(style)) {
