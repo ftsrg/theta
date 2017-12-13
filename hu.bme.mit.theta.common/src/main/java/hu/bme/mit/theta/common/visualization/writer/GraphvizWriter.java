@@ -119,6 +119,9 @@ public final class GraphvizWriter extends AbstractGraphWriter {
 			sb.append(",peripheries=").append(attributes.getPeripheries());
 		}
 		sb.append(",style=\"").append(style).append("\"");
+		if (!attributes.getFont().equals("")) {
+			sb.append(",fontname=\"").append(attributes.getFont()).append("\"");
+		}
 		sb.append(",fillcolor=").append(mapColorToString(attributes.getFillColor()));
 		sb.append(",color=").append(mapColorToString(attributes.getLineColor()));
 		sb.append(",shape=").append(mapShapeToString(attributes.getShape()));
@@ -134,6 +137,9 @@ public final class GraphvizWriter extends AbstractGraphWriter {
 				.append(System.lineSeparator());
 		if (!"".equals(style)) {
 			sb.append("\t\tstyle=").append(style).append(';').append(System.lineSeparator());
+		}
+		if (!attributes.getFont().equals("")) {
+			sb.append(",fontname=\"").append(attributes.getFont()).append("\"");
 		}
 		sb.append("\t\tlabel=\"").append(convertLabel(attributes.getLabel(), attributes)).append("\";")
 				.append(System.lineSeparator());

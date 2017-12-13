@@ -24,16 +24,18 @@ public final class NodeAttributes {
 	private final Color lineColor;
 	private final Color fillColor;
 	private final LineStyle lineStyle;
+	private final String font;
 	private final int peripheries;
 	private final Shape shape;
 	private final Alignment alignment;
 
 	private NodeAttributes(final String label, final Color lineColor, final Color fillColor, final LineStyle lineStyle,
-			final int peripheries, final Shape shape, final Alignment alignment) {
+			final String font, final int peripheries, final Shape shape, final Alignment alignment) {
 		this.label = checkNotNull(label);
 		this.lineColor = checkNotNull(lineColor);
 		this.fillColor = checkNotNull(fillColor);
 		this.lineStyle = checkNotNull(lineStyle);
+		this.font = checkNotNull(font);
 		this.peripheries = peripheries;
 		this.shape = checkNotNull(shape);
 		this.alignment = checkNotNull(alignment);
@@ -53,6 +55,10 @@ public final class NodeAttributes {
 
 	public LineStyle getLineStyle() {
 		return lineStyle;
+	}
+
+	public String getFont() {
+		return font;
 	}
 
 	public int getPeripheries() {
@@ -76,6 +82,7 @@ public final class NodeAttributes {
 		private Color lineColor = Color.BLACK;
 		private Color fillColor = Color.WHITE;
 		private LineStyle lineStyle = LineStyle.NORMAL;
+		private String font = "";
 		private int peripheries = 1;
 		private Shape shape = Shape.ELLIPSE;
 		private Alignment alignment = Alignment.CENTER;
@@ -100,6 +107,11 @@ public final class NodeAttributes {
 			return this;
 		}
 
+		public Builder font(final String font) {
+			this.font = font;
+			return this;
+		}
+
 		public Builder peripheries(final int peripheries) {
 			this.peripheries = peripheries;
 			return this;
@@ -116,7 +128,7 @@ public final class NodeAttributes {
 		}
 
 		public NodeAttributes build() {
-			return new NodeAttributes(label, lineColor, fillColor, lineStyle, peripheries, shape, alignment);
+			return new NodeAttributes(label, lineColor, fillColor, lineStyle, font, peripheries, shape, alignment);
 		}
 	}
 }
