@@ -114,7 +114,7 @@ public final class GraphvizWriter extends AbstractGraphWriter {
 		style += "filled";
 
 		sb.append("\t\t").append(node.getId());
-		sb.append(" [label=\"").append(convertLabel(attributes.getLabel(), attributes)).append("\"");
+		sb.append(" [label=\"").append(convertLabel(attributes.getLabel(), attributes.getAlignment())).append("\"");
 		if (attributes.getPeripheries() > 1) {
 			sb.append(",peripheries=").append(attributes.getPeripheries());
 		}
@@ -141,7 +141,7 @@ public final class GraphvizWriter extends AbstractGraphWriter {
 		if (!attributes.getFont().equals("")) {
 			sb.append(",fontname=\"").append(attributes.getFont()).append("\"");
 		}
-		sb.append("\t\tlabel=\"").append(convertLabel(attributes.getLabel(), attributes)).append("\";")
+		sb.append("\t\tlabel=\"").append(convertLabel(attributes.getLabel(), attributes.getAlignment())).append("\";")
 				.append(System.lineSeparator());
 		for (final Node child : node.getChildren()) {
 			printNode(child, sb);
@@ -158,7 +158,7 @@ public final class GraphvizWriter extends AbstractGraphWriter {
 			for (final Edge edge : node.getOutEdges()) {
 				final EdgeAttributes attributes = edge.getAttributes();
 				sb.append("\t").append(edge.getSource().getId()).append(" -> ").append(edge.getTarget().getId());
-				sb.append(" [label=\"").append(attributes.getLabel().replace("\r", "").replace("\n", "\\n"))
+				sb.append(" [label=\"").append(convertLabel(attributes.getLabel(), attributes.getAlignment()))
 						.append("\"");
 				sb.append(",color=").append(mapColorToString(attributes.getColor()));
 				final String style = mapLineStyleToString(attributes.getLineStyle());
@@ -176,12 +176,12 @@ public final class GraphvizWriter extends AbstractGraphWriter {
 		}
 	}
 
-	private String convertLabel(final String label, final NodeAttributes attrs) {
+	private String convertLabel(final String label, final Alignment alignment) {
 		String converted = label;
 		if (!converted.endsWith("\n")) {
 			converted = converted + "\n";
 		}
-		return converted.replace("\r", "").replace("\n", getLineSeparator(attrs.getAlignment()));
+		return converted.replace("\r", "").replace("\n", getLineSeparator(alignment));
 	}
 
 	private String getLineSeparator(final Alignment alignment) {

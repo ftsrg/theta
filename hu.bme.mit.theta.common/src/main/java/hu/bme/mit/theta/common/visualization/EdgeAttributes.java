@@ -1,12 +1,12 @@
 /*
  *  Copyright 2017 Budapest University of Technology and Economics
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,14 +25,16 @@ public final class EdgeAttributes {
 	private final LineStyle lineStyle;
 	private final String font;
 	private final int weight;
+	private final Alignment alignment;
 
 	private EdgeAttributes(final String label, final Color color, final LineStyle lineStyle, final String font,
-			final int weight) {
+			final int weight, final Alignment alignment) {
 		this.label = label;
 		this.color = color;
 		this.lineStyle = lineStyle;
 		this.font = font;
 		this.weight = weight;
+		this.alignment = alignment;
 	}
 
 	public String getLabel() {
@@ -55,6 +57,10 @@ public final class EdgeAttributes {
 		return weight;
 	}
 
+	public Alignment getAlignment() {
+		return alignment;
+	}
+
 	public static Builder builder() {
 		return new Builder();
 	}
@@ -65,6 +71,7 @@ public final class EdgeAttributes {
 		private LineStyle lineStyle = LineStyle.NORMAL;
 		private String font = "";
 		private int weight = 1;
+		private Alignment alignment = Alignment.CENTER;
 
 		public Builder label(final String label) {
 			this.label = checkNotNull(label);
@@ -91,8 +98,13 @@ public final class EdgeAttributes {
 			return this;
 		}
 
+		public Builder alignment(final Alignment alignment) {
+			this.alignment = alignment;
+			return this;
+		}
+
 		public EdgeAttributes build() {
-			return new EdgeAttributes(label, color, lineStyle, font, weight);
+			return new EdgeAttributes(label, color, lineStyle, font, weight, alignment);
 		}
 	}
 }
