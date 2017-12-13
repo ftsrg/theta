@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import hu.bme.mit.theta.analysis.expr.StmtAction;
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.formalism.cfa.CFA.Edge;
 import hu.bme.mit.theta.formalism.cfa.CFA.Loc;
@@ -74,6 +75,6 @@ public final class CfaAction extends StmtAction {
 
 	@Override
 	public String toString() {
-		return stmts.stream().map(Stmt::toString).collect(Collectors.joining(" "));
+		return Utils.lispStringBuilder(getClass().getSimpleName()).body().addAll(stmts).toString();
 	}
 }
