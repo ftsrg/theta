@@ -90,7 +90,7 @@ public final class LispLexer {
 		try {
 			c = reader.read();
 		} catch (final IOException e) {
-			throw new RuntimeException("An exception occured: " + e.getMessage());
+			throw new LexerException(e);
 		}
 	}
 
@@ -99,7 +99,7 @@ public final class LispLexer {
 		if (c == x) {
 			consume();
 		} else {
-			throw new Error("Expecting " + x + ", found " + c);
+			throw new LexerException("Expecting " + x + ", found " + c);
 		}
 	}
 
