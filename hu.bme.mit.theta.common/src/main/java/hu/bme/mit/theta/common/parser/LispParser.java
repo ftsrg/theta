@@ -16,9 +16,6 @@
 package hu.bme.mit.theta.common.parser;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.common.parser.TokenType.ATOM;
-import static hu.bme.mit.theta.common.parser.TokenType.LPAREN;
-import static hu.bme.mit.theta.common.parser.TokenType.RPAREN;
 
 import java.util.List;
 
@@ -52,20 +49,20 @@ public final class LispParser {
 		} else if (lookahead.getType() == TokenType.LPAREN) {
 			return list();
 		} else {
-			throw new RuntimeException("Expecting atom or list, found " + lookahead);
+			throw new ParserException("Expecting atom or list, found " + lookahead.getType());
 		}
 	}
 
 	public SAtom atom() {
 		final String atom = lookahead.getString();
-		match(ATOM);
+		match(TokenType.ATOM);
 		return SExpr.atom(atom);
 	}
 
 	public SList list() {
-		match(LPAREN);
+		match(TokenType.LPAREN);
 		final List<SExpr> sexprs = sexprs();
-		match(RPAREN);
+		match(TokenType.RPAREN);
 		return SExpr.list(sexprs);
 	}
 
@@ -73,7 +70,7 @@ public final class LispParser {
 		if (lookahead.getType() == type) {
 			consume();
 		} else {
-			throw new RuntimeException("Expecting " + type + ", found " + lookahead.getType());
+			throw new ParserException("Expecting " + type + ", found " + lookahead.getType());
 		}
 	}
 
