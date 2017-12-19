@@ -16,10 +16,8 @@
 package hu.bme.mit.theta.formalism.cfa.tool;
 
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintWriter;
 import java.util.concurrent.TimeUnit;
 
 import com.beust.jcommander.JCommander;
@@ -92,8 +90,8 @@ public class CfaCli {
 	@Parameter(names = "--benchmark", description = "Benchmark mode (only print metrics)")
 	Boolean benchmarkMode = false;
 
-	@Parameter(names = "--cexfile", description = "Write counterexample (trace) to file")
-	String cexfile = null;
+	@Parameter(names = "--cex", description = "Log concrete counterexample")
+	Boolean cexfile = false;
 
 	@Parameter(names = "--header", description = "Print only a header (for benchmarks)", help = true)
 	boolean headerOnly = false;
@@ -132,8 +130,8 @@ public class CfaCli {
 			final SafetyResult<?, ?> status = configuration.check();
 			sw.stop();
 			printResult(status, cfa, sw.elapsed(TimeUnit.MILLISECONDS));
-			if (status.isUnsafe() && cexfile != null) {
-				writeCexFile(status.asUnsafe(), cexfile);
+			if (status.isUnsafe() && cexfile) {
+				writeCex(status.asUnsafe());
 			}
 		} catch (final Throwable ex) {
 			printError(ex);
@@ -196,24 +194,10 @@ public class CfaCli {
 		}
 	}
 
-	private void writeCexFile(final Unsafe<?, ?> status, final String filename) throws FileNotFoundException {
+	private void writeCex(final Unsafe<?, ?> status) {
 		@SuppressWarnings("unchecked")
 		final Trace<CfaState<?>, CfaAction> trace = (Trace<CfaState<?>, CfaAction>) status.getTrace();
 		final Trace<CfaState<ExplState>, CfaAction> concrTrace = CfaTraceConcretizer.concretize(trace);
-		PrintWriter pw = null;
-		try {
-			pw = new PrintWriter(filename);
-			for (int i = 0; i < concrTrace.getStates().size(); i++) {
-				pw.println(concrTrace.getStates().get(i).toString());
-				if (i < trace.getActions().size()) {
-					pw.println(trace.getAction(i).toString());
-				}
-			}
-		} finally {
-			if (pw != null) {
-				pw.close();
-			}
-		}
-
+		logger.write(Level.RESULT, "%s", concrTrace);
 	}
 }
