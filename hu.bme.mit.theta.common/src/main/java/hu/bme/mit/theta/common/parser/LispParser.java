@@ -27,16 +27,16 @@ import hu.bme.mit.theta.common.parser.SExpr.SList;
 public final class LispParser {
 
 	private final LispLexer lexer;
-	private Token lookahead;
+	private Token lookahead; // use lookahead() to get value
 
 	public LispParser(final LispLexer lexer) {
 		this.lexer = checkNotNull(lexer);
-		consume();
+		this.lookahead = null;
 	}
 
 	public List<SExpr> sexprs() {
 		final ImmutableList.Builder<SExpr> builder = ImmutableList.builder();
-		while (lookahead.getType() != TokenType.RPAREN) {
+		while (lookahead().getType() != TokenType.RPAREN) {
 			final SExpr sexpr = sexpr();
 			builder.add(sexpr);
 		}
@@ -44,9 +44,9 @@ public final class LispParser {
 	}
 
 	public SExpr sexpr() {
-		if (lookahead.getType() == TokenType.ATOM) {
+		if (lookahead().getType() == TokenType.ATOM) {
 			return atom();
-		} else if (lookahead.getType() == TokenType.LPAREN) {
+		} else if (lookahead().getType() == TokenType.LPAREN) {
 			return list();
 		} else {
 			throw new ParserException("Expecting atom or list, found " + lookahead.getType());
@@ -54,7 +54,7 @@ public final class LispParser {
 	}
 
 	public SAtom atom() {
-		final String atom = lookahead.getString();
+		final String atom = lookahead().getString();
 		match(TokenType.ATOM);
 		return SExpr.atom(atom);
 	}
@@ -66,8 +66,17 @@ public final class LispParser {
 		return SExpr.list(sexprs);
 	}
 
+	private Token lookahead() {
+		Token result = lookahead;
+		if (result == null) {
+			result = lexer.nextToken();
+			lookahead = result;
+		}
+		return result;
+	}
+
 	private void match(final TokenType type) {
-		if (lookahead.getType() == type) {
+		if (lookahead().getType() == type) {
 			consume();
 		} else {
 			throw new ParserException("Expecting " + type + ", found " + lookahead.getType());
@@ -75,7 +84,10 @@ public final class LispParser {
 	}
 
 	private void consume() {
-		lookahead = lexer.nextToken();
+		if (lookahead == null) {
+			lookahead();
+		}
+		lookahead = null;
 	}
 
 }
