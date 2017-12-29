@@ -84,9 +84,7 @@ public final class LispParser {
 	}
 
 	private void consume() {
-		if (lookahead == null) {
-			lookahead();
-		}
+		lookahead();
 		lookahead = null;
 	}
 
