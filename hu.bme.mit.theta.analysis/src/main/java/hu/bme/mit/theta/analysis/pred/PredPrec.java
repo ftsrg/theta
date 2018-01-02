@@ -82,7 +82,11 @@ public final class PredPrec implements Prec {
 		return solver;
 	}
 
-	private Expr<BoolType> negate(final Expr<BoolType> pred) {
+	public Set<Expr<BoolType>> getPreds() {
+		return Collections.unmodifiableSet(predToNegMap.keySet());
+	}
+
+	public Expr<BoolType> negate(final Expr<BoolType> pred) {
 		final Expr<BoolType> negated = predToNegMap.get(pred);
 		checkArgument(negated != null, "Negated predicate not found");
 		return negated;
