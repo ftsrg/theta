@@ -16,7 +16,6 @@
 package hu.bme.mit.theta.analysis.pred;
 
 import static hu.bme.mit.theta.core.decl.Decls.Var;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Lt;
@@ -27,12 +26,9 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
-import hu.bme.mit.theta.solver.Solver;
-import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 
 public class PredPrecTest {
 
@@ -41,26 +37,11 @@ public class PredPrecTest {
 
 	private final Expr<BoolType> pred = Lt(x.getRef(), Int(5));
 
-	private final Solver solver = Z3SolverFactory.getInstace().createSolver();
-
-	@Test
-	public void testMapping() {
-		final PredPrec prec = PredPrec.create(Collections.singleton(pred), solver);
-
-		final PredState s1 = prec.createState(ImmutableValuation.builder().put(x, Int(0)).build());
-		final PredState s2 = prec.createState(ImmutableValuation.builder().put(x, Int(10)).build());
-		final PredState s3 = prec.createState(ImmutableValuation.builder().put(y, Int(0)).build());
-
-		Assert.assertEquals(Collections.singleton(pred), s1.getPreds());
-		Assert.assertEquals(Collections.singleton(Not(pred)), s2.getPreds());
-		Assert.assertEquals(Collections.emptySet(), s3.getPreds());
-	}
-
 	@Test
 	public void testRefinement() {
-		final PredPrec p0 = PredPrec.create(solver);
-		final PredPrec p1 = PredPrec.create(Collections.singleton(pred), solver);
-		final PredPrec p2 = PredPrec.create(Collections.singleton(Eq(x.getRef(), y.getRef())), solver);
+		final PredPrec p0 = PredPrec.create();
+		final PredPrec p1 = PredPrec.create(Collections.singleton(pred));
+		final PredPrec p2 = PredPrec.create(Collections.singleton(Eq(x.getRef(), y.getRef())));
 
 		final PredPrec r1 = p1.join(p0);
 		final PredPrec r2 = p1.join(p2);
@@ -74,9 +55,9 @@ public class PredPrecTest {
 
 	@Test
 	public void testEquals() {
-		final PredPrec p0 = PredPrec.create(solver);
-		final PredPrec p1 = PredPrec.create(Collections.singleton(pred), solver);
-		final PredPrec p2 = PredPrec.create(Collections.singleton(pred), solver);
+		final PredPrec p0 = PredPrec.create();
+		final PredPrec p1 = PredPrec.create(Collections.singleton(pred));
+		final PredPrec p2 = PredPrec.create(Collections.singleton(pred));
 
 		Assert.assertNotEquals(p0, p1);
 		Assert.assertNotEquals(p0, p2);

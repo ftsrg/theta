@@ -309,14 +309,14 @@ public class CfaConfigBuilder {
 				throw new UnsupportedOperationException(
 						domain + " domain does not support " + refinement + " refinement.");
 			}
-			final ItpRefToPredPrec refToPrec = new ItpRefToPredPrec(solver, predSplit.splitter);
+			final ItpRefToPredPrec refToPrec = new ItpRefToPredPrec(predSplit.splitter);
 			final Refiner<CfaState<PredState>, CfaAction, CfaPrec<PredPrec>> refiner = SingleExprTraceRefiner
 					.create(exprTraceChecker, precGranularity.createRefiner(refToPrec), logger);
 
 			final SafetyChecker<CfaState<PredState>, CfaAction, CfaPrec<PredPrec>> checker = CegarChecker
 					.create(abstractor, refiner, logger);
 
-			final CfaPrec<PredPrec> prec = precGranularity.createPrec(initPrec.builder.createPred(cfa, solver));
+			final CfaPrec<PredPrec> prec = precGranularity.createPrec(initPrec.builder.createPred(cfa));
 
 			return Config.create(checker, prec);
 

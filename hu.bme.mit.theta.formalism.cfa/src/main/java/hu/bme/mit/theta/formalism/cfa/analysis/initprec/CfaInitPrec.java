@@ -18,7 +18,6 @@ package hu.bme.mit.theta.formalism.cfa.analysis.initprec;
 import hu.bme.mit.theta.analysis.expl.ExplPrec;
 import hu.bme.mit.theta.analysis.pred.PredPrec;
 import hu.bme.mit.theta.formalism.cfa.CFA;
-import hu.bme.mit.theta.solver.Solver;
 
 /**
  * Common interface for inferring initial precision for CFAs.
@@ -32,5 +31,5 @@ public interface CfaInitPrec {
 	/**
 	 * Creates initial PredPrec based on a CFA.
 	 */
-	PredPrec createPred(CFA cfa, Solver solver);
+	PredPrec createPred(CFA cfa);
 }

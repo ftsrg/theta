@@ -18,7 +18,6 @@ package hu.bme.mit.theta.formalism.cfa.analysis.initprec;
 import hu.bme.mit.theta.analysis.expl.ExplPrec;
 import hu.bme.mit.theta.analysis.pred.PredPrec;
 import hu.bme.mit.theta.formalism.cfa.CFA;
-import hu.bme.mit.theta.solver.Solver;
 
 /**
  * An implementation for initial precision that returns all variables. Only
@@ -32,7 +31,7 @@ public class CfaAllVarsInitPrec implements CfaInitPrec {
 	}
 
 	@Override
-	public PredPrec createPred(final CFA cfa, final Solver solver) {
+	public PredPrec createPred(final CFA cfa) {
 		throw new UnsupportedOperationException("Initial precision not supported for this kind of precision");
 	}
 

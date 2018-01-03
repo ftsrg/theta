@@ -17,14 +17,11 @@ package hu.bme.mit.theta.analysis.pred;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -32,14 +29,10 @@ import com.google.common.collect.ImmutableSet;
 
 import hu.bme.mit.theta.analysis.Prec;
 import hu.bme.mit.theta.common.Utils;
-import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
-import hu.bme.mit.theta.core.utils.PathUtils;
-import hu.bme.mit.theta.solver.Solver;
-import hu.bme.mit.theta.solver.utils.WithPushPop;
 
 /**
  * Represents an immutable, simple predicate precision that is a set of
@@ -48,23 +41,21 @@ import hu.bme.mit.theta.solver.utils.WithPushPop;
 public final class PredPrec implements Prec {
 
 	private final Map<Expr<BoolType>, Expr<BoolType>> predToNegMap;
-	private final Solver solver;
 
-	public static PredPrec create(final Solver solver) {
-		return new PredPrec(Collections.emptySet(), solver);
+	public static PredPrec create() {
+		return new PredPrec(Collections.emptySet());
 	}
 
-	public static PredPrec create(final Iterable<Expr<BoolType>> preds, final Solver solver) {
-		return new PredPrec(preds, solver);
+	public static PredPrec create(final Iterable<Expr<BoolType>> preds) {
+		return new PredPrec(preds);
 	}
 
-	public static PredPrec create(final Expr<BoolType> pred, final Solver solver) {
-		return new PredPrec(Collections.singleton(pred), solver);
+	public static PredPrec create(final Expr<BoolType> pred) {
+		return new PredPrec(Collections.singleton(pred));
 	}
 
-	private PredPrec(final Iterable<Expr<BoolType>> preds, final Solver solver) {
+	private PredPrec(final Iterable<Expr<BoolType>> preds) {
 		checkNotNull(preds);
-		this.solver = checkNotNull(solver);
 		this.predToNegMap = new HashMap<>();
 
 		for (final Expr<BoolType> pred : preds) {
@@ -78,10 +69,6 @@ public final class PredPrec implements Prec {
 		}
 	}
 
-	public Solver getSolver() {
-		return solver;
-	}
-
 	public Set<Expr<BoolType>> getPreds() {
 		return Collections.unmodifiableSet(predToNegMap.keySet());
 	}
@@ -90,42 +77,6 @@ public final class PredPrec implements Prec {
 		final Expr<BoolType> negated = predToNegMap.get(pred);
 		checkArgument(negated != null, "Negated predicate not found");
 		return negated;
-	}
-
-	public PredState createState(final Valuation valuation) {
-		checkNotNull(valuation);
-		final Set<Expr<BoolType>> statePreds = new HashSet<>();
-
-		for (final Expr<BoolType> pred : predToNegMap.keySet()) {
-			final Expr<BoolType> simplified = ExprUtils.simplify(pred, valuation);
-			if (simplified.equals(True())) {
-				statePreds.add(pred);
-			} else if (simplified.equals(False())) {
-				statePreds.add(negate(pred));
-			} else {
-				final Expr<BoolType> simplified0 = PathUtils.unfold(simplified, 0);
-
-				boolean ponValid;
-				boolean negValid;
-				try (WithPushPop wpp = new WithPushPop(solver)) {
-					solver.add(Not(simplified0));
-					ponValid = solver.check().isUnsat();
-				}
-				try (WithPushPop wpp = new WithPushPop(solver)) {
-					solver.add(simplified0);
-					negValid = solver.check().isUnsat();
-				}
-
-				assert !(ponValid && negValid) : "Ponated and negated predicates are both valid";
-				if (ponValid) {
-					statePreds.add(pred);
-				} else if (negValid) {
-					statePreds.add(negate(pred));
-				}
-			}
-		}
-
-		return PredState.of(statePreds);
 	}
 
 	public PredPrec join(final PredPrec other) {
@@ -139,7 +90,7 @@ public final class PredPrec implements Prec {
 			return other;
 		}
 
-		return create(joinedPreds, solver);
+		return create(joinedPreds);
 	}
 
 	@Override

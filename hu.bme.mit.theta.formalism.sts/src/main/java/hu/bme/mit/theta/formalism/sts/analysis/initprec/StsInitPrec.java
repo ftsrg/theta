@@ -18,7 +18,6 @@ package hu.bme.mit.theta.formalism.sts.analysis.initprec;
 import hu.bme.mit.theta.analysis.expl.ExplPrec;
 import hu.bme.mit.theta.analysis.pred.PredPrec;
 import hu.bme.mit.theta.formalism.sts.STS;
-import hu.bme.mit.theta.solver.Solver;
 
 /**
  * Common interface for inferring initial precision for STSs.
@@ -32,5 +31,5 @@ public interface StsInitPrec {
 	/**
 	 * Creates initial PredPrec based on an STS.
 	 */
-	PredPrec createPred(STS sts, Solver solver);
+	PredPrec createPred(STS sts);
 }
