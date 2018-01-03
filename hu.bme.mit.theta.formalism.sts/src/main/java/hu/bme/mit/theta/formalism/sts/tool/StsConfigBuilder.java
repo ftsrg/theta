@@ -227,12 +227,12 @@ public final class StsConfigBuilder {
 						domain + " domain does not support " + refinement + " refinement.");
 			}
 			final Refiner<PredState, StsAction, PredPrec> refiner = SingleExprTraceRefiner.create(exprTraceChecker,
-					JoiningPrecRefiner.create(new ItpRefToPredPrec(solver, predSplit.splitter)), logger);
+					JoiningPrecRefiner.create(new ItpRefToPredPrec(predSplit.splitter)), logger);
 
 			final SafetyChecker<PredState, StsAction, PredPrec> checker = CegarChecker.create(abstractor, refiner,
 					logger);
 
-			final PredPrec prec = initPrec.builder.createPred(sts, solver);
+			final PredPrec prec = initPrec.builder.createPred(sts);
 			return Config.create(checker, prec);
 		} else {
 			throw new UnsupportedOperationException(domain + " domain is not supported.");

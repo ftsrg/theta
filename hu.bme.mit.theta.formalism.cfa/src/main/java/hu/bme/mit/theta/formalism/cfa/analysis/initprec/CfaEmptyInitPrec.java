@@ -18,7 +18,6 @@ package hu.bme.mit.theta.formalism.cfa.analysis.initprec;
 import hu.bme.mit.theta.analysis.expl.ExplPrec;
 import hu.bme.mit.theta.analysis.pred.PredPrec;
 import hu.bme.mit.theta.formalism.cfa.CFA;
-import hu.bme.mit.theta.solver.Solver;
 
 /**
  * An implementation for initial precision that returns empty initial
@@ -32,8 +31,8 @@ public class CfaEmptyInitPrec implements CfaInitPrec {
 	}
 
 	@Override
-	public PredPrec createPred(final CFA cfa, final Solver solver) {
-		return PredPrec.create(solver);
+	public PredPrec createPred(final CFA cfa) {
+		return PredPrec.create();
 	}
 
 }
