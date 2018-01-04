@@ -17,9 +17,15 @@ package hu.bme.mit.theta.core.utils;
 
 import static com.google.common.collect.ImmutableSet.of;
 import static hu.bme.mit.theta.core.decl.Decls.Var;
+import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
+import static hu.bme.mit.theta.core.stmt.Stmts.Assume;
+import static hu.bme.mit.theta.core.stmt.Stmts.Havoc;
+import static hu.bme.mit.theta.core.stmt.Stmts.Skip;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Imply;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Add;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static org.junit.Assert.assertEquals;
 
 import java.util.Arrays;
@@ -34,20 +40,18 @@ import org.junit.runners.Parameterized.Parameters;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
-import hu.bme.mit.theta.core.stmt.Stmts;
-import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.inttype.IntType;
 
 @RunWith(Parameterized.class)
 public class VarCollectorStmtVisitorTest {
-	private static final VarDecl<BoolType> VA = Var("a", Bool());
-	private static final VarDecl<BoolType> VB = Var("b", Bool());
 
-	private static final Expr<BoolType> A = VA.getRef();
-	private static final Expr<BoolType> B = VB.getRef();
+	private static final VarDecl<BoolType> VA = Var("a", Bool());
+	private static final VarDecl<IntType> VB = Var("b", Int());
+	private static final VarDecl<IntType> VC = Var("d", Int());
 
 	@Parameter(value = 0)
-	public Stmt statement;
+	public Stmt stmt;
 
 	@Parameter(value = 1)
 	public Set<VarDecl<?>> expectedVars;
@@ -56,20 +60,27 @@ public class VarCollectorStmtVisitorTest {
 	public static Collection<Object[]> data() {
 		return Arrays.asList(new Object[][] {
 
-				{ Stmts.Assign(VA, B), of(VA, VB) },
+				{ Skip(), of() },
 
-				{ Stmts.Assign(VA, True()), of(VA) },
+				{ Havoc(VA), of(VA) },
 
-				{ Stmts.Assume(Imply(A, B)), of(VA, VB) },
+				{ Havoc(VB), of(VB) },
 
-				{ Stmts.Havoc(VA), of(VA) },
+				{ Assign(VB, Int(0)), of(VB) },
+
+				{ Assign(VB, Add(VB.getRef(), VB.getRef())), of(VB) },
+
+				{ Assign(VB, Add(VB.getRef(), VC.getRef())), of(VB, VC) },
+
+				{ Assume(And(VA.getRef(), Eq(VB.getRef(), VC.getRef()))), of(VA, VB, VC) },
 
 		});
 	}
 
 	@Test
 	public void test() {
-		final Set<VarDecl<?>> vars = StmtUtils.getVars(statement);
+		final Set<VarDecl<?>> vars = StmtUtils.getVars(stmt);
 		assertEquals(expectedVars, vars);
 	}
+
 }
