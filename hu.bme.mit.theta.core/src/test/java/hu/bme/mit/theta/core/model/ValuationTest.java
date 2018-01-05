@@ -1,12 +1,12 @@
 /*
  *  Copyright 2017 Budapest University of Technology and Economics
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -64,5 +64,47 @@ public class ValuationTest {
 		Assert.assertEquals(1, val1.getDecls().size());
 		Assert.assertEquals(3, val2.getDecls().size());
 		Assert.assertEquals(2, val3.getDecls().size());
+	}
+
+	@Test
+	public void testLeq() {
+		final Valuation v1 = ImmutableValuation.builder().put(ca, Int(1)).build();
+		final Valuation v2 = ImmutableValuation.builder().put(ca, Int(2)).build();
+		final Valuation v3 = ImmutableValuation.builder().put(cb, Int(1)).build();
+		final Valuation v4 = ImmutableValuation.builder().put(ca, Int(1)).put(cb, Int(1)).build();
+
+		Assert.assertTrue(v1.isLeq(v1));
+		Assert.assertFalse(v2.isLeq(v1));
+		Assert.assertFalse(v3.isLeq(v1));
+		Assert.assertTrue(v4.isLeq(v1));
+
+		Assert.assertFalse(v1.isLeq(v2));
+		Assert.assertTrue(v2.isLeq(v2));
+		Assert.assertFalse(v3.isLeq(v2));
+		Assert.assertFalse(v4.isLeq(v2));
+
+		Assert.assertFalse(v1.isLeq(v3));
+		Assert.assertFalse(v2.isLeq(v3));
+		Assert.assertTrue(v3.isLeq(v3));
+		Assert.assertTrue(v4.isLeq(v3));
+
+		Assert.assertFalse(v1.isLeq(v4));
+		Assert.assertFalse(v2.isLeq(v4));
+		Assert.assertFalse(v3.isLeq(v4));
+		Assert.assertTrue(v4.isLeq(v4));
+	}
+
+	@Test
+	public void testEquals() {
+		final Valuation v1 = ImmutableValuation.builder().put(ca, Int(1)).build();
+		final Valuation v2 = ImmutableValuation.builder().put(ca, Int(1)).build();
+		final Valuation v3 = ImmutableValuation.builder().put(ca, Int(2)).build();
+		final Valuation v4 = ImmutableValuation.builder().put(cb, Int(1)).build();
+
+		Assert.assertTrue(v1.equals(v1));
+		Assert.assertTrue(v1.equals(v2));
+		Assert.assertFalse(v1.equals(v3));
+		Assert.assertFalse(v1.equals(v4));
+
 	}
 }

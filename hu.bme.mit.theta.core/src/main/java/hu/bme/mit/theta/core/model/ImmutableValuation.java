@@ -17,8 +17,6 @@ package hu.bme.mit.theta.core.model;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.collect.ImmutableList.toImmutableList;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
 
 import java.util.Collection;
 import java.util.Map;
@@ -31,7 +29,6 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs;
 
 /**
  * Basic, immutable implementation of a valuation. The inner builder class can
@@ -82,8 +79,7 @@ public final class ImmutableValuation extends Valuation {
 	public Expr<BoolType> toExpr() {
 		Expr<BoolType> result = expr;
 		if (result == null) {
-			result = SmartBoolExprs.And(declToExpr.entrySet().stream().map(e -> Eq(e.getKey().getRef(), e.getValue()))
-					.collect(toImmutableList()));
+			result = super.toExpr();
 			expr = result;
 		}
 		return result;
