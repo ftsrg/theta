@@ -63,6 +63,7 @@ import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
+import hu.bme.mit.theta.core.type.rattype.RatType;
 
 public class ExprSimplifierTest {
 
@@ -72,6 +73,7 @@ public class ExprSimplifierTest {
 	private final ConstDecl<IntType> ca = Const("a", Int());
 	private final ConstDecl<IntType> cb = Const("b", Int());
 	private final ConstDecl<IntType> cc = Const("c", Int());
+	private final ConstDecl<RatType> cd = Const("d", Rat());
 
 	private final Expr<BoolType> x = cx.getRef();
 	private final Expr<BoolType> y = cy.getRef();
@@ -79,6 +81,7 @@ public class ExprSimplifierTest {
 	private final Expr<IntType> a = ca.getRef();
 	private final Expr<IntType> b = cb.getRef();
 	private final Expr<IntType> c = cc.getRef();
+	private final Expr<RatType> d = cd.getRef();
 
 	// Boolean
 
@@ -86,6 +89,8 @@ public class ExprSimplifierTest {
 	public void testNot() {
 		assertEquals(False(), simplify(Not(And(True(), True()))));
 		assertEquals(True(), simplify(Not(And(False(), True()))));
+		assertEquals(x, simplify(Not(Not(Not(Not(x))))));
+		assertEquals(Not(x), simplify(Not(Not(Not(x)))));
 	}
 
 	@Test
@@ -94,6 +99,8 @@ public class ExprSimplifierTest {
 		assertEquals(True(), simplify(Imply(x, True())));
 		assertEquals(x, simplify(Imply(True(), x)));
 		assertEquals(Not(x), simplify(Imply(x, False())));
+		assertEquals(False(), simplify(Imply(True(), False())));
+		assertEquals(True(), simplify(Imply(x, x)));
 	}
 
 	@Test
@@ -119,6 +126,8 @@ public class ExprSimplifierTest {
 		assertEquals(x, simplify(And(True(), x, True())));
 		assertEquals(False(), simplify(And(True(), x, False())));
 		assertEquals(And(x, y, z), simplify(And(x, And(y, z))));
+		assertEquals(And(x, z), simplify(And(x, And(True(), z))));
+		assertEquals(False(), simplify(And(x, And(False(), z))));
 		assertEquals(True(), simplify(And(True(), True())));
 	}
 
@@ -126,6 +135,9 @@ public class ExprSimplifierTest {
 	public void testOr() {
 		assertEquals(x, simplify(Or(False(), x, False())));
 		assertEquals(True(), simplify(Or(False(), x, True())));
+		assertEquals(Or(x, y, z), simplify(Or(x, Or(y, z))));
+		assertEquals(True(), simplify(Or(x, Or(True(), z))));
+		assertEquals(Or(x, z), simplify(Or(x, Or(False(), z))));
 	}
 
 	// Rational
@@ -133,6 +145,8 @@ public class ExprSimplifierTest {
 	@Test
 	public void testRatAdd() {
 		assertEquals(Rat(7, 12), simplify(Add(Rat(1, 3), Rat(1, 4))));
+		assertEquals(Add(Rat(7, 12), d), simplify(Add(Rat(1, 3), d, Rat(1, 4))));
+		assertEquals(Add(Rat(7, 12), d), simplify(Add(Rat(1, 3), Add(d, Rat(1, 4)))));
 	}
 
 	@Test
@@ -151,6 +165,9 @@ public class ExprSimplifierTest {
 	public void testRatMul() {
 		assertEquals(Rat(1, 1), simplify(Mul(Rat(2, 1), Rat(1, 1), Rat(1, 2))));
 		assertEquals(Rat(3, 4), simplify(Mul(Rat(3, 2), Rat(1, 1), Rat(1, 2))));
+		assertEquals(Mul(Rat(3, 4), d), simplify(Mul(Rat(3, 2), d, Rat(1, 2))));
+		assertEquals(Mul(Rat(3, 4), d), simplify(Mul(Rat(3, 2), Mul(d, Rat(1, 2)))));
+		assertEquals(Rat(0, 1), simplify(Mul(Rat(3, 2), Rat(0, 1), Rat(1, 2))));
 	}
 
 	@Test
@@ -220,6 +237,7 @@ public class ExprSimplifierTest {
 		assertEquals(Int(6), simplify(Add(Int(1), Int(2), Int(3))));
 		assertEquals(Int(0), simplify(Add(Int(1), Int(2), Int(-3))));
 		assertEquals(Add(a, Int(4)), simplify(Add(Int(1), a, Int(3))));
+		assertEquals(Add(a, Int(4)), simplify(Add(Int(1), Add(a, Int(3)))));
 		assertEquals(a, simplify(Add(Int(-3), a, Int(3))));
 		assertEquals(Add(a, b, a, b, c), simplify(Add(a, Add(b, Add(a, Add(b, c))))));
 	}
@@ -242,6 +260,7 @@ public class ExprSimplifierTest {
 	public void testIntMul() {
 		assertEquals(Int(30), simplify(Mul(Int(2), Int(3), Int(5))));
 		assertEquals(Mul(Int(10), a), simplify(Mul(Int(2), a, Int(5))));
+		assertEquals(Mul(Int(10), a), simplify(Mul(Int(2), Mul(a, Int(5)))));
 		assertEquals(Int(0), simplify(Mul(Int(0), a, b)));
 		assertEquals(Mul(a, b, a, b, c), simplify(Mul(a, Mul(b, Mul(a, Mul(b, c))))));
 	}

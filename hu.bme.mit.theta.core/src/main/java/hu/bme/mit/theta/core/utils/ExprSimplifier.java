@@ -24,6 +24,7 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 
@@ -376,27 +377,33 @@ public final class ExprSimplifier {
 
 	private Expr<RatType> simplifyRatAdd(final RatAddExpr expr) {
 		final List<Expr<RatType>> ops = new ArrayList<>();
-		int num = 0;
-		int denom = 1;
 
 		for (final Expr<RatType> op : expr.getOps()) {
 			final Expr<RatType> opVisited = simplify(op);
-			if (opVisited instanceof RatLitExpr) {
-				final RatLitExpr litOp = (RatLitExpr) opVisited;
-				num = num * litOp.getDenom() + denom * litOp.getNum();
-				denom *= litOp.getDenom();
-			} else if (opVisited instanceof RatAddExpr) {
+			if (opVisited instanceof RatAddExpr) {
 				final RatAddExpr addOp = (RatAddExpr) opVisited;
 				ops.addAll(addOp.getOps());
 			} else {
 				ops.add(opVisited);
 			}
 		}
+		int num = 0;
+		int denom = 1;
+
+		for (final Iterator<Expr<RatType>> iterator = ops.iterator(); iterator.hasNext();) {
+			final Expr<RatType> op = iterator.next();
+			if (op instanceof RatLitExpr) {
+				final RatLitExpr litOp = (RatLitExpr) op;
+				num = num * litOp.getDenom() + denom * litOp.getNum();
+				denom *= litOp.getDenom();
+				iterator.remove();
+			}
+		}
 
 		final Expr<RatType> sum = Rat(num, denom);
 
 		if (!sum.equals(Rat(0, 1))) {
-			ops.add(sum);
+			ops.add(0, sum);
 		}
 
 		if (ops.isEmpty()) {
@@ -443,25 +450,29 @@ public final class ExprSimplifier {
 
 	private Expr<RatType> simplifyRatMul(final RatMulExpr expr) {
 		final List<Expr<RatType>> ops = new ArrayList<>();
-		int num = 1;
-		int denom = 1;
 
 		for (final Expr<RatType> op : expr.getOps()) {
 			final Expr<RatType> opVisited = simplify(op);
-			if (opVisited instanceof RatLitExpr) {
-				final RatLitExpr litOp = (RatLitExpr) opVisited;
-				num *= litOp.getNum();
-				denom *= litOp.getDenom();
-
-				if (num == 0) {
-					return Rat(0, 1);
-				}
-
-			} else if (opVisited instanceof RatMulExpr) {
+			if (opVisited instanceof RatMulExpr) {
 				final RatMulExpr mulOp = (RatMulExpr) opVisited;
 				ops.addAll(mulOp.getOps());
 			} else {
 				ops.add(opVisited);
+			}
+		}
+		int num = 1;
+		int denom = 1;
+
+		for (final Iterator<Expr<RatType>> iterator = ops.iterator(); iterator.hasNext();) {
+			final Expr<RatType> op = iterator.next();
+			if (op instanceof RatLitExpr) {
+				final RatLitExpr litOp = (RatLitExpr) op;
+				num *= litOp.getNum();
+				denom *= litOp.getDenom();
+				iterator.remove();
+				if (num == 0) {
+					return Rat(0, 1);
+				}
 			}
 		}
 
@@ -616,18 +627,24 @@ public final class ExprSimplifier {
 
 	private Expr<IntType> simplifyIntAdd(final IntAddExpr expr) {
 		final List<Expr<IntType>> ops = new ArrayList<>();
-		int value = 0;
 
 		for (final Expr<IntType> op : expr.getOps()) {
 			final Expr<IntType> opVisited = simplify(op);
-			if (opVisited instanceof IntLitExpr) {
-				final IntLitExpr litOp = (IntLitExpr) opVisited;
-				value = value + litOp.getValue();
-			} else if (opVisited instanceof IntAddExpr) {
+			if (opVisited instanceof IntAddExpr) {
 				final IntAddExpr addOp = (IntAddExpr) opVisited;
 				ops.addAll(addOp.getOps());
 			} else {
 				ops.add(opVisited);
+			}
+		}
+		int value = 0;
+
+		for (final Iterator<Expr<IntType>> iterator = ops.iterator(); iterator.hasNext();) {
+			final Expr<IntType> op = iterator.next();
+			if (op instanceof IntLitExpr) {
+				final IntLitExpr litOp = (IntLitExpr) op;
+				value = value + litOp.getValue();
+				iterator.remove();
 			}
 		}
 
@@ -680,23 +697,27 @@ public final class ExprSimplifier {
 
 	private Expr<IntType> simplifyIntMul(final IntMulExpr expr) {
 		final List<Expr<IntType>> ops = new ArrayList<>();
-		int value = 1;
 
 		for (final Expr<IntType> op : expr.getOps()) {
 			final Expr<IntType> opVisited = simplify(op);
-			if (opVisited instanceof IntLitExpr) {
-				final IntLitExpr litOp = (IntLitExpr) opVisited;
-				value = value * litOp.getValue();
-
-				if (value == 0) {
-					return Int(0);
-				}
-
-			} else if (opVisited instanceof IntMulExpr) {
+			if (opVisited instanceof IntMulExpr) {
 				final IntMulExpr mulOp = (IntMulExpr) opVisited;
 				ops.addAll(mulOp.getOps());
 			} else {
 				ops.add(opVisited);
+			}
+		}
+
+		int value = 1;
+		for (final Iterator<Expr<IntType>> iterator = ops.iterator(); iterator.hasNext();) {
+			final Expr<IntType> op = iterator.next();
+			if (op instanceof IntLitExpr) {
+				final IntLitExpr litOp = (IntLitExpr) op;
+				value = value * litOp.getValue();
+				iterator.remove();
+				if (value == 0) {
+					return Int(0);
+				}
 			}
 		}
 
