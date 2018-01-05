@@ -93,7 +93,7 @@ public final class PrimeCounterTest {
 		final Expr<?> expr = manager.parseExpr(exprString);
 
 		// Act
-		final VarIndexing indexing = PrimeCounter.countPrimes(expr);
+		final VarIndexing indexing = PathUtils.countPrimes(expr);
 
 		// Assert
 		assertEquals(nPrimesOnX, indexing.get(x));
