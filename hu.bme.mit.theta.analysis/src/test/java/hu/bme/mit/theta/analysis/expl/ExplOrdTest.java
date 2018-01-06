@@ -27,17 +27,17 @@ import hu.bme.mit.theta.core.type.inttype.IntType;
 
 public class ExplOrdTest {
 
-	final VarDecl<IntType> X = Decls.Var("x", Int());
-	final VarDecl<IntType> Y = Decls.Var("y", Int());
+	private final VarDecl<IntType> X = Decls.Var("x", Int());
+	private final VarDecl<IntType> Y = Decls.Var("y", Int());
 
-	final ExplOrd ord = ExplOrd.getInstance();
+	private final ExplOrd ord = ExplOrd.getInstance();
 
-	final ExplState st = ExplState.top();
-	final ExplState s1 = ExplState.of(ImmutableValuation.builder().put(X, Int(1)).build());
-	final ExplState s2 = ExplState.of(ImmutableValuation.builder().put(X, Int(2)).build());
-	final ExplState s3 = ExplState.of(ImmutableValuation.builder().put(Y, Int(1)).build());
-	final ExplState s4 = ExplState.of(ImmutableValuation.builder().put(X, Int(1)).put(Y, Int(1)).build());
-	final ExplState sb = ExplState.bottom();
+	private final ExplState st = ExplState.top();
+	private final ExplState s1 = ExplState.of(ImmutableValuation.builder().put(X, Int(1)).build());
+	private final ExplState s2 = ExplState.of(ImmutableValuation.builder().put(X, Int(2)).build());
+	private final ExplState s3 = ExplState.of(ImmutableValuation.builder().put(Y, Int(1)).build());
+	private final ExplState s4 = ExplState.of(ImmutableValuation.builder().put(X, Int(1)).put(Y, Int(1)).build());
+	private final ExplState sb = ExplState.bottom();
 
 	@Test
 	public void testBottom() {
