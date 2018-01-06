@@ -54,6 +54,8 @@ public class StmtWriteTest {
 
 				{ Stmts.Assign(VX, IntExprs.Int(1)), "x := 1" },
 
+				{ Stmts.Skip(), "skip" },
+
 		});
 	}
 
