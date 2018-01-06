@@ -18,8 +18,6 @@ package hu.bme.mit.theta.core.utils;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
 
 import com.google.common.collect.ImmutableSet;
 
@@ -61,11 +59,4 @@ final class ExprAtomCollector {
 			collectTo.add(expr);
 		}
 	}
-
-	static Set<Expr<BoolType>> getAtoms(final Expr<BoolType> expr) {
-		final Set<Expr<BoolType>> atoms = new HashSet<>();
-		collectAtoms(expr, atoms);
-		return atoms;
-	}
-
 }

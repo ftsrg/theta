@@ -64,7 +64,9 @@ public final class ExprUtils {
 	 * @return Set of atoms
 	 */
 	public static Set<Expr<BoolType>> getAtoms(final Expr<BoolType> expr) {
-		return ExprAtomCollector.getAtoms(expr);
+		final Set<Expr<BoolType>> atoms = new HashSet<>();
+		collectAtoms(expr, atoms);
+		return atoms;
 	}
 
 	/**
