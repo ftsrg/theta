@@ -16,6 +16,10 @@
 package hu.bme.mit.theta.analysis.expl;
 
 import static hu.bme.mit.theta.core.decl.Decls.Var;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 import java.util.Optional;
@@ -54,5 +58,13 @@ public class ExplStateTest {
 
 		Assert.assertEquals(Optional.of(Int(1)), s1.eval(x));
 		Assert.assertEquals(Optional.empty(), s1.eval(y));
+	}
+
+	@Test
+	public void testToExpr() {
+		Assert.assertEquals(True(), ExplState.top().toExpr());
+		Assert.assertEquals(False(), ExplState.bottom().toExpr());
+		Assert.assertEquals(And(Eq(x.getRef(), Int(1)), Eq(y.getRef(), Int(2))),
+				ExplState.of(ImmutableValuation.builder().put(x, Int(1)).put(y, Int(2)).build()).toExpr());
 	}
 }
