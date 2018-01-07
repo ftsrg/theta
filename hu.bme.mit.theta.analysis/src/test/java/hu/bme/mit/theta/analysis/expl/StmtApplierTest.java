@@ -23,6 +23,7 @@ import static hu.bme.mit.theta.core.decl.Decls.Var;
 import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
 import static hu.bme.mit.theta.core.stmt.Stmts.Assume;
 import static hu.bme.mit.theta.core.stmt.Stmts.Havoc;
+import static hu.bme.mit.theta.core.stmt.Stmts.Skip;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Gt;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Leq;
@@ -57,6 +58,7 @@ public final class StmtApplierTest {
 	private static final Tuple2<Decl<?>, LitExpr<?>> X_IS_2 = Tuple2.of(X, Int(2));
 	private static final Tuple2<Decl<?>, LitExpr<?>> Y_IS_2 = Tuple2.of(Y, Int(2));
 
+	private static final Stmt SKIP = Skip();
 	private static final Stmt HAVOC_X = Havoc(X);
 	private static final Stmt ASSUME_GT_X_0 = Assume(Gt(X.getRef(), Int(0)));
 	private static final Stmt ASSUME_LEQ_X_0 = Assume(Leq(X.getRef(), Int(0)));
@@ -128,9 +130,13 @@ public final class StmtApplierTest {
 
 				{ ASSIGN_X_Y, of(X_IS_1), false, FAILURE, of(X_IS_1) },
 
+				{ ASSIGN_X_Y, of(X_IS_1), true, SUCCESS, of() },
+
 				{ ASSIGN_X_Y, of(X_IS_1, Y_IS_2), false, SUCCESS, of(X_IS_2, Y_IS_2) },
 
-				{ ASSIGN_X_Y, of(Y_IS_2), false, SUCCESS, of(X_IS_2, Y_IS_2) }
+				{ ASSIGN_X_Y, of(Y_IS_2), false, SUCCESS, of(X_IS_2, Y_IS_2) },
+
+				{ SKIP, of(X_IS_1), false, SUCCESS, of(X_IS_1) },
 
 		});
 	}

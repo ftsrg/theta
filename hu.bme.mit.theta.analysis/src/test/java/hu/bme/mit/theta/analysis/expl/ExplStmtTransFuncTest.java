@@ -23,6 +23,8 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Add;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Leq;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Lt;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Mul;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -67,6 +69,22 @@ public class ExplStmtTransFuncTest {
 
 		Assert.assertEquals(1, succStates.size());
 		final ExplState expectedState = ExplState.of(ImmutableValuation.builder().put(x, Int(2)).build());
+		Assert.assertEquals(expectedState, Utils.singleElementOf(succStates));
+	}
+
+	@Test
+	public void testBottom() {
+		final ExplStmtTransFunc transFunc = ExplStmtTransFunc.create(solver, 0);
+		final ExplState sourceState = ExplState.top();
+		final ExplPrec prec = ExplPrec.of(Collections.singleton(x));
+		final List<Stmt> stmts = new ArrayList<>();
+		stmts.add(Havoc(x));
+		stmts.add(Assume(Lt(Mul(x.getRef(), x.getRef()), Int(0))));
+
+		final Collection<? extends ExplState> succStates = transFunc.getSuccStates(sourceState, stmts, prec);
+
+		Assert.assertEquals(1, succStates.size());
+		final ExplState expectedState = ExplState.bottom();
 		Assert.assertEquals(expectedState, Utils.singleElementOf(succStates));
 	}
 
