@@ -35,12 +35,14 @@ import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.stmt.Stmts;
 import hu.bme.mit.theta.core.type.inttype.IntType;
+import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 
 public class PredTransFuncTest {
 	private final VarDecl<IntType> x = Var("x", Int());
 	private final VarDecl<IntType> y = Var("y", Int());
-	private final PredTransFunc transFunc = PredTransFunc.create(Z3SolverFactory.getInstace().createSolver());
+	private final Solver solver = Z3SolverFactory.getInstace().createSolver();
+	private final PredTransFunc transFunc = PredTransFunc.create(PredAbstractors.booleanSplitAbstractor(solver));
 
 	@Test
 	public void test1() {
