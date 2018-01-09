@@ -33,7 +33,7 @@ public class StsPropInitPrec implements StsInitPrec {
 
 	@Override
 	public PredPrec createPred(final STS sts) {
-		return PredPrec.create(ExprUtils.getAtoms(sts.getProp()));
+		return PredPrec.of(ExprUtils.getAtoms(sts.getProp()));
 	}
 
 }

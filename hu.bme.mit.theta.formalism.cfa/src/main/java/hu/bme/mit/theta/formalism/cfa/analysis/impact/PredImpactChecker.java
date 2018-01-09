@@ -52,7 +52,7 @@ public final class PredImpactChecker implements SafetyChecker<CfaState<PredState
 
 		final Analysis<PredState, ExprAction, PredPrec> predAnalysis = PredAnalysis.create(solver, True());
 
-		final CfaPrec<PredPrec> fixedPrec = GlobalCfaPrec.create(PredPrec.create(emptySet()));
+		final CfaPrec<PredPrec> fixedPrec = GlobalCfaPrec.create(PredPrec.of(emptySet()));
 
 		final Analysis<CfaState<PredState>, CfaAction, CfaPrec<PredPrec>> cfaAnalysis = CfaAnalysis.create(initLoc,
 				predAnalysis);

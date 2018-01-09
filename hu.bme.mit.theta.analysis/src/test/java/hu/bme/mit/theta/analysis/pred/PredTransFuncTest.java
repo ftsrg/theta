@@ -45,7 +45,7 @@ public class PredTransFuncTest {
 	@Test
 	public void test1() {
 		// (x<5) ---[x := x+1]--> (x<5)?
-		final PredPrec prec = PredPrec.create(ImmutableList.of(Lt(x.getRef(), Int(5))));
+		final PredPrec prec = PredPrec.of(ImmutableList.of(Lt(x.getRef(), Int(5))));
 		final PredState state = PredState.of(Lt(x.getRef(), Int(5)));
 		final ExprAction action = new BasicStmtAction(Stmts.Assign(x, Add(x.getRef(), Int(1))));
 		Assert.assertEquals(2, transFunc.getSuccStates(state, action, prec).size());
@@ -54,7 +54,7 @@ public class PredTransFuncTest {
 	@Test
 	public void test2() {
 		// (x<4) ---[x := x+1]--> (x<5)?
-		final PredPrec prec = PredPrec.create(ImmutableList.of(Lt(x.getRef(), Int(5))));
+		final PredPrec prec = PredPrec.of(ImmutableList.of(Lt(x.getRef(), Int(5))));
 		final PredState state = PredState.of(Lt(x.getRef(), Int(4)));
 		final ExprAction action = new BasicStmtAction(Stmts.Assign(x, Add(x.getRef(), Int(1))));
 		Assert.assertEquals(1, transFunc.getSuccStates(state, action, prec).size());
@@ -63,7 +63,7 @@ public class PredTransFuncTest {
 	@Test
 	public void test3() {
 		// (x>0) ---[x := x+y]--> (x>0, y>0)?
-		final PredPrec prec = PredPrec.create(ImmutableList.of(Gt(x.getRef(), Int(0)), Gt(y.getRef(), Int(0))));
+		final PredPrec prec = PredPrec.of(ImmutableList.of(Gt(x.getRef(), Int(0)), Gt(y.getRef(), Int(0))));
 		final PredState state = PredState.of(Gt(x.getRef(), Int(0)));
 		final ExprAction action = new BasicStmtAction(Stmts.Assign(x, Add(x.getRef(), y.getRef())));
 		Assert.assertEquals(3, transFunc.getSuccStates(state, action, prec).size());
