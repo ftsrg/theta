@@ -24,10 +24,13 @@ import java.util.List;
 import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.theta.analysis.State;
+import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.common.Utils;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.formalism.xta.XtaProcess.Loc;
 
-public final class XtaState<S extends State> implements State {
+public final class XtaState<S extends State> implements ExprState {
 	private static final int HASH_SEED = 8291;
 	private volatile int hashCode = 0;
 
@@ -68,6 +71,16 @@ public final class XtaState<S extends State> implements State {
 	@Override
 	public boolean isBottom() {
 		return state.isBottom();
+	}
+
+	@Override
+	public Expr<BoolType> toExpr() {
+		if (state instanceof ExprState) {
+			final ExprState exprState = (ExprState) state;
+			return exprState.toExpr();
+		} else {
+			throw new UnsupportedOperationException();
+		}
 	}
 
 	@Override
