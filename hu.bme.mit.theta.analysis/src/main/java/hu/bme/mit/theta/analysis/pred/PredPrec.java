@@ -42,18 +42,6 @@ public final class PredPrec implements Prec {
 
 	private final Map<Expr<BoolType>, Expr<BoolType>> predToNegMap;
 
-	public static PredPrec create() {
-		return new PredPrec(Collections.emptySet());
-	}
-
-	public static PredPrec create(final Iterable<Expr<BoolType>> preds) {
-		return new PredPrec(preds);
-	}
-
-	public static PredPrec create(final Expr<BoolType> pred) {
-		return new PredPrec(Collections.singleton(pred));
-	}
-
 	private PredPrec(final Iterable<Expr<BoolType>> preds) {
 		checkNotNull(preds);
 		this.predToNegMap = new HashMap<>();
@@ -68,6 +56,22 @@ public final class PredPrec implements Prec {
 			}
 		}
 	}
+
+	public static PredPrec create(final Iterable<Expr<BoolType>> preds) {
+		return new PredPrec(preds);
+	}
+
+	// Convenience factory methods
+
+	public static PredPrec create() {
+		return new PredPrec(Collections.emptySet());
+	}
+
+	public static PredPrec create(final Expr<BoolType> pred) {
+		return new PredPrec(Collections.singleton(pred));
+	}
+
+	////
 
 	public Set<Expr<BoolType>> getPreds() {
 		return Collections.unmodifiableSet(predToNegMap.keySet());
