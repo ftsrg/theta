@@ -53,6 +53,7 @@ import hu.bme.mit.theta.analysis.expr.refinement.JoiningPrecRefiner;
 import hu.bme.mit.theta.analysis.expr.refinement.SingleExprTraceRefiner;
 import hu.bme.mit.theta.analysis.pred.ExprSplitters;
 import hu.bme.mit.theta.analysis.pred.ItpRefToPredPrec;
+import hu.bme.mit.theta.analysis.pred.PredAbstractors;
 import hu.bme.mit.theta.analysis.pred.PredAnalysis;
 import hu.bme.mit.theta.analysis.pred.PredPrec;
 import hu.bme.mit.theta.analysis.pred.PredState;
@@ -90,7 +91,8 @@ public class StsPredTest {
 	@Test
 	public void testPredPrec() {
 
-		final Analysis<PredState, ExprAction, PredPrec> analysis = PredAnalysis.create(solver, sts.getInit());
+		final Analysis<PredState, ExprAction, PredPrec> analysis = PredAnalysis.create(solver,
+				PredAbstractors.booleanSplitAbstractor(solver), sts.getInit());
 		final Predicate<ExprState> target = new ExprStatePredicate(Not(sts.getProp()), solver);
 
 		final PredPrec prec = PredPrec.create();

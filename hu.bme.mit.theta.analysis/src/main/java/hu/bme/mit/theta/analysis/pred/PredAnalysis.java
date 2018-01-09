@@ -37,8 +37,9 @@ public final class PredAnalysis implements Analysis<PredState, ExprAction, PredP
 		transFunc = PredTransFunc.create(predAbstractor);
 	}
 
-	public static PredAnalysis create(final Solver solver, final Expr<BoolType> initExpr) {
-		return new PredAnalysis(solver, PredAbstractors.booleanSplitAbstractor(solver), initExpr);
+	public static PredAnalysis create(final Solver solver, final PredAbstractor predAbstractor,
+			final Expr<BoolType> initExpr) {
+		return new PredAnalysis(solver, predAbstractor, initExpr);
 	}
 
 	////
