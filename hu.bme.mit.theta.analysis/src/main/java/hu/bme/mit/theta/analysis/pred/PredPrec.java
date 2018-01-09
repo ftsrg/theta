@@ -57,17 +57,17 @@ public final class PredPrec implements Prec {
 		}
 	}
 
-	public static PredPrec create(final Iterable<Expr<BoolType>> preds) {
+	public static PredPrec of(final Iterable<Expr<BoolType>> preds) {
 		return new PredPrec(preds);
 	}
 
 	// Convenience factory methods
 
-	public static PredPrec create() {
+	public static PredPrec of() {
 		return new PredPrec(Collections.emptySet());
 	}
 
-	public static PredPrec create(final Expr<BoolType> pred) {
+	public static PredPrec of(final Expr<BoolType> pred) {
 		return new PredPrec(Collections.singleton(pred));
 	}
 
@@ -94,7 +94,7 @@ public final class PredPrec implements Prec {
 			return other;
 		}
 
-		return create(joinedPreds);
+		return of(joinedPreds);
 	}
 
 	@Override

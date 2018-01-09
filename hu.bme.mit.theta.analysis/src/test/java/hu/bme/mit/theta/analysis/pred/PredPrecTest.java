@@ -39,9 +39,9 @@ public class PredPrecTest {
 
 	@Test
 	public void testRefinement() {
-		final PredPrec p0 = PredPrec.create();
-		final PredPrec p1 = PredPrec.create(Collections.singleton(pred));
-		final PredPrec p2 = PredPrec.create(Collections.singleton(Eq(x.getRef(), y.getRef())));
+		final PredPrec p0 = PredPrec.of();
+		final PredPrec p1 = PredPrec.of(Collections.singleton(pred));
+		final PredPrec p2 = PredPrec.of(Collections.singleton(Eq(x.getRef(), y.getRef())));
 
 		final PredPrec r1 = p1.join(p0);
 		final PredPrec r2 = p1.join(p2);
@@ -55,9 +55,9 @@ public class PredPrecTest {
 
 	@Test
 	public void testEquals() {
-		final PredPrec p0 = PredPrec.create();
-		final PredPrec p1 = PredPrec.create(Collections.singleton(pred));
-		final PredPrec p2 = PredPrec.create(Collections.singleton(pred));
+		final PredPrec p0 = PredPrec.of();
+		final PredPrec p1 = PredPrec.of(Collections.singleton(pred));
+		final PredPrec p2 = PredPrec.of(Collections.singleton(pred));
 
 		Assert.assertNotEquals(p0, p1);
 		Assert.assertNotEquals(p0, p2);
