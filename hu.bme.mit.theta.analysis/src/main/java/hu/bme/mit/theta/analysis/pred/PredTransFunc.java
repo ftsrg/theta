@@ -22,19 +22,19 @@ import java.util.Collection;
 
 import hu.bme.mit.theta.analysis.TransFunc;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
+import hu.bme.mit.theta.analysis.pred.PredAbstractors.PredAbstractor;
 import hu.bme.mit.theta.core.utils.VarIndexing;
-import hu.bme.mit.theta.solver.Solver;
 
 public final class PredTransFunc implements TransFunc<PredState, ExprAction, PredPrec> {
 
-	private final PredStates predStates;
+	private final PredAbstractor predAbstractor;
 
-	private PredTransFunc(final Solver solver) {
-		this.predStates = new PredStates(checkNotNull(solver));
+	private PredTransFunc(final PredAbstractor predAbstractor) {
+		this.predAbstractor = checkNotNull(predAbstractor);
 	}
 
-	public static PredTransFunc create(final Solver solver) {
-		return new PredTransFunc(solver);
+	public static PredTransFunc create(final PredAbstractor predAbstractor) {
+		return new PredTransFunc(predAbstractor);
 	}
 
 	@Override
@@ -44,7 +44,7 @@ public final class PredTransFunc implements TransFunc<PredState, ExprAction, Pre
 		checkNotNull(action);
 		checkNotNull(prec);
 
-		return predStates.createStatesForExpr(And(state.toExpr(), action.toExpr()), VarIndexing.all(0), prec,
+		return predAbstractor.createStatesForExpr(And(state.toExpr(), action.toExpr()), VarIndexing.all(0), prec,
 				action.nextIndexing());
 	}
 

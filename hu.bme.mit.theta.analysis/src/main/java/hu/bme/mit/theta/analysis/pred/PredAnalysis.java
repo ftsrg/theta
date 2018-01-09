@@ -16,10 +16,11 @@
 package hu.bme.mit.theta.analysis.pred;
 
 import hu.bme.mit.theta.analysis.Analysis;
-import hu.bme.mit.theta.analysis.PartialOrd;
 import hu.bme.mit.theta.analysis.InitFunc;
+import hu.bme.mit.theta.analysis.PartialOrd;
 import hu.bme.mit.theta.analysis.TransFunc;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
+import hu.bme.mit.theta.analysis.pred.PredAbstractors.PredAbstractor;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.solver.Solver;
@@ -30,14 +31,14 @@ public final class PredAnalysis implements Analysis<PredState, ExprAction, PredP
 	private final InitFunc<PredState, PredPrec> initFunc;
 	private final TransFunc<PredState, ExprAction, PredPrec> transFunc;
 
-	private PredAnalysis(final Solver solver, final Expr<BoolType> initExpr) {
+	private PredAnalysis(final Solver solver, final PredAbstractor predAbstractor, final Expr<BoolType> initExpr) {
 		partialOrd = PredOrd.create(solver);
-		initFunc = PredInitFunc.create(solver, initExpr);
-		transFunc = PredTransFunc.create(solver);
+		initFunc = PredInitFunc.create(predAbstractor, initExpr);
+		transFunc = PredTransFunc.create(predAbstractor);
 	}
 
 	public static PredAnalysis create(final Solver solver, final Expr<BoolType> initExpr) {
-		return new PredAnalysis(solver, initExpr);
+		return new PredAnalysis(solver, PredAbstractors.booleanSplitAbstractor(solver), initExpr);
 	}
 
 	////

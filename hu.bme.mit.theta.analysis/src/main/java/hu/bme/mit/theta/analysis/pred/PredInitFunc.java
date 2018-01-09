@@ -20,29 +20,29 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.util.Collection;
 
 import hu.bme.mit.theta.analysis.InitFunc;
+import hu.bme.mit.theta.analysis.pred.PredAbstractors.PredAbstractor;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.VarIndexing;
-import hu.bme.mit.theta.solver.Solver;
 
 public final class PredInitFunc implements InitFunc<PredState, PredPrec> {
 
 	private final Expr<BoolType> initExpr;
-	private final PredStates predStates;
+	private final PredAbstractor predAbstractor;
 
-	private PredInitFunc(final Solver solver, final Expr<BoolType> initExpr) {
+	private PredInitFunc(final PredAbstractor predAbstractor, final Expr<BoolType> initExpr) {
 		this.initExpr = checkNotNull(initExpr);
-		this.predStates = new PredStates(checkNotNull(solver));
+		this.predAbstractor = checkNotNull(predAbstractor);
 	}
 
-	public static PredInitFunc create(final Solver solver, final Expr<BoolType> expr) {
-		return new PredInitFunc(solver, expr);
+	public static PredInitFunc create(final PredAbstractor predAbstractor, final Expr<BoolType> expr) {
+		return new PredInitFunc(predAbstractor, expr);
 	}
 
 	@Override
 	public Collection<? extends PredState> getInitStates(final PredPrec prec) {
 		checkNotNull(prec);
-		return predStates.createStatesForExpr(initExpr, VarIndexing.all(0), prec, VarIndexing.all(0));
+		return predAbstractor.createStatesForExpr(initExpr, VarIndexing.all(0), prec, VarIndexing.all(0));
 	}
 
 }
