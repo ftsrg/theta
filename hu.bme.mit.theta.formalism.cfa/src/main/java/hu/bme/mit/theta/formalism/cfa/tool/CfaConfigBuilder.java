@@ -48,6 +48,8 @@ import hu.bme.mit.theta.analysis.expr.refinement.SingleExprTraceRefiner;
 import hu.bme.mit.theta.analysis.pred.ExprSplitters;
 import hu.bme.mit.theta.analysis.pred.ExprSplitters.ExprSplitter;
 import hu.bme.mit.theta.analysis.pred.ItpRefToPredPrec;
+import hu.bme.mit.theta.analysis.pred.PredAbstractors;
+import hu.bme.mit.theta.analysis.pred.PredAbstractors.PredAbstractor;
 import hu.bme.mit.theta.analysis.pred.PredAnalysis;
 import hu.bme.mit.theta.analysis.pred.PredPrec;
 import hu.bme.mit.theta.analysis.pred.PredState;
@@ -77,7 +79,7 @@ import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 
 public class CfaConfigBuilder {
 	public enum Domain {
-		EXPL, PRED
+		EXPL, PRED_BOOL, PRED_CART, PRED_SPLIT
 	};
 
 	public enum Refinement {
@@ -285,9 +287,23 @@ public class CfaConfigBuilder {
 
 			return Config.create(checker, prec);
 
-		} else if (domain == Domain.PRED) {
+		} else if (domain == Domain.PRED_BOOL || domain == Domain.PRED_CART || domain == Domain.PRED_SPLIT) {
+			PredAbstractor predAbstractor = null;
+			switch (domain) {
+			case PRED_BOOL:
+				predAbstractor = PredAbstractors.booleanAbstractor(solver);
+				break;
+			case PRED_SPLIT:
+				predAbstractor = PredAbstractors.booleanSplitAbstractor(solver);
+				break;
+			case PRED_CART:
+				predAbstractor = PredAbstractors.cartesianAbstractor(solver);
+				break;
+			default:
+				throw new UnsupportedOperationException(domain + " domain is not supported.");
+			}
 			final Analysis<CfaState<PredState>, CfaAction, CfaPrec<PredPrec>> analysis = CfaAnalysis
-					.create(cfa.getInitLoc(), PredAnalysis.create(solver, True()));
+					.create(cfa.getInitLoc(), PredAnalysis.create(solver, predAbstractor, True()));
 			final ArgBuilder<CfaState<PredState>, CfaAction, CfaPrec<PredPrec>> argBuilder = ArgBuilder.create(lts,
 					analysis, s -> s.getLoc().equals(cfa.getErrorLoc()), true);
 			final Abstractor<CfaState<PredState>, CfaAction, CfaPrec<PredPrec>> abstractor = BasicAbstractor
