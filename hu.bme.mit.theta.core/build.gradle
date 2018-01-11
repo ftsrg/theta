@@ -2,11 +2,11 @@ apply plugin: 'antlr'
 apply plugin: 'jacoco'
 
 dependencies {
+  compile project(':hu.bme.mit.theta.common')
   antlr group: 'org.antlr', name: 'antlr4', version: antlrVersion
   compile group: 'org.antlr', name: 'antlr4-runtime', version: antlrVersion
   compile group: 'com.google.guava', name: 'guava', version: guavaVersion
-  compile group: 'junit', name: 'junit', version: junitVersion
-  compile project(':hu.bme.mit.theta.common')
+  testCompile group: 'junit', name: 'junit', version: junitVersion
 }
 
 generateGrammarSource {
