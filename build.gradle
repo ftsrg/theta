@@ -53,10 +53,11 @@ task jacocoRootReport(type: org.gradle.testing.jacoco.tasks.JacocoReport) {
 }
 
 ext {
-  antlrVersion = "4.5.3"
-  guavaVersion = "21.0"
-  junitVersion = "4.12"
-  jcommanderVersion = "1.72"
+  antlrVersion = '4.5.3'
+  guavaVersion = '21.0'
+  junitVersion = '4.12'
+  mockitoVersion = '2.2.11'
+  jcommanderVersion = '1.72'
 }
 
 task copyJars(type: Copy, dependsOn: subprojects.jar) {
