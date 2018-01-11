@@ -10,9 +10,14 @@ dependencies {
 }
 
 generateGrammarSource {
-    outputDirectory = new File("src/gen/java/hu/bme/mit/theta/core/dsl/gen")
     arguments += ["-package", "hu.bme.mit.theta.core.dsl.gen"]
     arguments += ["-Werror", "-visitor"]
+    doLast {
+        copy {
+            from "${buildDir}/generated-src/antlr/main"
+            into "src/gen/java/hu/bme/mit/theta/core/dsl/gen"
+        }
+    }
 }
 
 sourceSets {
