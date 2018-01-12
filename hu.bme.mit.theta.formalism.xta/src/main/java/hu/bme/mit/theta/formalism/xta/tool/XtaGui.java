@@ -168,7 +168,7 @@ public class XtaGui extends BaseGui {
 				final Graph graph = XtaVisualizer.visualize(xta);
 				final File tmpFile = File.createTempFile("theta", ".tmp");
 				GraphvizWriter.getInstance().writeFile(graph, tmpFile.getAbsolutePath(), Format.SVG);
-				final String image = Files.toString(tmpFile, Charsets.UTF_8);
+				final String image = Files.asCharSource(tmpFile, Charsets.UTF_8).read();
 				tmpFile.delete();
 				Platform.runLater(() -> wvVisualModel.getEngine().loadContent(image));
 			} catch (final Exception ex) {
@@ -201,7 +201,7 @@ public class XtaGui extends BaseGui {
 				}
 				final File tmpFile = File.createTempFile("theta", ".tmp");
 				GraphvizWriter.getInstance().writeFile(graph, tmpFile.getAbsolutePath(), Format.SVG);
-				final String image = Files.toString(tmpFile, Charsets.UTF_8);
+				final String image = Files.asCharSource(tmpFile, Charsets.UTF_8).read();
 				tmpFile.delete();
 				Platform.runLater(() -> wvVisualResult.getEngine().loadContent(image));
 			} catch (final Exception ex) {
