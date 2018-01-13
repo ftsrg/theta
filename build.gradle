@@ -1,55 +1,96 @@
+plugins {
+  id "com.jfrog.bintray" version "1.7.3"
+}
+
 allprojects  {
-	apply plugin: 'maven'
-	apply plugin: 'java'
-	apply plugin: 'jacoco'
+  apply plugin: 'java'
+  apply plugin: 'jacoco'
 
-	sourceCompatibility = 1.8
-	targetCompatibility = 1.8
+  sourceCompatibility = 1.8
+  targetCompatibility = 1.8
 
-	group = 'hu.bme.mit.theta'
-	version = '1.0.0-SNAPSHOT'
+  group = 'theta'
+  version = '0.0.1'
 
-	repositories {
-		mavenCentral()
-	}
+  repositories {
+    mavenCentral()
+    maven {
+      url  "https://dl.bintray.com/ftsrg/maven"
+    }
+  }
 }
 
 subprojects {
-	task packageSources(type: Jar) {
-		classifier = 'sources'
-		from sourceSets.main.allSource
-	}
+  apply plugin: 'com.jfrog.bintray'
+  apply plugin: 'maven-publish'
 
-	artifacts.archives packageSources
+  task sourcesJar(type: Jar) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+  }
 
-	test {
-		String libPath = ".." + File.separator + "lib"
-		environment.put('PATH', libPath)
-		environment.put('LD_LIBRARY_PATH', libPath)
-	}
+  artifacts {
+    archives sourcesJar
+  }
 
-	jacocoTestReport {
-		dependsOn tasks.test
+  test {
+    String libPath = ".." + File.separator + "lib"
+    environment.put('PATH', libPath)
+    environment.put('LD_LIBRARY_PATH', libPath)
+  }
+
+  jacocoTestReport {
+    dependsOn tasks.test
     reports {
-			xml.enabled false
-			csv.enabled false
-			html.enabled true
+      xml.enabled false
+      csv.enabled false
+      html.enabled true
     }
-	}
+  }
+
+  publishing {
+    publications {
+      mavenJava(MavenPublication) {
+        from components.java
+        artifact sourcesJar
+      }
+    }
+  }
+
+  bintray {
+    user = System.getenv('BINTRAY_USER')
+    key = System.getenv('BINTRAY_KEY')
+    publications = ['mavenJava']
+    publish = true
+    pkg {
+      userOrg = 'ftsrg'
+      repo = 'maven'
+      name = 'theta'
+      licenses = ['Apache-2.0']
+      vcsUrl = 'https://github.com/FTSRG/theta.git'
+      version {
+        name = project.version
+        released = new Date()
+        mavenCentralSync {
+          sync = false
+        }
+      }
+    }
+  }
 }
 
 // aggregates jacoco results from all subprojects and core project and generate a report
 task jacocoRootReport(type: org.gradle.testing.jacoco.tasks.JacocoReport) {
-    dependsOn = subprojects.test
-    additionalSourceDirs = files(subprojects.sourceSets.main.allSource.srcDirs)
-    sourceDirectories = files(subprojects.sourceSets.main.allSource.srcDirs)
-    classDirectories =  files(subprojects.sourceSets.main.output)
-    executionData = files(subprojects.jacocoTestReport.executionData)
-    reports {
-        html.enabled = false
-        xml.enabled = true
-        csv.enabled = false
-    }
+  dependsOn = subprojects.test
+  additionalSourceDirs = files(subprojects.sourceSets.main.allSource.srcDirs)
+  sourceDirectories = files(subprojects.sourceSets.main.allSource.srcDirs)
+  classDirectories =  files(subprojects.sourceSets.main.output)
+  executionData = files(subprojects.jacocoTestReport.executionData)
+  reports {
+    html.enabled = false
+    xml.enabled = true
+    csv.enabled = false
+  }
 }
 
 ext {
@@ -58,16 +99,17 @@ ext {
   junitVersion = '4.12'
   mockitoVersion = '2.2.11'
   jcommanderVersion = '1.72'
+  z3Version = '4.5.0'
 }
 
 task copyJars(type: Copy, dependsOn: subprojects.jar) {
-    from(subprojects.jar) 
-    into project.file('dest')
+  from(subprojects.jar)
+  into project.file('dest')
 }
 
 task copyDeps(type: Copy) {
-    from(subprojects.configurations.runtime) 
-    into project.file('dest/lib')
+  from(subprojects.configurations.runtime)
+  into project.file('dest/lib')
 }
 
 task copyFiles(dependsOn: [copyJars, copyDeps])
