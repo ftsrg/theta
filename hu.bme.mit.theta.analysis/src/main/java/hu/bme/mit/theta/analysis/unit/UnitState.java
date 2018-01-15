@@ -15,9 +15,13 @@
  */
 package hu.bme.mit.theta.analysis.unit;
 
-import hu.bme.mit.theta.analysis.State;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 
-public final class UnitState implements State {
+import hu.bme.mit.theta.analysis.expr.ExprState;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
+
+public final class UnitState implements ExprState {
 
 	private static final UnitState INSTANCE = new UnitState();
 
@@ -31,6 +35,11 @@ public final class UnitState implements State {
 	@Override
 	public boolean isBottom() {
 		return false;
+	}
+
+	@Override
+	public Expr<BoolType> toExpr() {
+		return True();
 	}
 
 	@Override
