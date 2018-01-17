@@ -2,17 +2,22 @@ apply plugin: 'antlr'
 apply plugin: 'jacoco'
 
 dependencies {
+  compile project(':hu.bme.mit.theta.common')
   antlr group: 'org.antlr', name: 'antlr4', version: antlrVersion
   compile group: 'org.antlr', name: 'antlr4-runtime', version: antlrVersion
   compile group: 'com.google.guava', name: 'guava', version: guavaVersion
-  compile group: 'junit', name: 'junit', version: junitVersion
-  compile project(':hu.bme.mit.theta.common')
+  testCompile group: 'junit', name: 'junit', version: junitVersion
 }
 
 generateGrammarSource {
-    outputDirectory = new File("src/gen/java/hu/bme/mit/theta/core/dsl/gen")
     arguments += ["-package", "hu.bme.mit.theta.core.dsl.gen"]
     arguments += ["-Werror", "-visitor"]
+    doLast {
+        copy {
+            from "${buildDir}/generated-src/antlr/main"
+            into "src/gen/java/hu/bme/mit/theta/core/dsl/gen"
+        }
+    }
 }
 
 sourceSets {

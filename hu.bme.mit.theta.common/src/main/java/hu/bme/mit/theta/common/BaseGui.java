@@ -174,7 +174,7 @@ public abstract class BaseGui extends Application {
 		protected Void call() throws Exception {
 			String text = "";
 			try {
-				text = Files.toString(new File(path), Charsets.UTF_8);
+				text = Files.asCharSource(new File(path), Charsets.UTF_8).read();
 			} catch (final IOException ex) {
 				Platform.runLater(() -> displayException(ex));
 				text = "";

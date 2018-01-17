@@ -95,7 +95,7 @@ public class StsPredTest {
 				PredAbstractors.booleanSplitAbstractor(solver), sts.getInit());
 		final Predicate<ExprState> target = new ExprStatePredicate(Not(sts.getProp()), solver);
 
-		final PredPrec prec = PredPrec.create();
+		final PredPrec prec = PredPrec.of();
 
 		final LTS<State, StsAction> lts = StsLts.create(sts);
 

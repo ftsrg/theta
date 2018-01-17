@@ -43,7 +43,7 @@ public class PredInitFuncTest {
 	@Test
 	public void test1() {
 		// true -> (x>=0, y>=0)?
-		final PredPrec prec = PredPrec.create(ImmutableList.of(Geq(x.getRef(), Int(0)), Geq(y.getRef(), Int(0))));
+		final PredPrec prec = PredPrec.of(ImmutableList.of(Geq(x.getRef(), Int(0)), Geq(y.getRef(), Int(0))));
 		final PredInitFunc initFunc = PredInitFunc.create(predAbstractor, True());
 		Assert.assertEquals(4, initFunc.getInitStates(prec).size());
 	}
@@ -51,7 +51,7 @@ public class PredInitFuncTest {
 	@Test
 	public void test2() {
 		// (x>=0) -> (x>=0, y>=0)?
-		final PredPrec prec = PredPrec.create(ImmutableList.of(Geq(x.getRef(), Int(0)), Geq(y.getRef(), Int(0))));
+		final PredPrec prec = PredPrec.of(ImmutableList.of(Geq(x.getRef(), Int(0)), Geq(y.getRef(), Int(0))));
 		final PredInitFunc initFunc = PredInitFunc.create(predAbstractor, Geq(x.getRef(), Int(0)));
 		Assert.assertEquals(2, initFunc.getInitStates(prec).size());
 	}
@@ -59,7 +59,7 @@ public class PredInitFuncTest {
 	@Test
 	public void test3() {
 		// (x>=1) -> (x>=0, y>=0)?
-		final PredPrec prec = PredPrec.create(ImmutableList.of(Geq(x.getRef(), Int(0)), Geq(y.getRef(), Int(0))));
+		final PredPrec prec = PredPrec.of(ImmutableList.of(Geq(x.getRef(), Int(0)), Geq(y.getRef(), Int(0))));
 		final PredInitFunc initFunc = PredInitFunc.create(predAbstractor, Geq(x.getRef(), Int(1)));
 		Assert.assertEquals(2, initFunc.getInitStates(prec).size());
 	}
@@ -67,7 +67,7 @@ public class PredInitFuncTest {
 	@Test
 	public void test4() {
 		// true -> (x>0, x<0)?
-		final PredPrec prec = PredPrec.create(ImmutableList.of(Gt(x.getRef(), Int(0)), Lt(x.getRef(), Int(0))));
+		final PredPrec prec = PredPrec.of(ImmutableList.of(Gt(x.getRef(), Int(0)), Lt(x.getRef(), Int(0))));
 		final PredInitFunc initFunc = PredInitFunc.create(predAbstractor, True());
 		Assert.assertEquals(3, initFunc.getInitStates(prec).size());
 	}

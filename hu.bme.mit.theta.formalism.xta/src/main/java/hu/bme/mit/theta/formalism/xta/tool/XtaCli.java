@@ -76,6 +76,7 @@ public final class XtaCli {
 		try {
 			JCommander.newBuilder().addObject(this).programName(JAR_NAME).build().parse(args);
 		} catch (final ParameterException ex) {
+			System.out.println("Invalid parameters, details:");
 			System.out.println(ex.getMessage());
 			ex.usage();
 			return;

@@ -32,7 +32,7 @@ public class StsEmptyInitPrec implements StsInitPrec {
 
 	@Override
 	public PredPrec createPred(final STS sts) {
-		return PredPrec.create();
+		return PredPrec.of();
 	}
 
 }

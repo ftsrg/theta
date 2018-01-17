@@ -111,6 +111,7 @@ public class StsCli {
 			JCommander.newBuilder().addObject(this).programName(JAR_NAME).build().parse(args);
 			logger = benchmarkMode ? NullLogger.getInstance() : new ConsoleLogger(logLevel);
 		} catch (final ParameterException ex) {
+			System.out.println("Invalid parameters, details:");
 			System.out.println(ex.getMessage());
 			ex.usage();
 			return;
