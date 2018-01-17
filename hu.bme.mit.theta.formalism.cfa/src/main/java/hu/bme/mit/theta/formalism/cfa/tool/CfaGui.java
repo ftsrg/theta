@@ -198,7 +198,7 @@ public class CfaGui extends BaseGui {
 				final Graph graph = CfaVisualizer.visualize(cfa);
 				final File tmpFile = File.createTempFile("theta", ".tmp");
 				GraphvizWriter.getInstance().writeFile(graph, tmpFile.getAbsolutePath(), Format.SVG);
-				final String image = Files.toString(tmpFile, Charsets.UTF_8);
+				final String image = Files.asCharSource(tmpFile, Charsets.UTF_8).read();
 				tmpFile.delete();
 				Platform.runLater(() -> wvVisualModel.getEngine().loadContent(image));
 			} catch (final Exception ex) {
@@ -229,7 +229,7 @@ public class CfaGui extends BaseGui {
 					}
 					final File tmpFile = File.createTempFile("theta", ".tmp");
 					GraphvizWriter.getInstance().writeFile(graph, tmpFile.getAbsolutePath(), Format.SVG);
-					content = Files.toString(tmpFile, Charsets.UTF_8);
+					content = Files.asCharSource(tmpFile, Charsets.UTF_8).read();
 					tmpFile.delete();
 				} else {
 					@SuppressWarnings("unchecked")

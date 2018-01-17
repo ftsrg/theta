@@ -189,7 +189,7 @@ public class StsGui extends BaseGui {
 					}
 					final File tmpFile = File.createTempFile("theta", ".tmp");
 					GraphvizWriter.getInstance().writeFile(graph, tmpFile.getAbsolutePath(), Format.SVG);
-					content = Files.toString(tmpFile, Charsets.UTF_8);
+					content = Files.asCharSource(tmpFile, Charsets.UTF_8).read();
 					tmpFile.delete();
 				} else {
 					// graph =

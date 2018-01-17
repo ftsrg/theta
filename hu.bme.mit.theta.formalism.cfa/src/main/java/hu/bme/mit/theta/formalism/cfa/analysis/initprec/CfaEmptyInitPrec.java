@@ -32,7 +32,7 @@ public class CfaEmptyInitPrec implements CfaInitPrec {
 
 	@Override
 	public PredPrec createPred(final CFA cfa) {
-		return PredPrec.create();
+		return PredPrec.of();
 	}
 
 }

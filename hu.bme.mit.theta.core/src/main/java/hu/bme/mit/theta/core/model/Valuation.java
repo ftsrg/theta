@@ -82,9 +82,8 @@ public abstract class Valuation implements Substitution {
 
 	@Override
 	public String toString() {
-		return Utils.lispStringBuilder("valuation")
-				.addAll(getDecls().stream().map(d -> String.format("(<- %s %s)", d.getName(), eval(d).get())))
-				.toString();
+		return Utils.lispStringBuilder("val").aligned()
+				.addAll(getDecls().stream().map(d -> String.format("(%s %s)", d.getName(), eval(d).get()))).toString();
 	}
 
 }
