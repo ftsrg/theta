@@ -35,6 +35,8 @@ ext {
 }
 ```
 
+For the (direct or transitive) use of the `hu.bme.mit.theta.solver.z3` project, the  [binaries](https://github.com/Z3Prover/z3/releases) of the corresponding version of Z3 must be on the library path.
+
 ## Work with the source code of Theta
 
 We are mainly developing on Windows, but we also test Theta on Linux. Theta can be built from command line, but you can most likely also import it into your favorite IDE. Theta has some external [dependencies](Dependencies.md) that may need to be obtained/installed depending on what parts of the framework you are working with.
