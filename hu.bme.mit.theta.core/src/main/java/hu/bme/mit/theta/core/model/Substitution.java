@@ -34,20 +34,18 @@ public interface Substitution {
 	<DeclType extends Type> Optional<? extends Expr<DeclType>> eval(final Decl<DeclType> decl);
 
 	default <T extends Type> Expr<T> apply(final Expr<T> expr) {
-		return expr.map(e -> {
-			if (e instanceof RefExpr) {
-				final RefExpr<?> ref = (RefExpr<?>) e;
-				final Decl<?> decl = ref.getDecl();
-				final Optional<? extends Expr<?>> optSub = eval(decl);
-				if (optSub.isPresent()) {
-					final Expr<?> sub = optSub.get();
-					return sub;
-				} else {
-					return e;
-				}
+		if (expr instanceof RefExpr) {
+			final RefExpr<T> ref = (RefExpr<T>) expr;
+			final Decl<T> decl = ref.getDecl();
+			final Optional<? extends Expr<T>> optSub = eval(decl);
+			if (optSub.isPresent()) {
+				final Expr<T> sub = optSub.get();
+				return sub;
 			} else {
-				return e;
+				return expr;
 			}
-		});
+		} else {
+			return expr.map(this::apply);
+		}
 	}
 }
