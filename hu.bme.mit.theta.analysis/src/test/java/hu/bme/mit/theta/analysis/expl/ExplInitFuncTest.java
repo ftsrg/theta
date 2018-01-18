@@ -21,11 +21,14 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Leq;
 
+import java.util.Collection;
+
 import org.junit.Assert;
 import org.junit.Test;
 
 import com.google.common.collect.ImmutableList;
 
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.solver.Solver;
@@ -57,5 +60,15 @@ public class ExplInitFuncTest {
 		final ExplInitFunc initFunc = ExplInitFunc.create(solver,
 				And(Leq(Int(0), x.getRef()), Leq(x.getRef(), y.getRef()), Leq(y.getRef(), Int(3))));
 		Assert.assertEquals(10, initFunc.getInitStates(prec).size());
+	}
+
+	@Test
+	public void testBottom() {
+		final ExplPrec prec = ExplPrec.of(ImmutableList.of(x, y));
+		final ExplInitFunc initFunc = ExplInitFunc.create(solver,
+				And(Leq(Int(5), x.getRef()), Leq(x.getRef(), y.getRef()), Leq(y.getRef(), Int(3))));
+		final Collection<? extends ExplState> initStates = initFunc.getInitStates(prec);
+		Assert.assertEquals(1, initStates.size());
+		Assert.assertEquals(ExplState.bottom(), Utils.singleElementOf(initStates));
 	}
 }

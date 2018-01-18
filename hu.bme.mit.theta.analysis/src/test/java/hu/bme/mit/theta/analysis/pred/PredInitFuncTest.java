@@ -16,11 +16,14 @@
 package hu.bme.mit.theta.analysis.pred;
 
 import static hu.bme.mit.theta.core.decl.Decls.Var;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Geq;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Gt;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Lt;
+
+import java.util.Collection;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -28,6 +31,7 @@ import org.junit.Test;
 import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.theta.analysis.pred.PredAbstractors.PredAbstractor;
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.solver.Solver;
@@ -70,5 +74,16 @@ public class PredInitFuncTest {
 		final PredPrec prec = PredPrec.of(ImmutableList.of(Gt(x.getRef(), Int(0)), Lt(x.getRef(), Int(0))));
 		final PredInitFunc initFunc = PredInitFunc.create(predAbstractor, True());
 		Assert.assertEquals(3, initFunc.getInitStates(prec).size());
+	}
+
+	@Test
+	public void testBottom() {
+		// (x<0) and (x>0) -> (x>0)?
+		final PredPrec prec = PredPrec.of(ImmutableList.of(Gt(x.getRef(), Int(0))));
+		final PredInitFunc initFunc = PredInitFunc.create(predAbstractor,
+				And(Gt(x.getRef(), Int(0)), Lt(x.getRef(), Int(0))));
+		final Collection<? extends PredState> initStates = initFunc.getInitStates(prec);
+		Assert.assertEquals(1, initStates.size());
+		Assert.assertEquals(PredState.bottom(), Utils.singleElementOf(initStates));
 	}
 }

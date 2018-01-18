@@ -17,10 +17,12 @@ package hu.bme.mit.theta.analysis.pred;
 
 import static hu.bme.mit.theta.core.decl.Decls.Var;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Add;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Gt;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Lt;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -31,6 +33,7 @@ import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.StmtAction;
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.stmt.Stmts;
@@ -69,6 +72,17 @@ public class PredTransFuncTest {
 		final PredState state = PredState.of(Gt(x.getRef(), Int(0)));
 		final ExprAction action = new BasicStmtAction(Stmts.Assign(x, Add(x.getRef(), y.getRef())));
 		Assert.assertEquals(3, transFunc.getSuccStates(state, action, prec).size());
+	}
+
+	@Test
+	public void testBottom() {
+		// (x>0) ---[assume x=0]--> (x>0)?
+		final PredPrec prec = PredPrec.of(ImmutableList.of(Gt(x.getRef(), Int(0))));
+		final PredState state = PredState.of(Gt(x.getRef(), Int(0)));
+		final ExprAction action = new BasicStmtAction(Stmts.Assume(Eq(Int(0), x.getRef())));
+		final Collection<? extends PredState> succStates = transFunc.getSuccStates(state, action, prec);
+		Assert.assertEquals(1, succStates.size());
+		Assert.assertEquals(PredState.bottom(), Utils.singleElementOf(succStates));
 	}
 
 	private static final class BasicStmtAction extends StmtAction {
