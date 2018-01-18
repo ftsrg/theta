@@ -23,7 +23,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -31,7 +30,6 @@ import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.ImmutableValuation;
-import hu.bme.mit.theta.core.model.Substitution;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
@@ -282,24 +280,4 @@ public final class ExprUtils {
 		return 1 + expr.getOps().stream().map(ExprUtils::nodeCountSize).reduce(0, (x, y) -> x + y);
 	}
 
-	/**
-	 * Apply a substitution to an expression.
-	 *
-	 * @param expr Expression
-	 * @param sub Substitution
-	 * @return A new expression with the substitution applied
-	 */
-	public static <T extends Type> Expr<T> substitute(final Expr<T> expr, final Substitution sub) {
-		if (expr instanceof RefExpr<?>) {
-			final Optional<?> eval = sub.eval(((RefExpr<?>) expr).getDecl());
-			if (eval.isPresent()) {
-				@SuppressWarnings("unchecked")
-				final Expr<T> substitute = (Expr<T>) eval.get();
-				return substitute;
-			} else {
-				return expr;
-			}
-		}
-		return expr.map(e -> substitute(e, sub));
-	}
 }
