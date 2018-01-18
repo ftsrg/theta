@@ -21,7 +21,8 @@ import hu.bme.mit.theta.core.type.Type;
 public abstract class ConstDecl<DeclType extends Type> extends Decl<DeclType> {
 	private static final String DECL_LABEL = "Const";
 
-	ConstDecl() {
+	ConstDecl(final String name, final DeclType type) {
+		super(name, type);
 	}
 
 	@Override

@@ -15,6 +15,8 @@
  */
 package hu.bme.mit.theta.core.decl;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.type.anytype.Exprs.Ref;
 
 import hu.bme.mit.theta.core.type.Type;
@@ -24,15 +26,25 @@ public abstract class Decl<DeclType extends Type> {
 	private static final int HASH_SEED = 5351;
 	private volatile int hashCode = 0;
 
+	private final String name;
+	private final DeclType type;
 	private final RefExpr<DeclType> ref;
 
-	public Decl() {
+	public Decl(final String name, final DeclType type) {
+		checkNotNull(name);
+		checkArgument(name.length() > 0);
+		this.name = name;
+		this.type = checkNotNull(type);
 		this.ref = Ref(this);
 	}
 
-	public abstract String getName();
+	public final String getName() {
+		return name;
+	}
 
-	public abstract DeclType getType();
+	public final DeclType getType() {
+		return type;
+	}
 
 	public final RefExpr<DeclType> getRef() {
 		return ref;
