@@ -15,7 +15,6 @@
  */
 package hu.bme.mit.theta.core.type.proctype;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.type.proctype.ProcExprs.Proc;
 import static java.util.stream.Collectors.toList;
@@ -31,34 +30,23 @@ import hu.bme.mit.theta.core.type.Type;
 
 public final class ProcDecl<ReturnType extends Type> extends Decl<ProcType<ReturnType>> {
 
-	private final String name;
 	private final List<ParamDecl<? extends Type>> paramDecls;
 	private final ReturnType returnType;
-	private final ProcType<ReturnType> type;
 
 	ProcDecl(final String name, final List<? extends ParamDecl<? extends Type>> paramDecls,
 			final ReturnType returnType) {
-		checkNotNull(name);
-		checkNotNull(paramDecls);
-		checkNotNull(returnType);
-		checkArgument(name.length() > 0);
-		this.name = name;
+		super(name, createProcType(paramDecls, returnType));
 		this.paramDecls = ImmutableList.copyOf(paramDecls);
 		this.returnType = returnType;
-
-		type = createProcType(paramDecls, returnType);
 	}
 
 	private static <ReturnType extends Type> ProcType<ReturnType> createProcType(
 			final List<? extends ParamDecl<? extends Type>> paramDecls, final ReturnType returnType) {
+		checkNotNull(paramDecls);
+		checkNotNull(returnType);
 		final Stream<Type> paramTypeStream = paramDecls.stream().map(ParamDecl::getType);
 		final List<Type> paramTypes = paramTypeStream.collect(toList());
 		return Proc(paramTypes, returnType);
-	}
-
-	@Override
-	public String getName() {
-		return name;
 	}
 
 	public List<? extends ParamDecl<?>> getParamDecls() {
@@ -70,15 +58,10 @@ public final class ProcDecl<ReturnType extends Type> extends Decl<ProcType<Retur
 	}
 
 	@Override
-	public ProcType<ReturnType> getType() {
-		return type;
-	}
-
-	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("Proc(");
-		sb.append(name);
+		sb.append(getName());
 		for (final ParamDecl<?> paramDecl : paramDecls) {
 			sb.append(", ");
 			sb.append(paramDecl);
