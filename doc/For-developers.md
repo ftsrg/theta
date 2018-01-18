@@ -35,7 +35,7 @@ The projects are currently developed and tested with [Eclipse Oxygen](https://ww
 * Add your fork (or the main repository) to Eclipse in the _Git Repositories_ window.
 * To import the projects, choose _File / Import..._ / _Gradle_ / _Existing Gradle Project_, specify the root directory and use the default settings.
 * At this point the projects may contain errors (due to some files not being generated). Build the projects from command line, and refresh the projects in Eclipse.
-* If you use the Z3 solver, the _lib_ folder that is in the root directory of the repository must be on the PATH.
+* If you use the Z3 solver, go to the properties of the `solver.z3` project, select _Java Build Path_ / _Libraries_ / _Project and External Dependencies_ / _Native library location_. Click on _Edit_ and browse the _lib_ folder that is located in the root of the repository. Alternatively, you can also add the _lib_ folder to the PATH.
   * On Windows, Z3 requires some additional libraries. See the [dependencies page](Dependencies.md) for more information.
 * If there are access restriction errors in Eclipse due to JavaFX then either install the [e(fx)clipse plugin](http://www.eclipse.org/efxclipse) or go to the _Java Build Path_ in the properties of the project and under the _Libraries_ tab delete the JRE System Library and re-add it.
 * There is a code formatting profile (ThetaFormatterProfile.xml) in this directory. In Eclipse, go to _Window_ / _Preferences_ / _Java_ / _Code Style_ / _Formatter_ and import the profile. You can enable automatic formatting on save under _Java_ / _Editor_ / _Save Actions_.
