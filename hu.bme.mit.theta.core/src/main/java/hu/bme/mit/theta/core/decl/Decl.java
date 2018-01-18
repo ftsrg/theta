@@ -1,12 +1,12 @@
 /*
  *  Copyright 2017 Budapest University of Technology and Economics
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,15 +15,44 @@
  */
 package hu.bme.mit.theta.core.decl;
 
+import static hu.bme.mit.theta.core.type.anytype.Exprs.Ref;
+
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 
-public interface Decl<DeclType extends Type> {
+public abstract class Decl<DeclType extends Type> {
+	private static final int HASH_SEED = 5351;
+	private volatile int hashCode = 0;
 
-	String getName();
+	private final RefExpr<DeclType> ref;
 
-	DeclType getType();
+	public Decl() {
+		this.ref = Ref(this);
+	}
 
-	RefExpr<DeclType> getRef();
+	public abstract String getName();
+
+	public abstract DeclType getType();
+
+	public final RefExpr<DeclType> getRef() {
+		return ref;
+	}
+
+	@Override
+	public final int hashCode() {
+		int result = hashCode;
+		if (result == 0) {
+			result = HASH_SEED;
+			result = 31 * result + getName().hashCode();
+			result = 31 * result + getType().hashCode();
+			hashCode = result;
+		}
+		return result;
+	}
+
+	@Override
+	public final boolean equals(final Object obj) {
+		return this == obj;
+	}
 
 }

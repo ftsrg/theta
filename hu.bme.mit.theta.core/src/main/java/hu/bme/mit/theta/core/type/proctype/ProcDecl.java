@@ -25,11 +25,11 @@ import java.util.stream.Stream;
 
 import com.google.common.collect.ImmutableList;
 
-import hu.bme.mit.theta.core.decl.AbstractDecl;
+import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.type.Type;
 
-public final class ProcDecl<ReturnType extends Type> extends AbstractDecl<ProcType<ReturnType>> {
+public final class ProcDecl<ReturnType extends Type> extends Decl<ProcType<ReturnType>> {
 
 	private final String name;
 	private final List<ParamDecl<? extends Type>> paramDecls;
