@@ -19,6 +19,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 
 import java.util.Collection;
+import java.util.Collections;
 
 import hu.bme.mit.theta.analysis.TransFunc;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
@@ -44,8 +45,9 @@ public final class PredTransFunc implements TransFunc<PredState, ExprAction, Pre
 		checkNotNull(action);
 		checkNotNull(prec);
 
-		return predAbstractor.createStatesForExpr(And(state.toExpr(), action.toExpr()), VarIndexing.all(0), prec,
-				action.nextIndexing());
+		final Collection<PredState> succStates = predAbstractor.createStatesForExpr(
+				And(state.toExpr(), action.toExpr()), VarIndexing.all(0), prec, action.nextIndexing());
+		return succStates.isEmpty() ? Collections.singleton(PredState.bottom()) : succStates;
 	}
 
 }

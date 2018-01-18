@@ -18,6 +18,7 @@ package hu.bme.mit.theta.analysis.pred;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Collection;
+import java.util.Collections;
 
 import hu.bme.mit.theta.analysis.InitFunc;
 import hu.bme.mit.theta.analysis.pred.PredAbstractors.PredAbstractor;
@@ -42,7 +43,9 @@ public final class PredInitFunc implements InitFunc<PredState, PredPrec> {
 	@Override
 	public Collection<? extends PredState> getInitStates(final PredPrec prec) {
 		checkNotNull(prec);
-		return predAbstractor.createStatesForExpr(initExpr, VarIndexing.all(0), prec, VarIndexing.all(0));
+		final Collection<PredState> initStates = predAbstractor.createStatesForExpr(initExpr, VarIndexing.all(0), prec,
+				VarIndexing.all(0));
+		return initStates.isEmpty() ? Collections.singleton(PredState.bottom()) : initStates;
 	}
 
 }

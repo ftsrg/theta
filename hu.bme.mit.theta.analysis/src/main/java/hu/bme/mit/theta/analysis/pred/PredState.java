@@ -49,6 +49,10 @@ public final class PredState implements ExprState {
 		return new PredState(preds);
 	}
 
+	public static PredState bottom() {
+		return of(False());
+	}
+
 	// Convenience factory methods
 
 	public static PredState of() {

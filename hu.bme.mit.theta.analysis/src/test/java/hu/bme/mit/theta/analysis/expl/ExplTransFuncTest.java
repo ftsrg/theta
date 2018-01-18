@@ -32,6 +32,7 @@ import org.junit.Test;
 import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.theta.analysis.expr.ExprAction;
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.type.inttype.IntType;
@@ -40,13 +41,13 @@ import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 
 public class ExplTransFuncTest {
 	private final VarDecl<IntType> x = Var("x", Int());
+	private final ExplPrec prec = ExplPrec.of(ImmutableList.of(x));
+	private final ExplState state = ExplState.of(ImmutableValuation.builder().put(x, Int(1)).build());
 
 	ExplTransFunc transFunc = ExplTransFunc.create(Z3SolverFactory.getInstace().createSolver());
 
 	@Test
-	public void test() {
-		final ExplPrec prec = ExplPrec.of(ImmutableList.of(x));
-		final ExplState state = ExplState.of(ImmutableValuation.builder().put(x, Int(1)).build());
+	public void testNormal() {
 		final ExprAction action = mock(ExprAction.class);
 		doReturn(Eq(Prime(x.getRef()), Add(x.getRef(), Int(1)))).when(action).toExpr();
 		when(action.nextIndexing()).thenReturn(VarIndexing.all(1));
@@ -55,5 +56,16 @@ public class ExplTransFuncTest {
 		Assert.assertEquals(1, succStates.size());
 		Assert.assertEquals(ExplState.of(ImmutableValuation.builder().put(x, Int(2)).build()),
 				succStates.iterator().next());
+	}
+
+	@Test
+	public void testBottom() {
+		final ExprAction action = mock(ExprAction.class);
+		doReturn(Eq(x.getRef(), Int(2))).when(action).toExpr();
+		when(action.nextIndexing()).thenReturn(VarIndexing.all(1));
+
+		final Collection<? extends ExplState> succStates = transFunc.getSuccStates(state, action, prec);
+		Assert.assertEquals(1, succStates.size());
+		Assert.assertEquals(ExplState.bottom(), Utils.singleElementOf(succStates));
 	}
 }
