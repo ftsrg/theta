@@ -10,7 +10,30 @@ There are two ways to work with Theta. You can use the precompiled binaries as a
 
 ## Use Theta as a library
 
-TODO
+Theta is deployed to [Bintray](https://bintray.com/ftsrg/maven/theta). For detailed information on use with build automaton systems like Maven and Gradle, check the project page [here](https://bintray.com/ftsrg/maven/theta).
+
+An example for use with Gradle:
+
+```gradle
+apply plugin: 'java'
+
+repositories {
+  mavenCentral()
+  maven {
+    url  "https://dl.bintray.com/ftsrg/maven" 
+  }
+}
+
+dependencies {
+  compile group: 'theta' name: 'hu.bme.mit.theta.core' version: thetaVersion
+  compile group: 'theta' name: 'hu.bme.mit.theta.solver' version: thetaVersion
+  compile group: 'theta' name: 'hu.bme.mit.theta.solver.z3' version: thetaVersion
+}
+
+ext {
+  thetaVersion = '0.0.1'
+}
+```
 
 ## Work with the source code of Theta
 
