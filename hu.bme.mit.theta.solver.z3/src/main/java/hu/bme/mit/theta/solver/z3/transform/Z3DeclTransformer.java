@@ -35,11 +35,14 @@ final class Z3DeclTransformer {
 	private final Z3SymbolTable symbolTable;
 	private final Context context;
 
+	private int symbolCount;
+
 	Z3DeclTransformer(final Z3TransformationManager transformer, final Z3SymbolTable symbolTable,
 			final Context context) {
 		this.transformer = transformer;
 		this.symbolTable = symbolTable;
 		this.context = context;
+		this.symbolCount = 0;
 	}
 
 	public com.microsoft.z3.FuncDecl toSymbol(final Decl<?> decl) {
@@ -68,7 +71,7 @@ final class Z3DeclTransformer {
 			final com.microsoft.z3.Sort[] paramSorts = paramTypes.stream().map(t -> transformer.toSort(t))
 					.toArray(size -> new com.microsoft.z3.Sort[size]);
 
-			symbol = context.mkFuncDecl(decl.getName(), paramSorts, returnSort);
+			symbol = context.mkFuncDecl(symbolNameFor(decl), paramSorts, returnSort);
 			symbolTable.put(decl, symbol);
 		}
 
@@ -81,7 +84,7 @@ final class Z3DeclTransformer {
 			throw new UnsupportedOperationException("Only simple types are supported");
 		} else {
 			final com.microsoft.z3.Sort sort = transformer.toSort(type);
-			return context.mkConstDecl(decl.getName(), sort);
+			return context.mkConstDecl(symbolNameFor(decl), sort);
 		}
 	}
 
@@ -104,6 +107,10 @@ final class Z3DeclTransformer {
 		} else {
 			return Tuple2.of(ImmutableList.of(), type);
 		}
+	}
+
+	private String symbolNameFor(final Decl<?> decl) {
+		return String.format("%s_%d", decl.getName(), symbolCount++);
 	}
 
 }
