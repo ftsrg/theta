@@ -44,21 +44,56 @@ import hu.bme.mit.theta.core.utils.VarIndexing;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.utils.WithPushPop;
 
+/**
+ * Strategies for performing predicate abstraction over an expression.
+ */
 public class PredAbstractors {
 
+	/**
+	 * Interface for performing predicate abstraction over an expression.
+	 */
 	public interface PredAbstractor {
+		/**
+		 * Create predicate states for a given expression with a given
+		 * precision.
+		 *
+		 * @param expr Expression to be abstracted
+		 * @param exprIndexing Unfold indexing of the expression
+		 * @param prec Precision
+		 * @param precIndexing Unfold indexing of the precision
+		 * @return
+		 */
 		Collection<PredState> createStatesForExpr(final Expr<BoolType> expr, final VarIndexing exprIndexing,
 				final PredPrec prec, final VarIndexing precIndexing);
 	}
 
+	/**
+	 * Get the strategy that uses Boolean abstraction and splits the disjuncts.
+	 *
+	 * @param solver
+	 * @return
+	 */
 	public static PredAbstractor booleanSplitAbstractor(final Solver solver) {
 		return new BooleanAbstractor(solver, true);
 	}
 
+	/**
+	 * Get the strategy that uses Boolean abstraction (and keeps the formula as
+	 * a whole).
+	 *
+	 * @param solver
+	 * @return
+	 */
 	public static PredAbstractor booleanAbstractor(final Solver solver) {
 		return new BooleanAbstractor(solver, false);
 	}
 
+	/**
+	 * Get the strategy that uses Cartesian abstraction.
+	 *
+	 * @param solver
+	 * @return
+	 */
 	public static PredAbstractor cartesianAbstractor(final Solver solver) {
 		return new CartesianAbstractor(solver);
 	}
