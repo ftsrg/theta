@@ -5,6 +5,7 @@ dependencies {
   compile project(':hu.bme.mit.theta.common')
   compile project(':hu.bme.mit.theta.core')
   compile project(':hu.bme.mit.theta.analysis')
+  compile project(':hu.bme.mit.theta.solver.z3')
   antlr group: 'org.antlr', name: 'antlr4', version: antlrVersion
   compile group: 'com.beust', name: 'jcommander', version: jcommanderVersion
   compile group: 'com.google.guava', name: 'guava', version: guavaVersion
