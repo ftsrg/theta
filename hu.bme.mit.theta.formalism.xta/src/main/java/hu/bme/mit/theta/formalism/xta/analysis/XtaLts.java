@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.formalism.xta.analysis;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.formalism.xta.XtaProcess.LocKind.COMMITTED;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -76,6 +77,10 @@ public final class XtaLts implements LTS<XtaState<?>, XtaAction> {
 				continue;
 			}
 
+			if (state.isCommitted() && emitLoc.getKind() != COMMITTED && recvLoc.getKind() != COMMITTED) {
+				continue;
+			}
+
 			for (final Edge recvEdge : recvLoc.getOutEdges()) {
 				if (!recvEdge.getSync().isPresent()) {
 					continue;
@@ -98,6 +103,10 @@ public final class XtaLts implements LTS<XtaState<?>, XtaAction> {
 
 	private static void addSimpleActionsForEdge(final Collection<XtaAction> result, final XtaSystem system,
 			final XtaState<?> state, final Edge edge) {
+		final Loc loc = edge.getSource();
+		if (state.isCommitted() && loc.getKind() != COMMITTED) {
+			return;
+		}
 		final XtaAction action = XtaAction.simple(system, state.getLocs(), edge);
 		result.add(action);
 	}
