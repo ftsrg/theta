@@ -56,7 +56,7 @@ public abstract class Valuation implements Substitution {
 			return false;
 		}
 		for (final Decl<?> varDecl : that.getDecls()) {
-			if (!this.getDecls().contains(varDecl) || !that.eval(varDecl).get().equals(this.eval(varDecl).get())) {
+			if (!that.eval(varDecl).equals(this.eval(varDecl))) {
 				return false;
 			}
 		}
