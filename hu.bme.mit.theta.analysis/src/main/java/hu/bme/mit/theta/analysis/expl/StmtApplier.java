@@ -57,14 +57,14 @@ final class StmtApplier {
 
 	private static ApplyResult applyAssign(final AssignStmt<?> stmt, final MutableValuation val,
 			final boolean approximate) {
-		final VarDecl<?> var = stmt.getVarDecl();
+		final VarDecl<?> varDecl = stmt.getVarDecl();
 		final Expr<?> expr = ExprUtils.simplify(stmt.getExpr(), val);
 		if (expr instanceof LitExpr<?>) {
 			final LitExpr<?> lit = (LitExpr<?>) expr;
-			val.put(var, lit);
+			val.put(varDecl, lit);
 			return ApplyResult.SUCCESS;
 		} else if (approximate) {
-			val.remove(var);
+			val.remove(varDecl);
 			return ApplyResult.SUCCESS;
 		} else {
 			return ApplyResult.FAILURE;
@@ -92,8 +92,8 @@ final class StmtApplier {
 
 	private static ApplyResult applyHavoc(final HavocStmt<?> stmt, final MutableValuation val,
 			final boolean approximate) {
-		final VarDecl<?> var = stmt.getVarDecl();
-		val.remove(var);
+		final VarDecl<?> varDecl = stmt.getVarDecl();
+		val.remove(varDecl);
 		return ApplyResult.SUCCESS;
 	}
 

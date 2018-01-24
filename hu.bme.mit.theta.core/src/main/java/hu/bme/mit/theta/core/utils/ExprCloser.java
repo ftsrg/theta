@@ -39,8 +39,8 @@ final class ExprCloser {
 			final RefExpr<T> ref = (RefExpr<T>) expr;
 			final Decl<T> decl = ref.getDecl();
 			if (decl instanceof VarDecl) {
-				final VarDecl<T> var = (VarDecl<T>) decl;
-				final ParamDecl<?> param = mapping.computeIfAbsent(var,
+				final VarDecl<T> varDecl = (VarDecl<T>) decl;
+				final ParamDecl<?> param = mapping.computeIfAbsent(varDecl,
 						v -> Param(format(PARAM_NAME_FORMAT, v.getName()), v.getType()));
 				final Expr<T> paramRef = TypeUtils.cast(param.getRef(), expr.getType());
 				return paramRef;

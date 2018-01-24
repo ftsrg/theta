@@ -68,13 +68,13 @@ final class XtaUpdate {
 			} else {
 				@SuppressWarnings("unchecked")
 				final RefExpr<Type> leftOp = (RefExpr<Type>) ctx.fLeftOp.accept(visitor);
-				final VarDecl<Type> var = (VarDecl<Type>) leftOp.getDecl();
+				final VarDecl<Type> varDecl = (VarDecl<Type>) leftOp.getDecl();
 				@SuppressWarnings("unchecked")
 				final Expr<Type> rightOp = (Expr<Type>) ctx.fRightOp.accept(visitor);
 
 				final AssignmentOpContext op = ctx.fOper;
 				if (op.fAssignOp != null) {
-					return Stmts.Assign(var, rightOp);
+					return Stmts.Assign(varDecl, rightOp);
 				} else {
 					// TODO Auto-generated method stub
 					throw new UnsupportedOperationException();
@@ -88,8 +88,8 @@ final class XtaUpdate {
 				return visitChildren(ctx);
 			} else {
 				final RefExpr<?> ref = (RefExpr<?>) ctx.fOp.accept(visitor);
-				final VarDecl<?> var = (VarDecl<?>) ref.getDecl();
-				final VarDecl<IntType> intVar = TypeUtils.cast(var, Int());
+				final VarDecl<?> varDecl = (VarDecl<?>) ref.getDecl();
+				final VarDecl<IntType> intVar = TypeUtils.cast(varDecl, Int());
 				final RefExpr<IntType> intRef = intVar.getRef();
 
 				final PostfixOpContext op = Utils.singleElementOf(ctx.fOpers);

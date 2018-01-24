@@ -133,8 +133,8 @@ final class XtaProcessSymbol implements Symbol, Scope {
 			final Object value = env.eval(variable);
 			if (value instanceof RefExpr) {
 				final RefExpr<?> ref = (RefExpr<?>) value;
-				final VarDecl<?> var = (VarDecl<?>) ref.getDecl();
-				addVariable(process, var);
+				final VarDecl<?> varDecl = (VarDecl<?>) ref.getDecl();
+				addVariable(process, varDecl);
 			}
 		}
 	}
@@ -144,21 +144,21 @@ final class XtaProcessSymbol implements Symbol, Scope {
 			final Expr<?> value = variable.instantiate(process.getName() + "_", env);
 			if (value instanceof RefExpr) {
 				final RefExpr<?> ref = (RefExpr<?>) value;
-				final VarDecl<?> var = (VarDecl<?>) ref.getDecl();
-				addVariable(process, var);
+				final VarDecl<?> varDecl = (VarDecl<?>) ref.getDecl();
+				addVariable(process, varDecl);
 			}
 			env.define(variable, value);
 		}
 	}
 
-	private void addVariable(final XtaProcess process, final VarDecl<?> var) {
-		final Type type = var.getType();
+	private void addVariable(final XtaProcess process, final VarDecl<?> varDecl) {
+		final Type type = varDecl.getType();
 		if (type instanceof BoolType) {
-			process.addDataVar(var);
+			process.addDataVar(varDecl);
 		} else if (type instanceof IntType) {
-			process.addDataVar(var);
+			process.addDataVar(varDecl);
 		} else if (type instanceof RatType) {
-			final VarDecl<RatType> clock = TypeUtils.cast(var, Rat());
+			final VarDecl<RatType> clock = TypeUtils.cast(varDecl, Rat());
 			process.addClockVar(clock);
 		} else {
 			// do nothing

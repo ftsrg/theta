@@ -31,19 +31,19 @@ public final class CopyOp implements ClockOp {
 
 	private static final int HASH_SEED = 1289;
 
-	private final VarDecl<RatType> var;
+	private final VarDecl<RatType> varDecl;
 	private final VarDecl<RatType> value;
 
 	private volatile int hashCode = 0;
 	private volatile AssignStmt<RatType> stmt = null;
 
-	CopyOp(final VarDecl<RatType> var, final VarDecl<RatType> value) {
-		this.var = checkNotNull(var);
+	CopyOp(final VarDecl<RatType> varDecl, final VarDecl<RatType> value) {
+		this.varDecl = checkNotNull(varDecl);
 		this.value = checkNotNull(value);
 	}
 
 	public VarDecl<RatType> getVar() {
-		return var;
+		return varDecl;
 	}
 
 	public VarDecl<RatType> getValue() {
@@ -52,14 +52,14 @@ public final class CopyOp implements ClockOp {
 
 	@Override
 	public Collection<VarDecl<RatType>> getVars() {
-		return ImmutableSet.of(var, value);
+		return ImmutableSet.of(varDecl, value);
 	}
 
 	@Override
 	public AssignStmt<RatType> toStmt() {
 		AssignStmt<RatType> result = stmt;
 		if (result == null) {
-			result = Assign(var, value.getRef());
+			result = Assign(varDecl, value.getRef());
 			stmt = result;
 		}
 		return stmt;
@@ -75,7 +75,7 @@ public final class CopyOp implements ClockOp {
 		int result = hashCode;
 		if (result == 0) {
 			result = HASH_SEED;
-			result = 31 * result + var.hashCode();
+			result = 31 * result + varDecl.hashCode();
 			result = 31 * result + value.hashCode();
 			hashCode = result;
 		}
@@ -96,7 +96,7 @@ public final class CopyOp implements ClockOp {
 
 	@Override
 	public String toString() {
-		return Utils.lispStringBuilder("copy").add(var.getName()).add(value.getName()).toString();
+		return Utils.lispStringBuilder("copy").add(varDecl.getName()).add(value.getName()).toString();
 	}
 
 }

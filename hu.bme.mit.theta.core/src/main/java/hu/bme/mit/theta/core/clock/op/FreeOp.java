@@ -31,29 +31,29 @@ public final class FreeOp implements ClockOp {
 
 	private static final int HASH_SEED = 2281;
 
-	private final VarDecl<RatType> var;
+	private final VarDecl<RatType> varDecl;
 
 	private volatile int hashCode = 0;
 	private volatile HavocStmt<RatType> stmt = null;
 
-	FreeOp(final VarDecl<RatType> var) {
-		this.var = checkNotNull(var);
+	FreeOp(final VarDecl<RatType> varDecl) {
+		this.varDecl = checkNotNull(varDecl);
 	}
 
 	public VarDecl<RatType> getVar() {
-		return var;
+		return varDecl;
 	}
 
 	@Override
 	public Collection<VarDecl<RatType>> getVars() {
-		return ImmutableSet.of(var);
+		return ImmutableSet.of(varDecl);
 	}
 
 	@Override
 	public HavocStmt<RatType> toStmt() {
 		HavocStmt<RatType> result = stmt;
 		if (result == null) {
-			result = Havoc(var);
+			result = Havoc(varDecl);
 			stmt = result;
 		}
 		return result;
@@ -69,7 +69,7 @@ public final class FreeOp implements ClockOp {
 		int result = hashCode;
 		if (result == 0) {
 			result = HASH_SEED;
-			result = 31 * result + var.hashCode();
+			result = 31 * result + varDecl.hashCode();
 			hashCode = result;
 		}
 		return result;
@@ -89,7 +89,7 @@ public final class FreeOp implements ClockOp {
 
 	@Override
 	public String toString() {
-		return Utils.lispStringBuilder("free").add(var.getName()).toString();
+		return Utils.lispStringBuilder("free").add(varDecl.getName()).toString();
 	}
 
 }

@@ -78,10 +78,10 @@ public final class ExplPrec implements Prec {
 	public ExplState createState(final Valuation valuation) {
 		checkNotNull(valuation);
 		final ImmutableValuation.Builder builder = ImmutableValuation.builder();
-		for (final VarDecl<?> var : vars) {
-			final Optional<? extends LitExpr<?>> eval = valuation.eval(var);
+		for (final VarDecl<?> varDecl : vars) {
+			final Optional<? extends LitExpr<?>> eval = valuation.eval(varDecl);
 			if (eval.isPresent()) {
-				builder.put(var, eval.get());
+				builder.put(varDecl, eval.get());
 			}
 		}
 		return ExplState.of(builder.build());

@@ -34,11 +34,11 @@ import hu.bme.mit.theta.formalism.xta.XtaSystem;
 
 final class XtaExplInitFunc implements InitFunc<ExplState, UnitPrec> {
 
-	private final Collection<VarDecl<?>> vars;
+	private final Collection<VarDecl<?>> varDecls;
 
 	private XtaExplInitFunc(final XtaSystem system) {
 		checkNotNull(system);
-		vars = system.getDataVars();
+		varDecls = system.getDataVars();
 	}
 
 	public static XtaExplInitFunc create(final XtaSystem system) {
@@ -49,12 +49,12 @@ final class XtaExplInitFunc implements InitFunc<ExplState, UnitPrec> {
 	public Collection<ExplState> getInitStates(final UnitPrec prec) {
 		checkNotNull(prec);
 		final MutableValuation val = new MutableValuation();
-		for (final VarDecl<?> var : vars) {
-			final Type type = var.getType();
+		for (final VarDecl<?> varDecl : varDecls) {
+			final Type type = varDecl.getType();
 			if (type instanceof BoolType) {
-				val.put(var, False());
+				val.put(varDecl, False());
 			} else if (type instanceof IntType) {
-				val.put(var, Int(0));
+				val.put(varDecl, Int(0));
 			} else {
 				throw new UnsupportedOperationException();
 			}

@@ -33,20 +33,20 @@ public final class ResetOp implements ClockOp {
 
 	private static final int HASH_SEED = 4507;
 
-	private final VarDecl<RatType> var;
+	private final VarDecl<RatType> varDecl;
 	private final int value;
 
 	private volatile int hashCode = 0;
 	private volatile AssignStmt<RatType> stmt = null;
 
-	ResetOp(final VarDecl<RatType> clock, final int value) {
+	ResetOp(final VarDecl<RatType> varDecl, final int value) {
 		checkArgument(value >= 0);
-		this.var = checkNotNull(clock);
+		this.varDecl = checkNotNull(varDecl);
 		this.value = value;
 	}
 
 	public VarDecl<RatType> getVar() {
-		return var;
+		return varDecl;
 	}
 
 	public int getValue() {
@@ -55,14 +55,14 @@ public final class ResetOp implements ClockOp {
 
 	@Override
 	public Collection<VarDecl<RatType>> getVars() {
-		return ImmutableSet.of(var);
+		return ImmutableSet.of(varDecl);
 	}
 
 	@Override
 	public AssignStmt<RatType> toStmt() {
 		AssignStmt<RatType> result = stmt;
 		if (result == null) {
-			result = Assign(var, Rat(value, 1));
+			result = Assign(varDecl, Rat(value, 1));
 			stmt = result;
 		}
 		return result;
@@ -78,7 +78,7 @@ public final class ResetOp implements ClockOp {
 		int result = hashCode;
 		if (result == 0) {
 			result = HASH_SEED;
-			result = 31 * result + var.hashCode();
+			result = 31 * result + varDecl.hashCode();
 			result = 31 * result + value;
 			hashCode = result;
 		}
@@ -99,7 +99,7 @@ public final class ResetOp implements ClockOp {
 
 	@Override
 	public String toString() {
-		return Utils.lispStringBuilder("reset").add(var.getName()).add(value).toString();
+		return Utils.lispStringBuilder("reset").add(varDecl.getName()).add(value).toString();
 	}
 
 }
