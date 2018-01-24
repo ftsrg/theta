@@ -33,19 +33,19 @@ public final class ShiftOp implements ClockOp {
 
 	private static final int HASH_SEED = 5521;
 
-	private final VarDecl<RatType> var;
+	private final VarDecl<RatType> varDecl;
 	private final int offset;
 
 	private volatile int hashCode = 0;
 	private volatile AssignStmt<RatType> stmt = null;
 
-	ShiftOp(final VarDecl<RatType> var, final int offset) {
-		this.var = checkNotNull(var);
+	ShiftOp(final VarDecl<RatType> varDecl, final int offset) {
+		this.varDecl = checkNotNull(varDecl);
 		this.offset = offset;
 	}
 
 	public VarDecl<RatType> getVar() {
-		return var;
+		return varDecl;
 	}
 
 	public int getOffset() {
@@ -54,14 +54,14 @@ public final class ShiftOp implements ClockOp {
 
 	@Override
 	public Collection<VarDecl<RatType>> getVars() {
-		return ImmutableSet.of(var);
+		return ImmutableSet.of(varDecl);
 	}
 
 	@Override
 	public AssignStmt<RatType> toStmt() {
 		AssignStmt<RatType> result = stmt;
 		if (result == null) {
-			result = Assign(var, Add(var.getRef(), Rat(offset, 1)));
+			result = Assign(varDecl, Add(varDecl.getRef(), Rat(offset, 1)));
 			stmt = result;
 		}
 		return result;
@@ -77,7 +77,7 @@ public final class ShiftOp implements ClockOp {
 		int result = hashCode;
 		if (result == 0) {
 			result = HASH_SEED;
-			result = 31 * result + var.hashCode();
+			result = 31 * result + varDecl.hashCode();
 			result = 31 * result + offset;
 			hashCode = result;
 		}
@@ -98,7 +98,7 @@ public final class ShiftOp implements ClockOp {
 
 	@Override
 	public String toString() {
-		return Utils.lispStringBuilder("shift").add(var.getName()).add(offset).toString();
+		return Utils.lispStringBuilder("shift").add(varDecl.getName()).add(offset).toString();
 	}
 
 }

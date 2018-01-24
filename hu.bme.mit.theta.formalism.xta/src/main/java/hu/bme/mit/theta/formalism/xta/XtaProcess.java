@@ -97,16 +97,16 @@ public final class XtaProcess {
 
 	////
 
-	public void addDataVar(final VarDecl<?> var) {
-		checkNotNull(var);
-		checkArgument(!clockVars.contains(var));
-		dataVars.add(var);
+	public void addDataVar(final VarDecl<?> varDecl) {
+		checkNotNull(varDecl);
+		checkArgument(!clockVars.contains(varDecl));
+		dataVars.add(varDecl);
 	}
 
-	public void addClockVar(final VarDecl<RatType> var) {
-		checkNotNull(var);
-		checkArgument(!dataVars.contains(var));
-		clockVars.add(var);
+	public void addClockVar(final VarDecl<RatType> varDecl) {
+		checkNotNull(varDecl);
+		checkArgument(!dataVars.contains(varDecl));
+		clockVars.add(varDecl);
 	}
 
 	public void setInitLoc(final Loc loc) {
@@ -142,13 +142,13 @@ public final class XtaProcess {
 
 			boolean dataExpr = false;
 			boolean clockExpr = false;
-			for (final VarDecl<?> var : vars) {
-				if (dataVars.contains(var)) {
+			for (final VarDecl<?> varDecl : vars) {
+				if (dataVars.contains(varDecl)) {
 					dataExpr = true;
-				} else if (clockVars.contains(var)) {
+				} else if (clockVars.contains(varDecl)) {
 					clockExpr = true;
 				} else {
-					throw new IllegalArgumentException("Undeclared variable: " + var.getName());
+					throw new IllegalArgumentException("Undeclared variable: " + varDecl.getName());
 				}
 			}
 
@@ -170,16 +170,16 @@ public final class XtaProcess {
 
 		final ImmutableList.Builder<Update> builder = ImmutableList.builder();
 		for (final Stmt stmt : stmts) {
-			final Collection<VarDecl<?>> vars = StmtUtils.getVars(stmt);
+			final Collection<VarDecl<?>> varsDecls = StmtUtils.getVars(stmt);
 			boolean dataStmt = false;
 			boolean clockStmt = false;
-			for (final VarDecl<?> var : vars) {
-				if (dataVars.contains(var)) {
+			for (final VarDecl<?> varDecl : varsDecls) {
+				if (dataVars.contains(varDecl)) {
 					dataStmt = true;
-				} else if (clockVars.contains(var)) {
+				} else if (clockVars.contains(varDecl)) {
 					clockStmt = true;
 				} else {
-					throw new IllegalArgumentException("Undeclared variable: " + var.getName());
+					throw new IllegalArgumentException("Undeclared variable: " + varDecl.getName());
 				}
 			}
 

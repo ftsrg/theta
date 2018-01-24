@@ -56,24 +56,24 @@ public final class ClockOps {
 
 	////
 
-	public static CopyOp Copy(final VarDecl<RatType> var, final VarDecl<RatType> value) {
-		return new CopyOp(var, value);
+	public static CopyOp Copy(final VarDecl<RatType> varDecl, final VarDecl<RatType> value) {
+		return new CopyOp(varDecl, value);
 	}
 
-	public static FreeOp Free(final VarDecl<RatType> var) {
-		return new FreeOp(var);
+	public static FreeOp Free(final VarDecl<RatType> varDecl) {
+		return new FreeOp(varDecl);
 	}
 
 	public static GuardOp Guard(final ClockConstr constr) {
 		return new GuardOp(constr);
 	}
 
-	public static ResetOp Reset(final VarDecl<RatType> var, final int value) {
-		return new ResetOp(var, value);
+	public static ResetOp Reset(final VarDecl<RatType> varDecl, final int value) {
+		return new ResetOp(varDecl, value);
 	}
 
-	public static ShiftOp Shift(final VarDecl<RatType> var, final int offset) {
-		return new ShiftOp(var, offset);
+	public static ShiftOp Shift(final VarDecl<RatType> varDecl, final int offset) {
+		return new ShiftOp(varDecl, offset);
 	}
 
 	////
@@ -90,20 +90,20 @@ public final class ClockOps {
 
 		@Override
 		public <DeclType extends Type> ClockOp visit(final HavocStmt<DeclType> stmt, final Void param) {
-			final VarDecl<RatType> var = TypeUtils.cast(stmt.getVarDecl(), Rat());
-			return Free(var);
+			final VarDecl<RatType> varDecl = TypeUtils.cast(stmt.getVarDecl(), Rat());
+			return Free(varDecl);
 		}
 
 		@Override
 		public <DeclType extends Type> ClockOp visit(final AssignStmt<DeclType> stmt, final Void param) {
 
-			final VarDecl<RatType> var = TypeUtils.cast(stmt.getVarDecl(), Rat());
+			final VarDecl<RatType> varDecl = TypeUtils.cast(stmt.getVarDecl(), Rat());
 			final Expr<?> expr = stmt.getExpr();
 
 			if (expr instanceof IntLitExpr) {
 				final IntLitExpr intLit = (IntLitExpr) expr;
 				final int value = Math.toIntExact(intLit.getValue());
-				return Reset(var, value);
+				return Reset(varDecl, value);
 
 			} else if (expr instanceof RefExpr) {
 				final RefExpr<?> rightRef = (RefExpr<?>) expr;
@@ -111,11 +111,11 @@ public final class ClockOps {
 				if (rightDecl instanceof VarDecl) {
 					final VarDecl<?> rightVar = (VarDecl<?>) rightDecl;
 					final VarDecl<RatType> rightRatVar = TypeUtils.cast(rightVar, Rat());
-					return Copy(var, rightRatVar);
+					return Copy(varDecl, rightRatVar);
 				}
 
 			} else if (expr instanceof AddExpr) {
-				final RefExpr<RatType> varRef = var.getRef();
+				final RefExpr<RatType> varRef = varDecl.getRef();
 				final AddExpr<?> addExpr = (AddExpr<?>) expr;
 				final Expr<?>[] ops = addExpr.getOps().toArray(new Expr<?>[0]);
 
@@ -126,14 +126,14 @@ public final class ClockOps {
 							final int num = ratLit.getNum();
 							final int denom = ratLit.getDenom();
 							if (denom == 1) {
-								return Shift(var, num);
+								return Shift(varDecl, num);
 							}
 						}
 					} else if (ops[1].equals(varRef)) {
 						if (ops[0] instanceof IntLitExpr) {
 							final IntLitExpr intLit = (IntLitExpr) ops[0];
 							final int offset = Math.toIntExact(intLit.getValue());
-							return Shift(var, offset);
+							return Shift(varDecl, offset);
 						}
 					}
 				}

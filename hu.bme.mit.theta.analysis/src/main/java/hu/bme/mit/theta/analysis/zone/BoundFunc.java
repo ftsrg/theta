@@ -80,21 +80,21 @@ public final class BoundFunc {
 		return new Builder(this);
 	}
 
-	public Optional<Integer> getLower(final VarDecl<RatType> var) {
-		checkNotNull(var);
-		if (var.equals(ZeroVar.getInstance())) {
+	public Optional<Integer> getLower(final VarDecl<RatType> varDecl) {
+		checkNotNull(varDecl);
+		if (varDecl.equals(ZeroVar.getInstance())) {
 			return Optional.of(0);
 		} else {
-			return Optional.ofNullable(varToLower.get(var));
+			return Optional.ofNullable(varToLower.get(varDecl));
 		}
 	}
 
-	public Optional<Integer> getUpper(final VarDecl<RatType> var) {
-		checkNotNull(var);
-		if (var.equals(ZeroVar.getInstance())) {
+	public Optional<Integer> getUpper(final VarDecl<RatType> varDecl) {
+		checkNotNull(varDecl);
+		if (varDecl.equals(ZeroVar.getInstance())) {
 			return Optional.of(0);
 		} else {
-			return Optional.ofNullable(varToUpper.get(var));
+			return Optional.ofNullable(varToUpper.get(varDecl));
 		}
 	}
 
@@ -170,10 +170,10 @@ public final class BoundFunc {
 			this.varToUpper = new HashMap<>(boundFunction.varToUpper);
 		}
 
-		public Builder remove(final VarDecl<RatType> var) {
+		public Builder remove(final VarDecl<RatType> varDecl) {
 			checkState(!isBuilt(), "Already built.");
-			varToLower.remove(var);
-			varToUpper.remove(var);
+			varToLower.remove(varDecl);
+			varToUpper.remove(varDecl);
 			return this;
 		}
 
@@ -205,42 +205,42 @@ public final class BoundFunc {
 
 		@Override
 		public Void visit(final UnitLtConstr constr, final Builder builder) {
-			final VarDecl<RatType> var = constr.getVar();
+			final VarDecl<RatType> varDecl = constr.getVar();
 			final int bound = constr.getBound();
-			builder.varToUpper.merge(var, bound, Integer::max);
+			builder.varToUpper.merge(varDecl, bound, Integer::max);
 			return null;
 		}
 
 		@Override
 		public Void visit(final UnitLeqConstr constr, final Builder builder) {
-			final VarDecl<RatType> var = constr.getVar();
+			final VarDecl<RatType> varDecl = constr.getVar();
 			final int bound = constr.getBound();
-			builder.varToUpper.merge(var, bound, Integer::max);
+			builder.varToUpper.merge(varDecl, bound, Integer::max);
 			return null;
 		}
 
 		@Override
 		public Void visit(final UnitGtConstr constr, final Builder builder) {
-			final VarDecl<RatType> var = constr.getVar();
+			final VarDecl<RatType> varDecl = constr.getVar();
 			final int bound = constr.getBound();
-			builder.varToLower.merge(var, bound, Integer::max);
+			builder.varToLower.merge(varDecl, bound, Integer::max);
 			return null;
 		}
 
 		@Override
 		public Void visit(final UnitGeqConstr constr, final Builder builder) {
-			final VarDecl<RatType> var = constr.getVar();
+			final VarDecl<RatType> varDecl = constr.getVar();
 			final int bound = constr.getBound();
-			builder.varToLower.merge(var, bound, Integer::max);
+			builder.varToLower.merge(varDecl, bound, Integer::max);
 			return null;
 		}
 
 		@Override
 		public Void visit(final UnitEqConstr constr, final Builder builder) {
-			final VarDecl<RatType> var = constr.getVar();
+			final VarDecl<RatType> varDecl = constr.getVar();
 			final int bound = constr.getBound();
-			builder.varToLower.merge(var, bound, Integer::max);
-			builder.varToUpper.merge(var, bound, Integer::max);
+			builder.varToLower.merge(varDecl, bound, Integer::max);
+			builder.varToUpper.merge(varDecl, bound, Integer::max);
 			return null;
 		}
 

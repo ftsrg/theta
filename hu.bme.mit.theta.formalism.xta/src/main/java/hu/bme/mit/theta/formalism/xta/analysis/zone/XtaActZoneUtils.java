@@ -59,8 +59,8 @@ public final class XtaActZoneUtils {
 			for (final Update update : updates) {
 				if (update.isClockUpdate()) {
 					final ResetOp op = (ResetOp) update.asClockUpdate().getClockOp();
-					final VarDecl<RatType> var = op.getVar();
-					result.remove(var);
+					final VarDecl<RatType> varDecl = op.getVar();
+					result.remove(varDecl);
 				}
 			}
 
@@ -96,16 +96,16 @@ public final class XtaActZoneUtils {
 			for (final Update update : receivingEdge.getUpdates()) {
 				if (update.isClockUpdate()) {
 					final ResetOp op = (ResetOp) update.asClockUpdate().getClockOp();
-					final VarDecl<RatType> var = op.getVar();
-					result.remove(var);
+					final VarDecl<RatType> varDecl = op.getVar();
+					result.remove(varDecl);
 				}
 			}
 
 			for (final Update update : emittingEdge.getUpdates()) {
 				if (update.isClockUpdate()) {
 					final ResetOp op = (ResetOp) update.asClockUpdate().getClockOp();
-					final VarDecl<RatType> var = op.getVar();
-					result.remove(var);
+					final VarDecl<RatType> varDecl = op.getVar();
+					result.remove(varDecl);
 				}
 			}
 

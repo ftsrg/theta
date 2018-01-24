@@ -127,8 +127,8 @@ public final class WpState {
 
 		@Override
 		public <DeclType extends Type> WpState visit(final AssignStmt<DeclType> stmt, final WpState state) {
-			final VarDecl<DeclType> var = stmt.getVarDecl();
-			final Substitution sub = BasicSubstitution.builder().put(var, stmt.getExpr()).build();
+			final VarDecl<DeclType> varDecl = stmt.getVarDecl();
+			final Substitution sub = BasicSubstitution.builder().put(varDecl, stmt.getExpr()).build();
 			final Expr<BoolType> expr = sub.apply(state.getExpr());
 			final int constCount = state.constCount;
 			return new WpState(expr, constCount);
@@ -136,11 +136,11 @@ public final class WpState {
 
 		@Override
 		public <DeclType extends Type> WpState visit(final HavocStmt<DeclType> stmt, final WpState state) {
-			final VarDecl<DeclType> var = stmt.getVarDecl();
+			final VarDecl<DeclType> varDecl = stmt.getVarDecl();
 			final int constCount = state.constCount + 1;
 			final String valName = String.format("_val_%d", constCount);
-			final Expr<DeclType> val = Const(valName, var.getType()).getRef();
-			final Substitution sub = BasicSubstitution.builder().put(var, val).build();
+			final Expr<DeclType> val = Const(valName, varDecl.getType()).getRef();
+			final Substitution sub = BasicSubstitution.builder().put(varDecl, val).build();
 			final Expr<BoolType> expr = sub.apply(state.getExpr());
 			return new WpState(expr, constCount);
 		}

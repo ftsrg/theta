@@ -26,22 +26,22 @@ import hu.bme.mit.theta.core.type.rattype.RatType;
 
 public abstract class UnitConstr extends AtomicConstr {
 
-	private final VarDecl<RatType> var;
+	private final VarDecl<RatType> varDecl;
 
 	private volatile int hashCode = 0;
 
-	protected UnitConstr(final VarDecl<RatType> var, final int bound) {
+	protected UnitConstr(final VarDecl<RatType> varDecl, final int bound) {
 		super(bound);
-		this.var = checkNotNull(var);
+		this.varDecl = checkNotNull(varDecl);
 	}
 
 	public final VarDecl<RatType> getVar() {
-		return var;
+		return varDecl;
 	}
 
 	@Override
 	public Collection<VarDecl<RatType>> getVars() {
-		return ImmutableSet.of(var);
+		return ImmutableSet.of(varDecl);
 	}
 
 	@Override
@@ -49,7 +49,7 @@ public abstract class UnitConstr extends AtomicConstr {
 		int result = hashCode;
 		if (result == 0) {
 			result = getHashSeed();
-			result = 31 * result + var.hashCode();
+			result = 31 * result + varDecl.hashCode();
 			result = 31 * result + getBound();
 			hashCode = result;
 		}
@@ -59,7 +59,7 @@ public abstract class UnitConstr extends AtomicConstr {
 	@Override
 	public final String toString() {
 		final StringBuilder sb = new StringBuilder();
-		sb.append(var.getName());
+		sb.append(varDecl.getName());
 		sb.append(' ');
 		sb.append(getOperatorLabel());
 		sb.append(' ');

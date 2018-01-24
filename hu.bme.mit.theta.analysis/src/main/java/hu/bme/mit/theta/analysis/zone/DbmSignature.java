@@ -1,12 +1,12 @@
 /*
  *  Copyright 2017 Budapest University of Technology and Economics
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,8 +38,8 @@ final class DbmSignature implements Iterable<VarDecl<RatType>> {
 	private final List<VarDecl<RatType>> indexToVar;
 	private final Map<VarDecl<RatType>, Integer> varToIndex;
 
-	private DbmSignature(final Iterable<? extends VarDecl<RatType>> vars) {
-		checkNotNull(vars);
+	private DbmSignature(final Iterable<? extends VarDecl<RatType>> varDecls) {
+		checkNotNull(varDecls);
 
 		final ImmutableList.Builder<VarDecl<RatType>> indexToVarBuilder = ImmutableList.builder();
 		final ImmutableMap.Builder<VarDecl<RatType>, Integer> varToIndexBuilder = ImmutableMap.builder();
@@ -50,11 +50,11 @@ final class DbmSignature implements Iterable<VarDecl<RatType>> {
 		varToIndexBuilder.put(ZeroVar.getInstance(), addedVars.size());
 		addedVars.add(ZeroVar.getInstance());
 
-		for (final VarDecl<RatType> var : vars) {
-			if (!addedVars.contains(var)) {
-				indexToVarBuilder.add(var);
-				varToIndexBuilder.put(var, addedVars.size());
-				addedVars.add(var);
+		for (final VarDecl<RatType> varDecl : varDecls) {
+			if (!addedVars.contains(varDecl)) {
+				indexToVarBuilder.add(varDecl);
+				varToIndexBuilder.put(varDecl, addedVars.size());
+				addedVars.add(varDecl);
 			}
 		}
 
@@ -103,14 +103,14 @@ final class DbmSignature implements Iterable<VarDecl<RatType>> {
 		return indexToVar.size();
 	}
 
-	public boolean contains(final VarDecl<RatType> var) {
-		checkNotNull(var);
-		return varToIndex.containsKey(var);
+	public boolean contains(final VarDecl<RatType> varDecl) {
+		checkNotNull(varDecl);
+		return varToIndex.containsKey(varDecl);
 	}
 
-	public int indexOf(final VarDecl<RatType> var) {
-		checkArgument(contains(var), "Unknown variable");
-		return varToIndex.get(var);
+	public int indexOf(final VarDecl<RatType> varDecl) {
+		checkArgument(contains(varDecl), "Unknown variable");
+		return varToIndex.get(varDecl);
 	}
 
 	public VarDecl<RatType> getVar(final int index) {

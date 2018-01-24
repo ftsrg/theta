@@ -191,9 +191,9 @@ public final class XtaZoneUtils {
 		for (final Update update : edge.getUpdates()) {
 			if (update.isClockUpdate()) {
 				final ResetOp op = (ResetOp) update.asClockUpdate().getClockOp();
-				final VarDecl<RatType> var = op.getVar();
+				final VarDecl<RatType> varDecl = op.getVar();
 				final int value = op.getValue();
-				builder.reset(var, value);
+				builder.reset(varDecl, value);
 			}
 		}
 	}
@@ -202,10 +202,10 @@ public final class XtaZoneUtils {
 		for (final Update update : Lists.reverse(edge.getUpdates())) {
 			if (update.isClockUpdate()) {
 				final ResetOp op = (ResetOp) update.asClockUpdate().getClockOp();
-				final VarDecl<RatType> var = op.getVar();
+				final VarDecl<RatType> varDecl = op.getVar();
 				final int value = op.getValue();
-				builder.and(Eq(var, value));
-				builder.free(var);
+				builder.and(Eq(varDecl, value));
+				builder.free(varDecl);
 			}
 		}
 	}

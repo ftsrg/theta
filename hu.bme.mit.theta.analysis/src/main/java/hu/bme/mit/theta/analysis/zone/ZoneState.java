@@ -274,13 +274,13 @@ public final class ZoneState implements ExprState {
 			return this;
 		}
 
-		public Builder free(final VarDecl<RatType> var) {
-			dbm.free(var);
+		public Builder free(final VarDecl<RatType> varDecl) {
+			dbm.free(varDecl);
 			return this;
 		}
 
-		public Builder reset(final VarDecl<RatType> var, final int m) {
-			dbm.reset(var, m);
+		public Builder reset(final VarDecl<RatType> varDecl, final int m) {
+			dbm.reset(varDecl, m);
 			return this;
 		}
 
@@ -289,8 +289,8 @@ public final class ZoneState implements ExprState {
 			return this;
 		}
 
-		public Builder shift(final VarDecl<RatType> var, final int m) {
-			dbm.shift(var, m);
+		public Builder shift(final VarDecl<RatType> varDecl, final int m) {
+			dbm.shift(varDecl, m);
 			return this;
 		}
 

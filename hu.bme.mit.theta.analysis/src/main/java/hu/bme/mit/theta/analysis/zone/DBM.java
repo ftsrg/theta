@@ -1,12 +1,12 @@
 /*
  *  Copyright 2017 Budapest University of Technology and Economics
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -309,8 +309,8 @@ final class DBM {
 	private static DbmSignature signatureFrom(final DbmSignature interpolantSignature, final int[] cycle) {
 		final Collection<VarDecl<RatType>> vars = new ArrayList<>();
 		for (int i = 0; i + 1 < cycle.length; i++) {
-			final VarDecl<RatType> var = interpolantSignature.getVar(cycle[i]);
-			vars.add(var);
+			final VarDecl<RatType> varDecl = interpolantSignature.getVar(cycle[i]);
+			vars.add(varDecl);
 		}
 		return DbmSignature.over(vars);
 	}
@@ -522,20 +522,20 @@ final class DBM {
 		constr.accept(AndOperationVisitor.INSTANCE, this);
 	}
 
-	public void free(final VarDecl<RatType> var) {
-		checkNotNull(var);
-		checkArgument(!isZeroClock(var), "Var is zero");
-		ifTracks(var, dbm::free);
+	public void free(final VarDecl<RatType> varDecl) {
+		checkNotNull(varDecl);
+		checkArgument(!isZeroClock(varDecl), "Var is zero");
+		ifTracks(varDecl, dbm::free);
 	}
 
 	public void free() {
 		dbm.free();
 	}
 
-	public void reset(final VarDecl<RatType> var, final int m) {
-		checkNotNull(var);
-		checkArgument(!isZeroClock(var), "Var is zero");
-		ifTracks(var, x -> dbm.reset(x, m));
+	public void reset(final VarDecl<RatType> varDecl, final int m) {
+		checkNotNull(varDecl);
+		checkArgument(!isZeroClock(varDecl), "Var is zero");
+		ifTracks(varDecl, x -> dbm.reset(x, m));
 	}
 
 	public void copy(final VarDecl<RatType> lhs, final VarDecl<RatType> rhs) {
@@ -546,17 +546,17 @@ final class DBM {
 		ifTracks(lhs, x -> ifTracksElse(rhs, y -> dbm.copy(x, y), () -> dbm.free(x)));
 	}
 
-	public void shift(final VarDecl<RatType> var, final int m) {
-		checkNotNull(var);
-		checkArgument(!isZeroClock(var), "Var is zero");
-		ifTracks(var, x -> dbm.shift(x, m));
+	public void shift(final VarDecl<RatType> varDecl, final int m) {
+		checkNotNull(varDecl);
+		checkArgument(!isZeroClock(varDecl), "Var is zero");
+		ifTracks(varDecl, x -> dbm.shift(x, m));
 	}
 
 	public void norm(final Map<? extends VarDecl<RatType>, ? extends Integer> bounds) {
 		final int[] k = new int[signature.size()];
 		for (int i = 0; i < signature.size(); i++) {
-			final VarDecl<RatType> var = signature.getVar(i);
-			final Integer bound = bounds.get(var);
+			final VarDecl<RatType> varDecl = signature.getVar(i);
+			final Integer bound = bounds.get(varDecl);
 			if (bound != null) {
 				k[i] = bound;
 			} else {
@@ -589,8 +589,8 @@ final class DBM {
 		final StringBuilder sb = new StringBuilder();
 
 		sb.append(String.format("%-12s", ""));
-		for (final VarDecl<RatType> var : signature) {
-			sb.append(String.format("%-12s", var.getName()));
+		for (final VarDecl<RatType> varDecl : signature) {
+			sb.append(String.format("%-12s", varDecl.getName()));
 		}
 		sb.append(System.lineSeparator());
 
@@ -606,34 +606,34 @@ final class DBM {
 
 	////
 
-	private boolean tracks(final VarDecl<RatType> var) {
-		checkNotNull(var);
-		return signature.contains(var);
+	private boolean tracks(final VarDecl<RatType> varDecl) {
+		checkNotNull(varDecl);
+		return signature.contains(varDecl);
 	}
 
-	private void ifTracks(final VarDecl<RatType> var, final IntConsumer consumer) {
-		if (tracks(var)) {
-			final int x = signature.indexOf(var);
+	private void ifTracks(final VarDecl<RatType> varDecl, final IntConsumer consumer) {
+		if (tracks(varDecl)) {
+			final int x = signature.indexOf(varDecl);
 			consumer.accept(x);
 		}
 	}
 
-	private void ifTracksElse(final VarDecl<RatType> var, final IntConsumer consumer, final Procedure procedure) {
-		if (tracks(var)) {
-			final int x = signature.indexOf(var);
+	private void ifTracksElse(final VarDecl<RatType> varDecl, final IntConsumer consumer, final Procedure procedure) {
+		if (tracks(varDecl)) {
+			final int x = signature.indexOf(varDecl);
 			consumer.accept(x);
 		} else {
 			procedure.execute();
 		}
 	}
 
-	private boolean constrains(final VarDecl<RatType> var) {
-		checkNotNull(var);
-		return this.tracks(var) && dbm.constrains(signature.indexOf(var));
+	private boolean constrains(final VarDecl<RatType> varDecl) {
+		checkNotNull(varDecl);
+		return this.tracks(varDecl) && dbm.constrains(signature.indexOf(varDecl));
 	}
 
-	private boolean isZeroClock(final VarDecl<RatType> var) {
-		return var.equals(ZeroVar.getInstance());
+	private boolean isZeroClock(final VarDecl<RatType> varDecl) {
+		return varDecl.equals(ZeroVar.getInstance());
 	}
 
 	////
@@ -699,9 +699,9 @@ final class DBM {
 
 		@Override
 		public Void visit(final UnitLtConstr constr, final DBM dbm) {
-			final VarDecl<RatType> var = constr.getVar();
-			if (dbm.tracks(var)) {
-				final int x = dbm.signature.indexOf(var);
+			final VarDecl<RatType> varDecl = constr.getVar();
+			if (dbm.tracks(varDecl)) {
+				final int x = dbm.signature.indexOf(varDecl);
 				final int m = constr.getBound();
 				dbm.dbm.and(x, 0, Lt(m));
 			}
@@ -710,9 +710,9 @@ final class DBM {
 
 		@Override
 		public Void visit(final UnitLeqConstr constr, final DBM dbm) {
-			final VarDecl<RatType> var = constr.getVar();
-			if (dbm.tracks(var)) {
-				final int x = dbm.signature.indexOf(var);
+			final VarDecl<RatType> varDecl = constr.getVar();
+			if (dbm.tracks(varDecl)) {
+				final int x = dbm.signature.indexOf(varDecl);
 				final int m = constr.getBound();
 				dbm.dbm.and(x, 0, Leq(m));
 			}
@@ -721,9 +721,9 @@ final class DBM {
 
 		@Override
 		public Void visit(final UnitGtConstr constr, final DBM dbm) {
-			final VarDecl<RatType> var = constr.getVar();
-			if (dbm.tracks(var)) {
-				final int x = dbm.signature.indexOf(var);
+			final VarDecl<RatType> varDecl = constr.getVar();
+			if (dbm.tracks(varDecl)) {
+				final int x = dbm.signature.indexOf(varDecl);
 				final int m = constr.getBound();
 				dbm.dbm.and(0, x, Lt(-m));
 			}
@@ -732,9 +732,9 @@ final class DBM {
 
 		@Override
 		public Void visit(final UnitGeqConstr constr, final DBM dbm) {
-			final VarDecl<RatType> var = constr.getVar();
-			if (dbm.tracks(var)) {
-				final int x = dbm.signature.indexOf(var);
+			final VarDecl<RatType> varDecl = constr.getVar();
+			if (dbm.tracks(varDecl)) {
+				final int x = dbm.signature.indexOf(varDecl);
 				final int m = constr.getBound();
 				dbm.dbm.and(0, x, Leq(-m));
 			}
@@ -743,9 +743,9 @@ final class DBM {
 
 		@Override
 		public Void visit(final UnitEqConstr constr, final DBM dbm) {
-			final VarDecl<RatType> var = constr.getVar();
-			if (dbm.tracks(var)) {
-				final int x = dbm.signature.indexOf(var);
+			final VarDecl<RatType> varDecl = constr.getVar();
+			if (dbm.tracks(varDecl)) {
+				final int x = dbm.signature.indexOf(varDecl);
 				final int m = constr.getBound();
 				dbm.dbm.and(x, 0, Leq(m));
 				dbm.dbm.and(0, x, Leq(-m));

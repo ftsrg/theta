@@ -33,8 +33,8 @@ final class ExprPrimeApplier {
 			final RefExpr<T> ref = (RefExpr<T>) expr;
 			final Decl<T> decl = ref.getDecl();
 			if (decl instanceof VarDecl) {
-				final VarDecl<T> var = (VarDecl<T>) decl;
-				final int index = indexing.get(var);
+				final VarDecl<T> varDecl = (VarDecl<T>) decl;
+				final int index = indexing.get(varDecl);
 				if (index == 0) {
 					return expr;
 				} else {

@@ -37,8 +37,8 @@ final class PrimeCounter {
 			final RefExpr<?> ref = (RefExpr<?>) expr;
 			final Decl<?> decl = ref.getDecl();
 			if (decl instanceof VarDecl) {
-				final VarDecl<?> var = (VarDecl<?>) decl;
-				return VarIndexing.builder(0).inc(var, nPrimes);
+				final VarDecl<?> varDecl = (VarDecl<?>) decl;
+				return VarIndexing.builder(0).inc(varDecl, nPrimes);
 			}
 		}
 

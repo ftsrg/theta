@@ -118,8 +118,8 @@ public final class ExprUtils {
 			final RefExpr<?> refExpr = (RefExpr<?>) expr;
 			final Decl<?> decl = refExpr.getDecl();
 			if (decl instanceof VarDecl) {
-				final VarDecl<?> var = (VarDecl<?>) decl;
-				collectTo.add(var);
+				final VarDecl<?> varDecl = (VarDecl<?>) decl;
+				collectTo.add(varDecl);
 				return;
 			}
 		}
