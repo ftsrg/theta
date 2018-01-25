@@ -203,7 +203,7 @@ public final class ExprUtils {
 	 * @return Simplified expression
 	 */
 	public static <ExprType extends Type> Expr<ExprType> simplify(final Expr<ExprType> expr, final Valuation val) {
-		return new ExprSimplifier(val).simplify(expr);
+		return ExprSimplifier.simplify(expr, val);
 	}
 
 	/**
