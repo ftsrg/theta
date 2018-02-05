@@ -221,6 +221,8 @@ public final class CFA {
 			checkState(initLoc != null, "Initial location must be set.");
 			checkState(finalLoc != null, "Final location must be set.");
 			checkState(errorLoc != null, "Error location must be set.");
+			checkState(finalLoc.getOutEdges().isEmpty(), "Final location cannot have outgoing edges.");
+			checkState(errorLoc.getOutEdges().isEmpty(), "Error location cannot have outgoing edges.");
 			built = true;
 			return new CFA(this);
 		}
