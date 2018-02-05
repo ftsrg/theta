@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.formalism.xta.analysis.lazy;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.stream.Collectors.toList;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -25,27 +26,32 @@ import hu.bme.mit.theta.analysis.algorithm.ArgEdge;
 import hu.bme.mit.theta.analysis.algorithm.ArgNode;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.impl.PrecMappingAnalysis;
+import hu.bme.mit.theta.analysis.prod2.Prod2Analysis;
+import hu.bme.mit.theta.analysis.prod2.Prod2Prec;
 import hu.bme.mit.theta.analysis.prod2.Prod2State;
+import hu.bme.mit.theta.analysis.reachedset.Partition;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.analysis.zone.BoundFunc;
 import hu.bme.mit.theta.analysis.zone.ZonePrec;
 import hu.bme.mit.theta.analysis.zone.lu.LuZoneAnalysis;
 import hu.bme.mit.theta.analysis.zone.lu.LuZoneState;
+import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.formalism.xta.XtaSystem;
 import hu.bme.mit.theta.formalism.xta.analysis.XtaAction;
+import hu.bme.mit.theta.formalism.xta.analysis.XtaAnalysis;
 import hu.bme.mit.theta.formalism.xta.analysis.XtaState;
+import hu.bme.mit.theta.formalism.xta.analysis.expl.XtaExplAnalysis;
 import hu.bme.mit.theta.formalism.xta.analysis.lazy.LazyXtaStatistics.Builder;
 import hu.bme.mit.theta.formalism.xta.analysis.zone.XtaLuZoneUtils;
 import hu.bme.mit.theta.formalism.xta.analysis.zone.XtaZoneAnalysis;
 
-public final class LuStrategy implements LazyXtaChecker.AlgorithmStrategy<LuZoneState> {
+public final class LuStrategy implements AlgorithmStrategy<Prod2State<ExplState, LuZoneState>> {
 
-	private final Analysis<LuZoneState, XtaAction, UnitPrec> analysis;
+	private final Analysis<XtaState<Prod2State<ExplState, LuZoneState>>, XtaAction, UnitPrec> analysis;
 
 	public LuStrategy(final XtaSystem system) {
 		checkNotNull(system);
-		final ZonePrec prec = ZonePrec.of(system.getClockVars());
-		analysis = PrecMappingAnalysis.create(LuZoneAnalysis.create(XtaZoneAnalysis.getInstance()), u -> prec);
+		analysis = createAnalysis(system);
 	}
 
 	public static LuStrategy create(final XtaSystem system) {
@@ -55,49 +61,57 @@ public final class LuStrategy implements LazyXtaChecker.AlgorithmStrategy<LuZone
 	////
 
 	@Override
-	public Analysis<LuZoneState, XtaAction, UnitPrec> getAnalysis() {
+	public Analysis<XtaState<Prod2State<ExplState, LuZoneState>>, XtaAction, UnitPrec> getAnalysis() {
 		return analysis;
 	}
 
 	@Override
-	public boolean covers(final ArgNode<XtaState<Prod2State<ExplState, LuZoneState>>, XtaAction> nodeToCover,
-			final ArgNode<XtaState<Prod2State<ExplState, LuZoneState>>, XtaAction> coveringNode) {
-		return nodeToCover.getState().getState().getState2().isLeq(coveringNode.getState().getState().getState2());
+	public Partition<ArgNode<XtaState<Prod2State<ExplState, LuZoneState>>, XtaAction>, ?> createReachedSet() {
+		final Partition<ArgNode<XtaState<Prod2State<ExplState, LuZoneState>>, XtaAction>, ?> partition = Partition
+				.of(n -> Tuple2.of(n.getState().getLocs(), n.getState().getState().getState1()));
+		return partition;
 	}
 
 	@Override
-	public boolean mightCover(final ArgNode<XtaState<Prod2State<ExplState, LuZoneState>>, XtaAction> nodeToCover,
-			final ArgNode<XtaState<Prod2State<ExplState, LuZoneState>>, XtaAction> coveringNode) {
-		return nodeToCover.getState().getState().getState2().getZone().isLeq(coveringNode.getState().getState().getState2().getZone(),
-				coveringNode.getState().getState().getState2().getBoundFunction());
+	public boolean mightCover(final ArgNode<XtaState<Prod2State<ExplState, LuZoneState>>, XtaAction> coveree,
+			final ArgNode<XtaState<Prod2State<ExplState, LuZoneState>>, XtaAction> coverer) {
+		return coveree.getState().getState().getState2().getZone().isLeq(
+				coverer.getState().getState().getState2().getZone(),
+				coverer.getState().getState().getState2().getBoundFunction());
 	}
 
 	@Override
-	public boolean shouldRefine(final ArgNode<XtaState<Prod2State<ExplState, LuZoneState>>, XtaAction> node) {
-		return node.getState().getState().getState2().getZone().isBottom();
+	public boolean shouldExclude(final XtaState<Prod2State<ExplState, LuZoneState>> state) {
+		return state.getState().isBottom1() || state.getState().isBottom2();
 	}
 
 	@Override
 	public Collection<ArgNode<XtaState<Prod2State<ExplState, LuZoneState>>, XtaAction>> forceCover(
-			final ArgNode<XtaState<Prod2State<ExplState, LuZoneState>>, XtaAction> nodeToCover,
-			final ArgNode<XtaState<Prod2State<ExplState, LuZoneState>>, XtaAction> coveringNode,
-			final Builder statistics) {
-
+			final ArgNode<XtaState<Prod2State<ExplState, LuZoneState>>, XtaAction> coveree,
+			final ArgNode<XtaState<Prod2State<ExplState, LuZoneState>>, XtaAction> coverer, final Builder stats) {
+		stats.startCloseZoneRefinement();
 		final Collection<ArgNode<XtaState<Prod2State<ExplState, LuZoneState>>, XtaAction>> uncoveredNodes = new ArrayList<>();
-		final BoundFunc boundFunction = coveringNode.getState().getState().getState2().getBoundFunction();
-		propagateBounds(nodeToCover, boundFunction, uncoveredNodes, statistics, false);
-
+		final BoundFunc boundFunc = coverer.getState().getState().getState2().getBoundFunction();
+		propagateBounds(coveree, boundFunc, uncoveredNodes, stats);
+		stats.stopCloseZoneRefinement();
 		return uncoveredNodes;
 	}
 
 	@Override
-	public Collection<ArgNode<XtaState<Prod2State<ExplState, LuZoneState>>, XtaAction>> refine(
-			final ArgNode<XtaState<Prod2State<ExplState, LuZoneState>>, XtaAction> node, final Builder statistics) {
-
+	public Collection<ArgNode<XtaState<Prod2State<ExplState, LuZoneState>>, XtaAction>> block(
+			final ArgNode<XtaState<Prod2State<ExplState, LuZoneState>>, XtaAction> node, final XtaAction action,
+			final XtaState<Prod2State<ExplState, LuZoneState>> succState, final Builder stats) {
 		final Collection<ArgNode<XtaState<Prod2State<ExplState, LuZoneState>>, XtaAction>> uncoveredNodes = new ArrayList<>();
-		final BoundFunc boundFunction = BoundFunc.top();
-		propagateBounds(node, boundFunction, uncoveredNodes, statistics, true);
-
+		if (succState.getState().isBottom1()) {
+			// do nothing
+		} else if (succState.getState().isBottom2()) {
+			stats.startExpandZoneRefinement();
+			final BoundFunc preImage = XtaLuZoneUtils.pre(BoundFunc.top(), action);
+			propagateBounds(node, preImage, uncoveredNodes, stats);
+			stats.stopExpandZoneRefinement();
+		} else {
+			throw new AssertionError();
+		}
 		return uncoveredNodes;
 	}
 
@@ -106,22 +120,20 @@ public final class LuStrategy implements LazyXtaChecker.AlgorithmStrategy<LuZone
 	private void propagateBounds(final ArgNode<XtaState<Prod2State<ExplState, LuZoneState>>, XtaAction> node,
 			final BoundFunc boundFunction,
 			final Collection<ArgNode<XtaState<Prod2State<ExplState, LuZoneState>>, XtaAction>> uncoveredNodes,
-			final Builder statistics, final boolean forcePropagate) {
-
+			final Builder stats) {
 		final BoundFunc oldBoundFunction = node.getState().getState().getState2().getBoundFunction();
-
-		if (forcePropagate || !boundFunction.isLeq(oldBoundFunction)) {
-			statistics.refine();
+		if (!boundFunction.isLeq(oldBoundFunction)) {
+			stats.refineZone();
 
 			strengthen(node, boundFunction);
-			maintainCoverage(node, uncoveredNodes);
+			maintainCoverage(node, boundFunction, uncoveredNodes);
 
 			if (node.getInEdge().isPresent()) {
 				final ArgEdge<XtaState<Prod2State<ExplState, LuZoneState>>, XtaAction> inEdge = node.getInEdge().get();
 				final XtaAction action = inEdge.getAction();
 				final ArgNode<XtaState<Prod2State<ExplState, LuZoneState>>, XtaAction> parent = inEdge.getSource();
 				final BoundFunc preBound = XtaLuZoneUtils.pre(boundFunction, action);
-				propagateBounds(parent, preBound, uncoveredNodes, statistics, false);
+				propagateBounds(parent, preBound, uncoveredNodes, stats);
 			}
 		}
 	}
@@ -142,9 +154,36 @@ public final class LuStrategy implements LazyXtaChecker.AlgorithmStrategy<LuZone
 	}
 
 	private void maintainCoverage(final ArgNode<XtaState<Prod2State<ExplState, LuZoneState>>, XtaAction> node,
+			final BoundFunc interpolant,
 			final Collection<ArgNode<XtaState<Prod2State<ExplState, LuZoneState>>, XtaAction>> uncoveredNodes) {
-		node.getCoveredNodes().forEach(uncoveredNodes::add);
-		node.clearCoveredNodes();
+		final Collection<ArgNode<XtaState<Prod2State<ExplState, LuZoneState>>, XtaAction>> uncovered = node
+				.getCoveredNodes()
+				.filter(covered -> !covered.getState().getState().getState2().getBoundFunction().isLeq(interpolant))
+				.collect(toList());
+		uncoveredNodes.addAll(uncovered);
+		uncovered.forEach(ArgNode::unsetCoveringNode);
+	}
+
+	////
+
+	private static Analysis<XtaState<Prod2State<ExplState, LuZoneState>>, XtaAction, UnitPrec> createAnalysis(
+			final XtaSystem system) {
+		final Analysis<ExplState, XtaAction, UnitPrec> explAnalysis = XtaExplAnalysis.create(system);
+		final Analysis<LuZoneState, XtaAction, ZonePrec> luZoneAnalysis = LuZoneAnalysis
+				.create(XtaZoneAnalysis.getInstance());
+
+		final Prod2Analysis<ExplState, LuZoneState, XtaAction, UnitPrec, ZonePrec> prodAnalysis = Prod2Analysis
+				.create(explAnalysis, luZoneAnalysis);
+
+		final UnitPrec unitPrec = UnitPrec.getInstance();
+		final ZonePrec zonePrec = ZonePrec.of(system.getClockVars());
+		final Prod2Prec<UnitPrec, ZonePrec> prec = Prod2Prec.of(unitPrec, zonePrec);
+
+		final Analysis<Prod2State<ExplState, LuZoneState>, XtaAction, UnitPrec> mappingAnalysis = PrecMappingAnalysis
+				.create(prodAnalysis, u -> prec);
+		final Analysis<XtaState<Prod2State<ExplState, LuZoneState>>, XtaAction, UnitPrec> analysis = XtaAnalysis
+				.create(system, mappingAnalysis);
+		return analysis;
 	}
 
 }

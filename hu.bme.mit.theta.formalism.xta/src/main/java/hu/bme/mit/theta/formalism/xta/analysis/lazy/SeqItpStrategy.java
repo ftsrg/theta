@@ -15,19 +15,16 @@
  */
 package hu.bme.mit.theta.formalism.xta.analysis.lazy;
 
-import java.util.ArrayList;
 import java.util.Collection;
 
 import hu.bme.mit.theta.analysis.algorithm.ArgEdge;
 import hu.bme.mit.theta.analysis.algorithm.ArgNode;
 import hu.bme.mit.theta.analysis.expl.ExplState;
-import hu.bme.mit.theta.analysis.prod2.Prod2State;
+import hu.bme.mit.theta.analysis.prod3.Prod3State;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
-import hu.bme.mit.theta.analysis.zone.itp.ItpZoneState;
 import hu.bme.mit.theta.formalism.xta.XtaSystem;
 import hu.bme.mit.theta.formalism.xta.analysis.XtaAction;
 import hu.bme.mit.theta.formalism.xta.analysis.XtaState;
-import hu.bme.mit.theta.formalism.xta.analysis.lazy.LazyXtaStatistics.Builder;
 
 public final class SeqItpStrategy extends ItpStrategy {
 
@@ -40,68 +37,40 @@ public final class SeqItpStrategy extends ItpStrategy {
 	}
 
 	@Override
-	public Collection<ArgNode<XtaState<Prod2State<ExplState, ItpZoneState>>, XtaAction>> forceCover(
-			final ArgNode<XtaState<Prod2State<ExplState, ItpZoneState>>, XtaAction> nodeToCover,
-			final ArgNode<XtaState<Prod2State<ExplState, ItpZoneState>>, XtaAction> coveringNode,
-			final Builder statistics) {
-
-		final Collection<ArgNode<XtaState<Prod2State<ExplState, ItpZoneState>>, XtaAction>> uncoveredNodes = new ArrayList<>();
-		final Collection<ZoneState> complementZones = coveringNode.getState().getState().getState2().getInterpolant()
-				.complement();
-		for (final ZoneState complementZone : complementZones) {
-			blockZone(nodeToCover, complementZone, uncoveredNodes, statistics);
-		}
-
-		return uncoveredNodes;
-	}
-
-	@Override
-	public Collection<ArgNode<XtaState<Prod2State<ExplState, ItpZoneState>>, XtaAction>> refine(
-			final ArgNode<XtaState<Prod2State<ExplState, ItpZoneState>>, XtaAction> node, final Builder statistics) {
-
-		final Collection<ArgNode<XtaState<Prod2State<ExplState, ItpZoneState>>, XtaAction>> uncoveredNodes = new ArrayList<>();
-		blockZone(node, ZoneState.top(), uncoveredNodes, statistics);
-
-		return uncoveredNodes;
-	}
-
-	private ZoneState blockZone(final ArgNode<XtaState<Prod2State<ExplState, ItpZoneState>>, XtaAction> node,
+	protected ZoneState blockZone(final ArgNode<XtaState<Prod3State<ExplState, ZoneState, ZoneState>>, XtaAction> node,
 			final ZoneState zone,
-			final Collection<ArgNode<XtaState<Prod2State<ExplState, ItpZoneState>>, XtaAction>> uncoveredNodes,
-			final Builder statistics) {
-		final ZoneState abstractZone = node.getState().getState().getState2().getInterpolant();
+			final Collection<ArgNode<XtaState<Prod3State<ExplState, ZoneState, ZoneState>>, XtaAction>> uncoveredNodes,
+			final LazyXtaStatistics.Builder stats) {
+		final ZoneState abstractZone = node.getState().getState().getState3();
 		if (abstractZone.isConsistentWith(zone)) {
-
-			statistics.refine();
+			stats.refineZone();
 
 			if (node.getInEdge().isPresent()) {
-				final ArgEdge<XtaState<Prod2State<ExplState, ItpZoneState>>, XtaAction> inEdge = node.getInEdge().get();
+				final ArgEdge<XtaState<Prod3State<ExplState, ZoneState, ZoneState>>, XtaAction> inEdge = node
+						.getInEdge().get();
 				final XtaAction action = inEdge.getAction();
-				final ArgNode<XtaState<Prod2State<ExplState, ItpZoneState>>, XtaAction> parent = inEdge.getSource();
+				final ArgNode<XtaState<Prod3State<ExplState, ZoneState, ZoneState>>, XtaAction> parent = inEdge
+						.getSource();
 
 				final ZoneState B_pre = pre(zone, action);
-				final ZoneState A_pre = blockZone(parent, B_pre, uncoveredNodes, statistics);
+				final ZoneState A_pre = blockZone(parent, B_pre, uncoveredNodes, stats);
 
 				final ZoneState B = zone;
 				final ZoneState A = post(A_pre, action);
 
-				statistics.startInterpolation();
 				final ZoneState interpolant = interpolate(A, B);
-				statistics.stopInterpolation();
 
 				strengthen(node, interpolant);
-				maintainCoverage(node, uncoveredNodes);
+				maintainCoverage(node, interpolant, uncoveredNodes);
 
 				return interpolant;
 			} else {
-				final ZoneState concreteZone = node.getState().getState().getState2().getZone();
+				final ZoneState concreteZone = node.getState().getState().getState2();
 
-				statistics.startInterpolation();
 				final ZoneState interpolant = interpolate(concreteZone, zone);
-				statistics.stopInterpolation();
 
 				strengthen(node, interpolant);
-				maintainCoverage(node, uncoveredNodes);
+				maintainCoverage(node, interpolant, uncoveredNodes);
 
 				return interpolant;
 			}

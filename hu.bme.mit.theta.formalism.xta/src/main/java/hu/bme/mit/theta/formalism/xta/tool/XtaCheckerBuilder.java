@@ -15,15 +15,13 @@
  */
 package hu.bme.mit.theta.formalism.xta.tool;
 
-import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SearchStrategy;
-import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.formalism.xta.XtaSystem;
 import hu.bme.mit.theta.formalism.xta.analysis.lazy.ActStrategy;
+import hu.bme.mit.theta.formalism.xta.analysis.lazy.AlgorithmStrategy;
 import hu.bme.mit.theta.formalism.xta.analysis.lazy.BinItpStrategy;
 import hu.bme.mit.theta.formalism.xta.analysis.lazy.ItpStrategy.ItpOperator;
 import hu.bme.mit.theta.formalism.xta.analysis.lazy.LazyXtaChecker;
-import hu.bme.mit.theta.formalism.xta.analysis.lazy.LazyXtaChecker.AlgorithmStrategy;
 import hu.bme.mit.theta.formalism.xta.analysis.lazy.LuStrategy;
 import hu.bme.mit.theta.formalism.xta.analysis.lazy.SeqItpStrategy;
 
@@ -72,18 +70,17 @@ public final class XtaCheckerBuilder {
 			}
 		};
 
-		public abstract LazyXtaChecker.AlgorithmStrategy<?> create(final XtaSystem system);
+		public abstract AlgorithmStrategy<?> create(final XtaSystem system);
 	}
 
 	private XtaCheckerBuilder() {
 	}
 
-	public static SafetyChecker<?, ?, UnitPrec> build(final Algorithm algorithm, final SearchStrategy searchStrategy,
+	public static LazyXtaChecker<?> build(final Algorithm algorithm, final SearchStrategy searchStrategy,
 			final XtaSystem xta) {
-		final LazyXtaChecker.AlgorithmStrategy<?> algorithmStrategy = algorithm.create(xta);
+		final AlgorithmStrategy<?> algorithmStrategy = algorithm.create(xta);
 
-		final SafetyChecker<?, ?, UnitPrec> checker = LazyXtaChecker.create(xta, algorithmStrategy, searchStrategy,
-				l -> false);
+		final LazyXtaChecker<?> checker = LazyXtaChecker.create(xta, algorithmStrategy, searchStrategy);
 		return checker;
 	}
 }
