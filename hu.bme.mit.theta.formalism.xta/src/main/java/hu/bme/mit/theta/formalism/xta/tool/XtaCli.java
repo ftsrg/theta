@@ -83,7 +83,7 @@ public final class XtaCli {
 		}
 
 		if (headerOnly) {
-			printHeader();
+			LazyXtaStatistics.writeHeader(writer);
 			return;
 		}
 
@@ -98,23 +98,6 @@ public final class XtaCli {
 		} catch (final Throwable ex) {
 			printError(ex);
 		}
-		if (benchmarkMode) {
-			writer.newRow();
-		}
-	}
-
-	private void printHeader() {
-		writer.cell("Result");
-		writer.cell("AlgorithmTimeInMs");
-		writer.cell("RefinementTimeInMs");
-		writer.cell("InterpolationTimeInMs");
-		writer.cell("RefinementSteps");
-		writer.cell("ArgDepth");
-		writer.cell("ArgNodes");
-		writer.cell("ArgNodesFeasible");
-		writer.cell("ArgNodesExpanded");
-		writer.cell("DiscreteStatesExpanded");
-		writer.newRow();
 	}
 
 	private XtaSystem loadModel() throws IOException {
@@ -124,18 +107,8 @@ public final class XtaCli {
 
 	private void printResult(final SafetyResult<?, ?> result) {
 		final LazyXtaStatistics stats = (LazyXtaStatistics) result.getStats().get();
-
 		if (benchmarkMode) {
-			writer.cell(result.isSafe());
-			writer.cell(stats.getAlgorithmTimeInMs());
-			writer.cell(stats.getRefinementTimeInMs());
-			writer.cell(stats.getInterpolationTimeInMs());
-			writer.cell(stats.getRefinementSteps());
-			writer.cell(stats.getArgDepth());
-			writer.cell(stats.getArgNodes());
-			writer.cell(stats.getArgNodesFeasible());
-			writer.cell(stats.getArgNodesExpanded());
-			writer.cell(stats.getDiscreteStatesExpanded());
+			stats.writeData(writer);
 		} else {
 			System.out.println(stats.toString());
 		}
@@ -145,6 +118,7 @@ public final class XtaCli {
 		final String message = ex.getMessage() == null ? "" : ": " + ex.getMessage();
 		if (benchmarkMode) {
 			writer.cell("[EX] " + ex.getClass().getSimpleName() + message);
+			writer.newRow();
 		} else {
 			System.out.println("Exception occured: " + ex.getClass().getSimpleName());
 			System.out.println("Message: " + ex.getMessage());

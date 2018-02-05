@@ -15,19 +15,16 @@
  */
 package hu.bme.mit.theta.formalism.xta.analysis.lazy;
 
-import java.util.ArrayList;
 import java.util.Collection;
 
 import hu.bme.mit.theta.analysis.algorithm.ArgEdge;
 import hu.bme.mit.theta.analysis.algorithm.ArgNode;
 import hu.bme.mit.theta.analysis.expl.ExplState;
-import hu.bme.mit.theta.analysis.prod2.Prod2State;
+import hu.bme.mit.theta.analysis.prod3.Prod3State;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
-import hu.bme.mit.theta.analysis.zone.itp.ItpZoneState;
 import hu.bme.mit.theta.formalism.xta.XtaSystem;
 import hu.bme.mit.theta.formalism.xta.analysis.XtaAction;
 import hu.bme.mit.theta.formalism.xta.analysis.XtaState;
-import hu.bme.mit.theta.formalism.xta.analysis.lazy.LazyXtaStatistics.Builder;
 
 public final class BinItpStrategy extends ItpStrategy {
 
@@ -40,59 +37,36 @@ public final class BinItpStrategy extends ItpStrategy {
 	}
 
 	@Override
-	public Collection<ArgNode<XtaState<Prod2State<ExplState, ItpZoneState>>, XtaAction>> forceCover(
-			final ArgNode<XtaState<Prod2State<ExplState, ItpZoneState>>, XtaAction> nodeToCover,
-			final ArgNode<XtaState<Prod2State<ExplState, ItpZoneState>>, XtaAction> coveringNode,
-			final Builder statistics) {
-
-		final Collection<ArgNode<XtaState<Prod2State<ExplState, ItpZoneState>>, XtaAction>> uncoveredNodes = new ArrayList<>();
-		final Collection<ZoneState> complementZones = coveringNode.getState().getState().getState2().getInterpolant()
-				.complement();
-		for (final ZoneState complementZone : complementZones) {
-			blockZone(nodeToCover, complementZone, uncoveredNodes, statistics);
-		}
-
-		return uncoveredNodes;
-	}
-
-	@Override
-	public Collection<ArgNode<XtaState<Prod2State<ExplState, ItpZoneState>>, XtaAction>> refine(
-			final ArgNode<XtaState<Prod2State<ExplState, ItpZoneState>>, XtaAction> node, final Builder statistics) {
-
-		final Collection<ArgNode<XtaState<Prod2State<ExplState, ItpZoneState>>, XtaAction>> uncoveredNodes = new ArrayList<>();
-		blockZone(node, ZoneState.top(), uncoveredNodes, statistics);
-
-		return uncoveredNodes;
-	}
-
-	private void blockZone(final ArgNode<XtaState<Prod2State<ExplState, ItpZoneState>>, XtaAction> node,
+	protected ZoneState blockZone(final ArgNode<XtaState<Prod3State<ExplState, ZoneState, ZoneState>>, XtaAction> node,
 			final ZoneState zone,
-			final Collection<ArgNode<XtaState<Prod2State<ExplState, ItpZoneState>>, XtaAction>> uncoveredNodes,
-			final Builder statistics) {
-		final ZoneState abstractZone = node.getState().getState().getState2().getInterpolant();
+			final Collection<ArgNode<XtaState<Prod3State<ExplState, ZoneState, ZoneState>>, XtaAction>> uncoveredNodes,
+			final LazyXtaStatistics.Builder stats) {
+		final ZoneState abstractZone = node.getState().getState().getState3();
 		if (abstractZone.isConsistentWith(zone)) {
+			stats.refineZone();
 
-			statistics.refine();
-
-			final ZoneState concreteZone = node.getState().getState().getState2().getZone();
-
-			statistics.startInterpolation();
-			final ZoneState interpolant = interpolate(concreteZone, zone);
-			statistics.stopInterpolation();
+			final ZoneState concreteZone = node.getState().getState().getState2();
+			final ZoneState interpolant = ZoneState.interpolant(concreteZone, zone);
 
 			strengthen(node, interpolant);
-			maintainCoverage(node, uncoveredNodes);
+			maintainCoverage(node, interpolant, uncoveredNodes);
 
 			if (node.getInEdge().isPresent()) {
-				final ArgEdge<XtaState<Prod2State<ExplState, ItpZoneState>>, XtaAction> inEdge = node.getInEdge().get();
+				final ArgEdge<XtaState<Prod3State<ExplState, ZoneState, ZoneState>>, XtaAction> inEdge = node
+						.getInEdge().get();
 				final XtaAction action = inEdge.getAction();
-				final ArgNode<XtaState<Prod2State<ExplState, ItpZoneState>>, XtaAction> parent = inEdge.getSource();
+				final ArgNode<XtaState<Prod3State<ExplState, ZoneState, ZoneState>>, XtaAction> parent = inEdge
+						.getSource();
 				final Collection<ZoneState> badZones = interpolant.complement();
 				for (final ZoneState badZone : badZones) {
 					final ZoneState preBadZone = pre(badZone, action);
-					blockZone(parent, preBadZone, uncoveredNodes, statistics);
+					blockZone(parent, preBadZone, uncoveredNodes, stats);
 				}
 			}
+
+			return interpolant;
+		} else {
+			return abstractZone;
 		}
 	}
 
