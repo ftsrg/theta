@@ -1,12 +1,12 @@
 /*
  *  Copyright 2017 Budapest University of Technology and Economics
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,7 +15,6 @@
  */
 package hu.bme.mit.theta.analysis.algorithm;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Optional;
@@ -72,9 +71,6 @@ public abstract class SafetyResult<S extends State, A extends Action> {
 	public static final class Safe<S extends State, A extends Action> extends SafetyResult<S, A> {
 		private Safe(final ARG<S, A> arg, final Optional<Statistics> stats) {
 			super(arg, stats);
-			checkArgument(arg.isInitialized(), "ARG is not initialized");
-			checkArgument(arg.isComplete(), "ARG is not complete");
-			checkArgument(arg.isSafe(), "ARG is not safe");
 		}
 
 		@Override
