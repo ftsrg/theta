@@ -38,13 +38,15 @@ public class DistanceToErrorLocComparatorTest {
 		builder.setErrorLoc(locErr);
 		final Loc loc1 = builder.createLoc("L1");
 		final Loc loc2 = builder.createLoc("L2");
-		builder.setFinalLoc(loc2);
+		final Loc locFinal = builder.createLoc("LF");
+		builder.setFinalLoc(locFinal);
 		final Stmt stmt = Stmts.Assume(BoolExprs.True());
 		builder.createEdge(loc0, loc1, stmt);
 		builder.createEdge(loc0, loc2, stmt);
 		builder.createEdge(loc1, loc2, stmt);
 		builder.createEdge(loc1, locErr, stmt);
 		builder.createEdge(loc2, locErr, stmt);
+		builder.createEdge(loc2, locFinal, stmt);
 
 		final CFA cfa = builder.build();
 		final Map<Loc, Integer> distancesToError = DistToErrComparator.getDistancesToError(cfa);
@@ -53,5 +55,6 @@ public class DistanceToErrorLocComparatorTest {
 		Assert.assertEquals(2, (int) distancesToError.get(loc0));
 		Assert.assertEquals(1, (int) distancesToError.get(loc1));
 		Assert.assertEquals(1, (int) distancesToError.get(loc2));
+		Assert.assertFalse(distancesToError.containsKey(locFinal));
 	}
 }
