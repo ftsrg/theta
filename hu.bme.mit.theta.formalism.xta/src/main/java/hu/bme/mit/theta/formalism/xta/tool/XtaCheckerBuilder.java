@@ -20,6 +20,9 @@ import hu.bme.mit.theta.formalism.xta.XtaSystem;
 import hu.bme.mit.theta.formalism.xta.analysis.lazy.ActStrategy;
 import hu.bme.mit.theta.formalism.xta.analysis.lazy.AlgorithmStrategy;
 import hu.bme.mit.theta.formalism.xta.analysis.lazy.BinItpStrategy;
+import hu.bme.mit.theta.formalism.xta.analysis.lazy.ExplBinItpStrategy;
+import hu.bme.mit.theta.formalism.xta.analysis.lazy.ExplLuStrategy;
+import hu.bme.mit.theta.formalism.xta.analysis.lazy.ExplSeqItpStrategy;
 import hu.bme.mit.theta.formalism.xta.analysis.lazy.ItpStrategy.ItpOperator;
 import hu.bme.mit.theta.formalism.xta.analysis.lazy.LazyXtaChecker;
 import hu.bme.mit.theta.formalism.xta.analysis.lazy.LuStrategy;
@@ -67,6 +70,27 @@ public final class XtaCheckerBuilder {
 			@Override
 			public AlgorithmStrategy<?> create(final XtaSystem system) {
 				return ActStrategy.create(system);
+			}
+		},
+
+		EXPLSEQITP {
+			@Override
+			public AlgorithmStrategy<?> create(final XtaSystem system) {
+				return ExplSeqItpStrategy.create(system);
+			}
+		},
+
+		EXPLBINITP {
+			@Override
+			public AlgorithmStrategy<?> create(final XtaSystem system) {
+				return ExplBinItpStrategy.create(system);
+			}
+		},
+
+		EXPLLU {
+			@Override
+			public AlgorithmStrategy<?> create(final XtaSystem system) {
+				return ExplLuStrategy.create(system);
 			}
 		};
 

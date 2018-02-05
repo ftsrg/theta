@@ -20,15 +20,22 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.Streams.zip;
 import static hu.bme.mit.theta.core.stmt.Stmts.Assume;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Stream;
 
 import com.google.common.collect.Lists;
 
+import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.model.MutableValuation;
+import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.core.utils.WpState;
 import hu.bme.mit.theta.formalism.xta.Guard;
 import hu.bme.mit.theta.formalism.xta.Update;
@@ -40,6 +47,30 @@ import hu.bme.mit.theta.formalism.xta.analysis.XtaAction.SyncedXtaAction;
 public final class XtaDataUtils {
 
 	private XtaDataUtils() {
+	}
+
+	public static Valuation interpolate(final Valuation valA, final Expr<BoolType> exprB) {
+		final Collection<VarDecl<?>> vars = ExprUtils.getVars(exprB);
+		final MutableValuation valI = new MutableValuation();
+		for (final VarDecl<?> var : vars) {
+			final LitExpr<?> val = valA.eval(var).get();
+			valI.put(var, val);
+		}
+
+		assert ExprUtils.simplify(exprB, valI).equals(False());
+
+		for (final VarDecl<?> var : vars) {
+			valI.remove(var);
+			final Expr<BoolType> simplifiedExprB = ExprUtils.simplify(exprB, valI);
+			if (simplifiedExprB.equals(False())) {
+				continue;
+			} else {
+				final LitExpr<?> val = valA.eval(var).get();
+				valI.put(var, val);
+			}
+		}
+
+		return valI;
 	}
 
 	public static Expr<BoolType> pre(final Expr<BoolType> expr, final XtaAction action) {
