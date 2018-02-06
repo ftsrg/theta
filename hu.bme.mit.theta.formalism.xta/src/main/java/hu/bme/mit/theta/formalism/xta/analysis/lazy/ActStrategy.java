@@ -20,6 +20,7 @@ import static java.util.stream.Collectors.toList;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Set;
 
 import com.google.common.collect.ImmutableSet;
@@ -104,19 +105,18 @@ public final class ActStrategy implements AlgorithmStrategy<Prod2State<ExplState
 	public Collection<ArgNode<XtaState<Prod2State<ExplState, ActZoneState>>, XtaAction>> block(
 			final ArgNode<XtaState<Prod2State<ExplState, ActZoneState>>, XtaAction> node, final XtaAction action,
 			final XtaState<Prod2State<ExplState, ActZoneState>> succState, final Builder stats) {
-
-		final Collection<ArgNode<XtaState<Prod2State<ExplState, ActZoneState>>, XtaAction>> uncoveredNodes = new ArrayList<>();
 		if (succState.getState().isBottom1()) {
-			// do nothing
+			return Collections.emptyList();
 		} else if (succState.getState().isBottom2()) {
 			stats.startExpandZoneRefinement();
+			final Collection<ArgNode<XtaState<Prod2State<ExplState, ActZoneState>>, XtaAction>> uncoveredNodes = new ArrayList<>();
 			final Set<VarDecl<RatType>> preImage = XtaActZoneUtils.pre(ImmutableSet.of(), action);
 			propagateVars(node, preImage, uncoveredNodes, stats);
 			stats.stopExpandZoneRefinement();
+			return uncoveredNodes;
 		} else {
 			throw new AssertionError();
 		}
-		return uncoveredNodes;
 	}
 
 	////
