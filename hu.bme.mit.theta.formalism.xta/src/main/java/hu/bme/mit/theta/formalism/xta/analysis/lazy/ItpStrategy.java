@@ -20,6 +20,7 @@ import static java.util.stream.Collectors.toList;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 
 import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.algorithm.ArgNode;
@@ -168,18 +169,18 @@ public abstract class ItpStrategy implements AlgorithmStrategy<Prod3State<ExplSt
 			final ArgNode<XtaState<Prod3State<ExplState, ZoneState, ZoneState>>, XtaAction> node,
 			final XtaAction action, final XtaState<Prod3State<ExplState, ZoneState, ZoneState>> succState,
 			final LazyXtaStatistics.Builder stats) {
-		final Collection<ArgNode<XtaState<Prod3State<ExplState, ZoneState, ZoneState>>, XtaAction>> uncoveredNodes = new ArrayList<>();
 		if (succState.getState().isBottom1()) {
-			// do nothing
+			return Collections.emptyList();
 		} else if (succState.getState().isBottom2()) {
 			stats.startExpandZoneRefinement();
+			final Collection<ArgNode<XtaState<Prod3State<ExplState, ZoneState, ZoneState>>, XtaAction>> uncoveredNodes = new ArrayList<>();
 			final ZoneState preImage = pre(ZoneState.top(), action);
 			blockZone(node, preImage, uncoveredNodes, stats);
 			stats.stopExpandZoneRefinement();
+			return uncoveredNodes;
 		} else {
 			throw new AssertionError();
 		}
-		return uncoveredNodes;
 	}
 
 	////

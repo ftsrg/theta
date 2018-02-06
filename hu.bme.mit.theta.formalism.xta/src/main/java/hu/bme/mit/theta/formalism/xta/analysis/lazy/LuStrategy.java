@@ -20,6 +20,7 @@ import static java.util.stream.Collectors.toList;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 
 import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.algorithm.ArgEdge;
@@ -101,18 +102,18 @@ public final class LuStrategy implements AlgorithmStrategy<Prod2State<ExplState,
 	public Collection<ArgNode<XtaState<Prod2State<ExplState, LuZoneState>>, XtaAction>> block(
 			final ArgNode<XtaState<Prod2State<ExplState, LuZoneState>>, XtaAction> node, final XtaAction action,
 			final XtaState<Prod2State<ExplState, LuZoneState>> succState, final Builder stats) {
-		final Collection<ArgNode<XtaState<Prod2State<ExplState, LuZoneState>>, XtaAction>> uncoveredNodes = new ArrayList<>();
 		if (succState.getState().isBottom1()) {
-			// do nothing
+			return Collections.emptyList();
 		} else if (succState.getState().isBottom2()) {
 			stats.startExpandZoneRefinement();
+			final Collection<ArgNode<XtaState<Prod2State<ExplState, LuZoneState>>, XtaAction>> uncoveredNodes = new ArrayList<>();
 			final BoundFunc preImage = XtaLuZoneUtils.pre(BoundFunc.top(), action);
 			propagateBounds(node, preImage, uncoveredNodes, stats);
 			stats.stopExpandZoneRefinement();
+			return uncoveredNodes;
 		} else {
 			throw new AssertionError();
 		}
-		return uncoveredNodes;
 	}
 
 	////
