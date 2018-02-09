@@ -18,6 +18,8 @@ package hu.bme.mit.theta.formalism.cfa.tool;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.concurrent.TimeUnit;
 
 import com.beust.jcommander.JCommander;
@@ -191,7 +193,10 @@ public class CfaCli {
 			writer.cell("[EX] " + ex.getClass().getSimpleName() + message);
 		} else {
 			logger.write(Level.RESULT, "Exception of type %s occurred%n", ex.getClass().getSimpleName());
-			logger.write(Level.INFO, "Message:%n%s%n", ex.getMessage());
+			logger.write(Level.MAINSTEP, "Message:%n%s%n", ex.getMessage());
+			final StringWriter errors = new StringWriter();
+			ex.printStackTrace(new PrintWriter(errors));
+			logger.write(Level.SUBSTEP, "Trace:%n%s%n", errors.toString());
 		}
 	}
 
