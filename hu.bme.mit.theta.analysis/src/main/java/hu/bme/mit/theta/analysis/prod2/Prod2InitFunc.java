@@ -30,15 +30,24 @@ final class Prod2InitFunc<S1 extends State, S2 extends State, P1 extends Prec, P
 
 	private final InitFunc<S1, P1> initFunc1;
 	private final InitFunc<S2, P2> initFunc2;
+	private final StrengtheningOperator<S1, S2, P1, P2> strenghteningOperator;
 
-	private Prod2InitFunc(final InitFunc<S1, P1> initFunc1, final InitFunc<S2, P2> initFunc2) {
+	private Prod2InitFunc(final InitFunc<S1, P1> initFunc1, final InitFunc<S2, P2> initFunc2,
+			final StrengtheningOperator<S1, S2, P1, P2> strenghteningOperator) {
 		this.initFunc1 = checkNotNull(initFunc1);
 		this.initFunc2 = checkNotNull(initFunc2);
+		this.strenghteningOperator = checkNotNull(strenghteningOperator);
 	}
 
 	public static <S1 extends State, S2 extends State, P1 extends Prec, P2 extends Prec> Prod2InitFunc<S1, S2, P1, P2> create(
 			final InitFunc<S1, P1> initFunc1, final InitFunc<S2, P2> initFunc2) {
-		return new Prod2InitFunc<>(initFunc1, initFunc2);
+		return create(initFunc1, initFunc2, (states, prec) -> states);
+	}
+
+	public static <S1 extends State, S2 extends State, P1 extends Prec, P2 extends Prec> Prod2InitFunc<S1, S2, P1, P2> create(
+			final InitFunc<S1, P1> initFunc1, final InitFunc<S2, P2> initFunc2,
+			final StrengtheningOperator<S1, S2, P1, P2> strenghteningOperator) {
+		return new Prod2InitFunc<>(initFunc1, initFunc2, strenghteningOperator);
 	}
 
 	@Override
@@ -60,7 +69,9 @@ final class Prod2InitFunc<S1 extends State, S2 extends State, P1 extends Prec, P
 			return singleton(Prod2State.bottom2(bottom2));
 		}
 
-		return Prod2State.cartesian(initStates1, initStates2);
+		final Collection<Prod2State<S1, S2>> initStates = Prod2State.cartesian(initStates1, initStates2);
+
+		return strenghteningOperator.strengthen(initStates, prec);
 	}
 
 }

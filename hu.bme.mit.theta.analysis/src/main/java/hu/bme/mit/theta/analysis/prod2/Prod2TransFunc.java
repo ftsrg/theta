@@ -31,16 +31,24 @@ final class Prod2TransFunc<S1 extends State, S2 extends State, A extends Action,
 
 	private final TransFunc<S1, ? super A, P1> transFunc1;
 	private final TransFunc<S2, ? super A, P2> transFunc2;
+	private final StrengtheningOperator<S1, S2, P1, P2> strenghteningOperator;
 
-	private Prod2TransFunc(final TransFunc<S1, ? super A, P1> transFunc1,
-			final TransFunc<S2, ? super A, P2> transFunc2) {
+	private Prod2TransFunc(final TransFunc<S1, ? super A, P1> transFunc1, final TransFunc<S2, ? super A, P2> transFunc2,
+			final StrengtheningOperator<S1, S2, P1, P2> strenghteningOperator) {
 		this.transFunc1 = checkNotNull(transFunc1);
 		this.transFunc2 = checkNotNull(transFunc2);
+		this.strenghteningOperator = checkNotNull(strenghteningOperator);
 	}
 
 	public static <S1 extends State, S2 extends State, A extends Action, P1 extends Prec, P2 extends Prec> Prod2TransFunc<S1, S2, A, P1, P2> create(
 			final TransFunc<S1, ? super A, P1> transFunc1, final TransFunc<S2, ? super A, P2> transFunc2) {
-		return new Prod2TransFunc<>(transFunc1, transFunc2);
+		return create(transFunc1, transFunc2, (states, prec) -> states);
+	}
+
+	public static <S1 extends State, S2 extends State, A extends Action, P1 extends Prec, P2 extends Prec> Prod2TransFunc<S1, S2, A, P1, P2> create(
+			final TransFunc<S1, ? super A, P1> transFunc1, final TransFunc<S2, ? super A, P2> transFunc2,
+			final StrengtheningOperator<S1, S2, P1, P2> strenghteningOperator) {
+		return new Prod2TransFunc<>(transFunc1, transFunc2, strenghteningOperator);
 	}
 
 	@Override
@@ -72,7 +80,9 @@ final class Prod2TransFunc<S1 extends State, S2 extends State, A extends Action,
 			return singleton(Prod2State.bottom2(bottom2));
 		}
 
-		return Prod2State.cartesian(succStates1, succStates2);
+		final Collection<Prod2State<S1, S2>> succStates = Prod2State.cartesian(succStates1, succStates2);
+
+		return strenghteningOperator.strengthen(succStates, prec);
 	}
 
 }
