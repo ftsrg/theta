@@ -35,7 +35,6 @@ import hu.bme.mit.theta.analysis.algorithm.SearchStrategy;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.formalism.xta.XtaSystem;
 import hu.bme.mit.theta.formalism.xta.analysis.lazy.BinItpStrategy;
-import hu.bme.mit.theta.formalism.xta.analysis.lazy.ItpStrategy.ItpOperator;
 import hu.bme.mit.theta.formalism.xta.analysis.lazy.LazyXtaChecker;
 import hu.bme.mit.theta.formalism.xta.analysis.lazy.LuStrategy;
 import hu.bme.mit.theta.formalism.xta.analysis.lazy.SeqItpStrategy;
@@ -73,8 +72,8 @@ public final class LazyXtaCheckerTest {
 	@Test
 	public void testBinItpStrategy() {
 		// Arrange
-		final LazyXtaChecker<?> checker = LazyXtaChecker.create(system,
-				BinItpStrategy.create(system, ItpOperator.DEFAULT), SearchStrategy.BFS);
+		final LazyXtaChecker<?> checker = LazyXtaChecker.create(system, BinItpStrategy.create(system),
+				SearchStrategy.BFS);
 
 		// Act
 		final SafetyResult<?, XtaAction> status = checker.check(UnitPrec.getInstance());
@@ -87,8 +86,8 @@ public final class LazyXtaCheckerTest {
 	@Test
 	public void testSeqItpStrategy() {
 		// Arrange
-		final LazyXtaChecker<?> checker = LazyXtaChecker.create(system,
-				SeqItpStrategy.create(system, ItpOperator.DEFAULT), SearchStrategy.BFS);
+		final LazyXtaChecker<?> checker = LazyXtaChecker.create(system, SeqItpStrategy.create(system),
+				SearchStrategy.BFS);
 
 		// Act
 		final SafetyResult<?, XtaAction> status = checker.check(UnitPrec.getInstance());

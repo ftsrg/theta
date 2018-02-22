@@ -22,7 +22,6 @@ import hu.bme.mit.theta.formalism.xta.analysis.lazy.BinItpStrategy;
 import hu.bme.mit.theta.formalism.xta.analysis.lazy.ExplBinItpStrategy;
 import hu.bme.mit.theta.formalism.xta.analysis.lazy.ExplLuStrategy;
 import hu.bme.mit.theta.formalism.xta.analysis.lazy.ExplSeqItpStrategy;
-import hu.bme.mit.theta.formalism.xta.analysis.lazy.ItpStrategy.ItpOperator;
 import hu.bme.mit.theta.formalism.xta.analysis.lazy.LazyXtaChecker;
 import hu.bme.mit.theta.formalism.xta.analysis.lazy.LuStrategy;
 import hu.bme.mit.theta.formalism.xta.analysis.lazy.SeqItpStrategy;
@@ -33,28 +32,14 @@ public final class XtaCheckerBuilder {
 		SEQITP {
 			@Override
 			public AlgorithmStrategy<?> create(final XtaSystem system) {
-				return SeqItpStrategy.create(system, ItpOperator.DEFAULT);
+				return SeqItpStrategy.create(system);
 			}
 		},
 
 		BINITP {
 			@Override
 			public AlgorithmStrategy<?> create(final XtaSystem system) {
-				return BinItpStrategy.create(system, ItpOperator.DEFAULT);
-			}
-		},
-
-		WEAKSEQITP {
-			@Override
-			public AlgorithmStrategy<?> create(final XtaSystem system) {
-				return SeqItpStrategy.create(system, ItpOperator.WEAK);
-			}
-		},
-
-		WEAKBINITP {
-			@Override
-			public AlgorithmStrategy<?> create(final XtaSystem system) {
-				return BinItpStrategy.create(system, ItpOperator.WEAK);
+				return BinItpStrategy.create(system);
 			}
 		},
 
