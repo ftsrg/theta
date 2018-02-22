@@ -45,33 +45,11 @@ import hu.bme.mit.theta.formalism.xta.analysis.zone.XtaZoneUtils;
 
 public abstract class ItpStrategy implements AlgorithmStrategy<Prod3State<ExplState, ZoneState, ZoneState>> {
 
-	public enum ItpOperator {
-
-		DEFAULT {
-			@Override
-			public ZoneState interpolate(final ZoneState zoneA, final ZoneState zoneB) {
-				return ZoneState.interpolant(zoneA, zoneB);
-			}
-		},
-
-		WEAK {
-			@Override
-			public ZoneState interpolate(final ZoneState zoneA, final ZoneState zoneB) {
-				return ZoneState.weakInterpolant(zoneA, zoneB);
-			}
-		};
-
-		public abstract ZoneState interpolate(final ZoneState zoneA, final ZoneState zoneB);
-
-	}
-
 	private final ZonePrec prec;
 	private final Analysis<XtaState<Prod3State<ExplState, ZoneState, ZoneState>>, XtaAction, UnitPrec> analysis;
-	private final ItpOperator operator;
 
-	ItpStrategy(final XtaSystem system, final ItpOperator operator) {
+	ItpStrategy(final XtaSystem system) {
 		checkNotNull(system);
-		this.operator = checkNotNull(operator);
 		prec = ZonePrec.of(system.getClockVars());
 		analysis = createAnalysis(system);
 	}
@@ -79,7 +57,7 @@ public abstract class ItpStrategy implements AlgorithmStrategy<Prod3State<ExplSt
 	////
 
 	protected final ZoneState interpolate(final ZoneState zoneA, final ZoneState zoneB) {
-		return operator.interpolate(zoneA, zoneB);
+		return ZoneState.interpolant(zoneA, zoneB);
 	}
 
 	protected final ZoneState pre(final ZoneState state, final XtaAction action) {

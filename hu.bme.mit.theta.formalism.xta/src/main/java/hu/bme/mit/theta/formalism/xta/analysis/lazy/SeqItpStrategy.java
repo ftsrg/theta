@@ -28,12 +28,12 @@ import hu.bme.mit.theta.formalism.xta.analysis.XtaState;
 
 public final class SeqItpStrategy extends ItpStrategy {
 
-	private SeqItpStrategy(final XtaSystem system, final ItpOperator operator) {
-		super(system, operator);
+	private SeqItpStrategy(final XtaSystem system) {
+		super(system);
 	}
 
-	public static SeqItpStrategy create(final XtaSystem system, final ItpOperator operator) {
-		return new SeqItpStrategy(system, operator);
+	public static SeqItpStrategy create(final XtaSystem system) {
+		return new SeqItpStrategy(system);
 	}
 
 	@Override

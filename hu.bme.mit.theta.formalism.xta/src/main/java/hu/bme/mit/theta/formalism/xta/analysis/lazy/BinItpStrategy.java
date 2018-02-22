@@ -28,12 +28,12 @@ import hu.bme.mit.theta.formalism.xta.analysis.XtaState;
 
 public final class BinItpStrategy extends ItpStrategy {
 
-	private BinItpStrategy(final XtaSystem system, final ItpOperator operator) {
-		super(system, operator);
+	private BinItpStrategy(final XtaSystem system) {
+		super(system);
 	}
 
-	public static BinItpStrategy create(final XtaSystem system, final ItpOperator operator) {
-		return new BinItpStrategy(system, operator);
+	public static BinItpStrategy create(final XtaSystem system) {
+		return new BinItpStrategy(system);
 	}
 
 	@Override
