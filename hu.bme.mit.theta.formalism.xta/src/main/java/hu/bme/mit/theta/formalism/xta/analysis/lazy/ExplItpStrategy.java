@@ -135,11 +135,6 @@ public abstract class ExplItpStrategy
 	}
 
 	@Override
-	public final boolean shouldExclude(final XtaState<Prod4State<ExplState, ZoneState, ExplState, ZoneState>> state) {
-		return state.getState().isBottom1() || state.getState().isBottom2();
-	}
-
-	@Override
 	public final Collection<ArgNode<XtaState<Prod4State<ExplState, ZoneState, ExplState, ZoneState>>, XtaAction>> forceCover(
 			final ArgNode<XtaState<Prod4State<ExplState, ZoneState, ExplState, ZoneState>>, XtaAction> coveree,
 			final ArgNode<XtaState<Prod4State<ExplState, ZoneState, ExplState, ZoneState>>, XtaAction> coverer,

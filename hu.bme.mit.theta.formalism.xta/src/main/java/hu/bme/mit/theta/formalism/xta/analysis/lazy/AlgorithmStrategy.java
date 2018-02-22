@@ -33,8 +33,6 @@ public interface AlgorithmStrategy<S extends State> {
 
 	public boolean mightCover(ArgNode<XtaState<S>, XtaAction> coveree, ArgNode<XtaState<S>, XtaAction> coverer);
 
-	public boolean shouldExclude(final XtaState<S> state);
-
 	public Collection<ArgNode<XtaState<S>, XtaAction>> forceCover(final ArgNode<XtaState<S>, XtaAction> coveree,
 			ArgNode<XtaState<S>, XtaAction> coverer, final LazyXtaStatistics.Builder stats);
 
