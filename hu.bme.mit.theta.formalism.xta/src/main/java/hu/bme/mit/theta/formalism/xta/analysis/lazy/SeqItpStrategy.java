@@ -20,8 +20,9 @@ import java.util.Collection;
 import hu.bme.mit.theta.analysis.algorithm.ArgEdge;
 import hu.bme.mit.theta.analysis.algorithm.ArgNode;
 import hu.bme.mit.theta.analysis.expl.ExplState;
-import hu.bme.mit.theta.analysis.prod3.Prod3State;
+import hu.bme.mit.theta.analysis.prod2.Prod2State;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
+import hu.bme.mit.theta.analysis.zone.itp.ItpZoneState;
 import hu.bme.mit.theta.formalism.xta.XtaSystem;
 import hu.bme.mit.theta.formalism.xta.analysis.XtaAction;
 import hu.bme.mit.theta.formalism.xta.analysis.XtaState;
@@ -37,20 +38,18 @@ public final class SeqItpStrategy extends ItpStrategy {
 	}
 
 	@Override
-	protected ZoneState blockZone(final ArgNode<XtaState<Prod3State<ExplState, ZoneState, ZoneState>>, XtaAction> node,
+	protected ZoneState blockZone(final ArgNode<XtaState<Prod2State<ExplState, ItpZoneState>>, XtaAction> node,
 			final ZoneState zone,
-			final Collection<ArgNode<XtaState<Prod3State<ExplState, ZoneState, ZoneState>>, XtaAction>> uncoveredNodes,
+			final Collection<ArgNode<XtaState<Prod2State<ExplState, ItpZoneState>>, XtaAction>> uncoveredNodes,
 			final LazyXtaStatistics.Builder stats) {
-		final ZoneState abstractZone = node.getState().getState().getState3();
+		final ZoneState abstractZone = node.getState().getState().getState2().getInterpolant();
 		if (abstractZone.isConsistentWith(zone)) {
 			stats.refineZone();
 
 			if (node.getInEdge().isPresent()) {
-				final ArgEdge<XtaState<Prod3State<ExplState, ZoneState, ZoneState>>, XtaAction> inEdge = node
-						.getInEdge().get();
+				final ArgEdge<XtaState<Prod2State<ExplState, ItpZoneState>>, XtaAction> inEdge = node.getInEdge().get();
 				final XtaAction action = inEdge.getAction();
-				final ArgNode<XtaState<Prod3State<ExplState, ZoneState, ZoneState>>, XtaAction> parent = inEdge
-						.getSource();
+				final ArgNode<XtaState<Prod2State<ExplState, ItpZoneState>>, XtaAction> parent = inEdge.getSource();
 
 				final ZoneState B_pre = pre(zone, action);
 				final ZoneState A_pre = blockZone(parent, B_pre, uncoveredNodes, stats);
@@ -65,7 +64,7 @@ public final class SeqItpStrategy extends ItpStrategy {
 
 				return interpolant;
 			} else {
-				final ZoneState concreteZone = node.getState().getState().getState2();
+				final ZoneState concreteZone = node.getState().getState().getState2().getZone();
 
 				final ZoneState interpolant = interpolate(concreteZone, zone);
 
