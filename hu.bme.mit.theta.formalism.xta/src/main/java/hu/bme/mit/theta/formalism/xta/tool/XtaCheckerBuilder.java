@@ -17,7 +17,6 @@ package hu.bme.mit.theta.formalism.xta.tool;
 
 import hu.bme.mit.theta.analysis.algorithm.SearchStrategy;
 import hu.bme.mit.theta.formalism.xta.XtaSystem;
-import hu.bme.mit.theta.formalism.xta.analysis.lazy.ActStrategy;
 import hu.bme.mit.theta.formalism.xta.analysis.lazy.AlgorithmStrategy;
 import hu.bme.mit.theta.formalism.xta.analysis.lazy.BinItpStrategy;
 import hu.bme.mit.theta.formalism.xta.analysis.lazy.ExplBinItpStrategy;
@@ -63,13 +62,6 @@ public final class XtaCheckerBuilder {
 			@Override
 			public AlgorithmStrategy<?> create(final XtaSystem system) {
 				return LuStrategy.create(system);
-			}
-		},
-
-		ACT {
-			@Override
-			public AlgorithmStrategy<?> create(final XtaSystem system) {
-				return ActStrategy.create(system);
 			}
 		},
 
