@@ -82,11 +82,6 @@ public final class LuStrategy implements AlgorithmStrategy<Prod2State<ExplState,
 	}
 
 	@Override
-	public boolean shouldExclude(final XtaState<Prod2State<ExplState, LuZoneState>> state) {
-		return state.getState().isBottom1() || state.getState().isBottom2();
-	}
-
-	@Override
 	public Collection<ArgNode<XtaState<Prod2State<ExplState, LuZoneState>>, XtaAction>> forceCover(
 			final ArgNode<XtaState<Prod2State<ExplState, LuZoneState>>, XtaAction> coveree,
 			final ArgNode<XtaState<Prod2State<ExplState, LuZoneState>>, XtaAction> coverer, final Builder stats) {

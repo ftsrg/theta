@@ -135,7 +135,7 @@ public final class LazyXtaChecker<S extends State> implements SafetyChecker<XtaS
 						.getSuccStates(state, action, UnitPrec.getInstance());
 
 				for (final XtaState<S> succState : succStates) {
-					if (algorithmStrategy.shouldExclude(succState)) {
+					if (succState.isBottom()) {
 						final Collection<ArgNode<XtaState<S>, XtaAction>> uncoveredNodes = algorithmStrategy.block(node,
 								action, succState, stats);
 						waiting.addAll(uncoveredNodes);

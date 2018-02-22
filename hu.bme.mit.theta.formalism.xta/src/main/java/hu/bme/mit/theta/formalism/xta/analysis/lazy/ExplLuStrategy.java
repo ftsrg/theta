@@ -95,11 +95,6 @@ public final class ExplLuStrategy implements AlgorithmStrategy<Prod3State<ExplSt
 	}
 
 	@Override
-	public boolean shouldExclude(final XtaState<Prod3State<ExplState, ExplState, LuZoneState>> state) {
-		return state.getState().isBottom1() || state.getState().isBottom3();
-	}
-
-	@Override
 	public Collection<ArgNode<XtaState<Prod3State<ExplState, ExplState, LuZoneState>>, XtaAction>> forceCover(
 			final ArgNode<XtaState<Prod3State<ExplState, ExplState, LuZoneState>>, XtaAction> coveree,
 			final ArgNode<XtaState<Prod3State<ExplState, ExplState, LuZoneState>>, XtaAction> coverer,

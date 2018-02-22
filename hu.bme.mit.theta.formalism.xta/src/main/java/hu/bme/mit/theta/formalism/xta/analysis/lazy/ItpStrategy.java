@@ -121,11 +121,6 @@ public abstract class ItpStrategy implements AlgorithmStrategy<Prod3State<ExplSt
 	}
 
 	@Override
-	public boolean shouldExclude(final XtaState<Prod3State<ExplState, ZoneState, ZoneState>> state) {
-		return state.getState().isBottom1() || state.getState().isBottom2();
-	}
-
-	@Override
 	public Collection<ArgNode<XtaState<Prod3State<ExplState, ZoneState, ZoneState>>, XtaAction>> forceCover(
 			final ArgNode<XtaState<Prod3State<ExplState, ZoneState, ZoneState>>, XtaAction> coveree,
 			final ArgNode<XtaState<Prod3State<ExplState, ZoneState, ZoneState>>, XtaAction> coverer,
