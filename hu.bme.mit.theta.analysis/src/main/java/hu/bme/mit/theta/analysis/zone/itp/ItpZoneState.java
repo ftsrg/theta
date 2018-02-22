@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.analysis.zone.itp;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
@@ -74,12 +75,16 @@ public final class ItpZoneState implements ExprState {
 
 	@Override
 	public boolean isBottom() {
-		return interpolant.isBottom();
+		return zone.isBottom();
 	}
 
 	@Override
 	public Expr<BoolType> toExpr() {
-		return interpolant.toExpr();
+		if (isBottom()) {
+			return False();
+		} else {
+			return interpolant.toExpr();
+		}
 	}
 
 	////
