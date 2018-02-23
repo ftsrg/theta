@@ -17,7 +17,7 @@ package hu.bme.mit.theta.formalism.xta.tool;
 
 import hu.bme.mit.theta.analysis.algorithm.SearchStrategy;
 import hu.bme.mit.theta.formalism.xta.XtaSystem;
-import hu.bme.mit.theta.formalism.xta.analysis.lazy.AlgorithmStrategy;
+import hu.bme.mit.theta.formalism.xta.analysis.lazy.LazyXtaStrategy;
 import hu.bme.mit.theta.formalism.xta.analysis.lazy.BinItpStrategy;
 import hu.bme.mit.theta.formalism.xta.analysis.lazy.ExplBinItpStrategy;
 import hu.bme.mit.theta.formalism.xta.analysis.lazy.ExplLuStrategy;
@@ -31,47 +31,47 @@ public final class XtaCheckerBuilder {
 
 		SEQITP {
 			@Override
-			public AlgorithmStrategy<?> create(final XtaSystem system) {
+			public LazyXtaStrategy<?> create(final XtaSystem system) {
 				return SeqItpStrategy.create(system);
 			}
 		},
 
 		BINITP {
 			@Override
-			public AlgorithmStrategy<?> create(final XtaSystem system) {
+			public LazyXtaStrategy<?> create(final XtaSystem system) {
 				return BinItpStrategy.create(system);
 			}
 		},
 
 		LU {
 			@Override
-			public AlgorithmStrategy<?> create(final XtaSystem system) {
+			public LazyXtaStrategy<?> create(final XtaSystem system) {
 				return LuStrategy.create(system);
 			}
 		},
 
 		EXPLSEQITP {
 			@Override
-			public AlgorithmStrategy<?> create(final XtaSystem system) {
+			public LazyXtaStrategy<?> create(final XtaSystem system) {
 				return ExplSeqItpStrategy.create(system);
 			}
 		},
 
 		EXPLBINITP {
 			@Override
-			public AlgorithmStrategy<?> create(final XtaSystem system) {
+			public LazyXtaStrategy<?> create(final XtaSystem system) {
 				return ExplBinItpStrategy.create(system);
 			}
 		},
 
 		EXPLLU {
 			@Override
-			public AlgorithmStrategy<?> create(final XtaSystem system) {
+			public LazyXtaStrategy<?> create(final XtaSystem system) {
 				return ExplLuStrategy.create(system);
 			}
 		};
 
-		public abstract AlgorithmStrategy<?> create(final XtaSystem system);
+		public abstract LazyXtaStrategy<?> create(final XtaSystem system);
 	}
 
 	private XtaCheckerBuilder() {
@@ -79,7 +79,7 @@ public final class XtaCheckerBuilder {
 
 	public static LazyXtaChecker<?> build(final Algorithm algorithm, final SearchStrategy searchStrategy,
 			final XtaSystem xta) {
-		final AlgorithmStrategy<?> algorithmStrategy = algorithm.create(xta);
+		final LazyXtaStrategy<?> algorithmStrategy = algorithm.create(xta);
 
 		final LazyXtaChecker<?> checker = LazyXtaChecker.create(xta, algorithmStrategy, searchStrategy);
 		return checker;
