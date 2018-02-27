@@ -38,8 +38,6 @@ import hu.bme.mit.theta.analysis.reachedset.Partition;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.analysis.zone.ZonePrec;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
-import hu.bme.mit.theta.analysis.zone.itp.ItpZoneAnalysis;
-import hu.bme.mit.theta.analysis.zone.itp.ItpZoneState;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.model.ImmutableValuation.Builder;
@@ -56,6 +54,8 @@ import hu.bme.mit.theta.formalism.xta.analysis.XtaState;
 import hu.bme.mit.theta.formalism.xta.analysis.expl.XtaExplAnalysis;
 import hu.bme.mit.theta.formalism.xta.analysis.zone.XtaZoneAnalysis;
 import hu.bme.mit.theta.formalism.xta.analysis.zone.XtaZoneUtils;
+import hu.bme.mit.theta.formalism.xta.analysis.zone.itp.ItpZoneAnalysis;
+import hu.bme.mit.theta.formalism.xta.analysis.zone.itp.ItpZoneState;
 
 public abstract class ExplItpStrategy implements LazyXtaStrategy<Prod3State<ExplState, ExplState, ItpZoneState>> {
 
