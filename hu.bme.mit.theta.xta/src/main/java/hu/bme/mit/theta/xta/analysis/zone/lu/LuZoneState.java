@@ -1,12 +1,12 @@
 /*
  *  Copyright 2017 Budapest University of Technology and Economics
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -47,39 +47,39 @@ public final class LuZoneState implements ExprState {
 	private static final int HASH_SEED = 5261;
 
 	private final ZoneState zone;
-	private final BoundFunc boundFunction;
+	private final BoundFunc boundFunc;
 
 	private volatile int hashCode = 0;
 	private volatile Expr<BoolType> expr = null;
 
-	private LuZoneState(final ZoneState zone, final BoundFunc boundFunction) {
+	private LuZoneState(final ZoneState zone, final BoundFunc boundFunc) {
 		this.zone = checkNotNull(zone);
-		this.boundFunction = checkNotNull(boundFunction);
+		this.boundFunc = checkNotNull(boundFunc);
 	}
 
-	public static LuZoneState of(final ZoneState zone, final BoundFunc boundFunction) {
-		return new LuZoneState(zone, boundFunction);
+	public static LuZoneState of(final ZoneState zone, final BoundFunc boundFunc) {
+		return new LuZoneState(zone, boundFunc);
 	}
 
 	public ZoneState getZone() {
 		return zone;
 	}
 
-	public BoundFunc getBoundFunction() {
-		return boundFunction;
+	public BoundFunc getBoundFunc() {
+		return boundFunc;
 	}
 
-	public LuZoneState withBoundFunction(final BoundFunc boundFunction) {
-		return LuZoneState.of(zone, boundFunction);
+	public LuZoneState withBoundFunc(final BoundFunc boundFunc) {
+		return LuZoneState.of(zone, boundFunc);
 	}
 
+	@Override
 	public boolean isBottom() {
 		return zone.isBottom();
 	}
 
 	public boolean isLeq(final LuZoneState that) {
-		return that.getBoundFunction().isLeq(this.getBoundFunction())
-				&& this.getZone().isLeq(that.getZone(), that.boundFunction);
+		return that.boundFunc.isLeq(this.boundFunc) && this.zone.isLeq(that.zone, that.boundFunc);
 	}
 
 	@Override
@@ -104,7 +104,7 @@ public final class LuZoneState implements ExprState {
 				final Expr<RatType> x = dx.getRef();
 				final Expr<RatType> xp = dxp.getRef();
 
-				final Optional<Integer> optLower = boundFunction.getLower(dx);
+				final Optional<Integer> optLower = boundFunc.getLower(dx);
 				if (optLower.isPresent()) {
 					final int lower = optLower.get();
 					final Expr<RatType> lx = Rat(lower, 1);
@@ -113,7 +113,7 @@ public final class LuZoneState implements ExprState {
 					conjuncts.add(lowerExpr);
 				}
 
-				final Optional<Integer> optUpper = boundFunction.getUpper(dx);
+				final Optional<Integer> optUpper = boundFunc.getUpper(dx);
 				if (optUpper.isPresent()) {
 					final int upper = optUpper.get();
 					final Expr<RatType> ux = Rat(upper, 1);
@@ -140,7 +140,7 @@ public final class LuZoneState implements ExprState {
 		if (result == 0) {
 			result = HASH_SEED;
 			result = 31 * result + zone.hashCode();
-			result = 31 * result + boundFunction.hashCode();
+			result = 31 * result + boundFunc.hashCode();
 			hashCode = result;
 		}
 		return result;
@@ -152,7 +152,7 @@ public final class LuZoneState implements ExprState {
 			return true;
 		} else if (obj instanceof LuZoneState) {
 			final LuZoneState that = (LuZoneState) obj;
-			return this.zone.equals(that.zone) && this.boundFunction.equals(that.boundFunction);
+			return this.zone.equals(that.zone) && this.boundFunc.equals(that.boundFunc);
 		} else {
 			return false;
 		}
@@ -162,13 +162,13 @@ public final class LuZoneState implements ExprState {
 	public String toString() {
 		final StringJoiner sj = new StringJoiner("\n");
 		sj.add(zone.toString());
-		if (!boundFunction.getLowerVars().isEmpty()) {
+		if (!boundFunc.getLowerVars().isEmpty()) {
 			sj.add("L:");
-			boundFunction.getLowerVars().forEach(c -> sj.add(c.getName() + " <- " + boundFunction.getLower(c).get()));
+			boundFunc.getLowerVars().forEach(c -> sj.add(c.getName() + " <- " + boundFunc.getLower(c).get()));
 		}
-		if (!boundFunction.getUpperVars().isEmpty()) {
+		if (!boundFunc.getUpperVars().isEmpty()) {
 			sj.add("U:");
-			boundFunction.getUpperVars().forEach(c -> sj.add(c.getName() + " <- " + boundFunction.getUpper(c).get()));
+			boundFunc.getUpperVars().forEach(c -> sj.add(c.getName() + " <- " + boundFunc.getUpper(c).get()));
 		}
 		return sj.toString();
 	}

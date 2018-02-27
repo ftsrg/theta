@@ -90,7 +90,7 @@ public final class ExplLuStrategy implements LazyXtaStrategy<Prod3State<ExplStat
 		final ExplState covererExpl = coverer.getState().getState().getState2();
 		final ZoneState covereeZone = coveree.getState().getState().getState3().getZone();
 		final ZoneState covererZone = coverer.getState().getState().getState3().getZone();
-		final BoundFunc covererBoundFunc = coverer.getState().getState().getState3().getBoundFunction();
+		final BoundFunc covererBoundFunc = coverer.getState().getState().getState3().getBoundFunc();
 		return covereeExpl.isLeq(covererExpl) && covereeZone.isLeq(covererZone, covererBoundFunc);
 	}
 
@@ -106,7 +106,7 @@ public final class ExplLuStrategy implements LazyXtaStrategy<Prod3State<ExplStat
 		stats.stopCloseExplRefinement();
 
 		stats.startCloseZoneRefinement();
-		final BoundFunc boundFunc = coverer.getState().getState().getState3().getBoundFunction();
+		final BoundFunc boundFunc = coverer.getState().getState().getState3().getBoundFunc();
 		propagateBounds(coveree, boundFunc, uncoveredNodes, stats);
 		stats.stopCloseZoneRefinement();
 
@@ -169,15 +169,15 @@ public final class ExplLuStrategy implements LazyXtaStrategy<Prod3State<ExplStat
 	}
 
 	private void propagateBounds(final ArgNode<XtaState<Prod3State<ExplState, ExplState, LuZoneState>>, XtaAction> node,
-			final BoundFunc boundFunction,
+			final BoundFunc boundFunc,
 			final Collection<ArgNode<XtaState<Prod3State<ExplState, ExplState, LuZoneState>>, XtaAction>> uncoveredNodes,
 			final LazyXtaStatistics.Builder stats) {
-		final BoundFunc oldBoundFunction = node.getState().getState().getState3().getBoundFunction();
-		if (!boundFunction.isLeq(oldBoundFunction)) {
+		final BoundFunc oldBoundFunc = node.getState().getState().getState3().getBoundFunc();
+		if (!boundFunc.isLeq(oldBoundFunc)) {
 			stats.refineZone();
 
-			strengthenZone(node, boundFunction);
-			maintainZoneCoverage(node, boundFunction, uncoveredNodes);
+			strengthenZone(node, boundFunc);
+			maintainZoneCoverage(node, boundFunc, uncoveredNodes);
 
 			if (node.getInEdge().isPresent()) {
 				final ArgEdge<XtaState<Prod3State<ExplState, ExplState, LuZoneState>>, XtaAction> inEdge = node
@@ -185,7 +185,7 @@ public final class ExplLuStrategy implements LazyXtaStrategy<Prod3State<ExplStat
 				final XtaAction action = inEdge.getAction();
 				final ArgNode<XtaState<Prod3State<ExplState, ExplState, LuZoneState>>, XtaAction> parent = inEdge
 						.getSource();
-				final BoundFunc preBound = XtaLuZoneUtils.pre(boundFunction, action);
+				final BoundFunc preBound = XtaLuZoneUtils.pre(boundFunc, action);
 				propagateBounds(parent, preBound, uncoveredNodes, stats);
 			}
 		}
@@ -218,11 +218,11 @@ public final class ExplLuStrategy implements LazyXtaStrategy<Prod3State<ExplStat
 		final XtaState<Prod3State<ExplState, ExplState, LuZoneState>> state = node.getState();
 		final Prod3State<ExplState, ExplState, LuZoneState> prodState = state.getState();
 		final LuZoneState luZoneState = prodState.getState3();
-		final BoundFunc oldBoundFunction = luZoneState.getBoundFunction();
+		final BoundFunc oldBoundFunc = luZoneState.getBoundFunc();
 
-		final BoundFunc newBoundFunction = oldBoundFunction.merge(interpolant);
+		final BoundFunc newBoundFunc = oldBoundFunc.merge(interpolant);
 
-		final LuZoneState newLuZoneState = luZoneState.withBoundFunction(newBoundFunction);
+		final LuZoneState newLuZoneState = luZoneState.withBoundFunc(newBoundFunc);
 		final Prod3State<ExplState, ExplState, LuZoneState> newProdState = prodState.with3(newLuZoneState);
 		final XtaState<Prod3State<ExplState, ExplState, LuZoneState>> newState = state.withState(newProdState);
 		node.setState(newState);
