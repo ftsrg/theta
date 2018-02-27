@@ -42,8 +42,8 @@ public final class SeqItpStrategy extends ItpStrategy {
 			final ZoneState zone,
 			final Collection<ArgNode<XtaState<Prod2State<ExplState, ItpZoneState>>, XtaAction>> uncoveredNodes,
 			final LazyXtaStatistics.Builder stats) {
-		final ZoneState abstractZone = node.getState().getState().getState2().getInterpolant();
-		if (abstractZone.isConsistentWith(zone)) {
+		final ZoneState abstrState = node.getState().getState().getState2().getAbstrState();
+		if (abstrState.isConsistentWith(zone)) {
 			stats.refineZone();
 
 			if (node.getInEdge().isPresent()) {
@@ -64,9 +64,9 @@ public final class SeqItpStrategy extends ItpStrategy {
 
 				return interpolant;
 			} else {
-				final ZoneState concreteZone = node.getState().getState().getState2().getZone();
+				final ZoneState concrState = node.getState().getState().getState2().getConcrState();
 
-				final ZoneState interpolant = interpolate(concreteZone, zone);
+				final ZoneState interpolant = interpolate(concrState, zone);
 
 				strengthen(node, interpolant);
 				maintainCoverage(node, interpolant, uncoveredNodes);
@@ -74,7 +74,7 @@ public final class SeqItpStrategy extends ItpStrategy {
 				return interpolant;
 			}
 		} else {
-			return abstractZone;
+			return abstrState;
 		}
 	}
 

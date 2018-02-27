@@ -43,12 +43,12 @@ public final class BinItpStrategy extends ItpStrategy {
 			final Collection<ArgNode<XtaState<Prod2State<ExplState, ItpZoneState>>, XtaAction>> uncoveredNodes,
 			final LazyXtaStatistics.Builder stats) {
 
-		final ZoneState abstractZone = node.getState().getState().getState2().getInterpolant();
-		if (abstractZone.isConsistentWith(zone)) {
+		final ZoneState abstrState = node.getState().getState().getState2().getAbstrState();
+		if (abstrState.isConsistentWith(zone)) {
 			stats.refineZone();
 
-			final ZoneState concreteZone = node.getState().getState().getState2().getZone();
-			final ZoneState interpolant = ZoneState.interpolant(concreteZone, zone);
+			final ZoneState concrState = node.getState().getState().getState2().getConcrState();
+			final ZoneState interpolant = ZoneState.interpolant(concrState, zone);
 
 			strengthen(node, interpolant);
 			maintainCoverage(node, interpolant, uncoveredNodes);
@@ -66,7 +66,7 @@ public final class BinItpStrategy extends ItpStrategy {
 
 			return interpolant;
 		} else {
-			return abstractZone;
+			return abstrState;
 		}
 	}
 
