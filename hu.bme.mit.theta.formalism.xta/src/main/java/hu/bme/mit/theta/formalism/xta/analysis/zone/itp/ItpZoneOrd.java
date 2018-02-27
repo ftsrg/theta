@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.analysis.zone.itp;
+package hu.bme.mit.theta.formalism.xta.analysis.zone.itp;
 
 import hu.bme.mit.theta.analysis.PartialOrd;
 
