@@ -34,8 +34,6 @@ import hu.bme.mit.theta.analysis.reachedset.Partition;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.analysis.zone.BoundFunc;
 import hu.bme.mit.theta.analysis.zone.ZonePrec;
-import hu.bme.mit.theta.analysis.zone.lu.LuZoneAnalysis;
-import hu.bme.mit.theta.analysis.zone.lu.LuZoneState;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.formalism.xta.XtaSystem;
 import hu.bme.mit.theta.formalism.xta.analysis.XtaAction;
@@ -45,6 +43,8 @@ import hu.bme.mit.theta.formalism.xta.analysis.expl.XtaExplAnalysis;
 import hu.bme.mit.theta.formalism.xta.analysis.lazy.LazyXtaStatistics.Builder;
 import hu.bme.mit.theta.formalism.xta.analysis.zone.XtaLuZoneUtils;
 import hu.bme.mit.theta.formalism.xta.analysis.zone.XtaZoneAnalysis;
+import hu.bme.mit.theta.formalism.xta.analysis.zone.lu.LuZoneAnalysis;
+import hu.bme.mit.theta.formalism.xta.analysis.zone.lu.LuZoneState;
 
 public final class LuStrategy implements LazyXtaStrategy<Prod2State<ExplState, LuZoneState>> {
 
