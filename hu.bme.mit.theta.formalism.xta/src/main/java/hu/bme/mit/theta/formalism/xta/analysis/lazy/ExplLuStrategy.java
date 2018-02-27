@@ -39,8 +39,6 @@ import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.analysis.zone.BoundFunc;
 import hu.bme.mit.theta.analysis.zone.ZonePrec;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
-import hu.bme.mit.theta.analysis.zone.lu.LuZoneAnalysis;
-import hu.bme.mit.theta.analysis.zone.lu.LuZoneState;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.model.ImmutableValuation;
 import hu.bme.mit.theta.core.model.ImmutableValuation.Builder;
@@ -57,6 +55,8 @@ import hu.bme.mit.theta.formalism.xta.analysis.XtaState;
 import hu.bme.mit.theta.formalism.xta.analysis.expl.XtaExplAnalysis;
 import hu.bme.mit.theta.formalism.xta.analysis.zone.XtaLuZoneUtils;
 import hu.bme.mit.theta.formalism.xta.analysis.zone.XtaZoneAnalysis;
+import hu.bme.mit.theta.formalism.xta.analysis.zone.lu.LuZoneAnalysis;
+import hu.bme.mit.theta.formalism.xta.analysis.zone.lu.LuZoneState;
 
 public final class ExplLuStrategy implements LazyXtaStrategy<Prod3State<ExplState, ExplState, LuZoneState>> {
 
