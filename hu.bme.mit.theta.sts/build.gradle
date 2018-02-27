@@ -1,0 +1,35 @@
+apply plugin: 'antlr'
+apply from: "$rootDir/common-methods.gradle"
+
+dependencies {
+    compile project(':hu.bme.mit.theta.common')
+    compile project(':hu.bme.mit.theta.core')
+    compile project(':hu.bme.mit.theta.analysis')
+    compile project(':hu.bme.mit.theta.solver.z3')
+    antlr group: 'org.antlr', name: 'antlr4', version: antlrVersion
+    compile group: 'com.beust', name: 'jcommander', version: jcommanderVersion
+    compile group: 'com.google.guava', name: 'guava', version: guavaVersion
+    testCompile group: 'junit', name: 'junit', version: junitVersion
+}
+
+generateGrammarSource {
+    arguments += ["-package", "hu.bme.mit.theta.sts.dsl.gen"]
+    arguments += ["-Werror", "-visitor"]
+    doLast {
+        copy {
+            from "${buildDir}/generated-src/antlr/main"
+            into "src/gen/java/hu/bme/mit/theta/sts/dsl/gen"
+        }
+    }
+}
+
+sourceSets {
+    main {
+        java {
+            srcDirs = [ "src/main/java", "src/gen/java" ]
+        }
+    } 
+}
+
+createJarTask("theta-sts-cli", 'hu.bme.mit.theta.sts.tool.StsCli', 'theta-sts-cli')
+createJarTask("theta-sts-gui", 'hu.bme.mit.theta.sts.tool.StsGui', 'theta-sts-gui')

@@ -1,10 +1,10 @@
 rootProject.name = 'theta'
 
 include ':hu.bme.mit.theta.analysis'
+include ':hu.bme.mit.theta.cfa'
 include ':hu.bme.mit.theta.common'
 include ':hu.bme.mit.theta.core'
-include ':hu.bme.mit.theta.formalism.cfa'
-include ':hu.bme.mit.theta.formalism.sts'
-include ':hu.bme.mit.theta.formalism.xta'
 include ':hu.bme.mit.theta.solver'
 include ':hu.bme.mit.theta.solver.z3'
+include ':hu.bme.mit.theta.sts'
+include ':hu.bme.mit.theta.xta'
