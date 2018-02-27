@@ -24,21 +24,16 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
 public final class ItpZoneState implements ExprState {
+	private final ZoneState concrState;
+	private final ZoneState abstrState;
 
 	private static final int HASH_SEED = 3361;
 	private volatile int hashCode = 0;
 
-	private final ZoneState zone;
-	private final ZoneState interpolant;
-
-	private ItpZoneState(final ZoneState zone, final ZoneState interpolant) {
-		checkNotNull(zone);
-		checkNotNull(interpolant);
-
-		assert zone.isLeq(interpolant);
-
-		this.zone = zone;
-		this.interpolant = interpolant;
+	private ItpZoneState(final ZoneState concrState, final ZoneState abstrState) {
+		this.concrState = checkNotNull(concrState);
+		this.abstrState = checkNotNull(abstrState);
+		assert concrState.isLeq(abstrState);
 	}
 
 	public static ItpZoneState of(final ZoneState state, final ZoneState interpolant) {
@@ -47,35 +42,35 @@ public final class ItpZoneState implements ExprState {
 
 	////
 
-	public ZoneState getZone() {
-		return zone;
+	public ZoneState getConcrState() {
+		return concrState;
 	}
 
-	public ZoneState getInterpolant() {
-		return interpolant;
+	public ZoneState getAbstrState() {
+		return abstrState;
 	}
 
 	////
 
 	public boolean isLeq(final ItpZoneState that) {
-		return this.interpolant.isLeq(that.interpolant);
+		return this.abstrState.isLeq(that.abstrState);
 	}
 
 	////
 
-	public ItpZoneState withState(final ZoneState state) {
-		return ItpZoneState.of(state, this.interpolant);
+	public ItpZoneState withConcrState(final ZoneState concrState) {
+		return ItpZoneState.of(concrState, abstrState);
 	}
 
-	public ItpZoneState withInterpolant(final ZoneState interpolant) {
-		return ItpZoneState.of(this.zone, interpolant);
+	public ItpZoneState withAbstrState(final ZoneState abstrState) {
+		return ItpZoneState.of(concrState, abstrState);
 	}
 
 	////
 
 	@Override
 	public boolean isBottom() {
-		return zone.isBottom();
+		return concrState.isBottom();
 	}
 
 	@Override
@@ -83,7 +78,7 @@ public final class ItpZoneState implements ExprState {
 		if (isBottom()) {
 			return False();
 		} else {
-			return interpolant.toExpr();
+			return abstrState.toExpr();
 		}
 	}
 
@@ -94,8 +89,8 @@ public final class ItpZoneState implements ExprState {
 		int result = hashCode;
 		if (result == 0) {
 			result = HASH_SEED;
-			result = 37 * result + zone.hashCode();
-			result = 37 * result + interpolant.hashCode();
+			result = 37 * result + concrState.hashCode();
+			result = 37 * result + abstrState.hashCode();
 			result = hashCode;
 		}
 		return result;
@@ -107,7 +102,7 @@ public final class ItpZoneState implements ExprState {
 			return true;
 		} else if (obj instanceof ItpZoneState) {
 			final ItpZoneState that = (ItpZoneState) obj;
-			return this.zone.equals(that.zone) && this.interpolant.equals(that.interpolant);
+			return this.concrState.equals(that.concrState) && this.abstrState.equals(that.abstrState);
 		} else {
 			return false;
 		}
@@ -115,7 +110,7 @@ public final class ItpZoneState implements ExprState {
 
 	@Override
 	public String toString() {
-		return interpolant.toString();
+		return abstrState.toString();
 	}
 
 }

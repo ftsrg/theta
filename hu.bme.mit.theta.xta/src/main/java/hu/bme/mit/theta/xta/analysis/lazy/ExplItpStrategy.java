@@ -90,11 +90,11 @@ public abstract class ExplItpStrategy implements LazyXtaStrategy<Prod3State<Expl
 		final XtaState<Prod3State<ExplState, ExplState, ItpZoneState>> state = node.getState();
 		final Prod3State<ExplState, ExplState, ItpZoneState> prodState = state.getState();
 		final ItpZoneState itpZoneState = prodState.getState3();
-		final ZoneState abstractZoneState = itpZoneState.getInterpolant();
+		final ZoneState abstrZoneState = itpZoneState.getAbstrState();
 
-		final ZoneState newAbstractZoneState = ZoneState.intersection(abstractZoneState, interpolant);
+		final ZoneState newAbstrZoneState = ZoneState.intersection(abstrZoneState, interpolant);
 
-		final ItpZoneState newItpZoneState = itpZoneState.withInterpolant(newAbstractZoneState);
+		final ItpZoneState newItpZoneState = itpZoneState.withAbstrState(newAbstrZoneState);
 		final Prod3State<ExplState, ExplState, ItpZoneState> newProdState = prodState.with3(newItpZoneState);
 		final XtaState<Prod3State<ExplState, ExplState, ItpZoneState>> newState = state.withState(newProdState);
 		node.setState(newState);
@@ -106,7 +106,7 @@ public abstract class ExplItpStrategy implements LazyXtaStrategy<Prod3State<Expl
 			final Collection<ArgNode<XtaState<Prod3State<ExplState, ExplState, ItpZoneState>>, XtaAction>> uncoveredNodes) {
 		final Collection<ArgNode<XtaState<Prod3State<ExplState, ExplState, ItpZoneState>>, XtaAction>> uncovered = node
 				.getCoveredNodes()
-				.filter(covered -> !covered.getState().getState().getState3().getInterpolant().isLeq(interpolant))
+				.filter(covered -> !covered.getState().getState().getState3().getAbstrState().isLeq(interpolant))
 				.collect(toList());
 		uncoveredNodes.addAll(uncovered);
 		uncovered.forEach(ArgNode::unsetCoveringNode);
@@ -132,8 +132,8 @@ public abstract class ExplItpStrategy implements LazyXtaStrategy<Prod3State<Expl
 			final ArgNode<XtaState<Prod3State<ExplState, ExplState, ItpZoneState>>, XtaAction> coverer) {
 		final ExplState covereeExpl = coveree.getState().getState().getState1();
 		final ExplState covererExpl = coverer.getState().getState().getState2();
-		final ZoneState covereeZone = coveree.getState().getState().getState3().getZone();
-		final ZoneState covererZone = coverer.getState().getState().getState3().getInterpolant();
+		final ZoneState covereeZone = coveree.getState().getState().getState3().getConcrState();
+		final ZoneState covererZone = coverer.getState().getState().getState3().getAbstrState();
 		return covereeExpl.isLeq(covererExpl) && covereeZone.isLeq(covererZone);
 	}
 
@@ -149,7 +149,7 @@ public abstract class ExplItpStrategy implements LazyXtaStrategy<Prod3State<Expl
 		stats.stopCloseExplRefinement();
 
 		stats.startCloseZoneRefinement();
-		final Collection<ZoneState> complementZones = coverer.getState().getState().getState3().getInterpolant()
+		final Collection<ZoneState> complementZones = coverer.getState().getState().getState3().getAbstrState()
 				.complement();
 		for (final ZoneState complementZone : complementZones) {
 			blockZone(coveree, complementZone, uncoveredNodes, stats);

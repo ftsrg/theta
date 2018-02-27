@@ -42,13 +42,12 @@ final class ItpZoneTransFunc<A extends Action> implements TransFunc<ItpZoneState
 	////
 
 	@Override
-	public Collection<? extends ItpZoneState> getSuccStates(final ItpZoneState state, final A action,
-			final ZonePrec prec) {
+	public Collection<ItpZoneState> getSuccStates(final ItpZoneState state, final A action, final ZonePrec prec) {
 		checkNotNull(state);
 		checkNotNull(action);
 		checkNotNull(prec);
 
-		final ZoneState subState = state.getZone();
+		final ZoneState subState = state.getConcrState();
 		final Collection<? extends ZoneState> subSuccStates = transFunc.getSuccStates(subState, action, prec);
 
 		if (subSuccStates.isEmpty()) {
