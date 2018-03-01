@@ -7,7 +7,12 @@ hs_err_pid*
 build/
 dest/
 
+# Eclipse
 .settings/
-
 .project
 .classpath
+
+# Intellij
+.idea/
+*.iml
+*.iws
