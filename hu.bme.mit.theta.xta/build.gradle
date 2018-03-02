@@ -1,5 +1,5 @@
 apply plugin: 'antlr'
-apply from: "$rootDir/common-methods.gradle"
+apply from: "${rootDir}/common-methods.gradle"
 
 dependencies {
     compile project(':hu.bme.mit.theta.common')
@@ -12,24 +12,23 @@ dependencies {
 }
 
 generateGrammarSource {
-    arguments += ["-package", "hu.bme.mit.theta.xta.dsl.gen"]
-    arguments += ["-Werror", "-visitor"]
+    arguments += ['-package', 'hu.bme.mit.theta.xta.dsl.gen']
+    arguments += ['-Werror', '-visitor']
     doLast {
         copy {
-            from "${buildDir}/generated-src/antlr/main"
-            into "src/gen/java/hu/bme/mit/theta/xta/dsl/gen"
+            from outputDirectory
+            into 'src/main/java/hu/bme/mit/theta/xta/dsl/gen'
         }
     }
 }
 
-
 sourceSets {
     main {
         java {
-            srcDirs = [ "src/main/java", "src/gen/java" ]
+            srcDirs = ['src/main/java']
         }
-    } 
+    }
 }
 
-createJarTask("theta-xta-cli", 'hu.bme.mit.theta.xta.tool.XtaCli', 'theta-xta-cli')
-createJarTask("theta-xta-gui", 'hu.bme.mit.theta.xta.tool.XtaGui', 'theta-xta-gui')
+createJarTask('theta-xta-cli', 'hu.bme.mit.theta.xta.tool.XtaCli', 'theta-xta-cli')
+createJarTask('theta-xta-gui', 'hu.bme.mit.theta.xta.tool.XtaGui', 'theta-xta-gui')
