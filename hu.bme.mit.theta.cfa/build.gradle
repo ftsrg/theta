@@ -1,24 +1,24 @@
 apply plugin: 'antlr'
-apply from: "$rootDir/common-methods.gradle"
+apply from: "${rootDir}/common-methods.gradle"
 
 dependencies {
-  compile project(':hu.bme.mit.theta.common')
-  compile project(':hu.bme.mit.theta.core')
-  compile project(':hu.bme.mit.theta.analysis')
-  compile project(':hu.bme.mit.theta.solver.z3')
-  antlr group: 'org.antlr', name: 'antlr4', version: antlrVersion
-  compile group: 'com.beust', name: 'jcommander', version: jcommanderVersion
-  compile group: 'com.google.guava', name: 'guava', version: guavaVersion
-  testCompile group: 'junit', name: 'junit', version: junitVersion
+    compile project(':hu.bme.mit.theta.common')
+    compile project(':hu.bme.mit.theta.core')
+    compile project(':hu.bme.mit.theta.analysis')
+    compile project(':hu.bme.mit.theta.solver.z3')
+    antlr group: 'org.antlr', name: 'antlr4', version: antlrVersion
+    compile group: 'com.beust', name: 'jcommander', version: jcommanderVersion
+    compile group: 'com.google.guava', name: 'guava', version: guavaVersion
+    testCompile group: 'junit', name: 'junit', version: junitVersion
 }
 
 generateGrammarSource {
-    arguments += ["-package", "hu.bme.mit.theta.cfa.dsl.gen"]
-    arguments += ["-Werror", "-visitor"]
+    arguments += ['-package', 'hu.bme.mit.theta.cfa.dsl.gen']
+    arguments += ['-Werror', '-visitor']
     doLast {
         copy {
-            from "${buildDir}/generated-src/antlr/main"
-            into "src/gen/java/hu/bme/mit/theta/cfa/dsl/gen"
+            from outputDirectory
+            into 'src/main/java/hu/bme/mit/theta/cfa/dsl/gen'
         }
     }
 }
@@ -26,11 +26,11 @@ generateGrammarSource {
 sourceSets {
     main {
         java {
-            srcDirs = [ "src/main/java", "src/gen/java" ]
+            srcDirs = ['src/main/java']
         }
     } 
 }
 
-createJarTask("theta-cfa-cli", 'hu.bme.mit.theta.cfa.tool.CfaCli', 'theta-cfa-cli')
-createJarTask("theta-cfa-gui", 'hu.bme.mit.theta.cfa.tool.CfaGui', 'theta-cfa-gui')
-createJarTask("cfa2dot", 'hu.bme.mit.theta.cfa.tool.CfaToDotMain', 'cfa2dot')
+createJarTask('theta-cfa-cli', 'hu.bme.mit.theta.cfa.tool.CfaCli', 'theta-cfa-cli')
+createJarTask('theta-cfa-gui', 'hu.bme.mit.theta.cfa.tool.CfaGui', 'theta-cfa-gui')
+createJarTask('cfa2dot', 'hu.bme.mit.theta.cfa.tool.CfaToDotMain', 'cfa2dot')
