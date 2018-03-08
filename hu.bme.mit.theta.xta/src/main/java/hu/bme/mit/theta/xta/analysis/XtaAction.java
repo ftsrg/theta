@@ -41,10 +41,10 @@ import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.rattype.RatType;
 import hu.bme.mit.theta.xta.Label;
-import hu.bme.mit.theta.xta.XtaSystem;
 import hu.bme.mit.theta.xta.XtaProcess.Edge;
 import hu.bme.mit.theta.xta.XtaProcess.Loc;
 import hu.bme.mit.theta.xta.XtaProcess.LocKind;
+import hu.bme.mit.theta.xta.XtaSystem;
 
 public abstract class XtaAction extends StmtAction {
 
@@ -145,6 +145,7 @@ public abstract class XtaAction extends StmtAction {
 			List<Stmt> result = stmts;
 			if (stmts == null) {
 				final ImmutableList.Builder<Stmt> builder = ImmutableList.builder();
+				addClocksNonNegative(builder, getClockVars());
 				addInvariants(builder, getSourceLocs());
 				addGuards(builder, edge);
 				addUpdates(builder, edge);
@@ -238,6 +239,7 @@ public abstract class XtaAction extends StmtAction {
 			List<Stmt> result = stmts;
 			if (stmts == null) {
 				final ImmutableList.Builder<Stmt> builder = ImmutableList.builder();
+				addClocksNonNegative(builder, getClockVars());
 				addInvariants(builder, getSourceLocs());
 				addSync(builder, emitEdge, recvEdge);
 				addGuards(builder, emitEdge);
@@ -261,6 +263,11 @@ public abstract class XtaAction extends StmtAction {
 					.addAll(emitEdge.getUpdates()).addAll(recvEdge.getUpdates()).toString();
 		}
 
+	}
+
+	private static void addClocksNonNegative(final ImmutableList.Builder<Stmt> builder,
+			final Collection<VarDecl<RatType>> clocks) {
+		clocks.forEach(c -> builder.add(Assume(Geq(c.getRef(), Rat(0, 1)))));
 	}
 
 	private static void addInvariants(final ImmutableList.Builder<Stmt> builder, final List<Loc> locs) {
