@@ -19,12 +19,12 @@ import java.util.Collection;
 
 import hu.bme.mit.theta.analysis.algorithm.ArgEdge;
 import hu.bme.mit.theta.analysis.algorithm.ArgNode;
-import hu.bme.mit.theta.analysis.expl.ExplState;
-import hu.bme.mit.theta.analysis.prod3.Prod3State;
+import hu.bme.mit.theta.analysis.prod2.Prod2State;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
 import hu.bme.mit.theta.xta.XtaSystem;
 import hu.bme.mit.theta.xta.analysis.XtaAction;
 import hu.bme.mit.theta.xta.analysis.XtaState;
+import hu.bme.mit.theta.xta.analysis.expl.itp.ItpExplState;
 import hu.bme.mit.theta.xta.analysis.zone.itp.ItpZoneState;
 
 public final class ExplBinItpStrategy extends ExplItpStrategy {
@@ -38,28 +38,26 @@ public final class ExplBinItpStrategy extends ExplItpStrategy {
 	}
 
 	@Override
-	protected ZoneState blockZone(
-			final ArgNode<XtaState<Prod3State<ExplState, ExplState, ItpZoneState>>, XtaAction> node,
+	protected ZoneState blockZone(final ArgNode<XtaState<Prod2State<ItpExplState, ItpZoneState>>, XtaAction> node,
 			final ZoneState zone,
-			final Collection<ArgNode<XtaState<Prod3State<ExplState, ExplState, ItpZoneState>>, XtaAction>> uncoveredNodes,
+			final Collection<ArgNode<XtaState<Prod2State<ItpExplState, ItpZoneState>>, XtaAction>> uncoveredNodes,
 			final LazyXtaStatistics.Builder stats) {
 
-		final ZoneState abstrState = node.getState().getState().getState3().getAbstrState();
+		final ZoneState abstrState = node.getState().getState().getState2().getAbstrState();
 		if (abstrState.isConsistentWith(zone)) {
 			stats.refineZone();
 
-			final ZoneState concrState = node.getState().getState().getState3().getConcrState();
+			final ZoneState concrState = node.getState().getState().getState2().getConcrState();
 			final ZoneState interpolant = ZoneState.interpolant(concrState, zone);
 
 			strengthenZone(node, interpolant);
 			maintainZoneCoverage(node, interpolant, uncoveredNodes);
 
 			if (node.getInEdge().isPresent()) {
-				final ArgEdge<XtaState<Prod3State<ExplState, ExplState, ItpZoneState>>, XtaAction> inEdge = node
-						.getInEdge().get();
+				final ArgEdge<XtaState<Prod2State<ItpExplState, ItpZoneState>>, XtaAction> inEdge = node.getInEdge()
+						.get();
 				final XtaAction action = inEdge.getAction();
-				final ArgNode<XtaState<Prod3State<ExplState, ExplState, ItpZoneState>>, XtaAction> parent = inEdge
-						.getSource();
+				final ArgNode<XtaState<Prod2State<ItpExplState, ItpZoneState>>, XtaAction> parent = inEdge.getSource();
 				final Collection<ZoneState> badZones = interpolant.complement();
 				for (final ZoneState badZone : badZones) {
 					final ZoneState preBadZone = pre(badZone, action);
