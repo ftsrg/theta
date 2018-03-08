@@ -17,29 +17,29 @@ package hu.bme.mit.theta.xta.tool;
 
 import hu.bme.mit.theta.analysis.algorithm.SearchStrategy;
 import hu.bme.mit.theta.xta.XtaSystem;
-import hu.bme.mit.theta.xta.analysis.lazy.BinItpStrategy;
 import hu.bme.mit.theta.xta.analysis.lazy.ExplBinItpStrategy;
 import hu.bme.mit.theta.xta.analysis.lazy.ExplLuStrategy;
 import hu.bme.mit.theta.xta.analysis.lazy.ExplSeqItpStrategy;
+import hu.bme.mit.theta.xta.analysis.lazy.ItpStrategy;
 import hu.bme.mit.theta.xta.analysis.lazy.LazyXtaChecker;
 import hu.bme.mit.theta.xta.analysis.lazy.LazyXtaStrategy;
 import hu.bme.mit.theta.xta.analysis.lazy.LuStrategy;
-import hu.bme.mit.theta.xta.analysis.lazy.SeqItpStrategy;
 
 public final class XtaCheckerBuilder {
+
 	public enum Algorithm {
 
 		SEQITP {
 			@Override
 			public LazyXtaStrategy<?> create(final XtaSystem system) {
-				return SeqItpStrategy.create(system);
+				return ItpStrategy.createForward(system);
 			}
 		},
 
 		BINITP {
 			@Override
 			public LazyXtaStrategy<?> create(final XtaSystem system) {
-				return BinItpStrategy.create(system);
+				return ItpStrategy.createBackward(system);
 			}
 		},
 

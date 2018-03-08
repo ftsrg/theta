@@ -34,11 +34,9 @@ import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.SearchStrategy;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.xta.XtaSystem;
-import hu.bme.mit.theta.xta.analysis.XtaAction;
-import hu.bme.mit.theta.xta.analysis.lazy.BinItpStrategy;
+import hu.bme.mit.theta.xta.analysis.lazy.ItpStrategy;
 import hu.bme.mit.theta.xta.analysis.lazy.LazyXtaChecker;
 import hu.bme.mit.theta.xta.analysis.lazy.LuStrategy;
-import hu.bme.mit.theta.xta.analysis.lazy.SeqItpStrategy;
 import hu.bme.mit.theta.xta.dsl.XtaDslManager;
 
 @RunWith(Parameterized.class)
@@ -73,7 +71,7 @@ public final class LazyXtaCheckerTest {
 	@Test
 	public void testBinItpStrategy() {
 		// Arrange
-		final LazyXtaChecker<?> checker = LazyXtaChecker.create(system, BinItpStrategy.create(system),
+		final LazyXtaChecker<?> checker = LazyXtaChecker.create(system, ItpStrategy.createForward(system),
 				SearchStrategy.BFS);
 
 		// Act
@@ -87,7 +85,7 @@ public final class LazyXtaCheckerTest {
 	@Test
 	public void testSeqItpStrategy() {
 		// Arrange
-		final LazyXtaChecker<?> checker = LazyXtaChecker.create(system, SeqItpStrategy.create(system),
+		final LazyXtaChecker<?> checker = LazyXtaChecker.create(system, ItpStrategy.createBackward(system),
 				SearchStrategy.BFS);
 
 		// Act

@@ -16,7 +16,6 @@
 package hu.bme.mit.theta.xta.analysis.lazy;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.util.stream.Collectors.toList;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -40,67 +39,27 @@ import hu.bme.mit.theta.xta.analysis.XtaAnalysis;
 import hu.bme.mit.theta.xta.analysis.XtaState;
 import hu.bme.mit.theta.xta.analysis.expl.XtaExplAnalysis;
 import hu.bme.mit.theta.xta.analysis.zone.XtaZoneAnalysis;
-import hu.bme.mit.theta.xta.analysis.zone.XtaZoneUtils;
 import hu.bme.mit.theta.xta.analysis.zone.itp.ItpZoneAnalysis;
 import hu.bme.mit.theta.xta.analysis.zone.itp.ItpZoneState;
 
-public abstract class ItpStrategy implements LazyXtaStrategy<Prod2State<ExplState, ItpZoneState>> {
+public final class ItpStrategy implements LazyXtaStrategy<Prod2State<ExplState, ItpZoneState>> {
 
-	private final ZonePrec prec;
 	private final Analysis<XtaState<Prod2State<ExplState, ItpZoneState>>, XtaAction, UnitPrec> analysis;
+	private final ItpZoneRefiner refiner;
 
-	ItpStrategy(final XtaSystem system) {
+	private ItpStrategy(final XtaSystem system, final ItpZoneRefiner refiner) {
 		checkNotNull(system);
-		prec = ZonePrec.of(system.getClockVars());
+		this.refiner = checkNotNull(refiner);
 		analysis = createAnalysis(system);
 	}
 
-	////
-
-	protected final ZoneState interpolate(final ZoneState zoneA, final ZoneState zoneB) {
-		return ZoneState.interpolant(zoneA, zoneB);
+	public static ItpStrategy createForward(final XtaSystem system) {
+		return new ItpStrategy(system, new FwItpZoneRefiner(system));
 	}
 
-	protected final ZoneState pre(final ZoneState state, final XtaAction action) {
-		return XtaZoneUtils.pre(state, action, prec);
+	public static ItpStrategy createBackward(final XtaSystem system) {
+		return new ItpStrategy(system, new BwItpZoneRefiner(system));
 	}
-
-	protected final ZoneState post(final ZoneState state, final XtaAction action) {
-		return XtaZoneUtils.post(state, action, prec);
-	}
-
-	protected final void strengthen(final ArgNode<XtaState<Prod2State<ExplState, ItpZoneState>>, XtaAction> node,
-			final ZoneState interpolant) {
-		final XtaState<Prod2State<ExplState, ItpZoneState>> state = node.getState();
-		final Prod2State<ExplState, ItpZoneState> prodState = state.getState();
-		final ItpZoneState itpZoneState = prodState.getState2();
-		final ZoneState abstrZoneState = itpZoneState.getAbstrState();
-
-		final ZoneState newAbstrZone = ZoneState.intersection(abstrZoneState, interpolant);
-
-		final ItpZoneState newItpZoneState = itpZoneState.withAbstrState(newAbstrZone);
-		final Prod2State<ExplState, ItpZoneState> newProdState = prodState.with2(newItpZoneState);
-		final XtaState<Prod2State<ExplState, ItpZoneState>> newState = state.withState(newProdState);
-		node.setState(newState);
-	}
-
-	protected final void maintainCoverage(final ArgNode<XtaState<Prod2State<ExplState, ItpZoneState>>, XtaAction> node,
-			final ZoneState interpolant,
-			final Collection<ArgNode<XtaState<Prod2State<ExplState, ItpZoneState>>, XtaAction>> uncoveredNodes) {
-		final Collection<ArgNode<XtaState<Prod2State<ExplState, ItpZoneState>>, XtaAction>> uncovered = node
-				.getCoveredNodes()
-				.filter(covered -> !covered.getState().getState().getState2().getAbstrState().isLeq(interpolant))
-				.collect(toList());
-		uncoveredNodes.addAll(uncovered);
-		uncovered.forEach(ArgNode::unsetCoveringNode);
-	}
-
-	protected abstract ZoneState blockZone(final ArgNode<XtaState<Prod2State<ExplState, ItpZoneState>>, XtaAction> node,
-			final ZoneState zone,
-			final Collection<ArgNode<XtaState<Prod2State<ExplState, ItpZoneState>>, XtaAction>> uncoveredNodes,
-			final LazyXtaStatistics.Builder stats);
-
-	////
 
 	@Override
 	public final Analysis<XtaState<Prod2State<ExplState, ItpZoneState>>, XtaAction, UnitPrec> getAnalysis() {
@@ -133,7 +92,7 @@ public abstract class ItpStrategy implements LazyXtaStrategy<Prod2State<ExplStat
 		final Collection<ZoneState> complementZones = coverer.getState().getState().getState2().getAbstrState()
 				.complement();
 		for (final ZoneState complementZone : complementZones) {
-			blockZone(coveree, complementZone, uncoveredNodes, stats);
+			refiner.blockZone(coveree, complementZone, uncoveredNodes, stats);
 		}
 		stats.stopCloseZoneRefinement();
 
@@ -149,8 +108,8 @@ public abstract class ItpStrategy implements LazyXtaStrategy<Prod2State<ExplStat
 		} else if (succState.getState().isBottom2()) {
 			stats.startExpandZoneRefinement();
 			final Collection<ArgNode<XtaState<Prod2State<ExplState, ItpZoneState>>, XtaAction>> uncoveredNodes = new ArrayList<>();
-			final ZoneState preImage = pre(ZoneState.top(), action);
-			blockZone(node, preImage, uncoveredNodes, stats);
+			final ZoneState preImage = refiner.pre(ZoneState.top(), action);
+			refiner.blockZone(node, preImage, uncoveredNodes, stats);
 			stats.stopExpandZoneRefinement();
 			return uncoveredNodes;
 		} else {
