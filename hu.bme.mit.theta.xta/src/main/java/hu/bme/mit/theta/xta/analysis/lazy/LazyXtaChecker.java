@@ -37,10 +37,10 @@ import hu.bme.mit.theta.xta.analysis.XtaState;
 
 public final class LazyXtaChecker<S extends State> implements SafetyChecker<XtaState<S>, XtaAction, UnitPrec> {
 	private final XtaLts lts;
-	private final LazyXtaStrategy<S> algorithmStrategy;
+	private final AlgorithmStrategy<S> algorithmStrategy;
 	private final SearchStrategy searchStrategy;
 
-	private LazyXtaChecker(final XtaSystem system, final LazyXtaStrategy<S> algorithmStrategy,
+	private LazyXtaChecker(final XtaSystem system, final AlgorithmStrategy<S> algorithmStrategy,
 			final SearchStrategy searchStrategy) {
 		checkNotNull(system);
 		lts = XtaLts.create(system);
@@ -49,7 +49,7 @@ public final class LazyXtaChecker<S extends State> implements SafetyChecker<XtaS
 	}
 
 	public static <S extends State> LazyXtaChecker<S> create(final XtaSystem system,
-			final LazyXtaStrategy<S> algorithmStrategy, final SearchStrategy searchStrategy) {
+			final AlgorithmStrategy<S> algorithmStrategy, final SearchStrategy searchStrategy) {
 		return new LazyXtaChecker<>(system, algorithmStrategy, searchStrategy);
 	}
 

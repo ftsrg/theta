@@ -25,7 +25,7 @@ import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.xta.analysis.XtaAction;
 import hu.bme.mit.theta.xta.analysis.XtaState;
 
-public interface LazyXtaStrategy<S extends State> {
+public interface AlgorithmStrategy<S extends State> {
 
 	public Analysis<XtaState<S>, XtaAction, UnitPrec> getAnalysis();
 
