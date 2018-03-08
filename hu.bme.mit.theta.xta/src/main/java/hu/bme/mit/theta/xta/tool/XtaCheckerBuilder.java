@@ -17,62 +17,11 @@ package hu.bme.mit.theta.xta.tool;
 
 import hu.bme.mit.theta.analysis.algorithm.SearchStrategy;
 import hu.bme.mit.theta.xta.XtaSystem;
-import hu.bme.mit.theta.xta.analysis.lazy.ExplBinItpStrategy;
-import hu.bme.mit.theta.xta.analysis.lazy.ExplLuStrategy;
-import hu.bme.mit.theta.xta.analysis.lazy.ExplSeqItpStrategy;
-import hu.bme.mit.theta.xta.analysis.lazy.ItpStrategy;
-import hu.bme.mit.theta.xta.analysis.lazy.LazyXtaChecker;
+import hu.bme.mit.theta.xta.analysis.lazy.Algorithm;
 import hu.bme.mit.theta.xta.analysis.lazy.AlgorithmStrategy;
-import hu.bme.mit.theta.xta.analysis.lazy.LuStrategy;
+import hu.bme.mit.theta.xta.analysis.lazy.LazyXtaChecker;
 
 public final class XtaCheckerBuilder {
-
-	public enum Algorithm {
-
-		SEQITP {
-			@Override
-			public AlgorithmStrategy<?> create(final XtaSystem system) {
-				return ItpStrategy.createForward(system);
-			}
-		},
-
-		BINITP {
-			@Override
-			public AlgorithmStrategy<?> create(final XtaSystem system) {
-				return ItpStrategy.createBackward(system);
-			}
-		},
-
-		LU {
-			@Override
-			public AlgorithmStrategy<?> create(final XtaSystem system) {
-				return LuStrategy.create(system);
-			}
-		},
-
-		EXPLSEQITP {
-			@Override
-			public AlgorithmStrategy<?> create(final XtaSystem system) {
-				return ExplSeqItpStrategy.create(system);
-			}
-		},
-
-		EXPLBINITP {
-			@Override
-			public AlgorithmStrategy<?> create(final XtaSystem system) {
-				return ExplBinItpStrategy.create(system);
-			}
-		},
-
-		EXPLLU {
-			@Override
-			public AlgorithmStrategy<?> create(final XtaSystem system) {
-				return ExplLuStrategy.create(system);
-			}
-		};
-
-		public abstract AlgorithmStrategy<?> create(final XtaSystem system);
-	}
 
 	private XtaCheckerBuilder() {
 	}

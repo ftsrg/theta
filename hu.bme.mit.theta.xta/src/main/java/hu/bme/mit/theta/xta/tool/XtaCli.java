@@ -35,9 +35,9 @@ import hu.bme.mit.theta.common.table.impl.BasicTableWriter;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 import hu.bme.mit.theta.xta.XtaSystem;
+import hu.bme.mit.theta.xta.analysis.lazy.Algorithm;
 import hu.bme.mit.theta.xta.analysis.lazy.LazyXtaStatistics;
 import hu.bme.mit.theta.xta.dsl.XtaDslManager;
-import hu.bme.mit.theta.xta.tool.XtaCheckerBuilder.Algorithm;
 
 public final class XtaCli {
 	private static final String JAR_NAME = "theta-xta.jar";
