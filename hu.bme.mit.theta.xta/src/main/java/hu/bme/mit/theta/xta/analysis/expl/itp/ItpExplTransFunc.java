@@ -23,24 +23,24 @@ import java.util.Collections;
 
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.TransFunc;
-import hu.bme.mit.theta.analysis.expl.ExplPrec;
 import hu.bme.mit.theta.analysis.expl.ExplState;
+import hu.bme.mit.theta.analysis.unit.UnitPrec;
 
-final class ItpExplTransFunc<A extends Action> implements TransFunc<ItpExplState, A, ExplPrec> {
+final class ItpExplTransFunc<A extends Action> implements TransFunc<ItpExplState, A, UnitPrec> {
 
-	private final TransFunc<ExplState, ? super A, ExplPrec> transFunc;
+	private final TransFunc<ExplState, ? super A, UnitPrec> transFunc;
 
-	public ItpExplTransFunc(final TransFunc<ExplState, ? super A, ExplPrec> transFunc) {
+	public ItpExplTransFunc(final TransFunc<ExplState, ? super A, UnitPrec> transFunc) {
 		this.transFunc = checkNotNull(transFunc);
 	}
 
 	public static final <A extends Action> ItpExplTransFunc<A> create(
-			final TransFunc<ExplState, ? super A, ExplPrec> transFunc) {
+			final TransFunc<ExplState, ? super A, UnitPrec> transFunc) {
 		return new ItpExplTransFunc<>(transFunc);
 	}
 
 	@Override
-	public Collection<ItpExplState> getSuccStates(final ItpExplState state, final A action, final ExplPrec prec) {
+	public Collection<ItpExplState> getSuccStates(final ItpExplState state, final A action, final UnitPrec prec) {
 		checkNotNull(state);
 		checkNotNull(action);
 		checkNotNull(prec);
