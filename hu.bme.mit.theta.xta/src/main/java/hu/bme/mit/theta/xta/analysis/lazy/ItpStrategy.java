@@ -42,7 +42,7 @@ import hu.bme.mit.theta.xta.analysis.zone.XtaZoneAnalysis;
 import hu.bme.mit.theta.xta.analysis.zone.itp.ItpZoneAnalysis;
 import hu.bme.mit.theta.xta.analysis.zone.itp.ItpZoneState;
 
-public final class ItpStrategy implements LazyXtaStrategy<Prod2State<ExplState, ItpZoneState>> {
+public final class ItpStrategy implements AlgorithmStrategy<Prod2State<ExplState, ItpZoneState>> {
 
 	private final Analysis<XtaState<Prod2State<ExplState, ItpZoneState>>, XtaAction, UnitPrec> analysis;
 	private final ItpZoneRefiner refiner;
