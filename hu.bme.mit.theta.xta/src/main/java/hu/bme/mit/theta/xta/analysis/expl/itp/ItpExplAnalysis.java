@@ -22,18 +22,23 @@ import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.InitFunc;
 import hu.bme.mit.theta.analysis.PartialOrd;
 import hu.bme.mit.theta.analysis.TransFunc;
-import hu.bme.mit.theta.analysis.expl.ExplPrec;
 import hu.bme.mit.theta.analysis.expl.ExplState;
+import hu.bme.mit.theta.analysis.unit.UnitPrec;
 
-public final class ItpExplAnalysis<A extends Action> implements Analysis<ItpExplState, A, ExplPrec> {
+public final class ItpExplAnalysis<A extends Action> implements Analysis<ItpExplState, A, UnitPrec> {
 
-	private final InitFunc<ItpExplState, ExplPrec> initFunc;
-	private final TransFunc<ItpExplState, A, ExplPrec> transFunc;
+	private final InitFunc<ItpExplState, UnitPrec> initFunc;
+	private final TransFunc<ItpExplState, A, UnitPrec> transFunc;
 
-	public ItpExplAnalysis(final Analysis<ExplState, ? super A, ExplPrec> analysis) {
+	private ItpExplAnalysis(final Analysis<ExplState, ? super A, UnitPrec> analysis) {
 		checkNotNull(analysis);
 		initFunc = ItpExplInitFunc.create(analysis.getInitFunc());
 		transFunc = ItpExplTransFunc.create(analysis.getTransFunc());
+	}
+
+	public static <A extends Action> ItpExplAnalysis<A> create(
+			final Analysis<ExplState, ? super A, UnitPrec> analysis) {
+		return new ItpExplAnalysis<>(analysis);
 	}
 
 	@Override
@@ -42,12 +47,12 @@ public final class ItpExplAnalysis<A extends Action> implements Analysis<ItpExpl
 	}
 
 	@Override
-	public InitFunc<ItpExplState, ExplPrec> getInitFunc() {
+	public InitFunc<ItpExplState, UnitPrec> getInitFunc() {
 		return initFunc;
 	}
 
 	@Override
-	public TransFunc<ItpExplState, A, ExplPrec> getTransFunc() {
+	public TransFunc<ItpExplState, A, UnitPrec> getTransFunc() {
 		return transFunc;
 	}
 

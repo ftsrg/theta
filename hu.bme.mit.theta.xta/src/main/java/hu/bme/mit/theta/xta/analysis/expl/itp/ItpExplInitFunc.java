@@ -22,23 +22,23 @@ import java.util.Collection;
 import java.util.Collections;
 
 import hu.bme.mit.theta.analysis.InitFunc;
-import hu.bme.mit.theta.analysis.expl.ExplPrec;
 import hu.bme.mit.theta.analysis.expl.ExplState;
+import hu.bme.mit.theta.analysis.unit.UnitPrec;
 
-final class ItpExplInitFunc implements InitFunc<ItpExplState, ExplPrec> {
+final class ItpExplInitFunc implements InitFunc<ItpExplState, UnitPrec> {
 
-	private final InitFunc<ExplState, ExplPrec> initFunc;
+	private final InitFunc<ExplState, UnitPrec> initFunc;
 
-	private ItpExplInitFunc(final InitFunc<ExplState, ExplPrec> initFunc) {
+	private ItpExplInitFunc(final InitFunc<ExplState, UnitPrec> initFunc) {
 		this.initFunc = checkNotNull(initFunc);
 	}
 
-	public static ItpExplInitFunc create(final InitFunc<ExplState, ExplPrec> initFunc) {
+	public static ItpExplInitFunc create(final InitFunc<ExplState, UnitPrec> initFunc) {
 		return new ItpExplInitFunc(initFunc);
 	}
 
 	@Override
-	public Collection<ItpExplState> getInitStates(final ExplPrec prec) {
+	public Collection<ItpExplState> getInitStates(final UnitPrec prec) {
 		checkNotNull(prec);
 
 		final Collection<? extends ExplState> subInitStates = initFunc.getInitStates(prec);
