@@ -20,7 +20,6 @@ import java.io.File;
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
 
-import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.SearchStrategy;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
@@ -33,6 +32,8 @@ import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter.Format;
 import hu.bme.mit.theta.xta.XtaSystem;
 import hu.bme.mit.theta.xta.XtaVisualizer;
 import hu.bme.mit.theta.xta.analysis.lazy.Algorithm;
+import hu.bme.mit.theta.xta.analysis.lazy.AlgorithmStrategy;
+import hu.bme.mit.theta.xta.analysis.lazy.LazyXtaChecker;
 import hu.bme.mit.theta.xta.analysis.lazy.LazyXtaStatistics;
 import hu.bme.mit.theta.xta.dsl.XtaDslManager;
 import javafx.application.Platform;
@@ -144,9 +145,11 @@ public class XtaGui extends BaseGui {
 		@Override
 		protected Void call() throws Exception {
 			try {
-				final XtaSystem xta = XtaDslManager.createSystem(taModel.getText());
-				final SafetyChecker<?, ?, UnitPrec> checker = XtaCheckerBuilder.build(cbAlgorithm.getValue(),
-						cbSearchStrategy.getValue(), xta);
+				final XtaSystem system = XtaDslManager.createSystem(taModel.getText());
+				final Algorithm algorithm = cbAlgorithm.getValue();
+				final AlgorithmStrategy<?> algorithmStrategy = algorithm.createStrategy(system);
+				final SearchStrategy searchStrategy = cbSearchStrategy.getValue();
+				final LazyXtaChecker<?> checker = LazyXtaChecker.create(system, algorithmStrategy, searchStrategy);
 				safetyResult = checker.check(UnitPrec.getInstance());
 				final LazyXtaStatistics stats = (LazyXtaStatistics) safetyResult.getStats().get();
 				Platform.runLater(() -> taOutput.setText(stats.toString()));

@@ -24,7 +24,6 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 
-import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.SearchStrategy;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
@@ -36,6 +35,8 @@ import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 import hu.bme.mit.theta.xta.XtaSystem;
 import hu.bme.mit.theta.xta.analysis.lazy.Algorithm;
+import hu.bme.mit.theta.xta.analysis.lazy.AlgorithmStrategy;
+import hu.bme.mit.theta.xta.analysis.lazy.LazyXtaChecker;
 import hu.bme.mit.theta.xta.analysis.lazy.LazyXtaStatistics;
 import hu.bme.mit.theta.xta.dsl.XtaDslManager;
 
@@ -88,8 +89,9 @@ public final class XtaCli {
 		}
 
 		try {
-			final XtaSystem xta = loadModel();
-			final SafetyChecker<?, ?, UnitPrec> checker = XtaCheckerBuilder.build(algorithm, searchStrategy, xta);
+			final XtaSystem system = loadModel();
+			final AlgorithmStrategy<?> algorithmStrategy = algorithm.createStrategy(system);
+			final LazyXtaChecker<?> checker = LazyXtaChecker.create(system, algorithmStrategy, searchStrategy);
 			final SafetyResult<?, ?> result = checker.check(UnitPrec.getInstance());
 			printResult(result);
 			if (dotfile != null) {
