@@ -21,45 +21,45 @@ public enum Algorithm {
 
 	SEQITP {
 		@Override
-		public AlgorithmStrategy<?> create(final XtaSystem system) {
+		public AlgorithmStrategy<?> createStrategy(final XtaSystem system) {
 			return ItpStrategy.createForward(system);
 		}
 	},
 
 	BINITP {
 		@Override
-		public AlgorithmStrategy<?> create(final XtaSystem system) {
+		public AlgorithmStrategy<?> createStrategy(final XtaSystem system) {
 			return ItpStrategy.createBackward(system);
 		}
 	},
 
 	LU {
 		@Override
-		public AlgorithmStrategy<?> create(final XtaSystem system) {
+		public AlgorithmStrategy<?> createStrategy(final XtaSystem system) {
 			return LuStrategy.create(system);
 		}
 	},
 
 	EXPLSEQITP {
 		@Override
-		public AlgorithmStrategy<?> create(final XtaSystem system) {
+		public AlgorithmStrategy<?> createStrategy(final XtaSystem system) {
 			return ExplSeqItpStrategy.create(system);
 		}
 	},
 
 	EXPLBINITP {
 		@Override
-		public AlgorithmStrategy<?> create(final XtaSystem system) {
+		public AlgorithmStrategy<?> createStrategy(final XtaSystem system) {
 			return ExplBinItpStrategy.create(system);
 		}
 	},
 
 	EXPLLU {
 		@Override
-		public AlgorithmStrategy<?> create(final XtaSystem system) {
+		public AlgorithmStrategy<?> createStrategy(final XtaSystem system) {
 			return ExplLuStrategy.create(system);
 		}
 	};
 
-	public abstract AlgorithmStrategy<?> create(final XtaSystem system);
+	public abstract AlgorithmStrategy<?> createStrategy(final XtaSystem system);
 }
