@@ -28,7 +28,7 @@ public final class XtaCheckerBuilder {
 
 	public static LazyXtaChecker<?> build(final Algorithm algorithm, final SearchStrategy searchStrategy,
 			final XtaSystem xta) {
-		final AlgorithmStrategy<?> algorithmStrategy = algorithm.create(xta);
+		final AlgorithmStrategy<?> algorithmStrategy = algorithm.createStrategy(xta);
 
 		final LazyXtaChecker<?> checker = LazyXtaChecker.create(xta, algorithmStrategy, searchStrategy);
 		return checker;
