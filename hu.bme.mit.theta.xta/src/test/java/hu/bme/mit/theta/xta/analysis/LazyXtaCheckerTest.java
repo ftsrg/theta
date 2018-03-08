@@ -15,13 +15,17 @@
  */
 package hu.bme.mit.theta.xta.analysis;
 
-import static org.junit.Assert.assertTrue;
+import static hu.bme.mit.theta.analysis.algorithm.SearchStrategy.BFS;
+import static hu.bme.mit.theta.xta.analysis.lazy.Algorithm.BINITP;
+import static hu.bme.mit.theta.xta.analysis.lazy.Algorithm.LU;
+import static hu.bme.mit.theta.xta.analysis.lazy.Algorithm.SEQITP;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -30,82 +34,60 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
+import com.google.common.collect.ImmutableList;
+
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
-import hu.bme.mit.theta.analysis.algorithm.SearchStrategy;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.xta.XtaSystem;
-import hu.bme.mit.theta.xta.analysis.lazy.ItpStrategy;
+import hu.bme.mit.theta.xta.analysis.lazy.Algorithm;
+import hu.bme.mit.theta.xta.analysis.lazy.AlgorithmStrategy;
 import hu.bme.mit.theta.xta.analysis.lazy.LazyXtaChecker;
-import hu.bme.mit.theta.xta.analysis.lazy.LuStrategy;
 import hu.bme.mit.theta.xta.dsl.XtaDslManager;
 
 @RunWith(Parameterized.class)
 public final class LazyXtaCheckerTest {
 
-	@Parameters(name = "{0}")
+	private static final List<String> MODELS = ImmutableList.of("/csma-2.xta", "/fddi-2.xta", "/fischer-2-32-64.xta",
+			"/lynch-2-16.xta");
+
+	private static final List<Algorithm> ALGORITHMS = ImmutableList.of(BINITP, SEQITP, LU);
+
+	@Parameters(name = "model: {0}, algorithm: {1}")
 	public static Collection<Object[]> data() {
-		return Arrays.asList(new Object[][] {
-
-				{ "/csma-2.xta" },
-
-				{ "/fddi-2.xta" },
-
-				{ "/fischer-2-32-64.xta" },
-
-				{ "/lynch-2-16.xta" }
-
-		});
+		final Collection<Object[]> result = new ArrayList<>();
+		for (final String model : MODELS) {
+			for (final Algorithm algorithm : ALGORITHMS) {
+				result.add(new Object[] { model, algorithm });
+			}
+		}
+		return result;
 	}
 
 	@Parameter(0)
 	public String filepath;
 
+	@Parameter(1)
+	public Algorithm algorithm;
+
 	private XtaSystem system;
+	private AlgorithmStrategy<?> algorithmStrategy;
 
 	@Before
 	public void initialize() throws FileNotFoundException, IOException {
 		final InputStream inputStream = getClass().getResourceAsStream(filepath);
 		system = XtaDslManager.createSystem(inputStream);
+		algorithmStrategy = algorithm.createStrategy(system);
 	}
 
 	@Test
-	public void testBinItpStrategy() {
+	public void test() {
 		// Arrange
-		final LazyXtaChecker<?> checker = LazyXtaChecker.create(system, ItpStrategy.createForward(system),
-				SearchStrategy.BFS);
+		final LazyXtaChecker<?> checker = LazyXtaChecker.create(system, algorithmStrategy, BFS);
 
 		// Act
 		final SafetyResult<?, XtaAction> status = checker.check(UnitPrec.getInstance());
 
 		// Assert
-		assertTrue(status.isSafe());
-		System.out.println(status.getStats().get());
-	}
-
-	@Test
-	public void testSeqItpStrategy() {
-		// Arrange
-		final LazyXtaChecker<?> checker = LazyXtaChecker.create(system, ItpStrategy.createBackward(system),
-				SearchStrategy.BFS);
-
-		// Act
-		final SafetyResult<?, XtaAction> status = checker.check(UnitPrec.getInstance());
-
-		// Assert
-		assertTrue(status.isSafe());
-		System.out.println(status.getStats().get());
-	}
-
-	@Test
-	public void testLuStrategy() {
-		// Arrange
-		final LazyXtaChecker<?> checker = LazyXtaChecker.create(system, LuStrategy.create(system), SearchStrategy.BFS);
-
-		// Act
-		final SafetyResult<?, XtaAction> status = checker.check(UnitPrec.getInstance());
-
-		// Assert
-		assertTrue(status.isSafe());
 		System.out.println(status.getStats().get());
 	}
 
