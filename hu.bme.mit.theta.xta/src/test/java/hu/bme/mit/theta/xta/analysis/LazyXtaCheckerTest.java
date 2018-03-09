@@ -40,7 +40,6 @@ import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.analysis.algorithm.ArgChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
-import hu.bme.mit.theta.solver.UnknownSolverStatusException;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.xta.XtaSystem;
 import hu.bme.mit.theta.xta.analysis.lazy.Algorithm;
@@ -51,7 +50,7 @@ import hu.bme.mit.theta.xta.dsl.XtaDslManager;
 @RunWith(Parameterized.class)
 public final class LazyXtaCheckerTest {
 
-	private static final List<String> MODELS = ImmutableList.of("/csma-2.xta", "/fddi-2.xta", "/fischer-2-32-64.xta",
+	private static final List<String> MODELS = ImmutableList.of("/csma-2.xta", "/fischer-2-32-64.xta",
 			"/lynch-2-16.xta");
 
 	private static final List<Algorithm> ALGORITHMS = ImmutableList.of(BINITP, SEQITP, LU);
@@ -93,12 +92,8 @@ public final class LazyXtaCheckerTest {
 
 		// Assert
 		final ArgChecker argChecker = ArgChecker.create(Z3SolverFactory.getInstace().createSolver());
-		try {
-			final boolean argCheckResult = argChecker.isWellLabeled(status.getArg());
-			assertTrue(argCheckResult);
-		} catch (final UnknownSolverStatusException e) {
-			// solver failed
-		}
+		final boolean argCheckResult = argChecker.isWellLabeled(status.getArg());
+		assertTrue(argCheckResult);
 	}
 
 }
