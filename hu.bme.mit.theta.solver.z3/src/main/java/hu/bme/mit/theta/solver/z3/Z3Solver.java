@@ -283,7 +283,7 @@ final class Z3Solver implements Solver {
 					builder.add(constDecl);
 				} else {
 					if (!assumptions.containsKey(symbol.getName().toString())) {
-						throw new AssertionError();
+						// Quantifier?
 					}
 				}
 			}
