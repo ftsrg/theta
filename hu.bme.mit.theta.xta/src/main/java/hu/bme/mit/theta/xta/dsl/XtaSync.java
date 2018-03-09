@@ -20,7 +20,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-import hu.bme.mit.theta.common.dsl.Environment;
+import hu.bme.mit.theta.common.dsl.Env;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr;
 import hu.bme.mit.theta.core.utils.TypeUtils;
@@ -46,7 +46,7 @@ final class XtaSync {
 		EMIT, RECV
 	}
 
-	public Sync instantiate(final Environment env) {
+	public Sync instantiate(final Env env) {
 		final Expr<?> expr = expression.instantiate(env);
 		TypeUtils.cast(expr, ChanType.getInstance());
 

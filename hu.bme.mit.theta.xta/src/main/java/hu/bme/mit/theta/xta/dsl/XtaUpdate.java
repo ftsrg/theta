@@ -21,7 +21,7 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Sub;
 
 import hu.bme.mit.theta.common.Utils;
-import hu.bme.mit.theta.common.dsl.Environment;
+import hu.bme.mit.theta.common.dsl.Env;
 import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
@@ -48,7 +48,7 @@ final class XtaUpdate {
 		this.context = checkNotNull(context);
 	}
 
-	public AssignStmt<?> instantiate(final Environment env) {
+	public AssignStmt<?> instantiate(final Env env) {
 		final UpdateInstantiationVisitor visitor = new UpdateInstantiationVisitor(env);
 		final AssignStmt<?> result = context.accept(visitor);
 		return result;
@@ -57,7 +57,7 @@ final class XtaUpdate {
 	private final class UpdateInstantiationVisitor extends XtaDslBaseVisitor<AssignStmt<?>> {
 		private final ExpressionInstantiationVisitor visitor;
 
-		public UpdateInstantiationVisitor(final Environment env) {
+		public UpdateInstantiationVisitor(final Env env) {
 			visitor = new ExpressionInstantiationVisitor(scope, env);
 		}
 

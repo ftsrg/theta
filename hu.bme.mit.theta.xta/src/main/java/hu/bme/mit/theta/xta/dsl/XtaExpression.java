@@ -43,7 +43,7 @@ import java.util.stream.Stream;
 import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.theta.common.Utils;
-import hu.bme.mit.theta.common.dsl.Environment;
+import hu.bme.mit.theta.common.dsl.Env;
 import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.core.type.Expr;
@@ -101,7 +101,7 @@ final class XtaExpression {
 		this.context = checkNotNull(context);
 	}
 
-	public Expr<?> instantiate(final Environment env) {
+	public Expr<?> instantiate(final Env env) {
 		final ExpressionInstantiationVisitor visitor = new ExpressionInstantiationVisitor(scope, env);
 		final Expr<?> expr = context.accept(visitor);
 		final Expr<?> simplifiedExpr = ExprUtils.simplify(expr);
@@ -110,9 +110,9 @@ final class XtaExpression {
 
 	static final class ExpressionInstantiationVisitor extends XtaDslBaseVisitor<Expr<?>> {
 		private final Scope scope;
-		private final Environment env;
+		private final Env env;
 
-		public ExpressionInstantiationVisitor(final Scope scope, final Environment env) {
+		public ExpressionInstantiationVisitor(final Scope scope, final Env env) {
 			this.scope = checkNotNull(scope);
 			this.env = checkNotNull(env);
 		}

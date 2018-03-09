@@ -29,7 +29,7 @@ import hu.bme.mit.theta.cfa.dsl.gen.CfaDslParser.EdgeContext;
 import hu.bme.mit.theta.cfa.dsl.gen.CfaDslParser.LocContext;
 import hu.bme.mit.theta.cfa.dsl.gen.CfaDslParser.ProcDeclContext;
 import hu.bme.mit.theta.cfa.dsl.gen.CfaDslParser.VarDeclContext;
-import hu.bme.mit.theta.common.dsl.Environment;
+import hu.bme.mit.theta.common.dsl.Env;
 import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.common.dsl.SymbolTable;
@@ -72,7 +72,7 @@ final class CfaProcessSymbol implements Symbol, Scope {
 
 	////
 
-	public CFA instantiate(final Environment env) {
+	public CFA instantiate(final Env env) {
 		final Builder cfaBuilder = CFA.builder();
 		env.push();
 

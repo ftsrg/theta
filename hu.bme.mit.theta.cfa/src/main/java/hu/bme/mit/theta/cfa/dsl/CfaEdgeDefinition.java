@@ -26,7 +26,7 @@ import hu.bme.mit.theta.cfa.CFA.Edge;
 import hu.bme.mit.theta.cfa.CFA.Loc;
 import hu.bme.mit.theta.cfa.dsl.gen.CfaDslParser.EdgeContext;
 import hu.bme.mit.theta.cfa.dsl.gen.CfaDslParser.StmtContext;
-import hu.bme.mit.theta.common.dsl.Environment;
+import hu.bme.mit.theta.common.dsl.Env;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.stmt.Stmts;
 
@@ -49,7 +49,7 @@ final class CfaEdgeDefinition {
 
 	////
 
-	public List<Edge> instantiate(final CFA.Builder cfa, final Environment env) {
+	public List<Edge> instantiate(final CFA.Builder cfa, final Env env) {
 		final CfaLocationSymbol sourceSymbol = (CfaLocationSymbol) scope.resolve(source).get();
 		final CfaLocationSymbol targetSymbol = (CfaLocationSymbol) scope.resolve(target).get();
 

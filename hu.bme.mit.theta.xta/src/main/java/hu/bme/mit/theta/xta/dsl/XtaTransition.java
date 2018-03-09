@@ -26,7 +26,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
-import hu.bme.mit.theta.common.dsl.Environment;
+import hu.bme.mit.theta.common.dsl.Env;
 import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.common.dsl.SymbolTable;
@@ -103,7 +103,7 @@ final class XtaTransition implements Scope {
 
 	////
 
-	public void instantiate(final XtaProcess process, final Environment env) {
+	public void instantiate(final XtaProcess process, final Env env) {
 		final XtaStateSymbol sourceSymbol = (XtaStateSymbol) resolve(sourceState).get();
 		final XtaStateSymbol targetSymbol = (XtaStateSymbol) resolve(targetState).get();
 
