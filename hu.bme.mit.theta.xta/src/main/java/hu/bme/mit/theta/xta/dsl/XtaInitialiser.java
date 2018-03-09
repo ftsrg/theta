@@ -17,7 +17,7 @@ package hu.bme.mit.theta.xta.dsl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import hu.bme.mit.theta.common.dsl.Environment;
+import hu.bme.mit.theta.common.dsl.Env;
 import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
@@ -36,16 +36,16 @@ final class XtaInitialiser {
 		this.context = checkNotNull(context);
 	}
 
-	public Expr<?> instantiate(final Type type, final Environment env) {
+	public Expr<?> instantiate(final Type type, final Env env) {
 		final InitialiserInstantiationVisitor visitor = new InitialiserInstantiationVisitor(env);
 		final Expr<?> expr = context.accept(visitor);
 		return expr;
 	}
 
 	private final class InitialiserInstantiationVisitor extends XtaDslBaseVisitor<Expr<?>> {
-		private final Environment env;
+		private final Env env;
 
-		public InitialiserInstantiationVisitor(final Environment env) {
+		public InitialiserInstantiationVisitor(final Env env) {
 			this.env = checkNotNull(env);
 		}
 

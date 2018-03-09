@@ -87,7 +87,7 @@ import hu.bme.mit.theta.cfa.dsl.gen.CfaDslParser.RatLitExprContext;
 import hu.bme.mit.theta.cfa.dsl.gen.CfaDslParser.RelationExprContext;
 import hu.bme.mit.theta.cfa.dsl.gen.CfaDslParser.TrueExprContext;
 import hu.bme.mit.theta.common.dsl.BasicScope;
-import hu.bme.mit.theta.common.dsl.Environment;
+import hu.bme.mit.theta.common.dsl.Env;
 import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.core.decl.Decl;
@@ -121,7 +121,7 @@ final class CfaExpression {
 		this.context = checkNotNull(context);
 	}
 
-	public Expr<?> instantiate(final Environment env) {
+	public Expr<?> instantiate(final Env env) {
 		final ExprCreatorVisitor visitor = new ExprCreatorVisitor(scope, env);
 		final Expr<?> expr = context.accept(visitor);
 		if (expr == null) {
@@ -134,9 +134,9 @@ final class CfaExpression {
 	private static final class ExprCreatorVisitor extends CfaDslBaseVisitor<Expr<?>> {
 
 		private Scope currentScope;
-		private final Environment env;
+		private final Env env;
 
-		private ExprCreatorVisitor(final Scope scope, final Environment env) {
+		private ExprCreatorVisitor(final Scope scope, final Env env) {
 			currentScope = checkNotNull(scope);
 			this.env = checkNotNull(env);
 		}

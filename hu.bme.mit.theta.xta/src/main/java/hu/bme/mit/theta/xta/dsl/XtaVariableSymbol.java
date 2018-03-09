@@ -24,7 +24,7 @@ import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 
-import hu.bme.mit.theta.common.dsl.Environment;
+import hu.bme.mit.theta.common.dsl.Env;
 import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.core.decl.Decls;
@@ -71,7 +71,7 @@ final class XtaVariableSymbol implements Symbol {
 		return constant;
 	}
 
-	public Expr<?> instantiate(final String prefix, final Environment env) {
+	public Expr<?> instantiate(final String prefix, final Env env) {
 		final Type varType = type.instantiate(env);
 
 		if (!isSupportedType(varType)) {

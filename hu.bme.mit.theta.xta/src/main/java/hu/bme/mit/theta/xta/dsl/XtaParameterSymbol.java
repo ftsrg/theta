@@ -23,7 +23,7 @@ import static java.util.stream.Collectors.toCollection;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-import hu.bme.mit.theta.common.dsl.Environment;
+import hu.bme.mit.theta.common.dsl.Env;
 import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.core.type.Expr;
@@ -65,13 +65,13 @@ final class XtaParameterSymbol implements Symbol {
 		return constant;
 	}
 
-	public Type instantiateType(final Environment env) {
+	public Type instantiateType(final Env env) {
 		checkNotNull(env);
 		final Type paramType = type.instantiate(env);
 		return paramType;
 	}
 
-	public Set<Expr<?>> instantiateValues(final Environment env) {
+	public Set<Expr<?>> instantiateValues(final Env env) {
 		checkState(!reference);
 		final Type paramType = instantiateType(env);
 		final RangeType rangeType = (RangeType) paramType;

@@ -27,7 +27,7 @@ import java.util.Set;
 
 import com.google.common.collect.Sets;
 
-import hu.bme.mit.theta.common.dsl.Environment;
+import hu.bme.mit.theta.common.dsl.Env;
 import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.common.dsl.SymbolTable;
@@ -93,7 +93,7 @@ final class XtaProcessSymbol implements Symbol, Scope {
 		return name;
 	}
 
-	public Set<List<Expr<?>>> getArgumentLists(final Environment env) {
+	public Set<List<Expr<?>>> getArgumentLists(final Env env) {
 		final List<Set<Expr<?>>> argumentValues = parameters.stream().map(p -> p.instantiateValues(env))
 				.collect(toList());
 		final Set<List<Expr<?>>> argumentLists = Sets.cartesianProduct(argumentValues);
@@ -102,7 +102,7 @@ final class XtaProcessSymbol implements Symbol, Scope {
 
 	////
 
-	public XtaProcess instantiate(final String name, final List<? extends Expr<?>> arguments, final Environment env) {
+	public XtaProcess instantiate(final String name, final List<? extends Expr<?>> arguments, final Env env) {
 		checkArgument(arguments.size() == parameters.size());
 		checkArgument(argumentTypesMatch(arguments));
 
@@ -119,7 +119,7 @@ final class XtaProcessSymbol implements Symbol, Scope {
 		return process;
 	}
 
-	private void defineAllParameters(final List<? extends Expr<?>> arguments, final Environment env) {
+	private void defineAllParameters(final List<? extends Expr<?>> arguments, final Env env) {
 		int i = 0;
 		for (final XtaParameterSymbol parameter : parameters) {
 			final Expr<?> argument = arguments.get(i);
@@ -128,7 +128,7 @@ final class XtaProcessSymbol implements Symbol, Scope {
 		}
 	}
 
-	private void createAllGlobalVariables(final XtaProcess process, final Environment env) {
+	private void createAllGlobalVariables(final XtaProcess process, final Env env) {
 		for (final XtaVariableSymbol variable : scope.getVariables()) {
 			final Object value = env.eval(variable);
 			if (value instanceof RefExpr) {
@@ -139,7 +139,7 @@ final class XtaProcessSymbol implements Symbol, Scope {
 		}
 	}
 
-	private void createAllLocalVariables(final XtaProcess process, final Environment env) {
+	private void createAllLocalVariables(final XtaProcess process, final Env env) {
 		for (final XtaVariableSymbol variable : variables) {
 			final Expr<?> value = variable.instantiate(process.getName() + "_", env);
 			if (value instanceof RefExpr) {
@@ -165,7 +165,7 @@ final class XtaProcessSymbol implements Symbol, Scope {
 		}
 	}
 
-	private void createAllStates(final XtaProcess process, final Environment env) {
+	private void createAllStates(final XtaProcess process, final Env env) {
 		for (final XtaStateSymbol state : states) {
 			final Loc loc = state.instantiate(process, env);
 			if (state.getName().equals(initState)) {
@@ -175,7 +175,7 @@ final class XtaProcessSymbol implements Symbol, Scope {
 		}
 	}
 
-	private void createAllTransitions(final XtaProcess process, final Environment env) {
+	private void createAllTransitions(final XtaProcess process, final Env env) {
 		for (final XtaTransition transition : transitions) {
 			transition.instantiate(process, env);
 		}

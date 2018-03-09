@@ -26,7 +26,7 @@ import java.util.Set;
 
 import org.antlr.v4.runtime.Token;
 
-import hu.bme.mit.theta.common.dsl.Environment;
+import hu.bme.mit.theta.common.dsl.Env;
 import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.common.dsl.SymbolTable;
@@ -81,7 +81,7 @@ final class XtaSpecification implements Scope {
 	private XtaSystem instantiate() {
 		final List<XtaProcess> processes = new ArrayList<>();
 
-		final Environment env = new Environment();
+		final Env env = new Env();
 
 		defineAllVariables(env);
 		defineAllTypes(env);
@@ -118,13 +118,13 @@ final class XtaSpecification implements Scope {
 
 	////
 
-	private void defineAllVariables(final Environment env) {
+	private void defineAllVariables(final Env env) {
 		for (final XtaVariableSymbol variable : variables) {
 			env.compute(variable, v -> v.instantiate("", env));
 		}
 	}
 
-	private void defineAllTypes(final Environment env) {
+	private void defineAllTypes(final Env env) {
 		for (final XtaTypeSymbol type : types) {
 			env.compute(type, v -> v.instantiate(env));
 		}

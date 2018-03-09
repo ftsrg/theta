@@ -22,7 +22,7 @@ import static java.util.stream.Collectors.toList;
 import java.util.Collection;
 import java.util.Collections;
 
-import hu.bme.mit.theta.common.dsl.Environment;
+import hu.bme.mit.theta.common.dsl.Env;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
@@ -71,7 +71,7 @@ final class XtaStateSymbol implements Symbol {
 		return name;
 	}
 
-	public Loc instantiate(final XtaProcess process, final Environment env) {
+	public Loc instantiate(final XtaProcess process, final Env env) {
 		final Collection<Expr<BoolType>> invars;
 		if (expression == null) {
 			invars = Collections.emptySet();

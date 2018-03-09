@@ -27,7 +27,7 @@ import hu.bme.mit.theta.cfa.dsl.gen.CfaDslParser.ProcDeclContext;
 import hu.bme.mit.theta.cfa.dsl.gen.CfaDslParser.SpecContext;
 import hu.bme.mit.theta.cfa.dsl.gen.CfaDslParser.VarDeclContext;
 import hu.bme.mit.theta.common.Utils;
-import hu.bme.mit.theta.common.dsl.Environment;
+import hu.bme.mit.theta.common.dsl.Env;
 import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.common.dsl.SymbolTable;
@@ -58,7 +58,7 @@ final class CfaSpecification implements Scope {
 	////
 
 	public CFA instantiate() {
-		final Environment env = new Environment();
+		final Env env = new Env();
 
 		for (final CfaVariableSymbol variable : variables) {
 			final VarDecl<?> var = variable.instantiate();

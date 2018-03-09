@@ -26,7 +26,7 @@ import hu.bme.mit.theta.cfa.dsl.gen.CfaDslParser.AssignStmtContext;
 import hu.bme.mit.theta.cfa.dsl.gen.CfaDslParser.AssumeStmtContext;
 import hu.bme.mit.theta.cfa.dsl.gen.CfaDslParser.HavocStmtContext;
 import hu.bme.mit.theta.cfa.dsl.gen.CfaDslParser.StmtContext;
-import hu.bme.mit.theta.common.dsl.Environment;
+import hu.bme.mit.theta.common.dsl.Env;
 import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.core.decl.VarDecl;
@@ -46,7 +46,7 @@ final class CfaStatement {
 		this.context = checkNotNull(context);
 	}
 
-	public Stmt instantiate(final Environment env) {
+	public Stmt instantiate(final Env env) {
 		final StmtCreatorVisitor visitor = new StmtCreatorVisitor(scope, env);
 		final Stmt stmt = context.accept(visitor);
 		if (stmt == null) {
@@ -59,9 +59,9 @@ final class CfaStatement {
 	private static final class StmtCreatorVisitor extends CfaDslBaseVisitor<Stmt> {
 
 		private final Scope scope;
-		private final Environment env;
+		private final Env env;
 
-		public StmtCreatorVisitor(final Scope scope, final Environment env) {
+		public StmtCreatorVisitor(final Scope scope, final Env env) {
 			this.scope = checkNotNull(scope);
 			this.env = checkNotNull(env);
 		}

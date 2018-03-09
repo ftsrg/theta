@@ -23,7 +23,7 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 
 import java.util.List;
 
-import hu.bme.mit.theta.common.dsl.Environment;
+import hu.bme.mit.theta.common.dsl.Env;
 import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.core.type.Expr;
@@ -62,7 +62,7 @@ final class XtaType {
 		checkArgument(typeContext.fTypePrefix.fUrgent == null);
 	}
 
-	public Type instantiate(final Environment env) {
+	public Type instantiate(final Env env) {
 		checkNotNull(env);
 
 		final Type basicType = createBasicType(typeContext, env);
@@ -79,14 +79,14 @@ final class XtaType {
 
 	////
 
-	private Type createBasicType(final TypeContext typeContext, final Environment env) {
+	private Type createBasicType(final TypeContext typeContext, final Env env) {
 		final BasicTypeInstantiationVisitor visitor = new BasicTypeInstantiationVisitor(env);
 		final BasicTypeContext basicTypeContext = typeContext.fBasicType;
 		final Type basicType = basicTypeContext.accept(visitor);
 		return basicType;
 	}
 
-	private Type createIndexType(final ArrayIndexContext arrayIndexContext, final Environment env) {
+	private Type createIndexType(final ArrayIndexContext arrayIndexContext, final Env env) {
 		final IndexTypeInstantiationVisitor visitor = new IndexTypeInstantiationVisitor(env);
 		final Type indexType = arrayIndexContext.accept(visitor);
 		return indexType;
@@ -95,9 +95,9 @@ final class XtaType {
 	////
 
 	private final class BasicTypeInstantiationVisitor extends XtaDslBaseVisitor<Type> {
-		private final Environment env;
+		private final Env env;
 
-		private BasicTypeInstantiationVisitor(final Environment env) {
+		private BasicTypeInstantiationVisitor(final Env env) {
 			this.env = env;
 		}
 
@@ -152,9 +152,9 @@ final class XtaType {
 	}
 
 	private final class IndexTypeInstantiationVisitor extends XtaDslBaseVisitor<Type> {
-		private final Environment env;
+		private final Env env;
 
-		public IndexTypeInstantiationVisitor(final Environment env) {
+		public IndexTypeInstantiationVisitor(final Env env) {
 			this.env = env;
 		}
 
