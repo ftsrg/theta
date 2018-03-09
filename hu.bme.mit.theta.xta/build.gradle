@@ -8,6 +8,8 @@ dependencies {
     antlr group: 'org.antlr', name: 'antlr4', version: antlrVersion
     compile group: 'com.beust', name: 'jcommander', version: jcommanderVersion
     compile group: 'com.google.guava', name: 'guava', version: guavaVersion
+    testCompile project(':hu.bme.mit.theta.solver')
+    testCompile project(':hu.bme.mit.theta.solver.z3')
     testCompile group: 'junit', name: 'junit', version: junitVersion
 }
 

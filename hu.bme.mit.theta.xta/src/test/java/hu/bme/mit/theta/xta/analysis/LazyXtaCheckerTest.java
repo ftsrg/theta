@@ -19,6 +19,7 @@ import static hu.bme.mit.theta.analysis.algorithm.SearchStrategy.BFS;
 import static hu.bme.mit.theta.xta.analysis.lazy.Algorithm.BINITP;
 import static hu.bme.mit.theta.xta.analysis.lazy.Algorithm.LU;
 import static hu.bme.mit.theta.xta.analysis.lazy.Algorithm.SEQITP;
+import static org.junit.Assert.assertTrue;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -36,8 +37,11 @@ import org.junit.runners.Parameterized.Parameters;
 
 import com.google.common.collect.ImmutableList;
 
+import hu.bme.mit.theta.analysis.algorithm.ArgChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
+import hu.bme.mit.theta.solver.UnknownSolverStatusException;
+import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.xta.XtaSystem;
 import hu.bme.mit.theta.xta.analysis.lazy.Algorithm;
 import hu.bme.mit.theta.xta.analysis.lazy.AlgorithmStrategy;
@@ -85,10 +89,16 @@ public final class LazyXtaCheckerTest {
 		final LazyXtaChecker<?> checker = LazyXtaChecker.create(system, algorithmStrategy, BFS);
 
 		// Act
-		final SafetyResult<?, XtaAction> status = checker.check(UnitPrec.getInstance());
+		final SafetyResult<? extends XtaState<?>, XtaAction> status = checker.check(UnitPrec.getInstance());
 
 		// Assert
-		System.out.println(status.getStats().get());
+		final ArgChecker argChecker = ArgChecker.create(Z3SolverFactory.getInstace().createSolver());
+		try {
+			final boolean argCheckResult = argChecker.isWellLabeled(status.getArg());
+			assertTrue(argCheckResult);
+		} catch (final UnknownSolverStatusException e) {
+			// solver failed
+		}
 	}
 
 }
