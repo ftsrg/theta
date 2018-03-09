@@ -243,8 +243,10 @@ public final class ExplLuStrategy implements AlgorithmStrategy<Prod2State<ItpExp
 			final ArgNode<XtaState<Prod2State<ItpExplState, LuZoneState>>, XtaAction> node, final BoundFunc interpolant,
 			final Collection<ArgNode<XtaState<Prod2State<ItpExplState, LuZoneState>>, XtaAction>> uncoveredNodes) {
 		final Collection<ArgNode<XtaState<Prod2State<ItpExplState, LuZoneState>>, XtaAction>> uncovered = node
-				.getCoveredNodes().filter(covered -> !covered.getState().getState().getState2().getZone()
-						.isLeq(node.getState().getState().getState2().getZone(), interpolant))
+				.getCoveredNodes()
+				.filter(covered -> !interpolant.isLeq(covered.getState().getState().getState2().getBoundFunc())
+						|| !covered.getState().getState().getState2().getZone()
+								.isLeq(node.getState().getState().getState2().getZone(), interpolant))
 				.collect(toList());
 		uncoveredNodes.addAll(uncovered);
 		uncovered.forEach(ArgNode::unsetCoveringNode);
