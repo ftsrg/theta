@@ -153,8 +153,10 @@ public final class LuStrategy implements AlgorithmStrategy<Prod2State<ExplState,
 			final BoundFunc interpolant,
 			final Collection<ArgNode<XtaState<Prod2State<ExplState, LuZoneState>>, XtaAction>> uncoveredNodes) {
 		final Collection<ArgNode<XtaState<Prod2State<ExplState, LuZoneState>>, XtaAction>> uncovered = node
-				.getCoveredNodes().filter(covered -> !covered.getState().getState().getState2().getZone()
-						.isLeq(node.getState().getState().getState2().getZone(), interpolant))
+				.getCoveredNodes()
+				.filter(covered -> !interpolant.isLeq(covered.getState().getState().getState2().getBoundFunc())
+						|| !covered.getState().getState().getState2().getZone()
+								.isLeq(node.getState().getState().getState2().getZone(), interpolant))
 				.collect(toList());
 		uncoveredNodes.addAll(uncovered);
 		uncovered.forEach(ArgNode::unsetCoveringNode);
