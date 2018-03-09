@@ -17,6 +17,9 @@ package hu.bme.mit.theta.xta.analysis;
 
 import static hu.bme.mit.theta.analysis.algorithm.SearchStrategy.BFS;
 import static hu.bme.mit.theta.xta.analysis.lazy.Algorithm.BINITP;
+import static hu.bme.mit.theta.xta.analysis.lazy.Algorithm.EXPLBINITP;
+import static hu.bme.mit.theta.xta.analysis.lazy.Algorithm.EXPLLU;
+import static hu.bme.mit.theta.xta.analysis.lazy.Algorithm.EXPLSEQITP;
 import static hu.bme.mit.theta.xta.analysis.lazy.Algorithm.LU;
 import static hu.bme.mit.theta.xta.analysis.lazy.Algorithm.SEQITP;
 import static org.junit.Assert.assertTrue;
@@ -53,7 +56,8 @@ public final class LazyXtaCheckerTest {
 	private static final List<String> MODELS = ImmutableList.of("/csma-2.xta", "/fischer-2-32-64.xta",
 			"/lynch-2-16.xta");
 
-	private static final List<Algorithm> ALGORITHMS = ImmutableList.of(BINITP, SEQITP, LU);
+	private static final List<Algorithm> ALGORITHMS = ImmutableList.of(BINITP, SEQITP, LU, EXPLBINITP, EXPLSEQITP,
+			EXPLLU);
 
 	@Parameters(name = "model: {0}, algorithm: {1}")
 	public static Collection<Object[]> data() {
