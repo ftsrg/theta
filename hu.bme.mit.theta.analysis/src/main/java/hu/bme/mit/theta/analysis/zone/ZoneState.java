@@ -19,7 +19,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.clock.constr.ClockConstrs.Eq;
 import static hu.bme.mit.theta.core.clock.constr.ClockConstrs.Gt;
 import static hu.bme.mit.theta.core.clock.constr.ClockConstrs.Lt;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
+import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
 import static java.util.stream.Collectors.toList;
 
 import java.util.Collection;
