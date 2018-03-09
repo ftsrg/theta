@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.solver.z3.transform;
 
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import com.google.common.cache.Cache;
@@ -22,9 +23,13 @@ import com.google.common.cache.CacheBuilder;
 import com.microsoft.z3.Context;
 
 import hu.bme.mit.theta.common.DispatchTable;
+import hu.bme.mit.theta.common.dsl.Env;
+import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.ParamDecl;
+import hu.bme.mit.theta.core.dsl.DeclSymbol;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.booltype.AndExpr;
@@ -37,6 +42,7 @@ import hu.bme.mit.theta.core.type.booltype.NotExpr;
 import hu.bme.mit.theta.core.type.booltype.OrExpr;
 import hu.bme.mit.theta.core.type.booltype.TrueExpr;
 import hu.bme.mit.theta.core.type.booltype.XorExpr;
+import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.type.inttype.IntAddExpr;
 import hu.bme.mit.theta.core.type.inttype.IntDivExpr;
 import hu.bme.mit.theta.core.type.inttype.IntEqExpr;
@@ -73,10 +79,12 @@ class Z3ExprTransformer {
 
 	private final Cache<Expr<?>, com.microsoft.z3.Expr> exprToTerm;
 	private final DispatchTable<com.microsoft.z3.Expr> table;
+	private final Env env;
 
 	Z3ExprTransformer(final Z3TransformationManager transformer, final Context context) {
 		this.context = context;
 		this.transformer = transformer;
+		this.env = new Env();
 
 		exprToTerm = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).build();
 
@@ -185,8 +193,15 @@ class Z3ExprTransformer {
 
 	private com.microsoft.z3.Expr transformRef(final RefExpr<?> expr) {
 		final Decl<?> decl = expr.getDecl();
-		final com.microsoft.z3.FuncDecl funcDecl = transformer.toSymbol(decl);
-		return context.mkConst(funcDecl);
+		if (decl instanceof ConstDecl) {
+			final com.microsoft.z3.FuncDecl funcDecl = transformer.toSymbol(decl);
+			return context.mkConst(funcDecl);
+		} else if (decl instanceof ParamDecl) {
+			final com.microsoft.z3.FuncDecl funcDecl = (com.microsoft.z3.FuncDecl) env.eval(DeclSymbol.of(decl));
+			return context.mkConst(funcDecl);
+		} else {
+			throw new UnsupportedOperationException("Cannot transform reference for declaration: " + decl);
+		}
 	}
 
 	private com.microsoft.z3.Expr transformIte(final IteExpr<?> expr) {
@@ -245,31 +260,43 @@ class Z3ExprTransformer {
 	}
 
 	private com.microsoft.z3.Expr transformExists(final ExistsExpr expr) {
+		env.push();
+		final com.microsoft.z3.Expr[] paramTerms = transformParamDecls(expr.getParamDecls());
 		final com.microsoft.z3.BoolExpr opTerm = (com.microsoft.z3.BoolExpr) toTerm(expr.getOp());
-		final com.microsoft.z3.Expr[] paramTerms = new com.microsoft.z3.Expr[expr.getParamDecls().size()];
-
-		int i = 0;
-		for (final ParamDecl<?> paramDecl : expr.getParamDecls()) {
-			final com.microsoft.z3.FuncDecl paramSymbol = transformer.toSymbol(paramDecl);
-			paramTerms[i] = context.mkConst(paramSymbol);
-			i++;
-		}
-
-		return context.mkExists(paramTerms, opTerm, 1, null, null, null, null);
+		final com.microsoft.z3.BoolExpr result = context.mkExists(paramTerms, opTerm, 1, null, null, null, null);
+		env.pop();
+		return result;
 	}
 
 	private com.microsoft.z3.Expr transformForall(final ForallExpr expr) {
+		env.push();
+		final com.microsoft.z3.Expr[] paramTerms = transformParamDecls(expr.getParamDecls());
 		final com.microsoft.z3.BoolExpr opTerm = (com.microsoft.z3.BoolExpr) toTerm(expr.getOp());
-		final com.microsoft.z3.Expr[] paramTerms = new com.microsoft.z3.Expr[expr.getParamDecls().size()];
+		final com.microsoft.z3.BoolExpr result = context.mkForall(paramTerms, opTerm, 1, null, null, null, null);
+		env.pop();
+		return result;
+	}
 
+	private com.microsoft.z3.Expr[] transformParamDecls(final List<ParamDecl<?>> paramDecls) {
+		final com.microsoft.z3.Expr[] paramTerms = new com.microsoft.z3.Expr[paramDecls.size()];
 		int i = 0;
-		for (final ParamDecl<?> paramDecl : expr.getParamDecls()) {
-			final com.microsoft.z3.FuncDecl paramSymbol = transformer.toSymbol(paramDecl);
+		for (final ParamDecl<?> paramDecl : paramDecls) {
+			final com.microsoft.z3.FuncDecl paramSymbol = transformParamDecl(paramDecl);
 			paramTerms[i] = context.mkConst(paramSymbol);
+			env.define(DeclSymbol.of(paramDecl), paramSymbol);
 			i++;
 		}
+		return paramTerms;
+	}
 
-		return context.mkForall(paramTerms, opTerm, 1, null, null, null, null);
+	private com.microsoft.z3.FuncDecl transformParamDecl(final ParamDecl<?> paramDecl) {
+		final Type type = paramDecl.getType();
+		if (type instanceof FuncType<?, ?>) {
+			throw new UnsupportedOperationException("Only simple types are supported");
+		} else {
+			final com.microsoft.z3.Sort sort = transformer.toSort(type);
+			return context.mkConstDecl(paramDecl.getName(), sort);
+		}
 	}
 
 	/*

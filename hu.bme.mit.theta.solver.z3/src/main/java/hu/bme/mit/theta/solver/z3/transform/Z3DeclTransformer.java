@@ -25,7 +25,6 @@ import com.microsoft.z3.Context;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.Decl;
-import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.functype.FuncType;
 
@@ -48,8 +47,6 @@ final class Z3DeclTransformer {
 	public com.microsoft.z3.FuncDecl toSymbol(final Decl<?> decl) {
 		if (decl instanceof ConstDecl) {
 			return transformConst((ConstDecl<?>) decl);
-		} else if (decl instanceof ParamDecl) {
-			return transformParam((ParamDecl<?>) decl);
 		} else {
 			throw new UnsupportedOperationException("Cannot transform declaration: " + decl);
 		}
@@ -76,16 +73,6 @@ final class Z3DeclTransformer {
 		}
 
 		return symbol;
-	}
-
-	private com.microsoft.z3.FuncDecl transformParam(final ParamDecl<?> decl) {
-		final Type type = decl.getType();
-		if (type instanceof FuncType<?, ?>) {
-			throw new UnsupportedOperationException("Only simple types are supported");
-		} else {
-			final com.microsoft.z3.Sort sort = transformer.toSort(type);
-			return context.mkConstDecl(symbolNameFor(decl), sort);
-		}
 	}
 
 	private Tuple2<List<Type>, Type> extractTypes(final Type type) {
