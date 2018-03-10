@@ -44,10 +44,10 @@ import hu.bme.mit.theta.cfa.tool.CfaConfigBuilder.PrecGranularity;
 import hu.bme.mit.theta.cfa.tool.CfaConfigBuilder.PredSplit;
 import hu.bme.mit.theta.cfa.tool.CfaConfigBuilder.Refinement;
 import hu.bme.mit.theta.cfa.tool.CfaConfigBuilder.Search;
+import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
+import hu.bme.mit.theta.common.logging.NullLogger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
-import hu.bme.mit.theta.common.logging.impl.ConsoleLogger;
-import hu.bme.mit.theta.common.logging.impl.NullLogger;
 import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.common.table.impl.BasicTableWriter;
 
