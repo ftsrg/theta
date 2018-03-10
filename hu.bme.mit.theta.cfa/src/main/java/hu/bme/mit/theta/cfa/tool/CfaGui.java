@@ -42,7 +42,7 @@ import hu.bme.mit.theta.cfa.utils.CfaVisualizer;
 import hu.bme.mit.theta.common.BaseGui;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.TextAreaLogger;
-import hu.bme.mit.theta.common.table.impl.HtmlTableWriter;
+import hu.bme.mit.theta.common.table.HtmlTableWriter;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter.Format;

@@ -24,8 +24,6 @@ import org.junit.Test;
 
 import com.google.common.collect.ImmutableList;
 
-import hu.bme.mit.theta.common.table.impl.BasicTableWriter;
-
 public class TableWriterTest {
 	@Test
 	public void test() {

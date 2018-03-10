@@ -48,8 +48,8 @@ import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.NullLogger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
+import hu.bme.mit.theta.common.table.BasicTableWriter;
 import hu.bme.mit.theta.common.table.TableWriter;
-import hu.bme.mit.theta.common.table.impl.BasicTableWriter;
 
 /**
  * A command line interface for running a CEGAR configuration on a CFA.
