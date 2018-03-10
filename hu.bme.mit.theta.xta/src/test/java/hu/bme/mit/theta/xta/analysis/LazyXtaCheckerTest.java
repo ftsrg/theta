@@ -29,7 +29,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -39,6 +38,7 @@ import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 
 import hu.bme.mit.theta.analysis.algorithm.ArgChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
@@ -52,23 +52,20 @@ import hu.bme.mit.theta.xta.dsl.XtaDslManager;
 
 @RunWith(Parameterized.class)
 public final class LazyXtaCheckerTest {
+	private static final String MODEL_CSMA = "/csma-2.xta";
+	private static final String MODEL_FDDI = "/fddi-2.xta";
+	private static final String MODEL_FISCHER = "/fischer-2-32-64.xta";
+	private static final String MODEL_LYNCH = "/lynch-2-16.xta";
+	private static final String MODEL_ENGINE = "/engine-classic.xta";
 
-	private static final List<String> MODELS = ImmutableList.of("/csma-2.xta", "/fischer-2-32-64.xta",
-			"/lynch-2-16.xta");
+	private static final Collection<String> MODELS = ImmutableList.of(MODEL_CSMA, MODEL_FDDI, MODEL_FISCHER,
+			MODEL_LYNCH, MODEL_ENGINE);
 
-	private static final List<Algorithm> ALGORITHMS = ImmutableList.of(BINITP, SEQITP, LU, EXPLBINITP, EXPLSEQITP,
+	private static final Collection<Algorithm> ALGORITHMS = ImmutableList.of(BINITP, SEQITP, LU, EXPLBINITP, EXPLSEQITP,
 			EXPLLU);
 
-	@Parameters(name = "model: {0}, algorithm: {1}")
-	public static Collection<Object[]> data() {
-		final Collection<Object[]> result = new ArrayList<>();
-		for (final String model : MODELS) {
-			for (final Algorithm algorithm : ALGORITHMS) {
-				result.add(new Object[] { model, algorithm });
-			}
-		}
-		return result;
-	}
+	private static final Collection<String> MODELS_WITH_UNKNOWN_SOLVER_STATUS = ImmutableSet.of(MODEL_FDDI,
+			MODEL_ENGINE);
 
 	@Parameter(0)
 	public String filepath;
@@ -78,6 +75,19 @@ public final class LazyXtaCheckerTest {
 
 	private XtaSystem system;
 	private AlgorithmStrategy<?> algorithmStrategy;
+
+	@Parameters(name = "model: {0}, algorithm: {1}")
+	public static Collection<Object[]> data() {
+		final Collection<Object[]> result = new ArrayList<>();
+		for (final String model : MODELS) {
+			for (final Algorithm algorithm : ALGORITHMS) {
+				if (!MODELS_WITH_UNKNOWN_SOLVER_STATUS.contains(model) || (algorithm != LU && algorithm != EXPLLU)) {
+					result.add(new Object[] { model, algorithm });
+				}
+			}
+		}
+		return result;
+	}
 
 	@Before
 	public void initialize() throws FileNotFoundException, IOException {
