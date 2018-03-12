@@ -20,9 +20,11 @@ import java.util.concurrent.ExecutionException;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.google.common.collect.ImmutableList;
 import com.microsoft.z3.Context;
 
 import hu.bme.mit.theta.common.DispatchTable;
+import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.common.dsl.Env;
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.Decl;
@@ -44,6 +46,7 @@ import hu.bme.mit.theta.core.type.booltype.NotExpr;
 import hu.bme.mit.theta.core.type.booltype.OrExpr;
 import hu.bme.mit.theta.core.type.booltype.TrueExpr;
 import hu.bme.mit.theta.core.type.booltype.XorExpr;
+import hu.bme.mit.theta.core.type.functype.FuncAppExpr;
 import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.type.inttype.IntAddExpr;
 import hu.bme.mit.theta.core.type.inttype.IntDivExpr;
@@ -175,6 +178,10 @@ final class Z3ExprTransformer {
 				.addCase(IntLeqExpr.class, this::transformIntLeq)
 
 				.addCase(IntLtExpr.class, this::transformIntLt)
+
+				// Functions
+
+				.addCase(FuncAppExpr.class, this::transformFuncApp)
 
 				// Arrays
 
@@ -480,6 +487,41 @@ final class Z3ExprTransformer {
 		final com.microsoft.z3.Expr indexTerm = toTerm(expr.getIndex());
 		final com.microsoft.z3.Expr elemTerm = toTerm(expr.getElem());
 		return context.mkStore(arrayTerm, indexTerm, elemTerm);
+	}
+
+	/*
+	 * Functions
+	 */
+
+	private com.microsoft.z3.Expr transformFuncApp(final FuncAppExpr<?, ?> expr) {
+		final Tuple2<Expr<?>, List<Expr<?>>> funcAndArgs = extractFuncAndArgs(expr);
+		final Expr<?> func = funcAndArgs.get1();
+		if (func instanceof RefExpr) {
+			final RefExpr<?> ref = (RefExpr<?>) func;
+			final Decl<?> decl = ref.getDecl();
+			final com.microsoft.z3.FuncDecl funcDecl = transformer.toSymbol(decl);
+			final List<Expr<?>> args = funcAndArgs.get2();
+			final com.microsoft.z3.Expr[] argTerms = args.stream().map(this::toTerm)
+					.toArray(size -> new com.microsoft.z3.Expr[size]);
+			return context.mkApp(funcDecl, argTerms);
+		} else {
+			throw new UnsupportedOperationException("Higher order functions are not supported: " + func);
+		}
+	}
+
+	private static Tuple2<Expr<?>, List<Expr<?>>> extractFuncAndArgs(final FuncAppExpr<?, ?> expr) {
+		final Expr<?> func = expr.getFunc();
+		final Expr<?> arg = expr.getParam();
+		if (func instanceof FuncAppExpr) {
+			final FuncAppExpr<?, ?> funcApp = (FuncAppExpr<?, ?>) func;
+			final Tuple2<Expr<?>, List<Expr<?>>> funcAndArgs = extractFuncAndArgs(funcApp);
+			final Expr<?> resFunc = funcAndArgs.get1();
+			final List<Expr<?>> args = funcAndArgs.get2();
+			final List<Expr<?>> resArgs = ImmutableList.<Expr<?>>builder().addAll(args).add(arg).build();
+			return Tuple2.of(resFunc, resArgs);
+		} else {
+			return Tuple2.of(func, ImmutableList.of(arg));
+		}
 	}
 
 }
