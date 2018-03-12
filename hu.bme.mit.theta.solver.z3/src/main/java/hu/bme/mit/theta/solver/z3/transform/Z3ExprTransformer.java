@@ -32,6 +32,8 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
+import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr;
+import hu.bme.mit.theta.core.type.arraytype.ArrayWriteExpr;
 import hu.bme.mit.theta.core.type.booltype.AndExpr;
 import hu.bme.mit.theta.core.type.booltype.ExistsExpr;
 import hu.bme.mit.theta.core.type.booltype.FalseExpr;
@@ -70,7 +72,7 @@ import hu.bme.mit.theta.core.type.rattype.RatNegExpr;
 import hu.bme.mit.theta.core.type.rattype.RatNeqExpr;
 import hu.bme.mit.theta.core.type.rattype.RatSubExpr;
 
-class Z3ExprTransformer {
+final class Z3ExprTransformer {
 
 	private static final int CACHE_SIZE = 1000;
 
@@ -81,7 +83,7 @@ class Z3ExprTransformer {
 	private final DispatchTable<com.microsoft.z3.Expr> table;
 	private final Env env;
 
-	Z3ExprTransformer(final Z3TransformationManager transformer, final Context context) {
+	public Z3ExprTransformer(final Z3TransformationManager transformer, final Context context) {
 		this.context = context;
 		this.transformer = transformer;
 		this.env = new Env();
@@ -173,6 +175,12 @@ class Z3ExprTransformer {
 				.addCase(IntLeqExpr.class, this::transformIntLeq)
 
 				.addCase(IntLtExpr.class, this::transformIntLt)
+
+				// Arrays
+
+				.addCase(ArrayReadExpr.class, this::transformArrayRead)
+
+				.addCase(ArrayWriteExpr.class, this::transformArrayWrite)
 
 				.build();
 	}
@@ -455,6 +463,23 @@ class Z3ExprTransformer {
 		final com.microsoft.z3.ArithExpr leftOpTerm = (com.microsoft.z3.ArithExpr) toTerm(expr.getLeftOp());
 		final com.microsoft.z3.ArithExpr rightOpTerm = (com.microsoft.z3.ArithExpr) toTerm(expr.getRightOp());
 		return context.mkLt(leftOpTerm, rightOpTerm);
+	}
+
+	/*
+	 * Arrays
+	 */
+
+	private com.microsoft.z3.Expr transformArrayRead(final ArrayReadExpr<?, ?> expr) {
+		final com.microsoft.z3.ArrayExpr arrayTerm = (com.microsoft.z3.ArrayExpr) toTerm(expr.getArray());
+		final com.microsoft.z3.Expr indexTerm = toTerm(expr.getIndex());
+		return context.mkSelect(arrayTerm, indexTerm);
+	}
+
+	private com.microsoft.z3.Expr transformArrayWrite(final ArrayWriteExpr<?, ?> expr) {
+		final com.microsoft.z3.ArrayExpr arrayTerm = (com.microsoft.z3.ArrayExpr) toTerm(expr.getArray());
+		final com.microsoft.z3.Expr indexTerm = toTerm(expr.getIndex());
+		final com.microsoft.z3.Expr elemTerm = toTerm(expr.getElem());
+		return context.mkStore(arrayTerm, indexTerm, elemTerm);
 	}
 
 }
