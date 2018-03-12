@@ -1,12 +1,12 @@
 /*
  *  Copyright 2017 Budapest University of Technology and Economics
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,7 @@ package hu.bme.mit.theta.solver.z3.transform;
 import com.microsoft.z3.Context;
 
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.type.rattype.RatType;
@@ -26,7 +27,6 @@ class Z3TypeTransformer {
 
 	@SuppressWarnings("unused")
 	private final Z3TransformationManager transformer;
-	@SuppressWarnings("unused")
 	private final Context context;
 
 	private final com.microsoft.z3.BoolSort boolSort;
@@ -49,6 +49,11 @@ class Z3TypeTransformer {
 			return intSort;
 		} else if (type instanceof RatType) {
 			return realSort;
+		} else if (type instanceof ArrayType) {
+			final ArrayType<?, ?> arrayType = (ArrayType<?, ?>) type;
+			final com.microsoft.z3.Sort indexSort = toSort(arrayType.getIndexType());
+			final com.microsoft.z3.Sort elemSort = toSort(arrayType.getElemType());
+			return context.mkArraySort(indexSort, elemSort);
 		} else {
 			throw new UnsupportedOperationException();
 		}
