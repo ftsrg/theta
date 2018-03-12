@@ -31,8 +31,6 @@ public final class FuncAppExpr<ParamType extends Type, ResultType extends Type> 
 
 	private static final int HASH_SEED = 7951;
 
-	private static final String OPERATOR_LABEL = "app";
-
 	private final Expr<FuncType<ParamType, ResultType>> func;
 	private final Expr<ParamType> param;
 
@@ -121,7 +119,7 @@ public final class FuncAppExpr<ParamType extends Type, ResultType extends Type> 
 
 	@Override
 	public String toString() {
-		return Utils.lispStringBuilder(OPERATOR_LABEL).add(func).add(param).toString();
+		return Utils.lispStringBuilder().add(func).add(param).toString();
 	}
 
 }
