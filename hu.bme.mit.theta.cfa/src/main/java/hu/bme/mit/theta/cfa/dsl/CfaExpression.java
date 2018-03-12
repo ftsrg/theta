@@ -150,15 +150,21 @@ final class CfaExpression {
 
 		////
 
-		private void push(final Collection<? extends Decl<?>> decls) {
+		private void push(final List<ParamDecl<?>> paramDecls) {
 			final BasicScope scope = new BasicScope(currentScope);
-			decls.forEach(p -> scope.declare(DeclSymbol.of(p)));
+			env.push();
+			for (final ParamDecl<?> paramDecl : paramDecls) {
+				final Symbol symbol = DeclSymbol.of(paramDecl);
+				scope.declare(symbol);
+				env.define(symbol, paramDecl);
+			}
 			currentScope = scope;
 		}
 
 		private void pop() {
 			checkState(currentScope.enclosingScope().isPresent(), "Enclosing scope is not present.");
 			currentScope = currentScope.enclosingScope().get();
+			env.pop();
 		}
 
 		////
