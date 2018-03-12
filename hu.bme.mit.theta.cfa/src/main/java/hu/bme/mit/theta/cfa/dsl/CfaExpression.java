@@ -65,6 +65,7 @@ import hu.bme.mit.theta.cfa.dsl.gen.CfaDslParser.AccessorExprContext;
 import hu.bme.mit.theta.cfa.dsl.gen.CfaDslParser.AdditiveExprContext;
 import hu.bme.mit.theta.cfa.dsl.gen.CfaDslParser.AndExprContext;
 import hu.bme.mit.theta.cfa.dsl.gen.CfaDslParser.ArrayReadAccessContext;
+import hu.bme.mit.theta.cfa.dsl.gen.CfaDslParser.ArrayWriteAccessContext;
 import hu.bme.mit.theta.cfa.dsl.gen.CfaDslParser.DeclListContext;
 import hu.bme.mit.theta.cfa.dsl.gen.CfaDslParser.EqualityExprContext;
 import hu.bme.mit.theta.cfa.dsl.gen.CfaDslParser.ExistsExprContext;
@@ -521,6 +522,8 @@ final class CfaExpression {
 				return createFuncAppExpr(op, access.params);
 			} else if (access.readIndexes != null) {
 				return createArrayReadExpr(op, access.readIndexes);
+			} else if (access.writeIndex != null) {
+				return createArrayWriteExpr(op, access.writeIndex);
 			} else if (access.prime != null) {
 				return createPrimeExpr(op);
 			} else {
@@ -534,6 +537,11 @@ final class CfaExpression {
 		}
 
 		private Expr<?> createArrayReadExpr(final Expr<?> op, final ArrayReadAccessContext ctx) {
+			// TODO Auto-generated method stub
+			throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		}
+
+		private Expr<?> createArrayWriteExpr(final Expr<?> op, final ArrayWriteAccessContext ctx) {
 			// TODO Auto-generated method stub
 			throw new UnsupportedOperationException("TODO: auto-generated method stub");
 		}
