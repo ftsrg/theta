@@ -520,8 +520,8 @@ final class CfaExpression {
 		private Expr<?> createAccessSubExpr(final Expr<?> op, final AccessContext access) {
 			if (access.params != null) {
 				return createFuncAppExpr(op, access.params);
-			} else if (access.readIndexes != null) {
-				return createArrayReadExpr(op, access.readIndexes);
+			} else if (access.readIndex != null) {
+				return createArrayReadExpr(op, access.readIndex);
 			} else if (access.writeIndex != null) {
 				return createArrayWriteExpr(op, access.writeIndex);
 			} else if (access.prime != null) {

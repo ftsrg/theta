@@ -199,7 +199,7 @@ accessorExpr
 
 access
 	:	params=funcAccess
-	|	readIndexes=arrayReadAccess
+	|	readIndex=arrayReadAccess
 	|	writeIndex=arrayWriteAccess
 	|	prime=primeAccess
 	;
@@ -209,7 +209,7 @@ funcAccess
 	;
 	
 arrayReadAccess
-	:	LBRACK (indexes=exprList)? RBRACK
+	:	LBRACK index=expr RBRACK
 	;
 	
 arrayWriteAccess
