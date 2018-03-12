@@ -1,12 +1,12 @@
 /*
  *  Copyright 2017 Budapest University of Technology and Economics
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -64,7 +64,7 @@ import hu.bme.mit.theta.cfa.dsl.gen.CfaDslParser.AccessContext;
 import hu.bme.mit.theta.cfa.dsl.gen.CfaDslParser.AccessorExprContext;
 import hu.bme.mit.theta.cfa.dsl.gen.CfaDslParser.AdditiveExprContext;
 import hu.bme.mit.theta.cfa.dsl.gen.CfaDslParser.AndExprContext;
-import hu.bme.mit.theta.cfa.dsl.gen.CfaDslParser.ArrayAccessContext;
+import hu.bme.mit.theta.cfa.dsl.gen.CfaDslParser.ArrayReadAccessContext;
 import hu.bme.mit.theta.cfa.dsl.gen.CfaDslParser.DeclListContext;
 import hu.bme.mit.theta.cfa.dsl.gen.CfaDslParser.EqualityExprContext;
 import hu.bme.mit.theta.cfa.dsl.gen.CfaDslParser.ExistsExprContext;
@@ -519,8 +519,8 @@ final class CfaExpression {
 		private Expr<?> createAccessSubExpr(final Expr<?> op, final AccessContext access) {
 			if (access.params != null) {
 				return createFuncAppExpr(op, access.params);
-			} else if (access.indexes != null) {
-				return createArrayReadExpr(op, access.indexes);
+			} else if (access.readIndexes != null) {
+				return createArrayReadExpr(op, access.readIndexes);
 			} else if (access.prime != null) {
 				return createPrimeExpr(op);
 			} else {
@@ -533,7 +533,7 @@ final class CfaExpression {
 			throw new UnsupportedOperationException("TODO: auto-generated method stub");
 		}
 
-		private Expr<?> createArrayReadExpr(final Expr<?> op, final ArrayAccessContext ctx) {
+		private Expr<?> createArrayReadExpr(final Expr<?> op, final ArrayReadAccessContext ctx) {
 			// TODO Auto-generated method stub
 			throw new UnsupportedOperationException("TODO: auto-generated method stub");
 		}
