@@ -23,8 +23,12 @@ import hu.bme.mit.theta.core.type.UnaryExpr;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.anytype.PrimeExpr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
+import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr;
+import hu.bme.mit.theta.core.type.arraytype.ArrayWriteExpr;
 import hu.bme.mit.theta.core.type.booltype.AndExpr;
+import hu.bme.mit.theta.core.type.booltype.ExistsExpr;
 import hu.bme.mit.theta.core.type.booltype.FalseExpr;
+import hu.bme.mit.theta.core.type.booltype.ForallExpr;
 import hu.bme.mit.theta.core.type.booltype.IffExpr;
 import hu.bme.mit.theta.core.type.booltype.ImplyExpr;
 import hu.bme.mit.theta.core.type.booltype.NotExpr;
@@ -91,6 +95,10 @@ public final class ExprWriter {
 
 				.addCase(FalseExpr.class, e -> "false")
 
+				.addCase(ForallExpr.class, this::forall)
+
+				.addCase(ExistsExpr.class, this::exists)
+
 				// Integer
 
 				.addCase(IntAddExpr.class, e -> infixMultiary(e, " + "))
@@ -147,11 +155,17 @@ public final class ExprWriter {
 
 				.addCase(RatLitExpr.class, e -> e.getNum() + "%" + e.getDenom())
 
+				// Array
+
+				.addCase(ArrayReadExpr.class, this::arrayRead)
+
+				.addCase(ArrayWriteExpr.class, this::arrayWrite)
+
 				// General
 
 				.addCase(RefExpr.class, e -> e.getDecl().getName())
 
-				.addCase(IteExpr.class, e -> ite(e))
+				.addCase(IteExpr.class, this::ite)
 
 				.addCase(PrimeExpr.class, e -> postfixUnary(e, "'"))
 
@@ -195,6 +209,24 @@ public final class ExprWriter {
 		return sb.toString();
 	}
 
+	private String forall(final ForallExpr e) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+	}
+
+	private String exists(final ExistsExpr e) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+	}
+
+	private String arrayRead(final ArrayReadExpr<?, ?> e) {
+		return writeWithBrackets(e.getArray()) + "[" + write(e.getIndex()) + "]";
+	}
+
+	private String arrayWrite(final ArrayWriteExpr<?, ?> e) {
+		return writeWithBrackets(e.getArray()) + "[" + write(e.getIndex()) + " <- " + write(e.getElem()) + "]";
+	}
+
 	private String ite(final IteExpr<?> expr) {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("if ");
@@ -205,4 +237,5 @@ public final class ExprWriter {
 		sb.append(writeWithBrackets(expr.getElse()));
 		return sb.toString();
 	}
+
 }
