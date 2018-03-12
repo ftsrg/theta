@@ -18,7 +18,9 @@ package hu.bme.mit.theta.cfa.dsl;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static hu.bme.mit.theta.common.Utils.head;
 import static hu.bme.mit.theta.common.Utils.singleElementOf;
+import static hu.bme.mit.theta.common.Utils.tail;
 import static hu.bme.mit.theta.core.decl.Decls.Param;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Div;
@@ -511,9 +513,9 @@ final class CfaExpression {
 			if (accesses.isEmpty()) {
 				return op;
 			} else {
-				final AccessContext access = accesses.get(0);
+				final AccessContext access = head(accesses);
 				final Expr<?> subExpr = createAccessSubExpr(op, access);
-				return createAccessExpr(subExpr, accesses.subList(1, accesses.size()));
+				return createAccessExpr(subExpr, tail(accesses));
 			}
 		}
 
