@@ -35,6 +35,8 @@ import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neg;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Sub;
 import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;
+import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Read;
+import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Write;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Exists;
@@ -49,6 +51,7 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Mod;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Rem;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 import static java.util.stream.Collectors.toList;
 
 import java.util.Collection;
@@ -103,6 +106,7 @@ import hu.bme.mit.theta.core.type.abstracttype.DivExpr;
 import hu.bme.mit.theta.core.type.abstracttype.MulExpr;
 import hu.bme.mit.theta.core.type.abstracttype.SubExpr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
+import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.FalseExpr;
 import hu.bme.mit.theta.core.type.booltype.TrueExpr;
@@ -538,14 +542,23 @@ final class CfaExpression {
 			throw new UnsupportedOperationException("TODO: auto-generated method stub");
 		}
 
-		private Expr<?> createArrayReadExpr(final Expr<?> op, final ArrayReadAccessContext ctx) {
-			// TODO Auto-generated method stub
-			throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		private <T1 extends Type, T2 extends Type> Expr<?> createArrayReadExpr(final Expr<?> op,
+				final ArrayReadAccessContext ctx) {
+			checkArgument(op.getType() instanceof ArrayType);
+			@SuppressWarnings("unchecked")
+			final Expr<ArrayType<T1, T2>> array = (Expr<ArrayType<T1, T2>>) op;
+			final Expr<T1> index = cast(ctx.index.accept(this), array.getType().getIndexType());
+			return Read(array, index);
 		}
 
-		private Expr<?> createArrayWriteExpr(final Expr<?> op, final ArrayWriteAccessContext ctx) {
-			// TODO Auto-generated method stub
-			throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		private <T1 extends Type, T2 extends Type> Expr<?> createArrayWriteExpr(final Expr<?> op,
+				final ArrayWriteAccessContext ctx) {
+			checkArgument(op.getType() instanceof ArrayType);
+			@SuppressWarnings("unchecked")
+			final Expr<ArrayType<T1, T2>> array = (Expr<ArrayType<T1, T2>>) op;
+			final Expr<T1> index = cast(ctx.index.accept(this), array.getType().getIndexType());
+			final Expr<T2> elem = cast(ctx.elem.accept(this), array.getType().getElemType());
+			return Write(array, index, elem);
 		}
 
 		private Expr<?> createPrimeExpr(final Expr<?> op) {
