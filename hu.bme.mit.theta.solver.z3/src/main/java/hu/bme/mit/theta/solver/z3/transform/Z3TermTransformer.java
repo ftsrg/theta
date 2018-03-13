@@ -58,11 +58,10 @@ import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.type.rattype.RatType;
 import hu.bme.mit.theta.core.utils.TypeUtils;
 
-public class Z3TermTransformer {
+public final class Z3TermTransformer {
 
-	final Z3SymbolTable symbolTable;
-
-	final Cache<com.microsoft.z3.Expr, Expr<?>> termToExpr;
+	private final Z3SymbolTable symbolTable;
+	private final Cache<com.microsoft.z3.Expr, Expr<?>> termToExpr;
 
 	private static final int CACHE_SIZE = 1000;
 
