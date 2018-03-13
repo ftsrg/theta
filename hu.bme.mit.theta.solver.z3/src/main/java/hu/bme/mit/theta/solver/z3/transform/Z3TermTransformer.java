@@ -49,8 +49,6 @@ import java.util.function.BiFunction;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import com.microsoft.z3.FuncDecl;
-import com.microsoft.z3.RatNum;
 
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.Decl;
@@ -144,7 +142,7 @@ public final class Z3TermTransformer {
 	}
 
 	private final Expr<?> transformApp(final com.microsoft.z3.Expr term, final Deque<Decl<?>> vars) {
-		final FuncDecl funcDecl = term.getFuncDecl();
+		final com.microsoft.z3.FuncDecl funcDecl = term.getFuncDecl();
 		if (symbolTable.definesSymbol(funcDecl)) {
 			final ConstDecl<?> constDecl = symbolTable.getConst(funcDecl);
 			return transformFuncApp(constDecl.getRef(), term.getArgs(), vars);
@@ -189,13 +187,15 @@ public final class Z3TermTransformer {
 	}
 
 	private Expr<?> transformIntLit(final com.microsoft.z3.Expr term, final Deque<Decl<?>> vars) {
-		final int value = ((com.microsoft.z3.IntNum) term).getInt();
+		final com.microsoft.z3.IntNum intNum = (com.microsoft.z3.IntNum) term;
+		final int value = intNum.getInt();
 		return Int(value);
 	}
 
 	private Expr<?> transformRatLit(final com.microsoft.z3.Expr term, final Deque<Decl<?>> vars) {
-		final int num = ((RatNum) term).getNumerator().getInt();
-		final int denom = ((RatNum) term).getDenominator().getInt();
+		final com.microsoft.z3.RatNum ratNum = (com.microsoft.z3.RatNum) term;
+		final int num = ratNum.getNumerator().getInt();
+		final int denom = ratNum.getDenominator().getInt();
 		return Rat(num, denom);
 	}
 
