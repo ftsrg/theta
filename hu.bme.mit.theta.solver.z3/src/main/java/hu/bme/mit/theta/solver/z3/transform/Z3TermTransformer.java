@@ -183,16 +183,16 @@ public class Z3TermTransformer {
 			return transformConst(term, vars);
 
 		} else if (term.isAdd()) {
-			return transformIntAdd(term, vars);
+			return transformAdd(term, vars);
 
 		} else if (term.isMul()) {
-			return transformIntMul(term, vars);
+			return transformMul(term, vars);
 
 		} else if (term.isIDiv()) {
 			return transformIntDiv(term, vars);
 
 		} else if (term.isITE()) {
-			return transformIntIte(term, vars);
+			return transformIte(term, vars);
 
 		} else if (term.isApp()) {
 			return transformApp(term);
@@ -210,10 +210,10 @@ public class Z3TermTransformer {
 			return transformConst(term, vars);
 
 		} else if (term.isAdd()) {
-			return transformRatAdd(term, vars);
+			return transformAdd(term, vars);
 
 		} else if (term.isMul()) {
-			return transformRatMul(term, vars);
+			return transformMul(term, vars);
 
 		} else if (term.isApp()) {
 			return transformApp(term);
@@ -330,16 +330,36 @@ public class Z3TermTransformer {
 		return Int(value);
 	}
 
-	private Expr<?> transformIntAdd(final com.microsoft.z3.Expr term, final Deque<Decl<?>> vars) {
-		final com.microsoft.z3.Expr[] opTerms = term.getArgs();
-		final List<Expr<IntType>> ops = transformAll(opTerms, vars, Int());
-		return Add(ops);
+	private Expr<?> transformRatNum(final com.microsoft.z3.Expr term) {
+		final int num = ((RatNum) term).getNumerator().getInt();
+		final int denom = ((RatNum) term).getDenominator().getInt();
+		return Rat(num, denom);
 	}
 
-	private Expr<?> transformIntMul(final com.microsoft.z3.Expr term, final Deque<Decl<?>> vars) {
+	private Expr<?> transformAdd(final com.microsoft.z3.Expr term, final Deque<Decl<?>> vars) {
 		final com.microsoft.z3.Expr[] opTerms = term.getArgs();
-		final List<Expr<IntType>> ops = transformAll(opTerms, vars, Int());
-		return Mul(ops);
+		if (term instanceof com.microsoft.z3.IntExpr) {
+			final List<Expr<IntType>> ops = transformAll(opTerms, vars, Int());
+			return Add(ops);
+		} else if (term instanceof com.microsoft.z3.ArithExpr) {
+			final List<Expr<RatType>> ops = transformAll(opTerms, vars, Rat());
+			return Add(ops);
+		} else {
+			throw new UnsupportedOperationException();
+		}
+	}
+
+	private Expr<?> transformMul(final com.microsoft.z3.Expr term, final Deque<Decl<?>> vars) {
+		final com.microsoft.z3.Expr[] opTerms = term.getArgs();
+		if (term instanceof com.microsoft.z3.IntExpr) {
+			final List<Expr<IntType>> ops = transformAll(opTerms, vars, Int());
+			return Mul(ops);
+		} else if (term instanceof com.microsoft.z3.ArithExpr) {
+			final List<Expr<RatType>> ops = transformAll(opTerms, vars, Rat());
+			return Mul(ops);
+		} else {
+			throw new UnsupportedOperationException();
+		}
 	}
 
 	private Expr<?> transformIntDiv(final com.microsoft.z3.Expr term, final Deque<Decl<?>> vars) {
@@ -350,32 +370,15 @@ public class Z3TermTransformer {
 		return Div(leftOp, rightOp);
 	}
 
-	private Expr<?> transformIntIte(final com.microsoft.z3.Expr term, final Deque<Decl<?>> vars) {
+	private <T extends Type> Expr<?> transformIte(final com.microsoft.z3.Expr term, final Deque<Decl<?>> vars) {
 		final com.microsoft.z3.Expr condTerm = term.getArgs()[0];
 		final com.microsoft.z3.Expr thenTerm = term.getArgs()[1];
 		final com.microsoft.z3.Expr elzeTerm = term.getArgs()[2];
 		final Expr<BoolType> cond = TypeUtils.cast(transform(condTerm, vars), Bool());
-		final Expr<IntType> then = TypeUtils.cast(transform(thenTerm, vars), Int());
-		final Expr<IntType> elze = TypeUtils.cast(transform(elzeTerm, vars), Int());
+		@SuppressWarnings("unchecked")
+		final Expr<T> then = (Expr<T>) transform(thenTerm, vars);
+		final Expr<T> elze = TypeUtils.cast(transform(elzeTerm, vars), then.getType());
 		return Ite(cond, then, elze);
-	}
-
-	private Expr<?> transformRatNum(final com.microsoft.z3.Expr term) {
-		final int num = ((RatNum) term).getNumerator().getInt();
-		final int denom = ((RatNum) term).getDenominator().getInt();
-		return Rat(num, denom);
-	}
-
-	private Expr<?> transformRatAdd(final com.microsoft.z3.Expr term, final Deque<Decl<?>> vars) {
-		final com.microsoft.z3.Expr[] opTerms = term.getArgs();
-		final List<Expr<RatType>> ops = transformAll(opTerms, vars, Rat());
-		return Add(ops);
-	}
-
-	private Expr<?> transformRatMul(final com.microsoft.z3.Expr term, final Deque<Decl<?>> vars) {
-		final com.microsoft.z3.Expr[] opTerms = term.getArgs();
-		final List<Expr<RatType>> ops = transformAll(opTerms, vars, Rat());
-		return Mul(ops);
 	}
 
 	private Expr<?> transformUniversal(final com.microsoft.z3.Expr term, final Deque<Decl<?>> vars) {
