@@ -88,7 +88,7 @@ public final class ArrayWriteExpr<IndexType extends Type, ElemType extends Type>
 		checkNotNull(ops);
 		checkArgument(ops.size() == 3);
 		final Expr<ArrayType<IndexType, ElemType>> newArray = TypeUtils.cast(ops.get(0), array.getType());
-		final Expr<IndexType> newIndex = TypeUtils.cast(ops.get(0), index.getType());
+		final Expr<IndexType> newIndex = TypeUtils.cast(ops.get(1), index.getType());
 		final Expr<ElemType> newElem = TypeUtils.cast(ops.get(2), elem.getType());
 		return with(newArray, newIndex, newElem);
 	}
