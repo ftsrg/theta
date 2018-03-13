@@ -144,7 +144,9 @@ public class CfaGui extends BaseGui {
 	}
 
 	private void btnLoadClicked(final Stage stage) {
-		final File fileToOpen = new FileChooser().showOpenDialog(stage);
+		final FileChooser fileChooser = new FileChooser();
+		fileChooser.setInitialDirectory(new File(System.getProperty("user.dir")));
+		final File fileToOpen = fileChooser.showOpenDialog(stage);
 		if (fileToOpen != null) {
 			clearModel();
 			clearResult();
