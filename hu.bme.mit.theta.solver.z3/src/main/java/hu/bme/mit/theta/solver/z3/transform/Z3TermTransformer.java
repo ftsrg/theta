@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.solver.z3.transform;
 
+import static hu.bme.mit.theta.core.decl.Decls.Param;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Geq;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Gt;
@@ -23,7 +24,9 @@ import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Lt;
 import static hu.bme.mit.theta.core.type.anytype.Exprs.Ite;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Exists;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Forall;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Iff;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Imply;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
@@ -37,9 +40,9 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Mul;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Add;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Mul;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
+import static java.lang.String.format;
 
-import java.util.ArrayDeque;
-import java.util.Deque;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -49,9 +52,15 @@ import java.util.function.BiFunction;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.google.common.collect.ImmutableList;
+import com.microsoft.z3.BoolSort;
+import com.microsoft.z3.IntSort;
+import com.microsoft.z3.RealSort;
+import com.microsoft.z3.Sort;
 
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.Decl;
+import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
@@ -62,10 +71,11 @@ import hu.bme.mit.theta.core.utils.TypeUtils;
 
 public final class Z3TermTransformer {
 	private static final int CACHE_SIZE = 1000;
+	private static final String PARAM_NAME_FORMAT = "_p%d";
 
 	private final Z3SymbolTable symbolTable;
 	private final Cache<com.microsoft.z3.Expr, Expr<?>> termToExpr;
-	private final Map<String, BiFunction<com.microsoft.z3.Expr, Deque<Decl<?>>, Expr<?>>> environment;
+	private final Map<String, BiFunction<com.microsoft.z3.Expr, List<Decl<?>>, Expr<?>>> environment;
 
 	public Z3TermTransformer(final Z3SymbolTable symbolTable) {
 		this.symbolTable = symbolTable;
@@ -94,12 +104,12 @@ public final class Z3TermTransformer {
 	}
 
 	public Expr<?> toExpr(final com.microsoft.z3.Expr term) {
-		return transform(term, new ArrayDeque<>());
+		return transform(term, new ArrayList<>());
 	}
 
 	////////
 
-	private Expr<?> transform(final com.microsoft.z3.Expr term, final Deque<Decl<?>> vars) {
+	private Expr<?> transform(final com.microsoft.z3.Expr term, final List<Decl<?>> vars) {
 		try {
 			return termToExpr.get(term, () -> transformTerm(term, vars));
 		} catch (final ExecutionException e) {
@@ -107,7 +117,7 @@ public final class Z3TermTransformer {
 		}
 	}
 
-	private <T extends Type> List<Expr<T>> transformAll(final com.microsoft.z3.Expr[] terms, final Deque<Decl<?>> vars,
+	private <T extends Type> List<Expr<T>> transformAll(final com.microsoft.z3.Expr[] terms, final List<Decl<?>> vars,
 			final T type) {
 		final List<Expr<T>> result = new LinkedList<>();
 		for (final com.microsoft.z3.Expr term : terms) {
@@ -118,12 +128,12 @@ public final class Z3TermTransformer {
 
 	////
 
-	private Expr<?> transformTerm(final com.microsoft.z3.Expr term, final Deque<Decl<?>> vars) {
+	private Expr<?> transformTerm(final com.microsoft.z3.Expr term, final List<Decl<?>> vars) {
 		if (term.isIntNum()) {
-			return transformIntLit(term, vars);
+			return transformIntLit(term);
 
 		} else if (term.isRatNum()) {
-			return transformRatLit(term, vars);
+			return transformRatLit(term);
 
 		} else if (term.isApp()) {
 			return transformApp(term, vars);
@@ -133,15 +143,27 @@ public final class Z3TermTransformer {
 			return transformQuantifier(quantifier, vars);
 
 		} else if (term.isVar()) {
-			// TODO Auto-generated method stub
-			throw new UnsupportedOperationException("TODO: auto-generated method stub");
+			return transformVar(term, vars);
 
 		} else {
 			return transformUnsupported(term, vars);
 		}
 	}
 
-	private final Expr<?> transformApp(final com.microsoft.z3.Expr term, final Deque<Decl<?>> vars) {
+	private Expr<?> transformIntLit(final com.microsoft.z3.Expr term) {
+		final com.microsoft.z3.IntNum intNum = (com.microsoft.z3.IntNum) term;
+		final int value = intNum.getInt();
+		return Int(value);
+	}
+
+	private Expr<?> transformRatLit(final com.microsoft.z3.Expr term) {
+		final com.microsoft.z3.RatNum ratNum = (com.microsoft.z3.RatNum) term;
+		final int num = ratNum.getNumerator().getInt();
+		final int denom = ratNum.getDenominator().getInt();
+		return Rat(num, denom);
+	}
+
+	private final Expr<?> transformApp(final com.microsoft.z3.Expr term, final List<Decl<?>> vars) {
 		final com.microsoft.z3.FuncDecl funcDecl = term.getFuncDecl();
 		if (symbolTable.definesSymbol(funcDecl)) {
 			final ConstDecl<?> constDecl = symbolTable.getConst(funcDecl);
@@ -152,7 +174,7 @@ public final class Z3TermTransformer {
 		}
 	}
 
-	private Expr<?> transformQuantifier(final com.microsoft.z3.Quantifier term, final Deque<Decl<?>> vars) {
+	private Expr<?> transformQuantifier(final com.microsoft.z3.Quantifier term, final List<Decl<?>> vars) {
 		if (term.isUniversal()) {
 			return transformForall(term, vars);
 
@@ -164,8 +186,14 @@ public final class Z3TermTransformer {
 		}
 	}
 
+	private Expr<?> transformVar(final com.microsoft.z3.Expr term, final List<Decl<?>> vars) {
+		final int index = term.getIndex();
+		final Decl<?> decl = vars.get(vars.size() - index - 1);
+		return decl.getRef();
+	}
+
 	private <P extends Type, R extends Type> Expr<?> transformFuncApp(final Expr<?> expr,
-			final com.microsoft.z3.Expr[] argTerms, final Deque<Decl<?>> vars) {
+			final com.microsoft.z3.Expr[] argTerms, final List<Decl<?>> vars) {
 		Expr<?> result = expr;
 		for (final com.microsoft.z3.Expr term : argTerms) {
 			@SuppressWarnings("unchecked")
@@ -178,46 +206,33 @@ public final class Z3TermTransformer {
 
 	////////
 
-	private Expr<?> transformTrue(final com.microsoft.z3.Expr term, final Deque<Decl<?>> vars) {
+	private Expr<?> transformTrue(final com.microsoft.z3.Expr term, final List<Decl<?>> vars) {
 		return True();
 	}
 
-	private Expr<?> transformFalse(final com.microsoft.z3.Expr term, final Deque<Decl<?>> vars) {
+	private Expr<?> transformFalse(final com.microsoft.z3.Expr term, final List<Decl<?>> vars) {
 		return False();
 	}
 
-	private Expr<?> transformIntLit(final com.microsoft.z3.Expr term, final Deque<Decl<?>> vars) {
-		final com.microsoft.z3.IntNum intNum = (com.microsoft.z3.IntNum) term;
-		final int value = intNum.getInt();
-		return Int(value);
-	}
-
-	private Expr<?> transformRatLit(final com.microsoft.z3.Expr term, final Deque<Decl<?>> vars) {
-		final com.microsoft.z3.RatNum ratNum = (com.microsoft.z3.RatNum) term;
-		final int num = ratNum.getNumerator().getInt();
-		final int denom = ratNum.getDenominator().getInt();
-		return Rat(num, denom);
-	}
-
-	private Expr<?> transformNot(final com.microsoft.z3.Expr term, final Deque<Decl<?>> vars) {
+	private Expr<?> transformNot(final com.microsoft.z3.Expr term, final List<Decl<?>> vars) {
 		final com.microsoft.z3.Expr opTerm = term.getArgs()[0];
 		final Expr<BoolType> op = TypeUtils.cast(transform(opTerm, vars), Bool());
 		return Not(op);
 	}
 
-	private Expr<?> transformOr(final com.microsoft.z3.Expr term, final Deque<Decl<?>> vars) {
+	private Expr<?> transformOr(final com.microsoft.z3.Expr term, final List<Decl<?>> vars) {
 		final com.microsoft.z3.Expr[] opTerms = term.getArgs();
 		final List<Expr<BoolType>> ops = transformAll(opTerms, vars, Bool());
 		return Or(ops);
 	}
 
-	private Expr<?> transformAnd(final com.microsoft.z3.Expr term, final Deque<Decl<?>> vars) {
+	private Expr<?> transformAnd(final com.microsoft.z3.Expr term, final List<Decl<?>> vars) {
 		final com.microsoft.z3.Expr[] opTerms = term.getArgs();
 		final List<Expr<BoolType>> ops = transformAll(opTerms, vars, Bool());
 		return And(ops);
 	}
 
-	private Expr<?> transformImply(final com.microsoft.z3.Expr term, final Deque<Decl<?>> vars) {
+	private Expr<?> transformImply(final com.microsoft.z3.Expr term, final List<Decl<?>> vars) {
 		final com.microsoft.z3.Expr leftOpTerm = term.getArgs()[0];
 		final com.microsoft.z3.Expr rightOpTerm = term.getArgs()[1];
 		final Expr<BoolType> leftOp = TypeUtils.cast(transform(leftOpTerm, vars), Bool());
@@ -225,7 +240,7 @@ public final class Z3TermTransformer {
 		return Imply(leftOp, rightOp);
 	}
 
-	private Expr<?> transformIff(final com.microsoft.z3.Expr term, final Deque<Decl<?>> vars) {
+	private Expr<?> transformIff(final com.microsoft.z3.Expr term, final List<Decl<?>> vars) {
 		final com.microsoft.z3.Expr leftOpTerm = term.getArgs()[0];
 		final com.microsoft.z3.Expr rightOpTerm = term.getArgs()[1];
 		final Expr<BoolType> leftOp = TypeUtils.cast(transform(leftOpTerm, vars), Bool());
@@ -233,7 +248,7 @@ public final class Z3TermTransformer {
 		return Iff(leftOp, rightOp);
 	}
 
-	private Expr<?> transformEq(final com.microsoft.z3.Expr term, final Deque<Decl<?>> vars) {
+	private Expr<?> transformEq(final com.microsoft.z3.Expr term, final List<Decl<?>> vars) {
 		final com.microsoft.z3.Expr leftOpTerm = term.getArgs()[0];
 		final com.microsoft.z3.Expr rightOpTerm = term.getArgs()[1];
 		final Expr<?> leftOp = transform(leftOpTerm, vars);
@@ -241,7 +256,7 @@ public final class Z3TermTransformer {
 		return Eq(leftOp, rightOp);
 	}
 
-	private Expr<?> transformLeq(final com.microsoft.z3.Expr term, final Deque<Decl<?>> vars) {
+	private Expr<?> transformLeq(final com.microsoft.z3.Expr term, final List<Decl<?>> vars) {
 		final com.microsoft.z3.Expr leftOpTerm = term.getArgs()[0];
 		final com.microsoft.z3.Expr rightOpTerm = term.getArgs()[1];
 		final Expr<?> leftOp = transform(leftOpTerm, vars);
@@ -249,7 +264,7 @@ public final class Z3TermTransformer {
 		return Leq(leftOp, rightOp);
 	}
 
-	private Expr<?> transformLt(final com.microsoft.z3.Expr term, final Deque<Decl<?>> vars) {
+	private Expr<?> transformLt(final com.microsoft.z3.Expr term, final List<Decl<?>> vars) {
 		final com.microsoft.z3.Expr leftOpTerm = term.getArgs()[0];
 		final com.microsoft.z3.Expr rightOpTerm = term.getArgs()[1];
 		final Expr<?> leftOp = transform(leftOpTerm, vars);
@@ -257,7 +272,7 @@ public final class Z3TermTransformer {
 		return Lt(leftOp, rightOp);
 	}
 
-	private Expr<?> transformGeq(final com.microsoft.z3.Expr term, final Deque<Decl<?>> vars) {
+	private Expr<?> transformGeq(final com.microsoft.z3.Expr term, final List<Decl<?>> vars) {
 		final com.microsoft.z3.Expr leftOpTerm = term.getArgs()[0];
 		final com.microsoft.z3.Expr rightOpTerm = term.getArgs()[1];
 		final Expr<?> leftOp = transform(leftOpTerm, vars);
@@ -265,7 +280,7 @@ public final class Z3TermTransformer {
 		return Geq(leftOp, rightOp);
 	}
 
-	private Expr<?> transformGt(final com.microsoft.z3.Expr term, final Deque<Decl<?>> vars) {
+	private Expr<?> transformGt(final com.microsoft.z3.Expr term, final List<Decl<?>> vars) {
 		final com.microsoft.z3.Expr leftOpTerm = term.getArgs()[0];
 		final com.microsoft.z3.Expr rightOpTerm = term.getArgs()[1];
 		final Expr<?> leftOp = transform(leftOpTerm, vars);
@@ -273,7 +288,7 @@ public final class Z3TermTransformer {
 		return Gt(leftOp, rightOp);
 	}
 
-	private Expr<?> transformAdd(final com.microsoft.z3.Expr term, final Deque<Decl<?>> vars) {
+	private Expr<?> transformAdd(final com.microsoft.z3.Expr term, final List<Decl<?>> vars) {
 		final com.microsoft.z3.Expr[] opTerms = term.getArgs();
 		if (term instanceof com.microsoft.z3.IntExpr) {
 			final List<Expr<IntType>> ops = transformAll(opTerms, vars, Int());
@@ -286,7 +301,7 @@ public final class Z3TermTransformer {
 		}
 	}
 
-	private Expr<?> transformMul(final com.microsoft.z3.Expr term, final Deque<Decl<?>> vars) {
+	private Expr<?> transformMul(final com.microsoft.z3.Expr term, final List<Decl<?>> vars) {
 		final com.microsoft.z3.Expr[] opTerms = term.getArgs();
 		if (term instanceof com.microsoft.z3.IntExpr) {
 			final List<Expr<IntType>> ops = transformAll(opTerms, vars, Int());
@@ -299,7 +314,7 @@ public final class Z3TermTransformer {
 		}
 	}
 
-	private Expr<?> transformIntDiv(final com.microsoft.z3.Expr term, final Deque<Decl<?>> vars) {
+	private Expr<?> transformIntDiv(final com.microsoft.z3.Expr term, final List<Decl<?>> vars) {
 		final com.microsoft.z3.Expr leftOpTerm = term.getArgs()[0];
 		final com.microsoft.z3.Expr rightOpTerm = term.getArgs()[1];
 		final Expr<IntType> leftOp = TypeUtils.cast(transform(leftOpTerm, vars), Int());
@@ -307,7 +322,7 @@ public final class Z3TermTransformer {
 		return Div(leftOp, rightOp);
 	}
 
-	private <T extends Type> Expr<?> transformIte(final com.microsoft.z3.Expr term, final Deque<Decl<?>> vars) {
+	private <T extends Type> Expr<?> transformIte(final com.microsoft.z3.Expr term, final List<Decl<?>> vars) {
 		final com.microsoft.z3.Expr condTerm = term.getArgs()[0];
 		final com.microsoft.z3.Expr thenTerm = term.getArgs()[1];
 		final com.microsoft.z3.Expr elzeTerm = term.getArgs()[2];
@@ -318,27 +333,79 @@ public final class Z3TermTransformer {
 		return Ite(cond, then, elze);
 	}
 
-	private Expr<?> transformWrite(final com.microsoft.z3.Expr term, final Deque<Decl<?>> vars) {
+	private Expr<?> transformWrite(final com.microsoft.z3.Expr term, final List<Decl<?>> vars) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
 
-	private Expr<?> transformRead(final com.microsoft.z3.Expr term, final Deque<Decl<?>> vars) {
+	private Expr<?> transformRead(final com.microsoft.z3.Expr term, final List<Decl<?>> vars) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
 
-	private Expr<?> transformForall(final com.microsoft.z3.Expr term, final Deque<Decl<?>> vars) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+	////
+
+	private Expr<?> transformForall(final com.microsoft.z3.Expr term, final List<Decl<?>> vars) {
+		final com.microsoft.z3.Quantifier quantifier = (com.microsoft.z3.Quantifier) term;
+		final com.microsoft.z3.BoolExpr opTerm = quantifier.getBody();
+		final com.microsoft.z3.Sort[] sorts = quantifier.getBoundVariableSorts();
+		final List<ParamDecl<?>> paramDecls = transformParams(vars, sorts);
+
+		pushParams(vars, paramDecls);
+		final Expr<BoolType> op = TypeUtils.cast(transform(opTerm, vars), Bool());
+		popParams(vars, paramDecls);
+
+		return Forall(paramDecls, op);
 	}
 
-	private Expr<?> transformExists(final com.microsoft.z3.Expr term, final Deque<Decl<?>> vars) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+	private Expr<?> transformExists(final com.microsoft.z3.Expr term, final List<Decl<?>> vars) {
+		final com.microsoft.z3.Quantifier quantifier = (com.microsoft.z3.Quantifier) term;
+		final com.microsoft.z3.BoolExpr opTerm = quantifier.getBody();
+		final com.microsoft.z3.Sort[] sorts = quantifier.getBoundVariableSorts();
+		final List<ParamDecl<?>> paramDecls = transformParams(vars, sorts);
+
+		pushParams(vars, paramDecls);
+		final Expr<BoolType> op = TypeUtils.cast(transform(opTerm, vars), Bool());
+		popParams(vars, paramDecls);
+
+		return Exists(paramDecls, op);
 	}
 
-	private Expr<?> transformUnsupported(final com.microsoft.z3.Expr term, final Deque<Decl<?>> vars) {
-		throw new AssertionError("Unhandled case: " + term.toString());
+	private List<ParamDecl<?>> transformParams(final List<Decl<?>> vars, final com.microsoft.z3.Sort[] sorts) {
+		final ImmutableList.Builder<ParamDecl<?>> builder = ImmutableList.builder();
+		for (final com.microsoft.z3.Sort sort : sorts) {
+			final Type type = transformSort(sort);
+			final ParamDecl<?> param = Param(format(PARAM_NAME_FORMAT, vars.size()), type);
+			builder.add(param);
+		}
+		final List<ParamDecl<?>> paramDecls = builder.build();
+		return paramDecls;
 	}
+
+	private Type transformSort(final Sort sort) {
+		if (sort instanceof BoolSort) {
+			return Bool();
+		} else if (sort instanceof IntSort) {
+			return Int();
+		} else if (sort instanceof RealSort) {
+			return Rat();
+		} else {
+			throw new AssertionError("Unsupported sort: " + sort);
+		}
+	}
+
+	private void pushParams(final List<Decl<?>> vars, final List<ParamDecl<?>> paramDecls) {
+		vars.addAll(paramDecls);
+	}
+
+	private void popParams(final List<Decl<?>> vars, final List<ParamDecl<?>> paramDecls) {
+		for (int i = 0; i < paramDecls.size(); i++) {
+			vars.remove(vars.size() - 1);
+		}
+	}
+
+	private Expr<?> transformUnsupported(final com.microsoft.z3.Expr term, final List<Decl<?>> vars) {
+		throw new UnsupportedOperationException("Unsupported term: " + term);
+	}
+
 }
