@@ -46,7 +46,6 @@ import java.util.concurrent.ExecutionException;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.microsoft.z3.FuncDecl;
-import com.microsoft.z3.IntNum;
 import com.microsoft.z3.Quantifier;
 import com.microsoft.z3.RatNum;
 
@@ -54,7 +53,6 @@ import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
-import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.type.rattype.RatType;
@@ -100,7 +98,9 @@ public class Z3TermTransformer {
 	////
 
 	private Expr<?> transformTerm(final com.microsoft.z3.Expr term, final Deque<Decl<?>> vars) {
-		if (term instanceof com.microsoft.z3.BoolExpr) {
+		if (term instanceof com.microsoft.z3.Quantifier) {
+			return transformQuantifier((com.microsoft.z3.Quantifier) term, vars);
+		} else if (term instanceof com.microsoft.z3.BoolExpr) {
 			return transformBool((com.microsoft.z3.BoolExpr) term, vars);
 		} else if (term instanceof com.microsoft.z3.IntExpr) {
 			return transformInt((com.microsoft.z3.IntExpr) term, vars);
@@ -115,83 +115,57 @@ public class Z3TermTransformer {
 
 	////////
 
+	private Expr<?> transformQuantifier(final Quantifier term, final Deque<Decl<?>> vars) {
+		if (term.isUniversal()) {
+			return transformUniversal(term, vars);
+
+		} else if (term.isExistential()) {
+			return transformExistential(term, vars);
+
+		} else {
+			throw new AssertionError("Unhandled case: " + term.toString());
+		}
+	}
+
 	private Expr<?> transformBool(final com.microsoft.z3.BoolExpr term, final Deque<Decl<?>> vars) {
 		if (term.isTrue()) {
-			return True();
+			return transformTrue(term, vars);
 
 		} else if (term.isFalse()) {
-			return False();
+			return transformFalse(term, vars);
 
 		} else if (term.isConst()) {
-			return transformConst(term);
+			return transformConst(term, vars);
 
 		} else if (term.isNot()) {
-			final com.microsoft.z3.Expr opTerm = term.getArgs()[0];
-			final Expr<BoolType> op = TypeUtils.cast(transform(opTerm, vars), Bool());
-			return Not(op);
+			return transformNot(term, vars);
 
 		} else if (term.isOr()) {
-			final com.microsoft.z3.Expr[] opTerms = term.getArgs();
-			final List<Expr<BoolType>> ops = transformAll(opTerms, vars, Bool());
-			return Or(ops);
+			return transformOr(term, vars);
 
 		} else if (term.isAnd()) {
-			final com.microsoft.z3.Expr[] opTerms = term.getArgs();
-			final List<Expr<BoolType>> ops = transformAll(opTerms, vars, Bool());
-			return And(ops);
+			return transformAnd(term, vars);
 
 		} else if (term.isImplies()) {
-			final com.microsoft.z3.Expr leftOpTerm = term.getArgs()[0];
-			final com.microsoft.z3.Expr rightOpTerm = term.getArgs()[1];
-			final Expr<BoolType> leftOp = TypeUtils.cast(transform(leftOpTerm, vars), Bool());
-			final Expr<BoolType> rightOp = TypeUtils.cast(transform(rightOpTerm, vars), Bool());
-			return Imply(leftOp, rightOp);
+			return transformImplies(term, vars);
 
 		} else if (term.isIff()) {
-			final com.microsoft.z3.Expr leftOpTerm = term.getArgs()[0];
-			final com.microsoft.z3.Expr rightOpTerm = term.getArgs()[1];
-			final Expr<BoolType> leftOp = TypeUtils.cast(transform(leftOpTerm, vars), Bool());
-			final Expr<BoolType> rightOp = TypeUtils.cast(transform(rightOpTerm, vars), Bool());
-			return Iff(leftOp, rightOp);
+			return transformIff(term, vars);
 
 		} else if (term.isEq()) {
-			final com.microsoft.z3.Expr leftOpTerm = term.getArgs()[0];
-			final com.microsoft.z3.Expr rightOpTerm = term.getArgs()[1];
-			final Expr<?> leftOp = transform(leftOpTerm, vars);
-			final Expr<?> rightOp = transform(rightOpTerm, vars);
-			return Eq(leftOp, rightOp);
+			return transformEq(term, vars);
 
 		} else if (term.isLE()) {
-			final com.microsoft.z3.Expr leftOpTerm = term.getArgs()[0];
-			final com.microsoft.z3.Expr rightOpTerm = term.getArgs()[1];
-			final Expr<?> leftOp = transform(leftOpTerm, vars);
-			final Expr<?> rightOp = transform(rightOpTerm, vars);
-			return Leq(leftOp, rightOp);
+			return transformLeq(term, vars);
 
 		} else if (term.isLT()) {
-			final com.microsoft.z3.Expr leftOpTerm = term.getArgs()[0];
-			final com.microsoft.z3.Expr rightOpTerm = term.getArgs()[1];
-			final Expr<?> leftOp = transform(leftOpTerm, vars);
-			final Expr<?> rightOp = transform(rightOpTerm, vars);
-			return Lt(leftOp, rightOp);
+			return transformLt(term, vars);
 
 		} else if (term.isGE()) {
-			final com.microsoft.z3.Expr leftOpTerm = term.getArgs()[0];
-			final com.microsoft.z3.Expr rightOpTerm = term.getArgs()[1];
-			final Expr<?> leftOp = transform(leftOpTerm, vars);
-			final Expr<?> rightOp = transform(rightOpTerm, vars);
-			return Geq(leftOp, rightOp);
+			return transformGeq(term, vars);
 
 		} else if (term.isGT()) {
-			final com.microsoft.z3.Expr leftOpTerm = term.getArgs()[0];
-			final com.microsoft.z3.Expr rightOpTerm = term.getArgs()[1];
-			final Expr<?> leftOp = transform(leftOpTerm, vars);
-			final Expr<?> rightOp = transform(rightOpTerm, vars);
-			return Gt(leftOp, rightOp);
-
-		} else if (term.isQuantifier()) {
-			final com.microsoft.z3.Quantifier quantifier = (com.microsoft.z3.Quantifier) term;
-			return transformQuantifier(quantifier, vars);
+			return transformGt(term, vars);
 
 		} else if (term.isApp()) {
 			return transformApp(term);
@@ -201,49 +175,24 @@ public class Z3TermTransformer {
 		}
 	}
 
-	private Expr<?> transformQuantifier(final Quantifier term, final Deque<Decl<?>> vars) {
-		if (term.isUniversal()) {
-			throw new AssertionError("Unhandled case: " + term.toString());
-		} else if (term.isExistential()) {
-			throw new AssertionError("Unhandled case: " + term.toString());
-		} else {
-			throw new AssertionError("Unhandled case: " + term.toString());
-		}
-	}
-
 	private Expr<?> transformInt(final com.microsoft.z3.IntExpr term, final Deque<Decl<?>> vars) {
 		if (term.isIntNum()) {
-			final int value = ((IntNum) term).getInt();
-			return Int(value);
+			return transformIntNum(term, vars);
 
 		} else if (term.isConst()) {
-			return transformConst(term);
+			return transformConst(term, vars);
 
 		} else if (term.isAdd()) {
-			final com.microsoft.z3.Expr[] opTerms = term.getArgs();
-			final List<Expr<IntType>> ops = transformAll(opTerms, vars, Int());
-			return Add(ops);
+			return transformIntAdd(term, vars);
 
 		} else if (term.isMul()) {
-			final com.microsoft.z3.Expr[] opTerms = term.getArgs();
-			final List<Expr<IntType>> ops = transformAll(opTerms, vars, Int());
-			return Mul(ops);
+			return transformIntMul(term, vars);
 
 		} else if (term.isIDiv()) {
-			final com.microsoft.z3.Expr leftOpTerm = term.getArgs()[0];
-			final com.microsoft.z3.Expr rightOpTerm = term.getArgs()[1];
-			final Expr<IntType> leftOp = TypeUtils.cast(transform(leftOpTerm, vars), Int());
-			final Expr<IntType> rightOp = TypeUtils.cast(transform(rightOpTerm, vars), Int());
-			return Div(leftOp, rightOp);
+			return transformIntDiv(term, vars);
 
 		} else if (term.isITE()) {
-			final com.microsoft.z3.Expr condTerm = term.getArgs()[0];
-			final com.microsoft.z3.Expr thenTerm = term.getArgs()[1];
-			final com.microsoft.z3.Expr elzeTerm = term.getArgs()[2];
-			final Expr<BoolType> cond = TypeUtils.cast(transform(condTerm, vars), Bool());
-			final Expr<IntType> then = TypeUtils.cast(transform(thenTerm, vars), Int());
-			final Expr<IntType> elze = TypeUtils.cast(transform(elzeTerm, vars), Int());
-			return Ite(cond, then, elze);
+			return transformIntIte(term, vars);
 
 		} else if (term.isApp()) {
 			return transformApp(term);
@@ -255,22 +204,16 @@ public class Z3TermTransformer {
 
 	private Expr<?> transformArith(final com.microsoft.z3.ArithExpr term, final Deque<Decl<?>> vars) {
 		if (term.isRatNum()) {
-			final int num = ((RatNum) term).getNumerator().getInt();
-			final int denom = ((RatNum) term).getDenominator().getInt();
-			return Rat(num, denom);
+			return transformRatNum(term);
 
 		} else if (term.isConst()) {
-			return transformConst(term);
+			return transformConst(term, vars);
 
 		} else if (term.isAdd()) {
-			final com.microsoft.z3.Expr[] opTerms = term.getArgs();
-			final List<Expr<RatType>> ops = transformAll(opTerms, vars, Rat());
-			return Add(ops);
+			return transformRatAdd(term, vars);
 
 		} else if (term.isMul()) {
-			final com.microsoft.z3.Expr[] opTerms = term.getArgs();
-			final List<Expr<RatType>> ops = transformAll(opTerms, vars, Rat());
-			return Mul(ops);
+			return transformRatMul(term, vars);
 
 		} else if (term.isApp()) {
 			return transformApp(term);
@@ -280,18 +223,184 @@ public class Z3TermTransformer {
 		}
 	}
 
-	private Expr<ArrayType<?, ?>> transformArray(final com.microsoft.z3.ArrayExpr term, final Deque<Decl<?>> vars) {
-		throw new UnsupportedOperationException();
+	private Expr<?> transformArray(final com.microsoft.z3.ArrayExpr term, final Deque<Decl<?>> vars) {
+		if (term.isSelect()) {
+			return transformSelect(term, vars);
+
+		} else if (term.isStore()) {
+			return transformStore(term, vars);
+
+		} else {
+			throw new AssertionError("Unhandled case: " + term.toString());
+		}
 	}
 
-	private Expr<?> transformConst(final com.microsoft.z3.Expr term) {
+	////////
+
+	private Expr<?> transformTrue(final com.microsoft.z3.Expr term, final Deque<Decl<?>> vars) {
+		return True();
+	}
+
+	private Expr<?> transformFalse(final com.microsoft.z3.Expr term, final Deque<Decl<?>> vars) {
+		return False();
+	}
+
+	private Expr<?> transformConst(final com.microsoft.z3.Expr term, final Deque<Decl<?>> vars) {
 		final FuncDecl funcDecl = term.getFuncDecl();
 		final ConstDecl<?> constDecl = symbolTable.getConst(funcDecl);
 		return constDecl.getRef();
 	}
 
+	private Expr<?> transformNot(final com.microsoft.z3.Expr term, final Deque<Decl<?>> vars) {
+		final com.microsoft.z3.Expr opTerm = term.getArgs()[0];
+		final Expr<BoolType> op = TypeUtils.cast(transform(opTerm, vars), Bool());
+		return Not(op);
+	}
+
+	private Expr<?> transformOr(final com.microsoft.z3.Expr term, final Deque<Decl<?>> vars) {
+		final com.microsoft.z3.Expr[] opTerms = term.getArgs();
+		final List<Expr<BoolType>> ops = transformAll(opTerms, vars, Bool());
+		return Or(ops);
+	}
+
+	private Expr<?> transformAnd(final com.microsoft.z3.Expr term, final Deque<Decl<?>> vars) {
+		final com.microsoft.z3.Expr[] opTerms = term.getArgs();
+		final List<Expr<BoolType>> ops = transformAll(opTerms, vars, Bool());
+		return And(ops);
+	}
+
+	private Expr<?> transformImplies(final com.microsoft.z3.Expr term, final Deque<Decl<?>> vars) {
+		final com.microsoft.z3.Expr leftOpTerm = term.getArgs()[0];
+		final com.microsoft.z3.Expr rightOpTerm = term.getArgs()[1];
+		final Expr<BoolType> leftOp = TypeUtils.cast(transform(leftOpTerm, vars), Bool());
+		final Expr<BoolType> rightOp = TypeUtils.cast(transform(rightOpTerm, vars), Bool());
+		return Imply(leftOp, rightOp);
+	}
+
+	private Expr<?> transformIff(final com.microsoft.z3.Expr term, final Deque<Decl<?>> vars) {
+		final com.microsoft.z3.Expr leftOpTerm = term.getArgs()[0];
+		final com.microsoft.z3.Expr rightOpTerm = term.getArgs()[1];
+		final Expr<BoolType> leftOp = TypeUtils.cast(transform(leftOpTerm, vars), Bool());
+		final Expr<BoolType> rightOp = TypeUtils.cast(transform(rightOpTerm, vars), Bool());
+		return Iff(leftOp, rightOp);
+	}
+
+	private Expr<?> transformEq(final com.microsoft.z3.Expr term, final Deque<Decl<?>> vars) {
+		final com.microsoft.z3.Expr leftOpTerm = term.getArgs()[0];
+		final com.microsoft.z3.Expr rightOpTerm = term.getArgs()[1];
+		final Expr<?> leftOp = transform(leftOpTerm, vars);
+		final Expr<?> rightOp = transform(rightOpTerm, vars);
+		return Eq(leftOp, rightOp);
+	}
+
+	private Expr<?> transformLeq(final com.microsoft.z3.Expr term, final Deque<Decl<?>> vars) {
+		final com.microsoft.z3.Expr leftOpTerm = term.getArgs()[0];
+		final com.microsoft.z3.Expr rightOpTerm = term.getArgs()[1];
+		final Expr<?> leftOp = transform(leftOpTerm, vars);
+		final Expr<?> rightOp = transform(rightOpTerm, vars);
+		return Leq(leftOp, rightOp);
+	}
+
+	private Expr<?> transformLt(final com.microsoft.z3.Expr term, final Deque<Decl<?>> vars) {
+		final com.microsoft.z3.Expr leftOpTerm = term.getArgs()[0];
+		final com.microsoft.z3.Expr rightOpTerm = term.getArgs()[1];
+		final Expr<?> leftOp = transform(leftOpTerm, vars);
+		final Expr<?> rightOp = transform(rightOpTerm, vars);
+		return Lt(leftOp, rightOp);
+	}
+
+	private Expr<?> transformGeq(final com.microsoft.z3.Expr term, final Deque<Decl<?>> vars) {
+		final com.microsoft.z3.Expr leftOpTerm = term.getArgs()[0];
+		final com.microsoft.z3.Expr rightOpTerm = term.getArgs()[1];
+		final Expr<?> leftOp = transform(leftOpTerm, vars);
+		final Expr<?> rightOp = transform(rightOpTerm, vars);
+		return Geq(leftOp, rightOp);
+	}
+
+	private Expr<?> transformGt(final com.microsoft.z3.Expr term, final Deque<Decl<?>> vars) {
+		final com.microsoft.z3.Expr leftOpTerm = term.getArgs()[0];
+		final com.microsoft.z3.Expr rightOpTerm = term.getArgs()[1];
+		final Expr<?> leftOp = transform(leftOpTerm, vars);
+		final Expr<?> rightOp = transform(rightOpTerm, vars);
+		return Gt(leftOp, rightOp);
+	}
+
+	private Expr<?> transformIntNum(final com.microsoft.z3.Expr term, final Deque<Decl<?>> vars) {
+		final int value = ((com.microsoft.z3.IntNum) term).getInt();
+		return Int(value);
+	}
+
+	private Expr<?> transformIntAdd(final com.microsoft.z3.Expr term, final Deque<Decl<?>> vars) {
+		final com.microsoft.z3.Expr[] opTerms = term.getArgs();
+		final List<Expr<IntType>> ops = transformAll(opTerms, vars, Int());
+		return Add(ops);
+	}
+
+	private Expr<?> transformIntMul(final com.microsoft.z3.Expr term, final Deque<Decl<?>> vars) {
+		final com.microsoft.z3.Expr[] opTerms = term.getArgs();
+		final List<Expr<IntType>> ops = transformAll(opTerms, vars, Int());
+		return Mul(ops);
+	}
+
+	private Expr<?> transformIntDiv(final com.microsoft.z3.Expr term, final Deque<Decl<?>> vars) {
+		final com.microsoft.z3.Expr leftOpTerm = term.getArgs()[0];
+		final com.microsoft.z3.Expr rightOpTerm = term.getArgs()[1];
+		final Expr<IntType> leftOp = TypeUtils.cast(transform(leftOpTerm, vars), Int());
+		final Expr<IntType> rightOp = TypeUtils.cast(transform(rightOpTerm, vars), Int());
+		return Div(leftOp, rightOp);
+	}
+
+	private Expr<?> transformIntIte(final com.microsoft.z3.Expr term, final Deque<Decl<?>> vars) {
+		final com.microsoft.z3.Expr condTerm = term.getArgs()[0];
+		final com.microsoft.z3.Expr thenTerm = term.getArgs()[1];
+		final com.microsoft.z3.Expr elzeTerm = term.getArgs()[2];
+		final Expr<BoolType> cond = TypeUtils.cast(transform(condTerm, vars), Bool());
+		final Expr<IntType> then = TypeUtils.cast(transform(thenTerm, vars), Int());
+		final Expr<IntType> elze = TypeUtils.cast(transform(elzeTerm, vars), Int());
+		return Ite(cond, then, elze);
+	}
+
+	private Expr<?> transformRatNum(final com.microsoft.z3.Expr term) {
+		final int num = ((RatNum) term).getNumerator().getInt();
+		final int denom = ((RatNum) term).getDenominator().getInt();
+		return Rat(num, denom);
+	}
+
+	private Expr<?> transformRatAdd(final com.microsoft.z3.Expr term, final Deque<Decl<?>> vars) {
+		final com.microsoft.z3.Expr[] opTerms = term.getArgs();
+		final List<Expr<RatType>> ops = transformAll(opTerms, vars, Rat());
+		return Add(ops);
+	}
+
+	private Expr<?> transformRatMul(final com.microsoft.z3.Expr term, final Deque<Decl<?>> vars) {
+		final com.microsoft.z3.Expr[] opTerms = term.getArgs();
+		final List<Expr<RatType>> ops = transformAll(opTerms, vars, Rat());
+		return Mul(ops);
+	}
+
+	private Expr<?> transformUniversal(final com.microsoft.z3.Expr term, final Deque<Decl<?>> vars) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+	}
+
+	private Expr<?> transformExistential(final com.microsoft.z3.Expr term, final Deque<Decl<?>> vars) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+	}
+
+	private Expr<?> transformStore(final com.microsoft.z3.Expr term, final Deque<Decl<?>> vars) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+	}
+
+	private Expr<?> transformSelect(final com.microsoft.z3.Expr term, final Deque<Decl<?>> vars) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+	}
+
 	private Expr<?> transformApp(final com.microsoft.z3.Expr term) {
-		throw new AssertionError("Unhandled case: " + term.toString());
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("TODO: auto-generated method stub");
 	}
 
 }
