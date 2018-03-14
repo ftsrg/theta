@@ -17,9 +17,14 @@ package hu.bme.mit.theta.core.type.arraytype;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
+import hu.bme.mit.theta.core.type.abstracttype.Equational;
+import hu.bme.mit.theta.core.type.abstracttype.NeqExpr;
 
-public final class ArrayType<IndexType extends Type, ElemType extends Type> implements Type {
+public final class ArrayType<IndexType extends Type, ElemType extends Type>
+		implements Equational<ArrayType<IndexType, ElemType>> {
 
 	private final static int HASH_SEED = 4919;
 	private final static String TYPE_LABEL = "Array";
@@ -40,6 +45,18 @@ public final class ArrayType<IndexType extends Type, ElemType extends Type> impl
 
 	public ElemType getElemType() {
 		return elemType;
+	}
+
+	@Override
+	public EqExpr<ArrayType<IndexType, ElemType>> Eq(final Expr<ArrayType<IndexType, ElemType>> leftOp,
+			final Expr<ArrayType<IndexType, ElemType>> rightOp) {
+		return ArrayExprs.Eq(leftOp, rightOp);
+	}
+
+	@Override
+	public NeqExpr<ArrayType<IndexType, ElemType>> Neq(final Expr<ArrayType<IndexType, ElemType>> leftOp,
+			final Expr<ArrayType<IndexType, ElemType>> rightOp) {
+		return ArrayExprs.Neq(leftOp, rightOp);
 	}
 
 	@Override
