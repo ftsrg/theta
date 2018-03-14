@@ -34,6 +34,8 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
+import hu.bme.mit.theta.core.type.arraytype.ArrayEqExpr;
+import hu.bme.mit.theta.core.type.arraytype.ArrayNeqExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr;
 import hu.bme.mit.theta.core.type.arraytype.ArrayWriteExpr;
 import hu.bme.mit.theta.core.type.booltype.AndExpr;
@@ -188,6 +190,10 @@ final class Z3ExprTransformer {
 				.addCase(ArrayReadExpr.class, this::transformArrayRead)
 
 				.addCase(ArrayWriteExpr.class, this::transformArrayWrite)
+
+				.addCase(ArrayEqExpr.class, this::transformArrayEq)
+
+				.addCase(ArrayNeqExpr.class, this::transformArrayNeq)
 
 				.build();
 	}
@@ -487,6 +493,18 @@ final class Z3ExprTransformer {
 		final com.microsoft.z3.Expr indexTerm = toTerm(expr.getIndex());
 		final com.microsoft.z3.Expr elemTerm = toTerm(expr.getElem());
 		return context.mkStore(arrayTerm, indexTerm, elemTerm);
+	}
+
+	private com.microsoft.z3.Expr transformArrayEq(final ArrayEqExpr<?, ?> expr) {
+		final com.microsoft.z3.Expr leftOpTerm = toTerm(expr.getLeftOp());
+		final com.microsoft.z3.Expr rightOpTerm = toTerm(expr.getRightOp());
+		return context.mkEq(leftOpTerm, rightOpTerm);
+	}
+
+	private com.microsoft.z3.Expr transformArrayNeq(final ArrayNeqExpr<?, ?> expr) {
+		final com.microsoft.z3.Expr leftOpTerm = toTerm(expr.getLeftOp());
+		final com.microsoft.z3.Expr rightOpTerm = toTerm(expr.getRightOp());
+		return context.mkNot(context.mkEq(leftOpTerm, rightOpTerm));
 	}
 
 	/*
