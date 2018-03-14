@@ -22,6 +22,8 @@ import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Gt;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Leq;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Lt;
 import static hu.bme.mit.theta.core.type.anytype.Exprs.Ite;
+import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Read;
+import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Write;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Exists;
@@ -63,6 +65,7 @@ import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
@@ -333,14 +336,26 @@ public final class Z3TermTransformer {
 		return Ite(cond, then, elze);
 	}
 
-	private Expr<?> transformWrite(final com.microsoft.z3.Expr term, final List<Decl<?>> vars) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+	private <I extends Type, E extends Type> Expr<?> transformRead(final com.microsoft.z3.Expr term,
+			final List<Decl<?>> vars) {
+		final com.microsoft.z3.Expr arrayTerm = term.getArgs()[0];
+		final com.microsoft.z3.Expr indexTerm = term.getArgs()[1];
+		@SuppressWarnings("unchecked")
+		final Expr<ArrayType<I, E>> array = (Expr<ArrayType<I, E>>) transform(arrayTerm, vars);
+		final Expr<I> index = TypeUtils.cast(transform(indexTerm, vars), array.getType().getIndexType());
+		return Read(array, index);
 	}
 
-	private Expr<?> transformRead(final com.microsoft.z3.Expr term, final List<Decl<?>> vars) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+	private <I extends Type, E extends Type> Expr<?> transformWrite(final com.microsoft.z3.Expr term,
+			final List<Decl<?>> vars) {
+		final com.microsoft.z3.Expr arrayTerm = term.getArgs()[0];
+		final com.microsoft.z3.Expr indexTerm = term.getArgs()[1];
+		final com.microsoft.z3.Expr elemTerm = term.getArgs()[2];
+		@SuppressWarnings("unchecked")
+		final Expr<ArrayType<I, E>> array = (Expr<ArrayType<I, E>>) transform(arrayTerm, vars);
+		final Expr<I> index = TypeUtils.cast(transform(indexTerm, vars), array.getType().getIndexType());
+		final Expr<E> elem = TypeUtils.cast(transform(elemTerm, vars), array.getType().getElemType());
+		return Write(array, index, elem);
 	}
 
 	////
