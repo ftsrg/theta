@@ -49,11 +49,8 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 import java.util.function.BiFunction;
 
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.ImmutableList;
 import com.microsoft.z3.BoolSort;
 import com.microsoft.z3.IntSort;
@@ -73,17 +70,13 @@ import hu.bme.mit.theta.core.type.rattype.RatType;
 import hu.bme.mit.theta.core.utils.TypeUtils;
 
 public final class Z3TermTransformer {
-	private static final int CACHE_SIZE = 1000;
 	private static final String PARAM_NAME_FORMAT = "_p%d";
 
 	private final Z3SymbolTable symbolTable;
-	private final Cache<com.microsoft.z3.Expr, Expr<?>> termToExpr;
 	private final Map<String, BiFunction<com.microsoft.z3.Expr, List<Decl<?>>, Expr<?>>> environment;
 
 	public Z3TermTransformer(final Z3SymbolTable symbolTable) {
 		this.symbolTable = symbolTable;
-
-		termToExpr = CacheBuilder.newBuilder().maximumSize(CACHE_SIZE).build();
 
 		environment = new HashMap<>();
 		environment.put("true", this::transformTrue);
@@ -113,25 +106,6 @@ public final class Z3TermTransformer {
 	////////
 
 	private Expr<?> transform(final com.microsoft.z3.Expr term, final List<Decl<?>> vars) {
-		try {
-			return termToExpr.get(term, () -> transformTerm(term, vars));
-		} catch (final ExecutionException e) {
-			throw new AssertionError();
-		}
-	}
-
-	private <T extends Type> List<Expr<T>> transformAll(final com.microsoft.z3.Expr[] terms, final List<Decl<?>> vars,
-			final T type) {
-		final List<Expr<T>> result = new LinkedList<>();
-		for (final com.microsoft.z3.Expr term : terms) {
-			result.add(TypeUtils.cast(transform(term, vars), type));
-		}
-		return result;
-	}
-
-	////
-
-	private Expr<?> transformTerm(final com.microsoft.z3.Expr term, final List<Decl<?>> vars) {
 		if (term.isIntNum()) {
 			return transformIntLit(term);
 
@@ -152,6 +126,17 @@ public final class Z3TermTransformer {
 			return transformUnsupported(term, vars);
 		}
 	}
+
+	private <T extends Type> List<Expr<T>> transformAll(final com.microsoft.z3.Expr[] terms, final List<Decl<?>> vars,
+			final T type) {
+		final List<Expr<T>> result = new LinkedList<>();
+		for (final com.microsoft.z3.Expr term : terms) {
+			result.add(TypeUtils.cast(transform(term, vars), type));
+		}
+		return result;
+	}
+
+	////
 
 	private Expr<?> transformIntLit(final com.microsoft.z3.Expr term) {
 		final com.microsoft.z3.IntNum intNum = (com.microsoft.z3.IntNum) term;
