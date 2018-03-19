@@ -27,7 +27,7 @@ import hu.bme.mit.theta.xta.analysis.XtaAction;
 import hu.bme.mit.theta.xta.analysis.XtaState;
 import hu.bme.mit.theta.xta.analysis.zone.itp.ItpZoneState;
 
-public final class BwItpZoneRefiner extends ItpZoneRefiner {
+final class BwItpZoneRefiner extends ItpZoneRefiner {
 
 	public BwItpZoneRefiner(final XtaSystem system) {
 		super(system);
