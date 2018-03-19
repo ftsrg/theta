@@ -58,60 +58,26 @@ import hu.bme.mit.theta.xta.analysis.zone.XtaZoneUtils;
 import hu.bme.mit.theta.xta.analysis.zone.itp.ItpZoneAnalysis;
 import hu.bme.mit.theta.xta.analysis.zone.itp.ItpZoneState;
 
-public abstract class ExplItpStrategy implements AlgorithmStrategy<Prod2State<ItpExplState, ItpZoneState>> {
+public final class ExplItpStrategy implements AlgorithmStrategy<Prod2State<ItpExplState, ItpZoneState>> {
 
+	private final ItpZoneRefiner refiner;
 	private final Analysis<XtaState<Prod2State<ItpExplState, ItpZoneState>>, XtaAction, UnitPrec> analysis;
 	private final ZonePrec prec;
 
-	protected ExplItpStrategy(final XtaSystem system) {
+	private ExplItpStrategy(final XtaSystem system, final ItpZoneRefiner refiner) {
 		checkNotNull(system);
+		this.refiner = checkNotNull(refiner);
 		analysis = createAnalysis(system);
 		prec = ZonePrec.of(system.getClockVars());
 	}
 
-	protected abstract ZoneState blockZone(
-			final ArgNode<XtaState<Prod2State<ItpExplState, ItpZoneState>>, XtaAction> node, final ZoneState zone,
-			final Collection<ArgNode<XtaState<Prod2State<ItpExplState, ItpZoneState>>, XtaAction>> uncoveredNodes,
-			final LazyXtaStatistics.Builder stats);
-
-	////
-
-	protected final ZoneState pre(final ZoneState state, final XtaAction action) {
-		return XtaZoneUtils.pre(state, action, prec);
+	public static ExplItpStrategy createForward(final XtaSystem system) {
+		return new ExplItpStrategy(system, new FwItpZoneRefiner(system));
 	}
 
-	protected final ZoneState post(final ZoneState state, final XtaAction action) {
-		return XtaZoneUtils.post(state, action, prec);
+	public static ExplItpStrategy createBackward(final XtaSystem system) {
+		return new ExplItpStrategy(system, new BwItpZoneRefiner(system));
 	}
-
-	protected final void strengthenZone(final ArgNode<XtaState<Prod2State<ItpExplState, ItpZoneState>>, XtaAction> node,
-			final ZoneState interpolant) {
-		final XtaState<Prod2State<ItpExplState, ItpZoneState>> state = node.getState();
-		final Prod2State<ItpExplState, ItpZoneState> prodState = state.getState();
-		final ItpZoneState itpZoneState = prodState.getState2();
-		final ZoneState abstrZoneState = itpZoneState.getAbstrState();
-
-		final ZoneState newAbstrZoneState = ZoneState.intersection(abstrZoneState, interpolant);
-
-		final ItpZoneState newItpZoneState = itpZoneState.withAbstrState(newAbstrZoneState);
-		final Prod2State<ItpExplState, ItpZoneState> newProdState = prodState.with2(newItpZoneState);
-		final XtaState<Prod2State<ItpExplState, ItpZoneState>> newState = state.withState(newProdState);
-		node.setState(newState);
-	}
-
-	protected final void maintainZoneCoverage(
-			final ArgNode<XtaState<Prod2State<ItpExplState, ItpZoneState>>, XtaAction> node,
-			final ZoneState interpolant,
-			final Collection<ArgNode<XtaState<Prod2State<ItpExplState, ItpZoneState>>, XtaAction>> uncoveredNodes) {
-		final Collection<ArgNode<XtaState<Prod2State<ItpExplState, ItpZoneState>>, XtaAction>> uncovered = node
-				.getCoveredNodes()
-				.filter(covered -> !covered.getState().getState().getState2().getAbstrState().isLeq(interpolant))
-				.collect(toList());
-		uncoveredNodes.addAll(uncovered);
-		uncovered.forEach(ArgNode::unsetCoveringNode);
-	}
-
-	////
 
 	@Override
 	public final Analysis<XtaState<Prod2State<ItpExplState, ItpZoneState>>, XtaAction, UnitPrec> getAnalysis() {
@@ -150,7 +116,7 @@ public abstract class ExplItpStrategy implements AlgorithmStrategy<Prod2State<It
 		final Collection<ZoneState> complementZones = coverer.getState().getState().getState2().getAbstrState()
 				.complement();
 		for (final ZoneState complementZone : complementZones) {
-			blockZone(coveree, complementZone, uncoveredNodes, stats);
+			refiner.blockZone(coveree, complementZone, uncoveredNodes, stats);
 		}
 		stats.stopCloseZoneRefinement();
 
@@ -170,7 +136,7 @@ public abstract class ExplItpStrategy implements AlgorithmStrategy<Prod2State<It
 		} else if (succState.getState().isBottom2()) {
 			stats.startExpandZoneRefinement();
 			final ZoneState preImage = XtaZoneUtils.pre(ZoneState.top(), action, prec);
-			blockZone(node, preImage, uncoveredNodes, stats);
+			refiner.blockZone(node, preImage, uncoveredNodes, stats);
 			stats.stopExpandZoneRefinement();
 		} else {
 			throw new AssertionError();
