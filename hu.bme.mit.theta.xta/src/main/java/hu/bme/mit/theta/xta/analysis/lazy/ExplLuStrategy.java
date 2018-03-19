@@ -18,15 +18,12 @@ package hu.bme.mit.theta.xta.analysis.lazy;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not;
-import static java.util.stream.Collectors.toList;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 
 import hu.bme.mit.theta.analysis.Analysis;
-import hu.bme.mit.theta.analysis.algorithm.ArgEdge;
 import hu.bme.mit.theta.analysis.algorithm.ArgNode;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.impl.PrecMappingAnalysis;
@@ -38,14 +35,8 @@ import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.analysis.zone.BoundFunc;
 import hu.bme.mit.theta.analysis.zone.ZonePrec;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
-import hu.bme.mit.theta.core.decl.Decl;
-import hu.bme.mit.theta.core.model.ImmutableValuation;
-import hu.bme.mit.theta.core.model.ImmutableValuation.Builder;
-import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.xta.XtaProcess.Loc;
 import hu.bme.mit.theta.xta.XtaSystem;
 import hu.bme.mit.theta.xta.analysis.XtaAction;
@@ -103,7 +94,8 @@ public final class ExplLuStrategy implements AlgorithmStrategy<Prod2State<ItpExp
 		final Collection<ArgNode<XtaState<Prod2State<ItpExplState, LuZoneState>>, XtaAction>> uncoveredNodes = new ArrayList<>();
 
 		stats.startCloseExplRefinement();
-		blockExpl(coveree, Not(coverer.getState().getState().getState1().toExpr()), uncoveredNodes, stats);
+		ItpExplRefiner.getInstance().blockExpl(coveree, Not(coverer.getState().getState().getState1().toExpr()),
+				uncoveredNodes, stats);
 		stats.stopCloseExplRefinement();
 
 		stats.startCloseZoneRefinement();
@@ -122,7 +114,7 @@ public final class ExplLuStrategy implements AlgorithmStrategy<Prod2State<ItpExp
 		if (succState.getState().isBottom1()) {
 			stats.startExpandExplRefinement();
 			final Expr<BoolType> preImage = XtaDataUtils.pre(True(), action);
-			blockExpl(node, preImage, uncoveredNodes, stats);
+			ItpExplRefiner.getInstance().blockExpl(node, preImage, uncoveredNodes, stats);
 			stats.stopExpandExplRefinement();
 		} else if (succState.getState().isBottom2()) {
 			stats.startExpandZoneRefinement();
@@ -133,73 +125,6 @@ public final class ExplLuStrategy implements AlgorithmStrategy<Prod2State<ItpExp
 			throw new AssertionError();
 		}
 		return uncoveredNodes;
-	}
-
-	////
-
-	private final void blockExpl(final ArgNode<XtaState<Prod2State<ItpExplState, LuZoneState>>, XtaAction> node,
-			final Expr<BoolType> expr,
-			final Collection<ArgNode<XtaState<Prod2State<ItpExplState, LuZoneState>>, XtaAction>> uncoveredNodes,
-			final LazyXtaStatistics.Builder stats) {
-		assert !node.getState().isBottom();
-
-		final ExplState abstractExpl = node.getState().getState().getState1().getAbstrState();
-
-		final Expr<BoolType> simplifiedExpr = ExprUtils.simplify(expr, abstractExpl);
-		if (simplifiedExpr instanceof BoolLitExpr) {
-			assert !((BoolLitExpr) simplifiedExpr).getValue();
-			return;
-		}
-
-		stats.refineExpl();
-
-		final ExplState concreteExpl = node.getState().getState().getState1().getConcrState();
-		final Valuation valI = XtaDataUtils.interpolate(concreteExpl, expr);
-
-		strengthenExpl(node, valI);
-		maintainExplCoverage(node, valI, uncoveredNodes);
-
-		if (node.getParent().isPresent()) {
-			final ArgEdge<XtaState<Prod2State<ItpExplState, LuZoneState>>, XtaAction> inEdge = node.getInEdge().get();
-			final XtaAction action = inEdge.getAction();
-			final Expr<BoolType> newB = XtaDataUtils.pre(Not(valI.toExpr()), action);
-			blockExpl(node.getParent().get(), newB, uncoveredNodes, stats);
-		}
-	}
-
-	private void strengthenExpl(final ArgNode<XtaState<Prod2State<ItpExplState, LuZoneState>>, XtaAction> node,
-			final Valuation interpolant) {
-		final XtaState<Prod2State<ItpExplState, LuZoneState>> state = node.getState();
-		final Prod2State<ItpExplState, LuZoneState> prodState = state.getState();
-		final ItpExplState itpExplState = prodState.getState1();
-		final ExplState concreteExpl = itpExplState.getConcrState();
-		final ExplState abstractExpl = itpExplState.getAbstrState();
-
-		final Collection<Decl<?>> newVars = new HashSet<>();
-		newVars.addAll(interpolant.getDecls());
-		newVars.addAll(abstractExpl.getDecls());
-		final Builder builder = ImmutableValuation.builder();
-		for (final Decl<?> decl : newVars) {
-			builder.put(decl, concreteExpl.eval(decl).get());
-		}
-		final Valuation val = builder.build();
-		final ExplState newAbstractExpl = ExplState.of(val);
-
-		final ItpExplState newItpExplState = itpExplState.withAbstrState(newAbstractExpl);
-		final Prod2State<ItpExplState, LuZoneState> newProdState = prodState.with1(newItpExplState);
-		final XtaState<Prod2State<ItpExplState, LuZoneState>> newState = state.withState(newProdState);
-		node.setState(newState);
-	}
-
-	private final void maintainExplCoverage(
-			final ArgNode<XtaState<Prod2State<ItpExplState, LuZoneState>>, XtaAction> node, final Valuation interpolant,
-			final Collection<ArgNode<XtaState<Prod2State<ItpExplState, LuZoneState>>, XtaAction>> uncoveredNodes) {
-		final Collection<ArgNode<XtaState<Prod2State<ItpExplState, LuZoneState>>, XtaAction>> uncovered = node
-				.getCoveredNodes()
-				.filter(covered -> !covered.getState().getState().getState1().getAbstrState().isLeq(interpolant))
-				.collect(toList());
-		uncoveredNodes.addAll(uncovered);
-		uncovered.forEach(ArgNode::unsetCoveringNode);
 	}
 
 	////
