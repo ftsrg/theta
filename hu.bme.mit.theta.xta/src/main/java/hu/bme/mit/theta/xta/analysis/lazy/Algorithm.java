@@ -43,14 +43,14 @@ public enum Algorithm {
 	EXPLSEQITP {
 		@Override
 		public AlgorithmStrategy<?> createStrategy(final XtaSystem system) {
-			return ExplSeqItpStrategy.create(system);
+			return ExplItpStrategy.createForward(system);
 		}
 	},
 
 	EXPLBINITP {
 		@Override
 		public AlgorithmStrategy<?> createStrategy(final XtaSystem system) {
-			return ExplBinItpStrategy.create(system);
+			return ExplItpStrategy.createBackward(system);
 		}
 	},
 
