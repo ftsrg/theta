@@ -36,7 +36,7 @@ import hu.bme.mit.theta.xta.analysis.expl.itp.ItpExplState;
 
 abstract class ItpExplRefiner {
 
-	public abstract <S extends State> void blockExpl(
+	public abstract <S extends State> Valuation blockExpl(
 			final ArgNode<XtaState<Prod2State<ItpExplState, S>>, XtaAction> node, final Expr<BoolType> expr,
 			final Collection<ArgNode<XtaState<Prod2State<ItpExplState, S>>, XtaAction>> uncoveredNodes,
 			final LazyXtaStatistics.Builder stats);
