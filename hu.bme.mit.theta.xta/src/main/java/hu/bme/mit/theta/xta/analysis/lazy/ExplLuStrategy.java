@@ -43,6 +43,7 @@ import hu.bme.mit.theta.xta.analysis.XtaAction;
 import hu.bme.mit.theta.xta.analysis.XtaAnalysis;
 import hu.bme.mit.theta.xta.analysis.XtaState;
 import hu.bme.mit.theta.xta.analysis.expl.XtaExplAnalysis;
+import hu.bme.mit.theta.xta.analysis.expl.XtaExplUtils;
 import hu.bme.mit.theta.xta.analysis.expl.itp.ItpExplAnalysis;
 import hu.bme.mit.theta.xta.analysis.expl.itp.ItpExplState;
 import hu.bme.mit.theta.xta.analysis.zone.XtaLuZoneUtils;
@@ -114,7 +115,7 @@ public final class ExplLuStrategy implements AlgorithmStrategy<Prod2State<ItpExp
 		final Collection<ArgNode<XtaState<Prod2State<ItpExplState, LuZoneState>>, XtaAction>> uncoveredNodes = new ArrayList<>();
 		if (succState.getState().isBottom1()) {
 			stats.startExpandExplRefinement();
-			final Expr<BoolType> preImage = XtaDataUtils.pre(True(), action);
+			final Expr<BoolType> preImage = XtaExplUtils.pre(True(), action);
 			explRefiner.blockExpl(node, preImage, uncoveredNodes, stats);
 			stats.stopExpandExplRefinement();
 		} else if (succState.getState().isBottom2()) {

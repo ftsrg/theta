@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.xta.analysis.lazy;
+package hu.bme.mit.theta.xta.analysis.expl;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.ImmutableList.toImmutableList;
@@ -44,9 +44,9 @@ import hu.bme.mit.theta.xta.analysis.XtaAction;
 import hu.bme.mit.theta.xta.analysis.XtaAction.BasicXtaAction;
 import hu.bme.mit.theta.xta.analysis.XtaAction.SyncedXtaAction;
 
-public final class XtaDataUtils {
+public final class XtaExplUtils {
 
-	private XtaDataUtils() {
+	private XtaExplUtils() {
 	}
 
 	public static Valuation interpolate(final Valuation valA, final Expr<BoolType> exprB) {

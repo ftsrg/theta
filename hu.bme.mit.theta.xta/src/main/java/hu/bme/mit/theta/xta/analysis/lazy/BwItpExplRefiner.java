@@ -31,6 +31,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.xta.analysis.XtaAction;
 import hu.bme.mit.theta.xta.analysis.XtaState;
+import hu.bme.mit.theta.xta.analysis.expl.XtaExplUtils;
 import hu.bme.mit.theta.xta.analysis.expl.itp.ItpExplState;
 
 final class BwItpExplRefiner extends ItpExplRefiner {
@@ -64,7 +65,7 @@ final class BwItpExplRefiner extends ItpExplRefiner {
 		stats.refineExpl();
 
 		final ExplState concreteExpl = node.getState().getState().getState1().getConcrState();
-		final Valuation valI = XtaDataUtils.interpolate(concreteExpl, expr);
+		final Valuation valI = XtaExplUtils.interpolate(concreteExpl, expr);
 
 		strengthen(node, valI);
 		maintainCoverage(node, valI, uncoveredNodes);
@@ -72,7 +73,7 @@ final class BwItpExplRefiner extends ItpExplRefiner {
 		if (node.getParent().isPresent()) {
 			final ArgEdge<XtaState<Prod2State<ItpExplState, S>>, XtaAction> inEdge = node.getInEdge().get();
 			final XtaAction action = inEdge.getAction();
-			final Expr<BoolType> newB = XtaDataUtils.pre(Not(valI.toExpr()), action);
+			final Expr<BoolType> newB = XtaExplUtils.pre(Not(valI.toExpr()), action);
 			blockExpl(node.getParent().get(), newB, uncoveredNodes, stats);
 		}
 	}
