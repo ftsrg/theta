@@ -47,6 +47,7 @@ import hu.bme.mit.theta.core.type.inttype.IntMulExpr;
 import hu.bme.mit.theta.core.type.inttype.IntNegExpr;
 import hu.bme.mit.theta.core.type.inttype.IntNeqExpr;
 import hu.bme.mit.theta.core.type.inttype.IntSubExpr;
+import hu.bme.mit.theta.core.type.inttype.IntToRatExpr;
 import hu.bme.mit.theta.core.type.inttype.ModExpr;
 import hu.bme.mit.theta.core.type.inttype.RemExpr;
 import hu.bme.mit.theta.core.type.rattype.RatAddExpr;
@@ -128,6 +129,8 @@ public final class ExprWriter {
 				.addCase(IntLtExpr.class, e -> infixBinary(e, " < "))
 
 				.addCase(IntLitExpr.class, e -> e.getValue() + "")
+
+				.addCase(IntToRatExpr.class, e -> prefixUnary(e, "(rat)"))
 
 				// Rational
 
