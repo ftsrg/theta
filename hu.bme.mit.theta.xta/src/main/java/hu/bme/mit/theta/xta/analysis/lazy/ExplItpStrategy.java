@@ -51,23 +51,26 @@ import hu.bme.mit.theta.xta.analysis.zone.itp.ItpZoneState;
 
 public final class ExplItpStrategy implements AlgorithmStrategy<Prod2State<ItpExplState, ItpZoneState>> {
 
-	private final ItpZoneRefiner refiner;
+	private final ItpExplRefiner explRefiner;
+	private final ItpZoneRefiner zoneRefiner;
 	private final Analysis<XtaState<Prod2State<ItpExplState, ItpZoneState>>, XtaAction, UnitPrec> analysis;
 	private final ZonePrec prec;
 
-	private ExplItpStrategy(final XtaSystem system, final ItpZoneRefiner refiner) {
+	private ExplItpStrategy(final XtaSystem system, final ItpExplRefiner explRefiner,
+			final ItpZoneRefiner zoneRefiner) {
 		checkNotNull(system);
-		this.refiner = checkNotNull(refiner);
+		this.explRefiner = checkNotNull(explRefiner);
+		this.zoneRefiner = checkNotNull(zoneRefiner);
 		analysis = createAnalysis(system);
 		prec = ZonePrec.of(system.getClockVars());
 	}
 
 	public static ExplItpStrategy createForward(final XtaSystem system) {
-		return new ExplItpStrategy(system, new FwItpZoneRefiner(system));
+		return new ExplItpStrategy(system, BwItpExplRefiner.getInstance(), new FwItpZoneRefiner(system));
 	}
 
 	public static ExplItpStrategy createBackward(final XtaSystem system) {
-		return new ExplItpStrategy(system, new BwItpZoneRefiner(system));
+		return new ExplItpStrategy(system, BwItpExplRefiner.getInstance(), new BwItpZoneRefiner(system));
 	}
 
 	@Override
@@ -100,15 +103,14 @@ public final class ExplItpStrategy implements AlgorithmStrategy<Prod2State<ItpEx
 		final Collection<ArgNode<XtaState<Prod2State<ItpExplState, ItpZoneState>>, XtaAction>> uncoveredNodes = new ArrayList<>();
 
 		stats.startCloseExplRefinement();
-		ItpExplRefiner.getInstance().blockExpl(coveree, Not(coverer.getState().getState().getState1().toExpr()),
-				uncoveredNodes, stats);
+		explRefiner.blockExpl(coveree, Not(coverer.getState().getState().getState1().toExpr()), uncoveredNodes, stats);
 		stats.stopCloseExplRefinement();
 
 		stats.startCloseZoneRefinement();
 		final Collection<ZoneState> complementZones = coverer.getState().getState().getState2().getAbstrState()
 				.complement();
 		for (final ZoneState complementZone : complementZones) {
-			refiner.blockZone(coveree, complementZone, uncoveredNodes, stats);
+			zoneRefiner.blockZone(coveree, complementZone, uncoveredNodes, stats);
 		}
 		stats.stopCloseZoneRefinement();
 
@@ -123,12 +125,12 @@ public final class ExplItpStrategy implements AlgorithmStrategy<Prod2State<ItpEx
 		if (succState.getState().isBottom1()) {
 			stats.startExpandExplRefinement();
 			final Expr<BoolType> preImage = XtaDataUtils.pre(True(), action);
-			ItpExplRefiner.getInstance().blockExpl(node, preImage, uncoveredNodes, stats);
+			explRefiner.blockExpl(node, preImage, uncoveredNodes, stats);
 			stats.stopExpandExplRefinement();
 		} else if (succState.getState().isBottom2()) {
 			stats.startExpandZoneRefinement();
 			final ZoneState preImage = XtaZoneUtils.pre(ZoneState.top(), action, prec);
-			refiner.blockZone(node, preImage, uncoveredNodes, stats);
+			zoneRefiner.blockZone(node, preImage, uncoveredNodes, stats);
 			stats.stopExpandZoneRefinement();
 		} else {
 			throw new AssertionError();
