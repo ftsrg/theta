@@ -19,11 +19,13 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 
 import hu.bme.mit.theta.cfa.dsl.gen.CfaDslBaseVisitor;
 import hu.bme.mit.theta.cfa.dsl.gen.CfaDslParser.ArrayTypeContext;
 import hu.bme.mit.theta.cfa.dsl.gen.CfaDslParser.BoolTypeContext;
 import hu.bme.mit.theta.cfa.dsl.gen.CfaDslParser.IntTypeContext;
+import hu.bme.mit.theta.cfa.dsl.gen.CfaDslParser.RatTypeContext;
 import hu.bme.mit.theta.cfa.dsl.gen.CfaDslParser.TypeContext;
 import hu.bme.mit.theta.core.type.Type;
 
@@ -58,6 +60,11 @@ final class CfaType {
 		@Override
 		public Type visitIntType(final IntTypeContext ctx) {
 			return Int();
+		}
+
+		@Override
+		public Type visitRatType(final RatTypeContext ctx) {
+			return Rat();
 		}
 
 		@Override
