@@ -15,8 +15,6 @@
  */
 package hu.bme.mit.theta.xta.analysis.lazy;
 
-import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not;
-
 import java.util.Collection;
 
 import hu.bme.mit.theta.analysis.State;
@@ -34,16 +32,16 @@ import hu.bme.mit.theta.xta.analysis.XtaState;
 import hu.bme.mit.theta.xta.analysis.expl.XtaExplUtils;
 import hu.bme.mit.theta.xta.analysis.expl.itp.ItpExplState;
 
-final class BwItpExplRefiner extends ItpExplRefiner {
+final class FwItpExplRefiner extends ItpExplRefiner {
 
-	private BwItpExplRefiner() {
+	private FwItpExplRefiner() {
 	}
 
 	private static class LazyHolder {
-		static final BwItpExplRefiner INSTANCE = new BwItpExplRefiner();
+		static final FwItpExplRefiner INSTANCE = new FwItpExplRefiner();
 	}
 
-	public static BwItpExplRefiner getInstance() {
+	public static FwItpExplRefiner getInstance() {
 		return LazyHolder.INSTANCE;
 	}
 
@@ -52,32 +50,43 @@ final class BwItpExplRefiner extends ItpExplRefiner {
 			final Expr<BoolType> expr,
 			final Collection<ArgNode<XtaState<Prod2State<ItpExplState, S>>, XtaAction>> uncoveredNodes,
 			final LazyXtaStatistics.Builder stats) {
-		assert !node.getState().isBottom();
 
-		final ExplState abstractExpl = node.getState().getState().getState1().getAbstrState();
+		final ExplState abstrState = node.getState().getState().getState1().getAbstrState();
 
-		final Expr<BoolType> simplifiedExpr = ExprUtils.simplify(expr, abstractExpl);
+		final Expr<BoolType> simplifiedExpr = ExprUtils.simplify(expr, abstrState);
 		if (simplifiedExpr instanceof BoolLitExpr) {
 			assert !((BoolLitExpr) simplifiedExpr).getValue();
-			return abstractExpl;
+			return abstrState;
 		}
 
 		stats.refineExpl();
-
-		final ExplState concreteExpl = node.getState().getState().getState1().getConcrState();
-		final Valuation valI = XtaExplUtils.interpolate(concreteExpl, expr);
-
-		strengthen(node, valI);
-		maintainCoverage(node, valI, uncoveredNodes);
-
-		if (node.getParent().isPresent()) {
+		if (node.getInEdge().isPresent()) {
 			final ArgEdge<XtaState<Prod2State<ItpExplState, S>>, XtaAction> inEdge = node.getInEdge().get();
 			final XtaAction action = inEdge.getAction();
-			final Expr<BoolType> newB = XtaExplUtils.pre(Not(valI.toExpr()), action);
-			blockExpl(node.getParent().get(), newB, uncoveredNodes, stats);
-		}
+			final ArgNode<XtaState<Prod2State<ItpExplState, S>>, XtaAction> parent = inEdge.getSource();
 
-		return valI;
+			final Expr<BoolType> B_pre = XtaExplUtils.pre(expr, action);
+			final Valuation A_pre = blockExpl(parent, B_pre, uncoveredNodes, stats);
+
+			final Expr<BoolType> B = expr;
+			final Valuation A = XtaExplUtils.post(A_pre, action);
+
+			final Valuation interpolant = XtaExplUtils.interpolate(A, B);
+
+			strengthen(node, interpolant);
+			maintainCoverage(node, interpolant, uncoveredNodes);
+
+			return interpolant;
+		} else {
+			final ExplState concrState = node.getState().getState().getState1().getConcrState();
+
+			final Valuation interpolant = XtaExplUtils.interpolate(concrState, expr);
+
+			strengthen(node, interpolant);
+			maintainCoverage(node, interpolant, uncoveredNodes);
+
+			return interpolant;
+		}
 	}
 
 }
