@@ -52,15 +52,17 @@ import hu.bme.mit.theta.xta.analysis.zone.lu.LuZoneState;
 
 public final class ExplLuStrategy implements AlgorithmStrategy<Prod2State<ItpExplState, LuZoneState>> {
 
+	private final ItpExplRefiner explRefiner;
 	private final Analysis<XtaState<Prod2State<ItpExplState, LuZoneState>>, XtaAction, UnitPrec> analysis;
 
-	private ExplLuStrategy(final XtaSystem system) {
+	private ExplLuStrategy(final XtaSystem system, final ItpExplRefiner explRefiner) {
 		checkNotNull(system);
+		this.explRefiner = checkNotNull(explRefiner);
 		analysis = createAnalysis(system);
 	}
 
 	public static ExplLuStrategy create(final XtaSystem system) {
-		return new ExplLuStrategy(system);
+		return new ExplLuStrategy(system, BwItpExplRefiner.getInstance());
 	}
 
 	@Override
@@ -94,8 +96,7 @@ public final class ExplLuStrategy implements AlgorithmStrategy<Prod2State<ItpExp
 		final Collection<ArgNode<XtaState<Prod2State<ItpExplState, LuZoneState>>, XtaAction>> uncoveredNodes = new ArrayList<>();
 
 		stats.startCloseExplRefinement();
-		ItpExplRefiner.getInstance().blockExpl(coveree, Not(coverer.getState().getState().getState1().toExpr()),
-				uncoveredNodes, stats);
+		explRefiner.blockExpl(coveree, Not(coverer.getState().getState().getState1().toExpr()), uncoveredNodes, stats);
 		stats.stopCloseExplRefinement();
 
 		stats.startCloseZoneRefinement();
@@ -114,7 +115,7 @@ public final class ExplLuStrategy implements AlgorithmStrategy<Prod2State<ItpExp
 		if (succState.getState().isBottom1()) {
 			stats.startExpandExplRefinement();
 			final Expr<BoolType> preImage = XtaDataUtils.pre(True(), action);
-			ItpExplRefiner.getInstance().blockExpl(node, preImage, uncoveredNodes, stats);
+			explRefiner.blockExpl(node, preImage, uncoveredNodes, stats);
 			stats.stopExpandExplRefinement();
 		} else if (succState.getState().isBottom2()) {
 			stats.startExpandZoneRefinement();
