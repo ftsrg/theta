@@ -1,12 +1,12 @@
 /*
  *  Copyright 2017 Budapest University of Technology and Economics
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,36 +38,48 @@ public class DistToErrComparator implements ArgNodeComparator {
 	private static final long serialVersionUID = -6915823336852930450L;
 
 	private Map<Loc, Integer> distancesToError;
+	private final int errorWeight;
+	private final int depthWeight;
 	private final CFA cfa;
 
 	public DistToErrComparator(final CFA cfa) {
+		this(cfa, 1, 0);
+	}
+
+	public DistToErrComparator(final CFA cfa, final int errorWeight, final int depthWeight) {
 		this.cfa = cfa;
+		this.errorWeight = errorWeight;
+		this.depthWeight = depthWeight;
 		distancesToError = null;
 	}
 
 	@Override
 	public int compare(final ArgNode<? extends State, ? extends Action> n1,
 			final ArgNode<? extends State, ? extends Action> n2) {
-		checkArgument(n1.getState() instanceof CfaState, "CfaState expected.");
-		checkArgument(n2.getState() instanceof CfaState, "CfaState expected.");
-
-		final CfaState<?> s1 = (CfaState<?>) n1.getState();
-		final CfaState<?> s2 = (CfaState<?>) n2.getState();
-
-		final int dist1 = getDistance(s1.getLoc());
-		final int dist2 = getDistance(s2.getLoc());
+		final int dist1 = getWeightedDistance(n1);
+		final int dist2 = getWeightedDistance(n2);
 
 		return Integer.compare(dist1, dist2);
 	}
 
-	private int getDistance(final Loc loc) {
+	private int getWeightedDistance(final ArgNode<? extends State, ? extends Action> node) {
+		checkArgument(node.getState() instanceof CfaState, "CfaState expected.");
+		final CfaState<?> state = (CfaState<?>) node.getState();
+		final int distanceToError = getDistanceToError(state.getLoc());
+		if (distanceToError == Integer.MAX_VALUE) {
+			return distanceToError;
+		}
+		return errorWeight * distanceToError + depthWeight * node.getDepth();
+	}
+
+	private int getDistanceToError(final Loc loc) {
 		if (distancesToError == null) {
-			distancesToError = getDistancesToError(cfa);
+			distancesToError = calculateDistancesToError(cfa);
 		}
 		return distancesToError.getOrDefault(loc, Integer.MAX_VALUE);
 	}
 
-	static Map<Loc, Integer> getDistancesToError(final CFA cfa) {
+	static Map<Loc, Integer> calculateDistancesToError(final CFA cfa) {
 		List<Loc> queue = new LinkedList<>();
 		final Map<Loc, Integer> distancesToError = new HashMap<>();
 		queue.add(cfa.getErrorLoc());

@@ -106,6 +106,20 @@ public class CfaConfigBuilder {
 			public ArgNodeComparator getComp(final CFA cfa) {
 				return new DistToErrComparator(cfa);
 			}
+		},
+
+		ERR_DFS {
+			@Override
+			public ArgNodeComparator getComp(final CFA cfa) {
+				return new DistToErrComparator(cfa, 2, 1);
+			}
+		},
+
+		DFS_ERR {
+			@Override
+			public ArgNodeComparator getComp(final CFA cfa) {
+				return new DistToErrComparator(cfa, 1, 2);
+			}
 		};
 
 		public abstract ArgNodeComparator getComp(CFA cfa);
