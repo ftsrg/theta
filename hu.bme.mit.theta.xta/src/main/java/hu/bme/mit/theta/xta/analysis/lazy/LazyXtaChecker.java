@@ -114,7 +114,7 @@ final class LazyXtaChecker<S extends State> implements SafetyChecker<XtaState<S>
 					final Collection<ArgNode<XtaState<S>, XtaAction>> uncoveredNodes = new ArrayList<>();
 					algorithmStrategy.cover(coveree, coverer, uncoveredNodes, stats);
 
-					waiting.addAll(uncoveredNodes);
+					waiting.addAll(uncoveredNodes.stream().filter(n -> !n.equals(coveree)));
 
 					if (coveree.isCovered()) {
 						stats.successfulCoverage();
