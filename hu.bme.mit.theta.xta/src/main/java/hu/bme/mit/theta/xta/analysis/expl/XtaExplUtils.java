@@ -22,6 +22,7 @@ import static hu.bme.mit.theta.core.stmt.Stmts.Assume;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
+import static java.util.stream.Collectors.toList;
 
 import java.util.Collection;
 import java.util.List;
@@ -54,7 +55,8 @@ public final class XtaExplUtils {
 	}
 
 	public static Valuation interpolate(final Valuation valA, final Expr<BoolType> exprB) {
-		final Collection<VarDecl<?>> vars = ExprUtils.getVars(exprB);
+		final Collection<VarDecl<?>> vars = ExprUtils.getVars(exprB).stream().filter(valA.getDecls()::contains)
+				.collect(toList());
 		final MutableValuation valI = new MutableValuation();
 		for (final VarDecl<?> var : vars) {
 			final LitExpr<?> val = valA.eval(var).get();
