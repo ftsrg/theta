@@ -16,27 +16,27 @@
 package hu.bme.mit.theta.xta.analysis.lazy;
 
 import java.util.Collection;
+import java.util.function.Function;
 
 import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.ArgNode;
-import hu.bme.mit.theta.analysis.reachedset.Partition;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.xta.analysis.XtaAction;
-import hu.bme.mit.theta.xta.analysis.XtaState;
+import hu.bme.mit.theta.xta.analysis.lazy.LazyXtaStatistics.Builder;
 
-public interface AlgorithmStrategy<S extends State> {
+interface AlgorithmStrategy<S1 extends State, S2 extends State> {
 
-	public Analysis<XtaState<S>, XtaAction, UnitPrec> getAnalysis();
+	Analysis<S2, XtaAction, UnitPrec> getAnalysis();
 
-	public Partition<ArgNode<XtaState<S>, XtaAction>, ?> createReachedSet();
+	Function<S2, ?> getProjection();
 
-	public boolean mightCover(ArgNode<XtaState<S>, XtaAction> coveree, ArgNode<XtaState<S>, XtaAction> coverer);
+	boolean mightCover(final ArgNode<S1, XtaAction> coveree, ArgNode<S1, XtaAction> coverer);
 
-	public Collection<ArgNode<XtaState<S>, XtaAction>> forceCover(final ArgNode<XtaState<S>, XtaAction> coveree,
-			ArgNode<XtaState<S>, XtaAction> coverer, final LazyXtaStatistics.Builder stats);
+	void cover(ArgNode<S1, XtaAction> coveree, ArgNode<S1, XtaAction> coverer,
+			Collection<ArgNode<S1, XtaAction>> uncoveredNodes, final Builder stats);
 
-	public Collection<ArgNode<XtaState<S>, XtaAction>> block(final ArgNode<XtaState<S>, XtaAction> node,
-			final XtaAction action, final XtaState<S> succState, final LazyXtaStatistics.Builder stats);
+	void block(ArgNode<S1, XtaAction> node, final XtaAction action, final S1 succState,
+			Collection<ArgNode<S1, XtaAction>> uncoveredNodes, final Builder stats);
 
 }
