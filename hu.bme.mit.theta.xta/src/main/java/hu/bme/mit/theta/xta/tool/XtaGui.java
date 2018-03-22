@@ -20,6 +20,7 @@ import java.io.File;
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
 
+import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.SearchStrategy;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
@@ -31,9 +32,9 @@ import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter.Format;
 import hu.bme.mit.theta.xta.XtaSystem;
 import hu.bme.mit.theta.xta.XtaVisualizer;
-import hu.bme.mit.theta.xta.analysis.lazy.Algorithm;
-import hu.bme.mit.theta.xta.analysis.lazy.AlgorithmStrategy;
-import hu.bme.mit.theta.xta.analysis.lazy.LazyXtaChecker;
+import hu.bme.mit.theta.xta.analysis.lazy.ClockStrategy;
+import hu.bme.mit.theta.xta.analysis.lazy.DataStrategy;
+import hu.bme.mit.theta.xta.analysis.lazy.LazyXtaCheckerFactory;
 import hu.bme.mit.theta.xta.analysis.lazy.LazyXtaStatistics;
 import hu.bme.mit.theta.xta.dsl.XtaDslManager;
 import javafx.application.Platform;
@@ -49,7 +50,8 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 public class XtaGui extends BaseGui {
-	private ChoiceBox<Algorithm> cbAlgorithm;
+	private ChoiceBox<DataStrategy> cbDataStrategy;
+	private ChoiceBox<ClockStrategy> cbClockStrategy;
 	private ChoiceBox<SearchStrategy> cbSearchStrategy;
 	private CheckBox cbStructureOnly;
 
@@ -93,7 +95,8 @@ public class XtaGui extends BaseGui {
 		btnVisualizeModel.setOnMouseClicked(e -> btnVisualizeModelClicked());
 
 		createTitle("Algorithm");
-		cbAlgorithm = createChoice("Algorithm", Algorithm.values());
+		cbDataStrategy = createChoice("Discrete Refinement", DataStrategy.values());
+		cbClockStrategy = createChoice("Clock Refinement", ClockStrategy.values());
 		cbSearchStrategy = createChoice("Search", SearchStrategy.values());
 
 		final Button btnRunAlgo = createButton("Run algorithm");
@@ -148,10 +151,11 @@ public class XtaGui extends BaseGui {
 		protected Void call() throws Exception {
 			try {
 				final XtaSystem system = XtaDslManager.createSystem(taModel.getText());
-				final Algorithm algorithm = cbAlgorithm.getValue();
-				final AlgorithmStrategy<?> algorithmStrategy = algorithm.createStrategy(system);
+				final DataStrategy dataStrategy = cbDataStrategy.getValue();
+				final ClockStrategy clockStrategy = cbClockStrategy.getValue();
 				final SearchStrategy searchStrategy = cbSearchStrategy.getValue();
-				final LazyXtaChecker<?> checker = LazyXtaChecker.create(system, algorithmStrategy, searchStrategy);
+				final SafetyChecker<?, ?, UnitPrec> checker = LazyXtaCheckerFactory.create(system, dataStrategy,
+						clockStrategy, searchStrategy);
 				safetyResult = checker.check(UnitPrec.getInstance());
 				final LazyXtaStatistics stats = (LazyXtaStatistics) safetyResult.getStats().get();
 				Platform.runLater(() -> taOutput.setText(stats.toString()));

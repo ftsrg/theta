@@ -16,12 +16,7 @@
 package hu.bme.mit.theta.xta.analysis;
 
 import static hu.bme.mit.theta.analysis.algorithm.SearchStrategy.BFS;
-import static hu.bme.mit.theta.xta.analysis.lazy.Algorithm.BINITP;
-import static hu.bme.mit.theta.xta.analysis.lazy.Algorithm.EXPLBINITP;
-import static hu.bme.mit.theta.xta.analysis.lazy.Algorithm.EXPLLU;
-import static hu.bme.mit.theta.xta.analysis.lazy.Algorithm.EXPLSEQITP;
-import static hu.bme.mit.theta.xta.analysis.lazy.Algorithm.LU;
-import static hu.bme.mit.theta.xta.analysis.lazy.Algorithm.SEQITP;
+import static hu.bme.mit.theta.xta.analysis.lazy.ClockStrategy.LU;
 import static org.junit.Assert.assertTrue;
 
 import java.io.FileNotFoundException;
@@ -41,13 +36,14 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
 import hu.bme.mit.theta.analysis.algorithm.ArgChecker;
+import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.xta.XtaSystem;
-import hu.bme.mit.theta.xta.analysis.lazy.Algorithm;
-import hu.bme.mit.theta.xta.analysis.lazy.AlgorithmStrategy;
-import hu.bme.mit.theta.xta.analysis.lazy.LazyXtaChecker;
+import hu.bme.mit.theta.xta.analysis.lazy.ClockStrategy;
+import hu.bme.mit.theta.xta.analysis.lazy.DataStrategy;
+import hu.bme.mit.theta.xta.analysis.lazy.LazyXtaCheckerFactory;
 import hu.bme.mit.theta.xta.dsl.XtaDslManager;
 
 @RunWith(Parameterized.class)
@@ -61,9 +57,6 @@ public final class LazyXtaCheckerTest {
 	private static final Collection<String> MODELS = ImmutableList.of(MODEL_CSMA, MODEL_FDDI, MODEL_FISCHER,
 			MODEL_LYNCH, MODEL_ENGINE);
 
-	private static final Collection<Algorithm> ALGORITHMS = ImmutableList.of(BINITP, SEQITP, LU, EXPLBINITP, EXPLSEQITP,
-			EXPLLU);
-
 	private static final Collection<String> MODELS_WITH_UNKNOWN_SOLVER_STATUS = ImmutableSet.of(MODEL_FDDI,
 			MODEL_ENGINE);
 
@@ -71,18 +64,22 @@ public final class LazyXtaCheckerTest {
 	public String filepath;
 
 	@Parameter(1)
-	public Algorithm algorithm;
+	public DataStrategy dataStrategy;
 
-	private XtaSystem system;
-	private AlgorithmStrategy<?> algorithmStrategy;
+	@Parameter(2)
+	public ClockStrategy clockStrategy;
 
-	@Parameters(name = "model: {0}, algorithm: {1}")
+	private SafetyChecker<? extends XtaState<?>, XtaAction, UnitPrec> checker;
+
+	@Parameters(name = "model: {0}, discrete: {1}, clock: {2}")
 	public static Collection<Object[]> data() {
 		final Collection<Object[]> result = new ArrayList<>();
 		for (final String model : MODELS) {
-			for (final Algorithm algorithm : ALGORITHMS) {
-				if (!MODELS_WITH_UNKNOWN_SOLVER_STATUS.contains(model) || (algorithm != LU && algorithm != EXPLLU)) {
-					result.add(new Object[] { model, algorithm });
+			for (final DataStrategy dataStrategy : DataStrategy.values()) {
+				for (final ClockStrategy clockStrategy : ClockStrategy.values()) {
+					if (!MODELS_WITH_UNKNOWN_SOLVER_STATUS.contains(model) || (clockStrategy != LU)) {
+						result.add(new Object[] { model, dataStrategy, clockStrategy });
+					}
 				}
 			}
 		}
@@ -92,15 +89,12 @@ public final class LazyXtaCheckerTest {
 	@Before
 	public void initialize() throws FileNotFoundException, IOException {
 		final InputStream inputStream = getClass().getResourceAsStream(filepath);
-		system = XtaDslManager.createSystem(inputStream);
-		algorithmStrategy = algorithm.createStrategy(system);
+		final XtaSystem system = XtaDslManager.createSystem(inputStream);
+		checker = LazyXtaCheckerFactory.create(system, dataStrategy, clockStrategy, BFS);
 	}
 
 	@Test
 	public void test() {
-		// Arrange
-		final LazyXtaChecker<?> checker = LazyXtaChecker.create(system, algorithmStrategy, BFS);
-
 		// Act
 		final SafetyResult<? extends XtaState<?>, XtaAction> status = checker.check(UnitPrec.getInstance());
 

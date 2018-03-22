@@ -20,31 +20,28 @@ import java.util.Collection;
 import hu.bme.mit.theta.analysis.State;
 import hu.bme.mit.theta.analysis.algorithm.ArgEdge;
 import hu.bme.mit.theta.analysis.algorithm.ArgNode;
-import hu.bme.mit.theta.analysis.prod2.Prod2State;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
 import hu.bme.mit.theta.xta.XtaSystem;
 import hu.bme.mit.theta.xta.analysis.XtaAction;
-import hu.bme.mit.theta.xta.analysis.XtaState;
+import hu.bme.mit.theta.xta.analysis.lazy.LazyXtaStatistics.Builder;
 import hu.bme.mit.theta.xta.analysis.zone.itp.ItpZoneState;
 
-final class FwItpZoneRefiner extends ItpZoneRefiner {
+final class FwItpZoneStrategy<S extends State> extends ItpZoneStrategy<S> {
 
-	public FwItpZoneRefiner(final XtaSystem system) {
-		super(system);
+	public FwItpZoneStrategy(final XtaSystem system, final Lens<S, ItpZoneState> lens) {
+		super(system, lens);
 	}
 
 	@Override
-	public <S extends State> ZoneState blockZone(final ArgNode<XtaState<Prod2State<S, ItpZoneState>>, XtaAction> node,
-			final ZoneState zone,
-			final Collection<ArgNode<XtaState<Prod2State<S, ItpZoneState>>, XtaAction>> uncoveredNodes,
-			final LazyXtaStatistics.Builder stats) {
-		final ZoneState abstrState = node.getState().getState().getState2().getAbstrState();
+	protected ZoneState blockZone(final ArgNode<S, XtaAction> node, final ZoneState zone,
+			final Collection<ArgNode<S, XtaAction>> uncoveredNodes, final Builder stats) {
+		final ZoneState abstrState = getLens().get(node.getState()).getAbstrState();
 		if (abstrState.isConsistentWith(zone)) {
 			stats.refineZone();
 			if (node.getInEdge().isPresent()) {
-				final ArgEdge<XtaState<Prod2State<S, ItpZoneState>>, XtaAction> inEdge = node.getInEdge().get();
+				final ArgEdge<S, XtaAction> inEdge = node.getInEdge().get();
 				final XtaAction action = inEdge.getAction();
-				final ArgNode<XtaState<Prod2State<S, ItpZoneState>>, XtaAction> parent = inEdge.getSource();
+				final ArgNode<S, XtaAction> parent = inEdge.getSource();
 
 				final ZoneState B_pre = pre(zone, action);
 				final ZoneState A_pre = blockZone(parent, B_pre, uncoveredNodes, stats);
@@ -59,7 +56,7 @@ final class FwItpZoneRefiner extends ItpZoneRefiner {
 
 				return interpolant;
 			} else {
-				final ZoneState concrState = node.getState().getState().getState2().getConcrState();
+				final ZoneState concrState = getLens().get(node.getState()).getConcrState();
 
 				final ZoneState interpolant = ZoneState.interpolant(concrState, zone);
 
