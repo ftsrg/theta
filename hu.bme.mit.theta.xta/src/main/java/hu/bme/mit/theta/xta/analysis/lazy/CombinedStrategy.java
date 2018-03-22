@@ -75,6 +75,7 @@ final class CombinedStrategy<S1 extends State, S2 extends State>
 		assert coveree.getCoveringNode().isPresent() && coveree.getCoveringNode().get().equals(coverer);
 		strategy1.cover(coveree, coverer, uncoveredNodes, stats);
 		if (coveree.isCovered()) {
+			assert (!uncoveredNodes.contains(coveree));
 			strategy2.cover(coveree, coverer, uncoveredNodes, stats);
 		}
 	}
