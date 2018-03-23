@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.core.type.arraytype;
 
+import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 
@@ -26,6 +27,11 @@ public final class ArrayExprs {
 	public static <IndexType extends Type, ElemType extends Type> ArrayType<IndexType, ElemType> Array(
 			final IndexType indexType, final ElemType elemType) {
 		return new ArrayType<>(indexType, elemType);
+	}
+
+	public static <IndexType extends Type, ElemType extends Type> ArrayLitExpr<IndexType, ElemType> Array(
+			final ParamDecl<IndexType> index, final Expr<ElemType> elem) {
+		return new ArrayLitExpr<>(index, elem);
 	}
 
 	public static <IndexType extends Type, ElemType extends Type> ArrayReadExpr<IndexType, ElemType> Read(
