@@ -107,8 +107,9 @@ public final class XtaCli {
 	}
 
 	private XtaSystem loadModel() throws IOException {
-		final InputStream inputStream = new FileInputStream(model);
-		return XtaDslManager.createSystem(inputStream);
+		try (InputStream inputStream = new FileInputStream(model)) {
+			return XtaDslManager.createSystem(inputStream);
+		}
 	}
 
 	private void printResult(final SafetyResult<?, ?> result) {

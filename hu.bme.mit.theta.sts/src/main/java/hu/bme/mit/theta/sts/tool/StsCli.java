@@ -36,8 +36,8 @@ import hu.bme.mit.theta.analysis.utils.TraceVisualizer;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
-import hu.bme.mit.theta.common.logging.NullLogger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
+import hu.bme.mit.theta.common.logging.NullLogger;
 import hu.bme.mit.theta.common.table.BasicTableWriter;
 import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.common.visualization.Graph;
@@ -157,12 +157,13 @@ public class StsCli {
 			AigerCoi.apply(aigerSystem);
 			return AigerToSts.createSts(aigerSystem);
 		} else if (model.endsWith(".system")) {
-			final InputStream inputStream = new FileInputStream(model);
-			final StsSpec spec = StsDslManager.createStsSpec(inputStream);
-			if (spec.getAllSts().size() != 1) {
-				throw new UnsupportedOperationException("STS contains multiple properties.");
+			try (InputStream inputStream = new FileInputStream(model)) {
+				final StsSpec spec = StsDslManager.createStsSpec(inputStream);
+				if (spec.getAllSts().size() != 1) {
+					throw new UnsupportedOperationException("STS contains multiple properties.");
+				}
+				return StsUtils.eliminateIte(Utils.singleElementOf(spec.getAllSts()));
 			}
-			return StsUtils.eliminateIte(Utils.singleElementOf(spec.getAllSts()));
 		} else {
 			throw new IOException("Unknown format");
 		}
