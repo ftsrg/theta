@@ -46,8 +46,8 @@ import hu.bme.mit.theta.cfa.tool.CfaConfigBuilder.Refinement;
 import hu.bme.mit.theta.cfa.tool.CfaConfigBuilder.Search;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
-import hu.bme.mit.theta.common.logging.NullLogger;
 import hu.bme.mit.theta.common.logging.Logger.Level;
+import hu.bme.mit.theta.common.logging.NullLogger;
 import hu.bme.mit.theta.common.table.BasicTableWriter;
 import hu.bme.mit.theta.common.table.TableWriter;
 
@@ -154,9 +154,10 @@ public class CfaCli {
 	}
 
 	private CFA loadModel() throws IOException {
-		final InputStream inputStream = new FileInputStream(model);
-		final CFA cfa = CfaDslManager.createCfa(inputStream);
-		return cfa;
+		try (InputStream inputStream = new FileInputStream(model)) {
+			final CFA cfa = CfaDslManager.createCfa(inputStream);
+			return cfa;
+		}
 	}
 
 	private Config<?, ?, ?> buildConfiguration(final CFA cfa) {
