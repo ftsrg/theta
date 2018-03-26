@@ -15,6 +15,10 @@
  */
 package hu.bme.mit.theta.common;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import java.util.function.BiFunction;
+
 import com.google.common.collect.ImmutableList;
 
 public final class Tuple2<T1, T2> extends Tuple {
@@ -37,6 +41,11 @@ public final class Tuple2<T1, T2> extends Tuple {
 		@SuppressWarnings("unchecked")
 		final T2 result = (T2) elem(1);
 		return result;
+	}
+
+	public <R> R unpackTo(final BiFunction<? super T1, ? super T2, R> function) {
+		checkNotNull(function);
+		return function.apply(get1(), get2());
 	}
 
 }
