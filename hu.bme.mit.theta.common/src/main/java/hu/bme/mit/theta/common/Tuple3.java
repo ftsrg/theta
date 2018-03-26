@@ -15,6 +15,8 @@
  */
 package hu.bme.mit.theta.common;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.google.common.collect.ImmutableList;
 
 public final class Tuple3<T1, T2, T3> extends Tuple {
@@ -43,6 +45,11 @@ public final class Tuple3<T1, T2, T3> extends Tuple {
 		@SuppressWarnings("unchecked")
 		final T3 result = (T3) elem(2);
 		return result;
+	}
+
+	public <R> R unpackTo(final TriFunction<? super T1, ? super T2, ? super T3, ? extends R> function) {
+		checkNotNull(function);
+		return function.apply(get1(), get2(), get3());
 	}
 
 }
