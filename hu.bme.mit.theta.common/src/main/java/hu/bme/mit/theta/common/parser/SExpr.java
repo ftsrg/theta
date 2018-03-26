@@ -88,12 +88,16 @@ public abstract class SExpr {
 		private static final int HASH_SEED = 3943;
 		private volatile int hashCode = 0;
 
-		private final String string;
+		private final String atom;
 
-		private SAtom(final String string) {
-			checkNotNull(string);
-			checkArgument(string.length() > 0);
-			this.string = string;
+		private SAtom(final String atom) {
+			checkNotNull(atom);
+			checkArgument(atom.length() > 0);
+			this.atom = atom;
+		}
+
+		public String getAtom() {
+			return atom;
 		}
 
 		@Override
@@ -111,7 +115,7 @@ public abstract class SExpr {
 			int result = hashCode;
 			if (result == 0) {
 				result = HASH_SEED;
-				result = 31 * result + string.hashCode();
+				result = 31 * result + atom.hashCode();
 				hashCode = result;
 			}
 			return result;
@@ -123,7 +127,7 @@ public abstract class SExpr {
 				return true;
 			} else if (obj instanceof SAtom) {
 				final SAtom that = (SAtom) obj;
-				return this.string.equals(that.string);
+				return this.atom.equals(that.atom);
 			} else {
 				return false;
 			}
@@ -131,7 +135,7 @@ public abstract class SExpr {
 
 		@Override
 		public String toString() {
-			return string;
+			return atom;
 		}
 	}
 
