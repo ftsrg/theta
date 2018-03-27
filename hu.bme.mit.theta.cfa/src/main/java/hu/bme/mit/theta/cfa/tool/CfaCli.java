@@ -146,7 +146,7 @@ public class CfaCli {
 
 	private void printHeader() {
 		final String[] header = new String[] { "Result", "TimeMs", "AlgoTimeMs", "AbsTimeMs", "RefTimeMs", "Iterations",
-				"ArgSize", "ArgDepth", "ArgMeanBranchFactor", "CexLen", "Vars", "Locs", "Edges" };
+				"ArgSize", "ArgDepth", "ArgMeanBranchFactor", "CexLen" };
 		for (final String str : header) {
 			writer.cell(str);
 		}
@@ -182,9 +182,6 @@ public class CfaCli {
 			} else {
 				writer.cell("");
 			}
-			writer.cell(cfa.getVars().size());
-			writer.cell(cfa.getLocs().size());
-			writer.cell(cfa.getEdges().size());
 		}
 	}
 
