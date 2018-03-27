@@ -1,6 +1,7 @@
 package hu.bme.mit.theta.core.type.arraytype;
 
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.BinaryExpr;
@@ -16,8 +17,23 @@ public final class ArrayEqExpr<IndexType extends Type, ElemType extends Type>
 	private static final int HASH_SEED = 4261;
 	private static final String OPERATOR_LABEL = "=";
 
-	ArrayEqExpr(final Expr<ArrayType<IndexType, ElemType>> leftOp, final Expr<ArrayType<IndexType, ElemType>> rightOp) {
+	private ArrayEqExpr(final Expr<ArrayType<IndexType, ElemType>> leftOp,
+			final Expr<ArrayType<IndexType, ElemType>> rightOp) {
 		super(leftOp, rightOp);
+	}
+
+	public static <IndexType extends Type, ElemType extends Type> ArrayEqExpr<IndexType, ElemType> of(
+			final Expr<ArrayType<IndexType, ElemType>> leftOp, final Expr<ArrayType<IndexType, ElemType>> rightOp) {
+		return new ArrayEqExpr<>(leftOp, rightOp);
+	}
+
+	public static <IndexType extends Type, ElemType extends Type> ArrayEqExpr<?, ?> create(final Expr<?> leftOp,
+			final Expr<?> rightOp) {
+		@SuppressWarnings("unchecked")
+		final ArrayType<IndexType, ElemType> arrayType = (ArrayType<IndexType, ElemType>) leftOp.getType();
+		final Expr<ArrayType<IndexType, ElemType>> newLeftOp = cast(leftOp, arrayType);
+		final Expr<ArrayType<IndexType, ElemType>> newRightOp = cast(rightOp, arrayType);
+		return ArrayEqExpr.of(newLeftOp, newRightOp);
 	}
 
 	@Override
@@ -36,7 +52,7 @@ public final class ArrayEqExpr<IndexType extends Type, ElemType extends Type>
 		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
 			return this;
 		} else {
-			return new ArrayEqExpr<>(leftOp, rightOp);
+			return ArrayEqExpr.of(leftOp, rightOp);
 		}
 	}
 

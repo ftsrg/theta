@@ -27,7 +27,7 @@ public final class TrueExpr extends BoolLitExpr {
 	private TrueExpr() {
 	}
 
-	static TrueExpr getInstance() {
+	public static TrueExpr getInstance() {
 		return INSTANCE;
 	}
 

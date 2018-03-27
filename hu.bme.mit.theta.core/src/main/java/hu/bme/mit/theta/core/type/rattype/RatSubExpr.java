@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.core.type.rattype;
 
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
@@ -26,8 +27,18 @@ public final class RatSubExpr extends SubExpr<RatType> {
 	private static final int HASH_SEED = 6287;
 	private static final String OPERATOR = "-";
 
-	RatSubExpr(final Expr<RatType> leftOp, final Expr<RatType> rightOp) {
+	private RatSubExpr(final Expr<RatType> leftOp, final Expr<RatType> rightOp) {
 		super(leftOp, rightOp);
+	}
+
+	public static RatSubExpr of(final Expr<RatType> leftOp, final Expr<RatType> rightOp) {
+		return new RatSubExpr(leftOp, rightOp);
+	}
+
+	public static RatSubExpr create(final Expr<?> leftOp, final Expr<?> rightOp) {
+		final Expr<RatType> newLeftOp = cast(leftOp, Rat());
+		final Expr<RatType> newRightOp = cast(rightOp, Rat());
+		return RatSubExpr.of(newLeftOp, newRightOp);
 	}
 
 	@Override
@@ -47,7 +58,7 @@ public final class RatSubExpr extends SubExpr<RatType> {
 		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
 			return this;
 		} else {
-			return new RatSubExpr(leftOp, rightOp);
+			return RatSubExpr.of(leftOp, rightOp);
 		}
 	}
 

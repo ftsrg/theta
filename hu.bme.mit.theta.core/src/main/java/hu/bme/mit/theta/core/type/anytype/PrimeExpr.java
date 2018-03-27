@@ -27,8 +27,12 @@ public final class PrimeExpr<ExprType extends Type> extends UnaryExpr<ExprType, 
 
 	private static final String OPERATOR_LABEL = "prime";
 
-	PrimeExpr(final Expr<ExprType> op) {
+	private PrimeExpr(final Expr<ExprType> op) {
 		super(op);
+	}
+
+	public static <ExprType extends Type> PrimeExpr<ExprType> of(final Expr<ExprType> op) {
+		return new PrimeExpr<>(op);
 	}
 
 	@Override
@@ -46,7 +50,7 @@ public final class PrimeExpr<ExprType extends Type> extends UnaryExpr<ExprType, 
 		if (op == getOp()) {
 			return this;
 		} else {
-			return new PrimeExpr<>(op);
+			return PrimeExpr.of(op);
 		}
 	}
 

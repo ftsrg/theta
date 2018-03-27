@@ -16,6 +16,8 @@
 package hu.bme.mit.theta.core.type.inttype;
 
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
@@ -28,8 +30,18 @@ public final class IntLeqExpr extends LeqExpr<IntType> {
 	private static final int HASH_SEED = 4673;
 	private static final String OPERATOR_LABEL = "<=";
 
-	IntLeqExpr(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
+	private IntLeqExpr(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
 		super(leftOp, rightOp);
+	}
+
+	public static IntLeqExpr of(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
+		return new IntLeqExpr(leftOp, rightOp);
+	}
+
+	public static IntLeqExpr create(final Expr<?> leftOp, final Expr<?> rightOp) {
+		final Expr<IntType> newLeftOp = cast(leftOp, Int());
+		final Expr<IntType> newRightOp = cast(rightOp, Int());
+		return IntLeqExpr.of(newLeftOp, newRightOp);
 	}
 
 	@Override
@@ -49,7 +61,7 @@ public final class IntLeqExpr extends LeqExpr<IntType> {
 		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
 			return this;
 		} else {
-			return new IntLeqExpr(leftOp, rightOp);
+			return IntLeqExpr.of(leftOp, rightOp);
 		}
 	}
 

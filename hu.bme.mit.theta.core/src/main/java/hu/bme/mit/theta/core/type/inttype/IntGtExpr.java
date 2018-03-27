@@ -16,6 +16,8 @@
 package hu.bme.mit.theta.core.type.inttype;
 
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
@@ -28,8 +30,18 @@ public final class IntGtExpr extends GtExpr<IntType> {
 	private static final int HASH_SEED = 7349;
 	private static final String OPERATOR_LABEL = ">";
 
-	IntGtExpr(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
+	private IntGtExpr(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
 		super(leftOp, rightOp);
+	}
+
+	public static IntGtExpr of(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
+		return new IntGtExpr(leftOp, rightOp);
+	}
+
+	public static IntGtExpr create(final Expr<?> leftOp, final Expr<?> rightOp) {
+		final Expr<IntType> newLeftOp = cast(leftOp, Int());
+		final Expr<IntType> newRightOp = cast(rightOp, Int());
+		return IntGtExpr.of(newLeftOp, newRightOp);
 	}
 
 	@Override
@@ -49,7 +61,7 @@ public final class IntGtExpr extends GtExpr<IntType> {
 		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
 			return this;
 		} else {
-			return new IntGtExpr(leftOp, rightOp);
+			return IntGtExpr.of(leftOp, rightOp);
 		}
 	}
 

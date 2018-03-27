@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.core.type.inttype;
 
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
@@ -26,8 +27,18 @@ public final class IntSubExpr extends SubExpr<IntType> {
 	private static final int HASH_SEED = 4547;
 	private static final String OPERATOR = "-";
 
-	IntSubExpr(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
+	private IntSubExpr(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
 		super(leftOp, rightOp);
+	}
+
+	public static IntSubExpr of(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
+		return new IntSubExpr(leftOp, rightOp);
+	}
+
+	public static IntSubExpr create(final Expr<?> leftOp, final Expr<?> rightOp) {
+		final Expr<IntType> newLeftOp = cast(leftOp, Int());
+		final Expr<IntType> newRightOp = cast(rightOp, Int());
+		return IntSubExpr.of(newLeftOp, newRightOp);
 	}
 
 	@Override
@@ -47,7 +58,7 @@ public final class IntSubExpr extends SubExpr<IntType> {
 		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
 			return this;
 		} else {
-			return new IntSubExpr(leftOp, rightOp);
+			return IntSubExpr.of(leftOp, rightOp);
 		}
 	}
 

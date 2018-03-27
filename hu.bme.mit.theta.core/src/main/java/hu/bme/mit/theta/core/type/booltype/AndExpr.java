@@ -15,9 +15,13 @@
  */
 package hu.bme.mit.theta.core.type.booltype;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+
+import java.util.List;
 
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
@@ -26,11 +30,18 @@ import hu.bme.mit.theta.core.type.MultiaryExpr;
 public final class AndExpr extends MultiaryExpr<BoolType, BoolType> {
 
 	private static final int HASH_SEED = 41;
-
 	private static final String OPERATOR_LABEL = "and";
 
-	AndExpr(final Iterable<? extends Expr<BoolType>> ops) {
+	private AndExpr(final Iterable<? extends Expr<BoolType>> ops) {
 		super(ops);
+	}
+
+	public static AndExpr of(final Iterable<? extends Expr<BoolType>> ops) {
+		return new AndExpr(ops);
+	}
+
+	public static AndExpr create(final List<? extends Expr<?>> ops) {
+		return AndExpr.of(ops.stream().map(op -> cast(op, Bool())).collect(toImmutableList()));
 	}
 
 	@Override
@@ -54,7 +65,7 @@ public final class AndExpr extends MultiaryExpr<BoolType, BoolType> {
 		if (ops == getOps()) {
 			return this;
 		} else {
-			return new AndExpr(ops);
+			return AndExpr.of(ops);
 		}
 	}
 

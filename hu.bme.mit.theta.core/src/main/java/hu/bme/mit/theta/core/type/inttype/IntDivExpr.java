@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.core.type.inttype;
 
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
@@ -27,8 +28,18 @@ public final class IntDivExpr extends DivExpr<IntType> {
 
 	private static final String OPERATOR_LABEL = "div";
 
-	IntDivExpr(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
+	private IntDivExpr(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
 		super(leftOp, rightOp);
+	}
+
+	public static IntDivExpr of(final Expr<IntType> leftOp, final Expr<IntType> rightOp) {
+		return new IntDivExpr(leftOp, rightOp);
+	}
+
+	public static IntDivExpr create(final Expr<?> leftOp, final Expr<?> rightOp) {
+		final Expr<IntType> newLeftOp = cast(leftOp, Int());
+		final Expr<IntType> newRightOp = cast(rightOp, Int());
+		return IntDivExpr.of(newLeftOp, newRightOp);
 	}
 
 	@Override
@@ -48,7 +59,7 @@ public final class IntDivExpr extends DivExpr<IntType> {
 		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
 			return this;
 		} else {
-			return new IntDivExpr(leftOp, rightOp);
+			return IntDivExpr.of(leftOp, rightOp);
 		}
 	}
 

@@ -16,6 +16,8 @@
 package hu.bme.mit.theta.core.type.rattype;
 
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
@@ -28,8 +30,18 @@ public final class RatLtExpr extends LtExpr<RatType> {
 	private static final int HASH_SEED = 6311;
 	private static final String OPERATOR_LABEL = "<";
 
-	RatLtExpr(final Expr<RatType> leftOp, final Expr<RatType> rightOp) {
+	private RatLtExpr(final Expr<RatType> leftOp, final Expr<RatType> rightOp) {
 		super(leftOp, rightOp);
+	}
+
+	public static RatLtExpr of(final Expr<RatType> leftOp, final Expr<RatType> rightOp) {
+		return new RatLtExpr(leftOp, rightOp);
+	}
+
+	public static RatLtExpr create(final Expr<?> leftOp, final Expr<?> rightOp) {
+		final Expr<RatType> newLeftOp = cast(leftOp, Rat());
+		final Expr<RatType> newRightOp = cast(rightOp, Rat());
+		return RatLtExpr.of(newLeftOp, newRightOp);
 	}
 
 	@Override

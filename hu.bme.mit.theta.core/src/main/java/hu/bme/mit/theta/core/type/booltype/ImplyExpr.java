@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.core.type.booltype;
 
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.BinaryExpr;
@@ -27,8 +28,18 @@ public final class ImplyExpr extends BinaryExpr<BoolType, BoolType> {
 
 	private static final String OPERATOR_LABEL = "=>";
 
-	ImplyExpr(final Expr<BoolType> leftOp, final Expr<BoolType> rightOp) {
+	private ImplyExpr(final Expr<BoolType> leftOp, final Expr<BoolType> rightOp) {
 		super(leftOp, rightOp);
+	}
+
+	public static ImplyExpr of(final Expr<BoolType> leftOp, final Expr<BoolType> rightOp) {
+		return new ImplyExpr(leftOp, rightOp);
+	}
+
+	public static ImplyExpr create(final Expr<?> leftOp, final Expr<?> rightOp) {
+		final Expr<BoolType> newLeftOp = cast(leftOp, Bool());
+		final Expr<BoolType> newRightOp = cast(rightOp, Bool());
+		return ImplyExpr.of(newLeftOp, newRightOp);
 	}
 
 	@Override
@@ -48,7 +59,7 @@ public final class ImplyExpr extends BinaryExpr<BoolType, BoolType> {
 		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
 			return this;
 		} else {
-			return new ImplyExpr(leftOp, rightOp);
+			return ImplyExpr.of(leftOp, rightOp);
 		}
 	}
 

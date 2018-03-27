@@ -15,9 +15,13 @@
  */
 package hu.bme.mit.theta.core.type.booltype;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+
+import java.util.List;
 
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
@@ -29,8 +33,16 @@ public final class OrExpr extends MultiaryExpr<BoolType, BoolType> {
 
 	private static final String OPERATOR_LABEL = "or";
 
-	OrExpr(final Iterable<? extends Expr<BoolType>> ops) {
+	private OrExpr(final Iterable<? extends Expr<BoolType>> ops) {
 		super(ops);
+	}
+
+	public static OrExpr of(final Iterable<? extends Expr<BoolType>> ops) {
+		return new OrExpr(ops);
+	}
+
+	public static OrExpr create(final List<? extends Expr<?>> ops) {
+		return OrExpr.of(ops.stream().map(op -> cast(op, Bool())).collect(toImmutableList()));
 	}
 
 	@Override

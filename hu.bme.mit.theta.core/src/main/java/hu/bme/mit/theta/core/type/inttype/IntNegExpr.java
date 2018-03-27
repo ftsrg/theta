@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.core.type.inttype;
 
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
@@ -26,8 +27,17 @@ public final class IntNegExpr extends NegExpr<IntType> {
 	private static final int HASH_SEED = 3359;
 	private static final String OPERATOR_LABEL = "-";
 
-	IntNegExpr(final Expr<IntType> op) {
+	private IntNegExpr(final Expr<IntType> op) {
 		super(op);
+	}
+
+	public static IntNegExpr of(final Expr<IntType> op) {
+		return new IntNegExpr(op);
+	}
+
+	public static IntNegExpr create(final Expr<?> op) {
+		final Expr<IntType> newOp = cast(op, Int());
+		return IntNegExpr.of(newOp);
 	}
 
 	@Override
@@ -46,7 +56,7 @@ public final class IntNegExpr extends NegExpr<IntType> {
 		if (op == getOp()) {
 			return this;
 		} else {
-			return new IntNegExpr(op);
+			return IntNegExpr.of(op);
 		}
 	}
 

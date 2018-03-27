@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.core.type.booltype;
 
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
@@ -27,8 +28,17 @@ public final class NotExpr extends UnaryExpr<BoolType, BoolType> {
 
 	private static final String OPERAND_LABEL = "not";
 
-	NotExpr(final Expr<BoolType> op) {
+	private NotExpr(final Expr<BoolType> op) {
 		super(op);
+	}
+
+	public static NotExpr of(final Expr<BoolType> op) {
+		return new NotExpr(op);
+	}
+
+	public static NotExpr create(final Expr<?> op) {
+		final Expr<BoolType> newOp = cast(op, Bool());
+		return NotExpr.of(newOp);
 	}
 
 	@Override

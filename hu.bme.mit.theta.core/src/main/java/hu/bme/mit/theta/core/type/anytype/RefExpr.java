@@ -1,12 +1,12 @@
 /*
  *  Copyright 2017 Budapest University of Technology and Economics
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,8 +30,12 @@ public final class RefExpr<DeclType extends Type> extends NullaryExpr<DeclType> 
 
 	private final Decl<DeclType> decl;
 
-	RefExpr(final Decl<DeclType> decl) {
+	private RefExpr(final Decl<DeclType> decl) {
 		this.decl = checkNotNull(decl);
+	}
+
+	public static <DeclType extends Type> RefExpr<DeclType> of(final Decl<DeclType> decl) {
+		return new RefExpr<>(decl);
 	}
 
 	public Decl<DeclType> getDecl() {
@@ -45,7 +49,7 @@ public final class RefExpr<DeclType extends Type> extends NullaryExpr<DeclType> 
 
 	@Override
 	public LitExpr<DeclType> eval(final Valuation val) {
-		return (LitExpr<DeclType>) val.eval(decl).get();
+		return val.eval(decl).get();
 	}
 
 	@Override

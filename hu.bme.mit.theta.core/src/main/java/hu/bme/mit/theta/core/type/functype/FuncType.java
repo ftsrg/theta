@@ -29,9 +29,14 @@ public final class FuncType<ParamType extends Type, ResultType extends Type> imp
 
 	private volatile int hashCode = 0;
 
-	FuncType(final ParamType paramType, final ResultType resultType) {
+	private FuncType(final ParamType paramType, final ResultType resultType) {
 		this.paramType = checkNotNull(paramType);
 		this.resultType = checkNotNull(resultType);
+	}
+
+	public static <ParamType extends Type, ResultType extends Type> FuncType<ParamType, ResultType> of(
+			final ParamType paramType, final ResultType resultType) {
+		return new FuncType<>(paramType, resultType);
 	}
 
 	public ParamType getParamType() {

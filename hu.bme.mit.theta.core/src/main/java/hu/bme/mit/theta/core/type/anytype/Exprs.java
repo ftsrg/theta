@@ -1,12 +1,12 @@
 /*
  *  Copyright 2017 Budapest University of Technology and Economics
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,16 +28,16 @@ public final class Exprs {
 	}
 
 	public static <DeclType extends Type> RefExpr<DeclType> Ref(final Decl<DeclType> decl) {
-		return new RefExpr<>(decl);
+		return RefExpr.of(decl);
 	}
 
 	public static <ExprType extends Type> IteExpr<ExprType> Ite(final Expr<BoolType> cond, final Expr<ExprType> then,
 			final Expr<ExprType> elze) {
-		return new IteExpr<>(cond, then, elze);
+		return IteExpr.of(cond, then, elze);
 	}
 
 	public static <ExprType extends Type> PrimeExpr<ExprType> Prime(final Expr<ExprType> op) {
-		return new PrimeExpr<>(op);
+		return PrimeExpr.of(op);
 	}
 
 	/*

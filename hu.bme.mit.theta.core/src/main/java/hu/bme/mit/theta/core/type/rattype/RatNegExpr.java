@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.core.type.rattype;
 
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
@@ -26,8 +27,17 @@ public final class RatNegExpr extends NegExpr<RatType> {
 	private static final int HASH_SEED = 4127;
 	private static final String OPERATOR_LABEL = "-";
 
-	RatNegExpr(final Expr<RatType> op) {
+	private RatNegExpr(final Expr<RatType> op) {
 		super(op);
+	}
+
+	public static RatNegExpr of(final Expr<RatType> op) {
+		return new RatNegExpr(op);
+	}
+
+	public static RatNegExpr create(final Expr<?> op) {
+		final Expr<RatType> newOp = cast(op, Rat());
+		return RatNegExpr.of(newOp);
 	}
 
 	@Override
@@ -46,7 +56,7 @@ public final class RatNegExpr extends NegExpr<RatType> {
 		if (op == getOp()) {
 			return this;
 		} else {
-			return new RatNegExpr(op);
+			return RatNegExpr.of(op);
 		}
 	}
 

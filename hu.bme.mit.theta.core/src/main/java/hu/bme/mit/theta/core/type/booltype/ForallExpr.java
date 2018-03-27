@@ -15,6 +15,9 @@
  */
 package hu.bme.mit.theta.core.type.booltype;
 
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
@@ -26,8 +29,17 @@ public final class ForallExpr extends QuantifiedExpr {
 
 	private static final String OPERATOR_LABEL = "forall";
 
-	ForallExpr(final Iterable<? extends ParamDecl<?>> paramDecls, final Expr<BoolType> op) {
+	private ForallExpr(final Iterable<? extends ParamDecl<?>> paramDecls, final Expr<BoolType> op) {
 		super(paramDecls, op);
+	}
+
+	public static ForallExpr of(final Iterable<? extends ParamDecl<?>> paramDecls, final Expr<BoolType> op) {
+		return new ForallExpr(paramDecls, op);
+	}
+
+	public static ForallExpr create(final Iterable<? extends ParamDecl<?>> paramDecls, final Expr<?> op) {
+		final Expr<BoolType> newOp = cast(op, Bool());
+		return ForallExpr.of(paramDecls, newOp);
 	}
 
 	@Override
@@ -40,7 +52,7 @@ public final class ForallExpr extends QuantifiedExpr {
 		if (op == getOp()) {
 			return this;
 		} else {
-			return new ForallExpr(getParamDecls(), op);
+			return ForallExpr.of(getParamDecls(), op);
 		}
 	}
 

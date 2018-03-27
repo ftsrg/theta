@@ -15,7 +15,11 @@
  */
 package hu.bme.mit.theta.core.type.inttype;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+
+import java.util.List;
 
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
@@ -26,8 +30,16 @@ public final class IntMulExpr extends MulExpr<IntType> {
 	private static final int HASH_SEED = 2707;
 	private static final String OPERATOR_LABEL = "*";
 
-	IntMulExpr(final Iterable<? extends Expr<IntType>> ops) {
+	private IntMulExpr(final Iterable<? extends Expr<IntType>> ops) {
 		super(ops);
+	}
+
+	public static IntMulExpr of(final Iterable<? extends Expr<IntType>> ops) {
+		return new IntMulExpr(ops);
+	}
+
+	public static IntMulExpr create(final List<? extends Expr<?>> ops) {
+		return IntMulExpr.of(ops.stream().map(op -> cast(op, Int())).collect(toImmutableList()));
 	}
 
 	@Override
@@ -50,7 +62,7 @@ public final class IntMulExpr extends MulExpr<IntType> {
 		if (ops == getOps()) {
 			return this;
 		} else {
-			return new IntMulExpr(ops);
+			return IntMulExpr.of(ops);
 		}
 	}
 

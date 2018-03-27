@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.core.type.booltype;
 
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
@@ -27,8 +28,18 @@ public final class IffExpr extends EqExpr<BoolType> {
 
 	private static final String OPERATOR_LABEL = "iff";
 
-	IffExpr(final Expr<BoolType> leftOp, final Expr<BoolType> rightOp) {
+	private IffExpr(final Expr<BoolType> leftOp, final Expr<BoolType> rightOp) {
 		super(leftOp, rightOp);
+	}
+
+	public static IffExpr of(final Expr<BoolType> leftOp, final Expr<BoolType> rightOp) {
+		return new IffExpr(leftOp, rightOp);
+	}
+
+	public static IffExpr create(final Expr<?> leftOp, final Expr<?> rightOp) {
+		final Expr<BoolType> newLeftOp = cast(leftOp, Bool());
+		final Expr<BoolType> newRightOp = cast(rightOp, Bool());
+		return IffExpr.of(newLeftOp, newRightOp);
 	}
 
 	@Override

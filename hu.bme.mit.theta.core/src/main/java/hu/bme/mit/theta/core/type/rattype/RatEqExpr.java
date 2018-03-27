@@ -16,6 +16,8 @@
 package hu.bme.mit.theta.core.type.rattype;
 
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
@@ -28,8 +30,18 @@ public final class RatEqExpr extends EqExpr<RatType> {
 	private static final int HASH_SEED = 3709;
 	private static final String OPERATOR_LABEL = "=";
 
-	RatEqExpr(final Expr<RatType> leftOp, final Expr<RatType> rightOp) {
+	private RatEqExpr(final Expr<RatType> leftOp, final Expr<RatType> rightOp) {
 		super(leftOp, rightOp);
+	}
+
+	public static RatEqExpr of(final Expr<RatType> leftOp, final Expr<RatType> rightOp) {
+		return new RatEqExpr(leftOp, rightOp);
+	}
+
+	public static RatEqExpr create(final Expr<?> leftOp, final Expr<?> rightOp) {
+		final Expr<RatType> newLeftOp = cast(leftOp, Rat());
+		final Expr<RatType> newRightOp = cast(rightOp, Rat());
+		return RatEqExpr.of(newLeftOp, newRightOp);
 	}
 
 	@Override
@@ -49,7 +61,7 @@ public final class RatEqExpr extends EqExpr<RatType> {
 		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
 			return this;
 		} else {
-			return new RatEqExpr(leftOp, rightOp);
+			return RatEqExpr.of(leftOp, rightOp);
 		}
 	}
 

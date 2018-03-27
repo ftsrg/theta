@@ -34,9 +34,14 @@ public final class ArrayType<IndexType extends Type, ElemType extends Type>
 
 	private volatile int hashCode = 0;
 
-	ArrayType(final IndexType indexType, final ElemType elemType) {
+	private ArrayType(final IndexType indexType, final ElemType elemType) {
 		this.indexType = checkNotNull(indexType);
 		this.elemType = checkNotNull(elemType);
+	}
+
+	public static <IndexType extends Type, ElemType extends Type> ArrayType<IndexType, ElemType> of(
+			final IndexType indexType, final ElemType elemType) {
+		return new ArrayType<>(indexType, elemType);
 	}
 
 	public IndexType getIndexType() {

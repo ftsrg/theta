@@ -28,7 +28,7 @@ public final class FalseExpr extends BoolLitExpr {
 	private FalseExpr() {
 	}
 
-	static FalseExpr getInstance() {
+	public static FalseExpr getInstance() {
 		return INSTANCE;
 	}
 
