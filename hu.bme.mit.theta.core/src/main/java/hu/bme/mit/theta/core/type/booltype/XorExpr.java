@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.core.type.booltype;
 
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.BinaryExpr;
@@ -29,8 +30,18 @@ public class XorExpr extends NeqExpr<BoolType> {
 
 	private static final String OPERATOR_LABEL = "xor";
 
-	XorExpr(final Expr<BoolType> leftOp, final Expr<BoolType> rightOp) {
+	private XorExpr(final Expr<BoolType> leftOp, final Expr<BoolType> rightOp) {
 		super(leftOp, rightOp);
+	}
+
+	public static XorExpr of(final Expr<BoolType> leftOp, final Expr<BoolType> rightOp) {
+		return new XorExpr(leftOp, rightOp);
+	}
+
+	public static XorExpr create(final Expr<?> leftOp, final Expr<?> rightOp) {
+		final Expr<BoolType> newLeftOp = cast(leftOp, Bool());
+		final Expr<BoolType> newRightOp = cast(rightOp, Bool());
+		return XorExpr.of(newLeftOp, newRightOp);
 	}
 
 	@Override
@@ -50,7 +61,7 @@ public class XorExpr extends NeqExpr<BoolType> {
 		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
 			return this;
 		} else {
-			return new XorExpr(leftOp, rightOp);
+			return XorExpr.of(leftOp, rightOp);
 		}
 	}
 

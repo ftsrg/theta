@@ -41,9 +41,14 @@ public final class FuncLitExpr<ParamType extends Type, ResultType extends Type>
 
 	private volatile int hashCode = 0;
 
-	FuncLitExpr(final ParamDecl<ParamType> param, final Expr<ResultType> result) {
+	private FuncLitExpr(final ParamDecl<ParamType> param, final Expr<ResultType> result) {
 		this.param = checkNotNull(param);
 		this.result = checkNotNull(result);
+	}
+
+	public static <ParamType extends Type, ResultType extends Type> FuncLitExpr<ParamType, ResultType> of(
+			final ParamDecl<ParamType> param, final Expr<ResultType> result) {
+		return new FuncLitExpr<>(param, result);
 	}
 
 	public ParamDecl<ParamType> getParam() {
@@ -86,7 +91,7 @@ public final class FuncLitExpr<ParamType extends Type, ResultType extends Type>
 		if (this.result == result) {
 			return this;
 		} else {
-			return new FuncLitExpr<>(param, result);
+			return FuncLitExpr.of(param, result);
 		}
 	}
 

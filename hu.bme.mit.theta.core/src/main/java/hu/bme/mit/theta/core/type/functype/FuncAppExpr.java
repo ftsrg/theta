@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.core.type.functype;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 import java.util.List;
 
@@ -36,9 +37,23 @@ public final class FuncAppExpr<ParamType extends Type, ResultType extends Type> 
 
 	private volatile int hashCode = 0;
 
-	FuncAppExpr(final Expr<FuncType<ParamType, ResultType>> func, final Expr<ParamType> param) {
+	private FuncAppExpr(final Expr<FuncType<ParamType, ResultType>> func, final Expr<ParamType> param) {
 		this.func = checkNotNull(func);
 		this.param = checkNotNull(param);
+	}
+
+	public static <ParamType extends Type, ResultType extends Type> FuncAppExpr<ParamType, ResultType> of(
+			final Expr<FuncType<ParamType, ResultType>> func, final Expr<ParamType> param) {
+		return new FuncAppExpr<>(func, param);
+	}
+
+	public static <ParamType extends Type, ResultType extends Type> FuncAppExpr<?, ?> create(final Expr<?> func,
+			final Expr<?> param) {
+		@SuppressWarnings("unchecked")
+		final FuncType<ParamType, ResultType> funcType = (FuncType<ParamType, ResultType>) func.getType();
+		final Expr<FuncType<ParamType, ResultType>> newFunc = cast(func, funcType);
+		final Expr<ParamType> newParam = cast(param, funcType.getParamType());
+		return FuncAppExpr.of(newFunc, newParam);
 	}
 
 	public Expr<FuncType<ParamType, ResultType>> getFunc() {
@@ -81,7 +96,7 @@ public final class FuncAppExpr<ParamType extends Type, ResultType extends Type> 
 		if (this.func == func && this.param == param) {
 			return this;
 		} else {
-			return new FuncAppExpr<>(func, param);
+			return FuncAppExpr.of(func, param);
 		}
 	}
 

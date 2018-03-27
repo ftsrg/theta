@@ -15,7 +15,11 @@
  */
 package hu.bme.mit.theta.core.type.rattype;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+
+import java.util.List;
 
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
@@ -26,8 +30,16 @@ public final class RatMulExpr extends MulExpr<RatType> {
 	private static final int HASH_SEED = 9479;
 	private static final String OPERATOR_LABEL = "*";
 
-	RatMulExpr(final Iterable<? extends Expr<RatType>> ops) {
+	private RatMulExpr(final Iterable<? extends Expr<RatType>> ops) {
 		super(ops);
+	}
+
+	public static RatMulExpr of(final Iterable<? extends Expr<RatType>> ops) {
+		return new RatMulExpr(ops);
+	}
+
+	public static RatMulExpr create(final List<? extends Expr<?>> ops) {
+		return RatMulExpr.of(ops.stream().map(op -> cast(op, Rat())).collect(toImmutableList()));
 	}
 
 	@Override

@@ -16,6 +16,8 @@
 package hu.bme.mit.theta.core.type.rattype;
 
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
@@ -28,8 +30,18 @@ public final class RatGtExpr extends GtExpr<RatType> {
 	private static final int HASH_SEED = 8161;
 	private static final String OPERATOR_LABEL = ">";
 
-	RatGtExpr(final Expr<RatType> leftOp, final Expr<RatType> rightOp) {
+	private RatGtExpr(final Expr<RatType> leftOp, final Expr<RatType> rightOp) {
 		super(leftOp, rightOp);
+	}
+
+	public static RatGtExpr of(final Expr<RatType> leftOp, final Expr<RatType> rightOp) {
+		return new RatGtExpr(leftOp, rightOp);
+	}
+
+	public static RatGtExpr create(final Expr<?> leftOp, final Expr<?> rightOp) {
+		final Expr<RatType> newLeftOp = cast(leftOp, Rat());
+		final Expr<RatType> newRightOp = cast(rightOp, Rat());
+		return RatGtExpr.of(newLeftOp, newRightOp);
 	}
 
 	@Override
@@ -49,7 +61,7 @@ public final class RatGtExpr extends GtExpr<RatType> {
 		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
 			return this;
 		} else {
-			return new RatGtExpr(leftOp, rightOp);
+			return RatGtExpr.of(leftOp, rightOp);
 		}
 	}
 

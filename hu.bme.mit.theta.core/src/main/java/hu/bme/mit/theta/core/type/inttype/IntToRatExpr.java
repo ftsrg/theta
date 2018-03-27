@@ -15,7 +15,9 @@
  */
 package hu.bme.mit.theta.core.type.inttype;
 
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
@@ -28,8 +30,17 @@ public final class IntToRatExpr extends CastExpr<IntType, RatType> {
 	private static final int HASH_SEED = 1627;
 	private static final String OPERATOR_LABEL = "to_rat";
 
-	IntToRatExpr(final Expr<IntType> op) {
+	private IntToRatExpr(final Expr<IntType> op) {
 		super(op);
+	}
+
+	public static IntToRatExpr of(final Expr<IntType> op) {
+		return new IntToRatExpr(op);
+	}
+
+	public static IntToRatExpr create(final Expr<?> op) {
+		final Expr<IntType> newOp = cast(op, Int());
+		return IntToRatExpr.of(newOp);
 	}
 
 	@Override
@@ -48,7 +59,7 @@ public final class IntToRatExpr extends CastExpr<IntType, RatType> {
 		if (op == getOp()) {
 			return this;
 		} else {
-			return new IntToRatExpr(op);
+			return IntToRatExpr.of(op);
 		}
 	}
 

@@ -1,12 +1,12 @@
 /*
  *  Copyright 2017 Budapest University of Technology and Economics
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,51 +29,51 @@ public final class RatExprs {
 	}
 
 	public static RatLitExpr Rat(final int num, final int denom) {
-		return new RatLitExpr(num, denom);
+		return RatLitExpr.of(num, denom);
 	}
 
 	public static RatAddExpr Add(final Iterable<? extends Expr<RatType>> ops) {
-		return new RatAddExpr(ops);
+		return RatAddExpr.of(ops);
 	}
 
 	public static RatSubExpr Sub(final Expr<RatType> leftOp, final Expr<RatType> rightOp) {
-		return new RatSubExpr(leftOp, rightOp);
+		return RatSubExpr.of(leftOp, rightOp);
 	}
 
 	public static RatNegExpr Neg(final Expr<RatType> op) {
-		return new RatNegExpr(op);
+		return RatNegExpr.of(op);
 	}
 
 	public static RatMulExpr Mul(final Iterable<? extends Expr<RatType>> ops) {
-		return new RatMulExpr(ops);
+		return RatMulExpr.of(ops);
 	}
 
 	public static RatDivExpr Div(final Expr<RatType> leftOp, final Expr<RatType> rightOp) {
-		return new RatDivExpr(leftOp, rightOp);
+		return RatDivExpr.of(leftOp, rightOp);
 	}
 
 	public static RatEqExpr Eq(final Expr<RatType> leftOp, final Expr<RatType> rightOp) {
-		return new RatEqExpr(leftOp, rightOp);
+		return RatEqExpr.of(leftOp, rightOp);
 	}
 
 	public static RatNeqExpr Neq(final Expr<RatType> leftOp, final Expr<RatType> rightOp) {
-		return new RatNeqExpr(leftOp, rightOp);
+		return RatNeqExpr.of(leftOp, rightOp);
 	}
 
 	public static RatLtExpr Lt(final Expr<RatType> leftOp, final Expr<RatType> rightOp) {
-		return new RatLtExpr(leftOp, rightOp);
+		return RatLtExpr.of(leftOp, rightOp);
 	}
 
 	public static RatLeqExpr Leq(final Expr<RatType> leftOp, final Expr<RatType> rightOp) {
-		return new RatLeqExpr(leftOp, rightOp);
+		return RatLeqExpr.of(leftOp, rightOp);
 	}
 
 	public static RatGtExpr Gt(final Expr<RatType> leftOp, final Expr<RatType> rightOp) {
-		return new RatGtExpr(leftOp, rightOp);
+		return RatGtExpr.of(leftOp, rightOp);
 	}
 
 	public static RatGeqExpr Geq(final Expr<RatType> leftOp, final Expr<RatType> rightOp) {
-		return new RatGeqExpr(leftOp, rightOp);
+		return RatGeqExpr.of(leftOp, rightOp);
 	}
 
 	/*
@@ -81,41 +81,41 @@ public final class RatExprs {
 	 */
 
 	public static RatAddExpr Add(final Expr<RatType> op1, final Expr<RatType> op2) {
-		return Add(ImmutableList.of(op1, op2));
+		return RatAddExpr.of(ImmutableList.of(op1, op2));
 	}
 
 	public static RatAddExpr Add(final Expr<RatType> op1, final Expr<RatType> op2, final Expr<RatType> op3) {
-		return Add(ImmutableList.of(op1, op2, op3));
+		return RatAddExpr.of(ImmutableList.of(op1, op2, op3));
 	}
 
 	public static RatAddExpr Add(final Expr<RatType> op1, final Expr<RatType> op2, final Expr<RatType> op3,
 			final Expr<RatType> op4) {
-		return Add(ImmutableList.of(op1, op2, op3, op4));
+		return RatAddExpr.of(ImmutableList.of(op1, op2, op3, op4));
 	}
 
 	public static RatAddExpr Add(final Expr<RatType> op1, final Expr<RatType> op2, final Expr<RatType> op3,
 			final Expr<RatType> op4, final Expr<RatType> op5) {
-		return Add(ImmutableList.of(op1, op2, op3, op4, op5));
+		return RatAddExpr.of(ImmutableList.of(op1, op2, op3, op4, op5));
 	}
 
 	////
 
 	public static RatMulExpr Mul(final Expr<RatType> op1, final Expr<RatType> op2) {
-		return Mul(ImmutableList.of(op1, op2));
+		return RatMulExpr.of(ImmutableList.of(op1, op2));
 	}
 
 	public static RatMulExpr Mul(final Expr<RatType> op1, final Expr<RatType> op2, final Expr<RatType> op3) {
-		return Mul(ImmutableList.of(op1, op2, op3));
+		return RatMulExpr.of(ImmutableList.of(op1, op2, op3));
 	}
 
 	public static RatMulExpr Mul(final Expr<RatType> op1, final Expr<RatType> op2, final Expr<RatType> op3,
 			final Expr<RatType> op4) {
-		return Mul(ImmutableList.of(op1, op2, op3, op4));
+		return RatMulExpr.of(ImmutableList.of(op1, op2, op3, op4));
 	}
 
 	public static RatMulExpr Mul(final Expr<RatType> op1, final Expr<RatType> op2, final Expr<RatType> op3,
 			final Expr<RatType> op4, final Expr<RatType> op5) {
-		return Mul(ImmutableList.of(op1, op2, op3, op4, op5));
+		return RatMulExpr.of(ImmutableList.of(op1, op2, op3, op4, op5));
 	}
 
 }

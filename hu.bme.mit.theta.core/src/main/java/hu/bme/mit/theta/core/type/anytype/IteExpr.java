@@ -18,6 +18,7 @@ package hu.bme.mit.theta.core.type.anytype;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 import java.util.List;
 
@@ -43,11 +44,23 @@ public final class IteExpr<ExprType extends Type> implements Expr<ExprType> {
 
 	private volatile int hashCode = 0;
 
-	IteExpr(final Expr<BoolType> cond, final Expr<ExprType> then, final Expr<ExprType> elze) {
-
+	private IteExpr(final Expr<BoolType> cond, final Expr<ExprType> then, final Expr<ExprType> elze) {
 		this.cond = checkNotNull(cond);
 		this.then = checkNotNull(then);
 		this.elze = checkNotNull(elze);
+	}
+
+	public static <ExprType extends Type> IteExpr<ExprType> of(final Expr<BoolType> cond, final Expr<ExprType> then,
+			final Expr<ExprType> elze) {
+		return new IteExpr<>(cond, then, elze);
+	}
+
+	public static <ExprType extends Type> IteExpr<?> create(final Expr<?> cond, final Expr<?> then, final Expr<?> elze) {
+		final Expr<BoolType> newCond = cast(cond, Bool());
+		@SuppressWarnings("unchecked")
+		final Expr<ExprType> newThen = (Expr<ExprType>) then;
+		final Expr<ExprType> newElze = cast(elze, newThen.getType());
+		return IteExpr.of(newCond, newThen, newElze);
 	}
 
 	public Expr<BoolType> getCond() {
@@ -102,7 +115,7 @@ public final class IteExpr<ExprType extends Type> implements Expr<ExprType> {
 		if (this.cond == cond && this.then == then && this.elze == elze) {
 			return this;
 		} else {
-			return new IteExpr<>(cond, then, elze);
+			return IteExpr.of(cond, then, elze);
 		}
 	}
 

@@ -25,9 +25,14 @@ public final class ArrayLitExpr<IndexType extends Type, ElemType extends Type>
 	private final ParamDecl<IndexType> index;
 	private final Expr<ElemType> elem;
 
-	ArrayLitExpr(final ParamDecl<IndexType> index, final Expr<ElemType> elem) {
+	private ArrayLitExpr(final ParamDecl<IndexType> index, final Expr<ElemType> elem) {
 		this.index = checkNotNull(index);
 		this.elem = checkNotNull(elem);
+	}
+
+	public static <IndexType extends Type, ElemType extends Type> ArrayLitExpr<IndexType, ElemType> of(
+			final ParamDecl<IndexType> index, final Expr<ElemType> elem) {
+		return new ArrayLitExpr<>(index, elem);
 	}
 
 	public ParamDecl<IndexType> getIndex() {
@@ -70,7 +75,7 @@ public final class ArrayLitExpr<IndexType extends Type, ElemType extends Type>
 		if (this.elem == elem) {
 			return this;
 		} else {
-			return new ArrayLitExpr<>(index, elem);
+			return ArrayLitExpr.of(index, elem);
 		}
 	}
 

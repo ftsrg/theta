@@ -18,6 +18,7 @@ package hu.bme.mit.theta.core.type.arraytype;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 import java.util.List;
 
@@ -43,11 +44,26 @@ public final class ArrayWriteExpr<IndexType extends Type, ElemType extends Type>
 	private final Expr<IndexType> index;
 	private final Expr<ElemType> elem;
 
-	ArrayWriteExpr(final Expr<ArrayType<IndexType, ElemType>> array, final Expr<IndexType> index,
+	private ArrayWriteExpr(final Expr<ArrayType<IndexType, ElemType>> array, final Expr<IndexType> index,
 			final Expr<ElemType> elem) {
 		this.array = checkNotNull(array);
 		this.index = checkNotNull(index);
 		this.elem = checkNotNull(elem);
+	}
+
+	public static <IndexType extends Type, ElemType extends Type> ArrayWriteExpr<IndexType, ElemType> of(
+			final Expr<ArrayType<IndexType, ElemType>> array, final Expr<IndexType> index, final Expr<ElemType> elem) {
+		return new ArrayWriteExpr<>(array, index, elem);
+	}
+
+	public static <IndexType extends Type, ElemType extends Type> ArrayWriteExpr<?, ?> create(final Expr<?> array,
+			final Expr<?> index, final Expr<?> elem) {
+		@SuppressWarnings("unchecked")
+		final ArrayType<IndexType, ElemType> arrayType = (ArrayType<IndexType, ElemType>) array.getType();
+		final Expr<ArrayType<IndexType, ElemType>> newArray = cast(array, arrayType);
+		final Expr<IndexType> newIndex = cast(index, arrayType.getIndexType());
+		final Expr<ElemType> newElem = cast(elem, arrayType.getElemType());
+		return ArrayWriteExpr.of(newArray, newIndex, newElem);
 	}
 
 	public Expr<ArrayType<IndexType, ElemType>> getArray() {
@@ -98,7 +114,7 @@ public final class ArrayWriteExpr<IndexType extends Type, ElemType extends Type>
 		if (this.array == array && this.index == index && elem == this.elem) {
 			return this;
 		} else {
-			return new ArrayWriteExpr<>(array, index, elem);
+			return ArrayWriteExpr.of(array, index, elem);
 		}
 	}
 

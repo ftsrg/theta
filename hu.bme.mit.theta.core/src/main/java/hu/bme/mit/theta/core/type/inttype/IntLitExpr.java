@@ -1,12 +1,12 @@
 /*
  *  Copyright 2017 Budapest University of Technology and Economics
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,8 +32,12 @@ public final class IntLitExpr extends NullaryExpr<IntType> implements LitExpr<In
 
 	private final int value;
 
-	IntLitExpr(final int value) {
+	private IntLitExpr(final int value) {
 		this.value = value;
+	}
+
+	public static IntLitExpr of(final int value) {
+		return new IntLitExpr(value);
 	}
 
 	public int getValue() {
@@ -55,40 +59,40 @@ public final class IntLitExpr extends NullaryExpr<IntType> implements LitExpr<In
 	}
 
 	public IntLitExpr add(final IntLitExpr that) {
-		return new IntLitExpr(this.value + that.value);
+		return IntLitExpr.of(this.value + that.value);
 	}
 
 	public IntLitExpr sub(final IntLitExpr that) {
-		return new IntLitExpr(this.value - that.value);
+		return IntLitExpr.of(this.value - that.value);
 	}
 
 	public IntLitExpr neg() {
-		return new IntLitExpr(-this.value);
+		return IntLitExpr.of(-this.value);
 	}
 
 	public IntLitExpr div(final IntLitExpr that) {
-		return new IntLitExpr(this.value / that.value);
+		return IntLitExpr.of(this.value / that.value);
 	}
 
 	public IntLitExpr mod(final IntLitExpr that) {
 		// Always positive semantics:
-		//  5 mod  3 = 2
-		//  5 mod -3 = 2
-		// -5 mod  3 = 1
+		// 5 mod 3 = 2
+		// 5 mod -3 = 2
+		// -5 mod 3 = 1
 		// -5 mod -3 = 1
 		int result = this.value % that.value;
 		if (result < 0) {
 			result += Math.abs(that.value);
 		}
 		assert result >= 0;
-		return new IntLitExpr(result);
+		return IntLitExpr.of(result);
 	}
 
 	public IntLitExpr rem(final IntLitExpr that) {
 		// Semantics:
-		//  5 rem  3 =  2
-		//  5 rem -3 = -2
-		// -5 rem  3 =  1
+		// 5 rem 3 = 2
+		// 5 rem -3 = -2
+		// -5 rem 3 = 1
 		// -5 rem -3 = -1
 		final int thisAbs = Math.abs(this.value);
 		final int thatAbs = Math.abs(that.value);
@@ -105,9 +109,9 @@ public final class IntLitExpr extends NullaryExpr<IntType> implements LitExpr<In
 			if (result != 0) {
 				result = thatAbs - result;
 			}
-			return new IntLitExpr(result);
+			return IntLitExpr.of(result);
 		} else {
-			return new IntLitExpr(this.value % that.value);
+			return IntLitExpr.of(this.value % that.value);
 		}
 	}
 

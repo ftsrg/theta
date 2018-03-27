@@ -17,6 +17,7 @@ package hu.bme.mit.theta.core.type.arraytype;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 import java.util.List;
 
@@ -40,9 +41,23 @@ public final class ArrayReadExpr<IndexType extends Type, ElemType extends Type> 
 	private final Expr<ArrayType<IndexType, ElemType>> array;
 	private final Expr<IndexType> index;
 
-	ArrayReadExpr(final Expr<ArrayType<IndexType, ElemType>> array, final Expr<IndexType> index) {
+	private ArrayReadExpr(final Expr<ArrayType<IndexType, ElemType>> array, final Expr<IndexType> index) {
 		this.array = checkNotNull(array);
 		this.index = checkNotNull(index);
+	}
+
+	public static <IndexType extends Type, ElemType extends Type> ArrayReadExpr<IndexType, ElemType> of(
+			final Expr<ArrayType<IndexType, ElemType>> array, final Expr<IndexType> index) {
+		return new ArrayReadExpr<>(array, index);
+	}
+
+	public static <IndexType extends Type, ElemType extends Type> ArrayReadExpr<?, ?> create(final Expr<?> array,
+			final Expr<?> index) {
+		@SuppressWarnings("unchecked")
+		final ArrayType<IndexType, ElemType> arrayType = (ArrayType<IndexType, ElemType>) array.getType();
+		final Expr<ArrayType<IndexType, ElemType>> newArray = cast(array, arrayType);
+		final Expr<IndexType> newIndex = cast(index, arrayType.getIndexType());
+		return ArrayReadExpr.of(newArray, newIndex);
 	}
 
 	public Expr<ArrayType<IndexType, ElemType>> getArray() {
@@ -88,7 +103,7 @@ public final class ArrayReadExpr<IndexType extends Type, ElemType extends Type> 
 		if (this.array == array && this.index == index) {
 			return this;
 		} else {
-			return new ArrayReadExpr<>(array, index);
+			return ArrayReadExpr.of(array, index);
 		}
 	}
 
