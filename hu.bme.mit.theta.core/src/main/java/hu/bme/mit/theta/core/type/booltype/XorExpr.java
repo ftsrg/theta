@@ -76,6 +76,18 @@ public class XorExpr extends NeqExpr<BoolType> {
 	}
 
 	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		} else if (obj instanceof XorExpr) {
+			final XorExpr that = (XorExpr) obj;
+			return this.getLeftOp().equals(that.getLeftOp()) && this.getRightOp().equals(that.getRightOp());
+		} else {
+			return false;
+		}
+	}
+
+	@Override
 	protected int getHashSeed() {
 		return HASH_SEED;
 	}
