@@ -23,6 +23,7 @@ import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
@@ -121,14 +122,8 @@ public final class FuncLitExpr<ParamType extends Type, ResultType extends Type>
 
 	@Override
 	public String toString() {
-		final StringBuilder sb = new StringBuilder();
-		sb.append(OPERATOR_LABEL);
-		sb.append('(');
-		sb.append(param);
-		sb.append(" -> ");
-		sb.append(result);
-		sb.append(')');
-		return sb.toString();
+		final String paramString = String.format("(%s %s)", param.getName(), param.getType());
+		return Utils.lispStringBuilder(OPERATOR_LABEL).add(paramString).add(result).toString();
 	}
 
 }

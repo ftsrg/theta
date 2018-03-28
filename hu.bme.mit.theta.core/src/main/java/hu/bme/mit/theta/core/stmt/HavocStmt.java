@@ -24,9 +24,11 @@ import hu.bme.mit.theta.core.type.Type;
 public final class HavocStmt<DeclType extends Type> implements Stmt {
 
 	private static final int HASH_SEED = 929;
-	private volatile int hashCode = 0;
+	private static final String STMT_LABEL = "havoc";
 
 	private final VarDecl<DeclType> varDecl;
+
+	private volatile int hashCode = 0;
 
 	HavocStmt(final VarDecl<DeclType> varDecl) {
 		this.varDecl = checkNotNull(varDecl);
@@ -66,6 +68,6 @@ public final class HavocStmt<DeclType extends Type> implements Stmt {
 
 	@Override
 	public String toString() {
-		return Utils.lispStringBuilder("havoc").add(varDecl.getName()).toString();
+		return Utils.lispStringBuilder(STMT_LABEL).add(varDecl.getName()).toString();
 	}
 }

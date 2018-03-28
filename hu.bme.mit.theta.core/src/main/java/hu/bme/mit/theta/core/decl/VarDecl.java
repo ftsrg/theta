@@ -24,7 +24,7 @@ import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.type.Type;
 
 public final class VarDecl<DeclType extends Type> extends Decl<DeclType> {
-	private static final String DECL_LABEL = "Var";
+	private static final String DECL_LABEL = "var";
 
 	private final Map<Integer, IndexedConstDecl<DeclType>> indexToConst;
 

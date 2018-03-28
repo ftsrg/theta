@@ -25,6 +25,8 @@ import hu.bme.mit.theta.core.type.Type;
 public final class AssignStmt<DeclType extends Type> implements Stmt {
 
 	private static final int HASH_SEED = 409;
+	private static final String STMT_LABEL = "assign";
+
 	private volatile int hashCode = 0;
 
 	private final VarDecl<DeclType> varDecl;
@@ -74,6 +76,6 @@ public final class AssignStmt<DeclType extends Type> implements Stmt {
 
 	@Override
 	public String toString() {
-		return Utils.lispStringBuilder("assign").add(varDecl.getName()).add(expr).toString();
+		return Utils.lispStringBuilder(STMT_LABEL).add(varDecl.getName()).add(expr).toString();
 	}
 }
