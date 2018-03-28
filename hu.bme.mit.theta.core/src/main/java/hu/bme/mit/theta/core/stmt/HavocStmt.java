@@ -30,8 +30,12 @@ public final class HavocStmt<DeclType extends Type> implements Stmt {
 
 	private volatile int hashCode = 0;
 
-	HavocStmt(final VarDecl<DeclType> varDecl) {
+	private HavocStmt(final VarDecl<DeclType> varDecl) {
 		this.varDecl = checkNotNull(varDecl);
+	}
+
+	public static <DeclType extends Type> HavocStmt<DeclType> of(final VarDecl<DeclType> varDecl) {
+		return new HavocStmt<>(varDecl);
 	}
 
 	public VarDecl<DeclType> getVarDecl() {

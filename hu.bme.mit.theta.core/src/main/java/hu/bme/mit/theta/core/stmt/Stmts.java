@@ -30,15 +30,15 @@ public final class Stmts {
 	}
 
 	public static AssumeStmt Assume(final Expr<BoolType> cond) {
-		return new AssumeStmt(cond);
+		return AssumeStmt.of(cond);
 	}
 
 	public static <T extends Type> AssignStmt<T> Assign(final VarDecl<T> lhs, final Expr<T> rhs) {
-		return new AssignStmt<>(lhs, rhs);
+		return AssignStmt.of(lhs, rhs);
 	}
 
 	public static <T extends Type> HavocStmt<T> Havoc(final VarDecl<T> varDecl) {
-		return new HavocStmt<>(varDecl);
+		return HavocStmt.of(varDecl);
 	}
 
 }
