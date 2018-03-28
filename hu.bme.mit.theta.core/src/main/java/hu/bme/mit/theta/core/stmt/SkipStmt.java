@@ -16,8 +16,9 @@
 package hu.bme.mit.theta.core.stmt;
 
 public final class SkipStmt implements Stmt {
+
 	private static final int HASH_CODE = 1310147;
-	private static final String TO_STRING = "skip";
+	private static final String STMT_LABEL = "skip";
 
 	private SkipStmt() {
 	}
@@ -53,7 +54,7 @@ public final class SkipStmt implements Stmt {
 
 	@Override
 	public String toString() {
-		return TO_STRING;
+		return STMT_LABEL;
 	}
 
 }

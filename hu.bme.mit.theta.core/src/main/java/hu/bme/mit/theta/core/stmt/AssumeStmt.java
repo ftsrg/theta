@@ -24,9 +24,11 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 public final class AssumeStmt implements Stmt {
 
 	private static final int HASH_SEED = 547;
-	private volatile int hashCode = 0;
+	private static final String STMT_LABEL = "assume";
 
 	private final Expr<BoolType> cond;
+
+	private volatile int hashCode = 0;
 
 	AssumeStmt(final Expr<BoolType> cond) {
 		this.cond = checkNotNull(cond);
@@ -66,6 +68,6 @@ public final class AssumeStmt implements Stmt {
 
 	@Override
 	public String toString() {
-		return Utils.lispStringBuilder("assume").add(cond).toString();
+		return Utils.lispStringBuilder(STMT_LABEL).add(cond).toString();
 	}
 }

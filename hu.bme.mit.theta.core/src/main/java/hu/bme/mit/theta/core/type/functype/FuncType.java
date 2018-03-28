@@ -17,6 +17,7 @@ package hu.bme.mit.theta.core.type.functype;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.type.Type;
 
 public final class FuncType<ParamType extends Type, ResultType extends Type> implements Type {
@@ -73,14 +74,7 @@ public final class FuncType<ParamType extends Type, ResultType extends Type> imp
 
 	@Override
 	public String toString() {
-		final StringBuilder sb = new StringBuilder();
-		sb.append(TYPE_LABEL);
-		sb.append('(');
-		sb.append(paramType);
-		sb.append(" -> ");
-		sb.append(resultType);
-		sb.append(')');
-		return sb.toString();
+		return Utils.lispStringBuilder(TYPE_LABEL).add(paramType).add(resultType).toString();
 	}
 
 }

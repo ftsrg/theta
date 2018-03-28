@@ -20,10 +20,12 @@ public final class ArrayLitExpr<IndexType extends Type, ElemType extends Type>
 		implements LitExpr<ArrayType<IndexType, ElemType>> {
 
 	private static final int HASH_SEED = 229;
-	private volatile int hashCode;
+	private static final String OPERATOR_LABEL = "array";
 
 	private final ParamDecl<IndexType> index;
 	private final Expr<ElemType> elem;
+
+	private volatile int hashCode;
 
 	private ArrayLitExpr(final ParamDecl<IndexType> index, final Expr<ElemType> elem) {
 		this.index = checkNotNull(index);
@@ -106,7 +108,7 @@ public final class ArrayLitExpr<IndexType extends Type, ElemType extends Type>
 	@Override
 	public String toString() {
 		final String indexString = String.format("(%s %s)", index.getName(), index.getType());
-		return Utils.lispStringBuilder("array").add(indexString).add(elem).toString();
+		return Utils.lispStringBuilder(OPERATOR_LABEL).add(indexString).add(elem).toString();
 	}
 
 }
