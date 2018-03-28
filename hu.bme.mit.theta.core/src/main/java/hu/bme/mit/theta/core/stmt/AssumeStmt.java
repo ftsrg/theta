@@ -16,6 +16,8 @@
 package hu.bme.mit.theta.core.stmt;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
 
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.type.Expr;
@@ -30,8 +32,17 @@ public final class AssumeStmt implements Stmt {
 
 	private volatile int hashCode = 0;
 
-	AssumeStmt(final Expr<BoolType> cond) {
+	private AssumeStmt(final Expr<BoolType> cond) {
 		this.cond = checkNotNull(cond);
+	}
+
+	public static AssumeStmt of(final Expr<BoolType> cond) {
+		return new AssumeStmt(cond);
+	}
+
+	public static AssumeStmt create(final Expr<?> cond) {
+		final Expr<BoolType> newCond = cast(cond, Bool());
+		return AssumeStmt.of(newCond);
 	}
 
 	public Expr<BoolType> getCond() {

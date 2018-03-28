@@ -27,7 +27,7 @@ public final class SkipStmt implements Stmt {
 		static final SkipStmt INSTANCE = new SkipStmt();
 	}
 
-	static SkipStmt getInstance() {
+	public static SkipStmt getInstance() {
 		return LazyHolder.INSTANCE;
 	}
 
