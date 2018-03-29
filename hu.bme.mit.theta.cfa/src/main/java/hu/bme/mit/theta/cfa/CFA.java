@@ -19,6 +19,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
+import static java.lang.String.format;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -28,6 +29,7 @@ import java.util.LinkedList;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.utils.StmtUtils;
@@ -84,6 +86,29 @@ public final class CFA {
 
 	public static Builder builder() {
 		return new Builder();
+	}
+
+	@Override
+	public String toString() {
+		return Utils.lispStringBuilder("process").aligned().addAll(vars).body()
+				.addAll(locs.stream().map(this::locToString)).addAll(edges.stream().map(this::edgeToString)).toString();
+	}
+
+	private String locToString(final Loc loc) {
+		if (initLoc.equals(loc)) {
+			return format("(init %s)", loc.getName());
+		} else if (finalLoc.equals(loc)) {
+			return format("(final %s)", loc.getName());
+		} else if (errorLoc.equals(loc)) {
+			return format("(error %s)", loc.getName());
+		} else {
+			return format("(loc %s)", loc.getName());
+		}
+	}
+
+	private String edgeToString(final Edge edge) {
+		return Utils.lispStringBuilder("edge").add(edge.getSource().getName()).add(edge.getTarget().getName())
+				.add(edge.getStmt()).toString();
 	}
 
 	public static final class Loc {
