@@ -17,13 +17,16 @@ package hu.bme.mit.theta.sts;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
+import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
+import static hu.bme.mit.theta.core.utils.ExprUtils.getConjuncts;
+import static java.lang.String.format;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.AndExpr;
@@ -94,12 +97,10 @@ public final class STS {
 
 	@Override
 	public String toString() {
-		final StringBuilder sb = new StringBuilder("STS [" + System.lineSeparator());
-		sb.append("\tVars:  ").append(vars).append(System.lineSeparator());
-		sb.append("\tInit:  ").append(init).append(System.lineSeparator());
-		sb.append("\tTrans: ").append(trans).append(System.lineSeparator());
-		sb.append("\tProp: ").append(prop).append(System.lineSeparator()).append(']');
-		return sb.toString();
+		return Utils.lispStringBuilder("system").aligned().addAll(vars).body()
+				.addAll(getConjuncts(init).stream().map(e -> format("(init %s)", e)))
+				.addAll(getConjuncts(trans).stream().map(e -> format("(trans %s)", e))).add(format("(prop %s)", prop))
+				.toString();
 	}
 
 	/**
@@ -118,22 +119,18 @@ public final class STS {
 		}
 
 		/**
-		 * Add an initial expression. Multiple initial expressions will be
-		 * joined into a conjunction.
+		 * Add an initial expression. Multiple initial expressions will be joined into a
+		 * conjunction.
 		 */
 		public Builder addInit(final Expr<BoolType> expr) {
 			checkNotNull(expr);
-			if (expr instanceof AndExpr) {
-				((AndExpr) expr).getOps().forEach(this::addInit);
-			} else {
-				init.add(expr);
-			}
+			init.addAll(getConjuncts(expr));
 			return this;
 		}
 
 		/**
-		 * Add an invariant expression. An invariant is added both to the
-		 * initial and transition expressions.
+		 * Add an invariant expression. An invariant is added both to the initial and
+		 * transition expressions.
 		 */
 		public Builder addInvar(final Expr<BoolType> expr) {
 			checkNotNull(expr);
@@ -148,22 +145,17 @@ public final class STS {
 		}
 
 		/**
-		 * Add a transition expression. Multiple transition expressions will be
-		 * joined into a conjunction.
+		 * Add a transition expression. Multiple transition expressions will be joined
+		 * into a conjunction.
 		 */
 		public Builder addTrans(final Expr<BoolType> expr) {
 			checkNotNull(expr);
-			if (expr instanceof AndExpr) {
-				((AndExpr) expr).getOps().forEach(this::addTrans);
-			} else {
-				trans.add(expr);
-			}
+			trans.addAll(getConjuncts(expr));
 			return this;
 		}
 
 		/**
-		 * Set the property expression. Previously set property will be
-		 * overridden.
+		 * Set the property expression. Previously set property will be overridden.
 		 */
 		public Builder setProp(final Expr<BoolType> expr) {
 			this.prop = checkNotNull(expr);
@@ -171,8 +163,8 @@ public final class STS {
 		}
 
 		/**
-		 * Build an STS. The builder can be modified after building to get new
-		 * STSs, the already built ones will not be affected.
+		 * Build an STS. The builder can be modified after building to get new STSs, the
+		 * already built ones will not be affected.
 		 */
 		public STS build() {
 			checkNotNull(prop, "No property is given.");
