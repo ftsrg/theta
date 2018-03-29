@@ -15,7 +15,6 @@
  */
 package hu.bme.mit.theta.core.type;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 
@@ -35,7 +34,6 @@ public abstract class MultiaryExpr<OpType extends Type, ExprType extends Type> i
 	protected MultiaryExpr(final Iterable<? extends Expr<OpType>> ops) {
 		checkNotNull(ops);
 		this.ops = ImmutableList.copyOf(ops);
-		checkArgument(!this.ops.isEmpty());
 	}
 
 	@Override
@@ -51,9 +49,14 @@ public abstract class MultiaryExpr<OpType extends Type, ExprType extends Type> i
 	@Override
 	public final MultiaryExpr<OpType, ExprType> withOps(final List<? extends Expr<?>> ops) {
 		checkNotNull(ops);
-		final OpType opType = getOps().get(0).getType();
-		final List<Expr<OpType>> newOps = ops.stream().map(op -> TypeUtils.cast(op, opType)).collect(toImmutableList());
-		return with(newOps);
+		if (ops.isEmpty()) {
+			return with(ImmutableList.of());
+		} else {
+			final OpType opType = getOps().get(0).getType();
+			final List<Expr<OpType>> newOps = ops.stream().map(op -> TypeUtils.cast(op, opType))
+					.collect(toImmutableList());
+			return with(newOps);
+		}
 	}
 
 	@Override
