@@ -36,9 +36,6 @@ import hu.bme.mit.theta.solver.SolverStatus;
 import hu.bme.mit.theta.solver.Stack;
 import hu.bme.mit.theta.solver.impl.ItpPatternImpl;
 import hu.bme.mit.theta.solver.impl.StackImpl;
-import hu.bme.mit.theta.solver.z3.transform.Z3SymbolTable;
-import hu.bme.mit.theta.solver.z3.transform.Z3TermTransformer;
-import hu.bme.mit.theta.solver.z3.transform.Z3TransformationManager;
 
 final class Z3ItpSolver implements ItpSolver {
 
