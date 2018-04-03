@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.solver.z3.transform;
+package hu.bme.mit.theta.solver.z3;
 
 import static hu.bme.mit.theta.core.decl.Decls.Param;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
@@ -70,7 +70,7 @@ import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.type.rattype.RatType;
 import hu.bme.mit.theta.core.utils.TypeUtils;
 
-public final class Z3TermTransformer {
+final class Z3TermTransformer {
 	private static final String PARAM_NAME_FORMAT = "_p%d";
 
 	private final Z3SymbolTable symbolTable;

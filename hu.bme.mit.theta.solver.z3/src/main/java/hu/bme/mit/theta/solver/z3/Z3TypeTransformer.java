@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package hu.bme.mit.theta.solver.z3.transform;
+package hu.bme.mit.theta.solver.z3;
 
 import com.microsoft.z3.Context;
 
@@ -23,7 +23,7 @@ import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.core.type.rattype.RatType;
 
-class Z3TypeTransformer {
+final class Z3TypeTransformer {
 
 	@SuppressWarnings("unused")
 	private final Z3TransformationManager transformer;
