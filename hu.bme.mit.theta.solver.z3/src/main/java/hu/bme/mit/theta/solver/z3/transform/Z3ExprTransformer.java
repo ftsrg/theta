@@ -62,6 +62,7 @@ import hu.bme.mit.theta.core.type.inttype.IntMulExpr;
 import hu.bme.mit.theta.core.type.inttype.IntNegExpr;
 import hu.bme.mit.theta.core.type.inttype.IntNeqExpr;
 import hu.bme.mit.theta.core.type.inttype.IntSubExpr;
+import hu.bme.mit.theta.core.type.inttype.IntToRatExpr;
 import hu.bme.mit.theta.core.type.inttype.ModExpr;
 import hu.bme.mit.theta.core.type.inttype.RemExpr;
 import hu.bme.mit.theta.core.type.rattype.RatAddExpr;
@@ -180,6 +181,8 @@ final class Z3ExprTransformer {
 				.addCase(IntLeqExpr.class, this::transformIntLeq)
 
 				.addCase(IntLtExpr.class, this::transformIntLt)
+
+				.addCase(IntToRatExpr.class, this::transformIntToRat)
 
 				// Functions
 
@@ -476,6 +479,11 @@ final class Z3ExprTransformer {
 		final com.microsoft.z3.ArithExpr leftOpTerm = (com.microsoft.z3.ArithExpr) toTerm(expr.getLeftOp());
 		final com.microsoft.z3.ArithExpr rightOpTerm = (com.microsoft.z3.ArithExpr) toTerm(expr.getRightOp());
 		return context.mkLt(leftOpTerm, rightOpTerm);
+	}
+
+	private com.microsoft.z3.Expr transformIntToRat(final IntToRatExpr expr) {
+		final com.microsoft.z3.IntExpr opTerm = (com.microsoft.z3.IntExpr) toTerm(expr.getOp());
+		return context.mkInt2Real(opTerm);
 	}
 
 	/*
