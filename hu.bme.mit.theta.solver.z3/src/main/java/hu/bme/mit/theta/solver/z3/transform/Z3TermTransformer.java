@@ -39,6 +39,7 @@ import static hu.bme.mit.theta.core.type.inttype.IntExprs.Add;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Div;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Mul;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.ToRat;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Add;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Mul;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
@@ -97,6 +98,7 @@ public final class Z3TermTransformer {
 		environment.put("ite", this::transformIte);
 		environment.put("select", this::transformRead);
 		environment.put("store", this::transformWrite);
+		environment.put("to_real", this::transformToReal);
 	}
 
 	public Expr<?> toExpr(final com.microsoft.z3.Expr term) {
@@ -341,6 +343,13 @@ public final class Z3TermTransformer {
 		final Expr<I> index = TypeUtils.cast(transform(indexTerm, vars), array.getType().getIndexType());
 		final Expr<E> elem = TypeUtils.cast(transform(elemTerm, vars), array.getType().getElemType());
 		return Write(array, index, elem);
+	}
+
+	private <I extends Type, E extends Type> Expr<?> transformToReal(final com.microsoft.z3.Expr term,
+			final List<Decl<?>> vars) {
+		final com.microsoft.z3.Expr opTerm = term.getArgs()[0];
+		final Expr<IntType> op = TypeUtils.cast(transform(opTerm, vars), Int());
+		return ToRat(op);
 	}
 
 	////
