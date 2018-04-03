@@ -64,6 +64,18 @@ public final class IntToRatExpr extends CastExpr<IntType, RatType> {
 	}
 
 	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		} else if (obj instanceof IntToRatExpr) {
+			final IntToRatExpr that = (IntToRatExpr) obj;
+			return this.getOp().equals(that.getOp());
+		} else {
+			return false;
+		}
+	}
+
+	@Override
 	protected int getHashSeed() {
 		return HASH_SEED;
 	}
