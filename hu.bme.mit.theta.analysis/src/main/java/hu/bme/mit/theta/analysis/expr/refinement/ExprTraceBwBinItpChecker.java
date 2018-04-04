@@ -63,7 +63,8 @@ public final class ExprTraceBwBinItpChecker implements ExprTraceChecker<ItpRefut
 		final int stateCount = trace.getStates().size();
 
 		final List<VarIndexing> indexings = new ArrayList<>(stateCount);
-		indexings.add(VarIndexing.all(10 * stateCount));
+		// TODO: this could be done better
+		indexings.add(VarIndexing.all(Integer.MAX_VALUE));
 
 		solver.push();
 
