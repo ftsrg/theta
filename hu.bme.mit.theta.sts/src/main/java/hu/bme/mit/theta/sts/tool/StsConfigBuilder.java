@@ -43,6 +43,7 @@ import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.ExprStatePredicate;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceBwBinItpChecker;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceChecker;
+import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceCombinedCheckers;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceFwBinItpChecker;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceSeqItpChecker;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceUnsatCoreChecker;
@@ -79,7 +80,7 @@ public final class StsConfigBuilder {
 	};
 
 	public enum Refinement {
-		FW_BIN_ITP, BW_BIN_ITP, SEQ_ITP, UNSAT_CORE
+		FW_BIN_ITP, BW_BIN_ITP, SEQ_ITP, UNSAT_CORE, MIN_PRUNE, MAX_PRUNE
 	};
 
 	public enum Search {
@@ -195,6 +196,16 @@ public final class StsConfigBuilder {
 				refiner = SingleExprTraceRefiner.create(ExprTraceUnsatCoreChecker.create(init, negProp, solver),
 						JoiningPrecRefiner.create(new VarsRefToExplPrec()), logger);
 				break;
+			case MIN_PRUNE:
+				refiner = SingleExprTraceRefiner.create(
+						ExprTraceCombinedCheckers.createBwFwMinPrune(init, negProp, solver),
+						JoiningPrecRefiner.create(new ItpRefToExplPrec()), logger);
+				break;
+			case MAX_PRUNE:
+				refiner = SingleExprTraceRefiner.create(
+						ExprTraceCombinedCheckers.createBwFwMaxPrune(init, negProp, solver),
+						JoiningPrecRefiner.create(new ItpRefToExplPrec()), logger);
+				break;
 			default:
 				throw new UnsupportedOperationException(
 						domain + " domain does not support " + refinement + " refinement.");
@@ -238,6 +249,12 @@ public final class StsConfigBuilder {
 				break;
 			case SEQ_ITP:
 				exprTraceChecker = ExprTraceSeqItpChecker.create(init, negProp, solver);
+				break;
+			case MIN_PRUNE:
+				exprTraceChecker = ExprTraceCombinedCheckers.createBwFwMinPrune(init, negProp, solver);
+				break;
+			case MAX_PRUNE:
+				exprTraceChecker = ExprTraceCombinedCheckers.createBwFwMaxPrune(init, negProp, solver);
 				break;
 			default:
 				throw new UnsupportedOperationException(
