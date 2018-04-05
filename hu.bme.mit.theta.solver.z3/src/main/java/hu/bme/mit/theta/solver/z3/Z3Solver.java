@@ -18,6 +18,7 @@ package hu.bme.mit.theta.solver.z3;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -35,7 +36,9 @@ import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.arraytype.ArrayType;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverStatus;
 import hu.bme.mit.theta.solver.Stack;
@@ -249,19 +252,46 @@ final class Z3Solver implements Solver {
 
 			LitExpr<?> val = constToExpr.get(constDecl);
 			if (val == null) {
-				final FuncDecl funcDecl = transformationManager.toSymbol(constDecl);
-				final com.microsoft.z3.Expr term = z3Model.getConstInterp(funcDecl);
-				if (term != null) {
-					val = (LitExpr<?>) termTransformer.toExpr(term);
+				val = extractLiteral(constDecl);
+				if (val != null) {
 					constToExpr.put(constDecl, val);
-				} else {
-					return Optional.empty();
 				}
 			}
 
 			@SuppressWarnings("unchecked")
 			final LitExpr<DeclType> tVal = (LitExpr<DeclType>) val;
-			return Optional.of(tVal);
+			return Optional.ofNullable(tVal);
+		}
+
+		private <DeclType extends Type> LitExpr<?> extractLiteral(final ConstDecl<DeclType> decl) {
+			final FuncDecl funcDecl = transformationManager.toSymbol(decl);
+			final Type type = decl.getType();
+			if (type instanceof FuncType) {
+				return extractFuncLiteral(funcDecl);
+			} else if (type instanceof ArrayType) {
+				return extractArrayLiteral(funcDecl);
+			} else {
+				return extractConstLiteral(funcDecl);
+			}
+		}
+
+		private LitExpr<?> extractFuncLiteral(final FuncDecl funcDecl) {
+			final Expr<?> expr = termTransformer.toFuncLitExpr(funcDecl, z3Model, new ArrayList<>());
+			return (LitExpr<?>) expr;
+		}
+
+		private LitExpr<?> extractArrayLiteral(final FuncDecl funcDecl) {
+			// TODO Auto-generated method stub
+			throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		}
+
+		private LitExpr<?> extractConstLiteral(final FuncDecl funcDecl) {
+			final com.microsoft.z3.Expr term = z3Model.getConstInterp(funcDecl);
+			if (term == null) {
+				return null;
+			} else {
+				return (LitExpr<?>) termTransformer.toExpr(term);
+			}
 		}
 
 		@Override

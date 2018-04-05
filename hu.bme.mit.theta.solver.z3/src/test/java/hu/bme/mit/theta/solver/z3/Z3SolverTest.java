@@ -15,19 +15,35 @@
  */
 package hu.bme.mit.theta.solver.z3;
 
+import static com.google.common.collect.ImmutableList.of;
 import static hu.bme.mit.theta.core.decl.Decls.Const;
+import static hu.bme.mit.theta.core.decl.Decls.Param;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Forall;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Imply;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
+import static hu.bme.mit.theta.core.type.functype.FuncExprs.App;
+import static hu.bme.mit.theta.core.type.functype.FuncExprs.Func;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Geq;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Leq;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+
+import java.util.Optional;
 
 import org.junit.Test;
 
 import hu.bme.mit.theta.core.decl.ConstDecl;
+import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.functype.FuncType;
+import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverStatus;
 
@@ -52,6 +68,29 @@ public final class Z3SolverTest {
 		assertNotNull(model);
 
 		solver.pop();
+	}
+
+	@Test
+	public void testFunc() {
+		// Arrange
+		final Solver solver = Z3SolverFactory.getInstace().createSolver();
+		final ConstDecl<FuncType<IntType, IntType>> ca = Const("a", Func(Int(), Int()));
+		final Expr<FuncType<IntType, IntType>> a = ca.getRef();
+		final ParamDecl<IntType> px = Param("x", Int());
+		final Expr<IntType> x = px.getRef();
+
+		solver.add(Forall(of(px), Imply(Leq(x, Int(0)), Eq(App(a, x), Int(0)))));
+		solver.add(Forall(of(px), Imply(Geq(x, Int(1)), Eq(App(a, x), Int(1)))));
+
+		// Act
+		final SolverStatus status = solver.check();
+		assertTrue(status.isSat());
+		final Valuation model = solver.getModel();
+		final Optional<LitExpr<FuncType<IntType, IntType>>> optVal = model.eval(ca);
+		final Expr<FuncType<IntType, IntType>> val = optVal.get();
+
+		// Assert
+		assertTrue(val.getType().equals(ca.getType()));
 	}
 
 }
