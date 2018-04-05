@@ -16,60 +16,59 @@
 package hu.bme.mit.theta.solver.z3;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.collect.ImmutableList.toImmutableList;
 import static hu.bme.mit.theta.common.Utils.head;
 import static hu.bme.mit.theta.common.Utils.tail;
 import static hu.bme.mit.theta.core.decl.Decls.Param;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Geq;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Gt;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Leq;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Lt;
-import static hu.bme.mit.theta.core.type.anytype.Exprs.Ite;
-import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Read;
-import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Write;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Exists;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Forall;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Iff;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Imply;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
 import static hu.bme.mit.theta.core.type.functype.FuncExprs.App;
 import static hu.bme.mit.theta.core.type.functype.FuncExprs.Func;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Add;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Div;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Mul;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.ToRat;
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Add;
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Mul;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 import static java.lang.String.format;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BinaryOperator;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.function.UnaryOperator;
+import java.util.stream.Stream;
 
 import com.google.common.collect.ImmutableList;
 
+import hu.bme.mit.theta.common.TernaryOperator;
 import hu.bme.mit.theta.common.TriFunction;
 import hu.bme.mit.theta.common.Tuple2;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.abstracttype.AddExpr;
 import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
+import hu.bme.mit.theta.core.type.abstracttype.GeqExpr;
+import hu.bme.mit.theta.core.type.abstracttype.GtExpr;
+import hu.bme.mit.theta.core.type.abstracttype.LeqExpr;
+import hu.bme.mit.theta.core.type.abstracttype.LtExpr;
+import hu.bme.mit.theta.core.type.abstracttype.MulExpr;
 import hu.bme.mit.theta.core.type.anytype.IteExpr;
-import hu.bme.mit.theta.core.type.arraytype.ArrayType;
+import hu.bme.mit.theta.core.type.arraytype.ArrayReadExpr;
+import hu.bme.mit.theta.core.type.arraytype.ArrayWriteExpr;
+import hu.bme.mit.theta.core.type.booltype.AndExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.booltype.FalseExpr;
+import hu.bme.mit.theta.core.type.booltype.IffExpr;
+import hu.bme.mit.theta.core.type.booltype.ImplyExpr;
+import hu.bme.mit.theta.core.type.booltype.NotExpr;
+import hu.bme.mit.theta.core.type.booltype.OrExpr;
+import hu.bme.mit.theta.core.type.booltype.TrueExpr;
 import hu.bme.mit.theta.core.type.functype.FuncType;
-import hu.bme.mit.theta.core.type.inttype.IntType;
-import hu.bme.mit.theta.core.type.rattype.RatType;
+import hu.bme.mit.theta.core.type.inttype.IntDivExpr;
+import hu.bme.mit.theta.core.type.inttype.IntToRatExpr;
 import hu.bme.mit.theta.core.utils.TypeUtils;
 
 final class Z3TermTransformer {
@@ -82,25 +81,25 @@ final class Z3TermTransformer {
 		this.symbolTable = symbolTable;
 
 		environment = new HashMap<>();
-		environment.put("true", this::transformTrue);
-		environment.put("false", this::transformFalse);
-		environment.put("not", this::transformNot);
-		environment.put("or", this::transformOr);
-		environment.put("and", this::transformAnd);
-		environment.put("=>", this::transformImply);
-		environment.put("iff", this::transformIff);
-		environment.put("=", this::transformEq);
-		environment.put("<=", this::transformLeq);
-		environment.put("<", this::transformLt);
-		environment.put(">=", this::transformGeq);
-		environment.put(">", this::transformGt);
-		environment.put("+", this::transformAdd);
-		environment.put("*", this::transformMul);
-		environment.put("div", this::transformIntDiv);
-		environment.put("if", this::transformIte);
-		environment.put("select", this::transformRead);
-		environment.put("store", this::transformWrite);
-		environment.put("to_real", this::transformToReal);
+		environment.put("true", exprNullaryOperator(TrueExpr::getInstance));
+		environment.put("false", exprNullaryOperator(FalseExpr::getInstance));
+		environment.put("not", exprUnaryOperator(NotExpr::create));
+		environment.put("or", exprMultiaryOperator(OrExpr::create));
+		environment.put("and", exprMultiaryOperator(AndExpr::create));
+		environment.put("=>", exprBinaryOperator(ImplyExpr::create));
+		environment.put("iff", exprBinaryOperator(IffExpr::create));
+		environment.put("=", exprBinaryOperator(EqExpr::create2));
+		environment.put("<=", exprBinaryOperator(LeqExpr::create2));
+		environment.put("<", exprBinaryOperator(LtExpr::create2));
+		environment.put(">=", exprBinaryOperator(GeqExpr::create2));
+		environment.put(">", exprBinaryOperator(GtExpr::create2));
+		environment.put("+", exprMultiaryOperator(AddExpr::create2));
+		environment.put("*", exprMultiaryOperator(MulExpr::create2));
+		environment.put("div", exprBinaryOperator(IntDivExpr::create));
+		environment.put("if", exprTernaryOperator(IteExpr::create));
+		environment.put("select", exprBinaryOperator(ArrayReadExpr::create));
+		environment.put("store", exprTernaryOperator(ArrayWriteExpr::create));
+		environment.put("to_real", exprUnaryOperator(IntToRatExpr::create));
 	}
 
 	public Expr<?> toExpr(final com.microsoft.z3.Expr term) {
@@ -142,15 +141,6 @@ final class Z3TermTransformer {
 		}
 	}
 
-	private <T extends Type> List<Expr<T>> transformAll(final com.microsoft.z3.Expr[] terms,
-			final com.microsoft.z3.Model model, final List<Decl<?>> vars, final T type) {
-		final List<Expr<T>> result = new LinkedList<>();
-		for (final com.microsoft.z3.Expr term : terms) {
-			result.add(TypeUtils.cast(transform(term, model, vars), type));
-		}
-		return result;
-	}
-
 	////
 
 	private Expr<?> transformIntLit(final com.microsoft.z3.Expr term) {
@@ -189,11 +179,11 @@ final class Z3TermTransformer {
 			final com.microsoft.z3.Model model, final List<Decl<?>> vars) {
 		checkArgument(funcInterp.getArity() == 1);
 		final ParamDecl<?> paramDecl = (ParamDecl<?>) vars.get(vars.size() - 1);
-		final Expr<?> op = createFuncLitBody(paramDecl, funcInterp, model, vars);
+		final Expr<?> op = createFuncLitExprBody(paramDecl, funcInterp, model, vars);
 		return Func(paramDecl, op);
 	}
 
-	private Expr<?> createFuncLitBody(final ParamDecl<?> paramDecl, final com.microsoft.z3.FuncInterp funcInterp,
+	private Expr<?> createFuncLitExprBody(final ParamDecl<?> paramDecl, final com.microsoft.z3.FuncInterp funcInterp,
 			final com.microsoft.z3.Model model, final List<Decl<?>> vars) {
 		final List<Tuple2<Expr<?>, Expr<?>>> entryExprs = createEntryExprs(funcInterp, model, vars);
 		final Expr<?> elseExpr = transform(funcInterp.getElse(), model, vars);
@@ -257,180 +247,6 @@ final class Z3TermTransformer {
 			result = App(func, arg);
 		}
 		return result;
-	}
-
-	////////
-
-	private Expr<?> transformTrue(final com.microsoft.z3.Expr term, final com.microsoft.z3.Model model,
-			final List<Decl<?>> vars) {
-		return True();
-	}
-
-	private Expr<?> transformFalse(final com.microsoft.z3.Expr term, final com.microsoft.z3.Model model,
-			final List<Decl<?>> vars) {
-		return False();
-	}
-
-	private Expr<?> transformNot(final com.microsoft.z3.Expr term, final com.microsoft.z3.Model model,
-			final List<Decl<?>> vars) {
-		final com.microsoft.z3.Expr opTerm = term.getArgs()[0];
-		final Expr<BoolType> op = TypeUtils.cast(transform(opTerm, model, vars), Bool());
-		return Not(op);
-	}
-
-	private Expr<?> transformOr(final com.microsoft.z3.Expr term, final com.microsoft.z3.Model model,
-			final List<Decl<?>> vars) {
-		final com.microsoft.z3.Expr[] opTerms = term.getArgs();
-		final List<Expr<BoolType>> ops = transformAll(opTerms, model, vars, Bool());
-		return Or(ops);
-	}
-
-	private Expr<?> transformAnd(final com.microsoft.z3.Expr term, final com.microsoft.z3.Model model,
-			final List<Decl<?>> vars) {
-		final com.microsoft.z3.Expr[] opTerms = term.getArgs();
-		final List<Expr<BoolType>> ops = transformAll(opTerms, model, vars, Bool());
-		return And(ops);
-	}
-
-	private Expr<?> transformImply(final com.microsoft.z3.Expr term, final com.microsoft.z3.Model model,
-			final List<Decl<?>> vars) {
-		final com.microsoft.z3.Expr leftOpTerm = term.getArgs()[0];
-		final com.microsoft.z3.Expr rightOpTerm = term.getArgs()[1];
-		final Expr<BoolType> leftOp = TypeUtils.cast(transform(leftOpTerm, model, vars), Bool());
-		final Expr<BoolType> rightOp = TypeUtils.cast(transform(rightOpTerm, model, vars), Bool());
-		return Imply(leftOp, rightOp);
-	}
-
-	private Expr<?> transformIff(final com.microsoft.z3.Expr term, final com.microsoft.z3.Model model,
-			final List<Decl<?>> vars) {
-		final com.microsoft.z3.Expr leftOpTerm = term.getArgs()[0];
-		final com.microsoft.z3.Expr rightOpTerm = term.getArgs()[1];
-		final Expr<BoolType> leftOp = TypeUtils.cast(transform(leftOpTerm, model, vars), Bool());
-		final Expr<BoolType> rightOp = TypeUtils.cast(transform(rightOpTerm, model, vars), Bool());
-		return Iff(leftOp, rightOp);
-	}
-
-	private Expr<?> transformEq(final com.microsoft.z3.Expr term, final com.microsoft.z3.Model model,
-			final List<Decl<?>> vars) {
-		final com.microsoft.z3.Expr leftOpTerm = term.getArgs()[0];
-		final com.microsoft.z3.Expr rightOpTerm = term.getArgs()[1];
-		final Expr<?> leftOp = transform(leftOpTerm, model, vars);
-		final Expr<?> rightOp = transform(rightOpTerm, model, vars);
-		return Eq(leftOp, rightOp);
-	}
-
-	private Expr<?> transformLeq(final com.microsoft.z3.Expr term, final com.microsoft.z3.Model model,
-			final List<Decl<?>> vars) {
-		final com.microsoft.z3.Expr leftOpTerm = term.getArgs()[0];
-		final com.microsoft.z3.Expr rightOpTerm = term.getArgs()[1];
-		final Expr<?> leftOp = transform(leftOpTerm, model, vars);
-		final Expr<?> rightOp = transform(rightOpTerm, model, vars);
-		return Leq(leftOp, rightOp);
-	}
-
-	private Expr<?> transformLt(final com.microsoft.z3.Expr term, final com.microsoft.z3.Model model,
-			final List<Decl<?>> vars) {
-		final com.microsoft.z3.Expr leftOpTerm = term.getArgs()[0];
-		final com.microsoft.z3.Expr rightOpTerm = term.getArgs()[1];
-		final Expr<?> leftOp = transform(leftOpTerm, model, vars);
-		final Expr<?> rightOp = transform(rightOpTerm, model, vars);
-		return Lt(leftOp, rightOp);
-	}
-
-	private Expr<?> transformGeq(final com.microsoft.z3.Expr term, final com.microsoft.z3.Model model,
-			final List<Decl<?>> vars) {
-		final com.microsoft.z3.Expr leftOpTerm = term.getArgs()[0];
-		final com.microsoft.z3.Expr rightOpTerm = term.getArgs()[1];
-		final Expr<?> leftOp = transform(leftOpTerm, model, vars);
-		final Expr<?> rightOp = transform(rightOpTerm, model, vars);
-		return Geq(leftOp, rightOp);
-	}
-
-	private Expr<?> transformGt(final com.microsoft.z3.Expr term, final com.microsoft.z3.Model model,
-			final List<Decl<?>> vars) {
-		final com.microsoft.z3.Expr leftOpTerm = term.getArgs()[0];
-		final com.microsoft.z3.Expr rightOpTerm = term.getArgs()[1];
-		final Expr<?> leftOp = transform(leftOpTerm, model, vars);
-		final Expr<?> rightOp = transform(rightOpTerm, model, vars);
-		return Gt(leftOp, rightOp);
-	}
-
-	private Expr<?> transformAdd(final com.microsoft.z3.Expr term, final com.microsoft.z3.Model model,
-			final List<Decl<?>> vars) {
-		final com.microsoft.z3.Expr[] opTerms = term.getArgs();
-		if (term instanceof com.microsoft.z3.IntExpr) {
-			final List<Expr<IntType>> ops = transformAll(opTerms, model, vars, Int());
-			return Add(ops);
-		} else if (term instanceof com.microsoft.z3.ArithExpr) {
-			final List<Expr<RatType>> ops = transformAll(opTerms, model, vars, Rat());
-			return Add(ops);
-		} else {
-			throw new UnsupportedOperationException();
-		}
-	}
-
-	private Expr<?> transformMul(final com.microsoft.z3.Expr term, final com.microsoft.z3.Model model,
-			final List<Decl<?>> vars) {
-		final com.microsoft.z3.Expr[] opTerms = term.getArgs();
-		if (term instanceof com.microsoft.z3.IntExpr) {
-			final List<Expr<IntType>> ops = transformAll(opTerms, model, vars, Int());
-			return Mul(ops);
-		} else if (term instanceof com.microsoft.z3.ArithExpr) {
-			final List<Expr<RatType>> ops = transformAll(opTerms, model, vars, Rat());
-			return Mul(ops);
-		} else {
-			throw new UnsupportedOperationException();
-		}
-	}
-
-	private Expr<?> transformIntDiv(final com.microsoft.z3.Expr term, final com.microsoft.z3.Model model,
-			final List<Decl<?>> vars) {
-		final com.microsoft.z3.Expr leftOpTerm = term.getArgs()[0];
-		final com.microsoft.z3.Expr rightOpTerm = term.getArgs()[1];
-		final Expr<IntType> leftOp = TypeUtils.cast(transform(leftOpTerm, model, vars), Int());
-		final Expr<IntType> rightOp = TypeUtils.cast(transform(rightOpTerm, model, vars), Int());
-		return Div(leftOp, rightOp);
-	}
-
-	private <T extends Type> Expr<?> transformIte(final com.microsoft.z3.Expr term, final com.microsoft.z3.Model model,
-			final List<Decl<?>> vars) {
-		final com.microsoft.z3.Expr condTerm = term.getArgs()[0];
-		final com.microsoft.z3.Expr thenTerm = term.getArgs()[1];
-		final com.microsoft.z3.Expr elzeTerm = term.getArgs()[2];
-		final Expr<BoolType> cond = TypeUtils.cast(transform(condTerm, model, vars), Bool());
-		@SuppressWarnings("unchecked")
-		final Expr<T> then = (Expr<T>) transform(thenTerm, model, vars);
-		final Expr<T> elze = TypeUtils.cast(transform(elzeTerm, model, vars), then.getType());
-		return Ite(cond, then, elze);
-	}
-
-	private <I extends Type, E extends Type> Expr<?> transformRead(final com.microsoft.z3.Expr term,
-			final com.microsoft.z3.Model model, final List<Decl<?>> vars) {
-		final com.microsoft.z3.Expr arrayTerm = term.getArgs()[0];
-		final com.microsoft.z3.Expr indexTerm = term.getArgs()[1];
-		@SuppressWarnings("unchecked")
-		final Expr<ArrayType<I, E>> array = (Expr<ArrayType<I, E>>) transform(arrayTerm, model, vars);
-		final Expr<I> index = TypeUtils.cast(transform(indexTerm, model, vars), array.getType().getIndexType());
-		return Read(array, index);
-	}
-
-	private <I extends Type, E extends Type> Expr<?> transformWrite(final com.microsoft.z3.Expr term,
-			final com.microsoft.z3.Model model, final List<Decl<?>> vars) {
-		final com.microsoft.z3.Expr arrayTerm = term.getArgs()[0];
-		final com.microsoft.z3.Expr indexTerm = term.getArgs()[1];
-		final com.microsoft.z3.Expr elemTerm = term.getArgs()[2];
-		@SuppressWarnings("unchecked")
-		final Expr<ArrayType<I, E>> array = (Expr<ArrayType<I, E>>) transform(arrayTerm, model, vars);
-		final Expr<I> index = TypeUtils.cast(transform(indexTerm, model, vars), array.getType().getIndexType());
-		final Expr<E> elem = TypeUtils.cast(transform(elemTerm, model, vars), array.getType().getElemType());
-		return Write(array, index, elem);
-	}
-
-	private <I extends Type, E extends Type> Expr<?> transformToReal(final com.microsoft.z3.Expr term,
-			final com.microsoft.z3.Model model, final List<Decl<?>> vars) {
-		final com.microsoft.z3.Expr opTerm = term.getArgs()[0];
-		final Expr<IntType> op = TypeUtils.cast(transform(opTerm, model, vars), Int());
-		return ToRat(op);
 	}
 
 	////
@@ -504,6 +320,60 @@ final class Z3TermTransformer {
 	private Expr<?> transformUnsupported(final com.microsoft.z3.Expr term, final com.microsoft.z3.Model model,
 			final List<Decl<?>> vars) {
 		throw new UnsupportedOperationException("Unsupported term: " + term);
+	}
+
+	////
+
+	private TriFunction<com.microsoft.z3.Expr, com.microsoft.z3.Model, List<Decl<?>>, Expr<?>> exprNullaryOperator(
+			final Supplier<Expr<?>> function) {
+		return (term, model, vars) -> {
+			final com.microsoft.z3.Expr[] args = term.getArgs();
+			checkArgument(args.length == 0);
+			return function.get();
+		};
+	}
+
+	private TriFunction<com.microsoft.z3.Expr, com.microsoft.z3.Model, List<Decl<?>>, Expr<?>> exprUnaryOperator(
+			final UnaryOperator<Expr<?>> function) {
+		return (term, model, vars) -> {
+			final com.microsoft.z3.Expr[] args = term.getArgs();
+			checkArgument(args.length == 1);
+			final Expr<?> op = transform(args[0], model, vars);
+			return function.apply(op);
+		};
+	}
+
+	private TriFunction<com.microsoft.z3.Expr, com.microsoft.z3.Model, List<Decl<?>>, Expr<?>> exprBinaryOperator(
+			final BinaryOperator<Expr<?>> function) {
+		return (term, model, vars) -> {
+			final com.microsoft.z3.Expr[] args = term.getArgs();
+			checkArgument(args.length == 2);
+			final Expr<?> op1 = transform(args[0], model, vars);
+			final Expr<?> op2 = transform(args[1], model, vars);
+			return function.apply(op1, op2);
+		};
+	}
+
+	private TriFunction<com.microsoft.z3.Expr, com.microsoft.z3.Model, List<Decl<?>>, Expr<?>> exprTernaryOperator(
+			final TernaryOperator<Expr<?>> function) {
+		return (term, model, vars) -> {
+			final com.microsoft.z3.Expr[] args = term.getArgs();
+			checkArgument(args.length == 3);
+			final Expr<?> op1 = transform(args[0], model, vars);
+			final Expr<?> op2 = transform(args[1], model, vars);
+			final Expr<?> op3 = transform(args[1], model, vars);
+			return function.apply(op1, op2, op3);
+		};
+	}
+
+	private TriFunction<com.microsoft.z3.Expr, com.microsoft.z3.Model, List<Decl<?>>, Expr<?>> exprMultiaryOperator(
+			final Function<List<Expr<?>>, Expr<?>> function) {
+		return (term, model, vars) -> {
+			final com.microsoft.z3.Expr[] args = term.getArgs();
+			final List<Expr<?>> ops = Stream.of(args).map(arg -> transform(arg, model, vars))
+					.collect(toImmutableList());
+			return function.apply(ops);
+		};
 	}
 
 }
