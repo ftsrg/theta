@@ -20,6 +20,7 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expr.ExprState;
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
@@ -96,8 +97,7 @@ public final class ItpExplState implements ExprState {
 
 	@Override
 	public String toString() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
+		return Utils.lispStringBuilder(getClass().getSimpleName()).body().add(concrState).add(abstrState).toString();
 	}
 
 }

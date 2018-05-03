@@ -20,6 +20,7 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.zone.ZoneState;
+import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
@@ -110,7 +111,7 @@ public final class ItpZoneState implements ExprState {
 
 	@Override
 	public String toString() {
-		return abstrState.toString();
+		return Utils.lispStringBuilder(getClass().getSimpleName()).body().add(concrState).add(abstrState).toString();
 	}
 
 }
