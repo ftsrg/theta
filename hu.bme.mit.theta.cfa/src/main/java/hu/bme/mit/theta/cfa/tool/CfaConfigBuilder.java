@@ -29,6 +29,7 @@ import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
 import hu.bme.mit.theta.analysis.algorithm.cegar.BasicAbstractor;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Refiner;
+import hu.bme.mit.theta.analysis.algorithm.cegar.abstractor.StopCriterions;
 import hu.bme.mit.theta.analysis.expl.ExplPrec;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.analysis.expl.ExplStmtAnalysis;
@@ -42,6 +43,7 @@ import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceFwBinItpChecker;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceSeqItpChecker;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceUnsatCoreChecker;
 import hu.bme.mit.theta.analysis.expr.refinement.ItpRefutation;
+import hu.bme.mit.theta.analysis.expr.refinement.MultiExprTraceRefiner;
 import hu.bme.mit.theta.analysis.expr.refinement.PrecRefiner;
 import hu.bme.mit.theta.analysis.expr.refinement.Refutation;
 import hu.bme.mit.theta.analysis.expr.refinement.RefutationToPrec;
@@ -84,7 +86,7 @@ public class CfaConfigBuilder {
 	};
 
 	public enum Refinement {
-		FW_BIN_ITP, BW_BIN_ITP, SEQ_ITP, UNSAT_CORE, MIN_PRUNE, MAX_PRUNE
+		FW_BIN_ITP, BW_BIN_ITP, SEQ_ITP, UNSAT_CORE, MIN_PRUNE, MAX_PRUNE, MULTI_SEQ
 	};
 
 	public enum Search {
@@ -269,7 +271,10 @@ public class CfaConfigBuilder {
 					analysis, s -> s.getLoc().equals(cfa.getErrorLoc()), true);
 			final Abstractor<CfaState<ExplState>, CfaAction, CfaPrec<ExplPrec>> abstractor = BasicAbstractor
 					.builder(argBuilder).projection(CfaState::getLoc)
-					.waitlist(PriorityWaitlist.create(search.getComp(cfa))).logger(logger).build();
+					.waitlist(PriorityWaitlist.create(search.getComp(cfa)))
+					.stopCriterion(refinement == Refinement.MULTI_SEQ ? StopCriterions.fullExploration()
+							: StopCriterions.firstCex())
+					.logger(logger).build();
 
 			Refiner<CfaState<ExplState>, CfaAction, CfaPrec<ExplPrec>> refiner = null;
 
@@ -298,6 +303,10 @@ public class CfaConfigBuilder {
 			case MAX_PRUNE:
 				refiner = SingleExprTraceRefiner.create(
 						ExprTraceCombinedCheckers.createBwFwMaxPrune(True(), True(), solver),
+						precGranularity.createRefiner(new ItpRefToExplPrec()), logger);
+				break;
+			case MULTI_SEQ:
+				refiner = MultiExprTraceRefiner.create(ExprTraceSeqItpChecker.create(True(), True(), solver),
 						precGranularity.createRefiner(new ItpRefToExplPrec()), logger);
 				break;
 			default:
@@ -333,7 +342,10 @@ public class CfaConfigBuilder {
 					analysis, s -> s.getLoc().equals(cfa.getErrorLoc()), true);
 			final Abstractor<CfaState<PredState>, CfaAction, CfaPrec<PredPrec>> abstractor = BasicAbstractor
 					.builder(argBuilder).projection(CfaState::getLoc)
-					.waitlist(PriorityWaitlist.create(search.getComp(cfa))).logger(logger).build();
+					.waitlist(PriorityWaitlist.create(search.getComp(cfa)))
+					.stopCriterion(refinement == Refinement.MULTI_SEQ ? StopCriterions.fullExploration()
+							: StopCriterions.firstCex())
+					.logger(logger).build();
 
 			ExprTraceChecker<ItpRefutation> exprTraceChecker = null;
 			switch (refinement) {
@@ -344,6 +356,7 @@ public class CfaConfigBuilder {
 				exprTraceChecker = ExprTraceBwBinItpChecker.create(True(), True(), solver);
 				break;
 			case SEQ_ITP:
+			case MULTI_SEQ:
 				exprTraceChecker = ExprTraceSeqItpChecker.create(True(), True(), solver);
 				break;
 			case MIN_PRUNE:
@@ -357,8 +370,15 @@ public class CfaConfigBuilder {
 						domain + " domain does not support " + refinement + " refinement.");
 			}
 			final ItpRefToPredPrec refToPrec = new ItpRefToPredPrec(predSplit.splitter);
-			final Refiner<CfaState<PredState>, CfaAction, CfaPrec<PredPrec>> refiner = SingleExprTraceRefiner
-					.create(exprTraceChecker, precGranularity.createRefiner(refToPrec), logger);
+			Refiner<CfaState<PredState>, CfaAction, CfaPrec<PredPrec>> refiner;
+
+			if (refinement == Refinement.MULTI_SEQ) {
+				refiner = MultiExprTraceRefiner.create(exprTraceChecker, precGranularity.createRefiner(refToPrec),
+						logger);
+			} else {
+				refiner = SingleExprTraceRefiner.create(exprTraceChecker, precGranularity.createRefiner(refToPrec),
+						logger);
+			}
 
 			final SafetyChecker<CfaState<PredState>, CfaAction, CfaPrec<PredPrec>> checker = CegarChecker
 					.create(abstractor, refiner, logger);
