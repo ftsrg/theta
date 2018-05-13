@@ -32,6 +32,7 @@ import hu.bme.mit.theta.analysis.algorithm.cegar.Abstractor;
 import hu.bme.mit.theta.analysis.algorithm.cegar.BasicAbstractor;
 import hu.bme.mit.theta.analysis.algorithm.cegar.CegarChecker;
 import hu.bme.mit.theta.analysis.algorithm.cegar.Refiner;
+import hu.bme.mit.theta.analysis.algorithm.cegar.abstractor.StopCriterions;
 import hu.bme.mit.theta.analysis.expl.ExplAnalysis;
 import hu.bme.mit.theta.analysis.expl.ExplPrec;
 import hu.bme.mit.theta.analysis.expl.ExplState;
@@ -49,6 +50,7 @@ import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceSeqItpChecker;
 import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceUnsatCoreChecker;
 import hu.bme.mit.theta.analysis.expr.refinement.ItpRefutation;
 import hu.bme.mit.theta.analysis.expr.refinement.JoiningPrecRefiner;
+import hu.bme.mit.theta.analysis.expr.refinement.MultiExprTraceRefiner;
 import hu.bme.mit.theta.analysis.expr.refinement.SingleExprTraceRefiner;
 import hu.bme.mit.theta.analysis.pred.ExprSplitters;
 import hu.bme.mit.theta.analysis.pred.ExprSplitters.ExprSplitter;
@@ -80,7 +82,7 @@ public final class StsConfigBuilder {
 	};
 
 	public enum Refinement {
-		FW_BIN_ITP, BW_BIN_ITP, SEQ_ITP, UNSAT_CORE, MIN_PRUNE, MAX_PRUNE
+		FW_BIN_ITP, BW_BIN_ITP, SEQ_ITP, UNSAT_CORE, MIN_PRUNE, MAX_PRUNE, MULTI_SEQ
 	};
 
 	public enum Search {
@@ -175,7 +177,10 @@ public final class StsConfigBuilder {
 			final ArgBuilder<ExplState, StsAction, ExplPrec> argBuilder = ArgBuilder.create(lts, analysis, target,
 					true);
 			final Abstractor<ExplState, StsAction, ExplPrec> abstractor = BasicAbstractor.builder(argBuilder)
-					.waitlist(PriorityWaitlist.create(search.comparator)).logger(logger).build();
+					.waitlist(PriorityWaitlist.create(search.comparator))
+					.stopCriterion(refinement == Refinement.MULTI_SEQ ? StopCriterions.fullExploration()
+							: StopCriterions.firstCex())
+					.logger(logger).build();
 
 			Refiner<ExplState, StsAction, ExplPrec> refiner = null;
 
@@ -204,6 +209,10 @@ public final class StsConfigBuilder {
 			case MAX_PRUNE:
 				refiner = SingleExprTraceRefiner.create(
 						ExprTraceCombinedCheckers.createBwFwMaxPrune(init, negProp, solver),
+						JoiningPrecRefiner.create(new ItpRefToExplPrec()), logger);
+				break;
+			case MULTI_SEQ:
+				refiner = MultiExprTraceRefiner.create(ExprTraceSeqItpChecker.create(init, negProp, solver),
 						JoiningPrecRefiner.create(new ItpRefToExplPrec()), logger);
 				break;
 			default:
@@ -237,7 +246,10 @@ public final class StsConfigBuilder {
 			final ArgBuilder<PredState, StsAction, PredPrec> argBuilder = ArgBuilder.create(lts, analysis, target,
 					true);
 			final Abstractor<PredState, StsAction, PredPrec> abstractor = BasicAbstractor.builder(argBuilder)
-					.waitlist(PriorityWaitlist.create(search.comparator)).logger(logger).build();
+					.waitlist(PriorityWaitlist.create(search.comparator))
+					.stopCriterion(refinement == Refinement.MULTI_SEQ ? StopCriterions.fullExploration()
+							: StopCriterions.firstCex())
+					.logger(logger).build();
 
 			ExprTraceChecker<ItpRefutation> exprTraceChecker = null;
 			switch (refinement) {
@@ -248,6 +260,7 @@ public final class StsConfigBuilder {
 				exprTraceChecker = ExprTraceBwBinItpChecker.create(init, negProp, solver);
 				break;
 			case SEQ_ITP:
+			case MULTI_SEQ:
 				exprTraceChecker = ExprTraceSeqItpChecker.create(init, negProp, solver);
 				break;
 			case MIN_PRUNE:
@@ -260,8 +273,14 @@ public final class StsConfigBuilder {
 				throw new UnsupportedOperationException(
 						domain + " domain does not support " + refinement + " refinement.");
 			}
-			final Refiner<PredState, StsAction, PredPrec> refiner = SingleExprTraceRefiner.create(exprTraceChecker,
-					JoiningPrecRefiner.create(new ItpRefToPredPrec(predSplit.splitter)), logger);
+			Refiner<PredState, StsAction, PredPrec> refiner;
+			if (refinement == Refinement.MULTI_SEQ) {
+				refiner = MultiExprTraceRefiner.create(exprTraceChecker,
+						JoiningPrecRefiner.create(new ItpRefToPredPrec(predSplit.splitter)), logger);
+			} else {
+				refiner = SingleExprTraceRefiner.create(exprTraceChecker,
+						JoiningPrecRefiner.create(new ItpRefToPredPrec(predSplit.splitter)), logger);
+			}
 
 			final SafetyChecker<PredState, StsAction, PredPrec> checker = CegarChecker.create(abstractor, refiner,
 					logger);
