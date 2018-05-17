@@ -36,7 +36,7 @@ If you want to extend Theta and build your own algorithms and tools, then take l
 
 ## Read more
 
-If you want to read more, take a look at the [list of publications](https://ftsrg.github.io/theta/publications/). A good starting point is our [tool paper](http://home.mit.bme.hu/~hajdua/theta/fmcad2017.pdf) and [slides](https://www.slideshare.net/AkosHajdu/theta-a-framework-for-abstraction-refinementbased-model-checking) presented at FMCAD 2017.
+If you want to read more, take a look at the [list of publications](https://ftsrg.github.io/theta/publications/). A good starting point is our [tool paper](https://ftsrg.github.io/theta/publications/fmcad2017.pdf) and [slides](https://www.slideshare.net/AkosHajdu/theta-a-framework-for-abstraction-refinementbased-model-checking) presented at FMCAD 2017.
 
 To cite Theta, please cite the following paper.
 
