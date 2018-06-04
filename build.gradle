@@ -1,5 +1,5 @@
 plugins {
-  id "com.jfrog.bintray" version "1.7.3"
+  id 'com.jfrog.bintray' version '1.7.3'
 }
 
 allprojects  {
@@ -15,7 +15,7 @@ allprojects  {
   repositories {
     mavenCentral()
     maven {
-      url  "https://dl.bintray.com/ftsrg/maven"
+      url  'https://dl.bintray.com/ftsrg/maven'
     }
   }
 }
@@ -34,7 +34,7 @@ subprojects {
   }
 
   test {
-    String libPath = ".." + File.separator + "lib"
+    String libPath = '..' + File.separator + 'lib'
     environment.put('PATH', libPath)
     environment.put('LD_LIBRARY_PATH', libPath)
   }
