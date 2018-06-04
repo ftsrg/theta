@@ -6,8 +6,8 @@ allprojects  {
   apply plugin: 'java'
   apply plugin: 'jacoco'
 
-  sourceCompatibility = 1.8
-  targetCompatibility = 1.8
+  sourceCompatibility = 10
+  targetCompatibility = 10
 
   group = 'theta'
   version = '0.0.1'
