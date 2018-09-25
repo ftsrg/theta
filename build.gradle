@@ -94,7 +94,7 @@ task jacocoRootReport(type: org.gradle.testing.jacoco.tasks.JacocoReport) {
 }
 
 ext {
-  antlrVersion = '4.5.3'
+  antlrVersion = '4.7.1'
   guavaVersion = '23.6-jre'
   junitVersion = '4.12'
   mockitoVersion = '2.2.11'
