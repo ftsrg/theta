@@ -20,7 +20,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
-import org.antlr.v4.runtime.ANTLRInputStream;
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 
 import hu.bme.mit.theta.xta.XtaSystem;
@@ -39,9 +40,9 @@ public final class XtaDslManager {
 	}
 
 	public static XtaSystem createSystem(final InputStream inputStream) throws IOException {
-		final ANTLRInputStream input = new ANTLRInputStream(inputStream);
+		final CharStream stream = CharStreams.fromStream(inputStream);
 
-		final XtaDslLexer lexer = new XtaDslLexer(input);
+		final XtaDslLexer lexer = new XtaDslLexer(stream);
 		final CommonTokenStream tokens = new CommonTokenStream(lexer);
 		final XtaDslParser parser = new XtaDslParser(tokens);
 
