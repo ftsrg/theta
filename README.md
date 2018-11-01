@@ -51,3 +51,6 @@ To cite Theta, please cite the following paper.
     pages      = {176--179},
 }
 ```
+
+## Acknowledgements
+See the [notice file](NOTICE) for the list of supporters of the Theta project.
