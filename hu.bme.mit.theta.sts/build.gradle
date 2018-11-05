@@ -32,4 +32,3 @@ sourceSets {
 }
 
 createJarTask("theta-sts-cli", 'hu.bme.mit.theta.sts.tool.StsCli', 'theta-sts-cli')
-createJarTask("theta-sts-gui", 'hu.bme.mit.theta.sts.tool.StsGui', 'theta-sts-gui')
