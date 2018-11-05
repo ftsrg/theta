@@ -1,6 +1,17 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.google.gradle:osdetector-gradle-plugin:1.6.0'
+    }
+}
+
 plugins {
   id 'com.jfrog.bintray' version '1.7.3'
 }
+
+apply plugin: 'com.google.osdetector'
 
 allprojects  {
   apply plugin: 'java'
@@ -17,6 +28,10 @@ allprojects  {
     maven {
       url  'https://dl.bintray.com/ftsrg/maven'
     }
+  }
+
+  jacoco {
+    toolVersion = '0.8.2'
   }
 }
 
@@ -100,6 +115,7 @@ ext {
   mockitoVersion = '2.2.11'
   jcommanderVersion = '1.72'
   z3Version = '4.5.0'
+  platform = osdetector.os == 'osx' ? 'mac' : osdetector.os == 'windows' ? 'win' : osdetector.os
 }
 
 task copyJars(type: Copy, dependsOn: subprojects.jar) {
