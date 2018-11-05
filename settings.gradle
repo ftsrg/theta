@@ -1,10 +1,16 @@
 rootProject.name = 'theta'
 
-include ':hu.bme.mit.theta.analysis'
-include ':hu.bme.mit.theta.cfa'
-include ':hu.bme.mit.theta.common'
-include ':hu.bme.mit.theta.core'
-include ':hu.bme.mit.theta.solver'
-include ':hu.bme.mit.theta.solver.z3'
-include ':hu.bme.mit.theta.sts'
-include ':hu.bme.mit.theta.xta'
+include 'analysis'
+include 'cfa'
+include 'common'
+include 'core'
+include 'solver'
+include 'solver-z3'
+include 'sts'
+include 'xta'
+
+for (project in rootProject.children) {
+    project.projectDir = file("subprojects/${project.name}")
+    project.name = "${rootProject.name}-${project.name}"
+}
+

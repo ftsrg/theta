@@ -20,7 +20,7 @@ allprojects  {
   sourceCompatibility = 11
   targetCompatibility = 11
 
-  group = 'theta'
+  group = 'hu.bme.mit.theta'
   version = '0.0.1'
 
   repositories {
@@ -49,7 +49,7 @@ subprojects {
   }
 
   test {
-    String libPath = '..' + File.separator + 'lib'
+    String libPath = new File(rootProject.rootDir, 'lib').path
     environment.put('PATH', libPath)
     environment.put('LD_LIBRARY_PATH', libPath)
   }

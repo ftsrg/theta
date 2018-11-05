@@ -1,6 +1,0 @@
-dependencies {
-  compile project(':hu.bme.mit.theta.common')
-  compile project(':hu.bme.mit.theta.core')
-  compile group: 'com.google.guava', name: 'guava', version: guavaVersion
-  testCompile group: 'junit', name: 'junit', version: junitVersion
-}
