@@ -53,4 +53,11 @@ To cite Theta, please cite the following paper.
 ```
 
 ## Acknowledgements
-See the [notice file](NOTICE) for the list of supporters of the Theta project.
+Supporters of the Theta project are listed below.
+
+* [MTA-BME Lendület Cyber-Physical Systems Research Group](http://lendulet.inf.mit.bme.hu/)
+* [Fault Tolerant Systems Research Group](https://inf.mit.bme.hu/en), [Department of Measurement and Information Systems](https://www.mit.bme.hu/eng/), [Budapest University of Technology and Economics](http://www.bme.hu/?language=en)
+* [Gedeon Richter’s](https://www.richter.hu/en-US/Pages/default.aspx) Talentum Foundation
+* Nemzeti Tehetség Program, [Nemzet Fiatal Tehetségeiért Ösztöndíj 2016](http://www.emet.gov.hu/felhivasok/nemzeti_tehetseg_program212/) (NTP-NFTÖ-16)
+* [CECRIS project](http://www.cecris-project.eu/)
+* [R5-COP project](http://www.r5-cop.eu/)
