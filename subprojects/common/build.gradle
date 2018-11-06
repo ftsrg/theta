@@ -1,4 +1,0 @@
-dependencies {
-  compile group: 'com.google.guava', name: 'guava', version: guavaVersion
-  testCompile group: 'junit', name: 'junit', version: junitVersion
-}
