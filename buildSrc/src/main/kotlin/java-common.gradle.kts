@@ -1,5 +1,5 @@
 apply<JavaPlugin>()
-apply<JacocoPlugin>()
+apply(plugin = "jacoco-common")
 
 dependencies {
     val implementation: Configuration by configurations
@@ -23,8 +23,4 @@ tasks {
         environment["PATH"] = execPath
         environment["LD_LIBRARY_PATH"] = libPath
     }
-}
-
-extensions.configure<JacocoPluginExtension> {
-    toolVersion = Versions.jacoco
 }
