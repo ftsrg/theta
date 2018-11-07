@@ -1,5 +1,11 @@
 plugins {
     base
+    id("jacoco-common")
+}
+
+buildscript {
+    val libPath: String by extra { rootProject.projectDir.resolve("lib").path }
+    extra["execPath"] = "$libPath${File.pathSeparator}${System.getenv("PATH")}"
 }
 
 allprojects {
@@ -9,5 +15,25 @@ allprojects {
     apply(from = rootDir.resolve("gradle/shared-with-buildSrc/mirrors.gradle.kts"))
 }
 
-val libPath: String by extra { rootProject.rootDir.resolve("lib").path }
-val execPath by extra { "$libPath${File.pathSeparator}${System.getenv("PATH")}" }
+evaluationDependsOnChildren()
+
+val jacocoRootReport by tasks.creating(JacocoReport::class) {
+    reports {
+        html.isEnabled = false
+        xml.isEnabled = true
+        csv.isEnabled = false
+    }
+
+    val reportTasks = subprojects.mapNotNull { subproject ->
+        subproject.tasks.named("jacocoTestReport", JacocoReport::class).orNull
+    }
+    sourceDirectories = files(reportTasks.map { it.allSourceDirs })
+    classDirectories = files(reportTasks.map { it.allClassDirs })
+    val allExecutionData = files(reportTasks.map { it.executionData })
+    // We only declare dependencies, subprojects without tests will be filtered out in doFirst.
+    executionData = allExecutionData
+
+    doFirst {
+        executionData = allExecutionData.filter { it.exists() }
+    }
+}

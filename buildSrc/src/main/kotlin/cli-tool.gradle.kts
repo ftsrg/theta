@@ -5,4 +5,3 @@ dependencies {
 
     implementation(Deps.jcommander)
 }
-
