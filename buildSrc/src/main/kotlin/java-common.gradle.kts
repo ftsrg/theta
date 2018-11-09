@@ -23,4 +23,8 @@ tasks {
         environment["PATH"] = execPath
         environment["LD_LIBRARY_PATH"] = libPath
     }
+
+    named("jacocoTestReport") {
+        dependsOn(named("test"))
+    }
 }
