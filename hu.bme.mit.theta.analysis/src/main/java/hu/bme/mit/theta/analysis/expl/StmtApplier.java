@@ -24,6 +24,8 @@ import hu.bme.mit.theta.core.stmt.SkipStmt;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
+import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
+import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
@@ -81,6 +83,8 @@ final class StmtApplier {
 			} else {
 				return ApplyResult.BOTTOM;
 			}
+		} else if (checkAssumeVarEqualsLit(cond, val)) {
+			return ApplyResult.SUCCESS;
 		} else {
 			if (approximate) {
 				return ApplyResult.SUCCESS;
@@ -88,6 +92,29 @@ final class StmtApplier {
 				return ApplyResult.FAILURE;
 			}
 		}
+	}
+
+	private static boolean checkAssumeVarEqualsLit(final Expr<BoolType> cond, final MutableValuation val) {
+		if (!(cond instanceof EqExpr<?>)) {
+			return false;
+		}
+		final EqExpr<?> condEq = (EqExpr<?>) cond;
+
+		if (condEq.getLeftOp() instanceof RefExpr<?> && condEq.getRightOp() instanceof LitExpr<?>) {
+			final RefExpr<?> ref = (RefExpr<?>) condEq.getLeftOp();
+			final LitExpr<?> lit = (LitExpr<?>) condEq.getRightOp();
+			val.put(ref.getDecl(), lit);
+			return true;
+		}
+
+		if (condEq.getRightOp() instanceof RefExpr<?> && condEq.getLeftOp() instanceof LitExpr<?>) {
+			final RefExpr<?> ref = (RefExpr<?>) condEq.getRightOp();
+			final LitExpr<?> lit = (LitExpr<?>) condEq.getLeftOp();
+			val.put(ref.getDecl(), lit);
+			return true;
+		}
+
+		return false;
 	}
 
 	private static ApplyResult applyHavoc(final HavocStmt<?> stmt, final MutableValuation val,

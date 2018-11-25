@@ -24,6 +24,7 @@ import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
 import static hu.bme.mit.theta.core.stmt.Stmts.Assume;
 import static hu.bme.mit.theta.core.stmt.Stmts.Havoc;
 import static hu.bme.mit.theta.core.stmt.Stmts.Skip;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Gt;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Leq;
@@ -61,6 +62,7 @@ public final class StmtApplierTest {
 	private static final Stmt SKIP = Skip();
 	private static final Stmt HAVOC_X = Havoc(X);
 	private static final Stmt ASSUME_GT_X_0 = Assume(Gt(X.getRef(), Int(0)));
+	private static final Stmt ASSUME_EQ_X_1 = Assume(Eq(X.getRef(), Int(1)));
 	private static final Stmt ASSUME_LEQ_X_0 = Assume(Leq(X.getRef(), Int(0)));
 	private static final Stmt ASSUME_LEQ_X_Y = Assume(Leq(X.getRef(), Y.getRef()));
 	private static final Stmt ASSIGN_X_1 = Assign(X, Int(1));
@@ -93,6 +95,10 @@ public final class StmtApplierTest {
 				{ HAVOC_X, of(X_IS_1, Y_IS_2), false, SUCCESS, of(Y_IS_2) },
 
 				{ HAVOC_X, of(), false, SUCCESS, of() },
+
+				{ ASSUME_EQ_X_1, of(), false, SUCCESS, of(X_IS_1) },
+
+				{ ASSUME_EQ_X_1, of(), true, SUCCESS, of(X_IS_1) },
 
 				{ ASSUME_GT_X_0, of(X_IS_1), false, SUCCESS, of(X_IS_1) },
 
