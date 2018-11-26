@@ -43,13 +43,16 @@ public final class ExplStmtTransFunc implements TransFunc<ExplState, StmtAction,
 	// 0 means arbitrarily many
 	private final int maxSuccToEnumerate;
 
+	private final boolean noSolver;
+
 	private ExplStmtTransFunc(final Solver solver, final int maxSuccToEnumerate) {
 		this.solver = checkNotNull(solver);
-		this.maxSuccToEnumerate = maxSuccToEnumerate;
+		this.maxSuccToEnumerate = maxSuccToEnumerate == -1 ? 1 : maxSuccToEnumerate;
+		this.noSolver = maxSuccToEnumerate == -1;
 	}
 
 	public static ExplStmtTransFunc create(final Solver solver, final int maxSuccToEnumerate) {
-		checkArgument(maxSuccToEnumerate >= 0, "Max. succ. to enumerate must be non-negative.");
+		checkArgument(maxSuccToEnumerate >= -1, "Max. succ. to enumerate must be non-negative or -1.");
 		return new ExplStmtTransFunc(solver, maxSuccToEnumerate);
 	}
 
@@ -64,7 +67,7 @@ public final class ExplStmtTransFunc implements TransFunc<ExplState, StmtAction,
 
 		for (int i = 0; i < stmts.size(); i++) {
 			final Stmt stmt = stmts.get(i);
-			final ApplyResult applyResult = StmtApplier.apply(stmt, val, triedSolver);
+			final ApplyResult applyResult = StmtApplier.apply(stmt, val, triedSolver || noSolver);
 
 			assert !triedSolver || applyResult != ApplyResult.BOTTOM;
 
