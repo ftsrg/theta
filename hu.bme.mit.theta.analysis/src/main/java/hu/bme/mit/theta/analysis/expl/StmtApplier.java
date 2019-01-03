@@ -118,7 +118,7 @@ final class StmtApplier {
 		if (cond instanceof NotExpr) {
 			final NotExpr condNE = (NotExpr) cond;
 			if (condNE.getOp() instanceof NeqExpr<?>) {
-				final NeqExpr<?> condNeq = (NeqExpr<?>) cond;
+				final NeqExpr<?> condNeq = (NeqExpr<?>) condNE.getOp();
 
 				if (condNeq.getLeftOp() instanceof RefExpr<?> && condNeq.getRightOp() instanceof LitExpr<?>) {
 					final RefExpr<?> ref = (RefExpr<?>) condNeq.getLeftOp();
