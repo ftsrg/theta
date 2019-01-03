@@ -25,9 +25,11 @@ import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.abstracttype.EqExpr;
+import hu.bme.mit.theta.core.type.abstracttype.NeqExpr;
 import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.booltype.NotExpr;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 
 final class StmtApplier {
@@ -95,23 +97,43 @@ final class StmtApplier {
 	}
 
 	private static boolean checkAssumeVarEqualsLit(final Expr<BoolType> cond, final MutableValuation val) {
-		if (!(cond instanceof EqExpr<?>)) {
-			return false;
-		}
-		final EqExpr<?> condEq = (EqExpr<?>) cond;
+		if (cond instanceof EqExpr<?>) {
+			final EqExpr<?> condEq = (EqExpr<?>) cond;
 
-		if (condEq.getLeftOp() instanceof RefExpr<?> && condEq.getRightOp() instanceof LitExpr<?>) {
-			final RefExpr<?> ref = (RefExpr<?>) condEq.getLeftOp();
-			final LitExpr<?> lit = (LitExpr<?>) condEq.getRightOp();
-			val.put(ref.getDecl(), lit);
-			return true;
+			if (condEq.getLeftOp() instanceof RefExpr<?> && condEq.getRightOp() instanceof LitExpr<?>) {
+				final RefExpr<?> ref = (RefExpr<?>) condEq.getLeftOp();
+				final LitExpr<?> lit = (LitExpr<?>) condEq.getRightOp();
+				val.put(ref.getDecl(), lit);
+				return true;
+			}
+
+			if (condEq.getRightOp() instanceof RefExpr<?> && condEq.getLeftOp() instanceof LitExpr<?>) {
+				final RefExpr<?> ref = (RefExpr<?>) condEq.getRightOp();
+				final LitExpr<?> lit = (LitExpr<?>) condEq.getLeftOp();
+				val.put(ref.getDecl(), lit);
+				return true;
+			}
 		}
 
-		if (condEq.getRightOp() instanceof RefExpr<?> && condEq.getLeftOp() instanceof LitExpr<?>) {
-			final RefExpr<?> ref = (RefExpr<?>) condEq.getRightOp();
-			final LitExpr<?> lit = (LitExpr<?>) condEq.getLeftOp();
-			val.put(ref.getDecl(), lit);
-			return true;
+		if (cond instanceof NotExpr) {
+			final NotExpr condNE = (NotExpr) cond;
+			if (condNE.getOp() instanceof NeqExpr<?>) {
+				final NeqExpr<?> condNeq = (NeqExpr<?>) cond;
+
+				if (condNeq.getLeftOp() instanceof RefExpr<?> && condNeq.getRightOp() instanceof LitExpr<?>) {
+					final RefExpr<?> ref = (RefExpr<?>) condNeq.getLeftOp();
+					final LitExpr<?> lit = (LitExpr<?>) condNeq.getRightOp();
+					val.put(ref.getDecl(), lit);
+					return true;
+				}
+
+				if (condNeq.getRightOp() instanceof RefExpr<?> && condNeq.getLeftOp() instanceof LitExpr<?>) {
+					final RefExpr<?> ref = (RefExpr<?>) condNeq.getRightOp();
+					final LitExpr<?> lit = (LitExpr<?>) condNeq.getLeftOp();
+					val.put(ref.getDecl(), lit);
+					return true;
+				}
+			}
 		}
 
 		return false;
