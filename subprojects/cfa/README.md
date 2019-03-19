@@ -4,16 +4,23 @@ This project contains the Control Flow Automata (CFA) formalism. Its main purpos
 
 * Classes to represent CFAs.
 * A domain specific language (DSL) to parse CFAs from a textual representation.
-* CFA specific analysis modules enabling the algorithms to operate on them.
-* An executable tool (command line and GUI) for running analyses on CFAs.
 
-## CFA Formalism
+### Related projects
 
-A CFA is a directed graph with
+* [`cfa-analysis`](../cfa-analysis/README.md): CFA specific analysis modules enabling the algorithms to operate on them.
+* [`cfa-cli`](../cfa-cli/README.md): An executable tool (command line) for running analyses on CFAs.
 
-* variables,
-* locations, with dedicated initial, final and error locations,
-* edges between locations, labeled with statements over the variables.
+## CFA formalism
+
+A CFA is a directed graph (`V`, `L`, `E`) with
+
+* variables `V = {v1, v2, ..., vn}`,
+* locations `L`, with dedicated initial (`l0`), final (`lf`) and error (`le`) locations,
+* edges `E` between locations, labeled with statements over the variables.
+Statements can be
+  * assignments of the form `v := expr`, where `expr` is an expression with the same type as `v`,
+  * assumptions of the form `assume expr`, where `expr` is a Boolean expression,
+  * havocs of the form `havoc v`.
 
 Algorithms are usually interested in proving that the error location is not reachable.
 
@@ -41,11 +48,13 @@ main process counter {
 }
 ```
 
-See _src/test/resources_ for more examples.
+See _src/test/resources_ for more examples and _src/main/antlr_ for the full grammar.
 
 ### C source to CFA
 
-An unstable, prototype tool is available that can parse simple C programs into CFAs using Eclipse CDT. The tool can be downloaded [here](http://home.mit.bme.hu/~hajdua/theta/c-to-cfa.jar). This tool is no longer maintained as we are currently developing an LLVM frontend for CFAs.
+An unstable, prototype tool is available that can parse simple C programs into CFAs using Eclipse CDT.
+The tool can be downloaded [here](http://home.mit.bme.hu/~hajdua/theta/c-to-cfa.jar). 
+his tool is no longer maintained as we are currently developing an LLVM frontend for CFAs.
 
 ## Tool
 
