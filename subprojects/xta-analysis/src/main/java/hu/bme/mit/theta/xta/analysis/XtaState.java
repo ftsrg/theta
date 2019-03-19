@@ -52,15 +52,15 @@ public final class XtaState<S extends State> implements ExprState {
 		boolean urgent = false;
 		for (final Loc loc : locs) {
 			switch (loc.getKind()) {
-			case COMMITTED:
-				return LocKind.COMMITTED;
-			case URGENT:
-				urgent = true;
-				break;
-			case NORMAL:
-				break;
-			default:
-				throw new AssertionError();
+				case COMMITTED:
+					return LocKind.COMMITTED;
+				case URGENT:
+					urgent = true;
+					break;
+				case NORMAL:
+					break;
+				default:
+					throw new AssertionError();
 			}
 		}
 		return urgent ? LocKind.URGENT : LocKind.NORMAL;
@@ -71,7 +71,7 @@ public final class XtaState<S extends State> implements ExprState {
 	}
 
 	public static <S extends State> Collection<XtaState<S>> collectionOf(final List<Loc> locs,
-			final Collection<? extends S> states) {
+																		 final Collection<? extends S> states) {
 		final Collection<XtaState<S>> result = new ArrayList<>();
 		for (final S state : states) {
 			final XtaState<S> initXtaState = XtaState.of(locs, state);

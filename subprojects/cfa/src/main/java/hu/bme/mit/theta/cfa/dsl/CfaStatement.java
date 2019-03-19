@@ -91,10 +91,8 @@ final class CfaStatement {
 			final Expr<?> expr = expression.instantiate(env);
 
 			if (expr.getType().equals(var.getType())) {
-				@SuppressWarnings("unchecked")
-				final VarDecl<Type> tVar = (VarDecl<Type>) var;
-				@SuppressWarnings("unchecked")
-				final Expr<Type> tExpr = (Expr<Type>) expr;
+				@SuppressWarnings("unchecked") final VarDecl<Type> tVar = (VarDecl<Type>) var;
+				@SuppressWarnings("unchecked") final Expr<Type> tExpr = (Expr<Type>) expr;
 				return Assign(tVar, tExpr);
 			} else {
 				throw new IllegalArgumentException("Type of " + var + " is incompatilbe with " + expr);

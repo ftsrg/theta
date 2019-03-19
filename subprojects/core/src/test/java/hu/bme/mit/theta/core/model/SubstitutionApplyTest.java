@@ -55,17 +55,17 @@ public class SubstitutionApplyTest {
 
 	@Parameters
 	public static Collection<Object[]> data() {
-		return Arrays.asList(new Object[][] {
+		return Arrays.asList(new Object[][]{
 
-				{ Add(B, Int(3)), BasicSubstitution.builder().build(), Add(B, Int(3)) },
+				{Add(B, Int(3)), BasicSubstitution.builder().build(), Add(B, Int(3))},
 
-				{ Add(B, Int(3)), BasicSubstitution.builder().put(VB, Add(Int(1), Int(2))).build(),
-						Add(Add(Int(1), Int(2)), Int(3)) },
+				{Add(B, Int(3)), BasicSubstitution.builder().put(VB, Add(Int(1), Int(2))).build(),
+						Add(Add(Int(1), Int(2)), Int(3))},
 
-				{ Add(B, Int(3)), BasicSubstitution.builder().put(VB, Add(B, Int(2))).build(),
-						Add(Add(B, Int(2)), Int(3)) },
+				{Add(B, Int(3)), BasicSubstitution.builder().put(VB, Add(B, Int(2))).build(),
+						Add(Add(B, Int(2)), Int(3))},
 
-				{ Div(B, A), BasicSubstitution.builder().put(VB, A).put(VA, B).build(), Div(A, B) },
+				{Div(B, A), BasicSubstitution.builder().put(VB, A).put(VA, B).build(), Div(A, B)},
 
 		});
 	}

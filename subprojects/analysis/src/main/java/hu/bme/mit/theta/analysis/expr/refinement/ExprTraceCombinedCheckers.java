@@ -25,7 +25,7 @@ public final class ExprTraceCombinedCheckers {
 	}
 
 	public static ExprTraceChecker<ItpRefutation> createBwFwMinPrune(final Expr<BoolType> init,
-			final Expr<BoolType> target, final ItpSolver solver) {
+																	 final Expr<BoolType> target, final ItpSolver solver) {
 		final ExprTraceBwBinItpChecker bwChecker = ExprTraceBwBinItpChecker.create(init, target, solver);
 		final ExprTraceFwBinItpChecker fwChecker = ExprTraceFwBinItpChecker.create(init, target, solver);
 		final ExprTraceStatusMerger<ItpRefutation> merger = ExprTraceStatusMergers.minPruneIndex();
@@ -33,7 +33,7 @@ public final class ExprTraceCombinedCheckers {
 	}
 
 	public static ExprTraceChecker<ItpRefutation> createBwFwMaxPrune(final Expr<BoolType> init,
-			final Expr<BoolType> target, final ItpSolver solver) {
+																	 final Expr<BoolType> target, final ItpSolver solver) {
 		final ExprTraceBwBinItpChecker bwChecker = ExprTraceBwBinItpChecker.create(init, target, solver);
 		final ExprTraceFwBinItpChecker fwChecker = ExprTraceFwBinItpChecker.create(init, target, solver);
 		final ExprTraceStatusMerger<ItpRefutation> merger = ExprTraceStatusMergers.maxPruneIndex();

@@ -33,7 +33,7 @@ public final class Prod2Analysis<S1 extends State, S2 extends State, A extends A
 	private final TransFunc<Prod2State<S1, S2>, A, Prod2Prec<P1, P2>> transFunc;
 
 	private Prod2Analysis(final Analysis<S1, ? super A, P1> analysis1, final Analysis<S2, ? super A, P2> analysis2,
-			final StrengtheningOperator<S1, S2, P1, P2> strenghteningOperator) {
+						  final StrengtheningOperator<S1, S2, P1, P2> strenghteningOperator) {
 		checkNotNull(analysis1);
 		checkNotNull(analysis2);
 		partialOrd = Prod2Ord.create(analysis1.getPartialOrd(), analysis2.getPartialOrd());

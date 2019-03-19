@@ -46,11 +46,11 @@ public class StsDslTest {
 
 	@Parameters
 	public static Collection<Object[]> data() {
-		return Arrays.asList(new Object[][] {
+		return Arrays.asList(new Object[][]{
 
-				{ "/readerswriters.system", "safe", 3 },
+				{"/readerswriters.system", "safe", 3},
 
-				{ "/simple1.system", "safe", 2 }
+				{"/simple1.system", "safe", 2}
 
 		});
 	}

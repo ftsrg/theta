@@ -53,7 +53,7 @@ public class PathUtils {
 	/**
 	 * Transform an expression by substituting variables with indexed constants.
 	 *
-	 * @param expr Original expression
+	 * @param expr     Original expression
 	 * @param indexing Indexing for the variables
 	 * @return Transformed expression
 	 */
@@ -68,7 +68,7 @@ public class PathUtils {
 	 * Transform an expression by substituting variables with indexed constants.
 	 *
 	 * @param expr Original expression
-	 * @param i Index
+	 * @param i    Index
 	 * @return Transformed expression
 	 */
 	public static <T extends Type> Expr<T> unfold(final Expr<T> expr, final int i) {
@@ -79,7 +79,7 @@ public class PathUtils {
 	/**
 	 * Transform an expression by substituting indexed constants with variables.
 	 *
-	 * @param expr Original expression
+	 * @param expr     Original expression
 	 * @param indexing Indexing for the variables
 	 * @return Transformed expression
 	 */
@@ -94,7 +94,7 @@ public class PathUtils {
 	 * Transform an expression by substituting indexed constants with variables.
 	 *
 	 * @param expr Original expression
-	 * @param i Index
+	 * @param i    Index
 	 * @return Transformed expression
 	 */
 	public static <T extends Type> Expr<T> foldin(final Expr<T> expr, final int i) {
@@ -107,7 +107,7 @@ public class PathUtils {
 	 * variables to be extracted, use that overload because it is more
 	 * efficient.
 	 *
-	 * @param model Model
+	 * @param model    Model
 	 * @param indexing Indexing
 	 * @return Values
 	 */
@@ -132,7 +132,7 @@ public class PathUtils {
 	 * efficient.
 	 *
 	 * @param model Model
-	 * @param i Index
+	 * @param i     Index
 	 * @return Values
 	 */
 	public static Valuation extractValuation(final Valuation model, final int i) {
@@ -145,12 +145,12 @@ public class PathUtils {
 	 * a variable has no value in the model, it will not be included in the
 	 * return value.
 	 *
-	 * @param model Model
+	 * @param model    Model
 	 * @param indexing Indexing
 	 * @return Values
 	 */
 	public static Valuation extractValuation(final Valuation model, final VarIndexing indexing,
-			final Collection<? extends VarDecl<?>> varDecls) {
+											 final Collection<? extends VarDecl<?>> varDecls) {
 		final ImmutableValuation.Builder builder = ImmutableValuation.builder();
 		for (final VarDecl<?> varDecl : varDecls) {
 			final int index = indexing.get(varDecl);
@@ -169,11 +169,11 @@ public class PathUtils {
 	 * value.
 	 *
 	 * @param model Model
-	 * @param i Index
+	 * @param i     Index
 	 * @return Values
 	 */
 	public static Valuation extractValuation(final Valuation model, final int i,
-			final Collection<? extends VarDecl<?>> varDecls) {
+											 final Collection<? extends VarDecl<?>> varDecls) {
 		checkArgument(i >= 0);
 		return extractValuation(model, VarIndexing.all(i), varDecls);
 	}

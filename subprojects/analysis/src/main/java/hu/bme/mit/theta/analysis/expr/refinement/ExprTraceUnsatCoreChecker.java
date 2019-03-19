@@ -53,7 +53,7 @@ public final class ExprTraceUnsatCoreChecker implements ExprTraceChecker<VarsRef
 	}
 
 	public static ExprTraceUnsatCoreChecker create(final Expr<BoolType> init, final Expr<BoolType> target,
-			final Solver solver) {
+												   final Solver solver) {
 		return new ExprTraceUnsatCoreChecker(init, target, solver);
 	}
 

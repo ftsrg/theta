@@ -38,7 +38,7 @@ public final class PredAnalysis implements Analysis<PredState, ExprAction, PredP
 	}
 
 	public static PredAnalysis create(final Solver solver, final PredAbstractor predAbstractor,
-			final Expr<BoolType> initExpr) {
+									  final Expr<BoolType> initExpr) {
 		return new PredAnalysis(solver, predAbstractor, initExpr);
 	}
 

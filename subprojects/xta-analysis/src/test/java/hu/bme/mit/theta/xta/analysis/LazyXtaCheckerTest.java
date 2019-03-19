@@ -78,7 +78,7 @@ public final class LazyXtaCheckerTest {
 			for (final DataStrategy dataStrategy : DataStrategy.values()) {
 				for (final ClockStrategy clockStrategy : ClockStrategy.values()) {
 					if (!MODELS_WITH_UNKNOWN_SOLVER_STATUS.contains(model) || (clockStrategy != LU)) {
-						result.add(new Object[] { model, dataStrategy, clockStrategy });
+						result.add(new Object[]{model, dataStrategy, clockStrategy});
 					}
 				}
 			}

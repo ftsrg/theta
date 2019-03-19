@@ -57,14 +57,14 @@ public class PredAbstractors {
 		 * Create predicate states for a given expression with a given
 		 * precision.
 		 *
-		 * @param expr Expression to be abstracted
+		 * @param expr         Expression to be abstracted
 		 * @param exprIndexing Unfold indexing of the expression
-		 * @param prec Precision
+		 * @param prec         Precision
 		 * @param precIndexing Unfold indexing of the precision
 		 * @return
 		 */
 		Collection<PredState> createStatesForExpr(final Expr<BoolType> expr, final VarIndexing exprIndexing,
-				final PredPrec prec, final VarIndexing precIndexing);
+												  final PredPrec prec, final VarIndexing precIndexing);
 	}
 
 	/**
@@ -116,7 +116,7 @@ public class PredAbstractors {
 
 		@Override
 		public Collection<PredState> createStatesForExpr(final Expr<BoolType> expr, final VarIndexing exprIndexing,
-				final PredPrec prec, final VarIndexing precIndexing) {
+														 final PredPrec prec, final VarIndexing precIndexing) {
 			checkNotNull(expr);
 			checkNotNull(exprIndexing);
 			checkNotNull(prec);
@@ -181,7 +181,7 @@ public class PredAbstractors {
 
 		@Override
 		public Collection<PredState> createStatesForExpr(final Expr<BoolType> expr, final VarIndexing exprIndexing,
-				final PredPrec prec, final VarIndexing precIndexing) {
+														 final PredPrec prec, final VarIndexing precIndexing) {
 			final List<Expr<BoolType>> newStatePreds = new ArrayList<>();
 
 			try (WithPushPop wp = new WithPushPop(solver)) {

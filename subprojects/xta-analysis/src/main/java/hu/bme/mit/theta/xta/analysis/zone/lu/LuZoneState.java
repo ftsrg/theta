@@ -95,11 +95,9 @@ public final class LuZoneState implements ExprState {
 			final Collection<VarDecl<?>> vars = mapping.keySet();
 
 			for (final VarDecl<?> vx : vars) {
-				@SuppressWarnings("unchecked")
-				final VarDecl<RatType> dx = (VarDecl<RatType>) vx;
+				@SuppressWarnings("unchecked") final VarDecl<RatType> dx = (VarDecl<RatType>) vx;
 
-				@SuppressWarnings("unchecked")
-				final ParamDecl<RatType> dxp = (ParamDecl<RatType>) mapping.get(dx);
+				@SuppressWarnings("unchecked") final ParamDecl<RatType> dxp = (ParamDecl<RatType>) mapping.get(dx);
 
 				final Expr<RatType> x = dx.getRef();
 				final Expr<RatType> xp = dxp.getRef();

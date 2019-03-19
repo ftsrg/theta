@@ -1,12 +1,12 @@
 /*
  *  Copyright 2017 Budapest University of Technology and Economics
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -52,8 +52,7 @@ public class ArgCexTest {
 		final ArgNode<State, Action> n4 = arg.createSuccNode(n2, act, s4, true);
 		final ArgNode<State, Action> n5 = arg.createSuccNode(n2, act, s5, false);
 		final ArgNode<State, Action> n6 = arg.createSuccNode(n3, act, s6, false);
-		@SuppressWarnings("unused")
-		final ArgNode<State, Action> n7 = arg.createSuccNode(n3, act, s7, true);
+		@SuppressWarnings("unused") final ArgNode<State, Action> n7 = arg.createSuccNode(n3, act, s7, true);
 		final ArgNode<State, Action> n8 = arg.createSuccNode(n5, act, s8, true);
 
 		n6.setCoveringNode(n2);

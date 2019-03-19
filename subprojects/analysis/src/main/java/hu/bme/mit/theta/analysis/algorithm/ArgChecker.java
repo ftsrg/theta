@@ -85,7 +85,7 @@ public final class ArgChecker {
 	}
 
 	private boolean isCoveredBy(final ArgNode<? extends ExprState, ?> node,
-			final ArgNode<? extends ExprState, ?> coveringNode) {
+								final ArgNode<? extends ExprState, ?> coveringNode) {
 		return partialOrd.isLeq(node.getState(), coveringNode.getState());
 	}
 
@@ -97,14 +97,14 @@ public final class ArgChecker {
 	}
 
 	private boolean nodeIsWellLabeledForAction(final ArgNode<? extends ExprState, ? extends ExprAction> node,
-			final ExprAction action) {
+											   final ExprAction action) {
 		final ExprState state = node.getState();
 		final Collection<ExprState> succStates = getSuccStatesOfNodeForAction(node, action);
 		return hasSuccStates(state, action, succStates);
 	}
 
 	private boolean hasSuccStates(final ExprState state, final ExprAction action,
-			final Collection<? extends ExprState> succStates) {
+								  final Collection<? extends ExprState> succStates) {
 		return !ExprStateUtils.anyUncoveredSuccessor(state, action, succStates, solver).isPresent();
 	}
 

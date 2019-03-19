@@ -44,7 +44,7 @@ final class CombinedStrategy<S1 extends State, S2 extends State>
 	private final Function<XtaState<Prod2State<S1, S2>>, ?> projection;
 
 	public CombinedStrategy(final XtaSystem system, final AlgorithmStrategy<XtaState<Prod2State<S1, S2>>, S1> strategy1,
-			final AlgorithmStrategy<XtaState<Prod2State<S1, S2>>, S2> strategy2) {
+							final AlgorithmStrategy<XtaState<Prod2State<S1, S2>>, S2> strategy2) {
 		this.strategy1 = checkNotNull(strategy1);
 		this.strategy2 = checkNotNull(strategy2);
 		this.analysis = createAnalysis(system);
@@ -64,14 +64,14 @@ final class CombinedStrategy<S1 extends State, S2 extends State>
 
 	@Override
 	public boolean mightCover(final ArgNode<XtaState<Prod2State<S1, S2>>, XtaAction> coveree,
-			final ArgNode<XtaState<Prod2State<S1, S2>>, XtaAction> coverer) {
+							  final ArgNode<XtaState<Prod2State<S1, S2>>, XtaAction> coverer) {
 		return strategy1.mightCover(coveree, coverer) && strategy2.mightCover(coveree, coverer);
 	}
 
 	@Override
 	public void cover(final ArgNode<XtaState<Prod2State<S1, S2>>, XtaAction> coveree,
-			final ArgNode<XtaState<Prod2State<S1, S2>>, XtaAction> coverer,
-			final Collection<ArgNode<XtaState<Prod2State<S1, S2>>, XtaAction>> uncoveredNodes, final Builder stats) {
+					  final ArgNode<XtaState<Prod2State<S1, S2>>, XtaAction> coverer,
+					  final Collection<ArgNode<XtaState<Prod2State<S1, S2>>, XtaAction>> uncoveredNodes, final Builder stats) {
 		assert coveree.getCoveringNode().isPresent() && coveree.getCoveringNode().get().equals(coverer);
 		strategy1.cover(coveree, coverer, uncoveredNodes, stats);
 		if (coveree.isCovered()) {
@@ -82,8 +82,8 @@ final class CombinedStrategy<S1 extends State, S2 extends State>
 
 	@Override
 	public void block(final ArgNode<XtaState<Prod2State<S1, S2>>, XtaAction> node, final XtaAction action,
-			final XtaState<Prod2State<S1, S2>> succState,
-			final Collection<ArgNode<XtaState<Prod2State<S1, S2>>, XtaAction>> uncoveredNodes, final Builder stats) {
+					  final XtaState<Prod2State<S1, S2>> succState,
+					  final Collection<ArgNode<XtaState<Prod2State<S1, S2>>, XtaAction>> uncoveredNodes, final Builder stats) {
 		assert succState.isBottom();
 		if (succState.getState().isBottom1()) {
 			strategy1.block(node, action, succState, uncoveredNodes, stats);

@@ -49,7 +49,7 @@ public final class BasicAbstractor<S extends State, A extends Action, P extends 
 	private final Logger logger;
 
 	private BasicAbstractor(final ArgBuilder<S, A, P> argBuilder, final Function<? super S, ?> projection,
-			final Waitlist<ArgNode<S, A>> waitlist, final StopCriterion<S, A> stopCriterion, final Logger logger) {
+							final Waitlist<ArgNode<S, A>> waitlist, final StopCriterion<S, A> stopCriterion, final Logger logger) {
 		this.argBuilder = checkNotNull(argBuilder);
 		this.projection = checkNotNull(projection);
 		this.waitlist = checkNotNull(waitlist);

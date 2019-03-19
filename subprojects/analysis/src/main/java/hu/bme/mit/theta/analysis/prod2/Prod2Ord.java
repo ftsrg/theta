@@ -31,7 +31,7 @@ final class Prod2Ord<S1 extends State, S2 extends State> implements PartialOrd<P
 	}
 
 	public static <S1 extends State, S2 extends State> Prod2Ord<S1, S2> create(final PartialOrd<S1> partialOrd1,
-			final PartialOrd<S2> partialOrd2) {
+																			   final PartialOrd<S2> partialOrd2) {
 		return new Prod2Ord<>(partialOrd1, partialOrd2);
 	}
 

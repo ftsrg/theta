@@ -65,8 +65,8 @@ final class Z3Solver implements Solver {
 	private SolverStatus status;
 
 	public Z3Solver(final Z3SymbolTable symbolTable, final Z3TransformationManager transformationManager,
-			final Z3TermTransformer termTransformer, final com.microsoft.z3.Context z3Context,
-			final com.microsoft.z3.Solver z3Solver) {
+					final Z3TermTransformer termTransformer, final com.microsoft.z3.Context z3Context,
+					final com.microsoft.z3.Solver z3Solver) {
 		this.symbolTable = symbolTable;
 		this.transformationManager = transformationManager;
 		this.termTransformer = termTransformer;
@@ -117,12 +117,12 @@ final class Z3Solver implements Solver {
 
 	private SolverStatus transformStatus(final Status z3Status) {
 		switch (z3Status) {
-		case SATISFIABLE:
-			return SolverStatus.SAT;
-		case UNSATISFIABLE:
-			return SolverStatus.UNSAT;
-		default:
-			throw new UnknownSolverStatusException();
+			case SATISFIABLE:
+				return SolverStatus.SAT;
+			case UNSATISFIABLE:
+				return SolverStatus.UNSAT;
+			default:
+				throw new UnknownSolverStatusException();
 		}
 	}
 
@@ -258,8 +258,7 @@ final class Z3Solver implements Solver {
 				}
 			}
 
-			@SuppressWarnings("unchecked")
-			final LitExpr<DeclType> tVal = (LitExpr<DeclType>) val;
+			@SuppressWarnings("unchecked") final LitExpr<DeclType> tVal = (LitExpr<DeclType>) val;
 			return Optional.ofNullable(tVal);
 		}
 

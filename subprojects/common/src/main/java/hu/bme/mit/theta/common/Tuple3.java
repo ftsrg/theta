@@ -30,20 +30,17 @@ public final class Tuple3<T1, T2, T3> extends Tuple {
 	}
 
 	public T1 get1() {
-		@SuppressWarnings("unchecked")
-		final T1 result = (T1) elem(0);
+		@SuppressWarnings("unchecked") final T1 result = (T1) elem(0);
 		return result;
 	}
 
 	public T2 get2() {
-		@SuppressWarnings("unchecked")
-		final T2 result = (T2) elem(1);
+		@SuppressWarnings("unchecked") final T2 result = (T2) elem(1);
 		return result;
 	}
 
 	public T3 get3() {
-		@SuppressWarnings("unchecked")
-		final T3 result = (T3) elem(2);
+		@SuppressWarnings("unchecked") final T3 result = (T3) elem(2);
 		return result;
 	}
 

@@ -40,16 +40,16 @@ public final class ExprStates {
 	/**
 	 * Generate all states that satisfy a given expression.
 	 *
-	 * @param solver Solver
-	 * @param expr Expression to be satisfied
-	 * @param exprIndex Index for unfolding the expression
+	 * @param solver           Solver
+	 * @param expr             Expression to be satisfied
+	 * @param exprIndex        Index for unfolding the expression
 	 * @param valuationToState Mapping from a valuation to a state
-	 * @param stateIndexing Index for extracting the state
+	 * @param stateIndexing    Index for extracting the state
 	 * @return States satisfying the expression
 	 */
 	public static <S extends ExprState> Collection<S> createStatesForExpr(final Solver solver,
-			final Expr<BoolType> expr, final int exprIndex,
-			final Function<? super Valuation, ? extends S> valuationToState, final VarIndexing stateIndexing) {
+																		  final Expr<BoolType> expr, final int exprIndex,
+																		  final Function<? super Valuation, ? extends S> valuationToState, final VarIndexing stateIndexing) {
 		return createStatesForExpr(solver, expr, exprIndex, valuationToState, stateIndexing, 0);
 	}
 
@@ -57,18 +57,18 @@ public final class ExprStates {
 	 * Generate all or a limited number of states that satisfy a given
 	 * expression.
 	 *
-	 * @param solver Solver
-	 * @param expr Expression to be satisfied
-	 * @param exprIndex Index for unfolding the expression
+	 * @param solver           Solver
+	 * @param expr             Expression to be satisfied
+	 * @param exprIndex        Index for unfolding the expression
 	 * @param valuationToState Mapping from a valuation to a state
-	 * @param stateIndexing Index for extracting the state
-	 * @param limit Limit the number of states to generate (0 is unlimited)
+	 * @param stateIndexing    Index for extracting the state
+	 * @param limit            Limit the number of states to generate (0 is unlimited)
 	 * @return States satisfying the expression
 	 */
 	public static <S extends ExprState> Collection<S> createStatesForExpr(final Solver solver,
-			final Expr<BoolType> expr, final int exprIndex,
-			final Function<? super Valuation, ? extends S> valuationToState, final VarIndexing stateIndexing,
-			final int limit) {
+																		  final Expr<BoolType> expr, final int exprIndex,
+																		  final Function<? super Valuation, ? extends S> valuationToState, final VarIndexing stateIndexing,
+																		  final int limit) {
 		try (WithPushPop wpp = new WithPushPop(solver)) {
 			solver.add(PathUtils.unfold(expr, exprIndex));
 

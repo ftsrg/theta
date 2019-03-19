@@ -40,14 +40,14 @@ public final class Z3SolverFactory implements SolverFactory {
 
 	private static void loadLibraries() {
 		switch (OsHelper.getOs()) {
-		case WINDOWS:
-			System.loadLibrary("libz3java");
-			break;
-		case LINUX:
-			System.loadLibrary("z3java");
-			break;
-		default:
-			throw new RuntimeException("Operating system not supported.");
+			case WINDOWS:
+				System.loadLibrary("libz3java");
+				break;
+			case LINUX:
+				System.loadLibrary("z3java");
+				break;
+			default:
+				throw new RuntimeException("Operating system not supported.");
 		}
 	}
 

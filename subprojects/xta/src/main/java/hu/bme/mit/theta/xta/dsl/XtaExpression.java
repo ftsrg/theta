@@ -179,7 +179,7 @@ final class XtaExpression {
 		}
 
 		private Expr<?> createAdditiveExpr(final Expr<?> opsHead, final List<? extends Expr<?>> opsTail,
-				final List<AdditiveOpContext> opers) {
+										   final List<AdditiveOpContext> opers) {
 			checkArgument(opsTail.size() == opers.size());
 
 			if (opsTail.isEmpty()) {
@@ -198,7 +198,7 @@ final class XtaExpression {
 		}
 
 		private Expr<?> createAdditiveSubExpr(final Expr<?> leftOp, final Expr<?> rightOp,
-				final AdditiveOpContext oper) {
+											  final AdditiveOpContext oper) {
 			if (oper.fAddOp != null) {
 				return createAddExpr(leftOp, rightOp);
 			} else if (oper.fSubOp != null) {
@@ -241,7 +241,7 @@ final class XtaExpression {
 		}
 
 		private Expr<?> createMutliplicativeExpr(final Expr<?> opsHead, final List<? extends Expr<?>> opsTail,
-				final List<MultiplicativeOpContext> opers) {
+												 final List<MultiplicativeOpContext> opers) {
 			checkArgument(opsTail.size() == opers.size());
 
 			if (opsTail.isEmpty()) {
@@ -260,7 +260,7 @@ final class XtaExpression {
 		}
 
 		private Expr<?> createMultiplicativeSubExpr(final Expr<?> leftOp, final Expr<?> rightOp,
-				final MultiplicativeOpContext oper) {
+													final MultiplicativeOpContext oper) {
 			if (oper.fMulOp != null) {
 				return createMulExpr(leftOp, rightOp);
 			} else if (oper.fDivOp != null) {

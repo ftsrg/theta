@@ -71,7 +71,7 @@ final class LuZoneStrategy<S extends State> implements AlgorithmStrategy<S, LuZo
 
 	@Override
 	public void cover(final ArgNode<S, XtaAction> coveree, final ArgNode<S, XtaAction> coverer,
-			final Collection<ArgNode<S, XtaAction>> uncoveredNodes, final Builder stats) {
+					  final Collection<ArgNode<S, XtaAction>> uncoveredNodes, final Builder stats) {
 		stats.startCloseZoneRefinement();
 		final LuZoneState covererState = lens.get(coverer.getState());
 		final BoundFunc boundFunc = covererState.getBoundFunc();
@@ -81,7 +81,7 @@ final class LuZoneStrategy<S extends State> implements AlgorithmStrategy<S, LuZo
 
 	@Override
 	public void block(final ArgNode<S, XtaAction> node, final XtaAction action, final S succState,
-			final Collection<ArgNode<S, XtaAction>> uncoveredNodes, final Builder stats) {
+					  final Collection<ArgNode<S, XtaAction>> uncoveredNodes, final Builder stats) {
 		assert lens.get(succState).isBottom();
 		stats.startExpandZoneRefinement();
 		final BoundFunc preImage = XtaLuZoneUtils.pre(BoundFunc.top(), action);
@@ -92,7 +92,7 @@ final class LuZoneStrategy<S extends State> implements AlgorithmStrategy<S, LuZo
 	////
 
 	private void propagateBounds(final ArgNode<S, XtaAction> node, final BoundFunc boundFunc,
-			final Collection<ArgNode<S, XtaAction>> uncoveredNodes, final Builder stats) {
+								 final Collection<ArgNode<S, XtaAction>> uncoveredNodes, final Builder stats) {
 		final LuZoneState oldState = lens.get(node.getState());
 		final BoundFunc oldBoundFunc = oldState.getBoundFunc();
 		if (!boundFunc.isLeq(oldBoundFunc)) {
@@ -122,7 +122,7 @@ final class LuZoneStrategy<S extends State> implements AlgorithmStrategy<S, LuZo
 	}
 
 	private void maintainCoverage(final ArgNode<S, XtaAction> node, final BoundFunc interpolant,
-			final Collection<ArgNode<S, XtaAction>> uncoveredNodes) {
+								  final Collection<ArgNode<S, XtaAction>> uncoveredNodes) {
 
 		final LuZoneState covererState = lens.get(node.getState());
 		final Collection<ArgNode<S, XtaAction>> uncovered = node.getCoveredNodes()
@@ -132,7 +132,7 @@ final class LuZoneStrategy<S extends State> implements AlgorithmStrategy<S, LuZo
 	}
 
 	private boolean shouldUncover(final ArgNode<S, XtaAction> covered, final LuZoneState covererState,
-			final BoundFunc interpolant) {
+								  final BoundFunc interpolant) {
 		final LuZoneState coveredState = lens.get(covered.getState());
 		return !interpolant.isLeq(coveredState.getBoundFunc())
 				|| !coveredState.getZone().isLeq(covererState.getZone(), interpolant);

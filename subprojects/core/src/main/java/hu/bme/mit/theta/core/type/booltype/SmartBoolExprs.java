@@ -108,12 +108,12 @@ public final class SmartBoolExprs {
 	}
 
 	public static Expr<BoolType> And(final Expr<BoolType> op1, final Expr<BoolType> op2, final Expr<BoolType> op3,
-			final Expr<BoolType> op4) {
+									 final Expr<BoolType> op4) {
 		return And(ImmutableList.of(op1, op2, op3, op4));
 	}
 
 	public static Expr<BoolType> And(final Expr<BoolType> op1, final Expr<BoolType> op2, final Expr<BoolType> op3,
-			final Expr<BoolType> op4, final Expr<BoolType> op5) {
+									 final Expr<BoolType> op4, final Expr<BoolType> op5) {
 		return And(ImmutableList.of(op1, op2, op3, op4, op5));
 	}
 
@@ -128,12 +128,12 @@ public final class SmartBoolExprs {
 	}
 
 	public static Expr<BoolType> Or(final Expr<BoolType> op1, final Expr<BoolType> op2, final Expr<BoolType> op3,
-			final Expr<BoolType> op4) {
+									final Expr<BoolType> op4) {
 		return Or(ImmutableList.of(op1, op2, op3, op4));
 	}
 
 	public static Expr<BoolType> Or(final Expr<BoolType> op1, final Expr<BoolType> op2, final Expr<BoolType> op3,
-			final Expr<BoolType> op4, final Expr<BoolType> op5) {
+									final Expr<BoolType> op4, final Expr<BoolType> op5) {
 		return Or(ImmutableList.of(op1, op2, op3, op4, op5));
 	}
 }

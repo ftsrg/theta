@@ -42,7 +42,7 @@ public final class SingleExprTraceRefiner<S extends ExprState, A extends ExprAct
 	private final Logger logger;
 
 	private SingleExprTraceRefiner(final ExprTraceChecker<R> exprTraceChecker,
-			final PrecRefiner<S, A, P, R> precRefiner, final Logger logger) {
+								   final PrecRefiner<S, A, P, R> precRefiner, final Logger logger) {
 		this.exprTraceChecker = checkNotNull(exprTraceChecker);
 		this.precRefiner = checkNotNull(precRefiner);
 		this.logger = checkNotNull(logger);

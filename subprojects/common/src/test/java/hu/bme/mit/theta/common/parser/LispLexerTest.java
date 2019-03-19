@@ -47,41 +47,41 @@ public final class LispLexerTest {
 
 	@Parameters
 	public static Collection<Object[]> data() {
-		return Arrays.asList(new Object[][] {
+		return Arrays.asList(new Object[][]{
 
-				{ "", of() },
+				{"", of()},
 
-				{ ";", of() },
+				{";", of()},
 
-				{ ";;", of() },
+				{";;", of()},
 
-				{ "; comment", of() },
+				{"; comment", of()},
 
-				{ "atom1", of(ATOM1) },
+				{"atom1", of(ATOM1)},
 
-				{ "(", of(LPAREN) },
+				{"(", of(LPAREN)},
 
-				{ ")", of(RPAREN) },
+				{")", of(RPAREN)},
 
-				{ "()", of(LPAREN, RPAREN) },
+				{"()", of(LPAREN, RPAREN)},
 
-				{ "( )", of(LPAREN, RPAREN) },
+				{"( )", of(LPAREN, RPAREN)},
 
-				{ "( )", of(LPAREN, RPAREN) },
+				{"( )", of(LPAREN, RPAREN)},
 
-				{ "() ; comment", of(LPAREN, RPAREN) },
+				{"() ; comment", of(LPAREN, RPAREN)},
 
-				{ "(atom1)", of(LPAREN, ATOM1, RPAREN) },
+				{"(atom1)", of(LPAREN, ATOM1, RPAREN)},
 
-				{ "(atom1 atom2)", of(LPAREN, ATOM1, ATOM2, RPAREN) },
+				{"(atom1 atom2)", of(LPAREN, ATOM1, ATOM2, RPAREN)},
 
-				{ "(atom1 atom2 atom3)", of(LPAREN, ATOM1, ATOM2, ATOM3, RPAREN) },
+				{"(atom1 atom2 atom3)", of(LPAREN, ATOM1, ATOM2, ATOM3, RPAREN)},
 
-				{ "(atom1 atom2 atom3) ; comment", of(LPAREN, ATOM1, ATOM2, ATOM3, RPAREN) },
+				{"(atom1 atom2 atom3) ; comment", of(LPAREN, ATOM1, ATOM2, ATOM3, RPAREN)},
 
-				{ "(atom1 (atom2 atom3))", of(LPAREN, ATOM1, LPAREN, ATOM2, ATOM3, RPAREN, RPAREN) },
+				{"(atom1 (atom2 atom3))", of(LPAREN, ATOM1, LPAREN, ATOM2, ATOM3, RPAREN, RPAREN)},
 
-				{ "(()(()", of(LPAREN, LPAREN, RPAREN, LPAREN, LPAREN, RPAREN) },
+				{"(()(()", of(LPAREN, LPAREN, RPAREN, LPAREN, LPAREN, RPAREN)},
 
 		});
 	}

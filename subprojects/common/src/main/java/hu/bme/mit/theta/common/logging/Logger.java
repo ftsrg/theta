@@ -30,7 +30,7 @@ public interface Logger {
 	/**
 	 * Write objects with a given level and pattern
 	 *
-	 * @param level Level
+	 * @param level   Level
 	 * @param pattern Pattern for {@link String#format(String, Object...)}
 	 * @param objects Objects to be substituted in the pattern
 	 * @return Logger instance

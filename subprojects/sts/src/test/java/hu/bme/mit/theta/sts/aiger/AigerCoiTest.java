@@ -29,17 +29,17 @@ public class AigerCoiTest {
 
 	@Parameters
 	public static Collection<Object[]> data() {
-		return Arrays.asList(new Object[][] {
+		return Arrays.asList(new Object[][]{
 
-				{ "coi1.aag", 8, 3 },
+				{"coi1.aag", 8, 3},
 
-				{ "coi2.aag", 5, 3 },
+				{"coi2.aag", 5, 3},
 
-				{ "simple.aag", 6, 5 },
+				{"simple.aag", 6, 5},
 
-				{ "simple2.aag", 6, 5 },
+				{"simple2.aag", 6, 5},
 
-				{ "simple3.aag", 7, 6 },
+				{"simple3.aag", 7, 6},
 
 		});
 	}

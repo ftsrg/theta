@@ -1,12 +1,12 @@
 /*
  *  Copyright 2017 Budapest University of Technology and Economics
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -57,19 +57,19 @@ public class ExprSizeTest {
 
 	@Parameters
 	public static Collection<Object[]> data() {
-		return Arrays.asList(new Object[][] {
+		return Arrays.asList(new Object[][]{
 
-				{ True(), 1 },
+				{True(), 1},
 
-				{ A, 1 },
+				{A, 1},
 
-				{ And(A, True()), 3 },
+				{And(A, True()), 3},
 
-				{ And(A, True(), False()), 4 },
+				{And(A, True(), False()), 4},
 
-				{ And(A, And(True(), False())), 5 },
+				{And(A, And(True(), False())), 5},
 
-				{ Add(B, Sub(Int(1), Int(2)), Int(3)), 6 },
+				{Add(B, Sub(Int(1), Int(2)), Int(3)), 6},
 
 		});
 	}

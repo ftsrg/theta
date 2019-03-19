@@ -48,9 +48,8 @@ public final class FuncAppExpr<ParamType extends Type, ResultType extends Type> 
 	}
 
 	public static <ParamType extends Type, ResultType extends Type> FuncAppExpr<?, ?> create(final Expr<?> func,
-			final Expr<?> param) {
-		@SuppressWarnings("unchecked")
-		final FuncType<ParamType, ResultType> funcType = (FuncType<ParamType, ResultType>) func.getType();
+																							 final Expr<?> param) {
+		@SuppressWarnings("unchecked") final FuncType<ParamType, ResultType> funcType = (FuncType<ParamType, ResultType>) func.getType();
 		final Expr<FuncType<ParamType, ResultType>> newFunc = cast(func, funcType);
 		final Expr<ParamType> newParam = cast(param, funcType.getParamType());
 		return FuncAppExpr.of(newFunc, newParam);
@@ -92,7 +91,7 @@ public final class FuncAppExpr<ParamType extends Type, ResultType extends Type> 
 	}
 
 	public FuncAppExpr<ParamType, ResultType> with(final Expr<FuncType<ParamType, ResultType>> func,
-			final Expr<ParamType> param) {
+												   final Expr<ParamType> param) {
 		if (this.func == func && this.param == param) {
 			return this;
 		} else {

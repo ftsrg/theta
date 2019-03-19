@@ -55,13 +55,13 @@ public class StmtToExprTransformerTest {
 
 	@Parameters
 	public static Collection<Object[]> data() {
-		return Arrays.asList(new Object[][] {
+		return Arrays.asList(new Object[][]{
 
-				{ Stmts.Assume(And(True(), False())), ImmutableList.of(And(True(), False())) },
+				{Stmts.Assume(And(True(), False())), ImmutableList.of(And(True(), False()))},
 
-				{ Stmts.Havoc(VX), ImmutableList.of(True()) },
+				{Stmts.Havoc(VX), ImmutableList.of(True())},
 
-				{ Stmts.Assign(VX, Int(2)), ImmutableList.of(Eq(Prime(VX.getRef()), Int(2))) }
+				{Stmts.Assign(VX, Int(2)), ImmutableList.of(Eq(Prime(VX.getRef()), Int(2)))}
 
 		});
 	}

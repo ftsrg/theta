@@ -75,11 +75,15 @@ public final class StsConfigBuilder {
 
 	public enum Domain {
 		EXPL, PRED_BOOL, PRED_CART, PRED_SPLIT
-	};
+	}
+
+	;
 
 	public enum Refinement {
 		FW_BIN_ITP, BW_BIN_ITP, SEQ_ITP, UNSAT_CORE
-	};
+	}
+
+	;
 
 	public enum Search {
 		BFS(ArgNodeComparators.combine(ArgNodeComparators.targetFirst(), ArgNodeComparators.bfs())),
@@ -92,7 +96,9 @@ public final class StsConfigBuilder {
 			this.comparator = comparator;
 		}
 
-	};
+	}
+
+	;
 
 	public enum PredSplit {
 		WHOLE(ExprSplitters.whole()),
@@ -106,7 +112,9 @@ public final class StsConfigBuilder {
 		private PredSplit(final ExprSplitter splitter) {
 			this.splitter = splitter;
 		}
-	};
+	}
+
+	;
 
 	public enum InitPrec {
 		EMPTY(new StsEmptyInitPrec()), PROP(new StsPropInitPrec());
@@ -117,7 +125,9 @@ public final class StsConfigBuilder {
 			this.builder = builder;
 		}
 
-	};
+	}
+
+	;
 
 	private Logger logger = NullLogger.getInstance();
 	private final SolverFactory solverFactory;
@@ -174,25 +184,25 @@ public final class StsConfigBuilder {
 			Refiner<ExplState, StsAction, ExplPrec> refiner = null;
 
 			switch (refinement) {
-			case FW_BIN_ITP:
-				refiner = SingleExprTraceRefiner.create(ExprTraceFwBinItpChecker.create(init, negProp, solver),
-						JoiningPrecRefiner.create(new ItpRefToExplPrec()), logger);
-				break;
-			case BW_BIN_ITP:
-				refiner = SingleExprTraceRefiner.create(ExprTraceBwBinItpChecker.create(init, negProp, solver),
-						JoiningPrecRefiner.create(new ItpRefToExplPrec()), logger);
-				break;
-			case SEQ_ITP:
-				refiner = SingleExprTraceRefiner.create(ExprTraceSeqItpChecker.create(init, negProp, solver),
-						JoiningPrecRefiner.create(new ItpRefToExplPrec()), logger);
-				break;
-			case UNSAT_CORE:
-				refiner = SingleExprTraceRefiner.create(ExprTraceUnsatCoreChecker.create(init, negProp, solver),
-						JoiningPrecRefiner.create(new VarsRefToExplPrec()), logger);
-				break;
-			default:
-				throw new UnsupportedOperationException(
-						domain + " domain does not support " + refinement + " refinement.");
+				case FW_BIN_ITP:
+					refiner = SingleExprTraceRefiner.create(ExprTraceFwBinItpChecker.create(init, negProp, solver),
+							JoiningPrecRefiner.create(new ItpRefToExplPrec()), logger);
+					break;
+				case BW_BIN_ITP:
+					refiner = SingleExprTraceRefiner.create(ExprTraceBwBinItpChecker.create(init, negProp, solver),
+							JoiningPrecRefiner.create(new ItpRefToExplPrec()), logger);
+					break;
+				case SEQ_ITP:
+					refiner = SingleExprTraceRefiner.create(ExprTraceSeqItpChecker.create(init, negProp, solver),
+							JoiningPrecRefiner.create(new ItpRefToExplPrec()), logger);
+					break;
+				case UNSAT_CORE:
+					refiner = SingleExprTraceRefiner.create(ExprTraceUnsatCoreChecker.create(init, negProp, solver),
+							JoiningPrecRefiner.create(new VarsRefToExplPrec()), logger);
+					break;
+				default:
+					throw new UnsupportedOperationException(
+							domain + " domain does not support " + refinement + " refinement.");
 			}
 
 			final SafetyChecker<ExplState, StsAction, ExplPrec> checker = CegarChecker.create(abstractor, refiner,
@@ -203,17 +213,17 @@ public final class StsConfigBuilder {
 		} else if (domain == Domain.PRED_BOOL || domain == Domain.PRED_CART || domain == Domain.PRED_SPLIT) {
 			PredAbstractor predAbstractor = null;
 			switch (domain) {
-			case PRED_BOOL:
-				predAbstractor = PredAbstractors.booleanAbstractor(solver);
-				break;
-			case PRED_SPLIT:
-				predAbstractor = PredAbstractors.booleanSplitAbstractor(solver);
-				break;
-			case PRED_CART:
-				predAbstractor = PredAbstractors.cartesianAbstractor(solver);
-				break;
-			default:
-				throw new UnsupportedOperationException(domain + " domain is not supported.");
+				case PRED_BOOL:
+					predAbstractor = PredAbstractors.booleanAbstractor(solver);
+					break;
+				case PRED_SPLIT:
+					predAbstractor = PredAbstractors.booleanSplitAbstractor(solver);
+					break;
+				case PRED_CART:
+					predAbstractor = PredAbstractors.cartesianAbstractor(solver);
+					break;
+				default:
+					throw new UnsupportedOperationException(domain + " domain is not supported.");
 			}
 			final Predicate<ExprState> target = new ExprStatePredicate(negProp, solver);
 			final Analysis<PredState, ExprAction, PredPrec> analysis = PredAnalysis.create(solver, predAbstractor,
@@ -225,18 +235,18 @@ public final class StsConfigBuilder {
 
 			ExprTraceChecker<ItpRefutation> exprTraceChecker = null;
 			switch (refinement) {
-			case FW_BIN_ITP:
-				exprTraceChecker = ExprTraceFwBinItpChecker.create(init, negProp, solver);
-				break;
-			case BW_BIN_ITP:
-				exprTraceChecker = ExprTraceBwBinItpChecker.create(init, negProp, solver);
-				break;
-			case SEQ_ITP:
-				exprTraceChecker = ExprTraceSeqItpChecker.create(init, negProp, solver);
-				break;
-			default:
-				throw new UnsupportedOperationException(
-						domain + " domain does not support " + refinement + " refinement.");
+				case FW_BIN_ITP:
+					exprTraceChecker = ExprTraceFwBinItpChecker.create(init, negProp, solver);
+					break;
+				case BW_BIN_ITP:
+					exprTraceChecker = ExprTraceBwBinItpChecker.create(init, negProp, solver);
+					break;
+				case SEQ_ITP:
+					exprTraceChecker = ExprTraceSeqItpChecker.create(init, negProp, solver);
+					break;
+				default:
+					throw new UnsupportedOperationException(
+							domain + " domain does not support " + refinement + " refinement.");
 			}
 			final Refiner<PredState, StsAction, PredPrec> refiner = SingleExprTraceRefiner.create(exprTraceChecker,
 					JoiningPrecRefiner.create(new ItpRefToPredPrec(predSplit.splitter)), logger);

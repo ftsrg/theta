@@ -30,7 +30,7 @@ public final class NodeAttributes {
 	private final Alignment alignment;
 
 	private NodeAttributes(final String label, final Color lineColor, final Color fillColor, final LineStyle lineStyle,
-			final String font, final int peripheries, final Shape shape, final Alignment alignment) {
+						   final String font, final int peripheries, final Shape shape, final Alignment alignment) {
 		this.label = checkNotNull(label);
 		this.lineColor = checkNotNull(lineColor);
 		this.fillColor = checkNotNull(fillColor);

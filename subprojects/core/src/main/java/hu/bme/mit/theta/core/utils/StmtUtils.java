@@ -57,7 +57,7 @@ public final class StmtUtils {
 	/**
 	 * Unfold a statement into expressions with a given indexing
 	 *
-	 * @param stmt Statement
+	 * @param stmt     Statement
 	 * @param indexing Indexing
 	 * @return Expressions and new indexing
 	 */
@@ -68,7 +68,7 @@ public final class StmtUtils {
 	/**
 	 * Unfold statements into expressions with a given indexing
 	 *
-	 * @param stmts Statements
+	 * @param stmts    Statements
 	 * @param indexing Indexing
 	 * @return Expressions and new indexing
 	 */

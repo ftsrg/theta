@@ -113,8 +113,7 @@ public final class IntType implements Additive<IntType>, Multiplicative<IntType>
 	@Override
 	public <TargetType extends Type> Expr<TargetType> Cast(final Expr<IntType> op, final TargetType type) {
 		if (type instanceof RatType) {
-			@SuppressWarnings("unchecked")
-			final Expr<TargetType> result = (Expr<TargetType>) IntExprs.ToRat(op);
+			@SuppressWarnings("unchecked") final Expr<TargetType> result = (Expr<TargetType>) IntExprs.ToRat(op);
 			return result;
 		} else {
 			throw new ClassCastException("Int cannot be cast to " + type);

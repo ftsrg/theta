@@ -52,7 +52,7 @@ public final class LocalCfaPrecRefiner<S extends ExprState, A extends Action, P 
 		checkNotNull(prec);
 		checkNotNull(refutation);
 		checkArgument(prec instanceof LocalCfaPrec); // TODO: enforce this in a
-														// better way
+		// better way
 
 		// Important: the same location may appear multiple times in the trace
 		// and in this case the corresponding precisions should be joined before

@@ -27,8 +27,7 @@ public abstract class DivExpr<ExprType extends Multiplicative<ExprType>> extends
 	}
 
 	public static <ExprType extends Multiplicative<ExprType>> DivExpr<?> create2(final Expr<?> leftOp, final Expr<?> rightOp) {
-		@SuppressWarnings("unchecked")
-		final ExprType type = (ExprType) leftOp.getType();
+		@SuppressWarnings("unchecked") final ExprType type = (ExprType) leftOp.getType();
 		final Expr<ExprType> newLeftOp = cast(leftOp, type);
 		final Expr<ExprType> newRightOp = cast(rightOp, type);
 		return type.Div(newLeftOp, newRightOp);

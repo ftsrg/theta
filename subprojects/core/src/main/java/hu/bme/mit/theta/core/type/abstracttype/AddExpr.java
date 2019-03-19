@@ -32,8 +32,7 @@ public abstract class AddExpr<ExprType extends Additive<ExprType>> extends Multi
 
 	public static <ExprType extends Additive<ExprType>> AddExpr<?> create2(final List<? extends Expr<?>> ops) {
 		checkArgument(!ops.isEmpty());
-		@SuppressWarnings("unchecked")
-		final ExprType type = (ExprType) ops.get(0).getType();
+		@SuppressWarnings("unchecked") final ExprType type = (ExprType) ops.get(0).getType();
 		return type.Add(ops.stream().map(op -> cast(op, type)).collect(toImmutableList()));
 	}
 

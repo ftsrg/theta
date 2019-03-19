@@ -50,8 +50,7 @@ public final class BasicSubstitution implements Substitution {
 	public <DeclType extends Type> Optional<Expr<DeclType>> eval(final Decl<DeclType> decl) {
 		checkNotNull(decl);
 		if (declToExpr.containsKey(decl)) {
-			@SuppressWarnings("unchecked")
-			final Expr<DeclType> val = (Expr<DeclType>) declToExpr.get(decl);
+			@SuppressWarnings("unchecked") final Expr<DeclType> val = (Expr<DeclType>) declToExpr.get(decl);
 			return Optional.of(val);
 		}
 		return Optional.empty();

@@ -48,7 +48,7 @@ public final class GlobalCfaPrecRefiner<S extends ExprState, A extends Action, P
 		checkNotNull(prec);
 		checkNotNull(refutation);
 		checkArgument(prec instanceof GlobalCfaPrec); // TODO: enforce this in a
-														// better way
+		// better way
 
 		final GlobalCfaPrec<P> constPrec = (GlobalCfaPrec<P>) prec;
 		P runningPrec = constPrec.getPrec();

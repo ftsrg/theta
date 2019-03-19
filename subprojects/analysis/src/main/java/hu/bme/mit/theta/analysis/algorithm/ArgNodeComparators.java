@@ -1,12 +1,12 @@
 /*
  *  Copyright 2017 Budapest University of Technology and Economics
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -70,7 +70,7 @@ public class ArgNodeComparators {
 
 		@Override
 		public int compare(final ArgNode<? extends State, ? extends Action> n1,
-				final ArgNode<? extends State, ? extends Action> n2) {
+						   final ArgNode<? extends State, ? extends Action> n2) {
 			return Integer.compare(n1.getDepth(), n2.getDepth());
 		}
 
@@ -85,7 +85,7 @@ public class ArgNodeComparators {
 
 		@Override
 		public int compare(final ArgNode<? extends State, ? extends Action> n1,
-				final ArgNode<? extends State, ? extends Action> n2) {
+						   final ArgNode<? extends State, ? extends Action> n2) {
 			return Integer.compare(n1.getId(), n2.getId());
 		}
 
@@ -100,7 +100,7 @@ public class ArgNodeComparators {
 
 		@Override
 		public int compare(final ArgNode<? extends State, ? extends Action> n1,
-				final ArgNode<? extends State, ? extends Action> n2) {
+						   final ArgNode<? extends State, ? extends Action> n2) {
 			return Boolean.compare(n1.isTarget(), n2.isTarget()) * -1;
 		}
 
@@ -120,7 +120,7 @@ public class ArgNodeComparators {
 
 		@Override
 		public int compare(final ArgNode<? extends State, ? extends Action> n1,
-				final ArgNode<? extends State, ? extends Action> n2) {
+						   final ArgNode<? extends State, ? extends Action> n2) {
 			return comparator.compare(n1, n2) * -1;
 		}
 
@@ -141,7 +141,7 @@ public class ArgNodeComparators {
 
 		@Override
 		public int compare(final ArgNode<? extends State, ? extends Action> n1,
-				final ArgNode<? extends State, ? extends Action> n2) {
+						   final ArgNode<? extends State, ? extends Action> n2) {
 			final int compareFirst = first.compare(n1, n2);
 			if (compareFirst == 0) {
 				return then.compare(n1, n2);

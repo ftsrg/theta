@@ -39,7 +39,7 @@ public final class XtaAnalysis<S extends State, P extends Prec> implements Analy
 	}
 
 	public static <S extends State, P extends Prec> XtaAnalysis<S, P> create(final XtaSystem system,
-			final Analysis<S, ? super XtaAction, ? super P> analysis) {
+																			 final Analysis<S, ? super XtaAction, ? super P> analysis) {
 		return new XtaAnalysis<>(system, analysis);
 	}
 

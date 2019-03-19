@@ -58,21 +58,21 @@ public class VarCollectorStmtVisitorTest {
 
 	@Parameters
 	public static Collection<Object[]> data() {
-		return Arrays.asList(new Object[][] {
+		return Arrays.asList(new Object[][]{
 
-				{ Skip(), of() },
+				{Skip(), of()},
 
-				{ Havoc(VA), of(VA) },
+				{Havoc(VA), of(VA)},
 
-				{ Havoc(VB), of(VB) },
+				{Havoc(VB), of(VB)},
 
-				{ Assign(VB, Int(0)), of(VB) },
+				{Assign(VB, Int(0)), of(VB)},
 
-				{ Assign(VB, Add(VB.getRef(), VB.getRef())), of(VB) },
+				{Assign(VB, Add(VB.getRef(), VB.getRef())), of(VB)},
 
-				{ Assign(VB, Add(VB.getRef(), VC.getRef())), of(VB, VC) },
+				{Assign(VB, Add(VB.getRef(), VC.getRef())), of(VB, VC)},
 
-				{ Assume(And(VA.getRef(), Eq(VB.getRef(), VC.getRef()))), of(VA, VB, VC) },
+				{Assume(And(VA.getRef(), Eq(VB.getRef(), VC.getRef()))), of(VA, VB, VC)},
 
 		});
 	}

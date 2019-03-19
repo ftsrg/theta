@@ -108,7 +108,7 @@ public final class ARG<S extends State, A extends Action> {
 	}
 
 	public ArgNode<S, A> createSuccNode(final ArgNode<S, A> node, final A action, final S succState,
-			final boolean target) {
+										final boolean target) {
 		checkNotNull(node);
 		checkNotNull(action);
 		checkNotNull(succState);

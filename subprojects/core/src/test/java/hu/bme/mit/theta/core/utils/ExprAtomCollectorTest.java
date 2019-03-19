@@ -59,15 +59,15 @@ public class ExprAtomCollectorTest {
 
 	@Parameters
 	public static Collection<Object[]> data() {
-		return Arrays.asList(new Object[][] {
+		return Arrays.asList(new Object[][]{
 
-				{ And(CA, Or(CA, Not(CB))), of(CA, CB) },
+				{And(CA, Or(CA, Not(CB))), of(CA, CB)},
 
-				{ Imply(Eq(CX, Int(2)), Not(Leq(CX, CY))), of(Eq(CX, Int(2)), Leq(CX, CY)) },
+				{Imply(Eq(CX, Int(2)), Not(Leq(CX, CY))), of(Eq(CX, Int(2)), Leq(CX, CY))},
 
-				{ Iff(And(Leq(CX, CY), Eq(CX, CY)), Or(Not(Leq(CX, CY)), CA)), of(CA, Leq(CX, CY), Eq(CX, CY)) },
+				{Iff(And(Leq(CX, CY), Eq(CX, CY)), Or(Not(Leq(CX, CY)), CA)), of(CA, Leq(CX, CY), Eq(CX, CY))},
 
-				{ And(Ite(CA, CA, CB), Not(CA)), of(CA, Ite(CA, CA, CB)) },
+				{And(Ite(CA, CA, CB), Not(CA)), of(CA, Ite(CA, CA, CB))},
 
 		});
 	}

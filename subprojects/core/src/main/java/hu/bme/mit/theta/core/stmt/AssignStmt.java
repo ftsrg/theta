@@ -39,13 +39,12 @@ public final class AssignStmt<DeclType extends Type> implements Stmt {
 	}
 
 	public static <DeclType extends Type> AssignStmt<DeclType> of(final VarDecl<DeclType> lhs,
-			final Expr<DeclType> rhs) {
+																  final Expr<DeclType> rhs) {
 		return new AssignStmt<>(lhs, rhs);
 	}
 
 	public static <DeclType extends Type> AssignStmt<?> create(final VarDecl<?> lhs, final Expr<?> rhs) {
-		@SuppressWarnings("unchecked")
-		final VarDecl<DeclType> newLhs = (VarDecl<DeclType>) lhs;
+		@SuppressWarnings("unchecked") final VarDecl<DeclType> newLhs = (VarDecl<DeclType>) lhs;
 		final Expr<DeclType> newRhs = cast(rhs, newLhs.getType());
 		return AssignStmt.of(newLhs, newRhs);
 	}

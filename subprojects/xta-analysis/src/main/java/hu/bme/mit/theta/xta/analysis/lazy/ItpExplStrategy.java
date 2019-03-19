@@ -74,7 +74,7 @@ abstract class ItpExplStrategy<S extends State> implements AlgorithmStrategy<S, 
 
 	@Override
 	public final void cover(final ArgNode<S, XtaAction> coveree, final ArgNode<S, XtaAction> coverer,
-			final Collection<ArgNode<S, XtaAction>> uncoveredNodes, final Builder stats) {
+							final Collection<ArgNode<S, XtaAction>> uncoveredNodes, final Builder stats) {
 		stats.startCloseExplRefinement();
 		final ItpExplState covererState = lens.get(coverer.getState());
 		blockExpl(coveree, Not(covererState.toExpr()), uncoveredNodes, stats);
@@ -83,7 +83,7 @@ abstract class ItpExplStrategy<S extends State> implements AlgorithmStrategy<S, 
 
 	@Override
 	public final void block(final ArgNode<S, XtaAction> node, final XtaAction action, final S succState,
-			final Collection<ArgNode<S, XtaAction>> uncoveredNodes, final Builder stats) {
+							final Collection<ArgNode<S, XtaAction>> uncoveredNodes, final Builder stats) {
 		assert lens.get(succState).isBottom();
 		stats.startExpandExplRefinement();
 		final Expr<BoolType> preImage = XtaExplUtils.pre(True(), action);
@@ -94,7 +94,7 @@ abstract class ItpExplStrategy<S extends State> implements AlgorithmStrategy<S, 
 	////
 
 	protected abstract Valuation blockExpl(final ArgNode<S, XtaAction> node, final Expr<BoolType> expr,
-			final Collection<ArgNode<S, XtaAction>> uncoveredNodes, final Builder stats);
+										   final Collection<ArgNode<S, XtaAction>> uncoveredNodes, final Builder stats);
 
 	protected final Lens<S, ItpExplState> getLens() {
 		return lens;
@@ -122,7 +122,7 @@ abstract class ItpExplStrategy<S extends State> implements AlgorithmStrategy<S, 
 	}
 
 	protected final void maintainCoverage(final ArgNode<S, XtaAction> node, final Valuation interpolant,
-			final Collection<ArgNode<S, XtaAction>> uncoveredNodes) {
+										  final Collection<ArgNode<S, XtaAction>> uncoveredNodes) {
 		final Collection<ArgNode<S, XtaAction>> uncovered = node.getCoveredNodes()
 				.filter(covered -> shouldUncover(covered, interpolant)).collect(toList());
 		uncoveredNodes.addAll(uncovered);

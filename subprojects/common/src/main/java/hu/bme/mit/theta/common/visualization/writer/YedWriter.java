@@ -155,27 +155,27 @@ public final class YedWriter extends AbstractGraphWriter {
 
 	private String mapLineStyleToString(final LineStyle lineStyle) {
 		switch (lineStyle) {
-		case DASHED:
-			return "dashed";
-		case DOTTED:
-			return "dotted";
-		case NORMAL:
-			return "";
-		default:
-			throw new UnsupportedOperationException("Unknown line style: " + lineStyle + ".");
+			case DASHED:
+				return "dashed";
+			case DOTTED:
+				return "dotted";
+			case NORMAL:
+				return "";
+			default:
+				throw new UnsupportedOperationException("Unknown line style: " + lineStyle + ".");
 		}
 	}
 
 	private String mapShapeToString(final Shape shape) {
 		switch (shape) {
-		case CIRCLE:
-			return "circle";
-		case ELLIPSE:
-			return "ellipse";
-		case RECTANGLE:
-			return "rectangle";
-		default:
-			throw new UnsupportedOperationException("Unknown shape: " + shape + ".");
+			case CIRCLE:
+				return "circle";
+			case ELLIPSE:
+				return "ellipse";
+			case RECTANGLE:
+				return "rectangle";
+			default:
+				throw new UnsupportedOperationException("Unknown shape: " + shape + ".");
 		}
 	}
 }

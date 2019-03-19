@@ -45,7 +45,7 @@ public final class ArrayWriteExpr<IndexType extends Type, ElemType extends Type>
 	private final Expr<ElemType> elem;
 
 	private ArrayWriteExpr(final Expr<ArrayType<IndexType, ElemType>> array, final Expr<IndexType> index,
-			final Expr<ElemType> elem) {
+						   final Expr<ElemType> elem) {
 		this.array = checkNotNull(array);
 		this.index = checkNotNull(index);
 		this.elem = checkNotNull(elem);
@@ -57,9 +57,8 @@ public final class ArrayWriteExpr<IndexType extends Type, ElemType extends Type>
 	}
 
 	public static <IndexType extends Type, ElemType extends Type> ArrayWriteExpr<?, ?> create(final Expr<?> array,
-			final Expr<?> index, final Expr<?> elem) {
-		@SuppressWarnings("unchecked")
-		final ArrayType<IndexType, ElemType> arrayType = (ArrayType<IndexType, ElemType>) array.getType();
+																							  final Expr<?> index, final Expr<?> elem) {
+		@SuppressWarnings("unchecked") final ArrayType<IndexType, ElemType> arrayType = (ArrayType<IndexType, ElemType>) array.getType();
 		final Expr<ArrayType<IndexType, ElemType>> newArray = cast(array, arrayType);
 		final Expr<IndexType> newIndex = cast(index, arrayType.getIndexType());
 		final Expr<ElemType> newElem = cast(elem, arrayType.getElemType());
@@ -110,7 +109,7 @@ public final class ArrayWriteExpr<IndexType extends Type, ElemType extends Type>
 	}
 
 	public ArrayWriteExpr<IndexType, ElemType> with(final Expr<ArrayType<IndexType, ElemType>> array,
-			final Expr<IndexType> index, final Expr<ElemType> elem) {
+													final Expr<IndexType> index, final Expr<ElemType> elem) {
 		if (this.array == array && this.index == index && elem == this.elem) {
 			return this;
 		} else {

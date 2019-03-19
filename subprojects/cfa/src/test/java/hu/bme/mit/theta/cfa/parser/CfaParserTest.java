@@ -43,9 +43,9 @@ public final class CfaParserTest {
 
 	@Parameters
 	public static Collection<Object[]> data() {
-		return Arrays.asList(new Object[][] {
+		return Arrays.asList(new Object[][]{
 
-				{ "src/test/resources/counter5_true.lisp.cfa" },
+				{"src/test/resources/counter5_true.lisp.cfa"},
 
 		});
 	}

@@ -34,21 +34,21 @@ public final class LispLexer {
 	public Token nextToken() {
 		while (c != EOF) {
 			switch (c) {
-			case ' ':
-			case '\t':
-			case '\n':
-			case '\r':
-				WS();
-				continue;
-			case ';':
-				COMMENT();
-				continue;
-			case '(':
-				return LPAREN();
-			case ')':
-				return RPAREN();
-			default:
-				return ATOM();
+				case ' ':
+				case '\t':
+				case '\n':
+				case '\r':
+					WS();
+					continue;
+				case ';':
+					COMMENT();
+					continue;
+				case '(':
+					return LPAREN();
+				case ')':
+					return RPAREN();
+				default:
+					return ATOM();
 			}
 		}
 

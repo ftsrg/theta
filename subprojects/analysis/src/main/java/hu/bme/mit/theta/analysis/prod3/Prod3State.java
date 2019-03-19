@@ -34,7 +34,7 @@ public abstract class Prod3State<S1 extends State, S2 extends State, S3 extends 
 	}
 
 	public static <S1 extends State, S2 extends State, S3 extends State> Prod3State<S1, S2, S3> of(final S1 state1,
-			final S2 state2, final S3 state3) {
+																								   final S2 state2, final S3 state3) {
 		checkNotNull(state1);
 		checkNotNull(state2);
 		checkNotNull(state3);

@@ -54,7 +54,7 @@ public abstract class SafetyResult<S extends State, A extends Action> {
 	}
 
 	public static <S extends State, A extends Action> Unsafe<S, A> unsafe(final Trace<S, A> cex, final ARG<S, A> arg,
-			final Statistics stats) {
+																		  final Statistics stats) {
 		return new Unsafe<>(cex, arg, Optional.of(stats));
 	}
 

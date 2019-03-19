@@ -157,7 +157,8 @@ public final class ExprSimplifier {
 				return expr.map(e -> simplify(e, val));
 			})
 
-			.build();;
+			.build();
+	;
 
 	private ExprSimplifier() {
 	}
@@ -178,7 +179,7 @@ public final class ExprSimplifier {
 	// TODO Eliminate helper method once the Java compiler is able to handle
 	// this kind of type inference
 	private static <DeclType extends Type> Expr<DeclType> simplifyGenericRef(final RefExpr<DeclType> expr,
-			final Valuation val) {
+																			 final Valuation val) {
 		final Optional<LitExpr<DeclType>> eval = val.eval(expr.getDecl());
 		if (eval.isPresent()) {
 			return eval.get();
@@ -194,7 +195,7 @@ public final class ExprSimplifier {
 	// TODO Eliminate helper method once the Java compiler is able to handle
 	// this kind of type inference
 	private static <ExprType extends Type> Expr<ExprType> simplifyGenericIte(final IteExpr<ExprType> expr,
-			final Valuation val) {
+																			 final Valuation val) {
 		final Expr<BoolType> cond = simplify(expr.getCond(), val);
 
 		if (cond instanceof TrueExpr) {
@@ -387,7 +388,7 @@ public final class ExprSimplifier {
 		int num = 0;
 		int denom = 1;
 
-		for (final Iterator<Expr<RatType>> iterator = ops.iterator(); iterator.hasNext();) {
+		for (final Iterator<Expr<RatType>> iterator = ops.iterator(); iterator.hasNext(); ) {
 			final Expr<RatType> op = iterator.next();
 			if (op instanceof RatLitExpr) {
 				final RatLitExpr litOp = (RatLitExpr) op;
@@ -460,7 +461,7 @@ public final class ExprSimplifier {
 		int num = 1;
 		int denom = 1;
 
-		for (final Iterator<Expr<RatType>> iterator = ops.iterator(); iterator.hasNext();) {
+		for (final Iterator<Expr<RatType>> iterator = ops.iterator(); iterator.hasNext(); ) {
 			final Expr<RatType> op = iterator.next();
 			if (op instanceof RatLitExpr) {
 				final RatLitExpr litOp = (RatLitExpr) op;
@@ -636,7 +637,7 @@ public final class ExprSimplifier {
 		}
 		int value = 0;
 
-		for (final Iterator<Expr<IntType>> iterator = ops.iterator(); iterator.hasNext();) {
+		for (final Iterator<Expr<IntType>> iterator = ops.iterator(); iterator.hasNext(); ) {
 			final Expr<IntType> op = iterator.next();
 			if (op instanceof IntLitExpr) {
 				final IntLitExpr litOp = (IntLitExpr) op;
@@ -706,7 +707,7 @@ public final class ExprSimplifier {
 		}
 
 		int value = 1;
-		for (final Iterator<Expr<IntType>> iterator = ops.iterator(); iterator.hasNext();) {
+		for (final Iterator<Expr<IntType>> iterator = ops.iterator(); iterator.hasNext(); ) {
 			final Expr<IntType> op = iterator.next();
 			if (op instanceof IntLitExpr) {
 				final IntLitExpr litOp = (IntLitExpr) op;

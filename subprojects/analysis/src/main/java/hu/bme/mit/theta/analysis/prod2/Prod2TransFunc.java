@@ -34,7 +34,7 @@ final class Prod2TransFunc<S1 extends State, S2 extends State, A extends Action,
 	private final StrengtheningOperator<S1, S2, P1, P2> strenghteningOperator;
 
 	private Prod2TransFunc(final TransFunc<S1, ? super A, P1> transFunc1, final TransFunc<S2, ? super A, P2> transFunc2,
-			final StrengtheningOperator<S1, S2, P1, P2> strenghteningOperator) {
+						   final StrengtheningOperator<S1, S2, P1, P2> strenghteningOperator) {
 		this.transFunc1 = checkNotNull(transFunc1);
 		this.transFunc2 = checkNotNull(transFunc2);
 		this.strenghteningOperator = checkNotNull(strenghteningOperator);
@@ -53,7 +53,7 @@ final class Prod2TransFunc<S1 extends State, S2 extends State, A extends Action,
 
 	@Override
 	public Collection<Prod2State<S1, S2>> getSuccStates(final Prod2State<S1, S2> state, final A action,
-			final Prod2Prec<P1, P2> prec) {
+														final Prod2Prec<P1, P2> prec) {
 		checkNotNull(state);
 		checkNotNull(action);
 		checkNotNull(prec);

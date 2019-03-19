@@ -1,12 +1,12 @@
 /*
  *  Copyright 2017 Budapest University of Technology and Economics
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -67,14 +67,14 @@ public class ExprIndexedVarCollectorTest {
 
 	@Parameters
 	public static Collection<Object[]> data() {
-		return Arrays.asList(new Object[][] {
+		return Arrays.asList(new Object[][]{
 
-				{ And(True(), False(), Eq(Int(1), Int(2))), ImmutableMap.of() },
+				{And(True(), False(), Eq(Int(1), Int(2))), ImmutableMap.of()},
 
-				{ And(A0.getRef(), Not(A1.getRef())), ImmutableMap.of(0, of(VA), 1, of(VA)) },
+				{And(A0.getRef(), Not(A1.getRef())), ImmutableMap.of(0, of(VA), 1, of(VA))},
 
-				{ And(A2.getRef(), A0.getRef(), Eq(B0.getRef(), B1.getRef())),
-						ImmutableMap.of(0, of(VA, VB), 1, of(VB), 2, of(VA)) },
+				{And(A2.getRef(), A0.getRef(), Eq(B0.getRef(), B1.getRef())),
+						ImmutableMap.of(0, of(VA, VB), 1, of(VB), 2, of(VA))},
 
 		});
 

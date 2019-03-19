@@ -27,8 +27,7 @@ public abstract class SubExpr<ExprType extends Additive<ExprType>> extends Binar
 	}
 
 	public static <ExprType extends Additive<ExprType>> SubExpr<?> create2(final Expr<?> leftOp, final Expr<?> rightOp) {
-		@SuppressWarnings("unchecked")
-		final ExprType type = (ExprType) leftOp.getType();
+		@SuppressWarnings("unchecked") final ExprType type = (ExprType) leftOp.getType();
 		final Expr<ExprType> newLeftOp = cast(leftOp, type);
 		final Expr<ExprType> newRightOp = cast(rightOp, type);
 		return type.Sub(newLeftOp, newRightOp);

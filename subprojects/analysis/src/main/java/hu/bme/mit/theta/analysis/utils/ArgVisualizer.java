@@ -94,7 +94,7 @@ public final class ArgVisualizer<S extends State, A extends Action> {
 	}
 
 	private void traverse(final Graph graph, final ArgNode<? extends S, ? extends A> node,
-			final Set<ArgNode<? extends S, ? extends A>> traversed) {
+						  final Set<ArgNode<? extends S, ? extends A>> traversed) {
 		if (traversed.contains(node)) {
 			return;
 		} else {

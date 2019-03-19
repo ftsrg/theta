@@ -35,7 +35,7 @@ public final class Prod3Prec<P1 extends Prec, P2 extends Prec, P3 extends Prec> 
 	}
 
 	public static <P1 extends Prec, P2 extends Prec, P3 extends Prec> Prod3Prec<P1, P2, P3> of(final P1 prec1,
-			final P2 prec2, final P3 prec3) {
+																							   final P2 prec2, final P3 prec3) {
 		return new Prod3Prec<>(prec1, prec2, prec3);
 	}
 

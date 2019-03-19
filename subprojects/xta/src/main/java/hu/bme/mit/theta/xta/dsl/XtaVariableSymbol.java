@@ -50,7 +50,7 @@ final class XtaVariableSymbol implements Symbol {
 	private final XtaInitialiser initialiser;
 
 	public XtaVariableSymbol(final Scope scope, final TypeContext typeContext,
-			final VariableIdContext variableIdcontext) {
+							 final VariableIdContext variableIdcontext) {
 		checkNotNull(typeContext);
 		checkNotNull(variableIdcontext);
 		name = variableIdcontext.fArrayId.fId.getText();

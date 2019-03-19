@@ -71,34 +71,34 @@ public class StsCli {
 	private final String[] args;
 	private final TableWriter writer;
 
-	@Parameter(names = { "--domain" }, description = "Abstract domain", required = true)
+	@Parameter(names = {"--domain"}, description = "Abstract domain", required = true)
 	Domain domain;
 
-	@Parameter(names = { "--refinement" }, description = "Refinement strategy", required = true)
+	@Parameter(names = {"--refinement"}, description = "Refinement strategy", required = true)
 	Refinement refinement;
 
-	@Parameter(names = { "--search" }, description = "Search strategy")
+	@Parameter(names = {"--search"}, description = "Search strategy")
 	Search search = Search.BFS;
 
-	@Parameter(names = { "--predsplit" }, description = "Predicate splitting")
+	@Parameter(names = {"--predsplit"}, description = "Predicate splitting")
 	PredSplit predSplit = PredSplit.WHOLE;
 
-	@Parameter(names = { "--model" }, description = "Path of the input model", required = true)
+	@Parameter(names = {"--model"}, description = "Path of the input model", required = true)
 	String model;
 
-	@Parameter(names = { "--initprec" }, description = "Initial precision")
+	@Parameter(names = {"--initprec"}, description = "Initial precision")
 	InitPrec initPrec = InitPrec.EMPTY;
 
-	@Parameter(names = { "--loglevel" }, description = "Detailedness of logging")
+	@Parameter(names = {"--loglevel"}, description = "Detailedness of logging")
 	Logger.Level logLevel = Level.SUBSTEP;
 
-	@Parameter(names = { "--benchmark" }, description = "Benchmark mode (only print metrics)")
+	@Parameter(names = {"--benchmark"}, description = "Benchmark mode (only print metrics)")
 	Boolean benchmarkMode = false;
 
-	@Parameter(names = { "--visualize" }, description = "Write proof or counterexample to file in dot format")
+	@Parameter(names = {"--visualize"}, description = "Write proof or counterexample to file in dot format")
 	String dotfile = null;
 
-	@Parameter(names = { "--header" }, description = "Print only a header (for benchmarks)", help = true)
+	@Parameter(names = {"--header"}, description = "Print only a header (for benchmarks)", help = true)
 	boolean headerOnly = false;
 
 	private Logger logger;
@@ -148,8 +148,8 @@ public class StsCli {
 	}
 
 	private void printHeader() {
-		final String[] header = new String[] { "Result", "TimeMs", "AlgoTimeMs", "AbsTimeMs", "RefTimeMs", "Iterations",
-				"ArgSize", "ArgDepth", "ArgMeanBranchFactor", "CexLen", "Vars", "Size" };
+		final String[] header = new String[]{"Result", "TimeMs", "AlgoTimeMs", "AbsTimeMs", "RefTimeMs", "Iterations",
+				"ArgSize", "ArgDepth", "ArgMeanBranchFactor", "CexLen", "Vars", "Size"};
 		for (final String str : header) {
 			writer.cell(str);
 		}

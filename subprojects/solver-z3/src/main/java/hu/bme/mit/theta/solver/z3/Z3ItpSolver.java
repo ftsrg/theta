@@ -50,8 +50,8 @@ final class Z3ItpSolver implements ItpSolver {
 	private final Stack<Z3ItpMarker> markers;
 
 	public Z3ItpSolver(final Z3SymbolTable symbolTable, final Z3TransformationManager transformationManager,
-			final Z3TermTransformer termTransformer, final com.microsoft.z3.InterpolationContext z3Context,
-			final com.microsoft.z3.Solver z3Solver) {
+					   final Z3TermTransformer termTransformer, final com.microsoft.z3.InterpolationContext z3Context,
+					   final com.microsoft.z3.Solver z3Solver) {
 		this.transformationManager = transformationManager;
 		this.termTransformer = termTransformer;
 		this.z3Context = z3Context;
@@ -98,8 +98,7 @@ final class Z3ItpSolver implements ItpSolver {
 		final List<Expr<BoolType>> itpList = new LinkedList<>();
 
 		for (final com.microsoft.z3.BoolExpr itpTerm : itpArray) {
-			@SuppressWarnings("unchecked")
-			final Expr<BoolType> itpExpr = (Expr<BoolType>) termTransformer.toExpr(itpTerm);
+			@SuppressWarnings("unchecked") final Expr<BoolType> itpExpr = (Expr<BoolType>) termTransformer.toExpr(itpTerm);
 			itpList.add(itpExpr);
 		}
 
@@ -127,7 +126,7 @@ final class Z3ItpSolver implements ItpSolver {
 	}
 
 	private void buildItpMapFormList(final ItpPattern pattern, final List<Expr<BoolType>> itpList,
-			final Map<ItpMarker, Expr<BoolType>> itpMap) {
+									 final Map<ItpMarker, Expr<BoolType>> itpMap) {
 		for (final ItpPattern child : pattern.getChildren()) {
 			buildItpMapFormList(child, itpList, itpMap);
 		}

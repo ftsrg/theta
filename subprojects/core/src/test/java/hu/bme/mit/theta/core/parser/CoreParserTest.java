@@ -90,55 +90,55 @@ public final class CoreParserTest {
 
 	@Parameters
 	public static Collection<Object[]> data() {
-		return Arrays.asList(new Object[][] {
+		return Arrays.asList(new Object[][]{
 
-				{ "true", True() },
+				{"true", True()},
 
-				{ "false", False() },
+				{"false", False()},
 
-				{ "(not x)", Not(X) },
+				{"(not x)", Not(X)},
 
-				{ "(and x y z)", And(X, Y, Z) },
+				{"(and x y z)", And(X, Y, Z)},
 
-				{ "(or x y z)", Or(X, Y, Z) },
+				{"(or x y z)", Or(X, Y, Z)},
 
-				{ "(=> x y)", Imply(X, Y) },
+				{"(=> x y)", Imply(X, Y)},
 
-				{ "(iff x y)", Iff(X, Y) },
+				{"(iff x y)", Iff(X, Y)},
 
-				{ "(xor x y)", Xor(X, Y) },
+				{"(xor x y)", Xor(X, Y)},
 
-				{ "1", Int(1) },
+				{"1", Int(1)},
 
-				{ "(+ a b c)", Add(A, B, C) },
+				{"(+ a b c)", Add(A, B, C)},
 
-				{ "(* a b c)", Mul(A, B, C) },
+				{"(* a b c)", Mul(A, B, C)},
 
-				{ "(- a b)", Sub(A, B) },
+				{"(- a b)", Sub(A, B)},
 
-				{ "(/ a b)", Div(A, B) },
+				{"(/ a b)", Div(A, B)},
 
-				{ "(mod a b)", Mod(A, B) },
+				{"(mod a b)", Mod(A, B)},
 
-				{ "(rem a b)", Rem(A, B) },
+				{"(rem a b)", Rem(A, B)},
 
-				{ "(< a b)", Lt(A, B) },
+				{"(< a b)", Lt(A, B)},
 
-				{ "(<= a b)", Leq(A, B) },
+				{"(<= a b)", Leq(A, B)},
 
-				{ "(> a b)", Gt(A, B) },
+				{"(> a b)", Gt(A, B)},
 
-				{ "(>= a b)", Geq(A, B) },
+				{"(>= a b)", Geq(A, B)},
 
-				{ "(= a b)", Eq(A, B) },
+				{"(= a b)", Eq(A, B)},
 
-				{ "(/= a b)", Neq(A, B) },
+				{"(/= a b)", Neq(A, B)},
 
-				{ "a", A },
+				{"a", A},
 
-				{ "(ite x a b)", Ite(X, A, B) },
+				{"(ite x a b)", Ite(X, A, B)},
 
-				{ "(f a)", App(F, A) }
+				{"(f a)", App(F, A)}
 
 		});
 	}

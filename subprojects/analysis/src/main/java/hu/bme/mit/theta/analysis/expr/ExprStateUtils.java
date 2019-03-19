@@ -34,7 +34,7 @@ public final class ExprStateUtils {
 	}
 
 	public static Optional<Valuation> anyUncoveredSuccessor(final ExprState state, final ExprAction action,
-			final Collection<? extends ExprState> succStates, final Solver solver) {
+															final Collection<? extends ExprState> succStates, final Solver solver) {
 		try (WithPushPop wpp = new WithPushPop(solver)) {
 			final VarIndexing indexing = action.nextIndexing();
 			solver.add(unfold(state.toExpr(), 0));
@@ -57,7 +57,7 @@ public final class ExprStateUtils {
 	}
 
 	public static Optional<Valuation> anyUncoveredPredecessor(final Collection<? extends ExprState> predStates,
-			final ExprAction action, final ExprState state, final Solver solver) {
+															  final ExprAction action, final ExprState state, final Solver solver) {
 		try (WithPushPop wpp = new WithPushPop(solver)) {
 			final VarIndexing indexing = action.nextIndexing();
 			for (final ExprState predState : predStates) {

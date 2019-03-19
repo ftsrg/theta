@@ -40,7 +40,7 @@ public final class ExplTransFunc implements TransFunc<ExplState, ExprAction, Exp
 
 	@Override
 	public Collection<? extends ExplState> getSuccStates(final ExplState state, final ExprAction action,
-			final ExplPrec prec) {
+														 final ExplPrec prec) {
 		checkNotNull(state);
 		checkNotNull(action);
 		checkNotNull(prec);

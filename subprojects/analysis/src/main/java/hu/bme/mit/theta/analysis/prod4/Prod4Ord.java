@@ -29,7 +29,7 @@ final class Prod4Ord<S1 extends State, S2 extends State, S3 extends State, S4 ex
 	private final PartialOrd<S4> partialOrd4;
 
 	private Prod4Ord(final PartialOrd<S1> partialOrd1, final PartialOrd<S2> partialOrd2,
-			final PartialOrd<S3> partialOrd3, final PartialOrd<S4> partialOrd4) {
+					 final PartialOrd<S3> partialOrd3, final PartialOrd<S4> partialOrd4) {
 		this.partialOrd1 = checkNotNull(partialOrd1);
 		this.partialOrd2 = checkNotNull(partialOrd2);
 		this.partialOrd3 = checkNotNull(partialOrd3);

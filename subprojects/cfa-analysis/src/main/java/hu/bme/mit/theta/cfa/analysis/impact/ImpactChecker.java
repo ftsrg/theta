@@ -41,7 +41,7 @@ public final class ImpactChecker<S extends State, A extends Action, P extends Pr
 	private final Function<? super S, ?> partitioning;
 
 	private ImpactChecker(final ArgBuilder<S, A, P> argBuilder, final ImpactRefiner<S, A> refiner,
-			final Function<? super S, ?> partitioning) {
+						  final Function<? super S, ?> partitioning) {
 		this.argBuilder = checkNotNull(argBuilder);
 		this.refiner = checkNotNull(refiner);
 		this.partitioning = checkNotNull(partitioning);

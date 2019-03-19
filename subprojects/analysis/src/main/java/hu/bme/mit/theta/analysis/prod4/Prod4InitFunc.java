@@ -34,7 +34,7 @@ final class Prod4InitFunc<S1 extends State, S2 extends State, S3 extends State, 
 	private final InitFunc<S4, P4> initFunc4;
 
 	private Prod4InitFunc(final InitFunc<S1, P1> initFunc1, final InitFunc<S2, P2> initFunc2,
-			final InitFunc<S3, P3> initFunc3, final InitFunc<S4, P4> initFunc4) {
+						  final InitFunc<S3, P3> initFunc3, final InitFunc<S4, P4> initFunc4) {
 		this.initFunc1 = checkNotNull(initFunc1);
 		this.initFunc2 = checkNotNull(initFunc2);
 		this.initFunc3 = checkNotNull(initFunc3);

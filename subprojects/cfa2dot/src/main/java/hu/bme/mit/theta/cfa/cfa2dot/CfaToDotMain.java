@@ -1,12 +1,12 @@
 /*
  *  Copyright 2017 Budapest University of Technology and Economics
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,10 +33,10 @@ public final class CfaToDotMain {
 	private static final String JAR_NAME = "theta-cfa2dot.jar";
 	private final String[] args;
 
-	@Parameter(names = { "-c", "--cfa" }, description = "Path of the input cfa", required = true)
+	@Parameter(names = {"-c", "--cfa"}, description = "Path of the input cfa", required = true)
 	String cfapath;
 
-	@Parameter(names = { "-d", "--dot" }, description = "Path of the output dot", required = false)
+	@Parameter(names = {"-d", "--dot"}, description = "Path of the output dot", required = false)
 	String dotpath;
 
 	public CfaToDotMain(final String[] args) {

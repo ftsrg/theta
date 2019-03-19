@@ -42,7 +42,7 @@ final class LazyXtaChecker<S extends State> implements SafetyChecker<XtaState<S>
 	private final SearchStrategy searchStrategy;
 
 	private LazyXtaChecker(final XtaSystem system, final AlgorithmStrategy<XtaState<S>, XtaState<S>> algorithmStrategy,
-			final SearchStrategy searchStrategy) {
+						   final SearchStrategy searchStrategy) {
 		checkNotNull(system);
 		lts = XtaLts.create(system);
 		this.algorithmStrategy = checkNotNull(algorithmStrategy);
@@ -50,7 +50,7 @@ final class LazyXtaChecker<S extends State> implements SafetyChecker<XtaState<S>
 	}
 
 	public static <S extends State> LazyXtaChecker<S> create(final XtaSystem system,
-			final AlgorithmStrategy<XtaState<S>, XtaState<S>> algorithmStrategy, final SearchStrategy searchStrategy) {
+															 final AlgorithmStrategy<XtaState<S>, XtaState<S>> algorithmStrategy, final SearchStrategy searchStrategy) {
 		return new LazyXtaChecker<>(system, algorithmStrategy, searchStrategy);
 	}
 

@@ -32,8 +32,7 @@ public abstract class MulExpr<ExprType extends Multiplicative<ExprType>> extends
 
 	public static <T extends Multiplicative<T>> MulExpr<?> create2(final List<? extends Expr<?>> ops) {
 		checkArgument(!ops.isEmpty());
-		@SuppressWarnings("unchecked")
-		final T type = (T) ops.get(0).getType();
+		@SuppressWarnings("unchecked") final T type = (T) ops.get(0).getType();
 		return type.Mul(ops.stream().map(op -> cast(op, type)).collect(toImmutableList()));
 	}
 

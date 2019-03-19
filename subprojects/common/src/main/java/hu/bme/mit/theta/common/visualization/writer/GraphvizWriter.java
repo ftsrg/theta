@@ -31,13 +31,13 @@ import hu.bme.mit.theta.common.visualization.Shape;
 
 /**
  * Class for writing graphs in GraphViz format.
- *
+ * <p>
  * Known limitations (due to GraphViz):
- *
+ * <p>
  * - Fill color of composite nodes is ignored.
- *
+ * <p>
  * - Shape of composite nodes is ignored.
- *
+ * <p>
  * - Peripheries of composite nodes are ignored.
  */
 public final class GraphvizWriter extends AbstractGraphWriter {
@@ -86,7 +86,7 @@ public final class GraphvizWriter extends AbstractGraphWriter {
 			throws IOException, InterruptedException {
 		final String dotFile = fileName + ".dot";
 		super.writeFile(graph, dotFile);
-		final String[] cmd = { "dot", format.getOption(), dotFile, "-o", fileName };
+		final String[] cmd = {"dot", format.getOption(), dotFile, "-o", fileName};
 		final Process proc = Runtime.getRuntime().exec(cmd);
 		proc.waitFor();
 		final boolean deleteSuccessful = new File(dotFile).delete();
@@ -186,14 +186,14 @@ public final class GraphvizWriter extends AbstractGraphWriter {
 
 	private String getLineSeparator(final Alignment alignment) {
 		switch (alignment) {
-		case CENTER:
-			return "\\n";
-		case LEFT:
-			return "\\l";
-		case RIGHT:
-			return "\\r";
-		default:
-			throw new UnsupportedOperationException("Unknown alignment: " + alignment);
+			case CENTER:
+				return "\\n";
+			case LEFT:
+				return "\\l";
+			case RIGHT:
+				return "\\r";
+			default:
+				throw new UnsupportedOperationException("Unknown alignment: " + alignment);
 		}
 	}
 
@@ -203,27 +203,27 @@ public final class GraphvizWriter extends AbstractGraphWriter {
 
 	private String mapLineStyleToString(final LineStyle lineStyle) {
 		switch (lineStyle) {
-		case DASHED:
-			return "dashed";
-		case DOTTED:
-			return "dotted";
-		case NORMAL:
-			return "solid";
-		default:
-			throw new UnsupportedOperationException("Unknown line style: " + lineStyle + ".");
+			case DASHED:
+				return "dashed";
+			case DOTTED:
+				return "dotted";
+			case NORMAL:
+				return "solid";
+			default:
+				throw new UnsupportedOperationException("Unknown line style: " + lineStyle + ".");
 		}
 	}
 
 	private String mapShapeToString(final Shape shape) {
 		switch (shape) {
-		case CIRCLE:
-			return "circle";
-		case ELLIPSE:
-			return "ellipse";
-		case RECTANGLE:
-			return "rectangle";
-		default:
-			throw new UnsupportedOperationException("Unknown shape: " + shape + ".");
+			case CIRCLE:
+				return "circle";
+			case ELLIPSE:
+				return "ellipse";
+			case RECTANGLE:
+				return "rectangle";
+			default:
+				throw new UnsupportedOperationException("Unknown shape: " + shape + ".");
 		}
 	}
 }

@@ -1,12 +1,12 @@
 /*
  *  Copyright 2017 Budapest University of Technology and Economics
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -55,12 +55,12 @@ public class VarIndexing {
 	public static VarIndexing all(final int defaultIndex) {
 		checkArgument(defaultIndex >= 0);
 		switch (defaultIndex) {
-		case 0:
-			return ALL_ZERO;
-		case 1:
-			return ALL_ONE;
-		default:
-			return new Builder(defaultIndex).build();
+			case 0:
+				return ALL_ZERO;
+			case 1:
+				return ALL_ONE;
+			default:
+				return new Builder(defaultIndex).build();
 		}
 	}
 
@@ -88,7 +88,7 @@ public class VarIndexing {
 	 * Increment the index of a given variable with a given amount
 	 *
 	 * @param varDecl Variable to increment
-	 * @param n Amount to increment
+	 * @param n       Amount to increment
 	 * @return Transformed indexing
 	 */
 	public VarIndexing inc(final VarDecl<?> varDecl, final int n) {
@@ -141,7 +141,7 @@ public class VarIndexing {
 
 	/**
 	 * Get the index of a variable
-	 * 
+	 *
 	 * @param varDecl Variable
 	 * @return Index
 	 */

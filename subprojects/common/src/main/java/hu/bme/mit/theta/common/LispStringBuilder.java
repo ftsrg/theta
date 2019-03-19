@@ -114,14 +114,14 @@ public final class LispStringBuilder {
 
 	private List<Object> sectionFor(final State state) {
 		switch (state) {
-		case HEAD:
-			return headObjs;
-		case ALIGNED:
-			return alignedObjs;
-		case BODY:
-			return bodyObjs;
-		default:
-			throw new AssertionError("Unhandled state: " + state);
+			case HEAD:
+				return headObjs;
+			case ALIGNED:
+				return alignedObjs;
+			case BODY:
+				return bodyObjs;
+			default:
+				throw new AssertionError("Unhandled state: " + state);
 		}
 	}
 

@@ -28,7 +28,7 @@ public final class LazyXtaCheckerFactory {
 	}
 
 	public static SafetyChecker<? extends XtaState<?>, XtaAction, UnitPrec> create(final XtaSystem system,
-			final DataStrategy dataStrategy, final ClockStrategy clockStrategy, final SearchStrategy searchStrategy) {
+																				   final DataStrategy dataStrategy, final ClockStrategy clockStrategy, final SearchStrategy searchStrategy) {
 		final CombinedStrategy<?, ?> algorithmStrategy = combineStrategies(system, dataStrategy, clockStrategy);
 		final SafetyChecker<? extends XtaState<?>, XtaAction, UnitPrec> checker = LazyXtaChecker.create(system,
 				algorithmStrategy, searchStrategy);
@@ -36,59 +36,59 @@ public final class LazyXtaCheckerFactory {
 	}
 
 	private static CombinedStrategy<?, ?> combineStrategies(final XtaSystem system, final DataStrategy dataStrategy,
-			final ClockStrategy clockStrategy) {
+															final ClockStrategy clockStrategy) {
 
 		switch (dataStrategy) {
-		case BWITP:
-
-			switch (clockStrategy) {
 			case BWITP:
-				return new CombinedStrategy<>(system, DataStrategies.createBwItpStrategy(system),
-						ClockStrategies.createBwItpStrategy(system));
+
+				switch (clockStrategy) {
+					case BWITP:
+						return new CombinedStrategy<>(system, DataStrategies.createBwItpStrategy(system),
+								ClockStrategies.createBwItpStrategy(system));
+					case FWITP:
+						return new CombinedStrategy<>(system, DataStrategies.createBwItpStrategy(system),
+								ClockStrategies.createFwItpStrategy(system));
+					case LU:
+						return new CombinedStrategy<>(system, DataStrategies.createBwItpStrategy(system),
+								ClockStrategies.createLuStrategy(system));
+					default:
+						throw new AssertionError();
+				}
+
 			case FWITP:
-				return new CombinedStrategy<>(system, DataStrategies.createBwItpStrategy(system),
-						ClockStrategies.createFwItpStrategy(system));
-			case LU:
-				return new CombinedStrategy<>(system, DataStrategies.createBwItpStrategy(system),
-						ClockStrategies.createLuStrategy(system));
+
+				switch (clockStrategy) {
+					case BWITP:
+						return new CombinedStrategy<>(system, DataStrategies.createFwItpStrategy(system),
+								ClockStrategies.createBwItpStrategy(system));
+					case FWITP:
+						return new CombinedStrategy<>(system, DataStrategies.createFwItpStrategy(system),
+								ClockStrategies.createFwItpStrategy(system));
+					case LU:
+						return new CombinedStrategy<>(system, DataStrategies.createFwItpStrategy(system),
+								ClockStrategies.createLuStrategy(system));
+					default:
+						throw new AssertionError();
+				}
+
+			case NONE:
+
+				switch (clockStrategy) {
+					case BWITP:
+						return new CombinedStrategy<>(system, DataStrategies.createExplStrategy(system),
+								ClockStrategies.createBwItpStrategy(system));
+					case FWITP:
+						return new CombinedStrategy<>(system, DataStrategies.createExplStrategy(system),
+								ClockStrategies.createFwItpStrategy(system));
+					case LU:
+						return new CombinedStrategy<>(system, DataStrategies.createExplStrategy(system),
+								ClockStrategies.createLuStrategy(system));
+					default:
+						throw new AssertionError();
+				}
+
 			default:
 				throw new AssertionError();
-			}
-
-		case FWITP:
-
-			switch (clockStrategy) {
-			case BWITP:
-				return new CombinedStrategy<>(system, DataStrategies.createFwItpStrategy(system),
-						ClockStrategies.createBwItpStrategy(system));
-			case FWITP:
-				return new CombinedStrategy<>(system, DataStrategies.createFwItpStrategy(system),
-						ClockStrategies.createFwItpStrategy(system));
-			case LU:
-				return new CombinedStrategy<>(system, DataStrategies.createFwItpStrategy(system),
-						ClockStrategies.createLuStrategy(system));
-			default:
-				throw new AssertionError();
-			}
-
-		case NONE:
-
-			switch (clockStrategy) {
-			case BWITP:
-				return new CombinedStrategy<>(system, DataStrategies.createExplStrategy(system),
-						ClockStrategies.createBwItpStrategy(system));
-			case FWITP:
-				return new CombinedStrategy<>(system, DataStrategies.createExplStrategy(system),
-						ClockStrategies.createFwItpStrategy(system));
-			case LU:
-				return new CombinedStrategy<>(system, DataStrategies.createExplStrategy(system),
-						ClockStrategies.createLuStrategy(system));
-			default:
-				throw new AssertionError();
-			}
-
-		default:
-			throw new AssertionError();
 		}
 	}
 }

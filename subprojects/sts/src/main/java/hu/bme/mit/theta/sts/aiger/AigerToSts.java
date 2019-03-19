@@ -82,12 +82,12 @@ public final class AigerToSts {
 	}
 
 	private static void transformFalseConst(final Builder builder, final Map<AigerNode, VarDecl<BoolType>> vars,
-			final FalseConst falseConst) {
+											final FalseConst falseConst) {
 		builder.addInvar(Not(vars.get(falseConst).getRef()));
 	}
 
 	private static void transformLatch(final Builder builder, final Map<AigerNode, VarDecl<BoolType>> vars,
-			final Latch latch) {
+									   final Latch latch) {
 		builder.addInit(Not(vars.get(latch).getRef()));
 		final AigerWire inWire = latch.getInWire();
 		final AigerNode source = inWire.getSource();
@@ -97,7 +97,7 @@ public final class AigerToSts {
 	}
 
 	private static void transformAndGate(final Builder builder, final Map<AigerNode, VarDecl<BoolType>> vars,
-			final AndGate andGate) {
+										 final AndGate andGate) {
 		final AigerWire inWire1 = andGate.getInWire1();
 		final AigerWire inWire2 = andGate.getInWire2();
 		final AigerNode source1 = inWire1.getSource();

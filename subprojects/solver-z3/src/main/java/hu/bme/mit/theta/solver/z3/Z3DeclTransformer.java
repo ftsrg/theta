@@ -37,7 +37,7 @@ final class Z3DeclTransformer {
 	private int symbolCount;
 
 	Z3DeclTransformer(final Z3TransformationManager transformer, final Z3SymbolTable symbolTable,
-			final Context context) {
+					  final Context context) {
 		this.transformer = transformer;
 		this.symbolTable = symbolTable;
 		this.context = context;

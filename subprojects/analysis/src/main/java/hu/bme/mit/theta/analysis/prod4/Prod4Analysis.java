@@ -33,7 +33,7 @@ public final class Prod4Analysis<S1 extends State, S2 extends State, S3 extends 
 	private final TransFunc<Prod4State<S1, S2, S3, S4>, A, Prod4Prec<P1, P2, P3, P4>> transFunc;
 
 	private Prod4Analysis(final Analysis<S1, ? super A, P1> analysis1, final Analysis<S2, ? super A, P2> analysis2,
-			final Analysis<S3, ? super A, P3> analysis3, final Analysis<S4, ? super A, P4> analysis4) {
+						  final Analysis<S3, ? super A, P3> analysis3, final Analysis<S4, ? super A, P4> analysis4) {
 		checkNotNull(analysis1);
 		checkNotNull(analysis2);
 		checkNotNull(analysis3);

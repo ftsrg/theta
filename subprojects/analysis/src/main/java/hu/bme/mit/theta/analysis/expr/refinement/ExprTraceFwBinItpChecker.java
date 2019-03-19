@@ -52,7 +52,7 @@ public final class ExprTraceFwBinItpChecker implements ExprTraceChecker<ItpRefut
 	}
 
 	public static ExprTraceFwBinItpChecker create(final Expr<BoolType> init, final Expr<BoolType> target,
-			final ItpSolver solver) {
+												  final ItpSolver solver) {
 		return new ExprTraceFwBinItpChecker(init, target, solver);
 	}
 

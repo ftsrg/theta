@@ -150,8 +150,8 @@ public class CfaCli {
 	}
 
 	private void printHeader() {
-		final String[] header = new String[] { "Result", "TimeMs", "AlgoTimeMs", "AbsTimeMs", "RefTimeMs", "Iterations",
-				"ArgSize", "ArgDepth", "ArgMeanBranchFactor", "CexLen" };
+		final String[] header = new String[]{"Result", "TimeMs", "AlgoTimeMs", "AbsTimeMs", "RefTimeMs", "Iterations",
+				"ArgSize", "ArgDepth", "ArgMeanBranchFactor", "CexLen"};
 		for (final String str : header) {
 			writer.cell(str);
 		}
@@ -204,8 +204,7 @@ public class CfaCli {
 	}
 
 	private void writeCex(final Unsafe<?, ?> status) {
-		@SuppressWarnings("unchecked")
-		final Trace<CfaState<?>, CfaAction> trace = (Trace<CfaState<?>, CfaAction>) status.getTrace();
+		@SuppressWarnings("unchecked") final Trace<CfaState<?>, CfaAction> trace = (Trace<CfaState<?>, CfaAction>) status.getTrace();
 		final Trace<CfaState<ExplState>, CfaAction> concrTrace = CfaTraceConcretizer.concretize(trace, solverFactory);
 		logger.write(Level.RESULT, "%s", concrTrace);
 	}

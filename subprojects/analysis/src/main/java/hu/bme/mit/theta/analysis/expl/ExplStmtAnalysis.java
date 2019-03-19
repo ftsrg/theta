@@ -41,7 +41,7 @@ public final class ExplStmtAnalysis implements Analysis<ExplState, StmtAction, E
 	}
 
 	public static ExplStmtAnalysis create(final Solver solver, final Expr<BoolType> initExpr,
-			final int maxSuccToEnumerate) {
+										  final int maxSuccToEnumerate) {
 		return new ExplStmtAnalysis(solver, initExpr, maxSuccToEnumerate);
 	}
 
