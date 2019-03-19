@@ -18,7 +18,7 @@ public final class ArrayEqExpr<IndexType extends Type, ElemType extends Type>
 	private static final String OPERATOR_LABEL = "=";
 
 	private ArrayEqExpr(final Expr<ArrayType<IndexType, ElemType>> leftOp,
-			final Expr<ArrayType<IndexType, ElemType>> rightOp) {
+						final Expr<ArrayType<IndexType, ElemType>> rightOp) {
 		super(leftOp, rightOp);
 	}
 
@@ -28,9 +28,8 @@ public final class ArrayEqExpr<IndexType extends Type, ElemType extends Type>
 	}
 
 	public static <IndexType extends Type, ElemType extends Type> ArrayEqExpr<?, ?> create(final Expr<?> leftOp,
-			final Expr<?> rightOp) {
-		@SuppressWarnings("unchecked")
-		final ArrayType<IndexType, ElemType> arrayType = (ArrayType<IndexType, ElemType>) leftOp.getType();
+																						   final Expr<?> rightOp) {
+		@SuppressWarnings("unchecked") final ArrayType<IndexType, ElemType> arrayType = (ArrayType<IndexType, ElemType>) leftOp.getType();
 		final Expr<ArrayType<IndexType, ElemType>> newLeftOp = cast(leftOp, arrayType);
 		final Expr<ArrayType<IndexType, ElemType>> newRightOp = cast(rightOp, arrayType);
 		return ArrayEqExpr.of(newLeftOp, newRightOp);
@@ -48,7 +47,7 @@ public final class ArrayEqExpr<IndexType extends Type, ElemType extends Type>
 
 	@Override
 	public BinaryExpr<ArrayType<IndexType, ElemType>, BoolType> with(final Expr<ArrayType<IndexType, ElemType>> leftOp,
-			final Expr<ArrayType<IndexType, ElemType>> rightOp) {
+																	 final Expr<ArrayType<IndexType, ElemType>> rightOp) {
 		if (leftOp == getLeftOp() && rightOp == getRightOp()) {
 			return this;
 		} else {

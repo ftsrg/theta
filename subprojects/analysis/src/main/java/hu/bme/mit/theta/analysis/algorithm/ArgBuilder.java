@@ -40,7 +40,7 @@ public final class ArgBuilder<S extends State, A extends Action, P extends Prec>
 	private final boolean excludeBottom;
 
 	private ArgBuilder(final LTS<? super S, ? extends A> lts, final Analysis<S, ? super A, ? super P> analysis,
-			final Predicate<? super S> target, final boolean excludeBottom) {
+					   final Predicate<? super S> target, final boolean excludeBottom) {
 		this.lts = checkNotNull(lts);
 		this.analysis = checkNotNull(analysis);
 		this.target = checkNotNull(target);

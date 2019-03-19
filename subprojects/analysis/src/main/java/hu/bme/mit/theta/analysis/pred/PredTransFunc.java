@@ -40,7 +40,7 @@ public final class PredTransFunc implements TransFunc<PredState, ExprAction, Pre
 
 	@Override
 	public Collection<? extends PredState> getSuccStates(final PredState state, final ExprAction action,
-			final PredPrec prec) {
+														 final PredPrec prec) {
 		checkNotNull(state);
 		checkNotNull(action);
 		checkNotNull(prec);

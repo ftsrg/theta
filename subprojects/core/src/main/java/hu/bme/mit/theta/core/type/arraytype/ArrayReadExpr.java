@@ -52,9 +52,8 @@ public final class ArrayReadExpr<IndexType extends Type, ElemType extends Type> 
 	}
 
 	public static <IndexType extends Type, ElemType extends Type> ArrayReadExpr<?, ?> create(final Expr<?> array,
-			final Expr<?> index) {
-		@SuppressWarnings("unchecked")
-		final ArrayType<IndexType, ElemType> arrayType = (ArrayType<IndexType, ElemType>) array.getType();
+																							 final Expr<?> index) {
+		@SuppressWarnings("unchecked") final ArrayType<IndexType, ElemType> arrayType = (ArrayType<IndexType, ElemType>) array.getType();
 		final Expr<ArrayType<IndexType, ElemType>> newArray = cast(array, arrayType);
 		final Expr<IndexType> newIndex = cast(index, arrayType.getIndexType());
 		return ArrayReadExpr.of(newArray, newIndex);
@@ -99,7 +98,7 @@ public final class ArrayReadExpr<IndexType extends Type, ElemType extends Type> 
 	}
 
 	public ArrayReadExpr<IndexType, ElemType> with(final Expr<ArrayType<IndexType, ElemType>> array,
-			final Expr<IndexType> index) {
+												   final Expr<IndexType> index) {
 		if (this.array == array && this.index == index) {
 			return this;
 		} else {

@@ -49,31 +49,31 @@ public final class PrimeCounterTest {
 
 	@Parameters
 	public static Collection<Object[]> data() {
-		return asList(new Object[][] {
+		return asList(new Object[][]{
 
-				{ "true", 0, 0 },
+				{"true", 0, 0},
 
-				{ "(true)'", 0, 0 },
+				{"(true)'", 0, 0},
 
-				{ "x", 0, 0 },
+				{"x", 0, 0},
 
-				{ "not x'", 1, 0 },
+				{"not x'", 1, 0},
 
-				{ "x''", 2, 0 },
+				{"x''", 2, 0},
 
-				{ "x' and y", 1, 0 },
+				{"x' and y", 1, 0},
 
-				{ "(x imply y)'", 1, 1 },
+				{"(x imply y)'", 1, 1},
 
-				{ "(x' iff y)'", 2, 1 },
+				{"(x' iff y)'", 2, 1},
 
-				{ "a", 0, 0 },
+				{"a", 0, 0},
 
-				{ "a'", 0, 0 },
+				{"a'", 0, 0},
 
-				{ "x' and a", 1, 0 },
+				{"x' and a", 1, 0},
 
-				{ "(x' or a)'", 2, 0 }
+				{"(x' or a)'", 2, 0}
 
 		});
 	}

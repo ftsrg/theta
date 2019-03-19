@@ -37,7 +37,7 @@ public final class CfaTraceConcretizer {
 	}
 
 	public static Trace<CfaState<ExplState>, CfaAction> concretize(
-	        final Trace<CfaState<?>, CfaAction> trace, SolverFactory solverFactory) {
+			final Trace<CfaState<?>, CfaAction> trace, SolverFactory solverFactory) {
 		final ExprTraceChecker<ItpRefutation> checker = ExprTraceFwBinItpChecker.create(BoolExprs.True(),
 				BoolExprs.True(), solverFactory.createItpSolver());
 		final ExprTraceStatus<ItpRefutation> status = checker.check(trace);

@@ -175,13 +175,11 @@ final class CfaExpression {
 				final List<ParamDecl<?>> params = createParamList(ctx.paramDecls);
 
 				checkArgument(params.size() == 1);
-				@SuppressWarnings("unchecked")
-				final ParamDecl<Type> param = (ParamDecl<Type>) singleElementOf(params);
+				@SuppressWarnings("unchecked") final ParamDecl<Type> param = (ParamDecl<Type>) singleElementOf(params);
 
 				push(params);
 
-				@SuppressWarnings("unchecked")
-				final Expr<Type> result = (Expr<Type>) ctx.result.accept(this);
+				@SuppressWarnings("unchecked") final Expr<Type> result = (Expr<Type>) ctx.result.accept(this);
 
 				pop();
 
@@ -309,12 +307,12 @@ final class CfaExpression {
 				final Expr<?> rightOp = ctx.rightOp.accept(this);
 
 				switch (ctx.oper.getType()) {
-				case CfaDslParser.EQ:
-					return Eq(leftOp, rightOp);
-				case CfaDslParser.NEQ:
-					return Neq(leftOp, rightOp);
-				default:
-					throw new AssertionError();
+					case CfaDslParser.EQ:
+						return Eq(leftOp, rightOp);
+					case CfaDslParser.NEQ:
+						return Neq(leftOp, rightOp);
+					default:
+						throw new AssertionError();
 				}
 
 			} else {
@@ -329,16 +327,16 @@ final class CfaExpression {
 				final Expr<?> rightOp = ctx.rightOp.accept(this);
 
 				switch (ctx.oper.getType()) {
-				case CfaDslParser.LT:
-					return Lt(leftOp, rightOp);
-				case CfaDslParser.LEQ:
-					return Leq(leftOp, rightOp);
-				case CfaDslParser.GT:
-					return Gt(leftOp, rightOp);
-				case CfaDslParser.GEQ:
-					return Geq(leftOp, rightOp);
-				default:
-					throw new AssertionError();
+					case CfaDslParser.LT:
+						return Lt(leftOp, rightOp);
+					case CfaDslParser.LEQ:
+						return Leq(leftOp, rightOp);
+					case CfaDslParser.GT:
+						return Gt(leftOp, rightOp);
+					case CfaDslParser.GEQ:
+						return Geq(leftOp, rightOp);
+					default:
+						throw new AssertionError();
 				}
 
 			} else {
@@ -364,7 +362,7 @@ final class CfaExpression {
 		}
 
 		private Expr<?> createAdditiveExpr(final Expr<?> opsHead, final List<? extends Expr<?>> opsTail,
-				final List<? extends Token> opers) {
+										   final List<? extends Token> opers) {
 			checkArgument(opsTail.size() == opers.size());
 
 			if (opsTail.isEmpty()) {
@@ -385,14 +383,14 @@ final class CfaExpression {
 		private Expr<?> createAdditiveSubExpr(final Expr<?> leftOp, final Expr<?> rightOp, final Token oper) {
 			switch (oper.getType()) {
 
-			case CfaDslParser.PLUS:
-				return createAddExpr(leftOp, rightOp);
+				case CfaDslParser.PLUS:
+					return createAddExpr(leftOp, rightOp);
 
-			case CfaDslParser.MINUS:
-				return createSubExpr(leftOp, rightOp);
+				case CfaDslParser.MINUS:
+					return createSubExpr(leftOp, rightOp);
 
-			default:
-				throw new AssertionError();
+				default:
+					throw new AssertionError();
 			}
 		}
 
@@ -430,7 +428,7 @@ final class CfaExpression {
 		}
 
 		private Expr<?> createMutliplicativeExpr(final Expr<?> opsHead, final List<? extends Expr<?>> opsTail,
-				final List<? extends Token> opers) {
+												 final List<? extends Token> opers) {
 			checkArgument(opsTail.size() == opers.size());
 
 			if (opsTail.isEmpty()) {
@@ -451,20 +449,20 @@ final class CfaExpression {
 		private Expr<?> createMultiplicativeSubExpr(final Expr<?> leftOp, final Expr<?> rightOp, final Token oper) {
 			switch (oper.getType()) {
 
-			case CfaDslParser.MUL:
-				return createMulExpr(leftOp, rightOp);
+				case CfaDslParser.MUL:
+					return createMulExpr(leftOp, rightOp);
 
-			case CfaDslParser.DIV:
-				return createDivExpr(leftOp, rightOp);
+				case CfaDslParser.DIV:
+					return createDivExpr(leftOp, rightOp);
 
-			case CfaDslParser.MOD:
-				return createModExpr(leftOp, rightOp);
+				case CfaDslParser.MOD:
+					return createModExpr(leftOp, rightOp);
 
-			case CfaDslParser.REM:
-				return createRemExpr(leftOp, rightOp);
+				case CfaDslParser.REM:
+					return createRemExpr(leftOp, rightOp);
 
-			default:
-				throw new AssertionError();
+				default:
+					throw new AssertionError();
 			}
 		}
 
@@ -549,19 +547,17 @@ final class CfaExpression {
 		}
 
 		private <T1 extends Type, T2 extends Type> Expr<?> createArrayReadExpr(final Expr<?> op,
-				final ArrayReadAccessContext ctx) {
+																			   final ArrayReadAccessContext ctx) {
 			checkArgument(op.getType() instanceof ArrayType);
-			@SuppressWarnings("unchecked")
-			final Expr<ArrayType<T1, T2>> array = (Expr<ArrayType<T1, T2>>) op;
+			@SuppressWarnings("unchecked") final Expr<ArrayType<T1, T2>> array = (Expr<ArrayType<T1, T2>>) op;
 			final Expr<T1> index = cast(ctx.index.accept(this), array.getType().getIndexType());
 			return Read(array, index);
 		}
 
 		private <T1 extends Type, T2 extends Type> Expr<?> createArrayWriteExpr(final Expr<?> op,
-				final ArrayWriteAccessContext ctx) {
+																				final ArrayWriteAccessContext ctx) {
 			checkArgument(op.getType() instanceof ArrayType);
-			@SuppressWarnings("unchecked")
-			final Expr<ArrayType<T1, T2>> array = (Expr<ArrayType<T1, T2>>) op;
+			@SuppressWarnings("unchecked") final Expr<ArrayType<T1, T2>> array = (Expr<ArrayType<T1, T2>>) op;
 			final Expr<T1> index = cast(ctx.index.accept(this), array.getType().getIndexType());
 			final Expr<T2> elem = cast(ctx.elem.accept(this), array.getType().getElemType());
 			return Write(array, index, elem);

@@ -57,15 +57,15 @@ public class ExplStatePredicateTest {
 
 	@Parameters
 	public static Collection<Object[]> data() {
-		return Arrays.asList(new Object[][] {
+		return Arrays.asList(new Object[][]{
 
-				{ True(), ExplState.of(ImmutableValuation.builder().put(x, Int(1)).build()), true },
+				{True(), ExplState.of(ImmutableValuation.builder().put(x, Int(1)).build()), true},
 
-				{ Leq(x.getRef(), Int(5)), ExplState.of(ImmutableValuation.builder().put(x, Int(1)).build()), true },
+				{Leq(x.getRef(), Int(5)), ExplState.of(ImmutableValuation.builder().put(x, Int(1)).build()), true},
 
-				{ Leq(x.getRef(), Int(5)), ExplState.of(ImmutableValuation.builder().put(x, Int(7)).build()), false },
+				{Leq(x.getRef(), Int(5)), ExplState.of(ImmutableValuation.builder().put(x, Int(7)).build()), false},
 
-				{ Geq(Mul(x.getRef(), x.getRef()), Int(0)), ExplState.top(), true },
+				{Geq(Mul(x.getRef(), x.getRef()), Int(0)), ExplState.top(), true},
 
 		});
 	}

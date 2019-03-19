@@ -46,7 +46,7 @@ public final class PredImpactChecker implements SafetyChecker<CfaState<PredState
 	private final ImpactChecker<CfaState<PredState>, CfaAction, UnitPrec> checker;
 
 	private PredImpactChecker(final LTS<? super CfaState<PredState>, ? extends CfaAction> lts, final Loc initLoc,
-			final Predicate<? super Loc> targetLocs, final ItpSolver solver) {
+							  final Predicate<? super Loc> targetLocs, final ItpSolver solver) {
 		checkNotNull(lts);
 		checkNotNull(initLoc);
 		checkNotNull(solver);
@@ -73,7 +73,7 @@ public final class PredImpactChecker implements SafetyChecker<CfaState<PredState
 	}
 
 	public static PredImpactChecker create(final LTS<? super CfaState<PredState>, ? extends CfaAction> lts,
-			final Loc initLoc, final Predicate<? super Loc> targetLocs, final ItpSolver solver) {
+										   final Loc initLoc, final Predicate<? super Loc> targetLocs, final ItpSolver solver) {
 		return new PredImpactChecker(lts, initLoc, targetLocs, solver);
 	}
 

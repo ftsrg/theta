@@ -51,14 +51,13 @@ public final class IteExpr<ExprType extends Type> implements Expr<ExprType> {
 	}
 
 	public static <ExprType extends Type> IteExpr<ExprType> of(final Expr<BoolType> cond, final Expr<ExprType> then,
-			final Expr<ExprType> elze) {
+															   final Expr<ExprType> elze) {
 		return new IteExpr<>(cond, then, elze);
 	}
 
 	public static <ExprType extends Type> IteExpr<?> create(final Expr<?> cond, final Expr<?> then, final Expr<?> elze) {
 		final Expr<BoolType> newCond = cast(cond, Bool());
-		@SuppressWarnings("unchecked")
-		final Expr<ExprType> newThen = (Expr<ExprType>) then;
+		@SuppressWarnings("unchecked") final Expr<ExprType> newThen = (Expr<ExprType>) then;
 		final Expr<ExprType> newElze = cast(elze, newThen.getType());
 		return IteExpr.of(newCond, newThen, newElze);
 	}

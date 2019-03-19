@@ -36,7 +36,7 @@ final class XtaInitFunc<S extends State, P extends Prec> implements InitFunc<Xta
 	}
 
 	public static <S extends State, P extends Prec> XtaInitFunc<S, P> create(final XtaSystem system,
-			final InitFunc<S, ? super P> initFunc) {
+																			 final InitFunc<S, ? super P> initFunc) {
 		return new XtaInitFunc<>(system, initFunc);
 	}
 

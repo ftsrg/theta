@@ -50,17 +50,17 @@ public final class XtaAnalysisTest {
 
 	@Parameters(name = "{0}")
 	public static Collection<Object[]> data() {
-		return Arrays.asList(new Object[][] {
+		return Arrays.asList(new Object[][]{
 
-				{ "/critical-2-25-50.xta" },
+				{"/critical-2-25-50.xta"},
 
-				{ "/csma-2.xta" },
+				{"/csma-2.xta"},
 
-				{ "/fddi-2.xta" },
+				{"/fddi-2.xta"},
 
-				{ "/fischer-2-32-64.xta" },
+				{"/fischer-2-32-64.xta"},
 
-				{ "/lynch-2-16.xta" }
+				{"/lynch-2-16.xta"}
 
 		});
 	}

@@ -33,13 +33,13 @@ public final class ExprTraceCombinedChecker<R extends Refutation> implements Exp
 	private final ExprTraceStatusMerger<R> merger;
 
 	private ExprTraceCombinedChecker(final Collection<ExprTraceChecker<R>> checkers,
-			final ExprTraceStatusMerger<R> merger) {
+									 final ExprTraceStatusMerger<R> merger) {
 		this.checkers = ImmutableList.copyOf(checkNotNull(checkers));
 		this.merger = checkNotNull(merger);
 	}
 
 	public static <R extends Refutation> ExprTraceCombinedChecker<R> create(final ExprTraceChecker<R> checker1,
-			final ExprTraceChecker<R> checker2, final ExprTraceStatusMerger<R> merger) {
+																			final ExprTraceChecker<R> checker2, final ExprTraceStatusMerger<R> merger) {
 		return new ExprTraceCombinedChecker<>(ImmutableList.of(checker1, checker2), merger);
 	}
 

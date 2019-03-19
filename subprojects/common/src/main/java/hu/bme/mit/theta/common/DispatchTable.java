@@ -34,8 +34,7 @@ public final class DispatchTable<R> {
 
 	public <T> R dispatch(final T param) {
 		final Class<?> clazz = param.getClass();
-		@SuppressWarnings("unchecked")
-		final Function<? super T, ? extends R> function = (Function<? super T, ? extends R>) cases.get(clazz);
+		@SuppressWarnings("unchecked") final Function<? super T, ? extends R> function = (Function<? super T, ? extends R>) cases.get(clazz);
 		if (function == null) {
 			return defaultCase.apply(param);
 		} else {

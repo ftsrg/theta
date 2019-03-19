@@ -24,5 +24,5 @@ import hu.bme.mit.theta.analysis.State;
 public interface StrengtheningOperator<S1 extends State, S2 extends State, P1 extends Prec, P2 extends Prec> {
 
 	Collection<Prod2State<S1, S2>> strengthen(final Collection<Prod2State<S1, S2>> states,
-			final Prod2Prec<P1, P2> prec);
+											  final Prod2Prec<P1, P2> prec);
 }

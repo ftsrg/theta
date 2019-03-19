@@ -43,11 +43,11 @@ public final class StsParserTest {
 
 	@Parameters
 	public static Collection<Object[]> data() {
-		return Arrays.asList(new Object[][] {
+		return Arrays.asList(new Object[][]{
 
-				{ "src/test/resources/simple1.lisp.sts" },
+				{"src/test/resources/simple1.lisp.sts"},
 
-				{ "src/test/resources/readerswriters.lisp.sts" },
+				{"src/test/resources/readerswriters.lisp.sts"},
 
 		});
 	}

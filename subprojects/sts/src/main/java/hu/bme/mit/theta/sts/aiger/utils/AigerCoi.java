@@ -64,7 +64,7 @@ public final class AigerCoi {
 		system.getNodes().clear();
 		system.getNodes().addAll(reachable);
 		for (final AigerNode node : system.getNodes()) {
-			for (final Iterator<AigerWire> iterator = node.getOutWires().iterator(); iterator.hasNext();) {
+			for (final Iterator<AigerWire> iterator = node.getOutWires().iterator(); iterator.hasNext(); ) {
 				final AigerWire wire = iterator.next();
 				if (!reachable.contains(wire.getTarget())) {
 					iterator.remove();

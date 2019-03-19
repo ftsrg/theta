@@ -34,9 +34,9 @@ interface AlgorithmStrategy<S1 extends State, S2 extends State> {
 	boolean mightCover(final ArgNode<S1, XtaAction> coveree, ArgNode<S1, XtaAction> coverer);
 
 	void cover(ArgNode<S1, XtaAction> coveree, ArgNode<S1, XtaAction> coverer,
-			Collection<ArgNode<S1, XtaAction>> uncoveredNodes, final Builder stats);
+			   Collection<ArgNode<S1, XtaAction>> uncoveredNodes, final Builder stats);
 
 	void block(ArgNode<S1, XtaAction> node, final XtaAction action, final S1 succState,
-			Collection<ArgNode<S1, XtaAction>> uncoveredNodes, final Builder stats);
+			   Collection<ArgNode<S1, XtaAction>> uncoveredNodes, final Builder stats);
 
 }

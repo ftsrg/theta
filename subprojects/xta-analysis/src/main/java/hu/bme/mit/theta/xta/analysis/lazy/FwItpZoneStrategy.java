@@ -34,7 +34,7 @@ final class FwItpZoneStrategy<S extends State> extends ItpZoneStrategy<S> {
 
 	@Override
 	protected ZoneState blockZone(final ArgNode<S, XtaAction> node, final ZoneState zone,
-			final Collection<ArgNode<S, XtaAction>> uncoveredNodes, final Builder stats) {
+								  final Collection<ArgNode<S, XtaAction>> uncoveredNodes, final Builder stats) {
 		final ZoneState abstrState = getLens().get(node.getState()).getAbstrState();
 		if (abstrState.isConsistentWith(zone)) {
 			stats.refineZone();

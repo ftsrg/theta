@@ -84,7 +84,7 @@ public final class XtaVisualizer {
 	}
 
 	private static void traverse(final Graph graph, final Loc loc, final String parentNodeId,
-			final Map<Object, String> ids) {
+								 final Map<Object, String> ids) {
 		if (!ids.containsKey(loc)) {
 			addLocation(graph, loc, parentNodeId, ids);
 			for (final Edge outEdge : loc.getOutEdges()) {
@@ -96,7 +96,7 @@ public final class XtaVisualizer {
 	}
 
 	private static void addLocation(final Graph graph, final Loc loc, final String parentNodeId,
-			final Map<Object, String> ids) {
+									final Map<Object, String> ids) {
 		final String id = LOC_ID_PREFIX + ids.size();
 		ids.put(loc, id);
 		final StringJoiner locLabel = new StringJoiner("\n", loc.getName() + "\n", "");

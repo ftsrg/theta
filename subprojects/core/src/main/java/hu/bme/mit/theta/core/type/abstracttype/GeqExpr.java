@@ -28,8 +28,7 @@ public abstract class GeqExpr<OpType extends Ordered<OpType>> extends BinaryExpr
 	}
 
 	public static <OpType extends Ordered<OpType>> GeqExpr<?> create2(final Expr<?> leftOp, final Expr<?> rightOp) {
-		@SuppressWarnings("unchecked")
-		final OpType type = (OpType) leftOp.getType();
+		@SuppressWarnings("unchecked") final OpType type = (OpType) leftOp.getType();
 		final Expr<OpType> newLeftOp = cast(leftOp, type);
 		final Expr<OpType> newRightOp = cast(rightOp, type);
 		return type.Geq(newLeftOp, newRightOp);

@@ -28,8 +28,7 @@ public abstract class NeqExpr<OpType extends Equational<OpType>> extends BinaryE
 	}
 
 	public static <OpType extends Equational<OpType>> NeqExpr<?> create2(final Expr<?> leftOp, final Expr<?> rightOp) {
-		@SuppressWarnings("unchecked")
-		final OpType type = (OpType) leftOp.getType();
+		@SuppressWarnings("unchecked") final OpType type = (OpType) leftOp.getType();
 		final Expr<OpType> newLeftOp = cast(leftOp, type);
 		final Expr<OpType> newRightOp = cast(rightOp, type);
 		return type.Neq(newLeftOp, newRightOp);

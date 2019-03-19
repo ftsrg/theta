@@ -20,7 +20,7 @@ import java.io.PrintStream;
 /**
  * A simple table writer that prints tables to a PrintStream using an arbitrary
  * delimeter and a cell pre/postfix.
- *
+ * <p>
  * For exemple in ordinary CSV files, the delimeter is ',' and the pre/postfix
  * is '"'.
  */
@@ -33,7 +33,7 @@ public final class BasicTableWriter implements TableWriter {
 	private boolean isFirstCell = true;
 
 	public BasicTableWriter(final PrintStream stream, final String delimeter, final String prefix,
-			final String postfix) {
+							final String postfix) {
 		this.stream = stream;
 		this.delimeter = delimeter;
 		this.prefix = prefix;

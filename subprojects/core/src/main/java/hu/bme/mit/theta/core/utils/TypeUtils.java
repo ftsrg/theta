@@ -1,12 +1,12 @@
 /*
  *  Copyright 2017 Budapest University of Technology and Economics
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,8 +42,7 @@ public final class TypeUtils {
 		checkNotNull(type);
 
 		if (decl.getType().equals(type)) {
-			@SuppressWarnings("unchecked")
-			final Decl<T> result = (Decl<T>) type;
+			@SuppressWarnings("unchecked") final Decl<T> result = (Decl<T>) type;
 			return result;
 		} else {
 			throw new ClassCastException("The type of declaration " + decl + " is not of type " + type);
@@ -62,8 +61,7 @@ public final class TypeUtils {
 		checkNotNull(type);
 
 		if (decl.getType().equals(type)) {
-			@SuppressWarnings("unchecked")
-			final VarDecl<T> result = (VarDecl<T>) decl;
+			@SuppressWarnings("unchecked") final VarDecl<T> result = (VarDecl<T>) decl;
 			return result;
 		} else {
 			throw new ClassCastException("The type of declaration " + decl + " is not of type " + type);
@@ -72,7 +70,7 @@ public final class TypeUtils {
 
 	/**
 	 * Cast an expression to a given type.
-	 * 
+	 *
 	 * @param expr Original expression
 	 * @param type Type
 	 * @return Casted expression
@@ -82,8 +80,7 @@ public final class TypeUtils {
 		checkNotNull(type);
 
 		if (expr.getType().equals(type)) {
-			@SuppressWarnings("unchecked")
-			final Expr<T> result = (Expr<T>) expr;
+			@SuppressWarnings("unchecked") final Expr<T> result = (Expr<T>) expr;
 			return result;
 		} else {
 			throw new ClassCastException("The type of expression " + expr + " is not of type " + type);

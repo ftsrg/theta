@@ -75,11 +75,15 @@ import hu.bme.mit.theta.solver.SolverFactory;
 public class CfaConfigBuilder {
 	public enum Domain {
 		EXPL, PRED_BOOL, PRED_CART, PRED_SPLIT
-	};
+	}
+
+	;
 
 	public enum Refinement {
 		FW_BIN_ITP, BW_BIN_ITP, SEQ_ITP, UNSAT_CORE
-	};
+	}
+
+	;
 
 	public enum Search {
 		BFS {
@@ -105,7 +109,9 @@ public class CfaConfigBuilder {
 
 		public abstract ArgNodeComparator getComp(CFA cfa);
 
-	};
+	}
+
+	;
 
 	public enum PredSplit {
 		WHOLE(ExprSplitters.whole()),
@@ -119,7 +125,9 @@ public class CfaConfigBuilder {
 		private PredSplit(final ExprSplitter splitter) {
 			this.splitter = splitter;
 		}
-	};
+	}
+
+	;
 
 	public enum PrecGranularity {
 		GLOBAL {
@@ -152,7 +160,9 @@ public class CfaConfigBuilder {
 
 		public abstract <S extends ExprState, A extends Action, P extends Prec, R extends Refutation> PrecRefiner<CfaState<S>, A, CfaPrec<P>, R> createRefiner(
 				RefutationToPrec<P, R> refToPrec);
-	};
+	}
+
+	;
 
 	public enum Encoding {
 		SBE {
@@ -170,7 +180,9 @@ public class CfaConfigBuilder {
 		};
 
 		public abstract CfaLts getLts();
-	};
+	}
+
+	;
 
 	public enum InitPrec {
 		EMPTY(new CfaEmptyInitPrec()), ALLVARS(new CfaAllVarsInitPrec());
@@ -250,25 +262,25 @@ public class CfaConfigBuilder {
 			Refiner<CfaState<ExplState>, CfaAction, CfaPrec<ExplPrec>> refiner = null;
 
 			switch (refinement) {
-			case FW_BIN_ITP:
-				refiner = SingleExprTraceRefiner.create(ExprTraceFwBinItpChecker.create(True(), True(), solver),
-						precGranularity.createRefiner(new ItpRefToExplPrec()), logger);
-				break;
-			case BW_BIN_ITP:
-				refiner = SingleExprTraceRefiner.create(ExprTraceBwBinItpChecker.create(True(), True(), solver),
-						precGranularity.createRefiner(new ItpRefToExplPrec()), logger);
-				break;
-			case SEQ_ITP:
-				refiner = SingleExprTraceRefiner.create(ExprTraceSeqItpChecker.create(True(), True(), solver),
-						precGranularity.createRefiner(new ItpRefToExplPrec()), logger);
-				break;
-			case UNSAT_CORE:
-				refiner = SingleExprTraceRefiner.create(ExprTraceUnsatCoreChecker.create(True(), True(), solver),
-						precGranularity.createRefiner(new VarsRefToExplPrec()), logger);
-				break;
-			default:
-				throw new UnsupportedOperationException(
-						domain + " domain does not support " + refinement + " refinement.");
+				case FW_BIN_ITP:
+					refiner = SingleExprTraceRefiner.create(ExprTraceFwBinItpChecker.create(True(), True(), solver),
+							precGranularity.createRefiner(new ItpRefToExplPrec()), logger);
+					break;
+				case BW_BIN_ITP:
+					refiner = SingleExprTraceRefiner.create(ExprTraceBwBinItpChecker.create(True(), True(), solver),
+							precGranularity.createRefiner(new ItpRefToExplPrec()), logger);
+					break;
+				case SEQ_ITP:
+					refiner = SingleExprTraceRefiner.create(ExprTraceSeqItpChecker.create(True(), True(), solver),
+							precGranularity.createRefiner(new ItpRefToExplPrec()), logger);
+					break;
+				case UNSAT_CORE:
+					refiner = SingleExprTraceRefiner.create(ExprTraceUnsatCoreChecker.create(True(), True(), solver),
+							precGranularity.createRefiner(new VarsRefToExplPrec()), logger);
+					break;
+				default:
+					throw new UnsupportedOperationException(
+							domain + " domain does not support " + refinement + " refinement.");
 			}
 
 			final SafetyChecker<CfaState<ExplState>, CfaAction, CfaPrec<ExplPrec>> checker = CegarChecker
@@ -281,17 +293,17 @@ public class CfaConfigBuilder {
 		} else if (domain == Domain.PRED_BOOL || domain == Domain.PRED_CART || domain == Domain.PRED_SPLIT) {
 			PredAbstractor predAbstractor = null;
 			switch (domain) {
-			case PRED_BOOL:
-				predAbstractor = PredAbstractors.booleanAbstractor(solver);
-				break;
-			case PRED_SPLIT:
-				predAbstractor = PredAbstractors.booleanSplitAbstractor(solver);
-				break;
-			case PRED_CART:
-				predAbstractor = PredAbstractors.cartesianAbstractor(solver);
-				break;
-			default:
-				throw new UnsupportedOperationException(domain + " domain is not supported.");
+				case PRED_BOOL:
+					predAbstractor = PredAbstractors.booleanAbstractor(solver);
+					break;
+				case PRED_SPLIT:
+					predAbstractor = PredAbstractors.booleanSplitAbstractor(solver);
+					break;
+				case PRED_CART:
+					predAbstractor = PredAbstractors.cartesianAbstractor(solver);
+					break;
+				default:
+					throw new UnsupportedOperationException(domain + " domain is not supported.");
 			}
 			final Analysis<CfaState<PredState>, CfaAction, CfaPrec<PredPrec>> analysis = CfaAnalysis
 					.create(cfa.getInitLoc(), PredAnalysis.create(solver, predAbstractor, True()));
@@ -303,18 +315,18 @@ public class CfaConfigBuilder {
 
 			ExprTraceChecker<ItpRefutation> exprTraceChecker = null;
 			switch (refinement) {
-			case FW_BIN_ITP:
-				exprTraceChecker = ExprTraceFwBinItpChecker.create(True(), True(), solver);
-				break;
-			case BW_BIN_ITP:
-				exprTraceChecker = ExprTraceBwBinItpChecker.create(True(), True(), solver);
-				break;
-			case SEQ_ITP:
-				exprTraceChecker = ExprTraceSeqItpChecker.create(True(), True(), solver);
-				break;
-			default:
-				throw new UnsupportedOperationException(
-						domain + " domain does not support " + refinement + " refinement.");
+				case FW_BIN_ITP:
+					exprTraceChecker = ExprTraceFwBinItpChecker.create(True(), True(), solver);
+					break;
+				case BW_BIN_ITP:
+					exprTraceChecker = ExprTraceBwBinItpChecker.create(True(), True(), solver);
+					break;
+				case SEQ_ITP:
+					exprTraceChecker = ExprTraceSeqItpChecker.create(True(), True(), solver);
+					break;
+				default:
+					throw new UnsupportedOperationException(
+							domain + " domain does not support " + refinement + " refinement.");
 			}
 			final ItpRefToPredPrec refToPrec = new ItpRefToPredPrec(predSplit.splitter);
 			final Refiner<CfaState<PredState>, CfaAction, CfaPrec<PredPrec>> refiner = SingleExprTraceRefiner

@@ -1,12 +1,12 @@
 /*
  *  Copyright 2017 Budapest University of Technology and Economics
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -50,8 +50,7 @@ final class ExprIteEliminator {
 				final Expr<BoolType> cond = removeIte(iteExpr.getCond());
 				final Expr<BoolType> then = TypeUtils.cast(removeIte(iteExpr.getThen()), Bool());
 				final Expr<BoolType> elze = TypeUtils.cast(removeIte(iteExpr.getElse()), Bool());
-				@SuppressWarnings("unchecked")
-				final Expr<T> result = (Expr<T>) And(Or(Not(cond), then), Or(cond, elze));
+				@SuppressWarnings("unchecked") final Expr<T> result = (Expr<T>) And(Or(Not(cond), then), Or(cond, elze));
 				return result;
 			} else {
 				return expr;

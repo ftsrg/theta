@@ -1,12 +1,12 @@
 /*
  *  Copyright 2017 Budapest University of Technology and Economics
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -139,13 +139,11 @@ final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
 			final List<ParamDecl<?>> params = createParamList(ctx.paramDecls);
 
 			checkArgument(params.size() == 1);
-			@SuppressWarnings("unchecked")
-			final ParamDecl<Type> param = (ParamDecl<Type>) singleElementOf(params);
+			@SuppressWarnings("unchecked") final ParamDecl<Type> param = (ParamDecl<Type>) singleElementOf(params);
 
 			push(params);
 
-			@SuppressWarnings("unchecked")
-			final Expr<Type> result = (Expr<Type>) ctx.result.accept(this);
+			@SuppressWarnings("unchecked") final Expr<Type> result = (Expr<Type>) ctx.result.accept(this);
 
 			pop();
 
@@ -260,12 +258,12 @@ final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
 			final Expr<?> rightOp = ctx.rightOp.accept(this);
 
 			switch (ctx.oper.getType()) {
-			case StsDslParser.EQ:
-				return Eq(leftOp, rightOp);
-			case StsDslParser.NEQ:
-				return Neq(leftOp, rightOp);
-			default:
-				throw new AssertionError();
+				case StsDslParser.EQ:
+					return Eq(leftOp, rightOp);
+				case StsDslParser.NEQ:
+					return Neq(leftOp, rightOp);
+				default:
+					throw new AssertionError();
 			}
 
 		} else {
@@ -280,16 +278,16 @@ final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
 			final Expr<?> rightOp = ctx.rightOp.accept(this);
 
 			switch (ctx.oper.getType()) {
-			case StsDslParser.LT:
-				return Lt(leftOp, rightOp);
-			case StsDslParser.LEQ:
-				return Leq(leftOp, rightOp);
-			case StsDslParser.GT:
-				return Gt(leftOp, rightOp);
-			case StsDslParser.GEQ:
-				return Geq(leftOp, rightOp);
-			default:
-				throw new AssertionError();
+				case StsDslParser.LT:
+					return Lt(leftOp, rightOp);
+				case StsDslParser.LEQ:
+					return Leq(leftOp, rightOp);
+				case StsDslParser.GT:
+					return Gt(leftOp, rightOp);
+				case StsDslParser.GEQ:
+					return Geq(leftOp, rightOp);
+				default:
+					throw new AssertionError();
 			}
 
 		} else {
@@ -315,7 +313,7 @@ final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
 	}
 
 	private Expr<?> createAdditiveExpr(final Expr<?> opsHead, final List<? extends Expr<?>> opsTail,
-			final List<? extends Token> opers) {
+									   final List<? extends Token> opers) {
 		checkArgument(opsTail.size() == opers.size());
 
 		if (opsTail.isEmpty()) {
@@ -336,14 +334,14 @@ final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
 	private Expr<?> createAdditiveSubExpr(final Expr<?> leftOp, final Expr<?> rightOp, final Token oper) {
 		switch (oper.getType()) {
 
-		case StsDslParser.PLUS:
-			return createAddExpr(leftOp, rightOp);
+			case StsDslParser.PLUS:
+				return createAddExpr(leftOp, rightOp);
 
-		case StsDslParser.MINUS:
-			return createSubExpr(leftOp, rightOp);
+			case StsDslParser.MINUS:
+				return createSubExpr(leftOp, rightOp);
 
-		default:
-			throw new AssertionError();
+			default:
+				throw new AssertionError();
 		}
 	}
 
@@ -380,7 +378,7 @@ final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
 	}
 
 	private Expr<?> createMutliplicativeExpr(final Expr<?> opsHead, final List<? extends Expr<?>> opsTail,
-			final List<? extends Token> opers) {
+											 final List<? extends Token> opers) {
 		checkArgument(opsTail.size() == opers.size());
 
 		if (opsTail.isEmpty()) {
@@ -401,20 +399,20 @@ final class StsExprCreatorVisitor extends StsDslBaseVisitor<Expr<?>> {
 	private Expr<?> createMultiplicativeSubExpr(final Expr<?> leftOp, final Expr<?> rightOp, final Token oper) {
 		switch (oper.getType()) {
 
-		case StsDslParser.MUL:
-			return createMulExpr(leftOp, rightOp);
+			case StsDslParser.MUL:
+				return createMulExpr(leftOp, rightOp);
 
-		case StsDslParser.DIV:
-			return createDivExpr(leftOp, rightOp);
+			case StsDslParser.DIV:
+				return createDivExpr(leftOp, rightOp);
 
-		case StsDslParser.MOD:
-			return createModExpr(leftOp, rightOp);
+			case StsDslParser.MOD:
+				return createModExpr(leftOp, rightOp);
 
-		case StsDslParser.REM:
-			return createRemExpr(leftOp, rightOp);
+			case StsDslParser.REM:
+				return createRemExpr(leftOp, rightOp);
 
-		default:
-			throw new AssertionError();
+			default:
+				throw new AssertionError();
 		}
 	}
 

@@ -56,15 +56,15 @@ public final class XtaZoneAnalysisTest {
 
 	@Parameters(name = "{0}")
 	public static Collection<Object[]> data() {
-		return Arrays.asList(new Object[][] {
+		return Arrays.asList(new Object[][]{
 
-				{ "/csma-2.xta" },
+				{"/csma-2.xta"},
 
-				{ "/fddi-2.xta" },
+				{"/fddi-2.xta"},
 
-				{ "/fischer-2-32-64.xta" },
+				{"/fischer-2-32-64.xta"},
 
-				{ "/lynch-2-16.xta" }
+				{"/lynch-2-16.xta"}
 
 		});
 	}

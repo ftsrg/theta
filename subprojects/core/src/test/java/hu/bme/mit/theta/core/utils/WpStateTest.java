@@ -51,27 +51,27 @@ public final class WpStateTest {
 
 	@Parameters
 	public static Collection<Object[]> data() {
-		return Arrays.asList(new Object[][] {
+		return Arrays.asList(new Object[][]{
 
-				{ TRUE, ASSIGN_X_1, TRUE },
+				{TRUE, ASSIGN_X_1, TRUE},
 
-				{ GEQ_X_1, ASSIGN_X_1, TRUE },
+				{GEQ_X_1, ASSIGN_X_1, TRUE},
 
-				{ GEQ_1_X, ASSIGN_X_1, TRUE },
+				{GEQ_1_X, ASSIGN_X_1, TRUE},
 
-				{ GEQ_1_Y, ASSIGN_X_1, GEQ_1_Y },
+				{GEQ_1_Y, ASSIGN_X_1, GEQ_1_Y},
 
-				{ GEQ_X_Y, ASSIGN_X_1, GEQ_1_Y },
+				{GEQ_X_Y, ASSIGN_X_1, GEQ_1_Y},
 
-				{ TRUE, ASSIGN_Y_X, TRUE },
+				{TRUE, ASSIGN_Y_X, TRUE},
 
-				{ GEQ_X_1, ASSIGN_Y_X, GEQ_X_1 },
+				{GEQ_X_1, ASSIGN_Y_X, GEQ_X_1},
 
-				{ GEQ_1_X, ASSIGN_Y_X, GEQ_1_X },
+				{GEQ_1_X, ASSIGN_Y_X, GEQ_1_X},
 
-				{ GEQ_1_Y, ASSIGN_Y_X, GEQ_1_X },
+				{GEQ_1_Y, ASSIGN_Y_X, GEQ_1_X},
 
-				{ GEQ_X_Y, ASSIGN_Y_X, TRUE },
+				{GEQ_X_Y, ASSIGN_Y_X, TRUE},
 
 		});
 	}

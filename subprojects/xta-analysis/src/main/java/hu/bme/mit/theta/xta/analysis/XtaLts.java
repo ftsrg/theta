@@ -53,7 +53,7 @@ public final class XtaLts implements LTS<XtaState<?>, XtaAction> {
 	}
 
 	private static void addActionsForEdge(final Collection<XtaAction> result, final XtaSystem system,
-			final XtaState<?> state, final Edge edge) {
+										  final XtaState<?> state, final Edge edge) {
 		if (edge.getSync().isPresent()) {
 			addSyncActionsForEdge(result, system, state, edge);
 		} else {
@@ -62,7 +62,7 @@ public final class XtaLts implements LTS<XtaState<?>, XtaAction> {
 	}
 
 	private static void addSyncActionsForEdge(final Collection<XtaAction> result, final XtaSystem system,
-			final XtaState<?> state, final Edge emitEdge) {
+											  final XtaState<?> state, final Edge emitEdge) {
 
 		final Loc emitLoc = emitEdge.getSource();
 		final Sync emitSync = emitEdge.getSync().get();
@@ -102,7 +102,7 @@ public final class XtaLts implements LTS<XtaState<?>, XtaAction> {
 	}
 
 	private static void addSimpleActionsForEdge(final Collection<XtaAction> result, final XtaSystem system,
-			final XtaState<?> state, final Edge edge) {
+												final XtaState<?> state, final Edge edge) {
 		final Loc loc = edge.getSource();
 		if (state.isCommitted() && loc.getKind() != COMMITTED) {
 			return;

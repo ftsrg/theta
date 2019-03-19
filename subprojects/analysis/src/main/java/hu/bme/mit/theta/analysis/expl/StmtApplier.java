@@ -56,7 +56,7 @@ final class StmtApplier {
 	}
 
 	private static ApplyResult applyAssign(final AssignStmt<?> stmt, final MutableValuation val,
-			final boolean approximate) {
+										   final boolean approximate) {
 		final VarDecl<?> varDecl = stmt.getVarDecl();
 		final Expr<?> expr = ExprUtils.simplify(stmt.getExpr(), val);
 		if (expr instanceof LitExpr<?>) {
@@ -72,7 +72,7 @@ final class StmtApplier {
 	}
 
 	private static ApplyResult applyAssume(final AssumeStmt stmt, final MutableValuation val,
-			final boolean approximate) {
+										   final boolean approximate) {
 		final Expr<BoolType> cond = ExprUtils.simplify(stmt.getCond(), val);
 		if (cond instanceof BoolLitExpr) {
 			final BoolLitExpr condLit = (BoolLitExpr) cond;
@@ -91,7 +91,7 @@ final class StmtApplier {
 	}
 
 	private static ApplyResult applyHavoc(final HavocStmt<?> stmt, final MutableValuation val,
-			final boolean approximate) {
+										  final boolean approximate) {
 		final VarDecl<?> varDecl = stmt.getVarDecl();
 		val.remove(varDecl);
 		return ApplyResult.SUCCESS;

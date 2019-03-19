@@ -1,12 +1,12 @@
 /*
  *  Copyright 2017 Budapest University of Technology and Economics
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -234,16 +234,13 @@ public final class AbstractExprs {
 		final T2 type2 = expr2.getType();
 
 		if (expr1.getType().equals(expr2.getType())) {
-			@SuppressWarnings("unchecked")
-			final Expr<T1> t1Expr2 = (Expr<T1>) expr2;
+			@SuppressWarnings("unchecked") final Expr<T1> t1Expr2 = (Expr<T1>) expr2;
 			return bind(expr1, t1Expr2);
 		}
 
 		if (type1 instanceof Castable) {
-			@SuppressWarnings("unchecked")
-			final C cType1 = (C) type1;
-			@SuppressWarnings("unchecked")
-			final Expr<C> cExpr1 = (Expr<C>) expr1;
+			@SuppressWarnings("unchecked") final C cType1 = (C) type1;
+			@SuppressWarnings("unchecked") final Expr<C> cExpr1 = (Expr<C>) expr1;
 			final Try<Expr<T2>> tryToCast = Try.attempt(() -> cType1.Cast(cExpr1, type2));
 			if (tryToCast.isSuccess()) {
 				final Expr<T2> t2Expr1 = tryToCast.asSuccess().getValue();
@@ -252,10 +249,8 @@ public final class AbstractExprs {
 		}
 
 		if (type2 instanceof Castable) {
-			@SuppressWarnings("unchecked")
-			final C cType2 = (C) type2;
-			@SuppressWarnings("unchecked")
-			final Expr<C> cExpr2 = (Expr<C>) expr2;
+			@SuppressWarnings("unchecked") final C cType2 = (C) type2;
+			@SuppressWarnings("unchecked") final Expr<C> cExpr2 = (Expr<C>) expr2;
 			final Try<Expr<T1>> tryToCast = Try.attempt(() -> cType2.Cast(cExpr2, type1));
 			if (tryToCast.isSuccess()) {
 				final Expr<T1> t1Expr2 = tryToCast.asSuccess().getValue();
@@ -267,17 +262,14 @@ public final class AbstractExprs {
 	}
 
 	private static <TR extends Type, TP extends Type> Expr<TR> bind(final Expr<TP> expr) {
-		@SuppressWarnings("unchecked")
-		final Expr<TR> trExpr = (Expr<TR>) expr;
+		@SuppressWarnings("unchecked") final Expr<TR> trExpr = (Expr<TR>) expr;
 		return trExpr;
 	}
 
 	private static <TR extends Type, TP extends Type> Tuple2<Expr<TR>, Expr<TR>> bind(final Expr<TP> expr1,
-			final Expr<TP> expr2) {
-		@SuppressWarnings("unchecked")
-		final Expr<TR> trExpr1 = (Expr<TR>) expr1;
-		@SuppressWarnings("unchecked")
-		final Expr<TR> trExpr2 = (Expr<TR>) expr2;
+																					  final Expr<TP> expr2) {
+		@SuppressWarnings("unchecked") final Expr<TR> trExpr1 = (Expr<TR>) expr1;
+		@SuppressWarnings("unchecked") final Expr<TR> trExpr2 = (Expr<TR>) expr2;
 		return Tuple2.of(trExpr1, trExpr2);
 	}
 

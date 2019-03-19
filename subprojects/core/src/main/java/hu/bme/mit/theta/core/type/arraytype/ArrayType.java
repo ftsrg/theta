@@ -55,13 +55,13 @@ public final class ArrayType<IndexType extends Type, ElemType extends Type>
 
 	@Override
 	public EqExpr<ArrayType<IndexType, ElemType>> Eq(final Expr<ArrayType<IndexType, ElemType>> leftOp,
-			final Expr<ArrayType<IndexType, ElemType>> rightOp) {
+													 final Expr<ArrayType<IndexType, ElemType>> rightOp) {
 		return ArrayExprs.Eq(leftOp, rightOp);
 	}
 
 	@Override
 	public NeqExpr<ArrayType<IndexType, ElemType>> Neq(final Expr<ArrayType<IndexType, ElemType>> leftOp,
-			final Expr<ArrayType<IndexType, ElemType>> rightOp) {
+													   final Expr<ArrayType<IndexType, ElemType>> rightOp) {
 		return ArrayExprs.Neq(leftOp, rightOp);
 	}
 

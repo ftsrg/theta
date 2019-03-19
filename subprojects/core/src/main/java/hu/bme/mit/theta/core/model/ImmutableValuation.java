@@ -70,8 +70,7 @@ public final class ImmutableValuation extends Valuation {
 	@Override
 	public <DeclType extends Type> Optional<LitExpr<DeclType>> eval(final Decl<DeclType> decl) {
 		checkNotNull(decl);
-		@SuppressWarnings("unchecked")
-		final LitExpr<DeclType> val = (LitExpr<DeclType>) declToExpr.get(decl);
+		@SuppressWarnings("unchecked") final LitExpr<DeclType> val = (LitExpr<DeclType>) declToExpr.get(decl);
 		return Optional.ofNullable(val);
 	}
 

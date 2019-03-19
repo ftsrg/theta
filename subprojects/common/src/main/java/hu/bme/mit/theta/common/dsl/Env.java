@@ -62,7 +62,7 @@ public final class Env {
 	}
 
 	public <S extends Symbol, V extends Object> Object compute(final S symbol,
-			final Function<? super S, ? extends Object> mapping) {
+															   final Function<? super S, ? extends Object> mapping) {
 		checkNotNull(symbol);
 		checkNotNull(mapping);
 		Object value = currentFrame.eval(symbol);

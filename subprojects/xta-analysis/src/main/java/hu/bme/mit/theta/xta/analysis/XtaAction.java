@@ -64,7 +64,7 @@ public abstract class XtaAction extends StmtAction {
 	}
 
 	public static SyncedXtaAction synced(final XtaSystem system, final List<Loc> sourceLocs, final Edge emitEdge,
-			final Edge recvEdge) {
+										 final Edge recvEdge) {
 		return new SyncedXtaAction(system, sourceLocs, emitEdge, recvEdge);
 	}
 
@@ -175,7 +175,7 @@ public abstract class XtaAction extends StmtAction {
 		private volatile List<Stmt> stmts = null;
 
 		private SyncedXtaAction(final XtaSystem system, final List<Loc> sourceLocs, final Edge emitEdge,
-				final Edge recvEdge) {
+								final Edge recvEdge) {
 			super(system, sourceLocs);
 			this.emitEdge = checkNotNull(emitEdge);
 			this.recvEdge = checkNotNull(recvEdge);
@@ -266,7 +266,7 @@ public abstract class XtaAction extends StmtAction {
 	}
 
 	private static void addClocksNonNegative(final ImmutableList.Builder<Stmt> builder,
-			final Collection<VarDecl<RatType>> clocks) {
+											 final Collection<VarDecl<RatType>> clocks) {
 		clocks.forEach(c -> builder.add(Assume(Geq(c.getRef(), Rat(0, 1)))));
 	}
 

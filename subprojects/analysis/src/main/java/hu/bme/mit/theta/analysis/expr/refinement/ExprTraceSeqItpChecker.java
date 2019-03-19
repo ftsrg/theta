@@ -53,7 +53,7 @@ public final class ExprTraceSeqItpChecker implements ExprTraceChecker<ItpRefutat
 	}
 
 	public static ExprTraceSeqItpChecker create(final Expr<BoolType> init, final Expr<BoolType> target,
-			final ItpSolver solver) {
+												final ItpSolver solver) {
 		return new ExprTraceSeqItpChecker(init, target, solver);
 	}
 

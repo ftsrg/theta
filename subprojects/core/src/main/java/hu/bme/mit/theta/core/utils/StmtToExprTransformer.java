@@ -80,7 +80,7 @@ final class StmtToExprTransformer {
 
 		@Override
 		public <DeclType extends Type> StmtUnfoldResult visit(final HavocStmt<DeclType> stmt,
-				final VarIndexing indexing) {
+															  final VarIndexing indexing) {
 			final VarDecl<?> varDecl = stmt.getVarDecl();
 			final VarIndexing newIndexing = indexing.inc(varDecl);
 			return StmtUnfoldResult.of(ImmutableList.of(BoolExprs.True()), newIndexing);
@@ -88,7 +88,7 @@ final class StmtToExprTransformer {
 
 		@Override
 		public <DeclType extends Type> StmtUnfoldResult visit(final AssignStmt<DeclType> stmt,
-				final VarIndexing indexing) {
+															  final VarIndexing indexing) {
 			final VarDecl<DeclType> varDecl = stmt.getVarDecl();
 			final VarIndexing newIndexing = indexing.inc(varDecl);
 			final Expr<DeclType> rhs = ExprUtils.applyPrimes(stmt.getExpr(), indexing);

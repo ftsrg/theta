@@ -42,7 +42,7 @@ final class BwItpExplStrategy<S extends State> extends ItpExplStrategy<S> {
 
 	@Override
 	protected Valuation blockExpl(final ArgNode<S, XtaAction> node, final Expr<BoolType> expr,
-			final Collection<ArgNode<S, XtaAction>> uncoveredNodes, final Builder stats) {
+								  final Collection<ArgNode<S, XtaAction>> uncoveredNodes, final Builder stats) {
 		assert !node.getState().isBottom();
 
 		final ExplState abstractExpl = getLens().get(node.getState()).getAbstrState();

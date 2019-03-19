@@ -1,12 +1,12 @@
 /*
  *  Copyright 2017 Budapest University of Technology and Economics
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -66,23 +66,23 @@ public class ExprDslTest {
 
 	@Parameters
 	public static Collection<Object[]> data() {
-		return Arrays.asList(new Object[][] {
+		return Arrays.asList(new Object[][]{
 
-				{ "true or false and not 1%2 > 2%3", Or(True(), And(False(), Not(Gt(Rat(1, 2), Rat(2, 3))))), null },
+				{"true or false and not 1%2 > 2%3", Or(True(), And(False(), Not(Gt(Rat(1, 2), Rat(2, 3))))), null},
 
-				{ "true or (false and not 1 < 2)", Or(True(), And(False(), Not(Lt(Int(1), Int(2))))), null },
+				{"true or (false and not 1 < 2)", Or(True(), And(False(), Not(Lt(Int(1), Int(2))))), null},
 
-				{ "(true or false) and not - 5 = 4 - 1",
-						And(Or(True(), False()), Not(Eq(Neg(Int(5)), Sub(Int(4), Int(1))))), null },
+				{"(true or false) and not - 5 = 4 - 1",
+						And(Or(True(), False()), Not(Eq(Neg(Int(5)), Sub(Int(4), Int(1))))), null},
 
-				{ "true iff false imply true", Iff(True(), Imply(False(), True())), null },
+				{"true iff false imply true", Iff(True(), Imply(False(), True())), null},
 
-				{ "1 * 2 * 3 /= 4 - 1", Neq(Mul(Int(1), Int(2), Int(3)), Sub(Int(4), Int(1))), null },
+				{"1 * 2 * 3 /= 4 - 1", Neq(Mul(Int(1), Int(2), Int(3)), Sub(Int(4), Int(1))), null},
 
-				{ "(1 mod 2) <= 4 / 5", Leq(Mod(Int(1), Int(2)), Div(Int(4), Int(5))), null },
+				{"(1 mod 2) <= 4 / 5", Leq(Mod(Int(1), Int(2)), Div(Int(4), Int(5))), null},
 
-				{ "if 1 >= 2 then 1 rem 2 else 3 mod 5",
-						Ite(Geq(Int(1), Int(2)), Rem(Int(1), Int(2)), Mod(Int(3), Int(5))), null },
+				{"if 1 >= 2 then 1 rem 2 else 3 mod 5",
+						Ite(Geq(Int(1), Int(2)), Rem(Int(1), Int(2)), Mod(Int(3), Int(5))), null},
 
 		});
 	}

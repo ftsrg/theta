@@ -98,8 +98,7 @@ final class CfaInterpreter {
 		if (head.isAtom()) {
 			final String symbol = head.asAtom().getAtom();
 			final Object object = env.eval(symbol);
-			@SuppressWarnings("unchecked")
-			final Function<List<SExpr>, ?> interpretation = (Function<List<SExpr>, ?>) object;
+			@SuppressWarnings("unchecked") final Function<List<SExpr>, ?> interpretation = (Function<List<SExpr>, ?>) object;
 			final Object value = interpretation.apply(tail);
 			return value;
 		} else if (head.isList()) {
@@ -135,19 +134,19 @@ final class CfaInterpreter {
 	private Loc createLoc(final CFA.Builder builder, final LocContext context) {
 		final Loc loc = builder.createLoc(context.name);
 		switch (context.kind) {
-		case LOC:
-			break;
-		case INIT:
-			builder.setInitLoc(loc);
-			break;
-		case FINAL:
-			builder.setFinalLoc(loc);
-			break;
-		case ERROR:
-			builder.setErrorLoc(loc);
-			break;
-		default:
-			throw new AssertionError();
+			case LOC:
+				break;
+			case INIT:
+				builder.setInitLoc(loc);
+				break;
+			case FINAL:
+				builder.setFinalLoc(loc);
+				break;
+			case ERROR:
+				builder.setErrorLoc(loc);
+				break;
+			default:
+				throw new AssertionError();
 		}
 		return loc;
 	}

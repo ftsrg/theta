@@ -50,7 +50,7 @@ public final class ExprUtils {
 	/**
 	 * Collect atoms from a Boolean expression into a given collection.
 	 *
-	 * @param expr Expression
+	 * @param expr      Expression
 	 * @param collectTo Collection where the atoms should be put
 	 */
 	public static void collectAtoms(final Expr<BoolType> expr, final Collection<Expr<BoolType>> collectTo) {
@@ -110,7 +110,7 @@ public final class ExprUtils {
 	/**
 	 * Collect variables of an expression into a given collection.
 	 *
-	 * @param expr Expression
+	 * @param expr      Expression
 	 * @param collectTo Collection where the variables should be put
 	 */
 	public static void collectVars(final Expr<?> expr, final Collection<VarDecl<?>> collectTo) {
@@ -129,7 +129,7 @@ public final class ExprUtils {
 	/**
 	 * Collect variables from expressions into a given collection.
 	 *
-	 * @param exprs Expressions
+	 * @param exprs     Expressions
 	 * @param collectTo Collection where the variables should be put
 	 */
 	public static void collectVars(final Iterable<? extends Expr<?>> exprs, final Collection<VarDecl<?>> collectTo) {
@@ -199,7 +199,7 @@ public final class ExprUtils {
 	 * Simplify expression and substitute the valuation.
 	 *
 	 * @param expr Original expression
-	 * @param val Valuation
+	 * @param val  Valuation
 	 * @return Simplified expression
 	 */
 	public static <ExprType extends Type> Expr<ExprType> simplify(final Expr<ExprType> expr, final Valuation val) {
@@ -249,7 +249,7 @@ public final class ExprUtils {
 	/**
 	 * Transform an expression by universally quantifying certain variables.
 	 *
-	 * @param expr Original expression
+	 * @param expr    Original expression
 	 * @param mapping Quantifying
 	 * @return Transformed expression
 	 */
@@ -261,7 +261,7 @@ public final class ExprUtils {
 	 * Transform an expression by applying primes to an expression based on an
 	 * indexing.
 	 *
-	 * @param expr Original expression
+	 * @param expr     Original expression
 	 * @param indexing Indexing
 	 * @return Transformed expression
 	 */

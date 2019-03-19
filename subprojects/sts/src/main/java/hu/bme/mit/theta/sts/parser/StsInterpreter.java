@@ -97,8 +97,7 @@ final class StsInterpreter {
 		if (head.isAtom()) {
 			final String symbol = head.asAtom().getAtom();
 			final Object object = env.eval(symbol);
-			@SuppressWarnings("unchecked")
-			final Function<List<SExpr>, ?> interpretation = (Function<List<SExpr>, ?>) object;
+			@SuppressWarnings("unchecked") final Function<List<SExpr>, ?> interpretation = (Function<List<SExpr>, ?>) object;
 			final Object value = interpretation.apply(tail);
 			return value;
 		} else if (head.isList()) {

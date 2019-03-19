@@ -34,7 +34,7 @@ final class Prod3TransFunc<S1 extends State, S2 extends State, S3 extends State,
 	private final TransFunc<S3, ? super A, P3> transFunc3;
 
 	private Prod3TransFunc(final TransFunc<S1, ? super A, P1> transFunc1, final TransFunc<S2, ? super A, P2> transFunc2,
-			final TransFunc<S3, ? super A, P3> transFunc3) {
+						   final TransFunc<S3, ? super A, P3> transFunc3) {
 		this.transFunc1 = checkNotNull(transFunc1);
 		this.transFunc2 = checkNotNull(transFunc2);
 		this.transFunc3 = checkNotNull(transFunc3);
@@ -48,7 +48,7 @@ final class Prod3TransFunc<S1 extends State, S2 extends State, S3 extends State,
 
 	@Override
 	public Collection<Prod3State<S1, S2, S3>> getSuccStates(final Prod3State<S1, S2, S3> state, final A action,
-			final Prod3Prec<P1, P2, P3> prec) {
+															final Prod3Prec<P1, P2, P3> prec) {
 		checkNotNull(state);
 		checkNotNull(action);
 		checkNotNull(prec);

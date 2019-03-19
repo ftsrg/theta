@@ -27,8 +27,7 @@ public abstract class NegExpr<ExprType extends Additive<ExprType>> extends Unary
 	}
 
 	public static <ExprType extends Additive<ExprType>> NegExpr<?> create2(final Expr<?> op) {
-		@SuppressWarnings("unchecked")
-		final ExprType type = (ExprType) op.getType();
+		@SuppressWarnings("unchecked") final ExprType type = (ExprType) op.getType();
 		final Expr<ExprType> newOp = cast(op, type);
 		return type.Neg(newOp);
 	}

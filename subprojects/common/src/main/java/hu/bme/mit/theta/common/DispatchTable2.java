@@ -34,8 +34,7 @@ public final class DispatchTable2<P, R> {
 
 	public <T> R dispatch(final T type, final P param) {
 		final Class<?> clazz = type.getClass();
-		@SuppressWarnings("unchecked")
-		final BiFunction<? super T, ? super P, ? extends R> function = (BiFunction<? super T, ? super P, ? extends R>) cases
+		@SuppressWarnings("unchecked") final BiFunction<? super T, ? super P, ? extends R> function = (BiFunction<? super T, ? super P, ? extends R>) cases
 				.get(clazz);
 		if (function == null) {
 			return defaultCase.apply(type, param);
@@ -62,7 +61,7 @@ public final class DispatchTable2<P, R> {
 		}
 
 		public <T> Builder<P, R> addCase(final Class<T> clazz,
-				final BiFunction<? super T, ? super P, ? extends R> function) {
+										 final BiFunction<? super T, ? super P, ? extends R> function) {
 			checkState(!built, "Already built.");
 			checkNotNull(clazz);
 			checkNotNull(function);

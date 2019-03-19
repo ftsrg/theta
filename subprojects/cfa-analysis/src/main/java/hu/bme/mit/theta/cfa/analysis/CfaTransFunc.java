@@ -41,7 +41,7 @@ final class CfaTransFunc<S extends ExprState, P extends Prec> implements TransFu
 
 	@Override
 	public Collection<CfaState<S>> getSuccStates(final CfaState<S> state, final CfaAction action,
-			final CfaPrec<P> prec) {
+												 final CfaPrec<P> prec) {
 		checkNotNull(state);
 		checkNotNull(action);
 		checkNotNull(prec);

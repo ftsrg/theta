@@ -25,7 +25,6 @@ import hu.bme.mit.theta.analysis.waitlist.Waitlist;
 public enum SearchStrategy {
 
 	BFS {
-
 		@Override
 		public <S extends State, A extends Action> Waitlist<ArgNode<S, A>> createWaitlist() {
 			return FifoWaitlist.create();
@@ -34,7 +33,6 @@ public enum SearchStrategy {
 	},
 
 	DFS {
-
 		@Override
 		public <S extends State, A extends Action> Waitlist<ArgNode<S, A>> createWaitlist() {
 			return LifoWaitlist.create();
@@ -43,7 +41,6 @@ public enum SearchStrategy {
 	},
 
 	RANDOM {
-
 		@Override
 		public <S extends State, A extends Action> Waitlist<ArgNode<S, A>> createWaitlist() {
 			return RandomWaitlist.create();

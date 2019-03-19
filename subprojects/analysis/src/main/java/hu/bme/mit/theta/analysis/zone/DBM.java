@@ -89,7 +89,7 @@ final class DBM {
 
 	// TODO replace BiFunction by IntBiFunction
 	private DBM(final DbmSignature signature,
-			final BiFunction<? super VarDecl<RatType>, ? super VarDecl<RatType>, ? extends Integer> values) {
+				final BiFunction<? super VarDecl<RatType>, ? super VarDecl<RatType>, ? extends Integer> values) {
 		this(signature, (final int x, final int y) -> {
 			return values.apply(signature.getVar(x), signature.getVar(y));
 		});
@@ -114,7 +114,7 @@ final class DBM {
 						final int newBound = negate(bound);
 						final DbmSignature newSignature = DbmSignature.over(Arrays.asList(x, y));
 						final BiFunction<VarDecl<RatType>, VarDecl<RatType>, Integer> newValues = (c1,
-								c2) -> (c1 == y && c2 == x) ? newBound : defaultBound(c1, c2);
+																								   c2) -> (c1 == y && c2 == x) ? newBound : defaultBound(c1, c2);
 						final DBM newDBM = new DBM(newSignature, newValues);
 						result.add(newDBM);
 					}

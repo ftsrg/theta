@@ -57,7 +57,7 @@ public final class ExprSplitters {
 
 	/**
 	 * Get the strategy that splits the expression into atoms.
-	 * 
+	 *
 	 * @return
 	 */
 	public static ExprSplitter atoms() {

@@ -33,7 +33,7 @@ final class Prod2InitFunc<S1 extends State, S2 extends State, P1 extends Prec, P
 	private final StrengtheningOperator<S1, S2, P1, P2> strenghteningOperator;
 
 	private Prod2InitFunc(final InitFunc<S1, P1> initFunc1, final InitFunc<S2, P2> initFunc2,
-			final StrengtheningOperator<S1, S2, P1, P2> strenghteningOperator) {
+						  final StrengtheningOperator<S1, S2, P1, P2> strenghteningOperator) {
 		this.initFunc1 = checkNotNull(initFunc1);
 		this.initFunc2 = checkNotNull(initFunc2);
 		this.strenghteningOperator = checkNotNull(strenghteningOperator);

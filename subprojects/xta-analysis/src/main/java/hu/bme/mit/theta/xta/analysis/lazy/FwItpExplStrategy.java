@@ -40,7 +40,7 @@ final class FwItpExplStrategy<S extends State> extends ItpExplStrategy<S> {
 
 	@Override
 	protected Valuation blockExpl(final ArgNode<S, XtaAction> node, final Expr<BoolType> expr,
-			final Collection<ArgNode<S, XtaAction>> uncoveredNodes, final Builder stats) {
+								  final Collection<ArgNode<S, XtaAction>> uncoveredNodes, final Builder stats) {
 		final ExplState abstrState = getLens().get(node.getState()).getAbstrState();
 
 		final Expr<BoolType> simplifiedExpr = ExprUtils.simplify(expr, abstrState);
