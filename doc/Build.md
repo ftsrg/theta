@@ -6,10 +6,11 @@ Theta is written in Java 11 using
 * [Travis](https://travis-ci.org/FTSRG/theta) for continuous integration,
 * [Codacy](https://www.codacy.com/app/FTSRG/theta/dashboard) for static code analysis.
 
-We are mainly developing on Windows, but we also test Theta on Linux.
-Theta can be built from command line, but you can most likely also import it into your favorite IDE.
 Theta is uses Java 11, therefore JDK 11 is required to build Theta.
 Currently, we use [OpenJDK 11](https://openjdk.java.net/projects/jdk/11/).
+We are mainly developing on Windows, but we also test Theta on Linux.
+Theta can be built from command line, but you can also import it into [IntelliJ IDEA](https://www.jetbrains.com/idea/).
+Unfortunately, Eclipse [does not support](https://github.com/eclipse/buildship/issues/222) Gradle projects with Kotlin build scripts (yet).
 
 ## Dependencies
 
