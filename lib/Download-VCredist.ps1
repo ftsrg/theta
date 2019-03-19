@@ -3,6 +3,8 @@ $z3version = "z3-4.5.0-x64-win"
 
 $currentPath = (Resolve-Path .\).Path
 
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
 $clnt = new-object System.Net.WebClient
 $url = "https://github.com/Z3Prover/z3/releases/download/$z3release/$z3version.zip"
 $zipFilePath = "$currentPath\$z3version.zip"
