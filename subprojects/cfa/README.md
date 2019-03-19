@@ -55,18 +55,3 @@ See _src/test/resources_ for more examples and _src/main/antlr_ for the full gra
 An unstable, prototype tool is available that can parse simple C programs into CFAs using Eclipse CDT.
 The tool can be downloaded [here](http://home.mit.bme.hu/~hajdua/theta/c-to-cfa.jar). 
 his tool is no longer maintained as we are currently developing an LLVM frontend for CFAs.
-
-## Tool
-
-Use one of the following commands to build the tool.
-
-- Linux, command line: `./gradlew theta-cfa-cli`
-- Linux, GUI: `./gradlew theta-cfa-gui`
-- Windows, command line: `gradlew.bat theta-cfa-cli`
-- Windows, GUI: `gradlew.bat theta-cfa-gui`
-
-The runnable file will appear under _build/libs_. The tool also requires [Z3 and GraphViz](../doc/Dependencies.md).
-
-The command line tool can be run with `java -jar theta-cfa-cli.jar [arguments]`. If no arguments are given, a help screen is displayed about the arguments and their possible values. For example, put the example above in a file called `counter.cfa` and call `java -jar theta-cfa-cli.jar --model counter.cfa --domain EXPL --refinement SEQ_ITP --loglevel INFO`.
-
-The GUI tool can be run simply by executing `theta-cfa-gui.jar`. Use the controls to load the model, adjust parameters and run the algorithm.

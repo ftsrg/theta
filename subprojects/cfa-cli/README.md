@@ -16,4 +16,4 @@ The tool also requires the [Z3 SMT solver](../../doc/Build.md).
 
 The tool can be run with `java -jar theta-cfa-cli.jar [arguments]`.
 If no arguments are given, a help screen is displayed about the arguments and their possible values.
-For example, put the example above in a file called `counter.cfa` and call `java -jar theta-cfa-cli.jar --model counter.cfa --domain EXPL --refinement SEQ_ITP --loglevel INFO`.
+For example `java -jar theta-cfa-cli.jar --model counter.cfa --domain EXPL --refinement SEQ_ITP --loglevel INFO`.
