@@ -18,8 +18,19 @@ package hu.bme.mit.theta.solver;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
+/**
+ * Interface for different kind of interpolants. An interpolant consists of {@link ItpPattern}s,
+ * describing the shape (e.g., binary, sequence, ...) of the interpolant. Each pattern is associated
+ * with a {@link ItpMarker}.
+ */
 public interface Interpolant {
 
+	/**
+	 * Get the expression in the interpolant corresponding to a given marker.
+	 *
+	 * @param marker Marker
+	 * @return Expression
+	 */
 	Expr<BoolType> eval(final ItpMarker marker);
 
 }
