@@ -37,7 +37,7 @@ Tools are concrete instantiations of the framework to solve a certain problem us
 
 ## Extend Theta
 
-If you want to extend Theta and build your own algorithms and tools, then take look at [doc/Build.md](doc/Build.md) and [doc/Coding-conventions.md](doc/Coding-conventions.md).
+If you want to extend Theta and build your own algorithms and tools, then take look at [doc/Development.md](doc/Development.md).
 
 ## Read more
 
