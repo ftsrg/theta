@@ -15,27 +15,6 @@
  */
 package hu.bme.mit.theta.solver.z3;
 
-import static com.google.common.collect.ImmutableList.of;
-import static hu.bme.mit.theta.core.decl.Decls.Const;
-import static hu.bme.mit.theta.core.decl.Decls.Param;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Forall;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Imply;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
-import static hu.bme.mit.theta.core.type.functype.FuncExprs.App;
-import static hu.bme.mit.theta.core.type.functype.FuncExprs.Func;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Geq;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Leq;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-
-import java.util.Optional;
-
-import org.junit.Test;
-
 import hu.bme.mit.theta.core.decl.ConstDecl;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.model.Valuation;
@@ -46,8 +25,44 @@ import hu.bme.mit.theta.core.type.functype.FuncType;
 import hu.bme.mit.theta.core.type.inttype.IntType;
 import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverStatus;
+import org.junit.Test;
+
+import java.util.Optional;
+
+import static com.google.common.collect.ImmutableList.of;
+import static hu.bme.mit.theta.core.decl.Decls.Const;
+import static hu.bme.mit.theta.core.decl.Decls.Param;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
+import static hu.bme.mit.theta.core.type.functype.FuncExprs.App;
+import static hu.bme.mit.theta.core.type.functype.FuncExprs.Func;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.*;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 public final class Z3SolverTest {
+
+	@Test
+	public void testSimple() {
+		final Solver solver = Z3SolverFactory.getInstace().createSolver();
+
+		// Create two integer constants x and y
+		final ConstDecl<IntType> cx = Const("x", Int());
+		final ConstDecl<IntType> cy = Const("y", Int());
+
+		// Add x == y + 1 to the solver
+		solver.add(Eq(cx.getRef(), Add(cy.getRef(), Int(1))));
+
+		// Check, the expression should be satisfiable
+		SolverStatus status = solver.check();
+		assertTrue(status.isSat());
+
+		// Add x < y to the solver
+		solver.add(Lt(cx.getRef(), cy.getRef()));
+
+		// Check, the expression should be unsatisfiable
+		status = solver.check();
+		assertTrue(status.isUnsat());
+	}
 
 	@Test
 	public void testTrack() {
