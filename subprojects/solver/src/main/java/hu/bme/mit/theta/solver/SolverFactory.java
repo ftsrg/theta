@@ -15,10 +15,21 @@
  */
 package hu.bme.mit.theta.solver;
 
+/**
+ * Interface for solver factories that can instantiate solvers.
+ */
 public interface SolverFactory {
 
+	/**
+	 * Create a basic solver instance.
+	 * @return Solver instance
+	 */
 	Solver createSolver();
 
+	/**
+	 * Create a solver that is capable of interpolation.
+	 * @return Solver instance
+	 */
 	ItpSolver createItpSolver();
 
 }

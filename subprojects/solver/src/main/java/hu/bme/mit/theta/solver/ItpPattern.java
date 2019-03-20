@@ -17,14 +17,39 @@ package hu.bme.mit.theta.solver;
 
 import java.util.Collection;
 
+/**
+ * Interface for an element of an interpolation pattern.
+ * For example, in sequence interpolation the patterns form a linear chain.
+ */
 public interface ItpPattern {
 
+	/**
+	 * Get the current marker.
+	 *
+	 * @return Marker
+	 */
 	ItpMarker getMarker();
 
+	/**
+	 * Get the parent pattern.
+	 *
+	 * @return Parent
+	 */
 	ItpPattern getParent();
 
+	/**
+	 * Get child patterns.
+	 *
+	 * @return Children
+	 */
 	Collection<ItpPattern> getChildren();
 
+	/**
+	 * Create a child for the current pattern with a given marker.
+	 *
+	 * @param marker Marker
+	 * @return Child
+	 */
 	ItpPattern createChild(final ItpMarker marker);
 
 }

@@ -27,10 +27,28 @@ import com.google.common.collect.Lists;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 
+/**
+ * An extension of the {@link Solver} interface, which also supports interpolation.
+ * It can create {@link ItpMarker}s and expressions can be added to these markers.
+ * The markers can form different {@link ItpPattern}s, e.g., binary or sequence.
+ */
 public interface ItpSolver extends Solver {
 
+	/**
+	 * Create a pattern for a given marker.
+	 *
+	 * @param marker Marker
+	 * @return Pattern
+	 */
 	ItpPattern createPattern(final ItpMarker marker);
 
+	/**
+	 * Create a binary pattern, which is a sequence of two markers: A and B.
+	 *
+	 * @param markerA Marker A
+	 * @param markerB Marker B
+	 * @return Binary interpolant pattern
+	 */
 	default ItpPattern createBinPattern(final ItpMarker markerA, final ItpMarker markerB) {
 		checkNotNull(markerA);
 		checkNotNull(markerB);
@@ -38,6 +56,12 @@ public interface ItpSolver extends Solver {
 		return createSeqPattern(Arrays.asList(markerA, markerB));
 	}
 
+	/**
+	 * Create a sequence pattern, which is a linear sequence of N markers.
+	 *
+	 * @param markers Markers
+	 * @return Sequence interpolant pattern
+	 */
 	default ItpPattern createSeqPattern(final List<? extends ItpMarker> markers) {
 		checkNotNull(markers);
 		checkArgument(!markers.isEmpty());
@@ -56,10 +80,27 @@ public interface ItpSolver extends Solver {
 		return result;
 	}
 
+	/**
+	 * Create a new marker.
+	 *
+	 * @return Marker
+	 */
 	ItpMarker createMarker();
 
+	/**
+	 * Add an expression to the solver and the given marker.
+	 *
+	 * @param marker    Marker
+	 * @param assertion Expression
+	 */
 	void add(final ItpMarker marker, final Expr<BoolType> assertion);
 
+	/**
+	 * Add a collection of expressions to the solver and the given marker.
+	 *
+	 * @param marker     Marker
+	 * @param assertions Expression
+	 */
 	default void add(final ItpMarker marker, final Iterable<? extends Expr<BoolType>> assertions) {
 		checkNotNull(marker);
 		checkNotNull(assertions);
@@ -68,6 +109,13 @@ public interface ItpSolver extends Solver {
 		}
 	}
 
+	/**
+	 * Get the interpolant for the currently added expressions. Should only be called if {@link #check()}
+	 * was already called and the result is UNSAT.
+	 *
+	 * @param pattern Pattern
+	 * @return Interpolant
+	 */
 	Interpolant getInterpolant(final ItpPattern pattern);
 
 	Collection<? extends ItpMarker> getMarkers();
