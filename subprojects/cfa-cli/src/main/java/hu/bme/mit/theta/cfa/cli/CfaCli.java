@@ -64,31 +64,31 @@ public class CfaCli {
 	private final String[] args;
 	private final TableWriter writer;
 
-	@Parameter(names = "--domain", description = "Abstract domain", required = true)
-	Domain domain;
+	@Parameter(names = "--domain", description = "Abstract domain")
+	Domain domain = Domain.PRED_CART;
 
-	@Parameter(names = "--refinement", description = "Refinement strategy", required = true)
-	Refinement refinement;
+	@Parameter(names = "--refinement", description = "Refinement strategy")
+	Refinement refinement = Refinement.SEQ_ITP;
 
 	@Parameter(names = "--search", description = "Search strategy")
 	Search search = Search.BFS;
 
-	@Parameter(names = "--predsplit", description = "Predicate splitting")
+	@Parameter(names = "--predsplit", description = "Predicate splitting (for predicate abstraction)")
 	PredSplit predSplit = PredSplit.WHOLE;
 
-	@Parameter(names = "--model", description = "Path of the input model", required = true)
+	@Parameter(names = "--model", description = "Path of the input CFA model", required = true)
 	String model;
 
 	@Parameter(names = "--precgranularity", description = "Precision granularity")
 	PrecGranularity precGranularity = PrecGranularity.GLOBAL;
 
-	@Parameter(names = "--encoding", description = "Encoding")
+	@Parameter(names = "--encoding", description = "Block encoding")
 	Encoding encoding = Encoding.LBE;
 
 	@Parameter(names = "--maxenum", description = "Maximal number of explicitly enumerated successors (0: unlimited)")
 	Integer maxEnum = 0;
 
-	@Parameter(names = "--initprec", description = "Initial precision")
+	@Parameter(names = "--initprec", description = "Initial precision of abstraction")
 	InitPrec initPrec = InitPrec.EMPTY;
 
 	@Parameter(names = "--loglevel", description = "Detailedness of logging")
