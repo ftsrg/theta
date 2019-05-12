@@ -35,7 +35,7 @@ import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.utils.StmtUtils;
 
 /**
- * Represents an immutable Control Flow Automata (XCFA). Use the builder class to
+ * Represents an immutable Extended Control Flow Automata (XCFA). Use the builder class to
  * create a new instance.
  */
 public final class XCFA {

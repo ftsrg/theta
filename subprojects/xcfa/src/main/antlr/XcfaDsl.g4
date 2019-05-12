@@ -26,6 +26,12 @@ varDecl
 
 procDecl
 	:	(main=MAIN)? PROCESS id=ID (LPAREN (paramDecls=declList)? RPAREN)? LBRAC
+			(varDecls+=varDecl | locs+=loc | edges+=edge | funcDecls+=funcDecl)*
+		RBRAC
+	;
+
+funcDecl
+	:	(rtype=type)? FUNCTION id=ID LPAREN (paramDecls=declList)? RPAREN LBRAC
 			(varDecls+=varDecl | locs+=loc | edges+=edge)*
 		RBRAC
 	;
@@ -46,6 +52,10 @@ MAIN:	'main'
 
 PROCESS
 	:	'process'
+	;
+
+FUNCTION
+	:	'function'
 	;
 
 INIT:	'init'
@@ -75,15 +85,15 @@ declList
 
 // T Y P E S
 
-type:	boolType
-	|	intType
-	|	ratType
-	|	funcType
-	|	arrayType
+type:	atomicType? (boolType | intType | ratType | funcType | arrayType)
 	;
 
 typeList
 	:	(types+=type)(COMMA types+=type)*
+	;
+
+atomicType
+	: ATOMICTYPE
 	;
 
 boolType
@@ -104,6 +114,10 @@ funcType
 
 arrayType
 	:	LBRACK indexType=type RBRACK RARROW elemType=type
+	;
+
+ATOMICTYPE
+	:	'atomic'
 	;
 
 BOOLTYPE
@@ -339,9 +353,12 @@ FALSE
 // S T A T E M E N T S
 
 stmt:	assignStmt
+	|	storeStmt
+	|	loadStmt
 	|	havocStmt
 	|	assumeStmt
 	|	returnStmt
+	|	funcCallStmt
 	;
 
 stmtList
@@ -350,6 +367,14 @@ stmtList
 
 assignStmt
 	:	lhs=ID ASSIGN value=expr
+	;
+
+storeStmt
+	:	lhs=ID LARROW rhs=ID (atomic=ATOMICTYPE ATSIGN ordering=ID)? 
+	;
+
+loadStmt
+	:	lhs=ID LARROW rhs=ID (atomic=ATOMICTYPE ATSIGN ordering=ID)? 
 	;
 
 havocStmt
@@ -362,6 +387,10 @@ assumeStmt
 
 returnStmt
 	:	RETURN value=expr
+	;
+
+funcCallStmt
+	:	(lhs=ID ASSIGN)? CALL funcName=ID LPAREN (params+=ID)?(COMMA params+=ID)* RPAREN
 	;
 
 //
@@ -380,6 +409,9 @@ ASSUME
 
 RETURN
 	:	'return'
+	;
+
+CALL:	'call'
 	;
 
 // B A S I C   T O K E N S
@@ -456,6 +488,10 @@ LARROW
 
 RARROW
 	:	'->'
+	;
+
+ATSIGN
+	:	'@'
 	;
 
 // Whitespace and comments
