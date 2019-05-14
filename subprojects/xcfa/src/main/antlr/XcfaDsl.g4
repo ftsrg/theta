@@ -26,12 +26,12 @@ varDecl
 
 procDecl
 	:	(main=MAIN)? PROCESS id=ID (LPAREN (paramDecls=declList)? RPAREN)? LBRAC
-			(varDecls+=varDecl | locs+=loc | edges+=edge | funcDecls+=funcDecl)*
+			(varDecls+=varDecl | locs+=loc | edges+=edge | procedureDecls+=procedureDecl)*
 		RBRAC
 	;
 
-funcDecl
-	:	(rtype=type)? FUNCTION id=ID LPAREN (paramDecls=declList)? RPAREN LBRAC
+procedureDecl
+	:	(rtype=type)? (main=MAIN)? PROCEDURE id=ID LPAREN (paramDecls=declList)? RPAREN LBRAC
 			(varDecls+=varDecl | locs+=loc | edges+=edge)*
 		RBRAC
 	;
@@ -39,7 +39,17 @@ funcDecl
 loc	:	(init=INIT | finall=FINAL | error=ERROR)? LOC id=ID
 	;
 
-edge:	source=ID RARROW target=ID (LBRAC
+edge: 	simpleEdge
+	|	atomicEdges
+	;
+
+atomicEdges
+	:	ATOMICTYPE LBRAC
+			(edges+=simpleEdge)*
+		RBRAC
+	;
+
+simpleEdge:	source=ID RARROW target=ID (LBRAC
 			(stmts+=stmt)*
 		RBRAC)?
 	;
@@ -54,8 +64,8 @@ PROCESS
 	:	'process'
 	;
 
-FUNCTION
-	:	'function'
+PROCEDURE
+	:	'procedure'
 	;
 
 INIT:	'init'
@@ -93,7 +103,7 @@ typeList
 	;
 
 atomicType
-	: ATOMICTYPE
+	:	ATOMICTYPE
 	;
 
 boolType
@@ -359,6 +369,8 @@ stmt:	assignStmt
 	|	assumeStmt
 	|	returnStmt
 	|	funcCallStmt
+	|	sleepStmt
+	|	wakeupStmt
 	;
 
 stmtList
@@ -393,6 +405,13 @@ funcCallStmt
 	:	(lhs=ID ASSIGN)? CALL funcName=ID LPAREN (params+=ID)?(COMMA params+=ID)* RPAREN
 	;
 
+sleepStmt
+	: SLEEP 
+	;
+	
+wakeupStmt
+	: WAKEUP LPAREN otherThread=ID RPAREN
+	;
 //
 
 ASSIGN
@@ -412,6 +431,14 @@ RETURN
 	;
 
 CALL:	'call'
+	;
+
+SLEEP
+	:	'sleep'
+	;
+
+WAKEUP
+	:	'wakeup'
 	;
 
 // B A S I C   T O K E N S

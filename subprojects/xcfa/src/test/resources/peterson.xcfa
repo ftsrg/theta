@@ -1,0 +1,59 @@
+var flag0 : bool
+var flag1 : bool
+var turn : int
+
+process mainProcess{
+
+	main procedure mainProcedure(){
+		init loc Li
+		loc L0
+		loc L1
+		final loc Lf
+		
+		Li -> L0 {
+			call initProcedure()
+		}
+		
+		L0 -> L1 {
+			call startThreads()
+		}
+
+		L1 -> Lf {
+			sleep
+		}
+	}
+
+	procedure initProcedure(){
+		init  loc Li
+		final loc Lf
+
+		atomic{
+			Li -> Lf{
+				flag0 := false
+				flag1 := false
+				turn  := 0
+			}
+		}
+	}
+
+	procedure startThreads(){
+		init  loc Li
+		final loc Lf
+
+		atomic{
+			Li -> Lf{
+				wakeup(thread0)
+				wakeup(thread1)
+			}
+		}
+	}
+}
+
+process thread0{
+	
+}
+
+process thread1{
+	
+}
+
