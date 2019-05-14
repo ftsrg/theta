@@ -1,6 +1,8 @@
-var flag0 : bool
-var flag1 : bool
-var turn : int
+var flag0 : atomic bool
+var flag1 : atomic bool
+var turn : atomic int
+
+var cnt : atomic bool
 
 process mainProcess{
 
@@ -27,12 +29,11 @@ process mainProcess{
 		init  loc Li
 		final loc Lf
 
-		atomic{
-			Li -> Lf{
-				flag0 := false
-				flag1 := false
-				turn  := 0
-			}
+		Li -> Lf{
+			flag0 := false
+			flag1 := false
+			turn  := 0
+			cnt := false
 		}
 	}
 
@@ -40,20 +41,103 @@ process mainProcess{
 		init  loc Li
 		final loc Lf
 
-		atomic{
-			Li -> Lf{
-				wakeup(thread0)
-				wakeup(thread1)
-			}
+		Li -> Lf{
+			wakeup(thread0)
+			wakeup(thread1)
 		}
 	}
 }
 
 process thread0{
-	
+	main procedure peterson(){
+		init  loc Li
+		loc L0
+		loc L1
+		loc L2
+		loc L3
+		loc L4
+		final loc Lf
+		error loc Le
+
+		Li -> L0 {
+			flag0 := true
+			turn := 1
+		}
+
+		L0 -> L0 {
+			assume (flag1 and turn = 1)
+		}
+
+		L0 -> L1 {
+			assume not (flag1 and turn = 1)
+		}
+
+		L1 -> Le {
+			assume (cnt)
+		}
+
+		L1 -> L2 {
+			assume not (cnt)
+		}
+
+		L2 -> L3 {
+			cnt := true
+		}
+
+		L3 -> L4 {
+			cnt := false
+		}
+
+		L4 -> Lf {
+			flag0 := false
+		}
+
+	}
 }
 
 process thread1{
-	
-}
+	main procedure peterson(){
+		init  loc Li
+		loc L0
+		loc L1
+		loc L2
+		loc L3
+		loc L4
+		final loc Lf
+		error loc Le
 
+		Li -> L0 {
+			flag1 := true
+			turn := 1
+		}
+
+		L0 -> L0 {
+			assume (flag0 and turn = 0)
+		}
+
+		L0 -> L1 {
+			assume not (flag0 and turn = 0)
+		}
+
+		L1 -> Le {
+			assume (cnt)
+		}
+
+		L1 -> L2 {
+			assume not (cnt)
+		}
+
+		L2 -> L3 {
+			cnt := true
+		}
+
+		L3 -> L4 {
+			cnt := false
+		}
+
+		L4 -> Lf {
+			flag1 := false
+		}
+
+	}
+}
