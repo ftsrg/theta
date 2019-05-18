@@ -55,7 +55,9 @@ public final class XcfaDslManagerTest {
 
 				{ "/locking.xcfa", 3, 9, 10, 10 },
 
-				{ "/counter5_true.xcfa", 1, 6, 6, 6 }
+				{ "/counter5_true.xcfa", 1, 6, 6, 6 },
+
+				{ "/peterson.xcfa", 5, 0, 0, 0 }
 
 		});
 	}

@@ -39,17 +39,7 @@ procedureDecl
 loc	:	(init=INIT | finall=FINAL | error=ERROR)? LOC id=ID
 	;
 
-edge: 	simpleEdge
-	|	atomicEdges
-	;
-
-atomicEdges
-	:	ATOMICTYPE LBRAC
-			(edges+=simpleEdge)*
-		RBRAC
-	;
-
-simpleEdge:	source=ID RARROW target=ID (LBRAC
+edge:	source=ID RARROW target=ID (LBRAC
 			(stmts+=stmt)*
 		RBRAC)?
 	;
@@ -95,15 +85,16 @@ declList
 
 // T Y P E S
 
-type:	atomicType? (boolType | intType | ratType | funcType | arrayType)
+type:	boolType
+	|	intType
+	|	ratType
+	|	funcType
+	|	arrayType
+	|	syntheticVar
 	;
 
 typeList
 	:	(types+=type)(COMMA types+=type)*
-	;
-
-atomicType
-	:	ATOMICTYPE
 	;
 
 boolType
@@ -126,8 +117,8 @@ arrayType
 	:	LBRACK indexType=type RBRACK RARROW elemType=type
 	;
 
-ATOMICTYPE
-	:	'atomic'
+syntheticVar
+	:	SYNTHETIC
 	;
 
 BOOLTYPE
@@ -140,6 +131,10 @@ INTTYPE
 
 RATTYPE
 	:	'rat'
+	;
+
+SYNTHETIC
+	:	'synthetic'
 	;
 
 // E X P R E S S I O N S
@@ -369,8 +364,11 @@ stmt:	assignStmt
 	|	assumeStmt
 	|	returnStmt
 	|	funcCallStmt
-	|	sleepStmt
-	|	wakeupStmt
+	|   atomicBegin
+	|	atomicEnd
+	|	waitStmt
+	|	notifyStmt
+	|	notifyAllStmt
 	;
 
 stmtList
@@ -405,13 +403,26 @@ funcCallStmt
 	:	(lhs=ID ASSIGN)? CALL funcName=ID LPAREN (params+=ID)?(COMMA params+=ID)* RPAREN
 	;
 
-sleepStmt
-	: SLEEP 
+atomicBegin
+	:	ATOMICBEGIN
+	;
+
+atomicEnd
+	:	ATOMICEND
+	;
+
+waitStmt
+	: WAIT LPAREN syncVar=ID RPAREN
 	;
 	
-wakeupStmt
-	: WAKEUP LPAREN otherThread=ID RPAREN
+notifyStmt
+	: NOTIFY LPAREN syncVar=ID RPAREN
 	;
+	
+notifyAllStmt
+	: NOTIFYALL LPAREN syncVar=ID RPAREN
+	;
+
 //
 
 ASSIGN
@@ -433,12 +444,27 @@ RETURN
 CALL:	'call'
 	;
 
-SLEEP
-	:	'sleep'
+ATOMICBEGIN
+	:	'atomic-begin'
 	;
 
-WAKEUP
-	:	'wakeup'
+ATOMICEND
+	:	'atomic-end'
+	;
+
+WAIT:	'wait'
+	;
+
+NOTIFY
+	:	'notify'
+	;
+
+NOTIFYALL
+	:	'notifyAll'
+	;
+
+ATOMICTYPE
+	:	'atomic'
 	;
 
 // B A S I C   T O K E N S

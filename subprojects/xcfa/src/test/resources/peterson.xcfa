@@ -1,8 +1,10 @@
-var flag0 : atomic bool
-var flag1 : atomic bool
-var turn : atomic int
+var flag0 : bool
+var flag1 : bool
+var turn : int
 
-var cnt : atomic bool
+var cnt : bool
+
+var start : synthetic
 
 process mainProcess{
 
@@ -11,7 +13,7 @@ process mainProcess{
 		loc L0
 		loc L1
 		final loc Lf
-		
+
 		Li -> L0 {
 			call initProcedure()
 		}
@@ -19,7 +21,7 @@ process mainProcess{
 		L0 -> L1 {
 			call startThreads()
 		}
-
+		
 		L1 -> Lf {
 			sleep
 		}
@@ -42,8 +44,7 @@ process mainProcess{
 		final loc Lf
 
 		Li -> Lf{
-			wakeup(thread0)
-			wakeup(thread1)
+			notifyAll(start)
 		}
 	}
 }
@@ -60,6 +61,7 @@ process thread0{
 		error loc Le
 
 		Li -> L0 {
+			wait(start)
 			flag0 := true
 			turn := 1
 		}
@@ -107,6 +109,7 @@ process thread1{
 		error loc Le
 
 		Li -> L0 {
+			wait(start)
 			flag1 := true
 			turn := 1
 		}
