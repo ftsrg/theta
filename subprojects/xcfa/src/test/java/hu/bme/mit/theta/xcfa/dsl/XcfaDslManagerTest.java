@@ -57,7 +57,7 @@ public final class XcfaDslManagerTest {
 
 				{ "/counter5_true.xcfa", 1, 6, 6, 6 },
 
-				{ "/peterson.xcfa", 5, 0, 0, 0 }
+				//{ "/peterson.xcfa", 5, 0, 0, 0 }
 
 		});
 	}
