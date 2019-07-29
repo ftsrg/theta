@@ -60,8 +60,6 @@ final class XtaVariableSymbol implements Symbol {
 		type = new XtaType(scope, typeContext, variableIdcontext.fArrayId.fArrayIndexes);
 		initialiser = variableIdcontext.fInitialiser != null ? new XtaInitialiser(scope, variableIdcontext.fInitialiser)
 				: null;
-
-		checkArgument(constant || initialiser == null, "Initialisers are only supported for constants");
 	}
 
 	@Override
@@ -78,6 +76,10 @@ final class XtaVariableSymbol implements Symbol {
 
 		if (broadcast && varType != ChanType.getInstance()) {
 			throw new UnsupportedOperationException("Keyword \"broadcast\" is only supported for type \"chan\"");
+		}
+
+		if (varType == ChanType.getInstance() && initialiser != null) {
+			throw new UnsupportedOperationException("Initialisers are not supported for type \"chan\"");
 		}
 
 		if (!isSupportedType(varType)) {
