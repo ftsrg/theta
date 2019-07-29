@@ -45,6 +45,7 @@ final class XtaVariableSymbol implements Symbol {
 
 	private final String name;
 	private final boolean constant;
+	private final boolean broadcast;
 
 	private final XtaType type;
 	private final XtaInitialiser initialiser;
@@ -55,6 +56,7 @@ final class XtaVariableSymbol implements Symbol {
 		checkNotNull(variableIdcontext);
 		name = variableIdcontext.fArrayId.fId.getText();
 		constant = (typeContext.fTypePrefix.fConst != null);
+		broadcast = (typeContext.fTypePrefix.fBroadcast != null);
 		type = new XtaType(scope, typeContext, variableIdcontext.fArrayId.fArrayIndexes);
 		initialiser = variableIdcontext.fInitialiser != null ? new XtaInitialiser(scope, variableIdcontext.fInitialiser)
 				: null;
@@ -74,6 +76,10 @@ final class XtaVariableSymbol implements Symbol {
 	public Expr<?> instantiate(final String prefix, final Env env) {
 		final Type varType = type.instantiate(env);
 
+		if (broadcast && varType != ChanType.getInstance()) {
+			throw new UnsupportedOperationException("Keyword \"broadcast\" is only supported for type \"chan\"");
+		}
+
 		if (!isSupportedType(varType)) {
 			throw new UnsupportedOperationException(varType + " is not supported for variables");
 		}
@@ -86,7 +92,7 @@ final class XtaVariableSymbol implements Symbol {
 				return Decls.Var(prefix + name, Rat()).getRef();
 			} else if (isChanArrayType(varType)) {
 				final List<Type> args = extractArgs(varType);
-				final Label label = Label.of(prefix + name, args);
+				final Label label = Label.of(prefix + name, args, broadcast);
 				return LabelExpr.of(label);
 			} else {
 				return Decls.Var(prefix + name, varType).getRef();
