@@ -20,12 +20,15 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
 
-import java.util.Collection;
-import java.util.List;
+import java.lang.reflect.Array;
+import java.util.*;
 
 import com.google.common.collect.ImmutableList;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.model.MutableValuation;
+import hu.bme.mit.theta.core.model.Valuation;
+import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.rattype.RatType;
 import hu.bme.mit.theta.xta.XtaProcess.Loc;
 
@@ -33,35 +36,67 @@ public final class XtaSystem {
 	private final List<XtaProcess> processes;
 	private final Collection<VarDecl<?>> dataVars;
 	private final Collection<VarDecl<RatType>> clockVars;
-	private final List<Loc> initLocs;
+	private final MutableValuation initVal;
 
-	private XtaSystem(final List<XtaProcess> processes) {
-		checkNotNull(processes);
-		checkArgument(!processes.isEmpty());
-		this.processes = ImmutableList.copyOf(processes);
-		dataVars = processes.stream().flatMap(p -> p.getDataVars().stream()).collect(toImmutableSet());
-		clockVars = processes.stream().flatMap(p -> p.getClockVars().stream()).collect(toImmutableSet());
-		initLocs = processes.stream().map(XtaProcess::getInitLoc).collect(toImmutableList());
+	private final List<XtaProcess> unmodProcesses;
+	private final Collection<VarDecl<?>> unmodDataVars;
+	private final Collection<VarDecl<RatType>> unmodClockVars;
+
+	private XtaSystem() {
+		processes = new ArrayList<>();
+		dataVars = new HashSet<>();
+		clockVars = new HashSet<>();
+		initVal = new MutableValuation();
+
+		unmodProcesses = Collections.unmodifiableList(processes);
+		unmodDataVars = Collections.unmodifiableCollection(dataVars);
+		unmodClockVars = Collections.unmodifiableCollection(clockVars);
 	}
 
-	public static XtaSystem of(final List<XtaProcess> processes) {
-		return new XtaSystem(processes);
+	public static XtaSystem create() {
+		return new XtaSystem();
 	}
 
 	public List<XtaProcess> getProcesses() {
-		return processes;
+		return unmodProcesses;
 	}
 
 	public Collection<VarDecl<?>> getDataVars() {
-		return dataVars;
+		return unmodDataVars;
 	}
 
 	public Collection<VarDecl<RatType>> getClockVars() {
-		return clockVars;
+		return unmodClockVars;
+	}
+
+	// TODO Return value is not immutable
+	public Valuation getInitVal() {
+		return initVal;
 	}
 
 	public List<Loc> getInitLocs() {
-		return initLocs;
+		return processes.stream().map(XtaProcess::getInitLoc).collect(toImmutableList());
 	}
 
+	////
+
+	public void addDataVar(final VarDecl<?> varDecl, final LitExpr<?> initValue) {
+		checkNotNull(varDecl);
+		checkNotNull(initValue);
+		checkArgument(!clockVars.contains(varDecl));
+		dataVars.add(varDecl);
+		initVal.put(varDecl, initValue);
+	}
+
+	public void addClockVar(final VarDecl<RatType> varDecl) {
+		checkNotNull(varDecl);
+		checkArgument(!dataVars.contains(varDecl));
+		clockVars.add(varDecl);
+	}
+
+	public XtaProcess createProcess(final String name) {
+		final XtaProcess process = XtaProcess.create(this, name);
+		processes.add(process);
+		return process;
+	}
 }

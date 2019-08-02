@@ -15,33 +15,24 @@
  */
 package hu.bme.mit.theta.xta.dsl;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static java.util.stream.Collectors.toList;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-
-import org.antlr.v4.runtime.Token;
-
 import hu.bme.mit.theta.common.dsl.Env;
 import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.common.dsl.SymbolTable;
+import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.LitExpr;
+import hu.bme.mit.theta.core.type.rattype.RatType;
+import hu.bme.mit.theta.xta.Label;
 import hu.bme.mit.theta.xta.XtaProcess;
 import hu.bme.mit.theta.xta.XtaSystem;
-import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.ArrayIdContext;
-import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.FunctionDeclContext;
-import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.InstantiationContext;
-import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.ProcessDeclContext;
-import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.TypeContext;
-import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.TypeDeclContext;
-import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.VariableDeclContext;
-import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.VariableIdContext;
-import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.XtaContext;
+import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.*;
+import org.antlr.v4.runtime.Token;
+
+import java.util.*;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.stream.Collectors.toList;
 
 final class XtaSpecification implements Scope {
 	private final SymbolTable symbolTable;
@@ -79,12 +70,12 @@ final class XtaSpecification implements Scope {
 	////
 
 	private XtaSystem instantiate() {
-		final List<XtaProcess> processes = new ArrayList<>();
+		final XtaSystem system = XtaSystem.create();
 
 		final Env env = new Env();
 
-		defineAllVariables(env);
 		defineAllTypes(env);
+		createAllGlobalVariables(system, env);
 
 		for (final String processId : processIds) {
 			final Symbol symbol = symbolTable.get(processId).get();
@@ -95,8 +86,7 @@ final class XtaSpecification implements Scope {
 
 				for (final List<Expr<?>> argumentList : argumentLists) {
 					final String name = createName(processSymbol, argumentList);
-					final XtaProcess process = processSymbol.instantiate(name, argumentList, env);
-					processes.add(process);
+					final XtaProcess process = processSymbol.instantiate(system, name, argumentList, env);
 				}
 
 			} else if (symbol instanceof XtaInstantiationSymbol) {
@@ -106,7 +96,7 @@ final class XtaSpecification implements Scope {
 			}
 		}
 
-		return XtaSystem.of(processes);
+		return system;
 	}
 
 	private static String createName(final XtaProcessSymbol processSymbol, final List<Expr<?>> argumentList) {
@@ -118,15 +108,34 @@ final class XtaSpecification implements Scope {
 
 	////
 
-	private void defineAllVariables(final Env env) {
-		for (final XtaVariableSymbol variable : variables) {
-			env.compute(variable, v -> v.instantiate("", env));
-		}
-	}
-
 	private void defineAllTypes(final Env env) {
 		for (final XtaTypeSymbol type : types) {
 			env.compute(type, v -> v.instantiate(env));
+		}
+	}
+
+	private void createAllGlobalVariables(final XtaSystem system, final Env env) {
+		for (final XtaVariableSymbol variable : variables) {
+			if (variable.isConstant()) {
+				// do nothing; will be defined lazily on first occurrence
+			} else {
+				final XtaVariableSymbol.InstantiateResult instantiateResult = variable.instantiate(variable.getName(), env);
+				if (instantiateResult.isChannel()) {
+					final Label label = instantiateResult.asChannel().getLabel();
+					env.define(variable, label);
+				} else if (instantiateResult.isClockVariable()) {
+					final VarDecl<RatType> varDecl = instantiateResult.asClockVariable().getVarDecl();
+					env.define(variable, varDecl);
+					system.addClockVar(varDecl);
+				} else if (instantiateResult.isDataVariable()) {
+					final VarDecl<?> varDecl = instantiateResult.asDataVariable().getVarDecl();
+					final LitExpr<?> initValue = instantiateResult.asDataVariable().getInitValue();
+					env.define(variable, varDecl);
+					system.addDataVar(varDecl, initValue);
+				} else {
+					throw new AssertionError();
+				}
+			}
 		}
 	}
 
