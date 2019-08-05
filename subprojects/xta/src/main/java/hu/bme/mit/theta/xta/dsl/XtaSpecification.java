@@ -86,7 +86,7 @@ final class XtaSpecification implements Scope {
 
 				for (final List<Expr<?>> argumentList : argumentLists) {
 					final String name = createName(processSymbol, argumentList);
-					final XtaProcess process = processSymbol.instantiate(system, name, argumentList, env);
+					processSymbol.instantiate(system, name, argumentList, env);
 				}
 
 			} else if (symbol instanceof XtaInstantiationSymbol) {

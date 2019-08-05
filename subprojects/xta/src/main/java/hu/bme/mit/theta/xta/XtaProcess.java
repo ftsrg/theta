@@ -15,39 +15,19 @@
  */
 package hu.bme.mit.theta.xta;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-
 import com.google.common.collect.ImmutableList;
-
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.model.MutableValuation;
-import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.LitExpr;
-import hu.bme.mit.theta.core.type.Type;
-
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
-
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-
-import hu.bme.mit.theta.core.type.inttype.IntType;
-import hu.bme.mit.theta.core.type.rattype.RatType;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.core.utils.StmtUtils;
 
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+import java.util.*;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class XtaProcess {
     private final String name;

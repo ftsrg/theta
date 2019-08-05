@@ -130,20 +130,6 @@ final class XtaVariableSymbol implements Symbol {
 		}
 	}
 
-	private static boolean isSupportedType(final Type type) {
-		if (type instanceof BoolType) {
-			return true;
-		} else if (type instanceof IntType) {
-			return true;
-		} else if (type instanceof ClockType) {
-			return true;
-		} else if (isChanArrayType(type)) {
-			return true;
-		} else {
-			return false;
-		}
-	}
-
 	private static boolean isSupportedDataType(Type type) {
 		return type instanceof BoolType || type instanceof IntType;
 	}
