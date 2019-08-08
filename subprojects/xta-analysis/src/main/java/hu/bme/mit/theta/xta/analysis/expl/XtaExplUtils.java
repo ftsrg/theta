@@ -47,7 +47,7 @@ import hu.bme.mit.theta.xta.XtaProcess.Edge;
 import hu.bme.mit.theta.xta.XtaProcess.Loc;
 import hu.bme.mit.theta.xta.analysis.XtaAction;
 import hu.bme.mit.theta.xta.analysis.XtaAction.BasicXtaAction;
-import hu.bme.mit.theta.xta.analysis.XtaAction.SyncedXtaAction;
+import hu.bme.mit.theta.xta.analysis.XtaAction.BinaryXtaAction;
 
 public final class XtaExplUtils {
 
@@ -87,8 +87,8 @@ public final class XtaExplUtils {
 
 		if (action.isBasic()) {
 			return postForBasicAction(val, action.asBasic());
-		} else if (action.isSynced()) {
-			return postForSyncedAction(val, action.asSynced());
+		} else if (action.isBinary()) {
+			return postForBinaryAction(val, action.asBinary());
 		} else {
 			throw new AssertionError();
 		}
@@ -112,7 +112,7 @@ public final class XtaExplUtils {
 		return ExplState.of(succVal);
 	}
 
-	private static ExplState postForSyncedAction(final Valuation val, final SyncedXtaAction action) {
+	private static ExplState postForBinaryAction(final Valuation val, final BinaryXtaAction action) {
 		final Edge emitEdge = action.getEmitEdge();
 		final Edge recvEdge = action.getRecvEdge();
 		final List<Loc> targetLocs = action.getTargetLocs();
@@ -197,15 +197,15 @@ public final class XtaExplUtils {
 		checkNotNull(action);
 
 		if (action.isBasic()) {
-			return preForSimpleAction(expr, action.asBasic());
-		} else if (action.isSynced()) {
-			return preForSyncedAction(expr, action.asSynced());
+			return preForBasicAction(expr, action.asBasic());
+		} else if (action.isBinary()) {
+			return preForBinaryAction(expr, action.asBinary());
 		} else {
 			throw new AssertionError();
 		}
 	}
 
-	private static Expr<BoolType> preForSimpleAction(final Expr<BoolType> expr, final BasicXtaAction action) {
+	private static Expr<BoolType> preForBasicAction(final Expr<BoolType> expr, final BasicXtaAction action) {
 		final Edge edge = action.getEdge();
 		final WpState wp0 = WpState.of(expr);
 		final WpState wp1 = applyInverseUpdates(wp0, edge);
@@ -213,7 +213,7 @@ public final class XtaExplUtils {
 		return wp2.getExpr();
 	}
 
-	private static Expr<BoolType> preForSyncedAction(final Expr<BoolType> expr, final SyncedXtaAction action) {
+	private static Expr<BoolType> preForBinaryAction(final Expr<BoolType> expr, final BinaryXtaAction action) {
 		final Edge emitEdge = action.getEmitEdge();
 		final Edge recvEdge = action.getRecvEdge();
 		final WpState wp0 = WpState.of(expr);
