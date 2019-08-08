@@ -15,19 +15,42 @@
  */
 package hu.bme.mit.theta.xta.dsl;
 
+import hu.bme.mit.theta.common.dsl.Env;
+import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.common.dsl.Symbol;
+import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.xta.dsl.gen.XtaDslParser.InstantiationContext;
+
+import java.util.List;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.stream.Collectors.toList;
 
 final class XtaInstantiationSymbol implements Symbol {
 
-	public XtaInstantiationSymbol(final InstantiationContext context) {
-		throw new UnsupportedOperationException();
-	}
+    private final Scope scope;
+    private final InstantiationContext context;
 
-	@Override
-	public String getName() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("TODO: auto-generated method stub");
-	}
+    public XtaInstantiationSymbol(final Scope scope, final InstantiationContext context) {
+        this.scope = checkNotNull(scope);
+        this.context = checkNotNull(context);
+    }
+
+    @Override
+    public String getName() {
+        return context.fId.getText();
+    }
+
+    public String getProcName() {
+        return context.fProcId.getText();
+    }
+
+    public List<Expr<?>> getArgumentList(final Env env) {
+        final List<Expr<?>> argumentList = context.fArgList.fExpressions.stream().map(e -> {
+            final XtaExpression expression = new XtaExpression(scope, e);
+            return expression.instantiate(env);
+        }).collect(toList());
+        return argumentList;
+    }
 
 }
