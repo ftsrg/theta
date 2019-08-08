@@ -25,7 +25,7 @@ iteratorDecl
 	;
 
 instantiation
-	:	ID assignOp ID LPAREN fArgList=argList RPAREN SEMICOLON
+	:	fId=ID assignOp fProcId=ID LPAREN fArgList=argList RPAREN SEMICOLON
 	;
 
 system
