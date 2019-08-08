@@ -35,7 +35,7 @@ import hu.bme.mit.theta.xta.XtaProcess.Loc;
 import hu.bme.mit.theta.xta.XtaProcess.LocKind;
 import hu.bme.mit.theta.xta.analysis.XtaAction;
 import hu.bme.mit.theta.xta.analysis.XtaAction.BasicXtaAction;
-import hu.bme.mit.theta.xta.analysis.XtaAction.SyncedXtaAction;
+import hu.bme.mit.theta.xta.analysis.XtaAction.BinaryXtaAction;
 
 public final class XtaZoneUtils {
 
@@ -48,17 +48,17 @@ public final class XtaZoneUtils {
 		checkNotNull(prec);
 
 		if (action.isBasic()) {
-			return postForSimpleAction(state, action.asBasic(), prec);
-		} else if (action.isSynced()) {
-			return postForSyncedAction(state, action.asSynced(), prec);
+			return postForBasicAction(state, action.asBasic(), prec);
+		} else if (action.isBinary()) {
+			return postForBinaryAction(state, action.asBinary(), prec);
 		} else {
 			throw new AssertionError();
 		}
 
 	}
 
-	private static ZoneState postForSimpleAction(final ZoneState state, final BasicXtaAction action,
-												 final ZonePrec prec) {
+	private static ZoneState postForBasicAction(final ZoneState state, final BasicXtaAction action,
+												final ZonePrec prec) {
 		final ZoneState.Builder succStateBuilder = state.project(prec.getVars());
 
 		final List<Loc> sourceLocs = action.getSourceLocs();
@@ -77,7 +77,7 @@ public final class XtaZoneUtils {
 		return succState;
 	}
 
-	private static ZoneState postForSyncedAction(final ZoneState state, final SyncedXtaAction action,
+	private static ZoneState postForBinaryAction(final ZoneState state, final BinaryXtaAction action,
 												 final ZonePrec prec) {
 		final ZoneState.Builder succStateBuilder = state.project(prec.getVars());
 
@@ -109,17 +109,17 @@ public final class XtaZoneUtils {
 		checkNotNull(prec);
 
 		if (action.isBasic()) {
-			return preForSimpleAction(state, action.asBasic(), prec);
-		} else if (action.isSynced()) {
-			return preForSyncedAction(state, action.asSynced(), prec);
+			return preForBasicAction(state, action.asBasic(), prec);
+		} else if (action.isBinary()) {
+			return preForBinaryAction(state, action.asBinary(), prec);
 		} else {
 			throw new AssertionError();
 		}
 
 	}
 
-	private static ZoneState preForSimpleAction(final ZoneState state, final BasicXtaAction action,
-												final ZonePrec prec) {
+	private static ZoneState preForBasicAction(final ZoneState state, final BasicXtaAction action,
+											   final ZonePrec prec) {
 		final ZoneState.Builder preStateBuilder = state.project(prec.getVars());
 
 		final List<Loc> sourceLocs = action.getSourceLocs();
@@ -138,7 +138,7 @@ public final class XtaZoneUtils {
 		return preState;
 	}
 
-	private static ZoneState preForSyncedAction(final ZoneState state, final SyncedXtaAction action,
+	private static ZoneState preForBinaryAction(final ZoneState state, final BinaryXtaAction action,
 												final ZonePrec prec) {
 		final ZoneState.Builder preStateBuilder = state.project(prec.getVars());
 

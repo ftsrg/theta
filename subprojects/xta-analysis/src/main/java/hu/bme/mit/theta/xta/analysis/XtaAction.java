@@ -59,13 +59,13 @@ public abstract class XtaAction extends StmtAction {
 		this.sourceLocs = ImmutableList.copyOf(checkNotNull(source));
 	}
 
-	public static BasicXtaAction simple(final XtaSystem system, final List<Loc> sourceLocs, final Edge edge) {
+	public static BasicXtaAction basic(final XtaSystem system, final List<Loc> sourceLocs, final Edge edge) {
 		return new BasicXtaAction(system, sourceLocs, edge);
 	}
 
-	public static SyncedXtaAction synced(final XtaSystem system, final List<Loc> sourceLocs, final Edge emitEdge,
+	public static BinaryXtaAction binary(final XtaSystem system, final List<Loc> sourceLocs, final Edge emitEdge,
 										 final Edge recvEdge) {
-		return new SyncedXtaAction(system, sourceLocs, emitEdge, recvEdge);
+		return new BinaryXtaAction(system, sourceLocs, emitEdge, recvEdge);
 	}
 
 	public Collection<VarDecl<RatType>> getClockVars() {
@@ -82,15 +82,15 @@ public abstract class XtaAction extends StmtAction {
 		return false;
 	}
 
-	public boolean isSynced() {
+	public boolean isBinary() {
 		return false;
 	}
-
+	
 	public BasicXtaAction asBasic() {
 		throw new ClassCastException();
 	}
 
-	public SyncedXtaAction asSynced() {
+	public BinaryXtaAction asBinary() {
 		throw new ClassCastException();
 	}
 
@@ -167,14 +167,14 @@ public abstract class XtaAction extends StmtAction {
 
 	}
 
-	public static final class SyncedXtaAction extends XtaAction {
+	public static final class BinaryXtaAction extends XtaAction {
 		private final Edge emitEdge;
 		private final Edge recvEdge;
 		private final List<Loc> targetLocs;
 
 		private volatile List<Stmt> stmts = null;
 
-		private SyncedXtaAction(final XtaSystem system, final List<Loc> sourceLocs, final Edge emitEdge,
+		private BinaryXtaAction(final XtaSystem system, final List<Loc> sourceLocs, final Edge emitEdge,
 								final Edge recvEdge) {
 			super(system, sourceLocs);
 			this.emitEdge = checkNotNull(emitEdge);
@@ -225,12 +225,12 @@ public abstract class XtaAction extends StmtAction {
 		}
 
 		@Override
-		public boolean isSynced() {
+		public boolean isBinary() {
 			return true;
 		}
 
 		@Override
-		public SyncedXtaAction asSynced() {
+		public BinaryXtaAction asBinary() {
 			return this;
 		}
 

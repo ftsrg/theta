@@ -94,7 +94,7 @@ public final class XtaLts implements LTS<XtaState<?>, XtaAction> {
 				final Label recvLabel = recvSync.getLabel();
 
 				if (emitLabel.equals(recvLabel)) {
-					final XtaAction action = XtaAction.synced(system, state.getLocs(), emitEdge, recvEdge);
+					final XtaAction action = XtaAction.binary(system, state.getLocs(), emitEdge, recvEdge);
 					result.add(action);
 				}
 			}
@@ -107,7 +107,7 @@ public final class XtaLts implements LTS<XtaState<?>, XtaAction> {
 		if (state.isCommitted() && loc.getKind() != COMMITTED) {
 			return;
 		}
-		final XtaAction action = XtaAction.simple(system, state.getLocs(), edge);
+		final XtaAction action = XtaAction.basic(system, state.getLocs(), edge);
 		result.add(action);
 	}
 
