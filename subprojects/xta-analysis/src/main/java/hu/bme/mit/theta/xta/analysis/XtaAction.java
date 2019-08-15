@@ -15,25 +15,8 @@
  */
 package hu.bme.mit.theta.xta.analysis;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.collect.Streams.zip;
-import static hu.bme.mit.theta.core.decl.Decls.Var;
-import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
-import static hu.bme.mit.theta.core.stmt.Stmts.Assume;
-import static hu.bme.mit.theta.core.stmt.Stmts.Havoc;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Add;
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Geq;
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
-
-import java.util.Collection;
-import java.util.List;
-import java.util.stream.Stream;
-
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
-
 import hu.bme.mit.theta.analysis.expr.StmtAction;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
@@ -45,6 +28,21 @@ import hu.bme.mit.theta.xta.XtaProcess.Edge;
 import hu.bme.mit.theta.xta.XtaProcess.Loc;
 import hu.bme.mit.theta.xta.XtaProcess.LocKind;
 import hu.bme.mit.theta.xta.XtaSystem;
+
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.stream.Stream;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.collect.ImmutableSet.toImmutableSet;
+import static com.google.common.collect.Streams.zip;
+import static hu.bme.mit.theta.core.decl.Decls.Var;
+import static hu.bme.mit.theta.core.stmt.Stmts.*;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.*;
+import static java.util.function.Predicate.isEqual;
 
 public abstract class XtaAction extends StmtAction {
 
@@ -85,12 +83,20 @@ public abstract class XtaAction extends StmtAction {
 	public boolean isBinary() {
 		return false;
 	}
-	
+
+	public boolean isBroadcast() {
+		return false;
+	}
+
 	public BasicXtaAction asBasic() {
 		throw new ClassCastException();
 	}
 
 	public BinaryXtaAction asBinary() {
+		throw new ClassCastException();
+	}
+
+	public BroadcastXtaAction asBroadcast() {
 		throw new ClassCastException();
 	}
 
@@ -188,7 +194,7 @@ public abstract class XtaAction extends StmtAction {
 
 			final ImmutableList.Builder<Loc> builder = ImmutableList.builder();
 			final Loc emitSource = emitEdge.getSource();
-			final Loc emitarget = emitEdge.getTarget();
+			final Loc emitTarget = emitEdge.getTarget();
 			final Loc recvSource = recvEdge.getSource();
 			final Loc recvTarget = recvEdge.getTarget();
 			boolean emitMatched = false;
@@ -196,7 +202,7 @@ public abstract class XtaAction extends StmtAction {
 			for (final Loc loc : sourceLocs) {
 				if (loc.equals(emitSource)) {
 					checkArgument(!emitMatched);
-					builder.add(emitarget);
+					builder.add(emitTarget);
 					emitMatched = true;
 				} else if (loc.equals(recvSource)) {
 					checkArgument(!recvMatched);
@@ -263,6 +269,111 @@ public abstract class XtaAction extends StmtAction {
 					.addAll(emitEdge.getUpdates()).addAll(recvEdge.getUpdates()).toString();
 		}
 
+	}
+
+	public static final class BroadcastXtaAction extends XtaAction {
+		private final Edge emitEdge;
+		private final List<Edge> recvEdges;
+		private final List<Collection<Edge>> nonRecvEdges;
+		private final List<Loc> targetLocs;
+
+		private BroadcastXtaAction(final XtaSystem system, final List<Loc> sourceLocs, final Edge emitEdge, List<Edge> recvEdges) {
+			super(system, sourceLocs);
+			this.emitEdge = checkNotNull(emitEdge);
+			this.recvEdges = ImmutableList.copyOf(checkNotNull(recvEdges));
+
+			checkArgument(emitEdge.getSync().isPresent());
+			final Label emitLabel = emitEdge.getSync().get().getLabel();
+
+			final ImmutableList.Builder<Collection<Edge>> nonRecvEdgesBuilder = ImmutableList.builder();
+			final ImmutableList.Builder<Loc> targetLocsBuilder = ImmutableList.builder();
+			final Loc emitSource = emitEdge.getSource();
+			final Loc emitTarget = emitEdge.getTarget();
+
+			boolean emitMatched = false;
+			final Iterator<Loc> locsIterator = sourceLocs.listIterator();
+			for (final Edge recvEdge : recvEdges) {
+				checkArgument(recvEdge.getSync().isPresent());
+				final Label recvLabel = recvEdge.getSync().get().getLabel();
+				checkArgument(emitLabel.equals(recvLabel));
+
+				final Loc recvSource = recvEdge.getSource();
+				final Loc recvTarget = recvEdge.getTarget();
+
+				boolean recvMatched = false;
+				while (!recvMatched) {
+					if (locsIterator.hasNext()) {
+						final Loc loc = locsIterator.next();
+						if (loc.equals(emitSource)) {
+							targetLocsBuilder.add(emitTarget);
+							emitMatched = true;
+						} else if (loc.equals(recvSource)) {
+							targetLocsBuilder.add(recvTarget);
+							recvMatched = true;
+						} else {
+							final Collection<Edge> nonRecvEdgesForLoc = outEdgesOfLocWithLabel(loc, emitLabel);
+							nonRecvEdgesBuilder.add(nonRecvEdgesForLoc);
+							targetLocsBuilder.add(loc);
+						}
+					} else {
+						checkArgument(false);
+					}
+				}
+			}
+			checkArgument(emitMatched);
+			nonRecvEdges = nonRecvEdgesBuilder.build();
+			checkArgument(recvEdges.size() + nonRecvEdges.size() == sourceLocs.size());
+			targetLocs = targetLocsBuilder.build();
+			checkArgument(targetLocs.size() == sourceLocs.size());
+		}
+
+		private Collection<Edge> outEdgesOfLocWithLabel(final Loc loc, final Label emitLabel) {
+			return loc.getOutEdges().stream()
+					.filter(e -> e.getSync()
+							.filter(isEqual(emitLabel))
+							.isPresent())
+					.collect(toImmutableSet());
+		}
+
+		public Edge getEmitEdge() {
+			return emitEdge;
+		}
+
+		public List<Edge> getRecvEdges() {
+			return recvEdges;
+		}
+
+		public List<Collection<Edge>> getNonRecvEdges() {
+			return nonRecvEdges;
+		}
+
+		// TODO
+		@Override
+		public List<Loc> getTargetLocs() {
+			return targetLocs;
+		}
+
+		@Override
+		public boolean isBroadcast() {
+			return true;
+		}
+
+		@Override
+		public BroadcastXtaAction asBroadcast() {
+			return this;
+		}
+
+		// TODO
+		@Override
+		public List<Stmt> getStmts() {
+			throw new UnsupportedOperationException();
+		}
+
+		// TODO
+		@Override
+		public String toString() {
+			throw new UnsupportedOperationException();
+		}
 	}
 
 	private static void addClocksNonNegative(final ImmutableList.Builder<Stmt> builder,
