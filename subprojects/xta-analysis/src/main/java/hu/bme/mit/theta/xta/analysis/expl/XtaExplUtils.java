@@ -15,6 +15,33 @@
  */
 package hu.bme.mit.theta.xta.analysis.expl;
 
+import com.google.common.collect.Lists;
+import hu.bme.mit.theta.analysis.expl.ExplState;
+import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.core.model.MutableValuation;
+import hu.bme.mit.theta.core.model.Valuation;
+import hu.bme.mit.theta.core.stmt.AssignStmt;
+import hu.bme.mit.theta.core.type.Expr;
+import hu.bme.mit.theta.core.type.LitExpr;
+import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.booltype.FalseExpr;
+import hu.bme.mit.theta.core.utils.ExprUtils;
+import hu.bme.mit.theta.core.utils.WpState;
+import hu.bme.mit.theta.xta.Guard;
+import hu.bme.mit.theta.xta.Guard.DataGuard;
+import hu.bme.mit.theta.xta.Update;
+import hu.bme.mit.theta.xta.XtaProcess.Edge;
+import hu.bme.mit.theta.xta.XtaProcess.Loc;
+import hu.bme.mit.theta.xta.analysis.XtaAction;
+import hu.bme.mit.theta.xta.analysis.XtaAction.BasicXtaAction;
+import hu.bme.mit.theta.xta.analysis.XtaAction.BinaryXtaAction;
+import hu.bme.mit.theta.xta.analysis.XtaAction.BroadcastXtaAction;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.stream.Stream;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.Streams.zip;
@@ -24,30 +51,6 @@ import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
 import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
 import static java.util.stream.Collectors.toList;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.stream.Stream;
-
-import com.google.common.collect.Lists;
-
-import hu.bme.mit.theta.analysis.expl.ExplState;
-import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.model.MutableValuation;
-import hu.bme.mit.theta.core.model.Valuation;
-import hu.bme.mit.theta.core.stmt.AssignStmt;
-import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.LitExpr;
-import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.core.type.booltype.FalseExpr;
-import hu.bme.mit.theta.core.utils.ExprUtils;
-import hu.bme.mit.theta.core.utils.WpState;
-import hu.bme.mit.theta.xta.Guard;
-import hu.bme.mit.theta.xta.Update;
-import hu.bme.mit.theta.xta.XtaProcess.Edge;
-import hu.bme.mit.theta.xta.XtaProcess.Loc;
-import hu.bme.mit.theta.xta.analysis.XtaAction;
-import hu.bme.mit.theta.xta.analysis.XtaAction.BasicXtaAction;
-import hu.bme.mit.theta.xta.analysis.XtaAction.BinaryXtaAction;
 
 public final class XtaExplUtils {
 
@@ -89,6 +92,8 @@ public final class XtaExplUtils {
 			return postForBasicAction(val, action.asBasic());
 		} else if (action.isBinary()) {
 			return postForBinaryAction(val, action.asBinary());
+		} else if (action.isBroadcast()) {
+			return postForBroadcastAction(val, action.asBroadcast());
 		} else {
 			throw new AssertionError();
 		}
@@ -98,7 +103,7 @@ public final class XtaExplUtils {
 		final Edge edge = action.getEdge();
 		final List<Loc> targetLocs = action.getTargetLocs();
 
-		if (!checkDataGuards(edge, val)) {
+		if (!checkGuards(edge, val)) {
 			return ExplState.bottom();
 		}
 
@@ -121,11 +126,11 @@ public final class XtaExplUtils {
 			return ExplState.bottom();
 		}
 
-		if (!checkDataGuards(emitEdge, val)) {
+		if (!checkGuards(emitEdge, val)) {
 			return ExplState.bottom();
 		}
 
-		if (!checkDataGuards(recvEdge, val)) {
+		if (!checkGuards(recvEdge, val)) {
 			return ExplState.bottom();
 		}
 
@@ -140,22 +145,64 @@ public final class XtaExplUtils {
 		return ExplState.of(succVal);
 	}
 
+	private static ExplState postForBroadcastAction(final Valuation val, final BroadcastXtaAction action) {
+		final Edge emitEdge = action.getEmitEdge();
+		final List<Edge> recvEdges = action.getRecvEdges();
+		final List<Collection<Edge>> nonRecvEdges = action.getNonRecvEdges();
+		final List<Loc> targetLocs = action.getTargetLocs();
+
+		if (recvEdges.stream().anyMatch(recvEdge ->
+				!checkSync(emitEdge, recvEdge, val))) {
+			return ExplState.bottom();
+		}
+
+		if (!checkGuards(emitEdge, val)) {
+			return ExplState.bottom();
+		}
+
+		if (recvEdges.stream().anyMatch(recvEdge ->
+				!checkGuards(recvEdge, val))) {
+			return ExplState.bottom();
+		}
+
+		if (nonRecvEdges.stream().anyMatch(c -> c.stream().anyMatch(recvEdge ->
+				checkSync(emitEdge, recvEdge, val) && checkGuards(recvEdge, val)))) {
+			return ExplState.bottom();
+		}
+
+		final MutableValuation succVal = MutableValuation.copyOf(val);
+
+		applyDataUpdates(emitEdge, succVal);
+		recvEdges.stream().forEachOrdered(recvEdge -> applyDataUpdates(recvEdge, succVal));
+
+		if (!checkDataInvariants(targetLocs, succVal)) {
+			return ExplState.bottom();
+		}
+
+		return ExplState.of(succVal);
+	}
+
 	private static boolean checkSync(final Edge emitEdge, final Edge recvEdge, final Valuation val) {
 		final List<Expr<?>> emitArgs = emitEdge.getSync().get().getArgs();
 		final List<Expr<?>> recvArgs = recvEdge.getSync().get().getArgs();
 		return zip(emitArgs.stream(), recvArgs.stream(), (e, r) -> e.eval(val).equals(r.eval(val))).allMatch(x -> x);
 	}
 
-	private static boolean checkDataGuards(final Edge edge, final Valuation val) {
+	private static boolean checkGuards(final Edge edge, final Valuation val) {
 		for (final Guard guard : edge.getGuards()) {
 			if (guard.isDataGuard()) {
-				final Expr<BoolType> expr = ExprUtils.simplify(guard.asDataGuard().toExpr(), val);
-				if (expr instanceof FalseExpr) {
+				final DataGuard dataGuard = guard.asDataGuard();
+				if (!checkDataGuard(dataGuard, val)) {
 					return false;
 				}
 			}
 		}
 		return true;
+	}
+
+	private static boolean checkDataGuard(final DataGuard guard, final Valuation val) {
+		final Expr<BoolType> expr = ExprUtils.simplify(guard.asDataGuard().toExpr(), val);
+		return !(expr instanceof FalseExpr);
 	}
 
 	private static boolean checkDataInvariants(final List<Loc> locs, final Valuation val) {
