@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.xta.analysis.expl;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Streams;
 import hu.bme.mit.theta.analysis.expl.ExplState;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.MutableValuation;
@@ -23,9 +24,9 @@ import hu.bme.mit.theta.core.model.Valuation;
 import hu.bme.mit.theta.core.stmt.AssignStmt;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
-import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.FalseExpr;
+import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.core.utils.WpState;
 import hu.bme.mit.theta.xta.Guard;
@@ -48,7 +49,7 @@ import static com.google.common.collect.Streams.zip;
 import static hu.bme.mit.theta.core.stmt.Stmts.Assume;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
-import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.And;
+import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.*;
 import static java.util.stream.Collectors.toList;
 
 
@@ -247,6 +248,8 @@ public final class XtaExplUtils {
 			return preForBasicAction(expr, action.asBasic());
 		} else if (action.isBinary()) {
 			return preForBinaryAction(expr, action.asBinary());
+		} else if (action.isBroadcast()) {
+			return preForBroadcastAction(expr, action.asBroadcast());
 		} else {
 			throw new AssertionError();
 		}
@@ -270,6 +273,41 @@ public final class XtaExplUtils {
 		final WpState wp4 = applyGuards(wp3, emitEdge);
 		final WpState wp5 = applySync(wp4, emitEdge, recvEdge);
 		return wp5.getExpr();
+	}
+
+	private static Expr<BoolType> preForBroadcastAction(final Expr<BoolType> expr, final BroadcastXtaAction action) {
+		final Edge emitEdge = action.getEmitEdge();
+		final List<Edge> recvEdges = action.getRecvEdges();
+		final List<Edge> reverseRecvEdges = Lists.reverse(recvEdges);
+		final List<Collection<Edge>> nonRecvEdgeCols = action.getNonRecvEdges();
+
+		final WpState wp0 = WpState.of(expr);
+
+		WpState wp1 = wp0;
+		for (final Edge recvEdge : reverseRecvEdges) {
+			wp1 = applyInverseUpdates(wp1, recvEdge);
+		}
+		final WpState wp2 = applyInverseUpdates(wp1, emitEdge);
+
+		WpState wp3 = wp2;
+		for (final Edge recvEdge : reverseRecvEdges) {
+			wp3 = applyGuards(wp3, recvEdge);
+		}
+		final WpState wp4 = applyGuards(wp3, emitEdge);
+
+		WpState wp5 = wp4;
+		for (final Edge recvEdge : reverseRecvEdges) {
+			wp5 = applySync(wp5, emitEdge, recvEdge);
+		}
+
+		WpState wp6 = wp5;
+		for (final Collection<Edge> nonRecvEdges : nonRecvEdgeCols) {
+			for (final Edge nonRecvEdge : nonRecvEdges) {
+				wp6 = applyNonRecvEdge(wp6, emitEdge, nonRecvEdge);
+			}
+		}
+
+		return wp6.getExpr();
 	}
 
 	private static WpState applyInverseUpdates(final WpState state, final Edge edge) {
@@ -301,4 +339,15 @@ public final class XtaExplUtils {
 		return state.wep(Assume(andExpr));
 	}
 
+	private static WpState applyNonRecvEdge(final WpState state, final Edge emitEdge, final Edge nonRecvEdge) {
+		final Stream<Expr<?>> emitArgs = emitEdge.getSync().get().getArgs().stream();
+		final Stream<Expr<?>> nonRecvArgs = nonRecvEdge.getSync().get().getArgs().stream();
+		final Stream<Expr<BoolType>> notEqExprs = zip(emitArgs, nonRecvArgs, (e, r) -> Not(Eq(e, r)));
+		final Stream<Expr<BoolType>> notGuards = nonRecvEdge.getGuards().stream()
+				.filter(Guard::isDataGuard)
+				.map(Guard::toExpr)
+				.map(SmartBoolExprs::Not);
+		final List<Expr<BoolType>> exprs = Streams.concat(notEqExprs, notGuards).collect(toImmutableList());
+		return state.wep(Assume(Or(exprs)));
+	}
 }
