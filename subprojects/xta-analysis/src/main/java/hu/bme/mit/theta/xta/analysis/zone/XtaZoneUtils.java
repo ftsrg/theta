@@ -36,6 +36,7 @@ import hu.bme.mit.theta.xta.XtaProcess.LocKind;
 import hu.bme.mit.theta.xta.analysis.XtaAction;
 import hu.bme.mit.theta.xta.analysis.XtaAction.BasicXtaAction;
 import hu.bme.mit.theta.xta.analysis.XtaAction.BinaryXtaAction;
+import hu.bme.mit.theta.xta.analysis.XtaAction.BroadcastXtaAction;
 
 public final class XtaZoneUtils {
 
@@ -51,10 +52,11 @@ public final class XtaZoneUtils {
 			return postForBasicAction(state, action.asBasic(), prec);
 		} else if (action.isBinary()) {
 			return postForBinaryAction(state, action.asBinary(), prec);
+		} else if (action.isBroadcast()) {
+			return postForBroadcastAction(state, action.asBroadcast(), prec);
 		} else {
 			throw new AssertionError();
 		}
-
 	}
 
 	private static ZoneState postForBasicAction(final ZoneState state, final BasicXtaAction action,
@@ -101,6 +103,45 @@ public final class XtaZoneUtils {
 		return succState;
 	}
 
+	private static ZoneState postForBroadcastAction(final ZoneState state, final BroadcastXtaAction action,
+													final ZonePrec prec) {
+		final ZoneState.Builder succStateBuilder = state.project(prec.getVars());
+
+		final List<Loc> sourceLocs = action.getSourceLocs();
+		final Edge emitEdge = action.getEmitEdge();
+		final List<Edge> recvEdges = action.getRecvEdges();
+		final List<Collection<Edge>> nonRecvEdgeCols = action.getNonRecvEdges();
+		final List<Loc> targetLocs = action.getTargetLocs();
+
+		applyInvariants(succStateBuilder, sourceLocs);
+		applyGuards(succStateBuilder, emitEdge);
+
+		if (recvEdges.stream().anyMatch(XtaZoneUtils::hasClockGuards)) {
+			throw new UnsupportedOperationException(
+					"Clock guards on edges with broadcast synchronization labels are not supported.");
+		}
+
+		if (nonRecvEdgeCols.stream().anyMatch(c -> c.stream().anyMatch(XtaZoneUtils::hasClockGuards))) {
+			throw new UnsupportedOperationException(
+					"Clock guards on edges with broadcast synchronization labels are not supported.");
+		}
+
+		applyUpdates(succStateBuilder, emitEdge);
+		recvEdges.stream().forEachOrdered(recvEdge -> applyUpdates(succStateBuilder, recvEdge));
+		applyInvariants(succStateBuilder, targetLocs);
+
+		if (shouldApplyDelay(targetLocs)) {
+			applyDelay(succStateBuilder);
+		}
+
+		final ZoneState succState = succStateBuilder.build();
+		return succState;
+	}
+
+	private static boolean hasClockGuards(Edge edge) {
+		return edge.getGuards().stream().anyMatch(Guard::isClockGuard);
+	}
+
 	////
 
 	public static ZoneState pre(final ZoneState state, final XtaAction action, final ZonePrec prec) {
@@ -143,18 +184,18 @@ public final class XtaZoneUtils {
 		final ZoneState.Builder preStateBuilder = state.project(prec.getVars());
 
 		final List<Loc> sourceLocs = action.getSourceLocs();
-		final Edge emittingEdge = action.getEmitEdge();
-		final Edge receivingEdge = action.getRecvEdge();
+		final Edge emitEdge = action.getEmitEdge();
+		final Edge recvEdge = action.getRecvEdge();
 		final List<Loc> targetLocs = action.getTargetLocs();
 
 		if (shouldApplyDelay(action.getTargetLocs())) {
 			applyInverseDelay(preStateBuilder);
 		}
 		applyInvariants(preStateBuilder, targetLocs);
-		applyInverseUpdates(preStateBuilder, receivingEdge);
-		applyInverseUpdates(preStateBuilder, emittingEdge);
-		applyGuards(preStateBuilder, receivingEdge);
-		applyGuards(preStateBuilder, emittingEdge);
+		applyInverseUpdates(preStateBuilder, recvEdge);
+		applyInverseUpdates(preStateBuilder, emitEdge);
+		applyGuards(preStateBuilder, recvEdge);
+		applyGuards(preStateBuilder, emitEdge);
 		applyInvariants(preStateBuilder, sourceLocs);
 
 		final ZoneState succState = preStateBuilder.build();
