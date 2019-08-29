@@ -17,13 +17,15 @@ package hu.bme.mit.theta.xta.analysis;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
+import com.google.common.collect.Streams;
 import hu.bme.mit.theta.analysis.expr.StmtAction;
 import hu.bme.mit.theta.common.LispStringBuilder;
 import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Expr;
-import hu.bme.mit.theta.core.type.booltype.BoolExprs;
+import hu.bme.mit.theta.core.type.booltype.BoolType;
+import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs;
 import hu.bme.mit.theta.core.type.rattype.RatType;
 import hu.bme.mit.theta.xta.Guard;
 import hu.bme.mit.theta.xta.Label;
@@ -47,6 +49,7 @@ import static com.google.common.collect.Streams.zip;
 import static hu.bme.mit.theta.core.decl.Decls.Var;
 import static hu.bme.mit.theta.core.stmt.Stmts.*;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
+import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Not;
 import static hu.bme.mit.theta.core.type.booltype.SmartBoolExprs.Or;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.*;
 import static hu.bme.mit.theta.xta.Sync.Kind.EMIT;
@@ -289,6 +292,8 @@ public abstract class XtaAction extends StmtAction {
 		private final List<Collection<Edge>> nonRecvEdges;
 		private final List<Loc> targetLocs;
 
+		private volatile List<Stmt> stmts = null;
+
 		private BroadcastXtaAction(final XtaSystem system, final List<Loc> sourceLocs, final Edge emitEdge, List<Edge> recvEdges) {
 			super(system, sourceLocs);
 			this.emitEdge = checkNotNull(emitEdge);
@@ -296,7 +301,6 @@ public abstract class XtaAction extends StmtAction {
 
 			checkArgument(emitEdge.getSync().isPresent());
 			final Sync emitSync = emitEdge.getSync().get();
-			final Label emitLabel = emitSync.getLabel();
 			checkArgument(emitSync.getKind().equals(EMIT));
 
 			final ImmutableList.Builder<Collection<Edge>> nonRecvEdgesBuilder = ImmutableList.builder();
@@ -379,7 +383,6 @@ public abstract class XtaAction extends StmtAction {
 			return nonRecvEdges;
 		}
 
-		// TODO
 		@Override
 		public List<Loc> getTargetLocs() {
 			return targetLocs;
@@ -395,13 +398,33 @@ public abstract class XtaAction extends StmtAction {
 			return this;
 		}
 
-		// TODO
 		@Override
 		public List<Stmt> getStmts() {
-			throw new UnsupportedOperationException();
+			List<Stmt> result = stmts;
+			if (stmts == null) {
+				final ImmutableList.Builder<Stmt> builder = ImmutableList.builder();
+				addClocksNonNegative(builder, getClockVars());
+				addInvariants(builder, getSourceLocs());
+				recvEdges.stream().forEachOrdered(recvEdge -> addSync(builder, emitEdge, recvEdge));
+				addGuards(builder, emitEdge);
+				recvEdges.stream().forEachOrdered(recvEdge -> addGuards(builder, recvEdge));
+
+				addUpdates(builder, emitEdge);
+				recvEdges.stream().forEachOrdered(recvEdge -> addUpdates(builder, recvEdge));
+
+				nonRecvEdges.stream().forEachOrdered(c -> c.stream().forEachOrdered(nonRecvEdge ->
+						addNonRecvSyncAndGuards(builder, emitEdge, nonRecvEdge)));
+
+				addInvariants(builder, targetLocs);
+				if (shouldApplyDelay(getTargetLocs())) {
+					addDelay(builder, getClockVars());
+				}
+				result = builder.build();
+				stmts = result;
+			}
+			return result;
 		}
 
-		// TODO
 		@Override
 		public String toString() {
 			final LispStringBuilder builder = Utils.lispStringBuilder(getClass().getSimpleName());
@@ -418,10 +441,10 @@ public abstract class XtaAction extends StmtAction {
 
 			builder.addAll(nonRecvEdges.stream().flatMap(edges ->
 					edges.stream().map(edge ->
-									Utils.lispStringBuilder("disabled")
-											.add(edge.getSync().get())
-											.body()
-											.addAll(edge.getGuards()
+							Utils.lispStringBuilder("disabled")
+									.add(edge.getSync().get())
+									.body()
+									.addAll(edge.getGuards()
 									))));
 
 			builder.addAll(emitEdge.getUpdates())
@@ -449,6 +472,20 @@ public abstract class XtaAction extends StmtAction {
 	private static void addGuards(final ImmutableList.Builder<Stmt> builder, final Edge edge) {
 		edge.getGuards().forEach(g -> builder.add(Assume(g.toExpr())));
 	}
+
+
+	private static void addNonRecvSyncAndGuards(final ImmutableList.Builder<Stmt> builder, final Edge emitEdge, final Edge nonRecvEdge) {
+		final Stream<Expr<?>> emitArgs = emitEdge.getSync().get().getArgs().stream();
+		final Stream<Expr<?>> nonRecvArgs = nonRecvEdge.getSync().get().getArgs().stream();
+		final Stream<Expr<BoolType>> notEqExprs = zip(emitArgs, nonRecvArgs, (e, r) -> Not(Eq(e, r)));
+		final Stream<Expr<BoolType>> notGuards = nonRecvEdge.getGuards().stream()
+				.filter(Guard::isDataGuard)
+				.map(Guard::toExpr)
+				.map(SmartBoolExprs::Not);
+		final List<Expr<BoolType>> exprs = Streams.concat(notEqExprs, notGuards).collect(toImmutableList());
+		builder.add(Assume(Or(exprs)));
+	}
+
 
 	private static void addUpdates(final ImmutableList.Builder<Stmt> builder, final Edge edge) {
 		edge.getUpdates().forEach(u -> builder.add(u.toStmt()));
