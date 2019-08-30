@@ -319,7 +319,9 @@ public abstract class XtaAction extends StmtAction {
 					emitMatched = true;
 				} else if (!optRecvEdge.isPresent() || !optRecvEdge.get().getSource().equals(loc)) {
 					final Collection<Edge> nonRecvEdgesForLoc = outEdgesOfLocThatMayReceiveSync(loc, emitSync);
-					nonRecvEdgesBuilder.add(nonRecvEdgesForLoc);
+					if (!nonRecvEdgesForLoc.isEmpty()) {
+						nonRecvEdgesBuilder.add(nonRecvEdgesForLoc);
+					}
 					targetLocsBuilder.add(loc);
 				} else {
 					final Edge recvEdge = optRecvEdge.get();
