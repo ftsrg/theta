@@ -27,6 +27,7 @@ import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.booltype.FalseExpr;
 import hu.bme.mit.theta.core.type.booltype.SmartBoolExprs;
+import hu.bme.mit.theta.core.type.booltype.TrueExpr;
 import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.core.utils.WpState;
 import hu.bme.mit.theta.xta.Guard;
@@ -166,8 +167,8 @@ public final class XtaExplUtils {
 			return ExplState.bottom();
 		}
 
-		if (nonRecvEdges.stream().anyMatch(c -> c.stream().anyMatch(recvEdge ->
-				checkSync(emitEdge, recvEdge, val) && checkGuards(recvEdge, val)))) {
+		if (nonRecvEdges.stream().anyMatch(c -> c.stream().anyMatch(nonRecvEdge ->
+				nonRecvEdgeDefinitelyEnabled(emitEdge, nonRecvEdge, val)))) {
 			return ExplState.bottom();
 		}
 
@@ -181,6 +182,26 @@ public final class XtaExplUtils {
 		}
 
 		return ExplState.of(succVal);
+	}
+
+	private static boolean nonRecvEdgeDefinitelyEnabled(final Edge emitEdge, final Edge nonRecvEdge, final Valuation val) {
+		for (final Guard guard : nonRecvEdge.getGuards()) {
+			if (guard.isDataGuard()) {
+				final DataGuard dataGuard = guard.asDataGuard();
+				final Expr<BoolType> expr = ExprUtils.simplify(dataGuard.toExpr(), val);
+				if (!(expr instanceof TrueExpr)) {
+					return false;
+				}
+			}
+		}
+
+		final List<Expr<?>> emitArgs = emitEdge.getSync().get().getArgs();
+		final List<Expr<?>> recvArgs = nonRecvEdge.getSync().get().getArgs();
+		if (zip(emitArgs.stream(), recvArgs.stream(), (e, r) -> !e.eval(val).equals(r.eval(val))).anyMatch(x -> x)) {
+			return false;
+		}
+
+		return true;
 	}
 
 	private static boolean checkSync(final Edge emitEdge, final Edge recvEdge, final Valuation val) {
