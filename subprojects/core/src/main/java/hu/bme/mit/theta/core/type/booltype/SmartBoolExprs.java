@@ -78,7 +78,7 @@ public final class SmartBoolExprs {
 
 	public static Expr<BoolType> Or(final Collection<? extends Expr<BoolType>> ops) {
 		if (ops.isEmpty()) {
-			return True();
+			return False();
 		} else if (ops.contains(True())) {
 			return True();
 		}
