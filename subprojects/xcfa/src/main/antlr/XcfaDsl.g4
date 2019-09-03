@@ -17,14 +17,14 @@ grammar XcfaDsl;
 
 // S P E C I F I C A T I O N
 
-spec:	(varDecls+=varDecl | procDecls+=procDecl)*
+spec:	(varDecls+=varDecl | processDecls+=processDecl)*
 	;
 
 varDecl
 	:	VAR ddecl=decl
 	;
 
-procDecl
+processDecl
 	:	(main=MAIN)? PROCESS id=ID (LPAREN (paramDecls=declList)? RPAREN)? LBRAC
 			(varDecls+=varDecl | locs+=loc | edges+=edge | procedureDecls+=procedureDecl)*
 		RBRAC
@@ -90,7 +90,7 @@ type:	boolType
 	|	ratType
 	|	funcType
 	|	arrayType
-	|	syntheticVar
+	|	syntheticType
 	;
 
 typeList
@@ -117,7 +117,7 @@ arrayType
 	:	LBRACK indexType=type RBRACK RARROW elemType=type
 	;
 
-syntheticVar
+syntheticType
 	:	SYNTHETIC
 	;
 
@@ -363,7 +363,7 @@ stmt:	assignStmt
 	|	havocStmt
 	|	assumeStmt
 	|	returnStmt
-	|	funcCallStmt
+	|	procCallStmt
 	|   atomicBegin
 	|	atomicEnd
 	|	waitStmt
@@ -399,7 +399,7 @@ returnStmt
 	:	RETURN value=expr
 	;
 
-funcCallStmt
+procCallStmt
 	:	(lhs=ID ASSIGN)? CALL funcName=ID LPAREN (params+=ID)?(COMMA params+=ID)* RPAREN
 	;
 
