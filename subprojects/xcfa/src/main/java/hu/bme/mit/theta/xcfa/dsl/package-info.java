@@ -1,5 +1,5 @@
 /**
- * This package contains a domain specific language (DSL) for parsing CFAs.
+ * This package contains a domain specific language (DSL) for parsing XCFAs.
  *
  * @see hu.bme.mit.theta.xcfa.dsl.XcfaDslManager
  */

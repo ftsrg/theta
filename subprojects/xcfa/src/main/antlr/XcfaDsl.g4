@@ -26,7 +26,7 @@ varDecl
 
 processDecl
 	:	(main=MAIN)? PROCESS id=ID (LPAREN (paramDecls=declList)? RPAREN)? LBRAC
-			(varDecls+=varDecl | locs+=loc | edges+=edge | procedureDecls+=procedureDecl)*
+			(varDecls+=varDecl | procedureDecls+=procedureDecl)*
 		RBRAC
 	;
 
@@ -36,13 +36,17 @@ procedureDecl
 		RBRAC
 	;
 
-loc	:	(init=INIT | finall=FINAL | error=ERROR)? LOC id=ID
+loc	:	(init=INIT | finall=FINAL | error=ERROR)? LOC comments=comment* id=ID
 	;
 
 edge:	source=ID RARROW target=ID (LBRAC
 			(stmts+=stmt)*
 		RBRAC)?
 	;
+
+comment
+    :   LBRAC id=ID COLON value=ID RBRAC
+    ;
 
 VAR	:	'var'
 	;

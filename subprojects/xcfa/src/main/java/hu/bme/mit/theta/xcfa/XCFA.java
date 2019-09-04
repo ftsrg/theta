@@ -15,24 +15,15 @@
  */
 package hu.bme.mit.theta.xcfa;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
-import static com.google.common.collect.ImmutableSet.toImmutableSet;
-import static java.lang.String.format;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.LinkedList;
-
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-
-import hu.bme.mit.theta.common.Utils;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
-import hu.bme.mit.theta.core.utils.StmtUtils;
+import hu.bme.mit.theta.core.type.Type;
+
+import java.util.*;
+
+import static com.google.common.base.Preconditions.*;
 
 /**
  * Represents an immutable Extended Control Flow Automata (XCFA). Use the builder class to
@@ -40,220 +31,441 @@ import hu.bme.mit.theta.core.utils.StmtUtils;
  */
 public final class XCFA {
 
-	private final Loc initLoc;
-	private final Loc finalLoc;
-	private final Loc errorLoc;
-
 	private final Collection<VarDecl<?>> vars;
-	private final Collection<Loc> locs;
-	private final Collection<Edge> edges;
 
-	private XCFA(final Builder builder) {
-		initLoc = builder.initLoc;
-		finalLoc = builder.finalLoc;
-		errorLoc = builder.errorLoc;
-		locs = ImmutableSet.copyOf(builder.locs);
-		edges = ImmutableList.copyOf(builder.edges);
-		vars = edges.stream().flatMap(e -> StmtUtils.getVars(e.getStmt()).stream()).collect(toImmutableSet());
+	private final Collection<Process> processes;
+	private final Process mainProcess;
+
+	private XCFA(Builder builder) {
+		vars = ImmutableSet.copyOf(builder.vars);
+		processes = ImmutableSet.copyOf(builder.processes);
+		mainProcess = builder.mainProcess;
 	}
 
-	public Loc getInitLoc() {
-		return initLoc;
+	public Builder builder() {
+		return new Builder();
 	}
 
-	public Loc getFinalLoc() {
-		return finalLoc;
-	}
-
-	public Loc getErrorLoc() {
-		return errorLoc;
-	}
-
-	/**
-	 * Get the variables appearing on the edges of the XCFA.
-	 */
 	public Collection<VarDecl<?>> getVars() {
 		return vars;
 	}
 
-	public Collection<Loc> getLocs() {
-		return locs;
+	public Collection<Process> getProcesses() {
+		return processes;
 	}
 
-	public Collection<Edge> getEdges() {
-		return edges;
+	public Process getMainProcess() {
+		return mainProcess;
 	}
 
-	public static Builder builder() {
-		return new Builder();
-	}
+	public static final class Process {
+		private final List<VarDecl<?>> params;
 
-	@Override
-	public String toString() {
-		return Utils.lispStringBuilder("process").aligned().addAll(vars).body()
-				.addAll(locs.stream().map(this::locToString)).addAll(edges.stream().map(this::edgeToString)).toString();
-	}
+		private final Collection<VarDecl<?>> vars;
 
-	private String locToString(final Loc loc) {
-		if (initLoc.equals(loc)) {
-			return format("(init %s)", loc.getName());
-		} else if (finalLoc.equals(loc)) {
-			return format("(final %s)", loc.getName());
-		} else if (errorLoc.equals(loc)) {
-			return format("(error %s)", loc.getName());
-		} else {
-			return format("(loc %s)", loc.getName());
-		}
-	}
+		private final Collection<Procedure> procedures;
+		private final Procedure mainProcedure;
 
-	private String edgeToString(final Edge edge) {
-		return Utils.lispStringBuilder("edge").add(edge.getSource().getName()).add(edge.getTarget().getName())
-				.add(edge.getStmt()).toString();
-	}
-
-	public static final class Loc {
 		private final String name;
-		private final Collection<Edge> inEdges;
-		private final Collection<Edge> outEdges;
 
-		private Loc(final String name) {
-			this.name = checkNotNull(name);
-			inEdges = new LinkedList<>();
-			outEdges = new LinkedList<>();
+		private Process(final Builder builder) {
+			params = ImmutableList.copyOf(builder.params);
+			vars = ImmutableSet.copyOf(builder.vars);
+			procedures = ImmutableSet.copyOf(builder.procedures);
+			mainProcedure = builder.mainProcedure;
+			name = builder.name;
 		}
 
-		////
+		public Builder builder() {
+			return new Builder();
+		}
+
+		public List<VarDecl<?>> getParams() {
+			return params;
+		}
+
+		public Collection<VarDecl<?>> getVars() {
+			return vars;
+		}
+
+		public Collection<Procedure> getProcedures() {
+			return procedures;
+		}
+
+		public Procedure getMainProcedure() {
+			return mainProcedure;
+		}
 
 		public String getName() {
 			return name;
 		}
 
-		public Collection<Edge> getInEdges() {
-			return Collections.unmodifiableCollection(inEdges);
+		public static final class Procedure {
+			private final Type rtype;
+
+			private final List<VarDecl<?>> params;
+
+			private final Collection<VarDecl<?>> vars;
+
+			private final Collection<Location> locs;
+			private final Location initLoc;
+			private final Location errorLoc;
+			private final Location finalLoc;
+
+			private final Collection<Edge> edges;
+
+			private Procedure(final Builder builder) {
+				rtype = builder.rtype;
+				params = ImmutableList.copyOf(builder.params);
+				vars = ImmutableSet.copyOf(builder.vars);
+				locs = ImmutableSet.copyOf(builder.locs);
+				initLoc = builder.initLoc;
+				errorLoc = builder.errorLoc;
+				finalLoc = builder.finalLoc;
+				edges = ImmutableSet.copyOf(builder.edges);
+			}
+
+			public static Builder builder() {
+				return new Builder();
+			}
+
+			public Type getRtype() {
+				return rtype;
+			}
+
+			public List<VarDecl<?>> getParams() {
+				return params;
+			}
+
+			public Collection<VarDecl<?>> getVars() {
+				return vars;
+			}
+
+			public Collection<Location> getLocs() {
+				return locs;
+			}
+
+			public Location getInitLoc() {
+				return initLoc;
+			}
+
+			public Location getErrorLoc() {
+				return errorLoc;
+			}
+
+			public Location getFinalLoc() {
+				return finalLoc;
+			}
+
+			public Collection<Edge> getEdges() {
+				return edges;
+			}
+
+			public static final class Location {
+				private final String name;
+
+				private final Map<String, String> dictionary;
+
+				private final Collection<Edge> incomingEdges;
+				private final Collection<Edge> outgoingEdges;
+
+				private Location(final String name, final Map<String, String> dictionary) {
+					this.name = checkNotNull(name);
+					this.dictionary = dictionary;
+					outgoingEdges = new HashSet<>();
+					incomingEdges = new HashSet<>();
+				}
+
+				public String getName() {
+					return name;
+				}
+
+				public Map<String, String> getDictionary() {
+					return dictionary;
+				}
+
+				public Collection<Edge> getIncomingEdges() {
+					return incomingEdges;
+				}
+
+				public Collection<Edge> getOutgoingEdges() {
+					return outgoingEdges;
+				}
+			}
+
+			public static final class Edge {
+				private final Location source;
+				private final Location target;
+
+				private final List<Stmt> stmts;
+
+				private Edge(final Location source, final Location target, final List<Stmt> stmts) {
+					this.source = checkNotNull(source);
+					this.target = checkNotNull(target);
+					this.stmts = ImmutableList.copyOf(stmts);
+					source.outgoingEdges.add(this);
+					target.incomingEdges.add(this);
+				}
+
+				public Location getSource() {
+					return source;
+				}
+
+				public Location getTarget() {
+					return target;
+				}
+
+				public List<Stmt> getStmts() {
+					return stmts;
+				}
+			}
+
+			public static final class Builder {
+				private boolean built;
+
+				private Type rtype;
+
+				private List<VarDecl<?>> params;
+
+				private Collection<VarDecl<?>> vars;
+
+				private Collection<Location> locs;
+				private Location initLoc;
+				private Location errorLoc;
+				private Location finalLoc;
+
+				private Collection<Edge> edges;
+
+				private Builder() {
+					params = new ArrayList<>();
+					vars = new HashSet<>();
+					locs = new HashSet<>();
+					edges = new HashSet<>();
+					built = false;
+				}
+
+				public VarDecl<?> createParam(final String name, final Type type){
+					checkNotBuilt();
+					VarDecl<?> param = null; //TODO
+					params.add(param);
+					return param;
+				}
+
+				public VarDecl<?> createVar(final String name, final Type type){
+					checkNotBuilt();
+					VarDecl<?> var = null; //TODO
+					vars.add(var);
+					return var;
+				}
+
+				public Location createLoc(final String name, final Map<String, String> dictionary){
+					checkNotBuilt();
+					Location loc = new Location(name, dictionary);
+					locs.add(loc);
+					return loc;
+				}
+
+				public Edge createEdge(final Location source, final Location target, final List<Stmt> stmts)
+				{
+					checkNotBuilt();
+					checkArgument(locs.contains(source), "Invalid source.");
+					checkArgument(locs.contains(target), "Invalid target.");
+					Edge edge = new Edge(source, target, stmts);
+					edges.add(edge);
+					return edge;
+				}
+
+				private void checkNotBuilt() {
+					checkState(!built, "A Procedure was already built.");
+				}
+
+				public Type getRtype() {
+					return rtype;
+				}
+
+				public void setRtype(final Type rtype) {
+					this.rtype = rtype;
+				}
+
+				public List<VarDecl<?>> getParams() {
+					return params;
+				}
+
+				public Collection<VarDecl<?>> getVars() {
+					return vars;
+				}
+
+				public Collection<Location> getLocs() {
+					return locs;
+				}
+
+				public Location getInitLoc() {
+					return initLoc;
+				}
+
+				public void setInitLoc(final Location initLoc) {
+					checkNotBuilt();
+					checkArgument(locs.contains(initLoc), "Init location not present in XCFA.");
+					checkArgument(!errorLoc.equals(initLoc), "Init location cannot be the same as error location.");
+					checkArgument(!finalLoc.equals(initLoc), "Init location cannot be the same as final location.");
+					this.initLoc = initLoc;
+				}
+
+				public Location getErrorLoc() {
+					return errorLoc;
+				}
+
+				public void setErrorLoc(final Location errorLoc) {
+					checkNotBuilt();
+					checkArgument(locs.contains(errorLoc), "Error location not present in XCFA.");
+					checkArgument(!initLoc.equals(errorLoc), "Error location cannot be the same as init location.");
+					checkArgument(!finalLoc.equals(errorLoc), "Error location cannot be the same as final location.");
+					this.errorLoc = errorLoc;
+				}
+
+				public Location getFinalLoc() {
+					return finalLoc;
+				}
+
+				public void setFinalLoc(final Location finalLoc) {
+					checkNotBuilt();
+					checkArgument(locs.contains(finalLoc), "Final location not present in XCFA.");
+					checkArgument(!errorLoc.equals(finalLoc), "Final location cannot be the same as error location.");
+					checkArgument(!initLoc.equals(finalLoc), "Final location cannot be the same as init location.");
+					this.finalLoc = finalLoc;
+				}
+
+				public Procedure build()
+				{
+					checkState(initLoc != null, "Initial location must be set.");
+					checkState(finalLoc != null, "Final location must be set.");
+					checkState(errorLoc != null, "Error location must be set.");
+					checkState(finalLoc.outgoingEdges.isEmpty(), "Final location cannot have outgoing edges.");
+					checkState(errorLoc.outgoingEdges.isEmpty(), "Error location cannot have outgoing edges.");
+					built = true;
+					return new Procedure(this);
+				}
+			}
 		}
 
-		public Collection<Edge> getOutEdges() {
-			return Collections.unmodifiableCollection(outEdges);
-		}
+		public static final class Builder {
+			private boolean built;
 
-		////
+			private List<VarDecl<?>> params;
 
-		@Override
-		public String toString() {
-			return name;
-		}
-	}
+			private Collection<VarDecl<?>> vars;
 
-	public static final class Edge {
-		private final Loc source;
-		private final Loc target;
-		private final Stmt stmt;
+			private Collection<Procedure> procedures;
+			private Procedure mainProcedure;
 
-		private Edge(final Loc source, final Loc target, final Stmt stmt) {
-			this.source = checkNotNull(source);
-			this.target = checkNotNull(target);
-			this.stmt = checkNotNull(stmt);
-		}
+			private String name;
 
-		public Loc getSource() {
-			return source;
-		}
+			private Builder() {
+				built = false;
+				params = new ArrayList<>();
+				vars = new HashSet<>();
+				procedures = new HashSet<>();
+			}
 
-		public Loc getTarget() {
-			return target;
-		}
+			private void checkNotBuilt() {
+				checkState(!built, "A Process was already built.");
+			}
 
-		public Stmt getStmt() {
-			return stmt;
+			private VarDecl<?> createParam(final String name, final Type type) {
+				checkNotBuilt();
+				VarDecl<?> param = null; //TODO
+				params.add(param);
+				return param;
+			}
+
+			private VarDecl<?> createVar(final String name, final Type type) {
+				checkNotBuilt();
+				VarDecl<?> var = null; //TODO
+				vars.add(var);
+				return var;
+			}
+
+			private void addProcedure(final Procedure procedure)
+			{
+				checkNotBuilt();
+				procedures.add(procedure);
+			}
+
+			public Procedure getMainProcedure() {
+				return mainProcedure;
+			}
+
+			public void setMainProcedure(final Procedure mainProcedure) {
+				checkNotBuilt();
+				checkArgument(procedures.contains(mainProcedure));
+				this.mainProcedure = mainProcedure;
+			}
+
+			public String getName() {
+				return name;
+			}
+
+			public void setName(final String name) {
+				checkNotBuilt();
+				this.name = name;
+			}
+
+			public Process build()
+			{
+				checkNotBuilt();
+				checkState(mainProcedure != null, "Main procedure must be set.");
+				Process process = new Process(this);
+				built = true;
+				return process;
+			}
 		}
 	}
 
 	public static final class Builder {
-		private Loc initLoc;
-		private Loc finalLoc;
-		private Loc errorLoc;
-
-		private final Collection<Loc> locs;
-		private final Collection<Edge> edges;
-
 		private boolean built;
 
+		private Collection<VarDecl<?>> vars;
+
+		private Collection<XCFA.Process> processes;
+		private XCFA.Process mainProcess;
+
 		private Builder() {
-			locs = new HashSet<>();
-			edges = new LinkedList<>();
-			built = false;
-		}
-
-		public Loc getInitLoc() {
-			return initLoc;
-		}
-
-		public Loc getFinalLoc() {
-			return finalLoc;
-		}
-
-		public Loc getErrorLoc() {
-			return errorLoc;
-		}
-
-		public void setInitLoc(final Loc initLoc) {
-			checkNotBuilt();
-			checkNotNull(initLoc);
-			checkArgument(locs.contains(initLoc), "Initial location not present in XCFA.");
-			checkArgument(!initLoc.equals(finalLoc), "Initial location cannot be same as final.");
-			checkArgument(!initLoc.equals(errorLoc), "Initial location cannot be same as error.");
-			this.initLoc = initLoc;
-		}
-
-		public void setFinalLoc(final Loc finalLoc) {
-			checkNotBuilt();
-			checkNotNull(finalLoc);
-			checkArgument(locs.contains(finalLoc), "Final location not present in XCFA.");
-			checkArgument(!finalLoc.equals(initLoc), "Final location cannot be same as init.");
-			checkArgument(!finalLoc.equals(errorLoc), "Final location cannot be same as error.");
-			this.finalLoc = finalLoc;
-		}
-
-		public void setErrorLoc(final Loc errorLoc) {
-			checkNotBuilt();
-			checkNotNull(errorLoc);
-			checkArgument(locs.contains(errorLoc), "Error location not present in XCFA.");
-			checkArgument(!errorLoc.equals(initLoc), "Error location cannot be same as init.");
-			checkArgument(!errorLoc.equals(finalLoc), "Error location cannot be same as final.");
-			this.errorLoc = errorLoc;
-		}
-
-		public Loc createLoc(final String name) {
-			checkNotBuilt();
-			final Loc loc = new Loc(name);
-			locs.add(loc);
-			return loc;
-		}
-
-		public Edge createEdge(final Loc source, final Loc target, final Stmt stmt) {
-			checkNotBuilt();
-			checkArgument(locs.contains(source), "Invalid source.");
-			checkArgument(locs.contains(target), "Invalid target.");
-
-			final Edge edge = new Edge(source, target, stmt);
-			source.outEdges.add(edge);
-			target.inEdges.add(edge);
-			edges.add(edge);
-			return edge;
-		}
-
-		public XCFA build() {
-			checkState(initLoc != null, "Initial location must be set.");
-			checkState(finalLoc != null, "Final location must be set.");
-			checkState(errorLoc != null, "Error location must be set.");
-			checkState(finalLoc.getOutEdges().isEmpty(), "Final location cannot have outgoing edges.");
-			checkState(errorLoc.getOutEdges().isEmpty(), "Error location cannot have outgoing edges.");
-			built = true;
-			return new XCFA(this);
+			vars = new HashSet<>();
+			processes = new HashSet<>();
 		}
 
 		private void checkNotBuilt() {
-			checkState(!built, "A XCFA was already built.");
+			checkState(!built, "An XCFA was already built.");
+		}
+
+		public VarDecl<?> createVar(final String name, final Type type) {
+			checkNotBuilt();
+			VarDecl<?> var = null; //TODO
+			vars.add(var);
+			return var;
+		}
+
+		public void addProcess(final Process process) {
+			checkNotBuilt();
+			processes.add(process);
+		}
+
+		public Process getMainProcess() {
+			return mainProcess;
+		}
+
+		public void setMainProcess(final Process mainProcess) {
+			checkNotBuilt();
+			checkArgument(processes.contains(mainProcess), "Invalid main process.");
+			this.mainProcess = mainProcess;
+		}
+
+		public XCFA build() {
+			checkNotBuilt();
+			checkState(mainProcess != null, "Main process must be set.");
+			XCFA xcfa = new XCFA(this);
+			built = true;
+			return xcfa;
 		}
 	}
 
