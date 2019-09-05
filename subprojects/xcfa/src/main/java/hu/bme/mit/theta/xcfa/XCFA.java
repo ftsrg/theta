@@ -17,6 +17,7 @@ package hu.bme.mit.theta.xcfa;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import hu.bme.mit.theta.cfa.CFA;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Type;
@@ -42,7 +43,29 @@ public final class XCFA {
 		mainProcess = builder.mainProcess;
 	}
 
-	public Builder builder() {
+	public CFA createCFA() {
+		checkState(processes.size() == 1, "XCFA cannot be converted to CFA because it has more than one process.");
+		checkState(mainProcess.procedures.size() == 1, "XCFA cannot be converted to CFA because it has more than one procedure.");
+		for(Process.Procedure.Edge e : mainProcess.mainProcedure.edges) {
+			checkState(e.stmts.size() == 1, "XCFA cannot be converted to CFA because an edge has more/less than one statement.");
+		}
+		CFA.Builder builder = CFA.builder();
+		CFA.Loc initLoc = null, errorLoc = null, finalLoc = null;
+		for(Process.Procedure.Edge e : mainProcess.mainProcedure.edges) {
+			CFA.Loc source = builder.createLoc(e.source.name);
+			CFA.Loc target = builder.createLoc(e.target.name);
+			builder.createEdge(source, target, e.stmts.get(0));
+			if(e.source == mainProcess.mainProcedure.initLoc) initLoc = source;
+			if(e.target == mainProcess.mainProcedure.errorLoc) errorLoc = target;
+			else if(e.target == mainProcess.mainProcedure.finalLoc) finalLoc = target;
+		}
+		builder.setInitLoc(initLoc);
+		builder.setErrorLoc(errorLoc);
+		builder.setFinalLoc(finalLoc);
+		return builder.build();
+    }
+
+	public static Builder builder() {
 		return new Builder();
 	}
 
