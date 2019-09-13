@@ -41,12 +41,12 @@ final class XcfaStatement {
 	private final Scope scope;
 	private final StmtContext context;
 
-	public XcfaStatement(final Scope scope, final StmtContext context) {
+	XcfaStatement(final Scope scope, final StmtContext context) {
 		this.scope = checkNotNull(scope);
 		this.context = checkNotNull(context);
 	}
 
-	public Stmt instantiate(final Env env) {
+	Stmt instantiate(final Env env) {
 		final StmtCreatorVisitor visitor = new StmtCreatorVisitor(scope, env);
 		final Stmt stmt = context.accept(visitor);
 		if (stmt == null) {
@@ -61,7 +61,7 @@ final class XcfaStatement {
 		private final Scope scope;
 		private final Env env;
 
-		public StmtCreatorVisitor(final Scope scope, final Env env) {
+		StmtCreatorVisitor(final Scope scope, final Env env) {
 			this.scope = checkNotNull(scope);
 			this.env = checkNotNull(env);
 		}
@@ -97,7 +97,7 @@ final class XcfaStatement {
 				final Expr<Type> tExpr = (Expr<Type>) expr;
 				return Assign(tVar, tExpr);
 			} else {
-				throw new IllegalArgumentException("Type of " + var + " is incompatilbe with " + expr);
+				throw new IllegalArgumentException("Type of " + var + " is incompatible with " + expr);
 			}
 		}
 

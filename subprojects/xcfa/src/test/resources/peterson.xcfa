@@ -5,6 +5,7 @@ var turn : int
 var cnt : bool
 
 var start : synthetic
+var end : synthetic
 
 process mainProcess{
 
@@ -23,7 +24,7 @@ process mainProcess{
 		}
 		
 		L1 -> Lf {
-			sleep
+			wait(end)
 		}
 	}
 
