@@ -54,18 +54,8 @@ final class XcfaLocationSymbol implements Symbol {
 		return error;
 	}
 
-	public Loc intantiate(final XCFA.Builder xcfaBuilder) {
-		final Loc loc = xcfaBuilder.createLoc(name);
+	public XCFA.Process.Procedure.Location instantiate() {
 
-		if (init) {
-			xcfaBuilder.setInitLoc(loc);
-		} else if (finall) {
-			xcfaBuilder.setFinalLoc(loc);
-		} else if (error) {
-			xcfaBuilder.setErrorLoc(loc);
-		}
-
-		return loc;
 	}
 
 }

@@ -22,8 +22,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import hu.bme.mit.theta.xcfa.XCFA;
-import hu.bme.mit.theta.xcfa.XCFA.Edge;
-import hu.bme.mit.theta.xcfa.XCFA.Loc;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.EdgeContext;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.StmtContext;
 import hu.bme.mit.theta.common.dsl.Env;
@@ -32,19 +30,29 @@ import hu.bme.mit.theta.core.stmt.Stmts;
 
 final class XcfaEdgeDefinition {
 
-	private final XcfaProcessSymbol scope;
+	private final XcfaProcedureSymbol scope;
 
 	private final String source;
 	private final String target;
 	private final List<XcfaStatement> statements;
 
-	public XcfaEdgeDefinition(final XcfaProcessSymbol scope, final EdgeContext context) {
+	public XcfaEdgeDefinition(final XcfaProcedureSymbol scope, final EdgeContext context) {
 		checkNotNull(context);
 		this.scope = checkNotNull(scope);
 
 		source = context.source.getText();
 		target = context.target.getText();
 		statements = createStatements(context.stmts);
+	}
+
+	String getSource(){
+		return source;
+	}
+	String getTarget(){
+		return target;
+	}
+	List<XcfaStatement> getStatements() {
+		return statements;
 	}
 
 	////
