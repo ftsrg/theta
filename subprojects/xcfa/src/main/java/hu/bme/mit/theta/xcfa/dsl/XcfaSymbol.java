@@ -37,7 +37,11 @@ public class XcfaSymbol implements Scope {
     XCFA instantiate() {
         XCFA.Builder builder = XCFA.builder();
         vars.forEach(xcfaVariableSymbol -> builder.createVar(xcfaVariableSymbol.instantiate()));
-        processes.forEach(xcfaProcessSymbol -> builder.addProcess(xcfaProcessSymbol.instantiate()));
+        processes.forEach(xcfaProcessSymbol -> {
+            XCFA.Process process;
+            builder.addProcess(process = xcfaProcessSymbol.instantiate());
+            if(xcfaProcessSymbol.isMain()) builder.setMainProcess(process);
+        });
         return builder.build();
     }
 

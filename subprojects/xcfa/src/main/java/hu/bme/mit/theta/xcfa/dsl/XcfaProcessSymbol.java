@@ -17,14 +17,50 @@ package hu.bme.mit.theta.xcfa.dsl;
 
 import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.common.dsl.Symbol;
+import hu.bme.mit.theta.common.dsl.SymbolTable;
+import hu.bme.mit.theta.xcfa.XCFA;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 final class XcfaProcessSymbol implements Symbol, Scope {
 
+	private final XcfaSymbol scope;
+	private final String name;
+	private final boolean isMain;
+	private final List<XcfaParamSymbol> params;
+	private final List<XcfaVariableSymbol> vars;
+	private final List<XcfaProcedureSymbol> procedures;
+
+	private SymbolTable symbolTable;
 
 	XcfaProcessSymbol(final XcfaSymbol scope, final XcfaDslParser.ProcessDeclContext context) {
+		this.scope = scope;
+		name = context.id.getText();
+		isMain = context.main != null;
+		symbolTable = new SymbolTable();
+
+		params = new ArrayList<>();
+		vars = new ArrayList<>();
+		procedures = new ArrayList<>();
+
+		context.paramDecls.decls.forEach(declContext -> {
+			XcfaParamSymbol paramSymbol;
+			symbolTable.add(paramSymbol = new XcfaParamSymbol(declContext));
+			params.add(paramSymbol);
+		});
+		context.varDecls.forEach(varDeclContext -> {
+			XcfaVariableSymbol variableSymbol;
+			symbolTable.add(variableSymbol = new XcfaVariableSymbol(varDeclContext));
+			vars.add(variableSymbol);
+		});
+		context.procedureDecls.forEach(procedureDeclContext -> {
+			XcfaProcedureSymbol procedureSymbol;
+			symbolTable.add(procedureSymbol = new XcfaProcedureSymbol(this, procedureDeclContext));
+			procedures.add(procedureSymbol);
+		});
 	}
 
 	@Override
@@ -33,12 +69,34 @@ final class XcfaProcessSymbol implements Symbol, Scope {
 	}
 
 	@Override
-	public Optional<XcfaSpecification> enclosingScope() {
+	public Optional<XcfaSymbol> enclosingScope() {
 		return Optional.of(scope);
 	}
 
 	@Override
-	public Optional<Symbol> resolve(final String name) {
+	public Optional<? extends Symbol> resolve(final String name) {
+		final Optional<Symbol> symbol = symbolTable.get(name);
+		if (symbol.isPresent()) {
+			return symbol;
+		} else {
+			return scope.resolve(name);
+		}
 	}
 
+	public XCFA.Process instantiate() {
+		XCFA.Process.Builder builder = XCFA.Process.builder();
+		params.forEach(xcfaParamSymbol -> builder.createParam(xcfaParamSymbol.instantiate()));
+		vars.forEach(xcfaVariableSymbol -> builder.createVar(xcfaVariableSymbol.instantiate()));
+		procedures.forEach(xcfaProcedureSymbol -> {
+			XCFA.Process.Procedure procedure;
+			builder.addProcedure(procedure = xcfaProcedureSymbol.instantiate());
+			if(xcfaProcedureSymbol.isMain()) builder.setMainProcedure(procedure);
+		});
+		builder.setName(name);
+		return builder.build();
+	}
+
+	public boolean isMain() {
+		return isMain;
+	}
 }

@@ -99,7 +99,7 @@ public final class XCFA {
 			name = builder.name;
 		}
 
-		public Builder builder() {
+		public static Builder builder() {
 			return new Builder();
 		}
 
@@ -392,20 +392,19 @@ public final class XCFA {
 				checkState(!built, "A Process was already built.");
 			}
 
-			private VarDecl<?> createParam(final VarDecl<?> param) {
+			public VarDecl<?> createParam(final VarDecl<?> param) {
 				checkNotBuilt();
 				params.add(param);
 				return param;
 			}
 
-			private VarDecl<?> createVar(final VarDecl<?> var) {
+			public VarDecl<?> createVar(final VarDecl<?> var) {
 				checkNotBuilt();
 				vars.add(var);
 				return var;
 			}
 
-			private void addProcedure(final Procedure procedure)
-			{
+			public void addProcedure(final Procedure procedure) {
 				checkNotBuilt();
 				procedures.add(procedure);
 			}
