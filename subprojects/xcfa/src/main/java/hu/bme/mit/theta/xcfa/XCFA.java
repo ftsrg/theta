@@ -267,16 +267,14 @@ public final class XCFA {
 					built = false;
 				}
 
-				public VarDecl<?> createParam(final String name, final Type type){
+				public VarDecl<?> createParam(final VarDecl<?> param){
 					checkNotBuilt();
-					VarDecl<?> param = null; //TODO
 					params.add(param);
 					return param;
 				}
 
-				public VarDecl<?> createVar(final String name, final Type type){
+				public VarDecl<?> createVar(final VarDecl<?> var){
 					checkNotBuilt();
-					VarDecl<?> var = null; //TODO
 					vars.add(var);
 					return var;
 				}
@@ -394,16 +392,14 @@ public final class XCFA {
 				checkState(!built, "A Process was already built.");
 			}
 
-			private VarDecl<?> createParam(final String name, final Type type) {
+			private VarDecl<?> createParam(final VarDecl<?> param) {
 				checkNotBuilt();
-				VarDecl<?> param = null; //TODO
 				params.add(param);
 				return param;
 			}
 
-			private VarDecl<?> createVar(final String name, final Type type) {
+			private VarDecl<?> createVar(final VarDecl<?> var) {
 				checkNotBuilt();
-				VarDecl<?> var = null; //TODO
 				vars.add(var);
 				return var;
 			}
@@ -461,9 +457,8 @@ public final class XCFA {
 			checkState(!built, "An XCFA was already built.");
 		}
 
-		public VarDecl<?> createVar(final String name, final Type type) {
+		public VarDecl<?> createVar(final VarDecl<?> var) {
 			checkNotBuilt();
-			VarDecl<?> var = null; //TODO
 			vars.add(var);
 			return var;
 		}
