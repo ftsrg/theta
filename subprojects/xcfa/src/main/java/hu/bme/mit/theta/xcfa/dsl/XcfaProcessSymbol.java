@@ -15,86 +15,22 @@
  */
 package hu.bme.mit.theta.xcfa.dsl;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-
-import hu.bme.mit.theta.xcfa.XCFA;
-import hu.bme.mit.theta.xcfa.XCFA.Builder;
-import hu.bme.mit.theta.xcfa.XCFA.Loc;
-import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.EdgeContext;
-import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.LocContext;
-import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.ProcDeclContext;
-import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.VarDeclContext;
-import hu.bme.mit.theta.common.dsl.Env;
 import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.common.dsl.Symbol;
-import hu.bme.mit.theta.common.dsl.SymbolTable;
-import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser;
+
+import java.util.Optional;
 
 final class XcfaProcessSymbol implements Symbol, Scope {
 
-	private final XcfaSpecification scope;
-	private final SymbolTable symbolTable;
 
-	private final String name;
-	private final boolean main;
-	private final List<XcfaVariableSymbol> variables;
-	private final List<XcfaLocationSymbol> locations;
-	private final List<XcfaEdgeDefinition> edges;
-
-	public XcfaProcessSymbol(final XcfaSpecification scope, final ProcDeclContext context) {
-		checkNotNull(context);
-		this.scope = checkNotNull(scope);
-		symbolTable = new SymbolTable();
-
-		name = context.id.getText();
-		main = (context.main != null);
-		variables = createVariables(context.varDecls);
-		locations = createLocations(context.locs);
-		edges = createEdges(context.edges);
-
-		declareAll(variables);
-		declareAll(locations);
+	XcfaProcessSymbol(final XcfaSymbol scope, final XcfaDslParser.ProcessDeclContext context) {
 	}
 
 	@Override
 	public String getName() {
 		return name;
 	}
-
-	public boolean isMain() {
-		return main;
-	}
-
-	////
-
-	public XCFA instantiate(final Env env) {
-		final Builder xcfaBuilder = XCFA.builder();
-		env.push();
-
-		for (final XcfaVariableSymbol variable : variables) {
-			final VarDecl<?> var = variable.instantiate();
-			env.define(variable, var);
-		}
-
-		for (final XcfaLocationSymbol location : locations) {
-			final Loc loc = location.intantiate(xcfaBuilder);
-			env.define(location, loc);
-		}
-
-		for (final XcfaEdgeDefinition edge : edges) {
-			edge.instantiate(xcfaBuilder, env);
-		}
-
-		env.pop();
-		return xcfaBuilder.build();
-	}
-
-	////
 
 	@Override
 	public Optional<XcfaSpecification> enclosingScope() {
@@ -103,64 +39,6 @@ final class XcfaProcessSymbol implements Symbol, Scope {
 
 	@Override
 	public Optional<Symbol> resolve(final String name) {
-		final Optional<Symbol> symbol = symbolTable.get(name);
-		if (symbol.isPresent()) {
-			return symbol;
-		} else {
-			return scope.resolve(name);
-		}
-	}
-
-	////
-
-	private void declareAll(final Iterable<? extends Symbol> symbols) {
-		symbolTable.addAll(symbols);
-	}
-
-	private List<XcfaVariableSymbol> createVariables(final List<VarDeclContext> varDeclContexts) {
-		final List<XcfaVariableSymbol> result = new ArrayList<>();
-		for (final VarDeclContext varDeclContext : varDeclContexts) {
-			final XcfaVariableSymbol symbol = new XcfaVariableSymbol(varDeclContext);
-			result.add(symbol);
-		}
-		return result;
-	}
-
-	private List<XcfaLocationSymbol> createLocations(final List<LocContext> locContexts) {
-		final List<XcfaLocationSymbol> result = new ArrayList<>();
-
-		int nInitLocs = 0;
-		int nFinalLocs = 0;
-		int nErrorLocs = 0;
-
-		for (final LocContext locContext : locContexts) {
-			final XcfaLocationSymbol symbol = new XcfaLocationSymbol(locContext);
-
-			if (symbol.isInit()) {
-				nInitLocs++;
-			} else if (symbol.isFinal()) {
-				nFinalLocs++;
-			} else if (symbol.isError()) {
-				nErrorLocs++;
-			}
-
-			result.add(symbol);
-		}
-
-		checkArgument(nInitLocs == 1, "Exactly one initial location must be specififed");
-		checkArgument(nFinalLocs == 1, "Exactly one final location must be specififed");
-		checkArgument(nErrorLocs == 1, "Exactly one error location must be specififed");
-
-		return result;
-	}
-
-	private List<XcfaEdgeDefinition> createEdges(final List<EdgeContext> edgeContexts) {
-		final List<XcfaEdgeDefinition> result = new ArrayList<>();
-		for (final EdgeContext edgeContext : edgeContexts) {
-			final XcfaEdgeDefinition edgeDefinition = new XcfaEdgeDefinition(this, edgeContext);
-			result.add(edgeDefinition);
-		}
-		return result;
 	}
 
 }
