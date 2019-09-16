@@ -46,8 +46,8 @@ final class XcfaStatement {
 		this.context = checkNotNull(context);
 	}
 
-	Stmt instantiate(final Env env) {
-		final StmtCreatorVisitor visitor = new StmtCreatorVisitor(scope, env);
+	Stmt instantiate() {
+		final StmtCreatorVisitor visitor = new StmtCreatorVisitor(scope, null); //TODO Env
 		final Stmt stmt = context.accept(visitor);
 		if (stmt == null) {
 			throw new AssertionError();

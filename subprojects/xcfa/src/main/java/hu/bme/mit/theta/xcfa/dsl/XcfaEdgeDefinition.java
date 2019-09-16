@@ -15,18 +15,14 @@
  */
 package hu.bme.mit.theta.xcfa.dsl;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
-
 import hu.bme.mit.theta.xcfa.XCFA;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.EdgeContext;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.StmtContext;
-import hu.bme.mit.theta.common.dsl.Env;
-import hu.bme.mit.theta.core.stmt.Stmt;
-import hu.bme.mit.theta.core.stmt.Stmts;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 final class XcfaEdgeDefinition {
 
@@ -36,7 +32,7 @@ final class XcfaEdgeDefinition {
 	private final String target;
 	private final List<XcfaStatement> statements;
 
-	public XcfaEdgeDefinition(final XcfaProcedureSymbol scope, final EdgeContext context) {
+	XcfaEdgeDefinition(final XcfaProcedureSymbol scope, final EdgeContext context) {
 		checkNotNull(context);
 		this.scope = checkNotNull(scope);
 
@@ -45,41 +41,12 @@ final class XcfaEdgeDefinition {
 		statements = createStatements(context.stmts);
 	}
 
-	String getSource(){
-		return source;
-	}
-	String getTarget(){
-		return target;
-	}
-	List<XcfaStatement> getStatements() {
-		return statements;
-	}
-
 	////
 
-	public List<Edge> instantiate(final XCFA.Builder xcfa, final Env env) {
+	public XCFA.Process.Procedure.Edge instantiate() {
 		final XcfaLocationSymbol sourceSymbol = (XcfaLocationSymbol) scope.resolve(source).get();
 		final XcfaLocationSymbol targetSymbol = (XcfaLocationSymbol) scope.resolve(target).get();
-
-		final Loc sourceLoc = (Loc) env.eval(sourceSymbol);
-		final Loc targetLoc = (Loc) env.eval(targetSymbol);
-		final List<Stmt> stmts = statements.stream().map(s -> s.instantiate(env)).collect(Collectors.toList());
-		if (stmts.isEmpty()) {
-			stmts.add(Stmts.Skip());
-		}
-		final List<Edge> edges = new ArrayList<>(stmts.size());
-		final List<Loc> locs = new ArrayList<>(stmts.size() + 1);
-		locs.add(sourceLoc);
-		for (int i = 0; i < stmts.size() - 1; ++i) {
-			locs.add(xcfa.createLoc(""));
-		}
-		locs.add(targetLoc);
-
-		for (int i = 0; i < stmts.size(); ++i) {
-			edges.add(xcfa.createEdge(locs.get(i), locs.get(i + 1), stmts.get(i)));
-		}
-
-		return edges;
+		return null;
 	}
 
 	////
@@ -93,4 +60,7 @@ final class XcfaEdgeDefinition {
 		return result;
 	}
 
+	public List<XcfaStatement> getStatements() {
+		return statements;
+	}
 }

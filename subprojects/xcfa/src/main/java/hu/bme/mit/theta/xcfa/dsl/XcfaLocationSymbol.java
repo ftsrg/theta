@@ -18,7 +18,6 @@ package hu.bme.mit.theta.xcfa.dsl;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import hu.bme.mit.theta.xcfa.XCFA;
-import hu.bme.mit.theta.xcfa.XCFA.Loc;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.LocContext;
 import hu.bme.mit.theta.common.dsl.Symbol;
 
@@ -55,7 +54,7 @@ final class XcfaLocationSymbol implements Symbol {
 	}
 
 	public XCFA.Process.Procedure.Location instantiate() {
-
+		return new XCFA.Process.Procedure.Location(name, null); //TODO dictionary
 	}
 
 }

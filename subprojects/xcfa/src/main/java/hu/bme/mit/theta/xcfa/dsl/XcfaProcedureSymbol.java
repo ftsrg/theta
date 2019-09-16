@@ -15,23 +15,17 @@
  */
 package hu.bme.mit.theta.xcfa.dsl;
 
-import hu.bme.mit.theta.common.dsl.Env;
 import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.common.dsl.SymbolTable;
-import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.xcfa.XCFA;
-import hu.bme.mit.theta.xcfa.XCFA.Builder;
-import hu.bme.mit.theta.xcfa.XCFA.Loc;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.EdgeContext;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.LocContext;
-import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.ProcDeclContext;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.VarDeclContext;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -42,7 +36,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 final class XcfaProcedureSymbol implements Symbol, Scope {
 
 
-	private final XcfaSpecification scope;
+	private final XcfaProcessSymbol scope;
 	private final SymbolTable symbolTable;
 
 	private final String name;
@@ -53,7 +47,7 @@ final class XcfaProcedureSymbol implements Symbol, Scope {
 	private final List<XcfaLocationSymbol> locations;
 	private final List<XcfaEdgeDefinition> edges;
 
-	XcfaProcedureSymbol(final XcfaSpecification scope, final XcfaDslParser.ProcedureDeclContext context) {
+	XcfaProcedureSymbol(final XcfaProcessSymbol scope, final XcfaDslParser.ProcedureDeclContext context) {
 		checkNotNull(context);
 		this.scope = checkNotNull(scope);
 		symbolTable = new SymbolTable();
@@ -84,25 +78,33 @@ final class XcfaProcedureSymbol implements Symbol, Scope {
 
 	public XCFA.Process.Procedure instantiate() {
 		XCFA.Process.Procedure.Builder builder = XCFA.Process.Procedure.builder();
+		builder.setRtype(rtype);
 		params.forEach(xcfaParamSymbol -> builder.createParam(xcfaParamSymbol.instantiate()));
 		variables.forEach(xcfaVariableSymbol -> builder.createVar(xcfaVariableSymbol.instantiate()));
-		locations.forEach(xcfaLocationSymbol -> builder.createLoc(xcfaLocationSymbol.getName(), null)); //TODO dictionary
+		locations.forEach(xcfaLocationSymbol -> {
+			XCFA.Process.Procedure.Location loc = builder.createLoc(xcfaLocationSymbol.getName(), null); //TODO dictionary
+			if(xcfaLocationSymbol.isInit()) builder.setInitLoc(loc);
+			else if(xcfaLocationSymbol.isError()) builder.setErrorLoc(loc);
+			else if(xcfaLocationSymbol.isFinal()) builder.setFinalLoc(loc);
+		});
 		edges.forEach(xcfaEdgeDefinition -> {
 			List<Stmt> stmts = new ArrayList<>();
 			xcfaEdgeDefinition.getStatements().forEach(xcfaStatement -> stmts.add(xcfaStatement.instantiate()));
-			builder.createEdge(xcfaEdgeDefinition.getSource(), xcfaEdgeDefinition.getTarget(), )
+			XCFA.Process.Procedure.Edge edge = xcfaEdgeDefinition.instantiate();
+			builder.addEdge(edge);
 		});
+		return builder.build();
 	}
 
 	////
 
 	@Override
-	public Optional<XcfaSpecification> enclosingScope() {
+	public Optional<XcfaProcessSymbol> enclosingScope() {
 		return Optional.of(scope);
 	}
 
 	@Override
-	public Optional<Symbol> resolve(final String name) {
+	public Optional<? extends Symbol> resolve(final String name) {
 		final Optional<Symbol> symbol = symbolTable.get(name);
 		if (symbol.isPresent()) {
 			return symbol;

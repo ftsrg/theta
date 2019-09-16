@@ -192,7 +192,7 @@ public final class XCFA {
 				private final Collection<Edge> incomingEdges;
 				private final Collection<Edge> outgoingEdges;
 
-				private Location(final String name, final Map<String, String> dictionary) {
+				public Location(final String name, final Map<String, String> dictionary) {
 					this.name = checkNotNull(name);
 					this.dictionary = dictionary;
 					outgoingEdges = new HashSet<>();
@@ -286,14 +286,12 @@ public final class XCFA {
 					return loc;
 				}
 
-				public Edge createEdge(final Location source, final Location target, final List<Stmt> stmts)
+				public void addEdge(Edge e)
 				{
 					checkNotBuilt();
-					checkArgument(locs.contains(source), "Invalid source.");
-					checkArgument(locs.contains(target), "Invalid target.");
-					Edge edge = new Edge(source, target, stmts);
-					edges.add(edge);
-					return edge;
+					checkArgument(locs.contains(e.source), "Invalid source.");
+					checkArgument(locs.contains(e.target), "Invalid target.");
+					edges.add(e);
 				}
 
 				private void checkNotBuilt() {
