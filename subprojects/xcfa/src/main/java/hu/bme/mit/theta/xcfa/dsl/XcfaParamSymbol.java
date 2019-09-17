@@ -22,12 +22,12 @@ import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.decl.Decls.Var;
 
-final class XcfaParamSymbol implements Symbol {
+final class XcfaParamSymbol implements Symbol, Instantiatable<VarDecl<?>> {
 
 	private final String name;
 	private final XcfaType type;
 
-	public XcfaParamSymbol(final XcfaDslParser.DeclContext context) {
+	XcfaParamSymbol(final XcfaDslParser.DeclContext context) {
 		checkNotNull(context);
 		name = context.name.getText();
 		type = new XcfaType(context.ttype);

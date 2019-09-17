@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public class XcfaSymbol implements Scope {
+public class XcfaSymbol implements Scope, Symbol, Instantiatable<XCFA> {
 
     private SymbolTable symbolTable;
 
@@ -34,7 +34,7 @@ public class XcfaSymbol implements Scope {
     }
 
 
-    XCFA instantiate() {
+    public XCFA instantiate() {
         XCFA.Builder builder = XCFA.builder();
         vars.forEach(xcfaVariableSymbol -> builder.createVar(xcfaVariableSymbol.instantiate()));
         processes.forEach(xcfaProcessSymbol -> {
@@ -56,4 +56,8 @@ public class XcfaSymbol implements Scope {
         return symbolTable.get(name);
     }
 
+    @Override
+    public String getName() {
+        return "";
+    }
 }

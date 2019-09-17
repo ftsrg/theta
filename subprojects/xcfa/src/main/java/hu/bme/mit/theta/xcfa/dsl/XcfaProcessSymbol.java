@@ -25,7 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-final class XcfaProcessSymbol implements Symbol, Scope {
+final class XcfaProcessSymbol implements Symbol, Scope, Instantiatable<XCFA.Process> {
 
 	private final XcfaSymbol scope;
 	private final String name;

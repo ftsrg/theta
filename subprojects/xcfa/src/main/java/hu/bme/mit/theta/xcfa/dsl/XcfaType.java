@@ -15,25 +15,21 @@
  */
 package hu.bme.mit.theta.xcfa.dsl;
 
+import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslBaseVisitor;
+import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.*;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Array;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
 import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 
-import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslBaseVisitor;
-import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.ArrayTypeContext;
-import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.BoolTypeContext;
-import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.IntTypeContext;
-import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.RatTypeContext;
-import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.TypeContext;
-import hu.bme.mit.theta.core.type.Type;
-
-final class XcfaType {
+final class XcfaType implements Instantiatable<Type> {
 
 	private final TypeContext context;
 
-	public XcfaType(final TypeContext context) {
+	XcfaType(final TypeContext context) {
 		this.context = checkNotNull(context);
 	}
 

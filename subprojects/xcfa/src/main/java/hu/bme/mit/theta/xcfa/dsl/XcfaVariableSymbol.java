@@ -15,19 +15,19 @@
  */
 package hu.bme.mit.theta.xcfa.dsl;
 
+import hu.bme.mit.theta.common.dsl.Symbol;
+import hu.bme.mit.theta.core.decl.VarDecl;
+import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.VarDeclContext;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.decl.Decls.Var;
 
-import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.VarDeclContext;
-import hu.bme.mit.theta.common.dsl.Symbol;
-import hu.bme.mit.theta.core.decl.VarDecl;
-
-final class XcfaVariableSymbol implements Symbol {
+final class XcfaVariableSymbol implements Symbol, Instantiatable<VarDecl<?>> {
 
 	private final String name;
 	private final XcfaType type;
 
-	public XcfaVariableSymbol(final VarDeclContext context) {
+	XcfaVariableSymbol(final VarDeclContext context) {
 		checkNotNull(context);
 		name = context.ddecl.name.getText();
 		type = new XcfaType(context.ddecl.ttype);
