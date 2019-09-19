@@ -15,90 +15,10 @@
  */
 package hu.bme.mit.theta.xcfa.dsl;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
-import static hu.bme.mit.theta.common.Utils.head;
-import static hu.bme.mit.theta.common.Utils.singleElementOf;
-import static hu.bme.mit.theta.common.Utils.tail;
-import static hu.bme.mit.theta.core.decl.Decls.Param;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Div;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Geq;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Gt;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Ite;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Leq;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Lt;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Mul;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neg;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq;
-import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Sub;
-import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;
-import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Read;
-import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Write;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Exists;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.False;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Forall;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Iff;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Imply;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Or;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.True;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Mod;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Rem;
-import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
-import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
-import static java.util.stream.Collectors.toList;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Stream;
-
-import org.antlr.v4.runtime.Token;
-
 import com.google.common.collect.ImmutableList;
-
-import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslBaseVisitor;
-import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser;
-import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.AccessContext;
-import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.AccessorExprContext;
-import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.AdditiveExprContext;
-import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.AndExprContext;
-import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.ArrayReadAccessContext;
-import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.ArrayWriteAccessContext;
-import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.DeclListContext;
-import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.EqualityExprContext;
-import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.ExistsExprContext;
-import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.ExprContext;
-import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.FalseExprContext;
-import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.ForallExprContext;
-import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.FuncAccessContext;
-import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.FuncLitExprContext;
-import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.IdExprContext;
-import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.IffExprContext;
-import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.ImplyExprContext;
-import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.IntLitExprContext;
-import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.IteExprContext;
-import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.MultiplicativeExprContext;
-import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.NegExprContext;
-import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.NotExprContext;
-import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.OrExprContext;
-import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.ParenExprContext;
-import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.RatLitExprContext;
-import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.RelationExprContext;
-import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.TrueExprContext;
-import hu.bme.mit.theta.common.dsl.BasicScope;
-import hu.bme.mit.theta.common.dsl.Env;
 import hu.bme.mit.theta.common.dsl.Scope;
-import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.ParamDecl;
-import hu.bme.mit.theta.core.dsl.DeclSymbol;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.abstracttype.AddExpr;
@@ -117,21 +37,53 @@ import hu.bme.mit.theta.core.type.inttype.ModExpr;
 import hu.bme.mit.theta.core.type.inttype.RemExpr;
 import hu.bme.mit.theta.core.type.rattype.RatLitExpr;
 import hu.bme.mit.theta.core.utils.TypeUtils;
+import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslBaseVisitor;
+import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser;
+import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.*;
+import org.antlr.v4.runtime.Token;
 
-//TODO refactor
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Stream;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.common.Utils.*;
+import static hu.bme.mit.theta.core.decl.Decls.Param;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Div;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Eq;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Geq;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Gt;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Leq;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Lt;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Mul;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neg;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Neq;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Sub;
+import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.*;
+import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;
+import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Read;
+import static hu.bme.mit.theta.core.type.arraytype.ArrayExprs.Write;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.*;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.*;
+import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
+import static hu.bme.mit.theta.core.utils.TypeUtils.cast;
+import static java.util.stream.Collectors.toList;
 
 final class XcfaExpression {
 
 	private final Scope scope;
 	private final ExprContext context;
 
-	public XcfaExpression(final Scope scope, final ExprContext context) {
+	XcfaExpression(final Scope scope, final ExprContext context) {
 		this.scope = checkNotNull(scope);
 		this.context = checkNotNull(context);
 	}
 
 	public Expr<?> instantiate() {
-		final ExprCreatorVisitor visitor = new ExprCreatorVisitor(scope, env);
+		final ExprCreatorVisitor visitor = new ExprCreatorVisitor(scope);
 		final Expr<?> expr = context.accept(visitor);
 		if (expr == null) {
 			throw new AssertionError();
@@ -143,15 +95,13 @@ final class XcfaExpression {
 	private static final class ExprCreatorVisitor extends XcfaDslBaseVisitor<Expr<?>> {
 
 		private Scope currentScope;
-		private final Env env;
 
-		private ExprCreatorVisitor(final Scope scope, final Env env) {
+		private ExprCreatorVisitor(final Scope scope) {
 			currentScope = checkNotNull(scope);
-			this.env = checkNotNull(env);
 		}
 
 		////
-
+/*
 		private void push(final List<ParamDecl<?>> paramDecls) {
 			final BasicScope scope = new BasicScope(currentScope);
 			env.push();
@@ -168,7 +118,7 @@ final class XcfaExpression {
 			currentScope = currentScope.enclosingScope().get();
 			env.pop();
 		}
-
+*/
 		////
 
 		@Override
@@ -180,12 +130,8 @@ final class XcfaExpression {
 				@SuppressWarnings("unchecked")
 				final ParamDecl<Type> param = (ParamDecl<Type>) singleElementOf(params);
 
-				push(params);
-
 				@SuppressWarnings("unchecked")
 				final Expr<Type> result = (Expr<Type>) ctx.result.accept(this);
-
-				pop();
 
 				return FuncExprs.Func(param, result);
 
@@ -245,9 +191,7 @@ final class XcfaExpression {
 			if (ctx.paramDecls != null) {
 				final List<ParamDecl<?>> paramDecls = createParamList(ctx.paramDecls);
 
-				push(paramDecls);
 				final Expr<BoolType> op = TypeUtils.cast(ctx.op.accept(this), Bool());
-				pop();
 
 				return Forall(paramDecls, op);
 			} else {
@@ -260,9 +204,7 @@ final class XcfaExpression {
 			if (ctx.paramDecls != null) {
 				final List<ParamDecl<?>> paramDecls = createParamList(ctx.paramDecls);
 
-				push(paramDecls);
 				final Expr<BoolType> op = TypeUtils.cast(ctx.op.accept(this), Bool());
-				pop();
 
 				return Exists(paramDecls, op);
 			} else {
@@ -600,8 +542,8 @@ final class XcfaExpression {
 
 		@Override
 		public RefExpr<?> visitIdExpr(final IdExprContext ctx) {
-			final Symbol symbol = currentScope.resolve(ctx.id.getText()).get();
-			final Decl<?> decl = (Decl<?>) env.eval(symbol);
+			final InstantiatableSymbol symbol = (InstantiatableSymbol) currentScope.resolve(ctx.id.getText()).get();
+			final Decl<?> decl = (Decl<?>) symbol.instantiate();
 			return decl.getRef();
 		}
 
