@@ -16,7 +16,7 @@
 package hu.bme.mit.theta.xcfa;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.cfa.CFA;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
@@ -32,14 +32,14 @@ import static com.google.common.base.Preconditions.*;
  */
 public final class XCFA {
 
-	private final Collection<VarDecl<?>> vars;
+	private final List<VarDecl<?>> vars;
 
-	private final Collection<Process> processes;
+	private final List<Process> processes;
 	private final Process mainProcess;
 
 	private XCFA(Builder builder) {
-		vars = ImmutableSet.copyOf(builder.vars);
-		processes = ImmutableSet.copyOf(builder.processes);
+		vars = ImmutableList.copyOf(builder.vars);
+		processes = ImmutableList.copyOf(builder.processes);
 		mainProcess = builder.mainProcess;
 	}
 
@@ -69,11 +69,11 @@ public final class XCFA {
 		return new Builder();
 	}
 
-	public Collection<VarDecl<?>> getVars() {
+	public List<VarDecl<?>> getVars() {
 		return vars;
 	}
 
-	public Collection<Process> getProcesses() {
+	public List<Process> getProcesses() {
 		return processes;
 	}
 
@@ -84,17 +84,17 @@ public final class XCFA {
 	public static final class Process {
 		private final List<VarDecl<?>> params;
 
-		private final Collection<VarDecl<?>> vars;
+		private final List<VarDecl<?>> vars;
 
-		private final Collection<Procedure> procedures;
+		private final List<Procedure> procedures;
 		private final Procedure mainProcedure;
 
 		private final String name;
 
 		private Process(final Builder builder) {
 			params = ImmutableList.copyOf(builder.params);
-			vars = ImmutableSet.copyOf(builder.vars);
-			procedures = ImmutableSet.copyOf(builder.procedures);
+			vars = ImmutableList.copyOf(builder.vars);
+			procedures = ImmutableList.copyOf(builder.procedures);
 			mainProcedure = builder.mainProcedure;
 			name = builder.name;
 		}
@@ -107,11 +107,11 @@ public final class XCFA {
 			return params;
 		}
 
-		public Collection<VarDecl<?>> getVars() {
+		public List<VarDecl<?>> getVars() {
 			return vars;
 		}
 
-		public Collection<Procedure> getProcedures() {
+		public List<Procedure> getProcedures() {
 			return procedures;
 		}
 
@@ -128,24 +128,24 @@ public final class XCFA {
 
 			private final List<VarDecl<?>> params;
 
-			private final Collection<VarDecl<?>> vars;
+			private final List<VarDecl<?>> vars;
 
-			private final Collection<Location> locs;
+			private final List<Location> locs;
 			private final Location initLoc;
 			private final Location errorLoc;
 			private final Location finalLoc;
 
-			private final Collection<Edge> edges;
+			private final List<Edge> edges;
 
 			private Procedure(final Builder builder) {
 				rtype = builder.rtype;
 				params = ImmutableList.copyOf(builder.params);
-				vars = ImmutableSet.copyOf(builder.vars);
-				locs = ImmutableSet.copyOf(builder.locs);
+				vars = ImmutableList.copyOf(builder.vars);
+				locs = ImmutableList.copyOf(builder.locs);
 				initLoc = builder.initLoc;
 				errorLoc = builder.errorLoc;
 				finalLoc = builder.finalLoc;
-				edges = ImmutableSet.copyOf(builder.edges);
+				edges = ImmutableList.copyOf(builder.edges);
 			}
 
 			public static Builder builder() {
@@ -160,11 +160,11 @@ public final class XCFA {
 				return params;
 			}
 
-			public Collection<VarDecl<?>> getVars() {
+			public List<VarDecl<?>> getVars() {
 				return vars;
 			}
 
-			public Collection<Location> getLocs() {
+			public List<Location> getLocs() {
 				return locs;
 			}
 
@@ -180,7 +180,7 @@ public final class XCFA {
 				return finalLoc;
 			}
 
-			public Collection<Edge> getEdges() {
+			public List<Edge> getEdges() {
 				return edges;
 			}
 
@@ -189,14 +189,14 @@ public final class XCFA {
 
 				private final Map<String, String> dictionary;
 
-				private final Collection<Edge> incomingEdges;
-				private final Collection<Edge> outgoingEdges;
+				private final List<Edge> incomingEdges;
+				private final List<Edge> outgoingEdges;
 
 				public Location(final String name, final Map<String, String> dictionary) {
 					this.name = checkNotNull(name);
 					this.dictionary = dictionary;
-					outgoingEdges = new HashSet<>();
-					incomingEdges = new HashSet<>();
+					outgoingEdges = new ArrayList<>();
+					incomingEdges = new ArrayList<>();
 				}
 
 				public String getName() {
@@ -207,11 +207,11 @@ public final class XCFA {
 					return dictionary;
 				}
 
-				public Collection<Edge> getIncomingEdges() {
+				public List<Edge> getIncomingEdges() {
 					return incomingEdges;
 				}
 
-				public Collection<Edge> getOutgoingEdges() {
+				public List<Edge> getOutgoingEdges() {
 					return outgoingEdges;
 				}
 			}
@@ -250,20 +250,20 @@ public final class XCFA {
 
 				private List<VarDecl<?>> params;
 
-				private Collection<VarDecl<?>> vars;
+				private List<VarDecl<?>> vars;
 
-				private Collection<Location> locs;
+				private List<Location> locs;
 				private Location initLoc;
 				private Location errorLoc;
 				private Location finalLoc;
 
-				private Collection<Edge> edges;
+				private List<Edge> edges;
 
 				private Builder() {
 					params = new ArrayList<>();
-					vars = new HashSet<>();
-					locs = new HashSet<>();
-					edges = new HashSet<>();
+					vars = new ArrayList<>();
+					locs = new ArrayList<>();
+					edges = new ArrayList<>();
 					built = false;
 				}
 
@@ -310,11 +310,11 @@ public final class XCFA {
 					return params;
 				}
 
-				public Collection<VarDecl<?>> getVars() {
+				public List<VarDecl<?>> getVars() {
 					return vars;
 				}
 
-				public Collection<Location> getLocs() {
+				public List<Location> getLocs() {
 					return locs;
 				}
 
@@ -372,9 +372,9 @@ public final class XCFA {
 
 			private List<VarDecl<?>> params;
 
-			private Collection<VarDecl<?>> vars;
+			private List<VarDecl<?>> vars;
 
-			private Collection<Procedure> procedures;
+			private List<Procedure> procedures;
 			private Procedure mainProcedure;
 
 			private String name;
@@ -382,8 +382,8 @@ public final class XCFA {
 			private Builder() {
 				built = false;
 				params = new ArrayList<>();
-				vars = new HashSet<>();
-				procedures = new HashSet<>();
+				vars = new ArrayList<>();
+				procedures = new ArrayList<>();
 			}
 
 			private void checkNotBuilt() {
@@ -440,14 +440,14 @@ public final class XCFA {
 	public static final class Builder {
 		private boolean built;
 
-		private Collection<VarDecl<?>> vars;
+		private List<VarDecl<?>> vars;
 
-		private Collection<XCFA.Process> processes;
+		private List<XCFA.Process> processes;
 		private XCFA.Process mainProcess;
 
 		private Builder() {
-			vars = new HashSet<>();
-			processes = new HashSet<>();
+			vars = new ArrayList<>();
+			processes = new ArrayList<>();
 		}
 
 		private void checkNotBuilt() {
