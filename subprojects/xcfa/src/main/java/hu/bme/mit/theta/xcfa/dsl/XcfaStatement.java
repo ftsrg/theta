@@ -16,6 +16,7 @@
 package hu.bme.mit.theta.xcfa.dsl;
 
 import hu.bme.mit.theta.common.dsl.Scope;
+import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Expr;
@@ -28,7 +29,10 @@ import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.AssumeStmtContext;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.HavocStmtContext;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.StmtContext;
 
+import java.util.Optional;
+
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 import static hu.bme.mit.theta.core.stmt.Stmts.*;
 import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 
@@ -66,7 +70,9 @@ final class XcfaStatement {
 		@Override
 		public Stmt visitHavocStmt(final HavocStmtContext ctx) {
 			final String lhsId = ctx.lhs.getText();
-			final InstantiatableSymbol lhsSymbol = (InstantiatableSymbol) scope.resolve(lhsId).get();
+			Optional<? extends Symbol> opt = scope.resolve(lhsId);
+			checkState(opt.isPresent());
+			final InstantiatableSymbol lhsSymbol = (InstantiatableSymbol) opt.get();
 			final VarDecl<?> var = (VarDecl<?>) lhsSymbol.instantiate();
 			return Havoc(var);
 		}
@@ -81,7 +87,9 @@ final class XcfaStatement {
 		@Override
 		public Stmt visitAssignStmt(final AssignStmtContext ctx) {
 			final String lhsId = ctx.lhs.getText();
-			final InstantiatableSymbol lhsSymbol = (InstantiatableSymbol) scope.resolve(lhsId).get();
+			Optional<? extends Symbol> opt = scope.resolve(lhsId);
+			checkState(opt.isPresent());
+			final InstantiatableSymbol lhsSymbol = (InstantiatableSymbol) opt.get();
 			final VarDecl<?> var = (VarDecl<?>) lhsSymbol.instantiate();
 
 			final XcfaExpression expression = new XcfaExpression(scope, ctx.value);

@@ -16,7 +16,6 @@
 package hu.bme.mit.theta.xcfa;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.cfa.CFA;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
@@ -248,16 +247,16 @@ public final class XCFA {
 
 				private Type rtype;
 
-				private List<VarDecl<?>> params;
+				private final List<VarDecl<?>> params;
 
-				private List<VarDecl<?>> vars;
+				private final List<VarDecl<?>> vars;
 
-				private List<Location> locs;
+				private final List<Location> locs;
 				private Location initLoc;
 				private Location errorLoc;
 				private Location finalLoc;
 
-				private List<Edge> edges;
+				private final List<Edge> edges;
 
 				private Builder() {
 					params = new ArrayList<>();
@@ -267,16 +266,14 @@ public final class XCFA {
 					built = false;
 				}
 
-				public VarDecl<?> createParam(final VarDecl<?> param){
+				public void createParam(final VarDecl<?> param){
 					checkNotBuilt();
 					params.add(param);
-					return param;
 				}
 
-				public VarDecl<?> createVar(final VarDecl<?> var){
+				public void createVar(final VarDecl<?> var){
 					checkNotBuilt();
 					vars.add(var);
-					return var;
 				}
 
 				public Location createLoc(final String name, final Map<String, String> dictionary){
@@ -370,11 +367,11 @@ public final class XCFA {
 		public static final class Builder {
 			private boolean built;
 
-			private List<VarDecl<?>> params;
+			private final List<VarDecl<?>> params;
 
-			private List<VarDecl<?>> vars;
+			private final List<VarDecl<?>> vars;
 
-			private List<Procedure> procedures;
+			private final List<Procedure> procedures;
 			private Procedure mainProcedure;
 
 			private String name;
@@ -390,16 +387,14 @@ public final class XCFA {
 				checkState(!built, "A Process was already built.");
 			}
 
-			public VarDecl<?> createParam(final VarDecl<?> param) {
+			public void createParam(final VarDecl<?> param) {
 				checkNotBuilt();
 				params.add(param);
-				return param;
 			}
 
-			public VarDecl<?> createVar(final VarDecl<?> var) {
+			public void createVar(final VarDecl<?> var) {
 				checkNotBuilt();
 				vars.add(var);
-				return var;
 			}
 
 			public void addProcedure(final Procedure procedure) {
@@ -440,9 +435,9 @@ public final class XCFA {
 	public static final class Builder {
 		private boolean built;
 
-		private List<VarDecl<?>> vars;
+		private final List<VarDecl<?>> vars;
 
-		private List<XCFA.Process> processes;
+		private final List<XCFA.Process> processes;
 		private XCFA.Process mainProcess;
 
 		private Builder() {
@@ -454,10 +449,9 @@ public final class XCFA {
 			checkState(!built, "An XCFA was already built.");
 		}
 
-		public VarDecl<?> createVar(final VarDecl<?> var) {
+		public void createVar(final VarDecl<?> var) {
 			checkNotBuilt();
 			vars.add(var);
-			return var;
 		}
 
 		public void addProcess(final Process process) {

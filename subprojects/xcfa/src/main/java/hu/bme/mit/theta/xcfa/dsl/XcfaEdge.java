@@ -1,11 +1,15 @@
 package hu.bme.mit.theta.xcfa.dsl;
 
+import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.xcfa.XCFA;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+
+import static com.google.common.base.Preconditions.checkState;
 
 public class XcfaEdge implements Instantiatable<XCFA.Process.Procedure.Edge> {
 
@@ -17,8 +21,12 @@ public class XcfaEdge implements Instantiatable<XCFA.Process.Procedure.Edge> {
     private final List<XcfaStatement> stmts;
 
     XcfaEdge(final XcfaProcedureSymbol scope, final XcfaDslParser.EdgeContext context) {
-        source = (XcfaLocationSymbol) scope.resolve(context.source.getText()).get();
-        target = (XcfaLocationSymbol) scope.resolve(context.target.getText()).get();
+        Optional<? extends Symbol> opt = scope.resolve(context.source.getText());
+        checkState(opt.isPresent());
+        source = (XcfaLocationSymbol) opt.get();
+        opt = scope.resolve(context.target.getText());
+        checkState(opt.isPresent());
+        target = (XcfaLocationSymbol) opt.get();
 
         stmts = new ArrayList<>();
         context.stmts.forEach(stmtContext -> stmts.add(new XcfaStatement(scope, stmtContext)));

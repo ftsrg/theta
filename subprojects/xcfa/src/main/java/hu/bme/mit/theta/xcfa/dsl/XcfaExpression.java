@@ -17,6 +17,7 @@ package hu.bme.mit.theta.xcfa.dsl;
 
 import com.google.common.collect.ImmutableList;
 import hu.bme.mit.theta.common.dsl.Scope;
+import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.ParamDecl;
 import hu.bme.mit.theta.core.type.Expr;
@@ -45,10 +46,10 @@ import org.antlr.v4.runtime.Token;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.*;
 import static hu.bme.mit.theta.common.Utils.*;
 import static hu.bme.mit.theta.core.decl.Decls.Param;
 import static hu.bme.mit.theta.core.type.abstracttype.AbstractExprs.Add;
@@ -94,7 +95,7 @@ final class XcfaExpression {
 
 	private static final class ExprCreatorVisitor extends XcfaDslBaseVisitor<Expr<?>> {
 
-		private Scope currentScope;
+		private final Scope currentScope;
 
 		private ExprCreatorVisitor(final Scope scope) {
 			currentScope = checkNotNull(scope);
@@ -144,9 +145,8 @@ final class XcfaExpression {
 			if (ctx.decls == null) {
 				return Collections.emptyList();
 			} else {
-				final List<ParamDecl<?>> paramDecls = ctx.decls.stream()
+				return ctx.decls.stream()
 						.map(d -> Param(d.name.getText(), new XcfaType(d.ttype).instantiate())).collect(toList());
-				return paramDecls;
 			}
 		}
 
@@ -542,7 +542,9 @@ final class XcfaExpression {
 
 		@Override
 		public RefExpr<?> visitIdExpr(final IdExprContext ctx) {
-			final InstantiatableSymbol symbol = (InstantiatableSymbol) currentScope.resolve(ctx.id.getText()).get();
+			Optional<? extends Symbol> opt = currentScope.resolve(ctx.id.getText());
+			checkState(opt.isPresent());
+			final InstantiatableSymbol symbol = (InstantiatableSymbol) opt.get();
 			final Decl<?> decl = (Decl<?>) symbol.instantiate();
 			return decl.getRef();
 		}

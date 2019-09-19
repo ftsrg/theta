@@ -36,7 +36,7 @@ final class XcfaProcessSymbol extends InstantiatableSymbol<XCFA.Process> impleme
 	private final List<XcfaVariableSymbol> vars;
 	private final List<XcfaProcedureSymbol> procedures;
 
-	private SymbolTable symbolTable;
+	private final SymbolTable symbolTable;
 
 	XcfaProcessSymbol(final XcfaSymbol scope, final XcfaDslParser.ProcessDeclContext context) {
 		this.scope = scope;

@@ -46,8 +46,7 @@ public final class XcfaDslManager {
 
 		final SpecContext context = parser.spec();
 		final XcfaSymbol specification = new XcfaSymbol(context);
-		final XCFA xcfa = specification.instantiate();
-		return xcfa;
+		return specification.instantiate();
 	}
 
 }
