@@ -118,6 +118,8 @@ import hu.bme.mit.theta.core.type.inttype.RemExpr;
 import hu.bme.mit.theta.core.type.rattype.RatLitExpr;
 import hu.bme.mit.theta.core.utils.TypeUtils;
 
+//TODO refactor
+
 final class XcfaExpression {
 
 	private final Scope scope;

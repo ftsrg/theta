@@ -15,17 +15,6 @@
  */
 package hu.bme.mit.theta.xcfa.dsl;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static hu.bme.mit.theta.core.stmt.Stmts.Assign;
-import static hu.bme.mit.theta.core.stmt.Stmts.Assume;
-import static hu.bme.mit.theta.core.stmt.Stmts.Havoc;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
-
-import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslBaseVisitor;
-import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.AssignStmtContext;
-import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.AssumeStmtContext;
-import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.HavocStmtContext;
-import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.StmtContext;
 import hu.bme.mit.theta.common.dsl.Env;
 import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.common.dsl.Symbol;
@@ -35,8 +24,19 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.TypeUtils;
+import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslBaseVisitor;
+import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.AssignStmtContext;
+import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.AssumeStmtContext;
+import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.HavocStmtContext;
+import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.StmtContext;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+import static hu.bme.mit.theta.core.stmt.Stmts.*;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Bool;
 
 final class XcfaStatement {
+
+	private Stmt stmt = null;
 
 	private final Scope scope;
 	private final StmtContext context;
@@ -47,12 +47,13 @@ final class XcfaStatement {
 	}
 
 	Stmt instantiate() {
+		if(stmt != null) return stmt;
 		final StmtCreatorVisitor visitor = new StmtCreatorVisitor(scope, null); //TODO Env
 		final Stmt stmt = context.accept(visitor);
 		if (stmt == null) {
 			throw new AssertionError();
 		} else {
-			return stmt;
+			return this.stmt = stmt;
 		}
 	}
 

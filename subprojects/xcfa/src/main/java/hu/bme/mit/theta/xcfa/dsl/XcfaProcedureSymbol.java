@@ -35,6 +35,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 final class XcfaProcedureSymbol implements Symbol, Scope, Instantiatable<XCFA.Process.Procedure> {
 
+	private XCFA.Process.Procedure procedure = null;
 
 	private final XcfaProcessSymbol scope;
 	private final SymbolTable symbolTable;
@@ -45,7 +46,7 @@ final class XcfaProcedureSymbol implements Symbol, Scope, Instantiatable<XCFA.Pr
 	private final List<XcfaParamSymbol> params;
 	private final List<XcfaVariableSymbol> variables;
 	private final List<XcfaLocationSymbol> locations;
-	private final List<XcfaEdgeDefinition> edges;
+	private final List<XcfaEdge> edges;
 
 	XcfaProcedureSymbol(final XcfaProcessSymbol scope, final XcfaDslParser.ProcedureDeclContext context) {
 		checkNotNull(context);
@@ -77,6 +78,7 @@ final class XcfaProcedureSymbol implements Symbol, Scope, Instantiatable<XCFA.Pr
 	////
 
 	public XCFA.Process.Procedure instantiate() {
+		if(procedure != null) return procedure;
 		XCFA.Process.Procedure.Builder builder = XCFA.Process.Procedure.builder();
 		builder.setRtype(rtype);
 		params.forEach(xcfaParamSymbol -> builder.createParam(xcfaParamSymbol.instantiate()));
@@ -93,7 +95,7 @@ final class XcfaProcedureSymbol implements Symbol, Scope, Instantiatable<XCFA.Pr
 			XCFA.Process.Procedure.Edge edge = xcfaEdgeDefinition.instantiate();
 			builder.addEdge(edge);
 		});
-		return builder.build();
+		return procedure = builder.build();
 	}
 
 	////
@@ -164,10 +166,10 @@ final class XcfaProcedureSymbol implements Symbol, Scope, Instantiatable<XCFA.Pr
 		return result;
 	}
 
-	private List<XcfaEdgeDefinition> createEdges(final List<EdgeContext> edgeContexts) {
-		final List<XcfaEdgeDefinition> result = new ArrayList<>();
+	private List<XcfaEdge> createEdges(final List<EdgeContext> edgeContexts) {
+		final List<XcfaEdge> result = new ArrayList<>();
 		for (final EdgeContext edgeContext : edgeContexts) {
-			final XcfaEdgeDefinition edgeDefinition = new XcfaEdgeDefinition(this, edgeContext);
+			final XcfaEdge edgeDefinition = new XcfaEdge(this, edgeContext);
 			result.add(edgeDefinition);
 		}
 		return result;

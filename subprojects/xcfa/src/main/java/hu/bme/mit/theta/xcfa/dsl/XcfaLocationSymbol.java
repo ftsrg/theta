@@ -23,6 +23,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 final class XcfaLocationSymbol implements Symbol, Instantiatable<XCFA.Process.Procedure.Location> {
 
+	private XCFA.Process.Procedure.Location loc = null;
+
 	private final boolean init;
 	private final boolean finall;
 	private final boolean error;
@@ -54,7 +56,8 @@ final class XcfaLocationSymbol implements Symbol, Instantiatable<XCFA.Process.Pr
 	}
 
 	public XCFA.Process.Procedure.Location instantiate() {
-		return new XCFA.Process.Procedure.Location(name, null); //TODO dictionary
+		if(loc != null) return loc;
+		return loc = new XCFA.Process.Procedure.Location(name, null); //TODO dictionary
 	}
 
 }

@@ -27,6 +27,8 @@ import java.util.Optional;
 
 final class XcfaProcessSymbol implements Symbol, Scope, Instantiatable<XCFA.Process> {
 
+	private XCFA.Process process = null;
+
 	private final XcfaSymbol scope;
 	private final String name;
 	private final boolean isMain;
@@ -84,6 +86,7 @@ final class XcfaProcessSymbol implements Symbol, Scope, Instantiatable<XCFA.Proc
 	}
 
 	public XCFA.Process instantiate() {
+		if(process != null) return process;
 		XCFA.Process.Builder builder = XCFA.Process.builder();
 		params.forEach(xcfaParamSymbol -> builder.createParam(xcfaParamSymbol.instantiate()));
 		vars.forEach(xcfaVariableSymbol -> builder.createVar(xcfaVariableSymbol.instantiate()));
@@ -93,7 +96,7 @@ final class XcfaProcessSymbol implements Symbol, Scope, Instantiatable<XCFA.Proc
 			if(xcfaProcedureSymbol.isMain()) builder.setMainProcedure(procedure);
 		});
 		builder.setName(name);
-		return builder.build();
+		return process = builder.build();
 	}
 
 	public boolean isMain() {

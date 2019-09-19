@@ -27,6 +27,8 @@ import static hu.bme.mit.theta.core.type.rattype.RatExprs.Rat;
 
 final class XcfaType implements Instantiatable<Type> {
 
+	private Type type = null;
+
 	private final TypeContext context;
 
 	XcfaType(final TypeContext context) {
@@ -34,11 +36,12 @@ final class XcfaType implements Instantiatable<Type> {
 	}
 
 	public Type instantiate() {
+		if(type != null) return type;
 		final Type result = TypeCreatorVisitor.INSTANCE.visit(context);
 		if (result == null) {
 			throw new AssertionError();
 		} else {
-			return result;
+			return type = result;
 		}
 	}
 

@@ -12,6 +12,8 @@ import java.util.Optional;
 
 public class XcfaSymbol implements Scope, Symbol, Instantiatable<XCFA> {
 
+    private XCFA xcfa = null;
+
     private SymbolTable symbolTable;
 
     private final List<XcfaVariableSymbol> vars;
@@ -42,7 +44,7 @@ public class XcfaSymbol implements Scope, Symbol, Instantiatable<XCFA> {
             builder.addProcess(process = xcfaProcessSymbol.instantiate());
             if(xcfaProcessSymbol.isMain()) builder.setMainProcess(process);
         });
-        return builder.build();
+        return xcfa = builder.build();
     }
 
 

@@ -24,6 +24,8 @@ import static hu.bme.mit.theta.core.decl.Decls.Var;
 
 final class XcfaParamSymbol implements Symbol, Instantiatable<VarDecl<?>> {
 
+	private VarDecl<?> param = null;
+
 	private final String name;
 	private final XcfaType type;
 
@@ -39,7 +41,8 @@ final class XcfaParamSymbol implements Symbol, Instantiatable<VarDecl<?>> {
 	}
 
 	public VarDecl<?> instantiate() {
-		return Var(name, type.instantiate());
+		if(param != null) return param;
+		return param = Var(name, type.instantiate());
 	}
 
 }
