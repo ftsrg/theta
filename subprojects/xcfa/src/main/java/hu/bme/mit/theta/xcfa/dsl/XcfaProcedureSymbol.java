@@ -18,7 +18,6 @@ package hu.bme.mit.theta.xcfa.dsl;
 import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.common.dsl.SymbolTable;
-import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.xcfa.XCFA;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser;
@@ -89,12 +88,7 @@ final class XcfaProcedureSymbol implements Symbol, Scope, Instantiatable<XCFA.Pr
 			else if(xcfaLocationSymbol.isError()) builder.setErrorLoc(loc);
 			else if(xcfaLocationSymbol.isFinal()) builder.setFinalLoc(loc);
 		});
-		edges.forEach(xcfaEdgeDefinition -> {
-			List<Stmt> stmts = new ArrayList<>();
-			xcfaEdgeDefinition.getStatements().forEach(xcfaStatement -> stmts.add(xcfaStatement.instantiate()));
-			XCFA.Process.Procedure.Edge edge = xcfaEdgeDefinition.instantiate();
-			builder.addEdge(edge);
-		});
+		edges.forEach(xcfaEdgeDefinition -> builder.addEdge(xcfaEdgeDefinition.instantiate()));
 		return procedure = builder.build();
 	}
 
