@@ -11,15 +11,12 @@ public class XcfaEdge implements Instantiatable<XCFA.Process.Procedure.Edge> {
 
     private XCFA.Process.Procedure.Edge built = null;
 
-    private final XcfaProcedureSymbol scope;
-
     private final XcfaLocationSymbol source;
     private final XcfaLocationSymbol target;
 
     private final List<XcfaStatement> stmts;
 
     XcfaEdge(final XcfaProcedureSymbol scope, final XcfaDslParser.EdgeContext context) {
-        this.scope = scope;
         source = (XcfaLocationSymbol) scope.resolve(context.source.getText()).get();
         target = (XcfaLocationSymbol) scope.resolve(context.target.getText()).get();
 
