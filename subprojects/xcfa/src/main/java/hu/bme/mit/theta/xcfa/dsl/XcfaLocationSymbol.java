@@ -15,13 +15,12 @@
  */
 package hu.bme.mit.theta.xcfa.dsl;
 
-import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.xcfa.XCFA;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.LocContext;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-final class XcfaLocationSymbol implements Symbol, Instantiatable<XCFA.Process.Procedure.Location> {
+final class XcfaLocationSymbol extends InstantiatableSymbol<XCFA.Process.Procedure.Location> {
 
 	private XCFA.Process.Procedure.Location loc = null;
 

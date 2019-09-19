@@ -15,9 +15,7 @@
  */
 package hu.bme.mit.theta.xcfa.dsl;
 
-import hu.bme.mit.theta.common.dsl.Env;
 import hu.bme.mit.theta.common.dsl.Scope;
-import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.type.Expr;
@@ -48,7 +46,7 @@ final class XcfaStatement {
 
 	Stmt instantiate() {
 		if(stmt != null) return stmt;
-		final StmtCreatorVisitor visitor = new StmtCreatorVisitor(scope, null); //TODO Env
+		final StmtCreatorVisitor visitor = new StmtCreatorVisitor(scope);
 		final Stmt stmt = context.accept(visitor);
 		if (stmt == null) {
 			throw new AssertionError();
@@ -60,36 +58,34 @@ final class XcfaStatement {
 	private static final class StmtCreatorVisitor extends XcfaDslBaseVisitor<Stmt> {
 
 		private final Scope scope;
-		private final Env env;
 
-		StmtCreatorVisitor(final Scope scope, final Env env) {
+		StmtCreatorVisitor(final Scope scope) {
 			this.scope = checkNotNull(scope);
-			this.env = checkNotNull(env);
 		}
 
 		@Override
 		public Stmt visitHavocStmt(final HavocStmtContext ctx) {
 			final String lhsId = ctx.lhs.getText();
-			final Symbol lhsSymbol = scope.resolve(lhsId).get();
-			final VarDecl<?> var = (VarDecl<?>) env.eval(lhsSymbol);
+			final InstantiatableSymbol lhsSymbol = (InstantiatableSymbol) scope.resolve(lhsId).get();
+			final VarDecl<?> var = (VarDecl<?>) lhsSymbol.instantiate();
 			return Havoc(var);
 		}
 
 		@Override
 		public Stmt visitAssumeStmt(final AssumeStmtContext ctx) {
 			final XcfaExpression expression = new XcfaExpression(scope, ctx.cond);
-			final Expr<BoolType> expr = TypeUtils.cast(expression.instantiate(env), Bool());
+			final Expr<BoolType> expr = TypeUtils.cast(expression.instantiate(), Bool());
 			return Assume(expr);
 		}
 
 		@Override
 		public Stmt visitAssignStmt(final AssignStmtContext ctx) {
 			final String lhsId = ctx.lhs.getText();
-			final Symbol lhsSymbol = scope.resolve(lhsId).get();
-			final VarDecl<?> var = (VarDecl<?>) env.eval(lhsSymbol);
+			final InstantiatableSymbol lhsSymbol = (InstantiatableSymbol) scope.resolve(lhsId).get();
+			final VarDecl<?> var = (VarDecl<?>) lhsSymbol.instantiate();
 
 			final XcfaExpression expression = new XcfaExpression(scope, ctx.value);
-			final Expr<?> expr = expression.instantiate(env);
+			final Expr<?> expr = expression.instantiate();
 
 			if (expr.getType().equals(var.getType())) {
 				@SuppressWarnings("unchecked")

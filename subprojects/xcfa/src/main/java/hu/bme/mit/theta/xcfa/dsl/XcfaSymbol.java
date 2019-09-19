@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public class XcfaSymbol implements Scope, Symbol, Instantiatable<XCFA> {
+public class XcfaSymbol extends InstantiatableSymbol<XCFA> implements Scope {
 
     private XCFA xcfa = null;
 

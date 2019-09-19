@@ -130,7 +130,7 @@ final class XcfaExpression {
 		this.context = checkNotNull(context);
 	}
 
-	public Expr<?> instantiate(final Env env) {
+	public Expr<?> instantiate() {
 		final ExprCreatorVisitor visitor = new ExprCreatorVisitor(scope, env);
 		final Expr<?> expr = context.accept(visitor);
 		if (expr == null) {

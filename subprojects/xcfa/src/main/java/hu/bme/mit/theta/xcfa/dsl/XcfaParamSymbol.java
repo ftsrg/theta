@@ -15,14 +15,13 @@
  */
 package hu.bme.mit.theta.xcfa.dsl;
 
-import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static hu.bme.mit.theta.core.decl.Decls.Var;
 
-final class XcfaParamSymbol implements Symbol, Instantiatable<VarDecl<?>> {
+final class XcfaParamSymbol extends InstantiatableSymbol<VarDecl<?>> {
 
 	private VarDecl<?> param = null;
 

@@ -32,7 +32,7 @@ import java.util.Optional;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-final class XcfaProcedureSymbol implements Symbol, Scope, Instantiatable<XCFA.Process.Procedure> {
+final class XcfaProcedureSymbol extends InstantiatableSymbol<XCFA.Process.Procedure> implements Scope {
 
 	private XCFA.Process.Procedure procedure = null;
 
