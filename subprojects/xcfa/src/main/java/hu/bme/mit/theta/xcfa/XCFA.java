@@ -222,7 +222,7 @@ public final class XCFA {
 
 				private final List<Stmt> stmts;
 
-				private Edge(final Location source, final Location target, final List<Stmt> stmts) {
+				public Edge(final Location source, final Location target, final List<Stmt> stmts) {
 					this.source = checkNotNull(source);
 					this.target = checkNotNull(target);
 					this.stmts = ImmutableList.copyOf(stmts);
