@@ -54,15 +54,23 @@ final class XcfaProcedureSymbol extends InstantiatableSymbol<XCFA.Process.Proced
 
 		name = context.id.getText();
 		main = (context.main != null);
-		variables = createVariables(context.varDecls);
-		params = createParams(context.paramDecls.decls);
-		locations = createLocations(context.locs);
-		edges = createEdges(context.edges);
-		rtype = new XcfaType(context.rtype).instantiate();
+		if(context.varDecls != null) {
+			variables = createVariables(context.varDecls);
+			declareAll(variables);
+		}
+		else variables = null;
+		if(context.paramDecls != null) {
+			params = createParams(context.paramDecls.decls);
+			declareAll(params);
+		}
+		else params = null;
 
-		declareAll(variables);
-		declareAll(params);
-		declareAll(locations);
+		locations = createLocations(context.locs);
+        declareAll(locations);
+
+        edges = createEdges(context.edges);
+		if(context.rtype != null) rtype = new XcfaType(context.rtype).instantiate();
+        else rtype = null;
 	}
 
 	@Override
@@ -80,8 +88,8 @@ final class XcfaProcedureSymbol extends InstantiatableSymbol<XCFA.Process.Proced
 		if(procedure != null) return procedure;
 		XCFA.Process.Procedure.Builder builder = XCFA.Process.Procedure.builder();
 		builder.setRtype(rtype);
-		params.forEach(xcfaParamSymbol -> builder.createParam(xcfaParamSymbol.instantiate()));
-		variables.forEach(xcfaVariableSymbol -> builder.createVar(xcfaVariableSymbol.instantiate()));
+		if(params != null) params.forEach(xcfaParamSymbol -> builder.createParam(xcfaParamSymbol.instantiate()));
+		if(variables != null) variables.forEach(xcfaVariableSymbol -> builder.createVar(xcfaVariableSymbol.instantiate()));
 		locations.forEach(xcfaLocationSymbol -> {
 			XCFA.Process.Procedure.Location loc = builder.createLoc(xcfaLocationSymbol.getName(), null); //TODO dictionary
 			if(xcfaLocationSymbol.isInit()) builder.setInitLoc(loc);
@@ -155,7 +163,7 @@ final class XcfaProcedureSymbol extends InstantiatableSymbol<XCFA.Process.Proced
 
 		checkArgument(nInitLocs == 1, "Exactly one initial location must be specififed");
 		checkArgument(nFinalLocs == 1, "Exactly one final location must be specififed");
-		checkArgument(nErrorLocs == 1, "Exactly one error location must be specififed");
+		//checkArgument(nErrorLocs == 1, "Exactly one error location must be specififed");
 
 		return result;
 	}

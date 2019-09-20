@@ -48,21 +48,27 @@ final class XcfaProcessSymbol extends InstantiatableSymbol<XCFA.Process> impleme
 		vars = new ArrayList<>();
 		procedures = new ArrayList<>();
 
-		context.paramDecls.decls.forEach(declContext -> {
-			XcfaParamSymbol paramSymbol;
-			symbolTable.add(paramSymbol = new XcfaParamSymbol(declContext));
-			params.add(paramSymbol);
-		});
-		context.varDecls.forEach(varDeclContext -> {
-			XcfaVariableSymbol variableSymbol;
-			symbolTable.add(variableSymbol = new XcfaVariableSymbol(varDeclContext));
-			vars.add(variableSymbol);
-		});
-		context.procedureDecls.forEach(procedureDeclContext -> {
-			XcfaProcedureSymbol procedureSymbol;
-			symbolTable.add(procedureSymbol = new XcfaProcedureSymbol(this, procedureDeclContext));
-			procedures.add(procedureSymbol);
-		});
+		if(context.paramDecls != null) {
+			context.paramDecls.decls.forEach(declContext -> {
+				XcfaParamSymbol paramSymbol;
+				symbolTable.add(paramSymbol = new XcfaParamSymbol(declContext));
+				params.add(paramSymbol);
+			});
+		}
+		if(context.varDecls != null) {
+			context.varDecls.forEach(varDeclContext -> {
+				XcfaVariableSymbol variableSymbol;
+				symbolTable.add(variableSymbol = new XcfaVariableSymbol(varDeclContext));
+				vars.add(variableSymbol);
+			});
+		}
+		if(context.procedureDecls != null) {
+			context.procedureDecls.forEach(procedureDeclContext -> {
+				XcfaProcedureSymbol procedureSymbol;
+				symbolTable.add(procedureSymbol = new XcfaProcedureSymbol(this, procedureDeclContext));
+				procedures.add(procedureSymbol);
+			});
+		}
 	}
 
 	@Override

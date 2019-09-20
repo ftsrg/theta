@@ -322,8 +322,8 @@ public final class XCFA {
 				public void setInitLoc(final Location initLoc) {
 					checkNotBuilt();
 					checkArgument(locs.contains(initLoc), "Init location not present in XCFA.");
-					checkArgument(!errorLoc.equals(initLoc), "Init location cannot be the same as error location.");
-					checkArgument(!finalLoc.equals(initLoc), "Init location cannot be the same as final location.");
+					//checkArgument(!errorLoc.equals(initLoc), "Init location cannot be the same as error location.");
+					checkArgument(finalLoc == null || !finalLoc.equals(initLoc), "Init location cannot be the same as final location.");
 					this.initLoc = initLoc;
 				}
 
@@ -334,8 +334,8 @@ public final class XCFA {
 				public void setErrorLoc(final Location errorLoc) {
 					checkNotBuilt();
 					checkArgument(locs.contains(errorLoc), "Error location not present in XCFA.");
-					checkArgument(!initLoc.equals(errorLoc), "Error location cannot be the same as init location.");
-					checkArgument(!finalLoc.equals(errorLoc), "Error location cannot be the same as final location.");
+					checkArgument(initLoc == null || !initLoc.equals(errorLoc), "Error location cannot be the same as init location.");
+					checkArgument(finalLoc == null || !finalLoc.equals(errorLoc), "Error location cannot be the same as final location.");
 					this.errorLoc = errorLoc;
 				}
 
@@ -346,8 +346,8 @@ public final class XCFA {
 				public void setFinalLoc(final Location finalLoc) {
 					checkNotBuilt();
 					checkArgument(locs.contains(finalLoc), "Final location not present in XCFA.");
-					checkArgument(!errorLoc.equals(finalLoc), "Final location cannot be the same as error location.");
-					checkArgument(!initLoc.equals(finalLoc), "Final location cannot be the same as init location.");
+					//checkArgument(!errorLoc.equals(finalLoc), "Final location cannot be the same as error location.");
+					checkArgument(initLoc == null || !initLoc.equals(finalLoc), "Final location cannot be the same as init location.");
 					this.finalLoc = finalLoc;
 				}
 

@@ -73,6 +73,14 @@ final class XcfaType implements Instantiatable<Type> {
 			return Array(indexType, elemType);
 		}
 
+		@Override
+		public Type visitSyntheticType(final SyntheticTypeContext ctx) {
+			return new Synthetic();
+		}
+
+		private static class Synthetic implements Type {}
+
+
 	}
 
 }
