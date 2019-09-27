@@ -27,4 +27,6 @@ public interface StmtVisitor<P, R> {
 
 	<DeclType extends Type> R visit(HavocStmt<DeclType> stmt, P param);
 
+	R visit(ParentCallStmt stmt, P param);
+
 }

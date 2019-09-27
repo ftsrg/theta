@@ -23,12 +23,16 @@ import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.utils.TypeUtils;
+import hu.bme.mit.theta.xcfa.XCFA;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslBaseVisitor;
+import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.AssignStmtContext;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.AssumeStmtContext;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.HavocStmtContext;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.StmtContext;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -106,6 +110,35 @@ final class XcfaStatement {
 			}
 		}
 
+		@Override
+		public Stmt visitProcCallStmt(final XcfaDslParser.ProcCallStmtContext ctx) {
+			final String lhsId = ctx.lhs.getText();
+			final String callee = ctx.funcName.getText();
+
+			Optional<? extends Symbol> opt = scope.resolve(lhsId);
+			checkState(opt.isPresent());
+			final InstantiatableSymbol lhsSymbol = (InstantiatableSymbol) opt.get();
+			final VarDecl<?> var = (VarDecl<?>) lhsSymbol.instantiate();
+
+			opt = scope.resolve(callee);
+			checkState(opt.isPresent());
+			final InstantiatableSymbol calleeSymbol = (InstantiatableSymbol) opt.get();
+			checkState(calleeSymbol.instantiate() instanceof XCFA.Process);
+			XCFA.Process process = (XCFA.Process) calleeSymbol.instantiate();
+
+			List<VarDecl<?>> params = new ArrayList<>();
+
+			if(ctx.params != null) {
+				ctx.params.forEach(token -> {
+					Optional<? extends Symbol> optionalSymbol = scope.resolve(token.getText());
+					checkState(optionalSymbol.isPresent());
+					final InstantiatableSymbol varSymbol = (InstantiatableSymbol) optionalSymbol.get();
+					params.add( (VarDecl<?>) varSymbol.instantiate() );
+
+				});
+			}
+			return new CallStmt(var, process, params);
+		}
 	}
 
 }
