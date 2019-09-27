@@ -116,9 +116,13 @@ final class XcfaStatement {
 			final String callee = ctx.funcName.getText();
 
 			Optional<? extends Symbol> opt = scope.resolve(lhsId);
-			checkState(opt.isPresent());
-			final InstantiatableSymbol lhsSymbol = (InstantiatableSymbol) opt.get();
-			final VarDecl<?> var = (VarDecl<?>) lhsSymbol.instantiate();
+			final VarDecl<?> var;
+			if(opt.isPresent())
+			{
+				InstantiatableSymbol lhsSymbol = (InstantiatableSymbol) opt.get();
+				var = (VarDecl<?>) lhsSymbol.instantiate();
+			}
+			else var = null;
 
 			opt = scope.resolve(callee);
 			checkState(opt.isPresent());
