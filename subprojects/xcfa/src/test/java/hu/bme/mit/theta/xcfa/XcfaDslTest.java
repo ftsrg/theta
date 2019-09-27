@@ -99,7 +99,7 @@ public final class XcfaDslTest {
             Assert.assertEquals((long) processParamCount[i], process.getParams().size());
             Assert.assertEquals((long) procedureCount[i], process.getProcedures().size());
             for(int j = 0; j < process.getProcedures().size(); ++j) {
-                XCFA.Process.Procedure procedure = process.getProcedures().get(i);
+                XCFA.Process.Procedure procedure = process.getProcedures().get(j);
                 Assert.assertEquals((long) procedureVarCount[i][j], procedure.getVars().size());
                 Assert.assertEquals((long) procedureParamCount[i][j], procedure.getParams().size());
                 Assert.assertEquals((long) locCount[i][j], procedure.getLocs().size());

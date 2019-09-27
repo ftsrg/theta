@@ -9,13 +9,13 @@ import java.util.List;
 class CallStmt extends XcfaCallStmt {
     private final VarDecl<?> var;
     private final boolean isVoid;
-    private final XCFA.Process process;
+    private final XCFA.Process.Procedure procedure;
     private final List<VarDecl<?>> params;
 
-    CallStmt(VarDecl<?> var, XCFA.Process process, List<VarDecl<?>> params) {
+    CallStmt(VarDecl<?> var, XCFA.Process.Procedure procedure, List<VarDecl<?>> params) {
         this.var = var;
         isVoid = var == null;
-        this.process = process;
+        this.procedure = procedure;
         this.params = params;
     }
 
@@ -27,11 +27,11 @@ class CallStmt extends XcfaCallStmt {
         return var;
     }
 
-    public XCFA.Process getProcess() {
-        return process;
-    }
-
     public List<VarDecl<?>> getParams() {
         return params;
+    }
+
+    public XCFA.Process.Procedure getProcedure() {
+        return procedure;
     }
 }

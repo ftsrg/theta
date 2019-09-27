@@ -276,9 +276,8 @@ public final class XCFA {
 					vars.add(var);
 				}
 
-				public Location createLoc(final String name, final Map<String, String> dictionary){
+				public Location addLoc(Location loc){
 					checkNotBuilt();
-					Location loc = new Location(name, dictionary);
 					locs.add(loc);
 					return loc;
 				}
@@ -355,9 +354,9 @@ public final class XCFA {
 				{
 					checkState(initLoc != null, "Initial location must be set.");
 					checkState(finalLoc != null, "Final location must be set.");
-					checkState(errorLoc != null, "Error location must be set.");
+					//checkState(errorLoc != null, "Error location must be set."); //TODO:
 					checkState(finalLoc.outgoingEdges.isEmpty(), "Final location cannot have outgoing edges.");
-					checkState(errorLoc.outgoingEdges.isEmpty(), "Error location cannot have outgoing edges.");
+					//checkState(errorLoc.outgoingEdges.isEmpty(), "Error location cannot have outgoing edges.");
 					built = true;
 					return new Procedure(this);
 				}

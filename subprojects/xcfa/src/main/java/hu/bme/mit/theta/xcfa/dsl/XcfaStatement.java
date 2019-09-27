@@ -128,8 +128,8 @@ final class XcfaStatement {
 			Optional<? extends Symbol> opt = scope.resolve(callee);
 			checkState(opt.isPresent());
 			final InstantiatableSymbol calleeSymbol = (InstantiatableSymbol) opt.get();
-			checkState(calleeSymbol.instantiate() instanceof XCFA.Process);
-			XCFA.Process process = (XCFA.Process) calleeSymbol.instantiate();
+			checkState(calleeSymbol.instantiate() instanceof XCFA.Process.Procedure);
+			XCFA.Process.Procedure procedure = (XCFA.Process.Procedure) calleeSymbol.instantiate();
 
 			List<VarDecl<?>> params = new ArrayList<>();
 
@@ -142,7 +142,7 @@ final class XcfaStatement {
 
 				});
 			}
-			return new CallStmt(var, process, params);
+			return new CallStmt(var, procedure, params);
 		}
 
 		@Override

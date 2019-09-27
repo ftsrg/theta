@@ -7,7 +7,7 @@ var cnt : bool
 var start : synthetic
 var end : synthetic
 
-process mainProcess{
+main process mainProcess{
 
 	main procedure mainProcedure(){
 		init loc Li

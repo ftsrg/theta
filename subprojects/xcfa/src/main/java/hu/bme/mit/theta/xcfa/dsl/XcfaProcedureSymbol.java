@@ -91,7 +91,8 @@ final class XcfaProcedureSymbol extends InstantiatableSymbol<XCFA.Process.Proced
 		if(params != null) params.forEach(xcfaParamSymbol -> builder.createParam(xcfaParamSymbol.instantiate()));
 		if(variables != null) variables.forEach(xcfaVariableSymbol -> builder.createVar(xcfaVariableSymbol.instantiate()));
 		locations.forEach(xcfaLocationSymbol -> {
-			XCFA.Process.Procedure.Location loc = builder.createLoc(xcfaLocationSymbol.getName(), null); //TODO dictionary
+			XCFA.Process.Procedure.Location loc = xcfaLocationSymbol.instantiate();
+			builder.addLoc(loc);
 			if(xcfaLocationSymbol.isInit()) builder.setInitLoc(loc);
 			else if(xcfaLocationSymbol.isError()) builder.setErrorLoc(loc);
 			else if(xcfaLocationSymbol.isFinal()) builder.setFinalLoc(loc);
