@@ -18,7 +18,8 @@ package hu.bme.mit.theta.xcfa.dsl;
 import hu.bme.mit.theta.common.dsl.Scope;
 import hu.bme.mit.theta.common.dsl.Symbol;
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.stmt.Stmt;
+import hu.bme.mit.theta.core.stmt.*;
+import hu.bme.mit.theta.core.stmt.xcfa.*;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.Type;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
@@ -143,6 +144,84 @@ final class XcfaStatement {
 			}
 			return new CallStmt(var, process, params);
 		}
+
+		@Override
+		public Stmt visitStoreStmt(final XcfaDslParser.StoreStmtContext ctx) {
+			final String lhsId = ctx.lhs.getText();
+			Optional<? extends Symbol> opt = scope.resolve(lhsId);
+			checkState(opt.isPresent());
+			final InstantiatableSymbol lhsSymbol = (InstantiatableSymbol) opt.get();
+			final VarDecl<?> lhs = (VarDecl<?>) lhsSymbol.instantiate();
+			opt = scope.resolve(ctx.rhs.getText());
+			checkState(opt.isPresent());
+			final InstantiatableSymbol rhsSymbol = (InstantiatableSymbol) opt.get();
+			final VarDecl<?> rhs = (VarDecl<?>) rhsSymbol.instantiate();
+
+			final boolean atomic = ctx.atomic != null;
+			final String ordering = atomic ?  ctx.ordering.getText() : null;
+
+			return new StoreStmt(lhs, rhs, atomic, ordering);
+
+		}
+
+		@Override
+		public Stmt visitLoadStmt(final XcfaDslParser.LoadStmtContext ctx) {
+			final String lhsId = ctx.lhs.getText();
+			Optional<? extends Symbol> opt = scope.resolve(lhsId);
+			checkState(opt.isPresent());
+			final InstantiatableSymbol lhsSymbol = (InstantiatableSymbol) opt.get();
+			final VarDecl<?> lhs = (VarDecl<?>) lhsSymbol.instantiate();
+			opt = scope.resolve(ctx.rhs.getText());
+			checkState(opt.isPresent());
+			final InstantiatableSymbol rhsSymbol = (InstantiatableSymbol) opt.get();
+			final VarDecl<?> rhs = (VarDecl<?>) rhsSymbol.instantiate();
+
+			final boolean atomic = ctx.atomic != null;
+			final String ordering = atomic ?  ctx.ordering.getText() : null;
+
+			return new LoadStmt(lhs, rhs, atomic, ordering);
+		}
+
+		@Override
+		public Stmt visitAtomicBegin(final XcfaDslParser.AtomicBeginContext ctx) {
+			return new AtomicBeginStmt();
+		}
+
+		@Override
+		public Stmt visitAtomicEnd(final XcfaDslParser.AtomicEndContext ctx) {
+			return new AtomicEndStmt();
+		}
+
+		@Override
+		public Stmt visitWaitStmt(final XcfaDslParser.WaitStmtContext ctx) {
+			final String lhsId = ctx.syncVar.getText();
+			Optional<? extends Symbol> opt = scope.resolve(lhsId);
+			checkState(opt.isPresent());
+			final InstantiatableSymbol lhsSymbol = (InstantiatableSymbol) opt.get();
+			final VarDecl<?> lhs = (VarDecl<?>) lhsSymbol.instantiate();
+			return new WaitStmt(lhs);
+		}
+
+		@Override
+		public Stmt visitNotifyStmt(final XcfaDslParser.NotifyStmtContext ctx) {
+			final String lhsId = ctx.syncVar.getText();
+			Optional<? extends Symbol> opt = scope.resolve(lhsId);
+			checkState(opt.isPresent());
+			final InstantiatableSymbol lhsSymbol = (InstantiatableSymbol) opt.get();
+			final VarDecl<?> lhs = (VarDecl<?>) lhsSymbol.instantiate();
+			return new NotifyStmt(lhs);
+		}
+
+		@Override
+		public Stmt visitNotifyAllStmt(final XcfaDslParser.NotifyAllStmtContext ctx) {
+			final String lhsId = ctx.syncVar.getText();
+			Optional<? extends Symbol> opt = scope.resolve(lhsId);
+			checkState(opt.isPresent());
+			final InstantiatableSymbol lhsSymbol = (InstantiatableSymbol) opt.get();
+			final VarDecl<?> lhs = (VarDecl<?>) lhsSymbol.instantiate();
+			return new NotifyAllStmt(lhs);
+		}
+
 	}
 
 }

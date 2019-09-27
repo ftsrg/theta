@@ -1,12 +1,12 @@
 package hu.bme.mit.theta.xcfa.dsl;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.stmt.ParentCallStmt;
+import hu.bme.mit.theta.core.stmt.xcfa.XcfaCallStmt;
 import hu.bme.mit.theta.xcfa.XCFA;
 
 import java.util.List;
 
-class CallStmt extends ParentCallStmt {
+class CallStmt extends XcfaCallStmt {
     private final VarDecl<?> var;
     private final boolean isVoid;
     private final XCFA.Process process;

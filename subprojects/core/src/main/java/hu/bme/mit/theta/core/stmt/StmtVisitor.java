@@ -15,6 +15,7 @@
  */
 package hu.bme.mit.theta.core.stmt;
 
+import hu.bme.mit.theta.core.stmt.xcfa.*;
 import hu.bme.mit.theta.core.type.Type;
 
 public interface StmtVisitor<P, R> {
@@ -27,6 +28,19 @@ public interface StmtVisitor<P, R> {
 
 	<DeclType extends Type> R visit(HavocStmt<DeclType> stmt, P param);
 
-	R visit(ParentCallStmt stmt, P param);
+	R visit(XcfaCallStmt stmt, P param);
 
+    R visit(StoreStmt storeStmt, P param);
+
+	R visit(LoadStmt loadStmt, P param);
+
+	R visit(AtomicBeginStmt atomicBeginStmt, P param);
+
+	R visit(AtomicEndStmt atomicEndStmt, P param);
+
+	R visit(NotifyAllStmt notifyAllStmt, P param);
+
+	R visit(NotifyStmt notifyStmt, P param);
+
+	R visit(WaitStmt waitStmt, P param);
 }
