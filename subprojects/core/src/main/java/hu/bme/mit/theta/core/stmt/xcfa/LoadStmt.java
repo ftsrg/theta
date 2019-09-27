@@ -1,10 +1,10 @@
 package hu.bme.mit.theta.core.stmt.xcfa;
 
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.stmt.Stmt;
 import hu.bme.mit.theta.core.stmt.StmtVisitor;
+import hu.bme.mit.theta.core.stmt.XcfaStmt;
 
-public class LoadStmt implements Stmt {
+public class LoadStmt extends XcfaStmt {
     private final VarDecl<?> lhs;
     private final VarDecl<?> rhs;
     private final boolean atomic;
@@ -18,6 +18,11 @@ public class LoadStmt implements Stmt {
 
     @Override
     public <P, R> R accept(StmtVisitor<? super P, ? extends R> visitor, P param) {
+        return visitor.visit(this, param);
+    }
+
+    @Override
+    public <P, R> R accept(XcfaStmtVisitor<? super P, ? extends R> visitor, P param) {
         return visitor.visit(this, param);
     }
 

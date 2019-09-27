@@ -15,15 +15,11 @@
  */
 package hu.bme.mit.theta.core.utils;
 
-import java.util.Collection;
-
 import hu.bme.mit.theta.core.decl.VarDecl;
-import hu.bme.mit.theta.core.stmt.AssignStmt;
-import hu.bme.mit.theta.core.stmt.AssumeStmt;
-import hu.bme.mit.theta.core.stmt.HavocStmt;
-import hu.bme.mit.theta.core.stmt.SkipStmt;
-import hu.bme.mit.theta.core.stmt.StmtVisitor;
+import hu.bme.mit.theta.core.stmt.*;
 import hu.bme.mit.theta.core.type.Type;
+
+import java.util.Collection;
 
 final class VarCollectorStmtVisitor implements StmtVisitor<Collection<VarDecl<?>>, Void> {
 
@@ -59,6 +55,12 @@ final class VarCollectorStmtVisitor implements StmtVisitor<Collection<VarDecl<?>
 	@Override
 	public <DeclType extends Type> Void visit(final HavocStmt<DeclType> stmt, final Collection<VarDecl<?>> vars) {
 		vars.add(stmt.getVarDecl());
+		return null;
+	}
+
+	@Override
+	public Void visit(XcfaStmt xcfaStmt, Collection<VarDecl<?>> param) {
+		assert(false); //TODO
 		return null;
 	}
 

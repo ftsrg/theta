@@ -113,19 +113,19 @@ final class XcfaStatement {
 
 		@Override
 		public Stmt visitProcCallStmt(final XcfaDslParser.ProcCallStmtContext ctx) {
-			final String lhsId = ctx.lhs.getText();
 			final String callee = ctx.funcName.getText();
 
-			Optional<? extends Symbol> opt = scope.resolve(lhsId);
 			final VarDecl<?> var;
-			if(opt.isPresent())
-			{
+			if(ctx.lhs != null){
+				final String lhsId = ctx.lhs.getText();
+				Optional<? extends Symbol> opt = scope.resolve(lhsId);
+				checkState(opt.isPresent());
 				InstantiatableSymbol lhsSymbol = (InstantiatableSymbol) opt.get();
 				var = (VarDecl<?>) lhsSymbol.instantiate();
 			}
 			else var = null;
 
-			opt = scope.resolve(callee);
+			Optional<? extends Symbol> opt = scope.resolve(callee);
 			checkState(opt.isPresent());
 			final InstantiatableSymbol calleeSymbol = (InstantiatableSymbol) opt.get();
 			checkState(calleeSymbol.instantiate() instanceof XCFA.Process);
