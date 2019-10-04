@@ -91,8 +91,7 @@ public final class ClockOps {
 
 		@Override
 		public ClockOp visit(XcfaStmt xcfaStmt, Void param) {
-			assert(false); //TODO
-			return null;
+			throw new UnsupportedOperationException("Not yet implemented");
 		}
 
 		@Override

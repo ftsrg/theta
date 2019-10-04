@@ -60,8 +60,7 @@ final class VarCollectorStmtVisitor implements StmtVisitor<Collection<VarDecl<?>
 
 	@Override
 	public Void visit(XcfaStmt xcfaStmt, Collection<VarDecl<?>> param) {
-		assert(false); //TODO
-		return null;
+		throw new UnsupportedOperationException("Not yet implemented"); //TODO
 	}
 
 }

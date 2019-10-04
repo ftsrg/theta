@@ -142,8 +142,7 @@ public final class WpState {
 
 		@Override
 		public WpState visit(XcfaStmt xcfaStmt, WpState param) {
-			assert(false); //TODO
-			return null;
+			throw new UnsupportedOperationException("Not yet implemented"); //TODO
 		}
 
 		@Override
@@ -184,8 +183,7 @@ public final class WpState {
 
 		@Override
 		public WpState visit(XcfaStmt xcfaStmt, WpState param) {
-			assert(false); //TODO
-			return null;
+			throw new UnsupportedOperationException("Not yet implemented"); //TODO
 		}
 
 		@Override

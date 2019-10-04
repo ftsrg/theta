@@ -36,7 +36,7 @@ procedureDecl
 		RBRAC
 	;
 
-loc	:	(init=INIT | finall=FINAL | error=ERROR)? LOC comments=comment* id=ID
+loc	:	(init=INIT | finall=FINAL | error=ERROR)? LOC (comments+=comment)* id=ID
 	;
 
 edge:	source=ID RARROW target=ID (LBRAC

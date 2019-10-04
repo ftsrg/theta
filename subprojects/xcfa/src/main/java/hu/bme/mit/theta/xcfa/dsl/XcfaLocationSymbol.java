@@ -18,6 +18,9 @@ package hu.bme.mit.theta.xcfa.dsl;
 import hu.bme.mit.theta.xcfa.XCFA;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.LocContext;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 
 final class XcfaLocationSymbol extends InstantiatableSymbol<XCFA.Process.Procedure.Location> {
@@ -29,12 +32,15 @@ final class XcfaLocationSymbol extends InstantiatableSymbol<XCFA.Process.Procedu
 	private final boolean error;
 	private final String name;
 
+	private final Map<String, String> dictionary;
+
 	XcfaLocationSymbol(final LocContext context) {
 		checkNotNull(context);
 		init = (context.init != null);
 		finall = (context.finall != null);
 		error = (context.error != null);
 		name = context.id.getText();
+		dictionary = new HashMap<>();
 	}
 
 	@Override
@@ -56,7 +62,14 @@ final class XcfaLocationSymbol extends InstantiatableSymbol<XCFA.Process.Procedu
 
 	public XCFA.Process.Procedure.Location instantiate() {
 		if(loc != null) return loc;
-		return loc = new XCFA.Process.Procedure.Location(name, null); //TODO dictionary
+		return loc = new XCFA.Process.Procedure.Location(name, dictionary); //TODO dictionary
 	}
 
+	public void addDictionaryEntry(final String key, final String value) {
+		dictionary.put(key, value);
+	}
+
+	public Map<String, String> getDictionary() {
+		return dictionary;
+	}
 }
