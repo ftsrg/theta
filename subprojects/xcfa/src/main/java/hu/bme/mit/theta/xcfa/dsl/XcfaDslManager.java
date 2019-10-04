@@ -19,7 +19,8 @@ import hu.bme.mit.theta.xcfa.XCFA;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslLexer;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.SpecContext;
-import org.antlr.v4.runtime.ANTLRInputStream;
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 
 import java.io.ByteArrayInputStream;
@@ -38,7 +39,7 @@ public final class XcfaDslManager {
 	}
 
 	public static XCFA createXcfa(final InputStream inputStream) throws IOException {
-		final ANTLRInputStream input = new ANTLRInputStream(inputStream);
+		final CharStream input = CharStreams.fromStream(inputStream);
 
 		final XcfaDslLexer lexer = new XcfaDslLexer(input);
 		final CommonTokenStream tokens = new CommonTokenStream(lexer);
