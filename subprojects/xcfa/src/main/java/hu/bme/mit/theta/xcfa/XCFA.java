@@ -124,6 +124,7 @@ public final class XCFA {
 
 		public static final class Procedure {
 			private final Type rtype;
+			private final VarDecl<?> result;
 
 			private final List<VarDecl<?>> params;
 
@@ -145,6 +146,7 @@ public final class XCFA {
 				errorLoc = builder.errorLoc;
 				finalLoc = builder.finalLoc;
 				edges = ImmutableList.copyOf(builder.edges);
+				result = builder.result;
 			}
 
 			public static Builder builder() {
@@ -181,6 +183,10 @@ public final class XCFA {
 
 			public List<Edge> getEdges() {
 				return edges;
+			}
+
+			public VarDecl<?> getResult() {
+				return result;
 			}
 
 			public static final class Location {
@@ -243,9 +249,11 @@ public final class XCFA {
 			}
 
 			public static final class Builder {
+				private static final String RESULT_NAME = "result";
 				private boolean built;
 
 				private Type rtype;
+				private VarDecl<?> result;
 
 				private final List<VarDecl<?>> params;
 
@@ -273,6 +281,7 @@ public final class XCFA {
 
 				public void createVar(final VarDecl<?> var){
 					checkNotBuilt();
+					if(var.getName().equals(RESULT_NAME)) setResult(var);
 					vars.add(var);
 				}
 
@@ -359,6 +368,10 @@ public final class XCFA {
 					//checkState(errorLoc.outgoingEdges.isEmpty(), "Error location cannot have outgoing edges.");
 					built = true;
 					return new Procedure(this);
+				}
+
+				private void setResult(VarDecl<?> result) {
+					this.result = result;
 				}
 			}
 		}

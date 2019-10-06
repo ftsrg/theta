@@ -62,10 +62,10 @@ final class XcfaLocationSymbol extends InstantiatableSymbol<XCFA.Process.Procedu
 
 	public XCFA.Process.Procedure.Location instantiate() {
 		if(loc != null) return loc;
-		return loc = new XCFA.Process.Procedure.Location(name, dictionary); //TODO dictionary
+		return loc = new XCFA.Process.Procedure.Location(name, dictionary);
 	}
 
-	public void addDictionaryEntry(final String key, final String value) {
+	void addDictionaryEntry(final String key, final String value) {
 		dictionary.put(key, value);
 	}
 
