@@ -47,8 +47,7 @@ public class StmtWriter implements StmtVisitor<Void, String> {
 
 	@Override
 	public String visit(XcfaStmt xcfaStmt, Void param) {
-		assert(false); //TODO
-		return null;
+		throw new UnsupportedOperationException("Not yet implemented"); //TODO
 	}
 
 

@@ -159,6 +159,9 @@ final class XcfaProcedureSymbol extends InstantiatableSymbol<XCFA.Process.Proced
 				nErrorLocs++;
 			}
 
+			for(final XcfaDslParser.CommentContext commentContext : locContext.comments) {
+				symbol.addDictionaryEntry(commentContext.id.getText(), commentContext.value.getText());
+			}
 			result.add(symbol);
 		}
 

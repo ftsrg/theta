@@ -82,8 +82,7 @@ final class StmtToExprTransformer {
 
 		@Override
 		public StmtUnfoldResult visit(XcfaStmt xcfaStmt, VarIndexing param) {
-			assert(false); //TODO
-			return null;
+			throw new UnsupportedOperationException("Not yet implemented"); //TODO
 		}
 
 		@Override
