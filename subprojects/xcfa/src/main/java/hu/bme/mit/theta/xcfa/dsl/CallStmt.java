@@ -6,7 +6,7 @@ import hu.bme.mit.theta.xcfa.XCFA;
 
 import java.util.List;
 
-class CallStmt extends XcfaCallStmt {
+public class CallStmt extends XcfaCallStmt {
     private final VarDecl<?> var;
     private final boolean isVoid;
     private final XCFA.Process.Procedure procedure;
