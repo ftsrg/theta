@@ -93,7 +93,7 @@ final class XcfaStatement {
 		public Stmt visitAssignStmt(final AssignStmtContext ctx) {
 			final String lhsId = ctx.lhs.getText();
 			Optional<? extends Symbol> opt = scope.resolve(lhsId);
-			checkState(opt.isPresent());
+			checkState(opt.isPresent(), "Could not find lhs variable %s in assign stmt %s", ctx.lhs.getText(), ctx.getText());
 			final InstantiatableSymbol lhsSymbol = (InstantiatableSymbol) opt.get();
 			final VarDecl<?> var = (VarDecl<?>) lhsSymbol.instantiate();
 

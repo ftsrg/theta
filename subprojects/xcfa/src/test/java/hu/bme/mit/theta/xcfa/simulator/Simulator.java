@@ -1,5 +1,6 @@
 package hu.bme.mit.theta.xcfa.simulator;
 
+import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.IndexedConstDecl;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.model.MutableValuation;
@@ -60,18 +61,33 @@ public class Simulator implements XcfaStmtVisitor<Simulator.CallState, Boolean> 
         Location currentLocation;
         ProcessState parent;
 
-        public CallState(ProcessState parent, Procedure procedure) {
+        public CallState(ProcessState parent, Procedure procedure, List<VarDecl<?>> parameters) {
             this.parent = parent;
             this.procedure = procedure;
             currentLocation = procedure.getInitLoc();
-            begin();
+            begin(parameters);
         }
 
         /** Called when the procedure gets called.
          * Pushes local variable instances. */
-        public void begin() {
-            for (VarDecl var: procedure.getParams()) {
-                parent.parent.vars.inc(var);
+        public void begin(List<VarDecl<?>> parameters) {
+            //  map everything *first* to the indexed version, because modifying the numbering can have effect to the variables
+            // for example: gcd(a,b) call to gcd(b,a%b) would change `a`'s meaning first
+            List<Decl<?>> callerParamsIndexed = new ArrayList<>(parameters);
+            callerParamsIndexed.replaceAll((a)->((VarDecl<?>)a).getConstDecl(parent.parent.vars.get((VarDecl<?>)a)));
+
+            assert(callerParamsIndexed.size() == procedure.getParams().size());
+            for (int i = 0; i < parameters.size(); i++) {
+                Decl<?> callerParam = callerParamsIndexed.get(i);
+                VarDecl<?> calleeParam = procedure.getParams().get(i);
+
+                parent.parent.vars.inc(calleeParam);
+
+                int calleeParamIndex = parent.parent.vars.get(calleeParam);
+                Optional<? extends LitExpr<?>> callerParameterValue = parent.parent.valuation.eval(callerParam);
+                // variable could have been uninitialised
+                if (callerParameterValue.isPresent())
+                    parent.parent.valuation.put(calleeParam.getConstDecl(calleeParamIndex), callerParameterValue.get());
             }
             for (VarDecl var: procedure.getVars()) {
                 parent.parent.vars.inc(var);
@@ -80,7 +96,8 @@ public class Simulator implements XcfaStmtVisitor<Simulator.CallState, Boolean> 
 
         /** Called when the function gets returned.
          * Deletes values associated with the current values.
-         *  */
+         * TODO write result to the caller's variable
+         */
         public void end() {
             for (VarDecl var: procedure.getParams()) {
                 int index = parent.parent.vars.get(var);
@@ -101,6 +118,13 @@ public class Simulator implements XcfaStmtVisitor<Simulator.CallState, Boolean> 
                 return true;
             }
             for (Edge edge: currentLocation.getOutgoingEdges()) {
+                assert(edge.getStmts().size() == 1);
+                // XXX dangerous: some special stmt could mess up everything with multiple statements:
+                // L0 -> L1 {
+                //   call proc()
+                //   a = a + 2
+                // }
+                // this code would try to call proc(), then increment a by 2, and *only then* proceed to the call itself.
                 for (Stmt stmt: edge.getStmts()) {
                     if (stmt.accept((XcfaStmtVisitor<CallState,Boolean>)parent.parent.simulator, this)) {
                         currentLocation = edge.getTarget();
@@ -123,8 +147,7 @@ public class Simulator implements XcfaStmtVisitor<Simulator.CallState, Boolean> 
             this.parent = parent;
             callStack = new Stack<>();
             this.process = process;
-            Procedure main = process.getMainProcedure();
-            callStack.push(new CallState(this, main));
+            push(process.getMainProcedure(), new ArrayList<>());
         }
 
         public void pop() {
@@ -135,6 +158,10 @@ public class Simulator implements XcfaStmtVisitor<Simulator.CallState, Boolean> 
             if (callStack.empty())
                 return false;
             return callStack.peek().step();
+        }
+
+        public void push(Procedure procedure, List<VarDecl<?>> params) {
+            callStack.push(new CallState(this, procedure, params));
         }
     }
 
@@ -182,6 +209,11 @@ public class Simulator implements XcfaStmtVisitor<Simulator.CallState, Boolean> 
     @Override
     public Boolean visit(XcfaCallStmt _stmt, CallState param) {
         assert(_stmt instanceof CallStmt);
+        CallStmt stmt = (CallStmt) _stmt;
+        // paraméterek befelé: stmt.getParams()
+        // az, amit hívnak: stmt.getProcedure()
+        ProcessState process = param.parent;
+        process.push(stmt.getProcedure(), stmt.getParams());
         throw new UnsupportedOperationException("Not yet supported");
     }
 
