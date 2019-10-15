@@ -1,5 +1,6 @@
 package hu.bme.mit.theta.xcfa.simulator;
 
+import com.google.common.base.Preconditions;
 import hu.bme.mit.theta.core.decl.Decl;
 import hu.bme.mit.theta.core.decl.IndexedConstDecl;
 import hu.bme.mit.theta.core.decl.VarDecl;
@@ -9,6 +10,7 @@ import hu.bme.mit.theta.core.stmt.xcfa.*;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.LitExpr;
 import hu.bme.mit.theta.core.type.Type;
+import hu.bme.mit.theta.core.type.anytype.RefExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolLitExpr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
 import hu.bme.mit.theta.core.type.inttype.IntExprs;
@@ -47,11 +49,38 @@ public class Simulator implements XcfaStmtVisitor<Simulator.CallState, Boolean> 
 
     static class FillValuation {
         <DeclType extends Type> void fill(Expr<DeclType> expr, MutableValuation param) {
-            for (VarDecl var: ExprUtils.getVars(expr)) {
+            for (Decl var: Utils.getDecls(expr)) {
                 if (!param.getDecls().contains(var)) {
-                    param.put(var, IntExprs.Int(10));
+                    param.put(var, IntExprs.Int(0));
                 }
             }
+        }
+
+        private FillValuation() {}
+
+        static FillValuation instance;
+
+        public static FillValuation getInstance() {
+            if (instance == null) instance = new FillValuation();
+            return instance;
+        }
+    }
+
+    static class Utils {
+
+        static private void collect(Expr<? extends Type> expr, Collection<Decl<?>> collectTo) {
+
+            if (expr instanceof RefExpr) {
+                final RefExpr<?> refExpr = (RefExpr<?>) expr;
+                final Decl<?> decl = refExpr.getDecl();
+                collectTo.add(decl);
+            }
+            expr.getOps().forEach(op -> collect(op, collectTo));
+        }
+        static Set<Decl<?>> getDecls(Expr<? extends Type> expr) {
+            Set<Decl<?>> x = new HashSet<>();
+            collect(expr, x);
+            return x;
         }
     }
 
@@ -60,10 +89,13 @@ public class Simulator implements XcfaStmtVisitor<Simulator.CallState, Boolean> 
         Procedure procedure;
         Location currentLocation;
         ProcessState parent;
+        /** Where to return the result */
+        VarDecl<?> resultVar;
 
-        public CallState(ProcessState parent, Procedure procedure, List<VarDecl<?>> parameters) {
+        public CallState(ProcessState parent, Procedure procedure, List<VarDecl<?>> parameters, VarDecl<?> resultVar) {
             this.parent = parent;
             this.procedure = procedure;
+            this.resultVar = resultVar;
             currentLocation = procedure.getInitLoc();
             begin(parameters);
         }
@@ -78,27 +110,37 @@ public class Simulator implements XcfaStmtVisitor<Simulator.CallState, Boolean> 
 
             assert(callerParamsIndexed.size() == procedure.getParams().size());
             for (int i = 0; i < parameters.size(); i++) {
-                Decl<?> callerParam = callerParamsIndexed.get(i);
+                Decl<?> callerParamIndexed = callerParamsIndexed.get(i);
                 VarDecl<?> calleeParam = procedure.getParams().get(i);
 
                 parent.parent.vars.inc(calleeParam);
 
                 int calleeParamIndex = parent.parent.vars.get(calleeParam);
-                Optional<? extends LitExpr<?>> callerParameterValue = parent.parent.valuation.eval(callerParam);
+                Decl<?> calleeParamIndexed = calleeParam.getConstDecl(calleeParamIndex);
+                Optional<? extends LitExpr<?>> callerParameterValue = parent.parent.valuation.eval(callerParamIndexed);
                 // variable could have been uninitialised
                 if (callerParameterValue.isPresent())
-                    parent.parent.valuation.put(calleeParam.getConstDecl(calleeParamIndex), callerParameterValue.get());
+                    parent.parent.valuation.put(calleeParamIndexed, callerParameterValue.get());
             }
             for (VarDecl var: procedure.getVars()) {
                 parent.parent.vars.inc(var);
             }
+            if (procedure.getResult() != null)
+                parent.parent.vars.inc(procedure.getResult(), 1);
         }
 
         /** Called when the function gets returned.
          * Deletes values associated with the current values.
-         * TODO write result to the caller's variable
          */
         public void end() {
+            // evaluate result
+            Optional<? extends LitExpr<?>> result = Optional.empty();
+            if (procedure.getResult() != null) {
+                int index0 = parent.parent.vars.get(procedure.getResult());
+                result = parent.parent.valuation.eval(procedure.getResult().getConstDecl(index0));
+            }
+
+            // pop call-stack parameters and local variables
             for (VarDecl var: procedure.getParams()) {
                 int index = parent.parent.vars.get(var);
                 parent.parent.valuation.remove(var.getConstDecl(index));
@@ -109,6 +151,19 @@ public class Simulator implements XcfaStmtVisitor<Simulator.CallState, Boolean> 
                 parent.parent.valuation.remove(var.getConstDecl(index));
                 parent.parent.vars.inc(var, -1);
             }
+
+            // write result
+            if (procedure.getResult() != null) {
+                Preconditions.checkState(result.isPresent(), "Procedure has return value, but nothing is returned.");
+                parent.parent.vars.inc(procedure.getResult(), -1);
+
+                Decl<? extends Type> resultDecl = resultVar.getConstDecl(parent.parent.vars.get(resultVar));
+                if (result.isPresent())
+                    parent.parent.valuation.put(resultDecl, result.get());
+            } else {
+                Preconditions.checkState(!result.isPresent(), "Procedure has no return value, but something is returned.");
+            }
+
             parent.pop();
         }
         // returning from a function counts as a step
@@ -147,7 +202,7 @@ public class Simulator implements XcfaStmtVisitor<Simulator.CallState, Boolean> 
             this.parent = parent;
             callStack = new Stack<>();
             this.process = process;
-            push(process.getMainProcedure(), new ArrayList<>());
+            push(process.getMainProcedure(), new ArrayList<>(), null);
         }
 
         public void pop() {
@@ -160,8 +215,8 @@ public class Simulator implements XcfaStmtVisitor<Simulator.CallState, Boolean> 
             return callStack.peek().step();
         }
 
-        public void push(Procedure procedure, List<VarDecl<?>> params) {
-            callStack.push(new CallState(this, procedure, params));
+        public void push(Procedure procedure, List<VarDecl<?>> params, VarDecl<?> resultVar) {
+            callStack.push(new CallState(this, procedure, params, resultVar));
         }
     }
 
@@ -212,9 +267,10 @@ public class Simulator implements XcfaStmtVisitor<Simulator.CallState, Boolean> 
         CallStmt stmt = (CallStmt) _stmt;
         // paraméterek befelé: stmt.getParams()
         // az, amit hívnak: stmt.getProcedure()
+        // visszatérési értéket stmt.getVar()-ba kell írni
         ProcessState process = param.parent;
-        process.push(stmt.getProcedure(), stmt.getParams());
-        throw new UnsupportedOperationException("Not yet supported");
+        process.push(stmt.getProcedure(), stmt.getParams(), stmt.isVoid() ? null : stmt.getVar());
+        return true;
     }
 
     @Override
@@ -260,7 +316,7 @@ public class Simulator implements XcfaStmtVisitor<Simulator.CallState, Boolean> 
     @Override
     public Boolean visit(AssumeStmt stmt, CallState param) {
         Expr<BoolType> unfolded = PathUtils.unfold(stmt.getCond(), state.vars);
-        new FillValuation().fill(unfolded, state.valuation);
+        FillValuation.getInstance().fill(unfolded, state.valuation);
         BoolLitExpr a = (BoolLitExpr) unfolded.eval(state.valuation);
         return a.getValue();
     }
@@ -270,7 +326,7 @@ public class Simulator implements XcfaStmtVisitor<Simulator.CallState, Boolean> 
         Expr<? extends Type> unfolded = PathUtils.unfold(stmt.getExpr(), state.vars);
 
         IndexedConstDecl<DeclType> y = stmt.getVarDecl().getConstDecl(state.vars.get(stmt.getVarDecl()));
-        new FillValuation().fill(unfolded, state.valuation);
+        FillValuation.getInstance().fill(unfolded, state.valuation);
         LitExpr x = unfolded.eval(state.valuation);
         state.valuation.put(y, x);
         return true;
