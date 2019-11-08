@@ -6,10 +6,12 @@ import hu.bme.mit.theta.xcfa.XCFA;
 
 import java.util.List;
 
+import static com.google.common.base.Preconditions.checkState;
+
 public class CallStmt extends XcfaCallStmt {
     private final VarDecl<?> var;
     private final boolean isVoid;
-    private final XCFA.Process.Procedure procedure;
+    private XCFA.Process.Procedure procedure;
     private final List<VarDecl<?>> params;
 
     CallStmt(VarDecl<?> var, XCFA.Process.Procedure procedure, List<VarDecl<?>> params) {
@@ -33,5 +35,10 @@ public class CallStmt extends XcfaCallStmt {
 
     public XCFA.Process.Procedure getProcedure() {
         return procedure;
+    }
+
+    void setProcedure(XCFA.Process.Procedure procedure) {
+        checkState(this.procedure == null);
+        this.procedure = procedure;
     }
 }

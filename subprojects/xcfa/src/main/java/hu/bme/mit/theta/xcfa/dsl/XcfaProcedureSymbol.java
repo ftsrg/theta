@@ -25,9 +25,7 @@ import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.EdgeContext;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.LocContext;
 import hu.bme.mit.theta.xcfa.dsl.gen.XcfaDslParser.VarDeclContext;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -35,6 +33,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 final class XcfaProcedureSymbol extends InstantiatableSymbol<XCFA.Process.Procedure> implements Scope {
 
 	private XCFA.Process.Procedure procedure = null;
+	private boolean startedBuilding = false;
+	private Set<CallStmt> incompleteInstantiations;
 
 	private final XcfaProcessSymbol scope;
 	private final SymbolTable symbolTable;
@@ -51,7 +51,7 @@ final class XcfaProcedureSymbol extends InstantiatableSymbol<XCFA.Process.Proced
 		checkNotNull(context);
 		this.scope = checkNotNull(scope);
 		symbolTable = new SymbolTable();
-
+		incompleteInstantiations = new HashSet<>();
 		name = context.id.getText();
 		main = (context.main != null);
 		if(context.varDecls != null) {
@@ -84,8 +84,13 @@ final class XcfaProcedureSymbol extends InstantiatableSymbol<XCFA.Process.Proced
 
 	////
 
+	void addIncompleteInstantiation(CallStmt stmt) {
+		incompleteInstantiations.add(stmt);
+	}
+
 	public XCFA.Process.Procedure instantiate() {
 		if(procedure != null) return procedure;
+		else if(startedBuilding) return null;
 		XCFA.Process.Procedure.Builder builder = XCFA.Process.Procedure.builder();
 		builder.setRtype(rtype);
 		if(params != null) params.forEach(xcfaParamSymbol -> builder.createParam(xcfaParamSymbol.instantiate()));
@@ -98,7 +103,10 @@ final class XcfaProcedureSymbol extends InstantiatableSymbol<XCFA.Process.Proced
 			else if(xcfaLocationSymbol.isFinal()) builder.setFinalLoc(loc);
 		});
 		edges.forEach(xcfaEdgeDefinition -> builder.addEdge(xcfaEdgeDefinition.instantiate()));
-		return procedure = builder.build();
+		procedure = builder.build();
+		incompleteInstantiations.forEach(callStmt -> callStmt.setProcedure(procedure));
+		incompleteInstantiations = null;
+		return procedure;
 	}
 
 	////
