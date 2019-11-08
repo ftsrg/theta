@@ -24,8 +24,8 @@ public class SimulatorTest {
     @Parameters()
     public static Collection<Object[]> data() {
         return Arrays.asList(
-                new Object[]{"subprojects/xcfa/src/test/resources/functions-global-local.xcfa"},
-                new Object[]{"subprojects/xcfa/src/test/resources/simple-test.xcfa"}
+                new Object[]{"src/test/resources/functions-global-local.xcfa"},
+                new Object[]{"src/test/resources/simple-test.xcfa"}
             );
     }
 
