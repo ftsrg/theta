@@ -32,7 +32,7 @@ public final class XcfaCliTest {
 
     @Parameters()
     public static Collection<Object[]> data() {
-        return Arrays.asList(new Object[][]{{"/bemenet.xcfa"}});
+        return Arrays.asList(new Object[][]{{"/locking.xcfa"}});
     }
 
     @Test
