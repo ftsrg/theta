@@ -45,18 +45,19 @@ public final class XCFA {
 	public CFA createCFA() {
 		checkState(processes.size() == 1, "XCFA cannot be converted to CFA because it has more than one process.");
 		checkState(mainProcess.procedures.size() == 1, "XCFA cannot be converted to CFA because it has more than one procedure.");
-		for(Process.Procedure.Edge e : mainProcess.mainProcedure.edges) {
-			checkState(e.stmts.size() == 1, "XCFA cannot be converted to CFA because an edge has more/less than one statement.");
-		}
 		CFA.Builder builder = CFA.builder();
 		CFA.Loc initLoc = null, errorLoc = null, finalLoc = null;
 		for(Process.Procedure.Edge e : mainProcess.mainProcedure.edges) {
-			CFA.Loc source = builder.createLoc(e.source.name);
-			CFA.Loc target = builder.createLoc(e.target.name);
-			builder.createEdge(source, target, e.stmts.get(0));
-			if(e.source == mainProcess.mainProcedure.initLoc) initLoc = source;
-			if(e.target == mainProcess.mainProcedure.errorLoc) errorLoc = target;
-			else if(e.target == mainProcess.mainProcedure.finalLoc) finalLoc = target;
+			List<CFA.Loc> locations = new ArrayList<>();
+			locations.add(builder.createLoc(e.source.name));
+			for(int i = 1; i<e.getStmts().size(); ++i)
+				locations.add(builder.createLoc(""));
+			locations.add(builder.createLoc(e.target.name));
+			for(int i = 0; i<e.getStmts().size(); ++i)
+				builder.createEdge(locations.get(i), locations.get(i+1), e.stmts.get(i));
+			if(e.source == mainProcess.mainProcedure.initLoc) initLoc = locations.get(0);
+			if(e.target == mainProcess.mainProcedure.errorLoc) errorLoc = locations.get(locations.size()-1);
+			else if(e.target == mainProcess.mainProcedure.finalLoc) finalLoc = locations.get(locations.size()-1);
 		}
 		builder.setInitLoc(initLoc);
 		builder.setErrorLoc(errorLoc);
