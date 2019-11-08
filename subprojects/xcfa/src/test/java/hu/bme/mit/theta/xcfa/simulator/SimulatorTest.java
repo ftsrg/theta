@@ -9,7 +9,6 @@ import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
@@ -24,8 +23,8 @@ public class SimulatorTest {
     @Parameters()
     public static Collection<Object[]> data() {
         return Arrays.asList(
-                new Object[]{"src/test/resources/functions-global-local.xcfa"},
-                new Object[]{"src/test/resources/simple-test.xcfa"}
+                new Object[]{"functions-global-local.xcfa"},
+                new Object[]{"simple-test.xcfa"}
             );
     }
 
@@ -33,7 +32,7 @@ public class SimulatorTest {
     public void test() throws IOException {
         System.out.println(new File(".").getAbsolutePath());
         //final InputStream inputStream = new FileInputStream("/home/rl/cpp/theta-xcfa/theta/out/test/theta/peterson.xcfa");
-        final InputStream inputStream = new FileInputStream(filepath);
+        final InputStream inputStream = getClass().getResourceAsStream(filepath);
         XCFA xcfa = XcfaDslManager.createXcfa(inputStream);
         new Simulator(xcfa);
     }
